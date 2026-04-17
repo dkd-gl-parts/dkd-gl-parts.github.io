@@ -443,7 +443,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
           <button class="btn-clear" id="clear-btn" data-i18n="btn_clear">クリア</button>
         </div>
       </div>
-      <div class="filter-row">
+      <div class="filter-row" id="filter-row">
         <button class="chip active" data-filter="all" data-i18n="filter_all">すべて</button>
         <button class="chip" data-filter="sl"  data-i18n="filter_sl">SL品番あり</button>
       </div>
@@ -1152,7 +1152,7 @@ async function applyLanguage(lang) {
 
   // 動的コンテンツを再描画する
   renderMenu();
-  if (dataLoaded) { render(); }
+  if (dataLoaded) { renderCategoryChips(); render(); }
   if (currentProduct) { renderPanelStatic(); }
   updateAllHeaders();
 
@@ -1445,7 +1445,44 @@ async function initSearch() {
     }
   });
 
+  // カテゴリチップを動的に生成する
+  renderCategoryChips();
   render();
+}
+
+// カテゴリの一覧を parts データから抽出してフィルターチップを生成
+function renderCategoryChips() {
+  var filterRow = document.getElementById("filter-row");
+  if (!filterRow) return;
+
+  // 既存のカテゴリチップを削除（all・sl は残す）
+  var existing = filterRow.querySelectorAll(".chip[data-filter^='cat:']");
+  existing.forEach(function(el) { el.remove(); });
+
+  // カテゴリの一覧を件数順に集計
+  var catCount = {};
+  allProducts.forEach(function(p) {
+    if (p.category) {
+      catCount[p.category] = (catCount[p.category] || 0) + 1;
+    }
+  });
+
+  // 件数の多い順に並べてチップを追加
+  var cats = Object.keys(catCount).sort(function(a,b) { return catCount[b]-catCount[a]; });
+  cats.forEach(function(cat) {
+    var btn = document.createElement("button");
+    btn.className = "chip";
+    btn.dataset.filter = "cat:" + cat;
+    btn.textContent = tCat(cat) + " (" + catCount[cat] + ")";
+    btn.addEventListener("click", function() {
+      currentFilter = btn.dataset.filter;
+      document.querySelectorAll(".chip").forEach(function(c) {
+        c.classList.toggle("active", c === btn);
+      });
+      render();
+    });
+    filterRow.appendChild(btn);
+  });
 }
 
 function esc(s) {
@@ -1481,7 +1518,9 @@ function getFiltered() {
     ].some(function(v){ return norm(v).indexOf(q)>=0; });
     // SLフィルター：slPartsMapに品番があるものが対象
     var hasSL  = slPartsMap[p.id] && slPartsMap[p.id].length > 0;
-    var mf = currentFilter==="sl"?hasSL:true;
+    var mf = currentFilter==="sl" ? hasSL
+           : currentFilter.indexOf("cat:") === 0 ? p.category === currentFilter.slice(4)
+           : true;
     return ms && mf;
   });
 }
