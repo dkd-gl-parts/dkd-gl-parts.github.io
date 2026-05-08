@@ -67,6 +67,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .price-value    { font-size: 15px; font-weight: 700; color: #1a6fd4; }
 .price-moq      { font-size: 12px; color: #888; }
 .price-section-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.kikan-section-title { font-size: 14px; font-weight: 600; margin: 16px 0 8px; display: flex; align-items: center; gap: 6px; }
+.kikan-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 12px; }
+.kikan-table th { background: #f5f7fa; color: #555; font-weight: 600; padding: 6px 8px; text-align: left; border-bottom: 2px solid #e0e0e0; }
+.kikan-table td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+.kikan-table tr:last-child td { border-bottom: none; }
+.kikan-table tr.kikan-current { background: #f0f6ff; }
+.kikan-table tr.kikan-other { cursor: pointer; }
+.kikan-table tr.kikan-other:hover { background: #f8f8f8; }
+.kikan-pn    { font-family: monospace; font-size: 12px; color: #444; }
+.kikan-mfr   { font-size: 11px; color: #aaa; }
+.kikan-badge { background: #e8f4ff; color: #1a6fd4; border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 600; }
 .pass-strength-bar  { height: 4px; border-radius: 2px; background: #eee; overflow: hidden; margin-bottom: 4px; }
 .pass-strength-fill { height: 100%; border-radius: 2px; width: 0%; transition: width .3s, background .3s; }
 .pass-strength-label { font-size: 11px; color: #888; }
@@ -723,7 +734,10 @@ var TRANSLATIONS = {
     f_supplier: "仕入先",
     f_unit_price: "単価",
     f_currency: "通貨",
-    no_prices: "価格データなし"
+    no_prices: "価格データなし",
+    kikan_section: "互換品",
+    kikan_none: "互換品情報なし",
+    kikan_this: "（この品番）"
   },
 
   en: {
@@ -863,7 +877,10 @@ var TRANSLATIONS = {
     f_supplier: "Supplier",
     f_unit_price: "Unit Price",
     f_currency: "Currency",
-    no_prices: "No price data"
+    no_prices: "No price data",
+    kikan_section: "Compatible Parts",
+    kikan_none: "No compatibility data",
+    kikan_this: "(this part)"
   },
 
   zh: {
@@ -1003,7 +1020,10 @@ var TRANSLATIONS = {
     f_supplier: "供应商",
     f_unit_price: "单价",
     f_currency: "货币",
-    no_prices: "无价格数据"
+    no_prices: "无价格数据",
+    kikan_section: "兼容件",
+    kikan_none: "无兼容件信息",
+    kikan_this: "（当前零件）"
   },
 
   // タガログ語（Tagalog）— 準備中
@@ -1619,7 +1639,9 @@ function renderPanelStatic() {
   document.getElementById("panel-body").innerHTML =
     "<table class='detail-table' style='margin-top:4px'>" + tHtml + "</table>" +
     "<div class='price-section-title'>&#x1F4B0; " + t("supplier_prices") + "</div>" +
-    "<div id='price-table-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>";
+    "<div id='price-table-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>" +
+    "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
+    "<div id='kikan-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>";
   // 画像エリアをリセット（右カラムはpanel-rightに固定表示）
   document.getElementById("img-grid").innerHTML =
     "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + t("img_loading") + "</div></div>";
@@ -1676,6 +1698,78 @@ async function loadSlParts(partId) {
 
   // SL品番に紐付く画像を読み込む
   loadImages(currentSlPartIds);
+
+  // 互換品を読み込む
+  if (currentProduct.shohin_cd) {
+    loadKikan(currentProduct.shohin_cd);
+  } else {
+    var wrap = document.getElementById("kikan-wrap");
+    if (wrap) wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
+  }
+}
+
+async function loadKikan(shohinCd) {
+  var wrap = document.getElementById("kikan-wrap");
+  if (!wrap) return;
+
+  // shohin_cd → kikan_group_id を検索
+  var r1 = await sb.from("kikan_group_members")
+    .select("kikan_group_id")
+    .eq("shohin_cd", shohinCd)
+    .single();
+
+  if (r1.error || !r1.data) {
+    wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
+    return;
+  }
+
+  var groupId = r1.data.kikan_group_id;
+
+  // 同じグループの全メンバーを取得
+  var r2 = await sb.from("kikan_group_members")
+    .select("shohin_cd")
+    .eq("kikan_group_id", groupId);
+
+  var members = r2.data || [];
+  if (members.length <= 1) {
+    wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
+    return;
+  }
+
+  // shohin_cd リストで parts テーブルを検索
+  var shohinCds = members.map(function(m) { return m.shohin_cd; });
+  var r3 = await sb.from("parts")
+    .select("id, genuine_part_number, manufacturer_part_number, manufacturer, vehicle_manufacturer, category, shohin_cd")
+    .in("shohin_cd", shohinCds)
+    .order("shohin_cd");
+
+  var parts_list = r3.data || [];
+
+  // テーブル表示
+  var html = "<table class='kikan-table'>";
+  html += "<tr><th>純正品番</th><th>メーカー品番</th><th>車メーカー</th></tr>";
+  parts_list.forEach(function(p) {
+    var isCurrent = String(p.shohin_cd) === String(shohinCd);
+    var rowCls = isCurrent ? "kikan-current" : "kikan-other";
+    html += "<tr class='" + rowCls + "' data-part-id='" + p.id + "'>";
+    html += "<td><div class='kikan-pn'>" + esc(p.genuine_part_number || "-") + "</div>";
+    if (isCurrent) html += "<div><span class='kikan-badge'>" + t("kikan_this") + "</span></div>";
+    html += "</td>";
+    html += "<td><div class='kikan-pn'>" + esc(p.manufacturer_part_number || "-") + "</div>";
+    html += "<div class='kikan-mfr'>" + esc(p.manufacturer || "") + "</div></td>";
+    html += "<td><div class='kikan-mfr'>" + esc(p.vehicle_manufacturer || "-") + "</div></td>";
+    html += "</tr>";
+  });
+  html += "</table>";
+  html += "<div style='font-size:11px;color:#aaa;text-align:right'>グループID: " + groupId + " / " + parts_list.length + "件</div>";
+  wrap.innerHTML = html;
+
+  // 互換品の行をクリックすると詳細パネルを切り替える
+  wrap.querySelectorAll("tr.kikan-other[data-part-id]").forEach(function(row) {
+    row.addEventListener("click", function() {
+      openPanel(parseInt(row.dataset.partId, 10));
+    });
+  });
 }
 
 async function loadImages(slPartIds) {
