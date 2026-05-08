@@ -720,6 +720,9 @@ var TRANSLATIONS = {
     btn_approve: "承認",
     btn_suspend: "停止",
     btn_activate: "有効化",
+    btn_send_pw_reset: "PW再設定メール送信",
+    msg_pw_reset_sent: "送信しました",
+    msg_pw_reset_err: "送信失敗",
     reset_title: "新しいパスワードを設定",
     reset_desc: "新しいパスワードを入力してください（8文字以上）",
     lbl_new_password: "新しいパスワード",
@@ -863,6 +866,9 @@ var TRANSLATIONS = {
     btn_approve: "Approve",
     btn_suspend: "Suspend",
     btn_activate: "Activate",
+    btn_send_pw_reset: "Send PW Reset Email",
+    msg_pw_reset_sent: "Sent",
+    msg_pw_reset_err: "Failed to send",
     reset_title: "Set New Password",
     reset_desc: "Please enter your new password (8+ characters)",
     lbl_new_password: "New Password",
@@ -1006,6 +1012,9 @@ var TRANSLATIONS = {
     btn_approve: "批准",
     btn_suspend: "停用",
     btn_activate: "启用",
+    btn_send_pw_reset: "发送密码重置邮件",
+    msg_pw_reset_sent: "已发送",
+    msg_pw_reset_err: "发送失败",
     reset_title: "设置新密码",
     reset_desc: "请输入新密码（至少8个字符）",
     lbl_new_password: "新密码",
@@ -1929,6 +1938,7 @@ function renderUsers(users) {
     html += "<button class='btn-save-user' data-uid='"+esc(u.id)+"'>"+t("btn_save")+"</button>";
     if (status==="pending"||status==="suspended") html += "<button class='btn-approve' data-uid='"+esc(u.id)+"'>"+t("btn_approve")+"</button>";
     if (status==="active") html += "<button class='btn-suspend' data-uid='"+esc(u.id)+"'>"+t("btn_suspend")+"</button>";
+    html += "<button class='btn-pw-reset' data-uid='"+esc(u.id)+"' data-email='"+esc(u.email)+"' style='background:#888;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;white-space:nowrap'>"+t("btn_send_pw_reset")+"</button>";
     html += "<span class='save-msg' id='save-msg-"+esc(u.id)+"'></span>";
     html += "</div></div>";
   });
@@ -1957,6 +1967,28 @@ function renderUsers(users) {
   });
   list.querySelectorAll(".btn-suspend").forEach(function(btn){
     btn.addEventListener("click",function(){if(confirm("このユーザーを停止しますか？"))updateStatus(btn.dataset.uid,"suspended");});
+  });
+
+  // パスワードリセットメール送信
+  list.querySelectorAll(".btn-pw-reset").forEach(function(btn){
+    btn.addEventListener("click", async function(){
+      var email = btn.dataset.email;
+      var uid   = btn.dataset.uid;
+      var msg   = document.getElementById("save-msg-"+uid);
+      btn.disabled = true;
+      var r = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + window.location.pathname
+      });
+      btn.disabled = false;
+      if (r.error) {
+        msg.className = "save-msg save-err";
+        msg.textContent = t("msg_pw_reset_err");
+      } else {
+        msg.className = "save-msg save-ok";
+        msg.textContent = t("msg_pw_reset_sent");
+        setTimeout(function(){ msg.textContent = ""; }, 3000);
+      }
+    });
   });
 }
 
