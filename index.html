@@ -1725,6 +1725,7 @@ async function loadKikan(shohinCd) {
   // shohin_cd → kikan_group_id を検索
   // shohin_cd を数値に変換して検索
   var shohinCdNum = parseInt(shohinCd, 10);
+  console.log("loadKikan呼び出し shohinCd=", shohinCd, "shohinCdNum=", shohinCdNum);
   if (isNaN(shohinCdNum)) {
     wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
     return;
@@ -1733,6 +1734,8 @@ async function loadKikan(shohinCd) {
     .select("kikan_group_id")
     .eq("shohin_cd", shohinCdNum)
     .limit(1);
+
+  console.log("r1.data=", r1.data, "r1.error=", r1.error);
 
   if (r1.error || !r1.data || r1.data.length === 0) {
     wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
