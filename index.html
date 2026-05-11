@@ -78,6 +78,50 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .kikan-pn    { font-family: monospace; font-size: 12px; color: #444; }
 .kikan-mfr   { font-size: 11px; color: #aaa; }
 .kikan-badge { background: #e8f4ff; color: #1a6fd4; border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 600; }
+
+/* =============================================
+   商品管理・互換管理・ログ画面
+============================================= */
+.mgmt-body      { flex: 1; padding: 20px 16px; max-width: 960px; width: 100%; margin: 0 auto; overflow-y: auto; }
+.mgmt-toolbar   { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+.mgmt-search    { flex: 1; min-width: 200px; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; font-size: 14px; outline: none; }
+.mgmt-search:focus { border-color: #4f8ef7; }
+.btn-primary    { background: #4f8ef7; color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 14px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+.btn-primary:hover { background: #3a7ae0; }
+.btn-sm-edit    { background: #f0f4ff; color: #4f8ef7; border: 1px solid #4f8ef7; border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.btn-sm-del     { background: #fff0f0; color: #e24b4a; border: 1px solid #e24b4a; border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.mgmt-table     { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.mgmt-table th  { background: #f5f7fa; color: #555; font-weight: 600; padding: 10px 12px; text-align: left; border-bottom: 2px solid #e0e0e0; }
+.mgmt-table td  { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+.mgmt-table tr:last-child td { border-bottom: none; }
+.mgmt-table tr:hover td { background: #f8f8f8; }
+.mgmt-pn        { font-family: monospace; font-size: 12px; }
+.mgmt-sub       { font-size: 11px; color: #aaa; margin-top: 2px; }
+.mgmt-actions   { display: flex; gap: 6px; flex-wrap: nowrap; }
+.mgmt-count     { font-size: 12px; color: #888; margin-bottom: 8px; }
+
+/* 商品登録フォーム（モーダル風） */
+.form-overlay   { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 400; align-items: center; justify-content: center; }
+.form-overlay.show { display: flex; }
+.form-card      { background: #fff; border-radius: 16px; padding: 24px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; margin: 16px; box-shadow: 0 12px 40px rgba(0,0,0,0.2); }
+.form-card h3   { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: #1a1a2e; }
+.form-row       { margin-bottom: 12px; }
+.form-label     { font-size: 12px; color: #888; margin-bottom: 4px; display: block; }
+.form-input     { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; font-size: 14px; outline: none; }
+.form-input:focus { border-color: #4f8ef7; }
+.form-select    { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; font-size: 14px; outline: none; background: #fff; cursor: pointer; }
+.form-footer    { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; padding-top: 16px; border-top: 1px solid #eee; }
+.btn-cancel     { background: #f0f0f0; color: #555; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; cursor: pointer; }
+.btn-cancel:hover { background: #e0e0e0; }
+
+/* ログ画面 */
+.log-table      { width: 100%; border-collapse: collapse; font-size: 12px; }
+.log-table th   { background: #f5f7fa; color: #555; font-weight: 600; padding: 8px 10px; text-align: left; border-bottom: 2px solid #e0e0e0; }
+.log-table td   { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+.log-insert     { color: #1a8c3e; font-weight: 600; }
+.log-update     { color: #1a5faa; font-weight: 600; }
+.log-delete     { color: #e24b4a; font-weight: 600; }
+.log-json       { font-family: monospace; font-size: 11px; color: #666; max-width: 300px; word-break: break-all; }
 .pass-strength-bar  { height: 4px; border-radius: 2px; background: #eee; overflow: hidden; margin-bottom: 4px; }
 .pass-strength-fill { height: 100%; border-radius: 2px; width: 0%; transition: width .3s, background .3s; }
 .pass-strength-label { font-size: 11px; color: #888; }
@@ -530,6 +574,153 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 </div>
 
 <!-- =============================================
+   商品管理画面
+============================================= -->
+<div id="screen-parts-mgmt" class="screen">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-parts-mgmt" data-i18n="btn_back">← メニュー</button>
+      <span class="logo-text" data-i18n="screen_parts_title">商品管理</span>
+    </div>
+    <div class="page-header-right">
+      <span class="header-username" id="parts-mgmt-username"></span>
+      <span class="role-badge" id="parts-mgmt-role-badge"></span>
+      <button class="btn-logout" id="btn-logout-parts-mgmt" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <div class="mgmt-body">
+    <div class="mgmt-toolbar">
+      <input class="mgmt-search" id="parts-mgmt-search" type="search" data-i18n-ph="ph_search_parts">
+      <button class="btn-primary" id="btn-add-part" data-i18n="btn_add_part">商品を追加</button>
+    </div>
+    <div class="mgmt-count" id="parts-mgmt-count"></div>
+    <div id="parts-mgmt-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
+  </div>
+</div>
+
+<!-- 商品登録・編集フォーム（モーダル） -->
+<div class="form-overlay" id="part-form-overlay">
+  <div class="form-card">
+    <h3 id="part-form-title">商品追加</h3>
+    <input type="hidden" id="part-form-id">
+    <div class="form-row">
+      <label class="form-label" data-i18n="lbl_shohin_cd">商品コード</label>
+      <input class="form-input" id="pf-shohin-cd" type="number" placeholder="例: 12345">
+    </div>
+    <div class="form-row">
+      <label class="form-label" data-i18n="lbl_genuine_pn">純正品番 *</label>
+      <input class="form-input" id="pf-genuine-pn" type="text" placeholder="例: 27060-37031">
+    </div>
+    <div class="form-row">
+      <label class="form-label" data-i18n="lbl_mfr_pn">メーカー品番</label>
+      <input class="form-input" id="pf-mfr-pn" type="text" placeholder="例: 104210-5520">
+    </div>
+    <div class="form-row">
+      <label class="form-label" data-i18n="lbl_mfr">メーカー</label>
+      <input class="form-input" id="pf-mfr" type="text" placeholder="例: DENSO">
+    </div>
+    <div class="form-row">
+      <label class="form-label" data-i18n="lbl_vehicle_mfr">車メーカー</label>
+      <input class="form-input" id="pf-vehicle-mfr" type="text" placeholder="例: TOYOTA">
+    </div>
+    <div class="form-row">
+      <label class="form-label" data-i18n="lbl_body_type">車種</label>
+      <input class="form-input" id="pf-body-type" type="text">
+    </div>
+    <div class="form-row">
+      <label class="form-label" data-i18n="lbl_compatible">適合車名</label>
+      <input class="form-input" id="pf-compatible" type="text">
+    </div>
+    <div class="form-row">
+      <label class="form-label" data-i18n="lbl_model">型式</label>
+      <input class="form-input" id="pf-model" type="text">
+    </div>
+    <div class="form-row">
+      <label class="form-label" data-i18n="lbl_category">カテゴリ</label>
+      <select class="form-select" id="pf-category">
+        <option value="Alternator">オルタネータ / Alternator</option>
+        <option value="Starter">スタータ / Starter</option>
+        <option value="Large Alternator">大型オルタネータ / Large Alternator</option>
+        <option value="Large Starter">大型スタータ / Large Starter</option>
+        <option value="New Large Starter">新品大型スタータ / New Large Starter</option>
+        <option value="Starter Generator">スタータジェネレータ / Starter Generator</option>
+        <option value="Distributor">ディストリビュータ / Distributor</option>
+        <option value="AC Compressor">ACコンプレッサ / AC Compressor</option>
+        <option value="Throttle Body">スロットルボディ / Throttle Body</option>
+        <option value="Blower Motor">ブロアモーター / Blower Motor</option>
+      </select>
+    </div>
+    <div class="form-footer">
+      <button class="btn-cancel" id="btn-part-form-cancel" data-i18n="btn_back">キャンセル</button>
+      <button class="btn-primary" id="btn-part-form-save" data-i18n="btn_save_part">保存</button>
+    </div>
+    <div class="reg-error" id="part-form-error"></div>
+  </div>
+</div>
+
+<!-- =============================================
+   互換管理画面
+============================================= -->
+<div id="screen-kikan-mgmt" class="screen">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-kikan-mgmt" data-i18n="btn_back">← メニュー</button>
+      <span class="logo-text" data-i18n="screen_kikan_title">互換管理</span>
+    </div>
+    <div class="page-header-right">
+      <span class="header-username" id="kikan-mgmt-username"></span>
+      <button class="btn-logout" id="btn-logout-kikan-mgmt" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <div class="mgmt-body">
+    <div class="mgmt-toolbar">
+      <input class="mgmt-search" id="kikan-mgmt-search" type="search" placeholder="商品コード・品番で検索">
+      <button class="btn-primary" id="btn-new-kikan-group">新しいグループを作成</button>
+    </div>
+    <div class="mgmt-count" id="kikan-mgmt-count"></div>
+    <div id="kikan-mgmt-list"><div class="loading">読み込み中...</div></div>
+  </div>
+</div>
+
+<!-- 互換追加フォーム -->
+<div class="form-overlay" id="kikan-form-overlay">
+  <div class="form-card">
+    <h3 id="kikan-form-title">互換グループに追加</h3>
+    <input type="hidden" id="kf-group-id">
+    <div class="form-row">
+      <label class="form-label">商品コード（追加する品番）</label>
+      <input class="form-input" id="kf-shohin-cd" type="number" placeholder="例: 12345">
+      <div style="font-size:11px;color:#aaa;margin-top:4px" id="kf-part-info"></div>
+    </div>
+    <div class="form-footer">
+      <button class="btn-cancel" id="btn-kikan-form-cancel">キャンセル</button>
+      <button class="btn-primary" id="btn-kikan-form-save">追加</button>
+    </div>
+    <div class="reg-error" id="kikan-form-error"></div>
+  </div>
+</div>
+
+<!-- =============================================
+   操作ログ画面
+============================================= -->
+<div id="screen-logs" class="screen">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-logs" data-i18n="btn_back">← メニュー</button>
+      <span class="logo-text" data-i18n="screen_logs_title">操作ログ</span>
+    </div>
+    <div class="page-header-right">
+      <span class="role-badge role-admin" data-i18n="role_admin">管理者</span>
+      <button class="btn-logout" id="btn-logout-logs" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <div class="mgmt-body">
+    <div class="mgmt-count" id="logs-count"></div>
+    <div id="logs-list"><div class="loading">読み込み中...</div></div>
+  </div>
+</div>
+
+<!-- =============================================
    パスワード変更画面（ログイン中ユーザー用）
 ============================================= -->
 <div id="screen-change-pw" class="screen">
@@ -691,6 +882,48 @@ var TRANSLATIONS = {
     btn_change_password: "パスワード変更",
     mi_changepw_title: "パスワード変更",
     mi_changepw_desc: "ログイン中のアカウントのパスワードを変更します。",
+    mi_parts_title: "商品管理",
+    mi_parts_desc: "商品の追加・修正・削除を行います。",
+    mi_kikan_title: "互換管理",
+    mi_kikan_desc: "互換グループの登録・編集を行います。",
+    mi_logs_title: "操作ログ",
+    mi_logs_desc: "商品・互換の追加・修正・削除の履歴を確認します。",
+    screen_parts_title: "商品管理",
+    screen_kikan_title: "互換管理",
+    screen_logs_title: "操作ログ",
+    lbl_shohin_cd: "商品コード",
+    lbl_genuine_pn: "純正品番",
+    lbl_mfr_pn: "メーカー品番",
+    lbl_mfr: "メーカー",
+    lbl_vehicle_mfr: "車メーカー",
+    lbl_body_type: "車種",
+    lbl_compatible: "適合車名",
+    lbl_model: "型式",
+    lbl_category: "カテゴリ",
+    btn_add_part: "商品を追加",
+    btn_edit: "修正",
+    btn_delete: "削除",
+    btn_save_part: "保存",
+    del_part_confirm: "この商品を削除しますか？互換グループからも削除されます。",
+    msg_part_saved: "保存しました",
+    msg_part_deleted: "削除しました",
+    msg_part_err: "エラーが発生しました",
+    ph_search_parts: "品番・メーカーで検索",
+    lbl_kikan_group: "互換グループID",
+    btn_add_kikan: "互換に追加",
+    btn_new_kikan: "新しいグループを作成",
+    del_kikan_confirm: "互換グループから除外しますか？",
+    msg_kikan_saved: "互換グループに追加しました",
+    msg_kikan_deleted: "互換グループから削除しました",
+    msg_kikan_err: "エラーが発生しました",
+    log_operation: "操作",
+    log_user: "操作者",
+    log_target: "対象",
+    log_date: "日時",
+    log_insert: "追加",
+    log_update: "修正",
+    log_delete: "削除",
+    log_no_data: "ログがありません",
     change_pw_title: "パスワード変更",
     lbl_current_password: "現在のパスワード",
     change_pw_success: "パスワードを変更しました。",
@@ -837,6 +1070,48 @@ var TRANSLATIONS = {
     btn_change_password: "Change Password",
     mi_changepw_title: "Change Password",
     mi_changepw_desc: "Change the password for your current account.",
+    mi_parts_title: "Parts Management",
+    mi_parts_desc: "Add, edit, and delete parts.",
+    mi_kikan_title: "Compatibility Management",
+    mi_kikan_desc: "Register and edit compatibility groups.",
+    mi_logs_title: "Operation Logs",
+    mi_logs_desc: "View history of part and compatibility changes.",
+    screen_parts_title: "Parts Management",
+    screen_kikan_title: "Compatibility Management",
+    screen_logs_title: "Operation Logs",
+    lbl_shohin_cd: "Product Code",
+    lbl_genuine_pn: "Genuine Part No.",
+    lbl_mfr_pn: "Manufacturer Part No.",
+    lbl_mfr: "Manufacturer",
+    lbl_vehicle_mfr: "Vehicle Maker",
+    lbl_body_type: "Body Type",
+    lbl_compatible: "Compatible Models",
+    lbl_model: "Model Code",
+    lbl_category: "Category",
+    btn_add_part: "Add Part",
+    btn_edit: "Edit",
+    btn_delete: "Delete",
+    btn_save_part: "Save",
+    del_part_confirm: "Delete this part? It will also be removed from compatibility groups.",
+    msg_part_saved: "Saved",
+    msg_part_deleted: "Deleted",
+    msg_part_err: "An error occurred",
+    ph_search_parts: "Search by part number or manufacturer",
+    lbl_kikan_group: "Compatibility Group ID",
+    btn_add_kikan: "Add to Group",
+    btn_new_kikan: "Create New Group",
+    del_kikan_confirm: "Remove from compatibility group?",
+    msg_kikan_saved: "Added to compatibility group",
+    msg_kikan_deleted: "Removed from compatibility group",
+    msg_kikan_err: "An error occurred",
+    log_operation: "Operation",
+    log_user: "User",
+    log_target: "Target",
+    log_date: "Date",
+    log_insert: "Add",
+    log_update: "Edit",
+    log_delete: "Delete",
+    log_no_data: "No logs found",
     change_pw_title: "Change Password",
     lbl_current_password: "Current Password",
     change_pw_success: "Password changed successfully.",
@@ -983,6 +1258,48 @@ var TRANSLATIONS = {
     btn_change_password: "修改密码",
     mi_changepw_title: "修改密码",
     mi_changepw_desc: "修改当前账号的登录密码。",
+    mi_parts_title: "零件管理",
+    mi_parts_desc: "添加、修改和删除零件。",
+    mi_kikan_title: "兼容性管理",
+    mi_kikan_desc: "注册和编辑兼容组。",
+    mi_logs_title: "操作日志",
+    mi_logs_desc: "查看零件和兼容性更改的历史记录。",
+    screen_parts_title: "零件管理",
+    screen_kikan_title: "兼容性管理",
+    screen_logs_title: "操作日志",
+    lbl_shohin_cd: "商品代码",
+    lbl_genuine_pn: "纯正零件编号",
+    lbl_mfr_pn: "制造商零件编号",
+    lbl_mfr: "制造商",
+    lbl_vehicle_mfr: "汽车制造商",
+    lbl_body_type: "车身类型",
+    lbl_compatible: "适用车型",
+    lbl_model: "型号代码",
+    lbl_category: "类别",
+    btn_add_part: "添加零件",
+    btn_edit: "修改",
+    btn_delete: "删除",
+    btn_save_part: "保存",
+    del_part_confirm: "删除此零件？它也将从兼容组中删除。",
+    msg_part_saved: "已保存",
+    msg_part_deleted: "已删除",
+    msg_part_err: "发生错误",
+    ph_search_parts: "按零件编号或制造商搜索",
+    lbl_kikan_group: "兼容组ID",
+    btn_add_kikan: "添加到组",
+    btn_new_kikan: "创建新组",
+    del_kikan_confirm: "从兼容组中移除？",
+    msg_kikan_saved: "已添加到兼容组",
+    msg_kikan_deleted: "已从兼容组中删除",
+    msg_kikan_err: "发生错误",
+    log_operation: "操作",
+    log_user: "操作者",
+    log_target: "对象",
+    log_date: "日期",
+    log_insert: "添加",
+    log_update: "修改",
+    log_delete: "删除",
+    log_no_data: "暂无日志",
     change_pw_title: "修改密码",
     lbl_current_password: "当前密码",
     change_pw_success: "密码修改成功。",
@@ -1380,8 +1697,11 @@ function renderMenu() {
     { icon: "&#x1F50D;", titleKey: "mi_search_title", descKey: "mi_search_desc", action: "search", available: true, tag: null },
     { icon: "&#x1F465;", titleKey: "mi_users_title",  descKey: "mi_users_desc",  action: "users",  available: isAdmin(), tag: isAdmin() ? null : "tag_admin_only", tagClass: "tag-admin" },
     { icon: "&#x1F4CB;", titleKey: "mi_data_title",   descKey: "mi_data_desc",   action: null,     available: false,     tag: "tag_coming", tagClass: "tag-coming" },
-    { icon: "&#x1F4CA;", titleKey: "mi_report_title", descKey: "mi_report_desc", action: null,     available: false,     tag: "tag_coming", tagClass: "tag-coming" },
-    { icon: "&#x1F512;", titleKey: "mi_changepw_title", descKey: "mi_changepw_desc", action: "change-pw", available: true, tag: null }
+    { icon: "&#x1F4CA;", titleKey: "mi_report_title", descKey: "mi_report_desc", action: null, available: false, tag: "tag_coming", tagClass: "tag-coming" },
+    { icon: "&#x1F512;", titleKey: "mi_changepw_title", descKey: "mi_changepw_desc", action: "change-pw", available: true, tag: null },
+    { icon: "&#x1F527;", titleKey: "mi_parts_title", descKey: "mi_parts_desc", action: "parts-mgmt", available: canEdit(), tag: null },
+    { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canEdit(), tag: null },
+    { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: isAdmin(), tag: isAdmin() ? null : "tag_admin_only", tagClass: "tag-admin" }
   ];
 
   var html = "";
@@ -1402,6 +1722,9 @@ function renderMenu() {
       if (card.dataset.action === "search") enterSearch();
       else if (card.dataset.action === "users") enterUsers();
       else if (card.dataset.action === "change-pw") enterChangePw();
+      else if (card.dataset.action === "parts-mgmt") enterPartsMgmt();
+      else if (card.dataset.action === "kikan-mgmt") enterKikanMgmt();
+      else if (card.dataset.action === "logs") enterLogs();
     });
   });
 }
@@ -1412,6 +1735,325 @@ function renderMenu() {
 async function enterSearch() {
   showScreen("search");
   if (!dataLoaded) { await initSearch(); dataLoaded = true; }
+}
+
+// =============================================
+// ログヘルパー（操作ログをDBに記録）
+// =============================================
+async function writeLog(operation, tableName, targetId, targetDesc, beforeData, afterData) {
+  if (!userProfile) return;
+  await sb.from("operation_logs").insert({
+    user_id:     userProfile.id,
+    user_email:  userProfile.email,
+    user_name:   userProfile.name || userProfile.email,
+    operation:   operation,
+    table_name:  tableName,
+    target_id:   targetId,
+    target_desc: targetDesc,
+    before_data: beforeData || null,
+    after_data:  afterData  || null
+  });
+}
+
+// =============================================
+// 商品管理画面
+// =============================================
+var partsMgmtData = [];
+var partFormMode  = "add"; // "add" or "edit"
+
+async function enterPartsMgmt() {
+  if (!canEdit()) { alert(t("err_perm")); return; }
+  showScreen("parts-mgmt");
+  var nameEl  = document.getElementById("parts-mgmt-username");
+  var badgeEl = document.getElementById("parts-mgmt-role-badge");
+  if (nameEl)  nameEl.textContent  = userProfile.name || userProfile.email.split("@")[0];
+  if (badgeEl) { badgeEl.textContent = roleLabel(userProfile.role); badgeEl.className = "role-badge " + roleClass(userProfile.role); }
+  await loadPartsMgmt();
+}
+
+async function loadPartsMgmt() {
+  var q = document.getElementById("parts-mgmt-search").value.trim();
+  var query = sb.from("parts").select("*").order("id").limit(200);
+  if (q) {
+    query = query.or(
+      "genuine_part_number.ilike.%" + q + "%," +
+      "manufacturer_part_number.ilike.%" + q + "%," +
+      "manufacturer.ilike.%" + q + "%"
+    );
+  }
+  var r = await query;
+  partsMgmtData = r.data || [];
+  renderPartsMgmt();
+}
+
+function renderPartsMgmt() {
+  var list     = document.getElementById("parts-mgmt-list");
+  var countEl  = document.getElementById("parts-mgmt-count");
+  if (countEl) countEl.textContent = partsMgmtData.length + " 件";
+  if (!partsMgmtData.length) { list.innerHTML = "<div class='empty'>該当する商品がありません</div>"; return; }
+  var html = "<table class='mgmt-table'><tr><th>商品コード</th><th>純正品番</th><th>メーカー品番</th><th>メーカー</th><th>カテゴリ</th><th></th></tr>";
+  partsMgmtData.forEach(function(p) {
+    html += "<tr>";
+    html += "<td><div class='mgmt-pn'>" + esc(String(p.shohin_cd || "-")) + "</div></td>";
+    html += "<td><div class='mgmt-pn'>" + esc(p.genuine_part_number || "-") + "</div></td>";
+    html += "<td><div class='mgmt-pn'>" + esc(p.manufacturer_part_number || "-") + "</div></td>";
+    html += "<td><div class='mgmt-sub'>" + esc(p.manufacturer || "-") + "</div></td>";
+    html += "<td><div class='mgmt-sub'>" + tCat(p.category) + "</div></td>";
+    html += "<td><div class='mgmt-actions'>";
+    html += "<button class='btn-sm-edit' data-pid='" + p.id + "'>修正</button>";
+    html += "<button class='btn-sm-del' data-pdel='" + p.id + "'>削除</button>";
+    html += "</div></td>";
+    html += "</tr>";
+  });
+  html += "</table>";
+  list.innerHTML = html;
+
+  list.querySelectorAll(".btn-sm-edit").forEach(function(btn) {
+    btn.addEventListener("click", function() { openPartForm("edit", parseInt(btn.dataset.pid,10)); });
+  });
+  list.querySelectorAll(".btn-sm-del").forEach(function(btn) {
+    btn.addEventListener("click", function() { deletePart(parseInt(btn.dataset.pdel,10)); });
+  });
+}
+
+function openPartForm(mode, partId) {
+  partFormMode = mode;
+  var overlay  = document.getElementById("part-form-overlay");
+  var title    = document.getElementById("part-form-title");
+  var errEl    = document.getElementById("part-form-error");
+  errEl.textContent = "";
+
+  if (mode === "add") {
+    title.textContent = "商品追加";
+    document.getElementById("part-form-id").value        = "";
+    document.getElementById("pf-shohin-cd").value        = "";
+    document.getElementById("pf-genuine-pn").value       = "";
+    document.getElementById("pf-mfr-pn").value           = "";
+    document.getElementById("pf-mfr").value              = "";
+    document.getElementById("pf-vehicle-mfr").value      = "";
+    document.getElementById("pf-body-type").value        = "";
+    document.getElementById("pf-compatible").value       = "";
+    document.getElementById("pf-model").value            = "";
+    document.getElementById("pf-category").value         = "Alternator";
+  } else {
+    var p = partsMgmtData.find(function(x){ return x.id === partId; });
+    if (!p) return;
+    title.textContent = "商品修正";
+    document.getElementById("part-form-id").value        = p.id;
+    document.getElementById("pf-shohin-cd").value        = p.shohin_cd || "";
+    document.getElementById("pf-genuine-pn").value       = p.genuine_part_number || "";
+    document.getElementById("pf-mfr-pn").value           = p.manufacturer_part_number || "";
+    document.getElementById("pf-mfr").value              = p.manufacturer || "";
+    document.getElementById("pf-vehicle-mfr").value      = p.vehicle_manufacturer || "";
+    document.getElementById("pf-body-type").value        = p.body_type || "";
+    document.getElementById("pf-compatible").value       = p.compatible_car_models || "";
+    document.getElementById("pf-model").value            = p.model || "";
+    document.getElementById("pf-category").value         = p.category || "Alternator";
+  }
+  overlay.classList.add("show");
+}
+
+async function savePartForm() {
+  var errEl   = document.getElementById("part-form-error");
+  errEl.textContent = "";
+  var gpn     = document.getElementById("pf-genuine-pn").value.trim();
+  if (!gpn) { errEl.textContent = "純正品番は必須です"; return; }
+
+  var data = {
+    genuine_part_number:      gpn,
+    manufacturer_part_number: document.getElementById("pf-mfr-pn").value.trim() || null,
+    manufacturer:             document.getElementById("pf-mfr").value.trim() || null,
+    vehicle_manufacturer:     document.getElementById("pf-vehicle-mfr").value.trim() || null,
+    body_type:                document.getElementById("pf-body-type").value.trim() || null,
+    compatible_car_models:    document.getElementById("pf-compatible").value.trim() || null,
+    model:                    document.getElementById("pf-model").value.trim() || null,
+    category:                 document.getElementById("pf-category").value,
+    updated_at:               new Date().toISOString()
+  };
+  var scd = document.getElementById("pf-shohin-cd").value.trim();
+  if (scd) data.shohin_cd = parseInt(scd, 10);
+
+  var partId = document.getElementById("part-form-id").value;
+  var r;
+  if (partFormMode === "add") {
+    r = await sb.from("parts").insert(data).select().single();
+    if (!r.error) await writeLog("insert", "parts", r.data.id, gpn, null, data);
+  } else {
+    var before = partsMgmtData.find(function(x){ return x.id === parseInt(partId,10); });
+    r = await sb.from("parts").update(data).eq("id", partId).select().single();
+    if (!r.error) await writeLog("update", "parts", parseInt(partId,10), gpn, before, data);
+  }
+
+  if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
+  document.getElementById("part-form-overlay").classList.remove("show");
+  await loadPartsMgmt();
+}
+
+async function deletePart(partId) {
+  if (!confirm(t("del_part_confirm"))) return;
+  var p = partsMgmtData.find(function(x){ return x.id === partId; });
+
+  // 互換グループから削除
+  if (p && p.shohin_cd) {
+    await sb.from("kikan_group_members").delete().eq("shohin_cd", p.shohin_cd);
+  }
+
+  var r = await sb.from("parts").delete().eq("id", partId);
+  if (r.error) { alert(t("msg_part_err") + ": " + r.error.message); return; }
+  await writeLog("delete", "parts", partId, p ? p.genuine_part_number : String(partId), p, null);
+  await loadPartsMgmt();
+}
+
+// =============================================
+// 互換管理画面
+// =============================================
+var kikanMgmtData  = [];
+var kikanFormGroupId = null;
+
+async function enterKikanMgmt() {
+  if (!canEdit()) { alert(t("err_perm")); return; }
+  showScreen("kikan-mgmt");
+  var nameEl = document.getElementById("kikan-mgmt-username");
+  if (nameEl) nameEl.textContent = userProfile.name || userProfile.email.split("@")[0];
+  await loadKikanMgmt();
+}
+
+async function loadKikanMgmt() {
+  var q = document.getElementById("kikan-mgmt-search").value.trim();
+  // グループ一覧を取得（最大100グループ）
+  var r1 = await sb.from("kikan_groups").select("kikan_group_id").order("kikan_group_id").limit(100);
+  var groups = r1.data || [];
+
+  if (q) {
+    // 商品コードか品番で検索
+    var qNum = parseInt(q, 10);
+    if (!isNaN(qNum)) {
+      var rm = await sb.from("kikan_group_members").select("kikan_group_id").eq("shohin_cd", qNum);
+      if (rm.data && rm.data.length > 0) {
+        groups = rm.data.map(function(m){ return { kikan_group_id: m.kikan_group_id }; });
+      } else {
+        groups = [];
+      }
+    }
+  }
+
+  kikanMgmtData = groups;
+  var countEl = document.getElementById("kikan-mgmt-count");
+  if (countEl) countEl.textContent = groups.length + " グループ";
+
+  // 各グループのメンバーを表示
+  var html = "";
+  for (var i = 0; i < groups.length; i++) {
+    var gid   = groups[i].kikan_group_id;
+    var rm    = await sb.from("kikan_group_members").select("shohin_cd, parts(genuine_part_number, manufacturer_part_number, manufacturer)").eq("kikan_group_id", gid);
+    var members = rm.data || [];
+    html += "<div style='background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:12px 14px;margin-bottom:10px'>";
+    html += "<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:8px'>";
+    html += "<div style='font-size:13px;font-weight:600;color:#1a1a2e'>グループID: " + gid + " <span style='font-size:11px;color:#aaa;font-weight:400'>(" + members.length + "件)</span></div>";
+    html += "<div style='display:flex;gap:6px'>";
+    html += "<button class='btn-sm-edit' data-kgid='" + gid + "' onclick='openKikanForm(" + gid + ")'>メンバー追加</button>";
+    html += "</div></div>";
+    html += "<table style='width:100%;border-collapse:collapse;font-size:12px'>";
+    members.forEach(function(m) {
+      var p = m.parts || {};
+      html += "<tr style='border-bottom:1px solid #f0f0f0'>";
+      html += "<td style='padding:5px 4px;font-family:monospace'>" + esc(String(m.shohin_cd || "-")) + "</td>";
+      html += "<td style='padding:5px 4px;font-family:monospace'>" + esc(p.genuine_part_number || "-") + "</td>";
+      html += "<td style='padding:5px 4px;color:#888'>" + esc(p.manufacturer_part_number || "-") + "</td>";
+      html += "<td style='padding:5px 4px;color:#aaa'>" + esc(p.manufacturer || "-") + "</td>";
+      html += "<td style='padding:5px 4px'><button class='btn-sm-del' onclick='removeKikanMember(" + gid + "," + m.shohin_cd + ")'>除外</button></td>";
+      html += "</tr>";
+    });
+    html += "</table></div>";
+  }
+  document.getElementById("kikan-mgmt-list").innerHTML = html || "<div class='empty'>グループがありません</div>";
+}
+
+function openKikanForm(groupId) {
+  kikanFormGroupId = groupId;
+  document.getElementById("kf-group-id").value   = groupId || "";
+  document.getElementById("kf-shohin-cd").value  = "";
+  document.getElementById("kf-part-info").textContent = "";
+  document.getElementById("kikan-form-error").textContent = "";
+  document.getElementById("kikan-form-title").textContent = groupId ? "グループ " + groupId + " にメンバー追加" : "新しいグループを作成";
+  document.getElementById("kikan-form-overlay").classList.add("show");
+}
+
+async function saveKikanForm() {
+  var errEl   = document.getElementById("kikan-form-error");
+  errEl.textContent = "";
+  var scd     = parseInt(document.getElementById("kf-shohin-cd").value.trim(), 10);
+  if (isNaN(scd)) { errEl.textContent = "商品コードを入力してください"; return; }
+
+  // 商品コードが parts に存在するか確認
+  var rp = await sb.from("parts").select("id, genuine_part_number").eq("shohin_cd", scd).single();
+  if (rp.error || !rp.data) { errEl.textContent = "商品コード " + scd + " が商品マスタに存在しません"; return; }
+
+  var groupId = kikanFormGroupId;
+
+  // 新グループ作成
+  if (!groupId) {
+    var rg = await sb.from("kikan_groups").insert({ kikan_group_id: scd }).select().single();
+    if (rg.error) { errEl.textContent = "グループ作成失敗: " + rg.error.message; return; }
+    groupId = scd;
+  }
+
+  // メンバー追加
+  var rm = await sb.from("kikan_group_members").insert({ kikan_group_id: groupId, shohin_cd: scd });
+  if (rm.error) { errEl.textContent = "追加失敗: " + rm.error.message; return; }
+
+  await writeLog("insert", "kikan_group_members", groupId, "グループ" + groupId + " + shohin_cd:" + scd, null, { kikan_group_id: groupId, shohin_cd: scd });
+  document.getElementById("kikan-form-overlay").classList.remove("show");
+  await loadKikanMgmt();
+}
+
+async function removeKikanMember(groupId, shohinCd) {
+  if (!confirm(t("del_kikan_confirm"))) return;
+  var r = await sb.from("kikan_group_members").delete().eq("kikan_group_id", groupId).eq("shohin_cd", shohinCd);
+  if (r.error) { alert(t("msg_kikan_err")); return; }
+  await writeLog("delete", "kikan_group_members", groupId, "グループ" + groupId + " - shohin_cd:" + shohinCd, { kikan_group_id: groupId, shohin_cd: shohinCd }, null);
+  await loadKikanMgmt();
+}
+
+// =============================================
+// 操作ログ画面
+// =============================================
+async function enterLogs() {
+  if (!isAdmin()) { alert(t("err_perm")); return; }
+  showScreen("logs");
+  await loadLogs();
+}
+
+async function loadLogs() {
+  var r = await sb.from("operation_logs").select("*").order("created_at", { ascending: false }).limit(200);
+  renderLogs(r.data || []);
+}
+
+function renderLogs(logs) {
+  var countEl = document.getElementById("logs-count");
+  if (countEl) countEl.textContent = logs.length + " 件（最新200件）";
+  if (!logs.length) {
+    document.getElementById("logs-list").innerHTML = "<div class='empty'>" + t("log_no_data") + "</div>";
+    return;
+  }
+  var opLabels = { insert: t("log_insert"), update: t("log_update"), delete: t("log_delete") };
+  var opClasses = { insert: "log-insert", update: "log-update", delete: "log-delete" };
+  var html = "<table class='log-table'><tr><th>" + t("log_date") + "</th><th>" + t("log_operation") + "</th><th>" + t("log_user") + "</th><th>" + t("log_target") + "</th><th>詳細</th></tr>";
+  logs.forEach(function(log) {
+    var dt  = log.created_at ? new Date(log.created_at).toLocaleString("ja-JP") : "-";
+    var op  = opLabels[log.operation] || log.operation;
+    var cls = opClasses[log.operation] || "";
+    var after = log.after_data ? JSON.stringify(log.after_data).slice(0,80) + "..." : "";
+    html += "<tr>";
+    html += "<td style='white-space:nowrap'>" + esc(dt) + "</td>";
+    html += "<td><span class='" + cls + "'>" + esc(op) + "</span></td>";
+    html += "<td>" + esc(log.user_name || log.user_email || "-") + "</td>";
+    html += "<td><div class='mgmt-pn'>" + esc(log.target_desc || "-") + "</div><div class='mgmt-sub'>" + esc(log.table_name) + "</div></td>";
+    html += "<td><div class='log-json'>" + esc(after) + "</div></td>";
+    html += "</tr>";
+  });
+  html += "</table>";
+  document.getElementById("logs-list").innerHTML = html;
 }
 
 function enterChangePw() {
@@ -2236,9 +2878,35 @@ document.getElementById("btn-back-to-login").addEventListener("click", function(
 document.getElementById("btn-submit-reg").addEventListener("click", doRegister);
 document.getElementById("reg-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doRegister(); });
 document.getElementById("login-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
-["btn-logout-menu","btn-logout-search","btn-logout-users","btn-logout-change-pw"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
+["btn-logout-menu","btn-logout-search","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-kikan-mgmt","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
 document.getElementById("btn-back-search").addEventListener("click", function(){ closePanel(); showScreen("menu"); });
 document.getElementById("btn-back-users").addEventListener("click",  function(){ showScreen("menu"); });
+document.getElementById("btn-back-parts-mgmt").addEventListener("click", function(){ showScreen("menu"); });
+document.getElementById("btn-back-kikan-mgmt").addEventListener("click", function(){ showScreen("menu"); });
+document.getElementById("btn-back-logs").addEventListener("click",       function(){ showScreen("menu"); });
+document.getElementById("btn-add-part").addEventListener("click", function(){ openPartForm("add"); });
+document.getElementById("btn-part-form-cancel").addEventListener("click", function(){ document.getElementById("part-form-overlay").classList.remove("show"); });
+document.getElementById("btn-part-form-save").addEventListener("click", savePartForm);
+document.getElementById("btn-new-kikan-group").addEventListener("click", function(){ openKikanForm(null); });
+document.getElementById("btn-kikan-form-cancel").addEventListener("click", function(){ document.getElementById("kikan-form-overlay").classList.remove("show"); });
+document.getElementById("btn-kikan-form-save").addEventListener("click", saveKikanForm);
+document.getElementById("parts-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadPartsMgmt(); });
+document.getElementById("kikan-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadKikanMgmt(); });
+
+// 商品コード入力時に品番情報を自動表示
+document.getElementById("kf-shohin-cd").addEventListener("change", async function() {
+  var scd = parseInt(this.value.trim(), 10);
+  var infoEl = document.getElementById("kf-part-info");
+  if (isNaN(scd)) { infoEl.textContent = ""; return; }
+  var r = await sb.from("parts").select("genuine_part_number, manufacturer_part_number").eq("shohin_cd", scd).single();
+  if (r.data) {
+    infoEl.textContent = r.data.genuine_part_number + " / " + (r.data.manufacturer_part_number || "-");
+    infoEl.style.color = "#1a8c3e";
+  } else {
+    infoEl.textContent = "商品マスタに存在しません";
+    infoEl.style.color = "#e24b4a";
+  }
+});
 document.getElementById("search-btn").addEventListener("click", function(){ render(); });
 document.getElementById("q").addEventListener("keydown", function(e){ if(e.key==="Enter") render(); });
 document.getElementById("clear-btn").addEventListener("click", function(){ document.getElementById("q").value=""; render(); });
