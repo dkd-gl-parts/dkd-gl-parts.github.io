@@ -1426,6 +1426,32 @@ function canSeeSalesPrice() {
   if (g === "public") return ["admin","editor","price_viewer"].indexOf(r) >= 0;
   return false;
 }
+function isDaikoGroup() {
+  return userProfile && userProfile.group_name === "daiko";
+}
+function isSharedCatalogGroup() {
+  if (!userProfile) return false;
+  return userProfile.group_name === "gltek" || userProfile.group_name === "public";
+}
+function isVisibleProduct(p) {
+  if (!p) return false;
+  if (isDaikoGroup()) return true;
+  if (isSharedCatalogGroup()) return !!(slPartsMap[p.id] && slPartsMap[p.id].length > 0);
+  return false;
+}
+function filterVisibleProducts(products) {
+  return (products || []).filter(isVisibleProduct);
+}
+function dedupeParts(parts) {
+  var seen = {};
+  var out = [];
+  (parts || []).forEach(function(p) {
+    if (!p || seen[p.id]) return;
+    seen[p.id] = true;
+    out.push(p);
+  });
+  return out;
+}
 function roleLabel(role) { return t("role_" + role) || role; }
 function roleClass(role) {
   return {
@@ -1775,6 +1801,27 @@ async function enterPartsMgmt() {
 
 async function loadPartsMgmt() {
   var q = document.getElementById("parts-mgmt-search").value.trim();
+
+  if (!isDaikoGroup()) {
+    var rm = await sb.from("part_sl_mapping").select("parts(*)");
+    var mappedParts = dedupeParts((rm.data || []).map(function(m) { return m.parts; })).sort(function(a,b) {
+      return (a.id || 0) - (b.id || 0);
+    });
+    if (q) {
+      var nq = norm(q);
+      mappedParts = mappedParts.filter(function(p) {
+        return [
+          p.genuine_part_number,
+          p.manufacturer_part_number,
+          p.manufacturer
+        ].some(function(v) { return norm(v).indexOf(nq) >= 0; });
+      });
+    }
+    partsMgmtData = mappedParts.slice(0, 200);
+    renderPartsMgmt();
+    return;
+  }
+
   var query = sb.from("parts").select("*").order("id").limit(200);
   if (q) {
     query = query.or(
@@ -1926,6 +1973,15 @@ async function loadKikanMgmt() {
   // グループ一覧を取得（最大100グループ）
   var r1 = await sb.from("kikan_groups").select("kikan_group_id").order("kikan_group_id").limit(100);
   var groups = r1.data || [];
+  var visibleShohinCdSet = null;
+
+  if (!isDaikoGroup()) {
+    var rv = await sb.from("part_sl_mapping").select("parts(shohin_cd)");
+    visibleShohinCdSet = {};
+    (rv.data || []).forEach(function(m) {
+      if (m.parts && m.parts.shohin_cd != null) visibleShohinCdSet[String(m.parts.shohin_cd)] = true;
+    });
+  }
 
   if (q) {
     // 商品コードか品番で検索
@@ -1940,6 +1996,18 @@ async function loadKikanMgmt() {
     }
   }
 
+  if (visibleShohinCdSet) {
+    var visibleShohinCds = Object.keys(visibleShohinCdSet).map(function(v) { return parseInt(v, 10); });
+    if (visibleShohinCds.length === 0) {
+      groups = [];
+    } else {
+      var rg = await sb.from("kikan_group_members").select("kikan_group_id").in("shohin_cd", visibleShohinCds);
+      var visibleGroupSet = {};
+      (rg.data || []).forEach(function(m) { visibleGroupSet[String(m.kikan_group_id)] = true; });
+      groups = groups.filter(function(g) { return visibleGroupSet[String(g.kikan_group_id)]; });
+    }
+  }
+
   kikanMgmtData = groups;
   var countEl = document.getElementById("kikan-mgmt-count");
   if (countEl) countEl.textContent = groups.length + " グループ";
@@ -1950,6 +2018,9 @@ async function loadKikanMgmt() {
     var gid   = groups[i].kikan_group_id;
     var rm    = await sb.from("kikan_group_members").select("shohin_cd, parts(genuine_part_number, manufacturer_part_number, manufacturer)").eq("kikan_group_id", gid);
     var members = rm.data || [];
+    if (visibleShohinCdSet) {
+      members = members.filter(function(m) { return visibleShohinCdSet[String(m.shohin_cd)]; });
+    }
     html += "<div style='background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:12px 14px;margin-bottom:10px'>";
     html += "<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:8px'>";
     html += "<div style='font-size:13px;font-weight:600;color:#1a1a2e'>グループID: " + gid + " <span style='font-size:11px;color:#aaa;font-weight:400'>(" + members.length + "件)</span></div>";
@@ -2091,7 +2162,6 @@ async function initSearch() {
     if (rows.length < page) break;
     from += page;
   }
-  allProducts = all;
 
   // sl_parts の画像カウントとサムネイルを取得
   // part_sl_mapping 経由で part_id に対応する画像を集計
@@ -2119,6 +2189,10 @@ async function initSearch() {
       slPartsMap[m.part_id].push(m.sl_parts.supplier_pn);
     }
   });
+
+  // グループ別表示制限:
+  // Daiko は全商品、GLTEK/Public は SL品番に紐づく共有カタログ商品のみ表示する。
+  allProducts = filterVisibleProducts(all);
 
   // カテゴリチップを動的に生成する
   renderCategoryChips();
@@ -2416,7 +2490,7 @@ async function loadKikan(shohinCd) {
     .in("shohin_cd", shohinCds)
     .order("shohin_cd");
 
-  var parts_list = r3.data || [];
+  var parts_list = filterVisibleProducts(r3.data || []);
 
   // テーブル表示
   var html = "<table class='kikan-table'>";
@@ -2594,7 +2668,7 @@ function renderUsers(users) {
       html += "<option value='"+r[0]+"'"+(u.role===r[0]?" selected":"")+">"+t(r[1])+"</option>";
     });
     html += "</select>";
-    html += "<select class='group-select' data-uid='"+esc(u.id)+"'>";
+    html += "<select class='group-select' data-uid='"+esc(u.id)+"'" + (isDaikoGroup() ? "" : " disabled") + ">";
     [["daiko","Daiko"],["gltek","GLTEK"],["public","Public"]].forEach(function(g){
       html += "<option value='"+g[0]+"'"+((u.group_name||"public")===g[0]?" selected":"")+">"+g[1]+"</option>";
     });
@@ -2614,7 +2688,7 @@ function renderUsers(users) {
       var card  = list.querySelector(".user-card[data-uid='"+uid+"']");
       var name  = card.querySelector(".user-name-input").value.trim();
       var role  = card.querySelector(".role-select").value;
-      var group = card.querySelector(".group-select").value;
+      var group = isDaikoGroup() ? card.querySelector(".group-select").value : userProfile.group_name;
       var msg   = document.getElementById("save-msg-"+uid);
       var r = await sb.from("profiles").update({name:name,role:role,group_name:group,updated_at:new Date().toISOString()}).eq("id",uid);
       if (r.error) { msg.className="save-msg save-err"; msg.textContent=t("msg_save_err"); }
