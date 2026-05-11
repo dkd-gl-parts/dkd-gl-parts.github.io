@@ -1843,7 +1843,7 @@ function renderPartsMgmt() {
   var html = "<table class='mgmt-table'><tr><th>商品コード</th><th>純正品番</th><th>メーカー品番</th><th>メーカー</th><th>カテゴリ</th><th></th></tr>";
   partsMgmtData.forEach(function(p) {
     html += "<tr>";
-    html += "<td><div class='mgmt-pn'>" + esc(String(p.shohin_cd || "-")) + "</div></td>";
+    html += "<td><div class='mgmt-pn'>" + esc(String(p.dkd_shohin_id || p.shohin_cd || "-")) + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(p.genuine_part_number || "-") + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(p.manufacturer_part_number || "-") + "</div></td>";
     html += "<td><div class='mgmt-sub'>" + esc(p.manufacturer || "-") + "</div></td>";
@@ -1889,7 +1889,7 @@ function openPartForm(mode, partId) {
     if (!p) return;
     title.textContent = "商品修正";
     document.getElementById("part-form-id").value        = p.id;
-    document.getElementById("pf-shohin-cd").value        = p.shohin_cd || "";
+    document.getElementById("pf-shohin-cd").value        = p.dkd_shohin_id || p.shohin_cd || "";
     document.getElementById("pf-genuine-pn").value       = p.genuine_part_number || "";
     document.getElementById("pf-mfr-pn").value           = p.manufacturer_part_number || "";
     document.getElementById("pf-mfr").value              = p.manufacturer || "";
@@ -1907,6 +1907,8 @@ async function savePartForm() {
   errEl.textContent = "";
   var gpn     = document.getElementById("pf-genuine-pn").value.trim();
   if (!gpn) { errEl.textContent = "純正品番は必須です"; return; }
+  var scd = document.getElementById("pf-shohin-cd").value.trim();
+  if (!scd) { errEl.textContent = "商品コードは必須です"; return; }
 
   var data = {
     genuine_part_number:      gpn,
@@ -1919,8 +1921,7 @@ async function savePartForm() {
     category:                 document.getElementById("pf-category").value,
     updated_at:               new Date().toISOString()
   };
-  var scd = document.getElementById("pf-shohin-cd").value.trim();
-  if (scd) data.shohin_cd = parseInt(scd, 10);
+  data.dkd_shohin_id = parseInt(scd, 10);
 
   var partId = document.getElementById("part-form-id").value;
   var r;
@@ -1944,8 +1945,8 @@ async function deletePart(partId) {
   var p = partsMgmtData.find(function(x){ return x.id === partId; });
 
   // 互換グループから削除
-  if (p && p.shohin_cd) {
-    await sb.from("kikan_group_members").delete().eq("shohin_cd", p.shohin_cd);
+  if (p && (p.dkd_shohin_id || p.shohin_cd)) {
+    await sb.from("kikan_group_members").delete().eq("dkd_gokan_id", p.dkd_shohin_id || p.shohin_cd);
   }
 
   var r = await sb.from("parts").delete().eq("id", partId);
@@ -1976,10 +1977,10 @@ async function loadKikanMgmt() {
   var visibleShohinCdSet = null;
 
   if (!isDaikoGroup()) {
-    var rv = await sb.from("part_sl_mapping").select("parts(shohin_cd)");
+    var rv = await sb.from("part_sl_mapping").select("parts(dkd_shohin_id)");
     visibleShohinCdSet = {};
     (rv.data || []).forEach(function(m) {
-      if (m.parts && m.parts.shohin_cd != null) visibleShohinCdSet[String(m.parts.shohin_cd)] = true;
+      if (m.parts && m.parts.dkd_shohin_id != null) visibleShohinCdSet[String(m.parts.dkd_shohin_id)] = true;
     });
   }
 
@@ -1987,7 +1988,7 @@ async function loadKikanMgmt() {
     // 商品コードか品番で検索
     var qNum = parseInt(q, 10);
     if (!isNaN(qNum)) {
-      var rm = await sb.from("kikan_group_members").select("kikan_group_id").eq("shohin_cd", qNum);
+      var rm = await sb.from("kikan_group_members").select("kikan_group_id").eq("dkd_gokan_id", qNum);
       if (rm.data && rm.data.length > 0) {
         groups = rm.data.map(function(m){ return { kikan_group_id: m.kikan_group_id }; });
       } else {
@@ -2001,7 +2002,7 @@ async function loadKikanMgmt() {
     if (visibleShohinCds.length === 0) {
       groups = [];
     } else {
-      var rg = await sb.from("kikan_group_members").select("kikan_group_id").in("shohin_cd", visibleShohinCds);
+      var rg = await sb.from("kikan_group_members").select("kikan_group_id").in("dkd_gokan_id", visibleShohinCds);
       var visibleGroupSet = {};
       (rg.data || []).forEach(function(m) { visibleGroupSet[String(m.kikan_group_id)] = true; });
       groups = groups.filter(function(g) { return visibleGroupSet[String(g.kikan_group_id)]; });
@@ -2016,11 +2017,17 @@ async function loadKikanMgmt() {
   var html = "";
   for (var i = 0; i < groups.length; i++) {
     var gid   = groups[i].kikan_group_id;
-    var rm    = await sb.from("kikan_group_members").select("shohin_cd, parts(genuine_part_number, manufacturer_part_number, manufacturer)").eq("kikan_group_id", gid);
+    var rm    = await sb.from("kikan_group_members").select("dkd_gokan_id, shohin_cd").eq("kikan_group_id", gid);
     var members = rm.data || [];
     if (visibleShohinCdSet) {
-      members = members.filter(function(m) { return visibleShohinCdSet[String(m.shohin_cd)]; });
+      members = members.filter(function(m) { return visibleShohinCdSet[String(m.dkd_gokan_id)]; });
     }
+    var memberIds = members.map(function(m) { return m.dkd_gokan_id; }).filter(function(v) { return v != null; });
+    var rp = memberIds.length > 0
+      ? await sb.from("parts").select("dkd_shohin_id, genuine_part_number, manufacturer_part_number, manufacturer").in("dkd_shohin_id", memberIds)
+      : { data: [] };
+    var partByDkdId = {};
+    (rp.data || []).forEach(function(p) { partByDkdId[String(p.dkd_shohin_id)] = p; });
     html += "<div style='background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:12px 14px;margin-bottom:10px'>";
     html += "<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:8px'>";
     html += "<div style='font-size:13px;font-weight:600;color:#1a1a2e'>グループID: " + gid + " <span style='font-size:11px;color:#aaa;font-weight:400'>(" + members.length + "件)</span></div>";
@@ -2030,13 +2037,13 @@ async function loadKikanMgmt() {
     html += "<table style='width:100%;border-collapse:collapse;font-size:12px'>";
     html += "<tr style='background:#f5f7fa'><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>大光品番</th><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>純正品番</th><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>メーカー品番</th><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>メーカー</th><th></th></tr>";
     members.forEach(function(m) {
-      var p = m.parts || {};
+      var p = partByDkdId[String(m.dkd_gokan_id)] || {};
       html += "<tr style='border-bottom:1px solid #f0f0f0'>";
-      html += "<td style='padding:5px 4px;font-family:monospace;color:#1a6fd4'>" + esc(String(m.shohin_cd || "-")) + "</td>";
+      html += "<td style='padding:5px 4px;font-family:monospace;color:#1a6fd4'>" + esc(String(m.dkd_gokan_id || "-")) + "</td>";
       html += "<td style='padding:5px 4px;font-family:monospace'>" + esc(p.genuine_part_number || "-") + "</td>";
       html += "<td style='padding:5px 4px;color:#555;font-family:monospace'>" + esc(p.manufacturer_part_number || "-") + "</td>";
       html += "<td style='padding:5px 4px;color:#aaa'>" + esc(p.manufacturer || "-") + "</td>";
-      html += "<td style='padding:5px 4px'><button class='btn-sm-del' onclick='removeKikanMember(" + gid + "," + m.shohin_cd + ")'>除外</button></td>";
+      html += "<td style='padding:5px 4px'><button class='btn-sm-del' onclick='removeKikanMember(" + gid + "," + m.dkd_gokan_id + ")'>除外</button></td>";
       html += "</tr>";
     });
     html += "</table></div>";
@@ -2057,36 +2064,36 @@ function openKikanForm(groupId) {
 async function saveKikanForm() {
   var errEl   = document.getElementById("kikan-form-error");
   errEl.textContent = "";
-  var scd     = parseInt(document.getElementById("kf-shohin-cd").value.trim(), 10);
-  if (isNaN(scd)) { errEl.textContent = "商品コードを入力してください"; return; }
+  var dkdId     = parseInt(document.getElementById("kf-shohin-cd").value.trim(), 10);
+  if (isNaN(dkdId)) { errEl.textContent = "商品コードを入力してください"; return; }
 
   // 商品コードが parts に存在するか確認
-  var rp = await sb.from("parts").select("id, genuine_part_number").eq("shohin_cd", scd).single();
-  if (rp.error || !rp.data) { errEl.textContent = "商品コード " + scd + " が商品マスタに存在しません"; return; }
+  var rp = await sb.from("parts").select("id, dkd_shohin_id, shohin_cd, genuine_part_number").eq("dkd_shohin_id", dkdId).single();
+  if (rp.error || !rp.data) { errEl.textContent = "商品コード " + dkdId + " が商品マスタに存在しません"; return; }
 
   var groupId = kikanFormGroupId;
 
   // 新グループ作成
   if (!groupId) {
-    var rg = await sb.from("kikan_groups").insert({ kikan_group_id: scd }).select().single();
+    var rg = await sb.from("kikan_groups").insert({ kikan_group_id: dkdId }).select().single();
     if (rg.error) { errEl.textContent = "グループ作成失敗: " + rg.error.message; return; }
-    groupId = scd;
+    groupId = dkdId;
   }
 
   // メンバー追加
-  var rm = await sb.from("kikan_group_members").insert({ kikan_group_id: groupId, shohin_cd: scd });
+  var rm = await sb.from("kikan_group_members").insert({ kikan_group_id: groupId, shohin_cd: rp.data.shohin_cd || dkdId, dkd_gokan_id: dkdId });
   if (rm.error) { errEl.textContent = "追加失敗: " + rm.error.message; return; }
 
-  await writeLog("insert", "kikan_group_members", groupId, "グループ" + groupId + " + shohin_cd:" + scd, null, { kikan_group_id: groupId, shohin_cd: scd });
+  await writeLog("insert", "kikan_group_members", groupId, "グループ" + groupId + " + dkd_gokan_id:" + dkdId, null, { kikan_group_id: groupId, dkd_gokan_id: dkdId });
   document.getElementById("kikan-form-overlay").classList.remove("show");
   await loadKikanMgmt();
 }
 
-async function removeKikanMember(groupId, shohinCd) {
+async function removeKikanMember(groupId, dkdGokanId) {
   if (!confirm(t("del_kikan_confirm"))) return;
-  var r = await sb.from("kikan_group_members").delete().eq("kikan_group_id", groupId).eq("shohin_cd", shohinCd);
+  var r = await sb.from("kikan_group_members").delete().eq("kikan_group_id", groupId).eq("dkd_gokan_id", dkdGokanId);
   if (r.error) { alert(t("msg_kikan_err")); return; }
-  await writeLog("delete", "kikan_group_members", groupId, "グループ" + groupId + " - shohin_cd:" + shohinCd, { kikan_group_id: groupId, shohin_cd: shohinCd }, null);
+  await writeLog("delete", "kikan_group_members", groupId, "グループ" + groupId + " - dkd_gokan_id:" + dkdGokanId, { kikan_group_id: groupId, dkd_gokan_id: dkdGokanId }, null);
   await loadKikanMgmt();
 }
 
@@ -2397,7 +2404,7 @@ async function loadSlParts(partId) {
     wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("no_prices") + "</div>";
     loadImages(null);
     // SL品番がなくても互換品は表示する
-    var scd0 = currentProduct ? currentProduct.shohin_cd : null;
+    var scd0 = currentProduct ? (currentProduct.dkd_shohin_id || currentProduct.shohin_cd) : null;
     if (scd0 !== null && scd0 !== undefined && scd0 !== '') {
       loadKikan(scd0);
     } else {
@@ -2437,7 +2444,7 @@ async function loadSlParts(partId) {
   loadImages(currentSlPartIds);
 
   // 互換品を読み込む
-  var scd = currentProduct.shohin_cd;
+  var scd = currentProduct.dkd_shohin_id || currentProduct.shohin_cd;
   if (scd !== null && scd !== undefined && scd !== '') {
     loadKikan(scd);
   } else {
@@ -2446,24 +2453,20 @@ async function loadSlParts(partId) {
   }
 }
 
-async function loadKikan(shohinCd) {
+async function loadKikan(dkdShohinId) {
   var wrap = document.getElementById("kikan-wrap");
   if (!wrap) return;
 
-  // shohin_cd → kikan_group_id を検索
-  // shohin_cd を数値に変換して検索
-  var shohinCdNum = parseInt(shohinCd, 10);
-  console.log("loadKikan呼び出し shohinCd=", shohinCd, "shohinCdNum=", shohinCdNum);
-  if (isNaN(shohinCdNum)) {
+  // dkd_shohin_id → kikan_group_id を検索
+  var dkdShohinIdNum = parseInt(dkdShohinId, 10);
+  if (isNaN(dkdShohinIdNum)) {
     wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
     return;
   }
   var r1 = await sb.from("kikan_group_members")
     .select("kikan_group_id")
-    .eq("shohin_cd", shohinCdNum)
+    .eq("dkd_gokan_id", dkdShohinIdNum)
     .limit(1);
-
-  console.log("r1.data=", r1.data, "r1.error=", r1.error);
 
   if (r1.error || !r1.data || r1.data.length === 0) {
     wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
@@ -2474,7 +2477,7 @@ async function loadKikan(shohinCd) {
 
   // 同じグループの全メンバーを取得
   var r2 = await sb.from("kikan_group_members")
-    .select("shohin_cd")
+    .select("dkd_gokan_id")
     .eq("kikan_group_id", groupId);
 
   var members = r2.data || [];
@@ -2483,12 +2486,12 @@ async function loadKikan(shohinCd) {
     return;
   }
 
-  // shohin_cd リストで parts テーブルを検索
-  var shohinCds = members.map(function(m) { return m.shohin_cd; });
+  // dkd_gokan_id リストで parts テーブルを検索
+  var dkdGokanIds = members.map(function(m) { return m.dkd_gokan_id; });
   var r3 = await sb.from("parts")
-    .select("id, genuine_part_number, manufacturer_part_number, manufacturer, vehicle_manufacturer, category, shohin_cd")
-    .in("shohin_cd", shohinCds)
-    .order("shohin_cd");
+    .select("id, dkd_shohin_id, genuine_part_number, manufacturer_part_number, manufacturer, vehicle_manufacturer, category, shohin_cd")
+    .in("dkd_shohin_id", dkdGokanIds)
+    .order("dkd_shohin_id");
 
   var parts_list = r3.data || [];
 
@@ -2496,7 +2499,7 @@ async function loadKikan(shohinCd) {
   // 同一メーカー品番の部品を互換候補として補完する。
   if (currentProduct && currentProduct.manufacturer_part_number) {
     var r4 = await sb.from("parts")
-      .select("id, genuine_part_number, manufacturer_part_number, manufacturer, vehicle_manufacturer, category, shohin_cd")
+      .select("id, dkd_shohin_id, genuine_part_number, manufacturer_part_number, manufacturer, vehicle_manufacturer, category, shohin_cd")
       .eq("manufacturer_part_number", currentProduct.manufacturer_part_number)
       .order("genuine_part_number");
     parts_list = dedupeParts(parts_list.concat(r4.data || []));
@@ -2508,7 +2511,7 @@ async function loadKikan(shohinCd) {
   var html = "<table class='kikan-table'>";
   html += "<tr><th>純正品番</th><th>メーカー品番</th><th>車メーカー</th></tr>";
   parts_list.forEach(function(p) {
-    var isCurrent = String(p.shohin_cd) === String(shohinCd);
+    var isCurrent = String(p.dkd_shohin_id) === String(dkdShohinId);
     if (!isCurrent && currentProduct && p.id === currentProduct.id) isCurrent = true;
     var rowCls = isCurrent ? "kikan-current" : "kikan-other";
     html += "<tr class='" + rowCls + "' data-part-id='" + p.id + "'>";
@@ -2989,7 +2992,7 @@ document.getElementById("kf-shohin-cd").addEventListener("change", async functio
   var scd = parseInt(this.value.trim(), 10);
   var infoEl = document.getElementById("kf-part-info");
   if (isNaN(scd)) { infoEl.textContent = ""; return; }
-  var r = await sb.from("parts").select("genuine_part_number, manufacturer_part_number").eq("shohin_cd", scd).single();
+  var r = await sb.from("parts").select("genuine_part_number, manufacturer_part_number").eq("dkd_shohin_id", scd).single();
   if (r.data) {
     infoEl.textContent = r.data.genuine_part_number + " / " + (r.data.manufacturer_part_number || "-");
     infoEl.style.color = "#1a8c3e";
