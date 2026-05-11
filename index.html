@@ -424,7 +424,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.0.7</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.0.8</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -453,7 +453,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.0.7</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.0.8</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1391,8 +1391,9 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.0.7";
+var APP_VERSION       = "v1.0.8";
 var kikanCandidateParts = [];
+var SEARCH_RENDER_LIMIT = 200;
 
 // =============================================
 // ロール判定
@@ -2372,10 +2373,15 @@ function render() {
     return;
   }
   var items = getFiltered();
-  document.getElementById("count-bar").textContent = tf("count_results", { n: items.length, m: allProducts.length });
   if (items.length === 0) { list.innerHTML = "<div class='empty'>" + t("no_results") + "</div>"; return; }
+  var visibleItems = items.slice(0, SEARCH_RENDER_LIMIT);
+  var countText = tf("count_results", { n: items.length, m: allProducts.length });
+  if (items.length > SEARCH_RENDER_LIMIT) {
+    countText += " - " + SEARCH_RENDER_LIMIT + " 件まで表示。品番・キーワードで絞り込んでください";
+  }
+  document.getElementById("count-bar").textContent = countText;
   var html = "";
-  items.forEach(function(p) {
+  visibleItems.forEach(function(p) {
     var cnt   = imageCountMap[p.id]||0;
     var thumb = imageThumbnailMap[p.id]||"";
     var slNums = slPartsMap[p.id] || [];
