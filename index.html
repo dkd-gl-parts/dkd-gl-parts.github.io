@@ -113,6 +113,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .form-footer    { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; padding-top: 16px; border-top: 1px solid #eee; }
 .btn-cancel     { background: #f0f0f0; color: #555; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; cursor: pointer; }
 .btn-cancel:hover { background: #e0e0e0; }
+.candidate-list { border: 1px solid #e0e0e0; border-radius: 8px; margin-top: 8px; overflow: hidden; background: #fff; display: none; }
+.candidate-item { width: 100%; border: none; background: #fff; padding: 8px 10px; text-align: left; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 12px; }
+.candidate-item:last-child { border-bottom: none; }
+.candidate-item:hover { background: #f5f8ff; }
+.candidate-main { font-weight: 600; color: #1a1a2e; }
+.candidate-sub { color: #777; margin-top: 2px; font-family: monospace; }
 
 /* ログ画面 */
 .log-table      { width: 100%; border-collapse: collapse; font-size: 12px; }
@@ -418,7 +424,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.0.5</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.0.6</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -447,7 +453,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.0.5</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.0.6</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -690,8 +696,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <h3 id="kikan-form-title">互換グループに追加</h3>
     <input type="hidden" id="kf-group-id">
     <div class="form-row">
-      <label class="form-label">商品コード（追加する品番）</label>
-      <input class="form-input" id="kf-shohin-cd" type="number" placeholder="例: 12345">
+      <label class="form-label">追加する品番</label>
+      <input type="hidden" id="kf-dkd-shohin-id">
+      <input class="form-input" id="kf-part-search" type="search" placeholder="商品ID・純正品番・メーカー品番で検索">
+      <div class="candidate-list" id="kf-candidates"></div>
       <div style="font-size:11px;color:#aaa;margin-top:4px" id="kf-part-info"></div>
     </div>
     <div class="form-footer">
@@ -1383,7 +1391,8 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.0.5";
+var APP_VERSION       = "v1.0.6";
+var kikanCandidateParts = [];
 
 // =============================================
 // ロール判定
@@ -2044,7 +2053,7 @@ async function loadKikanMgmt() {
     html += "<button class='btn-sm-edit' data-kgid='" + gid + "' onclick='openKikanForm(" + gid + ")'>品番の追加・修正</button>";
     html += "</div></div>";
     html += "<table style='width:100%;border-collapse:collapse;font-size:12px'>";
-    html += "<tr style='background:#f5f7fa'><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>大光品番</th><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>純正品番</th><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>メーカー品番</th><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>メーカー</th><th></th></tr>";
+    html += "<tr style='background:#f5f7fa'><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>商品ID</th><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>純正品番</th><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>メーカー品番</th><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>メーカー</th><th></th></tr>";
     members.forEach(function(m) {
       var p = partByDkdId[String(m.dkd_gokan_id)] || {};
       html += "<tr style='border-bottom:1px solid #f0f0f0'>";
@@ -2063,18 +2072,78 @@ async function loadKikanMgmt() {
 function openKikanForm(groupId) {
   kikanFormGroupId = groupId;
   document.getElementById("kf-group-id").value   = groupId || "";
-  document.getElementById("kf-shohin-cd").value  = "";
+  document.getElementById("kf-dkd-shohin-id").value  = "";
+  document.getElementById("kf-part-search").value  = "";
+  document.getElementById("kf-candidates").style.display = "none";
+  document.getElementById("kf-candidates").innerHTML = "";
   document.getElementById("kf-part-info").textContent = "";
   document.getElementById("kikan-form-error").textContent = "";
   document.getElementById("kikan-form-title").textContent = groupId ? "グループ " + groupId + " にメンバー追加" : "新しいグループを作成";
   document.getElementById("kikan-form-overlay").classList.add("show");
 }
 
+async function searchKikanPartCandidates() {
+  var q = document.getElementById("kf-part-search").value.trim();
+  var listEl = document.getElementById("kf-candidates");
+  var infoEl = document.getElementById("kf-part-info");
+  document.getElementById("kf-dkd-shohin-id").value = "";
+  infoEl.textContent = "";
+  kikanCandidateParts = [];
+
+  if (!q) {
+    listEl.style.display = "none";
+    listEl.innerHTML = "";
+    return;
+  }
+
+  var query = sb.from("parts")
+    .select("id, dkd_shohin_id, shohin_cd, genuine_part_number, manufacturer_part_number, manufacturer")
+    .order("dkd_shohin_id")
+    .limit(10);
+  var qNum = parseInt(q, 10);
+  if (!isNaN(qNum) && String(qNum) === q) {
+    query = query.or("dkd_shohin_id.eq." + qNum + ",shohin_cd.eq." + qNum + ",genuine_part_number.ilike.%" + q + "%,manufacturer_part_number.ilike.%" + q + "%");
+  } else {
+    query = query.or("genuine_part_number.ilike.%" + q + "%,manufacturer_part_number.ilike.%" + q + "%");
+  }
+
+  var r = await query;
+  kikanCandidateParts = r.data || [];
+  if (kikanCandidateParts.length === 0) {
+    listEl.style.display = "none";
+    listEl.innerHTML = "";
+    infoEl.textContent = "商品マスタに存在しません";
+    infoEl.style.color = "#e24b4a";
+    return;
+  }
+
+  var html = "";
+  kikanCandidateParts.forEach(function(p, idx) {
+    html += "<button type='button' class='candidate-item' data-candidate-index='" + idx + "'>";
+    html += "<div class='candidate-main'>ID " + esc(String(p.dkd_shohin_id || "-")) + " / " + esc(p.genuine_part_number || "-") + "</div>";
+    html += "<div class='candidate-sub'>" + esc(p.manufacturer_part_number || "-") + " / " + esc(p.manufacturer || "-") + "</div>";
+    html += "</button>";
+  });
+  listEl.innerHTML = html;
+  listEl.style.display = "block";
+}
+
+function selectKikanPartCandidate(index) {
+  var p = kikanCandidateParts[index];
+  if (!p) return;
+  document.getElementById("kf-dkd-shohin-id").value = p.dkd_shohin_id || "";
+  document.getElementById("kf-part-search").value = p.genuine_part_number || p.manufacturer_part_number || p.dkd_shohin_id || "";
+  var infoEl = document.getElementById("kf-part-info");
+  infoEl.textContent = "ID " + (p.dkd_shohin_id || "-") + " / " + (p.genuine_part_number || "-") + " / " + (p.manufacturer_part_number || "-");
+  infoEl.style.color = "#1a8c3e";
+  document.getElementById("kf-candidates").style.display = "none";
+}
+
 async function saveKikanForm() {
   var errEl   = document.getElementById("kikan-form-error");
   errEl.textContent = "";
-  var dkdId     = parseInt(document.getElementById("kf-shohin-cd").value.trim(), 10);
-  if (isNaN(dkdId)) { errEl.textContent = "商品コードを入力してください"; return; }
+  var dkdId     = parseInt(document.getElementById("kf-dkd-shohin-id").value.trim(), 10);
+  if (isNaN(dkdId)) { errEl.textContent = "候補から追加する品番を選択してください"; return; }
 
   // 商品コードが parts に存在するか確認
   var rp = await sb.from("parts").select("id, dkd_shohin_id, shohin_cd, genuine_part_number").eq("dkd_shohin_id", dkdId).single();
@@ -3007,19 +3076,20 @@ document.getElementById("btn-kikan-form-save").addEventListener("click", saveKik
 document.getElementById("parts-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadPartsMgmt(); });
 document.getElementById("kikan-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadKikanMgmt(); });
 
-// 商品コード入力時に品番情報を自動表示
-document.getElementById("kf-shohin-cd").addEventListener("change", async function() {
-  var scd = parseInt(this.value.trim(), 10);
-  var infoEl = document.getElementById("kf-part-info");
-  if (isNaN(scd)) { infoEl.textContent = ""; return; }
-  var r = await sb.from("parts").select("genuine_part_number, manufacturer_part_number").eq("dkd_shohin_id", scd).single();
-  if (r.data) {
-    infoEl.textContent = r.data.genuine_part_number + " / " + (r.data.manufacturer_part_number || "-");
-    infoEl.style.color = "#1a8c3e";
-  } else {
-    infoEl.textContent = "商品マスタに存在しません";
-    infoEl.style.color = "#e24b4a";
+document.getElementById("kf-part-search").addEventListener("input", function() {
+  clearTimeout(this._timer);
+  this._timer = setTimeout(searchKikanPartCandidates, 250);
+});
+document.getElementById("kf-part-search").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    if (kikanCandidateParts.length === 1) selectKikanPartCandidate(0);
+    else searchKikanPartCandidates();
   }
+});
+document.getElementById("kf-candidates").addEventListener("click", function(e) {
+  var item = e.target.closest("[data-candidate-index]");
+  if (item) selectKikanPartCandidate(parseInt(item.dataset.candidateIndex, 10));
 });
 document.getElementById("search-btn").addEventListener("click", function(){ render(); });
 document.getElementById("q").addEventListener("keydown", function(e){ if(e.key==="Enter") render(); });
