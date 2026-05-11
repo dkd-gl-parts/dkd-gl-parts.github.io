@@ -1709,8 +1709,9 @@ async function loadSlParts(partId) {
   loadImages(currentSlPartIds);
 
   // 互換品を読み込む
-  if (currentProduct.shohin_cd) {
-    loadKikan(currentProduct.shohin_cd);
+  var scd = currentProduct.shohin_cd;
+  if (scd !== null && scd !== undefined && scd !== '') {
+    loadKikan(scd);
   } else {
     var wrap = document.getElementById("kikan-wrap");
     if (wrap) wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
@@ -1722,17 +1723,23 @@ async function loadKikan(shohinCd) {
   if (!wrap) return;
 
   // shohin_cd → kikan_group_id を検索
+  // shohin_cd を数値に変換して検索
+  var shohinCdNum = parseInt(shohinCd, 10);
+  if (isNaN(shohinCdNum)) {
+    wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
+    return;
+  }
   var r1 = await sb.from("kikan_group_members")
     .select("kikan_group_id")
-    .eq("shohin_cd", shohinCd)
-    .single();
+    .eq("shohin_cd", shohinCdNum)
+    .limit(1);
 
-  if (r1.error || !r1.data) {
+  if (r1.error || !r1.data || r1.data.length === 0) {
     wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
     return;
   }
 
-  var groupId = r1.data.kikan_group_id;
+  var groupId = r1.data[0].kikan_group_id;
 
   // 同じグループの全メンバーを取得
   var r2 = await sb.from("kikan_group_members")
