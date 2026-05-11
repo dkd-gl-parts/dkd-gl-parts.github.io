@@ -418,7 +418,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.0.4</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.0.5</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -447,7 +447,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.0.4</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.0.5</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -744,8 +744,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         <div data-i18n="change_pw_success">パスワードを変更しました。</div>
       </div>
       <div id="change-pw-form">
+        <label class="login-label" data-i18n="lbl_current_password">現在のパスワード</label>
+        <input class="login-input" id="current-password" type="password" autocomplete="current-password">
         <label class="login-label" data-i18n="lbl_new_password">新しいパスワード</label>
-        <input class="login-input" id="new-password" type="password" placeholder="8文字以上">
+        <input class="login-input" id="new-password" type="password" autocomplete="new-password" placeholder="8文字以上">
         <div class="pass-strength-wrap">
           <div class="pass-strength-bar"><div class="pass-strength-fill" id="changepw-strength-fill"></div></div>
           <span class="pass-strength-label" id="changepw-strength-label"></span>
@@ -1381,7 +1383,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.0.4";
+var APP_VERSION       = "v1.0.5";
 
 // =============================================
 // ロール判定
@@ -2153,6 +2155,7 @@ function enterChangePw() {
   document.getElementById("change-pw-form").style.display    = "";
   document.getElementById("change-pw-success").style.display = "none";
   document.getElementById("change-pw-error").textContent     = "";
+  document.getElementById("current-password").value     = "";
   document.getElementById("new-password").value         = "";
   document.getElementById("new-password-confirm").value = "";
   checkPasswordStrength("", "changepw-strength-fill", "changepw-strength-label");
@@ -2812,17 +2815,19 @@ async function doForgotPassword() {
 // パスワード変更（ログイン中）
 // =============================================
 async function doChangePassword() {
+  var currentPw = document.getElementById("current-password").value;
   var newPw   = document.getElementById("new-password").value;
   var confirm = document.getElementById("new-password-confirm").value;
   var errorEl = document.getElementById("change-pw-error");
   var btnEl   = document.getElementById("btn-change-pw");
   errorEl.textContent = "";
+  if (!currentPw) { errorEl.textContent = t("lbl_current_password") + "を入力してください"; return; }
   if (newPw.length < 8)   { errorEl.textContent = t("err_pass_short");    return; }
   if (newPw !== confirm)   { errorEl.textContent = t("err_pass_mismatch"); return; }
   btnEl.disabled = true; btnEl.textContent = t("loading");
-  var r = await sb.auth.updateUser({ password: newPw });
+  var r = await sb.auth.updateUser({ password: newPw, currentPassword: currentPw });
   btnEl.disabled = false; btnEl.textContent = t("btn_change_password");
-  if (r.error) { errorEl.textContent = t("change_pw_error"); return; }
+  if (r.error) { errorEl.textContent = t("change_pw_error") + ": " + r.error.message; return; }
   document.getElementById("change-pw-form").style.display    = "none";
   document.getElementById("change-pw-success").style.display = "block";
   setTimeout(function() { showScreen("menu"); }, 2500);
@@ -2973,6 +2978,9 @@ document.getElementById("new-password").addEventListener("input", function() {
   checkPasswordStrength(this.value, "changepw-strength-fill", "changepw-strength-label");
 });
 document.getElementById("new-password-confirm").addEventListener("keydown", function(e) {
+  if(e.key==="Enter") doChangePassword();
+});
+document.getElementById("current-password").addEventListener("keydown", function(e) {
   if(e.key==="Enter") doChangePassword();
 });
 document.getElementById("btn-back-to-login").addEventListener("click", function() {
