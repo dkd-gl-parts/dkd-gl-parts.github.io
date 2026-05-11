@@ -1876,15 +1876,16 @@ async function savePartForm() {
   var partId = document.getElementById("part-form-id").value;
   var r;
   if (partFormMode === "add") {
-    r = await sb.from("parts").insert(data).select().single();
-    if (!r.error) await writeLog("insert", "parts", r.data.id, gpn, null, data);
+    r = await sb.from("parts").insert(data).select();
+    if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
+    var newId = (r.data && r.data[0]) ? r.data[0].id : null;
+    await writeLog("insert", "parts", newId, gpn, null, data);
   } else {
     var before = partsMgmtData.find(function(x){ return x.id === parseInt(partId,10); });
-    r = await sb.from("parts").update(data).eq("id", partId).select().single();
-    if (!r.error) await writeLog("update", "parts", parseInt(partId,10), gpn, before, data);
+    r = await sb.from("parts").update(data).eq("id", partId);
+    if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
+    await writeLog("update", "parts", parseInt(partId,10), gpn, before, data);
   }
-
-  if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
   document.getElementById("part-form-overlay").classList.remove("show");
   await loadPartsMgmt();
 }
@@ -1951,15 +1952,16 @@ async function loadKikanMgmt() {
     html += "<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:8px'>";
     html += "<div style='font-size:13px;font-weight:600;color:#1a1a2e'>グループID: " + gid + " <span style='font-size:11px;color:#aaa;font-weight:400'>(" + members.length + "件)</span></div>";
     html += "<div style='display:flex;gap:6px'>";
-    html += "<button class='btn-sm-edit' data-kgid='" + gid + "' onclick='openKikanForm(" + gid + ")'>メンバー追加</button>";
+    html += "<button class='btn-sm-edit' data-kgid='" + gid + "' onclick='openKikanForm(" + gid + ")'>品番の追加・修正</button>";
     html += "</div></div>";
     html += "<table style='width:100%;border-collapse:collapse;font-size:12px'>";
+    html += "<tr style='background:#f5f7fa'><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>大光品番</th><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>純正品番</th><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>メーカー品番</th><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>メーカー</th><th></th></tr>";
     members.forEach(function(m) {
       var p = m.parts || {};
       html += "<tr style='border-bottom:1px solid #f0f0f0'>";
-      html += "<td style='padding:5px 4px;font-family:monospace'>" + esc(String(m.shohin_cd || "-")) + "</td>";
+      html += "<td style='padding:5px 4px;font-family:monospace;color:#1a6fd4'>" + esc(String(m.shohin_cd || "-")) + "</td>";
       html += "<td style='padding:5px 4px;font-family:monospace'>" + esc(p.genuine_part_number || "-") + "</td>";
-      html += "<td style='padding:5px 4px;color:#888'>" + esc(p.manufacturer_part_number || "-") + "</td>";
+      html += "<td style='padding:5px 4px;color:#555;font-family:monospace'>" + esc(p.manufacturer_part_number || "-") + "</td>";
       html += "<td style='padding:5px 4px;color:#aaa'>" + esc(p.manufacturer || "-") + "</td>";
       html += "<td style='padding:5px 4px'><button class='btn-sm-del' onclick='removeKikanMember(" + gid + "," + m.shohin_cd + ")'>除外</button></td>";
       html += "</tr>";
