@@ -418,7 +418,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p style="font-size:10px;color:#ccc;margin-top:4px">v1.0.0</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.0.4</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -447,7 +447,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span style="font-size:9px;color:#556688;margin-left:4px">v1.0.0</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.0.4</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -840,6 +840,7 @@ var TRANSLATIONS = {
     f_body_type: "車種",
     f_compatible: "適合車名",
     f_model: "型式",
+    f_engine: "エンジン",
     f_moq: "MOQ",
     f_price_usd: "価格(USD)",
     f_price_jpy: "販売価格(JP)",
@@ -967,7 +968,7 @@ var TRANSLATIONS = {
     err_pass_short: "パスワードは8文字以上で入力してください",
     reset_success: "パスワードを更新しました。ログインしてください。",
     reset_error: "パスワードの更新に失敗しました。もう一度お試しください。",
-    supplier_prices: "仕入価格",
+    supplier_prices: "仕入先",
     sales_price_jpy: "販売価格(円)",
     f_supplier: "仕入先",
     f_unit_price: "単価",
@@ -1028,6 +1029,7 @@ var TRANSLATIONS = {
     f_body_type: "Body Type",
     f_compatible: "Compatible Models",
     f_model: "Model Code",
+    f_engine: "Engine",
     f_moq: "MOQ",
     f_price_usd: "Price (USD)",
     f_price_jpy: "Price (JPY)",
@@ -1155,7 +1157,7 @@ var TRANSLATIONS = {
     err_pass_short: "Password must be at least 8 characters",
     reset_success: "Password updated. Please log in.",
     reset_error: "Failed to update password. Please try again.",
-    supplier_prices: "Purchase Prices",
+    supplier_prices: "Suppliers",
     sales_price_jpy: "Sales Price (JPY)",
     f_supplier: "Supplier",
     f_unit_price: "Unit Price",
@@ -1216,6 +1218,7 @@ var TRANSLATIONS = {
     f_body_type: "车身类型",
     f_compatible: "适用车型",
     f_model: "型号代码",
+    f_engine: "发动机",
     f_moq: "最小订量",
     f_price_usd: "价格(USD)",
     f_price_jpy: "日本售价(JPY)",
@@ -1343,7 +1346,7 @@ var TRANSLATIONS = {
     err_pass_short: "密码至少需要8个字符",
     reset_success: "密码已更新，请重新登录。",
     reset_error: "密码更新失败，请重试。",
-    supplier_prices: "采购价格",
+    supplier_prices: "供应商",
     sales_price_jpy: "销售价格（日元）",
     f_supplier: "供应商",
     f_unit_price: "单价",
@@ -1378,6 +1381,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
+var APP_VERSION       = "v1.0.4";
 
 // =============================================
 // ロール判定
@@ -1490,6 +1494,9 @@ function tf(key, vars) {
 
 // HTMLのdata-i18n属性を持つ要素を一括更新する
 function applyI18n() {
+  document.querySelectorAll(".app-version").forEach(function(el) {
+    el.textContent = APP_VERSION;
+  });
   document.querySelectorAll("[data-i18n]").forEach(function(el) {
     var key = el.dataset.i18n;
     var val = t(key);
@@ -2255,6 +2262,9 @@ function tCat(category) {
   // 翻訳辞書にキーがない場合はそのまま返す
   return val === key ? category : val;
 }
+function getProductEngine(p) {
+  return p.engine || p.engine_model || p.engine_type || p.engine_code || "";
+}
 function norm(s) {
   if (s == null) return "";
   return String(s).toLowerCase().replace(/-/g,"");
@@ -2364,20 +2374,22 @@ function renderPanelStatic() {
     ["f_body_type",   p.body_type],
     ["f_compatible",  p.compatible_car_models],
     ["f_model",       p.model],
+    ["f_engine",      getProductEngine(p), true],
   ];
   var tHtml = "";
   defs.forEach(function(d) {
-    var k = d[0], v = d[1];
-    if (v != null && String(v) !== "None" && String(v) !== "") {
-      tHtml += "<tr><td>" + t(k) + "</td><td>" + esc(String(v)) + "</td></tr>";
+    var k = d[0], v = d[1], alwaysShow = d[2] === true;
+    if (alwaysShow || (v != null && String(v) !== "None" && String(v) !== "")) {
+      var text = (v != null && String(v) !== "None" && String(v) !== "") ? String(v) : "-";
+      tHtml += "<tr><td>" + t(k) + "</td><td>" + esc(text) + "</td></tr>";
     }
   });
   document.getElementById("panel-body").innerHTML =
     "<table class='detail-table' style='margin-top:4px'>" + tHtml + "</table>" +
-    "<div class='price-section-title'>&#x1F4B0; " + t("supplier_prices") + "</div>" +
-    "<div id='price-table-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>" +
     "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
-    "<div id='kikan-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>";
+    "<div id='kikan-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>" +
+    "<div class='price-section-title'>&#x1F4B0; " + t("supplier_prices") + "</div>" +
+    "<div id='price-table-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>";
   // 画像エリアをリセット（右カラムはpanel-rightに固定表示）
   document.getElementById("img-grid").innerHTML =
     "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + t("img_loading") + "</div></div>";
