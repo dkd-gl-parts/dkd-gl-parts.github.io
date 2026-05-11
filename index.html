@@ -424,7 +424,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.0.6</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.0.7</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -453,7 +453,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.0.6</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.0.7</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1391,7 +1391,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.0.6";
+var APP_VERSION       = "v1.0.7";
 var kikanCandidateParts = [];
 
 // =============================================
@@ -2446,15 +2446,13 @@ function renderPanelStatic() {
     ["f_body_type",   p.body_type],
     ["f_compatible",  p.compatible_car_models],
     ["f_model",       p.model],
-    ["f_engine",      getProductEngine(p), true],
+    ["f_engine",      getProductEngine(p)],
   ];
   var tHtml = "";
   defs.forEach(function(d) {
-    var k = d[0], v = d[1], alwaysShow = d[2] === true;
-    if (alwaysShow || (v != null && String(v) !== "None" && String(v) !== "")) {
-      var text = (v != null && String(v) !== "None" && String(v) !== "") ? String(v) : "-";
-      tHtml += "<tr><td>" + t(k) + "</td><td>" + esc(text) + "</td></tr>";
-    }
+    var k = d[0], v = d[1];
+    var text = (v != null && String(v) !== "None" && String(v) !== "") ? String(v) : "-";
+    tHtml += "<tr><td>" + t(k) + "</td><td>" + esc(text) + "</td></tr>";
   });
   document.getElementById("panel-body").innerHTML =
     "<table class='detail-table' style='margin-top:4px'>" + tHtml + "</table>" +
