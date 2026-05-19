@@ -484,7 +484,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.8</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.9</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1698,7 +1698,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.8";
+var APP_VERSION       = "v1.1.9";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
@@ -2313,6 +2313,28 @@ function rakutenJsonp(url) {
   });
 }
 
+async function rakutenFetchJson(url) {
+  var res = await fetch(url, {
+    method: "GET",
+    mode: "cors",
+    credentials: "omit",
+    referrerPolicy: "origin",
+    headers: { "Accept": "application/json" }
+  });
+  var text = await res.text();
+  var data = null;
+  try { data = text ? JSON.parse(text) : null; }
+  catch(e) { throw new Error("invalid_json: " + text.slice(0, 120)); }
+  if (!res.ok) {
+    var msg = (data && data.errors && data.errors.errorMessage) ||
+      (data && data.error_description) ||
+      (data && data.error) ||
+      ("HTTP " + res.status);
+    throw new Error(msg);
+  }
+  return data;
+}
+
 function yen(n) {
   if (n == null || isNaN(Number(n))) return "-";
   return "\u00a5" + Number(n).toLocaleString();
@@ -2390,8 +2412,9 @@ function openRakutenDiagnosticUrl() {
 }
 
 async function fetchRakutenItemsOnce(keyword, ngKeyword, sort, hits, opts) {
-  var data = await rakutenJsonp(buildRakutenApiUrl(keyword, ngKeyword, sort, hits, opts));
+  var data = await rakutenFetchJson(buildRakutenApiUrl(keyword, ngKeyword, sort, hits, opts));
   if (data && data.error) throw new Error(data.error_description || data.error);
+  if (data && data.errors) throw new Error(data.errors.errorMessage || JSON.stringify(data.errors));
   return ((data && data.Items) || (data && data.items) || []).map(function(row) {
     return row && row.Item ? row.Item : row;
   });
