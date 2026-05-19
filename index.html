@@ -484,7 +484,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.11</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.12</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -822,6 +822,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
             <option value="50">50</option>
             <option value="100" selected>100</option>
             <option value="200">200</option>
+            <option value="all">全件</option>
           </select>
         </div>
         <div class="rakuten-field">
@@ -1179,6 +1180,7 @@ var TRANSLATIONS = {
     rakuten_open_list: "結果一覧",
     rakuten_targets_title: "調査対象",
     rakuten_master_limit: "品番マスタ読込件数",
+    rakuten_loading_master: "品番マスタを読み込み中...",
     rakuten_upload_file: "品番リストアップロード",
     rakuten_load_master: "品番マスタから読み込み",
     rakuten_run_bulk: "調査対象を一括調査",
@@ -1419,6 +1421,7 @@ var TRANSLATIONS = {
     rakuten_open_list: "Result List",
     rakuten_targets_title: "Survey Targets",
     rakuten_master_limit: "Part master load count",
+    rakuten_loading_master: "Loading part master...",
     rakuten_upload_file: "Upload part number list",
     rakuten_load_master: "Load from Part Master",
     rakuten_run_bulk: "Run Bulk Survey",
@@ -1659,6 +1662,7 @@ var TRANSLATIONS = {
     rakuten_open_list: "结果列表",
     rakuten_targets_title: "调查对象",
     rakuten_master_limit: "从品号主数据读取件数",
+    rakuten_loading_master: "正在读取品号主数据...",
     rakuten_upload_file: "上传品号列表",
     rakuten_load_master: "从品号主数据读取",
     rakuten_run_bulk: "批量调查",
@@ -1701,7 +1705,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.11";
+var APP_VERSION       = "v1.1.12";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
@@ -2205,13 +2209,34 @@ function renderRakutenTargets() {
 }
 
 async function loadRakutenTargetsFromMaster() {
-  var limit = parseInt(document.getElementById("rakuten-master-limit").value, 10) || 100;
-  var r = await sb.from("parts")
-    .select("id, dkd_shohin_id, shohin_cd, genuine_part_number, manufacturer_part_number, manufacturer, category")
-    .not("manufacturer_part_number", "is", null)
-    .order("dkd_shohin_id", { ascending: true })
-    .limit(limit);
-  rakutenTargets = (r.data || []).map(function(p) { return rakutenTargetFromPart(p, "master"); }).filter(function(x) { return x.search_number; });
+  var limitValue = document.getElementById("rakuten-master-limit").value;
+  var status = document.getElementById("rakuten-target-status");
+  if (status) status.textContent = t("rakuten_loading_master");
+  var rows = [];
+  if (limitValue === "all") {
+    var pageSize = 1000;
+    for (var from=0; ; from += pageSize) {
+      var rPage = await sb.from("parts")
+        .select("id, dkd_shohin_id, shohin_cd, genuine_part_number, manufacturer_part_number, manufacturer, category")
+        .not("manufacturer_part_number", "is", null)
+        .order("dkd_shohin_id", { ascending: true })
+        .range(from, from + pageSize - 1);
+      if (rPage.error) throw new Error(rPage.error.message);
+      rows = rows.concat(rPage.data || []);
+      if (!rPage.data || rPage.data.length < pageSize) break;
+      if (status) status.textContent = tf("rakuten_loaded_targets", { n: rows.length });
+    }
+  } else {
+    var limit = parseInt(limitValue, 10) || 100;
+    var r = await sb.from("parts")
+      .select("id, dkd_shohin_id, shohin_cd, genuine_part_number, manufacturer_part_number, manufacturer, category")
+      .not("manufacturer_part_number", "is", null)
+      .order("dkd_shohin_id", { ascending: true })
+      .limit(limit);
+    if (r.error) throw new Error(r.error.message);
+    rows = r.data || [];
+  }
+  rakutenTargets = rows.map(function(p) { return rakutenTargetFromPart(p, "master"); }).filter(function(x) { return x.search_number; });
   renderRakutenTargets();
 }
 
@@ -4024,7 +4049,11 @@ document.getElementById("btn-rakuten-test-keys").addEventListener("click", testR
 document.getElementById("btn-rakuten-open-diagnostic").addEventListener("click", openRakutenDiagnosticUrl);
 document.getElementById("btn-rakuten-use-current").addEventListener("click", function(){ if (currentProduct) { rakutenActiveTarget = rakutenTargetFromPart(currentProduct, "detail"); document.getElementById("rakuten-keyword").value = buildRakutenProductQuery(currentProduct); } });
 document.getElementById("btn-rakuten-open-list").addEventListener("click", enterRakutenPriceList);
-document.getElementById("btn-rakuten-load-master").addEventListener("click", loadRakutenTargetsFromMaster);
+document.getElementById("btn-rakuten-load-master").addEventListener("click", function(){
+  loadRakutenTargetsFromMaster().catch(function(e) {
+    setRakutenStatus("品番マスタの読み込みに失敗しました: " + (e.message || e), true);
+  });
+});
 document.getElementById("btn-rakuten-run-bulk").addEventListener("click", runRakutenBulkSurvey);
 document.getElementById("rakuten-upload-file").addEventListener("change", handleRakutenUploadFile);
 document.getElementById("rakuten-keyword").addEventListener("keydown", function(e){ if(e.key==="Enter") searchRakutenPrices(); });
