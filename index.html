@@ -491,7 +491,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.22</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.23</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -814,7 +814,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     </div>
   </div>
   <div class="rakuten-price-body">
-    <div class="rakuten-card" id="rakuten-api-settings-card">
+    <div class="rakuten-card">
       <h3 data-i18n="rakuten_search_conditions">検索条件</h3>
       <div class="rakuten-grid">
         <div class="rakuten-field">
@@ -851,7 +851,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       </div>
     </div>
 
-    <div class="rakuten-card">
+    <div class="rakuten-card" id="rakuten-api-settings-card">
       <div class="rakuten-summary" id="rakuten-summary"></div>
       <div id="rakuten-results"><div class="empty" data-i18n="rakuten_empty">キーワードを入力して楽天価格を調査してください</div></div>
     </div>
@@ -1822,7 +1822,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.22";
+var APP_VERSION       = "v1.1.23";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
