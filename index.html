@@ -484,7 +484,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.12</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.13</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -832,6 +832,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       </div>
       <div class="rakuten-actions">
         <button class="btn-sm-edit" id="btn-rakuten-load-master" data-i18n="rakuten_load_master">品番マスタから読み込み</button>
+        <button class="btn-sm-edit" id="btn-rakuten-filter-unsurveyed" data-i18n="rakuten_filter_unsurveyed">未調査分だけに絞る</button>
         <button class="btn-primary" id="btn-rakuten-run-bulk" data-i18n="rakuten_run_bulk">調査対象を一括調査</button>
         <span class="rakuten-note" id="rakuten-target-status"></span>
       </div>
@@ -1183,6 +1184,8 @@ var TRANSLATIONS = {
     rakuten_loading_master: "品番マスタを読み込み中...",
     rakuten_upload_file: "品番リストアップロード",
     rakuten_load_master: "品番マスタから読み込み",
+    rakuten_filter_unsurveyed: "未調査分だけに絞る",
+    rakuten_unsurveyed_done: "未調査 {remaining} 件に絞りました（除外 {skipped} 件）",
     rakuten_run_bulk: "調査対象を一括調査",
     rakuten_targets_empty: "調査対象がありません",
     rakuten_loaded_targets: "{n} 件を読み込みました",
@@ -1424,6 +1427,8 @@ var TRANSLATIONS = {
     rakuten_loading_master: "Loading part master...",
     rakuten_upload_file: "Upload part number list",
     rakuten_load_master: "Load from Part Master",
+    rakuten_filter_unsurveyed: "Keep Unsurveyed Only",
+    rakuten_unsurveyed_done: "Kept {remaining} unsurveyed targets ({skipped} skipped)",
     rakuten_run_bulk: "Run Bulk Survey",
     rakuten_targets_empty: "No survey targets",
     rakuten_loaded_targets: "Loaded {n} targets",
@@ -1665,6 +1670,8 @@ var TRANSLATIONS = {
     rakuten_loading_master: "正在读取品号主数据...",
     rakuten_upload_file: "上传品号列表",
     rakuten_load_master: "从品号主数据读取",
+    rakuten_filter_unsurveyed: "仅保留未调查",
+    rakuten_unsurveyed_done: "已保留未调查 {remaining} 件（排除 {skipped} 件）",
     rakuten_run_bulk: "批量调查",
     rakuten_targets_empty: "没有调查对象",
     rakuten_loaded_targets: "已读取 {n} 件",
@@ -1705,7 +1712,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.12";
+var APP_VERSION       = "v1.1.13";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
@@ -2314,6 +2321,54 @@ async function handleRakutenUploadFile() {
   renderRakutenTargets();
 }
 
+function chunkArray(arr, size) {
+  var chunks = [];
+  for (var i=0; i<arr.length; i+=size) chunks.push(arr.slice(i, i + size));
+  return chunks;
+}
+
+function rakutenTargetDoneKey(target) {
+  if (target.part_id) return "part:" + target.part_id;
+  if (target.dkd_shohin_id) return "dkd:" + target.dkd_shohin_id;
+  return "search:" + String(target.search_number || "").toUpperCase();
+}
+
+async function loadRakutenDoneKeys(targets) {
+  var done = {};
+  var partIds = targets.map(function(t) { return t.part_id; }).filter(Boolean);
+  var dkdIds = targets.map(function(t) { return t.dkd_shohin_id; }).filter(Boolean);
+  var searchNumbers = targets.map(function(t) { return t.search_number; }).filter(Boolean);
+  for (var i=0; i<chunkArray(partIds, 500).length; i++) {
+    var partChunk = chunkArray(partIds, 500)[i];
+    var rPart = await sb.from("rakuten_price_surveys").select("part_id").in("part_id", partChunk);
+    if (rPart.error) throw new Error(rPart.error.message);
+    (rPart.data || []).forEach(function(row) { if (row.part_id) done["part:" + row.part_id] = true; });
+  }
+  for (var j=0; j<chunkArray(dkdIds, 500).length; j++) {
+    var dkdChunk = chunkArray(dkdIds, 500)[j];
+    var rDkd = await sb.from("rakuten_price_surveys").select("dkd_shohin_id").in("dkd_shohin_id", dkdChunk);
+    if (rDkd.error) throw new Error(rDkd.error.message);
+    (rDkd.data || []).forEach(function(row) { if (row.dkd_shohin_id) done["dkd:" + row.dkd_shohin_id] = true; });
+  }
+  for (var k=0; k<chunkArray(searchNumbers, 500).length; k++) {
+    var searchChunk = chunkArray(searchNumbers, 500)[k];
+    var rSearch = await sb.from("rakuten_price_surveys").select("search_number").in("search_number", searchChunk);
+    if (rSearch.error) throw new Error(rSearch.error.message);
+    (rSearch.data || []).forEach(function(row) { if (row.search_number) done["search:" + String(row.search_number).toUpperCase()] = true; });
+  }
+  return done;
+}
+
+async function filterRakutenUnsurveyedTargets() {
+  if (!rakutenTargets.length) { setRakutenStatus(t("rakuten_targets_empty"), true); return; }
+  setRakutenStatus(t("rakuten_loading_master"), false);
+  var before = rakutenTargets.length;
+  var done = await loadRakutenDoneKeys(rakutenTargets);
+  rakutenTargets = rakutenTargets.filter(function(target) { return !done[rakutenTargetDoneKey(target)]; });
+  renderRakutenTargets();
+  setRakutenStatus(tf("rakuten_unsurveyed_done", { remaining: rakutenTargets.length, skipped: before - rakutenTargets.length }), false);
+}
+
 function rakutenJsonp(url) {
   return new Promise(function(resolve, reject) {
     var cb = "dcatsRakutenCb_" + Date.now() + "_" + Math.floor(Math.random() * 100000);
@@ -2620,6 +2675,7 @@ async function runRakutenBulkSurvey() {
   var failed = 0;
   var firstError = "";
   var stoppedByRateLimit = false;
+  var rateLimitRemaining = 0;
   for (var i=0; i<rakutenTargets.length; i++) {
     var target = rakutenTargets[i];
     if (!target.search_number) continue;
@@ -2634,13 +2690,16 @@ async function runRakutenBulkSurvey() {
       if (isRakutenRateLimitError(e)) {
         firstError = target.search_number + ": " + rakutenFriendlyError(e);
         stoppedByRateLimit = true;
+        rakutenTargets = rakutenTargets.slice(i);
+        rateLimitRemaining = rakutenTargets.length;
+        renderRakutenTargets();
         break;
       }
       failed++;
       if (!firstError) firstError = target.search_number + ": " + rakutenFriendlyError(e);
     }
   }
-  if (stoppedByRateLimit) setRakutenStatus(tf("rakuten_bulk_rate_limited", { saved: saved, remaining: Math.max(rakutenTargets.length - saved - failed, 0), error: firstError }), true);
+  if (stoppedByRateLimit) setRakutenStatus(tf("rakuten_bulk_rate_limited", { saved: saved, remaining: rateLimitRemaining, error: firstError }), true);
   else if (failed) setRakutenStatus(tf("rakuten_bulk_failed", { saved: saved, failed: failed, error: firstError }), true);
   else setRakutenStatus(tf("rakuten_bulk_done", { n: saved }), false);
   loadRakutenPriceList();
@@ -4052,6 +4111,11 @@ document.getElementById("btn-rakuten-open-list").addEventListener("click", enter
 document.getElementById("btn-rakuten-load-master").addEventListener("click", function(){
   loadRakutenTargetsFromMaster().catch(function(e) {
     setRakutenStatus("品番マスタの読み込みに失敗しました: " + (e.message || e), true);
+  });
+});
+document.getElementById("btn-rakuten-filter-unsurveyed").addEventListener("click", function(){
+  filterRakutenUnsurveyedTargets().catch(function(e) {
+    setRakutenStatus("未調査分の抽出に失敗しました: " + (e.message || e), true);
   });
 });
 document.getElementById("btn-rakuten-run-bulk").addEventListener("click", runRakutenBulkSurvey);
