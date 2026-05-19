@@ -491,7 +491,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.18</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.19</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -642,7 +642,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
           <td>gltek</td><td data-i18n="perm_all_roles">全ロール</td><td data-i18n="perm_sl_products">SL品番あり商品</td><td class="permission-ok">○</td><td data-i18n="perm_role_limited">admin/editor/price_viewer</td><td data-i18n="perm_role_edit">admin/editor</td><td data-i18n="perm_admin_own_group">adminは自グループのみ</td>
         </tr>
         <tr>
-          <td>public</td><td data-i18n="perm_all_roles">全ロール</td><td data-i18n="perm_sl_products">SL品番あり商品</td><td class="permission-no">-</td><td data-i18n="perm_role_limited">admin/editor/price_viewer</td><td data-i18n="perm_role_edit">admin/editor</td><td data-i18n="perm_admin_own_group">adminは自グループのみ</td>
+          <td>public</td><td data-i18n="perm_public_roles">viewer/price_viewerのみ</td><td data-i18n="perm_sl_products">SL品番あり商品</td><td class="permission-no">-</td><td data-i18n="perm_public_sales">price_viewerのみ</td><td class="permission-no">-</td><td class="permission-no">-</td>
         </tr>
       </table>
     </div>
@@ -1082,6 +1082,8 @@ var TRANSLATIONS = {
     perm_role_limited: "admin/editor/price_viewer",
     perm_role_edit: "admin/editor",
     perm_admin_own_group: "adminは自グループのみ",
+    perm_public_roles: "viewer/price_viewerのみ",
+    perm_public_sales: "price_viewerのみ",
     lbl_display_name: "表示名",
     ph_display_name: "表示名（任意）",
     lbl_registered: "登録:",
@@ -1342,6 +1344,8 @@ var TRANSLATIONS = {
     perm_role_limited: "admin/editor/price_viewer",
     perm_role_edit: "admin/editor",
     perm_admin_own_group: "Admin: own group only",
+    perm_public_roles: "viewer/price_viewer only",
+    perm_public_sales: "price_viewer only",
     lbl_display_name: "Display Name",
     ph_display_name: "Display name (optional)",
     lbl_registered: "Registered:",
@@ -1602,6 +1606,8 @@ var TRANSLATIONS = {
     perm_role_limited: "admin/editor/price_viewer",
     perm_role_edit: "admin/editor",
     perm_admin_own_group: "admin仅限本组",
+    perm_public_roles: "仅viewer/price_viewer",
+    perm_public_sales: "仅price_viewer",
     lbl_display_name: "显示名称",
     ph_display_name: "显示名称（可选）",
     lbl_registered: "注册时间:",
@@ -1804,7 +1810,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.18";
+var APP_VERSION       = "v1.1.19";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
@@ -1821,6 +1827,7 @@ var rakutenActiveTarget = null;
 // =============================================
 function canEdit() {
   if (!userProfile) return false;
+  if (userProfile.group_name === "public") return false;
   return userProfile.role === "admin" || userProfile.role === "editor";
 }
 function canDelete() {
@@ -1835,6 +1842,7 @@ function isAdmin() {
 // ユーザー管理：daikoは全員、それ以外は自グループのみ
 function canManageUser(targetProfile) {
   if (!userProfile || userProfile.role !== "admin") return false;
+  if (userProfile.group_name === "public") return false;
   if (userProfile.group_name === "daiko") return true;
   return targetProfile.group_name === userProfile.group_name;
 }
@@ -1856,7 +1864,7 @@ function canSeeSalesPrice() {
   var r = userProfile.role;
   if (g === "daiko") return true;
   if (g === "gltek") return ["admin","editor","price_viewer"].indexOf(r) >= 0;
-  if (g === "public") return ["admin","editor","price_viewer"].indexOf(r) >= 0;
+  if (g === "public") return r === "price_viewer";
   return false;
 }
 function isDaikoGroup() {
@@ -1891,6 +1899,10 @@ function roleClass(role) {
     admin: "role-admin", editor: "role-editor",
     price_viewer: "role-price", viewer: "role-viewer"
   }[role] || "role-viewer";
+}
+function normalizeRoleForGroup(role, group) {
+  if (group === "public" && ["viewer","price_viewer"].indexOf(role) < 0) return "viewer";
+  return role || "viewer";
 }
 
 // =============================================
@@ -3940,7 +3952,9 @@ function renderUsers(users) {
     html += "<input class='user-name-input' data-uid='"+esc(u.id)+"' value='"+esc(u.name||"")+"' placeholder='"+t("ph_display_name")+"'>";
     html += "<div class='user-card-bottom' style='flex-wrap:wrap;gap:6px'>";
     html += "<select class='role-select' data-uid='"+esc(u.id)+"'>";
-    [["viewer","role_viewer"],["price_viewer","role_price_viewer"],["editor","role_editor"],["admin","role_admin"]].forEach(function(r){
+    var roleOptions = [["viewer","role_viewer"],["price_viewer","role_price_viewer"],["editor","role_editor"],["admin","role_admin"]];
+    if ((u.group_name || "public") === "public") roleOptions = [["viewer","role_viewer"],["price_viewer","role_price_viewer"]];
+    roleOptions.forEach(function(r){
       html += "<option value='"+r[0]+"'"+(u.role===r[0]?" selected":"")+">"+t(r[1])+"</option>";
     });
     html += "</select>";
@@ -3965,8 +3979,8 @@ function renderUsers(users) {
       if (!isAdmin() || !target || !canManageUser(target)) { alert(t("err_perm")); return; }
       var card  = list.querySelector(".user-card[data-uid='"+uid+"']");
       var name  = card.querySelector(".user-name-input").value.trim();
-      var role  = card.querySelector(".role-select").value;
       var group = isDaikoGroup() ? card.querySelector(".group-select").value : userProfile.group_name;
+      var role  = normalizeRoleForGroup(card.querySelector(".role-select").value, group);
       var msg   = document.getElementById("save-msg-"+uid);
       var r = await sb.from("profiles").update({name:name,role:role,group_name:group,updated_at:new Date().toISOString()}).eq("id",uid);
       if (r.error) { msg.className="save-msg save-err"; msg.textContent=t("msg_save_err"); }
