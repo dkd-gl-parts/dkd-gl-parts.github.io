@@ -482,7 +482,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.0</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.1</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1667,7 +1667,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.0";
+var APP_VERSION       = "v1.1.1";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
@@ -2292,7 +2292,12 @@ function getRakutenImage(item) {
   return typeof first === "string" ? first : (first.imageUrl || "");
 }
 
-function buildRakutenApiUrl(keyword, ngKeyword, sort, hits) {
+function rakutenLooseKeyword(keyword) {
+  return String(keyword || "").replace(/[-\s_]/g, "");
+}
+
+function buildRakutenApiUrl(keyword, ngKeyword, sort, hits, opts) {
+  opts = opts || {};
   var appId = document.getElementById("rakuten-app-id").value.trim();
   var accessKey = document.getElementById("rakuten-access-key").value.trim();
   var params = [
@@ -2304,20 +2309,49 @@ function buildRakutenApiUrl(keyword, ngKeyword, sort, hits) {
     ["NGKeyword", ngKeyword],
     ["hits", hits],
     ["sort", sort],
-    ["availability", "1"],
-    ["field", "1"],
+    ["availability", opts.availability != null ? opts.availability : "1"],
+    ["field", opts.field != null ? opts.field : "1"],
+    ["orFlag", opts.orFlag || ""],
     ["elements", "itemName,itemPrice,itemUrl,shopName,shopUrl,mediumImageUrls,smallImageUrls,reviewCount,reviewAverage,postageFlag,taxFlag,availability"]
   ].filter(function(p) { return p[1] !== ""; });
   return "https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260401?" +
     params.map(function(p) { return encodeURIComponent(p[0]) + "=" + encodeURIComponent(p[1]); }).join("&");
 }
 
-async function fetchRakutenItems(keyword, ngKeyword, sort, hits) {
-  var data = await rakutenJsonp(buildRakutenApiUrl(keyword, ngKeyword, sort, hits));
+async function fetchRakutenItemsOnce(keyword, ngKeyword, sort, hits, opts) {
+  var data = await rakutenJsonp(buildRakutenApiUrl(keyword, ngKeyword, sort, hits, opts));
   if (data && data.error) throw new Error(data.error_description || data.error);
   return ((data && data.Items) || (data && data.items) || []).map(function(row) {
     return row && row.Item ? row.Item : row;
   });
+}
+
+async function fetchRakutenItems(keyword, ngKeyword, sort, hits) {
+  var variants = [
+    { keyword: keyword, opts: { field: "1", availability: "1" } },
+    { keyword: rakutenLooseKeyword(keyword), opts: { field: "1", availability: "1" } },
+    { keyword: rakutenLooseKeyword(keyword), opts: { field: "0", availability: "1" } },
+    { keyword: rakutenLooseKeyword(keyword), opts: { field: "0", availability: "0" } }
+  ];
+  var tried = {};
+  var lastErr = null;
+  for (var i=0; i<variants.length; i++) {
+    var v = variants[i];
+    if (!v.keyword || tried[v.keyword + "|" + v.opts.field + "|" + v.opts.availability]) continue;
+    tried[v.keyword + "|" + v.opts.field + "|" + v.opts.availability] = true;
+    try {
+      var items = await fetchRakutenItemsOnce(v.keyword, ngKeyword, sort, hits, v.opts);
+      if (items.length > 0 || i === variants.length - 1) return items;
+    } catch(e) {
+      if ((e.message || "").indexOf("not found") >= 0) {
+        lastErr = e;
+        continue;
+      }
+      throw e;
+    }
+  }
+  if (lastErr) return [];
+  return [];
 }
 
 function summarizeRakutenPrices(items) {
