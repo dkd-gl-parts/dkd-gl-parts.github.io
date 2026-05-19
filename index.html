@@ -483,7 +483,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.6</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.7</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -851,6 +851,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <div class="rakuten-actions">
         <button class="btn-sm-edit" id="btn-rakuten-save-keys" data-i18n="rakuten_save_keys">API設定を保存</button>
         <button class="btn-sm-edit" id="btn-rakuten-test-keys" data-i18n="rakuten_test_keys">API接続テスト</button>
+        <button class="btn-sm-edit" id="btn-rakuten-open-diagnostic" data-i18n="rakuten_open_diagnostic">診断URLを開く</button>
         <span class="rakuten-note" data-i18n="rakuten_key_note">API設定はこの端末のブラウザに保存されます。</span>
       </div>
     </div>
@@ -1153,6 +1154,7 @@ var TRANSLATIONS = {
     rakuten_api_settings: "楽天API設定",
     rakuten_save_keys: "API設定を保存",
     rakuten_test_keys: "API接続テスト",
+    rakuten_open_diagnostic: "診断URLを開く",
     rakuten_test_ok: "楽天API接続OKです",
     rakuten_test_failed: "楽天API接続テストに失敗しました",
     rakuten_bulk_preflight_failed: "楽天API接続テストに失敗したため、一括調査を中断しました: {error}",
@@ -1391,6 +1393,7 @@ var TRANSLATIONS = {
     rakuten_api_settings: "Rakuten API Settings",
     rakuten_save_keys: "Save API Settings",
     rakuten_test_keys: "Test API Connection",
+    rakuten_open_diagnostic: "Open Diagnostic URL",
     rakuten_test_ok: "Rakuten API connection is OK",
     rakuten_test_failed: "Rakuten API connection test failed",
     rakuten_bulk_preflight_failed: "Bulk survey stopped because the Rakuten API connection test failed: {error}",
@@ -1629,6 +1632,7 @@ var TRANSLATIONS = {
     rakuten_api_settings: "乐天API设置",
     rakuten_save_keys: "保存API设置",
     rakuten_test_keys: "API连接测试",
+    rakuten_open_diagnostic: "打开诊断URL",
     rakuten_test_ok: "乐天API连接正常",
     rakuten_test_failed: "乐天API连接测试失败",
     rakuten_bulk_preflight_failed: "乐天API连接测试失败，已中断批量调查: {error}",
@@ -1693,7 +1697,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.6";
+var APP_VERSION       = "v1.1.7";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
@@ -2368,6 +2372,13 @@ function buildRakutenApiUrl(keyword, ngKeyword, sort, hits, opts) {
   ].filter(function(p) { return p[1] !== ""; });
   return "https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260401?" +
     params.map(function(p) { return encodeURIComponent(p[0]) + "=" + encodeURIComponent(p[1]); }).join("&");
+}
+
+function openRakutenDiagnosticUrl() {
+  var appId = document.getElementById("rakuten-app-id").value.trim();
+  var accessKey = document.getElementById("rakuten-access-key").value.trim();
+  if (!appId || !accessKey) { setRakutenStatus(t("rakuten_missing_key"), true); return; }
+  window.open(buildRakutenApiUrl("福袋", "", "", "", { minimal: true }), "_blank", "noopener");
 }
 
 async function fetchRakutenItemsOnce(keyword, ngKeyword, sort, hits, opts) {
@@ -3928,6 +3939,7 @@ document.getElementById("kikan-mgmt-search").addEventListener("keydown", functio
 document.getElementById("btn-rakuten-search").addEventListener("click", searchRakutenPrices);
 document.getElementById("btn-rakuten-save-keys").addEventListener("click", saveRakutenKeys);
 document.getElementById("btn-rakuten-test-keys").addEventListener("click", testRakutenApiKeys);
+document.getElementById("btn-rakuten-open-diagnostic").addEventListener("click", openRakutenDiagnosticUrl);
 document.getElementById("btn-rakuten-use-current").addEventListener("click", function(){ if (currentProduct) { rakutenActiveTarget = rakutenTargetFromPart(currentProduct, "detail"); document.getElementById("rakuten-keyword").value = buildRakutenProductQuery(currentProduct); } });
 document.getElementById("btn-rakuten-open-list").addEventListener("click", enterRakutenPriceList);
 document.getElementById("btn-rakuten-load-master").addEventListener("click", loadRakutenTargetsFromMaster);
