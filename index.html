@@ -491,7 +491,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.20</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.21</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -898,7 +898,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         <button class="btn-sm-edit" id="btn-rakuten-save-keys" data-i18n="rakuten_save_keys">API設定を保存</button>
         <button class="btn-sm-edit" id="btn-rakuten-test-keys" data-i18n="rakuten_test_keys">API接続テスト</button>
         <button class="btn-sm-edit" id="btn-rakuten-open-diagnostic" data-i18n="rakuten_open_diagnostic">診断URLを開く</button>
-        <span class="rakuten-note" data-i18n="rakuten_key_note">API設定はこの端末のブラウザに保存されます。</span>
+        <span class="rakuten-note" data-i18n="rakuten_shared_key_note">API設定は会社共通設定として保存されます。保存は管理者のみ可能です。</span>
       </div>
     </div>
 
@@ -1215,6 +1215,8 @@ var TRANSLATIONS = {
     rakuten_use_current: "選択中の商品品番を使う",
     rakuten_api_settings: "楽天API設定",
     rakuten_save_keys: "API設定を保存",
+    rakuten_shared_key_note: "API設定は会社共通設定として保存されます。保存は管理者のみ可能です。",
+    rakuten_key_admin_only: "API設定の保存は管理者のみ可能です。",
     rakuten_test_keys: "API接続テスト",
     rakuten_open_diagnostic: "診断URLを開く",
     rakuten_test_ok: "楽天API接続OKです",
@@ -1479,6 +1481,8 @@ var TRANSLATIONS = {
     rakuten_use_current: "Use selected part number",
     rakuten_api_settings: "Rakuten API Settings",
     rakuten_save_keys: "Save API Settings",
+    rakuten_shared_key_note: "API settings are saved as a shared company setting. Only admins can save changes.",
+    rakuten_key_admin_only: "Only admins can save API settings.",
     rakuten_test_keys: "Test API Connection",
     rakuten_open_diagnostic: "Open Diagnostic URL",
     rakuten_test_ok: "Rakuten API connection is OK",
@@ -1743,6 +1747,8 @@ var TRANSLATIONS = {
     rakuten_use_current: "使用当前商品编号",
     rakuten_api_settings: "乐天API设置",
     rakuten_save_keys: "保存API设置",
+    rakuten_shared_key_note: "API设置会作为公司共用设置保存。仅管理员可以保存。",
+    rakuten_key_admin_only: "仅管理员可以保存API设置。",
     rakuten_test_keys: "API连接测试",
     rakuten_open_diagnostic: "打开诊断URL",
     rakuten_test_ok: "乐天API连接正常",
@@ -1816,7 +1822,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.20";
+var APP_VERSION       = "v1.1.21";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
@@ -1909,6 +1915,9 @@ function roleClass(role) {
 function normalizeRoleForGroup(role, group) {
   if (group === "public" && ["viewer","price_viewer"].indexOf(role) < 0) return "viewer";
   return role || "viewer";
+}
+function canManageSharedSettings() {
+  return !!(userProfile && userProfile.role === "admin" && userProfile.group_name !== "public");
 }
 
 // =============================================
@@ -2226,31 +2235,49 @@ async function enterSearch() {
 // =============================================
 // 楽天API販売価格調査
 // =============================================
-function getRakutenKeys() {
+async function getRakutenKeys() {
+  var fallback = { appId: "", accessKey: "" };
   try {
-    return {
-      appId: localStorage.getItem("dcats_rakuten_app_id") || "",
-      accessKey: localStorage.getItem("dcats_rakuten_access_key") || ""
-    };
-  } catch(e) {
-    return { appId: "", accessKey: "" };
-  }
+    fallback.appId = localStorage.getItem("dcats_rakuten_app_id") || "";
+    fallback.accessKey = localStorage.getItem("dcats_rakuten_access_key") || "";
+  } catch(e) {}
+  var r = await sb.from("app_settings").select("setting_value").eq("setting_key", "rakuten_api").maybeSingle();
+  if (r.error) return fallback;
+  var v = (r.data && r.data.setting_value) || {};
+  return {
+    appId: v.applicationId || fallback.appId || "",
+    accessKey: v.accessKey || fallback.accessKey || ""
+  };
 }
 
-function loadRakutenKeyFields() {
-  var keys = getRakutenKeys();
+async function loadRakutenKeyFields() {
+  var keys = await getRakutenKeys();
   var appEl = document.getElementById("rakuten-app-id");
   var keyEl = document.getElementById("rakuten-access-key");
   if (appEl) appEl.value = keys.appId;
   if (keyEl) keyEl.value = keys.accessKey;
+  var canSave = canManageSharedSettings();
+  var saveBtn = document.getElementById("btn-rakuten-save-keys");
+  if (saveBtn) saveBtn.style.display = canSave ? "" : "none";
+  if (appEl) appEl.readOnly = !canSave;
+  if (keyEl) keyEl.readOnly = !canSave;
 }
 
-function saveRakutenKeys() {
+async function saveRakutenKeys() {
+  if (!canManageSharedSettings()) { setRakutenStatus(t("rakuten_key_admin_only"), true); return; }
   var appId = document.getElementById("rakuten-app-id").value.trim();
   var accessKey = document.getElementById("rakuten-access-key").value.trim();
+  var payload = {
+    setting_key: "rakuten_api",
+    setting_value: { applicationId: appId, accessKey: accessKey },
+    updated_by: currentUser ? currentUser.id : null,
+    updated_at: new Date().toISOString()
+  };
+  var r = await sb.from("app_settings").upsert(payload, { onConflict: "setting_key" });
+  if (r.error) { setRakutenStatus(t("msg_save_err") + ": " + r.error.message, true); return; }
   try {
-    localStorage.setItem("dcats_rakuten_app_id", appId);
-    localStorage.setItem("dcats_rakuten_access_key", accessKey);
+    localStorage.removeItem("dcats_rakuten_app_id");
+    localStorage.removeItem("dcats_rakuten_access_key");
   } catch(e) {}
   setRakutenStatus(t("rakuten_saved"), false);
 }
@@ -2288,10 +2315,10 @@ function openRakutenForCurrentProduct() {
   enterRakutenPrice(buildRakutenProductQuery(currentProduct));
 }
 
-function enterRakutenPrice(seedKeyword) {
+async function enterRakutenPrice(seedKeyword) {
   if (!canSeeSalesPrice()) { alert(t("err_perm")); return; }
   showScreen("rakuten-price");
-  loadRakutenKeyFields();
+  await loadRakutenKeyFields();
   var nameEl = document.getElementById("rakuten-price-username");
   if (nameEl && userProfile) nameEl.textContent = userProfile.name || userProfile.email.split("@")[0];
   if (seedKeyword) document.getElementById("rakuten-keyword").value = seedKeyword;
@@ -4287,7 +4314,9 @@ document.getElementById("btn-kikan-form-save").addEventListener("click", saveKik
 document.getElementById("parts-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadPartsMgmt(); });
 document.getElementById("kikan-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadKikanMgmt(); });
 document.getElementById("btn-rakuten-search").addEventListener("click", searchRakutenPrices);
-document.getElementById("btn-rakuten-save-keys").addEventListener("click", saveRakutenKeys);
+document.getElementById("btn-rakuten-save-keys").addEventListener("click", function(){
+  saveRakutenKeys().catch(function(e) { setRakutenStatus(t("msg_save_err") + ": " + (e.message || e), true); });
+});
 document.getElementById("btn-rakuten-test-keys").addEventListener("click", testRakutenApiKeys);
 document.getElementById("btn-rakuten-open-diagnostic").addEventListener("click", openRakutenDiagnosticUrl);
 document.getElementById("btn-rakuten-use-current").addEventListener("click", function(){ if (currentProduct) { rakutenActiveTarget = rakutenTargetFromPart(currentProduct, "detail"); document.getElementById("rakuten-keyword").value = buildRakutenProductQuery(currentProduct); } });
