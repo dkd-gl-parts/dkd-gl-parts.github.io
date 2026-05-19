@@ -483,7 +483,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.2</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.3</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -850,6 +850,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       </div>
       <div class="rakuten-actions">
         <button class="btn-sm-edit" id="btn-rakuten-save-keys" data-i18n="rakuten_save_keys">API設定を保存</button>
+        <button class="btn-sm-edit" id="btn-rakuten-test-keys" data-i18n="rakuten_test_keys">API接続テスト</button>
         <span class="rakuten-note" data-i18n="rakuten_key_note">API設定はこの端末のブラウザに保存されます。</span>
       </div>
     </div>
@@ -1151,6 +1152,9 @@ var TRANSLATIONS = {
     rakuten_use_current: "選択中の商品品番を使う",
     rakuten_api_settings: "楽天API設定",
     rakuten_save_keys: "API設定を保存",
+    rakuten_test_keys: "API接続テスト",
+    rakuten_test_ok: "楽天API接続OKです",
+    rakuten_test_failed: "楽天API接続テストに失敗しました",
     rakuten_key_note: "API設定はこの端末のブラウザに保存されます。",
     rakuten_empty: "キーワードを入力して楽天価格を調査してください",
     rakuten_missing_key: "applicationId と accessKey を入力してください",
@@ -1177,6 +1181,7 @@ var TRANSLATIONS = {
     rakuten_targets_empty: "調査対象がありません",
     rakuten_loaded_targets: "{n} 件を読み込みました",
     rakuten_bulk_done: "{n} 件の調査を保存しました",
+    rakuten_bulk_failed: "{saved} 件保存、{failed} 件失敗しました: {error}",
     rakuten_bulk_running: "{done}/{total} 件 調査中...",
     rakuten_saved_result: "調査結果を保存しました",
     rakuten_list_search_ph: "商品ID・品番で検索",
@@ -1384,6 +1389,9 @@ var TRANSLATIONS = {
     rakuten_use_current: "Use selected part number",
     rakuten_api_settings: "Rakuten API Settings",
     rakuten_save_keys: "Save API Settings",
+    rakuten_test_keys: "Test API Connection",
+    rakuten_test_ok: "Rakuten API connection is OK",
+    rakuten_test_failed: "Rakuten API connection test failed",
     rakuten_key_note: "API settings are saved in this browser on this device.",
     rakuten_empty: "Enter a keyword to check Rakuten prices",
     rakuten_missing_key: "Enter applicationId and accessKey",
@@ -1410,6 +1418,7 @@ var TRANSLATIONS = {
     rakuten_targets_empty: "No survey targets",
     rakuten_loaded_targets: "Loaded {n} targets",
     rakuten_bulk_done: "Saved {n} survey results",
+    rakuten_bulk_failed: "Saved {saved}, failed {failed}: {error}",
     rakuten_bulk_running: "Surveying {done}/{total}...",
     rakuten_saved_result: "Saved survey result",
     rakuten_list_search_ph: "Search by product ID or part number",
@@ -1617,6 +1626,9 @@ var TRANSLATIONS = {
     rakuten_use_current: "使用当前商品编号",
     rakuten_api_settings: "乐天API设置",
     rakuten_save_keys: "保存API设置",
+    rakuten_test_keys: "API连接测试",
+    rakuten_test_ok: "乐天API连接正常",
+    rakuten_test_failed: "乐天API连接测试失败",
     rakuten_key_note: "API设置会保存在此设备的浏览器中。",
     rakuten_empty: "请输入关键词调查乐天价格",
     rakuten_missing_key: "请输入 applicationId 和 accessKey",
@@ -1643,6 +1655,7 @@ var TRANSLATIONS = {
     rakuten_targets_empty: "没有调查对象",
     rakuten_loaded_targets: "已读取 {n} 件",
     rakuten_bulk_done: "已保存 {n} 件调查结果",
+    rakuten_bulk_failed: "已保存 {saved} 件，失败 {failed} 件: {error}",
     rakuten_bulk_running: "调查中 {done}/{total}...",
     rakuten_saved_result: "调查结果已保存",
     rakuten_list_search_ph: "按商品ID或品号搜索",
@@ -1677,7 +1690,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.2";
+var APP_VERSION       = "v1.1.3";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
@@ -2389,6 +2402,19 @@ async function fetchRakutenItems(keyword, ngKeyword, sort, hits, target) {
   return [];
 }
 
+async function testRakutenApiKeys() {
+  var appId = document.getElementById("rakuten-app-id").value.trim();
+  var accessKey = document.getElementById("rakuten-access-key").value.trim();
+  if (!appId || !accessKey) { setRakutenStatus(t("rakuten_missing_key"), true); return; }
+  setRakutenStatus(t("rakuten_searching"), false);
+  try {
+    var items = await fetchRakutenItemsOnce("福袋", "", "standard", "1", { field: "0", availability: "0" });
+    setRakutenStatus(t("rakuten_test_ok") + " (" + items.length + "件)", false);
+  } catch(e) {
+    setRakutenStatus(t("rakuten_test_failed") + ": " + (e.message || e), true);
+  }
+}
+
 function summarizeRakutenPrices(items) {
   var prices = (items || []).map(function(item) { return Number(item.itemPrice || 0); }).filter(function(v) { return v > 0; });
   if (!prices.length) return { count: (items || []).length, min: null, avg: null, max: null };
@@ -2462,6 +2488,8 @@ async function runRakutenBulkSurvey() {
   var accessKey = document.getElementById("rakuten-access-key").value.trim();
   if (!appId || !accessKey) { setRakutenStatus(t("rakuten_missing_key"), true); return; }
   var saved = 0;
+  var failed = 0;
+  var firstError = "";
   for (var i=0; i<rakutenTargets.length; i++) {
     var target = rakutenTargets[i];
     if (!target.search_number) continue;
@@ -2473,9 +2501,12 @@ async function runRakutenBulkSurvey() {
       if (i === 0) renderRakutenResults(items, target.search_number);
     } catch(e) {
       console.warn("rakuten bulk item failed", target.search_number, e);
+      failed++;
+      if (!firstError) firstError = target.search_number + ": " + (e.message || e);
     }
   }
-  setRakutenStatus(tf("rakuten_bulk_done", { n: saved }), false);
+  if (failed) setRakutenStatus(tf("rakuten_bulk_failed", { saved: saved, failed: failed, error: firstError }), true);
+  else setRakutenStatus(tf("rakuten_bulk_done", { n: saved }), false);
   loadRakutenPriceList();
 }
 
@@ -3878,6 +3909,7 @@ document.getElementById("parts-mgmt-search").addEventListener("keydown", functio
 document.getElementById("kikan-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadKikanMgmt(); });
 document.getElementById("btn-rakuten-search").addEventListener("click", searchRakutenPrices);
 document.getElementById("btn-rakuten-save-keys").addEventListener("click", saveRakutenKeys);
+document.getElementById("btn-rakuten-test-keys").addEventListener("click", testRakutenApiKeys);
 document.getElementById("btn-rakuten-use-current").addEventListener("click", function(){ if (currentProduct) { rakutenActiveTarget = rakutenTargetFromPart(currentProduct, "detail"); document.getElementById("rakuten-keyword").value = buildRakutenProductQuery(currentProduct); } });
 document.getElementById("btn-rakuten-open-list").addEventListener("click", enterRakutenPriceList);
 document.getElementById("btn-rakuten-load-master").addEventListener("click", loadRakutenTargetsFromMaster);
