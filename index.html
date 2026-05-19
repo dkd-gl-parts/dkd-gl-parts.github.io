@@ -96,6 +96,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .rakuten-item-meta { font-size: 11px; color: #aaa; margin-top: 3px; display: flex; gap: 8px; flex-wrap: wrap; }
 .rakuten-item-link { display: inline-block; color: #4f8ef7; font-size: 12px; margin-top: 6px; text-decoration: none; font-weight: 600; }
 .rakuten-note { font-size: 12px; color: #888; line-height: 1.6; }
+.rakuten-debug { background: #fff8e6; border: 1px solid #f0d38a; border-radius: 8px; padding: 10px 12px; color: #8a6200; font-size: 12px; line-height: 1.6; margin-bottom: 10px; }
 .kikan-section-title { font-size: 14px; font-weight: 600; margin: 16px 0 8px; display: flex; align-items: center; gap: 6px; }
 .kikan-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 12px; }
 .kikan-table th { background: #f5f7fa; color: #555; font-weight: 600; padding: 6px 8px; text-align: left; border-bottom: 2px solid #e0e0e0; }
@@ -482,7 +483,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.1</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.2</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1157,6 +1158,9 @@ var TRANSLATIONS = {
     rakuten_saved: "保存しました",
     rakuten_searching: "検索中...",
     rakuten_no_results: "楽天市場の商品が見つかりません",
+    rakuten_no_results_debug: "APIで0件でした。下の検索条件でも0件か、楽天市場の通常検索で商品があるか確認してください。",
+    rakuten_tried_keywords: "試した検索条件",
+    rakuten_open_mall_search: "楽天市場で検索",
     rakuten_error: "楽天APIの取得に失敗しました",
     rakuten_count: "件数",
     rakuten_min: "最安値",
@@ -1387,6 +1391,9 @@ var TRANSLATIONS = {
     rakuten_saved: "Saved",
     rakuten_searching: "Searching...",
     rakuten_no_results: "No Rakuten Ichiba items found",
+    rakuten_no_results_debug: "The API returned 0 results. Check the tried search conditions below and compare with Rakuten Ichiba search.",
+    rakuten_tried_keywords: "Tried Conditions",
+    rakuten_open_mall_search: "Search Rakuten Ichiba",
     rakuten_error: "Failed to fetch Rakuten API",
     rakuten_count: "Items",
     rakuten_min: "Lowest",
@@ -1617,6 +1624,9 @@ var TRANSLATIONS = {
     rakuten_saved: "已保存",
     rakuten_searching: "搜索中...",
     rakuten_no_results: "未找到乐天市场商品",
+    rakuten_no_results_debug: "API返回0件。请确认下面尝试的搜索条件，或在乐天市场普通搜索中确认。",
+    rakuten_tried_keywords: "尝试的搜索条件",
+    rakuten_open_mall_search: "在乐天市场搜索",
     rakuten_error: "乐天API获取失败",
     rakuten_count: "件数",
     rakuten_min: "最低价",
@@ -1667,10 +1677,11 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1";
+var APP_VERSION       = "v1.1.2";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
+var rakutenLastDebug = [];
 var rakutenTargets = [];
 var rakutenActiveTarget = null;
 
@@ -2296,6 +2307,27 @@ function rakutenLooseKeyword(keyword) {
   return String(keyword || "").replace(/[-\s_]/g, "");
 }
 
+function rakutenKeywordCandidates(keyword, target) {
+  var candidates = [keyword];
+  target = target || {};
+  candidates.push(target.manufacturer_part_number);
+  candidates.push(target.genuine_part_number);
+  candidates.push(rakutenLooseKeyword(keyword));
+  candidates.push(rakutenLooseKeyword(target.manufacturer_part_number));
+  candidates.push(rakutenLooseKeyword(target.genuine_part_number));
+  var seen = {};
+  return candidates.map(function(v) { return String(v || "").trim(); })
+    .filter(function(v) {
+      if (!v || seen[v]) return false;
+      seen[v] = true;
+      return true;
+    });
+}
+
+function rakutenMallSearchUrl(keyword) {
+  return "https://search.rakuten.co.jp/search/mall/" + encodeURIComponent(keyword) + "/";
+}
+
 function buildRakutenApiUrl(keyword, ngKeyword, sort, hits, opts) {
   opts = opts || {};
   var appId = document.getElementById("rakuten-app-id").value.trim();
@@ -2326,13 +2358,14 @@ async function fetchRakutenItemsOnce(keyword, ngKeyword, sort, hits, opts) {
   });
 }
 
-async function fetchRakutenItems(keyword, ngKeyword, sort, hits) {
-  var variants = [
-    { keyword: keyword, opts: { field: "1", availability: "1" } },
-    { keyword: rakutenLooseKeyword(keyword), opts: { field: "1", availability: "1" } },
-    { keyword: rakutenLooseKeyword(keyword), opts: { field: "0", availability: "1" } },
-    { keyword: rakutenLooseKeyword(keyword), opts: { field: "0", availability: "0" } }
-  ];
+async function fetchRakutenItems(keyword, ngKeyword, sort, hits, target) {
+  rakutenLastDebug = [];
+  var variants = [];
+  rakutenKeywordCandidates(keyword, target).forEach(function(candidate) {
+    variants.push({ keyword: candidate, opts: { field: "1", availability: "1" } });
+    variants.push({ keyword: candidate, opts: { field: "0", availability: "1" } });
+    variants.push({ keyword: candidate, opts: { field: "0", availability: "0" } });
+  });
   var tried = {};
   var lastErr = null;
   for (var i=0; i<variants.length; i++) {
@@ -2341,8 +2374,10 @@ async function fetchRakutenItems(keyword, ngKeyword, sort, hits) {
     tried[v.keyword + "|" + v.opts.field + "|" + v.opts.availability] = true;
     try {
       var items = await fetchRakutenItemsOnce(v.keyword, ngKeyword, sort, hits, v.opts);
+      rakutenLastDebug.push({ keyword: v.keyword, field: v.opts.field, availability: v.opts.availability, count: items.length });
       if (items.length > 0 || i === variants.length - 1) return items;
     } catch(e) {
+      rakutenLastDebug.push({ keyword: v.keyword, field: v.opts.field, availability: v.opts.availability, count: 0, error: e.message || String(e) });
       if ((e.message || "").indexOf("not found") >= 0) {
         lastErr = e;
         continue;
@@ -2408,7 +2443,7 @@ async function searchRakutenPrices() {
   document.getElementById("rakuten-summary").innerHTML = "";
 
   try {
-    rakutenLastItems = await fetchRakutenItems(keyword, ngKeyword, sort, hits);
+    rakutenLastItems = await fetchRakutenItems(keyword, ngKeyword, sort, hits, rakutenActiveTarget);
     await saveRakutenSurvey(rakutenActiveTarget, rakutenLastItems, keyword, ngKeyword, sort);
     renderRakutenResults(rakutenLastItems, keyword);
     setRakutenStatus(t("rakuten_saved_result"), false);
@@ -2432,7 +2467,7 @@ async function runRakutenBulkSurvey() {
     if (!target.search_number) continue;
     setRakutenStatus(tf("rakuten_bulk_running", { done: i + 1, total: rakutenTargets.length }), false);
     try {
-      var items = await fetchRakutenItems(target.search_number, ngKeyword, sort, hits);
+      var items = await fetchRakutenItems(target.search_number, ngKeyword, sort, hits, target);
       await saveRakutenSurvey(target, items, target.search_number, ngKeyword, sort);
       saved++;
       if (i === 0) renderRakutenResults(items, target.search_number);
@@ -2449,7 +2484,15 @@ function renderRakutenResults(items, keyword) {
   var summaryEl = document.getElementById("rakuten-summary");
   if (!items || items.length === 0) {
     summaryEl.innerHTML = "";
-    resultEl.innerHTML = "<div class='empty'>" + t("rakuten_no_results") + "</div>";
+    var debugRows = rakutenLastDebug.map(function(row) {
+      var label = esc(row.keyword) + " / field=" + esc(row.field) + " / availability=" + esc(row.availability) + " / " + esc(row.error || (row.count + "件"));
+      return "<li>" + label + " <a href='" + esc(rakutenMallSearchUrl(row.keyword)) + "' target='_blank' rel='noopener'>" + t("rakuten_open_mall_search") + "</a></li>";
+    }).join("");
+    resultEl.innerHTML =
+      "<div class='rakuten-debug'><strong>" + t("rakuten_no_results") + "</strong><br>" +
+      esc(t("rakuten_no_results_debug")) +
+      (debugRows ? "<div style='margin-top:6px'><strong>" + t("rakuten_tried_keywords") + "</strong><ul style='margin:4px 0 0 18px;padding:0'>" + debugRows + "</ul></div>" : "") +
+      "</div>";
     return;
   }
   var prices = items.map(function(item) { return Number(item.itemPrice || 0); }).filter(function(v) { return v > 0; });
