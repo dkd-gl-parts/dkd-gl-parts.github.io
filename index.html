@@ -483,7 +483,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.5</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.6</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1155,6 +1155,7 @@ var TRANSLATIONS = {
     rakuten_test_keys: "API接続テスト",
     rakuten_test_ok: "楽天API接続OKです",
     rakuten_test_failed: "楽天API接続テストに失敗しました",
+    rakuten_bulk_preflight_failed: "楽天API接続テストに失敗したため、一括調査を中断しました: {error}",
     rakuten_key_note: "API設定はこの端末のブラウザに保存されます。",
     rakuten_empty: "キーワードを入力して楽天価格を調査してください",
     rakuten_missing_key: "applicationId と accessKey を入力してください",
@@ -1392,6 +1393,7 @@ var TRANSLATIONS = {
     rakuten_test_keys: "Test API Connection",
     rakuten_test_ok: "Rakuten API connection is OK",
     rakuten_test_failed: "Rakuten API connection test failed",
+    rakuten_bulk_preflight_failed: "Bulk survey stopped because the Rakuten API connection test failed: {error}",
     rakuten_key_note: "API settings are saved in this browser on this device.",
     rakuten_empty: "Enter a keyword to check Rakuten prices",
     rakuten_missing_key: "Enter applicationId and accessKey",
@@ -1629,6 +1631,7 @@ var TRANSLATIONS = {
     rakuten_test_keys: "API连接测试",
     rakuten_test_ok: "乐天API连接正常",
     rakuten_test_failed: "乐天API连接测试失败",
+    rakuten_bulk_preflight_failed: "乐天API连接测试失败，已中断批量调查: {error}",
     rakuten_key_note: "API设置会保存在此设备的浏览器中。",
     rakuten_empty: "请输入关键词调查乐天价格",
     rakuten_missing_key: "请输入 applicationId 和 accessKey",
@@ -1690,7 +1693,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.5";
+var APP_VERSION       = "v1.1.6";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
@@ -2406,13 +2409,17 @@ async function fetchRakutenItems(keyword, ngKeyword, sort, hits, target) {
   return [];
 }
 
+async function validateRakutenApiConnection() {
+  return fetchRakutenItemsOnce("福袋", "", "", "", { minimal: true });
+}
+
 async function testRakutenApiKeys() {
   var appId = document.getElementById("rakuten-app-id").value.trim();
   var accessKey = document.getElementById("rakuten-access-key").value.trim();
   if (!appId || !accessKey) { setRakutenStatus(t("rakuten_missing_key"), true); return; }
   setRakutenStatus(t("rakuten_searching"), false);
   try {
-    var items = await fetchRakutenItemsOnce("福袋", "", "", "", { minimal: true });
+    var items = await validateRakutenApiConnection();
     setRakutenStatus(t("rakuten_test_ok") + " (" + items.length + "件)", false);
   } catch(e) {
     setRakutenStatus(t("rakuten_test_failed") + ": " + (e.message || e), true);
@@ -2491,6 +2498,13 @@ async function runRakutenBulkSurvey() {
   var appId = document.getElementById("rakuten-app-id").value.trim();
   var accessKey = document.getElementById("rakuten-access-key").value.trim();
   if (!appId || !accessKey) { setRakutenStatus(t("rakuten_missing_key"), true); return; }
+  try {
+    setRakutenStatus(t("rakuten_searching"), false);
+    await validateRakutenApiConnection();
+  } catch(e) {
+    setRakutenStatus(tf("rakuten_bulk_preflight_failed", { error: e.message || e }), true);
+    return;
+  }
   var saved = 0;
   var failed = 0;
   var firstError = "";
