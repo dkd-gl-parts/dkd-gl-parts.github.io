@@ -484,7 +484,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.10</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.11</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1186,6 +1186,7 @@ var TRANSLATIONS = {
     rakuten_loaded_targets: "{n} 件を読み込みました",
     rakuten_bulk_done: "{n} 件の調査を保存しました",
     rakuten_bulk_failed: "{saved} 件保存、{failed} 件失敗しました: {error}",
+    rakuten_bulk_rate_limited: "{saved} 件保存しました。楽天APIの制限に達したため、{remaining} 件を残して停止しました: {error}",
     rakuten_bulk_running: "{done}/{total} 件 調査中...",
     rakuten_saved_result: "調査結果を保存しました",
     rakuten_list_search_ph: "商品ID・品番で検索",
@@ -1425,6 +1426,7 @@ var TRANSLATIONS = {
     rakuten_loaded_targets: "Loaded {n} targets",
     rakuten_bulk_done: "Saved {n} survey results",
     rakuten_bulk_failed: "Saved {saved}, failed {failed}: {error}",
+    rakuten_bulk_rate_limited: "Saved {saved}. Stopped with {remaining} remaining because the Rakuten API rate limit was reached: {error}",
     rakuten_bulk_running: "Surveying {done}/{total}...",
     rakuten_saved_result: "Saved survey result",
     rakuten_list_search_ph: "Search by product ID or part number",
@@ -1664,6 +1666,7 @@ var TRANSLATIONS = {
     rakuten_loaded_targets: "已读取 {n} 件",
     rakuten_bulk_done: "已保存 {n} 件调查结果",
     rakuten_bulk_failed: "已保存 {saved} 件，失败 {failed} 件: {error}",
+    rakuten_bulk_rate_limited: "已保存 {saved} 件。因达到乐天API限制，剩余 {remaining} 件已停止: {error}",
     rakuten_bulk_running: "调查中 {done}/{total}...",
     rakuten_saved_result: "调查结果已保存",
     rakuten_list_search_ph: "按商品ID或品号搜索",
@@ -1698,7 +1701,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.10";
+var APP_VERSION       = "v1.1.11";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
@@ -2330,6 +2333,7 @@ async function rakutenFetchJson(url) {
       (data && data.error_description) ||
       (data && data.error) ||
       ("HTTP " + res.status);
+    if (res.status === 429 && msg.indexOf("429") < 0) msg = "HTTP 429: " + msg;
     throw new Error(msg);
   }
   return data;
@@ -2372,8 +2376,20 @@ function rakutenMallSearchUrl(keyword) {
   return "https://search.rakuten.co.jp/search/mall/" + encodeURIComponent(keyword) + "/";
 }
 
+function sleep(ms) {
+  return new Promise(function(resolve) { setTimeout(resolve, ms); });
+}
+
+function isRakutenRateLimitError(err) {
+  var msg = err && err.message ? err.message : String(err || "");
+  return msg.indexOf("429") >= 0 || msg.indexOf("too_many_requests") >= 0;
+}
+
 function rakutenFriendlyError(err) {
   var msg = err && err.message ? err.message : String(err || "");
+  if (isRakutenRateLimitError(err)) {
+    return "HTTP 429: 楽天APIのリクエスト制限に達しました。しばらく待ってから、件数を減らして再実行してください。";
+  }
   if (msg.indexOf("HTTP_REFERRER_NOT_ALLOWED") >= 0) {
     return "HTTP_REFERRER_NOT_ALLOWED: 楽天Web Serviceのアプリ設定で「許可されたWebサイト」に " + location.origin + " を登録してください。";
   }
@@ -2429,6 +2445,8 @@ function openRakutenDiagnosticUrl() {
 }
 
 async function fetchRakutenItemsOnce(keyword, ngKeyword, sort, hits, opts) {
+  opts = opts || {};
+  if (opts.throttleMs) await sleep(opts.throttleMs);
   var data = await rakutenFetchJson(buildRakutenApiUrl(keyword, ngKeyword, sort, hits, opts));
   if (data && data.error) throw new Error(data.error_description || data.error);
   if (data && data.errors) throw new Error(data.errors.errorMessage || JSON.stringify(data.errors));
@@ -2437,14 +2455,22 @@ async function fetchRakutenItemsOnce(keyword, ngKeyword, sort, hits, opts) {
   });
 }
 
-async function fetchRakutenItems(keyword, ngKeyword, sort, hits, target) {
+async function fetchRakutenItems(keyword, ngKeyword, sort, hits, target, config) {
+  config = config || {};
   rakutenLastDebug = [];
   var variants = [];
-  rakutenKeywordCandidates(keyword, target).forEach(function(candidate) {
-    variants.push({ keyword: candidate, opts: { field: "1", availability: "1" } });
-    variants.push({ keyword: candidate, opts: { field: "0", availability: "1" } });
-    variants.push({ keyword: candidate, opts: { field: "0", availability: "0" } });
-  });
+  if (config.bulk) {
+    var primary = String(keyword || "").trim();
+    var loosePrimary = rakutenLooseKeyword(primary);
+    variants.push({ keyword: primary, opts: { field: "0", availability: "0", throttleMs: 1200 } });
+    if (loosePrimary && loosePrimary !== primary) variants.push({ keyword: loosePrimary, opts: { field: "0", availability: "0", throttleMs: 1200 } });
+  } else {
+    rakutenKeywordCandidates(keyword, target).forEach(function(candidate) {
+      variants.push({ keyword: candidate, opts: { field: "1", availability: "1", throttleMs: 500 } });
+      variants.push({ keyword: candidate, opts: { field: "0", availability: "1", throttleMs: 500 } });
+      variants.push({ keyword: candidate, opts: { field: "0", availability: "0", throttleMs: 500 } });
+    });
+  }
   var tried = {};
   var lastErr = null;
   for (var i=0; i<variants.length; i++) {
@@ -2457,6 +2483,7 @@ async function fetchRakutenItems(keyword, ngKeyword, sort, hits, target) {
       if (items.length > 0 || i === variants.length - 1) return items;
     } catch(e) {
       rakutenLastDebug.push({ keyword: v.keyword, field: v.opts.field, availability: v.opts.availability, count: 0, error: e.message || String(e) });
+      if (isRakutenRateLimitError(e)) throw e;
       if ((e.message || "").indexOf("not found") >= 0) {
         lastErr = e;
         continue;
@@ -2567,22 +2594,29 @@ async function runRakutenBulkSurvey() {
   var saved = 0;
   var failed = 0;
   var firstError = "";
+  var stoppedByRateLimit = false;
   for (var i=0; i<rakutenTargets.length; i++) {
     var target = rakutenTargets[i];
     if (!target.search_number) continue;
     setRakutenStatus(tf("rakuten_bulk_running", { done: i + 1, total: rakutenTargets.length }), false);
     try {
-      var items = await fetchRakutenItems(target.search_number, ngKeyword, sort, hits, target);
+      var items = await fetchRakutenItems(target.search_number, ngKeyword, sort, hits, target, { bulk: true });
       await saveRakutenSurvey(target, items, target.search_number, ngKeyword, sort);
       saved++;
       if (i === 0) renderRakutenResults(items, target.search_number);
     } catch(e) {
       console.warn("rakuten bulk item failed", target.search_number, e);
+      if (isRakutenRateLimitError(e)) {
+        firstError = target.search_number + ": " + rakutenFriendlyError(e);
+        stoppedByRateLimit = true;
+        break;
+      }
       failed++;
       if (!firstError) firstError = target.search_number + ": " + rakutenFriendlyError(e);
     }
   }
-  if (failed) setRakutenStatus(tf("rakuten_bulk_failed", { saved: saved, failed: failed, error: firstError }), true);
+  if (stoppedByRateLimit) setRakutenStatus(tf("rakuten_bulk_rate_limited", { saved: saved, remaining: Math.max(rakutenTargets.length - saved - failed, 0), error: firstError }), true);
+  else if (failed) setRakutenStatus(tf("rakuten_bulk_failed", { saved: saved, failed: failed, error: firstError }), true);
   else setRakutenStatus(tf("rakuten_bulk_done", { n: saved }), false);
   loadRakutenPriceList();
 }
