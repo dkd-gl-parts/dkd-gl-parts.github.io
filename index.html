@@ -491,7 +491,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.21</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.22</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -814,7 +814,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     </div>
   </div>
   <div class="rakuten-price-body">
-    <div class="rakuten-card">
+    <div class="rakuten-card" id="rakuten-api-settings-card">
       <h3 data-i18n="rakuten_search_conditions">検索条件</h3>
       <div class="rakuten-grid">
         <div class="rakuten-field">
@@ -1822,7 +1822,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.21";
+var APP_VERSION       = "v1.1.22";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
@@ -2252,6 +2252,8 @@ async function getRakutenKeys() {
 
 async function loadRakutenKeyFields() {
   var keys = await getRakutenKeys();
+  var settingsCard = document.getElementById("rakuten-api-settings-card");
+  if (settingsCard) settingsCard.style.display = canManageSharedSettings() ? "" : "none";
   var appEl = document.getElementById("rakuten-app-id");
   var keyEl = document.getElementById("rakuten-access-key");
   if (appEl) appEl.value = keys.appId;
