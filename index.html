@@ -491,7 +491,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.19</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.20</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1161,6 +1161,8 @@ var TRANSLATIONS = {
     lbl_current_password: "現在のパスワード",
     change_pw_success: "パスワードを変更しました。",
     change_pw_error: "パスワードの変更に失敗しました。",
+    change_pw_current_error: "現在のパスワードが正しくありません。",
+    change_pw_no_email: "ログイン中のメールアドレスを確認できません。",
     reg_title: "アカウント申請",
     reg_desc: "管理者が確認後、アクセスが許可されます。",
     lbl_name: "お名前",
@@ -1423,6 +1425,8 @@ var TRANSLATIONS = {
     lbl_current_password: "Current Password",
     change_pw_success: "Password changed successfully.",
     change_pw_error: "Failed to change password.",
+    change_pw_current_error: "The current password is incorrect.",
+    change_pw_no_email: "Could not confirm the signed-in email address.",
     reg_title: "Account Registration Request",
     reg_desc: "Access will be granted after admin review.",
     lbl_name: "Full Name",
@@ -1685,6 +1689,8 @@ var TRANSLATIONS = {
     lbl_current_password: "当前密码",
     change_pw_success: "密码修改成功。",
     change_pw_error: "密码修改失败。",
+    change_pw_current_error: "当前密码不正确。",
+    change_pw_no_email: "无法确认当前登录邮箱。",
     reg_title: "账号申请",
     reg_desc: "管理员审核后将授予访问权限。",
     lbl_name: "姓名",
@@ -1810,7 +1816,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.19";
+var APP_VERSION       = "v1.1.20";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
@@ -4083,14 +4089,23 @@ async function doChangePassword() {
   var confirm = document.getElementById("new-password-confirm").value;
   var errorEl = document.getElementById("change-pw-error");
   var btnEl   = document.getElementById("btn-change-pw");
+  var email   = (currentUser && currentUser.email) || (userProfile && userProfile.email) || "";
   errorEl.textContent = "";
+  if (!email) { errorEl.textContent = t("change_pw_no_email"); return; }
   if (!currentPw) { errorEl.textContent = t("lbl_current_password") + "を入力してください"; return; }
   if (newPw.length < 8)   { errorEl.textContent = t("err_pass_short");    return; }
   if (newPw !== confirm)   { errorEl.textContent = t("err_pass_mismatch"); return; }
   btnEl.disabled = true; btnEl.textContent = t("loading");
-  var r = await sb.auth.updateUser({ password: newPw, currentPassword: currentPw });
+  var verify = await sb.auth.signInWithPassword({ email: email, password: currentPw });
+  if (verify.error) {
+    btnEl.disabled = false; btnEl.textContent = t("btn_change_password");
+    errorEl.textContent = t("change_pw_current_error");
+    return;
+  }
+  var r = await sb.auth.updateUser({ password: newPw });
   btnEl.disabled = false; btnEl.textContent = t("btn_change_password");
   if (r.error) { errorEl.textContent = t("change_pw_error") + ": " + r.error.message; return; }
+  currentUser = (r.data && r.data.user) || currentUser;
   document.getElementById("change-pw-form").style.display    = "none";
   document.getElementById("change-pw-success").style.display = "block";
   setTimeout(function() { showScreen("menu"); }, 2500);
