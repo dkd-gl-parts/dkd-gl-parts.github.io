@@ -484,7 +484,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.14</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.15</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1721,7 +1721,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.14";
+var APP_VERSION       = "v1.1.15";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
@@ -2648,6 +2648,14 @@ function rakutenConditionSummaries(items) {
   }).filter(function(summary) { return summary.count > 0; });
 }
 
+function rakutenConditionSummaryMap(items) {
+  var map = { rebuilt: { count: 0, min: null, avg: null, max: null }, new: { count: 0, min: null, avg: null, max: null }, other: { count: 0, min: null, avg: null, max: null } };
+  rakutenConditionSummaries(items).forEach(function(summary) {
+    map[summary.condition] = summary;
+  });
+  return map;
+}
+
 async function saveRakutenSurvey(target, items, keyword, ngKeyword, sort) {
   target = target || {};
   items = enrichRakutenItems(items);
@@ -2815,7 +2823,7 @@ async function loadRakutenPriceList() {
   var q = (document.getElementById("rakuten-list-search") || {}).value || "";
   q = q.trim();
   var query = sb.from("rakuten_price_surveys")
-    .select("id, part_id, dkd_shohin_id, genuine_part_number, manufacturer_part_number, manufacturer, category, search_number, source_type, result_count, min_price_jpy, avg_price_jpy, max_price_jpy, searched_at")
+    .select("id, part_id, dkd_shohin_id, genuine_part_number, manufacturer_part_number, manufacturer, category, search_number, source_type, result_count, min_price_jpy, avg_price_jpy, max_price_jpy, items, searched_at")
     .order("searched_at", { ascending: false })
     .limit(200);
   if (q) {
@@ -2838,16 +2846,23 @@ function renderRakutenPriceList(rows) {
     return;
   }
   var html = "<table class='mgmt-table'>";
-  html += "<tr><th>商品ID</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("rakuten_count") + "</th><th>" + t("rakuten_min") + "</th><th>" + t("rakuten_avg") + "</th><th>" + t("rakuten_max") + "</th><th>" + t("rakuten_latest") + "</th></tr>";
+  html += "<tr><th>商品ID</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("rakuten_count") + "</th><th>" + t("rakuten_condition_rebuilt") + "</th><th>" + t("rakuten_condition_new") + "</th><th>" + t("rakuten_condition_other") + "</th><th>" + t("rakuten_min") + "</th><th>" + t("rakuten_avg") + "</th><th>" + t("rakuten_latest") + "</th></tr>";
   rows.forEach(function(r) {
+    var conditionMap = rakutenConditionSummaryMap(r.items || []);
+    function conditionCell(summary) {
+      if (!summary || !summary.count) return "<span class='muted'>-</span>";
+      return "<div class='price-value'>" + yen(summary.min) + "</div><div class='mgmt-sub'>" + summary.count + "件 / 平均 " + yen(summary.avg) + "</div>";
+    }
     html += "<tr>";
     html += "<td><div class='mgmt-pn'>" + esc(String(r.dkd_shohin_id || "-")) + "</div><div class='mgmt-sub'>" + esc(r.source_type || "-") + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(r.manufacturer_part_number || r.search_number || "-") + "</div><div class='mgmt-sub'>" + esc(r.manufacturer || "") + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(r.genuine_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(tCat(r.category) || "") + "</div></td>";
     html += "<td>" + esc(String(r.result_count || 0)) + "</td>";
+    html += "<td>" + conditionCell(conditionMap.rebuilt) + "</td>";
+    html += "<td>" + conditionCell(conditionMap.new) + "</td>";
+    html += "<td>" + conditionCell(conditionMap.other) + "</td>";
     html += "<td><div class='price-value'>" + yen(r.min_price_jpy) + "</div></td>";
     html += "<td><div class='price-value'>" + yen(r.avg_price_jpy) + "</div></td>";
-    html += "<td><div class='price-value'>" + yen(r.max_price_jpy) + "</div></td>";
     html += "<td style='white-space:nowrap'>" + esc(new Date(r.searched_at).toLocaleString("ja-JP")) + "</td>";
     html += "</tr>";
   });
