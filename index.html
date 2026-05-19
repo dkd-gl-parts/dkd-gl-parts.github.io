@@ -483,7 +483,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.3</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.4</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1690,7 +1690,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.3";
+var APP_VERSION       = "v1.1.4";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
@@ -2356,8 +2356,7 @@ function buildRakutenApiUrl(keyword, ngKeyword, sort, hits, opts) {
     ["sort", sort],
     ["availability", opts.availability != null ? opts.availability : "1"],
     ["field", opts.field != null ? opts.field : "1"],
-    ["orFlag", opts.orFlag || ""],
-    ["elements", "itemName,itemPrice,itemUrl,shopName,shopUrl,mediumImageUrls,smallImageUrls,reviewCount,reviewAverage,postageFlag,taxFlag,availability"]
+    ["orFlag", opts.orFlag || ""]
   ].filter(function(p) { return p[1] !== ""; });
   return "https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260401?" +
     params.map(function(p) { return encodeURIComponent(p[0]) + "=" + encodeURIComponent(p[1]); }).join("&");
