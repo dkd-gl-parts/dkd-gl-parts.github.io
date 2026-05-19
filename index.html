@@ -315,9 +315,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 /* =============================================
    ユーザー管理画面
 ============================================= */
-.users-body { flex: 1; padding: 20px 16px; max-width: 800px; width: 100%; margin: 0 auto; overflow-y: auto; }
+.users-body { flex: 1; padding: 20px 16px; max-width: 1100px; width: 100%; margin: 0 auto; overflow-y: auto; }
 .users-body h2 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
 .users-desc { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.6; }
+.permission-table-wrap { overflow-x: auto; margin: 12px 0 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; }
+.permission-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 760px; }
+.permission-table th { background: #f5f7fa; color: #555; font-weight: 700; padding: 8px 10px; text-align: left; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
+.permission-table td { padding: 8px 10px; border-bottom: 1px solid #edf0f3; color: #333; vertical-align: top; }
+.permission-table tr:last-child td { border-bottom: none; }
+.permission-ok { color: #157f3b; font-weight: 700; }
+.permission-no { color: #aaa; }
 .user-card     { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
 .user-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .user-avatar   { width: 38px; height: 38px; border-radius: 50%; background: #4f8ef7; color: #fff; font-weight: 700; font-size: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -484,7 +491,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.16</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.17</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -608,6 +615,37 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   <div class="users-body">
     <h2 data-i18n="users_heading">ユーザー一覧</h2>
     <p class="users-desc" data-i18n="users_desc">表示名とロールを設定して保存してください。</p>
+    <div class="permission-table-wrap">
+      <table class="permission-table">
+        <tr>
+          <th data-i18n="perm_group">グループ</th>
+          <th data-i18n="perm_role">ロール</th>
+          <th data-i18n="perm_products">商品閲覧</th>
+          <th data-i18n="perm_purchase">仕入価格</th>
+          <th data-i18n="perm_sales">販売価格</th>
+          <th data-i18n="perm_edit">追加・修正</th>
+          <th data-i18n="perm_users">ユーザー管理</th>
+        </tr>
+        <tr>
+          <td>daiko</td><td>admin</td><td data-i18n="perm_all_products">全商品</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td data-i18n="perm_all_users">全グループ</td>
+        </tr>
+        <tr>
+          <td>daiko</td><td>editor</td><td data-i18n="perm_all_products">全商品</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-no">-</td>
+        </tr>
+        <tr>
+          <td>daiko</td><td>price_viewer</td><td data-i18n="perm_all_products">全商品</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-no">-</td><td class="permission-no">-</td>
+        </tr>
+        <tr>
+          <td>daiko</td><td>viewer</td><td data-i18n="perm_all_products">全商品</td><td class="permission-no">-</td><td class="permission-ok">○</td><td class="permission-no">-</td><td class="permission-no">-</td>
+        </tr>
+        <tr>
+          <td>gltek</td><td data-i18n="perm_all_roles">全ロール</td><td data-i18n="perm_sl_products">SL品番あり商品</td><td class="permission-ok">○</td><td data-i18n="perm_role_limited">admin/editor/price_viewer</td><td data-i18n="perm_role_edit">admin/editor</td><td data-i18n="perm_admin_own_group">adminは自グループのみ</td>
+        </tr>
+        <tr>
+          <td>public</td><td data-i18n="perm_all_roles">全ロール</td><td data-i18n="perm_sl_products">SL品番あり商品</td><td class="permission-no">-</td><td data-i18n="perm_role_limited">admin/editor/price_viewer</td><td data-i18n="perm_role_edit">admin/editor</td><td data-i18n="perm_admin_own_group">adminは自グループのみ</td>
+        </tr>
+      </table>
+    </div>
     <div id="users-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
   </div>
 </div>
@@ -1030,6 +1068,20 @@ var TRANSLATIONS = {
     screen_users_title: "ユーザー管理",
     users_heading: "ユーザー一覧",
     users_desc: "表示名とロールを設定して「保存」をクリックしてください。ロールは「閲覧者」→「編集者」→「管理者」の順に権限が強くなります。",
+    perm_group: "グループ",
+    perm_role: "ロール",
+    perm_products: "商品閲覧",
+    perm_purchase: "仕入価格",
+    perm_sales: "販売価格",
+    perm_edit: "追加・修正",
+    perm_users: "ユーザー管理",
+    perm_all_products: "全商品",
+    perm_sl_products: "SL品番あり商品",
+    perm_all_users: "全グループ",
+    perm_all_roles: "全ロール",
+    perm_role_limited: "admin/editor/price_viewer",
+    perm_role_edit: "admin/editor",
+    perm_admin_own_group: "adminは自グループのみ",
     lbl_display_name: "表示名",
     ph_display_name: "表示名（任意）",
     lbl_registered: "登録:",
@@ -1276,6 +1328,20 @@ var TRANSLATIONS = {
     screen_users_title: "User Management",
     users_heading: "User List",
     users_desc: "Set display names and roles, then click Save. Viewer → Editor → Admin (increasing access level).",
+    perm_group: "Group",
+    perm_role: "Role",
+    perm_products: "Product View",
+    perm_purchase: "Purchase Price",
+    perm_sales: "Sales Price",
+    perm_edit: "Add/Edit",
+    perm_users: "User Management",
+    perm_all_products: "All products",
+    perm_sl_products: "Products with SL numbers",
+    perm_all_users: "All groups",
+    perm_all_roles: "All roles",
+    perm_role_limited: "admin/editor/price_viewer",
+    perm_role_edit: "admin/editor",
+    perm_admin_own_group: "Admin: own group only",
     lbl_display_name: "Display Name",
     ph_display_name: "Display name (optional)",
     lbl_registered: "Registered:",
@@ -1522,6 +1588,20 @@ var TRANSLATIONS = {
     screen_users_title: "用户管理",
     users_heading: "用户列表",
     users_desc: "设置显示名称和角色后点击【保存】。浏览者→编辑者→管理员（权限依次提升）。",
+    perm_group: "组",
+    perm_role: "角色",
+    perm_products: "商品查看",
+    perm_purchase: "进货价格",
+    perm_sales: "销售价格",
+    perm_edit: "新增/修改",
+    perm_users: "用户管理",
+    perm_all_products: "全部商品",
+    perm_sl_products: "有SL品号的商品",
+    perm_all_users: "全部组",
+    perm_all_roles: "全部角色",
+    perm_role_limited: "admin/editor/price_viewer",
+    perm_role_edit: "admin/editor",
+    perm_admin_own_group: "admin仅限本组",
     lbl_display_name: "显示名称",
     ph_display_name: "显示名称（可选）",
     lbl_registered: "注册时间:",
@@ -1724,7 +1804,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.16";
+var APP_VERSION       = "v1.1.17";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
