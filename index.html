@@ -484,7 +484,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.13</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.14</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1173,6 +1173,9 @@ var TRANSLATIONS = {
     rakuten_open_mall_search: "楽天市場で検索",
     rakuten_error: "楽天APIの取得に失敗しました",
     rakuten_count: "件数",
+    rakuten_condition_rebuilt: "リビルト",
+    rakuten_condition_new: "新品",
+    rakuten_condition_other: "その他",
     rakuten_min: "最安値",
     rakuten_avg: "平均",
     rakuten_max: "最高値",
@@ -1416,6 +1419,9 @@ var TRANSLATIONS = {
     rakuten_open_mall_search: "Search Rakuten Ichiba",
     rakuten_error: "Failed to fetch Rakuten API",
     rakuten_count: "Items",
+    rakuten_condition_rebuilt: "Rebuilt",
+    rakuten_condition_new: "New",
+    rakuten_condition_other: "Other",
     rakuten_min: "Lowest",
     rakuten_avg: "Average",
     rakuten_max: "Highest",
@@ -1659,6 +1665,9 @@ var TRANSLATIONS = {
     rakuten_open_mall_search: "在乐天市场搜索",
     rakuten_error: "乐天API获取失败",
     rakuten_count: "件数",
+    rakuten_condition_rebuilt: "翻新",
+    rakuten_condition_new: "新品",
+    rakuten_condition_other: "其他",
     rakuten_min: "最低价",
     rakuten_avg: "平均",
     rakuten_max: "最高价",
@@ -1712,7 +1721,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.13";
+var APP_VERSION       = "v1.1.14";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
@@ -2431,6 +2440,30 @@ function getRakutenImage(item) {
   return typeof first === "string" ? first : (first.imageUrl || "");
 }
 
+function normalizeRakutenCondition(item) {
+  var text = [
+    item.itemName,
+    item.itemCaption,
+    item.catchcopy
+  ].join(" ");
+  if (text.indexOf("\u30ea\u30d3\u30eb\u30c8") >= 0 || text.indexOf("\u30ea\u30d3\u30eb\u30c9") >= 0 || /rebuilt|remanufactured|reman/i.test(text)) return "rebuilt";
+  if (text.indexOf("\u65b0\u54c1") >= 0 || /new/i.test(text)) return "new";
+  return "other";
+}
+
+function rakutenConditionLabel(condition) {
+  if (condition === "rebuilt") return t("rakuten_condition_rebuilt");
+  if (condition === "new") return t("rakuten_condition_new");
+  return t("rakuten_condition_other");
+}
+
+function enrichRakutenItems(items) {
+  return (items || []).map(function(item) {
+    item.condition = item.condition || normalizeRakutenCondition(item);
+    return item;
+  });
+}
+
 function rakutenLooseKeyword(keyword) {
   return String(keyword || "").replace(/[-\s_]/g, "");
 }
@@ -2530,9 +2563,9 @@ async function fetchRakutenItemsOnce(keyword, ngKeyword, sort, hits, opts) {
   var data = await rakutenFetchJson(buildRakutenApiUrl(keyword, ngKeyword, sort, hits, opts));
   if (data && data.error) throw new Error(data.error_description || data.error);
   if (data && data.errors) throw new Error(data.errors.errorMessage || JSON.stringify(data.errors));
-  return ((data && data.Items) || (data && data.items) || []).map(function(row) {
+  return enrichRakutenItems(((data && data.Items) || (data && data.items) || []).map(function(row) {
     return row && row.Item ? row.Item : row;
-  });
+  }));
 }
 
 async function fetchRakutenItems(keyword, ngKeyword, sort, hits, target, config) {
@@ -2603,8 +2636,21 @@ function summarizeRakutenPrices(items) {
   };
 }
 
+function rakutenConditionSummaries(items) {
+  var groups = { rebuilt: [], new: [], other: [] };
+  enrichRakutenItems(items).forEach(function(item) {
+    groups[item.condition || "other"].push(item);
+  });
+  return ["rebuilt", "new", "other"].map(function(key) {
+    var summary = summarizeRakutenPrices(groups[key]);
+    summary.condition = key;
+    return summary;
+  }).filter(function(summary) { return summary.count > 0; });
+}
+
 async function saveRakutenSurvey(target, items, keyword, ngKeyword, sort) {
   target = target || {};
+  items = enrichRakutenItems(items);
   var summary = summarizeRakutenPrices(items);
   var payload = {
     part_id: target.part_id || null,
@@ -2725,16 +2771,21 @@ function renderRakutenResults(items, keyword) {
   var min = prices.length ? Math.min.apply(Math, prices) : null;
   var max = prices.length ? Math.max.apply(Math, prices) : null;
   var avg = prices.length ? prices.reduce(function(a,b) { return a + b; }, 0) / prices.length : null;
+  var conditionHtml = rakutenConditionSummaries(items).map(function(s) {
+    return "<div class='rakuten-stat'><div class='rakuten-stat-label'>" + esc(rakutenConditionLabel(s.condition)) + " / " + t("rakuten_count") + " " + s.count + "</div><div class='rakuten-stat-value'>" + yen(s.min) + "</div><div class='rakuten-note'>" + t("rakuten_avg") + " " + yen(s.avg) + " / " + t("rakuten_max") + " " + yen(s.max) + "</div></div>";
+  }).join("");
   summaryEl.innerHTML =
     "<div class='rakuten-stat'><div class='rakuten-stat-label'>" + t("rakuten_count") + "</div><div class='rakuten-stat-value'>" + items.length + "</div></div>" +
     "<div class='rakuten-stat'><div class='rakuten-stat-label'>" + t("rakuten_min") + "</div><div class='rakuten-stat-value'>" + yen(min) + "</div></div>" +
     "<div class='rakuten-stat'><div class='rakuten-stat-label'>" + t("rakuten_avg") + "</div><div class='rakuten-stat-value'>" + yen(avg == null ? null : Math.round(avg)) + "</div></div>" +
-    "<div class='rakuten-stat'><div class='rakuten-stat-label'>" + t("rakuten_max") + "</div><div class='rakuten-stat-value'>" + yen(max) + "</div></div>";
+    "<div class='rakuten-stat'><div class='rakuten-stat-label'>" + t("rakuten_max") + "</div><div class='rakuten-stat-value'>" + yen(max) + "</div></div>" +
+    conditionHtml;
 
   var html = "<div class='rakuten-results'>";
-  items.forEach(function(item) {
+  enrichRakutenItems(items).forEach(function(item) {
     var img = getRakutenImage(item);
     var meta = [];
+    meta.push(rakutenConditionLabel(item.condition));
     meta.push(item.postageFlag === 0 ? "送料込" : "送料別");
     meta.push(item.taxFlag === 0 ? "税込" : "税別");
     if (item.reviewCount != null) meta.push("レビュー " + item.reviewCount);
