@@ -484,7 +484,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.9</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.10</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1698,7 +1698,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.9";
+var APP_VERSION       = "v1.1.10";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
@@ -2372,6 +2372,23 @@ function rakutenMallSearchUrl(keyword) {
   return "https://search.rakuten.co.jp/search/mall/" + encodeURIComponent(keyword) + "/";
 }
 
+function rakutenFriendlyError(err) {
+  var msg = err && err.message ? err.message : String(err || "");
+  if (msg.indexOf("HTTP_REFERRER_NOT_ALLOWED") >= 0) {
+    return "HTTP_REFERRER_NOT_ALLOWED: 楽天Web Serviceのアプリ設定で「許可されたWebサイト」に " + location.origin + " を登録してください。";
+  }
+  if (msg.indexOf("REQUEST_CONTEXT_BODY_HTTP_REFERRER_MISSING") >= 0) {
+    return "REQUEST_CONTEXT_BODY_HTTP_REFERRER_MISSING: 楽天APIに呼び出し元サイト情報が届いていません。D-CATSを通常の画面から開き直してください。";
+  }
+  if (msg.indexOf("Invalid Access Key") >= 0) {
+    return "Invalid Access Key: accessKeyが違います。楽天Web Serviceのアプリ設定から新しいアクセスキーを確認してください。";
+  }
+  if (msg.indexOf("REQUESTED_SCOPES_NOT_ALLOWED") >= 0) {
+    return "REQUESTED_SCOPES_NOT_ALLOWED: 楽天Web Serviceのアプリ設定でAPIアクセススコープに楽天市場APIを許可してください。";
+  }
+  return msg;
+}
+
 function buildRakutenApiUrl(keyword, ngKeyword, sort, hits, opts) {
   opts = opts || {};
   var appId = document.getElementById("rakuten-app-id").value.trim();
@@ -2464,7 +2481,7 @@ async function testRakutenApiKeys() {
     var items = await validateRakutenApiConnection();
     setRakutenStatus(t("rakuten_test_ok") + " (" + items.length + "件)", false);
   } catch(e) {
-    setRakutenStatus(t("rakuten_test_failed") + ": " + (e.message || e), true);
+    setRakutenStatus(t("rakuten_test_failed") + ": " + rakutenFriendlyError(e), true);
   }
 }
 
@@ -2527,7 +2544,7 @@ async function searchRakutenPrices() {
     renderRakutenResults(rakutenLastItems, keyword);
     setRakutenStatus(t("rakuten_saved_result"), false);
   } catch(e) {
-    document.getElementById("rakuten-results").innerHTML = "<div class='empty'>" + t("rakuten_error") + ": " + esc(e.message || e) + "</div>";
+    document.getElementById("rakuten-results").innerHTML = "<div class='empty'>" + t("rakuten_error") + ": " + esc(rakutenFriendlyError(e)) + "</div>";
     setRakutenStatus(t("rakuten_error"), true);
   }
 }
@@ -2544,7 +2561,7 @@ async function runRakutenBulkSurvey() {
     setRakutenStatus(t("rakuten_searching"), false);
     await validateRakutenApiConnection();
   } catch(e) {
-    setRakutenStatus(tf("rakuten_bulk_preflight_failed", { error: e.message || e }), true);
+    setRakutenStatus(tf("rakuten_bulk_preflight_failed", { error: rakutenFriendlyError(e) }), true);
     return;
   }
   var saved = 0;
@@ -2562,7 +2579,7 @@ async function runRakutenBulkSurvey() {
     } catch(e) {
       console.warn("rakuten bulk item failed", target.search_number, e);
       failed++;
-      if (!firstError) firstError = target.search_number + ": " + (e.message || e);
+      if (!firstError) firstError = target.search_number + ": " + rakutenFriendlyError(e);
     }
   }
   if (failed) setRakutenStatus(tf("rakuten_bulk_failed", { saved: saved, failed: failed, error: firstError }), true);
