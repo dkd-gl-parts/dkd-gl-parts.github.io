@@ -491,7 +491,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.17</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.18</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1804,7 +1804,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.17";
+var APP_VERSION       = "v1.1.18";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
@@ -3918,6 +3918,8 @@ function renderUsers(users) {
   var order = {pending:0,active:1,suspended:2};
   users.sort(function(a,b){return (order[a.status||"active"]||1)-(order[b.status||"active"]||1);});
   var pendingCount = users.filter(function(u){return u.status==="pending";}).length;
+  var userById = {};
+  users.forEach(function(u) { userById[u.id] = u; });
 
   var html = "";
   if (pendingCount > 0) {
@@ -3959,6 +3961,8 @@ function renderUsers(users) {
   list.querySelectorAll(".btn-save-user").forEach(function(btn) {
     btn.addEventListener("click", async function() {
       var uid   = btn.dataset.uid;
+      var target = userById[uid];
+      if (!isAdmin() || !target || !canManageUser(target)) { alert(t("err_perm")); return; }
       var card  = list.querySelector(".user-card[data-uid='"+uid+"']");
       var name  = card.querySelector(".user-name-input").value.trim();
       var role  = card.querySelector(".role-select").value;
@@ -3971,6 +3975,8 @@ function renderUsers(users) {
   });
 
   async function updateStatus(uid,status) {
+    var target = userById[uid];
+    if (!isAdmin() || !target || !canManageUser(target)) { alert(t("err_perm")); return; }
     var r = await sb.from("profiles").update({status:status,updated_at:new Date().toISOString()}).eq("id",uid);
     if (!r.error) await loadUsers();
   }
