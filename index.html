@@ -491,7 +491,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.25</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.26</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1822,7 +1822,7 @@ var currentProduct    = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.25";
+var APP_VERSION       = "v1.1.26";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
@@ -2291,22 +2291,34 @@ function setRakutenStatus(msg, isError) {
   el.textContent = msg || "";
 }
 
+function cleanPartNumberValue(value) {
+  var v = String(value == null ? "" : value).trim();
+  if (!v) return "";
+  var normalized = v.replace(/[‐‑‒–—―ー−]/g, "-").replace(/\s+/g, "");
+  if (/^-+$/.test(normalized)) return "";
+  if (/^(n\/a|na|null|none|no)$/i.test(normalized)) return "";
+  if (["\u306a\u3057","\u7121\u3057","\u4e0d\u660e","\u672a\u8a2d\u5b9a"].indexOf(normalized) >= 0) return "";
+  return v;
+}
+
 function buildRakutenProductQuery(p) {
   if (!p) return "";
-  return p.manufacturer_part_number || p.genuine_part_number || "";
+  return cleanPartNumberValue(p.manufacturer_part_number) || cleanPartNumberValue(p.genuine_part_number) || "";
 }
 
 function rakutenTargetFromPart(p, sourceType) {
   var searchNumber = buildRakutenProductQuery(p);
+  var mfr = cleanPartNumberValue(p.manufacturer_part_number);
+  var genuine = cleanPartNumberValue(p.genuine_part_number);
   return {
     part_id: p.id || null,
     dkd_shohin_id: p.dkd_shohin_id || p.shohin_cd || null,
-    genuine_part_number: p.genuine_part_number || "",
-    manufacturer_part_number: p.manufacturer_part_number || "",
+    genuine_part_number: genuine,
+    manufacturer_part_number: mfr,
     manufacturer: p.manufacturer || "",
     category: p.category || "",
     search_number: searchNumber,
-    search_number_type: p.manufacturer_part_number ? "manufacturer_part_number" : "genuine_part_number",
+    search_number_type: mfr ? "manufacturer_part_number" : "genuine_part_number",
     source_type: sourceType || "master"
   };
 }
@@ -2398,10 +2410,10 @@ function parseUploadedPartList(text) {
     var row = {};
     if (hasHeader) first.forEach(function(h, idx) { row[h] = cols[idx] || ""; });
     else row.keyword = cols[0] || "";
-    var dkd = row.dkd_shohin_id || row.shohin_cd || row.product_id || row["商品id"] || row["商品コード"] || "";
-    var mfr = row.manufacturer_part_number || row["メーカー品番"] || "";
-    var genuine = row.genuine_part_number || row["純正品番"] || "";
-    var keyword = row.keyword || row["品番"] || mfr || genuine || dkd;
+    var dkd = cleanPartNumberValue(row.dkd_shohin_id || row.shohin_cd || row.product_id || row["商品id"] || row["商品コード"] || "");
+    var mfr = cleanPartNumberValue(row.manufacturer_part_number || row["メーカー品番"] || "");
+    var genuine = cleanPartNumberValue(row.genuine_part_number || row["純正品番"] || "");
+    var keyword = cleanPartNumberValue(row.keyword || row["品番"] || mfr || genuine || dkd);
     if (!keyword) continue;
     targets.push({
       part_id: null,
@@ -2816,7 +2828,7 @@ async function saveRakutenSurvey(target, items, keyword, ngKeyword, sort) {
 }
 
 async function searchRakutenPrices() {
-  var keyword = document.getElementById("rakuten-keyword").value.trim();
+  var keyword = cleanPartNumberValue(document.getElementById("rakuten-keyword").value);
   var ngKeyword = document.getElementById("rakuten-ng-keyword").value.trim();
   var sort = document.getElementById("rakuten-sort").value;
   var hits = document.getElementById("rakuten-hits").value;
