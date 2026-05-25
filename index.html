@@ -1945,10 +1945,19 @@ function isSharedCatalogGroup() {
   if (!userProfile) return false;
   return userProfile.group_name === "gltek" || userProfile.group_name === "public";
 }
+function productLegacyPartId(p) {
+  if (!p) return null;
+  var id = p.legacy_part_id || p.part_id || null;
+  var n = parseInt(id, 10);
+  return isNaN(n) ? null : n;
+}
 function isVisibleProduct(p) {
   if (!p) return false;
   if (isDaikoGroup()) return true;
-  if (isSharedCatalogGroup()) return !!(slPartsMap[p.id] && slPartsMap[p.id].length > 0);
+  if (isSharedCatalogGroup()) {
+    var legacyId = productLegacyPartId(p);
+    return !!(legacyId && slPartsMap[legacyId] && slPartsMap[legacyId].length > 0);
+  }
   return false;
 }
 function filterVisibleProducts(products) {
@@ -3527,10 +3536,10 @@ async function enterUsers() {
 async function initSearch() {
   document.getElementById("count-bar").textContent = t("loading");
 
-  // parts テーブルから全件取得（ページング対応）
+  // core_product_search_view から全件取得（ページング対応）
   var all = [], from = 0, page = 1000;
   while (true) {
-    var r = await sb.from("parts").select("*").order("id").range(from, from + page - 1);
+    var r = await sb.from("core_product_search_view").select("*").order("dkd_shohin_id").range(from, from + page - 1);
     var rows = r.data || [];
     all = all.concat(rows);
     if (rows.length < page) break;
@@ -3585,8 +3594,9 @@ function renderCategoryChips() {
   // カテゴリの一覧を件数順に集計
   var catCount = {};
   allProducts.forEach(function(p) {
-    if (p.category) {
-      catCount[p.category] = (catCount[p.category] || 0) + 1;
+    var catKey = p.category_code || p.category;
+    if (catKey) {
+      catCount[catKey] = (catCount[catKey] || 0) + 1;
     }
   });
 
@@ -3596,7 +3606,8 @@ function renderCategoryChips() {
     var btn = document.createElement("button");
     btn.className = "chip";
     btn.dataset.filter = "cat:" + cat;
-    btn.textContent = tCat(cat) + " (" + catCount[cat] + ")";
+    var sample = allProducts.find(function(p) { return (p.category_code || p.category) === cat; });
+    btn.textContent = productCategoryLabel(sample) + " (" + catCount[cat] + ")";
     btn.addEventListener("click", function() {
       currentFilter = btn.dataset.filter;
       document.querySelectorAll(".chip").forEach(function(c) {
@@ -3622,6 +3633,13 @@ function tCat(category) {
   // 翻訳辞書にキーがない場合はそのまま返す
   return val === key ? category : val;
 }
+function productCategoryLabel(p) {
+  if (!p) return "-";
+  if (currentLang === "ja" && p.category_ja) return p.category_ja;
+  if (currentLang === "zh" && p.category_zh) return p.category_zh;
+  if (currentLang === "en" && p.category_en) return p.category_en;
+  return tCat(p.category || p.category_code || "");
+}
 function getProductEngine(p) {
   return p.engine || p.engine_model || p.engine_type || p.engine_code || "";
 }
@@ -3635,17 +3653,18 @@ function getFiltered() {
   var q = norm(document.getElementById("q").value.trim());
   return allProducts.filter(function(p) {
     // SL品番はslPartsMapから取得して検索対象に含める
-    var slNums = (slPartsMap[p.id] || []).join(" ");
+    var legacyId = productLegacyPartId(p);
+    var slNums = legacyId ? (slPartsMap[legacyId] || []).join(" ") : "";
     var ms = !q || [
       p.genuine_part_number, p.manufacturer_part_number,
       p.vehicle_manufacturer, p.manufacturer,
       p.compatible_car_models, p.model,
-      p.category, slNums
+      p.category, p.category_ja, p.category_en, p.category_zh, slNums
     ].some(function(v){ return norm(v).indexOf(q)>=0; });
     // SLフィルター：slPartsMapに品番があるものが対象
-    var hasSL  = slPartsMap[p.id] && slPartsMap[p.id].length > 0;
+    var hasSL  = legacyId && slPartsMap[legacyId] && slPartsMap[legacyId].length > 0;
     var mf = currentFilter==="sl" ? hasSL
-           : currentFilter.indexOf("cat:") === 0 ? p.category === currentFilter.slice(4)
+           : currentFilter.indexOf("cat:") === 0 ? (p.category_code || p.category) === currentFilter.slice(4)
            : true;
     return ms && mf;
   });
@@ -3669,9 +3688,10 @@ function render() {
   document.getElementById("count-bar").textContent = countText;
   var html = "";
   visibleItems.forEach(function(p) {
-    var cnt   = imageCountMap[p.id]||0;
-    var thumb = imageThumbnailMap[p.id]||"";
-    var slNums = slPartsMap[p.id] || [];
+    var legacyId = productLegacyPartId(p);
+    var cnt   = legacyId ? (imageCountMap[legacyId]||0) : 0;
+    var thumb = legacyId ? (imageThumbnailMap[legacyId]||"") : "";
+    var slNums = legacyId ? (slPartsMap[legacyId] || []) : [];
     var hasSL  = slNums.length > 0;
     var mfr   = [p.manufacturer, p.vehicle_manufacturer].filter(Boolean).join(" / ");
     var sel   = (currentProduct && currentProduct.id===p.id) ? " selected" : "";
@@ -3682,7 +3702,7 @@ function render() {
       html += "<div class='card-thumb card-thumb-empty'>&#x1F5BC;</div>";
     }
     html += "<div class='card-left'>";
-    html += "<div class='card-name'>"+tCat(p.category)+"</div>";
+    html += "<div class='card-name'>"+esc(productCategoryLabel(p))+"</div>";
     html += "<div class='card-pn'>"+esc(p.genuine_part_number||"-")+"</div>";
     html += "<div class='card-mfr'>"+esc(mfr)+"</div>";
     if (p.manufacturer || p.manufacturer_part_number) {
@@ -3711,7 +3731,7 @@ function openPanel(id) {
   document.getElementById("panel-welcome").style.display  = "none";
   document.getElementById("panel-inner").style.display    = "flex";
   document.getElementById("panel-footer").style.display   = canEdit() ? "block" : "none";
-  document.getElementById("panel-topbar-title").textContent = currentProduct.category || currentProduct.genuine_part_number || "-";
+  document.getElementById("panel-topbar-title").textContent = productCategoryLabel(currentProduct) || currentProduct.genuine_part_number || "-";
   if (!isPC()) { document.getElementById("overlay").classList.add("show"); document.getElementById("panel").classList.add("show"); }
   renderPanelStatic();
   document.querySelectorAll(".card").forEach(function(c){ c.classList.toggle("selected", parseInt(c.dataset.id,10)===id); });
@@ -3772,7 +3792,7 @@ function renderPanelStatic() {
   bindComponentPanelActions();
   loadAssemblyComponentsForCurrent();
   loadParallelCandidatesForCurrent();
-  loadSlParts(p.id);
+  loadSlParts(productLegacyPartId(p));
 }
 
 function normalizePartNumberForCore(v) {
@@ -3782,6 +3802,11 @@ function normalizePartNumberForCore(v) {
 async function resolveCurrentCoreDkdShohinId() {
   if (!currentProduct) return null;
   if (currentCoreDkdShohinId) return currentCoreDkdShohinId;
+  var directId = parseInt(currentProduct.dkd_shohin_id || currentProduct.id, 10);
+  if (!isNaN(directId)) {
+    currentCoreDkdShohinId = directId;
+    return currentCoreDkdShohinId;
+  }
   var mfrPn = normalizePartNumberForCore(currentProduct.manufacturer_part_number);
   var genuinePn = normalizePartNumberForCore(currentProduct.genuine_part_number);
   if (mfrPn && genuinePn) {
@@ -4152,8 +4177,11 @@ async function uploadImages(event) {
 
   // 画像カウントを更新
   if (currentProduct) {
-    imageCountMap[currentProduct.id]     = currentImages.length;
-    imageThumbnailMap[currentProduct.id] = currentImages.length>0?currentImages[0].image_url:null;
+    var legacyId = productLegacyPartId(currentProduct);
+    if (legacyId) {
+      imageCountMap[legacyId]     = currentImages.length;
+      imageThumbnailMap[legacyId] = currentImages.length>0?currentImages[0].image_url:null;
+    }
   }
   render();
 }
@@ -4166,8 +4194,11 @@ async function deleteImage(imgId, imageUrl) {
   await sb.from("sl_part_images").delete().eq("id", imgId);
   currentImages = currentImages.filter(function(img){return img.id!==imgId;});
   if (currentProduct) {
-    imageCountMap[currentProduct.id]     = currentImages.length;
-    imageThumbnailMap[currentProduct.id] = currentImages.length>0?currentImages[0].image_url:null;
+    var legacyId = productLegacyPartId(currentProduct);
+    if (legacyId) {
+      imageCountMap[legacyId]     = currentImages.length;
+      imageThumbnailMap[legacyId] = currentImages.length>0?currentImages[0].image_url:null;
+    }
   }
   renderImages(); render();
 }
