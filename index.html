@@ -109,6 +109,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .kikan-pn    { font-family: monospace; font-size: 12px; color: #444; }
 .kikan-mfr   { font-size: 11px; color: #aaa; }
 .kikan-badge { background: #e8f4ff; color: #1a6fd4; border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 600; }
+.component-section-title { font-size: 14px; font-weight: 600; margin: 16px 0 8px; display: flex; align-items: center; gap: 6px; }
+.component-toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.component-search { flex: 1; min-width: 160px; border: 1px solid #ddd; border-radius: 6px; padding: 6px 8px; font-size: 12px; outline: none; }
+.component-search:focus { border-color: #4f8ef7; }
+.component-note { font-size: 11px; color: #888; line-height: 1.5; }
+.component-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 12px; }
+.component-table th { background: #f5f7fa; color: #555; font-weight: 600; padding: 6px 8px; text-align: left; border-bottom: 2px solid #e0e0e0; }
+.component-table td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+.component-table tr:last-child td { border-bottom: none; }
+.component-pn { font-family: monospace; font-size: 12px; color: #444; }
+.component-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
+.component-candidate { cursor: pointer; }
+.component-candidate:hover td { background: #f8f8f8; }
+.component-diff-side { min-width: 0; }
+.component-diff-side strong { display: block; font-size: 11px; color: #888; margin-bottom: 2px; }
+.component-empty { color:#bbb; font-size:12px; padding:8px 0; }
 
 /* =============================================
    商品管理・互換管理・ログ画面
@@ -1263,7 +1279,21 @@ var TRANSLATIONS = {
     rakuten_latest: "調査日時",
     kikan_section: "互換品",
     kikan_none: "互換品情報なし",
-    kikan_this: "（この品番）"
+    kikan_this: "（この品番）",
+    component_section: "構成部品",
+    component_parallel_section: "並列検索",
+    component_none: "構成部品情報なし",
+    component_candidates_none: "比較候補なし",
+    component_diff_none: "差分なし",
+    component_candidate_ph: "比較候補を品番で絞り込み",
+    component_load_candidates: "候補を表示",
+    component_position: "部位",
+    component_name: "部品名",
+    component_quantity: "数量",
+    component_base: "基準",
+    component_target: "比較先",
+    component_select_target: "比較対象を選択してください",
+    component_diff_count: "{n} 件の差分"
   },
 
   en: {
@@ -1529,7 +1559,21 @@ var TRANSLATIONS = {
     rakuten_latest: "Surveyed At",
     kikan_section: "Compatible Parts",
     kikan_none: "No compatibility data",
-    kikan_this: "(this part)"
+    kikan_this: "(this part)",
+    component_section: "Component Parts",
+    component_parallel_section: "Parallel Search",
+    component_none: "No component data",
+    component_candidates_none: "No comparison candidates",
+    component_diff_none: "No differences",
+    component_candidate_ph: "Filter candidates by part number",
+    component_load_candidates: "Show Candidates",
+    component_position: "Position",
+    component_name: "Part Name",
+    component_quantity: "Qty",
+    component_base: "Base",
+    component_target: "Target",
+    component_select_target: "Select a comparison target",
+    component_diff_count: "{n} differences"
   },
 
   zh: {
@@ -1795,7 +1839,21 @@ var TRANSLATIONS = {
     rakuten_latest: "调查时间",
     kikan_section: "兼容件",
     kikan_none: "无兼容件信息",
-    kikan_this: "（当前零件）"
+    kikan_this: "（当前零件）",
+    component_section: "构成部件",
+    component_parallel_section: "并列搜索",
+    component_none: "无构成部件信息",
+    component_candidates_none: "无比较候选",
+    component_diff_none: "无差异",
+    component_candidate_ph: "按品号筛选候选",
+    component_load_candidates: "显示候选",
+    component_position: "部位",
+    component_name: "部件名",
+    component_quantity: "数量",
+    component_base: "基准",
+    component_target: "比较对象",
+    component_select_target: "请选择比较对象",
+    component_diff_count: "{n} 项差异"
   },
 
   // タガログ語（Tagalog）— 準備中
@@ -1819,6 +1877,7 @@ var slPartsMap        = {};  // part_id → SL品番リスト
 var currentSlPartIds  = [];  // 現在表示中のSL品番IDリスト（画像ロード用）
 var currentFilter     = "all";
 var currentProduct    = null;
+var currentCoreDkdShohinId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
@@ -3646,6 +3705,7 @@ function render() {
 // =============================================
 function openPanel(id) {
   currentProduct = null;
+  currentCoreDkdShohinId = null;
   for (var i=0;i<allProducts.length;i++) { if(allProducts[i].id===id){currentProduct=allProducts[i];break;} }
   if (!currentProduct) return;
   document.getElementById("panel-welcome").style.display  = "none";
@@ -3666,7 +3726,7 @@ function closePanel() {
   document.getElementById("panel-body").innerHTML = "";
   document.getElementById("panel-topbar-title").textContent = "-";
   document.querySelectorAll(".card.selected").forEach(function(c){ c.classList.remove("selected"); });
-  currentProduct = null; currentImages = []; currentSlPartIds = [];
+  currentProduct = null; currentCoreDkdShohinId = null; currentImages = []; currentSlPartIds = [];
 }
 
 function renderPanelStatic() {
@@ -3693,6 +3753,15 @@ function renderPanelStatic() {
     "<div class='rakuten-quick-row'><button class='btn-sm-edit' onclick='openRakutenForCurrentProduct()'>&#x1F4B4; " + t("rakuten_quick") + "</button></div>" +
     "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
     "<div id='kikan-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>" +
+    "<div class='component-section-title'>&#9881; " + t("component_section") + "</div>" +
+    "<div id='component-wrap'><div class='component-empty'>" + t("loading") + "</div></div>" +
+    "<div class='component-section-title'>&#8644; " + t("component_parallel_section") + "</div>" +
+    "<div class='component-toolbar'>" +
+      "<input class='component-search' id='component-candidate-search' type='search' placeholder='" + esc(t("component_candidate_ph")) + "'>" +
+      "<button class='btn-sm-edit' id='btn-component-load-candidates'>" + t("component_load_candidates") + "</button>" +
+    "</div>" +
+    "<div id='component-candidate-wrap'><div class='component-empty'>" + t("component_select_target") + "</div></div>" +
+    "<div id='component-diff-wrap'></div>" +
     "<div class='price-section-title'>&#x1F4B0; " + t("supplier_prices") + "</div>" +
     "<div id='price-table-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>";
   // 画像エリアをリセット（右カラムはpanel-rightに固定表示）
@@ -3700,7 +3769,172 @@ function renderPanelStatic() {
     "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + t("img_loading") + "</div></div>";
   document.getElementById("img-count").textContent = "";
   document.getElementById("panel-scroll").scrollTop = 0;
+  bindComponentPanelActions();
+  loadAssemblyComponentsForCurrent();
+  loadParallelCandidatesForCurrent();
   loadSlParts(p.id);
+}
+
+function normalizePartNumberForCore(v) {
+  return String(v || "").toUpperCase().replace(/[-\s　]/g, "");
+}
+
+async function resolveCurrentCoreDkdShohinId() {
+  if (!currentProduct) return null;
+  if (currentCoreDkdShohinId) return currentCoreDkdShohinId;
+  var mfrPn = normalizePartNumberForCore(currentProduct.manufacturer_part_number);
+  var genuinePn = normalizePartNumberForCore(currentProduct.genuine_part_number);
+  if (mfrPn && genuinePn) {
+    var q = sb.from("core_products")
+      .select("dkd_shohin_id")
+      .eq("normalized_manufacturer_part_number", mfrPn)
+      .eq("normalized_genuine_part_number", genuinePn)
+      .limit(1);
+    if (currentProduct.manufacturer) q = q.eq("manufacturer", currentProduct.manufacturer);
+    var r = await q;
+    if (!r.error && r.data && r.data.length) {
+      currentCoreDkdShohinId = parseInt(r.data[0].dkd_shohin_id, 10);
+      return currentCoreDkdShohinId;
+    }
+  }
+  if (mfrPn) {
+    var q2 = sb.from("core_products")
+      .select("dkd_shohin_id")
+      .eq("normalized_manufacturer_part_number", mfrPn)
+      .limit(1);
+    if (currentProduct.manufacturer) q2 = q2.eq("manufacturer", currentProduct.manufacturer);
+    var r2 = await q2;
+    if (!r2.error && r2.data && r2.data.length) {
+      currentCoreDkdShohinId = parseInt(r2.data[0].dkd_shohin_id, 10);
+      return currentCoreDkdShohinId;
+    }
+  }
+  return null;
+}
+
+function bindComponentPanelActions() {
+  var btn = document.getElementById("btn-component-load-candidates");
+  var input = document.getElementById("component-candidate-search");
+  if (btn) btn.addEventListener("click", loadParallelCandidatesForCurrent);
+  if (input) input.addEventListener("keydown", function(e) {
+    if (e.key === "Enter") loadParallelCandidatesForCurrent();
+  });
+}
+
+async function loadAssemblyComponentsForCurrent() {
+  var wrap = document.getElementById("component-wrap");
+  if (!wrap) return;
+  var dkdId = await resolveCurrentCoreDkdShohinId();
+  if (!dkdId) {
+    wrap.innerHTML = "<div class='component-empty'>" + t("component_none") + "</div>";
+    return;
+  }
+  wrap.innerHTML = "<div class='component-empty'>" + t("loading") + "</div>";
+  var r = await sb.rpc("get_assembly_components", { target_dkd_shohin_id: dkdId });
+  if (r.error) {
+    console.warn("get_assembly_components failed", r.error);
+    wrap.innerHTML = "<div class='component-empty'>" + t("component_none") + "</div>";
+    return;
+  }
+  var rows = r.data || [];
+  if (!rows.length) {
+    wrap.innerHTML = "<div class='component-empty'>" + t("component_none") + "</div>";
+    return;
+  }
+  var html = "<table class='component-table'>";
+  html += "<tr><th>" + t("component_position") + "</th><th>" + t("component_name") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_quantity") + "</th></tr>";
+  rows.forEach(function(row) {
+    html += "<tr>";
+    html += "<td><div class='component-pn'>" + esc(row.component_position || "-") + "</div></td>";
+    html += "<td>" + esc(row.component_name || row.component_part_name || "-") + "<div class='component-sub'>" + esc(row.source_code || "") + "</div></td>";
+    html += "<td><div class='component-pn'>" + esc(row.component_manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.component_manufacturer || "") + "</div></td>";
+    html += "<td><div class='component-pn'>" + esc(row.component_genuine_part_number || "-") + "</div></td>";
+    html += "<td>" + esc(row.quantity || "-") + "</td>";
+    html += "</tr>";
+  });
+  html += "</table>";
+  wrap.innerHTML = html;
+}
+
+async function loadParallelCandidatesForCurrent() {
+  var wrap = document.getElementById("component-candidate-wrap");
+  var diffWrap = document.getElementById("component-diff-wrap");
+  if (!wrap) return;
+  if (diffWrap) diffWrap.innerHTML = "";
+  var dkdId = await resolveCurrentCoreDkdShohinId();
+  if (!dkdId) {
+    wrap.innerHTML = "<div class='component-empty'>" + t("component_candidates_none") + "</div>";
+    return;
+  }
+  var input = document.getElementById("component-candidate-search");
+  var searchText = input ? input.value.trim() : "";
+  wrap.innerHTML = "<div class='component-empty'>" + t("loading") + "</div>";
+  var r = await sb.rpc("get_parallel_component_candidates", {
+    base_dkd_shohin_id: dkdId,
+    search_text: searchText || null,
+    max_rows: 50
+  });
+  if (r.error) {
+    console.warn("get_parallel_component_candidates failed", r.error);
+    wrap.innerHTML = "<div class='component-empty'>" + t("component_candidates_none") + "</div>";
+    return;
+  }
+  var rows = r.data || [];
+  if (!rows.length) {
+    wrap.innerHTML = "<div class='component-empty'>" + t("component_candidates_none") + "</div>";
+    return;
+  }
+  var html = "<table class='component-table'>";
+  html += "<tr><th>商品ID</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_section") + "</th></tr>";
+  rows.forEach(function(row) {
+    html += "<tr class='component-candidate' data-dkd='" + esc(String(row.dkd_shohin_id)) + "'>";
+    html += "<td><div class='component-pn'>" + esc(row.dkd_shohin_id || "-") + "</div></td>";
+    html += "<td><div class='component-pn'>" + esc(row.manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.manufacturer || "") + "</div></td>";
+    html += "<td><div class='component-pn'>" + esc(row.genuine_part_number || "-") + "</div></td>";
+    html += "<td>" + esc(String(row.component_usage_count || 0)) + "</td>";
+    html += "</tr>";
+  });
+  html += "</table>";
+  wrap.innerHTML = html;
+  wrap.querySelectorAll("tr.component-candidate[data-dkd]").forEach(function(row) {
+    row.addEventListener("click", function() {
+      loadParallelDiffForCurrent(parseInt(row.dataset.dkd, 10));
+    });
+  });
+}
+
+async function loadParallelDiffForCurrent(targetDkdId) {
+  var wrap = document.getElementById("component-diff-wrap");
+  if (!wrap) return;
+  var baseDkdId = await resolveCurrentCoreDkdShohinId();
+  if (!baseDkdId || !targetDkdId) return;
+  wrap.innerHTML = "<div class='component-empty'>" + t("loading") + "</div>";
+  var r = await sb.rpc("compare_assembly_components", {
+    base_dkd_shohin_id: baseDkdId,
+    target_dkd_shohin_id: targetDkdId
+  });
+  if (r.error) {
+    console.warn("compare_assembly_components failed", r.error);
+    wrap.innerHTML = "<div class='component-empty'>" + t("component_diff_none") + "</div>";
+    return;
+  }
+  var rows = r.data || [];
+  if (!rows.length) {
+    wrap.innerHTML = "<div class='component-empty'>" + t("component_diff_none") + "</div>";
+    return;
+  }
+  var html = "<div class='component-note' style='margin:8px 0'>" + tf("component_diff_count", { n: rows.length }) + "</div>";
+  html += "<table class='component-table'>";
+  html += "<tr><th>" + t("component_position") + "</th><th>" + t("component_base") + "</th><th>" + t("component_target") + "</th></tr>";
+  rows.forEach(function(row) {
+    html += "<tr>";
+    html += "<td><div class='component-pn'>" + esc(row.component_position || "-") + "</div></td>";
+    html += "<td><div class='component-diff-side'><strong>" + esc(row.base_component_name || "-") + "</strong><div class='component-pn'>" + esc(row.base_component_part_numbers || "-") + "</div><div class='component-sub'>" + esc(row.base_component_genuine_numbers || "") + "</div></div></td>";
+    html += "<td><div class='component-diff-side'><strong>" + esc(row.target_component_name || "-") + "</strong><div class='component-pn'>" + esc(row.target_component_part_numbers || "-") + "</div><div class='component-sub'>" + esc(row.target_component_genuine_numbers || "") + "</div></div></td>";
+    html += "</tr>";
+  });
+  html += "</table>";
+  wrap.innerHTML = html;
 }
 
 async function loadSlParts(partId) {
