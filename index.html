@@ -483,7 +483,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.37</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.38</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -512,7 +512,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.37</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.38</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1978,7 +1978,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.37";
+var APP_VERSION       = "v1.1.38";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -3746,7 +3746,12 @@ function getProductEngine(p) {
 }
 function norm(s) {
   if (s == null) return "";
-  return String(s).toLowerCase().replace(/-/g,"");
+  return String(s)
+    .toUpperCase()
+    .replace(/[-\s　]/g, "")
+    .replace(/^([AM])0+([0-9])T/, "$1$2T")
+    .replace(/^0+/, "")
+    .toLowerCase();
 }
 function isPC() { return window.innerWidth >= 768; }
 
@@ -3940,7 +3945,11 @@ function renderPanelStatic() {
 }
 
 function normalizePartNumberForCore(v) {
-  return String(v || "").toUpperCase().replace(/[-\s　]/g, "");
+  return String(v || "")
+    .toUpperCase()
+    .replace(/[-\s　]/g, "")
+    .replace(/^([AM])0+([0-9])T/, "$1$2T")
+    .replace(/^0+/, "");
 }
 
 async function resolveCurrentCoreDkdShohinId() {
@@ -4252,6 +4261,7 @@ async function loadKikan(dkdShohinId) {
     .limit(1);
 
   if (r1.error || !r1.data || r1.data.length === 0) {
+    var altIds = [];
     if (currentProduct && currentProduct.genuine_part_number) {
       var altQuery = sb.from("core_product_search_view")
         .select("dkd_shohin_id")
@@ -4260,15 +4270,31 @@ async function loadKikan(dkdShohinId) {
         .limit(5);
       if (currentProduct.manufacturer) altQuery = altQuery.eq("manufacturer", currentProduct.manufacturer);
       var alt = await altQuery;
-      var altIds = (alt.data || []).map(function(p) { return p.dkd_shohin_id; }).filter(function(id) {
+      altIds = (alt.data || []).map(function(p) { return p.dkd_shohin_id; }).filter(function(id) {
         return String(id) !== String(dkdShohinIdNum);
       });
-      if (altIds.length) {
-        r1 = await sb.from("kikan_group_members")
-          .select("kikan_group_id")
-          .in("dkd_gokan_id", altIds)
-          .limit(1);
-      }
+    }
+    if (altIds.length === 0 && currentProduct && currentProduct.manufacturer_part_number) {
+      var matchKey = normalizePartNumberForCore(currentProduct.manufacturer_part_number);
+      var altByMatch = await sb.rpc("search_core_products", {
+        search_text: currentProduct.manufacturer_part_number,
+        category_filter: null,
+        require_sl: false,
+        max_rows: 20
+      });
+      altIds = (altByMatch.data || []).filter(function(p) {
+        if (String(p.dkd_shohin_id) === String(dkdShohinIdNum)) return false;
+        if (p.shohin_cd === null || p.shohin_cd === undefined || p.shohin_cd === "") return false;
+        if (currentProduct.manufacturer && p.manufacturer !== currentProduct.manufacturer) return false;
+        if (currentProduct.genuine_part_number && p.genuine_part_number !== currentProduct.genuine_part_number) return false;
+        return normalizePartNumberForCore(p.manufacturer_part_number) === matchKey;
+      }).map(function(p) { return p.dkd_shohin_id; });
+    }
+    if (altIds.length) {
+      r1 = await sb.from("kikan_group_members")
+        .select("kikan_group_id")
+        .in("dkd_gokan_id", altIds)
+        .limit(1);
     }
     if (r1.error || !r1.data || r1.data.length === 0) {
       wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
