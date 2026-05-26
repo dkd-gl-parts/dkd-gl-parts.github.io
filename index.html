@@ -130,6 +130,44 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-context { background:#fff; border:1px solid #e8e8e8; border-radius:8px; padding:12px 14px; margin-bottom:12px; }
 .component-context-title { font-size:15px; font-weight:700; color:#1a1a2e; }
 .component-context-sub { font-size:12px; color:#777; margin-top:4px; font-family:monospace; }
+.parallel-shell { display: flex; flex-direction: column; gap: 12px; }
+.parallel-controls { background:#fff; border:1px solid #e4e7ee; border-radius:8px; padding:12px; }
+.parallel-layout { display:grid; grid-template-columns:minmax(280px, 360px) minmax(0, 1fr); gap:12px; align-items:start; }
+.parallel-panel { background:#fff; border:1px solid #e4e7ee; border-radius:8px; min-width:0; overflow:hidden; }
+.parallel-panel-head { min-height:42px; padding:10px 12px; border-bottom:1px solid #edf0f5; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.parallel-panel-title { font-size:13px; font-weight:700; color:#1a1a2e; }
+.parallel-panel-count { font-size:11px; color:#888; white-space:nowrap; }
+.parallel-candidate-list { max-height:calc(100vh - 330px); min-height:220px; overflow:auto; }
+.parallel-candidate-card { display:grid; grid-template-columns:minmax(0, 1fr) 58px; gap:10px; padding:10px 12px; border-bottom:1px solid #f0f2f5; cursor:pointer; align-items:center; }
+.parallel-candidate-card:last-child { border-bottom:none; }
+.parallel-candidate-card:hover { background:#f8fbff; }
+.parallel-candidate-card.selected { background:#eef5ff; box-shadow:inset 3px 0 0 #4f8ef7; }
+.parallel-card-main { min-width:0; }
+.parallel-maker-pn { font-family:monospace; font-size:13px; font-weight:700; color:#1a1a2e; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.parallel-genuine { font-family:monospace; font-size:12px; color:#555; margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.parallel-maker { font-size:11px; color:#999; margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.parallel-count-box { border:1px solid #dce8ff; border-radius:6px; background:#f6f9ff; padding:5px 4px; text-align:center; color:#1a6fd4; }
+.parallel-count-box strong { display:block; font-size:14px; line-height:1.1; }
+.parallel-count-box span { display:block; font-size:10px; margin-top:2px; color:#6d86aa; }
+.parallel-compare-head { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:12px; border-bottom:1px solid #edf0f5; background:#fafbfc; }
+.parallel-assy-box { border:1px solid #e3e7ef; border-radius:8px; background:#fff; padding:10px; min-width:0; }
+.parallel-assy-label { font-size:11px; color:#777; margin-bottom:4px; }
+.parallel-assy-pn { font-family:monospace; font-size:14px; font-weight:700; color:#1a1a2e; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.parallel-assy-sub { font-family:monospace; font-size:12px; color:#777; margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.parallel-result-scroll { overflow:auto; max-height:calc(100vh - 390px); }
+.parallel-result-table { width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed; }
+.parallel-result-table th { position:sticky; top:0; z-index:1; background:#f5f7fa; color:#555; font-weight:700; padding:8px; text-align:left; border-bottom:2px solid #e0e0e0; }
+.parallel-result-table td { padding:8px; border-bottom:1px solid #f0f0f0; vertical-align:top; }
+.parallel-result-table th:nth-child(1), .parallel-result-table td:nth-child(1) { width:20%; }
+.parallel-result-table th:nth-child(2), .parallel-result-table td:nth-child(2) { width:12%; }
+.parallel-status { display:inline-flex; align-items:center; justify-content:center; min-width:54px; border-radius:999px; padding:2px 8px; font-size:11px; font-weight:700; }
+.parallel-status.same { background:#eef8f1; color:#188344; }
+.parallel-status.different { background:#fff1f0; color:#c93f3f; }
+@media (max-width: 900px) {
+  .parallel-layout { grid-template-columns:1fr; }
+  .parallel-candidate-list, .parallel-result-scroll { max-height:none; }
+  .parallel-compare-head { grid-template-columns:1fr; }
+}
 
 /* =============================================
    商品管理・互換管理・ログ画面
@@ -483,7 +521,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.38</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.39</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -512,7 +550,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.38</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.39</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -659,18 +697,36 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <div class="component-context-title" id="parallel-context-title">-</div>
       <div class="component-context-sub" id="parallel-context-sub">-</div>
     </div>
-    <div class="component-section-title">&#8644; <span data-i18n="component_parallel_section">並列検索</span></div>
-    <div class="component-toolbar">
-      <input class="component-search" id="component-candidate-search" type="search" data-i18n-ph="component_candidate_ph" placeholder="比較候補を品番で絞り込み">
-      <select class="component-search" id="component-compare-mode" style="max-width:160px">
-        <option value="different" data-i18n="component_mode_different">不一致</option>
-        <option value="same" data-i18n="component_mode_same">一致</option>
-        <option value="all" data-i18n="component_mode_all">全件</option>
-      </select>
-      <button class="btn-sm-edit" id="btn-component-load-candidates" data-i18n="component_load_candidates">候補を表示</button>
+    <div class="parallel-shell">
+      <div class="parallel-controls">
+        <div class="component-section-title" style="margin-top:0">&#8644; <span data-i18n="component_parallel_section">並列検索</span></div>
+        <div class="component-toolbar">
+          <input class="component-search" id="component-candidate-search" type="search" data-i18n-ph="component_candidate_ph" placeholder="比較候補を品番で絞り込み">
+          <select class="component-search" id="component-compare-mode" style="max-width:160px">
+            <option value="different" data-i18n="component_mode_different">不一致</option>
+            <option value="same" data-i18n="component_mode_same">一致</option>
+            <option value="all" data-i18n="component_mode_all">全件</option>
+          </select>
+          <button class="btn-sm-edit" id="btn-component-load-candidates" data-i18n="component_load_candidates">候補を表示</button>
+        </div>
+      </div>
+      <div class="parallel-layout">
+        <section class="parallel-panel">
+          <div class="parallel-panel-head">
+            <div class="parallel-panel-title" data-i18n="component_candidate_section">比較対象ASSY</div>
+            <div class="parallel-panel-count" id="component-candidate-count"></div>
+          </div>
+          <div id="component-candidate-wrap"><div class="component-empty" data-i18n="component_select_target">比較対象を選択してください</div></div>
+        </section>
+        <section class="parallel-panel">
+          <div class="parallel-panel-head">
+            <div class="parallel-panel-title" data-i18n="component_result_section">並列検索結果</div>
+            <div class="parallel-panel-count" id="component-result-count"></div>
+          </div>
+          <div id="component-diff-wrap"><div class="component-empty" data-i18n="component_select_target">比較対象を選択してください</div></div>
+        </section>
+      </div>
     </div>
-    <div id="component-candidate-wrap"><div class="component-empty" data-i18n="component_select_target">比較対象を選択してください</div></div>
-    <div id="component-diff-wrap"></div>
   </div>
 </div>
 
@@ -1978,7 +2034,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.38";
+var APP_VERSION       = "v1.1.39";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4032,13 +4088,13 @@ function bindComponentPanelActions() {
   var btn = document.getElementById("btn-component-load-candidates");
   var input = document.getElementById("component-candidate-search");
   var mode = document.getElementById("component-compare-mode");
-  if (btn) btn.addEventListener("click", loadParallelCandidatesForCurrent);
-  if (input) input.addEventListener("keydown", function(e) {
+  if (btn) btn.onclick = loadParallelCandidatesForCurrent;
+  if (input) input.onkeydown = function(e) {
     if (e.key === "Enter") loadParallelCandidatesForCurrent();
-  });
-  if (mode) mode.addEventListener("change", function() {
+  };
+  if (mode) mode.onchange = function() {
     if (currentParallelTargetDkdShohinId) loadParallelDiffForCurrent(currentParallelTargetDkdShohinId);
-  });
+  };
 }
 
 async function loadAssemblyComponentsForCurrent() {
@@ -4079,13 +4135,18 @@ async function loadAssemblyComponentsForCurrent() {
 async function loadParallelCandidatesForCurrent() {
   var wrap = document.getElementById("component-candidate-wrap");
   var diffWrap = document.getElementById("component-diff-wrap");
+  var candidateCount = document.getElementById("component-candidate-count");
+  var resultCount = document.getElementById("component-result-count");
   if (!wrap) return;
   currentParallelTargetDkdShohinId = null;
   currentParallelTargetProduct = null;
   parallelCandidateMap = {};
-  if (diffWrap) diffWrap.innerHTML = "";
+  if (candidateCount) candidateCount.textContent = "";
+  if (resultCount) resultCount.textContent = "";
+  if (diffWrap) diffWrap.innerHTML = "<div class='component-empty'>" + t("component_select_target") + "</div>";
   var dkdId = await resolveCurrentCoreDkdShohinId();
   if (!dkdId) {
+    if (candidateCount) candidateCount.textContent = tf("component_diff_count", { n: 0 });
     wrap.innerHTML = "<div class='component-empty'>" + t("component_candidates_none") + "</div>";
     return;
   }
@@ -4099,43 +4160,53 @@ async function loadParallelCandidatesForCurrent() {
   });
   if (r.error) {
     console.warn("get_parallel_component_candidates failed", r.error);
+    if (candidateCount) candidateCount.textContent = tf("component_diff_count", { n: 0 });
     wrap.innerHTML = "<div class='component-empty'>" + t("component_candidates_none") + "</div>";
     return;
   }
   var rows = r.data || [];
   if (!rows.length) {
+    if (candidateCount) candidateCount.textContent = tf("component_diff_count", { n: 0 });
     wrap.innerHTML = "<div class='component-empty'>" + t("component_candidates_none") + "</div>";
     return;
   }
-  var html = "<div class='component-section-title' style='margin-top:10px'>" + t("component_candidate_section") + "</div>";
-  html += "<div class='component-note' style='margin:0 0 8px'>" + t("component_candidate_hint") + "</div>";
-  html += "<table class='component-table'>";
-  html += "<tr><th>商品ID</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_section") + "</th></tr>";
+  if (candidateCount) candidateCount.textContent = tf("component_diff_count", { n: rows.length });
+  var html = "<div class='component-note' style='padding:10px 12px;border-bottom:1px solid #f0f2f5'>" + t("component_candidate_hint") + "</div>";
+  html += "<div class='parallel-candidate-list'>";
   rows.forEach(function(row) {
     parallelCandidateMap[String(row.dkd_shohin_id)] = row;
-    html += "<tr class='component-candidate' data-dkd='" + esc(String(row.dkd_shohin_id)) + "'>";
-    html += "<td><div class='component-pn'>" + esc(row.dkd_shohin_id || "-") + "</div></td>";
-    html += "<td><div class='component-pn'>" + esc(row.manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.manufacturer || "") + "</div></td>";
-    html += "<td><div class='component-pn'>" + esc(row.genuine_part_number || "-") + "</div></td>";
-    html += "<td>" + esc(String(row.component_usage_count || 0)) + "</td>";
-    html += "</tr>";
+    html += "<div class='parallel-candidate-card component-candidate' data-dkd='" + esc(String(row.dkd_shohin_id)) + "'>";
+    html += "<div class='parallel-card-main'>";
+    html += "<div class='parallel-maker-pn'>" + esc(row.manufacturer_part_number || "-") + "</div>";
+    html += "<div class='parallel-genuine'>" + esc(row.genuine_part_number || "-") + "</div>";
+    html += "<div class='parallel-maker'>" + esc(row.manufacturer || "") + " / ID " + esc(String(row.dkd_shohin_id || "-")) + "</div>";
+    html += "</div>";
+    html += "<div class='parallel-count-box'><strong>" + esc(String(row.component_usage_count || 0)) + "</strong><span>" + t("component_section") + "</span></div>";
+    html += "</div>";
   });
-  html += "</table>";
+  html += "</div>";
   wrap.innerHTML = html;
-  wrap.querySelectorAll("tr.component-candidate[data-dkd]").forEach(function(row) {
-    row.addEventListener("click", function() {
-      currentParallelTargetProduct = parallelCandidateMap[String(row.dataset.dkd)] || null;
-      loadParallelDiffForCurrent(parseInt(row.dataset.dkd, 10));
+  wrap.querySelectorAll(".component-candidate[data-dkd]").forEach(function(card) {
+    card.addEventListener("click", function() {
+      wrap.querySelectorAll(".component-candidate.selected").forEach(function(selected) {
+        selected.classList.remove("selected");
+      });
+      card.classList.add("selected");
+      currentParallelTargetProduct = parallelCandidateMap[String(card.dataset.dkd)] || null;
+      loadParallelDiffForCurrent(parseInt(card.dataset.dkd, 10));
     });
   });
   if (rows.length === 1) {
     currentParallelTargetProduct = rows[0];
+    var onlyCard = wrap.querySelector(".component-candidate[data-dkd]");
+    if (onlyCard) onlyCard.classList.add("selected");
     loadParallelDiffForCurrent(parseInt(rows[0].dkd_shohin_id, 10));
   }
 }
 
 async function loadParallelDiffForCurrent(targetDkdId) {
   var wrap = document.getElementById("component-diff-wrap");
+  var resultCount = document.getElementById("component-result-count");
   if (!wrap) return;
   var baseDkdId = await resolveCurrentCoreDkdShohinId();
   if (!baseDkdId || !targetDkdId) return;
@@ -4150,31 +4221,38 @@ async function loadParallelDiffForCurrent(targetDkdId) {
   });
   if (r.error) {
     console.warn("compare_assembly_components failed", r.error);
+    if (resultCount) resultCount.textContent = tf("component_diff_count", { n: 0 });
     wrap.innerHTML = "<div class='component-empty'>" + t("component_diff_none") + "</div>";
     return;
   }
   var rows = r.data || [];
   if (!rows.length) {
+    if (resultCount) resultCount.textContent = tf("component_diff_count", { n: 0 });
     wrap.innerHTML = "<div class='component-empty'>" + t("component_diff_none") + "</div>";
     return;
   }
-  var html = "<div class='component-section-title' style='margin-top:14px'>" + t("component_result_section") + "</div>";
-  html += "<div class='component-note' style='margin:0 0 8px'>" + tf("component_diff_count", { n: rows.length }) + "</div>";
-  var baseHead = esc((currentProduct && currentProduct.manufacturer_part_number) || "-") +
-    "<div class='component-sub'>" + esc((currentProduct && currentProduct.genuine_part_number) || "-") + " / " + esc((currentProduct && currentProduct.manufacturer) || "") + "</div>";
-  var targetHead = esc((currentParallelTargetProduct && currentParallelTargetProduct.manufacturer_part_number) || String(targetDkdId)) +
-    "<div class='component-sub'>" + esc((currentParallelTargetProduct && currentParallelTargetProduct.genuine_part_number) || "-") + " / " + esc((currentParallelTargetProduct && currentParallelTargetProduct.manufacturer) || "") + "</div>";
-  html += "<table class='component-table'>";
-  html += "<tr><th>" + t("component_name") + "</th><th>" + t("component_match_status") + "</th><th>" + t("component_base") + "<div class='component-pn'>" + baseHead + "</div></th><th>" + t("component_target") + "<div class='component-pn'>" + targetHead + "</div></th></tr>";
+  if (resultCount) resultCount.textContent = tf("component_diff_count", { n: rows.length });
+  var baseMfrPn = (currentProduct && currentProduct.manufacturer_part_number) || "-";
+  var baseSub = ((currentProduct && currentProduct.genuine_part_number) || "-") + " / " + ((currentProduct && currentProduct.manufacturer) || "");
+  var targetMfrPn = (currentParallelTargetProduct && currentParallelTargetProduct.manufacturer_part_number) || String(targetDkdId);
+  var targetSub = ((currentParallelTargetProduct && currentParallelTargetProduct.genuine_part_number) || "-") + " / " + ((currentParallelTargetProduct && currentParallelTargetProduct.manufacturer) || "");
+  var html = "<div class='parallel-compare-head'>";
+  html += "<div class='parallel-assy-box'><div class='parallel-assy-label'>" + t("component_base") + "</div><div class='parallel-assy-pn'>" + esc(baseMfrPn) + "</div><div class='parallel-assy-sub'>" + esc(baseSub) + "</div></div>";
+  html += "<div class='parallel-assy-box'><div class='parallel-assy-label'>" + t("component_target") + "</div><div class='parallel-assy-pn'>" + esc(targetMfrPn) + "</div><div class='parallel-assy-sub'>" + esc(targetSub) + "</div></div>";
+  html += "</div>";
+  html += "<div class='parallel-result-scroll'><table class='parallel-result-table'>";
+  html += "<tr><th>" + t("component_name") + "</th><th>" + t("component_match_status") + "</th><th>" + t("component_base") + "</th><th>" + t("component_target") + "</th></tr>";
   rows.forEach(function(row) {
+    var statusClass = row.match_status === "same" ? "same" : "different";
+    var statusLabel = row.match_status === "same" ? t("component_mode_same") : t("component_mode_different");
     html += "<tr>";
     html += "<td><div class='component-pn'>" + esc(row.component_position || "-") + "</div></td>";
-    html += "<td>" + esc(row.match_status === "same" ? t("component_mode_same") : t("component_mode_different")) + "</td>";
+    html += "<td><span class='parallel-status " + statusClass + "'>" + esc(statusLabel) + "</span></td>";
     html += "<td><div class='component-diff-side'><strong>" + esc(row.base_component_name || "-") + "</strong><div class='component-pn'>" + esc(row.base_component_part_numbers || "-") + "</div><div class='component-sub'>" + esc(row.base_component_genuine_numbers || "") + "</div></div></td>";
     html += "<td><div class='component-diff-side'><strong>" + esc(row.target_component_name || "-") + "</strong><div class='component-pn'>" + esc(row.target_component_part_numbers || "-") + "</div><div class='component-sub'>" + esc(row.target_component_genuine_numbers || "") + "</div></div></td>";
     html += "</tr>";
   });
-  html += "</table>";
+  html += "</table></div>";
   wrap.innerHTML = html;
 }
 
