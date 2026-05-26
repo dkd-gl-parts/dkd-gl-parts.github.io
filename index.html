@@ -483,7 +483,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.35</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.36</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -512,7 +512,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.35</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.36</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1978,7 +1978,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.35";
+var APP_VERSION       = "v1.1.36";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4298,10 +4298,10 @@ async function loadKikan(dkdShohinId) {
   }
 
   parts_list = filterVisibleProducts(parts_list);
-  var otherCount = parts_list.filter(function(p) {
+  parts_list = parts_list.filter(function(p) {
     return String(p.dkd_shohin_id) !== String(dkdShohinId);
-  }).length;
-  if (otherCount === 0) {
+  });
+  if (parts_list.length === 0) {
     wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
     return;
   }
@@ -4310,12 +4310,8 @@ async function loadKikan(dkdShohinId) {
   var html = "<table class='kikan-table'>";
   html += "<tr><th>純正品番</th><th>メーカー品番</th><th>車メーカー</th></tr>";
   parts_list.forEach(function(p) {
-    var isCurrent = String(p.dkd_shohin_id) === String(dkdShohinId);
-    if (!isCurrent && currentProduct && p.id === currentProduct.id) isCurrent = true;
-    var rowCls = isCurrent ? "kikan-current" : "kikan-other";
-    html += "<tr class='" + rowCls + "' data-dkd-id='" + esc(String(p.dkd_shohin_id || p.id)) + "'>";
+    html += "<tr class='kikan-other' data-dkd-id='" + esc(String(p.dkd_shohin_id || p.id)) + "'>";
     html += "<td><div class='kikan-pn'>" + esc(p.genuine_part_number || "-") + "</div>";
-    if (isCurrent) html += "<div><span class='kikan-badge'>" + t("kikan_this") + "</span></div>";
     html += "</td>";
     html += "<td><div class='kikan-pn'>" + esc(p.manufacturer_part_number || "-") + "</div>";
     html += "<div class='kikan-mfr'>" + esc(p.manufacturer || "") + "</div></td>";
