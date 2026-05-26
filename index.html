@@ -483,7 +483,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.29</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.30</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -512,7 +512,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.29</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.30</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -717,13 +717,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
           <td>daiko</td><td>price_viewer</td><td data-i18n="perm_all_products">全商品</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-no">-</td><td class="permission-no">-</td>
         </tr>
         <tr>
-          <td>daiko</td><td>viewer</td><td data-i18n="perm_all_products">全商品</td><td class="permission-no">-</td><td class="permission-ok">○</td><td class="permission-no">-</td><td class="permission-no">-</td>
+        <tr>
+          <td>gltek</td><td data-i18n="perm_all_roles">全ロール</td><td data-i18n="perm_all_products">全商品</td><td class="permission-ok">○</td><td data-i18n="perm_role_limited">admin/editor/price_viewer</td><td data-i18n="perm_role_edit">admin/editor</td><td data-i18n="perm_admin_own_group">adminは自グループのみ</td>
         </tr>
         <tr>
-          <td>gltek</td><td data-i18n="perm_all_roles">全ロール</td><td data-i18n="perm_sl_products">SL品番あり商品</td><td class="permission-ok">○</td><td data-i18n="perm_role_limited">admin/editor/price_viewer</td><td data-i18n="perm_role_edit">admin/editor</td><td data-i18n="perm_admin_own_group">adminは自グループのみ</td>
-        </tr>
-        <tr>
-          <td>public</td><td data-i18n="perm_public_roles">viewer/price_viewerのみ</td><td data-i18n="perm_sl_products">SL品番あり商品</td><td class="permission-no">-</td><td data-i18n="perm_public_sales">price_viewerのみ</td><td class="permission-no">-</td><td class="permission-no">-</td>
+          <td>public</td><td data-i18n="perm_public_roles">価格閲覧者のみ</td><td data-i18n="perm_all_products">全商品</td><td class="permission-no">-</td><td class="permission-ok">○</td><td class="permission-no">-</td><td class="permission-no">-</td>
         </tr>
       </table>
     </div>
@@ -1146,7 +1144,7 @@ var TRANSLATIONS = {
     role_admin: "管理者",
     role_editor: "編集者",
     role_price_viewer: "価格閲覧者",
-    role_viewer: "閲覧者",
+    role_viewer: "価格閲覧者",
     screen_users_title: "ユーザー管理",
     users_heading: "ユーザー一覧",
     users_desc: "表示名とロールを設定して「保存」をクリックしてください。ロールは「閲覧者」→「編集者」→「管理者」の順に権限が強くなります。",
@@ -1164,8 +1162,8 @@ var TRANSLATIONS = {
     perm_role_limited: "admin/editor/price_viewer",
     perm_role_edit: "admin/editor",
     perm_admin_own_group: "adminは自グループのみ",
-    perm_public_roles: "viewer/price_viewerのみ",
-    perm_public_sales: "price_viewerのみ",
+    perm_public_roles: "価格閲覧者のみ",
+    perm_public_sales: "価格閲覧者のみ",
     lbl_display_name: "表示名",
     ph_display_name: "表示名（任意）",
     lbl_registered: "登録:",
@@ -1435,8 +1433,8 @@ var TRANSLATIONS = {
     f_sl: "SL Part No.",
     role_admin: "Admin",
     role_editor: "Editor",
-    role_price_viewer: "Price Viewer",
-    role_viewer: "Viewer",
+    role_price_viewer: "価格閲覧者",
+    role_viewer: "価格閲覧者",
     screen_users_title: "User Management",
     users_heading: "User List",
     users_desc: "Set display names and roles, then click Save. Viewer → Editor → Admin (increasing access level).",
@@ -1454,8 +1452,8 @@ var TRANSLATIONS = {
     perm_role_limited: "admin/editor/price_viewer",
     perm_role_edit: "admin/editor",
     perm_admin_own_group: "Admin: own group only",
-    perm_public_roles: "viewer/price_viewer only",
-    perm_public_sales: "price_viewer only",
+    perm_public_roles: "価格閲覧者 only",
+    perm_public_sales: "価格閲覧者 only",
     lbl_display_name: "Display Name",
     ph_display_name: "Display name (optional)",
     lbl_registered: "Registered:",
@@ -1725,8 +1723,8 @@ var TRANSLATIONS = {
     f_sl: "SL零件编号",
     role_admin: "管理员",
     role_editor: "编辑者",
-    role_price_viewer: "价格查看者",
-    role_viewer: "浏览者",
+    role_price_viewer: "価格閲覧者",
+    role_viewer: "価格閲覧者",
     screen_users_title: "用户管理",
     users_heading: "用户列表",
     users_desc: "设置显示名称和角色后点击【保存】。浏览者→编辑者→管理员（权限依次提升）。",
@@ -1744,8 +1742,8 @@ var TRANSLATIONS = {
     perm_role_limited: "admin/editor/price_viewer",
     perm_role_edit: "admin/editor",
     perm_admin_own_group: "admin仅限本组",
-    perm_public_roles: "仅viewer/price_viewer",
-    perm_public_sales: "仅price_viewer",
+    perm_public_roles: "仅価格閲覧者",
+    perm_public_sales: "仅価格閲覧者",
     lbl_display_name: "显示名称",
     ph_display_name: "显示名称（可选）",
     lbl_registered: "注册时间:",
@@ -1979,7 +1977,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.29";
+var APP_VERSION       = "v1.1.30";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -2053,12 +2051,7 @@ function productLegacyPartId(p) {
 }
 function isVisibleProduct(p) {
   if (!p) return false;
-  if (isDaikoGroup()) return true;
-  if (isSharedCatalogGroup()) {
-    var legacyId = productLegacyPartId(p);
-    return !!(legacyId && slPartsMap[legacyId] && slPartsMap[legacyId].length > 0);
-  }
-  return false;
+  return !!userProfile;
 }
 function filterVisibleProducts(products) {
   return (products || []).filter(isVisibleProduct);
@@ -2081,8 +2074,9 @@ function roleClass(role) {
   }[role] || "role-viewer";
 }
 function normalizeRoleForGroup(role, group) {
-  if (group === "public" && ["viewer","price_viewer"].indexOf(role) < 0) return "viewer";
-  return role || "viewer";
+  if (role === "viewer") return "price_viewer";
+  if (group === "public") return "price_viewer";
+  return role || "price_viewer";
 }
 function canManageSharedSettings() {
   return !!(userProfile && userProfile.role === "admin" && userProfile.group_name !== "public");
@@ -2268,7 +2262,8 @@ async function handleAuthState() {
 
 async function loadProfile() {
   var r = await sb.from("profiles").select("*").eq("id", currentUser.id).single();
-  userProfile = r.data || { id: currentUser.id, email: currentUser.email, name: "", role: "viewer", status: "pending", language: "ja" };
+  userProfile = r.data || { id: currentUser.id, email: currentUser.email, name: "", role: "price_viewer", group_name: "public", status: "active", language: "ja" };
+  userProfile.role = normalizeRoleForGroup(userProfile.role, userProfile.group_name || "public");
 
   // pending / suspended の場合はログアウトしてメッセージを表示する
   if (userProfile.status === "pending") {
@@ -2360,8 +2355,8 @@ function renderMenu() {
     { icon: "&#x1F512;", titleKey: "mi_changepw_title", descKey: "mi_changepw_desc", action: "change-pw", available: true, tag: null },
     { icon: "&#x1F527;", titleKey: "mi_parts_title", descKey: "mi_parts_desc", action: "parts-mgmt", available: canEdit(), tag: null },
     { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canEdit(), tag: null },
-    { icon: "&#x1F4B4;", titleKey: "mi_rakuten_title", descKey: "mi_rakuten_desc", action: "rakuten-price", available: canSeeSalesPrice(), tag: null },
-    { icon: "&#x1F4C8;", titleKey: "screen_rakuten_list_title", descKey: "mi_rakuten_desc", action: "rakuten-price-list", available: canSeeSalesPrice(), tag: null },
+    { icon: "&#x1F4B4;", titleKey: "mi_rakuten_title", descKey: "mi_rakuten_desc", action: "rakuten-price", available: isDaikoGroup() && canSeeSalesPrice(), tag: null },
+    { icon: "&#x1F4C8;", titleKey: "screen_rakuten_list_title", descKey: "mi_rakuten_desc", action: "rakuten-price-list", available: isDaikoGroup() && canSeeSalesPrice(), tag: null },
     { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: isAdmin(), tag: isAdmin() ? null : "tag_admin_only", tagClass: "tag-admin" }
   ];
 
@@ -3760,7 +3755,7 @@ function getFiltered() {
 async function runProductSearch() {
   var q = document.getElementById("q").value.trim();
   var categoryFilter = currentFilter.indexOf("cat:") === 0 ? currentFilter.slice(4) : null;
-  var requireSl = currentFilter === "sl" || isSharedCatalogGroup();
+  var requireSl = currentFilter === "sl";
   var list = document.getElementById("list");
   var seq = ++searchRequestSeq;
 
@@ -4446,8 +4441,8 @@ function renderUsers(users) {
     html += "<input class='user-name-input' data-uid='"+esc(u.id)+"' value='"+esc(u.name||"")+"' placeholder='"+t("ph_display_name")+"'>";
     html += "<div class='user-card-bottom' style='flex-wrap:wrap;gap:6px'>";
     html += "<select class='role-select' data-uid='"+esc(u.id)+"'>";
-    var roleOptions = [["viewer","role_viewer"],["price_viewer","role_price_viewer"],["editor","role_editor"],["admin","role_admin"]];
-    if ((u.group_name || "public") === "public") roleOptions = [["viewer","role_viewer"],["price_viewer","role_price_viewer"]];
+    var roleOptions = [["price_viewer","role_price_viewer"],["editor","role_editor"],["admin","role_admin"]];
+    if ((u.group_name || "public") === "public") roleOptions = [["price_viewer","role_price_viewer"]];
     roleOptions.forEach(function(r){
       html += "<option value='"+r[0]+"'"+(u.role===r[0]?" selected":"")+">"+t(r[1])+"</option>";
     });
