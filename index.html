@@ -483,7 +483,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.32</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.33</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -512,7 +512,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.32</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.33</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1978,7 +1978,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.32";
+var APP_VERSION       = "v1.1.33";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4156,7 +4156,7 @@ async function loadParallelDiffForCurrent(targetDkdId) {
   var targetHead = esc((currentParallelTargetProduct && currentParallelTargetProduct.manufacturer_part_number) || String(targetDkdId)) +
     "<div class='component-sub'>" + esc((currentParallelTargetProduct && currentParallelTargetProduct.genuine_part_number) || "-") + " / " + esc((currentParallelTargetProduct && currentParallelTargetProduct.manufacturer) || "") + "</div>";
   html += "<table class='component-table'>";
-  html += "<tr><th>" + t("component_position") + "</th><th>" + t("component_match_status") + "</th><th>" + t("component_base") + "<div class='component-pn'>" + baseHead + "</div></th><th>" + t("component_target") + "<div class='component-pn'>" + targetHead + "</div></th></tr>";
+  html += "<tr><th>" + t("component_name") + "</th><th>" + t("component_match_status") + "</th><th>" + t("component_base") + "<div class='component-pn'>" + baseHead + "</div></th><th>" + t("component_target") + "<div class='component-pn'>" + targetHead + "</div></th></tr>";
   rows.forEach(function(row) {
     html += "<tr>";
     html += "<td><div class='component-pn'>" + esc(row.component_position || "-") + "</div></td>";
