@@ -483,7 +483,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.30</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.31</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -512,7 +512,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.30</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.31</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1964,6 +1964,7 @@ var currentUser       = null;
 var userProfile       = null;
 var currentLang       = "ja"; // 現在の言語コード
 var allProducts       = [];
+var categoryOptions   = [];
 var imageCountMap     = {};
 var imageThumbnailMap = {};
 var slPartsMap        = {};  // part_id → SL品番リスト
@@ -1977,7 +1978,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.30";
+var APP_VERSION       = "v1.1.31";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -3658,13 +3659,18 @@ async function initSearch() {
     }
   });
 
+  var r4 = await sb.from("assy_categories")
+    .select("category_code,label_ja,label_en,label_zh,sort_order")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+  categoryOptions = r4.data || [];
   allProducts = [];
 
   renderCategoryChips();
   render();
 }
 
-// カテゴリの一覧を parts データから抽出してフィルターチップを生成
+// カテゴリマスタからフィルターチップを生成
 function renderCategoryChips() {
   var filterRow = document.getElementById("filter-row");
   if (!filterRow) return;
@@ -3673,23 +3679,29 @@ function renderCategoryChips() {
   var existing = filterRow.querySelectorAll(".chip[data-filter^='cat:']");
   existing.forEach(function(el) { el.remove(); });
 
-  // カテゴリの一覧を件数順に集計
-  var catCount = {};
-  allProducts.forEach(function(p) {
-    var catKey = p.category_code || p.category;
-    if (catKey) {
-      catCount[catKey] = (catCount[catKey] || 0) + 1;
-    }
-  });
-
-  // 件数の多い順に並べてチップを追加
-  var cats = Object.keys(catCount).sort(function(a,b) { return catCount[b]-catCount[a]; });
+  var cats = categoryOptions.length ? categoryOptions : [];
+  if (!cats.length) {
+    var seen = {};
+    allProducts.forEach(function(p) {
+      var catKey = p.category_code || p.category;
+      if (catKey && !seen[catKey]) {
+        seen[catKey] = true;
+        cats.push({
+          category_code: catKey,
+          label_ja: p.category_ja || p.category,
+          label_en: p.category_en || p.category,
+          label_zh: p.category_zh || p.category
+        });
+      }
+    });
+  }
   cats.forEach(function(cat) {
+    var catCode = cat.category_code || cat.category;
     var btn = document.createElement("button");
     btn.className = "chip";
-    btn.dataset.filter = "cat:" + cat;
-    var sample = allProducts.find(function(p) { return (p.category_code || p.category) === cat; });
-    btn.textContent = productCategoryLabel(sample) + " (" + catCount[cat] + ")";
+    btn.dataset.filter = "cat:" + catCode;
+    btn.textContent = categoryOptionLabel(cat);
+    btn.classList.toggle("active", currentFilter === btn.dataset.filter);
     btn.addEventListener("click", function() {
       currentFilter = btn.dataset.filter;
       document.querySelectorAll(".chip").forEach(function(c) {
@@ -3714,6 +3726,13 @@ function tCat(category) {
   var val = t(key);
   // 翻訳辞書にキーがない場合はそのまま返す
   return val === key ? category : val;
+}
+function categoryOptionLabel(cat) {
+  if (!cat) return "-";
+  if (currentLang === "ja" && cat.label_ja) return cat.label_ja;
+  if (currentLang === "zh" && cat.label_zh) return cat.label_zh;
+  if (currentLang === "en" && cat.label_en) return cat.label_en;
+  return cat.label_ja || cat.label_en || cat.label_zh || cat.category_code || "-";
 }
 function productCategoryLabel(p) {
   if (!p) return "-";
