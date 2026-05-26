@@ -483,7 +483,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.28</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.29</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -512,7 +512,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.28</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.29</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1974,12 +1974,16 @@ var currentFilter     = "all";
 var currentProduct    = null;
 var currentCoreDkdShohinId = null;
 var currentParallelTargetDkdShohinId = null;
+var currentParallelTargetProduct = null;
+var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.28";
+var APP_VERSION       = "v1.1.29";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
+var SEARCH_FETCH_LIMIT = 200;
+var searchRequestSeq = 0;
 var rakutenLastItems = [];
 var rakutenLastDebug = [];
 var rakutenTargets = [];
@@ -3632,16 +3636,6 @@ async function enterUsers() {
 async function initSearch() {
   document.getElementById("count-bar").textContent = t("loading");
 
-  // core_product_search_view から全件取得（ページング対応）
-  var all = [], from = 0, page = 1000;
-  while (true) {
-    var r = await sb.from("core_product_search_view").select("*").order("dkd_shohin_id").range(from, from + page - 1);
-    var rows = r.data || [];
-    all = all.concat(rows);
-    if (rows.length < page) break;
-    from += page;
-  }
-
   // sl_parts の画像カウントとサムネイルを取得
   // part_sl_mapping 経由で part_id に対応する画像を集計
   var r2 = await sb.from("sl_part_images")
@@ -3669,11 +3663,8 @@ async function initSearch() {
     }
   });
 
-  // グループ別表示制限:
-  // Daiko は全商品、GLTEK/Public は SL品番に紐づく共有カタログ商品のみ表示する。
-  allProducts = filterVisibleProducts(all);
+  allProducts = [];
 
-  // カテゴリチップを動的に生成する
   renderCategoryChips();
   render();
 }
@@ -3709,7 +3700,7 @@ function renderCategoryChips() {
       document.querySelectorAll(".chip").forEach(function(c) {
         c.classList.toggle("active", c === btn);
       });
-      render();
+      runProductSearch();
     });
     filterRow.appendChild(btn);
   });
@@ -3766,20 +3757,56 @@ function getFiltered() {
   });
 }
 
+async function runProductSearch() {
+  var q = document.getElementById("q").value.trim();
+  var categoryFilter = currentFilter.indexOf("cat:") === 0 ? currentFilter.slice(4) : null;
+  var requireSl = currentFilter === "sl" || isSharedCatalogGroup();
+  var list = document.getElementById("list");
+  var seq = ++searchRequestSeq;
+
+  if (!q && currentFilter === "all") {
+    allProducts = [];
+    renderCategoryChips();
+    render();
+    return;
+  }
+
+  document.getElementById("count-bar").textContent = t("loading");
+  list.innerHTML = "<div class='loading'>" + t("loading") + "</div>";
+
+  var r = await sb.rpc("search_core_products", {
+    search_text: q || null,
+    category_filter: categoryFilter,
+    require_sl: requireSl,
+    max_rows: SEARCH_FETCH_LIMIT
+  });
+  if (seq !== searchRequestSeq) return;
+  if (r.error) {
+    console.warn("search_core_products failed", r.error);
+    allProducts = [];
+    document.getElementById("count-bar").textContent = "";
+    list.innerHTML = "<div class='empty'>" + t("no_results") + "</div>";
+    return;
+  }
+  allProducts = filterVisibleProducts(r.data || []);
+  renderCategoryChips();
+  render();
+}
+
 function render() {
   var q    = document.getElementById("q").value.trim();
   var list = document.getElementById("list");
   if (!q && currentFilter === "all") {
-    document.getElementById("count-bar").textContent = tf("count_hint", { n: allProducts.length });
+    document.getElementById("count-bar").textContent = t("hint_search");
     list.innerHTML = "<div class='empty'>" + t("hint_search") + "</div>";
     return;
   }
   var items = getFiltered();
   if (items.length === 0) { list.innerHTML = "<div class='empty'>" + t("no_results") + "</div>"; return; }
   var visibleItems = items.slice(0, SEARCH_RENDER_LIMIT);
-  var countText = tf("count_results", { n: items.length, m: allProducts.length });
-  if (items.length > SEARCH_RENDER_LIMIT) {
-    countText += " - " + SEARCH_RENDER_LIMIT + " 件まで表示。品番・キーワードで絞り込んでください";
+  var countText = items.length + " 件表示";
+  if (items.length >= SEARCH_FETCH_LIMIT) {
+    countText += " - " + SEARCH_FETCH_LIMIT + " 件まで取得。品番・キーワードで絞り込んでください";
   }
   document.getElementById("count-bar").textContent = countText;
   var html = "";
@@ -3842,7 +3869,7 @@ function closePanel() {
   document.getElementById("panel-body").innerHTML = "";
   document.getElementById("panel-topbar-title").textContent = "-";
   document.querySelectorAll(".card.selected").forEach(function(c){ c.classList.remove("selected"); });
-  currentProduct = null; currentCoreDkdShohinId = null; currentImages = []; currentSlPartIds = [];
+  currentProduct = null; currentCoreDkdShohinId = null; currentParallelTargetDkdShohinId = null; currentParallelTargetProduct = null; currentImages = []; currentSlPartIds = [];
 }
 
 function renderPanelStatic() {
@@ -4020,6 +4047,8 @@ async function loadParallelCandidatesForCurrent() {
   var diffWrap = document.getElementById("component-diff-wrap");
   if (!wrap) return;
   currentParallelTargetDkdShohinId = null;
+  currentParallelTargetProduct = null;
+  parallelCandidateMap = {};
   if (diffWrap) diffWrap.innerHTML = "";
   var dkdId = await resolveCurrentCoreDkdShohinId();
   if (!dkdId) {
@@ -4049,6 +4078,7 @@ async function loadParallelCandidatesForCurrent() {
   html += "<table class='component-table'>";
   html += "<tr><th>商品ID</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_section") + "</th></tr>";
   rows.forEach(function(row) {
+    parallelCandidateMap[String(row.dkd_shohin_id)] = row;
     html += "<tr class='component-candidate' data-dkd='" + esc(String(row.dkd_shohin_id)) + "'>";
     html += "<td><div class='component-pn'>" + esc(row.dkd_shohin_id || "-") + "</div></td>";
     html += "<td><div class='component-pn'>" + esc(row.manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.manufacturer || "") + "</div></td>";
@@ -4060,10 +4090,12 @@ async function loadParallelCandidatesForCurrent() {
   wrap.innerHTML = html;
   wrap.querySelectorAll("tr.component-candidate[data-dkd]").forEach(function(row) {
     row.addEventListener("click", function() {
+      currentParallelTargetProduct = parallelCandidateMap[String(row.dataset.dkd)] || null;
       loadParallelDiffForCurrent(parseInt(row.dataset.dkd, 10));
     });
   });
   if (rows.length === 1) {
+    currentParallelTargetProduct = rows[0];
     loadParallelDiffForCurrent(parseInt(rows[0].dkd_shohin_id, 10));
   }
 }
@@ -4094,8 +4126,12 @@ async function loadParallelDiffForCurrent(targetDkdId) {
   }
   var html = "<div class='component-section-title' style='margin-top:14px'>" + t("component_result_section") + "</div>";
   html += "<div class='component-note' style='margin:0 0 8px'>" + tf("component_diff_count", { n: rows.length }) + "</div>";
+  var baseHead = esc((currentProduct && currentProduct.manufacturer_part_number) || "-") +
+    "<div class='component-sub'>" + esc((currentProduct && currentProduct.genuine_part_number) || "-") + " / " + esc((currentProduct && currentProduct.manufacturer) || "") + "</div>";
+  var targetHead = esc((currentParallelTargetProduct && currentParallelTargetProduct.manufacturer_part_number) || String(targetDkdId)) +
+    "<div class='component-sub'>" + esc((currentParallelTargetProduct && currentParallelTargetProduct.genuine_part_number) || "-") + " / " + esc((currentParallelTargetProduct && currentParallelTargetProduct.manufacturer) || "") + "</div>";
   html += "<table class='component-table'>";
-  html += "<tr><th>" + t("component_position") + "</th><th>" + t("component_match_status") + "</th><th>" + t("component_base") + "</th><th>" + t("component_target") + "</th></tr>";
+  html += "<tr><th>" + t("component_position") + "</th><th>" + t("component_match_status") + "</th><th>" + t("component_base") + "<div class='component-pn'>" + baseHead + "</div></th><th>" + t("component_target") + "<div class='component-pn'>" + targetHead + "</div></th></tr>";
   rows.forEach(function(row) {
     html += "<tr>";
     html += "<td><div class='component-pn'>" + esc(row.component_position || "-") + "</div></td>";
@@ -4780,14 +4816,14 @@ document.getElementById("kf-candidates").addEventListener("click", function(e) {
   var item = e.target.closest("[data-candidate-index]");
   if (item) selectKikanPartCandidate(parseInt(item.dataset.candidateIndex, 10));
 });
-document.getElementById("search-btn").addEventListener("click", function(){ render(); });
-document.getElementById("q").addEventListener("keydown", function(e){ if(e.key==="Enter") render(); });
-document.getElementById("clear-btn").addEventListener("click", function(){ document.getElementById("q").value=""; render(); });
+document.getElementById("search-btn").addEventListener("click", function(){ runProductSearch(); });
+document.getElementById("q").addEventListener("keydown", function(e){ if(e.key==="Enter") runProductSearch(); });
+document.getElementById("clear-btn").addEventListener("click", function(){ document.getElementById("q").value=""; currentFilter="all"; document.querySelectorAll(".chip").forEach(function(c){ c.classList.toggle("active", c.dataset.filter==="all"); }); runProductSearch(); });
 document.querySelectorAll(".chip").forEach(function(chip){
   chip.addEventListener("click", function(){
     currentFilter=chip.dataset.filter;
     document.querySelectorAll(".chip").forEach(function(c){ c.classList.toggle("active",c===chip); });
-    render();
+    runProductSearch();
   });
 });
 document.getElementById("list").addEventListener("click", function(e){ var c=e.target.closest(".card"); if(c) openPanel(parseInt(c.dataset.id,10)); });
