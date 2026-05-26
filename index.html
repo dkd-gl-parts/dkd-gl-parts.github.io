@@ -483,7 +483,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.31</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.32</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -512,7 +512,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.31</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.32</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1978,7 +1978,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.31";
+var APP_VERSION       = "v1.1.32";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -3874,6 +3874,17 @@ function openPanel(id) {
   document.querySelectorAll(".card").forEach(function(c){ c.classList.toggle("selected", parseInt(c.dataset.id,10)===id); });
 }
 
+async function openProductByDkdId(dkdId) {
+  var id = parseInt(dkdId, 10);
+  if (isNaN(id)) return;
+  var found = allProducts.some(function(p) { return parseInt(p.id, 10) === id; });
+  if (!found) {
+    var r = await sb.from("core_product_search_view").select("*").eq("dkd_shohin_id", id).maybeSingle();
+    if (!r.error && r.data) allProducts.push(r.data);
+  }
+  openPanel(id);
+}
+
 function closePanel() {
   document.getElementById("overlay").classList.remove("show");
   document.getElementById("panel").classList.remove("show");
@@ -4258,23 +4269,19 @@ async function loadKikan(dkdShohinId) {
     return;
   }
 
-  // dkd_gokan_id リストで parts テーブルを検索
+  // dkd_gokan_id リストで基幹商品検索ビューを検索
   var dkdGokanIds = members.map(function(m) { return m.dkd_gokan_id; });
-  var r3 = await sb.from("parts")
-    .select("id, dkd_shohin_id, genuine_part_number, manufacturer_part_number, manufacturer, vehicle_manufacturer, category, shohin_cd")
+  var r3 = await sb.from("core_product_search_view")
+    .select("*")
     .in("dkd_shohin_id", dkdGokanIds)
     .order("dkd_shohin_id");
 
   var parts_list = r3.data || [];
-
-  // shohin_cd が未登録の部品は kikan_group_members に入れられないため、
-  // 同一メーカー品番の部品を互換候補として補完する。
-  if (currentProduct && currentProduct.manufacturer_part_number) {
-    var r4 = await sb.from("parts")
-      .select("id, dkd_shohin_id, genuine_part_number, manufacturer_part_number, manufacturer, vehicle_manufacturer, category, shohin_cd")
-      .eq("manufacturer_part_number", currentProduct.manufacturer_part_number)
-      .order("genuine_part_number");
-    parts_list = dedupeParts(parts_list.concat(r4.data || []));
+  if (currentProduct && (currentProduct.category_code || currentProduct.category)) {
+    var currentCategory = currentProduct.category_code || currentProduct.category;
+    parts_list = parts_list.filter(function(p) {
+      return (p.category_code || p.category) === currentCategory;
+    });
   }
 
   parts_list = filterVisibleProducts(parts_list);
@@ -4286,7 +4293,7 @@ async function loadKikan(dkdShohinId) {
     var isCurrent = String(p.dkd_shohin_id) === String(dkdShohinId);
     if (!isCurrent && currentProduct && p.id === currentProduct.id) isCurrent = true;
     var rowCls = isCurrent ? "kikan-current" : "kikan-other";
-    html += "<tr class='" + rowCls + "' data-part-id='" + p.id + "'>";
+    html += "<tr class='" + rowCls + "' data-dkd-id='" + esc(String(p.dkd_shohin_id || p.id)) + "'>";
     html += "<td><div class='kikan-pn'>" + esc(p.genuine_part_number || "-") + "</div>";
     if (isCurrent) html += "<div><span class='kikan-badge'>" + t("kikan_this") + "</span></div>";
     html += "</td>";
@@ -4300,9 +4307,9 @@ async function loadKikan(dkdShohinId) {
   wrap.innerHTML = html;
 
   // 互換品の行をクリックすると詳細パネルを切り替える
-  wrap.querySelectorAll("tr.kikan-other[data-part-id]").forEach(function(row) {
+  wrap.querySelectorAll("tr.kikan-other[data-dkd-id]").forEach(function(row) {
     row.addEventListener("click", function() {
-      openPanel(parseInt(row.dataset.partId, 10));
+      openProductByDkdId(parseInt(row.dataset.dkdId, 10));
     });
   });
 }
