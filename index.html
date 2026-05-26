@@ -483,7 +483,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.27</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.28</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -512,7 +512,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.27</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.28</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1351,6 +1351,9 @@ var TRANSLATIONS = {
     component_none: "構成部品情報なし",
     component_candidates_none: "比較候補なし",
     component_diff_none: "差分なし",
+    component_candidate_section: "比較対象ASSY",
+    component_result_section: "並列検索結果",
+    component_candidate_hint: "比較対象をクリックすると構成部品の比較結果を表示します",
     component_candidate_ph: "比較候補を品番で絞り込み",
     component_load_candidates: "候補を表示",
     component_position: "部位",
@@ -1638,6 +1641,9 @@ var TRANSLATIONS = {
     component_none: "No component data",
     component_candidates_none: "No comparison candidates",
     component_diff_none: "No differences",
+    component_candidate_section: "Comparison ASSY",
+    component_result_section: "Parallel Search Result",
+    component_candidate_hint: "Click a comparison target to show component comparison results",
     component_candidate_ph: "Filter candidates by part number",
     component_load_candidates: "Show Candidates",
     component_position: "Position",
@@ -1925,6 +1931,9 @@ var TRANSLATIONS = {
     component_none: "无构成部件信息",
     component_candidates_none: "无比较候选",
     component_diff_none: "无差异",
+    component_candidate_section: "比较对象ASSY",
+    component_result_section: "并列搜索结果",
+    component_candidate_hint: "点击比较对象后显示构成部件比较结果",
     component_candidate_ph: "按品号筛选候选",
     component_load_candidates: "显示候选",
     component_position: "部位",
@@ -1968,7 +1977,7 @@ var currentParallelTargetDkdShohinId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.27";
+var APP_VERSION       = "v1.1.28";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var rakutenLastItems = [];
@@ -4035,7 +4044,9 @@ async function loadParallelCandidatesForCurrent() {
     wrap.innerHTML = "<div class='component-empty'>" + t("component_candidates_none") + "</div>";
     return;
   }
-  var html = "<table class='component-table'>";
+  var html = "<div class='component-section-title' style='margin-top:10px'>" + t("component_candidate_section") + "</div>";
+  html += "<div class='component-note' style='margin:0 0 8px'>" + t("component_candidate_hint") + "</div>";
+  html += "<table class='component-table'>";
   html += "<tr><th>商品ID</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_section") + "</th></tr>";
   rows.forEach(function(row) {
     html += "<tr class='component-candidate' data-dkd='" + esc(String(row.dkd_shohin_id)) + "'>";
@@ -4052,6 +4063,9 @@ async function loadParallelCandidatesForCurrent() {
       loadParallelDiffForCurrent(parseInt(row.dataset.dkd, 10));
     });
   });
+  if (rows.length === 1) {
+    loadParallelDiffForCurrent(parseInt(rows[0].dkd_shohin_id, 10));
+  }
 }
 
 async function loadParallelDiffForCurrent(targetDkdId) {
@@ -4078,7 +4092,8 @@ async function loadParallelDiffForCurrent(targetDkdId) {
     wrap.innerHTML = "<div class='component-empty'>" + t("component_diff_none") + "</div>";
     return;
   }
-  var html = "<div class='component-note' style='margin:8px 0'>" + tf("component_diff_count", { n: rows.length }) + "</div>";
+  var html = "<div class='component-section-title' style='margin-top:14px'>" + t("component_result_section") + "</div>";
+  html += "<div class='component-note' style='margin:0 0 8px'>" + tf("component_diff_count", { n: rows.length }) + "</div>";
   html += "<table class='component-table'>";
   html += "<tr><th>" + t("component_position") + "</th><th>" + t("component_match_status") + "</th><th>" + t("component_base") + "</th><th>" + t("component_target") + "</th></tr>";
   rows.forEach(function(row) {
