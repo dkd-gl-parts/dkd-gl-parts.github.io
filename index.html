@@ -521,7 +521,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.39</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.40</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -550,7 +550,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.39</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.40</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -2034,7 +2034,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.39";
+var APP_VERSION       = "v1.1.40";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -3588,6 +3588,14 @@ function selectKikanPartCandidate(index) {
   document.getElementById("kf-candidates").style.display = "none";
 }
 
+function getKikanCategoryCode(product) {
+  return (product && (product.category_code || product.category)) || "";
+}
+
+function isConfirmedKikanCategory(categoryCode) {
+  return !!categoryCode && categoryCode !== "unclassified_assy" && categoryCode !== "other_assy";
+}
+
 async function saveKikanForm() {
   var errEl   = document.getElementById("kikan-form-error");
   errEl.textContent = "";
@@ -3598,7 +3606,44 @@ async function saveKikanForm() {
   var rp = await sb.from("parts").select("id, dkd_shohin_id, shohin_cd, genuine_part_number").eq("dkd_shohin_id", dkdId).single();
   if (rp.error || !rp.data) { errEl.textContent = "商品コード " + dkdId + " が商品マスタに存在しません"; return; }
 
+  var productResult = await sb.from("core_product_search_view")
+    .select("dkd_shohin_id, category_code, category")
+    .eq("dkd_shohin_id", dkdId)
+    .limit(1);
+  var selectedProduct = (productResult.data || [])[0];
+  var selectedCategory = getKikanCategoryCode(selectedProduct);
+  if (!isConfirmedKikanCategory(selectedCategory)) {
+    errEl.textContent = "カテゴリ未分類の商品は互換登録できません。先に基幹商品マスタのカテゴリを補正してください。";
+    return;
+  }
+
   var groupId = kikanFormGroupId;
+
+  if (groupId) {
+    var existingMembers = await sb.from("kikan_group_members")
+      .select("dkd_gokan_id")
+      .eq("kikan_group_id", groupId);
+    var existingIds = (existingMembers.data || []).map(function(m) { return m.dkd_gokan_id; }).filter(function(v) { return v != null; });
+    if (existingIds.length) {
+      var existingProducts = await sb.from("core_product_search_view")
+        .select("dkd_shohin_id, category_code, category")
+        .in("dkd_shohin_id", existingIds);
+      var existingCategories = {};
+      (existingProducts.data || []).forEach(function(p) {
+        var cat = getKikanCategoryCode(p);
+        existingCategories[cat || ""] = true;
+      });
+      var keys = Object.keys(existingCategories);
+      if (keys.some(function(cat) { return !isConfirmedKikanCategory(cat); })) {
+        errEl.textContent = "既存グループに未分類の商品が含まれています。先に基幹商品マスタのカテゴリを補正してください。";
+        return;
+      }
+      if (keys.some(function(cat) { return cat !== selectedCategory; })) {
+        errEl.textContent = "カテゴリが違う商品は互換登録できません。";
+        return;
+      }
+    }
+  }
 
   // 新グループ作成
   if (!groupId) {
