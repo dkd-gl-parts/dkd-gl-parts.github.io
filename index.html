@@ -532,7 +532,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.47</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.48</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -561,7 +561,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.44</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.48</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -2158,7 +2158,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.44";
+var APP_VERSION       = "v1.1.48";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -2219,6 +2219,12 @@ function canSeeSalesPrice() {
   if (g === "gltek") return ["admin","editor","price_viewer"].indexOf(r) >= 0;
   if (g === "public") return r === "price_viewer";
   return false;
+}
+function canUseRakutenResearch() {
+  return !!(userProfile && userProfile.group_name === "daiko" && canSeeSalesPrice());
+}
+function canViewInternalComponents() {
+  return !!(userProfile && userProfile.group_name !== "public");
 }
 function isDaikoGroup() {
   return userProfile && userProfile.group_name === "daiko";
@@ -2542,8 +2548,8 @@ function renderMenu() {
     { icon: "&#x1F512;", titleKey: "mi_changepw_title", descKey: "mi_changepw_desc", action: "change-pw", available: true, tag: null },
     { icon: "&#x1F527;", titleKey: "mi_parts_title", descKey: "mi_parts_desc", action: "parts-mgmt", available: canEdit(), tag: null },
     { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canEdit(), tag: null },
-    { icon: "&#x1F4B4;", titleKey: "mi_rakuten_title", descKey: "mi_rakuten_desc", action: "rakuten-price", available: isDaikoGroup() && canSeeSalesPrice(), tag: null },
-    { icon: "&#x1F4C8;", titleKey: "screen_rakuten_list_title", descKey: "mi_rakuten_desc", action: "rakuten-price-list", available: isDaikoGroup() && canSeeSalesPrice(), tag: null },
+    { icon: "&#x1F4B4;", titleKey: "mi_rakuten_title", descKey: "mi_rakuten_desc", action: "rakuten-price", available: canUseRakutenResearch(), tag: null },
+    { icon: "&#x1F4C8;", titleKey: "screen_rakuten_list_title", descKey: "mi_rakuten_desc", action: "rakuten-price-list", available: canUseRakutenResearch(), tag: null },
     { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: isAdmin(), tag: isAdmin() ? null : "tag_admin_only", tagClass: "tag-admin" }
   ];
 
@@ -2706,13 +2712,14 @@ function rakutenTargetFromPart(p, sourceType) {
 }
 
 function openRakutenForCurrentProduct() {
+  if (!canUseRakutenResearch()) { alert(t("err_perm")); return; }
   if (!currentProduct) return;
   rakutenActiveTarget = rakutenTargetFromPart(currentProduct, "detail");
   enterRakutenPrice(buildRakutenProductQuery(currentProduct));
 }
 
 async function enterRakutenPrice(seedKeyword) {
-  if (!canSeeSalesPrice()) { alert(t("err_perm")); return; }
+  if (!canUseRakutenResearch()) { alert(t("err_perm")); return; }
   showScreen("rakuten-price");
   await loadRakutenKeyFields();
   var nameEl = document.getElementById("rakuten-price-username");
@@ -3418,7 +3425,7 @@ function renderRakutenResults(items, keyword) {
 }
 
 async function enterRakutenPriceList() {
-  if (!canSeeSalesPrice()) { alert(t("err_perm")); return; }
+  if (!canUseRakutenResearch()) { alert(t("err_perm")); return; }
   showScreen("rakuten-price-list");
   var nameEl = document.getElementById("rakuten-price-list-username");
   if (nameEl && userProfile) nameEl.textContent = userProfile.name || userProfile.email.split("@")[0];
@@ -4301,7 +4308,7 @@ function renderPanelStatic() {
   document.getElementById("panel-body").innerHTML =
     "<table class='detail-table' style='margin-top:4px'>" + tHtml + "</table>" +
     "<div id='product-spec-wrap'><div class='spec-box'><div class='spec-head'><div class='spec-title'>" + t("spec_section") + "</div></div><div class='spec-sub'>" + t("loading") + "</div></div></div>" +
-    "<div class='rakuten-quick-row'><button class='btn-sm-edit' onclick='openRakutenForCurrentProduct()'>&#x1F4B4; " + t("rakuten_quick") + "</button></div>" +
+    (canUseRakutenResearch() ? "<div class='rakuten-quick-row'><button class='btn-sm-edit' onclick='openRakutenForCurrentProduct()'>&#x1F4B4; " + t("rakuten_quick") + "</button></div>" : "") +
     "<div class='detail-actions'>" +
       "<button class='btn-sm-edit' id='btn-open-components'>&#9881; " + t("component_open_parts") + "</button>" +
       "<button class='btn-sm-edit' id='btn-open-component-parallel'>&#8644; " + t("component_open_parallel") + "</button>" +
