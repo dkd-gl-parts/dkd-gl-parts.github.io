@@ -532,7 +532,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.44</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.45</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1446,6 +1446,8 @@ var TRANSLATIONS = {
     rakuten_tried_keywords: "試した検索条件",
     rakuten_open_mall_search: "楽天市場で検索",
     rakuten_error: "楽天APIの取得に失敗しました",
+    rakuten_rate_wait: "楽天APIの制限中です。{seconds}秒後に再実行してください。",
+    rakuten_rate_cooldown: "楽天APIの制限に達しました。約{seconds}秒後に再実行できます。",
     rakuten_count: "件数",
     rakuten_condition_rebuilt: "リビルト",
     rakuten_condition_new: "新品",
@@ -1755,6 +1757,8 @@ var TRANSLATIONS = {
     rakuten_tried_keywords: "Tried Conditions",
     rakuten_open_mall_search: "Search Rakuten Ichiba",
     rakuten_error: "Failed to fetch Rakuten API",
+    rakuten_rate_wait: "Rakuten API is cooling down. Try again in {seconds}s.",
+    rakuten_rate_cooldown: "Rakuten API rate limit reached. Try again in about {seconds}s.",
     rakuten_count: "Items",
     rakuten_condition_rebuilt: "Rebuilt",
     rakuten_condition_new: "New",
@@ -2064,6 +2068,8 @@ var TRANSLATIONS = {
     rakuten_tried_keywords: "尝试的搜索条件",
     rakuten_open_mall_search: "在乐天市场搜索",
     rakuten_error: "乐天API获取失败",
+    rakuten_rate_wait: "乐天API正在限流。请在{seconds}秒后重试。",
+    rakuten_rate_cooldown: "已达到乐天API限制。约{seconds}秒后可重试。",
     rakuten_count: "件数",
     rakuten_condition_rebuilt: "翻新",
     rakuten_condition_new: "新品",
@@ -2159,6 +2165,9 @@ var SEARCH_FETCH_LIMIT = 200;
 var searchRequestSeq = 0;
 var rakutenLastItems = [];
 var rakutenLastDebug = [];
+var rakutenApiBusy = false;
+var rakutenApiLastRequestAt = 0;
+var rakutenApiCooldownUntil = 0;
 var rakutenTargets = [];
 var rakutenActiveTarget = null;
 
@@ -2984,7 +2993,8 @@ function isRakutenRateLimitError(err) {
 function rakutenFriendlyError(err) {
   var msg = err && err.message ? err.message : String(err || "");
   if (isRakutenRateLimitError(err)) {
-    return "HTTP 429: 楽天APIのリクエスト制限に達しました。しばらく待ってから、件数を減らして再実行してください。";
+    var waitSeconds = Math.max(1, Math.ceil((rakutenApiCooldownUntil - Date.now()) / 1000));
+    return tf("rakuten_rate_cooldown", { seconds: waitSeconds });
   }
   if (msg.indexOf("HTTP_REFERRER_NOT_ALLOWED") >= 0) {
     return "HTTP_REFERRER_NOT_ALLOWED: 楽天Web Serviceのアプリ設定で「許可されたWebサイト」に " + location.origin + " を登録してください。";
@@ -3040,9 +3050,25 @@ function openRakutenDiagnosticUrl() {
   document.body.removeChild(a);
 }
 
+async function waitForRakutenApiSlot(extraDelayMs) {
+  var now = Date.now();
+  if (rakutenApiCooldownUntil > now) {
+    var waitSeconds = Math.ceil((rakutenApiCooldownUntil - now) / 1000);
+    throw new Error("HTTP 429 cooldown " + waitSeconds + "s");
+  }
+  var minInterval = Math.max(2500, Number(extraDelayMs || 0));
+  var elapsed = now - rakutenApiLastRequestAt;
+  if (elapsed < minInterval) await sleep(minInterval - elapsed);
+  rakutenApiLastRequestAt = Date.now();
+}
+
+function setRakutenCooldown(seconds) {
+  rakutenApiCooldownUntil = Date.now() + Math.max(1, seconds || 60) * 1000;
+}
+
 async function fetchRakutenItemsOnce(keyword, ngKeyword, sort, hits, opts) {
   opts = opts || {};
-  if (opts.throttleMs) await sleep(opts.throttleMs);
+  await waitForRakutenApiSlot(opts.throttleMs);
   var data = await rakutenFetchJson(buildRakutenApiUrl(keyword, ngKeyword, sort, hits, opts));
   if (data && data.error) throw new Error(data.error_description || data.error);
   if (data && data.errors) throw new Error(data.errors.errorMessage || JSON.stringify(data.errors));
@@ -3058,13 +3084,13 @@ async function fetchRakutenItems(keyword, ngKeyword, sort, hits, target, config)
   if (config.bulk) {
     var primary = String(keyword || "").trim();
     var loosePrimary = rakutenLooseKeyword(primary);
-    variants.push({ keyword: primary, opts: { field: "0", availability: "0", throttleMs: 1200 } });
-    if (loosePrimary && loosePrimary !== primary) variants.push({ keyword: loosePrimary, opts: { field: "0", availability: "0", throttleMs: 1200 } });
+    variants.push({ keyword: primary, opts: { field: "0", availability: "0", throttleMs: 3500 } });
+    if (loosePrimary && loosePrimary !== primary) variants.push({ keyword: loosePrimary, opts: { field: "0", availability: "0", throttleMs: 3500 } });
   } else {
     rakutenKeywordCandidates(keyword, target).forEach(function(candidate) {
-      variants.push({ keyword: candidate, opts: { field: "1", availability: "1", throttleMs: 500 } });
-      variants.push({ keyword: candidate, opts: { field: "0", availability: "1", throttleMs: 500 } });
-      variants.push({ keyword: candidate, opts: { field: "0", availability: "0", throttleMs: 500 } });
+      variants.push({ keyword: candidate, opts: { field: "1", availability: "1", throttleMs: 2500 } });
+      variants.push({ keyword: candidate, opts: { field: "0", availability: "1", throttleMs: 2500 } });
+      variants.push({ keyword: candidate, opts: { field: "0", availability: "0", throttleMs: 2500 } });
     });
   }
   var tried = {};
@@ -3079,7 +3105,7 @@ async function fetchRakutenItems(keyword, ngKeyword, sort, hits, target, config)
       if (items.length > 0 || i === variants.length - 1) return items;
     } catch(e) {
       rakutenLastDebug.push({ keyword: v.keyword, field: v.opts.field, availability: v.opts.availability, count: 0, error: e.message || String(e) });
-      if (isRakutenRateLimitError(e)) throw e;
+      if (isRakutenRateLimitError(e)) { setRakutenCooldown(60); throw e; }
       if ((e.message || "").indexOf("not found") >= 0) {
         lastErr = e;
         continue;
@@ -3169,6 +3195,15 @@ async function saveRakutenSurvey(target, items, keyword, ngKeyword, sort) {
 }
 
 async function searchRakutenPrices() {
+  if (rakutenApiBusy) return;
+  var cooldownMs = rakutenApiCooldownUntil - Date.now();
+  if (cooldownMs > 0) {
+    setRakutenStatus(tf("rakuten_rate_wait", { seconds: Math.ceil(cooldownMs / 1000) }), true);
+    return;
+  }
+  var searchBtn = document.getElementById("btn-rakuten-search");
+  rakutenApiBusy = true;
+  if (searchBtn) searchBtn.disabled = true;
   var keyword = cleanPartNumberValue(document.getElementById("rakuten-keyword").value);
   var ngKeyword = document.getElementById("rakuten-ng-keyword").value.trim();
   var sort = document.getElementById("rakuten-sort").value;
@@ -3176,8 +3211,18 @@ async function searchRakutenPrices() {
   var appId = document.getElementById("rakuten-app-id").value.trim();
   var accessKey = document.getElementById("rakuten-access-key").value.trim();
 
-  if (!keyword) { setRakutenStatus(t("rakuten_missing_keyword"), true); return; }
-  if (!appId || !accessKey) { setRakutenStatus(t("rakuten_missing_key"), true); return; }
+  if (!keyword) {
+    setRakutenStatus(t("rakuten_missing_keyword"), true);
+    rakutenApiBusy = false;
+    if (searchBtn) searchBtn.disabled = false;
+    return;
+  }
+  if (!appId || !accessKey) {
+    setRakutenStatus(t("rakuten_missing_key"), true);
+    rakutenApiBusy = false;
+    if (searchBtn) searchBtn.disabled = false;
+    return;
+  }
   setRakutenStatus(t("rakuten_searching"), false);
   document.getElementById("rakuten-results").innerHTML = "<div class='loading'>" + t("loading") + "</div>";
   document.getElementById("rakuten-summary").innerHTML = "";
@@ -3188,8 +3233,12 @@ async function searchRakutenPrices() {
     renderRakutenResults(rakutenLastItems, keyword);
     setRakutenStatus(t("rakuten_saved_result"), false);
   } catch(e) {
+    if (isRakutenRateLimitError(e)) setRakutenCooldown(60);
     document.getElementById("rakuten-results").innerHTML = "<div class='empty'>" + t("rakuten_error") + ": " + esc(rakutenFriendlyError(e)) + "</div>";
     setRakutenStatus(t("rakuten_error"), true);
+  } finally {
+    rakutenApiBusy = false;
+    if (searchBtn) searchBtn.disabled = false;
   }
 }
 
@@ -3202,6 +3251,11 @@ async function runRakutenBulkSurvey() {
   var accessKey = document.getElementById("rakuten-access-key").value.trim();
   if (!appId || !accessKey) { setRakutenStatus(t("rakuten_missing_key"), true); return; }
   try {
+    var cooldownMs = rakutenApiCooldownUntil - Date.now();
+    if (cooldownMs > 0) {
+      setRakutenStatus(tf("rakuten_rate_wait", { seconds: Math.ceil(cooldownMs / 1000) }), true);
+      return;
+    }
     setRakutenStatus(t("rakuten_searching"), false);
     await validateRakutenApiConnection();
   } catch(e) {
@@ -3226,6 +3280,7 @@ async function runRakutenBulkSurvey() {
       console.warn("rakuten bulk item failed", target.search_number, e);
       if (isRakutenRateLimitError(e)) {
         firstError = target.search_number + ": " + rakutenFriendlyError(e);
+        setRakutenCooldown(60);
         stoppedByRateLimit = true;
         rakutenTargets = rakutenTargets.slice(i);
         rateLimitRemaining = rakutenTargets.length;
