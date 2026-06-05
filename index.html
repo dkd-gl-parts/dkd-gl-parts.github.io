@@ -532,7 +532,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.51</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.52</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -561,7 +561,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.51</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.52</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1339,6 +1339,7 @@ var TRANSLATIONS = {
     screen_logs_title: "操作ログ",
     lbl_shohin_cd: "商品コード",
     lbl_genuine_pn: "純正品番",
+    f_genuine_pn2: "純正品番2",
     lbl_mfr_pn: "メーカー品番",
     lbl_mfr: "メーカー",
     lbl_vehicle_mfr: "車メーカー",
@@ -1650,6 +1651,7 @@ var TRANSLATIONS = {
     screen_logs_title: "Operation Logs",
     lbl_shohin_cd: "Product Code",
     lbl_genuine_pn: "Genuine Part No.",
+    f_genuine_pn2: "Genuine Part No. 2",
     lbl_mfr_pn: "Manufacturer Part No.",
     lbl_mfr: "Manufacturer",
     lbl_vehicle_mfr: "Vehicle Maker",
@@ -1961,6 +1963,7 @@ var TRANSLATIONS = {
     screen_logs_title: "操作日志",
     lbl_shohin_cd: "商品代码",
     lbl_genuine_pn: "纯正零件编号",
+    f_genuine_pn2: "纯正零件编号2",
     lbl_mfr_pn: "制造商零件编号",
     lbl_mfr: "制造商",
     lbl_vehicle_mfr: "汽车制造商",
@@ -2158,7 +2161,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.51";
+var APP_VERSION       = "v1.1.52";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4237,6 +4240,7 @@ function render() {
     html += "<div class='card-left'>";
     html += "<div class='card-name'>"+esc(productCategoryLabel(p))+"</div>";
     html += "<div class='card-pn'>"+esc(p.genuine_part_number||"-")+"</div>";
+    if (p.genuine_part_number_2) html += "<div class='card-sub'>純正2: "+esc(p.genuine_part_number_2)+"</div>";
     html += "<div class='card-mfr'>"+esc(mfr)+"</div>";
     if (p.manufacturer || p.manufacturer_part_number) {
       html += "<div class='card-sub'>";
@@ -4303,6 +4307,7 @@ function renderPanelStatic() {
   // parts テーブルのフィールド定義
   var defs = [
     ["f_genuine_pn",  p.genuine_part_number],
+    ["f_genuine_pn2", p.genuine_part_number_2],
     ["f_mfr_pn",      p.manufacturer_part_number],
     ["f_manufacturer",p.manufacturer],
     ["f_vehicle_mfr", p.vehicle_manufacturer],
