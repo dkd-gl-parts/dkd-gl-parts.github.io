@@ -352,10 +352,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .img-grid  { display: flex; flex-direction: column; gap: 8px; }
 .img-wrap  { position: relative; border-radius: 8px; overflow: hidden; background: #fff; aspect-ratio: 1; width: 100%; display: flex; align-items: center; justify-content: center; }
 .img-wrap img { width: 100%; height: 100%; object-fit: contain; display: block; cursor: zoom-in; image-rendering: auto; }
-.img-del   { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.55); color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .panel-footer { flex-shrink: 0; padding: 8px 10px 16px; border-top: 1px solid #eee; background: #fafafa; width: 180px; flex-shrink: 0; }
 .upload-btn-small { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; background: #4f8ef7; color: #fff; border: none; border-radius: 8px; padding: 8px 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
 .upload-btn-small:active { background: #3a7ae0; }
+.image-delete-open-btn { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; background: #fff; color: #d33; border: 1px solid #f0b8b8; border-radius: 8px; padding: 8px 6px; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 12px; }
+.image-delete-open-btn:active { background: #fff3f3; }
+.image-delete-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 14px; max-height: 58vh; overflow-y: auto; padding: 4px 2px; }
+.image-delete-item { border: 1px solid #eee; border-radius: 8px; background: #fafafa; padding: 8px; }
+.image-delete-preview { aspect-ratio: 1; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 10px; }
+.image-delete-preview img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.image-delete-btn { width: 100%; border: 1px solid #ff5a5a; background: #fff; color: #e03a3a; border-radius: 6px; padding: 7px 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.image-delete-btn:active { background: #fff0f0; }
 .upload-btn   { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: #4f8ef7; color: #fff; border: none; border-radius: 10px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; }
 .upload-btn:active { background: #3a7ae0; }
 .upload-btn.busy   { opacity: 0.5; pointer-events: none; }
@@ -533,7 +540,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.55</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.56</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -562,7 +569,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.55</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.56</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -655,6 +662,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
                   &#x1F4F7; <span data-i18n="btn_upload">写真を追加</span>
                   <input class="upload-input" id="upload-input" type="file" accept="image/*" multiple>
                 </label>
+                <button class="image-delete-open-btn" id="btn-open-image-delete" type="button">
+                  &#x1F5D1; <span data-i18n="btn_delete_images">写真を削除</span>
+                </button>
               </div>
             </div>
           </div>
@@ -1191,6 +1201,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 </div>
 
 <!-- フルスクリーンギャラリー -->
+
+<!-- 写真削除画面 -->
+<div class="form-overlay" id="image-delete-overlay">
+  <div class="form-card">
+    <h3 data-i18n="image_delete_title">写真の削除</h3>
+    <div class="image-delete-list" id="image-delete-list"></div>
+    <div class="form-footer">
+      <button class="btn-cancel" id="btn-image-delete-cancel" data-i18n="btn_back">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <div class="fullscreen" id="fullscreen">
   <div class="fs-top">
     <span class="fs-counter" id="fs-counter"></span>
@@ -1258,6 +1280,8 @@ var TRANSLATIONS = {
     welcome_panel: "品番を検索して選択してください",
     img_section: "画像",
     btn_upload: "写真を追加する",
+    btn_delete_images: "写真を削除",
+    image_delete_title: "写真の削除",
     img_none: "画像なし",
     img_loading: "読み込み中...",
     del_confirm: "この画像を削除しますか？",
@@ -1578,6 +1602,8 @@ var TRANSLATIONS = {
     welcome_panel: "Search and select a part number",
     img_section: "Images",
     btn_upload: "Add Photos",
+    btn_delete_images: "Delete Photos",
+    image_delete_title: "Delete Photos",
     img_none: "No images",
     img_loading: "Loading...",
     del_confirm: "Delete this image?",
@@ -1898,6 +1924,8 @@ var TRANSLATIONS = {
     welcome_panel: "请搜索并选择零件编号",
     img_section: "图片",
     btn_upload: "添加照片",
+    btn_delete_images: "删除照片",
+    image_delete_title: "删除照片",
     img_none: "无图片",
     img_loading: "加载中...",
     del_confirm: "确认删除此图片？",
@@ -2205,7 +2233,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.55";
+var APP_VERSION       = "v1.1.56";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -5238,10 +5266,43 @@ function renderImages() {
   currentImages.forEach(function(img, i) {
     html += "<div class='img-wrap'>";
     html += "<img src='"+esc(img.image_url)+"' loading='lazy' data-index='"+i+"' data-url='"+esc(img.image_url)+"'>";
-    if (canEdit()) html += "<button class='img-del' data-del-id='"+img.id+"' data-del-url='"+esc(img.image_url)+"'>&#10005;</button>";
     html += "</div>";
   });
   grid.innerHTML = html;
+}
+
+function openImageDeleteDialog() {
+  if (!canEdit()) { alert(t("err_perm")); return; }
+  renderImageDeleteDialog();
+  document.getElementById("image-delete-overlay").classList.add("show");
+}
+
+function closeImageDeleteDialog() {
+  document.getElementById("image-delete-overlay").classList.remove("show");
+}
+
+function renderImageDeleteDialog() {
+  var list = document.getElementById("image-delete-list");
+  if (!list) return;
+  if (!currentImages.length) {
+    list.innerHTML = "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + t("img_none") + "</div></div>";
+    return;
+  }
+  var html = "";
+  currentImages.forEach(function(img, i) {
+    html += "<div class='image-delete-item'>";
+    html += "<div class='image-delete-preview'><img src='" + esc(img.image_url) + "' loading='lazy'></div>";
+    html += "<button class='image-delete-btn' data-delete-image-index='" + i + "'>" + t("btn_delete_images") + "</button>";
+    html += "</div>";
+  });
+  list.innerHTML = html;
+}
+
+async function deleteImageFromDialog(index) {
+  var img = currentImages[index];
+  if (!img) return;
+  await deleteImage(img.id, img.image_url);
+  renderImageDeleteDialog();
 }
 
 async function uploadImages(event) {
@@ -5749,11 +5810,16 @@ document.getElementById("list").addEventListener("click", function(e){ var c=e.t
 document.getElementById("overlay").addEventListener("click", closePanel);
 document.getElementById("panel-close-btn").addEventListener("click", closePanel);
 document.getElementById("panel").addEventListener("click", function(e){
-  var d=e.target.closest(".img-del");
-  if(d){ e.stopPropagation(); deleteImage(parseInt(d.dataset.delId,10),d.dataset.delUrl); return; }
   var img=e.target.closest("img[data-index]"); if(img) openFullscreen(parseInt(img.dataset.index,10));
 });
 document.getElementById("upload-input").addEventListener("change", uploadImages);
+document.getElementById("btn-open-image-delete").addEventListener("click", openImageDeleteDialog);
+document.getElementById("btn-image-delete-cancel").addEventListener("click", closeImageDeleteDialog);
+document.getElementById("image-delete-overlay").addEventListener("click", function(e){ if(e.target===this) closeImageDeleteDialog(); });
+document.getElementById("image-delete-list").addEventListener("click", function(e){
+  var btn = e.target.closest("[data-delete-image-index]");
+  if (btn) deleteImageFromDialog(parseInt(btn.dataset.deleteImageIndex, 10));
+});
 document.getElementById("fs-close").addEventListener("click", closeFullscreen);
 document.getElementById("fullscreen").addEventListener("click", function(e){ if(e.target===this) closeFullscreen(); });
 document.getElementById("fs-prev").addEventListener("click", function(){ if(fsIndex>0){fsIndex--;renderFullscreen();} });
