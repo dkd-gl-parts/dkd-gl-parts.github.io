@@ -16,6 +16,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 
 .role-badge  { display: inline-block; padding: 2px 9px; border-radius: 10px; font-size: 11px; font-weight: 700; }
 .role-admin  { background: #fff0eb; color: #c04a1a; }
+.role-system { background: #1a1a2e; color: #fff; }
 .role-editor { background: #e8f4ff; color: #1a5faa; }
 .role-price  { background: #f0fff4; color: #1a8c3e; }
 .role-viewer { background: #f0f0f0; color: #666; }
@@ -532,7 +533,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.52</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.53</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -561,7 +562,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.52</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.53</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1049,7 +1050,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <div id="rakuten-results"><div class="empty" data-i18n="rakuten_empty">キーワードを入力して楽天価格を調査してください</div></div>
     </div>
 
-    <div class="rakuten-card">
+    <div class="rakuten-card" id="rakuten-bulk-card">
       <h3 data-i18n="rakuten_targets_title">調査対象</h3>
       <div class="rakuten-grid">
         <div class="rakuten-field">
@@ -1091,11 +1092,47 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         <button class="btn-sm-edit" id="btn-rakuten-save-keys" data-i18n="rakuten_save_keys">API設定を保存</button>
         <button class="btn-sm-edit" id="btn-rakuten-test-keys" data-i18n="rakuten_test_keys">API接続テスト</button>
         <button class="btn-sm-edit" id="btn-rakuten-open-diagnostic" data-i18n="rakuten_open_diagnostic">診断URLを開く</button>
-        <span class="rakuten-note" data-i18n="rakuten_shared_key_note">API設定は会社共通設定として保存されます。保存は管理者のみ可能です。</span>
+        <span class="rakuten-note" id="api-settings-status" data-i18n="rakuten_shared_key_note">API設定は会社共通設定として保存されます。保存はシステム管理者のみ可能です。</span>
       </div>
     </div>
 
   </div>
+</div>
+
+<!-- =============================================
+   価格一括調査画面
+============================================= -->
+<div id="screen-rakuten-bulk" class="screen">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-rakuten-bulk" data-i18n="btn_back">← メニュー</button>
+      <span class="logo-text" data-i18n="screen_rakuten_bulk_title">価格一括調査</span>
+    </div>
+    <div class="page-header-right">
+      <span class="header-username" id="rakuten-bulk-username"></span>
+      <span class="role-badge" id="rakuten-bulk-role-badge"></span>
+      <button class="btn-logout" id="btn-logout-rakuten-bulk" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <div class="rakuten-price-body" id="rakuten-bulk-host"></div>
+</div>
+
+<!-- =============================================
+   API設定画面
+============================================= -->
+<div id="screen-api-settings" class="screen">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-api-settings" data-i18n="btn_back">← メニュー</button>
+      <span class="logo-text" data-i18n="screen_api_settings_title">API設定</span>
+    </div>
+    <div class="page-header-right">
+      <span class="header-username" id="api-settings-username"></span>
+      <span class="role-badge" id="api-settings-role-badge"></span>
+      <button class="btn-logout" id="btn-logout-api-settings" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <div class="rakuten-price-body" id="api-settings-host"></div>
 </div>
 
 <!-- =============================================
@@ -1275,12 +1312,13 @@ var TRANSLATIONS = {
     f_category: "カテゴリ",
     f_sl: "SL品番",
     role_admin: "管理者",
+    role_system_admin: "システム管理者",
     role_editor: "編集者",
     role_price_viewer: "価格閲覧者",
     role_viewer: "価格閲覧者",
     screen_users_title: "ユーザー管理",
     users_heading: "ユーザー一覧",
-    users_desc: "表示名とロールを設定して「保存」をクリックしてください。ロールは「閲覧者」→「編集者」→「管理者」の順に権限が強くなります。",
+    users_desc: "通常管理者は自グループのみ管理できます。システム管理者は全グループとAPI設定を管理できます。",
     perm_group: "グループ",
     perm_role: "ロール",
     perm_products: "商品閲覧",
@@ -1328,13 +1366,19 @@ var TRANSLATIONS = {
     mi_parts_desc: "商品の追加・修正・削除を行います。",
     mi_kikan_title: "互換管理",
     mi_kikan_desc: "互換グループの登録・編集を行います。",
-    mi_rakuten_title: "楽天価格調査",
+    mi_rakuten_title: "価格調査",
+    mi_rakuten_bulk_title: "価格一括調査",
+    mi_rakuten_bulk_desc: "品番マスタやアップロードリストから一括で価格を調査します。",
+    mi_api_settings_title: "API設定",
+    mi_api_settings_desc: "外部APIの共通設定を管理します。",
     mi_rakuten_desc: "楽天市場APIで販売価格を調査し、相場を確認します。",
     mi_logs_title: "操作ログ",
     mi_logs_desc: "商品・互換の追加・修正・削除の履歴を確認します。",
     screen_parts_title: "商品管理",
     screen_kikan_title: "互換管理",
-    screen_rakuten_title: "楽天価格調査",
+    screen_rakuten_title: "価格調査",
+    screen_rakuten_bulk_title: "価格一括調査",
+    screen_api_settings_title: "API設定",
     screen_rakuten_list_title: "楽天価格調査結果",
     screen_logs_title: "操作ログ",
     lbl_shohin_cd: "商品コード",
@@ -1349,6 +1393,7 @@ var TRANSLATIONS = {
     lbl_category: "カテゴリ",
     btn_add_part: "商品を追加",
     btn_edit: "修正",
+    btn_edit_part: "品番修正",
     btn_delete: "削除",
     btn_save_part: "保存",
     del_part_confirm: "この商品を削除しますか？互換グループからも削除されます。",
@@ -1425,12 +1470,12 @@ var TRANSLATIONS = {
     rakuten_exclude: "除外キーワード",
     rakuten_sort: "並び順",
     rakuten_hits: "取得件数",
-    rakuten_btn_search: "楽天価格を調査",
+    rakuten_btn_search: "価格を調査",
     rakuten_use_current: "選択中の商品品番を使う",
     rakuten_api_settings: "楽天API設定",
     rakuten_save_keys: "API設定を保存",
-    rakuten_shared_key_note: "API設定は会社共通設定として保存されます。保存は管理者のみ可能です。",
-    rakuten_key_admin_only: "API設定の保存は管理者のみ可能です。",
+    rakuten_shared_key_note: "API設定は会社共通設定として保存されます。保存はシステム管理者のみ可能です。",
+    rakuten_key_admin_only: "API設定の保存はシステム管理者のみ可能です。",
     rakuten_test_keys: "API接続テスト",
     rakuten_open_diagnostic: "診断URLを開く",
     rakuten_test_ok: "楽天API接続OKです",
@@ -1457,7 +1502,7 @@ var TRANSLATIONS = {
     rakuten_avg: "平均",
     rakuten_max: "最高値",
     rakuten_open: "楽天で開く",
-    rakuten_quick: "楽天価格調査",
+    rakuten_quick: "価格調査",
     rakuten_open_list: "結果一覧",
     rakuten_targets_title: "調査対象",
     rakuten_master_limit: "品番マスタ読込件数",
@@ -1587,6 +1632,7 @@ var TRANSLATIONS = {
     f_category: "Category",
     f_sl: "SL Part No.",
     role_admin: "Admin",
+    role_system_admin: "System Admin",
     role_editor: "Editor",
     role_price_viewer: "価格閲覧者",
     role_viewer: "価格閲覧者",
@@ -1640,13 +1686,19 @@ var TRANSLATIONS = {
     mi_parts_desc: "Add, edit, and delete parts.",
     mi_kikan_title: "Compatibility Management",
     mi_kikan_desc: "Register and edit compatibility groups.",
-    mi_rakuten_title: "Rakuten Price Check",
+    mi_rakuten_title: "Price Check",
+    mi_rakuten_bulk_title: "Bulk Price Check",
+    mi_rakuten_bulk_desc: "Run price checks from the part master or an uploaded list.",
+    mi_api_settings_title: "API Settings",
+    mi_api_settings_desc: "Manage shared external API settings.",
     mi_rakuten_desc: "Check market selling prices via Rakuten Ichiba API.",
     mi_logs_title: "Operation Logs",
     mi_logs_desc: "View history of part and compatibility changes.",
     screen_parts_title: "Parts Management",
     screen_kikan_title: "Compatibility Management",
-    screen_rakuten_title: "Rakuten Price Check",
+    screen_rakuten_title: "Price Check",
+    screen_rakuten_bulk_title: "Bulk Price Check",
+    screen_api_settings_title: "API Settings",
     screen_rakuten_list_title: "Rakuten Price Results",
     screen_logs_title: "Operation Logs",
     lbl_shohin_cd: "Product Code",
@@ -1661,6 +1713,7 @@ var TRANSLATIONS = {
     lbl_category: "Category",
     btn_add_part: "Add Part",
     btn_edit: "Edit",
+    btn_edit_part: "Edit Part No.",
     btn_delete: "Delete",
     btn_save_part: "Save",
     del_part_confirm: "Delete this part? It will also be removed from compatibility groups.",
@@ -1737,12 +1790,12 @@ var TRANSLATIONS = {
     rakuten_exclude: "Excluded keywords",
     rakuten_sort: "Sort",
     rakuten_hits: "Results",
-    rakuten_btn_search: "Check Rakuten Prices",
+    rakuten_btn_search: "Check Prices",
     rakuten_use_current: "Use selected part number",
     rakuten_api_settings: "Rakuten API Settings",
     rakuten_save_keys: "Save API Settings",
-    rakuten_shared_key_note: "API settings are saved as a shared company setting. Only admins can save changes.",
-    rakuten_key_admin_only: "Only admins can save API settings.",
+    rakuten_shared_key_note: "API settings are saved as a shared company setting. Only system admins can save changes.",
+    rakuten_key_admin_only: "Only system admins can save API settings.",
     rakuten_test_keys: "Test API Connection",
     rakuten_open_diagnostic: "Open Diagnostic URL",
     rakuten_test_ok: "Rakuten API connection is OK",
@@ -1769,7 +1822,7 @@ var TRANSLATIONS = {
     rakuten_avg: "Average",
     rakuten_max: "Highest",
     rakuten_open: "Open Rakuten",
-    rakuten_quick: "Rakuten Price Check",
+    rakuten_quick: "Price Check",
     rakuten_open_list: "Result List",
     rakuten_targets_title: "Survey Targets",
     rakuten_master_limit: "Part master load count",
@@ -2161,7 +2214,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.52";
+var APP_VERSION       = "v1.1.53";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -2181,31 +2234,37 @@ var rakutenActiveTarget = null;
 // 権限判定ヘルパー
 // group_name × role の組み合わせで判定する
 // =============================================
+function isSystemAdmin() {
+  return !!(userProfile && userProfile.role === "system_admin");
+}
 function canEdit() {
   if (!userProfile) return false;
+  if (isSystemAdmin()) return true;
   if (userProfile.group_name === "public") return false;
   return userProfile.role === "admin" || userProfile.role === "editor";
 }
 function canDelete() {
   if (!userProfile) return false;
-  return userProfile.role === "admin";
+  return isSystemAdmin() || userProfile.role === "admin";
 }
 function isAdmin() {
   if (!userProfile) return false;
-  return userProfile.role === "admin";
+  return isSystemAdmin() || userProfile.role === "admin";
 }
 
-// ユーザー管理：daikoは全員、それ以外は自グループのみ
+// ユーザー管理：system_adminは全グループ、通常adminは自グループのみ
 function canManageUser(targetProfile) {
-  if (!userProfile || userProfile.role !== "admin") return false;
+  if (!userProfile || !targetProfile) return false;
+  if (isSystemAdmin()) return true;
+  if (userProfile.role !== "admin") return false;
   if (userProfile.group_name === "public") return false;
-  if (userProfile.group_name === "daiko") return true;
-  return targetProfile.group_name === userProfile.group_name;
+  return (targetProfile.group_name || "public") === (userProfile.group_name || "public");
 }
 
 // 仕入価格（USD）表示判定
 function canSeePurchasePrice() {
   if (!userProfile) return false;
+  if (isSystemAdmin()) return true;
   var g = userProfile.group_name;
   var r = userProfile.role;
   if (g === "daiko") return ["admin","editor","price_viewer"].indexOf(r) >= 0;
@@ -2216,6 +2275,7 @@ function canSeePurchasePrice() {
 // 販売価格（JPY）表示判定
 function canSeeSalesPrice() {
   if (!userProfile) return false;
+  if (isSystemAdmin()) return true;
   var g = userProfile.group_name;
   var r = userProfile.role;
   if (g === "daiko") return true;
@@ -2224,13 +2284,13 @@ function canSeeSalesPrice() {
   return false;
 }
 function canUseRakutenResearch() {
-  return !!(userProfile && userProfile.group_name === "daiko" && canSeeSalesPrice());
+  return !!(userProfile && (isSystemAdmin() || (userProfile.group_name === "daiko" && canSeeSalesPrice())));
 }
 function canViewInternalComponents() {
   return !!(userProfile && userProfile.group_name !== "public");
 }
 function isDaikoGroup() {
-  return userProfile && userProfile.group_name === "daiko";
+  return userProfile && (isSystemAdmin() || userProfile.group_name === "daiko");
 }
 function isSharedCatalogGroup() {
   if (!userProfile) return false;
@@ -2262,20 +2322,22 @@ function dedupeParts(parts) {
 function roleLabel(role) { return t("role_" + role) || role; }
 function roleClass(role) {
   return {
+    system_admin: "role-system",
     admin: "role-admin", editor: "role-editor",
     price_viewer: "role-price", viewer: "role-viewer"
   }[role] || "role-viewer";
 }
 function normalizeRoleForGroup(role, group) {
   if (role === "viewer") return "price_viewer";
+  if (role === "system_admin") return "system_admin";
   if (group === "public") return "price_viewer";
   return role || "price_viewer";
 }
 function canManageSharedSettings() {
-  return !!(userProfile && userProfile.role === "admin" && userProfile.group_name !== "public");
+  return isSystemAdmin();
 }
 function canManageProductSpecs() {
-  return !!(userProfile && userProfile.role === "admin" && userProfile.group_name === "daiko");
+  return !!(userProfile && (isSystemAdmin() || (userProfile.role === "admin" && userProfile.group_name === "daiko")));
 }
 
 // =============================================
@@ -2397,6 +2459,15 @@ function showScreen(id) {
   window.scrollTo(0, 0);
 }
 
+function relocateRakutenSections() {
+  var bulkHost = document.getElementById("rakuten-bulk-host");
+  var bulkCard = document.getElementById("rakuten-bulk-card");
+  if (bulkHost && bulkCard && bulkCard.parentElement !== bulkHost) bulkHost.appendChild(bulkCard);
+  var apiHost = document.getElementById("api-settings-host");
+  var apiCard = document.getElementById("rakuten-api-settings-card");
+  if (apiHost && apiCard && apiCard.parentElement !== apiHost) apiHost.appendChild(apiCard);
+}
+
 // =============================================
 // 認証
 // =============================================
@@ -2495,7 +2566,7 @@ function updateAllHeaders() {
   var cls   = roleClass(userProfile.role);
   var greet = tf("greeting", { name: name });
 
-  ["menu","search","components","component-parallel","rakuten-price","rakuten-price-list"].forEach(function(sc) {
+  ["menu","search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list"].forEach(function(sc) {
     var nameEl  = document.getElementById(sc + "-username");
     var badgeEl = document.getElementById(sc + "-role-badge");
     if (nameEl)  nameEl.textContent = name;
@@ -2552,7 +2623,9 @@ function renderMenu() {
     { icon: "&#x1F527;", titleKey: "mi_parts_title", descKey: "mi_parts_desc", action: "parts-mgmt", available: canEdit(), tag: null },
     { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canEdit(), tag: null },
     { icon: "&#x1F4B4;", titleKey: "mi_rakuten_title", descKey: "mi_rakuten_desc", action: "rakuten-price", available: canUseRakutenResearch(), tag: null },
+    { icon: "&#x1F4E6;", titleKey: "mi_rakuten_bulk_title", descKey: "mi_rakuten_bulk_desc", action: "rakuten-bulk", available: canUseRakutenResearch(), tag: null },
     { icon: "&#x1F4C8;", titleKey: "screen_rakuten_list_title", descKey: "mi_rakuten_desc", action: "rakuten-price-list", available: canUseRakutenResearch(), tag: null },
+    { icon: "&#x2699;", titleKey: "mi_api_settings_title", descKey: "mi_api_settings_desc", action: "api-settings", available: canManageSharedSettings(), tag: canManageSharedSettings() ? null : "tag_admin_only", tagClass: "tag-admin" },
     { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: isAdmin(), tag: isAdmin() ? null : "tag_admin_only", tagClass: "tag-admin" }
   ];
 
@@ -2577,7 +2650,9 @@ function renderMenu() {
       else if (card.dataset.action === "parts-mgmt") enterPartsMgmt();
       else if (card.dataset.action === "kikan-mgmt") enterKikanMgmt();
       else if (card.dataset.action === "rakuten-price") enterRakutenPrice();
+      else if (card.dataset.action === "rakuten-bulk") enterRakutenBulk();
       else if (card.dataset.action === "rakuten-price-list") enterRakutenPriceList();
+      else if (card.dataset.action === "api-settings") enterApiSettings();
       else if (card.dataset.action === "logs") enterLogs();
     });
   });
@@ -2644,10 +2719,12 @@ async function saveRakutenKeys() {
 }
 
 function setRakutenStatus(msg, isError) {
-  var el = document.getElementById("rakuten-status");
-  if (!el) return;
-  el.style.color = isError ? "#e24b4a" : "#888";
-  el.textContent = msg || "";
+  ["rakuten-status","api-settings-status"].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.style.color = isError ? "#e24b4a" : "#888";
+    el.textContent = msg || "";
+  });
 }
 
 function cleanPartNumberValue(value) {
@@ -2723,6 +2800,7 @@ function openRakutenForCurrentProduct() {
 
 async function enterRakutenPrice(seedKeyword) {
   if (!canUseRakutenResearch()) { alert(t("err_perm")); return; }
+  relocateRakutenSections();
   showScreen("rakuten-price");
   await loadRakutenKeyFields();
   var nameEl = document.getElementById("rakuten-price-username");
@@ -2732,6 +2810,22 @@ async function enterRakutenPrice(seedKeyword) {
   if (!document.getElementById("rakuten-summary").innerHTML) {
     document.getElementById("rakuten-summary").innerHTML = "";
   }
+}
+
+async function enterRakutenBulk() {
+  if (!canUseRakutenResearch()) { alert(t("err_perm")); return; }
+  relocateRakutenSections();
+  showScreen("rakuten-bulk");
+  await loadRakutenKeyFields();
+  updateAllHeaders();
+}
+
+async function enterApiSettings() {
+  if (!canManageSharedSettings()) { alert(t("err_perm")); return; }
+  relocateRakutenSections();
+  showScreen("api-settings");
+  await loadRakutenKeyFields();
+  updateAllHeaders();
 }
 
 function renderRakutenTargets() {
@@ -3509,6 +3603,7 @@ async function writeLog(operation, tableName, targetId, targetDesc, beforeData, 
 // =============================================
 var partsMgmtData = [];
 var partFormMode  = "add"; // "add" or "edit"
+var partFormSource = "parts"; // "parts" or "core_products"
 
 async function enterPartsMgmt() {
   if (!canEdit()) { alert(t("err_perm")); return; }
@@ -3587,6 +3682,7 @@ function renderPartsMgmt() {
 }
 
 function openPartForm(mode, partId) {
+  partFormSource = "parts";
   partFormMode = mode;
   var overlay  = document.getElementById("part-form-overlay");
   var title    = document.getElementById("part-form-title");
@@ -3624,6 +3720,10 @@ function openPartForm(mode, partId) {
 }
 
 async function savePartForm() {
+  if (partFormSource === "core_products") {
+    await saveCoreProductForm();
+    return;
+  }
   var errEl   = document.getElementById("part-form-error");
   errEl.textContent = "";
   var gpn     = document.getElementById("pf-genuine-pn").value.trim();
@@ -3659,6 +3759,109 @@ async function savePartForm() {
   }
   document.getElementById("part-form-overlay").classList.remove("show");
   await loadPartsMgmt();
+}
+
+function categoryCodeFromForm(value) {
+  var map = {
+    "Alternator": "alternator",
+    "Starter": "starter",
+    "Large Alternator": "alternator",
+    "Large Starter": "starter",
+    "New Large Starter": "starter",
+    "Starter Generator": "starter_generator",
+    "Distributor": "distributor",
+    "AC Compressor": "ac_compressor",
+    "Throttle Body": "throttle_body",
+    "Blower Motor": "blower_motor"
+  };
+  if (map[value]) return map[value];
+  return String(value || "unclassified_assy").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "unclassified_assy";
+}
+
+function formValueFromCategoryCode(code) {
+  var map = {
+    alternator: "Alternator",
+    starter: "Starter",
+    starter_generator: "Starter Generator",
+    distributor: "Distributor",
+    ac_compressor: "AC Compressor",
+    throttle_body: "Throttle Body",
+    blower_motor: "Blower Motor"
+  };
+  return map[code] || map[String(code || "").toLowerCase()] || "Alternator";
+}
+
+function setCoreProductFormFields(p) {
+  document.getElementById("part-form-id").value        = p && p.dkd_shohin_id ? p.dkd_shohin_id : "";
+  document.getElementById("pf-shohin-cd").value        = p && p.dkd_shohin_id ? p.dkd_shohin_id : "";
+  document.getElementById("pf-genuine-pn").value       = p ? (p.genuine_part_number || "") : "";
+  document.getElementById("pf-mfr-pn").value           = p ? (p.manufacturer_part_number || "") : "";
+  document.getElementById("pf-mfr").value              = p ? (p.manufacturer || "") : "";
+  document.getElementById("pf-vehicle-mfr").value      = p ? (p.vehicle_manufacturer || "") : "";
+  document.getElementById("pf-body-type").value        = p ? (p.body_type || "") : "";
+  document.getElementById("pf-compatible").value       = p ? (p.compatible_car_models || "") : "";
+  document.getElementById("pf-model").value            = p ? (p.model || "") : "";
+  document.getElementById("pf-category").value         = formValueFromCategoryCode(p && (p.category_code || p.category));
+}
+
+function openCoreProductForm(mode, product) {
+  if (!canEdit()) { alert(t("err_perm")); return; }
+  partFormSource = "core_products";
+  partFormMode = mode;
+  document.getElementById("part-form-error").textContent = "";
+  document.getElementById("part-form-title").textContent = mode === "add" ? t("btn_add_part") : t("btn_edit_part");
+  setCoreProductFormFields(mode === "add" ? (product || null) : product);
+  if (mode === "add") document.getElementById("part-form-id").value = "";
+  document.getElementById("part-form-overlay").classList.add("show");
+}
+
+function openCoreProductAddFromSearch() {
+  openCoreProductForm("add", currentProduct || null);
+  document.getElementById("pf-shohin-cd").value = "";
+}
+
+function openCoreProductEditFromSearch() {
+  if (!currentProduct) return;
+  openCoreProductForm("edit", currentProduct);
+}
+
+async function saveCoreProductForm() {
+  var errEl = document.getElementById("part-form-error");
+  errEl.textContent = "";
+  if (!canEdit()) { errEl.textContent = t("err_perm"); return; }
+  var dkd = parseInt(document.getElementById("pf-shohin-cd").value.trim(), 10);
+  if (isNaN(dkd)) { errEl.textContent = t("lbl_shohin_cd") + "を入力してください"; return; }
+  var genuine = document.getElementById("pf-genuine-pn").value.trim() || null;
+  var mfrPart = document.getElementById("pf-mfr-pn").value.trim() || null;
+  var manufacturer = document.getElementById("pf-mfr").value.trim() || null;
+  if (!genuine && !mfrPart) { errEl.textContent = t("lbl_genuine_pn") + "または" + t("lbl_mfr_pn") + "を入力してください"; return; }
+  var categoryValue = document.getElementById("pf-category").value;
+  var payload = {
+    dkd_shohin_id: dkd,
+    category_code: categoryCodeFromForm(categoryValue),
+    category: categoryValue,
+    genuine_part_number: genuine,
+    manufacturer_part_number: mfrPart,
+    manufacturer: manufacturer,
+    normalized_genuine_part_number: normalizePartNumberForCore(genuine),
+    normalized_manufacturer_part_number: normalizePartNumberForCore(mfrPart),
+    has_catalog_source: false,
+    updated_by: currentUser ? currentUser.id : null,
+    updated_at: new Date().toISOString()
+  };
+  var r;
+  if (partFormMode === "add") {
+    payload.created_by = currentUser ? currentUser.id : null;
+    r = await sb.from("core_products").insert(payload);
+    if (!r.error) await writeLog("insert", "core_products", dkd, genuine || mfrPart || String(dkd), null, payload);
+  } else {
+    var before = currentProduct ? JSON.parse(JSON.stringify(currentProduct)) : null;
+    r = await sb.from("core_products").update(payload).eq("dkd_shohin_id", dkd);
+    if (!r.error) await writeLog("update", "core_products", dkd, genuine || mfrPart || String(dkd), before, payload);
+  }
+  if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
+  document.getElementById("part-form-overlay").classList.remove("show");
+  await runProductSearch();
 }
 
 async function deletePart(partId) {
@@ -4322,8 +4525,12 @@ function renderPanelStatic() {
     var text = (v != null && String(v) !== "None" && String(v) !== "") ? String(v) : "-";
     tHtml += "<tr><td>" + t(k) + "</td><td>" + esc(text) + "</td></tr>";
   });
+  var editActions = canEdit()
+    ? "<div class='detail-actions'><button class='btn-sm-edit' id='btn-edit-current-product'>&#9998; " + t("btn_edit_part") + "</button><button class='btn-sm-edit' id='btn-add-core-product'>&#43; " + t("btn_add_part") + "</button></div>"
+    : "";
   document.getElementById("panel-body").innerHTML =
     "<table class='detail-table' style='margin-top:4px'>" + tHtml + "</table>" +
+    editActions +
     "<div id='product-spec-wrap'><div class='spec-box'><div class='spec-head'><div class='spec-title'>" + t("spec_section") + "</div></div><div class='spec-sub'>" + t("loading") + "</div></div></div>" +
     (canUseRakutenResearch() ? "<div class='rakuten-quick-row'><button class='btn-sm-edit' onclick='openRakutenForCurrentProduct()'>&#x1F4B4; " + t("rakuten_quick") + "</button></div>" : "") +
     "<div class='detail-actions'>" +
@@ -4339,6 +4546,10 @@ function renderPanelStatic() {
     "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + t("img_loading") + "</div></div>";
   document.getElementById("img-count").textContent = "";
   document.getElementById("panel-scroll").scrollTop = 0;
+  var editCurrentBtn = document.getElementById("btn-edit-current-product");
+  var addCoreBtn = document.getElementById("btn-add-core-product");
+  if (editCurrentBtn) editCurrentBtn.addEventListener("click", openCoreProductEditFromSearch);
+  if (addCoreBtn) addCoreBtn.addEventListener("click", openCoreProductAddFromSearch);
   var componentBtn = document.getElementById("btn-open-components");
   var parallelBtn = document.getElementById("btn-open-component-parallel");
   if (componentBtn) componentBtn.addEventListener("click", enterComponentsScreen);
@@ -5092,7 +5303,7 @@ async function loadUsers() {
   if (!isAdmin()) return;
   var query = sb.from("profiles").select("*").order("created_at");
   // daiko以外のadminは自グループのみ表示
-  if (userProfile.group_name !== "daiko") {
+  if (!isSystemAdmin()) {
     query = query.eq("group_name", userProfile.group_name);
   }
   var r = await query;
@@ -5129,12 +5340,13 @@ function renderUsers(users) {
     html += "<div class='user-card-bottom' style='flex-wrap:wrap;gap:6px'>";
     html += "<select class='role-select' data-uid='"+esc(u.id)+"'>";
     var roleOptions = [["price_viewer","role_price_viewer"],["editor","role_editor"],["admin","role_admin"]];
-    if ((u.group_name || "public") === "public") roleOptions = [["price_viewer","role_price_viewer"]];
+    if (isSystemAdmin()) roleOptions = [["price_viewer","role_price_viewer"],["editor","role_editor"],["admin","role_admin"],["system_admin","role_system_admin"]];
+    if ((u.group_name || "public") === "public" && u.role !== "system_admin") roleOptions = [["price_viewer","role_price_viewer"]];
     roleOptions.forEach(function(r){
       html += "<option value='"+r[0]+"'"+(u.role===r[0]?" selected":"")+">"+t(r[1])+"</option>";
     });
     html += "</select>";
-    html += "<select class='group-select' data-uid='"+esc(u.id)+"'" + (isDaikoGroup() ? "" : " disabled") + ">";
+    html += "<select class='group-select' data-uid='"+esc(u.id)+"'" + (isSystemAdmin() ? "" : " disabled") + ">";
     [["daiko","Daiko"],["gltek","GLTEK"],["public","Public"]].forEach(function(g){
       html += "<option value='"+g[0]+"'"+((u.group_name||"public")===g[0]?" selected":"")+">"+g[1]+"</option>";
     });
@@ -5155,7 +5367,7 @@ function renderUsers(users) {
       if (!isAdmin() || !target || !canManageUser(target)) { alert(t("err_perm")); return; }
       var card  = list.querySelector(".user-card[data-uid='"+uid+"']");
       var name  = card.querySelector(".user-name-input").value.trim();
-      var group = isDaikoGroup() ? card.querySelector(".group-select").value : userProfile.group_name;
+      var group = isSystemAdmin() ? card.querySelector(".group-select").value : userProfile.group_name;
       var role  = normalizeRoleForGroup(card.querySelector(".role-select").value, group);
       var msg   = document.getElementById("save-msg-"+uid);
       var r = await sb.from("profiles").update({name:name,role:role,group_name:group,updated_at:new Date().toISOString()}).eq("id",uid);
@@ -5440,7 +5652,7 @@ document.getElementById("btn-back-to-login").addEventListener("click", function(
 document.getElementById("btn-submit-reg").addEventListener("click", doRegister);
 document.getElementById("reg-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doRegister(); });
 document.getElementById("login-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
-["btn-logout-menu","btn-logout-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
+["btn-logout-menu","btn-logout-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
 document.getElementById("btn-back-search").addEventListener("click", function(){ closePanel(); showScreen("menu"); });
 document.getElementById("btn-back-components").addEventListener("click", function(){ showScreen("search"); });
 document.getElementById("btn-back-component-parallel").addEventListener("click", function(){ showScreen("search"); });
@@ -5448,6 +5660,8 @@ document.getElementById("btn-back-users").addEventListener("click",  function(){
 document.getElementById("btn-back-parts-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-kikan-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-rakuten-price").addEventListener("click", function(){ showScreen("menu"); });
+document.getElementById("btn-back-rakuten-bulk").addEventListener("click", function(){ showScreen("menu"); });
+document.getElementById("btn-back-api-settings").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-rakuten-price-list").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-logs").addEventListener("click",       function(){ showScreen("menu"); });
 document.getElementById("btn-add-part").addEventListener("click", function(){ openPartForm("add"); });
@@ -5536,6 +5750,7 @@ document.addEventListener("keydown", function(e){
   if(e.key==="Escape") closeFullscreen();
 });
 
+relocateRakutenSections();
 handleAuthState();
 </script>
 </body>
