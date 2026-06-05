@@ -305,8 +305,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .card:hover  { border-color: #b8d0f8; }
 .card.selected { border-color: #4f8ef7; background: #f0f6ff; }
 .card-top    { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-.card-thumb  { width: 56px; height: 56px; border-radius: 8px; overflow: hidden; flex-shrink: 0; margin-right: 4px; background: #f0f0f0; }
-.card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.card-thumb  { width: 56px; height: 56px; border-radius: 8px; overflow: hidden; flex-shrink: 0; margin-right: 4px; background: #fff; display: flex; align-items: center; justify-content: center; }
+.card-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; image-rendering: auto; }
 .card-thumb-empty { display: flex; align-items: center; justify-content: center; color: #ccc; font-size: 22px; }
 .card-left   { flex: 1; min-width: 0; }
 .card-name   { font-weight: 600; font-size: 14px; color: #1a1a2e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -350,8 +350,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 
 /* 右カラムの画像グリッド（縦1列） */
 .img-grid  { display: flex; flex-direction: column; gap: 8px; }
-.img-wrap  { position: relative; border-radius: 8px; overflow: hidden; background: #f0f0f0; aspect-ratio: 1; width: 100%; }
-.img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: zoom-in; }
+.img-wrap  { position: relative; border-radius: 8px; overflow: hidden; background: #fff; aspect-ratio: 1; width: 100%; display: flex; align-items: center; justify-content: center; }
+.img-wrap img { width: 100%; height: 100%; object-fit: contain; display: block; cursor: zoom-in; image-rendering: auto; }
 .img-del   { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.55); color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .panel-footer { flex-shrink: 0; padding: 8px 10px 16px; border-top: 1px solid #eee; background: #fafafa; width: 180px; flex-shrink: 0; }
 .upload-btn-small { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; background: #4f8ef7; color: #fff; border: none; border-radius: 8px; padding: 8px 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
@@ -379,9 +379,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .fs-next { right: 8px; }
 .fs-nav.hidden { display: none; }
 .fs-thumbs  { display: flex; gap: 6px; padding: 10px 16px; overflow-x: auto; flex-shrink: 0; }
-.fs-thumb   { width: 52px; height: 52px; border-radius: 6px; overflow: hidden; flex-shrink: 0; cursor: pointer; opacity: 0.5; border: 2px solid transparent; }
+.fs-thumb   { width: 52px; height: 52px; border-radius: 6px; overflow: hidden; flex-shrink: 0; cursor: pointer; opacity: 0.5; border: 2px solid transparent; background: #fff; display: flex; align-items: center; justify-content: center; }
 .fs-thumb.active { opacity: 1; border-color: #4f8ef7; }
-.fs-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fs-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; image-rendering: auto; }
 
 /* =============================================
    ユーザー管理画面
@@ -533,7 +533,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.54</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.55</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -562,7 +562,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.54</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.55</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -2205,7 +2205,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.54";
+var APP_VERSION       = "v1.1.55";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
