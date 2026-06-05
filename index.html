@@ -532,7 +532,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.49</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.50</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -561,7 +561,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.49</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.50</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -2158,7 +2158,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.49";
+var APP_VERSION       = "v1.1.50";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4104,19 +4104,30 @@ function norm(s) {
 }
 function isPC() { return window.innerWidth >= 768; }
 
+function normalizedStartsWith(value, query) {
+  return !!query && norm(value).indexOf(query) === 0;
+}
+
+function normalizedContains(value, query) {
+  return !!query && norm(value).indexOf(query) >= 0;
+}
+
 function getFiltered() {
   var q = norm(document.getElementById("q").value.trim());
   return allProducts.filter(function(p) {
-    // SL品番はslPartsMapから取得して検索対象に含める
     var legacyId = productLegacyPartId(p);
-    var slNums = legacyId ? (slPartsMap[legacyId] || []).join(" ") : "";
-    var ms = !q || [
-      p.genuine_part_number, p.manufacturer_part_number,
+    var slNums = legacyId ? (slPartsMap[legacyId] || []) : [];
+    var partMatch = !q || [
+      p.genuine_part_number, p.genuine_part_number_2,
+      p.manufacturer_part_number, p.daiko_part_number,
+      p.shohin_cd, p.pulley_assy_part_number
+    ].concat(slNums).some(function(v){ return normalizedStartsWith(v, q); });
+    var textMatch = !q || [
       p.vehicle_manufacturer, p.manufacturer,
       p.compatible_car_models, p.model,
-      p.category, p.category_ja, p.category_en, p.category_zh, slNums
-    ].some(function(v){ return norm(v).indexOf(q)>=0; });
-    // SLフィルター：slPartsMapに品番があるものが対象
+      p.category, p.category_ja, p.category_en, p.category_zh
+    ].some(function(v){ return normalizedContains(v, q); });
+    var ms = partMatch || textMatch;
     var hasSL  = legacyId && slPartsMap[legacyId] && slPartsMap[legacyId].length > 0;
     var mf = currentFilter==="sl" ? hasSL
            : currentFilter.indexOf("cat:") === 0 ? (p.category_code || p.category) === currentFilter.slice(4)
