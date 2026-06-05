@@ -533,7 +533,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.53</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.54</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -562,7 +562,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.53</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.54</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -874,6 +874,44 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         <option value="Blower Motor">ブロアモーター / Blower Motor</option>
       </select>
     </div>
+    <div class="form-row">
+      <div class="spec-head" style="margin-top:4px">
+        <div class="spec-title" data-i18n="spec_section">公称出力</div>
+      </div>
+      <input type="hidden" id="spec-form-id">
+      <label class="form-label" data-i18n="spec_raw">公称出力</label>
+      <input class="form-input" id="sf-raw-spec" type="text" placeholder="例: 12V 80A φ139 Jシリーズ">
+    </div>
+    <div class="spec-form-grid">
+      <div class="form-row">
+        <label class="form-label" data-i18n="spec_voltage">電圧(V)</label>
+        <input class="form-input" id="sf-voltage-v" type="number" step="0.01">
+      </div>
+      <div class="form-row">
+        <label class="form-label" data-i18n="spec_current">電流(A)</label>
+        <input class="form-input" id="sf-current-a" type="number" step="0.01">
+      </div>
+      <div class="form-row">
+        <label class="form-label" data-i18n="spec_power_kw">出力(kW)</label>
+        <input class="form-input" id="sf-power-kw" type="number" step="0.001">
+      </div>
+      <div class="form-row">
+        <label class="form-label" data-i18n="spec_power_w">出力(W)</label>
+        <input class="form-input" id="sf-power-w" type="number" step="0.01">
+      </div>
+      <div class="form-row">
+        <label class="form-label" data-i18n="spec_diameter">外径(D/φ)</label>
+        <input class="form-input" id="sf-diameter-d" type="number" step="0.01">
+      </div>
+      <div class="form-row">
+        <label class="form-label" data-i18n="spec_type">型式・シリーズ</label>
+        <input class="form-input" id="sf-type-text" type="text">
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label" data-i18n="spec_note">情報元メモ</label>
+      <input class="form-input" id="sf-source-note" type="text" placeholder="例: 社内確認、現品ラベル">
+    </div>
     <div class="form-footer">
       <button class="btn-cancel" id="btn-part-form-cancel" data-i18n="btn_back">キャンセル</button>
       <button class="btn-primary" id="btn-part-form-save" data-i18n="btn_save_part">保存</button>
@@ -923,53 +961,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <button class="btn-primary" id="btn-kikan-form-save">追加</button>
     </div>
     <div class="reg-error" id="kikan-form-error"></div>
-  </div>
-</div>
-
-<!-- 公称出力入力フォーム -->
-<div class="form-overlay" id="spec-form-overlay">
-  <div class="form-card">
-    <h3 data-i18n="spec_form_title">公称出力の追加・修正</h3>
-    <input type="hidden" id="spec-form-id">
-    <div class="form-row">
-      <label class="form-label" data-i18n="spec_raw">公称出力</label>
-      <input class="form-input" id="sf-raw-spec" type="text" placeholder="例: 12V 80A φ139 Jシリーズ">
-    </div>
-    <div class="spec-form-grid">
-      <div class="form-row">
-        <label class="form-label" data-i18n="spec_voltage">電圧(V)</label>
-        <input class="form-input" id="sf-voltage-v" type="number" step="0.01">
-      </div>
-      <div class="form-row">
-        <label class="form-label" data-i18n="spec_current">電流(A)</label>
-        <input class="form-input" id="sf-current-a" type="number" step="0.01">
-      </div>
-      <div class="form-row">
-        <label class="form-label" data-i18n="spec_power_kw">出力(kW)</label>
-        <input class="form-input" id="sf-power-kw" type="number" step="0.001">
-      </div>
-      <div class="form-row">
-        <label class="form-label" data-i18n="spec_power_w">出力(W)</label>
-        <input class="form-input" id="sf-power-w" type="number" step="0.01">
-      </div>
-      <div class="form-row">
-        <label class="form-label" data-i18n="spec_diameter">外径(D/φ)</label>
-        <input class="form-input" id="sf-diameter-d" type="number" step="0.01">
-      </div>
-      <div class="form-row">
-        <label class="form-label" data-i18n="spec_type">型式・シリーズ</label>
-        <input class="form-input" id="sf-type-text" type="text">
-      </div>
-    </div>
-    <div class="form-row">
-      <label class="form-label" data-i18n="spec_note">情報元メモ</label>
-      <input class="form-input" id="sf-source-note" type="text" placeholder="例: 社内確認、現品ラベル">
-    </div>
-    <div class="form-footer">
-      <button class="btn-cancel" id="btn-spec-form-cancel" data-i18n="btn_back">キャンセル</button>
-      <button class="btn-primary" id="btn-spec-form-save" data-i18n="btn_save">保存</button>
-    </div>
-    <div class="reg-error" id="spec-form-error"></div>
   </div>
 </div>
 
@@ -2214,7 +2205,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.53";
+var APP_VERSION       = "v1.1.54";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -3804,25 +3795,30 @@ function setCoreProductFormFields(p) {
   document.getElementById("pf-category").value         = formValueFromCategoryCode(p && (p.category_code || p.category));
 }
 
-function openCoreProductForm(mode, product) {
+async function openCoreProductForm(mode, product) {
   if (!canEdit()) { alert(t("err_perm")); return; }
   partFormSource = "core_products";
   partFormMode = mode;
   document.getElementById("part-form-error").textContent = "";
   document.getElementById("part-form-title").textContent = mode === "add" ? t("btn_add_part") : t("btn_edit_part");
   setCoreProductFormFields(mode === "add" ? (product || null) : product);
+  clearUnifiedSpecForm();
+  if (mode === "edit") {
+    await loadProductSpecsForCurrent();
+    populateUnifiedSpecForm(getManualProductSpec());
+  }
   if (mode === "add") document.getElementById("part-form-id").value = "";
   document.getElementById("part-form-overlay").classList.add("show");
 }
 
-function openCoreProductAddFromSearch() {
-  openCoreProductForm("add", currentProduct || null);
+async function openCoreProductAddFromSearch() {
+  await openCoreProductForm("add", currentProduct || null);
   document.getElementById("pf-shohin-cd").value = "";
 }
 
-function openCoreProductEditFromSearch() {
+async function openCoreProductEditFromSearch() {
   if (!currentProduct) return;
-  openCoreProductForm("edit", currentProduct);
+  await openCoreProductForm("edit", currentProduct);
 }
 
 async function saveCoreProductForm() {
@@ -3860,7 +3856,10 @@ async function saveCoreProductForm() {
     if (!r.error) await writeLog("update", "core_products", dkd, genuine || mfrPart || String(dkd), before, payload);
   }
   if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
+  var specOk = await saveUnifiedSpecForDkd(dkd, errEl);
+  if (!specOk) return;
   document.getElementById("part-form-overlay").classList.remove("show");
+  currentProductSpecs = [];
   await runProductSearch();
 }
 
@@ -4577,10 +4576,7 @@ function renderProductSpecs() {
   var wrap = document.getElementById("product-spec-wrap");
   if (!wrap) return;
   var specs = currentProductSpecs || [];
-  var editBtn = canManageProductSpecs()
-    ? "<button class='btn-sm-edit' id='btn-open-spec-form'>" + t("spec_edit") + "</button>"
-    : "";
-  var html = "<div class='spec-box'><div class='spec-head'><div class='spec-title'>" + t("spec_section") + "</div>" + editBtn + "</div>";
+  var html = "<div class='spec-box'><div class='spec-head'><div class='spec-title'>" + t("spec_section") + "</div></div>";
   if (!specs.length) {
     html += "<div class='spec-main'>-</div><div class='spec-sub'>" + t("spec_none") + "</div>";
   } else {
@@ -4614,8 +4610,6 @@ function renderProductSpecs() {
   }
   html += "</div>";
   wrap.innerHTML = html;
-  var btn = document.getElementById("btn-open-spec-form");
-  if (btn) btn.addEventListener("click", openSpecFormForCurrent);
 }
 
 async function loadProductSpecsForCurrent() {
@@ -4657,44 +4651,75 @@ function formNumberValue(id) {
 }
 
 function setSpecFormNumber(id, value) {
-  document.getElementById(id).value = (value === null || value === undefined || value === "") ? "" : value;
+  var el = document.getElementById(id);
+  if (el) el.value = (value === null || value === undefined || value === "") ? "" : value;
 }
 
-async function openSpecFormForCurrent() {
-  if (!canManageProductSpecs()) return;
-  var errEl = document.getElementById("spec-form-error");
-  if (errEl) errEl.textContent = "";
-  var manual = (currentProductSpecs || []).find(function(spec) {
+function getManualProductSpec() {
+  return (currentProductSpecs || []).find(function(spec) {
     return spec.source_code === "manual_entry" || spec.source_kind === "manual";
   }) || null;
-  document.getElementById("spec-form-id").value = manual ? manual.id : "";
-  document.getElementById("sf-raw-spec").value = manual ? (manual.raw_spec || "") : "";
-  setSpecFormNumber("sf-voltage-v", manual && manual.voltage_v);
-  setSpecFormNumber("sf-current-a", manual && manual.current_a);
-  setSpecFormNumber("sf-power-kw", manual && manual.power_kw);
-  setSpecFormNumber("sf-power-w", manual && manual.power_w);
-  setSpecFormNumber("sf-diameter-d", manual && manual.diameter_d);
-  document.getElementById("sf-type-text").value = manual ? (manual.type_text || "") : "";
-  document.getElementById("sf-source-note").value = manual ? (manual.source_note || "") : "";
-  document.getElementById("spec-form-overlay").classList.add("show");
 }
 
-async function saveSpecForm() {
-  var errEl = document.getElementById("spec-form-error");
-  if (errEl) errEl.textContent = "";
-  if (!canManageProductSpecs()) {
-    if (errEl) errEl.textContent = t("msg_save_err");
-    return;
+function clearUnifiedSpecForm() {
+  var idEl = document.getElementById("spec-form-id");
+  if (idEl) idEl.value = "";
+  var rawEl = document.getElementById("sf-raw-spec");
+  if (rawEl) rawEl.value = "";
+  setSpecFormNumber("sf-voltage-v", null);
+  setSpecFormNumber("sf-current-a", null);
+  setSpecFormNumber("sf-power-kw", null);
+  setSpecFormNumber("sf-power-w", null);
+  setSpecFormNumber("sf-diameter-d", null);
+  var typeEl = document.getElementById("sf-type-text");
+  if (typeEl) typeEl.value = "";
+  var noteEl = document.getElementById("sf-source-note");
+  if (noteEl) noteEl.value = "";
+}
+
+function populateUnifiedSpecForm(manual) {
+  var spec = manual || null;
+  var idEl = document.getElementById("spec-form-id");
+  if (idEl) idEl.value = spec ? spec.id : "";
+  var rawEl = document.getElementById("sf-raw-spec");
+  if (rawEl) rawEl.value = spec ? (spec.raw_spec || "") : "";
+  setSpecFormNumber("sf-voltage-v", spec && spec.voltage_v);
+  setSpecFormNumber("sf-current-a", spec && spec.current_a);
+  setSpecFormNumber("sf-power-kw", spec && spec.power_kw);
+  setSpecFormNumber("sf-power-w", spec && spec.power_w);
+  setSpecFormNumber("sf-diameter-d", spec && spec.diameter_d);
+  var typeEl = document.getElementById("sf-type-text");
+  if (typeEl) typeEl.value = spec ? (spec.type_text || "") : "";
+  var noteEl = document.getElementById("sf-source-note");
+  if (noteEl) noteEl.value = spec ? (spec.source_note || "") : "";
+}
+
+function unifiedSpecHasInput() {
+  return ["sf-raw-spec","sf-voltage-v","sf-current-a","sf-power-kw","sf-power-w","sf-diameter-d","sf-type-text","sf-source-note"]
+    .some(function(id) {
+      var el = document.getElementById(id);
+      return el && el.value.trim() !== "";
+    });
+}
+
+async function saveUnifiedSpecForDkd(dkdId, errEl) {
+  var specId = (document.getElementById("spec-form-id") || {}).value || "";
+  specId = String(specId).trim();
+  if (!unifiedSpecHasInput()) {
+    if (specId) {
+      var del = await sb.from("product_specs").delete().eq("id", parseInt(specId, 10));
+      if (del.error) {
+        if (errEl) errEl.textContent = t("msg_save_err") + ": " + del.error.message;
+        return false;
+      }
+    }
+    return true;
   }
-  var dkdId = await resolveCurrentCoreDkdShohinId();
-  if (!dkdId) {
-    if (errEl) errEl.textContent = t("msg_save_err");
-    return;
-  }
-  var rawSpec = document.getElementById("sf-raw-spec").value.trim();
+  var rawEl = document.getElementById("sf-raw-spec");
+  var rawSpec = rawEl ? rawEl.value.trim() : "";
   if (!rawSpec) {
     if (errEl) errEl.textContent = t("spec_raw") + "を入力してください";
-    return;
+    return false;
   }
   var payload = {
     dkd_shohin_id: dkdId,
@@ -4712,7 +4737,6 @@ async function saveSpecForm() {
     confidence: "confirmed",
     updated_by: currentUser ? currentUser.id : null
   };
-  var specId = document.getElementById("spec-form-id").value.trim();
   var r;
   if (specId) {
     r = await sb.from("product_specs").update(payload).eq("id", parseInt(specId, 10));
@@ -4721,13 +4745,12 @@ async function saveSpecForm() {
     r = await sb.from("product_specs").insert(payload);
   }
   if (r.error) {
-    console.warn("product spec save failed", r.error);
     if (errEl) errEl.textContent = t("msg_save_err") + ": " + r.error.message;
-    return;
+    return false;
   }
-  document.getElementById("spec-form-overlay").classList.remove("show");
-  await loadProductSpecsForCurrent();
+  return true;
 }
+
 
 function normalizePartNumberForCore(v) {
   return String(v || "")
@@ -5670,13 +5693,6 @@ document.getElementById("btn-part-form-save").addEventListener("click", savePart
 document.getElementById("btn-new-kikan-group").addEventListener("click", function(){ openKikanForm(null); });
 document.getElementById("btn-kikan-form-cancel").addEventListener("click", function(){ document.getElementById("kikan-form-overlay").classList.remove("show"); });
 document.getElementById("btn-kikan-form-save").addEventListener("click", saveKikanForm);
-document.getElementById("btn-spec-form-cancel").addEventListener("click", function(){ document.getElementById("spec-form-overlay").classList.remove("show"); });
-document.getElementById("btn-spec-form-save").addEventListener("click", function(){
-  saveSpecForm().catch(function(e) {
-    var errEl = document.getElementById("spec-form-error");
-    if (errEl) errEl.textContent = t("msg_save_err") + ": " + (e.message || e);
-  });
-});
 document.getElementById("parts-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadPartsMgmt(); });
 document.getElementById("kikan-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadKikanMgmt(); });
 document.getElementById("btn-rakuten-search").addEventListener("click", searchRakutenPrices);
