@@ -341,6 +341,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .panel.show { transform: translateY(0); }
 .panel-topbar { display: flex; align-items: center; padding: 10px 12px 10px 16px; flex-shrink: 0; border-bottom: 1px solid #f0f0f0; gap: 8px; }
 .panel-topbar-title { font-size: 14px; font-weight: 600; color: #555; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.panel-top-add { flex-shrink: 0; }
 .panel-close-btn { background: #e8e8e8; border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #333; }
 .panel-close-btn:active { background: #d0d0d0; }
 .panel-scroll  { flex: 1; overflow-y: auto; }
@@ -560,7 +561,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.65</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.66</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -589,7 +590,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.65</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.66</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -656,6 +657,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <div class="panel" id="panel">
         <div class="panel-topbar">
           <span class="panel-topbar-title" id="panel-topbar-title">詳細</span>
+          <button class="btn-sm-edit panel-top-add" id="btn-add-core-product-top" style="display:none">&#43; 商品を追加</button>
           <button class="panel-close-btn" id="panel-close-btn">&#10005;</button>
         </div>
         <div class="panel-scroll" id="panel-scroll">
@@ -2275,7 +2277,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.65";
+var APP_VERSION       = "v1.1.66";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4556,11 +4558,13 @@ function openPanel(id) {
   document.getElementById("panel-welcome").style.display  = "none";
   document.getElementById("panel-inner").style.display    = "flex";
   document.getElementById("panel-footer").style.display   = canEdit() ? "block" : "none";
-  document.getElementById("panel-topbar-title").textContent = [
-    currentProduct.genuine_part_number,
-    currentProduct.manufacturer_part_number,
-    currentProduct.manufacturer
-  ].filter(Boolean).join(" / ") || "-";
+  document.getElementById("panel-topbar-title").textContent = productCategoryLabel(currentProduct) || "-";
+  var topAddBtn = document.getElementById("btn-add-core-product-top");
+  if (topAddBtn) {
+    topAddBtn.textContent = "+ " + t("btn_add_part");
+    topAddBtn.style.display = canEdit() ? "" : "none";
+    topAddBtn.onclick = openCoreProductAddFromSearch;
+  }
   if (!isPC()) { document.getElementById("overlay").classList.add("show"); document.getElementById("panel").classList.add("show"); }
   renderPanelStatic();
   document.querySelectorAll(".card").forEach(function(c){ c.classList.toggle("selected", parseInt(c.dataset.id,10)===id); });
@@ -4585,12 +4589,24 @@ function closePanel() {
   document.getElementById("panel-footer").style.display  = "none";
   document.getElementById("panel-body").innerHTML = "";
   document.getElementById("panel-topbar-title").textContent = "-";
+  var topAddBtn = document.getElementById("btn-add-core-product-top");
+  if (topAddBtn) {
+    topAddBtn.style.display = "none";
+    topAddBtn.onclick = null;
+  }
   document.querySelectorAll(".card.selected").forEach(function(c){ c.classList.remove("selected"); });
   currentProduct = null; currentCoreDkdShohinId = null; currentProductSpecs = []; currentProductNominalSpec = null; currentParallelTargetDkdShohinId = null; currentParallelTargetProduct = null; currentImages = []; currentSlPartIds = [];
 }
 
 function renderPanelStatic() {
   var p = currentProduct;
+  document.getElementById("panel-topbar-title").textContent = productCategoryLabel(p) || "-";
+  var topAddBtn = document.getElementById("btn-add-core-product-top");
+  if (topAddBtn) {
+    topAddBtn.textContent = "+ " + t("btn_add_part");
+    topAddBtn.style.display = canEdit() ? "" : "none";
+    topAddBtn.onclick = openCoreProductAddFromSearch;
+  }
   var isAcProduct = (p.category_code || p.category || "") === "ac_compressor";
   // parts テーブルのフィールド定義
   var defs = [
@@ -4635,7 +4651,6 @@ function renderPanelStatic() {
   var toolHtml = "<div class='detail-toolbar'>";
   if (canEdit()) {
     toolHtml += "<button class='btn-sm-edit' id='btn-edit-current-product'>&#9998; " + t("btn_edit_part") + "</button>";
-    toolHtml += "<button class='btn-sm-edit' id='btn-add-core-product'>&#43; " + t("btn_add_part") + "</button>";
   }
   if (canUseRakutenResearch()) {
     toolHtml += "<button class='btn-sm-edit' onclick='openRakutenForCurrentProduct()'>&#x1F4B4; " + t("rakuten_quick") + "</button>";
@@ -4644,7 +4659,7 @@ function renderPanelStatic() {
   toolHtml += "<button class='btn-sm-edit' id='btn-open-component-parallel'>&#8644; " + t("component_open_parallel") + "</button>";
   toolHtml += "</div>";
   document.getElementById("panel-body").innerHTML =
-    "<div class='detail-summary'><div class='detail-category-name'>" + esc(productCategoryLabel(p) || "-") + "</div><div id='product-spec-wrap' class='spec-inline-wrap'><div class='spec-inline'><span class='spec-inline-title'>" + t("spec_section") + "</span><span class='spec-inline-empty'>" + t("loading") + "</span></div></div></div>" +
+    "<div class='detail-summary'><div id='product-spec-wrap' class='spec-inline-wrap'><div class='spec-inline'><span class='spec-inline-title'>" + t("spec_section") + "</span><span class='spec-inline-empty'>" + t("loading") + "</span></div></div></div>" +
     partHtml +
     "<table class='detail-table'>" + tHtml + "</table>" +
     toolHtml +
@@ -4658,9 +4673,7 @@ function renderPanelStatic() {
   document.getElementById("img-count").textContent = "";
   document.getElementById("panel-scroll").scrollTop = 0;
   var editCurrentBtn = document.getElementById("btn-edit-current-product");
-  var addCoreBtn = document.getElementById("btn-add-core-product");
   if (editCurrentBtn) editCurrentBtn.addEventListener("click", openCoreProductEditFromSearch);
-  if (addCoreBtn) addCoreBtn.addEventListener("click", openCoreProductAddFromSearch);
   var componentBtn = document.getElementById("btn-open-components");
   var parallelBtn = document.getElementById("btn-open-component-parallel");
   if (componentBtn) componentBtn.addEventListener("click", enterComponentsScreen);
