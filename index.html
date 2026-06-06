@@ -540,7 +540,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.58</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.59</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -569,7 +569,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.58</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.59</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -2233,7 +2233,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.58";
+var APP_VERSION       = "v1.1.59";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4612,7 +4612,21 @@ function specSourceLabel(spec) {
 function renderProductSpecs() {
   var wrap = document.getElementById("product-spec-wrap");
   if (!wrap) return;
-  var specs = currentProductSpecs || [];
+  var seenSpecKeys = {};
+  var specs = (currentProductSpecs || []).filter(function(spec) {
+    var key = [
+      spec.raw_spec || "",
+      spec.voltage_v || "",
+      spec.current_a || "",
+      spec.power_kw || "",
+      spec.power_w || "",
+      spec.diameter_d || "",
+      spec.type_text || ""
+    ].join("|");
+    if (seenSpecKeys[key]) return false;
+    seenSpecKeys[key] = true;
+    return true;
+  });
   var html = "<div class='spec-box'><div class='spec-head'><div class='spec-title'>" + t("spec_section") + "</div></div>";
   if (!specs.length) {
     html += "<div class='spec-main'>-</div><div class='spec-sub'>" + t("spec_none") + "</div>";
@@ -4632,7 +4646,7 @@ function renderProductSpecs() {
       if (diameterText) chips.push([t("spec_label_diameter"), diameterText]);
       if (spec.type_text) chips.push([t("spec_type"), spec.type_text]);
       html += "<div style='padding:7px 0;border-top:1px solid #edf1f7'>";
-      html += "<div class='spec-main'>" + esc(spec.raw_spec || "-") + "</div>";
+      if (!chips.length) html += "<div class='spec-main'>" + esc(spec.raw_spec || "-") + "</div>";
       var sourceLabel = (spec.is_catalog_source || spec.source_kind === "parts_catalog") ? "" : specSourceLabel(spec);
       if (sourceLabel) html += "<div class='spec-sub'>" + esc(sourceLabel) + "</div>";
       if (chips.length) {
