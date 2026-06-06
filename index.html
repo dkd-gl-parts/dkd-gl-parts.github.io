@@ -69,7 +69,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .price-value    { font-size: 15px; font-weight: 700; color: #1a6fd4; }
 .price-moq      { font-size: 12px; color: #888; }
 .price-section-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-.rakuten-quick-row { margin: -6px 0 16px; }
+.rakuten-quick-row { margin: 0; }
 .rakuten-price-body { flex: 1; padding: 20px 16px; max-width: 1120px; width: 100%; margin: 0 auto; overflow-y: auto; }
 .rakuten-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
 .rakuten-card h3 { font-size: 14px; font-weight: 700; color: #1a1a2e; margin-bottom: 10px; }
@@ -127,6 +127,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-diff-side strong { display: block; font-size: 11px; color: #888; margin-bottom: 2px; }
 .component-empty { color:#bbb; font-size:12px; padding:8px 0; }
 .detail-actions { display:flex; gap:8px; flex-wrap:wrap; margin:14px 0 6px; }
+.detail-toolbar { display: flex; align-items: center; justify-content: flex-start; gap: 8px; flex-wrap: wrap; padding: 8px 0 10px; border-bottom: 1px solid #f0f0f0; margin-bottom: 8px; }
+.detail-toolbar .btn-sm-edit { margin: 0; }
 .component-body { flex:1; padding:20px 16px; max-width:1120px; width:100%; margin:0 auto; overflow-y:auto; }
 .component-context { background:#fff; border:1px solid #e8e8e8; border-radius:8px; padding:12px 14px; margin-bottom:12px; }
 .component-context-title { font-size:15px; font-weight:700; color:#1a1a2e; }
@@ -220,9 +222,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .spec-chip strong { color: #1a5faa; margin-left: 4px; }
 .detail-summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 4px 0 10px; border-bottom: 1px solid #f0f0f0; margin-bottom: 6px; }
 .detail-category-name { font-size: 15px; font-weight: 700; color: #1a1a2e; line-height: 1.4; }
-.spec-inline-wrap { flex: 1; min-width: 220px; max-width: 520px; display: flex; justify-content: flex-end; }
+.spec-inline-wrap { flex: 1; min-width: 300px; max-width: 560px; display: flex; justify-content: flex-end; }
 .spec-inline { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
-.spec-inline-title { font-size: 12px; font-weight: 700; color: #555; white-space: nowrap; }
+.spec-inline-title { flex: 0 0 64px; width: 64px; font-size: 12px; font-weight: 700; color: #555; white-space: nowrap; text-align: right; }
 .spec-inline .spec-grid { margin-top: 0; justify-content: flex-end; }
 .spec-inline-empty { color: #aaa; font-size: 12px; }
 .ac-part-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-top: 1px solid #f0f0f0; margin-bottom: 8px; }
@@ -558,7 +560,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.64</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.65</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -587,7 +589,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.64</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.65</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -2273,7 +2275,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.63";
+var APP_VERSION       = "v1.1.65";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4554,7 +4556,11 @@ function openPanel(id) {
   document.getElementById("panel-welcome").style.display  = "none";
   document.getElementById("panel-inner").style.display    = "flex";
   document.getElementById("panel-footer").style.display   = canEdit() ? "block" : "none";
-  document.getElementById("panel-topbar-title").textContent = productCategoryLabel(currentProduct) || currentProduct.genuine_part_number || "-";
+  document.getElementById("panel-topbar-title").textContent = [
+    currentProduct.genuine_part_number,
+    currentProduct.manufacturer_part_number,
+    currentProduct.manufacturer
+  ].filter(Boolean).join(" / ") || "-";
   if (!isPC()) { document.getElementById("overlay").classList.add("show"); document.getElementById("panel").classList.add("show"); }
   renderPanelStatic();
   document.querySelectorAll(".card").forEach(function(c){ c.classList.toggle("selected", parseInt(c.dataset.id,10)===id); });
@@ -4626,19 +4632,22 @@ function renderPanelStatic() {
     });
     partHtml = "<table class='detail-table' style='margin-top:4px'>" + partHtml + "</table>";
   }
-  var editActions = canEdit()
-    ? "<div class='detail-actions'><button class='btn-sm-edit' id='btn-edit-current-product'>&#9998; " + t("btn_edit_part") + "</button><button class='btn-sm-edit' id='btn-add-core-product'>&#43; " + t("btn_add_part") + "</button></div>"
-    : "";
+  var toolHtml = "<div class='detail-toolbar'>";
+  if (canEdit()) {
+    toolHtml += "<button class='btn-sm-edit' id='btn-edit-current-product'>&#9998; " + t("btn_edit_part") + "</button>";
+    toolHtml += "<button class='btn-sm-edit' id='btn-add-core-product'>&#43; " + t("btn_add_part") + "</button>";
+  }
+  if (canUseRakutenResearch()) {
+    toolHtml += "<button class='btn-sm-edit' onclick='openRakutenForCurrentProduct()'>&#x1F4B4; " + t("rakuten_quick") + "</button>";
+  }
+  toolHtml += "<button class='btn-sm-edit' id='btn-open-components'>&#9881; " + t("component_open_parts") + "</button>";
+  toolHtml += "<button class='btn-sm-edit' id='btn-open-component-parallel'>&#8644; " + t("component_open_parallel") + "</button>";
+  toolHtml += "</div>";
   document.getElementById("panel-body").innerHTML =
-    "<div class='detail-summary'><div class='detail-category-name'>" + esc(productCategoryLabel(p) || "-") + "</div><div id='product-spec-wrap' class='spec-inline-wrap'><span class='spec-inline-empty'>" + t("loading") + "</span></div></div>" +
+    "<div class='detail-summary'><div class='detail-category-name'>" + esc(productCategoryLabel(p) || "-") + "</div><div id='product-spec-wrap' class='spec-inline-wrap'><div class='spec-inline'><span class='spec-inline-title'>" + t("spec_section") + "</span><span class='spec-inline-empty'>" + t("loading") + "</span></div></div></div>" +
     partHtml +
     "<table class='detail-table'>" + tHtml + "</table>" +
-    editActions +
-    (canUseRakutenResearch() ? "<div class='rakuten-quick-row'><button class='btn-sm-edit' onclick='openRakutenForCurrentProduct()'>&#x1F4B4; " + t("rakuten_quick") + "</button></div>" : "") +
-    "<div class='detail-actions'>" +
-      "<button class='btn-sm-edit' id='btn-open-components'>&#9881; " + t("component_open_parts") + "</button>" +
-      "<button class='btn-sm-edit' id='btn-open-component-parallel'>&#8644; " + t("component_open_parallel") + "</button>" +
-    "</div>" +
+    toolHtml +
     "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
     "<div id='kikan-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>" +
     "<div class='price-section-title'>&#x1F4B0; " + t("supplier_prices") + "</div>" +
