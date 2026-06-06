@@ -540,7 +540,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.56</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.57</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -569,7 +569,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.56</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.57</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -2233,7 +2233,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.56";
+var APP_VERSION       = "v1.1.57";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4372,6 +4372,12 @@ function getFiltered() {
 
 async function runProductSearch() {
   var q = document.getElementById("q").value.trim();
+  if (q && currentFilter !== "all") {
+    currentFilter = "all";
+    document.querySelectorAll(".chip").forEach(function(c) {
+      c.classList.toggle("active", c.dataset.filter === "all");
+    });
+  }
   var categoryFilter = currentFilter.indexOf("cat:") === 0 ? currentFilter.slice(4) : null;
   var requireSl = currentFilter === "sl";
   var list = document.getElementById("list");
