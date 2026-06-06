@@ -540,7 +540,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.60</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.61</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -569,7 +569,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.60</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.61</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -2236,7 +2236,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.60";
+var APP_VERSION       = "v1.1.61";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4655,6 +4655,7 @@ function renderProductSpecs() {
   if (!specs.length) {
     html += "<div class='spec-main'>-</div><div class='spec-sub'>" + t("spec_none") + "</div>";
   } else {
+    var seenVisibleSpecKeys = {};
     specs.forEach(function(spec) {
       var chips = [];
       var gas = specGasText(spec);
@@ -4676,6 +4677,11 @@ function renderProductSpecs() {
         if (diameterText) chips.push([t("spec_label_diameter"), diameterText]);
         if (spec.type_text) chips.push([t("spec_type"), spec.type_text]);
       }
+      var visibleKey = chips.length
+        ? chips.map(function(chip) { return chip[0] + ":" + chip[1]; }).join("|")
+        : String(spec.raw_spec || "").trim();
+      if (seenVisibleSpecKeys[visibleKey]) return;
+      seenVisibleSpecKeys[visibleKey] = true;
       html += "<div style='padding:7px 0;border-top:1px solid #edf1f7'>";
       if (!chips.length) html += "<div class='spec-main'>" + esc(spec.raw_spec || "-") + "</div>";
       var sourceLabel = (spec.is_catalog_source || spec.source_kind === "parts_catalog") ? "" : specSourceLabel(spec);
