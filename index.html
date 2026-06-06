@@ -540,7 +540,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.59</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.60</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -569,7 +569,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.59</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.60</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1317,6 +1317,7 @@ var TRANSLATIONS = {
     spec_label_current: "電流",
     spec_label_power: "出力",
     spec_label_diameter: "外径",
+    spec_label_gas: "ガス",
     spec_note: "情報元メモ",
     spec_source_manual: "手入力",
     spec_source_catalog: "パーツカタログ",
@@ -1639,6 +1640,7 @@ var TRANSLATIONS = {
     spec_label_current: "Current",
     spec_label_power: "Output",
     spec_label_diameter: "Diameter",
+    spec_label_gas: "Gas",
     spec_note: "Source note",
     spec_source_manual: "Manual",
     spec_source_catalog: "Parts Catalog",
@@ -1961,6 +1963,7 @@ var TRANSLATIONS = {
     spec_label_current: "电流",
     spec_label_power: "输出",
     spec_label_diameter: "外径",
+    spec_label_gas: "气体",
     spec_note: "信息来源备注",
     spec_source_manual: "手动输入",
     spec_source_catalog: "零件目录",
@@ -2233,7 +2236,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.59";
+var APP_VERSION       = "v1.1.60";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4609,9 +4612,30 @@ function specSourceLabel(spec) {
   return spec.source_name || spec.source_code || "";
 }
 
+function isCurrentAcCompressor() {
+  if (!currentProduct) return false;
+  return (currentProduct.category_code || currentProduct.category || "") === "ac_compressor";
+}
+
+function specGasText(spec) {
+  var text = [
+    spec && spec.gas_type,
+    spec && spec.refrigerant,
+    spec && spec.refrigerant_type,
+    spec && spec.raw_spec,
+    spec && spec.source_note,
+    spec && spec.type_text
+  ].filter(Boolean).join(" ");
+  var m = text.match(/\bR[\s-]?(134A|1234YF|12)\b/i) || text.match(/\b(134A|1234YF)\b/i);
+  if (!m) return "";
+  var gas = (m[1] || m[0]).toUpperCase().replace(/\s|-/g, "");
+  return gas.indexOf("R") === 0 ? gas : "R" + gas;
+}
+
 function renderProductSpecs() {
   var wrap = document.getElementById("product-spec-wrap");
   if (!wrap) return;
+  var isAc = isCurrentAcCompressor();
   var seenSpecKeys = {};
   var specs = (currentProductSpecs || []).filter(function(spec) {
     var key = [
@@ -4633,18 +4657,25 @@ function renderProductSpecs() {
   } else {
     specs.forEach(function(spec) {
       var chips = [];
+      var gas = specGasText(spec);
       var voltage = specNumberText(spec.voltage_v, "V");
       var current = specNumberText(spec.current_a, "A");
       var powerKw = specNumberText(spec.power_kw, "kW");
       var powerW = specNumberText(spec.power_w, "W");
       var diameter = specNumberText(spec.diameter_d, "");
       var diameterText = diameter ? "φ" + diameter : "";
-      if (voltage) chips.push([t("spec_label_voltage"), voltage]);
-      if (current) chips.push([t("spec_label_current"), current]);
-      if (powerKw) chips.push([t("spec_label_power"), powerKw]);
-      if (powerW) chips.push([t("spec_label_power"), powerW]);
-      if (diameterText) chips.push([t("spec_label_diameter"), diameterText]);
-      if (spec.type_text) chips.push([t("spec_type"), spec.type_text]);
+      if (isAc) {
+        if (gas) chips.push([t("spec_label_gas"), gas]);
+        if (spec.type_text) chips.push([t("spec_type"), spec.type_text]);
+        if (voltage) chips.push([t("spec_label_voltage"), voltage]);
+      } else {
+        if (voltage) chips.push([t("spec_label_voltage"), voltage]);
+        if (current) chips.push([t("spec_label_current"), current]);
+        if (powerKw) chips.push([t("spec_label_power"), powerKw]);
+        if (powerW) chips.push([t("spec_label_power"), powerW]);
+        if (diameterText) chips.push([t("spec_label_diameter"), diameterText]);
+        if (spec.type_text) chips.push([t("spec_type"), spec.type_text]);
+      }
       html += "<div style='padding:7px 0;border-top:1px solid #edf1f7'>";
       if (!chips.length) html += "<div class='spec-main'>" + esc(spec.raw_spec || "-") + "</div>";
       var sourceLabel = (spec.is_catalog_source || spec.source_kind === "parts_catalog") ? "" : specSourceLabel(spec);
