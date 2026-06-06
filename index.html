@@ -4352,7 +4352,9 @@ function getFiltered() {
     var partMatch = !q || [
       p.genuine_part_number, p.genuine_part_number_2,
       p.manufacturer_part_number, p.daiko_part_number,
-      p.shohin_cd, p.pulley_assy_part_number
+      p.shohin_cd, p.pulley_assy_part_number,
+      p.genuine_body_part_number, p.manufacturer_body_part_number,
+      p.genuine_clutch_part_number, p.manufacturer_clutch_part_number
     ].concat(slNums).some(function(v){ return normalizedStartsWith(v, q); });
     var textMatch = !q || [
       p.vehicle_manufacturer, p.manufacturer,
