@@ -2626,7 +2626,7 @@ async function doLogout() {
   currentUser = null; userProfile = null;
   allProducts = []; dataLoaded = false;
   slPartsMap = {}; currentSlPartIds = [];
-  currentProduct = null; currentImages = [];
+  currentProduct = null; currentProductSpecs = []; currentProductNominalSpec = null; currentImages = [];
   showScreen("login");
 }
 
@@ -3892,6 +3892,7 @@ async function saveCoreProductForm() {
   if (!specOk) return;
   document.getElementById("part-form-overlay").classList.remove("show");
   currentProductSpecs = [];
+  currentProductNominalSpec = null;
   await runProductSearch();
 }
 
@@ -4511,6 +4512,7 @@ function openPanel(id) {
   currentProduct = null;
   currentCoreDkdShohinId = null;
   currentProductSpecs = [];
+  currentProductNominalSpec = null;
   for (var i=0;i<allProducts.length;i++) { if(allProducts[i].id===id){currentProduct=allProducts[i];break;} }
   if (!currentProduct) return;
   document.getElementById("panel-welcome").style.display  = "none";
@@ -4542,7 +4544,7 @@ function closePanel() {
   document.getElementById("panel-body").innerHTML = "";
   document.getElementById("panel-topbar-title").textContent = "-";
   document.querySelectorAll(".card.selected").forEach(function(c){ c.classList.remove("selected"); });
-  currentProduct = null; currentCoreDkdShohinId = null; currentProductSpecs = []; currentParallelTargetDkdShohinId = null; currentParallelTargetProduct = null; currentImages = []; currentSlPartIds = [];
+  currentProduct = null; currentCoreDkdShohinId = null; currentProductSpecs = []; currentProductNominalSpec = null; currentParallelTargetDkdShohinId = null; currentParallelTargetProduct = null; currentImages = []; currentSlPartIds = [];
 }
 
 function renderPanelStatic() {
