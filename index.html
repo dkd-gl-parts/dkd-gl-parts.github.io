@@ -218,6 +218,24 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .spec-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .spec-chip { border: 1px solid #e0e7f2; border-radius: 6px; background: #fff; padding: 4px 7px; font-size: 11px; color: #555; }
 .spec-chip strong { color: #1a5faa; margin-left: 4px; }
+.detail-summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 4px 0 10px; border-bottom: 1px solid #f0f0f0; margin-bottom: 6px; }
+.detail-category-name { font-size: 15px; font-weight: 700; color: #1a1a2e; line-height: 1.4; }
+.spec-inline-wrap { flex: 1; min-width: 220px; max-width: 520px; display: flex; justify-content: flex-end; }
+.spec-inline { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.spec-inline-title { font-size: 12px; font-weight: 700; color: #555; white-space: nowrap; }
+.spec-inline .spec-grid { margin-top: 0; justify-content: flex-end; }
+.spec-inline-empty { color: #aaa; font-size: 12px; }
+.ac-part-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-top: 1px solid #f0f0f0; margin-bottom: 8px; }
+.ac-part-cell { min-width: 0; border-bottom: 1px solid #f0f0f0; padding: 8px 10px 8px 4px; }
+.ac-part-label { font-size: 12px; color: #888; margin-bottom: 3px; }
+.ac-part-value { font-size: 13px; font-weight: 600; color: #1a1a2e; word-break: break-all; }
+@media(max-width:720px){
+  .detail-summary { flex-direction: column; gap: 6px; }
+  .spec-inline-wrap { justify-content: flex-start; max-width: none; width: 100%; }
+  .spec-inline { justify-content: flex-start; }
+  .spec-inline .spec-grid { justify-content: flex-start; }
+  .ac-part-grid { grid-template-columns: 1fr; }
+}
 .spec-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 @media(max-width:640px){ .spec-form-grid { grid-template-columns: 1fr; } }
 
@@ -540,7 +558,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.63</p>
+      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.64</p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -569,7 +587,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.63</span>
+      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.64</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1291,6 +1309,12 @@ var TRANSLATIONS = {
     f_genuine_pn: "純正品番",
     f_mfr_pn: "メーカー品番",
     f_daiko_pn: "大光品番",
+    f_genuine_assy_pn: "純正ASSY品番",
+    f_mfr_assy_pn: "メーカーASSY品番",
+    f_genuine_body_pn: "純正本体品番",
+    f_mfr_body_pn: "メーカー本体品番",
+    f_genuine_clutch_pn: "純正クラッチ品番",
+    f_mfr_clutch_pn: "メーカークラッチ品番",
     f_manufacturer: "メーカー",
     f_vehicle_mfr: "車メーカー",
     f_body_type: "車種",
@@ -1614,6 +1638,12 @@ var TRANSLATIONS = {
     f_genuine_pn: "Genuine Part No.",
     f_mfr_pn: "Manufacturer Part No.",
     f_daiko_pn: "Daiko Part No.",
+    f_genuine_assy_pn: "Genuine ASSY No.",
+    f_mfr_assy_pn: "Manufacturer ASSY No.",
+    f_genuine_body_pn: "Genuine Body No.",
+    f_mfr_body_pn: "Manufacturer Body No.",
+    f_genuine_clutch_pn: "Genuine Clutch No.",
+    f_mfr_clutch_pn: "Manufacturer Clutch No.",
     f_manufacturer: "Manufacturer",
     f_vehicle_mfr: "Vehicle Maker",
     f_body_type: "Body Type",
@@ -1937,6 +1967,12 @@ var TRANSLATIONS = {
     f_genuine_pn: "纯正零件编号",
     f_mfr_pn: "制造商零件编号",
     f_daiko_pn: "大光零件编号",
+    f_genuine_assy_pn: "纯正ASSY编号",
+    f_mfr_assy_pn: "制造商ASSY编号",
+    f_genuine_body_pn: "纯正本体编号",
+    f_mfr_body_pn: "制造商本体编号",
+    f_genuine_clutch_pn: "纯正离合器编号",
+    f_mfr_clutch_pn: "制造商离合器编号",
     f_manufacturer: "制造商",
     f_vehicle_mfr: "汽车制造商",
     f_body_type: "车身类型",
@@ -4549,11 +4585,9 @@ function closePanel() {
 
 function renderPanelStatic() {
   var p = currentProduct;
+  var isAcProduct = (p.category_code || p.category || "") === "ac_compressor";
   // parts テーブルのフィールド定義
   var defs = [
-    ["f_genuine_pn",  p.genuine_part_number],
-    ["f_genuine_pn2", p.genuine_part_number_2],
-    ["f_mfr_pn",      p.manufacturer_part_number],
     ["f_manufacturer",p.manufacturer],
     ["f_vehicle_mfr", p.vehicle_manufacturer],
     ["f_body_type",   p.body_type],
@@ -4567,13 +4601,39 @@ function renderPanelStatic() {
     var text = (v != null && String(v) !== "None" && String(v) !== "") ? String(v) : "-";
     tHtml += "<tr><td>" + t(k) + "</td><td>" + esc(text) + "</td></tr>";
   });
+  var partHtml = "";
+  if (isAcProduct) {
+    [
+      ["f_genuine_assy_pn", p.genuine_part_number],
+      ["f_mfr_assy_pn", p.manufacturer_part_number],
+      ["f_genuine_body_pn", p.genuine_body_part_number],
+      ["f_mfr_body_pn", p.manufacturer_body_part_number],
+      ["f_genuine_clutch_pn", p.genuine_clutch_part_number],
+      ["f_mfr_clutch_pn", p.manufacturer_clutch_part_number]
+    ].forEach(function(d) {
+      var text = (d[1] != null && String(d[1]) !== "None" && String(d[1]) !== "") ? String(d[1]) : "-";
+      partHtml += "<div class='ac-part-cell'><div class='ac-part-label'>" + t(d[0]) + "</div><div class='ac-part-value'>" + esc(text) + "</div></div>";
+    });
+    partHtml = "<div class='ac-part-grid'>" + partHtml + "</div>";
+  } else {
+    [
+      ["f_genuine_pn",  p.genuine_part_number],
+      ["f_genuine_pn2", p.genuine_part_number_2],
+      ["f_mfr_pn",      p.manufacturer_part_number]
+    ].forEach(function(d) {
+      var text = (d[1] != null && String(d[1]) !== "None" && String(d[1]) !== "") ? String(d[1]) : "-";
+      partHtml += "<tr><td>" + t(d[0]) + "</td><td>" + esc(text) + "</td></tr>";
+    });
+    partHtml = "<table class='detail-table' style='margin-top:4px'>" + partHtml + "</table>";
+  }
   var editActions = canEdit()
     ? "<div class='detail-actions'><button class='btn-sm-edit' id='btn-edit-current-product'>&#9998; " + t("btn_edit_part") + "</button><button class='btn-sm-edit' id='btn-add-core-product'>&#43; " + t("btn_add_part") + "</button></div>"
     : "";
   document.getElementById("panel-body").innerHTML =
-    "<table class='detail-table' style='margin-top:4px'>" + tHtml + "</table>" +
+    "<div class='detail-summary'><div class='detail-category-name'>" + esc(productCategoryLabel(p) || "-") + "</div><div id='product-spec-wrap' class='spec-inline-wrap'><span class='spec-inline-empty'>" + t("loading") + "</span></div></div>" +
+    partHtml +
+    "<table class='detail-table'>" + tHtml + "</table>" +
     editActions +
-    "<div id='product-spec-wrap'><div class='spec-box'><div class='spec-head'><div class='spec-title'>" + t("spec_section") + "</div></div><div class='spec-sub'>" + t("loading") + "</div></div></div>" +
     (canUseRakutenResearch() ? "<div class='rakuten-quick-row'><button class='btn-sm-edit' onclick='openRakutenForCurrentProduct()'>&#x1F4B4; " + t("rakuten_quick") + "</button></div>" : "") +
     "<div class='detail-actions'>" +
       "<button class='btn-sm-edit' id='btn-open-components'>&#9881; " + t("component_open_parts") + "</button>" +
@@ -4639,65 +4699,38 @@ function renderProductSpecs() {
   var wrap = document.getElementById("product-spec-wrap");
   if (!wrap) return;
   var isAc = isCurrentAcCompressor();
-  var seenSpecKeys = {};
-  var specs = (currentProductNominalSpec ? [currentProductNominalSpec] : []).filter(function(spec) {
-    var key = [
-      spec.raw_spec || "",
-      spec.voltage_v || "",
-      spec.current_a || "",
-      spec.power_kw || "",
-      spec.power_w || "",
-      spec.diameter_d || "",
-      spec.type_text || ""
-    ].join("|");
-    if (seenSpecKeys[key]) return false;
-    seenSpecKeys[key] = true;
-    return true;
-  });
-  var html = "<div class='spec-box'><div class='spec-head'><div class='spec-title'>" + t("spec_section") + "</div></div>";
-  if (!specs.length) {
-    html += "<div class='spec-main'>-</div><div class='spec-sub'>" + t("spec_none") + "</div>";
-  } else {
-    var seenVisibleSpecKeys = {};
-    specs.forEach(function(spec) {
-      var chips = [];
-      var gas = specGasText(spec);
-      var voltage = specNumberText(spec.voltage_v, "V");
-      var current = specNumberText(spec.current_a, "A");
-      var powerKw = specNumberText(spec.power_kw, "kW");
-      var powerW = specNumberText(spec.power_w, "W");
-      var diameter = specNumberText(spec.diameter_d, "");
-      var diameterText = diameter ? "D" + diameter : "";
-      if (isAc) {
-        if (gas) chips.push([t("spec_label_gas"), gas]);
-        if (spec.type_text) chips.push([t("spec_type"), spec.type_text]);
-        if (voltage) chips.push([t("spec_label_voltage"), voltage]);
-      } else {
-        if (voltage) chips.push([t("spec_label_voltage"), voltage]);
-        if (current) chips.push([t("spec_label_current"), current]);
-        if (powerKw) chips.push([t("spec_label_power"), powerKw]);
-        if (powerW) chips.push([t("spec_label_power"), powerW]);
-        if (diameterText) chips.push([t("spec_label_diameter"), diameterText]);
-        if (spec.type_text) chips.push([t("spec_type"), spec.type_text]);
-      }
-      var visibleKey = chips.length
-        ? chips.map(function(chip) { return chip[0] + ":" + chip[1]; }).join("|")
-        : String(spec.raw_spec || "").trim();
-      if (seenVisibleSpecKeys[visibleKey]) return;
-      seenVisibleSpecKeys[visibleKey] = true;
-      html += "<div style='padding:7px 0;border-top:1px solid #edf1f7'>";
-      if (!chips.length) html += "<div class='spec-main'>" + esc(spec.raw_spec || "-") + "</div>";
-      var sourceLabel = (spec.is_catalog_source || spec.source_kind === "parts_catalog") ? "" : specSourceLabel(spec);
-      if (sourceLabel) html += "<div class='spec-sub'>" + esc(sourceLabel) + "</div>";
-      if (chips.length) {
-        html += "<div class='spec-grid'>";
-        chips.forEach(function(chip) {
-          html += "<span class='spec-chip'>" + esc(chip[0]) + "<strong>" + esc(chip[1]) + "</strong></span>";
-        });
-        html += "</div>";
-      }
-      html += "</div>";
+  var spec = currentProductNominalSpec || null;
+  var chips = [];
+  if (spec) {
+    var gas = specGasText(spec);
+    var voltage = specNumberText(spec.voltage_v, "V");
+    var current = specNumberText(spec.current_a, "A");
+    var powerKw = specNumberText(spec.power_kw, "kW");
+    var powerW = specNumberText(spec.power_w, "W");
+    var diameter = specNumberText(spec.diameter_d, "");
+    var diameterText = diameter ? "D" + diameter : "";
+    if (isAc) {
+      if (gas) chips.push([t("spec_label_gas"), gas]);
+      if (spec.type_text) chips.push([t("spec_type"), spec.type_text]);
+      if (voltage) chips.push([t("spec_label_voltage"), voltage]);
+    } else {
+      if (voltage) chips.push([t("spec_label_voltage"), voltage]);
+      if (current) chips.push([t("spec_label_current"), current]);
+      if (powerKw) chips.push([t("spec_label_power"), powerKw]);
+      if (powerW) chips.push([t("spec_label_power"), powerW]);
+      if (diameterText) chips.push([t("spec_label_diameter"), diameterText]);
+      if (spec.type_text) chips.push([t("spec_type"), spec.type_text]);
+    }
+  }
+  var html = "<div class='spec-inline'><span class='spec-inline-title'>" + t("spec_section") + "</span>";
+  if (chips.length) {
+    html += "<div class='spec-grid'>";
+    chips.forEach(function(chip) {
+      html += "<span class='spec-chip'>" + esc(chip[0]) + "<strong>" + esc(chip[1]) + "</strong></span>";
     });
+    html += "</div>";
+  } else {
+    html += "<span class='spec-inline-empty'>-</span>";
   }
   html += "</div>";
   wrap.innerHTML = html;
