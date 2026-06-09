@@ -2301,7 +2301,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.76";
+var APP_VERSION       = "v1.1.77";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -5057,6 +5057,17 @@ async function resolveCurrentCoreDkdShohinId() {
   return null;
 }
 
+function formatComponentInterchange(row) {
+  var code = row.component_interchange_code || row.interchange_code || "";
+  if (!code) return "-";
+  var maker = String(row.component_manufacturer || row.assy_manufacturer || "").toUpperCase();
+  if (maker === "MITSUBISHI") {
+    if (code === "A") return "\u2193";
+    if (code === "B") return "\u2191";
+    if (code === "C") return "\u2195";
+  }
+  return code;
+}
 function selectedProductTitle() {
   if (!currentProduct) return "-";
   return productCategoryLabel(currentProduct) || currentProduct.manufacturer_part_number || currentProduct.genuine_part_number || "-";
@@ -5136,7 +5147,7 @@ async function loadAssemblyComponentsForCurrent() {
     html += "<td><div class='component-pn'>" + esc(row.component_genuine_part_number || "-") + "</div></td>";
     html += "<td>" + esc(row.component_name || row.component_part_name || "-") + "<div class='component-sub'>" + esc(row.component_position || row.source_code || "") + "</div></td>";
     html += "<td>" + esc(row.quantity || "-") + "</td>";
-    html += "<td>" + esc(row.component_interchange_code || row.interchange_code || "-") + "</td>";
+    html += "<td>" + esc(formatComponentInterchange(row)) + "</td>";
     html += "<td>" + esc(row.effective_start || row.start_period || "-") + "</td>";
     html += "<td>" + esc(row.effective_end || row.end_period || "-") + "</td>";
     html += "</tr>";
