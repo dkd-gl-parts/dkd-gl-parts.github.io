@@ -222,7 +222,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .spec-chip strong { color: #1a5faa; margin-left: 4px; }
 .detail-summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 4px 0 10px; border-bottom: 1px solid #f0f0f0; margin-bottom: 6px; }
 .detail-category-name { font-size: 15px; font-weight: 700; color: #1a1a2e; line-height: 1.4; }
-.detail-main-grid { display: grid; grid-template-columns: minmax(360px, 1.05fr) minmax(300px, 0.95fr); gap: 14px; align-items: start; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 8px; }
+.detail-main-grid { display: grid; grid-template-columns: minmax(380px, 1.05fr) minmax(340px, 0.95fr); gap: 16px; align-items: start; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 8px; }
 .detail-column { min-width: 0; }
 .detail-block-title { font-size: 12px; font-weight: 700; color: #555; margin: 0 0 6px; }
 .detail-vehicle-grid { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 0; border-top: 1px solid #f0f0f0; margin-bottom: 10px; }
@@ -233,10 +233,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .spec-inline-title { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: #555; white-space: nowrap; }
 .spec-inline .spec-grid { margin-top: 0; justify-content: flex-start; }
 .spec-inline-empty { color: #aaa; font-size: 12px; }
-.ac-part-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-top: 1px solid #f0f0f0; margin-bottom: 8px; }
-.ac-part-cell { min-width: 0; border-bottom: 1px solid #f0f0f0; padding: 8px 10px 8px 4px; }
-.ac-part-label { font-size: 12px; color: #888; margin-bottom: 3px; }
-.ac-part-value { font-size: 13px; font-weight: 600; color: #1a1a2e; word-break: break-all; }
+.ac-part-grid { display: grid; grid-template-columns: 1fr; gap: 0; border-top: 1px solid #f0f0f0; margin-bottom: 8px; }
+.ac-part-row { display: grid; grid-template-columns: 118px minmax(0, 1fr) minmax(150px, 0.9fr); gap: 8px; align-items: center; min-width: 0; border-bottom: 1px solid #f0f0f0; padding: 7px 4px; }
+.ac-part-label { font-size: 12px; color: #888; }
+.ac-part-value { font-size: 13px; font-weight: 700; color: #1a1a2e; word-break: break-all; }
+.ac-part-sub { font-size: 12px; color: #666; word-break: break-all; }
+.ac-part-sub span { color: #999; margin-right: 5px; }
 .detail-main-grid .detail-table,
 .detail-main-grid .ac-part-grid { margin-bottom: 0; }
 @media(max-width:720px){
@@ -245,7 +247,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .spec-inline-wrap { justify-content: flex-start; max-width: none; width: 100%; }
   .spec-inline { justify-content: flex-start; }
   .spec-inline .spec-grid { justify-content: flex-start; }
-  .ac-part-grid { grid-template-columns: 1fr; }
+  .ac-part-row { grid-template-columns: 1fr; gap: 3px; padding: 7px 4px; }
 }
 .spec-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 @media(max-width:640px){ .spec-form-grid { grid-template-columns: 1fr; } }
@@ -2286,7 +2288,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.68";
+var APP_VERSION       = "v1.1.69";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4656,17 +4658,24 @@ function renderPanelStatic() {
   var partHtml = "";
   if (isAcProduct) {
     [
-      ["f_genuine_assy_pn", p.genuine_part_number],
-      ["f_mfr_assy_pn", p.manufacturer_part_number],
-      ["f_manufacturer", p.manufacturer],
-      ["f_genuine_body_pn", p.genuine_body_part_number],
-      ["f_mfr_body_pn", p.manufacturer_body_part_number],
-      ["f_genuine_clutch_pn", p.genuine_clutch_part_number],
-      ["f_mfr_clutch_pn", p.manufacturer_clutch_part_number]
+      ["f_genuine_assy_pn", p.genuine_part_number, "f_mfr_assy_pn", p.manufacturer_part_number],
+      ["f_genuine_body_pn", p.genuine_body_part_number, "f_mfr_body_pn", p.manufacturer_body_part_number],
+      ["f_genuine_clutch_pn", p.genuine_clutch_part_number, "f_mfr_clutch_pn", p.manufacturer_clutch_part_number]
     ].forEach(function(d) {
-      var text = (d[1] != null && String(d[1]) !== "None" && String(d[1]) !== "") ? String(d[1]) : "-";
-      partHtml += "<div class='ac-part-cell'><div class='ac-part-label'>" + t(d[0]) + "</div><div class='ac-part-value'>" + esc(text) + "</div></div>";
+      var genuineText = (d[1] != null && String(d[1]) !== "None" && String(d[1]) !== "") ? String(d[1]) : "-";
+      var makerText = (d[3] != null && String(d[3]) !== "None" && String(d[3]) !== "") ? String(d[3]) : "-";
+      partHtml += "<div class='ac-part-row'>" +
+        "<div class='ac-part-label'>" + t(d[0]) + "</div>" +
+        "<div class='ac-part-value'>" + esc(genuineText) + "</div>" +
+        "<div class='ac-part-sub'><span>" + t(d[2]) + "</span>" + esc(makerText) + "</div>" +
+      "</div>";
     });
+    var makerName = (p.manufacturer != null && String(p.manufacturer) !== "None" && String(p.manufacturer) !== "") ? String(p.manufacturer) : "-";
+    partHtml += "<div class='ac-part-row'>" +
+      "<div class='ac-part-label'>" + t("f_manufacturer") + "</div>" +
+      "<div class='ac-part-value'>" + esc(makerName) + "</div>" +
+      "<div class='ac-part-sub'></div>" +
+    "</div>";
     partHtml = "<div class='ac-part-grid'>" + partHtml + "</div>";
   } else {
     [
