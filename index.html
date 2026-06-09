@@ -2295,7 +2295,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.74";
+var APP_VERSION       = "v1.1.75";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4453,6 +4453,34 @@ async function fetchCategoryProducts(categoryFilter) {
     .limit(SEARCH_FETCH_LIMIT);
 }
 
+function normalizePartQuery(q) {
+  return String(q || "").toUpperCase().replace(/[-\s　]/g, "");
+}
+
+async function fetchSourceAliasProducts(q) {
+  var normalized = normalizePartQuery(q);
+  if (!normalized) return { data: [] };
+
+  var alias = await sb.rpc("core_product_source_alias_matches", {
+    normalized_q: normalized
+  });
+  if (alias.error || !(alias.data || []).length) return alias.error ? alias : { data: [] };
+
+  var ids = (alias.data || []).map(function(row) {
+    return row.dkd_shohin_id;
+  }).filter(function(id) {
+    return id !== null && id !== undefined && id !== "";
+  });
+  if (!ids.length) return { data: [] };
+
+  return await sb.from("core_product_search_view")
+    .select("*")
+    .in("dkd_shohin_id", ids)
+    .order("manufacturer_part_number")
+    .order("genuine_part_number")
+    .limit(SEARCH_FETCH_LIMIT);
+}
+
 async function runProductSearch(options) {
   options = options || {};
   var q = document.getElementById("q").value.trim();
@@ -4492,6 +4520,15 @@ async function runProductSearch(options) {
     document.getElementById("count-bar").textContent = "";
     list.innerHTML = "<div class='empty'>" + t("no_results") + "</div>";
     return;
+  }
+  if (q && !(r.data || []).length) {
+    var aliasResult = await fetchSourceAliasProducts(q);
+    if (seq !== searchRequestSeq) return;
+    if (!aliasResult.error && (aliasResult.data || []).length) {
+      r = aliasResult;
+    } else if (aliasResult.error) {
+      console.warn("source alias search failed", aliasResult.error);
+    }
   }
   allProducts = filterVisibleProducts(r.data || []);
   await loadComponentUsageCounts(allProducts);
