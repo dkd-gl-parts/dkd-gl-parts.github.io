@@ -1591,6 +1591,9 @@ var TRANSLATIONS = {
     component_position: "部位",
     component_name: "部品名",
     component_quantity: "数量",
+    component_interchange: "互",
+    component_start_period: "始期",
+    component_end_period: "終期",
     component_base: "基準",
     component_target: "比較先",
     component_select_target: "比較対象を選択してください",
@@ -1920,6 +1923,9 @@ var TRANSLATIONS = {
     component_position: "Position",
     component_name: "Part Name",
     component_quantity: "Qty",
+    component_interchange: "Int.",
+    component_start_period: "Start",
+    component_end_period: "End",
     component_base: "Base",
     component_target: "Target",
     component_select_target: "Select a comparison target",
@@ -2241,6 +2247,9 @@ var TRANSLATIONS = {
     component_position: "部位",
     component_name: "部件名",
     component_quantity: "数量",
+    component_interchange: "互",
+    component_start_period: "始期",
+    component_end_period: "终期",
     component_base: "基准",
     component_target: "比较对象",
     component_select_target: "请选择比较对象",
@@ -2286,7 +2295,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.72";
+var APP_VERSION       = "v1.1.73";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -5077,14 +5086,16 @@ async function loadAssemblyComponentsForCurrent() {
     return;
   }
   var html = "<table class='component-table'>";
-  html += "<tr><th>" + t("component_position") + "</th><th>" + t("component_name") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_quantity") + "</th></tr>";
+  html += "<tr><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th><th>" + t("component_quantity") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th></tr>";
   rows.forEach(function(row) {
     html += "<tr>";
-    html += "<td><div class='component-pn'>" + esc(row.component_position || "-") + "</div></td>";
-    html += "<td>" + esc(row.component_name || row.component_part_name || "-") + "<div class='component-sub'>" + esc(row.source_code || "") + "</div></td>";
     html += "<td><div class='component-pn'>" + esc(row.component_manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.component_manufacturer || "") + "</div></td>";
     html += "<td><div class='component-pn'>" + esc(row.component_genuine_part_number || "-") + "</div></td>";
+    html += "<td>" + esc(row.component_name || row.component_part_name || "-") + "<div class='component-sub'>" + esc(row.component_position || row.source_code || "") + "</div></td>";
     html += "<td>" + esc(row.quantity || "-") + "</td>";
+    html += "<td>" + esc(row.component_interchange_code || row.interchange_code || "-") + "</td>";
+    html += "<td>" + esc(row.effective_start || row.start_period || "-") + "</td>";
+    html += "<td>" + esc(row.effective_end || row.end_period || "-") + "</td>";
     html += "</tr>";
   });
   html += "</table>";
