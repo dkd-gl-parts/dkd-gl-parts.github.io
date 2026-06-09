@@ -2277,7 +2277,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.66";
+var APP_VERSION       = "v1.1.67";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4415,6 +4415,26 @@ function getFiltered() {
   });
 }
 
+async function fetchCategoryProducts(categoryFilter) {
+  if (!categoryFilter) return { data: [], error: null };
+
+  var fields = "*";
+  var byCode = await sb.from("core_product_search_view")
+    .select(fields)
+    .eq("category_code", categoryFilter)
+    .order("manufacturer_part_number", { ascending: true })
+    .limit(SEARCH_FETCH_LIMIT);
+
+  if (byCode.error) return byCode;
+  if ((byCode.data || []).length > 0) return byCode;
+
+  return await sb.from("core_product_search_view")
+    .select(fields)
+    .eq("category", categoryFilter)
+    .order("manufacturer_part_number", { ascending: true })
+    .limit(SEARCH_FETCH_LIMIT);
+}
+
 async function runProductSearch(options) {
   options = options || {};
   var q = document.getElementById("q").value.trim();
@@ -4439,12 +4459,14 @@ async function runProductSearch(options) {
   document.getElementById("count-bar").textContent = t("loading");
   list.innerHTML = "<div class='loading'>" + t("loading") + "</div>";
 
-  var r = await sb.rpc("search_core_products", {
-    search_text: q || null,
-    category_filter: categoryFilter,
-    require_sl: requireSl,
-    max_rows: SEARCH_FETCH_LIMIT
-  });
+  var r = (!q && categoryFilter && !requireSl)
+    ? await fetchCategoryProducts(categoryFilter)
+    : await sb.rpc("search_core_products", {
+        search_text: q || null,
+        category_filter: categoryFilter,
+        require_sl: requireSl,
+        max_rows: SEARCH_FETCH_LIMIT
+      });
   if (seq !== searchRequestSeq) return;
   if (r.error) {
     console.warn("search_core_products failed", r.error);
