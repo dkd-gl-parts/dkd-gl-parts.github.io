@@ -115,6 +115,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-search { flex: 1; min-width: 160px; border: 1px solid #ddd; border-radius: 6px; padding: 6px 8px; font-size: 12px; outline: none; }
 .component-search:focus { border-color: #4f8ef7; }
 .component-note { font-size: 11px; color: #888; line-height: 1.5; }
+.component-compat-help { margin: 0 0 10px; padding: 8px 10px; border: 1px solid #dbe7f8; border-radius: 6px; background: #f7fbff; color: #334155; font-size: 11px; line-height: 1.6; }
+.component-compat-help strong { color: #1a1a2e; font-weight: 700; }
 .component-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 12px; }
 .component-table th { background: #f5f7fa; color: #555; font-weight: 600; padding: 6px 8px; text-align: left; border-bottom: 2px solid #e0e0e0; }
 .component-table td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
@@ -726,6 +728,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <div class="component-context-sub" id="components-context-sub">-</div>
     </div>
     <div class="component-section-title">&#9881; <span data-i18n="component_section">構成部品</span></div>
+    <div class="component-compat-help" data-i18n="component_compat_help"></div>
     <div id="component-wrap"><div class="component-empty" data-i18n="loading">読み込み中...</div></div>
   </div>
 </div>
@@ -1592,6 +1595,7 @@ var TRANSLATIONS = {
     component_name: "部品名",
     component_quantity: "数量",
     component_interchange: "互",
+    component_compat_help: "<strong>\u4e92\u63db\u6027\u6b04\u306e\u898b\u65b9</strong> A=\u65b0\u65e7\u90e8\u54c1\u9593\u306b\u4e92\u63db\u6027\u3042\u308a / B=\u65e7\u90e8\u54c1\u306e\u66ff\u308f\u308a\u306b\u65b0\u90e8\u54c1\u3092\u4f7f\u7528\u53ef\uff08\u9006\u306f\u4e0d\u53ef\uff09 / C=\u65b0\u90e8\u54c1\u306e\u66ff\u308f\u308a\u306b\u65e7\u90e8\u54c1\u3092\u4f7f\u7528\u53ef\uff08\u9006\u306f\u4e0d\u53ef\uff09 / D=\u4e92\u63db\u6027\u306a\u3057 / X=\u4e92\u63db\u6027\u304c\u3042\u308b\u4ee3\u66ff\u90e8\u54c1\u3002A\u30fbB\u30fbX\u306e\u65e7\u54c1\u756a\u306f\u5728\u5eab\u304c\u7121\u304f\u306a\u308a\u6b21\u7b2c\u3001\u4f9b\u7d66\u7d42\u4e86\u3002",
     component_start_period: "始期",
     component_end_period: "終期",
     component_base: "基準",
@@ -1924,6 +1928,7 @@ var TRANSLATIONS = {
     component_name: "Part Name",
     component_quantity: "Qty",
     component_interchange: "Int.",
+    component_compat_help: "<strong>Interchange legend</strong> A=interchangeable both ways / B=new part can replace old, not the reverse / C=old part can replace new, not the reverse / D=not interchangeable / X=alternate interchangeable part. Old part numbers marked A, B, or X are supplied only while stock remains.",
     component_start_period: "Start",
     component_end_period: "End",
     component_base: "Base",
@@ -2248,6 +2253,7 @@ var TRANSLATIONS = {
     component_name: "部件名",
     component_quantity: "数量",
     component_interchange: "互",
+    component_compat_help: "<strong>互换栏说明</strong> A=新旧部件可互换 / B=新部件可替代旧部件，反向不可 / C=旧部件可替代新部件，反向不可 / D=不可互换 / X=表示有互换性的替代部件。A、B、X 的旧品号库存售完后停止供应。",
     component_start_period: "始期",
     component_end_period: "终期",
     component_base: "基准",
@@ -2295,7 +2301,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.75";
+var APP_VERSION       = "v1.1.76";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
