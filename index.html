@@ -222,16 +222,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .spec-chip strong { color: #1a5faa; margin-left: 4px; }
 .detail-summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 4px 0 10px; border-bottom: 1px solid #f0f0f0; margin-bottom: 6px; }
 .detail-category-name { font-size: 15px; font-weight: 700; color: #1a1a2e; line-height: 1.4; }
-.spec-inline-wrap { flex: 1; min-width: 300px; max-width: 560px; display: flex; justify-content: flex-end; }
-.spec-inline { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
-.spec-inline-title { flex: 0 0 64px; width: 64px; font-size: 12px; font-weight: 700; color: #555; white-space: nowrap; text-align: right; }
-.spec-inline .spec-grid { margin-top: 0; justify-content: flex-end; }
+.detail-main-grid { display: grid; grid-template-columns: minmax(360px, 1.05fr) minmax(300px, 0.95fr); gap: 14px; align-items: start; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 8px; }
+.detail-column { min-width: 0; }
+.detail-block-title { font-size: 12px; font-weight: 700; color: #555; margin: 0 0 6px; }
+.detail-vehicle-grid { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 0; border-top: 1px solid #f0f0f0; margin-bottom: 10px; }
+.detail-vehicle-label { color: #888; font-size: 12px; padding: 6px 4px; border-bottom: 1px solid #f0f0f0; }
+.detail-vehicle-value { color: #1a1a2e; font-size: 13px; font-weight: 500; padding: 6px 4px; border-bottom: 1px solid #f0f0f0; word-break: break-word; }
+.spec-inline-wrap { display: block; min-width: 0; max-width: none; }
+.spec-inline { display: flex; align-items: flex-start; justify-content: flex-start; gap: 8px; flex-wrap: wrap; border-top: 1px solid #f0f0f0; padding-top: 7px; }
+.spec-inline-title { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: #555; white-space: nowrap; }
+.spec-inline .spec-grid { margin-top: 0; justify-content: flex-start; }
 .spec-inline-empty { color: #aaa; font-size: 12px; }
 .ac-part-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-top: 1px solid #f0f0f0; margin-bottom: 8px; }
 .ac-part-cell { min-width: 0; border-bottom: 1px solid #f0f0f0; padding: 8px 10px 8px 4px; }
 .ac-part-label { font-size: 12px; color: #888; margin-bottom: 3px; }
 .ac-part-value { font-size: 13px; font-weight: 600; color: #1a1a2e; word-break: break-all; }
+.detail-main-grid .detail-table,
+.detail-main-grid .ac-part-grid { margin-bottom: 0; }
 @media(max-width:720px){
+  .detail-main-grid { grid-template-columns: 1fr; gap: 8px; }
   .detail-summary { flex-direction: column; gap: 6px; }
   .spec-inline-wrap { justify-content: flex-start; max-width: none; width: 100%; }
   .spec-inline { justify-content: flex-start; }
@@ -2277,7 +2286,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.67";
+var APP_VERSION       = "v1.1.68";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4632,7 +4641,6 @@ function renderPanelStatic() {
   var isAcProduct = (p.category_code || p.category || "") === "ac_compressor";
   // parts テーブルのフィールド定義
   var defs = [
-    ["f_manufacturer",p.manufacturer],
     ["f_vehicle_mfr", p.vehicle_manufacturer],
     ["f_body_type",   p.body_type],
     ["f_compatible",  p.compatible_car_models],
@@ -4643,13 +4651,14 @@ function renderPanelStatic() {
   defs.forEach(function(d) {
     var k = d[0], v = d[1];
     var text = (v != null && String(v) !== "None" && String(v) !== "") ? String(v) : "-";
-    tHtml += "<tr><td>" + t(k) + "</td><td>" + esc(text) + "</td></tr>";
+    tHtml += "<div class='detail-vehicle-label'>" + t(k) + "</div><div class='detail-vehicle-value'>" + esc(text) + "</div>";
   });
   var partHtml = "";
   if (isAcProduct) {
     [
       ["f_genuine_assy_pn", p.genuine_part_number],
       ["f_mfr_assy_pn", p.manufacturer_part_number],
+      ["f_manufacturer", p.manufacturer],
       ["f_genuine_body_pn", p.genuine_body_part_number],
       ["f_mfr_body_pn", p.manufacturer_body_part_number],
       ["f_genuine_clutch_pn", p.genuine_clutch_part_number],
@@ -4663,7 +4672,8 @@ function renderPanelStatic() {
     [
       ["f_genuine_pn",  p.genuine_part_number],
       ["f_genuine_pn2", p.genuine_part_number_2],
-      ["f_mfr_pn",      p.manufacturer_part_number]
+      ["f_mfr_pn",      p.manufacturer_part_number],
+      ["f_manufacturer",p.manufacturer]
     ].forEach(function(d) {
       var text = (d[1] != null && String(d[1]) !== "None" && String(d[1]) !== "") ? String(d[1]) : "-";
       partHtml += "<tr><td>" + t(d[0]) + "</td><td>" + esc(text) + "</td></tr>";
@@ -4681,9 +4691,10 @@ function renderPanelStatic() {
   toolHtml += "<button class='btn-sm-edit' id='btn-open-component-parallel'>&#8644; " + t("component_open_parallel") + "</button>";
   toolHtml += "</div>";
   document.getElementById("panel-body").innerHTML =
-    "<div class='detail-summary'><div id='product-spec-wrap' class='spec-inline-wrap'><div class='spec-inline'><span class='spec-inline-title'>" + t("spec_section") + "</span><span class='spec-inline-empty'>" + t("loading") + "</span></div></div></div>" +
-    partHtml +
-    "<table class='detail-table'>" + tHtml + "</table>" +
+    "<div class='detail-main-grid'>" +
+      "<div class='detail-column'><div class='detail-block-title'>" + esc(productCategoryLabel(p) || "-") + "</div>" + partHtml + "</div>" +
+      "<div class='detail-column'><div class='detail-vehicle-grid'>" + tHtml + "</div><div id='product-spec-wrap' class='spec-inline-wrap'><div class='spec-inline'><span class='spec-inline-title'>" + t("spec_section") + "</span><span class='spec-inline-empty'>" + t("loading") + "</span></div></div></div>" +
+    "</div>" +
     toolHtml +
     "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
     "<div id='kikan-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>" +
