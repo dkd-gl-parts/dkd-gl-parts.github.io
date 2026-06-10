@@ -117,6 +117,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-note { font-size: 11px; color: #888; line-height: 1.5; }
 .component-compat-help { margin: 0 0 10px; padding: 8px 10px; border: 1px solid #dbe7f8; border-radius: 6px; background: #f7fbff; color: #334155; font-size: 11px; line-height: 1.6; }
 .component-compat-help strong { color: #1a1a2e; font-weight: 700; }
+.component-add-panel { margin: 0 0 12px; padding: 12px; border: 1px solid #e5e9f2; border-radius: 8px; background: #fff; }
+.component-add-title { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-bottom: 10px; }
+.component-add-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.component-add-field label { display: block; font-size: 11px; color: #667085; margin-bottom: 4px; }
+.component-add-field input { width: 100%; border: 1px solid #d7dce5; border-radius: 6px; padding: 7px 8px; font-size: 12px; outline: none; background: #fff; }
+.component-add-field input:focus { border-color: #4f8ef7; }
+.component-add-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+@media(max-width:900px){ .component-add-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media(max-width:560px){ .component-add-grid { grid-template-columns: 1fr; } }
 .component-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 12px; }
 .component-table th { background: #f5f7fa; color: #555; font-weight: 600; padding: 6px 8px; text-align: left; border-bottom: 2px solid #e0e0e0; }
 .component-table td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
@@ -918,6 +927,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     </div>
     <div class="component-section-title"><span class="component-icon">&#x1F9E9;</span> <span data-i18n="component_section">構成部品</span></div>
     <div class="component-compat-help" data-i18n="component_compat_help"></div>
+    <div id="component-add-wrap"></div>
     <div id="component-wrap"><div class="component-empty" data-i18n="loading">読み込み中...</div></div>
   </div>
 </div>
@@ -2542,7 +2552,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.100";
+var APP_VERSION       = "v1.1.101";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -2550,6 +2560,7 @@ var productionRows = [];
 var productionFilteredRows = [];
 var productionFilter = "all";
 var currentProductionRow = null;
+var componentReturnScreen = "search";
 var productionInstructionRows = [];
 var productionInstructionMap = {};
 var productionDetailRequestSeq = 0;
@@ -3446,7 +3457,7 @@ async function openProductionComponents() {
   }
   if (row) {
     currentProduct = row;
-    enterComponentsScreen();
+    enterComponentsScreen("production-search");
   }
 }
 
@@ -5626,7 +5637,7 @@ function renderPanelStatic() {
   if (editCurrentBtn) editCurrentBtn.addEventListener("click", openCoreProductEditFromSearch);
   var componentBtn = document.getElementById("btn-open-components");
   var parallelBtn = document.getElementById("btn-open-component-parallel");
-  if (componentBtn) componentBtn.addEventListener("click", enterComponentsScreen);
+  if (componentBtn) componentBtn.addEventListener("click", function(){ enterComponentsScreen("search"); });
   if (parallelBtn) parallelBtn.addEventListener("click", enterComponentParallelScreen);
   loadProductSpecsForCurrent();
   loadSlParts(productLegacyPartId(p));
@@ -5970,14 +5981,20 @@ function selectedProductSub() {
   ].join(" / ");
 }
 
-function enterComponentsScreen() {
+function enterComponentsScreen(returnScreen) {
   if (!currentProduct) { alert(t("welcome_panel")); return; }
+  componentReturnScreen = returnScreen || "search";
   showScreen("components");
   updateAllHeaders();
+  var backBtn = document.getElementById("btn-back-components");
+  if (backBtn) {
+    backBtn.textContent = componentReturnScreen === "production-search" ? "← 製造部品検索" : t("btn_back_search");
+  }
   var title = document.getElementById("components-context-title");
   var sub = document.getElementById("components-context-sub");
   if (title) title.textContent = selectedProductTitle();
   if (sub) sub.textContent = selectedProductSub();
+  renderComponentAddPanel();
   loadAssemblyComponentsForCurrent();
 }
 
@@ -6005,6 +6022,84 @@ function bindComponentPanelActions() {
   if (mode) mode.onchange = function() {
     if (currentParallelTargetDkdShohinId) loadParallelDiffForCurrent(currentParallelTargetDkdShohinId);
   };
+}
+
+function renderComponentAddPanel() {
+  var wrap = document.getElementById("component-add-wrap");
+  if (!wrap) return;
+  if (!isAdmin()) {
+    wrap.innerHTML = "";
+    return;
+  }
+  var manufacturer = (currentProduct && currentProduct.manufacturer) || "";
+  var html = "<div class='component-add-panel'>";
+  html += "<div class='component-add-title'>構成部品を追加</div>";
+  html += "<div class='component-add-grid'>";
+  html += "<div class='component-add-field'><label>メーカー</label><input id='component-add-mfr' type='text' value='" + esc(manufacturer) + "'></div>";
+  html += "<div class='component-add-field'><label>メーカー品番 *</label><input id='component-add-mfr-pn' type='text'></div>";
+  html += "<div class='component-add-field'><label>純正品番</label><input id='component-add-genuine-pn' type='text'></div>";
+  html += "<div class='component-add-field'><label>部品名</label><input id='component-add-name' type='text'></div>";
+  html += "<div class='component-add-field'><label>図番/位置</label><input id='component-add-position' type='text'></div>";
+  html += "<div class='component-add-field'><label>数量</label><input id='component-add-qty' type='text' value='1'></div>";
+  html += "<div class='component-add-field'><label>互</label><input id='component-add-interchange' type='text'></div>";
+  html += "<div class='component-add-field'><label>始期</label><input id='component-add-start' type='text'></div>";
+  html += "<div class='component-add-field'><label>終期</label><input id='component-add-end' type='text'></div>";
+  html += "</div>";
+  html += "<div class='component-add-actions'><button class='btn-primary' id='btn-component-add' type='button'>追加</button></div>";
+  html += "</div>";
+  wrap.innerHTML = html;
+  var addBtn = document.getElementById("btn-component-add");
+  if (addBtn) addBtn.addEventListener("click", addAssemblyComponentForCurrent);
+}
+
+function componentAddValue(id) {
+  var el = document.getElementById(id);
+  return el ? el.value.trim() : "";
+}
+
+function clearComponentAddForm() {
+  ["component-add-mfr-pn","component-add-genuine-pn","component-add-name","component-add-position","component-add-interchange","component-add-start","component-add-end"].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+  var qty = document.getElementById("component-add-qty");
+  if (qty) qty.value = "1";
+}
+
+async function addAssemblyComponentForCurrent() {
+  if (!currentProduct) return;
+  if (!isAdmin()) { alert(t("err_perm")); return; }
+  var dkdId = await resolveCurrentCoreDkdShohinId();
+  if (!dkdId) { alert("対象商品のDKD商品IDを確認できません。"); return; }
+  var componentMfr = componentAddValue("component-add-mfr") || (currentProduct.manufacturer || "UNKNOWN");
+  var componentMfrPn = componentAddValue("component-add-mfr-pn");
+  if (!componentMfrPn) { alert("構成部品のメーカー品番を入力してください。"); return; }
+  var payload = {
+    target_dkd_shohin_id: dkdId,
+    target_manufacturer: currentProduct.manufacturer || null,
+    target_manufacturer_part_number: currentProduct.manufacturer_part_number || null,
+    target_genuine_part_number: currentProduct.genuine_part_number || null,
+    component_manufacturer: componentMfr,
+    component_manufacturer_part_number: componentMfrPn,
+    component_genuine_part_number: componentAddValue("component-add-genuine-pn") || null,
+    component_part_name: componentAddValue("component-add-name") || null,
+    component_position: componentAddValue("component-add-position") || null,
+    component_quantity: componentAddValue("component-add-qty") || "1",
+    component_interchange_code: componentAddValue("component-add-interchange") || null,
+    component_effective_start: componentAddValue("component-add-start") || null,
+    component_effective_end: componentAddValue("component-add-end") || null
+  };
+  var addBtn = document.getElementById("btn-component-add");
+  if (addBtn) { addBtn.disabled = true; addBtn.textContent = "追加中..."; }
+  var r = await sb.rpc("add_manual_assembly_component", payload);
+  if (addBtn) { addBtn.disabled = false; addBtn.textContent = "追加"; }
+  if (r.error) {
+    alert("構成部品の追加に失敗しました: " + r.error.message);
+    return;
+  }
+  await writeLog("insert", "assembly_component_usages", r.data || dkdId, componentMfrPn, null, payload);
+  clearComponentAddForm();
+  await loadAssemblyComponentsForCurrent();
 }
 
 async function loadAssemblyComponentsForCurrent() {
@@ -6811,7 +6906,14 @@ document.getElementById("login-password").addEventListener("keydown", function(e
 ["btn-logout-menu","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
 document.getElementById("btn-back-search").addEventListener("click", function(){ closePanel(); showScreen("menu"); });
 document.getElementById("btn-back-production-search").addEventListener("click", function(){ showScreen("menu"); });
-document.getElementById("btn-back-components").addEventListener("click", function(){ showScreen("search"); });
+document.getElementById("btn-back-components").addEventListener("click", async function(){
+  if (componentReturnScreen === "production-search") {
+    showScreen("production-search");
+    if (currentProductionRow) await renderProductionDetail(currentProductionRow);
+    return;
+  }
+  showScreen("search");
+});
 document.getElementById("btn-back-component-parallel").addEventListener("click", function(){ showScreen("search"); });
 document.getElementById("btn-back-users").addEventListener("click",  function(){ showScreen("menu"); });
 document.getElementById("btn-back-parts-mgmt").addEventListener("click", function(){ showScreen("menu"); });
