@@ -1807,7 +1807,7 @@ var TRANSLATIONS = {
     component_candidate_hint: "比較対象をクリックすると構成部品の比較結果を表示します",
     component_candidate_ph: "比較候補を品番で絞り込み",
     component_load_candidates: "候補を表示",
-    component_position: "部位",
+    component_position: "図番/位置",
     component_name: "部品名",
     component_quantity: "数量",
     component_interchange: "互",
@@ -2552,7 +2552,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.101";
+var APP_VERSION       = "v1.1.102";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -6123,12 +6123,13 @@ async function loadAssemblyComponentsForCurrent() {
     return;
   }
   var html = "<table class='component-table'>";
-  html += "<tr><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th><th>" + t("component_quantity") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th></tr>";
+  html += "<tr><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th><th>" + t("component_position") + "</th><th>" + t("component_quantity") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th></tr>";
   rows.forEach(function(row) {
     html += "<tr>";
     html += "<td><div class='component-pn'>" + esc(row.component_manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.component_manufacturer || "") + "</div></td>";
     html += "<td><div class='component-pn'>" + esc(row.component_genuine_part_number || "-") + "</div></td>";
-    html += "<td>" + esc(row.component_name || row.component_part_name || "-") + "<div class='component-sub'>" + esc(row.component_position || row.source_code || "") + "</div></td>";
+    html += "<td>" + esc(row.component_name || row.component_part_name || "-") + "</td>";
+    html += "<td>" + esc(row.component_position || row.source_code || "-") + "</td>";
     html += "<td>" + esc(row.quantity || "-") + "</td>";
     html += "<td>" + esc(formatComponentInterchange(row)) + "</td>";
     html += "<td>" + esc(row.effective_start || row.start_period || "-") + "</td>";
