@@ -514,6 +514,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-kv div:last-child { font-weight: 600; color: #111a33; }
 .production-wide { grid-column: 1 / -1; }
 .production-pre { white-space: pre-wrap; font-size: 12px; line-height: 1.55; color: #1a1a2e; background: #fafbfc; border: 1px solid #edf0f4; border-radius: 8px; padding: 10px; }
+.production-mini-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.production-mini-table th { text-align: left; color: #6b7280; font-weight: 600; border-bottom: 1px solid #edf0f4; padding: 6px 4px; }
+.production-mini-table td { border-bottom: 1px solid #f4f5f7; padding: 7px 4px; vertical-align: top; word-break: break-word; }
+.production-form-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+.production-form-row input { border: 1px solid #d7dce5; border-radius: 6px; padding: 7px 8px; font-size: 13px; min-width: 0; }
+.production-form-row input[type="number"] { width: 92px; }
+.production-form-row input[type="text"] { flex: 1; min-width: 180px; }
+.production-help { color: #8a93a3; font-size: 11px; line-height: 1.5; margin-top: 6px; }
+.production-action-secondary { background: #f8fafc; color: #344054; border-color: #d7dce5; }
+.production-action-secondary:hover { background: #eef2f7; }
 @media (max-width: 767px) {
   .production-body { grid-template-columns: 1fr; overflow-y: auto; }
   .production-left { border-right: 0; max-height: none; }
@@ -1468,7 +1478,7 @@ var TRANSLATIONS = {
     mi_search_title: "販売商品検索",
     mi_search_desc: "販売商品を品番・車種・メーカーで検索。画像の閲覧ができます。",
     mi_production_title: "製造部品検索",
-    mi_production_desc: "BEST100の優先順位をもとに、COREと構成部品から製造候補を確認します。",
+    mi_production_desc: "基幹商品マスタを検索し、製造指示・CORE・構成部品を確認します。",
     mi_users_title: "ユーザー管理",
     mi_users_desc: "ユーザーの表示名とロール（権限）を設定します。",
     mi_data_title: "データ管理",
@@ -1495,7 +1505,7 @@ var TRANSLATIONS = {
     production_search_ph: "DKD商品ID・メーカー品番・純正品番で検索",
     production_filter_ready: "構成部品あり",
     production_filter_need: "構成部品なし",
-    production_select_hint: "製造候補を選択してください",
+    production_select_hint: "基幹商品を選択してください",
     production_status_ready: "構成部品あり",
     production_status_need: "構成部品なし",
     production_open_sales: "販売商品検索で開く",
@@ -1818,7 +1828,7 @@ var TRANSLATIONS = {
     mi_search_title: "Sales Product Search",
     mi_search_desc: "Search sales products by part number, vehicle type or manufacturer. View images.",
     mi_production_title: "Production Parts Search",
-    mi_production_desc: "Review production candidates from BEST100 priority, core stock and component data.",
+    mi_production_desc: "Search master products and review instructions, core stock, and components.",
     mi_users_title: "User Management",
     mi_users_desc: "Set user display names and access roles.",
     mi_data_title: "Data Management",
@@ -1845,7 +1855,7 @@ var TRANSLATIONS = {
     production_search_ph: "Search by DKD product ID, maker part or genuine part",
     production_filter_ready: "Has components",
     production_filter_need: "Needs components",
-    production_select_hint: "Select a production candidate",
+    production_select_hint: "Select a master product",
     production_status_ready: "Has components",
     production_status_need: "Needs components",
     production_open_sales: "Open in sales search",
@@ -2168,7 +2178,7 @@ var TRANSLATIONS = {
     mi_search_title: "销售商品搜索",
     mi_search_desc: "按零件编号、车型或制造商搜索销售商品。可查看图片。",
     mi_production_title: "生产零件搜索",
-    mi_production_desc: "根据BEST100优先级、CORE库存和构成零件确认生产候选。",
+    mi_production_desc: "搜索基干商品主档，并确认生产指示、CORE和构成零件。",
     mi_users_title: "用户管理",
     mi_users_desc: "设置用户的显示名称和访问权限角色。",
     mi_data_title: "数据管理",
@@ -2195,7 +2205,7 @@ var TRANSLATIONS = {
     production_search_ph: "按DKD商品ID、厂家品番或纯正品番搜索",
     production_filter_ready: "有构成零件",
     production_filter_need: "无构成零件",
-    production_select_hint: "请选择生产候选",
+    production_select_hint: "请选择基干商品",
     production_status_ready: "有构成零件",
     production_status_need: "无构成零件",
     production_open_sales: "在销售搜索中打开",
@@ -2528,7 +2538,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.97";
+var APP_VERSION       = "v1.1.98";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -2536,6 +2546,9 @@ var productionRows = [];
 var productionFilteredRows = [];
 var productionFilter = "all";
 var currentProductionRow = null;
+var productionInstructionRows = [];
+var productionInstructionMap = {};
+var productionDetailRequestSeq = 0;
 var SEARCH_FETCH_LIMIT = 200;
 var searchRequestSeq = 0;
 var rakutenLastItems = [];
@@ -3018,9 +3031,9 @@ async function enterSearch() {
 
 async function enterProductionSearch() {
   showScreen("production-search");
-  if (!productionLoaded) await loadProductionInstructions();
+  if (!productionLoaded) await loadProductionProducts();
   renderProductionList();
-  renderProductionDetail(currentProductionRow);
+  await renderProductionDetail(currentProductionRow);
 }
 
 function productionStatusClass(row) {
@@ -3040,27 +3053,84 @@ function productionCategoryLabel(row) {
 }
 
 async function loadProductionInstructions() {
-  var countEl = document.getElementById("production-count");
-  if (countEl) countEl.textContent = t("loading");
+  if (productionInstructionRows.length) return;
   var r = await sb.from("production_instruction_candidates")
     .select("*")
     .order("priority_rank", { ascending: true })
     .order("category_code", { ascending: true })
-    .limit(300);
+    .limit(500);
+  productionInstructionRows = r.data || [];
+  productionInstructionMap = {};
+  productionInstructionRows.forEach(function(row) {
+    if (row.dkd_shohin_id != null) productionInstructionMap[String(row.dkd_shohin_id)] = row;
+  });
+}
+
+function productionInstructionFor(row) {
+  if (!row || row.dkd_shohin_id == null) return null;
+  return productionInstructionMap[String(row.dkd_shohin_id)] || null;
+}
+
+function enrichProductionProduct(row) {
+  var inst = productionInstructionFor(row);
+  row.production_instruction = inst;
+  row.priority_rank = inst ? inst.priority_rank : null;
+  row.core_stock_qty = inst && inst.core_stock_qty != null ? inst.core_stock_qty : parseInt(row.stock || "0", 10) || 0;
+  row.core_part_number = inst ? inst.core_part_number : (row.genuine_part_number || row.manufacturer_part_number || "");
+  row.core_pallet_summary = inst ? inst.core_pallet_summary : "";
+  row.component_count = inst && inst.component_count != null ? inst.component_count : (componentUsageCountMap[String(row.dkd_shohin_id)] || 0);
+  row.component_summary = inst ? inst.component_summary : "";
+  row.readiness_status = row.component_count > 0 ? t("production_status_ready") : t("production_status_need");
+  return row;
+}
+
+async function loadProductionProducts() {
+  var countEl = document.getElementById("production-count");
+  if (countEl) countEl.textContent = t("loading");
+  await loadProductionInstructions();
+  var qEl = document.getElementById("production-q");
+  var q = qEl ? qEl.value.trim() : "";
+  var r;
+  if (q) {
+    r = await sb.rpc("search_core_products", {
+      search_text: q,
+      category_filter: null,
+      require_sl: false,
+      max_rows: SEARCH_FETCH_LIMIT
+    });
+  } else {
+    var ids = productionInstructionRows.map(function(x){ return x.dkd_shohin_id; }).filter(Boolean);
+    r = ids.length
+      ? await sb.from("core_product_search_view").select("*").in("dkd_shohin_id", ids).limit(500)
+      : await sb.from("core_product_search_view").select("*").order("updated_at", { ascending: false }).limit(100);
+  }
   if (r.error) {
     productionRows = [];
     productionLoaded = false;
-    if (countEl) countEl.textContent = "製造指示データが未導入です: " + r.error.message;
+    if (countEl) countEl.textContent = "基幹商品マスタを取得できません: " + r.error.message;
     renderProductionDetail(null);
     return;
   }
   productionRows = r.data || [];
+  await loadComponentUsageCounts(productionRows);
+  productionRows = productionRows.map(enrichProductionProduct);
+  productionRows.sort(function(a,b) {
+    var ai = productionInstructionFor(a), bi = productionInstructionFor(b);
+    var ar = ai ? ai.priority_rank : 999999;
+    var br = bi ? bi.priority_rank : 999999;
+    if (ar !== br) return ar - br;
+    return String(a.manufacturer_part_number || a.genuine_part_number || "").localeCompare(String(b.manufacturer_part_number || b.genuine_part_number || ""));
+  });
   productionLoaded = true;
   if (!currentProductionRow && productionRows.length) currentProductionRow = productionRows[0];
+  if (currentProductionRow) {
+    var stillExists = productionRows.some(function(row){ return String(row.dkd_shohin_id) === String(currentProductionRow.dkd_shohin_id); });
+    if (!stillExists) currentProductionRow = productionRows[0] || null;
+  }
 }
 
 function productionMatchesQuery(row, q) {
-  if (!q) return true;
+  if (q) return true;
   var hay = [
     row.dkd_shohin_id,
     row.genuine_part_number,
@@ -3075,8 +3145,9 @@ function productionMatchesQuery(row, q) {
 }
 
 function productionMatchesFilter(row) {
-  if (productionFilter === "ready") return (row.component_count || 0) > 0;
-  if (productionFilter === "need") return (row.component_count || 0) <= 0;
+  var componentCount = componentUsageCountMap[String(row.dkd_shohin_id)] || row.component_count || 0;
+  if (productionFilter === "ready") return componentCount > 0;
+  if (productionFilter === "need") return componentCount <= 0;
   if (productionFilter === "starter" || productionFilter === "alternator") return row.category_code === productionFilter;
   return true;
 }
@@ -3090,9 +3161,9 @@ function renderProductionList() {
   productionFilteredRows = productionRows.filter(function(row) {
     return productionMatchesFilter(row) && productionMatchesQuery(row, q);
   });
-  if (countEl) countEl.textContent = productionFilteredRows.length + " 件表示 / 全 " + productionRows.length + " 件";
+  if (countEl) countEl.textContent = productionFilteredRows.length + " 件表示 / 基幹商品マスタ " + productionRows.length + " 件";
   if (!productionRows.length) {
-    list.innerHTML = "<div class='loading'>製造指示データがありません。SQLを適用してください。</div>";
+    list.innerHTML = "<div class='loading'>基幹商品マスタを検索してください。</div>";
     return;
   }
   if (!productionFilteredRows.length) {
@@ -3100,17 +3171,18 @@ function renderProductionList() {
     return;
   }
   list.innerHTML = productionFilteredRows.map(function(row, i) {
-    var selected = currentProductionRow && currentProductionRow.id === row.id ? " selected" : "";
+    var selected = currentProductionRow && String(currentProductionRow.dkd_shohin_id) === String(row.dkd_shohin_id) ? " selected" : "";
     var cls = productionStatusClass(row);
+    var inst = productionInstructionFor(row);
     var title = row.manufacturer_part_number || row.genuine_part_number || row.daiko_part_number || ("DKD " + row.dkd_shohin_id);
     var meta = [
       "DKD " + (row.dkd_shohin_id || "-"),
       row.manufacturer || "-",
       productionCategoryLabel(row),
-      "CORE " + (row.core_stock_qty || 0)
+      "CORE " + (row.core_stock_qty || row.stock || 0)
     ].join(" / ");
     return "<div class='production-card" + selected + "' data-production-index='" + i + "'>" +
-      "<div class='production-card-top'><div class='production-rank'>#" + esc(row.priority_rank || "-") + "</div><div class='production-status " + cls + "'>" + esc(productionStatusLabel(row)) + "</div></div>" +
+      "<div class='production-card-top'><div class='production-rank'>" + (inst ? "#" + esc(inst.priority_rank || "-") : "基幹") + "</div><div class='production-status " + cls + "'>" + esc(productionStatusLabel(row)) + "</div></div>" +
       "<div class='production-number'>" + esc(title) + "</div>" +
       "<div class='production-meta'>" + esc(meta) + "</div>" +
       "<div class='production-meta'>" + esc(row.genuine_part_number || "-") + " / " + esc(row.daiko_part_number || "-") + "</div>" +
@@ -3122,37 +3194,65 @@ function productionKv(label, value) {
   return "<div class='production-kv'><div>" + esc(label) + "</div><div>" + esc(value || "-") + "</div></div>";
 }
 
-function renderProductionDetail(row) {
+function formatDateTime(value) {
+  return value ? new Date(value).toLocaleString("ja-JP") : "-";
+}
+
+async function renderProductionDetail(row) {
   var el = document.getElementById("production-detail");
   if (!el) return;
   if (!row) {
     el.innerHTML = "<div class='production-detail-empty'><div style='font-size:34px'>&#x1F3ED;</div><div>" + t("production_select_hint") + "</div></div>";
     return;
   }
+  var seq = ++productionDetailRequestSeq;
+  row = enrichProductionProduct(row);
+  var inst = productionInstructionFor(row);
+  var dkdId = row.dkd_shohin_id;
+  var detail = await loadProductionDetailData(row);
+  if (seq !== productionDetailRequestSeq) return;
   var title = row.manufacturer_part_number || row.genuine_part_number || row.daiko_part_number || ("DKD " + row.dkd_shohin_id);
   var html = "";
   html += "<div class='production-detail-head'>";
-  html += "<div><div class='production-detail-title'>#" + esc(row.priority_rank || "-") + " " + esc(title) + "</div>";
+  html += "<div><div class='production-detail-title'>" + (inst ? "#" + esc(inst.priority_rank || "-") + " " : "") + esc(title) + "</div>";
   html += "<div class='production-detail-sub'>" + esc(productionCategoryLabel(row)) + " / DKD " + esc(row.dkd_shohin_id || "-") + " / " + esc(row.manufacturer || "-") + "</div></div>";
   html += "<div class='production-actions'>";
   html += "<button class='btn-sm-edit' id='production-open-sales'>" + esc(t("production_open_sales")) + "</button>";
   html += "<button class='btn-sm-edit btn-component-action' id='production-open-components'><span class='component-icon'>&#x1F9E9;</span> " + esc(t("component_section")) + "</button>";
+  if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-edit-core'>品番修正</button>";
+  if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-add-image'>画像登録</button>";
   html += "</div></div>";
   html += "<div class='production-grid'>";
   html += "<section class='production-section'><h3>" + esc(t("production_product_section")) + "</h3>";
   html += productionKv("DKD商品ID", row.dkd_shohin_id);
   html += productionKv("メーカー品番", row.manufacturer_part_number);
   html += productionKv("純正品番", row.genuine_part_number);
+  html += productionKv("純正品番2", row.genuine_part_number_2);
   html += productionKv("メーカー", row.manufacturer);
   html += productionKv("大光品番", row.daiko_part_number);
-  html += productionKv("販売価格", row.sales_price_jpy ? Number(row.sales_price_jpy).toLocaleString() + " 円" : "-");
+  html += productionKv("販売価格", inst && inst.sales_price_jpy ? Number(inst.sales_price_jpy).toLocaleString() + " 円" : (row.price_jpy || "-"));
+  html += "</section>";
+  html += "<section class='production-section'><h3>製造指示リスト</h3>";
+  if (inst) {
+    html += productionKv("BEST100順位", "#" + (inst.priority_rank || "-"));
+    html += productionKv("元データ", [inst.source_year, inst.source_sheet].filter(Boolean).join(" / "));
+    html += productionKv("DKS商品CD", inst.dks_shohin_cd);
+    html += productionKv("統合元件数", inst.merged_source_count || 1);
+  } else {
+    html += "<div class='production-help'>この商品は現在の製造指示リストにはありません。基幹商品マスタ上の商品として操作できます。</div>";
+  }
   html += "</section>";
   html += "<section class='production-section'><h3>" + esc(t("production_core_section")) + "</h3>";
-  html += productionKv("CORE在庫数", row.core_stock_qty || 0);
+  html += productionKv("CORE在庫数", row.core_stock_qty || row.stock || 0);
   html += productionKv("CORE品番", row.core_part_number);
   html += productionKv("パレット", row.core_pallet_summary);
   html += productionKv("状態", productionStatusLabel(row));
-  html += productionKv("統合元件数", row.merged_source_count || 1);
+  html += productionKv("引き落とし記録", detail.withdrawalTotal ? detail.withdrawalTotal + " 個" : "-");
+  html += "<div class='production-form-row'><input id='production-withdraw-qty' type='number' min='1' step='1' placeholder='数量'><input id='production-withdraw-reason' type='text' placeholder='製造指示No・理由など'><button class='btn-sm-edit' id='production-withdraw-btn'>CORE引き落とし記録</button></div>";
+  html += "<div class='production-help'>在庫元データは直接減算せず、製造引当の履歴として記録します。</div>";
+  html += "</section>";
+  html += "<section class='production-section'><h3>COREリスト</h3>";
+  html += renderProductionCoreSources(detail.coreSources);
   html += "</section>";
   html += "<section class='production-section production-wide'><h3>" + esc(t("production_vehicle_section")) + "</h3>";
   html += productionKv("車両メーカー", row.vehicle_manufacturer);
@@ -3160,14 +3260,20 @@ function renderProductionDetail(row) {
   html += productionKv("型式", row.model);
   html += "</section>";
   html += "<section class='production-section production-wide'><h3>" + esc(t("production_component_section")) + "</h3>";
-  html += productionKv("構成部品数", row.component_count || 0);
-  html += "<div class='production-pre'>" + esc(row.component_summary || "構成部品未登録") + "</div>";
+  html += productionKv("構成部品数", detail.components.length || row.component_count || 0);
+  html += renderProductionComponents(detail.components, row.component_summary);
   html += "</section>";
-  if (row.alternate_manufacturer_part_number || row.alternate_dkd_shohin_id || row.merged_sources) {
+  html += "<section class='production-section production-wide'><h3>CORE引き落とし履歴</h3>";
+  html += renderProductionWithdrawals(detail.withdrawals);
+  html += "</section>";
+  if ((inst && (inst.alternate_manufacturer_part_number || inst.alternate_dkd_shohin_id || inst.merged_sources)) || row.notes_jp) {
     html += "<section class='production-section production-wide'><h3>" + esc(t("production_source_section")) + "</h3>";
-    html += productionKv("代替DKD商品ID", row.alternate_dkd_shohin_id);
-    html += productionKv("代替メーカー品番", row.alternate_manufacturer_part_number);
-    html += "<div class='production-pre'>" + esc(row.merged_sources || "-") + "</div>";
+    if (inst) {
+      html += productionKv("代替DKD商品ID", inst.alternate_dkd_shohin_id);
+      html += productionKv("代替メーカー品番", inst.alternate_manufacturer_part_number);
+      html += "<div class='production-pre'>" + esc(inst.merged_sources || "-") + "</div>";
+    }
+    if (row.notes_jp) html += "<div class='production-pre'>" + esc(row.notes_jp) + "</div>";
     html += "</section>";
   }
   html += "</div>";
@@ -3176,6 +3282,68 @@ function renderProductionDetail(row) {
   if (salesBtn) salesBtn.addEventListener("click", openProductionSalesProduct);
   var compBtn = document.getElementById("production-open-components");
   if (compBtn) compBtn.addEventListener("click", openProductionComponents);
+  var editBtn = document.getElementById("production-edit-core");
+  if (editBtn) editBtn.addEventListener("click", openProductionCoreEdit);
+  var imgBtn = document.getElementById("production-add-image");
+  if (imgBtn) imgBtn.addEventListener("click", openProductionImageUpload);
+  var withdrawBtn = document.getElementById("production-withdraw-btn");
+  if (withdrawBtn) withdrawBtn.addEventListener("click", recordProductionCoreWithdrawal);
+  el.querySelectorAll("[data-core-source-edit]").forEach(function(btn) {
+    btn.addEventListener("click", function() { editProductionCoreSourceNote(btn.dataset.coreSourceEdit); });
+  });
+}
+
+async function loadProductionDetailData(row) {
+  var dkdId = row && row.dkd_shohin_id;
+  var result = { coreSources: [], components: [], withdrawals: [], withdrawalTotal: 0 };
+  if (!dkdId) return result;
+  var sourceR = await sb.from("core_product_sources")
+    .select("id, source_table, source_record_key, source_link_type, is_catalog_evidence, note, created_at")
+    .eq("dkd_shohin_id", dkdId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  result.coreSources = sourceR.data || [];
+  var compR = await sb.rpc("get_assembly_components", { target_dkd_shohin_id: dkdId });
+  result.components = compR.data || [];
+  var wR = await sb.from("production_core_withdrawals")
+    .select("id, quantity, reason, source_note, created_at")
+    .eq("dkd_shohin_id", dkdId)
+    .order("created_at", { ascending: false })
+    .limit(30);
+  result.withdrawals = wR.data || [];
+  result.withdrawalTotal = result.withdrawals.reduce(function(sum, row){ return sum + (parseInt(row.quantity || 0, 10) || 0); }, 0);
+  return result;
+}
+
+function renderProductionCoreSources(rows) {
+  if (!rows || !rows.length) return "<div class='production-help'>COREリストの紐づけがありません。</div>";
+  var html = "<table class='production-mini-table'><tr><th>元</th><th>区分</th><th>メモ</th>" + (isAdmin() ? "<th></th>" : "") + "</tr>";
+  rows.forEach(function(row) {
+    html += "<tr><td>" + esc(row.source_record_key || row.source_table || "-") + "</td><td>" + esc(row.source_link_type || "-") + "</td><td>" + esc(row.note || (row.is_catalog_evidence ? "catalog" : "-")) + "</td>";
+    if (isAdmin()) html += "<td><button class='btn-sm-edit production-action-secondary' data-core-source-edit='" + esc(String(row.id)) + "'>編集</button></td>";
+    html += "</tr>";
+  });
+  return html + "</table>";
+}
+
+function renderProductionComponents(rows, fallbackSummary) {
+  if (rows && rows.length) {
+    var html = "<table class='production-mini-table'><tr><th>メーカー品番</th><th>純正品番</th><th>部品名</th><th>数</th></tr>";
+    rows.forEach(function(row) {
+      html += "<tr><td>" + esc(row.component_manufacturer_part_number || "-") + "</td><td>" + esc(row.component_genuine_part_number || "-") + "</td><td>" + esc(row.component_name || row.component_part_name || "-") + "</td><td>" + esc(row.quantity || "-") + "</td></tr>";
+    });
+    return html + "</table>";
+  }
+  return "<div class='production-pre'>" + esc(fallbackSummary || "構成部品未登録") + "</div>";
+}
+
+function renderProductionWithdrawals(rows) {
+  if (!rows || !rows.length) return "<div class='production-help'>まだCORE引き落とし記録はありません。</div>";
+  var html = "<table class='production-mini-table'><tr><th>日時</th><th>数</th><th>理由</th></tr>";
+  rows.forEach(function(row) {
+    html += "<tr><td>" + esc(formatDateTime(row.created_at)) + "</td><td>" + esc(row.quantity || "-") + "</td><td>" + esc(row.reason || row.source_note || "-") + "</td></tr>";
+  });
+  return html + "</table>";
 }
 
 async function openProductionSalesProduct() {
@@ -3198,6 +3366,55 @@ async function openProductionComponents() {
     currentProduct = row;
     enterComponentsScreen();
   }
+}
+
+async function openProductionCoreEdit() {
+  if (!currentProductionRow) return;
+  await openCoreProductForm("edit", currentProductionRow);
+}
+
+async function openProductionImageUpload() {
+  if (!currentProductionRow) return;
+  currentProduct = currentProductionRow;
+  await loadSlParts(productLegacyPartId(currentProductionRow));
+  var input = document.getElementById("upload-input");
+  if (input) input.click();
+}
+
+async function recordProductionCoreWithdrawal() {
+  if (!currentProductionRow || !currentProductionRow.dkd_shohin_id) return;
+  if (!canEdit()) { alert(t("err_perm")); return; }
+  var qtyEl = document.getElementById("production-withdraw-qty");
+  var reasonEl = document.getElementById("production-withdraw-reason");
+  var qty = qtyEl ? parseInt(qtyEl.value, 10) : 0;
+  var reason = reasonEl ? reasonEl.value.trim() : "";
+  if (!qty || qty <= 0) { alert("引き落とし数量を入力してください"); return; }
+  var payload = {
+    dkd_shohin_id: currentProductionRow.dkd_shohin_id,
+    quantity: qty,
+    reason: reason || null,
+    source_note: "D-CATS production screen",
+    withdrawn_by: currentUser ? currentUser.id : null
+  };
+  var r = await sb.from("production_core_withdrawals").insert(payload);
+  if (r.error) { alert("CORE引き落とし記録に失敗しました: " + r.error.message); return; }
+  await writeLog("insert", "production_core_withdrawals", currentProductionRow.dkd_shohin_id, "CORE -" + qty, null, payload);
+  if (qtyEl) qtyEl.value = "";
+  if (reasonEl) reasonEl.value = "";
+  await renderProductionDetail(currentProductionRow);
+}
+
+async function editProductionCoreSourceNote(sourceId) {
+  if (!isAdmin()) { alert(t("err_perm")); return; }
+  var newNote = prompt("COREリストのメモを入力してください");
+  if (newNote === null) return;
+  var before = null;
+  var beforeR = await sb.from("core_product_sources").select("*").eq("id", sourceId).maybeSingle();
+  if (!beforeR.error) before = beforeR.data || null;
+  var r = await sb.from("core_product_sources").update({ note: newNote.trim() || null }).eq("id", sourceId);
+  if (r.error) { alert("COREリストの更新に失敗しました: " + r.error.message); return; }
+  await writeLog("update", "core_product_sources", sourceId, "CORE source note", before, { note: newNote.trim() || null });
+  await renderProductionDetail(currentProductionRow);
 }
 
 // =============================================
@@ -6541,13 +6758,28 @@ document.querySelectorAll(".chip").forEach(function(chip){
   });
 });
 document.getElementById("list").addEventListener("click", function(e){ var c=e.target.closest(".card"); if(c) openPanel(parseInt(c.dataset.id,10)); });
-document.getElementById("production-search-btn").addEventListener("click", renderProductionList);
-document.getElementById("production-q").addEventListener("keydown", function(e){ if(e.key==="Enter") renderProductionList(); });
-document.getElementById("production-clear-btn").addEventListener("click", function(){
+document.getElementById("production-search-btn").addEventListener("click", async function(){
+  productionLoaded = false;
+  await loadProductionProducts();
+  renderProductionList();
+  await renderProductionDetail(currentProductionRow);
+});
+document.getElementById("production-q").addEventListener("keydown", async function(e){
+  if(e.key==="Enter") {
+    productionLoaded = false;
+    await loadProductionProducts();
+    renderProductionList();
+    await renderProductionDetail(currentProductionRow);
+  }
+});
+document.getElementById("production-clear-btn").addEventListener("click", async function(){
   document.getElementById("production-q").value = "";
   productionFilter = "all";
   document.querySelectorAll("[data-production-filter]").forEach(function(c){ c.classList.toggle("active", c.dataset.productionFilter === "all"); });
+  productionLoaded = false;
+  await loadProductionProducts();
   renderProductionList();
+  await renderProductionDetail(currentProductionRow);
 });
 document.querySelectorAll("[data-production-filter]").forEach(function(chip) {
   chip.addEventListener("click", function() {
@@ -6556,12 +6788,12 @@ document.querySelectorAll("[data-production-filter]").forEach(function(chip) {
     renderProductionList();
   });
 });
-document.getElementById("production-list").addEventListener("click", function(e) {
+document.getElementById("production-list").addEventListener("click", async function(e) {
   var card = e.target.closest("[data-production-index]");
   if (!card) return;
   currentProductionRow = productionFilteredRows[parseInt(card.dataset.productionIndex, 10)] || null;
   renderProductionList();
-  renderProductionDetail(currentProductionRow);
+  await renderProductionDetail(currentProductionRow);
 });
 document.getElementById("overlay").addEventListener("click", closePanel);
 document.getElementById("panel-close-btn").addEventListener("click", closePanel);
