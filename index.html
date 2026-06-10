@@ -2309,7 +2309,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.85";
+var APP_VERSION       = "v1.1.86";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4859,8 +4859,7 @@ function specRowDefinitions() {
   if (isStarterCategoryKey(key)) {
     return [
       ["voltage", "spec_label_voltage"],
-      ["power_kw", "spec_power_kw"],
-      ["power_w", "spec_power_w"],
+      ["power", "spec_label_power"],
       ["type", "spec_type"]
     ];
   }
@@ -4897,6 +4896,7 @@ function renderProductSpecs() {
   setSpecValue("type", spec && spec.type_text);
   setSpecValue("voltage", voltage);
   setSpecValue("current", current);
+  setSpecValue("power", powerKw || powerW);
   setSpecValue("power_kw", powerKw);
   setSpecValue("power_w", powerW);
   setSpecValue("diameter", diameter ? "D" + diameter : "");
