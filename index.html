@@ -241,9 +241,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ac-part-value { font-size: 13px; font-weight: 700; color: #1a1a2e; word-break: break-all; }
 .detail-main-grid .detail-table,
 .detail-main-grid .ac-part-grid { margin-bottom: 0; }
+.detail-maker-offset { margin-top: 64px; }
 @media(max-width:720px){
   .detail-main-grid { grid-template-columns: 1fr; gap: 8px; }
   .detail-summary { flex-direction: column; gap: 6px; }
+  .detail-maker-offset { margin-top: 8px; }
   .spec-inline-wrap { justify-content: flex-start; max-width: none; width: 100%; }
   .spec-inline { justify-content: flex-start; }
   .spec-inline .spec-grid { justify-content: flex-start; }
@@ -2301,7 +2303,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.80";
+var APP_VERSION       = "v1.1.81";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4698,7 +4700,6 @@ function renderPanelStatic() {
     ["f_compatible",  p.compatible_car_models],
     ["f_model",       p.model],
     ["f_engine",      getProductEngine(p)],
-    ["f_manufacturer", p.manufacturer],
   ];
   var tHtml = "";
   defs.forEach(function(d) {
@@ -4706,33 +4707,51 @@ function renderPanelStatic() {
     var text = (v != null && String(v) !== "None" && String(v) !== "") ? String(v) : "-";
     tHtml += "<div class='detail-vehicle-label'>" + t(k) + "</div><div class='detail-vehicle-value'>" + esc(text) + "</div>";
   });
-  var partHtml = "";
-  if (isAcProduct) {
-    [
-      ["f_genuine_assy_pn", p.genuine_part_number],
-      ["f_genuine_body_pn", p.genuine_body_part_number],
-      ["f_genuine_clutch_pn", p.genuine_clutch_part_number],
-      ["f_mfr_assy_pn", p.manufacturer_part_number],
-      ["f_mfr_body_pn", p.manufacturer_body_part_number],
-      ["f_mfr_clutch_pn", p.manufacturer_clutch_part_number]
-    ].forEach(function(d) {
+  function renderAcPartRows(rows) {
+    var html = "";
+    rows.forEach(function(d) {
       var text = (d[1] != null && String(d[1]) !== "None" && String(d[1]) !== "") ? String(d[1]) : "-";
-      partHtml += "<div class='ac-part-row'>" +
+      html += "<div class='ac-part-row'>" +
         "<div class='ac-part-label'>" + t(d[0]) + "</div>" +
         "<div class='ac-part-value'>" + esc(text) + "</div>" +
       "</div>";
     });
-    partHtml = "<div class='ac-part-grid'>" + partHtml + "</div>";
-  } else {
-    [
-      ["f_genuine_pn",  p.genuine_part_number],
-      ["f_genuine_pn2", p.genuine_part_number_2],
-      ["f_mfr_pn",      p.manufacturer_part_number]
-    ].forEach(function(d) {
+    return html;
+  }
+  function renderDetailTableRows(rows) {
+    var html = "";
+    rows.forEach(function(d) {
       var text = (d[1] != null && String(d[1]) !== "None" && String(d[1]) !== "") ? String(d[1]) : "-";
-      partHtml += "<tr><td>" + t(d[0]) + "</td><td>" + esc(text) + "</td></tr>";
+      html += "<tr><td>" + t(d[0]) + "</td><td>" + esc(text) + "</td></tr>";
     });
-    partHtml = "<table class='detail-table' style='margin-top:4px'>" + partHtml + "</table>";
+    return html;
+  }
+  var partHtml = "";
+  if (isAcProduct) {
+    var acGenuineRows = [
+      ["f_genuine_assy_pn", p.genuine_part_number],
+      ["f_genuine_body_pn", p.genuine_body_part_number],
+      ["f_genuine_clutch_pn", p.genuine_clutch_part_number]
+    ];
+    var acMakerRows = [
+      ["f_manufacturer", p.manufacturer],
+      ["f_mfr_assy_pn", p.manufacturer_part_number],
+      ["f_mfr_body_pn", p.manufacturer_body_part_number],
+      ["f_mfr_clutch_pn", p.manufacturer_clutch_part_number]
+    ];
+    partHtml = "<div class='ac-part-grid'>" + renderAcPartRows(acGenuineRows) + "</div>" +
+      "<div class='ac-part-grid detail-maker-offset'>" + renderAcPartRows(acMakerRows) + "</div>";
+  } else {
+    var genuineRows = [
+      ["f_genuine_pn",  p.genuine_part_number],
+      ["f_genuine_pn2", p.genuine_part_number_2]
+    ];
+    var makerRows = [
+      ["f_manufacturer", p.manufacturer],
+      ["f_mfr_pn",      p.manufacturer_part_number]
+    ];
+    partHtml = "<table class='detail-table' style='margin-top:4px'>" + renderDetailTableRows(genuineRows) + "</table>" +
+      "<table class='detail-table detail-maker-offset'>" + renderDetailTableRows(makerRows) + "</table>";
   }
   var toolHtml = "<div class='detail-toolbar'>";
   if (canEdit()) {
