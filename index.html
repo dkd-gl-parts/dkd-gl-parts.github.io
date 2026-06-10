@@ -2301,7 +2301,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.78";
+var APP_VERSION       = "v1.1.79";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -5344,80 +5344,25 @@ async function loadKikan(dkdShohinId) {
   var wrap = document.getElementById("kikan-wrap");
   if (!wrap) return;
 
-  // dkd_shohin_id → kikan_group_id を検索
   var dkdShohinIdNum = parseInt(dkdShohinId, 10);
   if (isNaN(dkdShohinIdNum)) {
     wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
     return;
   }
-  var r1 = await sb.from("kikan_group_members")
-    .select("kikan_group_id")
-    .eq("dkd_gokan_id", dkdShohinIdNum)
-    .limit(1);
 
-  if (r1.error || !r1.data || r1.data.length === 0) {
-    var altIds = [];
-    if (currentProduct && currentProduct.genuine_part_number) {
-      var altQuery = sb.from("core_product_search_view")
-        .select("dkd_shohin_id")
-        .eq("genuine_part_number", currentProduct.genuine_part_number)
-        .not("shohin_cd", "is", null)
-        .limit(5);
-      if (currentProduct.manufacturer) altQuery = altQuery.eq("manufacturer", currentProduct.manufacturer);
-      var alt = await altQuery;
-      altIds = (alt.data || []).map(function(p) { return p.dkd_shohin_id; }).filter(function(id) {
-        return String(id) !== String(dkdShohinIdNum);
-      });
-    }
-    if (altIds.length === 0 && currentProduct && currentProduct.manufacturer_part_number) {
-      var matchKey = normalizePartNumberForCore(currentProduct.manufacturer_part_number);
-      var altByMatch = await sb.rpc("search_core_products", {
-        search_text: currentProduct.manufacturer_part_number,
-        category_filter: null,
-        require_sl: false,
-        max_rows: 20
-      });
-      altIds = (altByMatch.data || []).filter(function(p) {
-        if (String(p.dkd_shohin_id) === String(dkdShohinIdNum)) return false;
-        if (p.shohin_cd === null || p.shohin_cd === undefined || p.shohin_cd === "") return false;
-        if (currentProduct.manufacturer && p.manufacturer !== currentProduct.manufacturer) return false;
-        if (currentProduct.genuine_part_number && p.genuine_part_number !== currentProduct.genuine_part_number) return false;
-        return normalizePartNumberForCore(p.manufacturer_part_number) === matchKey;
-      }).map(function(p) { return p.dkd_shohin_id; });
-    }
-    if (altIds.length) {
-      r1 = await sb.from("kikan_group_members")
-        .select("kikan_group_id")
-        .in("dkd_gokan_id", altIds)
-        .limit(1);
-    }
-    if (r1.error || !r1.data || r1.data.length === 0) {
-      wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
-      return;
-    }
-  }
-
-  var groupId = r1.data[0].kikan_group_id;
-
-  // 同じグループの全メンバーを取得
-  var r2 = await sb.from("kikan_group_members")
-    .select("dkd_gokan_id")
-    .eq("kikan_group_id", groupId);
-
-  var members = r2.data || [];
-  if (members.length <= 1) {
+  var r = await sb.rpc("get_kikan_compatible_parts", {
+    target_dkd_shohin_id: dkdShohinIdNum,
+    target_manufacturer: currentProduct ? (currentProduct.manufacturer || null) : null,
+    target_manufacturer_part_number: currentProduct ? (currentProduct.manufacturer_part_number || null) : null,
+    target_genuine_part_number: currentProduct ? (currentProduct.genuine_part_number || null) : null
+  });
+  if (r.error) {
+    console.warn("get_kikan_compatible_parts failed", r.error);
     wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
     return;
   }
 
-  // dkd_gokan_id リストで基幹商品検索ビューを検索
-  var dkdGokanIds = members.map(function(m) { return m.dkd_gokan_id; });
-  var r3 = await sb.from("core_product_search_view")
-    .select("*")
-    .in("dkd_shohin_id", dkdGokanIds)
-    .order("dkd_shohin_id");
-
-  var parts_list = r3.data || [];
+  var parts_list = r.data || [];
   var categorySet = {};
   parts_list.forEach(function(p) {
     var cat = p.category_code || p.category || "";
@@ -5425,10 +5370,7 @@ async function loadKikan(dkdShohinId) {
   });
   if (Object.keys(categorySet).length > 1) {
     wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
-    console.warn("kikan group hidden for review", {
-      groupId: groupId,
-      categories: Object.keys(categorySet)
-    });
+    console.warn("kikan group hidden for review", { categories: Object.keys(categorySet) });
     return;
   }
   if (currentProduct && (currentProduct.category_code || currentProduct.category)) {
@@ -5441,7 +5383,7 @@ async function loadKikan(dkdShohinId) {
 
   parts_list = filterVisibleProducts(parts_list);
   parts_list = parts_list.filter(function(p) {
-    if (String(p.dkd_shohin_id) === String(dkdShohinId)) return false;
+    if (String(p.dkd_shohin_id) === String(dkdShohinIdNum)) return false;
     if (currentProduct && currentProduct.genuine_part_number && p.genuine_part_number === currentProduct.genuine_part_number) return false;
     return true;
   });
@@ -5450,7 +5392,6 @@ async function loadKikan(dkdShohinId) {
     return;
   }
 
-  // テーブル表示
   var html = "<table class='kikan-table'>";
   html += "<tr><th>純正品番</th><th>メーカー品番</th><th>車メーカー</th></tr>";
   parts_list.forEach(function(p) {
@@ -5463,10 +5404,9 @@ async function loadKikan(dkdShohinId) {
     html += "</tr>";
   });
   html += "</table>";
-  html += "<div style='font-size:11px;color:#aaa;text-align:right'>グループID: " + groupId + " / " + parts_list.length + "件</div>";
+  html += "<div style='font-size:11px;color:#aaa;text-align:right'>" + parts_list.length + "件</div>";
   wrap.innerHTML = html;
 
-  // 互換品の行をクリックすると詳細パネルを切り替える
   wrap.querySelectorAll("tr.kikan-other[data-dkd-id]").forEach(function(row) {
     row.addEventListener("click", function() {
       openProductByDkdId(parseInt(row.dataset.dkdId, 10));
