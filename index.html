@@ -308,7 +308,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .menu-welcome { margin-bottom: 22px; }
 .menu-welcome h2 { font-size: 18px; font-weight: 600; color: #222; }
 .menu-welcome p  { font-size: 13px; color: #888; margin-top: 4px; }
-.menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+.menu-grid { display: flex; flex-direction: column; gap: 18px; }
+.menu-section { display: flex; flex-direction: column; gap: 10px; }
+.menu-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.menu-section-title { font-size: 13px; font-weight: 700; color: #556070; }
+.menu-section-note { font-size: 11px; color: #9aa3af; }
+.menu-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
 .menu-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 14px; padding: 22px 18px; cursor: pointer; transition: all .15s; display: flex; flex-direction: column; gap: 8px; }
 .menu-card:hover { border-color: #4f8ef7; box-shadow: 0 4px 16px rgba(79,142,247,0.12); transform: translateY(-2px); }
 .menu-card.disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
@@ -318,6 +323,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .menu-tag        { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 8px; width: fit-content; }
 .tag-coming      { background: #f0f4ff; color: #5566aa; }
 .tag-admin       { background: #fff0eb; color: #c04a1a; }
+.menu-admin-panel { background:#fff; border:1px solid #e8e8e8; border-radius:14px; padding:14px; }
+.menu-admin-head { display:flex; align-items:center; gap:10px; padding:2px 2px 12px; border-bottom:1px solid #f0f2f5; }
+.menu-admin-icon { font-size:24px; }
+.menu-admin-title { font-size:15px; font-weight:700; color:#1a1a2e; }
+.menu-admin-desc { font-size:12px; color:#888; margin-top:2px; }
+.menu-admin-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:8px; padding-top:12px; }
+.menu-admin-link { display:flex; align-items:center; gap:9px; width:100%; min-height:54px; border:1px solid #edf0f5; border-radius:8px; background:#fbfcfe; padding:9px 10px; text-align:left; cursor:pointer; transition:all .12s; }
+.menu-admin-link:hover { border-color:#b8d0f8; background:#f6f9ff; }
+.menu-admin-link.disabled { opacity:.45; cursor:not-allowed; pointer-events:none; }
+.menu-admin-link-icon { font-size:18px; width:22px; text-align:center; flex-shrink:0; }
+.menu-admin-link strong { display:block; font-size:13px; color:#1a1a2e; }
+.menu-admin-link small { display:block; font-size:11px; color:#8a93a3; line-height:1.35; margin-top:2px; }
+@media (max-width: 640px) {
+  .menu-body { padding: 18px 12px; }
+  .menu-card-grid, .menu-admin-grid { grid-template-columns:1fr; }
+  .menu-card { padding: 18px 16px; }
+}
 
 /* =============================================
    検索画面
@@ -2309,7 +2331,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.86";
+var APP_VERSION       = "v1.1.87";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -2709,35 +2731,64 @@ function renderMenu() {
   var grid = document.getElementById("menu-grid");
   if (!grid || !userProfile) return;
 
-  var items = [
+  var mainItems = [
     { icon: "&#x1F50D;", titleKey: "mi_search_title", descKey: "mi_search_desc", action: "search", available: true, tag: null },
-    { icon: "&#x1F465;", titleKey: "mi_users_title",  descKey: "mi_users_desc",  action: "users",  available: isAdmin(), tag: isAdmin() ? null : "tag_admin_only", tagClass: "tag-admin" },
-    { icon: "&#x1F4CB;", titleKey: "mi_data_title",   descKey: "mi_data_desc",   action: null,     available: false,     tag: "tag_coming", tagClass: "tag-coming" },
-    { icon: "&#x1F4CA;", titleKey: "mi_report_title", descKey: "mi_report_desc", action: null, available: false, tag: "tag_coming", tagClass: "tag-coming" },
-    { icon: "&#x1F512;", titleKey: "mi_changepw_title", descKey: "mi_changepw_desc", action: "change-pw", available: true, tag: null },
-    { icon: "&#x1F527;", titleKey: "mi_parts_title", descKey: "mi_parts_desc", action: "parts-mgmt", available: canEdit(), tag: null },
-    { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canEdit(), tag: null },
     { icon: "&#x1F4B4;", titleKey: "mi_rakuten_title", descKey: "mi_rakuten_desc", action: "rakuten-price", available: canUseRakutenResearch(), tag: null },
     { icon: "&#x1F4E6;", titleKey: "mi_rakuten_bulk_title", descKey: "mi_rakuten_bulk_desc", action: "rakuten-bulk", available: canUseRakutenResearch(), tag: null },
     { icon: "&#x1F4C8;", titleKey: "screen_rakuten_list_title", descKey: "mi_rakuten_desc", action: "rakuten-price-list", available: canUseRakutenResearch(), tag: null },
-    { icon: "&#x2699;", titleKey: "mi_api_settings_title", descKey: "mi_api_settings_desc", action: "api-settings", available: canManageSharedSettings(), tag: canManageSharedSettings() ? null : "tag_admin_only", tagClass: "tag-admin" },
-    { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: isAdmin(), tag: isAdmin() ? null : "tag_admin_only", tagClass: "tag-admin" }
+    { icon: "&#x1F512;", titleKey: "mi_changepw_title", descKey: "mi_changepw_desc", action: "change-pw", available: true, tag: null }
   ];
 
-  var html = "";
-  items.forEach(function(item) {
+  var adminItems = [
+    { icon: "&#x1F465;", titleKey: "mi_users_title",  descKey: "mi_users_desc",  action: "users",  available: isAdmin() },
+    { icon: "&#x1F527;", titleKey: "mi_parts_title", descKey: "mi_parts_desc", action: "parts-mgmt", available: canEdit() },
+    { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canEdit() },
+    { icon: "&#x2699;", titleKey: "mi_api_settings_title", descKey: "mi_api_settings_desc", action: "api-settings", available: canManageSharedSettings() },
+    { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: isAdmin() }
+  ].filter(function(item) { return item.available; });
+
+  function renderCard(item) {
     var dis = item.available ? "" : " disabled";
     var act = item.action ? " data-action=\"" + item.action + "\"" : "";
+    var html = "";
     html += "<div class=\"menu-card" + dis + "\"" + act + ">";
     html += "<div class=\"menu-icon\">" + item.icon + "</div>";
     html += "<div class=\"menu-card-title\">" + t(item.titleKey) + "</div>";
     html += "<div class=\"menu-card-desc\">"  + t(item.descKey)  + "</div>";
     if (item.tag) html += "<span class=\"menu-tag " + item.tagClass + "\">" + t(item.tag) + "</span>";
     html += "</div>";
-  });
+    return html;
+  }
+
+  function renderAdminLink(item) {
+    var html = "";
+    html += "<button type=\"button\" class=\"menu-admin-link\" data-action=\"" + item.action + "\">";
+    html += "<span class=\"menu-admin-link-icon\">" + item.icon + "</span>";
+    html += "<span><strong>" + t(item.titleKey) + "</strong><small>" + t(item.descKey) + "</small></span>";
+    html += "</button>";
+    return html;
+  }
+
+  var html = "";
+  html += "<section class=\"menu-section\">";
+  html += "<div class=\"menu-section-head\"><h3 class=\"menu-section-title\">&#x4E3B;&#x8981;&#x6A5F;&#x80FD;</h3><span class=\"menu-section-note\">&#x666E;&#x6BB5;&#x4F7F;&#x3046;&#x64CD;&#x4F5C;</span></div>";
+  html += "<div class=\"menu-card-grid\">";
+  mainItems.forEach(function(item) { html += renderCard(item); });
+  html += "</div></section>";
+
+  if (adminItems.length) {
+    html += "<section class=\"menu-section\">";
+    html += "<div class=\"menu-section-head\"><h3 class=\"menu-section-title\">&#x7BA1;&#x7406;&#x753B;&#x9762;</h3><span class=\"menu-section-note\">&#x8A2D;&#x5B9A;&#x30FB;&#x30DE;&#x30B9;&#x30BF;&#x30FB;&#x5C65;&#x6B74;</span></div>";
+    html += "<div class=\"menu-admin-panel\">";
+    html += "<div class=\"menu-admin-head\"><div class=\"menu-admin-icon\">&#x1F6E0;</div><div><div class=\"menu-admin-title\">&#x7BA1;&#x7406;&#x30E1;&#x30CB;&#x30E5;&#x30FC;</div><div class=\"menu-admin-desc\">&#x6A29;&#x9650;&#x306E;&#x3042;&#x308B;&#x7BA1;&#x7406;&#x6A5F;&#x80FD;&#x3092;&#x3053;&#x3053;&#x306B;&#x307E;&#x3068;&#x3081;&#x3066;&#x8868;&#x793A;&#x3057;&#x307E;&#x3059;</div></div></div>";
+    html += "<div class=\"menu-admin-grid\">";
+    adminItems.forEach(function(item) { html += renderAdminLink(item); });
+    html += "</div></div></section>";
+  }
+
   grid.innerHTML = html;
 
-  grid.querySelectorAll(".menu-card:not(.disabled)[data-action]").forEach(function(card) {
+  grid.querySelectorAll(".menu-card:not(.disabled)[data-action], .menu-admin-link:not(.disabled)[data-action]").forEach(function(card) {
     card.addEventListener("click", function() {
       if (card.dataset.action === "search") enterSearch();
       else if (card.dataset.action === "users") enterUsers();
