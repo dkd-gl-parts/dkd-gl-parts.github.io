@@ -2542,7 +2542,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.99";
+var APP_VERSION       = "v1.1.100";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -3202,6 +3202,66 @@ function formatDateTime(value) {
   return value ? new Date(value).toLocaleString("ja-JP") : "-";
 }
 
+function renderProductMasterDetailHtml(p) {
+  var isAcProduct = (p.category_code || p.category || "") === "ac_compressor";
+  var vehicleRows = [
+    ["f_vehicle_mfr", p.vehicle_manufacturer],
+    ["f_body_type",   p.body_type],
+    ["f_compatible",  p.compatible_car_models],
+    ["f_model",       p.model],
+    ["f_engine",      getProductEngine(p)]
+  ];
+  var vehicleHtml = "";
+  vehicleRows.forEach(function(d) {
+    var text = (d[1] != null && String(d[1]) !== "None" && String(d[1]) !== "") ? String(d[1]) : "-";
+    vehicleHtml += "<div class='detail-vehicle-label'>" + t(d[0]) + "</div><div class='detail-vehicle-value'>" + esc(text) + "</div>";
+  });
+  function renderAcRows(rows) {
+    var html = "";
+    rows.forEach(function(d) {
+      var text = (d[1] != null && String(d[1]) !== "None" && String(d[1]) !== "") ? String(d[1]) : "-";
+      html += "<div class='ac-part-row'><div class='ac-part-label'>" + t(d[0]) + "</div><div class='ac-part-value'>" + esc(text) + "</div></div>";
+    });
+    return html;
+  }
+  function renderRows(rows) {
+    var html = "";
+    rows.forEach(function(d) {
+      var text = (d[1] != null && String(d[1]) !== "None" && String(d[1]) !== "") ? String(d[1]) : "-";
+      html += "<tr><td>" + t(d[0]) + "</td><td>" + esc(text) + "</td></tr>";
+    });
+    return html;
+  }
+  var partHtml = "";
+  if (isAcProduct) {
+    partHtml = "<div class='ac-part-grid'>" + renderAcRows([
+      ["f_genuine_assy_pn", p.genuine_part_number],
+      ["f_genuine_body_pn", p.genuine_body_part_number],
+      ["f_genuine_clutch_pn", p.genuine_clutch_part_number]
+    ]) + "</div>" +
+    "<div class='ac-part-grid detail-maker-offset detail-maker-offset-ac'>" + renderAcRows([
+      ["f_manufacturer", p.manufacturer],
+      ["f_mfr_assy_pn", p.manufacturer_part_number],
+      ["f_mfr_body_pn", p.manufacturer_body_part_number],
+      ["f_mfr_clutch_pn", p.manufacturer_clutch_part_number]
+    ]) + "</div>";
+  } else {
+    partHtml = "<table class='detail-table' style='margin-top:4px'>" + renderRows([
+      ["f_genuine_pn",  p.genuine_part_number],
+      ["f_genuine_pn2", p.genuine_part_number_2]
+    ]) + "</table>" +
+    "<table class='detail-table detail-maker-offset detail-maker-offset-standard'>" + renderRows([
+      ["f_manufacturer", p.manufacturer],
+      ["f_mfr_pn",      p.manufacturer_part_number]
+    ]) + "</table>";
+  }
+  return "<div class='detail-main-grid'>" +
+    "<div class='detail-column'>" + partHtml + "</div>" +
+    "<div class='detail-column'><div class='detail-vehicle-grid'>" + vehicleHtml + "</div>" +
+    "<div class='detail-spec-block'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div></div>" +
+  "</div>";
+}
+
 async function renderProductionDetail(row) {
   var el = document.getElementById("production-detail");
   if (!el) return;
@@ -3227,18 +3287,8 @@ async function renderProductionDetail(row) {
   if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-add-image'>画像登録</button>";
   html += "</div></div>";
   html += "<div class='production-grid'>";
-  html += "<section class='production-section'><h3>" + esc(t("production_product_section")) + "</h3>";
-  html += productionKv("DKD商品ID", row.dkd_shohin_id);
-  html += productionKv("メーカー品番", row.manufacturer_part_number);
-  html += productionKv("純正品番", row.genuine_part_number);
-  html += productionKv("純正品番2", row.genuine_part_number_2);
-  html += productionKv("メーカー", row.manufacturer);
-  html += productionKv("大光品番", row.daiko_part_number);
-  html += productionKv("販売価格", row.price_jpy);
-  html += productionKv("在庫", row.stock);
-  html += productionKv("コア返却", row.core_return);
-  html += productionKv("付属情報", row.accessories);
-  html += productionKv("仕様", row.spec || row.nominal_raw_spec);
+  html += "<section class='production-section production-wide'><h3>" + esc(productCategoryLabel(row)) + "</h3>";
+  html += renderProductMasterDetailHtml(row);
   html += "</section>";
   html += "<section class='production-section'><h3>製造指示リスト</h3>";
   if (inst) {
@@ -3270,15 +3320,6 @@ async function renderProductionDetail(row) {
     html += renderProductionCoreSources(detail.coreSources);
   }
   html += "</section>";
-  html += "<section class='production-section production-wide'><h3>" + esc(t("production_vehicle_section")) + "</h3>";
-  html += productionKv("車両メーカー", row.vehicle_manufacturer);
-  html += productionKv("適合車種", row.compatible_car_models);
-  html += productionKv("型式", row.model);
-  html += "</section>";
-  html += "<section class='production-section production-wide'><h3>" + esc(t("production_component_section")) + "</h3>";
-  html += productionKv("構成部品数", detail.components.length || row.component_count || 0);
-  html += renderProductionComponents(detail.components, row.component_summary);
-  html += "</section>";
   html += "<section class='production-section production-wide'><h3>CORE引き落とし履歴</h3>";
   html += renderProductionWithdrawals(detail.withdrawals);
   html += "</section>";
@@ -3294,6 +3335,11 @@ async function renderProductionDetail(row) {
   }
   html += "</div>";
   el.innerHTML = html;
+  currentProduct = row;
+  currentCoreDkdShohinId = row.dkd_shohin_id || null;
+  currentProductSpecs = [];
+  currentProductNominalSpec = null;
+  await loadProductSpecsForCurrent();
   var salesBtn = document.getElementById("production-open-sales");
   if (salesBtn) salesBtn.addEventListener("click", openProductionSalesProduct);
   var compBtn = document.getElementById("production-open-components");
@@ -3316,7 +3362,7 @@ async function renderProductionDetail(row) {
 
 async function loadProductionDetailData(row) {
   var dkdId = row && row.dkd_shohin_id;
-  var result = { coreSources: [], coreEntries: [], components: [], withdrawals: [], withdrawalTotal: 0 };
+  var result = { coreSources: [], coreEntries: [], withdrawals: [], withdrawalTotal: 0 };
   if (!dkdId) return result;
   var sourceR = await sb.from("core_product_sources")
     .select("id, source_table, source_record_key, source_link_type, is_catalog_evidence, note, created_at")
@@ -3330,8 +3376,6 @@ async function loadProductionDetailData(row) {
     .order("created_at", { ascending: false })
     .limit(100);
   result.coreEntries = entryR.data || [];
-  var compR = await sb.rpc("get_assembly_components", { target_dkd_shohin_id: dkdId });
-  result.components = compR.data || [];
   var wR = await sb.from("production_core_withdrawals")
     .select("id, quantity, reason, source_note, created_at")
     .eq("dkd_shohin_id", dkdId)
