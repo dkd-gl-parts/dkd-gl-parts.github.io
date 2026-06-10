@@ -2331,7 +2331,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.87";
+var APP_VERSION       = "v1.1.88";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4904,6 +4904,7 @@ function specRowDefinitions() {
     return [
       ["voltage", "spec_label_voltage"],
       ["current", "spec_label_current"],
+      ["diameter", "spec_label_diameter"],
       ["type", "spec_type"]
     ];
   }
@@ -4917,6 +4918,7 @@ function specRowDefinitions() {
   return [
     ["voltage", "spec_label_voltage"],
     ["current", "spec_label_current"],
+    ["diameter", "spec_label_diameter"],
     ["power_kw", "spec_power_kw"],
     ["type", "spec_type"]
   ];
