@@ -230,6 +230,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .detail-vehicle-grid { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 0; border-top: 1px solid #f0f0f0; margin-bottom: 10px; }
 .detail-vehicle-label { color: #888; font-size: 12px; padding: 6px 4px; border-bottom: 1px solid #f0f0f0; }
 .detail-vehicle-value { color: #1a1a2e; font-size: 13px; font-weight: 500; padding: 6px 4px; border-bottom: 1px solid #f0f0f0; word-break: break-word; }
+.detail-spec-value .spec-grid { margin-top: 0; justify-content: flex-start; }
 .spec-inline-wrap { display: block; min-width: 0; max-width: none; }
 .spec-inline { display: flex; align-items: flex-start; justify-content: flex-start; gap: 8px; flex-wrap: wrap; border-top: 1px solid #f0f0f0; padding-top: 7px; }
 .spec-inline-title { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: #555; white-space: nowrap; }
@@ -2303,7 +2304,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.81";
+var APP_VERSION       = "v1.1.82";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4766,7 +4767,7 @@ function renderPanelStatic() {
   document.getElementById("panel-body").innerHTML =
     "<div class='detail-main-grid'>" +
       "<div class='detail-column'><div class='detail-block-title'>" + esc(productCategoryLabel(p) || "-") + "</div>" + partHtml + "</div>" +
-      "<div class='detail-column'><div class='detail-vehicle-grid'>" + tHtml + "</div><div id='product-spec-wrap' class='spec-inline-wrap'><div class='spec-inline'><span class='spec-inline-title'>" + t("spec_section") + "</span><span class='spec-inline-empty'>" + t("loading") + "</span></div></div></div>" +
+      "<div class='detail-column'><div class='detail-vehicle-grid'>" + tHtml + "<div class='detail-vehicle-label'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-value detail-spec-value'>" + t("loading") + "</div></div></div>" +
     "</div>" +
     toolHtml +
     "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
@@ -4850,18 +4851,16 @@ function renderProductSpecs() {
       if (spec.type_text) chips.push([t("spec_type"), spec.type_text]);
     }
   }
-  var html = "<div class='spec-inline'><span class='spec-inline-title'>" + t("spec_section") + "</span>";
   if (chips.length) {
-    html += "<div class='spec-grid'>";
+    var html = "<div class='spec-grid'>";
     chips.forEach(function(chip) {
       html += "<span class='spec-chip'>" + esc(chip[0]) + "<strong>" + esc(chip[1]) + "</strong></span>";
     });
     html += "</div>";
+    wrap.innerHTML = html;
   } else {
-    html += "<span class='spec-inline-empty'>-</span>";
+    wrap.textContent = "-";
   }
-  html += "</div>";
-  wrap.innerHTML = html;
 }
 
 async function loadProductSpecsForCurrent() {
