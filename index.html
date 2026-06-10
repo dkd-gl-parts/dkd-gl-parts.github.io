@@ -2333,7 +2333,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.89";
+var APP_VERSION       = "v1.1.92";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4524,6 +4524,10 @@ function normalizePartQuery(q) {
   return String(q || "").toUpperCase().replace(/[-\s　]/g, "");
 }
 
+function normalizedPartKey(value) {
+  return String(value || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
+}
+
 async function fetchSourceAliasProducts(q) {
   var normalized = normalizePartQuery(q);
   if (!normalized) return { data: [] };
@@ -4636,59 +4640,53 @@ async function loadComponentUsageCounts(products) {
 
 async function loadKikanCompatibleFlags(products) {
   kikanCompatibleMap = {};
-  var ids = (products || []).map(function(p) {
-    return p.dkd_shohin_id || p.id;
-  }).filter(function(id) {
-    return id !== null && id !== undefined && id !== "";
-  });
-  var uniqueIds = Array.from(new Set(ids.map(function(id) { return parseInt(id, 10); }))).filter(function(id) {
-    return !isNaN(id);
-  });
-  if (!uniqueIds.length) return;
+  var rows = products || [];
+  for (var i = 0; i < rows.length; i += 8) {
+    var chunk = rows.slice(i, i + 8);
+    var results = await Promise.all(chunk.map(hasDisplayableKikanCompatibleParts));
+    chunk.forEach(function(p, idx) {
+      if (results[idx]) kikanCompatibleMap["dkd:" + String(p.dkd_shohin_id || p.id || "")] = true;
+    });
+  }
+}
 
-  var groupIds = [];
-  for (var i = 0; i < uniqueIds.length; i += 200) {
-    var chunk = uniqueIds.slice(i, i + 200);
-    var r = await sb.from("kikan_group_members")
-      .select("kikan_group_id, dkd_gokan_id")
-      .in("dkd_gokan_id", chunk);
-    if (r.error) {
-      console.warn("kikan flag lookup failed", r.error);
-      return;
-    }
-    (r.data || []).forEach(function(row) {
-      if (row.kikan_group_id !== null && row.kikan_group_id !== undefined) groupIds.push(row.kikan_group_id);
+async function hasDisplayableKikanCompatibleParts(product) {
+  var targetId = parseInt(product && (product.dkd_shohin_id || product.id), 10);
+  if (isNaN(targetId)) return false;
+  var r = await sb.rpc("get_kikan_compatible_parts", {
+    target_dkd_shohin_id: targetId,
+    target_manufacturer: product ? (product.manufacturer || null) : null,
+    target_manufacturer_part_number: product ? (product.manufacturer_part_number || null) : null,
+    target_genuine_part_number: product ? (product.genuine_part_number || null) : null
+  });
+  if (r.error) {
+    console.warn("get_kikan_compatible_parts flag lookup failed", r.error);
+    return false;
+  }
+
+  var parts_list = r.data || [];
+  var categorySet = {};
+  parts_list.forEach(function(p) {
+    var cat = p.category_code || p.category || "";
+    if (cat && cat !== "unclassified_assy" && cat !== "other_assy") categorySet[cat] = true;
+  });
+  if (Object.keys(categorySet).length > 1) return false;
+
+  if (product && (product.category_code || product.category)) {
+    var currentCategory = product.category_code || product.category;
+    parts_list = parts_list.filter(function(p) {
+      var cat = p.category_code || p.category;
+      return cat === currentCategory || cat === "unclassified_assy" || cat === "other_assy";
     });
   }
 
-  var uniqueGroupIds = Array.from(new Set(groupIds.map(function(id) { return parseInt(id, 10); }))).filter(function(id) {
-    return !isNaN(id);
+  parts_list = filterVisibleProducts(parts_list);
+  parts_list = parts_list.filter(function(p) {
+    if (String(p.dkd_shohin_id) === String(targetId)) return false;
+    if (product && product.genuine_part_number && p.genuine_part_number === product.genuine_part_number) return false;
+    return true;
   });
-  if (!uniqueGroupIds.length) return;
-
-  for (var j = 0; j < uniqueGroupIds.length; j += 200) {
-    var groupChunk = uniqueGroupIds.slice(j, j + 200);
-    var gm = await sb.from("kikan_group_members")
-      .select("kikan_group_id, dkd_gokan_id")
-      .in("kikan_group_id", groupChunk);
-    if (gm.error) {
-      console.warn("kikan member count lookup failed", gm.error);
-      return;
-    }
-    var groupMembers = {};
-    (gm.data || []).forEach(function(row) {
-      var gid = String(row.kikan_group_id);
-      if (!groupMembers[gid]) groupMembers[gid] = [];
-      groupMembers[gid].push(row.dkd_gokan_id);
-    });
-    Object.keys(groupMembers).forEach(function(gid) {
-      var members = groupMembers[gid] || [];
-      if (members.length < 2) return;
-      members.forEach(function(id) {
-        kikanCompatibleMap[String(id)] = true;
-      });
-    });
-  }
+  return parts_list.length > 0;
 }
 
 function render() {
@@ -4715,7 +4713,7 @@ function render() {
     var slNums = legacyId ? (slPartsMap[legacyId] || []) : [];
     var hasSL  = slNums.length > 0;
     var componentCount = componentUsageCountMap[String(p.dkd_shohin_id || p.id)] || 0;
-    var hasKikan = !!kikanCompatibleMap[String(p.dkd_shohin_id || p.id)];
+    var hasKikan = !!kikanCompatibleMap["dkd:" + String(p.dkd_shohin_id || p.id || "")];
     var mfr   = [p.manufacturer, p.vehicle_manufacturer].filter(Boolean).join(" / ");
     var sel   = (currentProduct && currentProduct.id===p.id) ? " selected" : "";
     html += "<div class='card"+sel+"' data-id='"+p.id+"'><div class='card-top'>";
