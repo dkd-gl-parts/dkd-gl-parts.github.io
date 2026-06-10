@@ -353,6 +353,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .badge-img { background: #e8f7ee; color: #1a8c3e; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .badge-component { background: #fff4d6; color: #8a5a00; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .badge-kikan { background: #eef5ff; color: #1a6fd4; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.btn-component-action { background: #fff4d6; color: #8a5a00; border-color: #f2d489; font-weight: 700; }
+.btn-component-action:hover { background: #ffe9ad; border-color: #e7bf54; }
+.component-icon { font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif; line-height: 1; }
 .loading { text-align: center; padding: 40px; color: #aaa; }
 .empty   { text-align: center; padding: 40px; color: #bbb; font-size: 13px; line-height: 1.8; }
 .search-header { background: #fff; border-bottom: 1px solid #e0e0e0; padding: 10px 16px; flex-shrink: 0; }
@@ -899,7 +902,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <div class="component-context-title" id="components-context-title">-</div>
       <div class="component-context-sub" id="components-context-sub">-</div>
     </div>
-    <div class="component-section-title">&#9881; <span data-i18n="component_section">構成部品</span></div>
+    <div class="component-section-title"><span class="component-icon">&#x1F9E9;</span> <span data-i18n="component_section">構成部品</span></div>
     <div class="component-compat-help" data-i18n="component_compat_help"></div>
     <div id="component-wrap"><div class="component-empty" data-i18n="loading">読み込み中...</div></div>
   </div>
@@ -2525,7 +2528,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.96";
+var APP_VERSION       = "v1.1.97";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -3133,7 +3136,7 @@ function renderProductionDetail(row) {
   html += "<div class='production-detail-sub'>" + esc(productionCategoryLabel(row)) + " / DKD " + esc(row.dkd_shohin_id || "-") + " / " + esc(row.manufacturer || "-") + "</div></div>";
   html += "<div class='production-actions'>";
   html += "<button class='btn-sm-edit' id='production-open-sales'>" + esc(t("production_open_sales")) + "</button>";
-  html += "<button class='btn-sm-edit' id='production-open-components'>" + esc(t("component_section")) + "</button>";
+  html += "<button class='btn-sm-edit btn-component-action' id='production-open-components'><span class='component-icon'>&#x1F9E9;</span> " + esc(t("component_section")) + "</button>";
   html += "</div></div>";
   html += "<div class='production-grid'>";
   html += "<section class='production-section'><h3>" + esc(t("production_product_section")) + "</h3>";
@@ -5123,7 +5126,7 @@ function render() {
     html += "<div class='badges'>"
       +(hasSL?"<span class='badge-sl'>SL</span>":"")
       +(hasKikan?"<span class='badge-kikan' title='"+esc(t("kikan_section"))+"'>&#x1F504;</span>":"")
-      +(componentCount>0?"<span class='badge-component' title='"+esc(t("component_section"))+"'>&#9881;"+esc(String(componentCount))+"</span>":"")
+      +(componentCount>0?"<span class='badge-component' title='"+esc(t("component_section"))+"'><span class='component-icon'>&#x1F9E9;</span>"+esc(String(componentCount))+"</span>":"")
       +(cnt>0?"<span class='badge-img'>&#x1F4F7;"+cnt+"</span>":"")
       +"</div>";
     html += "</div></div>";
@@ -5258,7 +5261,7 @@ function renderPanelStatic() {
   if (canUseRakutenResearch()) {
     toolHtml += "<button class='btn-sm-edit' onclick='openRakutenForCurrentProduct()'>&#x1F4B4; " + t("rakuten_quick") + "</button>";
   }
-  toolHtml += "<button class='btn-sm-edit' id='btn-open-components'>&#9881; " + t("component_open_parts") + "</button>";
+  toolHtml += "<button class='btn-sm-edit btn-component-action' id='btn-open-components'><span class='component-icon'>&#x1F9E9;</span> " + t("component_open_parts") + "</button>";
   toolHtml += "<button class='btn-sm-edit' id='btn-open-component-parallel'>&#8644; " + t("component_open_parallel") + "</button>";
   if (canEdit()) {
     toolHtml += "<button class='btn-sm-edit detail-toolbar-edit' id='btn-edit-current-product'>&#9998; " + t("btn_edit_part") + "</button>";
