@@ -2301,7 +2301,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.77";
+var APP_VERSION       = "v1.1.78";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -5059,14 +5059,7 @@ async function resolveCurrentCoreDkdShohinId() {
 
 function formatComponentInterchange(row) {
   var code = row.component_interchange_code || row.interchange_code || "";
-  if (!code) return "-";
-  var maker = String(row.component_manufacturer || row.assy_manufacturer || "").toUpperCase();
-  if (maker === "MITSUBISHI") {
-    if (code === "A") return "\u2193";
-    if (code === "B") return "\u2191";
-    if (code === "C") return "\u2195";
-  }
-  return code;
+  return code || "-";
 }
 function selectedProductTitle() {
   if (!currentProduct) return "-";
