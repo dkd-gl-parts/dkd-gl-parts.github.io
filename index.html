@@ -2301,7 +2301,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.79";
+var APP_VERSION       = "v1.1.80";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4698,6 +4698,7 @@ function renderPanelStatic() {
     ["f_compatible",  p.compatible_car_models],
     ["f_model",       p.model],
     ["f_engine",      getProductEngine(p)],
+    ["f_manufacturer", p.manufacturer],
   ];
   var tHtml = "";
   defs.forEach(function(d) {
@@ -4711,7 +4712,6 @@ function renderPanelStatic() {
       ["f_genuine_assy_pn", p.genuine_part_number],
       ["f_genuine_body_pn", p.genuine_body_part_number],
       ["f_genuine_clutch_pn", p.genuine_clutch_part_number],
-      ["f_manufacturer", p.manufacturer],
       ["f_mfr_assy_pn", p.manufacturer_part_number],
       ["f_mfr_body_pn", p.manufacturer_body_part_number],
       ["f_mfr_clutch_pn", p.manufacturer_clutch_part_number]
@@ -4727,7 +4727,6 @@ function renderPanelStatic() {
     [
       ["f_genuine_pn",  p.genuine_part_number],
       ["f_genuine_pn2", p.genuine_part_number_2],
-      ["f_manufacturer",p.manufacturer],
       ["f_mfr_pn",      p.manufacturer_part_number]
     ].forEach(function(d) {
       var text = (d[1] != null && String(d[1]) !== "None" && String(d[1]) !== "") ? String(d[1]) : "-";
