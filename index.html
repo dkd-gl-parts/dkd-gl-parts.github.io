@@ -2333,7 +2333,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.92";
+var APP_VERSION       = "v1.1.93";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -3959,6 +3959,7 @@ async function openCoreProductForm(mode, product) {
   document.getElementById("part-form-error").textContent = "";
   document.getElementById("part-form-title").textContent = mode === "add" ? t("btn_add_part") : t("btn_edit_part");
   setCoreProductFormFields(mode === "add" ? (product || null) : product);
+  document.getElementById("pf-shohin-cd").readOnly = mode !== "add";
   clearUnifiedSpecForm();
   if (mode === "edit") {
     await loadProductSpecsForCurrent();
@@ -3990,7 +3991,6 @@ async function saveCoreProductForm() {
   if (!genuine && !mfrPart) { errEl.textContent = t("lbl_genuine_pn") + "または" + t("lbl_mfr_pn") + "を入力してください"; return; }
   var categoryValue = document.getElementById("pf-category").value;
   var payload = {
-    dkd_shohin_id: dkd,
     category_code: categoryCodeFromForm(categoryValue),
     category: categoryValue,
     genuine_part_number: genuine,
@@ -3998,12 +3998,13 @@ async function saveCoreProductForm() {
     manufacturer: manufacturer,
     normalized_genuine_part_number: normalizePartNumberForCore(genuine),
     normalized_manufacturer_part_number: normalizePartNumberForCore(mfrPart),
-    has_catalog_source: false,
     updated_by: currentUser ? currentUser.id : null,
     updated_at: new Date().toISOString()
   };
   var r;
   if (partFormMode === "add") {
+    payload.dkd_shohin_id = dkd;
+    payload.has_catalog_source = false;
     payload.created_by = currentUser ? currentUser.id : null;
     r = await sb.from("core_products").insert(payload);
     if (!r.error) await writeLog("insert", "core_products", dkd, genuine || mfrPart || String(dkd), null, payload);
