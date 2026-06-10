@@ -230,6 +230,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .detail-vehicle-grid { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 0; border-top: 1px solid #f0f0f0; margin-bottom: 10px; }
 .detail-vehicle-label { color: #888; font-size: 12px; padding: 6px 4px; border-bottom: 1px solid #f0f0f0; }
 .detail-vehicle-value { color: #1a1a2e; font-size: 13px; font-weight: 500; padding: 6px 4px; border-bottom: 1px solid #f0f0f0; word-break: break-word; }
+.detail-spec-block { margin-top: 0; }
+.detail-spec-block .detail-block-title { margin-top: 0; }
+.detail-spec-grid { margin-bottom: 0; }
 .detail-spec-value { font-weight: 700; }
 .spec-inline-wrap { display: block; min-width: 0; max-width: none; }
 .spec-inline { display: flex; align-items: flex-start; justify-content: flex-start; gap: 8px; flex-wrap: wrap; border-top: 1px solid #f0f0f0; padding-top: 7px; }
@@ -2304,7 +2307,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.83";
+var APP_VERSION       = "v1.1.84";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4767,7 +4770,8 @@ function renderPanelStatic() {
   document.getElementById("panel-body").innerHTML =
     "<div class='detail-main-grid'>" +
       "<div class='detail-column'><div class='detail-block-title'>" + esc(productCategoryLabel(p) || "-") + "</div>" + partHtml + "</div>" +
-      "<div class='detail-column'><div class='detail-vehicle-grid'>" + tHtml + "<div class='detail-vehicle-label'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-value detail-spec-value'>" + t("loading") + "</div></div></div>" +
+      "<div class='detail-column'><div class='detail-vehicle-grid'>" + tHtml + "</div>" +
+      "<div class='detail-spec-block'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div></div>" +
     "</div>" +
     toolHtml +
     "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
@@ -4823,41 +4827,46 @@ function specGasText(spec) {
   var gas = (m[1] || m[0]).toUpperCase().replace(/\s|-/g, "");
   return gas.indexOf("R") === 0 ? gas : "R" + gas;
 }
+function specRowDefinitions() {
+  return [
+    ["gas", "spec_label_gas"],
+    ["type", "spec_type"],
+    ["voltage", "spec_label_voltage"],
+    ["current", "spec_label_current"],
+    ["power_kw", "spec_power_kw"],
+    ["power_w", "spec_power_w"],
+    ["diameter", "spec_label_diameter"]
+  ];
+}
+function renderSpecPlaceholderRows() {
+  return specRowDefinitions().map(function(row) {
+    return "<div class='detail-vehicle-label'>" + t(row[1]) + "</div>" +
+      "<div id='product-spec-" + row[0] + "' class='detail-vehicle-value detail-spec-value'>-</div>";
+  }).join("");
+}
+function setSpecValue(key, value) {
+  var el = document.getElementById("product-spec-" + key);
+  if (el) el.textContent = value || "-";
+}
 
 function renderProductSpecs() {
   var wrap = document.getElementById("product-spec-wrap");
   if (!wrap) return;
-  var isAc = isCurrentAcCompressor();
+  if (!wrap.querySelector("#product-spec-gas")) wrap.innerHTML = renderSpecPlaceholderRows();
   var spec = currentProductNominalSpec || null;
-  var chips = [];
-  if (spec) {
-    var gas = specGasText(spec);
-    var voltage = specNumberText(spec.voltage_v, "V");
-    var current = specNumberText(spec.current_a, "A");
-    var powerKw = specNumberText(spec.power_kw, "kW");
-    var powerW = specNumberText(spec.power_w, "W");
-    var diameter = specNumberText(spec.diameter_d, "");
-    var diameterText = diameter ? "D" + diameter : "";
-    if (isAc) {
-      if (gas) chips.push([t("spec_label_gas"), gas]);
-      if (spec.type_text) chips.push([t("spec_type"), spec.type_text]);
-      if (voltage) chips.push([t("spec_label_voltage"), voltage]);
-    } else {
-      if (voltage) chips.push([t("spec_label_voltage"), voltage]);
-      if (current) chips.push([t("spec_label_current"), current]);
-      if (powerKw) chips.push([t("spec_label_power"), powerKw]);
-      if (powerW) chips.push([t("spec_label_power"), powerW]);
-      if (diameterText) chips.push([t("spec_label_diameter"), diameterText]);
-      if (spec.type_text) chips.push([t("spec_type"), spec.type_text]);
-    }
-  }
-  if (chips.length) {
-    wrap.textContent = chips.map(function(chip) {
-      return chip[0] + " " + chip[1];
-    }).join(" / ");
-  } else {
-    wrap.textContent = "-";
-  }
+  var gas = spec ? specGasText(spec) : "";
+  var voltage = spec ? specNumberText(spec.voltage_v, "V") : "";
+  var current = spec ? specNumberText(spec.current_a, "A") : "";
+  var powerKw = spec ? specNumberText(spec.power_kw, "kW") : "";
+  var powerW = spec ? specNumberText(spec.power_w, "W") : "";
+  var diameter = spec ? specNumberText(spec.diameter_d, "") : "";
+  setSpecValue("gas", gas);
+  setSpecValue("type", spec && spec.type_text);
+  setSpecValue("voltage", voltage);
+  setSpecValue("current", current);
+  setSpecValue("power_kw", powerKw);
+  setSpecValue("power_w", powerW);
+  setSpecValue("diameter", diameter ? "D" + diameter : "");
 }
 
 async function loadProductSpecsForCurrent() {
