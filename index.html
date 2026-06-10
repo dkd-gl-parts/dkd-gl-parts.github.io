@@ -130,6 +130,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-empty { color:#bbb; font-size:12px; padding:8px 0; }
 .detail-actions { display:flex; gap:8px; flex-wrap:wrap; margin:14px 0 6px; }
 .detail-toolbar { display: flex; align-items: center; justify-content: flex-start; gap: 8px; flex-wrap: wrap; padding: 8px 0 10px; border-bottom: 1px solid #f0f0f0; margin-bottom: 8px; }
+.detail-toolbar-edit { margin-left: auto; }
 .detail-toolbar .btn-sm-edit { margin: 0; }
 .component-body { flex:1; padding:20px 16px; max-width:1120px; width:100%; margin:0 auto; overflow-y:auto; }
 .component-context { background:#fff; border:1px solid #e8e8e8; border-radius:8px; padding:12px 14px; margin-bottom:12px; }
@@ -224,7 +225,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .spec-chip strong { color: #1a5faa; margin-left: 4px; }
 .detail-summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 4px 0 10px; border-bottom: 1px solid #f0f0f0; margin-bottom: 6px; }
 .detail-category-name { font-size: 15px; font-weight: 700; color: #1a1a2e; line-height: 1.4; }
-.detail-main-grid { display: grid; grid-template-columns: minmax(380px, 1.05fr) minmax(340px, 0.95fr); gap: 16px; align-items: start; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 8px; }
+.detail-main-grid { display: grid; grid-template-columns: minmax(300px, 1.05fr) minmax(280px, 0.95fr); gap: 14px; align-items: start; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 8px; }
 .detail-column { min-width: 0; }
 .detail-block-title { font-size: 12px; font-weight: 700; color: #555; margin: 0 0 6px; }
 .detail-vehicle-grid { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 0; border-top: 1px solid #f0f0f0; margin-bottom: 10px; }
@@ -248,6 +249,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .detail-maker-offset { margin-top: 64px; }
 .detail-maker-offset-standard { margin-top: 96px; }
 .detail-maker-offset-ac { margin-top: 64px; }
+@media (max-width: 1180px) {
+  .detail-main-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .detail-maker-offset, .detail-maker-offset-standard, .detail-maker-offset-ac { margin-top: 8px; }
+}
 @media(max-width:720px){
   .detail-main-grid { grid-template-columns: 1fr; gap: 8px; }
   .detail-summary { flex-direction: column; gap: 6px; }
@@ -487,7 +492,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 @media (min-width: 768px) {
   #screen-search.active { height: 100vh; overflow: hidden; }
   #screen-search .app-body { display: flex; flex-direction: row; flex: 1; overflow: hidden; }
-  #screen-search .left-col { width: 380px; flex-shrink: 0; display: flex; flex-direction: column; height: 100%; border-right: 1px solid #e0e0e0; background: #f0f2f5; overflow: hidden; }
+  #screen-search .left-col { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; height: 100%; border-right: 1px solid #e0e0e0; background: #f0f2f5; overflow: hidden; }
   #screen-search .right-col { flex: 1; display: flex; flex-direction: column; height: 100%; background: #fff; min-width: 0; overflow: hidden; }
   #screen-search .overlay { display: none !important; }
   #screen-search .panel { position: static; height: 100%; max-height: none; border-radius: 0; transform: none !important; transition: none; display: flex; }
@@ -2333,7 +2338,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.93";
+var APP_VERSION       = "v1.1.94";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
@@ -4872,18 +4877,18 @@ function renderPanelStatic() {
       "<table class='detail-table detail-maker-offset detail-maker-offset-standard'>" + renderDetailTableRows(makerRows) + "</table>";
   }
   var toolHtml = "<div class='detail-toolbar'>";
-  if (canEdit()) {
-    toolHtml += "<button class='btn-sm-edit' id='btn-edit-current-product'>&#9998; " + t("btn_edit_part") + "</button>";
-  }
   if (canUseRakutenResearch()) {
     toolHtml += "<button class='btn-sm-edit' onclick='openRakutenForCurrentProduct()'>&#x1F4B4; " + t("rakuten_quick") + "</button>";
   }
   toolHtml += "<button class='btn-sm-edit' id='btn-open-components'>&#9881; " + t("component_open_parts") + "</button>";
   toolHtml += "<button class='btn-sm-edit' id='btn-open-component-parallel'>&#8644; " + t("component_open_parallel") + "</button>";
+  if (canEdit()) {
+    toolHtml += "<button class='btn-sm-edit detail-toolbar-edit' id='btn-edit-current-product'>&#9998; " + t("btn_edit_part") + "</button>";
+  }
   toolHtml += "</div>";
   document.getElementById("panel-body").innerHTML =
     "<div class='detail-main-grid'>" +
-      "<div class='detail-column'><div class='detail-block-title'>" + esc(productCategoryLabel(p) || "-") + "</div>" + partHtml + "</div>" +
+      "<div class='detail-column'>" + partHtml + "</div>" +
       "<div class='detail-column'><div class='detail-vehicle-grid'>" + tHtml + "</div>" +
       "<div class='detail-spec-block'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div></div>" +
     "</div>" +
