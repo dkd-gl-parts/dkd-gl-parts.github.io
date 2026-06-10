@@ -265,6 +265,47 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .spec-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 @media(max-width:640px){ .spec-form-grid { grid-template-columns: 1fr; } }
 
+@media (max-width: 767px) {
+  .panel-inner { flex-direction: column; min-height: 0; }
+  .panel-left { order: 1; overflow-y: visible; padding: 12px 14px 8px; }
+  .panel-right {
+    order: 2;
+    width: auto;
+    border-left: 0;
+    border-top: 1px solid #f0f0f0;
+    padding: 8px 14px 10px;
+    gap: 6px;
+  }
+  .panel-right-title { margin-bottom: 0; }
+  .panel-right-empty { min-height: 42px; flex: 0 0 auto; flex-direction: row; justify-content: flex-start; }
+  .panel-right-empty .empty-icon { font-size: 20px; }
+  #img-grid {
+    flex-direction: row;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .img-wrap {
+    width: 58px;
+    height: 58px;
+    flex: 0 0 58px;
+    aspect-ratio: auto;
+    border: 1px solid #eee;
+  }
+  #panel-footer {
+    margin-top: 4px !important;
+    padding-top: 6px !important;
+    display: flex;
+    gap: 8px;
+  }
+  .upload-btn-small,
+  .image-delete-open-btn {
+    margin-top: 0;
+    padding: 7px 6px;
+    font-size: 11px;
+  }
+}
+
 /* ログ画面 */
 .log-table      { width: 100%; border-collapse: collapse; font-size: 12px; }
 .log-table th   { background: #f5f7fa; color: #555; font-weight: 600; padding: 8px 10px; text-align: left; border-bottom: 2px solid #e0e0e0; }
@@ -417,7 +458,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .img-section-title { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
 
 /* 右カラムの画像グリッド（縦1列） */
-.img-grid  { display: flex; flex-direction: column; gap: 8px; }
+.img-grid, #img-grid  { display: flex; flex-direction: column; gap: 8px; }
 .img-wrap  { position: relative; border-radius: 8px; overflow: hidden; background: #fff; aspect-ratio: 1; width: 100%; display: flex; align-items: center; justify-content: center; }
 .img-wrap img { width: 100%; height: 100%; object-fit: contain; display: block; cursor: zoom-in; image-rendering: auto; }
 .panel-footer { flex-shrink: 0; padding: 8px 10px 16px; border-top: 1px solid #eee; background: #fafafa; width: 180px; flex-shrink: 0; }
@@ -2338,7 +2379,7 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.94";
+var APP_VERSION       = "v1.1.95";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var SEARCH_FETCH_LIMIT = 200;
