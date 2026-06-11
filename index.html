@@ -2844,7 +2844,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.113";
+var APP_VERSION       = "v1.1.114";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -3614,7 +3614,27 @@ function representativeVehicleMaker(rows) {
   return makers[0] + (makers.length > 1 ? " 他" + String(makers.length - 1) + "件" : "");
 }
 
+function hasVehicleApplicationDetail(row) {
+  return !!(row && (
+    row.vehicle_type ||
+    row.vehicle_model ||
+    row.model ||
+    row.engine ||
+    row.production_period_text ||
+    row.effective_start ||
+    row.effective_end
+  ));
+}
+
 function renderVehicleApplicationsTable(rows) {
+  var sourceRows = rows || [];
+  if (sourceRows.length) {
+    var detailRows = sourceRows.filter(hasVehicleApplicationDetail);
+    if (!detailRows.length) {
+      return "<div class='component-empty'>車メーカーは " + esc(representativeVehicleMaker(sourceRows)) + " と確認できますが、この品番に紐づく車種・型式・エンジンの詳細行はパーツカタログ側に見つかりません。</div>";
+    }
+    rows = detailRows;
+  }
   if (!rows || !rows.length) return "<div class='component-empty'>パーツカタログ由来の車両情報はまだありません。</div>";
   var html = "<table class='vehicle-table'><tr><th>車メーカー</th><th>車種</th><th>型式</th><th>エンジン</th><th>期間</th><th>品番</th><th>出典</th></tr>";
   rows.forEach(function(row) {
@@ -3660,6 +3680,8 @@ async function loadCatalogVehicleSummary(root, product) {
   if (valueEl) valueEl.textContent = representativeVehicleMaker(rows);
   if (button) {
     button.textContent = "車両情報" + (rows.length ? " (" + rows.length + ")" : "");
+    var detailCount = rows.filter(hasVehicleApplicationDetail).length;
+    button.textContent = detailCount ? ("車両情報 (" + detailCount + ")") : (rows.length ? "車両情報 (メーカーのみ)" : "車両情報");
     button.disabled = false;
     button.onclick = function() { openVehicleApplicationsDialog(rows, product); };
   }
