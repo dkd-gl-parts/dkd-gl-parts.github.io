@@ -2843,7 +2843,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.117";
+var APP_VERSION       = "v1.1.118";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -3635,7 +3635,7 @@ function renderVehicleApplicationsTable(rows) {
     rows = detailRows;
   }
   if (!rows || !rows.length) return "<div class='component-empty'>車両情報はまだありません。</div>";
-  var html = "<table class='vehicle-table'><tr><th>車メーカー</th><th>車種</th><th>型式</th><th>エンジン</th><th>期間</th><th>品番</th><th>区分</th></tr>";
+  var html = "<table class='vehicle-table'><tr><th>車メーカー</th><th>車種</th><th>型式</th><th>エンジン</th><th>期間</th><th>品番</th><th>品名</th></tr>";
   rows.forEach(function(row) {
     html += "<tr>";
     html += "<td>" + esc(row.vehicle_manufacturer || "-") + "</td>";
@@ -3644,19 +3644,11 @@ function renderVehicleApplicationsTable(rows) {
     html += "<td>" + esc(row.engine || "-") + "</td>";
     html += "<td>" + esc(row.production_period_text || [row.effective_start, row.effective_end].filter(Boolean).join(" - ") || "-") + "</td>";
     html += "<td><div class='component-pn'>" + esc(row.manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.genuine_part_number || "") + "</div></td>";
-    html += "<td>" + esc(vehicleApplicationMatchLabel(row)) + "<div class='component-sub'>" + esc(row.part_name || "") + "</div></td>";
+    html += "<td>" + esc(row.part_name || "-") + "</td>";
     html += "</tr>";
   });
   html += "</table>";
   return html;
-}
-
-function vehicleApplicationMatchLabel(row) {
-  var role = String(row && row.part_role || "");
-  var sourceTable = String(row && row.source_table || "");
-  if (role === "vehicle_application_parent_assy" || sourceTable.indexOf(" via ") >= 0) return "親ASSY経由";
-  if (role === "catalog_candidate") return "メーカー候補";
-  return "直接";
 }
 
 function openVehicleApplicationsDialog(rows, product) {
