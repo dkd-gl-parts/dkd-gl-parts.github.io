@@ -2843,7 +2843,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.118";
+var APP_VERSION       = "v1.1.120";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -3635,7 +3635,7 @@ function renderVehicleApplicationsTable(rows) {
     rows = detailRows;
   }
   if (!rows || !rows.length) return "<div class='component-empty'>車両情報はまだありません。</div>";
-  var html = "<table class='vehicle-table'><tr><th>車メーカー</th><th>車種</th><th>型式</th><th>エンジン</th><th>期間</th><th>品番</th><th>品名</th></tr>";
+  var html = "<table class='vehicle-table'><tr><th>車メーカー</th><th>車種/用途</th><th>機種/型式</th><th>エンジン</th><th>期間</th><th>品番</th><th>品名</th></tr>";
   rows.forEach(function(row) {
     html += "<tr>";
     html += "<td>" + esc(row.vehicle_manufacturer || "-") + "</td>";
