@@ -886,10 +886,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
           <button class="btn-clear" id="production-clear-btn" data-i18n="btn_clear">クリア</button>
         </div>
       </div>
-      <div class="production-filter-row">
-        <button class="chip active" data-production-filter="all" data-i18n="filter_all">すべて</button>
-        <button class="chip" data-production-filter="starter" data-i18n="filter_starter">スタータ</button>
-        <button class="chip" data-production-filter="alternator" data-i18n="filter_alt">オルタネータ</button>
+      <div class="production-filter-row" id="production-filter-row">
+        <button class="chip active" data-production-filter="instruction" data-i18n="production_instruction_filter">製造指示</button>
+        <button class="chip" data-production-filter="all" data-i18n="filter_all">すべて</button>
       </div>
       <div class="production-count" id="production-count" data-i18n="loading">読み込み中...</div>
       <div class="production-list" id="production-list"></div>
@@ -1517,6 +1516,7 @@ var TRANSLATIONS = {
     welcome_panel: "品番を検索して選択してください",
     production_search_title: "製造部品検索",
     production_search_ph: "DKD商品ID・メーカー品番・純正品番で検索",
+    production_instruction_filter: "製造指示",
     production_filter_ready: "構成部品あり",
     production_filter_need: "構成部品なし",
     production_select_hint: "基幹商品を選択してください",
@@ -1867,6 +1867,7 @@ var TRANSLATIONS = {
     welcome_panel: "Search and select a part number",
     production_search_title: "Production Parts Search",
     production_search_ph: "Search by DKD product ID, maker part or genuine part",
+    production_instruction_filter: "Production Plan",
     production_filter_ready: "Has components",
     production_filter_need: "Needs components",
     production_select_hint: "Select a master product",
@@ -2217,6 +2218,7 @@ var TRANSLATIONS = {
     welcome_panel: "请搜索并选择零件编号",
     production_search_title: "生产零件搜索",
     production_search_ph: "按DKD商品ID、厂家品番或纯正品番搜索",
+    production_instruction_filter: "生产指示",
     production_filter_ready: "有构成零件",
     production_filter_need: "无构成零件",
     production_select_hint: "请选择基干商品",
@@ -2552,13 +2554,13 @@ var parallelCandidateMap = {};
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.102";
+var APP_VERSION       = "v1.1.103";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
 var productionRows = [];
 var productionFilteredRows = [];
-var productionFilter = "all";
+var productionFilter = "instruction";
 var currentProductionRow = null;
 var componentReturnScreen = "search";
 var productionInstructionRows = [];
@@ -2757,6 +2759,7 @@ async function applyLanguage(lang) {
   // 動的コンテンツを再描画する
   renderMenu();
   if (dataLoaded) { renderCategoryChips(); render(); }
+  renderProductionFilterChips();
   if (currentProduct) { renderPanelStatic(); }
   updateAllHeaders();
 
@@ -3046,6 +3049,7 @@ async function enterSearch() {
 
 async function enterProductionSearch() {
   showScreen("production-search");
+  renderProductionFilterChips();
   if (!productionLoaded) await loadProductionProducts();
   renderProductionList();
   await renderProductionDetail(currentProductionRow);
@@ -3086,6 +3090,42 @@ function productionInstructionFor(row) {
   return productionInstructionMap[String(row.dkd_shohin_id)] || null;
 }
 
+function renderProductionFilterChips() {
+  var row = document.getElementById("production-filter-row");
+  if (!row) return;
+  row.innerHTML = "";
+  function addChip(filter, label, i18nKey) {
+    var btn = document.createElement("button");
+    btn.className = "chip";
+    btn.dataset.productionFilter = filter;
+    if (i18nKey) btn.dataset.i18n = i18nKey;
+    btn.textContent = label;
+    btn.classList.toggle("active", productionFilter === filter);
+    btn.addEventListener("click", async function() {
+      productionFilter = filter;
+      row.querySelectorAll("[data-production-filter]").forEach(function(c) {
+        c.classList.toggle("active", c === btn);
+      });
+      productionLoaded = false;
+      await loadProductionProducts();
+      renderProductionList();
+      await renderProductionDetail(currentProductionRow);
+    });
+    row.appendChild(btn);
+  }
+  addChip("instruction", t("production_instruction_filter"), "production_instruction_filter");
+  addChip("all", t("filter_all"), "filter_all");
+  var cats = (categoryOptions && categoryOptions.length) ? categoryOptions : [
+    { category_code: "starter", label_ja: t("filter_starter"), label_en: t("filter_starter"), label_zh: t("filter_starter") },
+    { category_code: "alternator", label_ja: t("filter_alt"), label_en: t("filter_alt"), label_zh: t("filter_alt") }
+  ];
+  cats.forEach(function(cat) {
+    var code = cat.category_code || cat.category;
+    if (!code) return;
+    addChip("cat:" + code, categoryOptionLabel(cat), null);
+  });
+}
+
 function enrichProductionProduct(row) {
   var inst = productionInstructionFor(row);
   row.production_instruction = inst;
@@ -3105,19 +3145,27 @@ async function loadProductionProducts() {
   await loadProductionInstructions();
   var qEl = document.getElementById("production-q");
   var q = qEl ? qEl.value.trim() : "";
+  var categoryFilter = productionFilter.indexOf("cat:") === 0 ? productionFilter.slice(4) : null;
   var r;
   if (q) {
     r = await sb.rpc("search_core_products", {
       search_text: q,
-      category_filter: null,
+      category_filter: categoryFilter,
       require_sl: false,
       max_rows: SEARCH_FETCH_LIMIT
     });
-  } else {
+  } else if (productionFilter === "instruction") {
     var ids = productionInstructionRows.map(function(x){ return x.dkd_shohin_id; }).filter(Boolean);
     r = ids.length
       ? await sb.from("core_product_search_view").select("*").in("dkd_shohin_id", ids).limit(500)
-      : await sb.from("core_product_search_view").select("*").order("updated_at", { ascending: false }).limit(100);
+      : { data: [], error: null };
+  } else if (categoryFilter) {
+    r = await fetchCategoryProducts(categoryFilter);
+  } else {
+    r = await sb.from("core_product_search_view")
+      .select("*")
+      .order("updated_at", { ascending: false })
+      .limit(SEARCH_FETCH_LIMIT);
   }
   if (r.error) {
     productionRows = [];
@@ -3161,8 +3209,13 @@ function productionMatchesQuery(row, q) {
 
 function productionMatchesFilter(row) {
   var componentCount = componentUsageCountMap[String(row.dkd_shohin_id)] || row.component_count || 0;
+  if (productionFilter === "instruction") return !!productionInstructionFor(row);
   if (productionFilter === "ready") return componentCount > 0;
   if (productionFilter === "need") return componentCount <= 0;
+  if (productionFilter.indexOf("cat:") === 0) {
+    var cat = productionFilter.slice(4);
+    return row.category_code === cat || row.category === cat;
+  }
   if (productionFilter === "starter" || productionFilter === "alternator") return row.category_code === productionFilter;
   return true;
 }
@@ -6999,8 +7052,8 @@ document.getElementById("production-q").addEventListener("keydown", async functi
 });
 document.getElementById("production-clear-btn").addEventListener("click", async function(){
   document.getElementById("production-q").value = "";
-  productionFilter = "all";
-  document.querySelectorAll("[data-production-filter]").forEach(function(c){ c.classList.toggle("active", c.dataset.productionFilter === "all"); });
+  productionFilter = "instruction";
+  document.querySelectorAll("[data-production-filter]").forEach(function(c){ c.classList.toggle("active", c.dataset.productionFilter === "instruction"); });
   productionLoaded = false;
   await loadProductionProducts();
   renderProductionList();
