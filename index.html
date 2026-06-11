@@ -1185,6 +1185,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <input class="mgmt-search" id="core-list-search" type="search" data-i18n-ph="core_list_search_ph">
       <button class="btn-primary" id="btn-core-list-search" data-i18n="btn_search">検索</button>
       <button class="btn-primary" id="btn-add-core-list" data-i18n="btn_add_core_list">COREを追加</button>
+      <button class="btn-sm-edit" id="btn-create-core-list-from-ranking" data-i18n="btn_create_core_from_ranking">ランキングから作成</button>
     </div>
     <div class="mgmt-count" id="core-list-count"></div>
     <div id="core-list-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
@@ -1856,6 +1857,7 @@ var TRANSLATIONS = {
     lbl_category: "カテゴリ",
     btn_add_part: "商品を追加",
     btn_add_core_list: "COREを追加",
+    btn_create_core_from_ranking: "ランキングから作成",
     btn_add_production_ranking: "ランキングを追加",
     btn_edit: "修正",
     btn_edit_part: "品番修正",
@@ -1872,6 +1874,8 @@ var TRANSLATIONS = {
     core_list_location: "置き場",
     core_list_note: "メモ",
     core_list_delete_confirm: "このCORE行を削除しますか？",
+    core_list_created_from_ranking: "ランキングからCOREリストを{n}件作成しました",
+    core_list_no_ranking_source: "ランキング側に追加できるCORE候補がありません",
     production_ranking_search_ph: "順位・品番・メーカー・DKD商品IDで検索",
     production_ranking_rank: "順位",
     production_ranking_year: "年度",
@@ -2231,6 +2235,7 @@ var TRANSLATIONS = {
     lbl_category: "Category",
     btn_add_part: "Add Part",
     btn_add_core_list: "Add CORE",
+    btn_create_core_from_ranking: "Create from Ranking",
     btn_add_production_ranking: "Add Ranking",
     btn_edit: "Edit",
     btn_edit_part: "Edit Part No.",
@@ -2247,6 +2252,8 @@ var TRANSLATIONS = {
     core_list_location: "Location",
     core_list_note: "Memo",
     core_list_delete_confirm: "Delete this CORE row?",
+    core_list_created_from_ranking: "Created {n} CORE rows from ranking",
+    core_list_no_ranking_source: "No CORE candidates available in ranking",
     production_ranking_search_ph: "Search by rank, part number, manufacturer, or DKD ID",
     production_ranking_rank: "Rank",
     production_ranking_year: "Year",
@@ -2599,6 +2606,7 @@ var TRANSLATIONS = {
     lbl_category: "类别",
     btn_add_part: "添加零件",
     btn_add_core_list: "添加CORE",
+    btn_create_core_from_ranking: "从排行创建",
     btn_add_production_ranking: "添加排行",
     btn_edit: "修改",
     btn_delete: "删除",
@@ -2614,6 +2622,8 @@ var TRANSLATIONS = {
     core_list_location: "位置",
     core_list_note: "备注",
     core_list_delete_confirm: "删除此CORE行？",
+    core_list_created_from_ranking: "已从排行创建{n}条CORE记录",
+    core_list_no_ranking_source: "排行中没有可添加的CORE候选",
     production_ranking_search_ph: "按排名、零件编号、制造商或DKD ID搜索",
     production_ranking_rank: "排名",
     production_ranking_year: "年度",
@@ -2813,7 +2823,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.106";
+var APP_VERSION       = "v1.1.108";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -5041,7 +5051,7 @@ function renderCoreListMgmt() {
   if (countEl) countEl.textContent = coreListMgmtRows.length + " 件";
   if (!list) return;
   if (!coreListMgmtRows.length) {
-    list.innerHTML = "<div class='empty'>該当するCOREがありません</div>";
+    list.innerHTML = "<div class='empty'>COREリストはまだ登録されていません。<br>「COREを追加」から基幹商品に紐づくCORE品番・数量・置き場を登録してください。</div>";
     return;
   }
   var html = "<table class='mgmt-table'>";
@@ -5182,6 +5192,53 @@ async function saveCoreListForm() {
   document.getElementById("core-list-form-overlay").classList.remove("show");
   productionLoaded = false;
   await loadCoreListMgmt();
+}
+
+async function createCoreListFromRanking() {
+  if (!canEdit()) { alert(t("err_perm")); return; }
+  var btn = document.getElementById("btn-create-core-list-from-ranking");
+  if (btn) btn.disabled = true;
+  try {
+    var existing = await sb.from("production_core_list_entries").select("dkd_shohin_id").limit(10000);
+    if (existing.error) { alert(t("msg_part_err") + ": " + existing.error.message); return; }
+    var existingIds = {};
+    (existing.data || []).forEach(function(row) {
+      if (row.dkd_shohin_id != null) existingIds[String(row.dkd_shohin_id)] = true;
+    });
+    var src = await sb.from("production_instruction_candidates")
+      .select("dkd_shohin_id, core_part_number, core_stock_qty, core_pallet_summary")
+      .not("dkd_shohin_id", "is", null)
+      .order("priority_rank", { ascending: true })
+      .limit(500);
+    if (src.error) { alert(t("msg_part_err") + ": " + src.error.message); return; }
+    var rows = [];
+    (src.data || []).forEach(function(row) {
+      var key = String(row.dkd_shohin_id);
+      if (existingIds[key]) return;
+      existingIds[key] = true;
+      rows.push({
+        dkd_shohin_id: row.dkd_shohin_id,
+        core_part_number: row.core_part_number || null,
+        quantity: row.core_stock_qty == null ? 0 : parseInt(row.core_stock_qty, 10) || 0,
+        location: null,
+        note: row.core_pallet_summary || null,
+        created_by: currentUser ? currentUser.id : null,
+        updated_at: new Date().toISOString()
+      });
+    });
+    if (!rows.length) {
+      alert(t("core_list_no_ranking_source"));
+      return;
+    }
+    var ins = await sb.from("production_core_list_entries").insert(rows).select("id");
+    if (ins.error) { alert(t("msg_part_err") + ": " + ins.error.message); return; }
+    await writeLog("insert", "production_core_list_entries", null, "ranking import", null, { count: rows.length });
+    alert(tf("core_list_created_from_ranking", { n: rows.length }));
+    productionLoaded = false;
+    await loadCoreListMgmt();
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 async function deleteCoreListRow(id) {
@@ -7018,8 +7075,9 @@ async function loadAssemblyComponentsForCurrent() {
     return;
   }
   wrap.innerHTML = "<div class='component-empty'>" + t("loading") + "</div>";
+  var selectColumns = "id, dkd_component_id, dkd_shohin_id, assy_manufacturer, normalized_assy_manufacturer_part_number, component_manufacturer_part_number, component_genuine_part_number, component_name, quantity, interchange_code, effective_start, effective_end, component_position, component_manufacturer, component_part_name, source_code, is_catalog_evidence";
   var r = await sb.from("assembly_component_usage_details")
-    .select("id, dkd_component_id, component_manufacturer_part_number, component_genuine_part_number, component_name, quantity, interchange_code, effective_start, effective_end, component_position, component_manufacturer, component_part_name, source_code, is_catalog_evidence")
+    .select(selectColumns)
     .eq("dkd_shohin_id", dkdId)
     .order("component_position", { ascending: true, nullsFirst: false })
     .order("component_manufacturer_part_number", { ascending: true });
@@ -7028,7 +7086,38 @@ async function loadAssemblyComponentsForCurrent() {
     wrap.innerHTML = "<div class='component-empty'>" + t("component_none") + "</div>";
     return;
   }
-  assemblyComponentRows = r.data || [];
+  var rows = r.data || [];
+  var seen = {};
+  rows.forEach(function(row) { if (row.id != null) seen[String(row.id)] = true; });
+
+  var mfr = currentProduct && currentProduct.manufacturer;
+  var normalizedMfrPn = currentProduct && (currentProduct.normalized_manufacturer_part_number || normalizedPartKey(currentProduct.manufacturer_part_number));
+  if (mfr && normalizedMfrPn) {
+    var byPart = await sb.from("assembly_component_usage_details")
+      .select(selectColumns)
+      .eq("assy_manufacturer", mfr)
+      .eq("normalized_assy_manufacturer_part_number", normalizedMfrPn)
+      .order("component_position", { ascending: true, nullsFirst: false })
+      .order("component_manufacturer_part_number", { ascending: true });
+    if (!byPart.error) {
+      (byPart.data || []).forEach(function(row) {
+        var key = row.id == null ? "" : String(row.id);
+        if (key && seen[key]) return;
+        if (key) seen[key] = true;
+        rows.push(row);
+      });
+    } else {
+      console.warn("assembly component fallback lookup failed", byPart.error);
+    }
+  }
+
+  rows.sort(function(a, b) {
+    var ap = String(a.component_position || "");
+    var bp = String(b.component_position || "");
+    if (ap !== bp) return ap.localeCompare(bp, "ja", { numeric: true });
+    return String(a.component_manufacturer_part_number || "").localeCompare(String(b.component_manufacturer_part_number || ""), "ja", { numeric: true });
+  });
+  assemblyComponentRows = rows;
   renderAssemblyComponentRows();
 }
 
@@ -7822,6 +7911,7 @@ document.getElementById("btn-add-part").addEventListener("click", function(){ op
 document.getElementById("btn-part-form-cancel").addEventListener("click", function(){ document.getElementById("part-form-overlay").classList.remove("show"); });
 document.getElementById("btn-part-form-save").addEventListener("click", savePartForm);
 document.getElementById("btn-add-core-list").addEventListener("click", function(){ openCoreListForm("add"); });
+document.getElementById("btn-create-core-list-from-ranking").addEventListener("click", createCoreListFromRanking);
 document.getElementById("btn-core-list-search").addEventListener("click", loadCoreListMgmt);
 document.getElementById("core-list-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadCoreListMgmt(); });
 document.getElementById("btn-core-list-form-cancel").addEventListener("click", function(){ document.getElementById("core-list-form-overlay").classList.remove("show"); });
