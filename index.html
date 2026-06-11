@@ -1081,7 +1081,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <input type="hidden" id="part-form-id">
     <div class="form-row">
       <label class="form-label" data-i18n="lbl_shohin_cd">商品コード</label>
-      <input class="form-input" id="pf-shohin-cd" type="number" placeholder="例: 12345">
+      <input class="form-input" id="pf-shohin-cd" type="number" placeholder="空欄なら自動採番">
     </div>
     <div class="form-row">
       <label class="form-label" data-i18n="lbl_genuine_pn">純正品番 *</label>
@@ -2849,7 +2849,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.122";
+var APP_VERSION       = "v1.1.123";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -5673,8 +5673,10 @@ async function saveCoreProductForm() {
   var errEl = document.getElementById("part-form-error");
   errEl.textContent = "";
   if (!canEdit()) { errEl.textContent = t("err_perm"); return; }
-  var dkd = parseInt(document.getElementById("pf-shohin-cd").value.trim(), 10);
+  var dkdInput = document.getElementById("pf-shohin-cd").value.trim();
+  var dkd = dkdInput ? parseInt(dkdInput, 10) : null;
   if (isNaN(dkd)) { errEl.textContent = t("lbl_shohin_cd") + "を入力してください"; return; }
+  if (partFormMode !== "add" && !dkd) { errEl.textContent = "商品コードを入力してください"; return; }
   var genuine = document.getElementById("pf-genuine-pn").value.trim() || null;
   var genuine2 = document.getElementById("pf-genuine-pn2").value.trim() || null;
   var mfrPart = document.getElementById("pf-mfr-pn").value.trim() || null;
@@ -5692,17 +5694,22 @@ async function saveCoreProductForm() {
   };
   var r;
   if (partFormMode === "add") {
-    payload.dkd_shohin_id = dkd;
+    if (dkd) payload.dkd_shohin_id = dkd;
     payload.has_catalog_source = false;
     payload.created_by = currentUser ? currentUser.id : null;
-    r = await sb.from("core_products").insert(payload);
-    if (!r.error) await writeLog("insert", "core_products", dkd, genuine || mfrPart || String(dkd), null, payload);
+    r = await sb.from("core_products").insert(payload).select("dkd_shohin_id").single();
+    if (!r.error) {
+      dkd = r.data && r.data.dkd_shohin_id ? r.data.dkd_shohin_id : dkd;
+      document.getElementById("pf-shohin-cd").value = dkd || "";
+      await writeLog("insert", "core_products", dkd, genuine || mfrPart || String(dkd), null, payload);
+    }
   } else {
     var before = currentProduct ? JSON.parse(JSON.stringify(currentProduct)) : null;
     r = await sb.from("core_products").update(payload).eq("dkd_shohin_id", dkd);
     if (!r.error) await writeLog("update", "core_products", dkd, genuine || mfrPart || String(dkd), before, payload);
   }
   if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
+  if (!dkd) { errEl.textContent = "商品コードを自動採番できませんでした"; return; }
   var genuine2Ok = await saveGenuinePartNumber2ForCurrentProduct(genuine2, errEl);
   if (!genuine2Ok) return;
   var specOk = await saveUnifiedSpecForDkd(dkd, errEl);
