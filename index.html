@@ -2849,7 +2849,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.123";
+var APP_VERSION       = "v1.1.124";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -5044,6 +5044,7 @@ function openPartForm(mode, partId) {
   var title    = document.getElementById("part-form-title");
   var errEl    = document.getElementById("part-form-error");
   errEl.textContent = "";
+  document.getElementById("pf-shohin-cd").readOnly = false;
 
   if (mode === "add") {
     title.textContent = "商品追加";
@@ -5631,7 +5632,8 @@ async function openCoreProductForm(mode, product) {
   document.getElementById("part-form-error").textContent = "";
   document.getElementById("part-form-title").textContent = mode === "add" ? t("btn_add_part") : t("btn_edit_part");
   setCoreProductFormFields(mode === "add" ? (product || null) : product);
-  document.getElementById("pf-shohin-cd").readOnly = mode !== "add";
+  document.getElementById("pf-shohin-cd").readOnly = true;
+  if (mode === "add") document.getElementById("pf-shohin-cd").value = "";
   clearUnifiedSpecForm();
   if (mode === "edit") {
     await loadProductSpecsForCurrent();
@@ -5694,7 +5696,6 @@ async function saveCoreProductForm() {
   };
   var r;
   if (partFormMode === "add") {
-    if (dkd) payload.dkd_shohin_id = dkd;
     payload.has_catalog_source = false;
     payload.created_by = currentUser ? currentUser.id : null;
     r = await sb.from("core_products").insert(payload).select("dkd_shohin_id").single();
