@@ -369,7 +369,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 ============================================= */
 .badge-sl  { background: #e8f4ff; color: #1a6fd4; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .badge-img { background: #e8f7ee; color: #1a8c3e; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
-.badge-core { background: #eef8e8; color: #327a18; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700; white-space: nowrap; }
 .badge-component { background: #fff4d6; color: #8a5a00; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .badge-kikan { background: #eef5ff; color: #1a6fd4; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700; white-space: nowrap; }
 .btn-component-action { background: #fff4d6; color: #8a5a00; border-color: #f2d489; font-weight: 700; }
@@ -2844,7 +2843,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.114";
+var APP_VERSION       = "v1.1.116";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -6419,9 +6418,7 @@ function render() {
     var slNums = legacyId ? (slPartsMap[legacyId] || []) : [];
     var hasSL  = slNums.length > 0;
     var componentCount = componentUsageCountMap[String(p.dkd_shohin_id || p.id)] || 0;
-    var coreQty = coreStockQtyMap[String(p.dkd_shohin_id || p.id)] || 0;
     var hasKikan = !!kikanCompatibleMap["dkd:" + String(p.dkd_shohin_id || p.id || "")];
-    var inst = productionInstructionFor(p);
     var mfr   = [p.manufacturer, p.vehicle_manufacturer].filter(Boolean).join(" / ");
     var sel   = (currentProduct && currentProduct.id===p.id) ? " selected" : "";
     html += "<div class='card"+sel+"' data-id='"+p.id+"'><div class='card-top'>";
@@ -6445,8 +6442,6 @@ function render() {
     if (hasSL) html += "<div class='card-sl'>SL: "+esc(slNums[0])+(slNums.length>1?" 他":"")+"</div>";
     html += "</div>";
     html += "<div class='badges'>"
-      +(inst?"<span class='badge-component' title='"+esc(t("production_instruction_filter"))+"'>#"+esc(String(inst.priority_rank || "-"))+"</span>":"")
-      +(coreQty>0?"<span class='badge-core' title='CORE'>CORE "+esc(String(coreQty))+"</span>":"")
       +(hasSL?"<span class='badge-sl'>SL</span>":"")
       +(hasKikan?"<span class='badge-kikan' title='"+esc(t("kikan_section"))+"'>&#x1F504;</span>":"")
       +(componentCount>0?"<span class='badge-component' title='"+esc(t("component_section"))+"'><span class='component-icon'>&#x1F9E9;</span>"+esc(String(componentCount))+"</span>":"")
