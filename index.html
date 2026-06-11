@@ -1088,29 +1088,35 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <input class="form-input" id="pf-genuine-pn" type="text" placeholder="例: 27060-37031">
     </div>
     <div class="form-row">
+      <label class="form-label" data-i18n="f_genuine_pn2">純正品番2</label>
+      <input class="form-input" id="pf-genuine-pn2" type="text" placeholder="例: 27060-37032">
+    </div>
+    <div class="form-row">
       <label class="form-label" data-i18n="lbl_mfr_pn">メーカー品番</label>
       <input class="form-input" id="pf-mfr-pn" type="text" placeholder="例: 104210-5520">
     </div>
     <div class="form-row">
       <label class="form-label" data-i18n="lbl_mfr">メーカー</label>
-      <input class="form-input" id="pf-mfr" type="text" placeholder="例: DENSO">
+      <input class="form-input" id="pf-mfr" type="text" list="manufacturer-options" placeholder="例: DENSO">
+      <datalist id="manufacturer-options">
+        <option value="DENSO">
+        <option value="MITSUBISHI">
+        <option value="HITACHI">
+        <option value="NIKKO">
+        <option value="SAWAFUJI">
+        <option value="MITSUBA">
+        <option value="BOSCH">
+        <option value="VALEO">
+        <option value="ZEXEL">
+        <option value="DELCO">
+        <option value="LUCAS">
+        <option value="大光">
+      </datalist>
     </div>
-    <div class="form-row">
-      <label class="form-label" data-i18n="lbl_vehicle_mfr">車メーカー</label>
-      <input class="form-input" id="pf-vehicle-mfr" type="text" placeholder="例: TOYOTA">
-    </div>
-    <div class="form-row">
-      <label class="form-label" data-i18n="lbl_body_type">車種</label>
-      <input class="form-input" id="pf-body-type" type="text">
-    </div>
-    <div class="form-row">
-      <label class="form-label" data-i18n="lbl_compatible">適合車名</label>
-      <input class="form-input" id="pf-compatible" type="text">
-    </div>
-    <div class="form-row">
-      <label class="form-label" data-i18n="lbl_model">型式</label>
-      <input class="form-input" id="pf-model" type="text">
-    </div>
+    <input id="pf-vehicle-mfr" type="hidden">
+    <input id="pf-body-type" type="hidden">
+    <input id="pf-compatible" type="hidden">
+    <input id="pf-model" type="hidden">
     <div class="form-row">
       <label class="form-label" data-i18n="lbl_category">カテゴリ</label>
       <select class="form-select" id="pf-category">
@@ -2843,7 +2849,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.121";
+var APP_VERSION       = "v1.1.122";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -5044,6 +5050,7 @@ function openPartForm(mode, partId) {
     document.getElementById("part-form-id").value        = "";
     document.getElementById("pf-shohin-cd").value        = "";
     document.getElementById("pf-genuine-pn").value       = "";
+    document.getElementById("pf-genuine-pn2").value      = "";
     document.getElementById("pf-mfr-pn").value           = "";
     document.getElementById("pf-mfr").value              = "";
     document.getElementById("pf-vehicle-mfr").value      = "";
@@ -5058,6 +5065,7 @@ function openPartForm(mode, partId) {
     document.getElementById("part-form-id").value        = p.id;
     document.getElementById("pf-shohin-cd").value        = p.dkd_shohin_id || p.shohin_cd || "";
     document.getElementById("pf-genuine-pn").value       = p.genuine_part_number || "";
+    document.getElementById("pf-genuine-pn2").value      = p.genuine_part_number_2 || "";
     document.getElementById("pf-mfr-pn").value           = p.manufacturer_part_number || "";
     document.getElementById("pf-mfr").value              = p.manufacturer || "";
     document.getElementById("pf-vehicle-mfr").value      = p.vehicle_manufacturer || "";
@@ -5083,12 +5091,9 @@ async function savePartForm() {
 
   var data = {
     genuine_part_number:      gpn,
+    genuine_part_number_2:    document.getElementById("pf-genuine-pn2").value.trim() || null,
     manufacturer_part_number: document.getElementById("pf-mfr-pn").value.trim() || null,
     manufacturer:             document.getElementById("pf-mfr").value.trim() || null,
-    vehicle_manufacturer:     document.getElementById("pf-vehicle-mfr").value.trim() || null,
-    body_type:                document.getElementById("pf-body-type").value.trim() || null,
-    compatible_car_models:    document.getElementById("pf-compatible").value.trim() || null,
-    model:                    document.getElementById("pf-model").value.trim() || null,
     category:                 document.getElementById("pf-category").value,
     updated_at:               new Date().toISOString()
   };
@@ -5609,6 +5614,7 @@ function setCoreProductFormFields(p) {
   document.getElementById("part-form-id").value        = p && p.dkd_shohin_id ? p.dkd_shohin_id : "";
   document.getElementById("pf-shohin-cd").value        = p && p.dkd_shohin_id ? p.dkd_shohin_id : "";
   document.getElementById("pf-genuine-pn").value       = p ? (p.genuine_part_number || "") : "";
+  document.getElementById("pf-genuine-pn2").value      = p ? (p.genuine_part_number_2 || "") : "";
   document.getElementById("pf-mfr-pn").value           = p ? (p.manufacturer_part_number || "") : "";
   document.getElementById("pf-mfr").value              = p ? (p.manufacturer || "") : "";
   document.getElementById("pf-vehicle-mfr").value      = p ? (p.vehicle_manufacturer || "") : "";
@@ -5645,6 +5651,24 @@ async function openCoreProductEditFromSearch() {
   await openCoreProductForm("edit", currentProduct);
 }
 
+async function saveGenuinePartNumber2ForCurrentProduct(value, errEl) {
+  if (partFormMode !== "edit") return true;
+  if (!currentProduct || !currentProduct.shohin_cd) return true;
+  var before = currentProduct.genuine_part_number_2 || null;
+  var next = value || null;
+  if ((before || "") === (next || "")) return true;
+  var r = await sb.from("dks_search_parts").update({
+    genuine_part_number_2: next,
+    updated_at: new Date().toISOString()
+  }).eq("dks_shohin_cd", currentProduct.shohin_cd);
+  if (r.error) {
+    errEl.textContent = t("msg_part_err") + ": " + r.error.message;
+    return false;
+  }
+  await writeLog("update", "dks_search_parts", currentProduct.shohin_cd, "genuine_part_number_2", before, { genuine_part_number_2: next });
+  return true;
+}
+
 async function saveCoreProductForm() {
   var errEl = document.getElementById("part-form-error");
   errEl.textContent = "";
@@ -5652,6 +5676,7 @@ async function saveCoreProductForm() {
   var dkd = parseInt(document.getElementById("pf-shohin-cd").value.trim(), 10);
   if (isNaN(dkd)) { errEl.textContent = t("lbl_shohin_cd") + "を入力してください"; return; }
   var genuine = document.getElementById("pf-genuine-pn").value.trim() || null;
+  var genuine2 = document.getElementById("pf-genuine-pn2").value.trim() || null;
   var mfrPart = document.getElementById("pf-mfr-pn").value.trim() || null;
   var manufacturer = document.getElementById("pf-mfr").value.trim() || null;
   if (!genuine && !mfrPart) { errEl.textContent = t("lbl_genuine_pn") + "または" + t("lbl_mfr_pn") + "を入力してください"; return; }
@@ -5678,6 +5703,8 @@ async function saveCoreProductForm() {
     if (!r.error) await writeLog("update", "core_products", dkd, genuine || mfrPart || String(dkd), before, payload);
   }
   if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
+  var genuine2Ok = await saveGenuinePartNumber2ForCurrentProduct(genuine2, errEl);
+  if (!genuine2Ok) return;
   var specOk = await saveUnifiedSpecForDkd(dkd, errEl);
   if (!specOk) return;
   document.getElementById("part-form-overlay").classList.remove("show");
