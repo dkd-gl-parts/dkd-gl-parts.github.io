@@ -362,6 +362,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 ============================================= */
 .badge-sl  { background: #e8f4ff; color: #1a6fd4; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .badge-img { background: #e8f7ee; color: #1a8c3e; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.badge-core { background: #eef8e8; color: #327a18; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700; white-space: nowrap; }
 .badge-component { background: #fff4d6; color: #8a5a00; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .badge-kikan { background: #eef5ff; color: #1a6fd4; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700; white-space: nowrap; }
 .btn-component-action { background: #fff4d6; color: #8a5a00; border-color: #f2d489; font-weight: 700; }
@@ -2807,6 +2808,7 @@ var imageCountMap     = {};
 var imageThumbnailMap = {};
 var slPartsMap        = {};  // part_id → SL品番リスト
 var componentUsageCountMap = {};
+var coreStockQtyMap = {};
 var kikanCompatibleMap = {};
 var currentSlPartIds  = [];  // 現在表示中のSL品番IDリスト（画像ロード用）
 var currentFilter     = "all";
@@ -2823,7 +2825,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.108";
+var APP_VERSION       = "v1.1.109";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -3406,9 +3408,12 @@ function renderProductionFilterChips() {
 
 function enrichProductionProduct(row) {
   var inst = productionInstructionFor(row);
+  var coreKey = String(row.dkd_shohin_id);
+  var hasCoreQty = Object.prototype.hasOwnProperty.call(coreStockQtyMap, coreKey);
+  var coreQty = hasCoreQty ? coreStockQtyMap[coreKey] : null;
   row.production_instruction = inst;
   row.priority_rank = inst ? inst.priority_rank : null;
-  row.core_stock_qty = inst && inst.core_stock_qty != null ? inst.core_stock_qty : parseInt(row.stock || "0", 10) || 0;
+  row.core_stock_qty = coreQty != null ? coreQty : (inst && inst.core_stock_qty != null ? inst.core_stock_qty : parseInt(row.stock || "0", 10) || 0);
   row.core_part_number = inst ? inst.core_part_number : (row.genuine_part_number || row.manufacturer_part_number || "");
   row.core_pallet_summary = inst ? inst.core_pallet_summary : "";
   row.component_count = inst && inst.component_count != null ? inst.component_count : (componentUsageCountMap[String(row.dkd_shohin_id)] || 0);
@@ -3454,6 +3459,7 @@ async function loadProductionProducts() {
   }
   productionRows = r.data || [];
   await loadComponentUsageCounts(productionRows);
+  await loadCoreStockQtyCounts(productionRows);
   productionRows = productionRows.map(enrichProductionProduct);
   productionRows.sort(function(a,b) {
     var ai = productionInstructionFor(a), bi = productionInstructionFor(b);
@@ -3542,6 +3548,13 @@ function productionKv(label, value) {
 
 function formatDateTime(value) {
   return value ? new Date(value).toLocaleString("ja-JP") : "-";
+}
+
+function formatYen(value) {
+  if (value === null || value === undefined || value === "") return "-";
+  var n = parseInt(value, 10);
+  if (isNaN(n)) return "-";
+  return n.toLocaleString("ja-JP");
 }
 
 function renderProductMasterDetailHtml(p) {
@@ -5031,20 +5044,6 @@ async function loadCoreListProductMap(rows) {
   });
 }
 
-function coreListProductTitle(row) {
-  var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
-  return p.manufacturer_part_number || p.genuine_part_number || p.daiko_part_number || ("DKD " + row.dkd_shohin_id);
-}
-
-function coreListProductMeta(row) {
-  var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
-  return [
-    p.genuine_part_number || "-",
-    p.manufacturer || "-",
-    productionCategoryLabel(p)
-  ].join(" / ");
-}
-
 function renderCoreListMgmt() {
   var list = document.getElementById("core-list-list");
   var countEl = document.getElementById("core-list-count");
@@ -5055,11 +5054,13 @@ function renderCoreListMgmt() {
     return;
   }
   var html = "<table class='mgmt-table'>";
-  html += "<tr><th>DKD商品ID</th><th>対象商品</th><th>CORE品番</th><th>数量</th><th>置き場</th><th>メモ</th><th>更新</th><th></th></tr>";
+  html += "<tr><th>純正品番</th><th>メーカー品番</th><th>メーカー</th><th>CORE品番</th><th>数量</th><th>置き場</th><th>メモ</th><th>更新</th><th></th></tr>";
   coreListMgmtRows.forEach(function(row) {
+    var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
     html += "<tr>";
-    html += "<td><div class='mgmt-pn'>" + esc(String(row.dkd_shohin_id || "-")) + "</div></td>";
-    html += "<td><div class='mgmt-pn'>" + esc(coreListProductTitle(row)) + "</div><div class='mgmt-sub'>" + esc(coreListProductMeta(row)) + "</div></td>";
+    html += "<td><div class='mgmt-pn'>" + esc(p.genuine_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(productionCategoryLabel(p)) + "</div></td>";
+    html += "<td><div class='mgmt-pn'>" + esc(p.manufacturer_part_number || "-") + "</div><div class='mgmt-sub'>DKD " + esc(String(row.dkd_shohin_id || "-")) + "</div></td>";
+    html += "<td>" + esc(p.manufacturer || "-") + "</td>";
     html += "<td><div class='mgmt-pn'>" + esc(row.core_part_number || "-") + "</div></td>";
     html += "<td>" + esc(String(row.quantity == null ? "-" : row.quantity)) + "</td>";
     html += "<td>" + esc(row.location || "-") + "</td>";
@@ -5380,6 +5381,13 @@ function nullableTextFromInput(id) {
 
 function nullableIntFromInput(id) {
   var v = document.getElementById(id).value.trim();
+  if (!v) return null;
+  var n = parseInt(v, 10);
+  return isNaN(n) ? null : n;
+}
+
+function nullableIntFromValue(value) {
+  var v = String(value == null ? "" : value).trim();
   if (!v) return null;
   var n = parseInt(v, 10);
   return isNaN(n) ? null : n;
@@ -6150,6 +6158,7 @@ async function runProductSearch(options) {
   }
   allProducts = filterVisibleProducts(r.data || []);
   await loadComponentUsageCounts(allProducts);
+  await loadCoreStockQtyCounts(allProducts);
   await loadKikanCompatibleFlags(allProducts);
   renderCategoryChips();
   render();
@@ -6181,6 +6190,33 @@ async function loadComponentUsageCounts(products) {
     }
     (r.data || []).forEach(function(row) {
       componentUsageCountMap[String(row.dkd_shohin_id)] = parseInt(row.component_usage_count || 0, 10);
+    });
+  }
+}
+
+async function loadCoreStockQtyCounts(products) {
+  coreStockQtyMap = {};
+  var ids = (products || []).map(function(p) {
+    return p.dkd_shohin_id || p.id;
+  }).filter(function(id) {
+    return id !== null && id !== undefined && id !== "";
+  });
+  var uniqueIds = Array.from(new Set(ids.map(function(id) { return parseInt(id, 10); }))).filter(function(id) {
+    return !isNaN(id);
+  });
+  if (!uniqueIds.length) return;
+  for (var i = 0; i < uniqueIds.length; i += 200) {
+    var chunk = uniqueIds.slice(i, i + 200);
+    var r = await sb.from("production_core_list_entries")
+      .select("dkd_shohin_id, quantity")
+      .in("dkd_shohin_id", chunk);
+    if (r.error) {
+      console.warn("core stock count lookup failed", r.error);
+      return;
+    }
+    (r.data || []).forEach(function(row) {
+      var key = String(row.dkd_shohin_id);
+      coreStockQtyMap[key] = (coreStockQtyMap[key] || 0) + (parseInt(row.quantity || 0, 10) || 0);
     });
   }
 }
@@ -6260,6 +6296,7 @@ function render() {
     var slNums = legacyId ? (slPartsMap[legacyId] || []) : [];
     var hasSL  = slNums.length > 0;
     var componentCount = componentUsageCountMap[String(p.dkd_shohin_id || p.id)] || 0;
+    var coreQty = coreStockQtyMap[String(p.dkd_shohin_id || p.id)] || 0;
     var hasKikan = !!kikanCompatibleMap["dkd:" + String(p.dkd_shohin_id || p.id || "")];
     var inst = productionInstructionFor(p);
     var mfr   = [p.manufacturer, p.vehicle_manufacturer].filter(Boolean).join(" / ");
@@ -6286,6 +6323,7 @@ function render() {
     html += "</div>";
     html += "<div class='badges'>"
       +(inst?"<span class='badge-component' title='"+esc(t("production_instruction_filter"))+"'>#"+esc(String(inst.priority_rank || "-"))+"</span>":"")
+      +(coreQty>0?"<span class='badge-core' title='CORE'>CORE "+esc(String(coreQty))+"</span>":"")
       +(hasSL?"<span class='badge-sl'>SL</span>":"")
       +(hasKikan?"<span class='badge-kikan' title='"+esc(t("kikan_section"))+"'>&#x1F504;</span>":"")
       +(componentCount>0?"<span class='badge-component' title='"+esc(t("component_section"))+"'><span class='component-icon'>&#x1F9E9;</span>"+esc(String(componentCount))+"</span>":"")
@@ -6853,6 +6891,7 @@ function renderComponentAddPanel() {
   html += "<div class='component-add-field'><label>部品名</label><input id='component-add-name' type='text'></div>";
   html += "<div class='component-add-field'><label>図番/位置</label><input id='component-add-position' type='text'></div>";
   html += "<div class='component-add-field'><label>数量</label><input id='component-add-qty' type='text' value='1'></div>";
+  html += "<div class='component-add-field'><label>単価</label><input id='component-add-unit-price' type='number' min='0' step='1'></div>";
   html += "<div class='component-add-field'><label>互</label><input id='component-add-interchange' type='text'></div>";
   html += "<div class='component-add-field'><label>始期</label><input id='component-add-start' type='text'></div>";
   html += "<div class='component-add-field'><label>終期</label><input id='component-add-end' type='text'></div>";
@@ -6870,7 +6909,7 @@ function componentAddValue(id) {
 }
 
 function clearComponentAddForm() {
-  ["component-add-mfr-pn","component-add-genuine-pn","component-add-name","component-add-position","component-add-interchange","component-add-start","component-add-end"].forEach(function(id) {
+  ["component-add-mfr-pn","component-add-genuine-pn","component-add-name","component-add-position","component-add-unit-price","component-add-interchange","component-add-start","component-add-end"].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.value = "";
   });
@@ -6897,6 +6936,7 @@ async function addAssemblyComponentForCurrent() {
     component_part_name: componentAddValue("component-add-name") || null,
     component_position: componentAddValue("component-add-position") || null,
     component_quantity: componentAddValue("component-add-qty") || "1",
+    component_unit_price_jpy: nullableIntFromInput("component-add-unit-price"),
     component_interchange_code: componentAddValue("component-add-interchange") || null,
     component_effective_start: componentAddValue("component-add-start") || null,
     component_effective_end: componentAddValue("component-add-end") || null
@@ -6962,6 +7002,7 @@ async function saveComponentEdit(usageId) {
     component_position: payload.component_position || null,
     component_name: payload.component_part_name || null,
     quantity: payload.quantity || "1",
+    unit_price_jpy: nullableIntFromValue(payload.unit_price_jpy),
     interchange_code: payload.component_interchange_code || null,
     effective_start: payload.effective_start || null,
     effective_end: payload.effective_end || null,
@@ -7022,7 +7063,7 @@ function renderAssemblyComponentRows() {
     return;
   }
   var html = "<table class='component-table'>";
-  html += "<tr><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th><th>" + t("component_position") + "</th><th>" + t("component_quantity") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
+  html += "<tr><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th><th>" + t("component_position") + "</th><th>" + t("component_quantity") + "</th><th>単価</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
   if (isAdmin()) html += "<th>操作</th>";
   html += "</tr>";
   rows.forEach(function(row) {
@@ -7034,6 +7075,7 @@ function renderAssemblyComponentRows() {
       html += "<td>" + componentEditInput(row, "component_part_name", row.component_name || row.component_part_name || "") + "</td>";
       html += "<td>" + componentEditInput(row, "component_position", row.component_position || row.source_code || "") + "</td>";
       html += "<td>" + componentEditInput(row, "quantity", row.quantity || "1") + "</td>";
+      html += "<td>" + componentEditInput(row, "unit_price_jpy", row.unit_price_jpy || "") + "</td>";
       html += "<td>" + componentEditInput(row, "component_interchange_code", row.interchange_code || row.component_interchange_code || "") + "</td>";
       html += "<td>" + componentEditInput(row, "effective_start", row.effective_start || "") + "</td>";
       html += "<td>" + componentEditInput(row, "effective_end", row.effective_end || "") + "</td>";
@@ -7044,6 +7086,7 @@ function renderAssemblyComponentRows() {
       html += "<td>" + esc(row.component_name || row.component_part_name || "-") + "</td>";
       html += "<td>" + esc(row.component_position || row.source_code || "-") + "</td>";
       html += "<td>" + esc(row.quantity || "-") + "</td>";
+      html += "<td>" + esc(formatYen(row.unit_price_jpy)) + "</td>";
       html += "<td>" + esc(formatComponentInterchange(row)) + "</td>";
       html += "<td>" + esc(row.effective_start || row.start_period || "-") + "</td>";
       html += "<td>" + esc(row.effective_end || row.end_period || "-") + "</td>";
@@ -7075,7 +7118,7 @@ async function loadAssemblyComponentsForCurrent() {
     return;
   }
   wrap.innerHTML = "<div class='component-empty'>" + t("loading") + "</div>";
-  var selectColumns = "id, dkd_component_id, dkd_shohin_id, assy_manufacturer, normalized_assy_manufacturer_part_number, component_manufacturer_part_number, component_genuine_part_number, component_name, quantity, interchange_code, effective_start, effective_end, component_position, component_manufacturer, component_part_name, source_code, is_catalog_evidence";
+  var selectColumns = "id, dkd_component_id, dkd_shohin_id, assy_manufacturer, normalized_assy_manufacturer_part_number, component_manufacturer_part_number, component_genuine_part_number, component_name, quantity, unit_price_jpy, interchange_code, effective_start, effective_end, component_position, component_manufacturer, component_part_name, source_code, is_catalog_evidence";
   var r = await sb.from("assembly_component_usage_details")
     .select(selectColumns)
     .eq("dkd_shohin_id", dkdId)
