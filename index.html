@@ -2825,7 +2825,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.109";
+var APP_VERSION       = "v1.1.110";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -6958,7 +6958,20 @@ function componentEditInput(row, field, value) {
   return "<input data-component-edit-field='" + esc(field) + "' value='" + esc(value || "") + "'>";
 }
 
+function isCatalogComponentRow(row) {
+  if (!row) return false;
+  if (row.is_catalog_evidence === true) return true;
+  var sourceCode = String(row.source_code || "").toLowerCase();
+  var sourceTable = String(row.source_table || "").toLowerCase();
+  return sourceCode.indexOf("catalog") === 0 || sourceTable.indexOf("catalog") >= 0;
+}
+
 function startComponentEdit(usageId) {
+  var row = assemblyComponentRows.find(function(r) { return String(r.id) === String(usageId); });
+  if (isCatalogComponentRow(row)) {
+    alert("パーツカタログ由来の構成部品は修正できません。手入力の構成部品として追加してください。");
+    return;
+  }
   editingComponentUsageId = String(usageId);
   renderAssemblyComponentRows();
 }
@@ -6980,6 +6993,26 @@ async function saveComponentEdit(usageId) {
   if (!isAdmin()) { alert(t("err_perm")); return; }
   var row = assemblyComponentRows.find(function(r) { return String(r.id) === String(usageId); });
   if (!row) return;
+  if (isCatalogComponentRow(row)) {
+    alert("パーツカタログ由来の構成部品は修正できません。");
+    editingComponentUsageId = null;
+    renderAssemblyComponentRows();
+    return;
+  }
+  var guardR = await sb.from("assembly_component_usages")
+    .select("id,is_catalog_evidence")
+    .eq("id", usageId)
+    .maybeSingle();
+  if (guardR.error) {
+    alert("構成部品の確認に失敗しました: " + guardR.error.message);
+    return;
+  }
+  if (!guardR.data || guardR.data.is_catalog_evidence === true) {
+    alert("パーツカタログ由来の構成部品は修正できません。");
+    editingComponentUsageId = null;
+    await loadAssemblyComponentsForCurrent();
+    return;
+  }
   var tr = document.querySelector("[data-component-edit-row='" + String(usageId) + "']");
   if (!tr) return;
   var payload = componentEditPayloadFromRow(tr);
@@ -7043,7 +7076,7 @@ async function saveComponentEdit(usageId) {
       return;
     }
   }
-  var usageR = await sb.from("assembly_component_usages").update(usageUpdate).eq("id", usageId);
+  var usageR = await sb.from("assembly_component_usages").update(usageUpdate).eq("id", usageId).eq("is_catalog_evidence", false);
   if (btn) { btn.disabled = false; btn.textContent = "保存"; }
   if (usageR.error) {
     alert("構成部品の更新に失敗しました: " + usageR.error.message);
@@ -7067,7 +7100,8 @@ function renderAssemblyComponentRows() {
   if (isAdmin()) html += "<th>操作</th>";
   html += "</tr>";
   rows.forEach(function(row) {
-    var editing = isAdmin() && String(editingComponentUsageId) === String(row.id);
+    var catalogLocked = isCatalogComponentRow(row);
+    var editing = isAdmin() && !catalogLocked && String(editingComponentUsageId) === String(row.id);
     html += "<tr" + (editing ? " data-component-edit-row='" + esc(String(row.id)) + "'" : "") + ">";
     if (editing) {
       html += "<td>" + componentEditInput(row, "component_manufacturer_part_number", row.component_manufacturer_part_number) + "<div class='component-sub'>" + componentEditInput(row, "component_manufacturer", row.component_manufacturer || "") + "</div></td>";
@@ -7090,7 +7124,9 @@ function renderAssemblyComponentRows() {
       html += "<td>" + esc(formatComponentInterchange(row)) + "</td>";
       html += "<td>" + esc(row.effective_start || row.start_period || "-") + "</td>";
       html += "<td>" + esc(row.effective_end || row.end_period || "-") + "</td>";
-      if (isAdmin()) html += "<td><button class='btn-sm-edit' data-component-edit='" + esc(String(row.id)) + "'>修正</button></td>";
+      if (isAdmin()) {
+        html += "<td>" + (catalogLocked ? "<span class='component-sub'>カタログ</span>" : "<button class='btn-sm-edit' data-component-edit='" + esc(String(row.id)) + "'>修正</button>") + "</td>";
+      }
     }
     html += "</tr>";
   });
