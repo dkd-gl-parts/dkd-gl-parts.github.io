@@ -242,6 +242,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .detail-vehicle-grid { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 0; border-top: 1px solid #f0f0f0; margin-bottom: 10px; }
 .detail-vehicle-label { color: #888; font-size: 12px; padding: 6px 4px; border-bottom: 1px solid #f0f0f0; }
 .detail-vehicle-value { color: #1a1a2e; font-size: 13px; font-weight: 500; padding: 6px 4px; border-bottom: 1px solid #f0f0f0; word-break: break-word; }
+.detail-vehicle-action { grid-column: 1 / -1; padding: 8px 4px; border-bottom: 1px solid #f0f0f0; }
+.vehicle-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.vehicle-table th { background: #f5f7fa; color: #555; font-weight: 700; padding: 7px 8px; text-align: left; border-bottom: 1px solid #e5e8ef; white-space: nowrap; }
+.vehicle-table td { padding: 7px 8px; border-bottom: 1px solid #f0f2f5; vertical-align: top; }
+.vehicle-dialog-body { max-height: 64vh; overflow: auto; border: 1px solid #edf0f5; border-radius: 8px; }
+.vehicle-summary-note { color: #888; font-size: 12px; margin: 0 0 8px; line-height: 1.5; }
 .detail-spec-block { margin-top: 0; }
 .detail-spec-block .detail-block-title { margin-top: 0; }
 .detail-spec-after-maker { margin-top: 10px; }
@@ -1633,6 +1639,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   </div>
 </div>
 
+<div class="form-overlay" id="vehicle-info-overlay">
+  <div class="form-card" style="max-width:980px">
+    <h3>車両情報</h3>
+    <div class="vehicle-summary-note" id="vehicle-info-note">パーツカタログ由来の車両情報を表示します。</div>
+    <div class="vehicle-dialog-body" id="vehicle-info-body"></div>
+    <div class="form-footer">
+      <button class="btn-cancel" id="btn-vehicle-info-close">閉じる</button>
+    </div>
+  </div>
+</div>
+
 <div class="fullscreen" id="fullscreen">
   <div class="fs-top">
     <span class="fs-counter" id="fs-counter"></span>
@@ -2817,6 +2834,7 @@ var currentProduct    = null;
 var currentCoreDkdShohinId = null;
 var currentProductSpecs = [];
 var currentProductNominalSpec = null;
+var currentVehicleApplicationRows = [];
 var manualSpecSourceId = null;
 var currentParallelTargetDkdShohinId = null;
 var currentParallelTargetProduct = null;
@@ -2826,7 +2844,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.112";
+var APP_VERSION       = "v1.1.113";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -3558,20 +3576,97 @@ function formatYen(value) {
   return n.toLocaleString("ja-JP");
 }
 
+function renderCatalogVehicleSummaryHtml(offsetClass) {
+  return "<div class='detail-vehicle-grid" + (offsetClass || "") + "'>" +
+    "<div class='detail-vehicle-label'>車メーカー</div>" +
+    "<div class='detail-vehicle-value catalog-vehicle-maker-value'>読み込み中...</div>" +
+    "<div class='detail-vehicle-action'><button class='btn-sm-edit catalog-vehicle-button' type='button'>車両情報</button></div>" +
+  "</div>";
+}
+
+async function fetchCatalogVehicleApplications(product) {
+  if (!product) return [];
+  var r = await sb.rpc("get_catalog_vehicle_applications", {
+    target_dkd_shohin_id: product.dkd_shohin_id || product.id || null,
+    target_manufacturer: product.manufacturer || null,
+    target_manufacturer_part_number: product.manufacturer_part_number || null,
+    target_genuine_part_number: product.genuine_part_number || null
+  });
+  if (r.error) {
+    console.warn("catalog vehicle applications lookup failed", r.error);
+    return [];
+  }
+  return r.data || [];
+}
+
+function representativeVehicleMaker(rows) {
+  var counts = {};
+  (rows || []).forEach(function(row) {
+    var maker = row.vehicle_manufacturer || "";
+    if (!maker) return;
+    counts[maker] = (counts[maker] || 0) + 1;
+  });
+  var makers = Object.keys(counts).sort(function(a, b) {
+    if (counts[b] !== counts[a]) return counts[b] - counts[a];
+    return a.localeCompare(b, "ja");
+  });
+  if (!makers.length) return "-";
+  return makers[0] + (makers.length > 1 ? " 他" + String(makers.length - 1) + "件" : "");
+}
+
+function renderVehicleApplicationsTable(rows) {
+  if (!rows || !rows.length) return "<div class='component-empty'>パーツカタログ由来の車両情報はまだありません。</div>";
+  var html = "<table class='vehicle-table'><tr><th>車メーカー</th><th>車種</th><th>型式</th><th>エンジン</th><th>期間</th><th>品番</th><th>出典</th></tr>";
+  rows.forEach(function(row) {
+    html += "<tr>";
+    html += "<td>" + esc(row.vehicle_manufacturer || "-") + "</td>";
+    html += "<td>" + esc(row.vehicle_type || row.vehicle_model || "-") + "</td>";
+    html += "<td>" + esc(row.model || row.vehicle_model || "-") + "</td>";
+    html += "<td>" + esc(row.engine || "-") + "</td>";
+    html += "<td>" + esc(row.production_period_text || [row.effective_start, row.effective_end].filter(Boolean).join(" - ") || "-") + "</td>";
+    html += "<td><div class='component-pn'>" + esc(row.manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.genuine_part_number || "") + "</div></td>";
+    html += "<td>" + esc(row.source_name || row.source_code || "-") + "<div class='component-sub'>" + esc(row.source_table || "") + "</div></td>";
+    html += "</tr>";
+  });
+  html += "</table>";
+  return html;
+}
+
+function openVehicleApplicationsDialog(rows, product) {
+  var overlay = document.getElementById("vehicle-info-overlay");
+  var body = document.getElementById("vehicle-info-body");
+  var note = document.getElementById("vehicle-info-note");
+  if (!overlay || !body) return;
+  note.textContent = [
+    productCategoryLabel(product),
+    product && product.manufacturer_part_number,
+    product && product.genuine_part_number
+  ].filter(Boolean).join(" / ") + " のパーツカタログ由来車両情報";
+  body.innerHTML = renderVehicleApplicationsTable(rows || []);
+  overlay.classList.add("show");
+}
+
+function closeVehicleApplicationsDialog() {
+  var overlay = document.getElementById("vehicle-info-overlay");
+  if (overlay) overlay.classList.remove("show");
+}
+
+async function loadCatalogVehicleSummary(root, product) {
+  if (!root || !product) return;
+  var valueEl = root.querySelector(".catalog-vehicle-maker-value");
+  var button = root.querySelector(".catalog-vehicle-button");
+  var rows = await fetchCatalogVehicleApplications(product);
+  if (product === currentProduct) currentVehicleApplicationRows = rows;
+  if (valueEl) valueEl.textContent = representativeVehicleMaker(rows);
+  if (button) {
+    button.textContent = "車両情報" + (rows.length ? " (" + rows.length + ")" : "");
+    button.disabled = false;
+    button.onclick = function() { openVehicleApplicationsDialog(rows, product); };
+  }
+}
+
 function renderProductMasterDetailHtml(p) {
   var isAcProduct = (p.category_code || p.category || "") === "ac_compressor";
-  var vehicleRows = [
-    ["f_vehicle_mfr", p.vehicle_manufacturer],
-    ["f_body_type",   p.body_type],
-    ["f_compatible",  p.compatible_car_models],
-    ["f_model",       p.model],
-    ["f_engine",      getProductEngine(p)]
-  ];
-  var vehicleHtml = "";
-  vehicleRows.forEach(function(d) {
-    var text = (d[1] != null && String(d[1]) !== "None" && String(d[1]) !== "") ? String(d[1]) : "-";
-    vehicleHtml += "<div class='detail-vehicle-label'>" + t(d[0]) + "</div><div class='detail-vehicle-value'>" + esc(text) + "</div>";
-  });
   function renderAcRows(rows) {
     var html = "";
     rows.forEach(function(d) {
@@ -3616,7 +3711,7 @@ function renderProductMasterDetailHtml(p) {
     vehicleOffsetClass = " detail-maker-offset detail-maker-offset-standard";
   }
   return "<div class='detail-main-grid'>" +
-    "<div class='detail-column'>" + genuineHtml + "<div class='detail-vehicle-grid" + vehicleOffsetClass + "'>" + vehicleHtml + "</div></div>" +
+    "<div class='detail-column'>" + genuineHtml + renderCatalogVehicleSummaryHtml(vehicleOffsetClass) + "</div>" +
     "<div class='detail-column'>" + makerHtml +
     "<div class='detail-spec-block detail-spec-after-maker'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div></div>" +
   "</div>";
@@ -3699,6 +3794,7 @@ async function renderProductionDetail(row) {
   currentCoreDkdShohinId = row.dkd_shohin_id || null;
   currentProductSpecs = [];
   currentProductNominalSpec = null;
+  loadCatalogVehicleSummary(el, row);
   await loadProductSpecsForCurrent();
   var salesBtn = document.getElementById("production-open-sales");
   if (salesBtn) salesBtn.addEventListener("click", openProductionSalesProduct);
@@ -6403,19 +6499,6 @@ function renderPanelStatic() {
   }
   var isAcProduct = (p.category_code || p.category || "") === "ac_compressor";
   // parts テーブルのフィールド定義
-  var defs = [
-    ["f_vehicle_mfr", p.vehicle_manufacturer],
-    ["f_body_type",   p.body_type],
-    ["f_compatible",  p.compatible_car_models],
-    ["f_model",       p.model],
-    ["f_engine",      getProductEngine(p)],
-  ];
-  var tHtml = "";
-  defs.forEach(function(d) {
-    var k = d[0], v = d[1];
-    var text = (v != null && String(v) !== "None" && String(v) !== "") ? String(v) : "-";
-    tHtml += "<div class='detail-vehicle-label'>" + t(k) + "</div><div class='detail-vehicle-value'>" + esc(text) + "</div>";
-  });
   function renderAcPartRows(rows) {
     var html = "";
     rows.forEach(function(d) {
@@ -6478,7 +6561,7 @@ function renderPanelStatic() {
   toolHtml += "</div>";
   document.getElementById("panel-body").innerHTML =
     "<div class='detail-main-grid'>" +
-      "<div class='detail-column'>" + genuineHtml + "<div class='detail-vehicle-grid" + vehicleOffsetClass + "'>" + tHtml + "</div></div>" +
+      "<div class='detail-column'>" + genuineHtml + renderCatalogVehicleSummaryHtml(vehicleOffsetClass) + "</div>" +
       "<div class='detail-column'>" + makerHtml +
       "<div class='detail-spec-block detail-spec-after-maker'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div></div>" +
     "</div>" +
@@ -6498,6 +6581,8 @@ function renderPanelStatic() {
   var parallelBtn = document.getElementById("btn-open-component-parallel");
   if (componentBtn) componentBtn.addEventListener("click", function(){ enterComponentsScreen("search"); });
   if (parallelBtn) parallelBtn.addEventListener("click", enterComponentParallelScreen);
+  currentVehicleApplicationRows = [];
+  loadCatalogVehicleSummary(document.getElementById("panel-body"), p);
   loadProductSpecsForCurrent();
   loadSlParts(productLegacyPartId(p));
 }
@@ -8131,6 +8216,8 @@ document.getElementById("image-delete-list").addEventListener("click", function(
   var btn = e.target.closest("[data-delete-image-index]");
   if (btn) deleteImageFromDialog(parseInt(btn.dataset.deleteImageIndex, 10));
 });
+document.getElementById("btn-vehicle-info-close").addEventListener("click", closeVehicleApplicationsDialog);
+document.getElementById("vehicle-info-overlay").addEventListener("click", function(e){ if(e.target===this) closeVehicleApplicationsDialog(); });
 document.getElementById("fs-close").addEventListener("click", closeFullscreen);
 document.getElementById("fullscreen").addEventListener("click", function(e){ if(e.target===this) closeFullscreen(); });
 document.getElementById("fs-prev").addEventListener("click", function(){ if(fsIndex>0){fsIndex--;renderFullscreen();} });
