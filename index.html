@@ -2843,7 +2843,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.120";
+var APP_VERSION       = "v1.1.121";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -5662,8 +5662,6 @@ async function saveCoreProductForm() {
     genuine_part_number: genuine,
     manufacturer_part_number: mfrPart,
     manufacturer: manufacturer,
-    normalized_genuine_part_number: normalizePartNumberForCore(genuine),
-    normalized_manufacturer_part_number: normalizePartNumberForCore(mfrPart),
     updated_by: currentUser ? currentUser.id : null,
     updated_at: new Date().toISOString()
   };
