@@ -2849,7 +2849,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.124";
+var APP_VERSION       = "v1.1.125";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -5702,6 +5702,9 @@ async function saveCoreProductForm() {
     if (!r.error) {
       dkd = r.data && r.data.dkd_shohin_id ? r.data.dkd_shohin_id : dkd;
       document.getElementById("pf-shohin-cd").value = dkd || "";
+      document.getElementById("part-form-id").value = dkd || "";
+      partFormMode = "edit";
+      currentProduct = Object.assign({}, currentProduct || {}, payload, { dkd_shohin_id: dkd, id: dkd });
       await writeLog("insert", "core_products", dkd, genuine || mfrPart || String(dkd), null, payload);
     }
   } else {
