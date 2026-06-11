@@ -1166,6 +1166,73 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 </div>
 
 <!-- =============================================
+   COREリスト管理画面
+============================================= -->
+<div id="screen-core-list-mgmt" class="screen">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-core-list-mgmt" data-i18n="btn_back">← メニュー</button>
+      <span class="logo-text" data-i18n="screen_core_list_title">COREリスト</span>
+    </div>
+    <div class="page-header-right">
+      <span class="header-username" id="core-list-mgmt-username"></span>
+      <span class="role-badge" id="core-list-mgmt-role-badge"></span>
+      <button class="btn-logout" id="btn-logout-core-list-mgmt" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <div class="mgmt-body">
+    <div class="mgmt-toolbar">
+      <input class="mgmt-search" id="core-list-search" type="search" data-i18n-ph="core_list_search_ph">
+      <button class="btn-primary" id="btn-core-list-search" data-i18n="btn_search">検索</button>
+      <button class="btn-primary" id="btn-add-core-list" data-i18n="btn_add_core_list">COREを追加</button>
+    </div>
+    <div class="mgmt-count" id="core-list-count"></div>
+    <div id="core-list-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
+  </div>
+</div>
+
+<!-- COREリスト登録・編集フォーム -->
+<div class="form-overlay" id="core-list-form-overlay">
+  <div class="form-card">
+    <h3 id="core-list-form-title">CORE登録</h3>
+    <input type="hidden" id="clf-id">
+    <div class="form-row">
+      <label class="form-label" data-i18n="core_list_product_search">対象商品検索</label>
+      <input class="form-input" id="clf-product-search" type="search" data-i18n-ph="production_search_ph">
+      <div class="candidate-list" id="clf-product-candidates"></div>
+      <div style="font-size:11px;color:#aaa;margin-top:4px" id="clf-product-info"></div>
+    </div>
+    <div class="spec-form-grid">
+      <div class="form-row">
+        <label class="form-label">DKD商品ID *</label>
+        <input class="form-input" id="clf-dkd-id" type="number" min="1" step="1">
+      </div>
+      <div class="form-row">
+        <label class="form-label" data-i18n="production_ranking_core_part">CORE品番</label>
+        <input class="form-input" id="clf-core-part" type="text">
+      </div>
+      <div class="form-row">
+        <label class="form-label" data-i18n="core_list_quantity">数量 *</label>
+        <input class="form-input" id="clf-quantity" type="number" min="0" step="1" value="1">
+      </div>
+      <div class="form-row">
+        <label class="form-label" data-i18n="core_list_location">置き場</label>
+        <input class="form-input" id="clf-location" type="text">
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label" data-i18n="core_list_note">メモ</label>
+      <input class="form-input" id="clf-note" type="text">
+    </div>
+    <div class="form-footer">
+      <button class="btn-cancel" id="btn-core-list-form-cancel" data-i18n="btn_back">キャンセル</button>
+      <button class="btn-primary" id="btn-core-list-form-save" data-i18n="btn_save_part">保存</button>
+    </div>
+    <div class="reg-error" id="core-list-form-error"></div>
+  </div>
+</div>
+
+<!-- =============================================
    製造指示ランキング管理画面
 ============================================= -->
 <div id="screen-production-ranking-mgmt" class="screen">
@@ -1612,6 +1679,8 @@ var TRANSLATIONS = {
     mi_production_desc: "基幹商品マスタを検索し、製造指示・CORE・構成部品を確認します。",
     mi_users_title: "ユーザー管理",
     mi_users_desc: "ユーザーの表示名とロール（権限）を設定します。",
+    mi_core_list_title: "COREリスト",
+    mi_core_list_desc: "基幹商品に紐づくコア品番・数量・置き場を登録します。",
     mi_production_ranking_title: "製造指示ランキング",
     mi_production_ranking_desc: "2024・2025のTOP100元リストを確認・メンテナンスします。",
     mi_data_title: "データ管理",
@@ -1767,6 +1836,7 @@ var TRANSLATIONS = {
     mi_logs_title: "操作ログ",
     mi_logs_desc: "商品・互換の追加・修正・削除の履歴を確認します。",
     screen_parts_title: "商品管理",
+    screen_core_list_title: "COREリスト",
     screen_production_ranking_title: "製造指示ランキング",
     screen_kikan_title: "互換管理",
     screen_rakuten_title: "価格調査",
@@ -1785,6 +1855,7 @@ var TRANSLATIONS = {
     lbl_model: "型式",
     lbl_category: "カテゴリ",
     btn_add_part: "商品を追加",
+    btn_add_core_list: "COREを追加",
     btn_add_production_ranking: "ランキングを追加",
     btn_edit: "修正",
     btn_edit_part: "品番修正",
@@ -1795,6 +1866,12 @@ var TRANSLATIONS = {
     msg_part_deleted: "削除しました",
     msg_part_err: "エラーが発生しました",
     ph_search_parts: "品番・メーカーで検索",
+    core_list_search_ph: "DKD商品ID・CORE品番・品番・置き場で検索",
+    core_list_product_search: "対象商品検索",
+    core_list_quantity: "数量",
+    core_list_location: "置き場",
+    core_list_note: "メモ",
+    core_list_delete_confirm: "このCORE行を削除しますか？",
     production_ranking_search_ph: "順位・品番・メーカー・DKD商品IDで検索",
     production_ranking_rank: "順位",
     production_ranking_year: "年度",
@@ -1977,6 +2054,8 @@ var TRANSLATIONS = {
     mi_production_desc: "Search master products and review instructions, core stock, and components.",
     mi_users_title: "User Management",
     mi_users_desc: "Set user display names and access roles.",
+    mi_core_list_title: "CORE List",
+    mi_core_list_desc: "Register core part numbers, quantities, and locations for master products.",
     mi_production_ranking_title: "Production Ranking",
     mi_production_ranking_desc: "View and maintain the 2024/2025 TOP100 source list.",
     mi_data_title: "Data Management",
@@ -2132,6 +2211,7 @@ var TRANSLATIONS = {
     mi_logs_title: "Operation Logs",
     mi_logs_desc: "View history of part and compatibility changes.",
     screen_parts_title: "Parts Management",
+    screen_core_list_title: "CORE List",
     screen_production_ranking_title: "Production Ranking",
     screen_kikan_title: "Compatibility Management",
     screen_rakuten_title: "Price Check",
@@ -2150,6 +2230,7 @@ var TRANSLATIONS = {
     lbl_model: "Model Code",
     lbl_category: "Category",
     btn_add_part: "Add Part",
+    btn_add_core_list: "Add CORE",
     btn_add_production_ranking: "Add Ranking",
     btn_edit: "Edit",
     btn_edit_part: "Edit Part No.",
@@ -2160,6 +2241,12 @@ var TRANSLATIONS = {
     msg_part_deleted: "Deleted",
     msg_part_err: "An error occurred",
     ph_search_parts: "Search by part number or manufacturer",
+    core_list_search_ph: "Search by DKD ID, CORE part, part number, or location",
+    core_list_product_search: "Target product search",
+    core_list_quantity: "Quantity",
+    core_list_location: "Location",
+    core_list_note: "Memo",
+    core_list_delete_confirm: "Delete this CORE row?",
     production_ranking_search_ph: "Search by rank, part number, manufacturer, or DKD ID",
     production_ranking_rank: "Rank",
     production_ranking_year: "Year",
@@ -2342,6 +2429,8 @@ var TRANSLATIONS = {
     mi_production_desc: "搜索基干商品主档，并确认生产指示、CORE和构成零件。",
     mi_users_title: "用户管理",
     mi_users_desc: "设置用户的显示名称和访问权限角色。",
+    mi_core_list_title: "CORE清单",
+    mi_core_list_desc: "登记基干商品对应的CORE编号、数量和位置。",
     mi_production_ranking_title: "生产指示排行",
     mi_production_ranking_desc: "查看和维护2024/2025 TOP100来源清单。",
     mi_data_title: "数据管理",
@@ -2492,6 +2581,7 @@ var TRANSLATIONS = {
     mi_logs_title: "操作日志",
     mi_logs_desc: "查看零件和兼容性更改的历史记录。",
     screen_parts_title: "零件管理",
+    screen_core_list_title: "CORE清单",
     screen_production_ranking_title: "生产指示排行",
     screen_kikan_title: "兼容性管理",
     screen_rakuten_title: "乐天价格调查",
@@ -2508,6 +2598,7 @@ var TRANSLATIONS = {
     lbl_model: "型号代码",
     lbl_category: "类别",
     btn_add_part: "添加零件",
+    btn_add_core_list: "添加CORE",
     btn_add_production_ranking: "添加排行",
     btn_edit: "修改",
     btn_delete: "删除",
@@ -2517,6 +2608,12 @@ var TRANSLATIONS = {
     msg_part_deleted: "已删除",
     msg_part_err: "发生错误",
     ph_search_parts: "按零件编号或制造商搜索",
+    core_list_search_ph: "按DKD ID、CORE编号、零件编号或位置搜索",
+    core_list_product_search: "目标商品搜索",
+    core_list_quantity: "数量",
+    core_list_location: "位置",
+    core_list_note: "备注",
+    core_list_delete_confirm: "删除此CORE行？",
     production_ranking_search_ph: "按排名、零件编号、制造商或DKD ID搜索",
     production_ranking_rank: "排名",
     production_ranking_year: "年度",
@@ -2716,7 +2813,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.105";
+var APP_VERSION       = "v1.1.106";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -2727,6 +2824,10 @@ var currentProductionRow = null;
 var componentReturnScreen = "search";
 var productionInstructionRows = [];
 var productionInstructionMap = {};
+var coreListMgmtRows = [];
+var coreListProductMap = {};
+var coreListProductCandidates = [];
+var coreListFormMode = "add";
 var productionRankingMgmtRows = [];
 var productionRankingFormMode = "add";
 var productionDetailRequestSeq = 0;
@@ -3080,7 +3181,7 @@ function updateAllHeaders() {
   var cls   = roleClass(userProfile.role);
   var greet = tf("greeting", { name: name });
 
-  ["menu","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","production-ranking-mgmt"].forEach(function(sc) {
+  ["menu","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","production-ranking-mgmt"].forEach(function(sc) {
     var nameEl  = document.getElementById(sc + "-username");
     var badgeEl = document.getElementById(sc + "-role-badge");
     if (nameEl)  nameEl.textContent = name;
@@ -3139,6 +3240,7 @@ function renderMenu() {
   var adminItems = [
     { icon: "&#x1F465;", titleKey: "mi_users_title",  descKey: "mi_users_desc",  action: "users",  available: isAdmin() },
     { icon: "&#x1F527;", titleKey: "mi_parts_title", descKey: "mi_parts_desc", action: "parts-mgmt", available: canEdit() },
+    { icon: "&#x1F3ED;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canEdit() },
     { icon: "&#x1F3C6;", titleKey: "mi_production_ranking_title", descKey: "mi_production_ranking_desc", action: "production-ranking-mgmt", available: canEdit() },
     { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canEdit() },
     { icon: "&#x2699;", titleKey: "mi_api_settings_title", descKey: "mi_api_settings_desc", action: "api-settings", available: canManageSharedSettings() },
@@ -3193,6 +3295,7 @@ function renderMenu() {
       else if (card.dataset.action === "users") enterUsers();
       else if (card.dataset.action === "change-pw") enterChangePw();
       else if (card.dataset.action === "parts-mgmt") enterPartsMgmt();
+      else if (card.dataset.action === "core-list-mgmt") enterCoreListMgmt();
       else if (card.dataset.action === "production-ranking-mgmt") enterProductionRankingMgmt();
       else if (card.dataset.action === "kikan-mgmt") enterKikanMgmt();
       else if (card.dataset.action === "rakuten-price") enterRakutenPrice();
@@ -4861,6 +4964,235 @@ async function savePartForm() {
   }
   document.getElementById("part-form-overlay").classList.remove("show");
   await loadPartsMgmt();
+}
+
+// =============================================
+// COREリスト管理
+// =============================================
+async function enterCoreListMgmt() {
+  if (!canEdit()) { alert(t("err_perm")); return; }
+  showScreen("core-list-mgmt");
+  await loadCoreListMgmt();
+}
+
+async function loadCoreListMgmt() {
+  var list = document.getElementById("core-list-list");
+  if (list) list.innerHTML = "<div class='loading'>" + t("loading") + "</div>";
+  var r = await sb.from("production_core_list_entries")
+    .select("*")
+    .order("updated_at", { ascending: false })
+    .limit(500);
+  if (r.error) {
+    if (list) list.innerHTML = "<div class='empty'>" + esc(t("msg_part_err") + ": " + r.error.message) + "</div>";
+    return;
+  }
+  coreListMgmtRows = r.data || [];
+  await loadCoreListProductMap(coreListMgmtRows);
+  var q = norm(document.getElementById("core-list-search").value.trim());
+  if (q) {
+    coreListMgmtRows = coreListMgmtRows.filter(function(row) {
+      var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
+      return [
+        row.dkd_shohin_id,
+        row.core_part_number,
+        row.location,
+        row.note,
+        p.genuine_part_number,
+        p.manufacturer_part_number,
+        p.manufacturer,
+        p.daiko_part_number
+      ].some(function(v) { return normalizedContains(v, q); });
+    });
+  }
+  renderCoreListMgmt();
+}
+
+async function loadCoreListProductMap(rows) {
+  coreListProductMap = {};
+  var ids = [];
+  (rows || []).forEach(function(row) {
+    if (row.dkd_shohin_id != null && ids.indexOf(row.dkd_shohin_id) < 0) ids.push(row.dkd_shohin_id);
+  });
+  if (!ids.length) return;
+  var r = await sb.from("core_product_search_view").select("*").in("dkd_shohin_id", ids).limit(500);
+  if (r.error) return;
+  (r.data || []).forEach(function(p) {
+    coreListProductMap[String(p.dkd_shohin_id)] = p;
+  });
+}
+
+function coreListProductTitle(row) {
+  var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
+  return p.manufacturer_part_number || p.genuine_part_number || p.daiko_part_number || ("DKD " + row.dkd_shohin_id);
+}
+
+function coreListProductMeta(row) {
+  var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
+  return [
+    p.genuine_part_number || "-",
+    p.manufacturer || "-",
+    productionCategoryLabel(p)
+  ].join(" / ");
+}
+
+function renderCoreListMgmt() {
+  var list = document.getElementById("core-list-list");
+  var countEl = document.getElementById("core-list-count");
+  if (countEl) countEl.textContent = coreListMgmtRows.length + " 件";
+  if (!list) return;
+  if (!coreListMgmtRows.length) {
+    list.innerHTML = "<div class='empty'>該当するCOREがありません</div>";
+    return;
+  }
+  var html = "<table class='mgmt-table'>";
+  html += "<tr><th>DKD商品ID</th><th>対象商品</th><th>CORE品番</th><th>数量</th><th>置き場</th><th>メモ</th><th>更新</th><th></th></tr>";
+  coreListMgmtRows.forEach(function(row) {
+    html += "<tr>";
+    html += "<td><div class='mgmt-pn'>" + esc(String(row.dkd_shohin_id || "-")) + "</div></td>";
+    html += "<td><div class='mgmt-pn'>" + esc(coreListProductTitle(row)) + "</div><div class='mgmt-sub'>" + esc(coreListProductMeta(row)) + "</div></td>";
+    html += "<td><div class='mgmt-pn'>" + esc(row.core_part_number || "-") + "</div></td>";
+    html += "<td>" + esc(String(row.quantity == null ? "-" : row.quantity)) + "</td>";
+    html += "<td>" + esc(row.location || "-") + "</td>";
+    html += "<td>" + esc(row.note || "-") + "</td>";
+    html += "<td><div class='mgmt-sub'>" + esc(formatDateTime(row.updated_at)) + "</div></td>";
+    html += "<td><div class='mgmt-actions'>";
+    html += "<button class='btn-sm-edit' data-core-edit='" + row.id + "'>" + t("btn_edit") + "</button>";
+    html += "<button class='btn-sm-del' data-core-del='" + row.id + "'>削除</button>";
+    html += "</div></td>";
+    html += "</tr>";
+  });
+  html += "</table>";
+  list.innerHTML = html;
+
+  list.querySelectorAll("[data-core-edit]").forEach(function(btn) {
+    btn.addEventListener("click", function() { openCoreListForm("edit", parseInt(btn.dataset.coreEdit, 10)); });
+  });
+  list.querySelectorAll("[data-core-del]").forEach(function(btn) {
+    btn.addEventListener("click", function() { deleteCoreListRow(parseInt(btn.dataset.coreDel, 10)); });
+  });
+}
+
+function openCoreListForm(mode, rowId) {
+  if (!canEdit()) { alert(t("err_perm")); return; }
+  coreListFormMode = mode;
+  var row = mode === "edit" ? coreListMgmtRows.find(function(x) { return x.id === rowId; }) : null;
+  var p = row ? (coreListProductMap[String(row.dkd_shohin_id)] || {}) : {};
+  document.getElementById("core-list-form-error").textContent = "";
+  document.getElementById("core-list-form-title").textContent = mode === "add" ? t("btn_add_core_list") : "CORE修正";
+  setProductionRankingFormValue("clf-id", row && row.id);
+  setProductionRankingFormValue("clf-dkd-id", row && row.dkd_shohin_id);
+  setProductionRankingFormValue("clf-core-part", row && row.core_part_number);
+  setProductionRankingFormValue("clf-quantity", row ? row.quantity : 1);
+  setProductionRankingFormValue("clf-location", row && row.location);
+  setProductionRankingFormValue("clf-note", row && row.note);
+  setProductionRankingFormValue("clf-product-search", "");
+  document.getElementById("clf-product-candidates").innerHTML = "";
+  document.getElementById("clf-product-info").textContent = row ? [
+    "DKD " + (row.dkd_shohin_id || "-"),
+    p.manufacturer_part_number || "-",
+    p.genuine_part_number || "-",
+    p.manufacturer || "-"
+  ].join(" / ") : "";
+  document.getElementById("core-list-form-overlay").classList.add("show");
+}
+
+async function searchCoreListProductCandidates() {
+  var input = document.getElementById("clf-product-search");
+  var wrap = document.getElementById("clf-product-candidates");
+  var q = input ? input.value.trim() : "";
+  if (!wrap) return;
+  if (!q) {
+    coreListProductCandidates = [];
+    wrap.innerHTML = "";
+    return;
+  }
+  var r = await sb.rpc("search_core_products", {
+    search_text: q,
+    category_filter: null,
+    require_sl: false,
+    max_rows: 20
+  });
+  if (r.error) {
+    wrap.innerHTML = "<div class='candidate-empty'>" + esc(r.error.message) + "</div>";
+    return;
+  }
+  coreListProductCandidates = r.data || [];
+  if (!coreListProductCandidates.length) {
+    wrap.innerHTML = "<div class='candidate-empty'>" + t("no_results") + "</div>";
+    return;
+  }
+  wrap.innerHTML = coreListProductCandidates.map(function(p, i) {
+    var title = p.manufacturer_part_number || p.genuine_part_number || p.daiko_part_number || ("DKD " + p.dkd_shohin_id);
+    var meta = [
+      "DKD " + (p.dkd_shohin_id || "-"),
+      p.genuine_part_number || "-",
+      p.manufacturer || "-",
+      productionCategoryLabel(p)
+    ].join(" / ");
+    return "<button type='button' class='candidate-item' data-core-candidate-index='" + i + "'><strong>" + esc(title) + "</strong><small>" + esc(meta) + "</small></button>";
+  }).join("");
+}
+
+function selectCoreListProductCandidate(index) {
+  var p = coreListProductCandidates[index];
+  if (!p) return;
+  document.getElementById("clf-dkd-id").value = p.dkd_shohin_id || "";
+  if (!document.getElementById("clf-core-part").value.trim()) {
+    document.getElementById("clf-core-part").value = p.manufacturer_part_number || p.genuine_part_number || "";
+  }
+  document.getElementById("clf-product-info").textContent = [
+    "DKD " + (p.dkd_shohin_id || "-"),
+    p.manufacturer_part_number || "-",
+    p.genuine_part_number || "-",
+    p.manufacturer || "-"
+  ].join(" / ");
+  document.getElementById("clf-product-candidates").innerHTML = "";
+}
+
+async function saveCoreListForm() {
+  var errEl = document.getElementById("core-list-form-error");
+  errEl.textContent = "";
+  if (!canEdit()) { errEl.textContent = t("err_perm"); return; }
+  var dkdId = nullableIntFromInput("clf-dkd-id");
+  var qty = nullableIntFromInput("clf-quantity");
+  if (!dkdId) { errEl.textContent = "DKD商品IDは必須です"; return; }
+  if (qty == null || qty < 0) { errEl.textContent = "数量は0以上で入力してください"; return; }
+  var data = {
+    dkd_shohin_id: dkdId,
+    core_part_number: nullableTextFromInput("clf-core-part"),
+    quantity: qty,
+    location: nullableTextFromInput("clf-location"),
+    note: nullableTextFromInput("clf-note"),
+    updated_at: new Date().toISOString()
+  };
+  var id = document.getElementById("clf-id").value;
+  var r;
+  if (coreListFormMode === "add") {
+    data.created_by = currentUser ? currentUser.id : null;
+    r = await sb.from("production_core_list_entries").insert(data).select();
+    if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
+    var newId = (r.data && r.data[0]) ? r.data[0].id : null;
+    await writeLog("insert", "production_core_list_entries", newId, "DKD " + dkdId, null, data);
+  } else {
+    var before = coreListMgmtRows.find(function(x) { return x.id === parseInt(id, 10); });
+    r = await sb.from("production_core_list_entries").update(data).eq("id", id);
+    if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
+    await writeLog("update", "production_core_list_entries", parseInt(id, 10), "DKD " + dkdId, before, data);
+  }
+  document.getElementById("core-list-form-overlay").classList.remove("show");
+  productionLoaded = false;
+  await loadCoreListMgmt();
+}
+
+async function deleteCoreListRow(id) {
+  if (!canEdit()) { alert(t("err_perm")); return; }
+  var row = coreListMgmtRows.find(function(x) { return x.id === id; });
+  if (!confirm(t("core_list_delete_confirm"))) return;
+  var r = await sb.from("production_core_list_entries").delete().eq("id", id);
+  if (r.error) { alert(t("msg_part_err") + ": " + r.error.message); return; }
+  await writeLog("delete", "production_core_list_entries", id, row ? ("DKD " + row.dkd_shohin_id) : String(id), row, null);
+  productionLoaded = false;
+  await loadCoreListMgmt();
 }
 
 // =============================================
@@ -7464,7 +7796,7 @@ document.getElementById("btn-back-to-login").addEventListener("click", function(
 document.getElementById("btn-submit-reg").addEventListener("click", doRegister);
 document.getElementById("reg-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doRegister(); });
 document.getElementById("login-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
-["btn-logout-menu","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
+["btn-logout-menu","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-core-list-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
 document.getElementById("btn-back-search").addEventListener("click", function(){ closePanel(); showScreen("menu"); });
 document.getElementById("btn-back-production-search").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-components").addEventListener("click", async function(){
@@ -7478,6 +7810,7 @@ document.getElementById("btn-back-components").addEventListener("click", async f
 document.getElementById("btn-back-component-parallel").addEventListener("click", function(){ showScreen("search"); });
 document.getElementById("btn-back-users").addEventListener("click",  function(){ showScreen("menu"); });
 document.getElementById("btn-back-parts-mgmt").addEventListener("click", function(){ showScreen("menu"); });
+document.getElementById("btn-back-core-list-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-production-ranking-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-kikan-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-rakuten-price").addEventListener("click", function(){ showScreen("menu"); });
@@ -7488,6 +7821,26 @@ document.getElementById("btn-back-logs").addEventListener("click",       functio
 document.getElementById("btn-add-part").addEventListener("click", function(){ openPartForm("add"); });
 document.getElementById("btn-part-form-cancel").addEventListener("click", function(){ document.getElementById("part-form-overlay").classList.remove("show"); });
 document.getElementById("btn-part-form-save").addEventListener("click", savePartForm);
+document.getElementById("btn-add-core-list").addEventListener("click", function(){ openCoreListForm("add"); });
+document.getElementById("btn-core-list-search").addEventListener("click", loadCoreListMgmt);
+document.getElementById("core-list-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadCoreListMgmt(); });
+document.getElementById("btn-core-list-form-cancel").addEventListener("click", function(){ document.getElementById("core-list-form-overlay").classList.remove("show"); });
+document.getElementById("btn-core-list-form-save").addEventListener("click", saveCoreListForm);
+document.getElementById("clf-product-search").addEventListener("input", function() {
+  clearTimeout(this._timer);
+  this._timer = setTimeout(searchCoreListProductCandidates, 250);
+});
+document.getElementById("clf-product-search").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    if (coreListProductCandidates.length === 1) selectCoreListProductCandidate(0);
+    else searchCoreListProductCandidates();
+  }
+});
+document.getElementById("clf-product-candidates").addEventListener("click", function(e) {
+  var item = e.target.closest("[data-core-candidate-index]");
+  if (item) selectCoreListProductCandidate(parseInt(item.dataset.coreCandidateIndex, 10));
+});
 document.getElementById("btn-add-production-ranking").addEventListener("click", function(){ openProductionRankingForm("add"); });
 document.getElementById("btn-production-ranking-search").addEventListener("click", loadProductionRankingMgmt);
 document.getElementById("production-ranking-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadProductionRankingMgmt(); });
