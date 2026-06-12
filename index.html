@@ -1399,10 +1399,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         <label class="form-label">DKD商品ID</label>
         <input class="form-input" id="prf-dkd-id" type="number" min="1" step="1">
       </div>
-      <div class="form-row" style="display:none">
-        <label class="form-label">DKS SHOHIN_CD</label>
-        <input class="form-input" id="prf-dks-cd" type="text">
-      </div>
       <div class="form-row" style="grid-column:1/-1">
         <label class="form-label">紐づけ先検索</label>
         <div class="production-form-row" style="margin-top:0">
@@ -2945,7 +2941,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.137";
+var APP_VERSION       = "v1.1.138";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -5776,7 +5772,6 @@ function hideProductionRankingField(id) {
 }
 
 function applyProductionRankingFormLayout() {
-  hideProductionRankingField("prf-dks-cd");
   hideProductionRankingField("prf-core-stock");
   hideProductionRankingField("prf-core-part");
   hideProductionRankingField("prf-core-summary");
@@ -5812,7 +5807,6 @@ function openProductionRankingForm(mode, rowId) {
   setProductionRankingFormValue("prf-source-sheet", row ? row.source_sheet : "top100");
   setProductionRankingFormValue("prf-category", row && row.category_code);
   setProductionRankingFormValue("prf-dkd-id", row && row.dkd_shohin_id);
-  setProductionRankingFormValue("prf-dks-cd", row && row.dks_shohin_cd);
   setProductionRankingFormValue("prf-genuine-pn", row && row.genuine_part_number);
   setProductionRankingFormValue("prf-mfr-pn", row && row.manufacturer_part_number);
   setProductionRankingFormValue("prf-mfr", row && row.manufacturer);
@@ -6151,24 +6145,6 @@ async function openCoreProductEditFromSearch() {
   await openCoreProductForm("edit", currentProduct);
 }
 
-async function saveGenuinePartNumber2ForCurrentProduct(value, errEl) {
-  if (partFormMode !== "edit") return true;
-  if (!currentProduct || !currentProduct.shohin_cd) return true;
-  var before = currentProduct.genuine_part_number_2 || null;
-  var next = value || null;
-  if ((before || "") === (next || "")) return true;
-  var r = await sb.from("dks_search_parts").update({
-    genuine_part_number_2: next,
-    updated_at: new Date().toISOString()
-  }).eq("dks_shohin_cd", currentProduct.shohin_cd);
-  if (r.error) {
-    errEl.textContent = t("msg_part_err") + ": " + r.error.message;
-    return false;
-  }
-  await writeLog("update", "dks_search_parts", currentProduct.shohin_cd, "genuine_part_number_2", before, { genuine_part_number_2: next });
-  return true;
-}
-
 async function saveCoreProductForm() {
   var errEl = document.getElementById("part-form-error");
   errEl.textContent = "";
@@ -6367,7 +6343,7 @@ async function searchKikanPartCandidates() {
     .limit(10);
   var qNum = parseInt(q, 10);
   if (!isNaN(qNum) && String(qNum) === q) {
-    query = query.or("dkd_shohin_id.eq." + qNum + ",shohin_cd.eq." + qNum + ",genuine_part_number.ilike.%" + q + "%,manufacturer_part_number.ilike.%" + q + "%");
+    query = query.or("dkd_shohin_id.eq." + qNum + ",genuine_part_number.ilike.%" + q + "%,manufacturer_part_number.ilike.%" + q + "%");
   } else {
     query = query.or("genuine_part_number.ilike.%" + q + "%,manufacturer_part_number.ilike.%" + q + "%");
   }
@@ -6685,7 +6661,7 @@ function getFiltered() {
     var partMatch = !q || [
       p.genuine_part_number, p.genuine_part_number_2,
       p.manufacturer_part_number, p.daiko_part_number,
-      p.shohin_cd, p.pulley_assy_part_number,
+      p.pulley_assy_part_number,
       p.genuine_body_part_number, p.manufacturer_body_part_number,
       p.genuine_clutch_part_number, p.manufacturer_clutch_part_number
     ].concat(slNums).some(function(v){ return normalizedStartsWith(v, q); });
@@ -6768,11 +6744,16 @@ async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows) {
       "normalized_genuine_part_number.ilike.%" + normalized + "%",
       "normalized_genuine_part_number_2.ilike.%" + normalized + "%",
       "normalized_manufacturer_part_number.ilike.%" + normalized + "%",
-      "normalized_pulley_assy_part_number.ilike.%" + normalized + "%"
+      "normalized_pulley_assy_part_number.ilike.%" + normalized + "%",
+      "normalized_daiko_part_number.ilike.%" + normalized + "%"
     ]);
   }
   if (raw) {
     orParts.push("manufacturer.ilike.%" + raw + "%");
+    orParts.push("vehicle_manufacturer.ilike.%" + raw + "%");
+    orParts.push("compatible_car_models.ilike.%" + raw + "%");
+    orParts.push("model.ilike.%" + raw + "%");
+    orParts.push("search_keyword.ilike.%" + raw + "%");
     orParts.push("category.ilike.%" + raw + "%");
   }
 
