@@ -246,11 +246,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .detail-column { min-width: 0; }
 .detail-block-title { font-size: 12px; font-weight: 700; color: #555; margin: 0 0 6px; }
 .detail-vehicle-grid { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 0; border-top: 1px solid #f0f0f0; margin-bottom: 10px; }
-.detail-vehicle-label { color: #888; font-size: 12px; padding: 6px 4px; border-bottom: 1px solid #f0f0f0; }
-.detail-vehicle-value { color: #1a1a2e; font-size: 13px; font-weight: 500; padding: 6px 4px; border-bottom: 1px solid #f0f0f0; word-break: break-word; }
+.detail-vehicle-label { color: #888; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid #f0f0f0; }
+.detail-vehicle-value { color: #1a1a2e; font-size: 13px; font-weight: 500; padding: 7px 4px; border-bottom: 1px solid #f0f0f0; word-break: break-word; }
 .detail-vehicle-maker-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .detail-vehicle-maker-row .catalog-vehicle-maker-value { min-width: 0; flex: 1; }
-.detail-vehicle-maker-row .catalog-vehicle-button { flex: 0 0 auto; padding: 3px 8px; }
+.detail-vehicle-maker-row .catalog-vehicle-button { flex: 0 0 auto; padding: 2px 7px; font-size: 11px; line-height: 1.2; }
 .detail-vehicle-action { grid-column: 1 / -1; padding: 8px 4px; border-bottom: 1px solid #f0f0f0; }
 .vehicle-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .vehicle-table th { background: #f5f7fa; color: #555; font-weight: 700; padding: 7px 8px; text-align: left; border-bottom: 1px solid #e5e8ef; white-space: nowrap; }
@@ -273,6 +273,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ac-part-value { font-size: 13px; font-weight: 700; color: #1a1a2e; word-break: break-all; }
 .detail-main-grid .detail-table,
 .detail-main-grid .ac-part-grid { margin-bottom: 0; }
+.detail-main-grid .detail-table { margin-top: 0 !important; }
+.detail-column > .detail-table:first-child { border-top: 1px solid #f0f0f0; }
+.detail-column > .detail-vehicle-grid { margin-bottom: 0; }
+.detail-column > .detail-vehicle-grid + .ac-part-grid { border-top: 0; }
 .detail-maker-offset { margin-top: 64px; }
 .detail-maker-offset-standard { margin-top: 96px; }
 .detail-maker-offset-ac { margin-top: 64px; }
@@ -2944,7 +2948,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.141";
+var APP_VERSION       = "v1.1.142";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
