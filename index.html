@@ -2948,7 +2948,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.142";
+var APP_VERSION       = "v1.1.143";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -2971,13 +2971,15 @@ var productionRankingFormMode = "add";
 var productionRankingLinkCandidates = [];
 var productionDetailRequestSeq = 0;
 var SEARCH_FETCH_LIMIT = 200;
-var SEARCH_INITIAL_LIMIT = 50;
-var SEARCH_PAGE_STEP = 50;
+var SEARCH_INITIAL_LIMIT = 30;
+var SEARCH_PAGE_STEP = 30;
+var KIKAN_FLAG_LOOKUP_LIMIT = 24;
 var productSearchLimit = SEARCH_INITIAL_LIMIT;
 var productionSearchLimit = SEARCH_INITIAL_LIMIT;
 var searchRequestSeq = 0;
 var productAuxRequestSeq = 0;
 var productionAuxRequestSeq = 0;
+var kikanCompatibleFlagCache = {};
 var rakutenLastItems = [];
 var rakutenLastDebug = [];
 var rakutenApiBusy = false;
@@ -3634,12 +3636,16 @@ async function loadProductionProducts() {
   var categoryFilter = productionFilter.indexOf("cat:") === 0 ? productionFilter.slice(4) : null;
   var r;
   if (q) {
-    r = await sb.rpc("search_core_products", {
-      search_text: q,
-      category_filter: categoryFilter,
-      require_sl: false,
-      max_rows: productionSearchLimit
-    });
+    r = await fetchCoreProductMasterMatches(q, categoryFilter, productionSearchLimit);
+    if (r.error || !(r.data || []).length) {
+      if (r.error) console.warn("production core product master search failed", r.error);
+      r = await sb.rpc("search_core_products", {
+        search_text: q,
+        category_filter: categoryFilter,
+        require_sl: false,
+        max_rows: productionSearchLimit
+      });
+    }
   } else if (productionFilter === "instruction") {
     var ids = productionInstructionRowsForFilter().map(function(x){ return x.dkd_shohin_id; }).filter(Boolean).slice(0, productionSearchLimit);
     r = ids.length
@@ -6926,14 +6932,27 @@ async function fetchCoreStockQtyMap(products) {
   return map;
 }
 
-async function fetchKikanCompatibleMap(products) {
+async function fetchKikanCompatibleMap(products, isStale) {
   var map = {};
-  var rows = products || [];
-  for (var i = 0; i < rows.length; i += 8) {
-    var chunk = rows.slice(i, i + 8);
+  var rows = (products || []).slice(0, KIKAN_FLAG_LOOKUP_LIMIT);
+  var pending = [];
+  rows.forEach(function(p) {
+    var key = "dkd:" + String(p.dkd_shohin_id || p.id || "");
+    if (Object.prototype.hasOwnProperty.call(kikanCompatibleFlagCache, key)) {
+      if (kikanCompatibleFlagCache[key]) map[key] = true;
+    } else {
+      pending.push(p);
+    }
+  });
+  for (var i = 0; i < pending.length; i += 4) {
+    if (isStale && isStale()) return map;
+    var chunk = pending.slice(i, i + 4);
     var results = await Promise.all(chunk.map(hasDisplayableKikanCompatibleParts));
+    if (isStale && isStale()) return map;
     chunk.forEach(function(p, idx) {
-      if (results[idx]) map["dkd:" + String(p.dkd_shohin_id || p.id || "")] = true;
+      var key = "dkd:" + String(p.dkd_shohin_id || p.id || "");
+      kikanCompatibleFlagCache[key] = !!results[idx];
+      if (results[idx]) map[key] = true;
     });
   }
   return map;
@@ -6949,7 +6968,11 @@ async function loadProductSearchAuxiliaryData(seq, products) {
   componentUsageCountMap = fast[0] || {};
   coreStockQtyMap = fast[1] || {};
   render();
-  var kikanMap = await fetchKikanCompatibleMap(products);
+  await delay(120);
+  if (seq !== searchRequestSeq || auxSeq !== productAuxRequestSeq) return;
+  var kikanMap = await fetchKikanCompatibleMap(products, function() {
+    return seq !== searchRequestSeq || auxSeq !== productAuxRequestSeq;
+  });
   if (seq !== searchRequestSeq || auxSeq !== productAuxRequestSeq) return;
   kikanCompatibleMap = kikanMap || {};
   render();
