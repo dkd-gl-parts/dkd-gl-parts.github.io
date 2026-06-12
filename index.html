@@ -2941,7 +2941,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.138";
+var APP_VERSION       = "v1.1.139";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -3597,7 +3597,8 @@ function enrichProductionProduct(row) {
   row.core_part_number = row.core_part_number || row.manufacturer_part_number || row.genuine_part_number || "";
   row.core_pallet_summary = inst ? inst.core_pallet_summary : "";
   row.core_pallet_summary = row.core_pallet_no || row.core_pallet_summary || "";
-  row.component_count = inst && inst.component_count != null ? inst.component_count : (componentUsageCountMap[String(row.dkd_shohin_id)] || 0);
+  var hasComponentCount = Object.prototype.hasOwnProperty.call(componentUsageCountMap, String(row.dkd_shohin_id));
+  row.component_count = hasComponentCount ? componentUsageCountMap[String(row.dkd_shohin_id)] : (inst && inst.component_count != null ? inst.component_count : 0);
   row.component_summary = inst ? inst.component_summary : "";
   row.readiness_status = row.component_count > 0 ? t("production_status_ready") : t("production_status_need");
   return row;
@@ -3701,7 +3702,8 @@ function productionMatchesQuery(row, q) {
 }
 
 function productionMatchesFilter(row) {
-  var componentCount = componentUsageCountMap[String(row.dkd_shohin_id)] || row.component_count || 0;
+  var componentKey = String(row.dkd_shohin_id);
+  var componentCount = Object.prototype.hasOwnProperty.call(componentUsageCountMap, componentKey) ? componentUsageCountMap[componentKey] : (row.component_count || 0);
   if (productionFilter === "instruction") return !!productionInstructionFor(row);
   if (productionFilter === "ready") return componentCount > 0;
   if (productionFilter === "need") return componentCount <= 0;
@@ -5794,7 +5796,7 @@ function updateProductionRankingLinkInfo(row) {
   el.textContent = text;
 }
 
-function openProductionRankingForm(mode, rowId) {
+async function openProductionRankingForm(mode, rowId) {
   if (!canEdit()) { alert(t("err_perm")); return; }
   productionRankingFormMode = mode;
   var row = mode === "edit" ? productionRankingMgmtRows.find(function(x) { return x.id === rowId; }) : null;
@@ -5821,6 +5823,14 @@ function openProductionRankingForm(mode, rowId) {
   var linkWrap = document.getElementById("prf-link-candidates");
   if (linkWrap) { linkWrap.innerHTML = ""; linkWrap.style.display = "none"; }
   applyProductionRankingFormLayout();
+  if (row) {
+    var counts = await componentCountsForProducts([row]);
+    if (Object.prototype.hasOwnProperty.call(counts, String(row.dkd_shohin_id))) {
+      row.component_count = counts[String(row.dkd_shohin_id)] || 0;
+      setProductionRankingFormValue("prf-component-summary", "構成 " + row.component_count + "件");
+      setProductionRankingFormValue("prf-status", row.component_count > 0 ? t("production_status_ready") : t("production_status_need"));
+    }
+  }
   updateProductionRankingLinkInfo(row);
   document.getElementById("production-ranking-form-overlay").classList.add("show");
 }
@@ -5902,12 +5912,7 @@ function productionCandidateMatchesRankingData(candidate, data) {
 async function preferComponentLinkedProductForRanking(data) {
   var searchText = data.manufacturer_part_number || data.genuine_part_number || "";
   if (!searchText) return data;
-  var r = await sb.rpc("search_core_products", {
-    search_text: searchText,
-    category_filter: data.category_code || null,
-    require_sl: false,
-    max_rows: 30
-  });
+  var r = await fetchCoreProductMasterMatches(searchText, data.category_code || null, 30);
   if (r.error) {
     console.warn("preferred production product lookup failed", r.error);
     return data;
@@ -5918,6 +5923,11 @@ async function preferComponentLinkedProductForRanking(data) {
   if (!candidates.length) return data;
   var counts = await componentCountsForProducts(candidates);
   var currentCount = counts[String(data.dkd_shohin_id || "")] || data.component_count || 0;
+  if (currentCount > 0) {
+    data.component_count = currentCount;
+    data.component_summary = "構成 " + currentCount + "件";
+    data.readiness_status = t("production_status_ready");
+  }
   candidates.sort(function(a, b) {
     var ac = counts[String(a.dkd_shohin_id)] || 0;
     var bc = counts[String(b.dkd_shohin_id)] || 0;
@@ -5954,12 +5964,7 @@ async function searchProductionRankingLinkCandidates() {
   }
   wrap.innerHTML = "<div class='candidate-item'>検索中...</div>";
   wrap.style.display = "block";
-  var r = await sb.rpc("search_core_products", {
-    search_text: q,
-    category_filter: nullableTextFromInput("prf-category"),
-    require_sl: false,
-    max_rows: 30
-  });
+  var r = await fetchCoreProductMasterMatches(q, nullableTextFromInput("prf-category"), 30);
   if (r.error) {
     wrap.innerHTML = "<div class='candidate-item'>" + esc(r.error.message) + "</div>";
     return;
