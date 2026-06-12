@@ -3092,7 +3092,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.148";
+var APP_VERSION       = "v1.1.149";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -3122,6 +3122,7 @@ var productSearchLimit = SEARCH_INITIAL_LIMIT;
 var productionSearchLimit = SEARCH_INITIAL_LIMIT;
 var searchRequestSeq = 0;
 var productAuxRequestSeq = 0;
+var productAuxSeq = 0;
 var productionAuxRequestSeq = 0;
 var kikanCompatibleFlagCache = {};
 var rakutenLastItems = [];
@@ -7101,7 +7102,7 @@ async function runProductSearch(options) {
   var requireSl = currentFilter === "sl";
   var list = document.getElementById("list");
   var seq = ++searchRequestSeq;
-  productAuxRequestSeq++;
+  productAuxSeq++;
 
   if (!q && currentFilter === "all") {
     allProducts = [];
@@ -7336,21 +7337,21 @@ async function fetchKikanGroupMemberFlagMap(products) {
 }
 
 async function loadProductSearchAuxiliaryData(seq, products) {
-  var auxSeq = ++productAuxRequestSeq;
+  var auxSeq = productAuxSeq;
   var fast = await Promise.all([
     fetchComponentUsageCountMap(products),
     fetchCoreStockQtyMap(products)
   ]);
-  if (seq !== searchRequestSeq || auxSeq !== productAuxRequestSeq) return;
+  if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
   componentUsageCountMap = fast[0] || {};
   coreStockQtyMap = fast[1] || {};
   render();
   await delay(120);
-  if (seq !== searchRequestSeq || auxSeq !== productAuxRequestSeq) return;
+  if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
   var kikanMap = await fetchKikanCompatibleMap(products, function() {
-    return seq !== searchRequestSeq || auxSeq !== productAuxRequestSeq;
+    return seq !== searchRequestSeq || auxSeq !== productAuxSeq;
   });
-  if (seq !== searchRequestSeq || auxSeq !== productAuxRequestSeq) return;
+  if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
   kikanCompatibleMap = kikanMap || {};
   render();
 }
