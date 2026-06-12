@@ -281,6 +281,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .ac-part-row { grid-template-columns: 1fr; gap: 3px; padding: 7px 4px; }
 }
 .spec-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.spec-form-help { font-size: 12px; color: #777; line-height: 1.45; margin-top: 5px; }
+.spec-form-hidden { display: none !important; }
 @media(max-width:640px){ .spec-form-grid { grid-template-columns: 1fr; } }
 
 /* ログ画面 */
@@ -1139,6 +1141,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <input type="hidden" id="spec-form-id">
       <label class="form-label" data-i18n="spec_raw">公称出力</label>
       <input class="form-input" id="sf-raw-spec" type="text" placeholder="例: 12V 80A φ139 Jシリーズ">
+      <div class="spec-form-help" id="spec-form-help">数値欄は単位を入れず、数字だけ入力してください。</div>
     </div>
     <div class="spec-form-grid">
       <div class="form-row">
@@ -2849,7 +2852,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.125";
+var APP_VERSION       = "v1.1.126";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -5075,6 +5078,7 @@ function openPartForm(mode, partId) {
     document.getElementById("pf-model").value            = p.model || "";
     document.getElementById("pf-category").value         = p.category || "Alternator";
   }
+  applySpecFormCategory();
   overlay.classList.add("show");
 }
 
@@ -5639,6 +5643,7 @@ async function openCoreProductForm(mode, product) {
     await loadProductSpecsForCurrent();
     populateUnifiedSpecForm(getManualProductSpec());
   }
+  applySpecFormCategory();
   if (mode === "add") document.getElementById("part-form-id").value = "";
   document.getElementById("part-form-overlay").classList.add("show");
 }
@@ -6817,6 +6822,120 @@ function setSpecFormNumber(id, value) {
   if (el) el.value = (value === null || value === undefined || value === "") ? "" : value;
 }
 
+function specFormCategoryCode() {
+  var el = document.getElementById("pf-category");
+  return categoryCodeFromForm(el ? el.value : "");
+}
+
+function specFormConfigForCategory(categoryCode) {
+  var code = String(categoryCode || "").toLowerCase();
+  var base = {
+    raw: true,
+    voltage: false,
+    current: false,
+    powerKw: false,
+    powerW: false,
+    diameter: false,
+    type: true,
+    rawPlaceholder: "例: 12V 80A",
+    help: "数値欄は単位を入れず、数字だけ入力してください。公称出力欄には単位付きの表示文字を入れられます。"
+  };
+  if (code === "alternator") {
+    base.voltage = true;
+    base.current = true;
+    base.diameter = true;
+    base.rawPlaceholder = "例: 12V 80A φ139 Jシリーズ";
+    base.help = "オルタネータは電圧・電流・外径・型式を入力します。数値欄は 12、80、139 のように単位なしで入力してください。";
+  } else if (code === "starter" || code === "starter_generator") {
+    base.voltage = true;
+    base.powerKw = true;
+    base.rawPlaceholder = "例: 24V 5.5kW";
+    base.help = "スタータは電圧・出力(kW)・型式を入力します。数値欄は 24、5.5 のように単位なしで入力してください。";
+  } else if (code === "ac_compressor") {
+    base.rawPlaceholder = "例: R12 TV14SC";
+    base.help = "ACコンプレッサはガス、型式・シリーズを中心に入力します。ガス種は公称出力欄に R12、R134A などを入れてください。";
+  } else if (code === "blower_motor") {
+    base.voltage = true;
+    base.powerW = true;
+    base.rawPlaceholder = "例: 12V 120W";
+    base.help = "ブロワモーターは電圧・出力(W)・型式を入力します。数値欄は単位なしです。";
+  } else if (code === "distributor" || code === "throttle_body") {
+    base.rawPlaceholder = "例: 型式・シリーズ";
+    base.help = "このカテゴリは型式・シリーズなど識別に必要な情報だけ入力します。";
+  }
+  return base;
+}
+
+function setSpecRowVisible(inputId, visible) {
+  var el = document.getElementById(inputId);
+  if (!el) return;
+  var row = el.closest ? el.closest(".form-row") : null;
+  if (!row) return;
+  row.classList.toggle("spec-form-hidden", !visible);
+}
+
+function applySpecFormCategory() {
+  var cfg = specFormConfigForCategory(specFormCategoryCode());
+  setSpecRowVisible("sf-voltage-v", cfg.voltage);
+  setSpecRowVisible("sf-current-a", cfg.current);
+  setSpecRowVisible("sf-power-kw", cfg.powerKw);
+  setSpecRowVisible("sf-power-w", cfg.powerW);
+  setSpecRowVisible("sf-diameter-d", cfg.diameter);
+  setSpecRowVisible("sf-type-text", cfg.type);
+  var rawEl = document.getElementById("sf-raw-spec");
+  if (rawEl) rawEl.placeholder = cfg.rawPlaceholder;
+  var helpEl = document.getElementById("spec-form-help");
+  if (helpEl) helpEl.textContent = cfg.help;
+  var unitHints = [
+    ["sf-voltage-v", "例: 12（Vは不要）"],
+    ["sf-current-a", "例: 80（Aは不要）"],
+    ["sf-power-kw", "例: 5.5（kWは不要）"],
+    ["sf-power-w", "例: 120（Wは不要）"],
+    ["sf-diameter-d", "例: 139（φ/Dは不要）"]
+  ];
+  unitHints.forEach(function(row) {
+    var el = document.getElementById(row[0]);
+    if (el) el.placeholder = row[1];
+  });
+}
+
+function isSpecInputActive(id) {
+  var cfg = specFormConfigForCategory(specFormCategoryCode());
+  var map = {
+    "sf-raw-spec": cfg.raw,
+    "sf-voltage-v": cfg.voltage,
+    "sf-current-a": cfg.current,
+    "sf-power-kw": cfg.powerKw,
+    "sf-power-w": cfg.powerW,
+    "sf-diameter-d": cfg.diameter,
+    "sf-type-text": cfg.type,
+    "sf-source-note": true
+  };
+  return !!map[id];
+}
+
+function activeFormNumberValue(id) {
+  return isSpecInputActive(id) ? formNumberValue(id) : null;
+}
+
+function buildRawSpecFromUnifiedInputs() {
+  var parts = [];
+  var voltage = activeFormNumberValue("sf-voltage-v");
+  var current = activeFormNumberValue("sf-current-a");
+  var powerKw = activeFormNumberValue("sf-power-kw");
+  var powerW = activeFormNumberValue("sf-power-w");
+  var diameter = activeFormNumberValue("sf-diameter-d");
+  var typeEl = document.getElementById("sf-type-text");
+  var typeText = isSpecInputActive("sf-type-text") && typeEl ? typeEl.value.trim() : "";
+  if (voltage !== null) parts.push(voltage + "V");
+  if (current !== null) parts.push(current + "A");
+  if (powerKw !== null) parts.push(powerKw + "kW");
+  if (powerW !== null) parts.push(powerW + "W");
+  if (diameter !== null) parts.push("φ" + diameter);
+  if (typeText) parts.push(typeText);
+  return parts.join(" ");
+}
+
 function getManualProductSpec() {
   return (currentProductSpecs || []).find(function(spec) {
     return spec.source_code === "manual_entry" || spec.source_kind === "manual";
@@ -6860,7 +6979,7 @@ function unifiedSpecHasInput() {
   return ["sf-raw-spec","sf-voltage-v","sf-current-a","sf-power-kw","sf-power-w","sf-diameter-d","sf-type-text","sf-source-note"]
     .some(function(id) {
       var el = document.getElementById(id);
-      return el && el.value.trim() !== "";
+      return el && isSpecInputActive(id) && el.value.trim() !== "";
     });
 }
 
@@ -6879,6 +6998,7 @@ async function saveUnifiedSpecForDkd(dkdId, errEl) {
   }
   var rawEl = document.getElementById("sf-raw-spec");
   var rawSpec = rawEl ? rawEl.value.trim() : "";
+  if (!rawSpec) rawSpec = buildRawSpecFromUnifiedInputs();
   if (!rawSpec) {
     if (errEl) errEl.textContent = t("spec_raw") + "を入力してください";
     return false;
@@ -6887,12 +7007,12 @@ async function saveUnifiedSpecForDkd(dkdId, errEl) {
     dkd_shohin_id: dkdId,
     spec_kind: "nominal_output",
     raw_spec: rawSpec,
-    voltage_v: formNumberValue("sf-voltage-v"),
-    current_a: formNumberValue("sf-current-a"),
-    power_kw: formNumberValue("sf-power-kw"),
-    power_w: formNumberValue("sf-power-w"),
-    diameter_d: formNumberValue("sf-diameter-d"),
-    type_text: document.getElementById("sf-type-text").value.trim() || null,
+    voltage_v: activeFormNumberValue("sf-voltage-v"),
+    current_a: activeFormNumberValue("sf-current-a"),
+    power_kw: activeFormNumberValue("sf-power-kw"),
+    power_w: activeFormNumberValue("sf-power-w"),
+    diameter_d: activeFormNumberValue("sf-diameter-d"),
+    type_text: isSpecInputActive("sf-type-text") ? (document.getElementById("sf-type-text").value.trim() || null) : null,
     source_id: await getManualSpecSourceId(),
     source_note: document.getElementById("sf-source-note").value.trim() || null,
     is_catalog_source: false,
@@ -8136,6 +8256,7 @@ document.getElementById("btn-back-logs").addEventListener("click",       functio
 document.getElementById("btn-add-part").addEventListener("click", function(){ openPartForm("add"); });
 document.getElementById("btn-part-form-cancel").addEventListener("click", function(){ document.getElementById("part-form-overlay").classList.remove("show"); });
 document.getElementById("btn-part-form-save").addEventListener("click", savePartForm);
+document.getElementById("pf-category").addEventListener("change", applySpecFormCategory);
 document.getElementById("btn-add-core-list").addEventListener("click", function(){ openCoreListForm("add"); });
 document.getElementById("btn-create-core-list-from-ranking").addEventListener("click", createCoreListFromRanking);
 document.getElementById("btn-core-list-search").addEventListener("click", loadCoreListMgmt);
