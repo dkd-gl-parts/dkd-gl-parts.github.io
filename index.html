@@ -988,37 +988,37 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 
 <div class="form-overlay" id="component-alternative-overlay">
   <div class="form-modal">
-    <h3>外品代替品を追加</h3>
-    <div class="form-help" id="component-alt-base">基準構成部品を選択してください</div>
+    <h3 data-i18n="component_alternative_modal_title">外品代替品を追加</h3>
+    <div class="form-help" id="component-alt-base" data-i18n="component_alternative_base_hint">基準構成部品を選択してください</div>
     <div class="form-grid">
       <div>
-        <label class="form-label">メーカー *</label>
+        <label class="form-label"><span data-i18n="f_manufacturer">メーカー</span> *</label>
         <input class="form-input" id="component-alt-mfr" type="text" placeholder="例: STRONGHOLD">
       </div>
       <div>
-        <label class="form-label">メーカー品番 *</label>
+        <label class="form-label"><span data-i18n="f_mfr_pn">メーカー品番</span> *</label>
         <input class="form-input" id="component-alt-pn" type="text">
       </div>
       <div>
-        <label class="form-label">部品名</label>
+        <label class="form-label" data-i18n="component_name">部品名</label>
         <input class="form-input" id="component-alt-name" type="text">
       </div>
       <div>
-        <label class="form-label">仕入先</label>
+        <label class="form-label" data-i18n="component_supplier">仕入先</label>
         <input class="form-input" id="component-alt-supplier" type="text">
       </div>
       <div>
-        <label class="form-label">参考単価</label>
+        <label class="form-label" data-i18n="component_reference_price">参考単価</label>
         <input class="form-input" id="component-alt-price" type="number" min="0" step="1">
       </div>
       <div>
-        <label class="form-label">メモ</label>
-        <input class="form-input" id="component-alt-note" type="text" placeholder="外品・代替条件など">
+        <label class="form-label" data-i18n="component_note">メモ</label>
+        <input class="form-input" id="component-alt-note" type="text" placeholder="外品・代替条件など" data-i18n-ph="component_alt_note_ph">
       </div>
     </div>
     <div class="form-actions">
-      <button class="btn-cancel" id="btn-component-alt-cancel">キャンセル</button>
-      <button class="btn-primary" id="btn-component-alt-save">保存</button>
+      <button class="btn-cancel" id="btn-component-alt-cancel" data-i18n="component_cancel">キャンセル</button>
+      <button class="btn-primary" id="btn-component-alt-save" data-i18n="component_save">保存</button>
     </div>
     <div class="reg-error" id="component-alt-error"></div>
   </div>
@@ -1217,11 +1217,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     </div>
     <div class="spec-form-grid">
       <div class="form-row">
-        <label class="form-label">コア在庫数</label>
+        <label class="form-label" data-i18n="core_stock_qty">コア在庫数</label>
         <input class="form-input" id="pf-core-stock-qty" type="number" min="0" step="1">
       </div>
       <div class="form-row">
-        <label class="form-label">パレットNo</label>
+        <label class="form-label" data-i18n="core_pallet_no">パレットNo</label>
         <input class="form-input" id="pf-core-pallet-no" type="text" placeholder="例: GL-A-01">
       </div>
     </div>
@@ -2159,7 +2159,55 @@ var TRANSLATIONS = {
     component_match_status: "判定",
     component_mode_different: "不一致",
     component_mode_same: "一致",
-    component_mode_all: "全件"
+    component_mode_all: "全件",
+    component_add_title: "構成部品を追加",
+    component_add: "追加",
+    component_unit_price: "単価",
+    component_actions: "操作",
+    component_catalog: "カタログ",
+    component_edit: "修正",
+    component_cancel: "取消",
+    component_save: "保存",
+    component_save_loading: "保存中...",
+    component_add_loading: "追加中...",
+    component_alternative_add: "代替品追加",
+    component_alternative_title: "外品代替品",
+    component_alternative_modal_title: "外品代替品を追加",
+    component_alternative_base_hint: "基準構成部品を選択してください",
+    component_alternative_base: "基準",
+    component_supplier: "仕入先",
+    component_reference_price: "参考単価",
+    component_note: "メモ",
+    component_disable: "無効",
+    component_alt_note_ph: "外品・代替条件など",
+    component_catalog_locked_edit: "パーツカタログ由来の構成部品は修正できません。手入力の構成部品として追加してください。",
+    component_catalog_locked_save: "パーツカタログ由来の構成部品は修正できません。",
+    component_target_id_missing: "対象商品のDKD商品IDを確認できません。",
+    component_mfr_pn_required: "構成部品のメーカー品番を入力してください。",
+    component_base_missing: "基準にする構成部品を確認できません。",
+    component_base_missing_save: "基準構成部品を確認できません。",
+    component_add_failed: "構成部品の追加に失敗しました",
+    component_alt_disable_confirm: "この代替品リンクを無効にしますか？",
+    component_alt_disable_failed: "代替品リンクの無効化に失敗しました",
+    core_stock_qty: "コア在庫数",
+    core_pallet_no: "パレットNo",
+    spec_ph_default: "例: 12V 80A",
+    spec_ph_alternator: "例: 12V 80A φ139 Jシリーズ",
+    spec_ph_starter: "例: 24V 5.5kW",
+    spec_ph_ac_compressor: "例: R12 TV14SC",
+    spec_ph_blower_motor: "例: 12V 120W",
+    spec_ph_type_only: "例: 型式・シリーズ",
+    spec_help_default: "数値欄は単位を入れず、数字だけ入力してください。公称出力欄には単位付きの表示文字を入れられます。",
+    spec_help_alternator: "オルタネータは電圧・電流・外径・型式を入力します。数値欄は 12、80、139 のように単位なしで入力してください。",
+    spec_help_starter: "スタータは電圧・出力(kW)・型式を入力します。数値欄は 24、5.5 のように単位なしで入力してください。",
+    spec_help_ac_compressor: "ACコンプレッサはガス、型式・シリーズを中心に入力します。ガス種は公称出力欄に R12、R134A などを入れてください。",
+    spec_help_blower_motor: "ブロワモーターは電圧・出力(W)・型式を入力します。数値欄は単位なしです。",
+    spec_help_type_only: "このカテゴリは型式・シリーズなど識別に必要な情報だけ入力します。",
+    spec_ph_voltage: "例: 12（Vは不要）",
+    spec_ph_current: "例: 80（Aは不要）",
+    spec_ph_power_kw: "例: 5.5（kWは不要）",
+    spec_ph_power_w: "例: 120（Wは不要）",
+    spec_ph_diameter: "例: 139（φ/Dは不要）"
   },
 
   en: {
@@ -2537,7 +2585,55 @@ var TRANSLATIONS = {
     component_match_status: "Status",
     component_mode_different: "Different",
     component_mode_same: "Same",
-    component_mode_all: "All"
+    component_mode_all: "All",
+    component_add_title: "Add Component Part",
+    component_add: "Add",
+    component_unit_price: "Unit Price",
+    component_actions: "Action",
+    component_catalog: "Catalog",
+    component_edit: "Edit",
+    component_cancel: "Cancel",
+    component_save: "Save",
+    component_save_loading: "Saving...",
+    component_add_loading: "Adding...",
+    component_alternative_add: "Add Alternative",
+    component_alternative_title: "Alternative Parts",
+    component_alternative_modal_title: "Add Alternative Part",
+    component_alternative_base_hint: "Select the base component part",
+    component_alternative_base: "Base",
+    component_supplier: "Supplier",
+    component_reference_price: "Reference Price",
+    component_note: "Memo",
+    component_disable: "Disable",
+    component_alt_note_ph: "Aftermarket or replacement conditions",
+    component_catalog_locked_edit: "Catalog-derived component parts cannot be edited. Add it as a manually entered component part instead.",
+    component_catalog_locked_save: "Catalog-derived component parts cannot be edited.",
+    component_target_id_missing: "Could not confirm the target product DKD ID.",
+    component_mfr_pn_required: "Enter the component manufacturer part number.",
+    component_base_missing: "Could not confirm the base component part.",
+    component_base_missing_save: "Could not confirm the base component part.",
+    component_add_failed: "Failed to add component part",
+    component_alt_disable_confirm: "Disable this alternative link?",
+    component_alt_disable_failed: "Failed to disable alternative link",
+    core_stock_qty: "Core Stock Qty",
+    core_pallet_no: "Pallet No.",
+    spec_ph_default: "Ex: 12V 80A",
+    spec_ph_alternator: "Ex: 12V 80A φ139 J series",
+    spec_ph_starter: "Ex: 24V 5.5kW",
+    spec_ph_ac_compressor: "Ex: R12 TV14SC",
+    spec_ph_blower_motor: "Ex: 12V 120W",
+    spec_ph_type_only: "Ex: type / series",
+    spec_help_default: "Enter numbers without units in the numeric fields. The nominal output field can contain the display text with units.",
+    spec_help_alternator: "For alternators, enter voltage, current, diameter, and type. Use numbers only, such as 12, 80, and 139.",
+    spec_help_starter: "For starters, enter voltage, output (kW), and type. Use numbers only, such as 24 and 5.5.",
+    spec_help_ac_compressor: "For AC compressors, enter gas and type / series information. Put gas such as R12 or R134A in the nominal output field.",
+    spec_help_blower_motor: "For blower motors, enter voltage, output (W), and type. Use numbers without units.",
+    spec_help_type_only: "For this category, enter only the identifying information such as type / series.",
+    spec_ph_voltage: "Ex: 12 (no V)",
+    spec_ph_current: "Ex: 80 (no A)",
+    spec_ph_power_kw: "Ex: 5.5 (no kW)",
+    spec_ph_power_w: "Ex: 120 (no W)",
+    spec_ph_diameter: "Ex: 139 (no φ/D)"
   },
 
   zh: {
@@ -2907,7 +3003,55 @@ var TRANSLATIONS = {
     component_match_status: "判定",
     component_mode_different: "不一致",
     component_mode_same: "一致",
-    component_mode_all: "全部"
+    component_mode_all: "全部",
+    component_add_title: "添加构成部件",
+    component_add: "添加",
+    component_unit_price: "单价",
+    component_actions: "操作",
+    component_catalog: "目录",
+    component_edit: "修改",
+    component_cancel: "取消",
+    component_save: "保存",
+    component_save_loading: "保存中...",
+    component_add_loading: "添加中...",
+    component_alternative_add: "添加替代品",
+    component_alternative_title: "替代部件",
+    component_alternative_modal_title: "添加替代部件",
+    component_alternative_base_hint: "请选择基准构成部件",
+    component_alternative_base: "基准",
+    component_supplier: "供应商",
+    component_reference_price: "参考单价",
+    component_note: "备注",
+    component_disable: "停用",
+    component_alt_note_ph: "外品或替代条件等",
+    component_catalog_locked_edit: "目录来源的构成部件不能修改。请作为手工输入的构成部件添加。",
+    component_catalog_locked_save: "目录来源的构成部件不能修改。",
+    component_target_id_missing: "无法确认目标商品的 DKD 商品ID。",
+    component_mfr_pn_required: "请输入构成部件的制造商品号。",
+    component_base_missing: "无法确认作为基准的构成部件。",
+    component_base_missing_save: "无法确认基准构成部件。",
+    component_add_failed: "构成部件添加失败",
+    component_alt_disable_confirm: "要停用此替代品链接吗？",
+    component_alt_disable_failed: "替代品链接停用失败",
+    core_stock_qty: "CORE库存数",
+    core_pallet_no: "托盘No",
+    spec_ph_default: "例: 12V 80A",
+    spec_ph_alternator: "例: 12V 80A φ139 J系列",
+    spec_ph_starter: "例: 24V 5.5kW",
+    spec_ph_ac_compressor: "例: R12 TV14SC",
+    spec_ph_blower_motor: "例: 12V 120W",
+    spec_ph_type_only: "例: 型式/系列",
+    spec_help_default: "数值栏不要输入单位，只输入数字。公称输出栏可以输入带单位的显示文字。",
+    spec_help_alternator: "交流发电机请输入电压、电流、外径、型式。数值栏请输入 12、80、139 这样的无单位数字。",
+    spec_help_starter: "起动机请输入电压、输出(kW)、型式。数值栏请输入 24、5.5 这样的无单位数字。",
+    spec_help_ac_compressor: "空调压缩机以气体、型式/系列为中心输入。气体种类请在公称输出栏输入 R12、R134A 等。",
+    spec_help_blower_motor: "鼓风机电机请输入电压、输出(W)、型式。数值栏不要输入单位。",
+    spec_help_type_only: "此类别只输入型式/系列等识别所需的信息。",
+    spec_ph_voltage: "例: 12（不要V）",
+    spec_ph_current: "例: 80（不要A）",
+    spec_ph_power_kw: "例: 5.5（不要kW）",
+    spec_ph_power_w: "例: 120（不要W）",
+    spec_ph_diameter: "例: 139（不要φ/D）"
   },
 
   // タガログ語（Tagalog）— 準備中
@@ -2948,7 +3092,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.145";
+var APP_VERSION       = "v1.1.146";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -3189,6 +3333,8 @@ function applyI18n() {
   document.querySelectorAll("[data-i18n-ph]").forEach(function(el) {
     el.placeholder = t(el.dataset.i18nPh);
   });
+  refreshCategorySelectLabels();
+  applySpecFormCategory();
 }
 
 // 全ての言語切り替えボタンのactiveクラスを更新する
@@ -3215,6 +3361,8 @@ async function applyLanguage(lang) {
   if (dataLoaded) { renderCategoryChips(); render(); }
   renderProductionFilterChips();
   if (currentProduct) { renderPanelStatic(); }
+  renderComponentAddPanel();
+  renderAssemblyComponentRows();
   updateAllHeaders();
 
   // ログイン中ならSupabaseのprofileにも保存する
@@ -3539,10 +3687,7 @@ function productionStatusLabel(row) {
 }
 
 function productionCategoryLabel(row) {
-  var c = row && row.category_code;
-  if (c === "starter") return t("filter_starter");
-  if (c === "alternator") return t("filter_alt");
-  return c || "-";
+  return productCategoryLabel(row);
 }
 
 async function loadProductionInstructions() {
@@ -6659,27 +6804,80 @@ function esc(s) {
 }
 
 // カテゴリ名を現在の言語で表示する
-// "Large Alternator" → キー "cat_Large_Alternator" → 翻訳辞書を引く
+// "alternator" / "Large Alternator" → キー "cat_Alternator" → 翻訳辞書を引く
+function categoryTranslationSource(category) {
+  var raw = String(category || "").trim();
+  if (!raw) return "";
+  var nativeMap = {
+    "オルタネータ": "Alternator",
+    "オルタネーター": "Alternator",
+    "スタータ": "Starter",
+    "スターター": "Starter",
+    "ディストリビュータ": "Distributor",
+    "大型オルタネータ": "Large Alternator",
+    "大型オルタネーター": "Large Alternator",
+    "ACコンプレッサ": "AC Compressor",
+    "ACコンプレッサー": "AC Compressor",
+    "スタータジェネレータ": "Starter Generator",
+    "スタータージェネレータ": "Starter Generator",
+    "新品大型スタータ": "New Large Starter",
+    "新品大型スターター": "New Large Starter",
+    "大型スタータ": "Large Starter",
+    "大型スターター": "Large Starter",
+    "スロットルボディ": "Throttle Body",
+    "ブロアモーター": "Blower Motor",
+    "ブロワモーター": "Blower Motor"
+  };
+  if (nativeMap[raw]) return nativeMap[raw];
+  var code = raw.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  var map = {
+    alternator: "Alternator",
+    starter: "Starter",
+    distributor: "Distributor",
+    large_alternator: "Large Alternator",
+    large_starter: "Large Starter",
+    new_large_starter: "New Large Starter",
+    starter_generator: "Starter Generator",
+    ac_compressor: "AC Compressor",
+    throttle_body: "Throttle Body",
+    blower_motor: "Blower Motor"
+  };
+  return map[code] || raw;
+}
 function tCat(category) {
   if (!category) return "-";
-  var key = "cat_" + category.replace(/ /g, "_");
+  var source = categoryTranslationSource(category);
+  var key = "cat_" + source.replace(/ /g, "_");
   var val = t(key);
   // 翻訳辞書にキーがない場合はそのまま返す
-  return val === key ? category : val;
+  return val === key ? source : val;
 }
 function categoryOptionLabel(cat) {
   if (!cat) return "-";
-  if (currentLang === "ja" && cat.label_ja) return cat.label_ja;
-  if (currentLang === "zh" && cat.label_zh) return cat.label_zh;
-  if (currentLang === "en" && cat.label_en) return cat.label_en;
-  return cat.label_ja || cat.label_en || cat.label_zh || cat.category_code || "-";
+  var code = cat.category_code || cat.category || cat.label_en || cat.label_ja || "";
+  var rawCode = String(code || "").trim().toLowerCase();
+  var label = "";
+  if (currentLang === "ja") label = cat.label_ja || "";
+  if (currentLang === "zh") label = cat.label_zh || "";
+  if (currentLang === "en") label = cat.label_en || "";
+  if (label && label.trim().toLowerCase() !== rawCode) return label;
+  return tCat(code);
 }
 function productCategoryLabel(p) {
   if (!p) return "-";
-  if (currentLang === "ja" && p.category_ja) return p.category_ja;
-  if (currentLang === "zh" && p.category_zh) return p.category_zh;
-  if (currentLang === "en" && p.category_en) return p.category_en;
-  return tCat(p.category || p.category_code || "");
+  var code = p.category_code || p.category || "";
+  var rawCode = String(code || "").trim().toLowerCase();
+  var label = "";
+  if (currentLang === "ja") label = p.category_ja || "";
+  if (currentLang === "zh") label = p.category_zh || "";
+  if (currentLang === "en") label = p.category_en || "";
+  if (label && label.trim().toLowerCase() !== rawCode) return label;
+  return tCat(code || label);
+}
+function refreshCategorySelectLabels() {
+  document.querySelectorAll("#pf-category option").forEach(function(opt) {
+    opt.textContent = tCat(opt.value);
+  });
 }
 function getProductEngine(p) {
   return p.engine || p.engine_model || p.engine_type || p.engine_code || "";
@@ -7549,31 +7747,31 @@ function specFormConfigForCategory(categoryCode) {
     powerW: false,
     diameter: false,
     type: true,
-    rawPlaceholder: "例: 12V 80A",
-    help: "数値欄は単位を入れず、数字だけ入力してください。公称出力欄には単位付きの表示文字を入れられます。"
+    rawPlaceholder: t("spec_ph_default"),
+    help: t("spec_help_default")
   };
   if (code === "alternator") {
     base.voltage = true;
     base.current = true;
     base.diameter = true;
-    base.rawPlaceholder = "例: 12V 80A φ139 Jシリーズ";
-    base.help = "オルタネータは電圧・電流・外径・型式を入力します。数値欄は 12、80、139 のように単位なしで入力してください。";
+    base.rawPlaceholder = t("spec_ph_alternator");
+    base.help = t("spec_help_alternator");
   } else if (code === "starter" || code === "starter_generator") {
     base.voltage = true;
     base.powerKw = true;
-    base.rawPlaceholder = "例: 24V 5.5kW";
-    base.help = "スタータは電圧・出力(kW)・型式を入力します。数値欄は 24、5.5 のように単位なしで入力してください。";
+    base.rawPlaceholder = t("spec_ph_starter");
+    base.help = t("spec_help_starter");
   } else if (code === "ac_compressor") {
-    base.rawPlaceholder = "例: R12 TV14SC";
-    base.help = "ACコンプレッサはガス、型式・シリーズを中心に入力します。ガス種は公称出力欄に R12、R134A などを入れてください。";
+    base.rawPlaceholder = t("spec_ph_ac_compressor");
+    base.help = t("spec_help_ac_compressor");
   } else if (code === "blower_motor") {
     base.voltage = true;
     base.powerW = true;
-    base.rawPlaceholder = "例: 12V 120W";
-    base.help = "ブロワモーターは電圧・出力(W)・型式を入力します。数値欄は単位なしです。";
+    base.rawPlaceholder = t("spec_ph_blower_motor");
+    base.help = t("spec_help_blower_motor");
   } else if (code === "distributor" || code === "throttle_body") {
-    base.rawPlaceholder = "例: 型式・シリーズ";
-    base.help = "このカテゴリは型式・シリーズなど識別に必要な情報だけ入力します。";
+    base.rawPlaceholder = t("spec_ph_type_only");
+    base.help = t("spec_help_type_only");
   }
   return base;
 }
@@ -7599,11 +7797,11 @@ function applySpecFormCategory() {
   var helpEl = document.getElementById("spec-form-help");
   if (helpEl) helpEl.textContent = cfg.help;
   var unitHints = [
-    ["sf-voltage-v", "例: 12（Vは不要）"],
-    ["sf-current-a", "例: 80（Aは不要）"],
-    ["sf-power-kw", "例: 5.5（kWは不要）"],
-    ["sf-power-w", "例: 120（Wは不要）"],
-    ["sf-diameter-d", "例: 139（φ/Dは不要）"]
+    ["sf-voltage-v", t("spec_ph_voltage")],
+    ["sf-current-a", t("spec_ph_current")],
+    ["sf-power-kw", t("spec_ph_power_kw")],
+    ["sf-power-w", t("spec_ph_power_w")],
+    ["sf-diameter-d", t("spec_ph_diameter")]
   ];
   unitHints.forEach(function(row) {
     var el = document.getElementById(row[0]);
@@ -7817,7 +8015,7 @@ function enterComponentsScreen(returnScreen) {
   updateAllHeaders();
   var backBtn = document.getElementById("btn-back-components");
   if (backBtn) {
-    backBtn.textContent = componentReturnScreen === "production-search" ? "← 品番検索" : t("btn_back_search");
+    backBtn.textContent = t("btn_back_search");
   }
   var title = document.getElementById("components-context-title");
   var sub = document.getElementById("components-context-sub");
@@ -7862,20 +8060,20 @@ function renderComponentAddPanel() {
   }
   var manufacturer = (currentProduct && currentProduct.manufacturer) || "";
   var html = "<div class='component-add-panel'>";
-  html += "<div class='component-add-title'>構成部品を追加</div>";
+  html += "<div class='component-add-title'>" + t("component_add_title") + "</div>";
   html += "<div class='component-add-grid'>";
-  html += "<div class='component-add-field'><label>メーカー</label><input id='component-add-mfr' type='text' value='" + esc(manufacturer) + "'></div>";
-  html += "<div class='component-add-field'><label>メーカー品番 *</label><input id='component-add-mfr-pn' type='text'></div>";
-  html += "<div class='component-add-field'><label>純正品番</label><input id='component-add-genuine-pn' type='text'></div>";
-  html += "<div class='component-add-field'><label>部品名</label><input id='component-add-name' type='text'></div>";
-  html += "<div class='component-add-field'><label>図番/位置</label><input id='component-add-position' type='text'></div>";
-  html += "<div class='component-add-field'><label>数量</label><input id='component-add-qty' type='text' value='1'></div>";
-  html += "<div class='component-add-field'><label>単価</label><input id='component-add-unit-price' type='number' min='0' step='1'></div>";
-  html += "<div class='component-add-field'><label>互</label><input id='component-add-interchange' type='text'></div>";
-  html += "<div class='component-add-field'><label>始期</label><input id='component-add-start' type='text'></div>";
-  html += "<div class='component-add-field'><label>終期</label><input id='component-add-end' type='text'></div>";
+  html += "<div class='component-add-field'><label>" + t("f_manufacturer") + "</label><input id='component-add-mfr' type='text' value='" + esc(manufacturer) + "'></div>";
+  html += "<div class='component-add-field'><label>" + t("f_mfr_pn") + " *</label><input id='component-add-mfr-pn' type='text'></div>";
+  html += "<div class='component-add-field'><label>" + t("f_genuine_pn") + "</label><input id='component-add-genuine-pn' type='text'></div>";
+  html += "<div class='component-add-field'><label>" + t("component_name") + "</label><input id='component-add-name' type='text'></div>";
+  html += "<div class='component-add-field'><label>" + t("component_position") + "</label><input id='component-add-position' type='text'></div>";
+  html += "<div class='component-add-field'><label>" + t("component_quantity") + "</label><input id='component-add-qty' type='text' value='1'></div>";
+  html += "<div class='component-add-field'><label>" + t("component_unit_price") + "</label><input id='component-add-unit-price' type='number' min='0' step='1'></div>";
+  html += "<div class='component-add-field'><label>" + t("component_interchange") + "</label><input id='component-add-interchange' type='text'></div>";
+  html += "<div class='component-add-field'><label>" + t("component_start_period") + "</label><input id='component-add-start' type='text'></div>";
+  html += "<div class='component-add-field'><label>" + t("component_end_period") + "</label><input id='component-add-end' type='text'></div>";
   html += "</div>";
-  html += "<div class='component-add-actions'><button class='btn-primary' id='btn-component-add' type='button'>追加</button></div>";
+  html += "<div class='component-add-actions'><button class='btn-primary' id='btn-component-add' type='button'>" + t("component_add") + "</button></div>";
   html += "</div>";
   wrap.innerHTML = html;
   var addBtn = document.getElementById("btn-component-add");
@@ -7900,10 +8098,10 @@ async function addAssemblyComponentForCurrent() {
   if (!currentProduct) return;
   if (!isAdmin()) { alert(t("err_perm")); return; }
   var dkdId = await resolveCurrentCoreDkdShohinId();
-  if (!dkdId) { alert("対象商品のDKD商品IDを確認できません。"); return; }
+  if (!dkdId) { alert(t("component_target_id_missing")); return; }
   var componentMfr = componentAddValue("component-add-mfr") || (currentProduct.manufacturer || "UNKNOWN");
   var componentMfrPn = componentAddValue("component-add-mfr-pn");
-  if (!componentMfrPn) { alert("構成部品のメーカー品番を入力してください。"); return; }
+  if (!componentMfrPn) { alert(t("component_mfr_pn_required")); return; }
   var payload = {
     target_dkd_shohin_id: dkdId,
     target_manufacturer: currentProduct.manufacturer || null,
@@ -7921,11 +8119,11 @@ async function addAssemblyComponentForCurrent() {
     component_effective_end: componentAddValue("component-add-end") || null
   };
   var addBtn = document.getElementById("btn-component-add");
-  if (addBtn) { addBtn.disabled = true; addBtn.textContent = "追加中..."; }
+  if (addBtn) { addBtn.disabled = true; addBtn.textContent = t("component_add_loading"); }
   var r = await sb.rpc("add_manual_assembly_component", payload);
-  if (addBtn) { addBtn.disabled = false; addBtn.textContent = "追加"; }
+  if (addBtn) { addBtn.disabled = false; addBtn.textContent = t("component_add"); }
   if (r.error) {
-    alert("構成部品の追加に失敗しました: " + r.error.message);
+    alert(t("component_add_failed") + ": " + r.error.message);
     return;
   }
   await writeLog("insert", "assembly_component_usages", r.data || dkdId, componentMfrPn, null, payload);
@@ -7948,7 +8146,7 @@ function isCatalogComponentRow(row) {
 function startComponentEdit(usageId) {
   var row = assemblyComponentRows.find(function(r) { return String(r.id) === String(usageId); });
   if (isCatalogComponentRow(row)) {
-    alert("パーツカタログ由来の構成部品は修正できません。手入力の構成部品として追加してください。");
+    alert(t("component_catalog_locked_edit"));
     return;
   }
   editingComponentUsageId = String(usageId);
@@ -7973,7 +8171,7 @@ async function saveComponentEdit(usageId) {
   var row = assemblyComponentRows.find(function(r) { return String(r.id) === String(usageId); });
   if (!row) return;
   if (isCatalogComponentRow(row)) {
-    alert("パーツカタログ由来の構成部品は修正できません。");
+    alert(t("component_catalog_locked_save"));
     editingComponentUsageId = null;
     renderAssemblyComponentRows();
     return;
@@ -7987,7 +8185,7 @@ async function saveComponentEdit(usageId) {
     return;
   }
   if (!guardR.data || guardR.data.is_catalog_evidence === true) {
-    alert("パーツカタログ由来の構成部品は修正できません。");
+    alert(t("component_catalog_locked_save"));
     editingComponentUsageId = null;
     await loadAssemblyComponentsForCurrent();
     return;
@@ -7996,11 +8194,11 @@ async function saveComponentEdit(usageId) {
   if (!tr) return;
   var payload = componentEditPayloadFromRow(tr);
   if (!payload.component_manufacturer_part_number) {
-    alert("構成部品のメーカー品番を入力してください。");
+    alert(t("component_mfr_pn_required"));
     return;
   }
   var btn = tr.querySelector("[data-component-save]");
-  if (btn) { btn.disabled = true; btn.textContent = "保存中..."; }
+  if (btn) { btn.disabled = true; btn.textContent = t("component_save_loading"); }
 
   var partUpdate = {
     manufacturer: payload.component_manufacturer || "UNKNOWN",
@@ -8025,7 +8223,7 @@ async function saveComponentEdit(usageId) {
     .select("id", { count: "exact", head: true })
     .eq("component_id", row.dkd_component_id);
   if (countResult.error) {
-    if (btn) { btn.disabled = false; btn.textContent = "保存"; }
+    if (btn) { btn.disabled = false; btn.textContent = t("component_save"); }
     alert("構成部品の使用状況確認に失敗しました: " + countResult.error.message);
     return;
   }
@@ -8042,7 +8240,7 @@ async function saveComponentEdit(usageId) {
     };
     var ins = await sb.from("component_parts").insert(insertPayload).select("dkd_component_id").single();
     if (ins.error) {
-      if (btn) { btn.disabled = false; btn.textContent = "保存"; }
+      if (btn) { btn.disabled = false; btn.textContent = t("component_save"); }
       alert("構成部品マスタの複製に失敗しました: " + ins.error.message);
       return;
     }
@@ -8050,13 +8248,13 @@ async function saveComponentEdit(usageId) {
   } else {
     var partR = await sb.from("component_parts").update(partUpdate).eq("dkd_component_id", row.dkd_component_id);
     if (partR.error) {
-      if (btn) { btn.disabled = false; btn.textContent = "保存"; }
+      if (btn) { btn.disabled = false; btn.textContent = t("component_save"); }
       alert("構成部品マスタの更新に失敗しました: " + partR.error.message);
       return;
     }
   }
   var usageR = await sb.from("assembly_component_usages").update(usageUpdate).eq("id", usageId).eq("is_catalog_evidence", false);
-  if (btn) { btn.disabled = false; btn.textContent = "保存"; }
+  if (btn) { btn.disabled = false; btn.textContent = t("component_save"); }
   if (usageR.error) {
     alert("構成部品の更新に失敗しました: " + usageR.error.message);
     return;
@@ -8085,7 +8283,7 @@ function renderComponentAlternatives(row, colspan) {
   var alternatives = alternativesForComponent(row);
   if (!alternatives.length) return "";
   var html = "<tr class='component-alt-row'><td colspan='" + String(colspan) + "'>";
-  html += "<div class='component-alt-box'><div class='component-alt-title'>外品代替品</div>";
+  html += "<div class='component-alt-box'><div class='component-alt-title'>" + t("component_alternative_title") + "</div>";
   alternatives.forEach(function(alt) {
     var part = alt.internal_component_parts || {};
     var suppliers = alt.internal_component_suppliers || [];
@@ -8096,9 +8294,9 @@ function renderComponentAlternatives(row, colspan) {
     html += "<span>" + esc(part.manufacturer || "-") + "</span>";
     html += "<strong>" + esc(part.part_number || "-") + "</strong>";
     html += "<span>" + esc(part.part_name || "") + "</span>";
-    if (supplierText) html += "<span class='component-alt-meta'>仕入先: " + esc(supplierText) + "</span>";
+    if (supplierText) html += "<span class='component-alt-meta'>" + t("component_supplier") + ": " + esc(supplierText) + "</span>";
     if (alt.note || part.note) html += "<span class='component-alt-meta'>" + esc(alt.note || part.note) + "</span>";
-    if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' data-component-alt-delete='" + esc(String(alt.id)) + "'>無効</button>";
+    if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' data-component-alt-delete='" + esc(String(alt.id)) + "'>" + t("component_disable") + "</button>";
     html += "</div>";
   });
   html += "</div></td></tr>";
@@ -8115,14 +8313,14 @@ function openComponentAlternativeForm(usageId) {
   if (!canEdit()) { alert(t("err_perm")); return; }
   var row = assemblyComponentRows.find(function(r) { return String(r.id) === String(usageId); });
   if (!row || !row.dkd_component_id) {
-    alert("基準にする構成部品を確認できません。");
+    alert(t("component_base_missing"));
     return;
   }
   componentAlternativeBaseRow = row;
   var overlay = document.getElementById("component-alternative-overlay");
   var base = document.getElementById("component-alt-base");
   var err = document.getElementById("component-alt-error");
-  if (base) base.textContent = "基準: " + componentAlternativeBaseText(row);
+  if (base) base.textContent = t("component_alternative_base") + ": " + componentAlternativeBaseText(row);
   if (err) err.textContent = "";
   ["component-alt-mfr","component-alt-pn","component-alt-supplier","component-alt-price","component-alt-note"].forEach(function(id) {
     var el = document.getElementById(id);
@@ -8140,7 +8338,7 @@ async function saveComponentAlternativeForm() {
   var saveBtn = document.getElementById("btn-component-alt-save");
   if (err) err.textContent = "";
   if (!row || !row.dkd_component_id) {
-    if (err) err.textContent = "基準構成部品を確認できません。";
+    if (err) err.textContent = t("component_base_missing_save");
     return;
   }
   var manufacturer = componentAddValue("component-alt-mfr") || "UNKNOWN";
@@ -8150,10 +8348,10 @@ async function saveComponentAlternativeForm() {
   var note = componentAddValue("component-alt-note");
   var price = nullableIntFromInput("component-alt-price");
   if (!partNumber) {
-    if (err) err.textContent = "メーカー品番を入力してください。";
+    if (err) err.textContent = t("component_mfr_pn_required");
     return;
   }
-  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = "保存中..."; }
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = t("component_save_loading"); }
   var normalized = normalizedPartKey(partNumber);
   var partId = null;
   var existing = await sb.from("internal_component_parts")
@@ -8175,8 +8373,8 @@ async function saveComponentAlternativeForm() {
       updated_by: currentUser ? currentUser.id : null
     }).select("id").single();
     if (insPart.error) {
-      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = "保存"; }
-      if (err) err.textContent = "外品部品の保存に失敗しました: " + insPart.error.message;
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = t("component_save"); }
+      if (err) err.textContent = t("msg_save_err") + ": " + insPart.error.message;
       return;
     }
     partId = insPart.data.id;
@@ -8204,8 +8402,8 @@ async function saveComponentAlternativeForm() {
       updated_by: currentUser ? currentUser.id : null
     }).select("id").single();
     if (insAlt.error) {
-      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = "保存"; }
-      if (err) err.textContent = "代替品リンクの保存に失敗しました: " + insAlt.error.message;
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = t("component_save"); }
+      if (err) err.textContent = t("msg_save_err") + ": " + insAlt.error.message;
       return;
     }
   }
@@ -8222,7 +8420,7 @@ async function saveComponentAlternativeForm() {
     });
     if (sup.error) console.warn("internal component supplier insert failed", sup.error);
   }
-  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = "保存"; }
+  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = t("component_save"); }
   await writeLog("insert", "component_part_alternatives", row.dkd_component_id, partNumber, null, { internal_component_part_id: partId, base: componentAlternativeBaseText(row) });
   closeComponentAlternativeForm();
   await loadAssemblyComponentsForCurrent();
@@ -8277,7 +8475,7 @@ async function loadComponentAlternativesForRows(rows) {
 
 async function disableComponentAlternative(altId) {
   if (!canEdit()) { alert(t("err_perm")); return; }
-  if (!confirm("この代替品リンクを無効にしますか？")) return;
+  if (!confirm(t("component_alt_disable_confirm"))) return;
   var before = componentAlternativeRows.find(function(row) { return String(row.id) === String(altId); }) || null;
   var r = await sb.from("component_part_alternatives").update({
     status: "inactive",
@@ -8285,7 +8483,7 @@ async function disableComponentAlternative(altId) {
     updated_at: new Date().toISOString()
   }).eq("id", altId);
   if (r.error) {
-    alert("代替品リンクの無効化に失敗しました: " + r.error.message);
+    alert(t("component_alt_disable_failed") + ": " + r.error.message);
     return;
   }
   await writeLog("update", "component_part_alternatives", altId, "disable alternative", before, { status: "inactive" });
@@ -8303,8 +8501,8 @@ function renderAssemblyComponentRows() {
   var hasActions = isAdmin() || canEdit();
   var colspan = 9 + (hasActions ? 1 : 0);
   var html = "<table class='component-table'>";
-  html += "<tr><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th><th>" + t("component_position") + "</th><th>" + t("component_quantity") + "</th><th>単価</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
-  if (hasActions) html += "<th>操作</th>";
+  html += "<tr><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th><th>" + t("component_position") + "</th><th>" + t("component_quantity") + "</th><th>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
+  if (hasActions) html += "<th>" + t("component_actions") + "</th>";
   html += "</tr>";
   rows.forEach(function(row) {
     var catalogLocked = isCatalogComponentRow(row);
@@ -8320,7 +8518,7 @@ function renderAssemblyComponentRows() {
       html += "<td>" + componentEditInput(row, "component_interchange_code", row.interchange_code || row.component_interchange_code || "") + "</td>";
       html += "<td>" + componentEditInput(row, "effective_start", row.effective_start || "") + "</td>";
       html += "<td>" + componentEditInput(row, "effective_end", row.effective_end || "") + "</td>";
-      html += "<td><div class='component-edit-actions'><button class='btn-sm-edit' data-component-save='" + esc(String(row.id)) + "'>保存</button><button class='btn-sm-edit production-action-secondary' data-component-cancel='1'>取消</button></div></td>";
+      html += "<td><div class='component-edit-actions'><button class='btn-sm-edit' data-component-save='" + esc(String(row.id)) + "'>" + t("component_save") + "</button><button class='btn-sm-edit production-action-secondary' data-component-cancel='1'>" + t("component_cancel") + "</button></div></td>";
     } else {
       html += "<td><div class='component-pn'>" + esc(row.component_manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.component_manufacturer || "") + "</div></td>";
       html += "<td><div class='component-pn'>" + esc(row.component_genuine_part_number || "-") + "</div></td>";
@@ -8333,8 +8531,8 @@ function renderAssemblyComponentRows() {
       html += "<td>" + esc(row.effective_end || row.end_period || "-") + "</td>";
       if (hasActions) {
         html += "<td><div class='component-edit-actions'>";
-        if (isAdmin()) html += catalogLocked ? "<span class='component-sub'>カタログ</span>" : "<button class='btn-sm-edit' data-component-edit='" + esc(String(row.id)) + "'>修正</button>";
-        html += "<button class='btn-sm-edit production-action-secondary' data-component-alt-add='" + esc(String(row.id)) + "'>代替品追加</button>";
+        if (isAdmin()) html += catalogLocked ? "<span class='component-sub'>" + t("component_catalog") + "</span>" : "<button class='btn-sm-edit' data-component-edit='" + esc(String(row.id)) + "'>" + t("component_edit") + "</button>";
+        html += "<button class='btn-sm-edit production-action-secondary' data-component-alt-add='" + esc(String(row.id)) + "'>" + t("component_alternative_add") + "</button>";
         html += "</div></td>";
       }
     }
