@@ -398,6 +398,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .count-bar  { padding: 6px 16px; font-size: 12px; color: #888; background: #fafafa; border-bottom: 1px solid #eee; flex-shrink: 0; }
 .list-area  { flex: 1; overflow-y: auto; }
 .list       { padding: 8px; }
+.load-more-wrap { padding: 8px; }
+.btn-load-more { width: 100%; border: 1px solid #d7dce5; border-radius: 8px; background: #fff; color: #315f9f; font-weight: 700; font-size: 13px; padding: 10px; cursor: pointer; }
+.btn-load-more:hover { background: #f5f8ff; border-color: #9bbcf5; }
 .card        { background: #fff; border-radius: 10px; border: 1px solid #e8e8e8; margin-bottom: 8px; padding: 12px 14px; cursor: pointer; overflow: hidden; transition: border-color .15s; }
 .card:hover  { border-color: #b8d0f8; }
 .card.selected { border-color: #4f8ef7; background: #f0f6ff; }
@@ -517,6 +520,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-filter-row { display: flex; gap: 6px; overflow-x: auto; padding: 8px 14px; background: #fff; border-bottom: 1px solid #eee; }
 .production-count { padding: 8px 14px; font-size: 12px; color: #778; background: #f6f7f9; border-bottom: 1px solid #eee; }
 .production-list { flex: 1; overflow-y: auto; padding: 8px; }
+.production-load-more-wrap { padding: 0 8px 10px; background: #f6f7f9; }
 .production-card { background: #fff; border: 1px solid #e7e9ee; border-radius: 8px; padding: 10px 11px; margin-bottom: 8px; cursor: pointer; display: grid; gap: 5px; }
 .production-card:hover, .production-card.selected { border-color: #4f8ef7; box-shadow: 0 2px 10px rgba(79,142,247,.12); }
 .production-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -831,6 +835,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <div class="count-bar" id="count-bar" data-i18n="loading">読み込み中...</div>
       <div class="list-area">
         <div class="list" id="list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
+        <div class="load-more-wrap" id="load-more-wrap" style="display:none">
+          <button class="btn-load-more" id="btn-load-more" type="button">さらに表示</button>
+        </div>
       </div>
     </div>
     <div class="right-col">
@@ -923,6 +930,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       </div>
       <div class="production-count" id="production-count" data-i18n="loading">読み込み中...</div>
       <div class="production-list" id="production-list"></div>
+      <div class="production-load-more-wrap" id="production-load-more-wrap" style="display:none">
+        <button class="btn-load-more" id="production-load-more" type="button">さらに表示</button>
+      </div>
     </div>
     <div class="production-right">
       <div class="production-detail" id="production-detail">
@@ -2909,7 +2919,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.131";
+var APP_VERSION       = "v1.1.132";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -2931,6 +2941,10 @@ var productionRankingMgmtRows = [];
 var productionRankingFormMode = "add";
 var productionDetailRequestSeq = 0;
 var SEARCH_FETCH_LIMIT = 200;
+var SEARCH_INITIAL_LIMIT = 50;
+var SEARCH_PAGE_STEP = 50;
+var productSearchLimit = SEARCH_INITIAL_LIMIT;
+var productionSearchLimit = SEARCH_INITIAL_LIMIT;
 var searchRequestSeq = 0;
 var productAuxRequestSeq = 0;
 var productionAuxRequestSeq = 0;
@@ -3508,6 +3522,7 @@ function renderProductionFilterChips() {
     btn.classList.toggle("active", productionFilter === filter);
     btn.addEventListener("click", async function() {
       productionFilter = filter;
+      productionSearchLimit = SEARCH_INITIAL_LIMIT;
       row.querySelectorAll("[data-production-filter]").forEach(function(c) {
         c.classList.toggle("active", c === btn);
       });
@@ -3574,20 +3589,20 @@ async function loadProductionProducts() {
       search_text: q,
       category_filter: categoryFilter,
       require_sl: false,
-      max_rows: SEARCH_FETCH_LIMIT
+      max_rows: productionSearchLimit
     });
   } else if (productionFilter === "instruction") {
-    var ids = productionInstructionRowsForFilter().map(function(x){ return x.dkd_shohin_id; }).filter(Boolean);
+    var ids = productionInstructionRowsForFilter().map(function(x){ return x.dkd_shohin_id; }).filter(Boolean).slice(0, productionSearchLimit);
     r = ids.length
       ? await sb.from("core_product_search_view").select("*").in("dkd_shohin_id", ids).limit(500)
       : { data: [], error: null };
   } else if (categoryFilter) {
-    r = await fetchCategoryProducts(categoryFilter);
+    r = await fetchCategoryProducts(categoryFilter, productionSearchLimit);
   } else {
     r = await sb.from("core_product_search_view")
       .select("*")
       .order("updated_at", { ascending: false })
-      .limit(SEARCH_FETCH_LIMIT);
+      .limit(productionSearchLimit);
   }
   if (r.error) {
     productionRows = [];
@@ -3660,6 +3675,7 @@ function productionMatchesFilter(row) {
 function renderProductionList() {
   var list = document.getElementById("production-list");
   var countEl = document.getElementById("production-count");
+  var moreWrap = document.getElementById("production-load-more-wrap");
   if (!list) return;
   var qEl = document.getElementById("production-q");
   var q = qEl ? qEl.value.trim() : "";
@@ -3667,11 +3683,14 @@ function renderProductionList() {
     return productionMatchesFilter(row) && productionMatchesQuery(row, q);
   });
   if (countEl) countEl.textContent = productionFilteredRows.length + " 件表示 / 基幹商品マスタ " + productionRows.length + " 件";
+  if (moreWrap) moreWrap.style.display = (productionRows.length >= productionSearchLimit && productionSearchLimit < SEARCH_FETCH_LIMIT) ? "" : "none";
   if (!productionRows.length) {
+    if (moreWrap) moreWrap.style.display = "none";
     list.innerHTML = "<div class='loading'>基幹商品マスタを検索してください。</div>";
     return;
   }
   if (!productionFilteredRows.length) {
+    if (moreWrap) moreWrap.style.display = "none";
     list.innerHTML = "<div class='loading'>" + t("no_results") + "</div>";
     return;
   }
@@ -6348,6 +6367,7 @@ function renderCategoryChips() {
     btn.classList.toggle("active", currentFilter === btn.dataset.filter);
     btn.addEventListener("click", function() {
       currentFilter = btn.dataset.filter;
+      productSearchLimit = SEARCH_INITIAL_LIMIT;
       document.querySelectorAll("#filter-row .chip").forEach(function(c) {
         c.classList.toggle("active", c === btn);
       });
@@ -6432,15 +6452,16 @@ function getFiltered() {
   });
 }
 
-async function fetchCategoryProducts(categoryFilter) {
+async function fetchCategoryProducts(categoryFilter, maxRows) {
   if (!categoryFilter) return { data: [], error: null };
+  maxRows = maxRows || SEARCH_FETCH_LIMIT;
 
   var fields = "*";
   var byCode = await sb.from("core_product_search_view")
     .select(fields)
     .eq("category_code", categoryFilter)
     .order("manufacturer_part_number", { ascending: true })
-    .limit(SEARCH_FETCH_LIMIT);
+    .limit(maxRows);
 
   if (byCode.error) return byCode;
   if ((byCode.data || []).length > 0) return byCode;
@@ -6449,7 +6470,7 @@ async function fetchCategoryProducts(categoryFilter) {
     .select(fields)
     .eq("category", categoryFilter)
     .order("manufacturer_part_number", { ascending: true })
-    .limit(SEARCH_FETCH_LIMIT);
+    .limit(maxRows);
 }
 
 function normalizePartQuery(q) {
@@ -6481,11 +6502,12 @@ async function fetchSourceAliasProducts(q) {
     .in("dkd_shohin_id", ids)
     .order("manufacturer_part_number")
     .order("genuine_part_number")
-    .limit(SEARCH_FETCH_LIMIT);
+    .limit(productSearchLimit);
 }
 
 async function runProductSearch(options) {
   options = options || {};
+  if (options.resetLimit) productSearchLimit = SEARCH_INITIAL_LIMIT;
   var q = document.getElementById("q").value.trim();
   if (currentFilter === "production") currentFilter = "all";
   if (q && options.resetFilter && currentFilter !== "all") {
@@ -6515,13 +6537,13 @@ async function runProductSearch(options) {
 
   var r;
   if (!q && categoryFilter && !requireSl) {
-    r = await fetchCategoryProducts(categoryFilter);
+    r = await fetchCategoryProducts(categoryFilter, productSearchLimit);
   } else {
     r = await sb.rpc("search_core_products", {
         search_text: q || null,
         category_filter: categoryFilter,
         require_sl: requireSl,
-        max_rows: SEARCH_FETCH_LIMIT
+        max_rows: productSearchLimit
       });
   }
   if (seq !== searchRequestSeq) return;
@@ -6746,19 +6768,29 @@ async function hasDisplayableKikanCompatibleParts(product) {
 function render() {
   var q    = document.getElementById("q").value.trim();
   var list = document.getElementById("list");
+  var moreWrap = document.getElementById("load-more-wrap");
   if (!q && currentFilter === "all") {
     document.getElementById("count-bar").textContent = t("hint_search");
     list.innerHTML = "<div class='empty'>" + t("hint_search") + "</div>";
+    if (moreWrap) moreWrap.style.display = "none";
     return;
   }
   var items = getFiltered();
-  if (items.length === 0) { list.innerHTML = "<div class='empty'>" + t("no_results") + "</div>"; return; }
+  if (items.length === 0) {
+    list.innerHTML = "<div class='empty'>" + t("no_results") + "</div>";
+    if (moreWrap) moreWrap.style.display = "none";
+    return;
+  }
   var visibleItems = items.slice(0, SEARCH_RENDER_LIMIT);
   var countText = items.length + " 件表示";
-  if (items.length >= SEARCH_FETCH_LIMIT) {
-    countText += " - " + SEARCH_FETCH_LIMIT + " 件まで取得。品番・キーワードで絞り込んでください";
+  if (allProducts.length >= productSearchLimit) {
+    countText += " - " + productSearchLimit + " 件まで取得";
+    if (productSearchLimit >= SEARCH_FETCH_LIMIT) {
+      countText += "。品番・キーワードで絞り込んでください";
+    }
   }
   document.getElementById("count-bar").textContent = countText;
+  if (moreWrap) moreWrap.style.display = (allProducts.length >= productSearchLimit && productSearchLimit < SEARCH_FETCH_LIMIT) ? "" : "none";
   var html = "";
   visibleItems.forEach(function(p) {
     var legacyId = productLegacyPartId(p);
@@ -8880,18 +8912,24 @@ document.getElementById("kf-candidates").addEventListener("click", function(e) {
   var item = e.target.closest("[data-candidate-index]");
   if (item) selectKikanPartCandidate(parseInt(item.dataset.candidateIndex, 10));
 });
-document.getElementById("search-btn").addEventListener("click", function(){ runProductSearch({ resetFilter: true }); });
-document.getElementById("q").addEventListener("keydown", function(e){ if(e.key==="Enter") runProductSearch({ resetFilter: true }); });
-document.getElementById("clear-btn").addEventListener("click", function(){ document.getElementById("q").value=""; currentFilter="all"; document.querySelectorAll("#filter-row .chip").forEach(function(c){ c.classList.toggle("active", c.dataset.filter==="all"); }); runProductSearch(); });
+document.getElementById("search-btn").addEventListener("click", function(){ runProductSearch({ resetFilter: true, resetLimit: true }); });
+document.getElementById("q").addEventListener("keydown", function(e){ if(e.key==="Enter") runProductSearch({ resetFilter: true, resetLimit: true }); });
+document.getElementById("clear-btn").addEventListener("click", function(){ document.getElementById("q").value=""; currentFilter="all"; productSearchLimit=SEARCH_INITIAL_LIMIT; document.querySelectorAll("#filter-row .chip").forEach(function(c){ c.classList.toggle("active", c.dataset.filter==="all"); }); runProductSearch(); });
 document.querySelectorAll("#filter-row .chip").forEach(function(chip){
   chip.addEventListener("click", function(){
     currentFilter=chip.dataset.filter;
+    productSearchLimit=SEARCH_INITIAL_LIMIT;
     document.querySelectorAll("#filter-row .chip").forEach(function(c){ c.classList.toggle("active",c===chip); });
     runProductSearch();
   });
 });
+document.getElementById("btn-load-more").addEventListener("click", function(){
+  productSearchLimit = Math.min(productSearchLimit + SEARCH_PAGE_STEP, SEARCH_FETCH_LIMIT);
+  runProductSearch();
+});
 document.getElementById("list").addEventListener("click", function(e){ var c=e.target.closest(".card"); if(c) openPanel(parseInt(c.dataset.id,10)); });
 document.getElementById("production-search-btn").addEventListener("click", async function(){
+  productionSearchLimit = SEARCH_INITIAL_LIMIT;
   productionLoaded = false;
   await loadProductionProducts();
   renderProductionList();
@@ -8899,6 +8937,7 @@ document.getElementById("production-search-btn").addEventListener("click", async
 });
 document.getElementById("production-q").addEventListener("keydown", async function(e){
   if(e.key==="Enter") {
+    productionSearchLimit = SEARCH_INITIAL_LIMIT;
     productionLoaded = false;
     await loadProductionProducts();
     renderProductionList();
@@ -8908,6 +8947,7 @@ document.getElementById("production-q").addEventListener("keydown", async functi
 document.getElementById("production-clear-btn").addEventListener("click", async function(){
   document.getElementById("production-q").value = "";
   productionFilter = "instruction";
+  productionSearchLimit = SEARCH_INITIAL_LIMIT;
   document.querySelectorAll("[data-production-filter]").forEach(function(c){ c.classList.toggle("active", c.dataset.productionFilter === "instruction"); });
   productionLoaded = false;
   await loadProductionProducts();
@@ -8916,6 +8956,7 @@ document.getElementById("production-clear-btn").addEventListener("click", async 
 });
 document.getElementById("production-year-filter").addEventListener("change", async function(){
   productionFilter = "instruction";
+  productionSearchLimit = SEARCH_INITIAL_LIMIT;
   document.querySelectorAll("[data-production-filter]").forEach(function(c){ c.classList.toggle("active", c.dataset.productionFilter === "instruction"); });
   productionLoaded = false;
   currentProductionRow = null;
@@ -8930,9 +8971,17 @@ document.getElementById("production-edit-ranking-inline").addEventListener("clic
 document.querySelectorAll("[data-production-filter]").forEach(function(chip) {
   chip.addEventListener("click", function() {
     productionFilter = chip.dataset.productionFilter;
+    productionSearchLimit = SEARCH_INITIAL_LIMIT;
     document.querySelectorAll("[data-production-filter]").forEach(function(c){ c.classList.toggle("active", c === chip); });
     renderProductionList();
   });
+});
+document.getElementById("production-load-more").addEventListener("click", async function(){
+  productionSearchLimit = Math.min(productionSearchLimit + SEARCH_PAGE_STEP, SEARCH_FETCH_LIMIT);
+  productionLoaded = false;
+  await loadProductionProducts();
+  renderProductionList();
+  await renderProductionDetail(currentProductionRow);
 });
 document.getElementById("production-list").addEventListener("click", async function(e) {
   var card = e.target.closest("[data-production-index]");
