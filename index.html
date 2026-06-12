@@ -825,7 +825,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         </div>
       </div>
       <div class="filter-row" id="filter-row">
-        <button class="chip" data-filter="production" data-i18n="production_instruction_filter">製造指示</button>
         <button class="chip active" data-filter="all" data-i18n="filter_all">すべて</button>
         <button class="chip" data-filter="sl"  data-i18n="filter_sl">SL品番あり</button>
       </div>
@@ -2910,7 +2909,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.129";
+var APP_VERSION       = "v1.1.130";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -6293,7 +6292,7 @@ function renderCategoryChips() {
   var filterRow = document.getElementById("filter-row");
   if (!filterRow) return;
 
-  // 既存のカテゴリチップを削除（production・all・sl は残す）
+  // 既存のカテゴリチップを削除（all・sl は残す）
   var existing = filterRow.querySelectorAll(".chip[data-filter^='cat:']");
   existing.forEach(function(el) { el.remove(); });
 
@@ -6400,7 +6399,6 @@ function getFiltered() {
     var ms = partMatch || textMatch;
     var hasSL  = legacyId && slPartsMap[legacyId] && slPartsMap[legacyId].length > 0;
     var mf = currentFilter==="sl" ? hasSL
-           : currentFilter==="production" ? !!productionInstructionFor(p)
            : currentFilter.indexOf("cat:") === 0 ? (p.category_code || p.category) === currentFilter.slice(4)
            : true;
     return ms && mf;
@@ -6462,13 +6460,13 @@ async function fetchSourceAliasProducts(q) {
 async function runProductSearch(options) {
   options = options || {};
   var q = document.getElementById("q").value.trim();
-  if (q && options.resetFilter && currentFilter !== "all" && currentFilter !== "production") {
+  if (currentFilter === "production") currentFilter = "all";
+  if (q && options.resetFilter && currentFilter !== "all") {
     currentFilter = "all";
       document.querySelectorAll("#filter-row .chip").forEach(function(c) {
       c.classList.toggle("active", c.dataset.filter === "all");
     });
   }
-  if (currentFilter === "production") await loadProductionInstructions();
   var categoryFilter = currentFilter.indexOf("cat:") === 0 ? currentFilter.slice(4) : null;
   var requireSl = currentFilter === "sl";
   var list = document.getElementById("list");
@@ -6485,12 +6483,7 @@ async function runProductSearch(options) {
   list.innerHTML = "<div class='loading'>" + t("loading") + "</div>";
 
   var r;
-  if (!q && currentFilter === "production") {
-    var ids = productionInstructionRows.map(function(x){ return x.dkd_shohin_id; }).filter(Boolean);
-    r = ids.length
-      ? await sb.from("core_product_search_view").select("*").in("dkd_shohin_id", ids).limit(500)
-      : { data: [], error: null };
-  } else if (!q && categoryFilter && !requireSl) {
+  if (!q && categoryFilter && !requireSl) {
     r = await fetchCategoryProducts(categoryFilter);
   } else {
     r = await sb.rpc("search_core_products", {
