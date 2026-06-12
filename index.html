@@ -3092,7 +3092,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.146";
+var APP_VERSION       = "v1.1.147";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -3117,7 +3117,7 @@ var productionDetailRequestSeq = 0;
 var SEARCH_FETCH_LIMIT = 200;
 var SEARCH_INITIAL_LIMIT = 30;
 var SEARCH_PAGE_STEP = 30;
-var KIKAN_FLAG_LOOKUP_LIMIT = 24;
+var KIKAN_FLAG_LOOKUP_LIMIT = 80;
 var productSearchLimit = SEARCH_INITIAL_LIMIT;
 var productionSearchLimit = SEARCH_INITIAL_LIMIT;
 var searchRequestSeq = 0;
@@ -6951,6 +6951,36 @@ async function fetchCategoryProducts(categoryFilter, maxRows) {
   return byName;
 }
 
+async function fetchSlProductsFromLoadedMap(maxRows) {
+  maxRows = maxRows || productSearchLimit;
+  var legacyIds = Object.keys(slPartsMap || {}).map(function(id) {
+    return parseInt(id, 10);
+  }).filter(function(id) {
+    return !isNaN(id);
+  });
+  if (!legacyIds.length) return { data: [], error: null };
+
+  var rows = [];
+  var seen = {};
+  for (var i = 0; i < legacyIds.length && rows.length < maxRows; i += 120) {
+    var chunk = legacyIds.slice(i, i + 120);
+    var r = await sb.from("core_products")
+      .select(CORE_PRODUCT_FAST_SELECT)
+      .in("legacy_part_id", chunk)
+      .order("manufacturer_part_number", { ascending: true })
+      .order("genuine_part_number", { ascending: true })
+      .limit(maxRows);
+    if (r.error) return r;
+    normalizeCoreProductFastRows(r.data || []).forEach(function(row) {
+      var key = String(row.dkd_shohin_id || row.id || "");
+      if (!key || seen[key] || rows.length >= maxRows) return;
+      seen[key] = true;
+      rows.push(row);
+    });
+  }
+  return { data: rows, error: null };
+}
+
 function normalizePartQuery(q) {
   return String(q || "").toUpperCase().replace(/[-\s　]/g, "");
 }
@@ -7089,6 +7119,10 @@ async function runProductSearch(options) {
   var r;
   if (!q && categoryFilter && !requireSl) {
     r = await fetchCategoryProducts(categoryFilter, productSearchLimit);
+  } else if (!q && requireSl) {
+    r = await fetchSlProductsFromLoadedMap(productSearchLimit);
+  } else if (q && requireSl) {
+    r = await fetchCoreProductMasterMatches(q, null, Math.min(productSearchLimit * 4, SEARCH_FETCH_LIMIT));
   } else if (q && !requireSl) {
     r = await fetchCoreProductMasterMatches(q, categoryFilter, productSearchLimit);
   } else {
@@ -7184,9 +7218,15 @@ async function fetchCoreStockQtyMap(products) {
 async function fetchKikanCompatibleMap(products, isStale) {
   var map = {};
   var rows = (products || []).slice(0, KIKAN_FLAG_LOOKUP_LIMIT);
+  var directMap = await fetchKikanGroupMemberFlagMap(rows);
+  Object.keys(directMap).forEach(function(key) {
+    map[key] = true;
+    kikanCompatibleFlagCache[key] = true;
+  });
   var pending = [];
   rows.forEach(function(p) {
     var key = "dkd:" + String(p.dkd_shohin_id || p.id || "");
+    if (map[key]) return;
     if (Object.prototype.hasOwnProperty.call(kikanCompatibleFlagCache, key)) {
       if (kikanCompatibleFlagCache[key]) map[key] = true;
     } else {
@@ -7204,6 +7244,52 @@ async function fetchKikanCompatibleMap(products, isStale) {
       if (results[idx]) map[key] = true;
     });
   }
+  return map;
+}
+
+async function fetchKikanGroupMemberFlagMap(products) {
+  var map = {};
+  var ids = (products || []).map(function(p) {
+    return parseInt(p.dkd_shohin_id || p.id, 10);
+  }).filter(function(id) {
+    return !isNaN(id);
+  });
+  var uniqueIds = Array.from(new Set(ids));
+  if (!uniqueIds.length) return map;
+  var first = await sb.from("kikan_group_members")
+    .select("kikan_group_id, dkd_gokan_id")
+    .in("dkd_gokan_id", uniqueIds);
+  if (first.error) {
+    console.warn("kikan group flag lookup failed", first.error);
+    return map;
+  }
+  var groupIds = Array.from(new Set((first.data || []).map(function(row) {
+    return row.kikan_group_id;
+  }).filter(function(id) {
+    return id !== null && id !== undefined && id !== "";
+  })));
+  if (!groupIds.length) return map;
+  var second = await sb.from("kikan_group_members")
+    .select("kikan_group_id, dkd_gokan_id")
+    .in("kikan_group_id", groupIds);
+  if (second.error) {
+    console.warn("kikan group member count lookup failed", second.error);
+    return map;
+  }
+  var membersByGroup = {};
+  (second.data || []).forEach(function(row) {
+    var gid = String(row.kikan_group_id);
+    if (!membersByGroup[gid]) membersByGroup[gid] = {};
+    membersByGroup[gid][String(row.dkd_gokan_id)] = true;
+  });
+  (first.data || []).forEach(function(row) {
+    var gid = String(row.kikan_group_id);
+    var target = String(row.dkd_gokan_id);
+    var members = Object.keys(membersByGroup[gid] || {});
+    if (members.some(function(memberId) { return memberId !== target; })) {
+      map["dkd:" + target] = true;
+    }
+  });
   return map;
 }
 
