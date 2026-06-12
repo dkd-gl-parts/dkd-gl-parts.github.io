@@ -2852,7 +2852,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.126";
+var APP_VERSION       = "v1.1.127";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -3741,7 +3741,7 @@ function renderProductMasterDetailHtml(p) {
     vehicleOffsetClass = " detail-maker-offset detail-maker-offset-standard";
   }
   return "<div class='detail-main-grid'>" +
-    "<div class='detail-column'>" + genuineHtml + renderCatalogVehicleSummaryHtml(vehicleOffsetClass) + "</div>" +
+    "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + "</div>" +
     "<div class='detail-column'>" + makerHtml +
     "<div class='detail-spec-block detail-spec-after-maker'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div></div>" +
   "</div>";
@@ -6619,7 +6619,7 @@ function renderPanelStatic() {
   toolHtml += "</div>";
   document.getElementById("panel-body").innerHTML =
     "<div class='detail-main-grid'>" +
-      "<div class='detail-column'>" + genuineHtml + renderCatalogVehicleSummaryHtml(vehicleOffsetClass) + "</div>" +
+      "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + "</div>" +
       "<div class='detail-column'>" + makerHtml +
       "<div class='detail-spec-block detail-spec-after-maker'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div></div>" +
     "</div>" +
