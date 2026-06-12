@@ -134,6 +134,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-edit-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .component-pn { font-family: monospace; font-size: 12px; color: #444; }
 .component-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
+.component-alt-row td { background: #fbfcff; padding-top: 0; }
+.component-alt-box { margin: 0 0 8px 26px; border-left: 3px solid #f4b740; padding: 7px 10px; background: #fffaf0; border-radius: 0 6px 6px 0; }
+.component-alt-title { font-size: 11px; font-weight: 700; color: #8a5a00; margin-bottom: 4px; }
+.component-alt-item { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: baseline; font-size: 12px; color: #333; padding: 3px 0; }
+.component-alt-item strong { font-family: monospace; color: #1a1a2e; }
+.component-alt-meta { color: #7c8492; font-size: 11px; }
 .component-candidate { cursor: pointer; }
 .component-candidate:hover td { background: #f8f8f8; }
 .component-diff-side { min-width: 0; }
@@ -283,6 +289,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .spec-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .spec-form-help { font-size: 12px; color: #777; line-height: 1.45; margin-top: 5px; }
 .spec-form-hidden { display: none !important; }
+.form-help { font-size: 12px; color: #667085; line-height: 1.45; margin: 0 0 10px; }
 @media(max-width:640px){ .spec-form-grid { grid-template-columns: 1fr; } }
 
 /* ログ画面 */
@@ -940,6 +947,44 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="component-compat-help" data-i18n="component_compat_help"></div>
     <div id="component-add-wrap"></div>
     <div id="component-wrap"><div class="component-empty" data-i18n="loading">読み込み中...</div></div>
+  </div>
+</div>
+
+<div class="form-overlay" id="component-alternative-overlay">
+  <div class="form-modal">
+    <h3>外品代替品を追加</h3>
+    <div class="form-help" id="component-alt-base">基準構成部品を選択してください</div>
+    <div class="form-grid">
+      <div>
+        <label class="form-label">メーカー *</label>
+        <input class="form-input" id="component-alt-mfr" type="text" placeholder="例: STRONGHOLD">
+      </div>
+      <div>
+        <label class="form-label">メーカー品番 *</label>
+        <input class="form-input" id="component-alt-pn" type="text">
+      </div>
+      <div>
+        <label class="form-label">部品名</label>
+        <input class="form-input" id="component-alt-name" type="text">
+      </div>
+      <div>
+        <label class="form-label">仕入先</label>
+        <input class="form-input" id="component-alt-supplier" type="text">
+      </div>
+      <div>
+        <label class="form-label">参考単価</label>
+        <input class="form-input" id="component-alt-price" type="number" min="0" step="1">
+      </div>
+      <div>
+        <label class="form-label">メモ</label>
+        <input class="form-input" id="component-alt-note" type="text" placeholder="外品・代替条件など">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" id="btn-component-alt-cancel">キャンセル</button>
+      <button class="btn-primary" id="btn-component-alt-save">保存</button>
+    </div>
+    <div class="reg-error" id="component-alt-error"></div>
   </div>
 </div>
 
@@ -1703,8 +1748,8 @@ var TRANSLATIONS = {
     greeting: "ようこそ、{name} さん",
     mi_search_title: "品番検索",
     mi_search_desc: "基幹商品マスタを品番・車種・メーカーで検索し、画像・構成部品・製造指示を確認します。",
-    mi_production_title: "製造部品検索",
-    mi_production_desc: "基幹商品マスタを検索し、製造指示・CORE・構成部品を確認します。",
+    mi_production_title: "製造指示",
+    mi_production_desc: "製造アイテムをランキング・カテゴリ別に確認し、CORE・構成部品・代替品を見ます。",
     mi_users_title: "ユーザー管理",
     mi_users_desc: "ユーザーの表示名とロール（権限）を設定します。",
     mi_core_list_title: "COREリスト",
@@ -1731,16 +1776,16 @@ var TRANSLATIONS = {
     count_hint: "全 {n} 件 — 品番・キーワードを入力して検索",
     count_results: "{n} 件表示 / 全 {m} 件",
     welcome_panel: "品番を検索して選択してください",
-    production_search_title: "品番検索",
+    production_search_title: "製造指示",
     production_search_ph: "DKD商品ID・メーカー品番・純正品番で検索",
     production_instruction_filter: "製造指示",
     production_filter_ready: "構成部品あり",
     production_filter_need: "構成部品なし",
-    production_select_hint: "基幹商品を選択してください",
+    production_select_hint: "製造する品番を選択してください",
     production_status_ready: "構成部品あり",
     production_status_need: "構成部品なし",
     production_open_sales: "品番検索で開く",
-    production_product_section: "品番情報",
+    production_product_section: "販売商品情報",
     production_core_section: "CORE",
     production_vehicle_section: "車両情報",
     production_component_section: "構成部品",
@@ -2081,8 +2126,8 @@ var TRANSLATIONS = {
     greeting: "Welcome, {name}",
     mi_search_title: "Part Number Search",
     mi_search_desc: "Search master products and review images, components, and production instructions.",
-    mi_production_title: "Production Parts Search",
-    mi_production_desc: "Search master products and review instructions, core stock, and components.",
+    mi_production_title: "Production Instructions",
+    mi_production_desc: "Review production items by ranking or category, including core stock, components, and alternatives.",
     mi_users_title: "User Management",
     mi_users_desc: "Set user display names and access roles.",
     mi_core_list_title: "CORE List",
@@ -2109,16 +2154,16 @@ var TRANSLATIONS = {
     count_hint: "{n} total — Enter part number or keyword",
     count_results: "{n} results / {m} total",
     welcome_panel: "Search and select a part number",
-    production_search_title: "Production Parts Search",
+    production_search_title: "Production Instructions",
     production_search_ph: "Search by DKD product ID, maker part or genuine part",
     production_instruction_filter: "Production Plan",
     production_filter_ready: "Has components",
     production_filter_need: "Needs components",
-    production_select_hint: "Select a master product",
+    production_select_hint: "Select a product to manufacture",
     production_status_ready: "Has components",
     production_status_need: "Needs components",
     production_open_sales: "Open in sales search",
-    production_product_section: "Sales product",
+    production_product_section: "Sales Product Info",
     production_core_section: "Core",
     production_vehicle_section: "Vehicle info",
     production_component_section: "Components",
@@ -2459,8 +2504,8 @@ var TRANSLATIONS = {
     greeting: "欢迎，{name}",
     mi_search_title: "零件编号搜索",
     mi_search_desc: "搜索基干商品主档，并确认图片、构成零件和生产指示。",
-    mi_production_title: "生产零件搜索",
-    mi_production_desc: "搜索基干商品主档，并确认生产指示、CORE和构成零件。",
+    mi_production_title: "生产指示",
+    mi_production_desc: "按排行或分类查看生产项目，并确认CORE、构成零件和替代品。",
     mi_users_title: "用户管理",
     mi_users_desc: "设置用户的显示名称和访问权限角色。",
     mi_core_list_title: "CORE清单",
@@ -2487,16 +2532,16 @@ var TRANSLATIONS = {
     count_hint: "共 {n} 件 — 请输入零件编号或关键词",
     count_results: "显示 {n} 件 / 共 {m} 件",
     welcome_panel: "请搜索并选择零件编号",
-    production_search_title: "生产零件搜索",
+    production_search_title: "生产指示",
     production_search_ph: "按DKD商品ID、厂家品番或纯正品番搜索",
     production_instruction_filter: "生产指示",
     production_filter_ready: "有构成零件",
     production_filter_need: "无构成零件",
-    production_select_hint: "请选择基干商品",
+    production_select_hint: "请选择要生产的品番",
     production_status_ready: "有构成零件",
     production_status_need: "无构成零件",
     production_open_sales: "在销售搜索中打开",
-    production_product_section: "销售商品",
+    production_product_section: "销售商品信息",
     production_core_section: "CORE",
     production_vehicle_section: "车辆信息",
     production_component_section: "构成零件",
@@ -2852,7 +2897,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.127";
+var APP_VERSION       = "v1.1.128";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -2861,6 +2906,9 @@ var productionFilteredRows = [];
 var productionFilter = "instruction";
 var currentProductionRow = null;
 var componentReturnScreen = "search";
+var componentAlternativeRows = [];
+var componentAlternativeMap = {};
+var componentAlternativeBaseRow = null;
 var productionInstructionRows = [];
 var productionInstructionMap = {};
 var coreListMgmtRows = [];
@@ -3270,6 +3318,7 @@ function renderMenu() {
 
   var mainItems = [
     { icon: "&#x1F50D;", titleKey: "mi_search_title", descKey: "mi_search_desc", action: "search", available: true, tag: null },
+    { icon: "&#x1F3ED;", titleKey: "mi_production_title", descKey: "mi_production_desc", action: "production-search", available: canEdit(), tag: null },
     { icon: "&#x1F4B4;", titleKey: "mi_rakuten_title", descKey: "mi_rakuten_desc", action: "rakuten-price", available: canUseRakutenResearch(), tag: null },
     { icon: "&#x1F4E6;", titleKey: "mi_rakuten_bulk_title", descKey: "mi_rakuten_bulk_desc", action: "rakuten-bulk", available: canUseRakutenResearch(), tag: null },
     { icon: "&#x1F4C8;", titleKey: "screen_rakuten_list_title", descKey: "mi_rakuten_desc", action: "rakuten-price-list", available: canUseRakutenResearch(), tag: null },
@@ -3279,7 +3328,7 @@ function renderMenu() {
   var adminItems = [
     { icon: "&#x1F465;", titleKey: "mi_users_title",  descKey: "mi_users_desc",  action: "users",  available: isAdmin() },
     { icon: "&#x1F527;", titleKey: "mi_parts_title", descKey: "mi_parts_desc", action: "parts-mgmt", available: canEdit() },
-    { icon: "&#x1F3ED;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canEdit() },
+    { icon: "&#x1F4E6;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canEdit() },
     { icon: "&#x1F3C6;", titleKey: "mi_production_ranking_title", descKey: "mi_production_ranking_desc", action: "production-ranking-mgmt", available: canEdit() },
     { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canEdit() },
     { icon: "&#x2699;", titleKey: "mi_api_settings_title", descKey: "mi_api_settings_desc", action: "api-settings", available: canManageSharedSettings() },
@@ -7354,6 +7403,232 @@ async function saveComponentEdit(usageId) {
   await loadAssemblyComponentsForCurrent();
 }
 
+function componentAlternativeBaseText(row) {
+  if (!row) return "-";
+  return [
+    row.component_position || row.source_code || "",
+    row.component_name || row.component_part_name || "",
+    row.component_manufacturer_part_number || "",
+    row.component_genuine_part_number || ""
+  ].filter(Boolean).join(" / ") || "-";
+}
+
+function alternativesForComponent(row) {
+  if (!row || row.dkd_component_id == null) return [];
+  return componentAlternativeMap[String(row.dkd_component_id)] || [];
+}
+
+function renderComponentAlternatives(row, colspan) {
+  var alternatives = alternativesForComponent(row);
+  if (!alternatives.length) return "";
+  var html = "<tr class='component-alt-row'><td colspan='" + String(colspan) + "'>";
+  html += "<div class='component-alt-box'><div class='component-alt-title'>外品代替品</div>";
+  alternatives.forEach(function(alt) {
+    var part = alt.internal_component_parts || {};
+    var suppliers = alt.internal_component_suppliers || [];
+    var supplierText = suppliers.map(function(s) {
+      return [s.supplier_name, formatYen(s.reference_price)].filter(function(x) { return x && x !== "-"; }).join(" ");
+    }).filter(Boolean).join(" / ");
+    html += "<div class='component-alt-item'>";
+    html += "<span>" + esc(part.manufacturer || "-") + "</span>";
+    html += "<strong>" + esc(part.part_number || "-") + "</strong>";
+    html += "<span>" + esc(part.part_name || "") + "</span>";
+    if (supplierText) html += "<span class='component-alt-meta'>仕入先: " + esc(supplierText) + "</span>";
+    if (alt.note || part.note) html += "<span class='component-alt-meta'>" + esc(alt.note || part.note) + "</span>";
+    if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' data-component-alt-delete='" + esc(String(alt.id)) + "'>無効</button>";
+    html += "</div>";
+  });
+  html += "</div></td></tr>";
+  return html;
+}
+
+function closeComponentAlternativeForm() {
+  var overlay = document.getElementById("component-alternative-overlay");
+  if (overlay) overlay.classList.remove("show");
+  componentAlternativeBaseRow = null;
+}
+
+function openComponentAlternativeForm(usageId) {
+  if (!canEdit()) { alert(t("err_perm")); return; }
+  var row = assemblyComponentRows.find(function(r) { return String(r.id) === String(usageId); });
+  if (!row || !row.dkd_component_id) {
+    alert("基準にする構成部品を確認できません。");
+    return;
+  }
+  componentAlternativeBaseRow = row;
+  var overlay = document.getElementById("component-alternative-overlay");
+  var base = document.getElementById("component-alt-base");
+  var err = document.getElementById("component-alt-error");
+  if (base) base.textContent = "基準: " + componentAlternativeBaseText(row);
+  if (err) err.textContent = "";
+  ["component-alt-mfr","component-alt-pn","component-alt-supplier","component-alt-price","component-alt-note"].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+  var nameEl = document.getElementById("component-alt-name");
+  if (nameEl) nameEl.value = row.component_name || row.component_part_name || "";
+  if (overlay) overlay.classList.add("show");
+}
+
+async function saveComponentAlternativeForm() {
+  if (!canEdit()) { alert(t("err_perm")); return; }
+  var row = componentAlternativeBaseRow;
+  var err = document.getElementById("component-alt-error");
+  var saveBtn = document.getElementById("btn-component-alt-save");
+  if (err) err.textContent = "";
+  if (!row || !row.dkd_component_id) {
+    if (err) err.textContent = "基準構成部品を確認できません。";
+    return;
+  }
+  var manufacturer = componentAddValue("component-alt-mfr") || "UNKNOWN";
+  var partNumber = componentAddValue("component-alt-pn");
+  var partName = componentAddValue("component-alt-name");
+  var supplierName = componentAddValue("component-alt-supplier");
+  var note = componentAddValue("component-alt-note");
+  var price = nullableIntFromInput("component-alt-price");
+  if (!partNumber) {
+    if (err) err.textContent = "メーカー品番を入力してください。";
+    return;
+  }
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = "保存中..."; }
+  var normalized = normalizedPartKey(partNumber);
+  var partId = null;
+  var existing = await sb.from("internal_component_parts")
+    .select("id")
+    .eq("normalized_part_number", normalized)
+    .eq("manufacturer", manufacturer)
+    .eq("status", "active")
+    .limit(1)
+    .maybeSingle();
+  if (!existing.error && existing.data) {
+    partId = existing.data.id;
+  } else {
+    var insPart = await sb.from("internal_component_parts").insert({
+      manufacturer: manufacturer,
+      part_number: partNumber,
+      part_name: partName || null,
+      note: note || null,
+      created_by: currentUser ? currentUser.id : null,
+      updated_by: currentUser ? currentUser.id : null
+    }).select("id").single();
+    if (insPart.error) {
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = "保存"; }
+      if (err) err.textContent = "外品部品の保存に失敗しました: " + insPart.error.message;
+      return;
+    }
+    partId = insPart.data.id;
+  }
+
+  var position = row.component_position || null;
+  var existingAlt = await sb.from("component_part_alternatives")
+    .select("id,component_position")
+    .eq("catalog_component_id", row.dkd_component_id)
+    .eq("internal_component_part_id", partId)
+    .eq("relation_type", "alternative")
+    .limit(1);
+  var hasSameAlt = !existingAlt.error && (existingAlt.data || []).some(function(alt) {
+    return String(alt.component_position || "") === String(position || "");
+  });
+  if (!hasSameAlt) {
+    var insAlt = await sb.from("component_part_alternatives").insert({
+      catalog_component_id: row.dkd_component_id,
+      internal_component_part_id: partId,
+      component_position: position,
+      relation_type: "alternative",
+      priority: 100,
+      note: note || null,
+      created_by: currentUser ? currentUser.id : null,
+      updated_by: currentUser ? currentUser.id : null
+    }).select("id").single();
+    if (insAlt.error) {
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = "保存"; }
+      if (err) err.textContent = "代替品リンクの保存に失敗しました: " + insAlt.error.message;
+      return;
+    }
+  }
+
+  if (supplierName || price !== null) {
+    var sup = await sb.from("internal_component_suppliers").insert({
+      internal_component_part_id: partId,
+      supplier_name: supplierName || null,
+      reference_price: price,
+      price_note: note || null,
+      is_preferred: true,
+      created_by: currentUser ? currentUser.id : null,
+      updated_by: currentUser ? currentUser.id : null
+    });
+    if (sup.error) console.warn("internal component supplier insert failed", sup.error);
+  }
+  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = "保存"; }
+  await writeLog("insert", "component_part_alternatives", row.dkd_component_id, partNumber, null, { internal_component_part_id: partId, base: componentAlternativeBaseText(row) });
+  closeComponentAlternativeForm();
+  await loadAssemblyComponentsForCurrent();
+}
+
+async function loadComponentAlternativesForRows(rows) {
+  componentAlternativeRows = [];
+  componentAlternativeMap = {};
+  var ids = (rows || []).map(function(row) { return row.dkd_component_id; }).filter(function(id, index, arr) {
+    return id != null && arr.indexOf(id) === index;
+  });
+  if (!ids.length) return;
+  var r = await sb.from("component_part_alternatives")
+    .select("id,catalog_component_id,internal_component_part_id,component_position,relation_type,priority,status,note,internal_component_parts(id,manufacturer,part_number,part_name,note,status)")
+    .in("catalog_component_id", ids)
+    .eq("status", "active")
+    .order("priority", { ascending: true })
+    .order("id", { ascending: true });
+  if (r.error) {
+    console.warn("component alternatives lookup failed", r.error);
+    return;
+  }
+  componentAlternativeRows = r.data || [];
+  var internalIds = componentAlternativeRows.map(function(row) { return row.internal_component_part_id; }).filter(function(id, index, arr) {
+    return id != null && arr.indexOf(id) === index;
+  });
+  var supplierMap = {};
+  if (internalIds.length) {
+    var sr = await sb.from("internal_component_suppliers")
+      .select("id,internal_component_part_id,supplier_name,reference_price,price_note,is_preferred,status")
+      .in("internal_component_part_id", internalIds)
+      .eq("status", "active")
+      .order("is_preferred", { ascending: false })
+      .order("id", { ascending: true });
+    if (!sr.error) {
+      (sr.data || []).forEach(function(row) {
+        var key = String(row.internal_component_part_id);
+        if (!supplierMap[key]) supplierMap[key] = [];
+        supplierMap[key].push(row);
+      });
+    } else {
+      console.warn("internal component suppliers lookup failed", sr.error);
+    }
+  }
+  componentAlternativeRows.forEach(function(row) {
+    row.internal_component_suppliers = supplierMap[String(row.internal_component_part_id)] || [];
+    var key = String(row.catalog_component_id);
+    if (!componentAlternativeMap[key]) componentAlternativeMap[key] = [];
+    componentAlternativeMap[key].push(row);
+  });
+}
+
+async function disableComponentAlternative(altId) {
+  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!confirm("この代替品リンクを無効にしますか？")) return;
+  var before = componentAlternativeRows.find(function(row) { return String(row.id) === String(altId); }) || null;
+  var r = await sb.from("component_part_alternatives").update({
+    status: "inactive",
+    updated_by: currentUser ? currentUser.id : null,
+    updated_at: new Date().toISOString()
+  }).eq("id", altId);
+  if (r.error) {
+    alert("代替品リンクの無効化に失敗しました: " + r.error.message);
+    return;
+  }
+  await writeLog("update", "component_part_alternatives", altId, "disable alternative", before, { status: "inactive" });
+  await loadAssemblyComponentsForCurrent();
+}
+
 function renderAssemblyComponentRows() {
   var wrap = document.getElementById("component-wrap");
   if (!wrap) return;
@@ -7362,9 +7637,11 @@ function renderAssemblyComponentRows() {
     wrap.innerHTML = "<div class='component-empty'>" + t("component_none") + "</div>";
     return;
   }
+  var hasActions = isAdmin() || canEdit();
+  var colspan = 9 + (hasActions ? 1 : 0);
   var html = "<table class='component-table'>";
   html += "<tr><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th><th>" + t("component_position") + "</th><th>" + t("component_quantity") + "</th><th>単価</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
-  if (isAdmin()) html += "<th>操作</th>";
+  if (hasActions) html += "<th>操作</th>";
   html += "</tr>";
   rows.forEach(function(row) {
     var catalogLocked = isCatalogComponentRow(row);
@@ -7391,11 +7668,15 @@ function renderAssemblyComponentRows() {
       html += "<td>" + esc(formatComponentInterchange(row)) + "</td>";
       html += "<td>" + esc(row.effective_start || row.start_period || "-") + "</td>";
       html += "<td>" + esc(row.effective_end || row.end_period || "-") + "</td>";
-      if (isAdmin()) {
-        html += "<td>" + (catalogLocked ? "<span class='component-sub'>カタログ</span>" : "<button class='btn-sm-edit' data-component-edit='" + esc(String(row.id)) + "'>修正</button>") + "</td>";
+      if (hasActions) {
+        html += "<td><div class='component-edit-actions'>";
+        if (isAdmin()) html += catalogLocked ? "<span class='component-sub'>カタログ</span>" : "<button class='btn-sm-edit' data-component-edit='" + esc(String(row.id)) + "'>修正</button>";
+        html += "<button class='btn-sm-edit production-action-secondary' data-component-alt-add='" + esc(String(row.id)) + "'>代替品追加</button>";
+        html += "</div></td>";
       }
     }
     html += "</tr>";
+    html += renderComponentAlternatives(row, colspan);
   });
   html += "</table>";
   wrap.innerHTML = html;
@@ -7408,12 +7689,20 @@ function renderAssemblyComponentRows() {
   wrap.querySelectorAll("[data-component-cancel]").forEach(function(btn) {
     btn.addEventListener("click", cancelComponentEdit);
   });
+  wrap.querySelectorAll("[data-component-alt-add]").forEach(function(btn) {
+    btn.addEventListener("click", function() { openComponentAlternativeForm(btn.dataset.componentAltAdd); });
+  });
+  wrap.querySelectorAll("[data-component-alt-delete]").forEach(function(btn) {
+    btn.addEventListener("click", function() { disableComponentAlternative(btn.dataset.componentAltDelete); });
+  });
 }
 
 async function loadAssemblyComponentsForCurrent() {
   var wrap = document.getElementById("component-wrap");
   if (!wrap) return;
   assemblyComponentRows = [];
+  componentAlternativeRows = [];
+  componentAlternativeMap = {};
   editingComponentUsageId = null;
   var dkdId = await resolveCurrentCoreDkdShohinId();
   if (!dkdId) {
@@ -7464,6 +7753,7 @@ async function loadAssemblyComponentsForCurrent() {
     return String(a.component_manufacturer_part_number || "").localeCompare(String(b.component_manufacturer_part_number || ""), "ja", { numeric: true });
   });
   assemblyComponentRows = rows;
+  await loadComponentAlternativesForRows(rows);
   renderAssemblyComponentRows();
 }
 
@@ -8242,6 +8532,8 @@ document.getElementById("btn-back-components").addEventListener("click", async f
   }
   showScreen("search");
 });
+document.getElementById("btn-component-alt-cancel").addEventListener("click", closeComponentAlternativeForm);
+document.getElementById("btn-component-alt-save").addEventListener("click", saveComponentAlternativeForm);
 document.getElementById("btn-back-component-parallel").addEventListener("click", function(){ showScreen("search"); });
 document.getElementById("btn-back-users").addEventListener("click",  function(){ showScreen("menu"); });
 document.getElementById("btn-back-parts-mgmt").addEventListener("click", function(){ showScreen("menu"); });
