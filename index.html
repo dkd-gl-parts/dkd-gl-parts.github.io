@@ -512,6 +512,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-body { flex: 1; display: grid; grid-template-columns: minmax(320px, 390px) minmax(0, 1fr); overflow: hidden; background: #f0f2f5; }
 .production-left { display: flex; flex-direction: column; min-width: 0; border-right: 1px solid #e0e0e0; background: #f6f7f9; }
 .production-search { padding: 12px 14px; background: #fff; border-bottom: 1px solid #e8e8e8; }
+.production-ranking-tools { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px; margin-top: 8px; align-items: center; }
+.production-ranking-tools .form-select { width: 100%; min-width: 0; }
 .production-filter-row { display: flex; gap: 6px; overflow-x: auto; padding: 8px 14px; background: #fff; border-bottom: 1px solid #eee; }
 .production-count { padding: 8px 14px; font-size: 12px; color: #778; background: #f6f7f9; border-bottom: 1px solid #eee; }
 .production-list { flex: 1; overflow-y: auto; padding: 8px; }
@@ -561,6 +563,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .production-detail-head { flex-direction: column; }
   .production-actions { justify-content: flex-start; }
   .production-grid { grid-template-columns: 1fr; }
+  .production-ranking-tools { grid-template-columns: 1fr 1fr; }
+  .production-ranking-tools .form-select { grid-column: 1 / -1; }
 }
 
 /* =============================================
@@ -903,6 +907,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         </div>
         <div class="clear-row">
           <button class="btn-clear" id="production-clear-btn" data-i18n="btn_clear">クリア</button>
+        </div>
+        <div class="production-ranking-tools">
+          <select class="form-select" id="production-year-filter">
+            <option value="">年度すべて</option>
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+          </select>
+          <button class="btn-sm-edit production-action-secondary" id="production-add-ranking-inline">ランキング追加</button>
+          <button class="btn-sm-edit production-action-secondary" id="production-edit-ranking-inline">選択行修正</button>
         </div>
       </div>
       <div class="production-filter-row" id="production-filter-row">
@@ -2897,7 +2910,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.128";
+var APP_VERSION       = "v1.1.129";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -3329,7 +3342,6 @@ function renderMenu() {
     { icon: "&#x1F465;", titleKey: "mi_users_title",  descKey: "mi_users_desc",  action: "users",  available: isAdmin() },
     { icon: "&#x1F527;", titleKey: "mi_parts_title", descKey: "mi_parts_desc", action: "parts-mgmt", available: canEdit() },
     { icon: "&#x1F4E6;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canEdit() },
-    { icon: "&#x1F3C6;", titleKey: "mi_production_ranking_title", descKey: "mi_production_ranking_desc", action: "production-ranking-mgmt", available: canEdit() },
     { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canEdit() },
     { icon: "&#x2699;", titleKey: "mi_api_settings_title", descKey: "mi_api_settings_desc", action: "api-settings", available: canManageSharedSettings() },
     { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: isAdmin() }
@@ -3432,18 +3444,54 @@ async function loadProductionInstructions() {
   var r = await sb.from("production_instruction_candidates")
     .select("*")
     .order("priority_rank", { ascending: true })
+    .order("component_count", { ascending: false, nullsFirst: false })
     .order("category_code", { ascending: true })
     .limit(500);
   productionInstructionRows = r.data || [];
   productionInstructionMap = {};
   productionInstructionRows.forEach(function(row) {
-    if (row.dkd_shohin_id != null) productionInstructionMap[String(row.dkd_shohin_id)] = row;
+    if (row.dkd_shohin_id == null) return;
+    var key = String(row.dkd_shohin_id);
+    var current = productionInstructionMap[key];
+    if (!current ||
+        (row.component_count || 0) > (current.component_count || 0) ||
+        ((row.component_count || 0) === (current.component_count || 0) && (row.priority_rank || 999999) < (current.priority_rank || 999999))) {
+      productionInstructionMap[key] = row;
+    }
+  });
+}
+
+function productionYearFilterValue() {
+  var el = document.getElementById("production-year-filter");
+  return el ? String(el.value || "") : "";
+}
+
+function productionInstructionRowsForFilter() {
+  var year = productionFilter === "instruction" ? productionYearFilterValue() : "";
+  if (!year) return productionInstructionRows;
+  return productionInstructionRows.filter(function(row) {
+    return String(row.source_year || "") === year;
   });
 }
 
 function productionInstructionFor(row) {
   if (!row || row.dkd_shohin_id == null) return null;
-  return productionInstructionMap[String(row.dkd_shohin_id)] || null;
+  var key = String(row.dkd_shohin_id);
+  var year = productionFilter === "instruction" ? productionYearFilterValue() : "";
+  if (year) {
+    var matches = productionInstructionRows.filter(function(inst) {
+      return String(inst.dkd_shohin_id) === key && String(inst.source_year || "") === year;
+    });
+    if (matches.length) {
+      matches.sort(function(a, b) {
+        var ac = a.component_count || 0, bc = b.component_count || 0;
+        if (bc !== ac) return bc - ac;
+        return (a.priority_rank || 999999) - (b.priority_rank || 999999);
+      });
+      return matches[0];
+    }
+  }
+  return productionInstructionMap[key] || null;
 }
 
 function renderProductionFilterChips() {
@@ -3514,7 +3562,7 @@ async function loadProductionProducts() {
       max_rows: SEARCH_FETCH_LIMIT
     });
   } else if (productionFilter === "instruction") {
-    var ids = productionInstructionRows.map(function(x){ return x.dkd_shohin_id; }).filter(Boolean);
+    var ids = productionInstructionRowsForFilter().map(function(x){ return x.dkd_shohin_id; }).filter(Boolean);
     r = ids.length
       ? await sb.from("core_product_search_view").select("*").in("dkd_shohin_id", ids).limit(500)
       : { data: [], error: null };
@@ -3542,6 +3590,9 @@ async function loadProductionProducts() {
     var ar = ai ? ai.priority_rank : 999999;
     var br = bi ? bi.priority_rank : 999999;
     if (ar !== br) return ar - br;
+    var ac = a.component_count || 0;
+    var bc = b.component_count || 0;
+    if (bc !== ac) return bc - ac;
     return String(a.manufacturer_part_number || a.genuine_part_number || "").localeCompare(String(b.manufacturer_part_number || b.genuine_part_number || ""));
   });
   productionLoaded = true;
@@ -5538,7 +5589,8 @@ function openProductionRankingForm(mode, rowId) {
   document.getElementById("production-ranking-form-title").textContent = mode === "add" ? t("btn_add_production_ranking") : "ランキング修正";
   setProductionRankingFormValue("prf-id", row && row.id);
   setProductionRankingFormValue("prf-rank", row && row.priority_rank);
-  setProductionRankingFormValue("prf-year", row ? row.source_year : (document.getElementById("production-ranking-year").value || ""));
+  var rankingYearEl = document.getElementById("production-ranking-year");
+  setProductionRankingFormValue("prf-year", row ? row.source_year : (productionYearFilterValue() || (rankingYearEl ? rankingYearEl.value : "") || ""));
   setProductionRankingFormValue("prf-source-sheet", row ? row.source_sheet : "top100");
   setProductionRankingFormValue("prf-category", row && row.category_code);
   setProductionRankingFormValue("prf-dkd-id", row && row.dkd_shohin_id);
@@ -5580,6 +5632,94 @@ function resetProductionInstructionCache() {
   productionLoaded = false;
 }
 
+function isProductionSearchActive() {
+  var screen = document.getElementById("screen-production-search");
+  return !!(screen && screen.classList.contains("active"));
+}
+
+async function refreshProductionInstructionScreen() {
+  if (!isProductionSearchActive()) return;
+  await loadProductionProducts();
+  renderProductionList();
+  await renderProductionDetail(currentProductionRow);
+}
+
+function openCurrentProductionRankingForm() {
+  if (!currentProductionRow) { alert("修正する製造指示行を選択してください。"); return; }
+  var inst = productionInstructionFor(currentProductionRow);
+  if (!inst || !inst.id) { alert("選択中の商品は製造指示ランキングに紐づいていません。"); return; }
+  productionRankingMgmtRows = productionInstructionRows.slice();
+  openProductionRankingForm("edit", inst.id);
+}
+
+async function componentCountsForProducts(products) {
+  var ids = (products || []).map(function(p) { return p.dkd_shohin_id || p.id; }).filter(Boolean);
+  ids = Array.from(new Set(ids.map(function(id) { return parseInt(id, 10); }))).filter(function(id) { return !isNaN(id); });
+  var map = {};
+  if (!ids.length) return map;
+  var r = await sb.from("parallel_component_search_targets")
+    .select("dkd_shohin_id, component_usage_count")
+    .in("dkd_shohin_id", ids)
+    .gt("component_usage_count", 0);
+  if (r.error) {
+    console.warn("preferred production component count lookup failed", r.error);
+    return map;
+  }
+  (r.data || []).forEach(function(row) {
+    map[String(row.dkd_shohin_id)] = parseInt(row.component_usage_count || 0, 10);
+  });
+  return map;
+}
+
+function productionCandidateMatchesRankingData(candidate, data) {
+  var mfrPn = normalizedPartKey(data.manufacturer_part_number);
+  var gpn = normalizedPartKey(data.genuine_part_number);
+  if (mfrPn && String(candidate.normalized_manufacturer_part_number || "") === mfrPn) return true;
+  if (gpn && String(candidate.normalized_genuine_part_number || "") === gpn) return true;
+  if (gpn && String(candidate.normalized_genuine_part_number_2 || "") === gpn) return true;
+  return false;
+}
+
+async function preferComponentLinkedProductForRanking(data) {
+  var searchText = data.manufacturer_part_number || data.genuine_part_number || "";
+  if (!searchText) return data;
+  var r = await sb.rpc("search_core_products", {
+    search_text: searchText,
+    category_filter: data.category_code || null,
+    require_sl: false,
+    max_rows: 30
+  });
+  if (r.error) {
+    console.warn("preferred production product lookup failed", r.error);
+    return data;
+  }
+  var candidates = (r.data || []).filter(function(row) {
+    return productionCandidateMatchesRankingData(row, data);
+  });
+  if (!candidates.length) return data;
+  var counts = await componentCountsForProducts(candidates);
+  var currentCount = counts[String(data.dkd_shohin_id || "")] || data.component_count || 0;
+  candidates.sort(function(a, b) {
+    var ac = counts[String(a.dkd_shohin_id)] || 0;
+    var bc = counts[String(b.dkd_shohin_id)] || 0;
+    if (bc !== ac) return bc - ac;
+    if (!!a.has_catalog_source !== !!b.has_catalog_source) return a.has_catalog_source ? -1 : 1;
+    return String(a.dkd_shohin_id || "").localeCompare(String(b.dkd_shohin_id || ""), "ja", { numeric: true });
+  });
+  var best = candidates[0];
+  var bestCount = counts[String(best.dkd_shohin_id)] || 0;
+  if (!best || !bestCount || (data.dkd_shohin_id && String(best.dkd_shohin_id) === String(data.dkd_shohin_id)) || bestCount <= currentCount) return data;
+  data.dkd_shohin_id = best.dkd_shohin_id;
+  data.genuine_part_number = best.genuine_part_number || data.genuine_part_number;
+  data.manufacturer_part_number = best.manufacturer_part_number || data.manufacturer_part_number;
+  data.manufacturer = best.manufacturer || data.manufacturer;
+  data.daiko_part_number = best.daiko_part_number || data.daiko_part_number;
+  data.category_code = best.category_code || data.category_code;
+  data.component_count = bestCount;
+  data.readiness_status = t("production_status_ready");
+  return data;
+}
+
 async function saveProductionRankingForm() {
   var errEl = document.getElementById("production-ranking-form-error");
   errEl.textContent = "";
@@ -5604,6 +5744,7 @@ async function saveProductionRankingForm() {
     readiness_status: nullableTextFromInput("prf-status"),
     updated_at: new Date().toISOString()
   };
+  data = await preferComponentLinkedProductForRanking(data);
   var id = document.getElementById("prf-id").value;
   var r;
   if (productionRankingFormMode === "add") {
@@ -5620,7 +5761,11 @@ async function saveProductionRankingForm() {
   }
   document.getElementById("production-ranking-form-overlay").classList.remove("show");
   resetProductionInstructionCache();
-  await loadProductionRankingMgmt();
+  if (isProductionSearchActive()) {
+    await refreshProductionInstructionScreen();
+  } else {
+    await loadProductionRankingMgmt();
+  }
 }
 
 async function deleteProductionRankingRow(id) {
@@ -5631,7 +5776,11 @@ async function deleteProductionRankingRow(id) {
   if (r.error) { alert(t("msg_part_err") + ": " + r.error.message); return; }
   await writeLog("delete", "production_instruction_candidates", id, row ? ("#" + row.priority_rank) : String(id), row, null);
   resetProductionInstructionCache();
-  await loadProductionRankingMgmt();
+  if (isProductionSearchActive()) {
+    await refreshProductionInstructionScreen();
+  } else {
+    await loadProductionRankingMgmt();
+  }
 }
 
 function categoryCodeFromForm(value) {
@@ -8655,6 +8804,19 @@ document.getElementById("production-clear-btn").addEventListener("click", async 
   renderProductionList();
   await renderProductionDetail(currentProductionRow);
 });
+document.getElementById("production-year-filter").addEventListener("change", async function(){
+  productionFilter = "instruction";
+  document.querySelectorAll("[data-production-filter]").forEach(function(c){ c.classList.toggle("active", c.dataset.productionFilter === "instruction"); });
+  productionLoaded = false;
+  currentProductionRow = null;
+  await loadProductionProducts();
+  renderProductionList();
+  await renderProductionDetail(currentProductionRow);
+});
+document.getElementById("production-add-ranking-inline").addEventListener("click", function(){
+  openProductionRankingForm("add");
+});
+document.getElementById("production-edit-ranking-inline").addEventListener("click", openCurrentProductionRankingForm);
 document.querySelectorAll("[data-production-filter]").forEach(function(chip) {
   chip.addEventListener("click", function() {
     productionFilter = chip.dataset.productionFilter;
