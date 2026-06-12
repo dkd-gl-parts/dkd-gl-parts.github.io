@@ -2909,7 +2909,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.130";
+var APP_VERSION       = "v1.1.131";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -2932,6 +2932,8 @@ var productionRankingFormMode = "add";
 var productionDetailRequestSeq = 0;
 var SEARCH_FETCH_LIMIT = 200;
 var searchRequestSeq = 0;
+var productAuxRequestSeq = 0;
+var productionAuxRequestSeq = 0;
 var rakutenLastItems = [];
 var rakutenLastDebug = [];
 var rakutenApiBusy = false;
@@ -3545,7 +3547,21 @@ function enrichProductionProduct(row) {
   return row;
 }
 
+function sortProductionRows() {
+  productionRows.sort(function(a,b) {
+    var ai = productionInstructionFor(a), bi = productionInstructionFor(b);
+    var ar = ai ? ai.priority_rank : 999999;
+    var br = bi ? bi.priority_rank : 999999;
+    if (ar !== br) return ar - br;
+    var ac = a.component_count || 0;
+    var bc = b.component_count || 0;
+    if (bc !== ac) return bc - ac;
+    return String(a.manufacturer_part_number || a.genuine_part_number || "").localeCompare(String(b.manufacturer_part_number || b.genuine_part_number || ""));
+  });
+}
+
 async function loadProductionProducts() {
+  productionAuxRequestSeq++;
   var countEl = document.getElementById("production-count");
   if (countEl) countEl.textContent = t("loading");
   await loadProductionInstructions();
@@ -3581,24 +3597,35 @@ async function loadProductionProducts() {
     return;
   }
   productionRows = r.data || [];
-  await loadComponentUsageCounts(productionRows);
-  await loadCoreStockQtyCounts(productionRows);
+  componentUsageCountMap = {};
+  coreStockQtyMap = {};
   productionRows = productionRows.map(enrichProductionProduct);
-  productionRows.sort(function(a,b) {
-    var ai = productionInstructionFor(a), bi = productionInstructionFor(b);
-    var ar = ai ? ai.priority_rank : 999999;
-    var br = bi ? bi.priority_rank : 999999;
-    if (ar !== br) return ar - br;
-    var ac = a.component_count || 0;
-    var bc = b.component_count || 0;
-    if (bc !== ac) return bc - ac;
-    return String(a.manufacturer_part_number || a.genuine_part_number || "").localeCompare(String(b.manufacturer_part_number || b.genuine_part_number || ""));
-  });
+  sortProductionRows();
   productionLoaded = true;
   if (!currentProductionRow && productionRows.length) currentProductionRow = productionRows[0];
   if (currentProductionRow) {
     var stillExists = productionRows.some(function(row){ return String(row.dkd_shohin_id) === String(currentProductionRow.dkd_shohin_id); });
     if (!stillExists) currentProductionRow = productionRows[0] || null;
+  }
+  loadProductionAuxiliaryData(productionRows.slice());
+}
+
+async function loadProductionAuxiliaryData(products) {
+  var auxSeq = ++productionAuxRequestSeq;
+  var fast = await Promise.all([
+    fetchComponentUsageCountMap(products),
+    fetchCoreStockQtyMap(products)
+  ]);
+  if (auxSeq !== productionAuxRequestSeq) return;
+  componentUsageCountMap = fast[0] || {};
+  coreStockQtyMap = fast[1] || {};
+  productionRows = productionRows.map(enrichProductionProduct);
+  sortProductionRows();
+  renderProductionList();
+  if (currentProductionRow) {
+    var refreshed = productionRows.find(function(row) { return String(row.dkd_shohin_id) === String(currentProductionRow.dkd_shohin_id); });
+    if (refreshed) currentProductionRow = refreshed;
+    await renderProductionDetail(currentProductionRow);
   }
 }
 
@@ -6471,9 +6498,13 @@ async function runProductSearch(options) {
   var requireSl = currentFilter === "sl";
   var list = document.getElementById("list");
   var seq = ++searchRequestSeq;
+  productAuxRequestSeq++;
 
   if (!q && currentFilter === "all") {
     allProducts = [];
+    componentUsageCountMap = {};
+    coreStockQtyMap = {};
+    kikanCompatibleMap = {};
     renderCategoryChips();
     render();
     return;
@@ -6511,10 +6542,96 @@ async function runProductSearch(options) {
     }
   }
   allProducts = filterVisibleProducts(r.data || []);
-  await loadComponentUsageCounts(allProducts);
-  await loadCoreStockQtyCounts(allProducts);
-  await loadKikanCompatibleFlags(allProducts);
+  componentUsageCountMap = {};
+  coreStockQtyMap = {};
+  kikanCompatibleMap = {};
   renderCategoryChips();
+  render();
+  loadProductSearchAuxiliaryData(seq, allProducts.slice());
+}
+
+async function fetchComponentUsageCountMap(products) {
+  var map = {};
+  var ids = (products || []).map(function(p) {
+    return p.dkd_shohin_id || p.id;
+  }).filter(function(id) {
+    return id !== null && id !== undefined && id !== "";
+  });
+  var uniqueIds = Array.from(new Set(ids.map(function(id) { return parseInt(id, 10); }))).filter(function(id) {
+    return !isNaN(id);
+  });
+  if (!uniqueIds.length) return map;
+  for (var i = 0; i < uniqueIds.length; i += 200) {
+    var chunk = uniqueIds.slice(i, i + 200);
+    var r = await sb.from("parallel_component_search_targets")
+      .select("dkd_shohin_id, component_usage_count")
+      .in("dkd_shohin_id", chunk)
+      .gt("component_usage_count", 0);
+    if (r.error) {
+      console.warn("component usage count lookup failed", r.error);
+      return map;
+    }
+    (r.data || []).forEach(function(row) {
+      map[String(row.dkd_shohin_id)] = parseInt(row.component_usage_count || 0, 10);
+    });
+  }
+  return map;
+}
+
+async function fetchCoreStockQtyMap(products) {
+  var map = {};
+  var ids = (products || []).map(function(p) {
+    return p.dkd_shohin_id || p.id;
+  }).filter(function(id) {
+    return id !== null && id !== undefined && id !== "";
+  });
+  var uniqueIds = Array.from(new Set(ids.map(function(id) { return parseInt(id, 10); }))).filter(function(id) {
+    return !isNaN(id);
+  });
+  if (!uniqueIds.length) return map;
+  for (var i = 0; i < uniqueIds.length; i += 200) {
+    var chunk = uniqueIds.slice(i, i + 200);
+    var r = await sb.from("production_core_list_entries")
+      .select("dkd_shohin_id, quantity")
+      .in("dkd_shohin_id", chunk);
+    if (r.error) {
+      console.warn("core stock count lookup failed", r.error);
+      return map;
+    }
+    (r.data || []).forEach(function(row) {
+      var key = String(row.dkd_shohin_id);
+      map[key] = (map[key] || 0) + (parseInt(row.quantity || 0, 10) || 0);
+    });
+  }
+  return map;
+}
+
+async function fetchKikanCompatibleMap(products) {
+  var map = {};
+  var rows = products || [];
+  for (var i = 0; i < rows.length; i += 8) {
+    var chunk = rows.slice(i, i + 8);
+    var results = await Promise.all(chunk.map(hasDisplayableKikanCompatibleParts));
+    chunk.forEach(function(p, idx) {
+      if (results[idx]) map["dkd:" + String(p.dkd_shohin_id || p.id || "")] = true;
+    });
+  }
+  return map;
+}
+
+async function loadProductSearchAuxiliaryData(seq, products) {
+  var auxSeq = ++productAuxRequestSeq;
+  var fast = await Promise.all([
+    fetchComponentUsageCountMap(products),
+    fetchCoreStockQtyMap(products)
+  ]);
+  if (seq !== searchRequestSeq || auxSeq !== productAuxRequestSeq) return;
+  componentUsageCountMap = fast[0] || {};
+  coreStockQtyMap = fast[1] || {};
+  render();
+  var kikanMap = await fetchKikanCompatibleMap(products);
+  if (seq !== searchRequestSeq || auxSeq !== productAuxRequestSeq) return;
+  kikanCompatibleMap = kikanMap || {};
   render();
 }
 
