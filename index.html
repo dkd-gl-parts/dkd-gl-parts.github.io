@@ -3092,7 +3092,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.147";
+var APP_VERSION       = "v1.1.148";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -7218,6 +7218,20 @@ async function fetchCoreStockQtyMap(products) {
 async function fetchKikanCompatibleMap(products, isStale) {
   var map = {};
   var rows = (products || []).slice(0, KIKAN_FLAG_LOOKUP_LIMIT);
+  var rpcResult = await fetchKikanRpcFlagMap(rows);
+  if (rpcResult && rpcResult.ok) {
+    Object.keys(rpcResult.map || {}).forEach(function(key) {
+      map[key] = true;
+      kikanCompatibleFlagCache[key] = true;
+    });
+    rows.forEach(function(p) {
+      var key = "dkd:" + String(p.dkd_shohin_id || p.id || "");
+      if (!Object.prototype.hasOwnProperty.call(kikanCompatibleFlagCache, key)) {
+        kikanCompatibleFlagCache[key] = !!map[key];
+      }
+    });
+    return map;
+  }
   var directMap = await fetchKikanGroupMemberFlagMap(rows);
   Object.keys(directMap).forEach(function(key) {
     map[key] = true;
@@ -7245,6 +7259,34 @@ async function fetchKikanCompatibleMap(products, isStale) {
     });
   }
   return map;
+}
+
+async function fetchKikanRpcFlagMap(products) {
+  var map = {};
+  var payload = (products || []).slice(0, KIKAN_FLAG_LOOKUP_LIMIT).map(function(p) {
+    return {
+      dkd_shohin_id: p.dkd_shohin_id || p.id || null,
+      manufacturer: p.manufacturer || null,
+      manufacturer_part_number: p.manufacturer_part_number || null,
+      genuine_part_number: p.genuine_part_number || null
+    };
+  }).filter(function(p) {
+    return p.dkd_shohin_id !== null && p.dkd_shohin_id !== undefined && p.dkd_shohin_id !== "";
+  });
+  if (!payload.length) return { ok: true, map: map };
+  var r = await sb.rpc("get_kikan_compatible_flags", {
+    target_products: payload
+  });
+  if (r.error) {
+    console.warn("get_kikan_compatible_flags failed", r.error);
+    return { ok: false, map: map };
+  }
+  (r.data || []).forEach(function(row) {
+    var key = "dkd:" + String(row.dkd_shohin_id || "");
+    kikanCompatibleFlagCache[key] = !!row.has_compatible;
+    if (row.has_compatible) map[key] = true;
+  });
+  return { ok: true, map: map };
 }
 
 async function fetchKikanGroupMemberFlagMap(products) {
