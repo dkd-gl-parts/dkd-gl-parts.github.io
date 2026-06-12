@@ -2941,7 +2941,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.139";
+var APP_VERSION       = "v1.1.140";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -3741,9 +3741,9 @@ function renderProductionList() {
     var selected = currentProductionRow && String(currentProductionRow.dkd_shohin_id) === String(row.dkd_shohin_id) ? " selected" : "";
     var cls = productionStatusClass(row);
     var inst = productionInstructionFor(row);
-    var title = row.manufacturer_part_number || row.genuine_part_number || row.daiko_part_number || ("DKD " + row.dkd_shohin_id);
+    var title = row.genuine_part_number || row.manufacturer_part_number || "-";
     var meta = [
-      "DKD " + (row.dkd_shohin_id || "-"),
+      row.manufacturer_part_number || "-",
       row.manufacturer || "-",
       productionCategoryLabel(row),
       "コア " + productionCoreStockQty(row)
@@ -3752,7 +3752,6 @@ function renderProductionList() {
       "<div class='production-card-top'><div class='production-rank'>" + (inst ? "#" + esc(inst.priority_rank || "-") : "基幹") + "</div><div class='production-status " + cls + "'>" + esc(productionStatusLabel(row)) + "</div></div>" +
       "<div class='production-number'>" + esc(title) + "</div>" +
       "<div class='production-meta'>" + esc(meta) + "</div>" +
-      "<div class='production-meta'>" + esc(row.genuine_part_number || "-") + " / " + esc(row.daiko_part_number || "-") + "</div>" +
     "</div>";
   }).join("");
 }
