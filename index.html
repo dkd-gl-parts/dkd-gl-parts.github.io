@@ -935,8 +935,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         <button class="chip active" data-production-filter="instruction" data-i18n="production_instruction_filter">製造予定リスト</button>
         <button class="chip" data-production-filter="all" data-i18n="filter_all">すべて</button>
       </div>
-      <div class="production-count" id="production-count" data-i18n="loading">読み込み中...</div>
-      <div class="production-list" id="production-list"></div>
+      <div class="production-count" id="production-count">検索待ち</div>
+      <div class="production-list" id="production-list"><div class="loading">検索条件を指定して検索してください。</div></div>
       <div class="production-load-more-wrap" id="production-load-more-wrap" style="display:none">
         <button class="btn-load-more" id="production-load-more" type="button">さらに表示</button>
       </div>
@@ -2926,7 +2926,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.133";
+var APP_VERSION       = "v1.1.134";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -3440,9 +3440,26 @@ async function enterSearch() {
 async function enterProductionSearch() {
   showScreen("production-search");
   renderProductionFilterChips();
-  if (!productionLoaded) await loadProductionProducts();
-  renderProductionList();
-  await renderProductionDetail(currentProductionRow);
+  if (productionLoaded) {
+    renderProductionList();
+    await renderProductionDetail(currentProductionRow);
+  } else {
+    resetProductionSearchView();
+  }
+}
+
+function resetProductionSearchView() {
+  productionRows = [];
+  productionFilteredRows = [];
+  currentProductionRow = null;
+  var countEl = document.getElementById("production-count");
+  var list = document.getElementById("production-list");
+  var moreWrap = document.getElementById("production-load-more-wrap");
+  var detail = document.getElementById("production-detail");
+  if (countEl) countEl.textContent = "検索待ち";
+  if (list) list.innerHTML = "<div class='loading'>検索条件を指定して検索してください。</div>";
+  if (moreWrap) moreWrap.style.display = "none";
+  if (detail) detail.innerHTML = "<div class='production-detail-empty'><div style='font-size:34px'>&#x1F3ED;</div><div>" + t("production_select_hint") + "</div></div>";
 }
 
 function productionStatusClass(row) {
@@ -9047,9 +9064,7 @@ document.getElementById("production-clear-btn").addEventListener("click", async 
   productionSearchLimit = SEARCH_INITIAL_LIMIT;
   document.querySelectorAll("[data-production-filter]").forEach(function(c){ c.classList.toggle("active", c.dataset.productionFilter === "instruction"); });
   productionLoaded = false;
-  await loadProductionProducts();
-  renderProductionList();
-  await renderProductionDetail(currentProductionRow);
+  resetProductionSearchView();
 });
 document.getElementById("production-year-filter").addEventListener("change", async function(){
   productionFilter = "instruction";
