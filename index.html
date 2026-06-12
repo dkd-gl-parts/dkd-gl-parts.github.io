@@ -1208,6 +1208,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         <option value="Blower Motor">ブロアモーター / Blower Motor</option>
       </select>
     </div>
+    <div class="spec-form-grid">
+      <div class="form-row">
+        <label class="form-label">コア在庫数</label>
+        <input class="form-input" id="pf-core-stock-qty" type="number" min="0" step="1">
+      </div>
+      <div class="form-row">
+        <label class="form-label">パレットNo</label>
+        <input class="form-input" id="pf-core-pallet-no" type="text" placeholder="例: GL-A-01">
+      </div>
+    </div>
     <div class="form-row">
       <div class="spec-head" style="margin-top:4px">
         <div class="spec-title" data-i18n="spec_section">公称出力</div>
@@ -1389,9 +1399,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         <label class="form-label">DKD商品ID</label>
         <input class="form-input" id="prf-dkd-id" type="number" min="1" step="1">
       </div>
-      <div class="form-row">
+      <div class="form-row" style="display:none">
         <label class="form-label">DKS SHOHIN_CD</label>
         <input class="form-input" id="prf-dks-cd" type="text">
+      </div>
+      <div class="form-row" style="grid-column:1/-1">
+        <label class="form-label">紐づけ先検索</label>
+        <div class="production-form-row" style="margin-top:0">
+          <input class="form-input" id="prf-link-search" type="search" placeholder="構成部品がある品番を検索">
+          <button class="btn-sm-edit" id="btn-prf-link-search" type="button">候補検索</button>
+        </div>
+        <div class="production-help" id="prf-link-current"></div>
+        <div class="candidate-list" id="prf-link-candidates"></div>
       </div>
       <div class="form-row">
         <label class="form-label" data-i18n="lbl_genuine_pn">純正品番</label>
@@ -1409,11 +1428,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         <label class="form-label" data-i18n="f_daiko_pn">大光品番</label>
         <input class="form-input" id="prf-daiko-pn" type="text">
       </div>
-      <div class="form-row">
+      <div class="form-row" style="display:none">
         <label class="form-label" data-i18n="production_ranking_core_stock">コア在庫</label>
         <input class="form-input" id="prf-core-stock" type="number" step="1">
       </div>
-      <div class="form-row">
+      <div class="form-row" style="display:none">
         <label class="form-label" data-i18n="production_ranking_core_part">コア品番</label>
         <input class="form-input" id="prf-core-part" type="text">
       </div>
@@ -1422,7 +1441,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <label class="form-label" data-i18n="production_ranking_component_summary">構成部品メモ</label>
       <input class="form-input" id="prf-component-summary" type="text">
     </div>
-    <div class="form-row">
+    <div class="form-row" style="display:none">
       <label class="form-label" data-i18n="production_ranking_core_summary">コアメモ</label>
       <input class="form-input" id="prf-core-summary" type="text">
     </div>
@@ -2926,7 +2945,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.134";
+var APP_VERSION       = "v1.1.135";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -2946,6 +2965,7 @@ var coreListProductCandidates = [];
 var coreListFormMode = "add";
 var productionRankingMgmtRows = [];
 var productionRankingFormMode = "add";
+var productionRankingLinkCandidates = [];
 var productionDetailRequestSeq = 0;
 var SEARCH_FETCH_LIMIT = 200;
 var SEARCH_INITIAL_LIMIT = 50;
@@ -3577,9 +3597,10 @@ function enrichProductionProduct(row) {
   var coreQty = hasCoreQty ? coreStockQtyMap[coreKey] : null;
   row.production_instruction = inst;
   row.priority_rank = inst ? inst.priority_rank : null;
-  row.core_stock_qty = coreQty != null ? coreQty : (inst && inst.core_stock_qty != null ? inst.core_stock_qty : parseInt(row.stock || "0", 10) || 0);
-  row.core_part_number = inst ? inst.core_part_number : (row.genuine_part_number || row.manufacturer_part_number || "");
+  row.core_stock_qty = coreQty != null ? coreQty : (row.core_stock_qty != null ? row.core_stock_qty : parseInt(row.stock || "0", 10) || 0);
+  row.core_part_number = row.core_part_number || row.manufacturer_part_number || row.genuine_part_number || "";
   row.core_pallet_summary = inst ? inst.core_pallet_summary : "";
+  row.core_pallet_summary = row.core_pallet_no || row.core_pallet_summary || "";
   row.component_count = inst && inst.component_count != null ? inst.component_count : (componentUsageCountMap[String(row.dkd_shohin_id)] || 0);
   row.component_summary = inst ? inst.component_summary : "";
   row.readiness_status = row.component_count > 0 ? t("production_status_ready") : t("production_status_need");
@@ -4029,7 +4050,6 @@ async function renderProductionDetail(row) {
   if (inst) {
     html += productionKv("BEST100順位", "#" + (inst.priority_rank || "-"));
     html += productionKv("元データ", [inst.source_year, inst.source_sheet].filter(Boolean).join(" / "));
-    html += productionKv("DKS商品CD", inst.dks_shohin_cd);
     html += productionKv("統合元件数", inst.merged_source_count || 1);
   } else {
     html += "<div class='production-help'>この商品は現在の製造予定リストにはありません。基幹商品マスタ上の商品として操作できます。</div>";
@@ -5598,22 +5618,33 @@ async function createCoreListFromRanking() {
       if (row.dkd_shohin_id != null) existingIds[String(row.dkd_shohin_id)] = true;
     });
     var src = await sb.from("production_instruction_candidates")
-      .select("dkd_shohin_id, core_part_number, core_stock_qty, core_pallet_summary")
+      .select("dkd_shohin_id")
       .not("dkd_shohin_id", "is", null)
       .order("priority_rank", { ascending: true })
       .limit(500);
     if (src.error) { alert(t("msg_part_err") + ": " + src.error.message); return; }
+    var ids = (src.data || []).map(function(row) { return row.dkd_shohin_id; }).filter(Boolean);
+    var productMap = {};
+    if (ids.length) {
+      var products = await sb.from("core_product_search_view")
+        .select("dkd_shohin_id, manufacturer_part_number, genuine_part_number, core_stock_qty, core_pallet_no")
+        .in("dkd_shohin_id", ids)
+        .limit(500);
+      if (products.error) { alert(t("msg_part_err") + ": " + products.error.message); return; }
+      (products.data || []).forEach(function(p) { productMap[String(p.dkd_shohin_id)] = p; });
+    }
     var rows = [];
     (src.data || []).forEach(function(row) {
       var key = String(row.dkd_shohin_id);
       if (existingIds[key]) return;
+      var product = productMap[key] || {};
       existingIds[key] = true;
       rows.push({
         dkd_shohin_id: row.dkd_shohin_id,
-        core_part_number: row.core_part_number || null,
-        quantity: row.core_stock_qty == null ? 0 : parseInt(row.core_stock_qty, 10) || 0,
+        core_part_number: product.manufacturer_part_number || product.genuine_part_number || null,
+        quantity: product.core_stock_qty == null ? 0 : parseInt(product.core_stock_qty, 10) || 0,
         location: null,
-        note: row.core_pallet_summary || null,
+        note: product.core_pallet_no || null,
         created_by: currentUser ? currentUser.id : null,
         updated_at: new Date().toISOString()
       });
@@ -5679,7 +5710,6 @@ async function loadProductionRankingMgmt() {
         row.source_sheet,
         row.category_code,
         row.dkd_shohin_id,
-        row.dks_shohin_cd,
         row.genuine_part_number,
         row.manufacturer_part_number,
         row.manufacturer,
@@ -5706,18 +5736,17 @@ function renderProductionRankingMgmt() {
     return;
   }
   var html = "<table class='mgmt-table'>";
-  html += "<tr><th>順位</th><th>年度</th><th>カテゴリ</th><th>DKD商品ID</th><th>純正品番</th><th>メーカー品番</th><th>メーカー</th><th>状態</th><th>コア</th><th></th></tr>";
+  html += "<tr><th>順位</th><th>年度</th><th>カテゴリ</th><th>DKD商品ID</th><th>純正品番</th><th>メーカー品番</th><th>メーカー</th><th>状態</th><th></th></tr>";
   productionRankingMgmtRows.forEach(function(row) {
     html += "<tr>";
     html += "<td><strong>#" + productionRankingCell(row.priority_rank) + "</strong><div class='mgmt-sub'>" + productionRankingCell(row.source_sheet) + "</div></td>";
     html += "<td>" + productionRankingCell(row.source_year) + "<div class='mgmt-sub'>" + productionRankingCell(row.merged_sources || row.import_batch) + "</div></td>";
     html += "<td>" + productionRankingCell(productionCategoryLabel(row)) + "</td>";
-    html += "<td><div class='mgmt-pn'>" + productionRankingCell(row.dkd_shohin_id) + "</div><div class='mgmt-sub'>DKS " + productionRankingCell(row.dks_shohin_cd) + "</div></td>";
+    html += "<td><div class='mgmt-pn'>" + productionRankingCell(row.dkd_shohin_id) + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + productionRankingCell(row.genuine_part_number) + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + productionRankingCell(row.manufacturer_part_number) + "</div></td>";
     html += "<td>" + productionRankingCell(row.manufacturer) + "</td>";
     html += "<td>" + productionRankingCell(row.readiness_status) + "<div class='mgmt-sub'>構成 " + productionRankingCell(row.component_count) + "</div></td>";
-    html += "<td>" + productionRankingCell(row.core_stock_qty) + "<div class='mgmt-sub'>" + productionRankingCell(row.core_part_number) + "</div></td>";
     html += "<td><div class='mgmt-actions'>";
     html += "<button class='btn-sm-edit' data-pr-edit='" + row.id + "'>" + t("btn_edit") + "</button>";
     html += "<button class='btn-sm-del' data-pr-del='" + row.id + "'>削除</button>";
@@ -5738,6 +5767,36 @@ function renderProductionRankingMgmt() {
 function setProductionRankingFormValue(id, value) {
   var el = document.getElementById(id);
   if (el) el.value = value == null ? "" : String(value);
+}
+
+function hideProductionRankingField(id) {
+  var el = document.getElementById(id);
+  var row = el ? el.closest(".form-row") : null;
+  if (row) row.style.display = "none";
+}
+
+function applyProductionRankingFormLayout() {
+  hideProductionRankingField("prf-dks-cd");
+  hideProductionRankingField("prf-core-stock");
+  hideProductionRankingField("prf-core-part");
+  hideProductionRankingField("prf-core-summary");
+}
+
+function updateProductionRankingLinkInfo(row) {
+  var el = document.getElementById("prf-link-current");
+  if (!el) return;
+  var dkd = document.getElementById("prf-dkd-id");
+  var gpn = document.getElementById("prf-genuine-pn");
+  var mpn = document.getElementById("prf-mfr-pn");
+  var maker = document.getElementById("prf-mfr");
+  var text = [
+    "現在の紐づけ: DKD " + (dkd && dkd.value ? dkd.value : "-"),
+    gpn && gpn.value ? "純正 " + gpn.value : "",
+    mpn && mpn.value ? "メーカー品番 " + mpn.value : "",
+    maker && maker.value ? maker.value : ""
+  ].filter(Boolean).join(" / ");
+  if (row && row.component_count != null) text += " / 構成 " + row.component_count + "件";
+  el.textContent = text;
 }
 
 function openProductionRankingForm(mode, rowId) {
@@ -5763,6 +5822,12 @@ function openProductionRankingForm(mode, rowId) {
   setProductionRankingFormValue("prf-component-summary", row && row.component_summary);
   setProductionRankingFormValue("prf-core-summary", row && row.core_pallet_summary);
   setProductionRankingFormValue("prf-status", row && row.readiness_status);
+  setProductionRankingFormValue("prf-link-search", "");
+  productionRankingLinkCandidates = [];
+  var linkWrap = document.getElementById("prf-link-candidates");
+  if (linkWrap) { linkWrap.innerHTML = ""; linkWrap.style.display = "none"; }
+  applyProductionRankingFormLayout();
+  updateProductionRankingLinkInfo(row);
   document.getElementById("production-ranking-form-overlay").classList.add("show");
 }
 
@@ -5879,6 +5944,78 @@ async function preferComponentLinkedProductForRanking(data) {
   return data;
 }
 
+async function searchProductionRankingLinkCandidates() {
+  var input = document.getElementById("prf-link-search");
+  var wrap = document.getElementById("prf-link-candidates");
+  var errEl = document.getElementById("production-ranking-form-error");
+  var q = input ? input.value.trim() : "";
+  if (errEl) errEl.textContent = "";
+  if (!wrap) return;
+  if (!q) {
+    productionRankingLinkCandidates = [];
+    wrap.innerHTML = "<div class='candidate-item'>検索する品番を入力してください。</div>";
+    wrap.style.display = "block";
+    return;
+  }
+  wrap.innerHTML = "<div class='candidate-item'>検索中...</div>";
+  wrap.style.display = "block";
+  var r = await sb.rpc("search_core_products", {
+    search_text: q,
+    category_filter: nullableTextFromInput("prf-category"),
+    require_sl: false,
+    max_rows: 30
+  });
+  if (r.error) {
+    wrap.innerHTML = "<div class='candidate-item'>" + esc(r.error.message) + "</div>";
+    return;
+  }
+  var rows = r.data || [];
+  var counts = await componentCountsForProducts(rows);
+  rows = rows.map(function(row) {
+    row.component_count = counts[String(row.dkd_shohin_id)] || 0;
+    return row;
+  }).filter(function(row) {
+    return (row.component_count || 0) > 0;
+  });
+  rows.sort(function(a, b) {
+    if ((b.component_count || 0) !== (a.component_count || 0)) return (b.component_count || 0) - (a.component_count || 0);
+    if (!!a.has_catalog_source !== !!b.has_catalog_source) return a.has_catalog_source ? -1 : 1;
+    return String(a.dkd_shohin_id || "").localeCompare(String(b.dkd_shohin_id || ""), "ja", { numeric: true });
+  });
+  productionRankingLinkCandidates = rows;
+  if (!rows.length) {
+    wrap.innerHTML = "<div class='candidate-item'>構成部品がある候補が見つかりません。</div>";
+    return;
+  }
+  wrap.innerHTML = rows.map(function(row, i) {
+    var title = row.manufacturer_part_number || row.genuine_part_number || ("DKD " + row.dkd_shohin_id);
+    var meta = [
+      "DKD " + (row.dkd_shohin_id || "-"),
+      row.genuine_part_number || "-",
+      row.manufacturer || "-",
+      productionCategoryLabel(row),
+      "構成 " + (row.component_count || 0) + "件"
+    ].join(" / ");
+    return "<button type='button' class='candidate-item' data-prf-link-index='" + i + "'><strong>" + esc(title) + "</strong><small>" + esc(meta) + "</small></button>";
+  }).join("");
+}
+
+function selectProductionRankingLinkCandidate(index) {
+  var row = productionRankingLinkCandidates[index];
+  if (!row) return;
+  setProductionRankingFormValue("prf-dkd-id", row.dkd_shohin_id);
+  setProductionRankingFormValue("prf-category", row.category_code || row.category);
+  setProductionRankingFormValue("prf-genuine-pn", row.genuine_part_number);
+  setProductionRankingFormValue("prf-mfr-pn", row.manufacturer_part_number);
+  setProductionRankingFormValue("prf-mfr", row.manufacturer);
+  setProductionRankingFormValue("prf-daiko-pn", row.daiko_part_number);
+  setProductionRankingFormValue("prf-component-summary", "構成 " + (row.component_count || 0) + "件");
+  setProductionRankingFormValue("prf-status", t("production_status_ready"));
+  var wrap = document.getElementById("prf-link-candidates");
+  if (wrap) { wrap.innerHTML = ""; wrap.style.display = "none"; }
+  updateProductionRankingLinkInfo(row);
+}
+
 async function saveProductionRankingForm() {
   var errEl = document.getElementById("production-ranking-form-error");
   errEl.textContent = "";
@@ -5891,15 +6028,11 @@ async function saveProductionRankingForm() {
     source_sheet: nullableTextFromInput("prf-source-sheet") || "top100",
     category_code: nullableTextFromInput("prf-category"),
     dkd_shohin_id: nullableIntFromInput("prf-dkd-id"),
-    dks_shohin_cd: nullableTextFromInput("prf-dks-cd"),
     genuine_part_number: nullableTextFromInput("prf-genuine-pn"),
     manufacturer_part_number: nullableTextFromInput("prf-mfr-pn"),
     manufacturer: nullableTextFromInput("prf-mfr"),
     daiko_part_number: nullableTextFromInput("prf-daiko-pn"),
-    core_stock_qty: nullableIntFromInput("prf-core-stock"),
-    core_part_number: nullableTextFromInput("prf-core-part"),
     component_summary: nullableTextFromInput("prf-component-summary"),
-    core_pallet_summary: nullableTextFromInput("prf-core-summary"),
     readiness_status: nullableTextFromInput("prf-status"),
     updated_at: new Date().toISOString()
   };
@@ -5984,6 +6117,8 @@ function setCoreProductFormFields(p) {
   document.getElementById("pf-compatible").value       = p ? (p.compatible_car_models || "") : "";
   document.getElementById("pf-model").value            = p ? (p.model || "") : "";
   document.getElementById("pf-category").value         = formValueFromCategoryCode(p && (p.category_code || p.category));
+  document.getElementById("pf-core-stock-qty").value   = p && p.core_stock_qty != null ? p.core_stock_qty : "";
+  document.getElementById("pf-core-pallet-no").value   = p ? (p.core_pallet_no || p.core_pallet_summary || "") : "";
 }
 
 async function openCoreProductForm(mode, product) {
@@ -6053,6 +6188,8 @@ async function saveCoreProductForm() {
     genuine_part_number: genuine,
     manufacturer_part_number: mfrPart,
     manufacturer: manufacturer,
+    core_stock_qty: nullableIntFromInput("pf-core-stock-qty"),
+    core_pallet_no: nullableTextFromInput("pf-core-pallet-no"),
     updated_by: currentUser ? currentUser.id : null,
     updated_at: new Date().toISOString()
   };
@@ -8981,6 +9118,17 @@ document.getElementById("production-ranking-search").addEventListener("keydown",
 document.getElementById("production-ranking-year").addEventListener("change", loadProductionRankingMgmt);
 document.getElementById("btn-production-ranking-form-cancel").addEventListener("click", function(){ document.getElementById("production-ranking-form-overlay").classList.remove("show"); });
 document.getElementById("btn-production-ranking-form-save").addEventListener("click", saveProductionRankingForm);
+document.getElementById("btn-prf-link-search").addEventListener("click", searchProductionRankingLinkCandidates);
+document.getElementById("prf-link-search").addEventListener("keydown", function(e){
+  if (e.key === "Enter") {
+    e.preventDefault();
+    searchProductionRankingLinkCandidates();
+  }
+});
+document.getElementById("prf-link-candidates").addEventListener("click", function(e) {
+  var item = e.target.closest("[data-prf-link-index]");
+  if (item) selectProductionRankingLinkCandidate(parseInt(item.dataset.prfLinkIndex, 10));
+});
 document.getElementById("btn-new-kikan-group").addEventListener("click", function(){ openKikanForm(null); });
 document.getElementById("btn-kikan-form-cancel").addEventListener("click", function(){ document.getElementById("kikan-form-overlay").classList.remove("show"); });
 document.getElementById("btn-kikan-form-save").addEventListener("click", saveKikanForm);
