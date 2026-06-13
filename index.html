@@ -850,7 +850,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <div class="list-area">
         <div class="list" id="list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
         <div class="load-more-wrap" id="load-more-wrap" style="display:none">
-          <button class="btn-load-more" id="btn-load-more" type="button">さらに表示</button>
+          <button class="btn-load-more" id="btn-load-more" type="button" data-i18n="btn_load_more">さらに表示</button>
         </div>
       </div>
     </div>
@@ -930,22 +930,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         </div>
         <div class="production-ranking-tools">
           <select class="form-select" id="production-year-filter">
-            <option value="">年度すべて</option>
+            <option value="" data-i18n="production_year_all">年度すべて</option>
             <option value="2025">2025</option>
             <option value="2024">2024</option>
           </select>
-          <button class="btn-sm-edit production-action-secondary" id="production-add-ranking-inline">ランキング追加</button>
-          <button class="btn-sm-edit production-action-secondary" id="production-edit-ranking-inline">選択行修正</button>
+          <button class="btn-sm-edit production-action-secondary" id="production-add-ranking-inline" data-i18n="btn_add_production_ranking">ランキング追加</button>
+          <button class="btn-sm-edit production-action-secondary" id="production-edit-ranking-inline" data-i18n="btn_edit_selected_row">選択行修正</button>
         </div>
       </div>
       <div class="production-filter-row" id="production-filter-row">
         <button class="chip active" data-production-filter="instruction" data-i18n="production_instruction_filter">製造予定リスト</button>
         <button class="chip" data-production-filter="all" data-i18n="filter_all">すべて</button>
       </div>
-      <div class="production-count" id="production-count">検索待ち</div>
-      <div class="production-list" id="production-list"><div class="loading">検索条件を指定して検索してください。</div></div>
+      <div class="production-count" id="production-count" data-i18n="production_search_wait">検索待ち</div>
+      <div class="production-list" id="production-list"><div class="loading" data-i18n="production_search_hint">検索条件を指定して検索してください。</div></div>
       <div class="production-load-more-wrap" id="production-load-more-wrap" style="display:none">
-        <button class="btn-load-more" id="production-load-more" type="button">さらに表示</button>
+        <button class="btn-load-more" id="production-load-more" type="button" data-i18n="btn_load_more">さらに表示</button>
       </div>
     </div>
     <div class="production-right">
@@ -1262,7 +1262,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     </div>
     <div class="form-row">
       <label class="form-label" data-i18n="spec_note">情報元メモ</label>
-      <input class="form-input" id="sf-source-note" type="text" placeholder="例: 社内確認、現品ラベル">
+      <input class="form-input" id="sf-source-note" type="text" placeholder="例: 社内確認、現品ラベル" data-i18n-ph="spec_note_ph">
     </div>
     <div class="form-footer">
       <button class="btn-cancel" id="btn-part-form-cancel" data-i18n="btn_back">キャンセル</button>
@@ -1796,6 +1796,12 @@ var TRANSLATIONS = {
     btn_back_search: "← 品番検索",
     btn_logout: "ログアウト",
     menu_welcome_sub: "ご利用になる機能を選択してください",
+    menu_section_main_title: "主要機能",
+    menu_section_main_note: "普段使う操作",
+    menu_section_admin_title: "管理画面",
+    menu_section_admin_note: "設定・マスタ・履歴",
+    menu_admin_title: "管理メニュー",
+    menu_admin_desc: "権限のある管理機能をここにまとめて表示します",
     greeting: "ようこそ、{name} さん",
     mi_search_title: "品番検索",
     mi_search_desc: "基幹商品マスタを品番・車種・メーカーで検索し、画像・構成部品・製造予定を確認します。",
@@ -1816,6 +1822,7 @@ var TRANSLATIONS = {
     ph_search: "品番・車名・メーカー (ハイフン有無OK)",
     btn_search: "検索",
     btn_clear: "クリア",
+    btn_load_more: "さらに表示",
     filter_all: "すべて",
     filter_sl: "SL品番あり",
     filter_img: "画像あり",
@@ -1829,6 +1836,10 @@ var TRANSLATIONS = {
     welcome_panel: "品番を検索して選択してください",
     production_search_title: "製造予定リスト",
     production_search_ph: "DKD商品ID・メーカー品番・純正品番で検索",
+    production_year_all: "年度すべて",
+    production_search_wait: "検索待ち",
+    production_search_hint: "検索条件を指定して検索してください。",
+    btn_edit_selected_row: "選択行修正",
     production_instruction_filter: "製造予定リスト",
     production_filter_ready: "構成部品あり",
     production_filter_need: "構成部品なし",
@@ -1888,6 +1899,7 @@ var TRANSLATIONS = {
     spec_label_diameter: "外径",
     spec_label_gas: "ガス",
     spec_note: "情報元メモ",
+    spec_note_ph: "例: 社内確認、現品ラベル",
     spec_source_manual: "手入力",
     spec_source_catalog: "パーツカタログ",
     spec_none: "公称出力データなし",
@@ -1979,7 +1991,12 @@ var TRANSLATIONS = {
     lbl_model: "型式",
     lbl_category: "カテゴリ",
     btn_add_part: "商品を追加",
+    part_form_add_title: "商品追加",
+    part_form_edit_title: "商品修正",
+    required_part_number: "純正品番またはメーカー品番を入力してください",
+    required_shohin_cd: "商品コードを入力してください",
     btn_add_core_list: "コアを追加",
+    core_list_edit_title: "コア修正",
     btn_create_core_from_ranking: "ランキングから作成",
     btn_add_production_ranking: "ランキングを追加",
     btn_edit: "修正",
@@ -2009,6 +2026,7 @@ var TRANSLATIONS = {
     production_ranking_core_summary: "コアメモ",
     production_ranking_component_summary: "構成部品メモ",
     production_ranking_delete_confirm: "このランキング行を削除しますか？",
+    production_ranking_edit_title: "ランキング修正",
     lbl_kikan_group: "互換グループID",
     btn_add_kikan: "互換に追加",
     btn_new_kikan: "新しいグループを作成",
@@ -2222,6 +2240,12 @@ var TRANSLATIONS = {
     btn_back_search: "← Parts Search",
     btn_logout: "Logout",
     menu_welcome_sub: "Select a feature to use",
+    menu_section_main_title: "Main Features",
+    menu_section_main_note: "Frequently used actions",
+    menu_section_admin_title: "Admin Screens",
+    menu_section_admin_note: "Settings, masters, and history",
+    menu_admin_title: "Admin Menu",
+    menu_admin_desc: "Available administration features are grouped here",
     greeting: "Welcome, {name}",
     mi_search_title: "Part Number Search",
     mi_search_desc: "Search master products and review images, components, and production instructions.",
@@ -2242,6 +2266,7 @@ var TRANSLATIONS = {
     ph_search: "Part No., Vehicle, Manufacturer (hyphens optional)",
     btn_search: "Search",
     btn_clear: "Clear",
+    btn_load_more: "Show More",
     filter_all: "All",
     filter_sl: "Has SL No.",
     filter_img: "Has Images",
@@ -2255,6 +2280,10 @@ var TRANSLATIONS = {
     welcome_panel: "Search and select a part number",
     production_search_title: "Production Instructions",
     production_search_ph: "Search by DKD product ID, maker part or genuine part",
+    production_year_all: "All years",
+    production_search_wait: "Waiting for search",
+    production_search_hint: "Set search conditions and run a search.",
+    btn_edit_selected_row: "Edit Selected Row",
     production_instruction_filter: "Production Plan",
     production_filter_ready: "Has components",
     production_filter_need: "Needs components",
@@ -2314,6 +2343,7 @@ var TRANSLATIONS = {
     spec_label_diameter: "Diameter",
     spec_label_gas: "Gas",
     spec_note: "Source note",
+    spec_note_ph: "Ex: internal confirmation, item label",
     spec_source_manual: "Manual",
     spec_source_catalog: "Parts Catalog",
     spec_none: "No nominal output data",
@@ -2405,7 +2435,12 @@ var TRANSLATIONS = {
     lbl_model: "Model Code",
     lbl_category: "Category",
     btn_add_part: "Add Part",
+    part_form_add_title: "Add Part",
+    part_form_edit_title: "Edit Part",
+    required_part_number: "Enter a genuine part number or manufacturer part number.",
+    required_shohin_cd: "Enter the product code.",
     btn_add_core_list: "Add CORE",
+    core_list_edit_title: "Edit CORE",
     btn_create_core_from_ranking: "Create from Ranking",
     btn_add_production_ranking: "Add Ranking",
     btn_edit: "Edit",
@@ -2435,6 +2470,7 @@ var TRANSLATIONS = {
     production_ranking_core_summary: "CORE memo",
     production_ranking_component_summary: "Component memo",
     production_ranking_delete_confirm: "Delete this ranking row?",
+    production_ranking_edit_title: "Edit Ranking",
     lbl_kikan_group: "Compatibility Group ID",
     btn_add_kikan: "Add to Group",
     btn_new_kikan: "Create New Group",
@@ -2637,6 +2673,24 @@ var TRANSLATIONS = {
   },
 
   zh: {
+    menu_section_main_title: "主要功能",
+    menu_section_main_note: "常用操作",
+    menu_section_admin_title: "管理画面",
+    menu_section_admin_note: "设置、主数据、历史",
+    menu_admin_title: "管理菜单",
+    menu_admin_desc: "有权限的管理功能会集中显示在这里",
+    spec_note_ph: "例：内部确认、实物标签",
+    part_form_add_title: "添加商品",
+    part_form_edit_title: "修改商品",
+    required_part_number: "请输入纯正品号或制造商品号。",
+    required_shohin_cd: "请输入商品代码。",
+    core_list_edit_title: "修改CORE",
+    production_ranking_edit_title: "修改排行",
+    btn_load_more: "显示更多",
+    production_year_all: "全部年度",
+    production_search_wait: "等待搜索",
+    production_search_hint: "请指定搜索条件后搜索。",
+    btn_edit_selected_row: "修改所选行",
     app_sub: "大光目录与搜索系统",
     lbl_email: "邮箱地址",
     lbl_password: "密码",
@@ -3092,7 +3146,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.152";
+var APP_VERSION       = "v1.1.153";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -3609,16 +3663,16 @@ function renderMenu() {
 
   var html = "";
   html += "<section class=\"menu-section\">";
-  html += "<div class=\"menu-section-head\"><h3 class=\"menu-section-title\">&#x4E3B;&#x8981;&#x6A5F;&#x80FD;</h3><span class=\"menu-section-note\">&#x666E;&#x6BB5;&#x4F7F;&#x3046;&#x64CD;&#x4F5C;</span></div>";
+  html += "<div class=\"menu-section-head\"><h3 class=\"menu-section-title\">" + t("menu_section_main_title") + "</h3><span class=\"menu-section-note\">" + t("menu_section_main_note") + "</span></div>";
   html += "<div class=\"menu-card-grid\">";
   mainItems.forEach(function(item) { html += renderCard(item); });
   html += "</div></section>";
 
   if (adminItems.length) {
     html += "<section class=\"menu-section\">";
-    html += "<div class=\"menu-section-head\"><h3 class=\"menu-section-title\">&#x7BA1;&#x7406;&#x753B;&#x9762;</h3><span class=\"menu-section-note\">&#x8A2D;&#x5B9A;&#x30FB;&#x30DE;&#x30B9;&#x30BF;&#x30FB;&#x5C65;&#x6B74;</span></div>";
+    html += "<div class=\"menu-section-head\"><h3 class=\"menu-section-title\">" + t("menu_section_admin_title") + "</h3><span class=\"menu-section-note\">" + t("menu_section_admin_note") + "</span></div>";
     html += "<div class=\"menu-admin-panel\">";
-    html += "<div class=\"menu-admin-head\"><div class=\"menu-admin-icon\">&#x1F6E0;</div><div><div class=\"menu-admin-title\">&#x7BA1;&#x7406;&#x30E1;&#x30CB;&#x30E5;&#x30FC;</div><div class=\"menu-admin-desc\">&#x6A29;&#x9650;&#x306E;&#x3042;&#x308B;&#x7BA1;&#x7406;&#x6A5F;&#x80FD;&#x3092;&#x3053;&#x3053;&#x306B;&#x307E;&#x3068;&#x3081;&#x3066;&#x8868;&#x793A;&#x3057;&#x307E;&#x3059;</div></div></div>";
+    html += "<div class=\"menu-admin-head\"><div class=\"menu-admin-icon\">&#x1F6E0;</div><div><div class=\"menu-admin-title\">" + t("menu_admin_title") + "</div><div class=\"menu-admin-desc\">" + t("menu_admin_desc") + "</div></div></div>";
     html += "<div class=\"menu-admin-grid\">";
     adminItems.forEach(function(item) { html += renderAdminLink(item); });
     html += "</div></div></section>";
@@ -3672,8 +3726,8 @@ function resetProductionSearchView() {
   var list = document.getElementById("production-list");
   var moreWrap = document.getElementById("production-load-more-wrap");
   var detail = document.getElementById("production-detail");
-  if (countEl) countEl.textContent = "検索待ち";
-  if (list) list.innerHTML = "<div class='loading'>検索条件を指定して検索してください。</div>";
+  if (countEl) countEl.textContent = t("production_search_wait");
+  if (list) list.innerHTML = "<div class='loading'>" + t("production_search_hint") + "</div>";
   if (moreWrap) moreWrap.style.display = "none";
   if (detail) detail.innerHTML = "<div class='production-detail-empty'><div style='font-size:34px'>&#x1F3ED;</div><div>" + t("production_select_hint") + "</div></div>";
 }
@@ -3980,7 +4034,7 @@ function renderProductionCoreEntriesDisplay(rows) {
   var html = "<table class='production-mini-table'><tr><th>コア品番</th><th>数</th><th>置き場</th><th>メモ</th>" + (canEdit() ? "<th></th>" : "") + "</tr>";
   rows.forEach(function(row) {
     html += "<tr><td>" + esc(row.core_part_number || "-") + "</td><td>" + esc(row.quantity || 0) + "</td><td>" + esc(row.location || "-") + "</td><td>" + esc(row.note || "-") + "</td>";
-    if (canEdit()) html += "<td><button class='btn-sm-edit production-action-secondary' data-core-entry-delete='" + esc(String(row.id)) + "'>削除</button></td>";
+    if (canEdit()) html += "<td><button class='btn-sm-edit production-action-secondary' data-core-entry-delete='" + esc(String(row.id)) + "'>" + t("btn_delete") + "</button></td>";
     html += "</tr>";
   });
   return html + "</table>";
@@ -4347,7 +4401,7 @@ function renderProductionCoreEntries(rows) {
   var html = "<table class='production-mini-table'><tr><th>コア品番</th><th>数</th><th>置き場</th><th>メモ</th>" + (canEdit() ? "<th></th>" : "") + "</tr>";
   rows.forEach(function(row) {
     html += "<tr><td>" + esc(row.core_part_number || "-") + "</td><td>" + esc(row.quantity || 0) + "</td><td>" + esc(row.location || "-") + "</td><td>" + esc(row.note || "-") + "</td>";
-    if (canEdit()) html += "<td><button class='btn-sm-edit production-action-secondary' data-core-entry-delete='" + esc(String(row.id)) + "'>削除</button></td>";
+    if (canEdit()) html += "<td><button class='btn-sm-edit production-action-secondary' data-core-entry-delete='" + esc(String(row.id)) + "'>" + t("btn_delete") + "</button></td>";
     html += "</tr>";
   });
   return html + "</table>";
@@ -5483,8 +5537,8 @@ function renderPartsMgmt() {
     html += "<td><div class='mgmt-sub'>" + esc(p.manufacturer || "-") + "</div></td>";
     html += "<td><div class='mgmt-sub'>" + tCat(p.category) + "</div></td>";
     html += "<td><div class='mgmt-actions'>";
-    html += "<button class='btn-sm-edit' data-pid='" + p.id + "'>修正</button>";
-    html += "<button class='btn-sm-del' data-pdel='" + p.id + "'>削除</button>";
+    html += "<button class='btn-sm-edit' data-pid='" + p.id + "'>" + t("btn_edit") + "</button>";
+    html += "<button class='btn-sm-del' data-pdel='" + p.id + "'>" + t("btn_delete") + "</button>";
     html += "</div></td>";
     html += "</tr>";
   });
@@ -5509,7 +5563,7 @@ function openPartForm(mode, partId) {
   document.getElementById("pf-shohin-cd").readOnly = false;
 
   if (mode === "add") {
-    title.textContent = "商品追加";
+    title.textContent = t("part_form_add_title");
     document.getElementById("part-form-id").value        = "";
     document.getElementById("pf-shohin-cd").value        = "";
     document.getElementById("pf-genuine-pn").value       = "";
@@ -5524,7 +5578,7 @@ function openPartForm(mode, partId) {
   } else {
     var p = partsMgmtData.find(function(x){ return x.id === partId; });
     if (!p) return;
-    title.textContent = "商品修正";
+    title.textContent = t("part_form_edit_title");
     document.getElementById("part-form-id").value        = p.id;
     document.getElementById("pf-shohin-cd").value        = p.dkd_shohin_id || p.shohin_cd || "";
     document.getElementById("pf-genuine-pn").value       = p.genuine_part_number || "";
@@ -5549,9 +5603,9 @@ async function savePartForm() {
   var errEl   = document.getElementById("part-form-error");
   errEl.textContent = "";
   var gpn     = document.getElementById("pf-genuine-pn").value.trim();
-  if (!gpn) { errEl.textContent = "純正品番は必須です"; return; }
+  if (!gpn) { errEl.textContent = t("required_part_number"); return; }
   var scd = document.getElementById("pf-shohin-cd").value.trim();
-  if (!scd) { errEl.textContent = "商品コードは必須です"; return; }
+  if (!scd) { errEl.textContent = t("required_shohin_cd"); return; }
 
   var data = {
     genuine_part_number:      gpn,
@@ -5663,7 +5717,7 @@ function renderCoreListMgmt() {
     html += "<td><div class='mgmt-sub'>" + esc(formatDateTime(row.updated_at)) + "</div></td>";
     html += "<td><div class='mgmt-actions'>";
     html += "<button class='btn-sm-edit' data-core-edit='" + row.id + "'>" + t("btn_edit") + "</button>";
-    html += "<button class='btn-sm-del' data-core-del='" + row.id + "'>削除</button>";
+    html += "<button class='btn-sm-del' data-core-del='" + row.id + "'>" + t("btn_delete") + "</button>";
     html += "</div></td>";
     html += "</tr>";
   });
@@ -5688,7 +5742,7 @@ function openCoreListForm(mode, rowId) {
   var row = mode === "edit" ? coreListMgmtRows.find(function(x) { return x.id === rowId; }) : null;
   var p = row ? (coreListProductMap[String(row.dkd_shohin_id)] || {}) : {};
   document.getElementById("core-list-form-error").textContent = "";
-  document.getElementById("core-list-form-title").textContent = mode === "add" ? t("btn_add_core_list") : "コア修正";
+  document.getElementById("core-list-form-title").textContent = mode === "add" ? t("btn_add_core_list") : t("core_list_edit_title");
   setProductionRankingFormValue("clf-id", row && row.id);
   setProductionRankingFormValue("clf-dkd-id", row && row.dkd_shohin_id);
   setProductionRankingFormValue("clf-core-part", row && row.core_part_number);
@@ -5937,7 +5991,7 @@ function renderProductionRankingMgmt() {
     html += "<td>" + productionRankingCell(row.readiness_status) + "<div class='mgmt-sub'>構成 " + productionRankingCell(row.component_count) + "</div></td>";
     html += "<td><div class='mgmt-actions'>";
     html += "<button class='btn-sm-edit' data-pr-edit='" + row.id + "'>" + t("btn_edit") + "</button>";
-    html += "<button class='btn-sm-del' data-pr-del='" + row.id + "'>削除</button>";
+    html += "<button class='btn-sm-del' data-pr-del='" + row.id + "'>" + t("btn_delete") + "</button>";
     html += "</div></td>";
     html += "</tr>";
   });
@@ -5991,7 +6045,7 @@ async function openProductionRankingForm(mode, rowId) {
   productionRankingFormMode = mode;
   var row = mode === "edit" ? productionRankingMgmtRows.find(function(x) { return x.id === rowId; }) : null;
   document.getElementById("production-ranking-form-error").textContent = "";
-  document.getElementById("production-ranking-form-title").textContent = mode === "add" ? t("btn_add_production_ranking") : "ランキング修正";
+  document.getElementById("production-ranking-form-title").textContent = mode === "add" ? t("btn_add_production_ranking") : t("production_ranking_edit_title");
   setProductionRankingFormValue("prf-id", row && row.id);
   setProductionRankingFormValue("prf-rank", row && row.priority_rank);
   var rankingYearEl = document.getElementById("production-ranking-year");
