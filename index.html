@@ -3092,7 +3092,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.150";
+var APP_VERSION       = "v1.1.151";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -7155,9 +7155,6 @@ async function runProductSearch(options) {
   componentUsageCountMap = {};
   coreStockQtyMap = {};
   kikanCompatibleMap = {};
-  var initialKikanMap = await enrichProductsWithKikanFlags(allProducts);
-  if (seq !== searchRequestSeq) return;
-  kikanCompatibleMap = initialKikanMap || {};
   renderCategoryChips();
   render();
   loadProductSearchAuxiliaryData(seq, allProducts.slice());
@@ -7367,6 +7364,12 @@ async function loadProductSearchAuxiliaryData(seq, products) {
   if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
   componentUsageCountMap = fast[0] || {};
   coreStockQtyMap = fast[1] || {};
+  (products || []).forEach(function(p) {
+    var key = String(p && (p.dkd_shohin_id || p.id || "") || "");
+    if (key && Object.prototype.hasOwnProperty.call(componentUsageCountMap, key)) {
+      p.component_count = componentUsageCountMap[key];
+    }
+  });
   render();
   await delay(120);
   if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
@@ -7374,8 +7377,16 @@ async function loadProductSearchAuxiliaryData(seq, products) {
     return seq !== searchRequestSeq || auxSeq !== productAuxSeq;
   });
   if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
-  kikanCompatibleMap = kikanMap || {};
+  kikanCompatibleMap = Object.assign({}, kikanCompatibleMap, kikanMap || {});
   render();
+}
+
+function productComponentCount(p) {
+  var key = String(p && (p.dkd_shohin_id || p.id || "") || "");
+  if (key && Object.prototype.hasOwnProperty.call(componentUsageCountMap, key)) {
+    return parseInt(componentUsageCountMap[key] || 0, 10) || 0;
+  }
+  return parseInt(p && (p.component_usage_count || p.component_count || p.component_count_total || 0), 10) || 0;
 }
 
 async function loadComponentUsageCounts(products) {
@@ -7519,7 +7530,7 @@ function render() {
     var thumb = legacyId ? (imageThumbnailMap[legacyId]||"") : "";
     var slNums = legacyId ? (slPartsMap[legacyId] || []) : [];
     var hasSL  = slNums.length > 0;
-    var componentCount = componentUsageCountMap[String(p.dkd_shohin_id || p.id)] || 0;
+    var componentCount = productComponentCount(p);
     var hasKikan = !!(p.has_kikan_compatible || kikanCompatibleMap["dkd:" + String(p.dkd_shohin_id || p.id || "")]);
     var mfr   = [p.manufacturer, p.vehicle_manufacturer].filter(Boolean).join(" / ");
     var sel   = (currentProduct && currentProduct.id===p.id) ? " selected" : "";
