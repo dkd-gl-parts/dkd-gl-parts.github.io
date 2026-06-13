@@ -3146,7 +3146,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.153";
+var APP_VERSION       = "v1.1.154";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -7355,8 +7355,13 @@ async function fetchKikanCompatibleMap(products, isStale) {
       map[key] = true;
       kikanCompatibleFlagCache[key] = true;
     });
+    var directMap = await fetchKikanGroupMemberFlagMap(rows);
+    Object.keys(directMap || {}).forEach(function(key) {
+      map[key] = true;
+      kikanCompatibleFlagCache[key] = true;
+    });
     rows.forEach(function(p) {
-      var key = "dkd:" + String(p.dkd_shohin_id || p.id || "");
+      var key = productKikanKey(p);
       if (!Object.prototype.hasOwnProperty.call(kikanCompatibleFlagCache, key)) {
         kikanCompatibleFlagCache[key] = !!map[key];
       }
@@ -7370,7 +7375,7 @@ async function fetchKikanCompatibleMap(products, isStale) {
   });
   var pending = [];
   rows.forEach(function(p) {
-    var key = "dkd:" + String(p.dkd_shohin_id || p.id || "");
+    var key = productKikanKey(p);
     if (map[key]) return;
     if (Object.prototype.hasOwnProperty.call(kikanCompatibleFlagCache, key)) {
       if (kikanCompatibleFlagCache[key]) map[key] = true;
@@ -7384,7 +7389,7 @@ async function fetchKikanCompatibleMap(products, isStale) {
     var results = await Promise.all(chunk.map(hasDisplayableKikanCompatibleParts));
     if (isStale && isStale()) return map;
     chunk.forEach(function(p, idx) {
-      var key = "dkd:" + String(p.dkd_shohin_id || p.id || "");
+      var key = productKikanKey(p);
       kikanCompatibleFlagCache[key] = !!results[idx];
       if (results[idx]) map[key] = true;
     });
@@ -7405,7 +7410,7 @@ async function enrichProductsWithKikanFlags(products) {
     map = await fetchKikanCompatibleMap(rows);
   }
   rows.forEach(function(p) {
-    var key = "dkd:" + String(p.dkd_shohin_id || p.id || "");
+    var key = productKikanKey(p);
     p.has_kikan_compatible = !!map[key];
   });
   return map;
@@ -7415,7 +7420,7 @@ async function fetchKikanRpcFlagMap(products) {
   var map = {};
   var payload = (products || []).slice(0, KIKAN_FLAG_LOOKUP_LIMIT).map(function(p) {
     return {
-      dkd_shohin_id: p.dkd_shohin_id || p.id || null,
+      dkd_shohin_id: productDkdId(p) || null,
       manufacturer: p.manufacturer || null,
       manufacturer_part_number: p.manufacturer_part_number || null,
       genuine_part_number: p.genuine_part_number || null
@@ -7442,7 +7447,7 @@ async function fetchKikanRpcFlagMap(products) {
 async function fetchKikanGroupMemberFlagMap(products) {
   var map = {};
   var ids = (products || []).map(function(p) {
-    return parseInt(p.dkd_shohin_id || p.id, 10);
+    return parseInt(productDkdId(p), 10);
   }).filter(function(id) {
     return !isNaN(id);
   });
@@ -7508,7 +7513,25 @@ async function loadProductSearchAuxiliaryData(seq, products) {
   });
   if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
   kikanCompatibleMap = Object.assign({}, kikanCompatibleMap, kikanMap || {});
+  (products || []).forEach(function(p) {
+    p.has_kikan_compatible = hasProductKikanCompatible(p);
+  });
   render();
+}
+
+function productDkdId(p) {
+  return String(p && (p.dkd_shohin_id || p.id || p.dkd_gokan_id || "") || "");
+}
+
+function productKikanKey(p) {
+  return "dkd:" + productDkdId(p);
+}
+
+function hasProductKikanCompatible(p) {
+  var key = productKikanKey(p);
+  return !!(p && p.has_kikan_compatible) ||
+    !!kikanCompatibleMap[key] ||
+    !!kikanCompatibleFlagCache[key];
 }
 
 function productComponentCount(p) {
@@ -7583,7 +7606,7 @@ async function loadKikanCompatibleFlags(products) {
     var chunk = rows.slice(i, i + 8);
     var results = await Promise.all(chunk.map(hasDisplayableKikanCompatibleParts));
     chunk.forEach(function(p, idx) {
-      if (results[idx]) kikanCompatibleMap["dkd:" + String(p.dkd_shohin_id || p.id || "")] = true;
+      if (results[idx]) kikanCompatibleMap[productKikanKey(p)] = true;
     });
   }
 }
@@ -7661,7 +7684,7 @@ function render() {
     var slNums = legacyId ? (slPartsMap[legacyId] || []) : [];
     var hasSL  = slNums.length > 0;
     var componentCount = productComponentCount(p);
-    var hasKikan = !!(p.has_kikan_compatible || kikanCompatibleMap["dkd:" + String(p.dkd_shohin_id || p.id || "")]);
+    var hasKikan = hasProductKikanCompatible(p);
     var mfr   = [p.manufacturer, p.vehicle_manufacturer].filter(Boolean).join(" / ");
     var sel   = (currentProduct && currentProduct.id===p.id) ? " selected" : "";
     html += "<div class='card"+sel+"' data-id='"+p.id+"'><div class='card-top'>";
