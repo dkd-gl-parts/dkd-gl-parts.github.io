@@ -3146,7 +3146,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.154";
+var APP_VERSION       = "v1.1.155";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -6946,6 +6946,10 @@ function norm(s) {
     .toLowerCase();
 }
 function isPC() { return window.innerWidth >= 768; }
+
+function delay(ms) {
+  return new Promise(function(resolve) { setTimeout(resolve, ms); });
+}
 
 function normalizedStartsWith(value, query) {
   return !!query && norm(value).indexOf(query) === 0;
