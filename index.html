@@ -3092,7 +3092,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.149";
+var APP_VERSION       = "v1.1.150";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -7155,6 +7155,9 @@ async function runProductSearch(options) {
   componentUsageCountMap = {};
   coreStockQtyMap = {};
   kikanCompatibleMap = {};
+  var initialKikanMap = await enrichProductsWithKikanFlags(allProducts);
+  if (seq !== searchRequestSeq) return;
+  kikanCompatibleMap = initialKikanMap || {};
   renderCategoryChips();
   render();
   loadProductSearchAuxiliaryData(seq, allProducts.slice());
@@ -7259,6 +7262,25 @@ async function fetchKikanCompatibleMap(products, isStale) {
       if (results[idx]) map[key] = true;
     });
   }
+  return map;
+}
+
+async function enrichProductsWithKikanFlags(products) {
+  var rows = (products || []).slice(0, KIKAN_FLAG_LOOKUP_LIMIT);
+  var map = {};
+  rows.forEach(function(p) {
+    p.has_kikan_compatible = false;
+  });
+  var rpcResult = await fetchKikanRpcFlagMap(rows);
+  if (rpcResult && rpcResult.ok) {
+    map = rpcResult.map || {};
+  } else {
+    map = await fetchKikanCompatibleMap(rows);
+  }
+  rows.forEach(function(p) {
+    var key = "dkd:" + String(p.dkd_shohin_id || p.id || "");
+    p.has_kikan_compatible = !!map[key];
+  });
   return map;
 }
 
@@ -7498,7 +7520,7 @@ function render() {
     var slNums = legacyId ? (slPartsMap[legacyId] || []) : [];
     var hasSL  = slNums.length > 0;
     var componentCount = componentUsageCountMap[String(p.dkd_shohin_id || p.id)] || 0;
-    var hasKikan = !!kikanCompatibleMap["dkd:" + String(p.dkd_shohin_id || p.id || "")];
+    var hasKikan = !!(p.has_kikan_compatible || kikanCompatibleMap["dkd:" + String(p.dkd_shohin_id || p.id || "")]);
     var mfr   = [p.manufacturer, p.vehicle_manufacturer].filter(Boolean).join(" / ");
     var sel   = (currentProduct && currentProduct.id===p.id) ? " selected" : "";
     html += "<div class='card"+sel+"' data-id='"+p.id+"'><div class='card-top'>";
