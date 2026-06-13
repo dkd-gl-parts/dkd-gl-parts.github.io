@@ -3092,7 +3092,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.151";
+var APP_VERSION       = "v1.1.152";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -6990,6 +6990,34 @@ function normalizedPartKey(value) {
   return String(value || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
 }
 
+function uniqueTextValues(values) {
+  var seen = {};
+  var out = [];
+  (values || []).forEach(function(value) {
+    var text = String(value || "").trim();
+    if (!text || seen[text]) return;
+    seen[text] = true;
+    out.push(text);
+  });
+  return out;
+}
+
+function mitsubishiCatalogPartKeyVariants(partNumber) {
+  var key = normalizedPartKey(partNumber);
+  var variants = [key];
+  var m = key.match(/^([A-Z])(\d{1,2})([A-Z].*)$/);
+  if (m) variants.push(m[1] + m[2].padStart(3, "0") + m[3]);
+  return uniqueTextValues(variants);
+}
+
+function componentAssyLookupKeys(product) {
+  var key = normalizedPartKey(product && product.manufacturer_part_number);
+  if (!key) return [];
+  var manufacturer = String(product && product.manufacturer || "").toUpperCase();
+  if (manufacturer === "MITSUBISHI") return mitsubishiCatalogPartKeyVariants(key);
+  return [key];
+}
+
 function normalizeCoreProductFastRows(rows) {
   return (rows || []).map(function(row) {
     var p = Object.assign({}, row);
@@ -7185,6 +7213,54 @@ async function fetchComponentUsageCountMap(products) {
       map[String(row.dkd_shohin_id)] = parseInt(row.component_usage_count || 0, 10);
     });
   }
+  var fallbackMap = await fetchMitsubishiComponentUsageCountFallback(products, map);
+  Object.keys(fallbackMap).forEach(function(key) {
+    if (!map[key]) map[key] = fallbackMap[key];
+  });
+  return map;
+}
+
+async function fetchMitsubishiComponentUsageCountFallback(products, baseMap) {
+  var map = {};
+  var keyToProductIds = {};
+  var lookupKeys = [];
+  (products || []).forEach(function(p) {
+    var manufacturer = String(p && p.manufacturer || "").toUpperCase();
+    if (manufacturer !== "MITSUBISHI") return;
+    var id = String(p && (p.dkd_shohin_id || p.id || "") || "");
+    if (!id || (baseMap && baseMap[id] > 0)) return;
+    componentAssyLookupKeys(p).forEach(function(key) {
+      if (!key) return;
+      if (!keyToProductIds[key]) {
+        keyToProductIds[key] = [];
+        lookupKeys.push(key);
+      }
+      keyToProductIds[key].push(id);
+    });
+  });
+  lookupKeys = uniqueTextValues(lookupKeys);
+  if (!lookupKeys.length) return map;
+  var countByKey = {};
+  for (var i = 0; i < lookupKeys.length; i += 60) {
+    var chunk = lookupKeys.slice(i, i + 60);
+    var r = await sb.from("assembly_component_usage_details")
+      .select("normalized_assy_manufacturer_part_number")
+      .eq("assy_manufacturer", "MITSUBISHI")
+      .in("normalized_assy_manufacturer_part_number", chunk);
+    if (r.error) {
+      console.warn("mitsubishi component count fallback failed", r.error);
+      return map;
+    }
+    (r.data || []).forEach(function(row) {
+      var key = String(row.normalized_assy_manufacturer_part_number || "");
+      countByKey[key] = (countByKey[key] || 0) + 1;
+    });
+  }
+  Object.keys(countByKey).forEach(function(key) {
+    (keyToProductIds[key] || []).forEach(function(id) {
+      map[id] = Math.max(map[id] || 0, countByKey[key] || 0);
+    });
+  });
   return map;
 }
 
@@ -8749,12 +8825,12 @@ async function loadAssemblyComponentsForCurrent() {
   rows.forEach(function(row) { if (row.id != null) seen[String(row.id)] = true; });
 
   var mfr = currentProduct && currentProduct.manufacturer;
-  var normalizedMfrPn = currentProduct && (currentProduct.normalized_manufacturer_part_number || normalizedPartKey(currentProduct.manufacturer_part_number));
-  if (mfr && normalizedMfrPn) {
+  var normalizedMfrPnKeys = componentAssyLookupKeys(currentProduct);
+  if (mfr && normalizedMfrPnKeys.length) {
     var byPart = await sb.from("assembly_component_usage_details")
       .select(selectColumns)
       .eq("assy_manufacturer", mfr)
-      .eq("normalized_assy_manufacturer_part_number", normalizedMfrPn)
+      .in("normalized_assy_manufacturer_part_number", normalizedMfrPnKeys)
       .order("component_position", { ascending: true, nullsFirst: false })
       .order("component_manufacturer_part_number", { ascending: true });
     if (!byPart.error) {
