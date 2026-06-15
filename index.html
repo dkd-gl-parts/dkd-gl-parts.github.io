@@ -3348,7 +3348,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.169";
+var APP_VERSION       = "v1.1.170";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -3490,12 +3490,13 @@ function canSeePurchasePrice() {
 // 販売価格（JPY）表示判定
 function canSeeSalesPrice() {
   if (!userProfile) return false;
+  if (isExternalViewer()) return false;
   if (isSystemAdmin()) return true;
   var g = userProfile.group_name;
   var r = userProfile.role;
   if (g === "daiko") return true;
   if (g === "gltek") return ["admin","editor","price_viewer"].indexOf(r) >= 0;
-  if (g === "public") return r === "price_viewer";
+  if (g === "public") return false;
   return false;
 }
 function canUseRakutenResearch() {
@@ -3505,7 +3506,26 @@ function canSeePurchasePrice() {
   return isAdmin();
 }
 function canViewInternalComponents() {
-  return !!(userProfile && userProfile.group_name !== "public");
+  return canSeeComponentInfo();
+}
+function isExternalViewerProfile(profile) {
+  if (!profile) return false;
+  var company = userCompanyCode(profile);
+  var role = userAccessRoleCode(profile);
+  var legacyGroup = profile.group_name || legacyGroupFromCompany(company);
+  return company === "external" || role === "external_viewer" || legacyGroup === "public";
+}
+function isExternalViewer() {
+  return isExternalViewerProfile(userProfile);
+}
+function canSeeInternalBusinessInfo() {
+  return !!userProfile && !isExternalViewer();
+}
+function canSeeComponentInfo() {
+  return canSeeInternalBusinessInfo();
+}
+function canSeeCoreStockInfo() {
+  return canSeeInternalBusinessInfo();
 }
 function isDaikoGroup() {
   return userProfile && (isSystemAdmin() || userProfile.group_name === "daiko");
@@ -7897,8 +7917,8 @@ async function fetchKikanGroupMemberFlagMap(products) {
 async function loadProductSearchAuxiliaryData(seq, products) {
   var auxSeq = productAuxSeq;
   var fast = await Promise.all([
-    fetchComponentUsageCountMap(products),
-    fetchCoreStockQtyMap(products)
+    canSeeComponentInfo() ? fetchComponentUsageCountMap(products) : Promise.resolve({}),
+    canSeeCoreStockInfo() ? fetchCoreStockQtyMap(products) : Promise.resolve({})
   ]);
   if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
   componentUsageCountMap = fast[0] || {};
@@ -8087,7 +8107,7 @@ function render() {
     var thumb = legacyId ? (imageThumbnailMap[legacyId]||"") : "";
     var slNums = legacyId ? (slPartsMap[legacyId] || []) : [];
     var hasSL  = slNums.length > 0;
-    var componentCount = productComponentCount(p);
+    var componentCount = canSeeComponentInfo() ? productComponentCount(p) : 0;
     var hasKikan = hasProductKikanCompatible(p);
     var mfr   = [p.manufacturer, p.vehicle_manufacturer].filter(Boolean).join(" / ");
     var sel   = (currentProduct && currentProduct.id===p.id) ? " selected" : "";
@@ -8240,18 +8260,23 @@ function renderPanelStatic() {
   if (canUseRakutenResearch()) {
     toolHtml += "<button class='btn-sm-edit' onclick='openRakutenForCurrentProduct()'>&#x1F4B4; " + t("rakuten_quick") + "</button>";
   }
-  toolHtml += "<button class='btn-sm-edit btn-component-action' id='btn-open-components'><span class='component-icon'>&#x1F9E9;</span> " + t("component_open_parts") + "</button>";
-  toolHtml += "<button class='btn-sm-edit' id='btn-open-component-parallel'>&#8644; " + t("component_open_parallel") + "</button>";
+  if (canSeeComponentInfo()) {
+    toolHtml += "<button class='btn-sm-edit btn-component-action' id='btn-open-components'><span class='component-icon'>&#x1F9E9;</span> " + t("component_open_parts") + "</button>";
+    toolHtml += "<button class='btn-sm-edit' id='btn-open-component-parallel'>&#8644; " + t("component_open_parallel") + "</button>";
+  }
   if (canEdit()) {
     toolHtml += "<button class='btn-sm-edit detail-toolbar-edit' id='btn-edit-current-product'>&#9998; " + t("btn_edit_part") + "</button>";
   }
   toolHtml += "</div>";
+  var salesPriceBlockHtml = canSeeSalesPrice()
+    ? "<div class='sales-price-summary-block'><div class='sales-price-summary-head'><div class='detail-block-title'>" + t("sales_price_section") + "</div></div><div id='sales-price-summary-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div></div>"
+    : "";
   document.getElementById("panel-body").innerHTML =
     "<div class='detail-main-grid'>" +
       "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + "</div>" +
       "<div class='detail-column'>" + makerHtml +
       "<div class='detail-spec-block detail-spec-after-maker'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div>" +
-      "<div class='sales-price-summary-block'><div class='sales-price-summary-head'><div class='detail-block-title'>" + t("sales_price_section") + "</div></div><div id='sales-price-summary-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div></div></div>" +
+      salesPriceBlockHtml + "</div>" +
     "</div>" +
     toolHtml +
     "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
@@ -8274,7 +8299,7 @@ function renderPanelStatic() {
   currentVehicleApplicationRows = [];
   loadCatalogVehicleSummary(document.getElementById("panel-body"), p);
   loadProductSpecsForCurrent();
-  loadSalesPriceSummaryForCurrent();
+  if (canSeeSalesPrice()) loadSalesPriceSummaryForCurrent();
   loadSlParts(productLegacyPartId(p));
 }
 
@@ -8733,6 +8758,7 @@ function selectedProductSub() {
 
 function enterComponentsScreen(returnScreen) {
   if (!currentProduct) { alert(t("welcome_panel")); return; }
+  if (!canSeeComponentInfo()) { alert(t("err_perm")); return; }
   componentReturnScreen = returnScreen || "search";
   showScreen("components");
   updateAllHeaders();
@@ -8750,6 +8776,7 @@ function enterComponentsScreen(returnScreen) {
 
 function enterComponentParallelScreen() {
   if (!currentProduct) { alert(t("welcome_panel")); return; }
+  if (!canSeeComponentInfo()) { alert(t("err_perm")); return; }
   showScreen("component-parallel");
   updateAllHeaders();
   var title = document.getElementById("parallel-context-title");
