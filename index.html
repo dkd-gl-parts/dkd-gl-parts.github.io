@@ -3345,7 +3345,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.164";
+var APP_VERSION       = "v1.1.165";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -4477,7 +4477,7 @@ function renderVehicleApplicationsTable(rows) {
     html += "<td>" + esc(row.model || row.vehicle_model || "-") + "</td>";
     html += "<td>" + esc(row.engine || "-") + "</td>";
     html += "<td>" + esc(row.production_period_text || [row.effective_start, row.effective_end].filter(Boolean).join(" - ") || "-") + "</td>";
-    html += "<td><div class='component-pn'>" + esc(row.manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.genuine_part_number || "") + "</div></td>";
+    html += "<td><div class='component-pn'>" + esc(row.genuine_part_number || "-") + "</div><div class='component-sub'>" + esc(row.manufacturer_part_number || "") + "</div></td>";
     html += "<td>" + esc(row.part_name || "-") + "</td>";
     html += "</tr>";
   });
@@ -4492,8 +4492,8 @@ function openVehicleApplicationsDialog(rows, product) {
   if (!overlay || !body) return;
   note.textContent = [
     productCategoryLabel(product),
-    product && product.manufacturer_part_number,
-    product && product.genuine_part_number
+    product && product.genuine_part_number,
+    product && product.manufacturer_part_number
   ].filter(Boolean).join(" / ") + " の車両情報";
   body.innerHTML = renderVehicleApplicationsTable(rows || []);
   overlay.classList.add("show");
