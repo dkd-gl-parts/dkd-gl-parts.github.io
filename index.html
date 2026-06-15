@@ -3332,7 +3332,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.160";
+var APP_VERSION       = "v1.1.161";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -9737,21 +9737,27 @@ async function loadSalesPricingMgmt() {
     return;
   }
   if (list) list.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
-  var query = sb.from("core_product_search_view")
-    .select(CORE_PRODUCT_FAST_SELECT)
-    .limit(100);
-  var escaped = q.replace(/[%_]/g, function(m){ return "\\" + m; });
-  if (/^\d+$/.test(q)) {
-    query = query.or("dkd_shohin_id.eq." + parseInt(q, 10) + ",genuine_part_number.ilike.%" + escaped + "%,genuine_part_number_2.ilike.%" + escaped + "%,manufacturer_part_number.ilike.%" + escaped + "%,daiko_part_number.ilike.%" + escaped + "%");
-  } else {
-    query = query.or("genuine_part_number.ilike.%" + escaped + "%,genuine_part_number_2.ilike.%" + escaped + "%,manufacturer_part_number.ilike.%" + escaped + "%,daiko_part_number.ilike.%" + escaped + "%,manufacturer.ilike.%" + escaped + "%,search_keyword.ilike.%" + escaped + "%");
+  var numericDkd = /^\d+$/.test(q) ? parseInt(q, 10) : null;
+  var r = numericDkd !== null
+    ? await sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).eq("dkd_shohin_id", numericDkd).limit(1)
+    : { data: [] };
+  if (!r.error && !(r.data || []).length) {
+    r = await fetchCoreProductMasterMatches(q, null, 100);
   }
-  var r = await query;
   if (r.error) {
     if (list) list.innerHTML = "<div class='empty'>" + esc(r.error.message || t("msg_kikan_err")) + "</div>";
     return;
   }
-  salesPricingMgmtRows = r.data || [];
+  var rows = r.data || [];
+  if (!rows.length) {
+    var aliasResult = await fetchSourceAliasProducts(q);
+    if (aliasResult.error) {
+      console.warn("sales pricing alias search failed", aliasResult.error);
+    } else {
+      rows = aliasResult.data || [];
+    }
+  }
+  salesPricingMgmtRows = filterVisibleProducts(normalizeCoreProductFastRows(rows)).slice(0, 100);
   var ids = salesPricingMgmtRows.map(function(row){ return row.dkd_shohin_id; }).filter(Boolean);
   salesPricingMgmtPriceMap = {};
   if (ids.length) {
