@@ -76,7 +76,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .price-value    { font-size: 15px; font-weight: 700; color: #1a6fd4; }
 .price-moq      { font-size: 12px; color: #888; }
 .price-section-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-.sales-price-summary { border: 1px solid #e5edf8; border-radius: 8px; background: #fbfdff; padding: 10px 12px; margin-bottom: 12px; font-size: 12px; }
+.sales-price-summary-block { margin-top: 10px; }
+.sales-price-summary-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.sales-price-summary-head .detail-block-title { margin: 0; }
+.sales-price-summary { border: 1px solid #e5edf8; border-radius: 8px; background: #fbfdff; padding: 10px 12px; margin-bottom: 0; font-size: 12px; }
 .sales-price-summary-main { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .sales-price-summary-label { color: #667085; font-weight: 600; }
 .sales-price-summary-value { color: #1a8c3e; font-size: 18px; font-weight: 800; }
@@ -2160,6 +2163,7 @@ var TRANSLATIONS = {
     f_unit_price: "単価",
     f_currency: "通貨",
     no_prices: "価格データなし",
+    sales_price_section: "販売価格",
     sales_pricing_title: "販売価格設定",
     sales_base_price: "基準価格(税抜)",
     sales_tax_type: "税区分",
@@ -2634,6 +2638,7 @@ var TRANSLATIONS = {
     f_unit_price: "Unit Price",
     f_currency: "Currency",
     no_prices: "No price data",
+    sales_price_section: "Sales Price",
     sales_pricing_title: "Sales Pricing",
     sales_base_price: "Base Price (tax excluded)",
     sales_tax_type: "Tax Type",
@@ -3100,6 +3105,7 @@ var TRANSLATIONS = {
     f_unit_price: "单价",
     f_currency: "货币",
     no_prices: "无价格数据",
+    sales_price_section: "销售价格",
     sales_pricing_title: "销售价格设置",
     sales_base_price: "基准价格(不含税)",
     sales_tax_type: "税区分",
@@ -3305,7 +3311,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.157";
+var APP_VERSION       = "v1.1.158";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -8108,9 +8114,6 @@ function renderPanelStatic() {
   if (canUseRakutenResearch()) {
     toolHtml += "<button class='btn-sm-edit' onclick='openRakutenForCurrentProduct()'>&#x1F4B4; " + t("rakuten_quick") + "</button>";
   }
-  if (canSeeSalesPrice()) {
-    toolHtml += "<button class='btn-sm-edit' id='btn-open-sales-pricing'>&#x1F4B0; " + t("sales_pricing_title") + "</button>";
-  }
   toolHtml += "<button class='btn-sm-edit btn-component-action' id='btn-open-components'><span class='component-icon'>&#x1F9E9;</span> " + t("component_open_parts") + "</button>";
   toolHtml += "<button class='btn-sm-edit' id='btn-open-component-parallel'>&#8644; " + t("component_open_parallel") + "</button>";
   if (canEdit()) {
@@ -8121,13 +8124,12 @@ function renderPanelStatic() {
     "<div class='detail-main-grid'>" +
       "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + "</div>" +
       "<div class='detail-column'>" + makerHtml +
-      "<div class='detail-spec-block detail-spec-after-maker'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div></div>" +
+      "<div class='detail-spec-block detail-spec-after-maker'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div>" +
+      "<div class='sales-price-summary-block'><div class='sales-price-summary-head'><div class='detail-block-title'>" + t("sales_price_section") + "</div>" + (canSeeSalesPrice() ? "<button class='btn-sm-edit' id='btn-open-sales-pricing'>&#x1F4B0; " + t("sales_pricing_title") + "</button>" : "") + "</div><div id='sales-price-summary-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div></div></div>" +
     "</div>" +
     toolHtml +
     "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
     "<div id='kikan-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>" +
-    "<div class='price-section-title'>&#x1F4B0; " + t("sales_pricing_title") + "</div>" +
-    "<div id='sales-price-summary-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>" +
     "<div class='price-section-title'>&#x1F4B0; " + t("supplier_prices") + "</div>" +
     "<div id='price-table-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>";
   // 画像エリアをリセット（右カラムはpanel-rightに固定表示）
