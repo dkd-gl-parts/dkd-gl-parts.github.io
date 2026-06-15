@@ -3332,7 +3332,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.159";
+var APP_VERSION       = "v1.1.160";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -9456,6 +9456,13 @@ function salesPricingRankCountMap(rows) {
   return map;
 }
 
+function salesRankDisplayName(rank) {
+  var name = String((rank && (rank.rank_name || rank.rank_code)) || "-");
+  name = name.replace(/^販売王\s*/, "");
+  name = name.replace(/^売値区分\s+/, "売値区分");
+  return name;
+}
+
 function calculateSalesPriceClient(basePrice, rank) {
   var base = parseInt(basePrice, 10);
   if (isNaN(base)) return null;
@@ -9493,7 +9500,7 @@ function renderSalesRankPreview() {
     var adjust = "x" + Number(rank.rate_multiplier || 1).toFixed(4) + " / " + formatYen(rank.amount_adjustment_jpy || 0) + " / " + formatYen(rank.rounding_unit_jpy || 10);
     var code = esc(rank.rank_code || "");
     html += "<tr>";
-    html += "<td><div class='price-supplier'>" + esc(rank.rank_name || rank.rank_code || "-") + "</div><div class='price-country'>" + esc(rank.rank_code || "") + "</div></td>";
+    html += "<td><div class='price-supplier'>" + esc(salesRankDisplayName(rank)) + "</div><div class='price-country'>" + esc(rank.rank_code || "") + "</div></td>";
     html += "<td>" + esc(String(salesPricingCustomerCounts[rank.rank_code] || 0)) + "</td>";
     if (editable) {
       html += "<td><input class='form-input sales-rank-rate' data-rank-code='" + code + "' type='number' min='0' step='0.0001' value='" + esc(String(rank.rate_multiplier || 1)) + "'></td>";
