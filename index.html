@@ -1138,29 +1138,32 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="permission-table-wrap">
       <table class="permission-table">
         <tr>
-          <th data-i18n="perm_group">グループ</th>
-          <th data-i18n="perm_role">ロール</th>
-          <th data-i18n="perm_products">商品閲覧</th>
-          <th data-i18n="perm_purchase">仕入価格</th>
-          <th data-i18n="perm_sales">販売価格</th>
-          <th data-i18n="perm_edit">追加・修正</th>
-          <th data-i18n="perm_users">ユーザー管理</th>
+          <th>権限</th>
+          <th>会社/部署</th>
+          <th>商品閲覧</th>
+          <th>販売価格</th>
+          <th>基準価格</th>
+          <th>仕入先価格</th>
+          <th>社内構成部品</th>
+          <th>ユーザー管理</th>
         </tr>
         <tr>
-          <td>daiko</td><td>admin</td><td data-i18n="perm_all_products">全商品</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td data-i18n="perm_all_users">全グループ</td>
+          <td>システム管理者</td><td>GLTEK / システム管理</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-ok">閲覧・編集</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-ok">全体</td>
         </tr>
         <tr>
-          <td>daiko</td><td>editor</td><td data-i18n="perm_all_products">全商品</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-no">-</td>
+          <td>会社管理者</td><td>大光電機・GLTEK</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-ok">閲覧・編集</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-ok">自社</td>
         </tr>
         <tr>
-          <td>daiko</td><td>price_viewer</td><td data-i18n="perm_all_products">全商品</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-no">-</td><td class="permission-no">-</td>
+          <td>部署責任者</td><td>各部署</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-ok">閲覧</td><td class="permission-ok">自部署</td>
         </tr>
         <tr>
-        <tr>
-          <td>gltek</td><td data-i18n="perm_all_roles">全ロール</td><td data-i18n="perm_all_products">全商品</td><td class="permission-ok">○</td><td data-i18n="perm_role_limited">admin/editor/price_viewer</td><td data-i18n="perm_role_edit">admin/editor</td><td data-i18n="perm_admin_own_group">adminは自グループのみ</td>
+          <td>商品管理・製造・販売担当</td><td>社内</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-ok">権限内</td><td class="permission-no">-</td>
         </tr>
         <tr>
-          <td>public</td><td data-i18n="perm_public_roles">価格閲覧者のみ</td><td data-i18n="perm_all_products">全商品</td><td class="permission-no">-</td><td class="permission-ok">○</td><td class="permission-no">-</td><td class="permission-no">-</td>
+          <td>営業閲覧・社内閲覧</td><td>社内</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td>
+        </tr>
+        <tr>
+          <td>社外閲覧</td><td>社外</td><td class="permission-ok">制限</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td>
         </tr>
       </table>
     </div>
@@ -3345,7 +3348,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.167";
+var APP_VERSION       = "v1.1.168";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -3547,6 +3550,88 @@ function normalizeRoleForGroup(role, group) {
   if (role === "system_admin") return "system_admin";
   if (group === "public") return "price_viewer";
   return role || "price_viewer";
+}
+var USER_COMPANY_OPTIONS = [
+  ["daiko", "大光電機"],
+  ["gltek", "GLTEK"],
+  ["external", "社外"]
+];
+var USER_DEPARTMENT_OPTIONS = [
+  ["system", "システム管理"],
+  ["product", "商品管理"],
+  ["production", "製造"],
+  ["sales", "販売"],
+  ["business", "営業"],
+  ["viewer", "閲覧"]
+];
+var USER_ACCESS_ROLE_OPTIONS = [
+  ["system_admin", "システム管理者"],
+  ["company_admin", "会社管理者"],
+  ["dept_admin", "部署責任者"],
+  ["master_editor", "商品管理担当"],
+  ["production_editor", "製造担当"],
+  ["sales_editor", "販売担当"],
+  ["sales_viewer", "営業閲覧"],
+  ["internal_viewer", "社内閲覧"],
+  ["external_viewer", "社外閲覧"]
+];
+var USER_ACCESS_LEGACY_ROLE = {
+  system_admin: "system_admin",
+  company_admin: "admin",
+  dept_admin: "admin",
+  master_editor: "editor",
+  production_editor: "editor",
+  sales_editor: "editor",
+  sales_viewer: "price_viewer",
+  internal_viewer: "price_viewer",
+  external_viewer: "price_viewer"
+};
+function userCompanyCode(profile) {
+  if (profile && profile.company_code) return profile.company_code;
+  var group = profile && profile.group_name;
+  if (group === "daiko" || group === "gltek") return group;
+  return "external";
+}
+function legacyGroupFromCompany(companyCode) {
+  if (companyCode === "daiko" || companyCode === "gltek") return companyCode;
+  return "public";
+}
+function userAccessRoleCode(profile) {
+  if (profile && profile.role_code) return profile.role_code;
+  var group = profile && profile.group_name;
+  var role = profile && profile.role;
+  if (role === "system_admin") return "system_admin";
+  if (role === "admin") return "company_admin";
+  if (role === "editor") return "master_editor";
+  if (role === "price_viewer" && group === "public") return "external_viewer";
+  if (role === "price_viewer") return "sales_viewer";
+  return "external_viewer";
+}
+function userDepartmentCode(profile) {
+  if (profile && profile.department_code) return profile.department_code;
+  var roleCode = userAccessRoleCode(profile);
+  if (roleCode === "system_admin" || roleCode === "company_admin") return "system";
+  if (roleCode === "master_editor") return "product";
+  if (roleCode === "production_editor") return "production";
+  if (roleCode === "sales_editor") return "sales";
+  if (roleCode === "sales_viewer") return "business";
+  return "viewer";
+}
+function normalizeAccessRoleForCompany(roleCode, companyCode) {
+  var role = roleCode || "external_viewer";
+  if (companyCode === "external") return "external_viewer";
+  if (role === "system_admin" && !isSystemAdmin()) return "company_admin";
+  return role;
+}
+function legacyRoleFromAccessRole(roleCode, companyCode) {
+  var role = normalizeAccessRoleForCompany(roleCode, companyCode);
+  return normalizeRoleForGroup(USER_ACCESS_LEGACY_ROLE[role] || "price_viewer", legacyGroupFromCompany(companyCode));
+}
+function optionHtml(options, selected, skipFn) {
+  return (options || []).map(function(opt) {
+    if (skipFn && skipFn(opt)) return "";
+    return "<option value='" + esc(opt[0]) + "'" + (opt[0] === selected ? " selected" : "") + ">" + esc(opt[1]) + "</option>";
+  }).join("");
 }
 function canManageSharedSettings() {
   return isSystemAdmin();
@@ -10086,23 +10171,29 @@ function renderUsers(users) {
     html += "<div class='user-card-top'><div class='user-avatar'>"+esc(initials)+"</div>";
     html += "<div style='flex:1;min-width:0'>";
     html += "<div class='user-email'>"+esc(u.email)+" "+sbadge+"</div>";
-    if (u.company) html += "<div class='user-company'>&#x1F3E2; "+esc(u.company)+"</div>";
+    var companyCode = userCompanyCode(u);
+    var departmentCode = userDepartmentCode(u);
+    var accessRoleCode = normalizeAccessRoleForCompany(userAccessRoleCode(u), companyCode);
+    var companyLabel = (USER_COMPANY_OPTIONS.find(function(opt){ return opt[0] === companyCode; }) || [companyCode, companyCode])[1];
+    var departmentLabel = (USER_DEPARTMENT_OPTIONS.find(function(opt){ return opt[0] === departmentCode; }) || [departmentCode, departmentCode])[1];
+    var accessRoleLabel = (USER_ACCESS_ROLE_OPTIONS.find(function(opt){ return opt[0] === accessRoleCode; }) || [accessRoleCode, accessRoleCode])[1];
+    html += "<div class='user-company'>&#x1F3E2; "+esc(companyLabel)+" / "+esc(departmentLabel)+" / "+esc(accessRoleLabel)+"</div>";
+    if (u.company) html += "<div class='user-company'>"+esc(u.company)+"</div>";
     html += "<div class='user-created'>"+t("lbl_registered")+" "+(u.created_at?u.created_at.slice(0,10):"-")+"</div>";
     html += "</div></div>";
     html += "<div style='font-size:12px;color:#888;margin-bottom:4px'>"+t("lbl_display_name")+"</div>";
     html += "<input class='user-name-input' data-uid='"+esc(u.id)+"' value='"+esc(u.name||"")+"' placeholder='"+t("ph_display_name")+"'>";
     html += "<div class='user-card-bottom' style='flex-wrap:wrap;gap:6px'>";
-    html += "<select class='role-select' data-uid='"+esc(u.id)+"'>";
-    var roleOptions = [["price_viewer","role_price_viewer"],["editor","role_editor"],["admin","role_admin"]];
-    if (isSystemAdmin()) roleOptions = [["price_viewer","role_price_viewer"],["editor","role_editor"],["admin","role_admin"],["system_admin","role_system_admin"]];
-    if ((u.group_name || "public") === "public" && u.role !== "system_admin") roleOptions = [["price_viewer","role_price_viewer"]];
-    roleOptions.forEach(function(r){
-      html += "<option value='"+r[0]+"'"+(u.role===r[0]?" selected":"")+">"+t(r[1])+"</option>";
-    });
+    html += "<select class='group-select user-company-select' data-uid='"+esc(u.id)+"'" + (isSystemAdmin() ? "" : " disabled") + ">";
+    html += optionHtml(USER_COMPANY_OPTIONS, companyCode);
     html += "</select>";
-    html += "<select class='group-select' data-uid='"+esc(u.id)+"'" + (isSystemAdmin() ? "" : " disabled") + ">";
-    [["daiko","Daiko"],["gltek","GLTEK"],["public","Public"]].forEach(function(g){
-      html += "<option value='"+g[0]+"'"+((u.group_name||"public")===g[0]?" selected":"")+">"+g[1]+"</option>";
+    html += "<select class='group-select user-department-select' data-uid='"+esc(u.id)+"'>";
+    html += optionHtml(USER_DEPARTMENT_OPTIONS, departmentCode);
+    html += "</select>";
+    html += "<select class='role-select user-access-role-select' data-uid='"+esc(u.id)+"'>";
+    html += optionHtml(USER_ACCESS_ROLE_OPTIONS, accessRoleCode, function(opt) {
+      if (companyCode === "external") return opt[0] !== "external_viewer";
+      return opt[0] === "system_admin" && !isSystemAdmin();
     });
     html += "</select>";
     html += "<button class='btn-save-user' data-uid='"+esc(u.id)+"'>"+t("btn_save")+"</button>";
@@ -10121,12 +10212,27 @@ function renderUsers(users) {
       if (!isAdmin() || !target || !canManageUser(target)) { alert(t("err_perm")); return; }
       var card  = list.querySelector(".user-card[data-uid='"+uid+"']");
       var name  = card.querySelector(".user-name-input").value.trim();
-      var group = isSystemAdmin() ? card.querySelector(".group-select").value : userProfile.group_name;
-      var role  = normalizeRoleForGroup(card.querySelector(".role-select").value, group);
+      var companyCode = isSystemAdmin()
+        ? card.querySelector(".user-company-select").value
+        : userCompanyCode(userProfile);
+      var departmentCode = card.querySelector(".user-department-select").value || "viewer";
+      var roleCode = normalizeAccessRoleForCompany(card.querySelector(".user-access-role-select").value, companyCode);
+      if (roleCode === "external_viewer") departmentCode = "viewer";
+      var group = legacyGroupFromCompany(companyCode);
+      var role = legacyRoleFromAccessRole(roleCode, companyCode);
       var msg   = document.getElementById("save-msg-"+uid);
-      var r = await sb.from("profiles").update({name:name,role:role,group_name:group,updated_at:new Date().toISOString()}).eq("id",uid);
+      var payload = {
+        name: name,
+        role: role,
+        group_name: group,
+        company_code: companyCode,
+        department_code: departmentCode,
+        role_code: roleCode,
+        updated_at: new Date().toISOString()
+      };
+      var r = await sb.from("profiles").update(payload).eq("id",uid);
       if (r.error) { msg.className="save-msg save-err"; msg.textContent=t("msg_save_err"); }
-      else { msg.className="save-msg save-ok"; msg.textContent=t("msg_saved"); setTimeout(function(){msg.textContent="";},2500); }
+      else { msg.className="save-msg save-ok"; msg.textContent=t("msg_saved"); setTimeout(function(){msg.textContent="";},2500); await loadUsers(); }
     });
   });
 
