@@ -3345,7 +3345,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.166";
+var APP_VERSION       = "v1.1.167";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -9609,8 +9609,10 @@ async function loadSalesPriceSummaryForCurrent() {
   if (!row) {
     wrap.innerHTML = "<div class='sales-price-summary'>" +
       "<div class='sales-price-summary-main'><span class='sales-price-summary-label'>" + esc(t("sales_price_section")) + "</span><span class='sales-price-summary-value'>-</span></div>" +
-      "<div class='sales-price-summary-main' style='margin-top:6px'><span class='sales-price-summary-label'>" + esc(t("sales_base_price")) + "</span><span class='sales-price-summary-value'>-</span></div>" +
-      "<div class='sales-price-summary-sub'>" + esc(t("sales_no_base_price")) + "</div>" +
+      (canManageSalesPricing()
+        ? "<div class='sales-price-summary-main' style='margin-top:6px'><span class='sales-price-summary-label'>" + esc(t("sales_base_price")) + "</span><span class='sales-price-summary-value'>-</span></div>"
+        : "") +
+      (canManageSalesPricing() ? "<div class='sales-price-summary-sub'>" + esc(t("sales_no_base_price")) + "</div>" : "") +
     "</div>";
     return;
   }
@@ -9618,8 +9620,10 @@ async function loadSalesPriceSummaryForCurrent() {
   var priceText = "JPY " + esc(formatYen(row.base_price_jpy));
   wrap.innerHTML = "<div class='sales-price-summary'>" +
     "<div class='sales-price-summary-main'><span class='sales-price-summary-label'>" + esc(t("sales_price_section")) + "</span><span class='sales-price-summary-value'>" + priceText + "</span></div>" +
-    "<div class='sales-price-summary-main' style='margin-top:6px'><span class='sales-price-summary-label'>" + esc(t("sales_base_price")) + "</span><span class='sales-price-summary-value'>" + priceText + "</span></div>" +
-    "<div class='sales-price-summary-sub'>" + esc(sub) + (row.basis_note ? " / " + esc(row.basis_note) : "") + "</div>" +
+    (canManageSalesPricing()
+      ? "<div class='sales-price-summary-main' style='margin-top:6px'><span class='sales-price-summary-label'>" + esc(t("sales_base_price")) + "</span><span class='sales-price-summary-value'>" + priceText + "</span></div>" +
+        "<div class='sales-price-summary-sub'>" + esc(sub) + (row.basis_note ? " / " + esc(row.basis_note) : "") + "</div>"
+      : "") +
   "</div>";
 }
 
