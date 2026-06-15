@@ -47,6 +47,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .header-username { font-size: 12px; color: #ccc; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .btn-logout { background: rgba(255,255,255,0.12); border: none; border-radius: 6px; color: #fff; padding: 5px 10px; font-size: 12px; cursor: pointer; white-space: nowrap; }
 .btn-logout:hover { background: rgba(255,255,255,0.2); }
+.app-update-banner { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 900; display: none; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-radius: 10px; background: #1a1a2e; color: #fff; box-shadow: 0 10px 32px rgba(0,0,0,0.25); font-size: 13px; }
+.app-update-banner.show { display: flex; }
+.app-update-banner strong { display: block; font-size: 14px; margin-bottom: 2px; }
+.app-update-banner span { color: rgba(255,255,255,0.78); line-height: 1.5; }
+.app-update-banner button { border: none; border-radius: 8px; background: #4f8ef7; color: #fff; font-weight: 700; padding: 8px 12px; cursor: pointer; white-space: nowrap; }
+.app-update-banner button:hover { background: #3a7ae0; }
+@media(max-width:640px){ .app-update-banner { left: 8px; right: 8px; bottom: 8px; align-items: flex-start; flex-direction: column; } .app-update-banner button { width: 100%; } }
 
 /* =============================================
    登録申請画面
@@ -2179,6 +2186,10 @@ var TRANSLATIONS = {
     sales_no_ranks: "価格ランクがありません",
     sales_no_product_id: "対象商品のDKD商品IDを確認できません",
     sales_base_price_required: "基準価格を入力してください",
+    app_update_title: "D-CATSの最新版があります",
+    app_update_auto_message: "{current} から {latest} へ自動更新します。操作中の場合は待機します。",
+    app_update_wait_message: "{current} から {latest} へ更新できます。入力中のため自動更新を待機しています。",
+    app_update_reload_now: "今すぐ更新",
     rakuten_search_conditions: "検索条件",
     rakuten_keyword: "検索キーワード",
     rakuten_exclude: "除外キーワード",
@@ -2649,6 +2660,10 @@ var TRANSLATIONS = {
     sales_no_ranks: "No price ranks",
     sales_no_product_id: "Could not confirm the target DKD product ID",
     sales_base_price_required: "Enter a base price",
+    app_update_title: "A new D-CATS version is available",
+    app_update_auto_message: "D-CATS will update from {current} to {latest}. It will wait while you are working.",
+    app_update_wait_message: "D-CATS can update from {current} to {latest}. Auto update is waiting because you are editing.",
+    app_update_reload_now: "Update now",
     rakuten_search_conditions: "Search Conditions",
     rakuten_keyword: "Search keyword",
     rakuten_exclude: "Excluded keywords",
@@ -3111,6 +3126,10 @@ var TRANSLATIONS = {
     sales_no_ranks: "没有价格等级",
     sales_no_product_id: "无法确认目标DKD商品ID",
     sales_base_price_required: "请输入基准价格",
+    app_update_title: "D-CATS有新版本",
+    app_update_auto_message: "将从 {current} 自动更新到 {latest}。操作中会等待。",
+    app_update_wait_message: "可从 {current} 更新到 {latest}。正在输入时会等待自动更新。",
+    app_update_reload_now: "立即更新",
     rakuten_search_conditions: "搜索条件",
     rakuten_keyword: "搜索关键词",
     rakuten_exclude: "排除关键词",
@@ -3286,7 +3305,12 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.156";
+var APP_VERSION       = "v1.1.157";
+var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
+var appUpdateTimer = null;
+var appUpdateReloadTimer = null;
+var appUpdateDetected = false;
+var appUpdateLastActivityAt = Date.now();
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -3574,6 +3598,103 @@ async function applyLanguage(lang) {
 // =============================================
 // 自動ログアウト（8時間無操作で自動的にログアウト）
 // =============================================
+function markAppUpdateActivity() {
+  appUpdateLastActivityAt = Date.now();
+}
+
+function appVersionNumber(version) {
+  var m = String(version || "").match(/v?(\d+)\.(\d+)\.(\d+)/i);
+  if (!m) return 0;
+  return parseInt(m[1], 10) * 1000000 + parseInt(m[2], 10) * 1000 + parseInt(m[3], 10);
+}
+
+function isAppSafeForAutoReload() {
+  if (document.querySelector(".form-overlay.show")) return false;
+  var el = document.activeElement;
+  if (el) {
+    var tag = (el.tagName || "").toUpperCase();
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable) return false;
+  }
+  if (document.hidden) return true;
+  return Date.now() - appUpdateLastActivityAt > 30000;
+}
+
+function getAppUpdateBanner() {
+  var banner = document.getElementById("app-update-banner");
+  if (banner) return banner;
+  banner = document.createElement("div");
+  banner.id = "app-update-banner";
+  banner.className = "app-update-banner";
+  banner.innerHTML = "<div><strong id='app-update-title'></strong><span id='app-update-message'></span></div><button id='app-update-reload' type='button'></button>";
+  document.body.appendChild(banner);
+  document.getElementById("app-update-reload").addEventListener("click", function() {
+    window.location.reload();
+  });
+  return banner;
+}
+
+function showAppUpdateBanner(latestVersion, autoReloading) {
+  var banner = getAppUpdateBanner();
+  var title = document.getElementById("app-update-title");
+  var msg = document.getElementById("app-update-message");
+  var btn = document.getElementById("app-update-reload");
+  title.textContent = t("app_update_title");
+  msg.textContent = autoReloading
+    ? tf("app_update_auto_message", { current: APP_VERSION, latest: latestVersion })
+    : tf("app_update_wait_message", { current: APP_VERSION, latest: latestVersion });
+  btn.textContent = t("app_update_reload_now");
+  banner.classList.add("show");
+}
+
+function scheduleAppUpdateReload(latestVersion) {
+  clearTimeout(appUpdateReloadTimer);
+  if (isAppSafeForAutoReload()) {
+    showAppUpdateBanner(latestVersion, true);
+    appUpdateReloadTimer = setTimeout(function() {
+      if (isAppSafeForAutoReload()) window.location.reload();
+      else scheduleAppUpdateReload(latestVersion);
+    }, 20000);
+  } else {
+    showAppUpdateBanner(latestVersion, false);
+    appUpdateReloadTimer = setTimeout(function() {
+      scheduleAppUpdateReload(latestVersion);
+    }, 60000);
+  }
+}
+
+async function checkForAppUpdate() {
+  if (appUpdateDetected || location.protocol === "file:") return;
+  try {
+    var url = new URL(window.location.href);
+    url.hash = "";
+    url.searchParams.set("_dcats_version_check", String(Date.now()));
+    var r = await fetch(url.toString(), { cache: "no-store" });
+    if (!r.ok) return;
+    var html = await r.text();
+    var m = html.match(/var\s+APP_VERSION\s*=\s*["']([^"']+)["']/);
+    var latest = m && m[1];
+    if (!latest) return;
+    if (latest !== APP_VERSION && appVersionNumber(latest) >= appVersionNumber(APP_VERSION)) {
+      appUpdateDetected = true;
+      scheduleAppUpdateReload(latest);
+    }
+  } catch(e) {
+    console.warn("app update check failed", e);
+  }
+}
+
+function startAppUpdateWatcher() {
+  if (appUpdateTimer) return;
+  ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "click", "input"].forEach(function(ev) {
+    document.addEventListener(ev, markAppUpdateActivity, { passive: true });
+  });
+  appUpdateTimer = setInterval(checkForAppUpdate, APP_UPDATE_CHECK_INTERVAL_MS);
+  setTimeout(checkForAppUpdate, 30000);
+  document.addEventListener("visibilitychange", function() {
+    if (!document.hidden) checkForAppUpdate();
+  });
+}
+
 var AUTO_LOGOUT_MS = 8 * 60 * 60 * 1000; // 8時間（ミリ秒）
 var autoLogoutTimer = null;
 
@@ -10353,6 +10474,7 @@ document.addEventListener("keydown", function(e){
 });
 
 relocateRakutenSections();
+startAppUpdateWatcher();
 handleAuthState();
 </script>
 </body>
