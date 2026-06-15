@@ -84,14 +84,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .sales-price-summary-label { color: #667085; font-weight: 600; }
 .sales-price-summary-value { color: #1a8c3e; font-size: 18px; font-weight: 800; }
 .sales-price-summary-sub { color: #8a94a6; margin-top: 4px; line-height: 1.5; }
-.sales-pricing-card { max-width: 1040px; width: calc(100vw - 32px); }
+.sales-pricing-card { max-width: 1220px; width: calc(100vw - 48px); }
 .sales-pricing-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .sales-pricing-grid .form-row { margin-bottom: 0; }
 .sales-pricing-help { font-size: 12px; color: #667085; line-height: 1.6; margin: 4px 0 12px; }
 .sales-pricing-preview { margin-top: 14px; border-top: 1px solid #edf0f5; padding-top: 12px; }
 .sales-pricing-preview-title { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; }
-.sales-rank-table-wrap { width: 100%; overflow-x: auto; padding-bottom: 2px; }
-.sales-rank-table { min-width: 900px; table-layout: fixed; }
+.sales-rank-table-wrap { width: 100%; overflow-x: visible; padding-bottom: 2px; }
+.sales-rank-table { width: 100%; min-width: 0; table-layout: fixed; }
 .sales-rank-table th, .sales-rank-table td { white-space: nowrap; }
 .sales-rank-table th:nth-child(1), .sales-rank-table td:nth-child(1) { width: 150px; }
 .sales-rank-table th:nth-child(2), .sales-rank-table td:nth-child(2) { width: 74px; text-align: right; }
@@ -103,6 +103,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .sales-rank-table .form-input { min-width: 0; padding: 7px 8px; }
 .sales-rank-price { white-space: nowrap; }
 .sales-pricing-error { color: #e24b4a; font-size: 12px; min-height: 18px; margin-top: 10px; }
+@media(max-width:1100px){ .sales-rank-table-wrap { overflow-x: auto; } .sales-rank-table { min-width: 900px; } }
 @media(max-width:640px){ .sales-pricing-card { width: calc(100vw - 18px); padding: 18px 14px; } .sales-pricing-grid { grid-template-columns: 1fr; } .sales-rank-table { min-width: 860px; } }
 .rakuten-quick-row { margin: 0; }
 .rakuten-price-body { flex: 1; padding: 20px 16px; max-width: 1120px; width: 100%; margin: 0 auto; overflow-y: auto; }
@@ -3344,7 +3345,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.162";
+var APP_VERSION       = "v1.1.163";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
