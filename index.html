@@ -3348,7 +3348,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.171";
+var APP_VERSION       = "v1.1.172";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -3665,6 +3665,22 @@ function optionHtml(options, selected, skipFn) {
     if (skipFn && skipFn(opt)) return "";
     return "<option value='" + esc(opt[0]) + "'" + (opt[0] === selected ? " selected" : "") + ">" + esc(opt[1]) + "</option>";
   }).join("");
+}
+function skipAccessRoleForCompany(companyCode, opt) {
+  if (companyCode === "external") return opt[0] !== "external_viewer";
+  return opt[0] === "system_admin" && !isSystemAdmin();
+}
+function defaultAccessRoleForCompany(companyCode, selected) {
+  if (companyCode === "external") return "external_viewer";
+  selected = selected || "internal_viewer";
+  var blocked = skipAccessRoleForCompany(companyCode, [selected, selected]);
+  return blocked ? "internal_viewer" : selected;
+}
+function accessRoleOptionHtmlForCompany(companyCode, selected) {
+  var value = defaultAccessRoleForCompany(companyCode, normalizeAccessRoleForCompany(selected, companyCode));
+  return optionHtml(USER_ACCESS_ROLE_OPTIONS, value, function(opt) {
+    return skipAccessRoleForCompany(companyCode, opt);
+  });
 }
 function canManageSharedSettings() {
   return isSystemAdmin();
@@ -10279,10 +10295,7 @@ function renderUsers(users) {
     html += optionHtml(USER_DEPARTMENT_OPTIONS, departmentCode);
     html += "</select>";
     html += "<select class='role-select user-access-role-select' data-uid='"+esc(u.id)+"'>";
-    html += optionHtml(USER_ACCESS_ROLE_OPTIONS, accessRoleCode, function(opt) {
-      if (companyCode === "external") return opt[0] !== "external_viewer";
-      return opt[0] === "system_admin" && !isSystemAdmin();
-    });
+    html += accessRoleOptionHtmlForCompany(companyCode, accessRoleCode);
     html += "</select>";
     html += "<button class='btn-save-user' data-uid='"+esc(u.id)+"'>"+t("btn_save")+"</button>";
     if (status==="pending"||status==="suspended") html += "<button class='btn-approve' data-uid='"+esc(u.id)+"'>"+t("btn_approve")+"</button>";
@@ -10292,6 +10305,22 @@ function renderUsers(users) {
     html += "</div></div>";
   });
   list.innerHTML = html;
+
+  list.querySelectorAll(".user-company-select").forEach(function(sel) {
+    sel.addEventListener("change", function() {
+      var uid = sel.dataset.uid;
+      var card = list.querySelector(".user-card[data-uid='"+uid+"']");
+      if (!card) return;
+      var roleSelect = card.querySelector(".user-access-role-select");
+      var departmentSelect = card.querySelector(".user-department-select");
+      if (!roleSelect) return;
+      var nextCompany = sel.value;
+      var nextRole = defaultAccessRoleForCompany(nextCompany, roleSelect.value);
+      roleSelect.innerHTML = accessRoleOptionHtmlForCompany(nextCompany, nextRole);
+      roleSelect.value = defaultAccessRoleForCompany(nextCompany, nextRole);
+      if (departmentSelect && nextCompany === "external") departmentSelect.value = "viewer";
+    });
+  });
 
   list.querySelectorAll(".btn-save-user").forEach(function(btn) {
     btn.addEventListener("click", async function() {
