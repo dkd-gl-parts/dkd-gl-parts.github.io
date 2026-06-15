@@ -3345,7 +3345,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.165";
+var APP_VERSION       = "v1.1.166";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -3497,6 +3497,9 @@ function canSeeSalesPrice() {
 }
 function canUseRakutenResearch() {
   return !!(userProfile && (isSystemAdmin() || (userProfile.group_name === "daiko" && canSeeSalesPrice())));
+}
+function canSeePurchasePrice() {
+  return isAdmin();
 }
 function canViewInternalComponents() {
   return !!(userProfile && userProfile.group_name !== "public");
@@ -8168,8 +8171,10 @@ function renderPanelStatic() {
     toolHtml +
     "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
     "<div id='kikan-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>" +
-    "<div class='price-section-title'>&#x1F4B0; " + t("supplier_prices") + "</div>" +
-    "<div id='price-table-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>";
+    (canSeePurchasePrice()
+      ? "<div class='price-section-title'>&#x1F4B0; " + t("supplier_prices") + "</div>" +
+        "<div id='price-table-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>"
+      : "<div id='price-table-wrap' style='display:none'></div>");
   // 画像エリアをリセット（右カラムはpanel-rightに固定表示）
   document.getElementById("img-grid").innerHTML =
     "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + t("img_loading") + "</div></div>";
@@ -9360,15 +9365,33 @@ async function loadSlParts(partId) {
   var wrap = document.getElementById("price-table-wrap");
   if (!wrap) return;
 
+  var showSupplierPrices = canSeePurchasePrice();
+  var slSelect = showSupplierPrices
+    ? "sl_parts(id, supplier_pn, unit_price, currency, moq, price_jpy, suppliers(name, short_name, country))"
+    : "sl_parts(id)";
+
   // part_sl_mapping → sl_parts → suppliers を JOIN して取得
   var r = await sb.from("part_sl_mapping")
-    .select("sl_parts(id, supplier_pn, unit_price, currency, moq, price_jpy, suppliers(name, short_name, country))")
+    .select(slSelect)
     .eq("part_id", partId);
 
   var rows = (r.data || []).map(function(m) { return m.sl_parts; }).filter(Boolean);
 
   // 現在のパネルに表示中のSL品番IDを保持（画像ロードに使用）
   currentSlPartIds = rows.map(function(sl) { return sl.id; });
+
+  if (!showSupplierPrices) {
+    wrap.innerHTML = "";
+    loadImages(currentSlPartIds.length ? currentSlPartIds : null);
+    var scdHidden = currentProduct.dkd_shohin_id || currentProduct.shohin_cd;
+    if (scdHidden !== null && scdHidden !== undefined && scdHidden !== '') {
+      loadKikan(scdHidden);
+    } else {
+      var hiddenKikanWrap = document.getElementById("kikan-wrap");
+      if (hiddenKikanWrap) hiddenKikanWrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
+    }
+    return;
+  }
 
   if (rows.length === 0) {
     wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("no_prices") + "</div>";
