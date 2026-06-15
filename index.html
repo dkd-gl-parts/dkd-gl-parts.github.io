@@ -1128,7 +1128,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         <button class="lang-btn" data-lang="en">EN</button>
         <button class="lang-btn" data-lang="zh">中文</button>
       </div>
-      <span class="role-badge role-admin" data-i18n="role_admin">管理者</span>
+      <span class="role-badge role-admin" id="logs-role-badge" data-i18n="role_admin">管理者</span>
       <button class="btn-logout" id="btn-logout-users" data-i18n="btn_logout">ログアウト</button>
     </div>
   </div>
@@ -3348,7 +3348,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.170";
+var APP_VERSION       = "v1.1.171";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -3490,6 +3490,7 @@ function canSeePurchasePrice() {
 // 販売価格（JPY）表示判定
 function canSeeSalesPrice() {
   if (!userProfile) return false;
+  if (canViewAllReadOnly()) return true;
   if (isExternalViewer()) return false;
   if (isSystemAdmin()) return true;
   var g = userProfile.group_name;
@@ -3503,7 +3504,7 @@ function canUseRakutenResearch() {
   return !!(userProfile && (isSystemAdmin() || (userProfile.group_name === "daiko" && canSeeSalesPrice())));
 }
 function canSeePurchasePrice() {
-  return isAdmin();
+  return isAdmin() || canViewAllReadOnly();
 }
 function canViewInternalComponents() {
   return canSeeComponentInfo();
@@ -3520,6 +3521,9 @@ function isExternalViewer() {
 }
 function canSeeInternalBusinessInfo() {
   return !!userProfile && !isExternalViewer();
+}
+function canViewAllReadOnly() {
+  return !!(userProfile && userAccessRoleCode(userProfile) === "all_viewer");
 }
 function canSeeComponentInfo() {
   return canSeeInternalBusinessInfo();
@@ -3558,6 +3562,11 @@ function dedupeParts(parts) {
   return out;
 }
 function roleLabel(role) { return t("role_" + role) || role; }
+function currentRoleDisplayLabel() {
+  var roleCode = userAccessRoleCode(userProfile);
+  var opt = USER_ACCESS_ROLE_OPTIONS.find(function(item) { return item[0] === roleCode; });
+  return opt ? opt[1] : roleLabel(userProfile && userProfile.role);
+}
 function roleClass(role) {
   return {
     system_admin: "role-system",
@@ -3595,6 +3604,7 @@ var USER_ACCESS_ROLE_OPTIONS = [
   ["internal_viewer", "社内閲覧"],
   ["external_viewer", "社外閲覧"]
 ];
+USER_ACCESS_ROLE_OPTIONS.splice(Math.max(0, USER_ACCESS_ROLE_OPTIONS.findIndex(function(opt){ return opt[0] === "internal_viewer"; })), 0, ["all_viewer", "全機能閲覧"]);
 var USER_ACCESS_LEGACY_ROLE = {
   system_admin: "system_admin",
   company_admin: "admin",
@@ -3603,6 +3613,7 @@ var USER_ACCESS_LEGACY_ROLE = {
   production_editor: "editor",
   sales_editor: "editor",
   sales_viewer: "price_viewer",
+  all_viewer: "price_viewer",
   internal_viewer: "price_viewer",
   external_viewer: "price_viewer"
 };
@@ -3623,6 +3634,7 @@ function userAccessRoleCode(profile) {
   if (role === "system_admin") return "system_admin";
   if (role === "admin") return "company_admin";
   if (role === "editor") return "master_editor";
+  if (role === "price_viewer" && profile && profile.role_code === "all_viewer") return "all_viewer";
   if (role === "price_viewer" && group === "public") return "external_viewer";
   if (role === "price_viewer") return "sales_viewer";
   return "external_viewer";
@@ -3635,6 +3647,7 @@ function userDepartmentCode(profile) {
   if (roleCode === "production_editor") return "production";
   if (roleCode === "sales_editor") return "sales";
   if (roleCode === "sales_viewer") return "business";
+  if (roleCode === "all_viewer") return "viewer";
   return "viewer";
 }
 function normalizeAccessRoleForCompany(roleCode, companyCode) {
@@ -3661,6 +3674,21 @@ function canManageProductSpecs() {
 }
 function canManageSalesPricing() {
   return isAdmin();
+}
+function canViewSalesPricing() {
+  return canManageSalesPricing() || canViewAllReadOnly();
+}
+function canViewProductionFeatures() {
+  return canEdit() || canViewAllReadOnly();
+}
+function canViewManagementScreen() {
+  return canEdit() || canViewAllReadOnly();
+}
+function canViewPriceResearchHistory() {
+  return canUseRakutenResearch() || canViewAllReadOnly();
+}
+function canViewOperationLogs() {
+  return isAdmin() || canViewAllReadOnly();
 }
 
 // =============================================
@@ -3987,11 +4015,11 @@ async function loadProfile() {
 function updateAllHeaders() {
   if (!userProfile) return;
   var name  = userProfile.name || userProfile.email.split("@")[0];
-  var label = roleLabel(userProfile.role);
+  var label = currentRoleDisplayLabel();
   var cls   = roleClass(userProfile.role);
   var greet = tf("greeting", { name: name });
 
-  ["menu","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","production-ranking-mgmt","sales-pricing-mgmt"].forEach(function(sc) {
+  ["menu","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","production-ranking-mgmt","sales-pricing-mgmt","logs"].forEach(function(sc) {
     var nameEl  = document.getElementById(sc + "-username");
     var badgeEl = document.getElementById(sc + "-role-badge");
     if (nameEl)  nameEl.textContent = name;
@@ -4041,21 +4069,21 @@ function renderMenu() {
 
   var mainItems = [
     { icon: "&#x1F50D;", titleKey: "mi_search_title", descKey: "mi_search_desc", action: "search", available: true, tag: null },
-    { icon: "&#x1F3ED;", titleKey: "mi_production_title", descKey: "mi_production_desc", action: "production-search", available: canEdit(), tag: null },
+    { icon: "&#x1F3ED;", titleKey: "mi_production_title", descKey: "mi_production_desc", action: "production-search", available: canViewProductionFeatures(), tag: null },
     { icon: "&#x1F4B4;", titleKey: "mi_rakuten_title", descKey: "mi_rakuten_desc", action: "rakuten-price", available: canUseRakutenResearch(), tag: null },
     { icon: "&#x1F4E6;", titleKey: "mi_rakuten_bulk_title", descKey: "mi_rakuten_bulk_desc", action: "rakuten-bulk", available: canUseRakutenResearch(), tag: null },
-    { icon: "&#x1F4C8;", titleKey: "screen_rakuten_list_title", descKey: "mi_rakuten_desc", action: "rakuten-price-list", available: canUseRakutenResearch(), tag: null },
+    { icon: "&#x1F4C8;", titleKey: "screen_rakuten_list_title", descKey: "mi_rakuten_desc", action: "rakuten-price-list", available: canViewPriceResearchHistory(), tag: null },
     { icon: "&#x1F512;", titleKey: "mi_changepw_title", descKey: "mi_changepw_desc", action: "change-pw", available: true, tag: null }
   ];
 
   var adminItems = [
     { icon: "&#x1F465;", titleKey: "mi_users_title",  descKey: "mi_users_desc",  action: "users",  available: isAdmin() },
-    { icon: "&#x1F527;", titleKey: "mi_parts_title", descKey: "mi_parts_desc", action: "parts-mgmt", available: canEdit() },
-    { icon: "&#x1F4B0;", titleKey: "sales_pricing_title", descKey: "sales_pricing_mgmt_desc", action: "sales-pricing-mgmt", available: isAdmin() },
-    { icon: "&#x1F4E6;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canEdit() },
-    { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canEdit() },
+    { icon: "&#x1F527;", titleKey: "mi_parts_title", descKey: "mi_parts_desc", action: "parts-mgmt", available: canViewManagementScreen() },
+    { icon: "&#x1F4B0;", titleKey: "sales_pricing_title", descKey: "sales_pricing_mgmt_desc", action: "sales-pricing-mgmt", available: canViewSalesPricing() },
+    { icon: "&#x1F4E6;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canViewManagementScreen() },
+    { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canViewManagementScreen() },
     { icon: "&#x2699;", titleKey: "mi_api_settings_title", descKey: "mi_api_settings_desc", action: "api-settings", available: canManageSharedSettings() },
-    { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: isAdmin() }
+    { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: canViewOperationLogs() }
   ].filter(function(item) { return item.available; });
 
   function renderCard(item) {
@@ -5814,7 +5842,7 @@ function renderRakutenResults(items, keyword) {
 }
 
 async function enterRakutenPriceList() {
-  if (!canUseRakutenResearch()) { alert(t("err_perm")); return; }
+  if (!canViewPriceResearchHistory()) { alert(t("err_perm")); return; }
   showScreen("rakuten-price-list");
   var nameEl = document.getElementById("rakuten-price-list-username");
   if (nameEl && userProfile) nameEl.textContent = userProfile.name || userProfile.email.split("@")[0];
@@ -5898,12 +5926,14 @@ var partFormMode  = "add"; // "add" or "edit"
 var partFormSource = "parts"; // "parts" or "core_products"
 
 async function enterPartsMgmt() {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canViewManagementScreen()) { alert(t("err_perm")); return; }
   showScreen("parts-mgmt");
   var nameEl  = document.getElementById("parts-mgmt-username");
   var badgeEl = document.getElementById("parts-mgmt-role-badge");
   if (nameEl)  nameEl.textContent  = userProfile.name || userProfile.email.split("@")[0];
-  if (badgeEl) { badgeEl.textContent = roleLabel(userProfile.role); badgeEl.className = "role-badge " + roleClass(userProfile.role); }
+  if (badgeEl) { badgeEl.textContent = currentRoleDisplayLabel(); badgeEl.className = "role-badge " + roleClass(userProfile.role); }
+  var addBtn = document.getElementById("btn-add-part");
+  if (addBtn) addBtn.style.display = canEdit() ? "" : "none";
   await loadPartsMgmt();
 }
 
@@ -5964,6 +5994,10 @@ function renderPartsMgmt() {
   });
   html += "</table>";
   list.innerHTML = html;
+  if (!canEdit()) {
+    list.querySelectorAll("[data-pid], [data-pdel]").forEach(function(btn) { btn.remove(); });
+    return;
+  }
 
   list.querySelectorAll(".btn-sm-edit").forEach(function(btn) {
     btn.addEventListener("click", function() { openPartForm("edit", parseInt(btn.dataset.pid,10)); });
@@ -6058,8 +6092,12 @@ async function savePartForm() {
 // コアリスト管理
 // =============================================
 async function enterCoreListMgmt() {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canViewManagementScreen()) { alert(t("err_perm")); return; }
   showScreen("core-list-mgmt");
+  var addBtn = document.getElementById("btn-add-core-list");
+  var createBtn = document.getElementById("btn-create-core-list-from-ranking");
+  if (addBtn) addBtn.style.display = canEdit() ? "" : "none";
+  if (createBtn) createBtn.style.display = canEdit() ? "" : "none";
   await loadCoreListMgmt();
 }
 
@@ -6143,6 +6181,14 @@ function renderCoreListMgmt() {
   });
   html += "</table>";
   list.innerHTML = html;
+  if (!canEdit()) {
+    list.querySelectorAll("[data-core-edit], [data-core-del]").forEach(function(btn) { btn.remove(); });
+    if (countEl) {
+      var readonlyTotalQty = sumProductionCoreEntryQty(coreListMgmtRows);
+      countEl.innerHTML = esc(String(coreListMgmtRows.length)) + " 莉ｶ <span class='core-count-pill'>繧ｳ繧｢蜷郁ｨ・" + esc(String(readonlyTotalQty)) + "</span>";
+    }
+    return;
+  }
 
   list.querySelectorAll("[data-core-edit]").forEach(function(btn) {
     btn.addEventListener("click", function() { openCoreListForm("edit", parseInt(btn.dataset.coreEdit, 10)); });
@@ -6341,8 +6387,10 @@ async function deleteCoreListRow(id) {
 // 製造予定ランキング管理
 // =============================================
 async function enterProductionRankingMgmt() {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canViewManagementScreen()) { alert(t("err_perm")); return; }
   showScreen("production-ranking-mgmt");
+  var addBtn = document.getElementById("btn-add-production-ranking");
+  if (addBtn) addBtn.style.display = canEdit() ? "" : "none";
   await loadProductionRankingMgmt();
 }
 
@@ -6417,6 +6465,10 @@ function renderProductionRankingMgmt() {
   });
   html += "</table>";
   list.innerHTML = html;
+  if (!canEdit()) {
+    list.querySelectorAll("[data-pr-edit], [data-pr-del]").forEach(function(btn) { btn.remove(); });
+    return;
+  }
 
   list.querySelectorAll("[data-pr-edit]").forEach(function(btn) {
     btn.addEventListener("click", function() { openProductionRankingForm("edit", parseInt(btn.dataset.prEdit, 10)); });
@@ -6890,10 +6942,12 @@ var kikanMgmtData  = [];
 var kikanFormGroupId = null;
 
 async function enterKikanMgmt() {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canViewManagementScreen()) { alert(t("err_perm")); return; }
   showScreen("kikan-mgmt");
   var nameEl = document.getElementById("kikan-mgmt-username");
   if (nameEl) nameEl.textContent = userProfile.name || userProfile.email.split("@")[0];
+  var newBtn = document.getElementById("btn-new-kikan-group");
+  if (newBtn) newBtn.style.display = canEdit() ? "" : "none";
   await loadKikanMgmt();
 }
 
@@ -6976,10 +7030,15 @@ async function loadKikanMgmt() {
     });
     html += "</table></div>";
   }
-  document.getElementById("kikan-mgmt-list").innerHTML = html || "<div class='empty'>グループがありません</div>";
+  var kikanListEl = document.getElementById("kikan-mgmt-list");
+  kikanListEl.innerHTML = html || "<div class='empty'>グループがありません</div>";
+  if (!canEdit()) {
+    kikanListEl.querySelectorAll("[data-kgid], .btn-sm-del").forEach(function(btn) { btn.remove(); });
+  }
 }
 
 function openKikanForm(groupId) {
+  if (!canEdit()) { alert(t("err_perm")); return; }
   kikanFormGroupId = groupId;
   document.getElementById("kf-group-id").value   = groupId || "";
   document.getElementById("kf-dkd-shohin-id").value  = "";
@@ -7060,6 +7119,7 @@ function isConfirmedKikanCategory(categoryCode) {
 async function saveKikanForm() {
   var errEl   = document.getElementById("kikan-form-error");
   errEl.textContent = "";
+  if (!canEdit()) { errEl.textContent = t("err_perm"); return; }
   var dkdId     = parseInt(document.getElementById("kf-dkd-shohin-id").value.trim(), 10);
   if (isNaN(dkdId)) { errEl.textContent = "候補から追加する品番を選択してください"; return; }
 
@@ -7118,6 +7178,7 @@ async function saveKikanForm() {
 }
 
 async function removeKikanMember(groupId, dkdGokanId) {
+  if (!canEdit()) { alert(t("err_perm")); return; }
   if (!confirm(t("del_kikan_confirm"))) return;
   var r = await sb.from("kikan_group_members").delete().eq("kikan_group_id", groupId).eq("dkd_gokan_id", dkdGokanId);
   if (r.error) { alert(t("msg_kikan_err")); return; }
@@ -7129,7 +7190,7 @@ async function removeKikanMember(groupId, dkdGokanId) {
 // 操作ログ画面
 // =============================================
 async function enterLogs() {
-  if (!isAdmin()) { alert(t("err_perm")); return; }
+  if (!canViewOperationLogs()) { alert(t("err_perm")); return; }
   showScreen("logs");
   await loadLogs();
 }
@@ -9721,10 +9782,10 @@ async function loadSalesPriceSummaryForCurrent() {
   if (!row) {
     wrap.innerHTML = "<div class='sales-price-summary'>" +
       "<div class='sales-price-summary-main'><span class='sales-price-summary-label'>" + esc(t("sales_price_section")) + "</span><span class='sales-price-summary-value'>-</span></div>" +
-      (canManageSalesPricing()
+      (canViewSalesPricing()
         ? "<div class='sales-price-summary-main' style='margin-top:6px'><span class='sales-price-summary-label'>" + esc(t("sales_base_price")) + "</span><span class='sales-price-summary-value'>-</span></div>"
         : "") +
-      (canManageSalesPricing() ? "<div class='sales-price-summary-sub'>" + esc(t("sales_no_base_price")) + "</div>" : "") +
+      (canViewSalesPricing() ? "<div class='sales-price-summary-sub'>" + esc(t("sales_no_base_price")) + "</div>" : "") +
     "</div>";
     return;
   }
@@ -9732,7 +9793,7 @@ async function loadSalesPriceSummaryForCurrent() {
   var priceText = "JPY " + esc(formatYen(row.base_price_jpy));
   wrap.innerHTML = "<div class='sales-price-summary'>" +
     "<div class='sales-price-summary-main'><span class='sales-price-summary-label'>" + esc(t("sales_price_section")) + "</span><span class='sales-price-summary-value'>" + priceText + "</span></div>" +
-    (canManageSalesPricing()
+    (canViewSalesPricing()
       ? "<div class='sales-price-summary-main' style='margin-top:6px'><span class='sales-price-summary-label'>" + esc(t("sales_base_price")) + "</span><span class='sales-price-summary-value'>" + priceText + "</span></div>" +
         "<div class='sales-price-summary-sub'>" + esc(sub) + (row.basis_note ? " / " + esc(row.basis_note) : "") + "</div>"
       : "") +
@@ -9746,7 +9807,7 @@ function closeSalesPricingOverlay() {
 
 async function openSalesPricingForCurrent() {
   if (!currentProduct) return;
-  if (!canManageSalesPricing()) { alert(t("err_perm")); return; }
+  if (!canViewSalesPricing()) { alert(t("err_perm")); return; }
   var overlay = document.getElementById("sales-pricing-overlay");
   var errEl = document.getElementById("sales-pricing-error");
   if (errEl) errEl.textContent = "";
@@ -9848,7 +9909,7 @@ async function saveSalesPricing() {
 }
 
 async function enterSalesPricingMgmt() {
-  if (!canManageSalesPricing()) { alert(t("err_perm")); return; }
+  if (!canViewSalesPricing()) { alert(t("err_perm")); return; }
   showScreen("sales-pricing-mgmt");
   updateAllHeaders();
   var q = document.getElementById("sales-pricing-mgmt-search");
@@ -9857,7 +9918,7 @@ async function enterSalesPricingMgmt() {
 }
 
 async function loadSalesPricingMgmt() {
-  if (!canManageSalesPricing()) { alert(t("err_perm")); return; }
+  if (!canViewSalesPricing()) { alert(t("err_perm")); return; }
   var q = (document.getElementById("sales-pricing-mgmt-search") || {}).value || "";
   q = q.trim();
   var list = document.getElementById("sales-pricing-mgmt-list");
