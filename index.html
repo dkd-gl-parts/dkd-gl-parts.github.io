@@ -69,6 +69,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .price-value    { font-size: 15px; font-weight: 700; color: #1a6fd4; }
 .price-moq      { font-size: 12px; color: #888; }
 .price-section-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.sales-price-summary { border: 1px solid #e5edf8; border-radius: 8px; background: #fbfdff; padding: 10px 12px; margin-bottom: 12px; font-size: 12px; }
+.sales-price-summary-main { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.sales-price-summary-label { color: #667085; font-weight: 600; }
+.sales-price-summary-value { color: #1a8c3e; font-size: 18px; font-weight: 800; }
+.sales-price-summary-sub { color: #8a94a6; margin-top: 4px; line-height: 1.5; }
+.sales-pricing-card { max-width: 760px; }
+.sales-pricing-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.sales-pricing-grid .form-row { margin-bottom: 0; }
+.sales-pricing-help { font-size: 12px; color: #667085; line-height: 1.6; margin: 4px 0 12px; }
+.sales-pricing-preview { margin-top: 14px; border-top: 1px solid #edf0f5; padding-top: 12px; }
+.sales-pricing-preview-title { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; }
+.sales-pricing-error { color: #e24b4a; font-size: 12px; min-height: 18px; margin-top: 10px; }
+@media(max-width:640px){ .sales-pricing-grid { grid-template-columns: 1fr; } }
 .rakuten-quick-row { margin: 0; }
 .rakuten-price-body { flex: 1; padding: 20px 16px; max-width: 1120px; width: 100%; margin: 0 auto; overflow-y: auto; }
 .rakuten-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
@@ -1272,6 +1285,55 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   </div>
 </div>
 
+<div class="form-overlay" id="sales-pricing-overlay">
+  <div class="form-card sales-pricing-card">
+    <h3 data-i18n="sales_pricing_title">販売価格設定</h3>
+    <div class="sales-pricing-help" id="sales-pricing-product">-</div>
+    <div class="sales-pricing-grid">
+      <div class="form-row">
+        <label class="form-label" data-i18n="sales_base_price">基準価格(税抜)</label>
+        <input class="form-input" id="sales-base-price" type="number" min="0" step="1">
+      </div>
+      <div class="form-row">
+        <label class="form-label" data-i18n="sales_tax_type">税区分</label>
+        <select class="form-input" id="sales-tax-included">
+          <option value="false" data-i18n="sales_tax_excluded">税抜</option>
+          <option value="true" data-i18n="sales_tax_included">税込</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label" data-i18n="sales_price_basis">価格根拠</label>
+        <select class="form-input" id="sales-price-basis">
+          <option value="manual" data-i18n="sales_basis_manual">手入力</option>
+          <option value="rakuten" data-i18n="sales_basis_rakuten">価格調査</option>
+          <option value="competitor" data-i18n="sales_basis_competitor">他社参考</option>
+          <option value="sales_history" data-i18n="sales_basis_history">販売実績</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label" data-i18n="sales_effective_start">適用開始日</label>
+        <input class="form-input" id="sales-effective-start" type="date">
+      </div>
+    </div>
+    <div class="form-row" style="margin-top:10px">
+      <label class="form-label" data-i18n="sales_basis_note">価格メモ</label>
+      <input class="form-input" id="sales-basis-note" type="text" data-i18n-ph="sales_basis_note_ph">
+    </div>
+    <div class="sales-pricing-preview">
+      <div class="sales-pricing-preview-title" data-i18n="sales_rank_preview">得意先ランク別の試算</div>
+      <div id="sales-rank-preview"><div class="component-empty" data-i18n="loading">読み込み中...</div></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:8px">
+        <button class="btn-sm-edit" id="btn-sales-rank-save" type="button" data-i18n="sales_rank_save">ランク設定を保存</button>
+      </div>
+    </div>
+    <div class="form-footer">
+      <button class="btn-cancel" id="btn-sales-pricing-cancel" data-i18n="btn_back">キャンセル</button>
+      <button class="btn-primary" id="btn-sales-pricing-save" data-i18n="btn_save_part">保存</button>
+    </div>
+    <div class="sales-pricing-error" id="sales-pricing-error"></div>
+  </div>
+</div>
+
 <!-- =============================================
    コアリスト管理画面
 ============================================= -->
@@ -2091,6 +2153,32 @@ var TRANSLATIONS = {
     f_unit_price: "単価",
     f_currency: "通貨",
     no_prices: "価格データなし",
+    sales_pricing_title: "販売価格設定",
+    sales_base_price: "基準価格(税抜)",
+    sales_tax_type: "税区分",
+    sales_tax_excluded: "税抜",
+    sales_tax_included: "税込",
+    sales_price_basis: "価格根拠",
+    sales_basis_manual: "手入力",
+    sales_basis_rakuten: "価格調査",
+    sales_basis_competitor: "他社参考",
+    sales_basis_history: "販売実績",
+    sales_effective_start: "適用開始日",
+    sales_basis_note: "価格メモ",
+    sales_basis_note_ph: "例: DKS仕切、EC相場、社内判断",
+    sales_rank_preview: "得意先ランク別の試算",
+    sales_rank_save: "ランク設定を保存",
+    sales_rank: "ランク",
+    sales_customer_count: "得意先数",
+    sales_rate_adjust: "掛率 / 調整 / 丸め",
+    sales_amount_adjustment: "金額調整",
+    sales_rounding_unit: "丸め単位",
+    sales_rounding_method: "丸め方法",
+    sales_result_price: "試算価格",
+    sales_no_base_price: "基準価格は未設定です",
+    sales_no_ranks: "価格ランクがありません",
+    sales_no_product_id: "対象商品のDKD商品IDを確認できません",
+    sales_base_price_required: "基準価格を入力してください",
     rakuten_search_conditions: "検索条件",
     rakuten_keyword: "検索キーワード",
     rakuten_exclude: "除外キーワード",
@@ -2535,6 +2623,32 @@ var TRANSLATIONS = {
     f_unit_price: "Unit Price",
     f_currency: "Currency",
     no_prices: "No price data",
+    sales_pricing_title: "Sales Pricing",
+    sales_base_price: "Base Price (tax excluded)",
+    sales_tax_type: "Tax Type",
+    sales_tax_excluded: "Tax excluded",
+    sales_tax_included: "Tax included",
+    sales_price_basis: "Price Basis",
+    sales_basis_manual: "Manual",
+    sales_basis_rakuten: "Price Survey",
+    sales_basis_competitor: "Competitor Reference",
+    sales_basis_history: "Sales History",
+    sales_effective_start: "Effective Start",
+    sales_basis_note: "Price Note",
+    sales_basis_note_ph: "Example: DKS cost, EC market price, internal decision",
+    sales_rank_preview: "Preview by Customer Rank",
+    sales_rank_save: "Save Rank Settings",
+    sales_rank: "Rank",
+    sales_customer_count: "Customers",
+    sales_rate_adjust: "Rate / Adjustment / Rounding",
+    sales_amount_adjustment: "Amount Adjustment",
+    sales_rounding_unit: "Rounding Unit",
+    sales_rounding_method: "Rounding Method",
+    sales_result_price: "Preview Price",
+    sales_no_base_price: "Base price is not set",
+    sales_no_ranks: "No price ranks",
+    sales_no_product_id: "Could not confirm the target DKD product ID",
+    sales_base_price_required: "Enter a base price",
     rakuten_search_conditions: "Search Conditions",
     rakuten_keyword: "Search keyword",
     rakuten_exclude: "Excluded keywords",
@@ -2971,6 +3085,32 @@ var TRANSLATIONS = {
     f_unit_price: "单价",
     f_currency: "货币",
     no_prices: "无价格数据",
+    sales_pricing_title: "销售价格设置",
+    sales_base_price: "基准价格(不含税)",
+    sales_tax_type: "税区分",
+    sales_tax_excluded: "不含税",
+    sales_tax_included: "含税",
+    sales_price_basis: "价格依据",
+    sales_basis_manual: "手动输入",
+    sales_basis_rakuten: "价格调查",
+    sales_basis_competitor: "同行参考",
+    sales_basis_history: "销售记录",
+    sales_effective_start: "开始日期",
+    sales_basis_note: "价格备注",
+    sales_basis_note_ph: "例如: DKS成本、EC行情、内部判断",
+    sales_rank_preview: "按客户等级试算",
+    sales_rank_save: "保存等级设置",
+    sales_rank: "等级",
+    sales_customer_count: "客户数",
+    sales_rate_adjust: "倍率 / 调整 / 取整",
+    sales_amount_adjustment: "金额调整",
+    sales_rounding_unit: "取整单位",
+    sales_rounding_method: "取整方式",
+    sales_result_price: "试算价格",
+    sales_no_base_price: "尚未设置基准价格",
+    sales_no_ranks: "没有价格等级",
+    sales_no_product_id: "无法确认目标DKD商品ID",
+    sales_base_price_required: "请输入基准价格",
     rakuten_search_conditions: "搜索条件",
     rakuten_keyword: "搜索关键词",
     rakuten_exclude: "排除关键词",
@@ -3146,7 +3286,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.155";
+var APP_VERSION       = "v1.1.156";
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -3186,6 +3326,10 @@ var rakutenApiLastRequestAt = 0;
 var rakutenApiCooldownUntil = 0;
 var rakutenTargets = [];
 var rakutenActiveTarget = null;
+var currentSalesPricingDkdId = null;
+var currentSalesPricingRow = null;
+var salesPricingRanks = [];
+var salesPricingCustomerCounts = {};
 var CORE_PRODUCT_FAST_SELECT = [
   "dkd_shohin_id",
   "legacy_part_id",
@@ -4280,6 +4424,7 @@ async function renderProductionDetail(row) {
   html += "<div class='production-detail-sub'>" + esc(productionCategoryLabel(row)) + " / DKD " + esc(row.dkd_shohin_id || "-") + " / " + esc(row.manufacturer || "-") + "</div></div>";
   html += "<div class='production-actions'>";
   html += "<button class='btn-sm-edit' id='production-open-sales'>" + esc(t("production_open_sales")) + "</button>";
+  if (canSeeSalesPrice()) html += "<button class='btn-sm-edit' id='production-open-sales-pricing'>&#x1F4B0; " + esc(t("sales_pricing_title")) + "</button>";
   html += "<button class='btn-sm-edit btn-component-action' id='production-open-components'><span class='component-icon'>&#x1F9E9;</span> " + esc(t("component_section")) + "</button>";
   if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-edit-core'>品番修正</button>";
   if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-add-image'>画像登録</button>";
@@ -4341,6 +4486,8 @@ async function renderProductionDetail(row) {
   await loadProductSpecsForCurrent();
   var salesBtn = document.getElementById("production-open-sales");
   if (salesBtn) salesBtn.addEventListener("click", openProductionSalesProduct);
+  var salesPricingBtn = document.getElementById("production-open-sales-pricing");
+  if (salesPricingBtn) salesPricingBtn.addEventListener("click", openSalesPricingForCurrent);
   var compBtn = document.getElementById("production-open-components");
   if (compBtn) compBtn.addEventListener("click", openProductionComponents);
   var editBtn = document.getElementById("production-edit-core");
@@ -7840,6 +7987,9 @@ function renderPanelStatic() {
   if (canUseRakutenResearch()) {
     toolHtml += "<button class='btn-sm-edit' onclick='openRakutenForCurrentProduct()'>&#x1F4B4; " + t("rakuten_quick") + "</button>";
   }
+  if (canSeeSalesPrice()) {
+    toolHtml += "<button class='btn-sm-edit' id='btn-open-sales-pricing'>&#x1F4B0; " + t("sales_pricing_title") + "</button>";
+  }
   toolHtml += "<button class='btn-sm-edit btn-component-action' id='btn-open-components'><span class='component-icon'>&#x1F9E9;</span> " + t("component_open_parts") + "</button>";
   toolHtml += "<button class='btn-sm-edit' id='btn-open-component-parallel'>&#8644; " + t("component_open_parallel") + "</button>";
   if (canEdit()) {
@@ -7855,6 +8005,8 @@ function renderPanelStatic() {
     toolHtml +
     "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
     "<div id='kikan-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>" +
+    "<div class='price-section-title'>&#x1F4B0; " + t("sales_pricing_title") + "</div>" +
+    "<div id='sales-price-summary-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>" +
     "<div class='price-section-title'>&#x1F4B0; " + t("supplier_prices") + "</div>" +
     "<div id='price-table-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>";
   // 画像エリアをリセット（右カラムはpanel-rightに固定表示）
@@ -7866,11 +8018,14 @@ function renderPanelStatic() {
   if (editCurrentBtn) editCurrentBtn.addEventListener("click", openCoreProductEditFromSearch);
   var componentBtn = document.getElementById("btn-open-components");
   var parallelBtn = document.getElementById("btn-open-component-parallel");
+  var salesPricingBtn = document.getElementById("btn-open-sales-pricing");
+  if (salesPricingBtn) salesPricingBtn.addEventListener("click", openSalesPricingForCurrent);
   if (componentBtn) componentBtn.addEventListener("click", function(){ enterComponentsScreen("search"); });
   if (parallelBtn) parallelBtn.addEventListener("click", enterComponentParallelScreen);
   currentVehicleApplicationRows = [];
   loadCatalogVehicleSummary(document.getElementById("panel-body"), p);
   loadProductSpecsForCurrent();
+  loadSalesPriceSummaryForCurrent();
   loadSlParts(productLegacyPartId(p));
 }
 
@@ -9128,6 +9283,278 @@ async function loadSlParts(partId) {
   }
 }
 
+function salesPricingTodayIso() {
+  var d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+}
+
+function salesPricingProductText(product, dkdId) {
+  product = product || currentProduct || {};
+  return [
+    productCategoryLabel(product),
+    "DKD " + (dkdId || product.dkd_shohin_id || "-"),
+    product.genuine_part_number || "-",
+    product.manufacturer_part_number || "-",
+    product.manufacturer || "-"
+  ].filter(Boolean).join(" / ");
+}
+
+function salesPricingRankCountMap(rows) {
+  var map = {};
+  (rows || []).forEach(function(row) {
+    var key = row.price_rank_code || "";
+    if (!key) return;
+    map[key] = (map[key] || 0) + 1;
+  });
+  return map;
+}
+
+function calculateSalesPriceClient(basePrice, rank) {
+  var base = parseInt(basePrice, 10);
+  if (isNaN(base)) return null;
+  var rate = Number(rank && rank.rate_multiplier);
+  if (!isFinite(rate) || rate <= 0) rate = 1;
+  var amount = parseInt(rank && rank.amount_adjustment_jpy, 10);
+  if (isNaN(amount)) amount = 0;
+  var unit = parseInt(rank && rank.rounding_unit_jpy, 10);
+  if (isNaN(unit) || unit <= 0) unit = 10;
+  var raw = base * rate + amount;
+  var method = (rank && rank.rounding_method) || "round";
+  if (method === "ceil") return Math.ceil(raw / unit) * unit;
+  if (method === "floor") return Math.floor(raw / unit) * unit;
+  return Math.round(raw / unit) * unit;
+}
+
+function renderSalesRankPreview() {
+  var wrap = document.getElementById("sales-rank-preview");
+  if (!wrap) return;
+  var base = document.getElementById("sales-base-price").value;
+  if (!salesPricingRanks.length) {
+    wrap.innerHTML = "<div class='component-empty'>" + esc(t("sales_no_ranks")) + "</div>";
+    return;
+  }
+  var editable = canEdit();
+  var html = "<table class='price-table'><tr><th>" + esc(t("sales_rank")) + "</th><th>" + esc(t("sales_customer_count")) + "</th>";
+  if (editable) {
+    html += "<th>" + esc(t("sales_rate_adjust")) + "</th><th>" + esc(t("sales_amount_adjustment")) + "</th><th>" + esc(t("sales_rounding_unit")) + "</th><th>" + esc(t("sales_rounding_method")) + "</th>";
+  } else {
+    html += "<th>" + esc(t("sales_rate_adjust")) + "</th>";
+  }
+  html += "<th>" + esc(t("sales_result_price")) + "</th></tr>";
+  salesPricingRanks.forEach(function(rank) {
+    var price = calculateSalesPriceClient(base, rank);
+    var adjust = "x" + Number(rank.rate_multiplier || 1).toFixed(4) + " / " + formatYen(rank.amount_adjustment_jpy || 0) + " / " + formatYen(rank.rounding_unit_jpy || 10);
+    var code = esc(rank.rank_code || "");
+    html += "<tr>";
+    html += "<td><div class='price-supplier'>" + esc(rank.rank_name || rank.rank_code || "-") + "</div><div class='price-country'>" + esc(rank.rank_code || "") + "</div></td>";
+    html += "<td>" + esc(String(salesPricingCustomerCounts[rank.rank_code] || 0)) + "</td>";
+    if (editable) {
+      html += "<td><input class='form-input sales-rank-rate' data-rank-code='" + code + "' type='number' min='0' step='0.0001' value='" + esc(String(rank.rate_multiplier || 1)) + "'></td>";
+      html += "<td><input class='form-input sales-rank-amount' data-rank-code='" + code + "' type='number' step='1' value='" + esc(String(rank.amount_adjustment_jpy || 0)) + "'></td>";
+      html += "<td><select class='form-input sales-rank-unit' data-rank-code='" + code + "'>" + [1,10,100,1000].map(function(v){ return "<option value='" + v + "'" + (String(rank.rounding_unit_jpy || 10) === String(v) ? " selected" : "") + ">" + v + "</option>"; }).join("") + "</select></td>";
+      html += "<td><select class='form-input sales-rank-method' data-rank-code='" + code + "'>" + ["round","ceil","floor"].map(function(v){ return "<option value='" + v + "'" + (String(rank.rounding_method || "round") === v ? " selected" : "") + ">" + v + "</option>"; }).join("") + "</select></td>";
+    } else {
+      html += "<td>" + esc(adjust) + "</td>";
+    }
+    html += "<td><div class='price-value' style='color:#1a8c3e'>" + (price === null ? "-" : "JPY " + esc(formatYen(price))) + "</div></td>";
+    html += "</tr>";
+  });
+  html += "</table>";
+  wrap.innerHTML = html;
+}
+
+function collectSalesRankSettingsFromForm() {
+  return salesPricingRanks.map(function(rank) {
+    var code = rank.rank_code;
+    var rateEl = document.querySelector(".sales-rank-rate[data-rank-code='" + CSS.escape(code) + "']");
+    var amountEl = document.querySelector(".sales-rank-amount[data-rank-code='" + CSS.escape(code) + "']");
+    var unitEl = document.querySelector(".sales-rank-unit[data-rank-code='" + CSS.escape(code) + "']");
+    var methodEl = document.querySelector(".sales-rank-method[data-rank-code='" + CSS.escape(code) + "']");
+    return {
+      rank_code: code,
+      rate_multiplier: rateEl ? parseFloat(rateEl.value || "1") : Number(rank.rate_multiplier || 1),
+      amount_adjustment_jpy: amountEl ? (parseInt(amountEl.value || "0", 10) || 0) : (parseInt(rank.amount_adjustment_jpy || 0, 10) || 0),
+      rounding_unit_jpy: unitEl ? (parseInt(unitEl.value || "10", 10) || 10) : (parseInt(rank.rounding_unit_jpy || 10, 10) || 10),
+      rounding_method: methodEl ? (methodEl.value || "round") : (rank.rounding_method || "round")
+    };
+  });
+}
+
+async function saveSalesPriceRanks() {
+  var errEl = document.getElementById("sales-pricing-error");
+  if (errEl) errEl.textContent = "";
+  if (!canEdit()) { if (errEl) errEl.textContent = t("err_perm"); return; }
+  var rows = collectSalesRankSettingsFromForm();
+  try {
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      if (!isFinite(row.rate_multiplier) || row.rate_multiplier < 0) throw new Error(t("sales_rate_adjust"));
+      if ([1,10,100,1000].indexOf(row.rounding_unit_jpy) < 0) row.rounding_unit_jpy = 10;
+      if (["round","ceil","floor"].indexOf(row.rounding_method) < 0) row.rounding_method = "round";
+      var r = await sb.from("sales_price_ranks").update({
+        rate_multiplier: row.rate_multiplier,
+        amount_adjustment_jpy: row.amount_adjustment_jpy,
+        rounding_unit_jpy: row.rounding_unit_jpy,
+        rounding_method: row.rounding_method,
+        updated_at: new Date().toISOString()
+      }).eq("rank_code", row.rank_code);
+      if (r.error) throw r.error;
+    }
+    salesPricingRanks = salesPricingRanks.map(function(rank) {
+      var next = rows.find(function(row){ return row.rank_code === rank.rank_code; });
+      return next ? Object.assign({}, rank, next) : rank;
+    });
+    renderSalesRankPreview();
+    if (errEl) errEl.textContent = t("msg_saved");
+  } catch (e) {
+    console.warn("save sales price ranks failed", e);
+    if (errEl) errEl.textContent = t("msg_save_err") + ": " + ((e && e.message) || String(e));
+  }
+}
+
+async function loadSalesPriceSummaryForCurrent() {
+  var wrap = document.getElementById("sales-price-summary-wrap");
+  if (!wrap) return;
+  if (!canSeeSalesPrice()) {
+    wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>-</div>";
+    return;
+  }
+  var dkdId = await resolveCurrentCoreDkdShohinId();
+  if (!dkdId) {
+    wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + esc(t("sales_no_base_price")) + "</div>";
+    return;
+  }
+  var r = await sb.from("product_base_prices")
+    .select("id,base_price_jpy,tax_included,price_basis,basis_note,effective_start,updated_at")
+    .eq("dkd_shohin_id", dkdId)
+    .eq("is_current", true)
+    .maybeSingle();
+  if (r.error) {
+    console.warn("product_base_prices summary failed", r.error);
+    wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + esc(t("sales_no_base_price")) + "</div>";
+    return;
+  }
+  var row = r.data || null;
+  if (!row) {
+    wrap.innerHTML = "<div class='sales-price-summary'><div class='sales-price-summary-main'><span class='sales-price-summary-label'>" + esc(t("sales_base_price")) + "</span><span class='sales-price-summary-value'>-</span></div><div class='sales-price-summary-sub'>" + esc(t("sales_no_base_price")) + "</div></div>";
+    return;
+  }
+  var tax = row.tax_included ? t("sales_tax_included") : t("sales_tax_excluded");
+  var sub = [tax, row.price_basis || "manual", row.effective_start || ""].filter(Boolean).join(" / ");
+  wrap.innerHTML = "<div class='sales-price-summary'>" +
+    "<div class='sales-price-summary-main'><span class='sales-price-summary-label'>" + esc(t("sales_base_price")) + "</span><span class='sales-price-summary-value'>JPY " + esc(formatYen(row.base_price_jpy)) + "</span></div>" +
+    "<div class='sales-price-summary-sub'>" + esc(sub) + (row.basis_note ? " / " + esc(row.basis_note) : "") + "</div>" +
+  "</div>";
+}
+
+function closeSalesPricingOverlay() {
+  var overlay = document.getElementById("sales-pricing-overlay");
+  if (overlay) overlay.classList.remove("show");
+}
+
+async function openSalesPricingForCurrent() {
+  if (!currentProduct) return;
+  if (!canSeeSalesPrice()) { alert(t("err_perm")); return; }
+  var overlay = document.getElementById("sales-pricing-overlay");
+  var errEl = document.getElementById("sales-pricing-error");
+  if (errEl) errEl.textContent = "";
+  overlay.classList.add("show");
+  document.getElementById("sales-pricing-product").textContent = t("loading");
+  document.getElementById("sales-rank-preview").innerHTML = "<div class='component-empty'>" + esc(t("loading")) + "</div>";
+  var saveBtn = document.getElementById("btn-sales-pricing-save");
+  if (saveBtn) saveBtn.style.display = canEdit() ? "" : "none";
+  var rankSaveBtn = document.getElementById("btn-sales-rank-save");
+  if (rankSaveBtn) rankSaveBtn.style.display = canEdit() ? "" : "none";
+  ["sales-base-price","sales-tax-included","sales-price-basis","sales-effective-start","sales-basis-note"].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.disabled = !canEdit();
+  });
+  try {
+    var dkdId = await resolveCurrentCoreDkdShohinId();
+    currentSalesPricingDkdId = dkdId;
+    document.getElementById("sales-pricing-product").textContent = salesPricingProductText(currentProduct, dkdId);
+    if (!dkdId) throw new Error(t("sales_no_product_id"));
+    var currentR = await sb.from("product_base_prices")
+      .select("id,dkd_shohin_id,base_price_jpy,tax_included,price_basis,basis_note,effective_start,effective_end,is_current,created_at,updated_at")
+      .eq("dkd_shohin_id", dkdId)
+      .eq("is_current", true)
+      .maybeSingle();
+    if (currentR.error) throw currentR.error;
+    var ranksR = await sb.from("sales_price_ranks")
+      .select("rank_code,rank_name,rate_multiplier,amount_adjustment_jpy,rounding_unit_jpy,rounding_method,is_active")
+      .eq("is_active", true)
+      .order("rank_code", { ascending: true });
+    if (ranksR.error) throw ranksR.error;
+    var customersR = await sb.from("sales_customers")
+      .select("price_rank_code")
+      .eq("source_code", "hanbaiou")
+      .eq("is_active", true);
+    if (customersR.error) throw customersR.error;
+    currentSalesPricingRow = currentR.data || null;
+    salesPricingRanks = ranksR.data || [];
+    salesPricingCustomerCounts = salesPricingRankCountMap(customersR.data || []);
+    document.getElementById("sales-base-price").value = currentSalesPricingRow ? currentSalesPricingRow.base_price_jpy : ((currentProduct && currentProduct.price_jpy) || "");
+    document.getElementById("sales-tax-included").value = currentSalesPricingRow && currentSalesPricingRow.tax_included ? "true" : "false";
+    document.getElementById("sales-price-basis").value = currentSalesPricingRow ? (currentSalesPricingRow.price_basis || "manual") : "manual";
+    document.getElementById("sales-effective-start").value = currentSalesPricingRow ? (currentSalesPricingRow.effective_start || salesPricingTodayIso()) : salesPricingTodayIso();
+    document.getElementById("sales-basis-note").value = currentSalesPricingRow ? (currentSalesPricingRow.basis_note || "") : "";
+    renderSalesRankPreview();
+  } catch (e) {
+    console.warn("open sales pricing failed", e);
+    if (errEl) errEl.textContent = (e && e.message) || String(e);
+  }
+}
+
+async function saveSalesPricing() {
+  var errEl = document.getElementById("sales-pricing-error");
+  if (errEl) errEl.textContent = "";
+  if (!canEdit()) { if (errEl) errEl.textContent = t("err_perm"); return; }
+  var dkdId = currentSalesPricingDkdId;
+  if (!dkdId) { if (errEl) errEl.textContent = t("sales_no_product_id"); return; }
+  var base = parseInt(document.getElementById("sales-base-price").value, 10);
+  if (isNaN(base) || base < 0) { if (errEl) errEl.textContent = t("sales_base_price_required"); return; }
+  var payload = {
+    dkd_shohin_id: dkdId,
+    base_price_jpy: base,
+    tax_included: document.getElementById("sales-tax-included").value === "true",
+    price_basis: document.getElementById("sales-price-basis").value || "manual",
+    basis_note: document.getElementById("sales-basis-note").value.trim() || null,
+    effective_start: document.getElementById("sales-effective-start").value || salesPricingTodayIso(),
+    is_current: true,
+    created_by: currentUser ? currentUser.id : null,
+    updated_by: currentUser ? currentUser.id : null
+  };
+  try {
+    var oldRow = currentSalesPricingRow ? JSON.parse(JSON.stringify(currentSalesPricingRow)) : null;
+    var closePayload = { is_current: false, updated_by: currentUser ? currentUser.id : null, updated_at: new Date().toISOString() };
+    if (!oldRow || !oldRow.effective_start || payload.effective_start >= oldRow.effective_start) closePayload.effective_end = payload.effective_start;
+    var upd = await sb.from("product_base_prices")
+      .update(closePayload)
+      .eq("dkd_shohin_id", dkdId)
+      .eq("is_current", true);
+    if (upd.error) throw upd.error;
+    var ins = await sb.from("product_base_prices").insert(payload).select("*").single();
+    if (ins.error) throw ins.error;
+    currentSalesPricingRow = ins.data;
+    await sb.from("product_base_price_history").insert({
+      base_price_id: ins.data.id,
+      dkd_shohin_id: dkdId,
+      old_base_price_jpy: oldRow ? oldRow.base_price_jpy : null,
+      new_base_price_jpy: ins.data.base_price_jpy,
+      old_payload: oldRow || null,
+      new_payload: ins.data,
+      changed_by: currentUser ? currentUser.id : null,
+      change_note: payload.basis_note
+    });
+    await loadSalesPriceSummaryForCurrent();
+    closeSalesPricingOverlay();
+  } catch (e) {
+    console.warn("save sales pricing failed", e);
+    if (errEl) errEl.textContent = t("msg_save_err") + ": " + ((e && e.message) || String(e));
+  }
+}
+
 async function loadKikan(dkdShohinId) {
   var wrap = document.getElementById("kikan-wrap");
   if (!wrap) return;
@@ -9728,6 +10155,16 @@ document.getElementById("btn-back-logs").addEventListener("click",       functio
 document.getElementById("btn-add-part").addEventListener("click", function(){ openPartForm("add"); });
 document.getElementById("btn-part-form-cancel").addEventListener("click", function(){ document.getElementById("part-form-overlay").classList.remove("show"); });
 document.getElementById("btn-part-form-save").addEventListener("click", savePartForm);
+document.getElementById("btn-sales-pricing-cancel").addEventListener("click", closeSalesPricingOverlay);
+document.getElementById("btn-sales-pricing-save").addEventListener("click", saveSalesPricing);
+document.getElementById("btn-sales-rank-save").addEventListener("click", saveSalesPriceRanks);
+["sales-base-price","sales-tax-included","sales-price-basis","sales-effective-start"].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (el) {
+    el.addEventListener("input", renderSalesRankPreview);
+    el.addEventListener("change", renderSalesRankPreview);
+  }
+});
 document.getElementById("pf-category").addEventListener("change", applySpecFormCategory);
 document.getElementById("btn-add-core-list").addEventListener("click", function(){ openCoreListForm("add"); });
 document.getElementById("btn-create-core-list-from-ranking").addEventListener("click", createCoreListFromRanking);
