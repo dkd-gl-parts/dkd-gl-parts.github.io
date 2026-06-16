@@ -3329,6 +3329,7 @@ var categoryOptions   = [];
 var imageCountMap     = {};
 var imageThumbnailMap = {};
 var slPartsMap        = {};  // part_id → SL品番リスト
+var slPresenceMap     = {};  // part_id → SL品番あり
 var componentUsageCountMap = {};
 var coreStockQtyMap = {};
 var kikanCompatibleMap = {};
@@ -3348,7 +3349,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.174";
+var APP_VERSION       = "v1.1.176";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -3504,7 +3505,7 @@ function canUseRakutenResearch() {
   return !!(userProfile && (isSystemAdmin() || (userProfile.group_name === "daiko" && canSeeSalesPrice())));
 }
 function canSeePurchasePrice() {
-  return isAdmin() || canViewAllReadOnly();
+  return isAdmin();
 }
 function canViewInternalComponents() {
   return canSeeComponentInfo();
@@ -4071,7 +4072,7 @@ async function doLogout() {
   await sb.auth.signOut();
   currentUser = null; userProfile = null;
   allProducts = []; dataLoaded = false;
-  slPartsMap = {}; currentSlPartIds = [];
+  slPartsMap = {}; slPresenceMap = {}; currentSlPartIds = [];
   currentProduct = null; currentProductSpecs = []; currentProductNominalSpec = null; currentImages = [];
   showScreen("login");
 }
@@ -7266,32 +7267,10 @@ async function enterUsers() {
 async function initSearch() {
   document.getElementById("count-bar").textContent = t("loading");
 
-  // sl_parts の画像カウントとサムネイルを取得
-  // part_sl_mapping 経由で part_id に対応する画像を集計
-  var r2 = await sb.from("sl_part_images")
-    .select("image_url, sl_part_id, sl_parts(part_sl_mapping(part_id))")
-    .order("created_at");
-
-  imageCountMap = {}; imageThumbnailMap = {};
-  (r2.data || []).forEach(function(img) {
-    var mappings = (img.sl_parts && img.sl_parts.part_sl_mapping) || [];
-    mappings.forEach(function(m) {
-      var pid = m.part_id;
-      imageCountMap[pid] = (imageCountMap[pid] || 0) + 1;
-      if (!imageThumbnailMap[pid]) imageThumbnailMap[pid] = img.image_url;
-    });
-  });
-
-  // sl_parts の SL品番マップを作成（part_id → SL品番リスト）
-  var r3 = await sb.from("part_sl_mapping")
-    .select("part_id, sl_parts(supplier_pn)");
+  imageCountMap = {};
+  imageThumbnailMap = {};
   slPartsMap = {};
-  (r3.data || []).forEach(function(m) {
-    if (!slPartsMap[m.part_id]) slPartsMap[m.part_id] = [];
-    if (m.sl_parts && m.sl_parts.supplier_pn) {
-      slPartsMap[m.part_id].push(m.sl_parts.supplier_pn);
-    }
-  });
+  slPresenceMap = {};
 
   var r4 = await sb.from("assy_categories")
     .select("category_code,label_ja,label_en,label_zh,sort_order")
@@ -7457,13 +7436,124 @@ function normalizedContains(value, query) {
 }
 
 function productHasSlPart(p, slNums) {
+  var legacyId = productLegacyPartId(p);
   return !!(
     (slNums && slNums.length > 0) ||
+    (legacyId && slPresenceMap[legacyId]) ||
     p.has_sl_part ||
     p.has_sl ||
     p.sl_part_count > 0 ||
     p.sl_count > 0
   );
+}
+
+function productLegacyPartIds(products) {
+  var seen = {};
+  var ids = [];
+  (products || []).forEach(function(p) {
+    var id = productLegacyPartId(p);
+    if (!id || seen[id]) return;
+    seen[id] = true;
+    ids.push(id);
+  });
+  return ids;
+}
+
+async function fillProductLegacyPartIds(products) {
+  var missingDkdIds = [];
+  var byDkdId = {};
+  (products || []).forEach(function(p) {
+    if (productLegacyPartId(p)) return;
+    var dkdId = p && (p.dkd_shohin_id || p.id);
+    var n = parseInt(dkdId, 10);
+    if (isNaN(n) || byDkdId[n]) return;
+    byDkdId[n] = p;
+    missingDkdIds.push(n);
+  });
+  if (!missingDkdIds.length) return;
+  for (var i = 0; i < missingDkdIds.length; i += 200) {
+    var chunk = missingDkdIds.slice(i, i + 200);
+    var r = await sb.from("core_product_search_view")
+      .select("dkd_shohin_id, legacy_part_id")
+      .in("dkd_shohin_id", chunk);
+    if (r.error) {
+      console.warn("legacy part id lookup failed", r.error);
+      continue;
+    }
+    (r.data || []).forEach(function(row) {
+      var p = byDkdId[parseInt(row.dkd_shohin_id, 10)];
+      var legacyId = parseInt(row.legacy_part_id, 10);
+      if (p && !isNaN(legacyId)) p.legacy_part_id = legacyId;
+    });
+  }
+}
+
+async function fetchSlAndImageMaps(products) {
+  await fillProductLegacyPartIds(products);
+  var partIds = productLegacyPartIds(products);
+  var result = { presence: {}, labels: {}, imageCounts: {}, thumbnails: {} };
+  if (!partIds.length) return result;
+
+  var slIdToPartIds = {};
+  var slIds = [];
+  for (var i = 0; i < partIds.length; i += 200) {
+    var chunk = partIds.slice(i, i + 200);
+    var m = await sb.from("part_sl_mapping")
+      .select("part_id, sl_part_id")
+      .in("part_id", chunk);
+    if (m.error) {
+      console.warn("SL mapping lookup failed", m.error);
+      continue;
+    }
+    (m.data || []).forEach(function(row) {
+      var partId = row.part_id;
+      var slId = row.sl_part_id;
+      if (!partId || !slId) return;
+      result.presence[partId] = true;
+      if (!slIdToPartIds[slId]) {
+        slIdToPartIds[slId] = [];
+        slIds.push(slId);
+      }
+      slIdToPartIds[slId].push(partId);
+    });
+  }
+
+  if (canSeePurchasePrice()) {
+    for (var j = 0; j < partIds.length; j += 200) {
+      var labelChunk = partIds.slice(j, j + 200);
+      var labels = await sb.from("part_sl_mapping")
+        .select("part_id, sl_parts(supplier_pn)")
+        .in("part_id", labelChunk);
+      if (labels.error) {
+        console.warn("SL label lookup failed", labels.error);
+        continue;
+      }
+      (labels.data || []).forEach(function(row) {
+        if (!row.part_id || !row.sl_parts || !row.sl_parts.supplier_pn) return;
+        if (!result.labels[row.part_id]) result.labels[row.part_id] = [];
+        result.labels[row.part_id].push(row.sl_parts.supplier_pn);
+      });
+    }
+  }
+
+  for (var k = 0; k < slIds.length; k += 200) {
+    var imageChunk = slIds.slice(k, k + 200);
+    var imgs = await sb.from("sl_part_images")
+      .select("image_url, sl_part_id")
+      .in("sl_part_id", imageChunk)
+      .order("created_at");
+    if (imgs.error) {
+      console.warn("SL image lookup failed", imgs.error);
+      continue;
+    }
+    (imgs.data || []).forEach(function(img) {
+      (slIdToPartIds[img.sl_part_id] || []).forEach(function(partId) {
+        result.imageCounts[partId] = (result.imageCounts[partId] || 0) + 1;
+        if (!result.thumbnails[partId]) result.thumbnails[partId] = img.image_url;
+      });
+    });
+  }
+  return result;
 }
 
 function getFiltered() {
@@ -7699,6 +7789,10 @@ async function runProductSearch(options) {
 
   if (!q && currentFilter === "all") {
     allProducts = [];
+    imageCountMap = {};
+    imageThumbnailMap = {};
+    slPartsMap = {};
+    slPresenceMap = {};
     componentUsageCountMap = {};
     coreStockQtyMap = {};
     kikanCompatibleMap = {};
@@ -7746,6 +7840,10 @@ async function runProductSearch(options) {
       p.has_sl_part = true;
     });
   }
+  imageCountMap = {};
+  imageThumbnailMap = {};
+  slPartsMap = {};
+  slPresenceMap = {};
   componentUsageCountMap = {};
   coreStockQtyMap = {};
   kikanCompatibleMap = {};
@@ -8006,11 +8104,17 @@ async function loadProductSearchAuxiliaryData(seq, products) {
   var auxSeq = productAuxSeq;
   var fast = await Promise.all([
     canSeeComponentInfo() ? fetchComponentUsageCountMap(products) : Promise.resolve({}),
-    canSeeCoreStockInfo() ? fetchCoreStockQtyMap(products) : Promise.resolve({})
+    canSeeCoreStockInfo() ? fetchCoreStockQtyMap(products) : Promise.resolve({}),
+    fetchSlAndImageMaps(products)
   ]);
   if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
   componentUsageCountMap = fast[0] || {};
   coreStockQtyMap = fast[1] || {};
+  var slAux = fast[2] || {};
+  slPresenceMap = Object.assign({}, slPresenceMap, slAux.presence || {});
+  slPartsMap = Object.assign({}, slPartsMap, slAux.labels || {});
+  imageCountMap = Object.assign({}, imageCountMap, slAux.imageCounts || {});
+  imageThumbnailMap = Object.assign({}, imageThumbnailMap, slAux.thumbnails || {});
   (products || []).forEach(function(p) {
     var key = String(p && (p.dkd_shohin_id || p.id || "") || "");
     if (key && Object.prototype.hasOwnProperty.call(componentUsageCountMap, key)) {
@@ -8217,7 +8321,7 @@ function render() {
       if (p.manufacturer_part_number) html += "<span style='font-family:monospace'>"+esc(p.manufacturer_part_number)+"</span>";
       html += "</div>";
     }
-    if (hasSL) html += "<div class='card-sl'>SL: "+esc(slNums[0])+(slNums.length>1?" 他":"")+"</div>";
+    if (hasSL && slNums.length) html += "<div class='card-sl'>SL: "+esc(slNums[0])+(slNums.length>1?" 他":"")+"</div>";
     html += "</div>";
     html += "<div class='badges'>"
       +(hasSL?"<span class='badge-sl'>SL</span>":"")
@@ -8388,7 +8492,7 @@ function renderPanelStatic() {
   loadCatalogVehicleSummary(document.getElementById("panel-body"), p);
   loadProductSpecsForCurrent();
   if (canSeeSalesPrice()) loadSalesPriceSummaryForCurrent();
-  loadSlParts(productLegacyPartId(p));
+  loadSlPartsForProduct(p);
 }
 
 function specNumberText(value, suffix) {
@@ -9561,26 +9665,29 @@ async function loadParallelDiffForCurrent(targetDkdId) {
   wrap.innerHTML = html;
 }
 
+async function loadSlPartsForProduct(product) {
+  await fillProductLegacyPartIds([product]);
+  loadSlParts(productLegacyPartId(product));
+}
+
 async function loadSlParts(partId) {
   var wrap = document.getElementById("price-table-wrap");
   if (!wrap) return;
+  if (!partId) {
+    currentSlPartIds = [];
+    wrap.innerHTML = "";
+    loadImages(null);
+    var emptyKikanWrap = document.getElementById("kikan-wrap");
+    if (emptyKikanWrap) emptyKikanWrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
+    return;
+  }
 
   var showSupplierPrices = canSeePurchasePrice();
-  var slSelect = showSupplierPrices
-    ? "sl_parts(id, supplier_pn, unit_price, currency, moq, price_jpy, suppliers(name, short_name, country))"
-    : "sl_parts(id)";
-
-  // part_sl_mapping → sl_parts → suppliers を JOIN して取得
-  var r = await sb.from("part_sl_mapping")
-    .select(slSelect)
-    .eq("part_id", partId);
-
-  var rows = (r.data || []).map(function(m) { return m.sl_parts; }).filter(Boolean);
-
-  // 現在のパネルに表示中のSL品番IDを保持（画像ロードに使用）
-  currentSlPartIds = rows.map(function(sl) { return sl.id; });
-
   if (!showSupplierPrices) {
+    var hiddenSl = await sb.from("part_sl_mapping")
+      .select("sl_part_id")
+      .eq("part_id", partId);
+    currentSlPartIds = (hiddenSl.data || []).map(function(m) { return m.sl_part_id; }).filter(Boolean);
     wrap.innerHTML = "";
     loadImages(currentSlPartIds.length ? currentSlPartIds : null);
     var scdHidden = currentProduct.dkd_shohin_id || currentProduct.shohin_cd;
@@ -9592,6 +9699,16 @@ async function loadSlParts(partId) {
     }
     return;
   }
+
+  // part_sl_mapping → sl_parts → suppliers を JOIN して取得
+  var r = await sb.from("part_sl_mapping")
+    .select("sl_parts(id, supplier_pn, unit_price, currency, moq, price_jpy, suppliers(name, short_name, country))")
+    .eq("part_id", partId);
+
+  var rows = (r.data || []).map(function(m) { return m.sl_parts; }).filter(Boolean);
+
+  // 現在のパネルに表示中のSL品番IDを保持（画像ロードに使用）
+  currentSlPartIds = rows.map(function(sl) { return sl.id; });
 
   if (rows.length === 0) {
     wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("no_prices") + "</div>";
