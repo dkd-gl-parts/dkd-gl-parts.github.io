@@ -3342,6 +3342,10 @@ var imageCountMap     = {};
 var imageThumbnailMap = {};
 var slPartsMap        = {};  // part_id → SL品番リスト
 var slPresenceMap     = {};  // part_id → SL品番あり
+var imageCountCache     = {};
+var imageThumbnailCache = {};
+var slPartsCache        = {};
+var slPresenceCache     = {};
 var componentUsageCountMap = {};
 var coreStockQtyMap = {};
 var kikanCompatibleMap = {};
@@ -3363,7 +3367,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.187";
+var APP_VERSION       = "v1.1.188";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -7467,6 +7471,32 @@ function productHasSlPart(p, slNums) {
   );
 }
 
+function applyCachedSearchAuxiliaryMaps(products) {
+  var changed = false;
+  (products || []).forEach(function(p) {
+    var legacyId = productLegacyPartId(p);
+    if (!legacyId) return;
+    var key = String(legacyId);
+    if (Object.prototype.hasOwnProperty.call(slPresenceCache, key) && !Object.prototype.hasOwnProperty.call(slPresenceMap, key)) {
+      slPresenceMap[key] = slPresenceCache[key];
+      changed = true;
+    }
+    if (Object.prototype.hasOwnProperty.call(slPartsCache, key) && !Object.prototype.hasOwnProperty.call(slPartsMap, key)) {
+      slPartsMap[key] = slPartsCache[key];
+      changed = true;
+    }
+    if (Object.prototype.hasOwnProperty.call(imageCountCache, key) && !Object.prototype.hasOwnProperty.call(imageCountMap, key)) {
+      imageCountMap[key] = imageCountCache[key];
+      changed = true;
+    }
+    if (Object.prototype.hasOwnProperty.call(imageThumbnailCache, key) && !Object.prototype.hasOwnProperty.call(imageThumbnailMap, key)) {
+      imageThumbnailMap[key] = imageThumbnailCache[key];
+      changed = true;
+    }
+  });
+  return changed;
+}
+
 function productLegacyPartIds(products) {
   var seen = {};
   var ids = [];
@@ -7509,13 +7539,22 @@ async function fillProductLegacyPartIds(products) {
 }
 
 async function fetchSlAndImageMaps(products) {
+  var mapping = await fetchSlMappingMaps(products);
+  var detail = await fetchSlLabelAndImageMaps(mapping);
+  return {
+    presence: mapping.presence || {},
+    labels: detail.labels || {},
+    imageCounts: detail.imageCounts || {},
+    thumbnails: detail.thumbnails || {}
+  };
+}
+
+async function fetchSlMappingMaps(products) {
   await fillProductLegacyPartIds(products);
   var partIds = productLegacyPartIds(products);
-  var result = { presence: {}, labels: {}, imageCounts: {}, thumbnails: {} };
+  var result = { presence: {}, slIdToPartIds: {}, slIds: [], partIds: partIds };
   if (!partIds.length) return result;
 
-  var slIdToPartIds = {};
-  var slIds = [];
   for (var i = 0; i < partIds.length; i += 200) {
     var chunk = partIds.slice(i, i + 200);
     var m = await sb.from("part_sl_mapping")
@@ -7530,49 +7569,64 @@ async function fetchSlAndImageMaps(products) {
       var slId = row.sl_part_id;
       if (!partId || !slId) return;
       result.presence[partId] = true;
-      if (!slIdToPartIds[slId]) {
-        slIdToPartIds[slId] = [];
-        slIds.push(slId);
+      if (!result.slIdToPartIds[slId]) {
+        result.slIdToPartIds[slId] = [];
+        result.slIds.push(slId);
       }
-      slIdToPartIds[slId].push(partId);
+      result.slIdToPartIds[slId].push(partId);
     });
   }
+  return result;
+}
 
-  if (canSeePurchasePrice()) {
-    for (var j = 0; j < partIds.length; j += 200) {
-      var labelChunk = partIds.slice(j, j + 200);
-      var labels = await sb.from("part_sl_mapping")
-        .select("part_id, sl_parts(supplier_pn)")
-        .in("part_id", labelChunk);
-      if (labels.error) {
-        console.warn("SL label lookup failed", labels.error);
+async function fetchSlLabelAndImageMaps(mapping) {
+  var result = { labels: {}, imageCounts: {}, thumbnails: {} };
+  var partIds = (mapping && mapping.partIds) || [];
+  var slIds = (mapping && mapping.slIds) || [];
+  var slIdToPartIds = (mapping && mapping.slIdToPartIds) || {};
+
+  var labelPromise = Promise.resolve();
+  if (canSeePurchasePrice() && partIds.length) {
+    labelPromise = (async function() {
+      for (var j = 0; j < partIds.length; j += 200) {
+        var labelChunk = partIds.slice(j, j + 200);
+        var labels = await sb.from("part_sl_mapping")
+          .select("part_id, sl_parts(supplier_pn)")
+          .in("part_id", labelChunk);
+        if (labels.error) {
+          console.warn("SL label lookup failed", labels.error);
+          continue;
+        }
+        (labels.data || []).forEach(function(row) {
+          if (!row.part_id || !row.sl_parts || !row.sl_parts.supplier_pn) return;
+          if (!result.labels[row.part_id]) result.labels[row.part_id] = [];
+          result.labels[row.part_id].push(row.sl_parts.supplier_pn);
+        });
+      }
+    })();
+  }
+
+  var imagePromise = (async function() {
+    for (var k = 0; k < slIds.length; k += 200) {
+      var imageChunk = slIds.slice(k, k + 200);
+      var imgs = await sb.from("sl_part_images")
+        .select("image_url, sl_part_id")
+        .in("sl_part_id", imageChunk)
+        .order("created_at");
+      if (imgs.error) {
+        console.warn("SL image lookup failed", imgs.error);
         continue;
       }
-      (labels.data || []).forEach(function(row) {
-        if (!row.part_id || !row.sl_parts || !row.sl_parts.supplier_pn) return;
-        if (!result.labels[row.part_id]) result.labels[row.part_id] = [];
-        result.labels[row.part_id].push(row.sl_parts.supplier_pn);
+      (imgs.data || []).forEach(function(img) {
+        (slIdToPartIds[img.sl_part_id] || []).forEach(function(partId) {
+          result.imageCounts[partId] = (result.imageCounts[partId] || 0) + 1;
+          if (!result.thumbnails[partId]) result.thumbnails[partId] = img.image_url;
+        });
       });
     }
-  }
+  })();
 
-  for (var k = 0; k < slIds.length; k += 200) {
-    var imageChunk = slIds.slice(k, k + 200);
-    var imgs = await sb.from("sl_part_images")
-      .select("image_url, sl_part_id")
-      .in("sl_part_id", imageChunk)
-      .order("created_at");
-    if (imgs.error) {
-      console.warn("SL image lookup failed", imgs.error);
-      continue;
-    }
-    (imgs.data || []).forEach(function(img) {
-      (slIdToPartIds[img.sl_part_id] || []).forEach(function(partId) {
-        result.imageCounts[partId] = (result.imageCounts[partId] || 0) + 1;
-        if (!result.thumbnails[partId]) result.thumbnails[partId] = img.image_url;
-      });
-    });
-  }
+  await Promise.all([labelPromise, imagePromise]);
   return result;
 }
 
@@ -8056,13 +8110,19 @@ async function fetchCoreStockQtyMap(products) {
 async function fetchKikanCompatibleMap(products, isStale) {
   var map = {};
   var rows = (products || []).slice(0, KIKAN_FLAG_LOOKUP_LIMIT);
-  var rpcResult = await fetchKikanRpcFlagMap(rows);
+  if (isStale && isStale()) return map;
+  var parallel = await Promise.all([
+    fetchKikanRpcFlagMap(rows),
+    fetchKikanGroupMemberFlagMap(rows)
+  ]);
+  if (isStale && isStale()) return map;
+  var rpcResult = parallel[0];
+  var directMap = parallel[1] || {};
   if (rpcResult && rpcResult.ok) {
     Object.keys(rpcResult.map || {}).forEach(function(key) {
       map[key] = true;
       kikanCompatibleFlagCache[key] = true;
     });
-    var directMap = await fetchKikanGroupMemberFlagMap(rows);
     Object.keys(directMap || {}).forEach(function(key) {
       map[key] = true;
       kikanCompatibleFlagCache[key] = true;
@@ -8075,7 +8135,6 @@ async function fetchKikanCompatibleMap(products, isStale) {
     });
     return map;
   }
-  var directMap = await fetchKikanGroupMemberFlagMap(rows);
   Object.keys(directMap).forEach(function(key) {
     map[key] = true;
     kikanCompatibleFlagCache[key] = true;
@@ -8199,40 +8258,58 @@ async function fetchKikanGroupMemberFlagMap(products) {
 
 async function loadProductSearchAuxiliaryData(seq, products) {
   var auxSeq = productAuxSeq;
-  var fast = await Promise.all([
-    canSeeComponentInfo() ? fetchComponentUsageCountMap(products) : Promise.resolve({}),
-    canSeeCoreStockInfo() ? fetchCoreStockQtyMap(products) : Promise.resolve({})
-  ]);
-  if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
-  componentUsageCountMap = fast[0] || {};
-  coreStockQtyMap = fast[1] || {};
-  (products || []).forEach(function(p) {
-    var key = String(p && (p.dkd_shohin_id || p.id || "") || "");
-    if (key && Object.prototype.hasOwnProperty.call(componentUsageCountMap, key)) {
-      p.component_count = componentUsageCountMap[key];
-    }
-  });
-  render();
-
-  var kikanPromise = fetchKikanCompatibleMap(products, function() {
+  var lookupProducts = (products || []).slice(0, SEARCH_RENDER_LIMIT);
+  function isStale() {
     return seq !== searchRequestSeq || auxSeq !== productAuxSeq;
-  });
-  var slAux = await fetchSlAndImageMaps(products);
-  if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
-  slPresenceMap = Object.assign({}, slPresenceMap, slAux.presence || {});
-  slPartsMap = Object.assign({}, slPartsMap, slAux.labels || {});
-  imageCountMap = Object.assign({}, imageCountMap, slAux.imageCounts || {});
-  imageThumbnailMap = Object.assign({}, slAux.thumbnails || {});
-  render();
+  }
+  if (applyCachedSearchAuxiliaryMaps(lookupProducts)) render();
 
-  if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
-  var kikanMap = await kikanPromise;
-  if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
-  kikanCompatibleMap = Object.assign({}, kikanCompatibleMap, kikanMap || {});
-  (products || []).forEach(function(p) {
-    p.has_kikan_compatible = hasProductKikanCompatible(p);
-  });
-  render();
+  var fastPromise = (async function() {
+    var fast = await Promise.all([
+      canSeeComponentInfo() ? fetchComponentUsageCountMap(lookupProducts) : Promise.resolve({}),
+      canSeeCoreStockInfo() ? fetchCoreStockQtyMap(lookupProducts) : Promise.resolve({})
+    ]);
+    if (isStale()) return;
+    componentUsageCountMap = fast[0] || {};
+    coreStockQtyMap = fast[1] || {};
+    lookupProducts.forEach(function(p) {
+      var key = String(p && (p.dkd_shohin_id || p.id || "") || "");
+      if (key && Object.prototype.hasOwnProperty.call(componentUsageCountMap, key)) {
+        p.component_count = componentUsageCountMap[key];
+      }
+    });
+    render();
+  })();
+
+  var slPromise = (async function() {
+    var slMapping = await fetchSlMappingMaps(lookupProducts);
+    if (isStale()) return;
+    Object.assign(slPresenceCache, slMapping.presence || {});
+    slPresenceMap = Object.assign({}, slPresenceMap, slMapping.presence || {});
+    render();
+
+    var slDetail = await fetchSlLabelAndImageMaps(slMapping);
+    if (isStale()) return;
+    Object.assign(slPartsCache, slDetail.labels || {});
+    Object.assign(imageCountCache, slDetail.imageCounts || {});
+    Object.assign(imageThumbnailCache, slDetail.thumbnails || {});
+    slPartsMap = Object.assign({}, slPartsMap, slDetail.labels || {});
+    imageCountMap = Object.assign({}, imageCountMap, slDetail.imageCounts || {});
+    imageThumbnailMap = Object.assign({}, imageThumbnailMap, slDetail.thumbnails || {});
+    render();
+  })();
+
+  var kikanPromise = (async function() {
+    var kikanMap = await fetchKikanCompatibleMap(lookupProducts, isStale);
+    if (isStale()) return;
+    kikanCompatibleMap = Object.assign({}, kikanCompatibleMap, kikanMap || {});
+    lookupProducts.forEach(function(p) {
+      p.has_kikan_compatible = hasProductKikanCompatible(p);
+    });
+    render();
+  })();
+
+  await Promise.allSettled([fastPromise, slPromise, kikanPromise]);
 }
 
 function productDkdId(p) {
@@ -10455,6 +10532,8 @@ async function uploadImages(event) {
     if (legacyId) {
       imageCountMap[legacyId]     = currentImages.length;
       imageThumbnailMap[legacyId] = currentImages.length>0?currentImages[0].image_url:null;
+      imageCountCache[legacyId] = imageCountMap[legacyId];
+      imageThumbnailCache[legacyId] = imageThumbnailMap[legacyId];
     }
   }
   render();
@@ -10472,6 +10551,8 @@ async function deleteImage(imgId, imageUrl) {
     if (legacyId) {
       imageCountMap[legacyId]     = currentImages.length;
       imageThumbnailMap[legacyId] = currentImages.length>0?currentImages[0].image_url:null;
+      imageCountCache[legacyId] = imageCountMap[legacyId];
+      imageThumbnailCache[legacyId] = imageThumbnailMap[legacyId];
     }
   }
   renderImages(); render();
