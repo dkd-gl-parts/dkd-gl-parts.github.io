@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
 <title>D-CATS</title>
+<link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -3367,7 +3368,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.190";
+var APP_VERSION       = "v1.1.191";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -7386,11 +7387,39 @@ function thumbImgHtml(url, options) {
   var original = String(url || "");
   var thumb = buildSupabaseThumbUrl(original, options.width || 96, options.height || options.width || 96, options.resize || "contain");
   var loading = options.loading || "lazy";
+  var decoding = options.decoding || "async";
   var fetchPriority = options.fetchPriority ? " fetchpriority='" + esc(options.fetchPriority) + "'" : "";
   var cls = options.className ? " class='" + esc(options.className) + "'" : "";
   return "<img" + cls + " src='" + esc(thumb || original) + "' data-original-src='" + esc(original) +
-    "' loading='" + esc(loading) + "' decoding='async'" + fetchPriority +
+    "' loading='" + esc(loading) + "' decoding='" + esc(decoding) + "'" + fetchPriority +
     " alt='' onerror=\"this.onerror=null;if(this.dataset.originalSrc){this.src=this.dataset.originalSrc;}\">";
+}
+
+var preloadedThumbUrls = {};
+function preloadThumbImage(url, options) {
+  options = options || {};
+  var original = String(url || "");
+  if (!original) return;
+  var src = buildSupabaseThumbUrl(original, options.width || 96, options.height || options.width || 96, options.resize || "contain") || original;
+  if (!src || preloadedThumbUrls[src]) return;
+  preloadedThumbUrls[src] = true;
+  var img = new Image();
+  img.decoding = "async";
+  img.src = src;
+}
+
+function preloadProductSearchThumbnails(products) {
+  (products || []).slice(0, productSearchLimit || SEARCH_INITIAL_LIMIT).forEach(function(p) {
+    var legacyId = productLegacyPartId(p);
+    var thumb = legacyId ? (imageThumbnailMap[legacyId] || "") : "";
+    if (thumb) preloadThumbImage(thumb, { width: 112, height: 112, resize: "contain" });
+  });
+}
+
+function preloadCurrentImageThumbnails(images) {
+  (images || []).forEach(function(img) {
+    if (img && img.image_url) preloadThumbImage(img.image_url, { width: 240, height: 240, resize: "contain" });
+  });
 }
 
 // カテゴリ名を現在の言語で表示する
@@ -8093,6 +8122,7 @@ async function runProductSearch(options) {
   var cardFlags = await fetchProductSearchCardFlags(allProducts);
   if (seq !== searchRequestSeq) return;
   applyProductSearchCardFlags(cardFlags, allProducts);
+  preloadProductSearchThumbnails(allProducts);
   renderCategoryChips();
   render();
   loadProductSearchAuxiliaryData(seq, allProducts.slice());
@@ -8547,8 +8577,9 @@ function render() {
         width: 112,
         height: 112,
         resize: "contain",
-        loading: idx < 8 ? "eager" : "lazy",
-        fetchPriority: idx < 8 ? "high" : "low"
+        loading: "eager",
+        decoding: "sync",
+        fetchPriority: idx < 12 ? "high" : "auto"
       }) + "</div>";
     } else {
       html += "<div class='card-thumb card-thumb-empty'>&#x1F5BC;</div>";
@@ -8753,6 +8784,7 @@ function renderPanelStatic() {
   document.getElementById("img-grid").innerHTML =
     "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + t("img_loading") + "</div></div>";
   document.getElementById("img-count").textContent = "";
+  renderCachedPanelThumbnail();
   document.getElementById("panel-scroll").scrollTop = 0;
   var editCurrentBtn = document.getElementById("btn-edit-current-product");
   if (editCurrentBtn) editCurrentBtn.addEventListener("click", openCoreProductEditFromSearch);
@@ -8765,6 +8797,28 @@ function renderPanelStatic() {
   loadProductSpecsForCurrent();
   if (canSeeSalesPrice()) loadSalesPriceSummaryForCurrent();
   loadSlPartsForProduct(p);
+}
+
+function renderCachedPanelThumbnail() {
+  if (!currentProduct) return false;
+  var legacyId = productLegacyPartId(currentProduct);
+  var thumb = legacyId ? (imageThumbnailMap[legacyId] || imageThumbnailCache[legacyId] || "") : "";
+  if (!thumb) return false;
+  var count = legacyId ? (imageCountMap[legacyId] || imageCountCache[legacyId] || 0) : 0;
+  var grid = document.getElementById("img-grid");
+  var countEl = document.getElementById("img-count");
+  if (!grid) return false;
+  preloadThumbImage(thumb, { width: 240, height: 240, resize: "contain" });
+  if (countEl) countEl.textContent = count > 0 ? count + " 枚" : "";
+  grid.innerHTML = "<div class='img-wrap cached-panel-thumb'>" + thumbImgHtml(thumb, {
+    width: 240,
+    height: 240,
+    resize: "contain",
+    loading: "eager",
+    decoding: "sync",
+    fetchPriority: "high"
+  }) + "</div>";
+  return true;
 }
 
 function specNumberText(value, suffix) {
@@ -10509,6 +10563,7 @@ async function loadImages(slPartIds) {
     .in("sl_part_id", slPartIds)
     .order("created_at");
   currentImages = r.data || [];
+  preloadCurrentImageThumbnails(currentImages);
   renderImages();
 }
 
@@ -10528,8 +10583,9 @@ function renderImages() {
       width: 240,
       height: 240,
       resize: "contain",
-      loading: i < 2 ? "eager" : "lazy",
-      fetchPriority: i < 2 ? "high" : "low"
+      loading: "eager",
+      decoding: "sync",
+      fetchPriority: i < 2 ? "high" : "auto"
     }).replace("<img", "<img data-index='" + i + "' data-url='" + esc(img.image_url) + "'");
     html += "</div>";
   });
