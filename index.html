@@ -886,8 +886,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         </div>
       </div>
       <div class="filter-row" id="filter-row">
-        <button class="chip active" data-filter="all" data-i18n="filter_all">すべて</button>
-        <button class="chip" data-filter="sl"  data-i18n="filter_sl">SL品番あり</button>
+        <button class="chip active" type="button" data-filter="all" data-i18n="filter_all">すべて</button>
+        <button class="chip" type="button" data-filter="sl"  data-i18n="filter_sl">SL品番あり</button>
       </div>
       <div class="count-bar" id="count-bar" data-i18n="loading">読み込み中...</div>
       <div class="list-area">
@@ -3345,6 +3345,7 @@ var coreStockQtyMap = {};
 var kikanCompatibleMap = {};
 var currentSlPartIds  = [];  // 現在表示中のSL品番IDリスト（画像ロード用）
 var currentFilter     = "all";
+var lastFilterTouchAt = 0;
 var currentProduct    = null;
 var currentCoreDkdShohinId = null;
 var currentProductSpecs = [];
@@ -3359,7 +3360,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.182";
+var APP_VERSION       = "v1.1.184";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -7333,6 +7334,7 @@ function renderCategoryChips() {
     var catCode = cat.category_code || cat.category;
     var btn = document.createElement("button");
     btn.className = "chip";
+    btn.type = "button";
     btn.dataset.filter = "cat:" + catCode;
     btn.textContent = categoryOptionLabel(cat);
     btn.classList.toggle("active", currentFilter === btn.dataset.filter);
@@ -7657,7 +7659,10 @@ async function fetchSlProductsFromMapping(q, maxRows) {
     .select("part_id")
     .not("part_id", "is", null)
     .limit(1000);
-  if (mappings.error) return mappings;
+  if (mappings.error) {
+    console.warn("SL mapping direct lookup failed; falling back to RPC", mappings.error);
+    return await fetchSlProductsViaRpc(q, maxRows);
+  }
 
   var partIds = uniqueTextValues((mappings.data || []).map(function(row) {
     return String(row.part_id || "").trim();
@@ -7666,7 +7671,7 @@ async function fetchSlProductsFromMapping(q, maxRows) {
   }).filter(function(id) {
     return !isNaN(id);
   });
-  if (!partIds.length) return { data: [], error: null };
+  if (!partIds.length) return await fetchSlProductsViaRpc(q, maxRows);
 
   var rows = [];
   var seen = {};
@@ -7677,7 +7682,10 @@ async function fetchSlProductsFromMapping(q, maxRows) {
       .in("legacy_part_id", chunk)
       .order("manufacturer_part_number", { ascending: true })
       .order("genuine_part_number", { ascending: true });
-    if (r.error) return r;
+    if (r.error) {
+      console.warn("SL product direct lookup failed; falling back to RPC", r.error);
+      return await fetchSlProductsViaRpc(q, maxRows);
+    }
     normalizeCoreProductFastRows(r.data || []).forEach(function(row) {
       var key = String(row.dkd_shohin_id || row.id || "");
       if (!key || seen[key]) return;
@@ -7685,6 +7693,11 @@ async function fetchSlProductsFromMapping(q, maxRows) {
       row.has_sl_part = true;
       rows.push(row);
     });
+  }
+
+  if (!rows.length) {
+    var fallback = await fetchSlProductsViaRpc(q, maxRows);
+    if (!fallback.error && (fallback.data || []).length) return fallback;
   }
 
   var query = norm(String(q || "").trim());
@@ -7707,6 +7720,21 @@ async function fetchSlProductsFromMapping(q, maxRows) {
   }
 
   return { data: rows.slice(0, maxRows), error: null };
+}
+
+async function fetchSlProductsViaRpc(q, maxRows) {
+  var r = await sb.rpc("search_core_products", {
+    search_text: q || null,
+    category_filter: null,
+    require_sl: true,
+    max_rows: maxRows || productSearchLimit
+  });
+  if (r.error) return r;
+  r.data = normalizeCoreProductFastRows(r.data || []);
+  (r.data || []).forEach(function(row) {
+    row.has_sl_part = true;
+  });
+  return r;
 }
 
 function normalizePartQuery(q) {
@@ -10976,16 +11004,26 @@ document.getElementById("q").addEventListener("keydown", function(e){ if(e.key==
 document.getElementById("clear-btn").addEventListener("click", function(){ document.getElementById("q").value=""; currentFilter="all"; productSearchLimit=SEARCH_INITIAL_LIMIT; document.querySelectorAll("#filter-row .chip").forEach(function(c){ c.classList.toggle("active", c.dataset.filter==="all"); }); runProductSearch(); });
 document.querySelectorAll("#filter-row .chip").forEach(function(chip){
   chip.addEventListener("click", function(){
+    if (Date.now() - lastFilterTouchAt < 450) return;
     activateSearchFilterChip(chip);
   });
 });
-document.getElementById("filter-row").addEventListener("touchend", function(e) {
+function activateSearchFilterChipFromEvent(e) {
   var target = e.target && e.target.closest ? e.target : (e.target && e.target.parentElement);
   var chip = target && target.closest ? target.closest(".chip[data-filter]") : null;
   if (!chip) return;
-  e.preventDefault();
+  if (e.cancelable) e.preventDefault();
+  lastFilterTouchAt = Date.now();
   activateSearchFilterChip(chip);
+}
+document.getElementById("filter-row").addEventListener("touchend", function(e) {
+  activateSearchFilterChipFromEvent(e);
 }, { passive: false });
+document.getElementById("filter-row").addEventListener("pointerup", function(e) {
+  if (!e.pointerType || e.pointerType === "mouse") return;
+  if (Date.now() - lastFilterTouchAt < 450) return;
+  activateSearchFilterChipFromEvent(e);
+});
 document.getElementById("btn-load-more").addEventListener("click", function(){
   productSearchLimit = Math.min(productSearchLimit + SEARCH_PAGE_STEP, SEARCH_FETCH_LIMIT);
   runProductSearch();
