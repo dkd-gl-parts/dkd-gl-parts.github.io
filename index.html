@@ -3348,7 +3348,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.173";
+var APP_VERSION       = "v1.1.174";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -7456,6 +7456,16 @@ function normalizedContains(value, query) {
   return !!query && norm(value).indexOf(query) >= 0;
 }
 
+function productHasSlPart(p, slNums) {
+  return !!(
+    (slNums && slNums.length > 0) ||
+    p.has_sl_part ||
+    p.has_sl ||
+    p.sl_part_count > 0 ||
+    p.sl_count > 0
+  );
+}
+
 function getFiltered() {
   var q = norm(document.getElementById("q").value.trim());
   return allProducts.filter(function(p) {
@@ -7474,7 +7484,7 @@ function getFiltered() {
       p.category, p.category_ja, p.category_en, p.category_zh
     ].some(function(v){ return normalizedContains(v, q); });
     var ms = partMatch || textMatch;
-    var hasSL  = legacyId && slPartsMap[legacyId] && slPartsMap[legacyId].length > 0;
+    var hasSL  = productHasSlPart(p, slNums);
     var mf = currentFilter==="sl" ? hasSL
            : currentFilter.indexOf("cat:") === 0 ? (p.category_code || p.category) === currentFilter.slice(4)
            : true;
@@ -7703,10 +7713,6 @@ async function runProductSearch(options) {
   var r;
   if (!q && categoryFilter && !requireSl) {
     r = await fetchCategoryProducts(categoryFilter, productSearchLimit);
-  } else if (!q && requireSl) {
-    r = await fetchSlProductsFromLoadedMap(productSearchLimit);
-  } else if (q && requireSl) {
-    r = await fetchCoreProductMasterMatches(q, null, Math.min(productSearchLimit * 4, SEARCH_FETCH_LIMIT));
   } else if (q && !requireSl) {
     r = await fetchCoreProductMasterMatches(q, categoryFilter, productSearchLimit);
   } else {
@@ -7735,6 +7741,11 @@ async function runProductSearch(options) {
     }
   }
   allProducts = filterVisibleProducts(r.data || []);
+  if (requireSl) {
+    allProducts.forEach(function(p) {
+      p.has_sl_part = true;
+    });
+  }
   componentUsageCountMap = {};
   coreStockQtyMap = {};
   kikanCompatibleMap = {};
@@ -8183,7 +8194,7 @@ function render() {
     var cnt   = legacyId ? (imageCountMap[legacyId]||0) : 0;
     var thumb = legacyId ? (imageThumbnailMap[legacyId]||"") : "";
     var slNums = legacyId ? (slPartsMap[legacyId] || []) : [];
-    var hasSL  = slNums.length > 0;
+    var hasSL  = productHasSlPart(p, slNums);
     var componentCount = canSeeComponentInfo() ? productComponentCount(p) : 0;
     var hasKikan = hasProductKikanCompatible(p);
     var mfr   = [p.manufacturer, p.vehicle_manufacturer].filter(Boolean).join(" / ");
