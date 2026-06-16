@@ -3349,7 +3349,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.180";
+var APP_VERSION       = "v1.1.181";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -7318,12 +7318,7 @@ function renderCategoryChips() {
     btn.textContent = categoryOptionLabel(cat);
     btn.classList.toggle("active", currentFilter === btn.dataset.filter);
     btn.addEventListener("click", function() {
-      currentFilter = btn.dataset.filter;
-      productSearchLimit = SEARCH_INITIAL_LIMIT;
-      document.querySelectorAll("#filter-row .chip").forEach(function(c) {
-        c.classList.toggle("active", c === btn);
-      });
-      runProductSearch();
+      activateSearchFilterChip(btn);
     });
     filterRow.appendChild(btn);
   });
@@ -8445,6 +8440,19 @@ function closePanel() {
   }
   document.querySelectorAll(".card.selected").forEach(function(c){ c.classList.remove("selected"); });
   currentProduct = null; currentCoreDkdShohinId = null; currentProductSpecs = []; currentProductNominalSpec = null; currentParallelTargetDkdShohinId = null; currentParallelTargetProduct = null; currentImages = []; currentSlPartIds = [];
+}
+
+function activateSearchFilterChip(chip) {
+  if (!chip || !chip.dataset || !chip.dataset.filter) return;
+  currentFilter = chip.dataset.filter;
+  productSearchLimit = SEARCH_INITIAL_LIMIT;
+  document.querySelectorAll("#filter-row .chip").forEach(function(c) {
+    c.classList.toggle("active", c === chip);
+  });
+  if (!isPC()) closePanel();
+  var listArea = document.querySelector("#screen-search .list-area");
+  if (listArea) listArea.scrollTop = 0;
+  runProductSearch();
 }
 
 function renderPanelStatic() {
@@ -10946,12 +10954,16 @@ document.getElementById("q").addEventListener("keydown", function(e){ if(e.key==
 document.getElementById("clear-btn").addEventListener("click", function(){ document.getElementById("q").value=""; currentFilter="all"; productSearchLimit=SEARCH_INITIAL_LIMIT; document.querySelectorAll("#filter-row .chip").forEach(function(c){ c.classList.toggle("active", c.dataset.filter==="all"); }); runProductSearch(); });
 document.querySelectorAll("#filter-row .chip").forEach(function(chip){
   chip.addEventListener("click", function(){
-    currentFilter=chip.dataset.filter;
-    productSearchLimit=SEARCH_INITIAL_LIMIT;
-    document.querySelectorAll("#filter-row .chip").forEach(function(c){ c.classList.toggle("active",c===chip); });
-    runProductSearch();
+    activateSearchFilterChip(chip);
   });
 });
+document.getElementById("filter-row").addEventListener("touchend", function(e) {
+  var target = e.target && e.target.closest ? e.target : (e.target && e.target.parentElement);
+  var chip = target && target.closest ? target.closest(".chip[data-filter]") : null;
+  if (!chip) return;
+  e.preventDefault();
+  activateSearchFilterChip(chip);
+}, { passive: false });
 document.getElementById("btn-load-more").addEventListener("click", function(){
   productSearchLimit = Math.min(productSearchLimit + SEARCH_PAGE_STEP, SEARCH_FETCH_LIMIT);
   runProductSearch();
