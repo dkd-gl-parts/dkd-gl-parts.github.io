@@ -757,11 +757,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 <div id="screen-register" class="screen">
   <div class="reg-card">
     <h2 data-i18n="reg_title">アカウント申請</h2>
-    <p class="reg-desc" data-i18n="reg_desc">管理者が確認後、アクセスが許可されます。</p>
+    <p class="reg-desc" data-i18n="reg_desc">登録後、確認メールが届いた場合はメール内リンクを開いてからログインしてください。</p>
     <hr class="reg-divider">
     <div id="reg-success-box" style="display:none" class="reg-success-box">
       <div style="font-size:24px;margin-bottom:8px">&#x2713;</div>
-      <div data-i18n="reg_success">申請を受け付けました。</div>
+      <div data-i18n="reg_success">登録を受け付けました。</div>
     </div>
     <div id="reg-form">
       <label class="login-label" data-i18n="lbl_name">お名前</label>
@@ -2152,14 +2152,14 @@ var TRANSLATIONS = {
     change_pw_current_error: "現在のパスワードが正しくありません。",
     change_pw_no_email: "ログイン中のメールアドレスを確認できません。",
     reg_title: "アカウント申請",
-    reg_desc: "管理者が確認後、アクセスが許可されます。",
+    reg_desc: "登録後、確認メールが届いた場合はメール内リンクを開いてからログインしてください。",
     lbl_name: "お名前",
     lbl_company: "会社名",
     ph_name: "山田 太郎",
     ph_company: "株式会社○○",
     btn_submit_reg: "申請する",
     btn_back_login: "ログイン画面に戻る",
-    reg_success: "申請を受け付けました。管理者の承認をお待ちください。",
+    reg_success: "登録を受け付けました。確認メールが届いた場合はメール内リンクを開いてからログインしてください。",
     reg_error: "申請に失敗しました。もう一度お試しください。",
     err_reg_empty: "すべての項目を入力してください",
     err_reg_email: "有効なメールアドレスを入力してください",
@@ -2629,14 +2629,14 @@ var TRANSLATIONS = {
     change_pw_current_error: "The current password is incorrect.",
     change_pw_no_email: "Could not confirm the signed-in email address.",
     reg_title: "Account Registration Request",
-    reg_desc: "Access will be granted after admin review.",
+    reg_desc: "After registration, if you receive a confirmation email, open the link before logging in.",
     lbl_name: "Full Name",
     lbl_company: "Company Name",
     ph_name: "John Smith",
     ph_company: "Company Inc.",
     btn_submit_reg: "Submit Request",
     btn_back_login: "Back to Login",
-    reg_success: "Your request has been submitted. Please wait for admin approval.",
+    reg_success: "Registration received. If you receive a confirmation email, open the link before logging in.",
     reg_error: "Registration failed. Please try again.",
     err_reg_empty: "Please fill in all fields",
     err_reg_email: "Please enter a valid email address",
@@ -3098,14 +3098,14 @@ var TRANSLATIONS = {
     change_pw_current_error: "当前密码不正确。",
     change_pw_no_email: "无法确认当前登录邮箱。",
     reg_title: "账号申请",
-    reg_desc: "管理员审核后将授予访问权限。",
+    reg_desc: "注册后，如收到确认邮件，请先打开邮件中的链接再登录。",
     lbl_name: "姓名",
     lbl_company: "公司名称",
     ph_name: "张三",
     ph_company: "○○有限公司",
     btn_submit_reg: "提交申请",
     btn_back_login: "返回登录页面",
-    reg_success: "申请已提交，请等待管理员审核。",
+    reg_success: "已受理注册。如收到确认邮件，请先打开邮件中的链接再登录。",
     reg_error: "申请失败，请重试。",
     err_reg_empty: "请填写所有字段",
     err_reg_email: "请输入有效的邮箱地址",
@@ -3348,7 +3348,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.172";
+var APP_VERSION       = "v1.1.173";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
