@@ -439,7 +439,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .search-input  { flex: 1; min-width: 0; border: 1px solid #d0d0d0; border-radius: 8px; padding: 8px 12px; font-size: 14px; outline: none; }
 .search-input:focus { border-color: #4f8ef7; }
 .btn-search { border: none; border-radius: 8px; padding: 8px 16px; font-size: 14px; cursor: pointer; font-weight: 600; white-space: nowrap; flex-shrink: 0; background: #4f8ef7; color: #fff; }
-.search-scope-row { display: none; align-items: center; gap: 8px; margin-top: 8px; }
+.search-scope-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
 .search-scope-label { font-size: 12px; color: #666; white-space: nowrap; }
 .search-scope-select { flex: 1; min-width: 0; border: 1px solid #d0d0d0; border-radius: 8px; background: #fff; color: #222; padding: 8px 10px; font-size: 14px; }
 .clear-row  { margin-top: 6px; text-align: right; }
@@ -447,7 +447,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .filter-row { display: flex; gap: 8px; padding: 8px 16px; background: #fff; border-bottom: 1px solid #e8e8e8; overflow-x: auto; flex-shrink: 0; }
 .chip       { border: 1px solid #d0d0d0; border-radius: 16px; padding: 4px 12px; font-size: 12px; cursor: pointer; background: #fff; color: #555; white-space: nowrap; flex-shrink: 0; }
 .chip.active { background: #4f8ef7; color: #fff; border-color: #4f8ef7; }
-@media (max-width: 767px) { .search-scope-row { display: flex; } }
 .count-bar  { padding: 6px 16px; font-size: 12px; color: #888; background: #fafafa; border-bottom: 1px solid #eee; flex-shrink: 0; }
 .list-area  { flex: 1; overflow-y: auto; }
 .list       { padding: 8px; }
@@ -898,7 +897,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       </div>
       <div class="filter-row" id="filter-row">
         <button class="chip active" type="button" data-filter="all" data-i18n="filter_all">すべて</button>
-        <button class="chip" type="button" data-filter="sl"  data-i18n="filter_sl">SL品番あり</button>
       </div>
       <div class="count-bar" id="count-bar" data-i18n="loading">読み込み中...</div>
       <div class="list-area">
@@ -3359,6 +3357,7 @@ var coreStockQtyMap = {};
 var kikanCompatibleMap = {};
 var currentSlPartIds  = [];  // 現在表示中のSL品番IDリスト（画像ロード用）
 var currentFilter     = "all";
+var searchSlOnly      = false;
 var lastFilterTouchAt = 0;
 var currentProduct    = null;
 var currentCoreDkdShohinId = null;
@@ -3374,7 +3373,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.185";
+var APP_VERSION       = "v1.1.186";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -7606,9 +7605,8 @@ function getFiltered() {
     ].some(function(v){ return normalizedContains(v, q); });
     var ms = partMatch || textMatch;
     var hasSL  = productHasSlPart(p, slNums);
-    var mf = currentFilter==="sl" ? hasSL
-           : currentFilter.indexOf("cat:") === 0 ? (p.category_code || p.category) === currentFilter.slice(4)
-           : true;
+    var mf = (searchSlOnly ? hasSL : true) &&
+      (currentFilter.indexOf("cat:") === 0 ? (p.category_code || p.category) === currentFilter.slice(4) : true);
     return ms && mf;
   });
 }
@@ -7890,19 +7888,19 @@ async function runProductSearch(options) {
   if (options.resetLimit) productSearchLimit = SEARCH_INITIAL_LIMIT;
   var q = document.getElementById("q").value.trim();
   if (currentFilter === "production") currentFilter = "all";
-  if (q && options.resetFilter && currentFilter !== "all" && currentFilter !== "sl") {
+  if (q && options.resetFilter && currentFilter !== "all") {
     currentFilter = "all";
       document.querySelectorAll("#filter-row .chip").forEach(function(c) {
       c.classList.toggle("active", c.dataset.filter === "all");
     });
   }
   var categoryFilter = currentFilter.indexOf("cat:") === 0 ? currentFilter.slice(4) : null;
-  var requireSl = currentFilter === "sl";
+  var requireSl = !!searchSlOnly;
   var list = document.getElementById("list");
   var seq = ++searchRequestSeq;
   productAuxSeq++;
 
-  if (!q && currentFilter === "all") {
+  if (!q && currentFilter === "all" && !requireSl) {
     allProducts = [];
     imageCountMap = {};
     imageThumbnailMap = {};
@@ -8221,17 +8219,11 @@ async function loadProductSearchAuxiliaryData(seq, products) {
   var auxSeq = productAuxSeq;
   var fast = await Promise.all([
     canSeeComponentInfo() ? fetchComponentUsageCountMap(products) : Promise.resolve({}),
-    canSeeCoreStockInfo() ? fetchCoreStockQtyMap(products) : Promise.resolve({}),
-    fetchSlAndImageMaps(products)
+    canSeeCoreStockInfo() ? fetchCoreStockQtyMap(products) : Promise.resolve({})
   ]);
   if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
   componentUsageCountMap = fast[0] || {};
   coreStockQtyMap = fast[1] || {};
-  var slAux = fast[2] || {};
-  slPresenceMap = Object.assign({}, slPresenceMap, slAux.presence || {});
-  slPartsMap = Object.assign({}, slPartsMap, slAux.labels || {});
-  imageCountMap = Object.assign({}, imageCountMap, slAux.imageCounts || {});
-  imageThumbnailMap = Object.assign({}, imageThumbnailMap, slAux.thumbnails || {});
   (products || []).forEach(function(p) {
     var key = String(p && (p.dkd_shohin_id || p.id || "") || "");
     if (key && Object.prototype.hasOwnProperty.call(componentUsageCountMap, key)) {
@@ -8239,11 +8231,20 @@ async function loadProductSearchAuxiliaryData(seq, products) {
     }
   });
   render();
-  await delay(120);
-  if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
-  var kikanMap = await fetchKikanCompatibleMap(products, function() {
+
+  var kikanPromise = fetchKikanCompatibleMap(products, function() {
     return seq !== searchRequestSeq || auxSeq !== productAuxSeq;
   });
+  var slAux = await fetchSlAndImageMaps(products);
+  if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
+  slPresenceMap = Object.assign({}, slPresenceMap, slAux.presence || {});
+  slPartsMap = Object.assign({}, slPartsMap, slAux.labels || {});
+  imageCountMap = Object.assign({}, imageCountMap, slAux.imageCounts || {});
+  imageThumbnailMap = Object.assign({}, slAux.thumbnails || {});
+  render();
+
+  if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
+  var kikanMap = await kikanPromise;
   if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
   kikanCompatibleMap = Object.assign({}, kikanCompatibleMap, kikanMap || {});
   (products || []).forEach(function(p) {
@@ -8387,7 +8388,7 @@ function render() {
   var q    = document.getElementById("q").value.trim();
   var list = document.getElementById("list");
   var moreWrap = document.getElementById("load-more-wrap");
-  if (!q && currentFilter === "all") {
+  if (!q && currentFilter === "all" && !searchSlOnly) {
     document.getElementById("count-bar").textContent = t("hint_search");
     list.innerHTML = "<div class='empty'>" + t("hint_search") + "</div>";
     if (moreWrap) moreWrap.style.display = "none";
@@ -8509,7 +8510,7 @@ function syncSearchFilterControls() {
     c.classList.toggle("active", c.dataset.filter === currentFilter);
   });
   var select = document.getElementById("search-filter-select");
-  if (select) select.value = (currentFilter === "sl") ? "sl" : "all";
+  if (select) select.value = searchSlOnly ? "sl" : "all";
 }
 
 function activateSearchFilterValue(filterValue, options) {
@@ -8533,7 +8534,7 @@ function applyVisibleSearchScopeFilter() {
   if (!select) return;
   var row = select.closest ? select.closest(".search-scope-row") : null;
   if (row && window.getComputedStyle(row).display === "none") return;
-  currentFilter = (select.value === "sl") ? "sl" : "all";
+  searchSlOnly = (select.value === "sl");
   syncSearchFilterControls();
 }
 
@@ -11036,9 +11037,15 @@ document.getElementById("kf-candidates").addEventListener("click", function(e) {
 });
 document.getElementById("search-btn").addEventListener("click", function(){ applyVisibleSearchScopeFilter(); runProductSearch({ resetFilter: true, resetLimit: true }); });
 document.getElementById("q").addEventListener("keydown", function(e){ if(e.key==="Enter") { applyVisibleSearchScopeFilter(); runProductSearch({ resetFilter: true, resetLimit: true }); } });
-document.getElementById("clear-btn").addEventListener("click", function(){ document.getElementById("q").value=""; currentFilter="all"; productSearchLimit=SEARCH_INITIAL_LIMIT; syncSearchFilterControls(); runProductSearch(); });
+document.getElementById("clear-btn").addEventListener("click", function(){ document.getElementById("q").value=""; currentFilter="all"; searchSlOnly=false; productSearchLimit=SEARCH_INITIAL_LIMIT; syncSearchFilterControls(); runProductSearch(); });
 document.getElementById("search-filter-select").addEventListener("change", function(){
-  activateSearchFilterValue(this.value === "sl" ? "sl" : "all", { closePanel: true });
+  searchSlOnly = (this.value === "sl");
+  productSearchLimit = SEARCH_INITIAL_LIMIT;
+  syncSearchFilterControls();
+  if (!isPC()) closePanel();
+  var listArea = document.querySelector("#screen-search .list-area");
+  if (listArea) listArea.scrollTop = 0;
+  runProductSearch();
 });
 document.querySelectorAll("#filter-row .chip").forEach(function(chip){
   chip.addEventListener("click", function(){
