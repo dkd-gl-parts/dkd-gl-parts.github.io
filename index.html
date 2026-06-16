@@ -3367,7 +3367,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.188";
+var APP_VERSION       = "v1.1.189";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -7358,6 +7358,41 @@ function esc(s) {
   return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
 
+function buildSupabaseThumbUrl(url, width, height, resize) {
+  var raw = String(url || "");
+  if (!raw) return "";
+  var marker = "/storage/v1/object/public/";
+  var renderMarker = "/storage/v1/render/image/public/";
+  if (raw.indexOf(marker) < 0 && raw.indexOf(renderMarker) < 0) return raw;
+  var transformed = raw.indexOf(marker) >= 0 ? raw.replace(marker, renderMarker) : raw;
+  try {
+    var u = new URL(transformed);
+    u.searchParams.set("width", String(width || 96));
+    u.searchParams.set("height", String(height || width || 96));
+    u.searchParams.set("resize", resize || "contain");
+    u.searchParams.set("quality", "55");
+    return u.toString();
+  } catch (e) {
+    var joiner = transformed.indexOf("?") >= 0 ? "&" : "?";
+    return transformed + joiner + "width=" + encodeURIComponent(String(width || 96)) +
+      "&height=" + encodeURIComponent(String(height || width || 96)) +
+      "&resize=" + encodeURIComponent(resize || "contain") +
+      "&quality=55";
+  }
+}
+
+function thumbImgHtml(url, options) {
+  options = options || {};
+  var original = String(url || "");
+  var thumb = buildSupabaseThumbUrl(original, options.width || 96, options.height || options.width || 96, options.resize || "contain");
+  var loading = options.loading || "lazy";
+  var fetchPriority = options.fetchPriority ? " fetchpriority='" + esc(options.fetchPriority) + "'" : "";
+  var cls = options.className ? " class='" + esc(options.className) + "'" : "";
+  return "<img" + cls + " src='" + esc(thumb || original) + "' data-original-src='" + esc(original) +
+    "' loading='" + esc(loading) + "' decoding='async'" + fetchPriority +
+    " alt='' onerror=\"this.onerror=null;if(this.dataset.originalSrc){this.src=this.dataset.originalSrc;}\">";
+}
+
 // カテゴリ名を現在の言語で表示する
 // "alternator" / "Large Alternator" → キー "cat_Alternator" → 翻訳辞書を引く
 function categoryTranslationSource(category) {
@@ -8470,7 +8505,7 @@ function render() {
   document.getElementById("count-bar").textContent = countText;
   if (moreWrap) moreWrap.style.display = (allProducts.length >= productSearchLimit && productSearchLimit < SEARCH_FETCH_LIMIT) ? "" : "none";
   var html = "";
-  visibleItems.forEach(function(p) {
+  visibleItems.forEach(function(p, idx) {
     var legacyId = productLegacyPartId(p);
     var cnt   = legacyId ? (imageCountMap[legacyId]||0) : 0;
     var thumb = legacyId ? (imageThumbnailMap[legacyId]||"") : "";
@@ -8482,7 +8517,13 @@ function render() {
     var sel   = (currentProduct && currentProduct.id===p.id) ? " selected" : "";
     html += "<div class='card"+sel+"' data-id='"+p.id+"'><div class='card-top'>";
     if (thumb) {
-      html += "<div class='card-thumb'><img src='"+esc(thumb)+"' loading='lazy'></div>";
+      html += "<div class='card-thumb'>" + thumbImgHtml(thumb, {
+        width: 112,
+        height: 112,
+        resize: "contain",
+        loading: idx < 8 ? "eager" : "lazy",
+        fetchPriority: idx < 8 ? "high" : "low"
+      }) + "</div>";
     } else {
       html += "<div class='card-thumb card-thumb-empty'>&#x1F5BC;</div>";
     }
@@ -10457,7 +10498,13 @@ function renderImages() {
   var html = "";
   currentImages.forEach(function(img, i) {
     html += "<div class='img-wrap'>";
-    html += "<img src='"+esc(img.image_url)+"' loading='lazy' data-index='"+i+"' data-url='"+esc(img.image_url)+"'>";
+    html += thumbImgHtml(img.image_url, {
+      width: 240,
+      height: 240,
+      resize: "contain",
+      loading: i < 2 ? "eager" : "lazy",
+      fetchPriority: i < 2 ? "high" : "low"
+    }).replace("<img", "<img data-index='" + i + "' data-url='" + esc(img.image_url) + "'");
     html += "</div>";
   });
   grid.innerHTML = html;
@@ -10483,7 +10530,11 @@ function renderImageDeleteDialog() {
   var html = "";
   currentImages.forEach(function(img, i) {
     html += "<div class='image-delete-item'>";
-    html += "<div class='image-delete-preview'><img src='" + esc(img.image_url) + "' loading='lazy'></div>";
+    html += "<div class='image-delete-preview'>" + thumbImgHtml(img.image_url, {
+      width: 160,
+      height: 160,
+      resize: "contain"
+    }) + "</div>";
     html += "<button class='image-delete-btn' data-delete-image-index='" + i + "'>" + t("btn_delete_images") + "</button>";
     html += "</div>";
   });
@@ -10570,7 +10621,13 @@ function renderFullscreen() {
   document.getElementById("fs-next").classList.toggle("hidden",fsIndex===currentImages.length-1);
   var thumbs=document.getElementById("fs-thumbs");
   thumbs.innerHTML=currentImages.map(function(img,i){
-    return "<div class='fs-thumb"+(i===fsIndex?" active":"")+"' data-thumb='"+i+"'><img src='"+esc(img.image_url)+"' loading='lazy'></div>";
+    return "<div class='fs-thumb"+(i===fsIndex?" active":"")+"' data-thumb='"+i+"'>" + thumbImgHtml(img.image_url, {
+      width: 112,
+      height: 112,
+      resize: "contain",
+      loading: i === fsIndex ? "eager" : "lazy",
+      fetchPriority: i === fsIndex ? "high" : "low"
+    }) + "</div>";
   }).join("");
   var a=thumbs.querySelector(".active"); if(a) a.scrollIntoView({inline:"center",behavior:"smooth"});
 }
