@@ -3367,7 +3367,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.189";
+var APP_VERSION       = "v1.1.190";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -7532,6 +7532,63 @@ function applyCachedSearchAuxiliaryMaps(products) {
   return changed;
 }
 
+function productSearchCardDkdIds(products) {
+  var seen = {};
+  var ids = [];
+  (products || []).forEach(function(p) {
+    var id = parseInt(p && (p.dkd_shohin_id || p.id), 10);
+    if (isNaN(id) || seen[id]) return;
+    seen[id] = true;
+    ids.push(id);
+  });
+  return ids;
+}
+
+async function fetchProductSearchCardFlags(products) {
+  var ids = productSearchCardDkdIds((products || []).slice(0, SEARCH_RENDER_LIMIT));
+  if (!ids.length) return [];
+  var r = await sb.rpc("get_product_search_card_flags", { target_dkd_ids: ids });
+  if (r.error) {
+    console.warn("product search card flags lookup failed", r.error);
+    return [];
+  }
+  return r.data || [];
+}
+
+function applyProductSearchCardFlags(rows, products) {
+  var byDkd = {};
+  (products || []).forEach(function(p) {
+    var key = String(p && (p.dkd_shohin_id || p.id || "") || "");
+    if (key) byDkd[key] = p;
+  });
+  (rows || []).forEach(function(row) {
+    var dkdKey = String(row && row.dkd_shohin_id || "");
+    if (!dkdKey) return;
+    var p = byDkd[dkdKey] || null;
+    var hasSl = !!row.has_sl_part;
+    var imageCount = parseInt(row.image_count || 0, 10) || 0;
+    var thumbUrl = row.thumbnail_image_url || "";
+    var hasKikan = !!row.has_kikan_compatible;
+    if (p) {
+      p.has_sl_part = hasSl || !!p.has_sl_part;
+      p.has_kikan_compatible = hasKikan;
+    }
+    var legacyId = productLegacyPartId(p);
+    if (legacyId) {
+      var legacyKey = String(legacyId);
+      slPresenceMap[legacyKey] = hasSl;
+      slPresenceCache[legacyKey] = hasSl;
+      imageCountMap[legacyKey] = imageCount;
+      imageCountCache[legacyKey] = imageCount;
+      imageThumbnailMap[legacyKey] = thumbUrl;
+      imageThumbnailCache[legacyKey] = thumbUrl;
+    }
+    var kikanKey = p ? productKikanKey(p) : ("dkd:" + dkdKey);
+    kikanCompatibleMap[kikanKey] = hasKikan;
+    kikanCompatibleFlagCache[kikanKey] = hasKikan;
+  });
+}
+
 function productLegacyPartIds(products) {
   var seen = {};
   var ids = [];
@@ -8033,6 +8090,9 @@ async function runProductSearch(options) {
   componentUsageCountMap = {};
   coreStockQtyMap = {};
   kikanCompatibleMap = {};
+  var cardFlags = await fetchProductSearchCardFlags(allProducts);
+  if (seq !== searchRequestSeq) return;
+  applyProductSearchCardFlags(cardFlags, allProducts);
   renderCategoryChips();
   render();
   loadProductSearchAuxiliaryData(seq, allProducts.slice());
@@ -8297,54 +8357,20 @@ async function loadProductSearchAuxiliaryData(seq, products) {
   function isStale() {
     return seq !== searchRequestSeq || auxSeq !== productAuxSeq;
   }
-  if (applyCachedSearchAuxiliaryMaps(lookupProducts)) render();
-
-  var fastPromise = (async function() {
-    var fast = await Promise.all([
-      canSeeComponentInfo() ? fetchComponentUsageCountMap(lookupProducts) : Promise.resolve({}),
-      canSeeCoreStockInfo() ? fetchCoreStockQtyMap(lookupProducts) : Promise.resolve({})
-    ]);
-    if (isStale()) return;
-    componentUsageCountMap = fast[0] || {};
-    coreStockQtyMap = fast[1] || {};
-    lookupProducts.forEach(function(p) {
-      var key = String(p && (p.dkd_shohin_id || p.id || "") || "");
-      if (key && Object.prototype.hasOwnProperty.call(componentUsageCountMap, key)) {
-        p.component_count = componentUsageCountMap[key];
-      }
-    });
-    render();
-  })();
-
-  var slPromise = (async function() {
-    var slMapping = await fetchSlMappingMaps(lookupProducts);
-    if (isStale()) return;
-    Object.assign(slPresenceCache, slMapping.presence || {});
-    slPresenceMap = Object.assign({}, slPresenceMap, slMapping.presence || {});
-    render();
-
-    var slDetail = await fetchSlLabelAndImageMaps(slMapping);
-    if (isStale()) return;
-    Object.assign(slPartsCache, slDetail.labels || {});
-    Object.assign(imageCountCache, slDetail.imageCounts || {});
-    Object.assign(imageThumbnailCache, slDetail.thumbnails || {});
-    slPartsMap = Object.assign({}, slPartsMap, slDetail.labels || {});
-    imageCountMap = Object.assign({}, imageCountMap, slDetail.imageCounts || {});
-    imageThumbnailMap = Object.assign({}, imageThumbnailMap, slDetail.thumbnails || {});
-    render();
-  })();
-
-  var kikanPromise = (async function() {
-    var kikanMap = await fetchKikanCompatibleMap(lookupProducts, isStale);
-    if (isStale()) return;
-    kikanCompatibleMap = Object.assign({}, kikanCompatibleMap, kikanMap || {});
-    lookupProducts.forEach(function(p) {
-      p.has_kikan_compatible = hasProductKikanCompatible(p);
-    });
-    render();
-  })();
-
-  await Promise.allSettled([fastPromise, slPromise, kikanPromise]);
+  var fast = await Promise.all([
+    canSeeComponentInfo() ? fetchComponentUsageCountMap(lookupProducts) : Promise.resolve({}),
+    canSeeCoreStockInfo() ? fetchCoreStockQtyMap(lookupProducts) : Promise.resolve({})
+  ]);
+  if (isStale()) return;
+  componentUsageCountMap = fast[0] || {};
+  coreStockQtyMap = fast[1] || {};
+  lookupProducts.forEach(function(p) {
+    var key = String(p && (p.dkd_shohin_id || p.id || "") || "");
+    if (key && Object.prototype.hasOwnProperty.call(componentUsageCountMap, key)) {
+      p.component_count = componentUsageCountMap[key];
+    }
+  });
+  render();
 }
 
 function productDkdId(p) {
