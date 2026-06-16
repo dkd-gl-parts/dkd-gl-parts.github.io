@@ -53,6 +53,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .app-update-banner span { color: rgba(255,255,255,0.78); line-height: 1.5; }
 .app-update-banner button { border: none; border-radius: 8px; background: #4f8ef7; color: #fff; font-weight: 700; padding: 8px 12px; cursor: pointer; white-space: nowrap; }
 .app-update-banner button:hover { background: #3a7ae0; }
+.app-version-wrap { display: inline-flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
+.login-logo .app-version-wrap { justify-content: center; margin-top: 4px; }
+.app-manual-refresh { border: 1px solid rgba(79,142,247,.35); border-radius: 999px; background: rgba(79,142,247,.12); color: #315f9f; font-size: 10px; font-weight: 700; line-height: 1; padding: 4px 8px; cursor: pointer; white-space: nowrap; }
+.app-manual-refresh:hover { background: rgba(79,142,247,.2); border-color: rgba(79,142,247,.55); }
+.page-header .app-manual-refresh { color: #d8e6ff; border-color: rgba(216,230,255,.28); background: rgba(255,255,255,.1); }
+.page-header .app-manual-refresh:hover { background: rgba(255,255,255,.18); }
 @media(max-width:640px){ .app-update-banner { left: 8px; right: 8px; bottom: 8px; align-items: flex-start; flex-direction: column; } .app-update-banner button { width: 100%; } }
 
 /* =============================================
@@ -796,7 +802,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version" style="font-size:10px;color:#ccc;margin-top:4px">v1.1.66</p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.66</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -825,7 +831,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">品番検索</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.66</span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.66</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -855,6 +861,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.66</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -2227,6 +2234,7 @@ var TRANSLATIONS = {
     app_update_auto_message: "{current} から {latest} へ自動更新します。操作中の場合は待機します。",
     app_update_wait_message: "{current} から {latest} へ更新できます。入力中のため自動更新を待機しています。",
     app_update_reload_now: "今すぐ更新",
+    app_manual_refresh: "更新",
     rakuten_search_conditions: "検索条件",
     rakuten_keyword: "検索キーワード",
     rakuten_exclude: "除外キーワード",
@@ -2704,6 +2712,7 @@ var TRANSLATIONS = {
     app_update_auto_message: "D-CATS will update from {current} to {latest}. It will wait while you are working.",
     app_update_wait_message: "D-CATS can update from {current} to {latest}. Auto update is waiting because you are editing.",
     app_update_reload_now: "Update now",
+    app_manual_refresh: "Update",
     rakuten_search_conditions: "Search Conditions",
     rakuten_keyword: "Search keyword",
     rakuten_exclude: "Excluded keywords",
@@ -3173,6 +3182,7 @@ var TRANSLATIONS = {
     app_update_auto_message: "将从 {current} 自动更新到 {latest}。操作中会等待。",
     app_update_wait_message: "可从 {current} 更新到 {latest}。正在输入时会等待自动更新。",
     app_update_reload_now: "立即更新",
+    app_manual_refresh: "更新",
     rakuten_search_conditions: "搜索条件",
     rakuten_keyword: "搜索关键词",
     rakuten_exclude: "排除关键词",
@@ -3349,7 +3359,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.181";
+var APP_VERSION       = "v1.1.182";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -3806,6 +3816,17 @@ function appVersionNumber(version) {
   return parseInt(m[1], 10) * 1000000 + parseInt(m[2], 10) * 1000 + parseInt(m[3], 10);
 }
 
+function manualRefreshApp() {
+  try {
+    var url = new URL(window.location.href);
+    url.hash = "";
+    url.searchParams.set("_dcats_refresh", String(Date.now()));
+    window.location.replace(url.toString());
+  } catch(e) {
+    window.location.reload();
+  }
+}
+
 function isAppSafeForAutoReload() {
   if (document.querySelector(".form-overlay.show")) return false;
   var el = document.activeElement;
@@ -3825,9 +3846,7 @@ function getAppUpdateBanner() {
   banner.className = "app-update-banner";
   banner.innerHTML = "<div><strong id='app-update-title'></strong><span id='app-update-message'></span></div><button id='app-update-reload' type='button'></button>";
   document.body.appendChild(banner);
-  document.getElementById("app-update-reload").addEventListener("click", function() {
-    window.location.reload();
-  });
+  document.getElementById("app-update-reload").addEventListener("click", manualRefreshApp);
   return banner;
 }
 
@@ -3849,7 +3868,7 @@ function scheduleAppUpdateReload(latestVersion) {
   if (isAppSafeForAutoReload()) {
     showAppUpdateBanner(latestVersion, true);
     appUpdateReloadTimer = setTimeout(function() {
-      if (isAppSafeForAutoReload()) window.location.reload();
+      if (isAppSafeForAutoReload()) manualRefreshApp();
       else scheduleAppUpdateReload(latestVersion);
     }, 20000);
   } else {
@@ -10717,6 +10736,9 @@ async function doRegister() {
 // =============================================
 document.querySelectorAll(".lang-btn, .lang-btn-login").forEach(function(btn) {
   btn.addEventListener("click", function() { applyLanguage(btn.dataset.lang); });
+});
+document.querySelectorAll(".app-manual-refresh").forEach(function(btn) {
+  btn.addEventListener("click", manualRefreshApp);
 });
 
 // =============================================
