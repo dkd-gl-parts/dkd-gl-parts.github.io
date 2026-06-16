@@ -3349,7 +3349,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.176";
+var APP_VERSION       = "v1.1.177";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -7557,7 +7557,7 @@ async function fetchSlAndImageMaps(products) {
 }
 
 function getFiltered() {
-  var q = norm(document.getElementById("q").value.trim());
+  var q = currentFilter === "sl" ? "" : norm(document.getElementById("q").value.trim());
   return allProducts.filter(function(p) {
     var legacyId = productLegacyPartId(p);
     var slNums = legacyId ? (slPartsMap[legacyId] || []) : [];
@@ -10887,6 +10887,7 @@ document.getElementById("clear-btn").addEventListener("click", function(){ docum
 document.querySelectorAll("#filter-row .chip").forEach(function(chip){
   chip.addEventListener("click", function(){
     currentFilter=chip.dataset.filter;
+    if (currentFilter === "sl") document.getElementById("q").value = "";
     productSearchLimit=SEARCH_INITIAL_LIMIT;
     document.querySelectorAll("#filter-row .chip").forEach(function(c){ c.classList.toggle("active",c===chip); });
     runProductSearch();
