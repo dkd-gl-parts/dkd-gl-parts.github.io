@@ -3349,7 +3349,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.178";
+var APP_VERSION       = "v1.1.179";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -7637,6 +7637,64 @@ async function fetchSlProductsFromLoadedMap(maxRows) {
   return { data: rows, error: null };
 }
 
+async function fetchSlProductsFromMapping(q, maxRows) {
+  maxRows = maxRows || productSearchLimit;
+  var mappings = await sb.from("part_sl_mapping")
+    .select("part_id")
+    .not("part_id", "is", null)
+    .limit(1000);
+  if (mappings.error) return mappings;
+
+  var partIds = uniqueTextValues((mappings.data || []).map(function(row) {
+    return String(row.part_id || "").trim();
+  })).map(function(id) {
+    return parseInt(id, 10);
+  }).filter(function(id) {
+    return !isNaN(id);
+  });
+  if (!partIds.length) return { data: [], error: null };
+
+  var rows = [];
+  var seen = {};
+  for (var i = 0; i < partIds.length; i += 200) {
+    var chunk = partIds.slice(i, i + 200);
+    var r = await sb.from("core_product_search_view")
+      .select("*")
+      .in("legacy_part_id", chunk)
+      .order("manufacturer_part_number", { ascending: true })
+      .order("genuine_part_number", { ascending: true });
+    if (r.error) return r;
+    normalizeCoreProductFastRows(r.data || []).forEach(function(row) {
+      var key = String(row.dkd_shohin_id || row.id || "");
+      if (!key || seen[key]) return;
+      seen[key] = true;
+      row.has_sl_part = true;
+      rows.push(row);
+    });
+  }
+
+  var query = norm(String(q || "").trim());
+  if (query) {
+    rows = rows.filter(function(p) {
+      var partMatch = [
+        p.genuine_part_number, p.genuine_part_number_2,
+        p.manufacturer_part_number, p.daiko_part_number,
+        p.pulley_assy_part_number,
+        p.genuine_body_part_number, p.manufacturer_body_part_number,
+        p.genuine_clutch_part_number, p.manufacturer_clutch_part_number
+      ].some(function(v){ return normalizedStartsWith(v, query); });
+      var textMatch = [
+        p.vehicle_manufacturer, p.manufacturer,
+        p.compatible_car_models, p.model,
+        p.category, p.category_ja, p.category_en, p.category_zh
+      ].some(function(v){ return normalizedContains(v, query); });
+      return partMatch || textMatch;
+    });
+  }
+
+  return { data: rows.slice(0, maxRows), error: null };
+}
+
 function normalizePartQuery(q) {
   return String(q || "").toUpperCase().replace(/[-\s　]/g, "");
 }
@@ -7805,7 +7863,9 @@ async function runProductSearch(options) {
   list.innerHTML = "<div class='loading'>" + t("loading") + "</div>";
 
   var r;
-  if (!q && categoryFilter && !requireSl) {
+  if (requireSl) {
+    r = await fetchSlProductsFromMapping(q, productSearchLimit);
+  } else if (!q && categoryFilter) {
     r = await fetchCategoryProducts(categoryFilter, productSearchLimit);
   } else if (q && !requireSl) {
     r = await fetchCoreProductMasterMatches(q, categoryFilter, productSearchLimit);
