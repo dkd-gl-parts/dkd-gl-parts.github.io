@@ -3371,7 +3371,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.193";
+var APP_VERSION       = "v1.1.194";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -7431,8 +7431,7 @@ function preloadThumbImage(url, options) {
 
 function preloadProductSearchThumbnails(products) {
   (products || []).slice(0, productSearchLimit || SEARCH_INITIAL_LIMIT).forEach(function(p) {
-    var legacyId = productLegacyPartId(p);
-    var thumb = legacyId ? (imageThumbnailMap[legacyId] || "") : "";
+    var thumb = getProductImageThumbnail(p);
     if (thumb) preloadThumbImage(thumb, { width: 112, height: 112, resize: "contain" });
   });
 }
@@ -7559,6 +7558,16 @@ function productHasSlPart(p, slNums) {
 function applyCachedSearchAuxiliaryMaps(products) {
   var changed = false;
   (products || []).forEach(function(p) {
+    productImageCacheKeys(p).forEach(function(cacheKey) {
+      if (Object.prototype.hasOwnProperty.call(imageCountCache, cacheKey) && !Object.prototype.hasOwnProperty.call(imageCountMap, cacheKey)) {
+        imageCountMap[cacheKey] = imageCountCache[cacheKey];
+        changed = true;
+      }
+      if (Object.prototype.hasOwnProperty.call(imageThumbnailCache, cacheKey) && !Object.prototype.hasOwnProperty.call(imageThumbnailMap, cacheKey)) {
+        imageThumbnailMap[cacheKey] = imageThumbnailCache[cacheKey];
+        changed = true;
+      }
+    });
     var legacyId = productLegacyPartId(p);
     if (!legacyId) return;
     var key = String(legacyId);
@@ -7568,14 +7577,6 @@ function applyCachedSearchAuxiliaryMaps(products) {
     }
     if (Object.prototype.hasOwnProperty.call(slPartsCache, key) && !Object.prototype.hasOwnProperty.call(slPartsMap, key)) {
       slPartsMap[key] = slPartsCache[key];
-      changed = true;
-    }
-    if (Object.prototype.hasOwnProperty.call(imageCountCache, key) && !Object.prototype.hasOwnProperty.call(imageCountMap, key)) {
-      imageCountMap[key] = imageCountCache[key];
-      changed = true;
-    }
-    if (Object.prototype.hasOwnProperty.call(imageThumbnailCache, key) && !Object.prototype.hasOwnProperty.call(imageThumbnailMap, key)) {
-      imageThumbnailMap[key] = imageThumbnailCache[key];
       changed = true;
     }
   });
@@ -7592,6 +7593,48 @@ function productSearchCardDkdIds(products) {
     ids.push(id);
   });
   return ids;
+}
+
+function productImageCacheKeys(p) {
+  var keys = [];
+  var dkd = productDkdId(p);
+  if (dkd) keys.push("dkd:" + String(dkd));
+  var legacyId = productLegacyPartId(p);
+  if (legacyId) keys.push(String(legacyId));
+  return keys.filter(function(key, idx, arr) { return key && arr.indexOf(key) === idx; });
+}
+
+function setProductImageCache(p, imageCount, thumbnailUrl) {
+  var count = parseInt(imageCount || 0, 10) || 0;
+  var thumb = thumbnailUrl || "";
+  productImageCacheKeys(p).forEach(function(key) {
+    imageCountMap[key] = count;
+    imageCountCache[key] = count;
+    imageThumbnailMap[key] = thumb;
+    imageThumbnailCache[key] = thumb;
+  });
+}
+
+function getProductImageCount(p) {
+  var count = 0;
+  productImageCacheKeys(p).forEach(function(key) {
+    if (Object.prototype.hasOwnProperty.call(imageCountMap, key)) {
+      count = Math.max(count, parseInt(imageCountMap[key] || 0, 10) || 0);
+    }
+    if (Object.prototype.hasOwnProperty.call(imageCountCache, key)) {
+      count = Math.max(count, parseInt(imageCountCache[key] || 0, 10) || 0);
+    }
+  });
+  return count;
+}
+
+function getProductImageThumbnail(p) {
+  var thumb = "";
+  productImageCacheKeys(p).some(function(key) {
+    thumb = imageThumbnailMap[key] || imageThumbnailCache[key] || "";
+    return !!thumb;
+  });
+  return thumb;
 }
 
 async function fetchProductSearchCardFlags(products) {
@@ -7622,16 +7665,13 @@ function applyProductSearchCardFlags(rows, products) {
     if (p) {
       p.has_sl_part = hasSl || !!p.has_sl_part;
       p.has_kikan_compatible = hasKikan;
+      setProductImageCache(p, imageCount, thumbUrl);
     }
     var legacyId = productLegacyPartId(p);
     if (legacyId) {
       var legacyKey = String(legacyId);
       slPresenceMap[legacyKey] = hasSl;
       slPresenceCache[legacyKey] = hasSl;
-      imageCountMap[legacyKey] = imageCount;
-      imageCountCache[legacyKey] = imageCount;
-      imageThumbnailMap[legacyKey] = thumbUrl;
-      imageThumbnailCache[legacyKey] = thumbUrl;
     }
     var kikanKey = p ? productKikanKey(p) : ("dkd:" + dkdKey);
     kikanCompatibleMap[kikanKey] = hasKikan;
@@ -8140,6 +8180,7 @@ async function runProductSearch(options) {
   componentUsageCountMap = {};
   coreStockQtyMap = {};
   kikanCompatibleMap = {};
+  applyCachedSearchAuxiliaryMaps(allProducts);
   var cardFlags = await fetchProductSearchCardFlags(allProducts);
   if (seq !== searchRequestSeq) return;
   applyProductSearchCardFlags(cardFlags, allProducts);
@@ -8584,8 +8625,8 @@ function render() {
   var html = "";
   visibleItems.forEach(function(p, idx) {
     var legacyId = productLegacyPartId(p);
-    var cnt   = legacyId ? (imageCountMap[legacyId]||0) : 0;
-    var thumb = legacyId ? (imageThumbnailMap[legacyId]||"") : "";
+    var cnt   = getProductImageCount(p);
+    var thumb = getProductImageThumbnail(p);
     var slNums = legacyId ? (slPartsMap[legacyId] || []) : [];
     var hasSL  = productHasSlPart(p, slNums);
     var componentCount = canSeeComponentInfo() ? productComponentCount(p) : 0;
@@ -8822,10 +8863,9 @@ function renderPanelStatic() {
 
 function renderCachedPanelThumbnail() {
   if (!currentProduct) return false;
-  var legacyId = productLegacyPartId(currentProduct);
-  var thumb = legacyId ? (imageThumbnailMap[legacyId] || imageThumbnailCache[legacyId] || "") : "";
+  var thumb = getProductImageThumbnail(currentProduct);
   if (!thumb) return false;
-  var count = legacyId ? (imageCountMap[legacyId] || imageCountCache[legacyId] || 0) : 0;
+  var count = getProductImageCount(currentProduct);
   var grid = document.getElementById("img-grid");
   var countEl = document.getElementById("img-count");
   if (!grid) return false;
@@ -10019,6 +10059,16 @@ async function loadSlPartsForProduct(product) {
   loadSlParts(productLegacyPartId(product));
 }
 
+function loadKikanForCurrentProduct() {
+  var scd = currentProduct ? (currentProduct.dkd_shohin_id || currentProduct.shohin_cd) : null;
+  if (scd !== null && scd !== undefined && scd !== '') {
+    loadKikan(scd);
+  } else {
+    var wrap = document.getElementById("kikan-wrap");
+    if (wrap) wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
+  }
+}
+
 async function loadSlParts(partId) {
   var wrap = document.getElementById("price-table-wrap");
   if (!wrap) return;
@@ -10026,26 +10076,20 @@ async function loadSlParts(partId) {
     currentSlPartIds = [];
     wrap.innerHTML = "";
     loadImages(null);
-    var emptyKikanWrap = document.getElementById("kikan-wrap");
-    if (emptyKikanWrap) emptyKikanWrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
+    loadKikanForCurrentProduct();
     return;
   }
 
   var showSupplierPrices = canSeePurchasePrice();
+  var slIdsR = await sb.from("part_sl_mapping")
+    .select("sl_part_id")
+    .eq("part_id", partId);
+  currentSlPartIds = (slIdsR.data || []).map(function(m) { return m.sl_part_id; }).filter(Boolean);
+  loadImages(currentSlPartIds.length ? currentSlPartIds : null);
+  loadKikanForCurrentProduct();
+
   if (!showSupplierPrices) {
-    var hiddenSl = await sb.from("part_sl_mapping")
-      .select("sl_part_id")
-      .eq("part_id", partId);
-    currentSlPartIds = (hiddenSl.data || []).map(function(m) { return m.sl_part_id; }).filter(Boolean);
     wrap.innerHTML = "";
-    loadImages(currentSlPartIds.length ? currentSlPartIds : null);
-    var scdHidden = currentProduct.dkd_shohin_id || currentProduct.shohin_cd;
-    if (scdHidden !== null && scdHidden !== undefined && scdHidden !== '') {
-      loadKikan(scdHidden);
-    } else {
-      var hiddenKikanWrap = document.getElementById("kikan-wrap");
-      if (hiddenKikanWrap) hiddenKikanWrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
-    }
     return;
   }
 
@@ -10056,20 +10100,8 @@ async function loadSlParts(partId) {
 
   var rows = (r.data || []).map(function(m) { return m.sl_parts; }).filter(Boolean);
 
-  // 現在のパネルに表示中のSL品番IDを保持（画像ロードに使用）
-  currentSlPartIds = rows.map(function(sl) { return sl.id; });
-
   if (rows.length === 0) {
     wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("no_prices") + "</div>";
-    loadImages(null);
-    // SL品番がなくても互換品は表示する
-    var scd0 = currentProduct ? (currentProduct.dkd_shohin_id || currentProduct.shohin_cd) : null;
-    if (scd0 !== null && scd0 !== undefined && scd0 !== '') {
-      loadKikan(scd0);
-    } else {
-      var kw = document.getElementById("kikan-wrap");
-      if (kw) kw.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
-    }
     return;
   }
 
@@ -10098,18 +10130,6 @@ async function loadSlParts(partId) {
   });
   html += "</table>";
   wrap.innerHTML = html;
-
-  // SL品番に紐付く画像を読み込む
-  loadImages(currentSlPartIds);
-
-  // 互換品を読み込む
-  var scd = currentProduct.dkd_shohin_id || currentProduct.shohin_cd;
-  if (scd !== null && scd !== undefined && scd !== '') {
-    loadKikan(scd);
-  } else {
-    var wrap = document.getElementById("kikan-wrap");
-    if (wrap) wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
-  }
 }
 
 function salesPricingTodayIso() {
@@ -10599,6 +10619,9 @@ async function loadImages(slPartIds) {
     .in("sl_part_id", slPartIds)
     .order("created_at");
   currentImages = r.data || [];
+  if (currentProduct) {
+    setProductImageCache(currentProduct, currentImages.length, currentImages.length > 0 ? currentImages[0].image_url : "");
+  }
   preloadCurrentImageThumbnails(currentImages);
   renderImages();
 }
@@ -10697,13 +10720,7 @@ async function uploadImages(event) {
 
   // 画像カウントを更新
   if (currentProduct) {
-    var legacyId = productLegacyPartId(currentProduct);
-    if (legacyId) {
-      imageCountMap[legacyId]     = currentImages.length;
-      imageThumbnailMap[legacyId] = currentImages.length>0?currentImages[0].image_url:null;
-      imageCountCache[legacyId] = imageCountMap[legacyId];
-      imageThumbnailCache[legacyId] = imageThumbnailMap[legacyId];
-    }
+    setProductImageCache(currentProduct, currentImages.length, currentImages.length>0 ? currentImages[0].image_url : "");
   }
   render();
 }
@@ -10716,13 +10733,7 @@ async function deleteImage(imgId, imageUrl) {
   await sb.from("sl_part_images").delete().eq("id", imgId);
   currentImages = currentImages.filter(function(img){return img.id!==imgId;});
   if (currentProduct) {
-    var legacyId = productLegacyPartId(currentProduct);
-    if (legacyId) {
-      imageCountMap[legacyId]     = currentImages.length;
-      imageThumbnailMap[legacyId] = currentImages.length>0?currentImages[0].image_url:null;
-      imageCountCache[legacyId] = imageCountMap[legacyId];
-      imageThumbnailCache[legacyId] = imageThumbnailMap[legacyId];
-    }
+    setProductImageCache(currentProduct, currentImages.length, currentImages.length>0 ? currentImages[0].image_url : "");
   }
   renderImages(); render();
 }
