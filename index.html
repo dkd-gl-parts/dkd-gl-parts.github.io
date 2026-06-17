@@ -1164,10 +1164,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
           <td>製造管理</td><td>自部署</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-ok">閲覧</td><td class="permission-ok">閲覧</td><td class="permission-ok">追加・修正</td><td class="permission-ok">自部署</td>
         </tr>
         <tr>
-          <td>商品管理・製造担当</td><td>社内</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-ok">追加・修正</td><td class="permission-no">-</td>
-        </tr>
-        <tr>
-          <td>販売担当</td><td>社内</td><td class="permission-ok">○</td><td class="permission-ok">閲覧・編集</td><td class="permission-ok">閲覧・編集</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td>
+          <td>商品管理</td><td>自部署</td><td class="permission-ok">○</td><td class="permission-ok">閲覧・編集</td><td class="permission-ok">閲覧</td><td class="permission-ok">閲覧</td><td class="permission-ok">閲覧</td><td class="permission-ok">自部署</td>
         </tr>
         <tr>
           <td>全機能閲覧</td><td>社内</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-ok">閲覧</td><td class="permission-ok">閲覧</td><td class="permission-ok">閲覧</td><td class="permission-no">-</td>
@@ -3374,7 +3371,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.192";
+var APP_VERSION       = "v1.1.193";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -3491,9 +3488,12 @@ function isCompanyAdminRole(profile) {
 function isDeptAdminRole(profile) {
   return hasAccessRole(profile || userProfile, ["dept_admin"]);
 }
+function hasOwnDepartmentUserScope(profile) {
+  return hasAccessRole(profile || userProfile, ["dept_admin", "master_editor"]);
+}
 function canEdit() {
   if (!userProfile || isExternalViewer()) return false;
-  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "sales_editor"]);
+  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]);
 }
 function canDelete() {
   return isCompanyAdminRole(userProfile);
@@ -3502,41 +3502,45 @@ function isAdmin() {
   return isCompanyAdminRole(userProfile);
 }
 function canUseUserManagement() {
-  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin"]);
+  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor"]);
 }
 function canAssignUserRole(roleCode) {
   if (isSystemAdmin()) return true;
   var currentRole = accessRoleCode(userProfile);
   if (currentRole === "company_admin") return roleCode !== "system_admin";
   if (currentRole === "dept_admin") return ["system_admin", "company_admin", "dept_admin", "external_viewer"].indexOf(roleCode) < 0;
+  if (currentRole === "master_editor") return ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "sales_editor", "external_viewer"].indexOf(roleCode) < 0;
   return false;
 }
 
-// ユーザー管理：system_adminは全体、会社管理者は自社、製造管理は自部署のみ
+// ユーザー管理：system_adminは全体、会社管理者は自社、製造管理・商品管理は自部署のみ
 function canManageUser(targetProfile) {
   if (!userProfile || !targetProfile) return false;
   if (isSystemAdmin()) return true;
   if (!canUseUserManagement()) return false;
   if (userCompanyCode(targetProfile) !== userCompanyCode(userProfile)) return false;
-  if (isDeptAdminRole(userProfile)) {
+  if (hasOwnDepartmentUserScope(userProfile)) {
     if (userDepartmentCode(targetProfile) !== userDepartmentCode(userProfile)) return false;
-    if (hasAccessRole(targetProfile, ["system_admin", "company_admin", "dept_admin"])) return false;
+    if (hasAccessRole(targetProfile, ["system_admin", "company_admin", "dept_admin", "master_editor"])) return false;
   }
   return true;
 }
 
 function canSeePurchasePrice() {
-  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "all_viewer"]);
+  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "all_viewer"]);
 }
 
 function canSeeSalesPrice() {
   return !!userProfile && !isExternalViewer();
 }
 function canViewBasePrice() {
-  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "sales_editor", "all_viewer"]);
+  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "all_viewer"]);
+}
+function canEditBasePrice() {
+  return hasAccessRole(userProfile, ["system_admin", "company_admin"]);
 }
 function canEditSalesPricing() {
-  return hasAccessRole(userProfile, ["system_admin", "company_admin", "sales_editor"]);
+  return hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"]);
 }
 function canUseRakutenResearch() {
   return !!(userProfile && (isSystemAdmin() || (userProfile.group_name === "daiko" && canSeeSalesPrice())));
@@ -3545,7 +3549,7 @@ function canViewInternalComponents() {
   return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "all_viewer"]);
 }
 function canEditInternalComponents() {
-  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]);
+  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]);
 }
 function isExternalViewerProfile(profile) {
   if (!profile) return false;
@@ -3635,9 +3639,8 @@ var USER_ACCESS_ROLE_OPTIONS = [
   ["system_admin", "システム管理者"],
   ["company_admin", "会社管理者"],
   ["dept_admin", "製造管理"],
-  ["master_editor", "商品管理担当"],
+  ["master_editor", "商品管理"],
   ["production_editor", "製造担当"],
-  ["sales_editor", "販売担当"],
   ["sales_viewer", "営業閲覧"],
   ["internal_viewer", "社内閲覧"],
   ["external_viewer", "社外閲覧"]
@@ -3649,7 +3652,6 @@ var USER_ACCESS_LEGACY_ROLE = {
   dept_admin: "editor",
   master_editor: "editor",
   production_editor: "editor",
-  sales_editor: "editor",
   sales_viewer: "price_viewer",
   all_viewer: "price_viewer",
   internal_viewer: "price_viewer",
@@ -10315,13 +10317,13 @@ async function openSalesPricingForCurrent() {
   document.getElementById("sales-pricing-product").textContent = t("loading");
   document.getElementById("sales-rank-preview").innerHTML = "<div class='component-empty'>" + esc(t("loading")) + "</div>";
   var saveBtn = document.getElementById("btn-sales-pricing-save");
-  if (saveBtn) saveBtn.style.display = canManageSalesPricing() ? "" : "none";
+  if (saveBtn) saveBtn.style.display = canEditBasePrice() ? "" : "none";
   var rankSaveBtn = document.getElementById("btn-sales-rank-save");
   if (rankSaveBtn) rankSaveBtn.style.display = canManageSalesPricing() ? "" : "none";
   setSalesPricingBaseFieldsVisible(canViewBasePrice());
   ["sales-base-price","sales-price-basis","sales-effective-start","sales-basis-note"].forEach(function(id) {
     var el = document.getElementById(id);
-    if (el) el.disabled = !canManageSalesPricing();
+    if (el) el.disabled = !canEditBasePrice();
   });
   try {
     var dkdId = await resolveCurrentCoreDkdShohinId();
@@ -10361,7 +10363,7 @@ async function openSalesPricingForCurrent() {
 async function saveSalesPricing() {
   var errEl = document.getElementById("sales-pricing-error");
   if (errEl) errEl.textContent = "";
-  if (!canManageSalesPricing()) { if (errEl) errEl.textContent = t("err_perm"); return; }
+  if (!canEditBasePrice()) { if (errEl) errEl.textContent = t("err_perm"); return; }
   var dkdId = currentSalesPricingDkdId;
   if (!dkdId) { if (errEl) errEl.textContent = t("sales_no_product_id"); return; }
   var base = parseInt(document.getElementById("sales-base-price").value, 10);
@@ -10757,7 +10759,7 @@ async function loadUsers() {
   var query = sb.from("profiles").select("*").order("created_at");
   if (!isSystemAdmin()) {
     query = query.eq("company_code", userCompanyCode(userProfile));
-    if (isDeptAdminRole(userProfile)) {
+    if (hasOwnDepartmentUserScope(userProfile)) {
       query = query.eq("department_code", userDepartmentCode(userProfile));
     }
   }
@@ -10796,7 +10798,7 @@ function renderUsers(users) {
     var canManageThis = canManageUser(u);
     var disabledAttr = canManageThis ? "" : " disabled";
     var companyDisabledAttr = (canManageThis && isSystemAdmin()) ? "" : " disabled";
-    var departmentDisabledAttr = (canManageThis && !isDeptAdminRole(userProfile)) ? "" : " disabled";
+    var departmentDisabledAttr = (canManageThis && !hasOwnDepartmentUserScope(userProfile)) ? "" : " disabled";
     html += "<div class='user-company'>&#x1F3E2; "+esc(companyLabel)+" / "+esc(departmentLabel)+" / "+esc(accessRoleLabel)+"</div>";
     if (u.company) html += "<div class='user-company'>"+esc(u.company)+"</div>";
     html += "<div class='user-created'>"+t("lbl_registered")+" "+(u.created_at?u.created_at.slice(0,10):"-")+"</div>";
@@ -10850,7 +10852,7 @@ function renderUsers(users) {
       var companyCode = isSystemAdmin()
         ? card.querySelector(".user-company-select").value
         : userCompanyCode(userProfile);
-      var departmentCode = isDeptAdminRole(userProfile)
+      var departmentCode = hasOwnDepartmentUserScope(userProfile)
         ? userDepartmentCode(userProfile)
         : (card.querySelector(".user-department-select").value || "viewer");
       var roleCode = normalizeAccessRoleForCompany(card.querySelector(".user-access-role-select").value, companyCode);
