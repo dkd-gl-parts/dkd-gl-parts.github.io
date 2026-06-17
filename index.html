@@ -1155,19 +1155,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
           <th>ユーザー管理</th>
         </tr>
         <tr>
-          <td>システム管理者</td><td>GLTEK / システム管理</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-ok">閲覧・編集</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-ok">全体</td>
+          <td>システム管理者</td><td>GLTEK / システム管理</td><td class="permission-ok">○</td><td class="permission-ok">閲覧・編集</td><td class="permission-ok">閲覧・編集</td><td class="permission-ok">閲覧</td><td class="permission-ok">追加・修正</td><td class="permission-ok">全体</td>
         </tr>
         <tr>
-          <td>会社管理者</td><td>大光電機・GLTEK</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-ok">閲覧・編集</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-ok">自社</td>
+          <td>会社管理者</td><td>大光電機・GLTEK</td><td class="permission-ok">○</td><td class="permission-ok">閲覧・編集</td><td class="permission-ok">閲覧・編集</td><td class="permission-ok">閲覧</td><td class="permission-ok">追加・修正</td><td class="permission-ok">自社</td>
         </tr>
         <tr>
-          <td>部署責任者</td><td>各部署</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-ok">閲覧</td><td class="permission-ok">自部署</td>
+          <td>製造管理</td><td>自部署</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-ok">閲覧</td><td class="permission-ok">閲覧</td><td class="permission-ok">追加・修正</td><td class="permission-ok">自部署</td>
         </tr>
         <tr>
-          <td>商品管理・製造・販売担当</td><td>社内</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-ok">追加・修正</td><td class="permission-no">-</td>
+          <td>商品管理・製造担当</td><td>社内</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-ok">追加・修正</td><td class="permission-no">-</td>
         </tr>
         <tr>
-          <td>営業閲覧・社内閲覧</td><td>社内</td><td class="permission-ok">○</td><td class="permission-ok">○</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td>
+          <td>販売担当</td><td>社内</td><td class="permission-ok">○</td><td class="permission-ok">閲覧・編集</td><td class="permission-ok">閲覧・編集</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td>
+        </tr>
+        <tr>
+          <td>全機能閲覧</td><td>社内</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-ok">閲覧</td><td class="permission-ok">閲覧</td><td class="permission-ok">閲覧</td><td class="permission-no">-</td>
+        </tr>
+        <tr>
+          <td>営業閲覧・社内閲覧</td><td>社内</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td>
         </tr>
         <tr>
           <td>社外閲覧</td><td>社外</td><td class="permission-ok">制限</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td>
@@ -3368,7 +3374,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.191";
+var APP_VERSION       = "v1.1.192";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -3469,65 +3475,77 @@ var CORE_PRODUCT_FAST_SELECT = [
 // 権限判定ヘルパー
 // group_name × role の組み合わせで判定する
 // =============================================
+function accessRoleCode(profile) {
+  return userAccessRoleCode(profile);
+}
+function hasAccessRole(profile, roleCodes) {
+  if (!profile) return false;
+  return roleCodes.indexOf(accessRoleCode(profile)) >= 0;
+}
 function isSystemAdmin() {
-  return !!(userProfile && userProfile.role === "system_admin");
+  return !!(userProfile && (userProfile.role === "system_admin" || accessRoleCode(userProfile) === "system_admin"));
+}
+function isCompanyAdminRole(profile) {
+  return hasAccessRole(profile || userProfile, ["system_admin", "company_admin"]);
+}
+function isDeptAdminRole(profile) {
+  return hasAccessRole(profile || userProfile, ["dept_admin"]);
 }
 function canEdit() {
-  if (!userProfile) return false;
-  if (isSystemAdmin()) return true;
-  if (userProfile.group_name === "public") return false;
-  return userProfile.role === "admin" || userProfile.role === "editor";
+  if (!userProfile || isExternalViewer()) return false;
+  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "sales_editor"]);
 }
 function canDelete() {
-  if (!userProfile) return false;
-  return isSystemAdmin() || userProfile.role === "admin";
+  return isCompanyAdminRole(userProfile);
 }
 function isAdmin() {
-  if (!userProfile) return false;
-  return isSystemAdmin() || userProfile.role === "admin";
+  return isCompanyAdminRole(userProfile);
+}
+function canUseUserManagement() {
+  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin"]);
+}
+function canAssignUserRole(roleCode) {
+  if (isSystemAdmin()) return true;
+  var currentRole = accessRoleCode(userProfile);
+  if (currentRole === "company_admin") return roleCode !== "system_admin";
+  if (currentRole === "dept_admin") return ["system_admin", "company_admin", "dept_admin", "external_viewer"].indexOf(roleCode) < 0;
+  return false;
 }
 
-// ユーザー管理：system_adminは全グループ、通常adminは自グループのみ
+// ユーザー管理：system_adminは全体、会社管理者は自社、製造管理は自部署のみ
 function canManageUser(targetProfile) {
   if (!userProfile || !targetProfile) return false;
   if (isSystemAdmin()) return true;
-  if (userProfile.role !== "admin") return false;
-  if (userProfile.group_name === "public") return false;
-  return (targetProfile.group_name || "public") === (userProfile.group_name || "public");
+  if (!canUseUserManagement()) return false;
+  if (userCompanyCode(targetProfile) !== userCompanyCode(userProfile)) return false;
+  if (isDeptAdminRole(userProfile)) {
+    if (userDepartmentCode(targetProfile) !== userDepartmentCode(userProfile)) return false;
+    if (hasAccessRole(targetProfile, ["system_admin", "company_admin", "dept_admin"])) return false;
+  }
+  return true;
 }
 
-// 仕入価格（USD）表示判定
 function canSeePurchasePrice() {
-  if (!userProfile) return false;
-  if (isSystemAdmin()) return true;
-  var g = userProfile.group_name;
-  var r = userProfile.role;
-  if (g === "daiko") return ["admin","editor","price_viewer"].indexOf(r) >= 0;
-  if (g === "gltek") return true;
-  return false; // public は非表示
+  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "all_viewer"]);
 }
 
-// 販売価格（JPY）表示判定
 function canSeeSalesPrice() {
-  if (!userProfile) return false;
-  if (canViewAllReadOnly()) return true;
-  if (isExternalViewer()) return false;
-  if (isSystemAdmin()) return true;
-  var g = userProfile.group_name;
-  var r = userProfile.role;
-  if (g === "daiko") return true;
-  if (g === "gltek") return ["admin","editor","price_viewer"].indexOf(r) >= 0;
-  if (g === "public") return false;
-  return false;
+  return !!userProfile && !isExternalViewer();
+}
+function canViewBasePrice() {
+  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "sales_editor", "all_viewer"]);
+}
+function canEditSalesPricing() {
+  return hasAccessRole(userProfile, ["system_admin", "company_admin", "sales_editor"]);
 }
 function canUseRakutenResearch() {
   return !!(userProfile && (isSystemAdmin() || (userProfile.group_name === "daiko" && canSeeSalesPrice())));
 }
-function canSeePurchasePrice() {
-  return isAdmin();
-}
 function canViewInternalComponents() {
-  return canSeeComponentInfo();
+  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "all_viewer"]);
+}
+function canEditInternalComponents() {
+  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]);
 }
 function isExternalViewerProfile(profile) {
   if (!profile) return false;
@@ -3616,7 +3634,7 @@ var USER_DEPARTMENT_OPTIONS = [
 var USER_ACCESS_ROLE_OPTIONS = [
   ["system_admin", "システム管理者"],
   ["company_admin", "会社管理者"],
-  ["dept_admin", "部署責任者"],
+  ["dept_admin", "製造管理"],
   ["master_editor", "商品管理担当"],
   ["production_editor", "製造担当"],
   ["sales_editor", "販売担当"],
@@ -3628,7 +3646,7 @@ USER_ACCESS_ROLE_OPTIONS.splice(Math.max(0, USER_ACCESS_ROLE_OPTIONS.findIndex(f
 var USER_ACCESS_LEGACY_ROLE = {
   system_admin: "system_admin",
   company_admin: "admin",
-  dept_admin: "admin",
+  dept_admin: "editor",
   master_editor: "editor",
   production_editor: "editor",
   sales_editor: "editor",
@@ -3663,6 +3681,7 @@ function userDepartmentCode(profile) {
   if (profile && profile.department_code) return profile.department_code;
   var roleCode = userAccessRoleCode(profile);
   if (roleCode === "system_admin" || roleCode === "company_admin") return "system";
+  if (roleCode === "dept_admin") return "production";
   if (roleCode === "master_editor") return "product";
   if (roleCode === "production_editor") return "production";
   if (roleCode === "sales_editor") return "sales";
@@ -3688,7 +3707,7 @@ function optionHtml(options, selected, skipFn) {
 }
 function skipAccessRoleForCompany(companyCode, opt) {
   if (companyCode === "external") return opt[0] !== "external_viewer";
-  return opt[0] === "system_admin" && !isSystemAdmin();
+  return !canAssignUserRole(opt[0]);
 }
 function defaultAccessRoleForCompany(companyCode, selected) {
   if (companyCode === "external") return "external_viewer";
@@ -3697,9 +3716,9 @@ function defaultAccessRoleForCompany(companyCode, selected) {
   return blocked ? "internal_viewer" : selected;
 }
 function accessRoleOptionHtmlForCompany(companyCode, selected) {
-  var value = defaultAccessRoleForCompany(companyCode, normalizeAccessRoleForCompany(selected, companyCode));
+  var value = normalizeAccessRoleForCompany(selected, companyCode) || defaultAccessRoleForCompany(companyCode, selected);
   return optionHtml(USER_ACCESS_ROLE_OPTIONS, value, function(opt) {
-    return skipAccessRoleForCompany(companyCode, opt);
+    return opt[0] !== value && skipAccessRoleForCompany(companyCode, opt);
   });
 }
 function canManageSharedSettings() {
@@ -3709,10 +3728,10 @@ function canManageProductSpecs() {
   return !!(userProfile && (isSystemAdmin() || (userProfile.role === "admin" && userProfile.group_name === "daiko")));
 }
 function canManageSalesPricing() {
-  return isAdmin();
+  return canEditSalesPricing();
 }
 function canViewSalesPricing() {
-  return canManageSalesPricing() || canViewAllReadOnly();
+  return canSeeSalesPrice();
 }
 function canViewProductionFeatures() {
   return canEdit() || canViewAllReadOnly();
@@ -4122,7 +4141,7 @@ function renderMenu() {
   ];
 
   var adminItems = [
-    { icon: "&#x1F465;", titleKey: "mi_users_title",  descKey: "mi_users_desc",  action: "users",  available: isAdmin() },
+    { icon: "&#x1F465;", titleKey: "mi_users_title",  descKey: "mi_users_desc",  action: "users",  available: canUseUserManagement() },
     { icon: "&#x1F527;", titleKey: "mi_parts_title", descKey: "mi_parts_desc", action: "parts-mgmt", available: canViewManagementScreen() },
     { icon: "&#x1F4B0;", titleKey: "sales_pricing_title", descKey: "sales_pricing_mgmt_desc", action: "sales-pricing-mgmt", available: canViewSalesPricing() },
     { icon: "&#x1F4E6;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canViewManagementScreen() },
@@ -7287,7 +7306,7 @@ function enterChangePw() {
 }
 
 async function enterUsers() {
-  if (!isAdmin()) { alert(t("err_perm")); return; }
+  if (!canUseUserManagement()) { alert(t("err_perm")); return; }
   showScreen("users");
   await loadUsers();
 }
@@ -9322,7 +9341,7 @@ function bindComponentPanelActions() {
 function renderComponentAddPanel() {
   var wrap = document.getElementById("component-add-wrap");
   if (!wrap) return;
-  if (!isAdmin()) {
+  if (!canEditInternalComponents()) {
     wrap.innerHTML = "";
     return;
   }
@@ -9364,7 +9383,7 @@ function clearComponentAddForm() {
 
 async function addAssemblyComponentForCurrent() {
   if (!currentProduct) return;
-  if (!isAdmin()) { alert(t("err_perm")); return; }
+  if (!canEditInternalComponents()) { alert(t("err_perm")); return; }
   var dkdId = await resolveCurrentCoreDkdShohinId();
   var targetManufacturer = String(currentProduct.manufacturer || "").toUpperCase();
   var targetManufacturerPartNumber = currentProduct.manufacturer_part_number || "";
@@ -9437,7 +9456,7 @@ function componentEditPayloadFromRow(tr) {
 }
 
 async function saveComponentEdit(usageId) {
-  if (!isAdmin()) { alert(t("err_perm")); return; }
+  if (!canEditInternalComponents()) { alert(t("err_perm")); return; }
   var row = assemblyComponentRows.find(function(r) { return String(r.id) === String(usageId); });
   if (!row) return;
   if (isCatalogComponentRow(row)) {
@@ -9550,6 +9569,7 @@ function alternativesForComponent(row) {
 }
 
 function renderComponentAlternatives(row, colspan) {
+  if (!canViewInternalComponents()) return "";
   var alternatives = alternativesForComponent(row);
   if (!alternatives.length) return "";
   var html = "<tr class='component-alt-row'><td colspan='" + String(colspan) + "'>";
@@ -9566,7 +9586,7 @@ function renderComponentAlternatives(row, colspan) {
     html += "<span>" + esc(part.part_name || "") + "</span>";
     if (supplierText) html += "<span class='component-alt-meta'>" + t("component_supplier") + ": " + esc(supplierText) + "</span>";
     if (alt.note || part.note) html += "<span class='component-alt-meta'>" + esc(alt.note || part.note) + "</span>";
-    if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' data-component-alt-delete='" + esc(String(alt.id)) + "'>" + t("component_disable") + "</button>";
+    if (canEditInternalComponents()) html += "<button class='btn-sm-edit production-action-secondary' data-component-alt-delete='" + esc(String(alt.id)) + "'>" + t("component_disable") + "</button>";
     html += "</div>";
   });
   html += "</div></td></tr>";
@@ -9580,7 +9600,7 @@ function closeComponentAlternativeForm() {
 }
 
 function openComponentAlternativeForm(usageId) {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canEditInternalComponents()) { alert(t("err_perm")); return; }
   var row = assemblyComponentRows.find(function(r) { return String(r.id) === String(usageId); });
   if (!row || !row.dkd_component_id) {
     alert(t("component_base_missing"));
@@ -9602,7 +9622,7 @@ function openComponentAlternativeForm(usageId) {
 }
 
 async function saveComponentAlternativeForm() {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canEditInternalComponents()) { alert(t("err_perm")); return; }
   var row = componentAlternativeBaseRow;
   var err = document.getElementById("component-alt-error");
   var saveBtn = document.getElementById("btn-component-alt-save");
@@ -9699,6 +9719,7 @@ async function saveComponentAlternativeForm() {
 async function loadComponentAlternativesForRows(rows) {
   componentAlternativeRows = [];
   componentAlternativeMap = {};
+  if (!canViewInternalComponents()) return;
   var ids = (rows || []).map(function(row) { return row.dkd_component_id; }).filter(function(id, index, arr) {
     return id != null && arr.indexOf(id) === index;
   });
@@ -9744,7 +9765,7 @@ async function loadComponentAlternativesForRows(rows) {
 }
 
 async function disableComponentAlternative(altId) {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canEditInternalComponents()) { alert(t("err_perm")); return; }
   if (!confirm(t("component_alt_disable_confirm"))) return;
   var before = componentAlternativeRows.find(function(row) { return String(row.id) === String(altId); }) || null;
   var r = await sb.from("component_part_alternatives").update({
@@ -9768,7 +9789,7 @@ function renderAssemblyComponentRows() {
     wrap.innerHTML = "<div class='component-empty'>" + t("component_none") + "</div>";
     return;
   }
-  var hasActions = isAdmin() || canEdit();
+  var hasActions = canEditInternalComponents();
   var colspan = 9 + (hasActions ? 1 : 0);
   var html = "<table class='component-table'>";
   html += "<tr><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th><th>" + t("component_position") + "</th><th>" + t("component_quantity") + "</th><th>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
@@ -9776,7 +9797,7 @@ function renderAssemblyComponentRows() {
   html += "</tr>";
   rows.forEach(function(row) {
     var catalogLocked = isCatalogComponentRow(row);
-    var editing = isAdmin() && !catalogLocked && String(editingComponentUsageId) === String(row.id);
+    var editing = canEditInternalComponents() && !catalogLocked && String(editingComponentUsageId) === String(row.id);
     html += "<tr" + (editing ? " data-component-edit-row='" + esc(String(row.id)) + "'" : "") + ">";
     if (editing) {
       html += "<td>" + componentEditInput(row, "component_manufacturer_part_number", row.component_manufacturer_part_number) + "<div class='component-sub'>" + componentEditInput(row, "component_manufacturer", row.component_manufacturer || "") + "</div></td>";
@@ -9801,7 +9822,7 @@ function renderAssemblyComponentRows() {
       html += "<td>" + esc(row.effective_end || row.end_period || "-") + "</td>";
       if (hasActions) {
         html += "<td><div class='component-edit-actions'>";
-        if (isAdmin()) html += catalogLocked ? "<span class='component-sub'>" + t("component_catalog") + "</span>" : "<button class='btn-sm-edit' data-component-edit='" + esc(String(row.id)) + "'>" + t("component_edit") + "</button>";
+        html += catalogLocked ? "<span class='component-sub'>" + t("component_catalog") + "</span>" : "<button class='btn-sm-edit' data-component-edit='" + esc(String(row.id)) + "'>" + t("component_edit") + "</button>";
         html += "<button class='btn-sm-edit production-action-secondary' data-component-alt-add='" + esc(String(row.id)) + "'>" + t("component_alternative_add") + "</button>";
         html += "</div></td>";
       }
@@ -10148,10 +10169,11 @@ function renderSalesRankPreview() {
     return;
   }
   var editable = canManageSalesPricing();
+  var showAdjustment = editable || canViewBasePrice();
   var html = "<div class='sales-rank-table-wrap'><table class='price-table sales-rank-table'><tr><th>" + esc(t("sales_rank")) + "</th><th>" + esc(t("sales_customer_count")) + "</th>";
   if (editable) {
     html += "<th>" + esc(t("sales_rate_adjust")) + "</th><th>" + esc(t("sales_amount_adjustment")) + "</th><th>" + esc(t("sales_rounding_unit")) + "</th><th>" + esc(t("sales_rounding_method")) + "</th>";
-  } else {
+  } else if (showAdjustment) {
     html += "<th>" + esc(t("sales_rate_adjust")) + "</th>";
   }
   html += "<th>" + esc(t("sales_result_price")) + "</th></tr>";
@@ -10167,7 +10189,7 @@ function renderSalesRankPreview() {
       html += "<td><input class='form-input sales-rank-amount' data-rank-code='" + code + "' type='number' step='1' value='" + esc(String(rank.amount_adjustment_jpy || 0)) + "'></td>";
       html += "<td><select class='form-input sales-rank-unit' data-rank-code='" + code + "'>" + [1,10,100,1000].map(function(v){ return "<option value='" + v + "'" + (String(rank.rounding_unit_jpy || 10) === String(v) ? " selected" : "") + ">" + v + "</option>"; }).join("") + "</select></td>";
       html += "<td><select class='form-input sales-rank-method' data-rank-code='" + code + "'>" + ["round","ceil","floor"].map(function(v){ return "<option value='" + v + "'" + (String(rank.rounding_method || "round") === v ? " selected" : "") + ">" + v + "</option>"; }).join("") + "</select></td>";
-    } else {
+    } else if (showAdjustment) {
       html += "<td>" + esc(adjust) + "</td>";
     }
     html += "<td><div class='price-value sales-rank-price' style='color:#1a8c3e'>" + (price === null ? "-" : "JPY " + esc(formatYen(price))) + "</div></td>";
@@ -10252,10 +10274,10 @@ async function loadSalesPriceSummaryForCurrent() {
   if (!row) {
     wrap.innerHTML = "<div class='sales-price-summary'>" +
       "<div class='sales-price-summary-main'><span class='sales-price-summary-label'>" + esc(t("sales_price_section")) + "</span><span class='sales-price-summary-value'>-</span></div>" +
-      (canViewSalesPricing()
+      (canViewBasePrice()
         ? "<div class='sales-price-summary-main' style='margin-top:6px'><span class='sales-price-summary-label'>" + esc(t("sales_base_price")) + "</span><span class='sales-price-summary-value'>-</span></div>"
         : "") +
-      (canViewSalesPricing() ? "<div class='sales-price-summary-sub'>" + esc(t("sales_no_base_price")) + "</div>" : "") +
+      (canViewBasePrice() ? "<div class='sales-price-summary-sub'>" + esc(t("sales_no_base_price")) + "</div>" : "") +
     "</div>";
     return;
   }
@@ -10263,11 +10285,19 @@ async function loadSalesPriceSummaryForCurrent() {
   var priceText = "JPY " + esc(formatYen(row.base_price_jpy));
   wrap.innerHTML = "<div class='sales-price-summary'>" +
     "<div class='sales-price-summary-main'><span class='sales-price-summary-label'>" + esc(t("sales_price_section")) + "</span><span class='sales-price-summary-value'>" + priceText + "</span></div>" +
-    (canViewSalesPricing()
+    (canViewBasePrice()
       ? "<div class='sales-price-summary-main' style='margin-top:6px'><span class='sales-price-summary-label'>" + esc(t("sales_base_price")) + "</span><span class='sales-price-summary-value'>" + priceText + "</span></div>" +
         "<div class='sales-price-summary-sub'>" + esc(sub) + (row.basis_note ? " / " + esc(row.basis_note) : "") + "</div>"
       : "") +
   "</div>";
+}
+
+function setSalesPricingBaseFieldsVisible(visible) {
+  ["sales-base-price","sales-price-basis","sales-effective-start","sales-basis-note"].forEach(function(id) {
+    var el = document.getElementById(id);
+    var row = el && el.closest ? el.closest(".form-row") : null;
+    if (row) row.style.display = visible ? "" : "none";
+  });
 }
 
 function closeSalesPricingOverlay() {
@@ -10288,6 +10318,7 @@ async function openSalesPricingForCurrent() {
   if (saveBtn) saveBtn.style.display = canManageSalesPricing() ? "" : "none";
   var rankSaveBtn = document.getElementById("btn-sales-rank-save");
   if (rankSaveBtn) rankSaveBtn.style.display = canManageSalesPricing() ? "" : "none";
+  setSalesPricingBaseFieldsVisible(canViewBasePrice());
   ["sales-base-price","sales-price-basis","sales-effective-start","sales-basis-note"].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.disabled = !canManageSalesPricing();
@@ -10445,7 +10476,10 @@ function renderSalesPricingMgmt() {
     list.innerHTML = "<div class='empty'>" + esc(t("sales_pricing_mgmt_hint")) + "</div>";
     return;
   }
-  var html = "<table class='mgmt-table'><tr><th>DKD</th><th>" + esc(t("f_genuine_pn")) + "</th><th>" + esc(t("f_mfr_pn")) + "</th><th>" + esc(t("f_manufacturer")) + "</th><th>" + esc(t("sales_price_section")) + "</th><th>" + esc(t("sales_base_price")) + "</th><th></th></tr>";
+  var showBasePrice = canViewBasePrice();
+  var html = "<table class='mgmt-table'><tr><th>DKD</th><th>" + esc(t("f_genuine_pn")) + "</th><th>" + esc(t("f_mfr_pn")) + "</th><th>" + esc(t("f_manufacturer")) + "</th><th>" + esc(t("sales_price_section")) + "</th>";
+  if (showBasePrice) html += "<th>" + esc(t("sales_base_price")) + "</th>";
+  html += "<th></th></tr>";
   salesPricingMgmtRows.forEach(function(row) {
     var price = salesPricingMgmtPriceMap[String(row.dkd_shohin_id)] || null;
     var priceText = price ? ("JPY " + formatYen(price.base_price_jpy)) : "-";
@@ -10455,7 +10489,7 @@ function renderSalesPricingMgmt() {
     html += "<td><div class='mgmt-pn'>" + esc(row.manufacturer_part_number || "-") + "</div></td>";
     html += "<td><div class='mgmt-sub'>" + esc(row.manufacturer || "-") + "</div></td>";
     html += "<td><div class='price-value' style='color:#1a8c3e'>" + esc(priceText) + "</div></td>";
-    html += "<td><div class='price-value'>" + esc(priceText) + "</div><div class='mgmt-sub'>" + esc(price ? ([price.price_basis, price.effective_start].filter(Boolean).join(" / ")) : "") + "</div></td>";
+    if (showBasePrice) html += "<td><div class='price-value'>" + esc(priceText) + "</div><div class='mgmt-sub'>" + esc(price ? ([price.price_basis, price.effective_start].filter(Boolean).join(" / ")) : "") + "</div></td>";
     html += "<td><button class='btn-sm-edit' data-sales-price-dkd='" + esc(String(row.dkd_shohin_id || "")) + "'>" + esc(t("sales_pricing_title")) + "</button></td>";
     html += "</tr>";
   });
@@ -10719,11 +10753,13 @@ function closeFullscreen() { document.getElementById("fullscreen").classList.rem
 // ユーザー管理
 // =============================================
 async function loadUsers() {
-  if (!isAdmin()) return;
+  if (!canUseUserManagement()) return;
   var query = sb.from("profiles").select("*").order("created_at");
-  // daiko以外のadminは自グループのみ表示
   if (!isSystemAdmin()) {
-    query = query.eq("group_name", userProfile.group_name);
+    query = query.eq("company_code", userCompanyCode(userProfile));
+    if (isDeptAdminRole(userProfile)) {
+      query = query.eq("department_code", userDepartmentCode(userProfile));
+    }
   }
   var r = await query;
   renderUsers(r.data || []);
@@ -10757,26 +10793,32 @@ function renderUsers(users) {
     var companyLabel = (USER_COMPANY_OPTIONS.find(function(opt){ return opt[0] === companyCode; }) || [companyCode, companyCode])[1];
     var departmentLabel = (USER_DEPARTMENT_OPTIONS.find(function(opt){ return opt[0] === departmentCode; }) || [departmentCode, departmentCode])[1];
     var accessRoleLabel = (USER_ACCESS_ROLE_OPTIONS.find(function(opt){ return opt[0] === accessRoleCode; }) || [accessRoleCode, accessRoleCode])[1];
+    var canManageThis = canManageUser(u);
+    var disabledAttr = canManageThis ? "" : " disabled";
+    var companyDisabledAttr = (canManageThis && isSystemAdmin()) ? "" : " disabled";
+    var departmentDisabledAttr = (canManageThis && !isDeptAdminRole(userProfile)) ? "" : " disabled";
     html += "<div class='user-company'>&#x1F3E2; "+esc(companyLabel)+" / "+esc(departmentLabel)+" / "+esc(accessRoleLabel)+"</div>";
     if (u.company) html += "<div class='user-company'>"+esc(u.company)+"</div>";
     html += "<div class='user-created'>"+t("lbl_registered")+" "+(u.created_at?u.created_at.slice(0,10):"-")+"</div>";
     html += "</div></div>";
     html += "<div style='font-size:12px;color:#888;margin-bottom:4px'>"+t("lbl_display_name")+"</div>";
-    html += "<input class='user-name-input' data-uid='"+esc(u.id)+"' value='"+esc(u.name||"")+"' placeholder='"+t("ph_display_name")+"'>";
+    html += "<input class='user-name-input' data-uid='"+esc(u.id)+"' value='"+esc(u.name||"")+"' placeholder='"+t("ph_display_name")+"'"+disabledAttr+">";
     html += "<div class='user-card-bottom' style='flex-wrap:wrap;gap:6px'>";
-    html += "<select class='group-select user-company-select' data-uid='"+esc(u.id)+"'" + (isSystemAdmin() ? "" : " disabled") + ">";
+    html += "<select class='group-select user-company-select' data-uid='"+esc(u.id)+"'" + companyDisabledAttr + ">";
     html += optionHtml(USER_COMPANY_OPTIONS, companyCode);
     html += "</select>";
-    html += "<select class='group-select user-department-select' data-uid='"+esc(u.id)+"'>";
+    html += "<select class='group-select user-department-select' data-uid='"+esc(u.id)+"'" + departmentDisabledAttr + ">";
     html += optionHtml(USER_DEPARTMENT_OPTIONS, departmentCode);
     html += "</select>";
-    html += "<select class='role-select user-access-role-select' data-uid='"+esc(u.id)+"'>";
+    html += "<select class='role-select user-access-role-select' data-uid='"+esc(u.id)+"'" + disabledAttr + ">";
     html += accessRoleOptionHtmlForCompany(companyCode, accessRoleCode);
     html += "</select>";
-    html += "<button class='btn-save-user' data-uid='"+esc(u.id)+"'>"+t("btn_save")+"</button>";
-    if (status==="pending"||status==="suspended") html += "<button class='btn-approve' data-uid='"+esc(u.id)+"'>"+t("btn_approve")+"</button>";
-    if (status==="active") html += "<button class='btn-suspend' data-uid='"+esc(u.id)+"'>"+t("btn_suspend")+"</button>";
-    html += "<button class='btn-pw-reset' data-uid='"+esc(u.id)+"' data-email='"+esc(u.email)+"' style='background:#888;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;white-space:nowrap'>"+t("btn_send_pw_reset")+"</button>";
+    if (canManageThis) {
+      html += "<button class='btn-save-user' data-uid='"+esc(u.id)+"'>"+t("btn_save")+"</button>";
+      if (status==="pending"||status==="suspended") html += "<button class='btn-approve' data-uid='"+esc(u.id)+"'>"+t("btn_approve")+"</button>";
+      if (status==="active") html += "<button class='btn-suspend' data-uid='"+esc(u.id)+"'>"+t("btn_suspend")+"</button>";
+      html += "<button class='btn-pw-reset' data-uid='"+esc(u.id)+"' data-email='"+esc(u.email)+"' style='background:#888;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;white-space:nowrap'>"+t("btn_send_pw_reset")+"</button>";
+    }
     html += "<span class='save-msg' id='save-msg-"+esc(u.id)+"'></span>";
     html += "</div></div>";
   });
@@ -10802,14 +10844,17 @@ function renderUsers(users) {
     btn.addEventListener("click", async function() {
       var uid   = btn.dataset.uid;
       var target = userById[uid];
-      if (!isAdmin() || !target || !canManageUser(target)) { alert(t("err_perm")); return; }
+      if (!canUseUserManagement() || !target || !canManageUser(target)) { alert(t("err_perm")); return; }
       var card  = list.querySelector(".user-card[data-uid='"+uid+"']");
       var name  = card.querySelector(".user-name-input").value.trim();
       var companyCode = isSystemAdmin()
         ? card.querySelector(".user-company-select").value
         : userCompanyCode(userProfile);
-      var departmentCode = card.querySelector(".user-department-select").value || "viewer";
+      var departmentCode = isDeptAdminRole(userProfile)
+        ? userDepartmentCode(userProfile)
+        : (card.querySelector(".user-department-select").value || "viewer");
       var roleCode = normalizeAccessRoleForCompany(card.querySelector(".user-access-role-select").value, companyCode);
+      if (!canAssignUserRole(roleCode)) { alert(t("err_perm")); return; }
       if (roleCode === "external_viewer") departmentCode = "viewer";
       var group = legacyGroupFromCompany(companyCode);
       var role = legacyRoleFromAccessRole(roleCode, companyCode);
@@ -10831,7 +10876,7 @@ function renderUsers(users) {
 
   async function updateStatus(uid,status) {
     var target = userById[uid];
-    if (!isAdmin() || !target || !canManageUser(target)) { alert(t("err_perm")); return; }
+    if (!canUseUserManagement() || !target || !canManageUser(target)) { alert(t("err_perm")); return; }
     var r = await sb.from("profiles").update({status:status,updated_at:new Date().toISOString()}).eq("id",uid);
     if (!r.error) await loadUsers();
   }
