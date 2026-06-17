@@ -3372,7 +3372,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.197";
+var APP_VERSION       = "v1.1.198";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -3409,7 +3409,10 @@ var searchRequestSeq = 0;
 var productAuxRequestSeq = 0;
 var productAuxSeq = 0;
 var productionAuxRequestSeq = 0;
+var detailSecondaryRequestSeq = 0;
 var kikanCompatibleFlagCache = {};
+var kikanPartsCache = {};
+var supplierPriceRowsCache = {};
 var rakutenLastItems = [];
 var rakutenLastDebug = [];
 var rakutenApiBusy = false;
@@ -8782,6 +8785,7 @@ function applyVisibleSearchScopeFilter() {
 
 function renderPanelStatic() {
   var p = currentProduct;
+  var detailSeq = ++detailSecondaryRequestSeq;
   document.getElementById("panel-topbar-title").textContent = productCategoryLabel(p) || "-";
   var topAddBtn = document.getElementById("btn-add-core-product-top");
   if (topAddBtn) {
@@ -8878,7 +8882,8 @@ function renderPanelStatic() {
   loadCatalogVehicleSummary(document.getElementById("panel-body"), p);
   loadProductSpecsForCurrent();
   if (canSeeSalesPrice()) loadSalesPriceSummaryForCurrent();
-  loadSlPartsForProduct(p);
+  loadKikanForCurrentProduct(detailSeq);
+  loadSlPartsForProduct(p, detailSeq);
 }
 
 function renderCachedPanelThumbnail() {
@@ -10074,53 +10079,31 @@ async function loadParallelDiffForCurrent(targetDkdId) {
   wrap.innerHTML = html;
 }
 
-async function loadSlPartsForProduct(product) {
-  await fillProductLegacyPartIds([product]);
-  loadSlParts(productLegacyPartId(product));
+function isCurrentDetailLoad(seq) {
+  return seq === null || seq === undefined || seq === detailSecondaryRequestSeq;
 }
 
-function loadKikanForCurrentProduct() {
+async function loadSlPartsForProduct(product, seq) {
+  await fillProductLegacyPartIds([product]);
+  if (!isCurrentDetailLoad(seq)) return;
+  loadSlParts(productLegacyPartId(product), seq);
+}
+
+function loadKikanForCurrentProduct(seq) {
   var scd = currentProduct ? (currentProduct.dkd_shohin_id || currentProduct.shohin_cd) : null;
   if (scd !== null && scd !== undefined && scd !== '') {
-    loadKikan(scd);
+    loadKikan(scd, seq, currentProduct);
   } else {
     var wrap = document.getElementById("kikan-wrap");
     if (wrap) wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
   }
 }
 
-async function loadSlParts(partId) {
+function renderSupplierPriceRows(rows) {
   var wrap = document.getElementById("price-table-wrap");
   if (!wrap) return;
-  if (!partId) {
-    currentSlPartIds = [];
-    wrap.innerHTML = "";
-    loadImages(null);
-    loadKikanForCurrentProduct();
-    return;
-  }
-
-  var showSupplierPrices = canSeePurchasePrice();
-  var slIdsR = await sb.from("part_sl_mapping")
-    .select("sl_part_id")
-    .eq("part_id", partId);
-  currentSlPartIds = (slIdsR.data || []).map(function(m) { return m.sl_part_id; }).filter(Boolean);
-  loadImages(currentSlPartIds.length ? currentSlPartIds : null);
-  loadKikanForCurrentProduct();
-
-  if (!showSupplierPrices) {
-    wrap.innerHTML = "";
-    return;
-  }
-
-  // part_sl_mapping → sl_parts → suppliers を JOIN して取得
-  var r = await sb.from("part_sl_mapping")
-    .select("sl_parts(id, supplier_pn, unit_price, currency, moq, price_jpy, suppliers(name, short_name, country))")
-    .eq("part_id", partId);
-
-  var rows = (r.data || []).map(function(m) { return m.sl_parts; }).filter(Boolean);
-
-  if (rows.length === 0) {
+  rows = rows || [];
+  if (!rows.length) {
     wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("no_prices") + "</div>";
     return;
   }
@@ -10150,6 +10133,51 @@ async function loadSlParts(partId) {
   });
   html += "</table>";
   wrap.innerHTML = html;
+}
+
+async function loadSlParts(partId, seq) {
+  var wrap = document.getElementById("price-table-wrap");
+  if (!wrap || !isCurrentDetailLoad(seq)) return;
+  if (!partId) {
+    currentSlPartIds = [];
+    wrap.innerHTML = "";
+    loadImages(null, seq);
+    return;
+  }
+
+  var showSupplierPrices = canSeePurchasePrice();
+  var cacheKey = String(partId);
+  var hasCachedSupplierPrices = showSupplierPrices && Object.prototype.hasOwnProperty.call(supplierPriceRowsCache, cacheKey);
+  if (hasCachedSupplierPrices) {
+    renderSupplierPriceRows(supplierPriceRowsCache[cacheKey]);
+  }
+
+  var selectCols = showSupplierPrices
+    ? "sl_parts(id, supplier_pn, unit_price, currency, moq, price_jpy, suppliers(name, short_name, country))"
+    : "sl_part_id";
+  var r = await sb.from("part_sl_mapping")
+    .select(selectCols)
+    .eq("part_id", partId);
+  if (!isCurrentDetailLoad(seq)) return;
+  if (r.error) {
+    console.warn("supplier/sl mapping lookup failed", r.error);
+    currentSlPartIds = [];
+    if (showSupplierPrices && !hasCachedSupplierPrices) wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("no_prices") + "</div>";
+    loadImages(null, seq);
+    return;
+  }
+
+  if (showSupplierPrices) {
+    var rows = (r.data || []).map(function(m) { return m.sl_parts; }).filter(Boolean);
+    supplierPriceRowsCache[cacheKey] = rows;
+    currentSlPartIds = rows.map(function(sl) { return sl.id; }).filter(Boolean);
+    loadImages(currentSlPartIds.length ? currentSlPartIds : null, seq);
+    renderSupplierPriceRows(rows);
+  } else {
+    currentSlPartIds = (r.data || []).map(function(m) { return m.sl_part_id; }).filter(Boolean);
+    wrap.innerHTML = "";
+    loadImages(currentSlPartIds.length ? currentSlPartIds : null, seq);
+  }
 }
 
 function salesPricingTodayIso() {
@@ -10552,7 +10580,44 @@ async function openSalesPricingMgmtRow(dkdId) {
   await openSalesPricingForCurrent();
 }
 
-async function loadKikan(dkdShohinId) {
+function kikanCacheKey(product, dkdShohinIdNum) {
+  return [
+    dkdShohinIdNum,
+    product && (product.category_code || product.category || ""),
+    product && (product.genuine_part_number || ""),
+    product && (product.manufacturer_part_number || "")
+  ].join("|");
+}
+
+function renderKikanPartsList(parts_list, dkdShohinIdNum, product, wrap) {
+  if (!wrap) return;
+  parts_list = parts_list || [];
+  if (parts_list.length === 0) {
+    wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
+    return;
+  }
+  var html = "<table class='kikan-table'>";
+  html += "<tr><th>純正品番</th><th>メーカー品番</th><th>車メーカー</th></tr>";
+  parts_list.forEach(function(p) {
+    html += "<tr class='kikan-other' data-dkd-id='" + esc(String(p.dkd_shohin_id || p.id)) + "'>";
+    html += "<td><div class='kikan-pn'>" + esc(p.genuine_part_number || "-") + "</div>";
+    html += "</td>";
+    html += "<td><div class='kikan-pn'>" + esc(p.manufacturer_part_number || "-") + "</div>";
+    html += "<div class='kikan-mfr'>" + esc(p.manufacturer || "") + "</div></td>";
+    html += "<td><div class='kikan-mfr'>" + esc(p.vehicle_manufacturer || "-") + "</div></td>";
+    html += "</tr>";
+  });
+  html += "</table>";
+  html += "<div style='font-size:11px;color:#aaa;text-align:right'>" + parts_list.length + "件</div>";
+  wrap.innerHTML = html;
+  wrap.querySelectorAll("tr.kikan-other[data-dkd-id]").forEach(function(row) {
+    row.addEventListener("click", function() {
+      openProductByDkdId(parseInt(row.dataset.dkdId, 10));
+    });
+  });
+}
+
+async function loadKikan(dkdShohinId, seq, productSnapshot) {
   var wrap = document.getElementById("kikan-wrap");
   if (!wrap) return;
 
@@ -10561,16 +10626,23 @@ async function loadKikan(dkdShohinId) {
     wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
     return;
   }
+  var product = productSnapshot || currentProduct;
+  var cacheKey = kikanCacheKey(product, dkdShohinIdNum);
+  var hasCachedKikan = Object.prototype.hasOwnProperty.call(kikanPartsCache, cacheKey);
+  if (hasCachedKikan) {
+    renderKikanPartsList(kikanPartsCache[cacheKey], dkdShohinIdNum, product, wrap);
+  }
 
   var r = await sb.rpc("get_kikan_compatible_parts", {
     target_dkd_shohin_id: dkdShohinIdNum,
-    target_manufacturer: currentProduct ? (currentProduct.manufacturer || null) : null,
-    target_manufacturer_part_number: currentProduct ? (currentProduct.manufacturer_part_number || null) : null,
-    target_genuine_part_number: currentProduct ? (currentProduct.genuine_part_number || null) : null
+    target_manufacturer: product ? (product.manufacturer || null) : null,
+    target_manufacturer_part_number: product ? (product.manufacturer_part_number || null) : null,
+    target_genuine_part_number: product ? (product.genuine_part_number || null) : null
   });
+  if (!isCurrentDetailLoad(seq)) return;
   if (r.error) {
     console.warn("get_kikan_compatible_parts failed", r.error);
-    wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
+    if (!hasCachedKikan) wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
     return;
   }
 
@@ -10585,8 +10657,8 @@ async function loadKikan(dkdShohinId) {
     console.warn("kikan group hidden for review", { categories: Object.keys(categorySet) });
     return;
   }
-  if (currentProduct && (currentProduct.category_code || currentProduct.category)) {
-    var currentCategory = currentProduct.category_code || currentProduct.category;
+  if (product && (product.category_code || product.category)) {
+    var currentCategory = product.category_code || product.category;
     parts_list = parts_list.filter(function(p) {
       var cat = p.category_code || p.category;
       return cat === currentCategory || cat === "unclassified_assy" || cat === "other_assy";
@@ -10596,9 +10668,10 @@ async function loadKikan(dkdShohinId) {
   parts_list = filterVisibleProducts(parts_list);
   parts_list = parts_list.filter(function(p) {
     if (String(p.dkd_shohin_id) === String(dkdShohinIdNum)) return false;
-    if (currentProduct && currentProduct.genuine_part_number && p.genuine_part_number === currentProduct.genuine_part_number) return false;
+    if (product && product.genuine_part_number && p.genuine_part_number === product.genuine_part_number) return false;
     return true;
   });
+  kikanPartsCache[cacheKey] = parts_list;
   if (parts_list.length === 0) {
     wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
     return;
@@ -10626,9 +10699,10 @@ async function loadKikan(dkdShohinId) {
   });
 }
 
-async function loadImages(slPartIds) {
+async function loadImages(slPartIds, seq) {
   // slPartIds が null または空の場合は画像なし
   if (!slPartIds || slPartIds.length === 0) {
+    if (!isCurrentDetailLoad(seq)) return;
     currentImages = [];
     renderImages();
     return;
@@ -10638,6 +10712,7 @@ async function loadImages(slPartIds) {
     .select("*")
     .in("sl_part_id", slPartIds)
     .order("created_at");
+  if (!isCurrentDetailLoad(seq)) return;
   currentImages = r.data || [];
   if (currentProduct) {
     setProductImageCache(currentProduct, currentImages.length, currentImages.length > 0 ? currentImages[0].image_url : "");
