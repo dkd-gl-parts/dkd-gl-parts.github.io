@@ -3371,7 +3371,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.194";
+var APP_VERSION       = "v1.1.195";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -8633,7 +8633,7 @@ function render() {
     var hasKikan = hasProductKikanCompatible(p);
     var mfr   = [p.manufacturer, p.vehicle_manufacturer].filter(Boolean).join(" / ");
     var sel   = (currentProduct && currentProduct.id===p.id) ? " selected" : "";
-    html += "<div class='card"+sel+"' data-id='"+p.id+"'><div class='card-top'>";
+    html += "<div class='card"+sel+"' data-id='"+p.id+"' data-result-index='"+idx+"'><div class='card-top'>";
     if (thumb) {
       html += "<div class='card-thumb'>" + thumbImgHtml(thumb, {
         width: 112,
@@ -8674,6 +8674,28 @@ function render() {
 // =============================================
 // 詳細パネル
 // =============================================
+function focusSearchResultIndex(index) {
+  if (index === null || index === undefined || index < 0) return;
+  requestAnimationFrame(function() {
+    var card = document.querySelector("#list .card[data-result-index='" + index + "']");
+    if (!card) return;
+    card.setAttribute("tabindex", "-1");
+    card.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+    try { card.focus({ preventScroll: true }); } catch (e) { card.focus(); }
+  });
+}
+
+function focusProductionResultIndex(index) {
+  if (index === null || index === undefined || index < 0) return;
+  requestAnimationFrame(function() {
+    var card = document.querySelector("#production-list [data-production-index='" + index + "']");
+    if (!card) return;
+    card.setAttribute("tabindex", "-1");
+    card.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+    try { card.focus({ preventScroll: true }); } catch (e) { card.focus(); }
+  });
+}
+
 function openPanel(id) {
   currentProduct = null;
   currentCoreDkdShohinId = null;
@@ -11315,9 +11337,11 @@ document.getElementById("filter-row").addEventListener("pointerup", function(e) 
   if (Date.now() - lastFilterTouchAt < 450) return;
   activateSearchFilterChipFromEvent(e);
 });
-document.getElementById("btn-load-more").addEventListener("click", function(){
+document.getElementById("btn-load-more").addEventListener("click", async function(){
+  var firstAddedIndex = getFiltered().slice(0, SEARCH_RENDER_LIMIT).length;
   productSearchLimit = Math.min(productSearchLimit + SEARCH_PAGE_STEP, SEARCH_FETCH_LIMIT);
-  runProductSearch();
+  await runProductSearch();
+  focusSearchResultIndex(firstAddedIndex);
 });
 document.getElementById("list").addEventListener("click", function(e){ var c=e.target.closest(".card"); if(c) openPanel(parseInt(c.dataset.id,10)); });
 document.getElementById("production-search-btn").addEventListener("click", async function(){
@@ -11367,11 +11391,13 @@ document.querySelectorAll("[data-production-filter]").forEach(function(chip) {
   });
 });
 document.getElementById("production-load-more").addEventListener("click", async function(){
+  var firstAddedIndex = productionFilteredRows.length;
   productionSearchLimit = Math.min(productionSearchLimit + SEARCH_PAGE_STEP, SEARCH_FETCH_LIMIT);
   productionLoaded = false;
   await loadProductionProducts();
   renderProductionList();
   await renderProductionDetail(currentProductionRow);
+  focusProductionResultIndex(firstAddedIndex);
 });
 document.getElementById("production-list").addEventListener("click", async function(e) {
   var card = e.target.closest("[data-production-index]");
