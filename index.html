@@ -255,6 +255,45 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .mgmt-sub       { font-size: 11px; color: #aaa; margin-top: 2px; }
 .mgmt-actions   { display: flex; gap: 6px; flex-wrap: nowrap; }
 .mgmt-count     { font-size: 12px; color: #888; margin-bottom: 8px; }
+.customer-access-body { flex: 1; padding: 20px 16px; max-width: 1220px; width: 100%; margin: 0 auto; overflow-y: auto; }
+.customer-access-layout { display: grid; grid-template-columns: minmax(260px, 360px) minmax(0, 1fr); gap: 14px; align-items: start; }
+.customer-access-panel { background: #fff; border: 1px solid #e4e7ee; border-radius: 10px; overflow: hidden; }
+.customer-access-panel-head { min-height: 44px; padding: 11px 14px; border-bottom: 1px solid #edf0f5; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.customer-access-panel-title { font-size: 14px; font-weight: 800; color: #1a1a2e; }
+.customer-access-list { max-height: calc(100vh - 230px); overflow: auto; }
+.customer-access-row { width: 100%; border: none; background: #fff; border-bottom: 1px solid #f0f2f5; padding: 10px 12px; text-align: left; cursor: pointer; display: block; }
+.customer-access-row:hover { background: #f8fbff; }
+.customer-access-row.selected { background: #eef5ff; box-shadow: inset 3px 0 0 #4f8ef7; }
+.customer-access-name { font-size: 13px; font-weight: 800; color: #1a1a2e; line-height: 1.4; }
+.customer-access-sub { font-size: 11px; color: #778095; line-height: 1.5; margin-top: 3px; word-break: break-word; }
+.customer-access-detail { padding: 14px; }
+.customer-access-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+.customer-access-stat { border: 1px solid #e6ebf3; border-radius: 8px; padding: 8px 10px; background: #fbfcff; min-width: 0; }
+.customer-access-stat-label { font-size: 11px; color: #778095; margin-bottom: 3px; }
+.customer-access-stat-value { font-size: 13px; font-weight: 800; color: #1a1a2e; word-break: break-word; }
+.customer-setting-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0 12px; }
+.customer-check { border: 1px solid #e6ebf3; border-radius: 8px; padding: 9px 10px; display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #334155; background: #fff; line-height: 1.45; }
+.customer-check input { margin-top: 2px; flex: 0 0 auto; }
+.customer-check.disabled { color: #9aa3b2; background: #f7f8fa; }
+.customer-rule-form { display: grid; grid-template-columns: 140px minmax(160px, 1fr) 110px minmax(150px, 1fr) auto; gap: 8px; align-items: end; margin: 10px 0 12px; }
+.customer-rule-field label { display: block; color: #778095; font-size: 11px; margin-bottom: 4px; }
+.customer-rule-field input, .customer-rule-field select { width: 100%; border: 1px solid #d7dce5; border-radius: 7px; padding: 7px 9px; font-size: 12px; outline: none; background: #fff; }
+.customer-rule-field input:focus, .customer-rule-field select:focus { border-color: #4f8ef7; }
+.customer-rule-candidates { border: 1px solid #e5e9f2; border-radius: 8px; overflow: hidden; margin: -4px 0 10px 148px; display: none; background: #fff; }
+.customer-rule-candidate { width: 100%; border: none; border-bottom: 1px solid #f0f2f5; background: #fff; padding: 8px 10px; text-align: left; cursor: pointer; }
+.customer-rule-candidate:last-child { border-bottom: none; }
+.customer-rule-candidate:hover { background: #f5f8ff; }
+.customer-rule-selected { color: #1a6fd4; font-size: 11px; margin: -4px 0 10px 148px; min-height: 16px; }
+.customer-rule-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+@media(max-width:980px){
+  .customer-access-layout { grid-template-columns: 1fr; }
+  .customer-access-list { max-height: 280px; }
+  .customer-rule-form { grid-template-columns: 1fr 1fr; }
+  .customer-rule-candidates, .customer-rule-selected { margin-left: 0; }
+}
+@media(max-width:640px){
+  .customer-access-summary, .customer-setting-grid, .customer-rule-form { grid-template-columns: 1fr; }
+}
 
 /* 商品登録フォーム（モーダル風） */
 .form-overlay   { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 400; align-items: center; justify-content: center; }
@@ -1233,6 +1272,46 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   </div>
 </div>
 
+<div id="screen-customer-access-mgmt" class="screen">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-customer-access-mgmt" data-i18n="btn_back">← メニュー</button>
+      <span class="logo-text" data-i18n="customer_access_title">得意先表示管理</span>
+    </div>
+    <div class="page-header-right">
+      <span class="header-username" id="customer-access-mgmt-username"></span>
+      <span class="role-badge" id="customer-access-mgmt-role-badge"></span>
+      <button class="btn-logout" id="btn-logout-customer-access-mgmt" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <div class="customer-access-body">
+    <div class="mgmt-toolbar">
+      <input class="mgmt-search" id="customer-access-search" type="search" data-i18n-ph="customer_access_search_ph" placeholder="得意先コード・得意先名で検索">
+      <button class="btn-primary" id="btn-customer-access-search" data-i18n="btn_search">検索</button>
+    </div>
+    <div class="customer-access-layout">
+      <section class="customer-access-panel">
+        <div class="customer-access-panel-head">
+          <div class="customer-access-panel-title" data-i18n="customer_access_customers">得意先</div>
+          <div class="mgmt-count" id="customer-access-count"></div>
+        </div>
+        <div class="customer-access-list" id="customer-access-list"><div class="empty" data-i18n="loading">読み込み中...</div></div>
+      </section>
+      <section class="customer-access-panel">
+        <div class="customer-access-panel-head">
+          <div class="customer-access-panel-title" data-i18n="customer_access_settings">表示設定</div>
+          <div class="customer-rule-actions">
+            <button class="btn-sm-edit" id="btn-customer-access-save" data-i18n="btn_save">保存</button>
+          </div>
+        </div>
+        <div class="customer-access-detail" id="customer-access-detail">
+          <div class="empty" data-i18n="customer_access_select_hint">得意先を選択してください</div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
 <div class="form-overlay" id="part-form-overlay">
   <div class="form-card">
     <h3 id="part-form-title">商品追加</h3>
@@ -1926,6 +2005,8 @@ var TRANSLATIONS = {
     mi_production_desc: "製造アイテムをランキング・カテゴリ別に確認し、コア・構成部品・代替品を見ます。",
     mi_users_title: "ユーザー管理",
     mi_users_desc: "ユーザーの表示名とロール（権限）を設定します。",
+    mi_customer_access_title: "得意先表示管理",
+    mi_customer_access_desc: "得意先閲覧ユーザーに見せる商品範囲・価格表示ルールを設定します。",
     mi_core_list_title: "コアリスト",
     mi_core_list_desc: "基幹商品に紐づくコア品番・数量・置き場を登録します。",
     mi_production_ranking_title: "製造予定ランキング",
@@ -2145,6 +2226,36 @@ var TRANSLATIONS = {
     production_ranking_component_summary: "構成部品メモ",
     production_ranking_delete_confirm: "このランキング行を削除しますか？",
     production_ranking_edit_title: "ランキング修正",
+    customer_access_title: "得意先表示管理",
+    customer_access_search_ph: "得意先コード・得意先名で検索",
+    customer_access_customers: "得意先",
+    customer_access_settings: "表示設定",
+    customer_access_select_hint: "得意先を選択してください",
+    customer_access_code: "コード",
+    customer_access_customer: "得意先",
+    customer_access_display_settings: "得意先向け表示ルール",
+    customer_access_rule_help: "販売価格をOFFにすると、0円表示・価格あり商品のみ表示もOFFになります。価格あり商品のみ表示をONにすると、価格未設定商品は非表示になります。",
+    customer_access_visibility_rules: "得意先別の表示範囲",
+    customer_access_show_images: "画像を表示",
+    customer_access_show_vehicle: "車両情報を表示",
+    customer_access_show_compatible: "互換品を表示",
+    customer_access_show_sales_price: "販売価格を表示",
+    customer_access_show_zero_price: "0円の価格も表示",
+    customer_access_priced_only: "販売価格がある商品だけ表示",
+    customer_access_show_no_price: "価格未設定の商品も表示",
+    customer_access_scope: "範囲",
+    customer_access_scope_all: "全商品",
+    customer_access_scope_category: "カテゴリ",
+    customer_access_scope_product: "商品",
+    customer_access_visible: "表示",
+    customer_access_hidden: "非表示",
+    customer_access_target: "対象",
+    customer_access_rule_note: "管理メモ",
+    customer_access_add_rule: "ルール追加",
+    customer_access_no_rules: "表示範囲ルールは未設定です。未設定の場合は全商品を表示対象とします。",
+    customer_access_product_search: "商品検索",
+    customer_access_product_selected: "選択中の商品",
+    customer_access_delete_rule_confirm: "この表示範囲ルールを削除しますか？",
     lbl_kikan_group: "互換グループID",
     btn_add_kikan: "互換に追加",
     btn_new_kikan: "新しいグループを作成",
@@ -2405,6 +2516,8 @@ var TRANSLATIONS = {
     mi_production_desc: "Review production items by ranking or category, including core stock, components, and alternatives.",
     mi_users_title: "User Management",
     mi_users_desc: "Set user display names and access roles.",
+    mi_customer_access_title: "Customer View",
+    mi_customer_access_desc: "Configure product visibility and sales price display for customer viewer users.",
     mi_core_list_title: "CORE List",
     mi_core_list_desc: "Register core part numbers, quantities, and locations for master products.",
     mi_production_ranking_title: "Production Ranking",
@@ -2624,6 +2737,36 @@ var TRANSLATIONS = {
     production_ranking_component_summary: "Component memo",
     production_ranking_delete_confirm: "Delete this ranking row?",
     production_ranking_edit_title: "Edit Ranking",
+    customer_access_title: "Customer View Settings",
+    customer_access_search_ph: "Search by customer code or name",
+    customer_access_customers: "Customers",
+    customer_access_settings: "Display Settings",
+    customer_access_select_hint: "Select a customer.",
+    customer_access_code: "Code",
+    customer_access_customer: "Customer",
+    customer_access_display_settings: "Customer display rules",
+    customer_access_rule_help: "When sales price is off, zero-price display and priced-only display are also off. When priced-only is on, products without prices are hidden.",
+    customer_access_visibility_rules: "Customer product visibility",
+    customer_access_show_images: "Show images",
+    customer_access_show_vehicle: "Show vehicle info",
+    customer_access_show_compatible: "Show compatible parts",
+    customer_access_show_sales_price: "Show sales price",
+    customer_access_show_zero_price: "Show zero-yen prices",
+    customer_access_priced_only: "Show only products with sales price",
+    customer_access_show_no_price: "Show products without price",
+    customer_access_scope: "Scope",
+    customer_access_scope_all: "All products",
+    customer_access_scope_category: "Category",
+    customer_access_scope_product: "Product",
+    customer_access_visible: "Visible",
+    customer_access_hidden: "Hidden",
+    customer_access_target: "Target",
+    customer_access_rule_note: "Admin note",
+    customer_access_add_rule: "Add Rule",
+    customer_access_no_rules: "No visibility rules are set. Without rules, all products are visible.",
+    customer_access_product_search: "Product search",
+    customer_access_product_selected: "Selected product",
+    customer_access_delete_rule_confirm: "Delete this visibility rule?",
     lbl_kikan_group: "Compatibility Group ID",
     btn_add_kikan: "Add to Group",
     btn_new_kikan: "Create New Group",
@@ -2896,6 +3039,8 @@ var TRANSLATIONS = {
     mi_production_desc: "按排行或分类查看生产项目，并确认CORE、构成零件和替代品。",
     mi_users_title: "用户管理",
     mi_users_desc: "设置用户的显示名称和访问权限角色。",
+    mi_customer_access_title: "客户显示管理",
+    mi_customer_access_desc: "设置客户浏览用户可见的商品范围和销售价格显示规则。",
     mi_core_list_title: "CORE清单",
     mi_core_list_desc: "登记基干商品对应的CORE编号、数量和位置。",
     mi_production_ranking_title: "生产指示排行",
@@ -3095,6 +3240,36 @@ var TRANSLATIONS = {
     production_ranking_core_summary: "CORE备注",
     production_ranking_component_summary: "构成零件备注",
     production_ranking_delete_confirm: "删除此排行行？",
+    customer_access_title: "客户显示管理",
+    customer_access_search_ph: "按客户代码或名称搜索",
+    customer_access_customers: "客户",
+    customer_access_settings: "显示设置",
+    customer_access_select_hint: "请选择客户。",
+    customer_access_code: "代码",
+    customer_access_customer: "客户",
+    customer_access_display_settings: "客户显示规则",
+    customer_access_rule_help: "关闭销售价格时，0日元显示和仅显示有价格商品也会关闭。开启仅显示有价格商品时，未设置价格的商品会隐藏。",
+    customer_access_visibility_rules: "客户商品显示范围",
+    customer_access_show_images: "显示图片",
+    customer_access_show_vehicle: "显示车辆信息",
+    customer_access_show_compatible: "显示兼容件",
+    customer_access_show_sales_price: "显示销售价格",
+    customer_access_show_zero_price: "显示0日元价格",
+    customer_access_priced_only: "仅显示有销售价格的商品",
+    customer_access_show_no_price: "显示未设置价格的商品",
+    customer_access_scope: "范围",
+    customer_access_scope_all: "全部商品",
+    customer_access_scope_category: "类别",
+    customer_access_scope_product: "商品",
+    customer_access_visible: "显示",
+    customer_access_hidden: "隐藏",
+    customer_access_target: "对象",
+    customer_access_rule_note: "管理备注",
+    customer_access_add_rule: "添加规则",
+    customer_access_no_rules: "未设置显示范围规则。未设置时全部商品为显示对象。",
+    customer_access_product_search: "商品搜索",
+    customer_access_product_selected: "已选商品",
+    customer_access_delete_rule_confirm: "删除此显示范围规则？",
     lbl_kikan_group: "兼容组ID",
     btn_add_kikan: "添加到组",
     btn_new_kikan: "创建新组",
@@ -3375,7 +3550,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.199";
+var APP_VERSION       = "v1.1.200";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -3432,6 +3607,14 @@ var salesPricingMgmtPriceMap = {};
 var customerViewerContext = null;
 var salesCustomerOptions = [];
 var customerUserLinkMap = {};
+var customerAccessRows = [];
+var customerAccessFilteredRows = [];
+var currentCustomerAccessCustomer = null;
+var customerAccessSettings = null;
+var customerAccessVisibilityRows = [];
+var customerAccessRuleProductMap = {};
+var customerAccessProductCandidates = [];
+var customerAccessSelectedProduct = null;
 var CORE_PRODUCT_FAST_SELECT = [
   "dkd_shohin_id",
   "legacy_part_id",
@@ -3846,6 +4029,9 @@ function canManageProductSpecs() {
 function canManageSalesPricing() {
   return canEditSalesPricing();
 }
+function canManageCustomerAccess() {
+  return hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"]);
+}
 function canViewSalesPricing() {
   return canSeeSalesPrice() && !isCustomerViewer();
 }
@@ -4200,7 +4386,7 @@ function updateAllHeaders() {
   var cls   = roleClass(userProfile.role);
   var greet = tf("greeting", { name: name });
 
-  ["menu","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","production-ranking-mgmt","sales-pricing-mgmt","logs"].forEach(function(sc) {
+  ["menu","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","production-ranking-mgmt","sales-pricing-mgmt","customer-access-mgmt","logs"].forEach(function(sc) {
     var nameEl  = document.getElementById(sc + "-username");
     var badgeEl = document.getElementById(sc + "-role-badge");
     if (nameEl)  nameEl.textContent = name;
@@ -4260,6 +4446,7 @@ function renderMenu() {
 
   var adminItems = [
     { icon: "&#x1F465;", titleKey: "mi_users_title",  descKey: "mi_users_desc",  action: "users",  available: canUseUserManagement() },
+    { icon: "&#x1F6AA;", titleKey: "mi_customer_access_title", descKey: "mi_customer_access_desc", action: "customer-access-mgmt", available: canManageCustomerAccess() },
     { icon: "&#x1F527;", titleKey: "mi_parts_title", descKey: "mi_parts_desc", action: "parts-mgmt", available: canViewManagementScreen() },
     { icon: "&#x1F4B0;", titleKey: "sales_pricing_title", descKey: "sales_pricing_mgmt_desc", action: "sales-pricing-mgmt", available: canViewSalesPricing() },
     { icon: "&#x1F4E6;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canViewManagementScreen() },
@@ -4314,6 +4501,7 @@ function renderMenu() {
       if (card.dataset.action === "search") enterSearch();
       else if (card.dataset.action === "production-search") enterProductionSearch();
       else if (card.dataset.action === "users") enterUsers();
+      else if (card.dataset.action === "customer-access-mgmt") enterCustomerAccessMgmt();
       else if (card.dataset.action === "change-pw") enterChangePw();
       else if (card.dataset.action === "parts-mgmt") enterPartsMgmt();
       else if (card.dataset.action === "sales-pricing-mgmt") enterSalesPricingMgmt();
@@ -10733,6 +10921,469 @@ async function openSalesPricingMgmtRow(dkdId) {
   await openSalesPricingForCurrent();
 }
 
+async function enterCustomerAccessMgmt() {
+  if (!canManageCustomerAccess()) { alert(t("err_perm")); return; }
+  showScreen("customer-access-mgmt");
+  updateAllHeaders();
+  await ensureCustomerAccessCategories();
+  await loadCustomerAccessMgmt();
+}
+
+async function ensureCustomerAccessCategories() {
+  if (categoryOptions && categoryOptions.length) return;
+  var r = await sb.from("assy_categories")
+    .select("category_code,label_ja,label_en,label_zh,sort_order")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+  if (!r.error) {
+    categoryOptions = (r.data || []).filter(function(cat) {
+      return (cat.category_code || cat.category) !== "car_air_conditioner";
+    });
+  }
+}
+
+async function loadCustomerAccessMgmt() {
+  if (!canManageCustomerAccess()) { alert(t("err_perm")); return; }
+  var q = (document.getElementById("customer-access-search") || {}).value || "";
+  q = normalizeAsciiWidth(q).trim().toLowerCase();
+  var list = document.getElementById("customer-access-list");
+  if (list) list.innerHTML = "<div class='empty'>" + esc(t("loading")) + "</div>";
+  var r = await sb.from("sales_customers")
+    .select("id,source_customer_code,customer_name,customer_kana,price_rank_code,is_active")
+    .eq("is_active", true)
+    .order("source_customer_code", { ascending: true })
+    .limit(2000);
+  if (r.error) {
+    if (list) list.innerHTML = "<div class='empty'>" + esc(r.error.message || t("msg_kikan_err")) + "</div>";
+    return;
+  }
+  customerAccessRows = r.data || [];
+  customerAccessFilteredRows = customerAccessRows.filter(function(row) {
+    if (!q) return true;
+    return [
+      row.source_customer_code,
+      row.customer_name,
+      row.customer_kana,
+      row.price_rank_code
+    ].some(function(value) {
+      return normalizeAsciiWidth(value).toLowerCase().indexOf(q) >= 0;
+    });
+  });
+  renderCustomerAccessList();
+  if (currentCustomerAccessCustomer) {
+    var still = customerAccessFilteredRows.find(function(row) { return String(row.id) === String(currentCustomerAccessCustomer.id); });
+    if (still) {
+      await selectCustomerAccessCustomer(still.id);
+      return;
+    }
+  }
+  if (customerAccessFilteredRows.length) {
+    await selectCustomerAccessCustomer(customerAccessFilteredRows[0].id);
+  } else {
+    currentCustomerAccessCustomer = null;
+    customerAccessSettings = null;
+    customerAccessVisibilityRows = [];
+    renderCustomerAccessDetail();
+  }
+}
+
+function renderCustomerAccessList() {
+  var list = document.getElementById("customer-access-list");
+  var countEl = document.getElementById("customer-access-count");
+  if (countEl) countEl.textContent = customerAccessFilteredRows.length ? (customerAccessFilteredRows.length + " 件") : "";
+  if (!list) return;
+  if (!customerAccessFilteredRows.length) {
+    list.innerHTML = "<div class='empty'>" + esc(t("no_results")) + "</div>";
+    return;
+  }
+  list.innerHTML = customerAccessFilteredRows.map(function(row) {
+    var selected = currentCustomerAccessCustomer && String(currentCustomerAccessCustomer.id) === String(row.id) ? " selected" : "";
+    return "<button type='button' class='customer-access-row" + selected + "' data-customer-id='" + esc(String(row.id)) + "'>" +
+      "<div class='customer-access-name'>" + esc(row.customer_name || "-") + "</div>" +
+      "<div class='customer-access-sub'>" + esc([row.source_customer_code, row.price_rank_code].filter(Boolean).join(" / ")) + "</div>" +
+    "</button>";
+  }).join("");
+  list.querySelectorAll("[data-customer-id]").forEach(function(btn) {
+    btn.addEventListener("click", function() { selectCustomerAccessCustomer(btn.dataset.customerId); });
+  });
+}
+
+async function selectCustomerAccessCustomer(customerId) {
+  var customer = customerAccessRows.find(function(row) { return String(row.id) === String(customerId); });
+  if (!customer) return;
+  currentCustomerAccessCustomer = customer;
+  customerAccessSelectedProduct = null;
+  customerAccessProductCandidates = [];
+  renderCustomerAccessList();
+  await loadCustomerAccessDetail(customerId);
+}
+
+async function loadCustomerAccessDetail(customerId) {
+  var detail = document.getElementById("customer-access-detail");
+  if (detail) detail.innerHTML = "<div class='empty'>" + esc(t("loading")) + "</div>";
+  var settingsR = await sb.from("customer_display_settings")
+    .select("*")
+    .eq("sales_customer_id", customerId)
+    .maybeSingle();
+  if (settingsR.error) console.warn("customer display settings lookup failed", settingsR.error);
+  customerAccessSettings = Object.assign(defaultCustomerDisplaySettings(), settingsR.data || { sales_customer_id: customerId });
+  var visibilityR = await sb.from("customer_product_visibility")
+    .select("id,sales_customer_id,visibility_scope,category_code,dkd_shohin_id,is_visible,note,updated_at")
+    .eq("sales_customer_id", customerId)
+    .order("visibility_scope", { ascending: true })
+    .order("id", { ascending: true });
+  if (visibilityR.error) {
+    console.warn("customer visibility lookup failed", visibilityR.error);
+    customerAccessVisibilityRows = [];
+  } else {
+    customerAccessVisibilityRows = visibilityR.data || [];
+  }
+  await loadCustomerAccessRuleProductMap();
+  renderCustomerAccessDetail();
+}
+
+async function loadCustomerAccessRuleProductMap() {
+  customerAccessRuleProductMap = {};
+  var ids = uniqueTextValues(customerAccessVisibilityRows.map(function(row) {
+    return row.dkd_shohin_id ? String(row.dkd_shohin_id) : "";
+  })).map(function(id) { return parseInt(id, 10); }).filter(function(id) { return !isNaN(id); });
+  if (!ids.length) return;
+  var r = await sb.from("core_products")
+    .select(CORE_PRODUCT_FAST_SELECT)
+    .in("dkd_shohin_id", ids);
+  if (r.error) {
+    console.warn("customer visibility product lookup failed", r.error);
+    return;
+  }
+  normalizeCoreProductFastRows(r.data || []).forEach(function(row) {
+    customerAccessRuleProductMap[String(row.dkd_shohin_id)] = row;
+  });
+}
+
+function customerAccessCategoryOptionsHtml(selected) {
+  var cats = (categoryOptions && categoryOptions.length) ? categoryOptions : [
+    { category_code: "alternator", label_ja: "オルタネータ", label_en: "Alternator", label_zh: "交流发电机" },
+    { category_code: "starter", label_ja: "スタータ", label_en: "Starter", label_zh: "起动机" }
+  ];
+  return cats.map(function(cat) {
+    var code = cat.category_code || cat.category || "";
+    return "<option value='" + esc(code) + "'" + (String(code) === String(selected || "") ? " selected" : "") + ">" + esc(categoryOptionLabel(cat)) + "</option>";
+  }).join("");
+}
+
+function renderCustomerAccessDetail() {
+  var detail = document.getElementById("customer-access-detail");
+  if (!detail) return;
+  if (!currentCustomerAccessCustomer) {
+    detail.innerHTML = "<div class='empty'>" + esc(t("customer_access_select_hint")) + "</div>";
+    return;
+  }
+  var customer = currentCustomerAccessCustomer;
+  var s = Object.assign(defaultCustomerDisplaySettings(), customerAccessSettings || {});
+  var html = "";
+  html += "<div class='customer-access-summary'>";
+  html += "<div class='customer-access-stat'><div class='customer-access-stat-label'>" + esc(t("customer_access_code")) + "</div><div class='customer-access-stat-value'>" + esc(customer.source_customer_code || "-") + "</div></div>";
+  html += "<div class='customer-access-stat'><div class='customer-access-stat-label'>" + esc(t("customer_access_customer")) + "</div><div class='customer-access-stat-value'>" + esc(customer.customer_name || "-") + "</div></div>";
+  html += "<div class='customer-access-stat'><div class='customer-access-stat-label'>" + esc(t("sales_rank")) + "</div><div class='customer-access-stat-value'>" + esc(customer.price_rank_code || "-") + "</div></div>";
+  html += "</div>";
+  html += "<div class='component-section-title'>" + esc(t("customer_access_display_settings")) + "</div>";
+  html += "<div class='customer-setting-grid'>";
+  [
+    ["show_product_images", "customer_access_show_images"],
+    ["show_vehicle_info", "customer_access_show_vehicle"],
+    ["show_compatible_parts", "customer_access_show_compatible"],
+    ["show_sales_price", "customer_access_show_sales_price"],
+    ["show_zero_price", "customer_access_show_zero_price"],
+    ["priced_products_only", "customer_access_priced_only"],
+    ["show_parts_without_price", "customer_access_show_no_price"]
+  ].forEach(function(row) {
+    html += "<label class='customer-check' data-customer-check='" + esc(row[0]) + "'><input type='checkbox' data-customer-setting='" + esc(row[0]) + "'" + (s[row[0]] ? " checked" : "") + "> <span>" + esc(t(row[1])) + "</span></label>";
+  });
+  html += "</div>";
+  html += "<div class='component-note'>" + esc(t("customer_access_rule_help")) + "</div>";
+  html += "<div class='component-section-title'>" + esc(t("customer_access_visibility_rules")) + "</div>";
+  html += renderCustomerAccessRuleForm();
+  html += renderCustomerAccessRulesTable();
+  detail.innerHTML = html;
+  bindCustomerAccessDetailEvents();
+  syncCustomerDisplayRuleControls();
+}
+
+function renderCustomerAccessRuleForm() {
+  return "<div class='customer-rule-form'>" +
+    "<div class='customer-rule-field'><label>" + esc(t("customer_access_scope")) + "</label><select id='customer-rule-scope'>" +
+      "<option value='all'>" + esc(t("customer_access_scope_all")) + "</option>" +
+      "<option value='category'>" + esc(t("customer_access_scope_category")) + "</option>" +
+      "<option value='product'>" + esc(t("customer_access_scope_product")) + "</option>" +
+    "</select></div>" +
+    "<div class='customer-rule-field' id='customer-rule-category-field'><label>" + esc(t("f_category")) + "</label><select id='customer-rule-category'>" + customerAccessCategoryOptionsHtml("") + "</select></div>" +
+    "<div class='customer-rule-field'><label>" + esc(t("customer_access_visible")) + "</label><select id='customer-rule-visible'><option value='true'>" + esc(t("customer_access_visible")) + "</option><option value='false'>" + esc(t("customer_access_hidden")) + "</option></select></div>" +
+    "<div class='customer-rule-field' id='customer-rule-product-field'><label>" + esc(t("customer_access_product_search")) + "</label><input id='customer-rule-product-search' type='search' placeholder='" + esc(t("ph_search_parts")) + "'></div>" +
+    "<button class='btn-sm-edit' id='btn-customer-rule-product-search' type='button'>" + esc(t("btn_search")) + "</button>" +
+    "<div class='customer-rule-field'><label>" + esc(t("customer_access_rule_note")) + "</label><input id='customer-rule-note' type='text'></div>" +
+    "<button class='btn-primary' id='btn-customer-rule-add' type='button'>" + esc(t("customer_access_add_rule")) + "</button>" +
+  "</div>" +
+  "<div class='customer-rule-selected' id='customer-rule-selected-product'></div>" +
+  "<div class='customer-rule-candidates' id='customer-rule-candidates'></div>";
+}
+
+function customerRuleTargetLabel(row) {
+  if (!row) return "-";
+  if (row.visibility_scope === "all") return t("customer_access_scope_all");
+  if (row.visibility_scope === "category") return tCat(row.category_code);
+  var p = customerAccessRuleProductMap[String(row.dkd_shohin_id)] || null;
+  if (!p) return "DKD " + (row.dkd_shohin_id || "-");
+  return [p.genuine_part_number || "-", p.manufacturer_part_number || "-", p.manufacturer || ""].filter(Boolean).join(" / ");
+}
+
+function renderCustomerAccessRulesTable() {
+  if (!customerAccessVisibilityRows.length) {
+    return "<div class='component-empty'>" + esc(t("customer_access_no_rules")) + "</div>";
+  }
+  var html = "<table class='mgmt-table'><tr><th>" + esc(t("customer_access_scope")) + "</th><th>" + esc(t("customer_access_target")) + "</th><th>" + esc(t("customer_access_visible")) + "</th><th>" + esc(t("customer_access_rule_note")) + "</th><th></th></tr>";
+  customerAccessVisibilityRows.forEach(function(row) {
+    var scopeLabel = row.visibility_scope === "all" ? t("customer_access_scope_all") : (row.visibility_scope === "category" ? t("customer_access_scope_category") : t("customer_access_scope_product"));
+    html += "<tr>";
+    html += "<td>" + esc(scopeLabel) + "</td>";
+    html += "<td><div class='mgmt-pn'>" + esc(customerRuleTargetLabel(row)) + "</div></td>";
+    html += "<td><span class='" + (row.is_visible ? "permission-ok" : "permission-no") + "'>" + esc(row.is_visible ? t("customer_access_visible") : t("customer_access_hidden")) + "</span></td>";
+    html += "<td>" + esc(row.note || "-") + "</td>";
+    html += "<td><button class='btn-sm-del' data-customer-rule-delete='" + esc(String(row.id)) + "'>" + esc(t("btn_delete")) + "</button></td>";
+    html += "</tr>";
+  });
+  html += "</table>";
+  return html;
+}
+
+function bindCustomerAccessDetailEvents() {
+  var detail = document.getElementById("customer-access-detail");
+  if (!detail) return;
+  detail.querySelectorAll("[data-customer-setting]").forEach(function(el) {
+    el.addEventListener("change", syncCustomerDisplayRuleControls);
+  });
+  var scopeEl = document.getElementById("customer-rule-scope");
+  if (scopeEl) scopeEl.addEventListener("change", syncCustomerRuleScopeFields);
+  var productSearchBtn = document.getElementById("btn-customer-rule-product-search");
+  if (productSearchBtn) productSearchBtn.addEventListener("click", searchCustomerAccessProductCandidates);
+  var productSearch = document.getElementById("customer-rule-product-search");
+  if (productSearch) {
+    productSearch.addEventListener("input", function() {
+      customerAccessSelectedProduct = null;
+      updateCustomerAccessSelectedProduct();
+    });
+    productSearch.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        searchCustomerAccessProductCandidates();
+      }
+    });
+  }
+  var addBtn = document.getElementById("btn-customer-rule-add");
+  if (addBtn) addBtn.addEventListener("click", addCustomerVisibilityRule);
+  var candidates = document.getElementById("customer-rule-candidates");
+  if (candidates) {
+    candidates.addEventListener("click", function(e) {
+      var item = e.target.closest("[data-customer-product-index]");
+      if (item) selectCustomerAccessProductCandidate(parseInt(item.dataset.customerProductIndex, 10));
+    });
+  }
+  detail.querySelectorAll("[data-customer-rule-delete]").forEach(function(btn) {
+    btn.addEventListener("click", function() { deleteCustomerVisibilityRule(btn.dataset.customerRuleDelete); });
+  });
+  syncCustomerRuleScopeFields();
+}
+
+function syncCustomerDisplayRuleControls() {
+  var showSales = document.querySelector("[data-customer-setting='show_sales_price']");
+  var showZero = document.querySelector("[data-customer-setting='show_zero_price']");
+  var pricedOnly = document.querySelector("[data-customer-setting='priced_products_only']");
+  var showNoPrice = document.querySelector("[data-customer-setting='show_parts_without_price']");
+  if (showSales && !showSales.checked) {
+    if (showZero) showZero.checked = false;
+    if (pricedOnly) pricedOnly.checked = false;
+  }
+  if (pricedOnly && pricedOnly.checked && showNoPrice) showNoPrice.checked = false;
+  [
+    ["show_zero_price", showZero, showSales && !showSales.checked],
+    ["priced_products_only", pricedOnly, showSales && !showSales.checked],
+    ["show_parts_without_price", showNoPrice, pricedOnly && pricedOnly.checked]
+  ].forEach(function(row) {
+    if (!row[1]) return;
+    row[1].disabled = !!row[2];
+    var label = document.querySelector("[data-customer-check='" + row[0] + "']");
+    if (label) label.classList.toggle("disabled", !!row[2]);
+  });
+}
+
+function syncCustomerRuleScopeFields() {
+  var scope = (document.getElementById("customer-rule-scope") || {}).value || "all";
+  var categoryField = document.getElementById("customer-rule-category-field");
+  var productField = document.getElementById("customer-rule-product-field");
+  var productBtn = document.getElementById("btn-customer-rule-product-search");
+  if (categoryField) categoryField.style.display = scope === "category" ? "" : "none";
+  if (productField) productField.style.display = scope === "product" ? "" : "none";
+  if (productBtn) productBtn.style.display = scope === "product" ? "" : "none";
+  updateCustomerAccessSelectedProduct();
+}
+
+function collectCustomerDisplaySettings() {
+  var data = defaultCustomerDisplaySettings();
+  Object.keys(data).forEach(function(key) {
+    var el = document.querySelector("[data-customer-setting='" + key + "']");
+    if (el) data[key] = !!el.checked;
+  });
+  if (!data.show_sales_price) {
+    data.show_zero_price = false;
+    data.priced_products_only = false;
+  }
+  if (data.priced_products_only) data.show_parts_without_price = false;
+  return data;
+}
+
+async function saveCustomerAccessSettings() {
+  if (!canManageCustomerAccess() || !currentCustomerAccessCustomer) { alert(t("err_perm")); return; }
+  syncCustomerDisplayRuleControls();
+  var data = collectCustomerDisplaySettings();
+  data.sales_customer_id = currentCustomerAccessCustomer.id;
+  data.updated_at = new Date().toISOString();
+  var r = await sb.from("customer_display_settings").upsert(data, { onConflict: "sales_customer_id" });
+  if (r.error) {
+    alert(t("msg_save_err") + ": " + (r.error.message || r.error));
+    return;
+  }
+  customerAccessSettings = Object.assign(defaultCustomerDisplaySettings(), data);
+  alert(t("msg_saved"));
+  renderCustomerAccessDetail();
+}
+
+async function searchCustomerAccessProductCandidates() {
+  var input = document.getElementById("customer-rule-product-search");
+  var wrap = document.getElementById("customer-rule-candidates");
+  if (!input || !wrap) return;
+  var q = input.value.trim();
+  customerAccessSelectedProduct = null;
+  updateCustomerAccessSelectedProduct();
+  if (!q) {
+    wrap.style.display = "none";
+    wrap.innerHTML = "";
+    return;
+  }
+  wrap.style.display = "block";
+  wrap.innerHTML = "<div class='candidate-item'>" + esc(t("loading")) + "</div>";
+  var r = await fetchCoreProductMasterMatches(q, null, 20);
+  if (r.error) {
+    wrap.innerHTML = "<div class='candidate-item'>" + esc(r.error.message || t("msg_kikan_err")) + "</div>";
+    return;
+  }
+  customerAccessProductCandidates = normalizeCoreProductFastRows(r.data || []);
+  if (!customerAccessProductCandidates.length) {
+    wrap.innerHTML = "<div class='candidate-item'>" + esc(t("no_results")) + "</div>";
+    return;
+  }
+  wrap.innerHTML = customerAccessProductCandidates.map(function(p, i) {
+    return "<button type='button' class='customer-rule-candidate' data-customer-product-index='" + i + "'>" +
+      "<div class='candidate-main'>" + esc(p.genuine_part_number || p.manufacturer_part_number || "-") + "</div>" +
+      "<div class='candidate-sub'>" + esc([p.manufacturer_part_number, p.manufacturer, productCategoryLabel(p), "DKD " + (p.dkd_shohin_id || "-")].filter(Boolean).join(" / ")) + "</div>" +
+    "</button>";
+  }).join("");
+}
+
+function selectCustomerAccessProductCandidate(index) {
+  customerAccessSelectedProduct = customerAccessProductCandidates[index] || null;
+  var input = document.getElementById("customer-rule-product-search");
+  if (input && customerAccessSelectedProduct) {
+    input.value = customerAccessSelectedProduct.genuine_part_number || customerAccessSelectedProduct.manufacturer_part_number || "";
+  }
+  var wrap = document.getElementById("customer-rule-candidates");
+  if (wrap) {
+    wrap.style.display = "none";
+    wrap.innerHTML = "";
+  }
+  updateCustomerAccessSelectedProduct();
+}
+
+function updateCustomerAccessSelectedProduct() {
+  var el = document.getElementById("customer-rule-selected-product");
+  var scope = (document.getElementById("customer-rule-scope") || {}).value || "all";
+  if (!el) return;
+  if (scope !== "product") {
+    el.textContent = "";
+    return;
+  }
+  if (!customerAccessSelectedProduct) {
+    el.textContent = t("customer_access_product_selected") + ": -";
+    return;
+  }
+  el.textContent = t("customer_access_product_selected") + ": " + [
+    customerAccessSelectedProduct.genuine_part_number || "-",
+    customerAccessSelectedProduct.manufacturer_part_number || "-",
+    customerAccessSelectedProduct.manufacturer || "",
+    "DKD " + (customerAccessSelectedProduct.dkd_shohin_id || "-")
+  ].filter(Boolean).join(" / ");
+}
+
+async function deleteExistingCustomerVisibilityTarget(payload) {
+  var q = sb.from("customer_product_visibility")
+    .delete()
+    .eq("sales_customer_id", payload.sales_customer_id)
+    .eq("visibility_scope", payload.visibility_scope);
+  if (payload.visibility_scope === "all") {
+    q = q.is("category_code", null).is("dkd_shohin_id", null);
+  } else if (payload.visibility_scope === "category") {
+    q = q.eq("category_code", payload.category_code).is("dkd_shohin_id", null);
+  } else {
+    q = q.eq("dkd_shohin_id", payload.dkd_shohin_id);
+  }
+  return await q;
+}
+
+async function addCustomerVisibilityRule() {
+  if (!canManageCustomerAccess() || !currentCustomerAccessCustomer) { alert(t("err_perm")); return; }
+  var scope = (document.getElementById("customer-rule-scope") || {}).value || "all";
+  var payload = {
+    sales_customer_id: currentCustomerAccessCustomer.id,
+    visibility_scope: scope,
+    category_code: null,
+    dkd_shohin_id: null,
+    is_visible: (document.getElementById("customer-rule-visible") || {}).value !== "false",
+    note: ((document.getElementById("customer-rule-note") || {}).value || "").trim() || null,
+    updated_at: new Date().toISOString()
+  };
+  if (scope === "category") {
+    payload.category_code = (document.getElementById("customer-rule-category") || {}).value || null;
+    if (!payload.category_code) { alert(t("f_category")); return; }
+  } else if (scope === "product") {
+    if (!customerAccessSelectedProduct || !customerAccessSelectedProduct.dkd_shohin_id) {
+      alert(t("customer_access_product_search"));
+      return;
+    }
+    payload.dkd_shohin_id = parseInt(customerAccessSelectedProduct.dkd_shohin_id, 10);
+  }
+  var del = await deleteExistingCustomerVisibilityTarget(payload);
+  if (del.error) {
+    alert(t("msg_save_err") + ": " + (del.error.message || del.error));
+    return;
+  }
+  var ins = await sb.from("customer_product_visibility").insert(payload);
+  if (ins.error) {
+    alert(t("msg_save_err") + ": " + (ins.error.message || ins.error));
+    return;
+  }
+  customerAccessSelectedProduct = null;
+  await loadCustomerAccessDetail(currentCustomerAccessCustomer.id);
+}
+
+async function deleteCustomerVisibilityRule(ruleId) {
+  if (!canManageCustomerAccess()) { alert(t("err_perm")); return; }
+  if (!confirm(t("customer_access_delete_rule_confirm"))) return;
+  var r = await sb.from("customer_product_visibility").delete().eq("id", ruleId);
+  if (r.error) {
+    alert(t("msg_save_err") + ": " + (r.error.message || r.error));
+    return;
+  }
+  await loadCustomerAccessDetail(currentCustomerAccessCustomer.id);
+}
+
 function kikanCacheKey(product, dkdShohinIdNum) {
   return [
     dkdShohinIdNum,
@@ -11515,7 +12166,7 @@ document.getElementById("btn-back-to-login").addEventListener("click", function(
 document.getElementById("btn-submit-reg").addEventListener("click", doRegister);
 document.getElementById("reg-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doRegister(); });
 document.getElementById("login-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
-["btn-logout-menu","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-core-list-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
+["btn-logout-menu","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-customer-access-mgmt","btn-logout-core-list-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
 document.getElementById("btn-back-search").addEventListener("click", function(){ closePanel(); showScreen("menu"); });
 document.getElementById("btn-back-production-search").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-components").addEventListener("click", async function(){
@@ -11532,6 +12183,7 @@ document.getElementById("btn-back-component-parallel").addEventListener("click",
 document.getElementById("btn-back-users").addEventListener("click",  function(){ showScreen("menu"); });
 document.getElementById("btn-back-parts-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-sales-pricing-mgmt").addEventListener("click", function(){ showScreen("menu"); });
+document.getElementById("btn-back-customer-access-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-core-list-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-production-ranking-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-kikan-mgmt").addEventListener("click", function(){ showScreen("menu"); });
@@ -11598,6 +12250,9 @@ document.getElementById("btn-kikan-form-save").addEventListener("click", saveKik
 document.getElementById("parts-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadPartsMgmt(); });
 document.getElementById("btn-sales-pricing-mgmt-search").addEventListener("click", loadSalesPricingMgmt);
 document.getElementById("sales-pricing-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadSalesPricingMgmt(); });
+document.getElementById("btn-customer-access-search").addEventListener("click", loadCustomerAccessMgmt);
+document.getElementById("customer-access-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadCustomerAccessMgmt(); });
+document.getElementById("btn-customer-access-save").addEventListener("click", saveCustomerAccessSettings);
 document.getElementById("kikan-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadKikanMgmt(); });
 document.getElementById("btn-rakuten-search").addEventListener("click", searchRakutenPrices);
 document.getElementById("btn-rakuten-save-keys").addEventListener("click", function(){
