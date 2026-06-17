@@ -879,7 +879,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="left-col">
       <div class="search-header">
         <div class="search-row">
-          <input class="search-input" id="q" type="search" inputmode="numeric" data-i18n-ph="ph_search">
+          <input class="search-input" id="q" type="search" inputmode="search" autocapitalize="characters" autocomplete="off" data-i18n-ph="ph_search">
           <button class="btn-search" id="search-btn" data-i18n="btn_search">検索</button>
         </div>
         <div class="clear-row">
@@ -3371,7 +3371,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.195";
+var APP_VERSION       = "v1.1.196";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -7521,11 +7521,21 @@ function refreshCategorySelectLabels() {
 function getProductEngine(p) {
   return p.engine || p.engine_model || p.engine_type || p.engine_code || "";
 }
+function normalizeAsciiWidth(value) {
+  if (value === null || value === undefined) return "";
+  return String(value)
+    .replace(/[\uFF01-\uFF5E]/g, function(ch) {
+      return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
+    })
+    .replace(/\u3000/g, " ");
+}
+
 function norm(s) {
   if (s == null) return "";
-  return String(s)
+  return normalizeAsciiWidth(s)
     .toUpperCase()
-    .replace(/[-\s　]/g, "")
+    .replace(/[\u2010-\u2015\u2212\u30FC\uFF0D]/g, "-")
+    .replace(/[-\s]/g, "")
     .replace(/^([AM])0+([0-9])T/, "$1$2T")
     .toLowerCase();
 }
@@ -7975,11 +7985,14 @@ async function fetchSlProductsViaRpc(q, maxRows) {
 }
 
 function normalizePartQuery(q) {
-  return String(q || "").toUpperCase().replace(/[-\s　]/g, "");
+  return normalizeAsciiWidth(q)
+    .toUpperCase()
+    .replace(/[\u2010-\u2015\u2212\u30FC\uFF0D]/g, "-")
+    .replace(/[-\s]/g, "");
 }
 
 function normalizedPartKey(value) {
-  return String(value || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
+  return normalizeAsciiWidth(value).toUpperCase().replace(/[^0-9A-Z]/g, "");
 }
 
 function uniqueTextValues(values) {
