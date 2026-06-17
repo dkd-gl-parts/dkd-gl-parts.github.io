@@ -1174,6 +1174,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
           <td>営業閲覧・社内閲覧</td><td>社内</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td>
         </tr>
         <tr>
+          <td>得意先閲覧</td><td>社外 / 得意先</td><td class="permission-ok">制限</td><td class="permission-ok">閲覧</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td>
+        </tr>
+        <tr>
           <td>社外閲覧</td><td>社外</td><td class="permission-ok">制限</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td>
         </tr>
       </table>
@@ -3372,7 +3375,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.198";
+var APP_VERSION       = "v1.1.199";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -3426,6 +3429,9 @@ var salesPricingRanks = [];
 var salesPricingCustomerCounts = {};
 var salesPricingMgmtRows = [];
 var salesPricingMgmtPriceMap = {};
+var customerViewerContext = null;
+var salesCustomerOptions = [];
+var customerUserLinkMap = {};
 var CORE_PRODUCT_FAST_SELECT = [
   "dkd_shohin_id",
   "legacy_part_id",
@@ -3512,8 +3518,8 @@ function canAssignUserRole(roleCode) {
   if (isSystemAdmin()) return true;
   var currentRole = accessRoleCode(userProfile);
   if (currentRole === "company_admin") return roleCode !== "system_admin";
-  if (currentRole === "dept_admin") return ["system_admin", "company_admin", "dept_admin", "external_viewer"].indexOf(roleCode) < 0;
-  if (currentRole === "master_editor") return ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "sales_editor", "external_viewer"].indexOf(roleCode) < 0;
+  if (currentRole === "dept_admin") return ["system_admin", "company_admin", "dept_admin", "customer_viewer", "external_viewer"].indexOf(roleCode) < 0;
+  if (currentRole === "master_editor") return ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "sales_editor", "customer_viewer", "external_viewer"].indexOf(roleCode) < 0;
   return false;
 }
 
@@ -3535,7 +3541,7 @@ function canSeePurchasePrice() {
 }
 
 function canSeeSalesPrice() {
-  return !!userProfile && !isExternalViewer();
+  return !!userProfile && (isCustomerViewer() || !isExternalViewer());
 }
 function canViewBasePrice() {
   return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "all_viewer"]);
@@ -3555,12 +3561,18 @@ function canViewInternalComponents() {
 function canEditInternalComponents() {
   return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]);
 }
+function isCustomerViewerProfile(profile) {
+  return userAccessRoleCode(profile) === "customer_viewer";
+}
+function isCustomerViewer() {
+  return isCustomerViewerProfile(userProfile);
+}
 function isExternalViewerProfile(profile) {
   if (!profile) return false;
   var company = userCompanyCode(profile);
   var role = userAccessRoleCode(profile);
   var legacyGroup = profile.group_name || legacyGroupFromCompany(company);
-  return company === "external" || role === "external_viewer" || legacyGroup === "public";
+  return company === "external" || role === "customer_viewer" || role === "external_viewer" || legacyGroup === "public";
 }
 function isExternalViewer() {
   return isExternalViewerProfile(userProfile);
@@ -3592,10 +3604,99 @@ function productLegacyPartId(p) {
 }
 function isVisibleProduct(p) {
   if (!p) return false;
+  if (isCustomerViewer()) return isCustomerVisibleProduct(p);
   return !!userProfile;
 }
 function filterVisibleProducts(products) {
   return (products || []).filter(isVisibleProduct);
+}
+function defaultCustomerDisplaySettings() {
+  return {
+    show_product_images: true,
+    show_vehicle_info: true,
+    show_compatible_parts: true,
+    show_sales_price: true,
+    show_zero_price: false,
+    priced_products_only: false,
+    show_parts_without_price: true
+  };
+}
+function customerViewerSetting(key, fallback) {
+  if (!isCustomerViewer()) return fallback;
+  var settings = customerViewerContext && customerViewerContext.settings;
+  if (!settings || settings[key] == null) return fallback;
+  return !!settings[key];
+}
+function customerCanShowProductImages() {
+  return customerViewerSetting("show_product_images", true);
+}
+function customerCanShowVehicleInfo() {
+  return customerViewerSetting("show_vehicle_info", true);
+}
+function customerCanShowCompatibleParts() {
+  return customerViewerSetting("show_compatible_parts", true);
+}
+function isCustomerVisibleProduct(p) {
+  if (!userProfile || !isCustomerViewer()) return false;
+  if (!customerViewerContext || !customerViewerContext.sales_customer_id) return false;
+  var rows = customerViewerContext.visibilityRows || [];
+  if (!rows.length) return true;
+  var dkdId = String(p.dkd_shohin_id || p.id || "");
+  var category = String(p.category_code || p.category || "");
+  var productRule = rows.find(function(row) {
+    return row.visibility_scope === "product" && String(row.dkd_shohin_id || "") === dkdId;
+  });
+  if (productRule) return !!productRule.is_visible;
+  var categoryRule = rows.find(function(row) {
+    return row.visibility_scope === "category" && String(row.category_code || "") === category;
+  });
+  if (categoryRule) return !!categoryRule.is_visible;
+  var allRule = rows.find(function(row) {
+    return row.visibility_scope === "all";
+  });
+  return allRule ? !!allRule.is_visible : true;
+}
+async function loadCustomerViewerContext() {
+  customerViewerContext = null;
+  if (!currentUser || !isCustomerViewerProfile(userProfile)) return;
+  try {
+    var links = await sb.from("customer_user_links")
+      .select("sales_customer_id,is_primary")
+      .eq("user_id", currentUser.id)
+      .eq("is_active", true)
+      .order("is_primary", { ascending: false })
+      .limit(1);
+    if (links.error) throw links.error;
+    var link = (links.data || [])[0] || null;
+    if (!link || !link.sales_customer_id) {
+      customerViewerContext = { sales_customer_id: null, settings: defaultCustomerDisplaySettings(), visibilityRows: [] };
+      return;
+    }
+    var customerR = await sb.from("sales_customers")
+      .select("id,source_customer_code,customer_name,price_rank_code,is_active")
+      .eq("id", link.sales_customer_id)
+      .maybeSingle();
+    if (customerR.error) throw customerR.error;
+    var settingsR = await sb.from("customer_display_settings")
+      .select("*")
+      .eq("sales_customer_id", link.sales_customer_id)
+      .maybeSingle();
+    if (settingsR.error) console.warn("customer display settings lookup failed", settingsR.error);
+    var visibilityR = await sb.from("customer_product_visibility")
+      .select("visibility_scope,category_code,dkd_shohin_id,is_visible")
+      .eq("sales_customer_id", link.sales_customer_id)
+      .limit(2000);
+    if (visibilityR.error) console.warn("customer visibility lookup failed", visibilityR.error);
+    customerViewerContext = {
+      sales_customer_id: link.sales_customer_id,
+      customer: customerR.data || null,
+      settings: Object.assign(defaultCustomerDisplaySettings(), settingsR.data || {}),
+      visibilityRows: visibilityR.data || []
+    };
+  } catch (e) {
+    console.warn("customer viewer context lookup failed", e);
+    customerViewerContext = { sales_customer_id: null, settings: defaultCustomerDisplaySettings(), visibilityRows: [] };
+  }
 }
 function dedupeParts(parts) {
   var seen = {};
@@ -3647,6 +3748,7 @@ var USER_ACCESS_ROLE_OPTIONS = [
   ["production_editor", "製造担当"],
   ["sales_viewer", "営業閲覧"],
   ["internal_viewer", "社内閲覧"],
+  ["customer_viewer", "得意先閲覧"],
   ["external_viewer", "社外閲覧"]
 ];
 USER_ACCESS_ROLE_OPTIONS.splice(Math.max(0, USER_ACCESS_ROLE_OPTIONS.findIndex(function(opt){ return opt[0] === "internal_viewer"; })), 0, ["all_viewer", "全機能閲覧"]);
@@ -3659,6 +3761,7 @@ var USER_ACCESS_LEGACY_ROLE = {
   sales_viewer: "price_viewer",
   all_viewer: "price_viewer",
   internal_viewer: "price_viewer",
+  customer_viewer: "price_viewer",
   external_viewer: "price_viewer"
 };
 function userCompanyCode(profile) {
@@ -3693,11 +3796,15 @@ function userDepartmentCode(profile) {
   if (roleCode === "sales_editor") return "sales";
   if (roleCode === "sales_viewer") return "business";
   if (roleCode === "all_viewer") return "viewer";
+  if (roleCode === "customer_viewer") return "viewer";
   return "viewer";
 }
 function normalizeAccessRoleForCompany(roleCode, companyCode) {
-  var role = roleCode || "external_viewer";
-  if (companyCode === "external") return "external_viewer";
+  var role = roleCode || "customer_viewer";
+  if (companyCode === "external") {
+    return role === "external_viewer" ? "external_viewer" : "customer_viewer";
+  }
+  if (role === "customer_viewer") return "internal_viewer";
   if (role === "system_admin" && !isSystemAdmin()) return "company_admin";
   return role;
 }
@@ -3712,11 +3819,14 @@ function optionHtml(options, selected, skipFn) {
   }).join("");
 }
 function skipAccessRoleForCompany(companyCode, opt) {
-  if (companyCode === "external") return opt[0] !== "external_viewer";
+  if (companyCode === "external") return ["customer_viewer", "external_viewer"].indexOf(opt[0]) < 0;
+  if (opt[0] === "customer_viewer") return true;
   return !canAssignUserRole(opt[0]);
 }
 function defaultAccessRoleForCompany(companyCode, selected) {
-  if (companyCode === "external") return "external_viewer";
+  if (companyCode === "external") {
+    return selected === "external_viewer" ? "external_viewer" : "customer_viewer";
+  }
   selected = selected || "internal_viewer";
   var blocked = skipAccessRoleForCompany(companyCode, [selected, selected]);
   return blocked ? "internal_viewer" : selected;
@@ -3737,7 +3847,7 @@ function canManageSalesPricing() {
   return canEditSalesPricing();
 }
 function canViewSalesPricing() {
-  return canSeeSalesPrice();
+  return canSeeSalesPrice() && !isCustomerViewer();
 }
 function canViewProductionFeatures() {
   return canEdit() || canViewAllReadOnly();
@@ -4072,6 +4182,7 @@ async function loadProfile() {
     if (el) { el.style.color = "#c0392b"; el.textContent = t("suspended_msg"); }
     return false;
   }
+  await loadCustomerViewerContext();
 
   // プロファイルの言語設定を優先する
   var lang = userProfile.language || "ja";
@@ -4124,6 +4235,7 @@ async function doLogin() {
 async function doLogout() {
   await sb.auth.signOut();
   currentUser = null; userProfile = null;
+  customerViewerContext = null;
   allProducts = []; dataLoaded = false;
   slPartsMap = {}; slPresenceMap = {}; currentSlPartIds = [];
   currentProduct = null; currentProductSpecs = []; currentProductNominalSpec = null; currentImages = [];
@@ -4617,6 +4729,7 @@ function formatYen(value) {
 }
 
 function renderCatalogVehicleSummaryHtml(offsetClass) {
+  if (!customerCanShowVehicleInfo()) return "";
   return "<div class='detail-vehicle-grid" + (offsetClass || "") + "'>" +
     "<div class='detail-vehicle-label'>車メーカー</div>" +
     "<div class='detail-vehicle-value detail-vehicle-maker-row'><span class='catalog-vehicle-maker-value'>読み込み中...</span><button class='btn-sm-edit catalog-vehicle-button' type='button'>車両情報</button></div>" +
@@ -4711,6 +4824,7 @@ function closeVehicleApplicationsDialog() {
 }
 
 async function loadCatalogVehicleSummary(root, product) {
+  if (!customerCanShowVehicleInfo()) return;
   if (!root || !product) return;
   var valueEl = root.querySelector(".catalog-vehicle-maker-value");
   var button = root.querySelector(".catalog-vehicle-button");
@@ -8852,6 +8966,10 @@ function renderPanelStatic() {
   var salesPriceBlockHtml = canSeeSalesPrice()
     ? "<div class='sales-price-summary-block'><div class='sales-price-summary-head'><div class='detail-block-title'>" + t("sales_price_section") + "</div></div><div id='sales-price-summary-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div></div>"
     : "";
+  var kikanBlockHtml = customerCanShowCompatibleParts()
+    ? "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
+      "<div id='kikan-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>"
+    : "";
   document.getElementById("panel-body").innerHTML =
     "<div class='detail-main-grid'>" +
       "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + "</div>" +
@@ -8860,17 +8978,17 @@ function renderPanelStatic() {
       salesPriceBlockHtml + "</div>" +
     "</div>" +
     toolHtml +
-    "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
-    "<div id='kikan-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>" +
+    kikanBlockHtml +
     (canSeePurchasePrice()
       ? "<div class='price-section-title'>&#x1F4B0; " + t("supplier_prices") + "</div>" +
         "<div id='price-table-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>"
       : "<div id='price-table-wrap' style='display:none'></div>");
   // 画像エリアをリセット（右カラムはpanel-rightに固定表示）
-  document.getElementById("img-grid").innerHTML =
-    "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + t("img_loading") + "</div></div>";
+  document.getElementById("img-grid").innerHTML = customerCanShowProductImages()
+    ? "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + t("img_loading") + "</div></div>"
+    : "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>-</div></div>";
   document.getElementById("img-count").textContent = "";
-  renderCachedPanelThumbnail();
+  if (customerCanShowProductImages()) renderCachedPanelThumbnail();
   document.getElementById("panel-scroll").scrollTop = 0;
   var editCurrentBtn = document.getElementById("btn-edit-current-product");
   if (editCurrentBtn) editCurrentBtn.addEventListener("click", openCoreProductEditFromSearch);
@@ -8882,11 +9000,12 @@ function renderPanelStatic() {
   loadCatalogVehicleSummary(document.getElementById("panel-body"), p);
   loadProductSpecsForCurrent();
   if (canSeeSalesPrice()) loadSalesPriceSummaryForCurrent();
-  loadKikanForCurrentProduct(detailSeq);
+  if (customerCanShowCompatibleParts()) loadKikanForCurrentProduct(detailSeq);
   loadSlPartsForProduct(p, detailSeq);
 }
 
 function renderCachedPanelThumbnail() {
+  if (!customerCanShowProductImages()) return false;
   if (!currentProduct) return false;
   var thumb = getProductImageThumbnail(currentProduct);
   if (!thumb) return false;
@@ -10090,6 +10209,7 @@ async function loadSlPartsForProduct(product, seq) {
 }
 
 function loadKikanForCurrentProduct(seq) {
+  if (!customerCanShowCompatibleParts()) return;
   var scd = currentProduct ? (currentProduct.dkd_shohin_id || currentProduct.shohin_cd) : null;
   if (scd !== null && scd !== undefined && scd !== '') {
     loadKikan(scd, seq, currentProduct);
@@ -10330,6 +10450,10 @@ async function loadSalesPriceSummaryForCurrent() {
     wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + esc(t("sales_no_base_price")) + "</div>";
     return;
   }
+  if (isCustomerViewer()) {
+    await loadCustomerSalesPriceSummary(wrap, dkdId);
+    return;
+  }
   var r = await sb.from("product_base_prices")
     .select("id,base_price_jpy,tax_included,price_basis,basis_note,effective_start,updated_at")
     .eq("dkd_shohin_id", dkdId)
@@ -10360,6 +10484,35 @@ async function loadSalesPriceSummaryForCurrent() {
         "<div class='sales-price-summary-sub'>" + esc(sub) + (row.basis_note ? " / " + esc(row.basis_note) : "") + "</div>"
       : "") +
   "</div>";
+}
+
+async function loadCustomerSalesPriceSummary(wrap, dkdId) {
+  try {
+    var r = await sb.rpc("get_customer_product_sales_price", {
+      target_dkd_shohin_id: parseInt(dkdId, 10)
+    });
+    if (r.error) throw r.error;
+    var row = (r.data || [])[0] || null;
+    var status = row && row.price_display_status;
+    var price = row && row.sales_price_jpy != null ? row.sales_price_jpy : null;
+    var customerName = row && row.customer_name ? row.customer_name : (customerViewerContext && customerViewerContext.customer && customerViewerContext.customer.customer_name) || "";
+    if (!row || status === "no_customer") {
+      wrap.innerHTML = "<div class='sales-price-summary'><div class='sales-price-summary-main'><span class='sales-price-summary-label'>" + esc(t("sales_price_section")) + "</span><span class='sales-price-summary-value'>-</span></div><div class='sales-price-summary-sub'>得意先の紐づけがありません</div></div>";
+      return;
+    }
+    if (status === "hidden" || status === "no_price_hidden") {
+      wrap.innerHTML = "<div class='sales-price-summary'><div class='sales-price-summary-main'><span class='sales-price-summary-label'>" + esc(t("sales_price_section")) + "</span><span class='sales-price-summary-value'>-</span></div></div>";
+      return;
+    }
+    var priceText = price == null ? "-" : "JPY " + esc(formatYen(price));
+    wrap.innerHTML = "<div class='sales-price-summary'>" +
+      "<div class='sales-price-summary-main'><span class='sales-price-summary-label'>" + esc(t("sales_price_section")) + "</span><span class='sales-price-summary-value'>" + priceText + "</span></div>" +
+      (customerName ? "<div class='sales-price-summary-sub'>" + esc(customerName) + "</div>" : "") +
+    "</div>";
+  } catch (e) {
+    console.warn("customer sales price summary failed", e);
+    wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + esc(t("sales_no_base_price")) + "</div>";
+  }
 }
 
 function setSalesPricingBaseFieldsVisible(visible) {
@@ -10700,6 +10853,12 @@ async function loadKikan(dkdShohinId, seq, productSnapshot) {
 }
 
 async function loadImages(slPartIds, seq) {
+  if (!customerCanShowProductImages()) {
+    if (!isCurrentDetailLoad(seq)) return;
+    currentImages = [];
+    renderImages();
+    return;
+  }
   // slPartIds が null または空の場合は画像なし
   if (!slPartIds || slPartIds.length === 0) {
     if (!isCurrentDetailLoad(seq)) return;
@@ -10870,7 +11029,70 @@ async function loadUsers() {
     }
   }
   var r = await query;
-  renderUsers(r.data || []);
+  var users = r.data || [];
+  await loadUserCustomerLinkOptions(users);
+  renderUsers(users);
+}
+
+async function loadUserCustomerLinkOptions(users) {
+  salesCustomerOptions = [];
+  customerUserLinkMap = {};
+  if (!canUseUserManagement() || !users || !users.length) return;
+  try {
+    var customersR = await sb.from("sales_customers")
+      .select("id,source_customer_code,customer_name,price_rank_code,is_active")
+      .eq("is_active", true)
+      .order("source_customer_code", { ascending: true })
+      .limit(2000);
+    if (customersR.error) throw customersR.error;
+    salesCustomerOptions = customersR.data || [];
+    var userIds = users.map(function(u) { return u.id; }).filter(Boolean);
+    if (!userIds.length) return;
+    var linksR = await sb.from("customer_user_links")
+      .select("user_id,sales_customer_id,is_primary,is_active")
+      .in("user_id", userIds)
+      .eq("is_active", true);
+    if (linksR.error) throw linksR.error;
+    (linksR.data || []).sort(function(a, b) {
+      return (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0);
+    }).forEach(function(link) {
+      if (!customerUserLinkMap[link.user_id]) customerUserLinkMap[link.user_id] = link.sales_customer_id;
+    });
+  } catch (e) {
+    console.warn("customer user link options lookup failed", e);
+    salesCustomerOptions = [];
+    customerUserLinkMap = {};
+  }
+}
+
+function customerOptionHtml(selectedId) {
+  var selected = selectedId == null ? "" : String(selectedId);
+  var html = "<option value=''>得意先未設定</option>";
+  salesCustomerOptions.forEach(function(customer) {
+    var id = String(customer.id);
+    var label = [customer.source_customer_code, customer.customer_name, customer.price_rank_code].filter(Boolean).join(" / ");
+    html += "<option value='" + esc(id) + "'" + (id === selected ? " selected" : "") + ">" + esc(label) + "</option>";
+  });
+  return html;
+}
+
+async function saveCustomerUserLink(uid, salesCustomerId) {
+  try {
+    await sb.from("customer_user_links")
+      .update({ is_active: false, is_primary: false, updated_at: new Date().toISOString() })
+      .eq("user_id", uid)
+      .eq("is_active", true);
+    if (!salesCustomerId) return { error: null };
+    return await sb.from("customer_user_links").upsert({
+      user_id: uid,
+      sales_customer_id: parseInt(salesCustomerId, 10),
+      is_primary: true,
+      is_active: true,
+      updated_at: new Date().toISOString()
+    }, { onConflict: "user_id,sales_customer_id" });
+  } catch (e) {
+    return { error: e };
+  }
 }
 
 function renderUsers(users) {
@@ -10921,6 +11143,11 @@ function renderUsers(users) {
     html += "<select class='role-select user-access-role-select' data-uid='"+esc(u.id)+"'" + disabledAttr + ">";
     html += accessRoleOptionHtmlForCompany(companyCode, accessRoleCode);
     html += "</select>";
+    var customerLinkDisplay = accessRoleCode === "customer_viewer" ? "" : " style='display:none'";
+    var selectedCustomerId = customerUserLinkMap[u.id] || "";
+    html += "<select class='group-select user-customer-select' data-uid='"+esc(u.id)+"'" + disabledAttr + customerLinkDisplay + ">";
+    html += customerOptionHtml(selectedCustomerId);
+    html += "</select>";
     if (canManageThis) {
       html += "<button class='btn-save-user' data-uid='"+esc(u.id)+"'>"+t("btn_save")+"</button>";
       if (status==="pending"||status==="suspended") html += "<button class='btn-approve' data-uid='"+esc(u.id)+"'>"+t("btn_approve")+"</button>";
@@ -10939,12 +11166,24 @@ function renderUsers(users) {
       if (!card) return;
       var roleSelect = card.querySelector(".user-access-role-select");
       var departmentSelect = card.querySelector(".user-department-select");
+      var customerSelect = card.querySelector(".user-customer-select");
       if (!roleSelect) return;
       var nextCompany = sel.value;
       var nextRole = defaultAccessRoleForCompany(nextCompany, roleSelect.value);
       roleSelect.innerHTML = accessRoleOptionHtmlForCompany(nextCompany, nextRole);
       roleSelect.value = defaultAccessRoleForCompany(nextCompany, nextRole);
       if (departmentSelect && nextCompany === "external") departmentSelect.value = "viewer";
+      if (customerSelect) customerSelect.style.display = roleSelect.value === "customer_viewer" ? "" : "none";
+    });
+  });
+
+  list.querySelectorAll(".user-access-role-select").forEach(function(sel) {
+    sel.addEventListener("change", function() {
+      var uid = sel.dataset.uid;
+      var card = list.querySelector(".user-card[data-uid='"+uid+"']");
+      if (!card) return;
+      var customerSelect = card.querySelector(".user-customer-select");
+      if (customerSelect) customerSelect.style.display = sel.value === "customer_viewer" ? "" : "none";
     });
   });
 
@@ -10963,7 +11202,14 @@ function renderUsers(users) {
         : (card.querySelector(".user-department-select").value || "viewer");
       var roleCode = normalizeAccessRoleForCompany(card.querySelector(".user-access-role-select").value, companyCode);
       if (!canAssignUserRole(roleCode)) { alert(t("err_perm")); return; }
-      if (roleCode === "external_viewer") departmentCode = "viewer";
+      if (roleCode === "customer_viewer" || roleCode === "external_viewer") departmentCode = "viewer";
+      var customerSelect = card.querySelector(".user-customer-select");
+      var salesCustomerId = customerSelect ? customerSelect.value : "";
+      if (roleCode === "customer_viewer" && !salesCustomerId) {
+        var msgNeedCustomer = document.getElementById("save-msg-"+uid);
+        if (msgNeedCustomer) { msgNeedCustomer.className="save-msg save-err"; msgNeedCustomer.textContent="得意先を選択してください"; }
+        return;
+      }
       var group = legacyGroupFromCompany(companyCode);
       var role = legacyRoleFromAccessRole(roleCode, companyCode);
       var msg   = document.getElementById("save-msg-"+uid);
@@ -10978,7 +11224,15 @@ function renderUsers(users) {
       };
       var r = await sb.from("profiles").update(payload).eq("id",uid);
       if (r.error) { msg.className="save-msg save-err"; msg.textContent=t("msg_save_err"); }
-      else { msg.className="save-msg save-ok"; msg.textContent=t("msg_saved"); setTimeout(function(){msg.textContent="";},2500); await loadUsers(); }
+      else {
+        var linkR = await saveCustomerUserLink(uid, roleCode === "customer_viewer" ? salesCustomerId : "");
+        if (linkR && linkR.error) {
+          msg.className="save-msg save-err";
+          msg.textContent=t("msg_save_err") + ": " + ((linkR.error && linkR.error.message) || String(linkR.error));
+          return;
+        }
+        msg.className="save-msg save-ok"; msg.textContent=t("msg_saved"); setTimeout(function(){msg.textContent="";},2500); await loadUsers();
+      }
     });
   });
 
