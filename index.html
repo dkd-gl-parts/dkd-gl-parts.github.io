@@ -476,6 +476,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .badge-img { background: #e8f7ee; color: #1a8c3e; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .badge-component { background: #fff4d6; color: #8a5a00; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .badge-kikan { background: #eef5ff; color: #1a6fd4; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.product-kind-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.product-kind-list.compact { gap: 3px; margin-top: 4px; }
+.product-kind-pill { display: inline-flex; align-items: center; gap: 4px; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700; line-height: 1.35; white-space: nowrap; border: 1px solid transparent; }
+.product-kind-pill.rebuilt { background: #edf7ed; color: #1f7a35; border-color: #cbe9cf; }
+.product-kind-pill.aftermarket_new { background: #eaf2ff; color: #1a5fb4; border-color: #c9ddff; }
+.product-kind-pill.used_core { background: #fff4d6; color: #8a5a00; border-color: #f0d184; }
+.product-kind-pill.other { background: #f1f3f7; color: #556070; border-color: #dfe4ec; }
+.product-kind-stock { font-weight: 600; opacity: .82; }
+.product-kind-panel { border-top: 1px solid #f0f0f0; padding-top: 8px; margin-top: 8px; }
+.product-kind-panel .product-kind-list { margin-top: 6px; }
 .btn-component-action { background: #fff4d6; color: #8a5a00; border-color: #f2d489; font-weight: 700; }
 .btn-component-action:hover { background: #ffe9ad; border-color: #e7bf54; }
 .component-icon { font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif; line-height: 1; }
@@ -2059,6 +2069,14 @@ var TRANSLATIONS = {
     production_core_section: "コア",
     production_vehicle_section: "車両情報",
     production_component_section: "構成部品",
+    product_kind_section: "商品区分",
+    product_kind_rebuilt: "リビルト",
+    product_kind_aftermarket_new: "社外新品",
+    product_kind_used_core: "中古コア",
+    product_kind_other: "その他",
+    product_kind_stock: "在庫",
+    product_kind_sl: "SL",
+    product_kind_none: "区分データなし",
     production_source_section: "統合元",
     img_section: "画像",
     btn_upload: "写真を追加する",
@@ -2624,6 +2642,14 @@ var TRANSLATIONS = {
     production_core_section: "Core",
     production_vehicle_section: "Vehicle info",
     production_component_section: "Components",
+    product_kind_section: "Product Kind",
+    product_kind_rebuilt: "Rebuilt",
+    product_kind_aftermarket_new: "Aftermarket New",
+    product_kind_used_core: "Used Core",
+    product_kind_other: "Other",
+    product_kind_stock: "Stock",
+    product_kind_sl: "SL",
+    product_kind_none: "No product-kind data",
     production_source_section: "Merged sources",
     img_section: "Images",
     btn_upload: "Add Photos",
@@ -3196,6 +3222,14 @@ var TRANSLATIONS = {
     production_core_section: "CORE",
     production_vehicle_section: "车辆信息",
     production_component_section: "构成零件",
+    product_kind_section: "商品区分",
+    product_kind_rebuilt: "再制造",
+    product_kind_aftermarket_new: "副厂新品",
+    product_kind_used_core: "旧芯",
+    product_kind_other: "其他",
+    product_kind_stock: "库存",
+    product_kind_sl: "SL",
+    product_kind_none: "无区分数据",
     production_source_section: "合并来源",
     img_section: "图片",
     btn_upload: "添加照片",
@@ -3703,11 +3737,14 @@ var slPresenceCache     = {};
 var componentUsageCountMap = {};
 var coreStockQtyMap = {};
 var kikanCompatibleMap = {};
+var productVariantSummaryMap = {};
+var productVariantSummaryCache = {};
 var currentSlPartIds  = [];  // 現在表示中のSL品番IDリスト（画像ロード用）
 var currentFilter     = "all";
 var searchSlOnly      = false;
 var lastFilterTouchAt = 0;
 var currentProduct    = null;
+var currentProductVariants = [];
 var currentCoreDkdShohinId = null;
 var currentProductSpecs = [];
 var currentProductNominalSpec = null;
@@ -3721,7 +3758,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.206";
+var APP_VERSION       = "v1.1.207";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -8135,6 +8172,11 @@ function applyCachedSearchAuxiliaryMaps(products) {
         changed = true;
       }
     });
+    var dkdKey = productDkdId(p);
+    if (dkdKey && Object.prototype.hasOwnProperty.call(productVariantSummaryCache, dkdKey) && !Object.prototype.hasOwnProperty.call(productVariantSummaryMap, dkdKey)) {
+      productVariantSummaryMap[dkdKey] = productVariantSummaryCache[dkdKey];
+      changed = true;
+    }
   });
   return changed;
 }
@@ -8149,6 +8191,135 @@ function productSearchCardDkdIds(products) {
     ids.push(id);
   });
   return ids;
+}
+
+function normalizeProductKind(kind) {
+  kind = String(kind || "").trim().toLowerCase();
+  if (kind === "aftermarket" || kind === "aftermarket-new" || kind === "aftermarket new") return "aftermarket_new";
+  if (kind === "used-core" || kind === "used core" || kind === "core") return "used_core";
+  if (kind === "rebuilt" || kind === "rebuild") return "rebuilt";
+  return kind || "rebuilt";
+}
+
+function productKindLabel(kind) {
+  kind = normalizeProductKind(kind);
+  if (kind === "rebuilt") return t("product_kind_rebuilt");
+  if (kind === "aftermarket_new") return t("product_kind_aftermarket_new");
+  if (kind === "used_core") return t("product_kind_used_core");
+  return t("product_kind_other");
+}
+
+function productKindClass(kind) {
+  kind = normalizeProductKind(kind);
+  if (kind === "rebuilt" || kind === "aftermarket_new" || kind === "used_core") return kind;
+  return "other";
+}
+
+function productKindSortValue(kind) {
+  kind = normalizeProductKind(kind);
+  if (kind === "rebuilt") return 10;
+  if (kind === "aftermarket_new") return 20;
+  if (kind === "used_core") return 30;
+  return 90;
+}
+
+function createProductVariantSummary() {
+  return { rows: [], kinds: {} };
+}
+
+function addProductVariantSummaryRow(summary, row) {
+  if (!summary) return summary;
+  row = row || {};
+  var kind = normalizeProductKind(row.product_kind || row.default_product_kind || "rebuilt");
+  if (!summary.kinds[kind]) {
+    summary.kinds[kind] = { kind: kind, count: 0, stockQty: 0, stockKnown: false, slCount: 0 };
+  }
+  var meta = summary.kinds[kind];
+  meta.count += 1;
+  if (row.stock_qty !== null && row.stock_qty !== undefined && row.stock_qty !== "") {
+    var qty = parseFloat(row.stock_qty);
+    if (!isNaN(qty)) {
+      meta.stockQty += qty;
+      meta.stockKnown = true;
+    }
+  }
+  if (row.sl_part_id) meta.slCount += 1;
+  summary.rows.push({
+    product_kind: kind,
+    stock_qty: row.stock_qty,
+    sl_part_id: row.sl_part_id || null,
+    display_label: row.display_label || "",
+    stock_location: row.stock_location || "",
+    stock_note: row.stock_note || ""
+  });
+  return summary;
+}
+
+function cloneProductVariantSummary(summary) {
+  var copy = createProductVariantSummary();
+  (summary && summary.rows || []).forEach(function(row) {
+    addProductVariantSummaryRow(copy, row);
+  });
+  return copy;
+}
+
+function productKindSummaryForProduct(p) {
+  var dkdKey = productDkdId(p);
+  var cached = dkdKey ? (productVariantSummaryMap[dkdKey] || productVariantSummaryCache[dkdKey]) : null;
+  var summary = cloneProductVariantSummary(cached);
+  var defaultKind = normalizeProductKind(p && p.default_product_kind || "rebuilt");
+  if (!summary.kinds[defaultKind]) {
+    addProductVariantSummaryRow(summary, { product_kind: defaultKind });
+  }
+  return summary;
+}
+
+function renderProductKindPills(summary, options) {
+  options = options || {};
+  var kinds = Object.keys((summary && summary.kinds) || {}).sort(function(a, b) {
+    return productKindSortValue(a) - productKindSortValue(b);
+  });
+  if (!kinds.length) {
+    return "<div class='product-kind-list" + (options.compact ? " compact" : "") + "'><span class='product-kind-pill other'>" + esc(t("product_kind_none")) + "</span></div>";
+  }
+  var html = "<div class='product-kind-list" + (options.compact ? " compact" : "") + "'>";
+  kinds.forEach(function(kind) {
+    var meta = summary.kinds[kind] || {};
+    var extra = "";
+    if (options.detail && meta.stockKnown) {
+      extra += "<span class='product-kind-stock'>" + esc(t("product_kind_stock")) + " " + esc(String(meta.stockQty)) + "</span>";
+    }
+    if (options.detail && meta.slCount > 0) {
+      extra += "<span class='product-kind-stock'>" + esc(t("product_kind_sl")) + " " + esc(String(meta.slCount)) + "</span>";
+    }
+    html += "<span class='product-kind-pill " + productKindClass(kind) + "'>" + esc(productKindLabel(kind)) + extra + "</span>";
+  });
+  html += "</div>";
+  return html;
+}
+
+async function fetchProductVariantSummaryMap(products) {
+  var map = {};
+  var ids = productSearchCardDkdIds(products);
+  if (!ids.length) return map;
+  for (var i = 0; i < ids.length; i += 200) {
+    var chunk = ids.slice(i, i + 200);
+    var r = await sb.from("core_product_variants")
+      .select("dkd_shohin_id, product_kind, sl_part_id, display_label, stock_qty, stock_location, stock_note, is_active")
+      .eq("is_active", true)
+      .in("dkd_shohin_id", chunk);
+    if (r.error) {
+      console.warn("product variant summary lookup failed", r.error);
+      return map;
+    }
+    (r.data || []).forEach(function(row) {
+      var key = String(row.dkd_shohin_id || "");
+      if (!key) return;
+      if (!map[key]) map[key] = createProductVariantSummary();
+      addProductVariantSummaryRow(map[key], row);
+    });
+  }
+  return map;
 }
 
 function productImageCacheKeys(p) {
@@ -8804,6 +8975,7 @@ async function runProductSearch(options) {
     componentUsageCountMap = {};
     coreStockQtyMap = {};
     kikanCompatibleMap = {};
+    productVariantSummaryMap = {};
     renderCategoryChips();
     render();
     return;
@@ -8859,6 +9031,7 @@ async function runProductSearch(options) {
   componentUsageCountMap = {};
   coreStockQtyMap = {};
   kikanCompatibleMap = {};
+  productVariantSummaryMap = {};
   applyCachedSearchAuxiliaryMaps(allProducts);
   var cardFlags = await fetchProductSearchCardFlags(allProducts);
   if (seq !== searchRequestSeq) return;
@@ -9130,11 +9303,16 @@ async function loadProductSearchAuxiliaryData(seq, products) {
   }
   var fast = await Promise.all([
     canSeeComponentInfo() ? fetchComponentUsageCountMap(lookupProducts) : Promise.resolve({}),
-    canSeeCoreStockInfo() ? fetchCoreStockQtyMap(lookupProducts) : Promise.resolve({})
+    canSeeCoreStockInfo() ? fetchCoreStockQtyMap(lookupProducts) : Promise.resolve({}),
+    fetchProductVariantSummaryMap(lookupProducts)
   ]);
   if (isStale()) return;
   componentUsageCountMap = fast[0] || {};
   coreStockQtyMap = fast[1] || {};
+  productVariantSummaryMap = fast[2] || {};
+  Object.keys(productVariantSummaryMap).forEach(function(key) {
+    productVariantSummaryCache[key] = productVariantSummaryMap[key];
+  });
   lookupProducts.forEach(function(p) {
     var key = String(p && (p.dkd_shohin_id || p.id || "") || "");
     if (key && Object.prototype.hasOwnProperty.call(componentUsageCountMap, key)) {
@@ -9309,6 +9487,7 @@ function render() {
     var hasSL  = productHasSlPart(p, slNums);
     var componentCount = canSeeComponentInfo() ? productComponentCount(p) : 0;
     var hasKikan = hasProductKikanCompatible(p);
+    var kindSummary = productKindSummaryForProduct(p);
     var mfr   = [p.manufacturer, p.vehicle_manufacturer].filter(Boolean).join(" / ");
     var sel   = (currentProduct && currentProduct.id===p.id) ? " selected" : "";
     html += "<div class='card"+sel+"' data-id='"+p.id+"' data-result-index='"+idx+"'><div class='card-top'>";
@@ -9328,6 +9507,7 @@ function render() {
     html += "<div class='card-name'>"+esc(productCategoryLabel(p))+"</div>";
     html += "<div class='card-pn'>"+esc(p.genuine_part_number||"-")+"</div>";
     if (p.genuine_part_number_2) html += "<div class='card-sub'>純正2: "+esc(p.genuine_part_number_2)+"</div>";
+    html += renderProductKindPills(kindSummary, { compact: true });
     html += "<div class='card-mfr'>"+esc(mfr)+"</div>";
     if (p.manufacturer || p.manufacturer_part_number) {
       html += "<div class='card-sub'>";
@@ -9379,6 +9559,7 @@ function openPanel(id) {
   currentCoreDkdShohinId = null;
   currentProductSpecs = [];
   currentProductNominalSpec = null;
+  currentProductVariants = [];
   for (var i=0;i<allProducts.length;i++) { if(allProducts[i].id===id){currentProduct=allProducts[i];break;} }
   if (!currentProduct) return;
   document.getElementById("panel-welcome").style.display  = "none";
@@ -9415,6 +9596,7 @@ function closePanel() {
   document.getElementById("panel-footer").style.display  = "none";
   document.getElementById("panel-body").innerHTML = "";
   document.getElementById("panel-topbar-title").textContent = "-";
+  currentProductVariants = [];
   var topAddBtn = document.getElementById("btn-add-core-product-top");
   if (topAddBtn) {
     topAddBtn.style.display = "none";
@@ -9521,6 +9703,7 @@ function renderPanelStatic() {
   var salesPriceBlockHtml = canSeeSalesPrice()
     ? "<div class='sales-price-summary-block'><div class='sales-price-summary-head'><div class='detail-block-title'>" + t("sales_price_section") + "</div></div><div id='sales-price-summary-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div></div>"
     : "";
+  var productKindBlockHtml = "<div class='product-kind-panel'><div class='detail-block-title'>" + t("product_kind_section") + "</div><div id='product-kind-wrap'>" + renderProductKindPills(productKindSummaryForProduct(p), { detail: true }) + "</div></div>";
   var kikanBlockHtml = customerCanShowCompatibleParts()
     ? "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
       "<div id='kikan-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>"
@@ -9530,7 +9713,7 @@ function renderPanelStatic() {
       "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + "</div>" +
       "<div class='detail-column'>" + makerHtml +
       "<div class='detail-spec-block detail-spec-after-maker'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div>" +
-      salesPriceBlockHtml + "</div>" +
+      salesPriceBlockHtml + productKindBlockHtml + "</div>" +
     "</div>" +
     toolHtml +
     kikanBlockHtml +
@@ -9554,9 +9737,39 @@ function renderPanelStatic() {
   currentVehicleApplicationRows = [];
   loadCatalogVehicleSummary(document.getElementById("panel-body"), p);
   loadProductSpecsForCurrent();
+  loadProductVariantsForCurrent(detailSeq);
   if (canSeeSalesPrice()) loadSalesPriceSummaryForCurrent();
   if (customerCanShowCompatibleParts()) loadKikanForCurrentProduct(detailSeq);
   loadSlPartsForProduct(p, detailSeq);
+}
+
+async function loadProductVariantsForCurrent(seq) {
+  if (!currentProduct) return;
+  var dkdId = parseInt(productDkdId(currentProduct), 10);
+  if (isNaN(dkdId)) return;
+  var wrap = document.getElementById("product-kind-wrap");
+  var r = await sb.from("core_product_variants")
+    .select("product_variant_id, dkd_shohin_id, product_kind, sl_part_id, display_label, stock_qty, stock_location, stock_note, is_active")
+    .eq("dkd_shohin_id", dkdId)
+    .eq("is_active", true)
+    .order("product_variant_id", { ascending: true });
+  if (seq !== detailSecondaryRequestSeq) return;
+  if (r.error) {
+    console.warn("product variants lookup failed", r.error);
+    return;
+  }
+  currentProductVariants = r.data || [];
+  var summary = createProductVariantSummary();
+  currentProductVariants.forEach(function(row) {
+    addProductVariantSummaryRow(summary, row);
+  });
+  var key = String(dkdId);
+  productVariantSummaryMap[key] = summary;
+  productVariantSummaryCache[key] = summary;
+  if (wrap) {
+    wrap.innerHTML = renderProductKindPills(productKindSummaryForProduct(currentProduct), { detail: true });
+  }
+  render();
 }
 
 function renderCachedPanelThumbnail() {
