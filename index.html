@@ -3721,7 +3721,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.202";
+var APP_VERSION       = "v1.1.203";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -3804,7 +3804,6 @@ var CORE_PRODUCT_FAST_SELECT = [
   "model",
   "search_keyword",
   "price_jpy",
-  "stock",
   "core_return",
   "core_stock_qty",
   "core_pallet_no",
@@ -4851,7 +4850,7 @@ function enrichProductionProduct(row) {
   var coreQty = hasCoreQty ? coreStockQtyMap[coreKey] : null;
   row.production_instruction = inst;
   row.priority_rank = inst ? inst.priority_rank : null;
-  row.core_stock_qty = coreQty != null ? coreQty : (row.core_stock_qty != null ? row.core_stock_qty : parseInt(row.stock || "0", 10) || 0);
+  row.core_stock_qty = coreQty != null ? coreQty : (row.core_stock_qty != null ? row.core_stock_qty : 0);
   row.core_part_number = row.core_part_number || row.manufacturer_part_number || row.genuine_part_number || "";
   row.core_pallet_summary = inst ? inst.core_pallet_summary : "";
   row.core_pallet_summary = row.core_pallet_no || row.core_pallet_summary || "";
@@ -5015,7 +5014,7 @@ function productionKv(label, value) {
 
 function productionCoreStockQty(row) {
   if (!row) return 0;
-  var raw = row.core_stock_qty != null ? row.core_stock_qty : row.stock;
+  var raw = row.core_stock_qty;
   var n = parseInt(raw || 0, 10);
   return isNaN(n) ? 0 : n;
 }
@@ -5298,7 +5297,7 @@ async function renderProductionDetail(row) {
   }
   html += "</section>";
   html += "<section class='production-section'><h3>" + esc(t("production_core_section")) + "</h3>";
-  html += productionKv("コア在庫数", row.core_stock_qty || row.stock || 0);
+  html += productionKv("コア在庫数", row.core_stock_qty || 0);
   html += productionKv("コア品番", row.core_part_number);
   html += productionKv("パレット", row.core_pallet_summary);
   html += productionKv("状態", productionStatusLabel(row));
