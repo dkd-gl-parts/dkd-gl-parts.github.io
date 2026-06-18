@@ -3721,7 +3721,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.205";
+var APP_VERSION       = "v1.1.206";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -3971,6 +3971,28 @@ function productSlPresence(p) {
   return productSlCacheKeys(p).some(function(key) {
     return !!(slPresenceMap[key] || slPresenceCache[key]);
   });
+}
+
+async function fetchActiveSlLinkedDkdIds(maxRows) {
+  maxRows = maxRows || 10000;
+  var result = [];
+  var seen = {};
+  var r = await sb.from("core_product_sl_links")
+    .select("dkd_shohin_id")
+    .eq("status", "active")
+    .not("dkd_shohin_id", "is", null)
+    .limit(maxRows);
+  if (r.error) {
+    console.warn("active SL linked product lookup failed", r.error);
+    return result;
+  }
+  (r.data || []).forEach(function(row) {
+    var id = parseInt(row.dkd_shohin_id, 10);
+    if (isNaN(id) || seen[id]) return;
+    seen[id] = true;
+    result.push(id);
+  });
+  return result;
 }
 function slPartLabelsForProduct(p) {
   var labels = [];
@@ -6518,17 +6540,34 @@ async function loadPartsMgmt() {
   var q = document.getElementById("parts-mgmt-search").value.trim();
 
   if (!isDaikoGroup()) {
-    var rm = await sb.from("part_sl_mapping").select("parts(*)");
-    var mappedParts = dedupeParts((rm.data || []).map(function(m) { return m.parts; })).sort(function(a,b) {
-      return (a.id || 0) - (b.id || 0);
-    });
+    var visibleDkdIds = await fetchActiveSlLinkedDkdIds(10000);
+    var mappedParts = [];
+    for (var vi = 0; vi < visibleDkdIds.length; vi += 200) {
+      var idChunk = visibleDkdIds.slice(vi, vi + 200);
+      var rp = await sb.from("core_products")
+        .select(CORE_PRODUCT_FAST_SELECT)
+        .in("dkd_shohin_id", idChunk)
+        .order("manufacturer_part_number", { ascending: true })
+        .order("genuine_part_number", { ascending: true });
+      if (rp.error) {
+        console.warn("linked core product lookup failed", rp.error);
+        continue;
+      }
+      normalizeCoreProductFastRows(rp.data || []).forEach(function(p) {
+        p._coreLinkedOnly = true;
+        mappedParts.push(p);
+      });
+    }
     if (q) {
       var nq = norm(q);
       mappedParts = mappedParts.filter(function(p) {
         return [
+          p.dkd_shohin_id,
           p.genuine_part_number,
+          p.genuine_part_number_2,
           p.manufacturer_part_number,
-          p.manufacturer
+          p.manufacturer,
+          p.daiko_part_number
         ].some(function(v) { return norm(v).indexOf(nq) >= 0; });
       });
     }
@@ -6564,8 +6603,10 @@ function renderPartsMgmt() {
     html += "<td><div class='mgmt-sub'>" + esc(p.manufacturer || "-") + "</div></td>";
     html += "<td><div class='mgmt-sub'>" + tCat(p.category) + "</div></td>";
     html += "<td><div class='mgmt-actions'>";
-    html += "<button class='btn-sm-edit' data-pid='" + p.id + "'>" + t("btn_edit") + "</button>";
-    html += "<button class='btn-sm-del' data-pdel='" + p.id + "'>" + t("btn_delete") + "</button>";
+    if (!p._coreLinkedOnly) {
+      html += "<button class='btn-sm-edit' data-pid='" + p.id + "'>" + t("btn_edit") + "</button>";
+      html += "<button class='btn-sm-del' data-pdel='" + p.id + "'>" + t("btn_delete") + "</button>";
+    }
     html += "</div></td>";
     html += "</tr>";
   });
@@ -7536,10 +7577,10 @@ async function loadKikanMgmt() {
   var visibleShohinCdSet = null;
 
   if (!isDaikoGroup()) {
-    var rv = await sb.from("part_sl_mapping").select("parts(dkd_shohin_id)");
+    var visibleDkdIds = await fetchActiveSlLinkedDkdIds(10000);
     visibleShohinCdSet = {};
-    (rv.data || []).forEach(function(m) {
-      if (m.parts && m.parts.dkd_shohin_id != null) visibleShohinCdSet[String(m.parts.dkd_shohin_id)] = true;
+    visibleDkdIds.forEach(function(id) {
+      if (id != null) visibleShohinCdSet[String(id)] = true;
     });
   }
 
@@ -8235,7 +8276,9 @@ async function fillProductLegacyPartIds(products) {
 
 async function fetchSlAndImageMaps(products) {
   var mapping = await fetchSlMappingMaps(products);
-  if (!(mapping.slIds || []).length) mapping = await fetchLegacySlMappingMaps(products);
+  if (!(mapping.slIds || []).length && !productSearchCardDkdIds(products).length) {
+    mapping = await fetchLegacySlMappingMaps(products);
+  }
   var detail = await fetchSlLabelAndImageMaps(mapping);
   return {
     presence: mapping.presence || {},
@@ -10739,16 +10782,24 @@ async function loadSlPartsForProduct(product, seq) {
     .eq("status", "active");
   if (!isCurrentDetailLoad(seq)) return;
   if (r.error) {
-    console.warn("core SL link lookup failed; falling back to legacy mapping", r.error);
-    await fillProductLegacyPartIds([product]);
-    return loadSlParts(productLegacyPartId(product), seq);
+    console.warn("core SL link lookup failed", r.error);
+    currentSlPartIds = [];
+    if (showSupplierPrices && !hasCachedSupplierPrices) {
+      renderSupplierPriceRows([]);
+    } else {
+      wrap.innerHTML = "";
+    }
+    loadImages(null, seq);
+    return;
   }
 
   if (showSupplierPrices) {
     var rows = (r.data || []).map(function(m) { return m.sl_parts; }).filter(Boolean);
     if (!rows.length) {
-      await fillProductLegacyPartIds([product]);
-      return loadSlParts(productLegacyPartId(product), seq);
+      currentSlPartIds = [];
+      if (!hasCachedSupplierPrices) renderSupplierPriceRows([]);
+      loadImages(null, seq);
+      return;
     }
     supplierPriceRowsCache[cacheKey] = rows;
     currentSlPartIds = rows.map(function(sl) { return sl.id; }).filter(Boolean);
@@ -10757,8 +10808,9 @@ async function loadSlPartsForProduct(product, seq) {
   } else {
     currentSlPartIds = (r.data || []).map(function(m) { return m.sl_part_id; }).filter(Boolean);
     if (!currentSlPartIds.length) {
-      await fillProductLegacyPartIds([product]);
-      return loadSlParts(productLegacyPartId(product), seq);
+      wrap.innerHTML = "";
+      loadImages(null, seq);
+      return;
     }
     wrap.innerHTML = "";
     loadImages(currentSlPartIds.length ? currentSlPartIds : null, seq);
