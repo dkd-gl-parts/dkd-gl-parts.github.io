@@ -91,27 +91,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .sales-price-summary-label { color: #667085; font-weight: 600; }
 .sales-price-summary-value { color: #1a8c3e; font-size: 18px; font-weight: 800; }
 .sales-price-summary-sub { color: #8a94a6; margin-top: 4px; line-height: 1.5; }
-.sales-pricing-card { max-width: 1220px; width: calc(100vw - 48px); }
+.sales-pricing-card { max-width: 1480px; width: calc(100vw - 20px); }
 .sales-pricing-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .sales-pricing-grid .form-row { margin-bottom: 0; }
 .sales-pricing-help { font-size: 12px; color: #667085; line-height: 1.6; margin: 4px 0 12px; }
+.sales-pricing-field-help { font-size: 11px; color: #8a94a6; line-height: 1.45; margin-top: 4px; }
 .sales-pricing-preview { margin-top: 14px; border-top: 1px solid #edf0f5; padding-top: 12px; }
 .sales-pricing-preview-title { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; }
-.sales-rank-table-wrap { width: 100%; overflow-x: visible; padding-bottom: 2px; }
+.sales-rank-table-wrap { width: 100%; overflow-x: hidden; padding-bottom: 2px; }
 .sales-rank-table { width: 100%; min-width: 0; table-layout: fixed; }
-.sales-rank-table th, .sales-rank-table td { white-space: nowrap; }
-.sales-rank-table th:nth-child(1), .sales-rank-table td:nth-child(1) { width: 150px; }
-.sales-rank-table th:nth-child(2), .sales-rank-table td:nth-child(2) { width: 74px; text-align: right; }
-.sales-rank-table th:nth-child(3), .sales-rank-table td:nth-child(3) { width: 128px; }
-.sales-rank-table th:nth-child(4), .sales-rank-table td:nth-child(4) { width: 128px; }
-.sales-rank-table th:nth-child(5), .sales-rank-table td:nth-child(5) { width: 116px; }
-.sales-rank-table th:nth-child(6), .sales-rank-table td:nth-child(6) { width: 126px; }
-.sales-rank-table th:nth-child(7), .sales-rank-table td:nth-child(7) { width: 148px; }
+.sales-rank-table th, .sales-rank-table td { white-space: normal; word-break: keep-all; }
+.sales-rank-table th:nth-child(1), .sales-rank-table td:nth-child(1) { width: 20%; }
+.sales-rank-table th:nth-child(2), .sales-rank-table td:nth-child(2) { width: 15%; }
+.sales-rank-table th:nth-child(3), .sales-rank-table td:nth-child(3) { width: 8%; text-align: right; }
+.sales-rank-table th:nth-child(4), .sales-rank-table td:nth-child(4) { width: 14%; }
+.sales-rank-table th:nth-child(5), .sales-rank-table td:nth-child(5) { width: 13%; }
+.sales-rank-table th:nth-child(6), .sales-rank-table td:nth-child(6) { width: 12%; }
+.sales-rank-table th:nth-child(7), .sales-rank-table td:nth-child(7) { width: 13%; }
 .sales-rank-table .form-input { min-width: 0; padding: 7px 8px; }
 .sales-rank-price { white-space: nowrap; }
 .sales-pricing-error { color: #e24b4a; font-size: 12px; min-height: 18px; margin-top: 10px; }
-@media(max-width:1100px){ .sales-rank-table-wrap { overflow-x: auto; } .sales-rank-table { min-width: 900px; } }
-@media(max-width:640px){ .sales-pricing-card { width: calc(100vw - 18px); padding: 18px 14px; } .sales-pricing-grid { grid-template-columns: 1fr; } .sales-rank-table { min-width: 860px; } }
+@media(max-width:640px){ .sales-pricing-card { width: calc(100vw - 10px); padding: 18px 10px; } .sales-pricing-grid { grid-template-columns: 1fr; } .sales-rank-table { font-size: 11px; } .sales-rank-table th, .sales-rank-table td { padding: 7px 5px; } }
 .rakuten-quick-row { margin: 0; }
 .rakuten-price-body { flex: 1; padding: 20px 16px; max-width: 1120px; width: 100%; margin: 0 auto; overflow-y: auto; }
 .rakuten-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
@@ -264,13 +264,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-access-row { width: 100%; border: none; background: #fff; border-bottom: 1px solid #f0f2f5; padding: 10px 12px; text-align: left; cursor: pointer; display: block; }
 .customer-access-row:hover { background: #f8fbff; }
 .customer-access-row.selected { background: #eef5ff; box-shadow: inset 3px 0 0 #4f8ef7; }
+.customer-access-row.inactive { background: #fbfbfc; color: #9aa3b2; }
 .customer-access-name { font-size: 13px; font-weight: 800; color: #1a1a2e; line-height: 1.4; }
+.customer-access-row.inactive .customer-access-name { color: #7e8796; }
 .customer-access-sub { font-size: 11px; color: #778095; line-height: 1.5; margin-top: 3px; word-break: break-word; }
 .customer-access-detail { padding: 14px; }
-.customer-access-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+.customer-access-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 14px; }
 .customer-access-stat { border: 1px solid #e6ebf3; border-radius: 8px; padding: 8px 10px; background: #fbfcff; min-width: 0; }
 .customer-access-stat-label { font-size: 11px; color: #778095; margin-bottom: 3px; }
 .customer-access-stat-value { font-size: 13px; font-weight: 800; color: #1a1a2e; word-break: break-word; }
+.customer-access-filter-check { display: inline-flex; align-items: center; gap: 6px; color: #566174; font-size: 12px; white-space: nowrap; }
+.customer-access-status { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 2px 8px; font-size: 11px; font-weight: 800; background: #eef8f1; color: #188344; }
+.customer-access-status.inactive { background: #fff3e0; color: #9a5b00; }
+.customer-access-management-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: -2px 0 14px; }
 .customer-setting-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0 12px; }
 .customer-check { border: 1px solid #e6ebf3; border-radius: 8px; padding: 9px 10px; display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #334155; background: #fff; line-height: 1.45; }
 .customer-check input { margin-top: 2px; flex: 0 0 auto; }
@@ -1286,6 +1292,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   </div>
   <div class="customer-access-body">
     <div class="mgmt-toolbar">
+      <label class="customer-access-filter-check"><input id="customer-access-include-inactive" type="checkbox"> <span data-i18n="customer_access_include_hidden">非表示も表示</span></label>
       <input class="mgmt-search" id="customer-access-search" type="search" data-i18n-ph="customer_access_search_ph" placeholder="得意先コード・得意先名で検索">
       <button class="btn-primary" id="btn-customer-access-search" data-i18n="btn_search">検索</button>
     </div>
@@ -1434,6 +1441,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <div class="form-row">
         <label class="form-label" data-i18n="sales_base_price">基準価格(税抜)</label>
         <input class="form-input" id="sales-base-price" type="number" min="0" step="1">
+        <div class="sales-pricing-field-help" data-i18n="sales_base_price_help">ランク調整前の元価格です</div>
       </div>
       <div class="form-row">
         <label class="form-label" data-i18n="sales_price_basis">価格根拠</label>
@@ -2233,6 +2241,16 @@ var TRANSLATIONS = {
     customer_access_select_hint: "得意先を選択してください",
     customer_access_code: "コード",
     customer_access_customer: "得意先",
+    customer_access_status: "状態",
+    customer_access_active: "表示中",
+    customer_access_inactive: "非表示",
+    customer_access_include_hidden: "非表示も表示",
+    customer_access_hide_customer: "非表示にする",
+    customer_access_restore_customer: "再表示する",
+    customer_access_delete_customer: "得意先を削除",
+    customer_access_hide_confirm: "この得意先を非表示にしますか？得意先閲覧ユーザーからも見えなくなります。",
+    customer_access_restore_confirm: "この得意先を再表示しますか？",
+    customer_access_delete_confirm: "この得意先を削除しますか？表示設定・表示範囲・ユーザー紐づけも削除されます。",
     customer_access_display_settings: "得意先向け表示ルール",
     customer_access_rule_help: "販売価格をOFFにすると、0円表示・価格あり商品のみ表示もOFFになります。価格あり商品のみ表示をONにすると、価格未設定商品は非表示になります。",
     customer_access_visibility_rules: "得意先別の表示範囲",
@@ -2323,6 +2341,7 @@ var TRANSLATIONS = {
     sales_price_section: "販売価格",
     sales_pricing_title: "販売価格設定",
     sales_base_price: "基準価格",
+    sales_base_price_help: "売値区分の掛率・金額調整をかける前の元価格です。",
     sales_tax_type: "税区分",
     sales_tax_excluded: "税抜",
     sales_tax_included: "税込",
@@ -2334,7 +2353,7 @@ var TRANSLATIONS = {
     sales_effective_start: "適用開始日",
     sales_basis_note: "価格メモ",
     sales_basis_note_ph: "例: DKS仕切、EC相場、社内判断",
-    sales_rank_preview: "得意先ランク別の試算",
+    sales_rank_preview: "売値区分別の販売価格",
     sales_rank_save: "ランク設定を保存",
     sales_rank: "ランク",
     sales_customer_count: "得意先数",
@@ -2342,7 +2361,7 @@ var TRANSLATIONS = {
     sales_amount_adjustment: "金額調整",
     sales_rounding_unit: "丸め単位",
     sales_rounding_method: "丸め方法",
-    sales_result_price: "試算価格",
+    sales_result_price: "販売価格",
     sales_no_base_price: "基準価格は未設定です",
     sales_no_ranks: "価格ランクがありません",
     sales_no_product_id: "対象商品のDKD商品IDを確認できません",
@@ -2744,6 +2763,16 @@ var TRANSLATIONS = {
     customer_access_select_hint: "Select a customer.",
     customer_access_code: "Code",
     customer_access_customer: "Customer",
+    customer_access_status: "Status",
+    customer_access_active: "Visible",
+    customer_access_inactive: "Hidden",
+    customer_access_include_hidden: "Show hidden",
+    customer_access_hide_customer: "Hide customer",
+    customer_access_restore_customer: "Restore customer",
+    customer_access_delete_customer: "Delete customer",
+    customer_access_hide_confirm: "Hide this customer? Customer viewer users linked to this customer will no longer see products.",
+    customer_access_restore_confirm: "Restore this customer?",
+    customer_access_delete_confirm: "Delete this customer? Display settings, visibility rules, and user links will also be deleted.",
     customer_access_display_settings: "Customer display rules",
     customer_access_rule_help: "When sales price is off, zero-price display and priced-only display are also off. When priced-only is on, products without prices are hidden.",
     customer_access_visibility_rules: "Customer product visibility",
@@ -2834,6 +2863,7 @@ var TRANSLATIONS = {
     sales_price_section: "Sales Price",
     sales_pricing_title: "Sales Pricing",
     sales_base_price: "Base Price",
+    sales_base_price_help: "Original price before rate, amount adjustment, and rounding by sales rank.",
     sales_tax_type: "Tax Type",
     sales_tax_excluded: "Tax excluded",
     sales_tax_included: "Tax included",
@@ -2845,7 +2875,7 @@ var TRANSLATIONS = {
     sales_effective_start: "Effective Start",
     sales_basis_note: "Price Note",
     sales_basis_note_ph: "Example: DKS cost, EC market price, internal decision",
-    sales_rank_preview: "Preview by Customer Rank",
+    sales_rank_preview: "Sales Price by Rank",
     sales_rank_save: "Save Rank Settings",
     sales_rank: "Rank",
     sales_customer_count: "Customers",
@@ -2853,7 +2883,7 @@ var TRANSLATIONS = {
     sales_amount_adjustment: "Amount Adjustment",
     sales_rounding_unit: "Rounding Unit",
     sales_rounding_method: "Rounding Method",
-    sales_result_price: "Preview Price",
+    sales_result_price: "Sales Price",
     sales_no_base_price: "Base price is not set",
     sales_no_ranks: "No price ranks",
     sales_no_product_id: "Could not confirm the target DKD product ID",
@@ -3247,6 +3277,16 @@ var TRANSLATIONS = {
     customer_access_select_hint: "请选择客户。",
     customer_access_code: "代码",
     customer_access_customer: "客户",
+    customer_access_status: "状态",
+    customer_access_active: "显示中",
+    customer_access_inactive: "隐藏",
+    customer_access_include_hidden: "显示隐藏客户",
+    customer_access_hide_customer: "隐藏客户",
+    customer_access_restore_customer: "恢复显示",
+    customer_access_delete_customer: "删除客户",
+    customer_access_hide_confirm: "要隐藏此客户吗？关联的客户浏览用户也将无法看到商品。",
+    customer_access_restore_confirm: "要恢复显示此客户吗？",
+    customer_access_delete_confirm: "要删除此客户吗？显示设置、显示范围和用户关联也会被删除。",
     customer_access_display_settings: "客户显示规则",
     customer_access_rule_help: "关闭销售价格时，0日元显示和仅显示有价格商品也会关闭。开启仅显示有价格商品时，未设置价格的商品会隐藏。",
     customer_access_visibility_rules: "客户商品显示范围",
@@ -3337,6 +3377,7 @@ var TRANSLATIONS = {
     sales_price_section: "销售价格",
     sales_pricing_title: "销售价格设置",
     sales_base_price: "基准价格",
+    sales_base_price_help: "应用销售等级倍率、金额调整和取整前的原始价格。",
     sales_tax_type: "税区分",
     sales_tax_excluded: "不含税",
     sales_tax_included: "含税",
@@ -3348,7 +3389,7 @@ var TRANSLATIONS = {
     sales_effective_start: "开始日期",
     sales_basis_note: "价格备注",
     sales_basis_note_ph: "例如: DKS成本、EC行情、内部判断",
-    sales_rank_preview: "按客户等级试算",
+    sales_rank_preview: "按销售等级的销售价格",
     sales_rank_save: "保存等级设置",
     sales_rank: "等级",
     sales_customer_count: "客户数",
@@ -3356,7 +3397,7 @@ var TRANSLATIONS = {
     sales_amount_adjustment: "金额调整",
     sales_rounding_unit: "取整单位",
     sales_rounding_method: "取整方式",
-    sales_result_price: "试算价格",
+    sales_result_price: "销售价格",
     sales_no_base_price: "尚未设置基准价格",
     sales_no_ranks: "没有价格等级",
     sales_no_product_id: "无法确认目标DKD商品ID",
@@ -3550,7 +3591,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.200";
+var APP_VERSION       = "v1.1.201";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -10548,19 +10589,20 @@ function renderSalesRankPreview() {
   }
   var editable = canManageSalesPricing();
   var showAdjustment = editable || canViewBasePrice();
-  var html = "<div class='sales-rank-table-wrap'><table class='price-table sales-rank-table'><tr><th>" + esc(t("sales_rank")) + "</th><th>" + esc(t("sales_customer_count")) + "</th>";
+  var html = "<div class='sales-rank-table-wrap'><table class='price-table sales-rank-table'><tr><th>" + esc(t("sales_rank")) + "</th><th>" + esc(t("sales_result_price")) + "</th><th>" + esc(t("sales_customer_count")) + "</th>";
   if (editable) {
     html += "<th>" + esc(t("sales_rate_adjust")) + "</th><th>" + esc(t("sales_amount_adjustment")) + "</th><th>" + esc(t("sales_rounding_unit")) + "</th><th>" + esc(t("sales_rounding_method")) + "</th>";
   } else if (showAdjustment) {
     html += "<th>" + esc(t("sales_rate_adjust")) + "</th>";
   }
-  html += "<th>" + esc(t("sales_result_price")) + "</th></tr>";
+  html += "</tr>";
   salesPricingRanks.forEach(function(rank) {
     var price = calculateSalesPriceClient(base, rank);
     var adjust = "x" + Number(rank.rate_multiplier || 1).toFixed(4) + " / " + formatYen(rank.amount_adjustment_jpy || 0) + " / " + formatYen(rank.rounding_unit_jpy || 10);
     var code = esc(rank.rank_code || "");
     html += "<tr>";
     html += "<td><div class='price-supplier'>" + esc(salesRankDisplayName(rank)) + "</div><div class='price-country'>" + esc(rank.rank_code || "") + "</div></td>";
+    html += "<td><div class='price-value sales-rank-price' style='color:#1a8c3e'>" + (price === null ? "-" : "JPY " + esc(formatYen(price))) + "</div></td>";
     html += "<td>" + esc(String(salesPricingCustomerCounts[rank.rank_code] || 0)) + "</td>";
     if (editable) {
       html += "<td><input class='form-input sales-rank-rate' data-rank-code='" + code + "' type='number' min='0' step='0.0001' value='" + esc(String(rank.rate_multiplier || 1)) + "'></td>";
@@ -10570,7 +10612,6 @@ function renderSalesRankPreview() {
     } else if (showAdjustment) {
       html += "<td>" + esc(adjust) + "</td>";
     }
-    html += "<td><div class='price-value sales-rank-price' style='color:#1a8c3e'>" + (price === null ? "-" : "JPY " + esc(formatYen(price))) + "</div></td>";
     html += "</tr>";
   });
   html += "</table></div>";
@@ -10948,11 +10989,13 @@ async function loadCustomerAccessMgmt() {
   q = normalizeAsciiWidth(q).trim().toLowerCase();
   var list = document.getElementById("customer-access-list");
   if (list) list.innerHTML = "<div class='empty'>" + esc(t("loading")) + "</div>";
-  var r = await sb.from("sales_customers")
+  var includeInactive = !!(document.getElementById("customer-access-include-inactive") || {}).checked;
+  var customerQuery = sb.from("sales_customers")
     .select("id,source_customer_code,customer_name,customer_kana,price_rank_code,is_active")
-    .eq("is_active", true)
     .order("source_customer_code", { ascending: true })
     .limit(2000);
+  if (!includeInactive) customerQuery = customerQuery.eq("is_active", true);
+  var r = await customerQuery;
   if (r.error) {
     if (list) list.innerHTML = "<div class='empty'>" + esc(r.error.message || t("msg_kikan_err")) + "</div>";
     return;
@@ -10998,8 +11041,9 @@ function renderCustomerAccessList() {
   }
   list.innerHTML = customerAccessFilteredRows.map(function(row) {
     var selected = currentCustomerAccessCustomer && String(currentCustomerAccessCustomer.id) === String(row.id) ? " selected" : "";
-    return "<button type='button' class='customer-access-row" + selected + "' data-customer-id='" + esc(String(row.id)) + "'>" +
-      "<div class='customer-access-name'>" + esc(row.customer_name || "-") + "</div>" +
+    var inactive = row.is_active === false;
+    return "<button type='button' class='customer-access-row" + selected + (inactive ? " inactive" : "") + "' data-customer-id='" + esc(String(row.id)) + "'>" +
+      "<div class='customer-access-name'>" + esc(row.customer_name || "-") + (inactive ? " <span class='customer-access-status inactive'>" + esc(t("customer_access_inactive")) + "</span>" : "") + "</div>" +
       "<div class='customer-access-sub'>" + esc([row.source_customer_code, row.price_rank_code].filter(Boolean).join(" / ")) + "</div>" +
     "</button>";
   }).join("");
@@ -11085,6 +11129,15 @@ function renderCustomerAccessDetail() {
   html += "<div class='customer-access-stat'><div class='customer-access-stat-label'>" + esc(t("customer_access_code")) + "</div><div class='customer-access-stat-value'>" + esc(customer.source_customer_code || "-") + "</div></div>";
   html += "<div class='customer-access-stat'><div class='customer-access-stat-label'>" + esc(t("customer_access_customer")) + "</div><div class='customer-access-stat-value'>" + esc(customer.customer_name || "-") + "</div></div>";
   html += "<div class='customer-access-stat'><div class='customer-access-stat-label'>" + esc(t("sales_rank")) + "</div><div class='customer-access-stat-value'>" + esc(customer.price_rank_code || "-") + "</div></div>";
+  html += "<div class='customer-access-stat'><div class='customer-access-stat-label'>" + esc(t("customer_access_status")) + "</div><div class='customer-access-stat-value'><span class='customer-access-status" + (customer.is_active === false ? " inactive" : "") + "'>" + esc(customer.is_active === false ? t("customer_access_inactive") : t("customer_access_active")) + "</span></div></div>";
+  html += "</div>";
+  html += "<div class='customer-access-management-actions'>";
+  if (customer.is_active === false) {
+    html += "<button class='btn-sm-edit' id='btn-customer-access-restore' type='button'>" + esc(t("customer_access_restore_customer")) + "</button>";
+  } else {
+    html += "<button class='btn-sm-edit' id='btn-customer-access-hide' type='button'>" + esc(t("customer_access_hide_customer")) + "</button>";
+  }
+  html += "<button class='btn-sm-del' id='btn-customer-access-delete' type='button'>" + esc(t("customer_access_delete_customer")) + "</button>";
   html += "</div>";
   html += "<div class='component-section-title'>" + esc(t("customer_access_display_settings")) + "</div>";
   html += "<div class='customer-setting-grid'>";
@@ -11161,6 +11214,12 @@ function bindCustomerAccessDetailEvents() {
   detail.querySelectorAll("[data-customer-setting]").forEach(function(el) {
     el.addEventListener("change", syncCustomerDisplayRuleControls);
   });
+  var hideBtn = document.getElementById("btn-customer-access-hide");
+  if (hideBtn) hideBtn.addEventListener("click", function() { setCustomerAccessActive(false); });
+  var restoreBtn = document.getElementById("btn-customer-access-restore");
+  if (restoreBtn) restoreBtn.addEventListener("click", function() { setCustomerAccessActive(true); });
+  var deleteBtn = document.getElementById("btn-customer-access-delete");
+  if (deleteBtn) deleteBtn.addEventListener("click", deleteCustomerAccessCustomer);
   var scopeEl = document.getElementById("customer-rule-scope");
   if (scopeEl) scopeEl.addEventListener("change", syncCustomerRuleScopeFields);
   var productSearchBtn = document.getElementById("btn-customer-rule-product-search");
@@ -11254,6 +11313,42 @@ async function saveCustomerAccessSettings() {
   customerAccessSettings = Object.assign(defaultCustomerDisplaySettings(), data);
   alert(t("msg_saved"));
   renderCustomerAccessDetail();
+}
+
+async function setCustomerAccessActive(isActive) {
+  if (!canManageCustomerAccess() || !currentCustomerAccessCustomer) { alert(t("err_perm")); return; }
+  var message = isActive ? t("customer_access_restore_confirm") : t("customer_access_hide_confirm");
+  if (!confirm(message)) return;
+  var customerId = currentCustomerAccessCustomer.id;
+  var r = await sb.from("sales_customers")
+    .update({ is_active: !!isActive, updated_at: new Date().toISOString() })
+    .eq("id", customerId);
+  if (r.error) {
+    alert(t("msg_save_err") + ": " + (r.error.message || r.error));
+    return;
+  }
+  currentCustomerAccessCustomer = Object.assign({}, currentCustomerAccessCustomer, { is_active: !!isActive });
+  customerAccessRows = customerAccessRows.map(function(row) {
+    return String(row.id) === String(customerId) ? Object.assign({}, row, { is_active: !!isActive }) : row;
+  });
+  await loadCustomerAccessMgmt();
+}
+
+async function deleteCustomerAccessCustomer() {
+  if (!canManageCustomerAccess() || !currentCustomerAccessCustomer) { alert(t("err_perm")); return; }
+  if (!confirm(t("customer_access_delete_confirm"))) return;
+  var customerId = currentCustomerAccessCustomer.id;
+  var r = await sb.from("sales_customers").delete().eq("id", customerId);
+  if (r.error) {
+    alert(t("msg_save_err") + ": " + (r.error.message || r.error));
+    return;
+  }
+  currentCustomerAccessCustomer = null;
+  customerAccessSettings = null;
+  customerAccessVisibilityRows = [];
+  customerAccessProductCandidates = [];
+  customerAccessSelectedProduct = null;
+  await loadCustomerAccessMgmt();
 }
 
 async function searchCustomerAccessProductCandidates() {
@@ -12252,6 +12347,7 @@ document.getElementById("btn-sales-pricing-mgmt-search").addEventListener("click
 document.getElementById("sales-pricing-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadSalesPricingMgmt(); });
 document.getElementById("btn-customer-access-search").addEventListener("click", loadCustomerAccessMgmt);
 document.getElementById("customer-access-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadCustomerAccessMgmt(); });
+document.getElementById("customer-access-include-inactive").addEventListener("change", loadCustomerAccessMgmt);
 document.getElementById("btn-customer-access-save").addEventListener("click", saveCustomerAccessSettings);
 document.getElementById("kikan-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadKikanMgmt(); });
 document.getElementById("btn-rakuten-search").addEventListener("click", searchRakutenPrices);
