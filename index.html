@@ -3721,7 +3721,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.204";
+var APP_VERSION       = "v1.1.205";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -8614,6 +8614,70 @@ async function fetchSourceAliasProducts(q) {
   return r;
 }
 
+async function fetchSlPartProducts(q, categoryFilter, maxRows) {
+  var raw = normalizeAsciiWidth(String(q || "").trim());
+  var normalized = normalizePartQuery(raw);
+  if (!raw && !normalized) return { data: [] };
+  maxRows = maxRows || productSearchLimit;
+
+  var sl = await sb.from("sl_parts")
+    .select("id, supplier_pn")
+    .limit(500);
+  if (sl.error) return sl;
+
+  var slIds = [];
+  (sl.data || []).forEach(function(row) {
+    var label = row.supplier_pn || "";
+    if (!label) return;
+    var matched = normalizedStartsWith(label, raw) ||
+      normalizedContains(label, raw) ||
+      (normalized && (normalizedStartsWith(label, normalized) || normalizedContains(label, normalized)));
+    if (matched && row.id) slIds.push(row.id);
+  });
+  slIds = Array.from(new Set(slIds));
+  if (!slIds.length) return { data: [] };
+
+  var dkdIds = [];
+  var seenDkd = {};
+  for (var i = 0; i < slIds.length; i += 200) {
+    var slChunk = slIds.slice(i, i + 200);
+    var links = await sb.from("core_product_sl_links")
+      .select("dkd_shohin_id, sl_part_id")
+      .eq("status", "active")
+      .in("sl_part_id", slChunk);
+    if (links.error) return links;
+    (links.data || []).forEach(function(link) {
+      var id = parseInt(link.dkd_shohin_id, 10);
+      if (isNaN(id) || seenDkd[id]) return;
+      seenDkd[id] = true;
+      dkdIds.push(id);
+    });
+  }
+  if (!dkdIds.length) return { data: [] };
+
+  var rows = [];
+  var seenRow = {};
+  for (var j = 0; j < dkdIds.length && rows.length < maxRows; j += 200) {
+    var dkdChunk = dkdIds.slice(j, j + 200);
+    var query = sb.from("core_products")
+      .select(CORE_PRODUCT_FAST_SELECT)
+      .in("dkd_shohin_id", dkdChunk)
+      .order("manufacturer_part_number", { ascending: true })
+      .order("genuine_part_number", { ascending: true });
+    if (categoryFilter) query = query.eq("category_code", categoryFilter);
+    var r = await query;
+    if (r.error) return r;
+    normalizeCoreProductFastRows(r.data || []).forEach(function(row) {
+      var key = String(row.dkd_shohin_id || row.id || "");
+      if (!key || seenRow[key] || rows.length >= maxRows) return;
+      seenRow[key] = true;
+      row.has_sl_part = true;
+      rows.push(row);
+    });
+  }
+  return { data: rows, error: null };
+}
+
 async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows) {
   var normalized = normalizePartQuery(q);
   var raw = String(q || "").trim();
@@ -8733,6 +8797,15 @@ async function runProductSearch(options) {
       r = aliasResult;
     } else if (aliasResult.error) {
       console.warn("source alias search failed", aliasResult.error);
+    }
+  }
+  if (q && !(r.data || []).length) {
+    var slResult = await fetchSlPartProducts(q, categoryFilter, productSearchLimit);
+    if (seq !== searchRequestSeq) return;
+    if (!slResult.error && (slResult.data || []).length) {
+      r = slResult;
+    } else if (slResult.error) {
+      console.warn("SL part search failed", slResult.error);
     }
   }
   allProducts = filterVisibleProducts(r.data || []);
