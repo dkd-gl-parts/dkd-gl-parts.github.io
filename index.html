@@ -258,6 +258,31 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .mgmt-sub       { font-size: 11px; color: #aaa; margin-top: 2px; }
 .mgmt-actions   { display: flex; gap: 6px; flex-wrap: nowrap; }
 .mgmt-count     { font-size: 12px; color: #888; margin-bottom: 8px; }
+.stock-mgmt-body { max-width: 1360px; }
+.stock-mgmt-toolbar { align-items: stretch; }
+.stock-mgmt-toolbar .form-select { min-width: 150px; max-width: 210px; }
+.stock-mgmt-table-wrap { overflow-x: auto; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); background: #fff; }
+.stock-mgmt-table { min-width: 1120px; box-shadow: none; border-radius: 0; table-layout: fixed; }
+.stock-mgmt-table th:nth-child(1), .stock-mgmt-table td:nth-child(1) { width: 18%; }
+.stock-mgmt-table th:nth-child(2), .stock-mgmt-table td:nth-child(2) { width: 18%; }
+.stock-mgmt-table th:nth-child(3), .stock-mgmt-table td:nth-child(3) { width: 12%; }
+.stock-mgmt-table th:nth-child(4), .stock-mgmt-table td:nth-child(4) { width: 12%; }
+.stock-mgmt-table th:nth-child(5), .stock-mgmt-table td:nth-child(5) { width: 8%; }
+.stock-mgmt-table th:nth-child(6), .stock-mgmt-table td:nth-child(6) { width: 12%; }
+.stock-mgmt-table th:nth-child(7), .stock-mgmt-table td:nth-child(7) { width: 15%; }
+.stock-mgmt-table th:nth-child(8), .stock-mgmt-table td:nth-child(8) { width: 9%; }
+.stock-mgmt-row.dirty td { background: #fffaf0; }
+.stock-mgmt-kind { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.stock-mgmt-input { width: 100%; min-width: 0; border: 1px solid #d7dce5; border-radius: 6px; padding: 6px 7px; font-size: 12px; background: #fff; }
+.stock-mgmt-input:focus { border-color: #4f8ef7; outline: none; box-shadow: 0 0 0 2px rgba(79,142,247,.12); }
+.stock-mgmt-qty { max-width: 86px; }
+.stock-mgmt-actions { display: flex; gap: 6px; justify-content: flex-end; align-items: center; flex-wrap: wrap; }
+.stock-mgmt-save-note { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px; background: #fff4e5; color: #9a5b00; font-size: 11px; font-weight: 700; }
+@media (max-width: 767px) {
+  .stock-mgmt-body { padding: 14px 8px; }
+  .stock-mgmt-toolbar .form-select { max-width: none; flex: 1 1 140px; }
+  .stock-mgmt-table { min-width: 960px; font-size: 12px; }
+}
 .customer-access-body { flex: 1; padding: 20px 16px; max-width: 1220px; width: 100%; margin: 0 auto; overflow-y: auto; }
 .customer-access-layout { display: grid; grid-template-columns: minmax(260px, 360px) minmax(0, 1fr); gap: 14px; align-items: start; }
 .customer-access-panel { background: #fff; border: 1px solid #e4e7ee; border-radius: 10px; overflow: hidden; }
@@ -507,6 +532,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .product-kind-stock { font-weight: 600; opacity: .82; }
 .product-kind-panel { border-top: 1px solid #f0f0f0; padding-top: 8px; margin-top: 8px; }
 .product-kind-panel .product-kind-list { margin-top: 6px; }
+.product-kind-control { margin-top: 8px; display: grid; gap: 6px; }
+.product-kind-control-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.product-kind-control-row label { color: #667085; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.product-kind-select { min-width: 150px; border: 1px solid #d7dce5; border-radius: 7px; padding: 6px 8px; font-size: 12px; background: #fff; }
+.product-kind-stock-grid { display: grid; gap: 6px; margin-top: 6px; }
+.product-kind-stock-row { display: grid; grid-template-columns: minmax(92px, 1fr) 72px minmax(86px, 1fr) minmax(90px, 1fr) auto; gap: 6px; align-items: center; border: 1px solid #edf0f5; border-radius: 7px; padding: 7px; background: #fbfcff; }
+.product-kind-stock-row.active { border-color: #b9d3ff; background: #f5f9ff; }
+.product-kind-stock-label { font-size: 12px; font-weight: 800; color: #1a1a2e; line-height: 1.35; min-width: 0; }
+.product-kind-stock-sub { font-size: 11px; color: #8a94a6; margin-top: 2px; word-break: break-word; }
+.product-kind-stock-input { width: 100%; border: 1px solid #d7dce5; border-radius: 6px; padding: 6px 7px; font-size: 12px; background: #fff; min-width: 0; }
+.product-kind-stock-save { white-space: nowrap; }
+@media(max-width:720px){
+  .product-kind-stock-row { grid-template-columns: 1fr 72px; }
+  .product-kind-stock-row .product-kind-stock-input:nth-of-type(2),
+  .product-kind-stock-row .product-kind-stock-input:nth-of-type(3),
+  .product-kind-stock-save { grid-column: 1 / -1; }
+}
 .btn-component-action { background: #fff4d6; color: #8a5a00; border-color: #f2d489; font-weight: 700; }
 .btn-component-action:hover { background: #ffe9ad; border-color: #e7bf54; }
 .component-icon { font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif; line-height: 1; }
@@ -1482,6 +1524,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="sales-pricing-help" id="sales-pricing-product">-</div>
     <div class="sales-pricing-grid">
       <div class="form-row">
+        <label class="form-label" data-i18n="product_kind_current">商品区分</label>
+        <select class="form-input" id="sales-product-kind"></select>
+      </div>
+      <div class="form-row">
         <label class="form-label" data-i18n="sales_base_price">基準価格(税抜)</label>
         <input class="form-input" id="sales-base-price" type="number" min="0" step="1">
         <div class="sales-pricing-field-help" data-i18n="sales_base_price_help">ランク調整前の元価格です</div>
@@ -1585,6 +1631,47 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <button class="btn-primary" id="btn-core-list-form-save" data-i18n="btn_save_part">保存</button>
     </div>
     <div class="reg-error" id="core-list-form-error"></div>
+  </div>
+</div>
+
+<!-- =============================================
+   商品区分在庫管理画面
+============================================= -->
+<div id="screen-product-kind-stock-mgmt" class="screen">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-product-kind-stock-mgmt" data-i18n="btn_back">← メニュー</button>
+      <span class="logo-text" data-i18n="screen_product_kind_stock_title">商品区分在庫管理</span>
+    </div>
+    <div class="page-header-right">
+      <span class="header-username" id="product-kind-stock-mgmt-username"></span>
+      <span class="role-badge" id="product-kind-stock-mgmt-role-badge"></span>
+      <button class="btn-logout" id="btn-logout-product-kind-stock-mgmt" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <div class="mgmt-body stock-mgmt-body">
+    <div class="mgmt-toolbar stock-mgmt-toolbar">
+      <input class="mgmt-search" id="product-kind-stock-search" type="search" data-i18n-ph="product_kind_stock_search_ph">
+      <select class="form-select" id="product-kind-stock-category">
+        <option value="" data-i18n="filter_all">すべて</option>
+      </select>
+      <select class="form-select" id="product-kind-stock-kind">
+        <option value="" data-i18n="product_kind_stock_kind_all">区分すべて</option>
+        <option value="rebuilt" data-i18n="product_kind_rebuilt">リビルト</option>
+        <option value="aftermarket_new" data-i18n="product_kind_aftermarket_new">社外新品</option>
+        <option value="used_core" data-i18n="product_kind_used_core">中古コア</option>
+        <option value="other" data-i18n="product_kind_other">その他</option>
+      </select>
+      <select class="form-select" id="product-kind-stock-state">
+        <option value="" data-i18n="product_kind_stock_state_all">在庫状態すべて</option>
+        <option value="stocked" data-i18n="product_kind_stock_state_stocked">在庫あり</option>
+        <option value="empty" data-i18n="product_kind_stock_state_empty">在庫なし</option>
+      </select>
+      <button class="btn-primary" id="btn-product-kind-stock-search" data-i18n="btn_search">検索</button>
+      <button class="btn-primary" id="btn-product-kind-stock-save" data-i18n="product_kind_stock_save_all">変更を保存</button>
+    </div>
+    <div class="mgmt-count" id="product-kind-stock-count"></div>
+    <div id="product-kind-stock-list"><div class="empty" data-i18n="product_kind_stock_search_hint">品番・カテゴリ・商品区分で絞り込んでください。</div></div>
   </div>
 </div>
 
@@ -2062,6 +2149,8 @@ var TRANSLATIONS = {
     mi_customer_access_desc: "得意先閲覧ユーザーに見せる商品範囲・価格表示ルールを設定します。",
     mi_core_list_title: "コアリスト",
     mi_core_list_desc: "基幹商品に紐づくコア品番・数量・置き場を登録します。",
+    mi_product_kind_stock_title: "商品区分在庫",
+    mi_product_kind_stock_desc: "リビルト・社外新品などの商品区分別在庫をまとめて確認・更新します。",
     mi_production_ranking_title: "製造予定ランキング",
     mi_production_ranking_desc: "2024・2025のTOP100元リストを確認・メンテナンスします。",
     mi_data_title: "データ管理",
@@ -2111,6 +2200,25 @@ var TRANSLATIONS = {
     product_kind_stock: "在庫",
     product_kind_sl: "SL",
     product_kind_none: "区分データなし",
+    product_kind_current: "表示区分",
+    product_kind_stock_qty: "在庫数",
+    product_kind_stock_location: "置場",
+    product_kind_stock_note: "在庫メモ",
+    product_kind_stock_save: "在庫保存",
+    product_kind_stock_saved: "在庫を保存しました",
+    product_kind_stock_kind_all: "区分すべて",
+    product_kind_stock_state_all: "在庫状態すべて",
+    product_kind_stock_state_stocked: "在庫あり",
+    product_kind_stock_state_empty: "在庫なし",
+    product_kind_stock_save_all: "変更を保存",
+    product_kind_stock_no_changes: "変更はありません",
+    product_kind_stock_saved_count: "{n} 件の在庫を保存しました",
+    product_kind_stock_search_hint: "品番・カテゴリ・商品区分で絞り込んでください。",
+    product_kind_stock_search_ph: "純正品番・メーカー品番・DKD商品IDで検索",
+    product_kind_stock_count: "{n} 件表示 / 変更 {m} 件",
+    product_kind_stock_row_saved: "保存済み",
+    product_kind_stock_invalid_qty: "在庫数は0以上の整数で入力してください",
+    screen_product_kind_stock_title: "商品区分在庫管理",
     production_source_section: "統合元",
     img_section: "画像",
     btn_upload: "写真を追加する",
@@ -2644,6 +2752,8 @@ var TRANSLATIONS = {
     mi_customer_access_desc: "Configure product visibility and sales price display for customer viewer users.",
     mi_core_list_title: "CORE List",
     mi_core_list_desc: "Register core part numbers, quantities, and locations for master products.",
+    mi_product_kind_stock_title: "Product-Kind Stock",
+    mi_product_kind_stock_desc: "Review and update stock by product kind such as rebuilt and aftermarket new.",
     mi_production_ranking_title: "Production Ranking",
     mi_production_ranking_desc: "View and maintain the 2024/2025 TOP100 source list.",
     mi_data_title: "Data Management",
@@ -2693,6 +2803,25 @@ var TRANSLATIONS = {
     product_kind_stock: "Stock",
     product_kind_sl: "SL",
     product_kind_none: "No product-kind data",
+    product_kind_current: "Current Kind",
+    product_kind_stock_qty: "Stock",
+    product_kind_stock_location: "Location",
+    product_kind_stock_note: "Stock note",
+    product_kind_stock_save: "Save stock",
+    product_kind_stock_saved: "Stock saved",
+    product_kind_stock_kind_all: "All Kinds",
+    product_kind_stock_state_all: "All Stock States",
+    product_kind_stock_state_stocked: "In Stock",
+    product_kind_stock_state_empty: "No Stock",
+    product_kind_stock_save_all: "Save Changes",
+    product_kind_stock_no_changes: "No changes",
+    product_kind_stock_saved_count: "Saved {n} stock rows",
+    product_kind_stock_search_hint: "Filter by part number, category, or product kind.",
+    product_kind_stock_search_ph: "Search by genuine part, maker part, or DKD product ID",
+    product_kind_stock_count: "{n} rows / {m} changed",
+    product_kind_stock_row_saved: "Saved",
+    product_kind_stock_invalid_qty: "Enter stock quantity as a whole number of 0 or more",
+    screen_product_kind_stock_title: "Product-Kind Stock Management",
     production_source_section: "Merged sources",
     img_section: "Images",
     btn_upload: "Add Photos",
@@ -3238,6 +3367,8 @@ var TRANSLATIONS = {
     mi_customer_access_desc: "设置客户浏览用户可见的商品范围和销售价格显示规则。",
     mi_core_list_title: "CORE清单",
     mi_core_list_desc: "登记基干商品对应的CORE编号、数量和位置。",
+    mi_product_kind_stock_title: "商品区分库存",
+    mi_product_kind_stock_desc: "按再制造、副厂新品等商品区分集中确认和更新库存。",
     mi_production_ranking_title: "生产指示排行",
     mi_production_ranking_desc: "查看和维护2024/2025 TOP100来源清单。",
     mi_data_title: "数据管理",
@@ -3282,6 +3413,25 @@ var TRANSLATIONS = {
     product_kind_stock: "库存",
     product_kind_sl: "SL",
     product_kind_none: "无区分数据",
+    product_kind_current: "显示区分",
+    product_kind_stock_qty: "库存数",
+    product_kind_stock_location: "库位",
+    product_kind_stock_note: "库存备注",
+    product_kind_stock_save: "保存库存",
+    product_kind_stock_saved: "库存已保存",
+    product_kind_stock_kind_all: "全部区分",
+    product_kind_stock_state_all: "全部库存状态",
+    product_kind_stock_state_stocked: "有库存",
+    product_kind_stock_state_empty: "无库存",
+    product_kind_stock_save_all: "保存更改",
+    product_kind_stock_no_changes: "没有更改",
+    product_kind_stock_saved_count: "已保存 {n} 条库存",
+    product_kind_stock_search_hint: "请按零件号、类别或商品区分筛选。",
+    product_kind_stock_search_ph: "按纯正品番、厂家品番或DKD商品ID搜索",
+    product_kind_stock_count: "显示 {n} 条 / 更改 {m} 条",
+    product_kind_stock_row_saved: "已保存",
+    product_kind_stock_invalid_qty: "库存数请输入0以上的整数",
+    screen_product_kind_stock_title: "商品区分库存管理",
     production_source_section: "合并来源",
     img_section: "图片",
     btn_upload: "添加照片",
@@ -3806,6 +3956,7 @@ var searchSlOnly      = false;
 var lastFilterTouchAt = 0;
 var currentProduct    = null;
 var currentProductVariants = [];
+var currentSelectedProductKind = "rebuilt";
 var currentCoreDkdShohinId = null;
 var currentProductSpecs = [];
 var currentProductNominalSpec = null;
@@ -3819,7 +3970,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.211";
+var APP_VERSION       = "v1.1.213";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -3842,6 +3993,9 @@ var coreListMgmtRows = [];
 var coreListProductMap = {};
 var coreListProductCandidates = [];
 var coreListFormMode = "add";
+var productKindStockRows = [];
+var productKindStockProductMap = {};
+var productKindStockDirtyMap = {};
 var productionRankingMgmtRows = [];
 var productionRankingFormMode = "add";
 var productionRankingLinkCandidates = [];
@@ -3868,6 +4022,7 @@ var rakutenApiCooldownUntil = 0;
 var rakutenTargets = [];
 var rakutenActiveTarget = null;
 var currentSalesPricingDkdId = null;
+var currentSalesPricingProductKind = "rebuilt";
 var currentSalesPricingRow = null;
 var currentSalesPricingDksReference = null;
 var salesPricingRanks = [];
@@ -4045,6 +4200,12 @@ function canSeeComponentInfo() {
 }
 function canSeeCoreStockInfo() {
   return canSeeInternalBusinessInfo();
+}
+function canViewProductKindStockMgmt() {
+  return canSeeCoreStockInfo();
+}
+function canEditProductKindStockMgmt() {
+  return canEdit();
 }
 function isDaikoGroup() {
   return userProfile && (isSystemAdmin() || userProfile.group_name === "daiko");
@@ -4452,6 +4613,11 @@ async function applyLanguage(lang) {
   renderComponentAddPanel();
   renderAssemblyComponentRows();
   updateAllHeaders();
+  if (isScreenActive("product-kind-stock-mgmt")) {
+    await populateProductKindStockCategoryOptions();
+    if (productKindStockRows.length) renderProductKindStockMgmt();
+    else renderProductKindStockEmpty();
+  }
   if (isScreenActive("kikan-mgmt")) await loadKikanMgmt();
   if (document.getElementById("kikan-form-overlay") && document.getElementById("kikan-form-overlay").classList.contains("show")) {
     document.getElementById("kikan-form-title").textContent = kikanFormGroupId ? tf("kikan_group_member_add_title", { id: kikanFormGroupId }) : t("kikan_group_new_title");
@@ -4724,7 +4890,7 @@ function updateAllHeaders() {
   var cls   = roleClass(userProfile.role);
   var greet = tf("greeting", { name: name });
 
-  ["menu","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","production-ranking-mgmt","sales-pricing-mgmt","customer-access-mgmt","logs"].forEach(function(sc) {
+  ["menu","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","product-kind-stock-mgmt","production-ranking-mgmt","sales-pricing-mgmt","customer-access-mgmt","logs"].forEach(function(sc) {
     var nameEl  = document.getElementById(sc + "-username");
     var badgeEl = document.getElementById(sc + "-role-badge");
     if (nameEl)  nameEl.textContent = name;
@@ -4788,6 +4954,7 @@ function renderMenu() {
     { icon: "&#x1F527;", titleKey: "mi_parts_title", descKey: "mi_parts_desc", action: "parts-mgmt", available: canViewManagementScreen() },
     { icon: "&#x1F4B0;", titleKey: "sales_pricing_title", descKey: "sales_pricing_mgmt_desc", action: "sales-pricing-mgmt", available: canViewSalesPricing() },
     { icon: "&#x1F4E6;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canViewManagementScreen() },
+    { icon: "&#x1F4E6;", titleKey: "mi_product_kind_stock_title", descKey: "mi_product_kind_stock_desc", action: "product-kind-stock-mgmt", available: canViewProductKindStockMgmt() },
     { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canViewManagementScreen() },
     { icon: "&#x2699;", titleKey: "mi_api_settings_title", descKey: "mi_api_settings_desc", action: "api-settings", available: canManageSharedSettings() },
     { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: canViewOperationLogs() }
@@ -4844,6 +5011,7 @@ function renderMenu() {
       else if (card.dataset.action === "parts-mgmt") enterPartsMgmt();
       else if (card.dataset.action === "sales-pricing-mgmt") enterSalesPricingMgmt();
       else if (card.dataset.action === "core-list-mgmt") enterCoreListMgmt();
+      else if (card.dataset.action === "product-kind-stock-mgmt") enterProductKindStockMgmt();
       else if (card.dataset.action === "production-ranking-mgmt") enterProductionRankingMgmt();
       else if (card.dataset.action === "kikan-mgmt") enterKikanMgmt();
       else if (card.dataset.action === "rakuten-price") enterRakutenPrice();
@@ -7106,6 +7274,333 @@ async function deleteCoreListRow(id) {
 }
 
 // =============================================
+// 商品区分在庫管理
+// =============================================
+async function enterProductKindStockMgmt() {
+  if (!canViewProductKindStockMgmt()) { alert(t("err_perm")); return; }
+  showScreen("product-kind-stock-mgmt");
+  var saveBtn = document.getElementById("btn-product-kind-stock-save");
+  if (saveBtn) saveBtn.style.display = canEditProductKindStockMgmt() ? "" : "none";
+  await populateProductKindStockCategoryOptions();
+  renderProductKindStockEmpty();
+}
+
+function renderProductKindStockEmpty() {
+  productKindStockRows = [];
+  productKindStockProductMap = {};
+  productKindStockDirtyMap = {};
+  var countEl = document.getElementById("product-kind-stock-count");
+  var list = document.getElementById("product-kind-stock-list");
+  if (countEl) countEl.textContent = "";
+  if (list) list.innerHTML = "<div class='empty'>" + esc(t("product_kind_stock_search_hint")) + "</div>";
+}
+
+async function populateProductKindStockCategoryOptions() {
+  var select = document.getElementById("product-kind-stock-category");
+  if (!select) return;
+  if (!categoryOptions.length) {
+    var r = await sb.from("assy_categories")
+      .select("category_code,label_ja,label_en,label_zh,sort_order,is_active")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+    if (!r.error) {
+      categoryOptions = (r.data || []).filter(function(cat) {
+        return (cat.category_code || cat.category) !== "car_air_conditioner";
+      });
+    }
+  }
+  var current = select.value || "";
+  var html = "<option value=''>" + esc(t("filter_all")) + "</option>";
+  (categoryOptions || []).forEach(function(cat) {
+    var code = cat.category_code || cat.category || "";
+    if (!code) return;
+    var label = currentLang === "en" ? (cat.label_en || cat.label_ja || code) : currentLang === "zh" ? (cat.label_zh || cat.label_ja || code) : (cat.label_ja || cat.label_en || code);
+    html += "<option value='" + esc(code) + "'>" + esc(label) + "</option>";
+  });
+  select.innerHTML = html;
+  select.value = current;
+}
+
+function applyProductKindStockVariantFilters(query, kind, state) {
+  query = query.eq("is_active", true);
+  if (kind) query = query.eq("product_kind", normalizeProductKind(kind));
+  if (state === "stocked") query = query.gt("stock_qty", 0);
+  if (state === "empty") query = query.or("stock_qty.is.null,stock_qty.eq.0");
+  return query;
+}
+
+async function fetchProductKindStockVariantsByIds(ids, kind, state, maxRows) {
+  maxRows = maxRows || 300;
+  var rows = [];
+  for (var i = 0; i < ids.length && rows.length < maxRows; i += 200) {
+    var chunk = ids.slice(i, i + 200);
+    var query = sb.from("core_product_variants")
+      .select("product_variant_id,dkd_shohin_id,product_kind,sl_part_id,display_label,stock_qty,stock_location,stock_note,is_active,updated_at")
+      .in("dkd_shohin_id", chunk)
+      .order("dkd_shohin_id", { ascending: true })
+      .order("product_kind", { ascending: true });
+    query = applyProductKindStockVariantFilters(query, kind, state);
+    var r = await query;
+    if (r.error) return r;
+    (r.data || []).forEach(function(row) {
+      if (rows.length < maxRows) rows.push(row);
+    });
+  }
+  return { data: rows, error: null };
+}
+
+async function fetchProductKindStockVariantsDirect(kind, state, maxRows) {
+  var query = sb.from("core_product_variants")
+    .select("product_variant_id,dkd_shohin_id,product_kind,sl_part_id,display_label,stock_qty,stock_location,stock_note,is_active,updated_at")
+    .order("updated_at", { ascending: false, nullsFirst: false })
+    .order("dkd_shohin_id", { ascending: true })
+    .limit(maxRows || 300);
+  query = applyProductKindStockVariantFilters(query, kind, state);
+  return await query;
+}
+
+async function loadProductKindStockProductMap(variants, seededRows) {
+  productKindStockProductMap = {};
+  (seededRows || []).forEach(function(p) {
+    var id = productDkdId(p);
+    if (id) productKindStockProductMap[String(id)] = p;
+  });
+  var ids = [];
+  (variants || []).forEach(function(row) {
+    var id = parseInt(row.dkd_shohin_id, 10);
+    if (!isNaN(id) && !productKindStockProductMap[String(id)] && ids.indexOf(id) < 0) ids.push(id);
+  });
+  for (var i = 0; i < ids.length; i += 200) {
+    var chunk = ids.slice(i, i + 200);
+    var r = await sb.from("core_products")
+      .select(CORE_PRODUCT_FAST_SELECT)
+      .in("dkd_shohin_id", chunk)
+      .limit(chunk.length);
+    if (r.error) {
+      console.warn("product-kind stock product lookup failed", r.error);
+      continue;
+    }
+    normalizeCoreProductFastRows(r.data || []).forEach(function(p) {
+      var id = productDkdId(p);
+      if (id) productKindStockProductMap[String(id)] = p;
+    });
+  }
+}
+
+function sortProductKindStockRows(rows) {
+  return (rows || []).slice().sort(function(a, b) {
+    var pa = productKindStockProductMap[String(a.dkd_shohin_id)] || {};
+    var pb = productKindStockProductMap[String(b.dkd_shohin_id)] || {};
+    var ak = [
+      productCategoryLabel(pa),
+      pa.manufacturer || "",
+      pa.genuine_part_number || "",
+      pa.manufacturer_part_number || "",
+      normalizeProductKind(a.product_kind)
+    ].join("|");
+    var bk = [
+      productCategoryLabel(pb),
+      pb.manufacturer || "",
+      pb.genuine_part_number || "",
+      pb.manufacturer_part_number || "",
+      normalizeProductKind(b.product_kind)
+    ].join("|");
+    return ak.localeCompare(bk);
+  });
+}
+
+async function loadProductKindStockMgmt() {
+  if (!canViewProductKindStockMgmt()) { alert(t("err_perm")); return; }
+  var list = document.getElementById("product-kind-stock-list");
+  var countEl = document.getElementById("product-kind-stock-count");
+  if (list) list.innerHTML = "<div class='loading'>" + t("loading") + "</div>";
+  if (countEl) countEl.textContent = t("loading");
+  productKindStockDirtyMap = {};
+
+  var rawQ = document.getElementById("product-kind-stock-search").value.trim();
+  var q = normalizeAsciiWidth(rawQ).trim();
+  var category = document.getElementById("product-kind-stock-category").value || "";
+  var kind = document.getElementById("product-kind-stock-kind").value || "";
+  var state = document.getElementById("product-kind-stock-state").value || "";
+  var productRows = [];
+  var variants;
+
+  if (q || category) {
+    var pr = q ? await fetchCoreProductMasterMatches(q, category || null, 300) : await fetchCategoryProducts(category, 300);
+    if (pr.error) {
+      if (list) list.innerHTML = "<div class='empty'>" + esc(t("msg_part_err") + ": " + pr.error.message) + "</div>";
+      if (countEl) countEl.textContent = "";
+      return;
+    }
+    productRows = normalizeCoreProductFastRows(pr.data || []);
+    var ids = [];
+    productRows.forEach(function(p) {
+      var id = productDkdId(p);
+      if (id && ids.indexOf(id) < 0) ids.push(id);
+    });
+    variants = ids.length ? await fetchProductKindStockVariantsByIds(ids, kind, state, 300) : { data: [], error: null };
+  } else {
+    variants = await fetchProductKindStockVariantsDirect(kind, state, 300);
+  }
+
+  if (variants.error) {
+    if (list) list.innerHTML = "<div class='empty'>" + esc(t("msg_part_err") + ": " + variants.error.message) + "</div>";
+    if (countEl) countEl.textContent = "";
+    return;
+  }
+
+  productKindStockRows = variants.data || [];
+  await loadProductKindStockProductMap(productKindStockRows, productRows);
+  productKindStockRows = sortProductKindStockRows(productKindStockRows);
+  renderProductKindStockMgmt();
+}
+
+function productKindStockInputValue(variantId, field) {
+  var el = document.querySelector("[data-stock-variant='" + String(variantId) + "'][data-stock-field='" + field + "']");
+  return el ? el.value : "";
+}
+
+function productKindStockRowPayload(variantId) {
+  var qtyText = productKindStockInputValue(variantId, "stock_qty").trim();
+  var qty = qtyText === "" ? 0 : parseInt(qtyText, 10);
+  if (isNaN(qty) || qty < 0 || String(qty) !== String(qtyText === "" ? 0 : Number(qtyText))) {
+    return { error: t("product_kind_stock_invalid_qty") };
+  }
+  return {
+    stock_qty: qty,
+    stock_location: productKindStockInputValue(variantId, "stock_location").trim() || null,
+    stock_note: productKindStockInputValue(variantId, "stock_note").trim() || null
+  };
+}
+
+function markProductKindStockDirty(variantId) {
+  if (!canEditProductKindStockMgmt()) return;
+  if (!variantId) return;
+  productKindStockDirtyMap[String(variantId)] = true;
+  var row = document.querySelector("[data-stock-row='" + String(variantId) + "']");
+  if (row) row.classList.add("dirty");
+  updateProductKindStockCount();
+}
+
+function updateProductKindStockCount() {
+  var countEl = document.getElementById("product-kind-stock-count");
+  if (!countEl) return;
+  countEl.textContent = tf("product_kind_stock_count", {
+    n: productKindStockRows.length,
+    m: Object.keys(productKindStockDirtyMap).length
+  });
+}
+
+function renderProductKindStockMgmt() {
+  var list = document.getElementById("product-kind-stock-list");
+  if (!list) return;
+  updateProductKindStockCount();
+  if (!productKindStockRows.length) {
+    list.innerHTML = "<div class='empty'>" + esc(t("no_results")) + "</div>";
+    return;
+  }
+
+  var editable = canEditProductKindStockMgmt();
+  var html = "<div class='stock-mgmt-table-wrap'><table class='mgmt-table stock-mgmt-table'>";
+  html += "<tr><th>" + esc(t("f_genuine_pn")) + "</th><th>" + esc(t("f_mfr_pn")) + "</th><th>" + esc(t("f_manufacturer")) + "</th><th>" + esc(t("product_kind_section")) + "</th><th>" + esc(t("product_kind_stock_qty")) + "</th><th>" + esc(t("product_kind_stock_location")) + "</th><th>" + esc(t("product_kind_stock_note")) + "</th><th>" + esc(t("btn_save_part")) + "</th></tr>";
+  productKindStockRows.forEach(function(row) {
+    var variantId = row.product_variant_id;
+    var p = productKindStockProductMap[String(row.dkd_shohin_id)] || {};
+    var kind = normalizeProductKind(row.product_kind);
+    var sl = row.sl_part_id ? (t("product_kind_sl") + " " + row.sl_part_id) : "";
+    var disabled = editable ? "" : " disabled";
+    html += "<tr class='stock-mgmt-row' data-stock-row='" + esc(String(variantId)) + "'>";
+    html += "<td><div class='mgmt-pn'>" + esc(p.genuine_part_number || "-") + "</div><div class='mgmt-sub'>DKD " + esc(String(row.dkd_shohin_id || "-")) + "</div></td>";
+    html += "<td><div class='mgmt-pn'>" + esc(p.manufacturer_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(productCategoryLabel(p) || "-") + "</div></td>";
+    html += "<td>" + esc(p.manufacturer || "-") + "</td>";
+    html += "<td><div class='stock-mgmt-kind'><span class='product-kind-pill " + productKindClass(kind) + "'>" + esc(productKindLabel(kind)) + "</span><span class='mgmt-sub'>" + esc(row.display_label || sl || "-") + "</span></div></td>";
+    html += "<td><input class='stock-mgmt-input stock-mgmt-qty' type='number' min='0' step='1' data-stock-variant='" + esc(String(variantId)) + "' data-stock-field='stock_qty' value='" + esc(row.stock_qty == null ? "" : String(row.stock_qty)) + "'" + disabled + "></td>";
+    html += "<td><input class='stock-mgmt-input' type='text' data-stock-variant='" + esc(String(variantId)) + "' data-stock-field='stock_location' value='" + esc(row.stock_location || "") + "'" + disabled + "></td>";
+    html += "<td><input class='stock-mgmt-input' type='text' data-stock-variant='" + esc(String(variantId)) + "' data-stock-field='stock_note' value='" + esc(row.stock_note || "") + "'" + disabled + "><div class='mgmt-sub'>" + esc(formatDateTime(row.updated_at)) + "</div></td>";
+    html += "<td><div class='stock-mgmt-actions'>";
+    if (editable) html += "<button class='btn-sm-edit' data-stock-save-row='" + esc(String(variantId)) + "'>" + esc(t("product_kind_stock_save")) + "</button>";
+    html += "</div></td>";
+    html += "</tr>";
+  });
+  html += "</table></div>";
+  list.innerHTML = html;
+
+  if (editable) {
+    list.querySelectorAll("[data-stock-field]").forEach(function(input) {
+      input.addEventListener("input", function() { markProductKindStockDirty(input.dataset.stockVariant); });
+    });
+    list.querySelectorAll("[data-stock-save-row]").forEach(function(btn) {
+      btn.addEventListener("click", function() { saveProductKindStockRow(btn.dataset.stockSaveRow); });
+    });
+  }
+}
+
+async function saveProductKindStockRow(variantId, options) {
+  options = options || {};
+  if (!canEditProductKindStockMgmt()) {
+    if (!options.silent) alert(t("err_perm"));
+    return false;
+  }
+  var id = parseInt(variantId, 10);
+  if (isNaN(id)) return false;
+  var row = productKindStockRows.find(function(x) { return parseInt(x.product_variant_id, 10) === id; });
+  if (!row) return false;
+  var payload = productKindStockRowPayload(id);
+  if (payload.error) {
+    if (!options.silent) alert(payload.error);
+    else throw new Error(payload.error);
+    return false;
+  }
+  var before = Object.assign({}, row);
+  var r = await sb.rpc("set_core_product_variant_stock", {
+    target_product_variant_id: id,
+    new_stock_qty: payload.stock_qty,
+    target_stock_location: payload.stock_location,
+    target_stock_note: payload.stock_note,
+    target_movement_type: "manual_adjustment",
+    target_note: "product-kind stock management"
+  });
+  if (r.error) {
+    if (!options.silent) alert(t("msg_save_err") + ": " + r.error.message);
+    else throw new Error(r.error.message);
+    return false;
+  }
+  row.stock_qty = payload.stock_qty;
+  row.stock_location = payload.stock_location;
+  row.stock_note = payload.stock_note;
+  row.updated_at = new Date().toISOString();
+  productKindStockDirtyMap[String(id)] = false;
+  delete productKindStockDirtyMap[String(id)];
+  await writeLog("update", "core_product_variants", id, productKindLabel(row.product_kind), before, payload);
+  if (!options.silent) {
+    renderProductKindStockMgmt();
+    alert(t("product_kind_stock_row_saved"));
+  }
+  return true;
+}
+
+async function saveProductKindStockChanges() {
+  if (!canEditProductKindStockMgmt()) { alert(t("err_perm")); return; }
+  var ids = Object.keys(productKindStockDirtyMap).filter(function(id) { return productKindStockDirtyMap[id]; });
+  if (!ids.length) { alert(t("product_kind_stock_no_changes")); return; }
+  var btn = document.getElementById("btn-product-kind-stock-save");
+  if (btn) btn.disabled = true;
+  var saved = 0;
+  try {
+    for (var i = 0; i < ids.length; i++) {
+      var ok = await saveProductKindStockRow(ids[i], { silent: true });
+      if (ok) saved++;
+    }
+    renderProductKindStockMgmt();
+    alert(tf("product_kind_stock_saved_count", { n: saved }));
+  } catch (e) {
+    alert(t("msg_save_err") + ": " + (e.message || e));
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// =============================================
 // 製造予定ランキング管理
 // =============================================
 async function enterProductionRankingMgmt() {
@@ -8342,6 +8837,8 @@ function addProductVariantSummaryRow(summary, row) {
   }
   if (row.sl_part_id) meta.slCount += 1;
   summary.rows.push({
+    product_variant_id: row.product_variant_id || null,
+    dkd_shohin_id: row.dkd_shohin_id || null,
     product_kind: kind,
     stock_qty: row.stock_qty,
     sl_part_id: row.sl_part_id || null,
@@ -8395,6 +8892,162 @@ function renderProductKindPills(summary, options) {
   return html;
 }
 
+function productKindRowsForCurrent() {
+  var dkdId = currentProduct ? productDkdId(currentProduct) : null;
+  var rows = (currentProductVariants || []).filter(function(row) {
+    return !dkdId || !row.dkd_shohin_id || String(row.dkd_shohin_id) === String(dkdId);
+  }).slice();
+  var defaultKind = normalizeProductKind((currentProduct && currentProduct.default_product_kind) || "rebuilt");
+  if (!rows.length && dkdId) {
+    rows.push({
+      product_variant_id: null,
+      dkd_shohin_id: dkdId,
+      product_kind: defaultKind,
+      stock_qty: null,
+      stock_location: "",
+      stock_note: "",
+      sl_part_id: null,
+      is_active: true
+    });
+  }
+  rows.sort(function(a, b) {
+    var ak = normalizeProductKind(a.product_kind);
+    var bk = normalizeProductKind(b.product_kind);
+    if (ak !== bk) return productKindSortValue(ak) - productKindSortValue(bk);
+    if (!!a.sl_part_id !== !!b.sl_part_id) return a.sl_part_id ? 1 : -1;
+    return (parseInt(a.product_variant_id || 0, 10) || 0) - (parseInt(b.product_variant_id || 0, 10) || 0);
+  });
+  return rows;
+}
+
+function currentProductKindOptions(summary) {
+  var map = {};
+  Object.keys((summary && summary.kinds) || {}).forEach(function(kind) {
+    map[normalizeProductKind(kind)] = true;
+  });
+  productKindRowsForCurrent().forEach(function(row) {
+    map[normalizeProductKind(row.product_kind)] = true;
+  });
+  map[normalizeProductKind((currentProduct && currentProduct.default_product_kind) || "rebuilt")] = true;
+  return Object.keys(map).sort(function(a, b) {
+    return productKindSortValue(a) - productKindSortValue(b);
+  });
+}
+
+function selectedProductKind() {
+  return normalizeProductKind(currentSelectedProductKind || (currentProduct && currentProduct.default_product_kind) || "rebuilt");
+}
+
+function selectedProductVariantId() {
+  var kind = selectedProductKind();
+  var rows = productKindRowsForCurrent().filter(function(row) {
+    return normalizeProductKind(row.product_kind) === kind && row.product_variant_id;
+  });
+  rows.sort(function(a, b) {
+    if (!!a.sl_part_id !== !!b.sl_part_id) return a.sl_part_id ? 1 : -1;
+    return (parseInt(a.product_variant_id || 0, 10) || 0) - (parseInt(b.product_variant_id || 0, 10) || 0);
+  });
+  return rows.length ? rows[0].product_variant_id : null;
+}
+
+function ensureSelectedProductKind(summary) {
+  var options = currentProductKindOptions(summary);
+  var selected = selectedProductKind();
+  if (options.indexOf(selected) < 0) selected = options[0] || "rebuilt";
+  currentSelectedProductKind = selected;
+  return selected;
+}
+
+function renderProductKindPanelHtml(summary) {
+  summary = summary || productKindSummaryForProduct(currentProduct);
+  var selected = ensureSelectedProductKind(summary);
+  var options = currentProductKindOptions(summary);
+  var html = renderProductKindPills(summary, { detail: true });
+  html += "<div class='product-kind-control'>";
+  html += "<div class='product-kind-control-row'><label for='product-kind-select'>" + esc(t("product_kind_current")) + "</label>";
+  html += "<select id='product-kind-select' class='product-kind-select'>";
+  options.forEach(function(kind) {
+    html += "<option value='" + esc(kind) + "'" + (kind === selected ? " selected" : "") + ">" + esc(productKindLabel(kind)) + "</option>";
+  });
+  html += "</select></div>";
+  var rows = productKindRowsForCurrent();
+  if (rows.length) {
+    html += "<div class='product-kind-stock-grid'>";
+    rows.forEach(function(row) {
+      var kind = normalizeProductKind(row.product_kind);
+      var variantId = row.product_variant_id || "";
+      var disabled = (!variantId || !canEdit()) ? " disabled" : "";
+      var activeClass = kind === selected ? " active" : "";
+      var sub = [];
+      if (row.sl_part_id) sub.push(t("product_kind_sl") + " " + row.sl_part_id);
+      if (row.display_label) sub.push(row.display_label);
+      html += "<div class='product-kind-stock-row" + activeClass + "' data-product-kind-row='" + esc(kind) + "'>";
+      html += "<div class='product-kind-stock-label'>" + esc(productKindLabel(kind)) + "<div class='product-kind-stock-sub'>" + esc(sub.join(" / ")) + "</div></div>";
+      html += "<input class='product-kind-stock-input' type='number' min='0' step='1' data-kind-stock='" + esc(String(variantId)) + "' value='" + esc(row.stock_qty == null ? "" : String(row.stock_qty)) + "' placeholder='" + esc(t("product_kind_stock_qty")) + "'" + disabled + ">";
+      html += "<input class='product-kind-stock-input' type='text' data-kind-location='" + esc(String(variantId)) + "' value='" + esc(row.stock_location || "") + "' placeholder='" + esc(t("product_kind_stock_location")) + "'" + disabled + ">";
+      html += "<input class='product-kind-stock-input' type='text' data-kind-note='" + esc(String(variantId)) + "' value='" + esc(row.stock_note || "") + "' placeholder='" + esc(t("product_kind_stock_note")) + "'" + disabled + ">";
+      html += "<button class='btn-sm-edit product-kind-stock-save' data-kind-stock-save='" + esc(String(variantId)) + "'" + disabled + ">" + esc(t("product_kind_stock_save")) + "</button>";
+      html += "</div>";
+    });
+    html += "</div>";
+  }
+  html += "</div>";
+  return html;
+}
+
+function renderProductKindWrapForCurrent() {
+  var wrap = document.getElementById("product-kind-wrap");
+  if (!wrap || !currentProduct) return;
+  wrap.innerHTML = renderProductKindPanelHtml(productKindSummaryForProduct(currentProduct));
+  bindProductKindPanelActions();
+}
+
+function bindProductKindPanelActions() {
+  var select = document.getElementById("product-kind-select");
+  if (select) {
+    select.onchange = function() {
+      currentSelectedProductKind = normalizeProductKind(select.value || "rebuilt");
+      renderProductKindWrapForCurrent();
+      if (canSeeSalesPrice()) loadSalesPriceSummaryForCurrent();
+      if (canSeeSalesPrice()) loadDetailCustomerInfoForCurrent(detailSecondaryRequestSeq);
+    };
+  }
+  document.querySelectorAll("[data-kind-stock-save]").forEach(function(btn) {
+    btn.onclick = async function() {
+      var variantId = btn.dataset.kindStockSave || "";
+      if (!variantId) return;
+      var qtyEl = document.querySelector("[data-kind-stock='" + CSS.escape(variantId) + "']");
+      var locEl = document.querySelector("[data-kind-location='" + CSS.escape(variantId) + "']");
+      var noteEl = document.querySelector("[data-kind-note='" + CSS.escape(variantId) + "']");
+      var qty = qtyEl ? parseInt(qtyEl.value, 10) : NaN;
+      if (isNaN(qty) || qty < 0) {
+        alert(t("product_kind_stock_qty"));
+        return;
+      }
+      btn.disabled = true;
+      var oldText = btn.textContent;
+      btn.textContent = t("component_save_loading");
+      var r = await sb.rpc("set_core_product_variant_stock", {
+        target_product_variant_id: parseInt(variantId, 10),
+        new_stock_qty: qty,
+        target_stock_location: locEl ? (locEl.value.trim() || null) : null,
+        target_stock_note: noteEl ? (noteEl.value.trim() || null) : null,
+        target_movement_type: "manual_set",
+        target_note: "D-CATS product detail stock edit"
+      });
+      btn.disabled = false;
+      btn.textContent = oldText;
+      if (r.error) {
+        alert(t("msg_save_err") + ": " + r.error.message);
+        return;
+      }
+      await writeLog("update", "core_product_variants", variantId, selectedProductKind(), null, r.data || null);
+      await loadProductVariantsForCurrent(detailSecondaryRequestSeq);
+      alert(t("product_kind_stock_saved"));
+    };
+  });
+}
+
 async function fetchProductVariantSummaryMap(products) {
   var map = {};
   var ids = productSearchCardDkdIds(products);
@@ -8402,7 +9055,7 @@ async function fetchProductVariantSummaryMap(products) {
   for (var i = 0; i < ids.length; i += 200) {
     var chunk = ids.slice(i, i + 200);
     var r = await sb.from("core_product_variants")
-      .select("dkd_shohin_id, product_kind, sl_part_id, display_label, stock_qty, stock_location, stock_note, is_active")
+      .select("product_variant_id, dkd_shohin_id, product_kind, sl_part_id, display_label, stock_qty, stock_location, stock_note, is_active")
       .eq("is_active", true)
       .in("dkd_shohin_id", chunk);
     if (r.error) {
@@ -9734,6 +10387,7 @@ function applyVisibleSearchScopeFilter() {
 function renderPanelStatic() {
   var p = currentProduct;
   var detailSeq = ++detailSecondaryRequestSeq;
+  currentSelectedProductKind = normalizeProductKind((p && p.default_product_kind) || "rebuilt");
   document.getElementById("panel-topbar-title").textContent = productCategoryLabel(p) || "-";
   var topAddBtn = document.getElementById("btn-add-core-product-top");
   if (topAddBtn) {
@@ -9800,7 +10454,7 @@ function renderPanelStatic() {
   var salesPriceBlockHtml = canSeeSalesPrice()
     ? "<div class='sales-price-summary-block'><div class='sales-price-summary-head'><div class='detail-block-title'>" + t("sales_price_section") + "</div></div><div id='sales-price-summary-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div></div>"
     : "";
-  var productKindBlockHtml = "<div class='product-kind-panel'><div class='detail-block-title'>" + t("product_kind_section") + "</div><div id='product-kind-wrap'>" + renderProductKindPills(productKindSummaryForProduct(p), { detail: true }) + "</div></div>";
+  var productKindBlockHtml = "<div class='product-kind-panel'><div class='detail-block-title'>" + t("product_kind_section") + "</div><div id='product-kind-wrap'>" + renderProductKindPanelHtml(productKindSummaryForProduct(p)) + "</div></div>";
   var kikanBlockHtml = customerCanShowCompatibleParts()
     ? "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
       "<div id='kikan-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>"
@@ -9833,6 +10487,7 @@ function renderPanelStatic() {
   document.getElementById("panel-scroll").scrollTop = 0;
   var editCurrentBtn = document.getElementById("btn-edit-current-product");
   if (editCurrentBtn) editCurrentBtn.addEventListener("click", openCoreProductEditFromSearch);
+  bindProductKindPanelActions();
   var componentBtn = document.getElementById("btn-open-components");
   var parallelBtn = document.getElementById("btn-open-component-parallel");
   if (componentBtn) componentBtn.addEventListener("click", function(){ enterComponentsScreen("search"); });
@@ -9852,17 +10507,9 @@ async function loadProductVariantsForCurrent(seq) {
   var dkdId = parseInt(productDkdId(currentProduct), 10);
   if (isNaN(dkdId)) return;
   var wrap = document.getElementById("product-kind-wrap");
-  var r = await sb.from("core_product_variants")
-    .select("product_variant_id, dkd_shohin_id, product_kind, sl_part_id, display_label, stock_qty, stock_location, stock_note, is_active")
-    .eq("dkd_shohin_id", dkdId)
-    .eq("is_active", true)
-    .order("product_variant_id", { ascending: true });
+  var rows = await fetchProductVariantsByDkdId(dkdId);
   if (seq !== detailSecondaryRequestSeq) return;
-  if (r.error) {
-    console.warn("product variants lookup failed", r.error);
-    return;
-  }
-  currentProductVariants = r.data || [];
+  currentProductVariants = rows;
   var summary = createProductVariantSummary();
   currentProductVariants.forEach(function(row) {
     addProductVariantSummaryRow(summary, row);
@@ -9871,9 +10518,45 @@ async function loadProductVariantsForCurrent(seq) {
   productVariantSummaryMap[key] = summary;
   productVariantSummaryCache[key] = summary;
   if (wrap) {
-    wrap.innerHTML = renderProductKindPills(productKindSummaryForProduct(currentProduct), { detail: true });
+    wrap.innerHTML = renderProductKindPanelHtml(productKindSummaryForProduct(currentProduct));
+    bindProductKindPanelActions();
   }
   render();
+}
+
+async function fetchProductVariantsByDkdId(dkdId) {
+  var id = parseInt(dkdId, 10);
+  if (isNaN(id)) return [];
+  var r = await sb.from("core_product_variants")
+    .select("product_variant_id, dkd_shohin_id, product_kind, sl_part_id, display_label, stock_qty, stock_location, stock_note, is_active")
+    .eq("dkd_shohin_id", id)
+    .eq("is_active", true)
+    .order("product_variant_id", { ascending: true });
+  if (r.error) {
+    console.warn("product variants lookup failed", r.error);
+    return [];
+  }
+  return r.data || [];
+}
+
+async function ensureProductVariantsForCurrentDkd(dkdId) {
+  var id = parseInt(dkdId, 10);
+  if (isNaN(id)) return [];
+  var hasCurrentRows = (currentProductVariants || []).some(function(row) {
+    return String(row.dkd_shohin_id || "") === String(id);
+  });
+  if (!hasCurrentRows) {
+    currentProductVariants = await fetchProductVariantsByDkdId(id);
+  }
+  var summary = createProductVariantSummary();
+  (currentProductVariants || []).filter(function(row) {
+    return String(row.dkd_shohin_id || "") === String(id);
+  }).forEach(function(row) {
+    addProductVariantSummaryRow(summary, row);
+  });
+  productVariantSummaryMap[String(id)] = summary;
+  productVariantSummaryCache[String(id)] = summary;
+  return currentProductVariants;
 }
 
 function renderCachedPanelThumbnail() {
@@ -10351,7 +11034,7 @@ function selectedProductSub() {
   ].join(" / ");
 }
 
-function enterComponentsScreen(returnScreen) {
+async function enterComponentsScreen(returnScreen) {
   if (!currentProduct) { alert(t("welcome_panel")); return; }
   if (!canSeeComponentInfo()) { alert(t("err_perm")); return; }
   componentReturnScreen = returnScreen || "search";
@@ -10365,6 +11048,7 @@ function enterComponentsScreen(returnScreen) {
   var sub = document.getElementById("components-context-sub");
   if (title) title.textContent = selectedProductTitle();
   if (sub) sub.textContent = selectedProductSub();
+  await ensureProductVariantsForCurrentDkd(productDkdId(currentProduct));
   renderComponentAddPanel();
   loadAssemblyComponentsForCurrent();
 }
@@ -10396,15 +11080,41 @@ function bindComponentPanelActions() {
   };
 }
 
+function renderComponentKindSelectorHtml() {
+  var summary = productKindSummaryForProduct(currentProduct);
+  var selected = ensureSelectedProductKind(summary);
+  var options = currentProductKindOptions(summary);
+  var html = "<div class='component-add-panel' style='padding:10px 12px'>";
+  html += "<div class='product-kind-control-row'><label for='component-product-kind-select'>" + esc(t("product_kind_current")) + "</label>";
+  html += "<select id='component-product-kind-select' class='product-kind-select'>";
+  options.forEach(function(kind) {
+    html += "<option value='" + esc(kind) + "'" + (kind === selected ? " selected" : "") + ">" + esc(productKindLabel(kind)) + "</option>";
+  });
+  html += "</select></div></div>";
+  return html;
+}
+
+function bindComponentKindSelector() {
+  var select = document.getElementById("component-product-kind-select");
+  if (!select) return;
+  select.onchange = function() {
+    currentSelectedProductKind = normalizeProductKind(select.value || "rebuilt");
+    renderComponentAddPanel();
+    loadAssemblyComponentsForCurrent();
+  };
+}
+
 function renderComponentAddPanel() {
   var wrap = document.getElementById("component-add-wrap");
   if (!wrap) return;
+  var html = renderComponentKindSelectorHtml();
   if (!canEditInternalComponents()) {
-    wrap.innerHTML = "";
+    wrap.innerHTML = html;
+    bindComponentKindSelector();
     return;
   }
   var manufacturer = (currentProduct && currentProduct.manufacturer) || "";
-  var html = "<div class='component-add-panel'>";
+  html += "<div class='component-add-panel'>";
   html += "<div class='component-add-title'>" + t("component_add_title") + "</div>";
   html += "<div class='component-add-grid'>";
   html += "<div class='component-add-field'><label>" + t("f_manufacturer") + "</label><input id='component-add-mfr' type='text' value='" + esc(manufacturer) + "'></div>";
@@ -10421,6 +11131,7 @@ function renderComponentAddPanel() {
   html += "<div class='component-add-actions'><button class='btn-primary' id='btn-component-add' type='button'>" + t("component_add") + "</button></div>";
   html += "</div>";
   wrap.innerHTML = html;
+  bindComponentKindSelector();
   var addBtn = document.getElementById("btn-component-add");
   if (addBtn) addBtn.addEventListener("click", addAssemblyComponentForCurrent);
 }
@@ -10454,6 +11165,8 @@ async function addAssemblyComponentForCurrent() {
     target_manufacturer: targetManufacturer,
     target_manufacturer_part_number: targetManufacturerPartNumber,
     target_genuine_part_number: currentProduct.genuine_part_number || null,
+    target_product_kind: selectedProductKind(),
+    target_product_variant_id: selectedProductVariantId(),
     component_manufacturer: componentMfr,
     component_manufacturer_part_number: componentMfrPn,
     component_genuine_part_number: componentAddValue("component-add-genuine-pn") || null,
@@ -10921,10 +11634,11 @@ async function loadAssemblyComponentsForCurrent() {
     return;
   }
   wrap.innerHTML = "<div class='component-empty'>" + t("loading") + "</div>";
-  var selectColumns = "id, dkd_component_id, dkd_shohin_id, assy_manufacturer, assy_manufacturer_part_number, normalized_assy_manufacturer_part_number, component_manufacturer_part_number, component_genuine_part_number, component_name, quantity, unit_price_jpy, interchange_code, effective_start, effective_end, component_position, component_manufacturer, component_part_name, source_code, is_catalog_evidence";
+  var selectColumns = "id, dkd_component_id, dkd_shohin_id, product_kind, product_variant_id, assy_manufacturer, assy_manufacturer_part_number, normalized_assy_manufacturer_part_number, component_manufacturer_part_number, component_genuine_part_number, component_name, quantity, unit_price_jpy, interchange_code, effective_start, effective_end, component_position, component_manufacturer, component_part_name, source_code, is_catalog_evidence";
   var r = await sb.from("assembly_component_usage_details")
     .select(selectColumns)
     .eq("assy_manufacturer", mfr)
+    .eq("product_kind", selectedProductKind())
     .in("normalized_assy_manufacturer_part_number", normalizedMfrPnKeys)
     .order("component_position", { ascending: true, nullsFirst: false })
     .order("component_manufacturer_part_number", { ascending: true });
@@ -11443,6 +12157,7 @@ async function loadSalesPriceSummaryForCurrent() {
   var r = await sb.from("product_base_prices")
     .select("id,base_price_jpy,tax_included,price_basis,basis_note,effective_start,updated_at")
     .eq("dkd_shohin_id", dkdId)
+    .eq("product_kind", selectedProductKind())
     .eq("is_current", true)
     .maybeSingle();
   if (r.error) {
@@ -11475,7 +12190,8 @@ async function loadSalesPriceSummaryForCurrent() {
 async function loadCustomerSalesPriceSummary(wrap, dkdId) {
   try {
     var r = await sb.rpc("get_customer_product_sales_price", {
-      target_dkd_shohin_id: parseInt(dkdId, 10)
+      target_dkd_shohin_id: parseInt(dkdId, 10),
+      target_product_kind: selectedProductKind()
     });
     if (r.error) throw r.error;
     var row = (r.data || [])[0] || null;
@@ -11566,7 +12282,10 @@ async function fetchDetailCustomerPriceInfo(customer, dkdId) {
   var id = parseInt(dkdId, 10);
   if (!customer || isNaN(id)) return info;
   if (isCustomerViewer()) {
-    var rpc = await sb.rpc("get_customer_product_sales_price", { target_dkd_shohin_id: id });
+    var rpc = await sb.rpc("get_customer_product_sales_price", {
+      target_dkd_shohin_id: id,
+      target_product_kind: selectedProductKind()
+    });
     if (rpc.error) throw rpc.error;
     var row = (rpc.data || [])[0] || null;
     if (row && row.sales_price_jpy != null) info.salesPrice = parseInt(row.sales_price_jpy, 10);
@@ -11575,6 +12294,7 @@ async function fetchDetailCustomerPriceInfo(customer, dkdId) {
   var baseR = await sb.from("product_base_prices")
     .select("base_price_jpy")
     .eq("dkd_shohin_id", id)
+    .eq("product_kind", selectedProductKind())
     .eq("is_current", true)
     .maybeSingle();
   if (baseR.error) throw baseR.error;
@@ -11648,6 +12368,66 @@ function closeSalesPricingOverlay() {
   currentSalesPricingDksReference = null;
 }
 
+function salesPricingProductKindOptionsForCurrent() {
+  var summary = productKindSummaryForProduct(currentProduct);
+  var options = currentProductKindOptions(summary);
+  var selected = normalizeProductKind(currentSalesPricingProductKind || selectedProductKind());
+  if (options.indexOf(selected) < 0) options.push(selected);
+  return options.sort(function(a, b) {
+    return productKindSortValue(a) - productKindSortValue(b);
+  });
+}
+
+function fillSalesPricingProductKindSelect(selectedKind) {
+  var select = document.getElementById("sales-product-kind");
+  if (!select) return;
+  var selected = normalizeProductKind(selectedKind || "rebuilt");
+  select.innerHTML = salesPricingProductKindOptionsForCurrent().map(function(kind) {
+    return "<option value='" + esc(kind) + "'" + (kind === selected ? " selected" : "") + ">" + esc(productKindLabel(kind)) + "</option>";
+  }).join("");
+  select.value = selected;
+}
+
+function salesPricingCurrentProductKind() {
+  var select = document.getElementById("sales-product-kind");
+  return normalizeProductKind((select && select.value) || currentSalesPricingProductKind || "rebuilt");
+}
+
+function salesPricingProductVariantIdForKind(kind) {
+  var targetKind = normalizeProductKind(kind || "rebuilt");
+  var rows = productKindRowsForCurrent().filter(function(row) {
+    return normalizeProductKind(row.product_kind) === targetKind && row.product_variant_id;
+  });
+  rows.sort(function(a, b) {
+    if (!!a.sl_part_id !== !!b.sl_part_id) return a.sl_part_id ? 1 : -1;
+    return (parseInt(a.product_variant_id || 0, 10) || 0) - (parseInt(b.product_variant_id || 0, 10) || 0);
+  });
+  return rows.length ? rows[0].product_variant_id : null;
+}
+
+function applySalesPricingRowToForm(row) {
+  currentSalesPricingRow = row || null;
+  document.getElementById("sales-base-price").value = currentSalesPricingRow ? currentSalesPricingRow.base_price_jpy : ((currentProduct && currentProduct.price_jpy) || "");
+  document.getElementById("sales-price-basis").value = currentSalesPricingRow ? (currentSalesPricingRow.price_basis || "manual") : "manual";
+  document.getElementById("sales-effective-start").value = currentSalesPricingRow ? (currentSalesPricingRow.effective_start || salesPricingTodayIso()) : salesPricingTodayIso();
+  document.getElementById("sales-basis-note").value = currentSalesPricingRow ? (currentSalesPricingRow.basis_note || "") : "";
+  renderSalesRankPreview();
+}
+
+async function loadSalesPricingCurrentBaseRow() {
+  if (!currentSalesPricingDkdId) return;
+  var kind = salesPricingCurrentProductKind();
+  currentSalesPricingProductKind = kind;
+  var currentR = await sb.from("product_base_prices")
+    .select("id,dkd_shohin_id,product_kind,product_variant_id,base_price_jpy,tax_included,price_basis,basis_note,effective_start,effective_end,is_current,created_at,updated_at")
+    .eq("dkd_shohin_id", currentSalesPricingDkdId)
+    .eq("product_kind", kind)
+    .eq("is_current", true)
+    .maybeSingle();
+  if (currentR.error) throw currentR.error;
+  applySalesPricingRowToForm(currentR.data || null);
+}
+
 async function openSalesPricingForCurrent() {
   if (!currentProduct) return;
   if (!canViewSalesPricing()) { alert(t("err_perm")); return; }
@@ -11671,14 +12451,11 @@ async function openSalesPricingForCurrent() {
   try {
     var dkdId = await resolveCurrentCoreDkdShohinId();
     currentSalesPricingDkdId = dkdId;
+    await ensureProductVariantsForCurrentDkd(dkdId);
+    currentSalesPricingProductKind = ensureSelectedProductKind(productKindSummaryForProduct(currentProduct));
+    fillSalesPricingProductKindSelect(currentSalesPricingProductKind);
     document.getElementById("sales-pricing-product").textContent = salesPricingProductText(currentProduct, dkdId);
     if (!dkdId) throw new Error(t("sales_no_product_id"));
-    var currentR = await sb.from("product_base_prices")
-      .select("id,dkd_shohin_id,base_price_jpy,tax_included,price_basis,basis_note,effective_start,effective_end,is_current,created_at,updated_at")
-      .eq("dkd_shohin_id", dkdId)
-      .eq("is_current", true)
-      .maybeSingle();
-    if (currentR.error) throw currentR.error;
     var ranksR = await sb.from("sales_price_ranks")
       .select("rank_code,rank_name,rate_multiplier,amount_adjustment_jpy,rounding_unit_jpy,rounding_method,is_active")
       .eq("is_active", true)
@@ -11689,13 +12466,23 @@ async function openSalesPricingForCurrent() {
       .eq("source_code", "hanbaiou")
       .eq("is_active", true);
     if (customersR.error) throw customersR.error;
-    currentSalesPricingRow = currentR.data || null;
     salesPricingRanks = ranksR.data || [];
     salesPricingCustomerCounts = salesPricingRankCountMap(customersR.data || []);
-    document.getElementById("sales-base-price").value = currentSalesPricingRow ? currentSalesPricingRow.base_price_jpy : ((currentProduct && currentProduct.price_jpy) || "");
-    document.getElementById("sales-price-basis").value = currentSalesPricingRow ? (currentSalesPricingRow.price_basis || "manual") : "manual";
-    document.getElementById("sales-effective-start").value = currentSalesPricingRow ? (currentSalesPricingRow.effective_start || salesPricingTodayIso()) : salesPricingTodayIso();
-    document.getElementById("sales-basis-note").value = currentSalesPricingRow ? (currentSalesPricingRow.basis_note || "") : "";
+    await loadSalesPricingCurrentBaseRow();
+    var kindSelect = document.getElementById("sales-product-kind");
+    if (kindSelect) {
+      kindSelect.onchange = async function() {
+        var err = document.getElementById("sales-pricing-error");
+        if (err) err.textContent = "";
+        try {
+          currentSalesPricingProductKind = salesPricingCurrentProductKind();
+          await loadSalesPricingCurrentBaseRow();
+        } catch (e) {
+          console.warn("sales pricing kind switch failed", e);
+          if (err) err.textContent = (e && e.message) || String(e);
+        }
+      };
+    }
     currentSalesPricingDksReference = await fetchSalesPricingDksReference(dkdId);
     renderSalesBasePriceGuidance();
     renderSalesRankPreview();
@@ -11713,10 +12500,14 @@ async function saveSalesPricing() {
   if (!canEditBasePrice()) { if (errEl) errEl.textContent = t("err_perm"); return; }
   var dkdId = currentSalesPricingDkdId;
   if (!dkdId) { if (errEl) errEl.textContent = t("sales_no_product_id"); return; }
+  var productKind = salesPricingCurrentProductKind();
+  var productVariantId = salesPricingProductVariantIdForKind(productKind);
   var base = parseInt(document.getElementById("sales-base-price").value, 10);
   if (isNaN(base) || base < 0) { if (errEl) errEl.textContent = t("sales_base_price_required"); return; }
   var payload = {
     dkd_shohin_id: dkdId,
+    product_kind: productKind,
+    product_variant_id: productVariantId,
     base_price_jpy: base,
     tax_included: false,
     price_basis: document.getElementById("sales-price-basis").value || "manual",
@@ -11733,6 +12524,7 @@ async function saveSalesPricing() {
     var upd = await sb.from("product_base_prices")
       .update(closePayload)
       .eq("dkd_shohin_id", dkdId)
+      .eq("product_kind", productKind)
       .eq("is_current", true);
     if (upd.error) throw upd.error;
     var ins = await sb.from("product_base_prices").insert(payload).select("*").single();
@@ -11741,6 +12533,8 @@ async function saveSalesPricing() {
     await sb.from("product_base_price_history").insert({
       base_price_id: ins.data.id,
       dkd_shohin_id: dkdId,
+      product_kind: productKind,
+      product_variant_id: productVariantId,
       old_base_price_jpy: oldRow ? oldRow.base_price_jpy : null,
       new_base_price_jpy: ins.data.base_price_jpy,
       old_payload: oldRow || null,
@@ -11749,7 +12543,7 @@ async function saveSalesPricing() {
       change_note: payload.basis_note
     });
     await loadSalesPriceSummaryForCurrent();
-    salesPricingMgmtPriceMap[String(dkdId)] = ins.data;
+    if (productKind === "rebuilt") salesPricingMgmtPriceMap[String(dkdId)] = ins.data;
     renderSalesPricingMgmt();
     closeSalesPricingOverlay();
   } catch (e) {
@@ -11808,6 +12602,7 @@ async function loadSalesPricingMgmt() {
     var pr = await sb.from("product_base_prices")
       .select("id,dkd_shohin_id,base_price_jpy,price_basis,basis_note,effective_start,is_current")
       .in("dkd_shohin_id", ids)
+      .eq("product_kind", "rebuilt")
       .eq("is_current", true);
     (pr.data || []).forEach(function(row) {
       salesPricingMgmtPriceMap[String(row.dkd_shohin_id)] = row;
@@ -13158,7 +13953,7 @@ document.getElementById("btn-back-to-login").addEventListener("click", function(
 document.getElementById("btn-submit-reg").addEventListener("click", doRegister);
 document.getElementById("reg-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doRegister(); });
 document.getElementById("login-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
-["btn-logout-menu","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-customer-access-mgmt","btn-logout-core-list-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
+["btn-logout-menu","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-customer-access-mgmt","btn-logout-core-list-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
 document.getElementById("btn-back-search").addEventListener("click", function(){ closePanel(); showScreen("menu"); });
 document.getElementById("btn-back-production-search").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-components").addEventListener("click", async function(){
@@ -13177,6 +13972,7 @@ document.getElementById("btn-back-parts-mgmt").addEventListener("click", functio
 document.getElementById("btn-back-sales-pricing-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-customer-access-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-core-list-mgmt").addEventListener("click", function(){ showScreen("menu"); });
+document.getElementById("btn-back-product-kind-stock-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-production-ranking-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-kikan-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-rakuten-price").addEventListener("click", function(){ showScreen("menu"); });
@@ -13225,6 +14021,12 @@ document.getElementById("clf-product-candidates").addEventListener("click", func
   var item = e.target.closest("[data-core-candidate-index]");
   if (item) selectCoreListProductCandidate(parseInt(item.dataset.coreCandidateIndex, 10));
 });
+document.getElementById("btn-product-kind-stock-search").addEventListener("click", loadProductKindStockMgmt);
+document.getElementById("product-kind-stock-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadProductKindStockMgmt(); });
+document.getElementById("product-kind-stock-category").addEventListener("change", loadProductKindStockMgmt);
+document.getElementById("product-kind-stock-kind").addEventListener("change", loadProductKindStockMgmt);
+document.getElementById("product-kind-stock-state").addEventListener("change", loadProductKindStockMgmt);
+document.getElementById("btn-product-kind-stock-save").addEventListener("click", saveProductKindStockChanges);
 document.getElementById("btn-add-production-ranking").addEventListener("click", function(){ openProductionRankingForm("add"); });
 document.getElementById("btn-production-ranking-search").addEventListener("click", loadProductionRankingMgmt);
 document.getElementById("production-ranking-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadProductionRankingMgmt(); });
