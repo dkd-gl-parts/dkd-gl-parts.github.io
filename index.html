@@ -4226,7 +4226,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.219";
+var APP_VERSION       = "v1.1.221";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -5232,7 +5232,7 @@ function renderMenu() {
     { icon: "&#x1F4E6;", titleKey: "mi_rakuten_bulk_title", descKey: "mi_rakuten_bulk_desc", action: "rakuten-bulk", available: canUseRakutenResearch(), tag: null },
     { icon: "&#x1F4C8;", titleKey: "screen_rakuten_list_title", descKey: "mi_rakuten_desc", action: "rakuten-price-list", available: canViewPriceResearchHistory(), tag: null },
     { icon: "&#x1F512;", titleKey: "mi_changepw_title", descKey: "mi_changepw_desc", action: "change-pw", available: true, tag: null }
-  ];
+  ].filter(function(item) { return item.available; });
 
   var adminItems = [
     { icon: "&#x1F465;", titleKey: "mi_users_title",  descKey: "mi_users_desc",  action: "users",  available: canUseUserManagement() },
@@ -5247,10 +5247,9 @@ function renderMenu() {
   ].filter(function(item) { return item.available; });
 
   function renderCard(item) {
-    var dis = item.available ? "" : " disabled";
     var act = item.action ? " data-action=\"" + item.action + "\"" : "";
     var html = "";
-    html += "<div class=\"menu-card" + dis + "\"" + act + ">";
+    html += "<div class=\"menu-card\"" + act + ">";
     html += "<div class=\"menu-icon\">" + item.icon + "</div>";
     html += "<div class=\"menu-card-title\">" + t(item.titleKey) + "</div>";
     html += "<div class=\"menu-card-desc\">"  + t(item.descKey)  + "</div>";
