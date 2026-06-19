@@ -4226,7 +4226,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.218";
+var APP_VERSION       = "v1.1.219";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -4806,10 +4806,10 @@ function canViewProductionFeatures() {
   return canEdit() || canViewAllReadOnly();
 }
 function canViewFinishedLabelMgmt() {
-  return canViewProductionFeatures();
+  return isSystemAdmin();
 }
 function canEditFinishedLabelMgmt() {
-  return canEdit();
+  return isSystemAdmin();
 }
 function canViewManagementScreen() {
   return canEdit() || canViewAllReadOnly();
@@ -5885,7 +5885,7 @@ async function renderProductionDetail(row) {
   html += "<div class='production-actions'>";
   html += "<button class='btn-sm-edit' id='production-open-sales'>" + esc(t("production_open_sales")) + "</button>";
   html += "<button class='btn-sm-edit btn-component-action' id='production-open-components'><span class='component-icon'>&#x1F9E9;</span> " + esc(t("component_section")) + "</button>";
-  html += "<button class='btn-sm-edit production-action-secondary' id='production-open-finished-label'>" + esc(t("mi_finished_label_title")) + "</button>";
+  if (canViewFinishedLabelMgmt()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-finished-label'>" + esc(t("mi_finished_label_title")) + "</button>";
   if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-edit-core'>品番修正</button>";
   if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-add-image'>画像登録</button>";
   html += "</div></div>";
