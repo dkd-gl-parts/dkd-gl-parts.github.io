@@ -4226,7 +4226,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.221";
+var APP_VERSION       = "v1.1.222";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -9775,6 +9775,14 @@ function renderProductKindPills(summary, options) {
   return html;
 }
 
+function productKindSelectLabel(kind, summary) {
+  kind = normalizeProductKind(kind);
+  var meta = summary && summary.kinds ? summary.kinds[kind] : null;
+  var parts = [productKindLabel(kind)];
+  if (meta && meta.slCount > 0) parts.push(t("product_kind_sl") + " " + meta.slCount);
+  return parts.join(" ");
+}
+
 function productKindRowsForCurrent() {
   var dkdId = currentProduct ? productDkdId(currentProduct) : null;
   var rows = (currentProductVariants || []).filter(function(row) {
@@ -9845,12 +9853,11 @@ function renderProductKindPanelHtml(summary) {
   summary = summary || productKindSummaryForProduct(currentProduct);
   var selected = ensureSelectedProductKind(summary);
   var options = currentProductKindOptions(summary);
-  var html = renderProductKindPills(summary, { detail: true });
-  html += "<div class='product-kind-control'>";
-  html += "<div class='product-kind-control-row'><label for='product-kind-select'>" + esc(t("filter_scope")) + "</label>";
+  var html = "<div class='product-kind-control'>";
+  html += "<div class='product-kind-control-row compact'>";
   html += "<select id='product-kind-select' class='product-kind-select'>";
   options.forEach(function(kind) {
-    html += "<option value='" + esc(kind) + "'" + (kind === selected ? " selected" : "") + ">" + esc(productKindLabel(kind)) + "</option>";
+    html += "<option value='" + esc(kind) + "'" + (kind === selected ? " selected" : "") + ">" + esc(productKindSelectLabel(kind, summary)) + "</option>";
   });
   html += "</select></div>";
   var rows = productKindRowsForCurrent().filter(function(row) {
