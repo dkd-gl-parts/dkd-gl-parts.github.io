@@ -537,17 +537,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .product-kind-control-row label { color: #667085; font-size: 12px; font-weight: 700; white-space: nowrap; }
 .product-kind-select { min-width: 150px; border: 1px solid #d7dce5; border-radius: 7px; padding: 6px 8px; font-size: 12px; background: #fff; }
 .product-kind-stock-grid { display: grid; gap: 6px; margin-top: 6px; }
-.product-kind-stock-row { display: grid; grid-template-columns: minmax(92px, 1fr) 72px minmax(86px, 1fr) minmax(90px, 1fr) auto; gap: 6px; align-items: center; border: 1px solid #edf0f5; border-radius: 7px; padding: 7px; background: #fbfcff; }
+.product-kind-stock-row { display: grid; grid-template-columns: minmax(100px, 1.1fr) 72px minmax(90px, 1fr) minmax(120px, 1.2fr); gap: 6px; align-items: stretch; border: 1px solid #edf0f5; border-radius: 7px; padding: 7px; background: #fbfcff; }
 .product-kind-stock-row.active { border-color: #b9d3ff; background: #f5f9ff; }
 .product-kind-stock-label { font-size: 12px; font-weight: 800; color: #1a1a2e; line-height: 1.35; min-width: 0; }
 .product-kind-stock-sub { font-size: 11px; color: #8a94a6; margin-top: 2px; word-break: break-word; }
-.product-kind-stock-input { width: 100%; border: 1px solid #d7dce5; border-radius: 6px; padding: 6px 7px; font-size: 12px; background: #fff; min-width: 0; }
-.product-kind-stock-save { white-space: nowrap; }
+.product-kind-stock-value { border-left: 1px solid #edf0f5; padding-left: 8px; min-width: 0; font-size: 12px; font-weight: 700; color: #1a1a2e; word-break: break-word; }
+.product-kind-stock-value span { display: block; color: #8a94a6; font-size: 10px; font-weight: 600; margin-bottom: 2px; }
 @media(max-width:720px){
   .product-kind-stock-row { grid-template-columns: 1fr 72px; }
-  .product-kind-stock-row .product-kind-stock-input:nth-of-type(2),
-  .product-kind-stock-row .product-kind-stock-input:nth-of-type(3),
-  .product-kind-stock-save { grid-column: 1 / -1; }
+  .product-kind-stock-value:nth-child(n+4) { grid-column: 1 / -1; }
 }
 .btn-component-action { background: #fff4d6; color: #8a5a00; border-color: #f2d489; font-weight: 700; }
 .btn-component-action:hover { background: #ffe9ad; border-color: #e7bf54; }
@@ -3970,7 +3968,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.213";
+var APP_VERSION       = "v1.1.214";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -8975,18 +8973,15 @@ function renderProductKindPanelHtml(summary) {
     html += "<div class='product-kind-stock-grid'>";
     rows.forEach(function(row) {
       var kind = normalizeProductKind(row.product_kind);
-      var variantId = row.product_variant_id || "";
-      var disabled = (!variantId || !canEdit()) ? " disabled" : "";
       var activeClass = kind === selected ? " active" : "";
       var sub = [];
       if (row.sl_part_id) sub.push(t("product_kind_sl") + " " + row.sl_part_id);
       if (row.display_label) sub.push(row.display_label);
       html += "<div class='product-kind-stock-row" + activeClass + "' data-product-kind-row='" + esc(kind) + "'>";
       html += "<div class='product-kind-stock-label'>" + esc(productKindLabel(kind)) + "<div class='product-kind-stock-sub'>" + esc(sub.join(" / ")) + "</div></div>";
-      html += "<input class='product-kind-stock-input' type='number' min='0' step='1' data-kind-stock='" + esc(String(variantId)) + "' value='" + esc(row.stock_qty == null ? "" : String(row.stock_qty)) + "' placeholder='" + esc(t("product_kind_stock_qty")) + "'" + disabled + ">";
-      html += "<input class='product-kind-stock-input' type='text' data-kind-location='" + esc(String(variantId)) + "' value='" + esc(row.stock_location || "") + "' placeholder='" + esc(t("product_kind_stock_location")) + "'" + disabled + ">";
-      html += "<input class='product-kind-stock-input' type='text' data-kind-note='" + esc(String(variantId)) + "' value='" + esc(row.stock_note || "") + "' placeholder='" + esc(t("product_kind_stock_note")) + "'" + disabled + ">";
-      html += "<button class='btn-sm-edit product-kind-stock-save' data-kind-stock-save='" + esc(String(variantId)) + "'" + disabled + ">" + esc(t("product_kind_stock_save")) + "</button>";
+      html += "<div class='product-kind-stock-value'><span>" + esc(t("product_kind_stock_qty")) + "</span>" + esc(row.stock_qty == null ? "-" : String(row.stock_qty)) + "</div>";
+      html += "<div class='product-kind-stock-value'><span>" + esc(t("product_kind_stock_location")) + "</span>" + esc(row.stock_location || "-") + "</div>";
+      html += "<div class='product-kind-stock-value'><span>" + esc(t("product_kind_stock_note")) + "</span>" + esc(row.stock_note || "-") + "</div>";
       html += "</div>";
     });
     html += "</div>";
@@ -9012,40 +9007,6 @@ function bindProductKindPanelActions() {
       if (canSeeSalesPrice()) loadDetailCustomerInfoForCurrent(detailSecondaryRequestSeq);
     };
   }
-  document.querySelectorAll("[data-kind-stock-save]").forEach(function(btn) {
-    btn.onclick = async function() {
-      var variantId = btn.dataset.kindStockSave || "";
-      if (!variantId) return;
-      var qtyEl = document.querySelector("[data-kind-stock='" + CSS.escape(variantId) + "']");
-      var locEl = document.querySelector("[data-kind-location='" + CSS.escape(variantId) + "']");
-      var noteEl = document.querySelector("[data-kind-note='" + CSS.escape(variantId) + "']");
-      var qty = qtyEl ? parseInt(qtyEl.value, 10) : NaN;
-      if (isNaN(qty) || qty < 0) {
-        alert(t("product_kind_stock_qty"));
-        return;
-      }
-      btn.disabled = true;
-      var oldText = btn.textContent;
-      btn.textContent = t("component_save_loading");
-      var r = await sb.rpc("set_core_product_variant_stock", {
-        target_product_variant_id: parseInt(variantId, 10),
-        new_stock_qty: qty,
-        target_stock_location: locEl ? (locEl.value.trim() || null) : null,
-        target_stock_note: noteEl ? (noteEl.value.trim() || null) : null,
-        target_movement_type: "manual_set",
-        target_note: "D-CATS product detail stock edit"
-      });
-      btn.disabled = false;
-      btn.textContent = oldText;
-      if (r.error) {
-        alert(t("msg_save_err") + ": " + r.error.message);
-        return;
-      }
-      await writeLog("update", "core_product_variants", variantId, selectedProductKind(), null, r.data || null);
-      await loadProductVariantsForCurrent(detailSecondaryRequestSeq);
-      alert(t("product_kind_stock_saved"));
-    };
-  });
 }
 
 async function fetchProductVariantSummaryMap(products) {
