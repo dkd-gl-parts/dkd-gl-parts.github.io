@@ -262,17 +262,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .stock-mgmt-toolbar { align-items: stretch; }
 .stock-mgmt-toolbar .form-select { min-width: 150px; max-width: 210px; }
 .stock-mgmt-table-wrap { overflow-x: auto; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); background: #fff; }
-.stock-mgmt-table { min-width: 1320px; box-shadow: none; border-radius: 0; table-layout: fixed; }
-.stock-mgmt-table th:nth-child(1), .stock-mgmt-table td:nth-child(1) { width: 14%; }
-.stock-mgmt-table th:nth-child(2), .stock-mgmt-table td:nth-child(2) { width: 13%; }
-.stock-mgmt-table th:nth-child(3), .stock-mgmt-table td:nth-child(3) { width: 8%; }
-.stock-mgmt-table th:nth-child(4), .stock-mgmt-table td:nth-child(4) { width: 10%; }
+.stock-mgmt-table { min-width: 1460px; box-shadow: none; border-radius: 0; table-layout: fixed; }
+.stock-mgmt-table th:nth-child(1), .stock-mgmt-table td:nth-child(1) { width: 12%; }
+.stock-mgmt-table th:nth-child(2), .stock-mgmt-table td:nth-child(2) { width: 12%; }
+.stock-mgmt-table th:nth-child(3), .stock-mgmt-table td:nth-child(3) { width: 7%; }
+.stock-mgmt-table th:nth-child(4), .stock-mgmt-table td:nth-child(4) { width: 9%; }
 .stock-mgmt-table th:nth-child(5), .stock-mgmt-table td:nth-child(5) { width: 6%; }
-.stock-mgmt-table th:nth-child(6), .stock-mgmt-table td:nth-child(6) { width: 8%; }
-.stock-mgmt-table th:nth-child(7), .stock-mgmt-table td:nth-child(7) { width: 7%; }
-.stock-mgmt-table th:nth-child(8), .stock-mgmt-table td:nth-child(8) { width: 9%; }
-.stock-mgmt-table th:nth-child(9), .stock-mgmt-table td:nth-child(9) { width: 9%; }
-.stock-mgmt-table th:nth-child(10), .stock-mgmt-table td:nth-child(10) { width: 16%; }
+.stock-mgmt-table th:nth-child(6), .stock-mgmt-table td:nth-child(6) { width: 7%; }
+.stock-mgmt-table th:nth-child(7), .stock-mgmt-table td:nth-child(7) { width: 8%; }
+.stock-mgmt-table th:nth-child(8), .stock-mgmt-table td:nth-child(8) { width: 7%; }
+.stock-mgmt-table th:nth-child(9), .stock-mgmt-table td:nth-child(9) { width: 8%; }
+.stock-mgmt-table th:nth-child(10), .stock-mgmt-table td:nth-child(10) { width: 8%; }
+.stock-mgmt-table th:nth-child(11), .stock-mgmt-table td:nth-child(11) { width: 16%; }
+.stock-mgmt-table th:last-child, .stock-mgmt-table td:last-child { width: 16%; }
 .stock-mgmt-row.dirty td { background: #fffaf0; }
 .stock-mgmt-kind { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .stock-mgmt-input { width: 100%; min-width: 0; border: 1px solid #d7dce5; border-radius: 6px; padding: 6px 7px; font-size: 12px; background: #fff; }
@@ -2386,6 +2388,9 @@ var TRANSLATIONS = {
     product_kind_stock_save: "在庫保存",
     product_kind_component_count: "構成部品",
     product_kind_component_cost: "部品単価計",
+    product_kind_base_price: "基準価格",
+    product_kind_no_base_price: "未設定",
+    product_kind_open_price: "価格設定",
     product_kind_open_components: "構成部品",
     product_kind_add: "区分追加",
     product_kind_add_select: "追加区分",
@@ -3022,6 +3027,9 @@ var TRANSLATIONS = {
     product_kind_stock_save: "Save stock",
     product_kind_component_count: "Components",
     product_kind_component_cost: "Part cost total",
+    product_kind_base_price: "Base Price",
+    product_kind_no_base_price: "Not set",
+    product_kind_open_price: "Pricing",
     product_kind_open_components: "Components",
     product_kind_add: "Add Kind",
     product_kind_add_select: "Add kind",
@@ -3665,6 +3673,9 @@ var TRANSLATIONS = {
     product_kind_stock_save: "保存库存",
     product_kind_component_count: "构成零件",
     product_kind_component_cost: "零件单价合计",
+    product_kind_base_price: "基准价格",
+    product_kind_no_base_price: "未设置",
+    product_kind_open_price: "价格设置",
     product_kind_open_components: "构成零件",
     product_kind_add: "添加区分",
     product_kind_add_select: "添加区分",
@@ -4245,7 +4256,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.223";
+var APP_VERSION       = "v1.1.225";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -4272,6 +4283,7 @@ var productKindStockRows = [];
 var productKindStockProductMap = {};
 var productKindStockDirtyMap = {};
 var productKindStockComponentMetaMap = {};
+var productKindStockPriceMap = {};
 var finishedLabelTemplates = [];
 var finishedLabelProducts = [];
 var finishedLabelInstructionMap = {};
@@ -7609,6 +7621,7 @@ function renderProductKindStockEmpty() {
   productKindStockProductMap = {};
   productKindStockDirtyMap = {};
   productKindStockComponentMetaMap = {};
+  productKindStockPriceMap = {};
   var countEl = document.getElementById("product-kind-stock-count");
   var list = document.getElementById("product-kind-stock-list");
   if (countEl) countEl.textContent = "";
@@ -7750,6 +7763,18 @@ function productKindStockComponentMeta(row) {
   return mergeProductKindComponentMeta(common, variant);
 }
 
+function productKindStockPriceKey(dkdId, kind) {
+  return "p:" + String(dkdId || "") + ":" + normalizeProductKind(kind);
+}
+
+function productKindStockPriceForRow(row) {
+  if (!row) return null;
+  var variantKey = row.product_variant_id ? productKindStockVariantMetaKey(row.product_variant_id) : "";
+  return (variantKey && productKindStockPriceMap[variantKey]) ||
+    productKindStockPriceMap[productKindStockPriceKey(row.dkd_shohin_id, row.product_kind)] ||
+    null;
+}
+
 function productKindStockAllKinds() {
   return ["rebuilt", "aftermarket_new", "used_core", "other"];
 }
@@ -7757,7 +7782,7 @@ function productKindStockAllKinds() {
 function productKindStockExistingKinds(dkdId) {
   var map = {};
   (productKindStockRows || []).forEach(function(row) {
-    if (String(row.dkd_shohin_id || "") === String(dkdId || "")) {
+    if (row.product_variant_id && String(row.dkd_shohin_id || "") === String(dkdId || "")) {
       map[normalizeProductKind(row.product_kind)] = true;
     }
   });
@@ -7809,6 +7834,32 @@ async function loadProductKindStockComponentMeta(rows) {
       } else {
         addProductKindComponentMeta(productKindStockComponentMetaMap, productKindStockCommonMetaKey(row.dkd_shohin_id, kind), row);
       }
+    });
+  }
+}
+
+async function loadProductKindStockPriceMeta(rows) {
+  productKindStockPriceMap = {};
+  if (!canViewBasePrice()) return;
+  var ids = [];
+  (rows || []).forEach(function(row) {
+    var id = parseInt(row.dkd_shohin_id, 10);
+    if (!isNaN(id) && ids.indexOf(id) < 0) ids.push(id);
+  });
+  for (var i = 0; i < ids.length; i += 150) {
+    var chunk = ids.slice(i, i + 150);
+    var r = await sb.from("product_base_prices")
+      .select("id,dkd_shohin_id,product_kind,product_variant_id,base_price_jpy,price_basis,basis_note,effective_start,is_current")
+      .in("dkd_shohin_id", chunk)
+      .eq("is_current", true);
+    if (r.error) {
+      console.warn("product-kind base price lookup failed", r.error);
+      continue;
+    }
+    (r.data || []).forEach(function(row) {
+      var kind = normalizeProductKind(row.product_kind || "rebuilt");
+      if (row.product_variant_id) productKindStockPriceMap[productKindStockVariantMetaKey(row.product_variant_id)] = row;
+      if (!row.product_variant_id) productKindStockPriceMap[productKindStockPriceKey(row.dkd_shohin_id, kind)] = row;
     });
   }
 }
@@ -7876,8 +7927,32 @@ async function loadProductKindStockMgmt() {
   }
 
   productKindStockRows = variants.data || [];
+  if (productRows.length && state !== "stocked") {
+    var hasVariant = {};
+    productKindStockRows.forEach(function(row) {
+      if (row.product_variant_id) hasVariant[String(row.dkd_shohin_id || "")] = true;
+    });
+    productRows.forEach(function(p) {
+      var id = productDkdId(p);
+      if (!id || hasVariant[String(id)]) return;
+      productKindStockRows.push({
+        product_variant_id: null,
+        dkd_shohin_id: id,
+        product_kind: normalizeProductKind(kind || p.default_product_kind || "rebuilt"),
+        sl_part_id: null,
+        display_label: "",
+        stock_qty: null,
+        stock_location: "",
+        stock_note: "",
+        is_active: false,
+        updated_at: null,
+        is_virtual: true
+      });
+    });
+  }
   await loadProductKindStockProductMap(productKindStockRows, productRows);
   await loadProductKindStockComponentMeta(productKindStockRows);
+  await loadProductKindStockPriceMeta(productKindStockRows);
   productKindStockRows = sortProductKindStockRows(productKindStockRows);
   renderProductKindStockMgmt();
 }
@@ -7928,29 +8003,40 @@ function renderProductKindStockMgmt() {
   }
 
   var editable = canEditProductKindStockMgmt();
+  var showBasePrice = canViewBasePrice();
+  var showPriceAction = canViewSalesPricing();
   var html = "<div class='stock-mgmt-table-wrap'><table class='mgmt-table stock-mgmt-table'>";
-  html += "<tr><th>" + esc(t("f_genuine_pn")) + "</th><th>" + esc(t("f_mfr_pn")) + "</th><th>" + esc(t("f_manufacturer")) + "</th><th>" + esc(t("product_kind_section")) + "</th><th>" + esc(t("product_kind_component_count")) + "</th><th>" + esc(t("product_kind_component_cost")) + "</th><th>" + esc(t("product_kind_stock_qty")) + "</th><th>" + esc(t("product_kind_stock_location")) + "</th><th>" + esc(t("product_kind_stock_note")) + "</th><th>" + esc(t("component_actions")) + "</th></tr>";
+  html += "<tr><th>" + esc(t("f_genuine_pn")) + "</th><th>" + esc(t("f_mfr_pn")) + "</th><th>" + esc(t("f_manufacturer")) + "</th><th>" + esc(t("product_kind_section")) + "</th><th>" + esc(t("product_kind_component_count")) + "</th><th>" + esc(t("product_kind_component_cost")) + "</th>";
+  if (showBasePrice) html += "<th>" + esc(t("product_kind_base_price")) + "</th>";
+  html += "<th>" + esc(t("product_kind_stock_qty")) + "</th><th>" + esc(t("product_kind_stock_location")) + "</th><th>" + esc(t("product_kind_stock_note")) + "</th><th>" + esc(t("component_actions")) + "</th></tr>";
   productKindStockRows.forEach(function(row) {
     var variantId = row.product_variant_id;
     var p = productKindStockProductMap[String(row.dkd_shohin_id)] || {};
     var kind = normalizeProductKind(row.product_kind);
     var sl = row.sl_part_id ? (t("product_kind_sl") + " " + row.sl_part_id) : "";
     var compMeta = productKindStockComponentMeta(row);
-    var disabled = editable ? "" : " disabled";
-    html += "<tr class='stock-mgmt-row' data-stock-row='" + esc(String(variantId)) + "'>";
+    var price = productKindStockPriceForRow(row);
+    var priceText = price && price.base_price_jpy != null ? ("JPY " + formatYen(price.base_price_jpy)) : "-";
+    var hasVariant = !!variantId;
+    var disabled = editable && hasVariant ? "" : " disabled";
+    html += "<tr class='stock-mgmt-row' data-stock-row='" + esc(hasVariant ? String(variantId) : ("new-" + String(row.dkd_shohin_id || ""))) + "'>";
     html += "<td><div class='mgmt-pn'>" + esc(p.genuine_part_number || "-") + "</div><div class='mgmt-sub'>DKD " + esc(String(row.dkd_shohin_id || "-")) + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(p.manufacturer_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(productCategoryLabel(p) || "-") + "</div></td>";
     html += "<td>" + esc(p.manufacturer || "-") + "</td>";
     html += "<td><div class='stock-mgmt-kind'><span class='product-kind-pill " + productKindClass(kind) + "'>" + esc(productKindLabel(kind)) + "</span><span class='mgmt-sub'>" + esc(row.display_label || sl || "-") + "</span></div></td>";
     html += "<td><strong>" + esc(String(compMeta.count || 0)) + "</strong></td>";
     html += "<td>" + esc(compMeta.priceKnown ? formatYen(compMeta.unitTotal) : "-") + "</td>";
+    if (showBasePrice) html += "<td><div class='price-value'>" + esc(priceText) + "</div><div class='mgmt-sub'>" + esc(price ? ([price.price_basis, price.effective_start].filter(Boolean).join(" / ")) : t("product_kind_no_base_price")) + "</div></td>";
     html += "<td><input class='stock-mgmt-input stock-mgmt-qty' type='number' min='0' step='1' data-stock-variant='" + esc(String(variantId)) + "' data-stock-field='stock_qty' value='" + esc(row.stock_qty == null ? "" : String(row.stock_qty)) + "'" + disabled + "></td>";
     html += "<td><input class='stock-mgmt-input' type='text' data-stock-variant='" + esc(String(variantId)) + "' data-stock-field='stock_location' value='" + esc(row.stock_location || "") + "'" + disabled + "></td>";
     html += "<td><input class='stock-mgmt-input' type='text' data-stock-variant='" + esc(String(variantId)) + "' data-stock-field='stock_note' value='" + esc(row.stock_note || "") + "'" + disabled + "><div class='mgmt-sub'>" + esc(formatDateTime(row.updated_at)) + "</div></td>";
     html += "<td><div class='stock-mgmt-actions'>";
-    html += "<button class='btn-sm-edit production-action-secondary' data-stock-open-components='" + esc(String(variantId)) + "'>" + esc(t("product_kind_open_components")) + "</button>";
+    if (hasVariant) {
+      html += "<button class='btn-sm-edit production-action-secondary' data-stock-open-components='" + esc(String(variantId)) + "'>" + esc(t("product_kind_open_components")) + "</button>";
+      if (showPriceAction) html += "<button class='btn-sm-edit' data-stock-open-price='" + esc(String(variantId)) + "'>" + esc(t("product_kind_open_price")) + "</button>";
+    }
     html += renderProductKindStockAddKindHtml(row);
-    if (editable) html += "<button class='btn-sm-edit' data-stock-save-row='" + esc(String(variantId)) + "'>" + esc(t("product_kind_stock_save")) + "</button>";
+    if (editable && hasVariant) html += "<button class='btn-sm-edit' data-stock-save-row='" + esc(String(variantId)) + "'>" + esc(t("product_kind_stock_save")) + "</button>";
     html += "</div></td>";
     html += "</tr>";
   });
@@ -7968,9 +8054,29 @@ function renderProductKindStockMgmt() {
   list.querySelectorAll("[data-stock-open-components]").forEach(function(btn) {
     btn.addEventListener("click", function() { openProductKindStockComponents(btn.dataset.stockOpenComponents); });
   });
+  list.querySelectorAll("[data-stock-open-price]").forEach(function(btn) {
+    btn.addEventListener("click", function() { openProductKindStockSalesPricing(btn.dataset.stockOpenPrice); });
+  });
   list.querySelectorAll("[data-stock-add-kind]").forEach(function(btn) {
     btn.addEventListener("click", function() { addProductKindStockVariant(btn.dataset.stockAddKind, btn.dataset.stockAddDkd); });
   });
+}
+
+async function productKindStockProductForRow(row) {
+  if (!row) return null;
+  var p = productKindStockProductMap[String(row.dkd_shohin_id)] || null;
+  if (p && productDkdId(p)) return p;
+  var r = await sb.from("core_products")
+    .select(CORE_PRODUCT_FAST_SELECT)
+    .eq("dkd_shohin_id", row.dkd_shohin_id)
+    .maybeSingle();
+  if (r.error || !r.data) {
+    alert(t("msg_part_err") + ": " + (r.error ? r.error.message : "not found"));
+    return null;
+  }
+  p = normalizeCoreProductFastRows([r.data])[0];
+  productKindStockProductMap[String(row.dkd_shohin_id)] = p;
+  return p;
 }
 
 async function openProductKindStockComponents(variantId) {
@@ -7978,19 +8084,8 @@ async function openProductKindStockComponents(variantId) {
   if (isNaN(id)) return;
   var row = productKindStockRows.find(function(x) { return parseInt(x.product_variant_id, 10) === id; });
   if (!row) return;
-  var p = productKindStockProductMap[String(row.dkd_shohin_id)] || null;
-  if (!p || !productDkdId(p)) {
-    var r = await sb.from("core_products")
-      .select(CORE_PRODUCT_FAST_SELECT)
-      .eq("dkd_shohin_id", row.dkd_shohin_id)
-      .maybeSingle();
-    if (r.error || !r.data) {
-      alert(t("msg_part_err") + ": " + (r.error ? r.error.message : "not found"));
-      return;
-    }
-    p = normalizeCoreProductFastRows([r.data])[0];
-    productKindStockProductMap[String(row.dkd_shohin_id)] = p;
-  }
+  var p = await productKindStockProductForRow(row);
+  if (!p) return;
   currentProduct = p;
   currentCoreDkdShohinId = productDkdId(p);
   currentProductSpecs = [];
@@ -7998,6 +8093,22 @@ async function openProductKindStockComponents(variantId) {
   currentImages = [];
   currentSelectedProductKind = normalizeProductKind(row.product_kind);
   await enterComponentsScreen("product-kind-stock-mgmt");
+}
+
+async function openProductKindStockSalesPricing(variantId) {
+  if (!canViewSalesPricing()) { alert(t("err_perm")); return; }
+  var id = parseInt(variantId, 10);
+  if (isNaN(id)) return;
+  var row = productKindStockRows.find(function(x) { return parseInt(x.product_variant_id, 10) === id; });
+  if (!row) return;
+  var p = await productKindStockProductForRow(row);
+  if (!p) return;
+  currentProduct = p;
+  currentCoreDkdShohinId = productDkdId(p);
+  currentProductVariants = await fetchProductVariantsByDkdId(row.dkd_shohin_id);
+  currentSelectedProductKind = normalizeProductKind(row.product_kind);
+  currentSalesPricingProductKind = currentSelectedProductKind;
+  await openSalesPricingForCurrent();
 }
 
 async function addProductKindStockVariant(selectKey, dkdId) {
@@ -13605,6 +13716,11 @@ async function saveSalesPricing() {
     await loadSalesPriceSummaryForCurrent();
     if (productKind === "rebuilt") salesPricingMgmtPriceMap[String(dkdId)] = ins.data;
     renderSalesPricingMgmt();
+    if (productKindStockRows.length) {
+      if (ins.data.product_variant_id) productKindStockPriceMap[productKindStockVariantMetaKey(ins.data.product_variant_id)] = ins.data;
+      if (!ins.data.product_variant_id) productKindStockPriceMap[productKindStockPriceKey(dkdId, productKind)] = ins.data;
+      renderProductKindStockMgmt();
+    }
     closeSalesPricingOverlay();
   } catch (e) {
     console.warn("save sales pricing failed", e);
