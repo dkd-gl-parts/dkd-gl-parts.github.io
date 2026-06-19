@@ -284,10 +284,28 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .stock-mgmt-add-kind { display: inline-flex; gap: 5px; align-items: center; }
 .stock-mgmt-add-kind select { max-width: 112px; border: 1px solid #d7dce5; border-radius: 6px; padding: 5px 6px; font-size: 12px; background: #fff; }
 .stock-mgmt-save-note { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px; background: #fff4e5; color: #9a5b00; font-size: 11px; font-weight: 700; }
+.stock-history-panel { margin-top: 14px; background: #fff; border: 1px solid #e5eaf2; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); overflow: hidden; }
+.stock-history-panel.empty { padding: 14px; color: #98a2b3; font-size: 12px; }
+.stock-history-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 12px 14px; border-bottom: 1px solid #eef1f6; background: #fbfcff; }
+.stock-history-title { font-size: 14px; font-weight: 800; color: #1a1a2e; }
+.stock-history-sub { font-size: 11px; color: #778095; margin-top: 3px; line-height: 1.5; }
+.stock-history-current { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; font-size: 12px; color: #344054; }
+.stock-history-current span { border: 1px solid #dbe4f0; border-radius: 999px; padding: 3px 8px; background: #fff; font-weight: 700; }
+.stock-history-form { display: grid; grid-template-columns: minmax(140px, 180px) minmax(100px, 130px) minmax(220px, 1fr) auto; gap: 8px; align-items: end; padding: 12px 14px; border-bottom: 1px solid #eef1f6; }
+.stock-history-form label { display: block; font-size: 11px; color: #667085; margin-bottom: 4px; }
+.stock-history-form select, .stock-history-form input { width: 100%; border: 1px solid #d7dce5; border-radius: 6px; padding: 7px 8px; font-size: 12px; background: #fff; }
+.stock-history-table-wrap { overflow-x: auto; }
+.stock-history-table { width: 100%; min-width: 780px; border-collapse: collapse; font-size: 12px; }
+.stock-history-table th { background: #f7f9fc; color: #566174; font-weight: 700; padding: 8px 10px; text-align: left; border-bottom: 1px solid #e8edf5; }
+.stock-history-table td { padding: 8px 10px; border-bottom: 1px solid #f0f2f6; vertical-align: top; }
+.stock-history-delta.plus { color: #188344; font-weight: 800; }
+.stock-history-delta.minus { color: #d92d20; font-weight: 800; }
 @media (max-width: 767px) {
   .stock-mgmt-body { padding: 14px 8px; }
   .stock-mgmt-toolbar .form-select { max-width: none; flex: 1 1 140px; }
   .stock-mgmt-table { min-width: 960px; font-size: 12px; }
+  .stock-history-form { grid-template-columns: 1fr 1fr; }
+  .stock-history-form .stock-history-note-field { grid-column: 1 / -1; }
 }
 .customer-access-body { flex: 1; padding: 20px 16px; max-width: 1220px; width: 100%; margin: 0 auto; overflow-y: auto; }
 .customer-access-layout { display: grid; grid-template-columns: minmax(260px, 360px) minmax(0, 1fr); gap: 14px; align-items: start; }
@@ -1714,6 +1732,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     </div>
     <div class="mgmt-count" id="product-kind-stock-count"></div>
     <div id="product-kind-stock-list"><div class="empty" data-i18n="product_kind_stock_search_hint">品番・カテゴリ・商品区分で絞り込んでください。</div></div>
+    <div id="product-kind-stock-history" class="stock-history-panel empty" data-i18n="product_kind_stock_history_hint">行の履歴ボタンで入出庫履歴を確認できます。</div>
   </div>
 </div>
 
@@ -2309,6 +2328,7 @@ var TRANSLATIONS = {
     btn_back_search: "← 品番検索",
     btn_close: "閉じる",
     btn_logout: "ログアウト",
+    created_at: "日時",
     menu_welcome_sub: "ご利用になる機能を選択してください",
     menu_section_main_title: "主要機能",
     menu_section_main_note: "普段使う操作",
@@ -2407,6 +2427,25 @@ var TRANSLATIONS = {
     product_kind_stock_count: "{n} 件表示 / 変更 {m} 件",
     product_kind_stock_row_saved: "保存済み",
     product_kind_stock_invalid_qty: "在庫数は0以上の整数で入力してください",
+    product_kind_stock_history: "在庫履歴",
+    product_kind_stock_history_btn: "履歴",
+    product_kind_stock_history_hint: "行の履歴ボタンで入出庫履歴を確認できます。",
+    product_kind_stock_history_empty: "在庫履歴はありません",
+    product_kind_stock_current: "現在庫",
+    product_kind_stock_movement_type: "処理",
+    product_kind_stock_movement_qty: "数量",
+    product_kind_stock_movement_note: "入出庫メモ",
+    product_kind_stock_movement_apply: "入出庫を記録",
+    product_kind_stock_movement_invalid_qty: "数量は1以上の整数で入力してください",
+    product_kind_stock_movement_negative: "在庫数がマイナスになるため登録できません",
+    product_kind_stock_movement_saved: "在庫履歴を保存しました",
+    product_kind_stock_delta_after: "増減 / 在庫",
+    stock_movement_receipt: "入庫",
+    stock_movement_shipment: "出庫",
+    stock_movement_production_complete: "製造完了",
+    stock_movement_production_use: "製造使用",
+    stock_movement_inventory_adjustment: "棚卸調整",
+    stock_movement_manual_set: "在庫設定",
     finished_label_title: "完品ラベル・QRシール発行",
     finished_label_product_search: "発行対象検索",
     finished_label_search_ph: "品番・製造予定Noで検索",
@@ -2948,6 +2987,7 @@ var TRANSLATIONS = {
     btn_back_search: "← Parts Search",
     btn_close: "Close",
     btn_logout: "Logout",
+    created_at: "Date/Time",
     menu_welcome_sub: "Select a feature to use",
     menu_section_main_title: "Main Features",
     menu_section_main_note: "Frequently used actions",
@@ -3046,6 +3086,25 @@ var TRANSLATIONS = {
     product_kind_stock_count: "{n} rows / {m} changed",
     product_kind_stock_row_saved: "Saved",
     product_kind_stock_invalid_qty: "Enter stock quantity as a whole number of 0 or more",
+    product_kind_stock_history: "Stock History",
+    product_kind_stock_history_btn: "History",
+    product_kind_stock_history_hint: "Use the History button on a row to review stock movements.",
+    product_kind_stock_history_empty: "No stock history",
+    product_kind_stock_current: "Current Stock",
+    product_kind_stock_movement_type: "Action",
+    product_kind_stock_movement_qty: "Qty",
+    product_kind_stock_movement_note: "Movement note",
+    product_kind_stock_movement_apply: "Record Movement",
+    product_kind_stock_movement_invalid_qty: "Enter quantity as a whole number of 1 or more",
+    product_kind_stock_movement_negative: "Cannot register because stock would become negative",
+    product_kind_stock_movement_saved: "Stock movement saved",
+    product_kind_stock_delta_after: "Delta / Stock",
+    stock_movement_receipt: "Receipt",
+    stock_movement_shipment: "Shipment",
+    stock_movement_production_complete: "Production Complete",
+    stock_movement_production_use: "Production Use",
+    stock_movement_inventory_adjustment: "Inventory Adjustment",
+    stock_movement_manual_set: "Stock Set",
     finished_label_title: "Finished Label / QR Seal Issue",
     finished_label_product_search: "Issue Target Search",
     finished_label_search_ph: "Search part number or production plan No.",
@@ -3605,6 +3664,7 @@ var TRANSLATIONS = {
     btn_back_search: "← 零件搜索",
     btn_close: "关闭",
     btn_logout: "退出",
+    created_at: "日期时间",
     menu_welcome_sub: "请选择要使用的功能",
     greeting: "欢迎，{name}",
     mi_search_title: "零件编号搜索",
@@ -3692,6 +3752,25 @@ var TRANSLATIONS = {
     product_kind_stock_count: "显示 {n} 条 / 更改 {m} 条",
     product_kind_stock_row_saved: "已保存",
     product_kind_stock_invalid_qty: "库存数请输入0以上的整数",
+    product_kind_stock_history: "库存履历",
+    product_kind_stock_history_btn: "履历",
+    product_kind_stock_history_hint: "点击行内的履历按钮可查看出入库记录。",
+    product_kind_stock_history_empty: "没有库存履历",
+    product_kind_stock_current: "当前库存",
+    product_kind_stock_movement_type: "处理",
+    product_kind_stock_movement_qty: "数量",
+    product_kind_stock_movement_note: "出入库备注",
+    product_kind_stock_movement_apply: "记录出入库",
+    product_kind_stock_movement_invalid_qty: "数量请输入1以上的整数",
+    product_kind_stock_movement_negative: "库存数会变为负数，无法登记",
+    product_kind_stock_movement_saved: "库存履历已保存",
+    product_kind_stock_delta_after: "增减 / 库存",
+    stock_movement_receipt: "入库",
+    stock_movement_shipment: "出库",
+    stock_movement_production_complete: "生产完成",
+    stock_movement_production_use: "生产使用",
+    stock_movement_inventory_adjustment: "盘点调整",
+    stock_movement_manual_set: "库存设置",
     finished_label_title: "完品标签・QR贴纸发行",
     finished_label_product_search: "发行对象搜索",
     finished_label_search_ph: "按品号或生产计划编号搜索",
@@ -4256,7 +4335,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.225";
+var APP_VERSION       = "v1.1.226";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -4284,6 +4363,8 @@ var productKindStockProductMap = {};
 var productKindStockDirtyMap = {};
 var productKindStockComponentMetaMap = {};
 var productKindStockPriceMap = {};
+var productKindStockHistoryVariantId = null;
+var productKindStockHistoryRows = [];
 var finishedLabelTemplates = [];
 var finishedLabelProducts = [];
 var finishedLabelInstructionMap = {};
@@ -7622,8 +7703,11 @@ function renderProductKindStockEmpty() {
   productKindStockDirtyMap = {};
   productKindStockComponentMetaMap = {};
   productKindStockPriceMap = {};
+  productKindStockHistoryVariantId = null;
+  productKindStockHistoryRows = [];
   var countEl = document.getElementById("product-kind-stock-count");
   var list = document.getElementById("product-kind-stock-list");
+  renderProductKindStockHistoryHint();
   if (countEl) countEl.textContent = "";
   if (list) list.innerHTML = "<div class='empty'>" + esc(t("product_kind_stock_search_hint")) + "</div>";
 }
@@ -7893,6 +7977,9 @@ async function loadProductKindStockMgmt() {
   if (list) list.innerHTML = "<div class='loading'>" + t("loading") + "</div>";
   if (countEl) countEl.textContent = t("loading");
   productKindStockDirtyMap = {};
+  productKindStockHistoryVariantId = null;
+  productKindStockHistoryRows = [];
+  renderProductKindStockHistoryHint();
 
   var rawQ = document.getElementById("product-kind-stock-search").value.trim();
   var q = normalizeAsciiWidth(rawQ).trim();
@@ -8032,6 +8119,7 @@ function renderProductKindStockMgmt() {
     html += "<td><input class='stock-mgmt-input' type='text' data-stock-variant='" + esc(String(variantId)) + "' data-stock-field='stock_note' value='" + esc(row.stock_note || "") + "'" + disabled + "><div class='mgmt-sub'>" + esc(formatDateTime(row.updated_at)) + "</div></td>";
     html += "<td><div class='stock-mgmt-actions'>";
     if (hasVariant) {
+      html += "<button class='btn-sm-edit production-action-secondary' data-stock-open-history='" + esc(String(variantId)) + "'>" + esc(t("product_kind_stock_history_btn")) + "</button>";
       html += "<button class='btn-sm-edit production-action-secondary' data-stock-open-components='" + esc(String(variantId)) + "'>" + esc(t("product_kind_open_components")) + "</button>";
       if (showPriceAction) html += "<button class='btn-sm-edit' data-stock-open-price='" + esc(String(variantId)) + "'>" + esc(t("product_kind_open_price")) + "</button>";
     }
@@ -8054,12 +8142,175 @@ function renderProductKindStockMgmt() {
   list.querySelectorAll("[data-stock-open-components]").forEach(function(btn) {
     btn.addEventListener("click", function() { openProductKindStockComponents(btn.dataset.stockOpenComponents); });
   });
+  list.querySelectorAll("[data-stock-open-history]").forEach(function(btn) {
+    btn.addEventListener("click", function() { loadProductKindStockHistory(btn.dataset.stockOpenHistory); });
+  });
   list.querySelectorAll("[data-stock-open-price]").forEach(function(btn) {
     btn.addEventListener("click", function() { openProductKindStockSalesPricing(btn.dataset.stockOpenPrice); });
   });
   list.querySelectorAll("[data-stock-add-kind]").forEach(function(btn) {
     btn.addEventListener("click", function() { addProductKindStockVariant(btn.dataset.stockAddKind, btn.dataset.stockAddDkd); });
   });
+}
+
+function renderProductKindStockHistoryHint() {
+  var wrap = document.getElementById("product-kind-stock-history");
+  if (!wrap) return;
+  wrap.className = "stock-history-panel empty";
+  wrap.innerHTML = esc(t("product_kind_stock_history_hint"));
+}
+
+function productKindStockRowByVariantId(variantId) {
+  var id = parseInt(variantId, 10);
+  if (isNaN(id)) return null;
+  return productKindStockRows.find(function(row) {
+    return parseInt(row.product_variant_id, 10) === id;
+  }) || null;
+}
+
+function stockMovementTypeLabel(type) {
+  type = String(type || "");
+  if (type === "receipt") return t("stock_movement_receipt");
+  if (type === "shipment") return t("stock_movement_shipment");
+  if (type === "production_complete") return t("stock_movement_production_complete");
+  if (type === "production_use") return t("stock_movement_production_use");
+  if (type === "inventory_adjustment") return t("stock_movement_inventory_adjustment");
+  if (type === "manual_set") return t("stock_movement_manual_set");
+  return type || "-";
+}
+
+function stockMovementDeltaHtml(delta) {
+  var n = parseInt(delta, 10);
+  if (isNaN(n)) return "-";
+  var cls = n > 0 ? " plus" : (n < 0 ? " minus" : "");
+  var text = (n > 0 ? "+" : "") + String(n);
+  return "<span class='stock-history-delta" + cls + "'>" + esc(text) + "</span>";
+}
+
+function renderProductKindStockHistoryPanel(row, loading) {
+  var wrap = document.getElementById("product-kind-stock-history");
+  if (!wrap) return;
+  if (!row) {
+    renderProductKindStockHistoryHint();
+    return;
+  }
+  var p = productKindStockProductMap[String(row.dkd_shohin_id)] || {};
+  var currentQty = row.stock_qty == null ? 0 : (parseInt(row.stock_qty, 10) || 0);
+  var title = [p.genuine_part_number || "-", p.manufacturer_part_number || "-", p.manufacturer || "-"].join(" / ");
+  wrap.className = "stock-history-panel";
+  var html = "<div class='stock-history-head'>";
+  html += "<div><div class='stock-history-title'>" + esc(t("product_kind_stock_history")) + "</div><div class='stock-history-sub'>" + esc(title) + "<br>" + esc(productKindLabel(row.product_kind)) + "</div></div>";
+  html += "<div class='stock-history-current'><span>" + esc(t("product_kind_stock_current")) + " " + esc(String(currentQty)) + "</span><span>" + esc(t("product_kind_stock_location")) + " " + esc(row.stock_location || "-") + "</span></div>";
+  html += "</div>";
+  if (canEditProductKindStockMgmt()) {
+    html += "<div class='stock-history-form'>";
+    html += "<div><label>" + esc(t("product_kind_stock_movement_type")) + "</label><select id='stock-history-movement-type'>" +
+      "<option value='receipt'>" + esc(t("stock_movement_receipt")) + "</option>" +
+      "<option value='shipment'>" + esc(t("stock_movement_shipment")) + "</option>" +
+      "<option value='production_complete'>" + esc(t("stock_movement_production_complete")) + "</option>" +
+      "<option value='production_use'>" + esc(t("stock_movement_production_use")) + "</option>" +
+      "</select></div>";
+    html += "<div><label>" + esc(t("product_kind_stock_movement_qty")) + "</label><input id='stock-history-movement-qty' type='number' min='1' step='1' value='1'></div>";
+    html += "<div class='stock-history-note-field'><label>" + esc(t("product_kind_stock_movement_note")) + "</label><input id='stock-history-movement-note' type='text'></div>";
+    html += "<div><button class='btn-primary' id='btn-stock-history-apply' type='button'>" + esc(t("product_kind_stock_movement_apply")) + "</button></div>";
+    html += "</div>";
+  }
+  if (loading) {
+    html += "<div class='loading'>" + esc(t("loading")) + "</div>";
+  } else if (!productKindStockHistoryRows.length) {
+    html += "<div class='empty' style='padding:14px'>" + esc(t("product_kind_stock_history_empty")) + "</div>";
+  } else {
+    html += "<div class='stock-history-table-wrap'><table class='stock-history-table'><tr><th>" + esc(t("created_at")) + "</th><th>" + esc(t("product_kind_stock_movement_type")) + "</th><th>" + esc(t("product_kind_stock_delta_after")) + "</th><th>" + esc(t("product_kind_stock_location")) + "</th><th>" + esc(t("product_kind_stock_movement_note")) + "</th></tr>";
+    productKindStockHistoryRows.forEach(function(mv) {
+      html += "<tr>";
+      html += "<td>" + esc(formatDateTime(mv.created_at)) + "</td>";
+      html += "<td>" + esc(stockMovementTypeLabel(mv.movement_type)) + "</td>";
+      html += "<td>" + stockMovementDeltaHtml(mv.quantity_delta) + " / " + esc(String(mv.stock_qty_after == null ? "-" : mv.stock_qty_after)) + "</td>";
+      html += "<td>" + esc(mv.stock_location || "-") + "</td>";
+      html += "<td>" + esc(mv.note || "-") + "</td>";
+      html += "</tr>";
+    });
+    html += "</table></div>";
+  }
+  wrap.innerHTML = html;
+  var btn = document.getElementById("btn-stock-history-apply");
+  if (btn) btn.addEventListener("click", function() { applyProductKindStockMovement(row.product_variant_id); });
+}
+
+async function loadProductKindStockHistory(variantId) {
+  var row = productKindStockRowByVariantId(variantId);
+  if (!row) return;
+  productKindStockHistoryVariantId = parseInt(variantId, 10);
+  productKindStockHistoryRows = [];
+  renderProductKindStockHistoryPanel(row, true);
+  var r = await sb.from("core_product_variant_stock_movements")
+    .select("id,product_variant_id,dkd_shohin_id,product_kind,movement_type,quantity_delta,stock_qty_after,stock_location,note,created_at")
+    .eq("product_variant_id", productKindStockHistoryVariantId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (r.error) {
+    productKindStockHistoryRows = [];
+    renderProductKindStockHistoryPanel(row, false);
+    alert(t("msg_part_err") + ": " + r.error.message);
+    return;
+  }
+  productKindStockHistoryRows = r.data || [];
+  renderProductKindStockHistoryPanel(row, false);
+  var wrap = document.getElementById("product-kind-stock-history");
+  if (wrap && wrap.scrollIntoView) wrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+async function applyProductKindStockMovement(variantId) {
+  if (!canEditProductKindStockMgmt()) { alert(t("err_perm")); return; }
+  var row = productKindStockRowByVariantId(variantId);
+  if (!row) return;
+  var typeEl = document.getElementById("stock-history-movement-type");
+  var qtyEl = document.getElementById("stock-history-movement-qty");
+  var noteEl = document.getElementById("stock-history-movement-note");
+  var movementType = typeEl ? (typeEl.value || "receipt") : "receipt";
+  var qty = qtyEl ? parseInt(qtyEl.value, 10) : NaN;
+  if (isNaN(qty) || qty <= 0) {
+    alert(t("product_kind_stock_movement_invalid_qty"));
+    return;
+  }
+  var currentQty = row.stock_qty == null ? 0 : (parseInt(row.stock_qty, 10) || 0);
+  var sign = (movementType === "shipment" || movementType === "production_use") ? -1 : 1;
+  var newQty = currentQty + sign * qty;
+  if (newQty < 0) {
+    alert(t("product_kind_stock_movement_negative"));
+    return;
+  }
+  var btn = document.getElementById("btn-stock-history-apply");
+  if (btn) btn.disabled = true;
+  var before = Object.assign({}, row);
+  try {
+    var r = await sb.rpc("set_core_product_variant_stock", {
+      target_product_variant_id: parseInt(variantId, 10),
+      new_stock_qty: newQty,
+      target_stock_location: row.stock_location || null,
+      target_stock_note: row.stock_note || null,
+      target_movement_type: movementType,
+      target_note: noteEl ? (noteEl.value.trim() || null) : null
+    });
+    if (r.error) throw r.error;
+    var saved = Array.isArray(r.data) ? (r.data[0] || null) : r.data;
+    row.stock_qty = saved && saved.stock_qty != null ? saved.stock_qty : newQty;
+    row.stock_location = saved ? (saved.stock_location || "") : (row.stock_location || "");
+    row.stock_note = saved ? (saved.stock_note || "") : (row.stock_note || "");
+    row.updated_at = new Date().toISOString();
+    await writeLog("update", "core_product_variants", variantId, stockMovementTypeLabel(movementType), before, {
+      stock_qty: row.stock_qty,
+      movement_type: movementType,
+      quantity_delta: sign * qty
+    });
+    renderProductKindStockMgmt();
+    await loadProductKindStockHistory(variantId);
+    alert(t("product_kind_stock_movement_saved"));
+  } catch (e) {
+    alert(t("msg_save_err") + ": " + ((e && e.message) || String(e)));
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 async function productKindStockProductForRow(row) {
@@ -8174,7 +8425,7 @@ async function saveProductKindStockRow(variantId, options) {
     new_stock_qty: payload.stock_qty,
     target_stock_location: payload.stock_location,
     target_stock_note: payload.stock_note,
-    target_movement_type: "manual_adjustment",
+    target_movement_type: "manual_set",
     target_note: "product-kind stock management"
   });
   if (r.error) {
@@ -8191,6 +8442,7 @@ async function saveProductKindStockRow(variantId, options) {
   await writeLog("update", "core_product_variants", id, productKindLabel(row.product_kind), before, payload);
   if (!options.silent) {
     renderProductKindStockMgmt();
+    if (String(productKindStockHistoryVariantId || "") === String(id)) await loadProductKindStockHistory(id);
     alert(t("product_kind_stock_row_saved"));
   }
   return true;
