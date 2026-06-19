@@ -279,6 +279,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-access-status { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 2px 8px; font-size: 11px; font-weight: 800; background: #eef8f1; color: #188344; }
 .customer-access-status.inactive { background: #fff3e0; color: #9a5b00; }
 .customer-access-management-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: -2px 0 14px; }
+.detail-customer-section { margin-top: 12px; }
+.detail-customer-panel { border: 1px solid #e5edf8; border-radius: 8px; background: #fbfdff; padding: 10px 12px; }
+.detail-customer-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.detail-customer-head label { color: #667085; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.detail-customer-select { flex: 1; min-width: 220px; border: 1px solid #d7dce5; border-radius: 7px; background: #fff; padding: 7px 9px; font-size: 12px; }
+.detail-customer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.detail-customer-cell { border-top: 1px solid #edf0f5; padding-top: 7px; min-width: 0; }
+.detail-customer-label { color: #778095; font-size: 11px; margin-bottom: 3px; }
+.detail-customer-value { color: #1a1a2e; font-size: 13px; font-weight: 800; word-break: break-word; }
+.detail-customer-value.price { color: #1a8c3e; font-size: 16px; }
+.detail-customer-note { color: #8a94a6; font-size: 11px; line-height: 1.45; margin-top: 8px; }
 .customer-setting-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0 12px; }
 .customer-check { border: 1px solid #e6ebf3; border-radius: 8px; padding: 9px 10px; display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #334155; background: #fff; line-height: 1.45; }
 .customer-check input { margin-top: 2px; flex: 0 0 auto; }
@@ -2280,6 +2291,12 @@ var TRANSLATIONS = {
     production_ranking_delete_confirm: "このランキング行を削除しますか？",
     production_ranking_edit_title: "ランキング修正",
     customer_access_title: "得意先表示管理",
+    detail_customer_section: "得意先情報",
+    detail_customer_select: "得意先選択",
+    detail_customer_select_none: "得意先を選択してください",
+    detail_customer_no_customers: "選択できる得意先がありません",
+    detail_customer_sales_price_note: "選択した得意先の売値区分で販売価格を計算しています。",
+    detail_customer_no_price: "販売価格は未設定です",
     customer_access_search_ph: "得意先コード・得意先名で検索",
     customer_access_customers: "得意先",
     customer_access_settings: "表示設定",
@@ -2856,6 +2873,12 @@ var TRANSLATIONS = {
     production_ranking_delete_confirm: "Delete this ranking row?",
     production_ranking_edit_title: "Edit Ranking",
     customer_access_title: "Customer View Settings",
+    detail_customer_section: "Customer Info",
+    detail_customer_select: "Select Customer",
+    detail_customer_select_none: "Select a customer",
+    detail_customer_no_customers: "No selectable customers",
+    detail_customer_sales_price_note: "Sales price is calculated using the selected customer's sales rank.",
+    detail_customer_no_price: "Sales price is not set",
     customer_access_search_ph: "Search by customer code or name",
     customer_access_customers: "Customers",
     customer_access_settings: "Display Settings",
@@ -3425,6 +3448,12 @@ var TRANSLATIONS = {
     production_ranking_component_summary: "构成零件备注",
     production_ranking_delete_confirm: "删除此排行行？",
     customer_access_title: "客户显示管理",
+    detail_customer_section: "客户信息",
+    detail_customer_select: "选择客户",
+    detail_customer_select_none: "请选择客户",
+    detail_customer_no_customers: "没有可选择的客户",
+    detail_customer_sales_price_note: "销售价格按所选客户的销售等级计算。",
+    detail_customer_no_price: "尚未设置销售价格",
     customer_access_search_ph: "按客户代码或名称搜索",
     customer_access_customers: "客户",
     customer_access_settings: "显示设置",
@@ -3770,7 +3799,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.209";
+var APP_VERSION       = "v1.1.210";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -3827,6 +3856,9 @@ var salesPricingMgmtRows = [];
 var salesPricingMgmtPriceMap = {};
 var customerViewerContext = null;
 var salesCustomerOptions = [];
+var detailSalesCustomerOptions = [];
+var detailSelectedSalesCustomerId = "";
+var detailCustomerPriceSeq = 0;
 var customerUserLinkMap = {};
 var customerAccessRows = [];
 var customerAccessFilteredRows = [];
@@ -9721,6 +9753,9 @@ function renderPanelStatic() {
     ? "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
       "<div id='kikan-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>"
     : "";
+  var detailCustomerBlockHtml = canSeeSalesPrice()
+    ? "<div class='detail-customer-section'><div class='price-section-title'>&#x1F464; " + t("detail_customer_section") + "</div><div id='detail-customer-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div></div>"
+    : "";
   document.getElementById("panel-body").innerHTML =
     "<div class='detail-main-grid'>" +
       "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + "</div>" +
@@ -9730,10 +9765,8 @@ function renderPanelStatic() {
     "</div>" +
     toolHtml +
     kikanBlockHtml +
-    (canSeePurchasePrice()
-      ? "<div class='price-section-title'>&#x1F4B0; " + t("supplier_prices") + "</div>" +
-        "<div id='price-table-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>"
-      : "<div id='price-table-wrap' style='display:none'></div>");
+    detailCustomerBlockHtml +
+    "<div id='price-table-wrap' style='display:none'></div>";
   // 画像エリアをリセット（右カラムはpanel-rightに固定表示）
   document.getElementById("img-grid").innerHTML = customerCanShowProductImages()
     ? "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + t("img_loading") + "</div></div>"
@@ -9752,6 +9785,7 @@ function renderPanelStatic() {
   loadProductSpecsForCurrent();
   loadProductVariantsForCurrent(detailSeq);
   if (canSeeSalesPrice()) loadSalesPriceSummaryForCurrent();
+  if (canSeeSalesPrice()) loadDetailCustomerInfoForCurrent(detailSeq);
   if (customerCanShowCompatibleParts()) loadKikanForCurrentProduct(detailSeq);
   loadSlPartsForProduct(p, detailSeq);
 }
@@ -10985,14 +11019,14 @@ function isCurrentDetailLoad(seq) {
 
 async function loadSlPartsForProduct(product, seq) {
   var wrap = document.getElementById("price-table-wrap");
-  if (!wrap || !isCurrentDetailLoad(seq)) return;
+  if (!isCurrentDetailLoad(seq)) return;
   var dkdId = productDkdId(product);
   if (!dkdId) {
     await fillProductLegacyPartIds([product]);
     return loadSlParts(productLegacyPartId(product), seq);
   }
 
-  var showSupplierPrices = canSeePurchasePrice();
+  var showSupplierPrices = false;
   var cacheKey = "dkd:" + String(dkdId);
   var hasCachedSupplierPrices = showSupplierPrices && Object.prototype.hasOwnProperty.call(supplierPriceRowsCache, cacheKey);
   if (hasCachedSupplierPrices) {
@@ -11013,7 +11047,7 @@ async function loadSlPartsForProduct(product, seq) {
     if (showSupplierPrices && !hasCachedSupplierPrices) {
       renderSupplierPriceRows([]);
     } else {
-      wrap.innerHTML = "";
+      if (wrap) wrap.innerHTML = "";
     }
     loadImages(null, seq);
     return;
@@ -11034,11 +11068,11 @@ async function loadSlPartsForProduct(product, seq) {
   } else {
     currentSlPartIds = (r.data || []).map(function(m) { return m.sl_part_id; }).filter(Boolean);
     if (!currentSlPartIds.length) {
-      wrap.innerHTML = "";
+      if (wrap) wrap.innerHTML = "";
       loadImages(null, seq);
       return;
     }
-    wrap.innerHTML = "";
+    if (wrap) wrap.innerHTML = "";
     loadImages(currentSlPartIds.length ? currentSlPartIds : null, seq);
   }
 }
@@ -11092,15 +11126,15 @@ function renderSupplierPriceRows(rows) {
 
 async function loadSlParts(partId, seq) {
   var wrap = document.getElementById("price-table-wrap");
-  if (!wrap || !isCurrentDetailLoad(seq)) return;
+  if (!isCurrentDetailLoad(seq)) return;
   if (!partId) {
     currentSlPartIds = [];
-    wrap.innerHTML = "";
+    if (wrap) wrap.innerHTML = "";
     loadImages(null, seq);
     return;
   }
 
-  var showSupplierPrices = canSeePurchasePrice();
+  var showSupplierPrices = false;
   var cacheKey = String(partId);
   var hasCachedSupplierPrices = showSupplierPrices && Object.prototype.hasOwnProperty.call(supplierPriceRowsCache, cacheKey);
   if (hasCachedSupplierPrices) {
@@ -11130,7 +11164,7 @@ async function loadSlParts(partId, seq) {
     renderSupplierPriceRows(rows);
   } else {
     currentSlPartIds = (r.data || []).map(function(m) { return m.sl_part_id; }).filter(Boolean);
-    wrap.innerHTML = "";
+    if (wrap) wrap.innerHTML = "";
     loadImages(currentSlPartIds.length ? currentSlPartIds : null, seq);
   }
 }
@@ -11407,6 +11441,139 @@ async function loadCustomerSalesPriceSummary(wrap, dkdId) {
   } catch (e) {
     console.warn("customer sales price summary failed", e);
     wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + esc(t("sales_no_base_price")) + "</div>";
+  }
+}
+
+async function loadDetailSalesCustomerOptions() {
+  if (detailSalesCustomerOptions.length) return detailSalesCustomerOptions;
+  var r = await sb.from("sales_customers")
+    .select("id,source_customer_code,customer_name,price_rank_code,is_active")
+    .eq("is_active", true)
+    .order("source_customer_code", { ascending: true })
+    .limit(1000);
+  if (r.error) {
+    console.warn("detail sales customers lookup failed", r.error);
+    detailSalesCustomerOptions = [];
+    return detailSalesCustomerOptions;
+  }
+  detailSalesCustomerOptions = r.data || [];
+  return detailSalesCustomerOptions;
+}
+
+function detailCustomerOptionLabel(customer) {
+  if (!customer) return "-";
+  return [customer.source_customer_code, customer.customer_name, customer.price_rank_code].filter(Boolean).join(" / ");
+}
+
+function detailCustomerCell(label, value, cls) {
+  return "<div class='detail-customer-cell'><div class='detail-customer-label'>" + esc(label) + "</div><div class='detail-customer-value" + (cls ? " " + cls : "") + "'>" + esc(value || "-") + "</div></div>";
+}
+
+function renderDetailCustomerInfoHtml(customer, priceInfo, canSelect) {
+  priceInfo = priceInfo || {};
+  var html = "<div class='detail-customer-panel'>";
+  if (canSelect) {
+    html += "<div class='detail-customer-head'><label for='detail-sales-customer-select'>" + esc(t("detail_customer_select")) + "</label>";
+    html += "<select class='detail-customer-select' id='detail-sales-customer-select'>";
+    html += "<option value=''>" + esc(t("detail_customer_select_none")) + "</option>";
+    detailSalesCustomerOptions.forEach(function(row) {
+      var selected = String(row.id) === String(detailSelectedSalesCustomerId || "") ? " selected" : "";
+      html += "<option value='" + esc(String(row.id)) + "'" + selected + ">" + esc(detailCustomerOptionLabel(row)) + "</option>";
+    });
+    html += "</select></div>";
+  }
+  if (!customer) {
+    html += "<div class='detail-customer-note'>" + esc(detailSalesCustomerOptions.length ? t("detail_customer_select_none") : t("detail_customer_no_customers")) + "</div>";
+    html += "</div>";
+    return html;
+  }
+  var salesPriceText = priceInfo.loading
+    ? t("loading")
+    : (priceInfo.salesPrice == null ? t("detail_customer_no_price") : "JPY " + formatYen(priceInfo.salesPrice));
+  html += "<div class='detail-customer-grid'>";
+  html += detailCustomerCell(t("customer_access_customer"), customer.customer_name || "-", "");
+  html += detailCustomerCell(t("customer_access_code"), customer.source_customer_code || "-", "");
+  html += detailCustomerCell(t("sales_rank"), customer.price_rank_code || "-", "");
+  html += detailCustomerCell(t("sales_price_section"), salesPriceText, "price");
+  if (canViewBasePrice()) {
+    html += detailCustomerCell(t("sales_base_price"), priceInfo.basePrice == null ? "-" : "JPY " + formatYen(priceInfo.basePrice), "");
+  }
+  html += "</div>";
+  html += "<div class='detail-customer-note'>" + esc(t("detail_customer_sales_price_note")) + "</div>";
+  html += "</div>";
+  return html;
+}
+
+async function fetchDetailCustomerPriceInfo(customer, dkdId) {
+  var info = { salesPrice: null, basePrice: null };
+  var id = parseInt(dkdId, 10);
+  if (!customer || isNaN(id)) return info;
+  if (isCustomerViewer()) {
+    var rpc = await sb.rpc("get_customer_product_sales_price", { target_dkd_shohin_id: id });
+    if (rpc.error) throw rpc.error;
+    var row = (rpc.data || [])[0] || null;
+    if (row && row.sales_price_jpy != null) info.salesPrice = parseInt(row.sales_price_jpy, 10);
+    return info;
+  }
+  var baseR = await sb.from("product_base_prices")
+    .select("base_price_jpy")
+    .eq("dkd_shohin_id", id)
+    .eq("is_current", true)
+    .maybeSingle();
+  if (baseR.error) throw baseR.error;
+  var base = baseR.data && baseR.data.base_price_jpy != null ? parseInt(baseR.data.base_price_jpy, 10) : null;
+  info.basePrice = isNaN(base) ? null : base;
+  if (info.basePrice == null) return info;
+  var rankCode = customer.price_rank_code || "";
+  var rankR = rankCode ? await sb.from("sales_price_ranks")
+    .select("rank_code,rank_name,rate_multiplier,amount_adjustment_jpy,rounding_unit_jpy,rounding_method,is_active")
+    .eq("rank_code", rankCode)
+    .eq("is_active", true)
+    .maybeSingle() : { data: null, error: null };
+  if (rankR.error) throw rankR.error;
+  info.salesPrice = calculateSalesPriceClient(info.basePrice, rankR.data || {});
+  return info;
+}
+
+async function loadDetailCustomerInfoForCurrent(seq) {
+  var wrap = document.getElementById("detail-customer-wrap");
+  if (!wrap || !isCurrentDetailLoad(seq)) return;
+  var dkdId = await resolveCurrentCoreDkdShohinId();
+  if (!isCurrentDetailLoad(seq)) return;
+  var canSelect = !isCustomerViewer();
+  var customer = null;
+  if (canSelect) {
+    await loadDetailSalesCustomerOptions();
+    customer = detailSalesCustomerOptions.find(function(row) { return String(row.id) === String(detailSelectedSalesCustomerId || ""); }) || null;
+    if (!customer && detailSelectedSalesCustomerId) detailSelectedSalesCustomerId = "";
+  } else {
+    customer = customerViewerContext && customerViewerContext.customer ? customerViewerContext.customer : null;
+  }
+  wrap.innerHTML = renderDetailCustomerInfoHtml(customer, customer ? { loading: true } : null, canSelect);
+  var select = document.getElementById("detail-sales-customer-select");
+  if (select) {
+    select.addEventListener("change", function() {
+      detailSelectedSalesCustomerId = select.value || "";
+      loadDetailCustomerInfoForCurrent(detailSecondaryRequestSeq);
+    });
+  }
+  if (!customer) return;
+  var localSeq = ++detailCustomerPriceSeq;
+  try {
+    var priceInfo = await fetchDetailCustomerPriceInfo(customer, dkdId);
+    if (!isCurrentDetailLoad(seq) || localSeq !== detailCustomerPriceSeq) return;
+    wrap.innerHTML = renderDetailCustomerInfoHtml(customer, priceInfo, canSelect);
+    var nextSelect = document.getElementById("detail-sales-customer-select");
+    if (nextSelect) {
+      nextSelect.addEventListener("change", function() {
+        detailSelectedSalesCustomerId = nextSelect.value || "";
+        loadDetailCustomerInfoForCurrent(detailSecondaryRequestSeq);
+      });
+    }
+  } catch (e) {
+    console.warn("detail customer price lookup failed", e);
+    if (!isCurrentDetailLoad(seq)) return;
+    wrap.innerHTML = renderDetailCustomerInfoHtml(customer, { salesPrice: null, basePrice: null }, canSelect);
   }
 }
 
