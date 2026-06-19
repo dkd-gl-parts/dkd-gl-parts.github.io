@@ -85,6 +85,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .price-moq      { font-size: 12px; color: #888; }
 .price-section-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
 .sales-price-summary-block { margin-top: 10px; }
+.detail-kind-price-row { display: grid; grid-template-columns: minmax(150px, .85fr) minmax(220px, 1.15fr); gap: 10px; align-items: stretch; margin-top: 10px; }
+.detail-kind-price-row.single { grid-template-columns: minmax(0, 1fr); }
+.detail-kind-price-row .product-kind-panel,
+.detail-kind-price-row .sales-price-summary-block { margin-top: 0; height: 100%; }
+.detail-kind-price-row .product-kind-panel { border-top: 1px solid #f0f0f0; }
 .sales-price-summary-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
 .sales-price-summary-head .detail-block-title { margin: 0; }
 .sales-price-summary { border: 1px solid #e5edf8; border-radius: 8px; background: #fbfdff; padding: 10px 12px; margin-bottom: 0; font-size: 12px; }
@@ -559,15 +564,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .product-kind-control { margin-top: 8px; display: grid; gap: 6px; }
 .product-kind-control-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .product-kind-control-row label { color: #667085; font-size: 12px; font-weight: 700; white-space: nowrap; }
-.product-kind-select { min-width: 150px; border: 1px solid #d7dce5; border-radius: 7px; padding: 6px 8px; font-size: 12px; background: #fff; }
+.product-kind-select { min-width: 150px; border: 1px solid #d7dce5; border-radius: 7px; padding: 6px 8px; font-size: 12px; background: #fff; font-weight: 800; }
+.product-kind-select.rebuilt { background: #edf7ed; color: #1f7a35; border-color: #cbe9cf; }
+.product-kind-select.aftermarket_new { background: #eaf2ff; color: #1a5fb4; border-color: #c9ddff; }
+.product-kind-select.used_core { background: #fff4d6; color: #8a5a00; border-color: #f0d184; }
+.product-kind-select.other { background: #f1f3f7; color: #556070; border-color: #dfe4ec; }
+.product-kind-select option { background: #fff; color: #1a1a2e; font-weight: 700; }
+.product-kind-select option.rebuilt { background: #edf7ed; color: #1f7a35; }
+.product-kind-select option.aftermarket_new { background: #eaf2ff; color: #1a5fb4; }
+.product-kind-select option.used_core { background: #fff4d6; color: #8a5a00; }
+.product-kind-select option.other { background: #f1f3f7; color: #556070; }
 .product-kind-stock-grid { display: grid; gap: 6px; margin-top: 6px; }
-.product-kind-stock-row { display: grid; grid-template-columns: 72px minmax(90px, 1fr) minmax(120px, 1.2fr); gap: 6px; align-items: stretch; border: 1px solid #edf0f5; border-radius: 7px; padding: 7px; background: #fbfcff; }
+.product-kind-stock-row { display: block; border: 1px solid #edf0f5; border-radius: 7px; padding: 7px 9px; background: #fbfcff; }
 .product-kind-stock-row.active { border-color: #b9d3ff; background: #f5f9ff; }
-.product-kind-stock-value { border-left: 1px solid #edf0f5; padding-left: 8px; min-width: 0; font-size: 12px; font-weight: 700; color: #1a1a2e; word-break: break-word; }
+.product-kind-stock-value { min-width: 0; font-size: 12px; font-weight: 800; color: #1a1a2e; word-break: break-word; }
 .product-kind-stock-value span { display: block; color: #8a94a6; font-size: 10px; font-weight: 600; margin-bottom: 2px; }
 @media(max-width:720px){
-  .product-kind-stock-row { grid-template-columns: 72px 1fr; }
-  .product-kind-stock-value:nth-child(3) { grid-column: 1 / -1; }
+  .detail-kind-price-row { grid-template-columns: 1fr; }
 }
 .btn-component-action { background: #fff4d6; color: #8a5a00; border-color: #f2d489; font-weight: 700; }
 .btn-component-action:hover { background: #ffe9ad; border-color: #e7bf54; }
@@ -4335,7 +4348,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.226";
+var APP_VERSION       = "v1.1.227";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -10347,10 +10360,7 @@ function renderProductKindPills(summary, options) {
 
 function productKindSelectLabel(kind, summary) {
   kind = normalizeProductKind(kind);
-  var meta = summary && summary.kinds ? summary.kinds[kind] : null;
-  var parts = [productKindLabel(kind)];
-  if (meta && meta.slCount > 0) parts.push(t("product_kind_sl") + " " + meta.slCount);
-  return parts.join(" ");
+  return productKindLabel(kind);
 }
 
 function productKindRowsForCurrent() {
@@ -10425,9 +10435,9 @@ function renderProductKindPanelHtml(summary) {
   var options = currentProductKindOptions(summary);
   var html = "<div class='product-kind-control'>";
   html += "<div class='product-kind-control-row compact'>";
-  html += "<select id='product-kind-select' class='product-kind-select'>";
+  html += "<select id='product-kind-select' class='product-kind-select " + productKindClass(selected) + "'>";
   options.forEach(function(kind) {
-    html += "<option value='" + esc(kind) + "'" + (kind === selected ? " selected" : "") + ">" + esc(productKindSelectLabel(kind, summary)) + "</option>";
+    html += "<option class='" + productKindClass(kind) + "' value='" + esc(kind) + "'" + (kind === selected ? " selected" : "") + ">" + esc(productKindSelectLabel(kind, summary)) + "</option>";
   });
   html += "</select></div>";
   var rows = productKindRowsForCurrent().filter(function(row) {
@@ -10438,8 +10448,6 @@ function renderProductKindPanelHtml(summary) {
     rows.forEach(function(row) {
       html += "<div class='product-kind-stock-row active' data-product-kind-row='" + esc(selected) + "'>";
       html += "<div class='product-kind-stock-value'><span>" + esc(t("product_kind_stock_qty")) + "</span>" + esc(row.stock_qty == null ? "-" : String(row.stock_qty)) + "</div>";
-      html += "<div class='product-kind-stock-value'><span>" + esc(t("product_kind_stock_location")) + "</span>" + esc(row.stock_location || "-") + "</div>";
-      html += "<div class='product-kind-stock-value'><span>" + esc(t("product_kind_stock_note")) + "</span>" + esc(row.stock_note || "-") + "</div>";
       html += "</div>";
     });
     html += "</div>";
@@ -11874,6 +11882,7 @@ function renderPanelStatic() {
     ? "<div class='sales-price-summary-block'><div class='sales-price-summary-head'><div class='detail-block-title'>" + t("sales_price_section") + "</div></div><div id='sales-price-summary-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div></div>"
     : "";
   var productKindBlockHtml = "<div class='product-kind-panel'><div class='detail-block-title'>" + t("product_kind_section") + "</div><div id='product-kind-wrap'>" + renderProductKindPanelHtml(productKindSummaryForProduct(p)) + "</div></div>";
+  var kindPriceBlockHtml = "<div class='detail-kind-price-row" + (salesPriceBlockHtml ? "" : " single") + "'>" + productKindBlockHtml + salesPriceBlockHtml + "</div>";
   var kikanBlockHtml = customerCanShowCompatibleParts()
     ? "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
       "<div id='kikan-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>"
@@ -11892,7 +11901,7 @@ function renderPanelStatic() {
       "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + "</div>" +
       "<div class='detail-column'>" + makerHtml +
       "<div class='detail-spec-block detail-spec-after-maker'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div>" +
-      productKindBlockHtml + salesPriceBlockHtml + "</div>" +
+      kindPriceBlockHtml + "</div>" +
     "</div>" +
     toolHtml +
     detailLowerGridHtml +
@@ -12507,9 +12516,9 @@ function renderComponentKindSelectorHtml() {
   var options = currentProductKindOptions(summary);
   var html = "<div class='component-add-panel' style='padding:10px 12px'>";
   html += "<div class='product-kind-control-row'><label for='component-product-kind-select'>" + esc(t("product_kind_current")) + "</label>";
-  html += "<select id='component-product-kind-select' class='product-kind-select'>";
+  html += "<select id='component-product-kind-select' class='product-kind-select " + productKindClass(selected) + "'>";
   options.forEach(function(kind) {
-    html += "<option value='" + esc(kind) + "'" + (kind === selected ? " selected" : "") + ">" + esc(productKindLabel(kind)) + "</option>";
+    html += "<option class='" + productKindClass(kind) + "' value='" + esc(kind) + "'" + (kind === selected ? " selected" : "") + ">" + esc(productKindLabel(kind)) + "</option>";
   });
   html += "</select></div></div>";
   return html;
