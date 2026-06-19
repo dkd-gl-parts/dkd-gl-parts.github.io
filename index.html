@@ -741,6 +741,41 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .core-qty-value { font-size: 22px; color: #174ea6; font-weight: 800; line-height: 1.1; }
 .core-qty-sub { font-size: 11px; color: #7c8492; margin-top: 4px; word-break: break-word; }
 .core-count-pill { display: inline-flex; align-items: center; gap: 4px; margin-left: 10px; padding: 3px 8px; border-radius: 999px; background: #eaf2ff; color: #174ea6; font-weight: 700; }
+.finished-label-body { max-width: none; padding: 16px; overflow: hidden; }
+.finished-label-shell { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 14px; height: 100%; min-height: 0; }
+.finished-label-left, .finished-label-editor { min-height: 0; overflow: auto; }
+.finished-label-left { display: flex; flex-direction: column; gap: 12px; }
+.finished-label-card { background: #fff; border: 1px solid #e5eaf0; border-radius: 8px; padding: 12px; }
+.finished-label-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 10px; color: #1a1a2e; }
+.finished-label-search-row { display: flex; gap: 8px; }
+.finished-label-search-row input { flex: 1; min-width: 0; border: 1px solid #d7dce5; border-radius: 8px; padding: 9px 10px; font-size: 13px; }
+.finished-label-results, .finished-label-history-list { display: flex; flex-direction: column; gap: 8px; }
+.finished-label-result { width: 100%; border: 1px solid #edf0f4; background: #fbfcff; border-radius: 8px; padding: 10px; text-align: left; cursor: pointer; }
+.finished-label-result:hover, .finished-label-result.active { border-color: #4f8ef7; background: #f0f6ff; }
+.finished-label-result-title { font-size: 14px; font-weight: 800; color: #111a33; word-break: break-word; }
+.finished-label-result-sub { font-size: 11px; color: #667085; margin-top: 3px; line-height: 1.45; word-break: break-word; }
+.finished-label-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.finished-label-selected { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.finished-label-selected-cell { border: 1px solid #edf0f4; border-radius: 8px; background: #fbfcfe; padding: 9px 10px; min-height: 54px; }
+.finished-label-selected-label { font-size: 11px; color: #7c8492; font-weight: 700; margin-bottom: 3px; }
+.finished-label-selected-value { font-size: 14px; color: #111a33; font-weight: 800; word-break: break-word; }
+.finished-label-form-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.finished-label-form-grid .wide { grid-column: span 2; }
+.finished-label-form-grid .full { grid-column: 1 / -1; }
+.finished-label-field label { display: block; font-size: 11px; color: #667085; font-weight: 700; margin-bottom: 4px; }
+.finished-label-field input, .finished-label-field select, .finished-label-field textarea { width: 100%; border: 1px solid #d7dce5; border-radius: 8px; padding: 8px 9px; font-size: 13px; background: #fff; }
+.finished-label-field textarea { min-height: 62px; resize: vertical; }
+.finished-label-table-wrap { overflow-x: auto; border: 1px solid #e5eaf0; border-radius: 8px; background: #fff; }
+.finished-label-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 760px; }
+.finished-label-table th { background: #f5f7fa; color: #556070; text-align: left; padding: 7px 8px; border-bottom: 1px solid #e5eaf0; white-space: nowrap; }
+.finished-label-table td { padding: 6px 8px; border-bottom: 1px solid #f0f2f5; vertical-align: top; }
+.finished-label-table tr:last-child td { border-bottom: 0; }
+.finished-label-table input, .finished-label-table select { width: 100%; border: 1px solid #d7dce5; border-radius: 6px; padding: 6px 7px; font-size: 12px; }
+.finished-label-actions { position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: 8px; padding: 10px 0 0; background: linear-gradient(rgba(246,248,251,0), #f6f8fb 35%); }
+.finished-label-history-row { border: 1px solid #edf0f4; border-radius: 8px; background: #fff; padding: 9px 10px; }
+.finished-label-history-main { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; font-weight: 700; }
+.finished-label-history-sub { font-size: 11px; color: #7c8492; margin-top: 4px; line-height: 1.45; word-break: break-word; }
+.finished-label-help { font-size: 11px; color: #7c8492; line-height: 1.55; margin-top: 8px; }
 @media (max-width: 767px) {
   .production-body { grid-template-columns: 1fr; overflow-y: auto; }
   .production-left { border-right: 0; max-height: none; }
@@ -753,6 +788,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .core-qty-summary { grid-template-columns: 1fr; }
   .production-ranking-tools { grid-template-columns: 1fr 1fr; }
   .production-ranking-tools .form-select { grid-column: 1 / -1; }
+  .finished-label-body { overflow: auto; padding: 12px; }
+  .finished-label-shell { grid-template-columns: 1fr; height: auto; }
+  .finished-label-selected, .finished-label-form-grid { grid-template-columns: 1fr; }
+  .finished-label-form-grid .wide { grid-column: 1 / -1; }
+  .finished-label-actions { position: static; flex-wrap: wrap; }
 }
 
 /* =============================================
@@ -1672,6 +1712,142 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 </div>
 
 <!-- =============================================
+   完品ラベル・QRシール発行画面
+============================================= -->
+<div id="screen-finished-label-mgmt" class="screen">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-finished-label-mgmt" data-i18n="btn_back">← メニュー</button>
+      <span class="logo-text" data-i18n="finished_label_title">完品ラベル・QRシール発行</span>
+    </div>
+    <div class="page-header-right">
+      <div class="lang-sw" id="lang-sw-finished-label-mgmt">
+        <button class="lang-btn" data-lang="ja">日本語</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="zh">中文</button>
+      </div>
+      <span class="header-username" id="finished-label-mgmt-username"></span>
+      <span class="role-badge" id="finished-label-mgmt-role-badge"></span>
+      <button class="btn-logout" id="btn-logout-finished-label-mgmt" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <div class="mgmt-body finished-label-body">
+    <div class="finished-label-shell">
+      <div class="finished-label-left">
+        <section class="finished-label-card">
+          <h3 data-i18n="finished_label_product_search">発行対象検索</h3>
+          <div class="finished-label-search-row">
+            <input id="finished-label-search" type="search" data-i18n-ph="finished_label_search_ph" placeholder="品番・製造予定Noで検索">
+            <button class="btn-primary" id="btn-finished-label-search" data-i18n="btn_search">検索</button>
+          </div>
+          <div class="finished-label-help" data-i18n="finished_label_search_hint">空欄の場合は製造予定リスト上位を表示します。</div>
+          <div class="mgmt-count" id="finished-label-search-count"></div>
+          <div class="finished-label-results" id="finished-label-results">
+            <div class="empty" data-i18n="finished_label_search_hint">空欄の場合は製造予定リスト上位を表示します。</div>
+          </div>
+        </section>
+        <section class="finished-label-card">
+          <div class="finished-label-toolbar">
+            <h3 data-i18n="finished_label_history">発行履歴</h3>
+            <button class="btn-sm-edit production-action-secondary" id="btn-finished-label-load-history" data-i18n="btn_reload">再読込</button>
+          </div>
+          <div class="finished-label-history-list" id="finished-label-history-list">
+            <div class="empty" data-i18n="finished_label_select_product">発行対象を選択してください。</div>
+          </div>
+        </section>
+      </div>
+      <div class="finished-label-editor">
+        <section class="finished-label-card">
+          <div class="finished-label-toolbar">
+            <h3 data-i18n="finished_label_issue_form">発行内容</h3>
+            <div>
+              <button class="btn-sm-edit production-action-secondary" id="btn-finished-label-template" data-i18n="finished_label_apply_template">テンプレート適用</button>
+              <button class="btn-sm-edit" id="btn-finished-label-preview" data-i18n="finished_label_preview">印刷プレビュー</button>
+            </div>
+          </div>
+          <div class="finished-label-selected" id="finished-label-selected-summary">
+            <div class="finished-label-selected-cell"><div class="finished-label-selected-label" data-i18n="f_genuine_pn">純正品番</div><div class="finished-label-selected-value">-</div></div>
+            <div class="finished-label-selected-cell"><div class="finished-label-selected-label" data-i18n="f_mfr_pn">メーカー品番</div><div class="finished-label-selected-value">-</div></div>
+            <div class="finished-label-selected-cell"><div class="finished-label-selected-label" data-i18n="f_manufacturer">メーカー</div><div class="finished-label-selected-value">-</div></div>
+            <div class="finished-label-selected-cell"><div class="finished-label-selected-label" data-i18n="product_kind_section">商品区分</div><div class="finished-label-selected-value">-</div></div>
+          </div>
+          <div class="finished-label-form-grid">
+            <div class="finished-label-field">
+              <label data-i18n="finished_label_issue_code">発行ID</label>
+              <input id="finished-label-issue-code" type="text" readonly>
+            </div>
+            <div class="finished-label-field">
+              <label data-i18n="finished_label_instruction_id">製造予定ID</label>
+              <input id="finished-label-instruction-id" type="text">
+            </div>
+            <div class="finished-label-field">
+              <label data-i18n="finished_label_product_category">ラベル種別</label>
+              <select id="finished-label-product-category"></select>
+            </div>
+            <div class="finished-label-field">
+              <label data-i18n="product_kind_current">表示区分</label>
+              <select id="finished-label-variant-kind"></select>
+            </div>
+            <div class="finished-label-field">
+              <label data-i18n="component_quantity">数量</label>
+              <input id="finished-label-quantity" type="number" min="1" step="1" value="1">
+            </div>
+            <div class="finished-label-field">
+              <label data-i18n="finished_label_print_count">発行枚数</label>
+              <input id="finished-label-print-count" type="number" min="1" step="1" value="1">
+            </div>
+            <div class="finished-label-field">
+              <label data-i18n="finished_label_assembly_staff">組立担当</label>
+              <input id="finished-label-assembly-staff" type="text">
+            </div>
+            <div class="finished-label-field">
+              <label data-i18n="finished_label_inspection_staff">検査担当</label>
+              <input id="finished-label-inspection-staff" type="text">
+            </div>
+            <div class="finished-label-field">
+              <label data-i18n="finished_label_shelf_no">棚番</label>
+              <input id="finished-label-shelf-no" type="text">
+            </div>
+            <div class="finished-label-field wide">
+              <label data-i18n="component_note">メモ</label>
+              <input id="finished-label-memo" type="text">
+            </div>
+            <div class="finished-label-field full">
+              <label>QR</label>
+              <input id="finished-label-qr-payload" type="text" readonly>
+            </div>
+          </div>
+        </section>
+        <section class="finished-label-card">
+          <div class="finished-label-toolbar">
+            <h3 data-i18n="finished_label_components">交換・構成部品</h3>
+            <span class="finished-label-help" data-i18n="finished_label_component_hint">交換した部品だけ品番・内容を入力してください。</span>
+          </div>
+          <div class="finished-label-table-wrap">
+            <table class="finished-label-table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th data-i18n="finished_label_part_type">部品種別</th>
+                  <th data-i18n="f_manufacturer">メーカー</th>
+                  <th data-i18n="finished_label_replacement_part">交換品番/内容</th>
+                  <th data-i18n="component_note">メモ</th>
+                </tr>
+              </thead>
+              <tbody id="finished-label-component-body"></tbody>
+            </table>
+          </div>
+          <div class="finished-label-actions">
+            <button class="btn-sm-edit production-action-secondary" id="btn-finished-label-clear" data-i18n="btn_clear">クリア</button>
+            <button class="btn-primary" id="btn-finished-label-save" data-i18n="finished_label_issue_save">発行して履歴保存</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =============================================
    製造予定ランキング管理画面
 ============================================= -->
 <div id="screen-production-ranking-mgmt" class="screen">
@@ -2147,6 +2323,8 @@ var TRANSLATIONS = {
     mi_core_list_desc: "基幹商品に紐づくコア品番・数量・置き場を登録します。",
     mi_product_kind_stock_title: "商品区分在庫",
     mi_product_kind_stock_desc: "リビルト・社外新品などの商品区分別在庫をまとめて確認・更新します。",
+    mi_finished_label_title: "完品ラベル・QRシール",
+    mi_finished_label_desc: "製造完了品のA6ラベルとQRシールを発行し、履歴を保存します。",
     mi_production_ranking_title: "製造予定ランキング",
     mi_production_ranking_desc: "2024・2025のTOP100元リストを確認・メンテナンスします。",
     mi_data_title: "データ管理",
@@ -2158,6 +2336,7 @@ var TRANSLATIONS = {
     ph_search: "品番・車名・メーカー (ハイフン有無OK)",
     btn_search: "検索",
     btn_clear: "クリア",
+    btn_reload: "再読込",
     btn_load_more: "さらに表示",
     filter_all: "すべて",
     filter_scope: "検索対象",
@@ -2214,6 +2393,31 @@ var TRANSLATIONS = {
     product_kind_stock_count: "{n} 件表示 / 変更 {m} 件",
     product_kind_stock_row_saved: "保存済み",
     product_kind_stock_invalid_qty: "在庫数は0以上の整数で入力してください",
+    finished_label_title: "完品ラベル・QRシール発行",
+    finished_label_product_search: "発行対象検索",
+    finished_label_search_ph: "品番・製造予定Noで検索",
+    finished_label_search_hint: "空欄の場合は製造予定リスト上位を表示します。",
+    finished_label_history: "発行履歴",
+    finished_label_select_product: "発行対象を選択してください。",
+    finished_label_issue_form: "発行内容",
+    finished_label_apply_template: "テンプレート適用",
+    finished_label_preview: "印刷プレビュー",
+    finished_label_issue_code: "発行ID",
+    finished_label_instruction_id: "製造予定ID",
+    finished_label_product_category: "ラベル種別",
+    finished_label_print_count: "発行枚数",
+    finished_label_assembly_staff: "組立担当",
+    finished_label_inspection_staff: "検査担当",
+    finished_label_shelf_no: "棚番",
+    finished_label_components: "交換・構成部品",
+    finished_label_component_hint: "交換した部品だけ品番・内容を入力してください。",
+    finished_label_part_type: "部品種別",
+    finished_label_replacement_part: "交換品番/内容",
+    finished_label_issue_save: "発行して履歴保存",
+    finished_label_saved: "完品ラベル発行履歴を保存しました。",
+    finished_label_no_product: "先に発行対象を選択してください。",
+    finished_label_count: "{n} 件表示",
+    finished_label_history_empty: "この品番の発行履歴はありません。",
     screen_product_kind_stock_title: "商品区分在庫管理",
     production_source_section: "統合元",
     img_section: "画像",
@@ -2416,8 +2620,8 @@ var TRANSLATIONS = {
     production_ranking_edit_title: "ランキング修正",
     customer_access_title: "得意先表示管理",
     detail_customer_section: "得意先情報",
-    detail_customer_select: "得意先選択",
-    detail_customer_select_none: "得意先を選択してください",
+    detail_customer_select: "選択",
+    detail_customer_select_none: "未選択",
     detail_customer_no_customers: "選択できる得意先がありません",
     detail_customer_sales_price_note: "選択した得意先の売値区分で販売価格を計算しています。",
     detail_customer_no_price: "販売価格は未設定です",
@@ -2750,6 +2954,8 @@ var TRANSLATIONS = {
     mi_core_list_desc: "Register core part numbers, quantities, and locations for master products.",
     mi_product_kind_stock_title: "Product-Kind Stock",
     mi_product_kind_stock_desc: "Review and update stock by product kind such as rebuilt and aftermarket new.",
+    mi_finished_label_title: "Finished Label / QR",
+    mi_finished_label_desc: "Issue A6 finished-product labels and QR seals, then save the issue history.",
     mi_production_ranking_title: "Production Ranking",
     mi_production_ranking_desc: "View and maintain the 2024/2025 TOP100 source list.",
     mi_data_title: "Data Management",
@@ -2761,6 +2967,7 @@ var TRANSLATIONS = {
     ph_search: "Part No., Vehicle, Manufacturer (hyphens optional)",
     btn_search: "Search",
     btn_clear: "Clear",
+    btn_reload: "Reload",
     btn_load_more: "Show More",
     filter_all: "All",
     filter_scope: "Search target",
@@ -2817,6 +3024,31 @@ var TRANSLATIONS = {
     product_kind_stock_count: "{n} rows / {m} changed",
     product_kind_stock_row_saved: "Saved",
     product_kind_stock_invalid_qty: "Enter stock quantity as a whole number of 0 or more",
+    finished_label_title: "Finished Label / QR Seal Issue",
+    finished_label_product_search: "Issue Target Search",
+    finished_label_search_ph: "Search part number or production plan No.",
+    finished_label_search_hint: "Blank search shows top production plan rows.",
+    finished_label_history: "Issue History",
+    finished_label_select_product: "Select an issue target.",
+    finished_label_issue_form: "Issue Details",
+    finished_label_apply_template: "Apply Template",
+    finished_label_preview: "Print Preview",
+    finished_label_issue_code: "Issue ID",
+    finished_label_instruction_id: "Production Plan ID",
+    finished_label_product_category: "Label Type",
+    finished_label_print_count: "Copies",
+    finished_label_assembly_staff: "Assembly Staff",
+    finished_label_inspection_staff: "Inspection Staff",
+    finished_label_shelf_no: "Shelf No.",
+    finished_label_components: "Replaced / Component Parts",
+    finished_label_component_hint: "Enter only replaced parts or notes.",
+    finished_label_part_type: "Part Type",
+    finished_label_replacement_part: "Replacement Part / Detail",
+    finished_label_issue_save: "Issue and Save History",
+    finished_label_saved: "Finished label issue history was saved.",
+    finished_label_no_product: "Select an issue target first.",
+    finished_label_count: "{n} rows",
+    finished_label_history_empty: "No issue history for this product.",
     screen_product_kind_stock_title: "Product-Kind Stock Management",
     production_source_section: "Merged sources",
     img_section: "Images",
@@ -3019,8 +3251,8 @@ var TRANSLATIONS = {
     production_ranking_edit_title: "Edit Ranking",
     customer_access_title: "Customer View Settings",
     detail_customer_section: "Customer Info",
-    detail_customer_select: "Select Customer",
-    detail_customer_select_none: "Select a customer",
+    detail_customer_select: "Select",
+    detail_customer_select_none: "None selected",
     detail_customer_no_customers: "No selectable customers",
     detail_customer_sales_price_note: "Sales price is calculated using the selected customer's sales rank.",
     detail_customer_no_price: "Sales price is not set",
@@ -3365,6 +3597,8 @@ var TRANSLATIONS = {
     mi_core_list_desc: "登记基干商品对应的CORE编号、数量和位置。",
     mi_product_kind_stock_title: "商品区分库存",
     mi_product_kind_stock_desc: "按再制造、副厂新品等商品区分集中确认和更新库存。",
+    mi_finished_label_title: "完品标签・QR贴纸",
+    mi_finished_label_desc: "发行完品A6标签和QR贴纸，并保存历史。",
     mi_production_ranking_title: "生产指示排行",
     mi_production_ranking_desc: "查看和维护2024/2025 TOP100来源清单。",
     mi_data_title: "数据管理",
@@ -3376,6 +3610,7 @@ var TRANSLATIONS = {
     ph_search: "零件编号、车型、制造商（有无连字符均可）",
     btn_search: "搜索",
     btn_clear: "清除",
+    btn_reload: "重新读取",
     filter_all: "全部",
     filter_scope: "搜索对象",
     filter_sl: "有SL编号",
@@ -3427,6 +3662,31 @@ var TRANSLATIONS = {
     product_kind_stock_count: "显示 {n} 条 / 更改 {m} 条",
     product_kind_stock_row_saved: "已保存",
     product_kind_stock_invalid_qty: "库存数请输入0以上的整数",
+    finished_label_title: "完品标签・QR贴纸发行",
+    finished_label_product_search: "发行对象搜索",
+    finished_label_search_ph: "按品号或生产计划编号搜索",
+    finished_label_search_hint: "空白搜索时显示生产计划上位项目。",
+    finished_label_history: "发行历史",
+    finished_label_select_product: "请选择发行对象。",
+    finished_label_issue_form: "发行内容",
+    finished_label_apply_template: "套用模板",
+    finished_label_preview: "打印预览",
+    finished_label_issue_code: "发行ID",
+    finished_label_instruction_id: "生产计划ID",
+    finished_label_product_category: "标签种类",
+    finished_label_print_count: "发行张数",
+    finished_label_assembly_staff: "组装担当",
+    finished_label_inspection_staff: "检查担当",
+    finished_label_shelf_no: "货架号",
+    finished_label_components: "更换・构成零件",
+    finished_label_component_hint: "只输入更换的零件或备注。",
+    finished_label_part_type: "零件种类",
+    finished_label_replacement_part: "更换品号/内容",
+    finished_label_issue_save: "发行并保存历史",
+    finished_label_saved: "完品标签发行历史已保存。",
+    finished_label_no_product: "请先选择发行对象。",
+    finished_label_count: "显示 {n} 条",
+    finished_label_history_empty: "此品号没有发行历史。",
     screen_product_kind_stock_title: "商品区分库存管理",
     production_source_section: "合并来源",
     img_section: "图片",
@@ -3615,8 +3875,8 @@ var TRANSLATIONS = {
     production_ranking_delete_confirm: "删除此排行行？",
     customer_access_title: "客户显示管理",
     detail_customer_section: "客户信息",
-    detail_customer_select: "选择客户",
-    detail_customer_select_none: "请选择客户",
+    detail_customer_select: "选择",
+    detail_customer_select_none: "未选择",
     detail_customer_no_customers: "没有可选择的客户",
     detail_customer_sales_price_note: "销售价格按所选客户的销售等级计算。",
     detail_customer_no_price: "尚未设置销售价格",
@@ -3966,7 +4226,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.216";
+var APP_VERSION       = "v1.1.218";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -3992,6 +4252,13 @@ var coreListFormMode = "add";
 var productKindStockRows = [];
 var productKindStockProductMap = {};
 var productKindStockDirtyMap = {};
+var finishedLabelTemplates = [];
+var finishedLabelProducts = [];
+var finishedLabelInstructionMap = {};
+var finishedLabelSelectedProduct = null;
+var finishedLabelSelectedInstruction = null;
+var finishedLabelVariants = [];
+var finishedLabelHistoryRows = [];
 var productionRankingMgmtRows = [];
 var productionRankingFormMode = "add";
 var productionRankingLinkCandidates = [];
@@ -4064,6 +4331,14 @@ var CORE_PRODUCT_FAST_SELECT = [
   "default_product_kind",
   "accessories",
   "spec",
+  "nominal_raw_spec",
+  "nominal_voltage_v",
+  "nominal_current_a",
+  "nominal_power_kw",
+  "nominal_power_w",
+  "nominal_diameter_d",
+  "nominal_type_text",
+  "nominal_gas_type",
   "notes_jp",
   "has_catalog_source",
   "created_at",
@@ -4082,6 +4357,14 @@ var CORE_PRODUCT_FAST_SELECT = [
   "normalized_genuine_clutch_part_number",
   "normalized_manufacturer_clutch_part_number"
 ].join(",");
+
+var FINISHED_LABEL_CATEGORIES = [
+  ["オルタネータ", "オルタネータ"],
+  ["スタータ", "スタータ"],
+  ["ACコンプレッサ", "ACコンプレッサ"],
+  ["ディストリビュータ", "ディストリビュータ"],
+  ["その他", "その他"]
+];
 
 // =============================================
 // ロール判定
@@ -4522,6 +4805,12 @@ function canViewSalesPricing() {
 function canViewProductionFeatures() {
   return canEdit() || canViewAllReadOnly();
 }
+function canViewFinishedLabelMgmt() {
+  return canViewProductionFeatures();
+}
+function canEditFinishedLabelMgmt() {
+  return canEdit();
+}
 function canViewManagementScreen() {
   return canEdit() || canViewAllReadOnly();
 }
@@ -4886,7 +5175,7 @@ function updateAllHeaders() {
   var cls   = roleClass(userProfile.role);
   var greet = tf("greeting", { name: name });
 
-  ["menu","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","product-kind-stock-mgmt","production-ranking-mgmt","sales-pricing-mgmt","customer-access-mgmt","logs"].forEach(function(sc) {
+  ["menu","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","product-kind-stock-mgmt","finished-label-mgmt","production-ranking-mgmt","sales-pricing-mgmt","customer-access-mgmt","logs"].forEach(function(sc) {
     var nameEl  = document.getElementById(sc + "-username");
     var badgeEl = document.getElementById(sc + "-role-badge");
     if (nameEl)  nameEl.textContent = name;
@@ -4938,6 +5227,7 @@ function renderMenu() {
   var mainItems = [
     { icon: "&#x1F50D;", titleKey: "mi_search_title", descKey: "mi_search_desc", action: "search", available: true, tag: null },
     { icon: "&#x1F3ED;", titleKey: "mi_production_title", descKey: "mi_production_desc", action: "production-search", available: canViewProductionFeatures(), tag: null },
+    { icon: "&#x1F3F7;", titleKey: "mi_finished_label_title", descKey: "mi_finished_label_desc", action: "finished-label-mgmt", available: canViewFinishedLabelMgmt(), tag: null },
     { icon: "&#x1F4B4;", titleKey: "mi_rakuten_title", descKey: "mi_rakuten_desc", action: "rakuten-price", available: canUseRakutenResearch(), tag: null },
     { icon: "&#x1F4E6;", titleKey: "mi_rakuten_bulk_title", descKey: "mi_rakuten_bulk_desc", action: "rakuten-bulk", available: canUseRakutenResearch(), tag: null },
     { icon: "&#x1F4C8;", titleKey: "screen_rakuten_list_title", descKey: "mi_rakuten_desc", action: "rakuten-price-list", available: canViewPriceResearchHistory(), tag: null },
@@ -5001,6 +5291,7 @@ function renderMenu() {
     card.addEventListener("click", function() {
       if (card.dataset.action === "search") enterSearch();
       else if (card.dataset.action === "production-search") enterProductionSearch();
+      else if (card.dataset.action === "finished-label-mgmt") enterFinishedLabelMgmt();
       else if (card.dataset.action === "users") enterUsers();
       else if (card.dataset.action === "customer-access-mgmt") enterCustomerAccessMgmt();
       else if (card.dataset.action === "change-pw") enterChangePw();
@@ -5594,6 +5885,7 @@ async function renderProductionDetail(row) {
   html += "<div class='production-actions'>";
   html += "<button class='btn-sm-edit' id='production-open-sales'>" + esc(t("production_open_sales")) + "</button>";
   html += "<button class='btn-sm-edit btn-component-action' id='production-open-components'><span class='component-icon'>&#x1F9E9;</span> " + esc(t("component_section")) + "</button>";
+  html += "<button class='btn-sm-edit production-action-secondary' id='production-open-finished-label'>" + esc(t("mi_finished_label_title")) + "</button>";
   if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-edit-core'>品番修正</button>";
   if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-add-image'>画像登録</button>";
   html += "</div></div>";
@@ -5656,6 +5948,8 @@ async function renderProductionDetail(row) {
   if (salesBtn) salesBtn.addEventListener("click", openProductionSalesProduct);
   var compBtn = document.getElementById("production-open-components");
   if (compBtn) compBtn.addEventListener("click", openProductionComponents);
+  var labelBtn = document.getElementById("production-open-finished-label");
+  if (labelBtn) labelBtn.addEventListener("click", openProductionFinishedLabel);
   var editBtn = document.getElementById("production-edit-core");
   if (editBtn) editBtn.addEventListener("click", openProductionCoreEdit);
   var imgBtn = document.getElementById("production-add-image");
@@ -5760,6 +6054,16 @@ async function openProductionComponents() {
     currentProduct = row;
     enterComponentsScreen("production-search");
   }
+}
+
+async function openProductionFinishedLabel() {
+  if (!currentProductionRow || !currentProductionRow.dkd_shohin_id) return;
+  var row = currentProductionRow;
+  if (!row.manufacturer_part_number || !row.category_code) {
+    var r = await sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).eq("dkd_shohin_id", currentProductionRow.dkd_shohin_id).maybeSingle();
+    if (!r.error && r.data) row = normalizeCoreProductFastRows([r.data])[0];
+  }
+  await enterFinishedLabelMgmt({ product: row, instruction: productionInstructionFor(currentProductionRow) });
 }
 
 async function openProductionCoreEdit() {
@@ -7594,6 +7898,590 @@ async function saveProductKindStockChanges() {
   } finally {
     if (btn) btn.disabled = false;
   }
+}
+
+// =============================================
+// 完品ラベル・QRシール発行
+// =============================================
+async function enterFinishedLabelMgmt(options) {
+  if (!canViewFinishedLabelMgmt()) { alert(t("err_perm")); return; }
+  showScreen("finished-label-mgmt");
+  renderFinishedLabelCategoryOptions();
+  renderFinishedLabelEmpty();
+  await loadFinishedLabelTemplates();
+  if (options && options.product) {
+    await selectFinishedLabelProduct(options.product, options.instruction || null);
+  }
+}
+
+function renderFinishedLabelEmpty() {
+  finishedLabelProducts = [];
+  finishedLabelInstructionMap = {};
+  finishedLabelSelectedProduct = null;
+  finishedLabelSelectedInstruction = null;
+  finishedLabelVariants = [];
+  finishedLabelHistoryRows = [];
+  var results = document.getElementById("finished-label-results");
+  var count = document.getElementById("finished-label-search-count");
+  var history = document.getElementById("finished-label-history-list");
+  if (count) count.textContent = "";
+  if (results) results.innerHTML = "<div class='empty'>" + esc(t("finished_label_search_hint")) + "</div>";
+  if (history) history.innerHTML = "<div class='empty'>" + esc(t("finished_label_select_product")) + "</div>";
+  renderFinishedLabelSelectedSummary(null);
+  renderFinishedLabelVariantOptions([]);
+  resetFinishedLabelForm();
+  renderFinishedLabelComponents([]);
+}
+
+function renderFinishedLabelCategoryOptions(selected) {
+  var select = document.getElementById("finished-label-product-category");
+  if (!select) return;
+  selected = selected || select.value || "オルタネータ";
+  select.innerHTML = FINISHED_LABEL_CATEGORIES.map(function(row) {
+    return "<option value='" + esc(row[0]) + "'" + (row[0] === selected ? " selected" : "") + ">" + esc(row[1]) + "</option>";
+  }).join("");
+}
+
+function finishedLabelCategoryForProduct(p) {
+  var code = String((p && (p.category_code || p.category)) || "").toLowerCase();
+  var label = String(productCategoryLabel(p) || "").toLowerCase();
+  if (code.indexOf("starter") >= 0 || label.indexOf("スタータ") >= 0 || label.indexOf("starter") >= 0) return "スタータ";
+  if (code.indexOf("ac") >= 0 || code.indexOf("compressor") >= 0 || label.indexOf("コンプレッサ") >= 0) return "ACコンプレッサ";
+  if (code.indexOf("distributor") >= 0 || label.indexOf("ディストリ") >= 0) return "ディストリビュータ";
+  if (code.indexOf("alternator") >= 0 || label.indexOf("オルタ") >= 0 || label.indexOf("alternator") >= 0) return "オルタネータ";
+  return "その他";
+}
+
+async function loadFinishedLabelTemplates() {
+  var r = await sb.from("finished_label_part_templates")
+    .select("id,product_kind,part_type,default_maker,default_part_number,sort_order,is_active")
+    .eq("is_active", true)
+    .order("product_kind", { ascending: true })
+    .order("sort_order", { ascending: true });
+  if (r.error) {
+    console.warn("finished label template lookup failed", r.error);
+    finishedLabelTemplates = [];
+    return;
+  }
+  finishedLabelTemplates = r.data || [];
+}
+
+function finishedLabelTemplatesForCategory(category) {
+  var rows = (finishedLabelTemplates || []).filter(function(row) {
+    return row.product_kind === category;
+  });
+  if (rows.length) return rows;
+  return [{ part_type: "備考", default_maker: "", default_part_number: "", sort_order: 10 }];
+}
+
+async function searchFinishedLabelProducts() {
+  if (!canViewFinishedLabelMgmt()) return;
+  var qEl = document.getElementById("finished-label-search");
+  var q = qEl ? normalizeAsciiWidth(qEl.value.trim()) : "";
+  var results = document.getElementById("finished-label-results");
+  var count = document.getElementById("finished-label-search-count");
+  if (results) results.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
+  if (count) count.textContent = t("loading");
+
+  var rows = [];
+  finishedLabelInstructionMap = {};
+  if (q) {
+    var pr = await fetchCoreProductMasterMatches(q, null, 80);
+    if (pr.error) {
+      if (results) results.innerHTML = "<div class='empty'>" + esc(pr.error.message || t("msg_part_err")) + "</div>";
+      if (count) count.textContent = "";
+      return;
+    }
+    rows = normalizeCoreProductFastRows(pr.data || []);
+  } else {
+    rows = await fetchFinishedLabelProductionProducts();
+  }
+  finishedLabelProducts = filterVisibleProducts(rows);
+  renderFinishedLabelResults();
+}
+
+async function fetchFinishedLabelProductionProducts() {
+  var instR = await sb.from("production_instruction_candidates")
+    .select("*")
+    .order("priority_rank", { ascending: true })
+    .limit(60);
+  if (instR.error) {
+    console.warn("finished label production lookup failed", instR.error);
+    return [];
+  }
+  var ids = [];
+  (instR.data || []).forEach(function(row) {
+    var id = parseInt(row.dkd_shohin_id, 10);
+    if (!isNaN(id) && ids.indexOf(id) < 0) ids.push(id);
+    if (!isNaN(id)) finishedLabelInstructionMap[String(id)] = row;
+  });
+  if (!ids.length) return [];
+  var productR = await sb.from("core_products")
+    .select(CORE_PRODUCT_FAST_SELECT)
+    .in("dkd_shohin_id", ids)
+    .limit(ids.length);
+  if (productR.error) {
+    console.warn("finished label product lookup failed", productR.error);
+    return normalizeCoreProductFastRows(instR.data || []);
+  }
+  var productMap = {};
+  normalizeCoreProductFastRows(productR.data || []).forEach(function(p) {
+    productMap[String(productDkdId(p))] = p;
+  });
+  return ids.map(function(id) {
+    var p = productMap[String(id)] || {};
+    var inst = finishedLabelInstructionMap[String(id)] || {};
+    return Object.assign({}, inst, p, { dkd_shohin_id: id });
+  });
+}
+
+function renderFinishedLabelResults() {
+  var results = document.getElementById("finished-label-results");
+  var count = document.getElementById("finished-label-search-count");
+  if (count) count.textContent = tf("finished_label_count", { n: finishedLabelProducts.length });
+  if (!results) return;
+  if (!finishedLabelProducts.length) {
+    results.innerHTML = "<div class='empty'>" + esc(t("no_results")) + "</div>";
+    return;
+  }
+  var selectedId = productDkdId(finishedLabelSelectedProduct);
+  var html = "";
+  finishedLabelProducts.forEach(function(p) {
+    var dkdId = productDkdId(p);
+    var inst = finishedLabelInstructionMap[String(dkdId)] || null;
+    var active = selectedId && String(selectedId) === String(dkdId) ? " active" : "";
+    var title = p.genuine_part_number || p.manufacturer_part_number || p.daiko_part_number || ("DKD " + dkdId);
+    html += "<button type='button' class='finished-label-result" + active + "' data-finished-label-dkd='" + esc(String(dkdId || "")) + "'>";
+    html += "<div class='finished-label-result-title'>" + esc(title || "-") + "</div>";
+    html += "<div class='finished-label-result-sub'>" + esc([productCategoryLabel(p), p.manufacturer, p.manufacturer_part_number].filter(Boolean).join(" / ")) + "</div>";
+    html += "<div class='finished-label-result-sub'>" + esc(inst ? ("#" + (inst.priority_rank || "-") + " / " + (inst.source_year || "-")) : ("DKD " + (dkdId || "-"))) + "</div>";
+    html += "</button>";
+  });
+  results.innerHTML = html;
+  results.querySelectorAll("[data-finished-label-dkd]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var id = btn.dataset.finishedLabelDkd;
+      var p = finishedLabelProducts.find(function(row) { return String(productDkdId(row)) === String(id); });
+      selectFinishedLabelProduct(p, finishedLabelInstructionMap[String(id)] || null);
+    });
+  });
+}
+
+async function selectFinishedLabelProduct(product, instruction) {
+  if (!product) return;
+  var dkdId = productDkdId(product);
+  if (!dkdId) return;
+  var full = product;
+  if (!full.manufacturer_part_number || !full.category_code) {
+    var r = await sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).eq("dkd_shohin_id", dkdId).maybeSingle();
+    if (!r.error && r.data) full = normalizeCoreProductFastRows([r.data])[0];
+  }
+  finishedLabelSelectedProduct = full;
+  finishedLabelSelectedInstruction = instruction || finishedLabelInstructionMap[String(dkdId)] || null;
+  renderFinishedLabelResults();
+  renderFinishedLabelSelectedSummary(full);
+  resetFinishedLabelForm(full, finishedLabelSelectedInstruction);
+  await loadFinishedLabelVariants(dkdId);
+  renderFinishedLabelVariantOptions(finishedLabelVariants);
+  renderFinishedLabelCategoryOptions(finishedLabelCategoryForProduct(full));
+  applyFinishedLabelTemplate();
+  updateFinishedLabelQrPayload();
+  await loadFinishedLabelHistory();
+}
+
+function renderFinishedLabelSelectedSummary(product) {
+  var wrap = document.getElementById("finished-label-selected-summary");
+  if (!wrap) return;
+  var cells = [
+    [t("f_genuine_pn"), product && product.genuine_part_number],
+    [t("f_mfr_pn"), product && product.manufacturer_part_number],
+    [t("f_manufacturer"), product && product.manufacturer],
+    [t("product_kind_section"), product && product.default_product_kind ? productKindLabel(product.default_product_kind) : "-"]
+  ];
+  wrap.innerHTML = cells.map(function(row) {
+    return "<div class='finished-label-selected-cell'><div class='finished-label-selected-label'>" + esc(row[0]) + "</div><div class='finished-label-selected-value'>" + esc(row[1] || "-") + "</div></div>";
+  }).join("");
+}
+
+function resetFinishedLabelForm(product, instruction) {
+  setFinishedLabelValue("finished-label-issue-code", newFinishedLabelIssueCode());
+  setFinishedLabelValue("finished-label-instruction-id", instruction && instruction.id ? String(instruction.id) : "");
+  setFinishedLabelValue("finished-label-quantity", instruction && instruction.merged_source_count ? String(instruction.merged_source_count) : "1");
+  setFinishedLabelValue("finished-label-print-count", "1");
+  setFinishedLabelValue("finished-label-assembly-staff", "");
+  setFinishedLabelValue("finished-label-inspection-staff", "");
+  setFinishedLabelValue("finished-label-shelf-no", "");
+  setFinishedLabelValue("finished-label-memo", product && product.notes_jp ? String(product.notes_jp).slice(0, 120) : "");
+  setFinishedLabelValue("finished-label-qr-payload", "");
+}
+
+function setFinishedLabelValue(id, value) {
+  var el = document.getElementById(id);
+  if (el) el.value = value == null ? "" : String(value);
+}
+
+function finishedLabelValue(id) {
+  var el = document.getElementById(id);
+  return el ? el.value.trim() : "";
+}
+
+async function loadFinishedLabelVariants(dkdId) {
+  finishedLabelVariants = [];
+  var r = await sb.from("core_product_variants")
+    .select("product_variant_id,dkd_shohin_id,product_kind,display_label,stock_qty,stock_location,is_active")
+    .eq("dkd_shohin_id", dkdId)
+    .eq("is_active", true)
+    .order("product_variant_id", { ascending: true });
+  if (r.error) {
+    console.warn("finished label variants lookup failed", r.error);
+    return;
+  }
+  finishedLabelVariants = r.data || [];
+}
+
+function renderFinishedLabelVariantOptions(rows) {
+  var select = document.getElementById("finished-label-variant-kind");
+  if (!select) return;
+  rows = rows || [];
+  if (!rows.length) {
+    var kind = finishedLabelSelectedProduct && finishedLabelSelectedProduct.default_product_kind || "rebuilt";
+    select.innerHTML = "<option value=''>" + esc(productKindLabel(kind)) + "</option>";
+    return;
+  }
+  select.innerHTML = rows.map(function(row) {
+    var stock = row.stock_qty == null ? "-" : row.stock_qty;
+    var label = productKindLabel(row.product_kind) + " / 在庫 " + stock;
+    if (row.display_label) label += " / " + row.display_label;
+    return "<option value='" + esc(String(row.product_variant_id)) + "'>" + esc(label) + "</option>";
+  }).join("");
+}
+
+function selectedFinishedLabelVariant() {
+  var select = document.getElementById("finished-label-variant-kind");
+  var id = select ? parseInt(select.value, 10) : NaN;
+  if (!isNaN(id)) {
+    return finishedLabelVariants.find(function(row) { return parseInt(row.product_variant_id, 10) === id; }) || null;
+  }
+  return null;
+}
+
+function applyFinishedLabelTemplate() {
+  var category = finishedLabelValue("finished-label-product-category") || "その他";
+  var rows = finishedLabelTemplatesForCategory(category).map(function(row, idx) {
+    return {
+      no: idx + 1,
+      type: row.part_type || "",
+      maker: row.default_maker || "",
+      partNo: row.default_part_number || "",
+      memo: ""
+    };
+  });
+  renderFinishedLabelComponents(rows);
+  updateFinishedLabelQrPayload();
+}
+
+function renderFinishedLabelComponents(rows) {
+  var body = document.getElementById("finished-label-component-body");
+  if (!body) return;
+  rows = rows && rows.length ? rows : [];
+  var category = finishedLabelValue("finished-label-product-category") || "その他";
+  var options = finishedLabelTemplatesForCategory(category).map(function(row) {
+    return row.part_type || "";
+  });
+  var html = "";
+  for (var i = 0; i < Math.max(rows.length, 10); i++) {
+    var row = rows[i] || { no: i + 1, type: options[i] || "", maker: "", partNo: "", memo: "" };
+    var typeOptions = options.map(function(type) {
+      return "<option value='" + esc(type) + "'" + (type === row.type ? " selected" : "") + ">" + esc(type) + "</option>";
+    }).join("");
+    if (typeOptions.indexOf("value='" + esc(row.type) + "'") < 0 && row.type) {
+      typeOptions = "<option value='" + esc(row.type) + "' selected>" + esc(row.type) + "</option>" + typeOptions;
+    }
+    html += "<tr data-finished-label-component-row='" + i + "'>";
+    html += "<td>" + (i + 1) + "</td>";
+    html += "<td><select data-finished-label-component-field='type'>" + typeOptions + "</select></td>";
+    html += "<td><input type='text' data-finished-label-component-field='maker' value='" + esc(row.maker || "") + "'></td>";
+    html += "<td><input type='text' data-finished-label-component-field='partNo' value='" + esc(row.partNo || "") + "'></td>";
+    html += "<td><input type='text' data-finished-label-component-field='memo' value='" + esc(row.memo || "") + "'></td>";
+    html += "</tr>";
+  }
+  body.innerHTML = html;
+  body.querySelectorAll("input,select").forEach(function(el) {
+    el.addEventListener("input", updateFinishedLabelQrPayload);
+    el.addEventListener("change", updateFinishedLabelQrPayload);
+  });
+}
+
+function readFinishedLabelComponents() {
+  var rows = [];
+  document.querySelectorAll("#finished-label-component-body tr").forEach(function(tr, idx) {
+    function val(field) {
+      var el = tr.querySelector("[data-finished-label-component-field='" + field + "']");
+      return el ? el.value.trim() : "";
+    }
+    var row = {
+      no: idx + 1,
+      type: val("type"),
+      maker: val("maker"),
+      partNo: val("partNo"),
+      memo: val("memo")
+    };
+    if (row.type || row.maker || row.partNo || row.memo) rows.push(row);
+  });
+  return rows;
+}
+
+function readFinishedLabelRecord() {
+  var p = finishedLabelSelectedProduct;
+  if (!p) throw new Error(t("finished_label_no_product"));
+  var variant = selectedFinishedLabelVariant();
+  var issueCode = finishedLabelValue("finished-label-issue-code") || newFinishedLabelIssueCode();
+  setFinishedLabelValue("finished-label-issue-code", issueCode);
+  var issuedAt = new Date();
+  var instIdText = finishedLabelValue("finished-label-instruction-id");
+  var qty = parseInt(finishedLabelValue("finished-label-quantity"), 10) || 1;
+  var printCount = parseInt(finishedLabelValue("finished-label-print-count"), 10) || 1;
+  var record = {
+    issueCode: issueCode,
+    productionInstructionId: instIdText ? parseInt(instIdText, 10) : null,
+    dkdShohinId: productDkdId(p),
+    productVariantId: variant ? variant.product_variant_id : null,
+    productKind: variant ? normalizeProductKind(variant.product_kind) : normalizeProductKind(p.default_product_kind || "rebuilt"),
+    productCategory: finishedLabelValue("finished-label-product-category") || finishedLabelCategoryForProduct(p),
+    productNo: p.manufacturer_part_number || p.genuine_part_number || p.daiko_part_number || "",
+    genuinePartNumber: p.genuine_part_number || "",
+    genuinePartNumber2: p.genuine_part_number_2 || "",
+    manufacturerPartNumber: p.manufacturer_part_number || "",
+    manufacturer: p.manufacturer || "",
+    daikoPartNumber: p.daiko_part_number || "",
+    vehicleManufacturer: p.vehicle_manufacturer || "",
+    nominalVoltage: specNumberText(p.nominal_voltage_v, "V"),
+    nominalOutput: finishedLabelOutputText(p),
+    nominalSpec: p.spec || p.nominal_raw_spec || "",
+    quantity: Math.max(1, qty),
+    assemblyStaff: finishedLabelValue("finished-label-assembly-staff"),
+    inspectionStaff: finishedLabelValue("finished-label-inspection-staff"),
+    shelfNo: finishedLabelValue("finished-label-shelf-no"),
+    memo: finishedLabelValue("finished-label-memo"),
+    printCount: Math.max(1, printCount),
+    issuedAt: issuedAt,
+    components: readFinishedLabelComponents()
+  };
+  record.qrPayload = buildFinishedLabelQrPayload(record);
+  setFinishedLabelValue("finished-label-qr-payload", record.qrPayload);
+  return record;
+}
+
+function finishedLabelOutputText(p) {
+  if (!p) return "";
+  if (p.nominal_current_a) return specNumberText(p.nominal_current_a, "A");
+  if (p.nominal_power_kw) return specNumberText(p.nominal_power_kw, "kW");
+  if (p.nominal_power_w) return specNumberText(p.nominal_power_w, "W");
+  if (p.nominal_gas_type) return String(p.nominal_gas_type);
+  return "";
+}
+
+function updateFinishedLabelQrPayload() {
+  try {
+    if (!finishedLabelSelectedProduct) return;
+    var record = readFinishedLabelRecord();
+    setFinishedLabelValue("finished-label-qr-payload", record.qrPayload);
+  } catch (e) {
+    setFinishedLabelValue("finished-label-qr-payload", "");
+  }
+}
+
+function newFinishedLabelIssueCode() {
+  return "FL-" + finishedLabelDateStamp(new Date(), true);
+}
+
+function finishedLabelDateStamp(date, withDash) {
+  date = date || new Date();
+  function pad(n) { return String(n).padStart(2, "0"); }
+  var d = date.getFullYear() + pad(date.getMonth() + 1) + pad(date.getDate());
+  var t2 = pad(date.getHours()) + pad(date.getMinutes()) + pad(date.getSeconds());
+  return withDash ? d + "-" + t2 : d + t2;
+}
+
+function buildFinishedLabelQrPayload(record) {
+  return [
+    "D-CATS",
+    "FINISHED_LABEL",
+    record.issueCode || "",
+    record.productionInstructionId || "",
+    record.productNo || record.manufacturerPartNumber || record.genuinePartNumber || "",
+    finishedLabelDateStamp(record.issuedAt || new Date(), false)
+  ].join("|");
+}
+
+function finishedLabelQrUrl(payload, size) {
+  return "https://quickchart.io/qr?size=" + encodeURIComponent(size || 180) + "&text=" + encodeURIComponent(payload || "");
+}
+
+async function saveFinishedLabelIssue() {
+  if (!canEditFinishedLabelMgmt()) { alert(t("err_perm")); return; }
+  var btn = document.getElementById("btn-finished-label-save");
+  if (btn) btn.disabled = true;
+  try {
+    var record = readFinishedLabelRecord();
+    var payload = {
+      issue_code: record.issueCode,
+      production_instruction_id: record.productionInstructionId || null,
+      dkd_shohin_id: record.dkdShohinId,
+      product_variant_id: record.productVariantId,
+      product_kind: record.productKind,
+      product_category: record.productCategory,
+      product_no: record.productNo,
+      genuine_part_number: record.genuinePartNumber || null,
+      genuine_part_number_2: record.genuinePartNumber2 || null,
+      manufacturer_part_number: record.manufacturerPartNumber || null,
+      manufacturer: record.manufacturer || null,
+      daiko_part_number: record.daikoPartNumber || null,
+      vehicle_manufacturer: record.vehicleManufacturer || null,
+      nominal_voltage: record.nominalVoltage || null,
+      nominal_output: record.nominalOutput || null,
+      nominal_spec: record.nominalSpec || null,
+      quantity: record.quantity,
+      assembly_staff: record.assemblyStaff || null,
+      inspection_staff: record.inspectionStaff || null,
+      shelf_no: record.shelfNo || null,
+      memo: record.memo || null,
+      print_count: record.printCount,
+      qr_payload: record.qrPayload,
+      components_json: record.components,
+      status: "issued",
+      issued_by: currentUser ? currentUser.id : null,
+      issued_at: record.issuedAt.toISOString()
+    };
+    var r = await sb.from("finished_label_issues").insert(payload).select("id").single();
+    if (r.error) throw r.error;
+    await writeLog("insert", "finished_label_issues", r.data && r.data.id, record.issueCode, null, payload);
+    alert(t("finished_label_saved"));
+    setFinishedLabelValue("finished-label-issue-code", newFinishedLabelIssueCode());
+    updateFinishedLabelQrPayload();
+    await loadFinishedLabelHistory();
+  } catch (e) {
+    alert(t("msg_save_err") + ": " + (e.message || e));
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function loadFinishedLabelHistory() {
+  var list = document.getElementById("finished-label-history-list");
+  if (!list) return;
+  if (!finishedLabelSelectedProduct) {
+    list.innerHTML = "<div class='empty'>" + esc(t("finished_label_select_product")) + "</div>";
+    return;
+  }
+  list.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
+  var dkdId = productDkdId(finishedLabelSelectedProduct);
+  var r = await sb.from("finished_label_issues")
+    .select("*")
+    .eq("dkd_shohin_id", dkdId)
+    .order("issued_at", { ascending: false })
+    .limit(30);
+  if (r.error) {
+    list.innerHTML = "<div class='empty'>" + esc(r.error.message) + "</div>";
+    return;
+  }
+  finishedLabelHistoryRows = r.data || [];
+  renderFinishedLabelHistory();
+}
+
+function renderFinishedLabelHistory() {
+  var list = document.getElementById("finished-label-history-list");
+  if (!list) return;
+  if (!finishedLabelHistoryRows.length) {
+    list.innerHTML = "<div class='empty'>" + esc(t("finished_label_history_empty")) + "</div>";
+    return;
+  }
+  var html = "";
+  finishedLabelHistoryRows.forEach(function(row) {
+    var comps = Array.isArray(row.components_json) ? row.components_json.length : 0;
+    html += "<div class='finished-label-history-row'>";
+    html += "<div class='finished-label-history-main'><span>" + esc(row.issue_code || "-") + "</span><button class='btn-sm-edit production-action-secondary' data-finished-label-history-preview='" + esc(String(row.id)) + "'>" + esc(t("finished_label_preview")) + "</button></div>";
+    html += "<div class='finished-label-history-sub'>" + esc([formatDateTime(row.issued_at), row.product_category, productKindLabel(row.product_kind), comps + " parts"].filter(Boolean).join(" / ")) + "</div>";
+    html += "</div>";
+  });
+  list.innerHTML = html;
+  list.querySelectorAll("[data-finished-label-history-preview]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var row = finishedLabelHistoryRows.find(function(x) { return String(x.id) === String(btn.dataset.finishedLabelHistoryPreview); });
+      if (row) openFinishedLabelPrintPreview(finishedLabelRecordFromHistory(row));
+    });
+  });
+}
+
+function finishedLabelRecordFromHistory(row) {
+  return {
+    issueCode: row.issue_code,
+    productionInstructionId: row.production_instruction_id,
+    dkdShohinId: row.dkd_shohin_id,
+    productVariantId: row.product_variant_id,
+    productKind: row.product_kind,
+    productCategory: row.product_category,
+    productNo: row.product_no,
+    genuinePartNumber: row.genuine_part_number,
+    genuinePartNumber2: row.genuine_part_number_2,
+    manufacturerPartNumber: row.manufacturer_part_number,
+    manufacturer: row.manufacturer,
+    daikoPartNumber: row.daiko_part_number,
+    vehicleManufacturer: row.vehicle_manufacturer,
+    nominalVoltage: row.nominal_voltage,
+    nominalOutput: row.nominal_output,
+    nominalSpec: row.nominal_spec,
+    quantity: row.quantity,
+    assemblyStaff: row.assembly_staff,
+    inspectionStaff: row.inspection_staff,
+    shelfNo: row.shelf_no,
+    memo: row.memo,
+    printCount: row.print_count,
+    qrPayload: row.qr_payload,
+    issuedAt: row.issued_at ? new Date(row.issued_at) : new Date(),
+    components: Array.isArray(row.components_json) ? row.components_json : []
+  };
+}
+
+function previewCurrentFinishedLabel() {
+  try {
+    openFinishedLabelPrintPreview(readFinishedLabelRecord());
+  } catch (e) {
+    alert(e.message || e);
+  }
+}
+
+function openFinishedLabelPrintPreview(record) {
+  var win = window.open("", "_blank");
+  if (!win) {
+    alert("印刷プレビューを開けませんでした。ポップアップ許可を確認してください。");
+    return;
+  }
+  win.document.open();
+  win.document.write(buildFinishedLabelPrintHtml(record));
+  win.document.close();
+}
+
+function buildFinishedLabelPrintHtml(record) {
+  var qrUrl = finishedLabelQrUrl(record.qrPayload, 210);
+  var components = (record.components || []).filter(function(c) {
+    return c.type || c.maker || c.partNo || c.memo;
+  }).slice(0, 12);
+  var rows = components.map(function(c) {
+    return "<tr><td>" + esc(c.no || "") + "</td><td>" + esc(c.type || "") + "</td><td>" + esc(c.maker || "") + "</td><td>" + esc(c.partNo || "") + "</td><td>" + esc(c.memo || "") + "</td></tr>";
+  }).join("");
+  if (!rows) rows = "<tr><td colspan='5'>-</td></tr>";
+  var sealHtml = "";
+  for (var i = 0; i < Math.max(1, record.printCount || 1); i++) {
+    sealHtml += "<div class='qr-seal'><img src='" + qrUrl + "'><div><b>" + esc(record.productNo || record.manufacturerPartNumber || record.genuinePartNumber || "") + "</b><br><span>" + esc(record.issueCode || "") + "</span></div></div>";
+  }
+  return "<!doctype html><html><head><meta charset='utf-8'><title>D-CATS " + esc(record.issueCode || "") + "</title>" +
+    "<style>@page{size:A6;margin:4mm}body{font-family:Arial,'Yu Gothic',sans-serif;margin:0;color:#111}.toolbar{position:sticky;top:0;background:#fff;padding:8px;border-bottom:1px solid #ddd}.toolbar button{padding:8px 14px}.a6{width:135mm;min-height:90mm;border:1px solid #333;margin:6mm auto;padding:4mm;box-sizing:border-box}.head{display:flex;justify-content:space-between;gap:4mm;border-bottom:2px solid #111;padding-bottom:2mm}.title{font-size:18pt;font-weight:800}.issue{font-size:9pt;text-align:right}.grid{display:grid;grid-template-columns:24mm 1fr 24mm 1fr;gap:1.5mm 3mm;margin-top:3mm;font-size:9pt}.lbl{color:#667085;font-size:8pt}.val{font-weight:800;word-break:break-word}.big{font-size:14pt}.parts{width:100%;border-collapse:collapse;margin-top:3mm;font-size:7.5pt}.parts th,.parts td{border:1px solid #999;padding:1mm;text-align:left}.parts th{background:#eef2f6}.bottom{display:flex;justify-content:space-between;align-items:flex-end;margin-top:2mm;font-size:8pt}.bottom img{width:22mm;height:22mm}.qr-wrap{width:135mm;margin:4mm auto}.qr-seal{display:flex;align-items:center;gap:2mm;width:58mm;height:9mm;border:1px dashed #aaa;margin:1.5mm 0;padding:0 1mm;box-sizing:border-box;font-size:6pt;overflow:hidden}.qr-seal img{width:7mm;height:7mm}@media print{.toolbar{display:none}.a6{margin:0 auto}.qr-wrap{break-before:page}}</style>" +
+    "</head><body><div class='toolbar'><button onclick='window.print()'>印刷</button> A6ラベルと9mm QRシールをまとめてプレビューしています。</div>" +
+    "<section class='a6'><div class='head'><div><div class='title'>D-CATS 完品ラベル</div><div>" + esc(record.productCategory || "") + " / " + esc(productKindLabel(record.productKind)) + "</div></div><div class='issue'>" + esc(record.issueCode || "") + "<br>" + esc(formatDateTime(record.issuedAt)) + "</div></div>" +
+    "<div class='grid'><div class='lbl'>純正品番</div><div class='val big'>" + esc(record.genuinePartNumber || "-") + "</div><div class='lbl'>メーカー品番</div><div class='val big'>" + esc(record.manufacturerPartNumber || record.productNo || "-") + "</div><div class='lbl'>メーカー</div><div class='val'>" + esc(record.manufacturer || "-") + "</div><div class='lbl'>大光品番</div><div class='val'>" + esc(record.daikoPartNumber || "-") + "</div><div class='lbl'>数量</div><div class='val'>" + esc(record.quantity || 1) + "</div><div class='lbl'>棚番</div><div class='val'>" + esc(record.shelfNo || "-") + "</div><div class='lbl'>電圧/出力</div><div class='val'>" + esc([record.nominalVoltage, record.nominalOutput].filter(Boolean).join(' / ') || "-") + "</div><div class='lbl'>担当</div><div class='val'>" + esc([record.assemblyStaff, record.inspectionStaff].filter(Boolean).join(' / ') || "-") + "</div></div>" +
+    "<table class='parts'><thead><tr><th>No</th><th>部品種別</th><th>メーカー</th><th>交換品番/内容</th><th>メモ</th></tr></thead><tbody>" + rows + "</tbody></table>" +
+    "<div class='bottom'><div>" + esc(record.memo || "") + "</div><img src='" + qrUrl + "'></div></section><section class='qr-wrap'>" + sealHtml + "</section></body></html>";
 }
 
 // =============================================
@@ -12211,7 +13099,9 @@ function renderDetailCustomerInfoHtml(customer, priceInfo, canSelect) {
     html += "</select></div>";
   }
   if (!customer) {
-    html += "<div class='detail-customer-note'>" + esc(detailSalesCustomerOptions.length ? t("detail_customer_select_none") : t("detail_customer_no_customers")) + "</div>";
+    if (!detailSalesCustomerOptions.length) {
+      html += "<div class='detail-customer-note'>" + esc(t("detail_customer_no_customers")) + "</div>";
+    }
     html += "</div>";
     return html;
   }
@@ -13908,7 +14798,7 @@ document.getElementById("btn-back-to-login").addEventListener("click", function(
 document.getElementById("btn-submit-reg").addEventListener("click", doRegister);
 document.getElementById("reg-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doRegister(); });
 document.getElementById("login-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
-["btn-logout-menu","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-customer-access-mgmt","btn-logout-core-list-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
+["btn-logout-menu","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-customer-access-mgmt","btn-logout-core-list-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-finished-label-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
 document.getElementById("btn-back-search").addEventListener("click", function(){ closePanel(); showScreen("menu"); });
 document.getElementById("btn-back-production-search").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-components").addEventListener("click", async function(){
@@ -13928,6 +14818,7 @@ document.getElementById("btn-back-sales-pricing-mgmt").addEventListener("click",
 document.getElementById("btn-back-customer-access-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-core-list-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-product-kind-stock-mgmt").addEventListener("click", function(){ showScreen("menu"); });
+document.getElementById("btn-back-finished-label-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-production-ranking-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-kikan-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-rakuten-price").addEventListener("click", function(){ showScreen("menu"); });
@@ -13982,6 +14873,25 @@ document.getElementById("product-kind-stock-category").addEventListener("change"
 document.getElementById("product-kind-stock-kind").addEventListener("change", loadProductKindStockMgmt);
 document.getElementById("product-kind-stock-state").addEventListener("change", loadProductKindStockMgmt);
 document.getElementById("btn-product-kind-stock-save").addEventListener("click", saveProductKindStockChanges);
+document.getElementById("btn-finished-label-search").addEventListener("click", searchFinishedLabelProducts);
+document.getElementById("finished-label-search").addEventListener("keydown", function(e){ if(e.key==="Enter") searchFinishedLabelProducts(); });
+document.getElementById("btn-finished-label-load-history").addEventListener("click", loadFinishedLabelHistory);
+document.getElementById("btn-finished-label-template").addEventListener("click", applyFinishedLabelTemplate);
+document.getElementById("btn-finished-label-preview").addEventListener("click", previewCurrentFinishedLabel);
+document.getElementById("btn-finished-label-clear").addEventListener("click", function(){
+  resetFinishedLabelForm(finishedLabelSelectedProduct, finishedLabelSelectedInstruction);
+  applyFinishedLabelTemplate();
+  updateFinishedLabelQrPayload();
+});
+document.getElementById("btn-finished-label-save").addEventListener("click", saveFinishedLabelIssue);
+document.getElementById("finished-label-product-category").addEventListener("change", applyFinishedLabelTemplate);
+["finished-label-instruction-id","finished-label-quantity","finished-label-print-count","finished-label-assembly-staff","finished-label-inspection-staff","finished-label-shelf-no","finished-label-memo","finished-label-variant-kind"].forEach(function(id){
+  var el = document.getElementById(id);
+  if (el) {
+    el.addEventListener("input", updateFinishedLabelQrPayload);
+    el.addEventListener("change", updateFinishedLabelQrPayload);
+  }
+});
 document.getElementById("btn-add-production-ranking").addEventListener("click", function(){ openProductionRankingForm("add"); });
 document.getElementById("btn-production-ranking-search").addEventListener("click", loadProductionRankingMgmt);
 document.getElementById("production-ranking-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadProductionRankingMgmt(); });
