@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://openapi.rakuten.co.jp; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co https://openapi.rakuten.co.jp;">
 <title>D-CATS</title>
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -290,6 +291,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .detail-customer-value { color: #1a1a2e; font-size: 13px; font-weight: 800; word-break: break-word; }
 .detail-customer-value.price { color: #1a8c3e; font-size: 16px; }
 .detail-customer-note { color: #8a94a6; font-size: 11px; line-height: 1.45; margin-top: 8px; }
+.detail-lower-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, .9fr); gap: 12px; align-items: start; margin-top: 10px; }
+.detail-lower-grid.detail-lower-count-1 { grid-template-columns: minmax(0, 1fr); }
+.detail-lower-panel { min-width: 0; }
+.detail-lower-panel #kikan-wrap { overflow-x: auto; }
+.detail-lower-panel .detail-customer-section { margin-top: 0; }
+.detail-lower-panel .kikan-section-title { margin-top: 0; }
 .customer-setting-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0 12px; }
 .customer-check { border: 1px solid #e6ebf3; border-radius: 8px; padding: 9px 10px; display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #334155; background: #fff; line-height: 1.45; }
 .customer-check input { margin-top: 2px; flex: 0 0 auto; }
@@ -387,6 +394,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 }
 @media(max-width:720px){
   .detail-main-grid { grid-template-columns: 1fr; gap: 8px; }
+  .detail-lower-grid { grid-template-columns: 1fr; }
   .detail-summary { flex-direction: column; gap: 6px; }
   .detail-maker-offset, .detail-maker-offset-standard, .detail-maker-offset-ac { margin-top: 8px; }
   .detail-vehicle-grid { grid-template-columns: 112px minmax(0, 1fr); }
@@ -556,6 +564,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   background: #fafafa;
   padding: 12px 10px;
   display: flex; flex-direction: column; gap: 8px;
+  align-self: flex-start;
+  max-height: min(48vh, 390px);
+  overflow: hidden;
+  position: sticky;
+  top: 0;
 }
 .panel-right-title { font-size: 12px; font-weight: 600; color: #888; margin-bottom: 4px; }
 .panel-right-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; color: #ddd; font-size: 11px; gap: 6px; text-align: center; min-height: 120px; }
@@ -570,6 +583,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 
 /* 右カラムの画像グリッド（縦1列） */
 .img-grid, #img-grid  { display: flex; flex-direction: column; gap: 8px; }
+.panel-right #img-grid { overflow-y: auto; max-height: min(34vh, 270px); padding-right: 2px; }
 .img-wrap  { position: relative; border-radius: 8px; overflow: hidden; background: #fff; aspect-ratio: 1; width: 100%; display: flex; align-items: center; justify-content: center; }
 .img-wrap img { width: 100%; height: 100%; object-fit: contain; display: block; cursor: zoom-in; image-rendering: auto; }
 .panel-footer { flex-shrink: 0; padding: 8px 10px 16px; border-top: 1px solid #eee; background: #fafafa; width: 180px; flex-shrink: 0; }
@@ -597,6 +611,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     border-top: 1px solid #f0f0f0;
     padding: 8px 14px 10px;
     gap: 6px;
+    align-self: stretch;
+    max-height: none;
+    overflow: visible;
+    position: static;
   }
   .panel-right-title { margin-bottom: 0; }
   .panel-right-empty { min-height: 42px; flex: 0 0 auto; flex-direction: row; justify-content: flex-start; }
@@ -605,6 +623,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     flex-direction: row;
     gap: 8px;
     overflow-x: auto;
+    overflow-y: hidden;
+    max-height: 64px;
     padding-bottom: 2px;
   }
   .img-wrap {
@@ -3799,7 +3819,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.210";
+var APP_VERSION       = "v1.1.211";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -6509,13 +6529,15 @@ function renderRakutenResults(items, keyword) {
     meta.push(item.taxFlag === 0 ? "税込" : "税別");
     if (item.reviewCount != null) meta.push("レビュー " + item.reviewCount);
     html += "<div class='rakuten-item'>";
+    img = safeHttpsUrl(img);
     html += "<div class='rakuten-thumb'>" + (img ? "<img src='" + esc(img) + "' loading='lazy'>" : "No image") + "</div>";
     html += "<div>";
     html += "<div class='rakuten-item-name'>" + esc(item.itemName || "-") + "</div>";
     html += "<div class='rakuten-item-shop'>" + esc(item.shopName || "-") + "</div>";
     html += "<div class='rakuten-item-price'>" + yen(item.itemPrice) + "</div>";
     html += "<div class='rakuten-item-meta'>" + meta.map(esc).join("<span>/</span>") + "</div>";
-    if (item.itemUrl) html += "<a class='rakuten-item-link' href='" + esc(item.itemUrl) + "' target='_blank' rel='noopener'>" + t("rakuten_open") + "</a>";
+    var itemUrl = safeHttpsUrl(item.itemUrl, ["rakuten.co.jp"]);
+    if (itemUrl) html += "<a class='rakuten-item-link' href='" + esc(itemUrl) + "' target='_blank' rel='noopener'>" + t("rakuten_open") + "</a>";
     html += "</div></div>";
   });
   html += "</div>";
@@ -8014,12 +8036,41 @@ function esc(s) {
   return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
 
+function safeHttpsUrl(raw, allowedHosts) {
+  try {
+    var u = new URL(String(raw || ""), location.href);
+    if (u.protocol !== "https:" && u.protocol !== "http:") return "";
+    if (allowedHosts && allowedHosts.length) {
+      var ok = allowedHosts.some(function(host) {
+        return u.hostname === host || u.hostname.endsWith("." + host);
+      });
+      if (!ok) return "";
+    }
+    return u.toString();
+  } catch (e) {
+    return "";
+  }
+}
+
+function safeSupabaseImageUrl(raw) {
+  try {
+    var u = new URL(String(raw || ""));
+    var supa = new URL(SUPABASE_URL);
+    var okPath = u.pathname.indexOf("/storage/v1/object/public/product-images/") === 0 ||
+      u.pathname.indexOf("/storage/v1/render/image/public/product-images/") === 0;
+    if (u.origin !== supa.origin || !okPath) return "";
+    return u.toString();
+  } catch (e) {
+    return "";
+  }
+}
+
 function buildSupabaseThumbUrl(url, width, height, resize) {
-  var raw = String(url || "");
+  var raw = safeSupabaseImageUrl(url);
   if (!raw) return "";
   var marker = "/storage/v1/object/public/";
   var renderMarker = "/storage/v1/render/image/public/";
-  if (raw.indexOf(marker) < 0 && raw.indexOf(renderMarker) < 0) return raw;
+  if (raw.indexOf(marker) < 0 && raw.indexOf(renderMarker) < 0) return "";
   var transformed = raw.indexOf(marker) >= 0 ? raw.replace(marker, renderMarker) : raw;
   try {
     var u = new URL(transformed);
@@ -8039,7 +8090,8 @@ function buildSupabaseThumbUrl(url, width, height, resize) {
 
 function thumbImgHtml(url, options) {
   options = options || {};
-  var original = String(url || "");
+  var original = safeSupabaseImageUrl(url);
+  if (!original) return "";
   var thumb = buildSupabaseThumbUrl(original, options.width || 96, options.height || options.width || 96, options.resize || "contain");
   var loading = options.loading || "lazy";
   var decoding = options.decoding || "async";
@@ -8053,7 +8105,7 @@ function thumbImgHtml(url, options) {
 var preloadedThumbUrls = {};
 function preloadThumbImage(url, options) {
   options = options || {};
-  var original = String(url || "");
+  var original = safeSupabaseImageUrl(url);
   if (!original) return;
   var src = buildSupabaseThumbUrl(original, options.width || 96, options.height || options.width || 96, options.resize || "contain") || original;
   if (!src || preloadedThumbUrls[src]) return;
@@ -9756,6 +9808,12 @@ function renderPanelStatic() {
   var detailCustomerBlockHtml = canSeeSalesPrice()
     ? "<div class='detail-customer-section'><div class='price-section-title'>&#x1F464; " + t("detail_customer_section") + "</div><div id='detail-customer-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div></div>"
     : "";
+  var detailLowerBlocks = [];
+  if (kikanBlockHtml) detailLowerBlocks.push("<div class='detail-lower-panel detail-lower-kikan'>" + kikanBlockHtml + "</div>");
+  if (detailCustomerBlockHtml) detailLowerBlocks.push("<div class='detail-lower-panel detail-lower-customer'>" + detailCustomerBlockHtml + "</div>");
+  var detailLowerGridHtml = detailLowerBlocks.length
+    ? "<div class='detail-lower-grid detail-lower-count-" + detailLowerBlocks.length + "'>" + detailLowerBlocks.join("") + "</div>"
+    : "";
   document.getElementById("panel-body").innerHTML =
     "<div class='detail-main-grid'>" +
       "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + "</div>" +
@@ -9764,8 +9822,7 @@ function renderPanelStatic() {
       salesPriceBlockHtml + productKindBlockHtml + "</div>" +
     "</div>" +
     toolHtml +
-    kikanBlockHtml +
-    detailCustomerBlockHtml +
+    detailLowerGridHtml +
     "<div id='price-table-wrap' style='display:none'></div>";
   // 画像エリアをリセット（右カラムはpanel-rightに固定表示）
   document.getElementById("img-grid").innerHTML = customerCanShowProductImages()
@@ -12584,7 +12641,7 @@ async function deleteImage(imgId, imageUrl) {
 function openFullscreen(i) { fsIndex=i; document.getElementById("fullscreen").classList.add("show"); renderFullscreen(); }
 function renderFullscreen() {
   var img=currentImages[fsIndex]; if(!img)return;
-  document.getElementById("fs-img").src=img.image_url;
+  document.getElementById("fs-img").src=safeSupabaseImageUrl(img.image_url);
   document.getElementById("fs-counter").textContent=(fsIndex+1)+" / "+currentImages.length;
   document.getElementById("fs-prev").classList.toggle("hidden",fsIndex===0);
   document.getElementById("fs-next").classList.toggle("hidden",fsIndex===currentImages.length-1);
