@@ -96,6 +96,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .sales-pricing-grid .form-row { margin-bottom: 0; }
 .sales-pricing-help { font-size: 12px; color: #667085; line-height: 1.6; margin: 4px 0 12px; }
 .sales-pricing-field-help { font-size: 11px; color: #8a94a6; line-height: 1.45; margin-top: 4px; }
+.sales-base-reference { font-size: 11px; color: #667085; line-height: 1.45; margin-top: 5px; }
+.sales-base-reference strong { color: #1a1a2e; }
 .sales-pricing-preview { margin-top: 14px; border-top: 1px solid #edf0f5; padding-top: 12px; }
 .sales-pricing-preview-title { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; }
 .sales-rank-table-wrap { width: 100%; overflow-x: hidden; padding-bottom: 2px; }
@@ -1452,6 +1454,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         <label class="form-label" data-i18n="sales_base_price">基準価格(税抜)</label>
         <input class="form-input" id="sales-base-price" type="number" min="0" step="1">
         <div class="sales-pricing-field-help" data-i18n="sales_base_price_help">ランク調整前の元価格です</div>
+        <div class="sales-base-reference" id="sales-base-reference"></div>
       </div>
       <div class="form-row">
         <label class="form-label" data-i18n="sales_price_basis">価格根拠</label>
@@ -2403,6 +2406,9 @@ var TRANSLATIONS = {
     sales_pricing_title: "販売価格設定",
     sales_base_price: "基準価格",
     sales_base_price_help: "売値区分の掛率・金額調整をかける前の元価格です。",
+    sales_dks_reference_loading: "DKS参考価格を確認中...",
+    sales_dks_reference_none: "DKS価格の参考データなし",
+    sales_dks_reference_line: "DKS価格 {dks} - 1,000 = 参考 {ref}",
     sales_tax_type: "税区分",
     sales_tax_excluded: "税抜",
     sales_tax_included: "税込",
@@ -2976,6 +2982,9 @@ var TRANSLATIONS = {
     sales_pricing_title: "Sales Pricing",
     sales_base_price: "Base Price",
     sales_base_price_help: "Original price before rate, amount adjustment, and rounding by sales rank.",
+    sales_dks_reference_loading: "Checking DKS reference price...",
+    sales_dks_reference_none: "No DKS reference price data",
+    sales_dks_reference_line: "DKS price {dks} - 1,000 = reference {ref}",
     sales_tax_type: "Tax Type",
     sales_tax_excluded: "Tax excluded",
     sales_tax_included: "Tax included",
@@ -3542,6 +3551,9 @@ var TRANSLATIONS = {
     sales_pricing_title: "销售价格设置",
     sales_base_price: "基准价格",
     sales_base_price_help: "应用销售等级倍率、金额调整和取整前的原始价格。",
+    sales_dks_reference_loading: "正在确认DKS参考价格...",
+    sales_dks_reference_none: "无DKS参考价格数据",
+    sales_dks_reference_line: "DKS价格 {dks} - 1,000 = 参考 {ref}",
     sales_tax_type: "税区分",
     sales_tax_excluded: "不含税",
     sales_tax_included: "含税",
@@ -3758,7 +3770,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.207";
+var APP_VERSION       = "v1.1.209";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -3808,6 +3820,7 @@ var rakutenTargets = [];
 var rakutenActiveTarget = null;
 var currentSalesPricingDkdId = null;
 var currentSalesPricingRow = null;
+var currentSalesPricingDksReference = null;
 var salesPricingRanks = [];
 var salesPricingCustomerCounts = {};
 var salesPricingMgmtRows = [];
@@ -11156,6 +11169,66 @@ function salesRankDisplayName(rank) {
   return name;
 }
 
+function parsePriceNumber(value) {
+  if (value === null || value === undefined) return null;
+  var text = String(value).replace(/[^\d.-]/g, "");
+  if (!text) return null;
+  var n = parseInt(text, 10);
+  return isNaN(n) ? null : n;
+}
+
+function renderSalesBasePriceGuidance() {
+  var refEl = document.getElementById("sales-base-reference");
+  if (!refEl) return;
+  var ref = currentSalesPricingDksReference;
+  if (ref && ref.loading) {
+    refEl.textContent = t("sales_dks_reference_loading");
+    return;
+  }
+  if (!ref || !ref.dksPrice) {
+    refEl.textContent = t("sales_dks_reference_none");
+    return;
+  }
+  var refLine = tf("sales_dks_reference_line", {
+    dks: "JPY " + formatYen(ref.dksPrice),
+    ref: "JPY " + formatYen(ref.referencePrice)
+  });
+  refEl.innerHTML = esc(refLine);
+}
+
+async function fetchSalesPricingDksReference(dkdId) {
+  var result = { loading: false, dksPrice: null, referencePrice: null };
+  var id = parseInt(dkdId, 10);
+  if (isNaN(id)) return result;
+  var linkR = await sb.from("core_product_dks_links")
+    .select("dks_search_part_id")
+    .eq("dkd_shohin_id", id);
+  if (linkR.error) {
+    console.warn("DKS price link lookup failed", linkR.error);
+    return result;
+  }
+  var dksIds = (linkR.data || []).map(function(row) { return row.dks_search_part_id; }).filter(Boolean);
+  dksIds = Array.from(new Set(dksIds));
+  if (!dksIds.length) return result;
+  var priceR = await sb.from("dks_search_parts")
+    .select("id, price_jpy")
+    .in("id", dksIds);
+  if (priceR.error) {
+    console.warn("DKS price lookup failed", priceR.error);
+    return result;
+  }
+  var prices = (priceR.data || []).map(function(row) {
+    return parsePriceNumber(row.price_jpy);
+  }).filter(function(price) {
+    return price !== null && price > 0;
+  });
+  if (!prices.length) return result;
+  var dksPrice = Math.min.apply(Math, prices);
+  result.dksPrice = dksPrice;
+  result.referencePrice = Math.max(0, dksPrice - 1000);
+  return result;
+}
+
 function calculateSalesPriceClient(basePrice, rank) {
   var base = parseInt(basePrice, 10);
   if (isNaN(base)) return null;
@@ -11348,6 +11421,7 @@ function setSalesPricingBaseFieldsVisible(visible) {
 function closeSalesPricingOverlay() {
   var overlay = document.getElementById("sales-pricing-overlay");
   if (overlay) overlay.classList.remove("show");
+  currentSalesPricingDksReference = null;
 }
 
 async function openSalesPricingForCurrent() {
@@ -11359,6 +11433,8 @@ async function openSalesPricingForCurrent() {
   overlay.classList.add("show");
   document.getElementById("sales-pricing-product").textContent = t("loading");
   document.getElementById("sales-rank-preview").innerHTML = "<div class='component-empty'>" + esc(t("loading")) + "</div>";
+  currentSalesPricingDksReference = { loading: true };
+  renderSalesBasePriceGuidance();
   var saveBtn = document.getElementById("btn-sales-pricing-save");
   if (saveBtn) saveBtn.style.display = canEditBasePrice() ? "" : "none";
   var rankSaveBtn = document.getElementById("btn-sales-rank-save");
@@ -11396,9 +11472,13 @@ async function openSalesPricingForCurrent() {
     document.getElementById("sales-price-basis").value = currentSalesPricingRow ? (currentSalesPricingRow.price_basis || "manual") : "manual";
     document.getElementById("sales-effective-start").value = currentSalesPricingRow ? (currentSalesPricingRow.effective_start || salesPricingTodayIso()) : salesPricingTodayIso();
     document.getElementById("sales-basis-note").value = currentSalesPricingRow ? (currentSalesPricingRow.basis_note || "") : "";
+    currentSalesPricingDksReference = await fetchSalesPricingDksReference(dkdId);
+    renderSalesBasePriceGuidance();
     renderSalesRankPreview();
   } catch (e) {
     console.warn("open sales pricing failed", e);
+    currentSalesPricingDksReference = null;
+    renderSalesBasePriceGuidance();
     if (errEl) errEl.textContent = (e && e.message) || String(e);
   }
 }
@@ -12889,8 +12969,14 @@ document.getElementById("btn-sales-rank-save").addEventListener("click", saveSal
 ["sales-base-price","sales-price-basis","sales-effective-start"].forEach(function(id) {
   var el = document.getElementById(id);
   if (el) {
-    el.addEventListener("input", renderSalesRankPreview);
-    el.addEventListener("change", renderSalesRankPreview);
+    el.addEventListener("input", function() {
+      renderSalesRankPreview();
+      renderSalesBasePriceGuidance();
+    });
+    el.addEventListener("change", function() {
+      renderSalesRankPreview();
+      renderSalesBasePriceGuidance();
+    });
   }
 });
 document.getElementById("pf-category").addEventListener("change", applySpecFormCategory);
