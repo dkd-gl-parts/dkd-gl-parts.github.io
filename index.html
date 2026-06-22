@@ -88,8 +88,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .detail-kind-price-row { display: grid; grid-template-columns: minmax(150px, .85fr) minmax(220px, 1.15fr); gap: 10px; align-items: stretch; margin-top: 10px; }
 .detail-kind-price-row.single { grid-template-columns: minmax(0, 1fr); }
 .detail-kind-price-row .product-kind-panel,
-.detail-kind-price-row .sales-price-summary-block { margin-top: 0; height: 100%; }
-.detail-kind-price-row .product-kind-panel { border-top: 1px solid #f0f0f0; }
+.detail-kind-price-row .sales-price-summary-block { margin-top: 0; min-height: 116px; height: 100%; border: 1px solid #e5edf8; border-radius: 8px; background: #fbfdff; padding: 10px 12px; display: flex; flex-direction: column; }
+.detail-kind-price-row .product-kind-panel { border-top: 0; }
+.detail-kind-price-row .product-kind-control { flex: 1; }
+.detail-kind-price-row .sales-price-summary { border: 0; background: transparent; padding: 0; flex: 1; }
 .sales-price-summary-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
 .sales-price-summary-head .detail-block-title { margin: 0; }
 .sales-price-summary { border: 1px solid #e5edf8; border-radius: 8px; background: #fbfdff; padding: 10px 12px; margin-bottom: 0; font-size: 12px; }
@@ -601,6 +603,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .product-kind-stock-row.other { background: #f1f3f7; border-color: #dfe4ec; }
 .product-kind-stock-value { min-width: 0; font-size: 12px; font-weight: 800; color: #1a1a2e; word-break: break-word; text-align: right; }
 .product-kind-stock-value span { display: block; color: #8a94a6; font-size: 10px; font-weight: 600; margin-bottom: 2px; }
+#screen-search .panel-topbar .btn-sm-edit,
+#screen-search .detail-toolbar .btn-sm-edit,
+#screen-search .detail-inline-action,
+#screen-search .catalog-vehicle-button {
+  min-height: 32px;
+  min-width: 92px;
+  padding: 6px 11px;
+  font-size: 12px;
+  line-height: 1.2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+#screen-search .panel-top-add { min-width: 104px; }
 @media(max-width:720px){
   .detail-kind-price-row { grid-template-columns: 1fr; }
 }
@@ -4397,7 +4416,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.237";
+var APP_VERSION       = "v1.1.238";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -8216,7 +8235,7 @@ function renderProductKindStockMgmt() {
     html += "<td><div class='mgmt-pn'>" + esc(p.manufacturer_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(productCategoryLabel(p) || "-") + "</div></td>";
     html += "<td>" + esc(p.manufacturer || "-") + "</td>";
     html += "<td><div class='stock-mgmt-kind'><span class='product-kind-pill " + productKindClass(kind) + "'>" + esc(productKindLabel(kind)) + "</span><span class='mgmt-sub'>" + esc(row.display_label || sl || "-") + "</span></div></td>";
-    html += "<td><input class='stock-mgmt-input stock-mgmt-qty' type='number' min='0' step='1' data-stock-variant='" + esc(String(variantId)) + "' data-stock-field='stock_qty' value='" + esc(row.stock_qty == null ? "" : String(row.stock_qty)) + "'" + disabled + "></td>";
+    html += "<td><input class='stock-mgmt-input stock-mgmt-qty' type='number' min='0' step='1' data-stock-variant='" + esc(String(variantId)) + "' data-stock-field='stock_qty' value='" + esc(row.stock_qty == null ? "0" : String(row.stock_qty)) + "'" + disabled + "></td>";
     html += "<td><input class='stock-mgmt-input' type='text' data-stock-variant='" + esc(String(variantId)) + "' data-stock-field='stock_location' value='" + esc(row.stock_location || "") + "'" + disabled + "></td>";
     html += "<td><input class='stock-mgmt-input' type='text' data-stock-variant='" + esc(String(variantId)) + "' data-stock-field='stock_note' value='" + esc(row.stock_note || "") + "'" + disabled + "><div class='mgmt-sub'>" + esc(formatDateTime(row.updated_at)) + "</div></td>";
     html += "<td><div class='stock-mgmt-actions'>";
@@ -8821,7 +8840,7 @@ function renderFinishedLabelVariantOptions(rows) {
     return;
   }
   select.innerHTML = rows.map(function(row) {
-    var stock = row.stock_qty == null ? "-" : row.stock_qty;
+    var stock = row.stock_qty == null ? "0" : row.stock_qty;
     var label = productKindLabel(row.product_kind) + " / 在庫 " + stock;
     if (row.display_label) label += " / " + row.display_label;
     return "<option value='" + esc(String(row.product_variant_id)) + "'>" + esc(label) + "</option>";
@@ -10548,7 +10567,7 @@ function componentVariantLabel(row) {
   if (row.display_label) labels.push(row.display_label);
   if (row.sl_part_id) labels.push(t("product_kind_sl") + " " + row.sl_part_id);
   if (row.stock_location) labels.push(row.stock_location);
-  if (row.stock_qty !== null && row.stock_qty !== undefined && row.stock_qty !== "") labels.push(t("product_kind_stock_qty") + " " + row.stock_qty);
+  labels.push(t("product_kind_stock_qty") + " " + (row.stock_qty === null || row.stock_qty === undefined || row.stock_qty === "" ? "0" : row.stock_qty));
   return kind + (labels.length ? " / " + labels.join(" / ") : " #" + String(row.product_variant_id || ""));
 }
 
@@ -10600,7 +10619,7 @@ function renderProductKindPanelHtml(summary) {
     html += "<div class='product-kind-stock-grid'>";
     rows.forEach(function(row) {
       html += "<div class='product-kind-stock-row active " + productKindClass(row.product_kind || selected) + "' data-product-kind-row='" + esc(selected) + "'>";
-      html += "<div class='product-kind-stock-value'><span>" + esc(t("product_kind_stock_qty")) + "</span>" + esc(row.stock_qty == null ? "-" : String(row.stock_qty)) + "</div>";
+      html += "<div class='product-kind-stock-value'><span>" + esc(t("product_kind_stock_qty")) + "</span>" + esc(row.stock_qty == null ? "0" : String(row.stock_qty)) + "</div>";
       html += "</div>";
     });
     html += "</div>";
@@ -12044,6 +12063,7 @@ function renderPanelStatic() {
     ? "<div class='sales-price-summary-block'><div class='sales-price-summary-head'><div class='detail-block-title'>" + t("sales_price_section") + "</div></div><div id='sales-price-summary-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div></div>"
     : "";
   var productKindBlockHtml = "<div class='product-kind-panel'><div class='detail-block-title'>" + t("product_kind_section") + "</div><div id='product-kind-wrap'>" + renderProductKindPanelHtml(productKindSummaryForProduct(p)) + "</div></div>";
+  var kindPriceRowHtml = "<div class='detail-kind-price-row" + (salesPriceBlockHtml ? "" : " single") + "'>" + productKindBlockHtml + salesPriceBlockHtml + "</div>";
   var kikanBlockHtml = customerCanShowCompatibleParts()
     ? "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
       "<div id='kikan-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>"
@@ -12059,11 +12079,12 @@ function renderPanelStatic() {
     : "";
   document.getElementById("panel-body").innerHTML =
     "<div class='detail-main-grid'>" +
-      "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + productKindBlockHtml + "</div>" +
+      "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + "</div>" +
       "<div class='detail-column'>" + makerHtml +
       "<div class='detail-spec-block detail-spec-after-maker'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div>" +
-      salesPriceBlockHtml + "</div>" +
+      "</div>" +
     "</div>" +
+    kindPriceRowHtml +
     toolHtml +
     detailLowerGridHtml +
     "<div id='price-table-wrap' style='display:none'></div>";
