@@ -204,7 +204,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-diff-side strong { display: block; font-size: 11px; color: #888; margin-bottom: 2px; }
 .component-empty { color:#bbb; font-size:12px; padding:8px 0; }
 .detail-actions { display:flex; gap:8px; flex-wrap:wrap; margin:14px 0 6px; }
-.detail-toolbar { display: flex; align-items: center; justify-content: flex-start; gap: 8px; flex-wrap: wrap; padding: 8px 0 10px; border-bottom: 1px solid #f0f0f0; margin-bottom: 8px; }
+.detail-toolbar { display: flex; align-items: center; justify-content: flex-start; gap: 8px; flex-wrap: wrap; padding: 8px 0 10px; border-bottom: 1px solid #f0f0f0; margin-bottom: 8px; flex: 0 0 auto; }
 .detail-toolbar-edit { margin-left: auto; }
 .detail-toolbar .btn-sm-edit { margin: 0; }
 .component-body { flex:1; padding:20px 16px; max-width:1120px; width:100%; margin:0 auto; overflow-y:auto; }
@@ -352,12 +352,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .detail-customer-value { color: #1a1a2e; font-size: 13px; font-weight: 800; word-break: break-word; }
 .detail-customer-value.price { color: #1a8c3e; font-size: 16px; }
 .detail-customer-note { color: #8a94a6; font-size: 11px; line-height: 1.45; margin-top: 8px; }
-.detail-lower-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, .9fr); gap: 12px; align-items: start; margin-top: 10px; }
+.detail-lower-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, .9fr); gap: 12px; align-items: stretch; margin-top: 10px; flex: 1 1 auto; min-height: 0; overflow: hidden; }
 .detail-lower-grid.detail-lower-count-1 { grid-template-columns: minmax(0, 1fr); }
-.detail-lower-panel { min-width: 0; }
-.detail-lower-panel #kikan-wrap { overflow-x: auto; }
-.detail-lower-panel .detail-customer-section { margin-top: 0; }
-.detail-lower-panel .kikan-section-title { margin-top: 0; }
+.detail-lower-panel { min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.detail-lower-panel #kikan-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; }
+.detail-lower-panel .detail-customer-section { margin-top: 0; min-height: 0; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+.detail-lower-panel .kikan-section-title,
+.detail-lower-panel .price-section-title { margin-top: 0; flex: 0 0 auto; }
+.detail-lower-panel #detail-customer-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; }
 .customer-setting-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0 12px; }
 .customer-check { border: 1px solid #e6ebf3; border-radius: 8px; padding: 9px 10px; display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #334155; background: #fff; line-height: 1.45; }
 .customer-check input { margin-top: 2px; flex: 0 0 auto; }
@@ -411,7 +413,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .spec-chip strong { color: #1a5faa; margin-left: 4px; }
 .detail-summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 4px 0 10px; border-bottom: 1px solid #f0f0f0; margin-bottom: 6px; }
 .detail-category-name { font-size: 15px; font-weight: 700; color: #1a1a2e; line-height: 1.4; }
-.detail-main-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 8px; }
+.detail-main-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 8px; flex: 0 0 auto; }
 .detail-column { min-width: 0; }
 .detail-block-title { font-size: 12px; font-weight: 700; color: #555; margin: 0 0 6px; }
 .detail-vehicle-grid { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 0; border-top: 1px solid #f0f0f0; margin-bottom: 10px; }
@@ -455,7 +457,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 }
 @media(max-width:720px){
   .detail-main-grid { grid-template-columns: 1fr; gap: 8px; }
-  .detail-lower-grid { grid-template-columns: 1fr; }
+  .detail-lower-grid { grid-template-columns: 1fr; grid-auto-rows: minmax(0, 1fr); }
   .detail-summary { flex-direction: column; gap: 6px; }
   .detail-maker-offset, .detail-maker-offset-standard, .detail-maker-offset-ac { margin-top: 8px; }
   .detail-vehicle-grid { grid-template-columns: 112px minmax(0, 1fr); }
@@ -637,11 +639,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .panel-top-add { flex-shrink: 0; }
 .panel-close-btn { background: #e8e8e8; border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #333; }
 .panel-close-btn:active { background: #d0d0d0; }
-.panel-scroll  { flex: 1; overflow-y: auto; }
-.panel-inner   { display: flex; gap: 0; min-height: 100%; }
+.panel-scroll  { flex: 1; overflow: hidden; min-height: 0; }
+.panel-inner   { display: flex; gap: 0; height: 100%; min-height: 0; }
 
 /* 左カラム：部品情報・価格 */
-.panel-left  { flex: 1; min-width: 0; padding: 14px 16px 8px; overflow-y: auto; }
+.panel-left  { flex: 1; min-width: 0; min-height: 0; padding: 14px 16px 8px; overflow: hidden; display: flex; flex-direction: column; }
 
 /* 右カラム：画像（常に一定幅を確保。画像なしでも空欄として表示） */
 .panel-right {
@@ -689,7 +691,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .upload-input { display: none; }
 @media (max-width: 767px) {
   .panel-inner { flex-direction: column; min-height: 0; }
-  .panel-left { order: 1; overflow-y: visible; padding: 12px 14px 8px; }
+  .panel-left { order: 1; overflow: hidden; padding: 12px 14px 8px; }
   .panel-right {
     order: 2;
     width: auto;
@@ -2371,8 +2373,10 @@ var TRANSLATIONS = {
     mi_customer_access_desc: "得意先閲覧ユーザーに見せる商品範囲・価格表示ルールを設定します。",
     mi_core_list_title: "コアリスト",
     mi_core_list_desc: "基幹商品に紐づくコア品番・数量・置き場を登録します。",
-    mi_product_kind_stock_title: "商品区分管理",
-    mi_product_kind_stock_desc: "リビルト・社外新品などの商品区分別に在庫と構成部品を確認・更新します。",
+    mi_product_kind_stock_title: "製品区分管理",
+    mi_product_kind_stock_desc: "リビルト・社外新品の製品区分別に在庫と構成部品を確認・更新します。",
+    mi_inventory_stock_title: "在庫管理",
+    mi_inventory_stock_desc: "中古コアなど、商品ではない在庫の数量・置場・履歴を管理します。",
     mi_finished_label_title: "完品ラベル・QRシール",
     mi_finished_label_desc: "製造完了品のA6ラベルとQRシールを発行し、履歴を保存します。",
     mi_production_ranking_title: "製造予定ランキング",
@@ -2418,6 +2422,7 @@ var TRANSLATIONS = {
     production_vehicle_section: "車両情報",
     production_component_section: "構成部品",
     product_kind_section: "商品区分",
+    inventory_kind_section: "在庫区分",
     product_kind_rebuilt: "リビルト",
     product_kind_aftermarket_new: "社外新品",
     product_kind_used_core: "中古コア",
@@ -2495,7 +2500,7 @@ var TRANSLATIONS = {
     finished_label_no_product: "先に発行対象を選択してください。",
     finished_label_count: "{n} 件表示",
     finished_label_history_empty: "この品番の発行履歴はありません。",
-    screen_product_kind_stock_title: "商品区分管理",
+    screen_product_kind_stock_title: "製品区分管理",
     production_source_section: "統合元",
     img_section: "画像",
     btn_upload: "写真を追加する",
@@ -3030,8 +3035,10 @@ var TRANSLATIONS = {
     mi_customer_access_desc: "Configure product visibility and sales price display for customer viewer users.",
     mi_core_list_title: "CORE List",
     mi_core_list_desc: "Register core part numbers, quantities, and locations for master products.",
-    mi_product_kind_stock_title: "Product-Kind Management",
-    mi_product_kind_stock_desc: "Review and update stock and component parts by product kind such as rebuilt and aftermarket new.",
+    mi_product_kind_stock_title: "Product Variant Management",
+    mi_product_kind_stock_desc: "Review and update stock and component parts for product variants such as rebuilt and aftermarket new.",
+    mi_inventory_stock_title: "Inventory Management",
+    mi_inventory_stock_desc: "Manage quantities, locations, and history for non-product inventory such as used cores.",
     mi_finished_label_title: "Finished Label / QR",
     mi_finished_label_desc: "Issue A6 finished-product labels and QR seals, then save the issue history.",
     mi_production_ranking_title: "Production Ranking",
@@ -3077,6 +3084,7 @@ var TRANSLATIONS = {
     production_vehicle_section: "Vehicle info",
     production_component_section: "Components",
     product_kind_section: "Product Kind",
+    inventory_kind_section: "Inventory Type",
     product_kind_rebuilt: "Rebuilt",
     product_kind_aftermarket_new: "Aftermarket New",
     product_kind_used_core: "Used Core",
@@ -3154,7 +3162,7 @@ var TRANSLATIONS = {
     finished_label_no_product: "Select an issue target first.",
     finished_label_count: "{n} rows",
     finished_label_history_empty: "No issue history for this product.",
-    screen_product_kind_stock_title: "Product-Kind Management",
+    screen_product_kind_stock_title: "Product Variant Management",
     production_source_section: "Merged sources",
     img_section: "Images",
     btn_upload: "Add Photos",
@@ -3701,8 +3709,10 @@ var TRANSLATIONS = {
     mi_customer_access_desc: "设置客户浏览用户可见的商品范围和销售价格显示规则。",
     mi_core_list_title: "CORE清单",
     mi_core_list_desc: "登记基干商品对应的CORE编号、数量和位置。",
-    mi_product_kind_stock_title: "商品区分管理",
-    mi_product_kind_stock_desc: "按再制造、副厂新品等商品区分确认和更新库存与构成零件。",
+    mi_product_kind_stock_title: "产品区分管理",
+    mi_product_kind_stock_desc: "按再制造、副厂新品等产品区分确认和更新库存与构成零件。",
+    mi_inventory_stock_title: "库存管理",
+    mi_inventory_stock_desc: "管理旧芯等非商品库存的数量、库位和履历。",
     mi_finished_label_title: "完品标签・QR贴纸",
     mi_finished_label_desc: "发行完品A6标签和QR贴纸，并保存历史。",
     mi_production_ranking_title: "生产指示排行",
@@ -3743,6 +3753,7 @@ var TRANSLATIONS = {
     production_vehicle_section: "车辆信息",
     production_component_section: "构成零件",
     product_kind_section: "商品区分",
+    inventory_kind_section: "库存区分",
     product_kind_rebuilt: "再制造",
     product_kind_aftermarket_new: "副厂新品",
     product_kind_used_core: "旧芯",
@@ -3820,7 +3831,7 @@ var TRANSLATIONS = {
     finished_label_no_product: "请先选择发行对象。",
     finished_label_count: "显示 {n} 条",
     finished_label_history_empty: "此品号没有发行历史。",
-    screen_product_kind_stock_title: "商品区分管理",
+    screen_product_kind_stock_title: "产品区分管理",
     production_source_section: "合并来源",
     img_section: "图片",
     btn_upload: "添加照片",
@@ -4359,7 +4370,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.232";
+var APP_VERSION       = "v1.1.234";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -4389,6 +4400,7 @@ var productKindStockComponentMetaMap = {};
 var productKindStockPriceMap = {};
 var productKindStockHistoryVariantId = null;
 var productKindStockHistoryRows = [];
+var productKindStockMode = "product";
 var finishedLabelTemplates = [];
 var finishedLabelProducts = [];
 var finishedLabelInstructionMap = {};
@@ -4618,6 +4630,9 @@ function canSeeCoreStockInfo() {
   return canSeeInternalBusinessInfo();
 }
 function canViewProductKindStockMgmt() {
+  return canSeeCoreStockInfo();
+}
+function canViewInventoryStockMgmt() {
   return canSeeCoreStockInfo();
 }
 function canEditProductKindStockMgmt() {
@@ -5378,6 +5393,7 @@ function renderMenu() {
     { icon: "&#x1F4B0;", titleKey: "sales_pricing_title", descKey: "sales_pricing_mgmt_desc", action: "sales-pricing-mgmt", available: canViewSalesPricing() },
     { icon: "&#x1F4E6;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canViewManagementScreen() },
     { icon: "&#x1F4E6;", titleKey: "mi_product_kind_stock_title", descKey: "mi_product_kind_stock_desc", action: "product-kind-stock-mgmt", available: canViewProductKindStockMgmt() },
+    { icon: "&#x1F4E6;", titleKey: "mi_inventory_stock_title", descKey: "mi_inventory_stock_desc", action: "inventory-stock-mgmt", available: canViewInventoryStockMgmt() },
     { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canViewManagementScreen() },
     { icon: "&#x2699;", titleKey: "mi_api_settings_title", descKey: "mi_api_settings_desc", action: "api-settings", available: canManageSharedSettings() },
     { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: canViewOperationLogs() }
@@ -5435,6 +5451,7 @@ function renderMenu() {
       else if (card.dataset.action === "sales-pricing-mgmt") enterSalesPricingMgmt();
       else if (card.dataset.action === "core-list-mgmt") enterCoreListMgmt();
       else if (card.dataset.action === "product-kind-stock-mgmt") enterProductKindStockMgmt();
+      else if (card.dataset.action === "inventory-stock-mgmt") enterInventoryStockMgmt();
       else if (card.dataset.action === "production-ranking-mgmt") enterProductionRankingMgmt();
       else if (card.dataset.action === "kikan-mgmt") enterKikanMgmt();
       else if (card.dataset.action === "rakuten-price") enterRakutenPrice();
@@ -7712,13 +7729,67 @@ async function deleteCoreListRow(id) {
 // =============================================
 // 商品区分在庫管理
 // =============================================
-async function enterProductKindStockMgmt() {
-  if (!canViewProductKindStockMgmt()) { alert(t("err_perm")); return; }
+function productKindStockModeTitleKey() {
+  return productKindStockMode === "inventory" ? "mi_inventory_stock_title" : "screen_product_kind_stock_title";
+}
+
+function productKindStockAllowedKinds() {
+  return productKindStockMode === "inventory" ? ["used_core"] : ["rebuilt", "aftermarket_new"];
+}
+
+function productKindStockKindAllowed(kind) {
+  if (!kind) return false;
+  return productKindStockAllowedKinds().indexOf(normalizeProductKind(kind)) >= 0;
+}
+
+function productKindStockDefaultKindForProduct(product, selectedKind) {
+  if (selectedKind && productKindStockKindAllowed(selectedKind)) return normalizeProductKind(selectedKind);
+  var defaultKind = product && product.default_product_kind ? normalizeProductKind(product.default_product_kind) : "";
+  if (defaultKind && productKindStockKindAllowed(defaultKind)) return defaultKind;
+  return productKindStockAllowedKinds()[0] || "rebuilt";
+}
+
+function configureProductKindStockMode(mode) {
+  productKindStockMode = mode === "inventory" ? "inventory" : "product";
+  var title = document.querySelector("#screen-product-kind-stock-mgmt .logo-text");
+  if (title) {
+    var key = productKindStockModeTitleKey();
+    title.setAttribute("data-i18n", key);
+    title.textContent = t(key);
+  }
+  var select = document.getElementById("product-kind-stock-kind");
+  if (!select) return;
+  var current = select.value || "";
+  var html = "";
+  if (productKindStockMode === "product") {
+    html += "<option value=''>" + esc(t("product_kind_stock_kind_all")) + "</option>";
+  }
+  productKindStockAllowedKinds().forEach(function(kind) {
+    html += "<option value='" + esc(kind) + "'>" + esc(productKindLabel(kind)) + "</option>";
+  });
+  select.innerHTML = html;
+  if (productKindStockMode === "inventory") {
+    select.value = "used_core";
+    select.disabled = true;
+  } else {
+    select.disabled = false;
+    select.value = productKindStockKindAllowed(current) ? normalizeProductKind(current) : "";
+  }
+}
+
+async function enterProductKindStockMgmt(mode) {
+  var inventoryMode = mode === "inventory";
+  if (inventoryMode ? !canViewInventoryStockMgmt() : !canViewProductKindStockMgmt()) { alert(t("err_perm")); return; }
   showScreen("product-kind-stock-mgmt");
+  configureProductKindStockMode(inventoryMode ? "inventory" : "product");
   var saveBtn = document.getElementById("btn-product-kind-stock-save");
   if (saveBtn) saveBtn.style.display = canEditProductKindStockMgmt() ? "" : "none";
   await populateProductKindStockCategoryOptions();
   renderProductKindStockEmpty();
+}
+
+async function enterInventoryStockMgmt() {
+  return await enterProductKindStockMgmt("inventory");
 }
 
 function renderProductKindStockEmpty() {
@@ -7764,7 +7835,10 @@ async function populateProductKindStockCategoryOptions() {
 
 function applyProductKindStockVariantFilters(query, kind, state) {
   query = query.eq("is_active", true);
-  if (kind) query = query.eq("product_kind", normalizeProductKind(kind));
+  var allowedKinds = productKindStockAllowedKinds();
+  kind = kind ? normalizeProductKind(kind) : "";
+  if (kind && allowedKinds.indexOf(kind) >= 0) query = query.eq("product_kind", kind);
+  else if (allowedKinds.length) query = query.in("product_kind", allowedKinds);
   if (state === "stocked") query = query.gt("stock_qty", 0);
   if (state === "empty") query = query.or("stock_qty.is.null,stock_qty.eq.0");
   return query;
@@ -7884,7 +7958,7 @@ function productKindStockPriceForRow(row) {
 }
 
 function productKindStockAllKinds() {
-  return ["rebuilt", "aftermarket_new", "used_core", "other"];
+  return productKindStockAllowedKinds();
 }
 
 function productKindStockExistingKinds(dkdId) {
@@ -8009,6 +8083,8 @@ async function loadProductKindStockMgmt() {
   var q = normalizeAsciiWidth(rawQ).trim();
   var category = document.getElementById("product-kind-stock-category").value || "";
   var kind = document.getElementById("product-kind-stock-kind").value || "";
+  kind = kind && productKindStockKindAllowed(kind) ? normalizeProductKind(kind) : "";
+  if (productKindStockMode === "inventory") kind = "used_core";
   var state = document.getElementById("product-kind-stock-state").value || "";
   var productRows = [];
   var variants;
@@ -8049,7 +8125,7 @@ async function loadProductKindStockMgmt() {
       productKindStockRows.push({
         product_variant_id: null,
         dkd_shohin_id: id,
-        product_kind: normalizeProductKind(kind || p.default_product_kind || "rebuilt"),
+        product_kind: productKindStockDefaultKindForProduct(p, kind),
         sl_part_id: null,
         display_label: "",
         stock_qty: null,
@@ -8114,10 +8190,13 @@ function renderProductKindStockMgmt() {
   }
 
   var editable = canEditProductKindStockMgmt();
-  var showBasePrice = canViewBasePrice();
-  var showPriceAction = canViewSalesPricing();
+  var inventoryMode = productKindStockMode === "inventory";
+  var showProductColumns = !inventoryMode;
+  var showBasePrice = showProductColumns && canViewBasePrice();
+  var showPriceAction = showProductColumns && canViewSalesPricing();
   var html = "<div class='stock-mgmt-table-wrap'><table class='mgmt-table stock-mgmt-table'>";
-  html += "<tr><th>" + esc(t("f_genuine_pn")) + "</th><th>" + esc(t("f_mfr_pn")) + "</th><th>" + esc(t("f_manufacturer")) + "</th><th>" + esc(t("product_kind_section")) + "</th><th>" + esc(t("product_kind_component_count")) + "</th><th>" + esc(t("product_kind_component_cost")) + "</th>";
+  html += "<tr><th>" + esc(t("f_genuine_pn")) + "</th><th>" + esc(t("f_mfr_pn")) + "</th><th>" + esc(t("f_manufacturer")) + "</th><th>" + esc(t(inventoryMode ? "inventory_kind_section" : "product_kind_section")) + "</th>";
+  if (showProductColumns) html += "<th>" + esc(t("product_kind_component_count")) + "</th><th>" + esc(t("product_kind_component_cost")) + "</th>";
   if (showBasePrice) html += "<th>" + esc(t("product_kind_base_price")) + "</th>";
   html += "<th>" + esc(t("product_kind_stock_qty")) + "</th><th>" + esc(t("product_kind_stock_location")) + "</th><th>" + esc(t("product_kind_stock_note")) + "</th><th>" + esc(t("component_actions")) + "</th></tr>";
   productKindStockRows.forEach(function(row) {
@@ -8135,8 +8214,10 @@ function renderProductKindStockMgmt() {
     html += "<td><div class='mgmt-pn'>" + esc(p.manufacturer_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(productCategoryLabel(p) || "-") + "</div></td>";
     html += "<td>" + esc(p.manufacturer || "-") + "</td>";
     html += "<td><div class='stock-mgmt-kind'><span class='product-kind-pill " + productKindClass(kind) + "'>" + esc(productKindLabel(kind)) + "</span><span class='mgmt-sub'>" + esc(row.display_label || sl || "-") + "</span></div></td>";
-    html += "<td><strong>" + esc(String(compMeta.count || 0)) + "</strong></td>";
-    html += "<td>" + esc(compMeta.priceKnown ? formatYen(compMeta.unitTotal) : "-") + "</td>";
+    if (showProductColumns) {
+      html += "<td><strong>" + esc(String(compMeta.count || 0)) + "</strong></td>";
+      html += "<td>" + esc(compMeta.priceKnown ? formatYen(compMeta.unitTotal) : "-") + "</td>";
+    }
     if (showBasePrice) html += "<td><div class='price-value'>" + esc(priceText) + "</div><div class='mgmt-sub'>" + esc(price ? ([price.price_basis, price.effective_start].filter(Boolean).join(" / ")) : t("product_kind_no_base_price")) + "</div></td>";
     html += "<td><input class='stock-mgmt-input stock-mgmt-qty' type='number' min='0' step='1' data-stock-variant='" + esc(String(variantId)) + "' data-stock-field='stock_qty' value='" + esc(row.stock_qty == null ? "" : String(row.stock_qty)) + "'" + disabled + "></td>";
     html += "<td><input class='stock-mgmt-input' type='text' data-stock-variant='" + esc(String(variantId)) + "' data-stock-field='stock_location' value='" + esc(row.stock_location || "") + "'" + disabled + "></td>";
@@ -8144,7 +8225,7 @@ function renderProductKindStockMgmt() {
     html += "<td><div class='stock-mgmt-actions'>";
     if (hasVariant) {
       html += "<button class='btn-sm-edit production-action-secondary' data-stock-open-history='" + esc(String(variantId)) + "'>" + esc(t("product_kind_stock_history_btn")) + "</button>";
-      html += "<button class='btn-sm-edit production-action-secondary' data-stock-open-components='" + esc(String(variantId)) + "'>" + esc(t("product_kind_open_components")) + "</button>";
+      if (showProductColumns) html += "<button class='btn-sm-edit production-action-secondary' data-stock-open-components='" + esc(String(variantId)) + "'>" + esc(t("product_kind_open_components")) + "</button>";
       if (showPriceAction) html += "<button class='btn-sm-edit' data-stock-open-price='" + esc(String(variantId)) + "'>" + esc(t("product_kind_open_price")) + "</button>";
     }
     html += renderProductKindStockAddKindHtml(row);
