@@ -2392,7 +2392,7 @@ var TRANSLATIONS = {
     menu_admin_desc: "権限のある管理機能をここにまとめて表示します",
     greeting: "ようこそ、{name} さん",
     mi_search_title: "品番検索",
-    mi_search_desc: "基幹商品マスタを品番・車種・メーカーで検索し、画像・構成部品・製造予定を確認します。",
+    mi_search_desc: "基幹商品マスタを品番で検索し、画像・構成部品・製造予定を確認します。",
     mi_production_title: "製造予定リスト",
     mi_production_desc: "製造アイテムをランキング・カテゴリ別に確認し、コア・構成部品・代替品を見ます。",
     mi_users_title: "ユーザー管理",
@@ -2413,7 +2413,7 @@ var TRANSLATIONS = {
     mi_report_desc: "在庫・出荷データの集計レポートを表示します。",
     tag_coming: "準備中",
     tag_admin_only: "管理者専用",
-    ph_search: "品番・車名・メーカー (ハイフン有無OK)",
+    ph_search: "品番で検索 (ハイフン有無OK)",
     btn_search: "検索",
     btn_clear: "クリア",
     btn_reload: "再読込",
@@ -2426,8 +2426,8 @@ var TRANSLATIONS = {
     filter_alt: "オルタネータ",
     loading: "読み込み中...",
     no_results: "該当する部品が見つかりません",
-    hint_search: "品番やキーワードを入力してください",
-    count_hint: "全 {n} 件 — 品番・キーワードを入力して検索",
+    hint_search: "品番を入力してください",
+    count_hint: "全 {n} 件 — 品番を入力して検索",
     count_results: "{n} 件表示 / 全 {m} 件",
     welcome_panel: "品番を検索して選択してください",
     production_search_title: "製造予定リスト",
@@ -3060,7 +3060,7 @@ var TRANSLATIONS = {
     menu_admin_desc: "Available administration features are grouped here",
     greeting: "Welcome, {name}",
     mi_search_title: "Part Number Search",
-    mi_search_desc: "Search master products and review images, components, and production instructions.",
+    mi_search_desc: "Search master products by part number and review images, components, and production instructions.",
     mi_production_title: "Production Instructions",
     mi_production_desc: "Review production items by ranking or category, including core stock, components, and alternatives.",
     mi_users_title: "User Management",
@@ -3081,7 +3081,7 @@ var TRANSLATIONS = {
     mi_report_desc: "View inventory and shipping summary reports.",
     tag_coming: "Coming Soon",
     tag_admin_only: "Admin Only",
-    ph_search: "Part No., Vehicle, Manufacturer (hyphens optional)",
+    ph_search: "Search by part number (hyphens optional)",
     btn_search: "Search",
     btn_clear: "Clear",
     btn_reload: "Reload",
@@ -3094,8 +3094,8 @@ var TRANSLATIONS = {
     filter_alt: "Alternator",
     loading: "Loading...",
     no_results: "No matching parts found",
-    hint_search: "Enter a part number or keyword",
-    count_hint: "{n} total — Enter part number or keyword",
+    hint_search: "Enter a part number",
+    count_hint: "{n} total — Enter a part number",
     count_results: "{n} results / {m} total",
     welcome_panel: "Search and select a part number",
     production_search_title: "Production Instructions",
@@ -3740,7 +3740,7 @@ var TRANSLATIONS = {
     menu_welcome_sub: "请选择要使用的功能",
     greeting: "欢迎，{name}",
     mi_search_title: "零件编号搜索",
-    mi_search_desc: "搜索基干商品主档，并确认图片、构成零件和生产指示。",
+    mi_search_desc: "按零件编号搜索基干商品主档，并确认图片、构成零件和生产指示。",
     mi_production_title: "生产指示",
     mi_production_desc: "按排行或分类查看生产项目，并确认CORE、构成零件和替代品。",
     mi_users_title: "用户管理",
@@ -3761,7 +3761,7 @@ var TRANSLATIONS = {
     mi_report_desc: "查看库存和出货汇总报告。",
     tag_coming: "即将推出",
     tag_admin_only: "仅限管理员",
-    ph_search: "零件编号、车型、制造商（有无连字符均可）",
+    ph_search: "按零件编号搜索（有无连字符均可）",
     btn_search: "搜索",
     btn_clear: "清除",
     btn_reload: "重新读取",
@@ -3773,8 +3773,8 @@ var TRANSLATIONS = {
     filter_alt: "发电机",
     loading: "加载中...",
     no_results: "未找到匹配的零件",
-    hint_search: "请输入零件编号或关键词",
-    count_hint: "共 {n} 件 — 请输入零件编号或关键词",
+    hint_search: "请输入零件编号",
+    count_hint: "共 {n} 件 — 请输入零件编号",
     count_results: "显示 {n} 件 / 共 {m} 件",
     welcome_panel: "请搜索并选择零件编号",
     production_search_title: "生产指示",
@@ -4416,7 +4416,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.239";
+var APP_VERSION       = "v1.1.240";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -10944,12 +10944,7 @@ function getFiltered() {
       p.genuine_body_part_number, p.manufacturer_body_part_number,
       p.genuine_clutch_part_number, p.manufacturer_clutch_part_number
     ].concat(slNums).some(function(v){ return normalizedStartsWith(v, q); });
-    var textMatch = !q || [
-      p.vehicle_manufacturer, p.manufacturer,
-      p.compatible_car_models, p.model,
-      p.category, p.category_ja, p.category_en, p.category_zh
-    ].some(function(v){ return normalizedContains(v, q); });
-    var ms = partMatch || textMatch;
+    var ms = partMatch;
     var mf = currentFilter.indexOf("cat:") === 0 ? (p.category_code || p.category) === currentFilter.slice(4) : true;
     return ms && mf;
   });
@@ -11070,12 +11065,7 @@ async function fetchSlProductsFromMapping(q, maxRows) {
         p.genuine_body_part_number, p.manufacturer_body_part_number,
         p.genuine_clutch_part_number, p.manufacturer_clutch_part_number
       ].some(function(v){ return normalizedStartsWith(v, query); });
-      var textMatch = [
-        p.vehicle_manufacturer, p.manufacturer,
-        p.compatible_car_models, p.model,
-        p.category, p.category_ja, p.category_en, p.category_zh
-      ].some(function(v){ return normalizedContains(v, query); });
-      return partMatch || textMatch;
+      return partMatch;
     });
   }
 
@@ -11287,12 +11277,12 @@ async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows) {
       "normalized_genuine_part_number_2.ilike.%" + normalized + "%",
       "normalized_manufacturer_part_number.ilike.%" + normalized + "%",
       "normalized_pulley_assy_part_number.ilike.%" + normalized + "%",
-      "normalized_daiko_part_number.ilike.%" + normalized + "%"
+      "normalized_daiko_part_number.ilike.%" + normalized + "%",
+      "normalized_genuine_body_part_number.ilike.%" + normalized + "%",
+      "normalized_manufacturer_body_part_number.ilike.%" + normalized + "%",
+      "normalized_genuine_clutch_part_number.ilike.%" + normalized + "%",
+      "normalized_manufacturer_clutch_part_number.ilike.%" + normalized + "%"
     ]);
-  }
-  if (raw) {
-    orParts.push("manufacturer.ilike.%" + raw + "%");
-    orParts.push("category.ilike.%" + raw + "%");
   }
   return await runCoreProductQuery(orParts, 2);
 }
@@ -11823,7 +11813,7 @@ function render() {
   if (allProducts.length >= productSearchLimit) {
     countText += " - " + productSearchLimit + " 件まで取得";
     if (productSearchLimit >= SEARCH_FETCH_LIMIT) {
-      countText += "。品番・キーワードで絞り込んでください";
+      countText += "。品番で絞り込んでください";
     }
   }
   document.getElementById("count-bar").textContent = countText;
