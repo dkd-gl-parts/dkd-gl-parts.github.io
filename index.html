@@ -461,7 +461,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ac-part-value { font-size: 13px; font-weight: 700; color: #1a1a2e; padding: 7px 4px; display: flex; align-items: center; word-break: break-all; }
 .ac-part-value-with-action { justify-content: space-between; gap: 8px; }
 .ac-part-value-text { min-width: 0; overflow-wrap: anywhere; }
-.detail-inline-actions { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .detail-inline-action { flex: 0 0 auto; white-space: nowrap; padding: 5px 9px; }
 .detail-main-grid .detail-table,
 .detail-main-grid .ac-part-grid { margin-bottom: 0; }
@@ -4432,7 +4431,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.248";
+var APP_VERSION       = "v1.1.249";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -12090,10 +12089,7 @@ function renderPanelStatic() {
     return html;
   }
   var componentButtonHtml = canSeeComponentInfo()
-    ? "<span class='detail-inline-actions'>" +
-      "<button class='btn-sm-edit btn-component-action detail-inline-action' id='btn-open-components'><span class='component-icon'>&#x1F9E9;</span> " + t("component_open_parts") + "</button>" +
-      "<button class='btn-sm-edit production-action-secondary detail-inline-action' id='btn-open-component-parallel-inline'>&#8644; " + t("component_open_parallel") + "</button>" +
-      "</span>"
+    ? "<button class='btn-sm-edit btn-component-action detail-inline-action' id='btn-open-components'><span class='component-icon'>&#x1F9E9;</span> " + t("component_open_parts") + "</button>"
     : "";
   var genuineHtml = "";
   var makerHtml = "";
@@ -12131,7 +12127,6 @@ function renderPanelStatic() {
     toolHtml += "<button class='btn-sm-edit' onclick='openRakutenForCurrentProduct()'>&#x1F4B4; " + t("rakuten_quick") + "</button>";
   }
   if (canSeeComponentInfo()) {
-    toolHtml += "<button class='btn-sm-edit' id='btn-open-component-parallel'>&#8644; " + t("component_open_parallel") + "</button>";
   }
   if (canEdit()) {
     toolHtml += "<button class='btn-sm-edit detail-toolbar-edit' id='btn-edit-current-product'>&#9998; " + t("btn_edit_part") + "</button>";
@@ -12177,11 +12172,7 @@ function renderPanelStatic() {
   if (editCurrentBtn) editCurrentBtn.addEventListener("click", openCoreProductEditFromSearch);
   bindProductKindPanelActions();
   var componentBtn = document.getElementById("btn-open-components");
-  var parallelBtn = document.getElementById("btn-open-component-parallel");
-  var parallelInlineBtn = document.getElementById("btn-open-component-parallel-inline");
   if (componentBtn) componentBtn.addEventListener("click", function(){ enterComponentsScreen("search"); });
-  if (parallelBtn) parallelBtn.addEventListener("click", function(){ enterComponentParallelScreen("search"); });
-  if (parallelInlineBtn) parallelInlineBtn.addEventListener("click", function(){ enterComponentParallelScreen("search"); });
   currentVehicleApplicationRows = [];
   loadCatalogVehicleSummary(document.getElementById("panel-body"), p);
   loadProductSpecsForCurrent();
