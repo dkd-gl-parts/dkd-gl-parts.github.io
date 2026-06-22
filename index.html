@@ -175,6 +175,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-note { font-size: 11px; color: #888; line-height: 1.5; }
 .component-compat-help { margin: 0 0 10px; padding: 8px 10px; border: 1px solid #dbe7f8; border-radius: 6px; background: #f7fbff; color: #334155; font-size: 11px; line-height: 1.6; }
 .component-compat-help strong { color: #1a1a2e; font-weight: 700; }
+.component-target-panel { margin: 0 0 12px; padding: 12px; border: 1px solid #dbe7f8; border-radius: 8px; background: #f7fbff; }
+.component-target-title { font-size: 12px; font-weight: 800; color: #1a1a2e; margin-bottom: 8px; }
+.component-target-controls { display: grid; grid-template-columns: minmax(180px, 240px) minmax(220px, 1fr); gap: 10px; align-items: end; }
+.component-target-field label { display: block; font-size: 11px; color: #667085; margin-bottom: 4px; }
+.component-target-field select { width: 100%; border: 1px solid #cdd7e7; border-radius: 7px; padding: 7px 8px; font-size: 12px; outline: none; background: #fff; }
+.component-target-help { margin-top: 8px; color: #667085; font-size: 11px; line-height: 1.5; }
 .component-add-panel { margin: 0 0 12px; padding: 12px; border: 1px solid #e5e9f2; border-radius: 8px; background: #fff; }
 .component-add-title { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-bottom: 10px; }
 .component-add-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
@@ -183,7 +189,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-add-field input:focus { border-color: #4f8ef7; }
 .component-add-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 @media(max-width:900px){ .component-add-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media(max-width:560px){ .component-add-grid { grid-template-columns: 1fr; } }
+@media(max-width:560px){ .component-add-grid, .component-target-controls { grid-template-columns: 1fr; } }
 .component-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 12px; }
 .component-table th { background: #f5f7fa; color: #555; font-weight: 600; padding: 6px 8px; text-align: left; border-bottom: 2px solid #e0e0e0; }
 .component-table td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
@@ -2953,6 +2959,14 @@ var TRANSLATIONS = {
     component_mode_same: "一致",
     component_mode_all: "全件",
     component_add_title: "構成部品を追加",
+    component_add_title_for_kind: "{kind} の構成部品を追加",
+    component_target_kind_title: "構成部品の対象",
+    component_target_kind_label: "区分",
+    component_target_variant_label: "対象在庫",
+    component_target_kind_help: "選択した区分に追加・表示します。社外新品のメーカー違いなどは対象在庫を選ぶと分けて登録できます。",
+    component_variant_auto: "区分標準",
+    component_variant_no_stock: "在庫区分未作成",
+    component_empty_for_kind: "{kind} の構成部品情報なし",
     component_add: "追加",
     component_unit_price: "単価",
     component_actions: "操作",
@@ -3613,6 +3627,14 @@ var TRANSLATIONS = {
     component_mode_same: "Same",
     component_mode_all: "All",
     component_add_title: "Add Component Part",
+    component_add_title_for_kind: "Add {kind} Component Part",
+    component_target_kind_title: "Component Target",
+    component_target_kind_label: "Kind",
+    component_target_variant_label: "Stock Target",
+    component_target_kind_help: "Components are shown and added for the selected kind. Choose a stock target to separate aftermarket-new makers or labels.",
+    component_variant_auto: "Kind Default",
+    component_variant_no_stock: "No stock target yet",
+    component_empty_for_kind: "No {kind} component data",
     component_add: "Add",
     component_unit_price: "Unit Price",
     component_actions: "Action",
@@ -4266,6 +4288,14 @@ var TRANSLATIONS = {
     component_mode_same: "一致",
     component_mode_all: "全部",
     component_add_title: "添加构成部件",
+    component_add_title_for_kind: "添加{kind}构成部件",
+    component_target_kind_title: "构成部件对象",
+    component_target_kind_label: "区分",
+    component_target_variant_label: "库存对象",
+    component_target_kind_help: "按选择的区分显示并添加。副厂新品有不同厂家时，可选择库存对象分开登记。",
+    component_variant_auto: "区分默认",
+    component_variant_no_stock: "未建立库存区分",
+    component_empty_for_kind: "{kind}没有构成部件信息",
     component_add: "添加",
     component_unit_price: "单价",
     component_actions: "操作",
@@ -4364,7 +4394,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.235";
+var APP_VERSION       = "v1.1.236";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -4381,6 +4411,7 @@ var componentReturnScreen = "search";
 var componentAlternativeRows = [];
 var componentAlternativeMap = {};
 var componentAlternativeBaseRow = null;
+var currentSelectedComponentVariantId = "";
 var productionInstructionRows = [];
 var productionInstructionMap = {};
 var coreListMgmtRows = [];
@@ -8409,6 +8440,7 @@ async function openProductKindStockComponents(variantId) {
   currentProductNominalSpec = null;
   currentImages = [];
   currentSelectedProductKind = normalizeProductKind(row.product_kind);
+  currentSelectedComponentVariantId = row.product_variant_id ? String(row.product_variant_id) : "";
   await enterComponentsScreen("product-kind-stock-mgmt");
 }
 
@@ -10487,6 +10519,56 @@ function selectedProductVariantId() {
     return (parseInt(a.product_variant_id || 0, 10) || 0) - (parseInt(b.product_variant_id || 0, 10) || 0);
   });
   return rows.length ? rows[0].product_variant_id : null;
+}
+
+function componentProductKindOptions() {
+  return ["rebuilt", "aftermarket_new"];
+}
+
+function componentVariantRowsForKind(kind) {
+  var dkdId = currentProduct ? productDkdId(currentProduct) : null;
+  kind = normalizeProductKind(kind || selectedProductKind());
+  return (currentProductVariants || []).filter(function(row) {
+    if (!row.product_variant_id) return false;
+    if (dkdId && row.dkd_shohin_id && String(row.dkd_shohin_id) !== String(dkdId)) return false;
+    return normalizeProductKind(row.product_kind) === kind && productDisplayKindAllowed(kind);
+  }).slice().sort(function(a, b) {
+    if (!!a.sl_part_id !== !!b.sl_part_id) return a.sl_part_id ? 1 : -1;
+    return (parseInt(a.product_variant_id || 0, 10) || 0) - (parseInt(b.product_variant_id || 0, 10) || 0);
+  });
+}
+
+function componentVariantLabel(row) {
+  if (!row) return t("component_variant_auto");
+  var kind = productKindLabel(row.product_kind || selectedProductKind());
+  var labels = [];
+  if (row.display_label) labels.push(row.display_label);
+  if (row.sl_part_id) labels.push(t("product_kind_sl") + " " + row.sl_part_id);
+  if (row.stock_location) labels.push(row.stock_location);
+  if (row.stock_qty !== null && row.stock_qty !== undefined && row.stock_qty !== "") labels.push(t("product_kind_stock_qty") + " " + row.stock_qty);
+  return kind + (labels.length ? " / " + labels.join(" / ") : " #" + String(row.product_variant_id || ""));
+}
+
+function selectedComponentVariantId() {
+  var id = parseInt(currentSelectedComponentVariantId || "", 10);
+  if (isNaN(id)) return null;
+  var found = componentVariantRowsForKind(selectedProductKind()).some(function(row) {
+    return parseInt(row.product_variant_id, 10) === id;
+  });
+  if (!found) {
+    currentSelectedComponentVariantId = "";
+    return null;
+  }
+  return id;
+}
+
+function componentUsageTargetLabel(row) {
+  var kind = productKindLabel(row && row.product_kind ? row.product_kind : selectedProductKind());
+  if (!row || !row.product_variant_id) return kind + " / " + t("component_variant_auto");
+  var found = componentVariantRowsForKind(row.product_kind).find(function(v) {
+    return parseInt(v.product_variant_id, 10) === parseInt(row.product_variant_id, 10);
+  });
+  return found ? componentVariantLabel(found) : (kind + " #" + String(row.product_variant_id));
 }
 
 function ensureSelectedProductKind(summary) {
@@ -12584,27 +12666,53 @@ function bindComponentPanelActions() {
 }
 
 function renderComponentKindSelectorHtml() {
-  var summary = productKindSummaryForProduct(currentProduct);
-  var selected = ensureSelectedProductKind(summary);
-  var options = currentProductKindOptions(summary);
-  var html = "<div class='component-add-panel' style='padding:10px 12px'>";
-  html += "<div class='product-kind-control-row'><label for='component-product-kind-select'>" + esc(t("product_kind_current")) + "</label>";
+  var options = componentProductKindOptions();
+  var selected = selectedProductKind();
+  if (options.indexOf(selected) < 0) selected = "rebuilt";
+  currentSelectedProductKind = selected;
+  var variants = componentVariantRowsForKind(selected);
+  var selectedVariantId = selectedComponentVariantId();
+  var html = "<div class='component-target-panel'>";
+  html += "<div class='component-target-title'>" + esc(t("component_target_kind_title")) + "</div>";
+  html += "<div class='component-target-controls'>";
+  html += "<div class='component-target-field'><label for='component-product-kind-select'>" + esc(t("component_target_kind_label")) + "</label>";
   html += "<select id='component-product-kind-select' class='product-kind-select " + productKindClass(selected) + "'>";
   options.forEach(function(kind) {
     html += "<option class='" + productKindClass(kind) + "' value='" + esc(kind) + "'" + (kind === selected ? " selected" : "") + ">" + esc(productKindLabel(kind)) + "</option>";
   });
-  html += "</select></div></div>";
+  html += "</select></div>";
+  html += "<div class='component-target-field'><label for='component-product-variant-select'>" + esc(t("component_target_variant_label")) + "</label>";
+  html += "<select id='component-product-variant-select'>";
+  html += "<option value=''>" + esc(t("component_variant_auto")) + "</option>";
+  variants.forEach(function(row) {
+    var id = parseInt(row.product_variant_id, 10);
+    html += "<option value='" + esc(String(id)) + "'" + (selectedVariantId === id ? " selected" : "") + ">" + esc(componentVariantLabel(row)) + "</option>";
+  });
+  html += "</select></div>";
+  html += "</div>";
+  html += "<div class='component-target-help'>" + esc(t("component_target_kind_help")) + (variants.length ? "" : " " + esc(t("component_variant_no_stock"))) + "</div>";
+  html += "</div>";
   return html;
 }
 
 function bindComponentKindSelector() {
   var select = document.getElementById("component-product-kind-select");
-  if (!select) return;
-  select.onchange = function() {
-    currentSelectedProductKind = normalizeProductKind(select.value || "rebuilt");
-    renderComponentAddPanel();
-    loadAssemblyComponentsForCurrent();
-  };
+  var variantSelect = document.getElementById("component-product-variant-select");
+  if (select) {
+    select.onchange = function() {
+      currentSelectedProductKind = normalizeProductKind(select.value || "rebuilt");
+      currentSelectedComponentVariantId = "";
+      renderComponentAddPanel();
+      loadAssemblyComponentsForCurrent();
+    };
+  }
+  if (variantSelect) {
+    variantSelect.onchange = function() {
+      currentSelectedComponentVariantId = variantSelect.value || "";
+      renderComponentAddPanel();
+      loadAssemblyComponentsForCurrent();
+    };
+  }
 }
 
 function renderComponentAddPanel() {
@@ -12618,7 +12726,7 @@ function renderComponentAddPanel() {
   }
   var manufacturer = (currentProduct && currentProduct.manufacturer) || "";
   html += "<div class='component-add-panel'>";
-  html += "<div class='component-add-title'>" + t("component_add_title") + "</div>";
+  html += "<div class='component-add-title'>" + esc(tf("component_add_title_for_kind", { kind: productKindLabel(selectedProductKind()) })) + "</div>";
   html += "<div class='component-add-grid'>";
   html += "<div class='component-add-field'><label>" + t("f_manufacturer") + "</label><input id='component-add-mfr' type='text' value='" + esc(manufacturer) + "'></div>";
   html += "<div class='component-add-field'><label>" + t("f_mfr_pn") + " *</label><input id='component-add-mfr-pn' type='text'></div>";
@@ -12669,7 +12777,7 @@ async function addAssemblyComponentForCurrent() {
     target_manufacturer_part_number: targetManufacturerPartNumber,
     target_genuine_part_number: currentProduct.genuine_part_number || null,
     target_product_kind: selectedProductKind(),
-    target_product_variant_id: selectedProductVariantId(),
+    target_product_variant_id: selectedComponentVariantId(),
     component_manufacturer: componentMfr,
     component_manufacturer_part_number: componentMfrPn,
     component_genuine_part_number: componentAddValue("component-add-genuine-pn") || null,
@@ -13060,7 +13168,7 @@ function renderAssemblyComponentRows() {
   if (!wrap) return;
   var rows = assemblyComponentRows || [];
   if (!rows.length) {
-    wrap.innerHTML = "<div class='component-empty'>" + t("component_none") + "</div>";
+    wrap.innerHTML = "<div class='component-empty'>" + esc(tf("component_empty_for_kind", { kind: productKindLabel(selectedProductKind()) })) + "</div>";
     return;
   }
   var hasActions = canEditInternalComponents();
@@ -13076,7 +13184,7 @@ function renderAssemblyComponentRows() {
     if (editing) {
       html += "<td>" + componentEditInput(row, "component_manufacturer_part_number", row.component_manufacturer_part_number) + "<div class='component-sub'>" + componentEditInput(row, "component_manufacturer", row.component_manufacturer || "") + "</div></td>";
       html += "<td>" + componentEditInput(row, "component_genuine_part_number", row.component_genuine_part_number || "") + "</td>";
-      html += "<td>" + componentEditInput(row, "component_part_name", row.component_name || row.component_part_name || "") + "</td>";
+      html += "<td>" + componentEditInput(row, "component_part_name", row.component_name || row.component_part_name || "") + "<div class='component-sub'>" + esc(componentUsageTargetLabel(row)) + "</div></td>";
       html += "<td>" + componentEditInput(row, "component_position", row.component_position || row.source_code || "") + "</td>";
       html += "<td>" + componentEditInput(row, "quantity", row.quantity || "1") + "</td>";
       html += "<td>" + componentEditInput(row, "unit_price_jpy", row.unit_price_jpy || "") + "</td>";
@@ -13087,7 +13195,7 @@ function renderAssemblyComponentRows() {
     } else {
       html += "<td><div class='component-pn'>" + esc(row.component_manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.component_manufacturer || "") + "</div></td>";
       html += "<td><div class='component-pn'>" + esc(row.component_genuine_part_number || "-") + "</div></td>";
-      html += "<td>" + esc(row.component_name || row.component_part_name || "-") + "</td>";
+      html += "<td>" + esc(row.component_name || row.component_part_name || "-") + "<div class='component-sub'>" + esc(componentUsageTargetLabel(row)) + "</div></td>";
       html += "<td>" + esc(row.component_position || row.source_code || "-") + "</td>";
       html += "<td>" + esc(row.quantity || "-") + "</td>";
       html += "<td>" + esc(formatYen(row.unit_price_jpy)) + "</td>";
@@ -13150,7 +13258,14 @@ async function loadAssemblyComponentsForCurrent() {
     wrap.innerHTML = "<div class='component-empty'>" + t("component_none") + "</div>";
     return;
   }
+  var selectedVariantId = selectedComponentVariantId();
   var rows = r.data || [];
+  if (selectedVariantId) {
+    rows = rows.filter(function(row) {
+      if (!row.product_variant_id) return true;
+      return parseInt(row.product_variant_id, 10) === selectedVariantId;
+    });
+  }
 
   rows.sort(function(a, b) {
     var ap = String(a.component_position || "");
