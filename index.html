@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://openapi.rakuten.co.jp; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co https://openapi.rakuten.co.jp;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co;">
 <title>D-CATS</title>
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -192,7 +192,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-empty-state { border: 1px dashed #d7e3f5; border-radius: 8px; background: #fbfdff; padding: 12px; color: #667085; font-size: 12px; line-height: 1.6; }
 .component-empty-title { color: #1a1a2e; font-weight: 800; margin-bottom: 3px; }
 .component-add-panel { margin: 0 0 12px; padding: 12px; border: 1px solid #e5e9f2; border-radius: 8px; background: #fff; }
+.component-add-compact { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 10px; }
 .component-add-title { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-bottom: 10px; }
+.component-add-compact .component-add-title { margin-bottom: 0; }
+.component-add-current { color: #667085; font-size: 11px; margin-top: 2px; }
+.component-add-card { max-width: 920px; }
 .component-add-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .component-add-field label { display: block; font-size: 11px; color: #667085; margin-bottom: 4px; }
 .component-add-field input { width: 100%; border: 1px solid #d7dce5; border-radius: 6px; padding: 7px 8px; font-size: 12px; outline: none; background: #fff; }
@@ -1286,6 +1290,60 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   </div>
 </div>
 
+<div class="form-overlay" id="component-add-overlay">
+  <div class="form-card component-add-card">
+    <h3 id="component-add-modal-title" data-i18n="component_add_title">構成部品を追加</h3>
+    <div class="form-help" id="component-add-modal-help">-</div>
+    <div class="component-add-grid">
+      <div class="component-add-field">
+        <label data-i18n="f_manufacturer">メーカー</label>
+        <input id="component-add-mfr" type="text">
+      </div>
+      <div class="component-add-field">
+        <label><span data-i18n="f_mfr_pn">メーカー品番</span> *</label>
+        <input id="component-add-mfr-pn" type="text">
+      </div>
+      <div class="component-add-field">
+        <label data-i18n="f_genuine_pn">純正品番</label>
+        <input id="component-add-genuine-pn" type="text">
+      </div>
+      <div class="component-add-field">
+        <label data-i18n="component_name">部品名</label>
+        <input id="component-add-name" type="text">
+      </div>
+      <div class="component-add-field">
+        <label data-i18n="component_position">図番/位置</label>
+        <input id="component-add-position" type="text">
+      </div>
+      <div class="component-add-field">
+        <label data-i18n="component_quantity">数量</label>
+        <input id="component-add-qty" type="text" value="1">
+      </div>
+      <div class="component-add-field">
+        <label data-i18n="component_unit_price">単価</label>
+        <input id="component-add-unit-price" type="number" min="0" step="1">
+      </div>
+      <div class="component-add-field">
+        <label data-i18n="component_interchange">互</label>
+        <input id="component-add-interchange" type="text">
+      </div>
+      <div class="component-add-field">
+        <label data-i18n="component_start_period">始期</label>
+        <input id="component-add-start" type="text">
+      </div>
+      <div class="component-add-field">
+        <label data-i18n="component_end_period">終期</label>
+        <input id="component-add-end" type="text">
+      </div>
+    </div>
+    <div class="form-footer">
+      <button class="btn-cancel" id="btn-component-add-cancel" type="button" data-i18n="component_cancel">キャンセル</button>
+      <button class="btn-primary" id="btn-component-add" type="button" data-i18n="component_add">追加</button>
+    </div>
+    <div class="reg-error" id="component-add-error"></div>
+  </div>
+</div>
+
 <div class="form-overlay" id="component-alternative-overlay">
   <div class="form-modal">
     <h3 data-i18n="component_alternative_modal_title">外品代替品を追加</h3>
@@ -2371,6 +2429,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 var SUPABASE_URL = "https://jqoeqximtwfpqwzngutj.supabase.co";
 var SUPABASE_KEY = "sb_publishable_TXdCwBQOD_s3N0TqFCDOAw_8B44a0kv";
 var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var RAKUTEN_EDGE_FUNCTION_NAME = "rakuten-search";
+var RAKUTEN_USE_EDGE_FUNCTION = true;
+var RAKUTEN_ALLOW_DIRECT_BROWSER_FALLBACK = false;
 
 // =============================================
 // 翻訳辞書（i18n）
@@ -2996,6 +3057,7 @@ var TRANSLATIONS = {
     component_mode_all: "全件",
     component_add_title: "構成部品を追加",
     component_add_title_for_kind: "{kind} の構成部品を追加",
+    component_add_open: "構成部品を追加",
     component_target_kind_title: "構成部品の対象",
     component_target_kind_label: "区分",
     component_target_variant_label: "対象在庫",
@@ -3668,6 +3730,7 @@ var TRANSLATIONS = {
     component_mode_all: "All",
     component_add_title: "Add Component Part",
     component_add_title_for_kind: "Add {kind} Component Part",
+    component_add_open: "Add Component Part",
     component_target_kind_title: "Component Target",
     component_target_kind_label: "Kind",
     component_target_variant_label: "Stock Target",
@@ -4333,6 +4396,7 @@ var TRANSLATIONS = {
     component_mode_all: "全部",
     component_add_title: "添加构成部件",
     component_add_title_for_kind: "添加{kind}构成部件",
+    component_add_open: "添加构成部件",
     component_target_kind_title: "构成部件对象",
     component_target_kind_label: "区分",
     component_target_variant_label: "库存对象",
@@ -4442,7 +4506,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.251";
+var APP_VERSION       = "v1.1.252";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -6387,13 +6451,7 @@ async function getRakutenKeys() {
     fallback.appId = localStorage.getItem("dcats_rakuten_app_id") || "";
     fallback.accessKey = localStorage.getItem("dcats_rakuten_access_key") || "";
   } catch(e) {}
-  var r = await sb.from("app_settings").select("setting_value").eq("setting_key", "rakuten_api").maybeSingle();
-  if (r.error) return fallback;
-  var v = (r.data && r.data.setting_value) || {};
-  return {
-    appId: v.applicationId || fallback.appId || "",
-    accessKey: v.accessKey || fallback.accessKey || ""
-  };
+  return RAKUTEN_ALLOW_DIRECT_BROWSER_FALLBACK ? fallback : { appId: "", accessKey: "" };
 }
 
 async function loadRakutenKeyFields() {
@@ -6402,31 +6460,31 @@ async function loadRakutenKeyFields() {
   if (settingsCard) settingsCard.style.display = canManageSharedSettings() ? "" : "none";
   var appEl = document.getElementById("rakuten-app-id");
   var keyEl = document.getElementById("rakuten-access-key");
+  var proxyMode = rakutenUsesServerProxy() && !RAKUTEN_ALLOW_DIRECT_BROWSER_FALLBACK;
   if (appEl) appEl.value = keys.appId;
   if (keyEl) keyEl.value = keys.accessKey;
-  var canSave = canManageSharedSettings();
+  var canSave = canManageSharedSettings() && !proxyMode;
   var saveBtn = document.getElementById("btn-rakuten-save-keys");
   if (saveBtn) saveBtn.style.display = canSave ? "" : "none";
-  if (appEl) appEl.readOnly = !canSave;
-  if (keyEl) keyEl.readOnly = !canSave;
+  var diagnosticBtn = document.getElementById("btn-rakuten-open-diagnostic");
+  if (diagnosticBtn) diagnosticBtn.style.display = proxyMode ? "none" : "";
+  if (appEl) appEl.readOnly = !canSave || proxyMode;
+  if (keyEl) keyEl.readOnly = !canSave || proxyMode;
+  if (proxyMode) setRakutenStatus("Rakuten API keys are managed in Supabase Edge Function secrets.", false);
 }
 
 async function saveRakutenKeys() {
+  if (!RAKUTEN_ALLOW_DIRECT_BROWSER_FALLBACK) {
+    setRakutenStatus("Rakuten API keys are managed in Supabase Edge Function secrets.", false);
+    return;
+  }
   if (!canManageSharedSettings()) { setRakutenStatus(t("rakuten_key_admin_only"), true); return; }
   var appId = document.getElementById("rakuten-app-id").value.trim();
   var accessKey = document.getElementById("rakuten-access-key").value.trim();
-  var payload = {
-    setting_key: "rakuten_api",
-    setting_value: { applicationId: appId, accessKey: accessKey },
-    updated_by: currentUser ? currentUser.id : null,
-    updated_at: new Date().toISOString()
-  };
-  var r = await sb.from("app_settings").upsert(payload, { onConflict: "setting_key" });
-  if (r.error) { setRakutenStatus(t("msg_save_err") + ": " + r.error.message, true); return; }
   try {
-    localStorage.removeItem("dcats_rakuten_app_id");
-    localStorage.removeItem("dcats_rakuten_access_key");
-  } catch(e) {}
+    localStorage.setItem("dcats_rakuten_app_id", appId);
+    localStorage.setItem("dcats_rakuten_access_key", accessKey);
+  } catch(e) { setRakutenStatus(t("msg_save_err") + ": " + e.message, true); return; }
   setRakutenStatus(t("rakuten_saved"), false);
 }
 
@@ -6768,6 +6826,61 @@ async function rakutenFetchJson(url) {
   return data;
 }
 
+function rakutenUsesServerProxy() {
+  return !!(RAKUTEN_USE_EDGE_FUNCTION && sb && sb.functions && typeof sb.functions.invoke === "function");
+}
+
+function rakutenCanUseDirectBrowserApi() {
+  return !RAKUTEN_USE_EDGE_FUNCTION || RAKUTEN_ALLOW_DIRECT_BROWSER_FALLBACK;
+}
+
+function rakutenBrowserKeysAvailable() {
+  var appEl = document.getElementById("rakuten-app-id");
+  var keyEl = document.getElementById("rakuten-access-key");
+  return !!(appEl && keyEl && appEl.value.trim() && keyEl.value.trim());
+}
+
+function buildRakutenApiRequest(keyword, ngKeyword, sort, hits, opts) {
+  opts = opts || {};
+  return {
+    keyword: keyword || "",
+    ngKeyword: ngKeyword || "",
+    sort: sort || "",
+    hits: hits || "",
+    availability: opts.availability != null ? opts.availability : "1",
+    field: opts.field != null ? opts.field : "1",
+    orFlag: opts.orFlag || "",
+    minimal: !!opts.minimal
+  };
+}
+
+async function rakutenInvokeServerProxy(payload) {
+  var r = await sb.functions.invoke(RAKUTEN_EDGE_FUNCTION_NAME, { body: payload });
+  if (r.error) {
+    var msg = r.error.message || String(r.error);
+    try {
+      if (r.error.context && typeof r.error.context.json === "function") {
+        var errBody = await r.error.context.json();
+        msg = (errBody && (errBody.error || errBody.message)) || msg;
+      }
+    } catch(e) {}
+    throw new Error(msg);
+  }
+  if (r.data && r.data.error) throw new Error(r.data.error);
+  return r.data && Object.prototype.hasOwnProperty.call(r.data, "data") ? r.data.data : r.data;
+}
+
+async function fetchRakutenApiData(keyword, ngKeyword, sort, hits, opts) {
+  var payload = buildRakutenApiRequest(keyword, ngKeyword, sort, hits, opts);
+  if (rakutenUsesServerProxy()) {
+    return rakutenInvokeServerProxy(payload);
+  }
+  if (!rakutenCanUseDirectBrowserApi()) {
+    throw new Error("rakuten_proxy_unavailable");
+  }
+  return rakutenFetchJson(buildRakutenApiUrl(keyword, ngKeyword, sort, hits, opts));
+}
+
 function yen(n) {
   if (n == null || isNaN(Number(n))) return "-";
   return "\u00a5" + Number(n).toLocaleString();
@@ -6880,6 +6993,15 @@ function rakutenFriendlyError(err) {
     var waitSeconds = Math.max(1, Math.ceil((rakutenApiCooldownUntil - Date.now()) / 1000));
     return tf("rakuten_rate_cooldown", { seconds: waitSeconds });
   }
+  if (msg.indexOf("rakuten_proxy_unavailable") >= 0 || msg.indexOf("Failed to send a request") >= 0) {
+    return "Rakuten server proxy is not available. Deploy the Supabase Edge Function rakuten-search.";
+  }
+  if (msg.indexOf("missing_env:RAKUTEN_") >= 0) {
+    return "Rakuten API secrets are not set on the Supabase Edge Function.";
+  }
+  if (msg.indexOf("forbidden") >= 0 || msg.indexOf("profile_lookup_failed") >= 0) {
+    return "This account is not allowed to use Rakuten price research.";
+  }
   if (msg.indexOf("HTTP_REFERRER_NOT_ALLOWED") >= 0) {
     return "HTTP_REFERRER_NOT_ALLOWED: 楽天Web Serviceのアプリ設定で「許可されたWebサイト」に " + location.origin + " を登録してください。";
   }
@@ -6922,6 +7044,10 @@ function buildRakutenApiUrl(keyword, ngKeyword, sort, hits, opts) {
 }
 
 function openRakutenDiagnosticUrl() {
+  if (rakutenUsesServerProxy() && !RAKUTEN_ALLOW_DIRECT_BROWSER_FALLBACK) {
+    testRakutenApiKeys();
+    return;
+  }
   var appId = document.getElementById("rakuten-app-id").value.trim();
   var accessKey = document.getElementById("rakuten-access-key").value.trim();
   if (!appId || !accessKey) { setRakutenStatus(t("rakuten_missing_key"), true); return; }
@@ -6953,7 +7079,7 @@ function setRakutenCooldown(seconds) {
 async function fetchRakutenItemsOnce(keyword, ngKeyword, sort, hits, opts) {
   opts = opts || {};
   await waitForRakutenApiSlot(opts.throttleMs);
-  var data = await rakutenFetchJson(buildRakutenApiUrl(keyword, ngKeyword, sort, hits, opts));
+  var data = await fetchRakutenApiData(keyword, ngKeyword, sort, hits, opts);
   if (data && data.error) throw new Error(data.error_description || data.error);
   if (data && data.errors) throw new Error(data.errors.errorMessage || JSON.stringify(data.errors));
   return enrichRakutenItems(((data && data.Items) || (data && data.items) || []).map(function(row) {
@@ -7006,9 +7132,10 @@ async function validateRakutenApiConnection() {
 }
 
 async function testRakutenApiKeys() {
-  var appId = document.getElementById("rakuten-app-id").value.trim();
-  var accessKey = document.getElementById("rakuten-access-key").value.trim();
-  if (!appId || !accessKey) { setRakutenStatus(t("rakuten_missing_key"), true); return; }
+  if (rakutenCanUseDirectBrowserApi() && !rakutenUsesServerProxy() && !rakutenBrowserKeysAvailable()) {
+    setRakutenStatus(t("rakuten_missing_key"), true);
+    return;
+  }
   setRakutenStatus(t("rakuten_searching"), false);
   try {
     var items = await validateRakutenApiConnection();
@@ -7092,8 +7219,6 @@ async function searchRakutenPrices() {
   var ngKeyword = document.getElementById("rakuten-ng-keyword").value.trim();
   var sort = document.getElementById("rakuten-sort").value;
   var hits = document.getElementById("rakuten-hits").value;
-  var appId = document.getElementById("rakuten-app-id").value.trim();
-  var accessKey = document.getElementById("rakuten-access-key").value.trim();
 
   if (!keyword) {
     setRakutenStatus(t("rakuten_missing_keyword"), true);
@@ -7101,7 +7226,7 @@ async function searchRakutenPrices() {
     if (searchBtn) searchBtn.disabled = false;
     return;
   }
-  if (!appId || !accessKey) {
+  if (rakutenCanUseDirectBrowserApi() && !rakutenUsesServerProxy() && !rakutenBrowserKeysAvailable()) {
     setRakutenStatus(t("rakuten_missing_key"), true);
     rakutenApiBusy = false;
     if (searchBtn) searchBtn.disabled = false;
@@ -7131,9 +7256,7 @@ async function runRakutenBulkSurvey() {
   var ngKeyword = document.getElementById("rakuten-ng-keyword").value.trim();
   var sort = document.getElementById("rakuten-sort").value;
   var hits = document.getElementById("rakuten-hits").value;
-  var appId = document.getElementById("rakuten-app-id").value.trim();
-  var accessKey = document.getElementById("rakuten-access-key").value.trim();
-  if (!appId || !accessKey) { setRakutenStatus(t("rakuten_missing_key"), true); return; }
+  if (rakutenCanUseDirectBrowserApi() && !rakutenUsesServerProxy() && !rakutenBrowserKeysAvailable()) { setRakutenStatus(t("rakuten_missing_key"), true); return; }
   try {
     var cooldownMs = rakutenApiCooldownUntil - Date.now();
     if (cooldownMs > 0) {
@@ -12850,27 +12973,40 @@ function renderComponentAddPanel() {
     bindComponentKindSelector();
     return;
   }
-  var manufacturer = (currentProduct && currentProduct.manufacturer) || "";
-  html += "<div class='component-add-panel'>";
-  html += "<div class='component-add-title'>" + esc(tf("component_add_title_for_kind", { kind: productKindLabel(selectedProductKind()) })) + "</div>";
-  html += "<div class='component-add-grid'>";
-  html += "<div class='component-add-field'><label>" + t("f_manufacturer") + "</label><input id='component-add-mfr' type='text' value='" + esc(manufacturer) + "'></div>";
-  html += "<div class='component-add-field'><label>" + t("f_mfr_pn") + " *</label><input id='component-add-mfr-pn' type='text'></div>";
-  html += "<div class='component-add-field'><label>" + t("f_genuine_pn") + "</label><input id='component-add-genuine-pn' type='text'></div>";
-  html += "<div class='component-add-field'><label>" + t("component_name") + "</label><input id='component-add-name' type='text'></div>";
-  html += "<div class='component-add-field'><label>" + t("component_position") + "</label><input id='component-add-position' type='text'></div>";
-  html += "<div class='component-add-field'><label>" + t("component_quantity") + "</label><input id='component-add-qty' type='text' value='1'></div>";
-  html += "<div class='component-add-field'><label>" + t("component_unit_price") + "</label><input id='component-add-unit-price' type='number' min='0' step='1'></div>";
-  html += "<div class='component-add-field'><label>" + t("component_interchange") + "</label><input id='component-add-interchange' type='text'></div>";
-  html += "<div class='component-add-field'><label>" + t("component_start_period") + "</label><input id='component-add-start' type='text'></div>";
-  html += "<div class='component-add-field'><label>" + t("component_end_period") + "</label><input id='component-add-end' type='text'></div>";
-  html += "</div>";
-  html += "<div class='component-add-actions'><button class='btn-primary' id='btn-component-add' type='button'>" + t("component_add") + "</button></div>";
+  html += "<div class='component-add-panel component-add-compact'>";
+  html += "<div><div class='component-add-title'>" + esc(t("component_add_title")) + "</div>";
+  html += "<div class='component-add-current'>" + esc(productKindLabel(selectedProductKind()) + " / " + componentTargetVariantText()) + "</div></div>";
+  html += "<button class='btn-primary' id='btn-component-add-open' type='button'>+ " + esc(t("component_add_open")) + "</button>";
   html += "</div>";
   wrap.innerHTML = html;
   bindComponentKindSelector();
-  var addBtn = document.getElementById("btn-component-add");
-  if (addBtn) addBtn.addEventListener("click", addAssemblyComponentForCurrent);
+  var openBtn = document.getElementById("btn-component-add-open");
+  if (openBtn) openBtn.addEventListener("click", openComponentAddForm);
+}
+
+function closeComponentAddForm() {
+  var overlay = document.getElementById("component-add-overlay");
+  if (overlay) overlay.classList.remove("show");
+}
+
+function openComponentAddForm() {
+  if (!currentProduct) return;
+  if (!canEditInternalComponents()) { alert(t("err_perm")); return; }
+  clearComponentAddForm();
+  var manufacturer = document.getElementById("component-add-mfr");
+  if (manufacturer) manufacturer.value = (currentProduct && currentProduct.manufacturer) || "";
+  var title = document.getElementById("component-add-modal-title");
+  if (title) title.textContent = tf("component_add_title_for_kind", { kind: productKindLabel(selectedProductKind()) });
+  var help = document.getElementById("component-add-modal-help");
+  if (help) help.textContent = selectedProductSub() + " / " + componentTargetVariantText();
+  var err = document.getElementById("component-add-error");
+  if (err) err.textContent = "";
+  var btn = document.getElementById("btn-component-add");
+  if (btn) { btn.disabled = false; btn.textContent = t("component_add"); }
+  var overlay = document.getElementById("component-add-overlay");
+  if (overlay) overlay.classList.add("show");
+  var pn = document.getElementById("component-add-mfr-pn");
+  if (pn) pn.focus();
 }
 
 function componentAddValue(id) {
@@ -12890,13 +13026,23 @@ function clearComponentAddForm() {
 async function addAssemblyComponentForCurrent() {
   if (!currentProduct) return;
   if (!canEditInternalComponents()) { alert(t("err_perm")); return; }
+  var err = document.getElementById("component-add-error");
+  if (err) err.textContent = "";
   var dkdId = await resolveCurrentCoreDkdShohinId();
   var targetManufacturer = String(currentProduct.manufacturer || "").toUpperCase();
   var targetManufacturerPartNumber = currentProduct.manufacturer_part_number || "";
-  if (!targetManufacturer || !targetManufacturerPartNumber) { alert(t("component_mfr_pn_required")); return; }
+  if (!targetManufacturer || !targetManufacturerPartNumber) {
+    if (err) err.textContent = t("component_mfr_pn_required");
+    else alert(t("component_mfr_pn_required"));
+    return;
+  }
   var componentMfr = componentAddValue("component-add-mfr") || (currentProduct.manufacturer || "UNKNOWN");
   var componentMfrPn = componentAddValue("component-add-mfr-pn");
-  if (!componentMfrPn) { alert(t("component_mfr_pn_required")); return; }
+  if (!componentMfrPn) {
+    if (err) err.textContent = t("component_mfr_pn_required");
+    else alert(t("component_mfr_pn_required"));
+    return;
+  }
   var payload = {
     target_dkd_shohin_id: dkdId || null,
     target_manufacturer: targetManufacturer,
@@ -12920,11 +13066,13 @@ async function addAssemblyComponentForCurrent() {
   var r = await sb.rpc("add_manual_assembly_component", payload);
   if (addBtn) { addBtn.disabled = false; addBtn.textContent = t("component_add"); }
   if (r.error) {
-    alert(t("component_add_failed") + ": " + r.error.message);
+    if (err) err.textContent = t("component_add_failed") + ": " + r.error.message;
+    else alert(t("component_add_failed") + ": " + r.error.message);
     return;
   }
   await writeLog("insert", "assembly_component_usages", r.data || dkdId, componentMfrPn, null, payload);
   clearComponentAddForm();
+  closeComponentAddForm();
   await loadAssemblyComponentsForCurrent();
 }
 
@@ -15830,6 +15978,8 @@ document.getElementById("btn-back-components").addEventListener("click", async f
 document.getElementById("btn-components-open-parallel").addEventListener("click", function(){
   enterComponentParallelScreen("components");
 });
+document.getElementById("btn-component-add-cancel").addEventListener("click", closeComponentAddForm);
+document.getElementById("btn-component-add").addEventListener("click", addAssemblyComponentForCurrent);
 document.getElementById("btn-component-alt-cancel").addEventListener("click", closeComponentAlternativeForm);
 document.getElementById("btn-component-alt-save").addEventListener("click", saveComponentAlternativeForm);
 document.getElementById("btn-back-component-parallel").addEventListener("click", function(){
