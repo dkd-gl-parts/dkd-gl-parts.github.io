@@ -1721,13 +1721,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 </div>
 
 <!-- =============================================
-   商品区分在庫管理画面
+   在庫管理画面
 ============================================= -->
 <div id="screen-product-kind-stock-mgmt" class="screen">
   <div class="page-header">
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-product-kind-stock-mgmt" data-i18n="btn_back">← メニュー</button>
-      <span class="logo-text" data-i18n="screen_product_kind_stock_title">商品区分在庫管理</span>
+      <span class="logo-text" data-i18n="screen_product_kind_stock_title">在庫管理</span>
     </div>
     <div class="page-header-right">
       <span class="header-username" id="product-kind-stock-mgmt-username"></span>
@@ -2373,10 +2373,8 @@ var TRANSLATIONS = {
     mi_customer_access_desc: "得意先閲覧ユーザーに見せる商品範囲・価格表示ルールを設定します。",
     mi_core_list_title: "コアリスト",
     mi_core_list_desc: "基幹商品に紐づくコア品番・数量・置き場を登録します。",
-    mi_product_kind_stock_title: "製品区分管理",
-    mi_product_kind_stock_desc: "リビルト・社外新品の製品区分別に在庫と構成部品を確認・更新します。",
-    mi_inventory_stock_title: "在庫管理",
-    mi_inventory_stock_desc: "中古コアなど、商品ではない在庫の数量・置場・履歴を管理します。",
+    mi_product_kind_stock_title: "在庫管理",
+    mi_product_kind_stock_desc: "リビルト・社外新品・中古コアの在庫数と置場を確認・更新します。",
     mi_finished_label_title: "完品ラベル・QRシール",
     mi_finished_label_desc: "製造完了品のA6ラベルとQRシールを発行し、履歴を保存します。",
     mi_production_ranking_title: "製造予定ランキング",
@@ -2500,7 +2498,7 @@ var TRANSLATIONS = {
     finished_label_no_product: "先に発行対象を選択してください。",
     finished_label_count: "{n} 件表示",
     finished_label_history_empty: "この品番の発行履歴はありません。",
-    screen_product_kind_stock_title: "製品区分管理",
+    screen_product_kind_stock_title: "在庫管理",
     production_source_section: "統合元",
     img_section: "画像",
     btn_upload: "写真を追加する",
@@ -3035,10 +3033,8 @@ var TRANSLATIONS = {
     mi_customer_access_desc: "Configure product visibility and sales price display for customer viewer users.",
     mi_core_list_title: "CORE List",
     mi_core_list_desc: "Register core part numbers, quantities, and locations for master products.",
-    mi_product_kind_stock_title: "Product Variant Management",
-    mi_product_kind_stock_desc: "Review and update stock and component parts for product variants such as rebuilt and aftermarket new.",
-    mi_inventory_stock_title: "Inventory Management",
-    mi_inventory_stock_desc: "Manage quantities, locations, and history for non-product inventory such as used cores.",
+    mi_product_kind_stock_title: "Stock Management",
+    mi_product_kind_stock_desc: "Review and update quantities and locations for rebuilt, aftermarket-new, and used-core stock.",
     mi_finished_label_title: "Finished Label / QR",
     mi_finished_label_desc: "Issue A6 finished-product labels and QR seals, then save the issue history.",
     mi_production_ranking_title: "Production Ranking",
@@ -3162,7 +3158,7 @@ var TRANSLATIONS = {
     finished_label_no_product: "Select an issue target first.",
     finished_label_count: "{n} rows",
     finished_label_history_empty: "No issue history for this product.",
-    screen_product_kind_stock_title: "Product Variant Management",
+    screen_product_kind_stock_title: "Stock Management",
     production_source_section: "Merged sources",
     img_section: "Images",
     btn_upload: "Add Photos",
@@ -3709,10 +3705,8 @@ var TRANSLATIONS = {
     mi_customer_access_desc: "设置客户浏览用户可见的商品范围和销售价格显示规则。",
     mi_core_list_title: "CORE清单",
     mi_core_list_desc: "登记基干商品对应的CORE编号、数量和位置。",
-    mi_product_kind_stock_title: "产品区分管理",
-    mi_product_kind_stock_desc: "按再制造、副厂新品等产品区分确认和更新库存与构成零件。",
-    mi_inventory_stock_title: "库存管理",
-    mi_inventory_stock_desc: "管理旧芯等非商品库存的数量、库位和履历。",
+    mi_product_kind_stock_title: "库存管理",
+    mi_product_kind_stock_desc: "确认和更新再制造、副厂新品、旧芯的库存数量和位置。",
     mi_finished_label_title: "完品标签・QR贴纸",
     mi_finished_label_desc: "发行完品A6标签和QR贴纸，并保存历史。",
     mi_production_ranking_title: "生产指示排行",
@@ -3831,7 +3825,7 @@ var TRANSLATIONS = {
     finished_label_no_product: "请先选择发行对象。",
     finished_label_count: "显示 {n} 条",
     finished_label_history_empty: "此品号没有发行历史。",
-    screen_product_kind_stock_title: "产品区分管理",
+    screen_product_kind_stock_title: "库存管理",
     production_source_section: "合并来源",
     img_section: "图片",
     btn_upload: "添加照片",
@@ -4370,7 +4364,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.234";
+var APP_VERSION       = "v1.1.235";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -4630,9 +4624,6 @@ function canSeeCoreStockInfo() {
   return canSeeInternalBusinessInfo();
 }
 function canViewProductKindStockMgmt() {
-  return canSeeCoreStockInfo();
-}
-function canViewInventoryStockMgmt() {
   return canSeeCoreStockInfo();
 }
 function canEditProductKindStockMgmt() {
@@ -5051,6 +5042,7 @@ async function applyLanguage(lang) {
   renderAssemblyComponentRows();
   updateAllHeaders();
   if (isScreenActive("product-kind-stock-mgmt")) {
+    configureProductKindStockMode(productKindStockMode);
     await populateProductKindStockCategoryOptions();
     if (productKindStockRows.length) renderProductKindStockMgmt();
     else renderProductKindStockEmpty();
@@ -5393,7 +5385,6 @@ function renderMenu() {
     { icon: "&#x1F4B0;", titleKey: "sales_pricing_title", descKey: "sales_pricing_mgmt_desc", action: "sales-pricing-mgmt", available: canViewSalesPricing() },
     { icon: "&#x1F4E6;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canViewManagementScreen() },
     { icon: "&#x1F4E6;", titleKey: "mi_product_kind_stock_title", descKey: "mi_product_kind_stock_desc", action: "product-kind-stock-mgmt", available: canViewProductKindStockMgmt() },
-    { icon: "&#x1F4E6;", titleKey: "mi_inventory_stock_title", descKey: "mi_inventory_stock_desc", action: "inventory-stock-mgmt", available: canViewInventoryStockMgmt() },
     { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canViewManagementScreen() },
     { icon: "&#x2699;", titleKey: "mi_api_settings_title", descKey: "mi_api_settings_desc", action: "api-settings", available: canManageSharedSettings() },
     { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: canViewOperationLogs() }
@@ -5451,7 +5442,6 @@ function renderMenu() {
       else if (card.dataset.action === "sales-pricing-mgmt") enterSalesPricingMgmt();
       else if (card.dataset.action === "core-list-mgmt") enterCoreListMgmt();
       else if (card.dataset.action === "product-kind-stock-mgmt") enterProductKindStockMgmt();
-      else if (card.dataset.action === "inventory-stock-mgmt") enterInventoryStockMgmt();
       else if (card.dataset.action === "production-ranking-mgmt") enterProductionRankingMgmt();
       else if (card.dataset.action === "kikan-mgmt") enterKikanMgmt();
       else if (card.dataset.action === "rakuten-price") enterRakutenPrice();
@@ -7727,14 +7717,14 @@ async function deleteCoreListRow(id) {
 }
 
 // =============================================
-// 商品区分在庫管理
+// 在庫管理
 // =============================================
 function productKindStockModeTitleKey() {
-  return productKindStockMode === "inventory" ? "mi_inventory_stock_title" : "screen_product_kind_stock_title";
+  return "screen_product_kind_stock_title";
 }
 
 function productKindStockAllowedKinds() {
-  return productKindStockMode === "inventory" ? ["used_core"] : ["rebuilt", "aftermarket_new"];
+  return ["rebuilt", "aftermarket_new", "used_core"];
 }
 
 function productKindStockKindAllowed(kind) {
@@ -7750,7 +7740,7 @@ function productKindStockDefaultKindForProduct(product, selectedKind) {
 }
 
 function configureProductKindStockMode(mode) {
-  productKindStockMode = mode === "inventory" ? "inventory" : "product";
+  productKindStockMode = "stock";
   var title = document.querySelector("#screen-product-kind-stock-mgmt .logo-text");
   if (title) {
     var key = productKindStockModeTitleKey();
@@ -7761,35 +7751,23 @@ function configureProductKindStockMode(mode) {
   if (!select) return;
   var current = select.value || "";
   var html = "";
-  if (productKindStockMode === "product") {
-    html += "<option value=''>" + esc(t("product_kind_stock_kind_all")) + "</option>";
-  }
+  html += "<option value=''>" + esc(t("product_kind_stock_kind_all")) + "</option>";
   productKindStockAllowedKinds().forEach(function(kind) {
     html += "<option value='" + esc(kind) + "'>" + esc(productKindLabel(kind)) + "</option>";
   });
   select.innerHTML = html;
-  if (productKindStockMode === "inventory") {
-    select.value = "used_core";
-    select.disabled = true;
-  } else {
-    select.disabled = false;
-    select.value = productKindStockKindAllowed(current) ? normalizeProductKind(current) : "";
-  }
+  select.disabled = false;
+  select.value = productKindStockKindAllowed(current) ? normalizeProductKind(current) : "";
 }
 
-async function enterProductKindStockMgmt(mode) {
-  var inventoryMode = mode === "inventory";
-  if (inventoryMode ? !canViewInventoryStockMgmt() : !canViewProductKindStockMgmt()) { alert(t("err_perm")); return; }
+async function enterProductKindStockMgmt() {
+  if (!canViewProductKindStockMgmt()) { alert(t("err_perm")); return; }
   showScreen("product-kind-stock-mgmt");
-  configureProductKindStockMode(inventoryMode ? "inventory" : "product");
+  configureProductKindStockMode();
   var saveBtn = document.getElementById("btn-product-kind-stock-save");
   if (saveBtn) saveBtn.style.display = canEditProductKindStockMgmt() ? "" : "none";
   await populateProductKindStockCategoryOptions();
   renderProductKindStockEmpty();
-}
-
-async function enterInventoryStockMgmt() {
-  return await enterProductKindStockMgmt("inventory");
 }
 
 function renderProductKindStockEmpty() {
@@ -8084,7 +8062,6 @@ async function loadProductKindStockMgmt() {
   var category = document.getElementById("product-kind-stock-category").value || "";
   var kind = document.getElementById("product-kind-stock-kind").value || "";
   kind = kind && productKindStockKindAllowed(kind) ? normalizeProductKind(kind) : "";
-  if (productKindStockMode === "inventory") kind = "used_core";
   var state = document.getElementById("product-kind-stock-state").value || "";
   var productRows = [];
   var variants;
@@ -8138,8 +8115,8 @@ async function loadProductKindStockMgmt() {
     });
   }
   await loadProductKindStockProductMap(productKindStockRows, productRows);
-  await loadProductKindStockComponentMeta(productKindStockRows);
-  await loadProductKindStockPriceMeta(productKindStockRows);
+  productKindStockComponentMetaMap = {};
+  productKindStockPriceMap = {};
   productKindStockRows = sortProductKindStockRows(productKindStockRows);
   renderProductKindStockMgmt();
 }
@@ -8190,23 +8167,14 @@ function renderProductKindStockMgmt() {
   }
 
   var editable = canEditProductKindStockMgmt();
-  var inventoryMode = productKindStockMode === "inventory";
-  var showProductColumns = !inventoryMode;
-  var showBasePrice = showProductColumns && canViewBasePrice();
-  var showPriceAction = showProductColumns && canViewSalesPricing();
   var html = "<div class='stock-mgmt-table-wrap'><table class='mgmt-table stock-mgmt-table'>";
-  html += "<tr><th>" + esc(t("f_genuine_pn")) + "</th><th>" + esc(t("f_mfr_pn")) + "</th><th>" + esc(t("f_manufacturer")) + "</th><th>" + esc(t(inventoryMode ? "inventory_kind_section" : "product_kind_section")) + "</th>";
-  if (showProductColumns) html += "<th>" + esc(t("product_kind_component_count")) + "</th><th>" + esc(t("product_kind_component_cost")) + "</th>";
-  if (showBasePrice) html += "<th>" + esc(t("product_kind_base_price")) + "</th>";
+  html += "<tr><th>" + esc(t("f_genuine_pn")) + "</th><th>" + esc(t("f_mfr_pn")) + "</th><th>" + esc(t("f_manufacturer")) + "</th><th>" + esc(t("inventory_kind_section")) + "</th>";
   html += "<th>" + esc(t("product_kind_stock_qty")) + "</th><th>" + esc(t("product_kind_stock_location")) + "</th><th>" + esc(t("product_kind_stock_note")) + "</th><th>" + esc(t("component_actions")) + "</th></tr>";
   productKindStockRows.forEach(function(row) {
     var variantId = row.product_variant_id;
     var p = productKindStockProductMap[String(row.dkd_shohin_id)] || {};
     var kind = normalizeProductKind(row.product_kind);
     var sl = row.sl_part_id ? (t("product_kind_sl") + " " + row.sl_part_id) : "";
-    var compMeta = productKindStockComponentMeta(row);
-    var price = productKindStockPriceForRow(row);
-    var priceText = price && price.base_price_jpy != null ? ("JPY " + formatYen(price.base_price_jpy)) : "-";
     var hasVariant = !!variantId;
     var disabled = editable && hasVariant ? "" : " disabled";
     html += "<tr class='stock-mgmt-row' data-stock-row='" + esc(hasVariant ? String(variantId) : ("new-" + String(row.dkd_shohin_id || ""))) + "'>";
@@ -8214,19 +8182,12 @@ function renderProductKindStockMgmt() {
     html += "<td><div class='mgmt-pn'>" + esc(p.manufacturer_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(productCategoryLabel(p) || "-") + "</div></td>";
     html += "<td>" + esc(p.manufacturer || "-") + "</td>";
     html += "<td><div class='stock-mgmt-kind'><span class='product-kind-pill " + productKindClass(kind) + "'>" + esc(productKindLabel(kind)) + "</span><span class='mgmt-sub'>" + esc(row.display_label || sl || "-") + "</span></div></td>";
-    if (showProductColumns) {
-      html += "<td><strong>" + esc(String(compMeta.count || 0)) + "</strong></td>";
-      html += "<td>" + esc(compMeta.priceKnown ? formatYen(compMeta.unitTotal) : "-") + "</td>";
-    }
-    if (showBasePrice) html += "<td><div class='price-value'>" + esc(priceText) + "</div><div class='mgmt-sub'>" + esc(price ? ([price.price_basis, price.effective_start].filter(Boolean).join(" / ")) : t("product_kind_no_base_price")) + "</div></td>";
     html += "<td><input class='stock-mgmt-input stock-mgmt-qty' type='number' min='0' step='1' data-stock-variant='" + esc(String(variantId)) + "' data-stock-field='stock_qty' value='" + esc(row.stock_qty == null ? "" : String(row.stock_qty)) + "'" + disabled + "></td>";
     html += "<td><input class='stock-mgmt-input' type='text' data-stock-variant='" + esc(String(variantId)) + "' data-stock-field='stock_location' value='" + esc(row.stock_location || "") + "'" + disabled + "></td>";
     html += "<td><input class='stock-mgmt-input' type='text' data-stock-variant='" + esc(String(variantId)) + "' data-stock-field='stock_note' value='" + esc(row.stock_note || "") + "'" + disabled + "><div class='mgmt-sub'>" + esc(formatDateTime(row.updated_at)) + "</div></td>";
     html += "<td><div class='stock-mgmt-actions'>";
     if (hasVariant) {
       html += "<button class='btn-sm-edit production-action-secondary' data-stock-open-history='" + esc(String(variantId)) + "'>" + esc(t("product_kind_stock_history_btn")) + "</button>";
-      if (showProductColumns) html += "<button class='btn-sm-edit production-action-secondary' data-stock-open-components='" + esc(String(variantId)) + "'>" + esc(t("product_kind_open_components")) + "</button>";
-      if (showPriceAction) html += "<button class='btn-sm-edit' data-stock-open-price='" + esc(String(variantId)) + "'>" + esc(t("product_kind_open_price")) + "</button>";
     }
     html += renderProductKindStockAddKindHtml(row);
     if (editable && hasVariant) html += "<button class='btn-sm-edit' data-stock-save-row='" + esc(String(variantId)) + "'>" + esc(t("product_kind_stock_save")) + "</button>";
@@ -8470,7 +8431,9 @@ async function openProductKindStockSalesPricing(variantId) {
 async function addProductKindStockVariant(selectKey, dkdId) {
   if (!canEditProductKindStockMgmt()) { alert(t("err_perm")); return; }
   var select = document.querySelector("[data-stock-add-kind-select='" + String(selectKey || "") + "']");
-  var kind = normalizeProductKind(select ? select.value : "");
+  var rawKind = select ? select.value : "";
+  if (!rawKind || !productKindStockKindAllowed(rawKind)) return;
+  var kind = normalizeProductKind(rawKind);
   var dkd = parseInt(dkdId, 10);
   if (isNaN(dkd) || !kind) return;
   var existing = await sb.from("core_product_variants")
@@ -10365,6 +10328,11 @@ function productKindClass(kind) {
   return "other";
 }
 
+function productDisplayKindAllowed(kind) {
+  kind = normalizeProductKind(kind);
+  return kind === "rebuilt" || kind === "aftermarket_new";
+}
+
 function productKindSortValue(kind) {
   kind = normalizeProductKind(kind);
   if (kind === "rebuilt") return 10;
@@ -10381,6 +10349,7 @@ function addProductVariantSummaryRow(summary, row) {
   if (!summary) return summary;
   row = row || {};
   var kind = normalizeProductKind(row.product_kind || row.default_product_kind || "rebuilt");
+  if (!productDisplayKindAllowed(kind)) return summary;
   if (!summary.kinds[kind]) {
     summary.kinds[kind] = { kind: kind, count: 0, stockQty: 0, stockKnown: false, slCount: 0 };
   }
@@ -10420,6 +10389,7 @@ function productKindSummaryForProduct(p) {
   var cached = dkdKey ? (productVariantSummaryMap[dkdKey] || productVariantSummaryCache[dkdKey]) : null;
   var summary = cloneProductVariantSummary(cached);
   var defaultKind = normalizeProductKind(p && p.default_product_kind || "rebuilt");
+  if (!productDisplayKindAllowed(defaultKind)) defaultKind = "rebuilt";
   if (!summary.kinds[defaultKind]) {
     addProductVariantSummaryRow(summary, { product_kind: defaultKind });
   }
@@ -10459,8 +10429,11 @@ function productKindRowsForCurrent() {
   var dkdId = currentProduct ? productDkdId(currentProduct) : null;
   var rows = (currentProductVariants || []).filter(function(row) {
     return !dkdId || !row.dkd_shohin_id || String(row.dkd_shohin_id) === String(dkdId);
+  }).filter(function(row) {
+    return productDisplayKindAllowed(row.product_kind || row.default_product_kind || "rebuilt");
   }).slice();
   var defaultKind = normalizeProductKind((currentProduct && currentProduct.default_product_kind) || "rebuilt");
+  if (!productDisplayKindAllowed(defaultKind)) defaultKind = "rebuilt";
   if (!rows.length && dkdId) {
     rows.push({
       product_variant_id: null,
@@ -10491,14 +10464,17 @@ function currentProductKindOptions(summary) {
   productKindRowsForCurrent().forEach(function(row) {
     map[normalizeProductKind(row.product_kind)] = true;
   });
-  map[normalizeProductKind((currentProduct && currentProduct.default_product_kind) || "rebuilt")] = true;
+  var defaultKind = normalizeProductKind((currentProduct && currentProduct.default_product_kind) || "rebuilt");
+  if (!productDisplayKindAllowed(defaultKind)) defaultKind = "rebuilt";
+  map[defaultKind] = true;
   return Object.keys(map).sort(function(a, b) {
     return productKindSortValue(a) - productKindSortValue(b);
   });
 }
 
 function selectedProductKind() {
-  return normalizeProductKind(currentSelectedProductKind || (currentProduct && currentProduct.default_product_kind) || "rebuilt");
+  var kind = normalizeProductKind(currentSelectedProductKind || (currentProduct && currentProduct.default_product_kind) || "rebuilt");
+  return productDisplayKindAllowed(kind) ? kind : "rebuilt";
 }
 
 function selectedProductVariantId() {
