@@ -4359,7 +4359,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.231";
+var APP_VERSION       = "v1.1.232";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -14637,7 +14637,7 @@ function kikanStockQtyText(product, kind) {
   var key = productDkdId(product);
   var summary = key ? (productVariantSummaryMap[key] || productVariantSummaryCache[key]) : null;
   var meta = summary && summary.kinds ? summary.kinds[normalizeProductKind(kind)] : null;
-  if (!meta || !meta.stockKnown) return "-";
+  if (!meta || !meta.stockKnown) return "0";
   var qty = Number(meta.stockQty || 0);
   return Number.isInteger(qty) ? String(qty) : String(meta.stockQty);
 }
