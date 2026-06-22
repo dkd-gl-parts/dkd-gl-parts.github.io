@@ -461,6 +461,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ac-part-value { font-size: 13px; font-weight: 700; color: #1a1a2e; padding: 7px 4px; display: flex; align-items: center; word-break: break-all; }
 .ac-part-value-with-action { justify-content: space-between; gap: 8px; }
 .ac-part-value-text { min-width: 0; overflow-wrap: anywhere; }
+.detail-inline-actions { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .detail-inline-action { flex: 0 0 auto; white-space: nowrap; padding: 5px 9px; }
 .detail-main-grid .detail-table,
 .detail-main-grid .ac-part-grid { margin-bottom: 0; }
@@ -1277,6 +1278,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <div class="component-context-sub" id="components-context-sub">-</div>
     </div>
     <div class="component-section-title"><span class="component-icon">&#x1F9E9;</span> <span data-i18n="component_section">構成部品</span></div>
+    <div class="component-toolbar">
+      <button class="btn-sm-edit production-action-secondary" id="btn-components-open-parallel" type="button">&#8644; <span data-i18n="component_open_parallel">並列検索</span></button>
+    </div>
     <div class="component-compat-help" data-i18n="component_compat_help"></div>
     <div id="component-add-wrap"></div>
     <div id="component-wrap"><div class="component-empty" data-i18n="loading">読み込み中...</div></div>
@@ -1289,7 +1293,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="form-help" id="component-alt-base" data-i18n="component_alternative_base_hint">基準構成部品を選択してください</div>
     <div class="form-grid">
       <div>
-        <label class="form-label"><span data-i18n="f_manufacturer">メーカー</span> *</label>
+        <label class="form-label"><span data-i18n="component_alt_manufacturer">外品メーカー</span> *</label>
         <input class="form-input" id="component-alt-mfr" type="text" placeholder="例: STRONGHOLD">
       </div>
       <div>
@@ -3012,6 +3016,7 @@ var TRANSLATIONS = {
     component_alternative_modal_title: "外品代替品を追加",
     component_alternative_base_hint: "基準構成部品を選択してください",
     component_alternative_base: "基準",
+    component_alt_manufacturer: "外品メーカー",
     component_supplier: "仕入先",
     component_reference_price: "参考単価",
     component_note: "メモ",
@@ -3680,6 +3685,7 @@ var TRANSLATIONS = {
     component_alternative_modal_title: "Add Alternative Part",
     component_alternative_base_hint: "Select the base component part",
     component_alternative_base: "Base",
+    component_alt_manufacturer: "Aftermarket Manufacturer",
     component_supplier: "Supplier",
     component_reference_price: "Reference Price",
     component_note: "Memo",
@@ -4341,6 +4347,7 @@ var TRANSLATIONS = {
     component_alternative_modal_title: "添加替代部件",
     component_alternative_base_hint: "请选择基准构成部件",
     component_alternative_base: "基准",
+    component_alt_manufacturer: "外品厂家",
     component_supplier: "供应商",
     component_reference_price: "参考单价",
     component_note: "备注",
@@ -4425,7 +4432,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.246";
+var APP_VERSION       = "v1.1.248";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -4439,6 +4446,7 @@ var productionFilteredRows = [];
 var productionFilter = "instruction";
 var currentProductionRow = null;
 var componentReturnScreen = "search";
+var componentParallelReturnScreen = "search";
 var componentAlternativeRows = [];
 var componentAlternativeMap = {};
 var componentAlternativeBaseRow = null;
@@ -12082,7 +12090,10 @@ function renderPanelStatic() {
     return html;
   }
   var componentButtonHtml = canSeeComponentInfo()
-    ? "<button class='btn-sm-edit btn-component-action detail-inline-action' id='btn-open-components'><span class='component-icon'>&#x1F9E9;</span> " + t("component_open_parts") + "</button>"
+    ? "<span class='detail-inline-actions'>" +
+      "<button class='btn-sm-edit btn-component-action detail-inline-action' id='btn-open-components'><span class='component-icon'>&#x1F9E9;</span> " + t("component_open_parts") + "</button>" +
+      "<button class='btn-sm-edit production-action-secondary detail-inline-action' id='btn-open-component-parallel-inline'>&#8644; " + t("component_open_parallel") + "</button>" +
+      "</span>"
     : "";
   var genuineHtml = "";
   var makerHtml = "";
@@ -12167,8 +12178,10 @@ function renderPanelStatic() {
   bindProductKindPanelActions();
   var componentBtn = document.getElementById("btn-open-components");
   var parallelBtn = document.getElementById("btn-open-component-parallel");
+  var parallelInlineBtn = document.getElementById("btn-open-component-parallel-inline");
   if (componentBtn) componentBtn.addEventListener("click", function(){ enterComponentsScreen("search"); });
-  if (parallelBtn) parallelBtn.addEventListener("click", enterComponentParallelScreen);
+  if (parallelBtn) parallelBtn.addEventListener("click", function(){ enterComponentParallelScreen("search"); });
+  if (parallelInlineBtn) parallelInlineBtn.addEventListener("click", function(){ enterComponentParallelScreen("search"); });
   currentVehicleApplicationRows = [];
   loadCatalogVehicleSummary(document.getElementById("panel-body"), p);
   loadProductSpecsForCurrent();
@@ -12739,11 +12752,18 @@ async function enterComponentsScreen(returnScreen) {
   loadAssemblyComponentsForCurrent();
 }
 
-function enterComponentParallelScreen() {
+function enterComponentParallelScreen(returnScreen) {
   if (!currentProduct) { alert(t("welcome_panel")); return; }
   if (!canSeeComponentInfo()) { alert(t("err_perm")); return; }
+  componentParallelReturnScreen = returnScreen || "search";
   showScreen("component-parallel");
   updateAllHeaders();
+  var backBtn = document.getElementById("btn-back-component-parallel");
+  if (backBtn) {
+    backBtn.textContent = componentParallelReturnScreen === "components"
+      ? "\u2190 " + t("component_section")
+      : t("btn_back_search");
+  }
   var title = document.getElementById("parallel-context-title");
   var sub = document.getElementById("parallel-context-sub");
   if (title) title.textContent = selectedProductTitle();
@@ -13131,14 +13151,26 @@ async function saveComponentAlternativeForm() {
   var normalized = normalizedPartKey(partNumber);
   var partId = null;
   var existing = await sb.from("internal_component_parts")
-    .select("id")
+    .select("id,manufacturer,part_name,note")
     .eq("normalized_part_number", normalized)
-    .eq("manufacturer", manufacturer)
     .eq("status", "active")
+    .order("id", { ascending: true })
     .limit(1)
     .maybeSingle();
   if (!existing.error && existing.data) {
     partId = existing.data.id;
+    var reuseUpdate = {};
+    if (String(existing.data.manufacturer || "").toUpperCase() === "UNKNOWN" && manufacturer !== "UNKNOWN") {
+      reuseUpdate.manufacturer = manufacturer;
+    }
+    if (!existing.data.part_name && partName) reuseUpdate.part_name = partName;
+    if (!existing.data.note && note) reuseUpdate.note = note;
+    if (Object.keys(reuseUpdate).length) {
+      reuseUpdate.updated_by = currentUser ? currentUser.id : null;
+      reuseUpdate.updated_at = new Date().toISOString();
+      var updPart = await sb.from("internal_component_parts").update(reuseUpdate).eq("id", partId);
+      if (updPart.error) console.warn("internal component part reuse update failed", updPart.error);
+    }
   } else {
     var insPart = await sb.from("internal_component_parts").insert({
       manufacturer: manufacturer,
@@ -15719,9 +15751,19 @@ document.getElementById("btn-back-components").addEventListener("click", async f
   }
   showScreen("search");
 });
+document.getElementById("btn-components-open-parallel").addEventListener("click", function(){
+  enterComponentParallelScreen("components");
+});
 document.getElementById("btn-component-alt-cancel").addEventListener("click", closeComponentAlternativeForm);
 document.getElementById("btn-component-alt-save").addEventListener("click", saveComponentAlternativeForm);
-document.getElementById("btn-back-component-parallel").addEventListener("click", function(){ showScreen("search"); });
+document.getElementById("btn-back-component-parallel").addEventListener("click", function(){
+  if (componentParallelReturnScreen === "components") {
+    showScreen("components");
+    updateComponentsContextHeader();
+    return;
+  }
+  showScreen("search");
+});
 document.getElementById("btn-back-users").addEventListener("click",  function(){ showScreen("menu"); });
 document.getElementById("btn-back-parts-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-sales-pricing-mgmt").addEventListener("click", function(){ showScreen("menu"); });
