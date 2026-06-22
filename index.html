@@ -96,6 +96,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .sales-price-summary-head .detail-block-title { margin: 0; }
 .sales-price-summary { border: 1px solid #e5edf8; border-radius: 8px; background: #fbfdff; padding: 10px 12px; margin-bottom: 0; font-size: 12px; }
 .sales-price-summary-main { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.sales-price-summary-main.primary { justify-content: flex-end; }
 .sales-price-summary-label { color: #667085; font-weight: 600; }
 .sales-price-summary-value { color: #1a8c3e; font-size: 18px; font-weight: 800; }
 .sales-price-summary-sub { color: #8a94a6; margin-top: 4px; line-height: 1.5; }
@@ -300,9 +301,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .stock-mgmt-input { width: 100%; min-width: 0; border: 1px solid #d7dce5; border-radius: 6px; padding: 6px 7px; font-size: 12px; background: #fff; }
 .stock-mgmt-input:focus { border-color: #4f8ef7; outline: none; box-shadow: 0 0 0 2px rgba(79,142,247,.12); }
 .stock-mgmt-qty { max-width: 86px; }
-.stock-mgmt-actions { display: flex; gap: 6px; justify-content: flex-end; align-items: center; flex-wrap: wrap; }
-.stock-mgmt-add-kind { display: inline-flex; gap: 5px; align-items: center; }
-.stock-mgmt-add-kind select { max-width: 112px; border: 1px solid #d7dce5; border-radius: 6px; padding: 5px 6px; font-size: 12px; background: #fff; }
+.stock-mgmt-actions { display: flex; gap: 4px; justify-content: flex-start; align-items: center; flex-wrap: nowrap; min-width: 0; }
+.stock-mgmt-actions .btn-sm-edit { display: inline-flex; align-items: center; justify-content: center; height: 24px; min-height: 24px; padding: 0 6px; border-radius: 5px; font-size: 11px; line-height: 1; }
+.stock-mgmt-add-kind { display: inline-flex; gap: 4px; align-items: center; flex-wrap: nowrap; min-width: 0; }
+.stock-mgmt-add-kind select { height: 24px; max-width: 96px; border: 1px solid #d7dce5; border-radius: 5px; padding: 0 5px; font-size: 11px; background: #fff; }
 .stock-mgmt-save-note { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px; background: #fff4e5; color: #9a5b00; font-size: 11px; font-weight: 700; }
 .stock-history-panel { margin-top: 14px; background: #fff; border: 1px solid #e5eaf2; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); overflow: hidden; }
 .stock-history-panel.empty { padding: 14px; color: #98a2b3; font-size: 12px; }
@@ -4416,7 +4418,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.241";
+var APP_VERSION       = "v1.1.244";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -8239,6 +8241,9 @@ function renderProductKindStockMgmt() {
     html += "<td><input class='stock-mgmt-input' type='text' data-stock-variant='" + esc(String(variantId)) + "' data-stock-field='stock_location' value='" + esc(row.stock_location || "") + "'" + disabled + "></td>";
     html += "<td><input class='stock-mgmt-input' type='text' data-stock-variant='" + esc(String(variantId)) + "' data-stock-field='stock_note' value='" + esc(row.stock_note || "") + "'" + disabled + "><div class='mgmt-sub'>" + esc(formatDateTime(row.updated_at)) + "</div></td>";
     html += "<td><div class='stock-mgmt-actions'>";
+    if (hasVariant && productDisplayKindAllowed(kind) && canSeeComponentInfo()) {
+      html += "<button class='btn-sm-edit production-action-secondary' data-stock-open-components='" + esc(String(variantId)) + "'>" + esc(t("product_kind_open_components")) + "</button>";
+    }
     if (hasVariant) {
       html += "<button class='btn-sm-edit production-action-secondary' data-stock-open-history='" + esc(String(variantId)) + "'>" + esc(t("product_kind_stock_history_btn")) + "</button>";
     }
@@ -13803,7 +13808,7 @@ async function loadSalesPriceSummaryForCurrent() {
   var row = r.data || null;
   if (!row) {
     wrap.innerHTML = "<div class='sales-price-summary'>" +
-      "<div class='sales-price-summary-main'><span class='sales-price-summary-label'>" + esc(t("sales_price_section")) + "</span><span class='sales-price-summary-value'>-</span></div>" +
+      "<div class='sales-price-summary-main primary'><span class='sales-price-summary-value'>-</span></div>" +
       (canViewBasePrice()
         ? "<div class='sales-price-summary-main' style='margin-top:6px'><span class='sales-price-summary-label'>" + esc(t("sales_base_price")) + "</span><span class='sales-price-summary-value'>-</span></div>"
         : "") +
@@ -13814,7 +13819,7 @@ async function loadSalesPriceSummaryForCurrent() {
   var sub = [row.price_basis || "manual", row.effective_start || ""].filter(Boolean).join(" / ");
   var priceText = "JPY " + esc(formatYen(row.base_price_jpy));
   wrap.innerHTML = "<div class='sales-price-summary'>" +
-    "<div class='sales-price-summary-main'><span class='sales-price-summary-label'>" + esc(t("sales_price_section")) + "</span><span class='sales-price-summary-value'>" + priceText + "</span></div>" +
+    "<div class='sales-price-summary-main primary'><span class='sales-price-summary-value'>" + priceText + "</span></div>" +
     (canViewBasePrice()
       ? "<div class='sales-price-summary-main' style='margin-top:6px'><span class='sales-price-summary-label'>" + esc(t("sales_base_price")) + "</span><span class='sales-price-summary-value'>" + priceText + "</span></div>" +
         "<div class='sales-price-summary-sub'>" + esc(sub) + (row.basis_note ? " / " + esc(row.basis_note) : "") + "</div>"
@@ -13834,16 +13839,16 @@ async function loadCustomerSalesPriceSummary(wrap, dkdId) {
     var price = row && row.sales_price_jpy != null ? row.sales_price_jpy : null;
     var customerName = row && row.customer_name ? row.customer_name : (customerViewerContext && customerViewerContext.customer && customerViewerContext.customer.customer_name) || "";
     if (!row || status === "no_customer") {
-      wrap.innerHTML = "<div class='sales-price-summary'><div class='sales-price-summary-main'><span class='sales-price-summary-label'>" + esc(t("sales_price_section")) + "</span><span class='sales-price-summary-value'>-</span></div><div class='sales-price-summary-sub'>得意先の紐づけがありません</div></div>";
+      wrap.innerHTML = "<div class='sales-price-summary'><div class='sales-price-summary-main primary'><span class='sales-price-summary-value'>-</span></div><div class='sales-price-summary-sub'>得意先の紐づけがありません</div></div>";
       return;
     }
     if (status === "hidden" || status === "no_price_hidden") {
-      wrap.innerHTML = "<div class='sales-price-summary'><div class='sales-price-summary-main'><span class='sales-price-summary-label'>" + esc(t("sales_price_section")) + "</span><span class='sales-price-summary-value'>-</span></div></div>";
+      wrap.innerHTML = "<div class='sales-price-summary'><div class='sales-price-summary-main primary'><span class='sales-price-summary-value'>-</span></div></div>";
       return;
     }
     var priceText = price == null ? "-" : "JPY " + esc(formatYen(price));
     wrap.innerHTML = "<div class='sales-price-summary'>" +
-      "<div class='sales-price-summary-main'><span class='sales-price-summary-label'>" + esc(t("sales_price_section")) + "</span><span class='sales-price-summary-value'>" + priceText + "</span></div>" +
+      "<div class='sales-price-summary-main primary'><span class='sales-price-summary-value'>" + priceText + "</span></div>" +
       (customerName ? "<div class='sales-price-summary-sub'>" + esc(customerName) + "</div>" : "") +
     "</div>";
   } catch (e) {
