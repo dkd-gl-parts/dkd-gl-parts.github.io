@@ -161,6 +161,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .kikan-pn    { font-family: monospace; font-size: 12px; color: #444; }
 .kikan-mfr   { font-size: 11px; color: #aaa; }
 .kikan-badge { background: #e8f4ff; color: #1a6fd4; border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 600; }
+.kikan-stock-list { display: grid; gap: 4px; min-width: 118px; }
+.kikan-stock-pill { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; border: 1px solid transparent; border-radius: 5px; padding: 3px 6px; font-size: 11px; font-weight: 700; line-height: 1.25; }
+.kikan-stock-pill.rebuilt { background: #edf7ed; color: #1f7a35; border-color: #cbe9cf; }
+.kikan-stock-pill.aftermarket_new { background: #eaf2ff; color: #1a5fb4; border-color: #c9ddff; }
+.kikan-stock-pill b { color: #1a1a2e; font-size: 12px; text-align: right; }
+.kikan-action { text-align: right; white-space: nowrap; }
+.kikan-search-btn { padding: 4px 8px; font-size: 11px; }
 .component-section-title { font-size: 14px; font-weight: 600; margin: 16px 0 8px; display: flex; align-items: center; gap: 6px; }
 .component-toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
 .component-search { flex: 1; min-width: 160px; border: 1px solid #ddd; border-radius: 6px; padding: 6px 8px; font-size: 12px; outline: none; }
@@ -4352,7 +4359,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.230";
+var APP_VERSION       = "v1.1.231";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -11741,7 +11748,13 @@ function openPanel(id) {
   currentProductSpecs = [];
   currentProductNominalSpec = null;
   currentProductVariants = [];
-  for (var i=0;i<allProducts.length;i++) { if(allProducts[i].id===id){currentProduct=allProducts[i];break;} }
+  for (var i=0;i<allProducts.length;i++) {
+    if (parseInt(productDkdId(allProducts[i]), 10) === id) {
+      currentProduct = allProducts[i];
+      currentProduct.id = currentProduct.id || id;
+      break;
+    }
+  }
   if (!currentProduct) return;
   document.getElementById("panel-welcome").style.display  = "none";
   document.getElementById("panel-inner").style.display    = "flex";
@@ -11761,10 +11774,10 @@ function openPanel(id) {
 async function openProductByDkdId(dkdId) {
   var id = parseInt(dkdId, 10);
   if (isNaN(id)) return;
-  var found = allProducts.some(function(p) { return parseInt(p.id, 10) === id; });
+  var found = allProducts.some(function(p) { return parseInt(productDkdId(p), 10) === id; });
   if (!found) {
     var r = await sb.from("core_product_search_view").select("*").eq("dkd_shohin_id", id).maybeSingle();
-    if (!r.error && r.data) allProducts.push(r.data);
+    if (!r.error && r.data) allProducts.push(normalizeCoreProductFastRows([r.data])[0]);
   }
   openPanel(id);
 }
@@ -14620,6 +14633,31 @@ function kikanCacheKey(product, dkdShohinIdNum) {
   ].join("|");
 }
 
+function kikanStockQtyText(product, kind) {
+  var key = productDkdId(product);
+  var summary = key ? (productVariantSummaryMap[key] || productVariantSummaryCache[key]) : null;
+  var meta = summary && summary.kinds ? summary.kinds[normalizeProductKind(kind)] : null;
+  if (!meta || !meta.stockKnown) return "-";
+  var qty = Number(meta.stockQty || 0);
+  return Number.isInteger(qty) ? String(qty) : String(meta.stockQty);
+}
+
+function renderKikanStockHtml(product) {
+  return "<div class='kikan-stock-list'>" +
+    "<span class='kikan-stock-pill rebuilt'><span>" + esc(productKindLabel("rebuilt")) + "</span><b>" + esc(kikanStockQtyText(product, "rebuilt")) + "</b></span>" +
+    "<span class='kikan-stock-pill aftermarket_new'><span>" + esc(productKindLabel("aftermarket_new")) + "</span><b>" + esc(kikanStockQtyText(product, "aftermarket_new")) + "</b></span>" +
+  "</div>";
+}
+
+async function loadKikanVariantSummaryCache(partsList) {
+  var map = await fetchProductVariantSummaryMap(partsList || []);
+  Object.keys(map || {}).forEach(function(key) {
+    productVariantSummaryMap[key] = map[key];
+    productVariantSummaryCache[key] = map[key];
+  });
+  return map;
+}
+
 function renderKikanPartsList(parts_list, dkdShohinIdNum, product, wrap) {
   if (!wrap) return;
   parts_list = parts_list || [];
@@ -14628,21 +14666,31 @@ function renderKikanPartsList(parts_list, dkdShohinIdNum, product, wrap) {
     return;
   }
   var html = "<table class='kikan-table'>";
-  html += "<tr><th>" + t("f_genuine_pn") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_vehicle_mfr") + "</th></tr>";
+  html += "<tr><th>" + t("f_genuine_pn") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("product_kind_stock") + "</th><th></th></tr>";
   parts_list.forEach(function(p) {
-    html += "<tr class='kikan-other' data-dkd-id='" + esc(String(p.dkd_shohin_id || p.id)) + "'>";
+    var dkdId = String(p.dkd_shohin_id || p.id || "");
+    html += "<tr class='kikan-other' data-dkd-id='" + esc(dkdId) + "'>";
     html += "<td><div class='kikan-pn'>" + esc(p.genuine_part_number || "-") + "</div>";
     html += "</td>";
     html += "<td><div class='kikan-pn'>" + esc(p.manufacturer_part_number || "-") + "</div>";
     html += "<div class='kikan-mfr'>" + esc(p.manufacturer || "") + "</div></td>";
-    html += "<td><div class='kikan-mfr'>" + esc(p.vehicle_manufacturer || "-") + "</div></td>";
+    html += "<td>" + renderKikanStockHtml(p) + "</td>";
+    html += "<td class='kikan-action'><button type='button' class='btn-sm-edit kikan-search-btn' data-dkd-id='" + esc(dkdId) + "'>" + esc(t("btn_search")) + "</button></td>";
     html += "</tr>";
   });
   html += "</table>";
   html += "<div style='font-size:11px;color:#aaa;text-align:right'>" + esc(tf("kikan_member_count", { n: parts_list.length })) + "</div>";
   wrap.innerHTML = html;
+  wrap.querySelectorAll(".kikan-search-btn[data-dkd-id]").forEach(function(btn) {
+    btn.addEventListener("click", function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      openProductByDkdId(parseInt(btn.dataset.dkdId, 10));
+    });
+  });
   wrap.querySelectorAll("tr.kikan-other[data-dkd-id]").forEach(function(row) {
-    row.addEventListener("click", function() {
+    row.addEventListener("click", function(e) {
+      if (e.target && e.target.closest && e.target.closest("button")) return;
       openProductByDkdId(parseInt(row.dataset.dkdId, 10));
     });
   });
@@ -14708,26 +14756,9 @@ async function loadKikan(dkdShohinId, seq, productSnapshot) {
     return;
   }
 
-  var html = "<table class='kikan-table'>";
-  html += "<tr><th>" + t("f_genuine_pn") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_vehicle_mfr") + "</th></tr>";
-  parts_list.forEach(function(p) {
-    html += "<tr class='kikan-other' data-dkd-id='" + esc(String(p.dkd_shohin_id || p.id)) + "'>";
-    html += "<td><div class='kikan-pn'>" + esc(p.genuine_part_number || "-") + "</div>";
-    html += "</td>";
-    html += "<td><div class='kikan-pn'>" + esc(p.manufacturer_part_number || "-") + "</div>";
-    html += "<div class='kikan-mfr'>" + esc(p.manufacturer || "") + "</div></td>";
-    html += "<td><div class='kikan-mfr'>" + esc(p.vehicle_manufacturer || "-") + "</div></td>";
-    html += "</tr>";
-  });
-  html += "</table>";
-  html += "<div style='font-size:11px;color:#aaa;text-align:right'>" + esc(tf("kikan_member_count", { n: parts_list.length })) + "</div>";
-  wrap.innerHTML = html;
-
-  wrap.querySelectorAll("tr.kikan-other[data-dkd-id]").forEach(function(row) {
-    row.addEventListener("click", function() {
-      openProductByDkdId(parseInt(row.dataset.dkdId, 10));
-    });
-  });
+  await loadKikanVariantSummaryCache(parts_list);
+  if (!isCurrentDetailLoad(seq)) return;
+  renderKikanPartsList(parts_list, dkdShohinIdNum, product, wrap);
 }
 
 async function loadImages(slPartIds, seq) {
