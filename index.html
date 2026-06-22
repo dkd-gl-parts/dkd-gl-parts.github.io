@@ -448,6 +448,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ac-part-row { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 0; align-items: stretch; min-width: 0; border-bottom: 1px solid #f0f0f0; min-height: 34px; }
 .ac-part-label { font-size: 13px; color: #888; padding: 7px 4px; display: flex; align-items: center; }
 .ac-part-value { font-size: 13px; font-weight: 700; color: #1a1a2e; padding: 7px 4px; display: flex; align-items: center; word-break: break-all; }
+.ac-part-value-with-action { justify-content: space-between; gap: 8px; }
+.ac-part-value-text { min-width: 0; overflow-wrap: anywhere; }
+.detail-inline-action { flex: 0 0 auto; white-space: nowrap; padding: 5px 9px; }
 .detail-main-grid .detail-table,
 .detail-main-grid .ac-part-grid { margin-bottom: 0; }
 .detail-main-grid .detail-table { margin-top: 0 !important; }
@@ -4394,7 +4397,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.236";
+var APP_VERSION       = "v1.1.237";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -11984,13 +11987,17 @@ function renderPanelStatic() {
     var html = "";
     rows.forEach(function(d) {
       var text = (d[1] != null && String(d[1]) !== "None" && String(d[1]) !== "") ? String(d[1]) : "-";
+      var actionHtml = d[2] || "";
       html += "<div class='ac-part-row'>" +
         "<div class='ac-part-label'>" + t(d[0]) + "</div>" +
-        "<div class='ac-part-value'>" + esc(text) + "</div>" +
+        "<div class='ac-part-value" + (actionHtml ? " ac-part-value-with-action" : "") + "'><span class='ac-part-value-text'>" + esc(text) + "</span>" + actionHtml + "</div>" +
       "</div>";
     });
     return html;
   }
+  var componentButtonHtml = canSeeComponentInfo()
+    ? "<button class='btn-sm-edit btn-component-action detail-inline-action' id='btn-open-components'><span class='component-icon'>&#x1F9E9;</span> " + t("component_open_parts") + "</button>"
+    : "";
   var genuineHtml = "";
   var makerHtml = "";
   var vehicleOffsetClass = "";
@@ -12001,7 +12008,7 @@ function renderPanelStatic() {
       ["f_genuine_clutch_pn", p.genuine_clutch_part_number]
     ];
     var acMakerRows = [
-      ["f_manufacturer", p.manufacturer],
+      ["f_manufacturer", p.manufacturer, componentButtonHtml],
       ["f_mfr_assy_pn", p.manufacturer_part_number],
       ["f_mfr_body_pn", p.manufacturer_body_part_number],
       ["f_mfr_clutch_pn", p.manufacturer_clutch_part_number]
@@ -12015,7 +12022,7 @@ function renderPanelStatic() {
       ["f_genuine_pn2", p.genuine_part_number_2]
     ];
     var makerRows = [
-      ["f_manufacturer", p.manufacturer],
+      ["f_manufacturer", p.manufacturer, componentButtonHtml],
       ["f_mfr_pn",      p.manufacturer_part_number]
     ];
     genuineHtml = "<div class='ac-part-grid'>" + renderAcPartRows(genuineRows) + "</div>";
@@ -12027,7 +12034,6 @@ function renderPanelStatic() {
     toolHtml += "<button class='btn-sm-edit' onclick='openRakutenForCurrentProduct()'>&#x1F4B4; " + t("rakuten_quick") + "</button>";
   }
   if (canSeeComponentInfo()) {
-    toolHtml += "<button class='btn-sm-edit btn-component-action' id='btn-open-components'><span class='component-icon'>&#x1F9E9;</span> " + t("component_open_parts") + "</button>";
     toolHtml += "<button class='btn-sm-edit' id='btn-open-component-parallel'>&#8644; " + t("component_open_parallel") + "</button>";
   }
   if (canEdit()) {
