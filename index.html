@@ -1248,7 +1248,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 </div>
 
 <!-- =============================================
-   讒区・驛ｨ蜩∫判髱｢
+   構成部品画面
 ============================================= -->
 <div id="screen-components" class="screen">
   <div class="page-header">
@@ -4416,7 +4416,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.238";
+var APP_VERSION       = "v1.1.239";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -7571,7 +7571,7 @@ function renderCoreListMgmt() {
     list.querySelectorAll("[data-core-edit], [data-core-del]").forEach(function(btn) { btn.remove(); });
     if (countEl) {
       var readonlyTotalQty = sumProductionCoreEntryQty(coreListMgmtRows);
-      countEl.innerHTML = esc(String(coreListMgmtRows.length)) + " 莉ｶ <span class='core-count-pill'>繧ｳ繧｢蜷郁ｨ・" + esc(String(readonlyTotalQty)) + "</span>";
+      countEl.innerHTML = esc(String(coreListMgmtRows.length)) + " 件 <span class='core-count-pill'>コア合計 " + esc(String(readonlyTotalQty)) + "</span>";
     }
     return;
   }
