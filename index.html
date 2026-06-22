@@ -4425,7 +4425,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.245";
+var APP_VERSION       = "v1.1.246";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -12711,6 +12711,16 @@ function selectedProductSub() {
   ].join(" / ");
 }
 
+function updateComponentsContextHeader() {
+  var title = document.getElementById("components-context-title");
+  var sub = document.getElementById("components-context-sub");
+  if (title) title.textContent = selectedProductTitle();
+  if (sub) {
+    var target = productKindLabel(selectedProductKind()) + " / " + componentTargetVariantText();
+    sub.textContent = selectedProductSub() + " / " + target;
+  }
+}
+
 async function enterComponentsScreen(returnScreen) {
   if (!currentProduct) { alert(t("welcome_panel")); return; }
   if (!canSeeComponentInfo()) { alert(t("err_perm")); return; }
@@ -12723,11 +12733,8 @@ async function enterComponentsScreen(returnScreen) {
       ? "← " + t("screen_product_kind_stock_title")
       : t("btn_back_search");
   }
-  var title = document.getElementById("components-context-title");
-  var sub = document.getElementById("components-context-sub");
-  if (title) title.textContent = selectedProductTitle();
-  if (sub) sub.textContent = selectedProductSub();
   await ensureProductVariantsForCurrentDkd(productDkdId(currentProduct));
+  updateComponentsContextHeader();
   renderComponentAddPanel();
   loadAssemblyComponentsForCurrent();
 }
@@ -12798,6 +12805,7 @@ function bindComponentKindSelector() {
       currentSelectedProductKind = normalizeProductKind(select.value || "rebuilt");
       currentSelectedComponentVariantId = "";
       renderComponentAddPanel();
+      updateComponentsContextHeader();
       loadAssemblyComponentsForCurrent();
     };
   }
@@ -12805,6 +12813,7 @@ function bindComponentKindSelector() {
     variantSelect.onchange = function() {
       currentSelectedComponentVariantId = variantSelect.value || "";
       renderComponentAddPanel();
+      updateComponentsContextHeader();
       loadAssemblyComponentsForCurrent();
     };
   }
