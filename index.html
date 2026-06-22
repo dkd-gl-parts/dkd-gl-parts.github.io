@@ -179,11 +179,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-compat-help { margin: 0 0 10px; padding: 8px 10px; border: 1px solid #dbe7f8; border-radius: 6px; background: #f7fbff; color: #334155; font-size: 11px; line-height: 1.6; }
 .component-compat-help strong { color: #1a1a2e; font-weight: 700; }
 .component-target-panel { margin: 0 0 12px; padding: 12px; border: 1px solid #dbe7f8; border-radius: 8px; background: #f7fbff; }
-.component-target-title { font-size: 12px; font-weight: 800; color: #1a1a2e; margin-bottom: 8px; }
+.component-target-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.component-target-title { font-size: 12px; font-weight: 800; color: #1a1a2e; }
+.component-target-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0 0 10px; }
+.component-target-stat { min-width: 0; border: 1px solid #e5edf8; border-radius: 7px; background: #fff; padding: 7px 9px; }
+.component-target-stat span { display: block; color: #667085; font-size: 10px; font-weight: 700; margin-bottom: 3px; }
+.component-target-stat b { display: block; color: #1a1a2e; font-size: 13px; line-height: 1.35; word-break: break-all; }
 .component-target-controls { display: grid; grid-template-columns: minmax(180px, 240px) minmax(220px, 1fr); gap: 10px; align-items: end; }
 .component-target-field label { display: block; font-size: 11px; color: #667085; margin-bottom: 4px; }
 .component-target-field select { width: 100%; border: 1px solid #cdd7e7; border-radius: 7px; padding: 7px 8px; font-size: 12px; outline: none; background: #fff; }
 .component-target-help { margin-top: 8px; color: #667085; font-size: 11px; line-height: 1.5; }
+.component-empty-state { border: 1px dashed #d7e3f5; border-radius: 8px; background: #fbfdff; padding: 12px; color: #667085; font-size: 12px; line-height: 1.6; }
+.component-empty-title { color: #1a1a2e; font-weight: 800; margin-bottom: 3px; }
 .component-add-panel { margin: 0 0 12px; padding: 12px; border: 1px solid #e5e9f2; border-radius: 8px; background: #fff; }
 .component-add-title { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-bottom: 10px; }
 .component-add-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
@@ -192,7 +199,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-add-field input:focus { border-color: #4f8ef7; }
 .component-add-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 @media(max-width:900px){ .component-add-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media(max-width:560px){ .component-add-grid, .component-target-controls { grid-template-columns: 1fr; } }
+@media(max-width:560px){ .component-add-grid, .component-target-controls, .component-target-summary { grid-template-columns: 1fr; } .component-target-head { align-items: flex-start; flex-direction: column; } }
 .component-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 12px; }
 .component-table th { background: #f5f7fa; color: #555; font-weight: 600; padding: 6px 8px; text-align: left; border-bottom: 2px solid #e0e0e0; }
 .component-table td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
@@ -4418,7 +4425,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.244";
+var APP_VERSION       = "v1.1.245";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -10576,6 +10583,71 @@ function componentVariantLabel(row) {
   return kind + (labels.length ? " / " + labels.join(" / ") : " #" + String(row.product_variant_id || ""));
 }
 
+function componentTargetVariantText() {
+  var selectedId = selectedComponentVariantId();
+  if (!selectedId) return t("component_variant_auto");
+  var row = componentVariantRowsForKind(selectedProductKind()).find(function(v) {
+    return parseInt(v.product_variant_id, 10) === selectedId;
+  });
+  if (!row) return t("component_variant_auto");
+  var labels = [];
+  if (row.display_label) labels.push(row.display_label);
+  if (row.sl_part_id) labels.push(t("product_kind_sl") + " " + row.sl_part_id);
+  if (row.stock_location) labels.push(row.stock_location);
+  return labels.length ? labels.join(" / ") : ("#" + String(row.product_variant_id || ""));
+}
+
+function componentTargetStockText() {
+  var selectedId = selectedComponentVariantId();
+  if (!selectedId) return "-";
+  var row = componentVariantRowsForKind(selectedProductKind()).find(function(v) {
+    return parseInt(v.product_variant_id, 10) === selectedId;
+  });
+  if (!row) return "-";
+  return row.stock_qty === null || row.stock_qty === undefined || row.stock_qty === "" ? "0" : String(row.stock_qty);
+}
+
+function componentTargetSummaryHtml(componentCount) {
+  var kind = selectedProductKind();
+  var countText = componentCount === null || componentCount === undefined ? "-" : String(componentCount);
+  return "<div class='component-target-summary'>" +
+    "<div class='component-target-stat'><span>" + esc(t("component_target_kind_label")) + "</span><b>" + esc(productKindLabel(kind)) + "</b></div>" +
+    "<div class='component-target-stat'><span>" + esc(t("component_target_variant_label")) + "</span><b>" + esc(componentTargetVariantText()) + "</b></div>" +
+    "<div class='component-target-stat'><span>" + esc(t("product_kind_stock_qty")) + "</span><b>" + esc(componentTargetStockText()) + "</b></div>" +
+    "<div class='component-target-stat'><span>" + esc(t("component_section")) + "</span><b>" + esc(countText) + "</b></div>" +
+  "</div>";
+}
+
+function updateComponentTargetSummary(componentCount) {
+  var el = document.getElementById("component-target-summary");
+  if (el) el.innerHTML = componentTargetSummaryHtml(componentCount);
+}
+
+function componentEmptyDetailText(kind) {
+  kind = normalizeProductKind(kind || selectedProductKind());
+  if (currentLang === "en") {
+    return kind === "rebuilt"
+      ? "Catalog-derived component rows are managed here. Manual rows can be added without changing protected catalog rows."
+      : "No component rows are registered for this kind. Add only the parts used for this product kind.";
+  }
+  if (currentLang === "zh") {
+    return kind === "rebuilt"
+      ? "目录来源的构成部品在这里管理。手动追加不会修改受保护的目录数据。"
+      : "此区分尚未登记构成部品。请只追加该区分实际使用的部品。";
+  }
+  return kind === "rebuilt"
+    ? "パーツカタログ由来の構成部品はここに表示します。カタログ行は保護したまま、社内入力分を追加できます。"
+    : "この区分には構成部品が未登録です。この区分で実際に使用する部品だけを追加してください。";
+}
+
+function componentEmptyStateHtml() {
+  var kind = selectedProductKind();
+  return "<div class='component-empty-state'>" +
+    "<div class='component-empty-title'>" + esc(tf("component_empty_for_kind", { kind: productKindLabel(kind) })) + "</div>" +
+    "<div>" + esc(componentEmptyDetailText(kind)) + "</div>" +
+  "</div>";
+}
+
 function selectedComponentVariantId() {
   var id = parseInt(currentSelectedComponentVariantId || "", 10);
   if (isNaN(id)) return null;
@@ -12695,7 +12767,8 @@ function renderComponentKindSelectorHtml() {
   var variants = componentVariantRowsForKind(selected);
   var selectedVariantId = selectedComponentVariantId();
   var html = "<div class='component-target-panel'>";
-  html += "<div class='component-target-title'>" + esc(t("component_target_kind_title")) + "</div>";
+  html += "<div class='component-target-head'><div class='component-target-title'>" + esc(t("component_target_kind_title")) + "</div><span class='product-kind-pill " + productKindClass(selected) + "'>" + esc(productKindLabel(selected)) + "</span></div>";
+  html += "<div id='component-target-summary'>" + componentTargetSummaryHtml(null) + "</div>";
   html += "<div class='component-target-controls'>";
   html += "<div class='component-target-field'><label for='component-product-kind-select'>" + esc(t("component_target_kind_label")) + "</label>";
   html += "<select id='component-product-kind-select' class='product-kind-select " + productKindClass(selected) + "'>";
@@ -13190,7 +13263,8 @@ function renderAssemblyComponentRows() {
   if (!wrap) return;
   var rows = assemblyComponentRows || [];
   if (!rows.length) {
-    wrap.innerHTML = "<div class='component-empty'>" + esc(tf("component_empty_for_kind", { kind: productKindLabel(selectedProductKind()) })) + "</div>";
+    updateComponentTargetSummary(0);
+    wrap.innerHTML = componentEmptyStateHtml();
     return;
   }
   var hasActions = canEditInternalComponents();
@@ -13263,6 +13337,7 @@ async function loadAssemblyComponentsForCurrent() {
   var mfr = String((currentProduct && currentProduct.manufacturer) || "").toUpperCase();
   var normalizedMfrPnKeys = componentAssyLookupKeys(currentProduct);
   if (!mfr || !normalizedMfrPnKeys.length) {
+    updateComponentTargetSummary(0);
     wrap.innerHTML = "<div class='component-empty'>" + t("component_none") + "</div>";
     return;
   }
@@ -13277,6 +13352,7 @@ async function loadAssemblyComponentsForCurrent() {
     .order("component_manufacturer_part_number", { ascending: true });
   if (r.error) {
     console.warn("assembly_component_usage_details failed", r.error);
+    updateComponentTargetSummary(0);
     wrap.innerHTML = "<div class='component-empty'>" + t("component_none") + "</div>";
     return;
   }
@@ -13296,6 +13372,7 @@ async function loadAssemblyComponentsForCurrent() {
     return String(a.component_manufacturer_part_number || "").localeCompare(String(b.component_manufacturer_part_number || ""), "ja", { numeric: true });
   });
   assemblyComponentRows = rows;
+  updateComponentTargetSummary(rows.length);
   await loadComponentAlternativesForRows(rows);
   renderAssemblyComponentRows();
 }
