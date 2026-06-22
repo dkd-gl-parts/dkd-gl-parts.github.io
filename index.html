@@ -4416,7 +4416,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.240";
+var APP_VERSION       = "v1.1.241";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -15779,8 +15779,8 @@ document.getElementById("kf-candidates").addEventListener("click", function(e) {
   var item = e.target.closest("[data-candidate-index]");
   if (item) selectKikanPartCandidate(parseInt(item.dataset.candidateIndex, 10));
 });
-document.getElementById("search-btn").addEventListener("click", function(){ searchSlOnly=false; runProductSearch({ resetFilter: true, resetLimit: true }); });
-document.getElementById("q").addEventListener("keydown", function(e){ if(e.key==="Enter") { searchSlOnly=false; runProductSearch({ resetFilter: true, resetLimit: true }); } });
+document.getElementById("search-btn").addEventListener("click", function(){ searchSlOnly=false; runProductSearch({ resetLimit: true }); });
+document.getElementById("q").addEventListener("keydown", function(e){ if(e.key==="Enter") { searchSlOnly=false; runProductSearch({ resetLimit: true }); } });
 document.getElementById("clear-btn").addEventListener("click", function(){ document.getElementById("q").value=""; currentFilter="all"; searchSlOnly=false; productSearchLimit=SEARCH_INITIAL_LIMIT; syncSearchFilterControls(); runProductSearch(); });
 document.querySelectorAll("#filter-row .chip").forEach(function(chip){
   chip.addEventListener("click", function(){
