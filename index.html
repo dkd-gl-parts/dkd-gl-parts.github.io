@@ -1297,20 +1297,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="form-help" id="component-add-modal-help">-</div>
     <div class="component-add-grid">
       <div class="component-add-field">
+        <label><span data-i18n="component_name">部品名</span> *</label>
+        <input id="component-add-name" type="text" list="component-add-name-list" data-i18n-ph="component_name_assist_ph" placeholder="候補から選択または入力" required>
+        <datalist id="component-add-name-list"></datalist>
+      </div>
+      <div class="component-add-field">
         <label data-i18n="f_manufacturer">メーカー</label>
         <input id="component-add-mfr" type="text">
       </div>
       <div class="component-add-field">
         <label><span data-i18n="f_mfr_pn">メーカー品番</span> *</label>
-        <input id="component-add-mfr-pn" type="text">
+        <input id="component-add-mfr-pn" type="text" required>
       </div>
       <div class="component-add-field">
         <label data-i18n="f_genuine_pn">純正品番</label>
         <input id="component-add-genuine-pn" type="text">
-      </div>
-      <div class="component-add-field">
-        <label data-i18n="component_name">部品名</label>
-        <input id="component-add-name" type="text">
       </div>
       <div class="component-add-field">
         <label data-i18n="component_position">図番/位置</label>
@@ -3041,6 +3042,7 @@ var TRANSLATIONS = {
     component_load_candidates: "候補を表示",
     component_position: "図番/位置",
     component_name: "部品名",
+    component_name_assist_ph: "候補から選択または入力",
     component_quantity: "数量",
     component_interchange: "互",
     component_compat_help: "<strong>\u4e92\u63db\u6027\u6b04\u306e\u898b\u65b9</strong> A=\u65b0\u65e7\u90e8\u54c1\u9593\u306b\u4e92\u63db\u6027\u3042\u308a / B=\u65e7\u90e8\u54c1\u306e\u66ff\u308f\u308a\u306b\u65b0\u90e8\u54c1\u3092\u4f7f\u7528\u53ef\uff08\u9006\u306f\u4e0d\u53ef\uff09 / C=\u65b0\u90e8\u54c1\u306e\u66ff\u308f\u308a\u306b\u65e7\u90e8\u54c1\u3092\u4f7f\u7528\u53ef\uff08\u9006\u306f\u4e0d\u53ef\uff09 / D=\u4e92\u63db\u6027\u306a\u3057 / X=\u4e92\u63db\u6027\u304c\u3042\u308b\u4ee3\u66ff\u90e8\u54c1\u3002A\u30fbB\u30fbX\u306e\u65e7\u54c1\u756a\u306f\u5728\u5eab\u304c\u7121\u304f\u306a\u308a\u6b21\u7b2c\u3001\u4f9b\u7d66\u7d42\u4e86\u3002",
@@ -3093,6 +3095,7 @@ var TRANSLATIONS = {
     component_catalog_locked_save: "パーツカタログ由来の構成部品は修正できません。",
     component_target_id_missing: "対象商品のDKD商品IDを確認できません。",
     component_mfr_pn_required: "構成部品のメーカー品番を入力してください。",
+    component_name_required: "構成部品の部品名を入力してください。",
     component_base_missing: "基準にする構成部品を確認できません。",
     component_base_missing_save: "基準構成部品を確認できません。",
     component_add_failed: "構成部品の追加に失敗しました",
@@ -3714,6 +3717,7 @@ var TRANSLATIONS = {
     component_load_candidates: "Show Candidates",
     component_position: "Position",
     component_name: "Part Name",
+    component_name_assist_ph: "Select from candidates or enter",
     component_quantity: "Qty",
     component_interchange: "Int.",
     component_compat_help: "<strong>Interchange legend</strong> A=interchangeable both ways / B=new part can replace old, not the reverse / C=old part can replace new, not the reverse / D=not interchangeable / X=alternate interchangeable part. Old part numbers marked A, B, or X are supplied only while stock remains.",
@@ -3766,6 +3770,7 @@ var TRANSLATIONS = {
     component_catalog_locked_save: "Catalog-derived component parts cannot be edited.",
     component_target_id_missing: "Could not confirm the target product DKD ID.",
     component_mfr_pn_required: "Enter the component manufacturer part number.",
+    component_name_required: "Enter the component part name.",
     component_base_missing: "Could not confirm the base component part.",
     component_base_missing_save: "Could not confirm the base component part.",
     component_add_failed: "Failed to add component part",
@@ -4380,6 +4385,7 @@ var TRANSLATIONS = {
     component_load_candidates: "显示候选",
     component_position: "部位",
     component_name: "部件名",
+    component_name_assist_ph: "从候选中选择或输入",
     component_quantity: "数量",
     component_interchange: "互",
     component_compat_help: "<strong>互换栏说明</strong> A=新旧部件可互换 / B=新部件可替代旧部件，反向不可 / C=旧部件可替代新部件，反向不可 / D=不可互换 / X=表示有互换性的替代部件。A、B、X 的旧品号库存售完后停止供应。",
@@ -4432,6 +4438,7 @@ var TRANSLATIONS = {
     component_catalog_locked_save: "目录来源的构成部件不能修改。",
     component_target_id_missing: "无法确认目标商品的 DKD 商品ID。",
     component_mfr_pn_required: "请输入构成部件的制造商品号。",
+    component_name_required: "请输入构成部件的部件名。",
     component_base_missing: "无法确认作为基准的构成部件。",
     component_base_missing_save: "无法确认基准构成部件。",
     component_add_failed: "构成部件添加失败",
@@ -4507,7 +4514,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.254";
+var APP_VERSION       = "v1.1.255";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -12995,7 +13002,8 @@ function openComponentAddForm() {
   if (!canEditInternalComponents()) { alert(t("err_perm")); return; }
   clearComponentAddForm();
   var manufacturer = document.getElementById("component-add-mfr");
-  if (manufacturer) manufacturer.value = (currentProduct && currentProduct.manufacturer) || "";
+  if (manufacturer) manufacturer.value = "";
+  renderComponentAddNameOptions();
   var title = document.getElementById("component-add-modal-title");
   if (title) title.textContent = tf("component_add_title_for_kind", { kind: productKindLabel(selectedProductKind()) });
   var help = document.getElementById("component-add-modal-help");
@@ -13006,8 +13014,8 @@ function openComponentAddForm() {
   if (btn) { btn.disabled = false; btn.textContent = t("component_add"); }
   var overlay = document.getElementById("component-add-overlay");
   if (overlay) overlay.classList.add("show");
-  var pn = document.getElementById("component-add-mfr-pn");
-  if (pn) pn.focus();
+  var name = document.getElementById("component-add-name");
+  if (name) name.focus();
 }
 
 function componentAddValue(id) {
@@ -13016,7 +13024,7 @@ function componentAddValue(id) {
 }
 
 function clearComponentAddForm() {
-  ["component-add-mfr-pn","component-add-genuine-pn","component-add-name","component-add-position","component-add-unit-price","component-add-interchange","component-add-start","component-add-end"].forEach(function(id) {
+  ["component-add-mfr","component-add-mfr-pn","component-add-genuine-pn","component-add-name","component-add-position","component-add-unit-price","component-add-interchange","component-add-start","component-add-end"].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.value = "";
   });
@@ -13037,7 +13045,13 @@ async function addAssemblyComponentForCurrent() {
     else alert(t("component_mfr_pn_required"));
     return;
   }
-  var componentMfr = componentAddValue("component-add-mfr") || (currentProduct.manufacturer || "UNKNOWN");
+  var componentPartName = componentAddValue("component-add-name");
+  if (!componentPartName) {
+    if (err) err.textContent = t("component_name_required");
+    else alert(t("component_name_required"));
+    return;
+  }
+  var componentMfr = componentAddValue("component-add-mfr") || "UNKNOWN";
   var componentMfrPn = componentAddValue("component-add-mfr-pn");
   if (!componentMfrPn) {
     if (err) err.textContent = t("component_mfr_pn_required");
@@ -13054,7 +13068,7 @@ async function addAssemblyComponentForCurrent() {
     component_manufacturer: componentMfr,
     component_manufacturer_part_number: componentMfrPn,
     component_genuine_part_number: componentAddValue("component-add-genuine-pn") || null,
-    component_part_name: componentAddValue("component-add-name") || null,
+    component_part_name: componentPartName,
     component_position: componentAddValue("component-add-position") || null,
     component_quantity: componentAddValue("component-add-qty") || "1",
     component_unit_price_jpy: nullableIntFromInput("component-add-unit-price"),
@@ -13247,6 +13261,54 @@ function componentAlternativeNameCandidates(baseRow, selectedName) {
   });
   addComponentNameCandidate(list, seen, selectedName);
   return list;
+}
+
+function componentAddNameCandidates(selectedName) {
+  var list = [];
+  var seen = {};
+  (assemblyComponentRows || []).forEach(function(row) {
+    addComponentNameCandidate(list, seen, row.component_name || row.component_part_name);
+  });
+  (componentAlternativeRows || []).forEach(function(alt) {
+    var part = alt.internal_component_parts || {};
+    addComponentNameCandidate(list, seen, part.part_name);
+  });
+  [
+    "コンプレッサAY",
+    "コンプレッサAY,W/クラッチ",
+    "クラッチAY,マグネット",
+    "ステータ,マグネット クラッチ",
+    "ロータ,マグネット クラッチ",
+    "ハブS/A,クラッチ",
+    "プーリ",
+    "ベアリング",
+    "ブラシ",
+    "ブラシホルダASSY",
+    "レギュレータ",
+    "レクチファイヤASSY",
+    "アマチュア",
+    "フィールドコイル",
+    "マグネットスイッチ",
+    "ドライブピニオン",
+    "エンドフレーム",
+    "Oリング",
+    "ワッシャ",
+    "ボルト"
+  ].forEach(function(name) {
+    addComponentNameCandidate(list, seen, name);
+  });
+  addComponentNameCandidate(list, seen, selectedName);
+  return list;
+}
+
+function renderComponentAddNameOptions(selectedName) {
+  var list = document.getElementById("component-add-name-list");
+  if (!list) return;
+  var html = "";
+  componentAddNameCandidates(selectedName).forEach(function(name) {
+    html += "<option value='" + esc(name) + "'></option>";
+  });
+  list.innerHTML = html;
 }
 
 function renderComponentAlternativeNameOptions(selectedName) {
