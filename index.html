@@ -410,6 +410,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .form-overlay.show { display: flex; }
 .form-card      { background: #fff; border-radius: 16px; padding: 24px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; margin: 16px; box-shadow: 0 12px 40px rgba(0,0,0,0.2); }
 .form-card h3   { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: #1a1a2e; }
+.component-alt-card { max-width: 640px; }
+.form-grid      { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .form-row       { margin-bottom: 12px; }
 .form-label     { font-size: 12px; color: #888; margin-bottom: 4px; display: block; }
 .form-input     { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; font-size: 14px; outline: none; }
@@ -424,6 +426,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .candidate-item:hover { background: #f5f8ff; }
 .candidate-main { font-weight: 600; color: #1a1a2e; }
 .candidate-sub { color: #777; margin-top: 2px; font-family: monospace; }
+@media(max-width:640px){ .form-grid { grid-template-columns: 1fr; } }
 .spec-box { margin: 12px 0 6px; border: 1px solid #e8edf5; border-radius: 8px; background: #fbfcff; padding: 10px 12px; }
 .spec-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
 .spec-title { font-size: 13px; font-weight: 700; color: #1a1a2e; }
@@ -1347,7 +1350,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 </div>
 
 <div class="form-overlay" id="component-alternative-overlay">
-  <div class="form-modal">
+  <div class="form-card component-alt-card">
     <h3 data-i18n="component_alternative_modal_title">外品代替品を追加</h3>
     <div class="form-help" id="component-alt-base" data-i18n="component_alternative_base_hint">基準構成部品を選択してください</div>
     <div class="form-grid">
@@ -1378,7 +1381,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         <input class="form-input" id="component-alt-note" type="text" placeholder="外品・代替条件など" data-i18n-ph="component_alt_note_ph">
       </div>
     </div>
-    <div class="form-actions">
+    <div class="form-footer">
       <button class="btn-cancel" id="btn-component-alt-cancel" data-i18n="component_cancel">キャンセル</button>
       <button class="btn-primary" id="btn-component-alt-save" data-i18n="component_save">保存</button>
     </div>
@@ -4514,7 +4517,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.255";
+var APP_VERSION       = "v1.1.256";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
