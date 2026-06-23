@@ -440,7 +440,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .detail-vehicle-grid { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 0; border-top: 1px solid #f0f0f0; margin-bottom: 10px; }
 .detail-vehicle-label { color: #888; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid #f0f0f0; min-height: 34px; display: flex; align-items: center; }
 .detail-vehicle-value { color: #1a1a2e; font-size: 13px; font-weight: 700; padding: 7px 4px; border-bottom: 1px solid #f0f0f0; min-height: 34px; display: flex; align-items: center; word-break: break-word; }
-.detail-vehicle-maker-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.detail-vehicle-maker-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 4px; }
 .detail-vehicle-maker-row .catalog-vehicle-maker-value { min-width: 0; flex: 1; font-size: 13px; font-weight: 700; color: #1a1a2e; line-height: 1.35; }
 .detail-vehicle-maker-row .catalog-vehicle-button { flex: 0 0 auto; padding: 2px 7px; font-size: 11px; line-height: 1.2; }
 .detail-vehicle-action { grid-column: 1 / -1; padding: 8px 4px; border-bottom: 1px solid #f0f0f0; }
@@ -463,7 +463,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ac-part-row { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 0; align-items: stretch; min-width: 0; border-bottom: 1px solid #f0f0f0; min-height: 34px; }
 .ac-part-label { font-size: 13px; color: #888; padding: 7px 4px; display: flex; align-items: center; }
 .ac-part-value { font-size: 13px; font-weight: 700; color: #1a1a2e; padding: 7px 4px; display: flex; align-items: center; word-break: break-all; }
-.ac-part-value-with-action { justify-content: space-between; gap: 8px; }
+.ac-part-value-with-action { justify-content: space-between; gap: 8px; padding: 5px 4px; }
 .ac-part-value-text { min-width: 0; overflow-wrap: anywhere; }
 .detail-inline-action { flex: 0 0 auto; white-space: nowrap; padding: 5px 9px; }
 .detail-main-grid .detail-table,
@@ -620,11 +620,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 #screen-search .detail-toolbar .btn-sm-edit,
 #screen-search .detail-inline-action,
 #screen-search .catalog-vehicle-button {
-  min-height: 32px;
-  min-width: 92px;
-  padding: 6px 11px;
-  font-size: 12px;
-  line-height: 1.2;
+  height: 24px;
+  min-height: 24px;
+  min-width: 76px;
+  padding: 0 8px;
+  font-size: 11px;
+  line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4506,7 +4507,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.252";
+var APP_VERSION       = "v1.1.253";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
