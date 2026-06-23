@@ -599,8 +599,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .product-kind-panel .product-kind-list { margin-top: 6px; }
 .product-kind-control { margin-top: 8px; display: grid; gap: 6px; }
 .product-kind-control-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.product-kind-control-row.compact { justify-content: flex-end; }
 .product-kind-control-row label { color: #667085; font-size: 12px; font-weight: 700; white-space: nowrap; }
-.product-kind-select { min-width: 150px; border: 1px solid #d7dce5; border-radius: 7px; padding: 6px 8px; font-size: 12px; background: #fff; font-weight: 800; }
+.product-kind-select { min-width: 150px; border: 1px solid #d7dce5; border-radius: 7px; padding: 6px 8px; font-size: 12px; background: #fff; font-weight: 800; text-align: right; text-align-last: right; }
 .product-kind-select.rebuilt { background: #edf7ed; color: #1f7a35; border-color: #cbe9cf; }
 .product-kind-select.aftermarket_new { background: #eaf2ff; color: #1a5fb4; border-color: #c9ddff; }
 .product-kind-select.used_core { background: #fff4d6; color: #8a5a00; border-color: #f0d184; }
@@ -4518,7 +4519,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.259";
+var APP_VERSION       = "v1.1.260";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
