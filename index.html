@@ -4507,7 +4507,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.253";
+var APP_VERSION       = "v1.1.254";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -14218,7 +14218,7 @@ async function loadDetailSalesCustomerOptions() {
 
 function detailCustomerOptionLabel(customer) {
   if (!customer) return "-";
-  return [customer.source_customer_code, customer.customer_name, customer.price_rank_code].filter(Boolean).join(" / ");
+  return customer.customer_name || "-";
 }
 
 function detailCustomerCell(label, value, cls) {
@@ -14245,19 +14245,9 @@ function renderDetailCustomerInfoHtml(customer, priceInfo, canSelect) {
     html += "</div>";
     return html;
   }
-  var salesPriceText = priceInfo.loading
-    ? t("loading")
-    : (priceInfo.salesPrice == null ? t("detail_customer_no_price") : "JPY " + formatYen(priceInfo.salesPrice));
   html += "<div class='detail-customer-grid'>";
   html += detailCustomerCell(t("customer_access_customer"), customer.customer_name || "-", "");
-  html += detailCustomerCell(t("customer_access_code"), customer.source_customer_code || "-", "");
-  html += detailCustomerCell(t("sales_rank"), customer.price_rank_code || "-", "");
-  html += detailCustomerCell(t("sales_price_section"), salesPriceText, "price");
-  if (canViewBasePrice()) {
-    html += detailCustomerCell(t("sales_base_price"), priceInfo.basePrice == null ? "-" : "JPY " + formatYen(priceInfo.basePrice), "");
-  }
   html += "</div>";
-  html += "<div class='detail-customer-note'>" + esc(t("detail_customer_sales_price_note")) + "</div>";
   html += "</div>";
   return html;
 }
@@ -14300,8 +14290,6 @@ async function fetchDetailCustomerPriceInfo(customer, dkdId) {
 async function loadDetailCustomerInfoForCurrent(seq) {
   var wrap = document.getElementById("detail-customer-wrap");
   if (!wrap || !isCurrentDetailLoad(seq)) return;
-  var dkdId = await resolveCurrentCoreDkdShohinId();
-  if (!isCurrentDetailLoad(seq)) return;
   var canSelect = !isCustomerViewer();
   var customer = null;
   if (canSelect) {
@@ -14311,31 +14299,13 @@ async function loadDetailCustomerInfoForCurrent(seq) {
   } else {
     customer = customerViewerContext && customerViewerContext.customer ? customerViewerContext.customer : null;
   }
-  wrap.innerHTML = renderDetailCustomerInfoHtml(customer, customer ? { loading: true } : null, canSelect);
+  wrap.innerHTML = renderDetailCustomerInfoHtml(customer, null, canSelect);
   var select = document.getElementById("detail-sales-customer-select");
   if (select) {
     select.addEventListener("change", function() {
       detailSelectedSalesCustomerId = select.value || "";
       loadDetailCustomerInfoForCurrent(detailSecondaryRequestSeq);
     });
-  }
-  if (!customer) return;
-  var localSeq = ++detailCustomerPriceSeq;
-  try {
-    var priceInfo = await fetchDetailCustomerPriceInfo(customer, dkdId);
-    if (!isCurrentDetailLoad(seq) || localSeq !== detailCustomerPriceSeq) return;
-    wrap.innerHTML = renderDetailCustomerInfoHtml(customer, priceInfo, canSelect);
-    var nextSelect = document.getElementById("detail-sales-customer-select");
-    if (nextSelect) {
-      nextSelect.addEventListener("change", function() {
-        detailSelectedSalesCustomerId = nextSelect.value || "";
-        loadDetailCustomerInfoForCurrent(detailSecondaryRequestSeq);
-      });
-    }
-  } catch (e) {
-    console.warn("detail customer price lookup failed", e);
-    if (!isCurrentDetailLoad(seq)) return;
-    wrap.innerHTML = renderDetailCustomerInfoHtml(customer, { salesPrice: null, basePrice: null }, canSelect);
   }
 }
 
