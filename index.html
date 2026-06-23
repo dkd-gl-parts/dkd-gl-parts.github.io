@@ -4517,7 +4517,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.256";
+var APP_VERSION       = "v1.1.257";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -14312,6 +14312,7 @@ function renderDetailCustomerInfoHtml(customer, priceInfo, canSelect) {
   }
   html += "<div class='detail-customer-grid'>";
   html += detailCustomerCell(t("customer_access_customer"), customer.customer_name || "-", "");
+  html += detailCustomerCell(t("sales_price_section"), priceInfo.salesPrice == null ? "-" : "JPY " + formatYen(priceInfo.salesPrice), "price");
   html += "</div>";
   html += "</div>";
   return html;
@@ -14371,6 +14372,24 @@ async function loadDetailCustomerInfoForCurrent(seq) {
       detailSelectedSalesCustomerId = select.value || "";
       loadDetailCustomerInfoForCurrent(detailSecondaryRequestSeq);
     });
+  }
+  if (!customer) return;
+  try {
+    var dkdId = currentCoreDkdShohinId || await resolveCurrentCoreDkdShohinId();
+    var requestedCustomerId = customer.id || "";
+    var priceInfo = await fetchDetailCustomerPriceInfo(customer, dkdId);
+    if (!isCurrentDetailLoad(seq)) return;
+    if (canSelect && String(detailSelectedSalesCustomerId || "") !== String(requestedCustomerId || "")) return;
+    wrap.innerHTML = renderDetailCustomerInfoHtml(customer, priceInfo, canSelect);
+    select = document.getElementById("detail-sales-customer-select");
+    if (select) {
+      select.addEventListener("change", function() {
+        detailSelectedSalesCustomerId = select.value || "";
+        loadDetailCustomerInfoForCurrent(detailSecondaryRequestSeq);
+      });
+    }
+  } catch (e) {
+    console.warn("detail customer sales price lookup failed", e);
   }
 }
 
