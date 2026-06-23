@@ -587,6 +587,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .badge-img { background: #e8f7ee; color: #1a8c3e; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .badge-component { background: #fff4d6; color: #8a5a00; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .badge-kikan { background: #eef5ff; color: #1a6fd4; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.badge-catalog { background: #eef4ff; color: #244a8f; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700; white-space: nowrap; }
 .product-kind-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
 .product-kind-list.compact { gap: 3px; margin-top: 4px; }
 .product-kind-pill { display: inline-flex; align-items: center; gap: 4px; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700; line-height: 1.35; white-space: nowrap; border: 1px solid transparent; }
@@ -2537,7 +2538,7 @@ var TRANSLATIONS = {
     product_kind_rebuilt: "リビルト",
     product_kind_aftermarket_new: "社外新品",
     product_kind_used_core: "中古コア",
-    product_kind_catalog_spec: "カタログ仕様",
+    product_kind_catalog_spec: "カタログ",
     product_kind_other: "その他",
     product_kind_stock: "在庫",
     product_kind_sl: "SL",
@@ -3213,7 +3214,7 @@ var TRANSLATIONS = {
     product_kind_rebuilt: "Rebuilt",
     product_kind_aftermarket_new: "Aftermarket New",
     product_kind_used_core: "Used Core",
-    product_kind_catalog_spec: "Catalog Spec",
+    product_kind_catalog_spec: "Catalog",
     product_kind_other: "Other",
     product_kind_stock: "Stock",
     product_kind_sl: "SL",
@@ -3896,7 +3897,7 @@ var TRANSLATIONS = {
     product_kind_rebuilt: "再制造",
     product_kind_aftermarket_new: "副厂新品",
     product_kind_used_core: "旧芯",
-    product_kind_catalog_spec: "目录规格",
+    product_kind_catalog_spec: "目录",
     product_kind_other: "其他",
     product_kind_stock: "库存",
     product_kind_sl: "SL",
@@ -4525,7 +4526,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.266";
+var APP_VERSION       = "v1.1.268";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -10628,12 +10629,23 @@ function productKindSummaryForProduct(p) {
   return summary;
 }
 
+function productKindSummaryHasKind(summary, kind) {
+  kind = normalizeProductKind(kind);
+  return !!(summary && summary.kinds && summary.kinds[kind]);
+}
+
 function renderProductKindPills(summary, options) {
   options = options || {};
   var kinds = Object.keys((summary && summary.kinds) || {}).sort(function(a, b) {
     return productKindSortValue(a) - productKindSortValue(b);
   });
+  if (options.compact) {
+    kinds = kinds.filter(function(kind) {
+      return normalizeProductKind(kind) !== "catalog_spec";
+    });
+  }
   if (!kinds.length) {
+    if (options.compact && productKindSummaryHasKind(summary, "catalog_spec")) return "";
     return "<div class='product-kind-list" + (options.compact ? " compact" : "") + "'><span class='product-kind-pill other'>" + esc(t("product_kind_none")) + "</span></div>";
   }
   var html = "<div class='product-kind-list" + (options.compact ? " compact" : "") + "'>";
@@ -12087,7 +12099,9 @@ function render() {
     var componentCount = canSeeComponentInfo() ? productComponentCount(p) : 0;
     var hasKikan = hasProductKikanCompatible(p);
     var kindSummary = productKindSummaryForProduct(p);
+    var hasCatalogSpec = productKindSummaryHasKind(kindSummary, "catalog_spec");
     var mfr   = [p.manufacturer, p.vehicle_manufacturer].filter(Boolean).join(" / ");
+    var showMfrLine = !!mfr && (!p.manufacturer_part_number || mfr !== p.manufacturer);
     var sel   = (currentProduct && currentProduct.id===p.id) ? " selected" : "";
     html += "<div class='card"+sel+"' data-id='"+p.id+"' data-result-index='"+idx+"'><div class='card-top'>";
     if (thumb) {
@@ -12107,7 +12121,7 @@ function render() {
     html += "<div class='card-pn'>"+esc(p.genuine_part_number||"-")+"</div>";
     if (p.genuine_part_number_2) html += "<div class='card-sub'>純正2: "+esc(p.genuine_part_number_2)+"</div>";
     html += renderProductKindPills(kindSummary, { compact: true });
-    html += "<div class='card-mfr'>"+esc(mfr)+"</div>";
+    if (showMfrLine) html += "<div class='card-mfr'>"+esc(mfr)+"</div>";
     if (p.manufacturer || p.manufacturer_part_number) {
       html += "<div class='card-sub'>";
       if (p.manufacturer) html += esc(p.manufacturer);
@@ -12118,6 +12132,7 @@ function render() {
     if (hasSL && slNums.length) html += "<div class='card-sl'>SL: "+esc(slNums[0])+(slNums.length>1?" 他":"")+"</div>";
     html += "</div>";
     html += "<div class='badges'>"
+      +(hasCatalogSpec?"<span class='badge-catalog'>"+esc(t("product_kind_catalog_spec"))+"</span>":"")
       +(hasSL?"<span class='badge-sl'>SL</span>":"")
       +(hasKikan?"<span class='badge-kikan' title='"+esc(t("kikan_section"))+"'>&#x1F504;</span>":"")
       +(componentCount>0?"<span class='badge-component' title='"+esc(t("component_section"))+"'><span class='component-icon'>&#x1F9E9;</span>"+esc(String(componentCount))+"</span>":"")
@@ -14366,7 +14381,6 @@ function renderDetailCustomerInfoHtml(customer, priceInfo, canSelect) {
     return html;
   }
   html += "<div class='detail-customer-grid'>";
-  html += detailCustomerCell(t("customer_access_customer"), customer.customer_name || "-", "");
   html += detailCustomerCell(t("sales_price_section"), priceInfo.salesPrice == null ? "-" : "JPY " + formatYen(priceInfo.salesPrice), "price");
   html += "</div>";
   html += "</div>";
