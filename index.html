@@ -291,12 +291,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .mgmt-actions   { display: flex; gap: 6px; flex-wrap: nowrap; }
 .mgmt-count     { font-size: 12px; color: #888; margin-bottom: 8px; }
 #core-list-list { overflow-x: auto; }
-#core-list-list .mgmt-table { min-width: 1120px; }
+#core-list-list .mgmt-table { min-width: 1160px; }
 #core-list-list .mgmt-table th,
 #core-list-list .mgmt-table td { white-space: nowrap; }
 #core-list-list .mgmt-pn { white-space: nowrap; }
 #core-list-list .mgmt-table th:nth-child(7),
 #core-list-list .mgmt-table td:nth-child(7) { white-space: normal; min-width: 180px; }
+#core-list-list .mgmt-table th:nth-child(1),
+#core-list-list .mgmt-table td:nth-child(1) { min-width: 160px; }
+#core-list-list .mgmt-table th:nth-child(2),
+#core-list-list .mgmt-table td:nth-child(2) { min-width: 110px; }
+#core-list-list .mgmt-table th:nth-child(3),
+#core-list-list .mgmt-table td:nth-child(3),
+#core-list-list .mgmt-table th:nth-child(4),
+#core-list-list .mgmt-table td:nth-child(4) { min-width: 150px; }
+#core-list-list .mgmt-table th:nth-child(5),
+#core-list-list .mgmt-table td:nth-child(5) { width: 72px; text-align: right; }
 #core-list-list .mgmt-table th:nth-child(8),
 #core-list-list .mgmt-table td:nth-child(8) { position: sticky; right: 112px; width: 120px; min-width: 120px; background: #fff; z-index: 2; }
 #core-list-list .mgmt-table th:nth-child(9),
@@ -306,6 +316,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 #core-list-list .mgmt-table td:nth-child(8) { box-shadow: -8px 0 10px -10px rgba(0,0,0,.35); }
 #core-list-list .mgmt-table tr:hover td:nth-child(8),
 #core-list-list .mgmt-table tr:hover td:nth-child(9) { background: #f8f8f8; }
+.core-list-table .core-main-pn { font-family: monospace; font-size: 13px; font-weight: 800; color: #173b6d; }
+.core-list-table .core-maker-badge { display: inline-flex; align-items: center; max-width: 140px; padding: 3px 8px; border-radius: 999px; background: #f0f6ff; color: #245aa8; font-size: 12px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.core-list-table .core-qty-pill { display: inline-flex; justify-content: flex-end; min-width: 42px; padding: 3px 8px; border-radius: 6px; background: #eef7ee; color: #1f7a35; font-weight: 800; font-variant-numeric: tabular-nums; }
+.core-list-table .core-note { color: #4b5563; line-height: 1.45; }
 .stock-mgmt-body { max-width: 1360px; }
 .stock-mgmt-toolbar { align-items: stretch; }
 .stock-mgmt-toolbar .form-select { min-width: 150px; max-width: 210px; }
@@ -4545,7 +4559,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.276";
+var APP_VERSION       = "v1.1.277";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -7807,19 +7821,19 @@ function renderCoreListMgmt() {
       : "<div class='empty'>コアリストはまだ登録されていません。<br>「コアを追加」から基幹商品に紐づくコア品番・数量・置き場を登録してください。</div>";
     return;
   }
-  var html = "<table class='mgmt-table'>";
-  html += "<tr><th>純正品番</th><th>メーカー品番</th><th>メーカー</th><th>コア品番</th><th>数量</th><th>置き場</th><th>メモ</th><th></th><th>更新</th></tr>";
+  var html = "<table class='mgmt-table core-list-table'>";
+  html += "<tr><th>コア品番</th><th>メーカー</th><th>純正品番</th><th>メーカー品番</th><th>数量</th><th>置き場</th><th>メモ</th><th></th><th>更新</th></tr>";
   coreListMgmtRows.forEach(function(row) {
     var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
     var fallbackPartNumber = row.core_part_number || "";
     html += "<tr>";
-    html += "<td><div class='mgmt-pn'>" + esc(p.genuine_part_number || fallbackPartNumber || "-") + "</div><div class='mgmt-sub'>" + esc(productionCategoryLabel(p)) + "</div></td>";
+    html += "<td><div class='core-main-pn'>" + esc(row.core_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(productionCategoryLabel(p)) + "</div></td>";
+    html += "<td><span class='core-maker-badge'>" + esc(p.manufacturer || "-") + "</span></td>";
+    html += "<td><div class='mgmt-pn'>" + esc(p.genuine_part_number || fallbackPartNumber || "-") + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(p.manufacturer_part_number || fallbackPartNumber || "-") + "</div><div class='mgmt-sub'>DKD " + esc(String(row.dkd_shohin_id || "-")) + "</div></td>";
-    html += "<td>" + esc(p.manufacturer || "-") + "</td>";
-    html += "<td><div class='mgmt-pn'>" + esc(row.core_part_number || "-") + "</div></td>";
-    html += "<td>" + esc(String(row.quantity == null ? "-" : row.quantity)) + "</td>";
+    html += "<td><span class='core-qty-pill'>" + esc(String(row.quantity == null ? "-" : row.quantity)) + "</span></td>";
     html += "<td>" + esc(row.location || "-") + "</td>";
-    html += "<td>" + esc(row.note || "-") + "</td>";
+    html += "<td><div class='core-note'>" + esc(row.note || "-") + "</div></td>";
     html += "<td><div class='mgmt-actions'>";
     html += "<button class='btn-sm-edit' data-core-edit='" + row.id + "'>" + t("btn_edit") + "</button>";
     html += "<button class='btn-sm-del' data-core-del='" + row.id + "'>" + t("btn_delete") + "</button>";
