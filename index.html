@@ -4602,7 +4602,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.282";
+var APP_VERSION       = "v1.1.283";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -5736,6 +5736,8 @@ async function enterProductionSearch() {
   productionSearchLimit = SEARCH_INITIAL_LIMIT;
   productionLoaded = false;
   currentProductionRow = null;
+  var qEl = document.getElementById("production-q");
+  if (qEl) qEl.value = "";
   renderProductionFilterChips();
   resetProductionSearchView();
 }
@@ -5862,6 +5864,10 @@ function renderProductionFilterChips() {
     btn.classList.toggle("active", productionFilter === filter);
     btn.addEventListener("click", async function() {
       productionFilter = filter;
+      if (filter === "instruction") {
+        var qEl = document.getElementById("production-q");
+        if (qEl) qEl.value = "";
+      }
       productionSearchLimit = SEARCH_INITIAL_LIMIT;
       row.querySelectorAll("[data-production-filter]").forEach(function(c) {
         c.classList.toggle("active", c === btn);
@@ -16782,6 +16788,10 @@ document.getElementById("production-edit-ranking-inline").addEventListener("clic
 document.querySelectorAll("[data-production-filter]").forEach(function(chip) {
   chip.addEventListener("click", async function() {
     productionFilter = chip.dataset.productionFilter;
+    if (productionFilter === "instruction") {
+      var qEl = document.getElementById("production-q");
+      if (qEl) qEl.value = "";
+    }
     productionSearchLimit = SEARCH_INITIAL_LIMIT;
     document.querySelectorAll("[data-production-filter]").forEach(function(c){ c.classList.toggle("active", c === chip); });
     productionLoaded = false;
