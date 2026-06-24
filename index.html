@@ -319,6 +319,43 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .core-list-table .core-maker-badge { display: inline-flex; align-items: center; max-width: 140px; padding: 3px 8px; border-radius: 999px; background: #f0f6ff; color: #245aa8; font-size: 12px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .core-list-table .core-qty-pill { display: inline-flex; justify-content: flex-end; min-width: 42px; padding: 3px 8px; border-radius: 6px; background: #eef7ee; color: #1f7a35; font-weight: 800; font-variant-numeric: tabular-nums; }
 .core-list-table .core-note { color: #4b5563; line-height: 1.45; }
+@media (max-width: 767px) {
+  #screen-core-list-mgmt .page-header { align-items: flex-start; flex-wrap: wrap; gap: 8px; padding: 8px 10px; }
+  #screen-core-list-mgmt .page-header-left { min-width: 0; flex: 1 1 auto; }
+  #screen-core-list-mgmt .page-header-right { width: 100%; justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
+  #screen-core-list-mgmt .logo-text { font-size: 15px; }
+  #screen-core-list-mgmt .mgmt-body { padding: 12px 8px; overflow-x: hidden; }
+  #screen-core-list-mgmt .mgmt-toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: stretch; }
+  #screen-core-list-mgmt .mgmt-search { grid-column: 1 / -1; min-width: 0; width: 100%; }
+  #screen-core-list-mgmt .mgmt-toolbar .btn-primary,
+  #screen-core-list-mgmt .mgmt-toolbar .btn-sm-edit { width: 100%; min-height: 38px; padding: 8px 10px; font-size: 12px; }
+  #screen-core-list-mgmt #btn-create-core-list-from-ranking { grid-column: 1 / -1; }
+  #core-list-list { overflow-x: hidden; }
+  #core-list-list .mgmt-table,
+  #core-list-list .mgmt-table tbody,
+  #core-list-list .mgmt-table tr,
+  #core-list-list .mgmt-table td { display: block; width: 100%; }
+  #core-list-list .mgmt-table { background: transparent; box-shadow: none; border-radius: 0; table-layout: auto; }
+  #core-list-list .mgmt-table tr:first-child { display: none; }
+  #core-list-list .mgmt-table tr { margin: 0 0 10px; padding: 10px; border: 1px solid #e3e9f3; border-radius: 10px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+  #core-list-list .mgmt-table tr:hover td { background: transparent; }
+  #core-list-list .mgmt-table td { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 8px; align-items: start; padding: 7px 0; border-bottom: 1px solid #f0f2f5; white-space: normal; text-align: left !important; }
+  #core-list-list .mgmt-table td:last-child { border-bottom: 0; grid-template-columns: 1fr; padding-bottom: 0; }
+  #core-list-list .mgmt-table td::before { color: #667085; font-size: 11px; font-weight: 800; line-height: 1.4; }
+  #core-list-list .mgmt-table td:nth-child(1)::before { content: "コア品番"; }
+  #core-list-list .mgmt-table td:nth-child(2)::before { content: "メーカー"; }
+  #core-list-list .mgmt-table td:nth-child(3)::before { content: "純正品番"; }
+  #core-list-list .mgmt-table td:nth-child(4)::before { content: "メーカー品番"; }
+  #core-list-list .mgmt-table td:nth-child(5)::before { content: "数量"; }
+  #core-list-list .mgmt-table td:nth-child(6)::before { content: "置き場"; }
+  #core-list-list .mgmt-table td:nth-child(7)::before { content: "メモ"; }
+  #core-list-list .mgmt-table td:nth-child(8)::before { content: ""; display: none; }
+  #core-list-list .mgmt-pn,
+  #core-list-list .core-main-pn { white-space: normal; overflow-wrap: anywhere; }
+  #core-list-list .core-maker-badge { max-width: 100%; white-space: normal; }
+  #core-list-list .mgmt-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; justify-content: stretch; }
+  #core-list-list .mgmt-actions button { width: 100%; min-height: 34px; padding: 7px 6px; }
+}
 .stock-mgmt-body { max-width: 1360px; }
 .stock-mgmt-toolbar { align-items: stretch; }
 .stock-mgmt-toolbar .form-select { min-width: 150px; max-width: 210px; }
