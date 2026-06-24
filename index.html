@@ -4608,7 +4608,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.286";
+var APP_VERSION       = "v1.1.287";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -6056,17 +6056,26 @@ async function loadProductionAuxiliaryData(products) {
 
 function productionMatchesQuery(row, q) {
   if (!q) return true;
-  var hay = [
+  var raw = normalizeAsciiWidth(String(q || "").trim()).toLowerCase();
+  var normalized = normalizePartQuery(q);
+  var values = [
     row.dkd_shohin_id,
     row.genuine_part_number,
+    row.genuine_part_number_2,
     row.manufacturer_part_number,
-    row.manufacturer,
     row.daiko_part_number,
     row.core_part_number,
-    row.compatible_car_models,
-    row.model
-  ].join(" ").toLowerCase();
-  return hay.indexOf(q.toLowerCase()) >= 0;
+    row.normalized_genuine_part_number,
+    row.normalized_genuine_part_number_2,
+    row.normalized_manufacturer_part_number,
+    row.normalized_daiko_part_number
+  ];
+  return values.some(function(value) {
+    if (value === null || value === undefined || value === "") return false;
+    var text = normalizeAsciiWidth(String(value)).toLowerCase();
+    if (raw && text.indexOf(raw) >= 0) return true;
+    return !!normalized && normalizePartQuery(value).indexOf(normalized) >= 0;
+  });
 }
 
 function productionMatchesFilter(row) {
