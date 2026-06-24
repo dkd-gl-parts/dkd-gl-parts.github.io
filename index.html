@@ -5220,6 +5220,9 @@ function canEditFinishedLabelMgmt() {
 function canViewManagementScreen() {
   return canEdit() || canViewAllReadOnly();
 }
+function canViewCoreManagement() {
+  return canViewManagementScreen() || canUploadCoreImages();
+}
 function canViewPriceResearchHistory() {
   return canUseRakutenResearch() || canViewAllReadOnly();
 }
@@ -5655,7 +5658,7 @@ function renderMenu() {
     { icon: "&#x1F50D;", titleKey: "mi_search_title", descKey: "mi_search_desc", action: "search", available: true, tag: null },
     { icon: "&#x1F3ED;", titleKey: "mi_production_title", descKey: "mi_production_desc", action: "production-search", available: canViewProductionFeatures(), tag: null },
     { icon: "&#x1F3F7;", titleKey: "mi_finished_label_title", descKey: "mi_finished_label_desc", action: "finished-label-mgmt", available: canViewFinishedLabelMgmt(), tag: null },
-    { icon: "&#x1F4E6;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canViewManagementScreen(), tag: null },
+    { icon: "&#x1F4E6;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canViewCoreManagement(), tag: null },
     { icon: "&#x1F4B4;", titleKey: "mi_rakuten_title", descKey: "mi_rakuten_desc", action: "rakuten-price", available: canUseRakutenResearch(), tag: null },
     { icon: "&#x1F4E6;", titleKey: "mi_rakuten_bulk_title", descKey: "mi_rakuten_bulk_desc", action: "rakuten-bulk", available: canUseRakutenResearch(), tag: null },
     { icon: "&#x1F4C8;", titleKey: "screen_rakuten_list_title", descKey: "mi_rakuten_desc", action: "rakuten-price-list", available: canViewPriceResearchHistory(), tag: null },
@@ -7974,7 +7977,7 @@ async function savePartForm() {
 // コアリスト管理
 // =============================================
 async function enterCoreListMgmt() {
-  if (!canViewManagementScreen()) { alert(t("err_perm")); return; }
+  if (!canViewCoreManagement()) { alert(t("err_perm")); return; }
   showScreen("core-list-mgmt");
   var addBtn = document.getElementById("btn-add-core-list");
   var createBtn = document.getElementById("btn-create-core-list-from-ranking");
