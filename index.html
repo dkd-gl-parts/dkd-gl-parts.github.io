@@ -4602,7 +4602,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.283";
+var APP_VERSION       = "v1.1.284";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -5863,19 +5863,7 @@ function renderProductionFilterChips() {
     btn.textContent = label;
     btn.classList.toggle("active", productionFilter === filter);
     btn.addEventListener("click", async function() {
-      productionFilter = filter;
-      if (filter === "instruction") {
-        var qEl = document.getElementById("production-q");
-        if (qEl) qEl.value = "";
-      }
-      productionSearchLimit = SEARCH_INITIAL_LIMIT;
-      row.querySelectorAll("[data-production-filter]").forEach(function(c) {
-        c.classList.toggle("active", c === btn);
-      });
-      productionLoaded = false;
-      await loadProductionProducts();
-      renderProductionList();
-      await renderProductionDetail(currentProductionRow);
+      await selectProductionFilter(filter);
     });
     row.appendChild(btn);
   }
@@ -5890,6 +5878,35 @@ function renderProductionFilterChips() {
     if (!code) return;
     addChip("cat:" + code, categoryOptionLabel(cat), null);
   });
+}
+
+async function selectProductionFilter(filter) {
+  try {
+    productionFilter = filter || "all";
+    if (productionFilter === "instruction") {
+      var qEl = document.getElementById("production-q");
+      if (qEl) qEl.value = "";
+    }
+    productionSearchLimit = SEARCH_INITIAL_LIMIT;
+    document.querySelectorAll("[data-production-filter]").forEach(function(c) {
+      c.classList.toggle("active", c.dataset.productionFilter === productionFilter);
+    });
+    productionLoaded = false;
+    await loadProductionProducts();
+    renderProductionList();
+    await renderProductionDetail(currentProductionRow);
+  } catch (err) {
+    console.error("production filter failed", err);
+    productionRows = [];
+    productionFilteredRows = [];
+    currentProductionRow = null;
+    var message = "製造管理の表示に失敗しました: " + (err && err.message ? err.message : String(err));
+    var countEl = document.getElementById("production-count");
+    var list = document.getElementById("production-list");
+    if (countEl) countEl.textContent = message;
+    if (list) list.innerHTML = "<div class='loading'>" + esc(message) + "</div>";
+    await renderProductionDetail(null);
+  }
 }
 
 function enrichProductionProduct(row) {
@@ -6051,7 +6068,7 @@ async function loadProductionAuxiliaryData(products) {
 }
 
 function productionMatchesQuery(row, q) {
-  if (q) return true;
+  if (!q) return true;
   var hay = [
     row.dkd_shohin_id,
     row.genuine_part_number,
@@ -16787,17 +16804,7 @@ document.getElementById("production-add-ranking-inline").addEventListener("click
 document.getElementById("production-edit-ranking-inline").addEventListener("click", openCurrentProductionRankingForm);
 document.querySelectorAll("[data-production-filter]").forEach(function(chip) {
   chip.addEventListener("click", async function() {
-    productionFilter = chip.dataset.productionFilter;
-    if (productionFilter === "instruction") {
-      var qEl = document.getElementById("production-q");
-      if (qEl) qEl.value = "";
-    }
-    productionSearchLimit = SEARCH_INITIAL_LIMIT;
-    document.querySelectorAll("[data-production-filter]").forEach(function(c){ c.classList.toggle("active", c === chip); });
-    productionLoaded = false;
-    await loadProductionProducts();
-    renderProductionList();
-    await renderProductionDetail(currentProductionRow);
+    await selectProductionFilter(chip.dataset.productionFilter);
   });
 });
 document.getElementById("production-load-more").addEventListener("click", async function(){
