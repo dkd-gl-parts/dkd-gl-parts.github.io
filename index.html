@@ -4602,7 +4602,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.281";
+var APP_VERSION       = "v1.1.282";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -5775,6 +5775,10 @@ async function loadProductionInstructions() {
     .order("component_count", { ascending: false, nullsFirst: false })
     .order("category_code", { ascending: true })
     .limit(500);
+  if (r.error) {
+    console.warn("production instruction lookup failed", r.error);
+    throw r.error;
+  }
   productionInstructionRows = r.data || [];
   productionInstructionMap = {};
   productionInstructionRows.forEach(function(row) {
@@ -5803,8 +5807,9 @@ function productionInstructionRowsForFilter() {
 }
 
 function productionInstructionFor(row) {
-  if (!row || row.dkd_shohin_id == null) return null;
-  var key = String(row.dkd_shohin_id);
+  if (!row) return null;
+  var key = productDkdId(row);
+  if (!key) return null;
   var year = productionFilter === "instruction" ? productionYearFilterValue() : "";
   if (year) {
     var matches = productionInstructionRows.filter(function(inst) {
@@ -5820,6 +5825,28 @@ function productionInstructionFor(row) {
     }
   }
   return productionInstructionMap[key] || null;
+}
+
+function productionRowFromInstruction(inst, product) {
+  product = product || {};
+  var dkdId = inst && inst.dkd_shohin_id != null ? inst.dkd_shohin_id : productDkdId(product);
+  return Object.assign({}, inst || {}, product, {
+    dkd_shohin_id: dkdId,
+    priority_rank: inst && inst.priority_rank != null ? inst.priority_rank : product.priority_rank,
+    source_year: inst && inst.source_year != null ? inst.source_year : product.source_year,
+    source_sheet: inst && inst.source_sheet != null ? inst.source_sheet : product.source_sheet,
+    category_code: product.category_code || product.category || (inst && inst.category_code) || "",
+    genuine_part_number: product.genuine_part_number || (inst && inst.genuine_part_number) || "",
+    manufacturer_part_number: product.manufacturer_part_number || (inst && inst.manufacturer_part_number) || "",
+    manufacturer: product.manufacturer || (inst && inst.manufacturer) || "",
+    daiko_part_number: product.daiko_part_number || (inst && inst.daiko_part_number) || "",
+    component_count: product.component_count != null ? product.component_count : (inst && inst.component_count != null ? inst.component_count : 0),
+    component_summary: product.component_summary || (inst && inst.component_summary) || "",
+    core_stock_qty: product.core_stock_qty != null ? product.core_stock_qty : (inst && inst.core_stock_qty != null ? inst.core_stock_qty : 0),
+    core_part_number: product.core_part_number || (inst && inst.core_part_number) || product.manufacturer_part_number || (inst && inst.manufacturer_part_number) || "",
+    core_pallet_summary: product.core_pallet_summary || (inst && inst.core_pallet_summary) || "",
+    readiness_status: product.readiness_status || (inst && inst.readiness_status) || ""
+  });
 }
 
 function renderProductionFilterChips() {
@@ -5861,7 +5888,7 @@ function renderProductionFilterChips() {
 
 function enrichProductionProduct(row) {
   var inst = productionInstructionFor(row);
-  var coreKey = String(row.dkd_shohin_id);
+  var coreKey = productDkdId(row);
   var hasCoreQty = Object.prototype.hasOwnProperty.call(coreStockQtyMap, coreKey);
   var coreQty = hasCoreQty ? coreStockQtyMap[coreKey] : null;
   row.production_instruction = inst;
@@ -5870,8 +5897,8 @@ function enrichProductionProduct(row) {
   row.core_part_number = row.core_part_number || row.manufacturer_part_number || row.genuine_part_number || "";
   row.core_pallet_summary = inst ? inst.core_pallet_summary : "";
   row.core_pallet_summary = row.core_pallet_no || row.core_pallet_summary || "";
-  var hasComponentCount = Object.prototype.hasOwnProperty.call(componentUsageCountMap, String(row.dkd_shohin_id));
-  row.component_count = hasComponentCount ? componentUsageCountMap[String(row.dkd_shohin_id)] : (inst && inst.component_count != null ? inst.component_count : 0);
+  var hasComponentCount = Object.prototype.hasOwnProperty.call(componentUsageCountMap, coreKey);
+  row.component_count = hasComponentCount ? componentUsageCountMap[coreKey] : (row.component_count != null ? row.component_count : (inst && inst.component_count != null ? inst.component_count : 0));
   row.component_summary = inst ? inst.component_summary : "";
   row.readiness_status = row.component_count > 0 ? t("production_status_ready") : t("production_status_need");
   return row;
@@ -5903,15 +5930,44 @@ async function loadProductionProducts(options) {
     resetProductionSearchView();
     return;
   }
-  await loadProductionInstructions();
+  try {
+    await loadProductionInstructions();
+  } catch (err) {
+    productionRows = [];
+    productionFilteredRows = [];
+    productionLoaded = false;
+    var message = "製造予定リストを取得できません: " + (err && err.message ? err.message : String(err));
+    if (countEl) countEl.textContent = message;
+    var listEl = document.getElementById("production-list");
+    if (listEl) listEl.innerHTML = "<div class='loading'>" + esc(message) + "</div>";
+    await renderProductionDetail(null);
+    return;
+  }
   var r;
   if (q) {
     r = await fetchCoreProductMasterMatches(q, categoryFilter, productionSearchLimit);
   } else if (productionFilter === "instruction") {
-    var ids = productionInstructionRowsForFilter().map(function(x){ return x.dkd_shohin_id; }).filter(Boolean).slice(0, productionSearchLimit);
-    r = ids.length
-      ? await sb.from("core_product_search_view").select("*").in("dkd_shohin_id", ids).limit(500)
-      : { data: [], error: null };
+    var instructionRows = productionInstructionRowsForFilter().slice(0, productionSearchLimit);
+    var ids = instructionRows.map(function(x){ return x.dkd_shohin_id; }).filter(Boolean);
+    var productMap = {};
+    if (ids.length) {
+      var productR = await sb.from("core_product_search_view").select("*").in("dkd_shohin_id", ids).limit(500);
+      if (productR.error) {
+        r = productR;
+      } else {
+        (productR.data || []).forEach(function(p) {
+          productMap[String(productDkdId(p))] = p;
+        });
+        r = {
+          data: instructionRows.map(function(inst) {
+            return productionRowFromInstruction(inst, productMap[String(inst.dkd_shohin_id)] || {});
+          }),
+          error: null
+        };
+      }
+    } else {
+      r = { data: instructionRows.map(function(inst) { return productionRowFromInstruction(inst, {}); }), error: null };
+    }
   } else if (categoryFilter) {
     r = await fetchCategoryProducts(categoryFilter, productionSearchLimit);
   } else {
@@ -5956,7 +6012,8 @@ async function loadProductionProducts(options) {
     currentProductionRow = productionRows[0];
   }
   if (options.preserveSelection && currentProductionRow) {
-    var stillExists = productionRows.some(function(row){ return String(row.dkd_shohin_id) === String(currentProductionRow.dkd_shohin_id); });
+    var currentKey = productDkdId(currentProductionRow);
+    var stillExists = productionRows.some(function(row){ return productDkdId(row) === currentKey; });
     if (!stillExists) currentProductionRow = productionRows[0] || null;
   }
   loadProductionAuxiliaryData(productionRows.slice());
@@ -5980,7 +6037,8 @@ async function loadProductionAuxiliaryData(products) {
   sortProductionRows();
   renderProductionList();
   if (currentProductionRow) {
-    var refreshed = productionRows.find(function(row) { return String(row.dkd_shohin_id) === String(currentProductionRow.dkd_shohin_id); });
+    var currentKey = productDkdId(currentProductionRow);
+    var refreshed = productionRows.find(function(row) { return productDkdId(row) === currentKey; });
     if (refreshed) currentProductionRow = refreshed;
     await renderProductionDetail(currentProductionRow);
   }
@@ -6002,7 +6060,7 @@ function productionMatchesQuery(row, q) {
 }
 
 function productionMatchesFilter(row) {
-  var componentKey = String(row.dkd_shohin_id);
+  var componentKey = productDkdId(row);
   var componentCount = Object.prototype.hasOwnProperty.call(componentUsageCountMap, componentKey) ? componentUsageCountMap[componentKey] : (row.component_count || 0);
   if (productionFilter === "instruction") return !!productionInstructionFor(row);
   if (productionFilter === "ready") return componentCount > 0;
@@ -6038,7 +6096,7 @@ function renderProductionList() {
     return;
   }
   list.innerHTML = productionFilteredRows.map(function(row, i) {
-    var selected = currentProductionRow && String(currentProductionRow.dkd_shohin_id) === String(row.dkd_shohin_id) ? " selected" : "";
+    var selected = currentProductionRow && productDkdId(currentProductionRow) === productDkdId(row) ? " selected" : "";
     var cls = productionStatusClass(row);
     var inst = productionInstructionFor(row);
     var title = row.genuine_part_number || row.manufacturer_part_number || "-";
@@ -11943,7 +12001,7 @@ async function runProductSearch(options) {
 async function fetchComponentUsageCountMap(products) {
   var map = {};
   var ids = (products || []).map(function(p) {
-    return p.dkd_shohin_id || p.id;
+    return productDkdId(p);
   }).filter(function(id) {
     return id !== null && id !== undefined && id !== "";
   });
@@ -11979,7 +12037,7 @@ async function fetchMitsubishiComponentUsageCountFallback(products, baseMap) {
   (products || []).forEach(function(p) {
     var manufacturer = String(p && p.manufacturer || "").toUpperCase();
     if (manufacturer !== "MITSUBISHI") return;
-    var id = String(p && (p.dkd_shohin_id || p.id || "") || "");
+    var id = productDkdId(p);
     if (!id || (baseMap && baseMap[id] > 0)) return;
     componentAssyLookupKeys(p).forEach(function(key) {
       if (!key) return;
@@ -12019,7 +12077,7 @@ async function fetchMitsubishiComponentUsageCountFallback(products, baseMap) {
 async function fetchCoreStockQtyMap(products) {
   var map = {};
   var ids = (products || []).map(function(p) {
-    return p.dkd_shohin_id || p.id;
+    return productDkdId(p);
   }).filter(function(id) {
     return id !== null && id !== undefined && id !== "";
   });
