@@ -822,7 +822,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-body { flex: 1; display: grid; grid-template-columns: minmax(320px, 390px) minmax(0, 1fr); overflow: hidden; background: #f0f2f5; }
 .production-left { display: flex; flex-direction: column; min-width: 0; border-right: 1px solid #e0e0e0; background: #f6f7f9; }
 .production-search { padding: 12px 14px; background: #fff; border-bottom: 1px solid #e8e8e8; }
-.production-ranking-tools { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px; margin-top: 8px; align-items: center; }
+.production-ranking-tools { display: flex; gap: 6px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
 .production-ranking-tools .form-select { width: 100%; min-width: 0; }
 .production-filter-row { display: flex; gap: 6px; overflow-x: auto; padding: 8px 14px; background: #fff; border-bottom: 1px solid #eee; }
 .production-count { padding: 8px 14px; font-size: 12px; color: #778; background: #f6f7f9; border-bottom: 1px solid #eee; }
@@ -865,7 +865,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-help { color: #8a93a3; font-size: 11px; line-height: 1.5; margin-top: 6px; }
 .production-action-secondary { background: #f8fafc; color: #344054; border-color: #d7dce5; }
 .production-action-secondary:hover { background: #eef2f7; }
-.core-qty-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+.core-qty-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 10px; }
 .core-qty-card { border: 1px solid #dbe7ff; background: #f6f9ff; border-radius: 8px; padding: 10px 12px; }
 .core-qty-label { font-size: 11px; color: #68758a; font-weight: 700; margin-bottom: 4px; }
 .core-qty-value { font-size: 22px; color: #174ea6; font-weight: 800; line-height: 1.1; }
@@ -1254,7 +1254,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   <div class="page-header">
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-production-search" data-i18n="btn_back">← メニュー</button>
-      <span class="logo-text" data-i18n="production_search_title">製造予定リスト</span>
+      <span class="logo-text" data-i18n="production_search_title">製造管理</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-production-search">
@@ -1271,25 +1271,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="production-left">
       <div class="production-search">
         <div class="search-row">
-          <input class="search-input" id="production-q" type="search" data-i18n-ph="production_search_ph" placeholder="DKD商品ID・メーカー品番・純正品番で検索">
+          <input class="search-input" id="production-q" type="search" inputmode="search" autocapitalize="characters" autocomplete="off" data-i18n-ph="production_search_ph" placeholder="品番で検索">
           <button class="btn-search" id="production-search-btn" data-i18n="btn_search">検索</button>
         </div>
         <div class="clear-row">
           <button class="btn-clear" id="production-clear-btn" data-i18n="btn_clear">クリア</button>
         </div>
         <div class="production-ranking-tools">
-          <select class="form-select" id="production-year-filter">
-            <option value="" data-i18n="production_year_all">年度すべて</option>
-            <option value="2025">2025</option>
-            <option value="2024">2024</option>
-          </select>
-          <button class="btn-sm-edit production-action-secondary" id="production-add-ranking-inline" data-i18n="btn_add_production_ranking">ランキング追加</button>
+          <button class="btn-sm-edit production-action-secondary" id="production-add-ranking-inline" data-i18n="btn_add_production_ranking">予定リストの追加</button>
           <button class="btn-sm-edit production-action-secondary" id="production-edit-ranking-inline" data-i18n="btn_edit_selected_row">選択行修正</button>
         </div>
       </div>
       <div class="production-filter-row" id="production-filter-row">
-        <button class="chip active" data-production-filter="instruction" data-i18n="production_instruction_filter">製造予定リスト</button>
-        <button class="chip" data-production-filter="all" data-i18n="filter_all">すべて</button>
+        <button class="chip active" data-production-filter="all" data-i18n="filter_all">すべて</button>
+        <button class="chip" data-production-filter="instruction" data-i18n="production_instruction_filter">製造予定リスト</button>
       </div>
       <div class="production-count" id="production-count" data-i18n="production_search_wait">検索待ち</div>
       <div class="production-list" id="production-list"><div class="loading" data-i18n="production_search_hint">検索条件を指定して検索してください。</div></div>
@@ -2070,7 +2065,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   <div class="page-header">
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-production-ranking-mgmt" data-i18n="btn_back">← メニュー</button>
-      <span class="logo-text" data-i18n="screen_production_ranking_title">製造予定ランキング</span>
+      <span class="logo-text" data-i18n="screen_production_ranking_title">製造予定リスト管理</span>
     </div>
     <div class="page-header-right">
       <span class="header-username" id="production-ranking-mgmt-username"></span>
@@ -2087,7 +2082,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       </select>
       <input class="mgmt-search" id="production-ranking-search" type="search" data-i18n-ph="production_ranking_search_ph">
       <button class="btn-primary" id="btn-production-ranking-search" data-i18n="btn_search">検索</button>
-      <button class="btn-primary" id="btn-add-production-ranking" data-i18n="btn_add_production_ranking">ランキングを追加</button>
+      <button class="btn-primary" id="btn-add-production-ranking" data-i18n="btn_add_production_ranking">予定リストを追加</button>
     </div>
     <div class="mgmt-count" id="production-ranking-count"></div>
     <div id="production-ranking-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
@@ -2533,8 +2528,8 @@ var TRANSLATIONS = {
     greeting: "ようこそ、{name} さん",
     mi_search_title: "品番検索",
     mi_search_desc: "基幹商品マスタを品番で検索し、画像・構成部品・製造予定を確認します。",
-    mi_production_title: "製造予定リスト",
-    mi_production_desc: "製造アイテムをランキング・カテゴリ別に確認し、コア・構成部品・代替品を見ます。",
+    mi_production_title: "製造管理",
+    mi_production_desc: "製造予定リスト・互換品・在庫を確認します。",
     mi_users_title: "ユーザー管理",
     mi_users_desc: "ユーザーの表示名とロール（権限）を設定します。",
     mi_customer_access_title: "得意先表示管理",
@@ -2545,7 +2540,7 @@ var TRANSLATIONS = {
     mi_product_kind_stock_desc: "リビルト・社外新品・中古コアの在庫数と置場を確認・更新します。",
     mi_finished_label_title: "完品ラベル・QRシール",
     mi_finished_label_desc: "製造完了品のA6ラベルとQRシールを発行し、履歴を保存します。",
-    mi_production_ranking_title: "製造予定ランキング",
+    mi_production_ranking_title: "製造予定リスト",
     mi_production_ranking_desc: "2024・2025のTOP100元リストを確認・メンテナンスします。",
     mi_data_title: "データ管理",
     mi_data_desc: "品番データの一括インポートや編集ができます。",
@@ -2570,8 +2565,8 @@ var TRANSLATIONS = {
     count_hint: "全 {n} 件 — 品番を入力して検索",
     count_results: "{n} 件表示 / 全 {m} 件",
     welcome_panel: "品番を検索して選択してください",
-    production_search_title: "製造予定リスト",
-    production_search_ph: "DKD商品ID・メーカー品番・純正品番で検索",
+    production_search_title: "製造管理",
+    production_search_ph: "品番で検索 (ハイフン有無OK)",
     production_year_all: "年度すべて",
     production_search_wait: "検索待ち",
     production_search_hint: "検索条件を指定して検索してください。",
@@ -2813,7 +2808,7 @@ var TRANSLATIONS = {
     mi_logs_desc: "商品・互換の追加・修正・削除の履歴を確認します。",
     screen_parts_title: "商品管理",
     screen_core_list_title: "コアリスト",
-    screen_production_ranking_title: "製造予定ランキング",
+    screen_production_ranking_title: "製造予定リスト管理",
     screen_kikan_title: "互換管理",
     screen_rakuten_title: "価格調査",
     screen_rakuten_bulk_title: "価格一括調査",
@@ -2838,7 +2833,7 @@ var TRANSLATIONS = {
     btn_add_core_list: "コアを追加",
     core_list_edit_title: "コア修正",
     btn_create_core_from_ranking: "ランキングから作成",
-    btn_add_production_ranking: "ランキングを追加",
+    btn_add_production_ranking: "予定リストを追加",
     btn_edit: "修正",
     btn_edit_part: "品番修正",
     btn_delete: "削除",
@@ -2865,8 +2860,8 @@ var TRANSLATIONS = {
     production_ranking_core_part: "コア品番",
     production_ranking_core_summary: "コアメモ",
     production_ranking_component_summary: "構成部品メモ",
-    production_ranking_delete_confirm: "このランキング行を削除しますか？",
-    production_ranking_edit_title: "ランキング修正",
+    production_ranking_delete_confirm: "この予定リスト行を削除しますか？",
+    production_ranking_edit_title: "予定リスト修正",
     customer_access_title: "得意先表示管理",
     detail_customer_section: "得意先情報",
     detail_customer_select: "選択",
@@ -3218,8 +3213,8 @@ var TRANSLATIONS = {
     greeting: "Welcome, {name}",
     mi_search_title: "Part Number Search",
     mi_search_desc: "Search master products by part number and review images, components, and production instructions.",
-    mi_production_title: "Production Instructions",
-    mi_production_desc: "Review production items by ranking or category, including core stock, components, and alternatives.",
+    mi_production_title: "Production Management",
+    mi_production_desc: "Review production plans, compatible parts, and stock.",
     mi_users_title: "User Management",
     mi_users_desc: "Set user display names and access roles.",
     mi_customer_access_title: "Customer View",
@@ -3230,7 +3225,7 @@ var TRANSLATIONS = {
     mi_product_kind_stock_desc: "Review and update quantities and locations for rebuilt, aftermarket-new, and used-core stock.",
     mi_finished_label_title: "Finished Label / QR",
     mi_finished_label_desc: "Issue A6 finished-product labels and QR seals, then save the issue history.",
-    mi_production_ranking_title: "Production Ranking",
+    mi_production_ranking_title: "Production Plan List",
     mi_production_ranking_desc: "View and maintain the 2024/2025 TOP100 source list.",
     mi_data_title: "Data Management",
     mi_data_desc: "Bulk import and edit part number data.",
@@ -3255,8 +3250,8 @@ var TRANSLATIONS = {
     count_hint: "{n} total — Enter a part number",
     count_results: "{n} results / {m} total",
     welcome_panel: "Search and select a part number",
-    production_search_title: "Production Instructions",
-    production_search_ph: "Search by DKD product ID, maker part or genuine part",
+    production_search_title: "Production Management",
+    production_search_ph: "Search by part number",
     production_year_all: "All years",
     production_search_wait: "Waiting for search",
     production_search_hint: "Set search conditions and run a search.",
@@ -3498,7 +3493,7 @@ var TRANSLATIONS = {
     mi_logs_desc: "View history of part and compatibility changes.",
     screen_parts_title: "Parts Management",
     screen_core_list_title: "CORE List",
-    screen_production_ranking_title: "Production Ranking",
+    screen_production_ranking_title: "Production Plan Management",
     screen_kikan_title: "Compatibility Management",
     screen_rakuten_title: "Price Check",
     screen_rakuten_bulk_title: "Bulk Price Check",
@@ -3523,7 +3518,7 @@ var TRANSLATIONS = {
     btn_add_core_list: "Add CORE",
     core_list_edit_title: "Edit CORE",
     btn_create_core_from_ranking: "Create from Ranking",
-    btn_add_production_ranking: "Add Ranking",
+    btn_add_production_ranking: "Add Plan",
     btn_edit: "Edit",
     btn_edit_part: "Edit Part No.",
     btn_delete: "Delete",
@@ -3550,8 +3545,8 @@ var TRANSLATIONS = {
     production_ranking_core_part: "CORE part number",
     production_ranking_core_summary: "CORE memo",
     production_ranking_component_summary: "Component memo",
-    production_ranking_delete_confirm: "Delete this ranking row?",
-    production_ranking_edit_title: "Edit Ranking",
+    production_ranking_delete_confirm: "Delete this production plan row?",
+    production_ranking_edit_title: "Edit Production Plan",
     customer_access_title: "Customer View Settings",
     detail_customer_section: "Customer Info",
     detail_customer_select: "Select",
@@ -3893,7 +3888,7 @@ var TRANSLATIONS = {
     required_part_number: "请输入纯正品号或制造商品号。",
     required_shohin_cd: "请输入商品代码。",
     core_list_edit_title: "修改CORE",
-    production_ranking_edit_title: "修改排行",
+    production_ranking_edit_title: "修改生产计划",
     btn_load_more: "显示更多",
     production_year_all: "全部年度",
     production_search_wait: "等待搜索",
@@ -3915,8 +3910,8 @@ var TRANSLATIONS = {
     greeting: "欢迎，{name}",
     mi_search_title: "零件编号搜索",
     mi_search_desc: "按零件编号搜索基干商品主档，并确认图片、构成零件和生产指示。",
-    mi_production_title: "生产指示",
-    mi_production_desc: "按排行或分类查看生产项目，并确认CORE、构成零件和替代品。",
+    mi_production_title: "生产管理",
+    mi_production_desc: "查看生产计划、兼容零件和库存。",
     mi_users_title: "用户管理",
     mi_users_desc: "设置用户的显示名称和访问权限角色。",
     mi_customer_access_title: "客户显示管理",
@@ -3927,7 +3922,7 @@ var TRANSLATIONS = {
     mi_product_kind_stock_desc: "确认和更新再制造、副厂新品、旧芯的库存数量和位置。",
     mi_finished_label_title: "完品标签・QR贴纸",
     mi_finished_label_desc: "发行完品A6标签和QR贴纸，并保存历史。",
-    mi_production_ranking_title: "生产指示排行",
+    mi_production_ranking_title: "生产计划清单",
     mi_production_ranking_desc: "查看和维护2024/2025 TOP100来源清单。",
     mi_data_title: "数据管理",
     mi_data_desc: "批量导入和编辑零件编号数据。",
@@ -3951,8 +3946,8 @@ var TRANSLATIONS = {
     count_hint: "共 {n} 件 — 请输入零件编号",
     count_results: "显示 {n} 件 / 共 {m} 件",
     welcome_panel: "请搜索并选择零件编号",
-    production_search_title: "生产指示",
-    production_search_ph: "按DKD商品ID、厂家品番或纯正品番搜索",
+    production_search_title: "生产管理",
+    production_search_ph: "按零件编号搜索",
     production_instruction_filter: "生产指示",
     production_filter_ready: "有构成零件",
     production_filter_need: "无构成零件",
@@ -4185,7 +4180,7 @@ var TRANSLATIONS = {
     mi_logs_desc: "查看零件和兼容性更改的历史记录。",
     screen_parts_title: "零件管理",
     screen_core_list_title: "CORE清单",
-    screen_production_ranking_title: "生产指示排行",
+    screen_production_ranking_title: "生产计划管理",
     screen_kikan_title: "兼容性管理",
     screen_rakuten_title: "乐天价格调查",
     screen_rakuten_list_title: "乐天价格调查结果",
@@ -4203,7 +4198,7 @@ var TRANSLATIONS = {
     btn_add_part: "添加零件",
     btn_add_core_list: "添加CORE",
     btn_create_core_from_ranking: "从排行创建",
-    btn_add_production_ranking: "添加排行",
+    btn_add_production_ranking: "添加计划",
     btn_edit: "修改",
     btn_delete: "删除",
     btn_save_part: "保存",
@@ -4229,7 +4224,7 @@ var TRANSLATIONS = {
     production_ranking_core_part: "CORE零件编号",
     production_ranking_core_summary: "CORE备注",
     production_ranking_component_summary: "构成零件备注",
-    production_ranking_delete_confirm: "删除此排行行？",
+    production_ranking_delete_confirm: "删除此生产计划行？",
     customer_access_title: "客户显示管理",
     detail_customer_section: "客户信息",
     detail_customer_select: "选择",
@@ -4607,7 +4602,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.280";
+var APP_VERSION       = "v1.1.281";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -4618,7 +4613,7 @@ var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
 var productionRows = [];
 var productionFilteredRows = [];
-var productionFilter = "instruction";
+var productionFilter = "all";
 var currentProductionRow = null;
 var componentReturnScreen = "search";
 var componentParallelReturnScreen = "search";
@@ -5737,13 +5732,12 @@ async function enterSearch() {
 
 async function enterProductionSearch() {
   showScreen("production-search");
+  productionFilter = "all";
+  productionSearchLimit = SEARCH_INITIAL_LIMIT;
+  productionLoaded = false;
+  currentProductionRow = null;
   renderProductionFilterChips();
-  if (productionLoaded) {
-    renderProductionList();
-    await renderProductionDetail(currentProductionRow);
-  } else {
-    resetProductionSearchView();
-  }
+  resetProductionSearchView();
 }
 
 function resetProductionSearchView() {
@@ -5852,8 +5846,8 @@ function renderProductionFilterChips() {
     });
     row.appendChild(btn);
   }
-  addChip("instruction", t("production_instruction_filter"), "production_instruction_filter");
   addChip("all", t("filter_all"), "filter_all");
+  addChip("instruction", t("production_instruction_filter"), "production_instruction_filter");
   var cats = (categoryOptions && categoryOptions.length) ? categoryOptions : [
     { category_code: "starter", label_ja: t("filter_starter"), label_en: t("filter_starter"), label_zh: t("filter_starter") },
     { category_code: "alternator", label_ja: t("filter_alt"), label_en: t("filter_alt"), label_zh: t("filter_alt") }
@@ -5896,14 +5890,20 @@ function sortProductionRows() {
   });
 }
 
-async function loadProductionProducts() {
+async function loadProductionProducts(options) {
+  options = options || {};
   productionAuxRequestSeq++;
   var countEl = document.getElementById("production-count");
   if (countEl) countEl.textContent = t("loading");
-  await loadProductionInstructions();
   var qEl = document.getElementById("production-q");
   var q = qEl ? qEl.value.trim() : "";
   var categoryFilter = productionFilter.indexOf("cat:") === 0 ? productionFilter.slice(4) : null;
+  if (!q && productionFilter === "all") {
+    productionLoaded = false;
+    resetProductionSearchView();
+    return;
+  }
+  await loadProductionInstructions();
   var r;
   if (q) {
     r = await fetchCoreProductMasterMatches(q, categoryFilter, productionSearchLimit);
@@ -5920,6 +5920,22 @@ async function loadProductionProducts() {
       .order("updated_at", { ascending: false })
       .limit(productionSearchLimit);
   }
+  if (!r.error && q && !(r.data || []).length) {
+    var aliasResult = await fetchSourceAliasProducts(q);
+    if (!aliasResult.error && (aliasResult.data || []).length) {
+      r = aliasResult;
+    } else if (aliasResult.error) {
+      console.warn("source alias search failed", aliasResult.error);
+    }
+  }
+  if (!r.error && q && !(r.data || []).length) {
+    var slResult = await fetchSlPartProducts(q, categoryFilter, productionSearchLimit);
+    if (!slResult.error && (slResult.data || []).length) {
+      r = slResult;
+    } else if (slResult.error) {
+      console.warn("SL part search failed", slResult.error);
+    }
+  }
   if (r.error) {
     productionRows = [];
     productionLoaded = false;
@@ -5930,11 +5946,16 @@ async function loadProductionProducts() {
   productionRows = r.data || [];
   componentUsageCountMap = {};
   coreStockQtyMap = {};
+  productVariantSummaryMap = {};
   productionRows = productionRows.map(enrichProductionProduct);
   sortProductionRows();
   productionLoaded = true;
-  if (!currentProductionRow && productionRows.length) currentProductionRow = productionRows[0];
-  if (currentProductionRow) {
+  if (!options.preserveSelection) {
+    currentProductionRow = productionRows[0] || null;
+  } else if (!currentProductionRow && productionRows.length) {
+    currentProductionRow = productionRows[0];
+  }
+  if (options.preserveSelection && currentProductionRow) {
     var stillExists = productionRows.some(function(row){ return String(row.dkd_shohin_id) === String(currentProductionRow.dkd_shohin_id); });
     if (!stillExists) currentProductionRow = productionRows[0] || null;
   }
@@ -5945,11 +5966,16 @@ async function loadProductionAuxiliaryData(products) {
   var auxSeq = ++productionAuxRequestSeq;
   var fast = await Promise.all([
     fetchComponentUsageCountMap(products),
-    fetchCoreStockQtyMap(products)
+    fetchCoreStockQtyMap(products),
+    fetchProductVariantSummaryMap(products)
   ]);
   if (auxSeq !== productionAuxRequestSeq) return;
   componentUsageCountMap = fast[0] || {};
   coreStockQtyMap = fast[1] || {};
+  productVariantSummaryMap = fast[2] || {};
+  Object.keys(productVariantSummaryMap).forEach(function(key) {
+    productVariantSummaryCache[key] = productVariantSummaryMap[key];
+  });
   productionRows = productionRows.map(enrichProductionProduct);
   sortProductionRows();
   renderProductionList();
@@ -6020,7 +6046,8 @@ function renderProductionList() {
       row.manufacturer_part_number || "-",
       row.manufacturer || "-",
       productionCategoryLabel(row),
-      "コア " + productionCoreStockQty(row)
+      productKindLabel("rebuilt") + " " + productionProductKindStockQty(row, "rebuilt"),
+      productKindLabel("aftermarket_new") + " " + productionProductKindStockQty(row, "aftermarket_new")
     ].join(" / ");
     return "<div class='production-card" + selected + "' data-production-index='" + i + "'>" +
       "<div class='production-card-top'><div class='production-rank'>" + (inst ? "#" + esc(inst.priority_rank || "-") : "基幹") + "</div><div class='production-status " + cls + "'>" + esc(productionStatusLabel(row)) + "</div></div>" +
@@ -6041,6 +6068,10 @@ function productionCoreStockQty(row) {
   return isNaN(n) ? 0 : n;
 }
 
+function productionProductKindStockQty(row, kind) {
+  return kikanStockQtyText(row, kind);
+}
+
 function sumProductionCoreEntryQty(rows) {
   return (rows || []).reduce(function(sum, row) {
     var n = parseInt(row.quantity || 0, 10);
@@ -6050,10 +6081,10 @@ function sumProductionCoreEntryQty(rows) {
 
 function renderProductionCoreSummary(row, detail) {
   var stockQty = productionCoreStockQty(row);
-  var listQty = sumProductionCoreEntryQty(detail && detail.coreEntries);
   return "<div class='core-qty-summary'>" +
     "<div class='core-qty-card'><div class='core-qty-label'>コア在庫数</div><div class='core-qty-value'>" + esc(String(stockQty)) + "</div><div class='core-qty-sub'>" + esc(row && row.core_part_number ? row.core_part_number : "-") + "</div></div>" +
-    "<div class='core-qty-card'><div class='core-qty-label'>コアリスト合計</div><div class='core-qty-value'>" + esc(String(listQty)) + "</div><div class='core-qty-sub'>" + esc(((detail && detail.coreEntries) || []).length + " 行") + "</div></div>" +
+    "<div class='core-qty-card'><div class='core-qty-label'>" + esc(productKindLabel("rebuilt")) + "</div><div class='core-qty-value'>" + esc(productionProductKindStockQty(row, "rebuilt")) + "</div><div class='core-qty-sub'>" + esc(t("product_kind_stock_qty")) + "</div></div>" +
+    "<div class='core-qty-card'><div class='core-qty-label'>" + esc(productKindLabel("aftermarket_new")) + "</div><div class='core-qty-value'>" + esc(productionProductKindStockQty(row, "aftermarket_new")) + "</div><div class='core-qty-sub'>" + esc(t("product_kind_stock_qty")) + "</div></div>" +
   "</div>";
 }
 
@@ -6080,6 +6111,93 @@ function renderProductionCoreSourcesDisplay(rows) {
   return html + "</table>";
 }
 
+function renderProductionKikanPartsList(partsList, wrap) {
+  if (!wrap) return;
+  partsList = partsList || [];
+  if (!partsList.length) {
+    wrap.innerHTML = "<div class='production-help'>" + esc(t("kikan_none")) + "</div>";
+    return;
+  }
+  var html = "<table class='kikan-table'>";
+  html += "<tr><th>" + esc(t("f_genuine_pn")) + "</th><th>" + esc(t("f_mfr_pn")) + "</th><th>" + esc(t("product_kind_stock")) + "</th><th></th></tr>";
+  partsList.forEach(function(p) {
+    var dkdId = String(p.dkd_shohin_id || p.id || "");
+    html += "<tr class='kikan-other' data-production-kikan-dkd='" + esc(dkdId) + "'>";
+    html += "<td><div class='kikan-pn'>" + esc(p.genuine_part_number || "-") + "</div></td>";
+    html += "<td><div class='kikan-pn'>" + esc(p.manufacturer_part_number || "-") + "</div><div class='kikan-mfr'>" + esc(p.manufacturer || "") + "</div></td>";
+    html += "<td>" + renderKikanStockHtml(p) + "</td>";
+    html += "<td class='kikan-action'><button type='button' class='btn-sm-edit kikan-search-btn' data-production-kikan-search='" + esc(dkdId) + "'>" + esc(t("btn_search")) + "</button></td>";
+    html += "</tr>";
+  });
+  html += "</table>";
+  html += "<div style='font-size:11px;color:#aaa;text-align:right'>" + esc(tf("kikan_member_count", { n: partsList.length })) + "</div>";
+  wrap.innerHTML = html;
+  wrap.querySelectorAll("[data-production-kikan-search]").forEach(function(btn) {
+    btn.addEventListener("click", function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      openProductionCompatibleProduct(parseInt(btn.dataset.productionKikanSearch, 10));
+    });
+  });
+  wrap.querySelectorAll("[data-production-kikan-dkd]").forEach(function(row) {
+    row.addEventListener("click", function(e) {
+      if (e.target && e.target.closest && e.target.closest("button")) return;
+      openProductionCompatibleProduct(parseInt(row.dataset.productionKikanDkd, 10));
+    });
+  });
+}
+
+async function loadProductionKikanForRow(row, seq) {
+  var wrap = document.getElementById("production-kikan-wrap");
+  if (!wrap) return;
+  if (!row || !customerCanShowCompatibleParts()) {
+    renderProductionKikanPartsList([], wrap);
+    return;
+  }
+  var dkdShohinIdNum = parseInt(row.dkd_shohin_id || row.id, 10);
+  if (isNaN(dkdShohinIdNum)) {
+    renderProductionKikanPartsList([], wrap);
+    return;
+  }
+  var r = await sb.rpc("get_kikan_compatible_parts", {
+    target_dkd_shohin_id: dkdShohinIdNum,
+    target_manufacturer: row.manufacturer || null,
+    target_manufacturer_part_number: row.manufacturer_part_number || null,
+    target_genuine_part_number: row.genuine_part_number || null
+  });
+  if (seq !== productionDetailRequestSeq) return;
+  if (r.error) {
+    console.warn("production compatible parts lookup failed", r.error);
+    renderProductionKikanPartsList([], wrap);
+    return;
+  }
+  var partsList = r.data || [];
+  var categorySet = {};
+  partsList.forEach(function(p) {
+    var cat = p.category_code || p.category || "";
+    if (cat && cat !== "unclassified_assy" && cat !== "other_assy") categorySet[cat] = true;
+  });
+  if (Object.keys(categorySet).length > 1) {
+    renderProductionKikanPartsList([], wrap);
+    return;
+  }
+  if (row.category_code || row.category) {
+    var currentCategory = row.category_code || row.category;
+    partsList = partsList.filter(function(p) {
+      var cat = p.category_code || p.category;
+      return cat === currentCategory || cat === "unclassified_assy" || cat === "other_assy";
+    });
+  }
+  partsList = filterVisibleProducts(partsList).filter(function(p) {
+    if (String(p.dkd_shohin_id) === String(dkdShohinIdNum)) return false;
+    if (row.genuine_part_number && p.genuine_part_number === row.genuine_part_number) return false;
+    return true;
+  });
+  await loadKikanVariantSummaryCache(partsList);
+  if (seq !== productionDetailRequestSeq) return;
+  renderProductionKikanPartsList(partsList, wrap);
+}
+
 function normalizeProductionDetailLayout(root, row, detail) {
   if (!root) return;
   var grid = root.querySelector(".production-grid");
@@ -6101,13 +6219,7 @@ function normalizeProductionDetailLayout(root, row, detail) {
       "<div class='production-help'>在庫元データは直接減算せず、製造引当の履歴として記録します。</div>";
   }
   if (normalSections[1]) {
-    var html = "<h3>コアリスト</h3>" + renderProductionCoreEntriesDisplay(detail.coreEntries);
-    if (canEdit()) {
-      html += "<div class='production-form-row'><input id='production-core-entry-pn' type='text' placeholder='コア品番'><input id='production-core-entry-qty' type='number' min='0' step='1' placeholder='数'><input id='production-core-entry-location' type='text' placeholder='置き場'><button class='btn-sm-edit' id='production-core-entry-add'>追加</button></div>";
-      html += "<div class='production-help'>手入力の製造用コアリストです。削除はリスト内の削除ボタンから行います。</div>";
-    }
-    html += renderProductionCoreSourcesDisplay(detail.coreSources);
-    normalSections[1].innerHTML = html;
+    normalSections[1].innerHTML = "<h3>" + esc(t("kikan_section")) + "</h3><div id='production-kikan-wrap'><div class='production-help'>" + esc(t("loading")) + "</div></div>";
   }
   var wideSections = Array.prototype.slice.call(grid.querySelectorAll(":scope > .production-section.production-wide"));
   if (wideSections[1]) {
@@ -6328,16 +6440,8 @@ async function renderProductionDetail(row) {
   html += "<div class='production-form-row'><input id='production-withdraw-qty' type='number' min='1' step='1' placeholder='数量'><input id='production-withdraw-reason' type='text' placeholder='製造予定No・理由など'><button class='btn-sm-edit' id='production-withdraw-btn'>コア引き落とし記録</button></div>";
   html += "<div class='production-help'>在庫元データは直接減算せず、製造引当の履歴として記録します。</div>";
   html += "</section>";
-  html += "<section class='production-section'><h3>コアリスト</h3>";
-  html += renderProductionCoreEntries(detail.coreEntries);
-  if (canEdit()) {
-    html += "<div class='production-form-row'><input id='production-core-entry-pn' type='text' placeholder='コア品番'><input id='production-core-entry-qty' type='number' min='0' step='1' placeholder='数'><input id='production-core-entry-location' type='text' placeholder='置き場'><button class='btn-sm-edit' id='production-core-entry-add'>追加</button></div>";
-    html += "<div class='production-help'>手入力の製造用コアリストです。削除はリスト内の削除ボタンから行います。</div>";
-  }
-  if (detail.coreSources.length) {
-    html += "<div class='production-help' style='margin-top:10px'>インポート元のコア紐づけ</div>";
-    html += renderProductionCoreSources(detail.coreSources);
-  }
+  html += "<section class='production-section'><h3>" + esc(t("kikan_section")) + "</h3>";
+  html += "<div id='production-kikan-wrap'><div class='production-help'>" + esc(t("loading")) + "</div></div>";
   html += "</section>";
   html += "<section class='production-section production-wide'><h3>コア引き落とし履歴</h3>";
   html += renderProductionWithdrawals(detail.withdrawals);
@@ -6361,6 +6465,7 @@ async function renderProductionDetail(row) {
   currentProductNominalSpec = null;
   loadCatalogVehicleSummary(el, row);
   await loadProductSpecsForCurrent();
+  loadProductionKikanForRow(row, seq);
   var salesBtn = document.getElementById("production-open-sales");
   if (salesBtn) salesBtn.addEventListener("click", openProductionSalesProduct);
   var compBtn = document.getElementById("production-open-components");
@@ -9730,7 +9835,7 @@ async function refreshProductionInstructionScreen() {
 function openCurrentProductionRankingForm() {
   if (!currentProductionRow) { alert("修正する製造予定行を選択してください。"); return; }
   var inst = productionInstructionFor(currentProductionRow);
-  if (!inst || !inst.id) { alert("選択中の商品は製造予定ランキングに紐づいていません。"); return; }
+  if (!inst || !inst.id) { alert("選択中の商品は製造予定リストに紐づいていません。"); return; }
   productionRankingMgmtRows = productionInstructionRows.slice();
   openProductionRankingForm("edit", inst.id);
 }
@@ -12403,6 +12508,13 @@ async function openProductByDkdId(dkdId) {
     if (!r.error && r.data) allProducts.push(normalizeCoreProductFastRows([r.data])[0]);
   }
   openPanel(id);
+}
+
+async function openProductionCompatibleProduct(dkdId) {
+  var id = parseInt(dkdId, 10);
+  if (isNaN(id)) return;
+  await enterSearch();
+  await openProductByDkdId(id);
 }
 
 function closePanel() {
@@ -16586,39 +16698,45 @@ document.getElementById("production-q").addEventListener("keydown", async functi
 });
 document.getElementById("production-clear-btn").addEventListener("click", async function(){
   document.getElementById("production-q").value = "";
-  productionFilter = "instruction";
+  productionFilter = "all";
   productionSearchLimit = SEARCH_INITIAL_LIMIT;
-  document.querySelectorAll("[data-production-filter]").forEach(function(c){ c.classList.toggle("active", c.dataset.productionFilter === "instruction"); });
+  document.querySelectorAll("[data-production-filter]").forEach(function(c){ c.classList.toggle("active", c.dataset.productionFilter === "all"); });
   productionLoaded = false;
   resetProductionSearchView();
 });
-document.getElementById("production-year-filter").addEventListener("change", async function(){
-  productionFilter = "instruction";
-  productionSearchLimit = SEARCH_INITIAL_LIMIT;
-  document.querySelectorAll("[data-production-filter]").forEach(function(c){ c.classList.toggle("active", c.dataset.productionFilter === "instruction"); });
-  productionLoaded = false;
-  currentProductionRow = null;
-  await loadProductionProducts();
-  renderProductionList();
-  await renderProductionDetail(currentProductionRow);
-});
+var productionYearFilterEl = document.getElementById("production-year-filter");
+if (productionYearFilterEl) {
+  productionYearFilterEl.addEventListener("change", async function(){
+    productionFilter = "instruction";
+    productionSearchLimit = SEARCH_INITIAL_LIMIT;
+    document.querySelectorAll("[data-production-filter]").forEach(function(c){ c.classList.toggle("active", c.dataset.productionFilter === "instruction"); });
+    productionLoaded = false;
+    currentProductionRow = null;
+    await loadProductionProducts();
+    renderProductionList();
+    await renderProductionDetail(currentProductionRow);
+  });
+}
 document.getElementById("production-add-ranking-inline").addEventListener("click", function(){
   openProductionRankingForm("add");
 });
 document.getElementById("production-edit-ranking-inline").addEventListener("click", openCurrentProductionRankingForm);
 document.querySelectorAll("[data-production-filter]").forEach(function(chip) {
-  chip.addEventListener("click", function() {
+  chip.addEventListener("click", async function() {
     productionFilter = chip.dataset.productionFilter;
     productionSearchLimit = SEARCH_INITIAL_LIMIT;
     document.querySelectorAll("[data-production-filter]").forEach(function(c){ c.classList.toggle("active", c === chip); });
+    productionLoaded = false;
+    await loadProductionProducts();
     renderProductionList();
+    await renderProductionDetail(currentProductionRow);
   });
 });
 document.getElementById("production-load-more").addEventListener("click", async function(){
   var firstAddedIndex = productionFilteredRows.length;
   productionSearchLimit = Math.min(productionSearchLimit + SEARCH_PAGE_STEP, SEARCH_FETCH_LIMIT);
   productionLoaded = false;
-  await loadProductionProducts();
+  await loadProductionProducts({ preserveSelection: true });
   renderProductionList();
   await renderProductionDetail(currentProductionRow);
   focusProductionResultIndex(firstAddedIndex);
