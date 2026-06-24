@@ -291,12 +291,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .mgmt-actions   { display: flex; gap: 6px; flex-wrap: nowrap; }
 .mgmt-count     { font-size: 12px; color: #888; margin-bottom: 8px; }
 #core-list-list { overflow-x: auto; }
-#core-list-list .mgmt-table { min-width: 980px; }
+#core-list-list .mgmt-table { min-width: 1120px; }
 #core-list-list .mgmt-table th,
 #core-list-list .mgmt-table td { white-space: nowrap; }
 #core-list-list .mgmt-pn { white-space: nowrap; }
 #core-list-list .mgmt-table th:nth-child(7),
 #core-list-list .mgmt-table td:nth-child(7) { white-space: normal; min-width: 180px; }
+#core-list-list .mgmt-table th:nth-child(8),
+#core-list-list .mgmt-table td:nth-child(8) { width: 120px; }
 .stock-mgmt-body { max-width: 1360px; }
 .stock-mgmt-toolbar { align-items: stretch; }
 .stock-mgmt-toolbar .form-select { min-width: 150px; max-width: 210px; }
@@ -1794,6 +1796,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     </div>
     <div class="mgmt-count" id="core-list-count"></div>
     <div id="core-list-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
+    <div class="load-more-wrap" id="core-list-load-more-wrap" style="display:none">
+      <button class="btn-load-more" id="core-list-load-more" type="button" data-i18n="btn_load_more">さらに表示</button>
+    </div>
   </div>
 </div>
 
@@ -4533,7 +4538,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.273";
+var APP_VERSION       = "v1.1.274";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -4558,6 +4563,12 @@ var coreListMgmtRows = [];
 var coreListProductMap = {};
 var coreListProductCandidates = [];
 var coreListFormMode = "add";
+var coreListRawOffset = 0;
+var coreListHasMore = true;
+var coreListLoadingMore = false;
+var coreListCurrentSearchKey = "";
+var CORE_LIST_PAGE_SIZE = 50;
+var CORE_LIST_SEARCH_SCAN_CHUNKS = 5;
 var productKindStockRows = [];
 var productKindStockProductMap = {};
 var productKindStockDirtyMap = {};
@@ -7667,43 +7678,97 @@ async function enterCoreListMgmt() {
   await loadCoreListMgmt();
 }
 
-async function loadCoreListMgmt() {
-  var list = document.getElementById("core-list-list");
-  if (list) list.innerHTML = "<div class='loading'>" + t("loading") + "</div>";
+function coreListSearchKey() {
+  var input = document.getElementById("core-list-search");
+  return input ? norm(input.value.trim()) : "";
+}
+
+function coreListRowMatches(row, q) {
+  if (!q) return true;
+  var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
+  return [
+    row.dkd_shohin_id,
+    row.core_part_number,
+    row.location,
+    row.note,
+    p.genuine_part_number,
+    p.manufacturer_part_number,
+    p.manufacturer,
+    p.daiko_part_number
+  ].some(function(v) { return normalizedContains(v, q); });
+}
+
+function updateCoreListLoadMoreButton() {
+  var wrap = document.getElementById("core-list-load-more-wrap");
+  var btn = document.getElementById("core-list-load-more");
+  if (!wrap || !btn) return;
+  wrap.style.display = coreListHasMore ? "" : "none";
+  btn.disabled = !!coreListLoadingMore;
+  btn.textContent = coreListLoadingMore ? t("loading") : t("btn_load_more");
+}
+
+async function fetchCoreListRawPage(limit) {
+  var from = coreListRawOffset;
+  var to = from + limit - 1;
   var r = await sb.from("production_core_list_entries")
     .select("*")
     .order("updated_at", { ascending: false })
-    .limit(500);
-  if (r.error) {
-    if (list) list.innerHTML = "<div class='empty'>" + esc(t("msg_part_err") + ": " + r.error.message) + "</div>";
-    return;
+    .order("id", { ascending: false })
+    .range(from, to);
+  if (r.error) return r;
+  var rows = r.data || [];
+  coreListRawOffset += rows.length;
+  coreListHasMore = rows.length === limit;
+  return { data: rows, error: null };
+}
+
+async function loadCoreListMgmt(options) {
+  options = options || {};
+  var q = coreListSearchKey();
+  var append = !!options.append && q === coreListCurrentSearchKey;
+  var list = document.getElementById("core-list-list");
+  if (coreListLoadingMore) return;
+  if (!append) {
+    coreListMgmtRows = [];
+    coreListProductMap = {};
+    coreListRawOffset = 0;
+    coreListHasMore = true;
+    coreListCurrentSearchKey = q;
+    if (list) list.innerHTML = "<div class='loading'>" + t("loading") + "</div>";
   }
-  coreListMgmtRows = r.data || [];
-  await loadCoreListProductMap(coreListMgmtRows);
-  var q = norm(document.getElementById("core-list-search").value.trim());
-  if (q) {
-    coreListMgmtRows = coreListMgmtRows.filter(function(row) {
-      var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
-      return [
-        row.dkd_shohin_id,
-        row.core_part_number,
-        row.location,
-        row.note,
-        p.genuine_part_number,
-        p.manufacturer_part_number,
-        p.manufacturer,
-        p.daiko_part_number
-      ].some(function(v) { return normalizedContains(v, q); });
-    });
+
+  coreListLoadingMore = true;
+  updateCoreListLoadMoreButton();
+  try {
+    var added = 0;
+    var chunks = 0;
+    var maxChunks = q ? CORE_LIST_SEARCH_SCAN_CHUNKS : 1;
+    while (coreListHasMore && added < CORE_LIST_PAGE_SIZE && chunks < maxChunks) {
+      chunks += 1;
+      var r = await fetchCoreListRawPage(CORE_LIST_PAGE_SIZE);
+      if (r.error) {
+        if (list) list.innerHTML = "<div class='empty'>" + esc(t("msg_part_err") + ": " + r.error.message) + "</div>";
+        return;
+      }
+      var rawRows = r.data || [];
+      if (!rawRows.length) break;
+      await loadCoreListProductMap(rawRows);
+      var rows = rawRows.filter(function(row) { return coreListRowMatches(row, q); });
+      coreListMgmtRows = coreListMgmtRows.concat(rows);
+      added += rows.length;
+      if (!q) break;
+    }
+    renderCoreListMgmt();
+  } finally {
+    coreListLoadingMore = false;
+    updateCoreListLoadMoreButton();
   }
-  renderCoreListMgmt();
 }
 
 async function loadCoreListProductMap(rows) {
-  coreListProductMap = {};
   var ids = [];
   (rows || []).forEach(function(row) {
-    if (row.dkd_shohin_id != null && ids.indexOf(row.dkd_shohin_id) < 0) ids.push(row.dkd_shohin_id);
+    if (row.dkd_shohin_id != null && !coreListProductMap[String(row.dkd_shohin_id)] && ids.indexOf(row.dkd_shohin_id) < 0) ids.push(row.dkd_shohin_id);
   });
   if (!ids.length) return;
   var r = await sb.from("core_product_search_view").select("*").in("dkd_shohin_id", ids).limit(500);
@@ -7723,11 +7788,13 @@ function renderCoreListMgmt() {
     countEl.innerHTML = esc(String(coreListMgmtRows.length)) + " 件 <span class='core-count-pill'>コア合計 " + esc(String(initialTotalQty)) + "</span>";
   }
   if (!coreListMgmtRows.length) {
-    list.innerHTML = "<div class='empty'>コアリストはまだ登録されていません。<br>「コアを追加」から基幹商品に紐づくコア品番・数量・置き場を登録してください。</div>";
+    list.innerHTML = coreListHasMore
+      ? "<div class='empty'>" + esc(t("no_results")) + "</div>"
+      : "<div class='empty'>コアリストはまだ登録されていません。<br>「コアを追加」から基幹商品に紐づくコア品番・数量・置き場を登録してください。</div>";
     return;
   }
   var html = "<table class='mgmt-table'>";
-  html += "<tr><th>純正品番</th><th>メーカー品番</th><th>メーカー</th><th>コア品番</th><th>数量</th><th>置き場</th><th>メモ</th><th>更新</th><th></th></tr>";
+  html += "<tr><th>純正品番</th><th>メーカー品番</th><th>メーカー</th><th>コア品番</th><th>数量</th><th>置き場</th><th>メモ</th><th></th><th>更新</th></tr>";
   coreListMgmtRows.forEach(function(row) {
     var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
     html += "<tr>";
@@ -7738,11 +7805,11 @@ function renderCoreListMgmt() {
     html += "<td>" + esc(String(row.quantity == null ? "-" : row.quantity)) + "</td>";
     html += "<td>" + esc(row.location || "-") + "</td>";
     html += "<td>" + esc(row.note || "-") + "</td>";
-    html += "<td><div class='mgmt-sub'>" + esc(formatDateTime(row.updated_at)) + "</div></td>";
     html += "<td><div class='mgmt-actions'>";
     html += "<button class='btn-sm-edit' data-core-edit='" + row.id + "'>" + t("btn_edit") + "</button>";
     html += "<button class='btn-sm-del' data-core-del='" + row.id + "'>" + t("btn_delete") + "</button>";
     html += "</div></td>";
+    html += "<td><div class='mgmt-sub'>" + esc(formatDateTime(row.updated_at)) + "</div></td>";
     html += "</tr>";
   });
   html += "</table>";
@@ -16202,6 +16269,7 @@ document.getElementById("btn-add-core-list").addEventListener("click", function(
 document.getElementById("btn-create-core-list-from-ranking").addEventListener("click", createCoreListFromRanking);
 document.getElementById("btn-core-list-search").addEventListener("click", loadCoreListMgmt);
 document.getElementById("core-list-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadCoreListMgmt(); });
+document.getElementById("core-list-load-more").addEventListener("click", function(){ loadCoreListMgmt({ append: true }); });
 document.getElementById("btn-core-list-form-cancel").addEventListener("click", function(){ document.getElementById("core-list-form-overlay").classList.remove("show"); });
 document.getElementById("btn-core-list-form-save").addEventListener("click", saveCoreListForm);
 document.getElementById("clf-product-search").addEventListener("input", function() {
