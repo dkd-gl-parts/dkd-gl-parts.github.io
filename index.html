@@ -4602,7 +4602,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.284";
+var APP_VERSION       = "v1.1.285";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -5894,7 +5894,7 @@ async function selectProductionFilter(filter) {
     productionLoaded = false;
     await loadProductionProducts();
     renderProductionList();
-    await renderProductionDetail(currentProductionRow);
+    renderProductionDetail(currentProductionRow);
   } catch (err) {
     console.error("production filter failed", err);
     productionRows = [];
@@ -5971,26 +5971,7 @@ async function loadProductionProducts(options) {
     r = await fetchCoreProductMasterMatches(q, categoryFilter, productionSearchLimit);
   } else if (productionFilter === "instruction") {
     var instructionRows = productionInstructionRowsForFilter().slice(0, productionSearchLimit);
-    var ids = instructionRows.map(function(x){ return x.dkd_shohin_id; }).filter(Boolean);
-    var productMap = {};
-    if (ids.length) {
-      var productR = await sb.from("core_product_search_view").select("*").in("dkd_shohin_id", ids).limit(500);
-      if (productR.error) {
-        r = productR;
-      } else {
-        (productR.data || []).forEach(function(p) {
-          productMap[String(productDkdId(p))] = p;
-        });
-        r = {
-          data: instructionRows.map(function(inst) {
-            return productionRowFromInstruction(inst, productMap[String(inst.dkd_shohin_id)] || {});
-          }),
-          error: null
-        };
-      }
-    } else {
-      r = { data: instructionRows.map(function(inst) { return productionRowFromInstruction(inst, {}); }), error: null };
-    }
+    r = { data: instructionRows.map(function(inst) { return productionRowFromInstruction(inst, {}); }), error: null };
   } else if (categoryFilter) {
     r = await fetchCategoryProducts(categoryFilter, productionSearchLimit);
   } else {
@@ -6063,7 +6044,7 @@ async function loadProductionAuxiliaryData(products) {
     var currentKey = productDkdId(currentProductionRow);
     var refreshed = productionRows.find(function(row) { return productDkdId(row) === currentKey; });
     if (refreshed) currentProductionRow = refreshed;
-    await renderProductionDetail(currentProductionRow);
+    renderProductionDetail(currentProductionRow);
   }
 }
 
@@ -6545,7 +6526,7 @@ async function renderProductionDetail(row) {
   currentProductSpecs = [];
   currentProductNominalSpec = null;
   loadCatalogVehicleSummary(el, row);
-  await loadProductSpecsForCurrent();
+  loadProductSpecsForCurrent();
   loadProductionKikanForRow(row, seq);
   var salesBtn = document.getElementById("production-open-sales");
   if (salesBtn) salesBtn.addEventListener("click", openProductionSalesProduct);
@@ -9910,7 +9891,7 @@ async function refreshProductionInstructionScreen() {
   if (!isProductionSearchActive()) return;
   await loadProductionProducts();
   renderProductionList();
-  await renderProductionDetail(currentProductionRow);
+  renderProductionDetail(currentProductionRow);
 }
 
 function openCurrentProductionRankingForm() {
@@ -16766,7 +16747,7 @@ document.getElementById("production-search-btn").addEventListener("click", async
   productionLoaded = false;
   await loadProductionProducts();
   renderProductionList();
-  await renderProductionDetail(currentProductionRow);
+  renderProductionDetail(currentProductionRow);
 });
 document.getElementById("production-q").addEventListener("keydown", async function(e){
   if(e.key==="Enter") {
@@ -16774,7 +16755,7 @@ document.getElementById("production-q").addEventListener("keydown", async functi
     productionLoaded = false;
     await loadProductionProducts();
     renderProductionList();
-    await renderProductionDetail(currentProductionRow);
+    renderProductionDetail(currentProductionRow);
   }
 });
 document.getElementById("production-clear-btn").addEventListener("click", async function(){
@@ -16795,7 +16776,7 @@ if (productionYearFilterEl) {
     currentProductionRow = null;
     await loadProductionProducts();
     renderProductionList();
-    await renderProductionDetail(currentProductionRow);
+    renderProductionDetail(currentProductionRow);
   });
 }
 document.getElementById("production-add-ranking-inline").addEventListener("click", function(){
@@ -16813,7 +16794,7 @@ document.getElementById("production-load-more").addEventListener("click", async 
   productionLoaded = false;
   await loadProductionProducts({ preserveSelection: true });
   renderProductionList();
-  await renderProductionDetail(currentProductionRow);
+  renderProductionDetail(currentProductionRow);
   focusProductionResultIndex(firstAddedIndex);
 });
 document.getElementById("production-list").addEventListener("click", async function(e) {
@@ -16821,7 +16802,7 @@ document.getElementById("production-list").addEventListener("click", async funct
   if (!card) return;
   currentProductionRow = productionFilteredRows[parseInt(card.dataset.productionIndex, 10)] || null;
   renderProductionList();
-  await renderProductionDetail(currentProductionRow);
+  renderProductionDetail(currentProductionRow);
 });
 document.getElementById("overlay").addEventListener("click", closePanel);
 document.getElementById("panel-close-btn").addEventListener("click", closePanel);
