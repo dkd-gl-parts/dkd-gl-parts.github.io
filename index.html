@@ -970,6 +970,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .role-select   { border: 1px solid #ddd; border-radius: 6px; padding: 6px 10px; font-size: 13px; outline: none; cursor: pointer; flex: 1; min-width: 120px; background: #fff; }
 .btn-save-user { background: #4f8ef7; color: #fff; border: none; border-radius: 6px; padding: 7px 16px; font-size: 13px; cursor: pointer; font-weight: 600; white-space: nowrap; }
 .btn-save-user:hover { background: #3a7ae0; }
+.btn-user-history { background: #eef4ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 6px; padding: 7px 12px; font-size: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+.btn-user-history:hover { background: #dbeafe; }
+.user-auth-history-modal { max-width: 780px; }
+.user-auth-history-summary { font-size: 12px; color: #667085; margin: -6px 0 12px; }
+.user-auth-history-list { max-height: 56vh; overflow: auto; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; }
+.user-auth-history-list .log-table th { position: sticky; top: 0; z-index: 1; }
+.auth-event-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 58px; border-radius: 999px; padding: 3px 8px; font-size: 11px; font-weight: 700; }
+.auth-event-login { background: #e8f7ee; color: #16723a; }
+.auth-event-logout { background: #f3f4f6; color: #475467; }
 .save-msg { font-size: 12px; }
 .save-ok  { color: #1a8c3e; }
 .save-err { color: #e24b4a; }
@@ -1539,6 +1548,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       </table>
     </div>
     <div id="users-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
+  </div>
+</div>
+
+<div class="form-overlay" id="user-auth-history-overlay">
+  <div class="form-card user-auth-history-modal">
+    <h3 data-i18n="auth_history_title">ログイン履歴</h3>
+    <div class="user-auth-history-summary" id="user-auth-history-summary">-</div>
+    <div class="user-auth-history-list" id="user-auth-history-list">
+      <div class="loading" data-i18n="loading">読み込み中...</div>
+    </div>
+    <div class="form-footer" style="margin-top:16px">
+      <button class="btn-cancel" id="btn-user-auth-history-close" type="button" data-i18n="btn_close">閉じる</button>
+    </div>
   </div>
 </div>
 
@@ -2958,6 +2980,15 @@ var TRANSLATIONS = {
     btn_suspend: "停止",
     btn_activate: "有効化",
     btn_send_pw_reset: "PW再設定メール送信",
+    btn_auth_history: "履歴",
+    auth_history_title: "ログイン履歴",
+    auth_history_event: "種別",
+    auth_history_version: "版",
+    auth_history_device: "端末",
+    auth_history_no_data: "ログイン/ログアウト履歴はありません",
+    auth_history_load_error: "履歴を読み込めませんでした",
+    auth_event_login: "ログイン",
+    auth_event_logout: "ログアウト",
     msg_pw_reset_sent: "送信しました",
     msg_pw_reset_err: "送信失敗",
     reset_title: "新しいパスワードを設定",
@@ -3634,6 +3665,15 @@ var TRANSLATIONS = {
     btn_suspend: "Suspend",
     btn_activate: "Activate",
     btn_send_pw_reset: "Send PW Reset Email",
+    btn_auth_history: "History",
+    auth_history_title: "Login History",
+    auth_history_event: "Event",
+    auth_history_version: "Version",
+    auth_history_device: "Device",
+    auth_history_no_data: "No login/logout history found",
+    auth_history_load_error: "Could not load history",
+    auth_event_login: "Login",
+    auth_event_logout: "Logout",
     msg_pw_reset_sent: "Sent",
     msg_pw_reset_err: "Failed to send",
     reset_title: "Set New Password",
@@ -4303,6 +4343,15 @@ var TRANSLATIONS = {
     btn_suspend: "停用",
     btn_activate: "启用",
     btn_send_pw_reset: "发送密码重置邮件",
+    btn_auth_history: "履历",
+    auth_history_title: "登录履历",
+    auth_history_event: "类型",
+    auth_history_version: "版本",
+    auth_history_device: "设备",
+    auth_history_no_data: "暂无登录/退出履历",
+    auth_history_load_error: "无法读取履历",
+    auth_event_login: "登录",
+    auth_event_logout: "退出",
     msg_pw_reset_sent: "已发送",
     msg_pw_reset_err: "发送失败",
     reset_title: "设置新密码",
@@ -4559,7 +4608,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.277";
+var APP_VERSION       = "v1.1.278";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -5518,6 +5567,24 @@ async function loadProfile() {
   return true;
 }
 
+async function recordAuthEvent(eventType) {
+  if (!currentUser || !userProfile) return;
+  try {
+    var r = await sb.from("user_auth_events").insert({
+      user_id: currentUser.id,
+      user_email: userProfile.email || currentUser.email || null,
+      user_name: userProfile.name || userProfile.email || currentUser.email || null,
+      event_type: eventType,
+      app_version: APP_VERSION,
+      user_agent: navigator.userAgent || null,
+      page_url: window.location.origin + window.location.pathname
+    });
+    if (r.error) console.warn("auth event log failed", r.error);
+  } catch (e) {
+    console.warn("auth event log failed", e);
+  }
+}
+
 function updateAllHeaders() {
   if (!userProfile) return;
   var name  = userProfile.name || userProfile.email.split("@")[0];
@@ -5551,6 +5618,7 @@ async function doLogin() {
   currentUser = result.data.user;
   var profileOk = await loadProfile();
   if (!profileOk) { btnEl.disabled=false; btnEl.textContent=t("btn_login"); return; }
+  await recordAuthEvent("login");
   resetAutoLogoutTimer();
   showScreen("menu"); renderMenu();
   document.getElementById("login-password").value = "";
@@ -5558,6 +5626,7 @@ async function doLogin() {
 }
 
 async function doLogout() {
+  await recordAuthEvent("logout");
   await sb.auth.signOut();
   currentUser = null; userProfile = null;
   customerViewerContext = null;
@@ -15810,6 +15879,55 @@ async function saveCustomerUserLink(uid, salesCustomerId) {
   }
 }
 
+function authEventLabel(eventType) {
+  return eventType === "logout" ? t("auth_event_logout") : t("auth_event_login");
+}
+
+async function openUserAuthHistory(user) {
+  if (!user || !canManageUser(user)) { alert(t("err_perm")); return; }
+  var overlay = document.getElementById("user-auth-history-overlay");
+  var summary = document.getElementById("user-auth-history-summary");
+  var list = document.getElementById("user-auth-history-list");
+  if (!overlay || !summary || !list) return;
+
+  summary.textContent = (user.email || "-") + " / " + accessRoleLabel(normalizeAccessRoleForCompany(userAccessRoleCode(user), userCompanyCode(user)));
+  list.innerHTML = "<div class='loading'>" + t("loading") + "</div>";
+  overlay.classList.add("show");
+
+  var r = await sb.from("user_auth_events")
+    .select("id,event_type,user_email,user_name,app_version,user_agent,page_url,created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (r.error) {
+    list.innerHTML = "<div class='empty save-err'>" + esc(t("auth_history_load_error")) + ": " + esc(r.error.message || String(r.error)) + "</div>";
+    return;
+  }
+  renderUserAuthHistory(r.data || []);
+}
+
+function renderUserAuthHistory(rows) {
+  var list = document.getElementById("user-auth-history-list");
+  if (!list) return;
+  if (!rows.length) {
+    list.innerHTML = "<div class='empty'>" + t("auth_history_no_data") + "</div>";
+    return;
+  }
+  var html = "<table class='log-table'><tr><th>" + t("log_date") + "</th><th>" + t("auth_history_event") + "</th><th>" + t("auth_history_version") + "</th><th>" + t("auth_history_device") + "</th></tr>";
+  rows.forEach(function(row) {
+    var dt = row.created_at ? new Date(row.created_at).toLocaleString("ja-JP") : "-";
+    var eventClass = row.event_type === "logout" ? "auth-event-logout" : "auth-event-login";
+    html += "<tr>";
+    html += "<td style='white-space:nowrap'>" + esc(dt) + "</td>";
+    html += "<td><span class='auth-event-badge " + eventClass + "'>" + esc(authEventLabel(row.event_type)) + "</span></td>";
+    html += "<td style='white-space:nowrap'>" + esc(row.app_version || "-") + "</td>";
+    html += "<td><div class='mgmt-sub'>" + esc(row.user_agent || "-") + "</div></td>";
+    html += "</tr>";
+  });
+  html += "</table>";
+  list.innerHTML = html;
+}
+
 function renderUsers(users) {
   var list = document.getElementById("users-list");
   if (!users.length) { list.innerHTML = "<div class='empty'>"+t("no_users")+"</div>"; return; }
@@ -15864,6 +15982,9 @@ function renderUsers(users) {
     html += customerOptionHtml(selectedCustomerId);
     html += "</select>";
     if (canManageThis) {
+      html += "<button class='btn-user-history' data-uid='"+esc(u.id)+"' type='button'>"+t("btn_auth_history")+"</button>";
+    }
+    if (canManageThis) {
       html += "<button class='btn-save-user' data-uid='"+esc(u.id)+"'>"+t("btn_save")+"</button>";
       if (status==="pending"||status==="suspended") html += "<button class='btn-approve' data-uid='"+esc(u.id)+"'>"+t("btn_approve")+"</button>";
       if (status==="active") html += "<button class='btn-suspend' data-uid='"+esc(u.id)+"'>"+t("btn_suspend")+"</button>";
@@ -15873,6 +15994,12 @@ function renderUsers(users) {
     html += "</div></div>";
   });
   list.innerHTML = html;
+
+  list.querySelectorAll(".btn-user-history").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      openUserAuthHistory(userById[btn.dataset.uid]);
+    });
+  });
 
   list.querySelectorAll(".user-company-select").forEach(function(sel) {
     sel.addEventListener("change", function() {
@@ -16277,6 +16404,7 @@ document.getElementById("btn-back-logs").addEventListener("click",       functio
 document.getElementById("btn-add-part").addEventListener("click", function(){ openPartForm("add"); });
 document.getElementById("btn-part-form-cancel").addEventListener("click", function(){ document.getElementById("part-form-overlay").classList.remove("show"); });
 document.getElementById("btn-part-form-save").addEventListener("click", savePartForm);
+document.getElementById("btn-user-auth-history-close").addEventListener("click", function(){ document.getElementById("user-auth-history-overlay").classList.remove("show"); });
 document.getElementById("btn-sales-pricing-cancel").addEventListener("click", closeSalesPricingOverlay);
 document.getElementById("btn-sales-pricing-save").addEventListener("click", saveSalesPricing);
 document.getElementById("btn-sales-rank-save").addEventListener("click", saveSalesPriceRanks);
