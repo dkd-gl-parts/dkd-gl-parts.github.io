@@ -4526,7 +4526,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.270";
+var APP_VERSION       = "v1.1.271";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -14435,7 +14435,7 @@ async function fetchDetailCustomerPriceInfo(customer, dkdId) {
   if (info.basePrice == null) return info;
   var rankCode = customer.price_rank_code || "";
   var rankR = rankCode ? await sb.from("sales_price_ranks")
-    .select("rank_code,rank_name,rate_multiplier,amount_adjustment_jpy,rounding_unit_jpy,rounding_method,is_active")
+    .select("rank_code,rank_name,rate_multiplier,amount_adjustment_jpy,rounding_unit_jpy,rounding_method,is_active,display_order")
     .eq("rank_code", rankCode)
     .eq("is_active", true)
     .maybeSingle() : { data: null, error: null };
@@ -14587,8 +14587,9 @@ async function openSalesPricingForCurrent() {
     document.getElementById("sales-pricing-product").textContent = salesPricingProductText(currentProduct, dkdId);
     if (!dkdId) throw new Error(t("sales_no_product_id"));
     var ranksR = await sb.from("sales_price_ranks")
-      .select("rank_code,rank_name,rate_multiplier,amount_adjustment_jpy,rounding_unit_jpy,rounding_method,is_active")
+      .select("rank_code,rank_name,rate_multiplier,amount_adjustment_jpy,rounding_unit_jpy,rounding_method,is_active,display_order")
       .eq("is_active", true)
+      .order("display_order", { ascending: true })
       .order("rank_code", { ascending: true });
     if (ranksR.error) throw ranksR.error;
     var customersR = await sb.from("sales_customers")
