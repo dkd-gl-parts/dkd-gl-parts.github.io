@@ -319,6 +319,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .core-list-table .core-maker-badge { display: inline-flex; align-items: center; max-width: 140px; padding: 3px 8px; border-radius: 999px; background: #f0f6ff; color: #245aa8; font-size: 12px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .core-list-table .core-qty-pill { display: inline-flex; justify-content: flex-end; min-width: 42px; padding: 3px 8px; border-radius: 6px; background: #eef7ee; color: #1f7a35; font-weight: 800; font-variant-numeric: tabular-nums; }
 .core-list-table .core-note { color: #4b5563; line-height: 1.45; }
+.core-list-mobile-cards { display: none; }
+.core-list-card { background: #fff; border: 1px solid #e3e9f3; border-radius: 10px; padding: 11px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+.core-list-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid #edf0f5; }
+.core-list-card .core-qty-pill { display: inline-flex; justify-content: flex-end; min-width: 42px; padding: 3px 8px; border-radius: 6px; background: #eef7ee; color: #1f7a35; font-weight: 800; font-variant-numeric: tabular-nums; }
+.core-list-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px; padding: 9px 0; }
+.core-list-card-field { min-width: 0; }
+.core-list-card-label { display: block; color: #667085; font-size: 11px; font-weight: 800; margin-bottom: 3px; }
+.core-list-card-value { min-width: 0; color: #1a1a2e; font-size: 13px; line-height: 1.4; word-break: break-word; }
+.core-list-card-note { padding: 8px 0; border-top: 1px solid #f0f2f5; border-bottom: 1px solid #f0f2f5; }
+.core-list-card-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(82px, 1fr)); gap: 7px; padding-top: 9px; }
+.core-list-card-actions button { width: 100%; min-height: 32px; padding: 6px 5px; }
 @media (max-width: 767px) {
   #screen-core-list-mgmt .page-header { align-items: flex-start; flex-wrap: wrap; gap: 8px; padding: 8px 10px; }
   #screen-core-list-mgmt .page-header-left { min-width: 0; flex: 1 1 auto; }
@@ -355,6 +366,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   #core-list-list .core-maker-badge { max-width: 100%; white-space: normal; }
   #core-list-list .mgmt-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; justify-content: stretch; }
   #core-list-list .mgmt-actions button { width: 100%; min-height: 34px; padding: 7px 6px; }
+  #core-list-list .core-list-mobile-cards { display: grid; gap: 10px; }
+  #core-list-list .core-list-mobile-cards .core-maker-badge { max-width: 100%; white-space: nowrap; }
 }
 .stock-mgmt-body { max-width: 1360px; }
 .stock-mgmt-toolbar { align-items: stretch; }
@@ -4647,7 +4660,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.287";
+var APP_VERSION       = "v1.1.288";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -8145,6 +8158,51 @@ function renderCoreListMgmt() {
       : "<div class='empty'>コアリストはまだ登録されていません。<br>「コアを追加」から基幹商品に紐づくコア品番・数量・置き場を登録してください。</div>";
     return;
   }
+  if (!isPC()) {
+    var mobileHtml = "<div class='core-list-mobile-cards'>";
+    coreListMgmtRows.forEach(function(row) {
+      var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
+      var fallbackPartNumber = row.core_part_number || "";
+      var updatedText = formatDateTime(row.updated_at);
+      function mobileField(label, value) {
+        return "<div class='core-list-card-field'><span class='core-list-card-label'>" + esc(label) + "</span><div class='core-list-card-value'>" + value + "</div></div>";
+      }
+      mobileHtml += "<div class='core-list-card'>";
+      mobileHtml += "<div class='core-list-card-head'><div><div class='core-main-pn'>" + esc(row.core_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(productionCategoryLabel(p)) + "</div></div><span class='core-qty-pill'>" + esc(String(row.quantity == null ? 0 : row.quantity)) + "</span></div>";
+      mobileHtml += "<div class='core-list-card-grid'>";
+      mobileHtml += mobileField(t("f_manufacturer"), "<span class='core-maker-badge'>" + esc(p.manufacturer || "-") + "</span>");
+      mobileHtml += mobileField(t("f_genuine_pn"), "<span class='mgmt-pn'>" + esc(p.genuine_part_number || fallbackPartNumber || "-") + "</span>");
+      mobileHtml += mobileField(t("f_mfr_pn"), "<span class='mgmt-pn'>" + esc(p.manufacturer_part_number || fallbackPartNumber || "-") + "</span>");
+      mobileHtml += mobileField(t("core_list_location"), esc(row.location || "-"));
+      mobileHtml += "</div>";
+      mobileHtml += "<div class='core-list-card-note'><span class='core-list-card-label'>" + esc(t("core_list_note")) + "</span><div class='core-note'>" + esc(row.note || "-") + "</div><div class='mgmt-sub'>DKD " + esc(String(row.dkd_shohin_id || "-")) + " / " + esc(updatedText) + "</div></div>";
+      mobileHtml += "<div class='core-list-card-actions'>";
+      mobileHtml += "<button class='btn-sm-edit production-action-secondary' data-core-image='" + esc(String(row.id)) + "'>" + esc(t("btn_upload")) + "</button>";
+      mobileHtml += "<button class='btn-sm-edit' data-core-edit='" + esc(String(row.id)) + "'>" + esc(t("btn_edit")) + "</button>";
+      mobileHtml += "<button class='btn-sm-del' data-core-del='" + esc(String(row.id)) + "'>" + esc(t("btn_delete")) + "</button>";
+      mobileHtml += "</div></div>";
+    });
+    mobileHtml += "</div>";
+    list.innerHTML = mobileHtml;
+    if (!canUploadCoreImages()) {
+      list.querySelectorAll("[data-core-image]").forEach(function(btn) { btn.remove(); });
+    } else {
+      list.querySelectorAll("[data-core-image]").forEach(function(btn) {
+        btn.addEventListener("click", function() { openCoreListImageUpload(parseInt(btn.dataset.coreImage, 10)); });
+      });
+    }
+    if (!canEdit()) {
+      list.querySelectorAll("[data-core-edit], [data-core-del]").forEach(function(btn) { btn.remove(); });
+      return;
+    }
+    list.querySelectorAll("[data-core-edit]").forEach(function(btn) {
+      btn.addEventListener("click", function() { openCoreListForm("edit", parseInt(btn.dataset.coreEdit, 10)); });
+    });
+    list.querySelectorAll("[data-core-del]").forEach(function(btn) {
+      btn.addEventListener("click", function() { deleteCoreListRow(parseInt(btn.dataset.coreDel, 10)); });
+    });
+    return;
+  }
   var html = "<table class='mgmt-table core-list-table'>";
   html += "<tr><th>コア品番</th><th>メーカー</th><th>純正品番</th><th>メーカー品番</th><th>数量</th><th>置き場</th><th>メモ</th><th>操作</th></tr>";
   coreListMgmtRows.forEach(function(row) {
@@ -8156,7 +8214,7 @@ function renderCoreListMgmt() {
     html += "<td><span class='core-maker-badge'>" + esc(p.manufacturer || "-") + "</span></td>";
     html += "<td><div class='mgmt-pn'>" + esc(p.genuine_part_number || fallbackPartNumber || "-") + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(p.manufacturer_part_number || fallbackPartNumber || "-") + "</div><div class='mgmt-sub'>DKD " + esc(String(row.dkd_shohin_id || "-")) + "</div></td>";
-    html += "<td><span class='core-qty-pill'>" + esc(String(row.quantity == null ? "-" : row.quantity)) + "</span></td>";
+    html += "<td><span class='core-qty-pill'>" + esc(String(row.quantity == null ? 0 : row.quantity)) + "</span></td>";
     html += "<td>" + esc(row.location || "-") + "</td>";
     html += "<td><div class='core-note'>" + esc(row.note || "-") + "</div><div class='mgmt-sub'>" + esc(updatedText) + "</div></td>";
     html += "<td><div class='mgmt-actions'>";
