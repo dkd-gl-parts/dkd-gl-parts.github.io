@@ -1830,6 +1830,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <button class="btn-primary" id="btn-core-list-search" data-i18n="btn_search">検索</button>
       <button class="btn-primary" id="btn-add-core-list" data-i18n="btn_add_core_list">コアを追加</button>
       <button class="btn-sm-edit" id="btn-create-core-list-from-ranking" data-i18n="btn_create_core_from_ranking">ランキングから作成</button>
+      <button class="btn-sm-edit" id="btn-open-core-camera-test" type="button">カメラ計数テスト</button>
     </div>
     <div class="mgmt-count" id="core-list-count"></div>
     <div id="core-list-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
@@ -2492,6 +2493,7 @@ var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 var RAKUTEN_EDGE_FUNCTION_NAME = "rakuten-search";
 var RAKUTEN_USE_EDGE_FUNCTION = true;
 var RAKUTEN_ALLOW_DIRECT_BROWSER_FALLBACK = false;
+var CORE_AI_CAMERA_TEST_URL = "https://script.google.com/macros/s/AKfycbxlaPJSNTPC2p11rtrZKmS-CeMJ2SSyuVY-J_Pp8NsrSmz2HJeGA0it0vQ3uSXfKwAmvg/exec";
 
 // =============================================
 // 翻訳辞書（i18n）
@@ -2534,7 +2536,7 @@ var TRANSLATIONS = {
     mi_users_desc: "ユーザーの表示名とロール（権限）を設定します。",
     mi_customer_access_title: "得意先表示管理",
     mi_customer_access_desc: "得意先閲覧ユーザーに見せる商品範囲・価格表示ルールを設定します。",
-    mi_core_list_title: "コアリスト",
+    mi_core_list_title: "コア管理",
     mi_core_list_desc: "基幹商品に紐づくコア品番・数量・置き場を登録します。",
     mi_product_kind_stock_title: "在庫管理",
     mi_product_kind_stock_desc: "リビルト・社外新品・中古コアの在庫数と置場を確認・更新します。",
@@ -2809,7 +2811,7 @@ var TRANSLATIONS = {
     mi_logs_title: "操作ログ",
     mi_logs_desc: "商品・互換の追加・修正・削除の履歴を確認します。",
     screen_parts_title: "商品管理",
-    screen_core_list_title: "コアリスト",
+    screen_core_list_title: "コア管理",
     screen_production_ranking_title: "製造予定リスト管理",
     screen_kikan_title: "互換管理",
     screen_rakuten_title: "価格調査",
@@ -3221,7 +3223,7 @@ var TRANSLATIONS = {
     mi_users_desc: "Set user display names and access roles.",
     mi_customer_access_title: "Customer View",
     mi_customer_access_desc: "Configure product visibility and sales price display for customer viewer users.",
-    mi_core_list_title: "CORE List",
+    mi_core_list_title: "CORE Management",
     mi_core_list_desc: "Register core part numbers, quantities, and locations for master products.",
     mi_product_kind_stock_title: "Stock Management",
     mi_product_kind_stock_desc: "Review and update quantities and locations for rebuilt, aftermarket-new, and used-core stock.",
@@ -3496,7 +3498,7 @@ var TRANSLATIONS = {
     mi_logs_title: "Operation Logs",
     mi_logs_desc: "View history of part and compatibility changes.",
     screen_parts_title: "Parts Management",
-    screen_core_list_title: "CORE List",
+    screen_core_list_title: "CORE Management",
     screen_production_ranking_title: "Production Plan Management",
     screen_kikan_title: "Compatibility Management",
     screen_rakuten_title: "Price Check",
@@ -3920,7 +3922,7 @@ var TRANSLATIONS = {
     mi_users_desc: "设置用户的显示名称和访问权限角色。",
     mi_customer_access_title: "客户显示管理",
     mi_customer_access_desc: "设置客户浏览用户可见的商品范围和销售价格显示规则。",
-    mi_core_list_title: "CORE清单",
+    mi_core_list_title: "CORE管理",
     mi_core_list_desc: "登记基干商品对应的CORE编号、数量和位置。",
     mi_product_kind_stock_title: "库存管理",
     mi_product_kind_stock_desc: "确认和更新再制造、副厂新品、旧芯的库存数量和位置。",
@@ -4185,7 +4187,7 @@ var TRANSLATIONS = {
     mi_logs_title: "操作日志",
     mi_logs_desc: "查看零件和兼容性更改的历史记录。",
     screen_parts_title: "零件管理",
-    screen_core_list_title: "CORE清单",
+    screen_core_list_title: "CORE管理",
     screen_production_ranking_title: "生产计划管理",
     screen_kikan_title: "兼容性管理",
     screen_rakuten_title: "乐天价格调查",
@@ -4791,6 +4793,9 @@ function canEdit() {
   if (!userProfile || isExternalViewer()) return false;
   return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]);
 }
+function canUploadCoreImages() {
+  return canEdit() || hasAccessRole(userProfile, ["core_image_editor"]);
+}
 function canDelete() {
   return isCompanyAdminRole(userProfile);
 }
@@ -5099,6 +5104,7 @@ var USER_ACCESS_ROLE_OPTIONS = [
   ["external_viewer", "社外閲覧"]
 ];
 USER_ACCESS_ROLE_OPTIONS.splice(Math.max(0, USER_ACCESS_ROLE_OPTIONS.findIndex(function(opt){ return opt[0] === "internal_viewer"; })), 0, ["all_viewer", "全機能閲覧"]);
+USER_ACCESS_ROLE_OPTIONS.splice(Math.max(0, USER_ACCESS_ROLE_OPTIONS.findIndex(function(opt){ return opt[0] === "internal_viewer"; })), 0, ["core_image_editor", "コア画像登録"]);
 var USER_ACCESS_LEGACY_ROLE = {
   system_admin: "system_admin",
   company_admin: "admin",
@@ -5107,6 +5113,7 @@ var USER_ACCESS_LEGACY_ROLE = {
   production_editor: "editor",
   sales_viewer: "price_viewer",
   all_viewer: "price_viewer",
+  core_image_editor: "price_viewer",
   internal_viewer: "price_viewer",
   customer_viewer: "price_viewer",
   external_viewer: "price_viewer"
@@ -5142,6 +5149,7 @@ function userDepartmentCode(profile) {
   if (roleCode === "production_editor") return "production";
   if (roleCode === "sales_editor") return "sales";
   if (roleCode === "sales_viewer") return "business";
+  if (roleCode === "core_image_editor") return "production";
   if (roleCode === "all_viewer") return "viewer";
   if (roleCode === "customer_viewer") return "viewer";
   return "viewer";
@@ -8112,6 +8120,7 @@ function renderCoreListMgmt() {
     html += "<td>" + esc(row.location || "-") + "</td>";
     html += "<td><div class='core-note'>" + esc(row.note || "-") + "</div><div class='mgmt-sub'>" + esc(updatedText) + "</div></td>";
     html += "<td><div class='mgmt-actions'>";
+    html += "<button class='btn-sm-edit production-action-secondary' data-core-image='" + row.id + "'>画像登録</button>";
     html += "<button class='btn-sm-edit' data-core-edit='" + row.id + "'>" + t("btn_edit") + "</button>";
     html += "<button class='btn-sm-del' data-core-del='" + row.id + "'>" + t("btn_delete") + "</button>";
     html += "</div></td>";
@@ -8119,6 +8128,13 @@ function renderCoreListMgmt() {
   });
   html += "</table>";
   list.innerHTML = html;
+  if (!canUploadCoreImages()) {
+    list.querySelectorAll("[data-core-image]").forEach(function(btn) { btn.remove(); });
+  } else {
+    list.querySelectorAll("[data-core-image]").forEach(function(btn) {
+      btn.addEventListener("click", function() { openCoreListImageUpload(parseInt(btn.dataset.coreImage, 10)); });
+    });
+  }
   if (!canEdit()) {
     list.querySelectorAll("[data-core-edit], [data-core-del]").forEach(function(btn) { btn.remove(); });
     if (countEl) {
@@ -8137,6 +8153,84 @@ function renderCoreListMgmt() {
   if (countEl) {
     var totalQty = sumProductionCoreEntryQty(coreListMgmtRows);
     countEl.innerHTML = esc(String(coreListMgmtRows.length)) + " 件 <span class='core-count-pill'>コア合計 " + esc(String(totalQty)) + "</span>";
+  }
+}
+
+function openCoreListImageUpload(rowId) {
+  if (!canUploadCoreImages()) { alert(t("err_perm")); return; }
+  var row = coreListMgmtRows.find(function(x) { return x.id === rowId; });
+  if (!row || !row.dkd_shohin_id) {
+    alert("画像登録にはDKD商品IDが必要です。");
+    return;
+  }
+  var input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.multiple = true;
+  input.setAttribute("capture", "environment");
+  input.addEventListener("change", function(event) {
+    uploadCoreListImages(event, rowId).catch(function(error) {
+      alert("コア画像登録に失敗しました: " + ((error && error.message) || String(error)));
+    });
+  });
+  input.click();
+}
+
+function coreImageFileExtension(file) {
+  var type = String((file && file.type) || "").toLowerCase();
+  if (type.indexOf("png") >= 0) return "png";
+  if (type.indexOf("webp") >= 0) return "webp";
+  var name = String((file && file.name) || "");
+  var match = name.match(/\.([a-z0-9]{2,5})$/i);
+  return match ? match[1].toLowerCase() : "jpg";
+}
+
+async function uploadCoreListImages(event, rowId) {
+  if (!canUploadCoreImages()) { alert(t("err_perm")); return; }
+  var files = Array.from(event.target.files || []);
+  if (!files.length) return;
+  var row = coreListMgmtRows.find(function(x) { return x.id === rowId; });
+  if (!row || !row.dkd_shohin_id) {
+    alert("画像登録にはDKD商品IDが必要です。");
+    return;
+  }
+
+  var dkdId = parseInt(row.dkd_shohin_id, 10);
+  if (isNaN(dkdId)) {
+    alert("DKD商品IDが不正です。");
+    return;
+  }
+
+  var uploaded = 0;
+  for (var i = 0; i < files.length; i++) {
+    var file = files[i];
+    if (!file || String(file.type || "").indexOf("image/") !== 0) {
+      alert("画像ファイルのみ登録できます。");
+      continue;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      alert("10MB以下の画像を選択してください: " + (file.name || ""));
+      continue;
+    }
+    var ext = coreImageFileExtension(file);
+    var path = "dkd_" + dkdId + "/used_core/core_list_" + rowId + "_" + Date.now() + "_" + Math.random().toString(36).slice(2) + "." + ext;
+    var up = await sb.storage.from("product-images").upload(path, file, { upsert: false, contentType: file.type || undefined });
+    if (up.error) { alert(t("err_upload") + ": " + up.error.message); continue; }
+    var urlR = sb.storage.from("product-images").getPublicUrl(path);
+    var dbR = await sb.from("core_product_images").insert({
+      dkd_shohin_id: dkdId,
+      product_kind: "used_core",
+      image_url: urlR.data.publicUrl,
+      storage_path: path,
+      caption: row.core_part_number ? ("CORE " + row.core_part_number) : "CORE"
+    });
+    if (dbR.error) { alert(t("err_db") + ": " + dbR.error.message); continue; }
+    uploaded += 1;
+  }
+  event.target.value = "";
+  if (uploaded > 0) {
+    await writeLog("insert", "core_product_images", dkdId, "core list image upload", null, { count: uploaded, core_list_entry_id: rowId });
+    alert(uploaded + "枚のコア画像を登録しました。");
   }
 }
 
@@ -16638,6 +16732,7 @@ document.getElementById("btn-sales-rank-save").addEventListener("click", saveSal
 document.getElementById("pf-category").addEventListener("change", applySpecFormCategory);
 document.getElementById("btn-add-core-list").addEventListener("click", function(){ openCoreListForm("add"); });
 document.getElementById("btn-create-core-list-from-ranking").addEventListener("click", createCoreListFromRanking);
+document.getElementById("btn-open-core-camera-test").addEventListener("click", function(){ window.open(CORE_AI_CAMERA_TEST_URL, "_blank", "noopener"); });
 document.getElementById("btn-core-list-search").addEventListener("click", loadCoreListMgmt);
 document.getElementById("core-list-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadCoreListMgmt(); });
 document.getElementById("core-list-load-more").addEventListener("click", function(){ loadCoreListMgmt({ append: true }); });
