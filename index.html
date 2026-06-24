@@ -2577,6 +2577,8 @@ var TRANSLATIONS = {
     production_select_hint: "製造する品番を選択してください",
     production_status_ready: "構成部品あり",
     production_status_need: "構成部品なし",
+    production_parts_registered: "部品登録あり",
+    production_parts_unregistered: "部品未登録",
     production_open_sales: "品番検索で開く",
     production_product_section: "販売商品情報",
     production_core_section: "コア",
@@ -3262,6 +3264,8 @@ var TRANSLATIONS = {
     production_select_hint: "Select a product to manufacture",
     production_status_ready: "Has components",
     production_status_need: "Needs components",
+    production_parts_registered: "Parts registered",
+    production_parts_unregistered: "No parts registered",
     production_open_sales: "Open in sales search",
     production_product_section: "Sales Product Info",
     production_core_section: "Core",
@@ -3954,6 +3958,8 @@ var TRANSLATIONS = {
     production_select_hint: "请选择要生产的品番",
     production_status_ready: "有构成零件",
     production_status_need: "无构成零件",
+    production_parts_registered: "已登记零件",
+    production_parts_unregistered: "未登记零件",
     production_open_sales: "在销售搜索中打开",
     production_product_section: "销售商品信息",
     production_core_section: "CORE",
@@ -4602,7 +4608,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.285";
+var APP_VERSION       = "v1.1.286";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -5762,7 +5768,7 @@ function productionStatusClass(row) {
 
 function productionStatusLabel(row) {
   if (!row) return "-";
-  return (row.component_count || 0) > 0 ? t("production_status_ready") : t("production_status_need");
+  return (row.component_count || 0) > 0 ? "\uD83E\uDDE9 " + t("production_parts_registered") : t("production_parts_unregistered");
 }
 
 function productionCategoryLabel(row) {
@@ -5842,7 +5848,7 @@ function productionRowFromInstruction(inst, product) {
     manufacturer_part_number: product.manufacturer_part_number || (inst && inst.manufacturer_part_number) || "",
     manufacturer: product.manufacturer || (inst && inst.manufacturer) || "",
     daiko_part_number: product.daiko_part_number || (inst && inst.daiko_part_number) || "",
-    component_count: product.component_count != null ? product.component_count : (inst && inst.component_count != null ? inst.component_count : 0),
+    component_count: product.component_count != null ? product.component_count : 0,
     component_summary: product.component_summary || (inst && inst.component_summary) || "",
     core_stock_qty: product.core_stock_qty != null ? product.core_stock_qty : (inst && inst.core_stock_qty != null ? inst.core_stock_qty : 0),
     core_part_number: product.core_part_number || (inst && inst.core_part_number) || product.manufacturer_part_number || (inst && inst.manufacturer_part_number) || "",
@@ -6026,7 +6032,7 @@ async function loadProductionProducts(options) {
 async function loadProductionAuxiliaryData(products) {
   var auxSeq = ++productionAuxRequestSeq;
   var fast = await Promise.all([
-    fetchComponentUsageCountMap(products),
+    fetchProductionPartRegistrationCountMap(products),
     fetchCoreStockQtyMap(products),
     fetchProductVariantSummaryMap(products)
   ]);
@@ -6132,6 +6138,32 @@ function productionCoreStockQty(row) {
 
 function productionProductKindStockQty(row, kind) {
   return kikanStockQtyText(row, kind);
+}
+
+async function fetchProductionPartRegistrationCountMap(products) {
+  var map = {};
+  var ids = (products || []).map(function(p) { return productDkdId(p); }).filter(Boolean);
+  var uniqueIds = Array.from(new Set(ids.map(function(id) { return parseInt(id, 10); }))).filter(function(id) {
+    return !isNaN(id);
+  });
+  if (!uniqueIds.length) return map;
+  for (var i = 0; i < uniqueIds.length; i += 200) {
+    var chunk = uniqueIds.slice(i, i + 200);
+    var r = await sb.from("assembly_component_usages")
+      .select("dkd_shohin_id")
+      .in("dkd_shohin_id", chunk)
+      .eq("product_kind", "rebuilt")
+      .eq("is_catalog_evidence", false);
+    if (r.error) {
+      console.warn("production part registration count lookup failed", r.error);
+      return map;
+    }
+    (r.data || []).forEach(function(row) {
+      var key = String(row.dkd_shohin_id || "");
+      if (key) map[key] = (map[key] || 0) + 1;
+    });
+  }
+  return map;
 }
 
 function sumProductionCoreEntryQty(rows) {
