@@ -1169,7 +1169,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.297</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.298</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1198,7 +1198,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.297</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.298</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1228,7 +1228,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.297</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.298</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -4727,7 +4727,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.297";
+var APP_VERSION       = "v1.1.298";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -13883,11 +13883,63 @@ function componentPartRowMatchScore(row, mfrKey, genuineKey) {
   var rowMfrKey = normalizedPartKey(row.normalized_manufacturer_part_number || row.manufacturer_part_number);
   var rowGenuineKey = normalizedPartKey(row.normalized_genuine_part_number || row.genuine_part_number);
   var score = 0;
-  if (mfrKey && rowMfrKey === mfrKey) score += 8;
-  if (genuineKey && rowGenuineKey === genuineKey) score += 8;
-  if (mfrKey && rowGenuineKey === mfrKey) score += 4;
-  if (genuineKey && rowMfrKey === genuineKey) score += 4;
+  if (mfrKey && rowMfrKey === mfrKey) score += 20;
+  if (genuineKey && rowGenuineKey === genuineKey) score += 20;
+  if (mfrKey && rowGenuineKey === mfrKey) score += 14;
+  if (genuineKey && rowMfrKey === genuineKey) score += 14;
+  if (mfrKey && genuineKey && rowMfrKey === mfrKey && rowGenuineKey === genuineKey) score += 40;
+  if (mfrKey && genuineKey && rowMfrKey === genuineKey && rowGenuineKey === mfrKey) score += 24;
+  if (row.manufacturer_part_number) score += 3;
+  if (row.genuine_part_number) score += 2;
+  if (row.manufacturer) score += 1;
   return score;
+}
+
+function componentPartLookupCandidateFromProduct(row, mfrKey, genuineKey) {
+  if (!row) return null;
+  var g1 = normalizedPartKey(row.normalized_genuine_part_number || row.genuine_part_number);
+  var g2 = normalizedPartKey(row.normalized_genuine_part_number_2 || row.genuine_part_number_2);
+  var useGenuine2 = !!(g2 && ((mfrKey && g2 === mfrKey) || (genuineKey && g2 === genuineKey)));
+  return {
+    manufacturer: row.manufacturer || "",
+    manufacturer_part_number: row.manufacturer_part_number || "",
+    genuine_part_number: useGenuine2 ? (row.genuine_part_number_2 || row.genuine_part_number || "") : (row.genuine_part_number || row.genuine_part_number_2 || ""),
+    part_name: "",
+    normalized_manufacturer_part_number: row.normalized_manufacturer_part_number || normalizedPartKey(row.manufacturer_part_number),
+    normalized_genuine_part_number: useGenuine2 ? g2 : (g1 || g2)
+  };
+}
+
+async function lookupCoreProductPartNumberPair(mfrKey, genuineKey) {
+  var keys = [];
+  if (mfrKey) keys.push(mfrKey);
+  if (genuineKey && keys.indexOf(genuineKey) < 0) keys.push(genuineKey);
+  if (!keys.length) return null;
+  var filters = [];
+  keys.forEach(function(key) {
+    filters.push("normalized_manufacturer_part_number.eq." + key);
+    filters.push("normalized_genuine_part_number.eq." + key);
+    filters.push("normalized_genuine_part_number_2.eq." + key);
+  });
+  var r = await sb.from("core_products")
+    .select("manufacturer,manufacturer_part_number,genuine_part_number,genuine_part_number_2,category,normalized_manufacturer_part_number,normalized_genuine_part_number,normalized_genuine_part_number_2")
+    .or(filters.join(","))
+    .limit(30);
+  if (r.error) {
+    console.warn("core product part number lookup failed", r.error);
+    return null;
+  }
+  var best = null;
+  var bestScore = 0;
+  (r.data || []).forEach(function(row) {
+    var candidate = componentPartLookupCandidateFromProduct(row, mfrKey, genuineKey);
+    var score = componentPartRowMatchScore(candidate, mfrKey, genuineKey);
+    if (score > bestScore) {
+      best = candidate;
+      bestScore = score;
+    }
+  });
+  return best;
 }
 
 async function lookupComponentPartNumberPair(mfrValue, genuineValue) {
@@ -13908,17 +13960,32 @@ async function lookupComponentPartNumberPair(mfrValue, genuineValue) {
     .limit(30);
   if (r.error) {
     console.warn("component part number lookup failed", r.error);
-    return null;
+    return lookupCoreProductPartNumberPair(mfrKey, genuineKey);
   }
   var best = null;
   var bestScore = 0;
   (r.data || []).forEach(function(row) {
     var score = componentPartRowMatchScore(row, mfrKey, genuineKey);
-    if (score > bestScore) {
+    var bestHasMfrPart = best && best.manufacturer_part_number;
+    var bestHasGenuinePart = best && best.genuine_part_number;
+    if (
+      score > bestScore ||
+      (score === bestScore && row.manufacturer_part_number && !bestHasMfrPart) ||
+      (score === bestScore && row.genuine_part_number && !bestHasGenuinePart)
+    ) {
       best = row;
       bestScore = score;
     }
   });
+  var bestMfrKey = best ? normalizedPartKey(best.normalized_manufacturer_part_number || best.manufacturer_part_number) : "";
+  var bestGenuineKey = best ? normalizedPartKey(best.normalized_genuine_part_number || best.genuine_part_number) : "";
+  var shouldUseProductFallback = !best || !best.manufacturer_part_number || (mfrKey && bestMfrKey === mfrKey && bestGenuineKey === mfrKey);
+  if (shouldUseProductFallback) {
+    var productBest = await lookupCoreProductPartNumberPair(mfrKey, genuineKey);
+    if (productBest && (!best || componentPartRowMatchScore(productBest, mfrKey, genuineKey) >= bestScore)) {
+      best = productBest;
+    }
+  }
   return best;
 }
 
@@ -14055,15 +14122,25 @@ function isCatalogComponentRow(row) {
   return sourceCode.indexOf("catalog") === 0 || sourceTable.indexOf("catalog") >= 0;
 }
 
-async function startComponentEdit(usageId) {
+function startComponentEdit(usageId) {
   var row = assemblyComponentRows.find(function(r) { return String(r.id) === String(usageId); });
   if (isCatalogComponentRow(row)) {
     alert(t("component_catalog_locked_edit"));
     return;
   }
   editingComponentUsageId = String(usageId);
-  await loadComponentCatalogNameCandidatesForCurrent();
+  componentCatalogNameCandidates = [];
   renderAssemblyComponentRows();
+  refreshComponentEditNameCandidates(String(usageId));
+}
+
+async function refreshComponentEditNameCandidates(usageId) {
+  await loadComponentCatalogNameCandidatesForCurrent();
+  if (String(editingComponentUsageId || "") !== String(usageId || "")) return;
+  var tr = document.querySelector("[data-component-edit-row='" + String(usageId) + "']");
+  var payload = tr ? componentEditPayloadFromRow(tr) : {};
+  var list = document.getElementById("component-edit-name-list");
+  if (list) list.innerHTML = componentNameOptionsHtml(payload.component_part_name || "");
 }
 
 function cancelComponentEdit() {
