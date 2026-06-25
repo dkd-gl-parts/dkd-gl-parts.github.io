@@ -1166,7 +1166,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.293</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.294</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1195,7 +1195,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">品番検索</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.293</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.294</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1225,7 +1225,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.293</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.294</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -4724,7 +4724,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.293";
+var APP_VERSION       = "v1.1.294";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -14129,29 +14129,31 @@ function componentAlternativeNameCandidates(baseRow, selectedName) {
 
 async function loadComponentCatalogNameCandidatesForCurrent() {
   var mfr = String((currentProduct && currentProduct.manufacturer) || "").trim().toUpperCase();
+  var category = String((currentProduct && (currentProduct.category_code || currentProduct.category)) || "").trim();
+  var cacheKey = mfr + "|" + (category || "-");
   componentCatalogNameCandidates = [];
   if (!mfr) return;
-  if (componentCatalogNameCandidateCache[mfr]) {
-    componentCatalogNameCandidates = componentCatalogNameCandidateCache[mfr];
+  if (componentCatalogNameCandidateCache[cacheKey]) {
+    componentCatalogNameCandidates = componentCatalogNameCandidateCache[cacheKey];
     return;
   }
-  var r = await sb.from("assembly_component_usage_details")
-    .select("component_name, component_part_name")
-    .eq("is_catalog_evidence", true)
-    .eq("assy_manufacturer", mfr)
-    .limit(3000);
+  var r = await sb.rpc("get_catalog_component_name_candidates", {
+    target_manufacturer: mfr,
+    target_category_code: category || null,
+    max_rows: 500
+  });
   if (r.error) {
     console.warn("component catalog name candidates failed", r.error);
-    componentCatalogNameCandidateCache[mfr] = [];
+    componentCatalogNameCandidateCache[cacheKey] = [];
     return;
   }
   var list = [];
   var seen = {};
   (r.data || []).forEach(function(row) {
-    addComponentNameCandidate(list, seen, row.component_name || row.component_part_name);
+    addComponentNameCandidate(list, seen, row.component_name);
   });
   list.sort(function(a, b) { return String(a || "").localeCompare(String(b || ""), "ja", { numeric: true }); });
-  componentCatalogNameCandidateCache[mfr] = list;
+  componentCatalogNameCandidateCache[cacheKey] = list;
   componentCatalogNameCandidates = list;
 }
 
