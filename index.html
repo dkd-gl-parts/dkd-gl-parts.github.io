@@ -894,6 +894,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-status.need { background: #fff4e5; color: #aa6512; }
 .production-number { font-size: 13px; font-weight: 700; color: #111a33; word-break: break-all; }
 .production-meta { font-size: 11px; color: #7c8492; line-height: 1.4; }
+.production-label-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.production-label-row .product-kind-list { margin-top: 0; }
+.production-badges { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; flex: 0 0 auto; }
 .production-right { min-width: 0; overflow-y: auto; background: #fff; }
 .production-detail { max-width: 980px; padding: 18px 20px 28px; }
 .production-detail-empty { min-height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #a0a7b2; gap: 8px; }
@@ -1166,7 +1169,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.296</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.297</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1193,9 +1196,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 <div id="screen-menu" class="screen">
   <div class="page-header">
     <div class="page-header-left">
-      <span class="logo-text" data-i18n="mi_search_title">品番検索</span>
+      <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.296</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.297</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1225,7 +1228,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.296</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.297</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1366,7 +1369,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 <div id="screen-components" class="screen">
   <div class="page-header">
     <div class="page-header-left">
-      <button class="back-btn" id="btn-back-components" data-i18n="btn_back_search">← 品番検索</button>
+      <button class="back-btn" id="btn-back-components" data-i18n="btn_back_search">← 販売管理</button>
       <span class="logo-text" data-i18n="component_section">構成部品</span>
     </div>
     <div class="page-header-right">
@@ -1508,7 +1511,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 <div id="screen-component-parallel" class="screen">
   <div class="page-header">
     <div class="page-header-left">
-      <button class="back-btn" id="btn-back-component-parallel" data-i18n="btn_back_search">← 品番検索</button>
+      <button class="back-btn" id="btn-back-component-parallel" data-i18n="btn_back_search">← 販売管理</button>
       <span class="logo-text" data-i18n="component_parallel_section">並列検索</span>
     </div>
     <div class="page-header-right">
@@ -2603,7 +2606,7 @@ var TRANSLATIONS = {
     err_empty: "メールアドレスとパスワードを入力してください",
     err_login: "メールアドレスまたはパスワードが正しくありません",
     btn_back: "← メニュー",
-    btn_back_search: "← 品番検索",
+    btn_back_search: "← 販売管理",
     btn_close: "閉じる",
     btn_logout: "ログアウト",
     created_at: "日時",
@@ -2615,8 +2618,8 @@ var TRANSLATIONS = {
     menu_admin_title: "管理メニュー",
     menu_admin_desc: "権限のある管理機能をここにまとめて表示します",
     greeting: "ようこそ、{name} さん",
-    mi_search_title: "品番検索",
-    mi_search_desc: "基幹商品マスタを品番で検索し、画像・構成部品・製造予定を確認します。",
+    mi_search_title: "販売管理",
+    mi_search_desc: "販売商品の品番を検索し、画像・構成部品・販売価格・製造予定を確認します。",
     mi_production_title: "製造管理",
     mi_production_desc: "製造予定リスト・互換品・在庫を確認します。",
     mi_users_title: "ユーザー管理",
@@ -2668,7 +2671,7 @@ var TRANSLATIONS = {
     production_status_need: "構成部品なし",
     production_parts_registered: "部品登録あり",
     production_parts_unregistered: "部品未登録",
-    production_open_sales: "品番検索で開く",
+    production_open_sales: "販売管理で開く",
     production_product_section: "販売商品情報",
     production_core_section: "コア",
     production_vehicle_section: "車両情報",
@@ -3299,7 +3302,7 @@ var TRANSLATIONS = {
     err_empty: "Please enter your email and password",
     err_login: "Incorrect email address or password",
     btn_back: "← Menu",
-    btn_back_search: "← Parts Search",
+    btn_back_search: "← Sales Management",
     btn_close: "Close",
     btn_logout: "Logout",
     created_at: "Date/Time",
@@ -3311,8 +3314,8 @@ var TRANSLATIONS = {
     menu_admin_title: "Admin Menu",
     menu_admin_desc: "Available administration features are grouped here",
     greeting: "Welcome, {name}",
-    mi_search_title: "Part Number Search",
-    mi_search_desc: "Search master products by part number and review images, components, and production instructions.",
+    mi_search_title: "Sales Management",
+    mi_search_desc: "Search sales products by part number and review images, components, sales prices, and production instructions.",
     mi_production_title: "Production Management",
     mi_production_desc: "Review production plans, compatible parts, and stock.",
     mi_users_title: "User Management",
@@ -3364,7 +3367,7 @@ var TRANSLATIONS = {
     production_status_need: "Needs components",
     production_parts_registered: "Parts registered",
     production_parts_unregistered: "No parts registered",
-    production_open_sales: "Open in sales search",
+    production_open_sales: "Open in Sales Management",
     production_product_section: "Sales Product Info",
     production_core_section: "Core",
     production_vehicle_section: "Vehicle info",
@@ -4013,14 +4016,14 @@ var TRANSLATIONS = {
     err_empty: "请输入邮箱地址和密码",
     err_login: "邮箱地址或密码不正确",
     btn_back: "← 菜单",
-    btn_back_search: "← 零件搜索",
+    btn_back_search: "← 销售管理",
     btn_close: "关闭",
     btn_logout: "退出",
     created_at: "日期时间",
     menu_welcome_sub: "请选择要使用的功能",
     greeting: "欢迎，{name}",
-    mi_search_title: "零件编号搜索",
-    mi_search_desc: "按零件编号搜索基干商品主档，并确认图片、构成零件和生产指示。",
+    mi_search_title: "销售管理",
+    mi_search_desc: "按零件编号搜索销售商品，并确认图片、构成零件、销售价格和生产指示。",
     mi_production_title: "生产管理",
     mi_production_desc: "查看生产计划、兼容零件和库存。",
     mi_users_title: "用户管理",
@@ -4067,7 +4070,7 @@ var TRANSLATIONS = {
     production_status_need: "无构成零件",
     production_parts_registered: "已登记零件",
     production_parts_unregistered: "未登记零件",
-    production_open_sales: "在销售搜索中打开",
+    production_open_sales: "在销售管理中打开",
     production_product_section: "销售商品信息",
     production_core_section: "CORE",
     production_vehicle_section: "车辆信息",
@@ -4724,7 +4727,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.296";
+var APP_VERSION       = "v1.1.297";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -6135,7 +6138,7 @@ async function loadProductionProducts(options) {
   if (r.error) {
     productionRows = [];
     productionLoaded = false;
-    if (countEl) countEl.textContent = "基幹商品マスタを取得できません: " + r.error.message;
+    if (countEl) countEl.textContent = "商品情報を取得できません: " + r.error.message;
     renderProductionDetail(null);
     return;
   }
@@ -6143,6 +6146,7 @@ async function loadProductionProducts(options) {
   componentUsageCountMap = {};
   coreStockQtyMap = {};
   productVariantSummaryMap = {};
+  applyCachedSearchAuxiliaryMaps(productionRows);
   productionRows = productionRows.map(enrichProductionProduct);
   sortProductionRows();
   productionLoaded = true;
@@ -6164,12 +6168,14 @@ async function loadProductionAuxiliaryData(products) {
   var fast = await Promise.all([
     fetchProductionPartRegistrationCountMap(products),
     fetchCoreStockQtyMap(products),
-    fetchProductVariantSummaryMap(products)
+    fetchProductVariantSummaryMap(products),
+    fetchProductSearchCardFlags(products)
   ]);
   if (auxSeq !== productionAuxRequestSeq) return;
   componentUsageCountMap = fast[0] || {};
   coreStockQtyMap = fast[1] || {};
   productVariantSummaryMap = fast[2] || {};
+  applyProductSearchCardFlags(fast[3] || [], products);
   Object.keys(productVariantSummaryMap).forEach(function(key) {
     productVariantSummaryCache[key] = productVariantSummaryMap[key];
   });
@@ -6232,11 +6238,11 @@ function renderProductionList() {
   productionFilteredRows = productionRows.filter(function(row) {
     return productionMatchesFilter(row) && productionMatchesQuery(row, q);
   });
-  if (countEl) countEl.textContent = productionFilteredRows.length + " 件表示 / 基幹商品マスタ " + productionRows.length + " 件";
+  if (countEl) countEl.textContent = productionFilteredRows.length + " 件表示 / 商品 " + productionRows.length + " 件";
   if (moreWrap) moreWrap.style.display = (productionRows.length >= productionSearchLimit && productionSearchLimit < SEARCH_FETCH_LIMIT) ? "" : "none";
   if (!productionRows.length) {
     if (moreWrap) moreWrap.style.display = "none";
-    list.innerHTML = "<div class='loading'>基幹商品マスタを検索してください。</div>";
+    list.innerHTML = "<div class='loading'>商品を検索してください。</div>";
     return;
   }
   if (!productionFilteredRows.length) {
@@ -6249,6 +6255,14 @@ function renderProductionList() {
     var cls = productionStatusClass(row);
     var inst = productionInstructionFor(row);
     var title = row.genuine_part_number || row.manufacturer_part_number || "-";
+    var kindSummary = productKindSummaryForProduct(row);
+    var hasCatalogSpec = productKindSummaryHasKind(kindSummary, "catalog_spec");
+    var slNums = slPartLabelsForProduct(row);
+    var hasSL = productHasSlPart(row, slNums);
+    var hasKikan = hasProductKikanCompatible(row);
+    var componentCount = canSeeComponentInfo() ? productComponentCount(row) : 0;
+    var imageCount = getProductImageCount(row);
+    var rankHtml = inst ? "<div class='production-rank'>#" + esc(inst.priority_rank || "-") + "</div>" : "<div></div>";
     var meta = [
       row.manufacturer_part_number || "-",
       row.manufacturer || "-",
@@ -6257,8 +6271,18 @@ function renderProductionList() {
       productKindLabel("aftermarket_new") + " " + productionProductKindStockQty(row, "aftermarket_new")
     ].join(" / ");
     return "<div class='production-card" + selected + "' data-production-index='" + i + "'>" +
-      "<div class='production-card-top'><div class='production-rank'>" + (inst ? "#" + esc(inst.priority_rank || "-") : "基幹") + "</div><div class='production-status " + cls + "'>" + esc(productionStatusLabel(row)) + "</div></div>" +
+      "<div class='production-card-top'>" + rankHtml + "<div class='production-status " + cls + "'>" + esc(productionStatusLabel(row)) + "</div></div>" +
       "<div class='production-number'>" + esc(title) + "</div>" +
+      "<div class='production-label-row'>" +
+        renderProductKindPills(kindSummary, { compact: true }) +
+        "<div class='production-badges'>" +
+          (hasCatalogSpec ? "<span class='badge-catalog'>" + esc(t("product_kind_catalog_spec")) + "</span>" : "") +
+          (hasSL ? "<span class='badge-sl'>SL</span>" : "") +
+          (hasKikan ? "<span class='badge-kikan' title='" + esc(t("kikan_section")) + "'>&#x1F504;</span>" : "") +
+          (componentCount > 0 ? "<span class='badge-component' title='" + esc(t("component_section")) + "'><span class='component-icon'>&#x1F9E9;</span>" + esc(String(componentCount)) + "</span>" : "") +
+          (imageCount > 0 ? "<span class='badge-img'>&#x1F4F7;" + esc(String(imageCount)) + "</span>" : "") +
+        "</div>" +
+      "</div>" +
       "<div class='production-meta'>" + esc(meta) + "</div>" +
     "</div>";
   }).join("");
@@ -6661,7 +6685,7 @@ async function renderProductionDetail(row) {
     html += productionKv("元データ", [inst.source_year, inst.source_sheet].filter(Boolean).join(" / "));
     html += productionKv("統合元件数", inst.merged_source_count || 1);
   } else {
-    html += "<div class='production-help'>この商品は現在の製造予定リストにはありません。基幹商品マスタ上の商品として操作できます。</div>";
+    html += "<div class='production-help'>この商品は現在の製造予定リストにはありません。商品マスタ上の商品として操作できます。</div>";
   }
   html += "</section>";
   html += "<section class='production-section'><h3>" + esc(t("production_core_section")) + "</h3>";
