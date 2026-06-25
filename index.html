@@ -199,8 +199,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-add-card { max-width: 920px; }
 .component-add-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .component-add-field label { display: block; font-size: 11px; color: #667085; margin-bottom: 4px; }
-.component-add-field input { width: 100%; border: 1px solid #d7dce5; border-radius: 6px; padding: 7px 8px; font-size: 12px; outline: none; background: #fff; }
-.component-add-field input:focus { border-color: #4f8ef7; }
+.component-add-field input,
+.component-add-field textarea { width: 100%; border: 1px solid #d7dce5; border-radius: 6px; padding: 7px 8px; font-size: 12px; outline: none; background: #fff; }
+.component-add-field textarea { min-height: 34px; resize: vertical; }
+.component-add-field input:focus,
+.component-add-field textarea:focus { border-color: #4f8ef7; }
 .component-add-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 @media(max-width:900px){ .component-add-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media(max-width:560px){ .component-add-grid, .component-target-controls, .component-target-summary { grid-template-columns: 1fr; } .component-target-head { align-items: flex-start; flex-direction: column; } }
@@ -1161,7 +1164,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.291</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.292</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1190,7 +1193,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">品番検索</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.291</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.292</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1220,7 +1223,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.291</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.292</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1420,6 +1423,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         <input id="component-add-unit-price" type="number" min="0" step="1">
       </div>
       <div class="component-add-field">
+        <label data-i18n="component_replacement_rate">交換率</label>
+        <input id="component-add-replacement-rate" type="number" min="0" step="1" inputmode="numeric" pattern="[0-9]*">
+      </div>
+      <div class="component-add-field">
         <label data-i18n="component_interchange">互</label>
         <input id="component-add-interchange" type="text">
       </div>
@@ -1430,6 +1437,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <div class="component-add-field">
         <label data-i18n="component_end_period">終期</label>
         <input id="component-add-end" type="text">
+      </div>
+      <div class="component-add-field">
+        <label data-i18n="component_manufacturing_memo">製造メモ</label>
+        <textarea id="component-add-manufacturing-memo" rows="2"></textarea>
       </div>
     </div>
     <div class="form-footer">
@@ -3212,6 +3223,9 @@ var TRANSLATIONS = {
     component_empty_for_kind: "{kind} の構成部品情報なし",
     component_add: "追加",
     component_unit_price: "単価",
+    component_replacement_rate: "交換率",
+    component_replacement_rate_digits: "交換率は数字のみで入力してください。",
+    component_manufacturing_memo: "製造メモ",
     component_actions: "操作",
     component_catalog: "カタログ",
     component_edit: "修正",
@@ -3904,6 +3918,9 @@ var TRANSLATIONS = {
     component_empty_for_kind: "No {kind} component data",
     component_add: "Add",
     component_unit_price: "Unit Price",
+    component_replacement_rate: "Replacement Rate",
+    component_replacement_rate_digits: "Replacement rate must contain digits only.",
+    component_manufacturing_memo: "Manufacturing Memo",
     component_actions: "Action",
     component_catalog: "Catalog",
     component_edit: "Edit",
@@ -4589,6 +4606,9 @@ var TRANSLATIONS = {
     component_empty_for_kind: "{kind}没有构成部件信息",
     component_add: "添加",
     component_unit_price: "单价",
+    component_replacement_rate: "更换率",
+    component_replacement_rate_digits: "更换率只能输入数字。",
+    component_manufacturing_memo: "制造备注",
     component_actions: "操作",
     component_catalog: "目录",
     component_edit: "修改",
@@ -4690,7 +4710,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.291";
+var APP_VERSION       = "v1.1.292";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -4708,6 +4728,8 @@ var componentParallelReturnScreen = "search";
 var componentAlternativeRows = [];
 var componentAlternativeMap = {};
 var componentAlternativeBaseRow = null;
+var componentCatalogNameCandidates = [];
+var componentCatalogNameCandidateCache = {};
 var currentSelectedComponentVariantId = "";
 var productionInstructionRows = [];
 var productionInstructionMap = {};
@@ -13783,7 +13805,7 @@ function closeComponentAddForm() {
   if (overlay) overlay.classList.remove("show");
 }
 
-function openComponentAddForm() {
+async function openComponentAddForm() {
   if (!currentProduct) return;
   if (!canEditInternalComponents()) { alert(t("err_perm")); return; }
   if (selectedProductKind() === "catalog_spec") { alert(t("component_catalog_locked_save")); return; }
@@ -13803,6 +13825,8 @@ function openComponentAddForm() {
   if (overlay) overlay.classList.add("show");
   var name = document.getElementById("component-add-name");
   if (name) name.focus();
+  await loadComponentCatalogNameCandidatesForCurrent();
+  renderComponentAddNameOptions(componentAddValue("component-add-name"));
 }
 
 function componentAddValue(id) {
@@ -13811,12 +13835,20 @@ function componentAddValue(id) {
 }
 
 function clearComponentAddForm() {
-  ["component-add-mfr","component-add-mfr-pn","component-add-genuine-pn","component-add-name","component-add-position","component-add-unit-price","component-add-interchange","component-add-start","component-add-end"].forEach(function(id) {
+  ["component-add-mfr","component-add-mfr-pn","component-add-genuine-pn","component-add-name","component-add-position","component-add-unit-price","component-add-replacement-rate","component-add-interchange","component-add-start","component-add-end","component-add-manufacturing-memo"].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.value = "";
   });
   var qty = document.getElementById("component-add-qty");
   if (qty) qty.value = "1";
+}
+
+function nullableDigitsFromInput(id) {
+  var el = document.getElementById(id);
+  var v = el ? el.value.trim() : "";
+  if (!v) return null;
+  if (!/^\d+$/.test(v)) return NaN;
+  return parseInt(v, 10);
 }
 
 async function addAssemblyComponentForCurrent() {
@@ -13846,6 +13878,12 @@ async function addAssemblyComponentForCurrent() {
     else alert(t("component_mfr_pn_required"));
     return;
   }
+  var replacementRate = nullableDigitsFromInput("component-add-replacement-rate");
+  if (isNaN(replacementRate)) {
+    if (err) err.textContent = t("component_replacement_rate_digits");
+    else alert(t("component_replacement_rate_digits"));
+    return;
+  }
   var payload = {
     target_dkd_shohin_id: dkdId || null,
     target_manufacturer: targetManufacturer,
@@ -13860,6 +13898,8 @@ async function addAssemblyComponentForCurrent() {
     component_position: componentAddValue("component-add-position") || null,
     component_quantity: componentAddValue("component-add-qty") || "1",
     component_unit_price_jpy: nullableIntFromInput("component-add-unit-price"),
+    component_replacement_rate: replacementRate,
+    component_manufacturing_memo: componentAddValue("component-add-manufacturing-memo") || null,
     component_interchange_code: componentAddValue("component-add-interchange") || null,
     component_effective_start: componentAddValue("component-add-start") || null,
     component_effective_end: componentAddValue("component-add-end") || null
@@ -13945,6 +13985,11 @@ async function saveComponentEdit(usageId) {
     alert(t("component_mfr_pn_required"));
     return;
   }
+  var editReplacementRate = String(payload.replacement_rate || "").trim();
+  if (editReplacementRate && !/^\d+$/.test(editReplacementRate)) {
+    alert(t("component_replacement_rate_digits"));
+    return;
+  }
   var btn = tr.querySelector("[data-component-save]");
   if (btn) { btn.disabled = true; btn.textContent = t("component_save_loading"); }
 
@@ -13961,6 +14006,8 @@ async function saveComponentEdit(usageId) {
     component_name: payload.component_part_name || null,
     quantity: payload.quantity || "1",
     unit_price_jpy: nullableIntFromValue(payload.unit_price_jpy),
+    replacement_rate: editReplacementRate ? parseInt(editReplacementRate, 10) : null,
+    manufacturing_memo: payload.manufacturing_memo || null,
     interchange_code: payload.component_interchange_code || null,
     effective_start: payload.effective_start || null,
     effective_end: payload.effective_end || null,
@@ -14051,6 +14098,34 @@ function componentAlternativeNameCandidates(baseRow, selectedName) {
   return list;
 }
 
+async function loadComponentCatalogNameCandidatesForCurrent() {
+  var mfr = String((currentProduct && currentProduct.manufacturer) || "").trim().toUpperCase();
+  componentCatalogNameCandidates = [];
+  if (!mfr) return;
+  if (componentCatalogNameCandidateCache[mfr]) {
+    componentCatalogNameCandidates = componentCatalogNameCandidateCache[mfr];
+    return;
+  }
+  var r = await sb.from("assembly_component_usage_details")
+    .select("component_name, component_part_name")
+    .eq("is_catalog_evidence", true)
+    .eq("assy_manufacturer", mfr)
+    .limit(3000);
+  if (r.error) {
+    console.warn("component catalog name candidates failed", r.error);
+    componentCatalogNameCandidateCache[mfr] = [];
+    return;
+  }
+  var list = [];
+  var seen = {};
+  (r.data || []).forEach(function(row) {
+    addComponentNameCandidate(list, seen, row.component_name || row.component_part_name);
+  });
+  list.sort(function(a, b) { return String(a || "").localeCompare(String(b || ""), "ja", { numeric: true }); });
+  componentCatalogNameCandidateCache[mfr] = list;
+  componentCatalogNameCandidates = list;
+}
+
 function componentAddNameCandidates(selectedName) {
   var list = [];
   var seen = {};
@@ -14061,6 +14136,11 @@ function componentAddNameCandidates(selectedName) {
     var part = alt.internal_component_parts || {};
     addComponentNameCandidate(list, seen, part.part_name);
   });
+  (componentCatalogNameCandidates || []).forEach(function(name) {
+    addComponentNameCandidate(list, seen, name);
+  });
+  addComponentNameCandidate(list, seen, selectedName);
+  return list;
   [
     "コンプレッサAY",
     "コンプレッサAY,W/クラッチ",
@@ -14384,9 +14464,9 @@ function renderAssemblyComponentRows() {
     return;
   }
   var hasActions = canEditInternalComponents();
-  var colspan = 9 + (hasActions ? 1 : 0);
+  var colspan = 11 + (hasActions ? 1 : 0);
   var html = "<table class='component-table'>";
-  html += "<tr><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th><th>" + t("component_position") + "</th><th>" + t("component_quantity") + "</th><th>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
+  html += "<tr><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th><th>" + t("component_position") + "</th><th>" + t("component_quantity") + "</th><th>" + t("component_unit_price") + "</th><th>" + t("component_replacement_rate") + "</th><th>" + t("component_manufacturing_memo") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
   if (hasActions) html += "<th>" + t("component_actions") + "</th>";
   html += "</tr>";
   rows.forEach(function(row) {
@@ -14400,6 +14480,8 @@ function renderAssemblyComponentRows() {
       html += "<td>" + componentEditInput(row, "component_position", row.component_position || row.source_code || "") + "</td>";
       html += "<td>" + componentEditInput(row, "quantity", row.quantity || "1") + "</td>";
       html += "<td>" + componentEditInput(row, "unit_price_jpy", row.unit_price_jpy || "") + "</td>";
+      html += "<td>" + componentEditInput(row, "replacement_rate", row.replacement_rate || "") + "</td>";
+      html += "<td>" + componentEditInput(row, "manufacturing_memo", row.manufacturing_memo || "") + "</td>";
       html += "<td>" + componentEditInput(row, "component_interchange_code", row.interchange_code || row.component_interchange_code || "") + "</td>";
       html += "<td>" + componentEditInput(row, "effective_start", row.effective_start || "") + "</td>";
       html += "<td>" + componentEditInput(row, "effective_end", row.effective_end || "") + "</td>";
@@ -14411,6 +14493,8 @@ function renderAssemblyComponentRows() {
       html += "<td>" + esc(row.component_position || row.source_code || "-") + "</td>";
       html += "<td>" + esc(row.quantity || "-") + "</td>";
       html += "<td>" + esc(formatYen(row.unit_price_jpy)) + "</td>";
+      html += "<td>" + esc(row.replacement_rate == null || row.replacement_rate === "" ? "-" : row.replacement_rate) + "</td>";
+      html += "<td>" + esc(row.manufacturing_memo || "-") + "</td>";
       html += "<td>" + esc(formatComponentInterchange(row)) + "</td>";
       html += "<td>" + esc(row.effective_start || row.start_period || "-") + "</td>";
       html += "<td>" + esc(row.effective_end || row.end_period || "-") + "</td>";
@@ -14454,7 +14538,7 @@ async function loadAssemblyComponentsForCurrent() {
   var mfr = String((currentProduct && currentProduct.manufacturer) || "").toUpperCase();
   var normalizedMfrPnKeys = componentAssyLookupKeys(currentProduct);
   wrap.innerHTML = "<div class='component-empty'>" + t("loading") + "</div>";
-  var selectColumns = "id, dkd_component_id, dkd_shohin_id, product_kind, product_variant_id, assy_manufacturer, assy_manufacturer_part_number, normalized_assy_manufacturer_part_number, assy_genuine_part_number, normalized_assy_genuine_part_number, component_manufacturer_part_number, component_genuine_part_number, component_name, quantity, unit_price_jpy, interchange_code, effective_start, effective_end, component_position, component_manufacturer, component_part_name, source_code, is_catalog_evidence";
+  var selectColumns = "id, dkd_component_id, dkd_shohin_id, product_kind, product_variant_id, assy_manufacturer, assy_manufacturer_part_number, normalized_assy_manufacturer_part_number, assy_genuine_part_number, normalized_assy_genuine_part_number, component_manufacturer_part_number, component_genuine_part_number, component_name, quantity, unit_price_jpy, replacement_rate, manufacturing_memo, interchange_code, effective_start, effective_end, component_position, component_manufacturer, component_part_name, source_code, is_catalog_evidence";
   var query = sb.from("assembly_component_usage_details")
     .select(selectColumns)
     .order("component_position", { ascending: true, nullsFirst: false })
