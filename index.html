@@ -1166,7 +1166,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.295</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.296</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1195,7 +1195,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">品番検索</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.295</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.296</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1225,7 +1225,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.295</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.296</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -4724,7 +4724,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.295";
+var APP_VERSION       = "v1.1.296";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -4744,6 +4744,8 @@ var componentAlternativeMap = {};
 var componentAlternativeBaseRow = null;
 var componentCatalogNameCandidates = [];
 var componentCatalogNameCandidateCache = {};
+var componentAddPartNumberLookupSeq = 0;
+var componentEditPartNumberLookupSeq = 0;
 var currentSelectedComponentVariantId = "";
 var productionInstructionRows = [];
 var productionInstructionMap = {};
@@ -13848,6 +13850,70 @@ function componentAddValue(id) {
   return el ? el.value.trim() : "";
 }
 
+function setComponentAddValue(id, value) {
+  var el = document.getElementById(id);
+  if (el) el.value = value || "";
+}
+
+function componentPartRowMatchScore(row, mfrKey, genuineKey) {
+  var rowMfrKey = normalizedPartKey(row.normalized_manufacturer_part_number || row.manufacturer_part_number);
+  var rowGenuineKey = normalizedPartKey(row.normalized_genuine_part_number || row.genuine_part_number);
+  var score = 0;
+  if (mfrKey && rowMfrKey === mfrKey) score += 8;
+  if (genuineKey && rowGenuineKey === genuineKey) score += 8;
+  if (mfrKey && rowGenuineKey === mfrKey) score += 4;
+  if (genuineKey && rowMfrKey === genuineKey) score += 4;
+  return score;
+}
+
+async function lookupComponentPartNumberPair(mfrValue, genuineValue) {
+  var mfrKey = normalizedPartKey(mfrValue);
+  var genuineKey = normalizedPartKey(genuineValue);
+  var keys = [];
+  if (mfrKey) keys.push(mfrKey);
+  if (genuineKey && keys.indexOf(genuineKey) < 0) keys.push(genuineKey);
+  if (!keys.length) return null;
+  var filters = [];
+  keys.forEach(function(key) {
+    filters.push("normalized_manufacturer_part_number.eq." + key);
+    filters.push("normalized_genuine_part_number.eq." + key);
+  });
+  var r = await sb.from("component_parts")
+    .select("manufacturer,manufacturer_part_number,genuine_part_number,part_name,normalized_manufacturer_part_number,normalized_genuine_part_number")
+    .or(filters.join(","))
+    .limit(30);
+  if (r.error) {
+    console.warn("component part number lookup failed", r.error);
+    return null;
+  }
+  var best = null;
+  var bestScore = 0;
+  (r.data || []).forEach(function(row) {
+    var score = componentPartRowMatchScore(row, mfrKey, genuineKey);
+    if (score > bestScore) {
+      best = row;
+      bestScore = score;
+    }
+  });
+  return best;
+}
+
+async function reconcileComponentAddPartNumbers() {
+  var seq = ++componentAddPartNumberLookupSeq;
+  var mfrPn = componentAddValue("component-add-mfr-pn");
+  var genuinePn = componentAddValue("component-add-genuine-pn");
+  if (!mfrPn && !genuinePn) return null;
+  var row = await lookupComponentPartNumberPair(mfrPn, genuinePn);
+  if (seq !== componentAddPartNumberLookupSeq || !row) return row;
+  if (row.manufacturer) setComponentAddValue("component-add-mfr", row.manufacturer);
+  if (row.manufacturer_part_number) setComponentAddValue("component-add-mfr-pn", row.manufacturer_part_number);
+  if (row.genuine_part_number) setComponentAddValue("component-add-genuine-pn", row.genuine_part_number);
+  var currentName = componentAddValue("component-add-name");
+  if (!currentName && row.part_name) setComponentAddValue("component-add-name", row.part_name);
+  renderComponentAddNameOptions(componentAddValue("component-add-name"));
+  return row;
+}
+
 function clearComponentAddForm() {
   ["component-add-mfr","component-add-mfr-pn","component-add-genuine-pn","component-add-name","component-add-position","component-add-unit-price","component-add-replacement-rate","component-add-interchange","component-add-procurement-category","component-add-start","component-add-end","component-add-manufacturing-memo"].forEach(function(id) {
     var el = document.getElementById(id);
@@ -13879,6 +13945,7 @@ async function addAssemblyComponentForCurrent() {
     else alert(t("component_mfr_pn_required"));
     return;
   }
+  await reconcileComponentAddPartNumbers();
   var componentPartName = componentAddValue("component-add-name");
   if (!componentPartName) {
     if (err) err.textContent = t("component_name_required");
@@ -13988,6 +14055,25 @@ function componentEditPayloadFromRow(tr) {
   return payload;
 }
 
+function setComponentEditFieldValue(tr, field, value) {
+  var el = tr ? tr.querySelector("[data-component-edit-field='" + field + "']") : null;
+  if (el) el.value = value || "";
+}
+
+async function reconcileComponentEditPartNumbers(usageId) {
+  var seq = ++componentEditPartNumberLookupSeq;
+  var tr = document.querySelector("[data-component-edit-row='" + String(usageId) + "']");
+  if (!tr) return null;
+  var payload = componentEditPayloadFromRow(tr);
+  var row = await lookupComponentPartNumberPair(payload.component_manufacturer_part_number, payload.component_genuine_part_number);
+  if (seq !== componentEditPartNumberLookupSeq || !row) return row;
+  if (row.manufacturer) setComponentEditFieldValue(tr, "component_manufacturer", row.manufacturer);
+  if (row.manufacturer_part_number) setComponentEditFieldValue(tr, "component_manufacturer_part_number", row.manufacturer_part_number);
+  if (row.genuine_part_number) setComponentEditFieldValue(tr, "component_genuine_part_number", row.genuine_part_number);
+  if (!payload.component_part_name && row.part_name) setComponentEditFieldValue(tr, "component_part_name", row.part_name);
+  return row;
+}
+
 async function saveComponentEdit(usageId) {
   if (!canEditInternalComponents()) { alert(t("err_perm")); return; }
   var row = assemblyComponentRows.find(function(r) { return String(r.id) === String(usageId); });
@@ -14014,6 +14100,7 @@ async function saveComponentEdit(usageId) {
   }
   var tr = document.querySelector("[data-component-edit-row='" + String(usageId) + "']");
   if (!tr) return;
+  await reconcileComponentEditPartNumbers(usageId);
   var payload = componentEditPayloadFromRow(tr);
   if (!payload.component_manufacturer_part_number) {
     alert(t("component_mfr_pn_required"));
@@ -14133,9 +14220,48 @@ function componentAlternativeNameCandidates(baseRow, selectedName) {
   return list;
 }
 
+function componentCatalogCategoryCode(product) {
+  var raw = String((product && (product.category_code || product.category)) || "").trim();
+  var key = raw.toLowerCase().replace(/[_\s-]+/g, "_");
+  if (key === "starter" || key === "alternator" || key === "ac_compressor" || key === "distributor" || key === "starter_generator" || key === "dc_motor") return key;
+  var source = categoryTranslationSource(raw).toLowerCase();
+  if (source.indexOf("ac compressor") >= 0) return "ac_compressor";
+  if (source.indexOf("starter generator") >= 0) return "starter_generator";
+  if (source.indexOf("alternator") >= 0) return "alternator";
+  if (source.indexOf("starter") >= 0) return "starter";
+  if (source.indexOf("distributor") >= 0) return "distributor";
+  if (source.indexOf("dc motor") >= 0) return "dc_motor";
+  if (raw.indexOf("コンプレッサ") >= 0) return "ac_compressor";
+  if (raw.indexOf("オルタ") >= 0) return "alternator";
+  if (raw.indexOf("スタータ") >= 0) return raw.indexOf("ジェネレータ") >= 0 ? "starter_generator" : "starter";
+  if (raw.indexOf("ディストリ") >= 0) return "distributor";
+  return key || "";
+}
+
+async function loadComponentCatalogNameCandidatesFallback(mfr, selectedName) {
+  var query = sb.from("assembly_component_usage_details")
+    .select("component_name,component_part_name")
+    .eq("is_catalog_evidence", true)
+    .eq("assy_manufacturer", mfr)
+    .limit(1000);
+  var r = await query;
+  if (r.error) {
+    console.warn("component catalog fallback candidates failed", r.error);
+    return [];
+  }
+  var list = [];
+  var seen = {};
+  (r.data || []).forEach(function(row) {
+    addComponentNameCandidate(list, seen, row.component_name || row.component_part_name);
+  });
+  addComponentNameCandidate(list, seen, selectedName);
+  list.sort(function(a, b) { return String(a || "").localeCompare(String(b || ""), "ja", { numeric: true }); });
+  return list;
+}
+
 async function loadComponentCatalogNameCandidatesForCurrent() {
   var mfr = String((currentProduct && currentProduct.manufacturer) || "").trim().toUpperCase();
-  var category = String((currentProduct && (currentProduct.category_code || currentProduct.category)) || "").trim();
+  var category = componentCatalogCategoryCode(currentProduct);
   var cacheKey = mfr + "|" + (category || "-");
   componentCatalogNameCandidates = [];
   if (!mfr) return;
@@ -14150,7 +14276,9 @@ async function loadComponentCatalogNameCandidatesForCurrent() {
   });
   if (r.error) {
     console.warn("component catalog name candidates failed", r.error);
-    componentCatalogNameCandidateCache[cacheKey] = [];
+    var fallback = await loadComponentCatalogNameCandidatesFallback(mfr);
+    componentCatalogNameCandidateCache[cacheKey] = fallback;
+    componentCatalogNameCandidates = fallback;
     return;
   }
   var list = [];
@@ -14158,6 +14286,9 @@ async function loadComponentCatalogNameCandidatesForCurrent() {
   (r.data || []).forEach(function(row) {
     addComponentNameCandidate(list, seen, row.component_name);
   });
+  if (!list.length && category) {
+    list = await loadComponentCatalogNameCandidatesFallback(mfr);
+  }
   list.sort(function(a, b) { return String(a || "").localeCompare(String(b || ""), "ja", { numeric: true }); });
   componentCatalogNameCandidateCache[cacheKey] = list;
   componentCatalogNameCandidates = list;
@@ -14573,6 +14704,14 @@ function renderAssemblyComponentRows() {
   });
   wrap.querySelectorAll("[data-component-save]").forEach(function(btn) {
     btn.addEventListener("click", function() { saveComponentEdit(btn.dataset.componentSave); });
+  });
+  wrap.querySelectorAll("[data-component-edit-field='component_manufacturer_part_number'],[data-component-edit-field='component_genuine_part_number']").forEach(function(input) {
+    var handler = function() {
+      var tr = input.closest("[data-component-edit-row]");
+      if (tr) reconcileComponentEditPartNumbers(tr.dataset.componentEditRow);
+    };
+    input.addEventListener("change", handler);
+    input.addEventListener("blur", handler);
   });
   wrap.querySelectorAll("[data-component-cancel]").forEach(function(btn) {
     btn.addEventListener("click", cancelComponentEdit);
@@ -17047,6 +17186,12 @@ document.getElementById("btn-components-open-parallel").addEventListener("click"
 });
 document.getElementById("btn-component-add-cancel").addEventListener("click", closeComponentAddForm);
 document.getElementById("btn-component-add").addEventListener("click", addAssemblyComponentForCurrent);
+["component-add-mfr-pn", "component-add-genuine-pn"].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener("change", reconcileComponentAddPartNumbers);
+  el.addEventListener("blur", reconcileComponentAddPartNumbers);
+});
 document.getElementById("btn-component-alt-cancel").addEventListener("click", closeComponentAlternativeForm);
 document.getElementById("btn-component-alt-save").addEventListener("click", saveComponentAlternativeForm);
 document.getElementById("btn-back-component-parallel").addEventListener("click", function(){
