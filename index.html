@@ -1161,7 +1161,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.66</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.291</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1190,7 +1190,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">品番検索</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.66</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.291</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1220,7 +1220,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.66</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.291</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1882,7 +1882,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <button class="btn-primary" id="btn-core-list-search" data-i18n="btn_search">検索</button>
       <button class="btn-primary" id="btn-add-core-list" data-i18n="btn_add_core_list">コアを追加</button>
       <button class="btn-sm-edit" id="btn-create-core-list-from-ranking" data-i18n="btn_create_core_from_ranking">ランキングから作成</button>
-      <button class="btn-sm-edit" id="btn-open-core-camera-test" type="button">カメラ計数テスト</button>
     </div>
     <div class="mgmt-count" id="core-list-count"></div>
     <div id="core-list-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
@@ -4691,7 +4690,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.290";
+var APP_VERSION       = "v1.1.291";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -8209,7 +8208,6 @@ function renderCoreListMgmt() {
       mobileHtml += "<div class='core-list-card-note'><span class='core-list-card-label'>" + esc(t("core_list_note")) + "</span><div class='core-note'>" + esc(row.note || "-") + "</div><div class='mgmt-sub'>DKD " + esc(String(row.dkd_shohin_id || "-")) + " / " + esc(updatedText) + "</div></div>";
       mobileHtml += "<div class='core-list-card-actions'>";
       mobileHtml += "<button class='btn-sm-edit production-action-secondary' data-core-image='" + esc(String(row.id)) + "'>" + esc(t("btn_upload")) + "</button>";
-      mobileHtml += "<button class='btn-sm-edit production-action-secondary' data-core-camera='" + esc(String(row.id)) + "'>" + esc(t("core_camera_count")) + "</button>";
       mobileHtml += "<button class='btn-sm-edit' data-core-edit='" + esc(String(row.id)) + "'>" + esc(t("btn_edit")) + "</button>";
       mobileHtml += "<button class='btn-sm-del' data-core-del='" + esc(String(row.id)) + "'>" + esc(t("btn_delete")) + "</button>";
       mobileHtml += "</div></div>";
@@ -8217,13 +8215,10 @@ function renderCoreListMgmt() {
     mobileHtml += "</div>";
     list.innerHTML = mobileHtml;
     if (!canUploadCoreImages()) {
-      list.querySelectorAll("[data-core-image], [data-core-camera]").forEach(function(btn) { btn.remove(); });
+      list.querySelectorAll("[data-core-image]").forEach(function(btn) { btn.remove(); });
     } else {
       list.querySelectorAll("[data-core-image]").forEach(function(btn) {
         btn.addEventListener("click", function() { openCorePhotoChoice(parseInt(btn.dataset.coreImage, 10)); });
-      });
-      list.querySelectorAll("[data-core-camera]").forEach(function(btn) {
-        btn.addEventListener("click", function() { openCoreListCameraCount(parseInt(btn.dataset.coreCamera, 10)); });
       });
     }
     if (!canEdit()) {
@@ -8253,7 +8248,6 @@ function renderCoreListMgmt() {
     html += "<td><div class='core-note'>" + esc(row.note || "-") + "</div><div class='mgmt-sub'>" + esc(updatedText) + "</div></td>";
     html += "<td><div class='mgmt-actions'>";
     html += "<button class='btn-sm-edit production-action-secondary' data-core-image='" + row.id + "'>" + esc(t("btn_upload")) + "</button>";
-    html += "<button class='btn-sm-edit production-action-secondary' data-core-camera='" + row.id + "'>" + esc(t("core_camera_count")) + "</button>";
     html += "<button class='btn-sm-edit' data-core-edit='" + row.id + "'>" + t("btn_edit") + "</button>";
     html += "<button class='btn-sm-del' data-core-del='" + row.id + "'>" + t("btn_delete") + "</button>";
     html += "</div></td>";
@@ -8262,13 +8256,10 @@ function renderCoreListMgmt() {
   html += "</table>";
   list.innerHTML = html;
   if (!canUploadCoreImages()) {
-    list.querySelectorAll("[data-core-image], [data-core-camera]").forEach(function(btn) { btn.remove(); });
+    list.querySelectorAll("[data-core-image]").forEach(function(btn) { btn.remove(); });
   } else {
     list.querySelectorAll("[data-core-image]").forEach(function(btn) {
       btn.addEventListener("click", function() { openCorePhotoChoice(parseInt(btn.dataset.coreImage, 10)); });
-    });
-    list.querySelectorAll("[data-core-camera]").forEach(function(btn) {
-      btn.addEventListener("click", function() { openCoreListCameraCount(parseInt(btn.dataset.coreCamera, 10)); });
     });
   }
   if (!canEdit()) {
@@ -16961,7 +16952,6 @@ document.getElementById("btn-sales-rank-save").addEventListener("click", saveSal
 document.getElementById("pf-category").addEventListener("change", applySpecFormCategory);
 document.getElementById("btn-add-core-list").addEventListener("click", function(){ openCoreListForm("add"); });
 document.getElementById("btn-create-core-list-from-ranking").addEventListener("click", createCoreListFromRanking);
-document.getElementById("btn-open-core-camera-test").addEventListener("click", function(){ window.open(CORE_AI_CAMERA_TEST_URL, "_blank", "noopener"); });
 document.getElementById("btn-core-list-search").addEventListener("click", loadCoreListMgmt);
 document.getElementById("core-list-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadCoreListMgmt(); });
 document.getElementById("core-list-load-more").addEventListener("click", function(){ loadCoreListMgmt({ append: true }); });
