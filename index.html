@@ -1166,7 +1166,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.294</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.295</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1195,7 +1195,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">品番検索</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.294</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.295</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1225,7 +1225,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.294</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.295</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -4724,7 +4724,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.294";
+var APP_VERSION       = "v1.1.295";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -13938,6 +13938,11 @@ function componentEditInput(row, field, value) {
   return "<input data-component-edit-field='" + esc(field) + "' value='" + esc(value || "") + "'>";
 }
 
+function componentEditNameInput(row) {
+  var value = row.component_name || row.component_part_name || "";
+  return "<input data-component-edit-field='component_part_name' list='component-edit-name-list' value='" + esc(value || "") + "'>";
+}
+
 function componentProcurementOptionsHtml(value) {
   var current = String(value || "");
   var options = ["", "部品どり", "自コア再利用", "新品交換"];
@@ -13959,13 +13964,14 @@ function isCatalogComponentRow(row) {
   return sourceCode.indexOf("catalog") === 0 || sourceTable.indexOf("catalog") >= 0;
 }
 
-function startComponentEdit(usageId) {
+async function startComponentEdit(usageId) {
   var row = assemblyComponentRows.find(function(r) { return String(r.id) === String(usageId); });
   if (isCatalogComponentRow(row)) {
     alert(t("component_catalog_locked_edit"));
     return;
   }
   editingComponentUsageId = String(usageId);
+  await loadComponentCatalogNameCandidatesForCurrent();
   renderAssemblyComponentRows();
 }
 
@@ -14200,13 +14206,18 @@ function componentAddNameCandidates(selectedName) {
   return list;
 }
 
-function renderComponentAddNameOptions(selectedName) {
-  var list = document.getElementById("component-add-name-list");
-  if (!list) return;
+function componentNameOptionsHtml(selectedName) {
   var html = "";
   componentAddNameCandidates(selectedName).forEach(function(name) {
     html += "<option value='" + esc(name) + "'></option>";
   });
+  return html;
+}
+
+function renderComponentAddNameOptions(selectedName) {
+  var list = document.getElementById("component-add-name-list");
+  if (!list) return;
+  var html = componentNameOptionsHtml(selectedName);
   list.innerHTML = html;
 }
 
@@ -14513,7 +14524,7 @@ function renderAssemblyComponentRows() {
     if (editing) {
       html += "<td>" + componentEditInput(row, "component_manufacturer_part_number", row.component_manufacturer_part_number) + "<div class='component-sub'>" + componentEditInput(row, "component_manufacturer", row.component_manufacturer || "") + "</div></td>";
       html += "<td>" + componentEditInput(row, "component_genuine_part_number", row.component_genuine_part_number || "") + "</td>";
-      html += "<td>" + componentEditInput(row, "component_part_name", row.component_name || row.component_part_name || "") + "<div class='component-sub'>" + esc(componentUsageTargetLabel(row)) + "</div></td>";
+      html += "<td>" + componentEditNameInput(row) + "<div class='component-sub'>" + esc(componentUsageTargetLabel(row)) + "</div></td>";
       html += "<td>" + componentEditInput(row, "quantity", row.quantity || "1") + "</td>";
       html += "<td>" + componentEditInput(row, "unit_price_jpy", row.unit_price_jpy || "") + "</td>";
       html += "<td>" + componentEditInput(row, "component_interchange_code", row.interchange_code || row.component_interchange_code || "") + "</td>";
@@ -14551,6 +14562,11 @@ function renderAssemblyComponentRows() {
     html += renderComponentAlternatives(row, colspan);
   });
   html += "</table>";
+  if (editingComponentUsageId) {
+    var editingRow = rows.find(function(row) { return String(row.id) === String(editingComponentUsageId); });
+    var editingName = editingRow ? (editingRow.component_name || editingRow.component_part_name || "") : "";
+    html += "<datalist id='component-edit-name-list'>" + componentNameOptionsHtml(editingName) + "</datalist>";
+  }
   wrap.innerHTML = html;
   wrap.querySelectorAll("[data-component-edit]").forEach(function(btn) {
     btn.addEventListener("click", function() { startComponentEdit(btn.dataset.componentEdit); });
