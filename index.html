@@ -488,6 +488,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .form-card      { background: #fff; border-radius: 16px; padding: 24px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; margin: 16px; box-shadow: 0 12px 40px rgba(0,0,0,0.2); }
 .form-card h3   { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: #1a1a2e; }
 .component-alt-card { max-width: 640px; }
+.core-photo-choice-card { max-width: 520px; }
+.core-photo-context { border: 1px solid #e7edf6; border-radius: 10px; background: #f8fbff; padding: 10px 12px; margin: 10px 0 12px; font-size: 12px; color: #455468; line-height: 1.55; }
+.core-photo-context strong { display: block; color: #1a1a2e; font-size: 14px; margin-bottom: 2px; }
+.core-photo-help { color: #667085; font-size: 12px; line-height: 1.6; margin: -4px 0 8px; }
 .form-grid      { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .form-row       { margin-bottom: 12px; }
 .form-label     { font-size: 12px; color: #888; margin-bottom: 4px; display: block; }
@@ -1929,6 +1933,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   </div>
 </div>
 
+<!-- コア写真追加方法の選択 -->
+<div class="form-overlay" id="core-photo-choice-overlay">
+  <div class="form-card core-photo-choice-card">
+    <h3 data-i18n="core_photo_add_title">コア写真追加</h3>
+    <div class="core-photo-help" data-i18n="core_photo_add_desc">カメラAIで対象を確認して撮影するか、端末内の写真を選んで登録します。</div>
+    <div class="core-photo-context" id="core-photo-choice-context"></div>
+    <div class="form-footer">
+      <button class="btn-cancel" id="btn-core-photo-choice-cancel" data-i18n="btn_back">キャンセル</button>
+      <button class="btn-sm-edit" id="btn-core-photo-device" type="button" data-i18n="core_upload_from_device">端末から写真</button>
+      <button class="btn-primary" id="btn-core-photo-ai" type="button" data-i18n="core_camera_ai">カメラAI</button>
+    </div>
+  </div>
+</div>
+
 <!-- =============================================
    在庫管理画面
 ============================================= -->
@@ -2719,6 +2737,10 @@ var TRANSLATIONS = {
     img_section: "画像",
     btn_upload: "写真を追加する",
     core_camera_count: "カメラ計数",
+    core_camera_ai: "カメラAI",
+    core_photo_add_title: "コア写真追加",
+    core_photo_add_desc: "カメラAIで対象を確認して撮影するか、端末内の写真を選んで登録します。",
+    core_upload_from_device: "端末から写真",
     btn_delete_images: "写真を削除",
     image_delete_title: "写真の削除",
     img_none: "画像なし",
@@ -3407,6 +3429,10 @@ var TRANSLATIONS = {
     img_section: "Images",
     btn_upload: "Add Photos",
     core_camera_count: "Camera Count",
+    core_camera_ai: "Camera AI",
+    core_photo_add_title: "Add CORE Photos",
+    core_photo_add_desc: "Use Camera AI to confirm and shoot the target, or choose photos from this device.",
+    core_upload_from_device: "From Device",
     btn_delete_images: "Delete Photos",
     image_delete_title: "Delete Photos",
     img_none: "No images",
@@ -4102,6 +4128,10 @@ var TRANSLATIONS = {
     img_section: "图片",
     btn_upload: "添加照片",
     core_camera_count: "相机计数",
+    core_camera_ai: "相机AI",
+    core_photo_add_title: "添加CORE照片",
+    core_photo_add_desc: "使用相机AI确认并拍摄对象，或从设备选择照片登记。",
+    core_upload_from_device: "从设备选择",
     btn_delete_images: "删除照片",
     image_delete_title: "删除照片",
     img_none: "无图片",
@@ -4661,7 +4691,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.289";
+var APP_VERSION       = "v1.1.290";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -4686,6 +4716,7 @@ var coreListMgmtRows = [];
 var coreListProductMap = {};
 var coreListProductCandidates = [];
 var coreListFormMode = "add";
+var corePhotoChoiceRowId = null;
 var coreListRawOffset = 0;
 var coreListHasMore = true;
 var coreListLoadingMore = false;
@@ -8189,7 +8220,7 @@ function renderCoreListMgmt() {
       list.querySelectorAll("[data-core-image], [data-core-camera]").forEach(function(btn) { btn.remove(); });
     } else {
       list.querySelectorAll("[data-core-image]").forEach(function(btn) {
-        btn.addEventListener("click", function() { openCoreListImageUpload(parseInt(btn.dataset.coreImage, 10)); });
+        btn.addEventListener("click", function() { openCorePhotoChoice(parseInt(btn.dataset.coreImage, 10)); });
       });
       list.querySelectorAll("[data-core-camera]").forEach(function(btn) {
         btn.addEventListener("click", function() { openCoreListCameraCount(parseInt(btn.dataset.coreCamera, 10)); });
@@ -8234,7 +8265,7 @@ function renderCoreListMgmt() {
     list.querySelectorAll("[data-core-image], [data-core-camera]").forEach(function(btn) { btn.remove(); });
   } else {
     list.querySelectorAll("[data-core-image]").forEach(function(btn) {
-      btn.addEventListener("click", function() { openCoreListImageUpload(parseInt(btn.dataset.coreImage, 10)); });
+      btn.addEventListener("click", function() { openCorePhotoChoice(parseInt(btn.dataset.coreImage, 10)); });
     });
     list.querySelectorAll("[data-core-camera]").forEach(function(btn) {
       btn.addEventListener("click", function() { openCoreListCameraCount(parseInt(btn.dataset.coreCamera, 10)); });
@@ -8261,6 +8292,88 @@ function renderCoreListMgmt() {
   }
 }
 
+function coreListRowAndProduct(rowId) {
+  var row = coreListMgmtRows.find(function(x) { return x.id === rowId; });
+  var product = row ? (coreListProductMap[String(row.dkd_shohin_id)] || {}) : {};
+  return { row: row, product: product };
+}
+
+function buildCoreAiCameraUrl(rowId, mode) {
+  var ctx = coreListRowAndProduct(rowId);
+  var row = ctx.row;
+  var p = ctx.product || {};
+  var url = new URL(CORE_AI_CAMERA_TEST_URL);
+  url.searchParams.set("page", "camera");
+  url.searchParams.set("source", "dcats_core_list");
+  url.searchParams.set("mode", mode || "core_count");
+  url.searchParams.set("dcats_version", APP_VERSION);
+  if (row) {
+    url.searchParams.set("core_list_entry_id", String(row.id || ""));
+    url.searchParams.set("dkd_shohin_id", String(row.dkd_shohin_id || ""));
+    if (row.core_part_number) url.searchParams.set("core_part_number", row.core_part_number);
+    if (row.quantity != null) url.searchParams.set("quantity", String(row.quantity));
+    if (row.location) url.searchParams.set("location", row.location);
+  }
+  if (p.genuine_part_number) url.searchParams.set("genuine_part_number", p.genuine_part_number);
+  if (p.manufacturer_part_number) url.searchParams.set("manufacturer_part_number", p.manufacturer_part_number);
+  if (p.manufacturer) url.searchParams.set("manufacturer", p.manufacturer);
+  if (p.category_code || p.category) url.searchParams.set("category", p.category_code || p.category);
+  return url;
+}
+
+function openCorePhotoChoice(rowId) {
+  if (!canUploadCoreImages()) { alert(t("err_perm")); return; }
+  var ctx = coreListRowAndProduct(rowId);
+  var row = ctx.row;
+  if (!row || !row.dkd_shohin_id) {
+    alert("画像登録にはDKD商品IDが必要です。");
+    return;
+  }
+  var p = ctx.product || {};
+  corePhotoChoiceRowId = rowId;
+  var context = document.getElementById("core-photo-choice-context");
+  if (context) {
+    var title = row.core_part_number || p.manufacturer_part_number || p.genuine_part_number || ("DKD " + row.dkd_shohin_id);
+    var meta = [
+      p.manufacturer || "-",
+      p.genuine_part_number || "-",
+      p.manufacturer_part_number || "-",
+      "DKD " + (row.dkd_shohin_id || "-")
+    ].join(" / ");
+    context.innerHTML = "<strong>" + esc(title) + "</strong>" + esc(meta);
+  }
+  document.getElementById("core-photo-choice-overlay").classList.add("show");
+}
+
+function closeCorePhotoChoice() {
+  corePhotoChoiceRowId = null;
+  document.getElementById("core-photo-choice-overlay").classList.remove("show");
+}
+
+function openCoreListCameraAi(rowId) {
+  if (!canUploadCoreImages()) { alert(t("err_perm")); return; }
+  var ctx = coreListRowAndProduct(rowId);
+  var row = ctx.row;
+  if (!row || !row.dkd_shohin_id) {
+    alert("カメラAIにはDKD商品IDが必要です。");
+    return;
+  }
+  var url = buildCoreAiCameraUrl(rowId, "core_photo_add");
+  try {
+    localStorage.setItem("dcats_core_camera_pending", JSON.stringify({
+      mode: "core_photo_add",
+      core_list_entry_id: row.id || null,
+      dkd_shohin_id: row.dkd_shohin_id || null,
+      core_part_number: row.core_part_number || "",
+      opened_at: new Date().toISOString()
+    }));
+  } catch (e) {
+    console.warn("core camera pending state failed", e);
+  }
+  closeCorePhotoChoice();
+  window.open(url.toString(), "_blank", "noopener");
+}
+
 function openCoreListCameraCount(rowId) {
   if (!canUploadCoreImages()) { alert(t("err_perm")); return; }
   var row = coreListMgmtRows.find(function(x) { return x.id === rowId; });
@@ -8268,15 +8381,7 @@ function openCoreListCameraCount(rowId) {
     alert("カメラ計数にはDKD商品IDが必要です。");
     return;
   }
-  var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
-  var url = new URL(CORE_AI_CAMERA_TEST_URL);
-  url.searchParams.set("source", "dcats_core_list");
-  url.searchParams.set("core_list_entry_id", String(row.id || ""));
-  url.searchParams.set("dkd_shohin_id", String(row.dkd_shohin_id || ""));
-  if (row.core_part_number) url.searchParams.set("core_part_number", row.core_part_number);
-  if (p.genuine_part_number) url.searchParams.set("genuine_part_number", p.genuine_part_number);
-  if (p.manufacturer_part_number) url.searchParams.set("manufacturer_part_number", p.manufacturer_part_number);
-  if (p.manufacturer) url.searchParams.set("manufacturer", p.manufacturer);
+  var url = buildCoreAiCameraUrl(rowId, "core_count");
   window.open(url.toString(), "_blank", "noopener");
 }
 
@@ -16862,6 +16967,15 @@ document.getElementById("core-list-search").addEventListener("keydown", function
 document.getElementById("core-list-load-more").addEventListener("click", function(){ loadCoreListMgmt({ append: true }); });
 document.getElementById("btn-core-list-form-cancel").addEventListener("click", function(){ document.getElementById("core-list-form-overlay").classList.remove("show"); });
 document.getElementById("btn-core-list-form-save").addEventListener("click", saveCoreListForm);
+document.getElementById("btn-core-photo-choice-cancel").addEventListener("click", closeCorePhotoChoice);
+document.getElementById("btn-core-photo-device").addEventListener("click", function() {
+  var rowId = corePhotoChoiceRowId;
+  closeCorePhotoChoice();
+  if (rowId != null) openCoreListImageUpload(rowId);
+});
+document.getElementById("btn-core-photo-ai").addEventListener("click", function() {
+  if (corePhotoChoiceRowId != null) openCoreListCameraAi(corePhotoChoiceRowId);
+});
 document.getElementById("clf-product-search").addEventListener("input", function() {
   clearTimeout(this._timer);
   this._timer = setTimeout(searchCoreListProductCandidates, 250);
