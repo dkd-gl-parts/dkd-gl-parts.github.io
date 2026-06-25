@@ -206,6 +206,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-add-field input:focus,
 .component-add-field select:focus,
 .component-add-field textarea:focus { border-color: #4f8ef7; }
+.component-part-number-warning { border-color: #f4b740 !important; background: #fffaf0 !important; }
+.component-part-number-invalid { border-color: #e24b4a !important; background: #fff7f7 !important; }
+.component-input-warning { display: none; margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: #fffaf0; border: 1px solid #f4d58a; color: #8a5a00; font-size: 12px; line-height: 1.5; white-space: pre-line; }
+.component-input-warning.show { display: block; }
+.component-input-warning.error { background: #fff7f7; border-color: #f2b5b5; color: #b42318; }
 .component-add-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 @media(max-width:900px){ .component-add-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media(max-width:560px){ .component-add-grid, .component-target-controls, .component-target-summary { grid-template-columns: 1fr; } .component-target-head { align-items: flex-start; flex-direction: column; } }
@@ -1169,7 +1174,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.298</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.299</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1198,7 +1203,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.298</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.299</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1228,7 +1233,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.298</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.299</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1409,11 +1414,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       </div>
       <div class="component-add-field">
         <label><span data-i18n="f_mfr_pn">メーカー品番</span> *</label>
-        <input id="component-add-mfr-pn" type="text" required>
+        <input id="component-add-mfr-pn" type="text" inputmode="latin" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
       </div>
       <div class="component-add-field">
         <label data-i18n="f_genuine_pn">純正品番</label>
-        <input id="component-add-genuine-pn" type="text">
+        <input id="component-add-genuine-pn" type="text" inputmode="latin" autocomplete="off" autocapitalize="characters" spellcheck="false">
       </div>
       <div class="component-add-field">
         <label data-i18n="component_position">図番/位置</label>
@@ -1457,6 +1462,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         <textarea id="component-add-manufacturing-memo" rows="2"></textarea>
       </div>
     </div>
+    <div class="component-input-warning" id="component-add-part-number-warning"></div>
     <div class="form-footer">
       <button class="btn-cancel" id="btn-component-add-cancel" type="button" data-i18n="component_cancel">キャンセル</button>
       <button class="btn-primary" id="btn-component-add" type="button" data-i18n="component_add">追加</button>
@@ -3267,6 +3273,10 @@ var TRANSLATIONS = {
     component_target_id_missing: "対象商品のDKD商品IDを確認できません。",
     component_mfr_pn_required: "構成部品のメーカー品番を入力してください。",
     component_name_required: "構成部品の部品名を入力してください。",
+    component_part_number_invalid_chars: "{field}は半角英数字 A-Z 0-9 とハイフン - のみで入力してください。",
+    component_part_number_length_warning: "{field}は{min}〜{max}文字が標準です。現在 {count} 文字です。",
+    component_part_number_duplicate_warning: "同じメーカー + 品番がこの構成部品一覧にあります: {value}",
+    component_part_number_confirm: "入力内容を確認してください。\n{messages}\n\nこのまま保存しますか？",
     component_base_missing: "基準にする構成部品を確認できません。",
     component_base_missing_save: "基準構成部品を確認できません。",
     component_add_failed: "構成部品の追加に失敗しました",
@@ -3963,6 +3973,10 @@ var TRANSLATIONS = {
     component_target_id_missing: "Could not confirm the target product DKD ID.",
     component_mfr_pn_required: "Enter the component manufacturer part number.",
     component_name_required: "Enter the component part name.",
+    component_part_number_invalid_chars: "{field} may contain only half-width A-Z, 0-9, and hyphen -.",
+    component_part_number_length_warning: "{field} is normally {min}-{max} characters. Current length is {count}.",
+    component_part_number_duplicate_warning: "The same manufacturer + part number already exists in this component list: {value}",
+    component_part_number_confirm: "Please confirm the entered part numbers.\n{messages}\n\nSave anyway?",
     component_base_missing: "Could not confirm the base component part.",
     component_base_missing_save: "Could not confirm the base component part.",
     component_add_failed: "Failed to add component part",
@@ -4652,6 +4666,10 @@ var TRANSLATIONS = {
     component_target_id_missing: "无法确认目标商品的 DKD 商品ID。",
     component_mfr_pn_required: "请输入构成部件的制造商品号。",
     component_name_required: "请输入构成部件的部件名。",
+    component_part_number_invalid_chars: "{field}只能输入半角 A-Z、0-9 和连字符 -。",
+    component_part_number_length_warning: "{field}通常为 {min}-{max} 个字符。当前为 {count} 个字符。",
+    component_part_number_duplicate_warning: "此构成部件列表中已有相同厂家 + 品号: {value}",
+    component_part_number_confirm: "请确认输入的品号。\n{messages}\n\n仍要保存吗？",
     component_base_missing: "无法确认作为基准的构成部件。",
     component_base_missing_save: "无法确认基准构成部件。",
     component_add_failed: "构成部件添加失败",
@@ -4727,7 +4745,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.298";
+var APP_VERSION       = "v1.1.299";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -13879,6 +13897,120 @@ function setComponentAddValue(id, value) {
   if (el) el.value = value || "";
 }
 
+function normalizeComponentPartNumberInput(value) {
+  return normalizeAsciiWidth(value)
+    .trim()
+    .toUpperCase()
+    .replace(/[\u2010-\u2015\u2212\u30FC\uFF0D]/g, "-");
+}
+
+function normalizeComponentManufacturerInput(value) {
+  return normalizeAsciiWidth(value).trim().toUpperCase();
+}
+
+function normalizeComponentPartNumberElement(el) {
+  if (!el) return "";
+  var value = normalizeComponentPartNumberInput(el.value);
+  if (el.value !== value) el.value = value;
+  return value;
+}
+
+function componentPartNumberSpec(kind) {
+  return kind === "genuine"
+    ? { min: 5, max: 16, required: false, label: t("f_genuine_pn") }
+    : { min: 5, max: 13, required: true, label: t("f_mfr_pn") };
+}
+
+function componentPartNumberValidation(value, kind) {
+  var spec = componentPartNumberSpec(kind);
+  var normalized = normalizeComponentPartNumberInput(value);
+  var errors = [];
+  var warnings = [];
+  if (!normalized) {
+    if (spec.required) errors.push(t("component_mfr_pn_required"));
+    return { value: normalized, errors: errors, warnings: warnings };
+  }
+  if (!/^[A-Z0-9-]+$/.test(normalized)) {
+    errors.push(tf("component_part_number_invalid_chars", { field: spec.label }));
+  }
+  if (normalized.length < spec.min || normalized.length > spec.max) {
+    warnings.push(tf("component_part_number_length_warning", {
+      field: spec.label,
+      min: spec.min,
+      max: spec.max,
+      count: normalized.length
+    }));
+  }
+  return { value: normalized, errors: errors, warnings: warnings };
+}
+
+function setComponentPartNumberInputState(el, result) {
+  if (!el || !result) return;
+  el.classList.toggle("component-part-number-invalid", result.errors.length > 0);
+  el.classList.toggle("component-part-number-warning", result.errors.length === 0 && result.warnings.length > 0);
+  el.title = result.errors.concat(result.warnings).join("\n");
+}
+
+function validateComponentPartNumberInputs(manufacturerPartNumber, genuinePartNumber, manufacturer, excludeUsageId) {
+  var mfr = componentPartNumberValidation(manufacturerPartNumber, "manufacturer");
+  var genuine = componentPartNumberValidation(genuinePartNumber, "genuine");
+  var errors = mfr.errors.concat(genuine.errors);
+  var warnings = mfr.warnings.concat(genuine.warnings);
+  var makerKey = normalizeComponentManufacturerInput(manufacturer || "UNKNOWN");
+  var partKey = normalizedPartKey(mfr.value);
+  if (partKey) {
+    (assemblyComponentRows || []).forEach(function(row) {
+      if (excludeUsageId && String(row.id) === String(excludeUsageId)) return;
+      var rowMakerKey = normalizeComponentManufacturerInput(row.component_manufacturer || "UNKNOWN");
+      var rowPartKey = normalizedPartKey(row.component_manufacturer_part_number);
+      if (rowMakerKey === makerKey && rowPartKey === partKey) {
+        warnings.push(tf("component_part_number_duplicate_warning", {
+          value: [makerKey, mfr.value].filter(Boolean).join(" / ")
+        }));
+      }
+    });
+  }
+  return {
+    manufacturerPartNumber: mfr.value,
+    genuinePartNumber: genuine.value,
+    errors: errors,
+    warnings: warnings
+  };
+}
+
+function confirmComponentPartNumberWarnings(warnings) {
+  if (!warnings || !warnings.length) return true;
+  var unique = uniqueTextValues(warnings);
+  return confirm(tf("component_part_number_confirm", { messages: unique.join("\n") }));
+}
+
+function setComponentAddPartNumberWarning(errors, warnings) {
+  var box = document.getElementById("component-add-part-number-warning");
+  if (!box) return;
+  var messages = (errors || []).concat(warnings || []);
+  box.textContent = uniqueTextValues(messages).join("\n");
+  box.classList.toggle("show", messages.length > 0);
+  box.classList.toggle("error", (errors || []).length > 0);
+}
+
+function updateComponentAddPartNumberInputState() {
+  var mfrEl = document.getElementById("component-add-mfr-pn");
+  var genuineEl = document.getElementById("component-add-genuine-pn");
+  var mfr = componentPartNumberValidation(mfrEl ? mfrEl.value : "", "manufacturer");
+  var genuine = componentPartNumberValidation(genuineEl ? genuineEl.value : "", "genuine");
+  setComponentPartNumberInputState(mfrEl, mfr);
+  setComponentPartNumberInputState(genuineEl, genuine);
+  setComponentAddPartNumberWarning(mfr.errors.concat(genuine.errors), mfr.warnings.concat(genuine.warnings));
+}
+
+function updateComponentEditPartNumberInputStates(tr) {
+  if (!tr) return;
+  var mfrEl = tr.querySelector("[data-component-edit-field='component_manufacturer_part_number']");
+  var genuineEl = tr.querySelector("[data-component-edit-field='component_genuine_part_number']");
+  setComponentPartNumberInputState(mfrEl, componentPartNumberValidation(mfrEl ? mfrEl.value : "", "manufacturer"));
+  setComponentPartNumberInputState(genuineEl, componentPartNumberValidation(genuineEl ? genuineEl.value : "", "genuine"));
+}
+
 function componentPartRowMatchScore(row, mfrKey, genuineKey) {
   var rowMfrKey = normalizedPartKey(row.normalized_manufacturer_part_number || row.manufacturer_part_number);
   var rowGenuineKey = normalizedPartKey(row.normalized_genuine_part_number || row.genuine_part_number);
@@ -14002,16 +14134,22 @@ async function reconcileComponentAddPartNumbers() {
   var currentName = componentAddValue("component-add-name");
   if (!currentName && row.part_name) setComponentAddValue("component-add-name", row.part_name);
   renderComponentAddNameOptions(componentAddValue("component-add-name"));
+  updateComponentAddPartNumberInputState();
   return row;
 }
 
 function clearComponentAddForm() {
   ["component-add-mfr","component-add-mfr-pn","component-add-genuine-pn","component-add-name","component-add-position","component-add-unit-price","component-add-replacement-rate","component-add-interchange","component-add-procurement-category","component-add-start","component-add-end","component-add-manufacturing-memo"].forEach(function(id) {
     var el = document.getElementById(id);
-    if (el) el.value = "";
+    if (el) {
+      el.value = "";
+      el.classList.remove("component-part-number-invalid", "component-part-number-warning");
+      el.title = "";
+    }
   });
   var qty = document.getElementById("component-add-qty");
   if (qty) qty.value = "1";
+  setComponentAddPartNumberWarning([], []);
 }
 
 function nullableDigitsFromInput(id) {
@@ -14036,15 +14174,46 @@ async function addAssemblyComponentForCurrent() {
     else alert(t("component_mfr_pn_required"));
     return;
   }
+  normalizeComponentPartNumberElement(document.getElementById("component-add-mfr-pn"));
+  normalizeComponentPartNumberElement(document.getElementById("component-add-genuine-pn"));
+  var preAddMfrCheck = componentPartNumberValidation(componentAddValue("component-add-mfr-pn"), "manufacturer");
+  var preAddGenuineCheck = componentPartNumberValidation(componentAddValue("component-add-genuine-pn"), "genuine");
+  var preAddErrors = preAddMfrCheck.errors.concat(preAddGenuineCheck.errors).filter(function(msg) {
+    return msg !== t("component_mfr_pn_required");
+  });
+  if (preAddErrors.length) {
+    updateComponentAddPartNumberInputState();
+    if (err) err.textContent = uniqueTextValues(preAddErrors).join("\n");
+    else alert(uniqueTextValues(preAddErrors).join("\n"));
+    return;
+  }
   await reconcileComponentAddPartNumbers();
+  normalizeComponentPartNumberElement(document.getElementById("component-add-mfr-pn"));
+  normalizeComponentPartNumberElement(document.getElementById("component-add-genuine-pn"));
+  var componentMfr = normalizeComponentManufacturerInput(componentAddValue("component-add-mfr")) || "UNKNOWN";
+  setComponentAddValue("component-add-mfr", componentMfr);
+  var addPartCheck = validateComponentPartNumberInputs(
+    componentAddValue("component-add-mfr-pn"),
+    componentAddValue("component-add-genuine-pn"),
+    componentMfr,
+    null
+  );
+  setComponentAddValue("component-add-mfr-pn", addPartCheck.manufacturerPartNumber);
+  setComponentAddValue("component-add-genuine-pn", addPartCheck.genuinePartNumber);
+  updateComponentAddPartNumberInputState();
+  if (addPartCheck.errors.length) {
+    if (err) err.textContent = uniqueTextValues(addPartCheck.errors).join("\n");
+    else alert(uniqueTextValues(addPartCheck.errors).join("\n"));
+    return;
+  }
+  if (!confirmComponentPartNumberWarnings(addPartCheck.warnings)) return;
   var componentPartName = componentAddValue("component-add-name");
   if (!componentPartName) {
     if (err) err.textContent = t("component_name_required");
     else alert(t("component_name_required"));
     return;
   }
-  var componentMfr = componentAddValue("component-add-mfr") || "UNKNOWN";
-  var componentMfrPn = componentAddValue("component-add-mfr-pn");
+  var componentMfrPn = addPartCheck.manufacturerPartNumber;
   if (!componentMfrPn) {
     if (err) err.textContent = t("component_mfr_pn_required");
     else alert(t("component_mfr_pn_required"));
@@ -14065,7 +14234,7 @@ async function addAssemblyComponentForCurrent() {
     target_product_variant_id: selectedComponentVariantId(),
     component_manufacturer: componentMfr,
     component_manufacturer_part_number: componentMfrPn,
-    component_genuine_part_number: componentAddValue("component-add-genuine-pn") || null,
+    component_genuine_part_number: addPartCheck.genuinePartNumber || null,
     component_part_name: componentPartName,
     component_position: componentAddValue("component-add-position") || null,
     component_quantity: componentAddValue("component-add-qty") || "1",
@@ -14093,7 +14262,9 @@ async function addAssemblyComponentForCurrent() {
 }
 
 function componentEditInput(row, field, value) {
-  return "<input data-component-edit-field='" + esc(field) + "' value='" + esc(value || "") + "'>";
+  var partNumberField = field === "component_manufacturer_part_number" || field === "component_genuine_part_number";
+  var attrs = partNumberField ? " class='component-part-number-edit' inputmode='latin' autocomplete='off' autocapitalize='characters' spellcheck='false'" : "";
+  return "<input data-component-edit-field='" + esc(field) + "'" + attrs + " value='" + esc(value || "") + "'>";
 }
 
 function componentEditNameInput(row) {
@@ -14172,6 +14343,7 @@ async function reconcileComponentEditPartNumbers(usageId) {
   if (row.manufacturer_part_number) setComponentEditFieldValue(tr, "component_manufacturer_part_number", row.manufacturer_part_number);
   if (row.genuine_part_number) setComponentEditFieldValue(tr, "component_genuine_part_number", row.genuine_part_number);
   if (!payload.component_part_name && row.part_name) setComponentEditFieldValue(tr, "component_part_name", row.part_name);
+  updateComponentEditPartNumberInputStates(tr);
   return row;
 }
 
@@ -14201,12 +14373,38 @@ async function saveComponentEdit(usageId) {
   }
   var tr = document.querySelector("[data-component-edit-row='" + String(usageId) + "']");
   if (!tr) return;
-  await reconcileComponentEditPartNumbers(usageId);
-  var payload = componentEditPayloadFromRow(tr);
-  if (!payload.component_manufacturer_part_number) {
-    alert(t("component_mfr_pn_required"));
+  normalizeComponentPartNumberElement(tr.querySelector("[data-component-edit-field='component_manufacturer_part_number']"));
+  normalizeComponentPartNumberElement(tr.querySelector("[data-component-edit-field='component_genuine_part_number']"));
+  var preEditPayload = componentEditPayloadFromRow(tr);
+  var preEditMfrCheck = componentPartNumberValidation(preEditPayload.component_manufacturer_part_number, "manufacturer");
+  var preEditGenuineCheck = componentPartNumberValidation(preEditPayload.component_genuine_part_number, "genuine");
+  var preEditErrors = preEditMfrCheck.errors.concat(preEditGenuineCheck.errors).filter(function(msg) {
+    return msg !== t("component_mfr_pn_required");
+  });
+  if (preEditErrors.length) {
+    updateComponentEditPartNumberInputStates(tr);
+    alert(uniqueTextValues(preEditErrors).join("\n"));
     return;
   }
+  await reconcileComponentEditPartNumbers(usageId);
+  normalizeComponentPartNumberElement(tr.querySelector("[data-component-edit-field='component_manufacturer_part_number']"));
+  normalizeComponentPartNumberElement(tr.querySelector("[data-component-edit-field='component_genuine_part_number']"));
+  var payload = componentEditPayloadFromRow(tr);
+  var editPartCheck = validateComponentPartNumberInputs(
+    payload.component_manufacturer_part_number,
+    payload.component_genuine_part_number,
+    payload.component_manufacturer || "UNKNOWN",
+    usageId
+  );
+  setComponentEditFieldValue(tr, "component_manufacturer_part_number", editPartCheck.manufacturerPartNumber);
+  setComponentEditFieldValue(tr, "component_genuine_part_number", editPartCheck.genuinePartNumber);
+  updateComponentEditPartNumberInputStates(tr);
+  if (editPartCheck.errors.length) {
+    alert(uniqueTextValues(editPartCheck.errors).join("\n"));
+    return;
+  }
+  if (!confirmComponentPartNumberWarnings(editPartCheck.warnings)) return;
+  payload = componentEditPayloadFromRow(tr);
   var editReplacementRate = String(payload.replacement_rate || "").trim();
   if (editReplacementRate && !/^\d+$/.test(editReplacementRate)) {
     alert(t("component_replacement_rate_digits"));
@@ -14807,12 +15005,23 @@ function renderAssemblyComponentRows() {
     btn.addEventListener("click", function() { saveComponentEdit(btn.dataset.componentSave); });
   });
   wrap.querySelectorAll("[data-component-edit-field='component_manufacturer_part_number'],[data-component-edit-field='component_genuine_part_number']").forEach(function(input) {
-    var handler = function() {
+    var preview = function() {
+      normalizeComponentPartNumberElement(input);
       var tr = input.closest("[data-component-edit-row]");
-      if (tr) reconcileComponentEditPartNumbers(tr.dataset.componentEditRow);
+      if (tr) updateComponentEditPartNumberInputStates(tr);
     };
+    var handler = function() {
+      normalizeComponentPartNumberElement(input);
+      var tr = input.closest("[data-component-edit-row]");
+      if (tr) {
+        updateComponentEditPartNumberInputStates(tr);
+        reconcileComponentEditPartNumbers(tr.dataset.componentEditRow);
+      }
+    };
+    input.addEventListener("input", preview);
     input.addEventListener("change", handler);
     input.addEventListener("blur", handler);
+    preview();
   });
   wrap.querySelectorAll("[data-component-cancel]").forEach(function(btn) {
     btn.addEventListener("click", cancelComponentEdit);
@@ -17290,8 +17499,20 @@ document.getElementById("btn-component-add").addEventListener("click", addAssemb
 ["component-add-mfr-pn", "component-add-genuine-pn"].forEach(function(id) {
   var el = document.getElementById(id);
   if (!el) return;
-  el.addEventListener("change", reconcileComponentAddPartNumbers);
-  el.addEventListener("blur", reconcileComponentAddPartNumbers);
+  el.addEventListener("input", function() {
+    normalizeComponentPartNumberElement(el);
+    updateComponentAddPartNumberInputState();
+  });
+  el.addEventListener("change", function() {
+    normalizeComponentPartNumberElement(el);
+    updateComponentAddPartNumberInputState();
+    reconcileComponentAddPartNumbers();
+  });
+  el.addEventListener("blur", function() {
+    normalizeComponentPartNumberElement(el);
+    updateComponentAddPartNumberInputState();
+    reconcileComponentAddPartNumbers();
+  });
 });
 document.getElementById("btn-component-alt-cancel").addEventListener("click", closeComponentAlternativeForm);
 document.getElementById("btn-component-alt-save").addEventListener("click", saveComponentAlternativeForm);
