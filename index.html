@@ -200,9 +200,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-add-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .component-add-field label { display: block; font-size: 11px; color: #667085; margin-bottom: 4px; }
 .component-add-field input,
+.component-add-field select,
 .component-add-field textarea { width: 100%; border: 1px solid #d7dce5; border-radius: 6px; padding: 7px 8px; font-size: 12px; outline: none; background: #fff; }
 .component-add-field textarea { min-height: 34px; resize: vertical; }
 .component-add-field input:focus,
+.component-add-field select:focus,
 .component-add-field textarea:focus { border-color: #4f8ef7; }
 .component-add-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 @media(max-width:900px){ .component-add-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -1164,7 +1166,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.292</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.293</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1193,7 +1195,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">品番検索</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.292</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.293</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1223,7 +1225,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.292</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.293</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1429,6 +1431,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <div class="component-add-field">
         <label data-i18n="component_interchange">互</label>
         <input id="component-add-interchange" type="text">
+      </div>
+      <div class="component-add-field">
+        <label data-i18n="component_procurement_category">調達区分</label>
+        <select id="component-add-procurement-category">
+          <option value="">-</option>
+          <option value="部品どり">部品どり</option>
+          <option value="自コア再利用">自コア再利用</option>
+          <option value="新品交換">新品交換</option>
+        </select>
       </div>
       <div class="component-add-field">
         <label data-i18n="component_start_period">始期</label>
@@ -3225,6 +3236,7 @@ var TRANSLATIONS = {
     component_unit_price: "単価",
     component_replacement_rate: "交換率",
     component_replacement_rate_digits: "交換率は数字のみで入力してください。",
+    component_procurement_category: "調達区分",
     component_manufacturing_memo: "製造メモ",
     component_actions: "操作",
     component_catalog: "カタログ",
@@ -3920,6 +3932,7 @@ var TRANSLATIONS = {
     component_unit_price: "Unit Price",
     component_replacement_rate: "Replacement Rate",
     component_replacement_rate_digits: "Replacement rate must contain digits only.",
+    component_procurement_category: "Procurement Type",
     component_manufacturing_memo: "Manufacturing Memo",
     component_actions: "Action",
     component_catalog: "Catalog",
@@ -4608,6 +4621,7 @@ var TRANSLATIONS = {
     component_unit_price: "单价",
     component_replacement_rate: "更换率",
     component_replacement_rate_digits: "更换率只能输入数字。",
+    component_procurement_category: "采购区分",
     component_manufacturing_memo: "制造备注",
     component_actions: "操作",
     component_catalog: "目录",
@@ -4710,7 +4724,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.292";
+var APP_VERSION       = "v1.1.293";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -13835,7 +13849,7 @@ function componentAddValue(id) {
 }
 
 function clearComponentAddForm() {
-  ["component-add-mfr","component-add-mfr-pn","component-add-genuine-pn","component-add-name","component-add-position","component-add-unit-price","component-add-replacement-rate","component-add-interchange","component-add-start","component-add-end","component-add-manufacturing-memo"].forEach(function(id) {
+  ["component-add-mfr","component-add-mfr-pn","component-add-genuine-pn","component-add-name","component-add-position","component-add-unit-price","component-add-replacement-rate","component-add-interchange","component-add-procurement-category","component-add-start","component-add-end","component-add-manufacturing-memo"].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.value = "";
   });
@@ -13901,6 +13915,7 @@ async function addAssemblyComponentForCurrent() {
     component_replacement_rate: replacementRate,
     component_manufacturing_memo: componentAddValue("component-add-manufacturing-memo") || null,
     component_interchange_code: componentAddValue("component-add-interchange") || null,
+    component_procurement_category: componentAddValue("component-add-procurement-category") || null,
     component_effective_start: componentAddValue("component-add-start") || null,
     component_effective_end: componentAddValue("component-add-end") || null
   };
@@ -13921,6 +13936,19 @@ async function addAssemblyComponentForCurrent() {
 
 function componentEditInput(row, field, value) {
   return "<input data-component-edit-field='" + esc(field) + "' value='" + esc(value || "") + "'>";
+}
+
+function componentProcurementOptionsHtml(value) {
+  var current = String(value || "");
+  var options = ["", "部品どり", "自コア再利用", "新品交換"];
+  return options.map(function(option) {
+    var label = option || "-";
+    return "<option value='" + esc(option) + "'" + (option === current ? " selected" : "") + ">" + esc(label) + "</option>";
+  }).join("");
+}
+
+function componentEditProcurementSelect(value) {
+  return "<select data-component-edit-field='procurement_category'>" + componentProcurementOptionsHtml(value) + "</select>";
 }
 
 function isCatalogComponentRow(row) {
@@ -13948,8 +13976,8 @@ function cancelComponentEdit() {
 
 function componentEditPayloadFromRow(tr) {
   var payload = {};
-  tr.querySelectorAll("[data-component-edit-field]").forEach(function(input) {
-    payload[input.dataset.componentEditField] = input.value.trim();
+  tr.querySelectorAll("[data-component-edit-field]").forEach(function(el) {
+    payload[el.dataset.componentEditField] = el.value.trim();
   });
   return payload;
 }
@@ -14008,6 +14036,7 @@ async function saveComponentEdit(usageId) {
     unit_price_jpy: nullableIntFromValue(payload.unit_price_jpy),
     replacement_rate: editReplacementRate ? parseInt(editReplacementRate, 10) : null,
     manufacturing_memo: payload.manufacturing_memo || null,
+    procurement_category: payload.procurement_category || null,
     interchange_code: payload.component_interchange_code || null,
     effective_start: payload.effective_start || null,
     effective_end: payload.effective_end || null,
@@ -14464,9 +14493,15 @@ function renderAssemblyComponentRows() {
     return;
   }
   var hasActions = canEditInternalComponents();
-  var colspan = 11 + (hasActions ? 1 : 0);
+  var catalogMode = selectedProductKind() === "catalog_spec";
+  var colspan = 9 + (hasActions ? 1 : 0);
   var html = "<table class='component-table'>";
-  html += "<tr><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th><th>" + t("component_position") + "</th><th>" + t("component_quantity") + "</th><th>" + t("component_unit_price") + "</th><th>" + t("component_replacement_rate") + "</th><th>" + t("component_manufacturing_memo") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
+  html += "<tr><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th>";
+  if (catalogMode) {
+    html += "<th>" + t("component_position") + "</th><th>" + t("component_quantity") + "</th><th>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
+  } else {
+    html += "<th>" + t("component_quantity") + "</th><th>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_procurement_category") + "</th><th>" + t("component_replacement_rate") + "</th><th>" + t("component_manufacturing_memo") + "</th>";
+  }
   if (hasActions) html += "<th>" + t("component_actions") + "</th>";
   html += "</tr>";
   rows.forEach(function(row) {
@@ -14477,27 +14512,32 @@ function renderAssemblyComponentRows() {
       html += "<td>" + componentEditInput(row, "component_manufacturer_part_number", row.component_manufacturer_part_number) + "<div class='component-sub'>" + componentEditInput(row, "component_manufacturer", row.component_manufacturer || "") + "</div></td>";
       html += "<td>" + componentEditInput(row, "component_genuine_part_number", row.component_genuine_part_number || "") + "</td>";
       html += "<td>" + componentEditInput(row, "component_part_name", row.component_name || row.component_part_name || "") + "<div class='component-sub'>" + esc(componentUsageTargetLabel(row)) + "</div></td>";
-      html += "<td>" + componentEditInput(row, "component_position", row.component_position || row.source_code || "") + "</td>";
       html += "<td>" + componentEditInput(row, "quantity", row.quantity || "1") + "</td>";
       html += "<td>" + componentEditInput(row, "unit_price_jpy", row.unit_price_jpy || "") + "</td>";
+      html += "<td>" + componentEditInput(row, "component_interchange_code", row.interchange_code || row.component_interchange_code || "") + "</td>";
+      html += "<td>" + componentEditProcurementSelect(row.procurement_category || "") + "</td>";
       html += "<td>" + componentEditInput(row, "replacement_rate", row.replacement_rate || "") + "</td>";
       html += "<td>" + componentEditInput(row, "manufacturing_memo", row.manufacturing_memo || "") + "</td>";
-      html += "<td>" + componentEditInput(row, "component_interchange_code", row.interchange_code || row.component_interchange_code || "") + "</td>";
-      html += "<td>" + componentEditInput(row, "effective_start", row.effective_start || "") + "</td>";
-      html += "<td>" + componentEditInput(row, "effective_end", row.effective_end || "") + "</td>";
       html += "<td><div class='component-edit-actions'><button class='btn-sm-edit' data-component-save='" + esc(String(row.id)) + "'>" + t("component_save") + "</button><button class='btn-sm-edit production-action-secondary' data-component-cancel='1'>" + t("component_cancel") + "</button></div></td>";
     } else {
       html += "<td><div class='component-pn'>" + esc(row.component_manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.component_manufacturer || "") + "</div></td>";
       html += "<td><div class='component-pn'>" + esc(row.component_genuine_part_number || "-") + "</div></td>";
       html += "<td>" + esc(row.component_name || row.component_part_name || "-") + "<div class='component-sub'>" + esc(componentUsageTargetLabel(row)) + "</div></td>";
-      html += "<td>" + esc(row.component_position || row.source_code || "-") + "</td>";
-      html += "<td>" + esc(row.quantity || "-") + "</td>";
-      html += "<td>" + esc(formatYen(row.unit_price_jpy)) + "</td>";
-      html += "<td>" + esc(row.replacement_rate == null || row.replacement_rate === "" ? "-" : row.replacement_rate) + "</td>";
-      html += "<td>" + esc(row.manufacturing_memo || "-") + "</td>";
-      html += "<td>" + esc(formatComponentInterchange(row)) + "</td>";
-      html += "<td>" + esc(row.effective_start || row.start_period || "-") + "</td>";
-      html += "<td>" + esc(row.effective_end || row.end_period || "-") + "</td>";
+      if (catalogMode) {
+        html += "<td>" + esc(row.component_position || row.source_code || "-") + "</td>";
+        html += "<td>" + esc(row.quantity || "-") + "</td>";
+        html += "<td>" + esc(formatYen(row.unit_price_jpy)) + "</td>";
+        html += "<td>" + esc(formatComponentInterchange(row)) + "</td>";
+        html += "<td>" + esc(row.effective_start || row.start_period || "-") + "</td>";
+        html += "<td>" + esc(row.effective_end || row.end_period || "-") + "</td>";
+      } else {
+        html += "<td>" + esc(row.quantity || "-") + "</td>";
+        html += "<td>" + esc(formatYen(row.unit_price_jpy)) + "</td>";
+        html += "<td>" + esc(formatComponentInterchange(row)) + "</td>";
+        html += "<td>" + esc(row.procurement_category || "-") + "</td>";
+        html += "<td>" + esc(row.replacement_rate == null || row.replacement_rate === "" ? "-" : row.replacement_rate) + "</td>";
+        html += "<td>" + esc(row.manufacturing_memo || "-") + "</td>";
+      }
       if (hasActions) {
         html += "<td><div class='component-edit-actions'>";
         html += catalogLocked ? "<span class='component-sub'>" + t("component_catalog") + "</span>" : "<button class='btn-sm-edit' data-component-edit='" + esc(String(row.id)) + "'>" + t("component_edit") + "</button>";
@@ -14538,7 +14578,7 @@ async function loadAssemblyComponentsForCurrent() {
   var mfr = String((currentProduct && currentProduct.manufacturer) || "").toUpperCase();
   var normalizedMfrPnKeys = componentAssyLookupKeys(currentProduct);
   wrap.innerHTML = "<div class='component-empty'>" + t("loading") + "</div>";
-  var selectColumns = "id, dkd_component_id, dkd_shohin_id, product_kind, product_variant_id, assy_manufacturer, assy_manufacturer_part_number, normalized_assy_manufacturer_part_number, assy_genuine_part_number, normalized_assy_genuine_part_number, component_manufacturer_part_number, component_genuine_part_number, component_name, quantity, unit_price_jpy, replacement_rate, manufacturing_memo, interchange_code, effective_start, effective_end, component_position, component_manufacturer, component_part_name, source_code, is_catalog_evidence";
+  var selectColumns = "id, dkd_component_id, dkd_shohin_id, product_kind, product_variant_id, assy_manufacturer, assy_manufacturer_part_number, normalized_assy_manufacturer_part_number, assy_genuine_part_number, normalized_assy_genuine_part_number, component_manufacturer_part_number, component_genuine_part_number, component_name, quantity, unit_price_jpy, replacement_rate, procurement_category, manufacturing_memo, interchange_code, effective_start, effective_end, component_position, component_manufacturer, component_part_name, source_code, is_catalog_evidence";
   var query = sb.from("assembly_component_usage_details")
     .select(selectColumns)
     .order("component_position", { ascending: true, nullsFirst: false })
