@@ -1186,7 +1186,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.305</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.306</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1215,7 +1215,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.305</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.306</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1245,7 +1245,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.305</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.306</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -4786,7 +4786,7 @@ var productionImages  = [];
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.305";
+var APP_VERSION       = "v1.1.306";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -6057,13 +6057,21 @@ function resetProductionSearchView() {
   if (detail) detail.innerHTML = "<div class='production-detail-empty'><div style='font-size:34px'>&#x1F3ED;</div><div>" + t("production_select_hint") + "</div></div>";
 }
 
-function productionStatusClass(row) {
-  return (row && (row.component_count || 0) > 0) ? "ready" : "need";
+function productionStatusClass(row, count) {
+  var n = count == null ? parseInt(row && row.component_count || 0, 10) || 0 : parseInt(count || 0, 10) || 0;
+  return n > 0 ? "ready" : "need";
 }
 
-function productionStatusLabel(row) {
+function productionStatusLabel(row, count) {
   if (!row) return "-";
-  return (row.component_count || 0) > 0 ? "\uD83E\uDDE9 " + t("production_parts_registered") : t("production_parts_unregistered");
+  var n = count == null ? parseInt(row.component_count || 0, 10) || 0 : parseInt(count || 0, 10) || 0;
+  return n > 0 ? "\uD83E\uDDE9 " + t("production_parts_registered") : t("production_parts_unregistered");
+}
+
+function productionComponentBadgeLabel(row, count) {
+  if (!row) return "-";
+  var n = count == null ? parseInt(row.component_count || 0, 10) || 0 : parseInt(count || 0, 10) || 0;
+  return "\uD83E\uDDE9 " + String(n);
 }
 
 function productionCategoryLabel(row) {
@@ -6414,7 +6422,6 @@ function renderProductionList() {
   }
   list.innerHTML = productionFilteredRows.map(function(row, i) {
     var selected = currentProductionRow && productDkdId(currentProductionRow) === productDkdId(row) ? " selected" : "";
-    var cls = productionStatusClass(row);
     var inst = productionInstructionFor(row);
     var title = row.genuine_part_number || row.manufacturer_part_number || "-";
     var kindSummary = productKindSummaryForProduct(row);
@@ -6423,6 +6430,7 @@ function renderProductionList() {
     var hasSL = productHasSlPart(row, slNums);
     var hasKikan = hasProductKikanCompatible(row);
     var componentCount = canSeeComponentInfo() ? productComponentCount(row) : 0;
+    var cls = productionStatusClass(row, componentCount);
     var imageCount = getProductImageCount(row);
     var rankHtml = inst ? "<div class='production-rank'>#" + esc(inst.priority_rank || "-") + "</div>" : "<div></div>";
     var meta = [
@@ -6433,7 +6441,7 @@ function renderProductionList() {
       productKindLabel("aftermarket_new") + " " + productionProductKindStockQty(row, "aftermarket_new")
     ].join(" / ");
     return "<div class='production-card" + selected + "' data-production-index='" + i + "'>" +
-      "<div class='production-card-top'>" + rankHtml + "<div class='production-status " + cls + "'>" + esc(productionStatusLabel(row)) + "</div></div>" +
+      "<div class='production-card-top'>" + rankHtml + "<div class='production-status " + cls + "' title='" + esc(t("component_section")) + "'>" + esc(productionComponentBadgeLabel(row, componentCount)) + "</div></div>" +
       "<div class='production-number'>" + esc(title) + "</div>" +
       "<div class='production-label-row'>" +
         renderProductKindPills(kindSummary, { compact: true }) +
@@ -6441,7 +6449,6 @@ function renderProductionList() {
           (hasCatalogSpec ? "<span class='badge-catalog'>" + esc(t("product_kind_catalog_spec")) + "</span>" : "") +
           (hasSL ? "<span class='badge-sl'>SL</span>" : "") +
           (hasKikan ? "<span class='badge-kikan' title='" + esc(t("kikan_section")) + "'>&#x1F504;</span>" : "") +
-          (componentCount > 0 ? "<span class='badge-component' title='" + esc(t("component_section")) + "'><span class='component-icon'>&#x1F9E9;</span>" + esc(String(componentCount)) + "</span>" : "") +
           (imageCount > 0 ? "<span class='badge-img'>&#x1F4F7;" + esc(String(imageCount)) + "</span>" : "") +
         "</div>" +
       "</div>" +
@@ -6810,7 +6817,7 @@ async function renderProductionDetail(row) {
   var html = "";
   html += "<div class='production-detail-head'>";
   html += "<div class='production-head-main'><div class='production-detail-title'>" + (inst ? "#" + esc(inst.priority_rank || "-") + " " : "") + esc(title) + "</div>";
-  html += "<div class='production-detail-sub'>" + esc(productionCategoryLabel(row)) + " / DKD " + esc(row.dkd_shohin_id || "-") + " / " + esc(row.manufacturer || "-") + "</div>";
+  html += "<div class='production-detail-sub'>" + esc(productionCategoryLabel(row)) + " / " + esc(t("f_genuine_pn")) + " " + esc(row.genuine_part_number || "-") + " / " + esc(row.manufacturer || "-") + "</div>";
   html += "<div class='production-image-panel'><div class='production-image-title'>" + esc(t("production_images_section")) + "</div><div class='production-image-count' id='production-image-count'>" + esc(t("production_images_loading")) + "</div><div class='production-image-strip' id='production-image-strip'><span class='production-image-empty'>" + esc(t("production_images_loading")) + "</span></div></div></div>";
   html += "<div class='production-actions'>";
   html += "<button class='btn-sm-edit btn-component-action' id='production-open-components'><span class='component-icon'>&#x1F9E9;</span> " + esc(t("component_section")) + "</button>";
@@ -12912,7 +12919,6 @@ function render() {
     var thumb = getProductImageThumbnail(p);
     var slNums = slPartLabelsForProduct(p);
     var hasSL  = productHasSlPart(p, slNums);
-    var componentCount = canSeeComponentInfo() ? productComponentCount(p) : 0;
     var hasKikan = hasProductKikanCompatible(p);
     var kindSummary = productKindSummaryForProduct(p);
     var hasCatalogSpec = productKindSummaryHasKind(kindSummary, "catalog_spec");
@@ -12951,7 +12957,6 @@ function render() {
       +(hasCatalogSpec?"<span class='badge-catalog'>"+esc(t("product_kind_catalog_spec"))+"</span>":"")
       +(hasSL?"<span class='badge-sl'>SL</span>":"")
       +(hasKikan?"<span class='badge-kikan' title='"+esc(t("kikan_section"))+"'>&#x1F504;</span>":"")
-      +(componentCount>0?"<span class='badge-component' title='"+esc(t("component_section"))+"'><span class='component-icon'>&#x1F9E9;</span>"+esc(String(componentCount))+"</span>":"")
       +(cnt>0?"<span class='badge-img'>&#x1F4F7;"+cnt+"</span>":"")
       +"</div>";
     html += "</div></div>";
