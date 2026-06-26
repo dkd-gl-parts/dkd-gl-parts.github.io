@@ -1174,7 +1174,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.299</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.300</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1203,7 +1203,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.299</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.300</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1233,7 +1233,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.299</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.300</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1343,7 +1343,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
           <button class="btn-clear" id="production-clear-btn" data-i18n="btn_clear">クリア</button>
         </div>
         <div class="production-ranking-tools">
-          <button class="btn-sm-edit production-action-secondary" id="production-add-ranking-inline" data-i18n="btn_add_production_ranking">予定リストの追加</button>
+          <button class="btn-sm-edit production-action-secondary" id="production-add-ranking-inline" data-i18n="btn_add_production_ranking">製造リスト追加</button>
           <button class="btn-sm-edit production-action-secondary" id="production-edit-ranking-inline" data-i18n="btn_edit_selected_row">選択行修正</button>
         </div>
       </div>
@@ -2179,7 +2179,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       </select>
       <input class="mgmt-search" id="production-ranking-search" type="search" data-i18n-ph="production_ranking_search_ph">
       <button class="btn-primary" id="btn-production-ranking-search" data-i18n="btn_search">検索</button>
-      <button class="btn-primary" id="btn-add-production-ranking" data-i18n="btn_add_production_ranking">予定リストを追加</button>
+      <button class="btn-primary" id="btn-add-production-ranking" data-i18n="btn_add_production_ranking">製造リスト追加</button>
     </div>
     <div class="mgmt-count" id="production-ranking-count"></div>
     <div id="production-ranking-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
@@ -2938,7 +2938,7 @@ var TRANSLATIONS = {
     btn_add_core_list: "コアを追加",
     core_list_edit_title: "コア修正",
     btn_create_core_from_ranking: "ランキングから作成",
-    btn_add_production_ranking: "予定リストを追加",
+    btn_add_production_ranking: "製造リスト追加",
     btn_edit: "修正",
     btn_edit_part: "品番修正",
     btn_delete: "削除",
@@ -3638,7 +3638,7 @@ var TRANSLATIONS = {
     btn_add_core_list: "Add CORE",
     core_list_edit_title: "Edit CORE",
     btn_create_core_from_ranking: "Create from Ranking",
-    btn_add_production_ranking: "Add Plan",
+    btn_add_production_ranking: "Add Production List",
     btn_edit: "Edit",
     btn_edit_part: "Edit Part No.",
     btn_delete: "Delete",
@@ -4333,7 +4333,7 @@ var TRANSLATIONS = {
     btn_add_part: "添加零件",
     btn_add_core_list: "添加CORE",
     btn_create_core_from_ranking: "从排行创建",
-    btn_add_production_ranking: "添加计划",
+    btn_add_production_ranking: "添加生产清单",
     btn_edit: "修改",
     btn_delete: "删除",
     btn_save_part: "保存",
@@ -4745,7 +4745,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.299";
+var APP_VERSION       = "v1.1.300";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
