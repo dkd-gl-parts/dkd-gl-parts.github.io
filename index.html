@@ -176,7 +176,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-search { flex: 1; min-width: 160px; border: 1px solid #ddd; border-radius: 6px; padding: 6px 8px; font-size: 12px; outline: none; }
 .component-search:focus { border-color: #4f8ef7; }
 .component-note { font-size: 11px; color: #888; line-height: 1.5; }
-.component-reverse-card { width: calc(100vw - 16px); max-width: 1320px; margin: 8px; padding: 20px; }
+.form-card.component-reverse-card { width: min(1320px, calc(100vw - 16px)); max-width: calc(100vw - 16px); margin: 8px; padding: 20px; }
 .component-reverse-help { color: #667085; font-size: 12px; line-height: 1.6; margin: 0 0 10px; }
 .component-reverse-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; align-items: end; }
 .component-reverse-field label { display: block; color: #667085; font-size: 11px; margin-bottom: 4px; }
@@ -186,15 +186,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-reverse-field select:focus { border-color: #4f8ef7; }
 .component-reverse-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; margin-top: 10px; }
 .component-reverse-summary { color: #667085; font-size: 12px; min-height: 18px; margin-top: 8px; }
-.component-reverse-result { max-height: 56vh; overflow: auto; margin-top: 10px; border: 1px solid #eef1f5; border-radius: 8px; }
+.component-reverse-result { max-height: 56vh; overflow-y: auto; overflow-x: hidden; margin-top: 10px; border: 1px solid #eef1f5; border-radius: 8px; }
+.component-reverse-list { display: grid; gap: 0; }
+.component-reverse-row { display: grid; grid-template-columns: minmax(190px, 1fr) minmax(250px, 1.25fr) minmax(230px, .9fr) auto; gap: 12px; align-items: start; padding: 10px 12px; border-bottom: 1px solid #edf0f5; background: #fff; }
+.component-reverse-row:nth-child(even) { background: #fbfcfe; }
+.component-reverse-row:last-child { border-bottom: none; }
+.component-reverse-label { color: #667085; font-size: 10px; font-weight: 800; margin-bottom: 3px; }
+.component-reverse-main { color: #1a1a2e; font-size: 12px; font-weight: 800; line-height: 1.45; overflow-wrap: anywhere; }
+.component-reverse-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; }
+.component-reverse-meta-item { min-width: 0; }
 .component-reverse-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: auto; }
 .component-reverse-table th { position: sticky; top: 0; z-index: 1; background: #f5f7fa; color: #555; font-weight: 700; padding: 7px 8px; text-align: left; border-bottom: 2px solid #e0e0e0; white-space: nowrap; }
 .component-reverse-table td { padding: 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
 .component-reverse-table tr:last-child td { border-bottom: none; }
-.component-reverse-assy { color: #1a4f9f; font-weight: 800; font-family: monospace; white-space: nowrap; }
+.component-reverse-assy { color: #1a4f9f; font-weight: 800; font-family: monospace; white-space: normal; overflow-wrap: anywhere; }
 .component-reverse-sub { color: #9aa4b2; font-size: 11px; line-height: 1.35; margin-top: 2px; }
-.component-reverse-part { font-weight: 700; color: #1a1a2e; }
-.component-reverse-nowrap { white-space: nowrap; }
+.component-reverse-part { font-weight: 800; color: #1a1a2e; overflow-wrap: anywhere; }
+.component-reverse-nowrap { white-space: normal; overflow-wrap: anywhere; }
 .component-compat-help { margin: 0 0 10px; padding: 8px 10px; border: 1px solid #dbe7f8; border-radius: 6px; background: #f7fbff; color: #334155; font-size: 11px; line-height: 1.6; }
 .component-compat-help strong { color: #1a1a2e; font-weight: 700; }
 .component-target-panel { margin: 0 0 12px; padding: 12px; border: 1px solid #dbe7f8; border-radius: 8px; background: #f7fbff; }
@@ -231,8 +239,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-input-warning.show { display: block; }
 .component-input-warning.error { background: #fff7f7; border-color: #f2b5b5; color: #b42318; }
 .component-add-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+@media(max-width:1100px){ .component-reverse-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .component-reverse-row .component-reverse-action { justify-self: start; } }
 @media(max-width:900px){ .component-add-grid, .component-reverse-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media(max-width:560px){ .component-add-grid, .component-target-controls, .component-target-summary, .component-reverse-grid { grid-template-columns: 1fr; } .component-target-head { align-items: flex-start; flex-direction: column; } .component-reverse-result { max-height: 58vh; } }
+@media(max-width:560px){ .component-add-grid, .component-target-controls, .component-target-summary, .component-reverse-grid, .component-reverse-row { grid-template-columns: 1fr; } .component-target-head { align-items: flex-start; flex-direction: column; } .component-reverse-result { max-height: 58vh; } }
 .component-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 12px; }
 .component-table th { background: #f5f7fa; color: #555; font-weight: 600; padding: 6px 8px; text-align: left; border-bottom: 2px solid #e0e0e0; }
 .component-table td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
@@ -1205,7 +1214,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.311</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.312</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1234,7 +1243,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.311</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.312</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1264,7 +1273,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.311</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.312</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -4892,7 +4901,7 @@ var productionImages  = [];
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.311";
+var APP_VERSION       = "v1.1.312";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -14066,36 +14075,32 @@ function renderComponentReverseLookupRows(rows) {
     result.innerHTML = "<div class='component-empty'>" + esc(t("component_reverse_no_results")) + "</div>";
     return;
   }
-  var html = "<table class='component-reverse-table'>";
-  html += "<tr>";
-  html += "<th>" + esc(t("f_mfr_assy_pn")) + "</th>";
-  html += "<th>" + esc(t("f_genuine_assy_pn")) + "</th>";
-  html += "<th>" + esc(t("f_manufacturer")) + "</th>";
-  html += "<th>" + esc(t("product_kind_section")) + "</th>";
-  html += "<th>" + esc(t("component_reverse_component")) + "</th>";
-  html += "<th>" + esc(t("component_position")) + "</th>";
-  html += "<th>" + esc(t("component_interchange")) + "</th>";
-  html += "<th>" + esc(t("component_start_period")) + "</th>";
-  html += "<th>" + esc(t("component_end_period")) + "</th>";
-  html += "<th></th>";
-  html += "</tr>";
+  var html = "<div class='component-reverse-list'>";
   rows.forEach(function(row) {
-    html += "<tr>";
-    html += "<td><div class='component-reverse-assy'>" + esc(row.assy_manufacturer_part_number || "-") + "</div></td>";
-    html += "<td><div class='component-reverse-assy'>" + esc(row.assy_genuine_part_number || "-") + "</div></td>";
-    html += "<td class='component-reverse-nowrap'>" + esc(row.assy_manufacturer || "-") + "</td>";
-    html += "<td class='component-reverse-nowrap'>" + esc(componentReverseKindLabel(row)) + "</td>";
-    html += "<td><div class='component-reverse-part'>" + esc(row.component_name || row.component_part_name || "-") + "</div>";
-    html += "<div class='component-reverse-sub'>" + esc(row.component_manufacturer_part_number || "-") + " / " + esc(row.component_genuine_part_number || "-") + "</div>";
-    html += "<div class='component-reverse-sub'>" + esc(row.component_manufacturer || "") + "</div></td>";
-    html += "<td class='component-reverse-nowrap'>" + esc(row.component_position || row.source_code || "-") + "</td>";
-    html += "<td class='component-reverse-nowrap'>" + esc(formatComponentInterchange(row)) + "</td>";
-    html += "<td class='component-reverse-nowrap'>" + esc(row.effective_start || row.start_period || "-") + "</td>";
-    html += "<td class='component-reverse-nowrap'>" + esc(row.effective_end || row.end_period || "-") + "</td>";
-    html += "<td class='component-reverse-nowrap'><button class='btn-sm-edit production-action-secondary' data-component-reverse-open-assy='" + esc(String(row.dkd_shohin_id || "")) + "'>" + esc(t("component_reverse_open_assy")) + "</button></td>";
-    html += "</tr>";
+    html += "<div class='component-reverse-row'>";
+    html += "<div>";
+    html += "<div class='component-reverse-label'>" + esc(t("f_mfr_assy_pn")) + "</div>";
+    html += "<div class='component-reverse-assy'>" + esc(row.assy_manufacturer_part_number || "-") + "</div>";
+    html += "<div class='component-reverse-sub'>" + esc(t("f_genuine_assy_pn")) + ": " + esc(row.assy_genuine_part_number || "-") + "</div>";
+    html += "<div class='component-reverse-sub'>" + esc(t("f_manufacturer")) + ": " + esc(row.assy_manufacturer || "-") + " / " + esc(t("product_kind_section")) + ": " + esc(componentReverseKindLabel(row)) + "</div>";
+    html += "</div>";
+    html += "<div>";
+    html += "<div class='component-reverse-label'>" + esc(t("component_reverse_component")) + "</div>";
+    html += "<div class='component-reverse-part'>" + esc(row.component_name || row.component_part_name || "-") + "</div>";
+    html += "<div class='component-reverse-sub'>" + esc(t("f_mfr_pn")) + ": " + esc(row.component_manufacturer_part_number || "-") + "</div>";
+    html += "<div class='component-reverse-sub'>" + esc(t("f_genuine_pn")) + ": " + esc(row.component_genuine_part_number || "-") + "</div>";
+    html += "<div class='component-reverse-sub'>" + esc(row.component_manufacturer || "") + "</div>";
+    html += "</div>";
+    html += "<div class='component-reverse-meta'>";
+    html += "<div class='component-reverse-meta-item'><div class='component-reverse-label'>" + esc(t("component_position")) + "</div><div class='component-reverse-main'>" + esc(row.component_position || row.source_code || "-") + "</div></div>";
+    html += "<div class='component-reverse-meta-item'><div class='component-reverse-label'>" + esc(t("component_interchange")) + "</div><div class='component-reverse-main'>" + esc(formatComponentInterchange(row)) + "</div></div>";
+    html += "<div class='component-reverse-meta-item'><div class='component-reverse-label'>" + esc(t("component_start_period")) + "</div><div class='component-reverse-main'>" + esc(row.effective_start || row.start_period || "-") + "</div></div>";
+    html += "<div class='component-reverse-meta-item'><div class='component-reverse-label'>" + esc(t("component_end_period")) + "</div><div class='component-reverse-main'>" + esc(row.effective_end || row.end_period || "-") + "</div></div>";
+    html += "</div>";
+    html += "<div class='component-reverse-action'><button class='btn-sm-edit production-action-secondary' data-component-reverse-open-assy='" + esc(String(row.dkd_shohin_id || "")) + "'>" + esc(t("component_reverse_open_assy")) + "</button></div>";
+    html += "</div>";
   });
-  html += "</table>";
+  html += "</div>";
   result.innerHTML = html;
   result.querySelectorAll("[data-component-reverse-open-assy]").forEach(function(btn) {
     btn.addEventListener("click", function() {
