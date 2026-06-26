@@ -847,6 +847,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .panel-footer { flex-shrink: 0; padding: 8px 10px 16px; border-top: 1px solid #eee; background: #fafafa; width: 180px; flex-shrink: 0; }
 .upload-btn-small { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; background: #4f8ef7; color: #fff; border: none; border-radius: 8px; padding: 8px 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
 .upload-btn-small:active { background: #3a7ae0; }
+.image-actions-open-btn { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; background: #4f8ef7; color: #fff; border: none; border-radius: 8px; padding: 8px 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.image-actions-open-btn:active { background: #3a7ae0; }
+.image-actions-list { display: grid; gap: 10px; margin-top: 10px; }
+.image-action-btn { width: 100%; min-height: 42px; border-radius: 8px; border: 1px solid #d8e2f1; background: #fff; color: #1f2a44; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.image-action-btn.primary { background: #4f8ef7; border-color: #4f8ef7; color: #fff; }
+.image-action-btn.danger { border-color: #f0b8b8; color: #d33; }
+.image-action-btn:active { transform: translateY(1px); }
 .image-delete-open-btn { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; background: #fff; color: #d33; border: 1px solid #f0b8b8; border-radius: 8px; padding: 8px 6px; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 12px; }
 .image-delete-open-btn:active { background: #fff3f3; }
 .image-delete-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 14px; max-height: 58vh; overflow-y: auto; padding: 4px 2px; }
@@ -926,6 +933,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-status.ready { background: #e9f8ef; color: #247a42; }
 .production-status.need { background: #fff4e5; color: #aa6512; }
 .production-number { font-size: 13px; font-weight: 700; color: #111a33; word-break: break-all; }
+.production-sub-number { font-size: 11px; color: #64748b; line-height: 1.25; word-break: break-all; }
 .production-meta { font-size: 11px; color: #7c8492; line-height: 1.4; }
 .production-label-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .production-label-row .product-kind-list { margin-top: 0; }
@@ -1214,7 +1222,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.312</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.314</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1243,7 +1251,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.312</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.314</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1273,7 +1281,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.312</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.314</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1336,13 +1344,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
                 </div>
               </div>
               <div id="panel-footer" style="display:none;margin-top:auto;padding-top:8px;border-top:1px solid #eee">
-                <label class="upload-btn-small" id="upload-label">
-                  &#x1F4F7; <span data-i18n="btn_upload">写真を追加</span>
-                  <input class="upload-input" id="upload-input" type="file" accept="image/*" multiple>
-                </label>
-                <button class="image-delete-open-btn" id="btn-open-image-delete" type="button">
-                  &#x1F5D1; <span data-i18n="btn_delete_images">写真を削除</span>
+                <button class="image-actions-open-btn" id="btn-open-image-actions" type="button">
+                  &#x1F4F7; <span data-i18n="image_actions_title">画像操作</span>
                 </button>
+                <input class="upload-input" id="upload-input" type="file" accept="image/*" multiple>
               </div>
             </div>
           </div>
@@ -2627,6 +2632,26 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 <!-- フルスクリーンギャラリー -->
 
 <!-- 写真削除画面 -->
+<div class="form-overlay" id="image-actions-overlay">
+  <div class="form-card" style="max-width:420px">
+    <h3 data-i18n="image_actions_title">画像操作</h3>
+    <div class="image-actions-list">
+      <button class="image-action-btn primary" id="btn-image-action-upload" type="button">
+        &#x1F4F7; <span data-i18n="btn_upload">写真を追加</span>
+      </button>
+      <button class="image-action-btn" id="btn-copy-production-images-to-sales" type="button">
+        &#x1F504; <span data-i18n="sales_copy_production_images">製造管理からコピー</span>
+      </button>
+      <button class="image-action-btn danger" id="btn-image-action-delete" type="button">
+        &#x1F5D1; <span data-i18n="btn_delete_images">写真を削除</span>
+      </button>
+    </div>
+    <div class="form-footer">
+      <button class="btn-cancel" id="btn-image-actions-cancel" data-i18n="btn_back">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <div class="form-overlay" id="image-delete-overlay">
   <div class="form-card">
     <h3 data-i18n="image_delete_title">写真の削除</h3>
@@ -2850,7 +2875,12 @@ var TRANSLATIONS = {
     finished_label_history_empty: "この品番の発行履歴はありません。",
     screen_product_kind_stock_title: "在庫管理",
     img_section: "画像",
+    image_actions_title: "画像操作",
     btn_upload: "写真を追加する",
+    sales_copy_production_images: "製造管理からコピー",
+    sales_copy_production_images_done: "{n} 枚の製造画像を販売管理へコピーしました",
+    sales_copy_production_images_empty: "コピーできる製造画像はありません",
+    sales_copy_production_images_failed: "製造画像のコピーに失敗しました",
     core_camera_count: "カメラ計数",
     core_camera_ai: "カメラAI",
     core_photo_add_title: "コア写真追加",
@@ -3575,7 +3605,12 @@ var TRANSLATIONS = {
     finished_label_history_empty: "No issue history for this product.",
     screen_product_kind_stock_title: "Stock Management",
     img_section: "Images",
+    image_actions_title: "Image Actions",
     btn_upload: "Add Photos",
+    sales_copy_production_images: "Copy from Production",
+    sales_copy_production_images_done: "Copied {n} production images to sales",
+    sales_copy_production_images_empty: "No production images to copy",
+    sales_copy_production_images_failed: "Failed to copy production images",
     core_camera_count: "Camera Count",
     core_camera_ai: "Camera AI",
     core_photo_add_title: "Add CORE Photos",
@@ -4307,7 +4342,12 @@ var TRANSLATIONS = {
     finished_label_history_empty: "此品号没有发行历史。",
     screen_product_kind_stock_title: "库存管理",
     img_section: "图片",
+    image_actions_title: "图片操作",
     btn_upload: "添加照片",
+    sales_copy_production_images: "从生产管理复制",
+    sales_copy_production_images_done: "已复制 {n} 张生产图片到销售管理",
+    sales_copy_production_images_empty: "没有可复制的生产图片",
+    sales_copy_production_images_failed: "生产图片复制失败",
     core_camera_count: "相机计数",
     core_camera_ai: "相机AI",
     core_photo_add_title: "添加CORE照片",
@@ -4901,7 +4941,7 @@ var productionImages  = [];
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.312";
+var APP_VERSION       = "v1.1.314";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -6538,7 +6578,8 @@ function renderProductionList() {
   list.innerHTML = productionFilteredRows.map(function(row, i) {
     var selected = currentProductionRow && productDkdId(currentProductionRow) === productDkdId(row) ? " selected" : "";
     var inst = productionInstructionFor(row);
-    var title = row.genuine_part_number || row.manufacturer_part_number || "-";
+    var title = row.manufacturer_part_number || row.genuine_part_number || row.genuine_part_number_2 || "-";
+    var subGenuinePartNumber = row.genuine_part_number || row.genuine_part_number_2 || "-";
     var kindSummary = productKindSummaryForProduct(row);
     var hasCatalogSpec = productKindSummaryHasKind(kindSummary, "catalog_spec");
     var slNums = slPartLabelsForProduct(row);
@@ -6549,7 +6590,6 @@ function renderProductionList() {
     var imageCount = getProductImageCount(row);
     var rankHtml = inst ? "<div class='production-rank'>#" + esc(inst.priority_rank || "-") + "</div>" : "<div></div>";
     var meta = [
-      row.manufacturer_part_number || "-",
       row.manufacturer || "-",
       productionCategoryLabel(row),
       productKindLabel("rebuilt") + " " + productionProductKindStockQty(row, "rebuilt"),
@@ -6558,6 +6598,7 @@ function renderProductionList() {
     return "<div class='production-card" + selected + "' data-production-index='" + i + "'>" +
       "<div class='production-card-top'>" + rankHtml + "<div class='production-status " + cls + "' title='" + esc(t("component_section")) + "'>" + esc(productionComponentBadgeLabel(row, componentCount)) + "</div></div>" +
       "<div class='production-number'>" + esc(title) + "</div>" +
+      "<div class='production-sub-number'>純正 " + esc(subGenuinePartNumber) + "</div>" +
       "<div class='production-label-row'>" +
         renderProductKindPills(kindSummary, { compact: true }) +
         "<div class='production-badges'>" +
@@ -17368,6 +17409,70 @@ async function copySalesImagesToProduction() {
   }
 }
 
+async function copyProductionImagesToSales() {
+  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!currentProduct) return;
+  var dkdId = parseInt(productDkdId(currentProduct), 10);
+  if (isNaN(dkdId)) return;
+  var targetKind = selectedProductKind();
+  if (!productKindStockKindAllowed(targetKind)) {
+    alert(t("product_kind_current"));
+    return;
+  }
+  var btn = document.getElementById("btn-copy-production-images-to-sales");
+  if (btn) btn.disabled = true;
+  try {
+    var productionR = await fetchCoreProductImagesForContext(dkdId, "rebuilt", "production");
+    if (productionR.error) throw productionR.error;
+    var salesR = await fetchCoreProductImagesForContext(dkdId, targetKind, "sales");
+    if (salesR.error) throw salesR.error;
+    var existing = {};
+    (salesR.data || []).forEach(function(img) {
+      if (img.image_url) existing[String(img.image_url)] = true;
+    });
+    var sources = (productionR.data || []).filter(function(img) {
+      return img && img.image_url && !existing[String(img.image_url)];
+    });
+    if (!sources.length) {
+      alert(t("sales_copy_production_images_empty"));
+      return;
+    }
+    var targetSlPartId = currentSlPartIds && currentSlPartIds.length ? currentSlPartIds[0] : null;
+    var variantId = selectedProductVariantId();
+    var copied = 0;
+    for (var i = 0; i < sources.length; i++) {
+      var src = sources[i];
+      var payload = {
+        dkd_shohin_id: dkdId,
+        product_kind: targetKind,
+        product_variant_id: variantId,
+        sl_part_id: targetSlPartId,
+        image_url: src.image_url,
+        storage_path: src.storage_path || null,
+        image_origin: "sales",
+        show_in_sales: true,
+        show_in_production: false
+      };
+      var r = await insertCoreProductImageRow(payload);
+      if (r.error) throw r.error;
+      copied++;
+      existing[String(src.image_url)] = true;
+    }
+    await loadImages(null, detailSecondaryRequestSeq);
+    if (currentProduct && targetKind === "rebuilt") {
+      setProductImageCache(currentProduct, currentImages.length, currentImages.length > 0 ? currentImages[0].image_url : "");
+    }
+    render();
+    closeImageActionsDialog();
+    alert(tf("sales_copy_production_images_done", { n: copied }));
+  } catch(e) {
+    console.warn("copy production images to sales failed", e);
+    alert(t("sales_copy_production_images_failed") + ": " + (e && e.message ? e.message : String(e)));
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
 async function loadProductionImagesForRow(row, seq) {
   var countEl = document.getElementById("production-image-count");
   var strip = document.getElementById("production-image-strip");
@@ -17475,6 +17580,24 @@ function renderImages() {
   grid.innerHTML = html;
 }
 
+function openImageActionsDialog() {
+  if (!canEdit()) { alert(t("err_perm")); return; }
+  document.getElementById("image-actions-overlay").classList.add("show");
+}
+
+function closeImageActionsDialog() {
+  document.getElementById("image-actions-overlay").classList.remove("show");
+}
+
+function triggerSalesImageUpload() {
+  if (!canEdit()) { alert(t("err_perm")); return; }
+  var input = document.getElementById("upload-input");
+  if (!input) return;
+  input.dataset.uploadContext = "sales";
+  closeImageActionsDialog();
+  input.click();
+}
+
 function openImageDeleteDialog() {
   if (!canEdit()) { alert(t("err_perm")); return; }
   renderImageDeleteDialog();
@@ -17530,7 +17653,7 @@ async function uploadImages(event) {
   var targetSlPartId = (!isProductionUpload && currentSlPartIds && currentSlPartIds.length) ? currentSlPartIds[0] : null;
   var variantId = isProductionUpload ? null : selectedProductVariantId();
 
-  var label = document.getElementById("upload-label");
+  var label = document.getElementById("upload-label") || document.getElementById("btn-image-action-upload");
   if (label) label.classList.add("busy");
 
   for (var i=0;i<files.length;i++) {
@@ -17580,7 +17703,18 @@ async function deleteImage(imgId, imageUrl) {
   if (!confirm(t("del_confirm"))) return;
   var target = currentImages.find(function(img) { return String(img.id) === String(imgId); }) || {};
   var path = target.storage_path || imageUrl.split("/product-images/")[1];
-  if (path) await sb.storage.from("product-images").remove([path]);
+  var hasOtherReference = false;
+  if (imageUrl) {
+    var imageRef = await sb.from("core_product_images").select("id").eq("image_url", imageUrl).neq("id", imgId).limit(1);
+    hasOtherReference = !!(!imageRef.error && (imageRef.data || []).length);
+    if (imageRef.error) hasOtherReference = true;
+  }
+  if (!hasOtherReference && path) {
+    var pathRef = await sb.from("core_product_images").select("id").eq("storage_path", path).neq("id", imgId).limit(1);
+    hasOtherReference = !!(!pathRef.error && (pathRef.data || []).length);
+    if (pathRef.error) hasOtherReference = true;
+  }
+  if (path && !hasOtherReference) await sb.storage.from("product-images").remove([path]);
   await sb.from("core_product_images").delete().eq("id", imgId);
   currentImages = currentImages.filter(function(img){return img.id!==imgId;});
   if (currentProduct && selectedProductKind() === "rebuilt") {
@@ -18500,8 +18634,16 @@ document.getElementById("panel-close-btn").addEventListener("click", closePanel)
 document.getElementById("panel").addEventListener("click", function(e){
   var img=e.target.closest("img[data-index]"); if(img) openFullscreen(parseInt(img.dataset.index,10));
 });
+document.getElementById("btn-open-image-actions").addEventListener("click", openImageActionsDialog);
+document.getElementById("btn-image-actions-cancel").addEventListener("click", closeImageActionsDialog);
+document.getElementById("image-actions-overlay").addEventListener("click", function(e){ if(e.target===this) closeImageActionsDialog(); });
+document.getElementById("btn-image-action-upload").addEventListener("click", triggerSalesImageUpload);
+document.getElementById("btn-copy-production-images-to-sales").addEventListener("click", copyProductionImagesToSales);
+document.getElementById("btn-image-action-delete").addEventListener("click", function(){
+  closeImageActionsDialog();
+  openImageDeleteDialog();
+});
 document.getElementById("upload-input").addEventListener("change", uploadImages);
-document.getElementById("btn-open-image-delete").addEventListener("click", openImageDeleteDialog);
 document.getElementById("btn-image-delete-cancel").addEventListener("click", closeImageDeleteDialog);
 document.getElementById("image-delete-overlay").addEventListener("click", function(e){ if(e.target===this) closeImageDeleteDialog(); });
 document.getElementById("image-delete-list").addEventListener("click", function(e){
