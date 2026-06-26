@@ -932,6 +932,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-status { font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
 .production-status.ready { background: #e9f8ef; color: #247a42; }
 .production-status.need { background: #fff4e5; color: #aa6512; }
+.production-component-counts { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+.production-component-pill { display: inline-flex; align-items: center; gap: 3px; border-radius: 999px; border: 1px solid transparent; padding: 2px 7px; font-size: 11px; font-weight: 800; line-height: 1.25; white-space: nowrap; }
+.production-component-pill.rebuilt { background: #edf7ed; color: #1f7a35; border-color: #cbe9cf; }
+.production-component-pill.aftermarket_new { background: #eaf2ff; color: #1a5fb4; border-color: #c9ddff; }
 .production-number { font-size: 13px; font-weight: 700; color: #111a33; word-break: break-all; }
 .production-sub-number { font-size: 11px; color: #64748b; line-height: 1.25; word-break: break-all; }
 .production-meta { font-size: 11px; color: #7c8492; line-height: 1.4; }
@@ -1222,7 +1226,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.314</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.315</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1251,7 +1255,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.314</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.315</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1281,7 +1285,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.314</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.315</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -4915,6 +4919,7 @@ var imageThumbnailCache = {};
 var slPartsCache        = {};
 var slPresenceCache     = {};
 var componentUsageCountMap = {};
+var productionComponentKindCountMap = {};
 var coreStockQtyMap = {};
 var kikanCompatibleMap = {};
 var productVariantSummaryMap = {};
@@ -4941,7 +4946,7 @@ var productionImages  = [];
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.314";
+var APP_VERSION       = "v1.1.315";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -6202,6 +6207,7 @@ function resetProductionSearchView() {
   productionRows = [];
   productionFilteredRows = [];
   currentProductionRow = null;
+  productionComponentKindCountMap = {};
   var countEl = document.getElementById("production-count");
   var list = document.getElementById("production-list");
   var moreWrap = document.getElementById("production-load-more-wrap");
@@ -6227,6 +6233,24 @@ function productionComponentBadgeLabel(row, count) {
   if (!row) return "-";
   var n = count == null ? parseInt(row.component_count || 0, 10) || 0 : parseInt(count || 0, 10) || 0;
   return "\uD83E\uDDE9 " + String(n);
+}
+
+function productionComponentKindCount(row, kind) {
+  var key = productDkdId(row);
+  var entry = key ? productionComponentKindCountMap[key] : null;
+  if (entry && Object.prototype.hasOwnProperty.call(entry, kind)) {
+    return parseInt(entry[kind] || 0, 10) || 0;
+  }
+  if (kind === "rebuilt") return productComponentCount(row);
+  return 0;
+}
+
+function renderProductionComponentCountBadges(row) {
+  if (!canSeeComponentInfo()) return "";
+  return "<div class='production-component-counts' title='" + esc(t("component_section")) + "'>" +
+    "<span class='production-component-pill rebuilt'>" + esc(productKindLabel("rebuilt")) + " " + esc(String(productionComponentKindCount(row, "rebuilt"))) + "</span>" +
+    "<span class='production-component-pill aftermarket_new'>" + esc(productKindLabel("aftermarket_new")) + " " + esc(String(productionComponentKindCount(row, "aftermarket_new"))) + "</span>" +
+  "</div>";
 }
 
 function productionCategoryLabel(row) {
@@ -6469,6 +6493,7 @@ async function loadProductionProducts(options) {
   }
   productionRows = r.data || [];
   componentUsageCountMap = {};
+  productionComponentKindCountMap = {};
   coreStockQtyMap = {};
   productVariantSummaryMap = {};
   applyCachedSearchAuxiliaryMaps(productionRows);
@@ -6497,7 +6522,9 @@ async function loadProductionAuxiliaryData(products) {
     fetchProductSearchCardFlags(products)
   ]);
   if (auxSeq !== productionAuxRequestSeq) return;
-  componentUsageCountMap = fast[0] || {};
+  var componentCounts = fast[0] || {};
+  componentUsageCountMap = componentCounts.total || componentCounts || {};
+  productionComponentKindCountMap = componentCounts.byKind || {};
   coreStockQtyMap = fast[1] || {};
   productVariantSummaryMap = fast[2] || {};
   applyProductSearchCardFlags(fast[3] || [], products);
@@ -6585,8 +6612,6 @@ function renderProductionList() {
     var slNums = slPartLabelsForProduct(row);
     var hasSL = productHasSlPart(row, slNums);
     var hasKikan = hasProductKikanCompatible(row);
-    var componentCount = canSeeComponentInfo() ? productComponentCount(row) : 0;
-    var cls = productionStatusClass(row, componentCount);
     var imageCount = getProductImageCount(row);
     var rankHtml = inst ? "<div class='production-rank'>#" + esc(inst.priority_rank || "-") + "</div>" : "<div></div>";
     var meta = [
@@ -6596,7 +6621,7 @@ function renderProductionList() {
       productKindLabel("aftermarket_new") + " " + productionProductKindStockQty(row, "aftermarket_new")
     ].join(" / ");
     return "<div class='production-card" + selected + "' data-production-index='" + i + "'>" +
-      "<div class='production-card-top'>" + rankHtml + "<div class='production-status " + cls + "' title='" + esc(t("component_section")) + "'>" + esc(productionComponentBadgeLabel(row, componentCount)) + "</div></div>" +
+      "<div class='production-card-top'>" + rankHtml + renderProductionComponentCountBadges(row) + "</div>" +
       "<div class='production-number'>" + esc(title) + "</div>" +
       "<div class='production-sub-number'>純正 " + esc(subGenuinePartNumber) + "</div>" +
       "<div class='production-label-row'>" +
@@ -6629,29 +6654,36 @@ function productionProductKindStockQty(row, kind) {
 }
 
 async function fetchProductionPartRegistrationCountMap(products) {
-  var map = {};
+  var totalMap = {};
+  var byKindMap = {};
   var ids = (products || []).map(function(p) { return productDkdId(p); }).filter(Boolean);
   var uniqueIds = Array.from(new Set(ids.map(function(id) { return parseInt(id, 10); }))).filter(function(id) {
     return !isNaN(id);
   });
-  if (!uniqueIds.length) return map;
+  if (!uniqueIds.length) return { total: totalMap, byKind: byKindMap };
   for (var i = 0; i < uniqueIds.length; i += 200) {
     var chunk = uniqueIds.slice(i, i + 200);
     var r = await sb.from("assembly_component_usages")
-      .select("dkd_shohin_id")
+      .select("dkd_shohin_id, product_kind")
       .in("dkd_shohin_id", chunk)
-      .eq("product_kind", "rebuilt")
+      .in("product_kind", ["rebuilt", "aftermarket_new"])
       .eq("is_catalog_evidence", false);
     if (r.error) {
       console.warn("production part registration count lookup failed", r.error);
-      return map;
+      return { total: totalMap, byKind: byKindMap };
     }
     (r.data || []).forEach(function(row) {
       var key = String(row.dkd_shohin_id || "");
-      if (key) map[key] = (map[key] || 0) + 1;
+      var kind = normalizeProductKind(row.product_kind || "rebuilt");
+      if (kind !== "rebuilt" && kind !== "aftermarket_new") kind = "rebuilt";
+      if (key) {
+        totalMap[key] = (totalMap[key] || 0) + 1;
+        byKindMap[key] = byKindMap[key] || {};
+        byKindMap[key][kind] = (byKindMap[key][kind] || 0) + 1;
+      }
     });
   }
-  return map;
+  return { total: totalMap, byKind: byKindMap };
 }
 
 function sumProductionCoreEntryQty(rows) {
