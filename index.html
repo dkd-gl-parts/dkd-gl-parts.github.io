@@ -1174,7 +1174,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.300</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.301</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1203,7 +1203,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.300</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.301</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1233,7 +1233,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.300</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.301</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -2677,7 +2677,6 @@ var TRANSLATIONS = {
     production_status_need: "構成部品なし",
     production_parts_registered: "部品登録あり",
     production_parts_unregistered: "部品未登録",
-    production_open_sales: "販売管理で開く",
     production_product_section: "販売商品情報",
     production_core_section: "コア",
     production_vehicle_section: "車両情報",
@@ -3377,7 +3376,6 @@ var TRANSLATIONS = {
     production_status_need: "Needs components",
     production_parts_registered: "Parts registered",
     production_parts_unregistered: "No parts registered",
-    production_open_sales: "Open in Sales Management",
     production_product_section: "Sales Product Info",
     production_core_section: "Core",
     production_vehicle_section: "Vehicle info",
@@ -4084,7 +4082,6 @@ var TRANSLATIONS = {
     production_status_need: "无构成零件",
     production_parts_registered: "已登记零件",
     production_parts_unregistered: "未登记零件",
-    production_open_sales: "在销售管理中打开",
     production_product_section: "销售商品信息",
     production_core_section: "CORE",
     production_vehicle_section: "车辆信息",
@@ -4745,7 +4742,7 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var fsIndex           = 0;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.300";
+var APP_VERSION       = "v1.1.301";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
@@ -6687,7 +6684,6 @@ async function renderProductionDetail(row) {
   html += "<div><div class='production-detail-title'>" + (inst ? "#" + esc(inst.priority_rank || "-") + " " : "") + esc(title) + "</div>";
   html += "<div class='production-detail-sub'>" + esc(productionCategoryLabel(row)) + " / DKD " + esc(row.dkd_shohin_id || "-") + " / " + esc(row.manufacturer || "-") + "</div></div>";
   html += "<div class='production-actions'>";
-  html += "<button class='btn-sm-edit' id='production-open-sales'>" + esc(t("production_open_sales")) + "</button>";
   html += "<button class='btn-sm-edit btn-component-action' id='production-open-components'><span class='component-icon'>&#x1F9E9;</span> " + esc(t("component_section")) + "</button>";
   if (canViewFinishedLabelMgmt()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-finished-label'>" + esc(t("mi_finished_label_title")) + "</button>";
   if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-edit-core'>品番修正</button>";
@@ -6741,8 +6737,6 @@ async function renderProductionDetail(row) {
   loadCatalogVehicleSummary(el, row);
   loadProductSpecsForCurrent();
   loadProductionKikanForRow(row, seq);
-  var salesBtn = document.getElementById("production-open-sales");
-  if (salesBtn) salesBtn.addEventListener("click", openProductionSalesProduct);
   var compBtn = document.getElementById("production-open-components");
   if (compBtn) compBtn.addEventListener("click", openProductionComponents);
   var labelBtn = document.getElementById("production-open-finished-label");
@@ -6829,14 +6823,6 @@ function renderProductionWithdrawals(rows) {
     html += "<tr><td>" + esc(formatDateTime(row.created_at)) + "</td><td>" + esc(row.quantity || "-") + "</td><td>" + esc(row.reason || row.source_note || "-") + "</td></tr>";
   });
   return html + "</table>";
-}
-
-async function openProductionSalesProduct() {
-  if (!currentProductionRow) return;
-  await enterSearch();
-  var q = document.getElementById("q");
-  if (q) q.value = String(currentProductionRow.dkd_shohin_id || currentProductionRow.manufacturer_part_number || "");
-  await runProductSearch({ resetFilter: true });
 }
 
 async function openProductionComponents() {
