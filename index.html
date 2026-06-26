@@ -1186,7 +1186,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.302</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.303</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1215,7 +1215,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.302</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.303</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1245,7 +1245,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.302</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.303</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -2778,7 +2778,6 @@ var TRANSLATIONS = {
     finished_label_count: "{n} 件表示",
     finished_label_history_empty: "この品番の発行履歴はありません。",
     screen_product_kind_stock_title: "在庫管理",
-    production_source_section: "統合元",
     img_section: "画像",
     btn_upload: "写真を追加する",
     core_camera_count: "カメラ計数",
@@ -3481,7 +3480,6 @@ var TRANSLATIONS = {
     finished_label_count: "{n} rows",
     finished_label_history_empty: "No issue history for this product.",
     screen_product_kind_stock_title: "Stock Management",
-    production_source_section: "Merged sources",
     img_section: "Images",
     btn_upload: "Add Photos",
     core_camera_count: "Camera Count",
@@ -4191,7 +4189,6 @@ var TRANSLATIONS = {
     finished_label_count: "显示 {n} 条",
     finished_label_history_empty: "此品号没有发行历史。",
     screen_product_kind_stock_title: "库存管理",
-    production_source_section: "合并来源",
     img_section: "图片",
     btn_upload: "添加照片",
     core_camera_count: "相机计数",
@@ -4768,7 +4765,7 @@ var productionImages  = [];
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.302";
+var APP_VERSION       = "v1.1.303";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -6500,18 +6497,6 @@ function renderProductionCoreEntriesDisplay(rows) {
   return html + "</table>";
 }
 
-function renderProductionCoreSourcesDisplay(rows) {
-  if (!rows || !rows.length) return "";
-  var html = "<div class='production-help' style='margin-top:10px'>インポート元のコア紐づけ</div>";
-  html += "<table class='production-mini-table'><tr><th>元データ</th><th>区分</th><th>メモ</th>" + (isAdmin() ? "<th></th>" : "") + "</tr>";
-  rows.forEach(function(row) {
-    html += "<tr><td>" + esc(row.source_record_key || row.source_table || "-") + "</td><td>" + esc(row.source_link_type || "-") + "</td><td>" + esc(row.note || (row.is_catalog_evidence ? "catalog" : "-")) + "</td>";
-    if (isAdmin()) html += "<td><button class='btn-sm-edit production-action-secondary' data-core-source-edit='" + esc(String(row.id)) + "'>編集</button></td>";
-    html += "</tr>";
-  });
-  return html + "</table>";
-}
-
 function renderProductionKikanPartsList(partsList, wrap) {
   if (!wrap) return;
   partsList = partsList || [];
@@ -6604,7 +6589,7 @@ function normalizeProductionDetailLayout(root, row, detail) {
   var grid = root.querySelector(".production-grid");
   if (!grid) return;
   var normalSections = Array.prototype.slice.call(grid.querySelectorAll(":scope > .production-section:not(.production-wide)"));
-  if (normalSections.length >= 3 && !normalSections[0].querySelector("#production-withdraw-qty")) {
+  if (normalSections.length >= 3) {
     normalSections[0].remove();
   }
   normalSections = Array.prototype.slice.call(grid.querySelectorAll(":scope > .production-section:not(.production-wide)"));
@@ -6614,17 +6599,10 @@ function normalizeProductionDetailLayout(root, row, detail) {
       renderProductionCoreSummary(row, detail) +
       productionKv("コア品番", row.core_part_number) +
       productionKv("パレット", row.core_pallet_summary) +
-      productionKv("状態", productionStatusLabel(row)) +
-      productionKv("引き落とし記録", detail.withdrawalTotal ? detail.withdrawalTotal + " 個" : "-") +
-      "<div class='production-form-row'><input id='production-withdraw-qty' type='number' min='1' step='1' placeholder='数量'><input id='production-withdraw-reason' type='text' placeholder='製造予定No・理由など'><button class='btn-sm-edit' id='production-withdraw-btn'>コア引き落とし記録</button></div>" +
-      "<div class='production-help'>在庫元データは直接減算せず、製造引当の履歴として記録します。</div>";
+      productionKv("状態", productionStatusLabel(row));
   }
   if (normalSections[1]) {
     normalSections[1].innerHTML = "<h3>" + esc(t("kikan_section")) + "</h3><div id='production-kikan-wrap'><div class='production-help'>" + esc(t("loading")) + "</div></div>";
-  }
-  var wideSections = Array.prototype.slice.call(grid.querySelectorAll(":scope > .production-section.production-wide"));
-  if (wideSections[1]) {
-    wideSections[1].innerHTML = "<h3>コア引き落とし履歴</h3>" + renderProductionWithdrawals(detail.withdrawals);
   }
 }
 
@@ -6837,26 +6815,10 @@ async function renderProductionDetail(row) {
   html += productionKv("コア品番", row.core_part_number);
   html += productionKv("パレット", row.core_pallet_summary);
   html += productionKv("状態", productionStatusLabel(row));
-  html += productionKv("引き落とし記録", detail.withdrawalTotal ? detail.withdrawalTotal + " 個" : "-");
-  html += "<div class='production-form-row'><input id='production-withdraw-qty' type='number' min='1' step='1' placeholder='数量'><input id='production-withdraw-reason' type='text' placeholder='製造予定No・理由など'><button class='btn-sm-edit' id='production-withdraw-btn'>コア引き落とし記録</button></div>";
-  html += "<div class='production-help'>在庫元データは直接減算せず、製造引当の履歴として記録します。</div>";
   html += "</section>";
   html += "<section class='production-section'><h3>" + esc(t("kikan_section")) + "</h3>";
   html += "<div id='production-kikan-wrap'><div class='production-help'>" + esc(t("loading")) + "</div></div>";
   html += "</section>";
-  html += "<section class='production-section production-wide'><h3>コア引き落とし履歴</h3>";
-  html += renderProductionWithdrawals(detail.withdrawals);
-  html += "</section>";
-  if ((inst && (inst.alternate_manufacturer_part_number || inst.alternate_dkd_shohin_id || inst.merged_sources)) || row.notes_jp) {
-    html += "<section class='production-section production-wide'><h3>" + esc(t("production_source_section")) + "</h3>";
-    if (inst) {
-      html += productionKv("代替DKD商品ID", inst.alternate_dkd_shohin_id);
-      html += productionKv("代替メーカー品番", inst.alternate_manufacturer_part_number);
-      html += "<div class='production-pre'>" + esc(inst.merged_sources || "-") + "</div>";
-    }
-    if (row.notes_jp) html += "<div class='production-pre'>" + esc(row.notes_jp) + "</div>";
-    html += "</section>";
-  }
   html += "</div>";
   el.innerHTML = html;
   normalizeProductionDetailLayout(el, row, detail);
@@ -6876,13 +6838,8 @@ async function renderProductionDetail(row) {
   if (editBtn) editBtn.addEventListener("click", openProductionCoreEdit);
   var imgBtn = document.getElementById("production-add-image");
   if (imgBtn) imgBtn.addEventListener("click", openProductionImageUpload);
-  var withdrawBtn = document.getElementById("production-withdraw-btn");
-  if (withdrawBtn) withdrawBtn.addEventListener("click", recordProductionCoreWithdrawal);
   var addCoreEntryBtn = document.getElementById("production-core-entry-add");
   if (addCoreEntryBtn) addCoreEntryBtn.addEventListener("click", addProductionCoreEntry);
-  el.querySelectorAll("[data-core-source-edit]").forEach(function(btn) {
-    btn.addEventListener("click", function() { editProductionCoreSourceNote(btn.dataset.coreSourceEdit); });
-  });
   el.querySelectorAll("[data-core-entry-delete]").forEach(function(btn) {
     btn.addEventListener("click", function() { deleteProductionCoreEntry(btn.dataset.coreEntryDelete); });
   });
@@ -6890,39 +6847,15 @@ async function renderProductionDetail(row) {
 
 async function loadProductionDetailData(row) {
   var dkdId = row && row.dkd_shohin_id;
-  var result = { coreSources: [], coreEntries: [], withdrawals: [], withdrawalTotal: 0 };
+  var result = { coreEntries: [] };
   if (!dkdId) return result;
-  var sourceR = await sb.from("core_product_sources")
-    .select("id, source_table, source_record_key, source_link_type, is_catalog_evidence, note, created_at")
-    .eq("dkd_shohin_id", dkdId)
-    .order("created_at", { ascending: false })
-    .limit(50);
-  result.coreSources = sourceR.data || [];
   var entryR = await sb.from("production_core_list_entries")
     .select("id, core_part_number, quantity, location, note, created_at")
     .eq("dkd_shohin_id", dkdId)
     .order("created_at", { ascending: false })
     .limit(100);
   result.coreEntries = entryR.data || [];
-  var wR = await sb.from("production_core_withdrawals")
-    .select("id, quantity, reason, source_note, created_at")
-    .eq("dkd_shohin_id", dkdId)
-    .order("created_at", { ascending: false })
-    .limit(30);
-  result.withdrawals = wR.data || [];
-  result.withdrawalTotal = result.withdrawals.reduce(function(sum, row){ return sum + (parseInt(row.quantity || 0, 10) || 0); }, 0);
   return result;
-}
-
-function renderProductionCoreSources(rows) {
-  if (!rows || !rows.length) return "<div class='production-help'>コアリストの紐づけがありません。</div>";
-  var html = "<table class='production-mini-table'><tr><th>元</th><th>区分</th><th>メモ</th>" + (isAdmin() ? "<th></th>" : "") + "</tr>";
-  rows.forEach(function(row) {
-    html += "<tr><td>" + esc(row.source_record_key || row.source_table || "-") + "</td><td>" + esc(row.source_link_type || "-") + "</td><td>" + esc(row.note || (row.is_catalog_evidence ? "catalog" : "-")) + "</td>";
-    if (isAdmin()) html += "<td><button class='btn-sm-edit production-action-secondary' data-core-source-edit='" + esc(String(row.id)) + "'>編集</button></td>";
-    html += "</tr>";
-  });
-  return html + "</table>";
 }
 
 function renderProductionCoreEntries(rows) {
@@ -6945,15 +6878,6 @@ function renderProductionComponents(rows, fallbackSummary) {
     return html + "</table>";
   }
   return "<div class='production-pre'>" + esc(fallbackSummary || "構成部品未登録") + "</div>";
-}
-
-function renderProductionWithdrawals(rows) {
-  if (!rows || !rows.length) return "<div class='production-help'>まだコア引き落とし記録はありません。</div>";
-  var html = "<table class='production-mini-table'><tr><th>日時</th><th>数</th><th>理由</th></tr>";
-  rows.forEach(function(row) {
-    html += "<tr><td>" + esc(formatDateTime(row.created_at)) + "</td><td>" + esc(row.quantity || "-") + "</td><td>" + esc(row.reason || row.source_note || "-") + "</td></tr>";
-  });
-  return html + "</table>";
 }
 
 async function openProductionComponents() {
@@ -6996,29 +6920,6 @@ async function openProductionImageUpload() {
   }
 }
 
-async function recordProductionCoreWithdrawal() {
-  if (!currentProductionRow || !currentProductionRow.dkd_shohin_id) return;
-  if (!canEdit()) { alert(t("err_perm")); return; }
-  var qtyEl = document.getElementById("production-withdraw-qty");
-  var reasonEl = document.getElementById("production-withdraw-reason");
-  var qty = qtyEl ? parseInt(qtyEl.value, 10) : 0;
-  var reason = reasonEl ? reasonEl.value.trim() : "";
-  if (!qty || qty <= 0) { alert("引き落とし数量を入力してください"); return; }
-  var payload = {
-    dkd_shohin_id: currentProductionRow.dkd_shohin_id,
-    quantity: qty,
-    reason: reason || null,
-    source_note: "D-CATS production screen",
-    withdrawn_by: currentUser ? currentUser.id : null
-  };
-  var r = await sb.from("production_core_withdrawals").insert(payload);
-  if (r.error) { alert("コア引き落とし記録に失敗しました: " + r.error.message); return; }
-  await writeLog("insert", "production_core_withdrawals", currentProductionRow.dkd_shohin_id, "コア -" + qty, null, payload);
-  if (qtyEl) qtyEl.value = "";
-  if (reasonEl) reasonEl.value = "";
-  await renderProductionDetail(currentProductionRow);
-}
-
 async function addProductionCoreEntry() {
   if (!currentProductionRow || !currentProductionRow.dkd_shohin_id) return;
   if (!canEdit()) { alert(t("err_perm")); return; }
@@ -7056,19 +6957,6 @@ async function deleteProductionCoreEntry(entryId) {
   var r = await sb.from("production_core_list_entries").delete().eq("id", entryId);
   if (r.error) { alert("コアリストの削除に失敗しました: " + r.error.message); return; }
   await writeLog("delete", "production_core_list_entries", entryId, before ? before.core_part_number : "コア entry", before, null);
-  await renderProductionDetail(currentProductionRow);
-}
-
-async function editProductionCoreSourceNote(sourceId) {
-  if (!isAdmin()) { alert(t("err_perm")); return; }
-  var newNote = prompt("コアリストのメモを入力してください");
-  if (newNote === null) return;
-  var before = null;
-  var beforeR = await sb.from("core_product_sources").select("*").eq("id", sourceId).maybeSingle();
-  if (!beforeR.error) before = beforeR.data || null;
-  var r = await sb.from("core_product_sources").update({ note: newNote.trim() || null }).eq("id", sourceId);
-  if (r.error) { alert("コアリストの更新に失敗しました: " + r.error.message); return; }
-  await writeLog("update", "core_product_sources", sourceId, "コア source note", before, { note: newNote.trim() || null });
   await renderProductionDetail(currentProductionRow);
 }
 
