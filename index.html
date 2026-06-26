@@ -328,6 +328,31 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .mgmt-sub       { font-size: 11px; color: #aaa; margin-top: 2px; }
 .mgmt-actions   { display: flex; gap: 6px; flex-wrap: nowrap; }
 .mgmt-count     { font-size: 12px; color: #888; margin-bottom: 8px; }
+#screen-purchase-mgmt .mgmt-body { max-width: 1280px; }
+.purchase-mgmt-hint { color: #667085; font-size: 12px; line-height: 1.6; margin: -4px 0 12px; }
+.purchase-mgmt-table-wrap { width: 100%; overflow-x: hidden; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); background: #fff; }
+.purchase-mgmt-table { box-shadow: none; border-radius: 0; table-layout: fixed; }
+.purchase-mgmt-table th:nth-child(1), .purchase-mgmt-table td:nth-child(1) { width: 17%; }
+.purchase-mgmt-table th:nth-child(2), .purchase-mgmt-table td:nth-child(2) { width: 17%; }
+.purchase-mgmt-table th:nth-child(3), .purchase-mgmt-table td:nth-child(3) { width: 12%; text-align: right; }
+.purchase-mgmt-table th:nth-child(4), .purchase-mgmt-table td:nth-child(4) { width: 12%; text-align: right; }
+.purchase-mgmt-table th:nth-child(5), .purchase-mgmt-table td:nth-child(5) { width: 8%; text-align: right; }
+.purchase-mgmt-table th:nth-child(6), .purchase-mgmt-table td:nth-child(6) { width: auto; }
+.purchase-mgmt-table td { vertical-align: top; }
+.purchase-product-list { display: grid; gap: 6px; }
+.purchase-product-item { border-left: 3px solid #dce8ff; padding-left: 8px; min-width: 0; }
+.purchase-product-main { font-family: monospace; font-size: 12px; font-weight: 800; color: #1a1a2e; overflow-wrap: anywhere; }
+.purchase-product-sub { color: #667085; font-size: 11px; line-height: 1.45; margin-top: 2px; overflow-wrap: anywhere; }
+.purchase-price-cell { font-size: 14px; font-weight: 800; color: #1a1a2e; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.purchase-price-cell.sales { color: #1a8c3e; }
+@media(max-width:760px){
+  #screen-purchase-mgmt .mgmt-body { padding: 12px 8px; }
+  #screen-purchase-mgmt .mgmt-toolbar { display: grid; grid-template-columns: 1fr 120px; gap: 8px; align-items: stretch; }
+  #screen-purchase-mgmt .mgmt-search { grid-column: 1 / -1; min-width: 0; }
+  #screen-purchase-mgmt .btn-primary { width: 100%; }
+  .purchase-mgmt-table-wrap { overflow-x: auto; }
+  .purchase-mgmt-table { min-width: 760px; }
+}
 #screen-core-list-mgmt .mgmt-body { max-width: none; }
 #core-list-list { overflow-x: visible; }
 #core-list-list .mgmt-table { min-width: 0; table-layout: fixed; }
@@ -1226,7 +1251,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.317</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.318</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1255,7 +1280,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.317</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.318</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1285,7 +1310,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.317</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.318</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1774,6 +1799,33 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     </div>
     <div class="mgmt-count" id="sales-pricing-mgmt-count"></div>
     <div id="sales-pricing-mgmt-list"><div class="empty" data-i18n="sales_pricing_mgmt_hint">品番を検索して販売価格を設定してください</div></div>
+  </div>
+</div>
+
+<div id="screen-purchase-mgmt" class="screen">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-purchase-mgmt" data-i18n="btn_back">← メニュー</button>
+      <span class="logo-text" data-i18n="purchase_mgmt_title">仕入管理</span>
+    </div>
+    <div class="page-header-right">
+      <span class="header-username" id="purchase-mgmt-username"></span>
+      <span class="role-badge" id="purchase-mgmt-role-badge"></span>
+      <button class="btn-logout" id="btn-logout-purchase-mgmt" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <div class="mgmt-body">
+    <div class="mgmt-toolbar">
+      <input class="mgmt-search" id="purchase-mgmt-search" type="search" data-i18n-ph="purchase_mgmt_search_ph" placeholder="SL品番・純正品番・メーカー品番で検索">
+      <select class="form-select" id="purchase-mgmt-supplier">
+        <option value="stronghold" data-i18n="purchase_supplier_stronghold">Stronghold</option>
+        <option value="all" data-i18n="purchase_supplier_all">すべて</option>
+      </select>
+      <button class="btn-primary" id="btn-purchase-mgmt-search" data-i18n="btn_search">検索</button>
+    </div>
+    <div class="purchase-mgmt-hint" data-i18n="purchase_mgmt_hint">最初はStrongholdのSL品番を表示します。品番で絞り込めます。</div>
+    <div class="mgmt-count" id="purchase-mgmt-count"></div>
+    <div id="purchase-mgmt-list"><div class="empty" data-i18n="purchase_mgmt_hint">最初はStrongholdのSL品番を表示します。品番で絞り込めます。</div></div>
   </div>
 </div>
 
@@ -2761,6 +2813,8 @@ var TRANSLATIONS = {
     mi_core_list_desc: "基幹商品に紐づくコア品番・数量・置き場を登録します。",
     mi_product_kind_stock_title: "在庫管理",
     mi_product_kind_stock_desc: "リビルト・社外新品・中古コアの在庫数と置場を確認・更新します。",
+    mi_purchase_mgmt_title: "仕入管理",
+    mi_purchase_mgmt_desc: "SL品番・仕入先価格・MOQを管理します。",
     mi_finished_label_title: "完品ラベル・QRシール",
     mi_finished_label_desc: "製造完了品のA6ラベルとQRシールを発行し、履歴を保存します。",
     mi_production_ranking_title: "製造予定リスト",
@@ -2974,6 +3028,17 @@ var TRANSLATIONS = {
     f_notes: "注意事項",
     f_category: "カテゴリ",
     f_sl: "SL品番",
+    purchase_mgmt_title: "仕入管理",
+    purchase_mgmt_hint: "最初はStrongholdのSL品番を表示します。品番で絞り込めます。",
+    purchase_mgmt_search_ph: "SL品番・純正品番・メーカー品番で検索",
+    purchase_supplier_filter: "仕入先",
+    purchase_supplier_stronghold: "Stronghold",
+    purchase_supplier_all: "すべて",
+    purchase_linked_product: "紐づけ商品",
+    purchase_price: "仕入価格",
+    purchase_sales_price: "販売価格",
+    purchase_no_rows: "該当するSL品番はありません",
+    purchase_count: "{n} 件表示",
     role_admin: "管理者",
     role_system_admin: "システム管理者",
     role_editor: "編集者",
@@ -3491,6 +3556,8 @@ var TRANSLATIONS = {
     mi_core_list_desc: "Register core part numbers, quantities, and locations for master products.",
     mi_product_kind_stock_title: "Stock Management",
     mi_product_kind_stock_desc: "Review and update quantities and locations for rebuilt, aftermarket-new, and used-core stock.",
+    mi_purchase_mgmt_title: "Purchase Management",
+    mi_purchase_mgmt_desc: "Manage SL numbers, supplier prices, and MOQ.",
     mi_finished_label_title: "Finished Label / QR",
     mi_finished_label_desc: "Issue A6 finished-product labels and QR seals, then save the issue history.",
     mi_production_ranking_title: "Production Plan List",
@@ -3704,6 +3771,17 @@ var TRANSLATIONS = {
     f_notes: "Notes",
     f_category: "Category",
     f_sl: "SL Part No.",
+    purchase_mgmt_title: "Purchase Management",
+    purchase_mgmt_hint: "Stronghold SL numbers are shown first. You can filter by part number.",
+    purchase_mgmt_search_ph: "Search by SL, genuine, or manufacturer part number",
+    purchase_supplier_filter: "Supplier",
+    purchase_supplier_stronghold: "Stronghold",
+    purchase_supplier_all: "All",
+    purchase_linked_product: "Linked Product",
+    purchase_price: "Purchase Price",
+    purchase_sales_price: "Sales Price",
+    purchase_no_rows: "No matching SL numbers",
+    purchase_count: "{n} rows",
     role_admin: "Admin",
     role_system_admin: "System Admin",
     role_editor: "Editor",
@@ -4233,6 +4311,8 @@ var TRANSLATIONS = {
     mi_core_list_desc: "登记基干商品对应的CORE编号、数量和位置。",
     mi_product_kind_stock_title: "库存管理",
     mi_product_kind_stock_desc: "确认和更新再制造、副厂新品、旧芯的库存数量和位置。",
+    mi_purchase_mgmt_title: "采购管理",
+    mi_purchase_mgmt_desc: "管理SL编号、供应商价格和MOQ。",
     mi_finished_label_title: "完品标签・QR贴纸",
     mi_finished_label_desc: "发行完品A6标签和QR贴纸，并保存历史。",
     mi_production_ranking_title: "生产计划清单",
@@ -4440,6 +4520,17 @@ var TRANSLATIONS = {
     f_notes: "注意事项",
     f_category: "类别",
     f_sl: "SL零件编号",
+    purchase_mgmt_title: "采购管理",
+    purchase_mgmt_hint: "首先显示Stronghold的SL编号。可按品番筛选。",
+    purchase_mgmt_search_ph: "按SL编号、纯正品番、厂家品番搜索",
+    purchase_supplier_filter: "供应商",
+    purchase_supplier_stronghold: "Stronghold",
+    purchase_supplier_all: "全部",
+    purchase_linked_product: "关联商品",
+    purchase_price: "采购价格",
+    purchase_sales_price: "销售价格",
+    purchase_no_rows: "没有匹配的SL编号",
+    purchase_count: "显示 {n} 条",
     role_admin: "管理员",
     role_system_admin: "系统管理员",
     role_editor: "编辑者",
@@ -4963,7 +5054,7 @@ var productionImages  = [];
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.317";
+var APP_VERSION       = "v1.1.318";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -5049,6 +5140,8 @@ var salesPricingRanks = [];
 var salesPricingCustomerCounts = {};
 var salesPricingMgmtRows = [];
 var salesPricingMgmtPriceMap = {};
+var purchaseMgmtRows = [];
+var purchaseMgmtProductMap = {};
 var customerViewerContext = null;
 var salesCustomerOptions = [];
 var detailSalesCustomerOptions = [];
@@ -5189,6 +5282,9 @@ function canManageUser(targetProfile) {
 
 function canSeePurchasePrice() {
   return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "all_viewer"]);
+}
+function canViewPurchaseMgmt() {
+  return canSeePurchasePrice();
 }
 
 function canSeeSalesPrice() {
@@ -6064,7 +6160,7 @@ function updateAllHeaders() {
   var cls   = roleClass(userProfile.role);
   var greet = tf("greeting", { name: name });
 
-  ["menu","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","product-kind-stock-mgmt","finished-label-mgmt","production-ranking-mgmt","sales-pricing-mgmt","customer-access-mgmt","logs"].forEach(function(sc) {
+  ["menu","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","product-kind-stock-mgmt","finished-label-mgmt","production-ranking-mgmt","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","logs"].forEach(function(sc) {
     var nameEl  = document.getElementById(sc + "-username");
     var badgeEl = document.getElementById(sc + "-role-badge");
     if (nameEl)  nameEl.textContent = name;
@@ -6131,6 +6227,7 @@ function renderMenu() {
     { icon: "&#x1F6AA;", titleKey: "mi_customer_access_title", descKey: "mi_customer_access_desc", action: "customer-access-mgmt", available: canManageCustomerAccess() },
     { icon: "&#x1F527;", titleKey: "mi_parts_title", descKey: "mi_parts_desc", action: "parts-mgmt", available: canViewManagementScreen() },
     { icon: "&#x1F4B0;", titleKey: "sales_pricing_title", descKey: "sales_pricing_mgmt_desc", action: "sales-pricing-mgmt", available: canViewSalesPricing() },
+    { icon: "&#x1F6D2;", titleKey: "mi_purchase_mgmt_title", descKey: "mi_purchase_mgmt_desc", action: "purchase-mgmt", available: canViewPurchaseMgmt() },
     { icon: "&#x1F4E6;", titleKey: "mi_product_kind_stock_title", descKey: "mi_product_kind_stock_desc", action: "product-kind-stock-mgmt", available: canViewProductKindStockMgmt() },
     { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canViewManagementScreen() },
     { icon: "&#x2699;", titleKey: "mi_api_settings_title", descKey: "mi_api_settings_desc", action: "api-settings", available: canManageSharedSettings() },
@@ -6187,6 +6284,7 @@ function renderMenu() {
       else if (card.dataset.action === "change-pw") enterChangePw();
       else if (card.dataset.action === "parts-mgmt") enterPartsMgmt();
       else if (card.dataset.action === "sales-pricing-mgmt") enterSalesPricingMgmt();
+      else if (card.dataset.action === "purchase-mgmt") enterPurchaseMgmt();
       else if (card.dataset.action === "core-list-mgmt") enterCoreListMgmt();
       else if (card.dataset.action === "product-kind-stock-mgmt") enterProductKindStockMgmt();
       else if (card.dataset.action === "production-ranking-mgmt") enterProductionRankingMgmt();
@@ -16689,6 +16787,172 @@ async function openSalesPricingMgmtRow(dkdId) {
   await openSalesPricingForCurrent();
 }
 
+async function enterPurchaseMgmt() {
+  if (!canViewPurchaseMgmt()) { alert(t("err_perm")); return; }
+  showScreen("purchase-mgmt");
+  updateAllHeaders();
+  var supplierEl = document.getElementById("purchase-mgmt-supplier");
+  if (supplierEl && !supplierEl.value) supplierEl.value = "stronghold";
+  renderPurchaseMgmt();
+  await loadPurchaseMgmt();
+}
+
+function purchaseSupplierLabel(sl) {
+  sl = sl || {};
+  var sup = sl.suppliers || {};
+  if (sup.short_name || sup.name) return sup.short_name || sup.name;
+  return isStrongholdSlPart(sl) ? "Stronghold" : "-";
+}
+
+function purchaseSupplierSub(sl) {
+  sl = sl || {};
+  var sup = sl.suppliers || {};
+  return [sup.name, sup.country].filter(function(x) { return !!x; }).join(" / ");
+}
+
+function isStrongholdSlPart(sl) {
+  sl = sl || {};
+  var sup = sl.suppliers || {};
+  var text = [sup.name, sup.short_name, sl.supplier_pn].filter(Boolean).join(" ").toLowerCase();
+  return text.indexOf("stronghold") >= 0 || text.indexOf("strong hold") >= 0 || text.indexOf("stnd") >= 0;
+}
+
+function purchaseTextMatches(value, rawQuery, normQuery) {
+  if (!rawQuery && !normQuery) return true;
+  var raw = normalizeAsciiWidth(value || "").toLowerCase();
+  if (rawQuery && raw.indexOf(rawQuery.toLowerCase()) >= 0) return true;
+  return !!(normQuery && norm(value).indexOf(normQuery) >= 0);
+}
+
+function purchaseMoneyText(value, currency) {
+  if (value === null || value === undefined || value === "") return "-";
+  var n = Number(value);
+  if (isNaN(n)) return "-";
+  currency = currency || "USD";
+  if (String(currency).toUpperCase() === "JPY") return "JPY " + formatYen(n);
+  return String(currency).toUpperCase() + " " + n.toLocaleString("ja-JP", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+async function loadPurchaseMgmt() {
+  if (!canViewPurchaseMgmt()) { alert(t("err_perm")); return; }
+  var list = document.getElementById("purchase-mgmt-list");
+  var countEl = document.getElementById("purchase-mgmt-count");
+  var qRaw = normalizeAsciiWidth((document.getElementById("purchase-mgmt-search") || {}).value || "").trim();
+  var qNorm = norm(qRaw);
+  var supplierFilter = (document.getElementById("purchase-mgmt-supplier") || {}).value || "stronghold";
+  if (list) list.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
+  if (countEl) countEl.textContent = "";
+  try {
+    var selectCols = "id,supplier_pn,unit_price,currency,moq,price_jpy,suppliers(name,short_name,country)";
+    var slR = await sb.from("sl_parts")
+      .select(selectCols)
+      .order("supplier_pn", { ascending: true })
+      .limit(2000);
+    if (slR.error) {
+      slR = await sb.from("sl_parts")
+        .select("id,supplier_pn,unit_price,currency,moq,price_jpy")
+        .order("supplier_pn", { ascending: true })
+        .limit(2000);
+    }
+    if (slR.error) throw slR.error;
+
+    var slRows = slR.data || [];
+    if (supplierFilter === "stronghold") {
+      slRows = slRows.filter(isStrongholdSlPart);
+    }
+    var slIds = slRows.map(function(sl) { return sl.id; }).filter(Boolean);
+    var links = [];
+    for (var i = 0; i < slIds.length; i += 200) {
+      var linkR = await sb.from("core_product_sl_links")
+        .select("dkd_shohin_id,sl_part_id,status")
+        .eq("status", "active")
+        .in("sl_part_id", slIds.slice(i, i + 200));
+      if (linkR.error) throw linkR.error;
+      links = links.concat(linkR.data || []);
+    }
+
+    var dkdIds = uniqueTextValues(links.map(function(link) {
+      return link.dkd_shohin_id ? String(link.dkd_shohin_id) : "";
+    })).map(function(id) { return parseInt(id, 10); }).filter(function(id) { return !isNaN(id); });
+    var productByDkd = {};
+    for (var j = 0; j < dkdIds.length; j += 200) {
+      var productR = await sb.from("core_products")
+        .select(CORE_PRODUCT_FAST_SELECT)
+        .in("dkd_shohin_id", dkdIds.slice(j, j + 200));
+      if (productR.error) throw productR.error;
+      normalizeCoreProductFastRows(productR.data || []).forEach(function(row) {
+        productByDkd[String(row.dkd_shohin_id)] = row;
+      });
+    }
+
+    purchaseMgmtProductMap = {};
+    links.forEach(function(link) {
+      var key = String(link.sl_part_id || "");
+      var product = productByDkd[String(link.dkd_shohin_id || "")];
+      if (!key || !product) return;
+      if (!purchaseMgmtProductMap[key]) purchaseMgmtProductMap[key] = [];
+      purchaseMgmtProductMap[key].push(product);
+    });
+
+    purchaseMgmtRows = slRows.map(function(sl) {
+      return {
+        sl: sl,
+        products: purchaseMgmtProductMap[String(sl.id || "")] || []
+      };
+    }).filter(function(row) {
+      if (!qRaw && !qNorm) return true;
+      var sl = row.sl || {};
+      if (purchaseTextMatches(sl.supplier_pn, qRaw, qNorm)) return true;
+      if (purchaseTextMatches(purchaseSupplierLabel(sl), qRaw, qNorm)) return true;
+      return row.products.some(function(p) {
+        return purchaseTextMatches(p.genuine_part_number, qRaw, qNorm) ||
+          purchaseTextMatches(p.genuine_part_number_2, qRaw, qNorm) ||
+          purchaseTextMatches(p.manufacturer_part_number, qRaw, qNorm) ||
+          purchaseTextMatches(p.manufacturer, qRaw, qNorm) ||
+          purchaseTextMatches(p.daiko_part_number, qRaw, qNorm);
+      });
+    });
+    renderPurchaseMgmt();
+  } catch (e) {
+    console.warn("purchase management load failed", e);
+    purchaseMgmtRows = [];
+    purchaseMgmtProductMap = {};
+    if (list) list.innerHTML = "<div class='empty'>" + esc((e && e.message) || t("msg_kikan_err")) + "</div>";
+  }
+}
+
+function renderPurchaseMgmt() {
+  var list = document.getElementById("purchase-mgmt-list");
+  var countEl = document.getElementById("purchase-mgmt-count");
+  if (!list) return;
+  if (countEl) countEl.textContent = purchaseMgmtRows.length ? tf("purchase_count", { n: purchaseMgmtRows.length }) : "";
+  if (!purchaseMgmtRows.length) {
+    list.innerHTML = "<div class='empty'>" + esc(t("purchase_no_rows")) + "</div>";
+    return;
+  }
+  var html = "<div class='purchase-mgmt-table-wrap'><table class='mgmt-table purchase-mgmt-table'>";
+  html += "<tr><th>" + esc(t("f_supplier")) + "</th><th>" + esc(t("f_sl")) + "</th><th>" + esc(t("purchase_price")) + "</th><th>" + esc(t("purchase_sales_price")) + "</th><th>" + esc(t("f_moq")) + "</th><th>" + esc(t("purchase_linked_product")) + "</th></tr>";
+  purchaseMgmtRows.forEach(function(row) {
+    var sl = row.sl || {};
+    var products = row.products || [];
+    var productHtml = products.length ? "<div class='purchase-product-list'>" + products.map(function(p) {
+      var main = [p.manufacturer_part_number, p.genuine_part_number].filter(Boolean).join(" / ") || "-";
+      var sub = [tCat(p.category_code || p.category), p.manufacturer, p.genuine_part_number_2].filter(Boolean).join(" / ");
+      return "<div class='purchase-product-item'><div class='purchase-product-main'>" + esc(main) + "</div><div class='purchase-product-sub'>" + esc(sub) + "</div></div>";
+    }).join("") + "</div>" : "<span class='mgmt-sub'>-</span>";
+    html += "<tr>";
+    html += "<td><div class='price-supplier'>" + esc(purchaseSupplierLabel(sl)) + "</div><div class='price-country'>" + esc(purchaseSupplierSub(sl)) + "</div></td>";
+    html += "<td><div class='mgmt-pn'>" + esc(sl.supplier_pn || "-") + "</div></td>";
+    html += "<td><div class='purchase-price-cell'>" + esc(purchaseMoneyText(sl.unit_price, sl.currency)) + "</div></td>";
+    html += "<td><div class='purchase-price-cell sales'>" + esc(sl.price_jpy ? ("JPY " + formatYen(sl.price_jpy)) : "-") + "</div></td>";
+    html += "<td><div class='price-moq'>" + esc(sl.moq === null || sl.moq === undefined || sl.moq === "" ? "-" : String(sl.moq)) + "</div></td>";
+    html += "<td>" + productHtml + "</td>";
+    html += "</tr>";
+  });
+  html += "</table></div>";
+  list.innerHTML = html;
+}
+
 async function enterCustomerAccessMgmt() {
   if (!canManageCustomerAccess()) { alert(t("err_perm")); return; }
   showScreen("customer-access-mgmt");
@@ -18414,7 +18678,7 @@ document.getElementById("btn-back-to-login").addEventListener("click", function(
 document.getElementById("btn-submit-reg").addEventListener("click", doRegister);
 document.getElementById("reg-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doRegister(); });
 document.getElementById("login-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
-["btn-logout-menu","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-customer-access-mgmt","btn-logout-core-list-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-finished-label-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
+["btn-logout-menu","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-core-list-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-finished-label-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
 document.getElementById("btn-back-search").addEventListener("click", function(){ closePanel(); showScreen("menu"); });
 document.getElementById("btn-back-production-search").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-components").addEventListener("click", async function(){
@@ -18480,6 +18744,7 @@ document.getElementById("btn-back-component-parallel").addEventListener("click",
 document.getElementById("btn-back-users").addEventListener("click",  function(){ showScreen("menu"); });
 document.getElementById("btn-back-parts-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-sales-pricing-mgmt").addEventListener("click", function(){ showScreen("menu"); });
+document.getElementById("btn-back-purchase-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-customer-access-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-core-list-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-product-kind-stock-mgmt").addEventListener("click", function(){ showScreen("menu"); });
@@ -18591,6 +18856,9 @@ document.getElementById("btn-kikan-form-save").addEventListener("click", saveKik
 document.getElementById("parts-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadPartsMgmt(); });
 document.getElementById("btn-sales-pricing-mgmt-search").addEventListener("click", loadSalesPricingMgmt);
 document.getElementById("sales-pricing-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadSalesPricingMgmt(); });
+document.getElementById("btn-purchase-mgmt-search").addEventListener("click", loadPurchaseMgmt);
+document.getElementById("purchase-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadPurchaseMgmt(); });
+document.getElementById("purchase-mgmt-supplier").addEventListener("change", loadPurchaseMgmt);
 document.getElementById("btn-customer-access-search").addEventListener("click", loadCustomerAccessMgmt);
 document.getElementById("customer-access-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadCustomerAccessMgmt(); });
 document.getElementById("customer-access-include-inactive").addEventListener("change", loadCustomerAccessMgmt);
