@@ -1203,7 +1203,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.308</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.309</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1232,7 +1232,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.308</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.309</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1262,7 +1262,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.308</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.309</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -4875,7 +4875,7 @@ var productionImages  = [];
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.308";
+var APP_VERSION       = "v1.1.309";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -13948,27 +13948,32 @@ function setComponentReverseStatus(message, isError) {
   summary.style.color = isError ? "#e24b4a" : "#667085";
 }
 
-function componentReverseLikePatterns(value) {
-  var normalized = normalizeComponentPartNumberInput(value).replace(/[^A-Z0-9-]/g, "");
-  var key = normalizedPartKey(value);
-  var patterns = [];
-  if (normalized && normalized.length >= 4) patterns.push("%" + normalized + "%");
-  if (key && key.length >= 4) patterns.push("%" + key.split("").join("%") + "%");
-  return uniqueTextValues(patterns);
-}
-
-function componentReverseQueryPatterns() {
+function componentReverseSearchKeys() {
   var values = [
     componentReverseValue("component-reverse-mfr-pn"),
     componentReverseValue("component-reverse-genuine-pn")
   ];
-  var patterns = [];
-  values.forEach(function(value) {
-    componentReverseLikePatterns(value).forEach(function(pattern) {
-      if (patterns.indexOf(pattern) < 0) patterns.push(pattern);
-    });
+  return uniqueTextValues(values.map(function(value) { return normalizedPartKey(value); }).filter(function(key) {
+    return key.length >= 4;
+  }));
+}
+
+async function loadComponentReverseComponentIds(keys) {
+  keys = uniqueTextValues(keys || []);
+  if (!keys.length) return [];
+  var filters = [];
+  keys.forEach(function(key) {
+    filters.push("normalized_manufacturer_part_number.eq." + key);
+    filters.push("normalized_genuine_part_number.eq." + key);
   });
-  return patterns;
+  var r = await sb.from("component_parts")
+    .select("dkd_component_id")
+    .or(filters.join(","))
+    .limit(300);
+  if (r.error) throw r.error;
+  return uniqueTextValues((r.data || []).map(function(row) { return String(row.dkd_component_id || "").trim(); }))
+    .map(function(id) { return parseInt(id, 10); })
+    .filter(function(id) { return !isNaN(id); });
 }
 
 function componentReverseNameMatches(row, partName) {
@@ -14080,10 +14085,10 @@ async function runComponentReverseLookup() {
     componentReverseValue("component-reverse-mfr-pn"),
     componentReverseValue("component-reverse-genuine-pn")
   ];
-  var patterns = componentReverseQueryPatterns();
+  var keys = componentReverseSearchKeys();
   var result = document.getElementById("component-reverse-result");
   var button = document.getElementById("btn-component-reverse-search");
-  if (!patterns.length) {
+  if (!keys.length) {
     setComponentReverseStatus(t("component_reverse_no_query"), true);
     if (result) result.innerHTML = "<div class='component-empty'>" + esc(t("component_reverse_no_query")) + "</div>";
     return;
@@ -14095,15 +14100,18 @@ async function runComponentReverseLookup() {
   setComponentReverseStatus(t("component_reverse_searching"), false);
   if (result) result.innerHTML = "<div class='component-empty'>" + esc(t("loading")) + "</div>";
   var selectColumns = "id, dkd_component_id, dkd_shohin_id, product_kind, product_variant_id, assy_manufacturer, assy_manufacturer_part_number, assy_genuine_part_number, component_manufacturer, component_manufacturer_part_number, component_genuine_part_number, component_name, component_part_name, quantity, unit_price_jpy, interchange_code, effective_start, effective_end, component_position, source_code, is_catalog_evidence";
-  var filters = [];
-  patterns.forEach(function(pattern) {
-    filters.push("component_manufacturer_part_number.ilike." + pattern);
-    filters.push("component_genuine_part_number.ilike." + pattern);
-  });
-  var r = await sb.from("assembly_component_usage_details")
-    .select(selectColumns)
-    .or(filters.join(","))
-    .limit(240);
+  var r = { data: [], error: null };
+  try {
+    var componentIds = await loadComponentReverseComponentIds(keys);
+    if (componentIds.length) {
+      r = await sb.from("assembly_component_usage_details")
+        .select(selectColumns)
+        .in("dkd_component_id", componentIds)
+        .limit(300);
+    }
+  } catch (e) {
+    r = { data: [], error: e };
+  }
   if (button) {
     button.disabled = false;
     button.textContent = t("component_reverse_search");
