@@ -1226,7 +1226,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.315</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.317</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1255,7 +1255,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.315</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.317</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1285,7 +1285,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.315</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.317</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -2643,15 +2643,32 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <button class="image-action-btn primary" id="btn-image-action-upload" type="button">
         &#x1F4F7; <span data-i18n="btn_upload">写真を追加</span>
       </button>
-      <button class="image-action-btn" id="btn-copy-production-images-to-sales" type="button">
-        &#x1F504; <span data-i18n="sales_copy_production_images">製造管理からコピー</span>
-      </button>
       <button class="image-action-btn danger" id="btn-image-action-delete" type="button">
         &#x1F5D1; <span data-i18n="btn_delete_images">写真を削除</span>
       </button>
     </div>
     <div class="form-footer">
       <button class="btn-cancel" id="btn-image-actions-cancel" data-i18n="btn_back">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<div class="form-overlay" id="production-image-actions-overlay">
+  <div class="form-card" style="max-width:420px">
+    <h3 data-i18n="image_actions_title">画像操作</h3>
+    <div class="image-actions-list">
+      <button class="image-action-btn primary" id="production-image-action-device" type="button">
+        &#x1F4F7; <span data-i18n="core_upload_from_device">端末から写真</span>
+      </button>
+      <button class="image-action-btn" id="production-image-action-camera-ai" type="button">
+        &#x1F4F9; <span data-i18n="core_camera_ai">カメラAI</span>
+      </button>
+      <button class="image-action-btn" id="production-image-action-copy-sales" type="button">
+        &#x1F504; <span data-i18n="production_copy_sales_images">販売画像をコピー</span>
+      </button>
+    </div>
+    <div class="form-footer">
+      <button class="btn-cancel" id="production-image-actions-cancel" data-i18n="btn_back">キャンセル</button>
     </div>
   </div>
 </div>
@@ -4946,7 +4963,7 @@ var productionImages  = [];
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.315";
+var APP_VERSION       = "v1.1.317";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -7011,8 +7028,7 @@ async function renderProductionDetail(row) {
   html += "<button class='btn-sm-edit btn-component-action' id='production-open-components'><span class='component-icon'>&#x1F9E9;</span> " + esc(t("component_section")) + "</button>";
   if (canViewFinishedLabelMgmt()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-finished-label'>" + esc(t("mi_finished_label_title")) + "</button>";
   if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-edit-core'>品番修正</button>";
-  if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-copy-sales-images'>" + esc(t("production_copy_sales_images")) + "</button>";
-  if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-add-image'>画像登録</button>";
+  if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-image-actions'>" + esc(t("image_actions_title")) + "</button>";
   html += "</div></div>";
   html += "<div class='production-grid'>";
   html += "<section class='production-section production-wide'><h3>" + esc(productCategoryLabel(row)) + "</h3>";
@@ -7053,10 +7069,8 @@ async function renderProductionDetail(row) {
   if (labelBtn) labelBtn.addEventListener("click", openProductionFinishedLabel);
   var editBtn = document.getElementById("production-edit-core");
   if (editBtn) editBtn.addEventListener("click", openProductionCoreEdit);
-  var copySalesImagesBtn = document.getElementById("production-copy-sales-images");
-  if (copySalesImagesBtn) copySalesImagesBtn.addEventListener("click", copySalesImagesToProduction);
-  var imgBtn = document.getElementById("production-add-image");
-  if (imgBtn) imgBtn.addEventListener("click", openProductionImageUpload);
+  var imageActionsBtn = document.getElementById("production-open-image-actions");
+  if (imageActionsBtn) imageActionsBtn.addEventListener("click", openProductionImageActionsDialog);
   var addCoreEntryBtn = document.getElementById("production-core-entry-add");
   if (addCoreEntryBtn) addCoreEntryBtn.addEventListener("click", addProductionCoreEntry);
   el.querySelectorAll("[data-core-entry-delete]").forEach(function(btn) {
@@ -7137,6 +7151,60 @@ async function openProductionImageUpload() {
     input.dataset.uploadContext = "production";
     input.click();
   }
+}
+
+function openProductionImageActionsDialog() {
+  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!currentProductionRow) return;
+  document.getElementById("production-image-actions-overlay").classList.add("show");
+}
+
+function closeProductionImageActionsDialog() {
+  document.getElementById("production-image-actions-overlay").classList.remove("show");
+}
+
+async function triggerProductionImageUpload() {
+  closeProductionImageActionsDialog();
+  await openProductionImageUpload();
+}
+
+function buildProductionAiCameraUrl(row, mode) {
+  row = row || currentProductionRow || {};
+  var url = new URL(CORE_AI_CAMERA_TEST_URL);
+  url.searchParams.set("page", "camera");
+  url.searchParams.set("source", "dcats_production");
+  url.searchParams.set("mode", mode || "production_photo_add");
+  url.searchParams.set("dcats_version", APP_VERSION);
+  url.searchParams.set("product_kind", "rebuilt");
+  url.searchParams.set("quantity", "1");
+  if (row.dkd_shohin_id) url.searchParams.set("dkd_shohin_id", String(row.dkd_shohin_id));
+  if (row.genuine_part_number) url.searchParams.set("genuine_part_number", row.genuine_part_number);
+  if (row.manufacturer_part_number) url.searchParams.set("manufacturer_part_number", row.manufacturer_part_number);
+  if (row.manufacturer) url.searchParams.set("manufacturer", row.manufacturer);
+  if (row.category_code || row.category) url.searchParams.set("category", row.category_code || row.category);
+  return url;
+}
+
+function openProductionCameraAi() {
+  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!currentProductionRow || !currentProductionRow.dkd_shohin_id) {
+    alert("カメラAIにはDKD商品IDが必要です。");
+    return;
+  }
+  var url = buildProductionAiCameraUrl(currentProductionRow, "production_photo_add");
+  try {
+    localStorage.setItem("dcats_production_camera_pending", JSON.stringify({
+      mode: "production_photo_add",
+      dkd_shohin_id: currentProductionRow.dkd_shohin_id || null,
+      genuine_part_number: currentProductionRow.genuine_part_number || "",
+      manufacturer_part_number: currentProductionRow.manufacturer_part_number || "",
+      opened_at: new Date().toISOString()
+    }));
+  } catch (e) {
+    console.warn("production camera pending state failed", e);
+  }
+  closeProductionImageActionsDialog();
+  window.open(url.toString(), "_blank", "noopener");
 }
 
 async function addProductionCoreEntry() {
@@ -17394,7 +17462,7 @@ async function copySalesImagesToProduction() {
   if (!currentProductionRow) return;
   var dkdId = parseInt(productDkdId(currentProductionRow), 10);
   if (isNaN(dkdId)) return;
-  var btn = document.getElementById("production-copy-sales-images");
+  var btn = document.getElementById("production-image-action-copy-sales") || document.getElementById("production-copy-sales-images");
   if (btn) btn.disabled = true;
   try {
     var salesR = await fetchSalesVisibleImagesForCopy(dkdId);
@@ -17432,6 +17500,7 @@ async function copySalesImagesToProduction() {
       existing[String(src.image_url)] = true;
     }
     await loadProductionImagesForRow(currentProductionRow, productionDetailRequestSeq);
+    closeProductionImageActionsDialog();
     alert(tf("production_copy_sales_images_done", { n: copied }));
   } catch(e) {
     console.warn("copy sales images to production failed", e);
@@ -18670,11 +18739,15 @@ document.getElementById("btn-open-image-actions").addEventListener("click", open
 document.getElementById("btn-image-actions-cancel").addEventListener("click", closeImageActionsDialog);
 document.getElementById("image-actions-overlay").addEventListener("click", function(e){ if(e.target===this) closeImageActionsDialog(); });
 document.getElementById("btn-image-action-upload").addEventListener("click", triggerSalesImageUpload);
-document.getElementById("btn-copy-production-images-to-sales").addEventListener("click", copyProductionImagesToSales);
 document.getElementById("btn-image-action-delete").addEventListener("click", function(){
   closeImageActionsDialog();
   openImageDeleteDialog();
 });
+document.getElementById("production-image-actions-cancel").addEventListener("click", closeProductionImageActionsDialog);
+document.getElementById("production-image-actions-overlay").addEventListener("click", function(e){ if(e.target===this) closeProductionImageActionsDialog(); });
+document.getElementById("production-image-action-device").addEventListener("click", triggerProductionImageUpload);
+document.getElementById("production-image-action-camera-ai").addEventListener("click", openProductionCameraAi);
+document.getElementById("production-image-action-copy-sales").addEventListener("click", copySalesImagesToProduction);
 document.getElementById("upload-input").addEventListener("change", uploadImages);
 document.getElementById("btn-image-delete-cancel").addEventListener("click", closeImageDeleteDialog);
 document.getElementById("image-delete-overlay").addEventListener("click", function(e){ if(e.target===this) closeImageDeleteDialog(); });
