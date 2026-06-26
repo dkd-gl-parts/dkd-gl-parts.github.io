@@ -1186,7 +1186,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.306</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.307</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1215,7 +1215,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.306</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.307</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1245,7 +1245,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.306</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.307</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -4786,7 +4786,7 @@ var productionImages  = [];
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.306";
+var APP_VERSION       = "v1.1.307";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -16820,7 +16820,43 @@ async function loadKikan(dkdShohinId, seq, productSnapshot) {
 
 function isImageVisibilitySchemaError(error) {
   var msg = String((error && (error.message || error.details || error.hint || error.code)) || "");
-  return /image_origin|show_in_sales|show_in_production|schema cache|PGRST204|column/i.test(msg);
+  return /image_origin|show_in_sales|show_in_production|product_kind|schema cache|PGRST204|column/i.test(msg);
+}
+
+function imageContextMatches(row, context) {
+  if (!row) return false;
+  var origin = String(row.image_origin || "").toLowerCase();
+  if (context === "production") {
+    if (row.show_in_production === true) return true;
+    if (origin === "production") return true;
+    return row.show_in_production == null && row.show_in_sales == null && !origin;
+  }
+  if (context === "sales") {
+    if (row.show_in_sales === true) return true;
+    if (origin === "sales" || !origin) return true;
+    return row.show_in_sales == null && row.show_in_production == null;
+  }
+  return true;
+}
+
+function imageProductKindMatches(row, kind) {
+  if (!row) return false;
+  var rowKind = normalizeProductKind(row.product_kind || "");
+  var targetKind = normalizeProductKind(kind || "rebuilt");
+  return !row.product_kind || rowKind === targetKind;
+}
+
+function chooseImageRowsForContext(rows, kind, context) {
+  rows = rows || [];
+  var exactRows = rows.filter(function(row) {
+    return imageProductKindMatches(row, kind) && imageContextMatches(row, context);
+  });
+  if (exactRows.length) return exactRows;
+  var kindRows = rows.filter(function(row) { return imageProductKindMatches(row, kind); });
+  if (kindRows.length) return kindRows;
+  var contextRows = rows.filter(function(row) { return imageContextMatches(row, context); });
+  if (contextRows.length) return contextRows;
+  return rows;
 }
 
 async function fetchCoreProductImagesForContext(dkdId, kind, context) {
@@ -16833,6 +16869,14 @@ async function fetchCoreProductImagesForContext(dkdId, kind, context) {
       .order("created_at")
       .order("id");
   }
+  function allKindQuery() {
+    return sb.from("core_product_images")
+      .select("*")
+      .eq("dkd_shohin_id", dkdId)
+      .order("sort_order")
+      .order("created_at")
+      .order("id");
+  }
   var query = baseQuery();
   if (context === "production") {
     query = query.or("image_origin.eq.production,show_in_production.eq.true");
@@ -16841,7 +16885,16 @@ async function fetchCoreProductImagesForContext(dkdId, kind, context) {
   }
   var result = await query;
   if (result.error && isImageVisibilitySchemaError(result.error)) {
-    result = await baseQuery();
+    result = await allKindQuery();
+    if (!result.error) result.data = chooseImageRowsForContext(result.data || [], kind, context);
+    return result;
+  }
+  if (!result.error && (!result.data || result.data.length === 0)) {
+    var fallback = await allKindQuery();
+    if (!fallback.error) {
+      fallback.data = chooseImageRowsForContext(fallback.data || [], kind, context);
+      return fallback;
+    }
   }
   return result;
 }
@@ -16869,6 +16922,13 @@ async function fetchSalesVisibleImagesForCopy(dkdId) {
   }
   var result = await baseQuery().or("show_in_sales.eq.true,image_origin.eq.sales,image_origin.is.null");
   if (result.error && isImageVisibilitySchemaError(result.error)) result = await baseQuery();
+  if (!result.error && (!result.data || result.data.length === 0)) {
+    var fallback = await baseQuery();
+    if (!fallback.error) {
+      fallback.data = chooseImageRowsForContext(fallback.data || [], "rebuilt", "sales");
+      return fallback;
+    }
+  }
   return result;
 }
 
