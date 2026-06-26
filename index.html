@@ -1186,7 +1186,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.303</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.304</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1215,7 +1215,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.303</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.304</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1245,7 +1245,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.303</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.304</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -2689,6 +2689,10 @@ var TRANSLATIONS = {
     production_images_loading: "読み込み中",
     production_images_empty: "画像なし",
     production_images_more: "さらに {n} 枚",
+    production_copy_sales_images: "販売画像をコピー",
+    production_copy_sales_images_done: "{n} 枚の販売画像を製造管理へコピーしました",
+    production_copy_sales_images_empty: "コピーできる販売画像はありません",
+    production_copy_sales_images_failed: "販売画像のコピーに失敗しました",
     production_status_ready: "構成部品あり",
     production_status_need: "構成部品なし",
     production_parts_registered: "部品登録あり",
@@ -3391,6 +3395,10 @@ var TRANSLATIONS = {
     production_images_loading: "Loading",
     production_images_empty: "No images",
     production_images_more: "{n} more",
+    production_copy_sales_images: "Copy Sales Images",
+    production_copy_sales_images_done: "Copied {n} sales images to production",
+    production_copy_sales_images_empty: "No sales images to copy",
+    production_copy_sales_images_failed: "Failed to copy sales images",
     production_status_ready: "Has components",
     production_status_need: "Needs components",
     production_parts_registered: "Parts registered",
@@ -4100,6 +4108,10 @@ var TRANSLATIONS = {
     production_images_loading: "加载中",
     production_images_empty: "无图片",
     production_images_more: "另有 {n} 张",
+    production_copy_sales_images: "复制销售图片",
+    production_copy_sales_images_done: "已复制 {n} 张销售图片到生产管理",
+    production_copy_sales_images_empty: "没有可复制的销售图片",
+    production_copy_sales_images_failed: "销售图片复制失败",
     production_status_ready: "有构成零件",
     production_status_need: "无构成零件",
     production_parts_registered: "已登记零件",
@@ -4765,7 +4777,7 @@ var productionImages  = [];
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.303";
+var APP_VERSION       = "v1.1.304";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -6795,6 +6807,7 @@ async function renderProductionDetail(row) {
   html += "<button class='btn-sm-edit btn-component-action' id='production-open-components'><span class='component-icon'>&#x1F9E9;</span> " + esc(t("component_section")) + "</button>";
   if (canViewFinishedLabelMgmt()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-finished-label'>" + esc(t("mi_finished_label_title")) + "</button>";
   if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-edit-core'>品番修正</button>";
+  if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-copy-sales-images'>" + esc(t("production_copy_sales_images")) + "</button>";
   if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-add-image'>画像登録</button>";
   html += "</div></div>";
   html += "<div class='production-grid'>";
@@ -6836,6 +6849,8 @@ async function renderProductionDetail(row) {
   if (labelBtn) labelBtn.addEventListener("click", openProductionFinishedLabel);
   var editBtn = document.getElementById("production-edit-core");
   if (editBtn) editBtn.addEventListener("click", openProductionCoreEdit);
+  var copySalesImagesBtn = document.getElementById("production-copy-sales-images");
+  if (copySalesImagesBtn) copySalesImagesBtn.addEventListener("click", copySalesImagesToProduction);
   var imgBtn = document.getElementById("production-add-image");
   if (imgBtn) imgBtn.addEventListener("click", openProductionImageUpload);
   var addCoreEntryBtn = document.getElementById("production-core-entry-add");
@@ -16781,6 +16796,72 @@ async function insertCoreProductImageRow(payload) {
     result = await sb.from("core_product_images").insert(fallback);
   }
   return result;
+}
+
+async function fetchSalesVisibleImagesForCopy(dkdId) {
+  function baseQuery() {
+    return sb.from("core_product_images")
+      .select("*")
+      .eq("dkd_shohin_id", dkdId)
+      .order("sort_order")
+      .order("created_at")
+      .order("id");
+  }
+  var result = await baseQuery().or("show_in_sales.eq.true,image_origin.eq.sales,image_origin.is.null");
+  if (result.error && isImageVisibilitySchemaError(result.error)) result = await baseQuery();
+  return result;
+}
+
+async function copySalesImagesToProduction() {
+  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!currentProductionRow) return;
+  var dkdId = parseInt(productDkdId(currentProductionRow), 10);
+  if (isNaN(dkdId)) return;
+  var btn = document.getElementById("production-copy-sales-images");
+  if (btn) btn.disabled = true;
+  try {
+    var salesR = await fetchSalesVisibleImagesForCopy(dkdId);
+    if (salesR.error) throw salesR.error;
+    var productionR = await fetchCoreProductImagesForContext(dkdId, "rebuilt", "production");
+    if (productionR.error) throw productionR.error;
+    var existing = {};
+    (productionR.data || []).forEach(function(img) {
+      if (img.image_url) existing[String(img.image_url)] = true;
+    });
+    var sources = (salesR.data || []).filter(function(img) {
+      return img && img.image_url && !existing[String(img.image_url)];
+    });
+    if (!sources.length) {
+      alert(t("production_copy_sales_images_empty"));
+      return;
+    }
+    var copied = 0;
+    for (var i = 0; i < sources.length; i++) {
+      var src = sources[i];
+      var payload = {
+        dkd_shohin_id: dkdId,
+        product_kind: "rebuilt",
+        product_variant_id: null,
+        sl_part_id: null,
+        image_url: src.image_url,
+        storage_path: src.storage_path || null,
+        image_origin: "production",
+        show_in_sales: false,
+        show_in_production: true
+      };
+      var r = await insertCoreProductImageRow(payload);
+      if (r.error) throw r.error;
+      copied++;
+      existing[String(src.image_url)] = true;
+    }
+    await loadProductionImagesForRow(currentProductionRow, productionDetailRequestSeq);
+    alert(tf("production_copy_sales_images_done", { n: copied }));
+  } catch(e) {
+    console.warn("copy sales images to production failed", e);
+    alert(t("production_copy_sales_images_failed") + ": " + (e && e.message ? e.message : String(e)));
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 async function loadProductionImagesForRow(row, seq) {
