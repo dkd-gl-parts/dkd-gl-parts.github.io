@@ -906,9 +906,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-detail { max-width: 980px; padding: 18px 20px 28px; }
 .production-detail-empty { min-height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #a0a7b2; gap: 8px; }
 .production-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 12px; }
+.production-head-main { min-width: 0; flex: 1 1 auto; }
 .production-detail-title { font-size: 18px; font-weight: 800; color: #1a1a2e; }
 .production-detail-sub { font-size: 12px; color: #7c8492; margin-top: 4px; }
 .production-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.production-image-panel { margin-top: 9px; max-width: 560px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 8px; align-items: center; }
+.production-image-title { font-size: 11px; font-weight: 700; color: #667085; white-space: nowrap; }
+.production-image-count { font-size: 11px; color: #8a93a3; min-width: 0; }
+.production-image-strip { grid-column: 1 / -1; display: flex; gap: 6px; overflow-x: auto; min-height: 48px; padding: 1px 0 2px; }
+.production-image-thumb { flex: 0 0 46px; width: 46px; height: 46px; border: 1px solid #dbe3ef; border-radius: 6px; background: #f8fafc; padding: 0; overflow: hidden; cursor: pointer; }
+.production-image-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.production-image-thumb:hover { border-color: #4f8ef7; box-shadow: 0 2px 8px rgba(79,142,247,.16); }
+.production-image-more, .production-image-empty { flex: 0 0 auto; min-height: 46px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 11px; }
+.production-image-more { min-width: 46px; padding: 0 9px; background: #eef4ff; color: #174ea6; font-weight: 700; }
+.production-image-empty { color: #a0a7b2; padding: 0 2px; }
 .production-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .production-section { border: 1px solid #edf0f4; border-radius: 8px; padding: 12px; background: #fff; }
 .production-section h3 { font-size: 13px; color: #556070; margin-bottom: 8px; }
@@ -979,6 +990,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .production-detail { padding: 14px; }
   .production-detail-head { flex-direction: column; }
   .production-actions { justify-content: flex-start; }
+  .production-image-panel { max-width: 100%; width: 100%; }
   .production-grid { grid-template-columns: 1fr; }
   .core-qty-summary { grid-template-columns: 1fr; }
   .production-ranking-tools { grid-template-columns: 1fr 1fr; }
@@ -1174,7 +1186,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.301</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.302</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1203,7 +1215,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.301</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.302</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1233,7 +1245,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.301</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.302</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -2673,6 +2685,10 @@ var TRANSLATIONS = {
     production_filter_ready: "構成部品あり",
     production_filter_need: "構成部品なし",
     production_select_hint: "製造する品番を選択してください",
+    production_images_section: "製造画像",
+    production_images_loading: "読み込み中",
+    production_images_empty: "画像なし",
+    production_images_more: "さらに {n} 枚",
     production_status_ready: "構成部品あり",
     production_status_need: "構成部品なし",
     production_parts_registered: "部品登録あり",
@@ -3372,6 +3388,10 @@ var TRANSLATIONS = {
     production_filter_ready: "Has components",
     production_filter_need: "Needs components",
     production_select_hint: "Select a product to manufacture",
+    production_images_section: "Production Images",
+    production_images_loading: "Loading",
+    production_images_empty: "No images",
+    production_images_more: "{n} more",
     production_status_ready: "Has components",
     production_status_need: "Needs components",
     production_parts_registered: "Parts registered",
@@ -4078,6 +4098,10 @@ var TRANSLATIONS = {
     production_filter_ready: "有构成零件",
     production_filter_need: "无构成零件",
     production_select_hint: "请选择要生产的品番",
+    production_images_section: "生产图片",
+    production_images_loading: "加载中",
+    production_images_empty: "无图片",
+    production_images_more: "另有 {n} 张",
     production_status_ready: "有构成零件",
     production_status_need: "无构成零件",
     production_parts_registered: "已登记零件",
@@ -4740,10 +4764,14 @@ var parallelCandidateMap = {};
 var assemblyComponentRows = [];
 var editingComponentUsageId = null;
 var currentImages     = [];
+var productionImages  = [];
 var fsIndex           = 0;
+var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.301";
+var APP_VERSION       = "v1.1.302";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
+var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
+var appRestoreInProgress = false;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
 var appUpdateDetected = false;
@@ -5478,7 +5506,107 @@ function appVersionNumber(version) {
   return parseInt(m[1], 10) * 1000000 + parseInt(m[2], 10) * 1000 + parseInt(m[3], 10);
 }
 
+function activeAppScreenName() {
+  var el = document.querySelector(".screen.active");
+  if (!el || !el.id) return "";
+  return el.id.replace(/^screen-/, "");
+}
+
+function captureAppRestoreState(reason) {
+  var screen = activeAppScreenName();
+  var state = {
+    reason: reason || "refresh",
+    version: APP_VERSION,
+    ts: Date.now(),
+    screen: screen,
+    lang: currentLang
+  };
+  if (screen === "search") {
+    var qEl = document.getElementById("q");
+    state.q = qEl ? qEl.value : "";
+    state.filter = currentFilter || "all";
+    state.selectedDkdId = currentProduct ? productDkdId(currentProduct) : "";
+    state.limit = productSearchLimit || SEARCH_INITIAL_LIMIT;
+  } else if (screen === "production-search") {
+    var pqEl = document.getElementById("production-q");
+    var yearEl = document.getElementById("production-year-filter");
+    state.q = pqEl ? pqEl.value : "";
+    state.filter = productionFilter || "all";
+    state.selectedDkdId = currentProductionRow ? productDkdId(currentProductionRow) : "";
+    state.limit = productionSearchLimit || SEARCH_INITIAL_LIMIT;
+    state.year = yearEl ? yearEl.value : "";
+  } else if (screen === "components" && currentProduct) {
+    state.screen = "search";
+    state.q = document.getElementById("q") ? document.getElementById("q").value : "";
+    state.filter = currentFilter || "all";
+    state.selectedDkdId = productDkdId(currentProduct);
+    state.limit = productSearchLimit || SEARCH_INITIAL_LIMIT;
+  }
+  return state;
+}
+
+function saveAppRestoreState(reason) {
+  try {
+    localStorage.setItem(APP_RESTORE_STATE_KEY, JSON.stringify(captureAppRestoreState(reason)));
+  } catch(e) {}
+}
+
+function consumeAppRestoreState() {
+  try {
+    var raw = localStorage.getItem(APP_RESTORE_STATE_KEY);
+    if (!raw) return null;
+    localStorage.removeItem(APP_RESTORE_STATE_KEY);
+    var state = JSON.parse(raw);
+    if (!state || !state.ts || Date.now() - state.ts > 15 * 60 * 1000) return null;
+    return state;
+  } catch(e) {
+    try { localStorage.removeItem(APP_RESTORE_STATE_KEY); } catch(ignore) {}
+    return null;
+  }
+}
+
+async function restoreAppStateAfterRefresh() {
+  if (appRestoreInProgress || !currentUser) return;
+  var state = consumeAppRestoreState();
+  if (!state || !state.screen) return;
+  appRestoreInProgress = true;
+  try {
+    if (state.screen === "production-search") {
+      await enterProductionSearch();
+      productionFilter = state.filter || "all";
+      productionSearchLimit = Math.min(Math.max(parseInt(state.limit || SEARCH_INITIAL_LIMIT, 10) || SEARCH_INITIAL_LIMIT, SEARCH_INITIAL_LIMIT), SEARCH_FETCH_LIMIT);
+      renderProductionFilterChips();
+      var pqEl = document.getElementById("production-q");
+      if (pqEl) pqEl.value = state.q || "";
+      var yearEl = document.getElementById("production-year-filter");
+      if (yearEl && state.year !== undefined) yearEl.value = state.year || "";
+      await loadProductionProducts();
+      if (state.selectedDkdId) {
+        var selected = productionRows.find(function(row) { return String(productDkdId(row)) === String(state.selectedDkdId); });
+        if (selected) currentProductionRow = selected;
+      }
+      renderProductionList();
+      await renderProductionDetail(currentProductionRow || null);
+    } else if (state.screen === "search") {
+      await enterSearch();
+      var qEl = document.getElementById("q");
+      if (qEl) qEl.value = state.q || "";
+      currentFilter = state.filter || "all";
+      productSearchLimit = Math.min(Math.max(parseInt(state.limit || SEARCH_INITIAL_LIMIT, 10) || SEARCH_INITIAL_LIMIT, SEARCH_INITIAL_LIMIT), SEARCH_FETCH_LIMIT);
+      syncSearchFilterControls();
+      await runProductSearch({ preserveSelection: true });
+      if (state.selectedDkdId) await openProductByDkdId(state.selectedDkdId);
+      else syncFirstSearchResultDetail();
+    }
+  } catch(e) {
+    console.warn("restore app state failed", e);
+  } finally {
+    appRestoreInProgress = false;
+  }
+}
+
 function manualRefreshApp() {
+  saveAppRestoreState("manual-refresh");
   try {
     var url = new URL(window.location.href);
     url.hash = "";
@@ -5677,6 +5805,7 @@ async function handleAuthState() {
     resetAutoLogoutTimer();
     showScreen("menu");
     renderMenu();
+    setTimeout(function() { restoreAppStateAfterRefresh(); }, 0);
   } else {
     showScreen("login");
   }
@@ -6681,8 +6810,9 @@ async function renderProductionDetail(row) {
   var title = row.manufacturer_part_number || row.genuine_part_number || row.daiko_part_number || ("DKD " + row.dkd_shohin_id);
   var html = "";
   html += "<div class='production-detail-head'>";
-  html += "<div><div class='production-detail-title'>" + (inst ? "#" + esc(inst.priority_rank || "-") + " " : "") + esc(title) + "</div>";
-  html += "<div class='production-detail-sub'>" + esc(productionCategoryLabel(row)) + " / DKD " + esc(row.dkd_shohin_id || "-") + " / " + esc(row.manufacturer || "-") + "</div></div>";
+  html += "<div class='production-head-main'><div class='production-detail-title'>" + (inst ? "#" + esc(inst.priority_rank || "-") + " " : "") + esc(title) + "</div>";
+  html += "<div class='production-detail-sub'>" + esc(productionCategoryLabel(row)) + " / DKD " + esc(row.dkd_shohin_id || "-") + " / " + esc(row.manufacturer || "-") + "</div>";
+  html += "<div class='production-image-panel'><div class='production-image-title'>" + esc(t("production_images_section")) + "</div><div class='production-image-count' id='production-image-count'>" + esc(t("production_images_loading")) + "</div><div class='production-image-strip' id='production-image-strip'><span class='production-image-empty'>" + esc(t("production_images_loading")) + "</span></div></div></div>";
   html += "<div class='production-actions'>";
   html += "<button class='btn-sm-edit btn-component-action' id='production-open-components'><span class='component-icon'>&#x1F9E9;</span> " + esc(t("component_section")) + "</button>";
   if (canViewFinishedLabelMgmt()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-finished-label'>" + esc(t("mi_finished_label_title")) + "</button>";
@@ -6737,6 +6867,7 @@ async function renderProductionDetail(row) {
   loadCatalogVehicleSummary(el, row);
   loadProductSpecsForCurrent();
   loadProductionKikanForRow(row, seq);
+  loadProductionImagesForRow(row, seq);
   var compBtn = document.getElementById("production-open-components");
   if (compBtn) compBtn.addEventListener("click", openProductionComponents);
   var labelBtn = document.getElementById("production-open-finished-label");
@@ -6859,7 +6990,10 @@ async function openProductionImageUpload() {
   currentProduct = currentProductionRow;
   await loadSlPartsForProduct(currentProductionRow);
   var input = document.getElementById("upload-input");
-  if (input) input.click();
+  if (input) {
+    input.dataset.uploadContext = "production";
+    input.click();
+  }
 }
 
 async function recordProductionCoreWithdrawal() {
@@ -16721,6 +16855,96 @@ async function loadKikan(dkdShohinId, seq, productSnapshot) {
   renderKikanPartsList(parts_list, dkdShohinIdNum, product, wrap);
 }
 
+function isImageVisibilitySchemaError(error) {
+  var msg = String((error && (error.message || error.details || error.hint || error.code)) || "");
+  return /image_origin|show_in_sales|show_in_production|schema cache|PGRST204|column/i.test(msg);
+}
+
+async function fetchCoreProductImagesForContext(dkdId, kind, context) {
+  function baseQuery() {
+    return sb.from("core_product_images")
+      .select("*")
+      .eq("dkd_shohin_id", dkdId)
+      .eq("product_kind", kind)
+      .order("sort_order")
+      .order("created_at")
+      .order("id");
+  }
+  var query = baseQuery();
+  if (context === "production") {
+    query = query.or("image_origin.eq.production,show_in_production.eq.true");
+  } else if (context === "sales") {
+    query = query.or("show_in_sales.eq.true,image_origin.eq.sales,image_origin.is.null");
+  }
+  var result = await query;
+  if (result.error && isImageVisibilitySchemaError(result.error)) {
+    result = await baseQuery();
+  }
+  return result;
+}
+
+async function insertCoreProductImageRow(payload) {
+  var result = await sb.from("core_product_images").insert(payload);
+  if (result.error && isImageVisibilitySchemaError(result.error)) {
+    var fallback = Object.assign({}, payload);
+    delete fallback.image_origin;
+    delete fallback.show_in_sales;
+    delete fallback.show_in_production;
+    result = await sb.from("core_product_images").insert(fallback);
+  }
+  return result;
+}
+
+async function loadProductionImagesForRow(row, seq) {
+  var countEl = document.getElementById("production-image-count");
+  var strip = document.getElementById("production-image-strip");
+  if (!row || !strip) return;
+  var dkdId = parseInt(productDkdId(row), 10);
+  if (isNaN(dkdId)) {
+    productionImages = [];
+    renderProductionImages();
+    return;
+  }
+  var r = await fetchCoreProductImagesForContext(dkdId, "rebuilt", "production");
+  if (seq !== productionDetailRequestSeq) return;
+  if (r.error) {
+    console.warn("production image lookup failed", r.error);
+    productionImages = [];
+    if (countEl) countEl.textContent = "";
+    if (strip) strip.innerHTML = "<span class='production-image-empty'>" + esc(t("production_images_empty")) + "</span>";
+    return;
+  }
+  productionImages = r.data || [];
+  preloadCurrentImageThumbnails(productionImages.slice(0, 8));
+  renderProductionImages();
+}
+
+function renderProductionImages() {
+  var strip = document.getElementById("production-image-strip");
+  var countEl = document.getElementById("production-image-count");
+  if (!strip) return;
+  if (countEl) countEl.textContent = productionImages.length ? (productionImages.length + " 枚") : "";
+  if (!productionImages.length) {
+    strip.innerHTML = "<span class='production-image-empty'>" + esc(t("production_images_empty")) + "</span>";
+    return;
+  }
+  var shown = productionImages.slice(0, 8);
+  var html = shown.map(function(img, i) {
+    return "<button class='production-image-thumb' type='button' data-production-image-index='" + i + "'>" +
+      thumbImgHtml(img.image_url, { width: 96, height: 96, resize: "cover", loading: i < 3 ? "eager" : "lazy", fetchPriority: i < 2 ? "high" : "low" }) +
+    "</button>";
+  }).join("");
+  if (productionImages.length > shown.length) {
+    html += "<span class='production-image-more'>" + esc(tf("production_images_more", { n: productionImages.length - shown.length })) + "</span>";
+  }
+  strip.innerHTML = html;
+  strip.querySelectorAll("[data-production-image-index]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      openFullscreen(parseInt(btn.dataset.productionImageIndex, 10), productionImages);
+    });
+  });
+}
+
 async function loadImages(slPartIds, seq) {
   if (!customerCanShowProductImages()) {
     if (!isCurrentDetailLoad(seq)) return;
@@ -16736,13 +16960,7 @@ async function loadImages(slPartIds, seq) {
     return;
   }
   var kind = selectedProductKind();
-  var r = await sb.from("core_product_images")
-    .select("*")
-    .eq("dkd_shohin_id", dkdId)
-    .eq("product_kind", kind)
-    .order("sort_order")
-    .order("created_at")
-    .order("id");
+  var r = await fetchCoreProductImagesForContext(dkdId, kind, "sales");
   if (r.error) {
     console.warn("product image lookup failed", r.error);
     if (!isCurrentDetailLoad(seq)) return;
@@ -16824,40 +17042,57 @@ async function deleteImageFromDialog(index) {
 
 async function uploadImages(event) {
   if (!canEdit()) { alert(t("err_perm")); return; }
+  var uploadContext = event && event.target && event.target.dataset ? (event.target.dataset.uploadContext || "sales") : "sales";
+  if (event && event.target && event.target.dataset) event.target.dataset.uploadContext = "";
+  var isProductionUpload = uploadContext === "production";
   var files = Array.from(event.target.files);
   if (!files.length || !currentProduct) return;
 
   var dkdId = parseInt(productDkdId(currentProduct), 10);
-  var kind = selectedProductKind();
+  var kind = isProductionUpload ? "rebuilt" : selectedProductKind();
   if (isNaN(dkdId) || !productKindStockKindAllowed(kind)) {
     alert(t("product_kind_current"));
     return;
   }
-  var targetSlPartId = currentSlPartIds && currentSlPartIds.length ? currentSlPartIds[0] : null;
-  var variantId = selectedProductVariantId();
+  var targetSlPartId = (!isProductionUpload && currentSlPartIds && currentSlPartIds.length) ? currentSlPartIds[0] : null;
+  var variantId = isProductionUpload ? null : selectedProductVariantId();
 
   var label = document.getElementById("upload-label");
   if (label) label.classList.add("busy");
 
   for (var i=0;i<files.length;i++) {
     var file=files[i], nameParts=file.name.split("."), ext=nameParts.length>1?nameParts.pop():"jpg";
-    var path = "dkd_"+dkdId+"/"+kind+"/"+Date.now()+"_"+Math.random().toString(36).slice(2)+"."+ext;
+    var path = "dkd_"+dkdId+"/"+(isProductionUpload ? "production" : kind)+"/"+Date.now()+"_"+Math.random().toString(36).slice(2)+"."+ext;
     var up = await sb.storage.from("product-images").upload(path, file, {upsert:false});
     if (up.error) { alert(t("err_upload")+": "+up.error.message); continue; }
     var urlR = sb.storage.from("product-images").getPublicUrl(path);
-    var dbR  = await sb.from("core_product_images").insert({
+    var imagePayload = {
       dkd_shohin_id: dkdId,
       product_kind: kind,
       product_variant_id: variantId,
       sl_part_id: targetSlPartId,
       image_url: urlR.data.publicUrl,
       storage_path: path
-    });
+    };
+    if (isProductionUpload) {
+      imagePayload.image_origin = "production";
+      imagePayload.show_in_production = true;
+      imagePayload.show_in_sales = false;
+    } else {
+      imagePayload.image_origin = "sales";
+      imagePayload.show_in_sales = true;
+      imagePayload.show_in_production = false;
+    }
+    var dbR  = await insertCoreProductImageRow(imagePayload);
     if (dbR.error) { alert(t("err_db")+": "+dbR.error.message); continue; }
   }
 
   event.target.value = "";
   if (label) label.classList.remove("busy");
+  if (isProductionUpload) {
+    await loadProductionImagesForRow(currentProductionRow, productionDetailRequestSeq);
+    return;
+  }
   await loadImages(null, detailSecondaryRequestSeq);
 
   // 画像カウントを更新
@@ -16884,15 +17119,24 @@ async function deleteImage(imgId, imageUrl) {
 // =============================================
 // フルスクリーンギャラリー
 // =============================================
-function openFullscreen(i) { fsIndex=i; document.getElementById("fullscreen").classList.add("show"); renderFullscreen(); }
+function fullscreenImageList() {
+  return activeFullscreenImages || currentImages || [];
+}
+function openFullscreen(i, images) {
+  fsIndex = i;
+  activeFullscreenImages = Array.isArray(images) ? images : null;
+  document.getElementById("fullscreen").classList.add("show");
+  renderFullscreen();
+}
 function renderFullscreen() {
-  var img=currentImages[fsIndex]; if(!img)return;
+  var list = fullscreenImageList();
+  var img=list[fsIndex]; if(!img)return;
   document.getElementById("fs-img").src=safeSupabaseImageUrl(img.image_url);
-  document.getElementById("fs-counter").textContent=(fsIndex+1)+" / "+currentImages.length;
+  document.getElementById("fs-counter").textContent=(fsIndex+1)+" / "+list.length;
   document.getElementById("fs-prev").classList.toggle("hidden",fsIndex===0);
-  document.getElementById("fs-next").classList.toggle("hidden",fsIndex===currentImages.length-1);
+  document.getElementById("fs-next").classList.toggle("hidden",fsIndex===list.length-1);
   var thumbs=document.getElementById("fs-thumbs");
-  thumbs.innerHTML=currentImages.map(function(img,i){
+  thumbs.innerHTML=list.map(function(img,i){
     return "<div class='fs-thumb"+(i===fsIndex?" active":"")+"' data-thumb='"+i+"'>" + thumbImgHtml(img.image_url, {
       width: 112,
       height: 112,
@@ -16903,7 +17147,7 @@ function renderFullscreen() {
   }).join("");
   var a=thumbs.querySelector(".active"); if(a) a.scrollIntoView({inline:"center",behavior:"smooth"});
 }
-function closeFullscreen() { document.getElementById("fullscreen").classList.remove("show"); }
+function closeFullscreen() { document.getElementById("fullscreen").classList.remove("show"); activeFullscreenImages = null; }
 
 // =============================================
 // ユーザー管理
@@ -17781,12 +18025,13 @@ document.getElementById("vehicle-info-overlay").addEventListener("click", functi
 document.getElementById("fs-close").addEventListener("click", closeFullscreen);
 document.getElementById("fullscreen").addEventListener("click", function(e){ if(e.target===this) closeFullscreen(); });
 document.getElementById("fs-prev").addEventListener("click", function(){ if(fsIndex>0){fsIndex--;renderFullscreen();} });
-document.getElementById("fs-next").addEventListener("click", function(){ if(fsIndex<currentImages.length-1){fsIndex++;renderFullscreen();} });
+document.getElementById("fs-next").addEventListener("click", function(){ var list = fullscreenImageList(); if(fsIndex<list.length-1){fsIndex++;renderFullscreen();} });
 document.getElementById("fs-thumbs").addEventListener("click", function(e){ var t=e.target.closest("[data-thumb]"); if(t){fsIndex=parseInt(t.dataset.thumb,10);renderFullscreen();} });
 document.addEventListener("keydown", function(e){
   if(!document.getElementById("fullscreen").classList.contains("show")) return;
   if(e.key==="ArrowLeft"&&fsIndex>0){fsIndex--;renderFullscreen();}
-  if(e.key==="ArrowRight"&&fsIndex<currentImages.length-1){fsIndex++;renderFullscreen();}
+  var list = fullscreenImageList();
+  if(e.key==="ArrowRight"&&fsIndex<list.length-1){fsIndex++;renderFullscreen();}
   if(e.key==="Escape") closeFullscreen();
 });
 
