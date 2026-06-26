@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -176,6 +176,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-search { flex: 1; min-width: 160px; border: 1px solid #ddd; border-radius: 6px; padding: 6px 8px; font-size: 12px; outline: none; }
 .component-search:focus { border-color: #4f8ef7; }
 .component-note { font-size: 11px; color: #888; line-height: 1.5; }
+.component-reverse-card { max-width: 1040px; }
+.component-reverse-help { color: #667085; font-size: 12px; line-height: 1.6; margin: 0 0 10px; }
+.component-reverse-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: end; }
+.component-reverse-field label { display: block; color: #667085; font-size: 11px; margin-bottom: 4px; }
+.component-reverse-field input { width: 100%; border: 1px solid #d7dce5; border-radius: 6px; padding: 8px 9px; font-size: 13px; outline: none; background: #fff; }
+.component-reverse-field input:focus { border-color: #4f8ef7; }
+.component-reverse-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; margin-top: 10px; }
+.component-reverse-summary { color: #667085; font-size: 12px; min-height: 18px; margin-top: 8px; }
+.component-reverse-result { max-height: 56vh; overflow: auto; margin-top: 10px; border: 1px solid #eef1f5; border-radius: 8px; }
+.component-reverse-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.component-reverse-table th { position: sticky; top: 0; z-index: 1; background: #f5f7fa; color: #555; font-weight: 700; padding: 7px 8px; text-align: left; border-bottom: 2px solid #e0e0e0; white-space: nowrap; }
+.component-reverse-table td { padding: 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+.component-reverse-table tr:last-child td { border-bottom: none; }
+.component-reverse-assy { color: #1a4f9f; font-weight: 800; font-family: monospace; white-space: nowrap; }
+.component-reverse-sub { color: #9aa4b2; font-size: 11px; line-height: 1.35; margin-top: 2px; }
+.component-reverse-part { font-weight: 700; color: #1a1a2e; }
+.component-reverse-nowrap { white-space: nowrap; }
 .component-compat-help { margin: 0 0 10px; padding: 8px 10px; border: 1px solid #dbe7f8; border-radius: 6px; background: #f7fbff; color: #334155; font-size: 11px; line-height: 1.6; }
 .component-compat-help strong { color: #1a1a2e; font-weight: 700; }
 .component-target-panel { margin: 0 0 12px; padding: 12px; border: 1px solid #dbe7f8; border-radius: 8px; background: #f7fbff; }
@@ -212,8 +229,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-input-warning.show { display: block; }
 .component-input-warning.error { background: #fff7f7; border-color: #f2b5b5; color: #b42318; }
 .component-add-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
-@media(max-width:900px){ .component-add-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media(max-width:560px){ .component-add-grid, .component-target-controls, .component-target-summary { grid-template-columns: 1fr; } .component-target-head { align-items: flex-start; flex-direction: column; } }
+@media(max-width:900px){ .component-add-grid, .component-reverse-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media(max-width:560px){ .component-add-grid, .component-target-controls, .component-target-summary, .component-reverse-grid { grid-template-columns: 1fr; } .component-target-head { align-items: flex-start; flex-direction: column; } .component-reverse-result { max-height: 58vh; } }
 .component-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 12px; }
 .component-table th { background: #f5f7fa; color: #555; font-weight: 600; padding: 6px 8px; text-align: left; border-bottom: 2px solid #e0e0e0; }
 .component-table td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
@@ -1186,7 +1203,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.307</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.308</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1215,7 +1232,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.307</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.308</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1245,7 +1262,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.307</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.308</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1403,6 +1420,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="component-section-title"><span class="component-icon">&#x1F9E9;</span> <span data-i18n="component_section">構成部品</span></div>
     <div class="component-toolbar">
       <button class="btn-sm-edit production-action-secondary" id="btn-components-open-parallel" type="button">&#8644; <span data-i18n="component_open_parallel">並列検索</span></button>
+      <button class="btn-sm-edit production-action-secondary" id="btn-component-reverse-open" type="button">&#x1F50E; <span data-i18n="component_reverse_open">逆展開検索</span></button>
     </div>
     <div class="component-compat-help" data-i18n="component_compat_help"></div>
     <div id="component-add-wrap"></div>
@@ -1520,6 +1538,35 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <button class="btn-primary" id="btn-component-alt-save" data-i18n="component_save">保存</button>
     </div>
     <div class="reg-error" id="component-alt-error"></div>
+  </div>
+</div>
+
+<div class="form-overlay" id="component-reverse-overlay">
+  <div class="form-card component-reverse-card">
+    <h3 data-i18n="component_reverse_title">構成部品からASSYを検索</h3>
+    <div class="component-reverse-help" data-i18n="component_reverse_help">構成部品のメーカー品番または純正品番から、その部品を使っているASSYを検索します。</div>
+    <div class="component-reverse-grid">
+      <div class="component-reverse-field">
+        <label data-i18n="component_reverse_mfr_pn">構成部品メーカー品番</label>
+        <input id="component-reverse-mfr-pn" type="text" inputmode="latin" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="例: 104210-4600">
+      </div>
+      <div class="component-reverse-field">
+        <label data-i18n="component_reverse_genuine_pn">構成部品純正品番</label>
+        <input id="component-reverse-genuine-pn" type="text" inputmode="latin" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="例: 27060-46180">
+      </div>
+      <div class="component-reverse-field">
+        <label data-i18n="component_reverse_part_name">部品名（任意）</label>
+        <input id="component-reverse-part-name" type="text" placeholder="例: レギュレータ">
+      </div>
+    </div>
+    <div class="component-reverse-actions">
+      <button class="btn-cancel" id="btn-component-reverse-close" type="button" data-i18n="btn_close">閉じる</button>
+      <button class="btn-primary" id="btn-component-reverse-search" type="button" data-i18n="component_reverse_search">検索</button>
+    </div>
+    <div class="component-reverse-summary" id="component-reverse-summary"></div>
+    <div class="component-reverse-result" id="component-reverse-result">
+      <div class="component-empty" data-i18n="component_reverse_empty">メーカー品番または純正品番を入力して検索してください。</div>
+    </div>
   </div>
 </div>
 
@@ -3245,6 +3292,20 @@ var TRANSLATIONS = {
     component_diff_count: "{n} 件",
     component_open_parts: "構成部品",
     component_open_parallel: "並列検索",
+    component_reverse_open: "逆展開検索",
+    component_reverse_title: "構成部品からASSYを検索",
+    component_reverse_help: "構成部品のメーカー品番または純正品番から、その部品を使っているASSYを検索します。",
+    component_reverse_mfr_pn: "構成部品メーカー品番",
+    component_reverse_genuine_pn: "構成部品純正品番",
+    component_reverse_part_name: "部品名（任意）",
+    component_reverse_search: "検索",
+    component_reverse_empty: "メーカー品番または純正品番を入力して検索してください。",
+    component_reverse_no_query: "メーカー品番または純正品番を入力してください。",
+    component_reverse_searching: "逆展開検索中...",
+    component_reverse_no_results: "該当するASSYはありません。",
+    component_reverse_count: "{n} 件",
+    component_reverse_open_assy: "ASSYを開く",
+    component_reverse_component: "検索対象部品",
     component_match_status: "判定",
     component_mode_different: "不一致",
     component_mode_same: "一致",
@@ -3954,6 +4015,20 @@ var TRANSLATIONS = {
     component_diff_count: "{n} rows",
     component_open_parts: "Components",
     component_open_parallel: "Parallel Search",
+    component_reverse_open: "Reverse Lookup",
+    component_reverse_title: "Search ASSY by Component",
+    component_reverse_help: "Search ASSY products that use the entered component manufacturer part number or genuine part number.",
+    component_reverse_mfr_pn: "Component Manufacturer Part No.",
+    component_reverse_genuine_pn: "Component Genuine Part No.",
+    component_reverse_part_name: "Part Name (optional)",
+    component_reverse_search: "Search",
+    component_reverse_empty: "Enter a manufacturer part number or genuine part number to search.",
+    component_reverse_no_query: "Enter a manufacturer part number or genuine part number.",
+    component_reverse_searching: "Searching reverse usage...",
+    component_reverse_no_results: "No matching ASSY found.",
+    component_reverse_count: "{n} rows",
+    component_reverse_open_assy: "Open ASSY",
+    component_reverse_component: "Component",
     component_match_status: "Status",
     component_mode_different: "Different",
     component_mode_same: "Same",
@@ -4656,6 +4731,20 @@ var TRANSLATIONS = {
     component_diff_count: "{n} 项",
     component_open_parts: "构成部件",
     component_open_parallel: "并列搜索",
+    component_reverse_open: "反向展开搜索",
+    component_reverse_title: "通过构成部件搜索ASSY",
+    component_reverse_help: "通过构成部件的厂家品号或纯正品号，搜索使用该部件的ASSY。",
+    component_reverse_mfr_pn: "构成部件厂家品号",
+    component_reverse_genuine_pn: "构成部件纯正品号",
+    component_reverse_part_name: "部件名（可选）",
+    component_reverse_search: "搜索",
+    component_reverse_empty: "请输入厂家品号或纯正品号进行搜索。",
+    component_reverse_no_query: "请输入厂家品号或纯正品号。",
+    component_reverse_searching: "正在反向搜索...",
+    component_reverse_no_results: "没有匹配的ASSY。",
+    component_reverse_count: "{n} 项",
+    component_reverse_open_assy: "打开ASSY",
+    component_reverse_component: "构成部件",
     component_match_status: "判定",
     component_mode_different: "不一致",
     component_mode_same: "一致",
@@ -4786,7 +4875,7 @@ var productionImages  = [];
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.307";
+var APP_VERSION       = "v1.1.308";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -13826,6 +13915,257 @@ function bindComponentPanelActions() {
   };
 }
 
+function openComponentReverseLookup() {
+  if (!canSeeComponentInfo()) { alert(t("err_perm")); return; }
+  var overlay = document.getElementById("component-reverse-overlay");
+  if (!overlay) return;
+  var result = document.getElementById("component-reverse-result");
+  var summary = document.getElementById("component-reverse-summary");
+  if (summary) {
+    summary.textContent = "";
+    summary.style.color = "";
+  }
+  if (result) result.innerHTML = "<div class='component-empty'>" + esc(t("component_reverse_empty")) + "</div>";
+  overlay.classList.add("show");
+  var input = document.getElementById("component-reverse-mfr-pn");
+  if (input) setTimeout(function() { input.focus(); }, 50);
+}
+
+function closeComponentReverseLookup() {
+  var overlay = document.getElementById("component-reverse-overlay");
+  if (overlay) overlay.classList.remove("show");
+}
+
+function componentReverseValue(id) {
+  var el = document.getElementById(id);
+  return el ? el.value.trim() : "";
+}
+
+function setComponentReverseStatus(message, isError) {
+  var summary = document.getElementById("component-reverse-summary");
+  if (!summary) return;
+  summary.textContent = message || "";
+  summary.style.color = isError ? "#e24b4a" : "#667085";
+}
+
+function componentReverseLikePatterns(value) {
+  var normalized = normalizeComponentPartNumberInput(value).replace(/[^A-Z0-9-]/g, "");
+  var key = normalizedPartKey(value);
+  var patterns = [];
+  if (normalized && normalized.length >= 4) patterns.push("%" + normalized + "%");
+  if (key && key.length >= 4) patterns.push("%" + key.split("").join("%") + "%");
+  return uniqueTextValues(patterns);
+}
+
+function componentReverseQueryPatterns() {
+  var values = [
+    componentReverseValue("component-reverse-mfr-pn"),
+    componentReverseValue("component-reverse-genuine-pn")
+  ];
+  var patterns = [];
+  values.forEach(function(value) {
+    componentReverseLikePatterns(value).forEach(function(pattern) {
+      if (patterns.indexOf(pattern) < 0) patterns.push(pattern);
+    });
+  });
+  return patterns;
+}
+
+function componentReverseNameMatches(row, partName) {
+  var name = String(partName || "").trim().toLowerCase();
+  if (!name) return true;
+  return [
+    row.component_name,
+    row.component_part_name
+  ].some(function(value) {
+    return String(value || "").toLowerCase().indexOf(name) >= 0;
+  });
+}
+
+function componentReverseMatchScore(row, values) {
+  var keys = uniqueTextValues((values || []).map(function(value) { return normalizedPartKey(value); }).filter(Boolean));
+  var rowMfr = normalizedPartKey(row.component_manufacturer_part_number);
+  var rowGenuine = normalizedPartKey(row.component_genuine_part_number);
+  var score = 0;
+  keys.forEach(function(key) {
+    if (rowMfr) {
+      if (rowMfr === key) score += 60;
+      else if (rowMfr.indexOf(key) >= 0 || key.indexOf(rowMfr) >= 0) score += 20;
+    }
+    if (rowGenuine) {
+      if (rowGenuine === key) score += 55;
+      else if (rowGenuine.indexOf(key) >= 0 || key.indexOf(rowGenuine) >= 0) score += 18;
+    }
+  });
+  if (row.is_catalog_evidence) score += 2;
+  return score;
+}
+
+function componentReverseDedupRows(rows) {
+  var seen = {};
+  var out = [];
+  (rows || []).forEach(function(row) {
+    var key = [
+      row.id || "",
+      row.dkd_shohin_id || "",
+      row.assy_manufacturer_part_number || "",
+      row.component_manufacturer_part_number || "",
+      row.component_genuine_part_number || "",
+      row.component_position || "",
+      row.product_kind || ""
+    ].join("|");
+    if (seen[key]) return;
+    seen[key] = true;
+    out.push(row);
+  });
+  return out;
+}
+
+function componentReverseKindLabel(row) {
+  if (row && row.is_catalog_evidence) return productKindLabel("catalog_spec");
+  return productKindLabel((row && row.product_kind) || "rebuilt");
+}
+
+function renderComponentReverseLookupRows(rows) {
+  var result = document.getElementById("component-reverse-result");
+  if (!result) return;
+  if (!rows || !rows.length) {
+    result.innerHTML = "<div class='component-empty'>" + esc(t("component_reverse_no_results")) + "</div>";
+    return;
+  }
+  var html = "<table class='component-reverse-table'>";
+  html += "<tr>";
+  html += "<th>" + esc(t("f_mfr_assy_pn")) + "</th>";
+  html += "<th>" + esc(t("f_genuine_assy_pn")) + "</th>";
+  html += "<th>" + esc(t("f_manufacturer")) + "</th>";
+  html += "<th>" + esc(t("product_kind_section")) + "</th>";
+  html += "<th>" + esc(t("component_reverse_component")) + "</th>";
+  html += "<th>" + esc(t("component_position")) + "</th>";
+  html += "<th>" + esc(t("component_interchange")) + "</th>";
+  html += "<th>" + esc(t("component_start_period")) + "</th>";
+  html += "<th>" + esc(t("component_end_period")) + "</th>";
+  html += "<th></th>";
+  html += "</tr>";
+  rows.forEach(function(row) {
+    html += "<tr>";
+    html += "<td><div class='component-reverse-assy'>" + esc(row.assy_manufacturer_part_number || "-") + "</div></td>";
+    html += "<td><div class='component-reverse-assy'>" + esc(row.assy_genuine_part_number || "-") + "</div></td>";
+    html += "<td class='component-reverse-nowrap'>" + esc(row.assy_manufacturer || "-") + "</td>";
+    html += "<td class='component-reverse-nowrap'>" + esc(componentReverseKindLabel(row)) + "</td>";
+    html += "<td><div class='component-reverse-part'>" + esc(row.component_name || row.component_part_name || "-") + "</div>";
+    html += "<div class='component-reverse-sub'>" + esc(row.component_manufacturer_part_number || "-") + " / " + esc(row.component_genuine_part_number || "-") + "</div>";
+    html += "<div class='component-reverse-sub'>" + esc(row.component_manufacturer || "") + "</div></td>";
+    html += "<td class='component-reverse-nowrap'>" + esc(row.component_position || row.source_code || "-") + "</td>";
+    html += "<td class='component-reverse-nowrap'>" + esc(formatComponentInterchange(row)) + "</td>";
+    html += "<td class='component-reverse-nowrap'>" + esc(row.effective_start || row.start_period || "-") + "</td>";
+    html += "<td class='component-reverse-nowrap'>" + esc(row.effective_end || row.end_period || "-") + "</td>";
+    html += "<td class='component-reverse-nowrap'><button class='btn-sm-edit production-action-secondary' data-component-reverse-open-assy='" + esc(String(row.dkd_shohin_id || "")) + "'>" + esc(t("component_reverse_open_assy")) + "</button></td>";
+    html += "</tr>";
+  });
+  html += "</table>";
+  result.innerHTML = html;
+  result.querySelectorAll("[data-component-reverse-open-assy]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      openComponentReverseAssy(btn.dataset.componentReverseOpenAssy);
+    });
+  });
+}
+
+async function runComponentReverseLookup() {
+  var mfrEl = document.getElementById("component-reverse-mfr-pn");
+  var genuineEl = document.getElementById("component-reverse-genuine-pn");
+  if (mfrEl) normalizeComponentPartNumberElement(mfrEl);
+  if (genuineEl) normalizeComponentPartNumberElement(genuineEl);
+  var values = [
+    componentReverseValue("component-reverse-mfr-pn"),
+    componentReverseValue("component-reverse-genuine-pn")
+  ];
+  var patterns = componentReverseQueryPatterns();
+  var result = document.getElementById("component-reverse-result");
+  var button = document.getElementById("btn-component-reverse-search");
+  if (!patterns.length) {
+    setComponentReverseStatus(t("component_reverse_no_query"), true);
+    if (result) result.innerHTML = "<div class='component-empty'>" + esc(t("component_reverse_no_query")) + "</div>";
+    return;
+  }
+  if (button) {
+    button.disabled = true;
+    button.textContent = t("loading");
+  }
+  setComponentReverseStatus(t("component_reverse_searching"), false);
+  if (result) result.innerHTML = "<div class='component-empty'>" + esc(t("loading")) + "</div>";
+  var selectColumns = "id, dkd_component_id, dkd_shohin_id, product_kind, product_variant_id, assy_manufacturer, assy_manufacturer_part_number, assy_genuine_part_number, component_manufacturer, component_manufacturer_part_number, component_genuine_part_number, component_name, component_part_name, quantity, unit_price_jpy, interchange_code, effective_start, effective_end, component_position, source_code, is_catalog_evidence";
+  var filters = [];
+  patterns.forEach(function(pattern) {
+    filters.push("component_manufacturer_part_number.ilike." + pattern);
+    filters.push("component_genuine_part_number.ilike." + pattern);
+  });
+  var r = await sb.from("assembly_component_usage_details")
+    .select(selectColumns)
+    .or(filters.join(","))
+    .limit(240);
+  if (button) {
+    button.disabled = false;
+    button.textContent = t("component_reverse_search");
+  }
+  if (r.error) {
+    console.warn("component reverse lookup failed", r.error);
+    setComponentReverseStatus(t("msg_kikan_err") + ": " + r.error.message, true);
+    if (result) result.innerHTML = "<div class='component-empty'>" + esc(t("component_reverse_no_results")) + "</div>";
+    return;
+  }
+  var partName = componentReverseValue("component-reverse-part-name");
+  var rows = componentReverseDedupRows(r.data || []).filter(function(row) {
+    return componentReverseNameMatches(row, partName);
+  });
+  rows.sort(function(a, b) {
+    var scoreDiff = componentReverseMatchScore(b, values) - componentReverseMatchScore(a, values);
+    if (scoreDiff) return scoreDiff;
+    var assyA = String(a.assy_manufacturer_part_number || "");
+    var assyB = String(b.assy_manufacturer_part_number || "");
+    if (assyA !== assyB) return assyA.localeCompare(assyB, "ja", { numeric: true });
+    return String(a.component_position || "").localeCompare(String(b.component_position || ""), "ja", { numeric: true });
+  });
+  setComponentReverseStatus(tf("component_reverse_count", { n: rows.length }), false);
+  renderComponentReverseLookupRows(rows);
+}
+
+async function openComponentReverseAssy(dkdId) {
+  var id = parseInt(dkdId, 10);
+  if (isNaN(id)) return;
+  closeComponentReverseLookup();
+  if (componentReturnScreen === "production-search" || isScreenActive("production-search")) {
+    var row = (productionRows || []).find(function(p) { return parseInt(productDkdId(p), 10) === id; }) || null;
+    if (!row) {
+      var r = await sb.from("core_product_search_view").select("*").eq("dkd_shohin_id", id).maybeSingle();
+      if (r.error || !r.data) {
+        alert(t("no_results"));
+        return;
+      }
+      row = normalizeCoreProductFastRows([r.data])[0];
+    }
+    row = enrichProductionProduct(row);
+    var replaced = false;
+    productionRows = (productionRows || []).map(function(p) {
+      if (parseInt(productDkdId(p), 10) === id) {
+        replaced = true;
+        return row;
+      }
+      return p;
+    });
+    if (!replaced) productionRows.unshift(row);
+    currentProductionRow = row;
+    showScreen("production-search");
+    updateAllHeaders();
+    renderProductionList();
+    await renderProductionDetail(row);
+    return;
+  }
+  showScreen("search");
+  updateAllHeaders();
+  await openProductByDkdId(id);
+}
+
 function renderComponentKindSelectorHtml() {
   var options = componentProductKindOptions();
   var selected = selectedProductKind();
@@ -17813,6 +18153,21 @@ document.getElementById("btn-back-components").addEventListener("click", async f
 document.getElementById("btn-components-open-parallel").addEventListener("click", function(){
   enterComponentParallelScreen("components");
 });
+document.getElementById("btn-component-reverse-open").addEventListener("click", openComponentReverseLookup);
+document.getElementById("btn-component-reverse-close").addEventListener("click", closeComponentReverseLookup);
+document.getElementById("btn-component-reverse-search").addEventListener("click", runComponentReverseLookup);
+["component-reverse-mfr-pn", "component-reverse-genuine-pn"].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener("input", function() { normalizeComponentPartNumberElement(el); });
+  el.addEventListener("change", function() { normalizeComponentPartNumberElement(el); });
+  el.addEventListener("blur", function() { normalizeComponentPartNumberElement(el); });
+  el.addEventListener("keydown", function(e) { if (e.key === "Enter") runComponentReverseLookup(); });
+});
+var componentReverseNameEl = document.getElementById("component-reverse-part-name");
+if (componentReverseNameEl) {
+  componentReverseNameEl.addEventListener("keydown", function(e) { if (e.key === "Enter") runComponentReverseLookup(); });
+}
 document.getElementById("btn-component-add-cancel").addEventListener("click", closeComponentAddForm);
 document.getElementById("btn-component-add").addEventListener("click", addAssemblyComponentForCurrent);
 ["component-add-mfr-pn", "component-add-genuine-pn"].forEach(function(id) {
