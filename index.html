@@ -2565,7 +2565,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 
     <div class="rakuten-card" id="rakuten-api-settings-card">
       <h3 data-i18n="rakuten_api_settings">楽天API設定</h3>
-      <div class="rakuten-grid">
+      <div class="rakuten-grid" style="display:none">
         <div class="rakuten-field">
           <label>applicationId</label>
           <input id="rakuten-app-id" type="password" autocomplete="off">
@@ -2576,10 +2576,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         </div>
       </div>
       <div class="rakuten-actions">
-        <button class="btn-sm-edit" id="btn-rakuten-save-keys" data-i18n="rakuten_save_keys">API設定を保存</button>
+        <button class="btn-sm-edit" id="btn-rakuten-save-keys" data-i18n="rakuten_save_keys" style="display:none">API設定を保存</button>
         <button class="btn-sm-edit" id="btn-rakuten-test-keys" data-i18n="rakuten_test_keys">API接続テスト</button>
-        <button class="btn-sm-edit" id="btn-rakuten-open-diagnostic" data-i18n="rakuten_open_diagnostic">診断URLを開く</button>
-        <span class="rakuten-note" id="api-settings-status" data-i18n="rakuten_shared_key_note">API設定は会社共通設定として保存されます。保存はシステム管理者のみ可能です。</span>
+        <button class="btn-sm-edit" id="btn-rakuten-open-diagnostic" data-i18n="rakuten_open_diagnostic" style="display:none">診断URLを開く</button>
+        <span class="rakuten-note" id="api-settings-status" data-i18n="rakuten_shared_key_note">APIキーは Supabase Edge Function のシークレットで管理されます。</span>
       </div>
     </div>
 
@@ -2766,7 +2766,6 @@ var SUPABASE_KEY = "sb_publishable_TXdCwBQOD_s3N0TqFCDOAw_8B44a0kv";
 var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 var RAKUTEN_EDGE_FUNCTION_NAME = "rakuten-search";
 var RAKUTEN_USE_EDGE_FUNCTION = true;
-var RAKUTEN_ALLOW_DIRECT_BROWSER_FALLBACK = false;
 var CORE_AI_CAMERA_TEST_URL = "https://script.google.com/macros/s/AKfycbxlaPJSNTPC2p11rtrZKmS-CeMJ2SSyuVY-J_Pp8NsrSmz2HJeGA0it0vQ3uSXfKwAmvg/exec";
 
 // =============================================
@@ -3355,16 +3354,16 @@ var TRANSLATIONS = {
     rakuten_use_current: "選択中の商品品番を使う",
     rakuten_api_settings: "楽天API設定",
     rakuten_save_keys: "API設定を保存",
-    rakuten_shared_key_note: "API設定は会社共通設定として保存されます。保存はシステム管理者のみ可能です。",
+    rakuten_shared_key_note: "APIキーは Supabase Edge Function のシークレットで管理されます。",
     rakuten_key_admin_only: "API設定の保存はシステム管理者のみ可能です。",
     rakuten_test_keys: "API接続テスト",
     rakuten_open_diagnostic: "診断URLを開く",
     rakuten_test_ok: "楽天API接続OKです",
     rakuten_test_failed: "楽天API接続テストに失敗しました",
     rakuten_bulk_preflight_failed: "楽天API接続テストに失敗したため、一括調査を中断しました: {error}",
-    rakuten_key_note: "API設定はこの端末のブラウザに保存されます。",
+    rakuten_key_note: "APIキーはブラウザには保存されません。",
     rakuten_empty: "キーワードを入力して楽天価格を調査してください",
-    rakuten_missing_key: "applicationId と accessKey を入力してください",
+    rakuten_missing_key: "楽天APIのサーバー設定を確認してください",
     rakuten_missing_keyword: "検索キーワードを入力してください",
     rakuten_saved: "保存しました",
     rakuten_searching: "検索中...",
@@ -4099,16 +4098,16 @@ var TRANSLATIONS = {
     rakuten_use_current: "Use selected part number",
     rakuten_api_settings: "Rakuten API Settings",
     rakuten_save_keys: "Save API Settings",
-    rakuten_shared_key_note: "API settings are saved as a shared company setting. Only system admins can save changes.",
+    rakuten_shared_key_note: "API keys are managed in Supabase Edge Function secrets.",
     rakuten_key_admin_only: "Only system admins can save API settings.",
     rakuten_test_keys: "Test API Connection",
     rakuten_open_diagnostic: "Open Diagnostic URL",
     rakuten_test_ok: "Rakuten API connection is OK",
     rakuten_test_failed: "Rakuten API connection test failed",
     rakuten_bulk_preflight_failed: "Bulk survey stopped because the Rakuten API connection test failed: {error}",
-    rakuten_key_note: "API settings are saved in this browser on this device.",
+    rakuten_key_note: "API keys are not saved in this browser.",
     rakuten_empty: "Enter a keyword to check Rakuten prices",
-    rakuten_missing_key: "Enter applicationId and accessKey",
+    rakuten_missing_key: "Check the server-side Rakuten API settings",
     rakuten_missing_keyword: "Enter a search keyword",
     rakuten_saved: "Saved",
     rakuten_searching: "Searching...",
@@ -4836,16 +4835,16 @@ var TRANSLATIONS = {
     rakuten_use_current: "使用当前商品编号",
     rakuten_api_settings: "乐天API设置",
     rakuten_save_keys: "保存API设置",
-    rakuten_shared_key_note: "API设置会作为公司共用设置保存。仅管理员可以保存。",
+    rakuten_shared_key_note: "API密钥由 Supabase Edge Function secret 管理。",
     rakuten_key_admin_only: "仅管理员可以保存API设置。",
     rakuten_test_keys: "API连接测试",
     rakuten_open_diagnostic: "打开诊断URL",
     rakuten_test_ok: "乐天API连接正常",
     rakuten_test_failed: "乐天API连接测试失败",
     rakuten_bulk_preflight_failed: "乐天API连接测试失败，已中断批量调查: {error}",
-    rakuten_key_note: "API设置会保存在此设备的浏览器中。",
+    rakuten_key_note: "API密钥不会保存在浏览器中。",
     rakuten_empty: "请输入关键词调查乐天价格",
-    rakuten_missing_key: "请输入 applicationId 和 accessKey",
+    rakuten_missing_key: "请确认服务器端乐天API设置",
     rakuten_missing_keyword: "请输入搜索关键词",
     rakuten_saved: "已保存",
     rakuten_searching: "搜索中...",
@@ -7353,12 +7352,11 @@ async function deleteProductionCoreEntry(entryId) {
 // 楽天API販売価格調査
 // =============================================
 async function getRakutenKeys() {
-  var fallback = { appId: "", accessKey: "" };
   try {
-    fallback.appId = localStorage.getItem("dcats_rakuten_app_id") || "";
-    fallback.accessKey = localStorage.getItem("dcats_rakuten_access_key") || "";
+    localStorage.removeItem("dcats_rakuten_app_id");
+    localStorage.removeItem("dcats_rakuten_access_key");
   } catch(e) {}
-  return RAKUTEN_ALLOW_DIRECT_BROWSER_FALLBACK ? fallback : { appId: "", accessKey: "" };
+  return { appId: "", accessKey: "" };
 }
 
 async function loadRakutenKeyFields() {
@@ -7367,32 +7365,25 @@ async function loadRakutenKeyFields() {
   if (settingsCard) settingsCard.style.display = canManageSharedSettings() ? "" : "none";
   var appEl = document.getElementById("rakuten-app-id");
   var keyEl = document.getElementById("rakuten-access-key");
-  var proxyMode = rakutenUsesServerProxy() && !RAKUTEN_ALLOW_DIRECT_BROWSER_FALLBACK;
+  var proxyMode = rakutenUsesServerProxy();
   if (appEl) appEl.value = keys.appId;
   if (keyEl) keyEl.value = keys.accessKey;
-  var canSave = canManageSharedSettings() && !proxyMode;
+  var canSave = false;
   var saveBtn = document.getElementById("btn-rakuten-save-keys");
   if (saveBtn) saveBtn.style.display = canSave ? "" : "none";
   var diagnosticBtn = document.getElementById("btn-rakuten-open-diagnostic");
-  if (diagnosticBtn) diagnosticBtn.style.display = proxyMode ? "none" : "";
-  if (appEl) appEl.readOnly = !canSave || proxyMode;
-  if (keyEl) keyEl.readOnly = !canSave || proxyMode;
+  if (diagnosticBtn) diagnosticBtn.style.display = "none";
+  if (appEl) { appEl.readOnly = true; appEl.disabled = true; }
+  if (keyEl) { keyEl.readOnly = true; keyEl.disabled = true; }
   if (proxyMode) setRakutenStatus("Rakuten API keys are managed in Supabase Edge Function secrets.", false);
 }
 
 async function saveRakutenKeys() {
-  if (!RAKUTEN_ALLOW_DIRECT_BROWSER_FALLBACK) {
-    setRakutenStatus("Rakuten API keys are managed in Supabase Edge Function secrets.", false);
-    return;
-  }
-  if (!canManageSharedSettings()) { setRakutenStatus(t("rakuten_key_admin_only"), true); return; }
-  var appId = document.getElementById("rakuten-app-id").value.trim();
-  var accessKey = document.getElementById("rakuten-access-key").value.trim();
   try {
-    localStorage.setItem("dcats_rakuten_app_id", appId);
-    localStorage.setItem("dcats_rakuten_access_key", accessKey);
-  } catch(e) { setRakutenStatus(t("msg_save_err") + ": " + e.message, true); return; }
-  setRakutenStatus(t("rakuten_saved"), false);
+    localStorage.removeItem("dcats_rakuten_app_id");
+    localStorage.removeItem("dcats_rakuten_access_key");
+  } catch(e) {}
+  setRakutenStatus("Rakuten API keys are managed in Supabase Edge Function secrets.", false);
 }
 
 function setRakutenStatus(msg, isError) {
@@ -7683,68 +7674,16 @@ async function filterRakutenUnsurveyedTargets() {
   setRakutenStatus(tf("rakuten_unsurveyed_done", { remaining: rakutenTargets.length, skipped: before - rakutenTargets.length }), false);
 }
 
-function rakutenJsonp(url) {
-  return new Promise(function(resolve, reject) {
-    var cb = "dcatsRakutenCb_" + Date.now() + "_" + Math.floor(Math.random() * 100000);
-    var script = document.createElement("script");
-    var timer = setTimeout(function() {
-      cleanup();
-      reject(new Error("timeout"));
-    }, 15000);
-    function cleanup() {
-      clearTimeout(timer);
-      try { delete window[cb]; } catch(e) { window[cb] = undefined; }
-      if (script.parentNode) script.parentNode.removeChild(script);
-    }
-    window[cb] = function(data) {
-      cleanup();
-      resolve(data);
-    };
-    script.onerror = function() {
-      cleanup();
-      reject(new Error("script_error"));
-    };
-    script.referrerPolicy = "origin";
-    script.src = url + "&callback=" + encodeURIComponent(cb);
-    document.head.appendChild(script);
-  });
-}
-
-async function rakutenFetchJson(url) {
-  var res = await fetch(url, {
-    method: "GET",
-    mode: "cors",
-    credentials: "omit",
-    referrerPolicy: "origin",
-    headers: { "Accept": "application/json" }
-  });
-  var text = await res.text();
-  var data = null;
-  try { data = text ? JSON.parse(text) : null; }
-  catch(e) { throw new Error("invalid_json: " + text.slice(0, 120)); }
-  if (!res.ok) {
-    var msg = (data && data.errors && data.errors.errorMessage) ||
-      (data && data.error_description) ||
-      (data && data.error) ||
-      ("HTTP " + res.status);
-    if (res.status === 429 && msg.indexOf("429") < 0) msg = "HTTP 429: " + msg;
-    throw new Error(msg);
-  }
-  return data;
-}
-
 function rakutenUsesServerProxy() {
   return !!(RAKUTEN_USE_EDGE_FUNCTION && sb && sb.functions && typeof sb.functions.invoke === "function");
 }
 
 function rakutenCanUseDirectBrowserApi() {
-  return !RAKUTEN_USE_EDGE_FUNCTION || RAKUTEN_ALLOW_DIRECT_BROWSER_FALLBACK;
+  return false;
 }
 
 function rakutenBrowserKeysAvailable() {
-  var appEl = document.getElementById("rakuten-app-id");
-  var keyEl = document.getElementById("rakuten-access-key");
-  return !!(appEl && keyEl && appEl.value.trim() && keyEl.value.trim());
+  return false;
 }
 
 function buildRakutenApiRequest(keyword, ngKeyword, sort, hits, opts) {
@@ -7785,7 +7724,7 @@ async function fetchRakutenApiData(keyword, ngKeyword, sort, hits, opts) {
   if (!rakutenCanUseDirectBrowserApi()) {
     throw new Error("rakuten_proxy_unavailable");
   }
-  return rakutenFetchJson(buildRakutenApiUrl(keyword, ngKeyword, sort, hits, opts));
+  throw new Error("rakuten_proxy_unavailable");
 }
 
 function yen(n) {
@@ -7924,47 +7863,8 @@ function rakutenFriendlyError(err) {
   return msg;
 }
 
-function buildRakutenApiUrl(keyword, ngKeyword, sort, hits, opts) {
-  opts = opts || {};
-  var appId = document.getElementById("rakuten-app-id").value.trim();
-  var accessKey = document.getElementById("rakuten-access-key").value.trim();
-  var params = opts.minimal ? [
-    ["applicationId", appId],
-    ["accessKey", accessKey],
-    ["format", "json"],
-    ["keyword", keyword]
-  ] : [
-    ["applicationId", appId],
-    ["accessKey", accessKey],
-    ["format", "json"],
-    ["formatVersion", "2"],
-    ["keyword", keyword],
-    ["NGKeyword", ngKeyword],
-    ["hits", hits],
-    ["sort", sort],
-    ["availability", opts.availability != null ? opts.availability : "1"],
-    ["field", opts.field != null ? opts.field : "1"],
-    ["orFlag", opts.orFlag || ""]
-  ].filter(function(p) { return p[1] !== ""; });
-  return "https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260401?" +
-    params.map(function(p) { return encodeURIComponent(p[0]) + "=" + encodeURIComponent(p[1]); }).join("&");
-}
-
 function openRakutenDiagnosticUrl() {
-  if (rakutenUsesServerProxy() && !RAKUTEN_ALLOW_DIRECT_BROWSER_FALLBACK) {
-    testRakutenApiKeys();
-    return;
-  }
-  var appId = document.getElementById("rakuten-app-id").value.trim();
-  var accessKey = document.getElementById("rakuten-access-key").value.trim();
-  if (!appId || !accessKey) { setRakutenStatus(t("rakuten_missing_key"), true); return; }
-  var a = document.createElement("a");
-  a.href = buildRakutenApiUrl("福袋", "", "", "", { minimal: true });
-  a.target = "_blank";
-  a.referrerPolicy = "origin";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  testRakutenApiKeys();
 }
 
 async function waitForRakutenApiSlot(extraDelayMs) {
@@ -11455,7 +11355,7 @@ function esc(s) {
 function safeHttpsUrl(raw, allowedHosts) {
   try {
     var u = new URL(String(raw || ""), location.href);
-    if (u.protocol !== "https:" && u.protocol !== "http:") return "";
+    if (u.protocol !== "https:") return "";
     if (allowedHosts && allowedHosts.length) {
       var ok = allowedHosts.some(function(host) {
         return u.hostname === host || u.hostname.endsWith("." + host);
