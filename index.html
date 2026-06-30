@@ -961,7 +961,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-status.ready { background: #e9f8ef; color: #247a42; }
 .production-status.need { background: #fff4e5; color: #aa6512; }
 .production-component-counts { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
-.production-component-pill { display: inline-flex; align-items: center; gap: 3px; border-radius: 999px; border: 1px solid transparent; padding: 2px 7px; font-size: 11px; font-weight: 800; line-height: 1.25; white-space: nowrap; }
+.production-component-pill { display: inline-flex; align-items: center; justify-content: center; gap: 3px; min-width: 34px; border-radius: 999px; border: 1px solid transparent; padding: 2px 6px; font-size: 11px; font-weight: 800; line-height: 1.25; white-space: nowrap; }
 .production-component-pill.rebuilt { background: #edf7ed; color: #1f7a35; border-color: #cbe9cf; }
 .production-component-pill.aftermarket_new { background: #eaf2ff; color: #1a5fb4; border-color: #c9ddff; }
 .production-number { font-size: 13px; font-weight: 700; color: #111a33; word-break: break-all; }
@@ -1254,7 +1254,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.325</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.326</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1283,7 +1283,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.325</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.326</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1313,7 +1313,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.325</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.326</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -5060,7 +5060,7 @@ var productionImages  = [];
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.325";
+var APP_VERSION       = "v1.1.327";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -5081,6 +5081,7 @@ var componentAlternativeRows = [];
 var componentAlternativeMap = {};
 var componentAlternativeBaseRow = null;
 var componentCatalogNameCandidates = [];
+var componentCatalogNameCandidateLabelMap = {};
 var componentCatalogNameCandidateCache = {};
 var componentCatalogNameCandidateLoadSeq = 0;
 var componentAddPartNumberLookupSeq = 0;
@@ -5763,6 +5764,8 @@ async function applyLanguage(lang) {
   updateLangSwitchers(lang);
 
   // 動的コンテンツを再描画する
+  componentCatalogNameCandidateCache = {};
+  componentCatalogNameCandidateLabelMap = {};
   renderMenu();
   if (dataLoaded) { renderCategoryChips(); render(); }
   renderProductionFilterChips();
@@ -6369,9 +6372,11 @@ function productionComponentKindCount(row, kind) {
 
 function renderProductionComponentCountBadges(row) {
   if (!canSeeComponentInfo()) return "";
+  var rebuiltCount = productionComponentKindCount(row, "rebuilt");
+  var aftermarketCount = productionComponentKindCount(row, "aftermarket_new");
   return "<div class='production-component-counts' title='" + esc(t("component_section")) + "'>" +
-    "<span class='production-component-pill rebuilt'>" + esc(productKindLabel("rebuilt")) + " " + esc(String(productionComponentKindCount(row, "rebuilt"))) + "</span>" +
-    "<span class='production-component-pill aftermarket_new'>" + esc(productKindLabel("aftermarket_new")) + " " + esc(String(productionComponentKindCount(row, "aftermarket_new"))) + "</span>" +
+    "<span class='production-component-pill rebuilt' title='" + esc(productKindLabel("rebuilt") + " " + t("product_kind_component_count")) + "'>&#x1F9E9; " + esc(String(rebuiltCount)) + "</span>" +
+    "<span class='production-component-pill aftermarket_new' title='" + esc(productKindLabel("aftermarket_new") + " " + t("product_kind_component_count")) + "'>&#x1F9E9; " + esc(String(aftermarketCount)) + "</span>" +
   "</div>";
 }
 
@@ -14495,6 +14500,7 @@ async function openComponentAddForm() {
   if (selectedProductKind() === "catalog_spec") { alert(t("component_catalog_locked_save")); return; }
   var productKeyAtOpen = productDkdId(currentProduct) + "|" + componentCatalogCategoryCode(currentProduct) + "|" + selectedProductKind();
   componentCatalogNameCandidates = [];
+  componentCatalogNameCandidateLabelMap = {};
   clearComponentAddForm();
   var manufacturer = document.getElementById("component-add-mfr");
   if (manufacturer) manufacturer.value = "";
@@ -14891,6 +14897,7 @@ async function addAssemblyComponentForCurrent() {
     return;
   }
   await writeLog("insert", "assembly_component_usages", r.data || dkdId, componentMfrPn, null, payload);
+  recordComponentNameCandidateUsageForCurrent(componentPartName);
   clearComponentAddForm();
   closeComponentAddForm();
   await loadAssemblyComponentsForCurrent();
@@ -14937,6 +14944,7 @@ function startComponentEdit(usageId) {
   }
   editingComponentUsageId = String(usageId);
   componentCatalogNameCandidates = [];
+  componentCatalogNameCandidateLabelMap = {};
   renderAssemblyComponentRows();
   refreshComponentEditNameCandidates(String(usageId));
 }
@@ -15114,6 +15122,7 @@ async function saveComponentEdit(usageId) {
     return;
   }
   await writeLog("update", "assembly_component_usages", usageId, payload.component_manufacturer_part_number, row, payload);
+  recordComponentNameCandidateUsageForCurrent(payload.component_part_name);
   editingComponentUsageId = null;
   await loadAssemblyComponentsForCurrent();
 }
@@ -15332,6 +15341,139 @@ function appendComponentNameDefaultCandidates(list, seen, category) {
   });
 }
 
+function componentNameCandidateLabelKey(value) {
+  return normalizeComponentNameText(value).toUpperCase();
+}
+
+function addComponentNameCandidateLabel(labelMap, candidateName, displayName) {
+  var value = normalizeComponentNameText(candidateName);
+  var label = normalizeComponentNameText(displayName);
+  if (!value || !label || value === label) return;
+  labelMap[componentNameCandidateLabelKey(value)] = label;
+}
+
+function componentNameTranslationLabel(name) {
+  var lang = currentLang === "zh" ? "zh" : (currentLang === "en" ? "en" : "");
+  if (!lang) return "";
+  var key = componentNameCandidateLabelKey(name);
+  var en = {
+    "コンプレッサAY": "Compressor ASSY",
+    "コンプレッサAY,W/クラッチ": "Compressor ASSY w/ Clutch",
+    "クラッチAY,マグネット": "Magnetic Clutch ASSY",
+    "ステータ,マグネット クラッチ": "Magnet Clutch Stator",
+    "ロータ,マグネット クラッチ": "Magnet Clutch Rotor",
+    "ハブS/A,クラッチ": "Clutch Hub S/A",
+    "プーリ": "Pulley",
+    "プーリAY": "Pulley ASSY",
+    "ベアリング": "Bearing",
+    "ベアリング,ボール": "Ball Bearing",
+    "Oリング": "O-Ring",
+    "リング,スナップ": "Snap Ring",
+    "ワッシャ": "Washer",
+    "ワッシャ,プレートSK": "Plate Washer",
+    "ナット": "Nut",
+    "ボルト": "Bolt",
+    "スクリュ,W/ワッシャ": "Screw w/ Washer",
+    "レギュレータ": "Regulator",
+    "レクチファイヤASSY": "Rectifier ASSY",
+    "ブラシ": "Brush",
+    "ブラシホルダASSY": "Brush Holder ASSY",
+    "ロータASSY": "Rotor ASSY",
+    "ロータ": "Rotor",
+    "ステータ": "Stator",
+    "スリップリング": "Slip Ring",
+    "ファン": "Fan",
+    "アマチュア": "Armature",
+    "ヨークASSY": "Yoke ASSY",
+    "マグネットスイッチ": "Magnetic Switch",
+    "レバー": "Lever",
+    "ピニオン": "Pinion",
+    "ドライブASSY": "Drive ASSY",
+    "クラッチ": "Clutch",
+    "キャップASSY": "Cap ASSY",
+    "ポイント": "Contact Point",
+    "コンデンサ": "Condenser",
+    "ピックアップコイル": "Pickup Coil",
+    "イグナイタ": "Igniter",
+    "ガスケット": "Gasket",
+    "ギヤ": "Gear",
+    "ハウジング": "Housing",
+    "フレーム": "Frame"
+  };
+  var zh = {
+    "コンプレッサAY": "压缩机总成",
+    "コンプレッサAY,W/クラッチ": "带离合器压缩机总成",
+    "クラッチAY,マグネット": "电磁离合器总成",
+    "ステータ,マグネット クラッチ": "电磁离合器定子",
+    "ロータ,マグネット クラッチ": "电磁离合器转子",
+    "ハブS/A,クラッチ": "离合器轮毂分总成",
+    "プーリ": "皮带轮",
+    "プーリAY": "皮带轮总成",
+    "ベアリング": "轴承",
+    "ベアリング,ボール": "球轴承",
+    "Oリング": "O形圈",
+    "リング,スナップ": "卡簧",
+    "ワッシャ": "垫圈",
+    "ワッシャ,プレートSK": "板垫圈",
+    "ナット": "螺母",
+    "ボルト": "螺栓",
+    "スクリュ,W/ワッシャ": "带垫圈螺钉",
+    "レギュレータ": "调节器",
+    "レクチファイヤASSY": "整流器总成",
+    "ブラシ": "碳刷",
+    "ブラシホルダASSY": "刷架总成",
+    "ロータASSY": "转子总成",
+    "ロータ": "转子",
+    "ステータ": "定子",
+    "スリップリング": "滑环",
+    "ファン": "风扇",
+    "アマチュア": "电枢",
+    "ヨークASSY": "磁轭总成",
+    "マグネットスイッチ": "电磁开关",
+    "レバー": "拨叉",
+    "ピニオン": "小齿轮",
+    "ドライブASSY": "驱动总成",
+    "クラッチ": "离合器",
+    "キャップASSY": "盖总成",
+    "ポイント": "触点",
+    "コンデンサ": "电容器",
+    "ピックアップコイル": "拾取线圈",
+    "イグナイタ": "点火器",
+    "ガスケット": "垫片",
+    "ギヤ": "齿轮",
+    "ハウジング": "壳体",
+    "フレーム": "框架"
+  };
+  return (lang === "zh" ? zh : en)[key] || "";
+}
+
+function componentNameCandidateDisplayLabel(candidateName, displayName) {
+  var translated = componentNameTranslationLabel(candidateName);
+  if (translated) return translated;
+  var value = normalizeComponentNameText(candidateName);
+  var label = normalizeComponentNameText(displayName);
+  return label && label !== value ? label : "";
+}
+
+function componentNameCandidateCachePayload(list, labelMap) {
+  return { list: list || [], labels: labelMap || {} };
+}
+
+function applyComponentNameCandidateCachePayload(payload) {
+  if (Array.isArray(payload)) {
+    componentCatalogNameCandidates = payload;
+    componentCatalogNameCandidateLabelMap = {};
+    return;
+  }
+  componentCatalogNameCandidates = (payload && payload.list) || [];
+  componentCatalogNameCandidateLabelMap = (payload && payload.labels) || {};
+}
+
+function componentNameOptionLabel(name) {
+  var key = componentNameCandidateLabelKey(name);
+  return componentCatalogNameCandidateLabelMap[key] || componentNameTranslationLabel(name) || "";
+}
+
 async function loadComponentCatalogNameCandidatesByCategory(category, selectedName) {
   category = String(category || "").trim();
   if (!category) return [];
@@ -15412,44 +15554,59 @@ async function loadComponentCatalogNameCandidatesForCurrent() {
   var productKey = productDkdId(currentProduct);
   var mfr = String((currentProduct && currentProduct.manufacturer) || "").trim().toUpperCase();
   var category = componentCatalogCategoryCode(currentProduct);
-  var cacheKey = mfr + "|" + (category || "-");
+  var cacheKey = mfr + "|" + (category || "-") + "|" + (currentLang || "ja");
   function isCurrentCandidateLoad() {
     return loadSeq === componentCatalogNameCandidateLoadSeq &&
       productKey === productDkdId(currentProduct) &&
       category === componentCatalogCategoryCode(currentProduct);
   }
   componentCatalogNameCandidates = [];
+  componentCatalogNameCandidateLabelMap = {};
   if (!mfr) return;
   if (componentCatalogNameCandidateCache[cacheKey]) {
     if (!isCurrentCandidateLoad()) return;
-    componentCatalogNameCandidates = componentCatalogNameCandidateCache[cacheKey];
+    applyComponentNameCandidateCachePayload(componentCatalogNameCandidateCache[cacheKey]);
     return;
   }
-  var r = await sb.rpc("get_catalog_component_name_candidates", {
+  var r = await sb.rpc("get_component_name_candidates", {
     target_manufacturer: mfr,
     target_category_code: category || null,
+    target_lang: currentLang || "ja",
     max_rows: 500
   });
   if (r.error) {
-    console.warn("component catalog name candidates failed", r.error);
-    var fallback = await loadComponentCatalogNameCandidatesFallback(mfr, null, category);
-    if (!isCurrentCandidateLoad()) return;
-    componentCatalogNameCandidateCache[cacheKey] = fallback;
-    componentCatalogNameCandidates = fallback;
-    return;
+    console.warn("component name candidate cache failed; fallback to catalog lookup", r.error);
+    r = await sb.rpc("get_catalog_component_name_candidates", {
+      target_manufacturer: mfr,
+      target_category_code: category || null,
+      max_rows: 500
+    });
+    if (r.error) {
+      console.warn("component catalog name candidates failed", r.error);
+      var fallback = await loadComponentCatalogNameCandidatesFallback(mfr, null, category);
+      if (!isCurrentCandidateLoad()) return;
+      componentCatalogNameCandidateCache[cacheKey] = componentNameCandidateCachePayload(fallback, {});
+      componentCatalogNameCandidates = fallback;
+      componentCatalogNameCandidateLabelMap = {};
+      return;
+    }
   }
   var list = [];
   var seen = {};
+  var labels = {};
   (r.data || []).forEach(function(row) {
-    addComponentNameCandidate(list, seen, row.component_name);
+    var canonicalName = row.component_name_ja || row.component_name;
+    addComponentNameCandidate(list, seen, canonicalName);
+    addComponentNameCandidateLabel(labels, canonicalName, componentNameCandidateDisplayLabel(canonicalName, row.component_name));
   });
   if (!list.length && category) {
     list = await loadComponentCatalogNameCandidatesFallback(mfr, null, category);
   }
   list.sort(function(a, b) { return String(a || "").localeCompare(String(b || ""), "ja", { numeric: true }); });
   if (!isCurrentCandidateLoad()) return;
-  componentCatalogNameCandidateCache[cacheKey] = list;
+  componentCatalogNameCandidateCache[cacheKey] = componentNameCandidateCachePayload(list, labels);
   componentCatalogNameCandidates = list;
+  componentCatalogNameCandidateLabelMap = labels;
 }
 
 function componentAddNameCandidates(selectedName) {
@@ -15475,7 +15632,8 @@ function componentAddNameCandidates(selectedName) {
 function componentNameOptionsHtml(selectedName) {
   var html = "";
   componentAddNameCandidates(selectedName).forEach(function(name) {
-    html += "<option value='" + esc(name) + "'></option>";
+    var label = componentNameOptionLabel(name);
+    html += "<option value='" + esc(name) + "'" + (label ? " label='" + esc(label) + "'" : "") + "></option>";
   });
   return html;
 }
@@ -15485,6 +15643,39 @@ function renderComponentAddNameOptions(selectedName) {
   if (!list) return;
   var html = componentNameOptionsHtml(selectedName);
   list.innerHTML = html;
+}
+
+function invalidateComponentNameCandidateCacheForCurrent() {
+  var mfr = String((currentProduct && currentProduct.manufacturer) || "").trim().toUpperCase();
+  var category = componentCatalogCategoryCode(currentProduct) || "-";
+  var prefix = mfr + "|" + category + "|";
+  Object.keys(componentCatalogNameCandidateCache || {}).forEach(function(key) {
+    if (key.indexOf(prefix) === 0) delete componentCatalogNameCandidateCache[key];
+  });
+}
+
+async function recordComponentNameCandidateUsageForCurrent(componentName) {
+  var name = normalizeComponentNameText(componentName);
+  if (!name || !currentProduct) return;
+  var mfr = String(currentProduct.manufacturer || "").trim().toUpperCase();
+  var category = componentCatalogCategoryCode(currentProduct);
+  if (!mfr || !category) return;
+  try {
+    var r = await sb.rpc("record_component_name_candidate_usage", {
+      target_manufacturer: mfr,
+      target_category_code: category,
+      component_name_ja: name,
+      component_name_en: null,
+      component_name_zh: null
+    });
+    if (r.error) {
+      console.warn("component name candidate usage record failed", r.error);
+      return;
+    }
+    invalidateComponentNameCandidateCacheForCurrent();
+  } catch (e) {
+    console.warn("component name candidate usage record failed", e);
+  }
 }
 
 function renderComponentAlternativeNameOptions(selectedName) {
