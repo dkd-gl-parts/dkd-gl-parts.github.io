@@ -1001,16 +1001,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-detail-title { font-size: 18px; font-weight: 800; color: #1a1a2e; }
 .production-detail-sub { font-size: 12px; color: #7c8492; margin-top: 4px; }
 .production-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-.production-image-panel { margin-top: 9px; max-width: 560px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 8px; align-items: center; }
+.production-image-panel { margin-top: 9px; max-width: 560px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 8px; align-items: center; }
 .production-image-title { font-size: 11px; font-weight: 700; color: #667085; white-space: nowrap; }
 .production-image-count { font-size: 11px; color: #8a93a3; min-width: 0; }
-.production-image-kind { justify-self: end; grid-column: 1 / -1; width: min(180px, 100%); }
+.production-image-kind { justify-self: end; width: min(180px, 100%); }
 .production-image-kind .product-kind-select { width: 100%; min-width: 0; }
 .production-image-strip { grid-column: 1 / -1; display: flex; gap: 6px; overflow-x: auto; min-height: 48px; padding: 1px 0 2px; }
+.production-image-strip.empty { min-height: 24px; }
 .production-image-thumb { flex: 0 0 46px; width: 46px; height: 46px; border: 1px solid #dbe3ef; border-radius: 6px; background: #f8fafc; padding: 0; overflow: hidden; cursor: pointer; }
 .production-image-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .production-image-thumb:hover { border-color: #4f8ef7; box-shadow: 0 2px 8px rgba(79,142,247,.16); }
 .production-image-more, .production-image-empty { flex: 0 0 auto; min-height: 46px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 11px; }
+.production-image-strip.empty .production-image-empty { min-height: 24px; }
 .production-image-more { min-width: 46px; padding: 0 9px; background: #eef4ff; color: #174ea6; font-weight: 700; }
 .production-image-empty { color: #a0a7b2; padding: 0 2px; }
 .production-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -5204,7 +5206,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.331";
+var APP_VERSION       = "v1.1.332";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -18841,9 +18843,11 @@ function renderProductionImages() {
   if (!strip) return;
   if (countEl) countEl.textContent = productionImages.length ? (productionImages.length + " 枚") : "";
   if (!productionImages.length) {
+    strip.classList.add("empty");
     strip.innerHTML = "<span class='production-image-empty'>" + esc(t("production_images_empty")) + "</span>";
     return;
   }
+  strip.classList.remove("empty");
   var shown = productionImages.slice(0, 8);
   var html = shown.map(function(img, i) {
     return "<button class='production-image-thumb' type='button' data-production-image-index='" + i + "'>" +
