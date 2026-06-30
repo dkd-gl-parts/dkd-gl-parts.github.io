@@ -1254,7 +1254,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.324</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.325</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1283,7 +1283,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.324</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.325</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1313,7 +1313,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.324</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.325</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -5060,7 +5060,7 @@ var productionImages  = [];
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.324";
+var APP_VERSION       = "v1.1.325";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -14494,28 +14494,10 @@ async function openComponentAddForm() {
   if (!canManageComponentsInCurrentContext()) { alert(t("err_perm")); return; }
   if (selectedProductKind() === "catalog_spec") { alert(t("component_catalog_locked_save")); return; }
   var productKeyAtOpen = productDkdId(currentProduct) + "|" + componentCatalogCategoryCode(currentProduct) + "|" + selectedProductKind();
-  var openBtn = document.getElementById("btn-component-add-open");
-  var openBtnText = openBtn ? openBtn.textContent : "";
-  if (openBtn) {
-    openBtn.disabled = true;
-    openBtn.textContent = t("loading");
-  }
   componentCatalogNameCandidates = [];
   clearComponentAddForm();
   var manufacturer = document.getElementById("component-add-mfr");
   if (manufacturer) manufacturer.value = "";
-  try {
-    await loadComponentCatalogNameCandidatesForCurrent();
-  } catch (err) {
-    console.warn("component name candidates load failed", err);
-    componentCatalogNameCandidates = [];
-  } finally {
-    if (openBtn) {
-      openBtn.disabled = false;
-      openBtn.textContent = openBtnText || ("+ " + t("component_add_open"));
-    }
-  }
-  if (!currentProduct || productKeyAtOpen !== productDkdId(currentProduct) + "|" + componentCatalogCategoryCode(currentProduct) + "|" + selectedProductKind()) return;
   renderComponentAddNameOptions();
   var title = document.getElementById("component-add-modal-title");
   if (title) title.textContent = tf("component_add_title_for_kind", { kind: productKindLabel(selectedProductKind()) });
@@ -14529,6 +14511,14 @@ async function openComponentAddForm() {
   if (overlay) overlay.classList.add("show");
   var name = document.getElementById("component-add-name");
   if (name) name.focus();
+  loadComponentCatalogNameCandidatesForCurrent().then(function() {
+    var overlayNow = document.getElementById("component-add-overlay");
+    if (!overlayNow || !overlayNow.classList.contains("show")) return;
+    if (!currentProduct || productKeyAtOpen !== productDkdId(currentProduct) + "|" + componentCatalogCategoryCode(currentProduct) + "|" + selectedProductKind()) return;
+    renderComponentAddNameOptions(componentAddValue("component-add-name"));
+  }).catch(function(err) {
+    console.warn("component name candidates load failed", err);
+  });
 }
 
 function componentAddValue(id) {
@@ -15475,7 +15465,7 @@ function componentAddNameCandidates(selectedName) {
   (componentCatalogNameCandidates || []).forEach(function(name) {
     addComponentNameCandidate(list, seen, name);
   });
-  if (!list.length) {
+  if (!componentCatalogNameCandidates || !componentCatalogNameCandidates.length) {
     appendComponentNameDefaultCandidates(list, seen, componentCatalogCategoryCode(currentProduct));
   }
   addComponentNameCandidate(list, seen, selectedName);
