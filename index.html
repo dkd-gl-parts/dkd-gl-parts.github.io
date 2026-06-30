@@ -1251,7 +1251,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.321</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.322</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1280,7 +1280,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.321</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.322</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1310,7 +1310,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.321</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.322</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -5057,7 +5057,7 @@ var productionImages  = [];
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.321";
+var APP_VERSION       = "v1.1.322";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -6539,6 +6539,12 @@ function sortProductionRows() {
     var ar = ai ? ai.priority_rank : 999999;
     var br = bi ? bi.priority_rank : 999999;
     if (ar !== br) return ar - br;
+    var arc = productRebuiltComponentCount(a);
+    var brc = productRebuiltComponentCount(b);
+    if (brc !== arc) return brc - arc;
+    var acat = productHasCatalogData(a) ? 1 : 0;
+    var bcat = productHasCatalogData(b) ? 1 : 0;
+    if (bcat !== acat) return bcat - acat;
     var ac = a.component_count || 0;
     var bc = b.component_count || 0;
     if (bc !== ac) return bc - ac;
@@ -12281,9 +12287,44 @@ async function fetchSlLabelAndImageMaps(mapping) {
   return result;
 }
 
+function productHasCatalogData(p) {
+  if (!p) return false;
+  if (p.has_catalog_source) return true;
+  return productKindSummaryHasKind(productKindSummaryForProduct(p), "catalog_spec");
+}
+
+function productRebuiltComponentCount(p) {
+  var key = productDkdId(p);
+  var byKind = key ? productionComponentKindCountMap[key] : null;
+  if (byKind && Object.prototype.hasOwnProperty.call(byKind, "rebuilt")) {
+    return parseInt(byKind.rebuilt || 0, 10) || 0;
+  }
+  return 0;
+}
+
+function productSearchPriorityScore(p) {
+  var score = 0;
+  var rebuiltCount = productRebuiltComponentCount(p);
+  if (rebuiltCount > 0) score += 200000 + Math.min(rebuiltCount, 999);
+  if (productHasCatalogData(p)) score += 100000;
+  return score;
+}
+
+function sortProductSearchRows(rows) {
+  return (rows || []).slice().sort(function(a, b) {
+    var sa = productSearchPriorityScore(a);
+    var sb = productSearchPriorityScore(b);
+    if (sb !== sa) return sb - sa;
+    var ac = productComponentCount(a);
+    var bc = productComponentCount(b);
+    if (bc !== ac) return bc - ac;
+    return String(a.manufacturer_part_number || a.genuine_part_number || "").localeCompare(String(b.manufacturer_part_number || b.genuine_part_number || ""), "ja", { numeric: true });
+  });
+}
+
 function getFiltered() {
   var q = norm(document.getElementById("q").value.trim());
-  return allProducts.filter(function(p) {
+  return sortProductSearchRows(allProducts.filter(function(p) {
     var slNums = slPartLabelsForProduct(p);
     var partMatch = !q || [
       p.genuine_part_number, p.genuine_part_number_2,
@@ -12295,7 +12336,7 @@ function getFiltered() {
     var ms = partMatch;
     var mf = currentFilter.indexOf("cat:") === 0 ? (p.category_code || p.category) === currentFilter.slice(4) : true;
     return ms && mf;
-  });
+  }));
 }
 
 async function fetchCategoryProducts(categoryFilter, maxRows) {
@@ -12660,6 +12701,7 @@ async function runProductSearch(options) {
     slPartsMap = {};
     slPresenceMap = {};
     componentUsageCountMap = {};
+    productionComponentKindCountMap = {};
     coreStockQtyMap = {};
     kikanCompatibleMap = {};
     productVariantSummaryMap = {};
@@ -12718,6 +12760,7 @@ async function runProductSearch(options) {
   slPartsMap = {};
   slPresenceMap = {};
   componentUsageCountMap = {};
+  productionComponentKindCountMap = {};
   coreStockQtyMap = {};
   kikanCompatibleMap = {};
   productVariantSummaryMap = {};
@@ -12990,18 +13033,23 @@ async function fetchKikanGroupMemberFlagMap(products) {
 async function loadProductSearchAuxiliaryData(seq, products) {
   var auxSeq = productAuxSeq;
   var lookupProducts = (products || []).slice(0, SEARCH_RENDER_LIMIT);
+  var firstBefore = getFiltered()[0] || null;
+  var selectedWasFirst = currentProduct && firstBefore && productDkdId(currentProduct) === productDkdId(firstBefore);
   function isStale() {
     return seq !== searchRequestSeq || auxSeq !== productAuxSeq;
   }
   var fast = await Promise.all([
     canSeeComponentInfo() ? fetchComponentUsageCountMap(lookupProducts) : Promise.resolve({}),
     canSeeCoreStockInfo() ? fetchCoreStockQtyMap(lookupProducts) : Promise.resolve({}),
-    fetchProductVariantSummaryMap(lookupProducts)
+    fetchProductVariantSummaryMap(lookupProducts),
+    canSeeComponentInfo() ? fetchProductionPartRegistrationCountMap(lookupProducts) : Promise.resolve({ total: {}, byKind: {} })
   ]);
   if (isStale()) return;
   componentUsageCountMap = fast[0] || {};
   coreStockQtyMap = fast[1] || {};
   productVariantSummaryMap = fast[2] || {};
+  var productionCounts = fast[3] || {};
+  productionComponentKindCountMap = productionCounts.byKind || {};
   Object.keys(productVariantSummaryMap).forEach(function(key) {
     productVariantSummaryCache[key] = productVariantSummaryMap[key];
   });
@@ -13012,6 +13060,12 @@ async function loadProductSearchAuxiliaryData(seq, products) {
     }
   });
   render();
+  if (selectedWasFirst) {
+    var firstAfter = getFiltered()[0] || null;
+    if (firstAfter && productDkdId(firstAfter) !== productDkdId(firstBefore)) {
+      syncFirstSearchResultDetail();
+    }
+  }
 }
 
 function productDkdId(p) {
@@ -15144,7 +15198,150 @@ function componentCatalogCategoryCode(product) {
   return key || "";
 }
 
-async function loadComponentCatalogNameCandidatesFallback(mfr, selectedName) {
+function componentNameDefaultCandidatesForCategory(category) {
+  category = String(category || "").toLowerCase();
+  var common = ["ベアリング", "ワッシャ", "ボルト", "ナット", "Oリング"];
+  if (category === "ac_compressor") {
+    return [
+      "コンプレッサAY",
+      "コンプレッサAY,W/クラッチ",
+      "クラッチAY,マグネット",
+      "ステータ,マグネット クラッチ",
+      "ロータ,マグネット クラッチ",
+      "ハブS/A,クラッチ",
+      "プーリ",
+      "ベアリング",
+      "Oリング"
+    ];
+  }
+  if (category === "alternator") {
+    return [
+      "レギュレータ",
+      "レクチファイヤASSY",
+      "ブラシ",
+      "ブラシホルダASSY",
+      "ロータASSY",
+      "ステータ",
+      "プーリ",
+      "ベアリング",
+      "スリップリング",
+      "ファン"
+    ];
+  }
+  if (category === "starter") {
+    return [
+      "アマチュア",
+      "ヨークASSY",
+      "マグネットスイッチ",
+      "レバー",
+      "ブラシ",
+      "ブラシホルダASSY",
+      "ピニオン",
+      "ドライブASSY",
+      "クラッチ",
+      "ベアリング"
+    ];
+  }
+  if (category === "starter_generator") {
+    return [
+      "アマチュア",
+      "ヨークASSY",
+      "レギュレータ",
+      "レクチファイヤASSY",
+      "ブラシ",
+      "ブラシホルダASSY",
+      "ステータ",
+      "ロータASSY",
+      "ベアリング"
+    ];
+  }
+  if (category === "distributor") {
+    return [
+      "キャップASSY",
+      "ロータ",
+      "ポイント",
+      "コンデンサ",
+      "ピックアップコイル",
+      "イグナイタ",
+      "Oリング",
+      "ガスケット"
+    ];
+  }
+  if (category === "dc_motor") {
+    return [
+      "アマチュア",
+      "ヨークASSY",
+      "ブラシ",
+      "ブラシホルダASSY",
+      "ギヤ",
+      "ベアリング",
+      "ボルト"
+    ];
+  }
+  return common;
+}
+
+function appendComponentNameDefaultCandidates(list, seen, category) {
+  componentNameDefaultCandidatesForCategory(category).forEach(function(name) {
+    addComponentNameCandidate(list, seen, name);
+  });
+}
+
+async function loadComponentCatalogNameCandidatesByCategory(category, selectedName) {
+  category = String(category || "").trim();
+  if (!category) return [];
+  var products = await sb.from("core_products")
+    .select("normalized_manufacturer_part_number")
+    .eq("category_code", category)
+    .not("normalized_manufacturer_part_number", "is", null)
+    .limit(600);
+  if (!products.error && !(products.data || []).length) {
+    products = await sb.from("core_products")
+      .select("normalized_manufacturer_part_number")
+      .eq("category", category)
+      .not("normalized_manufacturer_part_number", "is", null)
+      .limit(600);
+  }
+  if (products.error) {
+    console.warn("component catalog category products failed", products.error);
+    return [];
+  }
+  var keys = uniqueTextValues((products.data || []).map(function(row) {
+    return row.normalized_manufacturer_part_number;
+  })).filter(Boolean);
+  if (!keys.length) return [];
+  var list = [];
+  var seen = {};
+  for (var i = 0; i < keys.length; i += 120) {
+    var chunk = keys.slice(i, i + 120);
+    var r = await sb.from("assembly_component_usage_details")
+      .select("component_name,component_part_name")
+      .eq("is_catalog_evidence", true)
+      .in("normalized_assy_manufacturer_part_number", chunk)
+      .limit(1000);
+    if (r.error) {
+      console.warn("component catalog category candidates failed", r.error);
+      continue;
+    }
+    (r.data || []).forEach(function(row) {
+      addComponentNameCandidate(list, seen, row.component_name || row.component_part_name);
+    });
+  }
+  addComponentNameCandidate(list, seen, selectedName);
+  list.sort(function(a, b) { return String(a || "").localeCompare(String(b || ""), "ja", { numeric: true }); });
+  return list;
+}
+
+async function loadComponentCatalogNameCandidatesFallback(mfr, selectedName, category) {
+  if (category) {
+    var categoryList = await loadComponentCatalogNameCandidatesByCategory(category, selectedName);
+    if (categoryList.length) return categoryList;
+    var defaultList = [];
+    var defaultSeen = {};
+    appendComponentNameDefaultCandidates(defaultList, defaultSeen, category);
+    addComponentNameCandidate(defaultList, defaultSeen, selectedName);
+    return defaultList;
+  }
   var query = sb.from("assembly_component_usage_details")
     .select("component_name,component_part_name")
     .eq("is_catalog_evidence", true)
@@ -15182,7 +15379,7 @@ async function loadComponentCatalogNameCandidatesForCurrent() {
   });
   if (r.error) {
     console.warn("component catalog name candidates failed", r.error);
-    var fallback = await loadComponentCatalogNameCandidatesFallback(mfr);
+    var fallback = await loadComponentCatalogNameCandidatesFallback(mfr, null, category);
     componentCatalogNameCandidateCache[cacheKey] = fallback;
     componentCatalogNameCandidates = fallback;
     return;
@@ -15193,7 +15390,7 @@ async function loadComponentCatalogNameCandidatesForCurrent() {
     addComponentNameCandidate(list, seen, row.component_name);
   });
   if (!list.length && category) {
-    list = await loadComponentCatalogNameCandidatesFallback(mfr);
+    list = await loadComponentCatalogNameCandidatesFallback(mfr, null, category);
   }
   list.sort(function(a, b) { return String(a || "").localeCompare(String(b || ""), "ja", { numeric: true }); });
   componentCatalogNameCandidateCache[cacheKey] = list;
@@ -15213,32 +15410,9 @@ function componentAddNameCandidates(selectedName) {
   (componentCatalogNameCandidates || []).forEach(function(name) {
     addComponentNameCandidate(list, seen, name);
   });
-  addComponentNameCandidate(list, seen, selectedName);
-  return list;
-  [
-    "コンプレッサAY",
-    "コンプレッサAY,W/クラッチ",
-    "クラッチAY,マグネット",
-    "ステータ,マグネット クラッチ",
-    "ロータ,マグネット クラッチ",
-    "ハブS/A,クラッチ",
-    "プーリ",
-    "ベアリング",
-    "ブラシ",
-    "ブラシホルダASSY",
-    "レギュレータ",
-    "レクチファイヤASSY",
-    "アマチュア",
-    "フィールドコイル",
-    "マグネットスイッチ",
-    "ドライブピニオン",
-    "エンドフレーム",
-    "Oリング",
-    "ワッシャ",
-    "ボルト"
-  ].forEach(function(name) {
-    addComponentNameCandidate(list, seen, name);
-  });
+  if (!list.length) {
+    appendComponentNameDefaultCandidates(list, seen, componentCatalogCategoryCode(currentProduct));
+  }
   addComponentNameCandidate(list, seen, selectedName);
   return list;
 }
