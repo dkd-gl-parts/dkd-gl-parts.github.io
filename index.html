@@ -5136,7 +5136,7 @@ var productionImages  = [];
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.329";
+var APP_VERSION       = "v1.1.330";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -5494,6 +5494,18 @@ function slPartLabelsForProduct(p) {
     });
   });
   return labels;
+}
+function clearSlLinkCachesForDkdIds(dkdIds) {
+  (dkdIds || []).forEach(function(id) {
+    var n = parseInt(id, 10);
+    if (isNaN(n)) return;
+    var key = "dkd:" + String(n);
+    delete slPresenceMap[key];
+    delete slPresenceCache[key];
+    delete slPartsMap[key];
+    delete slPartsCache[key];
+    delete supplierPriceRowsCache[key];
+  });
 }
 function isVisibleProduct(p) {
   if (!p) return false;
@@ -12654,13 +12666,35 @@ async function fetchSlPartProducts(q, categoryFilter, maxRows) {
   if (!raw && !normalized) return { data: [] };
   maxRows = maxRows || productSearchLimit;
 
-  var sl = await sb.from("sl_parts")
-    .select("id, supplier_pn")
-    .limit(500);
-  if (sl.error) return sl;
+  var slRows = [];
+  var seenSlRow = {};
+  async function appendSlRows(pattern) {
+    var r = await sb.from("sl_parts")
+      .select("id, supplier_pn")
+      .ilike("supplier_pn", pattern)
+      .limit(1000);
+    if (r.error) return r;
+    (r.data || []).forEach(function(row) {
+      var key = String(row.id || "");
+      if (!key || seenSlRow[key]) return;
+      seenSlRow[key] = true;
+      slRows.push(row);
+    });
+    return r;
+  }
+  var prefix = await appendSlRows(raw + "%");
+  if (prefix.error) return prefix;
+  if (!slRows.length && normalized && normalized.length >= 3) {
+    var loosePrefix = await appendSlRows(normalized.slice(0, 3) + "%");
+    if (loosePrefix.error) return loosePrefix;
+  }
+  if (raw.length >= 3) {
+    var contains = await appendSlRows("%" + raw + "%");
+    if (contains.error) return contains;
+  }
 
   var slIds = [];
-  (sl.data || []).forEach(function(row) {
+  slRows.forEach(function(row) {
     var label = row.supplier_pn || "";
     if (!label) return;
     var matched = normalizedStartsWith(label, raw) ||
@@ -17575,6 +17609,25 @@ async function savePurchaseProductLink() {
     var p = purchaseLinkedProductEntryProduct(entry);
     return { link_id: entry.link && entry.link.id, dkd_shohin_id: p.dkd_shohin_id, manufacturer_part_number: p.manufacturer_part_number, genuine_part_number: p.genuine_part_number };
   }) : null;
+  var affectedDkdIds = [dkdId].concat((before || []).map(function(row) { return row.dkd_shohin_id; }));
+  var now = new Date().toISOString();
+  var activeEntries = currentPurchaseLinkRow ? (currentPurchaseLinkRow.products || []) : [];
+  if (activeEntries.length === 1) {
+    var oldEntry = activeEntries[0] || {};
+    var oldProduct = purchaseLinkedProductEntryProduct(oldEntry);
+    var oldDkdId = parseInt(oldProduct && oldProduct.dkd_shohin_id, 10);
+    var oldLinkId = parseInt(oldEntry.link && oldEntry.link.id, 10);
+    if (!isNaN(oldLinkId) && oldDkdId !== dkdId) {
+      var inactivePayload = { status: "inactive", updated_at: now };
+      var inactiveR = await sb.from("core_product_sl_links")
+        .update(inactivePayload)
+        .eq("id", oldLinkId);
+      if (inactiveR.error) {
+        setPurchaseLinkError(inactiveR.error.message || t("msg_save_err"));
+        return;
+      }
+    }
+  }
   var payload = {
     dkd_shohin_id: dkdId,
     sl_part_id: slId,
@@ -17582,7 +17635,7 @@ async function savePurchaseProductLink() {
     match_score: 100,
     status: "active",
     note: "Linked from purchase management",
-    updated_at: new Date().toISOString()
+    updated_at: now
   };
   var r = await sb.from("core_product_sl_links")
     .upsert(payload, { onConflict: "dkd_shohin_id,sl_part_id" })
@@ -17593,6 +17646,7 @@ async function savePurchaseProductLink() {
     return;
   }
   await writeLog("update", "core_product_sl_links", r.data && r.data.id, "SL " + slId + " -> DKD " + dkdId, before, payload);
+  clearSlLinkCachesForDkdIds(affectedDkdIds);
   document.getElementById("purchase-link-form-overlay").classList.remove("show");
   await loadPurchaseMgmt();
   alert(t("purchase_link_saved"));
@@ -17616,6 +17670,7 @@ async function unlinkPurchaseProduct(linkId) {
   var r = await sb.from("core_product_sl_links").update(payload).eq("id", id);
   if (r.error) { alert(t("msg_save_err") + ": " + r.error.message); return; }
   await writeLog("update", "core_product_sl_links", id, "unlink purchase SL", before, payload);
+  clearSlLinkCachesForDkdIds([before && before.product && before.product.dkd_shohin_id]);
   await loadPurchaseMgmt();
   alert(t("purchase_link_removed"));
 }
@@ -18302,6 +18357,12 @@ function imageProductKindMatches(row, kind) {
   return !row.product_kind || rowKind === targetKind;
 }
 
+function isLegacyImageFallbackRow(row) {
+  if (!row) return false;
+  var origin = String(row.image_origin || "").toLowerCase();
+  return !row.product_kind && !origin && row.show_in_sales == null && row.show_in_production == null;
+}
+
 function chooseImageRowsForContext(rows, kind, context) {
   rows = rows || [];
   var exactRows = rows.filter(function(row) {
@@ -18348,7 +18409,9 @@ async function fetchCoreProductImagesForContext(dkdId, kind, context) {
   if (!result.error && (!result.data || result.data.length === 0)) {
     var fallback = await allKindQuery();
     if (!fallback.error) {
-      fallback.data = chooseImageRowsForContext(fallback.data || [], kind, context);
+      fallback.data = (fallback.data || []).filter(function(row) {
+        return isLegacyImageFallbackRow(row) && imageProductKindMatches(row, kind) && imageContextMatches(row, context);
+      });
       return fallback;
     }
   }
@@ -18664,8 +18727,8 @@ function renderImageDeleteDialog() {
 async function deleteImageFromDialog(index) {
   var img = currentImages[index];
   if (!img) return;
-  await deleteImage(img.id, img.image_url);
-  renderImageDeleteDialog();
+  var deleted = await deleteImage(img.id, img.image_url);
+  if (deleted) renderImageDeleteDialog();
 }
 
 async function uploadImages(event) {
@@ -18731,10 +18794,10 @@ async function uploadImages(event) {
 }
 
 async function deleteImage(imgId, imageUrl) {
-  if (!canEdit()) { alert(t("err_perm")); return; }
-  if (!confirm(t("del_confirm"))) return;
+  if (!canEdit()) { alert(t("err_perm")); return false; }
+  if (!confirm(t("del_confirm"))) return false;
   var target = currentImages.find(function(img) { return String(img.id) === String(imgId); }) || {};
-  var path = target.storage_path || imageUrl.split("/product-images/")[1];
+  var path = target.storage_path || (imageUrl ? imageUrl.split("/product-images/")[1] : "");
   var hasOtherReference = false;
   if (imageUrl) {
     var imageRef = await sb.from("core_product_images").select("id").eq("image_url", imageUrl).neq("id", imgId).limit(1);
@@ -18746,13 +18809,22 @@ async function deleteImage(imgId, imageUrl) {
     hasOtherReference = !!(!pathRef.error && (pathRef.data || []).length);
     if (pathRef.error) hasOtherReference = true;
   }
-  if (path && !hasOtherReference) await sb.storage.from("product-images").remove([path]);
-  await sb.from("core_product_images").delete().eq("id", imgId);
-  currentImages = currentImages.filter(function(img){return img.id!==imgId;});
+  if (path && !hasOtherReference) {
+    var storageR = await sb.storage.from("product-images").remove([path]);
+    if (storageR.error) console.warn("product image storage delete failed", storageR.error);
+  }
+  var deleteR = await sb.from("core_product_images").delete().eq("id", imgId);
+  if (deleteR.error) {
+    alert(t("msg_save_err") + ": " + deleteR.error.message);
+    return false;
+  }
+  currentImages = currentImages.filter(function(img){return String(img.id)!==String(imgId);});
+  await loadImages(null, detailSecondaryRequestSeq);
   if (currentProduct && selectedProductKind() === "rebuilt") {
     setProductImageCache(currentProduct, currentImages.length, currentImages.length>0 ? currentImages[0].image_url : "");
   }
   renderImages(); render();
+  return true;
 }
 
 // =============================================
