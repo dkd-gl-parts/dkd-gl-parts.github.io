@@ -230,6 +230,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-add-field select,
 .component-add-field textarea { width: 100%; border: 1px solid #d7dce5; border-radius: 6px; padding: 7px 8px; font-size: 12px; outline: none; background: #fff; }
 .component-add-field textarea { min-height: 34px; resize: vertical; }
+.component-add-field.wide { grid-column: span 2; }
+.component-add-field.full { grid-column: 1 / -1; }
+.component-add-field.full textarea { min-height: 66px; }
 .component-add-field input:focus,
 .component-add-field select:focus,
 .component-add-field textarea:focus { border-color: #4f8ef7; }
@@ -241,7 +244,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-add-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 @media(max-width:1100px){ .component-reverse-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .component-reverse-row .component-reverse-action { justify-self: start; } }
 @media(max-width:900px){ .component-add-grid, .component-reverse-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media(max-width:560px){ .component-add-grid, .component-target-controls, .component-target-summary, .component-reverse-grid, .component-reverse-row { grid-template-columns: 1fr; } .component-target-head { align-items: flex-start; flex-direction: column; } .component-reverse-result { max-height: 58vh; } }
+@media(max-width:560px){ .component-add-grid, .component-target-controls, .component-target-summary, .component-reverse-grid, .component-reverse-row { grid-template-columns: 1fr; } .component-add-field.wide, .component-add-field.full { grid-column: 1; } .component-target-head { align-items: flex-start; flex-direction: column; } .component-reverse-result { max-height: 58vh; } }
 .component-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 12px; }
 .component-table th { background: #f5f7fa; color: #555; font-weight: 600; padding: 6px 8px; text-align: left; border-bottom: 2px solid #e0e0e0; }
 .component-table td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
@@ -1251,7 +1254,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.323</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.324</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1280,7 +1283,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.323</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.324</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1310,7 +1313,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.323</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.324</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1478,7 +1481,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <h3 id="component-add-modal-title" data-i18n="component_add_title">構成部品を追加</h3>
     <div class="form-help" id="component-add-modal-help">-</div>
     <div class="component-add-grid">
-      <div class="component-add-field">
+      <div class="component-add-field wide">
         <label><span data-i18n="component_name">部品名</span> *</label>
         <input id="component-add-name" type="text" list="component-add-name-list" data-i18n-ph="component_name_assist_ph" placeholder="候補から選択または入力" required>
         <datalist id="component-add-name-list"></datalist>
@@ -1532,7 +1535,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         <label data-i18n="component_end_period">終期</label>
         <input id="component-add-end" type="text">
       </div>
-      <div class="component-add-field">
+      <div class="component-add-field full">
         <label data-i18n="component_manufacturing_memo">製造メモ</label>
         <textarea id="component-add-manufacturing-memo" rows="2"></textarea>
       </div>
@@ -5057,7 +5060,7 @@ var productionImages  = [];
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.323";
+var APP_VERSION       = "v1.1.324";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -5079,6 +5082,7 @@ var componentAlternativeMap = {};
 var componentAlternativeBaseRow = null;
 var componentCatalogNameCandidates = [];
 var componentCatalogNameCandidateCache = {};
+var componentCatalogNameCandidateLoadSeq = 0;
 var componentAddPartNumberLookupSeq = 0;
 var componentEditPartNumberLookupSeq = 0;
 var currentSelectedComponentVariantId = "";
@@ -14489,10 +14493,29 @@ async function openComponentAddForm() {
   if (!currentProduct) return;
   if (!canManageComponentsInCurrentContext()) { alert(t("err_perm")); return; }
   if (selectedProductKind() === "catalog_spec") { alert(t("component_catalog_locked_save")); return; }
+  var productKeyAtOpen = productDkdId(currentProduct) + "|" + componentCatalogCategoryCode(currentProduct) + "|" + selectedProductKind();
+  var openBtn = document.getElementById("btn-component-add-open");
+  var openBtnText = openBtn ? openBtn.textContent : "";
+  if (openBtn) {
+    openBtn.disabled = true;
+    openBtn.textContent = t("loading");
+  }
   componentCatalogNameCandidates = [];
   clearComponentAddForm();
   var manufacturer = document.getElementById("component-add-mfr");
   if (manufacturer) manufacturer.value = "";
+  try {
+    await loadComponentCatalogNameCandidatesForCurrent();
+  } catch (err) {
+    console.warn("component name candidates load failed", err);
+    componentCatalogNameCandidates = [];
+  } finally {
+    if (openBtn) {
+      openBtn.disabled = false;
+      openBtn.textContent = openBtnText || ("+ " + t("component_add_open"));
+    }
+  }
+  if (!currentProduct || productKeyAtOpen !== productDkdId(currentProduct) + "|" + componentCatalogCategoryCode(currentProduct) + "|" + selectedProductKind()) return;
   renderComponentAddNameOptions();
   var title = document.getElementById("component-add-modal-title");
   if (title) title.textContent = tf("component_add_title_for_kind", { kind: productKindLabel(selectedProductKind()) });
@@ -14506,8 +14529,6 @@ async function openComponentAddForm() {
   if (overlay) overlay.classList.add("show");
   var name = document.getElementById("component-add-name");
   if (name) name.focus();
-  await loadComponentCatalogNameCandidatesForCurrent();
-  renderComponentAddNameOptions(componentAddValue("component-add-name"));
 }
 
 function componentAddValue(id) {
@@ -15397,12 +15418,20 @@ async function loadComponentCatalogNameCandidatesFallback(mfr, selectedName, cat
 }
 
 async function loadComponentCatalogNameCandidatesForCurrent() {
+  var loadSeq = ++componentCatalogNameCandidateLoadSeq;
+  var productKey = productDkdId(currentProduct);
   var mfr = String((currentProduct && currentProduct.manufacturer) || "").trim().toUpperCase();
   var category = componentCatalogCategoryCode(currentProduct);
   var cacheKey = mfr + "|" + (category || "-");
+  function isCurrentCandidateLoad() {
+    return loadSeq === componentCatalogNameCandidateLoadSeq &&
+      productKey === productDkdId(currentProduct) &&
+      category === componentCatalogCategoryCode(currentProduct);
+  }
   componentCatalogNameCandidates = [];
   if (!mfr) return;
   if (componentCatalogNameCandidateCache[cacheKey]) {
+    if (!isCurrentCandidateLoad()) return;
     componentCatalogNameCandidates = componentCatalogNameCandidateCache[cacheKey];
     return;
   }
@@ -15414,6 +15443,7 @@ async function loadComponentCatalogNameCandidatesForCurrent() {
   if (r.error) {
     console.warn("component catalog name candidates failed", r.error);
     var fallback = await loadComponentCatalogNameCandidatesFallback(mfr, null, category);
+    if (!isCurrentCandidateLoad()) return;
     componentCatalogNameCandidateCache[cacheKey] = fallback;
     componentCatalogNameCandidates = fallback;
     return;
@@ -15427,6 +15457,7 @@ async function loadComponentCatalogNameCandidatesForCurrent() {
     list = await loadComponentCatalogNameCandidatesFallback(mfr, null, category);
   }
   list.sort(function(a, b) { return String(a || "").localeCompare(String(b || ""), "ja", { numeric: true }); });
+  if (!isCurrentCandidateLoad()) return;
   componentCatalogNameCandidateCache[cacheKey] = list;
   componentCatalogNameCandidates = list;
 }
