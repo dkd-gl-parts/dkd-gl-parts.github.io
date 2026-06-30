@@ -1251,7 +1251,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.322</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.323</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1280,7 +1280,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.322</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.323</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1310,7 +1310,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.322</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.323</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -5057,7 +5057,7 @@ var productionImages  = [];
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.322";
+var APP_VERSION       = "v1.1.323";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -14489,6 +14489,7 @@ async function openComponentAddForm() {
   if (!currentProduct) return;
   if (!canManageComponentsInCurrentContext()) { alert(t("err_perm")); return; }
   if (selectedProductKind() === "catalog_spec") { alert(t("component_catalog_locked_save")); return; }
+  componentCatalogNameCandidates = [];
   clearComponentAddForm();
   var manufacturer = document.getElementById("component-add-mfr");
   if (manufacturer) manufacturer.value = "";
@@ -14829,7 +14830,8 @@ async function addAssemblyComponentForCurrent() {
     return;
   }
   if (!confirmComponentPartNumberWarnings(addPartCheck.warnings)) return;
-  var componentPartName = componentAddValue("component-add-name");
+  var componentPartName = normalizeComponentNameText(componentAddValue("component-add-name"));
+  setComponentAddValue("component-add-name", componentPartName);
   if (!componentPartName) {
     if (err) err.textContent = t("component_name_required");
     else alert(t("component_name_required"));
@@ -15028,6 +15030,8 @@ async function saveComponentEdit(usageId) {
   }
   if (!confirmComponentPartNumberWarnings(editPartCheck.warnings)) return;
   payload = componentEditPayloadFromRow(tr);
+  payload.component_part_name = normalizeComponentNameText(payload.component_part_name);
+  setComponentEditFieldValue(tr, "component_part_name", payload.component_part_name);
   var editReplacementRate = String(payload.replacement_rate || "").trim();
   if (editReplacementRate && !/^\d+$/.test(editReplacementRate)) {
     alert(t("component_replacement_rate_digits"));
@@ -15156,8 +15160,38 @@ function alternativesForComponent(row) {
   return componentAlternativeMap[String(row.dkd_component_id)] || [];
 }
 
-function addComponentNameCandidate(list, seen, value) {
+function componentNameMojibakeScore(text) {
+  text = String(text || "");
+  var matches = text.match(/[�ÃÂãâ繧繝縺譁莨]/g);
+  return matches ? matches.length : 0;
+}
+
+function tryRepairLatin1Utf8Mojibake(text) {
+  text = String(text || "");
+  if (!/[ÃÂãâ]/.test(text) || typeof TextDecoder === "undefined") return text;
+  try {
+    var bytes = new Uint8Array(text.split("").map(function(ch) { return ch.charCodeAt(0) & 0xff; }));
+    var repaired = new TextDecoder("utf-8").decode(bytes);
+    if (repaired && componentNameMojibakeScore(repaired) < componentNameMojibakeScore(text)) return repaired;
+  } catch (e) {}
+  return text;
+}
+
+function normalizeComponentNameText(value) {
   var text = String(value || "").trim();
+  if (!text) return "";
+  text = tryRepairLatin1Utf8Mojibake(text);
+  if (typeof text.normalize === "function") text = text.normalize("NFKC");
+  text = text
+    .replace(/[\u2010-\u2015\u2212\uFF0D]/g, "-")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!text || componentNameMojibakeScore(text) > 0) return "";
+  return text;
+}
+
+function addComponentNameCandidate(list, seen, value) {
+  var text = normalizeComponentNameText(value);
   if (!text) return;
   var key = text.toUpperCase();
   if (seen[key]) return;
