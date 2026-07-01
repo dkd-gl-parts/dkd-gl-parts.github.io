@@ -1279,7 +1279,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.329</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.336</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1308,7 +1308,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.329</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.336</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1338,7 +1338,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.329</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.336</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -5204,7 +5204,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.335";
+var APP_VERSION       = "v1.1.336";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -15142,7 +15142,7 @@ async function addAssemblyComponentForCurrent() {
     return;
   }
   if (!confirmComponentPartNumberWarnings(addPartCheck.warnings)) return;
-  var componentPartName = normalizeComponentNameText(componentAddValue("component-add-name"));
+  var componentPartName = canonicalComponentNameForStorage(componentAddValue("component-add-name"));
   setComponentAddValue("component-add-name", componentPartName);
   if (!componentPartName) {
     if (err) err.textContent = t("component_name_required");
@@ -15344,7 +15344,7 @@ async function saveComponentEdit(usageId) {
   }
   if (!confirmComponentPartNumberWarnings(editPartCheck.warnings)) return;
   payload = componentEditPayloadFromRow(tr);
-  payload.component_part_name = normalizeComponentNameText(payload.component_part_name);
+  payload.component_part_name = canonicalComponentNameForStorage(payload.component_part_name);
   setComponentEditFieldValue(tr, "component_part_name", payload.component_part_name);
   var editReplacementRate = String(payload.replacement_rate || "").trim();
   if (editReplacementRate && !/^\d+$/.test(editReplacementRate)) {
@@ -15505,6 +15505,45 @@ function normalizeComponentNameText(value) {
   return text;
 }
 
+function componentNameCanonicalJaMap() {
+  return {
+    "ASSY": "アッセンブリ",
+    "BEARING, BALL": "ベアリング,ボール",
+    "BOLT": "ボルト",
+    "BOLT, THROUGH": "ボルト,スルー",
+    "BOLT, W/WASHER": "ボルト,W/ワッシャ",
+    "BUSH, BEARING": "ブッシュ",
+    "BUSHING": "ブッシュ",
+    "CAP, PULLEY": "キャップ,プーリ",
+    "CLIP, CORD": "クリップ,ワイヤ",
+    "COVER, BEARING": "カバー,ベアリング",
+    "COVER, END, RR": "カバー,リヤ エンド",
+    "FRAME ASSY, DRIVE END": "フレームS/A,ドライブエンド",
+    "FRAME ASSY, END, RR": "フレームS/A,リヤエンド",
+    "FRAME, DRIVE END": "フレーム,ドライブ エンド",
+    "HOLDER SUB-ASSY, BRUSH": "ホルダS/A,ブラシ",
+    "HOLDER, W/RECTIFIER": "ホルダS/A,レクチファイヤ",
+    "INSULATION BUSH, TERMINAL": "ブッシュ,ターミナル",
+    "NUT": "ナット",
+    "PLATE, RETAINER": "プレート,リテーナ",
+    "PULLEY": "プーリ",
+    "PULLEY ASSY": "プーリAY",
+    "REGULATOR ASSY, GENERATOR": "レギュレータAY",
+    "ROTER SUB-ASSY": "ロータS/A",
+    "ROTOR ASSY": "ロータAY",
+    "ROTOR SUB-ASSY": "ロータS/A",
+    "SCREW": "スクリュ",
+    "SCREW, W/WASHER": "スクリュ,W/ワッシャ",
+    "STATOR ASSY": "ステータ"
+  };
+}
+
+function canonicalComponentNameForStorage(value) {
+  var text = normalizeComponentNameText(value);
+  if (!text) return "";
+  return componentNameCanonicalJaMap()[text.toUpperCase()] || text;
+}
+
 function componentNameDuplicateKey(value) {
   return normalizeComponentNameText(value)
     .replace(/[ァぁ]/g, "ア")
@@ -15520,7 +15559,7 @@ function componentNameDuplicateKey(value) {
 }
 
 function addComponentNameCandidate(list, seen, value) {
-  var text = normalizeComponentNameText(value);
+  var text = canonicalComponentNameForStorage(value);
   if (!text) return;
   var key = componentNameDuplicateKey(text);
   if (seen[key]) return;
@@ -15668,6 +15707,8 @@ function componentNameTranslationLabel(name) {
   var en = {
     "コンプレッサAY": "Compressor ASSY",
     "コンプレッサAY,W/クラッチ": "Compressor ASSY w/ Clutch",
+    "オルタネータAY": "Alternator ASSY",
+    "オルタネータ,W/レギュレータ": "Alternator w/ Regulator",
     "クラッチAY,マグネット": "Magnetic Clutch ASSY",
     "ステータ,マグネット クラッチ": "Magnet Clutch Stator",
     "ロータ,マグネット クラッチ": "Magnet Clutch Rotor",
@@ -15677,6 +15718,11 @@ function componentNameTranslationLabel(name) {
     "ベアリング": "Bearing",
     "ベアリング,ボール": "Ball Bearing",
     "Oリング": "O-Ring",
+    "アッセンブリ": "Assembly",
+    "インシュレータ": "Insulator",
+    "シール,リング": "Seal Ring",
+    "キャップ,プーリ": "Pulley Cap",
+    "クリップ,ワイヤ": "Wire Clip",
     "リング,スナップ": "Snap Ring",
     "ワッシャ": "Washer",
     "ワッシャ,プレートSK": "Plate Washer",
@@ -15684,12 +15730,27 @@ function componentNameTranslationLabel(name) {
     "ボルト": "Bolt",
     "スクリュ,W/ワッシャ": "Screw w/ Washer",
     "レギュレータ": "Regulator",
+    "レギュレータAY": "Generator Regulator ASSY",
     "レクチファイヤASSY": "Rectifier ASSY",
     "ブラシ": "Brush",
     "ブラシホルダASSY": "Brush Holder ASSY",
+    "ホルダS/A,ブラシ": "Brush Holder S/A",
+    "ホルダS/A,レクチファイヤ": "Rectifier Holder S/A",
     "ロータASSY": "Rotor ASSY",
+    "ロータAY": "Rotor ASSY",
+    "ロータS/A": "Rotor S/A",
     "ロータ": "Rotor",
     "ステータ": "Stator",
+    "フレームS/A,ドライブエンド": "Drive End Frame S/A",
+    "フレームS/A,リヤエンド": "Rear End Frame S/A",
+    "フレーム,ドライブ エンド": "Drive End Frame",
+    "カバー,ベアリング": "Bearing Cover",
+    "カバー,リヤ エンド": "Rear End Cover",
+    "ブッシュ": "Bush",
+    "ブッシュ,ターミナル": "Terminal Insulation Bush",
+    "プレート,リテーナ": "Retainer Plate",
+    "ボルト,スルー": "Through Bolt",
+    "ボルト,W/ワッシャ": "Bolt w/ Washer",
     "スリップリング": "Slip Ring",
     "ファン": "Fan",
     "アマチュア": "Armature",
@@ -15712,6 +15773,8 @@ function componentNameTranslationLabel(name) {
   var zh = {
     "コンプレッサAY": "压缩机总成",
     "コンプレッサAY,W/クラッチ": "带离合器压缩机总成",
+    "オルタネータAY": "发电机总成",
+    "オルタネータ,W/レギュレータ": "带调节器发电机",
     "クラッチAY,マグネット": "电磁离合器总成",
     "ステータ,マグネット クラッチ": "电磁离合器定子",
     "ロータ,マグネット クラッチ": "电磁离合器转子",
@@ -15721,6 +15784,11 @@ function componentNameTranslationLabel(name) {
     "ベアリング": "轴承",
     "ベアリング,ボール": "球轴承",
     "Oリング": "O形圈",
+    "アッセンブリ": "总成",
+    "インシュレータ": "绝缘体",
+    "シール,リング": "密封环",
+    "キャップ,プーリ": "皮带轮盖",
+    "クリップ,ワイヤ": "线夹",
     "リング,スナップ": "卡簧",
     "ワッシャ": "垫圈",
     "ワッシャ,プレートSK": "板垫圈",
@@ -15728,12 +15796,27 @@ function componentNameTranslationLabel(name) {
     "ボルト": "螺栓",
     "スクリュ,W/ワッシャ": "带垫圈螺钉",
     "レギュレータ": "调节器",
+    "レギュレータAY": "发电机调节器总成",
     "レクチファイヤASSY": "整流器总成",
     "ブラシ": "碳刷",
     "ブラシホルダASSY": "刷架总成",
+    "ホルダS/A,ブラシ": "刷架分总成",
+    "ホルダS/A,レクチファイヤ": "整流器支架分总成",
     "ロータASSY": "转子总成",
+    "ロータAY": "转子总成",
+    "ロータS/A": "转子分总成",
     "ロータ": "转子",
     "ステータ": "定子",
+    "フレームS/A,ドライブエンド": "驱动端框架分总成",
+    "フレームS/A,リヤエンド": "后端框架分总成",
+    "フレーム,ドライブ エンド": "驱动端框架",
+    "カバー,ベアリング": "轴承盖",
+    "カバー,リヤ エンド": "后端盖",
+    "ブッシュ": "衬套",
+    "ブッシュ,ターミナル": "端子绝缘衬套",
+    "プレート,リテーナ": "保持板",
+    "ボルト,スルー": "贯穿螺栓",
+    "ボルト,W/ワッシャ": "带垫圈螺栓",
     "スリップリング": "滑环",
     "ファン": "风扇",
     "アマチュア": "电枢",
