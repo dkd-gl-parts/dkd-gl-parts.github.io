@@ -1001,11 +1001,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-detail-title { font-size: 18px; font-weight: 800; color: #1a1a2e; }
 .production-detail-sub { font-size: 12px; color: #7c8492; margin-top: 4px; }
 .production-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-.production-image-panel { margin-top: 9px; max-width: 560px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 8px; align-items: center; }
+.production-image-panel { margin-top: 9px; max-width: 560px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 8px; align-items: center; }
 .production-image-title { font-size: 11px; font-weight: 700; color: #667085; white-space: nowrap; }
 .production-image-count { font-size: 11px; color: #8a93a3; min-width: 0; }
-.production-image-kind { justify-self: end; width: min(180px, 100%); }
-.production-image-kind .product-kind-select { width: 100%; min-width: 0; }
 .production-image-strip { grid-column: 1 / -1; display: flex; gap: 6px; overflow-x: auto; min-height: 48px; padding: 1px 0 2px; }
 .production-image-strip.empty { min-height: 24px; }
 .production-image-thumb { flex: 0 0 46px; width: 46px; height: 46px; border: 1px solid #dbe3ef; border-radius: 6px; background: #f8fafc; padding: 0; overflow: hidden; cursor: pointer; }
@@ -1018,6 +1016,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .production-section { border: 1px solid #edf0f4; border-radius: 8px; padding: 12px; background: #fff; }
 .production-section h3 { font-size: 13px; color: #556070; margin-bottom: 8px; }
+.production-kind-row { margin-top: 10px; }
+.production-kind-row .product-kind-panel { border: 1px solid #e5edf8; border-radius: 8px; background: #fbfdff; padding: 10px 12px; margin: 0; }
 .production-kv { display: grid; grid-template-columns: 118px minmax(0, 1fr); border-top: 1px solid #f2f2f2; }
 .production-kv:first-of-type { border-top: 0; }
 .production-kv div { padding: 6px 4px; font-size: 13px; word-break: break-word; }
@@ -5206,7 +5206,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.332";
+var APP_VERSION       = "v1.1.333";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -7289,6 +7289,14 @@ function renderProductMasterDetailHtml(p) {
   "</div>";
 }
 
+function renderProductionProductKindHtml() {
+  return "<div class='production-kind-row'><div class='product-kind-panel'>" +
+    "<div class='detail-block-title'>" + esc(t("product_kind_section")) + "</div>" +
+    "<div class='product-kind-control'><div class='product-kind-control-row compact'>" +
+    imageKindSelectHtml("production-image-kind-select", currentProductionImageKind) +
+    "</div></div></div></div>";
+}
+
 async function renderProductionDetail(row) {
   var el = document.getElementById("production-detail");
   if (!el) return;
@@ -7304,6 +7312,7 @@ async function renderProductionDetail(row) {
     currentProductionImageKind = "rebuilt";
     currentProductionImageDkdId = dkdId || null;
   }
+  currentSelectedProductKind = normalizeProductKind(currentProductionImageKind || "rebuilt");
   var detail = await loadProductionDetailData(row);
   if (seq !== productionDetailRequestSeq) return;
   var title = row.manufacturer_part_number || row.genuine_part_number || row.daiko_part_number || ("DKD " + row.dkd_shohin_id);
@@ -7311,7 +7320,7 @@ async function renderProductionDetail(row) {
   html += "<div class='production-detail-head'>";
   html += "<div class='production-head-main'><div class='production-detail-title'>" + (inst ? "#" + esc(inst.priority_rank || "-") + " " : "") + esc(title) + "</div>";
   html += "<div class='production-detail-sub'>" + esc(productionCategoryLabel(row)) + " / " + esc(t("f_genuine_pn")) + " " + esc(row.genuine_part_number || "-") + " / " + esc(row.manufacturer || "-") + "</div>";
-  html += "<div class='production-image-panel'><div class='production-image-title'>" + esc(t("production_images_section")) + "</div><div class='production-image-count' id='production-image-count'>" + esc(t("production_images_loading")) + "</div><div class='production-image-kind'>" + imageKindSelectHtml("production-image-kind-select", currentProductionImageKind) + "</div><div class='production-image-strip' id='production-image-strip'><span class='production-image-empty'>" + esc(t("production_images_loading")) + "</span></div></div></div>";
+  html += "<div class='production-image-panel'><div class='production-image-title'>" + esc(t("production_images_section")) + "</div><div class='production-image-count' id='production-image-count'>" + esc(t("production_images_loading")) + "</div><div class='production-image-strip' id='production-image-strip'><span class='production-image-empty'>" + esc(t("production_images_loading")) + "</span></div></div></div>";
   html += "<div class='production-actions'>";
   html += "<button class='btn-sm-edit btn-component-action' id='production-open-components'><span class='component-icon'>&#x1F9E9;</span> " + esc(t("component_section")) + "</button>";
   if (canViewFinishedLabelMgmt()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-finished-label'>" + esc(t("mi_finished_label_title")) + "</button>";
@@ -7321,6 +7330,7 @@ async function renderProductionDetail(row) {
   html += "<div class='production-grid'>";
   html += "<section class='production-section production-wide'><h3>" + esc(productCategoryLabel(row)) + "</h3>";
   html += renderProductMasterDetailHtml(row);
+  html += renderProductionProductKindHtml();
   html += "</section>";
   html += "<section class='production-section'><h3>製造予定リスト</h3>";
   if (inst) {
@@ -7363,6 +7373,7 @@ async function renderProductionDetail(row) {
   if (imageKindSelect) {
     imageKindSelect.addEventListener("change", function() {
       currentProductionImageKind = normalizeProductKind(imageKindSelect.value || "rebuilt");
+      currentSelectedProductKind = currentProductionImageKind;
       setProductKindSelectClass(imageKindSelect);
       productionImages = [];
       renderProductionImages();
@@ -7421,6 +7432,7 @@ async function openProductionComponents() {
   }
   if (row) {
     currentProduct = row;
+    currentSelectedProductKind = normalizeProductKind(currentProductionImageKind || "rebuilt");
     enterComponentsScreen("production-search");
   }
 }
