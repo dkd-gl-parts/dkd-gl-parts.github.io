@@ -1279,7 +1279,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.340</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.341</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1308,7 +1308,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.340</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.341</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1338,7 +1338,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.340</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.341</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -5213,7 +5213,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.340";
+var APP_VERSION       = "v1.1.341";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -7284,6 +7284,203 @@ function vehicleMakerLabel(value) {
   return text;
 }
 
+function vehicleApplicationTextLabel(value) {
+  var text = String(value || "").trim();
+  if (!text || text === "-") return text || "-";
+  if (currentLang === "ja") return text;
+  var en = {
+    "カーエアコン": "Car A/C",
+    "エアコン": "A/C",
+    "コンプレッサ": "Compressor",
+    "スタータ": "Starter",
+    "セルモータ": "Starter Motor",
+    "セルモーター": "Starter Motor",
+    "オルタネータ": "Alternator",
+    "ダイナモ": "Alternator",
+    "ディストリビュータ": "Distributor",
+    "ブロワ": "Blower",
+    "ブロワモータ": "Blower Motor",
+    "ブロワモーター": "Blower Motor",
+    "エンジンジェネレータ": "Engine Generator",
+    "発電機": "Generator",
+    "産業機械用": "Industrial Machinery",
+    "産業機械": "Industrial Machinery",
+    "建設機械": "Construction Machinery",
+    "農業機械": "Agricultural Machinery",
+    "船舶用": "Marine",
+    "船舶": "Marine",
+    "動力用": "Power Unit",
+    "動力用(CL)": "Power Unit (CL)",
+    "動力用(XE)": "Power Unit (XE)",
+    "動力用(XV)": "Power Unit (XV)",
+    "冷房用": "Cooling",
+    "トラック": "Truck",
+    "小型トラック": "Light Truck",
+    "バス": "Bus",
+    "乗用車": "Passenger Car",
+    "商用車": "Commercial Vehicle",
+    "フォークリフト": "Forklift",
+    "パワーショベル": "Excavator",
+    "ショベル": "Excavator",
+    "ミニショベル": "Mini Excavator",
+    "ブルドーザ": "Bulldozer",
+    "ホイールローダ": "Wheel Loader",
+    "ホイルローダ": "Wheel Loader",
+    "モータグレーダ": "Motor Grader",
+    "クレーン": "Crane",
+    "ローダ": "Loader",
+    "ムーヴ": "Move",
+    "ハイエースレジアス": "Hiace Regius",
+    "ハイエース": "Hiace",
+    "レジアスエース": "Regius Ace",
+    "レジアス": "Regius",
+    "ダイナ": "Dyna",
+    "トヨエース": "Toyoace",
+    "ランドクルーザー": "Land Cruiser",
+    "クラウン": "Crown",
+    "カローラ": "Corolla",
+    "カムリ": "Camry",
+    "セルシオ": "Celsior",
+    "プリウス": "Prius",
+    "ハイラックス": "Hilux",
+    "パジェロ": "Pajero",
+    "デリカ": "Delica",
+    "キャンター": "Canter",
+    "ローザ": "Rosa",
+    "エルフ": "Elf",
+    "フォワード": "Forward",
+    "ギガ": "Giga",
+    "レンジャー": "Ranger",
+    "プロフィア": "Profia",
+    "コンドル": "Condor",
+    "キャラバン": "Caravan",
+    "アトラス": "Atlas",
+    "ブルーバードシルフィ": "Bluebird Sylphy",
+    "セレナ": "Serena",
+    "サニー": "Sunny",
+    "エブリイ": "Every",
+    "キャリイ": "Carry",
+    "ジムニー": "Jimny",
+    "ワゴンR": "Wagon R",
+    "サンバー": "Sambar",
+    "レガシィ": "Legacy",
+    "インプレッサ": "Impreza",
+    "他": "others",
+    "その他": "Other"
+  };
+  var zh = {
+    "カーエアコン": "汽车空调",
+    "エアコン": "空调",
+    "コンプレッサ": "压缩机",
+    "スタータ": "起动机",
+    "セルモータ": "起动电机",
+    "セルモーター": "起动电机",
+    "オルタネータ": "发电机",
+    "ダイナモ": "发电机",
+    "ディストリビュータ": "分电器",
+    "ブロワ": "鼓风机",
+    "ブロワモータ": "鼓风电机",
+    "ブロワモーター": "鼓风电机",
+    "エンジンジェネレータ": "发动机发电机",
+    "発電機": "发电机",
+    "産業機械用": "工业机械用",
+    "産業機械": "工业机械",
+    "建設機械": "工程机械",
+    "農業機械": "农业机械",
+    "船舶用": "船舶用",
+    "船舶": "船舶",
+    "動力用": "动力用",
+    "動力用(CL)": "动力用(CL)",
+    "動力用(XE)": "动力用(XE)",
+    "動力用(XV)": "动力用(XV)",
+    "冷房用": "冷却用",
+    "トラック": "卡车",
+    "小型トラック": "轻型卡车",
+    "バス": "巴士",
+    "乗用車": "乘用车",
+    "商用車": "商用车",
+    "フォークリフト": "叉车",
+    "パワーショベル": "挖掘机",
+    "ショベル": "挖掘机",
+    "ミニショベル": "小型挖掘机",
+    "ブルドーザ": "推土机",
+    "ホイールローダ": "轮式装载机",
+    "ホイルローダ": "轮式装载机",
+    "モータグレーダ": "平地机",
+    "クレーン": "起重机",
+    "ローダ": "装载机",
+    "ムーヴ": "Move",
+    "ハイエースレジアス": "Hiace Regius",
+    "ハイエース": "Hiace",
+    "レジアスエース": "Regius Ace",
+    "レジアス": "Regius",
+    "ダイナ": "Dyna",
+    "トヨエース": "Toyoace",
+    "ランドクルーザー": "Land Cruiser",
+    "クラウン": "Crown",
+    "カローラ": "Corolla",
+    "カムリ": "Camry",
+    "セルシオ": "Celsior",
+    "プリウス": "Prius",
+    "ハイラックス": "Hilux",
+    "パジェロ": "Pajero",
+    "デリカ": "Delica",
+    "キャンター": "Canter",
+    "ローザ": "Rosa",
+    "エルフ": "Elf",
+    "フォワード": "Forward",
+    "ギガ": "Giga",
+    "レンジャー": "Ranger",
+    "プロフィア": "Profia",
+    "コンドル": "Condor",
+    "キャラバン": "Caravan",
+    "アトラス": "Atlas",
+    "ブルーバードシルフィ": "Bluebird Sylphy",
+    "セレナ": "Serena",
+    "サニー": "Sunny",
+    "エブリイ": "Every",
+    "キャリイ": "Carry",
+    "ジムニー": "Jimny",
+    "ワゴンR": "Wagon R",
+    "サンバー": "Sambar",
+    "レガシィ": "Legacy",
+    "インプレッサ": "Impreza",
+    "他": "其他",
+    "その他": "其他"
+  };
+  var dict = currentLang === "zh" ? zh : en;
+  function lookup(part) {
+    var p = String(part || "").trim();
+    if (!p) return "";
+    if (dict[p]) return dict[p];
+    var key = normalizeAsciiWidth(p).toUpperCase().replace(/[ \u3000・･_\-()（）]/g, "");
+    var hit = "";
+    Object.keys(dict).some(function(k) {
+      var dictKey = normalizeAsciiWidth(k).toUpperCase().replace(/[ \u3000・･_\-()（）]/g, "");
+      if (dictKey === key) {
+        hit = dict[k];
+        return true;
+      }
+      return false;
+    });
+    return hit || p;
+  }
+  if (/[、,／\/]/.test(text)) {
+    return text.split(/([、,／\/])/).map(function(part) {
+      if (/^[、,／\/]$/.test(part)) return part === "／" || part === "/" ? " / " : ", ";
+      return lookup(part);
+    }).join("").replace(/\s*,\s*/g, ", ").replace(/\s*\/\s*/g, " / ").trim();
+  }
+  return lookup(text);
+}
+
+function renderVehicleApplicationText(value) {
+  var text = String(value || "").trim() || "-";
+  var label = vehicleApplicationTextLabel(text);
+  if (currentLang === "ja" || !label || label === text) return esc(text);
+  return "<div class='component-pn'>" + esc(label) + "</div><div class='component-sub'>" + esc(text) + "</div>";
+}
+
 function vehicleApplicationPartNameLabel(value) {
   var text = String(value || "").trim();
   if (!text || text === "-") return text || "-";
@@ -7335,8 +7532,8 @@ function renderVehicleApplicationsTable(rows) {
   rows.forEach(function(row) {
     html += "<tr>";
     html += "<td>" + esc(vehicleMakerLabel(row.vehicle_manufacturer || "-")) + "</td>";
-    html += "<td>" + esc(row.vehicle_type || row.vehicle_model || "-") + "</td>";
-    html += "<td>" + esc(row.model || row.vehicle_model || "-") + "</td>";
+    html += "<td>" + renderVehicleApplicationText(row.vehicle_type || row.vehicle_model || "-") + "</td>";
+    html += "<td>" + (row.model ? esc(row.model || "-") : renderVehicleApplicationText(row.vehicle_model || "-")) + "</td>";
     html += "<td>" + esc(row.engine || "-") + "</td>";
     html += "<td>" + esc(row.production_period_text || [row.effective_start, row.effective_end].filter(Boolean).join(" - ") || "-") + "</td>";
     html += "<td><div class='component-pn'>" + esc(row.genuine_part_number || "-") + "</div><div class='component-sub'>" + esc(row.manufacturer_part_number || "") + "</div></td>";
