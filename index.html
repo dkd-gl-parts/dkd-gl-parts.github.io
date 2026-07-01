@@ -1279,7 +1279,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.337</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.338</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1308,7 +1308,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.337</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.338</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1338,7 +1338,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.337</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.338</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -5204,7 +5204,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.337";
+var APP_VERSION       = "v1.1.338";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -15812,6 +15812,7 @@ function componentNameTranslationLabel(name) {
     "ファン": "Fan",
     "アマチュア": "Armature",
     "アーマチュアS/A": "Armature S/A",
+    "アーマチュアAY,W/クラッチ": "Armature ASSY w/ Clutch",
     "ヨークASSY": "Yoke ASSY",
     "マグネットスイッチ": "Magnetic Switch",
     "レバー": "Lever",
@@ -15824,6 +15825,7 @@ function componentNameTranslationLabel(name) {
     "ピックアップコイル": "Pickup Coil",
     "イグナイタ": "Igniter",
     "ガスケット": "Gasket",
+    "ガスケット,スイッチ": "Switch Gasket",
     "ギヤ": "Gear",
     "ギヤ,プラネット": "Planet Gear",
     "ギヤ,インターナル": "Internal Gear",
@@ -15861,7 +15863,15 @@ function componentNameTranslationLabel(name) {
     "サポート,ブラシ": "Brush Support",
     "シール,スタータ": "Starter Seal",
     "ホルダ,ブラシ": "Brush Holder",
-    "フレーム": "Frame"
+    "フレーム": "Frame",
+    "カバー,スタータ": "Starter Cover",
+    "カバー,ソレノイド": "Solenoid Cover",
+    "カバー,マグネット スイッチ": "Magnetic Switch Cover",
+    "カラー,アーマチュア": "Armature Collar",
+    "カラー,センター ケース": "Center Case Collar",
+    "クッション": "Cushion",
+    "クラッチ&ベアリング,センタ": "Clutch & Center Bearing",
+    "クリップ": "Clip"
   };
   var zh = {
     "コンプレッサAY": "压缩机总成",
@@ -15971,6 +15981,7 @@ function componentNameTranslationLabel(name) {
     "ファン": "风扇",
     "アマチュア": "电枢",
     "アーマチュアS/A": "电枢分总成",
+    "アーマチュアAY,W/クラッチ": "带离合器电枢总成",
     "ヨークASSY": "磁轭总成",
     "マグネットスイッチ": "电磁开关",
     "レバー": "拨叉",
@@ -15983,6 +15994,7 @@ function componentNameTranslationLabel(name) {
     "ピックアップコイル": "拾取线圈",
     "イグナイタ": "点火器",
     "ガスケット": "垫片",
+    "ガスケット,スイッチ": "开关密封垫",
     "ギヤ": "齿轮",
     "ギヤ,プラネット": "行星齿轮",
     "ギヤ,インターナル": "内齿轮",
@@ -16020,7 +16032,15 @@ function componentNameTranslationLabel(name) {
     "サポート,ブラシ": "电刷支撑",
     "シール,スタータ": "起动机密封件",
     "ホルダ,ブラシ": "电刷架",
-    "フレーム": "框架"
+    "フレーム": "框架",
+    "カバー,スタータ": "起动机盖",
+    "カバー,ソレノイド": "电磁开关盖",
+    "カバー,マグネット スイッチ": "电磁开关盖",
+    "カラー,アーマチュア": "电枢衬套",
+    "カラー,センター ケース": "中心壳衬套",
+    "クッション": "缓冲垫",
+    "クラッチ&ベアリング,センタ": "离合器及中心轴承",
+    "クリップ": "卡夹"
   };
   return (lang === "zh" ? zh : en)[key] || "";
 }
@@ -16243,14 +16263,15 @@ function componentAddNameCandidates(selectedName) {
 
 function componentNameOptionsHtml(selectedName) {
   var html = "";
-  var seenDisplay = {};
+  var seenCanonical = {};
   componentAddNameCandidates(selectedName).forEach(function(name) {
-    var displayName = componentNameOptionDisplayValue(name);
-    if (!displayName) return;
-    var displayKey = componentNameDuplicateKey(displayName);
-    if (seenDisplay[displayKey]) return;
-    seenDisplay[displayKey] = true;
-    html += "<option value='" + esc(displayName) + "'></option>";
+    var canonicalName = canonicalComponentNameForStorage(name) || normalizeComponentNameText(name);
+    if (!canonicalName) return;
+    var canonicalKey = componentNameDuplicateKey(canonicalName);
+    if (seenCanonical[canonicalKey]) return;
+    seenCanonical[canonicalKey] = true;
+    var label = componentNameOptionLabel(canonicalName);
+    html += "<option value='" + esc(canonicalName) + "'" + (label ? " label='" + esc(label) + "'" : "") + "></option>";
   });
   return html;
 }
