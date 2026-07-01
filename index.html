@@ -1279,7 +1279,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.338</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.339</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1308,7 +1308,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.338</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.339</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1338,7 +1338,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.338</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.339</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1547,9 +1547,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         <label data-i18n="component_procurement_category">調達区分</label>
         <select id="component-add-procurement-category">
           <option value="">-</option>
-          <option value="部品どり">部品どり</option>
-          <option value="自コア再利用">自コア再利用</option>
-          <option value="新品交換">新品交換</option>
+          <option value="部品どり" data-i18n="component_procurement_parts_donor">部品どり</option>
+          <option value="自コア再利用" data-i18n="component_procurement_reuse_core">自コア再利用</option>
+          <option value="新品交換" data-i18n="component_procurement_new_replacement">新品交換</option>
         </select>
       </div>
       <div class="component-add-field">
@@ -3563,6 +3563,9 @@ var TRANSLATIONS = {
     component_replacement_rate: "交換率",
     component_replacement_rate_digits: "交換率は数字のみで入力してください。",
     component_procurement_category: "調達区分",
+    component_procurement_parts_donor: "部品どり",
+    component_procurement_reuse_core: "自コア再利用",
+    component_procurement_new_replacement: "新品交換",
     component_manufacturing_memo: "製造メモ",
     component_actions: "操作",
     component_catalog: "カタログ",
@@ -4328,6 +4331,9 @@ var TRANSLATIONS = {
     component_replacement_rate: "Replacement Rate",
     component_replacement_rate_digits: "Replacement rate must contain digits only.",
     component_procurement_category: "Procurement Type",
+    component_procurement_parts_donor: "Parts Donor",
+    component_procurement_reuse_core: "Reuse Own Core",
+    component_procurement_new_replacement: "New Replacement",
     component_manufacturing_memo: "Manufacturing Memo",
     component_actions: "Action",
     component_catalog: "Catalog",
@@ -5086,6 +5092,9 @@ var TRANSLATIONS = {
     component_replacement_rate: "更换率",
     component_replacement_rate_digits: "更换率只能输入数字。",
     component_procurement_category: "采购区分",
+    component_procurement_parts_donor: "拆件使用",
+    component_procurement_reuse_core: "自有旧件再利用",
+    component_procurement_new_replacement: "新品更换",
     component_manufacturing_memo: "制造备注",
     component_actions: "操作",
     component_catalog: "目录",
@@ -5204,7 +5213,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.338";
+var APP_VERSION       = "v1.1.339";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -15209,11 +15218,21 @@ function componentEditNameInput(row) {
   return "<input data-component-edit-field='component_part_name' list='component-edit-name-list' value='" + esc(value || "") + "'>";
 }
 
+function componentProcurementCategoryLabel(value) {
+  var keyMap = {
+    "部品どり": "component_procurement_parts_donor",
+    "自コア再利用": "component_procurement_reuse_core",
+    "新品交換": "component_procurement_new_replacement"
+  };
+  var key = keyMap[String(value || "")];
+  return key ? t(key) : (value || "-");
+}
+
 function componentProcurementOptionsHtml(value) {
   var current = String(value || "");
   var options = ["", "部品どり", "自コア再利用", "新品交換"];
   return options.map(function(option) {
-    var label = option || "-";
+    var label = option ? componentProcurementCategoryLabel(option) : "-";
     return "<option value='" + esc(option) + "'" + (option === current ? " selected" : "") + ">" + esc(label) + "</option>";
   }).join("");
 }
@@ -16642,7 +16661,7 @@ function renderAssemblyComponentRows() {
         html += "<td>" + esc(row.quantity || "-") + "</td>";
         html += "<td>" + esc(formatYen(row.unit_price_jpy)) + "</td>";
         html += "<td>" + esc(formatComponentInterchange(row)) + "</td>";
-        html += "<td>" + esc(row.procurement_category || "-") + "</td>";
+        html += "<td>" + esc(componentProcurementCategoryLabel(row.procurement_category)) + "</td>";
         html += "<td>" + esc(row.replacement_rate == null || row.replacement_rate === "" ? "-" : row.replacement_rate) + "</td>";
         html += "<td>" + esc(row.manufacturing_memo || "-") + "</td>";
       }
