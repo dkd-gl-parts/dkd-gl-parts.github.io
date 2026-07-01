@@ -1279,7 +1279,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.336</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.337</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1308,7 +1308,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.336</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.337</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1338,7 +1338,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.336</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.337</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -5204,7 +5204,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.336";
+var APP_VERSION       = "v1.1.337";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -15541,7 +15541,7 @@ function componentNameCanonicalJaMap() {
 function canonicalComponentNameForStorage(value) {
   var text = normalizeComponentNameText(value);
   if (!text) return "";
-  return componentNameCanonicalJaMap()[text.toUpperCase()] || text;
+  return componentNameCanonicalJaMap()[text.toUpperCase()] || componentDisplayNameToCanonicalName(text) || text;
 }
 
 function componentNameDuplicateKey(value) {
@@ -15708,6 +15708,9 @@ function componentNameTranslationLabel(name) {
     "コンプレッサAY": "Compressor ASSY",
     "コンプレッサAY,W/クラッチ": "Compressor ASSY w/ Clutch",
     "オルタネータAY": "Alternator ASSY",
+    "オルタネータ キット": "Alternator Kit",
+    "オルタネータAY,W/Vポンプ": "Alternator ASSY w/ Vacuum Pump",
+    "オルタネータ,W/VPレギュレータ": "Alternator w/ Vacuum Pump Regulator",
     "オルタネータ,W/レギュレータ": "Alternator w/ Regulator",
     "クラッチAY,マグネット": "Magnetic Clutch ASSY",
     "ステータ,マグネット クラッチ": "Magnet Clutch Stator",
@@ -15721,14 +15724,45 @@ function componentNameTranslationLabel(name) {
     "アッセンブリ": "Assembly",
     "インシュレータ": "Insulator",
     "シール,リング": "Seal Ring",
+    "シール,オイル": "Oil Seal",
+    "シール,プレート": "Seal Plate",
+    "シール": "Seal",
     "キャップ,プーリ": "Pulley Cap",
+    "キャップ,ターミナル ラバー": "Terminal Rubber Cap",
     "クリップ,ワイヤ": "Wire Clip",
+    "カラー,スペース": "Spacer Collar",
+    "カラー,スチール": "Steel Collar",
+    "カラー,アジャスト": "Adjusting Collar",
     "リング,スナップ": "Snap Ring",
+    "リング,スペース": "Space Ring",
     "ワッシャ": "Washer",
     "ワッシャ,プレートSK": "Plate Washer",
+    "ワッシャ,フェルト": "Felt Washer",
+    "ワッシャ,スプリング": "Spring Washer",
+    "ワッシャ,インシュレータ": "Insulator Washer",
+    "ワッシャ,ラバー": "Rubber Washer",
+    "ワッシャ,プレート": "Plate Washer",
+    "ワッシャ,ウエーブ": "Wave Washer",
+    "ワッシャ,ツースド": "Toothed Washer",
+    "ワッシャ,ベークライト": "Bakelite Washer",
     "ナット": "Nut",
+    "ナット,ヘキサゴン": "Hexagon Nut",
+    "ナット,ピニオンストップ": "Pinion Stop Nut",
+    "ナット,ロック": "Lock Nut",
+    "ナット,キャップ": "Cap Nut",
+    "ナット,フランジ": "Flange Nut",
     "ボルト": "Bolt",
+    "ボルト,スタッド": "Stud Bolt",
+    "ボルト,ソケット": "Socket Bolt",
+    "ボルト,フランジ": "Flange Bolt",
+    "ボルト,ヘキサゴン": "Hexagon Bolt",
+    "スクリュ": "Screw",
     "スクリュ,W/ワッシャ": "Screw w/ Washer",
+    "スクリュ,W/Oリング": "Screw w/ O-Ring",
+    "スプリング": "Spring",
+    "スプリング,ブラシ": "Brush Spring",
+    "スプリング,コンプレッション": "Compression Spring",
+    "スプリング,ブレーキ": "Brake Spring",
     "レギュレータ": "Regulator",
     "レギュレータAY": "Generator Regulator ASSY",
     "レクチファイヤASSY": "Rectifier ASSY",
@@ -15743,17 +15777,41 @@ function componentNameTranslationLabel(name) {
     "ステータ": "Stator",
     "フレームS/A,ドライブエンド": "Drive End Frame S/A",
     "フレームS/A,リヤエンド": "Rear End Frame S/A",
+    "カバーS/A,リヤエンド": "Rear End Cover S/A",
+    "フレームS/A,コンミテータエンド": "Commutator End Frame S/A",
+    "フレームAY,RR,W/ステータ": "Rear Frame ASSY w/ Stator",
+    "リアフレームAY, W/ステータ": "Rear Frame ASSY w/ Stator",
     "フレーム,ドライブ エンド": "Drive End Frame",
+    "フレーム,リヤ エンド": "Rear End Frame",
+    "フレーム,スタータ エンド": "Starter End Frame",
+    "カバー": "Cover",
     "カバー,ベアリング": "Bearing Cover",
     "カバー,リヤ エンド": "Rear End Cover",
+    "カバー,ターミナル": "Terminal Cover",
+    "カバー,ハウジング": "Housing Cover",
+    "カバー,フェルト": "Felt Cover",
+    "カバー,ブラシ": "Brush Cover",
+    "カバー,ブラシジャ": "Brush Cover",
+    "カバー,フレーム": "Frame Cover",
+    "カバー,レクチファイヤ": "Rectifier Cover",
+    "カバー,プランジャ": "Plunger Cover",
     "ブッシュ": "Bush",
     "ブッシュ,ターミナル": "Terminal Insulation Bush",
+    "ブッシュ,ドレイン": "Drain Bush",
+    "ブッシュ,ハウジング": "Housing Bush",
     "プレート,リテーナ": "Retainer Plate",
+    "プレート,ターミナル": "Terminal Plate",
+    "プレート": "Plate",
+    "プレート,ロック": "Lock Plate",
+    "プレート,カバー": "Cover Plate",
+    "プレート,レギユレータ カバー": "Regulator Cover Plate",
+    "パツキング,プレート リテーナ": "Retainer Plate Packing",
     "ボルト,スルー": "Through Bolt",
     "ボルト,W/ワッシャ": "Bolt w/ Washer",
     "スリップリング": "Slip Ring",
     "ファン": "Fan",
     "アマチュア": "Armature",
+    "アーマチュアS/A": "Armature S/A",
     "ヨークASSY": "Yoke ASSY",
     "マグネットスイッチ": "Magnetic Switch",
     "レバー": "Lever",
@@ -15767,13 +15825,51 @@ function componentNameTranslationLabel(name) {
     "イグナイタ": "Igniter",
     "ガスケット": "Gasket",
     "ギヤ": "Gear",
+    "ギヤ,プラネット": "Planet Gear",
+    "ギヤ,インターナル": "Internal Gear",
     "ハウジング": "Housing",
+    "ハウジング,コネクタ": "Connector Housing",
+    "ハウジングAY,コネクタ": "Connector Housing ASSY",
+    "キー,ウッドラフ": "Woodruff Key",
+    "ポンプAY,バキューム": "Vacuum Pump ASSY",
+    "ワイヤ,リード": "Lead Wire",
+    "コンデンサ,キャパシタ": "Capacitor",
+    "レクチファイヤ,W/ブラシ": "Rectifier w/ Brush",
+    "サービス キット": "Service Kit",
+    "ベアリング,オイルレス": "Oilless Bearing",
+    "ベアリング,ニードル": "Needle Bearing",
+    "ベアリング,センタ": "Center Bearing",
+    "ベアリング,フランジ オイルレス": "Flange Oilless Bearing",
+    "スイッチAY,マグネット": "Magnetic Switch ASSY",
+    "コイルS/A,ロータ": "Rotor Coil S/A",
+    "スタータAY": "Starter ASSY",
+    "スタータ キット": "Starter Kit",
+    "クラッチS/A": "Clutch S/A",
+    "レバー,ドライブ": "Drive Lever",
+    "ヨークAY,W/ホルダ": "Yoke ASSY w/ Holder",
+    "シャフトS/A,プラネット キャリヤ": "Planet Carrier Shaft S/A",
+    "グロメット": "Grommet",
+    "ダイオード": "Diode",
+    "パッキン": "Packing",
+    "ダクトS/A,エア": "Air Duct S/A",
+    "ダクト,エア": "Air Duct",
+    "ロータ,W/ベアリング": "Rotor w/ Bearing",
+    "ステー": "Stay",
+    "ステータ&レクチファイヤS/A": "Stator & Rectifier S/A",
+    "コイル,フィールド": "Field Coil",
+    "コネクタ": "Connector",
+    "サポート,ブラシ": "Brush Support",
+    "シール,スタータ": "Starter Seal",
+    "ホルダ,ブラシ": "Brush Holder",
     "フレーム": "Frame"
   };
   var zh = {
     "コンプレッサAY": "压缩机总成",
     "コンプレッサAY,W/クラッチ": "带离合器压缩机总成",
     "オルタネータAY": "发电机总成",
+    "オルタネータ キット": "发电机套件",
+    "オルタネータAY,W/Vポンプ": "带真空泵发电机总成",
+    "オルタネータ,W/VPレギュレータ": "带真空泵调节器发电机",
     "オルタネータ,W/レギュレータ": "带调节器发电机",
     "クラッチAY,マグネット": "电磁离合器总成",
     "ステータ,マグネット クラッチ": "电磁离合器定子",
@@ -15787,14 +15883,45 @@ function componentNameTranslationLabel(name) {
     "アッセンブリ": "总成",
     "インシュレータ": "绝缘体",
     "シール,リング": "密封环",
+    "シール,オイル": "油封",
+    "シール,プレート": "密封板",
+    "シール": "密封件",
     "キャップ,プーリ": "皮带轮盖",
+    "キャップ,ターミナル ラバー": "端子橡胶盖",
     "クリップ,ワイヤ": "线夹",
+    "カラー,スペース": "间隔套",
+    "カラー,スチール": "钢套",
+    "カラー,アジャスト": "调整套",
     "リング,スナップ": "卡簧",
+    "リング,スペース": "间隔环",
     "ワッシャ": "垫圈",
     "ワッシャ,プレートSK": "板垫圈",
+    "ワッシャ,フェルト": "毛毡垫圈",
+    "ワッシャ,スプリング": "弹簧垫圈",
+    "ワッシャ,インシュレータ": "绝缘垫圈",
+    "ワッシャ,ラバー": "橡胶垫圈",
+    "ワッシャ,プレート": "板垫圈",
+    "ワッシャ,ウエーブ": "波形垫圈",
+    "ワッシャ,ツースド": "齿形垫圈",
+    "ワッシャ,ベークライト": "电木垫圈",
     "ナット": "螺母",
+    "ナット,ヘキサゴン": "六角螺母",
+    "ナット,ピニオンストップ": "小齿轮止动螺母",
+    "ナット,ロック": "锁紧螺母",
+    "ナット,キャップ": "盖形螺母",
+    "ナット,フランジ": "法兰螺母",
     "ボルト": "螺栓",
+    "ボルト,スタッド": "双头螺栓",
+    "ボルト,ソケット": "内六角螺栓",
+    "ボルト,フランジ": "法兰螺栓",
+    "ボルト,ヘキサゴン": "六角螺栓",
+    "スクリュ": "螺钉",
     "スクリュ,W/ワッシャ": "带垫圈螺钉",
+    "スクリュ,W/Oリング": "带O形圈螺钉",
+    "スプリング": "弹簧",
+    "スプリング,ブラシ": "电刷弹簧",
+    "スプリング,コンプレッション": "压缩弹簧",
+    "スプリング,ブレーキ": "制动弹簧",
     "レギュレータ": "调节器",
     "レギュレータAY": "发电机调节器总成",
     "レクチファイヤASSY": "整流器总成",
@@ -15809,17 +15936,41 @@ function componentNameTranslationLabel(name) {
     "ステータ": "定子",
     "フレームS/A,ドライブエンド": "驱动端框架分总成",
     "フレームS/A,リヤエンド": "后端框架分总成",
+    "カバーS/A,リヤエンド": "后端盖分总成",
+    "フレームS/A,コンミテータエンド": "换向器端框架分总成",
+    "フレームAY,RR,W/ステータ": "带定子后框架总成",
+    "リアフレームAY, W/ステータ": "带定子后框架总成",
     "フレーム,ドライブ エンド": "驱动端框架",
+    "フレーム,リヤ エンド": "后端框架",
+    "フレーム,スタータ エンド": "起动机端框架",
+    "カバー": "盖",
     "カバー,ベアリング": "轴承盖",
     "カバー,リヤ エンド": "后端盖",
+    "カバー,ターミナル": "端子盖",
+    "カバー,ハウジング": "壳体盖",
+    "カバー,フェルト": "毛毡盖",
+    "カバー,ブラシ": "电刷盖",
+    "カバー,ブラシジャ": "电刷盖",
+    "カバー,フレーム": "框架盖",
+    "カバー,レクチファイヤ": "整流器盖",
+    "カバー,プランジャ": "柱塞盖",
     "ブッシュ": "衬套",
     "ブッシュ,ターミナル": "端子绝缘衬套",
+    "ブッシュ,ドレイン": "排水衬套",
+    "ブッシュ,ハウジング": "壳体衬套",
     "プレート,リテーナ": "保持板",
+    "プレート,ターミナル": "端子板",
+    "プレート": "板",
+    "プレート,ロック": "锁板",
+    "プレート,カバー": "盖板",
+    "プレート,レギユレータ カバー": "调节器盖板",
+    "パツキング,プレート リテーナ": "保持板密封垫",
     "ボルト,スルー": "贯穿螺栓",
     "ボルト,W/ワッシャ": "带垫圈螺栓",
     "スリップリング": "滑环",
     "ファン": "风扇",
     "アマチュア": "电枢",
+    "アーマチュアS/A": "电枢分总成",
     "ヨークASSY": "磁轭总成",
     "マグネットスイッチ": "电磁开关",
     "レバー": "拨叉",
@@ -15833,10 +15984,79 @@ function componentNameTranslationLabel(name) {
     "イグナイタ": "点火器",
     "ガスケット": "垫片",
     "ギヤ": "齿轮",
+    "ギヤ,プラネット": "行星齿轮",
+    "ギヤ,インターナル": "内齿轮",
     "ハウジング": "壳体",
+    "ハウジング,コネクタ": "连接器壳体",
+    "ハウジングAY,コネクタ": "连接器壳体总成",
+    "キー,ウッドラフ": "半圆键",
+    "ポンプAY,バキューム": "真空泵总成",
+    "ワイヤ,リード": "引线",
+    "コンデンサ,キャパシタ": "电容器",
+    "レクチファイヤ,W/ブラシ": "带电刷整流器",
+    "サービス キット": "维修套件",
+    "ベアリング,オイルレス": "无油轴承",
+    "ベアリング,ニードル": "滚针轴承",
+    "ベアリング,センタ": "中心轴承",
+    "ベアリング,フランジ オイルレス": "法兰无油轴承",
+    "スイッチAY,マグネット": "电磁开关总成",
+    "コイルS/A,ロータ": "转子线圈分总成",
+    "スタータAY": "起动机总成",
+    "スタータ キット": "起动机套件",
+    "クラッチS/A": "离合器分总成",
+    "レバー,ドライブ": "驱动杆",
+    "ヨークAY,W/ホルダ": "带支架磁轭总成",
+    "シャフトS/A,プラネット キャリヤ": "行星架轴分总成",
+    "グロメット": "护套",
+    "ダイオード": "二极管",
+    "パッキン": "密封垫",
+    "ダクトS/A,エア": "空气导管分总成",
+    "ダクト,エア": "空气导管",
+    "ロータ,W/ベアリング": "带轴承转子",
+    "ステー": "支架",
+    "ステータ&レクチファイヤS/A": "定子和整流器分总成",
+    "コイル,フィールド": "励磁线圈",
+    "コネクタ": "连接器",
+    "サポート,ブラシ": "电刷支撑",
+    "シール,スタータ": "起动机密封件",
+    "ホルダ,ブラシ": "电刷架",
     "フレーム": "框架"
   };
   return (lang === "zh" ? zh : en)[key] || "";
+}
+
+function componentNameOptionDisplayValue(name) {
+  var text = normalizeComponentNameText(name);
+  if (!text) return "";
+  if (currentLang !== "en" && currentLang !== "zh") return text;
+  return componentNameOptionLabel(text) || text;
+}
+
+function componentDisplayNameToCanonicalName(value) {
+  var text = normalizeComponentNameText(value);
+  if (!text || (currentLang !== "en" && currentLang !== "zh")) return "";
+  var key = componentNameDuplicateKey(text);
+  var candidates = [];
+  (assemblyComponentRows || []).forEach(function(row) {
+    candidates.push(row.component_name || row.component_part_name);
+  });
+  (componentAlternativeRows || []).forEach(function(alt) {
+    var part = alt.internal_component_parts || {};
+    candidates.push(part.part_name);
+  });
+  (componentCatalogNameCandidates || []).forEach(function(name) {
+    candidates.push(name);
+  });
+  componentNameDefaultCandidatesForCategory(componentCatalogCategoryCode(currentProduct)).forEach(function(name) {
+    candidates.push(name);
+  });
+  for (var i = 0; i < candidates.length; i++) {
+    var canonical = normalizeComponentNameText(candidates[i]);
+    if (!canonical) continue;
+    var display = componentNameOptionDisplayValue(canonical);
+    if (display && componentNameDuplicateKey(display) === key) return canonical;
+  }
+  return "";
 }
 
 function componentNameCandidateDisplayLabel(candidateName, displayName) {
@@ -16023,9 +16243,14 @@ function componentAddNameCandidates(selectedName) {
 
 function componentNameOptionsHtml(selectedName) {
   var html = "";
+  var seenDisplay = {};
   componentAddNameCandidates(selectedName).forEach(function(name) {
-    var label = componentNameOptionLabel(name);
-    html += "<option value='" + esc(name) + "'" + (label ? " label='" + esc(label) + "'" : "") + "></option>";
+    var displayName = componentNameOptionDisplayValue(name);
+    if (!displayName) return;
+    var displayKey = componentNameDuplicateKey(displayName);
+    if (seenDisplay[displayKey]) return;
+    seenDisplay[displayKey] = true;
+    html += "<option value='" + esc(displayName) + "'></option>";
   });
   return html;
 }
