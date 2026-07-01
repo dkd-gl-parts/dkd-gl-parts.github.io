@@ -5204,7 +5204,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.334";
+var APP_VERSION       = "v1.1.335";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -16319,7 +16319,7 @@ function renderAssemblyComponentRows() {
       }
       if (hasActions) {
         html += "<td><div class='component-edit-actions'>";
-        html += catalogLocked ? "<span class='component-sub'>" + t("component_catalog") + "</span>" : "<button class='btn-sm-edit' data-component-edit='" + esc(String(row.id)) + "'>" + t("component_edit") + "</button><button class='btn-sm-edit production-action-secondary' data-component-delete='" + esc(String(row.id)) + "'>" + t("component_delete") + "</button>";
+        html += catalogLocked ? "<span class='component-sub'>" + t("component_catalog") + "</span>" : "<button class='btn-sm-edit' data-component-edit='" + esc(String(row.id)) + "'>" + t("component_edit") + "</button>";
         html += "<button class='btn-sm-edit production-action-secondary' data-component-alt-add='" + esc(String(row.id)) + "'>" + t("component_alternative_add") + "</button>";
         html += "</div></td>";
       }
