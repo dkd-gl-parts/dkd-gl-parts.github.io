@@ -1016,8 +1016,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .production-section { border: 1px solid #edf0f4; border-radius: 8px; padding: 12px; background: #fff; }
 .production-section h3 { font-size: 13px; color: #556070; margin-bottom: 8px; }
-.production-kind-row { margin-top: 10px; }
-.production-kind-row .product-kind-panel { border: 1px solid #e5edf8; border-radius: 8px; background: #fbfdff; padding: 10px 12px; margin: 0; }
 .production-kv { display: grid; grid-template-columns: 118px minmax(0, 1fr); border-top: 1px solid #f2f2f2; }
 .production-kv:first-of-type { border-top: 0; }
 .production-kv div { padding: 6px 4px; font-size: 13px; word-break: break-word; }
@@ -5206,7 +5204,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.333";
+var APP_VERSION       = "v1.1.334";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -7289,14 +7287,6 @@ function renderProductMasterDetailHtml(p) {
   "</div>";
 }
 
-function renderProductionProductKindHtml() {
-  return "<div class='production-kind-row'><div class='product-kind-panel'>" +
-    "<div class='detail-block-title'>" + esc(t("product_kind_section")) + "</div>" +
-    "<div class='product-kind-control'><div class='product-kind-control-row compact'>" +
-    imageKindSelectHtml("production-image-kind-select", currentProductionImageKind) +
-    "</div></div></div></div>";
-}
-
 async function renderProductionDetail(row) {
   var el = document.getElementById("production-detail");
   if (!el) return;
@@ -7330,7 +7320,6 @@ async function renderProductionDetail(row) {
   html += "<div class='production-grid'>";
   html += "<section class='production-section production-wide'><h3>" + esc(productCategoryLabel(row)) + "</h3>";
   html += renderProductMasterDetailHtml(row);
-  html += renderProductionProductKindHtml();
   html += "</section>";
   html += "<section class='production-section'><h3>製造予定リスト</h3>";
   if (inst) {
@@ -7369,17 +7358,6 @@ async function renderProductionDetail(row) {
   if (editBtn) editBtn.addEventListener("click", openProductionCoreEdit);
   var imageActionsBtn = document.getElementById("production-open-image-actions");
   if (imageActionsBtn) imageActionsBtn.addEventListener("click", openProductionImageActionsDialog);
-  var imageKindSelect = document.getElementById("production-image-kind-select");
-  if (imageKindSelect) {
-    imageKindSelect.addEventListener("change", function() {
-      currentProductionImageKind = normalizeProductKind(imageKindSelect.value || "rebuilt");
-      currentSelectedProductKind = currentProductionImageKind;
-      setProductKindSelectClass(imageKindSelect);
-      productionImages = [];
-      renderProductionImages();
-      loadProductionImagesForRow(currentProductionRow, productionDetailRequestSeq);
-    });
-  }
   var addCoreEntryBtn = document.getElementById("production-core-entry-add");
   if (addCoreEntryBtn) addCoreEntryBtn.addEventListener("click", addProductionCoreEntry);
   el.querySelectorAll("[data-core-entry-delete]").forEach(function(btn) {
