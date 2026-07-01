@@ -1279,7 +1279,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.339</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.340</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1308,7 +1308,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.339</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.340</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1338,7 +1338,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.339</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.340</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -5213,7 +5213,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.339";
+var APP_VERSION       = "v1.1.340";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -7164,6 +7164,136 @@ async function fetchCatalogVehicleApplications(product) {
   return r.data || [];
 }
 
+function vehicleMakerLabel(value) {
+  var text = String(value || "").trim();
+  if (!text || text === "-") return text || "-";
+  if (currentLang === "ja") return text;
+  var key = normalizeAsciiWidth(text).toUpperCase().replace(/\s+/g, "");
+  var en = {
+    "TOYOTA": "Toyota",
+    "トヨタ": "Toyota",
+    "日産": "Nissan",
+    "ニッサン": "Nissan",
+    "NISSAN": "Nissan",
+    "ダイハツ": "Daihatsu",
+    "DAIHATSU": "Daihatsu",
+    "ホンダ": "Honda",
+    "HONDA": "Honda",
+    "マツダ": "Mazda",
+    "MAZDA": "Mazda",
+    "スズキ": "Suzuki",
+    "SUZUKI": "Suzuki",
+    "スバル": "Subaru",
+    "SUBARU": "Subaru",
+    "レクサス": "Lexus",
+    "LEXUS": "Lexus",
+    "三菱": "Mitsubishi",
+    "ミツビシ": "Mitsubishi",
+    "MITSUBISHI": "Mitsubishi",
+    "三菱ふそう": "Mitsubishi Fuso",
+    "三菱フソウ": "Mitsubishi Fuso",
+    "MITSUBISHIFUSO": "Mitsubishi Fuso",
+    "いすゞ": "Isuzu",
+    "いすゞ自動車": "Isuzu",
+    "イスズ": "Isuzu",
+    "ISUZU": "Isuzu",
+    "日野": "Hino",
+    "ヒノ": "Hino",
+    "HINO": "Hino",
+    "UDトラックス": "UD Trucks",
+    "UD": "UD Trucks",
+    "UDTRUCKS": "UD Trucks",
+    "日産ディーゼル": "Nissan Diesel",
+    "ニッサンディーゼル": "Nissan Diesel",
+    "NISSANDIESEL": "Nissan Diesel",
+    "コマツ": "Komatsu",
+    "KOMATSU": "Komatsu",
+    "クボタ": "Kubota",
+    "KUBOTA": "Kubota",
+    "ヤンマー": "Yanmar",
+    "YANMAR": "Yanmar",
+    "日立建機": "Hitachi Construction Machinery",
+    "HITACHI": "Hitachi",
+    "キャタピラー": "Caterpillar",
+    "CATERPILLAR": "Caterpillar",
+    "ボルボ": "Volvo",
+    "VOLVO": "Volvo",
+    "いすゞ自動車/UDトラックス": "Isuzu / UD Trucks",
+    "UDトラックス/日産ディーゼル": "UD Trucks / Nissan Diesel"
+  };
+  var zh = {
+    "TOYOTA": "丰田",
+    "トヨタ": "丰田",
+    "日産": "日产",
+    "ニッサン": "日产",
+    "NISSAN": "日产",
+    "ダイハツ": "大发",
+    "DAIHATSU": "大发",
+    "ホンダ": "本田",
+    "HONDA": "本田",
+    "マツダ": "马自达",
+    "MAZDA": "马自达",
+    "スズキ": "铃木",
+    "SUZUKI": "铃木",
+    "スバル": "斯巴鲁",
+    "SUBARU": "斯巴鲁",
+    "レクサス": "雷克萨斯",
+    "LEXUS": "雷克萨斯",
+    "三菱": "三菱",
+    "ミツビシ": "三菱",
+    "MITSUBISHI": "三菱",
+    "三菱ふそう": "三菱扶桑",
+    "三菱フソウ": "三菱扶桑",
+    "MITSUBISHIFUSO": "三菱扶桑",
+    "いすゞ": "五十铃",
+    "いすゞ自動車": "五十铃",
+    "イスズ": "五十铃",
+    "ISUZU": "五十铃",
+    "日野": "日野",
+    "ヒノ": "日野",
+    "HINO": "日野",
+    "UDトラックス": "UD卡车",
+    "UD": "UD卡车",
+    "UDTRUCKS": "UD卡车",
+    "日産ディーゼル": "日产柴油",
+    "ニッサンディーゼル": "日产柴油",
+    "NISSANDIESEL": "日产柴油",
+    "コマツ": "小松",
+    "KOMATSU": "小松",
+    "クボタ": "久保田",
+    "KUBOTA": "久保田",
+    "ヤンマー": "洋马",
+    "YANMAR": "洋马",
+    "日立建機": "日立建机",
+    "HITACHI": "日立",
+    "キャタピラー": "卡特彼勒",
+    "CATERPILLAR": "卡特彼勒",
+    "ボルボ": "沃尔沃",
+    "VOLVO": "沃尔沃",
+    "いすゞ自動車/UDトラックス": "五十铃 / UD卡车",
+    "UDトラックス/日産ディーゼル": "UD卡车 / 日产柴油"
+  };
+  var dict = currentLang === "zh" ? zh : en;
+  if (dict[text]) return dict[text];
+  if (dict[key]) return dict[key];
+  if (/[、,]/.test(text)) {
+    return text.split(/[、,]/).map(function(part) {
+      return vehicleMakerLabel(part.trim());
+    }).filter(Boolean).join(", ");
+  }
+  return text;
+}
+
+function vehicleApplicationPartNameLabel(value) {
+  var text = String(value || "").trim();
+  if (!text || text === "-") return text || "-";
+  if (currentLang === "ja") return text;
+  var categoryLabel = tCat(text);
+  if (categoryLabel && categoryLabel !== text) return categoryLabel;
+  var componentLabel = componentNameTranslationLabel(text);
+  return componentLabel || text;
+}
+
 function representativeVehicleMaker(rows) {
   var counts = {};
   (rows || []).forEach(function(row) {
@@ -7176,7 +7306,7 @@ function representativeVehicleMaker(rows) {
     return a.localeCompare(b, "ja");
   });
   if (!makers.length) return "-";
-  return makers[0] + (makers.length > 1 ? " " + tf("vehicle_other_count", { n: makers.length - 1 }) : "");
+  return vehicleMakerLabel(makers[0]) + (makers.length > 1 ? " " + tf("vehicle_other_count", { n: makers.length - 1 }) : "");
 }
 
 function hasVehicleApplicationDetail(row) {
@@ -7204,13 +7334,13 @@ function renderVehicleApplicationsTable(rows) {
   var html = "<table class='vehicle-table'><tr><th>" + esc(t("f_vehicle_mfr")) + "</th><th>" + esc(t("f_vehicle_usage")) + "</th><th>" + esc(t("f_machine_model")) + "</th><th>" + esc(t("f_engine")) + "</th><th>" + esc(t("f_period")) + "</th><th>" + esc(t("f_part_number")) + "</th><th>" + esc(t("component_name")) + "</th></tr>";
   rows.forEach(function(row) {
     html += "<tr>";
-    html += "<td>" + esc(row.vehicle_manufacturer || "-") + "</td>";
+    html += "<td>" + esc(vehicleMakerLabel(row.vehicle_manufacturer || "-")) + "</td>";
     html += "<td>" + esc(row.vehicle_type || row.vehicle_model || "-") + "</td>";
     html += "<td>" + esc(row.model || row.vehicle_model || "-") + "</td>";
     html += "<td>" + esc(row.engine || "-") + "</td>";
     html += "<td>" + esc(row.production_period_text || [row.effective_start, row.effective_end].filter(Boolean).join(" - ") || "-") + "</td>";
     html += "<td><div class='component-pn'>" + esc(row.genuine_part_number || "-") + "</div><div class='component-sub'>" + esc(row.manufacturer_part_number || "") + "</div></td>";
-    html += "<td>" + esc(row.part_name || "-") + "</td>";
+    html += "<td>" + esc(vehicleApplicationPartNameLabel(row.part_name || "-")) + "</td>";
     html += "</tr>";
   });
   html += "</table>";
