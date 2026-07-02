@@ -1122,25 +1122,38 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .users-body h2 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
 .users-desc { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.6; }
 .permission-table-wrap { overflow-x: auto; margin: 12px 0 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; }
-.permission-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 760px; }
+.permission-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 860px; }
 .permission-table th { background: #f5f7fa; color: #555; font-weight: 700; padding: 8px 10px; text-align: left; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
 .permission-table td { padding: 8px 10px; border-bottom: 1px solid #edf0f3; color: #333; vertical-align: top; }
 .permission-table tr:last-child td { border-bottom: none; }
 .permission-ok { color: #157f3b; font-weight: 700; }
 .permission-no { color: #aaa; }
 .user-card     { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
-.user-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.user-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 12px; }
+.user-card-identity { display: flex; align-items: flex-start; gap: 10px; min-width: 0; flex: 1; }
 .user-avatar   { width: 38px; height: 38px; border-radius: 50%; background: #4f8ef7; color: #fff; font-weight: 700; font-size: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .user-email    { font-size: 13px; font-weight: 600; color: #333; word-break: break-all; }
+.user-summary-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; color: #667085; }
+.user-summary-chip { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; min-height: 22px; padding: 2px 7px; border-radius: 999px; background: #f3f6fb; color: #475467; border: 1px solid #e5eaf2; }
+.user-summary-chip.role { background: #eef4ff; color: #1d4ed8; border-color: #bfdbfe; font-weight: 700; }
 .user-created  { font-size: 11px; color: #aaa; margin-top: 2px; }
-.user-name-input { width: 100%; border: 1px solid #ddd; border-radius: 6px; padding: 7px 10px; font-size: 13px; outline: none; margin-bottom: 10px; }
+.user-settings-grid { display: grid; grid-template-columns: minmax(180px, 1.3fr) minmax(150px, 1fr) minmax(150px, 1fr) minmax(190px, 1.15fr); gap: 10px; align-items: end; }
+.user-field { min-width: 0; }
+.user-field-label { display: block; font-size: 12px; color: #667085; font-weight: 700; margin-bottom: 5px; }
+.user-field-note { min-height: 18px; margin-top: 5px; font-size: 11px; color: #667085; line-height: 1.35; }
+.user-name-input { width: 100%; border: 1px solid #ddd; border-radius: 6px; padding: 7px 10px; font-size: 13px; outline: none; }
 .user-name-input:focus { border-color: #4f8ef7; }
 .user-card-bottom { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.role-select   { border: 1px solid #ddd; border-radius: 6px; padding: 6px 10px; font-size: 13px; outline: none; cursor: pointer; flex: 1; min-width: 120px; background: #fff; }
+.user-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-wrap: wrap; min-width: 250px; }
+.user-actions-label { width: 100%; text-align: right; font-size: 11px; color: #98a2b3; font-weight: 700; }
+.role-select   { border: 1px solid #ddd; border-radius: 6px; padding: 6px 10px; font-size: 13px; outline: none; cursor: pointer; width: 100%; background: #fff; }
+.group-select  { width: 100%; }
 .btn-save-user { background: #4f8ef7; color: #fff; border: none; border-radius: 6px; padding: 7px 16px; font-size: 13px; cursor: pointer; font-weight: 600; white-space: nowrap; }
 .btn-save-user:hover { background: #3a7ae0; }
 .btn-user-history { background: #eef4ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 6px; padding: 7px 12px; font-size: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
 .btn-user-history:hover { background: #dbeafe; }
+.btn-pw-reset { background: #667085; color: #fff; border: none; border-radius: 6px; padding: 7px 12px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.btn-pw-reset:hover { background: #525b6b; }
 .user-auth-history-modal { max-width: 780px; }
 .user-auth-history-summary { font-size: 12px; color: #667085; margin: -6px 0 12px; }
 .user-auth-history-list { max-height: 56vh; overflow: auto; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; }
@@ -1151,6 +1164,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .save-msg { font-size: 12px; }
 .save-ok  { color: #1a8c3e; }
 .save-err { color: #e24b4a; }
+@media (max-width: 900px) {
+  .user-card-top { flex-direction: column; }
+  .user-actions { justify-content: flex-start; width: 100%; min-width: 0; }
+  .user-actions-label { text-align: left; }
+  .user-settings-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) {
+  .user-settings-grid { grid-template-columns: 1fr; }
+}
 
 /* =============================================
    PC レスポンシブ（768px以上）
@@ -1731,12 +1753,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <table class="permission-table">
         <tr>
           <th>権限</th>
-          <th>会社/部署</th>
+          <th>主な所属</th>
           <th>商品閲覧</th>
           <th>販売価格</th>
           <th>基準価格</th>
           <th>仕入先価格</th>
-          <th>社内構成部品</th>
+          <th>構成部品/画像</th>
           <th>ユーザー管理</th>
         </tr>
         <tr>
@@ -1752,10 +1774,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
           <td>商品管理</td><td>自部署</td><td class="permission-ok">○</td><td class="permission-ok">閲覧・編集</td><td class="permission-ok">閲覧</td><td class="permission-ok">閲覧</td><td class="permission-ok">閲覧</td><td class="permission-ok">自部署</td>
         </tr>
         <tr>
+          <td>製造担当</td><td>製造</td><td class="permission-ok">○</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-ok">製造・コア画像</td><td class="permission-no">-</td>
+        </tr>
+        <tr>
+          <td>コア画像登録</td><td>商品管理 / 製造</td><td class="permission-ok">○</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-ok">使用済みコア画像のみ</td><td class="permission-no">-</td>
+        </tr>
+        <tr>
           <td>全機能閲覧</td><td>社内</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-ok">閲覧</td><td class="permission-ok">閲覧</td><td class="permission-ok">閲覧</td><td class="permission-no">-</td>
         </tr>
         <tr>
-          <td>営業閲覧・社内閲覧</td><td>社内</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td>
+          <td>営業閲覧</td><td>営業</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td>
+        </tr>
+        <tr>
+          <td>社内閲覧</td><td>社内</td><td class="permission-ok">○</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td>
         </tr>
         <tr>
           <td>得意先閲覧</td><td>社外 / 得意先</td><td class="permission-ok">制限</td><td class="permission-ok">閲覧</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td>
@@ -19954,6 +19985,36 @@ function customerOptionHtml(selectedId) {
   return html;
 }
 
+function accessRoleScopeText(roleCode) {
+  switch (roleCode) {
+    case "system_admin": return "全機能・全ユーザー管理";
+    case "company_admin": return "自社ユーザー管理・主要マスタ管理";
+    case "dept_admin": return "製造/コア管理・自部署ユーザー";
+    case "master_editor": return "商品・画像・車両情報・得意先表示";
+    case "production_editor": return "製造予定・コア・構成部品確認";
+    case "core_image_editor": return "使用済みコア画像の登録・削除のみ";
+    case "sales_viewer": return "商品・車両情報・販売価格の閲覧";
+    case "all_viewer": return "全機能閲覧のみ。保存操作は不可";
+    case "internal_viewer": return "社内一般閲覧";
+    case "customer_viewer": return "紐づいた得意先だけ閲覧";
+    case "external_viewer": return "公開範囲のみ閲覧";
+    default: return "-";
+  }
+}
+
+function optionLabel(options, code) {
+  var found = options.find(function(opt){ return opt[0] === code; });
+  return found ? found[1] : code;
+}
+
+function accessScopeLabel(roleCode, companyLabel, departmentLabel) {
+  if (roleCode === "system_admin") return "全体";
+  if (roleCode === "company_admin") return companyLabel + " 全体";
+  if (roleCode === "customer_viewer") return "紐づいた得意先";
+  if (roleCode === "external_viewer") return "公開範囲";
+  return companyLabel + " / " + departmentLabel;
+}
+
 async function saveCustomerUserLink(uid, salesCustomerId) {
   try {
     await sb.from("customer_user_links")
@@ -20040,51 +20101,63 @@ function renderUsers(users) {
     var initials = (u.name||u.email||"?").charAt(0).toUpperCase();
     var status   = u.status || "active";
     var sbadge   = "<span class='status-badge status-"+status+"'>"+t("users_"+status+"_badge")+"</span>";
-    html += "<div class='user-card' data-uid='"+esc(u.id)+"'>";
-    html += "<div class='user-card-top'><div class='user-avatar'>"+esc(initials)+"</div>";
-    html += "<div style='flex:1;min-width:0'>";
-    html += "<div class='user-email'>"+esc(u.email)+" "+sbadge+"</div>";
     var companyCode = userCompanyCode(u);
     var departmentCode = userDepartmentCode(u);
     var accessRoleCode = normalizeAccessRoleForCompany(userAccessRoleCode(u), companyCode);
-    var companyLabel = (USER_COMPANY_OPTIONS.find(function(opt){ return opt[0] === companyCode; }) || [companyCode, companyCode])[1];
-    var departmentLabel = (USER_DEPARTMENT_OPTIONS.find(function(opt){ return opt[0] === departmentCode; }) || [departmentCode, departmentCode])[1];
+    var companyLabel = optionLabel(USER_COMPANY_OPTIONS, companyCode);
+    var departmentLabel = optionLabel(USER_DEPARTMENT_OPTIONS, departmentCode);
     var accessRoleLabelText = accessRoleLabel(accessRoleCode);
+    var accessScopeText = accessScopeLabel(accessRoleCode, companyLabel, departmentLabel);
     var canManageThis = canManageUser(u);
     var disabledAttr = canManageThis ? "" : " disabled";
     var companyDisabledAttr = (canManageThis && isSystemAdmin()) ? "" : " disabled";
     var departmentDisabledAttr = (canManageThis && !hasOwnDepartmentUserScope(userProfile)) ? "" : " disabled";
-    html += "<div class='user-company'>&#x1F3E2; "+esc(companyLabel)+" / "+esc(departmentLabel)+" / "+esc(accessRoleLabelText)+"</div>";
-    if (u.company) html += "<div class='user-company'>"+esc(u.company)+"</div>";
+    html += "<div class='user-card' data-uid='"+esc(u.id)+"'>";
+    html += "<div class='user-card-top'>";
+    html += "<div class='user-card-identity'><div class='user-avatar'>"+esc(initials)+"</div>";
+    html += "<div style='flex:1;min-width:0'>";
+    html += "<div class='user-email'>"+esc(u.email)+" "+sbadge+"</div>";
+    html += "<div class='user-summary-line'>";
+    html += "<span class='user-summary-chip'>所属: "+esc(companyLabel)+" / "+esc(departmentLabel)+"</span>";
+    html += "<span class='user-summary-chip role'>権限: "+esc(accessRoleLabelText)+"</span>";
+    html += "<span class='user-summary-chip'>範囲: "+esc(accessScopeText)+"</span>";
+    html += "</div>";
+    if (u.company) html += "<div class='user-created'>申請会社名: "+esc(u.company)+"</div>";
     html += "<div class='user-created'>"+t("lbl_registered")+" "+(u.created_at?u.created_at.slice(0,10):"-")+"</div>";
     html += "</div></div>";
-    html += "<div style='font-size:12px;color:#888;margin-bottom:4px'>"+t("lbl_display_name")+"</div>";
-    html += "<input class='user-name-input' data-uid='"+esc(u.id)+"' value='"+esc(u.name||"")+"' placeholder='"+t("ph_display_name")+"'"+disabledAttr+">";
-    html += "<div class='user-card-bottom' style='flex-wrap:wrap;gap:6px'>";
-    html += "<select class='group-select user-company-select' data-uid='"+esc(u.id)+"'" + companyDisabledAttr + ">";
-    html += optionHtml(USER_COMPANY_OPTIONS, companyCode);
-    html += "</select>";
-    html += "<select class='group-select user-department-select' data-uid='"+esc(u.id)+"'" + departmentDisabledAttr + ">";
-    html += optionHtml(USER_DEPARTMENT_OPTIONS, departmentCode);
-    html += "</select>";
-    html += "<select class='role-select user-access-role-select' data-uid='"+esc(u.id)+"'" + disabledAttr + ">";
-    html += accessRoleOptionHtmlForCompany(companyCode, accessRoleCode);
-    html += "</select>";
-    var customerLinkDisplay = accessRoleCode === "customer_viewer" ? "" : " style='display:none'";
-    var selectedCustomerId = customerUserLinkMap[u.id] || "";
-    html += "<select class='group-select user-customer-select' data-uid='"+esc(u.id)+"'" + disabledAttr + customerLinkDisplay + ">";
-    html += customerOptionHtml(selectedCustomerId);
-    html += "</select>";
     if (canManageThis) {
+      html += "<div class='user-actions'>";
+      html += "<div class='user-actions-label'>アカウント操作</div>";
       html += "<button class='btn-user-history' data-uid='"+esc(u.id)+"' type='button'>"+t("btn_auth_history")+"</button>";
-    }
-    if (canManageThis) {
       html += "<button class='btn-save-user' data-uid='"+esc(u.id)+"'>"+t("btn_save")+"</button>";
       if (status==="pending"||status==="suspended") html += "<button class='btn-approve' data-uid='"+esc(u.id)+"'>"+t("btn_approve")+"</button>";
       if (status==="active") html += "<button class='btn-suspend' data-uid='"+esc(u.id)+"'>"+t("btn_suspend")+"</button>";
-      html += "<button class='btn-pw-reset' data-uid='"+esc(u.id)+"' data-email='"+esc(u.email)+"' style='background:#888;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;white-space:nowrap'>"+t("btn_send_pw_reset")+"</button>";
+      html += "<button class='btn-pw-reset' data-uid='"+esc(u.id)+"' data-email='"+esc(u.email)+"'>"+t("btn_send_pw_reset")+"</button>";
+      html += "<span class='save-msg' id='save-msg-"+esc(u.id)+"'></span>";
+      html += "</div>";
     }
-    html += "<span class='save-msg' id='save-msg-"+esc(u.id)+"'></span>";
+    html += "</div>";
+    html += "<div class='user-settings-grid'>";
+    html += "<div class='user-field'><label class='user-field-label'>"+t("lbl_display_name")+"</label>";
+    html += "<input class='user-name-input' data-uid='"+esc(u.id)+"' value='"+esc(u.name||"")+"' placeholder='"+t("ph_display_name")+"'"+disabledAttr+"></div>";
+    html += "<div class='user-field'><label class='user-field-label'>会社名</label>";
+    html += "<select class='group-select user-company-select' data-uid='"+esc(u.id)+"'" + companyDisabledAttr + ">";
+    html += optionHtml(USER_COMPANY_OPTIONS, companyCode);
+    html += "</select><div class='user-field-note user-company-note'>"+esc(companyLabel)+"</div></div>";
+    html += "<div class='user-field'><label class='user-field-label'>部署</label>";
+    html += "<select class='group-select user-department-select' data-uid='"+esc(u.id)+"'" + departmentDisabledAttr + ">";
+    html += optionHtml(USER_DEPARTMENT_OPTIONS, departmentCode);
+    html += "</select><div class='user-field-note user-department-note'>"+esc(departmentLabel)+"</div></div>";
+    html += "<div class='user-field'><label class='user-field-label'>ユーザー権限</label>";
+    html += "<select class='role-select user-access-role-select' data-uid='"+esc(u.id)+"'" + disabledAttr + ">";
+    html += accessRoleOptionHtmlForCompany(companyCode, accessRoleCode);
+    html += "</select><div class='user-field-note user-role-note'>"+esc(accessRoleScopeText(accessRoleCode))+"</div></div>";
+    var customerLinkDisplay = accessRoleCode === "customer_viewer" ? "" : " style='display:none'";
+    var selectedCustomerId = customerUserLinkMap[u.id] || "";
+    html += "<div class='user-field user-customer-field'"+customerLinkDisplay+"><label class='user-field-label'>得意先</label>";
+    html += "<select class='group-select user-customer-select' data-uid='"+esc(u.id)+"'" + disabledAttr + ">";
+    html += customerOptionHtml(selectedCustomerId);
+    html += "</select><div class='user-field-note'>得意先閲覧用</div></div>";
     html += "</div></div>";
   });
   list.innerHTML = html;
@@ -20103,13 +20176,31 @@ function renderUsers(users) {
       var roleSelect = card.querySelector(".user-access-role-select");
       var departmentSelect = card.querySelector(".user-department-select");
       var customerSelect = card.querySelector(".user-customer-select");
+      var customerField = card.querySelector(".user-customer-field");
+      var roleNote = card.querySelector(".user-role-note");
+      var companyNote = card.querySelector(".user-company-note");
+      var departmentNote = card.querySelector(".user-department-note");
       if (!roleSelect) return;
       var nextCompany = sel.value;
       var nextRole = defaultAccessRoleForCompany(nextCompany, roleSelect.value);
       roleSelect.innerHTML = accessRoleOptionHtmlForCompany(nextCompany, nextRole);
       roleSelect.value = defaultAccessRoleForCompany(nextCompany, nextRole);
       if (departmentSelect && nextCompany === "external") departmentSelect.value = "viewer";
-      if (customerSelect) customerSelect.style.display = roleSelect.value === "customer_viewer" ? "" : "none";
+      if (customerSelect) customerSelect.style.display = "";
+      if (customerField) customerField.style.display = roleSelect.value === "customer_viewer" ? "" : "none";
+      if (roleNote) roleNote.textContent = accessRoleScopeText(roleSelect.value);
+      if (companyNote) companyNote.textContent = optionLabel(USER_COMPANY_OPTIONS, nextCompany);
+      if (departmentNote && departmentSelect) departmentNote.textContent = optionLabel(USER_DEPARTMENT_OPTIONS, departmentSelect.value);
+    });
+  });
+
+  list.querySelectorAll(".user-department-select").forEach(function(sel) {
+    sel.addEventListener("change", function() {
+      var uid = sel.dataset.uid;
+      var card = list.querySelector(".user-card[data-uid='"+uid+"']");
+      if (!card) return;
+      var departmentNote = card.querySelector(".user-department-note");
+      if (departmentNote) departmentNote.textContent = optionLabel(USER_DEPARTMENT_OPTIONS, sel.value);
     });
   });
 
@@ -20119,7 +20210,11 @@ function renderUsers(users) {
       var card = list.querySelector(".user-card[data-uid='"+uid+"']");
       if (!card) return;
       var customerSelect = card.querySelector(".user-customer-select");
-      if (customerSelect) customerSelect.style.display = sel.value === "customer_viewer" ? "" : "none";
+      var customerField = card.querySelector(".user-customer-field");
+      var roleNote = card.querySelector(".user-role-note");
+      if (customerSelect) customerSelect.style.display = "";
+      if (customerField) customerField.style.display = sel.value === "customer_viewer" ? "" : "none";
+      if (roleNote) roleNote.textContent = accessRoleScopeText(sel.value);
     });
   });
 
