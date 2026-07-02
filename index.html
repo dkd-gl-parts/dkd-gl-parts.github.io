@@ -900,8 +900,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .image-action-btn:active { transform: translateY(1px); }
 .image-delete-open-btn { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; background: #fff; color: #d33; border: 1px solid #f0b8b8; border-radius: 8px; padding: 8px 6px; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 12px; }
 .image-delete-open-btn:active { background: #fff3f3; }
+.image-delete-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0 12px; padding: 10px; border: 1px solid #f0d0d0; border-radius: 10px; background: #fff8f8; }
+.image-delete-select-all { display: inline-flex; align-items: center; gap: 6px; color: #5b667a; font-size: 12px; font-weight: 700; cursor: pointer; }
+.image-delete-select-all input { width: 16px; height: 16px; }
+.image-delete-bulk-btn { border: 1px solid #ff5a5a; background: #fff; color: #d33; border-radius: 7px; padding: 7px 10px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.image-delete-bulk-btn:disabled { opacity: .45; cursor: not-allowed; }
 .image-delete-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 14px; max-height: 58vh; overflow-y: auto; padding: 4px 2px; }
 .image-delete-item { border: 1px solid #eee; border-radius: 8px; background: #fafafa; padding: 8px; }
+.image-delete-check { display: inline-flex; align-items: center; gap: 5px; color: #5b667a; font-size: 11px; font-weight: 700; margin-bottom: 7px; cursor: pointer; }
+.image-delete-check input { width: 15px; height: 15px; }
 .image-delete-preview { aspect-ratio: 1; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 10px; }
 .image-delete-preview img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .image-delete-btn { width: 100%; border: 1px solid #ff5a5a; background: #fff; color: #e03a3a; border-radius: 6px; padding: 7px 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
@@ -2866,6 +2873,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 <div class="form-overlay" id="image-delete-overlay">
   <div class="form-card">
     <h3 data-i18n="image_delete_title">写真の削除</h3>
+    <div class="image-delete-toolbar">
+      <label class="image-delete-select-all">
+        <input id="image-delete-select-all" type="checkbox">
+        <span data-i18n="image_delete_select_all">すべて選択</span>
+      </label>
+      <button class="image-delete-bulk-btn" id="btn-image-delete-selected" type="button" data-i18n="image_delete_selected">選択した写真を削除</button>
+    </div>
     <div class="image-delete-list" id="image-delete-list"></div>
     <div class="form-footer">
       <button class="btn-cancel" id="btn-image-delete-cancel" data-i18n="btn_back">キャンセル</button>
@@ -3110,6 +3124,12 @@ var TRANSLATIONS = {
     core_upload_from_device: "端末から写真",
     btn_delete_images: "写真を削除",
     image_delete_title: "写真の削除",
+    image_delete_select: "選択",
+    image_delete_select_all: "すべて選択",
+    image_delete_selected: "選択した写真を削除",
+    image_delete_none_selected: "削除する写真を選択してください",
+    image_delete_selected_confirm: "{n} 枚の写真を削除しますか？",
+    image_delete_selected_done: "{n} 枚の写真を削除しました",
     img_none: "画像なし",
     img_loading: "読み込み中...",
     del_confirm: "この画像を削除しますか？",
@@ -3882,6 +3902,12 @@ var TRANSLATIONS = {
     core_upload_from_device: "From Device",
     btn_delete_images: "Delete Photos",
     image_delete_title: "Delete Photos",
+    image_delete_select: "Select",
+    image_delete_select_all: "Select All",
+    image_delete_selected: "Delete Selected",
+    image_delete_none_selected: "Select photos to delete",
+    image_delete_selected_confirm: "Delete {n} photos?",
+    image_delete_selected_done: "Deleted {n} photos",
     img_none: "No images",
     img_loading: "Loading...",
     del_confirm: "Delete this image?",
@@ -4661,6 +4687,12 @@ var TRANSLATIONS = {
     core_upload_from_device: "从设备选择",
     btn_delete_images: "删除照片",
     image_delete_title: "删除照片",
+    image_delete_select: "选择",
+    image_delete_select_all: "全选",
+    image_delete_selected: "删除所选照片",
+    image_delete_none_selected: "请选择要删除的照片",
+    image_delete_selected_confirm: "要删除 {n} 张照片吗？",
+    image_delete_selected_done: "已删除 {n} 张照片",
     img_none: "无图片",
     img_loading: "加载中...",
     del_confirm: "确认删除此图片？",
@@ -5285,7 +5317,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.343";
+var APP_VERSION       = "v1.1.344";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -19729,6 +19761,10 @@ function closeImageDeleteDialog() {
 
 function renderImageDeleteDialog() {
   var list = document.getElementById("image-delete-list");
+  var selectAll = document.getElementById("image-delete-select-all");
+  var bulkBtn = document.getElementById("btn-image-delete-selected");
+  if (selectAll) selectAll.checked = false;
+  if (bulkBtn) bulkBtn.disabled = !currentImages.length;
   if (!list) return;
   if (!currentImages.length) {
     list.innerHTML = "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + t("img_none") + "</div></div>";
@@ -19737,6 +19773,7 @@ function renderImageDeleteDialog() {
   var html = "";
   currentImages.forEach(function(img, i) {
     html += "<div class='image-delete-item'>";
+    html += "<label class='image-delete-check'><input type='checkbox' data-delete-image-check='" + i + "'> " + esc(t("image_delete_select")) + "</label>";
     html += "<div class='image-delete-preview'>" + thumbImgHtml(img.image_url, {
       width: 160,
       height: 160,
@@ -19921,6 +19958,53 @@ async function deleteImageFromDialog(index) {
   if (deleted) renderImageDeleteDialog();
 }
 
+function selectedImageDeleteIndexes() {
+  return Array.from(document.querySelectorAll("[data-delete-image-check]:checked")).map(function(input) {
+    return parseInt(input.dataset.deleteImageCheck, 10);
+  }).filter(function(index) {
+    return !isNaN(index) && currentImages[index];
+  });
+}
+
+function setAllImageDeleteChecks(checked) {
+  document.querySelectorAll("[data-delete-image-check]").forEach(function(input) {
+    input.checked = !!checked;
+  });
+}
+
+async function refreshAfterImageDelete() {
+  await loadImages(null, detailSecondaryRequestSeq);
+  await refreshSalesImageCacheForProduct(currentProduct);
+  renderImages();
+  render();
+}
+
+async function deleteSelectedImagesFromDialog() {
+  if (!canEdit()) { alert(t("err_perm")); return; }
+  var indexes = selectedImageDeleteIndexes();
+  if (!indexes.length) {
+    alert(t("image_delete_none_selected"));
+    return;
+  }
+  var targets = indexes.map(function(index) { return currentImages[index]; }).filter(Boolean);
+  if (!targets.length) return;
+  if (!confirm(tf("image_delete_selected_confirm", { n: targets.length }))) return;
+  var btn = document.getElementById("btn-image-delete-selected");
+  if (btn) btn.disabled = true;
+  var deleted = 0;
+  try {
+    for (var i = 0; i < targets.length; i++) {
+      var ok = await deleteImageRecord(targets[i]);
+      if (ok) deleted++;
+    }
+    await refreshAfterImageDelete();
+    renderImageDeleteDialog();
+    if (deleted) alert(tf("image_delete_selected_done", { n: deleted }));
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
 async function uploadImages(event) {
   if (!canEdit()) { alert(t("err_perm")); return; }
   var uploadContext = event && event.target && event.target.dataset ? (event.target.dataset.uploadContext || "sales") : "sales";
@@ -19991,7 +20075,17 @@ async function uploadImages(event) {
 async function deleteImage(imgId, imageUrl) {
   if (!canEdit()) { alert(t("err_perm")); return false; }
   if (!confirm(t("del_confirm"))) return false;
-  var target = currentImages.find(function(img) { return String(img.id) === String(imgId); }) || {};
+  var target = currentImages.find(function(img) { return String(img.id) === String(imgId); }) || { id: imgId, image_url: imageUrl };
+  var ok = await deleteImageRecord(target);
+  if (!ok) return false;
+  await refreshAfterImageDelete();
+  return true;
+}
+
+async function deleteImageRecord(target) {
+  if (!target || !target.id) return false;
+  var imgId = target.id;
+  var imageUrl = target.image_url || "";
   var path = target.storage_path || (imageUrl ? imageUrl.split("/product-images/")[1] : "");
   var hasOtherReference = false;
   if (imageUrl) {
@@ -20014,9 +20108,6 @@ async function deleteImage(imgId, imageUrl) {
     return false;
   }
   currentImages = currentImages.filter(function(img){return String(img.id)!==String(imgId);});
-  await loadImages(null, detailSecondaryRequestSeq);
-  await refreshSalesImageCacheForProduct(currentProduct);
-  renderImages(); render();
   return true;
 }
 
@@ -21065,6 +21156,10 @@ document.getElementById("btn-image-edit-save").addEventListener("click", saveIma
 document.getElementById("image-edit-overlay").addEventListener("click", function(e){ if(e.target===this) closeImageEditDialog(); });
 document.getElementById("btn-image-delete-cancel").addEventListener("click", closeImageDeleteDialog);
 document.getElementById("image-delete-overlay").addEventListener("click", function(e){ if(e.target===this) closeImageDeleteDialog(); });
+document.getElementById("image-delete-select-all").addEventListener("change", function(e){
+  setAllImageDeleteChecks(e.target.checked);
+});
+document.getElementById("btn-image-delete-selected").addEventListener("click", deleteSelectedImagesFromDialog);
 document.getElementById("image-delete-list").addEventListener("click", function(e){
   var btn = e.target.closest("[data-delete-image-index]");
   if (btn) deleteImageFromDialog(parseInt(btn.dataset.deleteImageIndex, 10));
