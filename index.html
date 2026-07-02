@@ -8842,7 +8842,12 @@ function normalizeRakutenCondition(item) {
     item.itemCaption,
     item.catchcopy
   ].join(" ");
-  if (text.indexOf("\u30ea\u30d3\u30eb\u30c8") >= 0 || text.indexOf("\u30ea\u30d3\u30eb\u30c9") >= 0 || /rebuilt|remanufactured|reman/i.test(text)) return "rebuilt";
+  if (
+    text.indexOf("\u30ea\u30d3\u30eb\u30c8") >= 0 ||
+    text.indexOf("\u30ea\u30d3\u30eb\u30c9") >= 0 ||
+    text.indexOf("\u518d\u751f") >= 0 ||
+    /rebuilt|remanufactured|reman/i.test(text)
+  ) return "rebuilt";
   if (text.indexOf("\u65b0\u54c1") >= 0 || text.indexOf("\u672a\u4f7f\u7528") >= 0 || /new/i.test(text)) return "new";
   if (
     text.indexOf("\u4e2d\u53e4") >= 0 ||
