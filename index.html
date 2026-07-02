@@ -894,6 +894,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .panel-right #img-grid { overflow-y: auto; max-height: min(34vh, 270px); padding-right: 2px; }
 .img-wrap  { position: relative; border-radius: 8px; overflow: hidden; background: #fff; aspect-ratio: 1; width: 100%; display: flex; align-items: center; justify-content: center; }
 .img-wrap img { width: 100%; height: 100%; object-fit: contain; display: block; cursor: zoom-in; image-rendering: auto; }
+.sales-mobile-stock { display: none; }
 .panel-footer { flex-shrink: 0; padding: 8px 10px 16px; border-top: 1px solid #eee; background: #fafafa; width: 180px; flex-shrink: 0; }
 .upload-btn-small { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; background: #4f8ef7; color: #fff; border: none; border-radius: 8px; padding: 8px 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
 .upload-btn-small:active { background: #3a7ae0; }
@@ -944,8 +945,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .upload-btn.busy   { opacity: 0.5; pointer-events: none; }
 .upload-input { display: none; }
 @media (max-width: 767px) {
-  .panel-inner { flex-direction: column; min-height: 0; }
-  .panel-left { order: 1; overflow: hidden; padding: 12px 14px 8px; }
+  #screen-search .panel { height: calc(100vh - 16px); height: calc(100dvh - 16px); max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); }
+  .panel-scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .panel-inner { flex-direction: column; min-height: 100%; height: auto; }
+  .panel-left { order: 1; flex: 0 0 auto; overflow: visible; padding: 12px 14px 8px; }
   .panel-right {
     order: 2;
     width: auto;
@@ -957,7 +960,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     max-height: none;
     overflow: visible;
     position: static;
+    flex: 0 0 auto;
   }
+  .sales-mobile-stock { display: block; margin-bottom: 10px; }
+  .sales-mobile-stock .core-qty-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-bottom: 0; }
+  .sales-mobile-stock .core-qty-card { padding: 8px 7px; }
+  .sales-mobile-stock .core-qty-label { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sales-mobile-stock .core-qty-value { font-size: 20px; }
+  .sales-mobile-stock .core-qty-sub { display: none; }
   .panel-right-title { margin-bottom: 0; }
   .panel-right-empty { min-height: 42px; flex: 0 0 auto; flex-direction: row; justify-content: flex-start; }
   .panel-right-empty .empty-icon { font-size: 20px; }
@@ -5369,7 +5379,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.348";
+var APP_VERSION       = "v1.1.349";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -7168,6 +7178,19 @@ function renderProductionCoreSummary(row, detail) {
   "</div>";
 }
 
+function renderSalesMobileStockSummary(product) {
+  return "<div class='core-qty-summary'>" +
+    "<div class='core-qty-card'><div class='core-qty-label'>" + esc(productKindLabel("rebuilt")) + "</div><div class='core-qty-value'>" + esc(kikanStockQtyText(product, "rebuilt")) + "</div><div class='core-qty-sub'>" + esc(t("product_kind_stock_qty")) + "</div></div>" +
+    "<div class='core-qty-card'><div class='core-qty-label'>" + esc(productKindLabel("aftermarket_new")) + "</div><div class='core-qty-value'>" + esc(kikanStockQtyText(product, "aftermarket_new")) + "</div><div class='core-qty-sub'>" + esc(t("product_kind_stock_qty")) + "</div></div>" +
+  "</div>";
+}
+
+function refreshSalesMobileStockSummary() {
+  var wrap = document.getElementById("sales-mobile-stock-wrap");
+  if (!wrap || !currentProduct) return;
+  wrap.innerHTML = renderSalesMobileStockSummary(currentProduct);
+}
+
 function renderProductionCoreEntriesDisplay(rows) {
   if (!rows || !rows.length) return "<div class='production-help'>手入力のコアリストはまだありません。</div>";
   var html = "<table class='production-mini-table'><tr><th>コア品番</th><th>数</th><th>置き場</th><th>メモ</th>" + (canEdit() ? "<th></th>" : "") + "</tr>";
@@ -8590,6 +8613,10 @@ function buildRakutenApiRequest(keyword, ngKeyword, sort, hits, opts) {
 
 async function rakutenInvokeServerProxy(payload) {
   var r = await sb.functions.invoke(RAKUTEN_EDGE_FUNCTION_NAME, { body: payload });
+  if (r.error && RAKUTEN_EDGE_FUNCTION_NAME !== "rakuten-search" && (!payload.provider || payload.provider === "rakuten")) {
+    console.warn("ec-mall-search failed; falling back to legacy rakuten-search", r.error);
+    r = await sb.functions.invoke("rakuten-search", { body: payload });
+  }
   if (r.error) {
     var msg = r.error.message || String(r.error);
     try {
@@ -14891,6 +14918,7 @@ function renderPanelStatic() {
     ? "<div class='detail-lower-grid detail-lower-count-" + detailLowerBlocks.length + "'>" + detailLowerBlocks.join("") + "</div>"
     : "";
   document.getElementById("panel-body").innerHTML =
+    "<div class='sales-mobile-stock' id='sales-mobile-stock-wrap'>" + renderSalesMobileStockSummary(p) + "</div>" +
     "<div class='detail-main-grid'>" +
       "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + "</div>" +
       "<div class='detail-column'>" + makerHtml +
@@ -14942,6 +14970,7 @@ async function loadProductVariantsForCurrent(seq) {
     wrap.innerHTML = renderProductKindPanelHtml(productKindSummaryForProduct(currentProduct));
     bindProductKindPanelActions();
   }
+  refreshSalesMobileStockSummary();
   render();
 }
 
