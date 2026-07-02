@@ -5249,7 +5249,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.341";
+var APP_VERSION       = "v1.1.342";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -9812,15 +9812,23 @@ function productKindStockAddableKinds(dkdId) {
   return productKindStockAllKinds().filter(function(kind) { return !existing[kind]; });
 }
 
+function productKindStockAddDefaultKind(row, kinds) {
+  kinds = kinds || [];
+  var preferred = normalizeProductKind(row && (row.suggested_add_kind || row.product_kind) || "");
+  if (preferred && kinds.indexOf(preferred) >= 0) return preferred;
+  return kinds[0] || "";
+}
+
 function renderProductKindStockAddKindHtml(row) {
   if (!canEditProductKindStockMgmt()) return "";
   var kinds = productKindStockAddableKinds(row.dkd_shohin_id);
   if (!kinds.length) return "";
   var id = String(row.product_variant_id || row.dkd_shohin_id || "");
+  var selectedKind = productKindStockAddDefaultKind(row, kinds);
   var html = "<span class='stock-mgmt-add-kind'>";
   html += "<select data-stock-add-kind-select='" + esc(id) + "' aria-label='" + esc(t("product_kind_add_select")) + "'>";
   kinds.forEach(function(kind) {
-    html += "<option value='" + esc(kind) + "'>" + esc(productKindLabel(kind)) + "</option>";
+    html += "<option value='" + esc(kind) + "'" + (kind === selectedKind ? " selected" : "") + ">" + esc(productKindLabel(kind)) + "</option>";
   });
   html += "</select>";
   html += "<button class='btn-sm-edit production-action-secondary' data-stock-add-kind='" + esc(id) + "' data-stock-add-dkd='" + esc(String(row.dkd_shohin_id || "")) + "'>" + esc(t("product_kind_add")) + "</button>";
@@ -9954,16 +9962,18 @@ async function loadProductKindStockMgmt() {
     productKindStockRows.forEach(function(row) {
       if (row.product_variant_id) hasVariant[String(row.dkd_shohin_id || "")] = true;
     });
-    productRows.forEach(function(p) {
-      var id = productDkdId(p);
-      if (!id || hasVariant[String(id)]) return;
-      productKindStockRows.push({
-        product_variant_id: null,
-        dkd_shohin_id: id,
-        product_kind: productKindStockDefaultKindForProduct(p, kind),
-        sl_part_id: null,
-        display_label: "",
-        stock_qty: null,
+      productRows.forEach(function(p) {
+        var id = productDkdId(p);
+        if (!id || hasVariant[String(id)]) return;
+        var virtualKind = productKindStockDefaultKindForProduct(p, kind);
+        productKindStockRows.push({
+          product_variant_id: null,
+          dkd_shohin_id: id,
+          product_kind: virtualKind,
+          suggested_add_kind: virtualKind,
+          sl_part_id: null,
+          display_label: "",
+          stock_qty: null,
         stock_location: "",
         stock_note: "",
         is_active: false,
