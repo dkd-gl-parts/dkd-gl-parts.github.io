@@ -3647,7 +3647,7 @@ var TRANSLATIONS = {
     rakuten_bulk_rate_limited: "{saved} 件保存しました。ECモールAPIの制限に達したため、{remaining} 件を残して停止しました: {error}",
     rakuten_bulk_running: "{done}/{total} 件 調査中...",
     rakuten_saved_result: "調査結果を保存しました",
-    rakuten_list_search_ph: "商品ID・品番で検索",
+    rakuten_list_search_ph: "キーワード・品番・出品者で検索",
     rakuten_no_saved_results: "保存済みのECモール価格調査結果がありません",
     rakuten_latest: "調査日時",
     ec_mall_providers: "調査先",
@@ -4440,7 +4440,7 @@ var TRANSLATIONS = {
     rakuten_bulk_rate_limited: "Saved {saved}. Stopped with {remaining} remaining because the EC mall API rate limit was reached: {error}",
     rakuten_bulk_running: "Surveying {done}/{total}...",
     rakuten_saved_result: "Saved survey result",
-    rakuten_list_search_ph: "Search by product ID or part number",
+    rakuten_list_search_ph: "Search by keyword, part number, or seller",
     rakuten_no_saved_results: "No saved EC mall price survey results",
     rakuten_latest: "Surveyed At",
     ec_mall_providers: "Providers",
@@ -5226,7 +5226,7 @@ var TRANSLATIONS = {
     rakuten_bulk_rate_limited: "已保存 {saved} 件。因达到乐天API限制，剩余 {remaining} 件已停止: {error}",
     rakuten_bulk_running: "调查中 {done}/{total}...",
     rakuten_saved_result: "调查结果已保存",
-    rakuten_list_search_ph: "按商品ID或品号搜索",
+    rakuten_list_search_ph: "按关键词、品号或卖家搜索",
     rakuten_no_saved_results: "没有保存的乐天价格调查结果",
     rakuten_latest: "调查时间",
     ec_mall_providers: "调查平台",
@@ -8503,15 +8503,15 @@ function renderRakutenTargets() {
     return;
   }
   var html = "<div class='rakuten-target-list'>";
-  html += "<div class='rakuten-target-row header'><div>商品ID</div><div>メーカー品番</div><div>純正品番</div><div>検索</div><div>調査先</div><div>商品状態</div></div>";
+  html += "<div class='rakuten-target-row header'><div>" + t("rakuten_keyword") + "</div><div>メーカー品番</div><div>純正品番</div><div>DKD商品ID</div><div>調査先</div><div>商品状態</div></div>";
   rakutenTargets.slice(0, 200).forEach(function(x) {
     var providers = (x.provider_keys && x.provider_keys.length ? x.provider_keys : ecMallDefaultProviders).map(ecMallProviderLabel).join(" / ");
     var conditionText = x.include_used ? t("ec_mall_include_used") : t("rakuten_condition_rebuilt") + " / " + t("rakuten_condition_new");
     html += "<div class='rakuten-target-row'>";
-    html += "<div class='rakuten-target-num'>" + esc(x.dkd_shohin_id || "-") + "</div>";
+    html += "<div class='rakuten-target-num'>" + esc(x.search_number || "-") + "</div>";
     html += "<div class='rakuten-target-num'>" + esc(x.manufacturer_part_number || "-") + "</div>";
     html += "<div class='rakuten-target-num'>" + esc(x.genuine_part_number || "-") + "</div>";
-    html += "<div class='rakuten-target-muted'>" + esc(x.search_number || "-") + "</div>";
+    html += "<div class='rakuten-target-muted'>" + esc(x.dkd_shohin_id || "-") + "</div>";
     html += "<div class='rakuten-target-muted'>" + esc(providers || "-") + "</div>";
     html += "<div class='rakuten-target-muted'>" + esc(conditionText) + "</div>";
     html += "</div>";
@@ -9571,7 +9571,7 @@ function renderEcMallPriceList(rows) {
   });
   var listRows = Object.keys(groups).map(function(key) { return groups[key]; })
     .sort(function(a, b) { return new Date(b.meta.surveyed_at) - new Date(a.meta.surveyed_at); });
-  if (countEl) countEl.textContent = listRows.length + " 品番（Best3行 " + rows.length + " 件）";
+  if (countEl) countEl.textContent = listRows.length + " 検索条件（Best3行 " + rows.length + " 件）";
   var list = document.getElementById("rakuten-list");
   if (!listRows.length) {
     list.innerHTML = "<div class='empty'>" + t("rakuten_no_saved_results") + "</div>";
@@ -9589,11 +9589,14 @@ function renderEcMallPriceList(rows) {
     }).join("");
   }
   var html = "<table class='mgmt-table'>";
-  html += "<tr><th>商品ID</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("rakuten_condition_used") + " Best3</th><th>" + t("rakuten_condition_rebuilt") + " Best3</th><th>" + t("rakuten_condition_new") + " Best3</th><th>" + t("rakuten_latest") + "</th></tr>";
+  html += "<tr><th>" + t("rakuten_keyword") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("rakuten_condition_used") + " Best3</th><th>" + t("rakuten_condition_rebuilt") + " Best3</th><th>" + t("rakuten_condition_new") + " Best3</th><th>" + t("rakuten_latest") + "</th></tr>";
   listRows.forEach(function(group) {
     var r = group.meta;
+    var keyword = r.search_number || r.manufacturer_part_number || r.genuine_part_number || r.dkd_shohin_id || r.shohin_cd || "-";
+    var productId = r.dkd_shohin_id || r.shohin_cd || "";
+    var productSub = productId && String(productId) !== String(keyword) ? "DKD商品ID " + productId : "";
     html += "<tr>";
-    html += "<td><div class='mgmt-pn'>" + esc(String(r.dkd_shohin_id || r.shohin_cd || "-")) + "</div><div class='mgmt-sub'>" + esc(r.search_number || "-") + "</div></td>";
+    html += "<td><div class='mgmt-pn'>" + esc(String(keyword)) + "</div><div class='mgmt-sub'>" + esc(productSub) + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(r.manufacturer_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(r.manufacturer || "") + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(r.genuine_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(r.genuine_part_number_2 || tCat(r.category) || "") + "</div></td>";
     html += "<td>" + bestCell(group, "used") + "</td>";
@@ -9615,15 +9618,18 @@ function renderRakutenPriceList(rows) {
     return;
   }
   var html = "<table class='mgmt-table'>";
-  html += "<tr><th>商品ID</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("rakuten_count") + "</th><th>" + t("rakuten_condition_used") + "</th><th>" + t("rakuten_condition_rebuilt") + "</th><th>" + t("rakuten_condition_new") + "</th><th>" + t("rakuten_condition_other") + "</th><th>" + t("rakuten_min") + "</th><th>" + t("rakuten_avg") + "</th><th>" + t("rakuten_latest") + "</th></tr>";
+  html += "<tr><th>" + t("rakuten_keyword") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("rakuten_count") + "</th><th>" + t("rakuten_condition_used") + "</th><th>" + t("rakuten_condition_rebuilt") + "</th><th>" + t("rakuten_condition_new") + "</th><th>" + t("rakuten_condition_other") + "</th><th>" + t("rakuten_min") + "</th><th>" + t("rakuten_avg") + "</th><th>" + t("rakuten_latest") + "</th></tr>";
   rows.forEach(function(r) {
     var conditionMap = rakutenConditionSummaryMap(r.items || []);
     function conditionCell(summary) {
       if (!summary || !summary.count) return "<span class='muted'>-</span>";
       return "<div class='price-value'>" + yen(summary.min) + "</div><div class='mgmt-sub'>" + summary.count + "件 / 平均 " + yen(summary.avg) + "</div>";
     }
+    var keyword = r.search_number || r.manufacturer_part_number || r.genuine_part_number || r.dkd_shohin_id || "-";
+    var productSub = r.dkd_shohin_id && String(r.dkd_shohin_id) !== String(keyword) ? "DKD商品ID " + r.dkd_shohin_id : "";
+    var keywordSub = [productSub, r.source_type || ""].filter(Boolean).join(" / ");
     html += "<tr>";
-    html += "<td><div class='mgmt-pn'>" + esc(String(r.dkd_shohin_id || "-")) + "</div><div class='mgmt-sub'>" + esc(r.source_type || "-") + "</div></td>";
+    html += "<td><div class='mgmt-pn'>" + esc(String(keyword)) + "</div><div class='mgmt-sub'>" + esc(keywordSub || "-") + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(r.manufacturer_part_number || r.search_number || "-") + "</div><div class='mgmt-sub'>" + esc(r.manufacturer || "") + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(r.genuine_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(tCat(r.category) || "") + "</div></td>";
     html += "<td>" + esc(String(r.result_count || 0)) + "</td>";
