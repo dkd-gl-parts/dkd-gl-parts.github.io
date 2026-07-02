@@ -2736,6 +2736,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
           </select>
         </div>
         <div class="rakuten-field">
+          <label data-i18n="ec_single_target_label">個別品番追加</label>
+          <div class="ec-seller-input-row">
+            <input id="ec-mall-single-target-input" type="search" data-i18n-ph="ec_single_target_ph" placeholder="例: MD362184">
+            <button class="btn-sm-edit" type="button" id="btn-ec-add-single-target" data-i18n="ec_add_single_target">一覧に追加</button>
+          </div>
+        </div>
+        <div class="rakuten-field">
           <label data-i18n="rakuten_upload_file">品番リストアップロード</label>
           <input id="rakuten-upload-file" type="file" accept=".csv,.txt">
         </div>
@@ -3678,6 +3685,13 @@ var TRANSLATIONS = {
     ec_load_saved_targets: "保存済み対象を読み込み",
     ec_save_targets: "調査対象を保存",
     ec_targets_saved: "{n} 件の調査対象を保存しました",
+    ec_single_target_label: "個別品番追加",
+    ec_single_target_ph: "例: MD362184",
+    ec_add_single_target: "一覧に追加",
+    ec_single_target_required: "追加する品番またはキーワードを入力してください",
+    ec_single_target_added: "{keyword} を調査対象一覧に追加しました",
+    ec_single_target_updated: "既存の対象を更新しました",
+    ec_single_target_failed: "個別品番の追加に失敗しました: {error}",
     ec_best3_title: "{type} ベスト3",
     ec_research_operation_title: "継続調査の運用状況",
     ec_research_schedule_note: "毎日 02:00 JST に保存済み調査対象を自動調査します。",
@@ -4494,6 +4508,13 @@ var TRANSLATIONS = {
     ec_load_saved_targets: "Load Saved Targets",
     ec_save_targets: "Save Targets",
     ec_targets_saved: "Saved {n} survey targets",
+    ec_single_target_label: "Add Single Target",
+    ec_single_target_ph: "Example: MD362184",
+    ec_add_single_target: "Add to List",
+    ec_single_target_required: "Enter a part number or keyword to add",
+    ec_single_target_added: "Added {keyword} to the survey target list",
+    ec_single_target_updated: "Updated existing target",
+    ec_single_target_failed: "Failed to add the single target: {error}",
     ec_best3_title: "{type} Best 3",
     ec_research_operation_title: "Continuous Research Status",
     ec_research_schedule_note: "Saved targets are checked automatically every day at 02:00 JST.",
@@ -5303,6 +5324,13 @@ var TRANSLATIONS = {
     ec_load_saved_targets: "读取已保存对象",
     ec_save_targets: "保存调查对象",
     ec_targets_saved: "已保存 {n} 件调查对象",
+    ec_single_target_label: "单个品号追加",
+    ec_single_target_ph: "例: MD362184",
+    ec_add_single_target: "添加到列表",
+    ec_single_target_required: "请输入要追加的品号或关键词",
+    ec_single_target_added: "已将 {keyword} 添加到调查对象列表",
+    ec_single_target_updated: "已更新现有对象",
+    ec_single_target_failed: "单个品号追加失败: {error}",
     ec_best3_title: "{type} 前3名",
     ec_research_operation_title: "持续调查运行状态",
     ec_research_schedule_note: "每天 02:00 JST 自动调查已保存对象。",
@@ -5511,7 +5539,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.351";
+var APP_VERSION       = "v1.1.352";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -8741,6 +8769,115 @@ async function loadRakutenTargetsFromMaster() {
   }
   rakutenTargets = rows.map(function(p) { return rakutenTargetFromPart(p, "master"); }).filter(function(x) { return x.search_number; });
   renderRakutenTargets();
+}
+
+function ecMallTargetSameKey(a, b) {
+  var ak = (a && (a.target_key || ecMallTargetKey(a))) || "";
+  var bk = (b && (b.target_key || ecMallTargetKey(b))) || "";
+  if (ak && bk && ak === bk) return true;
+  var as = String((a && a.search_number) || "").trim().toUpperCase();
+  var bs = String((b && b.search_number) || "").trim().toUpperCase();
+  return !!(as && bs && as === bs);
+}
+
+function mergeEcMallTarget(target) {
+  if (!target || !target.search_number) return false;
+  target.provider_keys = getEcMallSelectedProviders();
+  target.seller_ids = getEcMallSellerIds();
+  target.include_used = getEcMallIncludeUsed();
+  target.priority = target.priority || (rakutenTargets.length + 1) * 10;
+  target.target_key = target.target_key || ecMallTargetKey(target);
+  for (var i=0; i<rakutenTargets.length; i++) {
+    if (!ecMallTargetSameKey(rakutenTargets[i], target)) continue;
+    var existing = rakutenTargets[i];
+    var merged = Object.assign({}, existing, target);
+    ["part_id","dkd_shohin_id","shohin_cd","genuine_part_number","genuine_part_number_2","manufacturer_part_number","daiko_part_number","manufacturer","category"].forEach(function(field) {
+      if ((merged[field] === null || merged[field] === undefined || merged[field] === "") && existing[field]) merged[field] = existing[field];
+    });
+    merged.id = existing.id || target.id;
+    merged.target_key = existing.target_key || target.target_key || ecMallTargetKey(merged);
+    merged.priority = existing.priority || target.priority;
+    rakutenTargets[i] = merged;
+    return false;
+  }
+  rakutenTargets.push(target);
+  return true;
+}
+
+function exactCoreProductMatchForEcTarget(rows, query) {
+  rows = rows || [];
+  var raw = String(query || "").trim();
+  var normalized = normalizePartQuery(raw);
+  var rawUpper = raw.toUpperCase();
+  for (var i=0; i<rows.length; i++) {
+    var row = rows[i] || {};
+    if (rawUpper && String(row.dkd_shohin_id || row.shohin_cd || "").toUpperCase() === rawUpper) return row;
+    var values = [
+      row.manufacturer_part_number,
+      row.genuine_part_number,
+      row.genuine_part_number_2,
+      row.daiko_part_number,
+      row.genuine_body_part_number,
+      row.manufacturer_body_part_number,
+      row.genuine_clutch_part_number,
+      row.manufacturer_clutch_part_number
+    ];
+    for (var j=0; j<values.length; j++) {
+      if (normalized && normalizePartQuery(values[j]) === normalized) return row;
+    }
+  }
+  return null;
+}
+
+async function resolveEcMallSingleTarget(value) {
+  var raw = cleanPartNumberValue(value);
+  if (!raw) return null;
+  var categoryValue = (document.getElementById("rakuten-target-category") || {}).value || "";
+  var lookupValues = [raw, rakutenKeywordPartOnly(raw)].map(cleanPartNumberValue).filter(Boolean);
+  lookupValues = Array.from(new Set(lookupValues));
+  for (var i=0; i<lookupValues.length; i++) {
+    var r = await fetchCoreProductMasterMatches(lookupValues[i], categoryValue || null, 10);
+    if (r.error) throw new Error(r.error.message);
+    var matched = exactCoreProductMatchForEcTarget(r.data || [], lookupValues[i]);
+    if (matched) return rakutenTargetFromPart(matched, "manual");
+  }
+  var searchNumber = /\s/.test(raw) ? raw : rakutenDenseKeyword(raw, { category: categoryValue });
+  var target = {
+    part_id: null,
+    dkd_shohin_id: null,
+    genuine_part_number: "",
+    genuine_part_number_2: "",
+    manufacturer_part_number: /\s/.test(raw) ? "" : raw,
+    daiko_part_number: "",
+    manufacturer: "",
+    category: categoryValue || "",
+    search_number: searchNumber || raw,
+    search_number_type: "manual_keyword",
+    source_type: "manual",
+    provider_keys: getEcMallSelectedProviders(),
+    seller_ids: getEcMallSellerIds(),
+    include_used: getEcMallIncludeUsed()
+  };
+  target.target_key = ecMallTargetKey(target);
+  return target;
+}
+
+async function addEcMallSingleTarget() {
+  var input = document.getElementById("ec-mall-single-target-input");
+  var value = input ? input.value.trim() : "";
+  if (!value) {
+    setRakutenStatus(t("ec_single_target_required"), true);
+    return;
+  }
+  var target = await resolveEcMallSingleTarget(value);
+  if (!target || !target.search_number) {
+    setRakutenStatus(t("ec_single_target_required"), true);
+    return;
+  }
+  var added = mergeEcMallTarget(target);
+  renderRakutenTargets();
+  if (input) input.value = "";
+  setRakutenStatus(tf("ec_single_target_added", { keyword: target.search_number }) + (added ? "" : " / " + t("ec_single_target_updated")), false);
 }
 
 async function loadEcMallSavedTargets() {
@@ -22202,6 +22339,18 @@ document.getElementById("btn-rakuten-load-master").addEventListener("click", fun
 document.getElementById("btn-ec-save-targets").addEventListener("click", function(){
   saveEcMallTargets().catch(function(e) {
     setRakutenStatus("調査対象の保存に失敗しました: " + (e.message || e), true);
+  });
+});
+document.getElementById("btn-ec-add-single-target").addEventListener("click", function(){
+  addEcMallSingleTarget().catch(function(e) {
+    setRakutenStatus(tf("ec_single_target_failed", { error: e.message || e }), true);
+  });
+});
+document.getElementById("ec-mall-single-target-input").addEventListener("keydown", function(e){
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  addEcMallSingleTarget().catch(function(err) {
+    setRakutenStatus(tf("ec_single_target_failed", { error: err.message || err }), true);
   });
 });
 document.getElementById("btn-rakuten-filter-unsurveyed").addEventListener("click", function(){
