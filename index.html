@@ -907,12 +907,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .image-delete-btn { width: 100%; border: 1px solid #ff5a5a; background: #fff; color: #e03a3a; border-radius: 6px; padding: 7px 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
 .image-delete-btn:active { background: #fff0f0; }
 .image-edit-list { display: grid; gap: 12px; max-height: 58vh; overflow-y: auto; padding: 4px 2px; }
+.image-edit-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 10px; align-items: end; margin: 10px 0 12px; padding: 10px; border: 1px solid #e6edf7; border-radius: 10px; background: #f8fbff; }
+.image-edit-field { display: grid; gap: 5px; min-width: 0; }
+.image-edit-field label { color: #667085; font-size: 12px; font-weight: 700; }
+.image-edit-field select { width: 100%; min-width: 0; }
+.image-edit-bulk { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; min-width: 0; }
+.image-edit-bulk button { white-space: nowrap; }
 .image-edit-item { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 12px; align-items: center; border: 1px solid #e7edf7; border-radius: 8px; background: #fbfcff; padding: 8px; }
 .image-edit-preview { width: 84px; aspect-ratio: 1; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .image-edit-preview img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .image-edit-controls { display: grid; gap: 5px; }
 .image-edit-controls label { color: #667085; font-size: 12px; font-weight: 700; }
 .image-edit-controls select { width: 100%; min-width: 0; }
+@media (max-width: 560px) {
+  .image-edit-toolbar { grid-template-columns: 1fr; }
+  .image-edit-bulk { grid-template-columns: 1fr; }
+}
 .upload-btn   { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: #4f8ef7; color: #fff; border: none; border-radius: 10px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; }
 .upload-btn:active { background: #3a7ae0; }
 .upload-btn.busy   { opacity: 0.5; pointer-events: none; }
@@ -2831,6 +2841,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   <div class="form-card">
     <h3 data-i18n="image_edit_title">画像編集</h3>
     <div class="form-help" id="image-edit-help"></div>
+    <div class="image-edit-toolbar">
+      <div class="image-edit-field">
+        <label for="image-edit-filter-kind" data-i18n="image_edit_filter_kind">表示区分</label>
+        <select id="image-edit-filter-kind" class="product-kind-select rebuilt"></select>
+      </div>
+      <div class="image-edit-field">
+        <label for="image-edit-bulk-kind" data-i18n="image_edit_bulk_kind">一括変更</label>
+        <div class="image-edit-bulk">
+          <select id="image-edit-bulk-kind" class="product-kind-select rebuilt"></select>
+          <button class="btn-sm-edit" id="btn-image-edit-bulk-apply" type="button" data-i18n="image_edit_bulk_apply">表示中を変更</button>
+        </div>
+      </div>
+    </div>
     <div class="image-edit-list" id="image-edit-list"></div>
     <div class="form-footer">
       <button class="btn-cancel" id="btn-image-edit-cancel" data-i18n="btn_back">キャンセル</button>
@@ -3073,6 +3096,10 @@ var TRANSLATIONS = {
     image_kind_target: "登録・編集する区分",
     image_edit_title: "画像編集",
     image_edit_help: "画像ごとに区分を変更できます。保存すると、選択中の画面で該当区分に表示されます。",
+    image_edit_filter_kind: "表示区分",
+    image_edit_filter_all: "すべて",
+    image_edit_bulk_kind: "一括変更",
+    image_edit_bulk_apply: "表示中を変更",
     image_edit_saved: "画像区分を保存しました",
     image_has: "画像あり",
     image_none_short: "画像なし",
@@ -3841,6 +3868,10 @@ var TRANSLATIONS = {
     image_kind_target: "Target Kind",
     image_edit_title: "Edit Images",
     image_edit_help: "Change product kind for each image. After saving, it appears under that kind in this screen.",
+    image_edit_filter_kind: "Filter Kind",
+    image_edit_filter_all: "All",
+    image_edit_bulk_kind: "Bulk Change",
+    image_edit_bulk_apply: "Change Visible",
     image_edit_saved: "Image kinds saved",
     image_has: "Has image",
     image_none_short: "No image",
@@ -4616,6 +4647,10 @@ var TRANSLATIONS = {
     image_kind_target: "登记・编辑区分",
     image_edit_title: "图片编辑",
     image_edit_help: "可以按图片更改区分。保存后会显示在当前画面的对应区分。",
+    image_edit_filter_kind: "显示区分",
+    image_edit_filter_all: "全部",
+    image_edit_bulk_kind: "批量更改",
+    image_edit_bulk_apply: "更改当前显示",
     image_edit_saved: "图片区分已保存",
     image_has: "有图片",
     image_none_short: "无图片",
@@ -5243,13 +5278,14 @@ var editingComponentUsageId = null;
 var currentImages     = [];
 var productionImages  = [];
 var imageEditRows = [];
+var imageEditFilterKind = "";
 var currentProductionImageKind = "rebuilt";
 var currentProductionImageDkdId = null;
 var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.342";
+var APP_VERSION       = "v1.1.343";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -7808,6 +7844,7 @@ async function openProductionImageUpload() {
   await loadSlPartsForProduct(currentProductionRow);
   var input = document.getElementById("upload-input");
   if (input) {
+    input.multiple = true;
     input.dataset.uploadContext = "production";
     input.dataset.uploadKind = selectedImageActionKind("production");
     input.click();
@@ -12222,9 +12259,21 @@ function imageKindSelectHtml(id, selected) {
   return html;
 }
 
+function imageKindFilterSelectHtml(id, selected) {
+  selected = selected ? normalizeProductKind(selected) : "";
+  var cls = selected ? productKindClass(selected) : "other";
+  var html = "<select id='" + esc(id) + "' class='product-kind-select " + esc(cls) + "'>";
+  html += "<option value=''>" + esc(t("image_edit_filter_all")) + "</option>";
+  imageProductKindOptions().forEach(function(kind) {
+    html += "<option class='" + productKindClass(kind) + "' value='" + esc(kind) + "'" + (kind === selected ? " selected" : "") + ">" + esc(productKindLabel(kind)) + "</option>";
+  });
+  html += "</select>";
+  return html;
+}
+
 function setProductKindSelectClass(select) {
   if (!select) return;
-  var cls = productKindClass(select.value || "rebuilt");
+  var cls = select.value ? productKindClass(select.value) : "other";
   select.className = "product-kind-select " + cls;
 }
 
@@ -19661,6 +19710,7 @@ function triggerSalesImageUpload() {
   if (!canEdit()) { alert(t("err_perm")); return; }
   var input = document.getElementById("upload-input");
   if (!input) return;
+  input.multiple = true;
   input.dataset.uploadContext = "sales";
   input.dataset.uploadKind = selectedImageActionKind("sales");
   closeImageActionsDialog();
@@ -19702,6 +19752,7 @@ async function openImageEditDialog(context) {
   if (!canEdit()) { alert(t("err_perm")); return; }
   context = context === "production" ? "production" : "sales";
   currentImageEditContext = context;
+  imageEditFilterKind = "";
   var product = context === "production" ? currentProductionRow : currentProduct;
   var dkdId = parseInt(productDkdId(product), 10);
   if (isNaN(dkdId)) return;
@@ -19725,14 +19776,64 @@ function closeImageEditDialog() {
   document.getElementById("image-edit-overlay").classList.remove("show");
 }
 
+function imageEditVisibleRows() {
+  var filter = imageEditFilterKind ? normalizeProductKind(imageEditFilterKind) : "";
+  return (imageEditRows || []).map(function(img, index) {
+    return { img: img, index: index };
+  }).filter(function(item) {
+    if (!filter) return true;
+    return normalizeProductKind(item.img.product_kind || "rebuilt") === filter;
+  });
+}
+
+function bindImageEditToolbar() {
+  var filterWrap = document.querySelector("#image-edit-filter-kind");
+  var bulkWrap = document.querySelector("#image-edit-bulk-kind");
+  if (filterWrap) {
+    var parent = filterWrap.parentNode;
+    parent.innerHTML = "<label for='image-edit-filter-kind'>" + esc(t("image_edit_filter_kind")) + "</label>" + imageKindFilterSelectHtml("image-edit-filter-kind", imageEditFilterKind);
+    var select = document.getElementById("image-edit-filter-kind");
+    if (select) {
+      setProductKindSelectClass(select);
+      select.addEventListener("change", function() {
+        imageEditFilterKind = select.value ? normalizeProductKind(select.value) : "";
+        renderImageEditDialog();
+      });
+    }
+  }
+  if (bulkWrap) {
+    var selectedBulkKind = normalizeProductKind(bulkWrap.value || selectedImageActionKind(currentImageEditContext) || "rebuilt");
+    var bulkParent = bulkWrap.closest(".image-edit-field");
+    if (bulkParent) {
+      bulkParent.innerHTML = "<label for='image-edit-bulk-kind'>" + esc(t("image_edit_bulk_kind")) + "</label>" +
+        "<div class='image-edit-bulk'>" +
+        imageKindSelectHtml("image-edit-bulk-kind", selectedBulkKind) +
+        "<button class='btn-sm-edit' id='btn-image-edit-bulk-apply' type='button'>" + esc(t("image_edit_bulk_apply")) + "</button>" +
+        "</div>";
+      var bulkSelect = document.getElementById("image-edit-bulk-kind");
+      if (bulkSelect) bulkSelect.addEventListener("change", function() { setProductKindSelectClass(bulkSelect); });
+      var bulkBtn = document.getElementById("btn-image-edit-bulk-apply");
+      if (bulkBtn) bulkBtn.addEventListener("click", applyImageEditBulkKind);
+    }
+  }
+}
+
 function renderImageEditDialog() {
   var list = document.getElementById("image-edit-list");
   if (!list) return;
+  bindImageEditToolbar();
   if (!imageEditRows.length) {
     list.innerHTML = "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + esc(t("img_none")) + "</div></div>";
     return;
   }
-  list.innerHTML = imageEditRows.map(function(img, i) {
+  var rows = imageEditVisibleRows();
+  if (!rows.length) {
+    list.innerHTML = "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + esc(t("img_none")) + "</div></div>";
+    return;
+  }
+  list.innerHTML = rows.map(function(item) {
+    var img = item.img;
+    var i = item.index;
     var kind = normalizeProductKind(img.product_kind || "rebuilt");
     return "<div class='image-edit-item'>" +
       "<div class='image-edit-preview'>" + thumbImgHtml(img.image_url, { width: 160, height: 160, resize: "contain" }) + "</div>" +
@@ -19742,9 +19843,21 @@ function renderImageEditDialog() {
       "</div>" +
       "</div>";
   }).join("");
-  imageEditRows.forEach(function(img, i) {
-    var select = document.getElementById("image-edit-kind-" + i);
+  rows.forEach(function(item) {
+    var select = document.getElementById("image-edit-kind-" + item.index);
     if (select) select.addEventListener("change", function() { setProductKindSelectClass(select); });
+  });
+}
+
+function applyImageEditBulkKind() {
+  var bulkSelect = document.getElementById("image-edit-bulk-kind");
+  var nextKind = normalizeProductKind((bulkSelect && bulkSelect.value) || "rebuilt");
+  imageEditVisibleRows().forEach(function(item) {
+    var select = document.getElementById("image-edit-kind-" + item.index);
+    if (select) {
+      select.value = nextKind;
+      setProductKindSelectClass(select);
+    }
   });
 }
 
