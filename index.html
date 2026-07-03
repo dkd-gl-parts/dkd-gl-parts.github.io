@@ -3880,6 +3880,10 @@ var TRANSLATIONS = {
     ec_category_target_added: "{total} 件を処理しました（追加 {added} 件 / 更新 {updated} 件）",
     ec_category_target_failed: "品番マスタ検索に失敗しました: {error}",
     ec_upload_targets_added: "{total} 件をアップロードしました（追加 {added} 件 / 更新 {updated} 件）",
+    ec_upload_targets_saved: "{total} 件をアップロードし保存しました（追加 {added} 件 / 更新 {updated} 件）",
+    ec_upload_processing: "品番リストを読み込み中...",
+    ec_upload_no_targets: "アップロードできる品番がありません。ひな型CSVの「検索キーワード」または「メーカー品番」に品番を入れてください。",
+    ec_upload_failed: "品番リストアップロードに失敗しました: {error}",
     ec_research_saved_targets: "保存済み対象",
     ec_research_enabled_targets: "有効な調査対象",
     ec_research_categories: "対象カテゴリ",
@@ -4741,6 +4745,10 @@ var TRANSLATIONS = {
     ec_category_target_added: "Processed {total} items (added {added} / updated {updated})",
     ec_category_target_failed: "Failed to search the part master: {error}",
     ec_upload_targets_added: "Uploaded {total} items (added {added} / updated {updated})",
+    ec_upload_targets_saved: "Uploaded and saved {total} items (added {added} / updated {updated})",
+    ec_upload_processing: "Loading part number list...",
+    ec_upload_no_targets: "No part numbers could be uploaded. Enter part numbers in the template CSV Search keyword or Manufacturer part number column.",
+    ec_upload_failed: "Failed to upload the part number list: {error}",
     ec_research_saved_targets: "Saved Targets",
     ec_research_enabled_targets: "Enabled research targets",
     ec_research_categories: "Target Categories",
@@ -5595,6 +5603,10 @@ var TRANSLATIONS = {
     ec_category_target_added: "已处理 {total} 件（追加 {added} 件 / 更新 {updated} 件）",
     ec_category_target_failed: "品号主数据搜索失败: {error}",
     ec_upload_targets_added: "已上传 {total} 件（追加 {added} 件 / 更新 {updated} 件）",
+    ec_upload_targets_saved: "已上传并保存 {total} 件（追加 {added} 件 / 更新 {updated} 件）",
+    ec_upload_processing: "正在读取品号列表...",
+    ec_upload_no_targets: "没有可上传的品号。请在CSV模板的搜索关键词或厂家品号栏输入品号。",
+    ec_upload_failed: "品号列表上传失败: {error}",
     ec_research_saved_targets: "已保存对象",
     ec_research_enabled_targets: "有效调查对象",
     ec_research_categories: "目标类别",
@@ -5797,7 +5809,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.367";
+var APP_VERSION       = "v1.1.368";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -9620,13 +9632,13 @@ async function saveEcMallTargets(options) {
 function parseUploadedPartList(text) {
   var lines = String(text || "").split(/\r?\n/).map(function(x) { return x.trim(); }).filter(Boolean);
   if (!lines.length) return [];
-  var first = lines[0].split(/\t|,/).map(function(x) { return x.trim().toLowerCase(); });
+  var first = parseEcMallDelimitedLine(lines[0]).map(normalizeEcMallUploadHeader);
   var headerNames = ["dkd_shohin_id","shohin_cd","product_id","商品id","商品コード","manufacturer_part_number","メーカー品番","genuine_part_number","純正品番","search_number","keyword","検索キーワード","検索品番","品番","category","カテゴリ","対象カテゴリ"];
   var hasHeader = first.some(function(h) { return headerNames.indexOf(h) >= 0; });
   var selectedCategory = (document.getElementById("rakuten-target-category") || {}).value || "";
   var targets = [];
   for (var i=(hasHeader ? 1 : 0); i<lines.length; i++) {
-    var cols = lines[i].split(/\t|,/).map(function(x) { return x.trim().replace(/^\"|\"$/g, ""); });
+    var cols = parseEcMallDelimitedLine(lines[i]);
     var row = {};
     if (hasHeader) first.forEach(function(h, idx) { row[h] = cols[idx] || ""; });
     else row.keyword = cols[0] || "";
@@ -9675,6 +9687,35 @@ function ecMallCsvCell(value) {
   var text = String(value == null ? "" : value);
   if (/[",\r\n]/.test(text)) return '"' + text.replace(/"/g, '""') + '"';
   return text;
+}
+
+function parseEcMallDelimitedLine(line) {
+  var cols = [];
+  var cur = "";
+  var inQuote = false;
+  var text = String(line == null ? "" : line);
+  for (var i=0; i<text.length; i++) {
+    var ch = text.charAt(i);
+    if (ch === '"') {
+      if (inQuote && text.charAt(i + 1) === '"') {
+        cur += '"';
+        i++;
+      } else {
+        inQuote = !inQuote;
+      }
+    } else if (!inQuote && (ch === "," || ch === "\t")) {
+      cols.push(cur);
+      cur = "";
+    } else {
+      cur += ch;
+    }
+  }
+  cols.push(cur);
+  return cols.map(function(x) { return String(x || "").replace(/^\uFEFF/, "").trim(); });
+}
+
+function normalizeEcMallUploadHeader(value) {
+  return String(value || "").replace(/^\uFEFF/, "").trim().replace(/^"|"$/g, "").toLowerCase();
 }
 
 function downloadEcMallUploadTemplate() {
@@ -9726,17 +9767,35 @@ async function resolveRakutenTarget(target) {
 }
 
 async function handleRakutenUploadFile() {
-  var file = document.getElementById("rakuten-upload-file").files[0];
+  var input = document.getElementById("rakuten-upload-file");
+  var file = input && input.files ? input.files[0] : null;
   if (!file) return;
-  var text = await file.text();
-  var parsed = parseUploadedPartList(text);
-  var resolved = [];
-  for (var i=0; i<parsed.length; i++) {
-    resolved.push(await resolveRakutenTarget(parsed[i]));
+  try {
+    setRakutenStatus(t("ec_upload_processing"), false);
+    var text = await file.text();
+    var parsed = parseUploadedPartList(text);
+    if (!parsed.length) {
+      setRakutenStatus(t("ec_upload_no_targets"), true);
+      return;
+    }
+    var resolved = [];
+    for (var i=0; i<parsed.length; i++) {
+      resolved.push(await resolveRakutenTarget(parsed[i]));
+    }
+    var merged = mergeEcMallTargets(resolved);
+    if (!merged.total) {
+      setRakutenStatus(t("ec_upload_no_targets"), true);
+      return;
+    }
+    renderRakutenTargets();
+    var saved = await saveEcMallTargets();
+    if (!saved) return;
+    setRakutenStatus(tf("ec_upload_targets_saved", merged), false);
+  } catch(e) {
+    setRakutenStatus(tf("ec_upload_failed", { error: e.message || e }), true);
+  } finally {
+    if (input) input.value = "";
   }
-  var merged = mergeEcMallTargets(resolved);
-  renderRakutenTargets();
-  setRakutenStatus(tf("ec_upload_targets_added", merged), false);
 }
 
 function chunkArray(arr, size) {
