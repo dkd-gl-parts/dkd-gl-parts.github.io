@@ -210,14 +210,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .kikan-table tr.kikan-current { background: #f0f6ff; }
 .kikan-table tr.kikan-other { cursor: pointer; }
 .kikan-table tr.kikan-other:hover { background: #f8f8f8; }
+.kikan-table th:nth-child(3),
+.kikan-table td:nth-child(3) { width: 86px; }
+.kikan-table th:nth-child(4),
+.kikan-table td:nth-child(4) { width: 58px; }
 .kikan-pn    { font-family: monospace; font-size: 12px; color: #444; }
 .kikan-mfr   { font-size: 11px; color: #aaa; }
 .kikan-badge { background: #e8f4ff; color: #1a6fd4; border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 600; }
-.kikan-stock-list { display: grid; gap: 4px; min-width: 118px; }
-.kikan-stock-pill { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; border: 1px solid transparent; border-radius: 5px; padding: 3px 6px; font-size: 11px; font-weight: 700; line-height: 1.25; }
+.kikan-stock-list { display: grid; gap: 3px; min-width: 72px; }
+.kikan-stock-pill { display: grid; grid-template-columns: minmax(0, 1fr) 2.4em; align-items: center; gap: 4px; border: 1px solid transparent; border-radius: 5px; padding: 3px 5px; font-size: 10px; font-weight: 700; line-height: 1.2; }
+.kikan-stock-pill span { min-width: 0; overflow: hidden; white-space: nowrap; }
 .kikan-stock-pill.rebuilt { background: #edf7ed; color: #1f7a35; border-color: #cbe9cf; }
 .kikan-stock-pill.aftermarket_new { background: #eaf2ff; color: #1a5fb4; border-color: #c9ddff; }
-.kikan-stock-pill b { color: #1a1a2e; font-size: 12px; text-align: right; }
+.kikan-stock-pill b { color: #1a1a2e; font-size: 11px; text-align: right; }
 .kikan-action { text-align: right; white-space: nowrap; }
 .kikan-search-btn { padding: 4px 8px; font-size: 11px; }
 .component-section-title { font-size: 14px; font-weight: 600; margin: 16px 0 8px; display: flex; align-items: center; gap: 6px; }
@@ -575,7 +580,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .detail-customer-value { color: #1a1a2e; font-size: 13px; font-weight: 800; word-break: break-word; }
 .detail-customer-value.price { color: #1a8c3e; font-size: 16px; }
 .detail-customer-note { color: #8a94a6; font-size: 11px; line-height: 1.45; margin-top: 8px; }
-.detail-lower-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, .9fr); gap: 12px; align-items: stretch; margin-top: 10px; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.detail-lower-grid { display: grid; grid-template-columns: minmax(0, .95fr) minmax(360px, 1.35fr); gap: 12px; align-items: stretch; margin-top: 10px; flex: 1 1 auto; min-height: 0; overflow: hidden; }
 .detail-lower-grid.detail-lower-count-1 { grid-template-columns: minmax(0, 1fr); }
 .detail-lower-panel { min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 .detail-lower-panel #kikan-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; }
@@ -5693,7 +5698,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.360";
+var APP_VERSION       = "v1.1.361";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -14268,7 +14273,6 @@ function bindProductKindPanelActions() {
       currentImages = [];
       renderImagesLoading();
       loadImages(null, detailSecondaryRequestSeq);
-      if (canSeeSalesPrice()) loadSalesPriceSummaryForCurrent();
       if (canSeeSalesPrice()) loadDetailCustomerInfoForCurrent(detailSecondaryRequestSeq);
     };
   }
@@ -15848,14 +15852,11 @@ function renderPanelStatic() {
     toolHtml += "<button class='btn-sm-edit detail-toolbar-edit' id='btn-edit-current-product'>&#9998; " + t("btn_edit_part") + "</button>";
   }
   toolHtml += "</div>";
-  var salesPriceBlockHtml = canSeeSalesPrice()
-    ? "<div class='sales-price-summary-block'><div class='sales-price-summary-head'><div class='detail-block-title'>" + t("sales_price_section") + "</div></div><div id='sales-price-summary-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div></div>"
-    : "";
   var ecMallPriceBlockHtml = canViewPriceResearchHistory()
     ? "<div class='ec-mall-summary-block'><div class='sales-price-summary-head'><div class='detail-block-title'>" + t("ec_research_detail_title") + "</div></div><div id='ec-mall-price-summary-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div></div>"
     : "";
   var productKindBlockHtml = "<div class='product-kind-panel'><div class='detail-block-title'>" + t("product_kind_section") + "</div><div id='product-kind-wrap'>" + renderProductKindPanelHtml(productKindSummaryForProduct(p)) + "</div></div>";
-  var kindPriceBlocks = [productKindBlockHtml, salesPriceBlockHtml, ecMallPriceBlockHtml].filter(Boolean);
+  var kindPriceBlocks = [productKindBlockHtml, ecMallPriceBlockHtml].filter(Boolean);
   var kindPriceRowHtml = "<div class='detail-kind-price-row" + (kindPriceBlocks.length > 1 ? "" : " single") + "'>" + kindPriceBlocks.join("") + "</div>";
   var kikanBlockHtml = customerCanShowCompatibleParts()
     ? "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
@@ -15909,7 +15910,6 @@ function renderPanelStatic() {
   loadCatalogVehicleSummary(document.getElementById("panel-body"), p);
   loadProductSpecsForCurrent();
   loadProductVariantsForCurrent(detailSeq);
-  if (canSeeSalesPrice()) loadSalesPriceSummaryForCurrent();
   if (canViewPriceResearchHistory()) loadEcMallPriceSummaryForCurrent(detailSeq);
   if (canSeeSalesPrice()) loadDetailCustomerInfoForCurrent(detailSeq);
   if (customerCanShowCompatibleParts()) loadKikanForCurrentProduct(detailSeq);
@@ -19823,7 +19823,6 @@ async function saveSalesPricing() {
       changed_by: currentUser ? currentUser.id : null,
       change_note: payload.basis_note
     });
-    await loadSalesPriceSummaryForCurrent();
     if (productKind === "rebuilt") salesPricingMgmtPriceMap[String(dkdId)] = ins.data;
     renderSalesPricingMgmt();
     if (productKindStockRows.length) {
