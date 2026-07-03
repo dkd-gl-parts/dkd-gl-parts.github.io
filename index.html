@@ -170,6 +170,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .rakuten-target-row.header { background: #f5f7fa; color: #555; font-weight: 700; position: sticky; top: 0; z-index: 1; }
 .rakuten-target-num { font-family: monospace; color: #1a1a2e; word-break: break-all; }
 .rakuten-target-muted { color: #aaa; font-size: 11px; }
+.ec-category-target-card { max-width: 720px; }
+.ec-category-target-summary { border: 1px solid #e7edf6; border-radius: 8px; background: #fbfdff; padding: 10px 12px; color: #455468; font-size: 12px; line-height: 1.6; margin-top: 6px; }
+.ec-category-target-summary strong { color: #1a1a2e; font-weight: 800; }
+.ec-category-target-summary .muted { color: #8a94a6; }
 .rakuten-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: 12px; }
 .rakuten-stat { background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; padding: 10px 12px; }
 .rakuten-stat-label { font-size: 11px; color: #888; margin-bottom: 4px; }
@@ -2813,6 +2817,34 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   </div>
 </div>
 
+<div class="form-overlay" id="ec-category-target-overlay">
+  <div class="form-card ec-category-target-card">
+    <h3 data-i18n="ec_category_target_modal_title">カテゴリ別品番一覧を作成</h3>
+    <div class="form-help" data-i18n="ec_category_target_modal_help">選択したカテゴリの品番を現在の調査対象リストへ追加します。</div>
+    <div class="form-grid">
+      <div class="form-row">
+        <label class="form-label" data-i18n="ec_research_target_category">対象カテゴリ</label>
+        <select class="form-select" id="ec-category-target-category"></select>
+      </div>
+      <div class="form-row">
+        <label class="form-label" data-i18n="rakuten_master_limit">品番マスタ読込件数</label>
+        <select class="form-select" id="ec-category-target-limit">
+          <option value="50">50</option>
+          <option value="100">100</option>
+          <option value="200">200</option>
+          <option value="all">全件</option>
+        </select>
+      </div>
+    </div>
+    <div class="ec-category-target-summary" id="ec-category-target-summary"></div>
+    <div class="form-footer">
+      <button class="btn-cancel" id="btn-ec-category-target-cancel" type="button" data-i18n="btn_cancel">取消</button>
+      <button class="btn-primary" id="btn-ec-category-target-create" type="button" data-i18n="ec_category_target_add">調査対象リストへ追加</button>
+    </div>
+    <div class="reg-error" id="ec-category-target-error"></div>
+  </div>
+</div>
+
 <!-- =============================================
    ECモール価格調査 旧一括画面
 ============================================= -->
@@ -3734,6 +3766,16 @@ var TRANSLATIONS = {
     ec_research_target_conditions: "調査条件",
     ec_research_target_category: "対象カテゴリ",
     ec_build_category_targets: "カテゴリ別品番一覧を作成",
+    ec_category_target_modal_title: "カテゴリ別品番一覧を作成",
+    ec_category_target_modal_help: "選択したカテゴリの品番を現在の調査対象リストへ追加します。",
+    ec_category_target_add: "調査対象リストへ追加",
+    ec_category_target_all: "全件",
+    ec_category_target_summary: "{category} / {limit} 件を現在の調査対象リストへ追加します",
+    ec_category_target_summary_all: "{category} / 全件を現在の調査対象リストへ追加します",
+    ec_category_target_save_note: "追加後に「調査対象を保存」すると定期調査に使用されます。",
+    ec_category_target_added: "{total} 件を処理しました（追加 {added} 件 / 更新 {updated} 件）",
+    ec_category_target_failed: "カテゴリ別品番一覧の作成に失敗しました: {error}",
+    ec_upload_targets_added: "{total} 件をアップロードしました（追加 {added} 件 / 更新 {updated} 件）",
     ec_research_saved_targets: "保存済み対象",
     ec_research_enabled_targets: "有効な調査対象",
     ec_research_categories: "対象カテゴリ",
@@ -4559,6 +4601,16 @@ var TRANSLATIONS = {
     ec_research_target_conditions: "Research Conditions",
     ec_research_target_category: "Target Category",
     ec_build_category_targets: "Build Category Target List",
+    ec_category_target_modal_title: "Build Category Target List",
+    ec_category_target_modal_help: "Add part numbers from the selected category to the current survey target list.",
+    ec_category_target_add: "Add to Target List",
+    ec_category_target_all: "All",
+    ec_category_target_summary: "{category} / {limit} items will be added to the current survey target list",
+    ec_category_target_summary_all: "{category} / all items will be added to the current survey target list",
+    ec_category_target_save_note: "After adding, save the target list to use it for scheduled research.",
+    ec_category_target_added: "Processed {total} items (added {added} / updated {updated})",
+    ec_category_target_failed: "Failed to build the category target list: {error}",
+    ec_upload_targets_added: "Uploaded {total} items (added {added} / updated {updated})",
     ec_research_saved_targets: "Saved Targets",
     ec_research_enabled_targets: "Enabled research targets",
     ec_research_categories: "Target Categories",
@@ -5377,6 +5429,16 @@ var TRANSLATIONS = {
     ec_research_target_conditions: "调查条件",
     ec_research_target_category: "目标类别",
     ec_build_category_targets: "创建类别品号列表",
+    ec_category_target_modal_title: "创建类别品号列表",
+    ec_category_target_modal_help: "将所选类别的品号添加到当前调查对象列表。",
+    ec_category_target_add: "添加到调查对象列表",
+    ec_category_target_all: "全部",
+    ec_category_target_summary: "{category} / {limit} 件将添加到当前调查对象列表",
+    ec_category_target_summary_all: "{category} / 全部将添加到当前调查对象列表",
+    ec_category_target_save_note: "追加后保存调查对象列表，即可用于定期调查。",
+    ec_category_target_added: "已处理 {total} 件（追加 {added} 件 / 更新 {updated} 件）",
+    ec_category_target_failed: "创建类别品号列表失败: {error}",
+    ec_upload_targets_added: "已上传 {total} 件（追加 {added} 件 / 更新 {updated} 件）",
     ec_research_saved_targets: "已保存对象",
     ec_research_enabled_targets: "有效调查对象",
     ec_research_categories: "目标类别",
@@ -5579,7 +5641,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.358";
+var APP_VERSION       = "v1.1.359";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -8680,14 +8742,80 @@ async function populateRakutenTargetCategoryOptions() {
     }
   }
   var current = select.value || "";
+  select.innerHTML = ecCategoryTargetCategoryOptionsHtml(current);
+  select.value = current;
+}
+
+function ecCategoryTargetCategoryOptionsHtml(current) {
   var html = "<option value=''>" + esc(t("filter_all")) + "</option>";
   (categoryOptions || []).forEach(function(cat) {
     var code = cat.category_code || cat.category || "";
     if (!code) return;
-    html += "<option value='" + esc(code) + "'>" + esc(categoryOptionLabel(cat)) + "</option>";
+    var selected = current && current === code ? " selected" : "";
+    html += "<option value='" + esc(code) + "'" + selected + ">" + esc(categoryOptionLabel(cat)) + "</option>";
   });
-  select.innerHTML = html;
-  select.value = current;
+  return html;
+}
+
+function ecCategoryTargetLimitLabel(value) {
+  return value === "all" ? t("ec_category_target_all") : String(parseInt(value, 10) || 100);
+}
+
+function updateEcCategoryTargetBuilderSummary() {
+  var catEl = document.getElementById("ec-category-target-category");
+  var limitEl = document.getElementById("ec-category-target-limit");
+  var summary = document.getElementById("ec-category-target-summary");
+  if (!catEl || !limitEl || !summary) return;
+  var categoryValue = catEl.value || "";
+  var categoryText = categoryValue ? (catEl.options[catEl.selectedIndex] ? catEl.options[catEl.selectedIndex].text : tCat(categoryValue)) : t("filter_all");
+  var limitValue = limitEl.value || "100";
+  var mainText = limitValue === "all"
+    ? tf("ec_category_target_summary_all", { category: categoryText })
+    : tf("ec_category_target_summary", { category: categoryText, limit: ecCategoryTargetLimitLabel(limitValue) });
+  summary.innerHTML = "<strong>" + esc(mainText) + "</strong><div class='muted'>" + esc(t("ec_category_target_save_note")) + "</div>";
+}
+
+async function openEcCategoryTargetBuilder() {
+  await populateRakutenTargetCategoryOptions();
+  var mainCategory = (document.getElementById("rakuten-target-category") || {}).value || "";
+  var mainLimit = (document.getElementById("rakuten-master-limit") || {}).value || "100";
+  var catEl = document.getElementById("ec-category-target-category");
+  var limitEl = document.getElementById("ec-category-target-limit");
+  var errorEl = document.getElementById("ec-category-target-error");
+  if (errorEl) errorEl.textContent = "";
+  if (catEl) {
+    catEl.innerHTML = ecCategoryTargetCategoryOptionsHtml(mainCategory);
+    catEl.value = mainCategory;
+  }
+  if (limitEl) limitEl.value = mainLimit;
+  updateEcCategoryTargetBuilderSummary();
+  var overlay = document.getElementById("ec-category-target-overlay");
+  if (overlay) overlay.classList.add("show");
+}
+
+function closeEcCategoryTargetBuilder() {
+  var overlay = document.getElementById("ec-category-target-overlay");
+  if (overlay) overlay.classList.remove("show");
+}
+
+async function confirmEcCategoryTargetBuilder() {
+  var catEl = document.getElementById("ec-category-target-category");
+  var limitEl = document.getElementById("ec-category-target-limit");
+  var mainCat = document.getElementById("rakuten-target-category");
+  var mainLimit = document.getElementById("rakuten-master-limit");
+  if (mainCat && catEl) mainCat.value = catEl.value || "";
+  if (mainLimit && limitEl) mainLimit.value = limitEl.value || "100";
+  var button = document.getElementById("btn-ec-category-target-create");
+  if (button) button.disabled = true;
+  try {
+    await loadRakutenTargetsFromMaster({
+      categoryElementId: "ec-category-target-category",
+      limitElementId: "ec-category-target-limit"
+    });
+    closeEcCategoryTargetBuilder();
+  } finally {
+    if (button) button.disabled = false;
+  }
 }
 
 function ecResearchRunStatusLabel(status) {
@@ -8775,10 +8903,7 @@ function renderRakutenTargets() {
   wrap.innerHTML = html;
 }
 
-async function loadRakutenTargetsFromMaster() {
-  var limitValue = document.getElementById("rakuten-master-limit").value;
-  var categoryValue = (document.getElementById("rakuten-target-category") || {}).value || "";
-  var status = document.getElementById("rakuten-target-status");
+async function fetchEcMallTargetsFromMaster(categoryValue, limitValue, status) {
   if (status) status.textContent = t("rakuten_loading_master");
   var rows = [];
   if (categoryValue) {
@@ -8809,8 +8934,33 @@ async function loadRakutenTargetsFromMaster() {
     if (r.error) throw new Error(r.error.message);
     rows = r.data || [];
   }
-  rakutenTargets = rows.map(function(p) { return rakutenTargetFromPart(p, "master"); }).filter(function(x) { return x.search_number; });
+  return rows;
+}
+
+function mergeEcMallTargets(targets) {
+  var result = { total: 0, added: 0, updated: 0 };
+  (targets || []).forEach(function(target) {
+    if (!target || !target.search_number) return;
+    result.total++;
+    if (mergeEcMallTarget(target)) result.added++;
+    else result.updated++;
+  });
+  return result;
+}
+
+async function loadRakutenTargetsFromMaster(options) {
+  options = options || {};
+  var limitEl = document.getElementById(options.limitElementId || "rakuten-master-limit");
+  var categoryEl = document.getElementById(options.categoryElementId || "rakuten-target-category");
+  var limitValue = (limitEl && limitEl.value) || "100";
+  var categoryValue = (categoryEl && categoryEl.value) || "";
+  var status = document.getElementById("rakuten-target-status");
+  var rows = await fetchEcMallTargetsFromMaster(categoryValue, limitValue, status);
+  var targets = rows.map(function(p) { return rakutenTargetFromPart(p, "master"); }).filter(function(x) { return x.search_number; });
+  var merged = mergeEcMallTargets(targets);
   renderRakutenTargets();
+  setRakutenStatus(tf("ec_category_target_added", merged), false);
+  return merged;
 }
 
 function ecMallTargetSameKey(a, b) {
@@ -9093,8 +9243,9 @@ async function handleRakutenUploadFile() {
   for (var i=0; i<parsed.length; i++) {
     resolved.push(await resolveRakutenTarget(parsed[i]));
   }
-  rakutenTargets = resolved;
+  var merged = mergeEcMallTargets(resolved);
   renderRakutenTargets();
+  setRakutenStatus(tf("ec_upload_targets_added", merged), false);
 }
 
 function chunkArray(arr, size) {
@@ -22427,10 +22578,21 @@ document.getElementById("btn-ec-load-saved-targets").addEventListener("click", f
   });
 });
 document.getElementById("btn-rakuten-load-master").addEventListener("click", function(){
-  loadRakutenTargetsFromMaster().catch(function(e) {
-    setRakutenStatus("品番マスタの読み込みに失敗しました: " + (e.message || e), true);
+  openEcCategoryTargetBuilder().catch(function(e) {
+    setRakutenStatus(tf("ec_category_target_failed", { error: e.message || e }), true);
   });
 });
+document.getElementById("btn-ec-category-target-cancel").addEventListener("click", closeEcCategoryTargetBuilder);
+document.getElementById("btn-ec-category-target-create").addEventListener("click", function(){
+  var errorEl = document.getElementById("ec-category-target-error");
+  if (errorEl) errorEl.textContent = "";
+  confirmEcCategoryTargetBuilder().catch(function(e) {
+    if (errorEl) errorEl.textContent = e.message || e;
+    setRakutenStatus(tf("ec_category_target_failed", { error: e.message || e }), true);
+  });
+});
+document.getElementById("ec-category-target-category").addEventListener("change", updateEcCategoryTargetBuilderSummary);
+document.getElementById("ec-category-target-limit").addEventListener("change", updateEcCategoryTargetBuilderSummary);
 document.getElementById("btn-ec-save-targets").addEventListener("click", function(){
   saveEcMallTargets().catch(function(e) {
     setRakutenStatus("調査対象の保存に失敗しました: " + (e.message || e), true);
