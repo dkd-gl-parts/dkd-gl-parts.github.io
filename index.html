@@ -5827,7 +5827,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.372";
+var APP_VERSION       = "v1.1.373";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -9479,7 +9479,7 @@ async function loadEcMallResearchStatus(options) {
   if (wrap && !options.silent) wrap.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
   try {
     var targetsR = await sb.from("ec_price_research_targets")
-      .select("id,category")
+      .select("id,category,last_run_at,last_status")
       .eq("enabled", true)
       .limit(5000);
     if (targetsR.error) throw targetsR.error;
@@ -9494,11 +9494,24 @@ async function loadEcMallResearchStatus(options) {
       if (cat) categoryMap[cat] = true;
     });
     var categoryLabels = Object.keys(categoryMap).sort().map(function(cat) { return tCat(cat); });
+    var latestRun = (runR.data || [])[0] || null;
+    if (latestRun && latestRun.status === "running" && latestRun.started_at) {
+      var startedAtMs = Date.parse(latestRun.started_at);
+      var runTargetRows = (targetsR.data || []).filter(function(row) {
+        var lastRunMs = Date.parse(row.last_run_at || "");
+        return Number.isFinite(lastRunMs) && Number.isFinite(startedAtMs) && lastRunMs >= startedAtMs - 1000;
+      });
+      latestRun = Object.assign({}, latestRun, {
+        success_count: runTargetRows.filter(function(row) { return row.last_status === "completed"; }).length,
+        failed_count: runTargetRows.filter(function(row) { return row.last_status === "failed"; }).length,
+        skipped_count: runTargetRows.filter(function(row) { return row.last_status === "skipped"; }).length
+      });
+    }
     ecResearchLatestStatus = {
       targetCount: (targetsR.data || []).length,
       categoryCount: categoryLabels.length,
       categoryLabels: categoryLabels,
-      latestRun: (runR.data || [])[0] || null
+      latestRun: latestRun
     };
     if (!ecResearchIsRunning(ecResearchLatestStatus) && !ecResearchIsStarting()) {
       ecResearchManualRunStarting = false;
