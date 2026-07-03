@@ -5827,7 +5827,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.375";
+var APP_VERSION       = "v1.1.376";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -8780,6 +8780,12 @@ function ecMallTargetKey(target) {
   return "search:" + rakutenPartKey(target.search_number || "");
 }
 
+function ecMallDkdShohinIdValue(target) {
+  var raw = target && target.dkd_shohin_id != null ? String(target.dkd_shohin_id).trim() : "";
+  if (!raw || !/^\d+$/.test(raw)) return null;
+  return parseInt(raw, 10);
+}
+
 function ecMallTargetPayload(target) {
   var providerKeys = target.provider_keys && target.provider_keys.length ? target.provider_keys : getEcMallSelectedProviders();
   var sellerIds = target.seller_ids && target.seller_ids.length ? target.seller_ids : getEcMallSellerIds();
@@ -8787,7 +8793,7 @@ function ecMallTargetPayload(target) {
   return {
     target_key: target.target_key || ecMallTargetKey(target),
     part_id: target.part_id || null,
-    dkd_shohin_id: target.dkd_shohin_id || null,
+    dkd_shohin_id: ecMallDkdShohinIdValue(target),
     shohin_cd: target.shohin_cd ? String(target.shohin_cd) : null,
     manufacturer: target.manufacturer || null,
     category: target.category || null,
@@ -8813,7 +8819,7 @@ function ecMallTargetFromDb(row) {
     id: row.id,
     target_key: row.target_key,
     part_id: row.part_id || null,
-    dkd_shohin_id: row.dkd_shohin_id || row.shohin_cd || null,
+    dkd_shohin_id: row.dkd_shohin_id || null,
     shohin_cd: row.shohin_cd || null,
     genuine_part_number: row.genuine_part_number || "",
     genuine_part_number_2: row.genuine_part_number_2 || "",
@@ -8829,6 +8835,41 @@ function ecMallTargetFromDb(row) {
     include_used: !!row.include_used,
     priority: row.priority || 100
   };
+}
+
+async function normalizeEcMallTargetsForSave(targets) {
+  targets = (targets || []).filter(Boolean);
+  var ids = [];
+  var seen = {};
+  targets.forEach(function(target) {
+    var id = ecMallDkdShohinIdValue(target);
+    if (!id || seen[id]) return;
+    seen[id] = true;
+    ids.push(id);
+  });
+  if (!ids.length) return targets;
+  var valid = {};
+  for (var i=0; i<ids.length; i+=200) {
+    var chunk = ids.slice(i, i + 200);
+    var r = await sb.from("core_products")
+      .select("dkd_shohin_id")
+      .in("dkd_shohin_id", chunk);
+    if (r.error) throw new Error(r.error.message);
+    (r.data || []).forEach(function(row) {
+      if (row.dkd_shohin_id != null) valid[String(row.dkd_shohin_id)] = true;
+    });
+  }
+  targets.forEach(function(target) {
+    var id = ecMallDkdShohinIdValue(target);
+    if (!id || valid[String(id)]) return;
+    var oldKey = target.target_key || ecMallTargetKey(target);
+    target.invalid_dkd_shohin_id = id;
+    target.dkd_shohin_id = null;
+    if (!target.shohin_cd) target.shohin_cd = String(id);
+    if (!target.search_number) target.search_number = String(id);
+    if (oldKey === "dkd:" + id) target.target_key = ecMallTargetKey(target);
+  });
+  return targets;
 }
 
 function cleanPartNumberValue(value) {
@@ -8884,7 +8925,7 @@ function rakutenTargetFromPart(p, sourceType) {
   var genuine = cleanPartNumberValue(p.genuine_part_number);
   var target = {
     part_id: p.id || null,
-    dkd_shohin_id: p.dkd_shohin_id || p.shohin_cd || null,
+    dkd_shohin_id: p.dkd_shohin_id || null,
     shohin_cd: p.shohin_cd || null,
     genuine_part_number: genuine,
     genuine_part_number_2: cleanPartNumberValue(p.genuine_part_number_2),
@@ -9741,12 +9782,22 @@ async function saveEcMallTargets(options) {
   var sellerIds = getEcMallSellerIds();
   setEcMallSellerIds(sellerIds);
   var includeUsed = getEcMallIncludeUsed();
-  var payloads = rakutenTargets.filter(function(target) { return target.search_number; }).map(function(target, idx) {
+  await normalizeEcMallTargetsForSave(rakutenTargets);
+  var payloads = [];
+  var payloadByKey = {};
+  rakutenTargets.filter(function(target) { return target.search_number; }).forEach(function(target, idx) {
     target.provider_keys = providerKeys;
     target.seller_ids = sellerIds;
     target.include_used = includeUsed;
     target.priority = target.priority || (idx + 1) * 10;
-    return ecMallTargetPayload(target);
+    target.target_key = target.target_key || ecMallTargetKey(target);
+    var payload = ecMallTargetPayload(target);
+    if (payloadByKey[payload.target_key]) {
+      payloadByKey[payload.target_key] = Object.assign(payloadByKey[payload.target_key], payload);
+    } else {
+      payloadByKey[payload.target_key] = payload;
+      payloads.push(payload);
+    }
   });
   if (!payloads.length) { setRakutenStatus(t("rakuten_targets_empty"), true); return false; }
   var r = await sb.from("ec_price_research_targets")
@@ -9773,7 +9824,7 @@ function parseUploadedPartList(text) {
   var lines = String(text || "").split(/\r?\n/).map(function(x) { return x.trim(); }).filter(Boolean);
   if (!lines.length) return [];
   var first = parseEcMallDelimitedLine(lines[0]).map(normalizeEcMallUploadHeader);
-  var headerNames = ["dkd_shohin_id","shohin_cd","product_id","商品id","商品コード","manufacturer_part_number","メーカー品番","genuine_part_number","純正品番","search_number","keyword","検索キーワード","検索品番","品番","category","カテゴリ","対象カテゴリ"];
+  var headerNames = ["dkd_shohin_id","dkd商品id","dkd商品コード","shohin_cd","product_id","商品id","商品コード","manufacturer_part_number","メーカー品番","genuine_part_number","純正品番","search_number","keyword","検索キーワード","検索品番","品番","category","カテゴリ","対象カテゴリ"];
   var hasHeader = first.some(function(h) { return headerNames.indexOf(h) >= 0; });
   var selectedCategory = (document.getElementById("rakuten-target-category") || {}).value || "";
   var targets = [];
@@ -9782,15 +9833,17 @@ function parseUploadedPartList(text) {
     var row = {};
     if (hasHeader) first.forEach(function(h, idx) { row[h] = cols[idx] || ""; });
     else row.keyword = cols[0] || "";
-    var dkd = cleanPartNumberValue(row.dkd_shohin_id || row.shohin_cd || row.product_id || row["商品id"] || row["商品コード"] || "");
+    var dkd = cleanPartNumberValue(row.dkd_shohin_id || row["dkd商品id"] || row["dkd商品コード"] || "");
+    var productCode = cleanPartNumberValue(row.shohin_cd || row.product_id || row["商品id"] || row["商品コード"] || "");
     var mfr = cleanPartNumberValue(row.manufacturer_part_number || row["メーカー品番"] || "");
     var genuine = cleanPartNumberValue(row.genuine_part_number || row["純正品番"] || "");
-    var keyword = cleanPartNumberValue(row.search_number || row.keyword || row["検索キーワード"] || row["検索品番"] || row["品番"] || mfr || genuine || dkd);
+    var keyword = cleanPartNumberValue(row.search_number || row.keyword || row["検索キーワード"] || row["検索品番"] || row["品番"] || mfr || genuine || dkd || productCode);
     var category = ecMallCategoryFromUpload(row.category || row["カテゴリ"] || row["対象カテゴリ"] || "") || selectedCategory;
     if (!keyword) continue;
     var target = {
       part_id: null,
       dkd_shohin_id: dkd || null,
+      shohin_cd: productCode || null,
       genuine_part_number: genuine,
       manufacturer_part_number: mfr,
       manufacturer: "",
@@ -9860,7 +9913,7 @@ function normalizeEcMallUploadHeader(value) {
 
 function downloadEcMallUploadTemplate() {
   var rows = [
-    ["検索キーワード","メーカー品番","純正品番","商品ID","カテゴリ"]
+    ["検索キーワード","メーカー品番","純正品番","カテゴリ"]
   ];
   var csv = rows.map(function(row) {
     return row.map(ecMallCsvCell).join(",");
@@ -10464,6 +10517,7 @@ async function ensureEcMallTarget(target, keyword) {
   target.seller_ids = target.seller_ids && target.seller_ids.length ? target.seller_ids : getEcMallSellerIds();
   target.include_used = target.include_used == null ? getEcMallIncludeUsed() : !!target.include_used;
   target.target_key = target.target_key || ecMallTargetKey(target);
+  await normalizeEcMallTargetsForSave([target]);
   var payload = ecMallTargetPayload(target);
   if (!payload.search_number || !payload.target_key) return target;
   var r = await sb.from("ec_price_research_targets")
