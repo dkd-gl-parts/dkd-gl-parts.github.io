@@ -5698,7 +5698,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.362";
+var APP_VERSION       = "v1.1.363";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -7595,20 +7595,11 @@ async function loadProductionKikanForRow(row, seq) {
     return;
   }
   var partsList = r.data || [];
-  var categorySet = {};
-  partsList.forEach(function(p) {
-    var cat = p.category_code || p.category || "";
-    if (cat && cat !== "unclassified_assy" && cat !== "other_assy") categorySet[cat] = true;
-  });
-  if (Object.keys(categorySet).length > 1) {
-    renderProductionKikanPartsList([], wrap);
-    return;
-  }
   if (row.category_code || row.category) {
     var currentCategory = row.category_code || row.category;
     partsList = partsList.filter(function(p) {
-      var cat = p.category_code || p.category;
-      return cat === currentCategory || cat === "unclassified_assy" || cat === "other_assy";
+      var cat = p.category_code || p.category || "";
+      return !cat || cat === currentCategory || cat === "unclassified_assy" || cat === "other_assy";
     });
   }
   partsList = filterVisibleProducts(partsList).filter(function(p) {
@@ -14457,7 +14448,7 @@ function applyProductSearchCardFlags(rows, products) {
     var hasKikan = !!row.has_kikan_compatible;
     if (p) {
       p.has_sl_part = hasSl || !!p.has_sl_part;
-      p.has_kikan_compatible = hasKikan;
+      if (hasKikan) p.has_kikan_compatible = true;
       setProductImageCache(p, imageCount, thumbUrl);
       productSlCacheKeys(p).forEach(function(key) {
         slPresenceMap[key] = hasSl;
@@ -14465,8 +14456,10 @@ function applyProductSearchCardFlags(rows, products) {
       });
     }
     var kikanKey = p ? productKikanKey(p) : ("dkd:" + dkdKey);
-    kikanCompatibleMap[kikanKey] = hasKikan;
-    kikanCompatibleFlagCache[kikanKey] = hasKikan;
+    if (hasKikan) {
+      kikanCompatibleMap[kikanKey] = true;
+      kikanCompatibleFlagCache[kikanKey] = true;
+    }
   });
 }
 
@@ -15302,13 +15295,6 @@ async function fetchKikanCompatibleMap(products, isStale) {
       map[key] = true;
       kikanCompatibleFlagCache[key] = true;
     });
-    rows.forEach(function(p) {
-      var key = productKikanKey(p);
-      if (!Object.prototype.hasOwnProperty.call(kikanCompatibleFlagCache, key)) {
-        kikanCompatibleFlagCache[key] = !!map[key];
-      }
-    });
-    return map;
   }
   Object.keys(directMap).forEach(function(key) {
     map[key] = true;
@@ -15379,8 +15365,10 @@ async function fetchKikanRpcFlagMap(products) {
   }
   (r.data || []).forEach(function(row) {
     var key = "dkd:" + String(row.dkd_shohin_id || "");
-    kikanCompatibleFlagCache[key] = !!row.has_compatible;
-    if (row.has_compatible) map[key] = true;
+    if (row.has_compatible) {
+      kikanCompatibleFlagCache[key] = true;
+      map[key] = true;
+    }
   });
   return { ok: true, map: map };
 }
@@ -15443,7 +15431,8 @@ async function loadProductSearchAuxiliaryData(seq, products) {
     canSeeComponentInfo() ? fetchComponentUsageCountMap(lookupProducts) : Promise.resolve({}),
     canSeeCoreStockInfo() ? fetchCoreStockQtyMap(lookupProducts) : Promise.resolve({}),
     fetchProductVariantSummaryMap(lookupProducts),
-    canSeeComponentInfo() ? fetchProductionPartRegistrationCountMap(lookupProducts) : Promise.resolve({ total: {}, byKind: {} })
+    canSeeComponentInfo() ? fetchProductionPartRegistrationCountMap(lookupProducts) : Promise.resolve({ total: {}, byKind: {} }),
+    customerCanShowCompatibleParts() ? fetchKikanCompatibleMap(lookupProducts, isStale) : Promise.resolve({})
   ]);
   if (isStale()) return;
   componentUsageCountMap = fast[0] || {};
@@ -15451,6 +15440,10 @@ async function loadProductSearchAuxiliaryData(seq, products) {
   productVariantSummaryMap = fast[2] || {};
   var productionCounts = fast[3] || {};
   productionComponentKindCountMap = productionCounts.byKind || {};
+  var kikanFlags = fast[4] || {};
+  Object.keys(kikanFlags).forEach(function(key) {
+    if (kikanFlags[key]) kikanCompatibleMap[key] = true;
+  });
   Object.keys(productVariantSummaryMap).forEach(function(key) {
     productVariantSummaryCache[key] = productVariantSummaryMap[key];
   });
@@ -15458,6 +15451,9 @@ async function loadProductSearchAuxiliaryData(seq, products) {
     var key = String(p && (p.dkd_shohin_id || p.id || "") || "");
     if (key && Object.prototype.hasOwnProperty.call(componentUsageCountMap, key)) {
       p.component_count = componentUsageCountMap[key];
+    }
+    if (kikanFlags[productKikanKey(p)]) {
+      p.has_kikan_compatible = true;
     }
   });
   render();
@@ -15576,18 +15572,11 @@ async function hasDisplayableKikanCompatibleParts(product) {
   }
 
   var parts_list = r.data || [];
-  var categorySet = {};
-  parts_list.forEach(function(p) {
-    var cat = p.category_code || p.category || "";
-    if (cat && cat !== "unclassified_assy" && cat !== "other_assy") categorySet[cat] = true;
-  });
-  if (Object.keys(categorySet).length > 1) return false;
-
   if (product && (product.category_code || product.category)) {
     var currentCategory = product.category_code || product.category;
     parts_list = parts_list.filter(function(p) {
-      var cat = p.category_code || p.category;
-      return cat === currentCategory || cat === "unclassified_assy" || cat === "other_assy";
+      var cat = p.category_code || p.category || "";
+      return !cat || cat === currentCategory || cat === "unclassified_assy" || cat === "other_assy";
     });
   }
 
@@ -21060,21 +21049,11 @@ async function loadKikan(dkdShohinId, seq, productSnapshot) {
   }
 
   var parts_list = r.data || [];
-  var categorySet = {};
-  parts_list.forEach(function(p) {
-    var cat = p.category_code || p.category || "";
-    if (cat && cat !== "unclassified_assy" && cat !== "other_assy") categorySet[cat] = true;
-  });
-  if (Object.keys(categorySet).length > 1) {
-    wrap.innerHTML = "<div style='color:#bbb;font-size:12px;padding:8px 0'>" + t("kikan_none") + "</div>";
-    console.warn("kikan group hidden for review", { categories: Object.keys(categorySet) });
-    return;
-  }
   if (product && (product.category_code || product.category)) {
     var currentCategory = product.category_code || product.category;
     parts_list = parts_list.filter(function(p) {
-      var cat = p.category_code || p.category;
-      return cat === currentCategory || cat === "unclassified_assy" || cat === "other_assy";
+      var cat = p.category_code || p.category || "";
+      return !cat || cat === currentCategory || cat === "unclassified_assy" || cat === "other_assy";
     });
   }
 
