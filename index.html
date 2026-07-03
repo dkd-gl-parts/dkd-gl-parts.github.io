@@ -3785,7 +3785,7 @@ var TRANSLATIONS = {
     ec_targets_saved: "{n} 件の調査対象を保存しました",
     ec_single_target_label: "個別品番追加",
     ec_single_target_ph: "例: MD362184",
-    ec_add_single_target: "一覧に追加",
+    ec_add_single_target: "追加して保存",
     ec_single_target_required: "追加する品番またはキーワードを入力してください",
     ec_single_target_added: "{keyword} を調査対象一覧に追加しました",
     ec_single_target_updated: "既存の対象を更新しました",
@@ -3803,7 +3803,7 @@ var TRANSLATIONS = {
     ec_category_target_product_maker: "製造メーカー",
     ec_category_target_add: "選択品番を調査対象へ追加",
     ec_category_target_summary: "検索結果から品番を選択して調査対象リストへ追加します",
-    ec_category_target_save_note: "追加後に「調査対象を保存」すると定期調査に使用されます。",
+    ec_category_target_save_note: "追加すると自動保存され、定期調査に使用されます。",
     ec_category_target_search_hint: "検索条件を入力して品番マスタを検索してください",
     ec_category_target_result_count: "{n} 件見つかりました",
     ec_category_target_result_limit_note: "検索結果は最大 {n} 件まで表示します。多い場合は条件を追加してください。",
@@ -4629,7 +4629,7 @@ var TRANSLATIONS = {
     ec_targets_saved: "Saved {n} survey targets",
     ec_single_target_label: "Add Single Target",
     ec_single_target_ph: "Example: MD362184",
-    ec_add_single_target: "Add to List",
+    ec_add_single_target: "Add and Save",
     ec_single_target_required: "Enter a part number or keyword to add",
     ec_single_target_added: "Added {keyword} to the survey target list",
     ec_single_target_updated: "Updated existing target",
@@ -4647,7 +4647,7 @@ var TRANSLATIONS = {
     ec_category_target_product_maker: "Product Maker",
     ec_category_target_add: "Add Selected Parts",
     ec_category_target_summary: "Select part numbers from the search results and add them to the survey target list",
-    ec_category_target_save_note: "After adding, save the target list to use it for scheduled research.",
+    ec_category_target_save_note: "Targets are saved automatically when added and used for scheduled research.",
     ec_category_target_search_hint: "Enter search conditions to search the part master",
     ec_category_target_result_count: "Found {n} items",
     ec_category_target_result_limit_note: "Up to {n} search results are shown. Add conditions if there are too many.",
@@ -5466,7 +5466,7 @@ var TRANSLATIONS = {
     ec_targets_saved: "已保存 {n} 件调查对象",
     ec_single_target_label: "单个品号追加",
     ec_single_target_ph: "例: MD362184",
-    ec_add_single_target: "添加到列表",
+    ec_add_single_target: "添加并保存",
     ec_single_target_required: "请输入要追加的品号或关键词",
     ec_single_target_added: "已将 {keyword} 添加到调查对象列表",
     ec_single_target_updated: "已更新现有对象",
@@ -5484,7 +5484,7 @@ var TRANSLATIONS = {
     ec_category_target_product_maker: "制造厂家",
     ec_category_target_add: "添加所选品号",
     ec_category_target_summary: "从搜索结果中选择品号并添加到调查对象列表",
-    ec_category_target_save_note: "追加后保存调查对象列表，即可用于定期调查。",
+    ec_category_target_save_note: "添加后会自动保存，并用于定期调查。",
     ec_category_target_search_hint: "请输入搜索条件来搜索品号主数据",
     ec_category_target_result_count: "找到 {n} 件",
     ec_category_target_result_limit_note: "搜索结果最多显示 {n} 件。结果过多时请增加条件。",
@@ -5698,7 +5698,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.361";
+var APP_VERSION       = "v1.1.362";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -8983,6 +8983,7 @@ function addSelectedEcCategoryTargets() {
   if (status) status.textContent = tf("ec_category_target_added", merged);
   Array.prototype.slice.call(document.querySelectorAll(".ec-category-target-check:checked")).forEach(function(el) { el.checked = false; });
   updateEcCategoryTargetSelectionStatus();
+  return merged;
 }
 
 function setEcCategoryTargetResultSelection(value) {
@@ -9024,7 +9025,15 @@ function closeEcCategoryTargetBuilder() {
 }
 
 async function confirmEcCategoryTargetBuilder() {
-  addSelectedEcCategoryTargets();
+  var merged = addSelectedEcCategoryTargets();
+  if (!merged || !merged.total) return;
+  var saved = await saveEcMallTargets();
+  if (!saved) return;
+  var message = tf("ec_category_target_added", merged) + " / " + tf("ec_targets_saved", { n: rakutenTargets.length });
+  setRakutenStatus(message, false);
+  var status = document.getElementById("ec-category-target-search-status");
+  if (status) status.textContent = message;
+  closeEcCategoryTargetBuilder();
 }
 
 function ecResearchRunStatusLabel(status) {
@@ -9228,8 +9237,10 @@ async function addEcMallSingleTarget() {
   }
   var added = mergeEcMallTarget(target);
   renderRakutenTargets();
+  var saved = await saveEcMallTargets();
+  if (!saved) return;
   if (input) input.value = "";
-  setRakutenStatus(tf("ec_single_target_added", { keyword: target.search_number }) + (added ? "" : " / " + t("ec_single_target_updated")), false);
+  setRakutenStatus(tf("ec_single_target_added", { keyword: target.search_number }) + (added ? "" : " / " + t("ec_single_target_updated")) + " / " + tf("ec_targets_saved", { n: rakutenTargets.length }), false);
 }
 
 async function loadEcMallSavedTargets() {
@@ -9253,9 +9264,9 @@ async function loadEcMallSavedTargets() {
 }
 
 async function saveEcMallTargets() {
-  if (!rakutenTargets.length) { setRakutenStatus(t("rakuten_targets_empty"), true); return; }
+  if (!rakutenTargets.length) { setRakutenStatus(t("rakuten_targets_empty"), true); return false; }
   var providerKeys = getEcMallSelectedProviders();
-  if (!providerKeys.length) { setRakutenStatus(t("ec_mall_providers") + "を選択してください", true); return; }
+  if (!providerKeys.length) { setRakutenStatus(t("ec_mall_providers") + "を選択してください", true); return false; }
   var sellerIds = getEcMallSellerIds();
   setEcMallSellerIds(sellerIds);
   var includeUsed = getEcMallIncludeUsed();
@@ -9266,7 +9277,7 @@ async function saveEcMallTargets() {
     target.priority = target.priority || (idx + 1) * 10;
     return ecMallTargetPayload(target);
   });
-  if (!payloads.length) { setRakutenStatus(t("rakuten_targets_empty"), true); return; }
+  if (!payloads.length) { setRakutenStatus(t("rakuten_targets_empty"), true); return false; }
   var r = await sb.from("ec_price_research_targets")
     .upsert(payloads, { onConflict: "target_key" })
     .select("id,target_key");
@@ -9284,6 +9295,7 @@ async function saveEcMallTargets() {
   renderRakutenTargets();
   setRakutenStatus(tf("ec_targets_saved", { n: payloads.length }), false);
   loadEcMallResearchStatus();
+  return true;
 }
 
 function parseUploadedPartList(text) {
