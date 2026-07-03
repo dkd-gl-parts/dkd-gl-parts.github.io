@@ -4629,9 +4629,8 @@ var TRANSLATIONS = {
     sales_pricing_mgmt_desc: "Manage base prices and customer rank adjustments.",
     app_update_title: "A new D-CATS version is available",
     app_update_auto_message: "D-CATS will update from {current} to {latest}. It will wait while you are working.",
-    app_update_wait_message: "D-CATS can update from {current} to {latest}. Auto update is waiting while work or EC research is in progress.",
+    app_update_wait_message: "D-CATS can update from {current} to {latest}. Auto update is waiting while you are working.",
     app_update_reload_now: "Update now",
-    app_update_wait_busy: "EC mall price research is running. Update after the research finishes.",
     app_manual_refresh: "Update",
     rakuten_search_conditions: "Search Conditions",
     rakuten_keyword: "Search keyword",
@@ -4720,6 +4719,10 @@ var TRANSLATIONS = {
     ec_research_target_conditions: "Research Conditions",
     ec_research_target_category: "Target Category",
     ec_run_now: "Run Now",
+    ec_run_now_starting: "Starting price research...",
+    ec_run_now_started: "Started price research. It continues in the background after page updates.",
+    ec_run_now_already_running: "Price research is already running.",
+    ec_run_now_failed: "Failed to start price research: {error}",
     ec_run_now_loading_targets: "Loading saved targets...",
     ec_schedule_enabled: "Scheduled Research",
     ec_schedule_enabled_on: "Enabled",
@@ -4769,6 +4772,8 @@ var TRANSLATIONS = {
     ec_research_run_failed: "Failed",
     ec_research_run_running: "Running",
     ec_research_run_skipped: "Skipped",
+    ec_research_progress: "{done}/{total} done",
+    ec_research_running_note: "Price research is running in the background. It cannot be started again until it finishes.",
     ec_research_no_runs: "No run history",
     ec_research_status_failed: "Could not load research status",
     ec_research_detail_title: "EC Mall Market",
@@ -5488,9 +5493,8 @@ var TRANSLATIONS = {
     sales_pricing_mgmt_desc: "管理每个品番的基准价格和客户等级调整。",
     app_update_title: "D-CATS有新版本",
     app_update_auto_message: "将从 {current} 自动更新到 {latest}。操作中会等待。",
-    app_update_wait_message: "可从 {current} 更新到 {latest}。操作中或EC调查中会等待自动更新。",
+    app_update_wait_message: "可从 {current} 更新到 {latest}。操作中会等待自动更新。",
     app_update_reload_now: "立即更新",
-    app_update_wait_busy: "EC商城价格调查正在执行。请在调查完成后更新。",
     app_manual_refresh: "更新",
     rakuten_search_conditions: "搜索条件",
     rakuten_keyword: "搜索关键词",
@@ -5579,6 +5583,10 @@ var TRANSLATIONS = {
     ec_research_target_conditions: "调查条件",
     ec_research_target_category: "目标类别",
     ec_run_now: "立即调查",
+    ec_run_now_starting: "正在开始价格调查...",
+    ec_run_now_started: "价格调查已开始。页面更新后仍会在后台继续。",
+    ec_run_now_already_running: "价格调查已在执行中。",
+    ec_run_now_failed: "价格调查启动失败: {error}",
     ec_run_now_loading_targets: "正在读取已保存对象...",
     ec_schedule_enabled: "定期调查",
     ec_schedule_enabled_on: "启用",
@@ -5628,6 +5636,8 @@ var TRANSLATIONS = {
     ec_research_run_failed: "失败",
     ec_research_run_running: "执行中",
     ec_research_run_skipped: "无对象",
+    ec_research_progress: "已完成 {done}/{total} 件",
+    ec_research_running_note: "后台正在执行价格调查。完成前不能再次开始。",
     ec_research_no_runs: "没有执行记录",
     ec_research_status_failed: "无法读取运行状态",
     ec_research_detail_title: "EC商城行情",
@@ -5817,7 +5827,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.371";
+var APP_VERSION       = "v1.1.372";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -5898,6 +5908,10 @@ var rakutenApiLastRequestAt = 0;
 var rakutenApiCooldownUntil = 0;
 var rakutenTargets = [];
 var rakutenActiveTarget = null;
+var ecResearchStatusPollTimer = null;
+var ecResearchLatestStatus = null;
+var ecResearchManualRunStarting = false;
+var ecResearchManualRunStartedAt = 0;
 var ecCategoryTargetSearchResults = [];
 var EC_CATEGORY_TARGET_SEARCH_LIMIT = 300;
 var ecMallDefaultProviders = ["rakuten", "yahoo_shopping", "yahoo_auction"];
@@ -6718,10 +6732,6 @@ async function restoreAppStateAfterRefresh() {
 }
 
 function manualRefreshApp() {
-  if (rakutenApiBusy) {
-    alert(t("app_update_wait_busy"));
-    return;
-  }
   saveAppRestoreState("manual-refresh");
   try {
     var url = new URL(window.location.href);
@@ -6734,7 +6744,6 @@ function manualRefreshApp() {
 }
 
 function isAppSafeForAutoReload() {
-  if (rakutenApiBusy) return false;
   if (document.querySelector(".form-overlay.show")) return false;
   var el = document.activeElement;
   if (el) {
@@ -9348,20 +9357,48 @@ async function saveEcResearchScheduleSettings() {
 
 async function runEcMallResearchNow() {
   if (!canUseRakutenResearch()) { setRakutenStatus(t("err_perm"), true); return; }
-  var btn = document.getElementById("btn-ec-run-now");
-  var bulkBtn = document.getElementById("btn-rakuten-run-bulk");
-  if (btn) btn.disabled = true;
-  if (bulkBtn) bulkBtn.disabled = true;
+  if (ecResearchManualRunStarting || ecResearchIsRunning(ecResearchLatestStatus)) {
+    setRakutenStatus(t("ec_run_now_already_running"), false);
+    syncEcResearchRunningControls(ecResearchLatestStatus);
+    return;
+  }
   try {
-    if (!rakutenTargets.length) {
-      setRakutenStatus(t("ec_run_now_loading_targets"), false);
-      await loadEcMallSavedTargets();
+    var latestStatus = await loadEcMallResearchStatus({ silent: true }).catch(function() { return ecResearchLatestStatus; });
+    if (ecResearchIsRunning(latestStatus)) {
+      setRakutenStatus(t("ec_run_now_already_running"), false);
+      syncEcResearchRunningControls(latestStatus);
+      return;
     }
-    await runRakutenBulkSurvey();
-    await loadEcMallResearchStatus();
-  } finally {
-    if (btn) btn.disabled = false;
-    if (bulkBtn) bulkBtn.disabled = false;
+    ecResearchManualRunStarting = true;
+    ecResearchManualRunStartedAt = Date.now();
+    syncEcResearchRunningControls(latestStatus);
+    setRakutenStatus(t("ec_run_now_starting"), false);
+    var schedule = collectEcResearchScheduleForm();
+    var r = await sb.functions.invoke("ec-price-research-start", {
+      body: {
+        limit: 200,
+        hits: schedule.default_hits || 30,
+        sort: schedule.default_sort || "+itemPrice",
+        provider_keys: getEcMallSelectedProviders()
+      }
+    });
+    if (r.error) throw new Error(r.error.message || r.error);
+    if (r.data && r.data.already_running) {
+      setRakutenStatus(t("ec_run_now_already_running"), false);
+    } else {
+      setRakutenStatus(t("ec_run_now_started"), false);
+    }
+    await loadEcMallResearchStatus({ silent: true }).catch(function() {});
+    setTimeout(function() {
+      loadEcMallResearchStatus({ silent: true }).catch(function(e) {
+        console.warn("ec price research status refresh failed", e);
+      });
+    }, 3000);
+  } catch(e) {
+    ecResearchManualRunStarting = false;
+    ecResearchManualRunStartedAt = 0;
+    syncEcResearchRunningControls(ecResearchLatestStatus);
+    setRakutenStatus(tf("ec_run_now_failed", { error: e.message || e }), true);
   }
 }
 
@@ -9369,6 +9406,42 @@ function ecResearchRunStatusLabel(status) {
   var key = "ec_research_run_" + String(status || "none");
   var label = t(key);
   return label === key ? (status || "-") : label;
+}
+
+function ecResearchRunDoneCount(run) {
+  run = run || {};
+  return Number(run.success_count || 0) + Number(run.failed_count || 0) + Number(run.skipped_count || 0);
+}
+
+function ecResearchIsRunning(status) {
+  return !!(status && status.latestRun && status.latestRun.status === "running");
+}
+
+function ecResearchIsStarting() {
+  return !!(ecResearchManualRunStarting && Date.now() - ecResearchManualRunStartedAt < 30000);
+}
+
+function syncEcResearchRunningControls(status) {
+  var running = ecResearchIsStarting() || ecResearchIsRunning(status || ecResearchLatestStatus);
+  var runBtn = document.getElementById("btn-ec-run-now");
+  var bulkBtn = document.getElementById("btn-rakuten-run-bulk");
+  if (runBtn) {
+    runBtn.disabled = running;
+    runBtn.textContent = running ? t("ec_research_run_running") : t("ec_run_now");
+  }
+  if (bulkBtn) bulkBtn.disabled = running;
+}
+
+function scheduleEcResearchStatusPolling(status) {
+  clearTimeout(ecResearchStatusPollTimer);
+  ecResearchStatusPollTimer = null;
+  if (!ecResearchIsRunning(status) && !ecResearchIsStarting()) return;
+  ecResearchStatusPollTimer = setTimeout(function() {
+    loadEcMallResearchStatus({ silent: true }).catch(function(e) {
+      console.warn("ec price research status polling failed", e);
+      scheduleEcResearchStatusPolling(ecResearchLatestStatus);
+    });
+  }, 10000);
 }
 
 function renderEcMallResearchStatus(status) {
@@ -9379,8 +9452,12 @@ function renderEcMallResearchStatus(status) {
   var categoryText = status.categoryLabels && status.categoryLabels.length ? status.categoryLabels.slice(0, 4).join(" / ") : "-";
   if (status.categoryLabels && status.categoryLabels.length > 4) categoryText += " +" + (status.categoryLabels.length - 4);
   var runText = latest ? ecResearchRunStatusLabel(latest.status) : "-";
+  var doneCount = ecResearchRunDoneCount(latest);
+  var progressText = latest && latest.status === "running"
+    ? tf("ec_research_progress", { done: doneCount, total: latest.target_count || 0 })
+    : t("ec_research_success") + " " + (latest ? (latest.success_count || 0) : 0) + "/" + (latest ? (latest.target_count || 0) : 0);
   var runSub = latest
-    ? [formatDateTime(latest.finished_at || latest.started_at), t("ec_research_success") + " " + (latest.success_count || 0) + "/" + (latest.target_count || 0), latest.failed_count ? t("ec_research_failed") + " " + latest.failed_count : ""].filter(Boolean).join(" / ")
+    ? [formatDateTime(latest.finished_at || latest.started_at), progressText, latest.failed_count ? t("ec_research_failed") + " " + latest.failed_count : "", latest.status === "running" ? t("ec_research_running_note") : ""].filter(Boolean).join(" / ")
     : t("ec_research_no_runs");
   var schedule = normalizeEcResearchScheduleSettings(ecResearchScheduleSettings);
   var scheduleValue = schedule.schedule_enabled ? schedule.quiet_window_start : "--:--";
@@ -9393,11 +9470,13 @@ function renderEcMallResearchStatus(status) {
     "<div class='ec-research-stat'><div class='ec-research-stat-label'>" + esc(t("ec_research_schedule")) + "</div><div class='ec-research-stat-value'>" + esc(scheduleValue) + "</div><div class='ec-research-stat-sub'>" + esc(scheduleSub) + "</div></div>" +
     "<div class='ec-research-stat'><div class='ec-research-stat-label'>" + esc(t("ec_research_latest_run")) + "</div><div class='ec-research-stat-value'>" + esc(runText) + "</div><div class='ec-research-stat-sub'>" + esc(runSub) + "</div></div>" +
   "</div>";
+  syncEcResearchRunningControls(status);
 }
 
-async function loadEcMallResearchStatus() {
+async function loadEcMallResearchStatus(options) {
+  options = options || {};
   var wrap = document.getElementById("ec-mall-research-status");
-  if (wrap) wrap.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
+  if (wrap && !options.silent) wrap.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
   try {
     var targetsR = await sb.from("ec_price_research_targets")
       .select("id,category")
@@ -9415,15 +9494,24 @@ async function loadEcMallResearchStatus() {
       if (cat) categoryMap[cat] = true;
     });
     var categoryLabels = Object.keys(categoryMap).sort().map(function(cat) { return tCat(cat); });
-    renderEcMallResearchStatus({
+    ecResearchLatestStatus = {
       targetCount: (targetsR.data || []).length,
       categoryCount: categoryLabels.length,
       categoryLabels: categoryLabels,
       latestRun: (runR.data || [])[0] || null
-    });
+    };
+    if (!ecResearchIsRunning(ecResearchLatestStatus) && !ecResearchIsStarting()) {
+      ecResearchManualRunStarting = false;
+      ecResearchManualRunStartedAt = 0;
+    }
+    renderEcMallResearchStatus(ecResearchLatestStatus);
+    scheduleEcResearchStatusPolling(ecResearchLatestStatus);
+    return ecResearchLatestStatus;
   } catch(e) {
     console.warn("ec price research status failed", e);
     if (wrap) wrap.innerHTML = "<div class='empty'>" + esc(t("ec_research_status_failed")) + "</div>";
+    syncEcResearchRunningControls(ecResearchLatestStatus);
+    return null;
   }
 }
 
@@ -14887,11 +14975,6 @@ function applyProductSearchCardFlags(rows, products) {
         slPresenceCache[key] = hasSl;
       });
     }
-    var kikanKey = p ? productKikanKey(p) : ("dkd:" + dkdKey);
-    if (hasKikan) {
-      kikanCompatibleMap[kikanKey] = true;
-      kikanCompatibleFlagCache[kikanKey] = true;
-    }
   });
 }
 
@@ -15711,46 +15794,21 @@ async function fetchKikanCompatibleMap(products, isStale) {
   var map = {};
   var rows = (products || []).slice(0, KIKAN_FLAG_LOOKUP_LIMIT);
   if (isStale && isStale()) return map;
-  var parallel = await Promise.all([
-    fetchKikanRpcFlagMap(rows),
-    fetchKikanGroupMemberFlagMap(rows)
-  ]);
-  if (isStale && isStale()) return map;
-  var rpcResult = parallel[0];
-  var directMap = parallel[1] || {};
-  if (rpcResult && rpcResult.ok) {
-    Object.keys(rpcResult.map || {}).forEach(function(key) {
-      map[key] = true;
-      kikanCompatibleFlagCache[key] = true;
-    });
-    Object.keys(directMap || {}).forEach(function(key) {
-      map[key] = true;
-      kikanCompatibleFlagCache[key] = true;
-    });
-  }
-  Object.keys(directMap).forEach(function(key) {
-    map[key] = true;
-    kikanCompatibleFlagCache[key] = true;
-  });
-  var pending = [];
-  rows.forEach(function(p) {
-    var key = productKikanKey(p);
-    if (map[key]) return;
-    if (Object.prototype.hasOwnProperty.call(kikanCompatibleFlagCache, key)) {
-      if (kikanCompatibleFlagCache[key]) map[key] = true;
-    } else {
-      pending.push(p);
-    }
-  });
-  for (var i = 0; i < pending.length; i += 4) {
+  for (var i = 0; i < rows.length; i += 4) {
     if (isStale && isStale()) return map;
-    var chunk = pending.slice(i, i + 4);
+    var chunk = rows.slice(i, i + 4);
     var results = await Promise.all(chunk.map(hasDisplayableKikanCompatibleParts));
     if (isStale && isStale()) return map;
     chunk.forEach(function(p, idx) {
       var key = productKikanKey(p);
       kikanCompatibleFlagCache[key] = !!results[idx];
-      if (results[idx]) map[key] = true;
+      if (results[idx]) {
+        map[key] = true;
+        p.has_kikan_compatible = true;
+      } else {
+        delete kikanCompatibleMap[key];
+        p.has_kikan_compatible = false;
+      }
     });
   }
   return map;
@@ -15859,12 +15917,13 @@ async function loadProductSearchAuxiliaryData(seq, products) {
   function isStale() {
     return seq !== searchRequestSeq || auxSeq !== productAuxSeq;
   }
+  var shouldLoadKikanFlags = customerCanShowCompatibleParts();
   var fast = await Promise.all([
     canSeeComponentInfo() ? fetchComponentUsageCountMap(lookupProducts) : Promise.resolve({}),
     canSeeCoreStockInfo() ? fetchCoreStockQtyMap(lookupProducts) : Promise.resolve({}),
     fetchProductVariantSummaryMap(lookupProducts),
     canSeeComponentInfo() ? fetchProductionPartRegistrationCountMap(lookupProducts) : Promise.resolve({ total: {}, byKind: {} }),
-    customerCanShowCompatibleParts() ? fetchKikanCompatibleMap(lookupProducts, isStale) : Promise.resolve({})
+    shouldLoadKikanFlags ? fetchKikanCompatibleMap(lookupProducts, isStale) : Promise.resolve({})
   ]);
   if (isStale()) return;
   componentUsageCountMap = fast[0] || {};
@@ -15884,8 +15943,15 @@ async function loadProductSearchAuxiliaryData(seq, products) {
     if (key && Object.prototype.hasOwnProperty.call(componentUsageCountMap, key)) {
       p.component_count = componentUsageCountMap[key];
     }
-    if (kikanFlags[productKikanKey(p)]) {
-      p.has_kikan_compatible = true;
+    if (shouldLoadKikanFlags) {
+      var kikanKey = productKikanKey(p);
+      var hasKikan = !!kikanFlags[kikanKey];
+      p.has_kikan_compatible = hasKikan;
+      if (hasKikan) {
+        kikanCompatibleMap[kikanKey] = true;
+      } else {
+        delete kikanCompatibleMap[kikanKey];
+      }
     }
   });
   render();
@@ -23293,7 +23359,11 @@ document.getElementById("btn-rakuten-filter-unsurveyed").addEventListener("click
     setRakutenStatus("未調査分の抽出に失敗しました: " + (e.message || e), true);
   });
 });
-document.getElementById("btn-rakuten-run-bulk").addEventListener("click", runRakutenBulkSurvey);
+document.getElementById("btn-rakuten-run-bulk").addEventListener("click", function(){
+  runEcMallResearchNow().catch(function(e) {
+    setRakutenStatus(tf("ec_run_now_failed", { error: e.message || e }), true);
+  });
+});
 document.getElementById("btn-ec-download-upload-template").addEventListener("click", downloadEcMallUploadTemplate);
 document.getElementById("rakuten-upload-file").addEventListener("change", handleRakutenUploadFile);
 document.getElementById("rakuten-keyword").addEventListener("keydown", function(e){ if(e.key==="Enter") searchRakutenPrices(); });
