@@ -5827,7 +5827,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.376";
+var APP_VERSION       = "v1.1.377";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -9415,9 +9415,11 @@ async function runEcMallResearchNow() {
     syncEcResearchRunningControls(latestStatus);
     setRakutenStatus(t("ec_run_now_starting"), false);
     var schedule = collectEcResearchScheduleForm();
+    var targetLimit = Math.min(1000, Math.max(1, (latestStatus && latestStatus.targetCount) || (ecResearchLatestStatus && ecResearchLatestStatus.targetCount) || 500));
     var r = await sb.functions.invoke("ec-price-research-start", {
       body: {
-        limit: 200,
+        limit: targetLimit,
+        batch_size: 5,
         hits: schedule.default_hits || 30,
         sort: schedule.default_sort || "+itemPrice",
         provider_keys: getEcMallSelectedProviders()
