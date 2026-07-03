@@ -2802,7 +2802,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <div class="rakuten-actions">
         <button class="btn-sm-edit" id="btn-ec-load-saved-targets" data-i18n="ec_load_saved_targets">保存済み対象を読み込み</button>
         <button class="btn-sm-edit" id="btn-rakuten-load-master" data-i18n="ec_build_category_targets">カテゴリ別品番一覧を作成</button>
-        <button class="btn-sm-edit" id="btn-ec-save-targets" data-i18n="ec_save_targets">調査対象を保存</button>
+        <button class="btn-sm-edit" id="btn-ec-save-targets" data-i18n="ec_save_targets">調査条件を保存</button>
         <span class="rakuten-note" id="rakuten-target-status"></span>
       </div>
       <div id="rakuten-targets"><div class="empty" data-i18n="rakuten_targets_empty">調査対象がありません</div></div>
@@ -3784,8 +3784,9 @@ var TRANSLATIONS = {
     ec_mall_condition_filters: "商品状態",
     ec_mall_include_used: "中古も対象",
     ec_load_saved_targets: "保存済み対象を読み込み",
-    ec_save_targets: "調査対象を保存",
+    ec_save_targets: "調査条件を保存",
     ec_targets_saved: "{n} 件の調査対象を保存しました",
+    ec_conditions_saved: "{n} 件の調査条件を保存しました",
     ec_target_delete_confirm: "この調査対象を削除しますか？\n{target}",
     ec_target_deleted: "調査対象を削除しました",
     ec_target_delete_failed: "調査対象の削除に失敗しました: {error}",
@@ -4631,8 +4632,9 @@ var TRANSLATIONS = {
     ec_mall_condition_filters: "Condition",
     ec_mall_include_used: "Include used",
     ec_load_saved_targets: "Load Saved Targets",
-    ec_save_targets: "Save Targets",
+    ec_save_targets: "Save Conditions",
     ec_targets_saved: "Saved {n} survey targets",
+    ec_conditions_saved: "Saved conditions for {n} survey targets",
     ec_target_delete_confirm: "Delete this survey target?\n{target}",
     ec_target_deleted: "Deleted the survey target",
     ec_target_delete_failed: "Failed to delete the survey target: {error}",
@@ -5471,8 +5473,9 @@ var TRANSLATIONS = {
     ec_mall_condition_filters: "商品状态",
     ec_mall_include_used: "包含二手",
     ec_load_saved_targets: "读取已保存对象",
-    ec_save_targets: "保存调查对象",
+    ec_save_targets: "保存调查条件",
     ec_targets_saved: "已保存 {n} 件调查对象",
+    ec_conditions_saved: "已保存 {n} 件调查条件",
     ec_target_delete_confirm: "要删除此调查对象吗？\n{target}",
     ec_target_deleted: "已删除调查对象",
     ec_target_delete_failed: "调查对象删除失败: {error}",
@@ -5710,7 +5713,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.365";
+var APP_VERSION       = "v1.1.366";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -9301,7 +9304,8 @@ async function loadEcMallSavedTargets() {
   renderRakutenTargets();
 }
 
-async function saveEcMallTargets() {
+async function saveEcMallTargets(options) {
+  options = options || {};
   if (!rakutenTargets.length) { setRakutenStatus(t("rakuten_targets_empty"), true); return false; }
   var providerKeys = getEcMallSelectedProviders();
   if (!providerKeys.length) { setRakutenStatus(t("ec_mall_providers") + "を選択してください", true); return false; }
@@ -9331,7 +9335,7 @@ async function saveEcMallTargets() {
     target.include_used = includeUsed;
   });
   renderRakutenTargets();
-  setRakutenStatus(tf("ec_targets_saved", { n: payloads.length }), false);
+  setRakutenStatus(tf(options.conditionsOnly ? "ec_conditions_saved" : "ec_targets_saved", { n: payloads.length }), false);
   loadEcMallResearchStatus();
   return true;
 }
@@ -22877,8 +22881,8 @@ document.getElementById("ec-category-target-category").addEventListener("change"
   });
 });
 document.getElementById("btn-ec-save-targets").addEventListener("click", function(){
-  saveEcMallTargets().catch(function(e) {
-    setRakutenStatus("調査対象の保存に失敗しました: " + (e.message || e), true);
+  saveEcMallTargets({ conditionsOnly: true }).catch(function(e) {
+    setRakutenStatus("調査条件の保存に失敗しました: " + (e.message || e), true);
   });
 });
 document.getElementById("btn-ec-add-single-target").addEventListener("click", function(){
