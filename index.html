@@ -5827,7 +5827,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.378";
+var APP_VERSION       = "v1.1.379";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -8775,7 +8775,7 @@ function ecMallSearchUrl(provider, keyword) {
 
 function ecMallTargetKey(target) {
   if (target.dkd_shohin_id) return "dkd:" + String(target.dkd_shohin_id);
-  if (target.manufacturer_part_number) return "mfr:" + rakutenPartKey(target.manufacturer_part_number);
+  if (target.manufacturer_part_number && !ecMallIsInternalDaikoPartNumber(target.manufacturer_part_number)) return "mfr:" + rakutenPartKey(target.manufacturer_part_number);
   if (target.genuine_part_number) return "genuine:" + rakutenPartKey(target.genuine_part_number);
   return "search:" + rakutenPartKey(target.search_number || "");
 }
@@ -8786,26 +8786,50 @@ function ecMallDkdShohinIdValue(target) {
   return parseInt(raw, 10);
 }
 
+function ecMallEffectiveManufacturerPartNumber(target) {
+  var mfr = cleanPartNumberValue(target && target.manufacturer_part_number);
+  if (!mfr) return "";
+  if (!ecMallIsInternalDaikoPartNumber(mfr)) return mfr;
+  return cleanPartNumberValue(target && target.genuine_part_number_2);
+}
+
+function ecMallEffectiveDaikoPartNumber(target) {
+  var mfr = cleanPartNumberValue(target && target.manufacturer_part_number);
+  var daiko = cleanPartNumberValue(target && target.daiko_part_number);
+  if (ecMallIsInternalDaikoPartNumber(mfr)) return daiko || mfr;
+  return daiko;
+}
+
+function ecMallPayloadTargetKey(target, manufacturerPartNumber) {
+  var key = target.target_key || "";
+  var mfr = cleanPartNumberValue(target && target.manufacturer_part_number);
+  if (key && !(key.indexOf("mfr:") === 0 && ecMallIsInternalDaikoPartNumber(mfr))) return key;
+  var keyTarget = Object.assign({}, target, { manufacturer_part_number: manufacturerPartNumber || "" });
+  return ecMallTargetKey(keyTarget);
+}
+
 function ecMallTargetPayload(target) {
   var providerKeys = target.provider_keys && target.provider_keys.length ? target.provider_keys : getEcMallSelectedProviders();
   var sellerIds = target.seller_ids && target.seller_ids.length ? target.seller_ids : getEcMallSellerIds();
   var includeUsed = target.include_used == null ? getEcMallIncludeUsed() : !!target.include_used;
+  var manufacturerPartNumber = ecMallEffectiveManufacturerPartNumber(target);
+  var daikoPartNumber = ecMallEffectiveDaikoPartNumber(target);
   var searchKeywords = {};
-  [target.search_number, target.manufacturer_part_number, target.genuine_part_number, target.genuine_part_number_2].forEach(function(value) {
+  [target.search_number, manufacturerPartNumber, target.genuine_part_number, target.genuine_part_number_2].forEach(function(value) {
     value = cleanPartNumberValue(value);
     if (value) searchKeywords[value] = true;
   });
   return {
-    target_key: target.target_key || ecMallTargetKey(target),
+    target_key: ecMallPayloadTargetKey(target, manufacturerPartNumber),
     part_id: target.part_id || null,
     dkd_shohin_id: ecMallDkdShohinIdValue(target),
     shohin_cd: target.shohin_cd ? String(target.shohin_cd) : null,
     manufacturer: target.manufacturer || null,
     category: target.category || null,
-    daiko_part_number: target.daiko_part_number || null,
+    daiko_part_number: daikoPartNumber || null,
     genuine_part_number: target.genuine_part_number || null,
     genuine_part_number_2: target.genuine_part_number_2 || null,
-    manufacturer_part_number: target.manufacturer_part_number || null,
+    manufacturer_part_number: manufacturerPartNumber || null,
     search_number: target.search_number || "",
     search_number_type: target.search_number_type || null,
     search_keywords: Object.keys(searchKeywords),
@@ -8940,14 +8964,16 @@ function ecMallExternalManufacturerPartNumber(p) {
 
 function buildRakutenProductQuery(p) {
   if (!p) return "";
-  var number = ecMallExternalManufacturerPartNumber(p) || cleanPartNumberValue(p.genuine_part_number) || "";
+  var number = ecMallIsInternalDaikoPartRow(p)
+    ? (cleanPartNumberValue(p.genuine_part_number) || ecMallExternalManufacturerPartNumber(p))
+    : (ecMallExternalManufacturerPartNumber(p) || cleanPartNumberValue(p.genuine_part_number));
   return rakutenDenseKeyword(number, p);
 }
 
 function rakutenTargetFromPart(p, sourceType) {
   var searchNumber = buildRakutenProductQuery(p);
   var rawMfr = cleanPartNumberValue(p.manufacturer_part_number);
-  var mfr = ecMallExternalManufacturerPartNumber(p) || rawMfr;
+  var mfr = ecMallExternalManufacturerPartNumber(p);
   var daiko = cleanPartNumberValue(p.daiko_part_number) || (ecMallIsInternalDaikoPartNumber(rawMfr) ? rawMfr : "");
   var genuine = cleanPartNumberValue(p.genuine_part_number);
   var manufacturer = ecMallIsInternalDaikoPartRow(p) && mfr !== rawMfr ? "" : (p.manufacturer || "");
