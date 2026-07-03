@@ -172,10 +172,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ec-best3-row:first-of-type { border-top: 0; }
 .ec-provider-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 7px; font-size: 10px; font-weight: 700; background: #eef4ff; color: #1a6fd4; white-space: nowrap; }
 .rakuten-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.rakuten-actions button:disabled { opacity: .45; cursor: not-allowed; }
 .rakuten-target-list { max-height: 220px; overflow: auto; border: 1px solid #eee; border-radius: 8px; margin-top: 10px; }
-.rakuten-target-row { display: grid; grid-template-columns: minmax(150px, 1.4fr) minmax(110px, 1fr) minmax(110px, 1fr) 90px 130px 95px 64px; gap: 8px; padding: 8px 10px; border-bottom: 1px solid #f0f0f0; font-size: 12px; align-items: center; }
+.rakuten-target-row { display: grid; grid-template-columns: 32px minmax(140px, 1.35fr) minmax(105px, 1fr) minmax(105px, 1fr) 90px 130px 95px 64px; gap: 8px; padding: 8px 10px; border-bottom: 1px solid #f0f0f0; font-size: 12px; align-items: center; }
 .rakuten-target-row:last-child { border-bottom: none; }
 .rakuten-target-row.header { background: #f5f7fa; color: #555; font-weight: 700; position: sticky; top: 0; z-index: 1; }
+.rakuten-target-check-cell input { width: 16px; height: 16px; margin: 0; }
 .rakuten-target-num { font-family: monospace; color: #1a1a2e; word-break: break-all; }
 .rakuten-target-muted { color: #aaa; font-size: 11px; }
 .rakuten-target-delete { padding: 5px 8px; white-space: nowrap; }
@@ -2848,6 +2850,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         <button class="btn-sm-edit" id="btn-ec-load-saved-targets" data-i18n="ec_load_saved_targets">保存済み対象を読み込み</button>
         <button class="btn-sm-edit" id="btn-rakuten-load-master" data-i18n="ec_build_category_targets">カテゴリ別品番一覧を作成</button>
         <button class="btn-sm-edit" id="btn-ec-save-targets" data-i18n="ec_save_targets">調査条件を保存</button>
+        <button class="btn-sm-del" id="btn-ec-delete-selected-targets" type="button" data-i18n="ec_delete_selected_targets" disabled>選択対象を削除</button>
+        <button class="btn-sm-del" id="btn-ec-delete-all-targets" type="button" data-i18n="ec_delete_all_targets" disabled>全対象を削除</button>
         <span class="rakuten-note" id="rakuten-target-status"></span>
       </div>
       <div id="rakuten-targets"><div class="empty" data-i18n="rakuten_targets_empty">調査対象がありません</div></div>
@@ -3494,6 +3498,7 @@ var TRANSLATIONS = {
     ph_display_name: "表示名（任意）",
     lbl_registered: "登録:",
     btn_save: "保存",
+    btn_cancel: "キャンセル",
     msg_saved: "保存しました",
     msg_save_err: "保存失敗",
     no_users: "ユーザーがいません",
@@ -3835,6 +3840,15 @@ var TRANSLATIONS = {
     ec_target_delete_confirm: "この調査対象を削除しますか？\n{target}",
     ec_target_deleted: "調査対象を削除しました",
     ec_target_delete_failed: "調査対象の削除に失敗しました: {error}",
+    ec_delete_selected_targets: "選択対象を削除",
+    ec_delete_all_targets: "全対象を削除",
+    ec_target_select_all: "表示中の調査対象をすべて選択",
+    ec_target_delete_none_selected: "削除する調査対象を選択してください",
+    ec_target_delete_selected_confirm: "選択した {n} 件の調査対象を削除しますか？",
+    ec_target_delete_all_confirm: "保存済みを含む {n} 件の調査対象をすべて削除しますか？",
+    ec_target_delete_selected_done: "{n} 件の調査対象を削除しました",
+    ec_target_delete_all_done: "{n} 件の調査対象を削除しました",
+    ec_target_selection_status: "{selected}/{total} 件選択中",
     ec_single_target_label: "個別品番追加",
     ec_single_target_ph: "例: MD362184",
     ec_add_single_target: "追加して保存",
@@ -4365,6 +4379,7 @@ var TRANSLATIONS = {
     ph_display_name: "Display name (optional)",
     lbl_registered: "Registered:",
     btn_save: "Save",
+    btn_cancel: "Cancel",
     msg_saved: "Saved",
     msg_save_err: "Save failed",
     no_users: "No users found",
@@ -4706,6 +4721,15 @@ var TRANSLATIONS = {
     ec_target_delete_confirm: "Delete this survey target?\n{target}",
     ec_target_deleted: "Deleted the survey target",
     ec_target_delete_failed: "Failed to delete the survey target: {error}",
+    ec_delete_selected_targets: "Delete Selected",
+    ec_delete_all_targets: "Delete All",
+    ec_target_select_all: "Select all visible survey targets",
+    ec_target_delete_none_selected: "Select survey targets to delete",
+    ec_target_delete_selected_confirm: "Delete {n} selected survey targets?",
+    ec_target_delete_all_confirm: "Delete all {n} survey targets, including saved targets?",
+    ec_target_delete_selected_done: "Deleted {n} survey targets",
+    ec_target_delete_all_done: "Deleted {n} survey targets",
+    ec_target_selection_status: "{selected}/{total} selected",
     ec_single_target_label: "Add Single Target",
     ec_single_target_ph: "Example: MD362184",
     ec_add_single_target: "Add and Save",
@@ -5242,6 +5266,7 @@ var TRANSLATIONS = {
     ph_display_name: "显示名称（可选）",
     lbl_registered: "注册时间:",
     btn_save: "保存",
+    btn_cancel: "取消",
     msg_saved: "已保存",
     msg_save_err: "保存失败",
     no_users: "没有用户",
@@ -5570,6 +5595,15 @@ var TRANSLATIONS = {
     ec_target_delete_confirm: "要删除此调查对象吗？\n{target}",
     ec_target_deleted: "已删除调查对象",
     ec_target_delete_failed: "调查对象删除失败: {error}",
+    ec_delete_selected_targets: "删除所选对象",
+    ec_delete_all_targets: "删除全部对象",
+    ec_target_select_all: "选择当前显示的全部调查对象",
+    ec_target_delete_none_selected: "请选择要删除的调查对象",
+    ec_target_delete_selected_confirm: "要删除所选 {n} 件调查对象吗？",
+    ec_target_delete_all_confirm: "要删除包含已保存对象在内的全部 {n} 件调查对象吗？",
+    ec_target_delete_selected_done: "已删除 {n} 件调查对象",
+    ec_target_delete_all_done: "已删除 {n} 件调查对象",
+    ec_target_selection_status: "已选择 {selected}/{total} 件",
     ec_single_target_label: "单个品号追加",
     ec_single_target_ph: "例: MD362184",
     ec_add_single_target: "添加并保存",
@@ -5827,7 +5861,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.379";
+var APP_VERSION       = "v1.1.380";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -9627,19 +9661,19 @@ async function loadEcMallResearchStatus(options) {
 
 function renderRakutenTargets() {
   var wrap = document.getElementById("rakuten-targets");
-  var status = document.getElementById("rakuten-target-status");
-  if (status) status.textContent = rakutenTargets.length ? tf("rakuten_loaded_targets", { n: rakutenTargets.length }) : "";
   if (!wrap) return;
   if (!rakutenTargets.length) {
     wrap.innerHTML = "<div class='empty'>" + t("rakuten_targets_empty") + "</div>";
+    updateEcMallTargetSelectionStatus();
     return;
   }
   var html = "<div class='rakuten-target-list'>";
-  html += "<div class='rakuten-target-row header'><div>" + t("rakuten_keyword") + "</div><div>メーカー品番</div><div>純正品番</div><div>DKD商品ID</div><div>調査先</div><div>商品状態</div><div></div></div>";
+  html += "<div class='rakuten-target-row header'><div class='rakuten-target-check-cell'><input type='checkbox' data-ec-target-select-all='1' aria-label='" + esc(t("ec_target_select_all")) + "'></div><div>" + t("rakuten_keyword") + "</div><div>メーカー品番</div><div>純正品番</div><div>DKD商品ID</div><div>調査先</div><div>商品状態</div><div></div></div>";
   rakutenTargets.slice(0, 200).forEach(function(x, idx) {
     var providers = (x.provider_keys && x.provider_keys.length ? x.provider_keys : ecMallDefaultProviders).map(ecMallProviderLabel).join(" / ");
     var conditionText = x.include_used ? t("ec_mall_include_used") : t("rakuten_condition_rebuilt") + " / " + t("rakuten_condition_new");
     html += "<div class='rakuten-target-row'>";
+    html += "<div class='rakuten-target-check-cell'><input class='ec-target-select' type='checkbox' data-ec-target-select='" + idx + "' aria-label='" + esc(ecMallTargetDisplayName(x)) + "'></div>";
     html += "<div class='rakuten-target-num'>" + esc(x.search_number || "-") + "</div>";
     html += "<div class='rakuten-target-num'>" + esc(x.manufacturer_part_number || "-") + "</div>";
     html += "<div class='rakuten-target-num'>" + esc(x.genuine_part_number || "-") + "</div>";
@@ -9652,6 +9686,41 @@ function renderRakutenTargets() {
   html += "</div>";
   if (rakutenTargets.length > 200) html += "<div class='rakuten-note' style='margin-top:6px'>200 件まで表示しています</div>";
   wrap.innerHTML = html;
+  updateEcMallTargetSelectionStatus();
+}
+
+function getEcMallSelectedTargetIndexes() {
+  return Array.prototype.slice.call(document.querySelectorAll(".ec-target-select:checked")).map(function(el) {
+    return parseInt(el.getAttribute("data-ec-target-select"), 10);
+  }).filter(function(idx, pos, arr) {
+    return !isNaN(idx) && idx >= 0 && idx < rakutenTargets.length && arr.indexOf(idx) === pos;
+  });
+}
+
+function setEcMallTargetVisibleSelection(value) {
+  Array.prototype.slice.call(document.querySelectorAll(".ec-target-select")).forEach(function(el) {
+    el.checked = !!value;
+  });
+  updateEcMallTargetSelectionStatus();
+}
+
+function updateEcMallTargetSelectionStatus() {
+  var selected = getEcMallSelectedTargetIndexes().length;
+  var total = rakutenTargets.length;
+  var status = document.getElementById("rakuten-target-status");
+  if (status) {
+    status.textContent = total ? (selected ? tf("ec_target_selection_status", { selected: selected, total: total }) : tf("rakuten_loaded_targets", { n: total })) : "";
+  }
+  var selectedBtn = document.getElementById("btn-ec-delete-selected-targets");
+  if (selectedBtn) selectedBtn.disabled = !selected;
+  var allBtn = document.getElementById("btn-ec-delete-all-targets");
+  if (allBtn) allBtn.disabled = !total;
+  var selectAll = document.querySelector("[data-ec-target-select-all]");
+  var visible = Array.prototype.slice.call(document.querySelectorAll(".ec-target-select"));
+  if (selectAll) {
+    selectAll.checked = !!visible.length && selected === visible.length;
+    selectAll.indeterminate = selected > 0 && selected < visible.length;
+  }
 }
 
 function ecMallTargetDisplayName(target) {
@@ -9686,6 +9755,56 @@ async function deleteEcMallTarget(index) {
     renderRakutenTargets();
     setRakutenStatus(tf("ec_target_delete_failed", { error: e.message || e }), true);
   }
+}
+
+async function disableEcMallTargetRows(targets) {
+  var ids = (targets || []).map(function(target) {
+    return target && target.id ? target.id : null;
+  }).filter(Boolean);
+  if (!ids.length) return;
+  var updatePayload = { enabled: false, updated_by: currentUser ? currentUser.id : null };
+  for (var i = 0; i < ids.length; i += 100) {
+    var chunk = ids.slice(i, i + 100);
+    var r = await sb.from("ec_price_research_targets").update(updatePayload).in("id", chunk).select("id");
+    if (r.error) throw new Error(r.error.message);
+    if ((r.data || []).length !== chunk.length) throw new Error(t("ec_research_no_product_results"));
+  }
+}
+
+async function deleteEcMallTargetsByIndexes(indexes, options) {
+  options = options || {};
+  indexes = (indexes || []).filter(function(idx, pos, arr) {
+    return !isNaN(idx) && idx >= 0 && idx < rakutenTargets.length && arr.indexOf(idx) === pos;
+  }).sort(function(a, b) { return b - a; });
+  if (!indexes.length) {
+    setRakutenStatus(t("ec_target_delete_none_selected"), true);
+    return;
+  }
+  if (!confirm(tf(options.all ? "ec_target_delete_all_confirm" : "ec_target_delete_selected_confirm", { n: indexes.length }))) return;
+  var removed = [];
+  indexes.forEach(function(idx) {
+    removed.push({ index: idx, target: rakutenTargets.splice(idx, 1)[0] });
+  });
+  renderRakutenTargets();
+  try {
+    await disableEcMallTargetRows(removed.map(function(x) { return x.target; }));
+    setRakutenStatus(tf(options.all ? "ec_target_delete_all_done" : "ec_target_delete_selected_done", { n: removed.length }), false);
+    loadEcMallResearchStatus();
+  } catch(e) {
+    removed.sort(function(a, b) { return a.index - b.index; }).forEach(function(item) {
+      rakutenTargets.splice(Math.min(item.index, rakutenTargets.length), 0, item.target);
+    });
+    renderRakutenTargets();
+    setRakutenStatus(tf("ec_target_delete_failed", { error: e.message || e }), true);
+  }
+}
+
+async function deleteSelectedEcMallTargets() {
+  await deleteEcMallTargetsByIndexes(getEcMallSelectedTargetIndexes(), { all: false });
+}
+
+async function deleteAllEcMallTargets() {
+  await deleteEcMallTargetsByIndexes(rakutenTargets.map(function(_, idx) { return idx; }), { all: true });
 }
 
 function mergeEcMallTargets(targets) {
@@ -23426,6 +23545,26 @@ document.getElementById("rakuten-targets").addEventListener("click", function(e)
   var btn = e.target && e.target.closest ? e.target.closest("[data-ec-target-delete]") : null;
   if (!btn) return;
   deleteEcMallTarget(btn.dataset.ecTargetDelete).catch(function(err) {
+    setRakutenStatus(tf("ec_target_delete_failed", { error: err.message || err }), true);
+  });
+});
+document.getElementById("rakuten-targets").addEventListener("change", function(e){
+  var selectAll = e.target && e.target.closest ? e.target.closest("[data-ec-target-select-all]") : null;
+  if (selectAll) {
+    setEcMallTargetVisibleSelection(selectAll.checked);
+    return;
+  }
+  if (e.target && e.target.classList && e.target.classList.contains("ec-target-select")) {
+    updateEcMallTargetSelectionStatus();
+  }
+});
+document.getElementById("btn-ec-delete-selected-targets").addEventListener("click", function(){
+  deleteSelectedEcMallTargets().catch(function(err) {
+    setRakutenStatus(tf("ec_target_delete_failed", { error: err.message || err }), true);
+  });
+});
+document.getElementById("btn-ec-delete-all-targets").addEventListener("click", function(){
+  deleteAllEcMallTargets().catch(function(err) {
     setRakutenStatus(tf("ec_target_delete_failed", { error: err.message || err }), true);
   });
 });
