@@ -545,6 +545,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-access-stat { border: 1px solid #e6ebf3; border-radius: 8px; padding: 8px 10px; background: #fbfcff; min-width: 0; }
 .customer-access-stat-label { font-size: 11px; color: #778095; margin-bottom: 3px; }
 .customer-access-stat-value { font-size: 13px; font-weight: 800; color: #1a1a2e; word-break: break-word; }
+.customer-access-rank-select { width: 100%; border: 1px solid #d7dce5; border-radius: 7px; background: #fff; color: #1a1a2e; font-size: 13px; font-weight: 800; padding: 6px 8px; outline: none; }
+.customer-access-rank-select:focus { border-color: #4f8ef7; box-shadow: 0 0 0 2px rgba(79,142,247,.12); }
 .customer-access-filter-check { display: inline-flex; align-items: center; gap: 6px; color: #566174; font-size: 12px; white-space: nowrap; }
 .customer-access-status { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 2px 8px; font-size: 11px; font-weight: 800; background: #eef8f1; color: #188344; }
 .customer-access-status.inactive { background: #fff3e0; color: #9a5b00; }
@@ -5641,7 +5643,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.359";
+var APP_VERSION       = "v1.1.360";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -5751,6 +5753,7 @@ var customerAccessVisibilityRows = [];
 var customerAccessRuleProductMap = {};
 var customerAccessProductCandidates = [];
 var customerAccessSelectedProduct = null;
+var customerAccessPriceRanks = [];
 var CORE_PRODUCT_FAST_SELECT = [
   "dkd_shohin_id",
   "legacy_part_id",
@@ -20223,6 +20226,7 @@ async function enterCustomerAccessMgmt() {
   showScreen("customer-access-mgmt");
   updateAllHeaders();
   await ensureCustomerAccessCategories();
+  await ensureCustomerAccessPriceRanks();
   await loadCustomerAccessMgmt();
 }
 
@@ -20371,6 +20375,39 @@ function customerAccessCategoryOptionsHtml(selected) {
   }).join("");
 }
 
+async function ensureCustomerAccessPriceRanks(force) {
+  if (!force && customerAccessPriceRanks.length) return customerAccessPriceRanks;
+  var r = await sb.from("sales_price_ranks")
+    .select("rank_code,rank_name,rate_multiplier,amount_adjustment_jpy,rounding_unit_jpy,rounding_method,is_active,display_order")
+    .eq("is_active", true)
+    .order("display_order", { ascending: true })
+    .order("rank_code", { ascending: true });
+  if (r.error) {
+    console.warn("customer access price ranks lookup failed", r.error);
+    customerAccessPriceRanks = [];
+  } else {
+    customerAccessPriceRanks = r.data || [];
+  }
+  return customerAccessPriceRanks;
+}
+
+function customerAccessRankOptionsHtml(selected) {
+  selected = selected || "";
+  var rows = (customerAccessPriceRanks || []).slice();
+  if (selected && !rows.some(function(rank) { return String(rank.rank_code || "") === String(selected); })) {
+    rows.push({ rank_code: selected, rank_name: selected, display_order: 9999 });
+  }
+  if (!rows.length) {
+    return "<option value='" + esc(selected) + "'>" + esc(selected || "-") + "</option>";
+  }
+  return rows.map(function(rank) {
+    var code = rank.rank_code || "";
+    var label = salesRankDisplayName(rank);
+    if (code && label !== code) label += " / " + code;
+    return "<option value='" + esc(code) + "'" + (String(code) === String(selected) ? " selected" : "") + ">" + esc(label || code || "-") + "</option>";
+  }).join("");
+}
+
 function renderCustomerAccessDetail() {
   var detail = document.getElementById("customer-access-detail");
   if (!detail) return;
@@ -20384,7 +20421,7 @@ function renderCustomerAccessDetail() {
   html += "<div class='customer-access-summary'>";
   html += "<div class='customer-access-stat'><div class='customer-access-stat-label'>" + esc(t("customer_access_code")) + "</div><div class='customer-access-stat-value'>" + esc(customer.source_customer_code || "-") + "</div></div>";
   html += "<div class='customer-access-stat'><div class='customer-access-stat-label'>" + esc(t("customer_access_customer")) + "</div><div class='customer-access-stat-value'>" + esc(customer.customer_name || "-") + "</div></div>";
-  html += "<div class='customer-access-stat'><div class='customer-access-stat-label'>" + esc(t("sales_rank")) + "</div><div class='customer-access-stat-value'>" + esc(customer.price_rank_code || "-") + "</div></div>";
+  html += "<div class='customer-access-stat'><label class='customer-access-stat-label' for='customer-access-rank-select'>" + esc(t("sales_rank")) + "</label><select class='customer-access-rank-select' id='customer-access-rank-select'>" + customerAccessRankOptionsHtml(customer.price_rank_code || "") + "</select></div>";
   html += "<div class='customer-access-stat'><div class='customer-access-stat-label'>" + esc(t("customer_access_status")) + "</div><div class='customer-access-stat-value'><span class='customer-access-status" + (customer.is_active === false ? " inactive" : "") + "'>" + esc(customer.is_active === false ? t("customer_access_inactive") : t("customer_access_active")) + "</span></div></div>";
   html += "</div>";
   html += "<div class='customer-access-management-actions'>";
@@ -20558,17 +20595,40 @@ function collectCustomerDisplaySettings() {
 async function saveCustomerAccessSettings() {
   if (!canManageCustomerAccess() || !currentCustomerAccessCustomer) { alert(t("err_perm")); return; }
   syncCustomerDisplayRuleControls();
+  var customerId = currentCustomerAccessCustomer.id;
+  var rankSelect = document.getElementById("customer-access-rank-select");
+  var nextRankCode = rankSelect ? (rankSelect.value || "") : (currentCustomerAccessCustomer.price_rank_code || "");
   var data = collectCustomerDisplaySettings();
-  data.sales_customer_id = currentCustomerAccessCustomer.id;
+  data.sales_customer_id = customerId;
   data.updated_at = new Date().toISOString();
-  var r = await sb.from("customer_display_settings").upsert(data, { onConflict: "sales_customer_id" });
-  if (r.error) {
-    alert(t("msg_save_err") + ": " + (r.error.message || r.error));
-    return;
+  try {
+    var customerR = await sb.from("sales_customers")
+      .update({ price_rank_code: nextRankCode || null, updated_at: new Date().toISOString() })
+      .eq("id", customerId)
+      .select("id,source_customer_code,customer_name,customer_kana,price_rank_code,is_active")
+      .maybeSingle();
+    if (customerR.error) throw customerR.error;
+    var updatedCustomer = customerR.data || Object.assign({}, currentCustomerAccessCustomer, { price_rank_code: nextRankCode || null });
+    var r = await sb.from("customer_display_settings").upsert(data, { onConflict: "sales_customer_id" });
+    if (r.error) throw r.error;
+    currentCustomerAccessCustomer = updatedCustomer;
+    customerAccessRows = customerAccessRows.map(function(row) {
+      return String(row.id) === String(customerId) ? Object.assign({}, row, updatedCustomer) : row;
+    });
+    customerAccessFilteredRows = customerAccessFilteredRows.map(function(row) {
+      return String(row.id) === String(customerId) ? Object.assign({}, row, updatedCustomer) : row;
+    });
+    detailSalesCustomerOptions = detailSalesCustomerOptions.map(function(row) {
+      return String(row.id) === String(customerId) ? Object.assign({}, row, updatedCustomer) : row;
+    });
+    customerAccessSettings = Object.assign(defaultCustomerDisplaySettings(), data);
+    alert(t("msg_saved"));
+    renderCustomerAccessList();
+    renderCustomerAccessDetail();
+  } catch (e) {
+    console.warn("save customer access settings failed", e);
+    alert(t("msg_save_err") + ": " + ((e && e.message) || String(e)));
   }
-  customerAccessSettings = Object.assign(defaultCustomerDisplaySettings(), data);
-  alert(t("msg_saved"));
-  renderCustomerAccessDetail();
 }
 
 async function setCustomerAccessActive(isActive) {
