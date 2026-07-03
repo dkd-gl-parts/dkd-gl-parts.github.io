@@ -3758,8 +3758,9 @@ var TRANSLATIONS = {
     sales_pricing_mgmt_desc: "品番ごとの基準価格と得意先ランク調整を管理します。",
     app_update_title: "D-CATSの最新版があります",
     app_update_auto_message: "{current} から {latest} へ自動更新します。操作中の場合は待機します。",
-    app_update_wait_message: "{current} から {latest} へ更新できます。入力中のため自動更新を待機しています。",
+    app_update_wait_message: "{current} から {latest} へ更新できます。操作中または調査中のため自動更新を待機しています。",
     app_update_reload_now: "今すぐ更新",
+    app_update_wait_busy: "ECモール価格調査を実行中です。調査完了後に更新してください。",
     app_manual_refresh: "更新",
     rakuten_search_conditions: "検索条件",
     rakuten_keyword: "検索キーワード",
@@ -4623,8 +4624,9 @@ var TRANSLATIONS = {
     sales_pricing_mgmt_desc: "Manage base prices and customer rank adjustments.",
     app_update_title: "A new D-CATS version is available",
     app_update_auto_message: "D-CATS will update from {current} to {latest}. It will wait while you are working.",
-    app_update_wait_message: "D-CATS can update from {current} to {latest}. Auto update is waiting because you are editing.",
+    app_update_wait_message: "D-CATS can update from {current} to {latest}. Auto update is waiting while work or EC research is in progress.",
     app_update_reload_now: "Update now",
+    app_update_wait_busy: "EC mall price research is running. Update after the research finishes.",
     app_manual_refresh: "Update",
     rakuten_search_conditions: "Search Conditions",
     rakuten_keyword: "Search keyword",
@@ -5481,8 +5483,9 @@ var TRANSLATIONS = {
     sales_pricing_mgmt_desc: "管理每个品番的基准价格和客户等级调整。",
     app_update_title: "D-CATS有新版本",
     app_update_auto_message: "将从 {current} 自动更新到 {latest}。操作中会等待。",
-    app_update_wait_message: "可从 {current} 更新到 {latest}。正在输入时会等待自动更新。",
+    app_update_wait_message: "可从 {current} 更新到 {latest}。操作中或EC调查中会等待自动更新。",
     app_update_reload_now: "立即更新",
+    app_update_wait_busy: "EC商城价格调查正在执行。请在调查完成后更新。",
     app_manual_refresh: "更新",
     rakuten_search_conditions: "搜索条件",
     rakuten_keyword: "搜索关键词",
@@ -5809,7 +5812,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.368";
+var APP_VERSION       = "v1.1.369";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -6619,6 +6622,15 @@ function captureAppRestoreState(reason) {
     state.filter = currentFilter || "all";
     state.selectedDkdId = productDkdId(currentProduct);
     state.limit = productSearchLimit || SEARCH_INITIAL_LIMIT;
+  } else if (screen === "rakuten-price") {
+    state.keyword = document.getElementById("rakuten-keyword") ? document.getElementById("rakuten-keyword").value : "";
+    state.ngKeyword = document.getElementById("rakuten-ng-keyword") ? document.getElementById("rakuten-ng-keyword").value : "";
+    state.sort = document.getElementById("rakuten-sort") ? document.getElementById("rakuten-sort").value : "";
+    state.hits = document.getElementById("rakuten-hits") ? document.getElementById("rakuten-hits").value : "";
+    state.targetCategory = document.getElementById("rakuten-target-category") ? document.getElementById("rakuten-target-category").value : "";
+    state.providers = getEcMallSelectedProviders();
+    state.sellerIds = getEcMallSellerIds();
+    state.includeUsed = getEcMallIncludeUsed();
   }
   return state;
 }
@@ -6675,6 +6687,23 @@ async function restoreAppStateAfterRefresh() {
       await runProductSearch({ preserveSelection: true });
       if (state.selectedDkdId) await openProductByDkdId(state.selectedDkdId);
       else syncFirstSearchResultDetail();
+    } else if (state.screen === "rakuten-price") {
+      await enterRakutenPrice();
+      var keywordEl = document.getElementById("rakuten-keyword");
+      var ngEl = document.getElementById("rakuten-ng-keyword");
+      var sortEl = document.getElementById("rakuten-sort");
+      var hitsEl = document.getElementById("rakuten-hits");
+      var catEl = document.getElementById("rakuten-target-category");
+      if (keywordEl) keywordEl.value = state.keyword || "";
+      if (ngEl) ngEl.value = state.ngKeyword || "";
+      if (sortEl && state.sort) sortEl.value = state.sort;
+      if (hitsEl && state.hits) hitsEl.value = state.hits;
+      if (catEl && state.targetCategory !== undefined) catEl.value = state.targetCategory || "";
+      setEcMallSelectedProviders(state.providers || ecMallDefaultProviders);
+      setEcMallSellerIds(state.sellerIds || []);
+      setEcMallIncludeUsed(!!state.includeUsed);
+      renderEcMallSellerPicker(rakutenLastItems);
+      renderRakutenTargets();
     }
   } catch(e) {
     console.warn("restore app state failed", e);
@@ -6684,6 +6713,10 @@ async function restoreAppStateAfterRefresh() {
 }
 
 function manualRefreshApp() {
+  if (rakutenApiBusy) {
+    alert(t("app_update_wait_busy"));
+    return;
+  }
   saveAppRestoreState("manual-refresh");
   try {
     var url = new URL(window.location.href);
@@ -6696,6 +6729,7 @@ function manualRefreshApp() {
 }
 
 function isAppSafeForAutoReload() {
+  if (rakutenApiBusy) return false;
   if (document.querySelector(".form-overlay.show")) return false;
   var el = document.activeElement;
   if (el) {
@@ -8877,7 +8911,7 @@ async function enterRakutenPrice(seedKeyword) {
   }
   await loadEcResearchScheduleSettings();
   loadEcMallResearchStatus();
-  loadEcMallSavedTargets().catch(function(e) {
+  await loadEcMallSavedTargets().catch(function(e) {
     setRakutenStatus("保存済み対象の読み込みに失敗しました: " + (e.message || e), true);
   });
 }
@@ -10506,6 +10540,7 @@ async function searchRakutenPrices() {
 }
 
 async function runRakutenBulkSurvey() {
+  if (rakutenApiBusy) return;
   if (!rakutenTargets.length) { setRakutenStatus(t("rakuten_targets_empty"), true); return; }
   var ngKeyword = document.getElementById("rakuten-ng-keyword").value.trim();
   var sort = document.getElementById("rakuten-sort").value;
@@ -10516,57 +10551,62 @@ async function runRakutenBulkSurvey() {
   var includeUsed = getEcMallIncludeUsed();
   if (!providers.length) { setRakutenStatus(t("ec_mall_providers") + "を選択してください", true); return; }
   if (rakutenCanUseDirectBrowserApi() && !rakutenUsesServerProxy() && !rakutenBrowserKeysAvailable()) { setRakutenStatus(t("rakuten_missing_key"), true); return; }
+  rakutenApiBusy = true;
   try {
-    var cooldownMs = rakutenApiCooldownUntil - Date.now();
-    if (cooldownMs > 0) {
-      setRakutenStatus(tf("rakuten_rate_wait", { seconds: Math.ceil(cooldownMs / 1000) }), true);
+    try {
+      var cooldownMs = rakutenApiCooldownUntil - Date.now();
+      if (cooldownMs > 0) {
+        setRakutenStatus(tf("rakuten_rate_wait", { seconds: Math.ceil(cooldownMs / 1000) }), true);
+        return;
+      }
+      setRakutenStatus(t("rakuten_searching"), false);
+      await validateRakutenApiConnection();
+    } catch(e) {
+      setRakutenStatus(tf("rakuten_bulk_preflight_failed", { error: rakutenFriendlyError(e) }), true);
       return;
     }
-    setRakutenStatus(t("rakuten_searching"), false);
-    await validateRakutenApiConnection();
-  } catch(e) {
-    setRakutenStatus(tf("rakuten_bulk_preflight_failed", { error: rakutenFriendlyError(e) }), true);
-    return;
-  }
-  var saved = 0;
-  var failed = 0;
-  var firstError = "";
-  var stoppedByRateLimit = false;
-  var rateLimitRemaining = 0;
-  for (var i=0; i<rakutenTargets.length; i++) {
-    var target = rakutenTargets[i];
-    if (!target.search_number) continue;
-    target.provider_keys = providers;
-    target.seller_ids = sellerIds.length ? sellerIds : (target.seller_ids || []);
-    target.include_used = includeUsed;
-    setRakutenStatus(tf("rakuten_bulk_running", { done: i + 1, total: rakutenTargets.length }), false);
-    try {
-      var items = filterEcMallItemsByCondition(
-        await fetchRakutenItems(target.search_number, ngKeyword, sort, hits, target, { bulk: true, providers: target.provider_keys, sellerIds: target.seller_ids }),
-        includeUsed
-      );
-      await saveRakutenSurvey(target, items, target.search_number, ngKeyword, sort);
-      saved++;
-      if (i === 0) renderRakutenResults(items, target.search_number);
-    } catch(e) {
-      console.warn("rakuten bulk item failed", target.search_number, e);
-      if (isRakutenRateLimitError(e)) {
-        firstError = target.search_number + ": " + rakutenFriendlyError(e);
-        setRakutenCooldown(60);
-        stoppedByRateLimit = true;
-        rakutenTargets = rakutenTargets.slice(i);
-        rateLimitRemaining = rakutenTargets.length;
-        renderRakutenTargets();
-        break;
+    var saved = 0;
+    var failed = 0;
+    var firstError = "";
+    var stoppedByRateLimit = false;
+    var rateLimitRemaining = 0;
+    for (var i=0; i<rakutenTargets.length; i++) {
+      var target = rakutenTargets[i];
+      if (!target.search_number) continue;
+      target.provider_keys = providers;
+      target.seller_ids = sellerIds.length ? sellerIds : (target.seller_ids || []);
+      target.include_used = includeUsed;
+      setRakutenStatus(tf("rakuten_bulk_running", { done: i + 1, total: rakutenTargets.length }), false);
+      try {
+        var items = filterEcMallItemsByCondition(
+          await fetchRakutenItems(target.search_number, ngKeyword, sort, hits, target, { bulk: true, providers: target.provider_keys, sellerIds: target.seller_ids }),
+          includeUsed
+        );
+        await saveRakutenSurvey(target, items, target.search_number, ngKeyword, sort);
+        saved++;
+        if (i === 0) renderRakutenResults(items, target.search_number);
+      } catch(e) {
+        console.warn("rakuten bulk item failed", target.search_number, e);
+        if (isRakutenRateLimitError(e)) {
+          firstError = target.search_number + ": " + rakutenFriendlyError(e);
+          setRakutenCooldown(60);
+          stoppedByRateLimit = true;
+          rakutenTargets = rakutenTargets.slice(i);
+          rateLimitRemaining = rakutenTargets.length;
+          renderRakutenTargets();
+          break;
+        }
+        failed++;
+        if (!firstError) firstError = target.search_number + ": " + rakutenFriendlyError(e);
       }
-      failed++;
-      if (!firstError) firstError = target.search_number + ": " + rakutenFriendlyError(e);
     }
+    if (stoppedByRateLimit) setRakutenStatus(tf("rakuten_bulk_rate_limited", { saved: saved, remaining: rateLimitRemaining, error: firstError }), true);
+    else if (failed) setRakutenStatus(tf("rakuten_bulk_failed", { saved: saved, failed: failed, error: firstError }), true);
+    else setRakutenStatus(tf("rakuten_bulk_done", { n: saved }), false);
+    loadRakutenPriceList();
+  } finally {
+    rakutenApiBusy = false;
   }
-  if (stoppedByRateLimit) setRakutenStatus(tf("rakuten_bulk_rate_limited", { saved: saved, remaining: rateLimitRemaining, error: firstError }), true);
-  else if (failed) setRakutenStatus(tf("rakuten_bulk_failed", { saved: saved, failed: failed, error: firstError }), true);
-  else setRakutenStatus(tf("rakuten_bulk_done", { n: saved }), false);
-  loadRakutenPriceList();
 }
 
 function renderRakutenResults(items, keyword) {
