@@ -140,6 +140,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ec-research-stat-label { color: #667085; font-size: 11px; font-weight: 700; }
 .ec-research-stat-value { color: #1a1a2e; font-size: 18px; font-weight: 800; margin-top: 4px; }
 .ec-research-stat-sub { color: #8a94a6; font-size: 11px; margin-top: 4px; line-height: 1.45; }
+.ec-schedule-panel { margin-top: 12px; border-top: 1px solid #edf0f5; padding-top: 12px; }
+.ec-schedule-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; align-items: end; }
+.ec-schedule-field label { display: block; color: #667085; font-size: 11px; font-weight: 700; margin-bottom: 4px; }
+.ec-schedule-field input, .ec-schedule-field select { width: 100%; border: 1px solid #d8deea; border-radius: 7px; padding: 7px 8px; font-size: 12px; background: #fff; outline: none; }
+.ec-schedule-toggle { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; color: #1a1a2e; font-size: 12px; font-weight: 700; cursor: pointer; }
+.ec-schedule-toggle input { width: 16px; height: 16px; }
+@media(max-width:900px){ .ec-schedule-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media(max-width:560px){ .ec-schedule-grid { grid-template-columns: 1fr; } }
 .rakuten-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; align-items: end; }
 .rakuten-field label { display: block; font-size: 12px; color: #888; margin-bottom: 4px; }
 .rakuten-field input, .rakuten-field select { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 8px 10px; font-size: 13px; outline: none; background: #fff; }
@@ -2737,7 +2745,44 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       </div>
       <div class="rakuten-actions">
         <button class="btn-sm-edit" id="btn-rakuten-open-list" data-i18n="rakuten_open_list">結果一覧</button>
-        <span class="rakuten-note" data-i18n="ec_research_schedule_note">毎日 02:00 JST に保存済み調査対象を自動調査します。</span>
+        <button class="btn-sm-edit" id="btn-ec-run-now" data-i18n="ec_run_now">今すぐ調査</button>
+        <span class="rakuten-note" data-i18n="ec_research_schedule_note">保存済み調査対象を設定時刻に自動調査します。</span>
+      </div>
+      <div class="ec-schedule-panel" id="ec-research-schedule-panel">
+        <div class="ec-schedule-grid">
+          <div class="ec-schedule-field">
+            <label data-i18n="ec_schedule_enabled">定期調査</label>
+            <label class="ec-schedule-toggle"><input id="ec-schedule-enabled" type="checkbox"> <span data-i18n="ec_schedule_enabled_on">有効</span></label>
+          </div>
+          <div class="ec-schedule-field">
+            <label data-i18n="ec_schedule_start_time">開始時刻</label>
+            <input id="ec-schedule-start" type="time" value="02:00">
+          </div>
+          <div class="ec-schedule-field">
+            <label data-i18n="ec_schedule_end_time">終了時刻</label>
+            <input id="ec-schedule-end" type="time" value="05:00">
+          </div>
+          <div class="ec-schedule-field">
+            <label data-i18n="rakuten_hits">取得件数</label>
+            <select id="ec-schedule-hits">
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="30">30</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+          <div class="ec-schedule-field">
+            <label data-i18n="rakuten_sort">並び順</label>
+            <select id="ec-schedule-sort">
+              <option value="+itemPrice" data-i18n="rakuten_sort_price_asc">価格が安い順</option>
+              <option value="-itemPrice" data-i18n="rakuten_sort_price_desc">価格が高い順</option>
+            </select>
+          </div>
+        </div>
+        <div class="rakuten-actions">
+          <button class="btn-sm-edit" id="btn-ec-save-schedule" data-i18n="ec_schedule_save">スケジュールを保存</button>
+          <span class="rakuten-note" id="ec-schedule-status"></span>
+        </div>
       </div>
     </div>
 
@@ -3799,9 +3844,22 @@ var TRANSLATIONS = {
     ec_single_target_failed: "個別品番の追加に失敗しました: {error}",
     ec_best3_title: "{type} ベスト3",
     ec_research_operation_title: "継続調査の運用状況",
-    ec_research_schedule_note: "毎日 02:00 JST に保存済み調査対象を自動調査します。",
+    ec_research_schedule_note: "保存済み調査対象を設定時刻に自動調査します。",
     ec_research_target_conditions: "調査条件",
     ec_research_target_category: "対象カテゴリ",
+    ec_run_now: "今すぐ調査",
+    ec_run_now_loading_targets: "保存済み対象を読み込み中...",
+    ec_schedule_enabled: "定期調査",
+    ec_schedule_enabled_on: "有効",
+    ec_schedule_start_time: "開始時刻",
+    ec_schedule_end_time: "終了時刻",
+    ec_schedule_save: "スケジュールを保存",
+    ec_schedule_saved: "スケジュールを保存しました",
+    ec_schedule_save_failed: "スケジュールの保存に失敗しました: {error}",
+    ec_schedule_load_failed: "スケジュール設定を読み込めません: {error}",
+    ec_schedule_disabled: "停止中",
+    ec_schedule_daily_at: "毎日 {time} {timezone}",
+    ec_schedule_admin_only: "スケジュール変更は管理者のみ可能です",
     ec_build_category_targets: "カテゴリ別品番一覧を作成",
     ec_category_target_modal_title: "カテゴリ別品番一覧を作成",
     ec_category_target_modal_help: "検索条件で品番マスタを絞り込み、必要な品番を選んで現在の調査対象リストへ追加します。",
@@ -4647,9 +4705,22 @@ var TRANSLATIONS = {
     ec_single_target_failed: "Failed to add the single target: {error}",
     ec_best3_title: "{type} Best 3",
     ec_research_operation_title: "Continuous Research Status",
-    ec_research_schedule_note: "Saved targets are checked automatically every day at 02:00 JST.",
+    ec_research_schedule_note: "Saved targets are checked automatically at the configured time.",
     ec_research_target_conditions: "Research Conditions",
     ec_research_target_category: "Target Category",
+    ec_run_now: "Run Now",
+    ec_run_now_loading_targets: "Loading saved targets...",
+    ec_schedule_enabled: "Scheduled Research",
+    ec_schedule_enabled_on: "Enabled",
+    ec_schedule_start_time: "Start Time",
+    ec_schedule_end_time: "End Time",
+    ec_schedule_save: "Save Schedule",
+    ec_schedule_saved: "Saved schedule",
+    ec_schedule_save_failed: "Failed to save schedule: {error}",
+    ec_schedule_load_failed: "Failed to load schedule settings: {error}",
+    ec_schedule_disabled: "Stopped",
+    ec_schedule_daily_at: "Daily at {time} {timezone}",
+    ec_schedule_admin_only: "Only admins can change the schedule",
     ec_build_category_targets: "Build Category Target List",
     ec_category_target_modal_title: "Build Category Target List",
     ec_category_target_modal_help: "Filter the part master, select the needed part numbers, and add them to the current survey target list.",
@@ -5488,9 +5559,22 @@ var TRANSLATIONS = {
     ec_single_target_failed: "单个品号追加失败: {error}",
     ec_best3_title: "{type} 前3名",
     ec_research_operation_title: "持续调查运行状态",
-    ec_research_schedule_note: "每天 02:00 JST 自动调查已保存对象。",
+    ec_research_schedule_note: "已保存对象会在设定时间自动调查。",
     ec_research_target_conditions: "调查条件",
     ec_research_target_category: "目标类别",
+    ec_run_now: "立即调查",
+    ec_run_now_loading_targets: "正在读取已保存对象...",
+    ec_schedule_enabled: "定期调查",
+    ec_schedule_enabled_on: "启用",
+    ec_schedule_start_time: "开始时间",
+    ec_schedule_end_time: "结束时间",
+    ec_schedule_save: "保存计划",
+    ec_schedule_saved: "已保存计划",
+    ec_schedule_save_failed: "计划保存失败: {error}",
+    ec_schedule_load_failed: "无法读取计划设置: {error}",
+    ec_schedule_disabled: "已停止",
+    ec_schedule_daily_at: "每天 {time} {timezone}",
+    ec_schedule_admin_only: "只有管理员可以更改计划",
     ec_build_category_targets: "创建类别品号列表",
     ec_category_target_modal_title: "创建类别品号列表",
     ec_category_target_modal_help: "按条件筛选品号主数据，选择需要的品号并添加到当前调查对象列表。",
@@ -5713,7 +5797,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.366";
+var APP_VERSION       = "v1.1.367";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -5721,6 +5805,7 @@ var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
 var appUpdateDetected = false;
 var appUpdateLastActivityAt = Date.now();
+var ecResearchScheduleSettings = null;
 var kikanCandidateParts = [];
 var SEARCH_RENDER_LIMIT = 200;
 var productionLoaded = false;
@@ -5974,6 +6059,9 @@ function canEditSalesPricing() {
 }
 function canUseRakutenResearch() {
   return hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"]);
+}
+function canManageEcResearchSchedule() {
+  return hasAccessRole(userProfile, ["system_admin", "company_admin"]);
 }
 function canViewInternalComponents() {
   return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "all_viewer"]);
@@ -8775,6 +8863,7 @@ async function enterRakutenPrice(seedKeyword) {
   if (!document.getElementById("rakuten-summary").innerHTML) {
     document.getElementById("rakuten-summary").innerHTML = "";
   }
+  await loadEcResearchScheduleSettings();
   loadEcMallResearchStatus();
   loadEcMallSavedTargets().catch(function(e) {
     setRakutenStatus("保存済み対象の読み込みに失敗しました: " + (e.message || e), true);
@@ -9042,6 +9131,189 @@ async function confirmEcCategoryTargetBuilder() {
   closeEcCategoryTargetBuilder();
 }
 
+function ecResearchDefaultScheduleSettings() {
+  return {
+    schedule_enabled: true,
+    cron_expression: "0 17 * * *",
+    timezone: "Asia/Tokyo",
+    quiet_window_start: "02:00",
+    quiet_window_end: "05:00",
+    default_provider_keys: ecMallDefaultProviders.slice(),
+    default_hits: 30,
+    default_sort: "+itemPrice",
+    default_include_used: false
+  };
+}
+
+function pad2(n) {
+  n = parseInt(n, 10);
+  return (n < 10 ? "0" : "") + String(isNaN(n) ? 0 : n);
+}
+
+function normalizeTimeInput(value, fallback) {
+  var text = String(value || fallback || "00:00").trim();
+  var m = text.match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return fallback || "00:00";
+  var h = Math.max(0, Math.min(23, parseInt(m[1], 10)));
+  var min = Math.max(0, Math.min(59, parseInt(m[2], 10)));
+  return pad2(h) + ":" + pad2(min);
+}
+
+function jstTimeToDailyCronExpression(timeValue) {
+  var time = normalizeTimeInput(timeValue, "02:00").split(":");
+  var minute = parseInt(time[1], 10);
+  var utcHour = (parseInt(time[0], 10) + 15) % 24;
+  return String(minute) + " " + String(utcHour) + " * * *";
+}
+
+function dailyCronExpressionToJstTime(cronExpression) {
+  var m = String(cronExpression || "").match(/^(\d{1,2})\s+(\d{1,2})\s+\*\s+\*\s+\*$/);
+  if (!m) return "02:00";
+  var minute = Math.max(0, Math.min(59, parseInt(m[1], 10)));
+  var jstHour = (Math.max(0, Math.min(23, parseInt(m[2], 10))) + 9) % 24;
+  return pad2(jstHour) + ":" + pad2(minute);
+}
+
+function normalizeEcResearchScheduleSettings(row) {
+  var defaults = ecResearchDefaultScheduleSettings();
+  row = row || {};
+  var start = normalizeTimeInput(row.quiet_window_start || dailyCronExpressionToJstTime(row.cron_expression), defaults.quiet_window_start);
+  return {
+    schedule_enabled: row.schedule_enabled == null ? defaults.schedule_enabled : !!row.schedule_enabled,
+    cron_expression: row.cron_expression || jstTimeToDailyCronExpression(start),
+    timezone: row.timezone || defaults.timezone,
+    quiet_window_start: start,
+    quiet_window_end: normalizeTimeInput(row.quiet_window_end, defaults.quiet_window_end),
+    default_provider_keys: row.default_provider_keys && row.default_provider_keys.length ? row.default_provider_keys : defaults.default_provider_keys,
+    default_hits: row.default_hits || defaults.default_hits,
+    default_sort: row.default_sort || defaults.default_sort,
+    default_include_used: !!row.default_include_used,
+    updated_at: row.updated_at || null
+  };
+}
+
+function applyEcResearchScheduleForm(settings) {
+  settings = normalizeEcResearchScheduleSettings(settings || ecResearchScheduleSettings);
+  var enabledEl = document.getElementById("ec-schedule-enabled");
+  var startEl = document.getElementById("ec-schedule-start");
+  var endEl = document.getElementById("ec-schedule-end");
+  var hitsEl = document.getElementById("ec-schedule-hits");
+  var sortEl = document.getElementById("ec-schedule-sort");
+  if (enabledEl) enabledEl.checked = !!settings.schedule_enabled;
+  if (startEl) startEl.value = settings.quiet_window_start;
+  if (endEl) endEl.value = settings.quiet_window_end;
+  if (hitsEl) hitsEl.value = String(settings.default_hits || 30);
+  if (sortEl) sortEl.value = settings.default_sort || "+itemPrice";
+  updateEcResearchScheduleFormAccess();
+}
+
+function updateEcResearchScheduleFormAccess() {
+  var canManage = canManageEcResearchSchedule();
+  ["ec-schedule-enabled","ec-schedule-start","ec-schedule-end","ec-schedule-hits","ec-schedule-sort"].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.disabled = !canManage;
+  });
+  var saveBtn = document.getElementById("btn-ec-save-schedule");
+  if (saveBtn) saveBtn.style.display = canManage ? "" : "none";
+  var status = document.getElementById("ec-schedule-status");
+  if (status && !canManage) status.textContent = t("ec_schedule_admin_only");
+}
+
+function collectEcResearchScheduleForm() {
+  var start = normalizeTimeInput((document.getElementById("ec-schedule-start") || {}).value, "02:00");
+  var end = normalizeTimeInput((document.getElementById("ec-schedule-end") || {}).value, "05:00");
+  var hits = parseInt((document.getElementById("ec-schedule-hits") || {}).value || "30", 10);
+  if (isNaN(hits)) hits = 30;
+  hits = Math.max(1, Math.min(50, hits));
+  return normalizeEcResearchScheduleSettings({
+    schedule_enabled: !!((document.getElementById("ec-schedule-enabled") || {}).checked),
+    cron_expression: jstTimeToDailyCronExpression(start),
+    timezone: "Asia/Tokyo",
+    quiet_window_start: start,
+    quiet_window_end: end,
+    default_provider_keys: getEcMallSelectedProviders(),
+    default_hits: hits,
+    default_sort: (document.getElementById("ec-schedule-sort") || {}).value || "+itemPrice",
+    default_include_used: getEcMallIncludeUsed()
+  });
+}
+
+function setEcScheduleStatus(message, isError) {
+  var el = document.getElementById("ec-schedule-status");
+  if (!el) return;
+  el.textContent = message || "";
+  el.style.color = isError ? "#e24b4a" : "";
+}
+
+async function loadEcResearchScheduleSettings() {
+  try {
+    var r = await sb.from("ec_price_research_settings")
+      .select("schedule_enabled,cron_expression,timezone,quiet_window_start,quiet_window_end,default_provider_keys,default_hits,default_sort,default_include_used,updated_at")
+      .eq("id", true)
+      .maybeSingle();
+    if (r.error) throw new Error(r.error.message);
+    ecResearchScheduleSettings = normalizeEcResearchScheduleSettings(r.data);
+    applyEcResearchScheduleForm(ecResearchScheduleSettings);
+    setEcScheduleStatus("", false);
+  } catch(e) {
+    ecResearchScheduleSettings = ecResearchDefaultScheduleSettings();
+    applyEcResearchScheduleForm(ecResearchScheduleSettings);
+    setEcScheduleStatus(tf("ec_schedule_load_failed", { error: e.message || e }), true);
+  }
+}
+
+async function saveEcResearchScheduleSettings() {
+  if (!canManageEcResearchSchedule()) {
+    setEcScheduleStatus(t("ec_schedule_admin_only"), true);
+    return;
+  }
+  var settings = collectEcResearchScheduleForm();
+  var btn = document.getElementById("btn-ec-save-schedule");
+  if (btn) btn.disabled = true;
+  setEcScheduleStatus(t("loading"), false);
+  try {
+    var r = await sb.rpc("save_ec_price_research_schedule", {
+      p_schedule_enabled: settings.schedule_enabled,
+      p_cron_expression: settings.cron_expression,
+      p_timezone: settings.timezone,
+      p_quiet_window_start: settings.quiet_window_start,
+      p_quiet_window_end: settings.quiet_window_end,
+      p_default_provider_keys: settings.default_provider_keys,
+      p_default_hits: settings.default_hits,
+      p_default_sort: settings.default_sort,
+      p_default_include_used: settings.default_include_used
+    });
+    if (r.error) throw new Error(r.error.message);
+    ecResearchScheduleSettings = normalizeEcResearchScheduleSettings(Array.isArray(r.data) ? r.data[0] : r.data || settings);
+    applyEcResearchScheduleForm(ecResearchScheduleSettings);
+    loadEcMallResearchStatus();
+    setEcScheduleStatus(t("ec_schedule_saved"), false);
+  } catch(e) {
+    setEcScheduleStatus(tf("ec_schedule_save_failed", { error: e.message || e }), true);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function runEcMallResearchNow() {
+  if (!canUseRakutenResearch()) { setRakutenStatus(t("err_perm"), true); return; }
+  var btn = document.getElementById("btn-ec-run-now");
+  var bulkBtn = document.getElementById("btn-rakuten-run-bulk");
+  if (btn) btn.disabled = true;
+  if (bulkBtn) bulkBtn.disabled = true;
+  try {
+    if (!rakutenTargets.length) {
+      setRakutenStatus(t("ec_run_now_loading_targets"), false);
+      await loadEcMallSavedTargets();
+    }
+    await runRakutenBulkSurvey();
+    await loadEcMallResearchStatus();
+  } finally {
+    if (btn) btn.disabled = false;
+    if (bulkBtn) bulkBtn.disabled = false;
+  }
+}
+
 function ecResearchRunStatusLabel(status) {
   var key = "ec_research_run_" + String(status || "none");
   var label = t(key);
@@ -9059,10 +9331,15 @@ function renderEcMallResearchStatus(status) {
   var runSub = latest
     ? [formatDateTime(latest.finished_at || latest.started_at), t("ec_research_success") + " " + (latest.success_count || 0) + "/" + (latest.target_count || 0), latest.failed_count ? t("ec_research_failed") + " " + latest.failed_count : ""].filter(Boolean).join(" / ")
     : t("ec_research_no_runs");
+  var schedule = normalizeEcResearchScheduleSettings(ecResearchScheduleSettings);
+  var scheduleValue = schedule.schedule_enabled ? schedule.quiet_window_start : "--:--";
+  var scheduleSub = schedule.schedule_enabled
+    ? tf("ec_schedule_daily_at", { time: schedule.quiet_window_start, timezone: schedule.timezone })
+    : t("ec_schedule_disabled");
   wrap.innerHTML = "<div class='ec-research-status-grid'>" +
     "<div class='ec-research-stat'><div class='ec-research-stat-label'>" + esc(t("ec_research_saved_targets")) + "</div><div class='ec-research-stat-value'>" + esc(String(status.targetCount || 0)) + "</div><div class='ec-research-stat-sub'>" + esc(t("ec_research_enabled_targets")) + "</div></div>" +
     "<div class='ec-research-stat'><div class='ec-research-stat-label'>" + esc(t("ec_research_categories")) + "</div><div class='ec-research-stat-value'>" + esc(String(status.categoryCount || 0)) + "</div><div class='ec-research-stat-sub'>" + esc(categoryText) + "</div></div>" +
-    "<div class='ec-research-stat'><div class='ec-research-stat-label'>" + esc(t("ec_research_schedule")) + "</div><div class='ec-research-stat-value'>02:00</div><div class='ec-research-stat-sub'>" + esc(t("ec_research_schedule_daily")) + "</div></div>" +
+    "<div class='ec-research-stat'><div class='ec-research-stat-label'>" + esc(t("ec_research_schedule")) + "</div><div class='ec-research-stat-value'>" + esc(scheduleValue) + "</div><div class='ec-research-stat-sub'>" + esc(scheduleSub) + "</div></div>" +
     "<div class='ec-research-stat'><div class='ec-research-stat-label'>" + esc(t("ec_research_latest_run")) + "</div><div class='ec-research-stat-value'>" + esc(runText) + "</div><div class='ec-research-stat-sub'>" + esc(runSub) + "</div></div>" +
   "</div>";
 }
@@ -22828,6 +23105,16 @@ document.getElementById("ec-mall-seller-picker").addEventListener("change", func
 document.getElementById("btn-ec-load-saved-targets").addEventListener("click", function(){
   loadEcMallSavedTargets().catch(function(e) {
     setRakutenStatus("保存済み対象の読み込みに失敗しました: " + (e.message || e), true);
+  });
+});
+document.getElementById("btn-ec-run-now").addEventListener("click", function(){
+  runEcMallResearchNow().catch(function(e) {
+    setRakutenStatus(t("rakuten_error") + ": " + rakutenFriendlyError(e), true);
+  });
+});
+document.getElementById("btn-ec-save-schedule").addEventListener("click", function(){
+  saveEcResearchScheduleSettings().catch(function(e) {
+    setEcScheduleStatus(tf("ec_schedule_save_failed", { error: e.message || e }), true);
   });
 });
 document.getElementById("rakuten-targets").addEventListener("click", function(e){
