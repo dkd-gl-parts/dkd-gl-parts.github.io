@@ -985,15 +985,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     position: static;
     flex: 0 0 auto;
   }
-  .sales-mobile-stock { display: block; margin-bottom: 10px; }
+  #screen-search .sales-mobile-stock { display: none !important; }
   .sales-mobile-stock .core-qty-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-bottom: 0; }
   .sales-mobile-stock .core-qty-card { padding: 8px 7px; }
   .sales-mobile-stock .core-qty-label { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sales-mobile-stock .core-qty-value { font-size: 20px; }
   .sales-mobile-stock .core-qty-sub { display: none; }
-  #screen-search .detail-main-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; align-items: start; }
-  #screen-search .detail-main-grid .detail-vehicle-grid { grid-template-columns: 78px minmax(0, 1fr); }
-  #screen-search .detail-main-grid .ac-part-row { grid-template-columns: 78px minmax(0, 1fr); }
+  #screen-search .detail-main-grid { display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap: 8px; align-items: start; }
+  #screen-search .detail-main-grid .detail-column { min-width: 0; }
+  #screen-search .detail-main-grid .detail-vehicle-grid { grid-template-columns: 72px minmax(0, 1fr); }
+  #screen-search .detail-main-grid .ac-part-row { grid-template-columns: 72px minmax(0, 1fr); }
   #screen-search .detail-main-grid .detail-vehicle-label,
   #screen-search .detail-main-grid .detail-vehicle-value,
   #screen-search .detail-main-grid .ac-part-label,
@@ -1008,7 +1009,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   #screen-search .detail-kind-price-row .product-kind-control-row.compact { justify-content: stretch; }
   #screen-search .detail-kind-price-row .product-kind-select { width: 100%; min-width: 0; padding: 6px 7px; }
   #screen-search .detail-kind-price-row .sales-price-summary-value { font-size: 16px; }
-  #screen-search .detail-kind-price-row .product-kind-stock-grid { display: none; }
+  #screen-search .detail-kind-price-row .product-kind-stock-grid { display: grid; gap: 4px; margin-top: 6px; }
+  #screen-search .detail-kind-price-row .product-kind-stock-row { grid-template-columns: minmax(0, 1fr) 54px; gap: 5px; }
+  #screen-search .detail-kind-price-row .product-kind-stock-label { font-size: 10px; }
+  #screen-search .detail-kind-price-row .product-kind-stock-value { width: 54px; font-size: 15px; padding: 2px 5px; border-radius: 6px; }
   .panel-right-title { margin-bottom: 0; }
   .panel-right-empty { min-height: 42px; flex: 0 0 auto; flex-direction: row; justify-content: flex-start; }
   .panel-right-empty .empty-icon { font-size: 20px; }
@@ -5556,7 +5560,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.354";
+var APP_VERSION       = "v1.1.355";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -15498,7 +15502,6 @@ function renderPanelStatic() {
     ? "<div class='detail-lower-grid detail-lower-count-" + detailLowerBlocks.length + "'>" + detailLowerBlocks.join("") + "</div>"
     : "";
   document.getElementById("panel-body").innerHTML =
-    "<div class='sales-mobile-stock' id='sales-mobile-stock-wrap'>" + renderSalesMobileStockSummary(p) + "</div>" +
     "<div class='detail-main-grid'>" +
       "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + "</div>" +
       "<div class='detail-column'>" + makerHtml +
