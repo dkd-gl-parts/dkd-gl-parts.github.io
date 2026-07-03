@@ -152,10 +152,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .rakuten-field label { display: block; font-size: 12px; color: #888; margin-bottom: 4px; }
 .rakuten-field input, .rakuten-field select { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 8px 10px; font-size: 13px; outline: none; background: #fff; }
 .rakuten-field input:focus, .rakuten-field select:focus { border-color: #4f8ef7; }
+.rakuten-field input[type="checkbox"] { width: 16px; min-width: 16px; height: 16px; margin: 0; padding: 0; border: 0; background: transparent; box-sizing: border-box; accent-color: #2f7df6; flex: 0 0 16px; }
 .ec-provider-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.ec-provider-chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #ddd; border-radius: 8px; padding: 8px 10px; font-size: 12px; color: #333; background: #fff; min-height: 36px; }
-.ec-provider-chip input { width: auto; margin: 0; }
+.ec-provider-chip { position: relative; display: inline-block; border: 1px solid #ddd; border-radius: 8px; padding: 0 10px 0 34px; font-size: 12px; color: #333; background: #fff; min-height: 36px; height: 36px; line-height: 34px; white-space: nowrap; box-sizing: border-box; vertical-align: middle; }
+.ec-provider-chip input[type="checkbox"] { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); display: block; }
+.ec-provider-chip span { display: inline-block; min-width: 0; line-height: 34px; vertical-align: top; }
 .ec-seller-input-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+.ec-research-condition-grid { grid-template-columns: minmax(300px, max-content) minmax(320px, 1fr) minmax(120px, max-content); gap: 12px 56px; align-items: start; }
+.ec-research-condition-grid .rakuten-field { min-width: 0; }
+.ec-research-condition-grid .rakuten-field > label { min-height: 16px; line-height: 1.2; margin-bottom: 6px; }
+.ec-research-condition-grid .ec-provider-row { min-height: 36px; align-items: center; }
+.ec-research-condition-grid .ec-seller-input-row { grid-template-columns: minmax(280px, 1fr) auto; align-items: stretch; }
+.ec-research-condition-grid .ec-seller-input-row input,
+.ec-research-condition-grid .ec-seller-input-row button { height: 36px; box-sizing: border-box; }
+@media(max-width:960px){ .ec-research-condition-grid { grid-template-columns: 1fr 1fr; gap: 12px; } }
+@media(max-width:640px){ .ec-research-condition-grid { grid-template-columns: 1fr; } .ec-research-condition-grid .ec-seller-input-row { grid-template-columns: 1fr auto; } }
 .ec-seller-picker { display: none; margin-top: 8px; border: 1px solid #e8e8e8; border-radius: 8px; background: #fff; max-height: 220px; overflow-y: auto; }
 .ec-seller-picker.active { display: block; }
 .ec-seller-picker-head { display: flex; justify-content: space-between; gap: 8px; padding: 8px 10px; background: #f5f7fa; border-bottom: 1px solid #eee; font-size: 11px; font-weight: 700; color: #555; position: sticky; top: 0; z-index: 1; }
@@ -2790,13 +2801,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 
     <div class="rakuten-card">
       <h3 data-i18n="ec_research_target_conditions">調査条件</h3>
-      <div class="rakuten-grid">
+      <div class="rakuten-grid ec-research-condition-grid">
         <div class="rakuten-field">
           <label data-i18n="ec_mall_providers">調査先</label>
           <div class="ec-provider-row">
-            <label class="ec-provider-chip"><input type="checkbox" class="ec-provider-check" value="rakuten" checked>楽天</label>
-            <label class="ec-provider-chip"><input type="checkbox" class="ec-provider-check" value="yahoo_shopping" checked>Yahooショッピング</label>
-            <label class="ec-provider-chip"><input type="checkbox" class="ec-provider-check" value="yahoo_auction" checked>ヤフオク</label>
+            <label class="ec-provider-chip"><input type="checkbox" class="ec-provider-check" value="rakuten" checked><span>楽天</span></label>
+            <label class="ec-provider-chip"><input type="checkbox" class="ec-provider-check" value="yahoo_shopping" checked><span>Yahooショッピング</span></label>
+            <label class="ec-provider-chip"><input type="checkbox" class="ec-provider-check" value="yahoo_auction" checked><span>ヤフオク</span></label>
           </div>
         </div>
         <div class="rakuten-field">
@@ -2810,7 +2821,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         <div class="rakuten-field">
           <label data-i18n="ec_mall_condition_filters">商品状態</label>
           <div class="ec-provider-row">
-            <label class="ec-provider-chip"><input id="ec-mall-include-used" type="checkbox"> <span data-i18n="ec_mall_include_used">中古も対象</span></label>
+            <label class="ec-provider-chip"><input id="ec-mall-include-used" type="checkbox"><span data-i18n="ec_mall_include_used">中古も対象</span></label>
           </div>
         </div>
       </div>
@@ -5861,7 +5872,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.380";
+var APP_VERSION       = "v1.1.381";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
