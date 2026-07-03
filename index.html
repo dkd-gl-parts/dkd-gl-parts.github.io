@@ -656,6 +656,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ac-part-value-with-action { justify-content: space-between; gap: 8px; padding: 5px 4px; }
 .ac-part-value-text { min-width: 0; overflow-wrap: anywhere; }
 .detail-inline-action { flex: 0 0 auto; white-space: nowrap; padding: 5px 9px; }
+.detail-mobile-actions { display: none; }
 .detail-main-grid .detail-table,
 .detail-main-grid .ac-part-grid { margin-bottom: 0; }
 .detail-main-grid .detail-table { margin-top: 0 !important; }
@@ -1003,8 +1004,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   #screen-search .detail-main-grid .ac-part-value { min-width: 0; overflow: hidden; word-break: keep-all; overflow-wrap: normal; }
   #screen-search .detail-main-grid .catalog-vehicle-maker-value,
   #screen-search .detail-main-grid .ac-part-value-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; word-break: keep-all; overflow-wrap: normal; }
+  #screen-search .detail-main-grid .detail-vehicle-maker-row .catalog-vehicle-button,
+  #screen-search .detail-main-grid #btn-open-components { display: none; }
+  #screen-search .detail-main-grid .ac-part-value-with-action { justify-content: flex-start; }
   #screen-search .detail-main-grid .catalog-vehicle-button { padding: 2px 5px; font-size: 10px; }
   #screen-search .detail-main-grid .detail-spec-block { margin-top: 8px; }
+  #screen-search .detail-mobile-actions { display: flex; gap: 6px; margin: -2px 0 8px; }
+  #screen-search .detail-mobile-actions .btn-sm-edit { flex: 1 1 0; min-width: 0; height: 26px; min-height: 26px; padding: 0 6px; font-size: 11px; }
   #screen-search .detail-kind-price-row { grid-template-columns: minmax(112px, .85fr) minmax(0, 1.15fr); gap: 8px; align-items: stretch; }
   #screen-search .detail-kind-price-row .product-kind-panel,
   #screen-search .detail-kind-price-row .sales-price-summary-block { min-height: 72px; padding: 8px; }
@@ -2769,7 +2775,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         </div>
         <div class="rakuten-field">
           <label data-i18n="rakuten_upload_file">品番リストアップロード</label>
-          <input id="rakuten-upload-file" type="file" accept=".csv,.txt">
+          <div class="ec-seller-input-row">
+            <input id="rakuten-upload-file" type="file" accept=".csv,.txt">
+            <button class="btn-sm-edit" type="button" id="btn-ec-download-upload-template" data-i18n="ec_upload_template_button">ひな型CSV</button>
+          </div>
         </div>
       </div>
       <div class="rakuten-actions">
@@ -3686,6 +3695,8 @@ var TRANSLATIONS = {
     rakuten_master_limit: "品番マスタ読込件数",
     rakuten_loading_master: "品番マスタを読み込み中...",
     rakuten_upload_file: "品番リストアップロード",
+    ec_upload_template_button: "ひな型CSV",
+    ec_upload_template_downloaded: "品番リストのひな型CSVをダウンロードしました",
     rakuten_load_master: "品番マスタから読み込み",
     rakuten_filter_unsurveyed: "未調査分だけに絞る",
     rakuten_unsurveyed_done: "未調査 {remaining} 件に絞りました（除外 {skipped} 件）",
@@ -4509,6 +4520,8 @@ var TRANSLATIONS = {
     rakuten_master_limit: "Part master load count",
     rakuten_loading_master: "Loading part master...",
     rakuten_upload_file: "Upload part number list",
+    ec_upload_template_button: "CSV Template",
+    ec_upload_template_downloaded: "Downloaded the part list CSV template",
     rakuten_load_master: "Load from Part Master",
     rakuten_filter_unsurveyed: "Keep Unsurveyed Only",
     rakuten_unsurveyed_done: "Kept {remaining} unsurveyed targets ({skipped} skipped)",
@@ -5325,6 +5338,8 @@ var TRANSLATIONS = {
     rakuten_master_limit: "从品号主数据读取件数",
     rakuten_loading_master: "正在读取品号主数据...",
     rakuten_upload_file: "上传品号列表",
+    ec_upload_template_button: "CSV模板",
+    ec_upload_template_downloaded: "已下载品号列表CSV模板",
     rakuten_load_master: "从品号主数据读取",
     rakuten_filter_unsurveyed: "仅保留未调查",
     rakuten_unsurveyed_done: "已保留未调查 {remaining} 件（排除 {skipped} 件）",
@@ -5564,7 +5579,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.356";
+var APP_VERSION       = "v1.1.358";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -7958,15 +7973,17 @@ async function loadCatalogVehicleSummary(root, product) {
   if (!customerCanShowVehicleInfo()) return;
   if (!root || !product) return;
   var valueEl = root.querySelector(".catalog-vehicle-maker-value");
-  var button = root.querySelector(".catalog-vehicle-button");
+  var buttons = Array.prototype.slice.call(root.querySelectorAll(".catalog-vehicle-button"));
   var rows = await fetchCatalogVehicleApplications(product);
   if (product === currentProduct) currentVehicleApplicationRows = rows;
   if (valueEl) valueEl.textContent = representativeVehicleMaker(rows);
-  if (button) {
+  if (buttons.length) {
     var detailCount = rows.filter(hasVehicleApplicationDetail).length;
-    button.textContent = detailCount ? (t("vehicle_info_button") + " (" + detailCount + ")") : (rows.length ? t("vehicle_info_button") + " (" + t("vehicle_info_maker_only") + ")" : t("vehicle_info_button"));
-    button.disabled = false;
-    button.onclick = function() { openVehicleApplicationsDialog(rows, product); };
+    buttons.forEach(function(button) {
+      button.textContent = detailCount ? (t("vehicle_info_button") + " (" + detailCount + ")") : (rows.length ? t("vehicle_info_button") + " (" + t("vehicle_info_maker_only") + ")" : t("vehicle_info_button"));
+      button.disabled = false;
+      button.onclick = function() { openVehicleApplicationsDialog(rows, product); };
+    });
   }
 }
 
@@ -8963,8 +8980,9 @@ function parseUploadedPartList(text) {
   var lines = String(text || "").split(/\r?\n/).map(function(x) { return x.trim(); }).filter(Boolean);
   if (!lines.length) return [];
   var first = lines[0].split(/\t|,/).map(function(x) { return x.trim().toLowerCase(); });
-  var headerNames = ["dkd_shohin_id","shohin_cd","product_id","商品id","商品コード","manufacturer_part_number","メーカー品番","genuine_part_number","純正品番","keyword","品番"];
+  var headerNames = ["dkd_shohin_id","shohin_cd","product_id","商品id","商品コード","manufacturer_part_number","メーカー品番","genuine_part_number","純正品番","search_number","keyword","検索キーワード","検索品番","品番","category","カテゴリ","対象カテゴリ"];
   var hasHeader = first.some(function(h) { return headerNames.indexOf(h) >= 0; });
+  var selectedCategory = (document.getElementById("rakuten-target-category") || {}).value || "";
   var targets = [];
   for (var i=(hasHeader ? 1 : 0); i<lines.length; i++) {
     var cols = lines[i].split(/\t|,/).map(function(x) { return x.trim().replace(/^\"|\"$/g, ""); });
@@ -8974,7 +8992,8 @@ function parseUploadedPartList(text) {
     var dkd = cleanPartNumberValue(row.dkd_shohin_id || row.shohin_cd || row.product_id || row["商品id"] || row["商品コード"] || "");
     var mfr = cleanPartNumberValue(row.manufacturer_part_number || row["メーカー品番"] || "");
     var genuine = cleanPartNumberValue(row.genuine_part_number || row["純正品番"] || "");
-    var keyword = cleanPartNumberValue(row.keyword || row["品番"] || mfr || genuine || dkd);
+    var keyword = cleanPartNumberValue(row.search_number || row.keyword || row["検索キーワード"] || row["検索品番"] || row["品番"] || mfr || genuine || dkd);
+    var category = ecMallCategoryFromUpload(row.category || row["カテゴリ"] || row["対象カテゴリ"] || "") || selectedCategory;
     if (!keyword) continue;
     var target = {
       part_id: null,
@@ -8982,7 +9001,7 @@ function parseUploadedPartList(text) {
       genuine_part_number: genuine,
       manufacturer_part_number: mfr,
       manufacturer: "",
-      category: "",
+      category: category || "",
       search_number: keyword,
       search_number_type: mfr ? "manufacturer_part_number" : (genuine ? "genuine_part_number" : "uploaded_number"),
       source_type: "upload",
@@ -8994,6 +9013,46 @@ function parseUploadedPartList(text) {
     targets.push(target);
   }
   return targets;
+}
+
+function ecMallCategoryFromUpload(value) {
+  var text = cleanPartNumberValue(value);
+  if (!text) return "";
+  var lowered = text.toLowerCase();
+  for (var i=0; i<(categoryOptions || []).length; i++) {
+    var cat = categoryOptions[i] || {};
+    var code = cat.category_code || cat.category || "";
+    var labels = [code, cat.label_ja, cat.label_en, cat.label_zh, categoryOptionLabel(cat)];
+    for (var j=0; j<labels.length; j++) {
+      if (String(labels[j] || "").trim().toLowerCase() === lowered) return code || text;
+    }
+  }
+  return text;
+}
+
+function ecMallCsvCell(value) {
+  var text = String(value == null ? "" : value);
+  if (/[",\r\n]/.test(text)) return '"' + text.replace(/"/g, '""') + '"';
+  return text;
+}
+
+function downloadEcMallUploadTemplate() {
+  var rows = [
+    ["検索キーワード","メーカー品番","純正品番","商品ID","カテゴリ"]
+  ];
+  var csv = rows.map(function(row) {
+    return row.map(ecMallCsvCell).join(",");
+  }).join("\r\n") + "\r\n";
+  var blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = "ec_price_research_targets_template.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+  setRakutenStatus(t("ec_upload_template_downloaded"), false);
 }
 
 async function resolveRakutenTarget(target) {
@@ -15505,6 +15564,14 @@ function renderPanelStatic() {
   var detailLowerGridHtml = detailLowerBlocks.length
     ? "<div class='detail-lower-grid detail-lower-count-" + detailLowerBlocks.length + "'>" + detailLowerBlocks.join("") + "</div>"
     : "";
+  var mobileActionButtons = [];
+  if (customerCanShowVehicleInfo()) {
+    mobileActionButtons.push("<button class='btn-sm-edit detail-mobile-action catalog-vehicle-button' type='button'>" + esc(t("vehicle_info_button")) + "</button>");
+  }
+  if (canSeeComponentInfo()) {
+    mobileActionButtons.push("<button class='btn-sm-edit btn-component-action detail-mobile-action btn-open-components-mobile' type='button'><span class='component-icon'>&#x1F9E9;</span> " + t("component_open_parts") + "</button>");
+  }
+  var mobileActionsHtml = mobileActionButtons.length ? "<div class='detail-mobile-actions'>" + mobileActionButtons.join("") + "</div>" : "";
   document.getElementById("panel-body").innerHTML =
     "<div class='detail-main-grid'>" +
       "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + "</div>" +
@@ -15512,6 +15579,7 @@ function renderPanelStatic() {
       "<div class='detail-spec-block detail-spec-after-maker'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div>" +
       "</div>" +
     "</div>" +
+    mobileActionsHtml +
     kindPriceRowHtml +
     toolHtml +
     detailLowerGridHtml +
@@ -15528,6 +15596,9 @@ function renderPanelStatic() {
   bindProductKindPanelActions();
   var componentBtn = document.getElementById("btn-open-components");
   if (componentBtn) componentBtn.addEventListener("click", function(){ enterComponentsScreen("search"); });
+  Array.prototype.slice.call(document.querySelectorAll(".btn-open-components-mobile")).forEach(function(btn) {
+    btn.addEventListener("click", function(){ enterComponentsScreen("search"); });
+  });
   currentVehicleApplicationRows = [];
   loadCatalogVehicleSummary(document.getElementById("panel-body"), p);
   loadProductSpecsForCurrent();
@@ -22383,6 +22454,7 @@ document.getElementById("btn-rakuten-filter-unsurveyed").addEventListener("click
   });
 });
 document.getElementById("btn-rakuten-run-bulk").addEventListener("click", runRakutenBulkSurvey);
+document.getElementById("btn-ec-download-upload-template").addEventListener("click", downloadEcMallUploadTemplate);
 document.getElementById("rakuten-upload-file").addEventListener("change", handleRakutenUploadFile);
 document.getElementById("rakuten-keyword").addEventListener("keydown", function(e){ if(e.key==="Enter") searchRakutenPrices(); });
 document.getElementById("btn-rakuten-list-search").addEventListener("click", loadRakutenPriceList);
