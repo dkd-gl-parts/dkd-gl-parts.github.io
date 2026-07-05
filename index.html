@@ -2776,7 +2776,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
             <input id="ec-schedule-end" type="time" value="05:00">
           </div>
           <div class="ec-schedule-field">
-            <label data-i18n="rakuten_hits">取得件数</label>
+            <label data-i18n="ec_schedule_candidate_hits">1品番あたり候補取得数</label>
             <select id="ec-schedule-hits">
               <option value="10">10</option>
               <option value="20">20</option>
@@ -3882,6 +3882,7 @@ var TRANSLATIONS = {
     ec_schedule_enabled_on: "有効",
     ec_schedule_start_time: "開始時刻",
     ec_schedule_end_time: "終了時刻",
+    ec_schedule_candidate_hits: "1品番あたり候補取得数",
     ec_schedule_save: "スケジュールを保存",
     ec_schedule_saved: "スケジュールを保存しました",
     ec_schedule_save_failed: "スケジュールの保存に失敗しました: {error}",
@@ -4763,6 +4764,7 @@ var TRANSLATIONS = {
     ec_schedule_enabled_on: "Enabled",
     ec_schedule_start_time: "Start Time",
     ec_schedule_end_time: "End Time",
+    ec_schedule_candidate_hits: "Candidates per Part",
     ec_schedule_save: "Save Schedule",
     ec_schedule_saved: "Saved schedule",
     ec_schedule_save_failed: "Failed to save schedule: {error}",
@@ -5637,6 +5639,7 @@ var TRANSLATIONS = {
     ec_schedule_enabled_on: "启用",
     ec_schedule_start_time: "开始时间",
     ec_schedule_end_time: "结束时间",
+    ec_schedule_candidate_hits: "每个品号候选获取数",
     ec_schedule_save: "保存计划",
     ec_schedule_saved: "已保存计划",
     ec_schedule_save_failed: "计划保存失败: {error}",
@@ -5872,7 +5875,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.383";
+var APP_VERSION       = "v1.1.384";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
