@@ -93,6 +93,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .detail-kind-price-row .product-kind-panel { border-top: 1px solid #e5edf8; }
 .detail-kind-price-row .product-kind-control { flex: 1; }
 .detail-kind-price-row .sales-price-summary { border: 0; background: transparent; padding: 0; flex: 1; }
+.detail-inline-kind-panel { margin-top: 10px; border: 1px solid #e5edf8; border-radius: 8px; background: #fbfdff; padding: 9px 11px; }
+.detail-inline-kind-panel .detail-block-title { margin-bottom: 6px; }
+.detail-inline-kind-panel .product-kind-control { margin-top: 0; }
+.detail-inline-kind-panel .product-kind-control-row.compact { justify-content: flex-end; }
+.detail-inline-kind-panel .product-kind-select { min-width: 0; width: min(180px, 100%); }
+.detail-inline-kind-panel .product-kind-stock-grid { max-width: 180px; margin-left: auto; }
 .sales-price-summary-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
 .sales-price-summary-head .detail-block-title { margin: 0; }
 .sales-price-summary { border: 1px solid #e5edf8; border-radius: 8px; background: #fbfdff; padding: 10px 12px; margin-bottom: 0; font-size: 12px; }
@@ -1073,6 +1079,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   #screen-search .detail-kind-price-row .product-kind-stock-row { grid-template-columns: minmax(0, 1fr) 54px; gap: 5px; }
   #screen-search .detail-kind-price-row .product-kind-stock-label { font-size: 10px; }
   #screen-search .detail-kind-price-row .product-kind-stock-value { width: 54px; font-size: 15px; padding: 2px 5px; border-radius: 6px; }
+  #screen-search .detail-inline-kind-panel { margin-top: 6px; padding: 7px; }
+  #screen-search .detail-inline-kind-panel .product-kind-select { width: 100%; min-width: 0; padding: 6px 7px; }
+  #screen-search .detail-inline-kind-panel .product-kind-stock-grid { max-width: none; margin-left: 0; gap: 4px; }
+  #screen-search .detail-inline-kind-panel .product-kind-stock-row { grid-template-columns: minmax(0, 1fr) 54px; gap: 5px; }
+  #screen-search .detail-inline-kind-panel .product-kind-stock-label { font-size: 10px; }
+  #screen-search .detail-inline-kind-panel .product-kind-stock-value { width: 54px; font-size: 15px; padding: 2px 5px; border-radius: 6px; }
   .panel-right-title { margin-bottom: 0; }
   .panel-right-empty { min-height: 42px; flex: 0 0 auto; flex-direction: row; justify-content: flex-start; }
   .panel-right-empty .empty-icon { font-size: 20px; }
@@ -5903,7 +5915,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.388";
+var APP_VERSION       = "v1.1.389";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -16936,9 +16948,11 @@ function renderPanelStatic() {
   var ecMallPriceBlockHtml = canViewPriceResearchHistory()
     ? "<div class='ec-mall-summary-block'><div class='sales-price-summary-head'><div class='detail-block-title'>" + t("ec_research_detail_title") + "</div></div><div id='ec-mall-price-summary-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div></div>"
     : "";
-  var productKindBlockHtml = "<div class='product-kind-panel'><div class='detail-block-title'>" + t("product_kind_section") + "</div><div id='product-kind-wrap'>" + renderProductKindPanelHtml(productKindSummaryForProduct(p)) + "</div></div>";
-  var kindPriceBlocks = [productKindBlockHtml, ecMallPriceBlockHtml].filter(Boolean);
-  var kindPriceRowHtml = "<div class='detail-kind-price-row" + (kindPriceBlocks.length > 1 ? "" : " single") + "'>" + kindPriceBlocks.join("") + "</div>";
+  var productKindBlockHtml = "<div class='product-kind-panel detail-inline-kind-panel'><div class='detail-block-title'>" + t("product_kind_section") + "</div><div id='product-kind-wrap'>" + renderProductKindPanelHtml(productKindSummaryForProduct(p)) + "</div></div>";
+  var kindPriceBlocks = [ecMallPriceBlockHtml].filter(Boolean);
+  var kindPriceRowHtml = kindPriceBlocks.length
+    ? "<div class='detail-kind-price-row" + (kindPriceBlocks.length > 1 ? "" : " single") + "'>" + kindPriceBlocks.join("") + "</div>"
+    : "";
   var kikanBlockHtml = customerCanShowCompatibleParts()
     ? "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
       "<div id='kikan-wrap'><div style='color:#aaa;font-size:12px;padding:8px 0'>" + t("loading") + "</div></div>"
@@ -16962,7 +16976,7 @@ function renderPanelStatic() {
   var mobileActionsHtml = mobileActionButtons.length ? "<div class='detail-mobile-actions'>" + mobileActionButtons.join("") + "</div>" : "";
   document.getElementById("panel-body").innerHTML =
     "<div class='detail-main-grid'>" +
-      "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + "</div>" +
+      "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + productKindBlockHtml + "</div>" +
       "<div class='detail-column'>" + makerHtml +
       "<div class='detail-spec-block detail-spec-after-maker'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div>" +
       "</div>" +
