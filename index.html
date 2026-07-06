@@ -5877,7 +5877,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.386";
+var APP_VERSION       = "v1.1.387";
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -10650,16 +10650,61 @@ function ecMallItemTotalPrice(item) {
   return Number(item.itemPrice) + Number(item.shippingPrice || 0);
 }
 
+var EC_MALL_KNOWN_YAHOO_AUCTION_SELLERS = {
+  "7kRN5AJLxPj99m5XD1bnffyoWzGpN": "エスオーエル2号店",
+  "FJ5NeS99SC8HDJ1PhPKRoqDWW62UG": "自動車パーツの宝箱 SOL",
+  "CYWC2j57DBqjcNEscUthj1EQCzRbG": "自動車パーツの宝箱 SOL"
+};
+
+function ecMallKnownSellerName(item) {
+  var id = String((item && (item.sellerId || item.shopCode)) || "").trim();
+  return EC_MALL_KNOWN_YAHOO_AUCTION_SELLERS[id] || "";
+}
+
 function ecMallSellerKey(item) {
   var id = String(item.sellerId || item.shopCode || "").trim().toLowerCase();
-  if (id) return (item.providerKey || "mall") + ":" + id;
-  var name = String(item.shopName || item.sellerName || "").trim().toLowerCase();
+  var name = String(ecMallKnownSellerName(item) || item.shopName || item.sellerName || "").trim().toLowerCase();
+  var compactName = name.replace(/[ \t\r\n\u3000]/g, "");
+  if (
+    compactName.indexOf("自動車パーツの宝箱sol") >= 0 ||
+    compactName.indexOf("エスオーエル") >= 0 ||
+    compactName.indexOf("sol補修パーツ館") >= 0 ||
+    ["solltd", "s-o-l", "fj5nes99sc8hdj1phpkroqdww62ug", "cywc2j57dbqjcnescuthj1eqczrbg", "7krn5ajlxpj99m5xd1bnffyowzgpn"].indexOf(id) >= 0
+  ) return "name:sol";
   if (name) return (item.providerKey || "mall") + ":name:" + name;
+  if (id) return (item.providerKey || "mall") + ":" + id;
   return (item.providerKey || "mall") + ":" + (item.itemUrl || item.itemName || "");
 }
 
 function ecMallSellerDisplayName(item) {
-  return item.shopName || item.sellerName || item.storeName || item.sellerId || item.shopCode || "-";
+  var known = ecMallKnownSellerName(item);
+  var seller = item.shopName || item.sellerName || item.storeName || "";
+  if (!seller || seller === item.sellerId || /^[A-Za-z0-9_-]{20,}$/.test(seller)) seller = known || seller;
+  return seller || item.sellerId || item.shopCode || "-";
+}
+
+function ecMallItemRuleText(item) {
+  var raw = item && item.raw && typeof item.raw === "object" ? item.raw : {};
+  return [
+    item && item.itemName,
+    item && item.itemCaption,
+    item && item.catchcopy,
+    raw.detailText
+  ].join("\n").toLowerCase();
+}
+
+function ecMallIsComponentOnlyItem(item) {
+  var text = ecMallItemRuleText(item || {});
+  var compact = text.replace(/[\s　・･_\-]/g, "");
+  return (
+    /ブラシ\s*(assy|ａｓｓｙ)?|ブラシassy|ブラシＡＳＳＹ|ブラシホルダー|カーボンブラシ|brush\s*(assy|assembly|holder)/i.test(text) ||
+    /マグネット\s*スイッチ|magnet\s*switch|solenoid\s*switch/i.test(text) ||
+    /レギュレータ|レギュレーター|regulator|プーリー|pulley|ベアリング|bearing|リペアキット|repair\s*kit|オーバーホール\s*キット|overhaul\s*kit/i.test(text) ||
+    /内部部品|補修用部品|補修専用部品|交換部品|単品販売|部品単品/.test(text) ||
+    compact.indexOf("マグネットスイッチ") >= 0 ||
+    compact.indexOf("補修専用部品") >= 0 ||
+    compact.indexOf("補修用部品") >= 0
+  );
 }
 
 function ecMallBest3Rows(items, includeUsed) {
@@ -10671,6 +10716,7 @@ function ecMallBest3Rows(items, includeUsed) {
       if ((item.condition || item.productType) !== condition) return;
       var total = ecMallItemTotalPrice(item);
       if (total == null || total <= 0) return;
+      if (ecMallIsComponentOnlyItem(item)) return;
       var key = ecMallSellerKey(item);
       if (!bySeller[key] || total < ecMallItemTotalPrice(bySeller[key])) bySeller[key] = item;
     });
