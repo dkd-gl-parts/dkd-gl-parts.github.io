@@ -1309,10 +1309,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .btn-user-history:hover { background: #dbeafe; }
 .btn-pw-reset { background: #667085; color: #fff; border: none; border-radius: 6px; padding: 7px 12px; font-size: 12px; cursor: pointer; white-space: nowrap; }
 .btn-pw-reset:hover { background: #525b6b; }
-.user-auth-history-modal { max-width: 780px; }
+.user-auth-history-modal { max-width: 980px; }
 .user-auth-history-summary { font-size: 12px; color: #667085; margin: -6px 0 12px; }
 .user-auth-history-list { max-height: 56vh; overflow: auto; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; }
 .user-auth-history-list .log-table th { position: sticky; top: 0; z-index: 1; }
+.user-history-section { padding: 10px 12px 14px; border-bottom: 1px solid #edf0f4; }
+.user-history-section:last-child { border-bottom: 0; }
+.user-history-section-title { font-size: 12px; font-weight: 800; color: #344054; margin: 2px 0 8px; }
+.activity-event-badge { display:inline-block; border-radius:999px; background:#eef4ff; color:#2563eb; padding:2px 8px; font-size:11px; font-weight:700; white-space:nowrap; }
+.auth-history-ip { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; color: #475467; }
 .auth-event-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 58px; border-radius: 999px; padding: 3px 8px; font-size: 11px; font-weight: 700; }
 .auth-event-login { background: #e8f7ee; color: #16723a; }
 .auth-event-logout { background: #f3f4f6; color: #475467; }
@@ -3716,11 +3721,18 @@ var TRANSLATIONS = {
     btn_activate: "有効化",
     btn_send_pw_reset: "PW再設定メール送信",
     btn_auth_history: "履歴",
-    auth_history_title: "ログイン履歴",
+    auth_history_title: "ユーザー履歴",
+    auth_history_login_section: "ログイン/ログアウト",
+    auth_history_activity_section: "活動履歴",
     auth_history_event: "種別",
     auth_history_version: "版",
     auth_history_device: "端末",
+    auth_history_ip: "IP",
+    activity_history_action: "操作",
+    activity_history_screen: "画面",
+    activity_history_target: "対象",
     auth_history_no_data: "ログイン/ログアウト履歴はありません",
+    activity_history_no_data: "活動履歴はありません",
     auth_history_load_error: "履歴を読み込めませんでした",
     auth_event_login: "ログイン",
     auth_event_logout: "ログアウト",
@@ -4598,11 +4610,18 @@ var TRANSLATIONS = {
     btn_activate: "Activate",
     btn_send_pw_reset: "Send PW Reset Email",
     btn_auth_history: "History",
-    auth_history_title: "Login History",
+    auth_history_title: "User History",
+    auth_history_login_section: "Login/Logout",
+    auth_history_activity_section: "Activity History",
     auth_history_event: "Event",
     auth_history_version: "Version",
     auth_history_device: "Device",
+    auth_history_ip: "IP",
+    activity_history_action: "Action",
+    activity_history_screen: "Screen",
+    activity_history_target: "Target",
     auth_history_no_data: "No login/logout history found",
+    activity_history_no_data: "No activity history found",
     auth_history_load_error: "Could not load history",
     auth_event_login: "Login",
     auth_event_logout: "Logout",
@@ -5473,11 +5492,18 @@ var TRANSLATIONS = {
     btn_activate: "启用",
     btn_send_pw_reset: "发送密码重置邮件",
     btn_auth_history: "履历",
-    auth_history_title: "登录履历",
+    auth_history_title: "用户履历",
+    auth_history_login_section: "登录/退出",
+    auth_history_activity_section: "活动履历",
     auth_history_event: "类型",
     auth_history_version: "版本",
     auth_history_device: "设备",
+    auth_history_ip: "IP",
+    activity_history_action: "操作",
+    activity_history_screen: "画面",
+    activity_history_target: "对象",
     auth_history_no_data: "暂无登录/退出履历",
+    activity_history_no_data: "暂无活动履历",
     auth_history_load_error: "无法读取履历",
     auth_event_login: "登录",
     auth_event_logout: "退出",
@@ -5877,7 +5903,9 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.387";
+var APP_VERSION       = "v1.1.388";
+var currentActivitySessionId = null;
+var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -6912,6 +6940,7 @@ function showScreen(id) {
   var el = document.getElementById("screen-" + id);
   if (el) el.classList.add("active");
   window.scrollTo(0, 0);
+  logScreenOpen(id);
 }
 function isScreenActive(id) {
   var el = document.getElementById("screen-" + id);
@@ -7032,19 +7061,226 @@ async function loadProfile() {
   return true;
 }
 
+function createActivitySessionId() {
+  var rand = Math.random().toString(36).slice(2);
+  return "dcats_" + Date.now().toString(36) + "_" + rand;
+}
+
+function ensureActivitySessionId(forceNew) {
+  if (forceNew) currentActivitySessionId = null;
+  if (!currentActivitySessionId) {
+    try {
+      currentActivitySessionId = forceNew ? "" : (sessionStorage.getItem("dcats_activity_session_id") || "");
+    } catch (e) {
+      currentActivitySessionId = "";
+    }
+  }
+  if (!currentActivitySessionId) {
+    currentActivitySessionId = createActivitySessionId();
+    try { sessionStorage.setItem("dcats_activity_session_id", currentActivitySessionId); } catch (e) {}
+  }
+  return currentActivitySessionId;
+}
+
+function clearActivitySessionId() {
+  currentActivitySessionId = null;
+  try { sessionStorage.removeItem("dcats_activity_session_id"); } catch (e) {}
+}
+
+function activityPageUrl() {
+  return window.location.origin + window.location.pathname;
+}
+
+function activityViewportInfo() {
+  return {
+    viewport_width: window.innerWidth || document.documentElement.clientWidth || null,
+    viewport_height: window.innerHeight || document.documentElement.clientHeight || null
+  };
+}
+
+function activityTimezone() {
+  try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; }
+}
+
+function normalizeActivityMetadata(metadata) {
+  if (!metadata || typeof metadata !== "object") return {};
+  try {
+    var json = JSON.stringify(metadata);
+    if (json.length > 3500) {
+      return { summary: json.slice(0, 3500), truncated: true };
+    }
+    return JSON.parse(json);
+  } catch (e) {
+    return { value: String(metadata).slice(0, 3500) };
+  }
+}
+
+function activeScreenId() {
+  var active = document.querySelector(".screen.active");
+  if (!active || !active.id) return "";
+  return active.id.replace(/^screen-/, "");
+}
+
+function productActivityDesc(product) {
+  if (!product) return "";
+  return [
+    product.manufacturer_part_number || product.core_part_number || "",
+    product.genuine_part_number || product.genuine_part_number_2 || "",
+    productCategoryLabel(product) || product.category_code || product.category || ""
+  ].filter(Boolean).join(" / ");
+}
+
+function logUserActivity(eventType, options) {
+  options = options || {};
+  if (!currentUser || !userProfile || !eventType) return Promise.resolve();
+  var throttleMs = options.throttleMs || 0;
+  var throttleKey = options.throttleKey ? (eventType + ":" + options.throttleKey) : "";
+  if (throttleKey && throttleMs > 0) {
+    var now = Date.now();
+    if (activityEventThrottleMap[throttleKey] && now - activityEventThrottleMap[throttleKey] < throttleMs) return Promise.resolve();
+    activityEventThrottleMap[throttleKey] = now;
+  }
+
+  var vp = activityViewportInfo();
+  var args = {
+    p_event_type: eventType,
+    p_user_email: userProfile.email || currentUser.email || null,
+    p_user_name: userProfile.name || userProfile.email || currentUser.email || null,
+    p_session_id: ensureActivitySessionId(false),
+    p_screen: options.screen || activeScreenId() || null,
+    p_action: options.action || null,
+    p_target_type: options.target_type || null,
+    p_target_id: options.target_id == null ? null : String(options.target_id),
+    p_target_desc: options.target_desc || null,
+    p_result: options.result || "ok",
+    p_app_version: APP_VERSION,
+    p_page_url: activityPageUrl(),
+    p_user_agent: navigator.userAgent || null,
+    p_timezone: activityTimezone() || null,
+    p_language: navigator.language || currentLang || null,
+    p_viewport_width: vp.viewport_width,
+    p_viewport_height: vp.viewport_height,
+    p_metadata: normalizeActivityMetadata(options.metadata)
+  };
+
+  return sb.rpc("log_user_activity_event", args).then(function(r) {
+    if (!r || !r.error) return r;
+    return sb.from("user_activity_events").insert({
+      user_id: currentUser.id,
+      user_email: args.p_user_email,
+      user_name: args.p_user_name,
+      session_id: args.p_session_id,
+      event_type: args.p_event_type,
+      screen: args.p_screen,
+      action: args.p_action,
+      target_type: args.p_target_type,
+      target_id: args.p_target_id,
+      target_desc: args.p_target_desc,
+      result: args.p_result,
+      app_version: args.p_app_version,
+      page_url: args.p_page_url,
+      user_agent: args.p_user_agent,
+      timezone: args.p_timezone,
+      language: args.p_language,
+      viewport_width: args.p_viewport_width,
+      viewport_height: args.p_viewport_height,
+      metadata: args.p_metadata
+    });
+  }).then(function(r) {
+    if (r && r.error) console.warn("activity event log failed", r.error);
+    return r;
+  }).catch(function(e) {
+    console.warn("activity event log failed", e);
+  });
+}
+
+function logScreenOpen(id) {
+  if (!id || !currentUser || !userProfile) return;
+  logUserActivity("screen_open", {
+    screen: id,
+    action: "open_screen",
+    throttleKey: "screen:" + id,
+    throttleMs: 30000
+  });
+}
+
+function logPermissionDenied(action, targetType, targetId, targetDesc) {
+  logUserActivity("permission_denied", {
+    action: action || "permission_denied",
+    target_type: targetType || null,
+    target_id: targetId || null,
+    target_desc: targetDesc || null,
+    result: "denied"
+  });
+}
+
+function showPermissionDenied(action, targetType, targetId, targetDesc) {
+  logPermissionDenied(action, targetType, targetId, targetDesc);
+  alert(t("err_perm"));
+}
+
+function logProductDetailOpen(screen, product) {
+  if (!product) return;
+  var id = productDkdId(product) || product.id || "";
+  logUserActivity("detail_open", {
+    screen: screen || activeScreenId() || "search",
+    action: "open_product_detail",
+    target_type: "core_products",
+    target_id: id,
+    target_desc: productActivityDesc(product),
+    metadata: {
+      dkd_shohin_id: id || null,
+      manufacturer_part_number: product.manufacturer_part_number || product.core_part_number || null,
+      genuine_part_number: product.genuine_part_number || null,
+      category: product.category_code || product.category || null
+    },
+    throttleKey: "detail:" + (screen || activeScreenId() || "search") + ":" + id,
+    throttleMs: 15000
+  });
+}
+
 async function recordAuthEvent(eventType) {
   if (!currentUser || !userProfile) return;
   try {
-    var r = await sb.from("user_auth_events").insert({
+    var vp = activityViewportInfo();
+    var payload = {
       user_id: currentUser.id,
       user_email: userProfile.email || currentUser.email || null,
       user_name: userProfile.name || userProfile.email || currentUser.email || null,
       event_type: eventType,
       app_version: APP_VERSION,
       user_agent: navigator.userAgent || null,
-      page_url: window.location.origin + window.location.pathname
+      page_url: activityPageUrl(),
+      session_id: ensureActivitySessionId(eventType === "login"),
+      timezone: activityTimezone() || null,
+      language: navigator.language || currentLang || null,
+      viewport_width: vp.viewport_width,
+      viewport_height: vp.viewport_height
+    };
+    var r = await sb.rpc("log_user_auth_event", {
+      p_event_type: payload.event_type,
+      p_user_email: payload.user_email,
+      p_user_name: payload.user_name,
+      p_session_id: payload.session_id,
+      p_app_version: payload.app_version,
+      p_page_url: payload.page_url,
+      p_user_agent: payload.user_agent,
+      p_timezone: payload.timezone,
+      p_language: payload.language,
+      p_viewport_width: payload.viewport_width,
+      p_viewport_height: payload.viewport_height
     });
+    if (r.error) r = await sb.from("user_auth_events").insert(payload);
     if (r.error) console.warn("auth event log failed", r.error);
+    await logUserActivity(eventType === "logout" ? "session_end" : "session_start", {
+      screen: "auth",
+      action: eventType,
+      target_type: "session",
+      target_id: payload.session_id,
+      metadata: { auth_event: eventType },
+      throttleKey: "session:" + eventType + ":" + payload.session_id,
+      throttleMs: 5000
+    });
   } catch (e) {
     console.warn("auth event log failed", e);
   }
@@ -7093,6 +7329,7 @@ async function doLogin() {
 async function doLogout() {
   await recordAuthEvent("logout");
   await sb.auth.signOut();
+  clearActivitySessionId();
   currentUser = null; userProfile = null;
   customerViewerContext = null;
   allProducts = []; dataLoaded = false;
@@ -8515,7 +8752,7 @@ async function openProductionImageUpload() {
 }
 
 function openProductionImageActionsDialog() {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canEdit()) { showPermissionDenied("open_image_actions", "core_product_images"); return; }
   if (!currentProductionRow) return;
   fillImageKindSelect(document.getElementById("production-image-action-kind"), currentProductionImageKind || "rebuilt");
   document.getElementById("production-image-actions-overlay").classList.add("show");
@@ -8548,7 +8785,7 @@ function buildProductionAiCameraUrl(row, mode) {
 }
 
 function openProductionCameraAi() {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canEdit()) { showPermissionDenied("open_production_camera_ai", "core_product_images"); return; }
   if (!currentProductionRow || !currentProductionRow.dkd_shohin_id) {
     alert("カメラAIにはDKD商品IDが必要です。");
     return;
@@ -11215,7 +11452,7 @@ function renderRakutenPriceList(rows) {
 // =============================================
 async function writeLog(operation, tableName, targetId, targetDesc, beforeData, afterData) {
   if (!userProfile) return;
-  await sb.from("operation_logs").insert({
+  var result = await sb.from("operation_logs").insert({
     user_id:     userProfile.id,
     user_email:  userProfile.email,
     user_name:   userProfile.name || userProfile.email,
@@ -11226,6 +11463,18 @@ async function writeLog(operation, tableName, targetId, targetDesc, beforeData, 
     before_data: beforeData || null,
     after_data:  afterData  || null
   });
+  logUserActivity(operation === "insert" ? "insert" : (operation === "delete" ? "delete" : "update"), {
+    action: operation,
+    target_type: tableName,
+    target_id: targetId,
+    target_desc: targetDesc,
+    result: result && result.error ? "error" : "ok",
+    metadata: {
+      operation: operation,
+      table_name: tableName
+    }
+  });
+  if (result && result.error) console.warn("operation log failed", result.error);
 }
 
 // =============================================
@@ -14319,7 +14568,7 @@ async function removeKikanMember(groupId, dkdGokanId) {
 // 操作ログ画面
 // =============================================
 async function enterLogs() {
-  if (!canViewOperationLogs()) { alert(t("err_perm")); return; }
+  if (!canViewOperationLogs()) { showPermissionDenied("open_logs", "operation_logs"); return; }
   showScreen("logs");
   await loadLogs();
 }
@@ -14371,7 +14620,7 @@ function enterChangePw() {
 }
 
 async function enterUsers() {
-  if (!canUseUserManagement()) { alert(t("err_perm")); return; }
+  if (!canUseUserManagement()) { showPermissionDenied("open_users", "profiles"); return; }
   showScreen("users");
   await loadUsers();
 }
@@ -15999,6 +16248,22 @@ async function runProductSearch(options) {
     syncFirstSearchResultDetail();
   }
   render();
+  if (options.logActivity) {
+    logUserActivity("search", {
+      screen: "search",
+      action: "product_search",
+      metadata: {
+        query: q || "",
+        filter: currentFilter,
+        category_filter: categoryFilter,
+        result_count: allProducts.length,
+        limit: productSearchLimit,
+        source: options.source || null
+      },
+      throttleKey: "product:" + (q || "") + ":" + currentFilter + ":" + productSearchLimit,
+      throttleMs: 3000
+    });
+  }
   loadProductSearchAuxiliaryData(seq, allProducts.slice());
 }
 
@@ -16504,7 +16769,7 @@ function syncFirstSearchResultDetail() {
     closePanel();
     return;
   }
-  openPanel(id, { showMobileOverlay: false });
+  openPanel(id, { showMobileOverlay: false, autoSelect: true });
 }
 
 function openPanel(id, options) {
@@ -16522,6 +16787,7 @@ function openPanel(id, options) {
     }
   }
   if (!currentProduct) return;
+  if (!options.autoSelect) logProductDetailOpen("search", currentProduct);
   document.getElementById("panel-welcome").style.display  = "none";
   document.getElementById("panel-inner").style.display    = "flex";
   document.getElementById("panel-footer").style.display   = canEdit() ? "block" : "none";
@@ -22308,7 +22574,7 @@ function selectedImageActionKind(context) {
 }
 
 function openImageActionsDialog() {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canEdit()) { showPermissionDenied("open_image_actions", "core_product_images"); return; }
   fillImageKindSelect(document.getElementById("image-action-product-kind"), selectedProductKind());
   document.getElementById("image-actions-overlay").classList.add("show");
 }
@@ -22318,7 +22584,7 @@ function closeImageActionsDialog() {
 }
 
 function triggerSalesImageUpload() {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canEdit()) { showPermissionDenied("upload_image", "core_product_images"); return; }
   var input = document.getElementById("upload-input");
   if (!input) return;
   input.multiple = true;
@@ -22487,7 +22753,7 @@ function productVariantIdForKind(kind) {
 }
 
 async function saveImageEditDialog() {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canEdit()) { showPermissionDenied("edit_image_kind", "core_product_images"); return; }
   var error = document.getElementById("image-edit-error");
   if (error) error.textContent = "";
   var context = currentImageEditContext === "production" ? "production" : "sales";
@@ -22559,7 +22825,7 @@ async function refreshAfterImageDelete() {
 }
 
 async function deleteSelectedImagesFromDialog() {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canEdit()) { showPermissionDenied("delete_image", "core_product_images"); return; }
   var indexes = selectedImageDeleteIndexes();
   if (!indexes.length) {
     alert(t("image_delete_none_selected"));
@@ -22585,7 +22851,7 @@ async function deleteSelectedImagesFromDialog() {
 }
 
 async function uploadImages(event) {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canEdit()) { showPermissionDenied("upload_image", "core_product_images"); return; }
   var uploadContext = event && event.target && event.target.dataset ? (event.target.dataset.uploadContext || "sales") : "sales";
   var uploadKind = event && event.target && event.target.dataset ? (event.target.dataset.uploadKind || "") : "";
   if (event && event.target && event.target.dataset) event.target.dataset.uploadContext = "";
@@ -22607,6 +22873,7 @@ async function uploadImages(event) {
   var label = document.getElementById("upload-label") || document.getElementById("btn-image-action-upload");
   if (label) label.classList.add("busy");
 
+  var uploaded = 0;
   for (var i=0;i<files.length;i++) {
     var file=files[i], nameParts=file.name.split("."), ext=nameParts.length>1?nameParts.pop():"jpg";
     var path = "dkd_"+dkdId+"/"+(isProductionUpload ? "production" : kind)+"/"+Date.now()+"_"+Math.random().toString(36).slice(2)+"."+ext;
@@ -22632,10 +22899,26 @@ async function uploadImages(event) {
     }
     var dbR  = await insertCoreProductImageRow(imagePayload);
     if (dbR.error) { alert(t("err_db")+": "+dbR.error.message); continue; }
+    uploaded++;
   }
 
   event.target.value = "";
   if (label) label.classList.remove("busy");
+  if (uploaded) {
+    logUserActivity("image_upload", {
+      screen: isProductionUpload ? "production-search" : "search",
+      action: isProductionUpload ? "upload_production_image" : "upload_sales_image",
+      target_type: "core_product_images",
+      target_id: dkdId,
+      target_desc: productActivityDesc(targetProduct),
+      metadata: {
+        count: uploaded,
+        product_kind: kind,
+        context: uploadContext,
+        dkd_shohin_id: dkdId
+      }
+    });
+  }
   if (isProductionUpload) {
     currentProductionImageKind = kind;
     await loadProductionImagesForRow(currentProductionRow, productionDetailRequestSeq);
@@ -22652,7 +22935,7 @@ async function uploadImages(event) {
 }
 
 async function deleteImage(imgId, imageUrl) {
-  if (!canEdit()) { alert(t("err_perm")); return false; }
+  if (!canEdit()) { showPermissionDenied("delete_image", "core_product_images", imgId); return false; }
   if (!confirm(t("del_confirm"))) return false;
   var target = currentImages.find(function(img) { return String(img.id) === String(imgId); }) || { id: imgId, image_url: imageUrl };
   var ok = await deleteImageRecord(target);
@@ -22686,6 +22969,18 @@ async function deleteImageRecord(target) {
     alert(t("msg_save_err") + ": " + deleteR.error.message);
     return false;
   }
+  logUserActivity("image_delete", {
+    screen: activeScreenId() || "search",
+    action: "delete_image",
+    target_type: "core_product_images",
+    target_id: imgId,
+    target_desc: productActivityDesc(currentProduct || currentProductionRow),
+    metadata: {
+      dkd_shohin_id: target.dkd_shohin_id || productDkdId(currentProduct || currentProductionRow) || null,
+      product_kind: target.product_kind || null,
+      image_origin: target.image_origin || null
+    }
+  });
   currentImages = currentImages.filter(function(img){return String(img.id)!==String(imgId);});
   return true;
 }
@@ -22853,8 +23148,30 @@ function authEventLabel(eventType) {
   return eventType === "logout" ? t("auth_event_logout") : t("auth_event_login");
 }
 
+function activityEventLabel(eventType) {
+  var labels = {
+    session_start: t("auth_event_login"),
+    session_end: t("auth_event_logout"),
+    screen_open: "画面表示",
+    search: "検索",
+    detail_open: "詳細表示",
+    save: "保存",
+    insert: t("log_insert"),
+    update: t("log_update"),
+    delete: t("log_delete"),
+    approve: t("btn_approve"),
+    suspend: t("btn_suspend"),
+    password_reset_sent: t("btn_send_pw_reset"),
+    image_upload: "画像登録",
+    image_delete: "画像削除",
+    permission_denied: "権限エラー",
+    settings_change: "重要設定変更"
+  };
+  return labels[eventType] || eventType || "-";
+}
+
 async function openUserAuthHistory(user) {
-  if (!user || !canManageUser(user)) { alert(t("err_perm")); return; }
+  if (!user || !canManageUser(user)) { showPermissionDenied("open_user_history", "profiles", user && user.id); return; }
   var overlay = document.getElementById("user-auth-history-overlay");
   var summary = document.getElementById("user-auth-history-summary");
   var list = document.getElementById("user-auth-history-list");
@@ -22864,37 +23181,72 @@ async function openUserAuthHistory(user) {
   list.innerHTML = "<div class='loading'>" + t("loading") + "</div>";
   overlay.classList.add("show");
 
-  var r = await sb.from("user_auth_events")
-    .select("id,event_type,user_email,user_name,app_version,user_agent,page_url,created_at")
+  var authQuery = sb.from("user_auth_events")
+    .select("id,event_type,user_email,user_name,app_version,user_agent,page_url,session_id,ip_address,timezone,language,viewport_width,viewport_height,created_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(100);
-  if (r.error) {
-    list.innerHTML = "<div class='empty save-err'>" + esc(t("auth_history_load_error")) + ": " + esc(r.error.message || String(r.error)) + "</div>";
+
+  var activityQuery = sb.from("user_activity_events")
+    .select("id,event_type,screen,action,target_type,target_id,target_desc,result,app_version,ip_address,user_agent,metadata,created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  var results = await Promise.all([authQuery, activityQuery]);
+  if (results[0].error && results[1].error) {
+    list.innerHTML = "<div class='empty save-err'>" + esc(t("auth_history_load_error")) + ": " + esc(results[0].error.message || String(results[0].error)) + "</div>";
     return;
   }
-  renderUserAuthHistory(r.data || []);
+  renderUserAuthHistory(results[0].data || [], results[1].data || [], results[0].error, results[1].error);
 }
 
-function renderUserAuthHistory(rows) {
+function renderUserAuthHistory(authRows, activityRows, authError, activityError) {
   var list = document.getElementById("user-auth-history-list");
   if (!list) return;
-  if (!rows.length) {
-    list.innerHTML = "<div class='empty'>" + t("auth_history_no_data") + "</div>";
-    return;
+  var html = "";
+  html += "<div class='user-history-section'><div class='user-history-section-title'>" + esc(t("auth_history_login_section")) + "</div>";
+  if (authError) {
+    html += "<div class='empty save-err'>" + esc(t("auth_history_load_error")) + ": " + esc(authError.message || String(authError)) + "</div>";
+  } else if (!authRows.length) {
+    html += "<div class='empty'>" + esc(t("auth_history_no_data")) + "</div>";
+  } else {
+    html += "<table class='log-table'><tr><th>" + t("log_date") + "</th><th>" + t("auth_history_event") + "</th><th>" + t("auth_history_ip") + "</th><th>" + t("auth_history_version") + "</th><th>" + t("auth_history_device") + "</th></tr>";
+    authRows.forEach(function(row) {
+      var dt = row.created_at ? new Date(row.created_at).toLocaleString("ja-JP") : "-";
+      var eventClass = row.event_type === "logout" ? "auth-event-logout" : "auth-event-login";
+      html += "<tr>";
+      html += "<td style='white-space:nowrap'>" + esc(dt) + "</td>";
+      html += "<td><span class='auth-event-badge " + eventClass + "'>" + esc(authEventLabel(row.event_type)) + "</span></td>";
+      html += "<td><span class='auth-history-ip'>" + esc(row.ip_address || "-") + "</span></td>";
+      html += "<td style='white-space:nowrap'>" + esc(row.app_version || "-") + "</td>";
+      html += "<td><div class='mgmt-sub'>" + esc(row.user_agent || "-") + "</div></td>";
+      html += "</tr>";
+    });
+    html += "</table>";
   }
-  var html = "<table class='log-table'><tr><th>" + t("log_date") + "</th><th>" + t("auth_history_event") + "</th><th>" + t("auth_history_version") + "</th><th>" + t("auth_history_device") + "</th></tr>";
-  rows.forEach(function(row) {
+  html += "</div>";
+
+  html += "<div class='user-history-section'><div class='user-history-section-title'>" + esc(t("auth_history_activity_section")) + "</div>";
+  if (activityError) {
+    html += "<div class='empty save-err'>" + esc(t("auth_history_load_error")) + ": " + esc(activityError.message || String(activityError)) + "</div>";
+  } else if (!activityRows.length) {
+    html += "<div class='empty'>" + esc(t("activity_history_no_data")) + "</div>";
+  } else {
+    html += "<table class='log-table'><tr><th>" + t("log_date") + "</th><th>" + t("auth_history_event") + "</th><th>" + t("activity_history_screen") + "</th><th>" + t("activity_history_action") + "</th><th>" + t("activity_history_target") + "</th></tr>";
+    activityRows.forEach(function(row) {
     var dt = row.created_at ? new Date(row.created_at).toLocaleString("ja-JP") : "-";
-    var eventClass = row.event_type === "logout" ? "auth-event-logout" : "auth-event-login";
     html += "<tr>";
     html += "<td style='white-space:nowrap'>" + esc(dt) + "</td>";
-    html += "<td><span class='auth-event-badge " + eventClass + "'>" + esc(authEventLabel(row.event_type)) + "</span></td>";
-    html += "<td style='white-space:nowrap'>" + esc(row.app_version || "-") + "</td>";
-    html += "<td><div class='mgmt-sub'>" + esc(row.user_agent || "-") + "</div></td>";
+      html += "<td><span class='activity-event-badge'>" + esc(activityEventLabel(row.event_type)) + "</span></td>";
+      html += "<td>" + esc(row.screen || "-") + "</td>";
+      html += "<td><div class='mgmt-pn'>" + esc(row.action || "-") + "</div><div class='mgmt-sub'>" + esc(row.result || "ok") + "</div></td>";
+      html += "<td><div class='mgmt-pn'>" + esc(row.target_desc || row.target_id || "-") + "</div><div class='mgmt-sub'>" + esc(row.target_type || "-") + "</div></td>";
     html += "</tr>";
   });
   html += "</table>";
+  }
+  html += "</div>";
   list.innerHTML = html;
 }
 
@@ -23046,7 +23398,7 @@ function renderUsers(users) {
     btn.addEventListener("click", async function() {
       var uid   = btn.dataset.uid;
       var target = userById[uid];
-      if (!canUseUserManagement() || !target || !canManageUser(target)) { alert(t("err_perm")); return; }
+      if (!canUseUserManagement() || !target || !canManageUser(target)) { showPermissionDenied("save_user_profile", "profiles", uid); return; }
       var card  = list.querySelector(".user-card[data-uid='"+uid+"']");
       var name  = card.querySelector(".user-name-input").value.trim();
       var companyCode = isSystemAdmin()
@@ -23056,7 +23408,7 @@ function renderUsers(users) {
         ? userDepartmentCode(userProfile)
         : (card.querySelector(".user-department-select").value || "viewer");
       var roleCode = normalizeAccessRoleForCompany(card.querySelector(".user-access-role-select").value, companyCode);
-      if (!canAssignUserRole(roleCode)) { alert(t("err_perm")); return; }
+      if (!canAssignUserRole(roleCode)) { showPermissionDenied("assign_user_role", "profiles", uid, roleCode); return; }
       if (roleCode === "customer_viewer" || roleCode === "external_viewer") departmentCode = "viewer";
       var customerSelect = card.querySelector(".user-customer-select");
       var salesCustomerId = customerSelect ? customerSelect.value : "";
@@ -23086,6 +23438,19 @@ function renderUsers(users) {
           msg.textContent=t("msg_save_err") + ": " + ((linkR.error && linkR.error.message) || String(linkR.error));
           return;
         }
+        logUserActivity("settings_change", {
+          screen: "users",
+          action: "save_user_profile",
+          target_type: "profiles",
+          target_id: uid,
+          target_desc: target.email || uid,
+          metadata: {
+            company_code: companyCode,
+            department_code: departmentCode,
+            role_code: roleCode,
+            sales_customer_id: roleCode === "customer_viewer" ? salesCustomerId : null
+          }
+        });
         msg.className="save-msg save-ok"; msg.textContent=t("msg_saved"); setTimeout(function(){msg.textContent="";},2500); await loadUsers();
       }
     });
@@ -23093,9 +23458,19 @@ function renderUsers(users) {
 
   async function updateStatus(uid,status) {
     var target = userById[uid];
-    if (!canUseUserManagement() || !target || !canManageUser(target)) { alert(t("err_perm")); return; }
+    if (!canUseUserManagement() || !target || !canManageUser(target)) { showPermissionDenied("update_user_status", "profiles", uid); return; }
     var r = await sb.from("profiles").update({status:status,updated_at:new Date().toISOString()}).eq("id",uid);
-    if (!r.error) await loadUsers();
+    if (!r.error) {
+      await logUserActivity(status === "active" ? "approve" : "suspend", {
+        screen: "users",
+        action: status === "active" ? "approve_user" : "suspend_user",
+        target_type: "profiles",
+        target_id: uid,
+        target_desc: target.email || uid,
+        metadata: { status: status }
+      });
+      await loadUsers();
+    }
   }
   list.querySelectorAll(".btn-approve").forEach(function(btn){
     btn.addEventListener("click",function(){updateStatus(btn.dataset.uid,"active");});
@@ -23119,6 +23494,13 @@ function renderUsers(users) {
         msg.className = "save-msg save-err";
         msg.textContent = t("msg_pw_reset_err");
       } else {
+        await logUserActivity("password_reset_sent", {
+          screen: "users",
+          action: "send_password_reset",
+          target_type: "profiles",
+          target_id: uid,
+          target_desc: email || uid
+        });
         msg.className = "save-msg save-ok";
         msg.textContent = t("msg_pw_reset_sent");
         setTimeout(function(){ msg.textContent = ""; }, 3000);
@@ -23722,8 +24104,8 @@ document.getElementById("kf-candidates").addEventListener("click", function(e) {
   var item = e.target.closest("[data-candidate-index]");
   if (item) selectKikanPartCandidate(parseInt(item.dataset.candidateIndex, 10));
 });
-document.getElementById("search-btn").addEventListener("click", function(){ searchSlOnly=false; runProductSearch({ resetLimit: true }); });
-document.getElementById("q").addEventListener("keydown", function(e){ if(e.key==="Enter") { searchSlOnly=false; runProductSearch({ resetLimit: true }); } });
+document.getElementById("search-btn").addEventListener("click", function(){ searchSlOnly=false; runProductSearch({ resetLimit: true, logActivity: true, source: "button" }); });
+document.getElementById("q").addEventListener("keydown", function(e){ if(e.key==="Enter") { searchSlOnly=false; runProductSearch({ resetLimit: true, logActivity: true, source: "enter" }); } });
 document.getElementById("clear-btn").addEventListener("click", function(){ document.getElementById("q").value=""; currentFilter="all"; searchSlOnly=false; productSearchLimit=SEARCH_INITIAL_LIMIT; syncSearchFilterControls(); runProductSearch(); });
 document.querySelectorAll("#filter-row .chip").forEach(function(chip){
   chip.addEventListener("click", function(){
@@ -23760,6 +24142,20 @@ document.getElementById("production-search-btn").addEventListener("click", async
   await loadProductionProducts();
   renderProductionList();
   renderProductionDetail(currentProductionRow);
+  logUserActivity("search", {
+    screen: "production-search",
+    action: "production_search",
+    metadata: {
+      query: (document.getElementById("production-q").value || "").trim(),
+      filter: productionFilter,
+      result_count: productionRows.length,
+      visible_count: productionFilteredRows.length,
+      limit: productionSearchLimit,
+      source: "button"
+    },
+    throttleKey: "production:" + ((document.getElementById("production-q").value || "").trim()) + ":" + productionFilter + ":" + productionSearchLimit,
+    throttleMs: 3000
+  });
 });
 document.getElementById("production-q").addEventListener("keydown", async function(e){
   if(e.key==="Enter") {
@@ -23768,6 +24164,20 @@ document.getElementById("production-q").addEventListener("keydown", async functi
     await loadProductionProducts();
     renderProductionList();
     renderProductionDetail(currentProductionRow);
+    logUserActivity("search", {
+      screen: "production-search",
+      action: "production_search",
+      metadata: {
+        query: (document.getElementById("production-q").value || "").trim(),
+        filter: productionFilter,
+        result_count: productionRows.length,
+        visible_count: productionFilteredRows.length,
+        limit: productionSearchLimit,
+        source: "enter"
+      },
+      throttleKey: "production:" + ((document.getElementById("production-q").value || "").trim()) + ":" + productionFilter + ":" + productionSearchLimit,
+      throttleMs: 3000
+    });
   }
 });
 document.getElementById("production-clear-btn").addEventListener("click", async function(){
@@ -23815,6 +24225,7 @@ document.getElementById("production-list").addEventListener("click", async funct
   currentProductionRow = productionFilteredRows[parseInt(card.dataset.productionIndex, 10)] || null;
   renderProductionList();
   await renderProductionDetail(currentProductionRow);
+  logProductDetailOpen("production-search", currentProductionRow);
   scrollProductionDetailIntoViewOnMobile();
 });
 document.getElementById("overlay").addEventListener("click", closePanel);
