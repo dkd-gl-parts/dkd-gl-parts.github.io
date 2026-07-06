@@ -319,6 +319,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-add-field.wide { grid-column: span 2; }
 .component-add-field.full { grid-column: 1 / -1; }
 .component-add-field.full textarea { min-height: 66px; }
+.component-yen-input { position: relative; }
+.component-yen-input .component-yen-prefix { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: #667085; font-size: 12px; font-weight: 700; pointer-events: none; }
+.component-yen-input input { padding-left: 23px; }
 .component-add-field input:focus,
 .component-add-field select:focus,
 .component-add-field textarea:focus { border-color: #4f8ef7; }
@@ -1701,7 +1704,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <h3 id="component-add-modal-title" data-i18n="component_add_title">構成部品を追加</h3>
     <div class="form-help" id="component-add-modal-help">-</div>
     <div class="component-add-grid">
-      <div class="component-add-field wide">
+      <div class="component-add-field full">
         <label><span data-i18n="component_name">部品名</span> *</label>
         <input id="component-add-name" type="text" list="component-add-name-list" data-i18n-ph="component_name_assist_ph" placeholder="候補から選択または入力" required>
         <datalist id="component-add-name-list"></datalist>
@@ -1714,29 +1717,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         <label><span data-i18n="f_mfr_pn">メーカー品番</span> *</label>
         <input id="component-add-mfr-pn" type="text" inputmode="latin" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
       </div>
-      <div class="component-add-field">
+      <div class="component-add-field wide">
         <label data-i18n="f_genuine_pn">純正品番</label>
         <input id="component-add-genuine-pn" type="text" inputmode="latin" autocomplete="off" autocapitalize="characters" spellcheck="false">
       </div>
       <div class="component-add-field">
-        <label data-i18n="component_position">図番/位置</label>
-        <input id="component-add-position" type="text">
-      </div>
-      <div class="component-add-field">
         <label data-i18n="component_quantity">数量</label>
-        <input id="component-add-qty" type="text" value="1">
+        <input id="component-add-qty" type="number" min="1" step="1" inputmode="numeric" pattern="[0-9]*" value="1">
       </div>
       <div class="component-add-field">
         <label data-i18n="component_unit_price">単価</label>
-        <input id="component-add-unit-price" type="number" min="0" step="1">
-      </div>
-      <div class="component-add-field">
-        <label data-i18n="component_replacement_rate">交換率</label>
-        <input id="component-add-replacement-rate" type="number" min="0" step="1" inputmode="numeric" pattern="[0-9]*">
-      </div>
-      <div class="component-add-field">
-        <label data-i18n="component_interchange">互</label>
-        <input id="component-add-interchange" type="text">
+        <div class="component-yen-input">
+          <span class="component-yen-prefix">¥</span>
+          <input id="component-add-unit-price" type="number" min="0" step="1" inputmode="numeric" pattern="[0-9]*">
+        </div>
       </div>
       <div class="component-add-field">
         <label data-i18n="component_procurement_category">調達区分</label>
@@ -1746,6 +1740,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
           <option value="自コア再利用" data-i18n="component_procurement_reuse_core">自コア再利用</option>
           <option value="新品交換" data-i18n="component_procurement_new_replacement">新品交換</option>
         </select>
+      </div>
+      <div class="component-add-field">
+        <label data-i18n="component_replacement_rate">交換率</label>
+        <input id="component-add-replacement-rate" type="number" min="0" max="100" step="1" inputmode="numeric" pattern="[0-9]*">
+      </div>
+      <div class="component-add-field">
+        <label data-i18n="component_interchange">互</label>
+        <input id="component-add-interchange" type="text">
+      </div>
+      <div class="component-add-field">
+        <label data-i18n="component_position">図番/位置</label>
+        <input id="component-add-position" type="text">
       </div>
       <div class="component-add-field">
         <label data-i18n="component_start_period">始期</label>
@@ -4024,6 +4030,7 @@ var TRANSLATIONS = {
     component_unit_price: "単価",
     component_replacement_rate: "交換率",
     component_replacement_rate_digits: "交換率は数字のみで入力してください。",
+    component_replacement_rate_range: "交換率は0〜100で入力してください。",
     component_procurement_category: "調達区分",
     component_procurement_parts_donor: "部品どり",
     component_procurement_reuse_core: "自コア再利用",
@@ -4913,6 +4920,7 @@ var TRANSLATIONS = {
     component_unit_price: "Unit Price",
     component_replacement_rate: "Replacement Rate",
     component_replacement_rate_digits: "Replacement rate must contain digits only.",
+    component_replacement_rate_range: "Replacement rate must be between 0 and 100.",
     component_procurement_category: "Procurement Type",
     component_procurement_parts_donor: "Parts Donor",
     component_procurement_reuse_core: "Reuse Own Core",
@@ -5792,6 +5800,7 @@ var TRANSLATIONS = {
     component_unit_price: "单价",
     component_replacement_rate: "更换率",
     component_replacement_rate_digits: "更换率只能输入数字。",
+    component_replacement_rate_range: "更换率请输入0到100。",
     component_procurement_category: "采购区分",
     component_procurement_parts_donor: "拆件使用",
     component_procurement_reuse_core: "自有旧件再利用",
@@ -5915,7 +5924,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.390";
+var APP_VERSION       = "v1.1.391";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -18304,6 +18313,32 @@ function nullableDigitsFromInput(id) {
   return parseInt(v, 10);
 }
 
+function normalizeComponentReplacementRateElement(setDefault) {
+  var el = document.getElementById("component-add-replacement-rate");
+  if (!el) return null;
+  var value = String(el.value || "").trim();
+  if (!value) {
+    if (setDefault) {
+      el.value = "100";
+      return 100;
+    }
+    return null;
+  }
+  if (!/^\d+$/.test(value)) return NaN;
+  var num = parseInt(value, 10);
+  if (num > 100) num = 100;
+  if (num < 0) num = 0;
+  if (String(num) !== value) el.value = String(num);
+  return num;
+}
+
+function applyComponentProcurementRateDefault() {
+  var procurement = document.getElementById("component-add-procurement-category");
+  var rate = document.getElementById("component-add-replacement-rate");
+  if (!procurement || !rate) return;
+  if (procurement.value === "新品交換") rate.value = "100";
+}
+
 async function addAssemblyComponentForCurrent() {
   if (!currentProduct) return;
   if (!canManageComponentsInCurrentContext()) { alert(t("err_perm")); return; }
@@ -18364,10 +18399,16 @@ async function addAssemblyComponentForCurrent() {
     else alert(t("component_mfr_pn_required"));
     return;
   }
-  var replacementRate = nullableDigitsFromInput("component-add-replacement-rate");
+  applyComponentProcurementRateDefault();
+  var replacementRate = normalizeComponentReplacementRateElement(false);
   if (isNaN(replacementRate)) {
     if (err) err.textContent = t("component_replacement_rate_digits");
     else alert(t("component_replacement_rate_digits"));
+    return;
+  }
+  if (replacementRate != null && (replacementRate < 0 || replacementRate > 100)) {
+    if (err) err.textContent = t("component_replacement_rate_range");
+    else alert(t("component_replacement_rate_range"));
     return;
   }
   var payload = {
@@ -23900,6 +23941,26 @@ document.getElementById("btn-component-add").addEventListener("click", addAssemb
     reconcileComponentAddPartNumbers();
   });
 });
+var componentAddReplacementRateEl = document.getElementById("component-add-replacement-rate");
+if (componentAddReplacementRateEl) {
+  componentAddReplacementRateEl.addEventListener("focus", function() {
+    normalizeComponentReplacementRateElement(true);
+    try { componentAddReplacementRateEl.select(); } catch (e) {}
+  });
+  componentAddReplacementRateEl.addEventListener("input", function() {
+    normalizeComponentReplacementRateElement(false);
+  });
+  componentAddReplacementRateEl.addEventListener("change", function() {
+    normalizeComponentReplacementRateElement(false);
+  });
+  componentAddReplacementRateEl.addEventListener("blur", function() {
+    normalizeComponentReplacementRateElement(false);
+  });
+}
+var componentAddProcurementEl = document.getElementById("component-add-procurement-category");
+if (componentAddProcurementEl) {
+  componentAddProcurementEl.addEventListener("change", applyComponentProcurementRateDefault);
+}
 document.getElementById("btn-component-alt-cancel").addEventListener("click", closeComponentAlternativeForm);
 document.getElementById("btn-component-alt-save").addEventListener("click", saveComponentAlternativeForm);
 document.getElementById("btn-back-component-parallel").addEventListener("click", function(){
