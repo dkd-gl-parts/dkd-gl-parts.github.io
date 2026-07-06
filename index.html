@@ -5924,7 +5924,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.391";
+var APP_VERSION       = "v1.1.392";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -18827,6 +18827,12 @@ function addComponentNameCandidate(list, seen, value) {
   list.push(text);
 }
 
+function mergeComponentNameCandidates(list, seen, values) {
+  (values || []).forEach(function(value) {
+    addComponentNameCandidate(list, seen, value);
+  });
+}
+
 function componentAlternativeNameCandidates(baseRow, selectedName) {
   var list = [];
   var seen = {};
@@ -19491,9 +19497,11 @@ async function loadComponentCatalogNameCandidatesForCurrent() {
     addComponentNameCandidate(list, seen, canonicalName);
     addComponentNameCandidateLabel(labels, canonicalName, componentNameCandidateDisplayLabel(canonicalName, row.component_name));
   });
-  if (!list.length && category) {
-    list = await loadComponentCatalogNameCandidatesFallback(mfr, null, category);
+  if (category && list.length < 80) {
+    var fallbackList = await loadComponentCatalogNameCandidatesFallback(mfr, null, category);
+    mergeComponentNameCandidates(list, seen, fallbackList);
   }
+  appendComponentNameDefaultCandidates(list, seen, category);
   list.sort(function(a, b) { return String(a || "").localeCompare(String(b || ""), "ja", { numeric: true }); });
   if (!isCurrentCandidateLoad()) return;
   componentCatalogNameCandidateCache[cacheKey] = componentNameCandidateCachePayload(list, labels);
@@ -19514,9 +19522,7 @@ function componentAddNameCandidates(selectedName) {
   (componentCatalogNameCandidates || []).forEach(function(name) {
     addComponentNameCandidate(list, seen, name);
   });
-  if (!componentCatalogNameCandidates || !componentCatalogNameCandidates.length) {
-    appendComponentNameDefaultCandidates(list, seen, componentCatalogCategoryCode(currentProduct));
-  }
+  appendComponentNameDefaultCandidates(list, seen, componentCatalogCategoryCode(currentProduct));
   addComponentNameCandidate(list, seen, selectedName);
   return list;
 }
