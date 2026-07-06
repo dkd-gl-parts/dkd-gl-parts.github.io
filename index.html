@@ -7142,6 +7142,39 @@ function productActivityDesc(product) {
   ].filter(Boolean).join(" / ");
 }
 
+function activityDataSummary(data) {
+  if (!data || typeof data !== "object") return null;
+  var keys = [
+    "id",
+    "dkd_shohin_id",
+    "product_variant_id",
+    "genuine_part_number",
+    "genuine_part_number_2",
+    "manufacturer",
+    "manufacturer_part_number",
+    "core_part_number",
+    "component_genuine_part_number",
+    "component_manufacturer_part_number",
+    "component_name",
+    "component_part_name",
+    "product_kind",
+    "image_origin",
+    "sl_part_id",
+    "sales_customer_id",
+    "email",
+    "name",
+    "status",
+    "role_code",
+    "company_code",
+    "department_code"
+  ];
+  var out = {};
+  keys.forEach(function(key) {
+    if (data[key] !== null && data[key] !== undefined && data[key] !== "") out[key] = data[key];
+  });
+  return Object.keys(out).length ? out : null;
+}
+
 function logUserActivity(eventType, options) {
   options = options || {};
   if (!currentUser || !userProfile || !eventType) return Promise.resolve();
@@ -11483,7 +11516,10 @@ async function writeLog(operation, tableName, targetId, targetDesc, beforeData, 
     result: result && result.error ? "error" : "ok",
     metadata: {
       operation: operation,
-      table_name: tableName
+      table_name: tableName,
+      target_desc: targetDesc || null,
+      before_summary: activityDataSummary(beforeData),
+      after_summary: activityDataSummary(afterData)
     }
   });
   if (result && result.error) console.warn("operation log failed", result.error);
@@ -16264,6 +16300,8 @@ async function runProductSearch(options) {
     logUserActivity("search", {
       screen: "search",
       action: "product_search",
+      target_type: "search",
+      target_desc: q || categoryFilter || currentFilter || "-",
       metadata: {
         query: q || "",
         filter: currentFilter,
@@ -23184,6 +23222,56 @@ function activityEventLabel(eventType) {
   return labels[eventType] || eventType || "-";
 }
 
+function activitySummaryParts(summary) {
+  if (!summary || typeof summary !== "object") return [];
+  var parts = [];
+  if (summary.dkd_shohin_id) parts.push("DKD: " + summary.dkd_shohin_id);
+  if (summary.manufacturer_part_number) parts.push("メーカー品番: " + summary.manufacturer_part_number);
+  if (summary.component_manufacturer_part_number) parts.push("構成品番: " + summary.component_manufacturer_part_number);
+  if (summary.genuine_part_number) parts.push("純正: " + summary.genuine_part_number);
+  if (summary.component_genuine_part_number) parts.push("構成純正: " + summary.component_genuine_part_number);
+  if (summary.core_part_number) parts.push("コア品番: " + summary.core_part_number);
+  if (summary.product_kind) parts.push("区分: " + productKindLabel(summary.product_kind));
+  if (summary.component_name || summary.component_part_name) parts.push("部品名: " + (summary.component_name || summary.component_part_name));
+  if (summary.email) parts.push("メール: " + summary.email);
+  return parts;
+}
+
+function activityMetadataSummaryText(row) {
+  var meta = row && row.metadata && typeof row.metadata === "object" ? row.metadata : {};
+  if (row && row.event_type === "search") {
+    var q = meta.query || row.target_desc || "";
+    return [
+      "検索語: " + (q || "-"),
+      meta.filter ? "フィルタ: " + meta.filter : "",
+      meta.result_count !== undefined ? "結果: " + meta.result_count + "件" : ""
+    ].filter(Boolean).join(" / ");
+  }
+  if (row && row.event_type === "image_upload") {
+    return [
+      meta.dkd_shohin_id ? "DKD: " + meta.dkd_shohin_id : "",
+      meta.product_kind ? "区分: " + productKindLabel(meta.product_kind) : "",
+      meta.count ? "枚数: " + meta.count : ""
+    ].filter(Boolean).join(" / ");
+  }
+  if (row && row.event_type === "image_delete") {
+    return [
+      meta.dkd_shohin_id ? "DKD: " + meta.dkd_shohin_id : "",
+      meta.product_kind ? "区分: " + productKindLabel(meta.product_kind) : "",
+      meta.image_origin ? "画像種別: " + meta.image_origin : ""
+    ].filter(Boolean).join(" / ");
+  }
+  if (row && row.event_type === "settings_change") {
+    return [
+      meta.company_code ? "会社: " + meta.company_code : "",
+      meta.department_code ? "部署: " + meta.department_code : "",
+      meta.role_code ? "権限: " + meta.role_code : ""
+    ].filter(Boolean).join(" / ");
+  }
+  var parts = activitySummaryParts(meta.before_summary || meta.after_summary);
+  return parts.join(" / ");
+}
+
 async function openUserAuthHistory(user) {
   if (!user || !canManageUser(user)) { showPermissionDenied("open_user_history", "profiles", user && user.id); return; }
   var overlay = document.getElementById("user-auth-history-overlay");
@@ -23250,11 +23338,12 @@ function renderUserAuthHistory(authRows, activityRows, authError, activityError)
     html += "<table class='log-table'><tr><th>" + t("log_date") + "</th><th>" + t("auth_history_event") + "</th><th>" + t("activity_history_screen") + "</th><th>" + t("activity_history_action") + "</th><th>" + t("activity_history_target") + "</th></tr>";
     activityRows.forEach(function(row) {
     var dt = row.created_at ? new Date(row.created_at).toLocaleString("ja-JP") : "-";
+    var metaText = activityMetadataSummaryText(row);
     html += "<tr>";
     html += "<td style='white-space:nowrap'>" + esc(dt) + "</td>";
       html += "<td><span class='activity-event-badge'>" + esc(activityEventLabel(row.event_type)) + "</span></td>";
       html += "<td>" + esc(row.screen || "-") + "</td>";
-      html += "<td><div class='mgmt-pn'>" + esc(row.action || "-") + "</div><div class='mgmt-sub'>" + esc(row.result || "ok") + "</div></td>";
+      html += "<td><div class='mgmt-pn'>" + esc(row.action || "-") + "</div><div class='mgmt-sub'>" + esc(row.result || "ok") + "</div>" + (metaText ? "<div class='mgmt-sub'>" + esc(metaText) + "</div>" : "") + "</td>";
       html += "<td><div class='mgmt-pn'>" + esc(row.target_desc || row.target_id || "-") + "</div><div class='mgmt-sub'>" + esc(row.target_type || "-") + "</div></td>";
     html += "</tr>";
   });
@@ -24159,6 +24248,8 @@ document.getElementById("production-search-btn").addEventListener("click", async
   logUserActivity("search", {
     screen: "production-search",
     action: "production_search",
+    target_type: "search",
+    target_desc: (document.getElementById("production-q").value || "").trim() || productionFilter || "-",
     metadata: {
       query: (document.getElementById("production-q").value || "").trim(),
       filter: productionFilter,
@@ -24181,6 +24272,8 @@ document.getElementById("production-q").addEventListener("keydown", async functi
     logUserActivity("search", {
       screen: "production-search",
       action: "production_search",
+      target_type: "search",
+      target_desc: (document.getElementById("production-q").value || "").trim() || productionFilter || "-",
       metadata: {
         query: (document.getElementById("production-q").value || "").trim(),
         filter: productionFilter,
