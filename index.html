@@ -5915,7 +5915,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.389";
+var APP_VERSION       = "v1.1.390";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -18069,8 +18069,8 @@ function normalizeComponentPartNumberElement(el) {
 
 function componentPartNumberSpec(kind) {
   return kind === "genuine"
-    ? { min: 5, max: 16, required: false, label: t("f_genuine_pn") }
-    : { min: 5, max: 13, required: true, label: t("f_mfr_pn") };
+    ? { required: false, label: t("f_genuine_pn") }
+    : { required: true, label: t("f_mfr_pn") };
 }
 
 function componentPartNumberValidation(value, kind) {
@@ -18084,14 +18084,6 @@ function componentPartNumberValidation(value, kind) {
   }
   if (!/^[A-Z0-9-]+$/.test(normalized)) {
     errors.push(tf("component_part_number_invalid_chars", { field: spec.label }));
-  }
-  if (normalized.length < spec.min || normalized.length > spec.max) {
-    warnings.push(tf("component_part_number_length_warning", {
-      field: spec.label,
-      min: spec.min,
-      max: spec.max,
-      count: normalized.length
-    }));
   }
   return { value: normalized, errors: errors, warnings: warnings };
 }
