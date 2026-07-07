@@ -687,6 +687,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .candidate-item:hover { background: #f5f8ff; }
 .candidate-main { font-weight: 600; color: #1a1a2e; }
 .candidate-sub { color: #777; margin-top: 2px; font-family: monospace; }
+.form-card.kikan-form-card { max-width: 980px; width: min(980px, calc(100vw - 24px)); }
+.kikan-form-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(280px, .95fr); gap: 14px; align-items: start; }
+.kikan-form-panel { border: 1px solid #e7edf7; border-radius: 10px; padding: 12px; background: #fbfdff; }
+.kikan-form-panel-title { font-size: 12px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; display: flex; justify-content: space-between; gap: 8px; }
+.kikan-multi-input { min-height: 72px; resize: vertical; line-height: 1.5; }
+.kikan-search-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.kikan-search-actions .btn-sm-edit { min-height: 32px; padding: 6px 10px; }
+.kikan-part-list { display: grid; gap: 7px; max-height: 270px; overflow: auto; }
+.kikan-part-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; border: 1px solid #eef1f6; border-radius: 8px; background: #fff; padding: 8px 10px; }
+.kikan-part-main { min-width: 0; }
+.kikan-part-title { font-size: 13px; font-weight: 700; color: #1a1a2e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kikan-part-meta { font-size: 11px; color: #718096; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kikan-part-status { display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 7px; font-size: 10px; font-weight: 700; background: #eef5ff; color: #1a6fd4; white-space: nowrap; }
+.kikan-part-empty { font-size: 12px; color: #99a3b3; padding: 10px; border: 1px dashed #d8e1ee; border-radius: 8px; background: #fff; }
+.kikan-candidate-action { margin-left: auto; color: #1a6fd4; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.candidate-item.kikan-candidate-item { display: flex; gap: 10px; align-items: center; }
+@media (max-width: 760px) {
+  .kikan-form-grid { grid-template-columns: 1fr; }
+  .form-card.kikan-form-card { max-width: calc(100vw - 16px); margin: 8px; padding: 16px; }
+  .kikan-part-list { max-height: 220px; }
+}
 @media(max-width:640px){ .form-grid { grid-template-columns: 1fr; } }
 .spec-box { margin: 12px 0 6px; border: 1px solid #e8edf5; border-radius: 8px; background: #fbfcff; padding: 10px 12px; }
 .spec-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
@@ -2740,19 +2761,42 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 
 <!-- 互換追加フォーム -->
 <div class="form-overlay" id="kikan-form-overlay">
-  <div class="form-card">
+  <div class="form-card kikan-form-card">
     <h3 id="kikan-form-title" data-i18n="kikan_group_add_title">互換グループに追加</h3>
     <input type="hidden" id="kf-group-id">
-    <div class="form-row">
-      <label class="form-label" data-i18n="kikan_add_part_label">追加する品番</label>
-      <input type="hidden" id="kf-dkd-shohin-id">
-      <input class="form-input" id="kf-part-search" type="search" data-i18n-ph="kikan_add_part_ph" placeholder="商品ID・純正品番・メーカー品番で検索">
-      <div class="candidate-list" id="kf-candidates"></div>
-      <div style="font-size:11px;color:#aaa;margin-top:4px" id="kf-part-info"></div>
+    <input type="hidden" id="kf-dkd-shohin-id">
+    <div class="kikan-form-grid">
+      <div class="kikan-form-panel">
+        <div class="kikan-form-panel-title">
+          <span data-i18n="kikan_add_part_label">追加する品番</span>
+          <span data-i18n="kikan_batch_hint">複数品番は改行・スペース・カンマで区切れます</span>
+        </div>
+        <textarea class="form-input kikan-multi-input" id="kf-part-search" rows="3" data-i18n-ph="kikan_add_part_ph" placeholder="商品ID・純正品番・メーカー品番で検索"></textarea>
+        <div class="kikan-search-actions">
+          <button type="button" class="btn-sm-edit" id="btn-kikan-part-search" data-i18n="kikan_resolve_parts">候補確認</button>
+          <button type="button" class="btn-sm-edit" id="btn-kikan-add-all-candidates" data-i18n="kikan_add_all_candidates">候補をすべて追加予定へ</button>
+        </div>
+        <div class="candidate-list" id="kf-candidates"></div>
+        <div style="font-size:11px;color:#aaa;margin-top:6px" id="kf-part-info"></div>
+      </div>
+      <div class="kikan-form-panel">
+        <div class="kikan-form-panel-title">
+          <span data-i18n="kikan_selected_parts">追加予定</span>
+          <span id="kf-selected-count"></span>
+        </div>
+        <div class="kikan-part-list" id="kf-selected-parts"></div>
+      </div>
+      <div class="kikan-form-panel" style="grid-column:1 / -1">
+        <div class="kikan-form-panel-title">
+          <span data-i18n="kikan_existing_members">登録済みメンバー</span>
+          <span id="kf-existing-count"></span>
+        </div>
+        <div class="kikan-part-list" id="kf-existing-members"></div>
+      </div>
     </div>
     <div class="form-footer">
       <button class="btn-cancel" id="btn-kikan-form-cancel" data-i18n="btn_back">キャンセル</button>
-      <button class="btn-primary" id="btn-kikan-form-save" data-i18n="btn_add_kikan">追加</button>
+      <button class="btn-primary" id="btn-kikan-form-save" data-i18n="kikan_save_batch">まとめて登録</button>
     </div>
     <div class="reg-error" id="kikan-form-error"></div>
   </div>
@@ -3724,6 +3768,21 @@ var TRANSLATIONS = {
     kikan_group_member_add_title: "グループ {id} にメンバー追加",
     kikan_no_product_master: "商品マスタに存在しません",
     kikan_select_candidate: "候補から追加する品番を選択してください",
+    kikan_batch_hint: "複数品番は改行・スペース・カンマで区切れます",
+    kikan_resolve_parts: "候補確認",
+    kikan_add_all_candidates: "候補をすべて追加予定へ",
+    kikan_selected_parts: "追加予定",
+    kikan_existing_members: "登録済みメンバー",
+    kikan_selected_empty: "追加予定の品番はありません",
+    kikan_existing_empty: "まだ登録済みメンバーはありません",
+    kikan_candidate_add: "追加予定へ",
+    kikan_registered: "登録済み",
+    kikan_pending: "追加予定",
+    kikan_duplicate_selected: "すでに追加予定に入っています",
+    kikan_duplicate_existing: "すでにこのグループに登録されています",
+    kikan_no_candidates_for: "候補なし: {terms}",
+    kikan_save_batch: "まとめて登録",
+    kikan_saved_count: "{n}件を登録しました",
     kikan_uncategorized_product: "カテゴリ未分類の商品は互換登録できません。先に基幹商品マスタのカテゴリを補正してください。",
     kikan_existing_uncategorized: "既存グループに未分類の商品が含まれています。先に基幹商品マスタのカテゴリを補正してください。",
     kikan_category_mismatch: "カテゴリが違う商品は互換登録できません。",
@@ -4619,6 +4678,21 @@ var TRANSLATIONS = {
     kikan_group_member_add_title: "Add member to group {id}",
     kikan_no_product_master: "This product does not exist in the product master.",
     kikan_select_candidate: "Select the part to add from the candidates.",
+    kikan_batch_hint: "Separate multiple part numbers with line breaks, spaces, or commas",
+    kikan_resolve_parts: "Check Candidates",
+    kikan_add_all_candidates: "Add All Candidates to Pending",
+    kikan_selected_parts: "Pending Additions",
+    kikan_existing_members: "Registered Members",
+    kikan_selected_empty: "No pending parts",
+    kikan_existing_empty: "No registered members yet",
+    kikan_candidate_add: "Add to Pending",
+    kikan_registered: "Registered",
+    kikan_pending: "Pending",
+    kikan_duplicate_selected: "Already in pending additions",
+    kikan_duplicate_existing: "Already registered in this group",
+    kikan_no_candidates_for: "No candidates: {terms}",
+    kikan_save_batch: "Register All",
+    kikan_saved_count: "Registered {n} item(s)",
     kikan_uncategorized_product: "Unclassified products cannot be registered for compatibility. Correct the category in the product master first.",
     kikan_existing_uncategorized: "The existing group contains an unclassified product. Correct the category in the product master first.",
     kikan_category_mismatch: "Products in different categories cannot be registered as compatible.",
@@ -5507,6 +5581,21 @@ var TRANSLATIONS = {
     kikan_group_member_add_title: "向组 {id} 添加成员",
     kikan_no_product_master: "商品主数据中不存在。",
     kikan_select_candidate: "请从候选中选择要添加的品番。",
+    kikan_batch_hint: "多个品番可用换行、空格或逗号分隔",
+    kikan_resolve_parts: "确认候选",
+    kikan_add_all_candidates: "将全部候选加入待添加",
+    kikan_selected_parts: "待添加",
+    kikan_existing_members: "已注册成员",
+    kikan_selected_empty: "没有待添加的品番",
+    kikan_existing_empty: "尚无已注册成员",
+    kikan_candidate_add: "加入待添加",
+    kikan_registered: "已注册",
+    kikan_pending: "待添加",
+    kikan_duplicate_selected: "已在待添加中",
+    kikan_duplicate_existing: "已注册在此组中",
+    kikan_no_candidates_for: "无候选: {terms}",
+    kikan_save_batch: "批量注册",
+    kikan_saved_count: "已注册 {n} 件",
     kikan_uncategorized_product: "未分类商品不能注册为兼容。请先修正商品主数据的类别。",
     kikan_existing_uncategorized: "现有组中包含未分类商品。请先修正商品主数据的类别。",
     kikan_category_mismatch: "类别不同的商品不能注册为兼容。",
@@ -5976,7 +6065,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.405";
+var APP_VERSION       = "v1.1.406";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -14435,6 +14524,9 @@ async function deletePart(partId) {
 // =============================================
 var kikanMgmtData  = [];
 var kikanFormGroupId = null;
+var kikanSelectedParts = [];
+var kikanExistingParts = [];
+var kikanExistingMemberIdSet = {};
 
 async function enterKikanMgmt() {
   if (!canViewManagementScreen()) { alert(t("err_perm")); return; }
@@ -14548,23 +14640,173 @@ async function loadKikanMgmt() {
 function openKikanForm(groupId) {
   if (!canEdit()) { alert(t("err_perm")); return; }
   kikanFormGroupId = groupId;
+  kikanSelectedParts = [];
+  kikanExistingParts = [];
+  kikanExistingMemberIdSet = {};
   document.getElementById("kf-group-id").value   = groupId || "";
   document.getElementById("kf-dkd-shohin-id").value  = "";
   document.getElementById("kf-part-search").value  = "";
   document.getElementById("kf-candidates").style.display = "none";
   document.getElementById("kf-candidates").innerHTML = "";
-  document.getElementById("kf-part-info").textContent = "";
-  document.getElementById("kikan-form-error").textContent = "";
+  setKikanFormStatus("", false);
   document.getElementById("kikan-form-title").textContent = groupId ? tf("kikan_group_member_add_title", { id: groupId }) : t("kikan_group_new_title");
+  renderKikanSelectedParts();
+  renderKikanExistingMembers();
   document.getElementById("kikan-form-overlay").classList.add("show");
+  loadKikanFormExistingMembers(groupId).catch(function(e) {
+    setKikanFormStatus((e && e.message) || t("msg_kikan_err"), true);
+  });
+  if (!groupId) {
+    var seedEl = document.getElementById("kikan-mgmt-search");
+    var seed = seedEl ? seedEl.value.trim() : "";
+    if (seed) {
+      document.getElementById("kf-part-search").value = seed;
+      searchKikanPartCandidates().catch(function(e) {
+        setKikanFormStatus((e && e.message) || t("msg_kikan_err"), true);
+      });
+    }
+  }
+}
+
+function setKikanFormStatus(message, isError) {
+  var infoEl = document.getElementById("kf-part-info");
+  var errEl = document.getElementById("kikan-form-error");
+  if (infoEl) {
+    infoEl.textContent = isError ? "" : (message || "");
+    infoEl.style.color = "#1a8c3e";
+  }
+  if (errEl) errEl.textContent = isError ? (message || "") : "";
+}
+
+function parseKikanPartSearchTerms(value) {
+  var normalized = normalizeAsciiWidth(value || "").toUpperCase();
+  var terms = normalized.split(/[\s,，、]+/).map(function(v) {
+    return v.trim();
+  }).filter(Boolean);
+  var seen = {};
+  return terms.filter(function(term) {
+    if (seen[term]) return false;
+    seen[term] = true;
+    return true;
+  });
+}
+
+function kikanPartId(p) {
+  return String(productDkdId(p) || p.dkd_shohin_id || p.dkd_gokan_id || "");
+}
+
+function kikanPartCardHtml(p, options) {
+  options = options || {};
+  var id = kikanPartId(p);
+  var title = (p.genuine_part_number || "-") + " / " + (p.manufacturer_part_number || "-");
+  var meta = "ID " + (id || "-") + " / " + (p.manufacturer || "-") + " / " + productCategoryLabel(p);
+  var status = options.status ? "<span class='kikan-part-status'>" + esc(options.status) + "</span>" : "";
+  var action = "";
+  if (options.removeSelected) {
+    action = "<button type='button' class='btn-sm-del' data-kf-selected-remove='" + esc(id) + "'>" + esc(t("kikan_remove")) + "</button>";
+  } else if (options.removeExisting && canEdit()) {
+    action = "<button type='button' class='btn-sm-del' data-kf-existing-remove='" + esc(id) + "'>" + esc(t("kikan_remove")) + "</button>";
+  } else {
+    action = status;
+  }
+  return "<div class='kikan-part-card'>" +
+    "<div class='kikan-part-main'><div class='kikan-part-title'>" + esc(title) + "</div><div class='kikan-part-meta'>" + esc(meta) + "</div></div>" +
+    (action || status) +
+    "</div>";
+}
+
+function renderKikanSelectedParts() {
+  var wrap = document.getElementById("kf-selected-parts");
+  var count = document.getElementById("kf-selected-count");
+  if (count) count.textContent = tf("kikan_member_count", { n: kikanSelectedParts.length });
+  if (!wrap) return;
+  if (!kikanSelectedParts.length) {
+    wrap.innerHTML = "<div class='kikan-part-empty'>" + esc(t("kikan_selected_empty")) + "</div>";
+    return;
+  }
+  wrap.innerHTML = kikanSelectedParts.map(function(p) {
+    return kikanPartCardHtml(p, { removeSelected: true, status: t("kikan_pending") });
+  }).join("");
+}
+
+function renderKikanExistingMembers() {
+  var wrap = document.getElementById("kf-existing-members");
+  var count = document.getElementById("kf-existing-count");
+  if (count) count.textContent = tf("kikan_member_count", { n: kikanExistingParts.length });
+  if (!wrap) return;
+  if (!kikanExistingParts.length) {
+    wrap.innerHTML = "<div class='kikan-part-empty'>" + esc(t("kikan_existing_empty")) + "</div>";
+    return;
+  }
+  wrap.innerHTML = kikanExistingParts.map(function(p) {
+    return kikanPartCardHtml(p, { removeExisting: true, status: t("kikan_registered") });
+  }).join("");
+}
+
+async function loadKikanFormExistingMembers(groupId) {
+  kikanExistingParts = [];
+  kikanExistingMemberIdSet = {};
+  if (!groupId) {
+    renderKikanExistingMembers();
+    return;
+  }
+  var wrap = document.getElementById("kf-existing-members");
+  if (wrap) wrap.innerHTML = "<div class='kikan-part-empty'>" + esc(t("loading")) + "</div>";
+  var rm = await sb.from("kikan_group_members").select("dkd_gokan_id, shohin_cd").eq("kikan_group_id", groupId);
+  if (rm.error) throw new Error(rm.error.message || t("msg_kikan_err"));
+  var ids = Array.from(new Set((rm.data || []).map(function(m) {
+    return parseInt(m.dkd_gokan_id, 10);
+  }).filter(function(id) {
+    return !isNaN(id);
+  })));
+  ids.forEach(function(id) { kikanExistingMemberIdSet[String(id)] = true; });
+  if (!ids.length) {
+    renderKikanExistingMembers();
+    return;
+  }
+  var rp = await sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).in("dkd_shohin_id", ids);
+  if (rp.error) throw new Error(rp.error.message || t("msg_kikan_err"));
+  var byId = {};
+  normalizeCoreProductFastRows(rp.data || []).forEach(function(p) {
+    byId[String(p.dkd_shohin_id)] = p;
+  });
+  kikanExistingParts = ids.map(function(id) {
+    return byId[String(id)] || { dkd_shohin_id: id, genuine_part_number: "-", manufacturer_part_number: "-", manufacturer: "-" };
+  });
+  renderKikanExistingMembers();
+}
+
+function addKikanSelectedPart(p) {
+  var id = kikanPartId(p);
+  if (!id) return false;
+  if (kikanExistingMemberIdSet[id]) {
+    setKikanFormStatus(t("kikan_duplicate_existing"), true);
+    return false;
+  }
+  if (kikanSelectedParts.some(function(row) { return kikanPartId(row) === id; })) {
+    setKikanFormStatus(t("kikan_duplicate_selected"), false);
+    return false;
+  }
+  kikanSelectedParts.push(p);
+  document.getElementById("kf-dkd-shohin-id").value = id;
+  renderKikanSelectedParts();
+  setKikanFormStatus(t("kikan_pending") + ": " + (p.genuine_part_number || p.manufacturer_part_number || id), false);
+  return true;
+}
+
+function addAllKikanCandidates() {
+  var added = 0;
+  (kikanCandidateParts || []).forEach(function(p) {
+    if (addKikanSelectedPart(p)) added++;
+  });
+  if (added > 0) setKikanFormStatus(tf("kikan_member_count", { n: added }) + " " + t("kikan_pending"), false);
 }
 
 async function searchKikanPartCandidates() {
   var q = document.getElementById("kf-part-search").value.trim();
   var listEl = document.getElementById("kf-candidates");
-  var infoEl = document.getElementById("kf-part-info");
   document.getElementById("kf-dkd-shohin-id").value = "";
-  infoEl.textContent = "";
+  setKikanFormStatus("", false);
   kikanCandidateParts = [];
 
   if (!q) {
@@ -14573,9 +14815,9 @@ async function searchKikanPartCandidates() {
     return;
   }
 
-  var qAscii = normalizeAsciiWidth(q).trim();
   var found = [];
   var seen = {};
+  var missingTerms = [];
   function appendCandidates(rows) {
     normalizeCoreProductFastRows(rows || []).forEach(function(p) {
       var key = String(productDkdId(p) || "");
@@ -14585,57 +14827,59 @@ async function searchKikanPartCandidates() {
     });
   }
 
-  if (/^\d+$/.test(qAscii)) {
-    var qNum = parseInt(qAscii, 10);
-    var direct = await sb.from("core_products")
-      .select(CORE_PRODUCT_FAST_SELECT)
-      .eq("dkd_shohin_id", qNum)
-      .limit(1);
-    if (direct.error) {
-      infoEl.textContent = direct.error.message || t("msg_kikan_err");
-      infoEl.style.color = "#e24b4a";
+  var terms = parseKikanPartSearchTerms(q).slice(0, 30);
+  for (var ti = 0; ti < terms.length; ti++) {
+    var qAscii = terms[ti];
+    var before = found.length;
+    if (/^\d+$/.test(qAscii)) {
+      var qNum = parseInt(qAscii, 10);
+      var direct = await sb.from("core_products")
+        .select(CORE_PRODUCT_FAST_SELECT)
+        .eq("dkd_shohin_id", qNum)
+        .limit(1);
+      if (direct.error) {
+        setKikanFormStatus(direct.error.message || t("msg_kikan_err"), true);
+        return;
+      }
+      appendCandidates(direct.data || []);
+    }
+
+    var r = await fetchCoreProductMasterMatches(qAscii, "", 10);
+    if (r.error) {
+      setKikanFormStatus(r.error.message || t("msg_kikan_err"), true);
       return;
     }
-    appendCandidates(direct.data || []);
+    appendCandidates(r.data || []);
+    if (found.length === before) missingTerms.push(qAscii);
   }
-
-  var r = await fetchCoreProductMasterMatches(qAscii, "", 10);
-  if (r.error) {
-    infoEl.textContent = r.error.message || t("msg_kikan_err");
-    infoEl.style.color = "#e24b4a";
-    return;
-  }
-  appendCandidates(r.data || []);
 
   kikanCandidateParts = found.slice(0, 10);
   if (kikanCandidateParts.length === 0) {
     listEl.style.display = "none";
     listEl.innerHTML = "";
-    infoEl.textContent = t("kikan_no_product_master");
-    infoEl.style.color = "#e24b4a";
+    setKikanFormStatus(t("kikan_no_product_master"), true);
     return;
   }
 
   var html = "";
   kikanCandidateParts.forEach(function(p, idx) {
-    html += "<button type='button' class='candidate-item' data-candidate-index='" + idx + "'>";
-    html += "<div class='candidate-main'>ID " + esc(String(p.dkd_shohin_id || "-")) + " / " + esc(p.genuine_part_number || "-") + "</div>";
-    html += "<div class='candidate-sub'>" + esc(p.manufacturer_part_number || "-") + " / " + esc(p.manufacturer || "-") + "</div>";
+    html += "<button type='button' class='candidate-item kikan-candidate-item' data-candidate-index='" + idx + "'>";
+    html += "<div style='min-width:0;flex:1'><div class='candidate-main'>ID " + esc(String(p.dkd_shohin_id || "-")) + " / " + esc(p.genuine_part_number || "-") + "</div>";
+    html += "<div class='candidate-sub'>" + esc(p.manufacturer_part_number || "-") + " / " + esc(p.manufacturer || "-") + " / " + esc(productCategoryLabel(p)) + "</div></div>";
+    html += "<span class='kikan-candidate-action'>" + esc(t("kikan_candidate_add")) + "</span>";
     html += "</button>";
   });
   listEl.innerHTML = html;
   listEl.style.display = "block";
+  if (missingTerms.length) {
+    setKikanFormStatus(tf("kikan_no_candidates_for", { terms: missingTerms.slice(0, 5).join(", ") }), false);
+  }
 }
 
 function selectKikanPartCandidate(index) {
   var p = kikanCandidateParts[index];
   if (!p) return;
-  document.getElementById("kf-dkd-shohin-id").value = p.dkd_shohin_id || "";
-  document.getElementById("kf-part-search").value = p.genuine_part_number || p.manufacturer_part_number || p.dkd_shohin_id || "";
-  var infoEl = document.getElementById("kf-part-info");
-  infoEl.textContent = "ID " + (p.dkd_shohin_id || "-") + " / " + (p.genuine_part_number || "-") + " / " + (p.manufacturer_part_number || "-");
-  infoEl.style.color = "#1a8c3e";
-  document.getElementById("kf-candidates").style.display = "none";
+  addKikanSelectedPart(p);
 }
 
 function getKikanCategoryCode(product) {
@@ -14650,76 +14894,115 @@ async function saveKikanForm() {
   var errEl   = document.getElementById("kikan-form-error");
   errEl.textContent = "";
   if (!canEdit()) { errEl.textContent = t("err_perm"); return; }
-  var dkdId     = parseInt(document.getElementById("kf-dkd-shohin-id").value.trim(), 10);
-  if (isNaN(dkdId)) {
+  if (!kikanSelectedParts.length) {
     await searchKikanPartCandidates();
-    if (kikanCandidateParts.length === 1) {
+    var terms = parseKikanPartSearchTerms(document.getElementById("kf-part-search").value);
+    if (terms.length > 1) {
+      addAllKikanCandidates();
+    } else if (kikanCandidateParts.length === 1) {
       selectKikanPartCandidate(0);
-      dkdId = parseInt(document.getElementById("kf-dkd-shohin-id").value.trim(), 10);
     }
   }
-  if (isNaN(dkdId)) { errEl.textContent = t("kikan_select_candidate"); return; }
+  if (!kikanSelectedParts.length) { errEl.textContent = t("kikan_select_candidate"); return; }
 
-  // 商品コードが基幹商品マスタに存在するか確認
-  var rp = await sb.from("core_product_search_view").select("id, dkd_shohin_id, shohin_cd, genuine_part_number, category_code, category").eq("dkd_shohin_id", dkdId).single();
-  if (rp.error || !rp.data) { errEl.textContent = t("kikan_no_product_master") + " (" + dkdId + ")"; return; }
+  var selectedIds = Array.from(new Set(kikanSelectedParts.map(function(p) {
+    return parseInt(kikanPartId(p), 10);
+  }).filter(function(id) { return !isNaN(id); })));
+  if (!selectedIds.length) { errEl.textContent = t("kikan_select_candidate"); return; }
 
-  var selectedCategory = getKikanCategoryCode(rp.data);
-  if (!isConfirmedKikanCategory(selectedCategory)) {
-    errEl.textContent = t("kikan_uncategorized_product");
+  var rp = await sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).in("dkd_shohin_id", selectedIds);
+  if (rp.error) { errEl.textContent = t("kikan_no_product_master") + ": " + rp.error.message; return; }
+  var productMap = {};
+  normalizeCoreProductFastRows(rp.data || []).forEach(function(p) {
+    productMap[String(p.dkd_shohin_id)] = p;
+  });
+  var selectedProducts = selectedIds.map(function(id) { return productMap[String(id)]; }).filter(Boolean);
+  if (selectedProducts.length !== selectedIds.length) {
+    errEl.textContent = t("kikan_no_product_master");
     return;
   }
 
   var groupId = kikanFormGroupId;
-
-  if (groupId) {
-    var existingMembers = await sb.from("kikan_group_members")
-      .select("dkd_gokan_id")
-      .eq("kikan_group_id", groupId);
-    var existingIds = (existingMembers.data || []).map(function(m) { return m.dkd_gokan_id; }).filter(function(v) { return v != null; });
-    if (existingIds.length) {
-      var existingProducts = await sb.from("core_product_search_view")
-        .select("dkd_shohin_id, category_code, category")
-        .in("dkd_shohin_id", existingIds);
-      var existingCategories = {};
-      (existingProducts.data || []).forEach(function(p) {
-        var cat = getKikanCategoryCode(p);
-        existingCategories[cat || ""] = true;
-      });
-      var keys = Object.keys(existingCategories);
-      if (keys.some(function(cat) { return !isConfirmedKikanCategory(cat); })) {
-        errEl.textContent = t("kikan_existing_uncategorized");
-        return;
-      }
-      if (keys.some(function(cat) { return cat !== selectedCategory; })) {
-        errEl.textContent = t("kikan_category_mismatch");
-        return;
-      }
+  var shouldCreateGroup = !groupId;
+  if (!groupId) {
+    groupId = parseInt(kikanPartId(selectedProducts[0]), 10);
+    if (isNaN(groupId)) {
+      errEl.textContent = t("kikan_select_candidate");
+      return;
+    }
+    var existingGroup = await sb.from("kikan_groups").select("kikan_group_id").eq("kikan_group_id", groupId).maybeSingle();
+    if (existingGroup.error) { errEl.textContent = t("kikan_create_failed") + ": " + existingGroup.error.message; return; }
+    if (existingGroup.data) {
+      kikanFormGroupId = groupId;
+      shouldCreateGroup = false;
+      document.getElementById("kf-group-id").value = groupId;
+      document.getElementById("kikan-form-title").textContent = tf("kikan_group_member_add_title", { id: groupId });
+      await loadKikanFormExistingMembers(groupId);
     }
   }
 
+  var categorySet = {};
+  selectedProducts.forEach(function(p) {
+    categorySet[getKikanCategoryCode(p) || ""] = true;
+  });
+
+  if (kikanFormGroupId || kikanExistingParts.length) {
+    kikanExistingParts.forEach(function(p) {
+      categorySet[getKikanCategoryCode(p) || ""] = true;
+    });
+  }
+  var categoryKeys = Object.keys(categorySet);
+  if (categoryKeys.some(function(cat) { return !isConfirmedKikanCategory(cat); })) {
+    errEl.textContent = (kikanFormGroupId || kikanExistingParts.length) ? t("kikan_existing_uncategorized") : t("kikan_uncategorized_product");
+    return;
+  }
+  if (categoryKeys.length > 1) {
+    errEl.textContent = t("kikan_category_mismatch");
+    return;
+  }
+
   // 新グループ作成
-  if (!groupId) {
-    var rg = await sb.from("kikan_groups").insert({ kikan_group_id: dkdId }).select().single();
+  if (shouldCreateGroup) {
+    var rg = await sb.from("kikan_groups").insert({ kikan_group_id: groupId }).select().single();
     if (rg.error) { errEl.textContent = t("kikan_create_failed") + ": " + rg.error.message; return; }
-    groupId = dkdId;
   }
 
   // メンバー追加
-  var rm = await sb.from("kikan_group_members").insert({ kikan_group_id: groupId, shohin_cd: rp.data.shohin_cd || dkdId, dkd_gokan_id: dkdId });
+  var rows = selectedProducts.filter(function(p) {
+    return !kikanExistingMemberIdSet[kikanPartId(p)];
+  }).map(function(p) {
+    var id = parseInt(kikanPartId(p), 10);
+    return { kikan_group_id: groupId, shohin_cd: p.shohin_cd || id, dkd_gokan_id: id };
+  });
+  if (!rows.length) {
+    errEl.textContent = t("kikan_duplicate_existing");
+    return;
+  }
+  var rm = await sb.from("kikan_group_members").insert(rows);
   if (rm.error) { errEl.textContent = t("kikan_add_failed") + ": " + rm.error.message; return; }
 
-  await writeLog("insert", "kikan_group_members", groupId, "グループ" + groupId + " + dkd_gokan_id:" + dkdId, null, { kikan_group_id: groupId, dkd_gokan_id: dkdId });
-  document.getElementById("kikan-form-overlay").classList.remove("show");
+  for (var li = 0; li < rows.length; li++) {
+    await writeLog("insert", "kikan_group_members", groupId, "グループ" + groupId + " + dkd_gokan_id:" + rows[li].dkd_gokan_id, null, rows[li]);
+  }
+  kikanFormGroupId = groupId;
+  document.getElementById("kf-group-id").value = groupId;
+  document.getElementById("kikan-form-title").textContent = tf("kikan_group_member_add_title", { id: groupId });
+  kikanSelectedParts = [];
+  renderKikanSelectedParts();
+  setKikanFormStatus(tf("kikan_saved_count", { n: rows.length }), false);
+  await loadKikanFormExistingMembers(groupId);
   await loadKikanMgmt();
 }
 
-async function removeKikanMember(groupId, dkdGokanId) {
+async function removeKikanMember(groupId, dkdGokanId, keepFormOpen) {
   if (!canEdit()) { alert(t("err_perm")); return; }
   if (!confirm(t("del_kikan_confirm"))) return;
   var r = await sb.from("kikan_group_members").delete().eq("kikan_group_id", groupId).eq("dkd_gokan_id", dkdGokanId);
   if (r.error) { alert(t("msg_kikan_err")); return; }
   await writeLog("delete", "kikan_group_members", groupId, "グループ" + groupId + " - dkd_gokan_id:" + dkdGokanId, { kikan_group_id: groupId, dkd_gokan_id: dkdGokanId }, null);
+  if (keepFormOpen && document.getElementById("kikan-form-overlay").classList.contains("show")) {
+    await loadKikanFormExistingMembers(groupId);
+  }
   await loadKikanMgmt();
 }
 
@@ -24417,6 +24700,12 @@ document.getElementById("prf-link-candidates").addEventListener("click", functio
 document.getElementById("btn-new-kikan-group").addEventListener("click", function(){ openKikanForm(null); });
 document.getElementById("btn-kikan-form-cancel").addEventListener("click", function(){ document.getElementById("kikan-form-overlay").classList.remove("show"); });
 document.getElementById("btn-kikan-form-save").addEventListener("click", saveKikanForm);
+document.getElementById("btn-kikan-part-search").addEventListener("click", function() {
+  searchKikanPartCandidates().catch(function(e) {
+    setKikanFormStatus((e && e.message) || t("msg_kikan_err"), true);
+  });
+});
+document.getElementById("btn-kikan-add-all-candidates").addEventListener("click", addAllKikanCandidates);
 document.getElementById("parts-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadPartsMgmt(); });
 document.getElementById("btn-sales-pricing-mgmt-search").addEventListener("click", loadSalesPricingMgmt);
 document.getElementById("sales-pricing-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadSalesPricingMgmt(); });
@@ -24584,7 +24873,7 @@ document.getElementById("kf-part-search").addEventListener("input", function() {
   this._timer = setTimeout(searchKikanPartCandidates, 250);
 });
 document.getElementById("kf-part-search").addEventListener("keydown", function(e) {
-  if (e.key === "Enter") {
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
     e.preventDefault();
     if (kikanCandidateParts.length === 1) selectKikanPartCandidate(0);
     else searchKikanPartCandidates();
@@ -24593,6 +24882,20 @@ document.getElementById("kf-part-search").addEventListener("keydown", function(e
 document.getElementById("kf-candidates").addEventListener("click", function(e) {
   var item = e.target.closest("[data-candidate-index]");
   if (item) selectKikanPartCandidate(parseInt(item.dataset.candidateIndex, 10));
+});
+document.getElementById("kf-selected-parts").addEventListener("click", function(e) {
+  var btn = e.target.closest("[data-kf-selected-remove]");
+  if (!btn) return;
+  var id = String(btn.dataset.kfSelectedRemove || "");
+  kikanSelectedParts = kikanSelectedParts.filter(function(p) { return kikanPartId(p) !== id; });
+  renderKikanSelectedParts();
+});
+document.getElementById("kf-existing-members").addEventListener("click", function(e) {
+  var btn = e.target.closest("[data-kf-existing-remove]");
+  if (!btn) return;
+  var id = parseInt(btn.dataset.kfExistingRemove, 10);
+  if (isNaN(id) || !kikanFormGroupId) return;
+  removeKikanMember(kikanFormGroupId, id, true);
 });
 document.getElementById("search-btn").addEventListener("click", function(){ searchSlOnly=false; runProductSearch({ resetLimit: true, logActivity: true, source: "button" }); });
 document.getElementById("q").addEventListener("keydown", function(e){ if(e.key==="Enter") { searchSlOnly=false; runProductSearch({ resetLimit: true, logActivity: true, source: "enter" }); } });
