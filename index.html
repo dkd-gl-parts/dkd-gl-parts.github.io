@@ -5976,7 +5976,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.403";
+var APP_VERSION       = "v1.1.404";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -14462,16 +14462,29 @@ async function loadKikanMgmt() {
   }
 
   if (q) {
-    // 商品コードか品番で検索
-    var qNum = parseInt(q, 10);
-    if (!isNaN(qNum)) {
+    var qAscii = normalizeAsciiWidth(q).trim();
+    var groupIdSet = {};
+    if (/^\d+$/.test(qAscii)) {
+      var qNum = parseInt(qAscii, 10);
       var rm = await sb.from("kikan_group_members").select("kikan_group_id").eq("dkd_gokan_id", qNum);
-      if (rm.data && rm.data.length > 0) {
-        groups = rm.data.map(function(m){ return { kikan_group_id: m.kikan_group_id }; });
-      } else {
-        groups = [];
-      }
+      (rm.data || []).forEach(function(m){ groupIdSet[String(m.kikan_group_id)] = true; });
+      var rgById = await sb.from("kikan_groups").select("kikan_group_id").eq("kikan_group_id", qNum);
+      (rgById.data || []).forEach(function(g){ groupIdSet[String(g.kikan_group_id)] = true; });
     }
+    var productMatches = await fetchCoreProductMasterMatches(qAscii, "", 50);
+    var matchIds = ((productMatches && productMatches.data) || []).map(function(p) {
+      return parseInt(productDkdId(p), 10);
+    }).filter(function(id) {
+      return !isNaN(id);
+    });
+    matchIds = Array.from(new Set(matchIds));
+    if (matchIds.length) {
+      var rmByPart = await sb.from("kikan_group_members").select("kikan_group_id").in("dkd_gokan_id", matchIds);
+      (rmByPart.data || []).forEach(function(m){ groupIdSet[String(m.kikan_group_id)] = true; });
+    }
+    groups = Object.keys(groupIdSet).map(function(gid) { return { kikan_group_id: parseInt(gid, 10) }; })
+      .filter(function(g) { return !isNaN(g.kikan_group_id); })
+      .sort(function(a, b) { return a.kikan_group_id - b.kikan_group_id; });
   }
 
   if (visibleShohinCdSet) {
@@ -14501,7 +14514,7 @@ async function loadKikanMgmt() {
     }
     var memberIds = members.map(function(m) { return m.dkd_gokan_id; }).filter(function(v) { return v != null; });
     var rp = memberIds.length > 0
-      ? await sb.from("core_product_search_view").select("dkd_shohin_id, genuine_part_number, manufacturer_part_number, manufacturer").in("dkd_shohin_id", memberIds)
+      ? await sb.from("core_products").select("dkd_shohin_id, genuine_part_number, manufacturer_part_number, manufacturer").in("dkd_shohin_id", memberIds)
       : { data: [] };
     var partByDkdId = {};
     (rp.data || []).forEach(function(p) { partByDkdId[String(p.dkd_shohin_id)] = p; });
