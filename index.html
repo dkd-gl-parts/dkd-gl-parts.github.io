@@ -6,6 +6,7 @@
 <meta name="referrer" content="origin">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co;">
 <title>D-CATS</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233c7df0'/%3E%3Cpath d='M8 17h16M16 9v14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
@@ -354,6 +355,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-table td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
 .component-table tr:last-child td { border-bottom: none; }
 .component-table input { width: 100%; min-width: 54px; border: 1px solid #d7dce5; border-radius: 5px; padding: 5px 6px; font-size: 12px; }
+.component-tree-col { width: 54px; text-align: center !important; white-space: nowrap; }
+.component-tree-toggle { min-width: 28px; height: 26px; border: 1px solid #cdd7e7; border-radius: 6px; background: #fff; color: #2f65c8; font-weight: 800; line-height: 1; }
+.component-tree-toggle.loading { color: #667085; background: #f5f7fa; }
+.component-tree-count { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: #e9f7ef; color: #2f9e68; font-size: 11px; font-weight: 800; }
+.component-child-row td { background: #fbfcff; }
+.component-child-indent { display: inline-block; width: 16px; height: 1px; margin-right: 4px; border-top: 1px solid #cdd7e7; vertical-align: middle; }
+.component-source-badge { display: inline-flex; align-items: center; min-height: 20px; padding: 0 7px; border-radius: 999px; background: #e9f7ef; color: #2f9e68; font-size: 11px; font-weight: 700; }
+.component-alt-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: #eef2f7; color: #667085; font-size: 11px; font-weight: 800; }
+.component-alt-badge.has-alt { background: #fff4dc; color: #b97709; }
+.component-child-loading td { color: #667085; background: #fbfcff; }
 .component-edit-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .component-pn { font-family: monospace; font-size: 12px; color: #444; }
 .component-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
@@ -4139,6 +4150,10 @@ var TRANSLATIONS = {
     component_manufacturing_memo: "製造メモ",
     component_actions: "操作",
     component_catalog: "カタログ",
+    component_child: "子構成",
+    component_child_loading: "子構成を読み込み中...",
+    component_child_load_failed: "子構成の読み込みに失敗しました",
+    component_variant_required_for_alternative: "代替品を登録する対象在庫を選択してください。",
     component_edit: "修正",
     component_cancel: "取消",
     component_save: "保存",
@@ -5049,6 +5064,10 @@ var TRANSLATIONS = {
     component_manufacturing_memo: "Manufacturing Memo",
     component_actions: "Action",
     component_catalog: "Catalog",
+    component_child: "Child",
+    component_child_loading: "Loading child components...",
+    component_child_load_failed: "Failed to load child components",
+    component_variant_required_for_alternative: "Select a target stock variant before adding an alternative part.",
     component_edit: "Edit",
     component_cancel: "Cancel",
     component_save: "Save",
@@ -5949,6 +5968,10 @@ var TRANSLATIONS = {
     component_manufacturing_memo: "制造备注",
     component_actions: "操作",
     component_catalog: "目录",
+    component_child: "子构成",
+    component_child_loading: "正在读取子构成...",
+    component_child_load_failed: "子构成读取失败",
+    component_variant_required_for_alternative: "请选择要登记替代部件的对象库存。",
     component_edit: "修改",
     component_cancel: "取消",
     component_save: "保存",
@@ -6088,6 +6111,10 @@ var componentParallelReturnScreen = "search";
 var componentAlternativeRows = [];
 var componentAlternativeMap = {};
 var componentAlternativeBaseRow = null;
+var componentChildRowsMap = {};
+var componentChildLoadingMap = {};
+var componentExpandedChildMap = {};
+var componentTreeRpcAvailable = true;
 var componentCatalogNameCandidates = [];
 var componentCatalogNameCandidateLabelMap = {};
 var componentCatalogNameCandidateCache = {};
@@ -19171,7 +19198,166 @@ function componentAlternativeBaseText(row) {
 
 function alternativesForComponent(row) {
   if (!row || row.dkd_component_id == null) return [];
+  if (row._ui_alternatives && row._ui_alternatives.length) return row._ui_alternatives;
   return componentAlternativeMap[String(row.dkd_component_id)] || [];
+}
+
+function componentTreeKey(row) {
+  if (!row) return "";
+  if (row.dkd_component_id != null) return "component:" + String(row.dkd_component_id);
+  return [
+    "row",
+    row.component_manufacturer || "",
+    row.component_manufacturer_part_number || "",
+    row.component_genuine_part_number || "",
+    row.component_position || ""
+  ].join("|");
+}
+
+function parseComponentAlternativesJson(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    try {
+      var parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+  return [];
+}
+
+function normalizeComponentAlternativeForUi(alt) {
+  alt = alt || {};
+  var supplierRows = [];
+  if (alt.preferred_supplier_name || alt.preferred_reference_price != null) {
+    supplierRows.push({
+      supplier_name: alt.preferred_supplier_name || "",
+      reference_price: alt.preferred_reference_price,
+      currency: alt.preferred_currency || "JPY",
+      status: "active",
+      is_preferred: true
+    });
+  }
+  return {
+    id: alt.alternative_id || alt.id || "",
+    catalog_component_id: alt.catalog_component_id || null,
+    product_variant_id: alt.product_variant_id || null,
+    component_position: alt.component_position || null,
+    relation_type: alt.relation_type || "alternative",
+    priority: alt.priority || 100,
+    status: alt.status || "active",
+    note: alt.note || "",
+    internal_component_part_id: alt.internal_component_part_id || null,
+    internal_component_parts: {
+      id: alt.internal_component_part_id || null,
+      manufacturer: alt.manufacturer || "",
+      part_number: alt.part_number || "",
+      part_name: alt.part_name || "",
+      note: alt.note || "",
+      status: "active"
+    },
+    internal_component_suppliers: supplierRows
+  };
+}
+
+function normalizeComponentTreeRow(row, parentRow) {
+  row = row || {};
+  var alternatives = parseComponentAlternativesJson(row.alternatives).map(normalizeComponentAlternativeForUi);
+  var dkdComponentId = row.dkd_component_id || row.component_id || null;
+  return Object.assign({}, row, {
+    id: row.id || (dkdComponentId ? ("component:" + String(dkdComponentId)) : componentTreeKey(row)),
+    dkd_component_id: dkdComponentId,
+    component_position: row.component_position || row.figure_number || "",
+    component_name: row.component_name || row.component_part_name || "",
+    component_part_name: row.component_part_name || row.component_name || "",
+    component_manufacturer: row.component_manufacturer || row.manufacturer || "",
+    component_manufacturer_part_number: row.component_manufacturer_part_number || row.manufacturer_part_number || "",
+    component_genuine_part_number: row.component_genuine_part_number || row.genuine_part_number || "",
+    quantity: row.quantity || "1",
+    unit_price_jpy: row.unit_price_jpy != null ? row.unit_price_jpy : row.component_unit_price_jpy,
+    component_interchange_code: row.component_interchange_code || row.interchange_code || "",
+    source_code: row.source_code || "",
+    is_catalog_evidence: row.is_catalog_evidence !== false,
+    has_child_catalog_components: !!(row.has_child_catalog_components || parseInt(row.child_catalog_component_count || 0, 10) > 0),
+    child_catalog_component_count: parseInt(row.child_catalog_component_count || 0, 10) || 0,
+    alternative_count: parseInt(row.alternative_count || alternatives.length || 0, 10) || 0,
+    _ui_alternatives: alternatives,
+    _ui_parent_component_key: parentRow ? componentTreeKey(parentRow) : "",
+    _ui_is_child_component: !!parentRow
+  });
+}
+
+function componentHasChildRows(row) {
+  return !!(row && (row.has_child_catalog_components || parseInt(row.child_catalog_component_count || 0, 10) > 0));
+}
+
+function componentChildToggleHtml(row) {
+  if (!componentHasChildRows(row)) return "";
+  var key = componentTreeKey(row);
+  var expanded = !!componentExpandedChildMap[key];
+  var loading = !!componentChildLoadingMap[key];
+  var count = parseInt(row.child_catalog_component_count || 0, 10) || 0;
+  var symbol = loading ? "..." : (expanded ? "-" : "+");
+  return "<button class='component-tree-toggle" + (loading ? " loading" : "") + "' type='button' data-component-child-toggle='" + esc(key) + "'>" + esc(symbol) + "</button>" +
+    "<span class='component-tree-count'>" + esc(String(count)) + "</span>";
+}
+
+function componentAlternativeCountHtml(row) {
+  var count = alternativesForComponent(row).length || parseInt(row && row.alternative_count || 0, 10) || 0;
+  return "<span class='component-alt-badge" + (count ? " has-alt" : "") + "'>" + esc(String(count)) + "</span>";
+}
+
+function componentSourceBadgeHtml(row) {
+  if (!isCatalogComponentRow(row)) return "";
+  return "<span class='component-source-badge'>" + esc(t("component_catalog")) + "</span>";
+}
+
+async function loadComponentChildRows(row) {
+  if (!row || !componentHasChildRows(row)) return [];
+  var key = componentTreeKey(row);
+  if (componentChildRowsMap[key]) return componentChildRowsMap[key];
+  componentChildLoadingMap[key] = true;
+  renderAssemblyComponentRows();
+  var r = await sb.rpc("get_catalog_component_children_for_ui", {
+    target_manufacturer: row.component_manufacturer || null,
+    target_manufacturer_part_number: row.component_manufacturer_part_number || null,
+    target_genuine_part_number: row.component_genuine_part_number || null,
+    target_product_variant_id: selectedProductKind() === "catalog_spec" ? null : selectedComponentVariantId(),
+    max_rows: 500
+  });
+  componentChildLoadingMap[key] = false;
+  if (r.error) {
+    console.warn("get_catalog_component_children_for_ui failed", r.error);
+    componentChildRowsMap[key] = [];
+    return [];
+  }
+  componentChildRowsMap[key] = (r.data || []).map(function(child) {
+    return normalizeComponentTreeRow(child, row);
+  });
+  return componentChildRowsMap[key];
+}
+
+async function toggleComponentChildRows(key) {
+  var row = (assemblyComponentRows || []).find(function(candidate) {
+    return componentTreeKey(candidate) === key;
+  });
+  if (!row) return;
+  if (componentExpandedChildMap[key]) {
+    delete componentExpandedChildMap[key];
+    renderAssemblyComponentRows();
+    return;
+  }
+  componentExpandedChildMap[key] = true;
+  try {
+    await loadComponentChildRows(row);
+  } catch (e) {
+    componentChildLoadingMap[key] = false;
+    console.warn("component child load failed", e);
+    alert(t("component_child_load_failed") + ": " + (e && e.message ? e.message : e));
+  }
+  renderAssemblyComponentRows();
 }
 
 function componentNameMojibakeScore(text) {
@@ -20189,7 +20375,18 @@ function closeComponentAlternativeForm() {
 
 function openComponentAlternativeForm(usageId) {
   if (!canManageComponentsInCurrentContext()) { alert(t("err_perm")); return; }
-  var row = assemblyComponentRows.find(function(r) { return String(r.id) === String(usageId); });
+  if (selectedProductKind() === "catalog_spec") { alert(t("component_catalog_locked_save")); return; }
+  var row = assemblyComponentRows.find(function(r) {
+    return String(r.id) === String(usageId) || String(r.dkd_component_id || "") === String(usageId || "").replace(/^component:/, "");
+  });
+  if (!row) {
+    Object.keys(componentChildRowsMap || {}).some(function(key) {
+      row = (componentChildRowsMap[key] || []).find(function(r) {
+        return String(r.id) === String(usageId) || String(r.dkd_component_id || "") === String(usageId || "").replace(/^component:/, "");
+      }) || null;
+      return !!row;
+    });
+  }
   if (!row || !row.dkd_component_id) {
     alert(t("component_base_missing"));
     return;
@@ -20231,7 +20428,48 @@ async function saveComponentAlternativeForm() {
     if (err) err.textContent = t("component_mfr_pn_required");
     return;
   }
+  var targetVariantId = selectedComponentVariantId();
+  if (!targetVariantId) {
+    if (err) err.textContent = t("component_variant_required_for_alternative");
+    return;
+  }
   if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = t("component_save_loading"); }
+  var rpcAlt = await sb.rpc("add_variant_component_alternative", {
+    target_catalog_component_id: row.dkd_component_id,
+    target_product_variant_id: targetVariantId,
+    alternative_manufacturer: manufacturer,
+    alternative_part_number: partNumber,
+    alternative_part_name: partName || null,
+    target_component_position: row.component_position || null,
+    target_relation_type: "alternative",
+    target_priority: 100,
+    target_note: note || null
+  });
+  if (!rpcAlt.error) {
+    var rpcRow = Array.isArray(rpcAlt.data) ? (rpcAlt.data[0] || null) : rpcAlt.data;
+    var rpcPartId = rpcRow && rpcRow.internal_component_part_id;
+    if (rpcPartId && (supplierName || price !== null)) {
+      var rpcSup = await sb.from("internal_component_suppliers").insert({
+        internal_component_part_id: rpcPartId,
+        supplier_name: supplierName || null,
+        reference_price: price,
+        price_note: note || null,
+        is_preferred: true,
+        created_by: currentUser ? currentUser.id : null,
+        updated_by: currentUser ? currentUser.id : null
+      });
+      if (rpcSup.error) console.warn("internal component supplier insert failed", rpcSup.error);
+    }
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = t("component_save"); }
+    await writeLog("insert", "component_part_alternatives", row.dkd_component_id, partNumber, null, { product_variant_id: targetVariantId, base: componentAlternativeBaseText(row) });
+    closeComponentAlternativeForm();
+    await loadAssemblyComponentsForCurrent();
+    return;
+  }
+  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = t("component_save"); }
+  if (err) err.textContent = t("msg_save_err") + ": " + rpcAlt.error.message;
+  return;
+
   var normalized = normalizedPartKey(partNumber);
   var partId = null;
   var existing = await sb.from("internal_component_parts")
@@ -20314,10 +20552,17 @@ async function loadComponentAlternativesForRows(rows) {
     return id != null && arr.indexOf(id) === index;
   });
   if (!ids.length) return;
-  var r = await sb.from("component_part_alternatives")
-    .select("id,catalog_component_id,internal_component_part_id,component_position,relation_type,priority,status,note,internal_component_parts(id,manufacturer,part_number,part_name,note,status)")
+  var rQuery = sb.from("component_part_alternatives")
+    .select("id,catalog_component_id,internal_component_part_id,product_variant_id,component_position,relation_type,priority,status,note,internal_component_parts(id,manufacturer,part_number,part_name,note,status)")
     .in("catalog_component_id", ids)
-    .eq("status", "active")
+    .eq("status", "active");
+  var selectedVariantId = selectedProductKind() === "catalog_spec" ? null : selectedComponentVariantId();
+  if (selectedVariantId) {
+    rQuery = rQuery.or("product_variant_id.is.null,product_variant_id.eq." + String(selectedVariantId));
+  } else {
+    rQuery = rQuery.is("product_variant_id", null);
+  }
+  var r = await rQuery
     .order("priority", { ascending: true })
     .order("id", { ascending: true });
   if (r.error) {
@@ -20482,6 +20727,140 @@ function renderAssemblyComponentRows() {
   });
 }
 
+function renderAssemblyComponentRows() {
+  var wrap = document.getElementById("component-wrap");
+  if (!wrap) return;
+  var rows = assemblyComponentRows || [];
+  if (!rows.length) {
+    updateComponentTargetSummary(0);
+    wrap.innerHTML = componentEmptyStateHtml();
+    return;
+  }
+  var hasActions = canManageComponentsInCurrentContext();
+  var catalogMode = selectedProductKind() === "catalog_spec";
+  var colspan = 11 + (hasActions ? 1 : 0);
+  var html = "<table class='component-table'>";
+  html += "<tr><th class='component-tree-col'>" + t("component_child") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th>";
+  if (catalogMode) {
+    html += "<th>" + t("component_position") + "</th><th>" + t("component_quantity") + "</th><th>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
+  } else {
+    html += "<th>" + t("component_quantity") + "</th><th>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_procurement_category") + "</th><th>" + t("component_replacement_rate") + "</th><th>" + t("component_manufacturing_memo") + "</th>";
+  }
+  html += "<th>" + t("component_alternative_title") + "</th>";
+  if (hasActions) html += "<th>" + t("component_actions") + "</th>";
+  html += "</tr>";
+
+  function renderRow(row, options) {
+    options = options || {};
+    var catalogLocked = isCatalogComponentRow(row);
+    var editing = canManageComponentsInCurrentContext() && !catalogLocked && String(editingComponentUsageId) === String(row.id);
+    html += "<tr" + (options.child ? " class='component-child-row'" : "") + (editing ? " data-component-edit-row='" + esc(String(row.id)) + "'" : "") + ">";
+    html += "<td class='component-tree-col'>" + (options.child ? "<span class='component-child-indent'></span>" : componentChildToggleHtml(row)) + "</td>";
+    if (editing) {
+      html += "<td>" + componentEditInput(row, "component_manufacturer_part_number", row.component_manufacturer_part_number) + "<div class='component-sub'>" + componentEditInput(row, "component_manufacturer", row.component_manufacturer || "") + "</div></td>";
+      html += "<td>" + componentEditInput(row, "component_genuine_part_number", row.component_genuine_part_number || "") + "</td>";
+      html += "<td>" + componentEditNameInput(row) + "<div class='component-sub'>" + esc(componentUsageTargetLabel(row)) + "</div></td>";
+      html += "<td>" + componentEditInput(row, "quantity", row.quantity || "1") + "</td>";
+      html += "<td>" + componentEditInput(row, "unit_price_jpy", row.unit_price_jpy || "") + "</td>";
+      html += "<td>" + componentEditInput(row, "component_interchange_code", row.interchange_code || row.component_interchange_code || "") + "</td>";
+      html += "<td>" + componentEditProcurementSelect(row.procurement_category || "") + "</td>";
+      html += "<td>" + componentEditInput(row, "replacement_rate", row.replacement_rate || "") + "</td>";
+      html += "<td>" + componentEditInput(row, "manufacturing_memo", row.manufacturing_memo || "") + "</td>";
+      html += "<td>" + componentAlternativeCountHtml(row) + "</td>";
+      html += "<td><div class='component-edit-actions'><button class='btn-sm-edit' data-component-save='" + esc(String(row.id)) + "'>" + t("component_save") + "</button><button class='btn-sm-edit production-action-secondary' data-component-cancel='1'>" + t("component_cancel") + "</button><button class='btn-sm-edit production-action-secondary' data-component-delete='" + esc(String(row.id)) + "'>" + t("component_delete") + "</button></div></td>";
+    } else {
+      html += "<td><div class='component-pn'>" + esc(row.component_manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.component_manufacturer || "") + "</div></td>";
+      html += "<td><div class='component-pn'>" + esc(row.component_genuine_part_number || "-") + "</div></td>";
+      html += "<td>" + esc(row.component_name || row.component_part_name || "-") + "<div class='component-sub'>" + esc(componentUsageTargetLabel(row)) + " " + componentSourceBadgeHtml(row) + "</div></td>";
+      if (catalogMode) {
+        html += "<td>" + esc(row.component_position || row.source_code || "-") + "</td>";
+        html += "<td>" + esc(row.quantity || "-") + "</td>";
+        html += "<td>" + esc(formatYen(row.unit_price_jpy)) + "</td>";
+        html += "<td>" + esc(formatComponentInterchange(row)) + "</td>";
+        html += "<td>" + esc(row.effective_start || row.start_period || "-") + "</td>";
+        html += "<td>" + esc(row.effective_end || row.end_period || "-") + "</td>";
+      } else {
+        html += "<td>" + esc(row.quantity || "-") + "</td>";
+        html += "<td>" + esc(formatYen(row.unit_price_jpy)) + "</td>";
+        html += "<td>" + esc(formatComponentInterchange(row)) + "</td>";
+        html += "<td>" + esc(componentProcurementCategoryLabel(row.procurement_category)) + "</td>";
+        html += "<td>" + esc(row.replacement_rate == null || row.replacement_rate === "" ? "-" : row.replacement_rate) + "</td>";
+        html += "<td>" + esc(row.manufacturing_memo || "-") + "</td>";
+      }
+      html += "<td>" + componentAlternativeCountHtml(row) + "</td>";
+      if (hasActions) {
+        html += "<td><div class='component-edit-actions'>";
+        html += catalogLocked ? "<span class='component-sub'>" + t("component_catalog") + "</span>" : "<button class='btn-sm-edit' data-component-edit='" + esc(String(row.id)) + "'>" + t("component_edit") + "</button>";
+        if (!catalogMode && row.dkd_component_id) html += "<button class='btn-sm-edit production-action-secondary' data-component-alt-add='" + esc(String(row.id || row.dkd_component_id)) + "'>" + t("component_alternative_add") + "</button>";
+        html += "</div></td>";
+      }
+    }
+    html += "</tr>";
+    html += renderComponentAlternatives(row, colspan);
+    if (!options.child && componentExpandedChildMap[componentTreeKey(row)]) {
+      var childRows = componentChildRowsMap[componentTreeKey(row)] || [];
+      if (componentChildLoadingMap[componentTreeKey(row)]) {
+        html += "<tr class='component-child-loading'><td></td><td colspan='" + String(colspan - 1) + "'>" + esc(t("component_child_loading")) + "</td></tr>";
+      } else {
+        childRows.forEach(function(childRow) {
+          renderRow(childRow, { child: true });
+        });
+      }
+    }
+  }
+
+  rows.forEach(function(row) {
+    renderRow(row);
+  });
+  html += "</table>";
+  if (editingComponentUsageId) {
+    var editingRow = rows.find(function(row) { return String(row.id) === String(editingComponentUsageId); });
+    var editingName = editingRow ? (editingRow.component_name || editingRow.component_part_name || "") : "";
+    html += "<datalist id='component-edit-name-list'>" + componentNameOptionsHtml(editingName) + "</datalist>";
+  }
+  wrap.innerHTML = html;
+  wrap.querySelectorAll("[data-component-edit]").forEach(function(btn) {
+    btn.addEventListener("click", function() { startComponentEdit(btn.dataset.componentEdit); });
+  });
+  wrap.querySelectorAll("[data-component-save]").forEach(function(btn) {
+    btn.addEventListener("click", function() { saveComponentEdit(btn.dataset.componentSave); });
+  });
+  wrap.querySelectorAll("[data-component-edit-field='component_manufacturer_part_number'],[data-component-edit-field='component_genuine_part_number']").forEach(function(input) {
+    var preview = function() {
+      normalizeComponentPartNumberElement(input);
+      var tr = input.closest("[data-component-edit-row]");
+      if (tr) updateComponentEditPartNumberInputStates(tr);
+    };
+    var handler = function() {
+      normalizeComponentPartNumberElement(input);
+      var tr = input.closest("[data-component-edit-row]");
+      if (tr) {
+        updateComponentEditPartNumberInputStates(tr);
+        reconcileComponentEditPartNumbers(tr.dataset.componentEditRow);
+      }
+    };
+    input.addEventListener("input", preview);
+    input.addEventListener("change", handler);
+    input.addEventListener("blur", handler);
+    preview();
+  });
+  wrap.querySelectorAll("[data-component-cancel]").forEach(function(btn) {
+    btn.addEventListener("click", cancelComponentEdit);
+  });
+  wrap.querySelectorAll("[data-component-delete]").forEach(function(btn) {
+    btn.addEventListener("click", function() { deleteComponentUsage(btn.dataset.componentDelete); });
+  });
+  wrap.querySelectorAll("[data-component-alt-add]").forEach(function(btn) {
+    btn.addEventListener("click", function() { openComponentAlternativeForm(btn.dataset.componentAltAdd); });
+  });
+  wrap.querySelectorAll("[data-component-alt-delete]").forEach(function(btn) {
+    btn.addEventListener("click", function() { disableComponentAlternative(btn.dataset.componentAltDelete); });
+  });
+  wrap.querySelectorAll("[data-component-child-toggle]").forEach(function(btn) {
+    btn.addEventListener("click", function() { toggleComponentChildRows(btn.dataset.componentChildToggle); });
+  });
+}
+
 async function loadAssemblyComponentsForCurrent() {
   var wrap = document.getElementById("component-wrap");
   if (!wrap) return;
@@ -20531,6 +20910,103 @@ async function loadAssemblyComponentsForCurrent() {
   }
   var selectedVariantId = selectedComponentVariantId();
   var rows = r.data || [];
+  if (selectedVariantId) {
+    rows = rows.filter(function(row) {
+      if (!row.product_variant_id) return true;
+      return parseInt(row.product_variant_id, 10) === selectedVariantId;
+    });
+  }
+
+  rows.sort(function(a, b) {
+    var ap = String(a.component_position || "");
+    var bp = String(b.component_position || "");
+    if (ap !== bp) return ap.localeCompare(bp, "ja", { numeric: true });
+    return String(a.component_manufacturer_part_number || "").localeCompare(String(b.component_manufacturer_part_number || ""), "ja", { numeric: true });
+  });
+  assemblyComponentRows = rows;
+  updateComponentTargetSummary(rows.length);
+  await loadComponentAlternativesForRows(rows);
+  renderAssemblyComponentRows();
+}
+
+async function loadAssemblyComponentsForCurrent() {
+  var wrap = document.getElementById("component-wrap");
+  if (!wrap) return;
+  assemblyComponentRows = [];
+  componentAlternativeRows = [];
+  componentAlternativeMap = {};
+  componentChildRowsMap = {};
+  componentChildLoadingMap = {};
+  componentExpandedChildMap = {};
+  editingComponentUsageId = null;
+  var selectedKind = selectedProductKind();
+  wrap.innerHTML = "<div class='component-empty'>" + t("loading") + "</div>";
+
+  var dkdId = await resolveCurrentCoreDkdShohinId();
+  if (!dkdId) {
+    updateComponentTargetSummary(0);
+    wrap.innerHTML = "<div class='component-empty'>" + t("component_none") + "</div>";
+    return;
+  }
+
+  if (componentTreeRpcAvailable) {
+    var rpc = await sb.rpc("get_variant_catalog_components_for_ui", {
+      target_dkd_shohin_id: dkdId,
+      target_product_kind: selectedKind,
+      target_product_variant_id: selectedKind === "catalog_spec" ? null : selectedComponentVariantId()
+    });
+    if (!rpc.error) {
+      var rpcRows = (rpc.data || []).map(function(row) {
+        return normalizeComponentTreeRow(row, null);
+      });
+      if (rpcRows.length || selectedKind === "catalog_spec") {
+        assemblyComponentRows = rpcRows;
+        updateComponentTargetSummary(rpcRows.length);
+        renderAssemblyComponentRows();
+        return;
+      }
+    } else {
+      componentTreeRpcAvailable = false;
+      console.warn("get_variant_catalog_components_for_ui failed; fallback to legacy component query", rpc.error);
+    }
+  }
+
+  var mfr = String((currentProduct && currentProduct.manufacturer) || "").toUpperCase();
+  var normalizedMfrPnKeys = componentAssyLookupKeys(currentProduct);
+  var selectColumns = "id, dkd_component_id, dkd_shohin_id, product_kind, product_variant_id, assy_manufacturer, assy_manufacturer_part_number, normalized_assy_manufacturer_part_number, assy_genuine_part_number, normalized_assy_genuine_part_number, component_manufacturer_part_number, component_genuine_part_number, component_name, quantity, unit_price_jpy, replacement_rate, procurement_category, manufacturing_memo, interchange_code, effective_start, effective_end, component_position, component_manufacturer, component_part_name, source_code, is_catalog_evidence";
+  var query = sb.from("assembly_component_usage_details")
+    .select(selectColumns)
+    .order("component_position", { ascending: true, nullsFirst: false })
+    .order("component_manufacturer_part_number", { ascending: true });
+  if (selectedKind === "catalog_spec") {
+    var genuineKey = normalizedPartKey(currentProduct && currentProduct.genuine_part_number);
+    if (!mfr || !normalizedMfrPnKeys.length || !genuineKey) {
+      updateComponentTargetSummary(0);
+      wrap.innerHTML = "<div class='component-empty'>" + t("component_none") + "</div>";
+      return;
+    }
+    query = query
+      .eq("is_catalog_evidence", true)
+      .eq("assy_manufacturer", mfr)
+      .eq("normalized_assy_genuine_part_number", genuineKey)
+      .in("normalized_assy_manufacturer_part_number", normalizedMfrPnKeys);
+  } else {
+    query = query
+      .eq("is_catalog_evidence", false)
+      .eq("product_kind", selectedKind)
+      .eq("dkd_shohin_id", dkdId);
+  }
+  var r = await query;
+  if (r.error) {
+    console.warn("assembly_component_usage_details failed", r.error);
+    updateComponentTargetSummary(0);
+    wrap.innerHTML = "<div class='component-empty'>" + t("component_none") + "</div>";
+    return;
+  }
+  var selectedVariantId = selectedComponentVariantId();
+  var rows = (r.data || []).map(function(row) {
+    return normalizeComponentTreeRow(row, null);
+  });
   if (selectedVariantId) {
     rows = rows.filter(function(row) {
       if (!row.product_variant_id) return true;
