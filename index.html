@@ -6065,7 +6065,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.407";
+var APP_VERSION       = "v1.1.408";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -8252,7 +8252,6 @@ async function loadProductionKikanForRow(row, seq) {
   }
   partsList = filterVisibleProducts(partsList).filter(function(p) {
     if (String(p.dkd_shohin_id) === String(dkdShohinIdNum)) return false;
-    if (row.genuine_part_number && p.genuine_part_number === row.genuine_part_number) return false;
     return true;
   });
   await loadKikanVariantSummaryCache(partsList);
@@ -17155,7 +17154,6 @@ async function hasDisplayableKikanCompatibleParts(product) {
   parts_list = filterVisibleProducts(parts_list);
   parts_list = parts_list.filter(function(p) {
     if (String(p.dkd_shohin_id) === String(targetId)) return false;
-    if (product && product.genuine_part_number && p.genuine_part_number === product.genuine_part_number) return false;
     return true;
   });
   return parts_list.length > 0;
@@ -22853,7 +22851,6 @@ async function loadKikan(dkdShohinId, seq, productSnapshot) {
   parts_list = filterVisibleProducts(parts_list);
   parts_list = parts_list.filter(function(p) {
     if (String(p.dkd_shohin_id) === String(dkdShohinIdNum)) return false;
-    if (product && product.genuine_part_number && p.genuine_part_number === product.genuine_part_number) return false;
     return true;
   });
   kikanPartsCache[cacheKey] = parts_list;
