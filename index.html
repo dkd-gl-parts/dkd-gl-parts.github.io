@@ -5971,7 +5971,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.399";
+var APP_VERSION       = "v1.1.400";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -7986,12 +7986,14 @@ function renderProductionList() {
       "<div class='production-sub-number'>純正 " + esc(subGenuinePartNumber) + "</div>" +
       "<div class='production-label-row'>" +
         renderProductKindPills(kindSummary, { compact: true }) +
-        "<div class='production-badges'>" +
-          (hasCatalogSpec ? "<span class='badge-catalog'>" + esc(t("product_kind_catalog_spec")) + "</span>" : "") +
-          (hasSL ? "<span class='badge-sl'>SL</span>" : "") +
-          (hasKikan ? "<span class='badge-kikan' title='" + esc(t("kikan_section")) + "'>&#x1F504;</span>" : "") +
-          (imageCount > 0 ? "<span class='badge-img'>&#x1F4F7;" + esc(String(imageCount)) + "</span>" : "<span class='badge-img no-image'>&#x1F5BC; " + esc(t("image_none_short")) + "</span>") +
-        "</div>" +
+        renderResultBadgeSlots({
+          className: "production-badges",
+          hasCatalogSpec: hasCatalogSpec,
+          hasSL: hasSL,
+          hasKikan: hasKikan,
+          imageCount: imageCount,
+          showEmptyImageBadge: true
+        }) +
       "</div>" +
       "<div class='production-meta'>" + esc(meta) + "</div>" +
     "</div>";
@@ -15192,34 +15194,71 @@ function productKindSummaryHasKind(summary, kind) {
   return !!(summary && summary.kinds && summary.kinds[kind]);
 }
 
+function renderProductKindPill(kind, meta, options) {
+  options = options || {};
+  meta = meta || {};
+  var extra = "";
+  if (options.detail && meta.stockKnown) {
+    extra += "<span class='product-kind-stock'>" + esc(t("product_kind_stock")) + " " + esc(String(meta.stockQty)) + "</span>";
+  }
+  if (options.detail && meta.slCount > 0) {
+    extra += "<span class='product-kind-stock'>" + esc(t("product_kind_sl")) + " " + esc(String(meta.slCount)) + "</span>";
+  }
+  return "<span class='product-kind-pill " + productKindClass(kind) + "'>" + esc(productKindLabel(kind)) + extra + "</span>";
+}
+
 function renderProductKindPills(summary, options) {
   options = options || {};
   var kinds = Object.keys((summary && summary.kinds) || {}).sort(function(a, b) {
     return productKindSortValue(a) - productKindSortValue(b);
   });
   if (options.compact) {
-    kinds = kinds.filter(function(kind) {
-      return normalizeProductKind(kind) !== "catalog_spec";
+    var compactSlots = ["rebuilt", "aftermarket_new"];
+    var compactHtml = "<div class='product-kind-list compact'>";
+    compactSlots.forEach(function(kind) {
+      var hasKind = productKindSummaryHasKind(summary, kind);
+      compactHtml += "<span class='product-kind-slot" + (hasKind ? "" : " empty") + "'>" +
+        (hasKind ? renderProductKindPill(kind, summary.kinds[kind] || {}, options) : "&nbsp;") +
+        "</span>";
     });
+    compactHtml += "</div>";
+    return compactHtml;
   }
   if (!kinds.length) {
-    if (options.compact && productKindSummaryHasKind(summary, "catalog_spec")) return "";
     return "<div class='product-kind-list" + (options.compact ? " compact" : "") + "'><span class='product-kind-pill other'>" + esc(t("product_kind_none")) + "</span></div>";
   }
   var html = "<div class='product-kind-list" + (options.compact ? " compact" : "") + "'>";
   kinds.forEach(function(kind) {
-    var meta = summary.kinds[kind] || {};
-    var extra = "";
-    if (options.detail && meta.stockKnown) {
-      extra += "<span class='product-kind-stock'>" + esc(t("product_kind_stock")) + " " + esc(String(meta.stockQty)) + "</span>";
-    }
-    if (options.detail && meta.slCount > 0) {
-      extra += "<span class='product-kind-stock'>" + esc(t("product_kind_sl")) + " " + esc(String(meta.slCount)) + "</span>";
-    }
-    html += "<span class='product-kind-pill " + productKindClass(kind) + "'>" + esc(productKindLabel(kind)) + extra + "</span>";
+    html += renderProductKindPill(kind, summary.kinds[kind] || {}, options);
   });
   html += "</div>";
   return html;
+}
+
+function renderBadgeSlotHtml(key, html) {
+  return "<span class='badge-slot badge-slot-" + esc(key || "item") + (html ? "" : " empty") + "'>" + (html || "&nbsp;") + "</span>";
+}
+
+function renderResultBadgeSlots(options) {
+  options = options || {};
+  var cls = options.className || "badges";
+  var imageCount = parseInt(options.imageCount || 0, 10);
+  if (isNaN(imageCount)) imageCount = 0;
+  var catalogHtml = options.hasCatalogSpec ? "<span class='badge-catalog'>" + esc(t("product_kind_catalog_spec")) + "</span>" : "";
+  var slHtml = options.hasSL ? "<span class='badge-sl'>SL</span>" : "";
+  var kikanHtml = options.hasKikan ? "<span class='badge-kikan' title='" + esc(t("kikan_section")) + "'>&#x1F504;</span>" : "";
+  var imageHtml = "";
+  if (imageCount > 0) {
+    imageHtml = "<span class='badge-img'>&#x1F4F7;" + esc(String(imageCount)) + "</span>";
+  } else if (options.showEmptyImageBadge) {
+    imageHtml = "<span class='badge-img no-image'>&#x1F5BC; " + esc(t("image_none_short")) + "</span>";
+  }
+  return "<div class='" + esc(cls) + " badge-slot-list'>" +
+    renderBadgeSlotHtml("catalog", catalogHtml) +
+    renderBadgeSlotHtml("sl", slHtml) +
+    renderBadgeSlotHtml("kikan", kikanHtml) +
+    renderBadgeSlotHtml("image", imageHtml) +
+    "</div>";
 }
 
 function productKindSelectLabel(kind, summary) {
@@ -16834,12 +16873,13 @@ function render() {
     }
     if (hasSL && slNums.length) html += "<div class='card-sl'>SL: "+esc(slNums[0])+(slNums.length>1?" 他":"")+"</div>";
     html += "</div>";
-    html += "<div class='badges'>"
-      +(hasCatalogSpec?"<span class='badge-catalog'>"+esc(t("product_kind_catalog_spec"))+"</span>":"")
-      +(hasSL?"<span class='badge-sl'>SL</span>":"")
-      +(hasKikan?"<span class='badge-kikan' title='"+esc(t("kikan_section"))+"'>&#x1F504;</span>":"")
-      +(cnt>0?"<span class='badge-img'>&#x1F4F7;"+cnt+"</span>":"")
-      +"</div>";
+    html += renderResultBadgeSlots({
+      className: "badges",
+      hasCatalogSpec: hasCatalogSpec,
+      hasSL: hasSL,
+      hasKikan: hasKikan,
+      imageCount: cnt
+    });
     html += "</div></div>";
   });
   list.innerHTML = html;
