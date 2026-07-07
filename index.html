@@ -939,13 +939,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .card:hover  { border-color: #b8d0f8; }
 .card.selected { border-color: #4f8ef7; background: #f0f6ff; }
 .card-top    { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.card-media { width: 56px; flex-shrink: 0; margin-right: 4px; display: flex; flex-direction: column; align-items: stretch; gap: 3px; }
 .card-thumb  { width: 56px; height: 56px; border-radius: 8px; overflow: hidden; flex-shrink: 0; margin-right: 4px; background: #fff; display: flex; align-items: center; justify-content: center; }
+.card-media .card-thumb { margin-right: 0; }
 .card-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; image-rendering: auto; }
 .card-thumb-empty { display: flex; align-items: center; justify-content: center; color: #ccc; font-size: 22px; }
 .card-thumb-icon { flex-direction: column; border: 1px solid #e3e8f2; color: #8a94a6; font-size: 18px; font-weight: 800; line-height: 1.1; }
 .card-thumb-icon.has-image { background: #eef7ff; color: #1a6fd4; border-color: #c8defa; }
 .card-thumb-icon.no-image { background: #f6f7f9; color: #b5bcc8; border-color: #e5e8ee; }
 .card-thumb-icon span { display: block; margin-top: 4px; font-size: 10px; font-weight: 700; }
+.card-media-catalog { display: flex; justify-content: center; }
+.card-media-catalog .badge-catalog { width: 100%; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; padding: 1px 3px; font-size: 10px; line-height: 1.3; text-align: center; overflow: hidden; text-overflow: ellipsis; }
 .card-left   { flex: 1; min-width: 0; }
 .card-name   { font-weight: 600; font-size: 14px; color: #1a1a2e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card-pn     { font-size: 13px; color: #444; margin-top: 3px; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -5972,7 +5976,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.402";
+var APP_VERSION       = "v1.1.403";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -16859,7 +16863,10 @@ function render() {
     var showMfrLine = !!mfr && (!p.manufacturer_part_number || mfr !== p.manufacturer);
     var sel   = (currentProduct && currentProduct.id===p.id) ? " selected" : "";
     html += "<div class='card"+sel+"' data-id='"+p.id+"' data-result-index='"+idx+"'><div class='card-top'>";
+    html += "<div class='card-media'>";
     html += "<div class='card-thumb card-thumb-icon " + (cnt > 0 ? "has-image" : "no-image") + "'>&#x1F5BC;<span>" + esc(cnt > 0 ? t("image_has") : t("image_none_short")) + "</span></div>";
+    if (hasCatalogSpec) html += "<div class='card-media-catalog'><span class='badge-catalog'>" + esc(t("product_kind_catalog_spec")) + "</span></div>";
+    html += "</div>";
     html += "<div class='card-left'>";
     html += "<div class='card-name'>"+esc(productCategoryLabel(p))+"</div>";
     html += "<div class='card-pn'>"+esc(p.genuine_part_number||"-")+"</div>";
@@ -16867,7 +16874,7 @@ function render() {
     html += renderProductKindPills(kindSummary, { compact: true });
     html += renderResultBadgeSlots({
       className: "badges card-badges-inline",
-      hasCatalogSpec: hasCatalogSpec,
+      hasCatalogSpec: false,
       hasSL: hasSL,
       hasKikan: hasKikan,
       imageCount: cnt,
