@@ -1546,7 +1546,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.411</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.412</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1575,7 +1575,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.411</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.412</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1605,7 +1605,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.411</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.412</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -6124,7 +6124,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.411";
+var APP_VERSION       = "v1.1.412";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -19348,6 +19348,28 @@ function componentHasChildRows(row) {
   return !!(row && (row.has_child_catalog_components || parseInt(row.child_catalog_component_count || 0, 10) > 0));
 }
 
+async function hydrateComponentChildCounts(rows) {
+  rows = Array.isArray(rows) ? rows : [];
+  var targets = rows.filter(function(row) {
+    return row && !componentHasChildRows(row) && row.component_manufacturer_part_number;
+  });
+  await Promise.all(targets.map(async function(row) {
+    var r = await sb.rpc("get_catalog_assembly_component_count", {
+      target_manufacturer: row.component_manufacturer || (currentProduct && currentProduct.manufacturer) || null,
+      target_manufacturer_part_number: row.component_manufacturer_part_number || null,
+      target_genuine_part_number: row.component_genuine_part_number || null
+    });
+    if (r.error) {
+      console.warn("get_catalog_assembly_component_count failed", r.error);
+      return;
+    }
+    var count = parseInt(Array.isArray(r.data) ? r.data[0] : r.data, 10) || 0;
+    row.child_catalog_component_count = count;
+    row.has_child_catalog_components = count > 0;
+  }));
+  return rows;
+}
+
 function componentChildToggleHtml(row) {
   if (!componentHasChildRows(row)) return "";
   var key = componentTreeKey(row);
@@ -21217,9 +21239,33 @@ async function loadAssemblyComponentsForCurrent() {
         return;
       }
     } else {
-      componentTreeRpcAvailable = false;
       console.warn("get_variant_catalog_components_for_ui failed; fallback to legacy component query", rpc.error);
     }
+  }
+
+  var treeFallbackRpc = await sb.rpc("get_assembly_components_with_children", {
+    target_dkd_shohin_id: dkdId,
+    target_product_kind: selectedKind
+  });
+  if (!treeFallbackRpc.error) {
+    var treeFallbackRows = (treeFallbackRpc.data || []).map(function(row) {
+      return normalizeComponentTreeRow(row, null);
+    });
+    var treeFallbackVariantId = selectedKind === "catalog_spec" ? null : selectedComponentVariantId();
+    if (treeFallbackVariantId) {
+      treeFallbackRows = treeFallbackRows.filter(function(row) {
+        if (!row.product_variant_id) return true;
+        return parseInt(row.product_variant_id, 10) === treeFallbackVariantId;
+      });
+    }
+    if (treeFallbackRows.length || selectedKind === "catalog_spec") {
+      assemblyComponentRows = treeFallbackRows;
+      updateComponentTargetSummary(treeFallbackRows.length);
+      renderAssemblyComponentRows();
+      return;
+    }
+  } else {
+    console.warn("get_assembly_components_with_children failed; fallback to legacy component query", treeFallbackRpc.error);
   }
 
   var mfr = String((currentProduct && currentProduct.manufacturer) || "").toUpperCase();
@@ -21264,6 +21310,7 @@ async function loadAssemblyComponentsForCurrent() {
       return parseInt(row.product_variant_id, 10) === selectedVariantId;
     });
   }
+  await hydrateComponentChildCounts(rows);
 
   rows.sort(function(a, b) {
     var ap = String(a.component_position || "");
