@@ -1546,7 +1546,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.410</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.411</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1575,7 +1575,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.410</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.411</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1605,7 +1605,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.410</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.411</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -6124,7 +6124,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.410";
+var APP_VERSION       = "v1.1.411";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -17374,11 +17374,52 @@ async function openProductByDkdId(dkdId) {
   openPanel(id);
 }
 
-async function openProductionCompatibleProduct(dkdId) {
+function productionSearchTermForRow(row, id) {
+  return row.manufacturer_part_number || row.genuine_part_number || row.genuine_part_number_2 || row.core_part_number || String(id || "");
+}
+
+async function openProductionProductByDkdId(dkdId, options) {
+  options = options || {};
   var id = parseInt(dkdId, 10);
   if (isNaN(id)) return;
-  await enterSearch();
-  await openProductByDkdId(id);
+  var row = (productionRows || []).find(function(p) { return parseInt(productDkdId(p), 10) === id; }) || null;
+  if (!row) {
+    var r = await sb.from("core_product_search_view").select("*").eq("dkd_shohin_id", id).maybeSingle();
+    if (r.error || !r.data) {
+      alert(t("no_results"));
+      return;
+    }
+    row = normalizeCoreProductFastRows([r.data])[0];
+  }
+  applyCachedSearchAuxiliaryMaps([row]);
+  row = enrichProductionProduct(row);
+  var replaced = false;
+  productionRows = (productionRows || []).map(function(p) {
+    if (parseInt(productDkdId(p), 10) === id) {
+      replaced = true;
+      return row;
+    }
+    return p;
+  });
+  if (!replaced) productionRows.unshift(row);
+  currentProductionRow = row;
+  if (options.syncSearch !== false) {
+    productionFilter = "all";
+    var qEl = document.getElementById("production-q");
+    if (qEl) qEl.value = productionSearchTermForRow(row, id);
+    renderProductionFilterChips();
+  }
+  showScreen("production-search");
+  updateAllHeaders();
+  renderProductionList();
+  var selectedIndex = productionFilteredRows.findIndex(function(p) { return parseInt(productDkdId(p), 10) === id; });
+  await renderProductionDetail(row);
+  if (selectedIndex >= 0) focusProductionResultIndex(selectedIndex);
+  logProductDetailOpen("production-search", row);
+}
+
+async function openProductionCompatibleProduct(dkdId) {
+  await openProductionProductByDkdId(dkdId);
 }
 
 function closePanel() {
@@ -18407,30 +18448,7 @@ async function openComponentReverseAssy(dkdId) {
   if (isNaN(id)) return;
   closeComponentReverseLookup();
   if (componentReturnScreen === "production-search" || isScreenActive("production-search")) {
-    var row = (productionRows || []).find(function(p) { return parseInt(productDkdId(p), 10) === id; }) || null;
-    if (!row) {
-      var r = await sb.from("core_product_search_view").select("*").eq("dkd_shohin_id", id).maybeSingle();
-      if (r.error || !r.data) {
-        alert(t("no_results"));
-        return;
-      }
-      row = normalizeCoreProductFastRows([r.data])[0];
-    }
-    row = enrichProductionProduct(row);
-    var replaced = false;
-    productionRows = (productionRows || []).map(function(p) {
-      if (parseInt(productDkdId(p), 10) === id) {
-        replaced = true;
-        return row;
-      }
-      return p;
-    });
-    if (!replaced) productionRows.unshift(row);
-    currentProductionRow = row;
-    showScreen("production-search");
-    updateAllHeaders();
-    renderProductionList();
-    await renderProductionDetail(row);
+    await openProductionProductByDkdId(id);
     return;
   }
   showScreen("search");
