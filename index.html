@@ -5976,7 +5976,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.404";
+var APP_VERSION       = "v1.1.405";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -14573,19 +14573,41 @@ async function searchKikanPartCandidates() {
     return;
   }
 
-  var query = sb.from("core_product_search_view")
-    .select("id, dkd_shohin_id, shohin_cd, genuine_part_number, manufacturer_part_number, manufacturer, category_code, category")
-    .order("dkd_shohin_id")
-    .limit(10);
-  var qNum = parseInt(q, 10);
-  if (!isNaN(qNum) && String(qNum) === q) {
-    query = query.or("dkd_shohin_id.eq." + qNum + ",genuine_part_number.ilike.%" + q + "%,manufacturer_part_number.ilike.%" + q + "%");
-  } else {
-    query = query.or("genuine_part_number.ilike.%" + q + "%,manufacturer_part_number.ilike.%" + q + "%");
+  var qAscii = normalizeAsciiWidth(q).trim();
+  var found = [];
+  var seen = {};
+  function appendCandidates(rows) {
+    normalizeCoreProductFastRows(rows || []).forEach(function(p) {
+      var key = String(productDkdId(p) || "");
+      if (!key || seen[key]) return;
+      seen[key] = true;
+      found.push(p);
+    });
   }
 
-  var r = await query;
-  kikanCandidateParts = r.data || [];
+  if (/^\d+$/.test(qAscii)) {
+    var qNum = parseInt(qAscii, 10);
+    var direct = await sb.from("core_products")
+      .select(CORE_PRODUCT_FAST_SELECT)
+      .eq("dkd_shohin_id", qNum)
+      .limit(1);
+    if (direct.error) {
+      infoEl.textContent = direct.error.message || t("msg_kikan_err");
+      infoEl.style.color = "#e24b4a";
+      return;
+    }
+    appendCandidates(direct.data || []);
+  }
+
+  var r = await fetchCoreProductMasterMatches(qAscii, "", 10);
+  if (r.error) {
+    infoEl.textContent = r.error.message || t("msg_kikan_err");
+    infoEl.style.color = "#e24b4a";
+    return;
+  }
+  appendCandidates(r.data || []);
+
+  kikanCandidateParts = found.slice(0, 10);
   if (kikanCandidateParts.length === 0) {
     listEl.style.display = "none";
     listEl.innerHTML = "";
@@ -14629,6 +14651,13 @@ async function saveKikanForm() {
   errEl.textContent = "";
   if (!canEdit()) { errEl.textContent = t("err_perm"); return; }
   var dkdId     = parseInt(document.getElementById("kf-dkd-shohin-id").value.trim(), 10);
+  if (isNaN(dkdId)) {
+    await searchKikanPartCandidates();
+    if (kikanCandidateParts.length === 1) {
+      selectKikanPartCandidate(0);
+      dkdId = parseInt(document.getElementById("kf-dkd-shohin-id").value.trim(), 10);
+    }
+  }
   if (isNaN(dkdId)) { errEl.textContent = t("kikan_select_candidate"); return; }
 
   // 商品コードが基幹商品マスタに存在するか確認
