@@ -12,6 +12,17 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { width: 100%; height: 100%; overflow-x: hidden; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f2f5; color: #1a1a1a; font-size: 14px; }
+:root {
+  --kind-rebuilt-bg: #edf7ed;
+  --kind-rebuilt-fg: #1f7a35;
+  --kind-rebuilt-border: #cbe9cf;
+  --kind-aftermarket-bg: #e8f2ff;
+  --kind-aftermarket-fg: #175cd3;
+  --kind-aftermarket-border: #b8d3ff;
+  --kind-catalog-bg: #f4f4f5;
+  --kind-catalog-fg: #51525c;
+  --kind-catalog-border: #d1d5db;
+}
 
 .screen { display: none; width: 100%; }
 .screen.active { display: flex; flex-direction: column; min-height: 100vh; }
@@ -253,8 +264,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .kikan-stock-list { display: grid; gap: 3px; min-width: 74px; }
 .kikan-stock-pill { display: grid; grid-template-columns: minmax(max-content, 1fr) 2em; align-items: center; gap: 2px; border: 1px solid transparent; border-radius: 5px; padding: 3px 2px; font-size: 10px; font-weight: 700; line-height: 1.2; }
 .kikan-stock-pill span { min-width: max-content; white-space: nowrap; }
-.kikan-stock-pill.rebuilt { background: #edf7ed; color: #1f7a35; border-color: #cbe9cf; }
-.kikan-stock-pill.aftermarket_new { background: #eaf2ff; color: #1a5fb4; border-color: #c9ddff; }
+.kikan-stock-pill.rebuilt { background: var(--kind-rebuilt-bg); color: var(--kind-rebuilt-fg); border-color: var(--kind-rebuilt-border); }
+.kikan-stock-pill.aftermarket_new { background: var(--kind-aftermarket-bg); color: var(--kind-aftermarket-fg); border-color: var(--kind-aftermarket-border); }
 .kikan-stock-pill b { color: #1a1a2e; font-size: 11px; text-align: right; }
 .kikan-action { text-align: center; white-space: nowrap; }
 .btn-sm-edit.kikan-search-btn { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; width: 100%; min-width: 0; max-width: none; padding: 3px 2px; font-size: 11px; line-height: 1.1; }
@@ -836,14 +847,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .badge-img.no-image { background: #f1f3f6; color: #98a2b3; }
 .badge-component { background: #fff4d6; color: #8a5a00; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .badge-kikan { background: #eef5ff; color: #1a6fd4; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700; white-space: nowrap; }
-.badge-catalog { background: #eef4ff; color: #244a8f; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.badge-catalog { background: var(--kind-catalog-bg); color: var(--kind-catalog-fg); border: 1px solid var(--kind-catalog-border); border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700; white-space: nowrap; }
 .product-kind-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
 .product-kind-list.compact { gap: 3px; margin-top: 4px; }
 .product-kind-pill { display: inline-flex; align-items: center; gap: 4px; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700; line-height: 1.35; white-space: nowrap; border: 1px solid transparent; }
-.product-kind-pill.rebuilt { background: #edf7ed; color: #1f7a35; border-color: #cbe9cf; }
-.product-kind-pill.aftermarket_new { background: #eaf2ff; color: #1a5fb4; border-color: #c9ddff; }
+.product-kind-pill.rebuilt { background: var(--kind-rebuilt-bg); color: var(--kind-rebuilt-fg); border-color: var(--kind-rebuilt-border); }
+.product-kind-pill.aftermarket_new { background: var(--kind-aftermarket-bg); color: var(--kind-aftermarket-fg); border-color: var(--kind-aftermarket-border); }
 .product-kind-pill.used_core { background: #fff4d6; color: #8a5a00; border-color: #f0d184; }
-.product-kind-pill.catalog_spec { background: #eef4ff; color: #244a8f; border-color: #cbdcff; }
+.product-kind-pill.catalog_spec { background: var(--kind-catalog-bg); color: var(--kind-catalog-fg); border-color: var(--kind-catalog-border); }
 .product-kind-pill.other { background: #f1f3f7; color: #556070; border-color: #dfe4ec; }
 .product-kind-stock { font-weight: 600; opacity: .82; }
 .product-kind-panel { border-top: 1px solid #f0f0f0; padding-top: 8px; margin-top: 8px; }
@@ -853,25 +864,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .product-kind-control-row.compact { justify-content: flex-end; }
 .product-kind-control-row label { color: #667085; font-size: 12px; font-weight: 700; white-space: nowrap; }
 .product-kind-select { min-width: 150px; border: 1px solid #d7dce5; border-radius: 7px; padding: 6px 8px; font-size: 12px; background: #fff; font-weight: 800; text-align: right; text-align-last: right; }
-.product-kind-select.rebuilt { background: #edf7ed; color: #1f7a35; border-color: #cbe9cf; }
-.product-kind-select.aftermarket_new { background: #eaf2ff; color: #1a5fb4; border-color: #c9ddff; }
+.product-kind-select.rebuilt { background: var(--kind-rebuilt-bg); color: var(--kind-rebuilt-fg); border-color: var(--kind-rebuilt-border); }
+.product-kind-select.aftermarket_new { background: var(--kind-aftermarket-bg); color: var(--kind-aftermarket-fg); border-color: var(--kind-aftermarket-border); }
 .product-kind-select.used_core { background: #fff4d6; color: #8a5a00; border-color: #f0d184; }
-.product-kind-select.catalog_spec { background: #eef4ff; color: #244a8f; border-color: #cbdcff; }
+.product-kind-select.catalog_spec { background: var(--kind-catalog-bg); color: var(--kind-catalog-fg); border-color: var(--kind-catalog-border); }
 .product-kind-select.other { background: #f1f3f7; color: #556070; border-color: #dfe4ec; }
 .product-kind-select option { background: #fff; color: #1a1a2e; font-weight: 700; }
-.product-kind-select option.rebuilt { background: #edf7ed; color: #1f7a35; }
-.product-kind-select option.aftermarket_new { background: #eaf2ff; color: #1a5fb4; }
+.product-kind-select option.rebuilt { background: var(--kind-rebuilt-bg); color: var(--kind-rebuilt-fg); }
+.product-kind-select option.aftermarket_new { background: var(--kind-aftermarket-bg); color: var(--kind-aftermarket-fg); }
 .product-kind-select option.used_core { background: #fff4d6; color: #8a5a00; }
-.product-kind-select option.catalog_spec { background: #eef4ff; color: #244a8f; }
+.product-kind-select option.catalog_spec { background: var(--kind-catalog-bg); color: var(--kind-catalog-fg); }
 .product-kind-select option.other { background: #f1f3f7; color: #556070; }
 .product-kind-stock-grid { display: grid; gap: 6px; margin-top: 6px; }
 .product-kind-stock-row { display: grid; grid-template-columns: minmax(0, 1fr) 72px; align-items: center; gap: 8px; width: 100%; padding: 0; background: transparent; }
 .product-kind-stock-label { color: #667085; font-size: 12px; font-weight: 700; white-space: nowrap; }
 .product-kind-stock-value { width: 72px; min-width: 0; box-sizing: border-box; border: 1px solid #edf0f5; border-radius: 7px; padding: 3px 6px; background: #fbfcff; font-size: 18px; font-weight: 800; color: #1a1a2e; white-space: nowrap; overflow: hidden; text-align: right; font-variant-numeric: tabular-nums; }
-.product-kind-stock-row.rebuilt .product-kind-stock-value { background: #edf7ed; color: #1f7a35; border-color: #cbe9cf; }
-.product-kind-stock-row.aftermarket_new .product-kind-stock-value { background: #eaf2ff; color: #1a5fb4; border-color: #c9ddff; }
+.product-kind-stock-row.rebuilt .product-kind-stock-value { background: var(--kind-rebuilt-bg); color: var(--kind-rebuilt-fg); border-color: var(--kind-rebuilt-border); }
+.product-kind-stock-row.aftermarket_new .product-kind-stock-value { background: var(--kind-aftermarket-bg); color: var(--kind-aftermarket-fg); border-color: var(--kind-aftermarket-border); }
 .product-kind-stock-row.used_core .product-kind-stock-value { background: #fff4d6; color: #8a5a00; border-color: #f0d184; }
-.product-kind-stock-row.catalog_spec .product-kind-stock-value { background: #eef4ff; color: #244a8f; border-color: #cbdcff; }
+.product-kind-stock-row.catalog_spec .product-kind-stock-value { background: var(--kind-catalog-bg); color: var(--kind-catalog-fg); border-color: var(--kind-catalog-border); }
 .product-kind-stock-row.other .product-kind-stock-value { background: #f1f3f7; color: #556070; border-color: #dfe4ec; }
 .product-kind-stock-value span { display: block; color: #8a94a6; font-size: 10px; font-weight: 600; margin-bottom: 2px; }
 #screen-search .panel-topbar .btn-sm-edit,
@@ -1144,8 +1155,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-status.need { background: #fff4e5; color: #aa6512; }
 .production-component-counts { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
 .production-component-pill { display: inline-flex; align-items: center; justify-content: center; gap: 3px; min-width: 34px; border-radius: 999px; border: 1px solid transparent; padding: 2px 6px; font-size: 11px; font-weight: 800; line-height: 1.25; white-space: nowrap; }
-.production-component-pill.rebuilt { background: #edf7ed; color: #1f7a35; border-color: #cbe9cf; }
-.production-component-pill.aftermarket_new { background: #eaf2ff; color: #1a5fb4; border-color: #c9ddff; }
+.production-component-pill.rebuilt { background: var(--kind-rebuilt-bg); color: var(--kind-rebuilt-fg); border-color: var(--kind-rebuilt-border); }
+.production-component-pill.aftermarket_new { background: var(--kind-aftermarket-bg); color: var(--kind-aftermarket-fg); border-color: var(--kind-aftermarket-border); }
 .production-number { font-size: 13px; font-weight: 700; color: #111a33; word-break: break-all; }
 .production-sub-number { font-size: 11px; color: #64748b; line-height: 1.25; word-break: break-all; }
 .production-meta { font-size: 11px; color: #7c8492; line-height: 1.4; }
@@ -1196,8 +1207,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-action-secondary:hover { background: #eef2f7; }
 .core-qty-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 10px; }
 .core-qty-card { border: 1px solid #dbe7ff; background: #f6f9ff; border-radius: 8px; padding: 10px 12px; }
+.core-qty-card.rebuilt { border-color: var(--kind-rebuilt-border); background: var(--kind-rebuilt-bg); }
+.core-qty-card.aftermarket_new { border-color: var(--kind-aftermarket-border); background: var(--kind-aftermarket-bg); }
 .core-qty-label { font-size: 11px; color: #68758a; font-weight: 700; margin-bottom: 4px; }
 .core-qty-value { font-size: 22px; color: #174ea6; font-weight: 800; line-height: 1.1; }
+.core-qty-card.rebuilt .core-qty-label,
+.core-qty-card.rebuilt .core-qty-value { color: var(--kind-rebuilt-fg); }
+.core-qty-card.aftermarket_new .core-qty-label,
+.core-qty-card.aftermarket_new .core-qty-value { color: var(--kind-aftermarket-fg); }
 .core-qty-sub { font-size: 11px; color: #7c8492; margin-top: 4px; word-break: break-word; }
 .core-count-pill { display: inline-flex; align-items: center; gap: 4px; margin-left: 10px; padding: 3px 8px; border-radius: 999px; background: #eaf2ff; color: #174ea6; font-weight: 700; }
 .finished-label-body { max-width: none; padding: 16px; overflow: hidden; }
@@ -5927,7 +5944,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.397";
+var APP_VERSION       = "v1.1.398";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -8012,15 +8029,15 @@ function renderProductionCoreSummary(row, detail) {
   var stockQty = productionCoreStockQty(row);
   return "<div class='core-qty-summary'>" +
     "<div class='core-qty-card'><div class='core-qty-label'>コア在庫数</div><div class='core-qty-value'>" + esc(String(stockQty)) + "</div><div class='core-qty-sub'>" + esc(row && row.core_part_number ? row.core_part_number : "-") + "</div></div>" +
-    "<div class='core-qty-card'><div class='core-qty-label'>" + esc(productKindLabel("rebuilt")) + "</div><div class='core-qty-value'>" + esc(productionProductKindStockQty(row, "rebuilt")) + "</div><div class='core-qty-sub'>" + esc(t("product_kind_stock_qty")) + "</div></div>" +
-    "<div class='core-qty-card'><div class='core-qty-label'>" + esc(productKindLabel("aftermarket_new")) + "</div><div class='core-qty-value'>" + esc(productionProductKindStockQty(row, "aftermarket_new")) + "</div><div class='core-qty-sub'>" + esc(t("product_kind_stock_qty")) + "</div></div>" +
+    "<div class='core-qty-card rebuilt'><div class='core-qty-label'>" + esc(productKindLabel("rebuilt")) + "</div><div class='core-qty-value'>" + esc(productionProductKindStockQty(row, "rebuilt")) + "</div><div class='core-qty-sub'>" + esc(t("product_kind_stock_qty")) + "</div></div>" +
+    "<div class='core-qty-card aftermarket_new'><div class='core-qty-label'>" + esc(productKindLabel("aftermarket_new")) + "</div><div class='core-qty-value'>" + esc(productionProductKindStockQty(row, "aftermarket_new")) + "</div><div class='core-qty-sub'>" + esc(t("product_kind_stock_qty")) + "</div></div>" +
   "</div>";
 }
 
 function renderSalesMobileStockSummary(product) {
   return "<div class='core-qty-summary'>" +
-    "<div class='core-qty-card'><div class='core-qty-label'>" + esc(productKindLabel("rebuilt")) + "</div><div class='core-qty-value'>" + esc(kikanStockQtyText(product, "rebuilt")) + "</div><div class='core-qty-sub'>" + esc(t("product_kind_stock_qty")) + "</div></div>" +
-    "<div class='core-qty-card'><div class='core-qty-label'>" + esc(productKindLabel("aftermarket_new")) + "</div><div class='core-qty-value'>" + esc(kikanStockQtyText(product, "aftermarket_new")) + "</div><div class='core-qty-sub'>" + esc(t("product_kind_stock_qty")) + "</div></div>" +
+    "<div class='core-qty-card rebuilt'><div class='core-qty-label'>" + esc(productKindLabel("rebuilt")) + "</div><div class='core-qty-value'>" + esc(kikanStockQtyText(product, "rebuilt")) + "</div><div class='core-qty-sub'>" + esc(t("product_kind_stock_qty")) + "</div></div>" +
+    "<div class='core-qty-card aftermarket_new'><div class='core-qty-label'>" + esc(productKindLabel("aftermarket_new")) + "</div><div class='core-qty-value'>" + esc(kikanStockQtyText(product, "aftermarket_new")) + "</div><div class='core-qty-sub'>" + esc(t("product_kind_stock_qty")) + "</div></div>" +
   "</div>";
 }
 
