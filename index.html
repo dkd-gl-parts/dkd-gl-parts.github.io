@@ -126,6 +126,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ec-mall-detail-seller { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #1a1a2e; }
 .ec-mall-detail-price { color: #1a6fd4; font-weight: 800; white-space: nowrap; }
 .ec-mall-detail-meta { color: #8a94a6; font-size: 11px; margin-top: 5px; line-height: 1.45; }
+.ec-mall-detail-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.ec-mall-detail-status { color: #8a94a6; font-size: 11px; line-height: 1.45; }
+.ec-mall-detail-status.error { color: #e24b4a; }
 .sales-pricing-card { max-width: 1480px; width: calc(100vw - 20px); }
 .sales-pricing-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .sales-pricing-grid .form-row { margin-bottom: 0; }
@@ -849,7 +852,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .badge-kikan { background: #eef5ff; color: #1a6fd4; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700; white-space: nowrap; }
 .badge-catalog { background: var(--kind-catalog-bg); color: var(--kind-catalog-fg); border: 1px solid var(--kind-catalog-border); border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700; white-space: nowrap; }
 .product-kind-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
-.product-kind-list.compact { gap: 3px; margin-top: 4px; }
+.product-kind-list.compact { display: grid; grid-template-columns: 58px 68px; gap: 3px; margin-top: 4px; align-items: center; width: 129px; }
+.product-kind-slot { min-width: 0; min-height: 18px; display: flex; align-items: center; }
+.product-kind-slot.empty { visibility: hidden; }
+.product-kind-list.compact .product-kind-pill { width: 100%; justify-content: center; box-sizing: border-box; padding: 2px 5px; }
 .product-kind-pill { display: inline-flex; align-items: center; gap: 4px; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700; line-height: 1.35; white-space: nowrap; border: 1px solid transparent; }
 .product-kind-pill.rebuilt { background: var(--kind-rebuilt-bg); color: var(--kind-rebuilt-fg); border-color: var(--kind-rebuilt-border); }
 .product-kind-pill.aftermarket_new { background: var(--kind-aftermarket-bg); color: var(--kind-aftermarket-fg); border-color: var(--kind-aftermarket-border); }
@@ -1163,6 +1169,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-label-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .production-label-row .product-kind-list { margin-top: 0; }
 .production-badges { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; flex: 0 0 auto; }
+.badge-slot-list { display: grid; grid-template-columns: 62px; gap: 4px; justify-items: stretch; align-items: start; flex: 0 0 62px; }
+.badges.badge-slot-list { align-items: stretch; }
+.production-badges.badge-slot-list { display: grid; grid-template-columns: repeat(2, 58px); flex: 0 0 120px; justify-content: end; }
+.badge-slot { min-width: 0; min-height: 18px; display: flex; align-items: center; justify-content: flex-end; }
+.badge-slot.empty { visibility: hidden; }
+.badge-slot > span { width: 100%; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; text-align: center; }
 .production-right { min-width: 0; overflow-y: auto; background: #fff; }
 .production-detail { max-width: 980px; padding: 18px 20px 28px; }
 .production-detail-empty { min-height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #a0a7b2; gap: 8px; }
@@ -3986,6 +3998,11 @@ var TRANSLATIONS = {
     ec_research_detail_title: "ECモール相場",
     ec_research_no_product_results: "この品番の調査結果はまだありません",
     ec_research_detail_failed: "ECモール相場を読み込めません",
+    ec_research_pinpoint: "この品番を調査",
+    ec_research_pinpoint_starting: "この品番の価格調査を開始しています...",
+    ec_research_pinpoint_started: "この品番の価格調査を開始しました。完了後にここへ表示されます。",
+    ec_research_pinpoint_running: "ECモール価格調査は実行中です。完了後に再実行できます。",
+    ec_research_pinpoint_failed: "この品番の価格調査を開始できません: {error}",
     ec_provider_rakuten: "楽天",
     ec_provider_yahoo_shopping: "Yahooショッピング",
     ec_provider_yahoo_auction: "ヤフオク",
@@ -4876,6 +4893,11 @@ var TRANSLATIONS = {
     ec_research_detail_title: "EC Mall Market",
     ec_research_no_product_results: "No research result for this part yet",
     ec_research_detail_failed: "Could not load EC mall market data",
+    ec_research_pinpoint: "Research This Part",
+    ec_research_pinpoint_starting: "Starting price research for this part...",
+    ec_research_pinpoint_started: "Started price research for this part. Results will appear here after completion.",
+    ec_research_pinpoint_running: "EC mall price research is already running. You can run this after it finishes.",
+    ec_research_pinpoint_failed: "Could not start price research for this part: {error}",
     ec_provider_rakuten: "Rakuten",
     ec_provider_yahoo_shopping: "Yahoo Shopping",
     ec_provider_yahoo_auction: "Yahoo Auctions",
@@ -5759,6 +5781,11 @@ var TRANSLATIONS = {
     ec_research_detail_title: "EC商城行情",
     ec_research_no_product_results: "此品号还没有调查结果",
     ec_research_detail_failed: "无法读取EC商城行情",
+    ec_research_pinpoint: "调查此品号",
+    ec_research_pinpoint_starting: "正在开始此品号的价格调查...",
+    ec_research_pinpoint_started: "已开始此品号的价格调查。完成后会显示在这里。",
+    ec_research_pinpoint_running: "EC商城价格调查正在执行中。完成后可以再次执行。",
+    ec_research_pinpoint_failed: "无法开始此品号的价格调查: {error}",
     kikan_section: "兼容件",
     kikan_none: "无兼容件信息",
     kikan_this: "（当前零件）",
@@ -5944,7 +5971,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.398";
+var APP_VERSION       = "v1.1.399";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -6031,6 +6058,7 @@ var ecResearchStatusPollTimer = null;
 var ecResearchLatestStatus = null;
 var ecResearchManualRunStarting = false;
 var ecResearchManualRunStartedAt = 0;
+var ecMallPinpointRunStarting = false;
 var ecCategoryTargetSearchResults = [];
 var EC_CATEGORY_TARGET_SEARCH_LIMIT = 300;
 var ecMallDefaultProviders = ["rakuten", "yahoo_shopping", "yahoo_auction"];
@@ -20659,12 +20687,118 @@ async function fetchEcMallLatestBest3ForProduct(product) {
   return byKeyword.data || [];
 }
 
+function ecMallPinpointProductKey(product) {
+  product = product || {};
+  return [productDkdId(product), buildRakutenProductQuery(product), product.manufacturer_part_number || "", product.genuine_part_number || ""].join("|");
+}
+
+function ecMallPinpointActionHtml() {
+  if (!canUseRakutenResearch()) return "";
+  var running = ecMallPinpointRunStarting || ecResearchIsRunning(ecResearchLatestStatus) || ecResearchIsStarting();
+  return "<div class='ec-mall-detail-actions'>" +
+    "<button class='btn-sm-edit' id='btn-ec-mall-pinpoint-research' type='button'" + (running ? " disabled" : "") + ">" + esc(running ? t("ec_research_run_running") : t("ec_research_pinpoint")) + "</button>" +
+    "<span class='ec-mall-detail-status' id='ec-mall-pinpoint-status'></span>" +
+  "</div>";
+}
+
+function setEcMallPinpointStatus(message, isError) {
+  var el = document.getElementById("ec-mall-pinpoint-status");
+  if (!el) return;
+  el.textContent = message || "";
+  el.classList.toggle("error", !!isError);
+}
+
+function updateEcMallPinpointButtonState() {
+  var btn = document.getElementById("btn-ec-mall-pinpoint-research");
+  if (!btn) return;
+  var running = ecMallPinpointRunStarting || ecResearchIsRunning(ecResearchLatestStatus) || ecResearchIsStarting();
+  btn.disabled = running;
+  btn.textContent = running ? t("ec_research_run_running") : t("ec_research_pinpoint");
+}
+
+function scheduleEcMallPinpointSummaryRefresh(product) {
+  var productKey = ecMallPinpointProductKey(product);
+  [12000, 30000, 60000].forEach(function(delay) {
+    setTimeout(function() {
+      if (!currentProduct || ecMallPinpointProductKey(currentProduct) !== productKey) return;
+      loadEcMallPriceSummaryForCurrent(++detailSecondaryRequestSeq).catch(function(e) {
+        console.warn("ec mall pinpoint summary refresh failed", e);
+      });
+    }, delay);
+  });
+}
+
+async function runEcMallPinpointResearchForProduct(product) {
+  if (!canUseRakutenResearch()) {
+    setEcMallPinpointStatus(t("err_perm"), true);
+    return;
+  }
+  product = product || currentProduct;
+  if (!product || ecMallPinpointRunStarting) return;
+  try {
+    var latestStatus = await loadEcMallResearchStatus({ silent: true }).catch(function() { return ecResearchLatestStatus; });
+    if (ecResearchIsRunning(latestStatus) || ecResearchIsStarting()) {
+      updateEcMallPinpointButtonState();
+      setEcMallPinpointStatus(t("ec_research_pinpoint_running"), false);
+      return;
+    }
+
+    ecMallPinpointRunStarting = true;
+    updateEcMallPinpointButtonState();
+    setEcMallPinpointStatus(t("ec_research_pinpoint_starting"), false);
+
+    var target = rakutenTargetFromPart(product, "detail");
+    target.provider_keys = ecMallDefaultProviders.slice();
+    target.seller_ids = [];
+    target.include_used = false;
+    target = await ensureEcMallTarget(target, target.search_number || buildRakutenProductQuery(product));
+    if (!target.id) throw new Error("target_not_found");
+
+    var schedule = normalizeEcResearchScheduleSettings(ecResearchScheduleSettings || ecResearchDefaultScheduleSettings());
+    var r = await sb.functions.invoke("ec-price-research-start", {
+      body: {
+        target_id: target.id,
+        limit: 1,
+        batch_size: 1,
+        hits: schedule.default_hits || 30,
+        sort: schedule.default_sort || "+itemPrice",
+        provider_keys: target.provider_keys || ecMallDefaultProviders.slice()
+      }
+    });
+    if (r.error) throw new Error(r.error.message || r.error);
+    if (r.data && r.data.already_running) {
+      setEcMallPinpointStatus(t("ec_research_pinpoint_running"), false);
+    } else {
+      setEcMallPinpointStatus(t("ec_research_pinpoint_started"), false);
+      scheduleEcMallPinpointSummaryRefresh(product);
+    }
+    await loadEcMallResearchStatus({ silent: true }).catch(function() {});
+  } catch(e) {
+    setEcMallPinpointStatus(tf("ec_research_pinpoint_failed", { error: e.message || e }), true);
+  } finally {
+    ecMallPinpointRunStarting = false;
+    updateEcMallPinpointButtonState();
+  }
+}
+
+function bindEcMallPinpointResearchButton(product) {
+  var btn = document.getElementById("btn-ec-mall-pinpoint-research");
+  if (!btn) return;
+  btn.addEventListener("click", function() {
+    runEcMallPinpointResearchForProduct(product).catch(function(e) {
+      setEcMallPinpointStatus(tf("ec_research_pinpoint_failed", { error: e.message || e }), true);
+    });
+  });
+  updateEcMallPinpointButtonState();
+}
+
 function renderEcMallPriceSummaryForCurrent(rows) {
   var wrap = document.getElementById("ec-mall-price-summary-wrap");
   if (!wrap) return;
   rows = rows || [];
   if (!rows.length) {
-    wrap.innerHTML = "<div class='sales-price-summary'><div class='sales-price-summary-main primary'><span class='sales-price-summary-value'>-</span></div><div class='sales-price-summary-sub'>" + esc(t("ec_research_no_product_results")) + "</div></div>";
+    wrap.innerHTML = "<div class='sales-price-summary'><div class='sales-price-summary-main primary'><span class='sales-price-summary-value'>-</span></div><div class='sales-price-summary-sub'>" + esc(t("ec_research_no_product_results")) + "</div></div>" + ecMallPinpointActionHtml();
+    bindEcMallPinpointResearchButton(currentProduct);
     return;
   }
   var bestByType = {};
