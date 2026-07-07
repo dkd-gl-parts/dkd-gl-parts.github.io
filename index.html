@@ -93,6 +93,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .detail-kind-price-row .product-kind-panel { border-top: 1px solid #e5edf8; }
 .detail-kind-price-row .product-kind-control { flex: 1; }
 .detail-kind-price-row .sales-price-summary { border: 0; background: transparent; padding: 0; flex: 1; }
+#screen-search .detail-inline-kind-panel { width: min(50%, 260px); min-width: 190px; margin-left: auto; }
 .detail-inline-kind-panel { margin-top: 10px; border: 1px solid #e5edf8; border-radius: 8px; background: #fbfdff; padding: 9px 11px; }
 .detail-inline-kind-panel .detail-block-title { margin-bottom: 6px; }
 .detail-inline-kind-panel .product-kind-control { margin-top: 0; }
@@ -1084,7 +1085,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   #screen-search .detail-kind-price-row .product-kind-stock-row { grid-template-columns: minmax(0, 1fr) 54px; gap: 5px; }
   #screen-search .detail-kind-price-row .product-kind-stock-label { font-size: 10px; }
   #screen-search .detail-kind-price-row .product-kind-stock-value { width: 54px; font-size: 15px; padding: 2px 5px; border-radius: 6px; }
-  #screen-search .detail-inline-kind-panel { margin-top: 6px; padding: 7px; }
+  #screen-search .detail-inline-kind-panel { width: 100%; min-width: 0; margin-left: 0; margin-top: 6px; padding: 7px; }
   #screen-search .detail-inline-kind-panel .product-kind-select { width: 100%; min-width: 0; padding: 6px 7px; }
   #screen-search .detail-inline-kind-panel .product-kind-stock-grid { max-width: none; margin-left: 0; gap: 4px; }
   #screen-search .detail-inline-kind-panel .product-kind-stock-row { grid-template-columns: minmax(0, 1fr) 54px; gap: 5px; }
@@ -5926,7 +5927,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.396";
+var APP_VERSION       = "v1.1.397";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
