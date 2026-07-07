@@ -2788,7 +2788,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       </div>
       <div class="kikan-form-panel" style="grid-column:1 / -1">
         <div class="kikan-form-panel-title">
-          <span data-i18n="kikan_existing_members">登録済みメンバー</span>
+          <span data-i18n="kikan_existing_members">登録済み品番</span>
           <span id="kf-existing-count"></span>
         </div>
         <div class="kikan-part-list" id="kf-existing-members"></div>
@@ -3772,9 +3772,9 @@ var TRANSLATIONS = {
     kikan_resolve_parts: "候補確認",
     kikan_add_all_candidates: "候補をすべて追加予定へ",
     kikan_selected_parts: "追加予定",
-    kikan_existing_members: "登録済みメンバー",
+    kikan_existing_members: "登録済み品番",
     kikan_selected_empty: "追加予定の品番はありません",
-    kikan_existing_empty: "まだ登録済みメンバーはありません",
+    kikan_existing_empty: "まだ登録済み品番はありません",
     kikan_candidate_add: "追加予定へ",
     kikan_registered: "登録済み",
     kikan_pending: "追加予定",
@@ -4682,9 +4682,9 @@ var TRANSLATIONS = {
     kikan_resolve_parts: "Check Candidates",
     kikan_add_all_candidates: "Add All Candidates to Pending",
     kikan_selected_parts: "Pending Additions",
-    kikan_existing_members: "Registered Members",
+    kikan_existing_members: "Registered Parts",
     kikan_selected_empty: "No pending parts",
-    kikan_existing_empty: "No registered members yet",
+    kikan_existing_empty: "No registered parts yet",
     kikan_candidate_add: "Add to Pending",
     kikan_registered: "Registered",
     kikan_pending: "Pending",
@@ -5585,9 +5585,9 @@ var TRANSLATIONS = {
     kikan_resolve_parts: "确认候选",
     kikan_add_all_candidates: "将全部候选加入待添加",
     kikan_selected_parts: "待添加",
-    kikan_existing_members: "已注册成员",
+    kikan_existing_members: "已注册品番",
     kikan_selected_empty: "没有待添加的品番",
-    kikan_existing_empty: "尚无已注册成员",
+    kikan_existing_empty: "尚无已注册品番",
     kikan_candidate_add: "加入待添加",
     kikan_registered: "已注册",
     kikan_pending: "待添加",
@@ -6065,7 +6065,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.406";
+var APP_VERSION       = "v1.1.407";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -14540,9 +14540,21 @@ async function enterKikanMgmt() {
 
 async function loadKikanMgmt() {
   var q = document.getElementById("kikan-mgmt-search").value.trim();
-  // グループ一覧を取得（最大100グループ）
-  var r1 = await sb.from("kikan_groups").select("kikan_group_id").order("kikan_group_id").limit(100);
-  var groups = r1.data || [];
+  // 一覧は登録済み品番を正とし、空の親グループだけが見える状態を避ける。
+  var groupRows = await sb.from("kikan_group_members").select("kikan_group_id").order("kikan_group_id").limit(5000);
+  if (groupRows.error) {
+    var kikanListErrEl = document.getElementById("kikan-mgmt-list");
+    if (kikanListErrEl) kikanListErrEl.innerHTML = "<div class='empty'>" + esc(groupRows.error.message || t("msg_kikan_err")) + "</div>";
+    return;
+  }
+  var baseGroupSet = {};
+  (groupRows.data || []).forEach(function(row) {
+    if (row.kikan_group_id != null) baseGroupSet[String(row.kikan_group_id)] = true;
+  });
+  var groups = Object.keys(baseGroupSet).map(function(gid) { return { kikan_group_id: parseInt(gid, 10) }; })
+    .filter(function(g) { return !isNaN(g.kikan_group_id); })
+    .sort(function(a, b) { return a.kikan_group_id - b.kikan_group_id; })
+    .slice(0, 100);
   var visibleShohinCdSet = null;
 
   if (!isDaikoGroup()) {
@@ -14560,8 +14572,7 @@ async function loadKikanMgmt() {
       var qNum = parseInt(qAscii, 10);
       var rm = await sb.from("kikan_group_members").select("kikan_group_id").eq("dkd_gokan_id", qNum);
       (rm.data || []).forEach(function(m){ groupIdSet[String(m.kikan_group_id)] = true; });
-      var rgById = await sb.from("kikan_groups").select("kikan_group_id").eq("kikan_group_id", qNum);
-      (rgById.data || []).forEach(function(g){ groupIdSet[String(g.kikan_group_id)] = true; });
+      if (baseGroupSet[String(qNum)]) groupIdSet[String(qNum)] = true;
     }
     var productMatches = await fetchCoreProductMasterMatches(qAscii, "", 50);
     var matchIds = ((productMatches && productMatches.data) || []).map(function(p) {
@@ -14961,12 +14972,6 @@ async function saveKikanForm() {
     return;
   }
 
-  // 新グループ作成
-  if (shouldCreateGroup) {
-    var rg = await sb.from("kikan_groups").insert({ kikan_group_id: groupId }).select().single();
-    if (rg.error) { errEl.textContent = t("kikan_create_failed") + ": " + rg.error.message; return; }
-  }
-
   // メンバー追加
   var rows = selectedProducts.filter(function(p) {
     return !kikanExistingMemberIdSet[kikanPartId(p)];
@@ -14978,6 +14983,12 @@ async function saveKikanForm() {
     errEl.textContent = t("kikan_duplicate_existing");
     return;
   }
+
+  if (shouldCreateGroup) {
+    var rg = await sb.from("kikan_groups").insert({ kikan_group_id: groupId }).select().single();
+    if (rg.error && rg.error.code !== "23505") { errEl.textContent = t("kikan_create_failed") + ": " + rg.error.message; return; }
+  }
+
   var rm = await sb.from("kikan_group_members").insert(rows);
   if (rm.error) { errEl.textContent = t("kikan_add_failed") + ": " + rm.error.message; return; }
 
