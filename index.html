@@ -1171,6 +1171,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-badges { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; flex: 0 0 auto; }
 .badge-slot-list { display: grid; grid-template-columns: 62px; gap: 4px; justify-items: stretch; align-items: start; flex: 0 0 62px; }
 .badges.badge-slot-list { grid-template-columns: 58px 50px; flex: 0 0 112px; align-items: stretch; }
+.card-badges-inline.badge-slot-list { grid-template-columns: 60px 30px 30px 52px; gap: 3px; width: 181px; flex: none; margin-top: 4px; }
 .production-badges.badge-slot-list { display: grid; grid-template-columns: repeat(2, 58px); flex: 0 0 120px; justify-content: end; }
 .badge-slot { min-width: 0; min-height: 18px; display: flex; align-items: center; justify-content: flex-end; }
 .badge-slot.slot-empty { visibility: hidden; }
@@ -5971,7 +5972,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.401";
+var APP_VERSION       = "v1.1.402";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -15253,6 +15254,7 @@ function renderResultBadgeSlots(options) {
   } else if (options.showEmptyImageBadge) {
     imageHtml = "<span class='badge-img no-image'>&#x1F5BC; " + esc(t("image_none_short")) + "</span>";
   }
+  if (options.hideWhenEmpty && !catalogHtml && !slHtml && !kikanHtml && !imageHtml) return "";
   return "<div class='" + esc(cls) + " badge-slot-list'>" +
     renderBadgeSlotHtml("catalog", catalogHtml) +
     renderBadgeSlotHtml("sl", slHtml) +
@@ -16863,6 +16865,14 @@ function render() {
     html += "<div class='card-pn'>"+esc(p.genuine_part_number||"-")+"</div>";
     if (p.genuine_part_number_2) html += "<div class='card-sub'>純正2: "+esc(p.genuine_part_number_2)+"</div>";
     html += renderProductKindPills(kindSummary, { compact: true });
+    html += renderResultBadgeSlots({
+      className: "badges card-badges-inline",
+      hasCatalogSpec: hasCatalogSpec,
+      hasSL: hasSL,
+      hasKikan: hasKikan,
+      imageCount: cnt,
+      hideWhenEmpty: true
+    });
     if (showMfrLine) html += "<div class='card-mfr'>"+esc(mfr)+"</div>";
     if (p.manufacturer || p.manufacturer_part_number) {
       html += "<div class='card-sub'>";
@@ -16873,13 +16883,6 @@ function render() {
     }
     if (hasSL && slNums.length) html += "<div class='card-sl'>SL: "+esc(slNums[0])+(slNums.length>1?" 他":"")+"</div>";
     html += "</div>";
-    html += renderResultBadgeSlots({
-      className: "badges",
-      hasCatalogSpec: hasCatalogSpec,
-      hasSL: hasSL,
-      hasKikan: hasKikan,
-      imageCount: cnt
-    });
     html += "</div></div>";
   });
   list.innerHTML = html;
