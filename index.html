@@ -854,7 +854,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .product-kind-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
 .product-kind-list.compact { display: grid; grid-template-columns: 58px 68px; gap: 3px; margin-top: 4px; align-items: center; width: 129px; }
 .product-kind-slot { min-width: 0; min-height: 18px; display: flex; align-items: center; }
-.product-kind-slot.empty { visibility: hidden; }
+.product-kind-slot.slot-empty { visibility: hidden; }
 .product-kind-list.compact .product-kind-pill { width: 100%; justify-content: center; box-sizing: border-box; padding: 2px 5px; }
 .product-kind-pill { display: inline-flex; align-items: center; gap: 4px; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700; line-height: 1.35; white-space: nowrap; border: 1px solid transparent; }
 .product-kind-pill.rebuilt { background: var(--kind-rebuilt-bg); color: var(--kind-rebuilt-fg); border-color: var(--kind-rebuilt-border); }
@@ -1173,7 +1173,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .badges.badge-slot-list { align-items: stretch; }
 .production-badges.badge-slot-list { display: grid; grid-template-columns: repeat(2, 58px); flex: 0 0 120px; justify-content: end; }
 .badge-slot { min-width: 0; min-height: 18px; display: flex; align-items: center; justify-content: flex-end; }
-.badge-slot.empty { visibility: hidden; }
+.badge-slot.slot-empty { visibility: hidden; }
 .badge-slot > span { width: 100%; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; text-align: center; }
 .production-right { min-width: 0; overflow-y: auto; background: #fff; }
 .production-detail { max-width: 980px; padding: 18px 20px 28px; }
@@ -15217,7 +15217,7 @@ function renderProductKindPills(summary, options) {
     var compactHtml = "<div class='product-kind-list compact'>";
     compactSlots.forEach(function(kind) {
       var hasKind = productKindSummaryHasKind(summary, kind);
-      compactHtml += "<span class='product-kind-slot" + (hasKind ? "" : " empty") + "'>" +
+      compactHtml += "<span class='product-kind-slot" + (hasKind ? "" : " slot-empty") + "'>" +
         (hasKind ? renderProductKindPill(kind, summary.kinds[kind] || {}, options) : "&nbsp;") +
         "</span>";
     });
@@ -15236,7 +15236,7 @@ function renderProductKindPills(summary, options) {
 }
 
 function renderBadgeSlotHtml(key, html) {
-  return "<span class='badge-slot badge-slot-" + esc(key || "item") + (html ? "" : " empty") + "'>" + (html || "&nbsp;") + "</span>";
+  return "<span class='badge-slot badge-slot-" + esc(key || "item") + (html ? "" : " slot-empty") + "'>" + (html || "&nbsp;") + "</span>";
 }
 
 function renderResultBadgeSlots(options) {
