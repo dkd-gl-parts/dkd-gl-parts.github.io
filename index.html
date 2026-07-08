@@ -1630,7 +1630,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.435</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.436</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1659,7 +1659,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.435</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.436</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1689,7 +1689,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.435</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.436</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -6450,7 +6450,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.435";
+var APP_VERSION       = "v1.1.436";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -21696,9 +21696,10 @@ function componentNameMasterCategoryRows() {
   });
 }
 
-function componentNameMasterCategoryOptionsHtml(selected) {
-  selected = selected || componentCatalogCategoryCode(currentProduct) || "starter";
-  return componentNameMasterCategoryRows().map(function(row) {
+function componentNameMasterCategoryOptionsHtml(selected, includeAll) {
+  selected = selected || "";
+  var html = includeAll ? "<option value='" + esc("") + "'" + (!selected ? " selected" : "") + ">" + esc(t("filter_all")) + "</option>" : "";
+  return html + componentNameMasterCategoryRows().map(function(row) {
     return "<option value='" + esc(row.code) + "'" + (row.code === selected ? " selected" : "") + ">" + esc(row.label || row.code) + "</option>";
   }).join("");
 }
@@ -21769,7 +21770,7 @@ async function enterComponentNameMasterMgmt() {
   updateAllHeaders();
   var category = document.getElementById("component-name-master-category");
   if (category) {
-    category.innerHTML = componentNameMasterCategoryOptionsHtml(category.value || componentCatalogCategoryCode(currentProduct) || "starter");
+    category.innerHTML = componentNameMasterCategoryOptionsHtml(category.value || "", true);
   }
   await loadComponentNameMasterMgmt();
 }
@@ -21834,6 +21835,8 @@ function componentNameMasterRowMatchesSearch(row, query) {
     row.component_name_ja,
     row.component_name_en,
     row.component_name_zh,
+    row.category_code,
+    tCat(row.category_code || ""),
     row.source_type,
     row.is_active ? "active" : "inactive"
   ].some(function(value) {
@@ -21857,9 +21860,11 @@ function componentNameMasterFilteredRows() {
   });
 }
 
-function componentNameMasterOptionListHtml(selectedId) {
+function componentNameMasterOptionListHtml(selectedId, targetCategoryCode) {
   var html = "<option value=''>" + esc(t("component_name_select_master")) + "</option>";
-  (componentNameMasterCandidateRows || []).forEach(function(row) {
+  (componentNameMasterCandidateRows || []).filter(function(row) {
+    return !targetCategoryCode || row.category_code === targetCategoryCode;
+  }).forEach(function(row) {
     var label = row.component_name_ja || row.component_name || "";
     var sub = [row.component_name_en, row.source_type].filter(Boolean).join(" / ");
     html += "<option value='" + esc(String(row.master_id || "")) + "'" + (String(row.master_id || "") === String(selectedId || "") ? " selected" : "") + ">" + esc(label + (sub ? " / " + sub : "")) + "</option>";
@@ -21890,7 +21895,7 @@ function renderComponentNameRequestList() {
     if (row.status === "pending") {
       html += "<div class='component-edit-actions'>";
       html += "<button class='btn-sm-edit' data-component-name-approve='" + esc(String(row.id)) + "'>" + esc(t("component_name_approve_new")) + "</button>";
-      html += "<select class='form-select' data-component-name-merge-select='" + esc(String(row.id)) + "'>" + componentNameMasterOptionListHtml(row.resolved_master_id) + "</select>";
+      html += "<select class='form-select' data-component-name-merge-select='" + esc(String(row.id)) + "'>" + componentNameMasterOptionListHtml(row.resolved_master_id, row.category_code) + "</select>";
       html += "<button class='btn-sm-edit production-action-secondary' data-component-name-merge='" + esc(String(row.id)) + "'>" + esc(t("component_name_merge_existing")) + "</button>";
       html += "<button class='btn-sm-edit production-action-secondary' data-component-name-reject='" + esc(String(row.id)) + "'>" + esc(t("component_name_reject")) + "</button>";
       html += "</div>";
@@ -21927,10 +21932,9 @@ function renderComponentNameMasterList() {
     wrap.innerHTML = "<div class='component-empty'>" + esc(t("component_name_master_empty")) + "</div>";
     return;
   }
-  var categoryEl = document.getElementById("component-name-master-category");
-  var categoryLabel = tCat(categoryEl ? categoryEl.value : "");
   var html = "<table class='mgmt-table'><tr><th>ID</th><th>" + esc(t("component_name")) + "</th><th>EN / 中文</th><th>" + esc(t("component_request_status")) + "</th><th>" + esc(t("component_actions")) + "</th></tr>";
   visibleRows.forEach(function(row) {
+    var categoryLabel = tCat(row.category_code || "");
     html += "<tr>";
     html += "<td>" + esc(String(row.master_id || "-")) + "</td>";
     html += "<td><strong>" + esc(row.component_name_ja || row.component_name || "-") + "</strong><div class='mgmt-sub'>" + esc(categoryLabel) + "</div></td>";
