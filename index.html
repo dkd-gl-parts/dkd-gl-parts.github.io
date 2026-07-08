@@ -530,6 +530,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .mgmt-sub       { font-size: 11px; color: #aaa; margin-top: 2px; }
 .mgmt-actions   { display: flex; gap: 6px; flex-wrap: nowrap; }
 .mgmt-count     { font-size: 12px; color: #888; margin-bottom: 8px; }
+.mgmt-section-title { font-size: 14px; font-weight: 800; color: #1a1a2e; margin: 12px 0 6px; }
 #screen-purchase-mgmt .mgmt-body { max-width: 1280px; }
 .purchase-mgmt-hint { color: #667085; font-size: 12px; line-height: 1.6; margin: -4px 0 12px; }
 .purchase-mgmt-table-wrap { width: 100%; overflow-x: hidden; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); background: #fff; }
@@ -1630,7 +1631,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.438</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.439</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1659,7 +1660,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.438</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.439</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1689,7 +1690,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.438</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.439</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -2561,9 +2562,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <input class="form-input" id="component-name-master-search" type="search" data-i18n-ph="component_name_master_search_ph" placeholder="部品名で絞り込み">
       <button class="btn-primary" id="btn-component-name-master-refresh" data-i18n="btn_reload">再読込</button>
     </div>
+    <div class="mgmt-section-title" data-i18n="component_name_request_list_title">申請一覧</div>
     <div class="mgmt-count" id="component-name-master-count"></div>
     <div id="component-name-request-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
     <div style="height:18px"></div>
+    <div class="mgmt-section-title" data-i18n="component_name_manual_master_list_title">手動追加マスター一覧</div>
     <div class="mgmt-count" id="component-name-master-list-count"></div>
     <div id="component-name-master-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
   </div>
@@ -4323,6 +4326,8 @@ var TRANSLATIONS = {
     component_name_master_count_showing: "マスター {n} 件中 {shown} 件表示",
     component_name_master_search_ph: "部品名で絞り込み",
     component_name_master_show_more: "さらに表示",
+    component_name_request_list_title: "申請一覧",
+    component_name_manual_master_list_title: "手動追加マスター一覧",
     component_name_request_open: "候補なし: 申請",
     component_name_request_title: "新規部品名候補を申請",
     component_name_requested: "申請する部品名",
@@ -5291,6 +5296,8 @@ var TRANSLATIONS = {
     component_name_master_count_showing: "Showing {shown} of {n} master names",
     component_name_master_search_ph: "Filter by part name",
     component_name_master_show_more: "Show More",
+    component_name_request_list_title: "Requests",
+    component_name_manual_master_list_title: "Manual Master Names",
     component_name_request_open: "Missing name: Request",
     component_name_request_title: "Request New Part Name",
     component_name_requested: "Requested Part Name",
@@ -6249,6 +6256,8 @@ var TRANSLATIONS = {
     component_name_master_count_showing: "显示 {n} 件中的 {shown} 件主数据",
     component_name_master_search_ph: "按部件名筛选",
     component_name_master_show_more: "显示更多",
+    component_name_request_list_title: "申请列表",
+    component_name_manual_master_list_title: "手动追加主数据列表",
     component_name_request_open: "无候选: 申请",
     component_name_request_title: "申请新的部件名候选",
     component_name_requested: "申请的部件名",
@@ -6450,7 +6459,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.438";
+var APP_VERSION       = "v1.1.439";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -21866,6 +21875,24 @@ function componentNameMasterRowMatchesSearch(row, query) {
   });
 }
 
+function componentNameRequestRowMatchesSearch(row, query) {
+  if (!query) return true;
+  return [
+    row.id,
+    row.requested_name,
+    row.requested_name_en,
+    row.requested_name_zh,
+    row.category_code,
+    tCat(row.category_code || ""),
+    row.manufacturer,
+    row.dkd_shohin_id,
+    productKindLabel(row.product_kind),
+    t("component_name_request_status_" + row.status)
+  ].some(function(value) {
+    return String(value || "").toLowerCase().indexOf(query) >= 0;
+  });
+}
+
 function isManualComponentNameMasterRow(row) {
   var sourceType = String(row && row.source_type || "").toLowerCase();
   return (sourceType === "manual" || sourceType === "approved") && parseInt(row && row.catalog_count || 0, 10) <= 0;
@@ -21901,7 +21928,11 @@ function componentNameMasterOptionListHtml(selectedId, targetCategoryCode) {
 function renderComponentNameRequestList() {
   var wrap = document.getElementById("component-name-request-list");
   var count = document.getElementById("component-name-master-count");
-  var rows = componentNameMasterRequestRows || [];
+  var query = componentNameMasterSearchValue();
+  var allRows = componentNameMasterRequestRows || [];
+  var rows = allRows.filter(function(row) {
+    return componentNameRequestRowMatchesSearch(row, query);
+  });
   if (count) count.textContent = tf("component_name_request_count", { n: rows.length });
   if (!wrap) return;
   if (!rows.length) {
@@ -27116,6 +27147,7 @@ document.getElementById("component-name-master-category").addEventListener("chan
 document.getElementById("component-name-request-status").addEventListener("change", loadComponentNameMasterMgmt);
 document.getElementById("component-name-master-search").addEventListener("input", function(){
   componentNameMasterRenderLimit = 150;
+  renderComponentNameRequestList();
   renderComponentNameMasterList();
 });
 document.getElementById("btn-back-product-kind-stock-mgmt").addEventListener("click", function(){ showScreen("menu"); });
