@@ -6995,6 +6995,7 @@ async function applyLanguage(lang) {
   // 動的コンテンツを再描画する
   componentCatalogNameCandidateCache = {};
   componentCatalogNameCandidateLabelMap = {};
+  componentCatalogNameCandidateKindMap = {};
   renderMenu();
   if (dataLoaded) { renderCategoryChips(); render(); }
   renderProductionFilterChips();
@@ -19076,6 +19077,7 @@ async function openComponentAddForm() {
   var productKeyAtOpen = productDkdId(currentProduct) + "|" + componentCatalogCategoryCode(currentProduct) + "|" + selectedProductKind();
   componentCatalogNameCandidates = [];
   componentCatalogNameCandidateLabelMap = {};
+  componentCatalogNameCandidateKindMap = {};
   clearComponentAddForm();
   var manufacturer = document.getElementById("component-add-mfr");
   if (manufacturer) manufacturer.value = "";
@@ -19555,6 +19557,7 @@ function startComponentEdit(usageId) {
   editingComponentUsageId = String(usageId);
   componentCatalogNameCandidates = [];
   componentCatalogNameCandidateLabelMap = {};
+  componentCatalogNameCandidateKindMap = {};
   renderAssemblyComponentRows();
   refreshComponentEditNameCandidates(String(usageId));
 }
@@ -20131,11 +20134,13 @@ function componentNameCanonicalJaMap() {
 
 function canonicalComponentNameForStorage(value) {
   var text = normalizeComponentNameText(value);
+  if (isComponentNameOptionGroupValue(text)) return "";
   if (!text) return "";
   return componentNameCanonicalJaMap()[text.toUpperCase()] || componentDisplayNameToCanonicalName(text) || text;
 }
 
 function componentNameDuplicateKey(value) {
+  if (isComponentNameOptionGroupValue(value)) return "";
   return normalizeComponentNameText(value)
     .replace(/[ァぁ]/g, "ア")
     .replace(/[ィぃ]/g, "イ")
@@ -20805,6 +20810,18 @@ function componentNameCandidateKindLabel(kind) {
   return "その他の候補";
 }
 
+function componentNameCandidateKinds() {
+  return ["master", "frequent", "other"];
+}
+
+function componentNameOptionGroupValue(kind) {
+  return "──────── " + componentNameCandidateKindLabel(kind) + " ────────";
+}
+
+function isComponentNameOptionGroupValue(value) {
+  return /^─+\s.+\s─+$/.test(String(value || "").trim());
+}
+
 function componentNameSortCompare(a, b) {
   return String(a || "").localeCompare(String(b || ""), "ja", { numeric: true, sensitivity: "base" });
 }
@@ -20823,6 +20840,10 @@ function setComponentNameCandidateKind(kindMap, name, kind) {
   if (!current || componentNameCandidatePriority(kind) < componentNameCandidatePriority(current)) {
     kindMap[key] = kind || "other";
   }
+}
+
+function componentNameCandidateKindForName(name) {
+  return componentCatalogNameCandidateKindMap[componentNameCandidateLabelKey(name)] || "other";
 }
 
 function componentNameCandidateCachePayload(list, labelMap, kindMap) {
@@ -20988,7 +21009,8 @@ async function loadComponentCatalogNameCandidatesForCurrent() {
   var labels = {};
   var kinds = {};
   (r.data || []).forEach(function(row) {
-    var canonicalName = row.component_name_ja || row.component_name;
+    var sourceName = row.component_name_ja || row.component_name;
+    var canonicalName = canonicalComponentNameForStorage(sourceName) || normalizeComponentNameText(sourceName);
     addComponentNameCandidate(list, seen, canonicalName);
     addComponentNameCandidateLabel(labels, canonicalName, componentNameCandidateDisplayLabel(canonicalName, row.component_name));
     setComponentNameCandidateKind(kinds, canonicalName, componentNameCandidateKindFromRow(row));
@@ -21030,17 +21052,71 @@ function componentAddNameCandidates(selectedName) {
   return list;
 }
 
-function componentNameOptionsHtml(selectedName) {
+function componentNameCandidateGroups() {
+  return { master: [], frequent: [], other: [] };
+}
+
+function addGroupedComponentNameCandidate(groups, seen, value, kind) {
+  var canonicalName = canonicalComponentNameForStorage(value) || normalizeComponentNameText(value);
+  if (!canonicalName) return;
+  kind = kind || "other";
+  if (componentNameCandidateKinds().indexOf(kind) < 0) kind = "other";
+  var canonicalKey = componentNameDuplicateKey(canonicalName);
+  if (!canonicalKey) return;
+  var existing = seen[canonicalKey];
+  if (existing) {
+    if (componentNameCandidatePriority(kind) >= componentNameCandidatePriority(existing.kind)) return;
+    groups[existing.kind] = (groups[existing.kind] || []).filter(function(item) {
+      return item.key !== canonicalKey;
+    });
+  }
+  seen[canonicalKey] = { key: canonicalKey, name: canonicalName, kind: kind };
+  groups[kind].push({ key: canonicalKey, name: canonicalName });
+}
+
+function componentNameGroupedCandidates(selectedName, options) {
+  options = options || {};
+  var groups = componentNameCandidateGroups();
+  var seen = {};
+  (componentCatalogNameCandidates || []).forEach(function(name) {
+    addGroupedComponentNameCandidate(groups, seen, name, componentNameCandidateKindForName(name));
+  });
+  if (options.baseRow) {
+    addGroupedComponentNameCandidate(groups, seen, options.baseRow.component_name || options.baseRow.component_part_name, "frequent");
+  }
+  (assemblyComponentRows || []).forEach(function(row) {
+    addGroupedComponentNameCandidate(groups, seen, row.component_name || row.component_part_name, "frequent");
+  });
+  (componentAlternativeRows || []).forEach(function(alt) {
+    var part = alt.internal_component_parts || {};
+    addGroupedComponentNameCandidate(groups, seen, part.part_name, "frequent");
+  });
+  componentNameDefaultCandidatesForCategory(componentCatalogCategoryCode(currentProduct)).forEach(function(name) {
+    addGroupedComponentNameCandidate(groups, seen, name, "other");
+  });
+  addGroupedComponentNameCandidate(groups, seen, selectedName, "other");
+  componentNameCandidateKinds().forEach(function(kind) {
+    groups[kind].sort(function(a, b) {
+      return componentNameSortCompare(a.name, b.name);
+    });
+  });
+  return groups;
+}
+
+function componentNameOptionHtml(name) {
+  var label = componentNameOptionLabel(name);
+  return "<option value='" + esc(name) + "'" + (label ? " label='" + esc(label) + "'" : "") + "></option>";
+}
+
+function componentNameOptionsHtml(selectedName, options) {
   var html = "";
-  var seenCanonical = {};
-  componentAddNameCandidates(selectedName).forEach(function(name) {
-    var canonicalName = canonicalComponentNameForStorage(name) || normalizeComponentNameText(name);
-    if (!canonicalName) return;
-    var canonicalKey = componentNameDuplicateKey(canonicalName);
-    if (seenCanonical[canonicalKey]) return;
-    seenCanonical[canonicalKey] = true;
-    var label = componentNameOptionLabel(canonicalName);
-    html += "<option value='" + esc(canonicalName) + "'" + (label ? " label='" + esc(label) + "'" : "") + "></option>";
+  var groups = componentNameGroupedCandidates(selectedName, options);
+  componentNameCandidateKinds().forEach(function(kind) {
+    if (!groups[kind].length) return;
+    html += "<option value='" + esc(componentNameOptionGroupValue(kind)) + "' disabled></option>";
+    groups[kind].forEach(function(candidate) {
+      html += componentNameOptionHtml(candidate.name);
+    });
   });
   return html;
 }
@@ -21088,19 +21164,7 @@ async function recordComponentNameCandidateUsageForCurrent(componentName) {
 function renderComponentAlternativeNameOptions(selectedName) {
   var listEl = document.getElementById("component-alt-name-list");
   if (!listEl) return;
-  var candidates = componentAlternativeNameCandidates(componentAlternativeBaseRow, selectedName);
-  var seenCanonical = {};
-  var html = "";
-  candidates.forEach(function(name) {
-    var canonicalName = canonicalComponentNameForStorage(name) || normalizeComponentNameText(name);
-    if (!canonicalName) return;
-    var canonicalKey = componentNameDuplicateKey(canonicalName);
-    if (seenCanonical[canonicalKey]) return;
-    seenCanonical[canonicalKey] = true;
-    var label = componentNameOptionLabel(canonicalName);
-    html += "<option value='" + esc(canonicalName) + "'" + (label ? " label='" + esc(label) + "'" : "") + "></option>";
-  });
-  listEl.innerHTML = html;
+  listEl.innerHTML = componentNameOptionsHtml(selectedName, { baseRow: componentAlternativeBaseRow });
 }
 
 function syncComponentAlternativeNameValue() {
@@ -21308,6 +21372,7 @@ function openComponentAlternativeForm(usageId) {
   var productKeyAtOpen = productDkdId(currentProduct) + "|" + componentCatalogCategoryCode(currentProduct) + "|" + selectedProductKind();
   componentCatalogNameCandidates = [];
   componentCatalogNameCandidateLabelMap = {};
+  componentCatalogNameCandidateKindMap = {};
   var overlay = document.getElementById("component-alternative-overlay");
   var base = document.getElementById("component-alt-base");
   var err = document.getElementById("component-alt-error");
