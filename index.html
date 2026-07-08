@@ -4476,9 +4476,11 @@ var TRANSLATIONS = {
     component_mfr_pn_required: "構成部品のメーカー品番を入力してください。",
     component_name_required: "構成部品の部品名を入力してください。",
     component_part_number_invalid_chars: "{field}は半角英数字 A-Z 0-9 とハイフン - のみで入力してください。",
+    component_mfr_part_number_invalid_chars: "{field}は半角英数字 A-Z 0-9、ハイフン -、カンマ , のみで入力してください。",
     component_part_number_length_warning: "{field}は{min}〜{max}文字が標準です。現在 {count} 文字です。",
     component_part_number_duplicate_warning: "同じメーカー + 品番がこの構成部品一覧にあります: {value}",
     component_part_number_confirm: "入力内容を確認してください。\n{messages}\n\nこのまま保存しますか？",
+    component_add_cancel_confirm: "入力中の構成部品は登録されません。取消して閉じますか？",
     component_base_missing: "基準にする構成部品を確認できません。",
     component_base_missing_save: "基準構成部品を確認できません。",
     component_add_failed: "構成部品の追加に失敗しました",
@@ -5446,9 +5448,11 @@ var TRANSLATIONS = {
     component_mfr_pn_required: "Enter the component manufacturer part number.",
     component_name_required: "Enter the component part name.",
     component_part_number_invalid_chars: "{field} may contain only half-width A-Z, 0-9, and hyphen -.",
+    component_mfr_part_number_invalid_chars: "{field} may contain only half-width A-Z, 0-9, hyphen -, and comma ,.",
     component_part_number_length_warning: "{field} is normally {min}-{max} characters. Current length is {count}.",
     component_part_number_duplicate_warning: "The same manufacturer + part number already exists in this component list: {value}",
     component_part_number_confirm: "Please confirm the entered part numbers.\n{messages}\n\nSave anyway?",
+    component_add_cancel_confirm: "The component part you are entering will not be saved. Cancel and close?",
     component_base_missing: "Could not confirm the base component part.",
     component_base_missing_save: "Could not confirm the base component part.",
     component_add_failed: "Failed to add component part",
@@ -6406,9 +6410,11 @@ var TRANSLATIONS = {
     component_mfr_pn_required: "请输入构成部件的制造商品号。",
     component_name_required: "请输入构成部件的部件名。",
     component_part_number_invalid_chars: "{field}只能输入半角 A-Z、0-9 和连字符 -。",
+    component_mfr_part_number_invalid_chars: "{field}只能输入半角 A-Z、0-9、连字符 - 和逗号 ,。",
     component_part_number_length_warning: "{field}通常为 {min}-{max} 个字符。当前为 {count} 个字符。",
     component_part_number_duplicate_warning: "此构成部件列表中已有相同厂家 + 品号: {value}",
     component_part_number_confirm: "请确认输入的品号。\n{messages}\n\n仍要保存吗？",
+    component_add_cancel_confirm: "正在输入的构成部件不会保存。要取消并关闭吗？",
     component_base_missing: "无法确认作为基准的构成部件。",
     component_base_missing_save: "无法确认基准构成部件。",
     component_add_failed: "构成部件添加失败",
@@ -6494,7 +6500,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.443";
+var APP_VERSION       = "v1.1.444";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -19482,6 +19488,10 @@ function closeComponentAddForm() {
   if (overlay) overlay.classList.remove("show");
 }
 
+function cancelComponentAddForm() {
+  if (confirm(t("component_add_cancel_confirm"))) closeComponentAddForm();
+}
+
 async function openComponentAddForm() {
   if (!currentProduct) return;
   if (!canManageComponentsInCurrentContext()) { alert(t("err_perm")); return; }
@@ -19539,7 +19549,8 @@ function normalizeComponentPartNumberInput(value) {
   return normalizeAsciiWidth(value)
     .trim()
     .toUpperCase()
-    .replace(/[\u2010-\u2015\u2212\u30FC\uFF0D]/g, "-");
+    .replace(/[\u2010-\u2015\u2212\u30FC\uFF0D]/g, "-")
+    .replace(/[\u3001\uFF0C]/g, ",");
 }
 
 function normalizeComponentManufacturerInput(value) {
@@ -19568,8 +19579,9 @@ function componentPartNumberValidation(value, kind) {
     if (spec.required) errors.push(t("component_mfr_pn_required"));
     return { value: normalized, errors: errors, warnings: warnings };
   }
-  if (!/^[A-Z0-9-]+$/.test(normalized)) {
-    errors.push(tf("component_part_number_invalid_chars", { field: spec.label }));
+  var validPattern = kind === "manufacturer" ? /^[A-Z0-9,-]+$/ : /^[A-Z0-9-]+$/;
+  if (!validPattern.test(normalized)) {
+    errors.push(tf(kind === "manufacturer" ? "component_mfr_part_number_invalid_chars" : "component_part_number_invalid_chars", { field: spec.label }));
   }
   return { value: normalized, errors: errors, warnings: warnings };
 }
@@ -19705,6 +19717,7 @@ async function lookupCoreProductPartNumberPair(mfrKey, genuineKey) {
 }
 
 async function lookupComponentPartNumberPair(mfrValue, genuineValue) {
+  if (String(mfrValue || "").indexOf(",") >= 0) return null;
   var mfrKey = normalizedPartKey(mfrValue);
   var genuineKey = normalizedPartKey(genuineValue);
   var keys = [];
@@ -27080,7 +27093,7 @@ var componentReverseNameEl = document.getElementById("component-reverse-part-nam
 if (componentReverseNameEl) {
   componentReverseNameEl.addEventListener("keydown", function(e) { if (e.key === "Enter") runComponentReverseLookup(); });
 }
-document.getElementById("btn-component-add-cancel").addEventListener("click", closeComponentAddForm);
+document.getElementById("btn-component-add-cancel").addEventListener("click", cancelComponentAddForm);
 document.getElementById("btn-component-add").addEventListener("click", addAssemblyComponentForCurrent);
 document.getElementById("btn-component-add-name-request").addEventListener("click", function(){ openComponentNameRequestForm("component_add"); });
 document.getElementById("btn-component-name-request-cancel").addEventListener("click", closeComponentNameRequestForm);
