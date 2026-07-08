@@ -238,6 +238,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ec-price-history-table tr:last-child td { border-bottom: 0; }
 .ec-price-history-table .rank-cell { width: 42px; text-align: right; color: #667085; font-weight: 800; white-space: nowrap; }
 .ec-price-history-table .price-cell { white-space: nowrap; }
+.ec-price-history-table.seller-ranking table { min-width: 980px; }
+.ec-price-history-table.seller-ranking th,
+.ec-price-history-table.seller-ranking td { white-space: nowrap; }
+.ec-price-history-table.seller-ranking th:nth-child(2),
+.ec-price-history-table.seller-ranking td:nth-child(2) { min-width: 220px; }
+.ec-price-history-table.seller-ranking th:nth-child(4),
+.ec-price-history-table.seller-ranking td:nth-child(4) { min-width: 84px; }
+#rakuten-list { overflow-x: auto; }
+#rakuten-list .ec-price-result-table { min-width: 1320px; table-layout: fixed; }
+#rakuten-list .ec-price-result-table th:nth-child(1),
+#rakuten-list .ec-price-result-table td:nth-child(1) { width: 150px; }
+#rakuten-list .ec-price-result-table th:nth-child(2),
+#rakuten-list .ec-price-result-table td:nth-child(2),
+#rakuten-list .ec-price-result-table th:nth-child(3),
+#rakuten-list .ec-price-result-table td:nth-child(3) { width: 165px; }
+#rakuten-list .ec-price-result-table th:nth-child(-n+3),
+#rakuten-list .ec-price-result-table td:nth-child(-n+3),
+#rakuten-list .ec-price-result-table td:nth-child(-n+3) .mgmt-pn,
+#rakuten-list .ec-price-result-table td:nth-child(-n+3) .mgmt-sub { white-space: nowrap; word-break: keep-all; overflow-wrap: normal; }
 @media(max-width:700px){ .ec-price-history-card { width: calc(100vw - 8px); max-height: calc(100vh - 8px); margin: 4px; padding: 12px 8px; } .ec-price-history-chart-wrap { padding: 6px; } .ec-price-history-chart { height: 300px; } }
 .rakuten-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
 .rakuten-actions button:disabled { opacity: .45; cursor: not-allowed; }
@@ -11480,17 +11499,47 @@ function ecMallItemTotalPrice(item) {
 var EC_MALL_KNOWN_YAHOO_AUCTION_SELLERS = {
   "7kRN5AJLxPj99m5XD1bnffyoWzGpN": "エスオーエル2号店",
   "FJ5NeS99SC8HDJ1PhPKRoqDWW62UG": "自動車パーツの宝箱 SOL",
-  "CYWC2j57DBqjcNEscUthj1EQCzRbG": "自動車パーツの宝箱 SOL"
+  "CYWC2j57DBqjcNEscUthj1EQCzRbG": "自動車パーツの宝箱 SOL",
+  "7au5bAjRvPB2pwYgwzFeADiHZ1TaD": "takasaki11",
+  "7xD4u9GiRnZydygvLBAmzJ98qY4yA": "ARD広島ヤフオク!店",
+  "dB8iQzJmtyaCDc2KFcm7BTqBCzTX": "エスオーエル4号店",
+  "3r1YakTqPzfw2HbK5thQ49Bt7wAta": "太田美品通商Yahoo!店",
+  "bDWtVsoKDq2d1WFkiWZbU7PU1kYW": "ズミタロウショップ",
+  "eBUbgaekn6TsZmyeuKM9M7jF72bc": "middlereus net",
+  "314z6YFMp7ZB9FZMVsCU8Z53XTvep": "パーツコネクション",
+  "4WZd2J1ERCG7TA6vX9msN9cNsPqEt": "W&Y",
+  "6NXmtHnWrDxuqFQiPWsoPUoxSsZcz": "エスオーエル5号店",
+  "ASzUBYQAyGDo4mYpNYk1n7zXqcSY9": "increase ヤフオク!店",
+  "Hm7R3YNiWFh2UotLi9FWjKvjAMCr": "SPEED オートパーツ",
+  "nFr8yV1NjKJKoC8Y1apTv4wXPCre": "エーネクストショップ",
+  "9VNcXAZnzLk2bJNkmNRhLUAAKZMaM": "ユーズショップ2",
+  "CMRzmjpK531TwcNqx9dcaRt4PYqP5": "オートパーツの館Yahoo!店",
+  "4WJKrv2xQjtqVnxFMXWa1twWWvBE2": "MCLオートパーツ",
+  "FfskK8w9nn8mY3p2211hBaFpjTgEh": "サポートパーツドットコム"
 };
 
+function ecMallSellerIdFromItem(item) {
+  return String((item && (item.sellerId || item.shopCode || item.seller_id || item.storeId || item.store_id)) || "").trim();
+}
+
+function ecMallLooksLikeOpaqueSellerId(value) {
+  return /^[A-Za-z0-9_-]{20,}$/.test(String(value || "").trim());
+}
+
+function ecMallLooksLikeBrokenSellerName(value) {
+  var text = String(value || "").trim();
+  if (!text) return true;
+  return ecMallLooksLikeOpaqueSellerId(text) || text.indexOf("???") >= 0 || text.indexOf("\uFFFD") >= 0;
+}
+
 function ecMallKnownSellerName(item) {
-  var id = String((item && (item.sellerId || item.shopCode)) || "").trim();
+  var id = ecMallSellerIdFromItem(item);
   return EC_MALL_KNOWN_YAHOO_AUCTION_SELLERS[id] || "";
 }
 
 function ecMallSellerKey(item) {
-  var id = String(item.sellerId || item.shopCode || "").trim().toLowerCase();
-  var name = String(ecMallKnownSellerName(item) || item.shopName || item.sellerName || "").trim().toLowerCase();
+  var id = ecMallSellerIdFromItem(item).toLowerCase();
+  var name = String(ecMallKnownSellerName(item) || item.shopName || item.sellerName || item.seller_name || "").trim().toLowerCase();
   var compactName = name.replace(/[ \t\r\n\u3000]/g, "");
   if (
     compactName.indexOf("自動車パーツの宝箱sol") >= 0 ||
@@ -11504,10 +11553,12 @@ function ecMallSellerKey(item) {
 }
 
 function ecMallSellerDisplayName(item) {
+  item = item || {};
+  var id = ecMallSellerIdFromItem(item);
   var known = ecMallKnownSellerName(item);
-  var seller = item.shopName || item.sellerName || item.storeName || "";
-  if (!seller || seller === item.sellerId || /^[A-Za-z0-9_-]{20,}$/.test(seller)) seller = known || seller;
-  return seller || item.sellerId || item.shopCode || "-";
+  var seller = item.shopName || item.sellerName || item.storeName || item.seller_name || "";
+  if (!seller || seller === id || ecMallLooksLikeBrokenSellerName(seller)) seller = known || seller;
+  return seller || id || item.shopCode || "-";
 }
 
 function ecMallItemRuleText(item) {
@@ -12193,7 +12244,7 @@ function renderEcPriceHistoryRecentTable(rows) {
   if (!usable.length) return "";
   var html = "<div class='ec-price-history-table'><table><tr><th>" + esc(t("rakuten_latest")) + "</th><th>" + esc(t("ec_mall_condition_filters")) + "</th><th>" + esc(t("ec_price_history_seller")) + "</th><th>" + esc(t("ec_price_history_rank_price")) + "</th></tr>";
   usable.forEach(function(row) {
-    var seller = row.seller_name || row.seller_id || "-";
+    var seller = ecMallSellerDisplayName(row);
     var url = safeHttpsUrl(row.item_url, ["rakuten.co.jp", "shopping.yahoo.co.jp", "yahoo.co.jp", "auctions.yahoo.co.jp"]);
     var sellerHtml = url ? "<a href='" + esc(url) + "' target='_blank' rel='noopener'>" + esc(seller) + "</a>" : esc(seller);
     var rank = parseInt(row.rank_no || 0, 10);
@@ -12213,7 +12264,7 @@ function renderEcPriceHistorySellerRanking(rows) {
   var groups = {};
   points.forEach(function(p) {
     var row = p.row || {};
-    var seller = String(row.seller_name || row.seller_id || "-").trim() || "-";
+    var seller = String(ecMallSellerDisplayName(row)).trim() || "-";
     var sellerKey = String(row.seller_id || seller).trim().toLowerCase();
     var key = p.providerKey + "|" + p.type + "|" + sellerKey;
     if (!groups[key]) {
@@ -12346,13 +12397,13 @@ function renderEcMallPriceList(rows) {
       .sort(function(a, b) { return (a.rank_no || 99) - (b.rank_no || 99); });
     if (!best.length) return "<span class='muted'>-</span>";
     return best.map(function(row) {
-      var seller = row.seller_name || row.seller_id || "-";
+      var seller = ecMallSellerDisplayName(row);
       var itemUrl = safeHttpsUrl(row.item_url, ["rakuten.co.jp", "shopping.yahoo.co.jp", "yahoo.co.jp", "auctions.yahoo.co.jp"]);
       var sellerHtml = itemUrl ? "<a href='" + esc(itemUrl) + "' target='_blank' rel='noopener'>" + esc(seller) + "</a>" : esc(seller);
       return "<div class='mgmt-sub' style='margin-bottom:4px'><strong>#" + esc(row.rank_no) + "</strong> " + sellerHtml + " <span class='ec-provider-badge'>" + esc(ecMallProviderLabel(row.provider_key)) + "</span><div class='price-value'>" + yen(row.total_price_jpy || row.price_jpy) + "</div></div>";
     }).join("");
   }
-  var html = "<table class='mgmt-table'>";
+  var html = "<table class='mgmt-table ec-price-result-table'>";
   html += "<tr><th>" + t("rakuten_keyword") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("rakuten_condition_used") + " Best3</th><th>" + t("rakuten_condition_rebuilt") + " Best3</th><th>" + t("rakuten_condition_new") + " Best3</th><th>" + t("rakuten_latest") + "</th><th>" + t("ec_price_history") + "</th></tr>";
   listRows.forEach(function(group, idx) {
     var r = group.meta;
@@ -12387,7 +12438,7 @@ function renderRakutenPriceList(rows) {
     list.innerHTML = "<div class='empty'>" + t("rakuten_no_saved_results") + "</div>";
     return;
   }
-  var html = "<table class='mgmt-table'>";
+  var html = "<table class='mgmt-table ec-price-result-table'>";
   html += "<tr><th>" + t("rakuten_keyword") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("rakuten_count") + "</th><th>" + t("rakuten_condition_used") + "</th><th>" + t("rakuten_condition_rebuilt") + "</th><th>" + t("rakuten_condition_new") + "</th><th>" + t("rakuten_condition_other") + "</th><th>" + t("rakuten_min") + "</th><th>" + t("rakuten_avg") + "</th><th>" + t("rakuten_latest") + "</th></tr>";
   rows.forEach(function(r) {
     var conditionMap = rakutenConditionSummaryMap(r.items || []);
@@ -23367,7 +23418,7 @@ function renderEcMallPriceSummaryForCurrent(rows) {
   var html = "<div class='ec-mall-detail-list'>";
   types.forEach(function(type) {
     var row = bestByType[type];
-    var seller = row.seller_name || row.seller_id || "-";
+    var seller = ecMallSellerDisplayName(row);
     var price = row.total_price_jpy || row.price_jpy;
     var url = safeHttpsUrl(row.item_url, ["rakuten.co.jp", "shopping.yahoo.co.jp", "yahoo.co.jp", "auctions.yahoo.co.jp"]);
     var sellerHtml = url ? "<a href='" + esc(url) + "' target='_blank' rel='noopener'>" + esc(seller) + "</a>" : esc(seller);
