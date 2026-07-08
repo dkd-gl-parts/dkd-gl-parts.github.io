@@ -1630,7 +1630,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.436</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.437</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1659,7 +1659,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.436</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.437</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1689,7 +1689,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.436</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.437</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -6450,7 +6450,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.436";
+var APP_VERSION       = "v1.1.437";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -9748,7 +9748,7 @@ function ecMallTargetPayload(target) {
     dkd_shohin_id: ecMallDkdShohinIdValue(target),
     shohin_cd: target.shohin_cd ? String(target.shohin_cd) : null,
     manufacturer: target.manufacturer || null,
-    category: target.category || null,
+    category: ecMallNormalizeTargetCategory(target.category) || null,
     daiko_part_number: daikoPartNumber || null,
     genuine_part_number: target.genuine_part_number || null,
     genuine_part_number_2: target.genuine_part_number_2 || null,
@@ -9778,7 +9778,7 @@ function ecMallTargetFromDb(row) {
     manufacturer_part_number: row.manufacturer_part_number || "",
     daiko_part_number: row.daiko_part_number || "",
     manufacturer: row.manufacturer || "",
-    category: row.category || "",
+    category: ecMallNormalizeTargetCategory(row.category || ""),
     search_number: row.search_number || "",
     search_number_type: row.search_number_type || null,
     source_type: "saved",
@@ -9838,14 +9838,34 @@ function rakutenPartKey(value) {
   return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
 
+function ecMallNormalizeTargetCategory(category) {
+  var raw = normalizeAsciiWidth(String(category || "").trim());
+  if (!raw) return "";
+  var source = categoryTranslationSource(raw);
+  var code = String(source || raw).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  var alias = {
+    alternator: "alternator",
+    large_alternator: "alternator",
+    starter: "starter",
+    large_starter: "starter",
+    new_large_starter: "starter",
+    starter_generator: "starter_generator",
+    distributor: "distributor",
+    ac_compressor: "ac_compressor",
+    throttle_body: "throttle_body",
+    blower_motor: "blower_motor"
+  };
+  return alias[code] || code || raw;
+}
+
 function rakutenKeywordPartOnly(value) {
   return String(value || "").trim().split(/\s+/)[0] || "";
 }
 
 function rakutenCategoryKeywords(category) {
-  var cat = String(category || "").toLowerCase();
+  var cat = ecMallNormalizeTargetCategory(category) || String(category || "").toLowerCase();
   if (cat.indexOf("alternator") >= 0) return ["オルタネータ", "オルタネーター", "ダイナモ", "alternator"];
-  if (cat.indexOf("starter generator") >= 0) return ["スタータジェネレータ", "スタータージェネレーター", "starter generator"];
+  if (cat.indexOf("starter_generator") >= 0 || cat.indexOf("starter generator") >= 0) return ["スタータジェネレータ", "スタータージェネレーター", "starter generator"];
   if (cat.indexOf("starter") >= 0) return ["スタータ", "スターター", "セルモーター", "starter"];
   if (cat.indexOf("compressor") >= 0) return ["ACコンプレッサ", "エアコンコンプレッサ", "コンプレッサー", "compressor"];
   if (cat.indexOf("distributor") >= 0) return ["ディストリビュータ", "デスビ", "distributor"];
@@ -9925,7 +9945,7 @@ function rakutenTargetFromPart(p, sourceType) {
     manufacturer_part_number: mfr,
     daiko_part_number: daiko,
     manufacturer: manufacturer,
-    category: p.category_code || p.category || "",
+    category: ecMallNormalizeTargetCategory(p.category_code || p.category || ""),
     search_number: searchNumber,
     search_number_type: mfr ? "manufacturer_part_number" : "genuine_part_number",
     source_type: sourceType || "master",
@@ -9990,7 +10010,7 @@ async function populateRakutenTargetCategoryOptions() {
       });
     }
   }
-  var current = select.value || "";
+  var current = ecMallNormalizeTargetCategory(select.value || "");
   select.innerHTML = ecCategoryTargetCategoryOptionsHtml(current);
   select.value = current;
 }
@@ -10186,7 +10206,7 @@ function setEcCategoryTargetResultSelection(value) {
 
 async function openEcCategoryTargetBuilder() {
   await populateRakutenTargetCategoryOptions();
-  var mainCategory = (document.getElementById("rakuten-target-category") || {}).value || "";
+  var mainCategory = ecMallNormalizeTargetCategory((document.getElementById("rakuten-target-category") || {}).value || "");
   var catEl = document.getElementById("ec-category-target-category");
   var errorEl = document.getElementById("ec-category-target-error");
   if (errorEl) errorEl.textContent = "";
@@ -10528,10 +10548,12 @@ async function loadEcMallResearchStatus(options) {
     if (runR.error) throw runR.error;
     var categoryMap = {};
     (targetsR.data || []).forEach(function(row) {
-      var cat = row.category || "";
+      var cat = ecMallNormalizeTargetCategory(row.category || "");
       if (cat) categoryMap[cat] = true;
     });
-    var categoryLabels = Object.keys(categoryMap).sort().map(function(cat) { return tCat(cat); });
+    var categoryLabels = Object.keys(categoryMap).sort(function(a, b) {
+      return tCat(a).localeCompare(tCat(b), "ja");
+    }).map(function(cat) { return tCat(cat); });
     var latestRun = (runR.data || [])[0] || null;
     if (latestRun && latestRun.status === "running" && latestRun.started_at) {
       var startedAtMs = Date.parse(latestRun.started_at);
@@ -10786,7 +10808,7 @@ function exactCoreProductMatchForEcTarget(rows, query) {
 async function resolveEcMallSingleTarget(value) {
   var raw = cleanPartNumberValue(value);
   if (!raw) return null;
-  var categoryValue = (document.getElementById("rakuten-target-category") || {}).value || "";
+  var categoryValue = ecMallNormalizeTargetCategory((document.getElementById("rakuten-target-category") || {}).value || "");
   var lookupValues = [raw, rakutenKeywordPartOnly(raw)].map(cleanPartNumberValue).filter(Boolean);
   lookupValues = Array.from(new Set(lookupValues));
   for (var i=0; i<lookupValues.length; i++) {
@@ -10908,7 +10930,7 @@ function parseUploadedPartList(text) {
   var first = parseEcMallDelimitedLine(lines[0]).map(normalizeEcMallUploadHeader);
   var headerNames = ["dkd_shohin_id","dkd商品id","dkd商品コード","shohin_cd","product_id","商品id","商品コード","manufacturer_part_number","メーカー品番","genuine_part_number","純正品番","search_number","keyword","検索キーワード","検索品番","品番","category","カテゴリ","対象カテゴリ"];
   var hasHeader = first.some(function(h) { return headerNames.indexOf(h) >= 0; });
-  var selectedCategory = (document.getElementById("rakuten-target-category") || {}).value || "";
+  var selectedCategory = ecMallNormalizeTargetCategory((document.getElementById("rakuten-target-category") || {}).value || "");
   var targets = [];
   for (var i=(hasHeader ? 1 : 0); i<lines.length; i++) {
     var cols = parseEcMallDelimitedLine(lines[i]);
@@ -10923,7 +10945,7 @@ function parseUploadedPartList(text) {
     var genuine = cleanPartNumberValue(row.genuine_part_number || row["純正品番"] || "");
     var keyword = cleanPartNumberValue(row.search_number || row.keyword || row["検索キーワード"] || row["検索品番"] || row["品番"] || mfr || genuine || dkd || productCode);
     if (daiko && rakutenPartKey(keyword) === rakutenPartKey(daiko)) keyword = cleanPartNumberValue(genuine || dkd || productCode);
-    var category = ecMallCategoryFromUpload(row.category || row["カテゴリ"] || row["対象カテゴリ"] || "") || selectedCategory;
+    var category = ecMallNormalizeTargetCategory(ecMallCategoryFromUpload(row.category || row["カテゴリ"] || row["対象カテゴリ"] || "") || selectedCategory);
     if (!keyword) continue;
     var target = {
       part_id: null,
@@ -10956,10 +10978,10 @@ function ecMallCategoryFromUpload(value) {
     var code = cat.category_code || cat.category || "";
     var labels = [code, cat.label_ja, cat.label_en, cat.label_zh, categoryOptionLabel(cat)];
     for (var j=0; j<labels.length; j++) {
-      if (String(labels[j] || "").trim().toLowerCase() === lowered) return code || text;
+      if (String(labels[j] || "").trim().toLowerCase() === lowered) return ecMallNormalizeTargetCategory(code || text);
     }
   }
-  return text;
+  return ecMallNormalizeTargetCategory(text);
 }
 
 function ecMallCsvCell(value) {
@@ -11716,7 +11738,7 @@ async function saveRakutenSurveyLegacy(target, items, keyword, ngKeyword, sort) 
     genuine_part_number: target.genuine_part_number || null,
     manufacturer_part_number: target.manufacturer_part_number || null,
     manufacturer: target.manufacturer || null,
-    category: target.category || null,
+    category: ecMallNormalizeTargetCategory(target.category) || null,
     search_number: keyword,
     search_number_type: target.search_number_type || null,
     source_type: target.source_type || "manual",
