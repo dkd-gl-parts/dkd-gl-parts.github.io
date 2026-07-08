@@ -1580,7 +1580,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.417</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.418</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1609,7 +1609,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.417</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.418</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1639,7 +1639,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.417</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.418</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -6227,7 +6227,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.417";
+var APP_VERSION       = "v1.1.418";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -7035,26 +7035,34 @@ function captureAppRestoreState(reason) {
     screen: screen,
     lang: currentLang
   };
-  if (screen === "search") {
+  function captureSearchState() {
     var qEl = document.getElementById("q");
+    state.screen = "search";
     state.q = qEl ? qEl.value : "";
     state.filter = currentFilter || "all";
     state.selectedDkdId = currentProduct ? productDkdId(currentProduct) : "";
     state.limit = productSearchLimit || SEARCH_INITIAL_LIMIT;
-  } else if (screen === "production-search") {
+  }
+  function captureProductionState() {
     var pqEl = document.getElementById("production-q");
     var yearEl = document.getElementById("production-year-filter");
+    state.screen = "production-search";
     state.q = pqEl ? pqEl.value : "";
     state.filter = productionFilter || "all";
-    state.selectedDkdId = currentProductionRow ? productDkdId(currentProductionRow) : "";
+    state.selectedDkdId = currentProductionRow ? productDkdId(currentProductionRow) : (currentProduct ? productDkdId(currentProduct) : "");
     state.limit = productionSearchLimit || SEARCH_INITIAL_LIMIT;
     state.year = yearEl ? yearEl.value : "";
+  }
+  if (screen === "search") {
+    captureSearchState();
+  } else if (screen === "production-search") {
+    captureProductionState();
   } else if (screen === "components" && currentProduct) {
-    state.screen = "search";
-    state.q = document.getElementById("q") ? document.getElementById("q").value : "";
-    state.filter = currentFilter || "all";
-    state.selectedDkdId = productDkdId(currentProduct);
-    state.limit = productSearchLimit || SEARCH_INITIAL_LIMIT;
+    if (componentReturnScreen === "production-search") captureProductionState();
+    else captureSearchState();
+  } else if (screen === "component-parallel" && currentProduct) {
+    if (componentParallelReturnScreen === "components" && componentReturnScreen === "production-search") captureProductionState();
+    else captureSearchState();
   } else if (screen === "rakuten-price") {
     state.keyword = document.getElementById("rakuten-keyword") ? document.getElementById("rakuten-keyword").value : "";
     state.ngKeyword = document.getElementById("rakuten-ng-keyword") ? document.getElementById("rakuten-ng-keyword").value : "";
@@ -7105,11 +7113,11 @@ async function restoreAppStateAfterRefresh() {
       if (yearEl && state.year !== undefined) yearEl.value = state.year || "";
       await loadProductionProducts();
       if (state.selectedDkdId) {
-        var selected = productionRows.find(function(row) { return String(productDkdId(row)) === String(state.selectedDkdId); });
-        if (selected) currentProductionRow = selected;
+        await openProductionProductByDkdId(state.selectedDkdId, { syncSearch: false });
+      } else {
+        renderProductionList();
+        await renderProductionDetail(currentProductionRow || null);
       }
-      renderProductionList();
-      await renderProductionDetail(currentProductionRow || null);
     } else if (state.screen === "search") {
       await enterSearch();
       var qEl = document.getElementById("q");
