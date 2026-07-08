@@ -1630,7 +1630,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.437</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.438</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1659,7 +1659,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.437</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.438</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1689,7 +1689,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.437</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.438</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -6450,7 +6450,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.437";
+var APP_VERSION       = "v1.1.438";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -21813,7 +21813,7 @@ async function loadComponentNameMasterMgmt() {
   componentNameMasterCandidateRows = [];
   var reqPromise = sb.rpc("list_component_name_requests", {
     target_status: status || "",
-    target_category_code: category || null,
+    target_category_code: null,
     max_rows: 300
   }).then(function(reqR) {
     if (loadSeq !== componentNameMasterLoadSeq) return;
@@ -21826,7 +21826,7 @@ async function loadComponentNameMasterMgmt() {
     if (list) list.innerHTML = "<div class='component-empty'>" + esc((err && err.message) || t("msg_kikan_err")) + "</div>";
   });
   var masterPromise = sb.rpc("get_component_name_master_candidates", {
-    target_category_code: category || null,
+    target_category_code: null,
     target_lang: currentLang || "ja",
     include_inactive: true,
     max_rows: 1200
@@ -21872,7 +21872,11 @@ function isManualComponentNameMasterRow(row) {
 }
 
 function componentNameMasterManageRows() {
-  return (componentNameMasterCandidateRows || []).filter(isManualComponentNameMasterRow);
+  var categoryEl = document.getElementById("component-name-master-category");
+  var category = categoryEl ? categoryEl.value : "";
+  return (componentNameMasterCandidateRows || []).filter(function(row) {
+    return isManualComponentNameMasterRow(row) && (!category || row.category_code === category);
+  });
 }
 
 function componentNameMasterFilteredRows() {
