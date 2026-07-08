@@ -1580,7 +1580,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.418</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.419</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1609,7 +1609,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.418</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.419</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1639,7 +1639,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.418</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.419</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -6227,7 +6227,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.418";
+var APP_VERSION       = "v1.1.419";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -20381,7 +20381,9 @@ function componentNameTranslationLabel(name) {
     "アマチュア": "Armature",
     "アーマチュアS/A": "Armature S/A",
     "アーマチュアAY,W/クラッチ": "Armature ASSY w/ Clutch",
+    "プランジャ": "Plunger",
     "ヨークASSY": "Yoke ASSY",
+    "ヨークAY": "Yoke ASSY",
     "マグネットスイッチ": "Magnetic Switch",
     "レバー": "Lever",
     "ピニオン": "Pinion",
@@ -20427,6 +20429,7 @@ function componentNameTranslationLabel(name) {
     "ステー": "Stay",
     "ステータ&レクチファイヤS/A": "Stator & Rectifier S/A",
     "コイル,フィールド": "Field Coil",
+    "コイル フィールド": "Field Coil",
     "コネクタ": "Connector",
     "サポート,ブラシ": "Brush Support",
     "シール,スタータ": "Starter Seal",
@@ -20550,7 +20553,9 @@ function componentNameTranslationLabel(name) {
     "アマチュア": "电枢",
     "アーマチュアS/A": "电枢分总成",
     "アーマチュアAY,W/クラッチ": "带离合器电枢总成",
+    "プランジャ": "柱塞",
     "ヨークASSY": "磁轭总成",
+    "ヨークAY": "磁轭总成",
     "マグネットスイッチ": "电磁开关",
     "レバー": "拨叉",
     "ピニオン": "小齿轮",
@@ -20596,6 +20601,7 @@ function componentNameTranslationLabel(name) {
     "ステー": "支架",
     "ステータ&レクチファイヤS/A": "定子和整流器分总成",
     "コイル,フィールド": "励磁线圈",
+    "コイル フィールド": "励磁线圈",
     "コネクタ": "连接器",
     "サポート,ブラシ": "电刷支撑",
     "シール,スタータ": "起动机密封件",
@@ -20672,6 +20678,20 @@ function applyComponentNameCandidateCachePayload(payload) {
 function componentNameOptionLabel(name) {
   var key = componentNameCandidateLabelKey(name);
   return componentCatalogNameCandidateLabelMap[key] || componentNameTranslationLabel(name) || "";
+}
+
+function componentRowNameText(row) {
+  return String((row && (row.component_name || row.component_part_name)) || "").trim();
+}
+
+function componentRowNameHtml(row) {
+  var name = componentRowNameText(row);
+  var html = esc(name || "-");
+  var translated = componentNameOptionLabel(name);
+  if (translated && componentNameDuplicateKey(translated) !== componentNameDuplicateKey(name)) {
+    html += "<div class='component-sub'>" + esc(translated) + "</div>";
+  }
+  return html;
 }
 
 async function loadComponentCatalogNameCandidatesByCategory(category, selectedName) {
@@ -21449,7 +21469,7 @@ function renderAssemblyComponentRows() {
     } else {
       html += "<td><div class='component-pn'>" + esc(row.component_manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.component_manufacturer || "") + "</div></td>";
       html += "<td><div class='component-pn'>" + esc(row.component_genuine_part_number || "-") + "</div></td>";
-      html += "<td>" + esc(row.component_name || row.component_part_name || "-") + "<div class='component-sub'>" + esc(componentUsageTargetLabel(row)) + "</div></td>";
+      html += "<td>" + componentRowNameHtml(row) + "<div class='component-sub'>" + esc(componentUsageTargetLabel(row)) + "</div></td>";
       if (catalogMode) {
         html += "<td>" + esc(row.component_position || row.source_code || "-") + "</td>";
         html += "<td>" + esc(row.quantity || "-") + "</td>";
@@ -21565,7 +21585,7 @@ function renderAssemblyComponentRows() {
     } else {
       html += "<td><div class='component-pn'>" + esc(row.component_manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.component_manufacturer || "") + "</div></td>";
       html += "<td><div class='component-pn'>" + esc(row.component_genuine_part_number || "-") + "</div></td>";
-      html += "<td>" + esc(row.component_name || row.component_part_name || "-") + "<div class='component-sub'>" + esc(componentUsageTargetLabel(row)) + " " + componentSourceBadgeHtml(row) + "</div></td>";
+      html += "<td>" + componentRowNameHtml(row) + "<div class='component-sub'>" + esc(componentUsageTargetLabel(row)) + " " + componentSourceBadgeHtml(row) + "</div></td>";
       if (catalogMode) {
         html += "<td>" + esc(row.component_position || row.source_code || "-") + "</td>";
         html += "<td>" + esc(row.quantity || "-") + "</td>";
