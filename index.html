@@ -231,10 +231,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ec-price-history-legend-item { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 .ec-price-history-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .ec-price-history-table { margin-top: 10px; max-height: 180px; overflow: auto; border: 1px solid #edf0f5; border-radius: 8px; }
+.ec-price-history-table.seller-ranking { max-height: 260px; }
 .ec-price-history-table table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .ec-price-history-table th { position: sticky; top: 0; background: #f5f7fa; color: #555; font-weight: 800; padding: 7px 8px; text-align: left; border-bottom: 1px solid #e5e7eb; }
 .ec-price-history-table td { padding: 7px 8px; border-bottom: 1px solid #f0f2f6; vertical-align: top; }
 .ec-price-history-table tr:last-child td { border-bottom: 0; }
+.ec-price-history-table .rank-cell { width: 42px; text-align: right; color: #667085; font-weight: 800; white-space: nowrap; }
+.ec-price-history-table .price-cell { white-space: nowrap; }
 @media(max-width:700px){ .ec-price-history-card { width: calc(100vw - 10px); margin: 5px; padding: 14px 10px; } .ec-price-history-chart { min-width: 620px; height: 360px; } }
 .rakuten-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
 .rakuten-actions button:disabled { opacity: .45; cursor: not-allowed; }
@@ -1580,7 +1583,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.421</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.423</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1609,7 +1612,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.421</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.423</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1639,7 +1642,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.421</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.423</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -4084,6 +4087,10 @@ var TRANSLATIONS = {
     ec_price_history_recent: "直近の履歴",
     ec_price_history_seller: "出品者",
     ec_price_history_rank_price: "順位 / 価格",
+    ec_price_history_seller_ranking: "出品者別ランキング",
+    ec_price_history_latest_price: "最新価格",
+    ec_price_history_count: "履歴件数",
+    ec_price_history_last_surveyed: "最終調査",
     rakuten_latest: "調査日時",
     ec_mall_providers: "調査先",
     ec_mall_seller_ids: "出品者指定",
@@ -5014,6 +5021,10 @@ var TRANSLATIONS = {
     ec_price_history_recent: "Recent History",
     ec_price_history_seller: "Seller",
     ec_price_history_rank_price: "Rank / Price",
+    ec_price_history_seller_ranking: "Seller Ranking",
+    ec_price_history_latest_price: "Latest Price",
+    ec_price_history_count: "History Rows",
+    ec_price_history_last_surveyed: "Last Surveyed",
     rakuten_latest: "Surveyed At",
     ec_mall_providers: "Providers",
     ec_mall_seller_ids: "Seller Filter",
@@ -5937,6 +5948,10 @@ var TRANSLATIONS = {
     ec_price_history_recent: "最近历史",
     ec_price_history_seller: "卖家",
     ec_price_history_rank_price: "排名 / 价格",
+    ec_price_history_seller_ranking: "卖家价格排名",
+    ec_price_history_latest_price: "最新价格",
+    ec_price_history_count: "历史件数",
+    ec_price_history_last_surveyed: "最后调查",
     rakuten_latest: "调查时间",
     ec_mall_providers: "调查平台",
     ec_mall_seller_ids: "卖家筛选",
@@ -6230,7 +6245,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.422";
+var APP_VERSION       = "v1.1.423";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -6260,6 +6275,7 @@ var componentChildMessageMap = {};
 var componentTreeRpcAvailable = true;
 var componentCatalogNameCandidates = [];
 var componentCatalogNameCandidateLabelMap = {};
+var componentCatalogNameCandidateKindMap = {};
 var componentCatalogNameCandidateCache = {};
 var componentCatalogNameCandidateLoadSeq = 0;
 var componentAddPartNumberLookupSeq = 0;
@@ -11798,6 +11814,38 @@ function ecPriceHistoryPointPrice(row) {
   return price !== null && price > 0 ? price : null;
 }
 
+function ecPriceHistoryPreparedPoints(rows) {
+  var points = [];
+  (rows || []).forEach(function(row) {
+    var type = row.product_type || "other";
+    if (["rebuilt", "new", "used"].indexOf(type) < 0) return;
+    var providerKey = row.provider_key || "unknown";
+    var ts = new Date(row.surveyed_at || 0).getTime();
+    var price = ecPriceHistoryPointPrice(row);
+    if (!ts || isNaN(ts) || price === null) return;
+    points.push({ row: row, type: type, providerKey: providerKey, ts: ts, price: price });
+  });
+  return points;
+}
+
+function ecPriceHistoryFilterPointsByRange(points, rangeDays) {
+  points = points || [];
+  if (!points.length) return [];
+  if (rangeDays && rangeDays !== "all") {
+    var days = parseInt(rangeDays, 10);
+    if (!isNaN(days) && days > 0) {
+      var maxTs = Math.max.apply(null, points.map(function(p) { return p.ts; }));
+      var minAllowed = maxTs - days * 24 * 60 * 60 * 1000;
+      points = points.filter(function(p) { return p.ts >= minAllowed; });
+    }
+  }
+  return points;
+}
+
+function filterEcPriceHistoryRowsByRange(rows, rangeDays) {
+  return ecPriceHistoryFilterPointsByRange(ecPriceHistoryPreparedPoints(rows), rangeDays).map(function(p) { return p.row; });
+}
+
 function ecPriceHistoryGroupTitle(group) {
   var r = (group && group.meta) || group || {};
   return String(r.search_number || r.manufacturer_part_number || r.genuine_part_number || r.dkd_shohin_id || r.shohin_cd || "-");
@@ -11840,26 +11888,8 @@ async function fetchEcPriceHistoryRowsForGroup(group) {
 }
 
 function buildEcPriceHistorySeries(rows, rangeDays) {
-  rows = rows || [];
-  var typed = [];
-  rows.forEach(function(row) {
-    var type = row.product_type || "other";
-    if (["rebuilt", "new", "used"].indexOf(type) < 0) return;
-    var providerKey = row.provider_key || "unknown";
-    var ts = new Date(row.surveyed_at || 0).getTime();
-    var price = ecPriceHistoryPointPrice(row);
-    if (!ts || isNaN(ts) || price === null) return;
-    typed.push({ row: row, type: type, providerKey: providerKey, ts: ts, price: price });
-  });
+  var typed = ecPriceHistoryFilterPointsByRange(ecPriceHistoryPreparedPoints(rows), rangeDays);
   if (!typed.length) return [];
-  var maxTs = Math.max.apply(null, typed.map(function(p) { return p.ts; }));
-  if (rangeDays && rangeDays !== "all") {
-    var days = parseInt(rangeDays, 10);
-    if (!isNaN(days) && days > 0) {
-      var minAllowed = maxTs - days * 24 * 60 * 60 * 1000;
-      typed = typed.filter(function(p) { return p.ts >= minAllowed; });
-    }
-  }
   var bucket = {};
   typed.forEach(function(p) {
     var key = p.type + "|" + p.providerKey + "|" + p.ts;
@@ -12009,6 +12039,51 @@ function renderEcPriceHistoryRecentTable(rows) {
   return html;
 }
 
+function renderEcPriceHistorySellerRanking(rows) {
+  var points = ecPriceHistoryPreparedPoints(rows);
+  if (!points.length) return "";
+  var groups = {};
+  points.forEach(function(p) {
+    var row = p.row || {};
+    var seller = String(row.seller_name || row.seller_id || "-").trim() || "-";
+    var sellerKey = String(row.seller_id || seller).trim().toLowerCase();
+    var key = p.providerKey + "|" + p.type + "|" + sellerKey;
+    if (!groups[key]) {
+      groups[key] = { seller: seller, providerKey: p.providerKey, type: p.type, lowest: p, latest: p, count: 0 };
+    }
+    groups[key].count++;
+    if (p.price < groups[key].lowest.price) groups[key].lowest = p;
+    if (p.ts > groups[key].latest.ts) groups[key].latest = p;
+  });
+  var ranked = Object.keys(groups).map(function(key) { return groups[key]; })
+    .sort(function(a, b) {
+      var priceDiff = a.lowest.price - b.lowest.price;
+      if (priceDiff) return priceDiff;
+      var typeDiff = ecMallProductTypeSort(a.type) - ecMallProductTypeSort(b.type);
+      if (typeDiff) return typeDiff;
+      return ecPriceHistoryProviderSort(a.providerKey) - ecPriceHistoryProviderSort(b.providerKey);
+    })
+    .slice(0, 20);
+  if (!ranked.length) return "";
+  var html = "<div class='ec-price-history-table seller-ranking'><table><tr><th class='rank-cell'>#</th><th>" + esc(t("ec_price_history_seller")) + "</th><th>" + esc(t("ec_mall_providers")) + "</th><th>" + esc(t("ec_mall_condition_filters")) + "</th><th>" + esc(t("ec_price_history_lowest")) + "</th><th>" + esc(t("ec_price_history_latest_price")) + "</th><th>" + esc(t("ec_price_history_count")) + "</th><th>" + esc(t("ec_price_history_last_surveyed")) + "</th></tr>";
+  ranked.forEach(function(group, index) {
+    var url = safeHttpsUrl((group.lowest.row || {}).item_url, ["rakuten.co.jp", "shopping.yahoo.co.jp", "yahoo.co.jp", "auctions.yahoo.co.jp"]);
+    var sellerHtml = url ? "<a href='" + esc(url) + "' target='_blank' rel='noopener'>" + esc(group.seller) + "</a>" : esc(group.seller);
+    html += "<tr>";
+    html += "<td class='rank-cell'>" + (index + 1) + "</td>";
+    html += "<td>" + sellerHtml + "</td>";
+    html += "<td><span class='ec-provider-badge'>" + esc(ecMallProviderLabel(group.providerKey)) + "</span></td>";
+    html += "<td>" + esc(ecMallProductTypeLabel(group.type)) + "</td>";
+    html += "<td class='price-cell'><div class='price-value'>" + esc(yen(group.lowest.price)) + "</div></td>";
+    html += "<td class='price-cell'><div class='price-value'>" + esc(yen(group.latest.price)) + "</div></td>";
+    html += "<td>" + esc(String(group.count)) + "</td>";
+    html += "<td>" + esc(formatDateTime((group.latest.row || {}).surveyed_at)) + "</td>";
+    html += "</tr>";
+  });
+  html += "</table></div>";
+  return html;
+}
+
 function updateEcPriceHistoryRangeButtons() {
   var range = ecPriceHistoryState ? ecPriceHistoryState.rangeDays : "all";
   document.querySelectorAll("#ec-price-history-range [data-ec-history-range]").forEach(function(btn) {
@@ -12023,9 +12098,11 @@ function renderEcPriceHistoryContent() {
   if (!body || !ecPriceHistoryState) return;
   var rows = ecPriceHistoryState.rows || [];
   var group = ecPriceHistoryState.group || {};
+  var rangeDays = ecPriceHistoryState.rangeDays || "all";
+  var rowsForRange = filterEcPriceHistoryRowsByRange(rows, rangeDays);
   if (title) title.textContent = t("ec_price_history_title") + " - " + ecPriceHistoryGroupTitle(group);
   if (meta) meta.textContent = ecPriceHistoryGroupMeta(group, rows);
-  var series = buildEcPriceHistorySeries(rows, ecPriceHistoryState.rangeDays || "all");
+  var series = buildEcPriceHistorySeries(rowsForRange, "all");
   renderEcPriceHistoryLegend(series);
   updateEcPriceHistoryRangeButtons();
   if (!series.length) {
@@ -12034,8 +12111,10 @@ function renderEcPriceHistoryContent() {
   }
   body.innerHTML = renderEcPriceHistorySummary(series) +
     "<div class='ec-price-history-chart-wrap'>" + renderEcPriceHistorySvg(series) + "</div>" +
+    "<div class='price-section-title' style='margin-top:12px'>" + esc(t("ec_price_history_seller_ranking")) + "</div>" +
+    renderEcPriceHistorySellerRanking(rowsForRange) +
     "<div class='price-section-title' style='margin-top:12px'>" + esc(t("ec_price_history_recent")) + "</div>" +
-    renderEcPriceHistoryRecentTable(rows);
+    renderEcPriceHistoryRecentTable(rowsForRange);
 }
 
 function closeEcPriceHistoryOverlay() {
@@ -20704,18 +20783,62 @@ function componentNameCandidateDisplayLabel(candidateName, displayName) {
   return label && label !== value ? label : "";
 }
 
-function componentNameCandidateCachePayload(list, labelMap) {
-  return { list: list || [], labels: labelMap || {} };
+function componentNameCandidatePriority(kind) {
+  if (kind === "master") return 0;
+  if (kind === "frequent") return 1;
+  return 2;
+}
+
+function componentNameCandidateKindLabel(kind) {
+  if (currentLang === "en") {
+    if (kind === "master") return "Component Name Master";
+    if (kind === "frequent") return "Frequently Used";
+    return "Other Candidates";
+  }
+  if (currentLang === "zh") {
+    if (kind === "master") return "构成部件名主数据";
+    if (kind === "frequent") return "常用部件名";
+    return "其他候选";
+  }
+  if (kind === "master") return "構成部品名マスター";
+  if (kind === "frequent") return "よく使う部品名";
+  return "その他の候補";
+}
+
+function componentNameSortCompare(a, b) {
+  return String(a || "").localeCompare(String(b || ""), "ja", { numeric: true, sensitivity: "base" });
+}
+
+function componentNameCandidateKindFromRow(row) {
+  if (!row) return "other";
+  if (String(row.source_type || "") === "manual") return "master";
+  if (parseInt(row.manual_count || 0, 10) > 0) return "frequent";
+  return "other";
+}
+
+function setComponentNameCandidateKind(kindMap, name, kind) {
+  var key = componentNameCandidateLabelKey(name);
+  if (!key) return;
+  var current = kindMap[key];
+  if (!current || componentNameCandidatePriority(kind) < componentNameCandidatePriority(current)) {
+    kindMap[key] = kind || "other";
+  }
+}
+
+function componentNameCandidateCachePayload(list, labelMap, kindMap) {
+  return { list: list || [], labels: labelMap || {}, kinds: kindMap || {} };
 }
 
 function applyComponentNameCandidateCachePayload(payload) {
   if (Array.isArray(payload)) {
     componentCatalogNameCandidates = payload;
     componentCatalogNameCandidateLabelMap = {};
+    componentCatalogNameCandidateKindMap = {};
     return;
   }
   componentCatalogNameCandidates = (payload && payload.list) || [];
   componentCatalogNameCandidateLabelMap = (payload && payload.labels) || {};
+  componentCatalogNameCandidateKindMap = (payload && payload.kinds) || {};
 }
 
 function componentNameOptionLabel(name) {
@@ -20778,7 +20901,7 @@ async function loadComponentCatalogNameCandidatesByCategory(category, selectedNa
     });
   }
   addComponentNameCandidate(list, seen, selectedName);
-  list.sort(function(a, b) { return String(a || "").localeCompare(String(b || ""), "ja", { numeric: true }); });
+  list.sort(componentNameSortCompare);
   return list;
 }
 
@@ -20808,7 +20931,7 @@ async function loadComponentCatalogNameCandidatesFallback(mfr, selectedName, cat
     addComponentNameCandidate(list, seen, row.component_name || row.component_part_name);
   });
   addComponentNameCandidate(list, seen, selectedName);
-  list.sort(function(a, b) { return String(a || "").localeCompare(String(b || ""), "ja", { numeric: true }); });
+  list.sort(componentNameSortCompare);
   return list;
 }
 
@@ -20825,6 +20948,7 @@ async function loadComponentCatalogNameCandidatesForCurrent() {
   }
   componentCatalogNameCandidates = [];
   componentCatalogNameCandidateLabelMap = {};
+  componentCatalogNameCandidateKindMap = {};
   if (!mfr) return;
   if (componentCatalogNameCandidateCache[cacheKey]) {
     if (!isCurrentCandidateLoad()) return;
@@ -20848,30 +20972,44 @@ async function loadComponentCatalogNameCandidatesForCurrent() {
       console.warn("component catalog name candidates failed", r.error);
       var fallback = await loadComponentCatalogNameCandidatesFallback(mfr, null, category);
       if (!isCurrentCandidateLoad()) return;
-      componentCatalogNameCandidateCache[cacheKey] = componentNameCandidateCachePayload(fallback, {});
+      var fallbackKinds = {};
+      fallback.forEach(function(name) {
+        setComponentNameCandidateKind(fallbackKinds, name, "other");
+      });
+      componentCatalogNameCandidateCache[cacheKey] = componentNameCandidateCachePayload(fallback, {}, fallbackKinds);
       componentCatalogNameCandidates = fallback;
       componentCatalogNameCandidateLabelMap = {};
+      componentCatalogNameCandidateKindMap = fallbackKinds;
       return;
     }
   }
   var list = [];
   var seen = {};
   var labels = {};
+  var kinds = {};
   (r.data || []).forEach(function(row) {
     var canonicalName = row.component_name_ja || row.component_name;
     addComponentNameCandidate(list, seen, canonicalName);
     addComponentNameCandidateLabel(labels, canonicalName, componentNameCandidateDisplayLabel(canonicalName, row.component_name));
+    setComponentNameCandidateKind(kinds, canonicalName, componentNameCandidateKindFromRow(row));
   });
   if (category && list.length < 80) {
     var fallbackList = await loadComponentCatalogNameCandidatesFallback(mfr, null, category);
     mergeComponentNameCandidates(list, seen, fallbackList);
+    fallbackList.forEach(function(name) {
+      setComponentNameCandidateKind(kinds, name, "other");
+    });
   }
-  appendComponentNameDefaultCandidates(list, seen, category);
-  list.sort(function(a, b) { return String(a || "").localeCompare(String(b || ""), "ja", { numeric: true }); });
+  componentNameDefaultCandidatesForCategory(category).forEach(function(name) {
+    addComponentNameCandidate(list, seen, name);
+    setComponentNameCandidateKind(kinds, name, "other");
+  });
+  list.sort(componentNameSortCompare);
   if (!isCurrentCandidateLoad()) return;
-  componentCatalogNameCandidateCache[cacheKey] = componentNameCandidateCachePayload(list, labels);
+  componentCatalogNameCandidateCache[cacheKey] = componentNameCandidateCachePayload(list, labels, kinds);
   componentCatalogNameCandidates = list;
   componentCatalogNameCandidateLabelMap = labels;
+  componentCatalogNameCandidateKindMap = kinds;
 }
 
 function componentAddNameCandidates(selectedName) {
