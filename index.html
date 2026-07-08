@@ -531,6 +531,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .mgmt-actions   { display: flex; gap: 6px; flex-wrap: nowrap; }
 .mgmt-count     { font-size: 12px; color: #888; margin-bottom: 8px; }
 .mgmt-section-title { font-size: 14px; font-weight: 800; color: #1a1a2e; margin: 12px 0 6px; }
+.component-name-request-actions { display: flex; flex-direction: column; gap: 7px; min-width: 240px; }
+.component-name-request-actions-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.component-name-request-actions-row .form-select { flex: 1 1 150px; min-width: 150px; }
+.component-name-request-approve-row { display: flex; justify-content: flex-end; }
 #screen-purchase-mgmt .mgmt-body { max-width: 1280px; }
 .purchase-mgmt-hint { color: #667085; font-size: 12px; line-height: 1.6; margin: -4px 0 12px; }
 .purchase-mgmt-table-wrap { width: 100%; overflow-x: hidden; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); background: #fff; }
@@ -1631,7 +1635,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.440</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.441</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1660,7 +1664,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.440</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.441</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1690,7 +1694,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.440</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.441</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -4343,7 +4347,7 @@ var TRANSLATIONS = {
     component_name_request_count: "申請 {n} 件",
     component_name_request_empty: "該当する申請はありません。",
     component_name_master_empty: "このカテゴリの手動追加部品名はありません。",
-    component_name_approve_new: "新規登録",
+    component_name_approve_new: "マスターに登録",
     component_name_merge_existing: "既存名へ統合",
     component_name_reject: "却下",
     component_name_resolution_note_ph: "承認・統合メモ",
@@ -5313,7 +5317,7 @@ var TRANSLATIONS = {
     component_name_request_count: "{n} requests",
     component_name_request_empty: "No matching requests.",
     component_name_master_empty: "No manually added part names for this category.",
-    component_name_approve_new: "Approve New",
+    component_name_approve_new: "Register to Master",
     component_name_merge_existing: "Merge Existing",
     component_name_reject: "Reject",
     component_name_resolution_note_ph: "Approval or merge note",
@@ -6273,7 +6277,7 @@ var TRANSLATIONS = {
     component_name_request_count: "申请 {n} 件",
     component_name_request_empty: "没有符合条件的申请。",
     component_name_master_empty: "此类别没有手动追加的部件名。",
-    component_name_approve_new: "新建批准",
+    component_name_approve_new: "注册到主数据",
     component_name_merge_existing: "合并到既有名称",
     component_name_reject: "驳回",
     component_name_resolution_note_ph: "批准或合并备注",
@@ -6459,7 +6463,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.440";
+var APP_VERSION       = "v1.1.441";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -21950,11 +21954,13 @@ function renderComponentNameRequestList() {
     html += "<td><input class='form-input' data-component-name-note='" + esc(String(row.id)) + "' value='" + esc(row.resolution_note || row.request_note || "") + "' placeholder='" + esc(t("component_name_resolution_note_ph")) + "'></td>";
     html += "<td>";
     if (row.status === "pending") {
-      html += "<div class='component-edit-actions'>";
-      html += "<button class='btn-sm-edit' data-component-name-approve='" + esc(String(row.id)) + "'>" + esc(t("component_name_approve_new")) + "</button>";
+      html += "<div class='component-name-request-actions'>";
+      html += "<div class='component-name-request-actions-row'>";
       html += "<select class='form-select' data-component-name-merge-select='" + esc(String(row.id)) + "'>" + componentNameMasterOptionListHtml(row.resolved_master_id, row.category_code) + "</select>";
       html += "<button class='btn-sm-edit production-action-secondary' data-component-name-merge='" + esc(String(row.id)) + "'>" + esc(t("component_name_merge_existing")) + "</button>";
       html += "<button class='btn-sm-edit production-action-secondary' data-component-name-reject='" + esc(String(row.id)) + "'>" + esc(t("component_name_reject")) + "</button>";
+      html += "</div>";
+      html += "<div class='component-name-request-approve-row'><button class='btn-sm-edit' data-component-name-approve='" + esc(String(row.id)) + "'>" + esc(t("component_name_approve_new")) + "</button></div>";
       html += "</div>";
     } else {
       html += "<div class='mgmt-sub'>" + esc(row.resolved_master_name || row.resolution_note || "-") + "</div>";
