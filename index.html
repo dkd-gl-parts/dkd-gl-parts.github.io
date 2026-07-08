@@ -1583,7 +1583,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.423</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.424</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1612,7 +1612,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.423</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.424</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1642,7 +1642,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.423</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.424</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1812,8 +1812,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="component-add-grid">
       <div class="component-add-field full">
         <label><span data-i18n="component_name">部品名</span> *</label>
-        <input id="component-add-name" type="text" list="component-add-name-list" data-i18n-ph="component_name_assist_ph" placeholder="候補から選択または入力" required>
-        <datalist id="component-add-name-list"></datalist>
+        <select id="component-add-name" required></select>
+        <button class="btn-sm-edit production-action-secondary" id="btn-component-add-name-request" type="button" data-i18n="component_name_request_open">候補なし: 申請</button>
       </div>
       <div class="component-add-field">
         <label data-i18n="f_manufacturer">メーカー</label>
@@ -1888,8 +1888,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="component-add-grid">
       <div class="component-add-field full">
         <label><span data-i18n="component_name">部品名</span> *</label>
-        <input id="component-alt-name" type="text" list="component-alt-name-list" data-i18n-ph="component_name_assist_ph" placeholder="候補から選択または入力" required>
-        <datalist id="component-alt-name-list"></datalist>
+        <select id="component-alt-name" required></select>
+        <button class="btn-sm-edit production-action-secondary" id="btn-component-alt-name-request" type="button" data-i18n="component_name_request_open">候補なし: 申請</button>
       </div>
       <div class="component-add-field">
         <label data-i18n="f_manufacturer">メーカー</label>
@@ -1954,6 +1954,26 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <button class="btn-primary" id="btn-component-alt-save" data-i18n="component_save">保存</button>
     </div>
     <div class="reg-error" id="component-alt-error"></div>
+  </div>
+</div>
+
+<div class="form-overlay" id="component-name-request-overlay">
+  <div class="form-card">
+    <h3 data-i18n="component_name_request_title">新規部品名候補を申請</h3>
+    <div class="form-help" id="component-name-request-help">-</div>
+    <div class="form-row">
+      <label class="form-label" data-i18n="component_name_requested">申請する部品名</label>
+      <input class="form-input" id="component-name-request-value" type="text" required>
+    </div>
+    <div class="form-row">
+      <label class="form-label" data-i18n="component_note">メモ</label>
+      <textarea class="form-input" id="component-name-request-note" rows="3"></textarea>
+    </div>
+    <div class="form-footer">
+      <button class="btn-cancel" id="btn-component-name-request-cancel" type="button" data-i18n="component_cancel">キャンセル</button>
+      <button class="btn-primary" id="btn-component-name-request-submit" type="button" data-i18n="component_name_request_submit">申請する</button>
+    </div>
+    <div class="reg-error" id="component-name-request-error"></div>
   </div>
 </div>
 
@@ -2463,6 +2483,41 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="load-more-wrap" id="core-list-load-more-wrap" style="display:none">
       <button class="btn-load-more" id="core-list-load-more" type="button" data-i18n="btn_load_more">さらに表示</button>
     </div>
+  </div>
+</div>
+
+<!-- =============================================
+   構成部品名マスター管理画面
+============================================= -->
+<div id="screen-component-name-master-mgmt" class="screen">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-component-name-master-mgmt" data-i18n="btn_back">← メニュー</button>
+      <span class="logo-text" data-i18n="component_name_master_title">構成部品名マスター</span>
+    </div>
+    <div class="page-header-right">
+      <span class="header-username" id="component-name-master-mgmt-username"></span>
+      <span class="role-badge" id="component-name-master-mgmt-role-badge"></span>
+      <button class="btn-logout" id="btn-logout-component-name-master-mgmt" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <div class="mgmt-body">
+    <div class="mgmt-toolbar">
+      <select class="form-select" id="component-name-master-category"></select>
+      <select class="form-select" id="component-name-request-status">
+        <option value="pending" data-i18n="component_name_request_status_pending">承認待ち</option>
+        <option value="" data-i18n="filter_all">すべて</option>
+        <option value="approved" data-i18n="component_name_request_status_approved">新規登録済み</option>
+        <option value="merged" data-i18n="component_name_request_status_merged">既存名へ統合</option>
+        <option value="rejected" data-i18n="component_name_request_status_rejected">却下</option>
+      </select>
+      <button class="btn-primary" id="btn-component-name-master-refresh" data-i18n="btn_reload">再読込</button>
+    </div>
+    <div class="mgmt-count" id="component-name-master-count"></div>
+    <div id="component-name-request-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
+    <div style="height:18px"></div>
+    <div class="mgmt-count" id="component-name-master-list-count"></div>
+    <div id="component-name-master-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
   </div>
 </div>
 
@@ -3749,6 +3804,8 @@ var TRANSLATIONS = {
     mi_changepw_desc: "ログイン中のアカウントのパスワードを変更します。",
     mi_parts_title: "商品管理",
     mi_parts_desc: "商品の追加・修正・削除を行います。",
+    mi_component_name_master_title: "部品名マスター",
+    mi_component_name_master_desc: "構成部品名の申請・承認・統合を管理します。",
     mi_kikan_title: "互換管理",
     mi_kikan_desc: "互換グループの登録・編集を行います。",
     mi_rakuten_title: "ECモール価格調査",
@@ -4212,7 +4269,35 @@ var TRANSLATIONS = {
     component_load_candidates: "候補を表示",
     component_position: "図番/位置",
     component_name: "部品名",
-    component_name_assist_ph: "候補から選択または入力",
+    component_name_assist_ph: "候補から選択",
+    component_name_master_title: "構成部品名マスター",
+    component_name_master_count: "マスター {n} 件",
+    component_name_request_open: "候補なし: 申請",
+    component_name_request_title: "新規部品名候補を申請",
+    component_name_requested: "申請する部品名",
+    component_name_request_submit: "申請する",
+    component_name_request_sent: "部品名候補を申請しました。管理者承認後に選択できます。",
+    component_name_request_failed: "部品名候補の申請に失敗しました",
+    component_name_master_required: "部品名は構成部品名マスターから選択してください。候補にない場合は新規候補申請をしてください。",
+    component_name_request_status_pending: "承認待ち",
+    component_request_status: "状態",
+    component_name_request_status_approved: "新規登録済み",
+    component_name_request_status_merged: "既存名へ統合",
+    component_name_request_status_rejected: "却下",
+    component_name_request_count: "申請 {n} 件",
+    component_name_request_empty: "該当する申請はありません。",
+    component_name_master_empty: "このカテゴリの部品名マスターはありません。",
+    component_name_approve_new: "新規登録",
+    component_name_merge_existing: "既存名へ統合",
+    component_name_reject: "却下",
+    component_name_resolution_note_ph: "承認・統合メモ",
+    component_name_select_master: "統合先を選択",
+    component_name_approve_confirm: "この申請を新規部品名マスターとして登録しますか？",
+    component_name_merge_confirm: "この申請名を選択した既存名へ統合しますか？",
+    component_name_reject_confirm: "この申請を却下しますか？",
+    component_name_enable: "有効化",
+    component_name_disable: "無効化",
+    component_name_toggle_confirm: "この部品名マスターの有効状態を変更しますか？",
     component_quantity: "数量",
     component_interchange: "互",
     component_compat_help: "<strong>\u4e92\u63db\u6027\u6b04\u306e\u898b\u65b9</strong> A=\u65b0\u65e7\u90e8\u54c1\u9593\u306b\u4e92\u63db\u6027\u3042\u308a / B=\u65e7\u90e8\u54c1\u306e\u66ff\u308f\u308a\u306b\u65b0\u90e8\u54c1\u3092\u4f7f\u7528\u53ef\uff08\u9006\u306f\u4e0d\u53ef\uff09 / C=\u65b0\u90e8\u54c1\u306e\u66ff\u308f\u308a\u306b\u65e7\u90e8\u54c1\u3092\u4f7f\u7528\u53ef\uff08\u9006\u306f\u4e0d\u53ef\uff09 / D=\u4e92\u63db\u6027\u306a\u3057 / X=\u4e92\u63db\u6027\u304c\u3042\u308b\u4ee3\u66ff\u90e8\u54c1\u3002A\u30fbB\u30fbX\u306e\u65e7\u54c1\u756a\u306f\u5728\u5eab\u304c\u7121\u304f\u306a\u308a\u6b21\u7b2c\u3001\u4f9b\u7d66\u7d42\u4e86\u3002",
@@ -4683,6 +4768,8 @@ var TRANSLATIONS = {
     mi_changepw_desc: "Change the password for your current account.",
     mi_parts_title: "Parts Management",
     mi_parts_desc: "Add, edit, and delete parts.",
+    mi_component_name_master_title: "Part Name Master",
+    mi_component_name_master_desc: "Review, approve, and merge component part names.",
     mi_kikan_title: "Compatibility Management",
     mi_kikan_desc: "Register and edit compatibility groups.",
     mi_rakuten_title: "EC Mall Price Research",
@@ -5146,7 +5233,35 @@ var TRANSLATIONS = {
     component_load_candidates: "Show Candidates",
     component_position: "Position",
     component_name: "Part Name",
-    component_name_assist_ph: "Select from candidates or enter",
+    component_name_assist_ph: "Select from candidates",
+    component_name_master_title: "Component Part Name Master",
+    component_name_master_count: "{n} master names",
+    component_name_request_open: "Missing name: Request",
+    component_name_request_title: "Request New Part Name",
+    component_name_requested: "Requested Part Name",
+    component_name_request_submit: "Submit Request",
+    component_name_request_sent: "Part name request submitted. It will be selectable after approval.",
+    component_name_request_failed: "Failed to submit part name request",
+    component_name_master_required: "Select the part name from the component name master. If it is missing, submit a new candidate request.",
+    component_name_request_status_pending: "Pending",
+    component_request_status: "Status",
+    component_name_request_status_approved: "Approved as New",
+    component_name_request_status_merged: "Merged",
+    component_name_request_status_rejected: "Rejected",
+    component_name_request_count: "{n} requests",
+    component_name_request_empty: "No matching requests.",
+    component_name_master_empty: "No part name master entries for this category.",
+    component_name_approve_new: "Approve New",
+    component_name_merge_existing: "Merge Existing",
+    component_name_reject: "Reject",
+    component_name_resolution_note_ph: "Approval or merge note",
+    component_name_select_master: "Select merge target",
+    component_name_approve_confirm: "Approve this request as a new part name master?",
+    component_name_merge_confirm: "Merge this requested name into the selected existing name?",
+    component_name_reject_confirm: "Reject this request?",
+    component_name_enable: "Enable",
+    component_name_disable: "Disable",
+    component_name_toggle_confirm: "Change active status for this part name master?",
     component_quantity: "Qty",
     component_interchange: "Int.",
     component_compat_help: "<strong>Interchange legend</strong> A=interchangeable both ways / B=new part can replace old, not the reverse / C=old part can replace new, not the reverse / D=not interchangeable / X=alternate interchangeable part. Old part numbers marked A, B, or X are supplied only while stock remains.",
@@ -5623,6 +5738,8 @@ var TRANSLATIONS = {
     mi_changepw_desc: "修改当前账号的登录密码。",
     mi_parts_title: "零件管理",
     mi_parts_desc: "添加、修改和删除零件。",
+    mi_component_name_master_title: "部件名主数据",
+    mi_component_name_master_desc: "管理构成部件名的申请、批准和合并。",
     mi_kikan_title: "兼容性管理",
     mi_kikan_desc: "注册和编辑兼容组。",
     mi_rakuten_title: "EC商城价格调查",
@@ -6070,7 +6187,35 @@ var TRANSLATIONS = {
     component_load_candidates: "显示候选",
     component_position: "部位",
     component_name: "部件名",
-    component_name_assist_ph: "从候选中选择或输入",
+    component_name_assist_ph: "从候选中选择",
+    component_name_master_title: "构成部件名主数据",
+    component_name_master_count: "主数据 {n} 件",
+    component_name_request_open: "无候选: 申请",
+    component_name_request_title: "申请新的部件名候选",
+    component_name_requested: "申请的部件名",
+    component_name_request_submit: "提交申请",
+    component_name_request_sent: "已提交部件名候选申请。管理员批准后可选择。",
+    component_name_request_failed: "部件名候选申请失败",
+    component_name_master_required: "请从构成部件名主数据中选择部件名。没有候选时请提交新候选申请。",
+    component_name_request_status_pending: "待批准",
+    component_request_status: "状态",
+    component_name_request_status_approved: "已新建",
+    component_name_request_status_merged: "已合并",
+    component_name_request_status_rejected: "已驳回",
+    component_name_request_count: "申请 {n} 件",
+    component_name_request_empty: "没有符合条件的申请。",
+    component_name_master_empty: "此类别没有部件名主数据。",
+    component_name_approve_new: "新建批准",
+    component_name_merge_existing: "合并到既有名称",
+    component_name_reject: "驳回",
+    component_name_resolution_note_ph: "批准或合并备注",
+    component_name_select_master: "选择合并目标",
+    component_name_approve_confirm: "将此申请批准为新的部件名主数据吗？",
+    component_name_merge_confirm: "将此申请名称合并到所选既有名称吗？",
+    component_name_reject_confirm: "驳回此申请吗？",
+    component_name_enable: "启用",
+    component_name_disable: "禁用",
+    component_name_toggle_confirm: "更改此部件名主数据的有效状态吗？",
     component_quantity: "数量",
     component_interchange: "互",
     component_compat_help: "<strong>互换栏说明</strong> A=新旧部件可互换 / B=新部件可替代旧部件，反向不可 / C=旧部件可替代新部件，反向不可 / D=不可互换 / X=表示有互换性的替代部件。A、B、X 的旧品号库存售完后停止供应。",
@@ -6245,7 +6390,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.423";
+var APP_VERSION       = "v1.1.424";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -6278,6 +6423,9 @@ var componentCatalogNameCandidateLabelMap = {};
 var componentCatalogNameCandidateKindMap = {};
 var componentCatalogNameCandidateCache = {};
 var componentCatalogNameCandidateLoadSeq = 0;
+var componentNameRequestContext = null;
+var componentNameMasterRequestRows = [];
+var componentNameMasterCandidateRows = [];
 var componentAddPartNumberLookupSeq = 0;
 var componentEditPartNumberLookupSeq = 0;
 var componentAlternativePartNumberLookupSeq = 0;
@@ -6532,6 +6680,9 @@ function canViewInternalComponents() {
 }
 function canEditInternalComponents() {
   return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]);
+}
+function canManageComponentNameMaster() {
+  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor"]);
 }
 function isCustomerViewerProfile(profile) {
   return userAccessRoleCode(profile) === "customer_viewer";
@@ -7690,7 +7841,7 @@ function updateAllHeaders() {
   var cls   = roleClass(userProfile.role);
   var greet = tf("greeting", { name: name });
 
-  ["menu","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","product-kind-stock-mgmt","finished-label-mgmt","production-ranking-mgmt","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","logs"].forEach(function(sc) {
+  ["menu","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","product-kind-stock-mgmt","finished-label-mgmt","production-ranking-mgmt","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","logs"].forEach(function(sc) {
     var nameEl  = document.getElementById(sc + "-username");
     var badgeEl = document.getElementById(sc + "-role-badge");
     if (nameEl)  nameEl.textContent = name;
@@ -7756,6 +7907,7 @@ function renderMenu() {
     { icon: "&#x1F465;", titleKey: "mi_users_title",  descKey: "mi_users_desc",  action: "users",  available: canUseUserManagement() },
     { icon: "&#x1F6AA;", titleKey: "mi_customer_access_title", descKey: "mi_customer_access_desc", action: "customer-access-mgmt", available: canManageCustomerAccess() },
     { icon: "&#x1F527;", titleKey: "mi_parts_title", descKey: "mi_parts_desc", action: "parts-mgmt", available: canViewManagementScreen() },
+    { icon: "&#x1F524;", titleKey: "mi_component_name_master_title", descKey: "mi_component_name_master_desc", action: "component-name-master-mgmt", available: canManageComponentNameMaster() },
     { icon: "&#x1F4B0;", titleKey: "sales_pricing_title", descKey: "sales_pricing_mgmt_desc", action: "sales-pricing-mgmt", available: canViewSalesPricing() },
     { icon: "&#x1F6D2;", titleKey: "mi_purchase_mgmt_title", descKey: "mi_purchase_mgmt_desc", action: "purchase-mgmt", available: canViewPurchaseMgmt() },
     { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canViewManagementScreen() },
@@ -7812,6 +7964,7 @@ function renderMenu() {
       else if (card.dataset.action === "customer-access-mgmt") enterCustomerAccessMgmt();
       else if (card.dataset.action === "change-pw") enterChangePw();
       else if (card.dataset.action === "parts-mgmt") enterPartsMgmt();
+      else if (card.dataset.action === "component-name-master-mgmt") enterComponentNameMasterMgmt();
       else if (card.dataset.action === "sales-pricing-mgmt") enterSalesPricingMgmt();
       else if (card.dataset.action === "purchase-mgmt") enterPurchaseMgmt();
       else if (card.dataset.action === "core-list-mgmt") enterCoreListMgmt();
@@ -19111,6 +19264,13 @@ function componentAddValue(id) {
 
 function setComponentAddValue(id, value) {
   var el = document.getElementById(id);
+  if (el && el.tagName === "SELECT" && value && !Array.prototype.some.call(el.options || [], function(opt) { return opt.value === value; })) {
+    var opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = value;
+    opt.dataset.unapproved = "1";
+    el.insertBefore(opt, el.firstChild ? el.firstChild.nextSibling : null);
+  }
   if (el) el.value = value || "";
 }
 
@@ -19445,9 +19605,10 @@ async function addAssemblyComponentForCurrent() {
   if (!confirmComponentPartNumberWarnings(addPartCheck.warnings)) return;
   var componentPartName = canonicalComponentNameForStorage(componentAddValue("component-add-name"));
   setComponentAddValue("component-add-name", componentPartName);
-  if (!componentPartName) {
-    if (err) err.textContent = t("component_name_required");
-    else alert(t("component_name_required"));
+  var componentNameError = componentNameMasterValidationMessage(componentPartName);
+  if (componentNameError) {
+    if (err) err.textContent = componentNameError;
+    else alert(componentNameError);
     return;
   }
   var componentMfrPn = addPartCheck.manufacturerPartNumber;
@@ -19513,7 +19674,7 @@ function componentEditInput(row, field, value) {
 
 function componentEditNameInput(row) {
   var value = row.component_name || row.component_part_name || "";
-  return "<input data-component-edit-field='component_part_name' list='component-edit-name-list' value='" + esc(value || "") + "'>";
+  return "<select data-component-edit-field='component_part_name'>" + componentNameSelectOptionsHtml(value) + "</select><button class='btn-sm-edit production-action-secondary' data-component-name-edit-request='1' type='button'>" + esc(t("component_name_request_open")) + "</button>";
 }
 
 function componentProcurementCategoryLabel(value) {
@@ -19569,6 +19730,8 @@ async function refreshComponentEditNameCandidates(usageId) {
   var payload = tr ? componentEditPayloadFromRow(tr) : {};
   var list = document.getElementById("component-edit-name-list");
   if (list) list.innerHTML = componentNameOptionsHtml(payload.component_part_name || "");
+  var select = tr ? tr.querySelector("[data-component-edit-field='component_part_name']") : null;
+  if (select) setComponentNameSelectOptions(select, payload.component_part_name || "");
 }
 
 function cancelComponentEdit() {
@@ -19694,6 +19857,11 @@ async function saveComponentEdit(usageId) {
   payload = componentEditPayloadFromRow(tr);
   payload.component_part_name = canonicalComponentNameForStorage(payload.component_part_name);
   setComponentEditFieldValue(tr, "component_part_name", payload.component_part_name);
+  var editNameError = componentNameMasterValidationMessage(payload.component_part_name);
+  if (editNameError) {
+    alert(editNameError);
+    return;
+  }
   var editReplacementRate = String(payload.replacement_rate || "").trim();
   if (editReplacementRate && !/^\d+$/.test(editReplacementRate)) {
     alert(t("component_replacement_rate_digits"));
@@ -20828,6 +20996,7 @@ function componentNameSortCompare(a, b) {
 
 function componentNameCandidateKindFromRow(row) {
   if (!row) return "other";
+  if (String(row.candidate_kind || "") === "master") return "master";
   if (String(row.source_type || "") === "manual") return "master";
   if (parseInt(row.manual_count || 0, 10) > 0) return "frequent";
   return "other";
@@ -20970,12 +21139,39 @@ async function loadComponentCatalogNameCandidatesForCurrent() {
   componentCatalogNameCandidates = [];
   componentCatalogNameCandidateLabelMap = {};
   componentCatalogNameCandidateKindMap = {};
-  if (!mfr) return;
+  if (!category) return;
   if (componentCatalogNameCandidateCache[cacheKey]) {
     if (!isCurrentCandidateLoad()) return;
     applyComponentNameCandidateCachePayload(componentCatalogNameCandidateCache[cacheKey]);
     return;
   }
+  var masterR = await sb.rpc("get_component_name_master_candidates", {
+    target_category_code: category || null,
+    target_lang: currentLang || "ja",
+    include_inactive: false,
+    max_rows: 1200
+  });
+  if (!masterR.error && (masterR.data || []).length) {
+    var masterList = [];
+    var masterSeen = {};
+    var masterLabels = {};
+    var masterKinds = {};
+    (masterR.data || []).forEach(function(row) {
+      var canonicalName = canonicalComponentNameForStorage(row.component_name_ja || row.component_name) || normalizeComponentNameText(row.component_name_ja || row.component_name);
+      addComponentNameCandidate(masterList, masterSeen, canonicalName);
+      addComponentNameCandidateLabel(masterLabels, canonicalName, componentNameCandidateDisplayLabel(canonicalName, row.component_name));
+      setComponentNameCandidateKind(masterKinds, canonicalName, "master");
+    });
+    masterList.sort(componentNameSortCompare);
+    if (!isCurrentCandidateLoad()) return;
+    componentCatalogNameCandidateCache[cacheKey] = componentNameCandidateCachePayload(masterList, masterLabels, masterKinds);
+    componentCatalogNameCandidates = masterList;
+    componentCatalogNameCandidateLabelMap = masterLabels;
+    componentCatalogNameCandidateKindMap = masterKinds;
+    return;
+  }
+  if (masterR.error) console.warn("component name master candidates failed; fallback to legacy candidates", masterR.error);
+  if (!mfr) return;
   var r = await sb.rpc("get_component_name_candidates", {
     target_manufacturer: mfr,
     target_category_code: category || null,
@@ -21121,11 +21317,60 @@ function componentNameOptionsHtml(selectedName, options) {
   return html;
 }
 
+function componentNameSelectOptionsHtml(selectedName, options) {
+  var html = "<option value=''>" + esc(t("component_alt_name_placeholder")) + "</option>";
+  var groups = componentNameGroupedCandidates(selectedName, options);
+  componentNameCandidateKinds().forEach(function(kind) {
+    if (!groups[kind].length) return;
+    html += "<optgroup label='" + esc(componentNameCandidateKindLabel(kind)) + "'>";
+    groups[kind].forEach(function(candidate) {
+      var label = componentNameOptionLabel(candidate.name);
+      var text = candidate.name + (label ? " / " + label : "");
+      var disabled = kind === "master" ? "" : " disabled";
+      html += "<option value='" + esc(candidate.name) + "'" + disabled + ">" + esc(text) + "</option>";
+    });
+    html += "</optgroup>";
+  });
+  return html;
+}
+
+function setComponentNameSelectOptions(selectEl, selectedName, options) {
+  if (!selectEl) return;
+  var value = canonicalComponentNameForStorage(selectedName) || normalizeComponentNameText(selectedName);
+  selectEl.innerHTML = componentNameSelectOptionsHtml(value, options);
+  if (value) setComponentNameSelectValue(selectEl, value);
+}
+
+function setComponentNameSelectValue(selectEl, value) {
+  if (!selectEl) return;
+  value = canonicalComponentNameForStorage(value) || normalizeComponentNameText(value);
+  if (value && !Array.prototype.some.call(selectEl.options || [], function(opt) { return opt.value === value; })) {
+    var opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = value;
+    opt.dataset.unapproved = "1";
+    selectEl.insertBefore(opt, selectEl.firstChild ? selectEl.firstChild.nextSibling : null);
+  }
+  selectEl.value = value || "";
+}
+
+function componentNameIsMasterValue(value) {
+  var name = canonicalComponentNameForStorage(value) || normalizeComponentNameText(value);
+  if (!name) return false;
+  return componentNameCandidateKindForName(name) === "master";
+}
+
+function componentNameMasterValidationMessage(value) {
+  if (!canonicalComponentNameForStorage(value)) return t("component_name_required");
+  if (!componentNameIsMasterValue(value)) return t("component_name_master_required");
+  return "";
+}
+
 function renderComponentAddNameOptions(selectedName) {
   var list = document.getElementById("component-add-name-list");
-  if (!list) return;
-  var html = componentNameOptionsHtml(selectedName);
-  list.innerHTML = html;
+  var select = document.getElementById("component-add-name");
+  if (select) setComponentNameSelectOptions(select, selectedName);
+  else if (list) list.innerHTML = componentNameOptionsHtml(selectedName);
 }
 
 function invalidateComponentNameCandidateCacheForCurrent() {
@@ -21161,10 +21406,283 @@ async function recordComponentNameCandidateUsageForCurrent(componentName) {
   }
 }
 
+function componentNameMasterCategoryRows() {
+  var rows = (categoryOptions || []).map(function(cat) {
+    return {
+      code: cat.category_code || cat.category || "",
+      label: categoryOptionLabel(cat)
+    };
+  }).filter(function(cat) { return cat.code; });
+  if (!rows.length) {
+    rows = [
+      { code: "starter", label: t("filter_starter") },
+      { code: "alternator", label: t("filter_alt") },
+      { code: "ac_compressor", label: tCat("ac_compressor") },
+      { code: "distributor", label: tCat("distributor") },
+      { code: "dc_motor", label: tCat("dc_motor") }
+    ];
+  }
+  var seen = {};
+  return rows.filter(function(row) {
+    if (!row.code || seen[row.code]) return false;
+    seen[row.code] = true;
+    return true;
+  }).sort(function(a, b) {
+    return componentNameSortCompare(a.label, b.label);
+  });
+}
+
+function componentNameMasterCategoryOptionsHtml(selected) {
+  selected = selected || componentCatalogCategoryCode(currentProduct) || "starter";
+  return componentNameMasterCategoryRows().map(function(row) {
+    return "<option value='" + esc(row.code) + "'" + (row.code === selected ? " selected" : "") + ">" + esc(row.label || row.code) + "</option>";
+  }).join("");
+}
+
+function openComponentNameRequestForm(source) {
+  if (!currentProduct) return;
+  componentNameRequestContext = {
+    source: source || "component",
+    category_code: componentCatalogCategoryCode(currentProduct),
+    manufacturer: currentProduct.manufacturer || null,
+    dkd_shohin_id: productDkdId(currentProduct) || null,
+    product_kind: selectedProductKind()
+  };
+  var overlay = document.getElementById("component-name-request-overlay");
+  var help = document.getElementById("component-name-request-help");
+  var input = document.getElementById("component-name-request-value");
+  var note = document.getElementById("component-name-request-note");
+  var err = document.getElementById("component-name-request-error");
+  if (help) help.textContent = [tCat(componentNameRequestContext.category_code), selectedProductTitle()].filter(Boolean).join(" / ");
+  if (input) input.value = "";
+  if (note) note.value = "";
+  if (err) err.textContent = "";
+  if (overlay) overlay.classList.add("show");
+  if (input) input.focus();
+}
+
+function closeComponentNameRequestForm() {
+  var overlay = document.getElementById("component-name-request-overlay");
+  if (overlay) overlay.classList.remove("show");
+  componentNameRequestContext = null;
+}
+
+async function submitComponentNameRequestForm() {
+  var ctx = componentNameRequestContext || {};
+  var input = document.getElementById("component-name-request-value");
+  var note = document.getElementById("component-name-request-note");
+  var err = document.getElementById("component-name-request-error");
+  var btn = document.getElementById("btn-component-name-request-submit");
+  var requestedName = normalizeComponentNameText(input ? input.value : "");
+  if (err) err.textContent = "";
+  if (!requestedName) {
+    if (err) err.textContent = t("component_name_required");
+    return;
+  }
+  if (btn) { btn.disabled = true; btn.textContent = t("loading"); }
+  var r = await sb.rpc("submit_component_name_request", {
+    target_category_code: ctx.category_code || componentCatalogCategoryCode(currentProduct),
+    requested_component_name: requestedName,
+    target_manufacturer: ctx.manufacturer || null,
+    target_dkd_shohin_id: ctx.dkd_shohin_id || null,
+    target_product_kind: ctx.product_kind || selectedProductKind(),
+    request_note: note ? note.value.trim() : null,
+    request_context: { source: ctx.source || "component" }
+  });
+  if (btn) { btn.disabled = false; btn.textContent = t("component_name_request_submit"); }
+  if (r.error) {
+    if (err) err.textContent = t("component_name_request_failed") + ": " + r.error.message;
+    return;
+  }
+  alert(t("component_name_request_sent"));
+  closeComponentNameRequestForm();
+  if (isScreenActive("component-name-master-mgmt")) await loadComponentNameMasterMgmt();
+}
+
+async function enterComponentNameMasterMgmt() {
+  if (!canManageComponentNameMaster()) { alert(t("err_perm")); return; }
+  showScreen("component-name-master-mgmt");
+  updateAllHeaders();
+  var category = document.getElementById("component-name-master-category");
+  if (category) {
+    category.innerHTML = componentNameMasterCategoryOptionsHtml(category.value || componentCatalogCategoryCode(currentProduct) || "starter");
+  }
+  await loadComponentNameMasterMgmt();
+}
+
+async function loadComponentNameMasterMgmt() {
+  if (!canManageComponentNameMaster()) return;
+  var categoryEl = document.getElementById("component-name-master-category");
+  var statusEl = document.getElementById("component-name-request-status");
+  var category = categoryEl ? categoryEl.value : "";
+  var status = statusEl ? statusEl.value : "pending";
+  var list = document.getElementById("component-name-request-list");
+  var masterList = document.getElementById("component-name-master-list");
+  if (list) list.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
+  if (masterList) masterList.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
+  var reqR = await sb.rpc("list_component_name_requests", {
+    target_status: status || "",
+    target_category_code: category || null,
+    max_rows: 300
+  });
+  var masterR = await sb.rpc("get_component_name_master_candidates", {
+    target_category_code: category || null,
+    target_lang: currentLang || "ja",
+    include_inactive: true,
+    max_rows: 1200
+  });
+  componentNameMasterRequestRows = reqR.error ? [] : (reqR.data || []);
+  componentNameMasterCandidateRows = masterR.error ? [] : (masterR.data || []);
+  if (reqR.error && list) list.innerHTML = "<div class='component-empty'>" + esc(reqR.error.message || t("msg_kikan_err")) + "</div>";
+  else renderComponentNameRequestList();
+  if (masterR.error && masterList) masterList.innerHTML = "<div class='component-empty'>" + esc(masterR.error.message || t("msg_kikan_err")) + "</div>";
+  else renderComponentNameMasterList();
+}
+
+function componentNameMasterOptionListHtml(selectedId) {
+  var html = "<option value=''>" + esc(t("component_name_select_master")) + "</option>";
+  (componentNameMasterCandidateRows || []).forEach(function(row) {
+    var label = row.component_name_ja || row.component_name || "";
+    var sub = [row.component_name_en, row.source_type].filter(Boolean).join(" / ");
+    html += "<option value='" + esc(String(row.master_id || "")) + "'" + (String(row.master_id || "") === String(selectedId || "") ? " selected" : "") + ">" + esc(label + (sub ? " / " + sub : "")) + "</option>";
+  });
+  return html;
+}
+
+function renderComponentNameRequestList() {
+  var wrap = document.getElementById("component-name-request-list");
+  var count = document.getElementById("component-name-master-count");
+  var rows = componentNameMasterRequestRows || [];
+  if (count) count.textContent = tf("component_name_request_count", { n: rows.length });
+  if (!wrap) return;
+  if (!rows.length) {
+    wrap.innerHTML = "<div class='component-empty'>" + esc(t("component_name_request_empty")) + "</div>";
+    return;
+  }
+  var html = "<table class='mgmt-table'><tr><th>ID</th><th>" + esc(t("component_name_requested")) + "</th><th>" + esc(t("f_category")) + "</th><th>" + esc(t("created_at")) + "</th><th>" + esc(t("component_note")) + "</th><th>" + esc(t("component_actions")) + "</th></tr>";
+  rows.forEach(function(row) {
+    var statusLabel = t("component_name_request_status_" + row.status);
+    html += "<tr>";
+    html += "<td><div class='mgmt-pn'>" + esc(String(row.id || "-")) + "</div><div class='mgmt-sub'>" + esc(statusLabel) + "</div></td>";
+    html += "<td><strong>" + esc(row.requested_name || "-") + "</strong><div class='mgmt-sub'>" + esc([row.requested_name_en, row.requested_name_zh].filter(Boolean).join(" / ")) + "</div></td>";
+    html += "<td>" + esc(tCat(row.category_code)) + "<div class='mgmt-sub'>" + esc([row.manufacturer, row.dkd_shohin_id ? "DKD " + row.dkd_shohin_id : "", productKindLabel(row.product_kind)].filter(Boolean).join(" / ")) + "</div></td>";
+    html += "<td>" + esc(fmtDate(row.created_at)) + "<div class='mgmt-sub'>" + esc(row.requester_name || row.requester_email || "") + "</div></td>";
+    html += "<td><input class='form-input' data-component-name-note='" + esc(String(row.id)) + "' value='" + esc(row.resolution_note || row.request_note || "") + "' placeholder='" + esc(t("component_name_resolution_note_ph")) + "'></td>";
+    html += "<td>";
+    if (row.status === "pending") {
+      html += "<div class='component-edit-actions'>";
+      html += "<button class='btn-sm-edit' data-component-name-approve='" + esc(String(row.id)) + "'>" + esc(t("component_name_approve_new")) + "</button>";
+      html += "<select class='form-select' data-component-name-merge-select='" + esc(String(row.id)) + "'>" + componentNameMasterOptionListHtml(row.resolved_master_id) + "</select>";
+      html += "<button class='btn-sm-edit production-action-secondary' data-component-name-merge='" + esc(String(row.id)) + "'>" + esc(t("component_name_merge_existing")) + "</button>";
+      html += "<button class='btn-sm-edit production-action-secondary' data-component-name-reject='" + esc(String(row.id)) + "'>" + esc(t("component_name_reject")) + "</button>";
+      html += "</div>";
+    } else {
+      html += "<div class='mgmt-sub'>" + esc(row.resolved_master_name || row.resolution_note || "-") + "</div>";
+    }
+    html += "</td></tr>";
+  });
+  html += "</table>";
+  wrap.innerHTML = html;
+  wrap.querySelectorAll("[data-component-name-approve]").forEach(function(btn) {
+    btn.addEventListener("click", function() { approveComponentNameRequest(btn.dataset.componentNameApprove); });
+  });
+  wrap.querySelectorAll("[data-component-name-merge]").forEach(function(btn) {
+    btn.addEventListener("click", function() { mergeComponentNameRequest(btn.dataset.componentNameMerge); });
+  });
+  wrap.querySelectorAll("[data-component-name-reject]").forEach(function(btn) {
+    btn.addEventListener("click", function() { rejectComponentNameRequest(btn.dataset.componentNameReject); });
+  });
+}
+
+function renderComponentNameMasterList() {
+  var wrap = document.getElementById("component-name-master-list");
+  var count = document.getElementById("component-name-master-list-count");
+  var rows = componentNameMasterCandidateRows || [];
+  if (count) count.textContent = tf("component_name_master_count", { n: rows.length });
+  if (!wrap) return;
+  if (!rows.length) {
+    wrap.innerHTML = "<div class='component-empty'>" + esc(t("component_name_master_empty")) + "</div>";
+    return;
+  }
+  var categoryEl = document.getElementById("component-name-master-category");
+  var categoryLabel = tCat(categoryEl ? categoryEl.value : "");
+  var html = "<table class='mgmt-table'><tr><th>ID</th><th>" + esc(t("component_name")) + "</th><th>EN / 中文</th><th>" + esc(t("component_request_status")) + "</th><th>" + esc(t("component_actions")) + "</th></tr>";
+  rows.slice(0, 500).forEach(function(row) {
+    html += "<tr>";
+    html += "<td>" + esc(String(row.master_id || "-")) + "</td>";
+    html += "<td><strong>" + esc(row.component_name_ja || row.component_name || "-") + "</strong><div class='mgmt-sub'>" + esc(categoryLabel) + "</div></td>";
+    html += "<td>" + esc([row.component_name_en, row.component_name_zh].filter(Boolean).join(" / ") || "-") + "</td>";
+    html += "<td>" + esc([row.source_type, row.is_active ? "active" : "inactive"].filter(Boolean).join(" / ")) + "</td>";
+    html += "<td><button class='btn-sm-edit production-action-secondary' data-component-name-master-toggle='" + esc(String(row.master_id || "")) + "' data-component-name-master-active='" + esc(String(row.is_active !== false)) + "'>" + esc(row.is_active === false ? t("component_name_enable") : t("component_name_disable")) + "</button></td>";
+    html += "</tr>";
+  });
+  html += "</table>";
+  wrap.innerHTML = html;
+  wrap.querySelectorAll("[data-component-name-master-toggle]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      toggleComponentNameMasterActive(btn.dataset.componentNameMasterToggle, btn.dataset.componentNameMasterActive === "true");
+    });
+  });
+}
+
+function componentNameResolutionNote(requestId) {
+  var el = document.querySelector("[data-component-name-note='" + String(requestId) + "']");
+  return el ? el.value.trim() : "";
+}
+
+async function approveComponentNameRequest(requestId) {
+  if (!confirm(t("component_name_approve_confirm"))) return;
+  var r = await sb.rpc("approve_component_name_request", {
+    target_request_id: parseInt(requestId, 10),
+    target_master_id: null,
+    resolution_note: componentNameResolutionNote(requestId) || null
+  });
+  if (r.error) { alert(r.error.message || t("msg_save_err")); return; }
+  componentCatalogNameCandidateCache = {};
+  await loadComponentNameMasterMgmt();
+}
+
+async function mergeComponentNameRequest(requestId) {
+  var select = document.querySelector("[data-component-name-merge-select='" + String(requestId) + "']");
+  var masterId = select ? select.value : "";
+  if (!masterId) { alert(t("component_name_select_master")); return; }
+  if (!confirm(t("component_name_merge_confirm"))) return;
+  var r = await sb.rpc("approve_component_name_request", {
+    target_request_id: parseInt(requestId, 10),
+    target_master_id: parseInt(masterId, 10),
+    resolution_note: componentNameResolutionNote(requestId) || null
+  });
+  if (r.error) { alert(r.error.message || t("msg_save_err")); return; }
+  componentCatalogNameCandidateCache = {};
+  await loadComponentNameMasterMgmt();
+}
+
+async function rejectComponentNameRequest(requestId) {
+  if (!confirm(t("component_name_reject_confirm"))) return;
+  var r = await sb.rpc("reject_component_name_request", {
+    target_request_id: parseInt(requestId, 10),
+    resolution_note: componentNameResolutionNote(requestId) || null
+  });
+  if (r.error) { alert(r.error.message || t("msg_save_err")); return; }
+  await loadComponentNameMasterMgmt();
+}
+
+async function toggleComponentNameMasterActive(masterId, isActive) {
+  if (!masterId) return;
+  if (!confirm(t("component_name_toggle_confirm"))) return;
+  var r = await sb.from("component_name_masters")
+    .update({ is_active: !isActive, updated_by: currentUser ? currentUser.id : null })
+    .eq("id", parseInt(masterId, 10));
+  if (r.error) { alert(r.error.message || t("msg_save_err")); return; }
+  componentCatalogNameCandidateCache = {};
+  await loadComponentNameMasterMgmt();
+}
+
 function renderComponentAlternativeNameOptions(selectedName) {
   var listEl = document.getElementById("component-alt-name-list");
-  if (!listEl) return;
-  listEl.innerHTML = componentNameOptionsHtml(selectedName, { baseRow: componentAlternativeBaseRow });
+  var select = document.getElementById("component-alt-name");
+  if (select) setComponentNameSelectOptions(select, selectedName, { baseRow: componentAlternativeBaseRow });
+  else if (listEl) listEl.innerHTML = componentNameOptionsHtml(selectedName, { baseRow: componentAlternativeBaseRow });
 }
 
 function syncComponentAlternativeNameValue() {
@@ -21174,13 +21692,17 @@ function syncComponentAlternativeNameValue() {
 function setComponentAlternativeNameValue(name) {
   var input = document.getElementById("component-alt-name");
   var value = canonicalComponentNameForStorage(name) || normalizeComponentNameText(name);
-  if (input) input.value = value || "";
+  if (input && input.tagName === "SELECT") setComponentNameSelectValue(input, value);
+  else if (input) input.value = value || "";
   renderComponentAlternativeNameOptions(value);
 }
 
 function bindComponentAlternativeNameControls() {
   var input = document.getElementById("component-alt-name");
   if (input) input.oninput = function() {
+    renderComponentAlternativeNameOptions(input.value);
+  };
+  if (input) input.onchange = function() {
     renderComponentAlternativeNameOptions(input.value);
   };
 }
@@ -21440,8 +21962,9 @@ async function saveComponentAlternativeForm() {
   if (!confirmComponentPartNumberWarnings(altPartCheck.warnings)) return;
   var partName = canonicalComponentNameForStorage(syncComponentAlternativeNameValue());
   setComponentAlternativeNameValue(partName);
-  if (!partName) {
-    if (err) err.textContent = t("component_name_required");
+  var altNameError = componentNameMasterValidationMessage(partName);
+  if (altNameError) {
+    if (err) err.textContent = altNameError;
     return;
   }
   var partNumber = altPartCheck.manufacturerPartNumber;
@@ -21754,6 +22277,9 @@ function renderAssemblyComponentRows() {
   wrap.querySelectorAll("[data-component-save]").forEach(function(btn) {
     btn.addEventListener("click", function() { saveComponentEdit(btn.dataset.componentSave); });
   });
+  wrap.querySelectorAll("[data-component-name-edit-request]").forEach(function(btn) {
+    btn.addEventListener("click", function() { openComponentNameRequestForm("component_edit"); });
+  });
   wrap.querySelectorAll("[data-component-edit-field='component_manufacturer_part_number'],[data-component-edit-field='component_genuine_part_number']").forEach(function(input) {
     var preview = function() {
       normalizeComponentPartNumberElement(input);
@@ -21889,6 +22415,9 @@ function renderAssemblyComponentRows() {
   });
   wrap.querySelectorAll("[data-component-save]").forEach(function(btn) {
     btn.addEventListener("click", function() { saveComponentEdit(btn.dataset.componentSave); });
+  });
+  wrap.querySelectorAll("[data-component-name-edit-request]").forEach(function(btn) {
+    btn.addEventListener("click", function() { openComponentNameRequestForm("component_edit"); });
   });
   wrap.querySelectorAll("[data-component-edit-field='component_manufacturer_part_number'],[data-component-edit-field='component_genuine_part_number']").forEach(function(input) {
     var preview = function() {
@@ -26080,7 +26609,7 @@ document.getElementById("btn-back-to-login").addEventListener("click", function(
 document.getElementById("btn-submit-reg").addEventListener("click", doRegister);
 document.getElementById("reg-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doRegister(); });
 document.getElementById("login-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
-["btn-logout-menu","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-core-list-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-finished-label-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
+["btn-logout-menu","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-finished-label-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
 document.getElementById("btn-back-search").addEventListener("click", function(){ closePanel(); showScreen("menu"); });
 document.getElementById("btn-back-production-search").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-components").addEventListener("click", async function(){
@@ -26115,6 +26644,9 @@ if (componentReverseNameEl) {
 }
 document.getElementById("btn-component-add-cancel").addEventListener("click", closeComponentAddForm);
 document.getElementById("btn-component-add").addEventListener("click", addAssemblyComponentForCurrent);
+document.getElementById("btn-component-add-name-request").addEventListener("click", function(){ openComponentNameRequestForm("component_add"); });
+document.getElementById("btn-component-name-request-cancel").addEventListener("click", closeComponentNameRequestForm);
+document.getElementById("btn-component-name-request-submit").addEventListener("click", submitComponentNameRequestForm);
 ["component-add-mfr-pn", "component-add-genuine-pn"].forEach(function(id) {
   var el = document.getElementById(id);
   if (!el) return;
@@ -26155,6 +26687,7 @@ if (componentAddProcurementEl) {
 }
 document.getElementById("btn-component-alt-cancel").addEventListener("click", closeComponentAlternativeForm);
 document.getElementById("btn-component-alt-save").addEventListener("click", saveComponentAlternativeForm);
+document.getElementById("btn-component-alt-name-request").addEventListener("click", function(){ openComponentNameRequestForm("component_alternative"); });
 ["component-alt-pn", "component-alt-genuine-pn"].forEach(function(id) {
   var el = document.getElementById(id);
   if (!el) return;
@@ -26207,6 +26740,10 @@ document.getElementById("btn-back-sales-pricing-mgmt").addEventListener("click",
 document.getElementById("btn-back-purchase-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-customer-access-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-core-list-mgmt").addEventListener("click", function(){ showScreen("menu"); });
+document.getElementById("btn-back-component-name-master-mgmt").addEventListener("click", function(){ showScreen("menu"); });
+document.getElementById("btn-component-name-master-refresh").addEventListener("click", loadComponentNameMasterMgmt);
+document.getElementById("component-name-master-category").addEventListener("change", loadComponentNameMasterMgmt);
+document.getElementById("component-name-request-status").addEventListener("change", loadComponentNameMasterMgmt);
 document.getElementById("btn-back-product-kind-stock-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-finished-label-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-production-ranking-mgmt").addEventListener("click", function(){ showScreen("menu"); });
