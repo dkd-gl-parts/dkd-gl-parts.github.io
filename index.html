@@ -531,14 +531,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .mgmt-actions   { display: flex; gap: 6px; flex-wrap: nowrap; }
 .mgmt-count     { font-size: 12px; color: #888; margin-bottom: 8px; }
 .mgmt-section-title { font-size: 14px; font-weight: 800; color: #1a1a2e; margin: 12px 0 6px; }
-#component-name-request-list { overflow-x: auto; padding-bottom: 2px; }
-.component-name-request-table { min-width: 1290px; table-layout: fixed; }
+#component-name-request-list { overflow-x: auto; padding-bottom: 2px; position: relative; }
+.component-name-request-table { min-width: 1290px; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
 .component-name-request-table th:nth-child(1), .component-name-request-table td:nth-child(1) { width: 64px; }
 .component-name-request-table th:nth-child(2), .component-name-request-table td:nth-child(2) { width: 320px; }
 .component-name-request-table th:nth-child(3), .component-name-request-table td:nth-child(3) { width: 180px; }
 .component-name-request-table th:nth-child(4), .component-name-request-table td:nth-child(4) { width: 150px; }
 .component-name-request-table th:nth-child(5), .component-name-request-table td:nth-child(5) { width: 220px; }
-.component-name-request-table th:nth-child(6), .component-name-request-table td:nth-child(6) { width: 360px; }
+.component-name-request-table th:nth-child(6), .component-name-request-table td:nth-child(6) {
+  width: 360px;
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background: #fff;
+  box-shadow: -8px 0 14px rgba(16, 24, 40, 0.08);
+}
+.component-name-request-table th:nth-child(6) { z-index: 3; background: #f5f7fa; }
+.component-name-request-table tr:hover td:nth-child(6) { background: #fff; }
 .component-name-request-table th:nth-child(2) { color: #1a1a2e; font-weight: 800; }
 .component-name-request-name {
   display: block;
@@ -1657,7 +1666,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.442</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.443</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1686,7 +1695,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.442</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.443</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1716,7 +1725,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.442</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.443</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -6485,7 +6494,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.442";
+var APP_VERSION       = "v1.1.443";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
