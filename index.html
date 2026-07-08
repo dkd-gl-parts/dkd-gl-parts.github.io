@@ -431,6 +431,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-table td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
 .component-table tr:last-child td { border-bottom: none; }
 .component-table input { width: 100%; min-width: 54px; border: 1px solid #d7dce5; border-radius: 5px; padding: 5px 6px; font-size: 12px; }
+.component-table .component-cell-qty { text-align: left; white-space: nowrap; }
+.component-table .component-cell-money,
+.component-table .component-cell-rate { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.component-table .component-cell-qty input { text-align: left; }
+.component-table .component-cell-money input,
+.component-table .component-cell-rate input { text-align: right; }
 .component-tree-col { width: 54px; text-align: center !important; white-space: nowrap; }
 .component-tree-toggle { min-width: 28px; height: 26px; border: 1px solid #cdd7e7; border-radius: 6px; background: #fff; color: #2f65c8; font-weight: 800; line-height: 1; }
 .component-tree-toggle.loading { color: #667085; background: #f5f7fa; }
@@ -6444,7 +6450,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.432";
+var APP_VERSION       = "v1.1.433";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -8715,6 +8721,17 @@ function formatYen(value) {
   var n = parseInt(value, 10);
   if (isNaN(n)) return "-";
   return n.toLocaleString("ja-JP");
+}
+
+function formatComponentYen(value) {
+  var text = formatYen(value);
+  return text === "-" ? "-" : "\u00a5" + text;
+}
+
+function formatComponentRate(value) {
+  if (value === null || value === undefined || value === "") return "-";
+  var text = String(value).trim();
+  return text ? (/%$/.test(text) ? text : text + "%") : "-";
 }
 
 function renderCatalogVehicleSummaryHtml(offsetClass) {
@@ -22399,11 +22416,11 @@ function renderAssemblyComponentRows() {
       html += "<td>" + componentEditInput(row, "component_manufacturer_part_number", row.component_manufacturer_part_number) + "<div class='component-sub'>" + componentEditInput(row, "component_manufacturer", row.component_manufacturer || "") + "</div></td>";
       html += "<td>" + componentEditInput(row, "component_genuine_part_number", row.component_genuine_part_number || "") + "</td>";
       html += "<td>" + componentEditNameInput(row) + "</td>";
-      html += "<td>" + componentEditInput(row, "quantity", row.quantity || "1") + "</td>";
-      html += "<td>" + componentEditInput(row, "unit_price_jpy", row.unit_price_jpy || "") + "</td>";
+      html += "<td class='component-cell-qty'>" + componentEditInput(row, "quantity", row.quantity || "1") + "</td>";
+      html += "<td class='component-cell-money'>" + componentEditInput(row, "unit_price_jpy", row.unit_price_jpy || "") + "</td>";
       html += "<td>" + componentEditInput(row, "component_interchange_code", row.interchange_code || row.component_interchange_code || "") + "</td>";
       html += "<td>" + componentEditProcurementSelect(row.procurement_category || "") + "</td>";
-      html += "<td>" + componentEditInput(row, "replacement_rate", row.replacement_rate || "") + "</td>";
+      html += "<td class='component-cell-rate'>" + componentEditInput(row, "replacement_rate", row.replacement_rate || "") + "</td>";
       html += "<td>" + componentEditInput(row, "manufacturing_memo", row.manufacturing_memo || "") + "</td>";
       html += "<td><div class='component-edit-actions'><button class='btn-sm-edit' data-component-save='" + esc(String(row.id)) + "'>" + t("component_save") + "</button><button class='btn-sm-edit production-action-secondary' data-component-cancel='1'>" + t("component_cancel") + "</button><button class='btn-sm-edit production-action-secondary' data-component-delete='" + esc(String(row.id)) + "'>" + t("component_delete") + "</button></div></td>";
     } else {
@@ -22412,17 +22429,17 @@ function renderAssemblyComponentRows() {
       html += "<td>" + componentRowNameHtml(row) + "</td>";
       if (catalogMode) {
         html += "<td>" + esc(row.component_position || row.source_code || "-") + "</td>";
-        html += "<td>" + esc(row.quantity || "-") + "</td>";
-        html += "<td>" + esc(formatYen(row.unit_price_jpy)) + "</td>";
+        html += "<td class='component-cell-qty'>" + esc(row.quantity || "-") + "</td>";
+        html += "<td class='component-cell-money'>" + esc(formatComponentYen(row.unit_price_jpy)) + "</td>";
         html += "<td>" + esc(formatComponentInterchange(row)) + "</td>";
         html += "<td>" + esc(row.effective_start || row.start_period || "-") + "</td>";
         html += "<td>" + esc(row.effective_end || row.end_period || "-") + "</td>";
       } else {
-        html += "<td>" + esc(row.quantity || "-") + "</td>";
-        html += "<td>" + esc(formatYen(row.unit_price_jpy)) + "</td>";
+        html += "<td class='component-cell-qty'>" + esc(row.quantity || "-") + "</td>";
+        html += "<td class='component-cell-money'>" + esc(formatComponentYen(row.unit_price_jpy)) + "</td>";
         html += "<td>" + esc(formatComponentInterchange(row)) + "</td>";
         html += "<td>" + esc(componentProcurementCategoryLabel(row.procurement_category)) + "</td>";
-        html += "<td>" + esc(row.replacement_rate == null || row.replacement_rate === "" ? "-" : row.replacement_rate) + "</td>";
+        html += "<td class='component-cell-rate'>" + esc(formatComponentRate(row.replacement_rate)) + "</td>";
         html += "<td>" + esc(row.manufacturing_memo || "-") + "</td>";
       }
       if (hasActions) {
@@ -22517,11 +22534,11 @@ function renderAssemblyComponentRows() {
       html += "<td>" + componentEditInput(row, "component_manufacturer_part_number", row.component_manufacturer_part_number) + "<div class='component-sub'>" + componentEditInput(row, "component_manufacturer", row.component_manufacturer || "") + "</div></td>";
       html += "<td>" + componentEditInput(row, "component_genuine_part_number", row.component_genuine_part_number || "") + "</td>";
       html += "<td>" + componentEditNameInput(row) + "</td>";
-      html += "<td>" + componentEditInput(row, "quantity", row.quantity || "1") + "</td>";
-      html += "<td>" + componentEditInput(row, "unit_price_jpy", row.unit_price_jpy || "") + "</td>";
+      html += "<td class='component-cell-qty'>" + componentEditInput(row, "quantity", row.quantity || "1") + "</td>";
+      html += "<td class='component-cell-money'>" + componentEditInput(row, "unit_price_jpy", row.unit_price_jpy || "") + "</td>";
       html += "<td>" + componentEditInput(row, "component_interchange_code", row.interchange_code || row.component_interchange_code || "") + "</td>";
       html += "<td>" + componentEditProcurementSelect(row.procurement_category || "") + "</td>";
-      html += "<td>" + componentEditInput(row, "replacement_rate", row.replacement_rate || "") + "</td>";
+      html += "<td class='component-cell-rate'>" + componentEditInput(row, "replacement_rate", row.replacement_rate || "") + "</td>";
       html += "<td>" + componentEditInput(row, "manufacturing_memo", row.manufacturing_memo || "") + "</td>";
       html += "<td>" + componentAlternativeCountHtml(row) + "</td>";
       html += "<td><div class='component-edit-actions'><button class='btn-sm-edit' data-component-save='" + esc(String(row.id)) + "'>" + t("component_save") + "</button><button class='btn-sm-edit production-action-secondary' data-component-cancel='1'>" + t("component_cancel") + "</button><button class='btn-sm-edit production-action-secondary' data-component-delete='" + esc(String(row.id)) + "'>" + t("component_delete") + "</button></div></td>";
@@ -22531,17 +22548,17 @@ function renderAssemblyComponentRows() {
       html += "<td>" + componentRowNameHtml(row) + "</td>";
       if (catalogMode) {
         html += "<td>" + esc(row.component_position || row.source_code || "-") + "</td>";
-        html += "<td>" + esc(row.quantity || "-") + "</td>";
-        html += "<td>" + esc(formatYen(row.unit_price_jpy)) + "</td>";
+        html += "<td class='component-cell-qty'>" + esc(row.quantity || "-") + "</td>";
+        html += "<td class='component-cell-money'>" + esc(formatComponentYen(row.unit_price_jpy)) + "</td>";
         html += "<td>" + esc(formatComponentInterchange(row)) + "</td>";
         html += "<td>" + esc(row.effective_start || row.start_period || "-") + "</td>";
         html += "<td>" + esc(row.effective_end || row.end_period || "-") + "</td>";
       } else {
-        html += "<td>" + esc(row.quantity || "-") + "</td>";
-        html += "<td>" + esc(formatYen(row.unit_price_jpy)) + "</td>";
+        html += "<td class='component-cell-qty'>" + esc(row.quantity || "-") + "</td>";
+        html += "<td class='component-cell-money'>" + esc(formatComponentYen(row.unit_price_jpy)) + "</td>";
         html += "<td>" + esc(formatComponentInterchange(row)) + "</td>";
         html += "<td>" + esc(componentProcurementCategoryLabel(row.procurement_category)) + "</td>";
-        html += "<td>" + esc(row.replacement_rate == null || row.replacement_rate === "" ? "-" : row.replacement_rate) + "</td>";
+        html += "<td class='component-cell-rate'>" + esc(formatComponentRate(row.replacement_rate)) + "</td>";
         html += "<td>" + esc(row.manufacturing_memo || "-") + "</td>";
       }
       html += "<td>" + componentAlternativeCountHtml(row) + "</td>";
