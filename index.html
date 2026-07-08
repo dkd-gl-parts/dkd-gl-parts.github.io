@@ -205,7 +205,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ec-best3-row:first-of-type { border-top: 0; }
 .ec-provider-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 7px; font-size: 10px; font-weight: 700; background: #eef4ff; color: #1a6fd4; white-space: nowrap; }
 .ec-history-btn { white-space: nowrap; }
-.ec-price-history-card { max-width: 1520px; width: min(1520px, calc(100vw - 16px)); max-height: calc(100vh - 18px); overflow: auto; padding: 18px; }
+.ec-price-history-card { max-width: 1800px; width: min(1800px, calc(100vw - 8px)); max-height: calc(100vh - 8px); overflow: auto; padding: 20px; }
 .ec-price-history-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 10px; }
 .ec-price-history-head h3 { margin: 0 0 4px; }
 .ec-price-history-close { border: none; border-radius: 999px; background: #e24b4a; color: #fff; width: 30px; height: 30px; font-size: 20px; font-weight: 800; line-height: 1; cursor: pointer; flex: 0 0 auto; }
@@ -220,13 +220,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ec-price-history-stat-label { color: #667085; font-size: 11px; font-weight: 800; }
 .ec-price-history-stat-value { color: #1a1a2e; font-size: 18px; font-weight: 900; margin-top: 3px; }
 .ec-price-history-stat-sub { color: #8a94a6; font-size: 11px; line-height: 1.45; margin-top: 2px; }
-.ec-price-history-chart-wrap { border: 1px solid #dfe6f0; border-radius: 8px; background: #fff; padding: 10px; overflow: hidden; }
-.ec-price-history-chart { width: 100%; height: clamp(330px, 48vh, 520px); display: block; }
-.ec-price-history-axis { fill: #667085; font-size: 11px; }
+.ec-price-history-chart-wrap { border: 1px solid #dfe6f0; border-radius: 8px; background: #fff; padding: 12px; overflow: hidden; }
+.ec-price-history-chart { width: 100%; height: clamp(420px, 62vh, 660px); display: block; }
+.ec-price-history-axis { fill: #667085; font-size: 14px; font-weight: 700; }
 .ec-price-history-grid { stroke: #e8edf4; stroke-width: 1; }
 .ec-price-history-axis-line { stroke: #98a2b3; stroke-width: 1; }
-.ec-price-history-line { fill: none; stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
-.ec-price-history-point { stroke: #fff; stroke-width: 1.5; }
+.ec-price-history-line { fill: none; stroke-width: 2.8; stroke-linejoin: round; stroke-linecap: round; }
+.ec-price-history-point { stroke: #fff; stroke-width: 1.8; }
 .ec-price-history-legend { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; color: #344054; font-size: 12px; font-weight: 700; }
 .ec-price-history-legend-item { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 .ec-price-history-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
@@ -257,7 +257,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 #rakuten-list .ec-price-result-table td:nth-child(-n+3),
 #rakuten-list .ec-price-result-table td:nth-child(-n+3) .mgmt-pn,
 #rakuten-list .ec-price-result-table td:nth-child(-n+3) .mgmt-sub { white-space: nowrap; word-break: keep-all; overflow-wrap: normal; }
-@media(max-width:700px){ .ec-price-history-card { width: calc(100vw - 8px); max-height: calc(100vh - 8px); margin: 4px; padding: 12px 8px; } .ec-price-history-chart-wrap { padding: 6px; } .ec-price-history-chart { height: 300px; } }
+@media(max-width:700px){ .ec-price-history-card { width: calc(100vw - 8px); max-height: calc(100vh - 8px); margin: 4px; padding: 12px 8px; } .ec-price-history-chart-wrap { padding: 6px; } .ec-price-history-chart { height: 340px; } .ec-price-history-axis { font-size: 13px; } }
 .rakuten-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
 .rakuten-actions button:disabled { opacity: .45; cursor: not-allowed; }
 .rakuten-target-list { max-height: 220px; overflow: auto; border: 1px solid #eee; border-radius: 8px; margin-top: 10px; }
@@ -6419,7 +6419,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.427";
+var APP_VERSION       = "v1.1.428";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -12163,10 +12163,13 @@ function renderEcPriceHistorySvg(series) {
   var allPoints = [];
   series.forEach(function(s) { allPoints = allPoints.concat(s.points); });
   if (!allPoints.length) return "";
-  var wideChart = window.innerWidth >= 1280;
-  var width = wideChart ? 1240 : 920;
-  var height = wideChart ? 430 : 390;
-  var left = wideChart ? 82 : 74, right = 24, top = 18, bottom = 48;
+  var viewportW = window.innerWidth || 0;
+  var wideChart = viewportW >= 1440;
+  var mediumChart = viewportW >= 900;
+  var width = wideChart ? 1500 : (mediumChart ? 1180 : 920);
+  var height = wideChart ? 560 : (mediumChart ? 500 : 420);
+  var left = wideChart ? 118 : (mediumChart ? 106 : 86);
+  var right = wideChart ? 36 : 30, top = 28, bottom = 70;
   var plotW = width - left - right;
   var plotH = height - top - bottom;
   var minTs = Math.min.apply(null, allPoints.map(function(p) { return p.ts; }));
@@ -12185,14 +12188,14 @@ function renderEcPriceHistorySvg(series) {
     var val = Math.round((yMax / yTickCount) * yi);
     var y = yScale(val);
     svg += "<line class='ec-price-history-grid' x1='" + left + "' y1='" + y.toFixed(1) + "' x2='" + (width - right) + "' y2='" + y.toFixed(1) + "'/>";
-    svg += "<text class='ec-price-history-axis' x='" + (left - 8) + "' y='" + (y + 4).toFixed(1) + "' text-anchor='end'>" + esc(yen(val)) + "</text>";
+    svg += "<text class='ec-price-history-axis' x='" + (left - 12) + "' y='" + (y + 5).toFixed(1) + "' text-anchor='end'>" + esc(yen(val)) + "</text>";
   }
   var xTickCount = 5;
   for (var xi = 0; xi <= xTickCount; xi++) {
     var ts = minTs + ((maxTs - minTs) / xTickCount) * xi;
     var x = xScale(ts);
     svg += "<line class='ec-price-history-grid' x1='" + x.toFixed(1) + "' y1='" + top + "' x2='" + x.toFixed(1) + "' y2='" + (height - bottom) + "'/>";
-    svg += "<text class='ec-price-history-axis' x='" + x.toFixed(1) + "' y='" + (height - 20) + "' text-anchor='middle'>" + esc(ecPriceHistoryAxisDate(ts, xi > 0 && xi < xTickCount)) + "</text>";
+    svg += "<text class='ec-price-history-axis' x='" + x.toFixed(1) + "' y='" + (height - 26) + "' text-anchor='middle'>" + esc(ecPriceHistoryAxisDate(ts, xi > 0 && xi < xTickCount)) + "</text>";
   }
   svg += "<line class='ec-price-history-axis-line' x1='" + left + "' y1='" + (height - bottom) + "' x2='" + (width - right) + "' y2='" + (height - bottom) + "'/>";
   svg += "<line class='ec-price-history-axis-line' x1='" + left + "' y1='" + top + "' x2='" + left + "' y2='" + (height - bottom) + "'/>";
@@ -12201,7 +12204,7 @@ function renderEcPriceHistorySvg(series) {
     var path = ecPriceHistoryStepPath(s.points, xScale, yScale, left, width - right);
     svg += "<path class='ec-price-history-line' d='" + path + "' stroke='" + color + "'/>";
     s.points.forEach(function(p) {
-      svg += "<circle class='ec-price-history-point' cx='" + xScale(p.ts).toFixed(1) + "' cy='" + yScale(p.price).toFixed(1) + "' r='3.5' fill='" + color + "'/>";
+      svg += "<circle class='ec-price-history-point' cx='" + xScale(p.ts).toFixed(1) + "' cy='" + yScale(p.price).toFixed(1) + "' r='4.2' fill='" + color + "'/>";
     });
   });
   svg += "</svg>";
