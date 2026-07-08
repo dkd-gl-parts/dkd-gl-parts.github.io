@@ -1580,7 +1580,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.415</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.417</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1609,7 +1609,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.415</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.417</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1639,7 +1639,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.415</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.417</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -6227,7 +6227,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.416";
+var APP_VERSION       = "v1.1.417";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -19465,6 +19465,30 @@ function componentEditPayloadFromRow(tr) {
   return payload;
 }
 
+function componentIsNumericRecordId(value) {
+  return /^\d+$/.test(String(value || ""));
+}
+
+async function resolveManualComponentUsageId(row, usageId) {
+  if (componentIsNumericRecordId(usageId)) return String(usageId);
+  if (row && componentIsNumericRecordId(row.id)) return String(row.id);
+  if (!row || !row.dkd_component_id) return "";
+  var dkdId = await resolveCurrentCoreDkdShohinId();
+  if (!dkdId) return "";
+  var query = sb.from("assembly_component_usages")
+    .select("id")
+    .eq("dkd_shohin_id", dkdId)
+    .eq("component_id", row.dkd_component_id)
+    .eq("is_catalog_evidence", false)
+    .eq("product_kind", row.product_kind || selectedProductKind())
+    .limit(2);
+  if (row.product_variant_id) query = query.eq("product_variant_id", row.product_variant_id);
+  var r = await query;
+  if (r.error || !r.data || r.data.length !== 1) return "";
+  row.id = r.data[0].id;
+  return String(r.data[0].id);
+}
+
 function setComponentEditFieldValue(tr, field, value) {
   var el = tr ? tr.querySelector("[data-component-edit-field='" + field + "']") : null;
   if (el) el.value = value || "";
@@ -19496,9 +19520,14 @@ async function saveComponentEdit(usageId) {
     renderAssemblyComponentRows();
     return;
   }
+  var resolvedUsageId = await resolveManualComponentUsageId(row, usageId);
+  if (!resolvedUsageId) {
+    alert("構成部品の使用レコードIDを確認できませんでした。画面を更新して再度お試しください。");
+    return;
+  }
   var guardR = await sb.from("assembly_component_usages")
     .select("id,is_catalog_evidence")
-    .eq("id", usageId)
+    .eq("id", resolvedUsageId)
     .maybeSingle();
   if (guardR.error) {
     alert("構成部品の確認に失敗しました: " + guardR.error.message);
@@ -19610,13 +19639,13 @@ async function saveComponentEdit(usageId) {
       return;
     }
   }
-  var usageR = await sb.from("assembly_component_usages").update(usageUpdate).eq("id", usageId).eq("is_catalog_evidence", false);
+  var usageR = await sb.from("assembly_component_usages").update(usageUpdate).eq("id", resolvedUsageId).eq("is_catalog_evidence", false);
   if (btn) { btn.disabled = false; btn.textContent = t("component_save"); }
   if (usageR.error) {
     alert("構成部品の更新に失敗しました: " + usageR.error.message);
     return;
   }
-  await writeLog("update", "assembly_component_usages", usageId, payload.component_manufacturer_part_number, row, payload);
+  await writeLog("update", "assembly_component_usages", resolvedUsageId, payload.component_manufacturer_part_number, row, payload);
   recordComponentNameCandidateUsageForCurrent(payload.component_part_name);
   editingComponentUsageId = null;
   await loadAssemblyComponentsForCurrent();
@@ -19633,9 +19662,14 @@ async function deleteComponentUsage(usageId) {
     return;
   }
   if (!confirm(t("component_delete_confirm"))) return;
+  var resolvedUsageId = await resolveManualComponentUsageId(row, usageId);
+  if (!resolvedUsageId) {
+    alert(t("component_delete_failed") + ": 構成部品の使用レコードIDを確認できませんでした。画面を更新して再度お試しください。");
+    return;
+  }
   var guardR = await sb.from("assembly_component_usages")
     .select("*")
-    .eq("id", usageId)
+    .eq("id", resolvedUsageId)
     .maybeSingle();
   if (guardR.error) {
     alert(t("component_delete_failed") + ": " + guardR.error.message);
@@ -19649,13 +19683,13 @@ async function deleteComponentUsage(usageId) {
   }
   var delR = await sb.from("assembly_component_usages")
     .delete()
-    .eq("id", usageId)
+    .eq("id", resolvedUsageId)
     .eq("is_catalog_evidence", false);
   if (delR.error) {
     alert(t("component_delete_failed") + ": " + delR.error.message);
     return;
   }
-  await writeLog("delete", "assembly_component_usages", usageId, row.component_manufacturer_part_number || row.component_name || "component", guardR.data, null);
+  await writeLog("delete", "assembly_component_usages", resolvedUsageId, row.component_manufacturer_part_number || row.component_name || "component", guardR.data, null);
   editingComponentUsageId = null;
   await loadAssemblyComponentsForCurrent();
 }
@@ -19748,8 +19782,9 @@ function normalizeComponentTreeRow(row, parentRow) {
   row = row || {};
   var alternatives = parseComponentAlternativesJson(row.alternatives).map(normalizeComponentAlternativeForUi);
   var dkdComponentId = row.dkd_component_id || row.component_id || null;
+  var usageId = row.id || row.usage_id || row.assembly_component_usage_id || null;
   return Object.assign({}, row, {
-    id: row.id || (dkdComponentId ? ("component:" + String(dkdComponentId)) : componentTreeKey(row)),
+    id: usageId || (dkdComponentId ? ("component:" + String(dkdComponentId)) : componentTreeKey(row)),
     dkd_component_id: dkdComponentId,
     component_position: row.component_position || row.figure_number || "",
     component_name: row.component_name || row.component_part_name || "",
@@ -19759,6 +19794,9 @@ function normalizeComponentTreeRow(row, parentRow) {
     component_genuine_part_number: row.component_genuine_part_number || row.genuine_part_number || "",
     quantity: row.quantity || "1",
     unit_price_jpy: row.unit_price_jpy != null ? row.unit_price_jpy : row.component_unit_price_jpy,
+    replacement_rate: row.replacement_rate != null ? row.replacement_rate : row.component_replacement_rate,
+    manufacturing_memo: row.manufacturing_memo != null ? row.manufacturing_memo : row.component_manufacturing_memo,
+    procurement_category: row.procurement_category != null ? row.procurement_category : row.component_procurement_category,
     component_interchange_code: row.component_interchange_code || row.interchange_code || "",
     source_code: row.source_code || "",
     is_catalog_evidence: componentTreeRowCatalogEvidence(row),
