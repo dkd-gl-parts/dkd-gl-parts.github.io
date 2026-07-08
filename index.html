@@ -1602,7 +1602,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.426</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.430</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1631,7 +1631,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.426</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.430</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1661,7 +1661,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.426</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.430</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -4309,7 +4309,7 @@ var TRANSLATIONS = {
     component_name_request_status_rejected: "却下",
     component_name_request_count: "申請 {n} 件",
     component_name_request_empty: "該当する申請はありません。",
-    component_name_master_empty: "このカテゴリの部品名マスターはありません。",
+    component_name_master_empty: "このカテゴリの手動追加部品名はありません。",
     component_name_approve_new: "新規登録",
     component_name_merge_existing: "既存名へ統合",
     component_name_reject: "却下",
@@ -4321,6 +4321,7 @@ var TRANSLATIONS = {
     component_name_enable: "有効化",
     component_name_disable: "無効化",
     component_name_toggle_confirm: "この部品名マスターの有効状態を変更しますか？",
+    component_name_catalog_locked: "パーツカタログ由来の部品名は無効化できません。",
     component_quantity: "数量",
     component_interchange: "互",
     component_compat_help: "<strong>\u4e92\u63db\u6027\u6b04\u306e\u898b\u65b9</strong> A=\u65b0\u65e7\u90e8\u54c1\u9593\u306b\u4e92\u63db\u6027\u3042\u308a / B=\u65e7\u90e8\u54c1\u306e\u66ff\u308f\u308a\u306b\u65b0\u90e8\u54c1\u3092\u4f7f\u7528\u53ef\uff08\u9006\u306f\u4e0d\u53ef\uff09 / C=\u65b0\u90e8\u54c1\u306e\u66ff\u308f\u308a\u306b\u65e7\u90e8\u54c1\u3092\u4f7f\u7528\u53ef\uff08\u9006\u306f\u4e0d\u53ef\uff09 / D=\u4e92\u63db\u6027\u306a\u3057 / X=\u4e92\u63db\u6027\u304c\u3042\u308b\u4ee3\u66ff\u90e8\u54c1\u3002A\u30fbB\u30fbX\u306e\u65e7\u54c1\u756a\u306f\u5728\u5eab\u304c\u7121\u304f\u306a\u308a\u6b21\u7b2c\u3001\u4f9b\u7d66\u7d42\u4e86\u3002",
@@ -5276,7 +5277,7 @@ var TRANSLATIONS = {
     component_name_request_status_rejected: "Rejected",
     component_name_request_count: "{n} requests",
     component_name_request_empty: "No matching requests.",
-    component_name_master_empty: "No part name master entries for this category.",
+    component_name_master_empty: "No manually added part names for this category.",
     component_name_approve_new: "Approve New",
     component_name_merge_existing: "Merge Existing",
     component_name_reject: "Reject",
@@ -5288,6 +5289,7 @@ var TRANSLATIONS = {
     component_name_enable: "Enable",
     component_name_disable: "Disable",
     component_name_toggle_confirm: "Change active status for this part name master?",
+    component_name_catalog_locked: "Part names from the parts catalog cannot be disabled.",
     component_quantity: "Qty",
     component_interchange: "Int.",
     component_compat_help: "<strong>Interchange legend</strong> A=interchangeable both ways / B=new part can replace old, not the reverse / C=old part can replace new, not the reverse / D=not interchangeable / X=alternate interchangeable part. Old part numbers marked A, B, or X are supplied only while stock remains.",
@@ -6233,7 +6235,7 @@ var TRANSLATIONS = {
     component_name_request_status_rejected: "已驳回",
     component_name_request_count: "申请 {n} 件",
     component_name_request_empty: "没有符合条件的申请。",
-    component_name_master_empty: "此类别没有部件名主数据。",
+    component_name_master_empty: "此类别没有手动追加的部件名。",
     component_name_approve_new: "新建批准",
     component_name_merge_existing: "合并到既有名称",
     component_name_reject: "驳回",
@@ -6245,6 +6247,7 @@ var TRANSLATIONS = {
     component_name_enable: "启用",
     component_name_disable: "禁用",
     component_name_toggle_confirm: "更改此部件名主数据的有效状态吗？",
+    component_name_catalog_locked: "零件目录来源的部件名不能禁用。",
     component_quantity: "数量",
     component_interchange: "互",
     component_compat_help: "<strong>互换栏说明</strong> A=新旧部件可互换 / B=新部件可替代旧部件，反向不可 / C=旧部件可替代新部件，反向不可 / D=不可互换 / X=表示有互换性的替代部件。A、B、X 的旧品号库存售完后停止供应。",
@@ -6419,7 +6422,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.428";
+var APP_VERSION       = "v1.1.430";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -21645,9 +21648,18 @@ function componentNameMasterRowMatchesSearch(row, query) {
   });
 }
 
+function isManualComponentNameMasterRow(row) {
+  var sourceType = String(row && row.source_type || "").toLowerCase();
+  return (sourceType === "manual" || sourceType === "approved") && parseInt(row && row.catalog_count || 0, 10) <= 0;
+}
+
+function componentNameMasterManageRows() {
+  return (componentNameMasterCandidateRows || []).filter(isManualComponentNameMasterRow);
+}
+
 function componentNameMasterFilteredRows() {
   var query = componentNameMasterSearchValue();
-  return (componentNameMasterCandidateRows || []).filter(function(row) {
+  return componentNameMasterManageRows().filter(function(row) {
     return componentNameMasterRowMatchesSearch(row, query);
   });
 }
@@ -21797,6 +21809,13 @@ async function rejectComponentNameRequest(requestId) {
 
 async function toggleComponentNameMasterActive(masterId, isActive) {
   if (!masterId) return;
+  var row = (componentNameMasterCandidateRows || []).find(function(item) {
+    return String(item.master_id || "") === String(masterId || "");
+  });
+  if (!isManualComponentNameMasterRow(row)) {
+    alert(t("component_name_catalog_locked"));
+    return;
+  }
   if (!confirm(t("component_name_toggle_confirm"))) return;
   var r = await sb.from("component_name_masters")
     .update({ is_active: !isActive, updated_by: currentUser ? currentUser.id : null })
