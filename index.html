@@ -204,6 +204,38 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ec-best3-row { display: grid; grid-template-columns: 28px 1fr auto; gap: 8px; align-items: center; font-size: 12px; padding: 5px 0; border-top: 1px solid #f0f0f0; }
 .ec-best3-row:first-of-type { border-top: 0; }
 .ec-provider-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 7px; font-size: 10px; font-weight: 700; background: #eef4ff; color: #1a6fd4; white-space: nowrap; }
+.ec-history-btn { white-space: nowrap; }
+.ec-price-history-card { max-width: 1120px; width: min(1120px, calc(100vw - 24px)); padding: 18px; }
+.ec-price-history-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 10px; }
+.ec-price-history-head h3 { margin: 0 0 4px; }
+.ec-price-history-close { border: none; border-radius: 999px; background: #e24b4a; color: #fff; width: 30px; height: 30px; font-size: 20px; font-weight: 800; line-height: 1; cursor: pointer; flex: 0 0 auto; }
+.ec-price-history-close:hover { background: #c93635; }
+.ec-price-history-meta { color: #667085; font-size: 12px; line-height: 1.55; }
+.ec-price-history-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; border-top: 1px solid #edf0f5; padding-top: 10px; margin-bottom: 10px; }
+.ec-price-history-range { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.ec-price-history-range button { border: 1px solid #d8deea; background: #fff; color: #344054; border-radius: 6px; padding: 5px 9px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.ec-price-history-range button.active { background: #1a6fd4; border-color: #1a6fd4; color: #fff; font-weight: 800; }
+.ec-price-history-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.ec-price-history-stat { border: 1px solid #e5edf8; border-radius: 8px; background: #fbfdff; padding: 9px 10px; }
+.ec-price-history-stat-label { color: #667085; font-size: 11px; font-weight: 800; }
+.ec-price-history-stat-value { color: #1a1a2e; font-size: 18px; font-weight: 900; margin-top: 3px; }
+.ec-price-history-stat-sub { color: #8a94a6; font-size: 11px; line-height: 1.45; margin-top: 2px; }
+.ec-price-history-chart-wrap { border: 1px solid #dfe6f0; border-radius: 8px; background: #fff; padding: 10px; overflow-x: auto; }
+.ec-price-history-chart { min-width: 760px; width: 100%; height: 420px; display: block; }
+.ec-price-history-axis { fill: #667085; font-size: 11px; }
+.ec-price-history-grid { stroke: #e8edf4; stroke-width: 1; }
+.ec-price-history-axis-line { stroke: #98a2b3; stroke-width: 1; }
+.ec-price-history-line { fill: none; stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+.ec-price-history-point { stroke: #fff; stroke-width: 1.5; }
+.ec-price-history-legend { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; color: #344054; font-size: 12px; font-weight: 700; }
+.ec-price-history-legend-item { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.ec-price-history-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.ec-price-history-table { margin-top: 10px; max-height: 180px; overflow: auto; border: 1px solid #edf0f5; border-radius: 8px; }
+.ec-price-history-table table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.ec-price-history-table th { position: sticky; top: 0; background: #f5f7fa; color: #555; font-weight: 800; padding: 7px 8px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+.ec-price-history-table td { padding: 7px 8px; border-bottom: 1px solid #f0f2f6; vertical-align: top; }
+.ec-price-history-table tr:last-child td { border-bottom: 0; }
+@media(max-width:700px){ .ec-price-history-card { width: calc(100vw - 10px); margin: 5px; padding: 14px 10px; } .ec-price-history-chart { min-width: 620px; height: 360px; } }
 .rakuten-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
 .rakuten-actions button:disabled { opacity: .45; cursor: not-allowed; }
 .rakuten-target-list { max-height: 220px; overflow: auto; border: 1px solid #eee; border-radius: 8px; margin-top: 10px; }
@@ -3154,6 +3186,30 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   </div>
 </div>
 
+<div class="form-overlay" id="ec-price-history-overlay">
+  <div class="form-card ec-price-history-card">
+    <div class="ec-price-history-head">
+      <div>
+        <h3 id="ec-price-history-title" data-i18n="ec_price_history_title">ECモール価格推移</h3>
+        <div class="ec-price-history-meta" id="ec-price-history-meta">-</div>
+      </div>
+      <button class="ec-price-history-close" id="btn-ec-price-history-close" type="button" aria-label="close">&times;</button>
+    </div>
+    <div class="ec-price-history-toolbar">
+      <div class="ec-price-history-range" id="ec-price-history-range">
+        <button type="button" data-ec-history-range="30" data-i18n="ec_price_history_range_30">30日</button>
+        <button type="button" data-ec-history-range="90" data-i18n="ec_price_history_range_90">90日</button>
+        <button type="button" data-ec-history-range="365" data-i18n="ec_price_history_range_365">1年</button>
+        <button type="button" data-ec-history-range="all" data-i18n="ec_price_history_range_all">全期間</button>
+      </div>
+      <div class="ec-price-history-legend" id="ec-price-history-legend"></div>
+    </div>
+    <div id="ec-price-history-body">
+      <div class="loading" data-i18n="loading">読み込み中...</div>
+    </div>
+  </div>
+</div>
+
 <!-- =============================================
    パスワード変更画面（ログイン中ユーザー用）
 ============================================= -->
@@ -4013,6 +4069,20 @@ var TRANSLATIONS = {
     rakuten_saved_result: "調査結果を保存しました",
     rakuten_list_search_ph: "キーワード・品番・出品者で検索",
     rakuten_no_saved_results: "保存済みのECモール価格調査結果がありません",
+    ec_price_history: "価格推移",
+    ec_price_history_title: "ECモール価格推移",
+    ec_price_history_loading: "価格推移を読み込み中...",
+    ec_price_history_no_data: "価格推移に使える履歴がありません",
+    ec_price_history_failed: "価格推移を読み込めません: {error}",
+    ec_price_history_latest: "最新",
+    ec_price_history_lowest: "最安",
+    ec_price_history_rows: "履歴 {n} 件",
+    ec_price_history_range_30: "30日",
+    ec_price_history_range_90: "90日",
+    ec_price_history_range_365: "1年",
+    ec_price_history_range_all: "全期間",
+    ec_price_history_recent: "直近の履歴",
+    ec_price_history_seller: "出品者",
     rakuten_latest: "調査日時",
     ec_mall_providers: "調査先",
     ec_mall_seller_ids: "出品者指定",
@@ -4928,6 +4998,20 @@ var TRANSLATIONS = {
     rakuten_saved_result: "Saved survey result",
     rakuten_list_search_ph: "Search by keyword, part number, or seller",
     rakuten_no_saved_results: "No saved EC mall price survey results",
+    ec_price_history: "Price Trend",
+    ec_price_history_title: "EC Mall Price Trend",
+    ec_price_history_loading: "Loading price trend...",
+    ec_price_history_no_data: "No history available for the price trend",
+    ec_price_history_failed: "Could not load price trend: {error}",
+    ec_price_history_latest: "Latest",
+    ec_price_history_lowest: "Lowest",
+    ec_price_history_rows: "{n} history rows",
+    ec_price_history_range_30: "30 days",
+    ec_price_history_range_90: "90 days",
+    ec_price_history_range_365: "1 year",
+    ec_price_history_range_all: "All",
+    ec_price_history_recent: "Recent History",
+    ec_price_history_seller: "Seller",
     rakuten_latest: "Surveyed At",
     ec_mall_providers: "Providers",
     ec_mall_seller_ids: "Seller Filter",
@@ -5836,6 +5920,20 @@ var TRANSLATIONS = {
     rakuten_saved_result: "调查结果已保存",
     rakuten_list_search_ph: "按关键词、品号或卖家搜索",
     rakuten_no_saved_results: "没有保存的EC商城价格调查结果",
+    ec_price_history: "价格趋势",
+    ec_price_history_title: "EC商城价格趋势",
+    ec_price_history_loading: "正在读取价格趋势...",
+    ec_price_history_no_data: "没有可用于价格趋势的历史",
+    ec_price_history_failed: "无法读取价格趋势: {error}",
+    ec_price_history_latest: "最新",
+    ec_price_history_lowest: "最低",
+    ec_price_history_rows: "历史 {n} 件",
+    ec_price_history_range_30: "30天",
+    ec_price_history_range_90: "90天",
+    ec_price_history_range_365: "1年",
+    ec_price_history_range_all: "全部",
+    ec_price_history_recent: "最近历史",
+    ec_price_history_seller: "卖家",
     rakuten_latest: "调查时间",
     ec_mall_providers: "调查平台",
     ec_mall_seller_ids: "卖家筛选",
@@ -6129,7 +6227,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.413";
+var APP_VERSION       = "v1.1.414";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -6227,6 +6325,8 @@ var ecCategoryTargetSearchResults = [];
 var EC_CATEGORY_TARGET_SEARCH_LIMIT = 300;
 var ecMallDefaultProviders = ["rakuten", "yahoo_shopping", "yahoo_auction"];
 var ecMallFallbackToLegacySurveys = false;
+var ecPriceHistoryGroupMap = {};
+var ecPriceHistoryState = null;
 var currentSalesPricingDkdId = null;
 var currentSalesPricingProductKind = "rebuilt";
 var currentSalesPricingRow = null;
@@ -6895,6 +6995,9 @@ async function applyLanguage(lang) {
   }
   if (document.getElementById("vehicle-info-overlay") && document.getElementById("vehicle-info-overlay").classList.contains("show")) {
     openVehicleApplicationsDialog(currentVehicleApplicationRows || [], currentProduct);
+  }
+  if (document.getElementById("ec-price-history-overlay") && document.getElementById("ec-price-history-overlay").classList.contains("show") && ecPriceHistoryState) {
+    renderEcPriceHistoryContent();
   }
 
   // ログイン中ならSupabaseのprofileにも保存する
@@ -11633,9 +11736,291 @@ async function loadRakutenPriceList() {
   }
 }
 
+function ecPriceHistoryColor(type) {
+  var colors = {
+    rebuilt: "#e83e8c",
+    new: "#1a6fd4",
+    used: "#6b7280"
+  };
+  return colors[type] || "#667085";
+}
+
+function ecPriceHistoryPointPrice(row) {
+  var price = parsePriceNumber(row.total_price_jpy);
+  if (price === null) price = parsePriceNumber(row.price_jpy);
+  return price !== null && price > 0 ? price : null;
+}
+
+function ecPriceHistoryGroupTitle(group) {
+  var r = (group && group.meta) || group || {};
+  return String(r.search_number || r.manufacturer_part_number || r.genuine_part_number || r.dkd_shohin_id || r.shohin_cd || "-");
+}
+
+function ecPriceHistoryGroupMeta(group, rows) {
+  var r = (group && group.meta) || group || {};
+  var parts = [];
+  if (r.dkd_shohin_id || r.shohin_cd) parts.push("DKD商品ID " + (r.dkd_shohin_id || r.shohin_cd));
+  if (r.manufacturer_part_number) parts.push(r.manufacturer_part_number);
+  if (r.genuine_part_number) parts.push(r.genuine_part_number);
+  if (r.manufacturer) parts.push(r.manufacturer);
+  if (rows && rows.length) parts.push(tf("ec_price_history_rows", { n: rows.length }));
+  return parts.filter(Boolean).join(" / ");
+}
+
+async function fetchEcPriceHistoryRowsForGroup(group) {
+  var r = (group && group.meta) || group || {};
+  var cols = "id,run_id,target_id,dkd_shohin_id,search_keyword,provider_key,product_type,rank_no,seller_id,seller_name,item_name,item_url,price_jpy,shipping_jpy,total_price_jpy,surveyed_at";
+  var query = sb.from("ec_price_research_results")
+    .select(cols)
+    .order("surveyed_at", { ascending: true })
+    .limit(5000);
+  if (r.dkd_shohin_id) {
+    query = query.eq("dkd_shohin_id", parseInt(r.dkd_shohin_id, 10));
+  } else if (r.target_id) {
+    query = query.eq("target_id", r.target_id);
+  } else if (r.search_number) {
+    query = query.eq("search_keyword", r.search_number);
+  } else if (r.manufacturer_part_number) {
+    query = query.eq("search_keyword", r.manufacturer_part_number);
+  } else if (r.genuine_part_number) {
+    query = query.eq("search_keyword", r.genuine_part_number);
+  } else {
+    return [];
+  }
+  var res = await query;
+  if (res.error) throw new Error(res.error.message);
+  return res.data || [];
+}
+
+function buildEcPriceHistorySeries(rows, rangeDays) {
+  rows = rows || [];
+  var typed = [];
+  rows.forEach(function(row) {
+    var type = row.product_type || "other";
+    if (["rebuilt", "new", "used"].indexOf(type) < 0) return;
+    var ts = new Date(row.surveyed_at || 0).getTime();
+    var price = ecPriceHistoryPointPrice(row);
+    if (!ts || isNaN(ts) || price === null) return;
+    typed.push({ row: row, type: type, ts: ts, price: price });
+  });
+  if (!typed.length) return [];
+  var maxTs = Math.max.apply(null, typed.map(function(p) { return p.ts; }));
+  if (rangeDays && rangeDays !== "all") {
+    var days = parseInt(rangeDays, 10);
+    if (!isNaN(days) && days > 0) {
+      var minAllowed = maxTs - days * 24 * 60 * 60 * 1000;
+      typed = typed.filter(function(p) { return p.ts >= minAllowed; });
+    }
+  }
+  var bucket = {};
+  typed.forEach(function(p) {
+    var key = p.type + "|" + p.ts;
+    if (!bucket[key] || p.price < bucket[key].price) bucket[key] = p;
+  });
+  return ["rebuilt", "new", "used"].map(function(type) {
+    var points = Object.keys(bucket).map(function(key) { return bucket[key]; })
+      .filter(function(p) { return p.type === type; })
+      .sort(function(a, b) { return a.ts - b.ts; });
+    return { type: type, points: points };
+  }).filter(function(series) { return series.points.length; });
+}
+
+function ecPriceHistoryNiceMax(maxPrice) {
+  maxPrice = Math.max(1000, Number(maxPrice || 0));
+  var rough = maxPrice * 1.12;
+  var pow = Math.pow(10, Math.max(0, Math.floor(Math.log10(rough)) - 1));
+  return Math.ceil(rough / pow) * pow;
+}
+
+function ecPriceHistoryAxisDate(ts, compact) {
+  var d = new Date(ts);
+  if (compact) return (d.getMonth() + 1) + "/" + d.getDate();
+  return d.getFullYear() + "/" + (d.getMonth() + 1) + "/" + d.getDate();
+}
+
+function ecPriceHistoryStepPath(points, xScale, yScale, left, right) {
+  if (!points.length) return "";
+  if (points.length === 1) {
+    var x = xScale(points[0].ts);
+    var y = yScale(points[0].price);
+    return "M " + Math.max(left, x - 10).toFixed(1) + " " + y.toFixed(1) + " L " + Math.min(right, x + 10).toFixed(1) + " " + y.toFixed(1);
+  }
+  var d = "M " + xScale(points[0].ts).toFixed(1) + " " + yScale(points[0].price).toFixed(1);
+  for (var i = 1; i < points.length; i++) {
+    var xNext = xScale(points[i].ts);
+    var yPrev = yScale(points[i - 1].price);
+    var yNext = yScale(points[i].price);
+    d += " L " + xNext.toFixed(1) + " " + yPrev.toFixed(1) + " L " + xNext.toFixed(1) + " " + yNext.toFixed(1);
+  }
+  return d;
+}
+
+function renderEcPriceHistorySvg(series) {
+  var allPoints = [];
+  series.forEach(function(s) { allPoints = allPoints.concat(s.points); });
+  if (!allPoints.length) return "";
+  var width = 920, height = 390;
+  var left = 74, right = 24, top = 18, bottom = 48;
+  var plotW = width - left - right;
+  var plotH = height - top - bottom;
+  var minTs = Math.min.apply(null, allPoints.map(function(p) { return p.ts; }));
+  var maxTs = Math.max.apply(null, allPoints.map(function(p) { return p.ts; }));
+  if (minTs === maxTs) {
+    minTs -= 12 * 60 * 60 * 1000;
+    maxTs += 12 * 60 * 60 * 1000;
+  }
+  var maxPrice = Math.max.apply(null, allPoints.map(function(p) { return p.price; }));
+  var yMax = ecPriceHistoryNiceMax(maxPrice);
+  function xScale(ts) { return left + ((ts - minTs) / (maxTs - minTs)) * plotW; }
+  function yScale(price) { return top + plotH - (price / yMax) * plotH; }
+  var svg = "<svg class='ec-price-history-chart' viewBox='0 0 " + width + " " + height + "' role='img' aria-label='price history chart'>";
+  var yTickCount = 5;
+  for (var yi = 0; yi <= yTickCount; yi++) {
+    var val = Math.round((yMax / yTickCount) * yi);
+    var y = yScale(val);
+    svg += "<line class='ec-price-history-grid' x1='" + left + "' y1='" + y.toFixed(1) + "' x2='" + (width - right) + "' y2='" + y.toFixed(1) + "'/>";
+    svg += "<text class='ec-price-history-axis' x='" + (left - 8) + "' y='" + (y + 4).toFixed(1) + "' text-anchor='end'>" + esc(yen(val)) + "</text>";
+  }
+  var xTickCount = 5;
+  for (var xi = 0; xi <= xTickCount; xi++) {
+    var ts = minTs + ((maxTs - minTs) / xTickCount) * xi;
+    var x = xScale(ts);
+    svg += "<line class='ec-price-history-grid' x1='" + x.toFixed(1) + "' y1='" + top + "' x2='" + x.toFixed(1) + "' y2='" + (height - bottom) + "'/>";
+    svg += "<text class='ec-price-history-axis' x='" + x.toFixed(1) + "' y='" + (height - 20) + "' text-anchor='middle'>" + esc(ecPriceHistoryAxisDate(ts, xi > 0 && xi < xTickCount)) + "</text>";
+  }
+  svg += "<line class='ec-price-history-axis-line' x1='" + left + "' y1='" + (height - bottom) + "' x2='" + (width - right) + "' y2='" + (height - bottom) + "'/>";
+  svg += "<line class='ec-price-history-axis-line' x1='" + left + "' y1='" + top + "' x2='" + left + "' y2='" + (height - bottom) + "'/>";
+  series.forEach(function(s) {
+    var color = ecPriceHistoryColor(s.type);
+    var path = ecPriceHistoryStepPath(s.points, xScale, yScale, left, width - right);
+    svg += "<path class='ec-price-history-line' d='" + path + "' stroke='" + color + "'/>";
+    s.points.forEach(function(p) {
+      svg += "<circle class='ec-price-history-point' cx='" + xScale(p.ts).toFixed(1) + "' cy='" + yScale(p.price).toFixed(1) + "' r='3.5' fill='" + color + "'/>";
+    });
+  });
+  svg += "</svg>";
+  return svg;
+}
+
+function renderEcPriceHistoryLegend(series) {
+  var legend = document.getElementById("ec-price-history-legend");
+  if (!legend) return;
+  if (!series.length) {
+    legend.innerHTML = "";
+    return;
+  }
+  legend.innerHTML = series.map(function(s) {
+    return "<span class='ec-price-history-legend-item'><span class='ec-price-history-dot' style='background:" + ecPriceHistoryColor(s.type) + "'></span>" + esc(ecMallProductTypeLabel(s.type)) + "</span>";
+  }).join("");
+}
+
+function renderEcPriceHistorySummary(series) {
+  if (!series.length) return "";
+  var html = "<div class='ec-price-history-summary'>";
+  series.forEach(function(s) {
+    var latest = s.points[s.points.length - 1];
+    var lowest = s.points.slice().sort(function(a, b) { return a.price - b.price; })[0];
+    html += "<div class='ec-price-history-stat'>";
+    html += "<div class='ec-price-history-stat-label'>" + esc(ecMallProductTypeLabel(s.type)) + "</div>";
+    html += "<div class='ec-price-history-stat-value'>" + esc(yen(latest.price)) + "</div>";
+    html += "<div class='ec-price-history-stat-sub'>" + esc(t("ec_price_history_latest") + " " + formatDateTime(latest.row.surveyed_at)) + "</div>";
+    html += "<div class='ec-price-history-stat-sub'>" + esc(t("ec_price_history_lowest") + " " + yen(lowest.price) + " / " + formatDateTime(lowest.row.surveyed_at)) + "</div>";
+    html += "</div>";
+  });
+  html += "</div>";
+  return html;
+}
+
+function renderEcPriceHistoryRecentTable(rows) {
+  var usable = (rows || []).filter(function(row) { return ecPriceHistoryPointPrice(row) !== null && parseInt(row.rank_no || 0, 10) === 1; })
+    .sort(function(a, b) { return new Date(b.surveyed_at || 0) - new Date(a.surveyed_at || 0); })
+    .slice(0, 18);
+  if (!usable.length) return "";
+  var html = "<div class='ec-price-history-table'><table><tr><th>" + esc(t("rakuten_latest")) + "</th><th>" + esc(t("ec_mall_condition_filters")) + "</th><th>" + esc(t("ec_price_history_seller")) + "</th><th>" + esc(t("rakuten_min")) + "</th></tr>";
+  usable.forEach(function(row) {
+    var seller = row.seller_name || row.seller_id || "-";
+    var url = safeHttpsUrl(row.item_url, ["rakuten.co.jp", "shopping.yahoo.co.jp", "yahoo.co.jp", "auctions.yahoo.co.jp"]);
+    var sellerHtml = url ? "<a href='" + esc(url) + "' target='_blank' rel='noopener'>" + esc(seller) + "</a>" : esc(seller);
+    html += "<tr><td>" + esc(formatDateTime(row.surveyed_at)) + "</td>";
+    html += "<td>" + esc(ecMallProductTypeLabel(row.product_type)) + " <span class='ec-provider-badge'>" + esc(ecMallProviderLabel(row.provider_key)) + "</span></td>";
+    html += "<td>" + sellerHtml + "</td>";
+    html += "<td><div class='price-value'>" + esc(yen(ecPriceHistoryPointPrice(row))) + "</div></td></tr>";
+  });
+  html += "</table></div>";
+  return html;
+}
+
+function updateEcPriceHistoryRangeButtons() {
+  var range = ecPriceHistoryState ? ecPriceHistoryState.rangeDays : "all";
+  document.querySelectorAll("#ec-price-history-range [data-ec-history-range]").forEach(function(btn) {
+    btn.classList.toggle("active", String(btn.dataset.ecHistoryRange || "") === String(range || "all"));
+  });
+}
+
+function renderEcPriceHistoryContent() {
+  var body = document.getElementById("ec-price-history-body");
+  var title = document.getElementById("ec-price-history-title");
+  var meta = document.getElementById("ec-price-history-meta");
+  if (!body || !ecPriceHistoryState) return;
+  var rows = ecPriceHistoryState.rows || [];
+  var group = ecPriceHistoryState.group || {};
+  if (title) title.textContent = t("ec_price_history_title") + " - " + ecPriceHistoryGroupTitle(group);
+  if (meta) meta.textContent = ecPriceHistoryGroupMeta(group, rows);
+  var series = buildEcPriceHistorySeries(rows, ecPriceHistoryState.rangeDays || "all");
+  renderEcPriceHistoryLegend(series);
+  updateEcPriceHistoryRangeButtons();
+  if (!series.length) {
+    body.innerHTML = "<div class='empty'>" + esc(t("ec_price_history_no_data")) + "</div>";
+    return;
+  }
+  body.innerHTML = renderEcPriceHistorySummary(series) +
+    "<div class='ec-price-history-chart-wrap'>" + renderEcPriceHistorySvg(series) + "</div>" +
+    "<div class='price-section-title' style='margin-top:12px'>" + esc(t("ec_price_history_recent")) + "</div>" +
+    renderEcPriceHistoryRecentTable(rows);
+}
+
+function closeEcPriceHistoryOverlay() {
+  var overlay = document.getElementById("ec-price-history-overlay");
+  if (overlay) overlay.classList.remove("show");
+}
+
+async function openEcPriceHistoryForGroup(group) {
+  if (!canViewPriceResearchHistory()) { alert(t("err_perm")); return; }
+  var overlay = document.getElementById("ec-price-history-overlay");
+  var body = document.getElementById("ec-price-history-body");
+  var title = document.getElementById("ec-price-history-title");
+  var meta = document.getElementById("ec-price-history-meta");
+  if (!overlay || !body) return;
+  ecPriceHistoryState = { group: group, rows: [], rangeDays: "all" };
+  if (title) title.textContent = t("ec_price_history_title") + " - " + ecPriceHistoryGroupTitle(group);
+  if (meta) meta.textContent = ecPriceHistoryGroupMeta(group, []);
+  body.innerHTML = "<div class='loading'>" + esc(t("ec_price_history_loading")) + "</div>";
+  renderEcPriceHistoryLegend([]);
+  updateEcPriceHistoryRangeButtons();
+  overlay.classList.add("show");
+  try {
+    var rows = await fetchEcPriceHistoryRowsForGroup(group);
+    if (!ecPriceHistoryState || ecPriceHistoryState.group !== group) return;
+    ecPriceHistoryState.rows = rows;
+    renderEcPriceHistoryContent();
+  } catch(e) {
+    body.innerHTML = "<div class='empty'>" + esc(tf("ec_price_history_failed", { error: e.message || e })) + "</div>";
+  }
+}
+
+function bindEcPriceHistoryButtons() {
+  document.querySelectorAll("[data-ec-price-history-key]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var group = ecPriceHistoryGroupMap[this.dataset.ecPriceHistoryKey || ""];
+      if (group) openEcPriceHistoryForGroup(group);
+    });
+  });
+}
+
 function renderEcMallPriceList(rows) {
   var countEl = document.getElementById("rakuten-list-count");
   var groups = {};
+  ecPriceHistoryGroupMap = {};
   rows.forEach(function(row) {
     var key = row.target_id ? "target:" + row.target_id : (row.dkd_shohin_id ? "dkd:" + row.dkd_shohin_id : "search:" + row.search_number);
     if (!groups[key]) groups[key] = { meta: row, rows: [] };
@@ -11662,9 +12047,11 @@ function renderEcMallPriceList(rows) {
     }).join("");
   }
   var html = "<table class='mgmt-table'>";
-  html += "<tr><th>" + t("rakuten_keyword") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("rakuten_condition_used") + " Best3</th><th>" + t("rakuten_condition_rebuilt") + " Best3</th><th>" + t("rakuten_condition_new") + " Best3</th><th>" + t("rakuten_latest") + "</th></tr>";
-  listRows.forEach(function(group) {
+  html += "<tr><th>" + t("rakuten_keyword") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("rakuten_condition_used") + " Best3</th><th>" + t("rakuten_condition_rebuilt") + " Best3</th><th>" + t("rakuten_condition_new") + " Best3</th><th>" + t("rakuten_latest") + "</th><th>" + t("ec_price_history") + "</th></tr>";
+  listRows.forEach(function(group, idx) {
     var r = group.meta;
+    var historyKey = "g" + idx;
+    ecPriceHistoryGroupMap[historyKey] = group;
     var keyword = r.search_number || r.manufacturer_part_number || r.genuine_part_number || r.dkd_shohin_id || r.shohin_cd || "-";
     var productId = r.dkd_shohin_id || r.shohin_cd || "";
     var productSub = productId && String(productId) !== String(keyword) ? "DKD商品ID " + productId : "";
@@ -11676,10 +12063,12 @@ function renderEcMallPriceList(rows) {
     html += "<td>" + bestCell(group, "rebuilt") + "</td>";
     html += "<td>" + bestCell(group, "new") + "</td>";
     html += "<td style='white-space:nowrap'>" + esc(new Date(r.surveyed_at).toLocaleString("ja-JP")) + "</td>";
+    html += "<td><button class='btn-sm-edit ec-history-btn' type='button' data-ec-price-history-key='" + esc(historyKey) + "'>" + esc(t("ec_price_history")) + "</button></td>";
     html += "</tr>";
   });
   html += "</table>";
   list.innerHTML = html;
+  bindEcPriceHistoryButtons();
 }
 
 function renderRakutenPriceList(rows) {
@@ -25696,6 +26085,15 @@ document.getElementById("btn-ec-category-target-select-all").addEventListener("c
 document.getElementById("btn-ec-category-target-clear-selection").addEventListener("click", function(){ setEcCategoryTargetResultSelection(false); });
 document.getElementById("ec-category-target-results").addEventListener("change", function(e){
   if (e.target && e.target.classList && e.target.classList.contains("ec-category-target-check")) updateEcCategoryTargetSelectionStatus();
+});
+document.getElementById("btn-ec-price-history-close").addEventListener("click", closeEcPriceHistoryOverlay);
+document.getElementById("ec-price-history-overlay").addEventListener("click", function(e){ if(e.target===this) closeEcPriceHistoryOverlay(); });
+document.querySelectorAll("#ec-price-history-range [data-ec-history-range]").forEach(function(btn) {
+  btn.addEventListener("click", function() {
+    if (!ecPriceHistoryState) return;
+    ecPriceHistoryState.rangeDays = this.dataset.ecHistoryRange || "all";
+    renderEcPriceHistoryContent();
+  });
 });
 document.getElementById("ec-category-target-category").addEventListener("change", function(){
   updateEcCategoryTargetBuilderSummary();
