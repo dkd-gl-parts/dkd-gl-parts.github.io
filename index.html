@@ -531,6 +531,28 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .mgmt-actions   { display: flex; gap: 6px; flex-wrap: nowrap; }
 .mgmt-count     { font-size: 12px; color: #888; margin-bottom: 8px; }
 .mgmt-section-title { font-size: 14px; font-weight: 800; color: #1a1a2e; margin: 12px 0 6px; }
+#component-name-request-list { overflow-x: auto; padding-bottom: 2px; }
+.component-name-request-table { min-width: 1290px; table-layout: fixed; }
+.component-name-request-table th:nth-child(1), .component-name-request-table td:nth-child(1) { width: 64px; }
+.component-name-request-table th:nth-child(2), .component-name-request-table td:nth-child(2) { width: 320px; }
+.component-name-request-table th:nth-child(3), .component-name-request-table td:nth-child(3) { width: 180px; }
+.component-name-request-table th:nth-child(4), .component-name-request-table td:nth-child(4) { width: 150px; }
+.component-name-request-table th:nth-child(5), .component-name-request-table td:nth-child(5) { width: 220px; }
+.component-name-request-table th:nth-child(6), .component-name-request-table td:nth-child(6) { width: 360px; }
+.component-name-request-table th:nth-child(2) { color: #1a1a2e; font-weight: 800; }
+.component-name-request-name {
+  display: block;
+  min-height: 42px;
+  padding: 8px 10px;
+  border-left: 4px solid #4f8ef7;
+  border-radius: 8px;
+  background: #f4f8ff;
+  color: #182230;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.component-name-request-name strong { display: block; font-size: 14px; font-weight: 800; }
+.component-name-request-name .mgmt-sub { color: #667085; margin-top: 4px; }
 .component-name-request-actions { display: flex; flex-direction: column; gap: 7px; min-width: 240px; }
 .component-name-request-actions-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .component-name-request-actions-row .form-select { flex: 1 1 150px; min-width: 150px; }
@@ -1635,7 +1657,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.441</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.442</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1664,7 +1686,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.441</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.442</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1694,7 +1716,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.441</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.442</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -6463,7 +6485,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.441";
+var APP_VERSION       = "v1.1.442";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -21943,12 +21965,12 @@ function renderComponentNameRequestList() {
     wrap.innerHTML = "<div class='component-empty'>" + esc(t("component_name_request_empty")) + "</div>";
     return;
   }
-  var html = "<table class='mgmt-table'><tr><th>ID</th><th>" + esc(t("component_name_requested")) + "</th><th>" + esc(t("f_category")) + "</th><th>" + esc(t("created_at")) + "</th><th>" + esc(t("component_note")) + "</th><th>" + esc(t("component_actions")) + "</th></tr>";
+  var html = "<table class='mgmt-table component-name-request-table'><tr><th>ID</th><th>" + esc(t("component_name_requested")) + "</th><th>" + esc(t("f_category")) + "</th><th>" + esc(t("created_at")) + "</th><th>" + esc(t("component_note")) + "</th><th>" + esc(t("component_actions")) + "</th></tr>";
   rows.forEach(function(row) {
     var statusLabel = t("component_name_request_status_" + row.status);
     html += "<tr>";
     html += "<td><div class='mgmt-pn'>" + esc(String(row.id || "-")) + "</div><div class='mgmt-sub'>" + esc(statusLabel) + "</div></td>";
-    html += "<td><strong>" + esc(row.requested_name || "-") + "</strong><div class='mgmt-sub'>" + esc([row.requested_name_en, row.requested_name_zh].filter(Boolean).join(" / ")) + "</div></td>";
+    html += "<td><div class='component-name-request-name'><strong>" + esc(row.requested_name || "-") + "</strong><div class='mgmt-sub'>" + esc([row.requested_name_en, row.requested_name_zh].filter(Boolean).join(" / ")) + "</div></div></td>";
     html += "<td>" + esc(tCat(row.category_code)) + "<div class='mgmt-sub'>" + esc([row.manufacturer, row.dkd_shohin_id ? "DKD " + row.dkd_shohin_id : "", productKindLabel(row.product_kind)].filter(Boolean).join(" / ")) + "</div></td>";
     html += "<td>" + esc(formatDateTime(row.created_at)) + "<div class='mgmt-sub'>" + esc(row.requester_name || row.requester_email || "") + "</div></td>";
     html += "<td><input class='form-input' data-component-name-note='" + esc(String(row.id)) + "' value='" + esc(row.resolution_note || row.request_note || "") + "' placeholder='" + esc(t("component_name_resolution_note_ph")) + "'></td>";
