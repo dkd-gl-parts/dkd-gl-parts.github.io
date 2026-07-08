@@ -597,7 +597,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .manufacturing-cost-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .manufacturing-cost-field label { color: #64748b; font-size: 11px; font-weight: 700; line-height: 1.1; }
 .manufacturing-cost-field input, .manufacturing-cost-field select { width: 100%; }
-.manufacturing-cost-listbar { display: grid; grid-template-columns: minmax(220px, 1.1fr) auto minmax(220px, 1fr) auto auto minmax(160px, .8fr); align-items: end; gap: 8px; margin: 10px 0 12px; }
+.manufacturing-cost-listbar { display: grid; grid-template-columns: minmax(200px, 1fr) auto auto minmax(220px, 1fr) auto auto minmax(160px, .8fr); align-items: end; gap: 8px; margin: 10px 0 12px; }
 .manufacturing-cost-listbar .btn-secondary, .manufacturing-cost-listbar .btn-primary, .manufacturing-cost-listbar .btn-danger { min-height: 36px; white-space: nowrap; }
 .manufacturing-cost-listbar .btn-danger { border: 1px solid #f3b4b4; background: #fff5f5; color: #c62828; border-radius: 8px; font-weight: 700; cursor: pointer; padding: 0 12px; }
 .manufacturing-cost-listbar .btn-danger:hover { background: #ffe8e8; }
@@ -1736,7 +1736,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.447</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.448</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1765,7 +1765,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.447</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.448</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1795,7 +1795,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.447</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.448</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -2820,6 +2820,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         </select>
       </div>
       <button class="btn-secondary" id="btn-manufacturing-cost-load-list" type="button" data-i18n="manufacturing_cost_load_list">呼び出し</button>
+      <button class="btn-secondary" id="btn-manufacturing-cost-new-list" type="button" data-i18n="manufacturing_cost_new_list">新規リスト</button>
       <div class="manufacturing-cost-field">
         <label for="manufacturing-cost-list-name" data-i18n="manufacturing_cost_list_name">リスト名</label>
         <input class="form-input" id="manufacturing-cost-list-name" type="text" data-i18n-ph="manufacturing_cost_list_name_ph" placeholder="例: スタータ標準原価">
@@ -3968,7 +3969,7 @@ var TRANSLATIONS = {
     manufacturing_cost_labor_amount: "工賃額",
     manufacturing_cost_calc: "原価計算",
     manufacturing_cost_find_candidates: "候補検索",
-    manufacturing_cost_calc_selected: "選択品番で原価計算",
+    manufacturing_cost_calc_selected: "選択品番を追加して原価計算",
     manufacturing_cost_candidate_count: "候補 {n} 件",
     manufacturing_cost_candidate_search_hint: "候補から採用する品番を選択して原価計算してください。",
     manufacturing_cost_no_candidate_selected: "原価計算する品番を選択してください。",
@@ -3977,6 +3978,7 @@ var TRANSLATIONS = {
     manufacturing_cost_saved_list: "保存リスト",
     manufacturing_cost_saved_list_empty: "保存リストなし",
     manufacturing_cost_load_list: "呼び出し",
+    manufacturing_cost_new_list: "新規リスト",
     manufacturing_cost_list_name: "リスト名",
     manufacturing_cost_list_name_ph: "例: スタータ標準原価",
     manufacturing_cost_save_list: "リスト保存",
@@ -3984,7 +3986,7 @@ var TRANSLATIONS = {
     manufacturing_cost_list_saved: "原価計算リストを保存しました",
     manufacturing_cost_list_loaded: "原価計算リストを呼び出しました",
     manufacturing_cost_list_deleted: "原価計算リストを削除しました",
-    manufacturing_cost_list_category_required: "リスト保存にはカテゴリを選択してください。",
+    manufacturing_cost_list_category_required: "カテゴリ未選択でも保存できます。",
     manufacturing_cost_list_name_required: "リスト名を入力してください。",
     manufacturing_cost_list_rows_required: "保存する原価計算結果がありません。",
     manufacturing_cost_list_select_required: "保存リストを選択してください。",
@@ -4994,7 +4996,7 @@ var TRANSLATIONS = {
     manufacturing_cost_labor_amount: "Labor amount",
     manufacturing_cost_calc: "Calculate",
     manufacturing_cost_find_candidates: "Find Candidates",
-    manufacturing_cost_calc_selected: "Calculate Selected",
+    manufacturing_cost_calc_selected: "Add Selected and Calculate",
     manufacturing_cost_candidate_count: "{n} candidates",
     manufacturing_cost_candidate_search_hint: "Select products from the candidates before calculating cost.",
     manufacturing_cost_no_candidate_selected: "Select products to calculate.",
@@ -5003,6 +5005,7 @@ var TRANSLATIONS = {
     manufacturing_cost_saved_list: "Saved List",
     manufacturing_cost_saved_list_empty: "No saved list",
     manufacturing_cost_load_list: "Load",
+    manufacturing_cost_new_list: "New List",
     manufacturing_cost_list_name: "List Name",
     manufacturing_cost_list_name_ph: "e.g. Starter standard cost",
     manufacturing_cost_save_list: "Save List",
@@ -5010,7 +5013,7 @@ var TRANSLATIONS = {
     manufacturing_cost_list_saved: "Manufacturing cost list saved",
     manufacturing_cost_list_loaded: "Manufacturing cost list loaded",
     manufacturing_cost_list_deleted: "Manufacturing cost list deleted",
-    manufacturing_cost_list_category_required: "Choose a category before saving the list.",
+    manufacturing_cost_list_category_required: "Lists can be saved without a category.",
     manufacturing_cost_list_name_required: "Enter a list name.",
     manufacturing_cost_list_rows_required: "No cost calculation results to save.",
     manufacturing_cost_list_select_required: "Choose a saved list.",
@@ -6026,7 +6029,7 @@ var TRANSLATIONS = {
     manufacturing_cost_labor_amount: "工费金额",
     manufacturing_cost_calc: "成本计算",
     manufacturing_cost_find_candidates: "候选搜索",
-    manufacturing_cost_calc_selected: "计算所选品番",
+    manufacturing_cost_calc_selected: "添加所选品番并计算",
     manufacturing_cost_candidate_count: "候选 {n} 条",
     manufacturing_cost_candidate_search_hint: "请从候选中选择要采用的品番后再计算成本。",
     manufacturing_cost_no_candidate_selected: "请选择要计算成本的品番。",
@@ -6035,6 +6038,7 @@ var TRANSLATIONS = {
     manufacturing_cost_saved_list: "保存列表",
     manufacturing_cost_saved_list_empty: "无保存列表",
     manufacturing_cost_load_list: "调用",
+    manufacturing_cost_new_list: "新建列表",
     manufacturing_cost_list_name: "列表名",
     manufacturing_cost_list_name_ph: "例: 起动机标准成本",
     manufacturing_cost_save_list: "保存列表",
@@ -6042,7 +6046,7 @@ var TRANSLATIONS = {
     manufacturing_cost_list_saved: "制造成本列表已保存",
     manufacturing_cost_list_loaded: "制造成本列表已调用",
     manufacturing_cost_list_deleted: "制造成本列表已删除",
-    manufacturing_cost_list_category_required: "保存列表前请选择类别。",
+    manufacturing_cost_list_category_required: "未选择类别也可以保存列表。",
     manufacturing_cost_list_name_required: "请输入列表名。",
     manufacturing_cost_list_rows_required: "没有可保存的成本计算结果。",
     manufacturing_cost_list_select_required: "请选择保存列表。",
@@ -6794,7 +6798,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.447";
+var APP_VERSION       = "v1.1.448";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -14869,6 +14873,20 @@ function selectedManufacturingCostList() {
   }) || null;
 }
 
+function resetManufacturingCostWorkingList() {
+  manufacturingCostActiveListId = null;
+  var savedEl = document.getElementById("manufacturing-cost-saved-list");
+  var nameEl = document.getElementById("manufacturing-cost-list-name");
+  var queryEl = document.getElementById("manufacturing-cost-query");
+  if (savedEl) savedEl.value = "";
+  if (nameEl) nameEl.value = "";
+  if (queryEl) queryEl.value = "";
+  setManufacturingCostListStatus("", false);
+  renderManufacturingCostCandidateEmpty("");
+  renderManufacturingCostEmpty();
+  if (queryEl) queryEl.focus();
+}
+
 function manufacturingCostTokens(value) {
   var text = normalizeAsciiWidth(String(value || "")).trim();
   if (!text) return [];
@@ -15001,6 +15019,22 @@ function setManufacturingCostCandidateChecks(checked) {
   document.querySelectorAll("#manufacturing-cost-candidates [data-cost-candidate-check]").forEach(function(el) {
     el.checked = !!checked;
   });
+}
+
+function mergeManufacturingCostProducts(addProducts) {
+  var merged = [];
+  var seen = {};
+  function add(product) {
+    var id = productDkdId(product);
+    if (!id || seen[String(id)]) return;
+    seen[String(id)] = true;
+    merged.push(product);
+  }
+  (manufacturingCostRows || []).forEach(function(row) {
+    if (row && row.product) add(row.product);
+  });
+  (addProducts || []).forEach(add);
+  return merged;
 }
 
 async function fetchManufacturingCostProducts(tokens, category) {
@@ -15195,33 +15229,30 @@ async function searchManufacturingCostCandidates() {
   var q = (document.getElementById("manufacturing-cost-query") || {}).value || "";
   var category = (document.getElementById("manufacturing-cost-category") || {}).value || "";
   var tokens = manufacturingCostTokens(q);
+  var hadRows = manufacturingCostRows.length > 0;
   if (!tokens.length && !category) {
     renderManufacturingCostCandidateEmpty(t("manufacturing_cost_need_condition"));
-    renderManufacturingCostEmpty();
+    if (!hadRows) renderManufacturingCostEmpty();
     return;
   }
-  manufacturingCostRows = [];
-  manufacturingCostProductMap = {};
-  manufacturingCostComponentMap = {};
   if (candidatesEl) candidatesEl.innerHTML = "<div class='manufacturing-cost-candidate-panel'><div class='loading'>" + esc(t("loading")) + "</div></div>";
-  if (list) list.innerHTML = "<div class='empty'>" + esc(t("manufacturing_cost_candidate_search_hint")) + "</div>";
-  if (countEl) countEl.textContent = t("loading");
-  if (summaryEl) summaryEl.innerHTML = "";
+  if (list && !hadRows) list.innerHTML = "<div class='empty'>" + esc(t("manufacturing_cost_candidate_search_hint")) + "</div>";
+  if (countEl && !hadRows) countEl.textContent = t("loading");
+  if (summaryEl && !hadRows) summaryEl.innerHTML = "";
   try {
     var pr = await fetchManufacturingCostProducts(tokens, category);
     if (pr.error) throw pr.error;
     var products = pr.data || [];
     renderManufacturingCostCandidates(products, tokens.length ? "query" : "category");
-    if (countEl) countEl.textContent = products.length ? tf("manufacturing_cost_candidate_count", { n: products.length }) : "";
-    if (!products.length && list) list.innerHTML = "<div class='empty'>" + esc(t("no_results")) + "</div>";
+    if (countEl && !hadRows) countEl.textContent = products.length ? tf("manufacturing_cost_candidate_count", { n: products.length }) : "";
+    if (!products.length && list && !hadRows) list.innerHTML = "<div class='empty'>" + esc(t("no_results")) + "</div>";
   } catch (e) {
     console.warn("manufacturing cost candidate search failed", e);
-    manufacturingCostRows = [];
     manufacturingCostCandidateRows = [];
-    manufacturingCostComponentMap = {};
-    if (countEl) countEl.textContent = "";
+    if (countEl && !hadRows) countEl.textContent = "";
     if (candidatesEl) candidatesEl.innerHTML = "";
-    if (list) list.innerHTML = "<div class='empty'>" + esc(t("msg_part_err") + ": " + ((e && e.message) || String(e))) + "</div>";
+    if (list && !hadRows) list.innerHTML = "<div class='empty'>" + esc(t("msg_part_err") + ": " + ((e && e.message) || String(e))) + "</div>";
+    setManufacturingCostListStatus((e && e.message) || String(e), true);
   }
 }
 
@@ -15240,7 +15271,7 @@ async function calculateSelectedManufacturingCost() {
   if (countEl) countEl.textContent = t("loading");
   if (summaryEl) summaryEl.innerHTML = "";
   try {
-    await buildAndRenderManufacturingCostProducts(products, manufacturingCostSettings());
+    await buildAndRenderManufacturingCostProducts(mergeManufacturingCostProducts(products), manufacturingCostSettings());
   } catch (e) {
     console.warn("manufacturing cost calculation failed", e);
     manufacturingCostRows = [];
@@ -15259,25 +15290,25 @@ async function saveManufacturingCostList() {
   var category = manufacturingCostSelectedCategory();
   var listNameEl = document.getElementById("manufacturing-cost-list-name");
   var listName = listNameEl ? listNameEl.value.trim() : "";
-  if (!category) { setManufacturingCostListStatus(t("manufacturing_cost_list_category_required"), true); return; }
   if (!listName) { setManufacturingCostListStatus(t("manufacturing_cost_list_name_required"), true); if (listNameEl) listNameEl.focus(); return; }
   if (!manufacturingCostRows.length) { setManufacturingCostListStatus(t("manufacturing_cost_list_rows_required"), true); return; }
   var settings = manufacturingCostSettings();
   var selected = selectedManufacturingCostList();
-  var existing = selected && selected.id ? selected : null;
+  var selectedCategory = selected ? (selected.category_code || "") : "";
+  var existing = selected && selected.id && selected.list_name === listName && selectedCategory === category ? selected : null;
   if (!existing) {
-    var existingR = await sb.from("manufacturing_cost_lists")
+    var existingQuery = sb.from("manufacturing_cost_lists")
       .select("id")
-      .eq("category_code", category)
       .eq("list_name", listName)
-      .eq("is_active", true)
-      .maybeSingle();
+      .eq("is_active", true);
+    existingQuery = category ? existingQuery.eq("category_code", category) : existingQuery.is("category_code", null);
+    var existingR = await existingQuery.maybeSingle();
     if (existingR.error) { setManufacturingCostListStatus(existingR.error.message || t("msg_part_err"), true); return; }
     existing = existingR.data || null;
   }
   var payload = {
     list_name: listName,
-    category_code: category,
+    category_code: category || null,
     product_kind: settings.productKind,
     core_cost_jpy: settings.coreCost,
     labor_rate_percent: settings.laborRate,
@@ -28317,13 +28348,13 @@ document.getElementById("manufacturing-cost-candidates").addEventListener("click
       manufacturingCostActiveListId = null;
       refreshManufacturingCostSavedLists();
       renderManufacturingCostCandidateEmpty("");
-      renderManufacturingCostEmpty();
       return;
     }
     if (manufacturingCostRows.length && manufacturingCostCandidateRows.length) calculateSelectedManufacturingCost();
   });
 });
 document.getElementById("btn-manufacturing-cost-load-list").addEventListener("click", loadManufacturingCostList);
+document.getElementById("btn-manufacturing-cost-new-list").addEventListener("click", resetManufacturingCostWorkingList);
 document.getElementById("btn-manufacturing-cost-save-list").addEventListener("click", saveManufacturingCostList);
 document.getElementById("btn-manufacturing-cost-delete-list").addEventListener("click", deleteManufacturingCostList);
 document.getElementById("manufacturing-cost-saved-list").addEventListener("change", function() {
