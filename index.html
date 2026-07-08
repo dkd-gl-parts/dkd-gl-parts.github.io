@@ -1580,7 +1580,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.413</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.415</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1609,7 +1609,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.413</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.415</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1639,7 +1639,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.413</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.415</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -6227,7 +6227,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.414";
+var APP_VERSION       = "v1.1.415";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -19712,6 +19712,14 @@ function normalizeComponentAlternativeForUi(alt) {
   };
 }
 
+function componentTreeRowCatalogEvidence(row) {
+  if (!row) return false;
+  if (row.is_catalog_evidence === true) return true;
+  if (row.is_catalog_evidence === false) return false;
+  if (String(row.product_kind || "") === "catalog_spec") return true;
+  return String(row.catalog_match_basis || "").indexOf("catalog_") === 0;
+}
+
 function normalizeComponentTreeRow(row, parentRow) {
   row = row || {};
   var alternatives = parseComponentAlternativesJson(row.alternatives).map(normalizeComponentAlternativeForUi);
@@ -19729,7 +19737,7 @@ function normalizeComponentTreeRow(row, parentRow) {
     unit_price_jpy: row.unit_price_jpy != null ? row.unit_price_jpy : row.component_unit_price_jpy,
     component_interchange_code: row.component_interchange_code || row.interchange_code || "",
     source_code: row.source_code || "",
-    is_catalog_evidence: row.is_catalog_evidence !== false,
+    is_catalog_evidence: componentTreeRowCatalogEvidence(row),
     has_child_catalog_components: !!(row.has_child_catalog_components || parseInt(row.child_catalog_component_count || 0, 10) > 0),
     child_catalog_component_count: parseInt(row.child_catalog_component_count || 0, 10) || 0,
     alternative_count: parseInt(row.alternative_count || alternatives.length || 0, 10) || 0,
