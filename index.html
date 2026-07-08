@@ -1580,7 +1580,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.420</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.421</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1609,7 +1609,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.420</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.421</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1639,7 +1639,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.420</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.421</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -6227,7 +6227,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.420";
+var APP_VERSION       = "v1.1.421";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -21472,7 +21472,7 @@ function renderAssemblyComponentRows() {
     if (editing) {
       html += "<td>" + componentEditInput(row, "component_manufacturer_part_number", row.component_manufacturer_part_number) + "<div class='component-sub'>" + componentEditInput(row, "component_manufacturer", row.component_manufacturer || "") + "</div></td>";
       html += "<td>" + componentEditInput(row, "component_genuine_part_number", row.component_genuine_part_number || "") + "</td>";
-      html += "<td>" + componentEditNameInput(row) + "<div class='component-sub'>" + esc(componentUsageTargetLabel(row)) + "</div></td>";
+      html += "<td>" + componentEditNameInput(row) + "</td>";
       html += "<td>" + componentEditInput(row, "quantity", row.quantity || "1") + "</td>";
       html += "<td>" + componentEditInput(row, "unit_price_jpy", row.unit_price_jpy || "") + "</td>";
       html += "<td>" + componentEditInput(row, "component_interchange_code", row.interchange_code || row.component_interchange_code || "") + "</td>";
@@ -21483,7 +21483,7 @@ function renderAssemblyComponentRows() {
     } else {
       html += "<td><div class='component-pn'>" + esc(row.component_manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.component_manufacturer || "") + "</div></td>";
       html += "<td><div class='component-pn'>" + esc(row.component_genuine_part_number || "-") + "</div></td>";
-      html += "<td>" + componentRowNameHtml(row) + "<div class='component-sub'>" + esc(componentUsageTargetLabel(row)) + "</div></td>";
+      html += "<td>" + componentRowNameHtml(row) + "</td>";
       if (catalogMode) {
         html += "<td>" + esc(row.component_position || row.source_code || "-") + "</td>";
         html += "<td>" + esc(row.quantity || "-") + "</td>";
@@ -21587,7 +21587,7 @@ function renderAssemblyComponentRows() {
     if (editing) {
       html += "<td>" + componentEditInput(row, "component_manufacturer_part_number", row.component_manufacturer_part_number) + "<div class='component-sub'>" + componentEditInput(row, "component_manufacturer", row.component_manufacturer || "") + "</div></td>";
       html += "<td>" + componentEditInput(row, "component_genuine_part_number", row.component_genuine_part_number || "") + "</td>";
-      html += "<td>" + componentEditNameInput(row) + "<div class='component-sub'>" + esc(componentUsageTargetLabel(row)) + "</div></td>";
+      html += "<td>" + componentEditNameInput(row) + "</td>";
       html += "<td>" + componentEditInput(row, "quantity", row.quantity || "1") + "</td>";
       html += "<td>" + componentEditInput(row, "unit_price_jpy", row.unit_price_jpy || "") + "</td>";
       html += "<td>" + componentEditInput(row, "component_interchange_code", row.interchange_code || row.component_interchange_code || "") + "</td>";
@@ -21599,7 +21599,7 @@ function renderAssemblyComponentRows() {
     } else {
       html += "<td><div class='component-pn'>" + esc(row.component_manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.component_manufacturer || "") + "</div></td>";
       html += "<td><div class='component-pn'>" + esc(row.component_genuine_part_number || "-") + "</div></td>";
-      html += "<td>" + componentRowNameHtml(row) + "<div class='component-sub'>" + esc(componentUsageTargetLabel(row)) + " " + componentSourceBadgeHtml(row) + "</div></td>";
+      html += "<td>" + componentRowNameHtml(row) + "</td>";
       if (catalogMode) {
         html += "<td>" + esc(row.component_position || row.source_code || "-") + "</td>";
         html += "<td>" + esc(row.quantity || "-") + "</td>";
