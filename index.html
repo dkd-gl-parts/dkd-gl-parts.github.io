@@ -588,9 +588,51 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
  .purchase-link-card { max-width: 780px; }
  .purchase-link-context { border: 1px solid #e7edf6; border-radius: 10px; background: #f8fbff; padding: 10px 12px; margin: 8px 0 12px; font-size: 12px; color: #455468; line-height: 1.55; }
  .purchase-link-context strong { display: block; color: #1a1a2e; font-size: 14px; margin-bottom: 2px; }
- .purchase-link-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
- .purchase-link-selected { min-height: 20px; color: #1a6fd4; font-size: 12px; margin-top: 8px; }
- .purchase-link-error { color: #d33; font-size: 12px; min-height: 18px; margin-top: 8px; }
+.purchase-link-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.purchase-link-selected { min-height: 20px; color: #1a6fd4; font-size: 12px; margin-top: 8px; }
+.purchase-link-error { color: #d33; font-size: 12px; min-height: 18px; margin-top: 8px; }
+.manufacturing-cost-body { max-width: 1320px; }
+.manufacturing-cost-toolbar { grid-template-columns: minmax(240px, 1fr) 170px 118px 110px 110px 110px auto; }
+.manufacturing-cost-toolbar .mgmt-search { min-width: 0; }
+.manufacturing-cost-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.manufacturing-cost-field label { color: #64748b; font-size: 11px; font-weight: 700; line-height: 1.1; }
+.manufacturing-cost-field input, .manufacturing-cost-field select { width: 100%; }
+.manufacturing-cost-hint { color: #667085; font-size: 12px; line-height: 1.6; margin: -4px 0 12px; }
+.manufacturing-cost-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 10px 0 12px; }
+.manufacturing-cost-stat { border: 1px solid #e4ebf7; border-radius: 8px; background: #fbfdff; padding: 10px 12px; }
+.manufacturing-cost-stat span { display: block; color: #667085; font-size: 11px; font-weight: 700; margin-bottom: 4px; }
+.manufacturing-cost-stat b { color: #1a1a2e; font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.manufacturing-cost-table-wrap { width: 100%; overflow-x: auto; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); background: #fff; }
+.manufacturing-cost-table { min-width: 1040px; table-layout: fixed; box-shadow: none; border-radius: 0; }
+.manufacturing-cost-table th:nth-child(1), .manufacturing-cost-table td:nth-child(1) { width: 23%; }
+.manufacturing-cost-table th:nth-child(2), .manufacturing-cost-table td:nth-child(2) { width: 12%; text-align: right; }
+.manufacturing-cost-table th:nth-child(3), .manufacturing-cost-table td:nth-child(3) { width: 13%; text-align: right; }
+.manufacturing-cost-table th:nth-child(4), .manufacturing-cost-table td:nth-child(4) { width: 11%; text-align: right; }
+.manufacturing-cost-table th:nth-child(5), .manufacturing-cost-table td:nth-child(5) { width: 12%; text-align: right; }
+.manufacturing-cost-table th:nth-child(6), .manufacturing-cost-table td:nth-child(6) { width: 13%; text-align: right; }
+.manufacturing-cost-table th:nth-child(7), .manufacturing-cost-table td:nth-child(7) { width: 16%; }
+.manufacturing-cost-product-main { font-size: 13px; font-weight: 800; color: #1a1a2e; line-height: 1.35; overflow-wrap: anywhere; }
+.manufacturing-cost-product-sub { color: #667085; font-size: 11px; line-height: 1.45; margin-top: 3px; overflow-wrap: anywhere; }
+.manufacturing-cost-money { font-size: 14px; font-weight: 800; color: #1a1a2e; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.manufacturing-cost-total { color: #1a8c3e; font-size: 16px; }
+.manufacturing-cost-note { color: #8a94a6; font-size: 11px; line-height: 1.45; margin-top: 4px; }
+.manufacturing-cost-missing { color: #b54708; font-weight: 700; }
+.manufacturing-cost-details { margin-top: 7px; text-align: left; }
+.manufacturing-cost-details summary { cursor: pointer; color: #1a6fd4; font-size: 11px; font-weight: 700; list-style-position: inside; }
+.manufacturing-cost-component-list { margin-top: 6px; border: 1px solid #edf0f5; border-radius: 7px; overflow: hidden; background: #fff; }
+.manufacturing-cost-component-row { display: grid; grid-template-columns: minmax(120px, 1.5fr) 72px 52px 56px 86px; gap: 6px; align-items: center; padding: 5px 7px; border-bottom: 1px solid #edf0f5; font-size: 11px; }
+.manufacturing-cost-component-row:last-child { border-bottom: 0; }
+.manufacturing-cost-component-row.head { background: #f5f7fa; color: #667085; font-weight: 700; }
+.manufacturing-cost-component-row div:nth-child(n+2) { text-align: right; white-space: nowrap; }
+@media(max-width:900px){
+  .manufacturing-cost-toolbar { grid-template-columns: 1fr 1fr; }
+  .manufacturing-cost-toolbar .mgmt-search { grid-column: 1 / -1; }
+  .manufacturing-cost-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media(max-width:560px){
+  .manufacturing-cost-toolbar, .manufacturing-cost-summary { grid-template-columns: 1fr; }
+  .manufacturing-cost-table { min-width: 920px; }
+}
 @media(max-width:760px){
   #screen-purchase-mgmt .mgmt-body { padding: 12px 8px; }
   #screen-purchase-mgmt .mgmt-toolbar { display: grid; grid-template-columns: 1fr 120px; gap: 8px; align-items: stretch; }
@@ -1666,7 +1708,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.443</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.445</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1695,7 +1737,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.443</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.445</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1725,7 +1767,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.443</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.445</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -2705,6 +2747,51 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 </div>
 
 <!-- =============================================
+   製造原価計算画面
+============================================= -->
+<div id="screen-manufacturing-cost-mgmt" class="screen">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-manufacturing-cost-mgmt" data-i18n="btn_back">← メニュー</button>
+      <span class="logo-text" data-i18n="manufacturing_cost_title">製造原価</span>
+    </div>
+    <div class="page-header-right">
+      <span class="header-username" id="manufacturing-cost-mgmt-username"></span>
+      <span class="role-badge" id="manufacturing-cost-mgmt-role-badge"></span>
+      <button class="btn-logout" id="btn-logout-manufacturing-cost-mgmt" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <div class="mgmt-body manufacturing-cost-body">
+    <div class="mgmt-toolbar manufacturing-cost-toolbar">
+      <input class="mgmt-search" id="manufacturing-cost-query" type="search" data-i18n-ph="manufacturing_cost_query_ph" placeholder="品番を複数指定できます">
+      <select class="form-select" id="manufacturing-cost-category">
+        <option value="" data-i18n="filter_all">すべて</option>
+      </select>
+      <select class="form-select" id="manufacturing-cost-kind">
+        <option value="rebuilt" data-i18n="product_kind_rebuilt">リビルト</option>
+      </select>
+      <div class="manufacturing-cost-field">
+        <label for="manufacturing-cost-core-cost" data-i18n="manufacturing_cost_core_cost">コア代</label>
+        <input class="form-input" id="manufacturing-cost-core-cost" type="number" min="0" step="1" value="1500" data-i18n-ph="manufacturing_cost_core_cost">
+      </div>
+      <div class="manufacturing-cost-field">
+        <label for="manufacturing-cost-labor-rate" data-i18n="manufacturing_cost_labor_rate">工賃率(%)</label>
+        <input class="form-input" id="manufacturing-cost-labor-rate" type="number" min="0" step="0.1" value="0" data-i18n-ph="manufacturing_cost_labor_rate">
+      </div>
+      <div class="manufacturing-cost-field">
+        <label for="manufacturing-cost-labor-amount" data-i18n="manufacturing_cost_labor_amount">固定工賃</label>
+        <input class="form-input" id="manufacturing-cost-labor-amount" type="number" min="0" step="1" value="0" data-i18n-ph="manufacturing_cost_labor_amount">
+      </div>
+      <button class="btn-primary" id="btn-manufacturing-cost-calc" data-i18n="manufacturing_cost_calc">原価計算</button>
+    </div>
+    <div class="manufacturing-cost-hint" data-i18n="manufacturing_cost_hint">品番を複数指定するか、カテゴリを選んで計算します。検索なしの全件計算は負荷を避けるため行いません。</div>
+    <div class="mgmt-count" id="manufacturing-cost-count"></div>
+    <div id="manufacturing-cost-summary"></div>
+    <div id="manufacturing-cost-list"><div class="empty" data-i18n="manufacturing_cost_search_hint">条件を指定して原価計算してください。</div></div>
+  </div>
+</div>
+
+<!-- =============================================
    完品ラベル・QRシール発行画面
 ============================================= -->
 <div id="screen-finished-label-mgmt" class="screen">
@@ -3568,6 +3655,8 @@ var TRANSLATIONS = {
     mi_core_list_desc: "基幹商品に紐づくコア品番・数量・置き場を登録します。",
     mi_product_kind_stock_title: "在庫管理",
     mi_product_kind_stock_desc: "リビルト・社外新品・中古コアの在庫数と置場を確認・更新します。",
+    mi_manufacturing_cost_title: "製造原価",
+    mi_manufacturing_cost_desc: "リビルトの構成部品・コア代・工賃から品番別の製造原価を計算します。",
     mi_purchase_mgmt_title: "仕入管理",
     mi_purchase_mgmt_desc: "SL品番・仕入先価格・MOQを管理します。",
     mi_finished_label_title: "完品ラベル・QRシール",
@@ -3826,6 +3915,36 @@ var TRANSLATIONS = {
     purchase_link_need_candidate: "紐づけ先を選択してください",
     purchase_link_save: "紐づけ保存",
     purchase_link_saved: "紐づけを保存しました",
+    manufacturing_cost_title: "製造原価",
+    manufacturing_cost_hint: "品番を複数指定するか、カテゴリを選んで計算します。検索なしの全件計算は負荷を避けるため行いません。",
+    manufacturing_cost_query_ph: "品番を複数指定（空白・カンマ区切り）",
+    manufacturing_cost_core_cost: "コア代",
+    manufacturing_cost_labor_rate: "工賃率%",
+    manufacturing_cost_labor_amount: "工賃額",
+    manufacturing_cost_calc: "原価計算",
+    manufacturing_cost_search_hint: "条件を指定して原価計算してください。",
+    manufacturing_cost_need_condition: "品番を入力するか、カテゴリを選択してください。",
+    manufacturing_cost_count: "{n} 件表示",
+    manufacturing_cost_summary_products: "対象品番",
+    manufacturing_cost_summary_parts: "部品原価合計",
+    manufacturing_cost_summary_labor: "工賃合計",
+    manufacturing_cost_summary_total: "製造原価合計",
+    manufacturing_cost_product: "品番",
+    manufacturing_cost_components: "構成部品",
+    manufacturing_cost_parts_cost: "部品原価",
+    manufacturing_cost_core_cost_short: "コア代",
+    manufacturing_cost_labor_cost: "工賃",
+    manufacturing_cost_total: "製造原価",
+    manufacturing_cost_notes: "確認",
+    manufacturing_cost_no_components: "リビルト構成部品なし",
+    manufacturing_cost_missing_unit: "単価未設定 {n} 件",
+    manufacturing_cost_component_detail: "構成部品明細",
+    manufacturing_cost_component_name: "部品名",
+    manufacturing_cost_unit_price: "単価",
+    manufacturing_cost_quantity: "数量",
+    manufacturing_cost_replacement_rate: "交換率",
+    manufacturing_cost_calculated: "計算額",
+    manufacturing_cost_formula_note: "部品原価 + コア代 + 工賃率 + 工賃額",
     role_admin: "管理者",
     role_system_admin: "システム管理者",
     role_editor: "編集者",
@@ -4540,6 +4659,8 @@ var TRANSLATIONS = {
     mi_core_list_desc: "Register core part numbers, quantities, and locations for master products.",
     mi_product_kind_stock_title: "Stock Management",
     mi_product_kind_stock_desc: "Review and update quantities and locations for rebuilt, aftermarket-new, and used-core stock.",
+    mi_manufacturing_cost_title: "Manufacturing Cost",
+    mi_manufacturing_cost_desc: "Calculate manufacturing cost by product from rebuilt components, core cost, and assembly labor.",
     mi_purchase_mgmt_title: "Purchase Management",
     mi_purchase_mgmt_desc: "Manage SL numbers, supplier prices, and MOQ.",
     mi_finished_label_title: "Finished Label / QR",
@@ -4798,6 +4919,36 @@ var TRANSLATIONS = {
     purchase_link_need_candidate: "Select a product to link",
     purchase_link_save: "Save link",
     purchase_link_saved: "Link saved",
+    manufacturing_cost_title: "Manufacturing Cost",
+    manufacturing_cost_hint: "Enter multiple part numbers or choose a category. Full calculation without conditions is not run to avoid load.",
+    manufacturing_cost_query_ph: "Multiple part numbers separated by spaces or commas",
+    manufacturing_cost_core_cost: "Core cost",
+    manufacturing_cost_labor_rate: "Labor %",
+    manufacturing_cost_labor_amount: "Labor amount",
+    manufacturing_cost_calc: "Calculate",
+    manufacturing_cost_search_hint: "Specify conditions and calculate cost.",
+    manufacturing_cost_need_condition: "Enter a part number or choose a category.",
+    manufacturing_cost_count: "{n} rows",
+    manufacturing_cost_summary_products: "Products",
+    manufacturing_cost_summary_parts: "Parts Cost Total",
+    manufacturing_cost_summary_labor: "Labor Total",
+    manufacturing_cost_summary_total: "Manufacturing Cost Total",
+    manufacturing_cost_product: "Product",
+    manufacturing_cost_components: "Components",
+    manufacturing_cost_parts_cost: "Parts Cost",
+    manufacturing_cost_core_cost_short: "Core",
+    manufacturing_cost_labor_cost: "Labor",
+    manufacturing_cost_total: "Mfg. Cost",
+    manufacturing_cost_notes: "Check",
+    manufacturing_cost_no_components: "No rebuilt components",
+    manufacturing_cost_missing_unit: "{n} unit prices missing",
+    manufacturing_cost_component_detail: "Component Details",
+    manufacturing_cost_component_name: "Part Name",
+    manufacturing_cost_unit_price: "Unit Price",
+    manufacturing_cost_quantity: "Qty",
+    manufacturing_cost_replacement_rate: "Rate",
+    manufacturing_cost_calculated: "Amount",
+    manufacturing_cost_formula_note: "Parts cost + core cost + labor rate + labor amount",
     role_admin: "Admin",
     role_system_admin: "System Admin",
     role_editor: "Editor",
@@ -5524,6 +5675,8 @@ var TRANSLATIONS = {
     mi_core_list_desc: "登记基干商品对应的CORE编号、数量和位置。",
     mi_product_kind_stock_title: "库存管理",
     mi_product_kind_stock_desc: "确认和更新再制造、副厂新品、旧芯的库存数量和位置。",
+    mi_manufacturing_cost_title: "制造成本",
+    mi_manufacturing_cost_desc: "根据再制造构成零件、旧芯成本和组装工费计算各品号的制造成本。",
     mi_purchase_mgmt_title: "采购管理",
     mi_purchase_mgmt_desc: "管理SL编号、供应商价格和MOQ。",
     mi_finished_label_title: "完品标签・QR贴纸",
@@ -5776,6 +5929,36 @@ var TRANSLATIONS = {
     purchase_link_need_candidate: "请选择关联对象",
     purchase_link_save: "保存关联",
     purchase_link_saved: "关联已保存",
+    manufacturing_cost_title: "制造成本",
+    manufacturing_cost_hint: "请输入多个品番或选择类别进行计算。为避免负载，不执行无条件全件计算。",
+    manufacturing_cost_query_ph: "多个品番用空格或逗号分隔",
+    manufacturing_cost_core_cost: "旧芯成本",
+    manufacturing_cost_labor_rate: "工费率%",
+    manufacturing_cost_labor_amount: "工费金额",
+    manufacturing_cost_calc: "成本计算",
+    manufacturing_cost_search_hint: "请指定条件后计算成本。",
+    manufacturing_cost_need_condition: "请输入品番或选择类别。",
+    manufacturing_cost_count: "显示 {n} 条",
+    manufacturing_cost_summary_products: "对象品番",
+    manufacturing_cost_summary_parts: "零件成本合计",
+    manufacturing_cost_summary_labor: "工费合计",
+    manufacturing_cost_summary_total: "制造成本合计",
+    manufacturing_cost_product: "品番",
+    manufacturing_cost_components: "构成零件",
+    manufacturing_cost_parts_cost: "零件成本",
+    manufacturing_cost_core_cost_short: "旧芯",
+    manufacturing_cost_labor_cost: "工费",
+    manufacturing_cost_total: "制造成本",
+    manufacturing_cost_notes: "确认",
+    manufacturing_cost_no_components: "无再制造构成零件",
+    manufacturing_cost_missing_unit: "{n} 件未设置单价",
+    manufacturing_cost_component_detail: "构成零件明细",
+    manufacturing_cost_component_name: "零件名",
+    manufacturing_cost_unit_price: "单价",
+    manufacturing_cost_quantity: "数量",
+    manufacturing_cost_replacement_rate: "更换率",
+    manufacturing_cost_calculated: "计算额",
+    manufacturing_cost_formula_note: "零件成本 + 旧芯成本 + 工费率 + 工费金额",
     role_admin: "管理员",
     role_system_admin: "系统管理员",
     role_editor: "编辑者",
@@ -6500,7 +6683,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.444";
+var APP_VERSION       = "v1.1.445";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -6565,6 +6748,9 @@ var productKindStockPriceMap = {};
 var productKindStockHistoryVariantId = null;
 var productKindStockHistoryRows = [];
 var productKindStockMode = "product";
+var manufacturingCostRows = [];
+var manufacturingCostProductMap = {};
+var manufacturingCostComponentMap = {};
 var finishedLabelTemplates = [];
 var finishedLabelProducts = [];
 var finishedLabelInstructionMap = {};
@@ -6837,6 +7023,9 @@ function canViewProductKindStockMgmt() {
 }
 function canEditProductKindStockMgmt() {
   return canEdit();
+}
+function canViewManufacturingCostMgmt() {
+  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "all_viewer"]);
 }
 function isDaikoGroup() {
   return userProfile && (isSystemAdmin() || userProfile.group_name === "daiko");
@@ -7278,6 +7467,11 @@ async function applyLanguage(lang) {
     await populateProductKindStockCategoryOptions();
     if (productKindStockRows.length) renderProductKindStockMgmt();
     else renderProductKindStockEmpty();
+  }
+  if (isScreenActive("manufacturing-cost-mgmt")) {
+    await populateManufacturingCostCategoryOptions();
+    if (manufacturingCostRows.length) renderManufacturingCostRows();
+    else renderManufacturingCostEmpty();
   }
   if (isScreenActive("kikan-mgmt")) await loadKikanMgmt();
   if (document.getElementById("kikan-form-overlay") && document.getElementById("kikan-form-overlay").classList.contains("show")) {
@@ -7960,7 +8154,7 @@ function updateAllHeaders() {
   var cls   = roleClass(userProfile.role);
   var greet = tf("greeting", { name: name });
 
-  ["menu","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","product-kind-stock-mgmt","finished-label-mgmt","production-ranking-mgmt","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","logs"].forEach(function(sc) {
+  ["menu","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","product-kind-stock-mgmt","manufacturing-cost-mgmt","finished-label-mgmt","production-ranking-mgmt","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","logs"].forEach(function(sc) {
     var nameEl  = document.getElementById(sc + "-username");
     var badgeEl = document.getElementById(sc + "-role-badge");
     if (nameEl)  nameEl.textContent = name;
@@ -8018,6 +8212,7 @@ function renderMenu() {
     { icon: "&#x1F3F7;", titleKey: "mi_finished_label_title", descKey: "mi_finished_label_desc", action: "finished-label-mgmt", available: canViewFinishedLabelMgmt(), tag: null },
     { icon: "&#x1F4E6;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canViewCoreManagement(), tag: null },
     { icon: "&#x1F4E6;", titleKey: "mi_product_kind_stock_title", descKey: "mi_product_kind_stock_desc", action: "product-kind-stock-mgmt", available: canViewProductKindStockMgmt(), tag: null },
+    { icon: "&#x1F9EE;", titleKey: "mi_manufacturing_cost_title", descKey: "mi_manufacturing_cost_desc", action: "manufacturing-cost-mgmt", available: canViewManufacturingCostMgmt(), tag: null },
     { icon: "&#x1F4C8;", titleKey: "mi_rakuten_title", descKey: "mi_rakuten_desc", action: canUseRakutenResearch() ? "rakuten-price" : "rakuten-price-list", available: canUseRakutenResearch() || canViewPriceResearchHistory(), tag: null },
     { icon: "&#x1F512;", titleKey: "mi_changepw_title", descKey: "mi_changepw_desc", action: "change-pw", available: true, tag: null }
   ].filter(function(item) { return item.available; });
@@ -8088,6 +8283,7 @@ function renderMenu() {
       else if (card.dataset.action === "purchase-mgmt") enterPurchaseMgmt();
       else if (card.dataset.action === "core-list-mgmt") enterCoreListMgmt();
       else if (card.dataset.action === "product-kind-stock-mgmt") enterProductKindStockMgmt();
+      else if (card.dataset.action === "manufacturing-cost-mgmt") enterManufacturingCostMgmt();
       else if (card.dataset.action === "production-ranking-mgmt") enterProductionRankingMgmt();
       else if (card.dataset.action === "kikan-mgmt") enterKikanMgmt();
       else if (card.dataset.action === "rakuten-price") enterRakutenPrice();
@@ -14397,6 +14593,329 @@ async function saveProductKindStockChanges() {
     alert(t("msg_save_err") + ": " + (e.message || e));
   } finally {
     if (btn) btn.disabled = false;
+  }
+}
+
+// =============================================
+// 製造原価計算
+// =============================================
+async function enterManufacturingCostMgmt() {
+  if (!canViewManufacturingCostMgmt()) { alert(t("err_perm")); return; }
+  showScreen("manufacturing-cost-mgmt");
+  updateAllHeaders();
+  await populateManufacturingCostCategoryOptions();
+  renderManufacturingCostEmpty();
+  var q = document.getElementById("manufacturing-cost-query");
+  if (q) q.focus();
+}
+
+function renderManufacturingCostEmpty() {
+  manufacturingCostRows = [];
+  manufacturingCostProductMap = {};
+  manufacturingCostComponentMap = {};
+  var countEl = document.getElementById("manufacturing-cost-count");
+  var summaryEl = document.getElementById("manufacturing-cost-summary");
+  var listEl = document.getElementById("manufacturing-cost-list");
+  if (countEl) countEl.textContent = "";
+  if (summaryEl) summaryEl.innerHTML = "";
+  if (listEl) listEl.innerHTML = "<div class='empty'>" + esc(t("manufacturing_cost_search_hint")) + "</div>";
+}
+
+async function populateManufacturingCostCategoryOptions() {
+  var select = document.getElementById("manufacturing-cost-category");
+  if (!select) return;
+  if (!categoryOptions.length) {
+    var r = await sb.from("assy_categories")
+      .select("category_code,label_ja,label_en,label_zh,sort_order,is_active")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+    if (!r.error) {
+      categoryOptions = (r.data || []).filter(function(cat) {
+        return (cat.category_code || cat.category) !== "car_air_conditioner";
+      });
+    }
+  }
+  var current = select.value || "";
+  var html = "<option value=''>" + esc(t("filter_all")) + "</option>";
+  (categoryOptions || []).forEach(function(cat) {
+    var code = cat.category_code || cat.category || "";
+    if (!code) return;
+    var label = currentLang === "en" ? (cat.label_en || cat.label_ja || code) : currentLang === "zh" ? (cat.label_zh || cat.label_ja || code) : (cat.label_ja || cat.label_en || code);
+    html += "<option value='" + esc(code) + "'>" + esc(label) + "</option>";
+  });
+  select.innerHTML = html;
+  select.value = current;
+}
+
+function manufacturingCostTokens(value) {
+  var text = normalizeAsciiWidth(String(value || "")).trim();
+  if (!text) return [];
+  var seen = {};
+  var out = [];
+  text.split(/[\s,\u3001\uFF0C]+/).forEach(function(token) {
+    token = token.trim();
+    if (!token) return;
+    var key = normalizePartQuery(token);
+    if (!key || seen[key]) return;
+    seen[key] = true;
+    out.push(token);
+  });
+  return out;
+}
+
+function manufacturingCostNumberFromInput(id, fallback) {
+  var el = document.getElementById(id);
+  var n = el ? parseFloat(String(el.value || "").replace(/,/g, "")) : NaN;
+  if (isNaN(n) || n < 0) n = fallback || 0;
+  return n;
+}
+
+function manufacturingCostSettings() {
+  return {
+    productKind: normalizeProductKind((document.getElementById("manufacturing-cost-kind") || {}).value || "rebuilt"),
+    coreCost: Math.round(manufacturingCostNumberFromInput("manufacturing-cost-core-cost", 1500)),
+    laborRate: manufacturingCostNumberFromInput("manufacturing-cost-labor-rate", 0),
+    laborAmount: Math.round(manufacturingCostNumberFromInput("manufacturing-cost-labor-amount", 0))
+  };
+}
+
+function manufacturingCostParseQty(value) {
+  var text = String(value == null ? "" : value).replace(/[^\d.]/g, "");
+  var n = parseFloat(text);
+  if (isNaN(n) || n <= 0) return 1;
+  return n;
+}
+
+function manufacturingCostParseRate(value) {
+  if (value === null || value === undefined || String(value).trim() === "") return 100;
+  var text = String(value).replace(/[^\d.]/g, "");
+  var n = parseFloat(text);
+  if (isNaN(n)) return 100;
+  if (n < 0) return 0;
+  if (n > 100) return 100;
+  return n;
+}
+
+function manufacturingCostYen(value) {
+  return "\u00a5" + formatYen(Math.round(value || 0));
+}
+
+function manufacturingCostPercent(value) {
+  var n = parseFloat(value);
+  if (isNaN(n)) return "-";
+  return String(n).replace(/\.0+$/, "") + "%";
+}
+
+function manufacturingCostComponentCalc(row) {
+  row = row || {};
+  var unitRaw = row.unit_price_jpy;
+  var hasUnit = !(unitRaw === null || unitRaw === undefined || unitRaw === "");
+  var unit = hasUnit ? parseInt(unitRaw, 10) : 0;
+  if (isNaN(unit)) {
+    hasUnit = false;
+    unit = 0;
+  }
+  var qty = manufacturingCostParseQty(row.quantity);
+  var rate = manufacturingCostParseRate(row.replacement_rate);
+  return {
+    unit: unit,
+    hasUnit: hasUnit,
+    qty: qty,
+    rate: rate,
+    amount: hasUnit ? Math.round(unit * qty * rate / 100) : 0
+  };
+}
+
+function manufacturingCostProductTitle(product) {
+  product = product || {};
+  return product.manufacturer_part_number || product.genuine_part_number || product.genuine_part_number_2 || ("DKD " + (product.dkd_shohin_id || "-"));
+}
+
+async function fetchManufacturingCostProducts(tokens, category) {
+  var rows = [];
+  var seen = {};
+  function addRows(list) {
+    normalizeCoreProductFastRows(list || []).forEach(function(row) {
+      var id = productDkdId(row);
+      if (!id || seen[id]) return;
+      seen[id] = true;
+      rows.push(row);
+    });
+  }
+  if (tokens.length) {
+    for (var i = 0; i < tokens.length && rows.length < 200; i++) {
+      var r = await fetchCoreProductMasterMatches(tokens[i], category || null, 60);
+      if (r.error) return r;
+      addRows(r.data || []);
+    }
+  } else if (category) {
+    var cr = await fetchCategoryProducts(category, 200);
+    if (cr.error) return cr;
+    addRows(cr.data || []);
+  }
+  rows = filterVisibleProducts(rows).slice(0, 200);
+  return { data: rows, error: null };
+}
+
+async function loadManufacturingCostComponents(products, productKind) {
+  manufacturingCostComponentMap = {};
+  var ids = (products || []).map(function(p) { return productDkdId(p); }).filter(Boolean);
+  ids = Array.from(new Set(ids.map(function(id) { return parseInt(id, 10); }))).filter(function(id) { return !isNaN(id); });
+  for (var i = 0; i < ids.length; i += 120) {
+    var chunk = ids.slice(i, i + 120);
+    var r = await sb.from("assembly_component_usage_details")
+      .select("id,dkd_shohin_id,product_kind,product_variant_id,component_manufacturer,component_manufacturer_part_number,component_genuine_part_number,component_name,component_part_name,quantity,unit_price_jpy,replacement_rate,procurement_category,is_catalog_evidence")
+      .in("dkd_shohin_id", chunk)
+      .eq("product_kind", productKind)
+      .eq("is_catalog_evidence", false)
+      .limit(10000);
+    if (r.error) return r;
+    (r.data || []).forEach(function(row) {
+      var key = String(row.dkd_shohin_id || "");
+      if (!key) return;
+      if (!manufacturingCostComponentMap[key]) manufacturingCostComponentMap[key] = [];
+      manufacturingCostComponentMap[key].push(row);
+    });
+  }
+  return { data: manufacturingCostComponentMap, error: null };
+}
+
+function manufacturingCostBuildRows(products, settings) {
+  return (products || []).map(function(product) {
+    var id = productDkdId(product);
+    var components = manufacturingCostComponentMap[String(id || "")] || [];
+    var partsCost = 0;
+    var missingUnitCount = 0;
+    components.forEach(function(row) {
+      var calc = manufacturingCostComponentCalc(row);
+      partsCost += calc.amount;
+      if (!calc.hasUnit) missingUnitCount += 1;
+    });
+    var coreCost = settings.coreCost;
+    var laborBase = partsCost + coreCost;
+    var laborRateCost = Math.round(laborBase * settings.laborRate / 100);
+    var laborCost = laborRateCost + settings.laborAmount;
+    return {
+      product: product,
+      productId: id,
+      components: components,
+      componentCount: components.length,
+      missingUnitCount: missingUnitCount,
+      partsCost: partsCost,
+      coreCost: coreCost,
+      laborRateCost: laborRateCost,
+      laborAmount: settings.laborAmount,
+      laborCost: laborCost,
+      totalCost: partsCost + coreCost + laborCost
+    };
+  });
+}
+
+function renderManufacturingCostSummary(rows) {
+  var wrap = document.getElementById("manufacturing-cost-summary");
+  if (!wrap) return;
+  if (!rows || !rows.length) {
+    wrap.innerHTML = "";
+    return;
+  }
+  var parts = 0, labor = 0, total = 0;
+  rows.forEach(function(row) {
+    parts += row.partsCost || 0;
+    labor += row.laborCost || 0;
+    total += row.totalCost || 0;
+  });
+  wrap.innerHTML =
+    "<div class='manufacturing-cost-summary'>" +
+      "<div class='manufacturing-cost-stat'><span>" + esc(t("manufacturing_cost_summary_products")) + "</span><b>" + esc(String(rows.length)) + "</b></div>" +
+      "<div class='manufacturing-cost-stat'><span>" + esc(t("manufacturing_cost_summary_parts")) + "</span><b>" + esc(manufacturingCostYen(parts)) + "</b></div>" +
+      "<div class='manufacturing-cost-stat'><span>" + esc(t("manufacturing_cost_summary_labor")) + "</span><b>" + esc(manufacturingCostYen(labor)) + "</b></div>" +
+      "<div class='manufacturing-cost-stat'><span>" + esc(t("manufacturing_cost_summary_total")) + "</span><b>" + esc(manufacturingCostYen(total)) + "</b></div>" +
+    "</div>";
+}
+
+function renderManufacturingCostComponentDetails(row) {
+  if (!row.components.length) return "";
+  var html = "<details class='manufacturing-cost-details'><summary>" + esc(t("manufacturing_cost_component_detail")) + "</summary>";
+  html += "<div class='manufacturing-cost-component-list'>";
+  html += "<div class='manufacturing-cost-component-row head'><div>" + esc(t("manufacturing_cost_component_name")) + "</div><div>" + esc(t("manufacturing_cost_unit_price")) + "</div><div>" + esc(t("manufacturing_cost_quantity")) + "</div><div>" + esc(t("manufacturing_cost_replacement_rate")) + "</div><div>" + esc(t("manufacturing_cost_calculated")) + "</div></div>";
+  row.components.forEach(function(component) {
+    var calc = manufacturingCostComponentCalc(component);
+    var name = component.component_name || component.component_part_name || component.component_manufacturer_part_number || "-";
+    html += "<div class='manufacturing-cost-component-row'>";
+    html += "<div>" + esc(name) + "<div class='manufacturing-cost-note'>" + esc([component.component_manufacturer, component.component_manufacturer_part_number, component.component_genuine_part_number].filter(Boolean).join(" / ")) + "</div></div>";
+    html += "<div>" + esc(calc.hasUnit ? manufacturingCostYen(calc.unit) : "-") + "</div>";
+    html += "<div>" + esc(String(calc.qty)) + "</div>";
+    html += "<div>" + esc(manufacturingCostPercent(calc.rate)) + "</div>";
+    html += "<div>" + esc(manufacturingCostYen(calc.amount)) + "</div>";
+    html += "</div>";
+  });
+  html += "</div></details>";
+  return html;
+}
+
+function renderManufacturingCostRows() {
+  var list = document.getElementById("manufacturing-cost-list");
+  var countEl = document.getElementById("manufacturing-cost-count");
+  if (!list) return;
+  if (countEl) countEl.textContent = manufacturingCostRows.length ? tf("manufacturing_cost_count", { n: manufacturingCostRows.length }) : "";
+  renderManufacturingCostSummary(manufacturingCostRows);
+  if (!manufacturingCostRows.length) {
+    list.innerHTML = "<div class='empty'>" + esc(t("no_results")) + "</div>";
+    return;
+  }
+  var html = "<div class='manufacturing-cost-table-wrap'><table class='mgmt-table manufacturing-cost-table'>";
+  html += "<tr><th>" + esc(t("manufacturing_cost_product")) + "</th><th>" + esc(t("manufacturing_cost_components")) + "</th><th>" + esc(t("manufacturing_cost_parts_cost")) + "</th><th>" + esc(t("manufacturing_cost_core_cost_short")) + "</th><th>" + esc(t("manufacturing_cost_labor_cost")) + "</th><th>" + esc(t("manufacturing_cost_total")) + "</th><th>" + esc(t("manufacturing_cost_notes")) + "</th></tr>";
+  manufacturingCostRows.forEach(function(row) {
+    var p = row.product || {};
+    var notes = [];
+    if (!row.componentCount) notes.push(t("manufacturing_cost_no_components"));
+    if (row.missingUnitCount) notes.push(tf("manufacturing_cost_missing_unit", { n: row.missingUnitCount }));
+    html += "<tr>";
+    html += "<td><div class='manufacturing-cost-product-main'>" + esc(manufacturingCostProductTitle(p)) + "</div><div class='manufacturing-cost-product-sub'>" + esc([p.genuine_part_number, p.genuine_part_number_2, p.manufacturer, tCat(p.category_code || p.category), "DKD " + (row.productId || "-")].filter(Boolean).join(" / ")) + "</div>" + renderManufacturingCostComponentDetails(row) + "</td>";
+    html += "<td><div class='manufacturing-cost-money'>" + esc(String(row.componentCount || 0)) + "</div></td>";
+    html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.partsCost)) + "</div></td>";
+    html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.coreCost)) + "</div></td>";
+    html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.laborCost)) + "</div><div class='manufacturing-cost-note'>" + esc(t("manufacturing_cost_formula_note")) + "</div></td>";
+    html += "<td><div class='manufacturing-cost-money manufacturing-cost-total'>" + esc(manufacturingCostYen(row.totalCost)) + "</div></td>";
+    html += "<td>" + (notes.length ? "<div class='manufacturing-cost-missing'>" + esc(notes.join(" / ")) + "</div>" : "<div class='manufacturing-cost-note'>-</div>") + "</td>";
+    html += "</tr>";
+  });
+  html += "</table></div>";
+  list.innerHTML = html;
+}
+
+async function calculateManufacturingCost() {
+  if (!canViewManufacturingCostMgmt()) { alert(t("err_perm")); return; }
+  var list = document.getElementById("manufacturing-cost-list");
+  var countEl = document.getElementById("manufacturing-cost-count");
+  var summaryEl = document.getElementById("manufacturing-cost-summary");
+  var q = (document.getElementById("manufacturing-cost-query") || {}).value || "";
+  var category = (document.getElementById("manufacturing-cost-category") || {}).value || "";
+  var tokens = manufacturingCostTokens(q);
+  if (!tokens.length && !category) {
+    renderManufacturingCostEmpty();
+    if (list) list.innerHTML = "<div class='empty'>" + esc(t("manufacturing_cost_need_condition")) + "</div>";
+    return;
+  }
+  if (list) list.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
+  if (countEl) countEl.textContent = t("loading");
+  if (summaryEl) summaryEl.innerHTML = "";
+  var settings = manufacturingCostSettings();
+  try {
+    var pr = await fetchManufacturingCostProducts(tokens, category);
+    if (pr.error) throw pr.error;
+    var products = pr.data || [];
+    await loadManufacturingCostComponents(products, settings.productKind).then(function(r) {
+      if (r.error) throw r.error;
+    });
+    manufacturingCostRows = manufacturingCostBuildRows(products, settings);
+    renderManufacturingCostRows();
+  } catch (e) {
+    console.warn("manufacturing cost calculation failed", e);
+    manufacturingCostRows = [];
+    manufacturingCostComponentMap = {};
+    if (countEl) countEl.textContent = "";
+    if (list) list.innerHTML = "<div class='empty'>" + esc(t("msg_part_err") + ": " + ((e && e.message) || String(e))) + "</div>";
   }
 }
 
@@ -27060,7 +27579,7 @@ document.getElementById("btn-back-to-login").addEventListener("click", function(
 document.getElementById("btn-submit-reg").addEventListener("click", doRegister);
 document.getElementById("reg-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doRegister(); });
 document.getElementById("login-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
-["btn-logout-menu","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-finished-label-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
+["btn-logout-menu","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-manufacturing-cost-mgmt","btn-logout-finished-label-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
 document.getElementById("btn-back-search").addEventListener("click", function(){ closePanel(); showScreen("menu"); });
 document.getElementById("btn-back-production-search").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-components").addEventListener("click", async function(){
@@ -27201,6 +27720,7 @@ document.getElementById("component-name-master-search").addEventListener("input"
   renderComponentNameMasterList();
 });
 document.getElementById("btn-back-product-kind-stock-mgmt").addEventListener("click", function(){ showScreen("menu"); });
+document.getElementById("btn-back-manufacturing-cost-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-finished-label-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-production-ranking-mgmt").addEventListener("click", function(){ showScreen("menu"); });
 document.getElementById("btn-back-kikan-mgmt").addEventListener("click", function(){ showScreen("menu"); });
@@ -27267,6 +27787,14 @@ document.getElementById("product-kind-stock-category").addEventListener("change"
 document.getElementById("product-kind-stock-kind").addEventListener("change", loadProductKindStockMgmt);
 document.getElementById("product-kind-stock-state").addEventListener("change", loadProductKindStockMgmt);
 document.getElementById("btn-product-kind-stock-save").addEventListener("click", saveProductKindStockChanges);
+document.getElementById("btn-manufacturing-cost-calc").addEventListener("click", calculateManufacturingCost);
+document.getElementById("manufacturing-cost-query").addEventListener("keydown", function(e){ if(e.key==="Enter") calculateManufacturingCost(); });
+["manufacturing-cost-category","manufacturing-cost-kind"].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (el) el.addEventListener("change", function() {
+    if (manufacturingCostRows.length) calculateManufacturingCost();
+  });
+});
 document.getElementById("btn-finished-label-search").addEventListener("click", searchFinishedLabelProducts);
 document.getElementById("finished-label-search").addEventListener("keydown", function(e){ if(e.key==="Enter") searchFinishedLabelProducts(); });
 document.getElementById("btn-finished-label-load-history").addEventListener("click", loadFinishedLabelHistory);
