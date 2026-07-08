@@ -6227,7 +6227,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.415";
+var APP_VERSION       = "v1.1.416";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -9609,6 +9609,10 @@ function ecMallIsInternalDaikoPartNumber(value) {
   return /^AL[A-Z0-9]{2}\d{3,}$/.test(key);
 }
 
+function ecMallHasInternalDaikoPartNumber(p) {
+  return ecMallIsInternalDaikoPartNumber(p && p.manufacturer_part_number) || ecMallIsInternalDaikoPartNumber(p && p.daiko_part_number);
+}
+
 function ecMallIsInternalDaikoPartRow(p) {
   if (!p) return false;
   var mfr = cleanPartNumberValue(p.manufacturer_part_number);
@@ -9620,8 +9624,20 @@ function ecMallIsInternalDaikoPartRow(p) {
 function ecMallExternalManufacturerPartNumber(p) {
   var mfr = cleanPartNumberValue(p && p.manufacturer_part_number);
   if (!mfr) return "";
+  if (ecMallIsInternalDaikoPartNumber(mfr)) return cleanPartNumberValue(p && p.genuine_part_number_2) || "";
   if (!ecMallIsInternalDaikoPartRow(p)) return mfr;
   return cleanPartNumberValue(p.genuine_part_number_2) || "";
+}
+
+function ecMallDisplayManufacturerPartNumber(p) {
+  return ecMallExternalManufacturerPartNumber(p);
+}
+
+function ecMallDisplayManufacturerName(p) {
+  var maker = String((p && p.manufacturer) || "");
+  if (!maker) return "";
+  if (ecMallHasInternalDaikoPartNumber(p) && !ecMallDisplayManufacturerPartNumber(p)) return "";
+  return maker;
 }
 
 function buildRakutenProductQuery(p) {
@@ -9808,10 +9824,12 @@ function renderEcCategoryTargetSearchResults(rows) {
     "</div>";
   rows.forEach(function(row, idx) {
     var target = rakutenTargetFromPart(row, "master");
+    var displayMfr = ecMallDisplayManufacturerPartNumber(target);
+    var displayMaker = ecMallDisplayManufacturerName(target);
     html += "<label class='ec-category-target-row'>";
     html += "<div><input class='ec-category-target-check' type='checkbox' value='" + idx + "'></div>";
     html += "<div class='ec-category-target-main'><div class='ec-category-target-pn'>" + esc(target.search_number || row.manufacturer_part_number || row.genuine_part_number || "-") + "</div><div class='ec-category-target-sub'>" + esc([row.genuine_part_number, row.genuine_part_number_2, tCat(row.category_code || row.category)].filter(Boolean).join(" / ") || "-") + "</div></div>";
-    html += "<div><div class='ec-category-target-pn'>" + esc(row.manufacturer_part_number || "-") + "</div><div class='ec-category-target-sub'>" + esc(row.manufacturer || "-") + "</div></div>";
+    html += "<div><div class='ec-category-target-pn'>" + esc(displayMfr || "-") + "</div><div class='ec-category-target-sub'>" + esc(displayMaker || "-") + "</div></div>";
     html += "<div class='ec-category-target-sub'>" + esc(vehicleMakerLabel(row.vehicle_manufacturer || "-")) + "</div>";
     html += "<div class='ec-category-target-sub'>" + esc(row.dkd_shohin_id || row.shohin_cd || "-") + "</div>";
     html += "</label>";
@@ -10639,8 +10657,11 @@ function parseUploadedPartList(text) {
     var dkd = cleanPartNumberValue(row.dkd_shohin_id || row["dkd商品id"] || row["dkd商品コード"] || "");
     var productCode = cleanPartNumberValue(row.shohin_cd || row.product_id || row["商品id"] || row["商品コード"] || "");
     var mfr = cleanPartNumberValue(row.manufacturer_part_number || row["メーカー品番"] || "");
+    var daiko = ecMallIsInternalDaikoPartNumber(mfr) ? mfr : "";
+    if (daiko) mfr = "";
     var genuine = cleanPartNumberValue(row.genuine_part_number || row["純正品番"] || "");
     var keyword = cleanPartNumberValue(row.search_number || row.keyword || row["検索キーワード"] || row["検索品番"] || row["品番"] || mfr || genuine || dkd || productCode);
+    if (daiko && rakutenPartKey(keyword) === rakutenPartKey(daiko)) keyword = cleanPartNumberValue(genuine || dkd || productCode);
     var category = ecMallCategoryFromUpload(row.category || row["カテゴリ"] || row["対象カテゴリ"] || "") || selectedCategory;
     if (!keyword) continue;
     var target = {
@@ -10649,6 +10670,7 @@ function parseUploadedPartList(text) {
       shohin_cd: productCode || null,
       genuine_part_number: genuine,
       manufacturer_part_number: mfr,
+      daiko_part_number: daiko,
       manufacturer: "",
       category: category || "",
       search_number: keyword,
@@ -12055,9 +12077,11 @@ function renderEcMallPriceList(rows) {
     var keyword = r.search_number || r.manufacturer_part_number || r.genuine_part_number || r.dkd_shohin_id || r.shohin_cd || "-";
     var productId = r.dkd_shohin_id || r.shohin_cd || "";
     var productSub = productId && String(productId) !== String(keyword) ? "DKD商品ID " + productId : "";
+    var displayMfr = ecMallDisplayManufacturerPartNumber(r);
+    var displayMaker = ecMallDisplayManufacturerName(r);
     html += "<tr>";
     html += "<td><div class='mgmt-pn'>" + esc(String(keyword)) + "</div><div class='mgmt-sub'>" + esc(productSub) + "</div></td>";
-    html += "<td><div class='mgmt-pn'>" + esc(r.manufacturer_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(r.manufacturer || "") + "</div></td>";
+    html += "<td><div class='mgmt-pn'>" + esc(displayMfr || "-") + "</div><div class='mgmt-sub'>" + esc(displayMaker || "") + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(r.genuine_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(r.genuine_part_number_2 || tCat(r.category) || "") + "</div></td>";
     html += "<td>" + bestCell(group, "used") + "</td>";
     html += "<td>" + bestCell(group, "rebuilt") + "</td>";
