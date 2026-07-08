@@ -1630,7 +1630,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.430</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.435</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1659,7 +1659,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.430</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.435</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1689,7 +1689,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.430</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.435</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -6450,7 +6450,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.434";
+var APP_VERSION       = "v1.1.435";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -6481,6 +6481,8 @@ var componentTreeRpcAvailable = true;
 var componentCatalogNameCandidates = [];
 var componentCatalogNameCandidateLabelMap = {};
 var componentCatalogNameCandidateKindMap = {};
+var componentCatalogNameCandidateMetaMap = {};
+var componentCatalogNameCandidateMasterMap = {};
 var componentCatalogNameCandidateCache = {};
 var componentCatalogNameCandidateLoadSeq = 0;
 var componentNameRequestContext = null;
@@ -7212,6 +7214,8 @@ async function applyLanguage(lang) {
   componentCatalogNameCandidateCache = {};
   componentCatalogNameCandidateLabelMap = {};
   componentCatalogNameCandidateKindMap = {};
+  componentCatalogNameCandidateMetaMap = {};
+  componentCatalogNameCandidateMasterMap = {};
   renderMenu();
   if (dataLoaded) { renderCategoryChips(); render(); }
   renderProductionFilterChips();
@@ -19420,6 +19424,8 @@ async function openComponentAddForm() {
   componentCatalogNameCandidates = [];
   componentCatalogNameCandidateLabelMap = {};
   componentCatalogNameCandidateKindMap = {};
+  componentCatalogNameCandidateMetaMap = {};
+  componentCatalogNameCandidateMasterMap = {};
   clearComponentAddForm();
   var manufacturer = document.getElementById("component-add-mfr");
   if (manufacturer) manufacturer.value = "";
@@ -19908,6 +19914,8 @@ function startComponentEdit(usageId) {
   componentCatalogNameCandidates = [];
   componentCatalogNameCandidateLabelMap = {};
   componentCatalogNameCandidateKindMap = {};
+  componentCatalogNameCandidateMetaMap = {};
+  componentCatalogNameCandidateMasterMap = {};
   renderAssemblyComponentRows();
   refreshComponentEditNameCandidates(String(usageId));
 }
@@ -21146,8 +21154,8 @@ function componentNameCandidateDisplayLabel(candidateName, displayName) {
 }
 
 function componentNameCandidatePriority(kind) {
-  if (kind === "master") return 0;
-  if (kind === "frequent") return 1;
+  if (kind === "frequent") return 0;
+  if (kind === "master") return 1;
   return 2;
 }
 
@@ -21168,7 +21176,7 @@ function componentNameCandidateKindLabel(kind) {
 }
 
 function componentNameCandidateKinds() {
-  return ["master", "frequent", "other"];
+  return ["frequent", "master", "other"];
 }
 
 function componentNameOptionGroupValue(kind) {
@@ -21183,11 +21191,36 @@ function componentNameSortCompare(a, b) {
   return String(a || "").localeCompare(String(b || ""), "ja", { numeric: true, sensitivity: "base" });
 }
 
+function componentNameCandidateSortMeta(item) {
+  var name = item && item.name != null ? item.name : item;
+  var meta = componentNameCandidateMetaForName(name);
+  return {
+    manualCount: componentNameCandidateNumber(meta.manualCount),
+    catalogCount: componentNameCandidateNumber(meta.catalogCount),
+    sortOrder: componentNameCandidateNumber(meta.sortOrder, 999999),
+    name: String(name || "")
+  };
+}
+
+function componentNameGroupedSortCompare(kind, a, b) {
+  var am = componentNameCandidateSortMeta(a);
+  var bm = componentNameCandidateSortMeta(b);
+  if (kind === "frequent") {
+    var manualDiff = bm.manualCount - am.manualCount;
+    if (manualDiff) return manualDiff;
+  }
+  if (kind === "master") {
+    var orderDiff = am.sortOrder - bm.sortOrder;
+    if (orderDiff) return orderDiff;
+  }
+  return componentNameSortCompare(am.name, bm.name);
+}
+
 function componentNameCandidateKindFromRow(row) {
   if (!row) return "other";
-  if (String(row.candidate_kind || "") === "master") return "master";
-  if (String(row.source_type || "") === "manual") return "master";
   if (parseInt(row.manual_count || 0, 10) > 0) return "frequent";
+  if (String(row.candidate_kind || "") === "master") return "master";
+  if (String(row.source_type || "") === "manual" || String(row.source_type || "") === "approved") return "master";
   return "other";
 }
 
@@ -21204,8 +21237,46 @@ function componentNameCandidateKindForName(name) {
   return componentCatalogNameCandidateKindMap[componentNameCandidateLabelKey(name)] || "other";
 }
 
-function componentNameCandidateCachePayload(list, labelMap, kindMap) {
-  return { list: list || [], labels: labelMap || {}, kinds: kindMap || {} };
+function componentNameCandidateMetaForName(name) {
+  return componentCatalogNameCandidateMetaMap[componentNameCandidateLabelKey(name)] || {};
+}
+
+function componentNameCandidateIsMasterName(name) {
+  var key = componentNameCandidateLabelKey(name);
+  return !!(key && componentCatalogNameCandidateMasterMap[key]);
+}
+
+function componentNameCandidateNumber(value, fallback) {
+  var n = parseInt(value, 10);
+  return isNaN(n) ? (fallback || 0) : n;
+}
+
+function setComponentNameCandidateMeta(metaMap, name, row) {
+  var key = componentNameCandidateLabelKey(name);
+  if (!key || !row) return;
+  var current = metaMap[key] || {};
+  var manualCount = Math.max(componentNameCandidateNumber(current.manualCount), componentNameCandidateNumber(row.manual_count));
+  var catalogCount = Math.max(componentNameCandidateNumber(current.catalogCount), componentNameCandidateNumber(row.catalog_count));
+  var sortOrder = current.sortOrder != null
+    ? Math.min(componentNameCandidateNumber(current.sortOrder, 999999), componentNameCandidateNumber(row.sort_order, 999999))
+    : componentNameCandidateNumber(row.sort_order, 999999);
+  metaMap[key] = {
+    manualCount: manualCount,
+    catalogCount: catalogCount,
+    sortOrder: sortOrder,
+    sourceType: current.sourceType || row.source_type || "",
+    lastUsedAt: current.lastUsedAt || row.last_used_at || ""
+  };
+}
+
+function setComponentNameCandidateMaster(masterMap, name, isMaster) {
+  var key = componentNameCandidateLabelKey(name);
+  if (!key || !isMaster) return;
+  masterMap[key] = true;
+}
+
+function componentNameCandidateCachePayload(list, labelMap, kindMap, metaMap, masterMap) {
+  return { list: list || [], labels: labelMap || {}, kinds: kindMap || {}, meta: metaMap || {}, masters: masterMap || {} };
 }
 
 function applyComponentNameCandidateCachePayload(payload) {
@@ -21213,11 +21284,15 @@ function applyComponentNameCandidateCachePayload(payload) {
     componentCatalogNameCandidates = payload;
     componentCatalogNameCandidateLabelMap = {};
     componentCatalogNameCandidateKindMap = {};
+    componentCatalogNameCandidateMetaMap = {};
+    componentCatalogNameCandidateMasterMap = {};
     return;
   }
   componentCatalogNameCandidates = (payload && payload.list) || [];
   componentCatalogNameCandidateLabelMap = (payload && payload.labels) || {};
   componentCatalogNameCandidateKindMap = (payload && payload.kinds) || {};
+  componentCatalogNameCandidateMetaMap = (payload && payload.meta) || {};
+  componentCatalogNameCandidateMasterMap = (payload && payload.masters) || {};
 }
 
 function componentNameOptionLabel(name) {
@@ -21328,12 +21403,20 @@ async function loadComponentCatalogNameCandidatesForCurrent() {
   componentCatalogNameCandidates = [];
   componentCatalogNameCandidateLabelMap = {};
   componentCatalogNameCandidateKindMap = {};
+  componentCatalogNameCandidateMetaMap = {};
+  componentCatalogNameCandidateMasterMap = {};
   if (!category) return;
   if (componentCatalogNameCandidateCache[cacheKey]) {
     if (!isCurrentCandidateLoad()) return;
     applyComponentNameCandidateCachePayload(componentCatalogNameCandidateCache[cacheKey]);
     return;
   }
+  var list = [];
+  var seen = {};
+  var labels = {};
+  var kinds = {};
+  var meta = {};
+  var masters = {};
   var masterR = await sb.rpc("get_component_name_master_candidates", {
     target_category_code: category || null,
     target_lang: currentLang || "ja",
@@ -21341,64 +21424,48 @@ async function loadComponentCatalogNameCandidatesForCurrent() {
     max_rows: 1200
   });
   if (!masterR.error && (masterR.data || []).length) {
-    var masterList = [];
-    var masterSeen = {};
-    var masterLabels = {};
-    var masterKinds = {};
     (masterR.data || []).forEach(function(row) {
       var canonicalName = canonicalComponentNameForStorage(row.component_name_ja || row.component_name) || normalizeComponentNameText(row.component_name_ja || row.component_name);
-      addComponentNameCandidate(masterList, masterSeen, canonicalName);
-      addComponentNameCandidateLabel(masterLabels, canonicalName, componentNameCandidateDisplayLabel(canonicalName, row.component_name));
-      setComponentNameCandidateKind(masterKinds, canonicalName, "master");
+      addComponentNameCandidate(list, seen, canonicalName);
+      addComponentNameCandidateLabel(labels, canonicalName, componentNameCandidateDisplayLabel(canonicalName, row.component_name));
+      setComponentNameCandidateKind(kinds, canonicalName, componentNameCandidateKindFromRow(row));
+      setComponentNameCandidateMeta(meta, canonicalName, row);
+      setComponentNameCandidateMaster(masters, canonicalName, true);
     });
-    masterList.sort(componentNameSortCompare);
-    if (!isCurrentCandidateLoad()) return;
-    componentCatalogNameCandidateCache[cacheKey] = componentNameCandidateCachePayload(masterList, masterLabels, masterKinds);
-    componentCatalogNameCandidates = masterList;
-    componentCatalogNameCandidateLabelMap = masterLabels;
-    componentCatalogNameCandidateKindMap = masterKinds;
-    return;
   }
   if (masterR.error) console.warn("component name master candidates failed; fallback to legacy candidates", masterR.error);
-  if (!mfr) return;
-  var r = await sb.rpc("get_component_name_candidates", {
-    target_manufacturer: mfr,
-    target_category_code: category || null,
-    target_lang: currentLang || "ja",
-    max_rows: 500
-  });
-  if (r.error) {
-    console.warn("component name candidate cache failed; fallback to catalog lookup", r.error);
-    r = await sb.rpc("get_catalog_component_name_candidates", {
+  var r = { data: [], error: null };
+  if (mfr) {
+    r = await sb.rpc("get_component_name_candidates", {
       target_manufacturer: mfr,
       target_category_code: category || null,
+      target_lang: currentLang || "ja",
       max_rows: 500
     });
     if (r.error) {
-      console.warn("component catalog name candidates failed", r.error);
-      var fallback = await loadComponentCatalogNameCandidatesFallback(mfr, null, category);
-      if (!isCurrentCandidateLoad()) return;
-      var fallbackKinds = {};
-      fallback.forEach(function(name) {
-        setComponentNameCandidateKind(fallbackKinds, name, "other");
+      console.warn("component name candidate cache failed; fallback to catalog lookup", r.error);
+      r = await sb.rpc("get_catalog_component_name_candidates", {
+        target_manufacturer: mfr,
+        target_category_code: category || null,
+        max_rows: 500
       });
-      componentCatalogNameCandidateCache[cacheKey] = componentNameCandidateCachePayload(fallback, {}, fallbackKinds);
-      componentCatalogNameCandidates = fallback;
-      componentCatalogNameCandidateLabelMap = {};
-      componentCatalogNameCandidateKindMap = fallbackKinds;
-      return;
+      if (r.error) {
+        console.warn("component catalog name candidates failed", r.error);
+        var fallback = await loadComponentCatalogNameCandidatesFallback(mfr, null, category);
+        mergeComponentNameCandidates(list, seen, fallback);
+        fallback.forEach(function(name) {
+          setComponentNameCandidateKind(kinds, name, "other");
+        });
+      }
     }
   }
-  var list = [];
-  var seen = {};
-  var labels = {};
-  var kinds = {};
-  (r.data || []).forEach(function(row) {
+  (r && !r.error ? (r.data || []) : []).forEach(function(row) {
     var sourceName = row.component_name_ja || row.component_name;
     var canonicalName = canonicalComponentNameForStorage(sourceName) || normalizeComponentNameText(sourceName);
     addComponentNameCandidate(list, seen, canonicalName);
     addComponentNameCandidateLabel(labels, canonicalName, componentNameCandidateDisplayLabel(canonicalName, row.component_name));
     setComponentNameCandidateKind(kinds, canonicalName, componentNameCandidateKindFromRow(row));
+    setComponentNameCandidateMeta(meta, canonicalName, row);
   });
   if (category && list.length < 80) {
     var fallbackList = await loadComponentCatalogNameCandidatesFallback(mfr, null, category);
@@ -21413,10 +21480,12 @@ async function loadComponentCatalogNameCandidatesForCurrent() {
   });
   list.sort(componentNameSortCompare);
   if (!isCurrentCandidateLoad()) return;
-  componentCatalogNameCandidateCache[cacheKey] = componentNameCandidateCachePayload(list, labels, kinds);
+  componentCatalogNameCandidateCache[cacheKey] = componentNameCandidateCachePayload(list, labels, kinds, meta, masters);
   componentCatalogNameCandidates = list;
   componentCatalogNameCandidateLabelMap = labels;
   componentCatalogNameCandidateKindMap = kinds;
+  componentCatalogNameCandidateMetaMap = meta;
+  componentCatalogNameCandidateMasterMap = masters;
 }
 
 function componentAddNameCandidates(selectedName) {
@@ -21482,7 +21551,7 @@ function componentNameGroupedCandidates(selectedName, options) {
   addGroupedComponentNameCandidate(groups, seen, selectedName, "other");
   componentNameCandidateKinds().forEach(function(kind) {
     groups[kind].sort(function(a, b) {
-      return componentNameSortCompare(a.name, b.name);
+      return componentNameGroupedSortCompare(kind, a, b);
     });
   });
   return groups;
@@ -21515,7 +21584,7 @@ function componentNameSelectOptionsHtml(selectedName, options) {
     groups[kind].forEach(function(candidate) {
       var label = componentNameOptionLabel(candidate.name);
       var text = candidate.name + (label ? " / " + label : "");
-      var disabled = kind === "master" ? "" : " disabled";
+      var disabled = componentNameCanSelectCandidate(candidate.name) ? "" : " disabled";
       html += "<option value='" + esc(candidate.name) + "'" + disabled + ">" + esc(text) + "</option>";
     });
     html += "</optgroup>";
@@ -21546,7 +21615,13 @@ function setComponentNameSelectValue(selectEl, value) {
 function componentNameIsMasterValue(value) {
   var name = canonicalComponentNameForStorage(value) || normalizeComponentNameText(value);
   if (!name) return false;
-  return componentNameCandidateKindForName(name) === "master";
+  return componentNameCanSelectCandidate(name);
+}
+
+function componentNameCanSelectCandidate(value) {
+  var name = canonicalComponentNameForStorage(value) || normalizeComponentNameText(value);
+  if (!name) return false;
+  return componentNameCandidateIsMasterName(name) || componentNameCandidateKindForName(name) === "master";
 }
 
 function componentNameMasterValidationMessage(value) {
