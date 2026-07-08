@@ -1580,7 +1580,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.419</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.420</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1609,7 +1609,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.419</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.420</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1639,7 +1639,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.419</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.420</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -6227,7 +6227,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.419";
+var APP_VERSION       = "v1.1.420";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -20268,10 +20268,20 @@ function addComponentNameCandidateLabel(labelMap, candidateName, displayName) {
   labelMap[componentNameCandidateLabelKey(value)] = label;
 }
 
+function lookupComponentNameTranslation(dict, name) {
+  var key = componentNameCandidateLabelKey(name);
+  if (!key) return "";
+  var normalizedName = normalizeComponentNameText(name);
+  if (dict[normalizedName]) return dict[normalizedName];
+  for (var sourceName in dict) {
+    if (componentNameCandidateLabelKey(sourceName) === key) return dict[sourceName];
+  }
+  return "";
+}
+
 function componentNameTranslationLabel(name) {
   var lang = currentLang === "zh" ? "zh" : (currentLang === "en" ? "en" : "");
   if (!lang) return "";
-  var key = componentNameCandidateLabelKey(name);
   var en = {
     "コンプレッサAY": "Compressor ASSY",
     "コンプレッサAY,W/クラッチ": "Compressor ASSY w/ Clutch",
@@ -20294,6 +20304,7 @@ function componentNameTranslationLabel(name) {
     "シール,リング": "Seal Ring",
     "シール,オイル": "Oil Seal",
     "シール,プレート": "Seal Plate",
+    "シール アセンブリ": "Seal Assembly",
     "シール": "Seal",
     "キャップ,プーリ": "Pulley Cap",
     "キャップ,ターミナル ラバー": "Terminal Rubber Cap",
@@ -20308,6 +20319,7 @@ function componentNameTranslationLabel(name) {
     "ワッシャ,フェルト": "Felt Washer",
     "ワッシャ,スプリング": "Spring Washer",
     "ワッシャ,インシュレータ": "Insulator Washer",
+    "インシュレート ワッシャ": "Insulating Washer",
     "ワッシャ,ラバー": "Rubber Washer",
     "ワッシャ,プレート": "Plate Washer",
     "ワッシャ,ウエーブ": "Wave Washer",
@@ -20466,6 +20478,7 @@ function componentNameTranslationLabel(name) {
     "シール,リング": "密封环",
     "シール,オイル": "油封",
     "シール,プレート": "密封板",
+    "シール アセンブリ": "密封件总成",
     "シール": "密封件",
     "キャップ,プーリ": "皮带轮盖",
     "キャップ,ターミナル ラバー": "端子橡胶盖",
@@ -20480,6 +20493,7 @@ function componentNameTranslationLabel(name) {
     "ワッシャ,フェルト": "毛毡垫圈",
     "ワッシャ,スプリング": "弹簧垫圈",
     "ワッシャ,インシュレータ": "绝缘垫圈",
+    "インシュレート ワッシャ": "绝缘垫圈",
     "ワッシャ,ラバー": "橡胶垫圈",
     "ワッシャ,プレート": "板垫圈",
     "ワッシャ,ウエーブ": "波形垫圈",
@@ -20616,7 +20630,7 @@ function componentNameTranslationLabel(name) {
     "クラッチ&ベアリング,センタ": "离合器及中心轴承",
     "クリップ": "卡夹"
   };
-  return (lang === "zh" ? zh : en)[key] || "";
+  return lookupComponentNameTranslation(lang === "zh" ? zh : en, name);
 }
 
 function componentNameOptionDisplayValue(name) {
