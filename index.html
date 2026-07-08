@@ -4175,7 +4175,7 @@ var TRANSLATIONS = {
     rakuten_bulk_rate_limited: "{saved} 件保存しました。ECモールAPIの制限に達したため、{remaining} 件を残して停止しました: {error}",
     rakuten_bulk_running: "{done}/{total} 件 調査中...",
     rakuten_saved_result: "調査結果を保存しました",
-    rakuten_list_search_ph: "キーワード・品番・出品者で検索",
+    rakuten_list_search_ph: "キーワード・品番・出品者で検索 (ハイフン有無OK)",
     rakuten_no_saved_results: "保存済みのECモール価格調査結果がありません",
     ec_price_history: "価格推移",
     ec_price_history_title: "ECモール価格推移",
@@ -5143,7 +5143,7 @@ var TRANSLATIONS = {
     rakuten_bulk_rate_limited: "Saved {saved}. Stopped with {remaining} remaining because the EC mall API rate limit was reached: {error}",
     rakuten_bulk_running: "Surveying {done}/{total}...",
     rakuten_saved_result: "Saved survey result",
-    rakuten_list_search_ph: "Search by keyword, part number, or seller",
+    rakuten_list_search_ph: "Search by keyword, part number, or seller (hyphens optional)",
     rakuten_no_saved_results: "No saved EC mall price survey results",
     ec_price_history: "Price Trend",
     ec_price_history_title: "EC Mall Price Trend",
@@ -6104,7 +6104,7 @@ var TRANSLATIONS = {
     rakuten_bulk_rate_limited: "已保存 {saved} 件。因达到乐天API限制，剩余 {remaining} 件已停止: {error}",
     rakuten_bulk_running: "调查中 {done}/{total}...",
     rakuten_saved_result: "调查结果已保存",
-    rakuten_list_search_ph: "按关键词、品号或卖家搜索",
+    rakuten_list_search_ph: "按关键词、品号或卖家搜索（可省略连字符）",
     rakuten_no_saved_results: "没有保存的EC商城价格调查结果",
     ec_price_history: "价格趋势",
     ec_price_history_title: "EC商城价格趋势",
@@ -6450,7 +6450,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.433";
+var APP_VERSION       = "v1.1.434";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -6554,6 +6554,9 @@ var ecCategoryTargetSearchResults = [];
 var EC_CATEGORY_TARGET_SEARCH_LIMIT = 300;
 var ecMallDefaultProviders = ["rakuten", "yahoo_shopping", "yahoo_auction"];
 var ecMallFallbackToLegacySurveys = false;
+var EC_PRICE_LIST_DEFAULT_LIMIT = 500;
+var EC_PRICE_LIST_SEARCH_SCAN_LIMIT = 5000;
+var EC_PRICE_LIST_PAGE_SIZE = 1000;
 var ecPriceHistoryGroupMap = {};
 var ecPriceHistoryState = null;
 var currentSalesPricingDkdId = null;
@@ -12006,41 +12009,115 @@ async function enterRakutenPriceList() {
   await loadRakutenPriceList();
 }
 
+function ecPriceListGroupKey(row) {
+  row = row || {};
+  if (row.target_id) return "target:" + row.target_id;
+  if (row.dkd_shohin_id) return "dkd:" + row.dkd_shohin_id;
+  return "search:" + String(row.search_number || row.manufacturer_part_number || row.genuine_part_number || "");
+}
+
+function ecPriceListSearchMatches(value, rawQuery, normalizedQuery, compactQuery) {
+  if (value === null || value === undefined || value === "") return false;
+  var text = normalizeAsciiWidth(String(value)).toLowerCase();
+  if (rawQuery && text.indexOf(rawQuery) >= 0) return true;
+  if (compactQuery && normalizedContains(value, compactQuery)) return true;
+  return !!(normalizedQuery && normalizePartQuery(value).indexOf(normalizedQuery) >= 0);
+}
+
+function ecPriceListRowMatchesSearch(row, q) {
+  q = normalizeAsciiWidth(String(q || "")).trim();
+  if (!q) return true;
+  var rawQuery = q.toLowerCase();
+  var normalizedQuery = normalizePartQuery(q);
+  var compactQuery = norm(q);
+  var values = [
+    row.dkd_shohin_id,
+    row.shohin_cd,
+    row.search_number,
+    row.genuine_part_number,
+    row.genuine_part_number_2,
+    row.manufacturer_part_number,
+    row.daiko_part_number,
+    row.manufacturer,
+    row.category,
+    row.seller_id,
+    row.seller_name,
+    row.item_name,
+    row.source_type,
+    row.provider_key ? ecMallProviderLabel(row.provider_key) : ""
+  ];
+  return values.some(function(value) {
+    return ecPriceListSearchMatches(value, rawQuery, normalizedQuery, compactQuery);
+  });
+}
+
+function filterEcPriceResearchRowsForList(rows, q) {
+  q = normalizeAsciiWidth(String(q || "")).trim();
+  if (!q) return rows || [];
+  var groups = {};
+  (rows || []).forEach(function(row) {
+    var key = ecPriceListGroupKey(row);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(row);
+  });
+  var out = [];
+  Object.keys(groups).forEach(function(key) {
+    if (groups[key].some(function(row) { return ecPriceListRowMatchesSearch(row, q); })) {
+      out = out.concat(groups[key]);
+    }
+  });
+  return out;
+}
+
+function filterRakutenLegacyRowsForList(rows, q) {
+  q = normalizeAsciiWidth(String(q || "")).trim();
+  if (!q) return rows || [];
+  return (rows || []).filter(function(row) {
+    return ecPriceListRowMatchesSearch(row, q);
+  });
+}
+
+async function fetchEcPriceListRows(tableName, selectColumns, orderColumn, maxRows) {
+  var rows = [];
+  var limit = Math.max(1, parseInt(maxRows || EC_PRICE_LIST_DEFAULT_LIMIT, 10) || EC_PRICE_LIST_DEFAULT_LIMIT);
+  var pageSize = Math.min(EC_PRICE_LIST_PAGE_SIZE, limit);
+  for (var from = 0; from < limit; from += pageSize) {
+    var to = Math.min(from + pageSize, limit) - 1;
+    var r = await sb.from(tableName)
+      .select(selectColumns)
+      .order(orderColumn, { ascending: false })
+      .range(from, to);
+    if (r.error) return r;
+    var page = r.data || [];
+    rows = rows.concat(page);
+    if (page.length < (to - from + 1)) break;
+  }
+  return { data: rows, error: null };
+}
+
 async function loadRakutenPriceList() {
   var q = (document.getElementById("rakuten-list-search") || {}).value || "";
-  q = q.trim();
+  q = normalizeAsciiWidth(q).trim();
   try {
     ecMallFallbackToLegacySurveys = false;
-    var query = sb.from("ec_price_research_latest_best3")
-      .select("id,run_id,target_id,dkd_shohin_id,shohin_cd,manufacturer,category,daiko_part_number,genuine_part_number,genuine_part_number_2,manufacturer_part_number,search_number,provider_key,product_type,rank_no,seller_id,seller_name,item_name,item_url,price_jpy,shipping_jpy,total_price_jpy,source_method,surveyed_at")
-      .order("surveyed_at", { ascending: false })
-      .limit(500);
-    if (q) {
-      if (/^\d+$/.test(q)) {
-        query = query.or("dkd_shohin_id.eq." + parseInt(q, 10) + ",search_number.ilike.%" + q + "%,genuine_part_number.ilike.%" + q + "%,genuine_part_number_2.ilike.%" + q + "%,manufacturer_part_number.ilike.%" + q + "%,seller_name.ilike.%" + q + "%");
-      } else {
-        query = query.or("search_number.ilike.%" + q + "%,genuine_part_number.ilike.%" + q + "%,genuine_part_number_2.ilike.%" + q + "%,manufacturer_part_number.ilike.%" + q + "%,manufacturer.ilike.%" + q + "%,seller_name.ilike.%" + q + "%");
-      }
-    }
-    var r = await query;
+    var r = await fetchEcPriceListRows(
+      "ec_price_research_latest_best3",
+      "id,run_id,target_id,dkd_shohin_id,shohin_cd,manufacturer,category,daiko_part_number,genuine_part_number,genuine_part_number_2,manufacturer_part_number,search_number,provider_key,product_type,rank_no,seller_id,seller_name,item_name,item_url,price_jpy,shipping_jpy,total_price_jpy,source_method,surveyed_at",
+      "surveyed_at",
+      q ? EC_PRICE_LIST_SEARCH_SCAN_LIMIT : EC_PRICE_LIST_DEFAULT_LIMIT
+    );
     if (r.error) throw new Error(r.error.message);
-    renderEcMallPriceList(r.data || []);
+    renderEcMallPriceList(filterEcPriceResearchRowsForList(r.data || [], q));
   } catch(e) {
     console.warn("ec price research list failed; falling back to legacy rakuten list", e);
     ecMallFallbackToLegacySurveys = true;
-    var legacyQuery = sb.from("rakuten_price_surveys")
-      .select("id, part_id, dkd_shohin_id, genuine_part_number, manufacturer_part_number, manufacturer, category, search_number, source_type, result_count, min_price_jpy, avg_price_jpy, max_price_jpy, items, searched_at")
-      .order("searched_at", { ascending: false })
-      .limit(200);
-    if (q) {
-      if (/^\d+$/.test(q)) {
-        legacyQuery = legacyQuery.or("dkd_shohin_id.eq." + parseInt(q, 10) + ",search_number.ilike.%" + q + "%,genuine_part_number.ilike.%" + q + "%,manufacturer_part_number.ilike.%" + q + "%");
-      } else {
-        legacyQuery = legacyQuery.or("search_number.ilike.%" + q + "%,genuine_part_number.ilike.%" + q + "%,manufacturer_part_number.ilike.%" + q + "%,manufacturer.ilike.%" + q + "%");
-      }
-    }
-    var legacyR = await legacyQuery;
-    renderRakutenPriceList(legacyR.data || []);
+    var legacyR = await fetchEcPriceListRows(
+      "rakuten_price_surveys",
+      "id,part_id,dkd_shohin_id,genuine_part_number,manufacturer_part_number,manufacturer,category,search_number,source_type,result_count,min_price_jpy,avg_price_jpy,max_price_jpy,items,searched_at",
+      "searched_at",
+      q ? EC_PRICE_LIST_SEARCH_SCAN_LIMIT : 200
+    );
+    renderRakutenPriceList(filterRakutenLegacyRowsForList(legacyR.data || [], q));
   }
 }
 
