@@ -1762,7 +1762,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.451</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.452</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1791,7 +1791,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.451</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.452</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1821,7 +1821,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.451</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.452</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -6874,7 +6874,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.451";
+var APP_VERSION       = "v1.1.452";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -8370,6 +8370,7 @@ function updateAllHeaders() {
   });
   var g = document.getElementById("menu-greeting");
   if (g) g.textContent = greet;
+  updateComponentsReturnButton();
 }
 
 async function doLogin() {
@@ -20242,18 +20243,24 @@ function canManageComponentsInCurrentContext() {
   return componentReturnScreen === "production-search" && canEditInternalComponents();
 }
 
+function componentReturnButtonText(returnScreen) {
+  if (returnScreen === "production-search") return "\u2190 " + t("production_search_title");
+  if (returnScreen === "product-kind-stock-mgmt") return "\u2190 " + t("screen_product_kind_stock_title");
+  return "\u2190 " + t("mi_search_title");
+}
+
+function updateComponentsReturnButton() {
+  var backBtn = document.getElementById("btn-back-components");
+  if (backBtn) backBtn.textContent = componentReturnButtonText(componentReturnScreen);
+}
+
 async function enterComponentsScreen(returnScreen) {
   if (!currentProduct) { alert(t("welcome_panel")); return; }
   if (!canSeeComponentInfo()) { alert(t("err_perm")); return; }
   componentReturnScreen = returnScreen || "search";
   showScreen("components");
   updateAllHeaders();
-  var backBtn = document.getElementById("btn-back-components");
-  if (backBtn) {
-    backBtn.textContent = componentReturnScreen === "product-kind-stock-mgmt"
-      ? "← " + t("screen_product_kind_stock_title")
-      : t("btn_back_search");
-  }
+  updateComponentsReturnButton();
   await ensureProductVariantsForCurrentDkd(productDkdId(currentProduct));
   updateComponentsContextHeader();
   renderComponentAddPanel();
