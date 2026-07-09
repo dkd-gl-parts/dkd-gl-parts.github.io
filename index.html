@@ -1464,6 +1464,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-body { flex: 1; display: grid; grid-template-columns: minmax(320px, 390px) minmax(0, 1fr); overflow: hidden; background: #f0f2f5; }
 .production-left { display: flex; flex-direction: column; min-width: 0; border-right: 1px solid #e0e0e0; background: #f6f7f9; }
 .production-search { padding: 12px 14px; background: #fff; border-bottom: 1px solid #e8e8e8; }
+.production-category-filter { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; margin-top: 8px; }
+.production-category-filter label { font-size: 11px; font-weight: 700; color: #667085; white-space: nowrap; }
+.production-category-filter .form-select { min-height: 32px; font-size: 13px; }
 .production-ranking-tools { display: flex; gap: 6px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
 .production-ranking-tools .form-select { width: 100%; min-width: 0; }
 .production-filter-row { display: flex; gap: 6px; overflow-x: auto; padding: 8px 14px; background: #fff; border-bottom: 1px solid #eee; }
@@ -1831,7 +1834,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.467</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.468</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1860,7 +1863,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.467</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.468</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1890,7 +1893,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.467</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.468</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1995,6 +1998,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
         </div>
         <div class="clear-row">
           <button class="btn-clear" id="production-clear-btn" data-i18n="btn_clear">クリア</button>
+        </div>
+        <div class="production-category-filter">
+          <label for="production-category-filter" data-i18n="production_category_filter">カテゴリ</label>
+          <select class="form-select" id="production-category-filter"></select>
         </div>
         <div class="production-ranking-tools">
           <button class="btn-sm-edit production-action-secondary" id="production-add-ranking-inline" data-i18n="btn_add_production_ranking">製造リスト追加</button>
@@ -3904,6 +3911,8 @@ var TRANSLATIONS = {
     production_search_hint: "検索条件を指定して検索してください。",
     btn_edit_selected_row: "選択行修正",
     production_instruction_filter: "製造予定リスト",
+    production_category_filter: "カテゴリ",
+    production_category_other: "その他",
     production_filter_ready: "構成部品あり",
     production_filter_need: "構成部品なし",
     production_select_hint: "製造する品番を選択してください",
@@ -4961,6 +4970,8 @@ var TRANSLATIONS = {
     production_search_hint: "Set search conditions and run a search.",
     btn_edit_selected_row: "Edit Selected Row",
     production_instruction_filter: "Production Plan",
+    production_category_filter: "Category",
+    production_category_other: "Other",
     production_filter_ready: "Has components",
     production_filter_need: "Needs components",
     production_select_hint: "Select a product to manufacture",
@@ -6025,6 +6036,8 @@ var TRANSLATIONS = {
     production_search_title: "生产管理",
     production_search_ph: "按零件编号搜索",
     production_instruction_filter: "生产指示",
+    production_category_filter: "类别",
+    production_category_other: "其他",
     production_filter_ready: "有构成零件",
     production_filter_need: "无构成零件",
     production_select_hint: "请选择要生产的品番",
@@ -7053,7 +7066,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.467";
+var APP_VERSION       = "v1.1.468";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -7070,6 +7083,7 @@ var productionLoaded = false;
 var productionRows = [];
 var productionFilteredRows = [];
 var productionFilter = "all";
+var productionCategoryFilter = "all";
 var currentProductionRow = null;
 var componentReturnScreen = "search";
 var componentParallelReturnScreen = "search";
@@ -7847,6 +7861,7 @@ async function applyLanguage(lang) {
   renderMenu();
   if (dataLoaded) { renderCategoryChips(); render(); }
   renderProductionFilterChips();
+  renderProductionCategoryFilterOptions();
   if (currentProduct) { renderPanelStatic(); }
   renderComponentAddPanel();
   renderAssemblyComponentRows();
@@ -7924,6 +7939,7 @@ function captureAppRestoreState(reason) {
     state.screen = "production-search";
     state.q = pqEl ? pqEl.value : "";
     state.filter = productionFilter || "all";
+    state.productionCategory = productionCategoryFilter || "all";
     state.selectedDkdId = currentProductionRow ? productDkdId(currentProductionRow) : (currentProduct ? productDkdId(currentProduct) : "");
     state.limit = productionSearchLimit || SEARCH_INITIAL_LIMIT;
     state.year = yearEl ? yearEl.value : "";
@@ -7980,8 +7996,10 @@ async function restoreAppStateAfterRefresh() {
     if (state.screen === "production-search") {
       await enterProductionSearch();
       productionFilter = state.filter || "all";
+      productionCategoryFilter = normalizeProductionCategoryFilter(state.productionCategory || "all");
       productionSearchLimit = Math.min(Math.max(parseInt(state.limit || SEARCH_INITIAL_LIMIT, 10) || SEARCH_INITIAL_LIMIT, SEARCH_INITIAL_LIMIT), SEARCH_FETCH_LIMIT);
       renderProductionFilterChips();
+      renderProductionCategoryFilterOptions();
       var pqEl = document.getElementById("production-q");
       if (pqEl) pqEl.value = state.q || "";
       var yearEl = document.getElementById("production-year-filter");
@@ -8698,12 +8716,14 @@ async function enterSearch() {
 async function enterProductionSearch() {
   showScreen("production-search");
   productionFilter = "all";
+  productionCategoryFilter = "all";
   productionSearchLimit = SEARCH_INITIAL_LIMIT;
   productionLoaded = false;
   currentProductionRow = null;
   var qEl = document.getElementById("production-q");
   if (qEl) qEl.value = "";
   renderProductionFilterChips();
+  renderProductionCategoryFilterOptions();
   resetProductionSearchView();
 }
 
@@ -8796,9 +8816,9 @@ function productionYearFilterValue() {
 
 function productionInstructionRowsForFilter() {
   var year = productionFilter === "instruction" ? productionYearFilterValue() : "";
-  if (!year) return productionInstructionRows;
-  return productionInstructionRows.filter(function(row) {
-    return String(row.source_year || "") === year;
+  return (productionInstructionRows || []).filter(function(row) {
+    if (year && String(row.source_year || "") !== year) return false;
+    return productionMatchesCategoryFilter(row);
   });
 }
 
@@ -8863,15 +8883,61 @@ function renderProductionFilterChips() {
   }
   addChip("all", t("filter_all"), "filter_all");
   addChip("instruction", t("production_instruction_filter"), "production_instruction_filter");
-  var cats = (categoryOptions && categoryOptions.length) ? categoryOptions : [
-    { category_code: "starter", label_ja: t("filter_starter"), label_en: t("filter_starter"), label_zh: t("filter_starter") },
-    { category_code: "alternator", label_ja: t("filter_alt"), label_en: t("filter_alt"), label_zh: t("filter_alt") }
+}
+
+function productionPrimaryCategoryCodes() {
+  return ["starter", "alternator", "ac_compressor", "distributor"];
+}
+
+function normalizeProductionCategoryFilter(value) {
+  var v = String(value || "all");
+  var allowed = ["all", "other"].concat(productionPrimaryCategoryCodes());
+  return allowed.indexOf(v) >= 0 ? v : "all";
+}
+
+function productionCategoryFilterOptions() {
+  return [
+    { value: "all", label: t("filter_all") },
+    { value: "starter", label: tCat("starter") || t("filter_starter") },
+    { value: "alternator", label: tCat("alternator") || t("filter_alt") },
+    { value: "ac_compressor", label: tCat("ac_compressor") || "ACコンプレッサ" },
+    { value: "distributor", label: tCat("distributor") || "ディストリビュータ" },
+    { value: "other", label: t("production_category_other") }
   ];
-  cats.forEach(function(cat) {
-    var code = cat.category_code || cat.category;
-    if (!code) return;
-    addChip("cat:" + code, categoryOptionLabel(cat), null);
-  });
+}
+
+function renderProductionCategoryFilterOptions() {
+  var select = document.getElementById("production-category-filter");
+  if (!select) return;
+  var current = normalizeProductionCategoryFilter(productionCategoryFilter);
+  select.innerHTML = productionCategoryFilterOptions().map(function(opt) {
+    return "<option value='" + esc(opt.value) + "'>" + esc(opt.label) + "</option>";
+  }).join("");
+  productionCategoryFilter = current;
+  select.value = current;
+}
+
+function productionCategoryCode(row) {
+  return String(row && (row.category_code || row.category) || "");
+}
+
+function productionMatchesCategoryFilter(row) {
+  var filter = normalizeProductionCategoryFilter(productionCategoryFilter);
+  if (filter === "all") return true;
+  var code = productionCategoryCode(row);
+  if (filter === "other") return productionPrimaryCategoryCodes().indexOf(code) < 0;
+  return code === filter;
+}
+
+async function selectProductionCategoryFilter(value) {
+  productionCategoryFilter = normalizeProductionCategoryFilter(value);
+  renderProductionCategoryFilterOptions();
+  productionSearchLimit = SEARCH_INITIAL_LIMIT;
+  productionLoaded = false;
+  currentProductionRow = null;
+  await loadProductionProducts();
+  renderProductionList();
+  renderProductionDetail(currentProductionRow);
 }
 
 async function selectProductionFilter(filter) {
@@ -8947,8 +9013,10 @@ async function loadProductionProducts(options) {
   if (countEl) countEl.textContent = t("loading");
   var qEl = document.getElementById("production-q");
   var q = qEl ? qEl.value.trim() : "";
-  var categoryFilter = productionFilter.indexOf("cat:") === 0 ? productionFilter.slice(4) : null;
-  if (!q && productionFilter === "all") {
+  var selectedCategory = normalizeProductionCategoryFilter(productionCategoryFilter);
+  var categoryFilter = (selectedCategory !== "all" && selectedCategory !== "other") ? selectedCategory : null;
+  var searchFetchLimit = selectedCategory === "other" ? Math.min(productionSearchLimit * 4, SEARCH_FETCH_LIMIT) : productionSearchLimit;
+  if (!q && productionFilter === "all" && selectedCategory === "all") {
     productionLoaded = false;
     resetProductionSearchView();
     return;
@@ -8968,10 +9036,12 @@ async function loadProductionProducts(options) {
   }
   var r;
   if (q) {
-    r = await fetchCoreProductMasterMatches(q, categoryFilter, productionSearchLimit);
+    r = await fetchCoreProductMasterMatches(q, categoryFilter, searchFetchLimit);
   } else if (productionFilter === "instruction") {
     var instructionRows = productionInstructionRowsForFilter().slice(0, productionSearchLimit);
     r = { data: instructionRows.map(function(inst) { return productionRowFromInstruction(inst, {}); }), error: null };
+  } else if (selectedCategory === "other") {
+    r = await fetchProductionOtherCategoryProducts(productionSearchLimit);
   } else if (categoryFilter) {
     r = await fetchCategoryProducts(categoryFilter, productionSearchLimit);
   } else {
@@ -8989,7 +9059,7 @@ async function loadProductionProducts(options) {
     }
   }
   if (!r.error && q && !(r.data || []).length) {
-    var slResult = await fetchSlPartProducts(q, categoryFilter, productionSearchLimit);
+    var slResult = await fetchSlPartProducts(q, categoryFilter, searchFetchLimit);
     if (!slResult.error && (slResult.data || []).length) {
       r = slResult;
     } else if (slResult.error) {
@@ -9004,6 +9074,9 @@ async function loadProductionProducts(options) {
     return;
   }
   productionRows = r.data || [];
+  if (selectedCategory !== "all") {
+    productionRows = productionRows.filter(productionMatchesCategoryFilter).slice(0, productionSearchLimit);
+  }
   componentUsageCountMap = {};
   productionComponentKindCountMap = {};
   coreStockQtyMap = {};
@@ -9083,14 +9156,10 @@ function productionMatchesQuery(row, q) {
 function productionMatchesFilter(row) {
   var componentKey = productDkdId(row);
   var componentCount = Object.prototype.hasOwnProperty.call(componentUsageCountMap, componentKey) ? componentUsageCountMap[componentKey] : (row.component_count || 0);
+  if (!productionMatchesCategoryFilter(row)) return false;
   if (productionFilter === "instruction") return !!productionInstructionFor(row);
   if (productionFilter === "ready") return componentCount > 0;
   if (productionFilter === "need") return componentCount <= 0;
-  if (productionFilter.indexOf("cat:") === 0) {
-    var cat = productionFilter.slice(4);
-    return row.category_code === cat || row.category === cat;
-  }
-  if (productionFilter === "starter" || productionFilter === "alternator") return row.category_code === productionFilter;
   return true;
 }
 
@@ -19064,6 +19133,19 @@ async function fetchCategoryProducts(categoryFilter, maxRows) {
   return byName;
 }
 
+async function fetchProductionOtherCategoryProducts(maxRows) {
+  maxRows = maxRows || SEARCH_FETCH_LIMIT;
+  var fetchLimit = Math.min(Math.max(maxRows * 4, maxRows), SEARCH_FETCH_LIMIT);
+  var r = await sb.from("core_product_search_view")
+    .select("*")
+    .order("updated_at", { ascending: false })
+    .limit(fetchLimit);
+  if (!r.error) {
+    r.data = (r.data || []).filter(productionMatchesCategoryFilter).slice(0, maxRows);
+  }
+  return r;
+}
+
 async function fetchSlProductsFromLoadedMap(maxRows) {
   maxRows = maxRows || productSearchLimit;
   var dkdIds = Object.keys(slPresenceMap || {}).concat(Object.keys(slPartsMap || {})).map(function(key) {
@@ -20104,9 +20186,11 @@ async function openProductionProductByDkdId(dkdId, options) {
   currentProductionRow = row;
   if (options.syncSearch !== false) {
     productionFilter = "all";
+    productionCategoryFilter = "all";
     var qEl = document.getElementById("production-q");
     if (qEl) qEl.value = productionSearchTermForRow(row, id);
     renderProductionFilterChips();
+    renderProductionCategoryFilterOptions();
   }
   showScreen("production-search");
   updateAllHeaders();
@@ -29458,12 +29542,13 @@ document.getElementById("production-search-btn").addEventListener("click", async
     metadata: {
       query: (document.getElementById("production-q").value || "").trim(),
       filter: productionFilter,
+      category: productionCategoryFilter,
       result_count: productionRows.length,
       visible_count: productionFilteredRows.length,
       limit: productionSearchLimit,
       source: "button"
     },
-    throttleKey: "production:" + ((document.getElementById("production-q").value || "").trim()) + ":" + productionFilter + ":" + productionSearchLimit,
+    throttleKey: "production:" + ((document.getElementById("production-q").value || "").trim()) + ":" + productionFilter + ":" + productionCategoryFilter + ":" + productionSearchLimit,
     throttleMs: 3000
   });
 });
@@ -29482,12 +29567,13 @@ document.getElementById("production-q").addEventListener("keydown", async functi
       metadata: {
         query: (document.getElementById("production-q").value || "").trim(),
         filter: productionFilter,
+        category: productionCategoryFilter,
         result_count: productionRows.length,
         visible_count: productionFilteredRows.length,
         limit: productionSearchLimit,
         source: "enter"
       },
-      throttleKey: "production:" + ((document.getElementById("production-q").value || "").trim()) + ":" + productionFilter + ":" + productionSearchLimit,
+      throttleKey: "production:" + ((document.getElementById("production-q").value || "").trim()) + ":" + productionFilter + ":" + productionCategoryFilter + ":" + productionSearchLimit,
       throttleMs: 3000
     });
   }
@@ -29495,11 +29581,19 @@ document.getElementById("production-q").addEventListener("keydown", async functi
 document.getElementById("production-clear-btn").addEventListener("click", async function(){
   document.getElementById("production-q").value = "";
   productionFilter = "all";
+  productionCategoryFilter = "all";
   productionSearchLimit = SEARCH_INITIAL_LIMIT;
   document.querySelectorAll("[data-production-filter]").forEach(function(c){ c.classList.toggle("active", c.dataset.productionFilter === "all"); });
+  renderProductionCategoryFilterOptions();
   productionLoaded = false;
   resetProductionSearchView();
 });
+var productionCategoryFilterEl = document.getElementById("production-category-filter");
+if (productionCategoryFilterEl) {
+  productionCategoryFilterEl.addEventListener("change", async function(){
+    await selectProductionCategoryFilter(productionCategoryFilterEl.value);
+  });
+}
 var productionYearFilterEl = document.getElementById("production-year-filter");
 if (productionYearFilterEl) {
   productionYearFilterEl.addEventListener("change", async function(){
