@@ -1831,7 +1831,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.466</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.467</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1860,7 +1860,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.466</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.467</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1890,7 +1890,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.466</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.467</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -7053,7 +7053,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.466";
+var APP_VERSION       = "v1.1.467";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -12847,6 +12847,14 @@ function filterRakutenLegacyRowsForList(rows, q) {
   });
 }
 
+function ecMallSelectColumnsWithoutRawPayload(selectColumns) {
+  return String(selectColumns || "").split(",").map(function(col) {
+    return col.trim();
+  }).filter(function(col) {
+    return col && col !== "raw_payload";
+  }).join(",");
+}
+
 async function fetchEcPriceListRows(tableName, selectColumns, orderColumn, maxRows) {
   var rows = [];
   var limit = Math.max(1, parseInt(maxRows || EC_PRICE_LIST_DEFAULT_LIMIT, 10) || EC_PRICE_LIST_DEFAULT_LIMIT);
@@ -12857,7 +12865,14 @@ async function fetchEcPriceListRows(tableName, selectColumns, orderColumn, maxRo
       .select(selectColumns)
       .order(orderColumn, { ascending: false })
       .range(from, to);
-    if (r.error) return r;
+    if (r.error) {
+      var fallbackColumns = selectColumns.indexOf("raw_payload") >= 0 ? ecMallSelectColumnsWithoutRawPayload(selectColumns) : "";
+      if (fallbackColumns) {
+        console.warn("raw_payload select failed; retrying without raw_payload", r.error);
+        return fetchEcPriceListRows(tableName, fallbackColumns, orderColumn, maxRows);
+      }
+      return r;
+    }
     var page = r.data || [];
     rows = rows.concat(page);
     if (page.length < (to - from + 1)) break;
@@ -12971,24 +12986,33 @@ function ecPriceHistoryGroupMeta(group, rows) {
 async function fetchEcPriceHistoryRowsForGroup(group) {
   var r = (group && group.meta) || group || {};
   var cols = "id,run_id,target_id,dkd_shohin_id,search_keyword,provider_key,product_type,rank_no,seller_id,seller_name,item_name,item_url,price_jpy,shipping_jpy,total_price_jpy,raw_payload,surveyed_at";
-  var query = sb.from("ec_price_research_results")
-    .select(cols)
-    .order("surveyed_at", { ascending: true })
-    .limit(5000);
-  if (r.dkd_shohin_id) {
-    query = query.eq("dkd_shohin_id", parseInt(r.dkd_shohin_id, 10));
-  } else if (r.target_id) {
-    query = query.eq("target_id", r.target_id);
-  } else if (r.search_number) {
-    query = query.eq("search_keyword", r.search_number);
-  } else if (r.manufacturer_part_number) {
-    query = query.eq("search_keyword", r.manufacturer_part_number);
-  } else if (r.genuine_part_number) {
-    query = query.eq("search_keyword", r.genuine_part_number);
-  } else {
-    return [];
+  function buildQuery(selectColumns) {
+    var query = sb.from("ec_price_research_results")
+      .select(selectColumns)
+      .order("surveyed_at", { ascending: true })
+      .limit(5000);
+    if (r.dkd_shohin_id) {
+      query = query.eq("dkd_shohin_id", parseInt(r.dkd_shohin_id, 10));
+    } else if (r.target_id) {
+      query = query.eq("target_id", r.target_id);
+    } else if (r.search_number) {
+      query = query.eq("search_keyword", r.search_number);
+    } else if (r.manufacturer_part_number) {
+      query = query.eq("search_keyword", r.manufacturer_part_number);
+    } else if (r.genuine_part_number) {
+      query = query.eq("search_keyword", r.genuine_part_number);
+    } else {
+      return null;
+    }
+    return query;
   }
+  var query = buildQuery(cols);
+  if (!query) return [];
   var res = await query;
+  if (res.error && cols.indexOf("raw_payload") >= 0) {
+    console.warn("price history raw_payload select failed; retrying without raw_payload", res.error);
+    res = await buildQuery(ecMallSelectColumnsWithoutRawPayload(cols));
+  }
   if (res.error) throw new Error(res.error.message);
   return res.data || [];
 }
@@ -25347,14 +25371,24 @@ function ecMallProductTypeSort(type) {
 async function fetchEcMallLatestBest3ForProduct(product) {
   product = product || {};
   var selectCols = "id,dkd_shohin_id,search_number,provider_key,product_type,rank_no,seller_id,seller_name,item_url,price_jpy,total_price_jpy,raw_payload,surveyed_at";
+  async function runBest3Query(buildQuery) {
+    var res = await buildQuery(selectCols);
+    if (res.error && selectCols.indexOf("raw_payload") >= 0) {
+      console.warn("latest best3 raw_payload select failed; retrying without raw_payload", res.error);
+      res = await buildQuery(ecMallSelectColumnsWithoutRawPayload(selectCols));
+    }
+    return res;
+  }
   var dkdId = parseInt(productDkdId(product), 10);
   if (!isNaN(dkdId)) {
-    var byDkd = await sb.from("ec_price_research_latest_best3")
-      .select(selectCols)
-      .eq("dkd_shohin_id", dkdId)
-      .order("product_type", { ascending: true })
-      .order("rank_no", { ascending: true })
-      .limit(30);
+    var byDkd = await runBest3Query(function(cols) {
+      return sb.from("ec_price_research_latest_best3")
+        .select(cols)
+        .eq("dkd_shohin_id", dkdId)
+        .order("product_type", { ascending: true })
+        .order("rank_no", { ascending: true })
+        .limit(30);
+    });
     if (byDkd.error) throw byDkd.error;
     if ((byDkd.data || []).length) return byDkd.data || [];
   }
@@ -25366,12 +25400,14 @@ async function fetchEcMallLatestBest3ForProduct(product) {
   ].map(cleanPartNumberValue).filter(Boolean);
   candidates = Array.from(new Set(candidates));
   if (!candidates.length) return [];
-  var byKeyword = await sb.from("ec_price_research_latest_best3")
-    .select(selectCols)
-    .in("search_number", candidates)
-    .order("product_type", { ascending: true })
-    .order("rank_no", { ascending: true })
-    .limit(30);
+  var byKeyword = await runBest3Query(function(cols) {
+    return sb.from("ec_price_research_latest_best3")
+      .select(cols)
+      .in("search_number", candidates)
+      .order("product_type", { ascending: true })
+      .order("rank_no", { ascending: true })
+      .limit(30);
+  });
   if (byKeyword.error) throw byKeyword.error;
   return byKeyword.data || [];
 }
