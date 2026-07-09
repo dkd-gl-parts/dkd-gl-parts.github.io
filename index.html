@@ -603,19 +603,32 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .manufacturing-cost-listbar .btn-danger:hover { background: #ffe8e8; }
 .manufacturing-cost-status { color: #64748b; font-size: 12px; line-height: 1.4; min-height: 18px; }
 .manufacturing-cost-hint { color: #667085; font-size: 12px; line-height: 1.6; margin: -4px 0 12px; }
-.manufacturing-cost-candidates { margin: 10px 0 12px; }
+.manufacturing-cost-candidates { margin: 12px 0; }
 .manufacturing-cost-candidates:empty { display: none; }
-.manufacturing-cost-candidate-panel { border: 1px solid #dce8ff; border-radius: 10px; background: #fbfdff; padding: 10px 12px; }
+.manufacturing-cost-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.manufacturing-cost-section-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.manufacturing-cost-section-title strong { color: #111827; font-size: 14px; font-weight: 900; }
+.manufacturing-cost-section-title span { color: #667085; font-size: 12px; font-weight: 700; }
+.manufacturing-cost-section-note { color: #667085; font-size: 12px; line-height: 1.45; margin-top: 2px; }
+.manufacturing-cost-section-badge { display: inline-flex; align-items: center; justify-content: center; min-height: 22px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 900; white-space: nowrap; }
+.manufacturing-cost-section-badge.candidate { color: #1d4ed8; background: #eaf3ff; border: 1px solid #bfdbfe; }
+.manufacturing-cost-section-badge.selected { color: #16803a; background: #e9f8ed; border: 1px solid #bdebc8; }
+.manufacturing-cost-candidate-panel { border: 1px solid #bdd7ff; border-radius: 10px; background: #f7fbff; padding: 12px; box-shadow: 0 1px 5px rgba(37,99,235,0.08); }
 .manufacturing-cost-candidate-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
 .manufacturing-cost-candidate-title { font-size: 13px; font-weight: 800; color: #1a1a2e; }
 .manufacturing-cost-candidate-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
 .manufacturing-cost-candidate-actions .btn-secondary, .manufacturing-cost-candidate-actions .btn-primary { min-height: 30px; padding: 0 10px; font-size: 12px; }
 .manufacturing-cost-candidate-list { display: grid; gap: 6px; max-height: 300px; overflow: auto; padding-right: 2px; }
 .manufacturing-cost-candidate-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 8px; border: 1px solid #edf2fb; border-radius: 8px; background: #fff; padding: 8px 10px; }
+.manufacturing-cost-candidate-row.added { background: #f4fbf6; border-color: #cdebd4; }
 .manufacturing-cost-candidate-row input { width: 16px; height: 16px; }
 .manufacturing-cost-candidate-main { font-size: 13px; font-weight: 800; color: #1a1a2e; line-height: 1.35; overflow-wrap: anywhere; }
 .manufacturing-cost-candidate-sub { color: #667085; font-size: 11px; line-height: 1.45; margin-top: 2px; overflow-wrap: anywhere; }
-.manufacturing-cost-candidate-kind { justify-self: end; color: #1a6fd4; background: #edf5ff; border: 1px solid #d7e9ff; border-radius: 999px; padding: 3px 8px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.manufacturing-cost-candidate-side { display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
+.manufacturing-cost-candidate-kind { color: #1a6fd4; background: #edf5ff; border: 1px solid #d7e9ff; border-radius: 999px; padding: 3px 8px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.manufacturing-cost-candidate-added { color: #16803a; background: #e9f8ed; border: 1px solid #bdebc8; border-radius: 999px; padding: 3px 8px; font-size: 11px; font-weight: 900; white-space: nowrap; }
+.manufacturing-cost-selected-panel { margin-top: 12px; border: 1px solid #caead2; border-radius: 10px; background: #fbfffc; padding: 12px; box-shadow: 0 1px 5px rgba(22,128,58,0.08); }
+.manufacturing-cost-selected-panel .mgmt-count { margin-left: auto; font-weight: 800; color: #16803a; }
 .manufacturing-cost-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 10px 0 12px; }
 .manufacturing-cost-stat { border: 1px solid #e4ebf7; border-radius: 8px; background: #fbfdff; padding: 10px 12px; }
 .manufacturing-cost-stat span { display: block; color: #667085; font-size: 11px; font-weight: 700; margin-bottom: 4px; }
@@ -655,7 +668,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .manufacturing-cost-candidate-head { align-items: stretch; flex-direction: column; }
   .manufacturing-cost-candidate-actions { justify-content: flex-start; }
   .manufacturing-cost-candidate-row { grid-template-columns: 26px minmax(0, 1fr); }
-  .manufacturing-cost-candidate-kind { grid-column: 2; justify-self: start; }
+  .manufacturing-cost-candidate-side { grid-column: 2; justify-content: flex-start; }
+  .manufacturing-cost-section-head { align-items: stretch; flex-direction: column; }
   .manufacturing-cost-table { min-width: 920px; }
 }
 @media(max-width:760px){
@@ -1736,7 +1750,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.448</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.449</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1765,7 +1779,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.448</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.449</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1795,7 +1809,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.448</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.449</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -2831,9 +2845,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     </div>
     <div class="manufacturing-cost-hint" data-i18n="manufacturing_cost_hint">品番を複数指定するか、カテゴリを選んで計算します。検索なしの全件計算は負荷を避けるため行いません。</div>
     <div id="manufacturing-cost-candidates" class="manufacturing-cost-candidates"></div>
-    <div class="mgmt-count" id="manufacturing-cost-count"></div>
-    <div id="manufacturing-cost-summary"></div>
-    <div id="manufacturing-cost-list"><div class="empty" data-i18n="manufacturing_cost_search_hint">条件を指定して原価計算してください。</div></div>
+    <div class="manufacturing-cost-selected-panel">
+      <div class="manufacturing-cost-section-head">
+        <div>
+          <div class="manufacturing-cost-section-title">
+            <span class="manufacturing-cost-section-badge selected" data-i18n="manufacturing_cost_selected_badge">決定済み</span>
+            <strong data-i18n="manufacturing_cost_selected_title">原価計算対象リスト</strong>
+          </div>
+          <div class="manufacturing-cost-section-note" data-i18n="manufacturing_cost_selected_note">ここに入っている品番だけをリスト保存します。</div>
+        </div>
+        <div class="mgmt-count" id="manufacturing-cost-count"></div>
+      </div>
+      <div id="manufacturing-cost-summary"></div>
+      <div id="manufacturing-cost-list"><div class="empty" data-i18n="manufacturing_cost_search_hint">条件を指定して原価計算してください。</div></div>
+    </div>
   </div>
 </div>
 
@@ -3970,8 +3995,16 @@ var TRANSLATIONS = {
     manufacturing_cost_calc: "原価計算",
     manufacturing_cost_find_candidates: "候補検索",
     manufacturing_cost_calc_selected: "選択品番を追加して原価計算",
+    manufacturing_cost_candidate_badge: "候補",
+    manufacturing_cost_candidate_title: "未決定の候補品番",
+    manufacturing_cost_candidate_note: "チェックした品番を下の決定リストへ追加します。",
     manufacturing_cost_candidate_count: "候補 {n} 件",
     manufacturing_cost_candidate_search_hint: "候補から採用する品番を選択して原価計算してください。",
+    manufacturing_cost_already_added: "追加済み",
+    manufacturing_cost_selected_badge: "決定済み",
+    manufacturing_cost_selected_title: "原価計算対象リスト",
+    manufacturing_cost_selected_note: "ここに入っている品番だけをリスト保存します。",
+    manufacturing_cost_selected_count: "決定 {n} 件",
     manufacturing_cost_no_candidate_selected: "原価計算する品番を選択してください。",
     manufacturing_cost_select_all: "全選択",
     manufacturing_cost_clear_selection: "全解除",
@@ -4997,8 +5030,16 @@ var TRANSLATIONS = {
     manufacturing_cost_calc: "Calculate",
     manufacturing_cost_find_candidates: "Find Candidates",
     manufacturing_cost_calc_selected: "Add Selected and Calculate",
+    manufacturing_cost_candidate_badge: "Candidates",
+    manufacturing_cost_candidate_title: "Undecided Products",
+    manufacturing_cost_candidate_note: "Checked products will be added to the selected cost list below.",
     manufacturing_cost_candidate_count: "{n} candidates",
     manufacturing_cost_candidate_search_hint: "Select products from the candidates before calculating cost.",
+    manufacturing_cost_already_added: "Added",
+    manufacturing_cost_selected_badge: "Selected",
+    manufacturing_cost_selected_title: "Cost Calculation List",
+    manufacturing_cost_selected_note: "Only products in this list will be saved.",
+    manufacturing_cost_selected_count: "{n} selected",
     manufacturing_cost_no_candidate_selected: "Select products to calculate.",
     manufacturing_cost_select_all: "Select All",
     manufacturing_cost_clear_selection: "Clear",
@@ -6030,8 +6071,16 @@ var TRANSLATIONS = {
     manufacturing_cost_calc: "成本计算",
     manufacturing_cost_find_candidates: "候选搜索",
     manufacturing_cost_calc_selected: "添加所选品番并计算",
+    manufacturing_cost_candidate_badge: "候选",
+    manufacturing_cost_candidate_title: "未确定候选品番",
+    manufacturing_cost_candidate_note: "勾选的品番会添加到下方的确定列表。",
     manufacturing_cost_candidate_count: "候选 {n} 条",
     manufacturing_cost_candidate_search_hint: "请从候选中选择要采用的品番后再计算成本。",
+    manufacturing_cost_already_added: "已添加",
+    manufacturing_cost_selected_badge: "已确定",
+    manufacturing_cost_selected_title: "成本计算对象列表",
+    manufacturing_cost_selected_note: "只保存此列表中的品番。",
+    manufacturing_cost_selected_count: "已确定 {n} 条",
     manufacturing_cost_no_candidate_selected: "请选择要计算成本的品番。",
     manufacturing_cost_select_all: "全选",
     manufacturing_cost_clear_selection: "全部解除",
@@ -6798,7 +6847,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.448";
+var APP_VERSION       = "v1.1.449";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -14751,7 +14800,7 @@ function renderManufacturingCostEmpty() {
   var countEl = document.getElementById("manufacturing-cost-count");
   var summaryEl = document.getElementById("manufacturing-cost-summary");
   var listEl = document.getElementById("manufacturing-cost-list");
-  if (countEl) countEl.textContent = "";
+  if (countEl) countEl.textContent = tf("manufacturing_cost_selected_count", { n: 0 });
   if (summaryEl) summaryEl.innerHTML = "";
   if (listEl) listEl.innerHTML = "<div class='empty'>" + esc(t("manufacturing_cost_search_hint")) + "</div>";
 }
@@ -14971,6 +15020,14 @@ function manufacturingCostProductTitle(product) {
   return product.manufacturer_part_number || product.genuine_part_number || product.genuine_part_number_2 || ("DKD " + (product.dkd_shohin_id || "-"));
 }
 
+function manufacturingCostCurrentProductIdMap() {
+  var map = {};
+  (manufacturingCostRows || []).forEach(function(row) {
+    if (row && row.productId) map[String(row.productId)] = true;
+  });
+  return map;
+}
+
 function renderManufacturingCostCandidates(products, mode) {
   manufacturingCostCandidateRows = products || [];
   manufacturingCostCandidateMode = mode || "";
@@ -14981,9 +15038,11 @@ function renderManufacturingCostCandidates(products, mode) {
     return;
   }
   var checkedDefault = mode === "category" || manufacturingCostCandidateRows.length === 1;
+  var currentIds = manufacturingCostCurrentProductIdMap();
   var html = "<div class='manufacturing-cost-candidate-panel'>";
-  html += "<div class='manufacturing-cost-candidate-head'>";
-  html += "<div class='manufacturing-cost-candidate-title'>" + esc(tf("manufacturing_cost_candidate_count", { n: manufacturingCostCandidateRows.length })) + "</div>";
+  html += "<div class='manufacturing-cost-section-head'>";
+  html += "<div><div class='manufacturing-cost-section-title'><span class='manufacturing-cost-section-badge candidate'>" + esc(t("manufacturing_cost_candidate_badge")) + "</span><strong>" + esc(t("manufacturing_cost_candidate_title")) + "</strong><span>" + esc(tf("manufacturing_cost_candidate_count", { n: manufacturingCostCandidateRows.length })) + "</span></div>";
+  html += "<div class='manufacturing-cost-section-note'>" + esc(t("manufacturing_cost_candidate_note")) + "</div></div>";
   html += "<div class='manufacturing-cost-candidate-actions'>";
   html += "<button class='btn-secondary' type='button' data-cost-select-all='1'>" + esc(t("manufacturing_cost_select_all")) + "</button>";
   html += "<button class='btn-secondary' type='button' data-cost-clear-selection='1'>" + esc(t("manufacturing_cost_clear_selection")) + "</button>";
@@ -14993,12 +15052,16 @@ function renderManufacturingCostCandidates(products, mode) {
   manufacturingCostCandidateRows.forEach(function(product) {
     var id = productDkdId(product);
     var cat = product.category_code || product.category || "";
+    var isAdded = !!currentIds[String(id || "")];
     var checked = checkedDefault ? " checked" : "";
-    html += "<label class='manufacturing-cost-candidate-row'>";
-    html += "<input type='checkbox' data-cost-candidate-check='1' value='" + esc(String(id || "")) + "'" + checked + ">";
+    if (isAdded) checked = " checked";
+    html += "<label class='manufacturing-cost-candidate-row" + (isAdded ? " added" : "") + "'>";
+    html += "<input type='checkbox' data-cost-candidate-check='1' value='" + esc(String(id || "")) + "'" + checked + (isAdded ? " disabled data-cost-candidate-added='1'" : "") + ">";
     html += "<span><span class='manufacturing-cost-candidate-main'>" + esc(manufacturingCostProductTitle(product)) + "</span>";
     html += "<span class='manufacturing-cost-candidate-sub'>" + esc([product.genuine_part_number, product.genuine_part_number_2, product.manufacturer, "DKD " + (id || "-")].filter(Boolean).join(" / ")) + "</span></span>";
-    html += "<span class='manufacturing-cost-candidate-kind'>" + esc(tCat(cat)) + "</span>";
+    html += "<span class='manufacturing-cost-candidate-side'><span class='manufacturing-cost-candidate-kind'>" + esc(tCat(cat)) + "</span>";
+    if (isAdded) html += "<span class='manufacturing-cost-candidate-added'>" + esc(t("manufacturing_cost_already_added")) + "</span>";
+    html += "</span>";
     html += "</label>";
   });
   html += "</div></div>";
@@ -15017,6 +15080,10 @@ function selectedManufacturingCostCandidateProducts() {
 
 function setManufacturingCostCandidateChecks(checked) {
   document.querySelectorAll("#manufacturing-cost-candidates [data-cost-candidate-check]").forEach(function(el) {
+    if (el.dataset.costCandidateAdded === "1") {
+      el.checked = true;
+      return;
+    }
     el.checked = !!checked;
   });
 }
@@ -15192,7 +15259,7 @@ function renderManufacturingCostRows() {
   var list = document.getElementById("manufacturing-cost-list");
   var countEl = document.getElementById("manufacturing-cost-count");
   if (!list) return;
-  if (countEl) countEl.textContent = manufacturingCostRows.length ? tf("manufacturing_cost_count", { n: manufacturingCostRows.length }) : "";
+  if (countEl) countEl.textContent = tf("manufacturing_cost_selected_count", { n: manufacturingCostRows.length || 0 });
   renderManufacturingCostSummary(manufacturingCostRows);
   if (!manufacturingCostRows.length) {
     list.innerHTML = "<div class='empty'>" + esc(t("no_results")) + "</div>";
@@ -15237,19 +15304,18 @@ async function searchManufacturingCostCandidates() {
   }
   if (candidatesEl) candidatesEl.innerHTML = "<div class='manufacturing-cost-candidate-panel'><div class='loading'>" + esc(t("loading")) + "</div></div>";
   if (list && !hadRows) list.innerHTML = "<div class='empty'>" + esc(t("manufacturing_cost_candidate_search_hint")) + "</div>";
-  if (countEl && !hadRows) countEl.textContent = t("loading");
+  if (countEl && !hadRows) countEl.textContent = tf("manufacturing_cost_selected_count", { n: 0 });
   if (summaryEl && !hadRows) summaryEl.innerHTML = "";
   try {
     var pr = await fetchManufacturingCostProducts(tokens, category);
     if (pr.error) throw pr.error;
     var products = pr.data || [];
     renderManufacturingCostCandidates(products, tokens.length ? "query" : "category");
-    if (countEl && !hadRows) countEl.textContent = products.length ? tf("manufacturing_cost_candidate_count", { n: products.length }) : "";
     if (!products.length && list && !hadRows) list.innerHTML = "<div class='empty'>" + esc(t("no_results")) + "</div>";
   } catch (e) {
     console.warn("manufacturing cost candidate search failed", e);
     manufacturingCostCandidateRows = [];
-    if (countEl && !hadRows) countEl.textContent = "";
+    if (countEl && !hadRows) countEl.textContent = tf("manufacturing_cost_selected_count", { n: 0 });
     if (candidatesEl) candidatesEl.innerHTML = "";
     if (list && !hadRows) list.innerHTML = "<div class='empty'>" + esc(t("msg_part_err") + ": " + ((e && e.message) || String(e))) + "</div>";
     setManufacturingCostListStatus((e && e.message) || String(e), true);
