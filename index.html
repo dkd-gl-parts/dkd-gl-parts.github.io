@@ -1806,7 +1806,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.459</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.460</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1835,7 +1835,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.459</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.460</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1865,7 +1865,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.459</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.460</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -7016,7 +7016,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.459";
+var APP_VERSION       = "v1.1.460";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -15391,7 +15391,7 @@ function manufacturingCostBuildSnapshotMap(items) {
 
 function manufacturingCostProductTitle(product) {
   product = product || {};
-  return product.manufacturer_part_number || product.genuine_part_number || product.genuine_part_number_2 || ("DKD " + (product.dkd_shohin_id || "-"));
+  return product.genuine_part_number || product.genuine_part_number_2 || product.manufacturer_part_number || ("DKD " + (product.dkd_shohin_id || "-"));
 }
 
 function manufacturingCostCurrentProductIdMap() {
@@ -15432,7 +15432,7 @@ function renderManufacturingCostCandidates(products, mode) {
     html += "<label class='manufacturing-cost-candidate-row" + (isAdded ? " added" : "") + "'>";
     html += "<input type='checkbox' data-cost-candidate-check='1' value='" + esc(String(id || "")) + "'" + checked + (isAdded ? " disabled data-cost-candidate-added='1'" : "") + ">";
     html += "<span><span class='manufacturing-cost-candidate-main'>" + esc(manufacturingCostProductTitle(product)) + "</span>";
-    html += "<span class='manufacturing-cost-candidate-sub'>" + esc([product.genuine_part_number, product.genuine_part_number_2, product.manufacturer, "DKD " + (id || "-")].filter(Boolean).join(" / ")) + "</span></span>";
+    html += "<span class='manufacturing-cost-candidate-sub'>" + esc([product.manufacturer_part_number, product.genuine_part_number_2, product.manufacturer, "DKD " + (id || "-")].filter(Boolean).join(" / ")) + "</span></span>";
     html += "<span class='manufacturing-cost-candidate-side'><span class='manufacturing-cost-candidate-kind'>" + esc(tCat(cat)) + "</span>";
     if (isAdded) html += "<span class='manufacturing-cost-candidate-added'>" + esc(t("manufacturing_cost_already_added")) + "</span>";
     html += "</span>";
@@ -15702,7 +15702,7 @@ function renderManufacturingCostRows() {
       : t("manufacturing_cost_core_default_note");
     var detailHtml = renderManufacturingCostComponentDetails(row);
     html += "<tr class='manufacturing-cost-main-row'>";
-    html += "<td><div class='manufacturing-cost-product-main'>" + esc(manufacturingCostProductTitle(p)) + "</div><div class='manufacturing-cost-product-sub'>" + esc([p.genuine_part_number, p.genuine_part_number_2, p.manufacturer, tCat(p.category_code || p.category), "DKD " + (row.productId || "-")].filter(Boolean).join(" / ")) + "</div></td>";
+    html += "<td><div class='manufacturing-cost-product-main'>" + esc(manufacturingCostProductTitle(p)) + "</div><div class='manufacturing-cost-product-sub'>" + esc([p.manufacturer_part_number, p.genuine_part_number_2, p.manufacturer, tCat(p.category_code || p.category), "DKD " + (row.productId || "-")].filter(Boolean).join(" / ")) + "</div></td>";
     html += "<td><div class='manufacturing-cost-money'>" + esc(String(row.componentCount || 0)) + "</div></td>";
     html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.partsCost)) + "</div></td>";
     html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.coreCost)) + "</div><div class='manufacturing-cost-note'>" + esc(coreNote) + "</div></td>";
