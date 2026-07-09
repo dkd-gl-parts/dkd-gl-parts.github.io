@@ -677,11 +677,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .manufacturing-cost-missing { color: #b54708; font-weight: 700; }
 .manufacturing-cost-details { margin-top: 7px; text-align: left; }
 .manufacturing-cost-details summary { cursor: pointer; color: #1a6fd4; font-size: 11px; font-weight: 700; list-style-position: inside; }
-.manufacturing-cost-component-list { margin-top: 6px; border: 1px solid #edf0f5; border-radius: 7px; overflow: hidden; background: #fff; }
-.manufacturing-cost-component-row { display: grid; grid-template-columns: minmax(120px, 1.5fr) 72px 52px 56px 86px; gap: 6px; align-items: center; padding: 5px 7px; border-bottom: 1px solid #edf0f5; font-size: 11px; }
-.manufacturing-cost-component-row:last-child { border-bottom: 0; }
-.manufacturing-cost-component-row.head { background: #f5f7fa; color: #667085; font-weight: 700; }
-.manufacturing-cost-component-row div:nth-child(n+2) { text-align: right; white-space: nowrap; }
+.manufacturing-cost-component-list { display: grid; gap: 6px; margin-top: 6px; }
+.manufacturing-cost-component-card { border: 1px solid #e4e9f1; border-radius: 8px; background: #fff; padding: 7px; font-size: 11px; }
+.manufacturing-cost-component-card.missing-unit { background: #fffaf0; border-color: #fedf89; }
+.manufacturing-cost-component-title { color: #1a1a2e; font-weight: 800; line-height: 1.35; overflow-wrap: anywhere; }
+.manufacturing-cost-component-calc { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; margin-top: 6px; }
+.manufacturing-cost-component-cell { min-width: 0; border: 1px solid #edf0f5; border-radius: 6px; background: #f8fafc; padding: 5px 6px; }
+.manufacturing-cost-component-cell span { display: block; color: #667085; font-size: 10px; font-weight: 700; line-height: 1.2; }
+.manufacturing-cost-component-cell b { display: block; color: #1a1a2e; font-size: 12px; font-weight: 800; line-height: 1.25; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.manufacturing-cost-component-subtotal { background: #eaf7ef; border-color: #c7ead4; }
+.manufacturing-cost-component-subtotal b { color: #16803a; font-size: 13px; }
+.manufacturing-cost-component-formula { margin-top: 5px; color: #667085; font-size: 10px; line-height: 1.35; text-align: right; overflow-wrap: anywhere; }
 @media(max-width:900px){
   .manufacturing-cost-toolbar { grid-template-columns: 1fr; }
   .manufacturing-cost-config-panel { grid-template-columns: 1fr; }
@@ -1781,7 +1787,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.454</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.455</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1810,7 +1816,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.454</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.455</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1840,7 +1846,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.454</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.455</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -4124,9 +4130,11 @@ var TRANSLATIONS = {
     manufacturing_cost_component_detail: "構成部品明細",
     manufacturing_cost_component_name: "部品名",
     manufacturing_cost_unit_price: "単価",
-    manufacturing_cost_quantity: "数量",
+    manufacturing_cost_quantity: "必要個数",
     manufacturing_cost_replacement_rate: "交換率",
-    manufacturing_cost_calculated: "計算額",
+    manufacturing_cost_calculated: "小計",
+    manufacturing_cost_formula: "計算式",
+    manufacturing_cost_unit_price_missing: "単価未設定",
     manufacturing_cost_formula_note: "部品原価 + コア代 + 工賃率 + 工賃額",
     role_admin: "管理者",
     role_system_admin: "システム管理者",
@@ -5167,9 +5175,11 @@ var TRANSLATIONS = {
     manufacturing_cost_component_detail: "Component Details",
     manufacturing_cost_component_name: "Part Name",
     manufacturing_cost_unit_price: "Unit Price",
-    manufacturing_cost_quantity: "Qty",
+    manufacturing_cost_quantity: "Required Qty",
     manufacturing_cost_replacement_rate: "Rate",
-    manufacturing_cost_calculated: "Amount",
+    manufacturing_cost_calculated: "Subtotal",
+    manufacturing_cost_formula: "Formula",
+    manufacturing_cost_unit_price_missing: "No unit price",
     manufacturing_cost_formula_note: "Parts cost + core cost + labor rate + labor amount",
     role_admin: "Admin",
     role_system_admin: "System Admin",
@@ -6216,9 +6226,11 @@ var TRANSLATIONS = {
     manufacturing_cost_component_detail: "构成零件明细",
     manufacturing_cost_component_name: "零件名",
     manufacturing_cost_unit_price: "单价",
-    manufacturing_cost_quantity: "数量",
+    manufacturing_cost_quantity: "所需数量",
     manufacturing_cost_replacement_rate: "更换率",
-    manufacturing_cost_calculated: "计算额",
+    manufacturing_cost_calculated: "小计",
+    manufacturing_cost_formula: "计算式",
+    manufacturing_cost_unit_price_missing: "未设置单价",
     manufacturing_cost_formula_note: "零件成本 + 旧芯成本 + 工费率 + 工费金额",
     role_admin: "管理员",
     role_system_admin: "系统管理员",
@@ -6944,7 +6956,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.454";
+var APP_VERSION       = "v1.1.455";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -15360,16 +15372,22 @@ function renderManufacturingCostComponentDetails(row) {
   if (!row.components.length) return "";
   var html = "<details class='manufacturing-cost-details'><summary>" + esc(t("manufacturing_cost_component_detail")) + "</summary>";
   html += "<div class='manufacturing-cost-component-list'>";
-  html += "<div class='manufacturing-cost-component-row head'><div>" + esc(t("manufacturing_cost_component_name")) + "</div><div>" + esc(t("manufacturing_cost_unit_price")) + "</div><div>" + esc(t("manufacturing_cost_quantity")) + "</div><div>" + esc(t("manufacturing_cost_replacement_rate")) + "</div><div>" + esc(t("manufacturing_cost_calculated")) + "</div></div>";
   row.components.forEach(function(component) {
     var calc = manufacturingCostComponentCalc(component);
     var name = component.component_name || component.component_part_name || component.component_manufacturer_part_number || "-";
-    html += "<div class='manufacturing-cost-component-row'>";
-    html += "<div>" + esc(name) + "<div class='manufacturing-cost-note'>" + esc([component.component_manufacturer, component.component_manufacturer_part_number, component.component_genuine_part_number].filter(Boolean).join(" / ")) + "</div></div>";
-    html += "<div>" + esc(calc.hasUnit ? manufacturingCostYen(calc.unit) : "-") + "</div>";
-    html += "<div>" + esc(String(calc.qty)) + "</div>";
-    html += "<div>" + esc(manufacturingCostPercent(calc.rate)) + "</div>";
-    html += "<div>" + esc(manufacturingCostYen(calc.amount)) + "</div>";
+    var unitText = calc.hasUnit ? manufacturingCostYen(calc.unit) : t("manufacturing_cost_unit_price_missing");
+    var formula = calc.hasUnit
+      ? unitText + " x " + String(calc.qty) + " x " + manufacturingCostPercent(calc.rate) + " = " + manufacturingCostYen(calc.amount)
+      : t("manufacturing_cost_unit_price_missing");
+    html += "<div class='manufacturing-cost-component-card" + (calc.hasUnit ? "" : " missing-unit") + "'>";
+    html += "<div class='manufacturing-cost-component-title'>" + esc(name) + "<div class='manufacturing-cost-note'>" + esc([component.component_manufacturer, component.component_manufacturer_part_number, component.component_genuine_part_number].filter(Boolean).join(" / ")) + "</div></div>";
+    html += "<div class='manufacturing-cost-component-calc'>";
+    html += "<div class='manufacturing-cost-component-cell'><span>" + esc(t("manufacturing_cost_unit_price")) + "</span><b>" + esc(unitText) + "</b></div>";
+    html += "<div class='manufacturing-cost-component-cell'><span>" + esc(t("manufacturing_cost_quantity")) + "</span><b>" + esc(String(calc.qty)) + "</b></div>";
+    html += "<div class='manufacturing-cost-component-cell'><span>" + esc(t("manufacturing_cost_replacement_rate")) + "</span><b>" + esc(manufacturingCostPercent(calc.rate)) + "</b></div>";
+    html += "<div class='manufacturing-cost-component-cell manufacturing-cost-component-subtotal'><span>" + esc(t("manufacturing_cost_calculated")) + "</span><b>" + esc(manufacturingCostYen(calc.amount)) + "</b></div>";
+    html += "</div>";
+    html += "<div class='manufacturing-cost-component-formula'>" + esc(t("manufacturing_cost_formula")) + ": " + esc(formula) + "</div>";
     html += "</div>";
   });
   html += "</div></details>";
