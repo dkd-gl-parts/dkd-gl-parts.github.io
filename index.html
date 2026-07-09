@@ -456,7 +456,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-table-tree th:nth-child(9), .component-table-tree td:nth-child(9) { width: 6%; }
 .component-table-tree th:nth-child(10), .component-table-tree td:nth-child(10) { width: 7%; }
 .component-table-tree th:nth-child(11), .component-table-tree td:nth-child(11) { width: 4%; }
-.component-table .component-action-col { width: 82px; position: sticky; right: 0; z-index: 2; background: #fff; box-shadow: -1px 0 0 #edf0f5; }
+.component-table .component-action-col { width: 132px; position: sticky; right: 0; z-index: 2; background: #fff; box-shadow: -1px 0 0 #edf0f5; }
 .component-table th.component-action-col { z-index: 3; background: #f5f7fa; }
 .component-table .component-cell-qty { text-align: left; white-space: nowrap; }
 .component-table .component-cell-money,
@@ -476,8 +476,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-alt-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: #eef2f7; color: #667085; font-size: 11px; font-weight: 800; }
 .component-alt-badge.has-alt { background: #fff4dc; color: #b97709; }
 .component-child-loading td { color: #667085; background: #fbfcff; }
-.component-edit-actions { display: flex; flex-direction: column; align-items: stretch; gap: 4px; }
-.component-edit-actions .btn-sm-edit { min-height: 24px; padding: 2px 6px; font-size: 11px; line-height: 1.2; white-space: nowrap; }
+.component-edit-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.component-edit-actions .btn-sm-edit { flex: 0 0 auto; min-height: 24px; padding: 2px 7px; font-size: 11px; line-height: 1.2; white-space: nowrap; }
 .component-pn { font-family: monospace; font-size: 12px; color: #444; }
 .component-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
 .component-alt-row td { background: #fbfcff; padding-top: 0; }
@@ -1828,7 +1828,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.461</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.462</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1857,7 +1857,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.461</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.462</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1887,7 +1887,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.461</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.462</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -7038,7 +7038,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.461";
+var APP_VERSION       = "v1.1.462";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
