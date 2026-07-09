@@ -685,24 +685,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .manufacturing-cost-total { color: #1a8c3e; font-size: 16px; }
 .manufacturing-cost-note { color: #8a94a6; font-size: 11px; line-height: 1.45; margin-top: 4px; }
 .manufacturing-cost-missing { color: #b54708; font-weight: 700; }
-.manufacturing-cost-details { margin-top: 7px; text-align: left; border: 1px solid #dce8fb; border-radius: 8px; background: #f8fbff; padding: 6px; }
+.manufacturing-cost-detail-row td { padding: 0 10px 8px; background: #fff; border-top: 0; }
+.manufacturing-cost-details { margin: 0; text-align: left; border: 1px solid #dce8fb; border-radius: 8px; background: #f8fbff; padding: 6px; }
 .manufacturing-cost-details summary { cursor: pointer; color: #1a6fd4; font-size: 11px; font-weight: 800; list-style-position: inside; }
 .manufacturing-cost-details summary::marker { color: #2f6fed; }
 .manufacturing-cost-detail-badges { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 5px; }
 .manufacturing-cost-detail-badge { display: inline-flex; align-items: center; justify-content: center; min-height: 20px; border-radius: 999px; border: 1px solid #d7e8ff; background: #fff; color: #175cd3; padding: 1px 7px; font-size: 10px; font-weight: 900; white-space: nowrap; }
 .manufacturing-cost-detail-badge.total { color: #16803a; border-color: #c7ead4; background: #eefaf2; }
 .manufacturing-cost-detail-badge.warn { color: #b54708; border-color: #fedf89; background: #fff7e6; }
-.manufacturing-cost-component-list { display: grid; gap: 6px; margin-top: 6px; max-height: 260px; overflow-y: auto; padding-right: 2px; }
-.manufacturing-cost-component-card { border: 1px solid #e4e9f1; border-radius: 8px; background: #fff; padding: 7px; font-size: 11px; }
+.manufacturing-cost-component-list { display: grid; gap: 4px; margin-top: 6px; max-height: 220px; overflow: auto; padding-right: 2px; }
+.manufacturing-cost-component-header, .manufacturing-cost-component-card { display: grid; grid-template-columns: minmax(180px, 2fr) minmax(170px, 1.4fr) 92px 58px 72px 104px; align-items: center; gap: 6px; min-width: 820px; }
+.manufacturing-cost-component-header { position: sticky; top: 0; z-index: 1; padding: 5px 8px; border: 1px solid #e2e8f0; border-radius: 7px; background: #eef4ff; color: #667085; font-size: 10px; font-weight: 900; }
+.manufacturing-cost-component-card { border: 1px solid #e4e9f1; border-radius: 7px; background: #fff; padding: 5px 8px; font-size: 11px; }
 .manufacturing-cost-component-card.missing-unit { background: #fffaf0; border-color: #fedf89; }
 .manufacturing-cost-component-title { color: #1a1a2e; font-weight: 800; line-height: 1.35; overflow-wrap: anywhere; }
-.manufacturing-cost-component-calc { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; margin-top: 6px; }
-.manufacturing-cost-component-cell { min-width: 0; border: 1px solid #edf0f5; border-radius: 6px; background: #f8fafc; padding: 5px 6px; }
+.manufacturing-cost-component-part { color: #667085; font-size: 10px; line-height: 1.35; overflow-wrap: anywhere; }
+.manufacturing-cost-component-cell { min-width: 0; border: 1px solid #edf0f5; border-radius: 6px; background: #f8fafc; padding: 4px 6px; }
 .manufacturing-cost-component-cell span { display: block; color: #667085; font-size: 10px; font-weight: 700; line-height: 1.2; }
 .manufacturing-cost-component-cell b { display: block; color: #1a1a2e; font-size: 12px; font-weight: 800; line-height: 1.25; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .manufacturing-cost-component-subtotal { background: #eaf7ef; border-color: #c7ead4; }
 .manufacturing-cost-component-subtotal b { color: #16803a; font-size: 13px; }
-.manufacturing-cost-component-formula { margin-top: 5px; color: #667085; font-size: 10px; line-height: 1.35; text-align: right; overflow-wrap: anywhere; }
+.manufacturing-cost-component-formula { color: #667085; font-size: 10px; line-height: 1.35; text-align: right; overflow-wrap: anywhere; }
 @media(max-width:900px){
   .manufacturing-cost-toolbar { grid-template-columns: 1fr; }
   .manufacturing-cost-config-panel { grid-template-columns: 1fr; }
@@ -1803,7 +1806,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.458</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.459</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1832,7 +1835,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.458</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.459</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1862,7 +1865,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.458</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.459</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -7013,7 +7016,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.458";
+var APP_VERSION       = "v1.1.459";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -15650,22 +15653,26 @@ function renderManufacturingCostComponentDetails(row) {
   if (row.savedSnapshotUsed) html += "<span class='manufacturing-cost-detail-badge'>" + esc(t("manufacturing_cost_saved_snapshot_used")) + "</span>";
   html += "</div>";
   html += "<div class='manufacturing-cost-component-list'>";
+  html += "<div class='manufacturing-cost-component-header'>";
+  html += "<span>" + esc(t("component_name")) + "</span>";
+  html += "<span>" + esc(t("f_part_number")) + "</span>";
+  html += "<span>" + esc(t("manufacturing_cost_unit_price")) + "</span>";
+  html += "<span>" + esc(t("manufacturing_cost_quantity")) + "</span>";
+  html += "<span>" + esc(t("manufacturing_cost_replacement_rate")) + "</span>";
+  html += "<span>" + esc(t("manufacturing_cost_calculated")) + "</span>";
+  html += "</div>";
   row.components.forEach(function(component) {
     var calc = manufacturingCostComponentCalc(component);
     var name = component.component_name || component.component_part_name || component.component_manufacturer_part_number || "-";
     var unitText = calc.hasUnit ? manufacturingCostYen(calc.unit) : t("manufacturing_cost_unit_price_missing");
-    var formula = calc.hasUnit
-      ? unitText + " x " + String(calc.qty) + " x " + manufacturingCostPercent(calc.rate) + " = " + manufacturingCostYen(calc.amount)
-      : t("manufacturing_cost_unit_price_missing");
+    var partText = [component.component_manufacturer, component.component_manufacturer_part_number, component.component_genuine_part_number].filter(Boolean).join(" / ") || "-";
     html += "<div class='manufacturing-cost-component-card" + (calc.hasUnit ? "" : " missing-unit") + "'>";
-    html += "<div class='manufacturing-cost-component-title'>" + esc(name) + "<div class='manufacturing-cost-note'>" + esc([component.component_manufacturer, component.component_manufacturer_part_number, component.component_genuine_part_number].filter(Boolean).join(" / ")) + "</div></div>";
-    html += "<div class='manufacturing-cost-component-calc'>";
-    html += "<div class='manufacturing-cost-component-cell'><span>" + esc(t("manufacturing_cost_unit_price")) + "</span><b>" + esc(unitText) + "</b></div>";
-    html += "<div class='manufacturing-cost-component-cell'><span>" + esc(t("manufacturing_cost_quantity")) + "</span><b>" + esc(String(calc.qty)) + "</b></div>";
-    html += "<div class='manufacturing-cost-component-cell'><span>" + esc(t("manufacturing_cost_replacement_rate")) + "</span><b>" + esc(manufacturingCostPercent(calc.rate)) + "</b></div>";
-    html += "<div class='manufacturing-cost-component-cell manufacturing-cost-component-subtotal'><span>" + esc(t("manufacturing_cost_calculated")) + "</span><b>" + esc(manufacturingCostYen(calc.amount)) + "</b></div>";
-    html += "</div>";
-    html += "<div class='manufacturing-cost-component-formula'>" + esc(t("manufacturing_cost_formula")) + ": " + esc(formula) + "</div>";
+    html += "<div class='manufacturing-cost-component-title'>" + esc(name) + "</div>";
+    html += "<div class='manufacturing-cost-component-part'>" + esc(partText) + "</div>";
+    html += "<div class='manufacturing-cost-component-cell'><b>" + esc(unitText) + "</b></div>";
+    html += "<div class='manufacturing-cost-component-cell'><b>" + esc(String(calc.qty)) + "</b></div>";
+    html += "<div class='manufacturing-cost-component-cell'><b>" + esc(manufacturingCostPercent(calc.rate)) + "</b></div>";
+    html += "<div class='manufacturing-cost-component-cell manufacturing-cost-component-subtotal'><b>" + esc(manufacturingCostYen(calc.amount)) + "</b></div>";
     html += "</div>";
   });
   html += "</div></details>";
@@ -15693,8 +15700,9 @@ function renderManufacturingCostRows() {
     var coreNote = row.coreCostCategorySpecific
       ? tf("manufacturing_cost_core_category_note", { category: manufacturingCostCategoryLabel(row.coreCostCategory) })
       : t("manufacturing_cost_core_default_note");
-    html += "<tr>";
-    html += "<td><div class='manufacturing-cost-product-main'>" + esc(manufacturingCostProductTitle(p)) + "</div><div class='manufacturing-cost-product-sub'>" + esc([p.genuine_part_number, p.genuine_part_number_2, p.manufacturer, tCat(p.category_code || p.category), "DKD " + (row.productId || "-")].filter(Boolean).join(" / ")) + "</div>" + renderManufacturingCostComponentDetails(row) + "</td>";
+    var detailHtml = renderManufacturingCostComponentDetails(row);
+    html += "<tr class='manufacturing-cost-main-row'>";
+    html += "<td><div class='manufacturing-cost-product-main'>" + esc(manufacturingCostProductTitle(p)) + "</div><div class='manufacturing-cost-product-sub'>" + esc([p.genuine_part_number, p.genuine_part_number_2, p.manufacturer, tCat(p.category_code || p.category), "DKD " + (row.productId || "-")].filter(Boolean).join(" / ")) + "</div></td>";
     html += "<td><div class='manufacturing-cost-money'>" + esc(String(row.componentCount || 0)) + "</div></td>";
     html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.partsCost)) + "</div></td>";
     html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.coreCost)) + "</div><div class='manufacturing-cost-note'>" + esc(coreNote) + "</div></td>";
@@ -15702,6 +15710,7 @@ function renderManufacturingCostRows() {
     html += "<td><div class='manufacturing-cost-money manufacturing-cost-total'>" + esc(manufacturingCostYen(row.totalCost)) + "</div></td>";
     html += "<td>" + (notes.length ? "<div class='manufacturing-cost-missing'>" + esc(notes.join(" / ")) + "</div>" : "<div class='manufacturing-cost-note'>-</div>") + "</td>";
     html += "</tr>";
+    if (detailHtml) html += "<tr class='manufacturing-cost-detail-row'><td colspan='7'>" + detailHtml + "</td></tr>";
   });
   html += "</table></div>";
   list.innerHTML = html;
