@@ -598,13 +598,29 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .purchase-link-selected { min-height: 20px; color: #1a6fd4; font-size: 12px; margin-top: 8px; }
 .purchase-link-error { color: #d33; font-size: 12px; min-height: 18px; margin-top: 8px; }
 .manufacturing-cost-body { max-width: 1320px; }
-.manufacturing-cost-toolbar { display: grid; grid-template-columns: minmax(340px, 1.25fr) 170px 118px 110px 110px 110px; align-items: end; }
+.manufacturing-cost-toolbar { display: grid; grid-template-columns: minmax(330px, .8fr) minmax(660px, 1.6fr); align-items: stretch; gap: 10px; }
 .manufacturing-cost-toolbar .mgmt-search { min-width: 0; }
-.manufacturing-cost-query-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.manufacturing-cost-query-field { display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; min-width: 0; }
 .manufacturing-cost-query-field label { color: #64748b; font-size: 11px; font-weight: 700; line-height: 1.1; }
 .manufacturing-cost-query-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px; align-items: center; }
 .manufacturing-cost-query-row .mgmt-search { width: 100%; }
 .manufacturing-cost-query-row .btn-secondary, .manufacturing-cost-query-row .btn-primary { min-height: 36px; padding: 0 12px; white-space: nowrap; }
+.manufacturing-cost-config-panel { display: grid; grid-template-columns: minmax(220px, .75fr) minmax(420px, 1.25fr); gap: 8px; min-width: 0; }
+.manufacturing-cost-flow-card { min-width: 0; border: 1px solid #dfe7f3; border-radius: 10px; background: #fff; padding: 9px 10px; box-shadow: 0 1px 5px rgba(15,23,42,0.05); }
+.manufacturing-cost-flow-card.target { background: #f8fbff; border-color: #d8e7ff; }
+.manufacturing-cost-flow-card.addition { background: #fffdf7; border-color: #f2dfb8; }
+.manufacturing-cost-flow-head { display: flex; align-items: center; gap: 7px; min-height: 22px; margin-bottom: 7px; color: #111827; }
+.manufacturing-cost-flow-step { display: inline-flex; align-items: center; justify-content: center; width: 21px; height: 21px; border-radius: 999px; background: #2563eb; color: #fff; font-size: 11px; font-weight: 900; }
+.manufacturing-cost-flow-card.addition .manufacturing-cost-flow-step { background: #b7791f; }
+.manufacturing-cost-flow-head strong { font-size: 13px; font-weight: 900; }
+.manufacturing-cost-flow-note { color: #667085; font-size: 11px; margin-left: auto; white-space: nowrap; }
+.manufacturing-cost-target-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(110px, .72fr); gap: 7px; align-items: end; }
+.manufacturing-cost-addition-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; align-items: end; }
+.manufacturing-cost-formula { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin: -1px 0 7px; color: #667085; font-size: 11px; line-height: 1.35; }
+.manufacturing-cost-formula-token { display: inline-flex; align-items: center; min-height: 20px; padding: 0 7px; border-radius: 999px; background: #f3f6fb; color: #455468; border: 1px solid #e5edf8; font-weight: 800; }
+.manufacturing-cost-formula-token.added { background: #fff7e6; color: #8a5a00; border-color: #f4d58a; }
+.manufacturing-cost-formula-token.total { background: #e9f8ed; color: #16803a; border-color: #bdebc8; }
+.manufacturing-cost-formula-plus, .manufacturing-cost-formula-eq { color: #94a3b8; font-weight: 900; }
 .manufacturing-cost-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .manufacturing-cost-field label { color: #64748b; font-size: 11px; font-weight: 700; line-height: 1.1; }
 .manufacturing-cost-field input, .manufacturing-cost-field select { width: 100%; }
@@ -667,8 +683,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .manufacturing-cost-component-row.head { background: #f5f7fa; color: #667085; font-weight: 700; }
 .manufacturing-cost-component-row div:nth-child(n+2) { text-align: right; white-space: nowrap; }
 @media(max-width:900px){
-  .manufacturing-cost-toolbar { grid-template-columns: 1fr 1fr; }
-  .manufacturing-cost-query-field { grid-column: 1 / -1; }
+  .manufacturing-cost-toolbar { grid-template-columns: 1fr; }
+  .manufacturing-cost-config-panel { grid-template-columns: 1fr; }
   .manufacturing-cost-listbar { grid-template-columns: 1fr 1fr; }
   .manufacturing-cost-listbar .manufacturing-cost-field { grid-column: span 2; }
   .manufacturing-cost-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -676,6 +692,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 @media(max-width:560px){
   .manufacturing-cost-toolbar, .manufacturing-cost-listbar, .manufacturing-cost-summary { grid-template-columns: 1fr; }
   .manufacturing-cost-query-row { grid-template-columns: minmax(0, 1fr) auto auto; }
+  .manufacturing-cost-target-grid, .manufacturing-cost-addition-grid { grid-template-columns: 1fr; }
+  .manufacturing-cost-flow-head { align-items: flex-start; flex-wrap: wrap; }
+  .manufacturing-cost-flow-note { margin-left: 0; white-space: normal; width: 100%; }
   .manufacturing-cost-listbar .manufacturing-cost-field { grid-column: auto; }
   .manufacturing-cost-candidate-head { align-items: stretch; flex-direction: column; }
   .manufacturing-cost-candidate-actions { justify-content: flex-start; }
@@ -1762,7 +1781,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.452</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.453</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1791,7 +1810,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.452</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.453</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1821,7 +1840,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.452</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.453</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -2825,23 +2844,59 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
           <button class="btn-primary" id="btn-manufacturing-cost-calc" type="button" data-i18n="manufacturing_cost_find_candidates">候補検索</button>
         </div>
       </div>
-      <select class="form-select" id="manufacturing-cost-category">
-        <option value="" data-i18n="filter_all">すべて</option>
-      </select>
-      <select class="form-select" id="manufacturing-cost-kind">
-        <option value="rebuilt" data-i18n="product_kind_rebuilt">リビルト</option>
-      </select>
-      <div class="manufacturing-cost-field">
-        <label for="manufacturing-cost-core-cost" data-i18n="manufacturing_cost_core_cost">コア代</label>
-        <input class="form-input" id="manufacturing-cost-core-cost" type="number" min="0" step="1" value="1500" data-i18n-ph="manufacturing_cost_core_cost">
-      </div>
-      <div class="manufacturing-cost-field">
-        <label for="manufacturing-cost-labor-rate" data-i18n="manufacturing_cost_labor_rate">工賃率(%)</label>
-        <input class="form-input" id="manufacturing-cost-labor-rate" type="number" min="0" step="0.1" value="0" data-i18n-ph="manufacturing_cost_labor_rate">
-      </div>
-      <div class="manufacturing-cost-field">
-        <label for="manufacturing-cost-labor-amount" data-i18n="manufacturing_cost_labor_amount">固定工賃</label>
-        <input class="form-input" id="manufacturing-cost-labor-amount" type="number" min="0" step="1" value="0" data-i18n-ph="manufacturing_cost_labor_amount">
+      <div class="manufacturing-cost-config-panel">
+        <div class="manufacturing-cost-flow-card target">
+          <div class="manufacturing-cost-flow-head">
+            <span class="manufacturing-cost-flow-step">1</span>
+            <strong data-i18n="manufacturing_cost_target_block">計算対象</strong>
+          </div>
+          <div class="manufacturing-cost-target-grid">
+            <div class="manufacturing-cost-field">
+              <label for="manufacturing-cost-category" data-i18n="lbl_category">カテゴリ</label>
+              <select class="form-select" id="manufacturing-cost-category">
+                <option value="" data-i18n="filter_all">すべて</option>
+              </select>
+            </div>
+            <div class="manufacturing-cost-field">
+              <label for="manufacturing-cost-kind" data-i18n="product_kind_section">商品区分</label>
+              <select class="form-select" id="manufacturing-cost-kind">
+                <option value="rebuilt" data-i18n="product_kind_rebuilt">リビルト</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="manufacturing-cost-flow-card addition">
+          <div class="manufacturing-cost-flow-head">
+            <span class="manufacturing-cost-flow-step">2</span>
+            <strong data-i18n="manufacturing_cost_addition_block">原価に加算</strong>
+            <span class="manufacturing-cost-flow-note" data-i18n="manufacturing_cost_addition_note">構成部品費に足して製造原価を作ります</span>
+          </div>
+          <div class="manufacturing-cost-formula" aria-hidden="true">
+            <span class="manufacturing-cost-formula-token" data-i18n="manufacturing_cost_formula_parts">構成部品費</span>
+            <span class="manufacturing-cost-formula-plus">+</span>
+            <span class="manufacturing-cost-formula-token added" data-i18n="manufacturing_cost_core_cost">コア代</span>
+            <span class="manufacturing-cost-formula-plus">+</span>
+            <span class="manufacturing-cost-formula-token added" data-i18n="manufacturing_cost_labor_rate">工賃率%</span>
+            <span class="manufacturing-cost-formula-plus">+</span>
+            <span class="manufacturing-cost-formula-token added" data-i18n="manufacturing_cost_labor_amount">工賃額</span>
+            <span class="manufacturing-cost-formula-eq">=</span>
+            <span class="manufacturing-cost-formula-token total" data-i18n="manufacturing_cost_formula_total">製造原価</span>
+          </div>
+          <div class="manufacturing-cost-addition-grid">
+            <div class="manufacturing-cost-field">
+              <label for="manufacturing-cost-core-cost" data-i18n="manufacturing_cost_core_cost">コア代</label>
+              <input class="form-input" id="manufacturing-cost-core-cost" type="number" min="0" step="1" value="1500" data-i18n-ph="manufacturing_cost_core_cost">
+            </div>
+            <div class="manufacturing-cost-field">
+              <label for="manufacturing-cost-labor-rate" data-i18n="manufacturing_cost_labor_rate">工賃率(%)</label>
+              <input class="form-input" id="manufacturing-cost-labor-rate" type="number" min="0" step="0.1" value="0" data-i18n-ph="manufacturing_cost_labor_rate">
+            </div>
+            <div class="manufacturing-cost-field">
+              <label for="manufacturing-cost-labor-amount" data-i18n="manufacturing_cost_labor_amount">工賃額</label>
+              <input class="form-input" id="manufacturing-cost-labor-amount" type="number" min="0" step="1" value="0" data-i18n-ph="manufacturing_cost_labor_amount">
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="manufacturing-cost-listbar">
@@ -4008,6 +4063,11 @@ var TRANSLATIONS = {
     manufacturing_cost_hint: "品番を複数指定するか、カテゴリを選んで計算します。検索なしの全件計算は負荷を避けるため行いません。",
     manufacturing_cost_query_label: "品番入力",
     manufacturing_cost_query_ph: "品番を複数指定（空白・カンマ区切り）",
+    manufacturing_cost_target_block: "計算対象",
+    manufacturing_cost_addition_block: "原価に加算",
+    manufacturing_cost_addition_note: "構成部品費に足して製造原価を作ります",
+    manufacturing_cost_formula_parts: "構成部品費",
+    manufacturing_cost_formula_total: "製造原価",
     manufacturing_cost_core_cost: "コア代",
     manufacturing_cost_labor_rate: "工賃率%",
     manufacturing_cost_labor_amount: "工賃額",
@@ -5046,6 +5106,11 @@ var TRANSLATIONS = {
     manufacturing_cost_hint: "Enter multiple part numbers or choose a category. Full calculation without conditions is not run to avoid load.",
     manufacturing_cost_query_label: "Part Number Input",
     manufacturing_cost_query_ph: "Multiple part numbers separated by spaces or commas",
+    manufacturing_cost_target_block: "Calculation Target",
+    manufacturing_cost_addition_block: "Added to Cost",
+    manufacturing_cost_addition_note: "Added to component cost to build manufacturing cost",
+    manufacturing_cost_formula_parts: "Component Cost",
+    manufacturing_cost_formula_total: "Manufacturing Cost",
     manufacturing_cost_core_cost: "Core cost",
     manufacturing_cost_labor_rate: "Labor %",
     manufacturing_cost_labor_amount: "Labor amount",
@@ -6090,6 +6155,11 @@ var TRANSLATIONS = {
     manufacturing_cost_hint: "请输入多个品番或选择类别进行计算。为避免负载，不执行无条件全件计算。",
     manufacturing_cost_query_label: "品番输入",
     manufacturing_cost_query_ph: "多个品番用空格或逗号分隔",
+    manufacturing_cost_target_block: "计算对象",
+    manufacturing_cost_addition_block: "加入成本",
+    manufacturing_cost_addition_note: "加入构成部件成本后生成制造成本",
+    manufacturing_cost_formula_parts: "构成部件成本",
+    manufacturing_cost_formula_total: "制造成本",
     manufacturing_cost_core_cost: "旧芯成本",
     manufacturing_cost_labor_rate: "工费率%",
     manufacturing_cost_labor_amount: "工费金额",
@@ -6874,7 +6944,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.452";
+var APP_VERSION       = "v1.1.453";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
