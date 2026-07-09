@@ -1834,7 +1834,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.468</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.469</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1863,7 +1863,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.468</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.469</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1893,7 +1893,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.468</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.469</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -7066,7 +7066,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.468";
+var APP_VERSION       = "v1.1.469";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -19135,15 +19135,40 @@ async function fetchCategoryProducts(categoryFilter, maxRows) {
 
 async function fetchProductionOtherCategoryProducts(maxRows) {
   maxRows = maxRows || SEARCH_FETCH_LIMIT;
-  var fetchLimit = Math.min(Math.max(maxRows * 4, maxRows), SEARCH_FETCH_LIMIT);
-  var r = await sb.from("core_product_search_view")
-    .select("*")
-    .order("updated_at", { ascending: false })
-    .limit(fetchLimit);
-  if (!r.error) {
-    r.data = (r.data || []).filter(productionMatchesCategoryFilter).slice(0, maxRows);
+  var primaryCodes = productionPrimaryCategoryCodes();
+  var notInValue = "(" + primaryCodes.join(",") + ")";
+  var rows = [];
+  var seen = {};
+
+  function appendRows(sourceRows) {
+    normalizeCoreProductFastRows(sourceRows || []).forEach(function(row) {
+      var key = productDkdId(row);
+      if (!key || seen[key]) return;
+      if (!productionMatchesCategoryFilter(row)) return;
+      seen[key] = true;
+      rows.push(row);
+    });
   }
-  return r;
+
+  var byCode = await sb.from("core_products")
+    .select(CORE_PRODUCT_FAST_SELECT)
+    .not("category_code", "in", notInValue)
+    .order("manufacturer_part_number", { ascending: true })
+    .limit(Math.min(maxRows * 3, SEARCH_FETCH_LIMIT));
+  if (byCode.error) return byCode;
+  appendRows(byCode.data);
+
+  if (rows.length < maxRows) {
+    var byNull = await sb.from("core_products")
+      .select(CORE_PRODUCT_FAST_SELECT)
+      .is("category_code", null)
+      .order("manufacturer_part_number", { ascending: true })
+      .limit(Math.min((maxRows - rows.length) * 3, SEARCH_FETCH_LIMIT));
+    if (byNull.error) return byNull;
+    appendRows(byNull.data);
+  }
+
+  return { data: rows.slice(0, maxRows), error: null };
 }
 
 async function fetchSlProductsFromLoadedMap(maxRows) {
