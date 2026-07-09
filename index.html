@@ -1781,7 +1781,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.453</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.454</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1810,7 +1810,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.453</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.454</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1840,7 +1840,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.453</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.454</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -6944,7 +6944,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.453";
+var APP_VERSION       = "v1.1.454";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -8633,7 +8633,6 @@ function productionComponentKindCount(row, kind) {
   if (entry && Object.prototype.hasOwnProperty.call(entry, kind)) {
     return parseInt(entry[kind] || 0, 10) || 0;
   }
-  if (kind === "rebuilt") return productComponentCount(row);
   return 0;
 }
 
@@ -8803,7 +8802,7 @@ function enrichProductionProduct(row) {
   row.core_pallet_summary = inst ? inst.core_pallet_summary : "";
   row.core_pallet_summary = row.core_pallet_no || row.core_pallet_summary || "";
   var hasComponentCount = Object.prototype.hasOwnProperty.call(componentUsageCountMap, coreKey);
-  row.component_count = hasComponentCount ? componentUsageCountMap[coreKey] : (row.component_count != null ? row.component_count : (inst && inst.component_count != null ? inst.component_count : 0));
+  row.component_count = hasComponentCount ? componentUsageCountMap[coreKey] : 0;
   row.component_summary = inst ? inst.component_summary : "";
   row.readiness_status = row.component_count > 0 ? t("production_status_ready") : t("production_status_need");
   return row;
@@ -9065,6 +9064,11 @@ async function fetchProductionPartRegistrationCountMap(products) {
     return !isNaN(id);
   });
   if (!uniqueIds.length) return { total: totalMap, byKind: byKindMap };
+  uniqueIds.forEach(function(id) {
+    var key = String(id);
+    totalMap[key] = 0;
+    byKindMap[key] = { rebuilt: 0, aftermarket_new: 0 };
+  });
   for (var i = 0; i < uniqueIds.length; i += 200) {
     var chunk = uniqueIds.slice(i, i + 200);
     var r = await sb.from("assembly_component_usages")
