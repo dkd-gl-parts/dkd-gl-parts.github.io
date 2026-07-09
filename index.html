@@ -427,16 +427,37 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 @media(max-width:900px){ .component-add-grid, .component-reverse-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media(max-width:560px){ .component-add-grid, .component-target-controls, .component-target-summary, .component-reverse-grid, .component-reverse-row { grid-template-columns: 1fr; } .component-add-field.wide, .component-add-field.full { grid-column: 1; } .component-target-head { align-items: flex-start; flex-direction: column; } .component-reverse-result { max-height: 58vh; } }
 #component-wrap { overflow-x: auto; }
-.component-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 12px; }
-.component-table th { background: #f5f7fa; color: #555; font-weight: 600; padding: 6px 8px; text-align: left; border-bottom: 2px solid #e0e0e0; }
-.component-table td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+.component-table { width: 100%; table-layout: fixed; border-collapse: collapse; margin-bottom: 8px; font-size: 11px; }
+.component-table th { background: #f5f7fa; color: #555; font-weight: 600; padding: 5px 5px; text-align: left; border-bottom: 2px solid #e0e0e0; }
+.component-table td { padding: 6px 5px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
 .component-table tr:last-child td { border-bottom: none; }
-.component-table input { width: 100%; min-width: 54px; border: 1px solid #d7dce5; border-radius: 5px; padding: 5px 6px; font-size: 12px; }
-.component-table select { width: 100%; min-width: 86px; border: 1px solid #d7dce5; border-radius: 5px; padding: 5px 6px; font-size: 12px; background: #fff; }
-.component-table input[data-component-edit-field="component_manufacturer_part_number"] { min-width: 154px; font-family: monospace; }
-.component-table input[data-component-edit-field="component_genuine_part_number"] { min-width: 140px; font-family: monospace; }
-.component-table input[data-component-edit-field="component_manufacturer"] { min-width: 96px; font-family: monospace; }
-.component-table select[data-component-edit-field="component_part_name"] { min-width: 190px; }
+.component-table input { width: 100%; min-width: 0; border: 1px solid #d7dce5; border-radius: 5px; padding: 4px 5px; font-size: 11px; }
+.component-table select { width: 100%; min-width: 0; border: 1px solid #d7dce5; border-radius: 5px; padding: 4px 5px; font-size: 11px; background: #fff; }
+.component-table input[data-component-edit-field="component_manufacturer_part_number"],
+.component-table input[data-component-edit-field="component_genuine_part_number"],
+.component-table input[data-component-edit-field="component_manufacturer"] { font-family: monospace; }
+.component-table-basic th:nth-child(1), .component-table-basic td:nth-child(1) { width: 15%; }
+.component-table-basic th:nth-child(2), .component-table-basic td:nth-child(2) { width: 13%; }
+.component-table-basic th:nth-child(3), .component-table-basic td:nth-child(3) { width: 19%; }
+.component-table-basic th:nth-child(4), .component-table-basic td:nth-child(4) { width: 5%; }
+.component-table-basic th:nth-child(5), .component-table-basic td:nth-child(5) { width: 7%; }
+.component-table-basic th:nth-child(6), .component-table-basic td:nth-child(6) { width: 5%; }
+.component-table-basic th:nth-child(7), .component-table-basic td:nth-child(7) { width: 9%; }
+.component-table-basic th:nth-child(8), .component-table-basic td:nth-child(8) { width: 6%; }
+.component-table-basic th:nth-child(9), .component-table-basic td:nth-child(9) { width: 10%; }
+.component-table-tree th:nth-child(1), .component-table-tree td:nth-child(1) { width: 4%; }
+.component-table-tree th:nth-child(2), .component-table-tree td:nth-child(2) { width: 14%; }
+.component-table-tree th:nth-child(3), .component-table-tree td:nth-child(3) { width: 12%; }
+.component-table-tree th:nth-child(4), .component-table-tree td:nth-child(4) { width: 18%; }
+.component-table-tree th:nth-child(5), .component-table-tree td:nth-child(5) { width: 5%; }
+.component-table-tree th:nth-child(6), .component-table-tree td:nth-child(6) { width: 7%; }
+.component-table-tree th:nth-child(7), .component-table-tree td:nth-child(7) { width: 4%; }
+.component-table-tree th:nth-child(8), .component-table-tree td:nth-child(8) { width: 8%; }
+.component-table-tree th:nth-child(9), .component-table-tree td:nth-child(9) { width: 6%; }
+.component-table-tree th:nth-child(10), .component-table-tree td:nth-child(10) { width: 7%; }
+.component-table-tree th:nth-child(11), .component-table-tree td:nth-child(11) { width: 4%; }
+.component-table .component-action-col { width: 82px; position: sticky; right: 0; z-index: 2; background: #fff; box-shadow: -1px 0 0 #edf0f5; }
+.component-table th.component-action-col { z-index: 3; background: #f5f7fa; }
 .component-table .component-cell-qty { text-align: left; white-space: nowrap; }
 .component-table .component-cell-money,
 .component-table .component-cell-rate { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -455,7 +476,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-alt-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: #eef2f7; color: #667085; font-size: 11px; font-weight: 800; }
 .component-alt-badge.has-alt { background: #fff4dc; color: #b97709; }
 .component-child-loading td { color: #667085; background: #fbfcff; }
-.component-edit-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.component-edit-actions { display: flex; flex-direction: column; align-items: stretch; gap: 4px; }
+.component-edit-actions .btn-sm-edit { min-height: 24px; padding: 2px 6px; font-size: 11px; line-height: 1.2; white-space: nowrap; }
 .component-pn { font-family: monospace; font-size: 12px; color: #444; }
 .component-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
 .component-alt-row td { background: #fbfcff; padding-top: 0; }
@@ -473,8 +495,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .detail-toolbar { display: flex; align-items: center; justify-content: flex-start; gap: 8px; flex-wrap: wrap; padding: 8px 0 10px; border-bottom: 1px solid #f0f0f0; margin-bottom: 8px; flex: 0 0 auto; }
 .detail-toolbar-edit { margin-left: auto; }
 .detail-toolbar .btn-sm-edit { margin: 0; }
-.component-body { flex:1; padding:20px 16px; max-width:1120px; width:100%; margin:0 auto; overflow-y:auto; }
-.component-context { background:#fff; border:1px solid #e8e8e8; border-radius:8px; padding:12px 14px; margin-bottom:12px; }
+.component-body { flex:1; padding:14px 8px; max-width:1280px; width:100%; margin:0 auto; overflow-y:auto; }
+.component-context { background:#fff; border:1px solid #e8e8e8; border-radius:8px; padding:10px 12px; margin-bottom:10px; }
 .component-context-title { font-size:15px; font-weight:700; color:#1a1a2e; }
 .component-context-sub { font-size:12px; color:#777; margin-top:4px; font-family:monospace; }
 .parallel-shell { display: flex; flex-direction: column; gap: 12px; }
@@ -1806,7 +1828,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.460</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.461</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1835,7 +1857,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.460</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.461</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1865,7 +1887,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.460</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.461</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -7016,7 +7038,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.460";
+var APP_VERSION       = "v1.1.461";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -24207,14 +24229,14 @@ function renderAssemblyComponentRows() {
   var hasActions = canManageComponentsInCurrentContext();
   var catalogMode = selectedProductKind() === "catalog_spec";
   var colspan = 9 + (hasActions ? 1 : 0);
-  var html = "<table class='component-table'>";
+  var html = "<table class='component-table component-table-basic'>";
   html += "<tr><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th>";
   if (catalogMode) {
     html += "<th>" + t("component_position") + "</th><th>" + t("component_quantity") + "</th><th>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
   } else {
     html += "<th>" + t("component_quantity") + "</th><th>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_procurement_category") + "</th><th>" + t("component_replacement_rate") + "</th><th>" + t("component_manufacturing_memo") + "</th>";
   }
-  if (hasActions) html += "<th>" + t("component_actions") + "</th>";
+  if (hasActions) html += "<th class='component-action-col'>" + t("component_actions") + "</th>";
   html += "</tr>";
   rows.forEach(function(row) {
     var catalogLocked = isCatalogComponentRow(row);
@@ -24230,7 +24252,7 @@ function renderAssemblyComponentRows() {
       html += "<td>" + componentEditProcurementSelect(row.procurement_category || "") + "</td>";
       html += "<td class='component-cell-rate'>" + componentEditInput(row, "replacement_rate", row.replacement_rate || "") + "</td>";
       html += "<td>" + componentEditInput(row, "manufacturing_memo", row.manufacturing_memo || "") + "</td>";
-      html += "<td><div class='component-edit-actions'><button class='btn-sm-edit' data-component-save='" + esc(String(row.id)) + "'>" + t("component_save") + "</button><button class='btn-sm-edit production-action-secondary' data-component-cancel='1'>" + t("component_cancel") + "</button><button class='btn-sm-edit production-action-secondary' data-component-delete='" + esc(String(row.id)) + "'>" + t("component_delete") + "</button></div></td>";
+      html += "<td class='component-action-col'><div class='component-edit-actions'><button class='btn-sm-edit' data-component-save='" + esc(String(row.id)) + "'>" + t("component_save") + "</button><button class='btn-sm-edit production-action-secondary' data-component-cancel='1'>" + t("component_cancel") + "</button><button class='btn-sm-edit production-action-secondary' data-component-delete='" + esc(String(row.id)) + "'>" + t("component_delete") + "</button></div></td>";
     } else {
       html += "<td><div class='component-pn'>" + esc(row.component_manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.component_manufacturer || "") + "</div></td>";
       html += "<td><div class='component-pn'>" + esc(row.component_genuine_part_number || "-") + "</div></td>";
@@ -24251,7 +24273,7 @@ function renderAssemblyComponentRows() {
         html += "<td>" + esc(row.manufacturing_memo || "-") + "</td>";
       }
       if (hasActions) {
-        html += "<td><div class='component-edit-actions'>";
+        html += "<td class='component-action-col'><div class='component-edit-actions'>";
         html += catalogLocked ? "<span class='component-sub'>" + t("component_catalog") + "</span>" : "<button class='btn-sm-edit' data-component-edit='" + esc(String(row.id)) + "'>" + t("component_edit") + "</button>";
         html += "<button class='btn-sm-edit production-action-secondary' data-component-alt-add='" + esc(String(row.id)) + "'>" + t("component_alternative_add") + "</button>";
         html += "</div></td>";
@@ -24321,7 +24343,7 @@ function renderAssemblyComponentRows() {
   var hasActions = canManageComponentsInCurrentContext();
   var catalogMode = selectedProductKind() === "catalog_spec";
   var colspan = 11 + (hasActions ? 1 : 0);
-  var html = "<table class='component-table'>";
+  var html = "<table class='component-table component-table-tree'>";
   html += "<tr><th class='component-tree-col'>" + t("component_child") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th>";
   if (catalogMode) {
     html += "<th>" + t("component_position") + "</th><th>" + t("component_quantity") + "</th><th>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
@@ -24329,7 +24351,7 @@ function renderAssemblyComponentRows() {
     html += "<th>" + t("component_quantity") + "</th><th>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_procurement_category") + "</th><th>" + t("component_replacement_rate") + "</th><th>" + t("component_manufacturing_memo") + "</th>";
   }
   html += "<th>" + t("component_alternative_title") + "</th>";
-  if (hasActions) html += "<th>" + t("component_actions") + "</th>";
+  if (hasActions) html += "<th class='component-action-col'>" + t("component_actions") + "</th>";
   html += "</tr>";
 
   function renderRow(row, options) {
@@ -24349,7 +24371,7 @@ function renderAssemblyComponentRows() {
       html += "<td class='component-cell-rate'>" + componentEditInput(row, "replacement_rate", row.replacement_rate || "") + "</td>";
       html += "<td>" + componentEditInput(row, "manufacturing_memo", row.manufacturing_memo || "") + "</td>";
       html += "<td>" + componentAlternativeCountHtml(row) + "</td>";
-      html += "<td><div class='component-edit-actions'><button class='btn-sm-edit' data-component-save='" + esc(String(row.id)) + "'>" + t("component_save") + "</button><button class='btn-sm-edit production-action-secondary' data-component-cancel='1'>" + t("component_cancel") + "</button><button class='btn-sm-edit production-action-secondary' data-component-delete='" + esc(String(row.id)) + "'>" + t("component_delete") + "</button></div></td>";
+      html += "<td class='component-action-col'><div class='component-edit-actions'><button class='btn-sm-edit' data-component-save='" + esc(String(row.id)) + "'>" + t("component_save") + "</button><button class='btn-sm-edit production-action-secondary' data-component-cancel='1'>" + t("component_cancel") + "</button><button class='btn-sm-edit production-action-secondary' data-component-delete='" + esc(String(row.id)) + "'>" + t("component_delete") + "</button></div></td>";
     } else {
       html += "<td><div class='component-pn'>" + esc(row.component_manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.component_manufacturer || "") + "</div></td>";
       html += "<td><div class='component-pn'>" + esc(row.component_genuine_part_number || "-") + "</div></td>";
@@ -24371,7 +24393,7 @@ function renderAssemblyComponentRows() {
       }
       html += "<td>" + componentAlternativeCountHtml(row) + "</td>";
       if (hasActions) {
-        html += "<td><div class='component-edit-actions'>";
+        html += "<td class='component-action-col'><div class='component-edit-actions'>";
         html += catalogLocked ? "<span class='component-sub'>" + t("component_catalog") + "</span>" : "<button class='btn-sm-edit' data-component-edit='" + esc(String(row.id)) + "'>" + t("component_edit") + "</button>";
         if (!catalogMode && row.dkd_component_id) html += "<button class='btn-sm-edit production-action-secondary' data-component-alt-add='" + esc(String(row.id || row.dkd_component_id)) + "'>" + t("component_alternative_add") + "</button>";
         html += "</div></td>";
