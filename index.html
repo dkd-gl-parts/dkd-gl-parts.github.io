@@ -1831,7 +1831,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.465</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.466</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1860,7 +1860,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.465</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.466</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1890,7 +1890,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.465</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.466</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -7053,7 +7053,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.465";
+var APP_VERSION       = "v1.1.466";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -10239,7 +10239,7 @@ function collectEcMallSellerCandidates(items) {
   var map = {};
   enrichRakutenItems(items || []).forEach(function(item) {
     var provider = item.providerKey || item.provider || "rakuten";
-    var sellerId = String(item.sellerId || item.shopCode || item.storeId || "").trim();
+    var sellerId = ecMallSellerIdFromItem(item);
     var sellerName = ecMallSellerDisplayName(item);
     if (!sellerId && sellerName === "-") return;
     var value = sellerId || sellerName;
@@ -12214,6 +12214,7 @@ var EC_MALL_KNOWN_YAHOO_AUCTION_SELLERS = {
   "FJ5NeS99SC8HDJ1PhPKRoqDWW62UG": "自動車パーツの宝箱 SOL",
   "CYWC2j57DBqjcNEscUthj1EQCzRbG": "自動車パーツの宝箱 SOL",
   "7au5bAjRvPB2pwYgwzFeADiHZ1TaD": "takasaki11",
+  "Fmcr7ceqVeAXzibhQcLiYVshtbRc": "Fast parts",
   "7xD4u9GiRnZydygvLBAmzJ98qY4yA": "ARD広島ヤフオク!店",
   "dB8iQzJmtyaCDc2KFcm7BTqBCzTX": "エスオーエル4号店",
   "3r1YakTqPzfw2HbK5thQ49Bt7wAta": "太田美品通商Yahoo!店",
@@ -12231,18 +12232,115 @@ var EC_MALL_KNOWN_YAHOO_AUCTION_SELLERS = {
   "FfskK8w9nn8mY3p2211hBaFpjTgEh": "サポートパーツドットコム"
 };
 
+function ecMallRawPayload(item) {
+  if (!item || typeof item !== "object") return {};
+  if (item.raw_payload && typeof item.raw_payload === "object") return item.raw_payload;
+  if (item.raw && typeof item.raw === "object") return item.raw;
+  return {};
+}
+
+function ecMallDirectValue(obj, path) {
+  var cur = obj;
+  for (var i=0; i<path.length; i++) {
+    if (!cur || typeof cur !== "object") return "";
+    cur = cur[path[i]];
+  }
+  return cur == null ? "" : cur;
+}
+
 function ecMallSellerIdFromItem(item) {
-  return String((item && (item.sellerId || item.shopCode || item.seller_id || item.storeId || item.store_id)) || "").trim();
+  item = item || {};
+  var raw = ecMallRawPayload(item);
+  var values = [
+    item.sellerId, item.shopCode, item.seller_id, item.storeId, item.store_id,
+    ecMallDirectValue(item, ["seller", "userId"]),
+    ecMallDirectValue(item, ["seller", "sellerId"]),
+    ecMallDirectValue(item, ["seller", "id"]),
+    raw.sellerId, raw.shopCode, raw.seller_id, raw.storeId, raw.store_id,
+    ecMallDirectValue(raw, ["seller", "userId"]),
+    ecMallDirectValue(raw, ["seller", "sellerId"]),
+    ecMallDirectValue(raw, ["seller", "id"])
+  ];
+  for (var i=0; i<values.length; i++) {
+    var v = String(values[i] || "").trim();
+    if (v) return v;
+  }
+  return "";
 }
 
 function ecMallLooksLikeOpaqueSellerId(value) {
-  return /^[A-Za-z0-9_-]{20,}$/.test(String(value || "").trim());
+  var text = String(value || "").trim();
+  return /^[A-Za-z0-9_-]{20,}$/.test(text) && /[A-Za-z]/.test(text) && /\d/.test(text);
+}
+
+function ecMallLooksLikeOnlyMask(value) {
+  return /^[*＊・.\s]+$/.test(String(value || "").trim());
 }
 
 function ecMallLooksLikeBrokenSellerName(value) {
   var text = String(value || "").trim();
   if (!text) return true;
-  return ecMallLooksLikeOpaqueSellerId(text) || text.indexOf("???") >= 0 || text.indexOf("\uFFFD") >= 0;
+  return ecMallLooksLikeOpaqueSellerId(text) || ecMallLooksLikeOnlyMask(text) || text.indexOf("???") >= 0 || text.indexOf("\uFFFD") >= 0;
+}
+
+function ecMallCleanSellerNameCandidate(value) {
+  var text = String(value || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  if (!text || text.length > 80) return "";
+  return text;
+}
+
+function ecMallPushSellerNameCandidate(list, value, id) {
+  var text = ecMallCleanSellerNameCandidate(value);
+  if (!text) return;
+  if (id && text === id) return;
+  if (ecMallLooksLikeBrokenSellerName(text)) return;
+  if (/^https?:\/\//i.test(text)) return;
+  if (/^(?:auction|auc_store|store|seller|user|unknown|-|null)$/i.test(text)) return;
+  if (/^\d+(?:\.\d+)?%?$/.test(text)) return;
+  var key = text.toLowerCase();
+  for (var i=0; i<list.length; i++) {
+    if (String(list[i]).toLowerCase() === key) return;
+  }
+  list.push(text);
+}
+
+function ecMallCollectSellerNameCandidatesFromObject(obj, list, id, depth, inSellerContext) {
+  if (!obj || typeof obj !== "object" || depth > 5 || list.length >= 8) return;
+  Object.keys(obj).forEach(function(key) {
+    if (list.length >= 8) return;
+    var value = obj[key];
+    var keyText = String(key || "");
+    var sellerContext = inSellerContext || /(seller|shop|store|merchant|vendor)/i.test(keyText);
+    if (typeof value === "string") {
+      var nameKey = /(name|display|nick|nickname|title|company|shop|store|seller)/i.test(keyText);
+      if (sellerContext && nameKey) ecMallPushSellerNameCandidate(list, value, id);
+      return;
+    }
+    if (value && typeof value === "object") {
+      ecMallCollectSellerNameCandidatesFromObject(value, list, id, depth + 1, sellerContext);
+    }
+  });
+}
+
+function ecMallSellerNameCandidates(item) {
+  item = item || {};
+  var id = ecMallSellerIdFromItem(item);
+  var list = [];
+  [
+    ecMallKnownSellerName(item),
+    item.shopName, item.sellerName, item.storeName, item.seller_name, item.shop_name, item.store_name,
+    item.displayName, item.sellerDisplayName,
+    ecMallDirectValue(item, ["seller", "displayName"]),
+    ecMallDirectValue(item, ["seller", "name"]),
+    ecMallDirectValue(item, ["shop", "name"]),
+    ecMallDirectValue(item, ["shop", "shopName"]),
+    ecMallDirectValue(item, ["store", "name"]),
+    ecMallDirectValue(item, ["store", "storeName"])
+  ].forEach(function(value) {
+    ecMallPushSellerNameCandidate(list, value, id);
+  });
+  ecMallCollectSellerNameCandidatesFromObject(ecMallRawPayload(item), list, id, 0, false);
+  return list;
 }
 
 function ecMallKnownSellerName(item) {
@@ -12252,7 +12350,7 @@ function ecMallKnownSellerName(item) {
 
 function ecMallSellerKey(item) {
   var id = ecMallSellerIdFromItem(item).toLowerCase();
-  var name = String(ecMallKnownSellerName(item) || item.shopName || item.sellerName || item.seller_name || "").trim().toLowerCase();
+  var name = String(ecMallSellerNameCandidates(item)[0] || "").trim().toLowerCase();
   var compactName = name.replace(/[ \t\r\n\u3000]/g, "");
   if (
     compactName.indexOf("自動車パーツの宝箱sol") >= 0 ||
@@ -12268,10 +12366,13 @@ function ecMallSellerKey(item) {
 function ecMallSellerDisplayName(item) {
   item = item || {};
   var id = ecMallSellerIdFromItem(item);
-  var known = ecMallKnownSellerName(item);
-  var seller = item.shopName || item.sellerName || item.storeName || item.seller_name || "";
-  if (!seller || seller === id || ecMallLooksLikeBrokenSellerName(seller)) seller = known || seller;
-  return seller || id || item.shopCode || "-";
+  var candidate = ecMallSellerNameCandidates(item)[0] || "";
+  if (candidate) return candidate;
+  if (id && !ecMallLooksLikeOpaqueSellerId(id)) return id;
+  var provider = item.providerKey || item.provider || item.provider_key || "";
+  if (provider === "yahoo_auction") return "ヤフオク出品者";
+  if (provider === "yahoo_shopping") return "Yahooショッピング出品者";
+  return id || item.shopCode || "-";
 }
 
 function ecMallItemRuleText(item) {
@@ -12437,7 +12538,7 @@ async function saveRakutenSurvey(target, items, keyword, ngKeyword, sort) {
           provider_key: item.providerKey || item.provider || "rakuten",
           product_type: row.product_type,
           rank_no: row.rank_no,
-          seller_id: item.sellerId || item.shopCode || null,
+          seller_id: ecMallSellerIdFromItem(item) || null,
           seller_name: ecMallSellerDisplayName(item) === "-" ? null : ecMallSellerDisplayName(item),
           item_name: item.itemName || null,
           item_url: item.itemUrl || null,
@@ -12656,7 +12757,7 @@ function renderRakutenResults(items, keyword) {
     html += "<div class='rakuten-thumb'>" + (img ? "<img src='" + esc(img) + "' loading='lazy'>" : "No image") + "</div>";
     html += "<div>";
     html += "<div class='rakuten-item-name'>" + esc(item.itemName || "-") + "</div>";
-    html += "<div class='rakuten-item-shop'>" + esc(item.shopName || "-") + "</div>";
+    html += "<div class='rakuten-item-shop'>" + esc(sellerDisplay || item.shopName || "-") + "</div>";
     html += "<div class='rakuten-item-price'>" + yen(ecMallItemTotalPrice(item) || item.itemPrice) + "</div>";
     html += "<div class='rakuten-item-meta'>" + meta.map(esc).join("<span>/</span>") + "</div>";
     var itemUrl = safeHttpsUrl(item.itemUrl, ["rakuten.co.jp", "shopping.yahoo.co.jp", "yahoo.co.jp", "auctions.yahoo.co.jp"]);
@@ -12710,6 +12811,7 @@ function ecPriceListRowMatchesSearch(row, q) {
     row.category,
     row.seller_id,
     row.seller_name,
+    ecMallSellerDisplayName(row),
     row.item_name,
     row.source_type,
     row.provider_key ? ecMallProviderLabel(row.provider_key) : ""
@@ -12770,7 +12872,7 @@ async function loadRakutenPriceList() {
     ecMallFallbackToLegacySurveys = false;
     var r = await fetchEcPriceListRows(
       "ec_price_research_latest_best3",
-      "id,run_id,target_id,dkd_shohin_id,shohin_cd,manufacturer,category,daiko_part_number,genuine_part_number,genuine_part_number_2,manufacturer_part_number,search_number,provider_key,product_type,rank_no,seller_id,seller_name,item_name,item_url,price_jpy,shipping_jpy,total_price_jpy,source_method,surveyed_at",
+      "id,run_id,target_id,dkd_shohin_id,shohin_cd,manufacturer,category,daiko_part_number,genuine_part_number,genuine_part_number_2,manufacturer_part_number,search_number,provider_key,product_type,rank_no,seller_id,seller_name,item_name,item_url,price_jpy,shipping_jpy,total_price_jpy,source_method,raw_payload,surveyed_at",
       "surveyed_at",
       q ? EC_PRICE_LIST_SEARCH_SCAN_LIMIT : EC_PRICE_LIST_DEFAULT_LIMIT
     );
@@ -12868,7 +12970,7 @@ function ecPriceHistoryGroupMeta(group, rows) {
 
 async function fetchEcPriceHistoryRowsForGroup(group) {
   var r = (group && group.meta) || group || {};
-  var cols = "id,run_id,target_id,dkd_shohin_id,search_keyword,provider_key,product_type,rank_no,seller_id,seller_name,item_name,item_url,price_jpy,shipping_jpy,total_price_jpy,surveyed_at";
+  var cols = "id,run_id,target_id,dkd_shohin_id,search_keyword,provider_key,product_type,rank_no,seller_id,seller_name,item_name,item_url,price_jpy,shipping_jpy,total_price_jpy,raw_payload,surveyed_at";
   var query = sb.from("ec_price_research_results")
     .select(cols)
     .order("surveyed_at", { ascending: true })
@@ -25244,7 +25346,7 @@ function ecMallProductTypeSort(type) {
 
 async function fetchEcMallLatestBest3ForProduct(product) {
   product = product || {};
-  var selectCols = "id,dkd_shohin_id,search_number,provider_key,product_type,rank_no,seller_id,seller_name,item_url,price_jpy,total_price_jpy,surveyed_at";
+  var selectCols = "id,dkd_shohin_id,search_number,provider_key,product_type,rank_no,seller_id,seller_name,item_url,price_jpy,total_price_jpy,raw_payload,surveyed_at";
   var dkdId = parseInt(productDkdId(product), 10);
   if (!isNaN(dkdId)) {
     var byDkd = await sb.from("ec_price_research_latest_best3")
