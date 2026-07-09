@@ -688,6 +688,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .manufacturing-cost-candidate-added { color: #16803a; background: #e9f8ed; border: 1px solid #bdebc8; border-radius: 999px; padding: 3px 8px; font-size: 11px; font-weight: 900; white-space: nowrap; }
 .manufacturing-cost-selected-panel { margin-top: 12px; border: 1px solid #caead2; border-radius: 10px; background: #fbfffc; padding: 12px; box-shadow: 0 1px 5px rgba(22,128,58,0.08); }
 .manufacturing-cost-selected-panel .mgmt-count { margin-left: auto; font-weight: 800; color: #16803a; }
+.manufacturing-cost-selected-actions { margin-left: auto; display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.manufacturing-cost-selected-actions .mgmt-count { margin-left: 0; }
+.manufacturing-cost-selected-actions .btn-secondary { min-height: 30px; padding: 0 10px; font-size: 12px; white-space: nowrap; }
 .manufacturing-cost-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 10px 0 12px; }
 .manufacturing-cost-stat { border: 1px solid #e4ebf7; border-radius: 8px; background: #fbfdff; padding: 10px 12px; }
 .manufacturing-cost-stat span { display: block; color: #667085; font-size: 11px; font-weight: 700; margin-bottom: 4px; }
@@ -1828,7 +1831,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.462</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.463</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1857,7 +1860,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.462</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.463</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1887,7 +1890,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.462</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.463</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -2975,7 +2978,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
           </div>
           <div class="manufacturing-cost-section-note" data-i18n="manufacturing_cost_selected_note">ここに入っている品番だけをリスト保存します。</div>
         </div>
-        <div class="mgmt-count" id="manufacturing-cost-count"></div>
+        <div class="manufacturing-cost-selected-actions">
+          <div class="mgmt-count" id="manufacturing-cost-count"></div>
+          <button class="btn-secondary" id="btn-manufacturing-cost-export" type="button" data-i18n="manufacturing_cost_export_excel">Excel出力</button>
+        </div>
       </div>
       <div id="manufacturing-cost-summary"></div>
       <div id="manufacturing-cost-list"><div class="empty" data-i18n="manufacturing_cost_search_hint">条件を指定して原価計算してください。</div></div>
@@ -4164,6 +4170,9 @@ var TRANSLATIONS = {
     manufacturing_cost_list_name_ph: "例: スタータ標準原価",
     manufacturing_cost_save_list: "リスト保存",
     manufacturing_cost_delete_list: "削除",
+    manufacturing_cost_export_excel: "Excel出力",
+    manufacturing_cost_export_no_rows: "出力する原価計算対象がありません。",
+    manufacturing_cost_export_done: "{n} 件をExcel用CSVに出力しました",
     manufacturing_cost_list_saved: "原価計算リストを保存しました",
     manufacturing_cost_list_loaded: "原価計算リストを呼び出しました",
     manufacturing_cost_list_deleted: "原価計算リストを削除しました",
@@ -5218,6 +5227,9 @@ var TRANSLATIONS = {
     manufacturing_cost_list_name_ph: "e.g. Starter standard cost",
     manufacturing_cost_save_list: "Save List",
     manufacturing_cost_delete_list: "Delete",
+    manufacturing_cost_export_excel: "Export Excel",
+    manufacturing_cost_export_no_rows: "No cost calculation rows to export.",
+    manufacturing_cost_export_done: "Exported {n} row(s) to Excel CSV",
     manufacturing_cost_list_saved: "Manufacturing cost list saved",
     manufacturing_cost_list_loaded: "Manufacturing cost list loaded",
     manufacturing_cost_list_deleted: "Manufacturing cost list deleted",
@@ -6278,6 +6290,9 @@ var TRANSLATIONS = {
     manufacturing_cost_list_name_ph: "例: 起动机标准成本",
     manufacturing_cost_save_list: "保存列表",
     manufacturing_cost_delete_list: "删除",
+    manufacturing_cost_export_excel: "导出Excel",
+    manufacturing_cost_export_no_rows: "没有可导出的成本计算对象。",
+    manufacturing_cost_export_done: "已导出 {n} 条到Excel用CSV",
     manufacturing_cost_list_saved: "制造成本列表已保存",
     manufacturing_cost_list_loaded: "制造成本列表已调用",
     manufacturing_cost_list_deleted: "制造成本列表已删除",
@@ -7038,7 +7053,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.462";
+var APP_VERSION       = "v1.1.463";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -15736,6 +15751,61 @@ function renderManufacturingCostRows() {
   });
   html += "</table></div>";
   list.innerHTML = html;
+}
+
+function manufacturingCostExportFileName() {
+  var listName = (document.getElementById("manufacturing-cost-list-name") || {}).value || "";
+  var base = listName.trim() || "manufacturing_cost";
+  base = normalizeAsciiWidth(base).replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, "_").replace(/^_+|_+$/g, "");
+  if (!base) base = "manufacturing_cost";
+  var d = new Date();
+  var y = String(d.getFullYear());
+  var m = String(d.getMonth() + 1).padStart(2, "0");
+  var day = String(d.getDate()).padStart(2, "0");
+  return base + "_" + y + m + day + ".csv";
+}
+
+function exportManufacturingCostRows() {
+  if (!canViewManufacturingCostMgmt()) { alert(t("err_perm")); return; }
+  if (!manufacturingCostRows.length) {
+    setManufacturingCostListStatus(t("manufacturing_cost_export_no_rows"), true);
+    return;
+  }
+  var rows = [[
+    "カテゴリ名",
+    "純正品番",
+    "メーカー品番",
+    "部品原価",
+    "コア代",
+    "工賃",
+    "製造原価計"
+  ]];
+  manufacturingCostRows.forEach(function(row) {
+    var p = row.product || {};
+    var category = manufacturingCostCategoryLabel(p.category_code || p.category || "");
+    rows.push([
+      category,
+      p.genuine_part_number || p.genuine_part_number_2 || "",
+      p.manufacturer_part_number || "",
+      Math.round(row.partsCost || 0),
+      Math.round(row.coreCost || 0),
+      Math.round(row.laborCost || 0),
+      Math.round(row.totalCost || 0)
+    ]);
+  });
+  var csv = rows.map(function(row) {
+    return row.map(ecMallCsvCell).join(",");
+  }).join("\r\n") + "\r\n";
+  var blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = manufacturingCostExportFileName();
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+  setManufacturingCostListStatus(tf("manufacturing_cost_export_done", { n: manufacturingCostRows.length }), false);
 }
 
 async function searchManufacturingCostCandidates() {
@@ -28933,6 +29003,7 @@ document.getElementById("btn-manufacturing-cost-load-list").addEventListener("cl
 document.getElementById("btn-manufacturing-cost-new-list").addEventListener("click", resetManufacturingCostWorkingList);
 document.getElementById("btn-manufacturing-cost-save-list").addEventListener("click", saveManufacturingCostList);
 document.getElementById("btn-manufacturing-cost-delete-list").addEventListener("click", deleteManufacturingCostList);
+document.getElementById("btn-manufacturing-cost-export").addEventListener("click", exportManufacturingCostRows);
 document.getElementById("manufacturing-cost-saved-list").addEventListener("change", function() {
   var selected = selectedManufacturingCostList();
   manufacturingCostActiveListId = selected ? selected.id : null;
