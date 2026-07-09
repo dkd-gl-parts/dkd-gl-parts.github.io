@@ -1831,7 +1831,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.463</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.464</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1860,7 +1860,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.463</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.464</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1890,7 +1890,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.463</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.464</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -7053,7 +7053,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.463";
+var APP_VERSION       = "v1.1.464";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -22900,10 +22900,20 @@ function componentNameSortCompare(a, b) {
 function componentNameCandidateSortMeta(item) {
   var name = item && item.name != null ? item.name : item;
   var meta = componentNameCandidateMetaForName(name);
+  var manualCount = Math.max(
+    componentNameCandidateNumber(meta.manualCount),
+    componentNameCandidateNumber(item && item.manualCount),
+    componentNameCandidateNumber(item && item.usageCount),
+    componentNameCandidateNumber(item && item.usedCount)
+  );
+  var catalogCount = Math.max(
+    componentNameCandidateNumber(meta.catalogCount),
+    componentNameCandidateNumber(item && item.catalogCount)
+  );
   return {
-    manualCount: componentNameCandidateNumber(meta.manualCount),
-    catalogCount: componentNameCandidateNumber(meta.catalogCount),
-    sortOrder: componentNameCandidateNumber(meta.sortOrder, 999999),
+    manualCount: manualCount,
+    catalogCount: catalogCount,
+    sortOrder: componentNameCandidateNumber((item && item.sortOrder) != null ? item.sortOrder : meta.sortOrder, 999999),
     name: String(name || "")
   };
 }
@@ -22914,10 +22924,16 @@ function componentNameGroupedSortCompare(kind, a, b) {
   if (kind === "frequent") {
     var manualDiff = bm.manualCount - am.manualCount;
     if (manualDiff) return manualDiff;
+    var catalogDiff = bm.catalogCount - am.catalogCount;
+    if (catalogDiff) return catalogDiff;
   }
   if (kind === "master") {
     var orderDiff = am.sortOrder - bm.sortOrder;
     if (orderDiff) return orderDiff;
+    var masterManualDiff = bm.manualCount - am.manualCount;
+    if (masterManualDiff) return masterManualDiff;
+    var masterCatalogDiff = bm.catalogCount - am.catalogCount;
+    if (masterCatalogDiff) return masterCatalogDiff;
   }
   return componentNameSortCompare(am.name, bm.name);
 }
@@ -22961,8 +22977,16 @@ function setComponentNameCandidateMeta(metaMap, name, row) {
   var key = componentNameCandidateLabelKey(name);
   if (!key || !row) return;
   var current = metaMap[key] || {};
-  var manualCount = Math.max(componentNameCandidateNumber(current.manualCount), componentNameCandidateNumber(row.manual_count));
-  var catalogCount = Math.max(componentNameCandidateNumber(current.catalogCount), componentNameCandidateNumber(row.catalog_count));
+  var manualCount = Math.max(
+    componentNameCandidateNumber(current.manualCount),
+    componentNameCandidateNumber(row.manual_count),
+    componentNameCandidateNumber(row.usage_count),
+    componentNameCandidateNumber(row.used_count)
+  );
+  var catalogCount = Math.max(
+    componentNameCandidateNumber(current.catalogCount),
+    componentNameCandidateNumber(row.catalog_count)
+  );
   var sortOrder = current.sortOrder != null
     ? Math.min(componentNameCandidateNumber(current.sortOrder, 999999), componentNameCandidateNumber(row.sort_order, 999999))
     : componentNameCandidateNumber(row.sort_order, 999999);
@@ -23230,8 +23254,17 @@ function addGroupedComponentNameCandidate(groups, seen, value, kind) {
       return item.key !== canonicalKey;
     });
   }
-  seen[canonicalKey] = { key: canonicalKey, name: canonicalName, kind: kind };
-  groups[kind].push({ key: canonicalKey, name: canonicalName });
+  var sortMeta = componentNameCandidateSortMeta(canonicalName);
+  var groupedItem = {
+    key: canonicalKey,
+    name: canonicalName,
+    kind: kind,
+    manualCount: sortMeta.manualCount,
+    catalogCount: sortMeta.catalogCount,
+    sortOrder: sortMeta.sortOrder
+  };
+  seen[canonicalKey] = groupedItem;
+  groups[kind].push(groupedItem);
 }
 
 function componentNameGroupedCandidates(selectedName, options) {
