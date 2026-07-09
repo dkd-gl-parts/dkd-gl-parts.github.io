@@ -614,6 +614,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .manufacturing-cost-flow-card.addition .manufacturing-cost-flow-step { background: #b7791f; }
 .manufacturing-cost-flow-head strong { font-size: 13px; font-weight: 900; }
 .manufacturing-cost-flow-note { color: #667085; font-size: 11px; margin-left: auto; white-space: nowrap; }
+.manufacturing-cost-settings-btn { min-height: 26px; padding: 0 10px; font-size: 11px; white-space: nowrap; }
 .manufacturing-cost-target-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(110px, .72fr); gap: 7px; align-items: end; }
 .manufacturing-cost-addition-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; align-items: end; }
 .manufacturing-cost-formula { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin: -1px 0 7px; color: #667085; font-size: 11px; line-height: 1.35; }
@@ -621,7 +622,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .manufacturing-cost-formula-token.added { background: #fff7e6; color: #8a5a00; border-color: #f4d58a; }
 .manufacturing-cost-formula-token.total { background: #e9f8ed; color: #16803a; border-color: #bdebc8; }
 .manufacturing-cost-formula-plus, .manufacturing-cost-formula-eq { color: #94a3b8; font-weight: 900; }
-.manufacturing-cost-category-core-panel { grid-column: 1 / -1; border-top: 1px solid #f1e0bd; margin-top: 2px; padding-top: 7px; }
+.manufacturing-cost-category-core-card { max-width: 760px; }
+.manufacturing-cost-category-core-panel { border: 1px solid #f1e0bd; border-radius: 10px; background: #fffdf7; padding: 10px; }
 .manufacturing-cost-category-core-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
 .manufacturing-cost-category-core-head strong { color: #8a5a00; font-size: 12px; font-weight: 900; }
 .manufacturing-cost-category-core-head span { color: #8a94a6; font-size: 11px; line-height: 1.3; text-align: right; }
@@ -1796,7 +1798,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.456</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.457</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1825,7 +1827,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.456</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.457</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1855,7 +1857,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.456</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.457</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -2885,6 +2887,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
             <span class="manufacturing-cost-flow-step">2</span>
             <strong data-i18n="manufacturing_cost_addition_block">原価に加算</strong>
             <span class="manufacturing-cost-flow-note" data-i18n="manufacturing_cost_addition_note">構成部品費に足して製造原価を作ります</span>
+            <button class="btn-secondary manufacturing-cost-settings-btn" id="btn-manufacturing-cost-category-core-open" type="button" data-i18n="manufacturing_cost_category_core_open">カテゴリ別設定</button>
           </div>
           <div class="manufacturing-cost-formula" aria-hidden="true">
             <span class="manufacturing-cost-formula-token" data-i18n="manufacturing_cost_formula_parts">構成部品費</span>
@@ -2909,13 +2912,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
             <div class="manufacturing-cost-field">
               <label for="manufacturing-cost-labor-amount" data-i18n="manufacturing_cost_labor_amount">工賃額</label>
               <input class="form-input" id="manufacturing-cost-labor-amount" type="number" min="0" step="1" value="0" data-i18n-ph="manufacturing_cost_labor_amount">
-            </div>
-            <div class="manufacturing-cost-category-core-panel">
-              <div class="manufacturing-cost-category-core-head">
-                <strong data-i18n="manufacturing_cost_category_core_title">カテゴリ別コア代</strong>
-                <span data-i18n="manufacturing_cost_category_core_note">空欄は共通コア代を使用します</span>
-              </div>
-              <div id="manufacturing-cost-category-core-list" class="manufacturing-cost-category-core-list"></div>
             </div>
           </div>
         </div>
@@ -2953,6 +2949,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       </div>
       <div id="manufacturing-cost-summary"></div>
       <div id="manufacturing-cost-list"><div class="empty" data-i18n="manufacturing_cost_search_hint">条件を指定して原価計算してください。</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="form-overlay" id="manufacturing-cost-category-core-overlay">
+  <div class="form-card manufacturing-cost-category-core-card">
+    <h3 data-i18n="manufacturing_cost_category_core_title">カテゴリ別コア代</h3>
+    <div class="form-help" data-i18n="manufacturing_cost_category_core_note">空欄は共通コア代を使用します</div>
+    <div class="manufacturing-cost-category-core-panel">
+      <div id="manufacturing-cost-category-core-list" class="manufacturing-cost-category-core-list"></div>
+    </div>
+    <div class="form-footer">
+      <button class="btn-cancel" id="btn-manufacturing-cost-category-core-close" type="button" data-i18n="btn_close">閉じる</button>
     </div>
   </div>
 </div>
@@ -4092,6 +4101,7 @@ var TRANSLATIONS = {
     manufacturing_cost_formula_total: "製造原価",
     manufacturing_cost_core_cost: "コア代",
     manufacturing_cost_default_core_cost: "共通コア代",
+    manufacturing_cost_category_core_open: "カテゴリ別設定",
     manufacturing_cost_category_core_title: "カテゴリ別コア代",
     manufacturing_cost_category_core_note: "空欄は共通コア代を使用します",
     manufacturing_cost_core_category_note: "{category} 設定",
@@ -5142,6 +5152,7 @@ var TRANSLATIONS = {
     manufacturing_cost_formula_total: "Manufacturing Cost",
     manufacturing_cost_core_cost: "Core cost",
     manufacturing_cost_default_core_cost: "Default core cost",
+    manufacturing_cost_category_core_open: "Category Settings",
     manufacturing_cost_category_core_title: "Category core costs",
     manufacturing_cost_category_core_note: "Blank categories use the default core cost",
     manufacturing_cost_core_category_note: "{category} setting",
@@ -6198,6 +6209,7 @@ var TRANSLATIONS = {
     manufacturing_cost_formula_total: "制造成本",
     manufacturing_cost_core_cost: "旧芯成本",
     manufacturing_cost_default_core_cost: "通用旧芯成本",
+    manufacturing_cost_category_core_open: "类别设置",
     manufacturing_cost_category_core_title: "类别旧芯成本",
     manufacturing_cost_category_core_note: "空白类别使用通用旧芯成本",
     manufacturing_cost_core_category_note: "{category} 设置",
@@ -6987,7 +6999,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.456";
+var APP_VERSION       = "v1.1.457";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -15120,6 +15132,17 @@ function recalculateManufacturingCostCurrentRows() {
   var products = manufacturingCostRows.map(function(row) { return row.product; }).filter(Boolean);
   manufacturingCostRows = manufacturingCostBuildRows(products, manufacturingCostSettings());
   renderManufacturingCostRows();
+}
+
+function openManufacturingCostCategoryCoreSettings() {
+  renderManufacturingCostCategoryCoreCosts();
+  var overlay = document.getElementById("manufacturing-cost-category-core-overlay");
+  if (overlay) overlay.classList.add("show");
+}
+
+function closeManufacturingCostCategoryCoreSettings() {
+  var overlay = document.getElementById("manufacturing-cost-category-core-overlay");
+  if (overlay) overlay.classList.remove("show");
 }
 
 function setManufacturingCostListStatus(message, isError) {
@@ -28725,6 +28748,11 @@ document.getElementById("btn-product-kind-stock-save").addEventListener("click",
 document.getElementById("btn-manufacturing-cost-calc").addEventListener("click", searchManufacturingCostCandidates);
 document.getElementById("btn-manufacturing-cost-query-clear").addEventListener("click", clearManufacturingCostQueryInput);
 document.getElementById("manufacturing-cost-query").addEventListener("keydown", function(e){ if(e.key==="Enter") searchManufacturingCostCandidates(); });
+document.getElementById("btn-manufacturing-cost-category-core-open").addEventListener("click", openManufacturingCostCategoryCoreSettings);
+document.getElementById("btn-manufacturing-cost-category-core-close").addEventListener("click", closeManufacturingCostCategoryCoreSettings);
+document.getElementById("manufacturing-cost-category-core-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeManufacturingCostCategoryCoreSettings();
+});
 document.getElementById("manufacturing-cost-candidates").addEventListener("click", function(e) {
   if (e.target.closest("[data-cost-select-all]")) { setManufacturingCostCandidateChecks(true); return; }
   if (e.target.closest("[data-cost-clear-selection]")) { setManufacturingCostCandidateChecks(false); return; }
