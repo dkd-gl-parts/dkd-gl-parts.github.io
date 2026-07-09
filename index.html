@@ -426,11 +426,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 @media(max-width:1100px){ .component-reverse-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .component-reverse-row .component-reverse-action { justify-self: start; } }
 @media(max-width:900px){ .component-add-grid, .component-reverse-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media(max-width:560px){ .component-add-grid, .component-target-controls, .component-target-summary, .component-reverse-grid, .component-reverse-row { grid-template-columns: 1fr; } .component-add-field.wide, .component-add-field.full { grid-column: 1; } .component-target-head { align-items: flex-start; flex-direction: column; } .component-reverse-result { max-height: 58vh; } }
+#component-wrap { overflow-x: auto; }
 .component-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 12px; }
 .component-table th { background: #f5f7fa; color: #555; font-weight: 600; padding: 6px 8px; text-align: left; border-bottom: 2px solid #e0e0e0; }
 .component-table td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
 .component-table tr:last-child td { border-bottom: none; }
 .component-table input { width: 100%; min-width: 54px; border: 1px solid #d7dce5; border-radius: 5px; padding: 5px 6px; font-size: 12px; }
+.component-table select { width: 100%; min-width: 86px; border: 1px solid #d7dce5; border-radius: 5px; padding: 5px 6px; font-size: 12px; background: #fff; }
+.component-table input[data-component-edit-field="component_manufacturer_part_number"] { min-width: 154px; font-family: monospace; }
+.component-table input[data-component-edit-field="component_genuine_part_number"] { min-width: 140px; font-family: monospace; }
+.component-table input[data-component-edit-field="component_manufacturer"] { min-width: 96px; font-family: monospace; }
+.component-table select[data-component-edit-field="component_part_name"] { min-width: 190px; }
 .component-table .component-cell-qty { text-align: left; white-space: nowrap; }
 .component-table .component-cell-money,
 .component-table .component-cell-rate { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -1756,7 +1762,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.450</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" style="font-size:10px;color:#ccc">v1.1.451</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -1785,7 +1791,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.450</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#556688;margin-left:4px">v1.1.451</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -1815,7 +1821,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.450</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" style="font-size:9px;color:#8899bb;margin-left:4px">v1.1.451</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -6868,7 +6874,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.450";
+var APP_VERSION       = "v1.1.451";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -21072,7 +21078,7 @@ function componentEditInput(row, field, value) {
 
 function componentEditNameInput(row) {
   var value = row.component_name || row.component_part_name || "";
-  return "<select data-component-edit-field='component_part_name'>" + componentNameSelectOptionsHtml(value) + "</select><button class='btn-sm-edit production-action-secondary' data-component-name-edit-request='1' type='button'>" + esc(t("component_name_request_open")) + "</button>";
+  return "<select data-component-edit-field='component_part_name'>" + componentNameSelectOptionsHtml(value, { baseRow: row }) + "</select><button class='btn-sm-edit production-action-secondary' data-component-name-edit-request='1' type='button'>" + esc(t("component_name_request_open")) + "</button>";
 }
 
 function componentProcurementCategoryLabel(value) {
@@ -21128,10 +21134,12 @@ async function refreshComponentEditNameCandidates(usageId) {
   if (String(editingComponentUsageId || "") !== String(usageId || "")) return;
   var tr = document.querySelector("[data-component-edit-row='" + String(usageId) + "']");
   var payload = tr ? componentEditPayloadFromRow(tr) : {};
+  var editingRow = assemblyComponentRows.find(function(row) { return String(row.id) === String(usageId); }) || null;
+  var editingName = payload.component_part_name || (editingRow ? (editingRow.component_name || editingRow.component_part_name || "") : "");
   var list = document.getElementById("component-edit-name-list");
-  if (list) list.innerHTML = componentNameOptionsHtml(payload.component_part_name || "");
+  if (list) list.innerHTML = componentNameOptionsHtml(editingName, { baseRow: editingRow });
   var select = tr ? tr.querySelector("[data-component-edit-field='component_part_name']") : null;
-  if (select) setComponentNameSelectOptions(select, payload.component_part_name || "");
+  if (select) setComponentNameSelectOptions(select, editingName, { baseRow: editingRow });
 }
 
 function cancelComponentEdit() {
@@ -22780,6 +22788,9 @@ function componentNameOptionsHtml(selectedName, options) {
 
 function componentNameSelectOptionsHtml(selectedName, options) {
   var html = "<option value=''>" + esc(t("component_alt_name_placeholder")) + "</option>";
+  var selectedValue = canonicalComponentNameForStorage(selectedName) || normalizeComponentNameText(selectedName);
+  var selectedKey = componentNameDuplicateKey(selectedValue);
+  var selectedRendered = false;
   var groups = componentNameGroupedCandidates(selectedName, options);
   componentNameCandidateKinds().forEach(function(kind) {
     if (!groups[kind].length) return;
@@ -22787,11 +22798,18 @@ function componentNameSelectOptionsHtml(selectedName, options) {
     groups[kind].forEach(function(candidate) {
       var label = componentNameOptionLabel(candidate.name);
       var text = candidate.name + (label ? " / " + label : "");
-      var disabled = componentNameCanSelectCandidate(candidate.name) ? "" : " disabled";
-      html += "<option value='" + esc(candidate.name) + "'" + disabled + ">" + esc(text) + "</option>";
+      var candidateKey = componentNameDuplicateKey(candidate.name);
+      var isSelected = !!(selectedKey && candidateKey && selectedKey === candidateKey);
+      if (isSelected) selectedRendered = true;
+      var disabled = (!isSelected && !componentNameCanSelectCandidate(candidate.name)) ? " disabled" : "";
+      var selected = isSelected ? " selected" : "";
+      html += "<option value='" + esc(candidate.name) + "'" + disabled + selected + ">" + esc(text) + "</option>";
     });
     html += "</optgroup>";
   });
+  if (selectedValue && !selectedRendered) {
+    html += "<option value='" + esc(selectedValue) + "' selected>" + esc(selectedValue) + "</option>";
+  }
   return html;
 }
 
