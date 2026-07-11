@@ -16859,6 +16859,12 @@ function openFinishedLabelPrintPreview(record) {
   win.document.open();
   win.document.write(buildFinishedLabelPrintHtml(record));
   win.document.close();
+  var printBtn = win.document.getElementById("dcats-print-now");
+  if (printBtn) {
+    printBtn.addEventListener("click", function() {
+      win.print();
+    });
+  }
 }
 
 function buildFinishedLabelPrintHtml(record) {
@@ -16876,7 +16882,7 @@ function buildFinishedLabelPrintHtml(record) {
   }
   return "<!doctype html><html><head><meta charset='utf-8'><title>D-CATS " + esc(record.issueCode || "") + "</title>" +
     "<style>@page{size:A6;margin:4mm}body{font-family:Arial,'Yu Gothic',sans-serif;margin:0;color:#111}.toolbar{position:sticky;top:0;background:#fff;padding:8px;border-bottom:1px solid #ddd}.toolbar button{padding:8px 14px}.a6{width:135mm;min-height:90mm;border:1px solid #333;margin:6mm auto;padding:4mm;box-sizing:border-box}.head{display:flex;justify-content:space-between;gap:4mm;border-bottom:2px solid #111;padding-bottom:2mm}.title{font-size:18pt;font-weight:800}.issue{font-size:9pt;text-align:right}.grid{display:grid;grid-template-columns:24mm 1fr 24mm 1fr;gap:1.5mm 3mm;margin-top:3mm;font-size:9pt}.lbl{color:#667085;font-size:8pt}.val{font-weight:800;word-break:break-word}.big{font-size:14pt}.parts{width:100%;border-collapse:collapse;margin-top:3mm;font-size:7.5pt}.parts th,.parts td{border:1px solid #999;padding:1mm;text-align:left}.parts th{background:#eef2f6}.bottom{display:flex;justify-content:space-between;align-items:flex-end;margin-top:2mm;font-size:8pt}.bottom img{width:22mm;height:22mm}.qr-wrap{width:135mm;margin:4mm auto}.qr-seal{display:flex;align-items:center;gap:2mm;width:58mm;height:9mm;border:1px dashed #aaa;margin:1.5mm 0;padding:0 1mm;box-sizing:border-box;font-size:6pt;overflow:hidden}.qr-seal img{width:7mm;height:7mm}@media print{.toolbar{display:none}.a6{margin:0 auto}.qr-wrap{break-before:page}}</style>" +
-    "</head><body><div class='toolbar'><button onclick='window.print()'>印刷</button> A6ラベルと9mm QRシールをまとめてプレビューしています。</div>" +
+    "</head><body><div class='toolbar'><button id='dcats-print-now' type='button'>印刷</button> A6ラベルと9mm QRシールをまとめてプレビューしています。</div>" +
     "<section class='a6'><div class='head'><div><div class='title'>D-CATS 完品ラベル</div><div>" + esc(record.productCategory || "") + " / " + esc(productKindLabel(record.productKind)) + "</div></div><div class='issue'>" + esc(record.issueCode || "") + "<br>" + esc(formatDateTime(record.issuedAt)) + "</div></div>" +
     "<div class='grid'><div class='lbl'>純正品番</div><div class='val big'>" + esc(record.genuinePartNumber || "-") + "</div><div class='lbl'>メーカー品番</div><div class='val big'>" + esc(record.manufacturerPartNumber || record.productNo || "-") + "</div><div class='lbl'>メーカー</div><div class='val'>" + esc(record.manufacturer || "-") + "</div><div class='lbl'>大光品番</div><div class='val'>" + esc(record.daikoPartNumber || "-") + "</div><div class='lbl'>数量</div><div class='val'>" + esc(record.quantity || 1) + "</div><div class='lbl'>棚番</div><div class='val'>" + esc(record.shelfNo || "-") + "</div><div class='lbl'>電圧/出力</div><div class='val'>" + esc([record.nominalVoltage, record.nominalOutput].filter(Boolean).join(' / ') || "-") + "</div><div class='lbl'>担当</div><div class='val'>" + esc([record.assemblyStaff, record.inspectionStaff].filter(Boolean).join(' / ') || "-") + "</div></div>" +
     "<table class='parts'><thead><tr><th>No</th><th>部品種別</th><th>メーカー</th><th>交換品番/内容</th><th>メモ</th></tr></thead><tbody>" + rows + "</tbody></table>" +
@@ -17541,7 +17547,7 @@ async function loadKikanMgmt() {
     html += "<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:8px'>";
     html += "<div style='font-size:13px;font-weight:600;color:#1a1a2e'>" + esc(t("kikan_group_id")) + ": " + gid + " <span style='font-size:11px;color:#aaa;font-weight:400'>(" + esc(tf("kikan_member_count", { n: members.length })) + ")</span></div>";
     html += "<div style='display:flex;gap:6px'>";
-    html += "<button class='btn-sm-edit' data-kgid='" + gid + "' onclick='openKikanForm(" + gid + ")'>" + esc(t("kikan_edit_members")) + "</button>";
+    html += "<button class='btn-sm-edit' data-kgid='" + esc(gid) + "' data-kikan-edit-group='" + esc(gid) + "'>" + esc(t("kikan_edit_members")) + "</button>";
     html += "</div></div>";
     html += "<table style='width:100%;border-collapse:collapse;font-size:12px'>";
     html += "<tr style='background:#f5f7fa'><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>" + esc(t("f_product_id")) + "</th><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>" + esc(t("f_genuine_pn")) + "</th><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>" + esc(t("f_mfr_pn")) + "</th><th style='padding:5px 4px;text-align:left;font-size:11px;color:#555'>" + esc(t("f_manufacturer")) + "</th><th></th></tr>";
@@ -17552,7 +17558,7 @@ async function loadKikanMgmt() {
       html += "<td style='padding:5px 4px;font-family:monospace'>" + esc(p.genuine_part_number || "-") + "</td>";
       html += "<td style='padding:5px 4px;color:#555;font-family:monospace'>" + esc(p.manufacturer_part_number || "-") + "</td>";
       html += "<td style='padding:5px 4px;color:#aaa'>" + esc(p.manufacturer || "-") + "</td>";
-      html += "<td style='padding:5px 4px'><button class='btn-sm-del' onclick='removeKikanMember(" + gid + "," + m.dkd_gokan_id + ")'>" + esc(t("kikan_remove")) + "</button></td>";
+      html += "<td style='padding:5px 4px'><button class='btn-sm-del' data-kikan-remove-group='" + esc(gid) + "' data-kikan-remove-member='" + esc(m.dkd_gokan_id) + "'>" + esc(t("kikan_remove")) + "</button></td>";
       html += "</tr>";
     });
     html += "</table></div>";
@@ -17561,7 +17567,18 @@ async function loadKikanMgmt() {
   kikanListEl.innerHTML = html || "<div class='empty'>" + esc(t("kikan_no_groups")) + "</div>";
   if (!canEdit()) {
     kikanListEl.querySelectorAll("[data-kgid], .btn-sm-del").forEach(function(btn) { btn.remove(); });
+    return;
   }
+  kikanListEl.querySelectorAll("[data-kikan-edit-group]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      openKikanForm(btn.dataset.kikanEditGroup);
+    });
+  });
+  kikanListEl.querySelectorAll("[data-kikan-remove-group][data-kikan-remove-member]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      removeKikanMember(btn.dataset.kikanRemoveGroup, btn.dataset.kikanRemoveMember);
+    });
+  });
 }
 
 function openKikanForm(groupId) {
@@ -18125,8 +18142,16 @@ function thumbImgHtml(url, options) {
   var cls = options.className ? " class='" + esc(options.className) + "'" : "";
   return "<img" + cls + " src='" + esc(thumb || original) + "' data-original-src='" + esc(original) +
     "' loading='" + esc(loading) + "' decoding='" + esc(decoding) + "'" + fetchPriority +
-    " alt='' onerror=\"this.onerror=null;if(this.dataset.originalSrc){this.src=this.dataset.originalSrc;}\">";
+    " alt=''>";
 }
+
+document.addEventListener("error", function(event) {
+  var img = event.target;
+  if (!img || img.tagName !== "IMG" || !img.dataset || !img.dataset.originalSrc) return;
+  if (img.dataset.thumbFallbackDone === "1" || img.src === img.dataset.originalSrc) return;
+  img.dataset.thumbFallbackDone = "1";
+  img.src = img.dataset.originalSrc;
+}, true);
 
 var preloadedThumbUrls = {};
 function preloadThumbImage(url, options) {
