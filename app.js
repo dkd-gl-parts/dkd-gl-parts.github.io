@@ -3315,7 +3315,6 @@ var productVariantSummaryCache = {};
 var currentSlPartIds  = [];  // 現在表示中のSL品番IDリスト（画像ロード用）
 var currentFilter     = "all";
 var searchSlOnly      = false;
-var lastFilterTouchAt = 0;
 var currentProduct    = null;
 var currentProductVariants = [];
 var currentSelectedProductKind = "rebuilt";
@@ -3339,7 +3338,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.475";
+var APP_VERSION       = "v1.1.476";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -14250,14 +14249,10 @@ async function initSearch() {
   render();
 }
 
-// カテゴリマスタからフィルターチップを生成
+// カテゴリマスタから販売管理のカテゴリ選択肢を生成
 function renderCategoryChips() {
-  var filterRow = document.getElementById("filter-row");
-  if (!filterRow) return;
-
-  // 既存のカテゴリチップを削除（all・sl は残す）
-  var existing = filterRow.querySelectorAll(".chip[data-filter^='cat:']");
-  existing.forEach(function(el) { el.remove(); });
+  var select = document.getElementById("search-category-filter");
+  if (!select) return;
 
   var cats = categoryOptions.length ? categoryOptions : [];
   if (!cats.length) {
@@ -14275,18 +14270,18 @@ function renderCategoryChips() {
       }
     });
   }
+  select.innerHTML = "";
+  var allOption = document.createElement("option");
+  allOption.value = "all";
+  allOption.textContent = t("filter_all");
+  select.appendChild(allOption);
   cats.forEach(function(cat) {
     var catCode = cat.category_code || cat.category;
-    var btn = document.createElement("button");
-    btn.className = "chip";
-    btn.type = "button";
-    btn.dataset.filter = "cat:" + catCode;
-    btn.textContent = categoryOptionLabel(cat);
-    btn.classList.toggle("active", currentFilter === btn.dataset.filter);
-    btn.addEventListener("click", function() {
-      activateSearchFilterChip(btn);
-    });
-    filterRow.appendChild(btn);
+    if (!catCode) return;
+    var option = document.createElement("option");
+    option.value = "cat:" + catCode;
+    option.textContent = categoryOptionLabel(cat);
+    select.appendChild(option);
   });
   if (typeof syncSearchFilterControls === "function") syncSearchFilterControls();
 }
@@ -15839,9 +15834,7 @@ async function runProductSearch(options) {
   if (currentFilter === "production") currentFilter = "all";
   if (q && options.resetFilter && currentFilter !== "all") {
     currentFilter = "all";
-      document.querySelectorAll("#filter-row .chip").forEach(function(c) {
-      c.classList.toggle("active", c.dataset.filter === "all");
-    });
+    syncSearchFilterControls();
   }
   var categoryFilter = currentFilter.indexOf("cat:") === 0 ? currentFilter.slice(4) : null;
   searchSlOnly = false;
@@ -16576,9 +16569,8 @@ function closePanel() {
 }
 
 function syncSearchFilterControls() {
-  document.querySelectorAll("#filter-row .chip").forEach(function(c) {
-    c.classList.toggle("active", c.dataset.filter === currentFilter);
-  });
+  var select = document.getElementById("search-category-filter");
+  if (select) select.value = currentFilter || "all";
   searchSlOnly = false;
 }
 
@@ -16591,11 +16583,6 @@ function activateSearchFilterValue(filterValue, options) {
   var listArea = document.querySelector("#screen-search .list-area");
   if (listArea) listArea.scrollTop = 0;
   runProductSearch();
-}
-
-function activateSearchFilterChip(chip) {
-  if (!chip || !chip.dataset || !chip.dataset.filter) return;
-  activateSearchFilterValue(chip.dataset.filter);
 }
 
 function applyVisibleSearchScopeFilter() {
@@ -26152,27 +26139,8 @@ document.getElementById("kf-existing-members").addEventListener("click", functio
 document.getElementById("search-btn").addEventListener("click", function(){ searchSlOnly=false; runProductSearch({ resetLimit: true, logActivity: true, source: "button" }); });
 document.getElementById("q").addEventListener("keydown", function(e){ if(e.key==="Enter") { searchSlOnly=false; runProductSearch({ resetLimit: true, logActivity: true, source: "enter" }); } });
 document.getElementById("clear-btn").addEventListener("click", function(){ document.getElementById("q").value=""; currentFilter="all"; searchSlOnly=false; productSearchLimit=SEARCH_INITIAL_LIMIT; syncSearchFilterControls(); runProductSearch(); });
-document.querySelectorAll("#filter-row .chip").forEach(function(chip){
-  chip.addEventListener("click", function(){
-    if (Date.now() - lastFilterTouchAt < 450) return;
-    activateSearchFilterChip(chip);
-  });
-});
-function activateSearchFilterChipFromEvent(e) {
-  var target = e.target && e.target.closest ? e.target : (e.target && e.target.parentElement);
-  var chip = target && target.closest ? target.closest(".chip[data-filter]") : null;
-  if (!chip) return;
-  if (e.cancelable) e.preventDefault();
-  lastFilterTouchAt = Date.now();
-  activateSearchFilterChip(chip);
-}
-document.getElementById("filter-row").addEventListener("touchend", function(e) {
-  activateSearchFilterChipFromEvent(e);
-}, { passive: false });
-document.getElementById("filter-row").addEventListener("pointerup", function(e) {
-  if (!e.pointerType || e.pointerType === "mouse") return;
-  if (Date.now() - lastFilterTouchAt < 450) return;
-  activateSearchFilterChipFromEvent(e);
+document.getElementById("search-category-filter").addEventListener("change", function() {
+  activateSearchFilterValue(this.value);
 });
 document.getElementById("btn-load-more").addEventListener("click", async function(){
   var firstAddedIndex = getFiltered().slice(0, SEARCH_RENDER_LIMIT).length;
