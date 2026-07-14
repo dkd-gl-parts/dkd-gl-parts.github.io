@@ -3353,7 +3353,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.483";
+var APP_VERSION       = "v1.1.484";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -20547,26 +20547,31 @@ async function searchComponentCompatibility() {
   });
 
   if (normalized) {
-    var assyUsages = await sb.from("assembly_component_usages")
-      .select("component_id,dkd_shohin_id,assy_manufacturer_part_number,assy_genuine_part_number,component_position,is_catalog_evidence,product_kind,product_variant_id")
-      .or("normalized_assy_manufacturer_part_number.like." + normalized + "%,normalized_assy_genuine_part_number.like." + normalized + "%")
-      .limit(5000);
+    var assyProducts = await sb.from("core_products")
+      .select("dkd_shohin_id,manufacturer_part_number,genuine_part_number,genuine_part_number_2")
+      .or("normalized_manufacturer_part_number.like." + normalized + "%,normalized_genuine_part_number.like." + normalized + "%,normalized_genuine_part_number_2.like." + normalized + "%")
+      .limit(300);
     if (seq !== componentCompatLoadSeq) return;
-    if (assyUsages.error) {
-      firstError = firstError || assyUsages.error;
+    if (assyProducts.error) {
+      firstError = firstError || assyProducts.error;
     } else {
-      var assyMeta = {};
-      (assyUsages.data || []).forEach(function(usage) {
-        var key = String(usage.component_id || "");
-        if (!key) return;
-        assyMeta[key] = assyMeta[key] || { labels: [], position: "" };
-        var label = [usage.assy_manufacturer_part_number || "-", usage.assy_genuine_part_number || ""].filter(Boolean).join(" / ");
-        if (label && assyMeta[key].labels.indexOf(label) < 0) assyMeta[key].labels.push(label);
-        var position = String(usage.component_position || "").trim();
-        if (position && (!assyMeta[key].position || position.localeCompare(assyMeta[key].position, "ja", { numeric: true }) < 0)) assyMeta[key].position = position;
-      });
-      var assyComponentIds = Object.keys(assyMeta).map(function(id) { return parseInt(id, 10); }).filter(function(id) { return !isNaN(id); });
       try {
+        var productMap = {};
+        (assyProducts.data || []).forEach(function(product) { productMap[String(product.dkd_shohin_id)] = product; });
+        var assyProductIds = Object.keys(productMap).map(function(id) { return parseInt(id, 10); }).filter(function(id) { return !isNaN(id); });
+        var assyUsages = assyProductIds.length ? await componentCompatFetchByChunks("assembly_component_usages", "component_id,dkd_shohin_id,component_position,is_catalog_evidence,product_kind,product_variant_id", "dkd_shohin_id", assyProductIds) : [];
+        var assyMeta = {};
+        assyUsages.forEach(function(usage) {
+          var key = String(usage.component_id || "");
+          if (!key) return;
+          assyMeta[key] = assyMeta[key] || { labels: [], position: "" };
+          var product = productMap[String(usage.dkd_shohin_id)] || {};
+          var label = [product.manufacturer_part_number || "-", product.genuine_part_number || product.genuine_part_number_2 || ""].filter(Boolean).join(" / ");
+          if (label && assyMeta[key].labels.indexOf(label) < 0) assyMeta[key].labels.push(label);
+          var position = String(usage.component_position || "").trim();
+          if (position && (!assyMeta[key].position || position.localeCompare(assyMeta[key].position, "ja", { numeric: true }) < 0)) assyMeta[key].position = position;
+        });
+        var assyComponentIds = Object.keys(assyMeta).map(function(id) { return parseInt(id, 10); }).filter(function(id) { return !isNaN(id); });
         var assyParts = assyComponentIds.length ? await componentCompatFetchByChunks("component_parts", select, "dkd_component_id", assyComponentIds, function(query) {
           if (source && source.value === "catalog") return query.eq("has_catalog_source", true);
           if (source && source.value === "manual") return query.eq("has_catalog_source", false);
