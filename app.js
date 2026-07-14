@@ -3353,7 +3353,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.484";
+var APP_VERSION       = "v1.1.485";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -20679,11 +20679,12 @@ function renderComponentCompatSearchRows() {
   }
   results.innerHTML = componentCompatSearchRows.map(function(row) {
     var active = componentCompatSelected && String(componentCompatSelected.dkd_component_id) === String(row.dkd_component_id);
-    var meta = [row.manufacturer || "UNKNOWN", row.part_name || "部品名未設定", row.genuine_part_number ? "純正 " + row.genuine_part_number : ""].filter(Boolean).join(" / ");
     var assyMeta = (row._matched_assy_labels || []).length ? "使用製品 " + row._matched_assy_labels.slice(0, 2).join(", ") + (row._matched_assy_labels.length > 2 ? " ほか" : "") + (row._matched_assy_position ? " / 位置 " + row._matched_assy_position : "") : "";
     return "<button class='component-compat-result" + (active ? " active" : "") + "' type='button' data-compat-base-id='" + esc(String(row.dkd_component_id)) + "'>" +
-      "<span class='component-compat-result-top'><span class='component-compat-pn'>" + esc(row.manufacturer_part_number || "-") + "</span>" + componentCompatSourceBadge(row) + "</span>" +
-      "<span class='component-compat-meta'>" + esc(meta) + "</span>" +
+      "<span class='component-compat-result-top'><span class='component-compat-result-title'><span class='component-compat-result-label'>部品名</span><span class='component-compat-result-value'>" + esc(row.part_name || "部品名未設定") + "</span></span>" + componentCompatSourceBadge(row) + "</span>" +
+      "<span class='component-compat-result-number'><span class='component-compat-result-label'>メーカー品番</span><span class='component-compat-result-value'>" + esc(row.manufacturer_part_number || "-") + "</span></span>" +
+      "<span class='component-compat-result-number'><span class='component-compat-result-label'>純正品番</span><span class='component-compat-result-value'>" + esc(row.genuine_part_number || "-") + "</span></span>" +
+      "<span class='component-compat-meta'>メーカー: " + esc(row.manufacturer || "UNKNOWN") + "</span>" +
       (assyMeta ? "<span class='component-compat-meta'>" + esc(assyMeta) + "</span>" : "") +
       "<span class='component-compat-meta'>共通互換 " + esc(String(row._compat_link_count || 0)) + "件 / ID " + esc(String(row.dkd_component_id)) + "</span></button>";
   }).join("");
