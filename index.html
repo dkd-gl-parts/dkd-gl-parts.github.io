@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.478">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.478"; -->
+<meta name="dcats-app-version" content="v1.1.479">
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.479"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co; form-action 'self';">
 <title>D-CATS</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233c7df0'/%3E%3Cpath d='M8 17h16M16 9v14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.478">
+<link rel="stylesheet" href="styles.css?v=1.1.479">
 </head>
 <body>
 
@@ -128,7 +128,7 @@
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.478</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.479</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -157,7 +157,7 @@
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.478</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.479</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -187,7 +187,7 @@
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.478</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.479</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1083,6 +1083,120 @@
     <div class="mgmt-section-title" data-i18n="component_name_manual_master_list_title">手動追加マスター一覧</div>
     <div class="mgmt-count" id="component-name-master-list-count"></div>
     <div id="component-name-master-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
+  </div>
+</div>
+
+<!-- =============================================
+   構成部品互換管理画面
+============================================= -->
+<div id="screen-component-compat-mgmt" class="screen">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-component-compat-mgmt">← メニュー</button>
+      <span class="logo-text">構成部品互換管理</span>
+    </div>
+    <div class="page-header-right">
+      <span class="header-username" id="component-compat-mgmt-username"></span>
+      <span class="role-badge" id="component-compat-mgmt-role-badge"></span>
+      <button class="btn-logout" id="btn-logout-component-compat-mgmt" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <div class="mgmt-body component-compat-body">
+    <div class="mgmt-toolbar component-compat-toolbar">
+      <input class="mgmt-search" id="component-compat-search" type="search" placeholder="メーカー品番・純正品番・部品名で検索">
+      <select class="form-select" id="component-compat-source-filter" aria-label="データ種別">
+        <option value="">すべて</option>
+        <option value="catalog">カタログ品</option>
+        <option value="manual">手入力品</option>
+      </select>
+      <button class="btn-primary" id="btn-component-compat-search">検索</button>
+    </div>
+    <div class="component-compat-notice">カタログ未収録の品番も、手入力部品として登録済みであれば互換の基準にできます。</div>
+    <div class="component-compat-layout">
+      <section class="component-compat-search-pane" aria-label="基準部品検索結果">
+        <div class="component-compat-pane-head">
+          <strong>基準部品</strong>
+          <span class="mgmt-count" id="component-compat-count"></span>
+        </div>
+        <div class="component-compat-results" id="component-compat-results">
+          <div class="component-empty">品番または部品名を入力して検索してください</div>
+        </div>
+      </section>
+      <section class="component-compat-detail-pane" aria-label="互換詳細">
+        <div class="component-compat-empty" id="component-compat-empty">左の一覧から基準部品を選択してください</div>
+        <div id="component-compat-detail" hidden>
+          <div class="component-compat-selected" id="component-compat-selected"></div>
+          <div class="component-compat-tabs" role="tablist">
+            <button class="component-compat-tab active" id="component-compat-tab-links" type="button" data-compat-tab="links">共通互換</button>
+            <button class="component-compat-tab" id="component-compat-tab-assist" type="button" data-compat-tab="assist">登録アシスト <span id="component-compat-assist-count"></span></button>
+          </div>
+          <div class="component-compat-tab-panel active" id="component-compat-panel-links">
+            <div class="component-compat-actionbar">
+              <div>
+                <strong>互換品番</strong>
+                <span>共通情報の修正は、この互換を使う手入力部品にも反映できます。</span>
+              </div>
+              <button class="btn-primary" id="btn-component-compat-add" type="button">互換を追加</button>
+            </div>
+            <div id="component-compat-links"></div>
+          </div>
+          <div class="component-compat-tab-panel" id="component-compat-panel-assist">
+            <div class="component-compat-actionbar">
+              <div>
+                <strong>未登録候補</strong>
+                <span>基準部品を使う商品から、互換品が未登録のリビルト・社外新品を抽出します。</span>
+              </div>
+              <button class="btn-sm-edit" id="btn-component-compat-assist-refresh" type="button">再抽出</button>
+            </div>
+            <div id="component-compat-assist"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div class="form-overlay" id="component-compat-form-overlay">
+  <div class="form-card component-compat-form-card">
+    <h3 id="component-compat-form-title">共通互換を追加</h3>
+    <div class="form-help" id="component-compat-form-base"></div>
+    <input id="component-compat-form-id" type="hidden">
+    <input id="component-compat-form-part-id" type="hidden">
+    <div class="spec-form-grid">
+      <div class="form-row">
+        <label class="form-label">メーカー *</label>
+        <input class="form-input" id="component-compat-form-manufacturer" type="text" required>
+      </div>
+      <div class="form-row">
+        <label class="form-label">メーカー品番 *</label>
+        <input class="form-input" id="component-compat-form-part-number" type="text" inputmode="latin" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
+      </div>
+      <div class="form-row">
+        <label class="form-label">部品名</label>
+        <input class="form-input" id="component-compat-form-part-name" type="text">
+      </div>
+      <div class="form-row">
+        <label class="form-label">関係</label>
+        <select class="form-select" id="component-compat-form-relation">
+          <option value="compatible">互換使用可</option>
+          <option value="alternative">代替品</option>
+          <option value="reference">参照品番</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">メモ</label>
+      <textarea class="form-input" id="component-compat-form-note" rows="3"></textarea>
+    </div>
+    <label class="component-compat-sync-option" id="component-compat-sync-wrap">
+      <input id="component-compat-form-sync" type="checkbox" checked>
+      <span id="component-compat-sync-label">同じ品番の手入力部品へ修正内容を反映する</span>
+    </label>
+    <div class="form-footer">
+      <button class="btn-cancel" id="btn-component-compat-form-cancel" type="button">キャンセル</button>
+      <button class="btn-primary" id="btn-component-compat-form-save" type="button">保存</button>
+    </div>
+    <div class="reg-error" id="component-compat-form-error"></div>
   </div>
 </div>
 
@@ -2126,6 +2240,6 @@
   <div class="fs-thumbs" id="fs-thumbs"></div>
 </div>
 
-<script src="app.js?v=1.1.478"></script>
+<script src="app.js?v=1.1.479"></script>
 </body>
 </html>

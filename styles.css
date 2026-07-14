@@ -1829,3 +1829,166 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ec-history-used-yahoo-shopping { background: #92400e; }
 .ec-history-used-yahoo-auction { background: #475467; }
 .ec-history-default { background: #667085; }
+
+/* Component compatibility management */
+.component-compat-body { max-width: 1600px; }
+.component-compat-toolbar .mgmt-search { flex: 1 1 440px; }
+.component-compat-toolbar .form-select { flex: 0 0 170px; }
+.component-compat-notice {
+  margin: 0 0 12px;
+  padding: 9px 12px;
+  border-left: 3px solid #3276c8;
+  background: #eef5fc;
+  color: #35506d;
+  font-size: 13px;
+}
+.component-compat-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 390px) minmax(0, 1fr);
+  min-height: 620px;
+  border: 1px solid #d7dde5;
+  background: #fff;
+}
+.component-compat-search-pane {
+  min-width: 0;
+  border-right: 1px solid #d7dde5;
+  background: #f7f9fb;
+}
+.component-compat-pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 0 14px;
+  border-bottom: 1px solid #d7dde5;
+  background: #fff;
+}
+.component-compat-pane-head .mgmt-count { margin: 0; }
+.component-compat-results { max-height: 700px; overflow-y: auto; }
+.component-compat-result {
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-bottom: 1px solid #e1e6ec;
+  background: transparent;
+  color: #172234;
+  text-align: left;
+  cursor: pointer;
+}
+.component-compat-result:hover,
+.component-compat-result.active { background: #e8f1fb; }
+.component-compat-result.active { box-shadow: inset 3px 0 #2468b2; }
+.component-compat-result-top,
+.component-compat-selected-top,
+.component-compat-link-top,
+.component-compat-assist-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.component-compat-pn {
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  font-weight: 700;
+}
+.component-compat-meta {
+  margin-top: 4px;
+  color: #607087;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.component-compat-badge {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 7px;
+  border: 1px solid #a9bfd8;
+  border-radius: 4px;
+  background: #edf4fb;
+  color: #315b86;
+  font-size: 11px;
+  font-weight: 700;
+}
+.component-compat-badge.manual {
+  border-color: #c8b990;
+  background: #fff8df;
+  color: #6f5a21;
+}
+.component-compat-badge.scoped {
+  border-color: #c6cad1;
+  background: #f0f1f3;
+  color: #5a606b;
+}
+.component-compat-detail-pane { min-width: 0; background: #fff; }
+.component-compat-empty { padding: 90px 20px; color: #7b8798; text-align: center; }
+.component-compat-selected {
+  padding: 18px 20px;
+  border-bottom: 1px solid #d7dde5;
+  background: #fbfcfd;
+}
+.component-compat-selected .component-compat-pn { font-size: 20px; }
+.component-compat-tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 20px;
+  border-bottom: 1px solid #cfd6df;
+}
+.component-compat-tab {
+  min-height: 46px;
+  padding: 0 18px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #526174;
+  font-weight: 700;
+  cursor: pointer;
+}
+.component-compat-tab.active { border-bottom-color: #2468b2; color: #174f8b; }
+.component-compat-tab-panel { display: none; padding: 18px 20px 28px; }
+.component-compat-tab-panel.active { display: block; }
+.component-compat-actionbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.component-compat-actionbar strong,
+.component-compat-actionbar span { display: block; }
+.component-compat-actionbar span { margin-top: 3px; color: #66758a; font-size: 12px; }
+.component-compat-link,
+.component-compat-assist-item { padding: 13px 14px; border-top: 1px solid #e0e5eb; }
+.component-compat-link:last-child,
+.component-compat-assist-item:last-child { border-bottom: 1px solid #e0e5eb; }
+.component-compat-link-actions,
+.component-compat-assist-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+}
+.component-compat-assist-actions .form-select { min-width: 230px; max-width: 340px; }
+.component-compat-sync-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid #d7dde5;
+  background: #f7f9fb;
+  color: #34465b;
+  font-size: 13px;
+}
+.component-compat-form-card { max-width: 720px; }
+
+@media (max-width: 860px) {
+  .component-compat-layout { grid-template-columns: 1fr; }
+  .component-compat-search-pane { border-right: 0; border-bottom: 1px solid #d7dde5; }
+  .component-compat-results { max-height: 330px; }
+  .component-compat-actionbar,
+  .component-compat-assist-top { align-items: stretch; flex-direction: column; }
+  .component-compat-assist-actions { align-items: stretch; flex-direction: column; }
+  .component-compat-assist-actions .form-select { width: 100%; max-width: none; }
+}
