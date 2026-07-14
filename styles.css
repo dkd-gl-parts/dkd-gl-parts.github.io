@@ -252,6 +252,34 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 #rakuten-list .ec-price-result-table td:nth-child(-n+3) .mgmt-pn,
 #rakuten-list .ec-price-result-table td:nth-child(-n+3) .mgmt-sub { white-space: nowrap; word-break: keep-all; overflow-wrap: normal; }
 #screen-rakuten-price-list .mgmt-body { max-width: min(1760px, calc(100vw - 16px)); padding-left: 8px; padding-right: 8px; }
+#screen-rakuten-price-list .ec-price-list-filter-toolbar { align-items: stretch; }
+#screen-rakuten-price-list .ec-price-list-filter-box {
+  display: flex;
+  flex: 1 1 360px;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 260px;
+  padding: 9px 10px;
+  border: 1px solid #d8e1ec;
+  border-radius: 8px;
+  background: #fbfdff;
+}
+#screen-rakuten-price-list .ec-price-list-filter-box label {
+  color: #475467;
+  font-size: 11px;
+  font-weight: 800;
+}
+#screen-rakuten-price-list .ec-price-list-filter-box .mgmt-search {
+  flex: 0 0 auto;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+#screen-rakuten-price-list .ec-price-list-filter-box:focus-within {
+  border-color: #4f8ef7;
+  box-shadow: 0 0 0 2px rgba(79,142,247,0.12);
+}
+#screen-rakuten-price-list .ec-price-list-seller-filter { flex: 0 0 auto; }
 #rakuten-list.ec-mall-grouped-list { overflow-x: visible; }
 #rakuten-list .ec-price-result-table.ec-mall-grouped-result-table { width: 100%; min-width: 0; table-layout: fixed; font-size: 12px; }
 #rakuten-list .ec-mall-grouped-result-table th,
@@ -273,7 +301,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 #rakuten-list .ec-mall-grouped-result-table th:nth-child(8),
 #rakuten-list .ec-mall-grouped-result-table td:nth-child(8) { width: 9%; text-align: center; white-space: nowrap; }
 #rakuten-list .ec-mall-grouped-result-table .ec-history-btn { width: 100%; padding-left: 4px; padding-right: 4px; }
-@media(max-width:700px){ .form-card.ec-price-history-card { width: calc(100vw - 8px); max-height: calc(100vh - 8px); margin: 4px; padding: 12px 8px; } .ec-price-history-chart-wrap { padding: 6px; } .ec-price-history-chart { height: 380px; } .ec-price-history-axis { font-size: 14px; } }
+@media(max-width:700px){ .form-card.ec-price-history-card { width: calc(100vw - 8px); max-height: calc(100vh - 8px); margin: 4px; padding: 12px 8px; } .ec-price-history-chart-wrap { padding: 6px; } .ec-price-history-chart { height: 380px; } .ec-price-history-axis { font-size: 14px; } #screen-rakuten-price-list .ec-price-list-filter-box { flex-basis: 100%; min-width: 0; } #screen-rakuten-price-list .ec-price-list-filter-toolbar .btn-primary, #screen-rakuten-price-list .ec-price-list-filter-toolbar .btn-sm-edit { width: 100%; } }
 .rakuten-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
 .rakuten-actions button:disabled { opacity: .45; cursor: not-allowed; }
 .rakuten-target-list { max-height: 220px; overflow: auto; border: 1px solid #eee; border-radius: 8px; margin-top: 10px; }

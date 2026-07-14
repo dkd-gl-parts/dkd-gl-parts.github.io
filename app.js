@@ -842,7 +842,10 @@ var TRANSLATIONS = {
     rakuten_bulk_rate_limited: "{saved} 件保存しました。ECモールAPIの制限に達したため、{remaining} 件を残して停止しました: {error}",
     rakuten_bulk_running: "{done}/{total} 件 調査中...",
     rakuten_saved_result: "調査結果を保存しました",
-    rakuten_list_search_ph: "キーワード・品番・出品者で検索 (ハイフン有無OK)",
+    rakuten_list_keyword_filter_label: "キーワード・品番",
+    rakuten_list_search_ph: "キーワード・品番で検索 (ハイフン有無OK)",
+    rakuten_list_seller_filter_label: "出品者",
+    rakuten_list_seller_filter_ph: "出品者名・IDで絞り込み",
     rakuten_no_saved_results: "保存済みのECモール価格調査結果がありません",
     ec_price_history: "価格推移",
     ec_price_history_title: "ECモール価格推移",
@@ -1922,7 +1925,10 @@ var TRANSLATIONS = {
     rakuten_bulk_rate_limited: "Saved {saved}. Stopped with {remaining} remaining because the EC mall API rate limit was reached: {error}",
     rakuten_bulk_running: "Surveying {done}/{total}...",
     rakuten_saved_result: "Saved survey result",
-    rakuten_list_search_ph: "Search by keyword, part number, or seller (hyphens optional)",
+    rakuten_list_keyword_filter_label: "Keyword / Part Number",
+    rakuten_list_search_ph: "Search by keyword or part number (hyphens optional)",
+    rakuten_list_seller_filter_label: "Seller",
+    rakuten_list_seller_filter_ph: "Filter by seller name or ID",
     rakuten_no_saved_results: "No saved EC mall price survey results",
     ec_price_history: "Price Trend",
     ec_price_history_title: "EC Mall Price Trend",
@@ -2995,7 +3001,10 @@ var TRANSLATIONS = {
     rakuten_bulk_rate_limited: "已保存 {saved} 件。因达到乐天API限制，剩余 {remaining} 件已停止: {error}",
     rakuten_bulk_running: "调查中 {done}/{total}...",
     rakuten_saved_result: "调查结果已保存",
-    rakuten_list_search_ph: "按关键词、品号或卖家搜索（可省略连字符）",
+    rakuten_list_keyword_filter_label: "关键词・品号",
+    rakuten_list_search_ph: "按关键词或品号搜索（可省略连字符）",
+    rakuten_list_seller_filter_label: "卖家",
+    rakuten_list_seller_filter_ph: "按卖家名称或ID筛选",
     rakuten_no_saved_results: "没有保存的EC商城价格调查结果",
     ec_price_history: "价格趋势",
     ec_price_history_title: "EC商城价格趋势",
@@ -3344,7 +3353,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.480";
+var APP_VERSION       = "v1.1.481";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -9212,9 +9221,60 @@ function ecPriceListRowMatchesSearch(row, q) {
   });
 }
 
-function filterEcPriceResearchRowsForList(rows, q) {
+function ecPriceListRowMatchesSellerFilter(row, sellerQ) {
+  sellerQ = normalizeAsciiWidth(String(sellerQ || "")).trim();
+  if (!sellerQ) return true;
+  row = row || {};
+  var rawQuery = sellerQ.toLowerCase();
+  var normalizedQuery = normalizePartQuery(sellerQ);
+  var compactQuery = norm(sellerQ);
+  var values = [
+    row.seller_id,
+    row.seller_name,
+    ecMallSellerIdFromItem(row),
+    ecMallSellerDisplayName(row),
+    row.shopName,
+    row.shop_name,
+    row.storeName,
+    row.store_name,
+    row.item_url,
+    row.itemUrl
+  ];
+  ecMallSellerNameCandidates(row).forEach(function(name) {
+    values.push(name);
+  });
+  return values.some(function(value) {
+    return ecPriceListSearchMatches(value, rawQuery, normalizedQuery, compactQuery);
+  });
+}
+
+function ecPriceListLegacyItems(row) {
+  var items = row && row.items;
+  if (Array.isArray(items)) return items;
+  if (typeof items === "string" && items.trim()) {
+    try {
+      var parsed = JSON.parse(items);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch(e) {
+      return [];
+    }
+  }
+  return [];
+}
+
+function ecPriceListLegacyRowMatchesSellerFilter(row, sellerQ) {
+  sellerQ = normalizeAsciiWidth(String(sellerQ || "")).trim();
+  if (!sellerQ) return true;
+  if (ecPriceListRowMatchesSellerFilter(row, sellerQ)) return true;
+  return ecPriceListLegacyItems(row).some(function(item) {
+    return ecPriceListRowMatchesSellerFilter(item, sellerQ);
+  });
+}
+
+function filterEcPriceResearchRowsForList(rows, q, sellerQ) {
   q = normalizeAsciiWidth(String(q || "")).trim();
-  if (!q) return rows || [];
+  sellerQ = normalizeAsciiWidth(String(sellerQ || "")).trim();
+  if (!q && !sellerQ) return rows || [];
   var groups = {};
   (rows || []).forEach(function(row) {
     var key = ecPriceListGroupKey(row);
@@ -9223,18 +9283,29 @@ function filterEcPriceResearchRowsForList(rows, q) {
   });
   var out = [];
   Object.keys(groups).forEach(function(key) {
-    if (groups[key].some(function(row) { return ecPriceListRowMatchesSearch(row, q); })) {
-      out = out.concat(groups[key]);
+    var groupRows = groups[key];
+    if (q && !groupRows.some(function(row) { return ecPriceListRowMatchesSearch(row, q); })) {
+      return;
+    }
+    if (sellerQ) {
+      groupRows = groupRows.filter(function(row) {
+        return ecPriceListRowMatchesSellerFilter(row, sellerQ);
+      });
+    }
+    if (groupRows.length) {
+      out = out.concat(groupRows);
     }
   });
   return out;
 }
 
-function filterRakutenLegacyRowsForList(rows, q) {
+function filterRakutenLegacyRowsForList(rows, q, sellerQ) {
   q = normalizeAsciiWidth(String(q || "")).trim();
-  if (!q) return rows || [];
+  sellerQ = normalizeAsciiWidth(String(sellerQ || "")).trim();
+  if (!q && !sellerQ) return rows || [];
   return (rows || []).filter(function(row) {
-    return ecPriceListRowMatchesSearch(row, q);
+    return (!q || ecPriceListRowMatchesSearch(row, q)) &&
+      (!sellerQ || ecPriceListLegacyRowMatchesSellerFilter(row, sellerQ));
   });
 }
 
@@ -9274,16 +9345,19 @@ async function fetchEcPriceListRows(tableName, selectColumns, orderColumn, maxRo
 async function loadRakutenPriceList() {
   var q = (document.getElementById("rakuten-list-search") || {}).value || "";
   q = normalizeAsciiWidth(q).trim();
+  var sellerQ = (document.getElementById("rakuten-list-seller-filter") || {}).value || "";
+  sellerQ = normalizeAsciiWidth(sellerQ).trim();
+  var hasFilter = !!(q || sellerQ);
   try {
     ecMallFallbackToLegacySurveys = false;
     var r = await fetchEcPriceListRows(
       "ec_price_research_latest_best3",
       "id,run_id,target_id,dkd_shohin_id,shohin_cd,manufacturer,category,daiko_part_number,genuine_part_number,genuine_part_number_2,manufacturer_part_number,search_number,provider_key,product_type,rank_no,seller_id,seller_name,item_name,item_url,price_jpy,shipping_jpy,total_price_jpy,source_method,raw_payload,surveyed_at",
       "surveyed_at",
-      q ? EC_PRICE_LIST_SEARCH_SCAN_LIMIT : EC_PRICE_LIST_DEFAULT_LIMIT
+      hasFilter ? EC_PRICE_LIST_SEARCH_SCAN_LIMIT : EC_PRICE_LIST_DEFAULT_LIMIT
     );
     if (r.error) throw new Error(r.error.message);
-    renderEcMallPriceList(filterEcPriceResearchRowsForList(r.data || [], q));
+    renderEcMallPriceList(filterEcPriceResearchRowsForList(r.data || [], q, sellerQ));
   } catch(e) {
     console.warn("ec price research list failed; falling back to legacy rakuten list", e);
     ecMallFallbackToLegacySurveys = true;
@@ -9291,9 +9365,9 @@ async function loadRakutenPriceList() {
       "rakuten_price_surveys",
       "id,part_id,dkd_shohin_id,genuine_part_number,manufacturer_part_number,manufacturer,category,search_number,source_type,result_count,min_price_jpy,avg_price_jpy,max_price_jpy,items,searched_at",
       "searched_at",
-      q ? EC_PRICE_LIST_SEARCH_SCAN_LIMIT : 200
+      hasFilter ? EC_PRICE_LIST_SEARCH_SCAN_LIMIT : 200
     );
-    renderRakutenPriceList(filterRakutenLegacyRowsForList(legacyR.data || [], q));
+    renderRakutenPriceList(filterRakutenLegacyRowsForList(legacyR.data || [], q, sellerQ));
   }
 }
 
@@ -26908,6 +26982,7 @@ document.getElementById("rakuten-keyword").addEventListener("keydown", function(
 document.getElementById("btn-rakuten-list-search").addEventListener("click", loadRakutenPriceList);
 document.getElementById("btn-rakuten-list-to-search").addEventListener("click", function(){ enterRakutenPrice(); });
 document.getElementById("rakuten-list-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadRakutenPriceList(); });
+document.getElementById("rakuten-list-seller-filter").addEventListener("keydown", function(e){ if(e.key==="Enter") loadRakutenPriceList(); });
 
 document.getElementById("kf-part-search").addEventListener("input", function() {
   clearTimeout(this._timer);
