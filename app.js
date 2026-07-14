@@ -3353,7 +3353,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.487";
+var APP_VERSION       = "v1.1.488";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -20485,7 +20485,7 @@ async function enterComponentCompatMgmt() {
   var existingKind = document.getElementById("component-compat-existing-kind");
   var selectAll = document.getElementById("component-compat-assist-select-all");
   if (search) search.value = "";
-  if (filter) filter.value = "";
+  if (filter) filter.value = "catalog";
   if (kind) kind.value = "rebuilt";
   componentCompatExistingProductKind = "rebuilt";
   if (existingKind) existingKind.value = componentCompatExistingProductKind;
