@@ -3339,12 +3339,13 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.473";
+var APP_VERSION       = "v1.1.474";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
+var appDiscardRestoreStateOnExit = false;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
 var appUpdateDetected = false;
@@ -4243,9 +4244,20 @@ function captureAppRestoreState(reason) {
 }
 
 function saveAppRestoreState(reason) {
+  if (appDiscardRestoreStateOnExit) return;
   try {
     localStorage.setItem(APP_RESTORE_STATE_KEY, JSON.stringify(captureAppRestoreState(reason)));
   } catch(e) {}
+}
+
+function clearAppRestoreState() {
+  try { localStorage.removeItem(APP_RESTORE_STATE_KEY); } catch(e) {}
+}
+
+function returnToMenuFresh() {
+  appDiscardRestoreStateOnExit = true;
+  clearAppRestoreState();
+  window.location.reload();
 }
 
 function consumeAppRestoreState() {
@@ -4332,6 +4344,18 @@ function manualRefreshApp() {
     window.location.reload();
   }
 }
+
+window.addEventListener("pagehide", function() {
+  saveAppRestoreState("pagehide");
+});
+
+document.addEventListener("visibilitychange", function() {
+  if (document.hidden) saveAppRestoreState("hidden");
+});
+
+document.addEventListener("freeze", function() {
+  saveAppRestoreState("freeze");
+});
 
 function isAppSafeForAutoReload() {
   if (document.querySelector(".form-overlay.show")) return false;
@@ -4873,6 +4897,7 @@ async function doLogin() {
 }
 
 async function doLogout() {
+  clearAppRestoreState();
   await recordAuthEvent("logout");
   await sb.auth.signOut();
   clearActivitySessionId();
@@ -25600,7 +25625,7 @@ document.getElementById("btn-send-reset").addEventListener("click", doForgotPass
 document.getElementById("btn-back-from-forgot").addEventListener("click", function() { showScreen("login"); });
 document.getElementById("forgot-email").addEventListener("keydown", function(e) { if(e.key==="Enter") doForgotPassword(); });
 document.getElementById("btn-change-pw").addEventListener("click", doChangePassword);
-document.getElementById("btn-back-change-pw").addEventListener("click", function() { showScreen("menu"); });
+document.getElementById("btn-back-change-pw").addEventListener("click", returnToMenuFresh);
 document.getElementById("new-password").addEventListener("input", function() {
   checkPasswordStrength(this.value, "changepw-strength-fill", "changepw-strength-label");
 });
@@ -25620,8 +25645,8 @@ document.getElementById("btn-submit-reg").addEventListener("click", doRegister);
 document.getElementById("reg-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doRegister(); });
 document.getElementById("login-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
 ["btn-logout-menu","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-manufacturing-cost-mgmt","btn-logout-finished-label-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
-document.getElementById("btn-back-search").addEventListener("click", function(){ closePanel(); showScreen("menu"); });
-document.getElementById("btn-back-production-search").addEventListener("click", function(){ showScreen("menu"); });
+document.getElementById("btn-back-search").addEventListener("click", function(){ closePanel(); returnToMenuFresh(); });
+document.getElementById("btn-back-production-search").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-components").addEventListener("click", async function(){
   if (componentReturnScreen === "production-search") {
     showScreen("production-search");
@@ -25744,13 +25769,13 @@ document.getElementById("btn-back-component-parallel").addEventListener("click",
   }
   showScreen("search");
 });
-document.getElementById("btn-back-users").addEventListener("click",  function(){ showScreen("menu"); });
-document.getElementById("btn-back-parts-mgmt").addEventListener("click", function(){ showScreen("menu"); });
-document.getElementById("btn-back-sales-pricing-mgmt").addEventListener("click", function(){ showScreen("menu"); });
-document.getElementById("btn-back-purchase-mgmt").addEventListener("click", function(){ showScreen("menu"); });
-document.getElementById("btn-back-customer-access-mgmt").addEventListener("click", function(){ showScreen("menu"); });
-document.getElementById("btn-back-core-list-mgmt").addEventListener("click", function(){ showScreen("menu"); });
-document.getElementById("btn-back-component-name-master-mgmt").addEventListener("click", function(){ showScreen("menu"); });
+document.getElementById("btn-back-users").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-parts-mgmt").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-sales-pricing-mgmt").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-purchase-mgmt").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-customer-access-mgmt").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-core-list-mgmt").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-component-name-master-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-component-name-master-refresh").addEventListener("click", loadComponentNameMasterMgmt);
 document.getElementById("component-name-master-category").addEventListener("change", loadComponentNameMasterMgmt);
 document.getElementById("component-name-request-status").addEventListener("change", loadComponentNameMasterMgmt);
@@ -25759,16 +25784,16 @@ document.getElementById("component-name-master-search").addEventListener("input"
   renderComponentNameRequestList();
   renderComponentNameMasterList();
 });
-document.getElementById("btn-back-product-kind-stock-mgmt").addEventListener("click", function(){ showScreen("menu"); });
-document.getElementById("btn-back-manufacturing-cost-mgmt").addEventListener("click", function(){ showScreen("menu"); });
-document.getElementById("btn-back-finished-label-mgmt").addEventListener("click", function(){ showScreen("menu"); });
-document.getElementById("btn-back-production-ranking-mgmt").addEventListener("click", function(){ showScreen("menu"); });
-document.getElementById("btn-back-kikan-mgmt").addEventListener("click", function(){ showScreen("menu"); });
-document.getElementById("btn-back-rakuten-price").addEventListener("click", function(){ showScreen("menu"); });
-document.getElementById("btn-back-rakuten-bulk").addEventListener("click", function(){ showScreen("menu"); });
-document.getElementById("btn-back-api-settings").addEventListener("click", function(){ showScreen("menu"); });
-document.getElementById("btn-back-rakuten-price-list").addEventListener("click", function(){ showScreen("menu"); });
-document.getElementById("btn-back-logs").addEventListener("click",       function(){ showScreen("menu"); });
+document.getElementById("btn-back-product-kind-stock-mgmt").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-manufacturing-cost-mgmt").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-finished-label-mgmt").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-production-ranking-mgmt").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-kikan-mgmt").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-rakuten-price").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-rakuten-bulk").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-api-settings").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-rakuten-price-list").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-logs").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-add-part").addEventListener("click", function(){ openPartForm("add"); });
 document.getElementById("btn-part-form-cancel").addEventListener("click", function(){ document.getElementById("part-form-overlay").classList.remove("show"); });
 document.getElementById("btn-part-form-save").addEventListener("click", savePartForm);
