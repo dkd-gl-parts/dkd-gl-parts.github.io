@@ -3338,7 +3338,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.477";
+var APP_VERSION       = "v1.1.478";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -13097,7 +13097,7 @@ function buildFinishedLabelPrintHtml(record) {
     sealHtml += "<div class='qr-seal'><img src='" + qrUrl + "'><div><b>" + esc(record.productNo || record.manufacturerPartNumber || record.genuinePartNumber || "") + "</b><br><span>" + esc(record.issueCode || "") + "</span></div></div>";
   }
   return "<!doctype html><html><head><meta charset='utf-8'><title>D-CATS " + esc(record.issueCode || "") + "</title>" +
-    "<link rel='stylesheet' href='print.css'>" +
+    "<link rel='stylesheet' href='print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'>" +
     "</head><body><div class='toolbar'><button id='dcats-print-now' type='button'>印刷</button> A6ラベルと9mm QRシールをまとめてプレビューしています。</div>" +
     "<section class='a6'><div class='head'><div><div class='title'>D-CATS 完品ラベル</div><div>" + esc(record.productCategory || "") + " / " + esc(productKindLabel(record.productKind)) + "</div></div><div class='issue'>" + esc(record.issueCode || "") + "<br>" + esc(formatDateTime(record.issuedAt)) + "</div></div>" +
     "<div class='grid'><div class='lbl'>純正品番</div><div class='val big'>" + esc(record.genuinePartNumber || "-") + "</div><div class='lbl'>メーカー品番</div><div class='val big'>" + esc(record.manufacturerPartNumber || record.productNo || "-") + "</div><div class='lbl'>メーカー</div><div class='val'>" + esc(record.manufacturer || "-") + "</div><div class='lbl'>大光品番</div><div class='val'>" + esc(record.daikoPartNumber || "-") + "</div><div class='lbl'>数量</div><div class='val'>" + esc(record.quantity || 1) + "</div><div class='lbl'>棚番</div><div class='val'>" + esc(record.shelfNo || "-") + "</div><div class='lbl'>電圧/出力</div><div class='val'>" + esc([record.nominalVoltage, record.nominalOutput].filter(Boolean).join(' / ') || "-") + "</div><div class='lbl'>担当</div><div class='val'>" + esc([record.assemblyStaff, record.inspectionStaff].filter(Boolean).join(' / ') || "-") + "</div></div>" +
