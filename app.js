@@ -3353,7 +3353,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.485";
+var APP_VERSION       = "v1.1.486";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -3395,6 +3395,7 @@ var componentNameMasterRequestRows = [];
 var componentNameMasterCandidateRows = [];
 var componentNameMasterLoadSeq = 0;
 var componentNameMasterRenderLimit = 150;
+var componentCompatAllRows = [];
 var componentCompatSearchRows = [];
 var componentCompatSelected = null;
 var componentCompatBaseIds = [];
@@ -20451,6 +20452,7 @@ function componentCompatIsAssySelfRow(row) {
 function componentCompatReset() {
   componentCompatLoadSeq++;
   componentCompatAssistSeq++;
+  componentCompatAllRows = [];
   componentCompatSearchRows = [];
   componentCompatSelected = null;
   componentCompatBaseIds = [];
@@ -20463,11 +20465,13 @@ function componentCompatReset() {
   var empty = document.getElementById("component-compat-empty");
   var detail = document.getElementById("component-compat-detail");
   var summary = document.getElementById("component-compat-assist-summary");
+  var nameFilter = document.getElementById("component-compat-name-filter");
   if (count) count.textContent = "";
   if (results) results.innerHTML = "<div class='component-empty'>品番または部品名を入力して検索してください</div>";
   if (empty) { empty.hidden = false; empty.textContent = "左の一覧から基準部品を選択してください"; }
   if (detail) detail.hidden = true;
   if (summary) summary.textContent = "";
+  if (nameFilter) { nameFilter.innerHTML = "<option value=''>すべて (0件)</option>"; nameFilter.disabled = true; }
 }
 
 async function enterComponentCompatMgmt() {
@@ -20501,6 +20505,52 @@ function componentCompatSearchScore(row, raw, normalized) {
   return score;
 }
 
+function componentCompatDisplayPartName(row) {
+  return String(row && row.part_name || "").trim() || "部品名未設定";
+}
+
+function populateComponentCompatNameFilter() {
+  var select = document.getElementById("component-compat-name-filter");
+  if (!select) return;
+  var counts = {};
+  componentCompatAllRows.forEach(function(row) {
+    var name = componentCompatDisplayPartName(row);
+    counts[name] = (counts[name] || 0) + 1;
+  });
+  var names = Object.keys(counts).sort(function(a, b) { return a.localeCompare(b, "ja", { numeric: true }); });
+  select.innerHTML = "<option value=''>すべて (" + componentCompatAllRows.length + "件)</option>" + names.map(function(name) {
+    return "<option value='" + esc(name) + "'>" + esc(name) + " (" + counts[name] + "件)</option>";
+  }).join("");
+  select.value = "";
+  select.disabled = !componentCompatAllRows.length;
+}
+
+function clearComponentCompatSelectionForFilter() {
+  componentCompatLoadSeq++;
+  componentCompatAssistSeq++;
+  componentCompatSelected = null;
+  componentCompatBaseIds = [];
+  componentCompatLinks = [];
+  componentCompatAssistRows = [];
+  componentCompatAssistSummary = { targetCount: 0, existingCount: 0 };
+  var empty = document.getElementById("component-compat-empty");
+  var detail = document.getElementById("component-compat-detail");
+  if (empty) { empty.hidden = false; empty.textContent = "左の一覧から基準部品を選択してください"; }
+  if (detail) detail.hidden = true;
+}
+
+function applyComponentCompatNameFilter() {
+  var select = document.getElementById("component-compat-name-filter");
+  var selectedName = String(select ? select.value : "");
+  componentCompatSearchRows = componentCompatAllRows.filter(function(row) {
+    return !selectedName || componentCompatDisplayPartName(row) === selectedName;
+  });
+  if (componentCompatSelected && !componentCompatSearchRows.some(function(row) { return String(row.dkd_component_id) === String(componentCompatSelected.dkd_component_id); })) {
+    clearComponentCompatSelectionForFilter();
+  }
+  renderComponentCompatSearchRows();
+}
+
 async function searchComponentCompatibility() {
   if (!canManageComponentCompatibility()) return;
   var input = document.getElementById("component-compat-search");
@@ -20513,7 +20563,17 @@ async function searchComponentCompatibility() {
   var seq = ++componentCompatLoadSeq;
   if (results) results.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
   if (count) count.textContent = "";
+  componentCompatAllRows = [];
+  componentCompatSearchRows = [];
   componentCompatSelected = null;
+  componentCompatBaseIds = [];
+  componentCompatLinks = [];
+  var nameFilter = document.getElementById("component-compat-name-filter");
+  var empty = document.getElementById("component-compat-empty");
+  var detail = document.getElementById("component-compat-detail");
+  if (nameFilter) { nameFilter.innerHTML = "<option value=''>すべて (0件)</option>"; nameFilter.disabled = true; }
+  if (empty) { empty.hidden = false; empty.textContent = "左の一覧から基準部品を選択してください"; }
+  if (detail) detail.hidden = true;
   var select = "dkd_component_id,manufacturer,manufacturer_part_number,genuine_part_number,part_name,normalized_manufacturer_part_number,normalized_genuine_part_number,has_catalog_source,note,updated_at";
   var queries = [];
   if (normalized) {
@@ -20628,14 +20688,17 @@ async function searchComponentCompatibility() {
       existing._matched_assy_position = row._matched_assy_position;
     }
   });
-  componentCompatSearchRows = groupedRows.slice(0, 150);
-  if (!componentCompatSearchRows.length && firstError) {
+  componentCompatAllRows = groupedRows.slice(0, 150);
+  componentCompatSearchRows = componentCompatAllRows.slice();
+  if (!componentCompatAllRows.length && firstError) {
+    populateComponentCompatNameFilter();
     if (results) results.innerHTML = "<div class='component-empty'>" + esc(firstError.message || t("msg_kikan_err")) + "</div>";
     return;
   }
-  await loadComponentCompatLinkCounts(componentCompatSearchRows);
+  await loadComponentCompatLinkCounts(componentCompatAllRows);
   if (seq !== componentCompatLoadSeq) return;
-  renderComponentCompatSearchRows();
+  populateComponentCompatNameFilter();
+  applyComponentCompatNameFilter();
 }
 
 async function loadComponentCompatLinkCounts(rows) {
@@ -20671,7 +20734,9 @@ async function loadComponentCompatLinkCounts(rows) {
 function renderComponentCompatSearchRows() {
   var results = document.getElementById("component-compat-results");
   var count = document.getElementById("component-compat-count");
-  if (count) count.textContent = componentCompatSearchRows.length + "件";
+  if (count) count.textContent = componentCompatSearchRows.length === componentCompatAllRows.length
+    ? componentCompatSearchRows.length + "件"
+    : componentCompatSearchRows.length + "件 / 全" + componentCompatAllRows.length + "件";
   if (!results) return;
   if (!componentCompatSearchRows.length) {
     results.innerHTML = "<div class='component-empty'>該当する構成部品はありません</div>";
@@ -26749,6 +26814,7 @@ document.getElementById("component-compat-search").addEventListener("keydown", f
 document.getElementById("component-compat-source-filter").addEventListener("change", function(){
   if (document.getElementById("component-compat-search").value.trim()) searchComponentCompatibility();
 });
+document.getElementById("component-compat-name-filter").addEventListener("change", applyComponentCompatNameFilter);
 document.getElementById("component-compat-results").addEventListener("click", function(e){
   var row = e.target.closest("[data-compat-base-id]");
   if (row) selectComponentCompatBase(row.dataset.compatBaseId);
