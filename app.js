@@ -3339,7 +3339,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.474";
+var APP_VERSION       = "v1.1.475";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -4418,8 +4418,10 @@ async function checkForAppUpdate() {
     var r = await fetch(url.toString(), { cache: "no-store" });
     if (!r.ok) return;
     var html = await r.text();
-    var m = html.match(/var\s+APP_VERSION\s*=\s*["']([^"']+)["']/);
-    var latest = m && m[1];
+    var versionDocument = new DOMParser().parseFromString(html, "text/html");
+    var versionMeta = versionDocument.querySelector('meta[name="dcats-app-version"]');
+    var legacyMatch = html.match(/var\s+APP_VERSION\s*=\s*["']([^"']+)["']/);
+    var latest = versionMeta ? versionMeta.getAttribute("content") : (legacyMatch && legacyMatch[1]);
     if (!latest) return;
     if (latest !== APP_VERSION && appVersionNumber(latest) >= appVersionNumber(APP_VERSION)) {
       appUpdateDetected = true;
