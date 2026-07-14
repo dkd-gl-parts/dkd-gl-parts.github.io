@@ -3344,7 +3344,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.479";
+var APP_VERSION       = "v1.1.480";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -3388,8 +3388,12 @@ var componentNameMasterLoadSeq = 0;
 var componentNameMasterRenderLimit = 150;
 var componentCompatSearchRows = [];
 var componentCompatSelected = null;
+var componentCompatBaseIds = [];
 var componentCompatLinks = [];
 var componentCompatAssistRows = [];
+var componentCompatAssistSummary = { targetCount: 0, existingCount: 0 };
+var componentCompatExistingRows = [];
+var componentCompatSourceComponentMap = {};
 var componentCompatLoadSeq = 0;
 var componentCompatAssistSeq = 0;
 var componentAddPartNumberLookupSeq = 0;
@@ -20371,16 +20375,21 @@ function componentCompatReset() {
   componentCompatAssistSeq++;
   componentCompatSearchRows = [];
   componentCompatSelected = null;
+  componentCompatBaseIds = [];
   componentCompatLinks = [];
   componentCompatAssistRows = [];
+  componentCompatAssistSummary = { targetCount: 0, existingCount: 0 };
+  componentCompatExistingRows = [];
   var count = document.getElementById("component-compat-count");
   var results = document.getElementById("component-compat-results");
   var empty = document.getElementById("component-compat-empty");
   var detail = document.getElementById("component-compat-detail");
+  var summary = document.getElementById("component-compat-assist-summary");
   if (count) count.textContent = "";
   if (results) results.innerHTML = "<div class='component-empty'>品番または部品名を入力して検索してください</div>";
   if (empty) { empty.hidden = false; empty.textContent = "左の一覧から基準部品を選択してください"; }
   if (detail) detail.hidden = true;
+  if (summary) summary.textContent = "";
 }
 
 async function enterComponentCompatMgmt() {
@@ -20389,8 +20398,12 @@ async function enterComponentCompatMgmt() {
   updateAllHeaders();
   var search = document.getElementById("component-compat-search");
   var filter = document.getElementById("component-compat-source-filter");
+  var kind = document.getElementById("component-compat-assist-kind");
+  var selectAll = document.getElementById("component-compat-assist-select-all");
   if (search) search.value = "";
   if (filter) filter.value = "";
+  if (kind) kind.value = "rebuilt";
+  if (selectAll) selectAll.checked = true;
   componentCompatReset();
 }
 
@@ -20472,17 +20485,25 @@ async function loadComponentCompatLinkCounts(rows) {
   var ids = (rows || []).map(function(row) { return row.dkd_component_id; });
   if (!ids.length) return;
   var r = await sb.from("component_part_alternatives")
-    .select("catalog_component_id")
+    .select("catalog_component_id,internal_component_part_id")
     .in("catalog_component_id", ids)
     .eq("status", "active")
     .is("product_variant_id", null)
     .limit(5000);
-  var counts = {};
-  if (!r.error) (r.data || []).forEach(function(row) {
-    var key = String(row.catalog_component_id);
-    counts[key] = (counts[key] || 0) + 1;
+  var idToKey = {};
+  (rows || []).forEach(function(row) {
+    idToKey[String(row.dkd_component_id)] = normalizedPartKey(row.normalized_manufacturer_part_number || row.manufacturer_part_number) || String(row.dkd_component_id);
   });
-  (rows || []).forEach(function(row) { row._compat_link_count = counts[String(row.dkd_component_id)] || 0; });
+  var countSets = {};
+  if (!r.error) (r.data || []).forEach(function(row) {
+    var key = idToKey[String(row.catalog_component_id)] || String(row.catalog_component_id);
+    countSets[key] = countSets[key] || {};
+    countSets[key][String(row.internal_component_part_id)] = true;
+  });
+  (rows || []).forEach(function(row) {
+    var key = idToKey[String(row.dkd_component_id)] || String(row.dkd_component_id);
+    row._compat_link_count = Object.keys(countSets[key] || {}).length;
+  });
 }
 
 function renderComponentCompatSearchRows() {
@@ -20514,7 +20535,8 @@ async function selectComponentCompatBase(id) {
   var selected = document.getElementById("component-compat-selected");
   if (empty) empty.hidden = true;
   if (detail) detail.hidden = false;
-  if (selected) selected.innerHTML = "<div class='component-compat-selected-top'><div><div class='component-compat-pn'>" + esc(row.manufacturer_part_number || "-") + "</div><div class='component-compat-meta'>" + esc([row.manufacturer || "UNKNOWN", row.genuine_part_number ? "純正 " + row.genuine_part_number : "", row.part_name || "部品名未設定"].filter(Boolean).join(" / ")) + "</div></div>" + componentCompatSourceBadge(row) + "</div>";
+  await loadComponentCompatBaseGroup(row);
+  if (selected) selected.innerHTML = "<div class='component-compat-selected-top'><div><div class='component-compat-pn'>" + esc(row.manufacturer_part_number || "-") + "</div><div class='component-compat-meta'>" + esc([row.manufacturer || "UNKNOWN", row.genuine_part_number ? "純正 " + row.genuine_part_number : "", row.part_name || "部品名未設定"].filter(Boolean).join(" / ")) + "</div><div class='component-compat-meta'>メーカー品番単位: カタログ部品 " + esc(String(componentCompatBaseIds.length)) + "件を対象</div></div>" + componentCompatSourceBadge(row) + "</div>";
   var links = document.getElementById("component-compat-links");
   var assist = document.getElementById("component-compat-assist");
   if (links) links.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
@@ -20526,12 +20548,29 @@ async function selectComponentCompatBase(id) {
   await loadComponentCompatAssist();
 }
 
+async function loadComponentCompatBaseGroup(row) {
+  componentCompatBaseIds = row ? [parseInt(row.dkd_component_id, 10)] : [];
+  if (!row || !row.has_catalog_source) return;
+  var normalized = normalizedPartKey(row.normalized_manufacturer_part_number || row.manufacturer_part_number);
+  if (!normalized) return;
+  var r = await sb.from("component_parts")
+    .select("dkd_component_id")
+    .eq("has_catalog_source", true)
+    .eq("normalized_manufacturer_part_number", normalized)
+    .limit(5000);
+  if (r.error) return;
+  componentCompatBaseIds = uniqueTextValues((r.data || []).map(function(item) { return String(item.dkd_component_id); }))
+    .map(function(value) { return parseInt(value, 10); })
+    .filter(function(value) { return !isNaN(value); });
+  if (!componentCompatBaseIds.length) componentCompatBaseIds = [parseInt(row.dkd_component_id, 10)];
+}
+
 async function loadComponentCompatLinks() {
   componentCompatLinks = [];
   if (!componentCompatSelected) return;
   var r = await sb.from("component_part_alternatives")
     .select("id,catalog_component_id,internal_component_part_id,product_variant_id,component_position,relation_type,priority,status,note,internal_component_parts(id,manufacturer,part_number,normalized_part_number,part_name,note,status)")
-    .eq("catalog_component_id", componentCompatSelected.dkd_component_id)
+    .in("catalog_component_id", componentCompatBaseIds.length ? componentCompatBaseIds : [componentCompatSelected.dkd_component_id])
     .eq("status", "active")
     .order("product_variant_id", { ascending: true, nullsFirst: true })
     .order("priority", { ascending: true })
@@ -20541,7 +20580,20 @@ async function loadComponentCompatLinks() {
     if (links) links.innerHTML = "<div class='component-empty'>" + esc(r.error.message || t("msg_kikan_err")) + "</div>";
     return;
   }
-  componentCompatLinks = r.data || [];
+  var grouped = {};
+  componentCompatLinks = [];
+  (r.data || []).forEach(function(link) {
+    var key = String(link.product_variant_id || "global") + ":" + String(link.internal_component_part_id);
+    if (grouped[key]) {
+      grouped[key]._group_link_ids.push(link.id);
+      grouped[key]._catalog_component_ids.push(link.catalog_component_id);
+      return;
+    }
+    link._group_link_ids = [link.id];
+    link._catalog_component_ids = [link.catalog_component_id];
+    grouped[key] = link;
+    componentCompatLinks.push(link);
+  });
 }
 
 function renderComponentCompatLinks() {
@@ -20574,6 +20626,81 @@ function switchComponentCompatTab(tab) {
   if (assist) assist.classList.toggle("active", tab === "assist");
 }
 
+function componentCompatSourceMapKey(link) {
+  return link ? String(link.internal_component_part_id || link.id || "") : "";
+}
+
+function renderComponentCompatExistingRows(selectedId) {
+  var wrap = document.getElementById("component-compat-existing-results");
+  if (!wrap) return;
+  if (!componentCompatExistingRows.length) {
+    wrap.textContent = "リビルト・社外新品へ登録済みの手入力部品は見つかりませんでした。";
+    return;
+  }
+  wrap.innerHTML = componentCompatExistingRows.map(function(row) {
+    var active = String(row.dkd_component_id) === String(selectedId || "");
+    var counts = [];
+    if (row._rebuilt_count) counts.push("リビルト " + row._rebuilt_count + "件");
+    if (row._aftermarket_count) counts.push("社外新品 " + row._aftermarket_count + "件");
+    return "<button class='component-compat-existing-result" + (active ? " active" : "") + "' type='button' data-compat-existing-id='" + esc(String(row.dkd_component_id)) + "'><strong>" + esc(row.manufacturer_part_number || "-") + " / " + esc(row.manufacturer || "UNKNOWN") + "</strong><span>" + esc([row.part_name || "部品名未設定", counts.join(" / "), "構成部品ID " + row.dkd_component_id].filter(Boolean).join(" / ")) + "</span></button>";
+  }).join("");
+}
+
+async function searchComponentCompatExistingParts() {
+  var input = document.getElementById("component-compat-existing-search");
+  var wrap = document.getElementById("component-compat-existing-results");
+  var raw = String(input ? input.value : "").trim();
+  var normalized = normalizedPartKey(raw);
+  componentCompatExistingRows = [];
+  if (!normalized) {
+    if (wrap) wrap.textContent = "メーカー品番を入力してください。";
+    return;
+  }
+  if (wrap) wrap.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
+  var parts = await sb.from("component_parts")
+    .select("dkd_component_id,manufacturer,manufacturer_part_number,genuine_part_number,part_name,normalized_manufacturer_part_number,has_catalog_source")
+    .eq("has_catalog_source", false)
+    .like("normalized_manufacturer_part_number", normalized + "%")
+    .limit(300);
+  if (parts.error) {
+    if (wrap) wrap.textContent = parts.error.message || t("msg_kikan_err");
+    return;
+  }
+  var ids = (parts.data || []).map(function(row) { return row.dkd_component_id; });
+  var usages = ids.length ? await componentCompatFetchByChunks("assembly_component_usages", "component_id,product_kind,product_variant_id,is_catalog_evidence", "component_id", ids, function(query) {
+    return query.eq("is_catalog_evidence", false).in("product_kind", ["rebuilt", "aftermarket_new"]).not("product_variant_id", "is", null);
+  }) : [];
+  var counts = {};
+  usages.forEach(function(row) {
+    var key = String(row.component_id);
+    counts[key] = counts[key] || { rebuilt: {}, aftermarket_new: {} };
+    if (counts[key][row.product_kind]) counts[key][row.product_kind][String(row.product_variant_id)] = true;
+  });
+  componentCompatExistingRows = (parts.data || []).filter(function(row) {
+    return !!counts[String(row.dkd_component_id)];
+  }).map(function(row) {
+    var itemCounts = counts[String(row.dkd_component_id)];
+    row._rebuilt_count = Object.keys(itemCounts.rebuilt || {}).length;
+    row._aftermarket_count = Object.keys(itemCounts.aftermarket_new || {}).length;
+    return row;
+  }).sort(function(a, b) {
+    var exact = Number(normalizedPartKey(b.manufacturer_part_number) === normalized) - Number(normalizedPartKey(a.manufacturer_part_number) === normalized);
+    if (exact) return exact;
+    return (b._rebuilt_count + b._aftermarket_count) - (a._rebuilt_count + a._aftermarket_count);
+  });
+  renderComponentCompatExistingRows(document.getElementById("component-compat-form-source-component-id").value);
+}
+
+function selectComponentCompatExistingPart(id) {
+  var row = componentCompatExistingRows.find(function(item) { return String(item.dkd_component_id) === String(id); });
+  if (!row) return;
+  document.getElementById("component-compat-form-source-component-id").value = row.dkd_component_id;
+  document.getElementById("component-compat-form-manufacturer").value = row.manufacturer || "UNKNOWN";
+  document.getElementById("component-compat-form-part-number").value = row.manufacturer_part_number || "";
+  document.getElementById("component-compat-form-part-name").value = row.part_name || componentCompatSelected.part_name || "";
+  renderComponentCompatExistingRows(row.dkd_component_id);
+}
+
 function openComponentCompatForm(linkId) {
   if (!componentCompatSelected) return;
   var link = componentCompatLinks.find(function(item) { return String(item.id) === String(linkId); }) || null;
@@ -20584,6 +20711,12 @@ function openComponentCompatForm(linkId) {
   document.getElementById("component-compat-form-base").textContent = "基準: " + componentCompatBaseLabel(componentCompatSelected);
   document.getElementById("component-compat-form-id").value = link ? link.id : "";
   document.getElementById("component-compat-form-part-id").value = part.id || "";
+  var sourcePart = link ? componentCompatSourceComponentMap[componentCompatSourceMapKey(link)] : null;
+  document.getElementById("component-compat-form-source-component-id").value = sourcePart ? sourcePart.dkd_component_id : "";
+  document.getElementById("component-compat-existing-search").value = sourcePart ? (sourcePart.manufacturer_part_number || "") : "";
+  componentCompatExistingRows = sourcePart ? [sourcePart] : [];
+  if (sourcePart) renderComponentCompatExistingRows(sourcePart.dkd_component_id);
+  else document.getElementById("component-compat-existing-results").textContent = "一括反映する場合は、登録済み部品を選択してください。";
   document.getElementById("component-compat-form-manufacturer").value = part.manufacturer || "";
   document.getElementById("component-compat-form-part-number").value = part.part_number || "";
   document.getElementById("component-compat-form-part-name").value = part.part_name || componentCompatSelected.part_name || "";
@@ -20629,7 +20762,6 @@ async function syncComponentCompatManualParts(oldPart, values) {
   var update = await sb.from("component_parts").update({
     manufacturer: values.manufacturer,
     manufacturer_part_number: values.partNumber,
-    normalized_manufacturer_part_number: values.normalizedPartNumber,
     part_name: values.partName || null,
     updated_by: currentUser ? currentUser.id : null,
     updated_at: new Date().toISOString()
@@ -20651,6 +20783,7 @@ async function saveComponentCompatForm() {
   var save = document.getElementById("btn-component-compat-form-save");
   var linkId = document.getElementById("component-compat-form-id").value;
   var partId = document.getElementById("component-compat-form-part-id").value;
+  var sourceComponentId = document.getElementById("component-compat-form-source-component-id").value;
   var manufacturer = normalizeComponentManufacturerInput(document.getElementById("component-compat-form-manufacturer").value) || "UNKNOWN";
   var partNumber = String(document.getElementById("component-compat-form-part-number").value || "").trim();
   var partName = canonicalComponentNameForStorage(document.getElementById("component-compat-form-part-name").value) || String(document.getElementById("component-compat-form-part-name").value || "").trim();
@@ -20670,6 +20803,19 @@ async function saveComponentCompatForm() {
   var oldPart = currentLink ? (currentLink.internal_component_parts || {}) : null;
   if (save) { save.disabled = true; save.textContent = "保存中..."; }
   try {
+    var selectedSourcePart = null;
+    if (sourceComponentId) {
+      var sourceResult = await sb.from("component_parts")
+        .select("dkd_component_id,manufacturer,manufacturer_part_number,genuine_part_number,part_name,normalized_manufacturer_part_number,has_catalog_source")
+        .eq("dkd_component_id", parseInt(sourceComponentId, 10))
+        .eq("has_catalog_source", false)
+        .maybeSingle();
+      if (sourceResult.error) throw new Error(sourceResult.error.message);
+      selectedSourcePart = sourceResult.data || null;
+      if (!selectedSourcePart || normalizedPartKey(selectedSourcePart.manufacturer_part_number) !== normalized || normalizeComponentManufacturerInput(selectedSourcePart.manufacturer || "UNKNOWN") !== manufacturer) {
+        throw new Error("選択した登録済み部品とメーカー・品番が一致しません。登録済み部品を選び直してください。");
+      }
+    }
     var duplicate = await sb.from("internal_component_parts").select("id,manufacturer,part_number,normalized_part_number,part_name,status")
       .ilike("manufacturer", manufacturer).eq("normalized_part_number", normalized).limit(2);
     if (duplicate.error) throw new Error(duplicate.error.message);
@@ -20679,7 +20825,6 @@ async function saveComponentCompatForm() {
       var updated = await sb.from("internal_component_parts").update({
         manufacturer: manufacturer,
         part_number: partNumber,
-        normalized_part_number: normalized,
         part_name: partName || null,
         status: "active",
         updated_by: currentUser ? currentUser.id : null,
@@ -20694,7 +20839,6 @@ async function saveComponentCompatForm() {
       var inserted = await sb.from("internal_component_parts").insert({
         manufacturer: manufacturer,
         part_number: partNumber,
-        normalized_part_number: normalized,
         part_name: partName || null,
         status: "active",
         note: "created from component compatibility management",
@@ -20710,7 +20854,7 @@ async function saveComponentCompatForm() {
       if (linkUpdate.error) throw new Error(linkUpdate.error.message);
     } else {
       var existing = await sb.from("component_part_alternatives").select("id")
-        .eq("catalog_component_id", componentCompatSelected.dkd_component_id)
+        .in("catalog_component_id", componentCompatBaseIds.length ? componentCompatBaseIds : [componentCompatSelected.dkd_component_id])
         .eq("internal_component_part_id", partId)
         .is("product_variant_id", null)
         .limit(1).maybeSingle();
@@ -20731,6 +20875,7 @@ async function saveComponentCompatForm() {
         linkId = linkInsert.data.id;
       }
     }
+    if (selectedSourcePart) componentCompatSourceComponentMap[String(partId)] = selectedSourcePart;
     var synced = 0;
     if (oldPart && document.getElementById("component-compat-form-sync").checked) {
       synced = await syncComponentCompatManualParts(oldPart, { manufacturer: manufacturer, partNumber: partNumber, normalizedPartNumber: normalized, partName: partName });
@@ -20750,7 +20895,8 @@ async function saveComponentCompatForm() {
 async function disableComponentCompatLink(id) {
   var link = componentCompatLinks.find(function(item) { return String(item.id) === String(id); });
   if (!link || link.product_variant_id || !confirm("この共通互換を解除しますか？")) return;
-  var r = await sb.from("component_part_alternatives").update({ status: "inactive", updated_by: currentUser ? currentUser.id : null, updated_at: new Date().toISOString() }).eq("id", id).is("product_variant_id", null);
+  var linkIds = (link._group_link_ids || [id]).map(function(value) { return parseInt(value, 10); });
+  var r = await sb.from("component_part_alternatives").update({ status: "inactive", updated_by: currentUser ? currentUser.id : null, updated_at: new Date().toISOString() }).in("id", linkIds).is("product_variant_id", null);
   if (r.error) { alert(r.error.message || t("msg_save_err")); return; }
   await writeLog("update", "component_part_alternatives", id, "disable compatibility", link, { status: "inactive" });
   await loadComponentCompatLinks();
@@ -20772,8 +20918,11 @@ async function componentCompatFetchByChunks(table, select, column, ids, configur
 
 async function loadComponentCompatAssist() {
   componentCompatAssistRows = [];
+  componentCompatAssistSummary = { targetCount: 0, existingCount: 0 };
   var wrap = document.getElementById("component-compat-assist");
   var count = document.getElementById("component-compat-assist-count");
+  var summary = document.getElementById("component-compat-assist-summary");
+  var bulkSelect = document.getElementById("component-compat-bulk-link");
   if (!componentCompatSelected) return;
   var selectedId = String(componentCompatSelected.dkd_component_id);
   var assistSeq = ++componentCompatAssistSeq;
@@ -20781,15 +20930,19 @@ async function loadComponentCompatAssist() {
   if (!globalLinks.length) {
     if (wrap) wrap.innerHTML = "<div class='component-empty'>先に共通互換を登録してください</div>";
     if (count) count.textContent = "";
+    if (summary) summary.textContent = "";
+    if (bulkSelect) bulkSelect.innerHTML = "<option value=''>互換品を選択</option>";
     return;
   }
   if (wrap) wrap.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
   try {
+    var kindEl = document.getElementById("component-compat-assist-kind");
+    var targetKind = kindEl && kindEl.value === "aftermarket_new" ? "aftermarket_new" : "rebuilt";
     var evidence = await sb.from("assembly_component_usages")
       .select("dkd_shohin_id,assy_manufacturer,assy_manufacturer_part_number,assy_genuine_part_number,component_position,component_name,quantity,is_catalog_evidence,product_kind,product_variant_id")
-      .eq("component_id", componentCompatSelected.dkd_component_id)
+      .in("component_id", componentCompatBaseIds.length ? componentCompatBaseIds : [componentCompatSelected.dkd_component_id])
+      .eq("is_catalog_evidence", true)
       .not("dkd_shohin_id", "is", null)
-      .order("is_catalog_evidence", { ascending: false })
       .limit(5000);
     if (evidence.error) throw new Error(evidence.error.message);
     if (assistSeq !== componentCompatAssistSeq || !componentCompatSelected || String(componentCompatSelected.dkd_component_id) !== selectedId) return;
@@ -20805,28 +20958,46 @@ async function loadComponentCompatAssist() {
       return;
     }
     var variants = await componentCompatFetchByChunks("core_product_variants", "product_variant_id,dkd_shohin_id,product_kind,display_label,is_active", "dkd_shohin_id", productIds, function(query) {
-      return query.in("product_kind", ["rebuilt", "aftermarket_new"]).eq("is_active", true);
+      return query.eq("product_kind", targetKind).eq("is_active", true);
     });
     var products = await componentCompatFetchByChunks("core_products", "dkd_shohin_id,manufacturer,manufacturer_part_number,genuine_part_number,category,category_code", "dkd_shohin_id", productIds);
     var productMap = {};
     products.forEach(function(row) { productMap[String(row.dkd_shohin_id)] = row; });
     var normalizedKeys = globalLinks.map(function(link) { return normalizedPartKey(link.internal_component_parts.normalized_part_number || link.internal_component_parts.part_number); }).filter(Boolean);
-    var compatiblePartIds = [componentCompatSelected.dkd_component_id];
+    var compatiblePartIds = [];
     if (normalizedKeys.length) {
-      var manualParts = await sb.from("component_parts").select("dkd_component_id,manufacturer,normalized_manufacturer_part_number")
+      var manualParts = await sb.from("component_parts").select("dkd_component_id,manufacturer,manufacturer_part_number,genuine_part_number,part_name,normalized_manufacturer_part_number,has_catalog_source")
         .eq("has_catalog_source", false).in("normalized_manufacturer_part_number", uniqueTextValues(normalizedKeys)).limit(10000);
       if (manualParts.error) throw new Error(manualParts.error.message);
-      (manualParts.data || []).forEach(function(part) {
-        var matched = globalLinks.some(function(link) {
+      var sourceUsageCounts = {};
+      var manualPartIds = (manualParts.data || []).map(function(part) { return part.dkd_component_id; });
+      var sourceUsages = manualPartIds.length ? await componentCompatFetchByChunks("assembly_component_usages", "component_id,product_variant_id,product_kind,is_catalog_evidence", "component_id", manualPartIds, function(query) {
+        return query.eq("is_catalog_evidence", false).in("product_kind", ["rebuilt", "aftermarket_new"]).not("product_variant_id", "is", null);
+      }) : [];
+      sourceUsages.forEach(function(usage) {
+        var key = String(usage.component_id);
+        sourceUsageCounts[key] = sourceUsageCounts[key] || {};
+        sourceUsageCounts[key][String(usage.product_variant_id)] = true;
+      });
+      globalLinks.forEach(function(link) {
+        var internal = link.internal_component_parts || {};
+        var matches = (manualParts.data || []).filter(function(part) {
           var internal = link.internal_component_parts || {};
           return normalizedPartKey(internal.normalized_part_number || internal.part_number) === normalizedPartKey(part.normalized_manufacturer_part_number) && String(internal.manufacturer || "UNKNOWN").toUpperCase() === String(part.manufacturer || "UNKNOWN").toUpperCase();
+        }).filter(function(part) { return !!sourceUsageCounts[String(part.dkd_component_id)]; });
+        matches.sort(function(a, b) {
+          return Object.keys(sourceUsageCounts[String(b.dkd_component_id)] || {}).length - Object.keys(sourceUsageCounts[String(a.dkd_component_id)] || {}).length;
         });
-        if (matched) compatiblePartIds.push(part.dkd_component_id);
+        link._matching_source_ids = matches.map(function(part) { return part.dkd_component_id; });
+        link._source_component = matches[0] || null;
+        link._source_component_id = matches[0] ? matches[0].dkd_component_id : null;
+        if (matches[0]) componentCompatSourceComponentMap[componentCompatSourceMapKey(link)] = matches[0];
+        compatiblePartIds = compatiblePartIds.concat(link._matching_source_ids);
       });
     }
     compatiblePartIds = uniqueTextValues(compatiblePartIds.map(String)).map(function(id) { return parseInt(id, 10); });
     var variantIds = variants.map(function(row) { return row.product_variant_id; });
-    var existingUsages = variantIds.length ? await componentCompatFetchByChunks("assembly_component_usages", "product_variant_id,component_id,is_catalog_evidence", "product_variant_id", variantIds, function(query) {
+    var existingUsages = variantIds.length && compatiblePartIds.length ? await componentCompatFetchByChunks("assembly_component_usages", "product_variant_id,component_id,is_catalog_evidence", "product_variant_id", variantIds, function(query) {
       return query.in("component_id", compatiblePartIds);
     }) : [];
     if (assistSeq !== componentCompatAssistSeq || !componentCompatSelected || String(componentCompatSelected.dkd_component_id) !== selectedId) return;
@@ -20834,20 +21005,36 @@ async function loadComponentCompatAssist() {
     existingUsages.forEach(function(row) {
       if (compatiblePartIds.indexOf(parseInt(row.component_id, 10)) >= 0) existingMap[String(row.product_variant_id)] = true;
     });
+    componentCompatAssistSummary.targetCount = variants.length;
+    componentCompatAssistSummary.existingCount = variants.filter(function(variant) { return !!existingMap[String(variant.product_variant_id)]; }).length;
     componentCompatAssistRows = variants.filter(function(variant) { return !existingMap[String(variant.product_variant_id)]; }).map(function(variant) {
       return { variant: variant, product: productMap[String(variant.dkd_shohin_id)] || {}, evidence: evidenceByProduct[String(variant.dkd_shohin_id)] || {}, alternatives: globalLinks };
-    }).slice(0, 300);
+    }).slice(0, 1000);
     renderComponentCompatAssist();
   } catch (e) {
     if (wrap) wrap.innerHTML = "<div class='component-empty'>" + esc(e.message || t("msg_kikan_err")) + "</div>";
     if (count) count.textContent = "";
+    if (summary) summary.textContent = "";
   }
 }
 
 function renderComponentCompatAssist() {
   var wrap = document.getElementById("component-compat-assist");
   var count = document.getElementById("component-compat-assist-count");
+  var summary = document.getElementById("component-compat-assist-summary");
+  var bulkSelect = document.getElementById("component-compat-bulk-link");
+  var selectAll = document.getElementById("component-compat-assist-select-all");
+  var globalLinks = componentCompatLinks.filter(function(link) { return !link.product_variant_id && link.status === "active" && link.internal_component_parts; });
+  var availableLinks = globalLinks.filter(function(link) { return !!link._source_component_id; });
   if (count) count.textContent = componentCompatAssistRows.length ? "(" + componentCompatAssistRows.length + ")" : "";
+  if (summary) summary.textContent = "対象 " + componentCompatAssistSummary.targetCount + "件 / 登録済み " + componentCompatAssistSummary.existingCount + "件 / 未登録 " + componentCompatAssistRows.length + "件";
+  if (selectAll) selectAll.checked = true;
+  if (bulkSelect) {
+    bulkSelect.innerHTML = availableLinks.length ? availableLinks.map(function(link) {
+      var part = link.internal_component_parts || {};
+      return "<option value='" + esc(String(link.id)) + "'>" + esc([part.part_number || "-", part.manufacturer || "UNKNOWN", part.part_name || ""].filter(Boolean).join(" / ")) + "</option>";
+    }).join("") : "<option value=''>登録済み部品を選択してください</option>";
+  }
   if (!wrap) return;
   if (!componentCompatAssistRows.length) {
     wrap.innerHTML = "<div class='component-empty'>未登録候補はありません</div>";
@@ -20857,75 +21044,57 @@ function renderComponentCompatAssist() {
     var variant = item.variant;
     var product = item.product;
     var productLabel = [product.manufacturer_part_number || item.evidence.assy_manufacturer_part_number || "-", product.genuine_part_number || item.evidence.assy_genuine_part_number || "", product.category || ""].filter(Boolean).join(" / ");
-    var options = item.alternatives.map(function(link) {
-      var part = link.internal_component_parts || {};
-      return "<option value='" + esc(String(link.id)) + "'>" + esc([part.manufacturer || "UNKNOWN", part.part_number || "-", part.part_name || ""].filter(Boolean).join(" / ")) + "</option>";
-    }).join("");
-    return "<div class='component-compat-assist-item' data-compat-assist-variant='" + esc(String(variant.product_variant_id)) + "'><div class='component-compat-assist-top'><div><div class='component-compat-pn'>" + esc(productLabel) + "</div><div class='component-compat-meta'>" + esc(productKindLabel(variant.product_kind)) + (variant.display_label ? " / " + esc(variant.display_label) : "") + " / DKD商品ID " + esc(String(variant.dkd_shohin_id)) + "</div><div class='component-compat-meta'>基準位置: " + esc(item.evidence.component_position || "-") + " / 数量: " + esc(item.evidence.quantity || "1") + "</div></div><div class='component-compat-assist-actions'><select class='form-select' data-compat-assist-link>" + options + "</select><button class='btn-primary' type='button' data-compat-assist-apply='" + esc(String(variant.product_variant_id)) + "'>部品登録へ反映</button></div></div></div>";
+    return "<div class='component-compat-assist-item' data-compat-assist-variant='" + esc(String(variant.product_variant_id)) + "'><div class='component-compat-assist-top'><label class='component-compat-assist-check'><input type='checkbox' data-compat-assist-check value='" + esc(String(variant.product_variant_id)) + "' checked><span><span class='component-compat-pn'>" + esc(productLabel) + "</span><span class='component-compat-meta'>" + esc(productKindLabel(variant.product_kind)) + (variant.display_label ? " / " + esc(variant.display_label) : "") + " / DKD商品ID " + esc(String(variant.dkd_shohin_id)) + "</span><span class='component-compat-meta'>基準位置: " + esc(item.evidence.component_position || "-") + " / 数量: " + esc(item.evidence.quantity || "1") + "</span></span></label><div class='component-compat-assist-actions'><button class='btn-sm-edit' type='button' data-compat-assist-apply='" + esc(String(variant.product_variant_id)) + "'>この商品へ反映</button></div></div></div>";
   }).join("");
 }
 
-async function applyComponentCompatAssist(variantId) {
-  var item = componentCompatAssistRows.find(function(row) { return String(row.variant.product_variant_id) === String(variantId); });
-  var container = document.querySelector("[data-compat-assist-variant='" + String(variantId) + "']");
-  var select = container ? container.querySelector("[data-compat-assist-link]") : null;
-  var button = container ? container.querySelector("[data-compat-assist-apply]") : null;
-  var link = item && item.alternatives.find(function(row) { return String(row.id) === String(select ? select.value : ""); });
-  if (!item || !link) return;
+function selectedComponentCompatAssistLink() {
+  var select = document.getElementById("component-compat-bulk-link");
+  return componentCompatLinks.find(function(link) { return String(link.id) === String(select ? select.value : ""); }) || null;
+}
+
+async function runComponentCompatBulkApply(variantIds, button) {
+  var link = selectedComponentCompatAssistLink();
+  if (!link || !link._source_component_id) { alert("反映する互換品に、登録済みの構成部品が紐づいていません"); return; }
+  variantIds = uniqueTextValues((variantIds || []).map(String)).map(function(value) { return parseInt(value, 10); }).filter(function(value) { return !isNaN(value); });
+  if (!variantIds.length) { alert("反映対象を選択してください"); return; }
   var part = link.internal_component_parts || {};
-  var product = item.product || {};
-  var evidence = item.evidence || {};
-  var productPartNumber = product.manufacturer_part_number || evidence.assy_manufacturer_part_number;
-  var productManufacturer = product.manufacturer || evidence.assy_manufacturer;
-  if (!productPartNumber || !productManufacturer) { alert("対象商品のメーカー・メーカー品番を確認できませんでした"); return; }
-  if (!confirm([productPartNumber, productKindLabel(item.variant.product_kind), part.part_number].join(" / ") + " を部品登録へ反映しますか？")) return;
-  var payload = {
-    target_dkd_shohin_id: item.variant.dkd_shohin_id,
-    target_manufacturer: productManufacturer,
-    target_manufacturer_part_number: productPartNumber,
-    target_genuine_part_number: product.genuine_part_number || evidence.assy_genuine_part_number || null,
-    target_product_kind: item.variant.product_kind,
-    target_product_variant_id: item.variant.product_variant_id,
-    component_manufacturer: part.manufacturer || "UNKNOWN",
-    component_manufacturer_part_number: part.part_number,
-    component_genuine_part_number: null,
-    component_part_name: part.part_name || componentCompatSelected.part_name || null,
-    component_position: evidence.component_position || null,
-    component_quantity: evidence.quantity || "1",
-    component_unit_price_jpy: null,
-    component_replacement_rate: null,
-    component_manufacturing_memo: "互換管理アシストから登録",
-    component_interchange_code: null,
-    component_procurement_category: null,
-    component_effective_start: null,
-    component_effective_end: null
-  };
-  var normalized = normalizedPartKey(part.normalized_part_number || part.part_number);
-  var duplicateParts = await sb.from("component_parts").select("dkd_component_id")
-    .eq("has_catalog_source", false)
-    .ilike("manufacturer", part.manufacturer || "UNKNOWN")
-    .eq("normalized_manufacturer_part_number", normalized)
-    .limit(5000);
-  if (duplicateParts.error) { alert(duplicateParts.error.message || t("msg_kikan_err")); return; }
-  var duplicateIds = (duplicateParts.data || []).map(function(row) { return row.dkd_component_id; });
-  if (duplicateIds.length) {
-    var duplicateUsage = await sb.from("assembly_component_usages").select("id")
-      .eq("product_variant_id", item.variant.product_variant_id)
-      .in("component_id", duplicateIds)
-      .limit(1);
-    if (duplicateUsage.error) { alert(duplicateUsage.error.message || t("msg_kikan_err")); return; }
-    if ((duplicateUsage.data || []).length) {
-      alert("このバリエーションには選択した互換品が既に登録されています");
-      await loadComponentCompatAssist();
-      return;
-    }
-  }
+  var kindEl = document.getElementById("component-compat-assist-kind");
+  var targetKind = kindEl && kindEl.value === "aftermarket_new" ? "aftermarket_new" : "rebuilt";
+  if (!confirm(part.part_number + " を選択した" + variantIds.length + "件の" + productKindLabel(targetKind) + "へ構成部品登録しますか？")) return;
+  var oldText = button ? button.textContent : "";
   if (button) { button.disabled = true; button.textContent = "反映中..."; }
-  var r = await sb.rpc("add_manual_assembly_component", payload);
-  if (button) { button.disabled = false; button.textContent = "部品登録へ反映"; }
+  var r = await sb.rpc("bulk_apply_component_compatibility", {
+    target_catalog_component_id: componentCompatSelected.dkd_component_id,
+    target_source_component_id: link._source_component_id,
+    target_product_kind: targetKind,
+    target_variant_ids: variantIds
+  });
+  if (button) { button.disabled = false; button.textContent = oldText; }
   if (r.error) { alert(t("component_add_failed") + ": " + r.error.message); return; }
-  await writeLog("insert", "assembly_component_usages", r.data || variantId, part.part_number, null, Object.assign({}, payload, { source: "component_compat_assist", compatibility_id: link.id }));
+  var result = Array.isArray(r.data) ? (r.data[0] || {}) : (r.data || {});
+  await writeLog("insert", "assembly_component_usages", componentCompatSelected.dkd_component_id, part.part_number, null, {
+    source: "component_compat_bulk",
+    compatibility_id: link.id,
+    source_component_id: link._source_component_id,
+    product_kind: targetKind,
+    requested_variant_ids: variantIds,
+    result: result
+  });
+  alert("構成部品を " + String(result.inserted_count || 0) + "件登録しました。登録済み等によるスキップ: " + String(result.skipped_count || 0) + "件");
   await loadComponentCompatAssist();
+}
+
+async function applyComponentCompatAssist(variantId) {
+  var container = document.querySelector("[data-compat-assist-variant='" + String(variantId) + "']");
+  var button = container ? container.querySelector("[data-compat-assist-apply]") : null;
+  await runComponentCompatBulkApply([variantId], button);
+}
+
+async function bulkApplyComponentCompatAssist() {
+  var checks = Array.prototype.slice.call(document.querySelectorAll("[data-compat-assist-check]:checked"));
+  var ids = checks.map(function(input) { return input.value; });
+  await runComponentCompatBulkApply(ids, document.getElementById("btn-component-compat-assist-bulk"));
 }
 
 function renderComponentAlternativeNameOptions(selectedName) {
@@ -26386,9 +26555,21 @@ document.getElementById("component-compat-links").addEventListener("click", func
 document.querySelectorAll("[data-compat-tab]").forEach(function(btn){ btn.addEventListener("click", function(){ switchComponentCompatTab(btn.dataset.compatTab); }); });
 document.getElementById("btn-component-compat-add").addEventListener("click", function(){ openComponentCompatForm(""); });
 document.getElementById("btn-component-compat-assist-refresh").addEventListener("click", loadComponentCompatAssist);
+document.getElementById("component-compat-assist-kind").addEventListener("change", loadComponentCompatAssist);
+document.getElementById("btn-component-compat-assist-bulk").addEventListener("click", bulkApplyComponentCompatAssist);
+document.getElementById("component-compat-assist-select-all").addEventListener("change", function(){
+  var checked = this.checked;
+  document.querySelectorAll("[data-compat-assist-check]").forEach(function(input){ input.checked = checked; });
+});
 document.getElementById("component-compat-assist").addEventListener("click", function(e){
   var apply = e.target.closest("[data-compat-assist-apply]");
   if (apply) applyComponentCompatAssist(apply.dataset.compatAssistApply);
+});
+document.getElementById("btn-component-compat-existing-search").addEventListener("click", searchComponentCompatExistingParts);
+document.getElementById("component-compat-existing-search").addEventListener("keydown", function(e){ if (e.key === "Enter") searchComponentCompatExistingParts(); });
+document.getElementById("component-compat-existing-results").addEventListener("click", function(e){
+  var row = e.target.closest("[data-compat-existing-id]");
+  if (row) selectComponentCompatExistingPart(row.dataset.compatExistingId);
 });
 document.getElementById("btn-component-compat-form-cancel").addEventListener("click", closeComponentCompatForm);
 document.getElementById("btn-component-compat-form-save").addEventListener("click", saveComponentCompatForm);

@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.479">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.479"; -->
+<meta name="dcats-app-version" content="v1.1.480">
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.480"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co; form-action 'self';">
 <title>D-CATS</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233c7df0'/%3E%3Cpath d='M8 17h16M16 9v14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.479">
+<link rel="stylesheet" href="styles.css?v=1.1.480">
 </head>
 <body>
 
@@ -128,7 +128,7 @@
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.479</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.480</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -157,7 +157,7 @@
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.479</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.480</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -187,7 +187,7 @@
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.479</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.480</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1144,10 +1144,20 @@
             <div class="component-compat-actionbar">
               <div>
                 <strong>未登録候補</strong>
-                <span>基準部品を使う商品から、互換品が未登録のリビルト・社外新品を抽出します。</span>
+                <span>同じメーカー品番のカタログ部品を使う商品から、互換品が未登録のバリアントを抽出します。</span>
               </div>
-              <button class="btn-sm-edit" id="btn-component-compat-assist-refresh" type="button">再抽出</button>
+              <div class="component-compat-assist-toolbar">
+                <select class="form-select" id="component-compat-assist-kind" aria-label="商品種別">
+                  <option value="rebuilt">リビルト</option>
+                  <option value="aftermarket_new">社外新品</option>
+                </select>
+                <select class="form-select" id="component-compat-bulk-link" aria-label="反映する互換品"></select>
+                <label class="component-compat-select-all"><input id="component-compat-assist-select-all" type="checkbox" checked> 全件選択</label>
+                <button class="btn-primary" id="btn-component-compat-assist-bulk" type="button">選択分へ一括反映</button>
+                <button class="btn-sm-edit" id="btn-component-compat-assist-refresh" type="button">再抽出</button>
+              </div>
             </div>
+            <div class="component-compat-assist-summary" id="component-compat-assist-summary"></div>
             <div id="component-compat-assist"></div>
           </div>
         </div>
@@ -1162,6 +1172,15 @@
     <div class="form-help" id="component-compat-form-base"></div>
     <input id="component-compat-form-id" type="hidden">
     <input id="component-compat-form-part-id" type="hidden">
+    <input id="component-compat-form-source-component-id" type="hidden">
+    <div class="component-compat-existing-picker" id="component-compat-existing-picker">
+      <label class="form-label" for="component-compat-existing-search">リビルト・社外新品へ登録済みの構成部品から選択</label>
+      <div class="component-compat-existing-search-row">
+        <input class="form-input" id="component-compat-existing-search" type="search" placeholder="メーカー品番で検索" inputmode="latin" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button class="btn-sm-edit" id="btn-component-compat-existing-search" type="button">検索</button>
+      </div>
+      <div class="component-compat-existing-results" id="component-compat-existing-results">一括反映する場合は、登録済み部品を選択してください。</div>
+    </div>
     <div class="spec-form-grid">
       <div class="form-row">
         <label class="form-label">メーカー *</label>
@@ -2240,6 +2259,6 @@
   <div class="fs-thumbs" id="fs-thumbs"></div>
 </div>
 
-<script src="app.js?v=1.1.479"></script>
+<script src="app.js?v=1.1.480"></script>
 </body>
 </html>
