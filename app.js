@@ -3392,7 +3392,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.495";
+var APP_VERSION       = "v1.1.496";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -5105,11 +5105,15 @@ function renderMenu() {
 // =============================================
 async function enterSearch() {
   showScreen("search");
+  var salesAddBtn = document.getElementById("btn-add-sales-core-product");
+  if (salesAddBtn) setCspStyle(salesAddBtn, "display", canEdit() ? "" : "none");
   if (!dataLoaded) { await initSearch(); dataLoaded = true; }
 }
 
 async function enterProductionSearch() {
   showScreen("production-search");
+  var productionAddBtn = document.getElementById("production-add-core-product");
+  if (productionAddBtn) setCspStyle(productionAddBtn, "display", canEdit() ? "" : "none");
   productionFilter = "all";
   productionCategoryFilter = "all";
   productionSearchLimit = SEARCH_INITIAL_LIMIT;
@@ -6505,7 +6509,7 @@ async function openProductionFinishedLabel() {
 
 async function openProductionCoreEdit() {
   if (!currentProductionRow) return;
-  await openCoreProductForm("edit", currentProductionRow);
+  await openCoreProductForm("edit", currentProductionRow, "production");
 }
 
 async function openProductionImageUpload() {
@@ -9981,6 +9985,7 @@ async function writeLog(operation, tableName, targetId, targetDesc, beforeData, 
 var partsMgmtData = [];
 var partFormMode  = "add"; // "add" or "edit"
 var partFormSource = "parts"; // "parts" or "core_products"
+var coreProductFormContext = "sales"; // "sales" or "production"
 
 async function enterPartsMgmt() {
   if (!canViewManagementScreen()) { alert(t("err_perm")); return; }
@@ -10088,6 +10093,7 @@ function renderPartsMgmt() {
 function openPartForm(mode, partId) {
   partFormSource = "parts";
   partFormMode = mode;
+  coreProductFormContext = "sales";
   var overlay  = document.getElementById("part-form-overlay");
   var title    = document.getElementById("part-form-title");
   var errEl    = document.getElementById("part-form-error");
@@ -14197,7 +14203,10 @@ function setGltekProductAddPanel() {
   var categoryEl = document.getElementById("pf-gltek-category-code");
   if (!panel || !typeEl || !fields || !baseEl || !categoryEl) return;
 
-  var showPanel = partFormSource === "core_products" && partFormMode === "add" && canIssueGltekPartNumber();
+  var showPanel = partFormSource === "core_products" &&
+    partFormMode === "add" &&
+    coreProductFormContext === "production" &&
+    canIssueGltekPartNumber();
   setCspStyle(panel, "display", showPanel ? "" : "none");
   if (!showPanel) {
     typeEl.value = "external";
@@ -14231,11 +14240,12 @@ function setCoreProductFormFields(p) {
   setGltekProductAddPanel();
 }
 
-async function openCoreProductForm(mode, product) {
+async function openCoreProductForm(mode, product, context) {
   if (!canEdit()) { alert(t("err_perm")); return; }
   if (mode === "edit" && product) currentProduct = product;
   partFormSource = "core_products";
   partFormMode = mode;
+  coreProductFormContext = context === "production" ? "production" : "sales";
   document.getElementById("part-form-error").textContent = "";
   document.getElementById("part-form-title").textContent = mode === "add" ? t("btn_add_part") : t("btn_edit_part");
   setCoreProductFormFields(mode === "add" ? (product || null) : product);
@@ -14252,13 +14262,18 @@ async function openCoreProductForm(mode, product) {
 }
 
 async function openCoreProductAddFromSearch() {
-  await openCoreProductForm("add", currentProduct || null);
+  await openCoreProductForm("add", currentProduct || null, "sales");
+  document.getElementById("pf-shohin-cd").value = "";
+}
+
+async function openCoreProductAddFromProduction() {
+  await openCoreProductForm("add", currentProductionRow || null, "production");
   document.getElementById("pf-shohin-cd").value = "";
 }
 
 async function openCoreProductEditFromSearch() {
   if (!currentProduct) return;
-  await openCoreProductForm("edit", currentProduct);
+  await openCoreProductForm("edit", currentProduct, "sales");
 }
 
 async function saveCoreProductForm() {
@@ -14266,6 +14281,7 @@ async function saveCoreProductForm() {
   errEl.textContent = "";
   if (!canEdit()) { errEl.textContent = t("err_perm"); return; }
   var addingProduct = partFormMode === "add";
+  var formContext = coreProductFormContext;
   var dkdInput = document.getElementById("pf-shohin-cd").value.trim();
   var dkd = dkdInput ? parseInt(dkdInput, 10) : null;
   if (isNaN(dkd)) { errEl.textContent = t("lbl_shohin_cd") + "を入力してください"; return; }
@@ -14275,8 +14291,10 @@ async function saveCoreProductForm() {
   var mfrPart = document.getElementById("pf-mfr-pn").value.trim() || null;
   var manufacturer = document.getElementById("pf-mfr").value.trim() || null;
   if (!genuine && !mfrPart) { errEl.textContent = t("lbl_genuine_pn") + "または" + t("lbl_mfr_pn") + "を入力してください"; return; }
-  var manufacturerType = addingProduct ? document.getElementById("pf-part-manufacturer-type").value : "external";
-  var isGltekAdd = addingProduct && manufacturerType === "gltek";
+  var manufacturerType = addingProduct && formContext === "production"
+    ? document.getElementById("pf-part-manufacturer-type").value
+    : "external";
+  var isGltekAdd = addingProduct && formContext === "production" && manufacturerType === "gltek";
   var baseCode = document.getElementById("pf-gltek-base-code").value.trim();
   var gltekCategoryCode = document.getElementById("pf-gltek-category-code").value.trim();
   if (isGltekAdd && !canIssueGltekPartNumber()) { errEl.textContent = t("err_perm"); return; }
@@ -14360,7 +14378,14 @@ async function saveCoreProductForm() {
   document.getElementById("part-form-overlay").classList.remove("show");
   currentProductSpecs = [];
   currentProductNominalSpec = null;
-  await runProductSearch();
+  if (formContext === "production") {
+    productionRows = (productionRows || []).filter(function(row) {
+      return parseInt(productDkdId(row), 10) !== parseInt(dkd, 10);
+    });
+    await openProductionProductByDkdId(dkd, { syncSearch: addingProduct });
+  } else {
+    await runProductSearch();
+  }
   if (gltekResult && gltekResult.gltek_part_number) {
     alert(t("gltek_product_add_done") + ": " + gltekResult.gltek_part_number);
   }
@@ -27619,6 +27644,7 @@ document.getElementById("btn-back-api-settings").addEventListener("click", retur
 document.getElementById("btn-back-rakuten-price-list").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-logs").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-add-part").addEventListener("click", function(){ openPartForm("add"); });
+document.getElementById("btn-add-sales-core-product").addEventListener("click", openCoreProductAddFromSearch);
 document.getElementById("btn-part-form-cancel").addEventListener("click", function(){ document.getElementById("part-form-overlay").classList.remove("show"); });
 document.getElementById("btn-part-form-save").addEventListener("click", savePartForm);
 document.getElementById("pf-part-manufacturer-type").addEventListener("change", setGltekProductAddPanel);
@@ -28095,6 +28121,7 @@ if (productionYearFilterEl) {
 document.getElementById("production-add-ranking-inline").addEventListener("click", function(){
   openProductionRankingForm("add");
 });
+document.getElementById("production-add-core-product").addEventListener("click", openCoreProductAddFromProduction);
 document.getElementById("production-edit-ranking-inline").addEventListener("click", openCurrentProductionRankingForm);
 document.querySelectorAll("[data-production-filter]").forEach(function(chip) {
   chip.addEventListener("click", async function() {
