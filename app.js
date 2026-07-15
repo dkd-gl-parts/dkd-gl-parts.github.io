@@ -3353,7 +3353,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.490";
+var APP_VERSION       = "v1.1.491";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -17911,10 +17911,7 @@ function openComponentReverseLookup() {
   if (result) result.innerHTML = "<div class='component-empty'>" + esc(t("component_reverse_empty")) + "</div>";
   overlay.classList.add("show");
   var scope = document.getElementById("component-reverse-scope");
-  if (scope) {
-    var kind = selectedProductKind();
-    scope.value = ["catalog_spec", "rebuilt", "aftermarket_new"].indexOf(kind) >= 0 ? kind : "all";
-  }
+  if (scope) scope.value = "catalog_spec";
   var input = document.getElementById("component-reverse-mfr-pn");
   if (input) setTimeout(function() { input.focus(); }, 50);
 }
