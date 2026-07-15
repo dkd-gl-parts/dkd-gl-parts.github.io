@@ -3383,6 +3383,9 @@ var componentChildLoadingMap = {};
 var componentExpandedChildMap = {};
 var componentChildMessageMap = {};
 var componentTreeRpcAvailable = true;
+var componentIllustrationRows = [];
+var componentIllustrationLoading = false;
+var componentIllustrationError = "";
 var componentCatalogNameCandidates = [];
 var componentCatalogNameCandidateLabelMap = {};
 var componentCatalogNameCandidateKindMap = {};
@@ -19174,6 +19177,112 @@ function componentSourceBadgeHtml(row) {
   return "<span class='component-source-badge'>" + esc(t("component_catalog")) + "</span>";
 }
 
+function componentIllustrationPublicUrl(row) {
+  if (!row || !row.image_bucket || !row.image_path) return "";
+  var publicUrl = sb.storage.from(row.image_bucket).getPublicUrl(row.image_path);
+  return publicUrl && publicUrl.data ? publicUrl.data.publicUrl : "";
+}
+
+function componentIllustrationPoints(row) {
+  var points = row && row.points;
+  if (typeof points === "string") {
+    try {
+      points = JSON.parse(points);
+    } catch (e) {
+      points = [];
+    }
+  }
+  return Array.isArray(points) ? points : [];
+}
+
+function componentIllustrationPointLabel(point) {
+  var label = String((point && point.component_position) || "").trim();
+  return label || "*";
+}
+
+function componentIllustrationPointTitle(point) {
+  if (!point) return "";
+  return [
+    point.component_position,
+    point.component_name,
+    point.component_manufacturer_part_number,
+    point.component_genuine_part_number
+  ].filter(function(value) { return value != null && String(value).trim() !== ""; }).join(" / ");
+}
+
+function componentIllustrationPointSvg(point, index) {
+  var x = Number(point && point.x_px);
+  var y = Number(point && point.y_px);
+  if (!isFinite(x) || !isFinite(y)) return "";
+  x = Math.max(0, Math.min(615, x));
+  y = Math.max(0, Math.min(487, y));
+  var label = componentIllustrationPointLabel(point);
+  var title = componentIllustrationPointTitle(point);
+  return "<g class='catalog-illustration-point' data-catalog-point='" + esc(String(index)) + "'>"
+    + "<title>" + esc(title || label) + "</title>"
+    + "<circle cx='" + esc(String(x)) + "' cy='" + esc(String(y)) + "' r='7'></circle>"
+    + "<text x='" + esc(String(x)) + "' y='" + esc(String(y + 4)) + "'>" + esc(label) + "</text>"
+    + "</g>";
+}
+
+function renderComponentIllustrationPanelHtml() {
+  if (selectedProductKind() !== "catalog_spec") return "";
+  if (componentIllustrationLoading) {
+    return "<div class='catalog-illustration-panel'><div class='component-empty'>" + t("loading") + "</div></div>";
+  }
+  if (componentIllustrationError) {
+    return "<div class='catalog-illustration-panel catalog-illustration-error'>" + esc(componentIllustrationError) + "</div>";
+  }
+  var rows = componentIllustrationRows || [];
+  if (!rows.length) return "";
+  var html = "<div class='catalog-illustration-panel'>";
+  html += "<div class='catalog-illustration-head'><div class='catalog-illustration-title'>カタログ図</div><div class='catalog-illustration-meta'>" + esc(String(rows.length)) + " image" + (rows.length === 1 ? "" : "s") + "</div></div>";
+  html += "<div class='catalog-illustration-list'>";
+  rows.forEach(function(row) {
+    var url = componentIllustrationPublicUrl(row);
+    if (!url) return;
+    var points = componentIllustrationPoints(row);
+    html += "<div class='catalog-illustration-card'>";
+    html += "<div class='catalog-illustration-card-head'><div class='component-pn'>" + esc(row.model_id || row.assy_manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.source_html || row.catalog_match_basis || "") + "</div></div>";
+    html += "<div class='catalog-illustration-frame'>";
+    html += "<img src='" + esc(url) + "' alt='" + esc(row.model_id || "catalog illustration") + "' loading='lazy'>";
+    html += "<svg class='catalog-illustration-overlay' viewBox='0 0 615 487' preserveAspectRatio='none' aria-hidden='true'>";
+    points.forEach(function(point, index) {
+      html += componentIllustrationPointSvg(point, index);
+    });
+    html += "</svg>";
+    html += "</div>";
+    html += "</div>";
+  });
+  html += "</div></div>";
+  return html;
+}
+
+async function loadCatalogIllustrationsForCurrent(dkdId, selectedKind) {
+  componentIllustrationRows = [];
+  componentIllustrationLoading = false;
+  componentIllustrationError = "";
+  if (selectedKind !== "catalog_spec" || !dkdId) return;
+  componentIllustrationLoading = true;
+  try {
+    var r = await sb.rpc("get_catalog_illustration_for_product", {
+      target_dkd_shohin_id: dkdId,
+      target_product_kind: selectedKind
+    });
+    componentIllustrationLoading = false;
+    if (r.error) {
+      componentIllustrationError = "カタログ図を読み込めませんでした: " + (r.error.message || r.error.details || r.error.code || "");
+      console.warn("get_catalog_illustration_for_product failed", r.error);
+      return;
+    }
+    componentIllustrationRows = r.data || [];
+  } catch (e) {
+    componentIllustrationLoading = false;
+    componentIllustrationError = "カタログ図を読み込めませんでした";
+    console.warn("get_catalog_illustration_for_product failed", e);
+  }
+}
+
 async function loadComponentChildRows(row) {
   if (!row || !componentHasChildRows(row)) return [];
   var key = componentTreeKey(row);
@@ -22482,15 +22591,16 @@ function renderAssemblyComponentRows() {
   var wrap = document.getElementById("component-wrap");
   if (!wrap) return;
   var rows = assemblyComponentRows || [];
+  var illustrationHtml = renderComponentIllustrationPanelHtml();
   if (!rows.length) {
     updateComponentTargetSummary(0);
-    wrap.innerHTML = componentEmptyStateHtml();
+    wrap.innerHTML = illustrationHtml + componentEmptyStateHtml();
     return;
   }
   var hasActions = canManageComponentsInCurrentContext();
   var catalogMode = selectedProductKind() === "catalog_spec";
   var colspan = 11 + (hasActions ? 1 : 0);
-  var html = "<table class='component-table component-table-tree'>";
+  var html = illustrationHtml + "<table class='component-table component-table-tree'>";
   html += "<tr><th class='component-tree-col'>" + t("component_child") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th>";
   if (catalogMode) {
     html += "<th>" + t("component_position") + "</th><th>" + t("component_quantity") + "</th><th>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
@@ -22698,6 +22808,9 @@ async function loadAssemblyComponentsForCurrent() {
   componentChildLoadingMap = {};
   componentExpandedChildMap = {};
   componentChildMessageMap = {};
+  componentIllustrationRows = [];
+  componentIllustrationLoading = false;
+  componentIllustrationError = "";
   editingComponentUsageId = null;
   var selectedKind = selectedProductKind();
   wrap.innerHTML = "<div class='component-empty'>" + t("loading") + "</div>";
@@ -22722,6 +22835,7 @@ async function loadAssemblyComponentsForCurrent() {
       if (rpcRows.length || selectedKind === "catalog_spec") {
         assemblyComponentRows = rpcRows;
         updateComponentTargetSummary(rpcRows.length);
+        await loadCatalogIllustrationsForCurrent(dkdId, selectedKind);
         renderAssemblyComponentRows();
         return;
       }
@@ -22748,6 +22862,7 @@ async function loadAssemblyComponentsForCurrent() {
     if (treeFallbackRows.length || selectedKind === "catalog_spec") {
       assemblyComponentRows = treeFallbackRows;
       updateComponentTargetSummary(treeFallbackRows.length);
+      await loadCatalogIllustrationsForCurrent(dkdId, selectedKind);
       renderAssemblyComponentRows();
       return;
     }
@@ -22808,6 +22923,7 @@ async function loadAssemblyComponentsForCurrent() {
   assemblyComponentRows = rows;
   updateComponentTargetSummary(rows.length);
   await loadComponentAlternativesForRows(rows);
+  await loadCatalogIllustrationsForCurrent(dkdId, selectedKind);
   renderAssemblyComponentRows();
 }
 

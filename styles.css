@@ -418,6 +418,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-target-help { margin-top: 8px; color: #667085; font-size: 11px; line-height: 1.5; }
 .component-empty-state { border: 1px dashed #d7e3f5; border-radius: 8px; background: #fbfdff; padding: 12px; color: #667085; font-size: 12px; line-height: 1.6; }
 .component-empty-title { color: #1a1a2e; font-weight: 800; margin-bottom: 3px; }
+.catalog-illustration-panel { margin: 0 0 12px; padding: 12px; border: 1px solid #dbe7f8; border-radius: 8px; background: #fbfdff; }
+.catalog-illustration-error { color: #b42318; background: #fff7f7; border-color: #f2b5b5; font-size: 12px; line-height: 1.5; }
+.catalog-illustration-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.catalog-illustration-title { color: #1a1a2e; font-size: 13px; font-weight: 800; }
+.catalog-illustration-meta { color: #667085; font-size: 11px; font-weight: 700; }
+.catalog-illustration-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.catalog-illustration-card { min-width: 0; border: 1px solid #e5edf8; border-radius: 8px; background: #fff; padding: 10px; }
+.catalog-illustration-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.catalog-illustration-frame { position: relative; width: 100%; max-width: 615px; aspect-ratio: 615 / 487; margin: 0 auto; overflow: hidden; border: 1px solid #edf0f5; border-radius: 6px; background: #fff; }
+.catalog-illustration-frame img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.catalog-illustration-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.catalog-illustration-point circle { fill: rgba(37, 99, 235, 0.9); stroke: #fff; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.catalog-illustration-point text { fill: #fff; font-size: 10px; font-weight: 800; text-anchor: middle; pointer-events: none; paint-order: stroke; stroke: rgba(30, 64, 175, 0.55); stroke-width: 1.5px; }
 .component-add-panel { margin: 0 0 12px; padding: 12px; border: 1px solid #e5e9f2; border-radius: 8px; background: #fff; }
 .component-add-compact { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 10px; }
 .component-add-title { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-bottom: 10px; }
