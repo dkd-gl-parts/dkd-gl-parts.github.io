@@ -1133,19 +1133,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .spec-chip strong { color: #1a5faa; margin-left: 4px; }
 .detail-summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 4px 0 10px; border-bottom: 1px solid #f0f0f0; margin-bottom: 6px; }
 .detail-category-name { font-size: 15px; font-weight: 700; color: #1a1a2e; line-height: 1.4; }
-.gltek-part-number-detail { margin: 0 0 10px; padding: 10px 12px; border: 1px solid #cfe0f6; border-radius: 9px; background: #f7fbff; flex: 0 0 auto; }
-.gltek-part-number-detail-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
-.gltek-part-number-detail-title { color: #164d86; font-size: 12px; font-weight: 800; }
-.gltek-part-number-detail-status { display: inline-flex; align-items: center; min-height: 20px; border-radius: 999px; padding: 1px 8px; font-size: 10px; font-weight: 800; white-space: nowrap; }
-.gltek-part-number-detail-status.issued { color: #16803a; border: 1px solid #b7e4c7; background: #eefaf2; }
-.gltek-part-number-detail-status.unissued { color: #667085; border: 1px solid #d7dce5; background: #fff; }
-.gltek-part-number-detail-grid { display: grid; grid-template-columns: minmax(190px, 1.5fr) repeat(3, minmax(86px, .7fr)) minmax(150px, 1fr); gap: 7px; }
-.gltek-part-number-detail-cell { min-width: 0; padding-left: 9px; border-left: 1px solid #dbe7f8; }
-.gltek-part-number-detail-cell.primary { padding-left: 0; border-left: 0; }
-.gltek-part-number-detail-label { color: #778095; font-size: 10px; line-height: 1.35; margin-bottom: 2px; }
-.gltek-part-number-detail-value { color: #1a1a2e; font-size: 13px; font-weight: 800; line-height: 1.4; overflow-wrap: anywhere; }
-.gltek-part-number-detail-value.number { color: #164d86; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 17px; letter-spacing: .04em; }
-.gltek-part-number-detail-value.date { font-size: 11px; }
 .detail-main-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 8px; flex: 0 0 auto; }
 .detail-column { min-width: 0; }
 .detail-block-title { font-size: 12px; font-weight: 700; color: #555; margin: 0 0 6px; }
@@ -1205,21 +1192,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 }
 .spec-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .spec-form-help { font-size: 12px; color: #777; line-height: 1.45; margin-top: 5px; }
-.form-card #gltek-part-number-panel { margin: 14px 0; padding: 12px; border: 1px solid #cfe0f6; border-radius: 10px; background: #f7fbff; }
-.form-card #gltek-part-number-panel > .form-row { margin-bottom: 8px; }
-#pf-gltek-part-number { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-weight: 700; letter-spacing: .04em; color: #164d86; background: #fff; }
-#btn-issue-gltek-part-number { width: 100%; margin-top: 10px; background: #e7f1ff; color: #145ca8; font-weight: 700; }
-#btn-issue-gltek-part-number:hover { background: #d9eaff; }
-#btn-issue-gltek-part-number:disabled { cursor: not-allowed; opacity: .6; }
+.form-card #gltek-product-add-panel { margin: 14px 0; padding: 12px; border: 1px solid #cfe0f6; border-radius: 10px; background: #f7fbff; }
+.form-card #gltek-product-add-panel > .form-row { margin-bottom: 8px; }
+#gltek-product-issuance-fields { margin-top: 10px; padding-top: 10px; border-top: 1px solid #dbe7f8; }
 .spec-form-hidden { display: none !important; }
 .form-help { font-size: 12px; color: #667085; line-height: 1.45; margin: 0 0 10px; }
 @media(max-width:640px){ .spec-form-grid { grid-template-columns: 1fr; } }
-@media(max-width:640px){
-  .gltek-part-number-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .gltek-part-number-detail-cell { padding: 6px 0 0; border-left: 0; border-top: 1px solid #dbe7f8; }
-  .gltek-part-number-detail-cell.primary { grid-column: 1 / -1; padding-top: 0; border-top: 0; }
-  .gltek-part-number-detail-cell.issued-at { grid-column: 1 / -1; }
-}
 
 /* ログ画面 */
 .log-table      { width: 100%; border-collapse: collapse; font-size: 12px; }
