@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.488">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.488"; -->
+<meta name="dcats-app-version" content="v1.1.489">
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.489"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co; form-action 'self';">
 <title>D-CATS</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233c7df0'/%3E%3Cpath d='M8 17h16M16 9v14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.488">
+<link rel="stylesheet" href="styles.css?v=1.1.489">
 </head>
 <body>
 
@@ -128,7 +128,7 @@
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.488</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.489</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -157,7 +157,7 @@
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.488</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.489</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -187,7 +187,7 @@
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.488</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.489</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1025,7 +1025,7 @@
   <div class="page-header">
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-core-list-mgmt" data-i18n="btn_back">← メニュー</button>
-      <span class="logo-text" data-i18n="screen_core_list_title">コアリスト</span>
+      <span class="logo-text" data-i18n="screen_core_list_title">コア管理</span>
     </div>
     <div class="page-header-right">
       <span class="header-username" id="core-list-mgmt-username"></span>
@@ -1034,17 +1034,100 @@
     </div>
   </div>
   <div class="mgmt-body">
-    <div class="mgmt-toolbar">
+    <div class="core-list-mode-switch" role="tablist" aria-label="コア管理表示">
+      <button class="core-list-mode-btn active" id="btn-core-list-mode-collection" type="button" role="tab" aria-selected="true">収集リスト</button>
+      <button class="core-list-mode-btn" id="btn-core-list-mode-inventory" type="button" role="tab" aria-selected="false">現在庫</button>
+    </div>
+    <div class="mgmt-toolbar core-list-collection-toolbar" id="core-list-collection-toolbar">
+      <input class="mgmt-search" id="core-collection-search" type="search" placeholder="コア品番・純正品番・メーカー品番で検索">
+      <select class="form-select" id="core-collection-category" aria-label="カテゴリ">
+        <option value="">すべてのカテゴリ</option>
+        <option value="starter">スタータ</option>
+        <option value="alternator">オルタネータ</option>
+        <option value="ac_compressor">ACコンプレッサ</option>
+        <option value="distributor">ディストリビュータ</option>
+        <option value="other">その他</option>
+      </select>
+      <select class="form-select" id="core-collection-state" aria-label="収集状態">
+        <option value="needed">不足あり</option>
+        <option value="all">すべて</option>
+        <option value="in_stock">在庫あり</option>
+        <option value="sufficient">目標数あり</option>
+        <option value="collecting">収集中</option>
+        <option value="completed">完了</option>
+        <option value="paused">保留</option>
+      </select>
+      <select class="form-select" id="core-collection-priority" aria-label="優先度">
+        <option value="">すべての優先度</option>
+        <option value="high">高</option>
+        <option value="normal">通常</option>
+        <option value="low">低</option>
+      </select>
+      <button class="btn-primary" id="btn-core-collection-search" type="button">検索</button>
+      <button class="btn-primary" id="btn-add-core-collection" type="button">収集対象を追加</button>
+      <button class="btn-sm-edit" id="btn-create-core-list-from-ranking" type="button">製造ランキングから追加</button>
+      <button class="btn-sm-edit" id="btn-export-core-collection" type="button">CSV出力</button>
+    </div>
+    <div class="mgmt-toolbar core-list-inventory-toolbar hidden" id="core-list-inventory-toolbar">
       <input class="mgmt-search" id="core-list-search" type="search" data-i18n-ph="core_list_search_ph">
       <button class="btn-primary" id="btn-core-list-search" data-i18n="btn_search">検索</button>
       <button class="btn-primary" id="btn-add-core-list" data-i18n="btn_add_core_list">コアを追加</button>
-      <button class="btn-sm-edit" id="btn-create-core-list-from-ranking" data-i18n="btn_create_core_from_ranking">ランキングから作成</button>
     </div>
     <div class="mgmt-count" id="core-list-count"></div>
     <div id="core-list-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
     <div class="load-more-wrap" id="core-list-load-more-wrap" data-dcats-inline-style="s-6aa34d7432e7">
       <button class="btn-load-more" id="core-list-load-more" type="button" data-i18n="btn_load_more">さらに表示</button>
     </div>
+  </div>
+</div>
+
+<!-- コア収集リスト登録・編集フォーム -->
+<div class="form-overlay" id="core-collection-form-overlay">
+  <div class="form-card core-collection-form-card">
+    <h3 id="core-collection-form-title">収集対象を追加</h3>
+    <input type="hidden" id="ccf-id">
+    <input type="hidden" id="ccf-dkd-id">
+    <div class="form-row" id="ccf-product-search-row">
+      <label class="form-label">対象商品検索 *</label>
+      <input class="form-input" id="ccf-product-search" type="search" placeholder="純正品番・メーカー品番で検索">
+      <div class="candidate-list" id="ccf-product-candidates"></div>
+    </div>
+    <div class="core-collection-selected-product" id="ccf-product-info"></div>
+    <div class="spec-form-grid">
+      <div class="form-row">
+        <label class="form-label">収集目標数 *</label>
+        <input class="form-input" id="ccf-target-quantity" type="number" min="0" step="1" value="1">
+      </div>
+      <div class="form-row">
+        <label class="form-label">優先度 *</label>
+        <select class="form-select" id="ccf-priority">
+          <option value="high">高</option>
+          <option value="normal" selected>通常</option>
+          <option value="low">低</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label">状態 *</label>
+        <select class="form-select" id="ccf-status">
+          <option value="collecting" selected>収集中</option>
+          <option value="completed">完了</option>
+          <option value="paused">保留</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label">入手先候補</label>
+        <input class="form-input" id="ccf-source-hint" type="text" placeholder="解体屋、中古市場など">
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">メモ</label>
+      <textarea class="form-input" id="ccf-note" rows="3"></textarea>
+    </div>
+    <div class="form-footer">
+      <button class="btn-cancel" id="btn-core-collection-form-cancel" type="button">キャンセル</button>
+      <button class="btn-primary" id="btn-core-collection-form-save" type="button">保存</button>
+    </div>
+    <div class="reg-error" id="core-collection-form-error"></div>
   </div>
 </div>
 
@@ -2280,6 +2363,6 @@
   <div class="fs-thumbs" id="fs-thumbs"></div>
 </div>
 
-<script src="app.js?v=1.1.488"></script>
+<script src="app.js?v=1.1.489"></script>
 </body>
 </html>

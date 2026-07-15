@@ -800,6 +800,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .purchase-mgmt-table { min-width: 760px; }
 }
 #screen-core-list-mgmt .mgmt-body { max-width: none; }
+.core-list-mode-switch { display: inline-flex; gap: 2px; margin-bottom: 10px; padding: 3px; border: 1px solid #cfd7e6; border-radius: 6px; background: #e9eef5; }
+.core-list-mode-btn { min-width: 120px; border: 0; border-radius: 4px; padding: 8px 14px; background: transparent; color: #4b5563; font-weight: 800; cursor: pointer; }
+.core-list-mode-btn.active { background: #fff; color: #1857a4; box-shadow: 0 1px 3px rgba(19, 43, 76, 0.16); }
+.core-list-collection-toolbar { display: grid; grid-template-columns: minmax(240px, 1fr) 170px 145px 140px auto auto auto auto; gap: 8px; align-items: stretch; }
+.core-list-collection-toolbar .form-select { width: 100%; min-width: 0; }
+.core-list-inventory-toolbar.hidden,
+.core-list-collection-toolbar.hidden { display: none !important; }
 #core-list-list { overflow-x: visible; }
 #core-list-list .mgmt-table { min-width: 0; table-layout: fixed; }
 #core-list-list .mgmt-table th,
@@ -837,6 +844,62 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .core-list-card-note { padding: 8px 0; border-top: 1px solid #f0f2f5; border-bottom: 1px solid #f0f2f5; }
 .core-list-card-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(82px, 1fr)); gap: 7px; padding-top: 9px; }
 .core-list-card-actions button { width: 100%; min-height: 32px; padding: 6px 5px; }
+.core-count-pill.stock { background: #e7f5ed; color: #17643b; }
+.core-count-pill.shortage { background: #fff0ed; color: #a33a2c; }
+.core-collection-table { min-width: 1050px !important; }
+#core-list-list .core-collection-table th,
+#core-list-list .core-collection-table td { white-space: normal; vertical-align: middle; }
+#core-list-list .core-collection-table th:nth-child(1),
+#core-list-list .core-collection-table td:nth-child(1) { width: 62px; text-align: center; }
+#core-list-list .core-collection-table th:nth-child(2),
+#core-list-list .core-collection-table td:nth-child(2) { width: 210px; }
+#core-list-list .core-collection-table th:nth-child(3),
+#core-list-list .core-collection-table td:nth-child(3) { width: 135px; }
+#core-list-list .core-collection-table th:nth-child(4),
+#core-list-list .core-collection-table td:nth-child(4) { width: 150px; text-align: left; }
+#core-list-list .core-collection-table th:nth-child(5),
+#core-list-list .core-collection-table td:nth-child(5),
+#core-list-list .core-collection-table th:nth-child(6),
+#core-list-list .core-collection-table td:nth-child(6) { width: 70px; text-align: center; }
+#core-list-list .core-collection-table th:nth-child(7),
+#core-list-list .core-collection-table td:nth-child(7) { width: auto; text-align: left; }
+#core-list-list .core-collection-table th:nth-child(8),
+#core-list-list .core-collection-table td:nth-child(8) { width: 190px; text-align: right; }
+.core-priority-badge,
+.core-status-badge,
+.core-stock-badge { display: inline-flex; align-items: center; justify-content: center; min-height: 24px; padding: 3px 8px; border-radius: 5px; font-size: 12px; font-weight: 800; line-height: 1.2; }
+.core-priority-badge.high { background: #fde7e4; color: #a62e23; }
+.core-priority-badge.normal { background: #fff2c9; color: #725400; }
+.core-priority-badge.low { background: #edf0f4; color: #536070; }
+.core-status-badge.collecting { background: #e8f0ff; color: #245aa8; }
+.core-status-badge.completed { background: #e5f5e9; color: #23743a; }
+.core-status-badge.paused { background: #f0f1f3; color: #5d6673; }
+.core-stock-badge.has-stock { background: #e5f5e9; color: #23743a; }
+.core-stock-badge.no-stock { background: #fde9e6; color: #aa3529; }
+.core-qty-pill.target { background: #e8f0ff; color: #245aa8; }
+.core-shortage-value { display: inline-flex; min-width: 38px; justify-content: center; padding: 4px 7px; border-radius: 5px; font-size: 14px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.core-shortage-value.needed { background: #fde9e6; color: #aa3529; }
+.core-shortage-value.enough { background: #e5f5e9; color: #23743a; }
+.core-collection-table .core-main-pn,
+.core-collection-card .core-main-pn { font-family: monospace; font-size: 14px; font-weight: 900; color: #173b6d; overflow-wrap: anywhere; }
+.core-collection-table .core-note { margin-top: 5px; color: #303846; line-height: 1.35; }
+.core-collection-mobile-cards { display: grid; gap: 10px; }
+.core-collection-card { padding: 11px; border: 1px solid #dce4ef; border-radius: 8px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+.core-collection-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid #edf0f5; }
+.core-collection-card-badges { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 0; }
+.core-collection-qty-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #e0e6ef; border-radius: 6px; overflow: hidden; }
+.core-collection-qty-grid > div { display: grid; place-items: center; gap: 2px; padding: 7px 4px; border-right: 1px solid #e0e6ef; }
+.core-collection-qty-grid > div:last-child { border-right: 0; }
+.core-collection-qty-grid span { font-size: 10px; font-weight: 800; color: #667085; }
+.core-collection-qty-grid strong { font-size: 18px; font-variant-numeric: tabular-nums; }
+.core-collection-qty-grid .shortage strong { color: #aa3529; }
+.core-collection-meta { padding: 8px 0; color: #596579; font-size: 12px; line-height: 1.5; }
+.core-collection-note { padding: 8px 0; border-top: 1px solid #edf0f5; color: #374151; font-size: 12px; line-height: 1.55; }
+.core-collection-form-card { width: min(720px, calc(100vw - 24px)); }
+.core-collection-selected-product { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 16px; margin-bottom: 12px; padding: 10px 12px; border-left: 3px solid #2f72c9; background: #eef5fd; color: #34445a; }
+.core-collection-selected-product:empty { display: none; }
+.core-collection-selected-product strong { grid-column: 1 / -1; color: #173b6d; font-family: monospace; font-size: 15px; }
+.core-collection-selected-product span { font-size: 12px; }
 @media (max-width: 767px) {
   #screen-core-list-mgmt .page-header { align-items: flex-start; flex-wrap: wrap; gap: 8px; padding: 8px 10px; }
   #screen-core-list-mgmt .page-header-left { min-width: 0; flex: 1 1 auto; }
@@ -844,6 +907,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   #screen-core-list-mgmt .logo-text { font-size: 15px; }
   #screen-core-list-mgmt .mgmt-body { padding: 12px 8px; overflow-x: hidden; }
   #screen-core-list-mgmt .mgmt-toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: stretch; }
+  #screen-core-list-mgmt .core-list-collection-toolbar { grid-template-columns: 1fr 1fr; }
+  #screen-core-list-mgmt .core-list-collection-toolbar .mgmt-search,
+  #screen-core-list-mgmt .core-list-collection-toolbar #btn-create-core-list-from-ranking,
+  #screen-core-list-mgmt .core-list-collection-toolbar #btn-export-core-collection { grid-column: 1 / -1; }
+  .core-list-mode-switch { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+  .core-list-mode-btn { min-width: 0; width: 100%; }
   #screen-core-list-mgmt .mgmt-search { grid-column: 1 / -1; min-width: 0; width: 100%; }
   #screen-core-list-mgmt .mgmt-toolbar .btn-primary,
   #screen-core-list-mgmt .mgmt-toolbar .btn-sm-edit { width: 100%; min-height: 38px; padding: 8px 10px; font-size: 12px; }
@@ -875,6 +944,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   #core-list-list .mgmt-actions button { width: 100%; min-height: 34px; padding: 7px 6px; }
   #core-list-list .core-list-mobile-cards { display: grid; gap: 10px; }
   #core-list-list .core-list-mobile-cards .core-maker-badge { max-width: 100%; white-space: nowrap; }
+  .core-collection-selected-product { grid-template-columns: 1fr; }
 }
 .stock-mgmt-body { max-width: 1360px; }
 .stock-mgmt-toolbar { align-items: stretch; }
