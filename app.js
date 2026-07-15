@@ -545,19 +545,19 @@ var TRANSLATIONS = {
     f_genuine_pn2: "純正品番2",
     lbl_mfr_pn: "メーカー品番",
     lbl_mfr: "メーカー",
-    gltek_part_number_section: "GLTEK品番（G品番）",
-    gltek_part_number_label: "G品番",
+    gltek_part_number_section: "GLTEK品番",
+    gltek_part_number_label: "GLTEK品番",
     gltek_product_add_section: "部品メーカー区分／GLTEK製",
     gltek_manufacturer_type: "部品メーカー区分",
     gltek_manufacturer_external: "外部メーカー製",
-    gltek_manufacturer_gltek: "GLTEK製（G品番を発行／再利用）",
+    gltek_manufacturer_gltek: "GLTEK製（GLTEK品番を発行／再利用）",
     gltek_base_manufacturer_code: "ベースメーカーコード（1桁）",
-    gltek_category_number_code: "G品番カテゴリコード（2桁）",
-    gltek_product_add_help: "メーカーとメーカー品番を基準に既存G品番を再利用します。未発行の場合のみ、入力した2つのコードで保存時に新規発行します。",
+    gltek_category_number_code: "GLTEK品番カテゴリコード（2桁）",
+    gltek_product_add_help: "メーカーとメーカー品番を基準に既存GLTEK品番を再利用します。未発行の場合のみ、入力した2つのコードで保存時に新規発行します。",
     gltek_product_add_requires_source: "GLTEK製には、ベースとなるメーカーとメーカー品番が必要です。",
     gltek_product_add_done: "GLTEK製の商品を追加しました",
     gltek_part_number_invalid_base: "ベースメーカーコードは半角数字1桁で入力してください。",
-    gltek_part_number_invalid_category: "G品番カテゴリコードは半角数字2桁で入力してください。",
+    gltek_part_number_invalid_category: "GLTEK品番カテゴリコードは半角数字2桁で入力してください。",
     lbl_vehicle_mfr: "車メーカー",
     lbl_body_type: "車種",
     lbl_compatible: "適合車名",
@@ -1641,19 +1641,19 @@ var TRANSLATIONS = {
     f_genuine_pn2: "Genuine Part No. 2",
     lbl_mfr_pn: "Manufacturer Part No.",
     lbl_mfr: "Manufacturer",
-    gltek_part_number_section: "GLTEK Part Number (G Number)",
-    gltek_part_number_label: "G Number",
+    gltek_part_number_section: "GLTEK Part Number",
+    gltek_part_number_label: "GLTEK Part Number",
     gltek_product_add_section: "Part Manufacturer Type / GLTEK Product",
     gltek_manufacturer_type: "Part Manufacturer Type",
     gltek_manufacturer_external: "External Manufacturer",
-    gltek_manufacturer_gltek: "GLTEK Product (issue / reuse G number)",
+    gltek_manufacturer_gltek: "GLTEK Product (issue / reuse GLTEK part number)",
     gltek_base_manufacturer_code: "Base Manufacturer Code (1 digit)",
-    gltek_category_number_code: "G Number Category Code (2 digits)",
-    gltek_product_add_help: "An existing G number is reused by base manufacturer and part number. The two codes are used only when a new number must be issued during save.",
+    gltek_category_number_code: "GLTEK Part Number Category Code (2 digits)",
+    gltek_product_add_help: "An existing GLTEK part number is reused by base manufacturer and part number. The two codes are used only when a new number must be issued during save.",
     gltek_product_add_requires_source: "A base manufacturer and manufacturer part number are required for a GLTEK product.",
     gltek_product_add_done: "GLTEK product added",
     gltek_part_number_invalid_base: "Enter a one-digit ASCII base-manufacturer code.",
-    gltek_part_number_invalid_category: "Enter a two-digit ASCII G-number category code.",
+    gltek_part_number_invalid_category: "Enter a two-digit ASCII GLTEK part-number category code.",
     lbl_vehicle_mfr: "Vehicle Maker",
     lbl_body_type: "Body Type",
     lbl_compatible: "Compatible Models",
@@ -2737,19 +2737,19 @@ var TRANSLATIONS = {
     f_genuine_pn2: "纯正零件编号2",
     lbl_mfr_pn: "制造商零件编号",
     lbl_mfr: "制造商",
-    gltek_part_number_section: "GLTEK零件编号（G编号）",
-    gltek_part_number_label: "G编号",
+    gltek_part_number_section: "GLTEK零件编号",
+    gltek_part_number_label: "GLTEK零件编号",
     gltek_product_add_section: "零件制造商类别／GLTEK产品",
     gltek_manufacturer_type: "零件制造商类别",
     gltek_manufacturer_external: "外部制造商产品",
-    gltek_manufacturer_gltek: "GLTEK产品（发行／复用G编号）",
+    gltek_manufacturer_gltek: "GLTEK产品（发行／复用GLTEK零件编号）",
     gltek_base_manufacturer_code: "基础制造商代码（1位）",
-    gltek_category_number_code: "G编号类别代码（2位）",
-    gltek_product_add_help: "系统按基础制造商和制造商零件编号复用现有G编号。仅在需要新发行时，保存时使用两个代码。",
+    gltek_category_number_code: "GLTEK零件编号类别代码（2位）",
+    gltek_product_add_help: "系统按基础制造商和制造商零件编号复用现有GLTEK零件编号。仅在需要新发行时，保存时使用两个代码。",
     gltek_product_add_requires_source: "GLTEK产品必须填写基础制造商和制造商零件编号。",
     gltek_product_add_done: "已添加GLTEK产品",
     gltek_part_number_invalid_base: "基础制造商代码必须是1位半角数字。",
-    gltek_part_number_invalid_category: "G编号类别代码必须是2位半角数字。",
+    gltek_part_number_invalid_category: "GLTEK零件编号类别代码必须是2位半角数字。",
     lbl_vehicle_mfr: "汽车制造商",
     lbl_body_type: "车身类型",
     lbl_compatible: "适用车型",
@@ -3392,7 +3392,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.494";
+var APP_VERSION       = "v1.1.495";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -10053,7 +10053,7 @@ function renderPartsMgmt() {
   var countEl  = document.getElementById("parts-mgmt-count");
   if (countEl) countEl.textContent = partsMgmtData.length + " 件";
   if (!partsMgmtData.length) { list.innerHTML = "<div class='empty'>該当する商品がありません</div>"; return; }
-  var html = "<table class='mgmt-table'><tr><th>商品コード</th><th>純正品番</th><th>メーカー品番</th><th>G品番</th><th>メーカー</th><th>カテゴリ</th><th></th></tr>";
+  var html = "<table class='mgmt-table'><tr><th>商品コード</th><th>純正品番</th><th>メーカー品番</th><th>GLTEK品番</th><th>メーカー</th><th>カテゴリ</th><th></th></tr>";
   partsMgmtData.forEach(function(p) {
     html += "<tr>";
     html += "<td><div class='mgmt-pn'>" + esc(String(p.dkd_shohin_id || p.shohin_cd || "-")) + "</div></td>";
