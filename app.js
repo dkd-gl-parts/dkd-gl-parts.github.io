@@ -3353,7 +3353,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.489";
+var APP_VERSION       = "v1.1.490";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -10105,7 +10105,7 @@ function resetCoreCollectionControls() {
   var inventorySearch = document.getElementById("core-list-search");
   if (search) search.value = "";
   if (category) category.value = "";
-  if (state) state.value = "needed";
+  if (state) state.value = "all";
   if (priority) priority.value = "";
   if (inventorySearch) inventorySearch.value = "";
 }
@@ -10140,6 +10140,14 @@ function coreCollectionStatusLabel(value) {
   return value === "completed" ? "完了" : (value === "paused" ? "保留" : "収集中");
 }
 
+function coreCollectionSourceDetail(row) {
+  var details = [];
+  if (row && row.source_hint) details.push(row.source_hint);
+  if (row && row.source_rank) details.push("元順位 #" + row.source_rank);
+  if (row && row.shipment_count != null) details.push("出荷 " + row.shipment_count + "台");
+  return details.join(" / ") || "-";
+}
+
 function coreCollectionStockQty(row) {
   var stock = row ? coreCollectionStockMap[String(row.dkd_shohin_id)] : null;
   return stock ? stock.quantity : 0;
@@ -10164,7 +10172,7 @@ function applyCoreCollectionFilters() {
   var priorityEl = document.getElementById("core-collection-priority");
   var q = qEl ? norm(qEl.value.trim()) : "";
   var category = categoryEl ? categoryEl.value : "";
-  var state = stateEl ? stateEl.value : "needed";
+  var state = stateEl ? stateEl.value : "all";
   var priority = priorityEl ? priorityEl.value : "";
   coreCollectionFilteredRows = coreCollectionRows.filter(function(row) {
     var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
@@ -10194,6 +10202,11 @@ function applyCoreCollectionFilters() {
   var priorityOrder = { high: 0, normal: 1, low: 2 };
   var statusOrder = { collecting: 0, paused: 1, completed: 2 };
   coreCollectionFilteredRows.sort(function(a, b) {
+    var aSort = parseInt(a.sort_order, 10);
+    var bSort = parseInt(b.sort_order, 10);
+    if (!isNaN(aSort) && !isNaN(bSort) && aSort !== bSort) return aSort - bSort;
+    if (!isNaN(aSort) && isNaN(bSort)) return -1;
+    if (isNaN(aSort) && !isNaN(bSort)) return 1;
     var aStatusOrder = Object.prototype.hasOwnProperty.call(statusOrder, a.status) ? statusOrder[a.status] : 0;
     var bStatusOrder = Object.prototype.hasOwnProperty.call(statusOrder, b.status) ? statusOrder[b.status] : 0;
     var statusDiff = aStatusOrder - bStatusOrder;
@@ -10215,6 +10228,7 @@ async function loadCoreCollectionList() {
   if (list) list.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
   var r = await sb.from("core_collection_list_items")
     .select("*")
+    .order("sort_order", { ascending: true, nullsFirst: false })
     .order("updated_at", { ascending: false })
     .limit(2000);
   if (r.error) {
@@ -10303,11 +10317,11 @@ function renderCoreCollectionList() {
       var stock = coreCollectionStockMap[String(row.dkd_shohin_id)] || {};
       var shortage = coreCollectionShortageQty(row);
       mobileHtml += "<div class='core-collection-card'>";
-      mobileHtml += "<div class='core-collection-card-head'><div><div class='core-main-pn'>" + esc(product.manufacturer_part_number || product.genuine_part_number || ("DKD " + row.dkd_shohin_id)) + "</div><div class='mgmt-sub'>" + esc(product.genuine_part_number || "-") + " / " + esc(product.manufacturer || "-") + "</div></div><span class='core-priority-badge " + esc(row.priority) + "'>" + esc(coreCollectionPriorityLabel(row.priority)) + "</span></div>";
+      mobileHtml += "<div class='core-collection-card-head'><div><div class='core-main-pn'>" + esc(product.manufacturer_part_number || product.genuine_part_number || ("DKD " + row.dkd_shohin_id)) + "</div><div class='mgmt-sub'>" + (row.sort_order ? "#" + esc(String(row.sort_order)) + " / " : "") + esc(product.genuine_part_number || "-") + " / " + esc(product.manufacturer || "-") + "</div></div><span class='core-priority-badge " + esc(row.priority) + "'>" + esc(coreCollectionPriorityLabel(row.priority)) + "</span></div>";
       mobileHtml += "<div class='core-collection-card-badges'>" + renderCoreCollectionStockBadge(row) + "<span class='core-status-badge " + esc(row.status) + "'>" + esc(coreCollectionStatusLabel(row.status)) + "</span></div>";
       mobileHtml += "<div class='core-collection-qty-grid'><div><span>目標</span><strong>" + esc(String(row.target_quantity || 0)) + "</strong></div><div><span>現在庫</span><strong>" + esc(String(coreCollectionStockQty(row))) + "</strong></div><div class='shortage'><span>不足</span><strong>" + esc(String(shortage)) + "</strong></div></div>";
       mobileHtml += "<div class='core-collection-meta'>" + esc(productionCategoryLabel(product)) + " / DKD " + esc(String(row.dkd_shohin_id)) + (stock.parts && stock.parts.length ? "<br>在庫品番: " + esc(stock.parts.join(" / ")) : "") + "</div>";
-      mobileHtml += "<div class='core-collection-note'><strong>入手先</strong> " + esc(row.source_hint || "-") + "<br><strong>メモ</strong> " + esc(row.note || "-") + "</div>";
+      mobileHtml += "<div class='core-collection-note'><strong>追加元</strong> " + esc(coreCollectionSourceDetail(row)) + "<br><strong>メモ</strong> " + esc(row.note || "-") + "</div>";
       mobileHtml += "<div class='core-list-card-actions'><button class='btn-sm-edit' data-core-collection-edit='" + row.id + "'>編集</button><button class='btn-sm-edit production-action-secondary' data-core-collection-complete='" + row.id + "'>" + (row.status === "completed" ? "収集再開" : "完了") + "</button><button class='btn-sm-del' data-core-collection-delete='" + row.id + "'>削除</button></div>";
       mobileHtml += "</div>";
     });
@@ -10315,19 +10329,19 @@ function renderCoreCollectionList() {
     bindCoreCollectionActions();
     return;
   }
-  var html = "<table class='mgmt-table core-collection-table'><tr><th>優先</th><th>対象品番</th><th>区分・メーカー</th><th>現在庫</th><th>目標</th><th>不足</th><th>状態・入手先</th><th>操作</th></tr>";
+  var html = "<table class='mgmt-table core-collection-table'><tr><th>順番・優先</th><th>対象品番</th><th>区分・メーカー</th><th>現在庫</th><th>目標</th><th>不足</th><th>状態・追加元</th><th>操作</th></tr>";
   coreCollectionFilteredRows.forEach(function(row) {
     var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
     var stock = coreCollectionStockMap[String(row.dkd_shohin_id)] || {};
     var shortage = coreCollectionShortageQty(row);
     html += "<tr>";
-    html += "<td><span class='core-priority-badge " + esc(row.priority) + "'>" + esc(coreCollectionPriorityLabel(row.priority)) + "</span></td>";
+    html += "<td>" + (row.sort_order ? "<strong>#" + esc(String(row.sort_order)) + "</strong><br>" : "") + "<span class='core-priority-badge " + esc(row.priority) + "'>" + esc(coreCollectionPriorityLabel(row.priority)) + "</span></td>";
     html += "<td><div class='core-main-pn'>" + esc(product.manufacturer_part_number || product.genuine_part_number || ("DKD " + row.dkd_shohin_id)) + "</div><div class='mgmt-pn'>純正 " + esc(product.genuine_part_number || "-") + "</div><div class='mgmt-sub'>DKD " + esc(String(row.dkd_shohin_id)) + "</div></td>";
     html += "<td>" + esc(productionCategoryLabel(product)) + "<div class='mgmt-sub'>" + esc(product.manufacturer || "-") + "</div></td>";
     html += "<td>" + renderCoreCollectionStockBadge(row) + (stock.parts && stock.parts.length ? "<div class='mgmt-sub'>" + esc(stock.parts.join(" / ")) + "</div>" : "") + "</td>";
     html += "<td><span class='core-qty-pill target'>" + esc(String(row.target_quantity || 0)) + "</span></td>";
     html += "<td><span class='core-shortage-value " + (shortage > 0 ? "needed" : "enough") + "'>" + esc(String(shortage)) + "</span></td>";
-    html += "<td><span class='core-status-badge " + esc(row.status) + "'>" + esc(coreCollectionStatusLabel(row.status)) + "</span><div class='core-note'>" + esc(row.source_hint || "-") + "</div><div class='mgmt-sub'>" + esc(row.note || "") + "</div></td>";
+    html += "<td><span class='core-status-badge " + esc(row.status) + "'>" + esc(coreCollectionStatusLabel(row.status)) + "</span><div class='core-note'>" + esc(coreCollectionSourceDetail(row)) + "</div><div class='mgmt-sub'>" + esc(row.note || "") + "</div></td>";
     html += "<td><div class='mgmt-actions'><button class='btn-sm-edit' data-core-collection-edit='" + row.id + "'>編集</button><button class='btn-sm-edit production-action-secondary' data-core-collection-complete='" + row.id + "'>" + (row.status === "completed" ? "再開" : "完了") + "</button><button class='btn-sm-del' data-core-collection-delete='" + row.id + "'>削除</button></div></td>";
     html += "</tr>";
   });
@@ -10448,6 +10462,11 @@ async function saveCoreCollectionForm() {
   var r;
   if (coreCollectionFormMode === "add") {
     data.created_by = currentUser ? currentUser.id : null;
+    data.sort_order = coreCollectionRows.reduce(function(maxValue, row) {
+      var value = parseInt(row.sort_order, 10);
+      return isNaN(value) ? maxValue : Math.max(maxValue, value);
+    }, 0) + 1;
+    data.source_type = "manual";
     r = await sb.from("core_collection_list_items").insert(data).select().single();
     if (!r.error) await writeLog("insert", "core_collection_list_items", r.data && r.data.id, "DKD " + dkdId, null, data);
   } else {
@@ -10492,10 +10511,14 @@ function csvCoreCollectionCell(value) {
 function exportCoreCollectionCsv() {
   applyCoreCollectionFilters();
   if (!coreCollectionFilteredRows.length) { alert("出力する収集対象がありません。"); return; }
-  var lines = [["優先度", "状態", "カテゴリ", "メーカー", "メーカー品番", "純正品番", "DKD商品ID", "現在庫", "目標数", "不足数", "入手先候補", "メモ"]];
+  var lines = [["順番", "追加元", "元順位", "2025出荷数", "優先度", "状態", "カテゴリ", "メーカー", "メーカー品番", "純正品番", "DKD商品ID", "現在庫", "目標数", "不足数", "入手先候補", "メモ"]];
   coreCollectionFilteredRows.forEach(function(row) {
     var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
     lines.push([
+      row.sort_order || "",
+      row.source_hint || "",
+      row.source_rank || "",
+      row.shipment_count == null ? "" : row.shipment_count,
       coreCollectionPriorityLabel(row.priority),
       coreCollectionStatusLabel(row.status),
       productionCategoryLabel(product),
@@ -11033,11 +11056,14 @@ async function createCoreListFromRanking() {
       alert("目標数は0以上の整数で入力してください。");
       return;
     }
-    var existing = await sb.from("core_collection_list_items").select("dkd_shohin_id").limit(10000);
+    var existing = await sb.from("core_collection_list_items").select("dkd_shohin_id, sort_order").limit(10000);
     if (existing.error) { alert(t("msg_part_err") + ": " + existing.error.message); return; }
     var existingIds = {};
+    var nextSortOrder = 1;
     (existing.data || []).forEach(function(row) {
       if (row.dkd_shohin_id != null) existingIds[String(row.dkd_shohin_id)] = true;
+      var sortOrder = parseInt(row.sort_order, 10);
+      if (!isNaN(sortOrder)) nextSortOrder = Math.max(nextSortOrder, sortOrder + 1);
     });
     var src = await sb.from("production_instruction_candidates")
       .select("dkd_shohin_id, priority_rank, source_year")
@@ -11057,6 +11083,10 @@ async function createCoreListFromRanking() {
         priority: rank > 0 && rank <= 30 ? "high" : (rank > 100 ? "low" : "normal"),
         status: "collecting",
         source_hint: "製造ランキング",
+        sort_order: nextSortOrder++,
+        source_type: "production",
+        source_rank: rank || null,
+        shipment_count: null,
         note: [rank ? "順位 #" + rank : "", row.source_year ? String(row.source_year) + "年度" : ""].filter(Boolean).join(" / ") || null,
         created_by: currentUser ? currentUser.id : null,
         updated_by: currentUser ? currentUser.id : null,
