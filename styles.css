@@ -665,9 +665,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 }
 
 .ranking-report-stock-badge.is-positive {
-  border-color: #9bd7b2;
-  background: #ecf9f1;
-  color: #18733b;
+  align-items: center;
+  border-color: #42a96b;
+  background: linear-gradient(135deg, #dff8e8, #effcf4);
+  color: #126334;
+  padding: 5px 9px;
+  font-size: 10px;
+  box-shadow: 0 2px 7px rgba(20, 116, 60, .15);
+}
+
+.ranking-report-stock-badge.is-positive::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: #1f9d55;
+  box-shadow: 0 0 0 3px rgba(31, 157, 85, .14);
 }
 
 .ranking-report-stock-badge.is-compatible {

@@ -968,9 +968,10 @@
   function buildPreviewCoreStock(result) {
     if (!state.masterDataReady) return "<span class='ranking-report-none'>照合中</span>";
     var stock = coreStockDetails(result);
-    if (!stock.matched) return "<span class='ranking-report-none'>マスタ未登録</span>";
+    if (!stock.matched) return "<span class='ranking-report-none'>-</span>";
     var currentClass = stock.currentTotal > 0 ? " is-positive" : "";
-    var html = "<span class='ranking-report-stock-badge" + currentClass + "'>現在 " + formatNumber(stock.currentTotal) + "台</span>";
+    var currentLabel = stock.currentTotal > 0 ? "在庫あり " : "現在 ";
+    var html = "<span class='ranking-report-stock-badge" + currentClass + "'>" + currentLabel + formatNumber(stock.currentTotal) + "台</span>";
     if (stock.compatibleTotal > 0) html += "<span class='ranking-report-stock-badge is-compatible'>互換品に " + formatNumber(stock.compatibleTotal) + "台</span>";
     return html;
   }
@@ -979,8 +980,19 @@
     if (!state.masterDataReady) return "-";
     var stock = coreStockDetails(result);
     if (!stock.matched) return "-";
-    var html = "<span>現在 " + formatNumber(stock.currentTotal) + "台</span>";
-    if (stock.compatibleTotal > 0) html += "<span class='compatible-stock'>互換品に " + formatNumber(stock.compatibleTotal) + "台</span>";
+    var html = stock.currentTotal > 0
+      ? "<span class='stock-status has-stock'><span>在庫あり</span><strong>" + formatNumber(stock.currentTotal) + "台</strong></span>"
+      : "<span class='stock-status no-stock'>現在 0台</span>";
+    if (stock.compatibleTotal > 0) html += "<span class='compatible-stock'>互換品に <strong>" + formatNumber(stock.compatibleTotal) + "台</strong></span>";
+    return html;
+  }
+
+  function buildPrintMissingMaster(missing) {
+    if (!state.masterDataReady || !missing.length) return "-";
+    var html = "<span class='missing-badge'>未登録 " + formatNumber(missing.length) + "品番</span>";
+    missing.forEach(function(entry) {
+      html += "<span class='missing-part'>" + escapeHtml(entry.label + " " + entry.value) + "</span>";
+    });
     return html;
   }
 
@@ -1125,7 +1137,6 @@
     return results.map(function(result) {
       var row = result.row;
       var missing = missingMasterPartNumbers(result, options.compatibilityMode);
-      var columnCount = 5 + (options.metric !== "shipment" ? 1 : 0) + (options.showCoreStock ? 1 : 0);
       var html = "<tr><td class='rank'>" + formatNumber(result.rank) + "</td>" +
         "<td class='product'><b>" + escapeHtml(row.productName || "-") + "</b><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
         "<td class='part genuine-part'>" + escapeHtml(row.genuine || "-") + "</td>" +
@@ -1133,16 +1144,8 @@
         "<td class='number shipment'>" + formatNumber(result.shipment) + "</td>";
       if (options.metric !== "shipment") html += "<td class='number score'>" + formatNumber(result.score) + "</td>";
       if (options.showCoreStock) html += "<td class='stock'>" + buildPrintCoreStock(result) + "</td>";
+      if (options.showMissingMaster) html += "<td class='missing'>" + buildPrintMissingMaster(missing) + "</td>";
       html += "</tr>";
-
-      var detailBlocks = [];
-      if (options.showMissingMaster && missing.length) {
-        detailBlocks.push("<div class='detail-block is-missing'><b class='detail-label'>未登録</b><div class='detail-values'>" +
-          missing.map(function(entry) { return "<span>" + escapeHtml(entry.label + " " + entry.value) + "</span>"; }).join("") + "</div></div>");
-      }
-      if (detailBlocks.length) {
-        html += "<tr class='detail-row'><td colspan='" + columnCount + "'><div class='detail-grid'>" + detailBlocks.join("") + "</div></td></tr>";
-      }
       return "<tbody class='print-item'>" + html + "</tbody>";
     }).join("");
   }
@@ -1156,12 +1159,13 @@
     var header = "<tr><th class='rank-head'>順位</th><th class='product-head'>商品名</th><th class='genuine-head'>純正品番</th><th class='maker-head'>メーカー品番</th><th class='shipment-head'>出荷数</th>";
     if (options.metric !== "shipment") header += "<th class='score-head'>順位値</th>";
     if (options.showCoreStock) header += "<th class='stock-head'>コア在庫</th>";
+    if (options.showMissingMaster) header += "<th class='missing-head'>未登録</th>";
     header += "</tr>";
 
     return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" +
       "<title>" + escapeHtml(title) + "</title>" +
-      "<link rel='stylesheet' href='ranking-report-print.css?dcats_version=" + encodeURIComponent(version) + "'>" +
-      "<link rel='stylesheet' href='" + orientationCss + "?dcats_version=" + encodeURIComponent(version) + "'>" +
+      "<link rel='stylesheet' href='ranking-report-print.css?dcats_version=" + encodeURIComponent(version) + "&amp;layout=2'>" +
+      "<link rel='stylesheet' href='" + orientationCss + "?dcats_version=" + encodeURIComponent(version) + "&amp;layout=2'>" +
       "</head><body><div class='print-toolbar'><button id='dcats-ranking-print' type='button'>PDFとして保存 / 印刷</button><span>印刷先で「PDFに保存」を選択してください。</span></div>" +
       "<main class='report'><header><div><span class='eyebrow'>D-CATS MANUFACTURING REPORT</span><h1>製造ランキング</h1><p>" + escapeHtml(categoryText) + "</p></div>" +
       "<div class='report-meta'><b>順位 " + formatNumber(options.startRank) + " - " + formatNumber(options.endRank) + "</b><span>" + escapeHtml(generatedAt) + " 作成</span></div></header>" +

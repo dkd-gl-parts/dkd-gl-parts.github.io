@@ -158,53 +158,55 @@ td small { display: block; margin-top: .3mm; color: #738094; font-size: 5.5pt; }
 .stock-head { min-width: 38mm; }
 .stock { min-width: 38mm; font-size: 5.7pt; }
 .stock span { display: block; margin-bottom: .35mm; overflow-wrap: anywhere; }
-.stock .compatible-stock { color: #0f6e5b; font-weight: 800; }
-
-.detail-row td {
-  border-bottom-color: #c8d6e8;
-  background: #eef4fb !important;
-  padding: .7mm .9mm 1mm;
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(70mm, 1fr));
-  gap: .7mm 2mm;
-}
-
-.detail-block {
-  min-width: 0;
+.stock .stock-status {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: space-between;
   gap: 1mm;
-  color: #42526a;
-  font-size: 5.6pt;
-  line-height: 1.25;
+  border: .25mm solid #cbd5e1;
+  border-radius: 1.1mm;
+  padding: .7mm 1mm;
+  background: #f5f7fa;
 }
-
-.detail-label {
+.stock .stock-status.has-stock {
+  border-color: #65b982;
+  background: #e4f7ea;
+  color: #126334;
+  font-weight: 900;
+}
+.stock .stock-status.has-stock::before {
+  content: "";
   flex: 0 0 auto;
-  border-radius: .8mm;
-  background: #d8e7fb;
-  color: #1d4fa9;
-  padding: .25mm 1mm;
-  font-size: 5.2pt;
-  white-space: nowrap;
+  width: 1.6mm;
+  height: 1.6mm;
+  border-radius: 50%;
+  background: #1f9d55;
 }
-
-.detail-block.is-missing .detail-label {
-  background: #fff0d8;
-  color: #9a4b00;
+.stock .stock-status.has-stock strong { margin-left: auto; font-size: 6.5pt; }
+.stock .stock-status.no-stock { color: #7c8796; }
+.stock .compatible-stock {
+  border: .25mm solid #89cabb;
+  border-radius: 1mm;
+  padding: .55mm .9mm;
+  background: #e9f8f4;
+  color: #0f6e5b;
+  font-weight: 800;
 }
-
-.detail-values {
-  min-width: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: .3mm 2mm;
+.stock .compatible-stock strong { font-size: 6.2pt; }
+.missing-head { min-width: 30mm; }
+.missing { min-width: 30mm; color: #6f4a1b; font-size: 5.4pt; }
+.missing span { display: block; overflow-wrap: anywhere; }
+.missing-badge {
+  width: fit-content;
+  margin-bottom: .45mm;
+  border: .25mm solid #efb866;
+  border-radius: 1mm;
+  padding: .35mm .8mm;
+  background: #fff2df;
+  color: #934900;
+  font-weight: 900;
 }
-
-.detail-values span { overflow-wrap: anywhere; }
+.missing-part { margin-top: .25mm; color: #795321; }
 
 footer {
   display: flex;
