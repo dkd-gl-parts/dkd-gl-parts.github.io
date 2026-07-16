@@ -349,6 +349,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ranking-report-controls {
   position: sticky;
   top: 12px;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   padding: 20px;
 }
 
@@ -490,10 +494,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 }
 
 .ranking-report-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 9px;
   margin-top: 20px;
+  border-top: 1px solid #edf0f5;
+  background: rgba(255, 255, 255, .97);
+  padding-top: 13px;
+  box-shadow: 0 -8px 16px rgba(255, 255, 255, .95);
 }
 
 .ranking-report-primary,
@@ -584,7 +595,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 
 .ranking-report-table {
   width: 100%;
-  min-width: 1120px;
+  min-width: 1420px;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 11px;
@@ -621,6 +632,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ranking-report-score-cell { color: #245ece; font-weight: 900; }
 .ranking-report-compat-column { min-width: 250px; }
 .ranking-report-compat-cell { min-width: 250px; }
+.ranking-report-stock-column { min-width: 210px; }
+.ranking-report-stock-cell { min-width: 210px; }
 
 .ranking-report-compat-badge {
   display: inline-flex;
@@ -631,6 +644,36 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   padding: 3px 7px;
   font-size: 9px;
   font-weight: 900;
+}
+
+.ranking-report-compat-badge.is-info {
+  border-color: #a8c5f4;
+  background: #edf4ff;
+  color: #245eaf;
+}
+
+.ranking-report-stock-badge {
+  display: inline-flex;
+  margin: 0 5px 5px 0;
+  border: 1px solid #d6dee9;
+  border-radius: 999px;
+  background: #f5f7fa;
+  color: #526174;
+  padding: 3px 7px;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.ranking-report-stock-badge.is-positive {
+  border-color: #9bd7b2;
+  background: #ecf9f1;
+  color: #18733b;
+}
+
+.ranking-report-stock-badge.is-compatible {
+  border-color: #7fc8b4;
+  background: #e9f8f4;
+  color: #0f6e5b;
 }
 
 .ranking-report-none { color: #9ca5b3; }
@@ -650,6 +693,50 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ranking-report-empty strong { margin-top: 10px; color: #4f5d72; font-size: 14px; }
 .ranking-report-empty p { margin: 6px 0 0; font-size: 11px; }
 
+@media (min-width: 861px) {
+  #screen-manufacturing-ranking-report.active {
+    height: 100vh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  #screen-manufacturing-ranking-report .ranking-report-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  #screen-manufacturing-ranking-report .ranking-report-source-card { flex: 0 0 auto; }
+
+  #screen-manufacturing-ranking-report .ranking-report-workspace {
+    flex: 1 1 auto;
+    min-height: 0;
+    align-items: stretch;
+    overflow: hidden;
+  }
+
+  #screen-manufacturing-ranking-report .ranking-report-controls {
+    position: static;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+  }
+
+  #screen-manufacturing-ranking-report .ranking-report-preview {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #screen-manufacturing-ranking-report .ranking-report-table-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
 @media (max-width: 1120px) {
   .ranking-report-workspace { grid-template-columns: 320px minmax(0, 1fr); }
   .ranking-report-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -660,7 +747,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .ranking-report-source-card { grid-template-columns: 1fr; padding: 20px; }
   .ranking-report-source-status { grid-column: auto; }
   .ranking-report-workspace { grid-template-columns: 1fr; }
-  .ranking-report-controls { position: static; }
+  .ranking-report-controls { position: static; max-height: none; overflow: visible; scrollbar-gutter: auto; }
+  .ranking-report-actions { position: static; }
 }
 
 @media (max-width: 560px) {

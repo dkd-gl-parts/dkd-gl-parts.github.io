@@ -154,6 +154,10 @@ td small { display: block; margin-top: .6mm; color: #738094; font-size: 6pt; }
 .compat-head { min-width: 48mm; }
 .compat { min-width: 48mm; font-size: 6.2pt; }
 .compat span { display: block; margin-bottom: .7mm; overflow-wrap: anywhere; }
+.stock-head { min-width: 38mm; }
+.stock { min-width: 38mm; font-size: 6.2pt; }
+.stock span { display: block; margin-bottom: .7mm; overflow-wrap: anywhere; }
+.stock .compatible-stock { color: #0f6e5b; font-weight: 800; }
 
 footer {
   display: flex;

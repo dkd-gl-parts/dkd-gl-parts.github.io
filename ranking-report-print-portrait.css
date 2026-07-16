@@ -10,4 +10,7 @@
   .compat-head,
   .compat { min-width: 34mm; }
   .compat { font-size: 5.5pt; }
+  .stock-head,
+  .stock { min-width: 28mm; }
+  .stock { font-size: 5.5pt; }
 }
