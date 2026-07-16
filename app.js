@@ -3392,7 +3392,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.504";
+var APP_VERSION       = "v1.1.505";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -3473,6 +3473,8 @@ var coreCollectionProductMap = {};
 var coreCollectionStockMap = {};
 var coreCollectionProductCandidates = [];
 var coreCollectionFormMode = "add";
+var CORE_COLLECTION_RENDER_PAGE_SIZE = 100;
+var coreCollectionRenderLimit = CORE_COLLECTION_RENDER_PAGE_SIZE;
 var productKindStockRows = [];
 var productKindStockProductMap = {};
 var productKindStockDirtyMap = {};
@@ -10228,7 +10230,7 @@ async function setCoreListMode(mode) {
   if (collectionToolbar) collectionToolbar.classList.toggle("hidden", coreListMode !== "collection");
   if (inventoryToolbar) inventoryToolbar.classList.toggle("hidden", coreListMode !== "inventory");
   var loadMoreWrap = document.getElementById("core-list-load-more-wrap");
-  if (coreListMode === "collection" && loadMoreWrap) setCspStyle(loadMoreWrap, "display", "none");
+  if (loadMoreWrap) setCspStyle(loadMoreWrap, "display", "none");
   if (coreListMode === "collection") await loadCoreCollectionList();
   else await loadCoreListMgmt();
 }
@@ -10305,7 +10307,8 @@ function coreCollectionCategoryMatches(product, category) {
   return coreCollectionCategoryKey(product) === category;
 }
 
-function applyCoreCollectionFilters() {
+function applyCoreCollectionFilters(options) {
+  options = options || {};
   var qEl = document.getElementById("core-collection-search");
   var categoryEl = document.getElementById("core-collection-category");
   var stateEl = document.getElementById("core-collection-state");
@@ -10314,6 +10317,7 @@ function applyCoreCollectionFilters() {
   var category = categoryEl ? categoryEl.value : "";
   var state = stateEl ? stateEl.value : "all";
   var priority = priorityEl ? priorityEl.value : "";
+  if (!options.preserveRenderLimit) coreCollectionRenderLimit = CORE_COLLECTION_RENDER_PAGE_SIZE;
   assignCoreCollectionCategoryRanks();
   coreCollectionFilteredRows = coreCollectionRows.filter(function(row) {
     var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
@@ -10343,10 +10347,10 @@ function applyCoreCollectionFilters() {
   coreCollectionFilteredRows.sort(function(a, b) {
     var ap = coreCollectionProductMap[String(a.dkd_shohin_id)] || {};
     var bp = coreCollectionProductMap[String(b.dkd_shohin_id)] || {};
-    var categoryDiff = coreCollectionCategoryOrder(ap) - coreCollectionCategoryOrder(bp);
-    if (categoryDiff) return categoryDiff;
     var rankDiff = (coreCollectionCategoryRank(a) || Number.MAX_SAFE_INTEGER) - (coreCollectionCategoryRank(b) || Number.MAX_SAFE_INTEGER);
     if (rankDiff) return rankDiff;
+    var categoryDiff = coreCollectionCategoryOrder(ap) - coreCollectionCategoryOrder(bp);
+    if (categoryDiff) return categoryDiff;
     return compareCoreCollectionStoredOrder(a, b);
   });
 }
@@ -10376,8 +10380,12 @@ async function loadCoreCollectionList() {
 
 async function loadCoreCollectionProducts(rows) {
   var ids = Array.from(new Set((rows || []).map(function(row) { return parseInt(row.dkd_shohin_id, 10); }).filter(function(id) { return !isNaN(id); })));
+  var requests = [];
   for (var i = 0; i < ids.length; i += 200) {
-    var r = await sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).in("dkd_shohin_id", ids.slice(i, i + 200));
+    requests.push(sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).in("dkd_shohin_id", ids.slice(i, i + 200)));
+  }
+  var results = await Promise.all(requests);
+  results.forEach(function(r) {
     if (r.error) {
       console.warn("core collection product lookup failed", r.error);
       return;
@@ -10385,15 +10393,19 @@ async function loadCoreCollectionProducts(rows) {
     normalizeCoreProductFastRows(r.data || []).forEach(function(product) {
       coreCollectionProductMap[String(product.dkd_shohin_id)] = product;
     });
-  }
+  });
 }
 
 async function loadCoreCollectionStock(rows) {
   var ids = Array.from(new Set((rows || []).map(function(row) { return parseInt(row.dkd_shohin_id, 10); }).filter(function(id) { return !isNaN(id); })));
+  var requests = [];
   for (var i = 0; i < ids.length; i += 200) {
-    var r = await sb.from("production_core_list_entries")
+    requests.push(sb.from("production_core_list_entries")
       .select("dkd_shohin_id, quantity, core_part_number, location")
-      .in("dkd_shohin_id", ids.slice(i, i + 200));
+      .in("dkd_shohin_id", ids.slice(i, i + 200)));
+  }
+  var results = await Promise.all(requests);
+  results.forEach(function(r) {
     if (r.error) {
       console.warn("core collection stock lookup failed", r.error);
       return;
@@ -10406,7 +10418,7 @@ async function loadCoreCollectionStock(rows) {
       if (stockRow.location && stock.locations.indexOf(stockRow.location) < 0) stock.locations.push(stockRow.location);
       coreCollectionStockMap[key] = stock;
     });
-  }
+  });
 }
 
 function renderCoreCollectionStockBadge(row) {
@@ -10414,10 +10426,22 @@ function renderCoreCollectionStockBadge(row) {
   return "<span class='core-stock-badge " + (qty > 0 ? "has-stock" : "no-stock") + "'>" + (qty > 0 ? "在庫あり " + esc(String(qty)) : "在庫なし") + "</span>";
 }
 
+function updateCoreCollectionLoadMoreButton() {
+  var wrap = document.getElementById("core-list-load-more-wrap");
+  var btn = document.getElementById("core-list-load-more");
+  if (!wrap || !btn || coreListMode !== "collection") return;
+  var visibleCount = Math.min(coreCollectionRenderLimit, coreCollectionFilteredRows.length);
+  var remaining = Math.max(coreCollectionFilteredRows.length - visibleCount, 0);
+  setCspStyle(wrap, "display", remaining > 0 ? "" : "none");
+  btn.disabled = false;
+  btn.textContent = remaining > 0 ? "さらに表示（残り" + remaining + "件）" : t("btn_load_more");
+}
+
 function renderCoreCollectionList() {
   var list = document.getElementById("core-list-list");
   var countEl = document.getElementById("core-list-count");
   if (!list) return;
+  var visibleRows = coreCollectionFilteredRows.slice(0, coreCollectionRenderLimit);
   var totalTarget = 0;
   var totalStock = 0;
   var totalShortage = 0;
@@ -10427,20 +10451,23 @@ function renderCoreCollectionList() {
     totalShortage += coreCollectionShortageQty(row);
   });
   if (countEl) countEl.innerHTML = esc(String(coreCollectionFilteredRows.length)) + " 件" +
+    (visibleRows.length < coreCollectionFilteredRows.length ? " <span class='core-count-pill'>表示 " + esc(String(visibleRows.length)) + " / " + esc(String(coreCollectionFilteredRows.length)) + "</span>" : "") +
     " <span class='core-count-pill'>目標 " + esc(String(totalTarget)) + "</span>" +
     " <span class='core-count-pill stock'>現在庫 " + esc(String(totalStock)) + "</span>" +
     " <span class='core-count-pill shortage'>不足 " + esc(String(totalShortage)) + "</span>";
   if (!coreCollectionRows.length) {
     list.innerHTML = "<div class='empty'>収集対象はまだ登録されていません。<br>「収集対象を追加」または「製造ランキングから追加」で、買い集めるコアを登録してください。</div>";
+    updateCoreCollectionLoadMoreButton();
     return;
   }
   if (!coreCollectionFilteredRows.length) {
     list.innerHTML = "<div class='empty'>条件に該当する収集対象はありません。</div>";
+    updateCoreCollectionLoadMoreButton();
     return;
   }
   if (!isPC()) {
     var mobileHtml = "<div class='core-collection-mobile-cards'>";
-    coreCollectionFilteredRows.forEach(function(row) {
+    visibleRows.forEach(function(row) {
       var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
       var stock = coreCollectionStockMap[String(row.dkd_shohin_id)] || {};
       var shortage = coreCollectionShortageQty(row);
@@ -10456,10 +10483,11 @@ function renderCoreCollectionList() {
     });
     list.innerHTML = mobileHtml + "</div>";
     bindCoreCollectionActions();
+    updateCoreCollectionLoadMoreButton();
     return;
   }
   var html = "<table class='mgmt-table core-collection-table'><tr><th>カテゴリ順位・優先</th><th>対象品番</th><th>区分・メーカー</th><th>現在庫</th><th>目標</th><th>不足</th><th>状態・追加元</th><th>操作</th></tr>";
-  coreCollectionFilteredRows.forEach(function(row) {
+  visibleRows.forEach(function(row) {
     var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
     var stock = coreCollectionStockMap[String(row.dkd_shohin_id)] || {};
     var shortage = coreCollectionShortageQty(row);
@@ -10477,6 +10505,7 @@ function renderCoreCollectionList() {
   });
   list.innerHTML = html + "</table>";
   bindCoreCollectionActions();
+  updateCoreCollectionLoadMoreButton();
 }
 
 function bindCoreCollectionActions() {
@@ -10724,7 +10753,7 @@ function csvCoreCollectionCell(value) {
 }
 
 function exportCoreCollectionCsv() {
-  applyCoreCollectionFilters();
+  applyCoreCollectionFilters({ preserveRenderLimit: true });
   if (!coreCollectionFilteredRows.length) { alert("出力する収集対象がありません。"); return; }
   var lines = [["カテゴリ順位", "追加元", "元順位", "2025出荷数", "優先度", "状態", "カテゴリ", "メーカー", "メーカー品番", "純正品番", "DKD商品ID", "現在庫", "目標数", "不足数", "入手先候補", "メモ"]];
   coreCollectionFilteredRows.forEach(function(row) {
@@ -27787,7 +27816,14 @@ document.getElementById("core-collection-search").addEventListener("keydown", fu
 });
 document.getElementById("btn-core-list-search").addEventListener("click", loadCoreListMgmt);
 document.getElementById("core-list-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadCoreListMgmt(); });
-document.getElementById("core-list-load-more").addEventListener("click", function(){ loadCoreListMgmt({ append: true }); });
+document.getElementById("core-list-load-more").addEventListener("click", function(){
+  if (coreListMode === "collection") {
+    coreCollectionRenderLimit += CORE_COLLECTION_RENDER_PAGE_SIZE;
+    renderCoreCollectionList();
+    return;
+  }
+  loadCoreListMgmt({ append: true });
+});
 document.getElementById("btn-core-list-form-cancel").addEventListener("click", function(){ document.getElementById("core-list-form-overlay").classList.remove("show"); });
 document.getElementById("btn-core-list-form-save").addEventListener("click", saveCoreListForm);
 document.getElementById("btn-core-collection-form-cancel").addEventListener("click", function(){ document.getElementById("core-collection-form-overlay").classList.remove("show"); });
