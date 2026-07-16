@@ -3392,7 +3392,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.498";
+var APP_VERSION       = "v1.1.499";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -10499,6 +10499,38 @@ function openCoreCollectionForm(mode, rowId) {
   document.getElementById("core-collection-form-overlay").classList.add("show");
 }
 
+function isCoreCollectionMasterProduct(product) {
+  if (!product) return false;
+  if (product.legacy_part_id !== null && product.legacy_part_id !== undefined && String(product.legacy_part_id).trim()) return true;
+  if (String(product.shohin_cd || product.dks_shohin_cd || "").trim()) return true;
+  return !!String(product.dks_relation_type || "").trim();
+}
+
+async function validateCoreCollectionMasterProduct(dkdId) {
+  var productResult = await sb.from("core_products")
+    .select("dkd_shohin_id,legacy_part_id,dks_shohin_cd")
+    .eq("dkd_shohin_id", dkdId)
+    .maybeSingle();
+  if (productResult.error || !productResult.data) return productResult;
+  if (isCoreCollectionMasterProduct(productResult.data)) return productResult;
+
+  var linkResult = await sb.from("core_product_dks_links")
+    .select("id")
+    .eq("dkd_shohin_id", dkdId)
+    .limit(1);
+  if (linkResult.error) return linkResult;
+  if ((linkResult.data || []).length) {
+    return { data: Object.assign({}, productResult.data, { dks_relation_type: "linked" }), error: null };
+  }
+
+  var searchedProduct = coreCollectionProductCandidates.find(function(product) {
+    return String(product.dkd_shohin_id) === String(dkdId);
+  });
+  return isCoreCollectionMasterProduct(searchedProduct)
+    ? { data: searchedProduct, error: null }
+    : { data: null, error: null };
+}
+
 async function searchCoreCollectionProductCandidates() {
   var input = document.getElementById("ccf-product-search");
   var wrap = document.getElementById("ccf-product-candidates");
@@ -10515,9 +10547,9 @@ async function searchCoreCollectionProductCandidates() {
     wrap.innerHTML = "<div class='candidate-empty'>" + esc(r.error.message) + "</div>";
     return;
   }
-  coreCollectionProductCandidates = filterVisibleProducts(r.data || []);
+  coreCollectionProductCandidates = filterVisibleProducts(r.data || []).filter(isCoreCollectionMasterProduct);
   if (!coreCollectionProductCandidates.length) {
-    wrap.innerHTML = "<div class='candidate-empty'>" + esc(t("no_results")) + "</div>";
+    wrap.innerHTML = "<div class='candidate-empty'>基幹商品マスタに該当する商品はありません。</div>";
     return;
   }
   var existingIds = {};
@@ -10547,6 +10579,17 @@ async function saveCoreCollectionForm() {
   var targetQty = nullableIntFromInput("ccf-target-quantity");
   if (!dkdId) { errorEl.textContent = "対象商品を選択してください。"; return; }
   if (targetQty == null || targetQty < 0) { errorEl.textContent = "収集目標数は0以上で入力してください。"; return; }
+  if (coreCollectionFormMode === "add") {
+    var masterCheck = await validateCoreCollectionMasterProduct(dkdId);
+    if (masterCheck.error) {
+      errorEl.textContent = "基幹商品マスタの確認に失敗しました: " + masterCheck.error.message;
+      return;
+    }
+    if (!isCoreCollectionMasterProduct(masterCheck.data)) {
+      errorEl.textContent = "基幹商品マスタに存在する商品だけ追加できます。";
+      return;
+    }
+  }
   var data = {
     dkd_shohin_id: dkdId,
     target_quantity: targetQty,
