@@ -551,6 +551,19 @@ var TRANSLATIONS = {
     gltek_manufacturer_type: "部品メーカー区分",
     gltek_manufacturer_external: "外部メーカー製",
     gltek_manufacturer_gltek: "GLTEK製（新しいGLTEK品番を発行）",
+    gltek_product_mode_entry_title: "GLTEK製として登録する場合",
+    gltek_product_mode_entry_help: "製造管理で選択した商品をベースに、専用のGLTEK製登録画面へ進みます。",
+    gltek_product_mode_open: "GLTEK製を登録する",
+    gltek_product_mode_close: "通常の商品登録に戻る",
+    gltek_product_mode_title: "GLTEK製登録モード",
+    gltek_product_mode_intro: "選択中の商品をベースに改造品を登録し、独立したGLTEK品番を新規発行します。",
+    gltek_product_mode_rule_fresh: "ベース商品と同じメーカー品番でも、GLTEK製には必ず別の新しいGLTEK品番を発行します。",
+    gltek_product_mode_rule_identity: "登録後はメーカーをGLTEKとし、メーカー品番とGLTEK品番に同じGLTEK品番を保存します。",
+    gltek_product_mode_rule_private: "ベース商品・元メーカー・元メーカー品番・設計系譜は製造機密として非公開で保存します。",
+    gltek_product_mode_rule_immutable: "発行したGLTEK品番は、品番修正画面から追加・削除・修正できません。",
+    gltek_product_mode_rule_standard: "通常リビルト・社外新品は、同じメーカー品番なら既存のGLTEK品番を共通利用します。",
+    gltek_product_mode_rule_production: "GLTEK製の登録は製造管理からのみ行い、販売管理の商品追加では利用できません。",
+    gltek_product_mode_save: "GLTEK製を登録",
     gltek_base_manufacturer_code: "ベースメーカーコード（1桁）",
     gltek_category_number_code: "GLTEK品番カテゴリコード（2桁）",
     gltek_product_add_help: "上のメーカーとメーカー品番は選択したベース商品の情報です。登録後はメーカーがGLTEKになり、メーカー品番とGLTEK品番には同じ新しいGLTEK品番が入ります。",
@@ -1648,9 +1661,22 @@ var TRANSLATIONS = {
     gltek_manufacturer_type: "Part Manufacturer Type",
     gltek_manufacturer_external: "External Manufacturer",
     gltek_manufacturer_gltek: "GLTEK Product (issue a new GLTEK part number)",
+    gltek_product_mode_entry_title: "Register as a GLTEK product",
+    gltek_product_mode_entry_help: "Continue to the dedicated GLTEK registration view using the product selected in Production Management as the base.",
+    gltek_product_mode_open: "Register GLTEK Product",
+    gltek_product_mode_close: "Return to Standard Product",
+    gltek_product_mode_title: "GLTEK Product Registration",
+    gltek_product_mode_intro: "Register a modified product from the selected base and issue a separate new GLTEK part number.",
+    gltek_product_mode_rule_fresh: "A GLTEK product always receives a separate new GLTEK part number, even when its base manufacturer part number matches another product.",
+    gltek_product_mode_rule_identity: "After registration, the manufacturer is GLTEK and the same GLTEK part number is stored as both manufacturer part number and GLTEK part number.",
+    gltek_product_mode_rule_private: "The base product, original manufacturer and part number, and design lineage are stored privately as manufacturing-confidential information.",
+    gltek_product_mode_rule_immutable: "An issued GLTEK part number cannot be added, deleted, or changed from the part-number edit screen.",
+    gltek_product_mode_rule_standard: "Standard rebuilt and aftermarket-new products continue sharing an existing GLTEK part number when the manufacturer part number is the same.",
+    gltek_product_mode_rule_production: "GLTEK products can be registered only from Production Management and are unavailable from Sales Management product add.",
+    gltek_product_mode_save: "Register GLTEK Product",
     gltek_base_manufacturer_code: "Base Manufacturer Code (1 digit)",
     gltek_category_number_code: "GLTEK Part Number Category Code (2 digits)",
-    gltek_product_add_help: "The manufacturer and part number above identify the selected base product. After registration, the manufacturer is GLTEK and one newly issued G number is stored as both the manufacturer part number and GLTEK part number.",
+    gltek_product_add_help: "The manufacturer and part number above identify the selected base product. After registration, the manufacturer is GLTEK and one newly issued GLTEK part number is stored as both the manufacturer part number and GLTEK part number.",
     gltek_product_add_requires_base: "Select a registered base product in Production Management before creating a GLTEK product.",
     gltek_product_add_requires_source: "A base manufacturer and manufacturer part number are required for a GLTEK product.",
     gltek_product_add_done: "GLTEK product added",
@@ -2745,9 +2771,22 @@ var TRANSLATIONS = {
     gltek_manufacturer_type: "零件制造商类别",
     gltek_manufacturer_external: "外部制造商产品",
     gltek_manufacturer_gltek: "GLTEK产品（发行新的GLTEK零件编号）",
+    gltek_product_mode_entry_title: "登记为GLTEK产品",
+    gltek_product_mode_entry_help: "以生产管理中选择的商品为基础，进入专用的GLTEK产品登记界面。",
+    gltek_product_mode_open: "登记GLTEK产品",
+    gltek_product_mode_close: "返回普通商品登记",
+    gltek_product_mode_title: "GLTEK产品登记模式",
+    gltek_product_mode_intro: "以所选商品为基础登记改造品，并单独发行新的GLTEK零件编号。",
+    gltek_product_mode_rule_fresh: "即使基础商品的制造商零件编号相同，GLTEK产品也必须发行不同的新GLTEK零件编号。",
+    gltek_product_mode_rule_identity: "登记后制造商为GLTEK，并将同一个GLTEK零件编号保存为制造商零件编号和GLTEK零件编号。",
+    gltek_product_mode_rule_private: "基础商品、原制造商及零件编号和设计沿革作为制造机密进行非公开保存。",
+    gltek_product_mode_rule_immutable: "已发行的GLTEK零件编号不能在零件编号修改界面中新增、删除或修改。",
+    gltek_product_mode_rule_standard: "普通再制造品和副厂新品在制造商零件编号相同时，继续共用现有GLTEK零件编号。",
+    gltek_product_mode_rule_production: "GLTEK产品只能从生产管理登记，不能从销售管理的商品添加中使用。",
+    gltek_product_mode_save: "登记GLTEK产品",
     gltek_base_manufacturer_code: "基础制造商代码（1位）",
     gltek_category_number_code: "GLTEK零件编号类别代码（2位）",
-    gltek_product_add_help: "上方制造商和零件编号来自所选基础产品。登记后制造商为GLTEK，并将同一个新发行的G编号保存为制造商零件编号和GLTEK零件编号。",
+    gltek_product_add_help: "上方制造商和零件编号来自所选基础产品。登记后制造商为GLTEK，并将同一个新发行的GLTEK零件编号保存为制造商零件编号和GLTEK零件编号。",
     gltek_product_add_requires_base: "创建GLTEK产品前，请先在生产管理中选择已登记的基础产品。",
     gltek_product_add_requires_source: "GLTEK产品必须填写基础制造商和制造商零件编号。",
     gltek_product_add_done: "已添加GLTEK产品",
@@ -3395,7 +3434,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.521";
+var APP_VERSION       = "v1.1.522";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -14362,44 +14401,74 @@ function setGltekProductAddPanel() {
   var panel = document.getElementById("gltek-product-add-panel");
   var typeEl = document.getElementById("pf-part-manufacturer-type");
   var fields = document.getElementById("gltek-product-issuance-fields");
+  var entry = document.getElementById("gltek-product-mode-entry");
+  var openButton = document.getElementById("btn-gltek-product-mode-open");
   var baseEl = document.getElementById("pf-gltek-base-code");
   var categoryEl = document.getElementById("pf-gltek-category-code");
   var manufacturerEl = document.getElementById("pf-mfr");
   var manufacturerPartEl = document.getElementById("pf-mfr-pn");
   var baseProductEl = document.getElementById("pf-gltek-base-product-id");
   var statusEl = document.getElementById("gltek-product-add-status");
-  if (!panel || !typeEl || !fields || !baseEl || !categoryEl || !manufacturerEl || !manufacturerPartEl) return;
+  var titleEl = document.getElementById("part-form-title");
+  var saveButton = document.getElementById("btn-part-form-save");
+  if (!panel || !typeEl || !fields || !entry || !openButton || !baseEl || !categoryEl || !manufacturerEl || !manufacturerPartEl) return;
 
   var showPanel = partFormSource === "core_products" &&
     partFormMode === "add" &&
     coreProductFormContext === "production" &&
     canIssueGltekPartNumber();
+  var isGltek = showPanel && typeEl.value === "gltek";
   setCspStyle(panel, "display", showPanel ? "" : "none");
+  panel.classList.toggle("is-active", isGltek);
+  setCspStyle(entry, "display", isGltek ? "none" : "");
+  setCspStyle(fields, "display", isGltek ? "block" : "none");
+  fields.setAttribute("aria-hidden", isGltek ? "false" : "true");
+  openButton.setAttribute("aria-expanded", isGltek ? "true" : "false");
+
   if (!showPanel) {
     if (partFormMode === "add") typeEl.value = "external";
     baseEl.value = "";
     categoryEl.value = "";
-    setCspStyle(fields, "display", "none");
     var lockExistingGltekIdentity = partFormMode === "edit" && typeEl.value === "gltek";
     manufacturerEl.readOnly = lockExistingGltekIdentity;
     manufacturerPartEl.readOnly = lockExistingGltekIdentity;
+    manufacturerEl.classList.toggle("gltek-base-identity", lockExistingGltekIdentity);
+    manufacturerPartEl.classList.toggle("gltek-base-identity", lockExistingGltekIdentity);
     manufacturerEl.setAttribute("aria-readonly", lockExistingGltekIdentity ? "true" : "false");
     manufacturerPartEl.setAttribute("aria-readonly", lockExistingGltekIdentity ? "true" : "false");
+    if (saveButton) saveButton.textContent = t("btn_save_part");
     return;
   }
 
-  var isGltek = typeEl.value === "gltek";
-  setCspStyle(fields, "display", isGltek ? "block" : "none");
   manufacturerEl.readOnly = isGltek;
   manufacturerPartEl.readOnly = isGltek;
+  manufacturerEl.classList.toggle("gltek-base-identity", isGltek);
+  manufacturerPartEl.classList.toggle("gltek-base-identity", isGltek);
   manufacturerEl.setAttribute("aria-readonly", isGltek ? "true" : "false");
   manufacturerPartEl.setAttribute("aria-readonly", isGltek ? "true" : "false");
+  if (titleEl) titleEl.textContent = isGltek ? t("gltek_product_mode_title") : t("btn_add_part");
+  if (saveButton) saveButton.textContent = isGltek ? t("gltek_product_mode_save") : t("btn_save_part");
   if (statusEl) {
     var hasBaseProduct = baseProductEl && parseInt(baseProductEl.value, 10) > 0;
-    statusEl.textContent = isGltek && !hasBaseProduct
+    statusEl.textContent = !hasBaseProduct
       ? t("gltek_product_add_requires_base")
-      : t("gltek_product_add_help");
+      : t("gltek_product_add_help") + " (DKD " + parseInt(baseProductEl.value, 10) + ")";
   }
+}
+
+function openGltekProductAddMode() {
+  if (partFormMode !== "add" || coreProductFormContext !== "production" || !canIssueGltekPartNumber()) return;
+  document.getElementById("pf-part-manufacturer-type").value = "gltek";
+  setGltekProductAddPanel();
+  var firstCodeInput = document.getElementById("pf-gltek-base-code");
+  if (firstCodeInput) firstCodeInput.focus();
+}
+
+function closeGltekProductAddMode() {
+  document.getElementById("pf-part-manufacturer-type").value = "external";
+  document.getElementById("pf-gltek-base-code").value = "";
+  document.getElementById("pf-gltek-category-code").value = "";
+  setGltekProductAddPanel();
 }
 
 function setProductFormFieldMode(source, mode) {
@@ -28041,6 +28110,8 @@ document.getElementById("btn-add-part").addEventListener("click", function(){ op
 document.getElementById("btn-part-form-cancel").addEventListener("click", function(){ document.getElementById("part-form-overlay").classList.remove("show"); });
 document.getElementById("btn-part-form-save").addEventListener("click", savePartForm);
 document.getElementById("pf-part-manufacturer-type").addEventListener("change", setGltekProductAddPanel);
+document.getElementById("btn-gltek-product-mode-open").addEventListener("click", openGltekProductAddMode);
+document.getElementById("btn-gltek-product-mode-close").addEventListener("click", closeGltekProductAddMode);
 document.getElementById("btn-user-auth-history-close").addEventListener("click", function(){ document.getElementById("user-auth-history-overlay").classList.remove("show"); });
 document.getElementById("btn-sales-pricing-cancel").addEventListener("click", closeSalesPricingOverlay);
 document.getElementById("btn-sales-pricing-save").addEventListener("click", saveSalesPricing);

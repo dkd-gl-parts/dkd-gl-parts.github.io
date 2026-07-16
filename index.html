@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.521">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.521"; -->
+<meta name="dcats-app-version" content="v1.1.522">
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.522"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co; form-action 'self';">
 <title>D-CATS</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233c7df0'/%3E%3Cpath d='M8 17h16M16 9v14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.521">
+<link rel="stylesheet" href="styles.css?v=1.1.522">
 </head>
 <body>
 
@@ -128,7 +128,7 @@
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.521</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.522</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -157,7 +157,7 @@
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.521</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.522</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -187,7 +187,7 @@
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.521</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.522</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -882,7 +882,7 @@
           </div>
         </div>
         <div class="product-form-basic-grid">
-          <div class="form-row" id="pf-shohin-cd-row">
+          <div class="form-row product-form-span-all" id="pf-shohin-cd-row">
             <label class="form-label" data-i18n="lbl_shohin_cd">商品コード</label>
             <input class="form-input" id="pf-shohin-cd" type="number" placeholder="保存時に自動採番" readonly aria-readonly="true">
           </div>
@@ -906,10 +906,6 @@
             <input class="form-input" id="pf-genuine-pn" type="text" placeholder="例: 27060-37031">
           </div>
           <div class="form-row">
-            <label class="form-label" data-i18n="f_genuine_pn2">純正品番2</label>
-            <input class="form-input" id="pf-genuine-pn2" type="text" placeholder="例: 27060-37032">
-          </div>
-          <div class="form-row">
             <label class="form-label" data-i18n="lbl_mfr">メーカー</label>
             <input class="form-input" id="pf-mfr" type="text" list="manufacturer-options" placeholder="例: DENSO">
             <datalist id="manufacturer-options">
@@ -924,12 +920,15 @@
               <option value="ZEXEL">
               <option value="DELCO">
               <option value="LUCAS">
-              <option value="大光">
             </datalist>
           </div>
           <div class="form-row">
             <label class="form-label" data-i18n="lbl_mfr_pn">メーカー品番</label>
             <input class="form-input" id="pf-mfr-pn" type="text" placeholder="例: 104210-5520">
+          </div>
+          <div class="form-row product-form-span-all">
+            <label class="form-label" data-i18n="f_genuine_pn2">純正品番2</label>
+            <input class="form-input" id="pf-genuine-pn2" type="text" placeholder="例: 27060-37032">
           </div>
         </div>
         <input id="pf-vehicle-mfr" type="hidden">
@@ -937,17 +936,30 @@
         <input id="pf-compatible" type="hidden">
         <input id="pf-model" type="hidden">
         <div class="form-row" id="gltek-product-add-panel" data-dcats-display="none">
-          <div class="spec-head">
-            <div class="spec-title" data-i18n="gltek_product_add_section">部品メーカー区分／GLTEK製</div>
+          <input type="hidden" id="pf-part-manufacturer-type" value="external">
+          <div class="gltek-mode-entry" id="gltek-product-mode-entry">
+            <div>
+              <div class="spec-title" data-i18n="gltek_product_mode_entry_title">GLTEK製として登録する場合</div>
+              <div class="spec-form-help" data-i18n="gltek_product_mode_entry_help">製造管理で選択した商品をベースに、専用のGLTEK製登録画面へ進みます。</div>
+            </div>
+            <button class="btn-primary gltek-mode-open" id="btn-gltek-product-mode-open" type="button" aria-expanded="false" aria-controls="gltek-product-issuance-fields" data-i18n="gltek_product_mode_open">GLTEK製を登録する</button>
           </div>
-          <div class="form-row">
-            <label class="form-label" data-i18n="gltek_manufacturer_type">部品メーカー区分</label>
-            <select class="form-select" id="pf-part-manufacturer-type">
-              <option value="external" data-i18n="gltek_manufacturer_external">外部メーカー製</option>
-              <option value="gltek" data-i18n="gltek_manufacturer_gltek">GLTEK製（新しいGLTEK品番を発行）</option>
-            </select>
-          </div>
-          <div id="gltek-product-issuance-fields" data-dcats-display="none">
+          <div id="gltek-product-issuance-fields" data-dcats-display="none" aria-hidden="true">
+            <div class="gltek-mode-head">
+              <div>
+                <div class="spec-title" data-i18n="gltek_product_mode_title">GLTEK製登録モード</div>
+                <div class="spec-form-help" data-i18n="gltek_product_mode_intro">選択中の商品をベースに改造品を登録し、独立したGLTEK品番を新規発行します。</div>
+              </div>
+              <button class="btn-cancel gltek-mode-close" id="btn-gltek-product-mode-close" type="button" data-i18n="gltek_product_mode_close">通常の商品登録に戻る</button>
+            </div>
+            <ul class="gltek-mode-rules" aria-label="GLTEK製登録ルール">
+              <li data-i18n="gltek_product_mode_rule_fresh">ベース商品と同じメーカー品番でも、GLTEK製には必ず別の新しいGLTEK品番を発行します。</li>
+              <li data-i18n="gltek_product_mode_rule_identity">登録後はメーカーをGLTEKとし、メーカー品番とGLTEK品番に同じGLTEK品番を保存します。</li>
+              <li data-i18n="gltek_product_mode_rule_private">ベース商品・元メーカー・元メーカー品番・設計系譜は製造機密として非公開で保存します。</li>
+              <li data-i18n="gltek_product_mode_rule_immutable">発行したGLTEK品番は、品番修正画面から追加・削除・修正できません。</li>
+              <li data-i18n="gltek_product_mode_rule_standard">通常リビルト・社外新品は、同じメーカー品番なら既存のGLTEK品番を共通利用します。</li>
+              <li data-i18n="gltek_product_mode_rule_production">GLTEK製の登録は製造管理からのみ行い、販売管理の商品追加では利用できません。</li>
+            </ul>
             <div class="spec-form-grid">
               <div class="form-row">
                 <label class="form-label" data-i18n="gltek_base_manufacturer_code">ベースメーカーコード（1桁）</label>
@@ -2594,7 +2606,7 @@
   <div class="fs-thumbs" id="fs-thumbs"></div>
 </div>
 
-<script src="app.js?v=1.1.521"></script>
+<script src="app.js?v=1.1.522"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.521"></script>
 </body>
 </html>

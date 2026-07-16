@@ -2035,7 +2035,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   font-size: 11px;
   line-height: 1.45;
 }
-.product-form-card #gltek-product-add-panel.is-active .form-input[readonly] {
+.product-form-card .form-input.gltek-base-identity {
   background: #f2f5f9;
   color: #526074;
 }
