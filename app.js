@@ -3392,7 +3392,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.515";
+var APP_VERSION       = "v1.1.516";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -19617,6 +19617,10 @@ function renderComponentIllustrationPanelHtml() {
     var points = componentIllustrationPoints(row);
     var dimensions = componentIllustrationDimensions(row);
     var imageLabel = row.model_id || row.assy_manufacturer_part_number || "catalog illustration";
+    var imageClass = "catalog-illustration-image";
+    if (String(row.source_code || "").toLowerCase() === "catalog_denso") {
+      imageClass += " catalog-illustration-image-denso";
+    }
     html += "<div class='catalog-illustration-card'>";
     html += "<div class='catalog-illustration-card-head'><div class='catalog-illustration-card-label'><div class='component-pn'>" + esc(imageLabel) + "</div><div class='component-sub'>" + esc(row.source_html || row.catalog_match_basis || "") + "</div></div>";
     html += "<div class='catalog-illustration-actions'>";
@@ -19627,7 +19631,7 @@ function renderComponentIllustrationPanelHtml() {
     html += "</div></div>";
     html += "<div class='catalog-illustration-frame' data-catalog-viewport data-catalog-width='" + esc(String(dimensions.width)) + "' data-catalog-height='" + esc(String(dimensions.height)) + "' tabindex='0' aria-label='" + esc(imageLabel) + "'>";
     html += "<svg class='catalog-illustration-canvas' data-catalog-canvas viewBox='0 0 " + esc(String(dimensions.width)) + " " + esc(String(dimensions.height)) + "' preserveAspectRatio='xMidYMid meet' role='img' aria-label='" + esc(imageLabel) + "'>";
-    html += "<image href='" + esc(url) + "' x='0' y='0' width='" + esc(String(dimensions.width)) + "' height='" + esc(String(dimensions.height)) + "' preserveAspectRatio='xMidYMid meet'></image>";
+    html += "<image class='" + esc(imageClass) + "' href='" + esc(url) + "' x='0' y='0' width='" + esc(String(dimensions.width)) + "' height='" + esc(String(dimensions.height)) + "' preserveAspectRatio='xMidYMid meet'></image>";
     points.forEach(function(point, index) {
       html += componentIllustrationPointSvg(point, index, dimensions.width, dimensions.height);
     });
