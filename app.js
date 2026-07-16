@@ -3392,7 +3392,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.517";
+var APP_VERSION       = "v1.1.518";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -3425,6 +3425,7 @@ var componentTreeRpcAvailable = true;
 var componentIllustrationRows = [];
 var componentIllustrationLoading = false;
 var componentIllustrationError = "";
+var componentIllustrationRequestId = 0;
 var componentCatalogNameCandidates = [];
 var componentCatalogNameCandidateLabelMap = {};
 var componentCatalogNameCandidateKindMap = {};
@@ -19791,6 +19792,7 @@ async function retryCatalogIllustrationLoad() {
 }
 
 async function loadCatalogIllustrationsForCurrent(dkdId, selectedKind) {
+  var requestId = ++componentIllustrationRequestId;
   componentIllustrationRows = [];
   componentIllustrationLoading = false;
   componentIllustrationError = "";
@@ -19802,6 +19804,7 @@ async function loadCatalogIllustrationsForCurrent(dkdId, selectedKind) {
       target_dkd_shohin_id: dkdId,
       target_product_kind: selectedKind
     });
+    if (requestId !== componentIllustrationRequestId) return;
     componentIllustrationLoading = false;
     if (r.error) {
       componentIllustrationError = "カタログ図を読み込めませんでした: " + (r.error.message || r.error.details || r.error.code || "");
@@ -19812,6 +19815,7 @@ async function loadCatalogIllustrationsForCurrent(dkdId, selectedKind) {
     componentIllustrationRows = r.data || [];
     renderComponentIllustrationSlot();
   } catch (e) {
+    if (requestId !== componentIllustrationRequestId) return;
     componentIllustrationLoading = false;
     componentIllustrationError = "カタログ図を読み込めませんでした";
     console.warn("get_catalog_illustration_for_product failed", e);
@@ -23347,6 +23351,7 @@ async function loadAssemblyComponentsForCurrent() {
   componentIllustrationRows = [];
   componentIllustrationLoading = false;
   componentIllustrationError = "";
+  componentIllustrationRequestId += 1;
   editingComponentUsageId = null;
   var selectedKind = selectedProductKind();
   wrap.innerHTML = "<div class='component-empty'>" + t("loading") + "</div>";
@@ -23373,7 +23378,7 @@ async function loadAssemblyComponentsForCurrent() {
         assemblyComponentRows = rpcRows;
         updateComponentTargetSummary(rpcRows.length);
         renderAssemblyComponentRows();
-        await loadCatalogIllustrationsForCurrent(dkdId, selectedKind);
+        loadCatalogIllustrationsForCurrent(dkdId, selectedKind);
         return;
       }
     } else {
@@ -23400,7 +23405,7 @@ async function loadAssemblyComponentsForCurrent() {
       assemblyComponentRows = treeFallbackRows;
       updateComponentTargetSummary(treeFallbackRows.length);
       renderAssemblyComponentRows();
-      await loadCatalogIllustrationsForCurrent(dkdId, selectedKind);
+      loadCatalogIllustrationsForCurrent(dkdId, selectedKind);
       return;
     }
   } else {
@@ -23460,8 +23465,8 @@ async function loadAssemblyComponentsForCurrent() {
   assemblyComponentRows = rows;
   updateComponentTargetSummary(rows.length);
   await loadComponentAlternativesForRows(rows);
-  await loadCatalogIllustrationsForCurrent(dkdId, selectedKind);
   renderAssemblyComponentRows();
+  loadCatalogIllustrationsForCurrent(dkdId, selectedKind);
 }
 
 async function loadParallelCandidatesForCurrent() {
