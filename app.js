@@ -3395,7 +3395,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.520";
+var APP_VERSION       = "v1.1.521";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -3514,6 +3514,8 @@ var SEARCH_PAGE_STEP = 30;
 var KIKAN_FLAG_LOOKUP_LIMIT = 80;
 var productSearchLimit = SEARCH_INITIAL_LIMIT;
 var productionSearchLimit = SEARCH_INITIAL_LIMIT;
+var productSearchFetchedCount = 0;
+var productionSearchHasMore = false;
 var searchRequestSeq = 0;
 var productAuxRequestSeq = 0;
 var productAuxSeq = 0;
@@ -5144,6 +5146,7 @@ async function enterProductionSearch() {
 function resetProductionSearchView() {
   productionRows = [];
   productionFilteredRows = [];
+  productionSearchHasMore = false;
   currentProductionRow = null;
   productionComponentKindCountMap = {};
   productionImageCountMap = {};
@@ -5423,6 +5426,7 @@ function sortProductionRows() {
 async function loadProductionProducts(options) {
   options = options || {};
   productionAuxRequestSeq++;
+  productionSearchHasMore = false;
   var countEl = document.getElementById("production-count");
   if (countEl) countEl.textContent = t("loading");
   var qEl = document.getElementById("production-q");
@@ -5440,6 +5444,7 @@ async function loadProductionProducts(options) {
   } catch (err) {
     productionRows = [];
     productionFilteredRows = [];
+    productionSearchHasMore = false;
     productionLoaded = false;
     var message = "製造予定リストを取得できません: " + (err && err.message ? err.message : String(err));
     if (countEl) countEl.textContent = message;
@@ -5482,12 +5487,16 @@ async function loadProductionProducts(options) {
   }
   if (r.error) {
     productionRows = [];
+    productionSearchHasMore = false;
     productionLoaded = false;
     if (countEl) countEl.textContent = "商品情報を取得できません: " + r.error.message;
     renderProductionDetail(null);
     return;
   }
-  productionRows = r.data || [];
+  var rawProductionRows = r.data || [];
+  var productionResultLimit = q ? searchFetchLimit : productionSearchLimit;
+  productionSearchHasMore = rawProductionRows.length >= productionResultLimit && productionSearchLimit < SEARCH_FETCH_LIMIT;
+  productionRows = rawProductionRows;
   if (selectedCategory !== "all") {
     productionRows = productionRows.filter(productionMatchesCategoryFilter).slice(0, productionSearchLimit);
   }
@@ -5588,14 +5597,12 @@ function renderProductionList() {
     return productionMatchesFilter(row) && productionMatchesQuery(row, q);
   });
   if (countEl) countEl.textContent = productionFilteredRows.length + " 件表示 / 商品 " + productionRows.length + " 件";
-  if (moreWrap) setCspStyle(moreWrap, "display", (productionRows.length >= productionSearchLimit && productionSearchLimit < SEARCH_FETCH_LIMIT) ? "" : "none");
+  if (moreWrap) setCspStyle(moreWrap, "display", productionSearchHasMore ? "" : "none");
   if (!productionRows.length) {
-    if (moreWrap) setCspStyle(moreWrap, "display", "none");
     list.innerHTML = "<div class='loading'>商品を検索してください。</div>";
     return;
   }
   if (!productionFilteredRows.length) {
-    if (moreWrap) setCspStyle(moreWrap, "display", "none");
     list.innerHTML = "<div class='loading'>" + t("no_results") + "</div>";
     return;
   }
@@ -5605,7 +5612,7 @@ function renderProductionList() {
     var title = row.manufacturer_part_number || row.genuine_part_number || row.genuine_part_number_2 || "-";
     var subGenuinePartNumber = row.genuine_part_number || row.genuine_part_number_2 || "-";
     var kindSummary = productKindSummaryForProduct(row);
-    var hasCatalogSpec = productKindSummaryHasKind(kindSummary, "catalog_spec");
+    var hasCatalogSpec = productHasCatalogData(row);
     var slNums = slPartLabelsForProduct(row);
     var hasSL = productHasSlPart(row, slNums);
     var hasKikan = hasProductKikanCompatible(row);
@@ -16802,6 +16809,7 @@ async function runProductSearch(options) {
 
   if (!q && currentFilter === "all" && !requireSl) {
     allProducts = [];
+    productSearchFetchedCount = 0;
     imageCountMap = {};
     imageThumbnailMap = {};
     productionImageCountMap = {};
@@ -16838,6 +16846,7 @@ async function runProductSearch(options) {
   if (r.error) {
     console.warn("search_core_products failed", r.error);
     allProducts = [];
+    productSearchFetchedCount = 0;
     closePanel();
     document.getElementById("count-bar").textContent = "";
     list.innerHTML = "<div class='empty'>" + t("no_results") + "</div>";
@@ -16861,7 +16870,9 @@ async function runProductSearch(options) {
       console.warn("SL part search failed", slResult.error);
     }
   }
-  allProducts = filterVisibleProducts(r.data || []);
+  var rawProducts = r.data || [];
+  productSearchFetchedCount = rawProducts.length;
+  allProducts = filterVisibleProducts(rawProducts);
   imageCountMap = {};
   imageThumbnailMap = {};
   productionImageCountMap = {};
@@ -17319,19 +17330,19 @@ function render() {
   var items = getFiltered();
   if (items.length === 0) {
     list.innerHTML = "<div class='empty'>" + t("no_results") + "</div>";
-    if (moreWrap) setCspStyle(moreWrap, "display", "none");
+    if (moreWrap) setCspStyle(moreWrap, "display", (productSearchFetchedCount >= productSearchLimit && productSearchLimit < SEARCH_FETCH_LIMIT) ? "" : "none");
     return;
   }
   var visibleItems = items.slice(0, SEARCH_RENDER_LIMIT);
   var countText = items.length + " 件表示";
-  if (allProducts.length >= productSearchLimit) {
+  if (productSearchFetchedCount >= productSearchLimit) {
     countText += " - " + productSearchLimit + " 件まで取得";
     if (productSearchLimit >= SEARCH_FETCH_LIMIT) {
       countText += "。品番で絞り込んでください";
     }
   }
   document.getElementById("count-bar").textContent = countText;
-  if (moreWrap) setCspStyle(moreWrap, "display", (allProducts.length >= productSearchLimit && productSearchLimit < SEARCH_FETCH_LIMIT) ? "" : "none");
+  if (moreWrap) setCspStyle(moreWrap, "display", (productSearchFetchedCount >= productSearchLimit && productSearchLimit < SEARCH_FETCH_LIMIT) ? "" : "none");
   var html = "";
   visibleItems.forEach(function(p, idx) {
     var cnt   = getProductImageCount(p);
@@ -17339,7 +17350,7 @@ function render() {
     var hasSL  = productHasSlPart(p, slNums);
     var hasKikan = hasProductKikanCompatible(p);
     var kindSummary = productKindSummaryForProduct(p);
-    var hasCatalogSpec = productKindSummaryHasKind(kindSummary, "catalog_spec");
+    var hasCatalogSpec = productHasCatalogData(p);
     var mfr   = [p.manufacturer, p.vehicle_manufacturer].filter(Boolean).join(" / ");
     var showMfrLine = !!mfr && (!p.manufacturer_part_number || mfr !== p.manufacturer);
     var sel   = (currentProduct && currentProduct.id===p.id) ? " selected" : "";
