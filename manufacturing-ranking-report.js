@@ -818,6 +818,21 @@
     return scope === "overall" ? "選択カテゴリ通算" : "カテゴリ別";
   }
 
+  function printFileDate(date) {
+    function pad(value) { return String(value).padStart(2, "0"); }
+    return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate());
+  }
+
+  function printFileTitle(categories, date) {
+    var categoryNames = (categories || []).map(function(category) {
+      return normalizeText(category)
+        .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "・")
+        .replace(/・+/g, "・")
+        .replace(/[.\s]+$/g, "");
+    }).filter(Boolean);
+    return (categoryNames.join("・") || "カテゴリ") + "＆製造ランキング＆" + printFileDate(date);
+  }
+
   function rowPartNumberEntries(row) {
     return [
       { label: "純正", value: row.genuine },
@@ -1170,9 +1185,10 @@
   function buildPrintHtml(results, options) {
     var version = typeof APP_VERSION === "string" ? APP_VERSION : "";
     var orientationCss = options.orientation === "portrait" ? "ranking-report-print-portrait.css" : "ranking-report-print-landscape.css";
-    var generatedAt = new Date().toLocaleString("ja-JP");
+    var generatedDate = new Date();
+    var generatedAt = generatedDate.toLocaleString("ja-JP");
     var categoryText = options.categories.join(" / ");
-    var title = "製造ランキング " + options.startRank + "-" + options.endRank + "位";
+    var title = printFileTitle(options.categories, generatedDate);
     var coreStockSummary = rankingCoreStockSummary(results);
     var header = "<tr><th class='rank-head'>順位</th><th class='product-head'>商品名</th><th class='genuine-head'>純正品番</th><th class='maker-head'>メーカー品番</th><th class='shipment-head'>出荷数</th>";
     if (options.metric !== "shipment") header += "<th class='score-head'>順位値</th>";
@@ -1274,6 +1290,7 @@
     compatibilityDetails: compatibilityDetails,
     coreStockDetails: coreStockDetails,
     rankingCoreStockSummary: rankingCoreStockSummary,
+    printFileTitle: printFileTitle,
     setMasterPartNumbers: function(values) {
       state.masterPartNumbers = Object.create(null);
       (values || []).forEach(function(value) {
