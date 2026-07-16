@@ -971,20 +971,20 @@
     if (!stock.matched) return "<span class='ranking-report-none'>-</span>";
     var currentClass = stock.currentTotal > 0 ? " is-positive" : "";
     var currentLabel = stock.currentTotal > 0 ? "在庫あり " : "現在 ";
-    var html = "<span class='ranking-report-stock-badge" + currentClass + "'>" + currentLabel + formatNumber(stock.currentTotal) + "台</span>";
+    var html = "<span class='ranking-report-stock-row'><span class='ranking-report-stock-badge" + currentClass + "'>" + currentLabel + formatNumber(stock.currentTotal) + "台</span>";
     if (stock.compatibleTotal > 0) html += "<span class='ranking-report-stock-badge is-compatible'>互換品に " + formatNumber(stock.compatibleTotal) + "台</span>";
-    return html;
+    return html + "</span>";
   }
 
   function buildPrintCoreStock(result) {
     if (!state.masterDataReady) return "-";
     var stock = coreStockDetails(result);
     if (!stock.matched) return "-";
-    var html = stock.currentTotal > 0
+    var html = "<span class='stock-status-row'>" + (stock.currentTotal > 0
       ? "<span class='stock-status has-stock'><span>在庫あり</span><strong>" + formatNumber(stock.currentTotal) + "台</strong></span>"
-      : "<span class='stock-status no-stock'>現在 0台</span>";
+      : "<span class='stock-status no-stock'>現在 0台</span>");
     if (stock.compatibleTotal > 0) html += "<span class='compatible-stock'>互換品に <strong>" + formatNumber(stock.compatibleTotal) + "台</strong></span>";
-    return html;
+    return html + "</span>";
   }
 
   function buildPrintMissingMaster(missing) {
@@ -1164,8 +1164,8 @@
 
     return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" +
       "<title>" + escapeHtml(title) + "</title>" +
-      "<link rel='stylesheet' href='ranking-report-print.css?dcats_version=" + encodeURIComponent(version) + "&amp;layout=2'>" +
-      "<link rel='stylesheet' href='" + orientationCss + "?dcats_version=" + encodeURIComponent(version) + "&amp;layout=2'>" +
+      "<link rel='stylesheet' href='ranking-report-print.css?dcats_version=" + encodeURIComponent(version) + "&amp;layout=3'>" +
+      "<link rel='stylesheet' href='" + orientationCss + "?dcats_version=" + encodeURIComponent(version) + "&amp;layout=3'>" +
       "</head><body><div class='print-toolbar'><button id='dcats-ranking-print' type='button'>PDFとして保存 / 印刷</button><span>印刷先で「PDFに保存」を選択してください。</span></div>" +
       "<main class='report'><header><div><span class='eyebrow'>D-CATS MANUFACTURING REPORT</span><h1>製造ランキング</h1><p>" + escapeHtml(categoryText) + "</p></div>" +
       "<div class='report-meta'><b>順位 " + formatNumber(options.startRank) + " - " + formatNumber(options.endRank) + "</b><span>" + escapeHtml(generatedAt) + " 作成</span></div></header>" +

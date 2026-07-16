@@ -664,6 +664,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   font-weight: 900;
 }
 
+.ranking-report-stock-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.ranking-report-stock-row .ranking-report-stock-badge { margin: 0; }
+
 .ranking-report-stock-badge.is-positive {
   align-items: center;
   border-color: #42a96b;
@@ -1967,6 +1977,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 }
 .product-form-basic-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .product-form-spec-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.product-form-span-all { grid-column: 1 / -1; }
 .product-form-card .form-row { min-width: 0; margin-bottom: 0; }
 .product-form-card .form-label {
   margin-bottom: 5px;
@@ -1989,6 +2000,44 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   margin: 12px 0 0;
   padding: 11px;
   border-radius: 9px;
+}
+.product-form-card #gltek-product-add-panel.is-active {
+  border-color: #78a9e8;
+  background: #eef6ff;
+  box-shadow: 0 0 0 2px rgba(26,111,212,.08);
+}
+.gltek-mode-entry,
+.gltek-mode-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.gltek-mode-open,
+.gltek-mode-close {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.gltek-mode-head { align-items: flex-start; }
+.gltek-mode-rules {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px 18px;
+  margin: 8px 0;
+  padding: 8px 10px 8px 28px;
+  border: 1px solid #d8e7fa;
+  border-radius: 8px;
+  background: #fff;
+  color: #46566d;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.product-form-card #gltek-product-add-panel.is-active .form-input[readonly] {
+  background: #f2f5f9;
+  color: #526074;
 }
 .product-form-card #gltek-product-add-panel .spec-head { margin-bottom: 8px; }
 .product-form-card #gltek-product-issuance-fields { margin-top: 8px; padding-top: 8px; }
@@ -2041,6 +2090,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .product-form-layout { gap: 10px; padding: 10px; }
   .product-form-section { padding: 11px; }
   .product-form-basic-grid { grid-template-columns: 1fr; }
+  .gltek-mode-entry, .gltek-mode-head { align-items: stretch; flex-direction: column; }
+  .gltek-mode-open, .gltek-mode-close { width: 100%; }
+  .gltek-mode-rules { grid-template-columns: 1fr; }
   .product-form-spec-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .product-form-error { margin: 0 12px; }
   .form-footer.product-form-footer { padding: 10px 12px 12px; }

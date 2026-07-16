@@ -158,16 +158,28 @@ td small { display: block; margin-top: .3mm; color: #738094; font-size: 5.5pt; }
 .stock-head { min-width: 38mm; }
 .stock { min-width: 38mm; font-size: 5.7pt; }
 .stock span { display: block; margin-bottom: .35mm; overflow-wrap: anywhere; }
+.stock .stock-status-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: .6mm;
+  margin: 0;
+  white-space: nowrap;
+}
+.stock .stock-status-row > span { margin: 0; white-space: nowrap; }
 .stock .stock-status {
   display: flex;
+  flex: 1 1 0;
+  min-width: 0;
   align-items: center;
   justify-content: space-between;
-  gap: 1mm;
+  gap: .5mm;
   border: .25mm solid #cbd5e1;
   border-radius: 1.1mm;
-  padding: .7mm 1mm;
+  padding: .55mm .65mm;
   background: #f5f7fa;
 }
+.stock .stock-status > span { display: inline; margin: 0; overflow: visible; }
 .stock .stock-status.has-stock {
   border-color: #65b982;
   background: #e4f7ea;
@@ -185,9 +197,14 @@ td small { display: block; margin-top: .3mm; color: #738094; font-size: 5.5pt; }
 .stock .stock-status.has-stock strong { margin-left: auto; font-size: 6.5pt; }
 .stock .stock-status.no-stock { color: #7c8796; }
 .stock .compatible-stock {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  gap: .4mm;
   border: .25mm solid #89cabb;
   border-radius: 1mm;
-  padding: .55mm .9mm;
+  padding: .55mm .65mm;
   background: #e9f8f4;
   color: #0f6e5b;
   font-weight: 800;
