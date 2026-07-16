@@ -1330,6 +1330,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .product-kind-stock-row.other .product-kind-stock-value { background: #f1f3f7; color: #556070; border-color: #dfe4ec; }
 .product-kind-stock-value span { display: block; color: #8a94a6; font-size: 10px; font-weight: 600; margin-bottom: 2px; }
 #screen-search .panel-topbar .btn-sm-edit,
+#screen-production-search .panel-topbar .btn-sm-edit,
 #screen-search .detail-toolbar .btn-sm-edit,
 #screen-search .detail-inline-action,
 #screen-search .catalog-vehicle-button,
@@ -1348,7 +1349,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   border-radius: 6px;
   box-sizing: border-box;
 }
-#screen-search .panel-top-add { min-width: 104px; }
+#screen-search .panel-top-add,
+#screen-production-search .panel-top-add { min-width: 104px; }
 @media(max-width:720px){
   .detail-kind-price-row { grid-template-columns: 1fr; }
 }
@@ -1594,7 +1596,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-category-filter label { font-size: 11px; font-weight: 700; color: #667085; white-space: nowrap; }
 .production-category-filter .form-select { min-height: 32px; font-size: 13px; }
 .production-ranking-tools { display: flex; gap: 6px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
-.production-ranking-tools .btn-primary { min-height: 32px; padding: 6px 12px; }
 .production-ranking-tools .form-select { width: 100%; min-width: 0; }
 .production-filter-row { display: flex; gap: 6px; overflow-x: auto; padding: 8px 14px; background: #fff; border-bottom: 1px solid #eee; }
 .production-count { padding: 8px 14px; font-size: 12px; color: #778; background: #f6f7f9; border-bottom: 1px solid #eee; }
@@ -1625,6 +1626,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .badge-slot.slot-empty { visibility: hidden; }
 .badge-slot > span { width: 100%; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; text-align: center; }
 .production-right { min-width: 0; overflow-y: auto; background: #fff; }
+.production-panel-topbar { position: sticky; top: 0; z-index: 2; background: #fff; }
 .production-detail { max-width: 980px; padding: 18px 20px 28px; }
 .production-detail-empty { min-height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #a0a7b2; gap: 8px; }
 .production-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 12px; }
