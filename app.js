@@ -3392,7 +3392,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.496";
+var APP_VERSION       = "v1.1.497";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -5103,10 +5103,17 @@ function renderMenu() {
 // =============================================
 // 検索画面
 // =============================================
+function configureSalesProductAddButton() {
+  var button = document.getElementById("btn-add-core-product-top");
+  if (!button) return;
+  button.textContent = "+ " + t("btn_add_part");
+  setCspStyle(button, "display", canEdit() ? "" : "none");
+  button.onclick = canEdit() ? openCoreProductAddFromSearch : null;
+}
+
 async function enterSearch() {
   showScreen("search");
-  var salesAddBtn = document.getElementById("btn-add-sales-core-product");
-  if (salesAddBtn) setCspStyle(salesAddBtn, "display", canEdit() ? "" : "none");
+  configureSalesProductAddButton();
   if (!dataLoaded) { await initSearch(); dataLoaded = true; }
 }
 
@@ -17227,12 +17234,7 @@ function openPanel(id, options) {
   setCspStyle(document.getElementById("panel-inner"), "display", "flex");
   setCspStyle(document.getElementById("panel-footer"), "display", canEdit() ? "block" : "none");
   document.getElementById("panel-topbar-title").textContent = productCategoryLabel(currentProduct) || "-";
-  var topAddBtn = document.getElementById("btn-add-core-product-top");
-  if (topAddBtn) {
-    topAddBtn.textContent = "+ " + t("btn_add_part");
-    setCspStyle(topAddBtn, "display", canEdit() ? "" : "none");
-    topAddBtn.onclick = openCoreProductAddFromSearch;
-  }
+  configureSalesProductAddButton();
   if (!isPC() && options.showMobileOverlay !== false) { document.getElementById("overlay").classList.add("show"); document.getElementById("panel").classList.add("show"); }
   renderPanelStatic();
   document.querySelectorAll(".card").forEach(function(c){ c.classList.toggle("selected", parseInt(c.dataset.id,10)===id); });
@@ -17308,11 +17310,7 @@ function closePanel() {
   document.getElementById("panel-body").innerHTML = "";
   document.getElementById("panel-topbar-title").textContent = "-";
   currentProductVariants = [];
-  var topAddBtn = document.getElementById("btn-add-core-product-top");
-  if (topAddBtn) {
-    setCspStyle(topAddBtn, "display", "none");
-    topAddBtn.onclick = null;
-  }
+  configureSalesProductAddButton();
   document.querySelectorAll(".card.selected").forEach(function(c){ c.classList.remove("selected"); });
   currentProduct = null; currentCoreDkdShohinId = null; currentProductSpecs = []; currentProductNominalSpec = null; currentParallelTargetDkdShohinId = null; currentParallelTargetProduct = null; currentImages = []; currentSlPartIds = [];
 }
@@ -17344,12 +17342,7 @@ function renderPanelStatic() {
   var detailSeq = ++detailSecondaryRequestSeq;
   currentSelectedProductKind = "rebuilt";
   document.getElementById("panel-topbar-title").textContent = productCategoryLabel(p) || "-";
-  var topAddBtn = document.getElementById("btn-add-core-product-top");
-  if (topAddBtn) {
-    topAddBtn.textContent = "+ " + t("btn_add_part");
-    setCspStyle(topAddBtn, "display", canEdit() ? "" : "none");
-    topAddBtn.onclick = openCoreProductAddFromSearch;
-  }
+  configureSalesProductAddButton();
   var isAcProduct = (p.category_code || p.category || "") === "ac_compressor";
   // parts テーブルのフィールド定義
   function renderAcPartRows(rows) {
@@ -27644,7 +27637,6 @@ document.getElementById("btn-back-api-settings").addEventListener("click", retur
 document.getElementById("btn-back-rakuten-price-list").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-logs").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-add-part").addEventListener("click", function(){ openPartForm("add"); });
-document.getElementById("btn-add-sales-core-product").addEventListener("click", openCoreProductAddFromSearch);
 document.getElementById("btn-part-form-cancel").addEventListener("click", function(){ document.getElementById("part-form-overlay").classList.remove("show"); });
 document.getElementById("btn-part-form-save").addEventListener("click", savePartForm);
 document.getElementById("pf-part-manufacturer-type").addEventListener("change", setGltekProductAddPanel);
