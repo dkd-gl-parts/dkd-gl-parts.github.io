@@ -18553,7 +18553,13 @@ function renderComponentAddPanel() {
   var wrap = document.getElementById("component-add-wrap");
   if (!wrap) return;
   var html = renderComponentKindSelectorHtml();
-  if (!canManageComponentsInCurrentContext() || selectedProductKind() === "catalog_spec") {
+  if (selectedProductKind() === "catalog_spec") {
+    wrap.innerHTML = "<div class='component-catalog-head-layout'><div class='component-catalog-target'>" + html + "</div><div class='component-illustration-slot' id='component-illustration-slot'>" + renderComponentIllustrationPanelHtml() + "</div></div>";
+    bindComponentKindSelector();
+    bindCatalogIllustrationInteractions(wrap);
+    return;
+  }
+  if (!canManageComponentsInCurrentContext()) {
     wrap.innerHTML = html;
     bindComponentKindSelector();
     return;
@@ -19562,45 +19568,68 @@ function componentIllustrationPointTitle(point) {
   ].filter(function(value) { return value != null && String(value).trim() !== ""; }).join(" / ");
 }
 
-function componentIllustrationPointSvg(point, index) {
+function componentIllustrationPointSvg(point, index, imageWidth, imageHeight) {
   var x = Number(point && point.x_px);
   var y = Number(point && point.y_px);
   if (!isFinite(x) || !isFinite(y)) return "";
-  x = Math.max(0, Math.min(615, x));
-  y = Math.max(0, Math.min(487, y));
+  x = Math.max(0, Math.min(imageWidth, x));
+  y = Math.max(0, Math.min(imageHeight, y));
+  var markerScale = Math.max(1, Math.min(imageWidth / 615, imageHeight / 487));
+  var markerRadius = 7 * markerScale;
+  var labelOffset = 4 * markerScale;
+  var labelSize = 10 * markerScale;
   var label = componentIllustrationPointLabel(point);
   var title = componentIllustrationPointTitle(point);
   return "<g class='catalog-illustration-point' data-catalog-point='" + esc(String(index)) + "'>"
     + "<title>" + esc(title || label) + "</title>"
-    + "<circle cx='" + esc(String(x)) + "' cy='" + esc(String(y)) + "' r='7'></circle>"
-    + "<text x='" + esc(String(x)) + "' y='" + esc(String(y + 4)) + "'>" + esc(label) + "</text>"
+    + "<circle cx='" + esc(String(x)) + "' cy='" + esc(String(y)) + "' r='" + esc(String(markerRadius)) + "'></circle>"
+    + "<text x='" + esc(String(x)) + "' y='" + esc(String(y + labelOffset)) + "' font-size='" + esc(String(labelSize)) + "'>" + esc(label) + "</text>"
     + "</g>";
+}
+
+function componentIllustrationDimensions(row) {
+  var width = Number(row && row.image_width);
+  var height = Number(row && row.image_height);
+  return {
+    width: isFinite(width) && width > 0 ? width : 615,
+    height: isFinite(height) && height > 0 ? height : 487
+  };
 }
 
 function renderComponentIllustrationPanelHtml() {
   if (selectedProductKind() !== "catalog_spec") return "";
   if (componentIllustrationLoading) {
-    return "<div class='catalog-illustration-panel'><div class='component-empty'>" + t("loading") + "</div></div>";
+    return "<div class='catalog-illustration-panel'><div class='catalog-illustration-head'><div class='catalog-illustration-title'>カタログ図</div></div><div class='component-empty'>" + t("loading") + "</div></div>";
   }
   if (componentIllustrationError) {
-    return "<div class='catalog-illustration-panel catalog-illustration-error'>" + esc(componentIllustrationError) + "</div>";
+    return "<div class='catalog-illustration-panel catalog-illustration-error'><div class='catalog-illustration-head'><div class='catalog-illustration-title'>カタログ図</div><button class='catalog-illustration-tool' type='button' data-catalog-retry title='再読み込み' aria-label='カタログ図を再読み込み'>↻</button></div><div>" + esc(componentIllustrationError) + "</div></div>";
   }
   var rows = componentIllustrationRows || [];
-  if (!rows.length) return "";
+  if (!rows.length) {
+    return "<div class='catalog-illustration-panel catalog-illustration-empty'><div class='catalog-illustration-head'><div class='catalog-illustration-title'>カタログ図</div></div><div class='component-empty'>カタログ図は登録されていません</div></div>";
+  }
   var html = "<div class='catalog-illustration-panel'>";
-  html += "<div class='catalog-illustration-head'><div class='catalog-illustration-title'>カタログ図</div><div class='catalog-illustration-meta'>" + esc(String(rows.length)) + " image" + (rows.length === 1 ? "" : "s") + "</div></div>";
+  html += "<div class='catalog-illustration-head'><div class='catalog-illustration-title'>カタログ図</div><div class='catalog-illustration-meta'>" + esc(String(rows.length)) + "枚</div></div>";
   html += "<div class='catalog-illustration-list'>";
   rows.forEach(function(row) {
     var url = componentIllustrationPublicUrl(row);
     if (!url) return;
     var points = componentIllustrationPoints(row);
+    var dimensions = componentIllustrationDimensions(row);
+    var imageLabel = row.model_id || row.assy_manufacturer_part_number || "catalog illustration";
     html += "<div class='catalog-illustration-card'>";
-    html += "<div class='catalog-illustration-card-head'><div class='component-pn'>" + esc(row.model_id || row.assy_manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.source_html || row.catalog_match_basis || "") + "</div></div>";
-    html += "<div class='catalog-illustration-frame'>";
-    html += "<img src='" + esc(url) + "' alt='" + esc(row.model_id || "catalog illustration") + "' loading='lazy'>";
-    html += "<svg class='catalog-illustration-overlay' viewBox='0 0 615 487' preserveAspectRatio='none' aria-hidden='true'>";
+    html += "<div class='catalog-illustration-card-head'><div class='catalog-illustration-card-label'><div class='component-pn'>" + esc(imageLabel) + "</div><div class='component-sub'>" + esc(row.source_html || row.catalog_match_basis || "") + "</div></div>";
+    html += "<div class='catalog-illustration-actions'>";
+    html += "<button class='catalog-illustration-tool' type='button' data-catalog-action='zoom-out' title='縮小' aria-label='縮小'>−</button>";
+    html += "<span class='catalog-illustration-zoom' data-catalog-zoom-label>100%</span>";
+    html += "<button class='catalog-illustration-tool' type='button' data-catalog-action='zoom-in' title='拡大' aria-label='拡大'>＋</button>";
+    html += "<button class='catalog-illustration-tool' type='button' data-catalog-action='reset' title='全体表示' aria-label='全体表示'>↺</button>";
+    html += "</div></div>";
+    html += "<div class='catalog-illustration-frame' data-catalog-viewport data-catalog-width='" + esc(String(dimensions.width)) + "' data-catalog-height='" + esc(String(dimensions.height)) + "' tabindex='0' aria-label='" + esc(imageLabel) + "'>";
+    html += "<svg class='catalog-illustration-canvas' data-catalog-canvas viewBox='0 0 " + esc(String(dimensions.width)) + " " + esc(String(dimensions.height)) + "' preserveAspectRatio='xMidYMid meet' role='img' aria-label='" + esc(imageLabel) + "'>";
+    html += "<image href='" + esc(url) + "' x='0' y='0' width='" + esc(String(dimensions.width)) + "' height='" + esc(String(dimensions.height)) + "' preserveAspectRatio='xMidYMid meet'></image>";
     points.forEach(function(point, index) {
-      html += componentIllustrationPointSvg(point, index);
+      html += componentIllustrationPointSvg(point, index, dimensions.width, dimensions.height);
     });
     html += "</svg>";
     html += "</div>";
@@ -19610,12 +19639,160 @@ function renderComponentIllustrationPanelHtml() {
   return html;
 }
 
+function catalogIllustrationViewBox(svg) {
+  var values = String(svg && svg.getAttribute("viewBox") || "").trim().split(/\s+/).map(Number);
+  if (values.length !== 4 || values.some(function(value) { return !isFinite(value); })) return null;
+  return { x: values[0], y: values[1], width: values[2], height: values[3] };
+}
+
+function setCatalogIllustrationViewBox(viewport, x, y, width, height) {
+  var svg = viewport && viewport.querySelector("[data-catalog-canvas]");
+  if (!svg) return;
+  var baseWidth = Number(viewport.dataset.catalogWidth) || 615;
+  var baseHeight = Number(viewport.dataset.catalogHeight) || 487;
+  var minWidth = baseWidth / 6;
+  var minHeight = baseHeight / 6;
+  width = Math.max(minWidth, Math.min(baseWidth, width));
+  height = Math.max(minHeight, Math.min(baseHeight, height));
+  x = Math.max(0, Math.min(baseWidth - width, x));
+  y = Math.max(0, Math.min(baseHeight - height, y));
+  svg.setAttribute("viewBox", [x, y, width, height].join(" "));
+  var label = viewport.closest(".catalog-illustration-card");
+  label = label && label.querySelector("[data-catalog-zoom-label]");
+  if (label) label.textContent = String(Math.round((baseWidth / width) * 100)) + "%";
+}
+
+function zoomCatalogIllustration(viewport, multiplier, clientX, clientY) {
+  var svg = viewport && viewport.querySelector("[data-catalog-canvas]");
+  var current = catalogIllustrationViewBox(svg);
+  if (!current) return;
+  var baseWidth = Number(viewport.dataset.catalogWidth) || 615;
+  var baseHeight = Number(viewport.dataset.catalogHeight) || 487;
+  var currentScale = baseWidth / current.width;
+  var nextScale = Math.max(1, Math.min(6, currentScale * multiplier));
+  var nextWidth = baseWidth / nextScale;
+  var nextHeight = baseHeight / nextScale;
+  var rect = viewport.getBoundingClientRect();
+  var ratioX = clientX == null || !rect.width ? 0.5 : Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+  var ratioY = clientY == null || !rect.height ? 0.5 : Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+  var anchorX = current.x + current.width * ratioX;
+  var anchorY = current.y + current.height * ratioY;
+  setCatalogIllustrationViewBox(
+    viewport,
+    anchorX - nextWidth * ratioX,
+    anchorY - nextHeight * ratioY,
+    nextWidth,
+    nextHeight
+  );
+}
+
+function resetCatalogIllustration(viewport) {
+  var baseWidth = Number(viewport && viewport.dataset.catalogWidth) || 615;
+  var baseHeight = Number(viewport && viewport.dataset.catalogHeight) || 487;
+  setCatalogIllustrationViewBox(viewport, 0, 0, baseWidth, baseHeight);
+}
+
+function bindCatalogIllustrationInteractions(root) {
+  root = root || document;
+  root.querySelectorAll("[data-catalog-viewport]").forEach(function(viewport) {
+    if (viewport.dataset.catalogBound === "1") return;
+    viewport.dataset.catalogBound = "1";
+    var drag = null;
+
+    viewport.addEventListener("wheel", function(event) {
+      event.preventDefault();
+      zoomCatalogIllustration(viewport, event.deltaY < 0 ? 1.2 : (1 / 1.2), event.clientX, event.clientY);
+    }, { passive: false });
+
+    viewport.addEventListener("pointerdown", function(event) {
+      if (event.button !== 0) return;
+      var current = catalogIllustrationViewBox(viewport.querySelector("[data-catalog-canvas]"));
+      if (!current) return;
+      drag = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, viewBox: current };
+      viewport.setPointerCapture(event.pointerId);
+      viewport.classList.add("is-dragging");
+    });
+
+    viewport.addEventListener("pointermove", function(event) {
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      var rect = viewport.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      setCatalogIllustrationViewBox(
+        viewport,
+        drag.viewBox.x - ((event.clientX - drag.x) * drag.viewBox.width / rect.width),
+        drag.viewBox.y - ((event.clientY - drag.y) * drag.viewBox.height / rect.height),
+        drag.viewBox.width,
+        drag.viewBox.height
+      );
+    });
+
+    var finishDrag = function(event) {
+      if (!drag || (event && drag.pointerId !== event.pointerId)) return;
+      drag = null;
+      viewport.classList.remove("is-dragging");
+    };
+    viewport.addEventListener("pointerup", finishDrag);
+    viewport.addEventListener("pointercancel", finishDrag);
+    viewport.addEventListener("lostpointercapture", finishDrag);
+    viewport.addEventListener("dblclick", function() { resetCatalogIllustration(viewport); });
+    viewport.addEventListener("keydown", function(event) {
+      if (event.key === "+" || event.key === "=") {
+        event.preventDefault();
+        zoomCatalogIllustration(viewport, 1.2);
+      } else if (event.key === "-") {
+        event.preventDefault();
+        zoomCatalogIllustration(viewport, 1 / 1.2);
+      } else if (event.key === "0") {
+        event.preventDefault();
+        resetCatalogIllustration(viewport);
+      } else if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].indexOf(event.key) >= 0) {
+        var current = catalogIllustrationViewBox(viewport.querySelector("[data-catalog-canvas]"));
+        if (!current) return;
+        event.preventDefault();
+        var dx = event.key === "ArrowLeft" ? -current.width * 0.08 : event.key === "ArrowRight" ? current.width * 0.08 : 0;
+        var dy = event.key === "ArrowUp" ? -current.height * 0.08 : event.key === "ArrowDown" ? current.height * 0.08 : 0;
+        setCatalogIllustrationViewBox(viewport, current.x + dx, current.y + dy, current.width, current.height);
+      }
+    });
+  });
+
+  root.querySelectorAll("[data-catalog-action]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      var card = button.closest(".catalog-illustration-card");
+      var viewport = card && card.querySelector("[data-catalog-viewport]");
+      if (!viewport) return;
+      if (button.dataset.catalogAction === "zoom-in") zoomCatalogIllustration(viewport, 1.2);
+      if (button.dataset.catalogAction === "zoom-out") zoomCatalogIllustration(viewport, 1 / 1.2);
+      if (button.dataset.catalogAction === "reset") resetCatalogIllustration(viewport);
+    });
+  });
+
+  root.querySelectorAll("[data-catalog-retry]").forEach(function(button) {
+    button.addEventListener("click", retryCatalogIllustrationLoad);
+  });
+}
+
+function renderComponentIllustrationSlot() {
+  var slot = document.getElementById("component-illustration-slot");
+  if (!slot) return;
+  slot.innerHTML = renderComponentIllustrationPanelHtml();
+  bindCatalogIllustrationInteractions(slot);
+}
+
+async function retryCatalogIllustrationLoad() {
+  var dkdId = await resolveCurrentCoreDkdShohinId();
+  if (!dkdId) return;
+  await loadCatalogIllustrationsForCurrent(dkdId, selectedProductKind());
+  renderComponentIllustrationSlot();
+}
+
 async function loadCatalogIllustrationsForCurrent(dkdId, selectedKind) {
   componentIllustrationRows = [];
   componentIllustrationLoading = false;
   componentIllustrationError = "";
   if (selectedKind !== "catalog_spec" || !dkdId) return;
   componentIllustrationLoading = true;
+  renderComponentIllustrationSlot();
   try {
     var r = await sb.rpc("get_catalog_illustration_for_product", {
       target_dkd_shohin_id: dkdId,
@@ -19625,13 +19802,16 @@ async function loadCatalogIllustrationsForCurrent(dkdId, selectedKind) {
     if (r.error) {
       componentIllustrationError = "カタログ図を読み込めませんでした: " + (r.error.message || r.error.details || r.error.code || "");
       console.warn("get_catalog_illustration_for_product failed", r.error);
+      renderComponentIllustrationSlot();
       return;
     }
     componentIllustrationRows = r.data || [];
+    renderComponentIllustrationSlot();
   } catch (e) {
     componentIllustrationLoading = false;
     componentIllustrationError = "カタログ図を読み込めませんでした";
     console.warn("get_catalog_illustration_for_product failed", e);
+    renderComponentIllustrationSlot();
   }
 }
 
@@ -22943,16 +23123,16 @@ function renderAssemblyComponentRows() {
   var wrap = document.getElementById("component-wrap");
   if (!wrap) return;
   var rows = assemblyComponentRows || [];
-  var illustrationHtml = renderComponentIllustrationPanelHtml();
+  renderComponentIllustrationSlot();
   if (!rows.length) {
     updateComponentTargetSummary(0);
-    wrap.innerHTML = illustrationHtml + componentEmptyStateHtml();
+    wrap.innerHTML = componentEmptyStateHtml();
     return;
   }
   var hasActions = canManageComponentsInCurrentContext();
   var catalogMode = selectedProductKind() === "catalog_spec";
   var colspan = 11 + (hasActions ? 1 : 0);
-  var html = illustrationHtml + "<table class='component-table component-table-tree'>";
+  var html = "<table class='component-table component-table-tree'>";
   html += "<tr><th class='component-tree-col'>" + t("component_child") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th>";
   if (catalogMode) {
     html += "<th>" + t("component_position") + "</th><th>" + t("component_quantity") + "</th><th>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
@@ -23166,6 +23346,7 @@ async function loadAssemblyComponentsForCurrent() {
   editingComponentUsageId = null;
   var selectedKind = selectedProductKind();
   wrap.innerHTML = "<div class='component-empty'>" + t("loading") + "</div>";
+  renderComponentIllustrationSlot();
 
   var dkdId = await resolveCurrentCoreDkdShohinId();
   if (!dkdId) {
