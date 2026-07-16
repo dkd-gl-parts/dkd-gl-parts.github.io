@@ -160,6 +160,7 @@ td small { display: block; margin-top: .3mm; color: #738094; font-size: 5.5pt; }
 .stock span { display: block; margin-bottom: .35mm; overflow-wrap: anywhere; }
 .stock .stock-status-row {
   display: flex;
+  width: 100%;
   flex-wrap: nowrap;
   align-items: stretch;
   gap: .6mm;
@@ -169,7 +170,8 @@ td small { display: block; margin-top: .3mm; color: #738094; font-size: 5.5pt; }
 .stock .stock-status-row > span { margin: 0; white-space: nowrap; }
 .stock .stock-status {
   display: flex;
-  flex: 1 1 0;
+  box-sizing: border-box;
+  flex: 0 0 calc(50% - .3mm);
   min-width: 0;
   align-items: center;
   justify-content: space-between;
@@ -198,7 +200,8 @@ td small { display: block; margin-top: .3mm; color: #738094; font-size: 5.5pt; }
 .stock .stock-status.no-stock { color: #7c8796; }
 .stock .compatible-stock {
   display: flex;
-  flex: 1 1 0;
+  box-sizing: border-box;
+  flex: 0 0 calc(50% - .3mm);
   align-items: center;
   justify-content: center;
   gap: .4mm;
