@@ -23368,8 +23368,8 @@ async function loadAssemblyComponentsForCurrent() {
       if (rpcRows.length || selectedKind === "catalog_spec") {
         assemblyComponentRows = rpcRows;
         updateComponentTargetSummary(rpcRows.length);
-        await loadCatalogIllustrationsForCurrent(dkdId, selectedKind);
         renderAssemblyComponentRows();
+        await loadCatalogIllustrationsForCurrent(dkdId, selectedKind);
         return;
       }
     } else {
@@ -23395,8 +23395,8 @@ async function loadAssemblyComponentsForCurrent() {
     if (treeFallbackRows.length || selectedKind === "catalog_spec") {
       assemblyComponentRows = treeFallbackRows;
       updateComponentTargetSummary(treeFallbackRows.length);
-      await loadCatalogIllustrationsForCurrent(dkdId, selectedKind);
       renderAssemblyComponentRows();
+      await loadCatalogIllustrationsForCurrent(dkdId, selectedKind);
       return;
     }
   } else {
