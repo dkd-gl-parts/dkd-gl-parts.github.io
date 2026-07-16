@@ -3434,7 +3434,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.522";
+var APP_VERSION       = "v1.1.523";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -15708,6 +15708,13 @@ function productKindSummaryForProduct(p) {
   var dkdKey = productDkdId(p);
   var cached = dkdKey ? (productVariantSummaryMap[dkdKey] || productVariantSummaryCache[dkdKey]) : null;
   var summary = cloneProductVariantSummary(cached);
+  if (p && (p.has_catalog_spec || p.has_catalog_source) && canSeeCatalogSpec() && !summary.kinds.catalog_spec) {
+    addProductVariantSummaryRow(summary, {
+      dkd_shohin_id: dkdKey || null,
+      product_kind: "catalog_spec",
+      display_label: "Catalog Spec"
+    });
+  }
   var defaultKind = normalizeProductKind(p && p.default_product_kind || "rebuilt");
   if (!productDisplayKindAllowed(defaultKind)) defaultKind = "rebuilt";
   if (!summary.kinds[defaultKind]) {
@@ -16208,9 +16215,11 @@ function applyProductSearchCardFlags(rows, products) {
     var imageCount = parseInt(row.image_count || 0, 10) || 0;
     var thumbUrl = row.thumbnail_image_url || "";
     var hasKikan = !!row.has_kikan_compatible;
+    var hasCatalogSpec = !!row.has_catalog_spec;
     if (p) {
       p.has_sl_part = hasSl || !!p.has_sl_part;
       if (hasKikan) p.has_kikan_compatible = true;
+      if (hasCatalogSpec) p.has_catalog_spec = true;
       setProductImageCache(p, imageCount, thumbUrl);
       productSlCacheKeys(p).forEach(function(key) {
         slPresenceMap[key] = hasSl;
@@ -16413,6 +16422,7 @@ async function fetchSlLabelAndImageMaps(mapping) {
 
 function productHasCatalogData(p) {
   if (!p) return false;
+  if (p.has_catalog_spec) return true;
   if (p.has_catalog_source) return true;
   return productKindSummaryHasKind(productKindSummaryForProduct(p), "catalog_spec");
 }
