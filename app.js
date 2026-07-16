@@ -3392,7 +3392,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.499";
+var APP_VERSION       = "v1.1.501";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -10474,7 +10474,8 @@ function renderCoreCollectionSelectedProduct(product) {
     return;
   }
   var stock = coreCollectionStockMap[String(product.dkd_shohin_id)] || { quantity: 0 };
-  info.innerHTML = "<strong>" + esc(product.manufacturer_part_number || product.genuine_part_number || ("DKD " + product.dkd_shohin_id)) + "</strong><span>純正 " + esc(product.genuine_part_number || "-") + " / " + esc(product.manufacturer || "-") + " / DKD " + esc(String(product.dkd_shohin_id)) + "</span><span>現在庫 " + esc(String(stock.quantity || 0)) + "</span>";
+  var productCode = product.shohin_cd || product.dks_shohin_cd || "-";
+  info.innerHTML = "<strong>" + esc(product.manufacturer_part_number || product.genuine_part_number || ("DKD " + product.dkd_shohin_id)) + "</strong><span>純正 " + esc(product.genuine_part_number || "-") + " / " + esc(product.manufacturer || "-") + " / DKD " + esc(String(product.dkd_shohin_id)) + "</span><span class='core-collection-selected-status'>品番マスタ登録あり / 商品CD " + esc(String(productCode)) + " / 現在庫 " + esc(String(stock.quantity || 0)) + "</span>";
 }
 
 function openCoreCollectionForm(mode, rowId) {
@@ -10492,7 +10493,9 @@ function openCoreCollectionForm(mode, rowId) {
   setProductionRankingFormValue("ccf-note", row && row.note);
   document.getElementById("core-collection-form-title").textContent = row ? "収集対象を編集" : "収集対象を追加";
   document.getElementById("core-collection-form-error").textContent = "";
-  document.getElementById("ccf-product-candidates").innerHTML = "";
+  var candidates = document.getElementById("ccf-product-candidates");
+  candidates.innerHTML = "";
+  setCspStyle(candidates, "display", "none");
   var searchRow = document.getElementById("ccf-product-search-row");
   if (searchRow) setCspStyle(searchRow, "display", row ? "none" : "");
   renderCoreCollectionSelectedProduct(product);
@@ -10504,6 +10507,32 @@ function isCoreCollectionMasterProduct(product) {
   if (product.legacy_part_id !== null && product.legacy_part_id !== undefined && String(product.legacy_part_id).trim()) return true;
   if (String(product.shohin_cd || product.dks_shohin_cd || "").trim()) return true;
   return !!String(product.dks_relation_type || "").trim();
+}
+
+async function enrichCoreCollectionMasterStatus(products) {
+  var rows = normalizeCoreProductFastRows(products || []);
+  var unresolvedIds = rows.filter(function(product) {
+    return !isCoreCollectionMasterProduct(product);
+  }).map(function(product) {
+    return parseInt(product.dkd_shohin_id, 10);
+  }).filter(function(id) {
+    return !isNaN(id);
+  });
+  if (!unresolvedIds.length) return { data: rows, error: null };
+
+  var linkResult = await sb.from("core_product_dks_links")
+    .select("dkd_shohin_id")
+    .in("dkd_shohin_id", unresolvedIds)
+    .limit(1000);
+  if (linkResult.error) return linkResult;
+  var linkedIds = {};
+  (linkResult.data || []).forEach(function(link) {
+    linkedIds[String(link.dkd_shohin_id)] = true;
+  });
+  rows.forEach(function(product) {
+    if (linkedIds[String(product.dkd_shohin_id)]) product.dks_relation_type = "linked";
+  });
+  return { data: rows, error: null };
 }
 
 async function validateCoreCollectionMasterProduct(dkdId) {
@@ -10539,24 +10568,35 @@ async function searchCoreCollectionProductCandidates() {
   if (!q) {
     coreCollectionProductCandidates = [];
     wrap.innerHTML = "";
+    setCspStyle(wrap, "display", "none");
     return;
   }
+  setCspStyle(wrap, "display", "block");
   wrap.innerHTML = "<div class='candidate-empty'>検索中...</div>";
-  var r = await sb.rpc("search_core_products", { search_text: q, category_filter: null, require_sl: false, max_rows: 30 });
+  var r = await fetchCoreProductMasterMatches(q, null, 30);
   if (r.error) {
     wrap.innerHTML = "<div class='candidate-empty'>" + esc(r.error.message) + "</div>";
     return;
   }
-  coreCollectionProductCandidates = filterVisibleProducts(r.data || []).filter(isCoreCollectionMasterProduct);
+  var statusResult = await enrichCoreCollectionMasterStatus(r.data || []);
+  if (statusResult.error) {
+    wrap.innerHTML = "<div class='candidate-empty'>品番マスタの確認に失敗しました: " + esc(statusResult.error.message) + "</div>";
+    return;
+  }
+  coreCollectionProductCandidates = filterVisibleProducts(statusResult.data || []);
   if (!coreCollectionProductCandidates.length) {
-    wrap.innerHTML = "<div class='candidate-empty'>基幹商品マスタに該当する商品はありません。</div>";
+    wrap.innerHTML = "<div class='candidate-empty'><strong>品番マスタ未登録</strong><span>該当する商品がありません。</span></div>";
     return;
   }
   var existingIds = {};
   coreCollectionRows.forEach(function(row) { existingIds[String(row.dkd_shohin_id)] = true; });
   wrap.innerHTML = coreCollectionProductCandidates.map(function(product, index) {
     var exists = !!existingIds[String(product.dkd_shohin_id)];
-    return "<button type='button' class='candidate-item' data-core-collection-candidate='" + index + "' " + (exists ? "disabled" : "") + "><strong>" + esc(product.manufacturer_part_number || product.genuine_part_number || ("DKD " + product.dkd_shohin_id)) + "</strong><small>純正 " + esc(product.genuine_part_number || "-") + " / " + esc(product.manufacturer || "-") + " / " + esc(productionCategoryLabel(product)) + (exists ? " / 登録済み" : "") + "</small></button>";
+    var isMaster = isCoreCollectionMasterProduct(product);
+    var statusClass = exists ? "existing" : (isMaster ? "master" : "missing");
+    var statusLabel = exists ? "収集リスト登録済み" : (isMaster ? "品番マスタ登録あり" : "品番マスタ未登録");
+    var productCode = product.shohin_cd || product.dks_shohin_cd || "-";
+    return "<button type='button' class='candidate-item core-collection-candidate-item' data-core-collection-candidate='" + index + "' " + (exists || !isMaster ? "disabled" : "") + "><span class='core-collection-candidate-head'><strong>" + esc(product.manufacturer_part_number || product.genuine_part_number || ("DKD " + product.dkd_shohin_id)) + "</strong><span class='core-collection-master-badge " + statusClass + "'>" + statusLabel + "</span></span><small>純正 " + esc(product.genuine_part_number || "-") + " / " + esc(product.manufacturer || "-") + " / 商品CD " + esc(String(productCode)) + " / " + esc(productionCategoryLabel(product)) + "</small></button>";
   }).join("");
 }
 
@@ -10564,7 +10604,9 @@ async function selectCoreCollectionProductCandidate(index) {
   var product = coreCollectionProductCandidates[index];
   if (!product) return;
   document.getElementById("ccf-dkd-id").value = product.dkd_shohin_id || "";
-  document.getElementById("ccf-product-candidates").innerHTML = "";
+  var candidates = document.getElementById("ccf-product-candidates");
+  candidates.innerHTML = "";
+  setCspStyle(candidates, "display", "none");
   if (!Object.prototype.hasOwnProperty.call(coreCollectionStockMap, String(product.dkd_shohin_id))) {
     await loadCoreCollectionStock([{ dkd_shohin_id: product.dkd_shohin_id }]);
   }

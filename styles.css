@@ -913,6 +913,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .core-collection-selected-product:empty { display: none; }
 .core-collection-selected-product strong { grid-column: 1 / -1; color: #173b6d; font-family: monospace; font-size: 15px; }
 .core-collection-selected-product span { font-size: 12px; }
+.core-collection-selected-status { color: #176b3a; font-weight: 700; }
+#ccf-product-candidates { max-height: 300px; overflow-y: auto; }
+#ccf-product-candidates .candidate-empty { display: grid; gap: 3px; padding: 12px; color: #667085; font-size: 12px; }
+#ccf-product-candidates .candidate-empty strong { color: #a33a2f; font-size: 13px; }
+#ccf-product-candidates .candidate-item:disabled { cursor: default; background: #f7f8fa; opacity: 1; }
+.core-collection-candidate-item small { display: block; margin-top: 4px; color: #667085; line-height: 1.45; }
+.core-collection-candidate-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.core-collection-candidate-head strong { min-width: 0; color: #172033; font-family: monospace; font-size: 14px; overflow-wrap: anywhere; }
+.core-collection-master-badge { flex: none; display: inline-flex; align-items: center; min-height: 22px; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 800; }
+.core-collection-master-badge.master { background: #e7f6ed; color: #176b3a; }
+.core-collection-master-badge.missing { background: #fff0ee; color: #a33a2f; }
+.core-collection-master-badge.existing { background: #eaf2ff; color: #245fa8; }
 @media (max-width: 767px) {
   #screen-core-list-mgmt .page-header { align-items: flex-start; flex-wrap: wrap; gap: 8px; padding: 8px 10px; }
   #screen-core-list-mgmt .page-header-left { min-width: 0; flex: 1 1 auto; }
