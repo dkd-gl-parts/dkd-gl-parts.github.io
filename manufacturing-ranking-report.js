@@ -4,8 +4,11 @@
   var MAX_FILE_BYTES = 50 * 1024 * 1024;
   var MAX_SOURCE_ROWS = 150000;
   var PREVIEW_LIMIT = 200;
+  var DATA_PAGE_SIZE = 1000;
   var state = {
     fileName: "",
+    dataset: null,
+    isLoading: false,
     rows: [],
     sheets: [],
     results: [],
@@ -175,10 +178,11 @@
   }
 
   function setLoading(isLoading) {
-    var input = byId("manufacturing-ranking-file");
+    var reload = byId("manufacturing-ranking-reload");
     var preview = byId("manufacturing-ranking-preview");
     var pdf = byId("manufacturing-ranking-pdf");
-    if (input) input.disabled = isLoading;
+    state.isLoading = isLoading;
+    if (reload) reload.disabled = isLoading;
     if (preview) preview.disabled = isLoading;
     if (pdf) pdf.disabled = isLoading || !state.results.length;
   }
@@ -218,6 +222,103 @@
       state.summary = null;
       setSourceStatus(error && error.message ? error.message : String(error), "error");
       renderEmptyPreview("Excelを読み込めませんでした", "ファイル形式と見出しを確認してください。");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function mapDatabaseRow(row) {
+    return {
+      id: String(row.dataset_id) + "::" + String(row.id),
+      sheet: normalizeText(row.category_name),
+      sourceRow: Number(row.source_row_number || 0),
+      productName: normalizeText(row.product_name),
+      productCode: normalizeText(row.product_code),
+      genuine: normalizeText(row.genuine_part_number),
+      maker: normalizeText(row.manufacturer_part_number),
+      genuine2: normalizeText(row.genuine_part_number_2),
+      body: normalizeText(row.genuine_body_part_number),
+      clutch: normalizeText(row.genuine_clutch_part_number),
+      type: normalizeText(row.product_type),
+      daiko: normalizeText(row.daiko_part_number),
+      shipment: Number(row.shipment_count || 0),
+      substitute: Number(row.substitute_count || 0)
+    };
+  }
+
+  function renderDatasetMetadata(dataset) {
+    var name = byId("manufacturing-ranking-dataset-name");
+    var meta = byId("manufacturing-ranking-dataset-meta");
+    if (name) name.textContent = dataset.dataset_name || (String(dataset.report_year) + "年 製造ランキング");
+    if (meta) {
+      var imported = dataset.imported_at ? new Date(dataset.imported_at).toLocaleString("ja-JP") : "-";
+      meta.textContent = formatNumber(dataset.row_count) + "件 / " + formatNumber(dataset.sheet_count) + "カテゴリ / 更新 " + imported;
+    }
+  }
+
+  async function fetchDatasetRows(datasetId) {
+    var rows = [];
+    for (var offset = 0; ; offset += DATA_PAGE_SIZE) {
+      var response = await sb.from("manufacturing_report_rows")
+        .select("id,dataset_id,category_name,category_order,source_row_number,is_aggregate,product_name,product_code,genuine_part_number,manufacturer_part_number,genuine_part_number_2,genuine_body_part_number,genuine_clutch_part_number,product_type,daiko_part_number,shipment_count,substitute_count")
+        .eq("dataset_id", datasetId)
+        .order("category_order", { ascending: true })
+        .order("source_row_number", { ascending: true })
+        .range(offset, offset + DATA_PAGE_SIZE - 1);
+      if (response.error) throw response.error;
+      var page = response.data || [];
+      rows = rows.concat(page);
+      if (page.length < DATA_PAGE_SIZE) break;
+    }
+    return rows;
+  }
+
+  async function loadDcatsSource() {
+    if (state.isLoading) return;
+    setLoading(true);
+    setSourceStatus("D-CATSの出荷実績を読み込んでいます...", "loading");
+    renderEmptyPreview("D-CATSデータを読み込んでいます", "最新の保存済みデータを取得しています。");
+    try {
+      var datasetResponse = await sb.from("manufacturing_report_datasets")
+        .select("id,report_year,dataset_name,source_file_name,source_file_sha256,source_file_modified_at,row_count,sheet_count,sheet_manifest,imported_at")
+        .eq("is_active", true)
+        .order("report_year", { ascending: false })
+        .order("imported_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (datasetResponse.error) throw datasetResponse.error;
+      if (!datasetResponse.data) throw new Error("有効な製造ランキングデータが登録されていません。");
+
+      var dataset = datasetResponse.data;
+      var sourceRows = await fetchDatasetRows(dataset.id);
+      if (sourceRows.length !== Number(dataset.row_count || 0)) {
+        throw new Error("D-CATSの帳票データ件数が一致しません。管理者に確認してください。");
+      }
+
+      state.dataset = dataset;
+      state.fileName = dataset.source_file_name || dataset.dataset_name || "D-CATS";
+      state.rows = sourceRows.map(mapDatabaseRow);
+      state.sheets = Array.isArray(dataset.sheet_manifest) ? dataset.sheet_manifest.map(function(sheet) {
+        return {
+          name: normalizeText(sheet.name),
+          count: Number(sheet.count || 0),
+          headerRow: Number(sheet.header_row || 0),
+          isAggregate: !!sheet.is_aggregate
+        };
+      }) : [];
+      renderDatasetMetadata(dataset);
+      renderCategoryOptions();
+      setSourceStatus("D-CATS保存データを読み込みました。元データ: " + state.fileName, "success");
+      updatePreview();
+    } catch (error) {
+      state.dataset = null;
+      state.fileName = "";
+      state.rows = [];
+      state.sheets = [];
+      state.results = [];
+      state.summary = null;
+      setSourceStatus(error && error.message ? error.message : String(error), "error");
+      renderEmptyPreview("D-CATSデータを読み込めませんでした", "接続状態または閲覧権限を確認してください。");
     } finally {
       setLoading(false);
     }
@@ -550,7 +651,7 @@
 
   function updatePreview() {
     if (!state.rows.length) {
-      renderEmptyPreview("Excelを選択してください", "読込後、カテゴリと条件に応じて順位を自動計算します。");
+      renderEmptyPreview("D-CATSデータがありません", "再読み込みを押すか、管理者にデータ登録を確認してください。");
       return false;
     }
     var options = readOptions();
@@ -613,7 +714,7 @@
       "</head><body><div class='print-toolbar'><button id='dcats-ranking-print' type='button'>PDFとして保存 / 印刷</button><span>印刷先で「PDFに保存」を選択してください。</span></div>" +
       "<main class='report'><header><div><span class='eyebrow'>D-CATS MANUFACTURING REPORT</span><h1>製造ランキング</h1><p>" + escapeHtml(categoryText) + "</p></div>" +
       "<div class='report-meta'><b>順位 " + formatNumber(options.startRank) + " - " + formatNumber(options.endRank) + "</b><span>" + escapeHtml(generatedAt) + " 作成</span></div></header>" +
-      "<section class='conditions'><div><span>元ファイル</span><b>" + escapeHtml(state.fileName) + "</b></div>" +
+      "<section class='conditions'><div><span>D-CATSデータ</span><b>" + escapeHtml(state.fileName) + "</b></div>" +
       "<div><span>順位基準</span><b>" + escapeHtml(metricLabel(options.metric) + " / " + rankScopeLabel(options.rankScope)) + "</b></div>" +
       "<div><span>互換品番</span><b>" + escapeHtml(compatibilityModeLabel(options.compatibilityMode)) + "</b></div>" +
       "<div><span>出力件数</span><b>" + formatNumber(results.length) + "件</b></div></section>" +
@@ -652,30 +753,13 @@
       return;
     }
     if (typeof showScreen === "function") showScreen("manufacturing-ranking-report");
+    if (!state.rows.length) loadDcatsSource();
   }
 
   function bindEvents() {
-    var fileInput = byId("manufacturing-ranking-file");
-    var drop = byId("manufacturing-ranking-file-drop");
-    if (!fileInput || !drop) return;
-
-    fileInput.addEventListener("change", function() { loadSourceFile(fileInput.files && fileInput.files[0]); });
-    ["dragenter", "dragover"].forEach(function(eventName) {
-      drop.addEventListener(eventName, function(event) {
-        event.preventDefault();
-        drop.classList.add("is-dragging");
-      });
-    });
-    ["dragleave", "drop"].forEach(function(eventName) {
-      drop.addEventListener(eventName, function(event) {
-        event.preventDefault();
-        drop.classList.remove("is-dragging");
-      });
-    });
-    drop.addEventListener("drop", function(event) {
-      var file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
-      if (file) loadSourceFile(file);
-    });
+    var reload = byId("manufacturing-ranking-reload");
+    if (!reload) return;
+    reload.addEventListener("click", loadDcatsSource);
     byId("manufacturing-ranking-category-all").addEventListener("click", function() { selectAllCategories(true); updatePreview(); });
     byId("manufacturing-ranking-category-clear").addEventListener("click", function() { selectAllCategories(false); updatePreview(); });
     byId("manufacturing-ranking-preview").addEventListener("click", updatePreview);
@@ -694,9 +778,9 @@
 
   window.enterManufacturingRankingReport = enterManufacturingRankingReport;
   window.DCatsManufacturingRankingReport = {
-    parseWorkbook: parseWorkbook,
     buildRanking: buildRanking,
-    normalizePart: normalizePart
+    normalizePart: normalizePart,
+    mapDatabaseRow: mapDatabaseRow
   };
   bindEvents();
 })();

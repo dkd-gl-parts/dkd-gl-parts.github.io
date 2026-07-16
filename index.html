@@ -4,15 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.505">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.505"; -->
+<meta name="dcats-app-version" content="v1.1.506">
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.506"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co; form-action 'self';">
 <title>D-CATS</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233c7df0'/%3E%3Cpath d='M8 17h16M16 9v14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.505">
+<link rel="stylesheet" href="styles.css?v=1.1.506">
 </head>
 <body>
 
@@ -129,7 +128,7 @@
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.505</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.506</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -158,7 +157,7 @@
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.505</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.506</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -188,7 +187,7 @@
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.505</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.506</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1734,16 +1733,18 @@
         <span class="ranking-report-kicker">MANUFACTURING REPORT</span>
         <h2>製造ランキング帳票</h2>
         <p>カテゴリ別の出荷実績から順位を計算し、互換候補が分かるPDF帳票を作成します。</p>
-        <p class="ranking-report-local-note">Excelはこの端末内で処理され、D-CATSやデータベースには送信されません。</p>
+        <p class="ranking-report-local-note">D-CATSに保存済みの出荷実績を使用します。毎回のExcelアップロードは不要です。</p>
       </div>
-      <label class="ranking-report-file-drop" id="manufacturing-ranking-file-drop" for="manufacturing-ranking-file">
-        <input id="manufacturing-ranking-file" type="file" accept=".xls,.xlsx,.xlsm,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
-        <span class="ranking-report-file-icon" aria-hidden="true">↥</span>
-        <strong>出荷実績Excelを選択</strong>
-        <small>.xls / .xlsx / .xlsm（最大50MB）</small>
-      </label>
+      <div class="ranking-report-dataset-panel">
+        <span class="ranking-report-dataset-icon" aria-hidden="true">DB</span>
+        <div>
+          <strong id="manufacturing-ranking-dataset-name">D-CATSデータを確認中</strong>
+          <small id="manufacturing-ranking-dataset-meta">最新の出荷実績を自動で読み込みます</small>
+        </div>
+        <button type="button" id="manufacturing-ranking-reload">再読み込み</button>
+      </div>
       <div class="ranking-report-source-status" id="manufacturing-ranking-source-status" aria-live="polite">
-        Excelを読み込むとカテゴリとランキング条件を設定できます。
+        D-CATSの出荷実績を読み込んでいます。
       </div>
     </section>
 
@@ -1760,7 +1761,7 @@
           </div>
         </div>
         <div class="ranking-report-category-list" id="manufacturing-ranking-categories">
-          <div class="ranking-report-placeholder">Excel未読込</div>
+          <div class="ranking-report-placeholder">データ読込中</div>
         </div>
 
         <div class="ranking-report-divider"></div>
@@ -1881,7 +1882,7 @@
         <div class="ranking-report-table-wrap" id="manufacturing-ranking-table">
           <div class="ranking-report-empty">
             <span aria-hidden="true">▤</span>
-            <strong>Excelを選択してください</strong>
+            <strong>D-CATSデータを読み込んでいます</strong>
             <p>読込後、カテゴリと条件に応じて順位を自動計算します。</p>
           </div>
         </div>
@@ -2571,7 +2572,7 @@
   <div class="fs-thumbs" id="fs-thumbs"></div>
 </div>
 
-<script src="app.js?v=1.1.505"></script>
-<script src="manufacturing-ranking-report.js?v=1.1.505"></script>
+<script src="app.js?v=1.1.506"></script>
+<script src="manufacturing-ranking-report.js?v=1.1.506"></script>
 </body>
 </html>

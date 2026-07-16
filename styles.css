@@ -265,6 +265,62 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ranking-report-file-drop strong { font-size: 14px; }
 .ranking-report-file-drop small { color: #7b8799; font-size: 11px; }
 
+.ranking-report-dataset-panel {
+  min-height: 126px;
+  border: 1px solid #b8cae8;
+  border-radius: 14px;
+  background: rgba(246, 249, 255, .94);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 5px 12px;
+  padding: 18px;
+}
+
+.ranking-report-dataset-icon {
+  grid-row: 1 / span 2;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #2f6fed;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .05em;
+}
+
+.ranking-report-dataset-panel strong {
+  display: block;
+  color: #234a86;
+  font-size: 14px;
+}
+
+.ranking-report-dataset-panel small {
+  display: block;
+  margin-top: 4px;
+  color: #6f7e94;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.ranking-report-dataset-panel button {
+  grid-column: 1 / -1;
+  border: 1px solid #a9bee1;
+  border-radius: 9px;
+  background: #fff;
+  color: #285ba9;
+  cursor: pointer;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ranking-report-dataset-panel button:hover { background: #edf4ff; }
+.ranking-report-dataset-panel button:disabled { cursor: wait; opacity: .6; }
+
 .ranking-report-source-status {
   grid-column: 1 / -1;
   min-height: 40px;
