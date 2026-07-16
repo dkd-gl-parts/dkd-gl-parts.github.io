@@ -601,12 +601,10 @@
   function renderCategoryOptions() {
     var host = byId("manufacturing-ranking-categories");
     if (!host) return;
-    var hasDetailSheets = state.sheets.some(function(sheet) { return !sheet.isAggregate; });
     host.innerHTML = state.sheets.map(function(sheet) {
-      var checked = !sheet.isAggregate || !hasDetailSheets;
       var aggregate = sheet.isAggregate ? "<small>全体集計 - カテゴリ別シートとの重複に注意</small>" : "<small>" + formatNumber(sheet.count) + "件</small>";
       return "<label class='ranking-report-category-option'>" +
-        "<input type='checkbox' value='" + escapeHtml(sheet.name) + "'" + (checked ? " checked" : "") + ">" +
+        "<input type='checkbox' value='" + escapeHtml(sheet.name) + "'>" +
         "<span><strong>" + escapeHtml(sheet.name) + "</strong>" + aggregate + "</span></label>";
     }).join("");
   }
