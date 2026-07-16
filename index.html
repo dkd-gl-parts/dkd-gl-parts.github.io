@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.508">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.508"; -->
+<meta name="dcats-app-version" content="v1.1.509">
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.509"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co; form-action 'self';">
 <title>D-CATS</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233c7df0'/%3E%3Cpath d='M8 17h16M16 9v14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.508">
+<link rel="stylesheet" href="styles.css?v=1.1.509">
 </head>
 <body>
 
@@ -128,7 +128,7 @@
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.508</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.509</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -157,7 +157,7 @@
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.508</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.509</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -187,7 +187,7 @@
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.508</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.509</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1732,7 +1732,7 @@
       <div class="ranking-report-source-copy">
         <span class="ranking-report-kicker">MANUFACTURING REPORT</span>
         <h2>製造ランキング帳票</h2>
-        <p>カテゴリ別の出荷実績から、同数でも重複しない連番順位を計算し、互換候補が分かるPDF帳票を作成します。</p>
+        <p>カテゴリ別の出荷実績から重複しない連番順位を計算し、D-CATSマスタ未登録品番が分かるPDF帳票を作成します。</p>
         <p class="ranking-report-local-note">D-CATSに保存済みの出荷実績を使用します。毎回のExcelアップロードは不要です。</p>
       </div>
       <div class="ranking-report-dataset-panel">
@@ -1822,13 +1822,13 @@
           <label class="ranking-report-field ranking-report-field-wide">
             <span>帳票への出し方</span>
             <select id="manufacturing-ranking-compat-mode">
-              <option value="all">全品番を表示して互換候補を明記</option>
+              <option value="all">全品番を個別表示</option>
               <option value="representative">互換品番を省き代表品番のみ</option>
               <option value="consolidated">互換グループを合算して1行表示</option>
             </select>
           </label>
           <label class="ranking-report-field ranking-report-field-wide">
-            <span>互換候補の判定</span>
+            <span>互換グループの判定</span>
             <select id="manufacturing-ranking-compat-basis">
               <option value="maker_genuine">同一のメーカー品番 または 純正品番</option>
               <option value="maker">同一のメーカー品番</option>
@@ -1847,7 +1847,7 @@
         </div>
         <label class="ranking-report-check">
           <input id="manufacturing-ranking-show-compat" type="checkbox" checked>
-          <span>互換候補の品番と個別出荷数を帳票に載せる</span>
+          <span>マスタ未登録品番を帳票に載せる</span>
         </label>
         <label class="ranking-report-check">
           <input id="manufacturing-ranking-show-substitute" type="checkbox" checked>
@@ -1870,7 +1870,7 @@
         </div>
         <div class="ranking-report-summary" id="manufacturing-ranking-summary">
           <div class="ranking-report-summary-card"><span>対象件数</span><strong>-</strong></div>
-          <div class="ranking-report-summary-card"><span>対象カテゴリ</span><strong>-</strong></div>
+          <div class="ranking-report-summary-card"><span>マスタ未登録品番</span><strong>-</strong></div>
           <div class="ranking-report-summary-card"><span>互換グループ</span><strong>-</strong></div>
           <div class="ranking-report-summary-card"><span>順位範囲</span><strong>1 - 100</strong></div>
         </div>
@@ -2568,7 +2568,7 @@
   <div class="fs-thumbs" id="fs-thumbs"></div>
 </div>
 
-<script src="app.js?v=1.1.508"></script>
-<script src="manufacturing-ranking-report.js?v=1.1.508"></script>
+<script src="app.js?v=1.1.509"></script>
+<script src="manufacturing-ranking-report.js?v=1.1.509"></script>
 </body>
 </html>

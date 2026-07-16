@@ -625,8 +625,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ranking-report-compat-badge {
   display: inline-flex;
   border-radius: 999px;
-  background: #eef3ff;
-  color: #315fae;
+  border: 1px solid #f2c98d;
+  background: #fff5e7;
+  color: #9a4c00;
   padding: 3px 7px;
   font-size: 9px;
   font-weight: 900;

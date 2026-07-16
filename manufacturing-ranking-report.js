@@ -5,12 +5,25 @@
   var MAX_SOURCE_ROWS = 150000;
   var PREVIEW_LIMIT = 200;
   var DATA_PAGE_SIZE = 1000;
+  var MASTER_PART_COLUMNS = [
+    "normalized_genuine_part_number",
+    "normalized_genuine_part_number_2",
+    "normalized_manufacturer_part_number",
+    "normalized_pulley_assy_part_number",
+    "normalized_genuine_body_part_number",
+    "normalized_manufacturer_body_part_number",
+    "normalized_genuine_clutch_part_number",
+    "normalized_manufacturer_clutch_part_number"
+  ];
   var state = {
     fileName: "",
     dataset: null,
     isLoading: false,
     rows: [],
     sheets: [],
+    masterPartNumbers: Object.create(null),
+    masterProductCount: 0,
+    masterPartNumberCount: 0,
     results: [],
     summary: null,
     options: null
@@ -272,6 +285,34 @@
     return rows;
   }
 
+  async function fetchMasterPartNumbers() {
+    var numbers = Object.create(null);
+    var productCount = 0;
+    var selectColumns = ["dkd_shohin_id"].concat(MASTER_PART_COLUMNS).join(",");
+    for (var offset = 0; ; offset += DATA_PAGE_SIZE) {
+      var response = await sb.from("core_products")
+        .select(selectColumns)
+        .order("dkd_shohin_id", { ascending: true })
+        .range(offset, offset + DATA_PAGE_SIZE - 1);
+      if (response.error) throw response.error;
+      var page = response.data || [];
+      productCount += page.length;
+      page.forEach(function(row) {
+        MASTER_PART_COLUMNS.forEach(function(column) {
+          var value = row[column];
+          if (!isLikelyPartNumber(value)) return;
+          numbers[normalizeSearch(value)] = true;
+        });
+      });
+      if (page.length < DATA_PAGE_SIZE) break;
+    }
+    return {
+      numbers: numbers,
+      productCount: productCount,
+      partNumberCount: Object.keys(numbers).length
+    };
+  }
+
   async function loadDcatsSource() {
     if (state.isLoading) return;
     setLoading(true);
@@ -289,7 +330,12 @@
       if (!datasetResponse.data) throw new Error("有効な製造ランキングデータが登録されていません。");
 
       var dataset = datasetResponse.data;
-      var sourceRows = await fetchDatasetRows(dataset.id);
+      var loaded = await Promise.all([
+        fetchDatasetRows(dataset.id),
+        fetchMasterPartNumbers()
+      ]);
+      var sourceRows = loaded[0];
+      var master = loaded[1];
       if (sourceRows.length !== Number(dataset.row_count || 0)) {
         throw new Error("D-CATSの帳票データ件数が一致しません。管理者に確認してください。");
       }
@@ -297,6 +343,9 @@
       state.dataset = dataset;
       state.fileName = dataset.source_file_name || dataset.dataset_name || "D-CATS";
       state.rows = sourceRows.map(mapDatabaseRow);
+      state.masterPartNumbers = master.numbers;
+      state.masterProductCount = master.productCount;
+      state.masterPartNumberCount = master.partNumberCount;
       state.sheets = Array.isArray(dataset.sheet_manifest) ? dataset.sheet_manifest.map(function(sheet) {
         return {
           name: normalizeText(sheet.name),
@@ -307,13 +356,16 @@
       }) : [];
       renderDatasetMetadata(dataset);
       renderCategoryOptions();
-      setSourceStatus("D-CATS保存データを読み込みました。元データ: " + state.fileName, "success");
+      setSourceStatus("D-CATS保存データを読み込みました。元データ: " + state.fileName + " / 品番マスタ " + formatNumber(state.masterProductCount) + "商品・" + formatNumber(state.masterPartNumberCount) + "品番", "success");
       updatePreview();
     } catch (error) {
       state.dataset = null;
       state.fileName = "";
       state.rows = [];
       state.sheets = [];
+      state.masterPartNumbers = Object.create(null);
+      state.masterProductCount = 0;
+      state.masterPartNumberCount = 0;
       state.results = [];
       state.summary = null;
       setSourceStatus(error && error.message ? error.message : String(error), "error");
@@ -372,7 +424,7 @@
       compatibilityMode: byId("manufacturing-ranking-compat-mode").value,
       compatibilityBasis: byId("manufacturing-ranking-compat-basis").value,
       orientation: byId("manufacturing-ranking-orientation").value,
-      showCompatibility: byId("manufacturing-ranking-show-compat").checked,
+      showMissingMaster: byId("manufacturing-ranking-show-compat").checked,
       showSubstitute: byId("manufacturing-ranking-show-substitute").checked
     };
   }
@@ -545,23 +597,41 @@
     return scope === "overall" ? "選択カテゴリ通算" : "カテゴリ別";
   }
 
-  function compatibilityMembers(result) {
-    return result.group.filter(function(row) { return row.id !== result.row.id; });
+  function rowPartNumberEntries(row) {
+    return [
+      { label: "純正", value: row.genuine },
+      { label: "メーカー", value: row.maker },
+      { label: "純正2", value: row.genuine2 },
+      { label: "純正本体", value: row.body },
+      { label: "純正クラッチ", value: row.clutch }
+    ];
   }
 
-  function compatibilityLine(row) {
-    var numbers = [row.genuine, row.genuine2, row.maker, row.body, row.clutch].filter(function(value, index, values) {
-      return value && values.indexOf(value) === index;
+  function missingMasterPartNumbers(result, compatibilityMode) {
+    var rows = compatibilityMode === "all" ? [result.row] : result.group;
+    var seen = Object.create(null);
+    var missing = [];
+    rows.forEach(function(row) {
+      rowPartNumberEntries(row).forEach(function(entry) {
+        if (!isLikelyPartNumber(entry.value)) return;
+        var key = normalizeSearch(entry.value);
+        if (!key || state.masterPartNumbers[key] || seen[key]) return;
+        seen[key] = true;
+        missing.push({ label: entry.label, value: entry.value });
+      });
     });
-    return numbers.join(" / ") + " (出荷 " + formatNumber(row.shipment) + ")";
+    return missing;
   }
 
   function renderSummary(summary, options) {
     var host = byId("manufacturing-ranking-summary");
     if (!host) return;
+    var missingPartNumberCount = summary.results.reduce(function(total, result) {
+      return total + missingMasterPartNumbers(result, options.compatibilityMode).length;
+    }, 0);
     host.innerHTML = [
       ["対象件数", formatNumber(summary.results.length)],
-      ["対象カテゴリ", formatNumber(options.categories.length)],
+      ["マスタ未登録品番", formatNumber(missingPartNumberCount)],
       ["互換グループ", formatNumber(summary.compatibleGroupCount)],
       ["順位範囲", formatNumber(options.startRank) + " - " + formatNumber(options.endRank)]
     ].map(function(card) {
@@ -577,7 +647,7 @@
     var hasDetail = selectedSheets.some(function(sheet) { return !sheet.isAggregate; });
     var messages = [];
     if (hasAggregate && hasDetail) messages.push("全体集計シートとカテゴリ別シートを同時に選択しています。重複集計に注意してください。");
-    if (options.compatibilityMode !== "all" && summary.omittedRows) messages.push("互換候補 " + formatNumber(summary.omittedRows) + "行を代表品番へまとめています。");
+    if (options.compatibilityMode !== "all" && summary.omittedRows) messages.push("互換品番 " + formatNumber(summary.omittedRows) + "行を代表品番へまとめています。");
     warning.hidden = messages.length === 0;
     warning.textContent = messages.join(" ");
   }
@@ -597,29 +667,28 @@
     }
     var visible = results.slice(0, PREVIEW_LIMIT);
     var html = "<table class='ranking-report-table'><thead><tr>" +
-      "<th>順位</th><th>カテゴリ</th><th>商品名</th><th>純正品番</th><th>メーカー品番</th><th>出荷数</th>";
+      "<th>順位</th><th>商品名</th><th>純正品番</th><th>メーカー品番</th><th>出荷数</th>";
     if (options.showSubstitute) html += "<th>代替</th>";
     if (options.metric !== "shipment") html += "<th>順位値</th>";
-    if (options.showCompatibility) html += "<th class='ranking-report-compat-column'>互換候補</th>";
+    if (options.showMissingMaster) html += "<th class='ranking-report-compat-column'>マスタ未登録品番</th>";
     html += "</tr></thead><tbody>";
     visible.forEach(function(result) {
       var row = result.row;
-      var members = compatibilityMembers(result);
+      var missing = missingMasterPartNumbers(result, options.compatibilityMode);
       html += "<tr><td class='ranking-report-rank-cell'>" + formatNumber(result.rank) + "</td>" +
-        "<td>" + escapeHtml(row.sheet) + "</td>" +
         "<td><strong>" + escapeHtml(row.productName || "-") + "</strong><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
         "<td class='ranking-report-part-cell'>" + escapeHtml(row.genuine || "-") + "</td>" +
         "<td class='ranking-report-part-cell'>" + escapeHtml(row.maker || "-") + "</td>" +
         "<td class='ranking-report-number-cell'>" + formatNumber(result.shipment) + "</td>";
       if (options.showSubstitute) html += "<td class='ranking-report-number-cell'>" + formatNumber(result.substitute) + "</td>";
       if (options.metric !== "shipment") html += "<td class='ranking-report-number-cell ranking-report-score-cell'>" + formatNumber(result.score) + "</td>";
-      if (options.showCompatibility) {
+      if (options.showMissingMaster) {
         html += "<td class='ranking-report-compat-cell'>";
-        if (!members.length) html += "<span class='ranking-report-none'>-</span>";
+        if (!missing.length) html += "<span class='ranking-report-none'>-</span>";
         else {
-          html += "<span class='ranking-report-compat-badge'>互換候補 " + formatNumber(members.length) + "品番</span>";
-          members.slice(0, 3).forEach(function(member) { html += "<small>" + escapeHtml(compatibilityLine(member)) + "</small>"; });
-          if (members.length > 3) html += "<small>ほか " + formatNumber(members.length - 3) + "品番</small>";
+          html += "<span class='ranking-report-compat-badge'>未登録 " + formatNumber(missing.length) + "品番</span>";
+          missing.slice(0, 5).forEach(function(entry) { html += "<small>" + escapeHtml(entry.label + " " + entry.value) + "</small>"; });
+          if (missing.length > 5) html += "<small>ほか " + formatNumber(missing.length - 5) + "品番</small>";
         }
         html += "</td>";
       }
@@ -658,19 +727,18 @@
   function buildPrintRows(results, options) {
     return results.map(function(result) {
       var row = result.row;
+      var missing = missingMasterPartNumbers(result, options.compatibilityMode);
       var html = "<tr><td class='rank'>" + formatNumber(result.rank) + "</td>" +
-        "<td>" + escapeHtml(row.sheet) + "</td>" +
         "<td><b>" + escapeHtml(row.productName || "-") + "</b><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
         "<td class='part'>" + escapeHtml(row.genuine || "-") + "</td>" +
         "<td class='part'>" + escapeHtml(row.maker || "-") + "</td>" +
         "<td class='number'>" + formatNumber(result.shipment) + "</td>";
       if (options.showSubstitute) html += "<td class='number'>" + formatNumber(result.substitute) + "</td>";
       if (options.metric !== "shipment") html += "<td class='number score'>" + formatNumber(result.score) + "</td>";
-      if (options.showCompatibility) {
-        var members = compatibilityMembers(result);
+      if (options.showMissingMaster) {
         html += "<td class='compat'>";
-        if (!members.length) html += "-";
-        else html += members.map(function(member) { return "<span>" + escapeHtml(compatibilityLine(member)) + "</span>"; }).join("");
+        if (!missing.length) html += "-";
+        else html += missing.map(function(entry) { return "<span>" + escapeHtml(entry.label + " " + entry.value) + "</span>"; }).join("");
         html += "</td>";
       }
       return html + "</tr>";
@@ -683,10 +751,10 @@
     var generatedAt = new Date().toLocaleString("ja-JP");
     var categoryText = options.categories.join(" / ");
     var title = "製造ランキング " + options.startRank + "-" + options.endRank + "位";
-    var header = "<tr><th>順位</th><th>カテゴリ</th><th>商品名</th><th>純正品番</th><th>メーカー品番</th><th>出荷数</th>";
+    var header = "<tr><th>順位</th><th>商品名</th><th>純正品番</th><th>メーカー品番</th><th>出荷数</th>";
     if (options.showSubstitute) header += "<th>代替</th>";
     if (options.metric !== "shipment") header += "<th>順位値</th>";
-    if (options.showCompatibility) header += "<th class='compat-head'>互換候補</th>";
+    if (options.showMissingMaster) header += "<th class='compat-head'>マスタ未登録品番</th>";
     header += "</tr>";
 
     return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" +
@@ -701,7 +769,7 @@
       "<div><span>互換品番</span><b>" + escapeHtml(compatibilityModeLabel(options.compatibilityMode)) + "</b></div>" +
       "<div><span>出力件数</span><b>" + formatNumber(results.length) + "件</b></div></section>" +
       "<table><thead>" + header + "</thead><tbody>" + buildPrintRows(results, options) + "</tbody></table>" +
-      "<footer><span>D-CATS / 製造ランキング</span><span>順位は指定した基準値の降順。同数時も商品別の連番で重複なし</span></footer></main></body></html>";
+      "<footer><span>D-CATS / 製造ランキング</span><span>順位は連番で重複なし / 未登録品番はD-CATS品番マスタ照合時点</span></footer></main></body></html>";
   }
 
   function openPdfPreview() {
@@ -762,7 +830,16 @@
   window.DCatsManufacturingRankingReport = {
     buildRanking: buildRanking,
     normalizePart: normalizePart,
-    mapDatabaseRow: mapDatabaseRow
+    mapDatabaseRow: mapDatabaseRow,
+    buildPrintHtml: buildPrintHtml,
+    missingMasterPartNumbers: missingMasterPartNumbers,
+    setMasterPartNumbers: function(values) {
+      state.masterPartNumbers = Object.create(null);
+      (values || []).forEach(function(value) {
+        var key = normalizeSearch(value);
+        if (key) state.masterPartNumbers[key] = true;
+      });
+    }
   };
   bindEvents();
 })();
