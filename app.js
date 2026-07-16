@@ -3434,7 +3434,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.523";
+var APP_VERSION       = "v1.1.524";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -5636,7 +5636,7 @@ function renderProductionList() {
     return productionMatchesFilter(row) && productionMatchesQuery(row, q);
   });
   if (countEl) countEl.textContent = productionFilteredRows.length + " 件表示 / 商品 " + productionRows.length + " 件";
-  if (moreWrap) setCspStyle(moreWrap, "display", productionSearchHasMore ? "" : "none");
+  if (moreWrap) setCspStyle(moreWrap, "display", productionSearchHasMore ? "block" : "none");
   if (!productionRows.length) {
     list.innerHTML = "<div class='loading'>商品を検索してください。</div>";
     return;
@@ -10482,7 +10482,7 @@ function updateCoreCollectionLoadMoreButton() {
   if (!wrap || !btn || coreListMode !== "collection") return;
   var visibleCount = Math.min(coreCollectionRenderLimit, coreCollectionFilteredRows.length);
   var remaining = Math.max(coreCollectionFilteredRows.length - visibleCount, 0);
-  setCspStyle(wrap, "display", remaining > 0 ? "" : "none");
+  setCspStyle(wrap, "display", remaining > 0 ? "block" : "none");
   btn.disabled = false;
   btn.textContent = remaining > 0 ? "さらに表示（残り" + remaining + "件）" : t("btn_load_more");
 }
@@ -10863,7 +10863,7 @@ function updateCoreListLoadMoreButton() {
   var wrap = document.getElementById("core-list-load-more-wrap");
   var btn = document.getElementById("core-list-load-more");
   if (!wrap || !btn) return;
-  setCspStyle(wrap, "display", coreListHasMore ? "" : "none");
+  setCspStyle(wrap, "display", coreListHasMore ? "block" : "none");
   btn.disabled = !!coreListLoadingMore;
   btn.textContent = coreListLoadingMore ? t("loading") : t("btn_load_more");
 }
@@ -17409,7 +17409,7 @@ function render() {
   var items = getFiltered();
   if (items.length === 0) {
     list.innerHTML = "<div class='empty'>" + t("no_results") + "</div>";
-    if (moreWrap) setCspStyle(moreWrap, "display", (productSearchFetchedCount >= productSearchLimit && productSearchLimit < SEARCH_FETCH_LIMIT) ? "" : "none");
+    if (moreWrap) setCspStyle(moreWrap, "display", (productSearchFetchedCount >= productSearchLimit && productSearchLimit < SEARCH_FETCH_LIMIT) ? "block" : "none");
     return;
   }
   var visibleItems = items.slice(0, SEARCH_RENDER_LIMIT);
@@ -17421,7 +17421,7 @@ function render() {
     }
   }
   document.getElementById("count-bar").textContent = countText;
-  if (moreWrap) setCspStyle(moreWrap, "display", (productSearchFetchedCount >= productSearchLimit && productSearchLimit < SEARCH_FETCH_LIMIT) ? "" : "none");
+  if (moreWrap) setCspStyle(moreWrap, "display", (productSearchFetchedCount >= productSearchLimit && productSearchLimit < SEARCH_FETCH_LIMIT) ? "block" : "none");
   var html = "";
   visibleItems.forEach(function(p, idx) {
     var cnt   = getProductImageCount(p);
