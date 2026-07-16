@@ -863,7 +863,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 #core-list-list .core-collection-table th,
 #core-list-list .core-collection-table td { white-space: normal; vertical-align: middle; }
 #core-list-list .core-collection-table th:nth-child(1),
-#core-list-list .core-collection-table td:nth-child(1) { width: 62px; text-align: center; }
+#core-list-list .core-collection-table td:nth-child(1) { width: 92px; text-align: center; }
 #core-list-list .core-collection-table th:nth-child(2),
 #core-list-list .core-collection-table td:nth-child(2) { width: 210px; }
 #core-list-list .core-collection-table th:nth-child(3),
@@ -884,6 +884,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .core-priority-badge.high { background: #fde7e4; color: #a62e23; }
 .core-priority-badge.normal { background: #fff2c9; color: #725400; }
 .core-priority-badge.low { background: #edf0f4; color: #536070; }
+.core-category-rank { display: grid; justify-items: center; gap: 1px; margin-bottom: 5px; line-height: 1.2; }
+.core-category-rank span { color: #667085; font-size: 10px; font-weight: 800; }
+.core-category-rank strong { color: #173b6d; font-size: 15px; font-variant-numeric: tabular-nums; }
 .core-status-badge.collecting { background: #e8f0ff; color: #245aa8; }
 .core-status-badge.completed { background: #e5f5e9; color: #23743a; }
 .core-status-badge.paused { background: #f0f1f3; color: #5d6673; }

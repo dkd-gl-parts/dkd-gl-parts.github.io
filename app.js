@@ -3392,7 +3392,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.501";
+var APP_VERSION       = "v1.1.503";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -10257,11 +10257,50 @@ function coreCollectionShortageQty(row) {
   return Math.max(target - coreCollectionStockQty(row), 0);
 }
 
+var CORE_COLLECTION_CATEGORY_ORDER = ["starter", "alternator", "ac_compressor", "distributor", "other"];
+
+function coreCollectionCategoryKey(product) {
+  var code = String(product && (product.category_code || product.category) || "");
+  return CORE_COLLECTION_CATEGORY_ORDER.indexOf(code) >= 0 ? code : "other";
+}
+
+function coreCollectionCategoryOrder(product) {
+  return CORE_COLLECTION_CATEGORY_ORDER.indexOf(coreCollectionCategoryKey(product));
+}
+
+function coreCollectionStoredOrder(row) {
+  var value = parseInt(row && row.sort_order, 10);
+  return isNaN(value) ? Number.MAX_SAFE_INTEGER : value;
+}
+
+function compareCoreCollectionStoredOrder(a, b) {
+  var orderDiff = coreCollectionStoredOrder(a) - coreCollectionStoredOrder(b);
+  if (orderDiff) return orderDiff;
+  return String(a && (a.id || a.dkd_shohin_id) || "").localeCompare(String(b && (b.id || b.dkd_shohin_id) || ""), "ja", { numeric: true });
+}
+
+function assignCoreCollectionCategoryRanks() {
+  var categoryRows = {};
+  coreCollectionRows.forEach(function(row) {
+    var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
+    var category = coreCollectionCategoryKey(product);
+    if (!categoryRows[category]) categoryRows[category] = [];
+    categoryRows[category].push(row);
+  });
+  Object.keys(categoryRows).forEach(function(category) {
+    categoryRows[category].sort(compareCoreCollectionStoredOrder).forEach(function(row, index) {
+      row._category_rank = index + 1;
+    });
+  });
+}
+
+function coreCollectionCategoryRank(row) {
+  return parseInt(row && row._category_rank, 10) || "";
+}
+
 function coreCollectionCategoryMatches(product, category) {
   if (!category) return true;
-  var code = String(product && (product.category_code || product.category) || "");
-  if (category !== "other") return code === category;
-  return ["starter", "alternator", "ac_compressor", "distributor"].indexOf(code) < 0;
+  return coreCollectionCategoryKey(product) === category;
 }
 
 function applyCoreCollectionFilters() {
@@ -10273,6 +10312,7 @@ function applyCoreCollectionFilters() {
   var category = categoryEl ? categoryEl.value : "";
   var state = stateEl ? stateEl.value : "all";
   var priority = priorityEl ? priorityEl.value : "";
+  assignCoreCollectionCategoryRanks();
   coreCollectionFilteredRows = coreCollectionRows.filter(function(row) {
     var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
     var stock = coreCollectionStockMap[String(row.dkd_shohin_id)] || {};
@@ -10298,27 +10338,14 @@ function applyCoreCollectionFilters() {
     if (["collecting", "completed", "paused"].indexOf(state) >= 0 && row.status !== state) return false;
     return true;
   });
-  var priorityOrder = { high: 0, normal: 1, low: 2 };
-  var statusOrder = { collecting: 0, paused: 1, completed: 2 };
   coreCollectionFilteredRows.sort(function(a, b) {
-    var aSort = parseInt(a.sort_order, 10);
-    var bSort = parseInt(b.sort_order, 10);
-    if (!isNaN(aSort) && !isNaN(bSort) && aSort !== bSort) return aSort - bSort;
-    if (!isNaN(aSort) && isNaN(bSort)) return -1;
-    if (isNaN(aSort) && !isNaN(bSort)) return 1;
-    var aStatusOrder = Object.prototype.hasOwnProperty.call(statusOrder, a.status) ? statusOrder[a.status] : 0;
-    var bStatusOrder = Object.prototype.hasOwnProperty.call(statusOrder, b.status) ? statusOrder[b.status] : 0;
-    var statusDiff = aStatusOrder - bStatusOrder;
-    if (statusDiff) return statusDiff;
-    var aPriorityOrder = Object.prototype.hasOwnProperty.call(priorityOrder, a.priority) ? priorityOrder[a.priority] : 1;
-    var bPriorityOrder = Object.prototype.hasOwnProperty.call(priorityOrder, b.priority) ? priorityOrder[b.priority] : 1;
-    var priorityDiff = aPriorityOrder - bPriorityOrder;
-    if (priorityDiff) return priorityDiff;
-    var shortageDiff = coreCollectionShortageQty(b) - coreCollectionShortageQty(a);
-    if (shortageDiff) return shortageDiff;
     var ap = coreCollectionProductMap[String(a.dkd_shohin_id)] || {};
     var bp = coreCollectionProductMap[String(b.dkd_shohin_id)] || {};
-    return String(ap.manufacturer_part_number || ap.genuine_part_number || "").localeCompare(String(bp.manufacturer_part_number || bp.genuine_part_number || ""), "ja", { numeric: true });
+    var categoryDiff = coreCollectionCategoryOrder(ap) - coreCollectionCategoryOrder(bp);
+    if (categoryDiff) return categoryDiff;
+    var rankDiff = (coreCollectionCategoryRank(a) || Number.MAX_SAFE_INTEGER) - (coreCollectionCategoryRank(b) || Number.MAX_SAFE_INTEGER);
+    if (rankDiff) return rankDiff;
+    return compareCoreCollectionStoredOrder(a, b);
   });
 }
 
@@ -10415,8 +10442,9 @@ function renderCoreCollectionList() {
       var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
       var stock = coreCollectionStockMap[String(row.dkd_shohin_id)] || {};
       var shortage = coreCollectionShortageQty(row);
+      var categoryRank = coreCollectionCategoryRank(row);
       mobileHtml += "<div class='core-collection-card'>";
-      mobileHtml += "<div class='core-collection-card-head'><div><div class='core-main-pn'>" + esc(product.manufacturer_part_number || product.genuine_part_number || ("DKD " + row.dkd_shohin_id)) + "</div><div class='mgmt-sub'>" + (row.sort_order ? "#" + esc(String(row.sort_order)) + " / " : "") + esc(product.genuine_part_number || "-") + " / " + esc(product.manufacturer || "-") + "</div></div><span class='core-priority-badge " + esc(row.priority) + "'>" + esc(coreCollectionPriorityLabel(row.priority)) + "</span></div>";
+      mobileHtml += "<div class='core-collection-card-head'><div><div class='core-main-pn'>" + esc(product.manufacturer_part_number || product.genuine_part_number || ("DKD " + row.dkd_shohin_id)) + "</div><div class='mgmt-sub'>" + esc(productionCategoryLabel(product)) + (categoryRank ? " #" + esc(String(categoryRank)) : "") + " / " + esc(product.genuine_part_number || "-") + " / " + esc(product.manufacturer || "-") + "</div></div><span class='core-priority-badge " + esc(row.priority) + "'>" + esc(coreCollectionPriorityLabel(row.priority)) + "</span></div>";
       mobileHtml += "<div class='core-collection-card-badges'>" + renderCoreCollectionStockBadge(row) + "<span class='core-status-badge " + esc(row.status) + "'>" + esc(coreCollectionStatusLabel(row.status)) + "</span></div>";
       mobileHtml += "<div class='core-collection-qty-grid'><div><span>目標</span><strong>" + esc(String(row.target_quantity || 0)) + "</strong></div><div><span>現在庫</span><strong>" + esc(String(coreCollectionStockQty(row))) + "</strong></div><div class='shortage'><span>不足</span><strong>" + esc(String(shortage)) + "</strong></div></div>";
       mobileHtml += "<div class='core-collection-meta'>" + esc(productionCategoryLabel(product)) + " / DKD " + esc(String(row.dkd_shohin_id)) + (stock.parts && stock.parts.length ? "<br>在庫品番: " + esc(stock.parts.join(" / ")) : "") + "</div>";
@@ -10428,13 +10456,14 @@ function renderCoreCollectionList() {
     bindCoreCollectionActions();
     return;
   }
-  var html = "<table class='mgmt-table core-collection-table'><tr><th>順番・優先</th><th>対象品番</th><th>区分・メーカー</th><th>現在庫</th><th>目標</th><th>不足</th><th>状態・追加元</th><th>操作</th></tr>";
+  var html = "<table class='mgmt-table core-collection-table'><tr><th>カテゴリ順位・優先</th><th>対象品番</th><th>区分・メーカー</th><th>現在庫</th><th>目標</th><th>不足</th><th>状態・追加元</th><th>操作</th></tr>";
   coreCollectionFilteredRows.forEach(function(row) {
     var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
     var stock = coreCollectionStockMap[String(row.dkd_shohin_id)] || {};
     var shortage = coreCollectionShortageQty(row);
+    var categoryRank = coreCollectionCategoryRank(row);
     html += "<tr>";
-    html += "<td>" + (row.sort_order ? "<strong>#" + esc(String(row.sort_order)) + "</strong><br>" : "") + "<span class='core-priority-badge " + esc(row.priority) + "'>" + esc(coreCollectionPriorityLabel(row.priority)) + "</span></td>";
+    html += "<td><div class='core-category-rank'><span>" + esc(productionCategoryLabel(product)) + "</span>" + (categoryRank ? "<strong>#" + esc(String(categoryRank)) + "</strong>" : "") + "</div><span class='core-priority-badge " + esc(row.priority) + "'>" + esc(coreCollectionPriorityLabel(row.priority)) + "</span></td>";
     html += "<td><div class='core-main-pn'>" + esc(product.manufacturer_part_number || product.genuine_part_number || ("DKD " + row.dkd_shohin_id)) + "</div><div class='mgmt-pn'>純正 " + esc(product.genuine_part_number || "-") + "</div><div class='mgmt-sub'>DKD " + esc(String(row.dkd_shohin_id)) + "</div></td>";
     html += "<td>" + esc(productionCategoryLabel(product)) + "<div class='mgmt-sub'>" + esc(product.manufacturer || "-") + "</div></td>";
     html += "<td>" + renderCoreCollectionStockBadge(row) + (stock.parts && stock.parts.length ? "<div class='mgmt-sub'>" + esc(stock.parts.join(" / ")) + "</div>" : "") + "</td>";
@@ -10695,11 +10724,11 @@ function csvCoreCollectionCell(value) {
 function exportCoreCollectionCsv() {
   applyCoreCollectionFilters();
   if (!coreCollectionFilteredRows.length) { alert("出力する収集対象がありません。"); return; }
-  var lines = [["順番", "追加元", "元順位", "2025出荷数", "優先度", "状態", "カテゴリ", "メーカー", "メーカー品番", "純正品番", "DKD商品ID", "現在庫", "目標数", "不足数", "入手先候補", "メモ"]];
+  var lines = [["カテゴリ順位", "追加元", "元順位", "2025出荷数", "優先度", "状態", "カテゴリ", "メーカー", "メーカー品番", "純正品番", "DKD商品ID", "現在庫", "目標数", "不足数", "入手先候補", "メモ"]];
   coreCollectionFilteredRows.forEach(function(row) {
     var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
     lines.push([
-      row.sort_order || "",
+      coreCollectionCategoryRank(row),
       row.source_hint || "",
       row.source_rank || "",
       row.shipment_count == null ? "" : row.shipment_count,
