@@ -6,7 +6,7 @@
 @media print {
   table {
     table-layout: fixed;
-    font-size: 6.2pt;
+    font-size: 6.8pt;
   }
   th,
   td { padding: .75mm .55mm; }
@@ -29,9 +29,9 @@
   }
   .stock-head,
   .stock { min-width: 0; width: 42mm; }
-  .stock { font-size: 5.6pt; line-height: 1.2; }
+  .stock { font-size: 6pt; line-height: 1.2; }
   .missing-head,
   .missing { min-width: 0; width: 33mm; }
-  td small { font-size: 5.2pt; }
-  footer { font-size: 5pt; }
+  td small { font-size: 5.7pt; }
+  footer { font-size: 5.4pt; }
 }

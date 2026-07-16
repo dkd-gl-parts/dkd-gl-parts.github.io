@@ -60,7 +60,7 @@ header {
 .eyebrow {
   display: block;
   color: #2f6fed;
-  font-size: 6.4pt;
+  font-size: 6.8pt;
   font-weight: 900;
   letter-spacing: .14em;
 }
@@ -74,7 +74,7 @@ h1 {
 header p {
   margin: 1mm 0 0;
   color: #5e6b7f;
-  font-size: 6.8pt;
+  font-size: 7.2pt;
   line-height: 1.3;
 }
 
@@ -88,7 +88,7 @@ header p {
 }
 
 .report-meta b { color: #1d4fa9; font-size: 10pt; }
-.report-meta span { color: #718096; font-size: 6.2pt; }
+.report-meta span { color: #718096; font-size: 6.6pt; }
 
 .conditions {
   display: grid;
@@ -108,21 +108,21 @@ header p {
 .conditions span {
   display: block;
   color: #768397;
-  font-size: 5.7pt;
+  font-size: 6.1pt;
 }
 
 .conditions b {
   display: block;
   margin-top: .4mm;
   overflow-wrap: anywhere;
-  font-size: 6.6pt;
+  font-size: 7pt;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
   table-layout: auto;
-  font-size: 6.2pt;
+  font-size: 6.8pt;
 }
 
 thead { display: table-header-group; }
@@ -147,8 +147,8 @@ tbody tr:nth-child(even) td { background: #f8fafc; }
 tr { break-inside: avoid; page-break-inside: avoid; }
 .print-item { break-inside: avoid; page-break-inside: avoid; }
 td b { display: block; color: #17243a; }
-td small { display: block; margin-top: .3mm; color: #738094; font-size: 5.5pt; }
-.rank { color: #1d4fa9; font-size: 8pt; font-weight: 900; text-align: right; }
+td small { display: block; margin-top: .3mm; color: #738094; font-size: 5.9pt; }
+.rank { color: #1d4fa9; font-size: 8.5pt; font-weight: 900; text-align: right; }
 .part { font-family: Consolas, "Yu Gothic", "Meiryo", monospace; white-space: nowrap; }
 .number { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .score { color: #1d4fa9; font-weight: 900; }
@@ -156,7 +156,7 @@ td small { display: block; margin-top: .3mm; color: #738094; font-size: 5.5pt; }
 .compat { min-width: 48mm; font-size: 5.7pt; }
 .compat span { display: block; margin-bottom: .35mm; overflow-wrap: anywhere; }
 .stock-head { min-width: 38mm; }
-.stock { min-width: 38mm; font-size: 5.7pt; }
+.stock { min-width: 38mm; font-size: 6pt; }
 .stock span { display: block; margin-bottom: .35mm; overflow-wrap: anywhere; }
 .stock .stock-status-row {
   display: flex;
@@ -196,7 +196,7 @@ td small { display: block; margin-top: .3mm; color: #738094; font-size: 5.5pt; }
   border-radius: 50%;
   background: #1f9d55;
 }
-.stock .stock-status.has-stock strong { margin-left: auto; font-size: 6.5pt; }
+.stock .stock-status.has-stock strong { margin-left: auto; font-size: 6.9pt; }
 .stock .stock-status.no-stock { color: #7c8796; }
 .stock .compatible-stock {
   display: flex;
@@ -212,9 +212,9 @@ td small { display: block; margin-top: .3mm; color: #738094; font-size: 5.5pt; }
   color: #0f6e5b;
   font-weight: 800;
 }
-.stock .compatible-stock strong { font-size: 6.2pt; }
+.stock .compatible-stock strong { font-size: 6.6pt; }
 .missing-head { min-width: 30mm; }
-.missing { min-width: 30mm; color: #6f4a1b; font-size: 5.4pt; }
+.missing { min-width: 30mm; color: #6f4a1b; font-size: 5.8pt; }
 .missing span { display: block; overflow-wrap: anywhere; }
 .missing-badge {
   width: fit-content;
@@ -236,7 +236,7 @@ footer {
   margin-top: 2mm;
   padding-top: 1.2mm;
   color: #738094;
-  font-size: 5.7pt;
+  font-size: 5.9pt;
 }
 
 @media print {
