@@ -368,7 +368,6 @@
       startRank: startRank,
       endRank: endRank,
       minShipment: nonNegativeNumber("manufacturing-ranking-min-shipment", 0),
-      tieMode: byId("manufacturing-ranking-tie-mode").value,
       query: normalizeSearch(byId("manufacturing-ranking-query").value),
       compatibilityMode: byId("manufacturing-ranking-compat-mode").value,
       compatibilityBasis: byId("manufacturing-ranking-compat-basis").value,
@@ -477,21 +476,9 @@
       normalizeSearch(left.row.maker || left.row.genuine || left.row.productCode).localeCompare(normalizeSearch(right.row.maker || right.row.genuine || right.row.productCode), "ja");
   }
 
-  function assignRanks(results, tieMode) {
-    var previousScore = null;
-    var previousRank = 0;
-    var denseRank = 0;
+  function assignRanks(results) {
     results.forEach(function(result, index) {
-      var changed = index === 0 || result.score !== previousScore;
-      if (tieMode === "sequential") result.rank = index + 1;
-      else if (tieMode === "dense") {
-        if (changed) denseRank++;
-        result.rank = denseRank;
-      } else {
-        if (changed) previousRank = index + 1;
-        result.rank = previousRank;
-      }
-      previousScore = result.score;
+      result.rank = index + 1;
     });
   }
 
@@ -521,14 +508,14 @@
       options.categories.forEach(function(category) {
         var categoryResults = candidates.filter(function(result) { return result.row.sheet === category; });
         categoryResults.sort(compareResults);
-        assignRanks(categoryResults, options.tieMode);
+        assignRanks(categoryResults);
         ranked = ranked.concat(categoryResults.filter(function(result) {
           return result.rank >= options.startRank && result.rank <= options.endRank;
         }));
       });
     } else {
       candidates.sort(compareResults);
-      assignRanks(candidates, options.tieMode);
+      assignRanks(candidates);
       ranked = candidates.filter(function(result) {
         return result.rank >= options.startRank && result.rank <= options.endRank;
       });
@@ -714,7 +701,7 @@
       "<div><span>互換品番</span><b>" + escapeHtml(compatibilityModeLabel(options.compatibilityMode)) + "</b></div>" +
       "<div><span>出力件数</span><b>" + formatNumber(results.length) + "件</b></div></section>" +
       "<table><thead>" + header + "</thead><tbody>" + buildPrintRows(results, options) + "</tbody></table>" +
-      "<footer><span>D-CATS / 製造ランキング</span><span>順位は指定した基準値の降順で自動計算</span></footer></main></body></html>";
+      "<footer><span>D-CATS / 製造ランキング</span><span>順位は指定した基準値の降順。同数時も商品別の連番で重複なし</span></footer></main></body></html>";
   }
 
   function openPdfPreview() {

@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.507">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.507"; -->
+<meta name="dcats-app-version" content="v1.1.508">
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.508"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co; form-action 'self';">
 <title>D-CATS</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233c7df0'/%3E%3Cpath d='M8 17h16M16 9v14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.507">
+<link rel="stylesheet" href="styles.css?v=1.1.508">
 </head>
 <body>
 
@@ -128,7 +128,7 @@
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.507</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.508</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -157,7 +157,7 @@
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.507</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.508</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -187,7 +187,7 @@
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.507</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.508</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1732,7 +1732,7 @@
       <div class="ranking-report-source-copy">
         <span class="ranking-report-kicker">MANUFACTURING REPORT</span>
         <h2>製造ランキング帳票</h2>
-        <p>カテゴリ別の出荷実績から順位を計算し、互換候補が分かるPDF帳票を作成します。</p>
+        <p>カテゴリ別の出荷実績から、同数でも重複しない連番順位を計算し、互換候補が分かるPDF帳票を作成します。</p>
         <p class="ranking-report-local-note">D-CATSに保存済みの出荷実績を使用します。毎回のExcelアップロードは不要です。</p>
       </div>
       <div class="ranking-report-dataset-panel">
@@ -1782,10 +1782,10 @@
             </select>
           </label>
           <label class="ranking-report-field ranking-report-field-wide">
-            <span>順位の範囲</span>
+            <span>順位の集計範囲</span>
             <select id="manufacturing-ranking-scope">
-              <option value="per_category">カテゴリごとに順位を計算</option>
-              <option value="overall">選択カテゴリを通算して順位を計算</option>
+              <option value="overall">選択カテゴリを通算して連番</option>
+              <option value="per_category">カテゴリごとに1位から連番</option>
             </select>
           </label>
           <label class="ranking-report-field">
@@ -1801,12 +1801,8 @@
             <input id="manufacturing-ranking-min-shipment" type="number" min="0" step="1" value="1">
           </label>
           <label class="ranking-report-field">
-            <span>同数順位</span>
-            <select id="manufacturing-ranking-tie-mode">
-              <option value="competition">同順位（次を飛ばす）</option>
-              <option value="dense">同順位（次を詰める）</option>
-              <option value="sequential">連番</option>
-            </select>
+            <span>同数時の順位</span>
+            <input type="text" value="各ランキング内で連番（重複なし）" readonly>
           </label>
           <label class="ranking-report-field ranking-report-field-wide">
             <span>品番・商品名で絞り込み</span>
@@ -2572,7 +2568,7 @@
   <div class="fs-thumbs" id="fs-thumbs"></div>
 </div>
 
-<script src="app.js?v=1.1.507"></script>
-<script src="manufacturing-ranking-report.js?v=1.1.507"></script>
+<script src="app.js?v=1.1.508"></script>
+<script src="manufacturing-ranking-report.js?v=1.1.508"></script>
 </body>
 </html>
