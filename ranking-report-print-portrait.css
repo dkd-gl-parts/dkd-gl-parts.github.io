@@ -1,0 +1,13 @@
+@page {
+  size: A4 portrait;
+  margin: 7mm;
+}
+
+@media print {
+  table { font-size: 6.1pt; }
+  th,
+  td { padding-left: 1mm; padding-right: 1mm; }
+  .compat-head,
+  .compat { min-width: 34mm; }
+  .compat { font-size: 5.5pt; }
+}

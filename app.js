@@ -3392,7 +3392,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.503";
+var APP_VERSION       = "v1.1.504";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -4955,7 +4955,7 @@ function updateAllHeaders() {
   var cls   = roleClass(userProfile.role);
   var greet = tf("greeting", { name: name });
 
-  ["menu","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","component-compat-mgmt","product-kind-stock-mgmt","manufacturing-cost-mgmt","finished-label-mgmt","production-ranking-mgmt","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","logs"].forEach(function(sc) {
+  ["menu","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","component-compat-mgmt","product-kind-stock-mgmt","manufacturing-cost-mgmt","finished-label-mgmt","production-ranking-mgmt","manufacturing-ranking-report","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","logs"].forEach(function(sc) {
     var nameEl  = document.getElementById(sc + "-username");
     var badgeEl = document.getElementById(sc + "-role-badge");
     if (nameEl)  nameEl.textContent = name;
@@ -5028,6 +5028,7 @@ function renderMenu() {
     { icon: "&#x1F517;", titleKey: "mi_component_compat_title", descKey: "mi_component_compat_desc", action: "component-compat-mgmt", available: canManageComponentCompatibility() },
     { icon: "&#x1F4B0;", titleKey: "sales_pricing_title", descKey: "sales_pricing_mgmt_desc", action: "sales-pricing-mgmt", available: canViewSalesPricing() },
     { icon: "&#x1F6D2;", titleKey: "mi_purchase_mgmt_title", descKey: "mi_purchase_mgmt_desc", action: "purchase-mgmt", available: canViewPurchaseMgmt() },
+    { icon: "&#x1F4CA;", titleKey: "mi_report_title", descKey: "mi_report_desc", action: "manufacturing-ranking-report", available: canViewManagementScreen() },
     { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canViewManagementScreen() },
     { icon: "&#x2699;", titleKey: "mi_api_settings_title", descKey: "mi_api_settings_desc", action: "api-settings", available: canManageSharedSettings() },
     { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: canViewOperationLogs() }
@@ -5090,6 +5091,7 @@ function renderMenu() {
       else if (card.dataset.action === "product-kind-stock-mgmt") enterProductKindStockMgmt();
       else if (card.dataset.action === "manufacturing-cost-mgmt") enterManufacturingCostMgmt();
       else if (card.dataset.action === "production-ranking-mgmt") enterProductionRankingMgmt();
+      else if (card.dataset.action === "manufacturing-ranking-report") enterManufacturingRankingReport();
       else if (card.dataset.action === "kikan-mgmt") enterKikanMgmt();
       else if (card.dataset.action === "rakuten-price") enterRakutenPrice();
       else if (card.dataset.action === "rakuten-bulk") enterRakutenBulk();
