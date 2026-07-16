@@ -240,7 +240,6 @@
       body: normalizeText(row.genuine_body_part_number),
       clutch: normalizeText(row.genuine_clutch_part_number),
       type: normalizeText(row.product_type),
-      daiko: normalizeText(row.daiko_part_number),
       shipment: Number(row.shipment_count || 0),
       substitute: Number(row.substitute_count || 0)
     };
@@ -260,7 +259,7 @@
     var rows = [];
     for (var offset = 0; ; offset += DATA_PAGE_SIZE) {
       var response = await sb.from("manufacturing_report_rows")
-        .select("id,dataset_id,category_name,category_order,source_row_number,is_aggregate,product_name,product_code,genuine_part_number,manufacturer_part_number,genuine_part_number_2,genuine_body_part_number,genuine_clutch_part_number,product_type,daiko_part_number,shipment_count,substitute_count")
+        .select("id,dataset_id,category_name,category_order,source_row_number,is_aggregate,product_name,product_code,genuine_part_number,manufacturer_part_number,genuine_part_number_2,genuine_body_part_number,genuine_clutch_part_number,product_type,shipment_count,substitute_count")
         .eq("dataset_id", datasetId)
         .order("category_order", { ascending: true })
         .order("source_row_number", { ascending: true })
@@ -397,7 +396,7 @@
       add("genuine:", row.genuine2);
     }
     if (basis === "all_source") {
-      [row.genuine, row.genuine2, row.maker, row.body, row.clutch, row.daiko].forEach(function(value) {
+      [row.genuine, row.genuine2, row.maker, row.body, row.clutch].forEach(function(value) {
         add("part:", value);
       });
     }
@@ -445,7 +444,7 @@
   function rowSearchText(row) {
     return normalizeSearch([
       row.sheet, row.productName, row.productCode, row.genuine, row.genuine2,
-      row.maker, row.body, row.clutch, row.type, row.daiko
+      row.maker, row.body, row.clutch, row.type
     ].join(" "));
   }
 
@@ -453,7 +452,7 @@
     return group.slice().sort(function(left, right) {
       return metricValue(right, metric) - metricValue(left, metric) ||
         right.shipment - left.shipment ||
-        normalizeSearch(left.daiko || left.maker || left.genuine).localeCompare(normalizeSearch(right.daiko || right.maker || right.genuine), "ja");
+        normalizeSearch(left.maker || left.genuine || left.productCode).localeCompare(normalizeSearch(right.maker || right.genuine || right.productCode), "ja");
     })[0];
   }
 
@@ -475,7 +474,7 @@
     return right.score - left.score ||
       right.shipment - left.shipment ||
       left.row.sheet.localeCompare(right.row.sheet, "ja") ||
-      normalizeSearch(left.row.daiko || left.row.maker || left.row.genuine).localeCompare(normalizeSearch(right.row.daiko || right.row.maker || right.row.genuine), "ja");
+      normalizeSearch(left.row.maker || left.row.genuine || left.row.productCode).localeCompare(normalizeSearch(right.row.maker || right.row.genuine || right.row.productCode), "ja");
   }
 
   function assignRanks(results, tieMode) {
@@ -559,16 +558,14 @@
     return scope === "overall" ? "選択カテゴリ通算" : "カテゴリ別";
   }
 
-  function mainPartNumber(row) {
-    return row.daiko || row.maker || row.genuine || row.productCode || "-";
-  }
-
   function compatibilityMembers(result) {
     return result.group.filter(function(row) { return row.id !== result.row.id; });
   }
 
   function compatibilityLine(row) {
-    var numbers = [row.daiko, row.genuine, row.maker].filter(Boolean);
+    var numbers = [row.genuine, row.genuine2, row.maker, row.body, row.clutch].filter(function(value, index, values) {
+      return value && values.indexOf(value) === index;
+    });
     return numbers.join(" / ") + " (出荷 " + formatNumber(row.shipment) + ")";
   }
 
@@ -613,7 +610,7 @@
     }
     var visible = results.slice(0, PREVIEW_LIMIT);
     var html = "<table class='ranking-report-table'><thead><tr>" +
-      "<th>順位</th><th>カテゴリ</th><th>商品名</th><th>大光品番</th><th>純正品番</th><th>メーカー品番</th><th>出荷数</th>";
+      "<th>順位</th><th>カテゴリ</th><th>商品名</th><th>純正品番</th><th>メーカー品番</th><th>出荷数</th>";
     if (options.showSubstitute) html += "<th>代替</th>";
     if (options.metric !== "shipment") html += "<th>順位値</th>";
     if (options.showCompatibility) html += "<th class='ranking-report-compat-column'>互換候補</th>";
@@ -624,7 +621,6 @@
       html += "<tr><td class='ranking-report-rank-cell'>" + formatNumber(result.rank) + "</td>" +
         "<td>" + escapeHtml(row.sheet) + "</td>" +
         "<td><strong>" + escapeHtml(row.productName || "-") + "</strong><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
-        "<td class='ranking-report-part-cell'>" + escapeHtml(mainPartNumber(row)) + "</td>" +
         "<td class='ranking-report-part-cell'>" + escapeHtml(row.genuine || "-") + "</td>" +
         "<td class='ranking-report-part-cell'>" + escapeHtml(row.maker || "-") + "</td>" +
         "<td class='ranking-report-number-cell'>" + formatNumber(result.shipment) + "</td>";
@@ -678,7 +674,6 @@
       var html = "<tr><td class='rank'>" + formatNumber(result.rank) + "</td>" +
         "<td>" + escapeHtml(row.sheet) + "</td>" +
         "<td><b>" + escapeHtml(row.productName || "-") + "</b><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
-        "<td class='part'>" + escapeHtml(mainPartNumber(row)) + "</td>" +
         "<td class='part'>" + escapeHtml(row.genuine || "-") + "</td>" +
         "<td class='part'>" + escapeHtml(row.maker || "-") + "</td>" +
         "<td class='number'>" + formatNumber(result.shipment) + "</td>";
@@ -701,7 +696,7 @@
     var generatedAt = new Date().toLocaleString("ja-JP");
     var categoryText = options.categories.join(" / ");
     var title = "製造ランキング " + options.startRank + "-" + options.endRank + "位";
-    var header = "<tr><th>順位</th><th>カテゴリ</th><th>商品名</th><th>大光品番</th><th>純正品番</th><th>メーカー品番</th><th>出荷数</th>";
+    var header = "<tr><th>順位</th><th>カテゴリ</th><th>商品名</th><th>純正品番</th><th>メーカー品番</th><th>出荷数</th>";
     if (options.showSubstitute) header += "<th>代替</th>";
     if (options.metric !== "shipment") header += "<th>順位値</th>";
     if (options.showCompatibility) header += "<th class='compat-head'>互換候補</th>";
