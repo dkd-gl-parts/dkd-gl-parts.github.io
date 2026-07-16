@@ -93,6 +93,10 @@
     return new Intl.NumberFormat("ja-JP", { maximumFractionDigits: 2 }).format(Number(value || 0));
   }
 
+  function normalizeManufacturingProductName(value) {
+    return normalizeText(value).replace(/大型オルタネータ/g, "オルタネータ");
+  }
+
   function columnIndex(headers, candidates) {
     var normalized = headers.map(normalizeHeader);
     for (var i = 0; i < candidates.length; i++) {
@@ -148,7 +152,7 @@
         id: sheetName + "::" + String(i + 1),
         sheet: sheetName,
         sourceRow: i + 1,
-        productName: cellValue(row, columns.productName),
+        productName: normalizeManufacturingProductName(cellValue(row, columns.productName)),
         productCode: cellValue(row, columns.productCode),
         genuine: cellValue(row, columns.genuine),
         maker: cellValue(row, columns.maker),
@@ -264,7 +268,7 @@
       id: String(row.dataset_id) + "::" + String(row.id),
       sheet: normalizeText(row.category_name),
       sourceRow: Number(row.source_row_number || 0),
-      productName: normalizeText(row.product_name),
+      productName: normalizeManufacturingProductName(row.product_name),
       productCode: normalizeText(row.product_code),
       genuine: normalizeText(row.genuine_part_number),
       maker: normalizeText(row.manufacturer_part_number),
@@ -643,7 +647,6 @@
       compatibilityMode: byId("manufacturing-ranking-compat-mode").value,
       compatibilityBasis: byId("manufacturing-ranking-compat-basis").value,
       orientation: byId("manufacturing-ranking-orientation").value,
-      showCompatibility: byId("manufacturing-ranking-show-compat").checked,
       showCoreStock: byId("manufacturing-ranking-show-core-stock").checked,
       showMissingMaster: byId("manufacturing-ranking-show-missing").checked
     };
@@ -968,13 +971,7 @@
     if (!stock.matched) return "<span class='ranking-report-none'>マスタ未登録</span>";
     var currentClass = stock.currentTotal > 0 ? " is-positive" : "";
     var html = "<span class='ranking-report-stock-badge" + currentClass + "'>現在 " + formatNumber(stock.currentTotal) + "台</span>";
-    if (stock.compatibleStocked.length) {
-      html += "<span class='ranking-report-stock-badge is-compatible'>互換在庫 " + formatNumber(stock.compatibleStocked.length) + "品番 / " + formatNumber(stock.compatibleTotal) + "台</span>";
-      stock.compatibleStocked.slice(0, 4).forEach(function(product) {
-        html += "<small>" + escapeHtml(masterProductPartNumber(product)) + "：" + formatNumber(product.coreStockQty) + "台</small>";
-      });
-      if (stock.compatibleStocked.length > 4) html += "<small>ほか " + formatNumber(stock.compatibleStocked.length - 4) + "品番</small>";
-    }
+    if (stock.compatibleTotal > 0) html += "<span class='ranking-report-stock-badge is-compatible'>互換品に " + formatNumber(stock.compatibleTotal) + "台</span>";
     return html;
   }
 
@@ -983,9 +980,7 @@
     var stock = coreStockDetails(result);
     if (!stock.matched) return "-";
     var html = "<span>現在 " + formatNumber(stock.currentTotal) + "台</span>";
-    stock.compatibleStocked.forEach(function(product) {
-      html += "<span class='compatible-stock'>互換 " + escapeHtml(masterProductPartNumber(product)) + "：" + formatNumber(product.coreStockQty) + "台</span>";
-    });
+    if (stock.compatibleTotal > 0) html += "<span class='compatible-stock'>互換品に " + formatNumber(stock.compatibleTotal) + "台</span>";
     return html;
   }
 
@@ -1071,13 +1066,11 @@
       "<th>順位</th><th>商品名</th><th>純正品番</th><th>メーカー品番</th><th>出荷数</th>";
     if (options.metric !== "shipment") html += "<th>順位値</th>";
     if (options.showCoreStock) html += "<th class='ranking-report-stock-column'>コア在庫</th>";
-    if (options.showCompatibility) html += "<th class='ranking-report-compat-column'>互換品情報</th>";
     if (options.showMissingMaster) html += "<th class='ranking-report-compat-column'>マスタ未登録品番</th>";
     html += "</tr></thead><tbody>";
     visible.forEach(function(result) {
       var row = result.row;
       var missing = missingMasterPartNumbers(result, options.compatibilityMode);
-      var compatibility = compatibilityDetails(result, options.showCoreStock);
       html += "<tr><td class='ranking-report-rank-cell'>" + formatNumber(result.rank) + "</td>" +
         "<td><strong>" + escapeHtml(row.productName || "-") + "</strong><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
         "<td class='ranking-report-part-cell'>" + escapeHtml(row.genuine || "-") + "</td>" +
@@ -1085,16 +1078,6 @@
         "<td class='ranking-report-number-cell'>" + formatNumber(result.shipment) + "</td>";
       if (options.metric !== "shipment") html += "<td class='ranking-report-number-cell ranking-report-score-cell'>" + formatNumber(result.score) + "</td>";
       if (options.showCoreStock) html += "<td class='ranking-report-stock-cell'>" + buildPreviewCoreStock(result) + "</td>";
-      if (options.showCompatibility) {
-        html += "<td class='ranking-report-compat-cell'>";
-        if (!compatibility.length) html += "<span class='ranking-report-none'>-</span>";
-        else {
-          html += "<span class='ranking-report-compat-badge is-info'>互換品あり " + formatNumber(compatibility.length) + "件</span>";
-          compatibility.slice(0, 5).forEach(function(detail) { html += "<small>" + escapeHtml(detail) + "</small>"; });
-          if (compatibility.length > 5) html += "<small>ほか " + formatNumber(compatibility.length - 5) + "件</small>";
-        }
-        html += "</td>";
-      }
       if (options.showMissingMaster) {
         html += "<td class='ranking-report-compat-cell'>";
         if (!state.masterDataReady) html += "<span class='ranking-report-none'>照合中</span>";
@@ -1142,7 +1125,6 @@
     return results.map(function(result) {
       var row = result.row;
       var missing = missingMasterPartNumbers(result, options.compatibilityMode);
-      var compatibility = compatibilityDetails(result, options.showCoreStock);
       var columnCount = 5 + (options.metric !== "shipment" ? 1 : 0) + (options.showCoreStock ? 1 : 0);
       var html = "<tr><td class='rank'>" + formatNumber(result.rank) + "</td>" +
         "<td class='product'><b>" + escapeHtml(row.productName || "-") + "</b><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
@@ -1154,10 +1136,6 @@
       html += "</tr>";
 
       var detailBlocks = [];
-      if (options.showCompatibility && compatibility.length) {
-        detailBlocks.push("<div class='detail-block'><b class='detail-label'>互換品</b><div class='detail-values'>" +
-          compatibility.map(function(detail) { return "<span>" + escapeHtml(detail) + "</span>"; }).join("") + "</div></div>");
-      }
       if (options.showMissingMaster && missing.length) {
         detailBlocks.push("<div class='detail-block is-missing'><b class='detail-label'>未登録</b><div class='detail-values'>" +
           missing.map(function(entry) { return "<span>" + escapeHtml(entry.label + " " + entry.value) + "</span>"; }).join("") + "</div></div>");
