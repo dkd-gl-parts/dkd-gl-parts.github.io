@@ -550,10 +550,11 @@ var TRANSLATIONS = {
     gltek_product_add_section: "部品メーカー区分／GLTEK製",
     gltek_manufacturer_type: "部品メーカー区分",
     gltek_manufacturer_external: "外部メーカー製",
-    gltek_manufacturer_gltek: "GLTEK製（GLTEK品番を発行／再利用）",
+    gltek_manufacturer_gltek: "GLTEK製（新しいGLTEK品番を発行）",
     gltek_base_manufacturer_code: "ベースメーカーコード（1桁）",
     gltek_category_number_code: "GLTEK品番カテゴリコード（2桁）",
-    gltek_product_add_help: "メーカーとメーカー品番を基準に既存GLTEK品番を再利用します。未発行の場合のみ、入力した2つのコードで保存時に新規発行します。",
+    gltek_product_add_help: "上のメーカーとメーカー品番は選択したベース商品の情報です。登録後はメーカーがGLTEKになり、メーカー品番とGLTEK品番には同じ新しいGLTEK品番が入ります。",
+    gltek_product_add_requires_base: "GLTEK製を登録する前に、ベースとなる登録済み商品を製造管理で選択してください。",
     gltek_product_add_requires_source: "GLTEK製には、ベースとなるメーカーとメーカー品番が必要です。",
     gltek_product_add_done: "GLTEK製の商品を追加しました",
     gltek_part_number_invalid_base: "ベースメーカーコードは半角数字1桁で入力してください。",
@@ -1646,10 +1647,11 @@ var TRANSLATIONS = {
     gltek_product_add_section: "Part Manufacturer Type / GLTEK Product",
     gltek_manufacturer_type: "Part Manufacturer Type",
     gltek_manufacturer_external: "External Manufacturer",
-    gltek_manufacturer_gltek: "GLTEK Product (issue / reuse GLTEK part number)",
+    gltek_manufacturer_gltek: "GLTEK Product (issue a new GLTEK part number)",
     gltek_base_manufacturer_code: "Base Manufacturer Code (1 digit)",
     gltek_category_number_code: "GLTEK Part Number Category Code (2 digits)",
-    gltek_product_add_help: "An existing GLTEK part number is reused by base manufacturer and part number. The two codes are used only when a new number must be issued during save.",
+    gltek_product_add_help: "The manufacturer and part number above identify the selected base product. After registration, the manufacturer is GLTEK and one newly issued G number is stored as both the manufacturer part number and GLTEK part number.",
+    gltek_product_add_requires_base: "Select a registered base product in Production Management before creating a GLTEK product.",
     gltek_product_add_requires_source: "A base manufacturer and manufacturer part number are required for a GLTEK product.",
     gltek_product_add_done: "GLTEK product added",
     gltek_part_number_invalid_base: "Enter a one-digit ASCII base-manufacturer code.",
@@ -2742,10 +2744,11 @@ var TRANSLATIONS = {
     gltek_product_add_section: "零件制造商类别／GLTEK产品",
     gltek_manufacturer_type: "零件制造商类别",
     gltek_manufacturer_external: "外部制造商产品",
-    gltek_manufacturer_gltek: "GLTEK产品（发行／复用GLTEK零件编号）",
+    gltek_manufacturer_gltek: "GLTEK产品（发行新的GLTEK零件编号）",
     gltek_base_manufacturer_code: "基础制造商代码（1位）",
     gltek_category_number_code: "GLTEK零件编号类别代码（2位）",
-    gltek_product_add_help: "系统按基础制造商和制造商零件编号复用现有GLTEK零件编号。仅在需要新发行时，保存时使用两个代码。",
+    gltek_product_add_help: "上方制造商和零件编号来自所选基础产品。登记后制造商为GLTEK，并将同一个新发行的G编号保存为制造商零件编号和GLTEK零件编号。",
+    gltek_product_add_requires_base: "创建GLTEK产品前，请先在生产管理中选择已登记的基础产品。",
     gltek_product_add_requires_source: "GLTEK产品必须填写基础制造商和制造商零件编号。",
     gltek_product_add_done: "已添加GLTEK产品",
     gltek_part_number_invalid_base: "基础制造商代码必须是1位半角数字。",
@@ -3392,7 +3395,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.519";
+var APP_VERSION       = "v1.1.520";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -14354,7 +14357,11 @@ function setGltekProductAddPanel() {
   var fields = document.getElementById("gltek-product-issuance-fields");
   var baseEl = document.getElementById("pf-gltek-base-code");
   var categoryEl = document.getElementById("pf-gltek-category-code");
-  if (!panel || !typeEl || !fields || !baseEl || !categoryEl) return;
+  var manufacturerEl = document.getElementById("pf-mfr");
+  var manufacturerPartEl = document.getElementById("pf-mfr-pn");
+  var baseProductEl = document.getElementById("pf-gltek-base-product-id");
+  var statusEl = document.getElementById("gltek-product-add-status");
+  if (!panel || !typeEl || !fields || !baseEl || !categoryEl || !manufacturerEl || !manufacturerPartEl) return;
 
   var showPanel = partFormSource === "core_products" &&
     partFormMode === "add" &&
@@ -14362,15 +14369,30 @@ function setGltekProductAddPanel() {
     canIssueGltekPartNumber();
   setCspStyle(panel, "display", showPanel ? "" : "none");
   if (!showPanel) {
-    typeEl.value = "external";
+    if (partFormMode === "add") typeEl.value = "external";
     baseEl.value = "";
     categoryEl.value = "";
     setCspStyle(fields, "display", "none");
+    var lockExistingGltekIdentity = partFormMode === "edit" && typeEl.value === "gltek";
+    manufacturerEl.readOnly = lockExistingGltekIdentity;
+    manufacturerPartEl.readOnly = lockExistingGltekIdentity;
+    manufacturerEl.setAttribute("aria-readonly", lockExistingGltekIdentity ? "true" : "false");
+    manufacturerPartEl.setAttribute("aria-readonly", lockExistingGltekIdentity ? "true" : "false");
     return;
   }
 
   var isGltek = typeEl.value === "gltek";
   setCspStyle(fields, "display", isGltek ? "block" : "none");
+  manufacturerEl.readOnly = isGltek;
+  manufacturerPartEl.readOnly = isGltek;
+  manufacturerEl.setAttribute("aria-readonly", isGltek ? "true" : "false");
+  manufacturerPartEl.setAttribute("aria-readonly", isGltek ? "true" : "false");
+  if (statusEl) {
+    var hasBaseProduct = baseProductEl && parseInt(baseProductEl.value, 10) > 0;
+    statusEl.textContent = isGltek && !hasBaseProduct
+      ? t("gltek_product_add_requires_base")
+      : t("gltek_product_add_help");
+  }
 }
 
 function setProductFormFieldMode(source, mode) {
@@ -14401,6 +14423,7 @@ function setProductFormFieldMode(source, mode) {
 
 function setCoreProductFormFields(p) {
   document.getElementById("part-form-id").value        = p && p.dkd_shohin_id ? p.dkd_shohin_id : "";
+  document.getElementById("pf-gltek-base-product-id").value = p ? (productDkdId(p) || "") : "";
   document.getElementById("pf-shohin-cd").value        = p && p.dkd_shohin_id ? p.dkd_shohin_id : "";
   document.getElementById("pf-genuine-pn").value       = p ? (p.genuine_part_number || "") : "";
   document.getElementById("pf-genuine-pn2").value      = p ? (p.genuine_part_number_2 || "") : "";
@@ -14413,7 +14436,7 @@ function setCoreProductFormFields(p) {
   document.getElementById("pf-category").value         = formValueFromCategoryCode(p && (p.category_code || p.category));
   document.getElementById("pf-core-stock-qty").value   = p && p.core_stock_qty != null ? p.core_stock_qty : "";
   document.getElementById("pf-core-pallet-no").value   = p ? (p.core_pallet_no || p.core_pallet_summary || "") : "";
-  document.getElementById("pf-part-manufacturer-type").value = "external";
+  document.getElementById("pf-part-manufacturer-type").value = partFormMode === "edit" && p && p.part_manufacturer_type === "gltek" ? "gltek" : "external";
   document.getElementById("pf-gltek-base-code").value = "";
   document.getElementById("pf-gltek-category-code").value = "";
   setGltekProductAddPanel();
@@ -14473,12 +14496,14 @@ async function saveCoreProductForm() {
     ? document.getElementById("pf-part-manufacturer-type").value
     : "external";
   var isGltekAdd = addingProduct && formContext === "production" && manufacturerType === "gltek";
+  var baseProductId = parseInt(document.getElementById("pf-gltek-base-product-id").value, 10);
   var baseCode = document.getElementById("pf-gltek-base-code").value.trim();
   var gltekCategoryCode = document.getElementById("pf-gltek-category-code").value.trim();
   if (isGltekAdd && !canIssueGltekPartNumber()) { errEl.textContent = t("err_perm"); return; }
+  if (isGltekAdd && (!baseProductId || isNaN(baseProductId))) { errEl.textContent = t("gltek_product_add_requires_base"); return; }
   if (isGltekAdd && (!manufacturer || !mfrPart)) { errEl.textContent = t("gltek_product_add_requires_source"); return; }
-  if (isGltekAdd && baseCode && !/^[0-9]$/.test(baseCode)) { errEl.textContent = t("gltek_part_number_invalid_base"); return; }
-  if (isGltekAdd && gltekCategoryCode && !/^[0-9]{2}$/.test(gltekCategoryCode)) { errEl.textContent = t("gltek_part_number_invalid_category"); return; }
+  if (isGltekAdd && !/^[0-9]$/.test(baseCode)) { errEl.textContent = t("gltek_part_number_invalid_base"); return; }
+  if (isGltekAdd && !/^[0-9]{2}$/.test(gltekCategoryCode)) { errEl.textContent = t("gltek_part_number_invalid_category"); return; }
   var categoryValue = document.getElementById("pf-category").value;
   var payload = {
     category_code: categoryCodeFromForm(categoryValue),
@@ -14508,11 +14533,14 @@ async function saveCoreProductForm() {
         product_core_stock_qty: null,
         product_core_pallet_no: null,
         base_manufacturer_code: baseCode || null,
-        category_number_code: gltekCategoryCode || null
+        category_number_code: gltekCategoryCode || null,
+        product_base_dkd_shohin_id: baseProductId
       });
       if (!r.error) {
         gltekResult = r.data || {};
         payload.part_manufacturer_type = "gltek";
+        payload.manufacturer = gltekResult.manufacturer || "GLTEK";
+        payload.manufacturer_part_number = gltekResult.manufacturer_part_number || gltekResult.gltek_part_number || null;
         payload.gltek_part_number = gltekResult.gltek_part_number || null;
         payload.gltek_base_manufacturer_code = gltekResult.base_manufacturer_code || null;
         payload.gltek_category_number_code = gltekResult.category_number_code || null;
