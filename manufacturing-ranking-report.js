@@ -965,6 +965,23 @@
     };
   }
 
+  function rankingCoreStockSummary(results) {
+    var productsById = Object.create(null);
+    function addProduct(product) {
+      if (product && product.id) productsById[String(product.id)] = product;
+    }
+    (results || []).forEach(function(result) {
+      masterProductsForRow(result.row).forEach(addProduct);
+      coreStockDetails(result).compatibleStocked.forEach(addProduct);
+    });
+    var products = Object.keys(productsById).map(function(productId) { return productsById[productId]; });
+    return {
+      ready: state.masterDataReady,
+      productCount: products.length,
+      total: products.reduce(function(total, product) { return total + Math.max(0, Number(product.coreStockQty || 0)); }, 0)
+    };
+  }
+
   function buildPreviewCoreStock(result) {
     if (!state.masterDataReady) return "<span class='ranking-report-none'>照合中</span>";
     var stock = coreStockDetails(result);
@@ -1028,8 +1045,10 @@
     var missingPartNumberCount = summary.results.reduce(function(total, result) {
       return total + missingMasterPartNumbers(result, options.compatibilityMode).length;
     }, 0);
+    var coreStockSummary = rankingCoreStockSummary(summary.results);
     host.innerHTML = [
       ["対象件数", formatNumber(summary.results.length)],
+      ["コア在庫合計（互換含む）", coreStockSummary.ready ? formatNumber(coreStockSummary.total) + "台" : "照合中"],
       ["マスタ未登録品番", state.masterDataReady ? formatNumber(missingPartNumberCount) : "照合中"],
       ["互換グループ", formatNumber(summary.compatibleGroupCount)],
       ["順位範囲", formatNumber(options.startRank) + " - " + formatNumber(options.endRank)]
@@ -1156,6 +1175,7 @@
     var generatedAt = new Date().toLocaleString("ja-JP");
     var categoryText = options.categories.join(" / ");
     var title = "製造ランキング " + options.startRank + "-" + options.endRank + "位";
+    var coreStockSummary = rankingCoreStockSummary(results);
     var header = "<tr><th class='rank-head'>順位</th><th class='product-head'>商品名</th><th class='genuine-head'>純正品番</th><th class='maker-head'>メーカー品番</th><th class='shipment-head'>出荷数</th>";
     if (options.metric !== "shipment") header += "<th class='score-head'>順位値</th>";
     if (options.showCoreStock) header += "<th class='stock-head'>コア在庫</th>";
@@ -1164,14 +1184,15 @@
 
     return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" +
       "<title>" + escapeHtml(title) + "</title>" +
-      "<link rel='stylesheet' href='ranking-report-print.css?dcats_version=" + encodeURIComponent(version) + "&amp;layout=4'>" +
-      "<link rel='stylesheet' href='" + orientationCss + "?dcats_version=" + encodeURIComponent(version) + "&amp;layout=4'>" +
+      "<link rel='stylesheet' href='ranking-report-print.css?dcats_version=" + encodeURIComponent(version) + "&amp;layout=5'>" +
+      "<link rel='stylesheet' href='" + orientationCss + "?dcats_version=" + encodeURIComponent(version) + "&amp;layout=5'>" +
       "</head><body><div class='print-toolbar'><button id='dcats-ranking-print' type='button'>PDFとして保存 / 印刷</button><span>印刷先で「PDFに保存」を選択してください。</span></div>" +
       "<main class='report'><header><div><span class='eyebrow'>D-CATS MANUFACTURING REPORT</span><h1>製造ランキング</h1><p>" + escapeHtml(categoryText) + "</p></div>" +
       "<div class='report-meta'><b>順位 " + formatNumber(options.startRank) + " - " + formatNumber(options.endRank) + "</b><span>" + escapeHtml(generatedAt) + " 作成</span></div></header>" +
       "<section class='conditions'><div><span>D-CATSデータ</span><b>" + escapeHtml(state.fileName) + "</b></div>" +
       "<div><span>順位基準</span><b>" + escapeHtml(metricLabel(options.metric) + " / " + rankScopeLabel(options.rankScope)) + "</b></div>" +
       "<div><span>互換品番</span><b>" + escapeHtml(compatibilityModeLabel(options.compatibilityMode)) + "</b></div>" +
+      "<div><span>コア在庫合計（互換含む）</span><b>" + (coreStockSummary.ready ? formatNumber(coreStockSummary.total) + "台" : "照合中") + "</b></div>" +
       "<div><span>出力件数</span><b>" + formatNumber(results.length) + "件</b></div></section>" +
       "<table><thead>" + header + "</thead>" + buildPrintRows(results, options) + "</table>" +
       "<footer><span>D-CATS / 製造ランキング</span><span>順位は連番で重複なし / コア在庫・互換・未登録品番はD-CATS照合時点</span></footer></main></body></html>";
@@ -1254,6 +1275,7 @@
     missingMasterPartNumbers: missingMasterPartNumbers,
     compatibilityDetails: compatibilityDetails,
     coreStockDetails: coreStockDetails,
+    rankingCoreStockSummary: rankingCoreStockSummary,
     setMasterPartNumbers: function(values) {
       state.masterPartNumbers = Object.create(null);
       (values || []).forEach(function(value) {

@@ -92,7 +92,7 @@ header p {
 
 .conditions {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr .7fr;
+  grid-template-columns: 1.35fr 1fr .85fr .85fr .55fr;
   gap: 1mm;
   margin: 2mm 0;
 }
