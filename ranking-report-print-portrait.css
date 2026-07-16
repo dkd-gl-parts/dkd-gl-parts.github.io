@@ -1,16 +1,39 @@
 @page {
   size: A4 portrait;
-  margin: 7mm;
+  margin: 5mm;
 }
 
 @media print {
-  table { font-size: 6.1pt; }
+  table {
+    table-layout: fixed;
+    font-size: 6.2pt;
+  }
   th,
-  td { padding-left: 1mm; padding-right: 1mm; }
-  .compat-head,
-  .compat { min-width: 34mm; }
-  .compat { font-size: 5.5pt; }
+  td { padding: .75mm .55mm; }
+  .rank-head,
+  .rank { width: 7mm; }
+  .product-head,
+  .product { width: 32mm; }
+  .genuine-head,
+  .genuine-part,
+  .maker-head,
+  .maker-part { width: 31mm; }
+  .shipment-head,
+  .shipment { width: 12mm; }
+  .substitute-head,
+  .substitute { width: 9mm; }
+  .score-head,
+  .score { width: 12mm; }
+  .part {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-all;
+  }
   .stock-head,
-  .stock { min-width: 28mm; }
-  .stock { font-size: 5.5pt; }
+  .stock { min-width: 0; width: 45mm; }
+  .stock { font-size: 5.6pt; line-height: 1.2; }
+  td small { font-size: 5.2pt; }
+  .detail-row td { padding: .55mm .65mm .75mm; }
+  .detail-block { font-size: 5.3pt; }
+  footer { font-size: 5pt; }
 }

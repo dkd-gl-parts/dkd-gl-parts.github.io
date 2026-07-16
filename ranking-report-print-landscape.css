@@ -2,3 +2,6 @@
   size: A4 landscape;
   margin: 8mm;
 }
+
+.report,
+.print-toolbar { max-width: 297mm; }

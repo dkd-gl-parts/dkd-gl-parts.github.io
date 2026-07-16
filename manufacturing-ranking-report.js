@@ -5,6 +5,7 @@
   var MAX_SOURCE_ROWS = 150000;
   var PREVIEW_LIMIT = 200;
   var DATA_PAGE_SIZE = 1000;
+  var REFERENCE_QUERY_CHUNK_SIZE = 400;
   var MASTER_PART_FIELDS = [
     { normalized: "normalized_genuine_part_number", value: "genuine_part_number", label: "純正" },
     { normalized: "normalized_genuine_part_number_2", value: "genuine_part_number_2", label: "純正2" },
@@ -32,7 +33,8 @@
     kikanMembersByGroupId: Object.create(null),
     kikanGroupIdsByProductId: Object.create(null),
     masterProductCount: 0,
-    masterPartNumberCount: 0,
+    masterCacheRowCount: 0,
+    stockedProductCount: 0,
     kikanGroupCount: 0,
     kikanMemberCount: 0,
     results: [],
@@ -271,7 +273,12 @@
       clutch: normalizeText(row.genuine_clutch_part_number),
       type: normalizeText(row.product_type),
       shipment: Number(row.shipment_count || 0),
-      substitute: Number(row.substitute_count || 0)
+      substitute: Number(row.substitute_count || 0),
+      masterProductIds: Array.isArray(row.master_product_ids) ? row.master_product_ids.map(String) : [],
+      missingMasterParts: Array.isArray(row.missing_master_part_numbers) ? row.missing_master_part_numbers.map(function(entry) {
+        return { label: normalizeText(entry && entry.label), value: normalizeText(entry && entry.value) };
+      }).filter(function(entry) { return entry.value; }) : [],
+      masterCacheReady: !!row.master_checked_at
     };
   }
 
@@ -287,7 +294,7 @@
 
   function fetchDatasetRowPage(datasetId, offset) {
     return sb.from("manufacturing_report_rows")
-        .select("id,dataset_id,category_name,category_order,source_row_number,is_aggregate,product_name,product_code,genuine_part_number,manufacturer_part_number,genuine_part_number_2,genuine_body_part_number,genuine_clutch_part_number,product_type,shipment_count,substitute_count")
+        .select("id,dataset_id,category_name,category_order,source_row_number,is_aggregate,product_name,product_code,genuine_part_number,manufacturer_part_number,genuine_part_number_2,genuine_body_part_number,genuine_clutch_part_number,product_type,shipment_count,substitute_count,master_product_ids,missing_master_part_numbers,master_checked_at")
         .eq("dataset_id", datasetId)
         .order("category_order", { ascending: true })
         .order("source_row_number", { ascending: true })
@@ -320,27 +327,49 @@
     return rows;
   }
 
-  async function fetchMasterPartNumbers() {
+  function uniqueIds(values) {
+    var seen = Object.create(null);
+    return (values || []).filter(function(value) {
+      return value !== null && value !== undefined && String(value) !== "";
+    }).map(String).filter(function(value) {
+      if (!value || seen[value]) return false;
+      seen[value] = true;
+      return true;
+    });
+  }
+
+  async function fetchRowsByValues(table, selectColumns, field, values, chunkSize) {
+    var ids = uniqueIds(values);
+    if (!ids.length) return [];
+    var size = Math.max(1, Number(chunkSize || REFERENCE_QUERY_CHUNK_SIZE));
+    var requests = [];
+    for (var index = 0; index < ids.length; index += size) {
+      requests.push(sb.from(table)
+        .select(selectColumns)
+        .in(field, ids.slice(index, index + size)));
+    }
+    var responses = await Promise.all(requests);
+    var rows = [];
+    responses.forEach(function(response) {
+      if (response.error) throw response.error;
+      rows = rows.concat(response.data || []);
+    });
+    return rows;
+  }
+
+  async function fetchMasterProducts(productIds) {
     var numbers = Object.create(null);
     var productsById = Object.create(null);
     var productsByPart = Object.create(null);
-    var productCount = 0;
-    var selectColumns = ["dkd_shohin_id", "manufacturer", "core_stock_qty"]
+    var selectColumns = ["dkd_shohin_id", "manufacturer"]
       .concat(MASTER_VALUE_COLUMNS, MASTER_PART_COLUMNS).join(",");
-    for (var offset = 0; ; offset += DATA_PAGE_SIZE) {
-      var response = await sb.from("core_products")
-        .select(selectColumns)
-        .order("dkd_shohin_id", { ascending: true })
-        .range(offset, offset + DATA_PAGE_SIZE - 1);
-      if (response.error) throw response.error;
-      var page = response.data || [];
-      productCount += page.length;
-      page.forEach(function(row) {
+    var rows = await fetchRowsByValues("core_products", selectColumns, "dkd_shohin_id", productIds);
+    rows.forEach(function(row) {
         var productId = String(row.dkd_shohin_id);
         var product = {
           id: productId,
           manufacturer: normalizeText(row.manufacturer),
-          coreStockQty: Math.max(0, parseNumber(row.core_stock_qty))
+          coreStockQty: 0
         };
         MASTER_PART_FIELDS.forEach(function(field) {
           product[field.value] = normalizeText(row[field.value]);
@@ -360,37 +389,38 @@
           productsByPart[key].push(product);
         });
       });
-      if (page.length < DATA_PAGE_SIZE) break;
-    }
     return {
       numbers: numbers,
       productsById: productsById,
       productsByPart: productsByPart,
-      productCount: productCount,
+      productCount: rows.length,
       partNumberCount: Object.keys(numbers).length
     };
   }
 
-  async function fetchKikanMembership() {
+  async function fetchKikanMembership(productIds) {
     var membersByGroupId = Object.create(null);
-    var memberCount = 0;
-    for (var offset = 0; ; offset += DATA_PAGE_SIZE) {
-      var response = await sb.from("kikan_group_members")
-        .select("id,kikan_group_id,dkd_gokan_id")
-        .order("id", { ascending: true })
-        .range(offset, offset + DATA_PAGE_SIZE - 1);
-      if (response.error) throw response.error;
-      var page = response.data || [];
-      memberCount += page.length;
-      page.forEach(function(row) {
+    var directMembers = await fetchRowsByValues(
+      "kikan_group_members",
+      "id,kikan_group_id,dkd_gokan_id",
+      "dkd_gokan_id",
+      productIds
+    );
+    var groupIds = uniqueIds(directMembers.map(function(row) { return row.kikan_group_id; }));
+    var rows = await fetchRowsByValues(
+      "kikan_group_members",
+      "id,kikan_group_id,dkd_gokan_id",
+      "kikan_group_id",
+      groupIds,
+      25
+    );
+    rows.forEach(function(row) {
         if (row.kikan_group_id == null || row.dkd_gokan_id == null) return;
         var groupId = String(row.kikan_group_id);
         var productId = String(row.dkd_gokan_id);
         if (!membersByGroupId[groupId]) membersByGroupId[groupId] = [];
         if (membersByGroupId[groupId].indexOf(productId) < 0) membersByGroupId[groupId].push(productId);
       });
-      if (page.length < DATA_PAGE_SIZE) break;
-    }
 
     var groupIdsByProductId = Object.create(null);
     Object.keys(membersByGroupId).forEach(function(groupId) {
@@ -403,7 +433,52 @@
       membersByGroupId: membersByGroupId,
       groupIdsByProductId: groupIdsByProductId,
       groupCount: Object.keys(membersByGroupId).length,
-      memberCount: memberCount
+      memberCount: rows.length
+    };
+  }
+
+  async function fetchCurrentCoreStock(productIds) {
+    var rows = await fetchRowsByValues(
+      "production_core_list_entries",
+      "dkd_shohin_id,quantity",
+      "dkd_shohin_id",
+      productIds
+    );
+    var quantitiesByProductId = Object.create(null);
+    rows.forEach(function(row) {
+      var productId = String(row.dkd_shohin_id || "");
+      if (!productId) return;
+      quantitiesByProductId[productId] = (quantitiesByProductId[productId] || 0) + Math.max(0, parseNumber(row.quantity));
+    });
+    return quantitiesByProductId;
+  }
+
+  async function fetchReportReferenceData(rows) {
+    var cachedProductIds = [];
+    rows.forEach(function(row) {
+      (row.masterProductIds || []).forEach(function(productId) { cachedProductIds.push(productId); });
+    });
+    var directProductIds = uniqueIds(cachedProductIds);
+    var kikan = await fetchKikanMembership(directProductIds);
+    var compatibleProductIds = [];
+    Object.keys(kikan.membersByGroupId).forEach(function(groupId) {
+      compatibleProductIds = compatibleProductIds.concat(kikan.membersByGroupId[groupId]);
+    });
+    var allProductIds = uniqueIds(directProductIds.concat(compatibleProductIds));
+    var loaded = await Promise.all([
+      fetchMasterProducts(allProductIds),
+      fetchCurrentCoreStock(allProductIds)
+    ]);
+    var master = loaded[0];
+    var stockByProductId = loaded[1];
+    Object.keys(master.productsById).forEach(function(productId) {
+      master.productsById[productId].coreStockQty = stockByProductId[productId] || 0;
+    });
+    return {
+      master: master,
+      kikan: kikan,
+      cacheRowCount: rows.filter(function(row) { return row.masterCacheReady; }).length,
+      stockedProductCount: Object.keys(stockByProductId).filter(function(productId) { return stockByProductId[productId] > 0; }).length
     };
   }
 
@@ -422,7 +497,8 @@
     state.kikanMembersByGroupId = Object.create(null);
     state.kikanGroupIdsByProductId = Object.create(null);
     state.masterProductCount = 0;
-    state.masterPartNumberCount = 0;
+    state.masterCacheRowCount = 0;
+    state.stockedProductCount = 0;
     state.kikanGroupCount = 0;
     state.kikanMemberCount = 0;
     state.results = [];
@@ -469,23 +545,21 @@
       updatePreview();
 
       try {
-        var loaded = await Promise.all([
-          fetchMasterPartNumbers(),
-          fetchKikanMembership()
-        ]);
-        var master = loaded[0];
-        var kikan = loaded[1];
+        var referenceData = await fetchReportReferenceData(state.rows);
+        var master = referenceData.master;
+        var kikan = referenceData.kikan;
         state.masterPartNumbers = master.numbers;
         state.masterProductsById = master.productsById;
         state.masterProductsByPart = master.productsByPart;
         state.kikanMembersByGroupId = kikan.membersByGroupId;
         state.kikanGroupIdsByProductId = kikan.groupIdsByProductId;
         state.masterProductCount = master.productCount;
-        state.masterPartNumberCount = master.partNumberCount;
+        state.masterCacheRowCount = referenceData.cacheRowCount;
+        state.stockedProductCount = referenceData.stockedProductCount;
         state.kikanGroupCount = kikan.groupCount;
         state.kikanMemberCount = kikan.memberCount;
         state.masterDataReady = true;
-        setSourceStatus("D-CATS保存データを読み込みました。元データ: " + state.fileName + " / 品番マスタ " + formatNumber(state.masterProductCount) + "商品・" + formatNumber(state.masterPartNumberCount) + "品番 / 互換 " + formatNumber(state.kikanGroupCount) + "グループ", "success");
+        setSourceStatus("D-CATS保存データを読み込みました。元データ: " + state.fileName + " / マスタ照合済み " + formatNumber(state.masterCacheRowCount) + "行 / 現在庫あり " + formatNumber(state.stockedProductCount) + "商品 / 互換 " + formatNumber(state.kikanGroupCount) + "グループ", "success");
         updatePreview();
       } catch (referenceError) {
         state.masterDataError = true;
@@ -506,7 +580,8 @@
       state.kikanMembersByGroupId = Object.create(null);
       state.kikanGroupIdsByProductId = Object.create(null);
       state.masterProductCount = 0;
-      state.masterPartNumberCount = 0;
+      state.masterCacheRowCount = 0;
+      state.stockedProductCount = 0;
       state.kikanGroupCount = 0;
       state.kikanMemberCount = 0;
       state.results = [];
@@ -762,6 +837,11 @@
   }
 
   function masterProductsForRow(row) {
+    if (row.masterCacheReady) {
+      return (row.masterProductIds || []).map(function(productId) {
+        return state.masterProductsById[String(productId)];
+      }).filter(Boolean);
+    }
     var seen = Object.create(null);
     var candidates = [];
     rowPrimaryPartNumberEntries(row).forEach(function(entry) {
@@ -916,6 +996,15 @@
     var seen = Object.create(null);
     var missing = [];
     rows.forEach(function(row) {
+      if (row.masterCacheReady) {
+        (row.missingMasterParts || []).forEach(function(entry) {
+          var key = normalizeSearch(entry.value);
+          if (!key || seen[key]) return;
+          seen[key] = true;
+          missing.push({ label: entry.label, value: entry.value });
+        });
+        return;
+      }
       rowPartNumberEntries(row).forEach(function(entry) {
         if (!isLikelyPartNumber(entry.value)) return;
         var key = normalizeSearch(entry.value);
@@ -1057,27 +1146,30 @@
       var row = result.row;
       var missing = missingMasterPartNumbers(result, options.compatibilityMode);
       var compatibility = compatibilityDetails(result, options.showCoreStock);
+      var columnCount = 5 + (options.showSubstitute ? 1 : 0) + (options.metric !== "shipment" ? 1 : 0) + (options.showCoreStock ? 1 : 0);
       var html = "<tr><td class='rank'>" + formatNumber(result.rank) + "</td>" +
-        "<td><b>" + escapeHtml(row.productName || "-") + "</b><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
-        "<td class='part'>" + escapeHtml(row.genuine || "-") + "</td>" +
-        "<td class='part'>" + escapeHtml(row.maker || "-") + "</td>" +
-        "<td class='number'>" + formatNumber(result.shipment) + "</td>";
-      if (options.showSubstitute) html += "<td class='number'>" + formatNumber(result.substitute) + "</td>";
+        "<td class='product'><b>" + escapeHtml(row.productName || "-") + "</b><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
+        "<td class='part genuine-part'>" + escapeHtml(row.genuine || "-") + "</td>" +
+        "<td class='part maker-part'>" + escapeHtml(row.maker || "-") + "</td>" +
+        "<td class='number shipment'>" + formatNumber(result.shipment) + "</td>";
+      if (options.showSubstitute) html += "<td class='number substitute'>" + formatNumber(result.substitute) + "</td>";
       if (options.metric !== "shipment") html += "<td class='number score'>" + formatNumber(result.score) + "</td>";
       if (options.showCoreStock) html += "<td class='stock'>" + buildPrintCoreStock(result) + "</td>";
-      if (options.showCompatibility) {
-        html += "<td class='compat'>";
-        if (!compatibility.length) html += "-";
-        else html += compatibility.map(function(detail) { return "<span>" + escapeHtml(detail) + "</span>"; }).join("");
-        html += "</td>";
+      html += "</tr>";
+
+      var detailBlocks = [];
+      if (options.showCompatibility && compatibility.length) {
+        detailBlocks.push("<div class='detail-block'><b class='detail-label'>互換品</b><div class='detail-values'>" +
+          compatibility.map(function(detail) { return "<span>" + escapeHtml(detail) + "</span>"; }).join("") + "</div></div>");
       }
-      if (options.showMissingMaster) {
-        html += "<td class='compat'>";
-        if (!missing.length) html += "-";
-        else html += missing.map(function(entry) { return "<span>" + escapeHtml(entry.label + " " + entry.value) + "</span>"; }).join("");
-        html += "</td>";
+      if (options.showMissingMaster && missing.length) {
+        detailBlocks.push("<div class='detail-block is-missing'><b class='detail-label'>未登録</b><div class='detail-values'>" +
+          missing.map(function(entry) { return "<span>" + escapeHtml(entry.label + " " + entry.value) + "</span>"; }).join("") + "</div></div>");
       }
-      return html + "</tr>";
+      if (detailBlocks.length) {
+        html += "<tr class='detail-row'><td colspan='" + columnCount + "'><div class='detail-grid'>" + detailBlocks.join("") + "</div></td></tr>";
+      }
+      return "<tbody class='print-item'>" + html + "</tbody>";
     }).join("");
   }
 
@@ -1087,12 +1179,10 @@
     var generatedAt = new Date().toLocaleString("ja-JP");
     var categoryText = options.categories.join(" / ");
     var title = "製造ランキング " + options.startRank + "-" + options.endRank + "位";
-    var header = "<tr><th>順位</th><th>商品名</th><th>純正品番</th><th>メーカー品番</th><th>出荷数</th>";
-    if (options.showSubstitute) header += "<th>代替</th>";
-    if (options.metric !== "shipment") header += "<th>順位値</th>";
+    var header = "<tr><th class='rank-head'>順位</th><th class='product-head'>商品名</th><th class='genuine-head'>純正品番</th><th class='maker-head'>メーカー品番</th><th class='shipment-head'>出荷数</th>";
+    if (options.showSubstitute) header += "<th class='substitute-head'>代替</th>";
+    if (options.metric !== "shipment") header += "<th class='score-head'>順位値</th>";
     if (options.showCoreStock) header += "<th class='stock-head'>コア在庫</th>";
-    if (options.showCompatibility) header += "<th class='compat-head'>互換品情報</th>";
-    if (options.showMissingMaster) header += "<th class='compat-head'>マスタ未登録品番</th>";
     header += "</tr>";
 
     return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" +
@@ -1106,7 +1196,7 @@
       "<div><span>順位基準</span><b>" + escapeHtml(metricLabel(options.metric) + " / " + rankScopeLabel(options.rankScope)) + "</b></div>" +
       "<div><span>互換品番</span><b>" + escapeHtml(compatibilityModeLabel(options.compatibilityMode)) + "</b></div>" +
       "<div><span>出力件数</span><b>" + formatNumber(results.length) + "件</b></div></section>" +
-      "<table><thead>" + header + "</thead><tbody>" + buildPrintRows(results, options) + "</tbody></table>" +
+      "<table><thead>" + header + "</thead>" + buildPrintRows(results, options) + "</table>" +
       "<footer><span>D-CATS / 製造ランキング</span><span>順位は連番で重複なし / コア在庫・互換・未登録品番はD-CATS照合時点</span></footer></main></body></html>";
   }
 
