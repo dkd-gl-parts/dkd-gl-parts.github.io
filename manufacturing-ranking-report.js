@@ -823,14 +823,17 @@
     return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate());
   }
 
-  function printFileTitle(categories, date) {
+  function printFileTitle(categories, startRank, endRank, date) {
     var categoryNames = (categories || []).map(function(category) {
       return normalizeText(category)
         .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "・")
         .replace(/・+/g, "・")
         .replace(/[.\s]+$/g, "");
     }).filter(Boolean);
-    return (categoryNames.join("・") || "カテゴリ") + "＆製造ランキング＆" + printFileDate(date);
+    var firstRank = Math.max(1, parseInt(startRank, 10) || 1);
+    var lastRank = Math.max(firstRank, parseInt(endRank, 10) || firstRank);
+    var rankRange = firstRank === lastRank ? String(firstRank) : firstRank + "-" + lastRank;
+    return (categoryNames.join("・") || "カテゴリ") + "＆製造ランキング" + rankRange + "位＆" + printFileDate(date);
   }
 
   function rowPartNumberEntries(row) {
@@ -1188,7 +1191,7 @@
     var generatedDate = new Date();
     var generatedAt = generatedDate.toLocaleString("ja-JP");
     var categoryText = options.categories.join(" / ");
-    var title = printFileTitle(options.categories, generatedDate);
+    var title = printFileTitle(options.categories, options.startRank, options.endRank, generatedDate);
     var coreStockSummary = rankingCoreStockSummary(results);
     var header = "<tr><th class='rank-head'>順位</th><th class='product-head'>商品名</th><th class='genuine-head'>純正品番</th><th class='maker-head'>メーカー品番</th><th class='shipment-head'>出荷数</th>";
     if (options.metric !== "shipment") header += "<th class='score-head'>順位値</th>";
