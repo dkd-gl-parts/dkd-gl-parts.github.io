@@ -3392,7 +3392,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.509";
+var APP_VERSION       = "v1.1.510";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -10109,7 +10109,7 @@ function openPartForm(mode, partId) {
   var title    = document.getElementById("part-form-title");
   var errEl    = document.getElementById("part-form-error");
   errEl.textContent = "";
-  document.getElementById("pf-shohin-cd").readOnly = false;
+  setProductFormFieldMode("parts", mode);
 
   if (mode === "add") {
     title.textContent = t("part_form_add_title");
@@ -14372,6 +14372,32 @@ function setGltekProductAddPanel() {
   setCspStyle(fields, "display", isGltek ? "block" : "none");
 }
 
+function setProductFormFieldMode(source, mode) {
+  var productCodeRow = document.getElementById("pf-shohin-cd-row");
+  var productCodeInput = document.getElementById("pf-shohin-cd");
+  var coreInventoryFields = document.getElementById("pf-core-inventory-fields");
+  var coreStockInput = document.getElementById("pf-core-stock-qty");
+  var corePalletInput = document.getElementById("pf-core-pallet-no");
+  var isCoreProduct = source === "core_products";
+  var isAdd = mode === "add";
+
+  setCspStyle(productCodeRow, "display", isCoreProduct && isAdd ? "none" : "");
+  setCspStyle(coreInventoryFields, "display", isCoreProduct && !isAdd ? "" : "none");
+
+  if (productCodeInput) {
+    productCodeInput.readOnly = isCoreProduct || mode === "edit";
+    productCodeInput.setAttribute("aria-readonly", productCodeInput.readOnly ? "true" : "false");
+    productCodeInput.tabIndex = isCoreProduct ? -1 : 0;
+    if (isCoreProduct && isAdd) productCodeInput.value = "";
+  }
+
+  [coreStockInput, corePalletInput].forEach(function(input) {
+    if (!input) return;
+    input.disabled = !isCoreProduct || isAdd;
+    if (isAdd) input.value = "";
+  });
+}
+
 function setCoreProductFormFields(p) {
   document.getElementById("part-form-id").value        = p && p.dkd_shohin_id ? p.dkd_shohin_id : "";
   document.getElementById("pf-shohin-cd").value        = p && p.dkd_shohin_id ? p.dkd_shohin_id : "";
@@ -14401,8 +14427,7 @@ async function openCoreProductForm(mode, product, context) {
   document.getElementById("part-form-error").textContent = "";
   document.getElementById("part-form-title").textContent = mode === "add" ? t("btn_add_part") : t("btn_edit_part");
   setCoreProductFormFields(mode === "add" ? (product || null) : product);
-  document.getElementById("pf-shohin-cd").readOnly = true;
-  if (mode === "add") document.getElementById("pf-shohin-cd").value = "";
+  setProductFormFieldMode("core_products", mode);
   clearUnifiedSpecForm();
   if (mode === "edit") {
     await loadProductSpecsForCurrent();
@@ -14461,11 +14486,13 @@ async function saveCoreProductForm() {
     genuine_part_number_2: genuine2,
     manufacturer_part_number: mfrPart,
     manufacturer: manufacturer,
-    core_stock_qty: nullableIntFromInput("pf-core-stock-qty"),
-    core_pallet_no: nullableTextFromInput("pf-core-pallet-no"),
     updated_by: currentUser ? currentUser.id : null,
     updated_at: new Date().toISOString()
   };
+  if (!addingProduct) {
+    payload.core_stock_qty = nullableIntFromInput("pf-core-stock-qty");
+    payload.core_pallet_no = nullableTextFromInput("pf-core-pallet-no");
+  }
   var r;
   var gltekResult = null;
   if (addingProduct) {
@@ -14477,8 +14504,8 @@ async function saveCoreProductForm() {
         product_genuine_part_number_2: payload.genuine_part_number_2,
         product_manufacturer_part_number: payload.manufacturer_part_number,
         product_manufacturer: payload.manufacturer,
-        product_core_stock_qty: payload.core_stock_qty,
-        product_core_pallet_no: payload.core_pallet_no,
+        product_core_stock_qty: null,
+        product_core_pallet_no: null,
         base_manufacturer_code: baseCode || null,
         category_number_code: gltekCategoryCode || null
       });
