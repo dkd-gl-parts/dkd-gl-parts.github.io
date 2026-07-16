@@ -645,8 +645,7 @@
       orientation: byId("manufacturing-ranking-orientation").value,
       showCompatibility: byId("manufacturing-ranking-show-compat").checked,
       showCoreStock: byId("manufacturing-ranking-show-core-stock").checked,
-      showMissingMaster: byId("manufacturing-ranking-show-missing").checked,
-      showSubstitute: byId("manufacturing-ranking-show-substitute").checked
+      showMissingMaster: byId("manufacturing-ranking-show-missing").checked
     };
   }
 
@@ -1070,7 +1069,6 @@
     var visible = results.slice(0, PREVIEW_LIMIT);
     var html = "<table class='ranking-report-table'><thead><tr>" +
       "<th>順位</th><th>商品名</th><th>純正品番</th><th>メーカー品番</th><th>出荷数</th>";
-    if (options.showSubstitute) html += "<th>代替</th>";
     if (options.metric !== "shipment") html += "<th>順位値</th>";
     if (options.showCoreStock) html += "<th class='ranking-report-stock-column'>コア在庫</th>";
     if (options.showCompatibility) html += "<th class='ranking-report-compat-column'>互換品情報</th>";
@@ -1085,7 +1083,6 @@
         "<td class='ranking-report-part-cell'>" + escapeHtml(row.genuine || "-") + "</td>" +
         "<td class='ranking-report-part-cell'>" + escapeHtml(row.maker || "-") + "</td>" +
         "<td class='ranking-report-number-cell'>" + formatNumber(result.shipment) + "</td>";
-      if (options.showSubstitute) html += "<td class='ranking-report-number-cell'>" + formatNumber(result.substitute) + "</td>";
       if (options.metric !== "shipment") html += "<td class='ranking-report-number-cell ranking-report-score-cell'>" + formatNumber(result.score) + "</td>";
       if (options.showCoreStock) html += "<td class='ranking-report-stock-cell'>" + buildPreviewCoreStock(result) + "</td>";
       if (options.showCompatibility) {
@@ -1146,13 +1143,12 @@
       var row = result.row;
       var missing = missingMasterPartNumbers(result, options.compatibilityMode);
       var compatibility = compatibilityDetails(result, options.showCoreStock);
-      var columnCount = 5 + (options.showSubstitute ? 1 : 0) + (options.metric !== "shipment" ? 1 : 0) + (options.showCoreStock ? 1 : 0);
+      var columnCount = 5 + (options.metric !== "shipment" ? 1 : 0) + (options.showCoreStock ? 1 : 0);
       var html = "<tr><td class='rank'>" + formatNumber(result.rank) + "</td>" +
         "<td class='product'><b>" + escapeHtml(row.productName || "-") + "</b><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
         "<td class='part genuine-part'>" + escapeHtml(row.genuine || "-") + "</td>" +
         "<td class='part maker-part'>" + escapeHtml(row.maker || "-") + "</td>" +
         "<td class='number shipment'>" + formatNumber(result.shipment) + "</td>";
-      if (options.showSubstitute) html += "<td class='number substitute'>" + formatNumber(result.substitute) + "</td>";
       if (options.metric !== "shipment") html += "<td class='number score'>" + formatNumber(result.score) + "</td>";
       if (options.showCoreStock) html += "<td class='stock'>" + buildPrintCoreStock(result) + "</td>";
       html += "</tr>";
@@ -1180,7 +1176,6 @@
     var categoryText = options.categories.join(" / ");
     var title = "製造ランキング " + options.startRank + "-" + options.endRank + "位";
     var header = "<tr><th class='rank-head'>順位</th><th class='product-head'>商品名</th><th class='genuine-head'>純正品番</th><th class='maker-head'>メーカー品番</th><th class='shipment-head'>出荷数</th>";
-    if (options.showSubstitute) header += "<th class='substitute-head'>代替</th>";
     if (options.metric !== "shipment") header += "<th class='score-head'>順位値</th>";
     if (options.showCoreStock) header += "<th class='stock-head'>コア在庫</th>";
     header += "</tr>";
