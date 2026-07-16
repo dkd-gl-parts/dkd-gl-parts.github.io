@@ -21,6 +21,9 @@
     fileName: "",
     dataset: null,
     isLoading: false,
+    rankingReady: false,
+    masterDataReady: false,
+    masterDataError: false,
     rows: [],
     sheets: [],
     masterPartNumbers: Object.create(null),
@@ -204,14 +207,20 @@
     var pdf = byId("manufacturing-ranking-pdf");
     state.isLoading = isLoading;
     if (reload) reload.disabled = isLoading;
-    if (preview) preview.disabled = isLoading;
-    if (pdf) pdf.disabled = isLoading || !state.results.length;
+    if (preview) preview.disabled = !state.rankingReady || !state.rows.length;
+    if (pdf) {
+      pdf.disabled = !state.masterDataReady || !state.results.length;
+      if (!state.rankingReady) pdf.textContent = "PDF準備中...";
+      else if (!state.masterDataReady) pdf.textContent = state.masterDataError ? "PDF準備エラー" : "在庫照合中...";
+      else pdf.textContent = "PDF出力";
+    }
   }
 
   function applyParsedSource(parsed) {
     state.fileName = parsed.fileName;
     state.rows = parsed.rows;
     state.sheets = parsed.sheets;
+    state.rankingReady = true;
     renderCategoryOptions();
     var message = parsed.fileName + " / " + formatNumber(parsed.rows.length) + "件 / " + parsed.sheets.length + "シートを読み込みました。";
     if (parsed.warnings && parsed.warnings.length) message += " 未使用: " + parsed.warnings.join("、");
@@ -276,15 +285,33 @@
     }
   }
 
-  async function fetchDatasetRows(datasetId) {
-    var rows = [];
-    for (var offset = 0; ; offset += DATA_PAGE_SIZE) {
-      var response = await sb.from("manufacturing_report_rows")
+  function fetchDatasetRowPage(datasetId, offset) {
+    return sb.from("manufacturing_report_rows")
         .select("id,dataset_id,category_name,category_order,source_row_number,is_aggregate,product_name,product_code,genuine_part_number,manufacturer_part_number,genuine_part_number_2,genuine_body_part_number,genuine_clutch_part_number,product_type,shipment_count,substitute_count")
         .eq("dataset_id", datasetId)
         .order("category_order", { ascending: true })
         .order("source_row_number", { ascending: true })
         .range(offset, offset + DATA_PAGE_SIZE - 1);
+  }
+
+  async function fetchDatasetRows(datasetId, expectedCount) {
+    var rows = [];
+    var count = Number(expectedCount || 0);
+    if (count > 0) {
+      var requests = [];
+      for (var parallelOffset = 0; parallelOffset < count; parallelOffset += DATA_PAGE_SIZE) {
+        requests.push(fetchDatasetRowPage(datasetId, parallelOffset));
+      }
+      var responses = await Promise.all(requests);
+      responses.forEach(function(response) {
+        if (response.error) throw response.error;
+        rows = rows.concat(response.data || []);
+      });
+      return rows;
+    }
+
+    for (var offset = 0; ; offset += DATA_PAGE_SIZE) {
+      var response = await fetchDatasetRowPage(datasetId, offset);
       if (response.error) throw response.error;
       var page = response.data || [];
       rows = rows.concat(page);
@@ -382,8 +409,27 @@
 
   async function loadDcatsSource() {
     if (state.isLoading) return;
+    state.dataset = null;
+    state.fileName = "";
+    state.rows = [];
+    state.sheets = [];
+    state.rankingReady = false;
+    state.masterDataReady = false;
+    state.masterDataError = false;
+    state.masterPartNumbers = Object.create(null);
+    state.masterProductsById = Object.create(null);
+    state.masterProductsByPart = Object.create(null);
+    state.kikanMembersByGroupId = Object.create(null);
+    state.kikanGroupIdsByProductId = Object.create(null);
+    state.masterProductCount = 0;
+    state.masterPartNumberCount = 0;
+    state.kikanGroupCount = 0;
+    state.kikanMemberCount = 0;
+    state.results = [];
+    state.summary = null;
+    state.options = null;
     setLoading(true);
-    setSourceStatus("D-CATSの出荷実績を読み込んでいます...", "loading");
+    setSourceStatus("D-CATSのカテゴリを読み込んでいます...", "loading");
     renderEmptyPreview("D-CATSデータを読み込んでいます", "最新の保存済みデータを取得しています。");
     try {
       var datasetResponse = await sb.from("manufacturing_report_datasets")
@@ -397,30 +443,8 @@
       if (!datasetResponse.data) throw new Error("有効な製造ランキングデータが登録されていません。");
 
       var dataset = datasetResponse.data;
-      var loaded = await Promise.all([
-        fetchDatasetRows(dataset.id),
-        fetchMasterPartNumbers(),
-        fetchKikanMembership()
-      ]);
-      var sourceRows = loaded[0];
-      var master = loaded[1];
-      var kikan = loaded[2];
-      if (sourceRows.length !== Number(dataset.row_count || 0)) {
-        throw new Error("D-CATSの帳票データ件数が一致しません。管理者に確認してください。");
-      }
-
       state.dataset = dataset;
       state.fileName = dataset.source_file_name || dataset.dataset_name || "D-CATS";
-      state.rows = sourceRows.map(mapDatabaseRow);
-      state.masterPartNumbers = master.numbers;
-      state.masterProductsById = master.productsById;
-      state.masterProductsByPart = master.productsByPart;
-      state.kikanMembersByGroupId = kikan.membersByGroupId;
-      state.kikanGroupIdsByProductId = kikan.groupIdsByProductId;
-      state.masterProductCount = master.productCount;
-      state.masterPartNumberCount = master.partNumberCount;
-      state.kikanGroupCount = kikan.groupCount;
-      state.kikanMemberCount = kikan.memberCount;
       state.sheets = Array.isArray(dataset.sheet_manifest) ? dataset.sheet_manifest.map(function(sheet) {
         return {
           name: normalizeText(sheet.name),
@@ -431,13 +455,51 @@
       }) : [];
       renderDatasetMetadata(dataset);
       renderCategoryOptions();
-      setSourceStatus("D-CATS保存データを読み込みました。元データ: " + state.fileName + " / 品番マスタ " + formatNumber(state.masterProductCount) + "商品・" + formatNumber(state.masterPartNumberCount) + "品番 / 互換 " + formatNumber(state.kikanGroupCount) + "グループ", "success");
+      setSourceStatus("カテゴリを表示しました。ランキング明細を読み込んでいます...", "loading");
+
+      var sourceRows = await fetchDatasetRows(dataset.id, dataset.row_count);
+      if (sourceRows.length !== Number(dataset.row_count || 0)) {
+        throw new Error("D-CATSの帳票データ件数が一致しません。管理者に確認してください。");
+      }
+
+      state.rows = sourceRows.map(mapDatabaseRow);
+      state.rankingReady = true;
+      setLoading(true);
+      setSourceStatus("ランキングを表示しました。コア在庫・互換情報を照合しています...", "loading");
       updatePreview();
+
+      try {
+        var loaded = await Promise.all([
+          fetchMasterPartNumbers(),
+          fetchKikanMembership()
+        ]);
+        var master = loaded[0];
+        var kikan = loaded[1];
+        state.masterPartNumbers = master.numbers;
+        state.masterProductsById = master.productsById;
+        state.masterProductsByPart = master.productsByPart;
+        state.kikanMembersByGroupId = kikan.membersByGroupId;
+        state.kikanGroupIdsByProductId = kikan.groupIdsByProductId;
+        state.masterProductCount = master.productCount;
+        state.masterPartNumberCount = master.partNumberCount;
+        state.kikanGroupCount = kikan.groupCount;
+        state.kikanMemberCount = kikan.memberCount;
+        state.masterDataReady = true;
+        setSourceStatus("D-CATS保存データを読み込みました。元データ: " + state.fileName + " / 品番マスタ " + formatNumber(state.masterProductCount) + "商品・" + formatNumber(state.masterPartNumberCount) + "品番 / 互換 " + formatNumber(state.kikanGroupCount) + "グループ", "success");
+        updatePreview();
+      } catch (referenceError) {
+        state.masterDataError = true;
+        setSourceStatus("ランキングは利用できますが、コア在庫・互換情報を取得できませんでした。再読み込みしてください。", "error");
+        updatePreview();
+      }
     } catch (error) {
       state.dataset = null;
       state.fileName = "";
       state.rows = [];
       state.sheets = [];
+      state.rankingReady = false;
+      state.masterDataReady = false;
+      state.masterDataError = false;
       state.masterPartNumbers = Object.create(null);
       state.masterProductsById = Object.create(null);
       state.masterProductsByPart = Object.create(null);
@@ -449,6 +511,7 @@
       state.kikanMemberCount = 0;
       state.results = [];
       state.summary = null;
+      renderCategoryOptions();
       setSourceStatus(error && error.message ? error.message : String(error), "error");
       renderEmptyPreview("D-CATSデータを読み込めませんでした", "接続状態または閲覧権限を確認してください。");
     } finally {
@@ -766,6 +829,7 @@
   function compatibilityDetails(result, includeCoreStock) {
     var entries = [];
     var seenNumbers = Object.create(null);
+    var includeResolvedStock = includeCoreStock && state.masterDataReady;
 
     compatibilityMembers(result).forEach(function(row) {
       var numbers = rowPrimaryPartNumberEntries(row).map(function(entry) { return entry.value; }).filter(function(value, index, list) {
@@ -775,7 +839,7 @@
       numbers.forEach(function(value) { seenNumbers[normalizeSearch(value)] = true; });
       var stock = masterProductsForRow(row).reduce(function(total, product) { return total + product.coreStockQty; }, 0);
       var detail = numbers.join(" / ") + " (出荷 " + formatNumber(row.shipment);
-      if (includeCoreStock) detail += " / コア " + formatNumber(stock) + "台";
+      if (includeResolvedStock) detail += " / コア " + formatNumber(stock) + "台";
       entries.push(detail + ")");
     });
 
@@ -784,7 +848,7 @@
       var key = normalizeSearch(number.split(" / ")[0]);
       if (seenNumbers[key]) return;
       seenNumbers[key] = true;
-      entries.push("登録互換 " + number + (includeCoreStock ? " (コア " + formatNumber(product.coreStockQty) + "台)" : ""));
+      entries.push("登録互換 " + number + (includeResolvedStock ? " (コア " + formatNumber(product.coreStockQty) + "台)" : ""));
     });
     return entries;
   }
@@ -811,6 +875,7 @@
         masterProductPartNumber(left).localeCompare(masterProductPartNumber(right), "ja");
     });
     return {
+      ready: state.masterDataReady,
       matched: directProducts.length > 0,
       currentTotal: directProducts.reduce(function(total, product) { return total + product.coreStockQty; }, 0),
       compatibleStocked: compatibleStocked,
@@ -819,6 +884,7 @@
   }
 
   function buildPreviewCoreStock(result) {
+    if (!state.masterDataReady) return "<span class='ranking-report-none'>照合中</span>";
     var stock = coreStockDetails(result);
     if (!stock.matched) return "<span class='ranking-report-none'>マスタ未登録</span>";
     var currentClass = stock.currentTotal > 0 ? " is-positive" : "";
@@ -834,6 +900,7 @@
   }
 
   function buildPrintCoreStock(result) {
+    if (!state.masterDataReady) return "-";
     var stock = coreStockDetails(result);
     if (!stock.matched) return "-";
     var html = "<span>現在 " + formatNumber(stock.currentTotal) + "台</span>";
@@ -844,6 +911,7 @@
   }
 
   function missingMasterPartNumbers(result, compatibilityMode) {
+    if (!state.masterDataReady) return [];
     var rows = compatibilityMode === "all" ? [result.row] : result.group;
     var seen = Object.create(null);
     var missing = [];
@@ -867,7 +935,7 @@
     }, 0);
     host.innerHTML = [
       ["対象件数", formatNumber(summary.results.length)],
-      ["マスタ未登録品番", formatNumber(missingPartNumberCount)],
+      ["マスタ未登録品番", state.masterDataReady ? formatNumber(missingPartNumberCount) : "照合中"],
       ["互換グループ", formatNumber(summary.compatibleGroupCount)],
       ["順位範囲", formatNumber(options.startRank) + " - " + formatNumber(options.endRank)]
     ].map(function(card) {
@@ -888,6 +956,7 @@
     var compatibleStockRows = options.showCoreStock ? summary.results.filter(function(result) {
       return coreStockDetails(result).compatibleStocked.length > 0;
     }).length : 0;
+    if (!state.masterDataReady) messages.push(state.masterDataError ? "コア在庫・登録互換の照合に失敗しました。再読み込みしてください。" : "コア在庫・登録互換を照合しています。完了後に自動更新します。");
     if (compatibleRows) messages.push("表示対象のうち " + formatNumber(compatibleRows) + "件に互換品があります。");
     if (compatibleStockRows) messages.push("うち " + formatNumber(compatibleStockRows) + "件は互換品にもコア在庫があります。");
     if (hasAggregate && hasDetail) messages.push("全体集計シートとカテゴリ別シートを同時に選択しています。重複集計に注意してください。");
@@ -942,7 +1011,8 @@
       }
       if (options.showMissingMaster) {
         html += "<td class='ranking-report-compat-cell'>";
-        if (!missing.length) html += "<span class='ranking-report-none'>-</span>";
+        if (!state.masterDataReady) html += "<span class='ranking-report-none'>照合中</span>";
+        else if (!missing.length) html += "<span class='ranking-report-none'>-</span>";
         else {
           html += "<span class='ranking-report-compat-badge'>未登録 " + formatNumber(missing.length) + "品番</span>";
           missing.slice(0, 5).forEach(function(entry) { html += "<small>" + escapeHtml(entry.label + " " + entry.value) + "</small>"; });
@@ -956,7 +1026,7 @@
     byId("manufacturing-ranking-table").innerHTML = html;
     var note = byId("manufacturing-ranking-preview-note");
     if (note) note.textContent = results.length > PREVIEW_LIMIT ? "全" + formatNumber(results.length) + "行中、上位" + formatNumber(PREVIEW_LIMIT) + "行を画面表示" : "全" + formatNumber(results.length) + "行を表示";
-    byId("manufacturing-ranking-pdf").disabled = false;
+    setLoading(state.isLoading);
   }
 
   function updatePreview() {
@@ -1041,22 +1111,36 @@
   }
 
   function openPdfPreview() {
-    if (!updatePreview()) return;
     var popup = window.open("", "_blank");
     if (!popup) {
       alert("PDFプレビューを開けませんでした。ブラウザのポップアップ許可を確認してください。");
       return;
     }
+    if (!state.masterDataReady) {
+      popup.close();
+      alert("コア在庫・互換情報の照合完了後にPDF出力できます。");
+      return;
+    }
+    if (!updatePreview()) {
+      popup.close();
+      return;
+    }
+    var printPrepared = false;
     var attachPrint = function() {
+      if (printPrepared || popup.closed) return;
+      printPrepared = true;
       var button = popup.document.getElementById("dcats-ranking-print");
       if (button) button.addEventListener("click", function() { popup.print(); });
       popup.focus();
-      window.setTimeout(function() { popup.print(); }, 250);
+      window.setTimeout(function() {
+        if (!popup.closed) popup.print();
+      }, 300);
     };
     popup.addEventListener("load", attachPrint, { once: true });
     popup.document.open();
     popup.document.write(buildPrintHtml(state.results, state.options));
     popup.document.close();
+    window.setTimeout(attachPrint, 800);
   }
 
   function selectAllCategories(checked) {
@@ -1109,6 +1193,8 @@
         var key = normalizeSearch(value);
         if (key) state.masterPartNumbers[key] = true;
       });
+      state.masterDataReady = true;
+      state.masterDataError = false;
     },
     setMasterProducts: function(products, groups) {
       state.masterProductsById = Object.create(null);
@@ -1140,6 +1226,8 @@
           state.kikanGroupIdsByProductId[productId].push(String(groupId));
         });
       });
+      state.masterDataReady = true;
+      state.masterDataError = false;
     }
   };
   bindEvents();
