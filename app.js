@@ -3440,7 +3440,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.530";
+var APP_VERSION       = "v1.1.531";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -20137,8 +20137,22 @@ function componentSourceBadgeHtml(row) {
 
 function componentIllustrationPublicUrl(row) {
   if (!row || !row.image_bucket || !row.image_path) return "";
-  var publicUrl = sb.storage.from(row.image_bucket).getPublicUrl(row.image_path);
-  return publicUrl && publicUrl.data ? publicUrl.data.publicUrl : "";
+  return row.signed_image_url || "";
+}
+
+async function signComponentIllustrationRows(rows) {
+  return Promise.all((rows || []).map(async function(row) {
+    if (!row || !row.image_bucket || !row.image_path) return row;
+    var result = await sb.storage
+      .from(row.image_bucket)
+      .createSignedUrl(row.image_path, PRODUCT_IMAGE_SIGNED_URL_TTL_SECONDS);
+    if (result.error) throw result.error;
+    var signedUrl = result.data && (
+      result.data.signedUrl || result.data.signedURL || result.data.publicUrl
+    ) || "";
+    if (!signedUrl) throw new Error("Catalog illustration signed URL is empty");
+    return Object.assign({}, row, { signed_image_url: signedUrl });
+  }));
 }
 
 function componentIllustrationPoints(row) {
@@ -20403,15 +20417,18 @@ async function loadCatalogIllustrationsForCurrent(dkdId, selectedKind) {
       target_dkd_shohin_id: dkdId,
       target_product_kind: selectedKind
     });
-    if (requestId !== componentIllustrationRequestId) return;
-    componentIllustrationLoading = false;
     if (r.error) {
+      if (requestId !== componentIllustrationRequestId) return;
+      componentIllustrationLoading = false;
       componentIllustrationError = "カタログ図を読み込めませんでした: " + (r.error.message || r.error.details || r.error.code || "");
       console.warn("get_catalog_illustration_for_product failed", r.error);
       renderComponentIllustrationSlot();
       return;
     }
-    componentIllustrationRows = r.data || [];
+    var signedRows = await signComponentIllustrationRows(r.data || []);
+    if (requestId !== componentIllustrationRequestId) return;
+    componentIllustrationLoading = false;
+    componentIllustrationRows = signedRows;
     renderComponentIllustrationSlot();
   } catch (e) {
     if (requestId !== componentIllustrationRequestId) return;
