@@ -3842,8 +3842,17 @@ function canEditProductKindStockMgmt() {
 function hasBaseManufacturingCostRole(profile) {
   return hasAccessRole(profile || userProfile, ["system_admin", "company_admin", "dept_admin"]);
 }
+function manufacturingCostOptionalAllowedFor(roleCode, companyCode) {
+  var company = companyCode || "external";
+  var role = normalizeAccessRoleForCompany(roleCode || "customer_viewer", company);
+  return company !== "external" && ["customer_viewer", "external_viewer"].indexOf(role) < 0;
+}
+function manufacturingCostOptionalAllowedForProfile(profile) {
+  if (!profile) return false;
+  return manufacturingCostOptionalAllowedFor(userAccessRoleCode(profile), userCompanyCode(profile));
+}
 function hasOptionalManufacturingCostPermission(profile) {
-  return !!(profile && profile.manufacturing_cost_allowed === true);
+  return !!(profile && profile.manufacturing_cost_allowed === true && manufacturingCostOptionalAllowedForProfile(profile));
 }
 function canUseManufacturingCost(profile) {
   return !!(profile && (hasBaseManufacturingCostRole(profile) || hasOptionalManufacturingCostPermission(profile)));
@@ -27327,24 +27336,28 @@ function manufacturingCostBaseRoleByCode(roleCode) {
   return ["system_admin", "company_admin", "dept_admin"].indexOf(roleCode) >= 0;
 }
 
-function manufacturingCostPermissionNote(roleCode, allowed) {
+function manufacturingCostPermissionNote(roleCode, allowed, companyCode) {
   if (manufacturingCostBaseRoleByCode(roleCode)) return "基本権限で自動許可";
+  if (!manufacturingCostOptionalAllowedFor(roleCode, companyCode)) return "対象外";
   return allowed ? "個別許可あり" : "未許可";
 }
 
 function refreshManufacturingCostPermissionField(card) {
   if (!card) return;
   var roleSelect = card.querySelector(".user-access-role-select");
+  var companySelect = card.querySelector(".user-company-select");
   var check = card.querySelector(".user-manufacturing-cost-check");
   var note = card.querySelector(".user-manufacturing-cost-note");
   var label = card.querySelector(".user-manufacturing-cost-label");
   if (!roleSelect || !check) return;
-  var roleCode = roleSelect.value;
+  var companyCode = companySelect ? companySelect.value : "external";
+  var roleCode = normalizeAccessRoleForCompany(roleSelect.value, companyCode);
   var baseAllowed = manufacturingCostBaseRoleByCode(roleCode);
-  check.disabled = baseAllowed || check.dataset.disabledByScope === "1";
-  check.checked = baseAllowed ? true : !!check.checked;
+  var optionalAllowed = manufacturingCostOptionalAllowedFor(roleCode, companyCode);
+  check.disabled = baseAllowed || !optionalAllowed || check.dataset.disabledByScope === "1";
+  check.checked = baseAllowed ? true : (optionalAllowed ? !!check.checked : false);
   if (label) label.classList.toggle("disabled", check.disabled);
-  if (note) note.textContent = manufacturingCostPermissionNote(roleCode, check.checked);
+  if (note) note.textContent = manufacturingCostPermissionNote(roleCode, check.checked, companyCode);
 }
 
 function refreshUserCardSummary(card) {
@@ -27365,7 +27378,7 @@ function refreshUserCardSummary(card) {
   if (roleSummary) roleSummary.textContent = "操作権限: " + accessRoleLabel(roleCode);
   if (scopeSummary) scopeSummary.textContent = "管理範囲: " + accessScopeLabel(roleCode, companyLabel, departmentLabel);
   if (costSummary && costCheck) {
-    costSummary.textContent = "製造原価: " + manufacturingCostPermissionNote(roleCode, costCheck.checked);
+    costSummary.textContent = "製造原価: " + manufacturingCostPermissionNote(roleCode, costCheck.checked, companySelect.value);
   }
   refreshManufacturingCostPermissionField(card);
 }
@@ -27575,10 +27588,11 @@ function renderUsers(users) {
     var canManageThis = canManageUser(u);
     var manufacturingCostAllowed = !!u.manufacturing_cost_allowed;
     var manufacturingCostBaseAllowed = manufacturingCostBaseRoleByCode(accessRoleCode);
-    var manufacturingCostEffectiveAllowed = manufacturingCostBaseAllowed || manufacturingCostAllowed;
-    var manufacturingCostDisabledAttr = (canManageThis && !manufacturingCostBaseAllowed) ? "" : " disabled";
-    var manufacturingCostDisabledByScope = (canManageThis && !manufacturingCostBaseAllowed) ? "0" : "1";
-    var manufacturingCostNote = manufacturingCostPermissionNote(accessRoleCode, manufacturingCostEffectiveAllowed);
+    var manufacturingCostOptionalAllowed = manufacturingCostOptionalAllowedFor(accessRoleCode, companyCode);
+    var manufacturingCostEffectiveAllowed = manufacturingCostBaseAllowed || (manufacturingCostOptionalAllowed && manufacturingCostAllowed);
+    var manufacturingCostDisabledAttr = (canManageThis && !manufacturingCostBaseAllowed && manufacturingCostOptionalAllowed) ? "" : " disabled";
+    var manufacturingCostDisabledByScope = canManageThis ? "0" : "1";
+    var manufacturingCostNote = manufacturingCostPermissionNote(accessRoleCode, manufacturingCostEffectiveAllowed, companyCode);
     var disabledAttr = canManageThis ? "" : " disabled";
     var companyDisabledAttr = (canManageThis && isSystemAdmin()) ? "" : " disabled";
     var departmentDisabledAttr = (canManageThis && !hasOwnDepartmentUserScope(userProfile)) ? "" : " disabled";
@@ -27729,7 +27743,9 @@ function renderUsers(users) {
       if (!canAssignUserRole(roleCode)) { showPermissionDenied("assign_user_role", "profiles", uid, roleCode); return; }
       if (roleCode === "customer_viewer" || roleCode === "external_viewer") departmentCode = "viewer";
       var manufacturingCostCheck = card.querySelector(".user-manufacturing-cost-check");
-      var manufacturingCostAllowed = manufacturingCostBaseRoleByCode(roleCode) ? false : !!(manufacturingCostCheck && manufacturingCostCheck.checked);
+      var manufacturingCostAllowed = (!manufacturingCostBaseRoleByCode(roleCode) && manufacturingCostOptionalAllowedFor(roleCode, companyCode))
+        ? !!(manufacturingCostCheck && manufacturingCostCheck.checked)
+        : false;
       var customerSelect = card.querySelector(".user-customer-select");
       var salesCustomerId = customerSelect ? customerSelect.value : "";
       if (roleCode === "customer_viewer" && !salesCustomerId) {
