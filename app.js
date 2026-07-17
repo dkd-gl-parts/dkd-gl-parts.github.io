@@ -471,7 +471,7 @@ var TRANSLATIONS = {
     access_role_external_viewer: "社外閲覧",
     screen_users_title: "ユーザー管理",
     users_heading: "ユーザー一覧",
-    users_desc: "会社・部署は所属、ユーザー権限は操作できる範囲です。確認して保存してください。",
+    users_desc: "会社・部署は所属、ユーザー権限は操作できる範囲です。製造原価は基本権限または個別許可で管理します。",
     perm_group: "グループ",
     perm_role: "ロール",
     perm_products: "商品閲覧",
@@ -1582,7 +1582,7 @@ var TRANSLATIONS = {
     access_role_external_viewer: "External Viewer",
     screen_users_title: "User Management",
     users_heading: "User List",
-    users_desc: "Company and department define affiliation. User role defines the allowed operations. Review both, then save.",
+    users_desc: "Company and department define affiliation. User role defines allowed operations. Manufacturing cost is controlled by base role or per-user permission.",
     perm_group: "Group",
     perm_role: "Role",
     perm_products: "Product View",
@@ -2699,7 +2699,7 @@ var TRANSLATIONS = {
     access_role_external_viewer: "外部查看",
     screen_users_title: "用户管理",
     users_heading: "用户列表",
-    users_desc: "公司和部门表示所属，用户权限表示可操作范围。请确认后保存。",
+    users_desc: "公司和部门表示所属，用户权限表示可操作范围。制造成本由基础权限或单独许可控制。",
     perm_group: "组",
     perm_role: "角色",
     perm_products: "商品查看",
@@ -3440,7 +3440,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.529";
+var APP_VERSION       = "v1.1.530";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -27659,14 +27659,14 @@ function customerOptionHtml(selectedId) {
 function accessRoleScopeText(roleCode) {
   switch (roleCode) {
     case "system_admin": return "全機能・全ユーザー管理";
-    case "company_admin": return "自社ユーザー管理・主要マスタ管理";
-    case "dept_admin": return "製造/コア管理・自部署ユーザー";
-    case "master_editor": return "商品・画像・車両情報・得意先表示";
-    case "production_editor": return "製造予定・コア・構成部品確認";
-    case "core_image_editor": return "使用済みコア画像の登録・削除のみ";
-    case "sales_viewer": return "商品・車両情報・販売価格の閲覧";
-    case "all_viewer": return "全機能閲覧のみ。保存操作は不可";
-    case "internal_viewer": return "社内一般閲覧";
+    case "company_admin": return "自社ユーザー管理・商品/価格/構成部品管理";
+    case "dept_admin": return "製造/構成部品管理・製造原価基本許可・自部署ユーザー";
+    case "master_editor": return "商品/販売価格/価格調査管理。製造原価は個別許可";
+    case "production_editor": return "製造/構成部品管理。製造原価は個別許可";
+    case "core_image_editor": return "商品/販売価格閲覧・使用済みコア画像の登録/削除。製造原価は個別許可";
+    case "sales_viewer": return "商品・販売価格・価格調査履歴の閲覧。製造原価は個別許可";
+    case "all_viewer": return "社内全体の閲覧のみ。製造原価は個別許可";
+    case "internal_viewer": return "社内一般閲覧。製造原価は個別許可";
     case "customer_viewer": return "紐づいた得意先だけ閲覧";
     case "external_viewer": return "公開範囲のみ閲覧";
     default: return "-";
@@ -27694,6 +27694,113 @@ function manufacturingCostPermissionNote(roleCode, allowed, companyCode) {
   if (manufacturingCostBaseRoleByCode(roleCode)) return "基本権限: 閲覧・保存・削除";
   if (!manufacturingCostOptionalAllowedFor(roleCode, companyCode)) return "対象外";
   return allowed ? "個別許可: 閲覧・計算・出力のみ" : "未許可";
+}
+
+function roleProductImagePermissionText(roleCode) {
+  switch (roleCode) {
+    case "system_admin":
+    case "company_admin": return "商品追加・修正・削除 / 画像全般";
+    case "dept_admin":
+    case "master_editor":
+    case "production_editor": return "商品追加・修正 / 画像全般";
+    case "core_image_editor": return "商品閲覧 / 使用済みコア画像の登録・削除";
+    case "all_viewer":
+    case "sales_viewer":
+    case "internal_viewer": return "商品閲覧";
+    case "customer_viewer": return "得意先紐づき商品の閲覧";
+    case "external_viewer": return "公開範囲の閲覧";
+    default: return "-";
+  }
+}
+
+function roleComponentPermissionText(roleCode) {
+  switch (roleCode) {
+    case "system_admin":
+    case "company_admin":
+    case "dept_admin":
+    case "production_editor": return "閲覧・追加・修正・削除";
+    case "master_editor":
+    case "all_viewer": return "閲覧";
+    default: return "-";
+  }
+}
+
+function rolePricePermissionText(roleCode) {
+  switch (roleCode) {
+    case "system_admin":
+    case "company_admin": return "販売価格編集 / 基準価格編集";
+    case "master_editor": return "販売価格編集 / 基準価格閲覧";
+    case "dept_admin":
+    case "all_viewer": return "販売価格閲覧 / 基準価格閲覧";
+    case "production_editor":
+    case "sales_viewer":
+    case "core_image_editor":
+    case "internal_viewer": return "販売価格閲覧";
+    case "customer_viewer": return "得意先価格閲覧";
+    default: return "-";
+  }
+}
+
+function rolePurchaseResearchPermissionText(roleCode) {
+  switch (roleCode) {
+    case "system_admin":
+    case "company_admin":
+    case "master_editor": return "仕入価格閲覧・紐づけ / 価格調査管理";
+    case "dept_admin": return "仕入価格閲覧";
+    case "all_viewer": return "仕入価格閲覧 / 価格調査履歴閲覧";
+    case "sales_viewer": return "価格調査履歴閲覧";
+    default: return "-";
+  }
+}
+
+function roleProductionCostPermissionText(roleCode, costAllowed, companyCode) {
+  var costText = manufacturingCostPermissionNote(roleCode, costAllowed, companyCode);
+  switch (roleCode) {
+    case "system_admin":
+    case "company_admin":
+    case "dept_admin":
+    case "master_editor":
+    case "production_editor": return "製造管理 / 原価: " + costText;
+    case "all_viewer": return "製造閲覧 / 原価: " + costText;
+    default: return "原価: " + costText;
+  }
+}
+
+function roleUserManagementPermissionText(roleCode) {
+  switch (roleCode) {
+    case "system_admin": return "全ユーザー";
+    case "company_admin": return "自社ユーザー";
+    case "dept_admin":
+    case "master_editor": return "自部署ユーザー";
+    default: return "-";
+  }
+}
+
+function permissionDetailTone(text) {
+  if (!text || text === "-" || text.indexOf("対象外") >= 0 || text.indexOf("未許可") >= 0) return "no";
+  if (text.indexOf("個別許可") >= 0) return "limited";
+  if (text.indexOf("追加") >= 0 || text.indexOf("編集") >= 0 || text.indexOf("管理") >= 0 || text.indexOf("削除") >= 0 || text.indexOf("紐づけ") >= 0) return "ok";
+  if (text.indexOf("閲覧") >= 0 || text.indexOf("制限") >= 0 || text.indexOf("紐づき") >= 0 || text.indexOf("公開範囲") >= 0) return "limited";
+  return "ok";
+}
+
+function userPermissionDetailItems(roleCode, companyCode, costAllowed) {
+  roleCode = normalizeAccessRoleForCompany(roleCode, companyCode);
+  return [
+    { label: "商品・画像", text: roleProductImagePermissionText(roleCode) },
+    { label: "構成部品", text: roleComponentPermissionText(roleCode) },
+    { label: "販売/基準価格", text: rolePricePermissionText(roleCode) },
+    { label: "仕入/価格調査", text: rolePurchaseResearchPermissionText(roleCode) },
+    { label: "製造/原価", text: roleProductionCostPermissionText(roleCode, costAllowed, companyCode) },
+    { label: "ユーザー管理", text: roleUserManagementPermissionText(roleCode) }
+  ];
+}
+
+function userPermissionDetailHtml(roleCode, companyCode, costAllowed) {
+  return userPermissionDetailItems(roleCode, companyCode, costAllowed).map(function(item) {
+    var tone = permissionDetailTone(item.text);
+    return "<div class='user-permission-detail-item " + tone + "'><span>" + esc(item.label) + "</span><b>" + esc(item.text) + "</b></div>";
+  }).join("");
 }
 
 function refreshManufacturingCostPermissionField(card) {
@@ -27728,13 +27835,17 @@ function refreshUserCardSummary(card) {
   var scopeSummary = card.querySelector(".user-scope-summary");
   var costSummary = card.querySelector(".user-manufacturing-cost-summary");
   var costCheck = card.querySelector(".user-manufacturing-cost-check");
+  var permissionDetailList = card.querySelector(".user-permission-detail-list");
+  refreshManufacturingCostPermissionField(card);
   if (affiliationSummary) affiliationSummary.textContent = "所属: " + companyLabel + " / " + departmentLabel;
   if (roleSummary) roleSummary.textContent = "操作権限: " + accessRoleLabel(roleCode);
   if (scopeSummary) scopeSummary.textContent = "管理範囲: " + accessScopeLabel(roleCode, companyLabel, departmentLabel);
   if (costSummary && costCheck) {
     costSummary.textContent = "製造原価: " + manufacturingCostPermissionNote(roleCode, costCheck.checked, companySelect.value);
   }
-  refreshManufacturingCostPermissionField(card);
+  if (permissionDetailList) {
+    permissionDetailList.innerHTML = userPermissionDetailHtml(roleCode, companySelect.value, costCheck && costCheck.checked);
+  }
 }
 
 async function saveCustomerUserLink(uid, salesCustomerId) {
@@ -27996,6 +28107,7 @@ function renderUsers(users) {
     html += "<select class='role-select user-access-role-select' data-uid='"+esc(u.id)+"'" + disabledAttr + ">";
     html += accessRoleOptionHtmlForCompany(companyCode, accessRoleCode);
     html += "</select><div class='user-field-note user-role-note'>"+esc(accessRoleScopeText(accessRoleCode))+"</div></div>";
+    html += "<div class='user-permission-detail-list'>"+userPermissionDetailHtml(accessRoleCode, companyCode, manufacturingCostEffectiveAllowed)+"</div>";
     var customerLinkDisplay = accessRoleCode === "customer_viewer" ? "" : " data-dcats-inline-style='s-6aa34d7432e7'";
     var selectedCustomerId = customerUserLinkMap[u.id] || "";
     html += "<div class='user-field user-customer-field'"+customerLinkDisplay+"><label class='user-field-label'>得意先</label>";

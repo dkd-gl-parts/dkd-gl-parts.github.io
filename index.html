@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.529">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.529"; -->
+<meta name="dcats-app-version" content="v1.1.530">
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.530"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co; form-action 'self';">
 <title>D-CATS</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233c7df0'/%3E%3Cpath d='M8 17h16M16 9v14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.522&amp;ranking=4">
+<link rel="stylesheet" href="styles.css?v=1.1.530&amp;ranking=4">
 </head>
 <body>
 
@@ -128,7 +128,7 @@
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.525</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.530</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -157,7 +157,7 @@
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.525</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.530</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -187,7 +187,7 @@
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.525</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.530</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -645,51 +645,51 @@
   </div>
   <div class="users-body">
     <h2 data-i18n="users_heading">ユーザー一覧</h2>
-    <p class="users-desc" data-i18n="users_desc">会社・部署は所属、ユーザー権限は操作できる範囲です。確認して保存してください。</p>
+    <p class="users-desc" data-i18n="users_desc">会社・部署は所属、ユーザー権限は操作できる範囲です。製造原価は基本権限または個別許可で管理します。</p>
     <div class="permission-table-wrap">
       <table class="permission-table">
         <tr>
           <th>操作権限</th>
-          <th>想定所属</th>
-          <th>商品閲覧</th>
-          <th>販売価格閲覧</th>
-          <th>基準価格/ランク</th>
-          <th>仕入管理</th>
-          <th>構成部品/画像</th>
+          <th>所属/範囲</th>
+          <th>商品・画像</th>
+          <th>構成部品</th>
+          <th>販売/基準価格</th>
+          <th>仕入/価格調査</th>
+          <th>製造原価</th>
           <th>ユーザー管理</th>
         </tr>
         <tr>
-          <td>システム管理者</td><td>GLTEK / システム管理</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-ok">基準・ランク編集</td><td class="permission-ok">価格閲覧・紐づけ</td><td class="permission-ok">追加・修正</td><td class="permission-ok">全体</td>
+          <td>システム管理者</td><td>全体</td><td class="permission-ok">追加・修正・削除</td><td class="permission-ok">追加・修正・削除</td><td class="permission-ok">販売・基準編集</td><td class="permission-ok">仕入紐づけ・価格調査管理</td><td class="permission-ok">基本許可</td><td class="permission-ok">全体</td>
         </tr>
         <tr>
-          <td>会社管理者</td><td>大光電機・GLTEK</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-ok">基準・ランク編集</td><td class="permission-ok">価格閲覧・紐づけ</td><td class="permission-ok">追加・修正</td><td class="permission-ok">自社</td>
+          <td>会社管理者</td><td>自社</td><td class="permission-ok">追加・修正・削除</td><td class="permission-ok">追加・修正・削除</td><td class="permission-ok">販売・基準編集</td><td class="permission-ok">仕入紐づけ・価格調査管理</td><td class="permission-ok">基本許可</td><td class="permission-ok">自社</td>
         </tr>
         <tr>
-          <td>製造管理</td><td>自部署</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-ok">基準閲覧</td><td class="permission-ok">価格閲覧</td><td class="permission-ok">追加・修正</td><td class="permission-ok">自部署</td>
+          <td>製造管理</td><td>自部署</td><td class="permission-ok">追加・修正</td><td class="permission-ok">追加・修正・削除</td><td class="permission-ok">販売・基準閲覧</td><td class="permission-ok">仕入閲覧</td><td class="permission-ok">基本許可</td><td class="permission-ok">自部署</td>
         </tr>
         <tr>
-          <td>商品管理</td><td>自部署</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-ok">ランク編集・基準閲覧</td><td class="permission-ok">価格閲覧・紐づけ</td><td class="permission-ok">閲覧</td><td class="permission-ok">自部署</td>
+          <td>商品管理</td><td>自部署</td><td class="permission-ok">追加・修正</td><td class="permission-ok">閲覧</td><td class="permission-ok">販売編集・基準閲覧</td><td class="permission-ok">仕入紐づけ・価格調査管理</td><td class="permission-ok">個別許可可</td><td class="permission-ok">自部署</td>
         </tr>
         <tr>
-          <td>製造担当</td><td>製造</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-ok">製造・コア画像</td><td class="permission-no">-</td>
+          <td>製造担当</td><td>製造</td><td class="permission-ok">追加・修正</td><td class="permission-ok">追加・修正・削除</td><td class="permission-ok">販売価格閲覧</td><td class="permission-no">-</td><td class="permission-ok">個別許可可</td><td class="permission-no">-</td>
         </tr>
         <tr>
-          <td>コア画像登録</td><td>商品管理 / 製造</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-ok">使用済みコア画像のみ</td><td class="permission-no">-</td>
+          <td>コア画像登録</td><td>商品管理 / 製造</td><td class="permission-ok">使用済みコア画像の登録・削除</td><td class="permission-no">-</td><td class="permission-ok">販売価格閲覧</td><td class="permission-no">-</td><td class="permission-ok">個別許可可</td><td class="permission-no">-</td>
         </tr>
         <tr>
-          <td>全機能閲覧</td><td>社内</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-ok">基準閲覧</td><td class="permission-ok">価格閲覧</td><td class="permission-ok">閲覧</td><td class="permission-no">-</td>
+          <td>全機能閲覧</td><td>社内</td><td class="permission-ok">閲覧</td><td class="permission-ok">閲覧</td><td class="permission-ok">販売・基準閲覧</td><td class="permission-ok">仕入閲覧・価格調査履歴</td><td class="permission-ok">個別許可可</td><td class="permission-no">-</td>
         </tr>
         <tr>
-          <td>営業閲覧</td><td>営業</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td>
+          <td>営業閲覧</td><td>営業</td><td class="permission-ok">閲覧</td><td class="permission-no">-</td><td class="permission-ok">販売価格閲覧</td><td class="permission-ok">価格調査履歴</td><td class="permission-ok">個別許可可</td><td class="permission-no">-</td>
         </tr>
         <tr>
-          <td>社内閲覧</td><td>社内</td><td class="permission-ok">○</td><td class="permission-ok">閲覧</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td>
+          <td>社内閲覧</td><td>社内</td><td class="permission-ok">閲覧</td><td class="permission-no">-</td><td class="permission-ok">販売価格閲覧</td><td class="permission-no">-</td><td class="permission-ok">個別許可可</td><td class="permission-no">-</td>
         </tr>
         <tr>
-          <td>得意先閲覧</td><td>社外 / 得意先</td><td class="permission-ok">制限</td><td class="permission-ok">閲覧</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td>
+          <td>得意先閲覧</td><td>紐づいた得意先</td><td class="permission-ok">制限閲覧</td><td class="permission-no">-</td><td class="permission-ok">得意先価格閲覧</td><td class="permission-no">-</td><td class="permission-no">対象外</td><td class="permission-no">-</td>
         </tr>
         <tr>
-          <td>社外閲覧</td><td>社外</td><td class="permission-ok">制限</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td>
+          <td>社外閲覧</td><td>公開範囲</td><td class="permission-ok">制限閲覧</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">-</td><td class="permission-no">対象外</td><td class="permission-no">-</td>
         </tr>
       </table>
     </div>
@@ -2608,7 +2608,7 @@
   <div class="fs-thumbs" id="fs-thumbs"></div>
 </div>
 
-<script src="app.js?v=1.1.528"></script>
+<script src="app.js?v=1.1.530"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.522&amp;ranking=8"></script>
 </body>
 </html>
