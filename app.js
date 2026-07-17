@@ -3440,7 +3440,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.526";
+var APP_VERSION       = "v1.1.527";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -3774,7 +3774,7 @@ function canAssignUserRole(roleCode) {
   if (isSystemAdmin()) return true;
   var currentRole = accessRoleCode(userProfile);
   if (currentRole === "company_admin") return roleCode !== "system_admin";
-  if (currentRole === "dept_admin") return ["system_admin", "company_admin", "dept_admin", "customer_viewer", "external_viewer"].indexOf(roleCode) < 0;
+  if (currentRole === "dept_admin") return ["system_admin", "company_admin", "dept_admin", "master_editor", "customer_viewer", "external_viewer"].indexOf(roleCode) < 0;
   if (currentRole === "master_editor") return ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "sales_editor", "customer_viewer", "external_viewer"].indexOf(roleCode) < 0;
   return false;
 }
@@ -3785,9 +3785,11 @@ function canManageUser(targetProfile) {
   if (isSystemAdmin()) return true;
   if (!canUseUserManagement()) return false;
   if (userCompanyCode(targetProfile) !== userCompanyCode(userProfile)) return false;
+  var currentRole = accessRoleCode(userProfile);
   if (hasOwnDepartmentUserScope(userProfile)) {
     if (userDepartmentCode(targetProfile) !== userDepartmentCode(userProfile)) return false;
-    if (hasAccessRole(targetProfile, ["system_admin", "company_admin", "dept_admin", "master_editor"])) return false;
+    if (currentRole === "dept_admin" && hasAccessRole(targetProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "customer_viewer", "external_viewer"])) return false;
+    if (currentRole === "master_editor" && hasAccessRole(targetProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "customer_viewer", "external_viewer"])) return false;
   }
   return true;
 }
