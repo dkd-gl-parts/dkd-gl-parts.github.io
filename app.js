@@ -250,7 +250,7 @@ var TRANSLATIONS = {
     core_camera_count: "カメラ計数",
     core_camera_ai: "カメラAI",
     core_photo_add_title: "コア写真追加",
-    core_photo_add_desc: "カメラAIで対象を確認して撮影するか、端末内の写真を選んで登録します。",
+    core_photo_add_desc: "カメラAIで対象を確認して撮影するか、端末内の写真を選んで登録・削除します。",
     core_upload_from_device: "端末から写真",
     btn_delete_images: "写真を削除",
     image_delete_title: "写真の削除",
@@ -1361,7 +1361,7 @@ var TRANSLATIONS = {
     core_camera_count: "Camera Count",
     core_camera_ai: "Camera AI",
     core_photo_add_title: "Add CORE Photos",
-    core_photo_add_desc: "Use Camera AI to confirm and shoot the target, or choose photos from this device.",
+    core_photo_add_desc: "Use Camera AI to confirm and shoot the target, or add/delete photos from this device.",
     core_upload_from_device: "From Device",
     btn_delete_images: "Delete Photos",
     image_delete_title: "Delete Photos",
@@ -2479,7 +2479,7 @@ var TRANSLATIONS = {
     core_camera_count: "相机计数",
     core_camera_ai: "相机AI",
     core_photo_add_title: "添加CORE照片",
-    core_photo_add_desc: "使用相机AI确认并拍摄对象，或从设备选择照片登记。",
+    core_photo_add_desc: "使用相机AI确认并拍摄对象，或从设备添加/删除照片。",
     core_upload_from_device: "从设备选择",
     btn_delete_images: "删除照片",
     image_delete_title: "删除照片",
@@ -3434,10 +3434,13 @@ var imageEditFilterKind = "";
 var currentProductionImageKind = "rebuilt";
 var currentProductionImageDkdId = null;
 var currentImageEditContext = "sales";
+var currentImageDeleteContext = "sales";
+var currentImageDeleteCoreListRowId = null;
+var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.525";
+var APP_VERSION       = "v1.1.526";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -3729,7 +3732,34 @@ function canIssueGltekPartNumber() {
     hasAccessRole(userProfile, ["company_admin", "master_editor"]);
 }
 function canUploadCoreImages() {
-  return canEdit() || hasAccessRole(userProfile, ["core_image_editor"]);
+  return canManageUsedCoreImages();
+}
+function isCoreImageEditorRole(profile) {
+  return hasAccessRole(profile || userProfile, ["core_image_editor"]);
+}
+function canManageUsedCoreImages() {
+  return canEdit() || isCoreImageEditorRole(userProfile);
+}
+function canManageImageKind(kind, context) {
+  if (canEdit()) return true;
+  if (!isCoreImageEditorRole(userProfile)) return false;
+  context = context === "production" ? "production" : "sales";
+  return context !== "production" && normalizeProductKind(kind || "used_core") === "used_core";
+}
+function imageTargetContext(target, fallbackContext) {
+  var origin = String((target && target.image_origin) || "").toLowerCase();
+  var productionShown = !!(target && (target.show_in_production === true || target.show_in_production === "true"));
+  if (origin === "production" || productionShown) return "production";
+  return fallbackContext === "production" ? "production" : "sales";
+}
+function canDeleteImageTarget(target, context) {
+  if (canEdit()) return true;
+  if (!isCoreImageEditorRole(userProfile)) return false;
+  context = imageTargetContext(target, context);
+  var kind = normalizeProductKind((target && target.product_kind) || selectedProductKind() || "used_core");
+  var origin = String((target && target.image_origin) || "").toLowerCase();
+  var productionShown = !!(target && (target.show_in_production === true || target.show_in_production === "true"));
+  return context !== "production" && kind === "used_core" && origin !== "production" && !productionShown;
 }
 function canDelete() {
   return isCompanyAdminRole(userProfile);
@@ -4825,6 +4855,17 @@ function productActivityDesc(product) {
   ].filter(Boolean).join(" / ");
 }
 
+function componentActivityDesc(row) {
+  if (!row) return "component";
+  return [
+    row.component_position || row.source_code || "",
+    row.component_name || row.component_part_name || "",
+    row.component_manufacturer_part_number || "",
+    row.component_genuine_part_number || "",
+    row.dkd_shohin_id ? ("DKD " + row.dkd_shohin_id) : ""
+  ].filter(Boolean).join(" / ") || "component";
+}
+
 function activityDataSummary(data) {
   if (!data || typeof data !== "object") return null;
   var keys = [
@@ -4840,8 +4881,16 @@ function activityDataSummary(data) {
     "component_manufacturer_part_number",
     "component_name",
     "component_part_name",
+    "component_position",
+    "source_code",
+    "quantity",
+    "assy_manufacturer_part_number",
     "product_kind",
     "image_origin",
+    "image_url",
+    "storage_path",
+    "show_in_sales",
+    "show_in_production",
     "sl_part_id",
     "sales_customer_id",
     "email",
@@ -11301,6 +11350,46 @@ async function uploadCoreListImages(event, rowId) {
   }
 }
 
+async function openCoreListImageDelete(rowId) {
+  if (!canManageUsedCoreImages()) { showPermissionDenied("delete_image", "core_product_images"); return; }
+  var ctx = coreListRowAndProduct(rowId);
+  var row = ctx.row;
+  if (!row || !row.dkd_shohin_id) {
+    alert("画像の削除にはDKD商品IDが必要です。");
+    return;
+  }
+  var dkdId = parseInt(row.dkd_shohin_id, 10);
+  if (isNaN(dkdId)) {
+    alert("DKD商品IDが不正です。");
+    return;
+  }
+  var r = await sb.from("core_product_images")
+    .select("*")
+    .eq("dkd_shohin_id", dkdId)
+    .eq("product_kind", "used_core")
+    .order("created_at", { ascending: false });
+  if (r.error) {
+    alert(t("msg_save_err") + ": " + r.error.message);
+    return;
+  }
+  currentImageDeleteContext = "core_list";
+  currentImageDeleteCoreListRowId = rowId;
+  currentImageDeleteActivityProduct = ctx.product || {
+    dkd_shohin_id: dkdId,
+    core_part_number: row.core_part_number || ""
+  };
+  currentImages = (r.data || []).map(function(img) {
+    img._activity_product = currentImageDeleteActivityProduct;
+    img._core_list_entry_id = rowId;
+    return img;
+  }).filter(function(img) {
+    return canDeleteImageTarget(img, "sales");
+  });
+  closeCorePhotoChoice();
+  renderImageDeleteDialog();
+  document.getElementById("image-delete-overlay").classList.add("show");
+}
+
 function openCoreListForm(mode, rowId) {
   if (!canEdit()) { alert(t("err_perm")); return; }
   coreListFormMode = mode;
@@ -17688,7 +17777,7 @@ function openPanel(id, options) {
   if (!options.autoSelect) logProductDetailOpen("search", currentProduct);
   setCspStyle(document.getElementById("panel-welcome"), "display", "none");
   setCspStyle(document.getElementById("panel-inner"), "display", "flex");
-  setCspStyle(document.getElementById("panel-footer"), "display", canEdit() ? "block" : "none");
+  setCspStyle(document.getElementById("panel-footer"), "display", canManageUsedCoreImages() ? "block" : "none");
   document.getElementById("panel-topbar-title").textContent = productCategoryLabel(currentProduct) || "-";
   configureSalesProductAddButton();
   if (!isPC() && options.showMobileOverlay !== false) { document.getElementById("overlay").classList.add("show"); document.getElementById("panel").classList.add("show"); }
@@ -19630,7 +19719,7 @@ async function deleteComponentUsage(usageId) {
     alert(t("component_delete_failed") + ": " + delR.error.message);
     return;
   }
-  await writeLog("delete", "assembly_component_usages", resolvedUsageId, row.component_manufacturer_part_number || row.component_name || "component", guardR.data, null);
+  await writeLog("delete", "assembly_component_usages", resolvedUsageId, componentActivityDesc(guardR.data || row), guardR.data, null);
   editingComponentUsageId = null;
   await loadAssemblyComponentsForCurrent();
 }
@@ -26798,8 +26887,15 @@ function selectedImageActionKind(context) {
 }
 
 function openImageActionsDialog() {
-  if (!canEdit()) { showPermissionDenied("open_image_actions", "core_product_images"); return; }
-  fillImageKindSelect(document.getElementById("image-action-product-kind"), selectedProductKind());
+  var actionKind = canEdit() ? selectedProductKind() : "used_core";
+  if (!canManageImageKind(actionKind, "sales")) { showPermissionDenied("open_image_actions", "core_product_images"); return; }
+  var select = document.getElementById("image-action-product-kind");
+  fillImageKindSelect(select, actionKind);
+  if (select) select.disabled = !canEdit();
+  var picker = select ? select.closest(".image-kind-picker") : null;
+  if (picker) setCspStyle(picker, "display", canEdit() ? "" : "none");
+  var editBtn = document.getElementById("btn-image-action-edit");
+  if (editBtn) setCspStyle(editBtn, "display", canEdit() ? "" : "none");
   document.getElementById("image-actions-overlay").classList.add("show");
 }
 
@@ -26808,18 +26904,22 @@ function closeImageActionsDialog() {
 }
 
 function triggerSalesImageUpload() {
-  if (!canEdit()) { showPermissionDenied("upload_image", "core_product_images"); return; }
   var input = document.getElementById("upload-input");
   if (!input) return;
+  var kind = selectedImageActionKind("sales");
+  if (!canManageImageKind(kind, "sales")) { showPermissionDenied("upload_image", "core_product_images"); return; }
   input.multiple = true;
   input.dataset.uploadContext = "sales";
-  input.dataset.uploadKind = selectedImageActionKind("sales");
+  input.dataset.uploadKind = kind;
   closeImageActionsDialog();
   input.click();
 }
 
 function openImageDeleteDialog() {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canEdit() && !isCoreImageEditorRole(userProfile)) { showPermissionDenied("delete_image", "core_product_images"); return; }
+  currentImageDeleteContext = "sales";
+  currentImageDeleteCoreListRowId = null;
+  currentImageDeleteActivityProduct = currentProduct || null;
   renderImageDeleteDialog();
   document.getElementById("image-delete-overlay").classList.add("show");
 }
@@ -26828,19 +26928,30 @@ function closeImageDeleteDialog() {
   document.getElementById("image-delete-overlay").classList.remove("show");
 }
 
+function imageDeleteRows() {
+  return (currentImages || []).map(function(img, index) {
+    return { img: img, index: index };
+  }).filter(function(item) {
+    return canDeleteImageTarget(item.img, currentImageDeleteContext);
+  });
+}
+
 function renderImageDeleteDialog() {
   var list = document.getElementById("image-delete-list");
   var selectAll = document.getElementById("image-delete-select-all");
   var bulkBtn = document.getElementById("btn-image-delete-selected");
+  var rows = imageDeleteRows();
   if (selectAll) selectAll.checked = false;
-  if (bulkBtn) bulkBtn.disabled = !currentImages.length;
+  if (bulkBtn) bulkBtn.disabled = !rows.length;
   if (!list) return;
-  if (!currentImages.length) {
+  if (!rows.length) {
     list.innerHTML = "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + t("img_none") + "</div></div>";
     return;
   }
   var html = "";
-  currentImages.forEach(function(img, i) {
+  rows.forEach(function(item) {
+    var img = item.img;
+    var i = item.index;
     html += "<div class='image-delete-item'>";
     html += "<label class='image-delete-check'><input type='checkbox' data-delete-image-check='" + i + "'> " + esc(t("image_delete_select")) + "</label>";
     html += "<div class='image-delete-preview'>" + thumbImgHtml(img.image_url, {
@@ -27023,7 +27134,7 @@ async function saveImageEditDialog() {
 async function deleteImageFromDialog(index) {
   var img = currentImages[index];
   if (!img) return;
-  var deleted = await deleteImage(img.id, img.image_url);
+  var deleted = await deleteImage(img.id, img.image_url, img);
   if (deleted) renderImageDeleteDialog();
 }
 
@@ -27031,7 +27142,7 @@ function selectedImageDeleteIndexes() {
   return Array.from(document.querySelectorAll("[data-delete-image-check]:checked")).map(function(input) {
     return parseInt(input.dataset.deleteImageCheck, 10);
   }).filter(function(index) {
-    return !isNaN(index) && currentImages[index];
+    return !isNaN(index) && currentImages[index] && canDeleteImageTarget(currentImages[index], currentImageDeleteContext);
   });
 }
 
@@ -27042,6 +27153,9 @@ function setAllImageDeleteChecks(checked) {
 }
 
 async function refreshAfterImageDelete() {
+  if (currentImageDeleteContext === "core_list") {
+    return;
+  }
   await loadImages(null, detailSecondaryRequestSeq);
   await refreshSalesImageCacheForProduct(currentProduct);
   renderImages();
@@ -27049,7 +27163,7 @@ async function refreshAfterImageDelete() {
 }
 
 async function deleteSelectedImagesFromDialog() {
-  if (!canEdit()) { showPermissionDenied("delete_image", "core_product_images"); return; }
+  if (!canEdit() && !isCoreImageEditorRole(userProfile)) { showPermissionDenied("delete_image", "core_product_images"); return; }
   var indexes = selectedImageDeleteIndexes();
   if (!indexes.length) {
     alert(t("image_delete_none_selected"));
@@ -27075,7 +27189,6 @@ async function deleteSelectedImagesFromDialog() {
 }
 
 async function uploadImages(event) {
-  if (!canEdit()) { showPermissionDenied("upload_image", "core_product_images"); return; }
   var uploadContext = event && event.target && event.target.dataset ? (event.target.dataset.uploadContext || "sales") : "sales";
   var uploadKind = event && event.target && event.target.dataset ? (event.target.dataset.uploadKind || "") : "";
   if (event && event.target && event.target.dataset) event.target.dataset.uploadContext = "";
@@ -27087,6 +27200,7 @@ async function uploadImages(event) {
 
   var dkdId = parseInt(productDkdId(targetProduct), 10);
   var kind = normalizeProductKind(uploadKind || (isProductionUpload ? currentProductionImageKind : selectedProductKind()) || "rebuilt");
+  if (!canManageImageKind(kind, uploadContext)) { showPermissionDenied("upload_image", "core_product_images"); return; }
   if (isNaN(dkdId) || !productKindStockKindAllowed(kind)) {
     alert(t("product_kind_current"));
     return;
@@ -27158,10 +27272,10 @@ async function uploadImages(event) {
   render();
 }
 
-async function deleteImage(imgId, imageUrl) {
-  if (!canEdit()) { showPermissionDenied("delete_image", "core_product_images", imgId); return false; }
+async function deleteImage(imgId, imageUrl, targetOverride) {
+  var target = targetOverride || currentImages.find(function(img) { return String(img.id) === String(imgId); }) || { id: imgId, image_url: imageUrl };
+  if (!canDeleteImageTarget(target, currentImageDeleteContext)) { showPermissionDenied("delete_image", "core_product_images", imgId); return false; }
   if (!confirm(t("del_confirm"))) return false;
-  var target = currentImages.find(function(img) { return String(img.id) === String(imgId); }) || { id: imgId, image_url: imageUrl };
   var ok = await deleteImageRecord(target);
   if (!ok) return false;
   await refreshAfterImageDelete();
@@ -27170,6 +27284,7 @@ async function deleteImage(imgId, imageUrl) {
 
 async function deleteImageRecord(target) {
   if (!target || !target.id) return false;
+  if (!canDeleteImageTarget(target, currentImageDeleteContext)) { showPermissionDenied("delete_image", "core_product_images", target.id); return false; }
   var imgId = target.id;
   var imageUrl = target.image_url || "";
   var path = target.storage_path || (imageUrl ? imageUrl.split("/product-images/")[1] : "");
@@ -27193,16 +27308,28 @@ async function deleteImageRecord(target) {
     alert(t("msg_save_err") + ": " + deleteR.error.message);
     return false;
   }
+  var activityProduct = target._activity_product || currentImageDeleteActivityProduct || currentProduct || currentProductionRow || null;
+  var activityDesc = [
+    productActivityDesc(activityProduct),
+    target.product_kind ? productKindLabel(target.product_kind) : "",
+    target.storage_path || target.image_url || ""
+  ].filter(Boolean).join(" / ");
   logUserActivity("image_delete", {
     screen: activeScreenId() || "search",
     action: "delete_image",
     target_type: "core_product_images",
     target_id: imgId,
-    target_desc: productActivityDesc(currentProduct || currentProductionRow),
+    target_desc: activityDesc || productActivityDesc(activityProduct),
     metadata: {
-      dkd_shohin_id: target.dkd_shohin_id || productDkdId(currentProduct || currentProductionRow) || null,
+      dkd_shohin_id: target.dkd_shohin_id || productDkdId(activityProduct) || null,
       product_kind: target.product_kind || null,
-      image_origin: target.image_origin || null
+      image_origin: target.image_origin || null,
+      image_url: target.image_url || null,
+      storage_path: target.storage_path || null,
+      show_in_sales: target.show_in_sales == null ? null : target.show_in_sales,
+      show_in_production: target.show_in_production == null ? null : target.show_in_production,
+      core_list_entry_id: target._core_list_entry_id || currentImageDeleteCoreListRowId || null,
+      context: currentImageDeleteContext
     }
   });
   currentImages = currentImages.filter(function(img){return String(img.id)!==String(imgId);});
@@ -28358,6 +28485,9 @@ document.getElementById("btn-core-photo-device").addEventListener("click", funct
   var rowId = corePhotoChoiceRowId;
   closeCorePhotoChoice();
   if (rowId != null) openCoreListImageUpload(rowId);
+});
+document.getElementById("btn-core-photo-delete").addEventListener("click", function() {
+  if (corePhotoChoiceRowId != null) openCoreListImageDelete(corePhotoChoiceRowId);
 });
 document.getElementById("btn-core-photo-ai").addEventListener("click", function() {
   if (corePhotoChoiceRowId != null) openCoreListCameraAi(corePhotoChoiceRowId);
