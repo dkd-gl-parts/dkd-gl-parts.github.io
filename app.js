@@ -108,6 +108,7 @@ var TRANSLATIONS = {
     btn_clear: "クリア",
     btn_reload: "再読込",
     btn_load_more: "さらに表示",
+    search_count_loaded: "{loaded} 件表示 / 全 {total} 件",
     filter_all: "すべて",
     filter_scope: "検索対象",
     filter_sl: "SL品番あり",
@@ -1218,6 +1219,7 @@ var TRANSLATIONS = {
     btn_clear: "Clear",
     btn_reload: "Reload",
     btn_load_more: "Show More",
+    search_count_loaded: "{loaded} shown / {total} total",
     filter_all: "All",
     filter_scope: "Search target",
     filter_sl: "Has SL No.",
@@ -2291,6 +2293,7 @@ var TRANSLATIONS = {
     core_list_edit_title: "修改CORE",
     production_ranking_edit_title: "修改生产计划",
     btn_load_more: "显示更多",
+    search_count_loaded: "已显示 {loaded} 件 / 共 {total} 件",
     production_year_all: "全部年度",
     production_search_wait: "等待搜索",
     production_search_hint: "请指定搜索条件后搜索。",
@@ -3434,7 +3437,7 @@ var currentImageEditContext = "sales";
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.524";
+var APP_VERSION       = "v1.1.525";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -3550,11 +3553,18 @@ var productionDetailRequestSeq = 0;
 var SEARCH_FETCH_LIMIT = 200;
 var SEARCH_INITIAL_LIMIT = 30;
 var SEARCH_PAGE_STEP = 30;
+var CATEGORY_SEARCH_PAGE_STEP = 100;
 var KIKAN_FLAG_LOOKUP_LIMIT = 80;
 var productSearchLimit = SEARCH_INITIAL_LIMIT;
 var productionSearchLimit = SEARCH_INITIAL_LIMIT;
 var productSearchFetchedCount = 0;
+var productSearchTotalCount = null;
+var productSearchHasMore = false;
+var productSearchPageKey = "";
+var productionSearchFetchedCount = 0;
+var productionSearchTotalCount = null;
 var productionSearchHasMore = false;
+var productionSearchPageKey = "";
 var searchRequestSeq = 0;
 var productAuxRequestSeq = 0;
 var productAuxSeq = 0;
@@ -5185,7 +5195,10 @@ async function enterProductionSearch() {
 function resetProductionSearchView() {
   productionRows = [];
   productionFilteredRows = [];
+  productionSearchFetchedCount = 0;
+  productionSearchTotalCount = null;
   productionSearchHasMore = false;
+  productionSearchPageKey = "";
   currentProductionRow = null;
   productionComponentKindCountMap = {};
   productionImageCountMap = {};
@@ -5465,13 +5478,26 @@ function sortProductionRows() {
 async function loadProductionProducts(options) {
   options = options || {};
   productionAuxRequestSeq++;
-  productionSearchHasMore = false;
   var countEl = document.getElementById("production-count");
   if (countEl) countEl.textContent = t("loading");
   var qEl = document.getElementById("production-q");
   var q = qEl ? qEl.value.trim() : "";
   var selectedCategory = normalizeProductionCategoryFilter(productionCategoryFilter);
   var categoryFilter = (selectedCategory !== "all" && selectedCategory !== "other") ? selectedCategory : null;
+  var categoryPageKey = !q && productionFilter === "all" && categoryFilter ? "category:" + categoryFilter : "";
+  var appendCategoryPage = !!(categoryPageKey && options.append && productionSearchPageKey === categoryPageKey);
+  var categoryPageSize = 0;
+  if (categoryPageKey && !appendCategoryPage) {
+    productionSearchFetchedCount = 0;
+    productionSearchTotalCount = null;
+    productionSearchHasMore = false;
+    productionSearchPageKey = categoryPageKey;
+  } else if (!categoryPageKey) {
+    productionSearchFetchedCount = 0;
+    productionSearchTotalCount = null;
+    productionSearchHasMore = false;
+    productionSearchPageKey = "";
+  }
   var searchFetchLimit = selectedCategory === "other" ? Math.min(productionSearchLimit * 4, SEARCH_FETCH_LIMIT) : productionSearchLimit;
   if (!q && productionFilter === "all" && selectedCategory === "all") {
     productionLoaded = false;
@@ -5501,7 +5527,11 @@ async function loadProductionProducts(options) {
   } else if (selectedCategory === "other") {
     r = await fetchProductionOtherCategoryProducts(productionSearchLimit);
   } else if (categoryFilter) {
-    r = await fetchCategoryProducts(categoryFilter, productionSearchLimit);
+    var categoryOffset = appendCategoryPage ? productionSearchFetchedCount : 0;
+    categoryPageSize = appendCategoryPage
+      ? Math.max(productionSearchLimit - productionSearchFetchedCount, 1)
+      : productionSearchLimit;
+    r = await fetchCategoryProductPage(categoryFilter, categoryOffset, categoryPageSize);
   } else {
     r = await sb.from("core_product_search_view")
       .select("*")
@@ -5534,16 +5564,36 @@ async function loadProductionProducts(options) {
   }
   var rawProductionRows = r.data || [];
   var productionResultLimit = q ? searchFetchLimit : productionSearchLimit;
-  productionSearchHasMore = rawProductionRows.length >= productionResultLimit && productionSearchLimit < SEARCH_FETCH_LIMIT;
-  productionRows = rawProductionRows;
+  var auxiliaryProducts;
+  if (categoryPageKey) {
+    if (appendCategoryPage) {
+      productionRows = mergeProductSearchRows(productionRows, rawProductionRows);
+      productionSearchFetchedCount += rawProductionRows.length;
+      auxiliaryProducts = rawProductionRows;
+    } else {
+      productionRows = rawProductionRows;
+      productionSearchFetchedCount = rawProductionRows.length;
+      auxiliaryProducts = productionRows;
+    }
+    productionSearchTotalCount = typeof r.count === "number" ? r.count : null;
+    productionSearchHasMore = productionSearchTotalCount !== null
+      ? productionSearchFetchedCount < productionSearchTotalCount
+      : rawProductionRows.length >= categoryPageSize;
+  } else {
+    productionSearchHasMore = rawProductionRows.length >= productionResultLimit && productionSearchLimit < SEARCH_FETCH_LIMIT;
+    productionRows = rawProductionRows;
+    auxiliaryProducts = productionRows;
+  }
   if (selectedCategory !== "all") {
     productionRows = productionRows.filter(productionMatchesCategoryFilter).slice(0, productionSearchLimit);
   }
-  componentUsageCountMap = {};
-  productionComponentKindCountMap = {};
-  coreStockQtyMap = {};
-  productVariantSummaryMap = {};
-  applyCachedSearchAuxiliaryMaps(productionRows);
+  if (!appendCategoryPage) {
+    componentUsageCountMap = {};
+    productionComponentKindCountMap = {};
+    coreStockQtyMap = {};
+    productVariantSummaryMap = {};
+  }
+  applyCachedSearchAuxiliaryMaps(auxiliaryProducts);
   productionRows = productionRows.map(enrichProductionProduct);
   sortProductionRows();
   productionLoaded = true;
@@ -5557,10 +5607,11 @@ async function loadProductionProducts(options) {
     var stillExists = productionRows.some(function(row){ return productDkdId(row) === currentKey; });
     if (!stillExists) currentProductionRow = productionRows[0] || null;
   }
-  loadProductionAuxiliaryData(productionRows.slice());
+  loadProductionAuxiliaryData(auxiliaryProducts.slice(), { append: appendCategoryPage });
 }
 
-async function loadProductionAuxiliaryData(products) {
+async function loadProductionAuxiliaryData(products, options) {
+  options = options || {};
   var auxSeq = ++productionAuxRequestSeq;
   var fast = await Promise.all([
     fetchProductionPartRegistrationCountMap(products),
@@ -5571,10 +5622,21 @@ async function loadProductionAuxiliaryData(products) {
   ]);
   if (auxSeq !== productionAuxRequestSeq) return;
   var componentCounts = fast[0] || {};
-  componentUsageCountMap = componentCounts.total || componentCounts || {};
-  productionComponentKindCountMap = componentCounts.byKind || {};
-  coreStockQtyMap = fast[1] || {};
-  productVariantSummaryMap = fast[2] || {};
+  var nextComponentCounts = componentCounts.total || componentCounts || {};
+  var nextComponentKindCounts = componentCounts.byKind || {};
+  var nextCoreStock = fast[1] || {};
+  var nextVariantSummary = fast[2] || {};
+  if (options.append) {
+    componentUsageCountMap = mergeObjectMap(componentUsageCountMap, nextComponentCounts);
+    productionComponentKindCountMap = mergeObjectMap(productionComponentKindCountMap, nextComponentKindCounts);
+    coreStockQtyMap = mergeObjectMap(coreStockQtyMap, nextCoreStock);
+    productVariantSummaryMap = mergeObjectMap(productVariantSummaryMap, nextVariantSummary);
+  } else {
+    componentUsageCountMap = nextComponentCounts;
+    productionComponentKindCountMap = nextComponentKindCounts;
+    coreStockQtyMap = nextCoreStock;
+    productVariantSummaryMap = nextVariantSummary;
+  }
   applyProductSearchCardFlags(fast[3] || [], products);
   applyProductImageCountMapForContext(products, fast[4] || {}, "production");
   Object.keys(productVariantSummaryMap).forEach(function(key) {
@@ -5635,7 +5697,11 @@ function renderProductionList() {
   productionFilteredRows = productionRows.filter(function(row) {
     return productionMatchesFilter(row) && productionMatchesQuery(row, q);
   });
-  if (countEl) countEl.textContent = productionFilteredRows.length + " 件表示 / 商品 " + productionRows.length + " 件";
+  if (countEl) {
+    countEl.textContent = productionSearchTotalCount !== null
+      ? tf("search_count_loaded", { loaded: productionFilteredRows.length, total: productionSearchTotalCount })
+      : productionFilteredRows.length + " 件表示 / 商品 " + productionRows.length + " 件";
+  }
   if (moreWrap) setCspStyle(moreWrap, "display", productionSearchHasMore ? "block" : "none");
   if (!productionRows.length) {
     list.innerHTML = "<div class='loading'>商品を検索してください。</div>";
@@ -16473,29 +16539,60 @@ function getFiltered() {
   }));
 }
 
-async function fetchCategoryProducts(categoryFilter, maxRows) {
-  if (!categoryFilter) return { data: [], error: null };
-  maxRows = maxRows || SEARCH_FETCH_LIMIT;
+function mergeObjectMap(target, source) {
+  target = target || {};
+  Object.keys(source || {}).forEach(function(key) {
+    target[key] = source[key];
+  });
+  return target;
+}
 
-  var byCode = await sb.from("core_products")
-    .select(CORE_PRODUCT_FAST_SELECT)
-    .eq("category_code", categoryFilter)
-    .order("manufacturer_part_number", { ascending: true })
-    .limit(maxRows);
+function mergeProductSearchRows(existingRows, addedRows) {
+  var rows = (existingRows || []).slice();
+  var seen = {};
+  rows.forEach(function(row) {
+    var key = productDkdId(row);
+    if (key) seen[key] = true;
+  });
+  (addedRows || []).forEach(function(row) {
+    var key = productDkdId(row);
+    if (!key || seen[key]) return;
+    seen[key] = true;
+    rows.push(row);
+  });
+  return rows;
+}
 
+async function fetchCategoryProductPage(categoryFilter, offset, pageSize) {
+  if (!categoryFilter) return { data: [], error: null, count: 0 };
+  offset = Math.max(parseInt(offset || 0, 10) || 0, 0);
+  pageSize = Math.max(parseInt(pageSize || SEARCH_INITIAL_LIMIT, 10) || SEARCH_INITIAL_LIMIT, 1);
+
+  async function fetchByColumn(column) {
+    var query = sb.from("core_products")
+      .select(CORE_PRODUCT_FAST_SELECT, { count: "exact" })
+      .eq(column, categoryFilter)
+      .order("manufacturer_part_number", { ascending: true, nullsFirst: false })
+      .order("genuine_part_number", { ascending: true, nullsFirst: false })
+      .order("dkd_shohin_id", { ascending: true })
+      .range(offset, offset + pageSize - 1);
+    return await query;
+  }
+
+  var byCode = await fetchByColumn("category_code");
   if (byCode.error) return byCode;
-  if ((byCode.data || []).length > 0) {
+  if ((byCode.count || 0) > 0 || (byCode.data || []).length > 0) {
     byCode.data = normalizeCoreProductFastRows(byCode.data || []);
     return byCode;
   }
 
-  var byName = await sb.from("core_products")
-    .select(CORE_PRODUCT_FAST_SELECT)
-    .eq("category", categoryFilter)
-    .order("manufacturer_part_number", { ascending: true })
-    .limit(maxRows);
+  var byName = await fetchByColumn("category");
   if (!byName.error) byName.data = normalizeCoreProductFastRows(byName.data || []);
   return byName;
+}
+
+async function fetchCategoryProducts(categoryFilter, maxRows) {
+  return await fetchCategoryProductPage(categoryFilter, 0, maxRows || SEARCH_FETCH_LIMIT);
 }
 
 async function fetchProductionOtherCategoryProducts(maxRows) {
@@ -16880,6 +16977,19 @@ async function runProductSearch(options) {
     syncSearchFilterControls();
   }
   var categoryFilter = currentFilter.indexOf("cat:") === 0 ? currentFilter.slice(4) : null;
+  var categoryPageKey = !q && categoryFilter ? "category:" + categoryFilter : "";
+  var appendCategoryPage = !!(categoryPageKey && options.append && productSearchPageKey === categoryPageKey);
+  var categoryPageSize = 0;
+  if (categoryPageKey && !appendCategoryPage) {
+    productSearchFetchedCount = 0;
+    productSearchTotalCount = null;
+    productSearchHasMore = false;
+    productSearchPageKey = categoryPageKey;
+  } else if (!categoryPageKey) {
+    productSearchTotalCount = null;
+    productSearchHasMore = false;
+    productSearchPageKey = "";
+  }
   searchSlOnly = false;
   var requireSl = false;
   var list = document.getElementById("list");
@@ -16889,6 +16999,9 @@ async function runProductSearch(options) {
   if (!q && currentFilter === "all" && !requireSl) {
     allProducts = [];
     productSearchFetchedCount = 0;
+    productSearchTotalCount = null;
+    productSearchHasMore = false;
+    productSearchPageKey = "";
     imageCountMap = {};
     imageThumbnailMap = {};
     productionImageCountMap = {};
@@ -16910,7 +17023,11 @@ async function runProductSearch(options) {
 
   var r;
   if (!q && categoryFilter) {
-    r = await fetchCategoryProducts(categoryFilter, productSearchLimit);
+    var categoryOffset = appendCategoryPage ? productSearchFetchedCount : 0;
+    categoryPageSize = appendCategoryPage
+      ? Math.max(productSearchLimit - productSearchFetchedCount, 1)
+      : productSearchLimit;
+    r = await fetchCategoryProductPage(categoryFilter, categoryOffset, categoryPageSize);
   } else if (q) {
     r = await fetchCoreProductMasterMatches(q, categoryFilter, productSearchLimit);
   } else {
@@ -16926,8 +17043,12 @@ async function runProductSearch(options) {
     console.warn("search_core_products failed", r.error);
     allProducts = [];
     productSearchFetchedCount = 0;
+    productSearchTotalCount = null;
+    productSearchHasMore = false;
     closePanel();
     document.getElementById("count-bar").textContent = "";
+    var moreWrap = document.getElementById("load-more-wrap");
+    if (moreWrap) setCspStyle(moreWrap, "display", "none");
     list.innerHTML = "<div class='empty'>" + t("no_results") + "</div>";
     return;
   }
@@ -16950,26 +17071,48 @@ async function runProductSearch(options) {
     }
   }
   var rawProducts = r.data || [];
-  productSearchFetchedCount = rawProducts.length;
-  allProducts = filterVisibleProducts(rawProducts);
-  imageCountMap = {};
-  imageThumbnailMap = {};
-  productionImageCountMap = {};
-  slPartsMap = {};
-  slPresenceMap = {};
-  componentUsageCountMap = {};
-  productionComponentKindCountMap = {};
-  coreStockQtyMap = {};
-  kikanCompatibleMap = {};
-  productVariantSummaryMap = {};
-  applyCachedSearchAuxiliaryMaps(allProducts);
-  var cardFlags = await fetchProductSearchCardFlags(allProducts);
+  var auxiliaryProducts;
+  if (categoryPageKey) {
+    var visiblePageProducts = filterVisibleProducts(rawProducts);
+    if (appendCategoryPage) {
+      allProducts = mergeProductSearchRows(allProducts, visiblePageProducts);
+      productSearchFetchedCount += rawProducts.length;
+      auxiliaryProducts = visiblePageProducts;
+    } else {
+      allProducts = visiblePageProducts;
+      productSearchFetchedCount = rawProducts.length;
+      auxiliaryProducts = allProducts;
+    }
+    productSearchTotalCount = typeof r.count === "number" ? r.count : null;
+    productSearchHasMore = productSearchTotalCount !== null
+      ? productSearchFetchedCount < productSearchTotalCount
+      : rawProducts.length >= categoryPageSize;
+  } else {
+    productSearchFetchedCount = rawProducts.length;
+    productSearchHasMore = productSearchFetchedCount >= productSearchLimit && productSearchLimit < SEARCH_FETCH_LIMIT;
+    allProducts = filterVisibleProducts(rawProducts);
+    auxiliaryProducts = allProducts;
+  }
+  if (!appendCategoryPage) {
+    imageCountMap = {};
+    imageThumbnailMap = {};
+    productionImageCountMap = {};
+    slPartsMap = {};
+    slPresenceMap = {};
+    componentUsageCountMap = {};
+    productionComponentKindCountMap = {};
+    coreStockQtyMap = {};
+    kikanCompatibleMap = {};
+    productVariantSummaryMap = {};
+  }
+  applyCachedSearchAuxiliaryMaps(auxiliaryProducts);
+  var cardFlags = await fetchProductSearchCardFlags(auxiliaryProducts);
   if (seq !== searchRequestSeq) return;
-  applyProductSearchCardFlags(cardFlags, allProducts);
-  var salesImageInfo = await fetchProductImageCountMapForContext(allProducts, "sales");
+  applyProductSearchCardFlags(cardFlags, auxiliaryProducts);
+  var salesImageInfo = await fetchProductImageCountMapForContext(auxiliaryProducts, "sales");
   if (seq !== searchRequestSeq) return;
-  applyProductImageCountMapForContext(allProducts, salesImageInfo, "sales");
-  preloadProductSearchThumbnails(allProducts);
+  applyProductImageCountMapForContext(auxiliaryProducts, salesImageInfo, "sales");
+  preloadProductSearchThumbnails(auxiliaryProducts);
   renderCategoryChips();
   if (!options.preserveSelection) {
     syncFirstSearchResultDetail();
@@ -16993,7 +17136,7 @@ async function runProductSearch(options) {
       throttleMs: 3000
     });
   }
-  loadProductSearchAuxiliaryData(seq, allProducts.slice());
+  loadProductSearchAuxiliaryData(seq, auxiliaryProducts.slice(), { append: appendCategoryPage });
 }
 
 async function fetchComponentUsageCountMap(products) {
@@ -17219,7 +17362,8 @@ async function fetchKikanGroupMemberFlagMap(products) {
   return map;
 }
 
-async function loadProductSearchAuxiliaryData(seq, products) {
+async function loadProductSearchAuxiliaryData(seq, products, options) {
+  options = options || {};
   var auxSeq = productAuxSeq;
   var lookupProducts = (products || []).slice(0, SEARCH_RENDER_LIMIT);
   var firstBefore = getFiltered()[0] || null;
@@ -17236,11 +17380,21 @@ async function loadProductSearchAuxiliaryData(seq, products) {
     shouldLoadKikanFlags ? fetchKikanCompatibleMap(lookupProducts, isStale) : Promise.resolve({})
   ]);
   if (isStale()) return;
-  componentUsageCountMap = fast[0] || {};
-  coreStockQtyMap = fast[1] || {};
-  productVariantSummaryMap = fast[2] || {};
+  var nextComponentCounts = fast[0] || {};
+  var nextCoreStock = fast[1] || {};
+  var nextVariantSummary = fast[2] || {};
   var productionCounts = fast[3] || {};
-  productionComponentKindCountMap = productionCounts.byKind || {};
+  if (options.append) {
+    componentUsageCountMap = mergeObjectMap(componentUsageCountMap, nextComponentCounts);
+    coreStockQtyMap = mergeObjectMap(coreStockQtyMap, nextCoreStock);
+    productVariantSummaryMap = mergeObjectMap(productVariantSummaryMap, nextVariantSummary);
+    productionComponentKindCountMap = mergeObjectMap(productionComponentKindCountMap, productionCounts.byKind || {});
+  } else {
+    componentUsageCountMap = nextComponentCounts;
+    coreStockQtyMap = nextCoreStock;
+    productVariantSummaryMap = nextVariantSummary;
+    productionComponentKindCountMap = productionCounts.byKind || {};
+  }
   var kikanFlags = fast[4] || {};
   Object.keys(kikanFlags).forEach(function(key) {
     if (kikanFlags[key]) kikanCompatibleMap[key] = true;
@@ -17409,19 +17563,21 @@ function render() {
   var items = getFiltered();
   if (items.length === 0) {
     list.innerHTML = "<div class='empty'>" + t("no_results") + "</div>";
-    if (moreWrap) setCspStyle(moreWrap, "display", (productSearchFetchedCount >= productSearchLimit && productSearchLimit < SEARCH_FETCH_LIMIT) ? "block" : "none");
+    if (moreWrap) setCspStyle(moreWrap, "display", productSearchHasMore ? "block" : "none");
     return;
   }
-  var visibleItems = items.slice(0, SEARCH_RENDER_LIMIT);
-  var countText = items.length + " 件表示";
-  if (productSearchFetchedCount >= productSearchLimit) {
+  var visibleItems = items;
+  var countText = productSearchTotalCount !== null
+    ? tf("search_count_loaded", { loaded: items.length, total: productSearchTotalCount })
+    : items.length + " 件表示";
+  if (productSearchTotalCount === null && productSearchFetchedCount >= productSearchLimit) {
     countText += " - " + productSearchLimit + " 件まで取得";
     if (productSearchLimit >= SEARCH_FETCH_LIMIT) {
       countText += "。品番で絞り込んでください";
     }
   }
   document.getElementById("count-bar").textContent = countText;
-  if (moreWrap) setCspStyle(moreWrap, "display", (productSearchFetchedCount >= productSearchLimit && productSearchLimit < SEARCH_FETCH_LIMIT) ? "block" : "none");
+  if (moreWrap) setCspStyle(moreWrap, "display", productSearchHasMore ? "block" : "none");
   var html = "";
   visibleItems.forEach(function(p, idx) {
     var cnt   = getProductImageCount(p);
@@ -28514,9 +28670,13 @@ document.getElementById("search-category-filter").addEventListener("change", fun
   activateSearchFilterValue(this.value);
 });
 document.getElementById("btn-load-more").addEventListener("click", async function(){
-  var firstAddedIndex = getFiltered().slice(0, SEARCH_RENDER_LIMIT).length;
-  productSearchLimit = Math.min(productSearchLimit + SEARCH_PAGE_STEP, SEARCH_FETCH_LIMIT);
-  await runProductSearch({ preserveSelection: true });
+  var firstAddedIndex = getFiltered().length;
+  var q = document.getElementById("q").value.trim();
+  var categoryPaging = !q && currentFilter.indexOf("cat:") === 0;
+  productSearchLimit = categoryPaging
+    ? productSearchLimit + CATEGORY_SEARCH_PAGE_STEP
+    : Math.min(productSearchLimit + SEARCH_PAGE_STEP, SEARCH_FETCH_LIMIT);
+  await runProductSearch({ preserveSelection: true, append: categoryPaging });
   focusSearchResultIndex(firstAddedIndex);
 });
 document.getElementById("list").addEventListener("click", function(e){ var c=e.target.closest(".card"); if(c) openPanel(parseInt(c.dataset.id,10)); });
@@ -28611,9 +28771,14 @@ document.querySelectorAll("[data-production-filter]").forEach(function(chip) {
 });
 document.getElementById("production-load-more").addEventListener("click", async function(){
   var firstAddedIndex = productionFilteredRows.length;
-  productionSearchLimit = Math.min(productionSearchLimit + SEARCH_PAGE_STEP, SEARCH_FETCH_LIMIT);
+  var q = document.getElementById("production-q").value.trim();
+  var selectedCategory = normalizeProductionCategoryFilter(productionCategoryFilter);
+  var categoryPaging = !q && productionFilter === "all" && selectedCategory !== "all" && selectedCategory !== "other";
+  productionSearchLimit = categoryPaging
+    ? productionSearchLimit + CATEGORY_SEARCH_PAGE_STEP
+    : Math.min(productionSearchLimit + SEARCH_PAGE_STEP, SEARCH_FETCH_LIMIT);
   productionLoaded = false;
-  await loadProductionProducts({ preserveSelection: true });
+  await loadProductionProducts({ preserveSelection: true, append: categoryPaging });
   renderProductionList();
   renderProductionDetail(currentProductionRow);
   focusProductionResultIndex(firstAddedIndex);
