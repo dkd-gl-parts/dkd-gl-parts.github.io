@@ -3440,7 +3440,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.528";
+var APP_VERSION       = "v1.1.529";
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -3893,7 +3893,7 @@ function canViewManufacturingCostMgmt() {
   return canUseManufacturingCost(userProfile);
 }
 function canEditManufacturingCostMgmt() {
-  return canUseManufacturingCost(userProfile);
+  return hasBaseManufacturingCostRole(userProfile);
 }
 function isDaikoGroup() {
   return userProfile && (isSystemAdmin() || userProfile.group_name === "daiko");
@@ -27691,9 +27691,9 @@ function manufacturingCostBaseRoleByCode(roleCode) {
 }
 
 function manufacturingCostPermissionNote(roleCode, allowed, companyCode) {
-  if (manufacturingCostBaseRoleByCode(roleCode)) return "基本権限で自動許可";
+  if (manufacturingCostBaseRoleByCode(roleCode)) return "基本権限: 閲覧・保存・削除";
   if (!manufacturingCostOptionalAllowedFor(roleCode, companyCode)) return "対象外";
-  return allowed ? "個別許可あり" : "未許可";
+  return allowed ? "個別許可: 閲覧・計算・出力のみ" : "未許可";
 }
 
 function refreshManufacturingCostPermissionField(card) {
@@ -27826,7 +27826,7 @@ function activityMetadataSummaryText(row) {
       meta.company_code ? "会社: " + meta.company_code : "",
       meta.department_code ? "部署: " + meta.department_code : "",
       meta.role_code ? "権限: " + meta.role_code : "",
-      meta.manufacturing_cost_allowed !== undefined ? "製造原価: " + (meta.manufacturing_cost_allowed ? "個別許可" : "個別許可なし") : ""
+      meta.manufacturing_cost_allowed !== undefined ? "製造原価: " + (meta.manufacturing_cost_allowed ? "個別許可（閲覧・計算・出力のみ）" : "個別許可なし") : ""
     ].filter(Boolean).join(" / ");
   }
   var parts = activitySummaryParts(meta.before_summary || meta.after_summary);
