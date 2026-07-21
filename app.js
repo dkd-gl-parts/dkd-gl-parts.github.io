@@ -3452,7 +3452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.532";
+var APP_VERSION       = "v1.1.533";
 var userPermissionOverviewShowAll = false;
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
@@ -28052,15 +28052,18 @@ function configureUsersScreenMode() {
   var canManage = canUseUserManagement();
   var heading = document.getElementById("users-heading");
   var title = document.getElementById("users-screen-title");
-  if (heading) heading.textContent = canManage ? t("users_heading") : t("user_permissions_heading");
+  if (heading) heading.textContent = canManage ? t("screen_users_title") : t("user_permissions_heading");
   if (title) title.textContent = canManage ? t("screen_users_title") : t("user_permissions_heading");
+  var listSection = document.getElementById("users-list-section");
   var list = document.getElementById("users-list");
   if (!list) return;
   if (canManage) {
+    if (listSection) setCspStyle(listSection, "display", "");
     setCspStyle(list, "display", "");
     if (!list.innerHTML.trim()) list.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
   } else {
     list.innerHTML = "";
+    if (listSection) setCspStyle(listSection, "display", "none");
     setCspStyle(list, "display", "none");
   }
 }
