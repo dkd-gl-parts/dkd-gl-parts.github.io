@@ -3452,7 +3452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.533";
+var APP_VERSION       = "v1.1.534";
 var userPermissionOverviewShowAll = false;
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
@@ -17450,18 +17450,11 @@ async function runProductSearch(options) {
     productVariantSummaryMap = {};
   }
   applyCachedSearchAuxiliaryMaps(auxiliaryProducts);
-  var cardFlags = await fetchProductSearchCardFlags(auxiliaryProducts);
-  if (seq !== searchRequestSeq) return;
-  applyProductSearchCardFlags(cardFlags, auxiliaryProducts);
-  var salesImageInfo = await fetchProductImageCountMapForContext(auxiliaryProducts, "sales");
-  if (seq !== searchRequestSeq) return;
-  applyProductImageCountMapForContext(auxiliaryProducts, salesImageInfo, "sales");
-  preloadProductSearchThumbnails(auxiliaryProducts);
   renderCategoryChips();
+  render();
   if (!options.preserveSelection) {
     syncFirstSearchResultDetail();
   }
-  render();
   if (options.logActivity) {
     logUserActivity("search", {
       screen: "search",
@@ -17480,7 +17473,31 @@ async function runProductSearch(options) {
       throttleMs: 3000
     });
   }
+  loadProductSearchCardData(seq, auxiliaryProducts.slice(), { preserveSelection: !!options.preserveSelection });
   loadProductSearchAuxiliaryData(seq, auxiliaryProducts.slice(), { append: appendCategoryPage });
+}
+
+async function loadProductSearchCardData(seq, products, options) {
+  options = options || {};
+  var auxSeq = productAuxSeq;
+  var lookupProducts = (products || []).slice(0, SEARCH_RENDER_LIMIT);
+  var firstBefore = getFiltered()[0] || null;
+  var selectedWasFirst = currentProduct && firstBefore && productDkdId(currentProduct) === productDkdId(firstBefore);
+  var results = await Promise.all([
+    fetchProductSearchCardFlags(lookupProducts),
+    fetchProductImageCountMapForContext(lookupProducts, "sales")
+  ]);
+  if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
+  applyProductSearchCardFlags(results[0] || [], lookupProducts);
+  applyProductImageCountMapForContext(lookupProducts, results[1] || {}, "sales");
+  preloadProductSearchThumbnails(lookupProducts);
+  render();
+  if (!options.preserveSelection && selectedWasFirst) {
+    var firstAfter = getFiltered()[0] || null;
+    if (firstAfter && productDkdId(firstAfter) !== productDkdId(firstBefore)) {
+      syncFirstSearchResultDetail();
+    }
+  }
 }
 
 async function fetchComponentUsageCountMap(products) {
