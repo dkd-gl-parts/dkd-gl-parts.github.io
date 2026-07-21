@@ -1,0 +1,29 @@
+name: Search performance guard
+
+on:
+  push:
+    paths:
+      - "app.js"
+      - "scripts/verify-search-workload-guard.js"
+      - ".github/workflows/search-performance-guard.yml"
+  pull_request:
+    paths:
+      - "app.js"
+      - "scripts/verify-search-workload-guard.js"
+      - ".github/workflows/search-performance-guard.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-search-workload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Check JavaScript syntax
+        run: node --check app.js
+      - name: Verify search workload ordering
+        run: node scripts/verify-search-workload-guard.js
