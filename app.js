@@ -3452,7 +3452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.536";
+var APP_VERSION       = "v1.1.537";
 var userPermissionOverviewShowAll = false;
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
@@ -3577,7 +3577,6 @@ var productSearchFetchedCount = 0;
 var productSearchTotalCount = null;
 var productSearchHasMore = false;
 var productSearchPageKey = "";
-var sourceAliasRpcAvailable = true;
 var productionSearchFetchedCount = 0;
 var productionSearchTotalCount = null;
 var productionSearchHasMore = false;
@@ -17146,15 +17145,11 @@ function normalizeCoreProductFastRows(rows) {
 
 async function fetchSourceAliasProducts(q) {
   var normalized = normalizePartQuery(q);
-  if (!normalized || !sourceAliasRpcAvailable) return { data: [] };
+  if (!normalized) return { data: [] };
 
   var alias = await sb.rpc("core_product_source_alias_matches", {
     normalized_q: normalized
   });
-  if (alias.error && (alias.error.code === "PGRST202" || alias.error.code === "42883" || /core_product_source_alias_matches.*(not find|does not exist)/i.test(String(alias.error.message || "")))) {
-    sourceAliasRpcAvailable = false;
-    return { data: [] };
-  }
   if (alias.error || !(alias.data || []).length) return alias.error ? alias : { data: [] };
 
   var ids = (alias.data || []).map(function(row) {
@@ -17175,63 +17170,6 @@ async function fetchSourceAliasProducts(q) {
 }
 
 async function fetchSlPartProducts(q, categoryFilter, maxRows) {
-  var raw = normalizeAsciiWidth(String(q || "").trim());
-  var normalized = normalizePartQuery(raw);
-  if (!raw && !normalized) return { data: [] };
-  maxRows = maxRows || productSearchLimit;
-
-  var rows = [];
-  var seenRow = {};
-  async function appendLinkedProducts(pattern) {
-    var nestedSelect = [
-      "sl_part_id",
-      "sl_parts!inner(id,supplier_pn)",
-      "core_products!inner(" + CORE_PRODUCT_FAST_SELECT + ")"
-    ].join(",");
-    var query = sb.from("core_product_sl_links")
-      .select(nestedSelect)
-      .eq("status", "active")
-      .ilike("sl_parts.supplier_pn", pattern)
-      .limit(1000);
-    if (categoryFilter) query = query.eq("core_products.category_code", categoryFilter);
-    var result = await query;
-    if (result.error) return result;
-    (result.data || []).forEach(function(link) {
-      var slPart = Array.isArray(link.sl_parts) ? link.sl_parts[0] : link.sl_parts;
-      var label = slPart && slPart.supplier_pn || "";
-      var matched = normalizedStartsWith(label, raw) ||
-        normalizedContains(label, raw) ||
-        (normalized && (normalizedStartsWith(label, normalized) || normalizedContains(label, normalized)));
-      if (!matched) return;
-      var product = Array.isArray(link.core_products) ? link.core_products[0] : link.core_products;
-      if (!product) return;
-      var row = normalizeCoreProductFastRows([product])[0];
-      var key = String(row && (row.dkd_shohin_id || row.id) || "");
-      if (!key || seenRow[key] || rows.length >= maxRows) return;
-      seenRow[key] = true;
-      row.has_sl_part = true;
-      rows.push(row);
-    });
-    return result;
-  }
-
-  var prefix = await appendLinkedProducts(raw + "%");
-  if (prefix.error) {
-    console.warn("joined SL product search failed; using compatibility lookup", prefix.error);
-    return await fetchSlPartProductsLegacy(q, categoryFilter, maxRows);
-  }
-  if (!rows.length && normalized && normalized.length >= 3) {
-    var loosePrefix = await appendLinkedProducts(normalized.slice(0, 3) + "%");
-    if (loosePrefix.error) return loosePrefix;
-  }
-  if (!rows.length && raw.length >= 3) {
-    var contains = await appendLinkedProducts("%" + raw + "%");
-    if (contains.error) return contains;
-  }
-  return { data: rows, error: null };
-}
-
-async function fetchSlPartProductsLegacy(q, categoryFilter, maxRows) {
   var raw = normalizeAsciiWidth(String(q || "").trim());
   var normalized = normalizePartQuery(raw);
   if (!raw && !normalized) return { data: [] };
@@ -17259,7 +17197,7 @@ async function fetchSlPartProductsLegacy(q, categoryFilter, maxRows) {
     var loosePrefix = await appendSlRows(normalized.slice(0, 3) + "%");
     if (loosePrefix.error) return loosePrefix;
   }
-  if (!slRows.length && raw.length >= 3) {
+  if (raw.length >= 3) {
     var contains = await appendSlRows("%" + raw + "%");
     if (contains.error) return contains;
   }
@@ -17317,8 +17255,7 @@ async function fetchSlPartProductsLegacy(q, categoryFilter, maxRows) {
   return { data: rows, error: null };
 }
 
-async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows, options) {
-  options = options || {};
+async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows) {
   var normalized = normalizePartQuery(q);
   var raw = String(q || "").trim();
   if (!normalized && !raw) return { data: [] };
@@ -17354,10 +17291,8 @@ async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows, options
     ]);
   }
 
-  if (!options.containsOnly) {
-    var fast = await runCoreProductQuery(prefixParts, 2);
-    if (fast.error || (fast.data || []).length || options.prefixOnly) return fast;
-  }
+  var fast = await runCoreProductQuery(prefixParts, 2);
+  if (fast.error || (fast.data || []).length) return fast;
 
   var orParts = [];
   if (normalized) {
@@ -17431,8 +17366,6 @@ async function runProductSearch(options) {
   list.innerHTML = "<div class='loading'>" + t("loading") + "</div>";
 
   var r;
-  var sourceAliasPromise = null;
-  var slProductPromise = null;
   if (!q && categoryFilter) {
     var categoryOffset = appendCategoryPage ? productSearchFetchedCount : 0;
     categoryPageSize = appendCategoryPage
@@ -17440,9 +17373,7 @@ async function runProductSearch(options) {
       : productSearchLimit;
     r = await fetchCategoryProductPage(categoryFilter, categoryOffset, categoryPageSize);
   } else if (q) {
-    sourceAliasPromise = fetchSourceAliasProducts(q);
-    slProductPromise = fetchSlPartProducts(q, categoryFilter, productSearchLimit);
-    r = await fetchCoreProductMasterMatches(q, categoryFilter, productSearchLimit, { prefixOnly: true });
+    r = await fetchCoreProductMasterMatches(q, categoryFilter, productSearchLimit);
   } else {
     r = await sb.rpc("search_core_products", {
         search_text: q || null,
@@ -17465,27 +17396,23 @@ async function runProductSearch(options) {
     list.innerHTML = "<div class='empty'>" + t("no_results") + "</div>";
     return;
   }
+  // Keep fallback reads sequential. Speculative requests can outlive the result and delay detail views.
   if (q && !(r.data || []).length) {
-    var broadMatchPromise = fetchCoreProductMasterMatches(q, categoryFilter, productSearchLimit, { containsOnly: true });
-    var slResult = await (slProductPromise || fetchSlPartProducts(q, categoryFilter, productSearchLimit));
+    var aliasResult = await fetchSourceAliasProducts(q);
+    if (seq !== searchRequestSeq) return;
+    if (!aliasResult.error && (aliasResult.data || []).length) {
+      r = aliasResult;
+    } else if (aliasResult.error) {
+      console.warn("source alias search failed", aliasResult.error);
+    }
+  }
+  if (q && !(r.data || []).length) {
+    var slResult = await fetchSlPartProducts(q, categoryFilter, productSearchLimit);
     if (seq !== searchRequestSeq) return;
     if (!slResult.error && (slResult.data || []).length) {
       r = slResult;
     } else if (slResult.error) {
       console.warn("SL part search failed", slResult.error);
-    }
-    if (!(r.data || []).length) {
-      var aliasResult = await (sourceAliasPromise || fetchSourceAliasProducts(q));
-      if (seq !== searchRequestSeq) return;
-      if (!aliasResult.error && (aliasResult.data || []).length) {
-        r = aliasResult;
-      } else if (aliasResult.error) {
-        console.warn("source alias search failed", aliasResult.error);
-      }
-    }
-    if (!(r.data || []).length) {
-      r = await broadMatchPromise;
-      if (seq !== searchRequestSeq) return;
     }
   }
   var rawProducts = r.data || [];
@@ -17524,11 +17451,19 @@ async function runProductSearch(options) {
     productVariantSummaryMap = {};
   }
   applyCachedSearchAuxiliaryMaps(auxiliaryProducts);
+  // Keep initial enrichment awaited so it cannot compete with compatibility and detail requests after rendering.
+  var cardFlags = await fetchProductSearchCardFlags(auxiliaryProducts);
+  if (seq !== searchRequestSeq) return;
+  applyProductSearchCardFlags(cardFlags, auxiliaryProducts);
+  var salesImageInfo = await fetchProductImageCountMapForContext(auxiliaryProducts, "sales");
+  if (seq !== searchRequestSeq) return;
+  applyProductImageCountMapForContext(auxiliaryProducts, salesImageInfo, "sales");
+  preloadProductSearchThumbnails(auxiliaryProducts);
   renderCategoryChips();
-  render();
   if (!options.preserveSelection) {
     syncFirstSearchResultDetail();
   }
+  render();
   if (options.logActivity) {
     logUserActivity("search", {
       screen: "search",
@@ -17547,31 +17482,7 @@ async function runProductSearch(options) {
       throttleMs: 3000
     });
   }
-  loadProductSearchCardData(seq, auxiliaryProducts.slice(), { preserveSelection: !!options.preserveSelection });
   loadProductSearchAuxiliaryData(seq, auxiliaryProducts.slice(), { append: appendCategoryPage });
-}
-
-async function loadProductSearchCardData(seq, products, options) {
-  options = options || {};
-  var auxSeq = productAuxSeq;
-  var lookupProducts = (products || []).slice(0, SEARCH_RENDER_LIMIT);
-  var firstBefore = getFiltered()[0] || null;
-  var selectedWasFirst = currentProduct && firstBefore && productDkdId(currentProduct) === productDkdId(firstBefore);
-  var results = await Promise.all([
-    fetchProductSearchCardFlags(lookupProducts),
-    fetchProductImageCountMapForContext(lookupProducts, "sales")
-  ]);
-  if (seq !== searchRequestSeq || auxSeq !== productAuxSeq) return;
-  applyProductSearchCardFlags(results[0] || [], lookupProducts);
-  applyProductImageCountMapForContext(lookupProducts, results[1] || {}, "sales");
-  preloadProductSearchThumbnails(lookupProducts);
-  render();
-  if (!options.preserveSelection && selectedWasFirst) {
-    var firstAfter = getFiltered()[0] || null;
-    if (firstAfter && productDkdId(firstAfter) !== productDkdId(firstBefore)) {
-      syncFirstSearchResultDetail();
-    }
-  }
 }
 
 async function fetchComponentUsageCountMap(products) {
