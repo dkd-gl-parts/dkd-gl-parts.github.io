@@ -3452,7 +3452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.537";
+var APP_VERSION       = "v1.1.538";
 var userPermissionOverviewShowAll = false;
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
@@ -3586,6 +3586,7 @@ var productAuxRequestSeq = 0;
 var productAuxSeq = 0;
 var productionAuxRequestSeq = 0;
 var detailSecondaryRequestSeq = 0;
+var productSearchDetailReadyPromise = Promise.resolve();
 var kikanCompatibleFlagCache = {};
 var kikanPartsCache = {};
 var supplierPriceRowsCache = {};
@@ -17451,19 +17452,11 @@ async function runProductSearch(options) {
     productVariantSummaryMap = {};
   }
   applyCachedSearchAuxiliaryMaps(auxiliaryProducts);
-  // Keep initial enrichment awaited so it cannot compete with compatibility and detail requests after rendering.
-  var cardFlags = await fetchProductSearchCardFlags(auxiliaryProducts);
-  if (seq !== searchRequestSeq) return;
-  applyProductSearchCardFlags(cardFlags, auxiliaryProducts);
-  var salesImageInfo = await fetchProductImageCountMapForContext(auxiliaryProducts, "sales");
-  if (seq !== searchRequestSeq) return;
-  applyProductImageCountMapForContext(auxiliaryProducts, salesImageInfo, "sales");
-  preloadProductSearchThumbnails(auxiliaryProducts);
   renderCategoryChips();
+  render();
   if (!options.preserveSelection) {
     syncFirstSearchResultDetail();
   }
-  render();
   if (options.logActivity) {
     logUserActivity("search", {
       screen: "search",
@@ -17482,7 +17475,68 @@ async function runProductSearch(options) {
       throttleMs: 3000
     });
   }
-  loadProductSearchAuxiliaryData(seq, auxiliaryProducts.slice(), { append: appendCategoryPage });
+  scheduleProductSearchEnrichment(seq, auxiliaryProducts.slice(), {
+    append: appendCategoryPage,
+    preserveSelection: !!options.preserveSelection
+  });
+}
+
+function waitForProductSearchEnrichmentDelay(ms) {
+  return new Promise(function(resolve) { setTimeout(resolve, ms); });
+}
+
+function isProductSearchEnrichmentStale(seq, auxSeq) {
+  return seq !== searchRequestSeq || auxSeq !== productAuxSeq || !isScreenActive("search");
+}
+
+async function waitForProductSearchDetailLoads(seq, auxSeq) {
+  for (var attempt = 0; attempt < 3; attempt++) {
+    if (isProductSearchEnrichmentStale(seq, auxSeq)) return false;
+    var detailSeq = detailSecondaryRequestSeq;
+    var detailPromise = productSearchDetailReadyPromise;
+    await detailPromise;
+    await waitForProductSearchEnrichmentDelay(300);
+    if (isProductSearchEnrichmentStale(seq, auxSeq)) return false;
+    if (detailSeq === detailSecondaryRequestSeq && detailPromise === productSearchDetailReadyPromise) return true;
+  }
+  return false;
+}
+
+function scheduleProductSearchEnrichment(seq, products, options) {
+  var auxSeq = productAuxSeq;
+  runDeferredProductSearchEnrichment(seq, auxSeq, products, options).catch(function(error) {
+    console.warn("deferred product search enrichment failed", error);
+  });
+}
+
+async function runDeferredProductSearchEnrichment(seq, auxSeq, products, options) {
+  options = options || {};
+  var lookupProducts = (products || []).slice(0, SEARCH_RENDER_LIMIT);
+  if (!lookupProducts.length) return;
+  if (!await waitForProductSearchDetailLoads(seq, auxSeq)) return;
+
+  var firstBefore = getFiltered()[0] || null;
+  var selectedWasFirst = currentProduct && firstBefore && productDkdId(currentProduct) === productDkdId(firstBefore);
+  var cardFlags = await fetchProductSearchCardFlags(lookupProducts);
+  if (isProductSearchEnrichmentStale(seq, auxSeq)) return;
+  applyProductSearchCardFlags(cardFlags, lookupProducts);
+  render();
+  if (!options.preserveSelection && selectedWasFirst) {
+    var firstAfterFlags = getFiltered()[0] || null;
+    if (firstAfterFlags && productDkdId(firstAfterFlags) !== productDkdId(firstBefore)) {
+      syncFirstSearchResultDetail();
+    }
+  }
+
+  if (!await waitForProductSearchDetailLoads(seq, auxSeq)) return;
+  var salesImageInfo = await fetchProductImageCountMapForContext(lookupProducts, "sales");
+  if (isProductSearchEnrichmentStale(seq, auxSeq)) return;
+  applyProductImageCountMapForContext(lookupProducts, salesImageInfo, "sales");
+  preloadProductSearchThumbnails(lookupProducts);
+  render();
+
+  if (!await waitForProductSearchDetailLoads(seq, auxSeq)) return;
+  await loadProductSearchAuxiliaryData(seq, lookupProducts, { append: !!options.append });
 }
 
 async function fetchComponentUsageCountMap(products) {
@@ -18248,14 +18302,17 @@ function renderPanelStatic() {
     btn.addEventListener("click", function(){ enterComponentsScreen("search"); });
   });
   currentVehicleApplicationRows = [];
-  loadCatalogVehicleSummary(document.getElementById("panel-body"), p);
-  loadGltekPartNumberValue(document.getElementById("panel-body"), p);
-  loadProductSpecsForCurrent();
-  loadProductVariantsForCurrent(detailSeq);
-  if (canViewPriceResearchHistory()) loadEcMallPriceSummaryForCurrent(detailSeq);
-  if (canSeeSalesPrice()) loadDetailCustomerInfoForCurrent(detailSeq);
-  if (customerCanShowCompatibleParts()) loadKikanForCurrentProduct(detailSeq);
-  loadSlPartsForProduct(p, detailSeq);
+  var detailLoads = [
+    loadCatalogVehicleSummary(document.getElementById("panel-body"), p),
+    loadGltekPartNumberValue(document.getElementById("panel-body"), p),
+    loadProductSpecsForCurrent(),
+    loadProductVariantsForCurrent(detailSeq),
+    loadSlPartsForProduct(p, detailSeq)
+  ];
+  if (canViewPriceResearchHistory()) detailLoads.push(loadEcMallPriceSummaryForCurrent(detailSeq));
+  if (canSeeSalesPrice()) detailLoads.push(loadDetailCustomerInfoForCurrent(detailSeq));
+  if (customerCanShowCompatibleParts()) detailLoads.push(loadKikanForCurrentProduct(detailSeq));
+  productSearchDetailReadyPromise = Promise.allSettled(detailLoads);
 }
 
 async function loadProductVariantsForCurrent(seq) {
@@ -24295,14 +24352,15 @@ async function loadSlPartsForProduct(product, seq) {
 }
 
 function loadKikanForCurrentProduct(seq) {
-  if (!customerCanShowCompatibleParts()) return;
+  if (!customerCanShowCompatibleParts()) return Promise.resolve();
   var scd = currentProduct ? (currentProduct.dkd_shohin_id || currentProduct.shohin_cd) : null;
   if (scd !== null && scd !== undefined && scd !== '') {
-    loadKikan(scd, seq, currentProduct);
+    return loadKikan(scd, seq, currentProduct);
   } else {
     var wrap = document.getElementById("kikan-wrap");
     if (wrap) wrap.innerHTML = "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>";
   }
+  return Promise.resolve();
 }
 
 function renderSupplierPriceRows(rows) {
