@@ -3452,7 +3452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.538";
+var APP_VERSION       = "v1.1.539";
 var userPermissionOverviewShowAll = false;
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
@@ -17261,6 +17261,17 @@ async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows) {
   var raw = String(q || "").trim();
   if (!normalized && !raw) return { data: [] };
   maxRows = maxRows || productSearchLimit;
+  var normalizedFields = [
+    "normalized_genuine_part_number",
+    "normalized_genuine_part_number_2",
+    "normalized_manufacturer_part_number",
+    "normalized_pulley_assy_part_number",
+    "normalized_daiko_part_number",
+    "normalized_genuine_body_part_number",
+    "normalized_manufacturer_body_part_number",
+    "normalized_genuine_clutch_part_number",
+    "normalized_manufacturer_clutch_part_number"
+  ];
 
   async function runCoreProductQuery(orParts, limitMultiplier) {
     if (!orParts.length) return { data: [] };
@@ -17277,38 +17288,23 @@ async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows) {
     return result;
   }
 
-  var prefixParts = [];
-  if (normalized) {
-    prefixParts = prefixParts.concat([
-      "normalized_genuine_part_number.like." + normalized + "%",
-      "normalized_genuine_part_number_2.like." + normalized + "%",
-      "normalized_manufacturer_part_number.like." + normalized + "%",
-      "normalized_pulley_assy_part_number.like." + normalized + "%",
-      "normalized_daiko_part_number.like." + normalized + "%",
-      "normalized_genuine_body_part_number.like." + normalized + "%",
-      "normalized_manufacturer_body_part_number.like." + normalized + "%",
-      "normalized_genuine_clutch_part_number.like." + normalized + "%",
-      "normalized_manufacturer_clutch_part_number.like." + normalized + "%"
-    ]);
-  }
+  // Equality operators remain indexable under the current RLS policies; prefix LIKE does not.
+  var exactParts = normalized ? normalizedFields.map(function(column) {
+    return column + ".eq." + normalized;
+  }) : [];
+  var exact = await runCoreProductQuery(exactParts, 1);
+  if (exact.error || (exact.data || []).length) return exact;
+
+  var prefixParts = normalized ? normalizedFields.map(function(column) {
+    return column + ".like." + normalized + "%";
+  }) : [];
 
   var fast = await runCoreProductQuery(prefixParts, 2);
   if (fast.error || (fast.data || []).length) return fast;
 
-  var orParts = [];
-  if (normalized) {
-    orParts = orParts.concat([
-      "normalized_genuine_part_number.ilike.%" + normalized + "%",
-      "normalized_genuine_part_number_2.ilike.%" + normalized + "%",
-      "normalized_manufacturer_part_number.ilike.%" + normalized + "%",
-      "normalized_pulley_assy_part_number.ilike.%" + normalized + "%",
-      "normalized_daiko_part_number.ilike.%" + normalized + "%",
-      "normalized_genuine_body_part_number.ilike.%" + normalized + "%",
-      "normalized_manufacturer_body_part_number.ilike.%" + normalized + "%",
-      "normalized_genuine_clutch_part_number.ilike.%" + normalized + "%",
-      "normalized_manufacturer_clutch_part_number.ilike.%" + normalized + "%"
-    ]);
-  }
+  var orParts = normalized ? normalizedFields.map(function(column) {
+    return column + ".ilike.%" + normalized + "%";
+  }) : [];
   return await runCoreProductQuery(orParts, 2);
 }
 

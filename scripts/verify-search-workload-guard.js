@@ -3,14 +3,16 @@ const path = require("path");
 
 const root = path.resolve(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
+const masterStart = source.indexOf("async function fetchCoreProductMasterMatches");
 const start = source.indexOf("async function runProductSearch(options)");
 const deferredStart = source.indexOf("async function runDeferredProductSearchEnrichment", start);
 const end = source.indexOf("async function fetchComponentUsageCountMap", deferredStart);
 
-if (start < 0 || deferredStart < 0 || end < 0) {
+if (masterStart < 0 || start < 0 || deferredStart < 0 || end < 0) {
   throw new Error("product search workload functions could not be isolated");
 }
 
+const masterSource = source.slice(masterStart, start);
 const searchSource = source.slice(start, deferredStart);
 const deferredSource = source.slice(deferredStart, end);
 const bannedPatterns = [
@@ -25,6 +27,15 @@ bannedPatterns.forEach((pattern) => {
     throw new Error(`search workload guard rejected speculative work: ${pattern}`);
   }
 });
+
+const exactPartsIndex = masterSource.indexOf('return column + ".eq." + normalized');
+const exactQueryIndex = masterSource.indexOf("var exact = await runCoreProductQuery(exactParts, 1)");
+const prefixPartsIndex = masterSource.indexOf('return column + ".like." + normalized + "%"');
+const prefixQueryIndex = masterSource.indexOf("var fast = await runCoreProductQuery(prefixParts, 2)");
+
+if (exactPartsIndex < 0 || exactQueryIndex < exactPartsIndex || prefixPartsIndex < exactQueryIndex || prefixQueryIndex < prefixPartsIndex) {
+  throw new Error("indexed exact product-number lookup must run before prefix matching");
+}
 
 const aliasIndex = searchSource.indexOf("var aliasResult = await fetchSourceAliasProducts(q)");
 const slIndex = searchSource.indexOf("var slResult = await fetchSlPartProducts(q");
