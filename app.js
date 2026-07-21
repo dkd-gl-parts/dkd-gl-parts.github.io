@@ -3452,7 +3452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.534";
+var APP_VERSION       = "v1.1.535";
 var userPermissionOverviewShowAll = false;
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
@@ -17197,7 +17197,7 @@ async function fetchSlPartProducts(q, categoryFilter, maxRows) {
     var loosePrefix = await appendSlRows(normalized.slice(0, 3) + "%");
     if (loosePrefix.error) return loosePrefix;
   }
-  if (raw.length >= 3) {
+  if (!slRows.length && raw.length >= 3) {
     var contains = await appendSlRows("%" + raw + "%");
     if (contains.error) return contains;
   }
@@ -17255,7 +17255,8 @@ async function fetchSlPartProducts(q, categoryFilter, maxRows) {
   return { data: rows, error: null };
 }
 
-async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows) {
+async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows, options) {
+  options = options || {};
   var normalized = normalizePartQuery(q);
   var raw = String(q || "").trim();
   if (!normalized && !raw) return { data: [] };
@@ -17291,8 +17292,10 @@ async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows) {
     ]);
   }
 
-  var fast = await runCoreProductQuery(prefixParts, 2);
-  if (fast.error || (fast.data || []).length) return fast;
+  if (!options.containsOnly) {
+    var fast = await runCoreProductQuery(prefixParts, 2);
+    if (fast.error || (fast.data || []).length || options.prefixOnly) return fast;
+  }
 
   var orParts = [];
   if (normalized) {
@@ -17373,7 +17376,7 @@ async function runProductSearch(options) {
       : productSearchLimit;
     r = await fetchCategoryProductPage(categoryFilter, categoryOffset, categoryPageSize);
   } else if (q) {
-    r = await fetchCoreProductMasterMatches(q, categoryFilter, productSearchLimit);
+    r = await fetchCoreProductMasterMatches(q, categoryFilter, productSearchLimit, { prefixOnly: true });
   } else {
     r = await sb.rpc("search_core_products", {
         search_text: q || null,
@@ -17397,21 +17400,27 @@ async function runProductSearch(options) {
     return;
   }
   if (q && !(r.data || []).length) {
-    var aliasResult = await fetchSourceAliasProducts(q);
+    var broadMatchPromise = fetchCoreProductMasterMatches(q, categoryFilter, productSearchLimit, { containsOnly: true });
+    var fallbackResults = await Promise.all([
+      fetchSourceAliasProducts(q),
+      fetchSlPartProducts(q, categoryFilter, productSearchLimit)
+    ]);
     if (seq !== searchRequestSeq) return;
+    var aliasResult = fallbackResults[0];
+    var slResult = fallbackResults[1];
     if (!aliasResult.error && (aliasResult.data || []).length) {
       r = aliasResult;
     } else if (aliasResult.error) {
       console.warn("source alias search failed", aliasResult.error);
     }
-  }
-  if (q && !(r.data || []).length) {
-    var slResult = await fetchSlPartProducts(q, categoryFilter, productSearchLimit);
-    if (seq !== searchRequestSeq) return;
-    if (!slResult.error && (slResult.data || []).length) {
+    if (!(r.data || []).length && !slResult.error && (slResult.data || []).length) {
       r = slResult;
     } else if (slResult.error) {
       console.warn("SL part search failed", slResult.error);
+    }
+    if (!(r.data || []).length) {
+      r = await broadMatchPromise;
+      if (seq !== searchRequestSeq) return;
     }
   }
   var rawProducts = r.data || [];
