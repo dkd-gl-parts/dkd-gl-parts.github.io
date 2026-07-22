@@ -3452,7 +3452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.541";
+var APP_VERSION       = "v1.1.542";
 var userPermissionOverviewShowAll = false;
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
@@ -24092,6 +24092,8 @@ async function loadAssemblyComponentsForCurrent() {
     return;
   }
 
+  loadCatalogIllustrationsForCurrent(dkdId, selectedKind);
+
   if (componentTreeRpcAvailable) {
     var rpc = await sb.rpc("get_variant_catalog_components_for_ui", {
       target_dkd_shohin_id: dkdId,
@@ -24116,7 +24118,6 @@ async function loadAssemblyComponentsForCurrent() {
         assemblyComponentRows = rpcRows;
         updateComponentTargetSummary(rpcRows.length);
         renderAssemblyComponentRows();
-        loadCatalogIllustrationsForCurrent(dkdId, selectedKind);
         if (recoveredCatalogRows) {
           await loadComponentAlternativesForRows(rpcRows);
           renderAssemblyComponentRows();
@@ -24147,7 +24148,6 @@ async function loadAssemblyComponentsForCurrent() {
       assemblyComponentRows = treeFallbackRows;
       updateComponentTargetSummary(treeFallbackRows.length);
       renderAssemblyComponentRows();
-      loadCatalogIllustrationsForCurrent(dkdId, selectedKind);
       return;
     }
   } else {
@@ -24208,7 +24208,6 @@ async function loadAssemblyComponentsForCurrent() {
   updateComponentTargetSummary(rows.length);
   await loadComponentAlternativesForRows(rows);
   renderAssemblyComponentRows();
-  loadCatalogIllustrationsForCurrent(dkdId, selectedKind);
 }
 
 async function loadParallelCandidatesForCurrent() {

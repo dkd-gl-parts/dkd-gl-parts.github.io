@@ -34,4 +34,15 @@ if (guardIndex < 0 || fetchIndex < guardIndex || replaceIndex < fetchIndex) {
   throw new Error("catalog recovery must run only after a suspicious RPC result and keep the larger result set");
 }
 
+const resolveIndex = loadSource.indexOf("await resolveCurrentCoreDkdShohinId()");
+const illustrationIndex = loadSource.indexOf("loadCatalogIllustrationsForCurrent(dkdId, selectedKind)", resolveIndex);
+const componentRpcIndex = loadSource.indexOf('sb.rpc("get_variant_catalog_components_for_ui"', illustrationIndex);
+
+if (resolveIndex < 0 || illustrationIndex < resolveIndex || componentRpcIndex < illustrationIndex) {
+  throw new Error("catalog illustrations must start immediately after resolving the DKD product");
+}
+if (loadSource.indexOf("loadCatalogIllustrationsForCurrent(dkdId, selectedKind)", illustrationIndex + 1) >= 0) {
+  throw new Error("catalog illustration loading must not be duplicated after component queries");
+}
+
 console.log("component catalog recovery guard passed");
