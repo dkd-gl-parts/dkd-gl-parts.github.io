@@ -6,12 +6,14 @@ on:
       - "app.js"
       - "scripts/verify-search-workload-guard.js"
       - "scripts/verify-component-catalog-recovery.js"
+      - "scripts/verify-component-reverse-lookup.js"
       - ".github/workflows/search-performance-guard.yml"
   pull_request:
     paths:
       - "app.js"
       - "scripts/verify-search-workload-guard.js"
       - "scripts/verify-component-catalog-recovery.js"
+      - "scripts/verify-component-reverse-lookup.js"
       - ".github/workflows/search-performance-guard.yml"
   workflow_dispatch:
 
@@ -31,3 +33,5 @@ jobs:
         run: node scripts/verify-search-workload-guard.js
       - name: Verify component catalog recovery
         run: node scripts/verify-component-catalog-recovery.js
+      - name: Verify component reverse lookup
+        run: node scripts/verify-component-reverse-lookup.js

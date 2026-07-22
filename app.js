@@ -3452,7 +3452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.542";
+var APP_VERSION       = "v1.1.543";
 var userPermissionOverviewShowAll = false;
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
@@ -19053,6 +19053,85 @@ function componentReverseDedupRows(rows) {
   return out;
 }
 
+function componentReverseAssyMasterKey(manufacturer, manufacturerPartNumber) {
+  return normalizedPartKey(manufacturer) + "|" + normalizedPartKey(manufacturerPartNumber);
+}
+
+function componentReverseMasterCandidates(row, strictMap, partMap) {
+  var partKey = normalizedPartKey(row && row.assy_manufacturer_part_number);
+  if (!partKey) return [];
+  var strictKey = componentReverseAssyMasterKey(row && row.assy_manufacturer, partKey);
+  var strict = strictMap[strictKey] || [];
+  if (strict.length) return strict;
+  var byPart = partMap[partKey] || [];
+  var manufacturerKeys = uniqueTextValues(byPart.map(function(product) {
+    return normalizedPartKey(product.manufacturer);
+  }).filter(Boolean));
+  return manufacturerKeys.length === 1 ? byPart : [];
+}
+
+function componentReverseExpandRowWithMasters(row, strictMap, partMap) {
+  var candidates = componentReverseMasterCandidates(row, strictMap, partMap);
+  if (!candidates.length) return [row];
+  var dkdId = String(row.dkd_shohin_id || "");
+  var genuineKey = normalizedPartKey(row.assy_genuine_part_number);
+  var selected = dkdId ? candidates.filter(function(product) {
+    return String(product.dkd_shohin_id || "") === dkdId;
+  }) : [];
+  if (!selected.length && genuineKey) {
+    selected = candidates.filter(function(product) {
+      return [product.genuine_part_number, product.genuine_part_number_2].some(function(value) {
+        return normalizedPartKey(value) === genuineKey;
+      });
+    });
+  }
+  if (!selected.length && !genuineKey) selected = candidates;
+  if (!selected.length) return [row];
+  return selected.map(function(product) {
+    return Object.assign({}, row, {
+      dkd_shohin_id: row.dkd_shohin_id || product.dkd_shohin_id || null,
+      assy_manufacturer: row.assy_manufacturer || product.manufacturer || "",
+      assy_manufacturer_part_number: row.assy_manufacturer_part_number || product.manufacturer_part_number || "",
+      assy_genuine_part_number: row.assy_genuine_part_number || product.genuine_part_number || product.genuine_part_number_2 || ""
+    });
+  });
+}
+
+async function hydrateComponentReverseAssyProducts(rows) {
+  rows = Array.isArray(rows) ? rows : [];
+  var partKeys = uniqueTextValues(rows.map(function(row) {
+    return normalizedPartKey(row.assy_manufacturer_part_number);
+  }).filter(Boolean));
+  if (!partKeys.length) return rows;
+  var products = [];
+  var chunks = chunkArray(partKeys, 100);
+  for (var i = 0; i < chunks.length; i++) {
+    var r = await sb.from("core_products")
+      .select("dkd_shohin_id,manufacturer,manufacturer_part_number,genuine_part_number,genuine_part_number_2,category_code,normalized_manufacturer_part_number")
+      .in("normalized_manufacturer_part_number", chunks[i])
+      .limit(1000);
+    if (r.error) {
+      console.warn("component reverse ASSY master lookup failed", r.error);
+      return rows;
+    }
+    products = products.concat(r.data || []);
+  }
+  var strictMap = {};
+  var partMap = {};
+  products.forEach(function(product) {
+    var partKey = String(product.normalized_manufacturer_part_number || normalizedPartKey(product.manufacturer_part_number));
+    if (!partKey) return;
+    var strictKey = componentReverseAssyMasterKey(product.manufacturer, partKey);
+    if (!strictMap[strictKey]) strictMap[strictKey] = [];
+    if (!partMap[partKey]) partMap[partKey] = [];
+    strictMap[strictKey].push(product);
+    partMap[partKey].push(product);
+  });
+  return rows.reduce(function(out, row) {
+    return out.concat(componentReverseExpandRowWithMasters(row, strictMap, partMap));
+  }, []);
+}
+
 function componentReverseKindLabel(row) {
   if (row && row.is_catalog_evidence) return productKindLabel("catalog_spec");
   return productKindLabel((row && row.product_kind) || "rebuilt");
@@ -19138,18 +19217,23 @@ async function runComponentReverseLookup() {
   } catch (e) {
     r = { data: [], error: e };
   }
-  if (button) {
-    button.disabled = false;
-    button.textContent = t("component_reverse_search");
-  }
   if (r.error) {
+    if (button) {
+      button.disabled = false;
+      button.textContent = t("component_reverse_search");
+    }
     console.warn("component reverse lookup failed", r.error);
     setComponentReverseStatus(t("msg_kikan_err") + ": " + r.error.message, true);
     if (result) result.innerHTML = "<div class='component-empty'>" + esc(t("component_reverse_no_results")) + "</div>";
     return;
   }
+  var hydratedRows = await hydrateComponentReverseAssyProducts(r.data || []);
+  if (button) {
+    button.disabled = false;
+    button.textContent = t("component_reverse_search");
+  }
   var partName = componentReverseValue("component-reverse-part-name");
-  var rows = componentReverseDedupRows(r.data || []).filter(function(row) {
+  var rows = componentReverseDedupRows(hydratedRows).filter(function(row) {
     return componentReverseNameMatches(row, partName);
   });
   rows.sort(function(a, b) {
