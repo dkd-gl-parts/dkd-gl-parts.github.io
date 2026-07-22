@@ -3452,7 +3452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.545";
+var APP_VERSION       = "v1.1.546";
 var userPermissionOverviewShowAll = false;
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
@@ -19163,19 +19163,18 @@ async function loadComponentReverseUsageRows(componentIds, scope, selectColumns)
   return { data: componentReversePreferCatalogAssyRows(rows), error: null };
 }
 
-async function loadComponentReverseVehicleMakerMap(rows, field, rowField, makerGroup) {
+async function loadComponentReverseVehicleApplicationRows(rows, field, rowField, makerGroup) {
   var keys = uniqueTextValues((rows || []).map(function(row) {
     return normalizedPartKey(row && row[rowField]);
   }).filter(Boolean));
-  var matches = {};
-  if (!keys.length || !makerGroup) return matches;
+  if (!keys.length || !makerGroup) return [];
 
   async function loadChunk(chunk) {
     var loaded = [];
     for (var from = 0; from < COMPONENT_REVERSE_VEHICLE_SOURCE_LIMIT; from += COMPONENT_REVERSE_PAGE_SIZE) {
       var to = Math.min(from + COMPONENT_REVERSE_PAGE_SIZE - 1, COMPONENT_REVERSE_VEHICLE_SOURCE_LIMIT - 1);
       var page = await sb.from("catalog_vehicle_applications")
-        .select("id," + field + ",vehicle_manufacturer")
+        .select("id,normalized_manufacturer_part_number,normalized_genuine_part_number,vehicle_manufacturer")
         .in("vehicle_manufacturer", makerGroup.aliases)
         .in(field, chunk)
         .order("id", { ascending: true })
@@ -19189,27 +19188,56 @@ async function loadComponentReverseVehicleMakerMap(rows, field, rowField, makerG
   }
 
   var chunks = chunkArray(keys, COMPONENT_REVERSE_VEHICLE_CHUNK_SIZE);
+  var rowsById = {};
   for (var i = 0; i < chunks.length; i += COMPONENT_REVERSE_VEHICLE_CHUNK_CONCURRENCY) {
     var batch = chunks.slice(i, i + COMPONENT_REVERSE_VEHICLE_CHUNK_CONCURRENCY);
     var batchRows = await Promise.all(batch.map(loadChunk));
     batchRows.forEach(function(loaded) {
       loaded.forEach(function(row) {
-        var key = String(row[field] || "");
-        if (!key) return;
-        if (!matches[key]) matches[key] = [];
-        var maker = String(row.vehicle_manufacturer || "").trim();
-        if (maker && matches[key].indexOf(maker) < 0) matches[key].push(maker);
+        var key = String(row.id || "") || [
+          row.normalized_manufacturer_part_number || "",
+          row.normalized_genuine_part_number || "",
+          row.vehicle_manufacturer || ""
+        ].join("|");
+        rowsById[key] = row;
       });
     });
   }
-  return matches;
+  return Object.keys(rowsById).map(function(key) { return rowsById[key]; });
 }
 
-function componentReverseRowsForVehicleMakerMaps(rows, manufacturerMap, genuineMap) {
+function componentReverseVehicleAssyPairKey(manufacturerPartNumber, genuinePartNumber) {
+  return normalizedPartKey(manufacturerPartNumber) + "|" + normalizedPartKey(genuinePartNumber);
+}
+
+function componentReverseAddVehicleMaker(map, key, maker) {
+  if (!key || !maker) return;
+  if (!map[key]) map[key] = [];
+  if (map[key].indexOf(maker) < 0) map[key].push(maker);
+}
+
+function componentReverseRowsForVehicleApplications(rows, applications) {
+  var pairMap = {};
+  var manufacturerMap = {};
+  var genuineMap = {};
+  (applications || []).forEach(function(application) {
+    var manufacturerKey = String(application.normalized_manufacturer_part_number || "");
+    var genuineKey = String(application.normalized_genuine_part_number || "");
+    var maker = String(application.vehicle_manufacturer || "").trim();
+    if (manufacturerKey && genuineKey) {
+      componentReverseAddVehicleMaker(pairMap, manufacturerKey + "|" + genuineKey, maker);
+    }
+    componentReverseAddVehicleMaker(manufacturerMap, manufacturerKey, maker);
+    componentReverseAddVehicleMaker(genuineMap, genuineKey, maker);
+  });
   return (rows || []).reduce(function(out, row) {
     var manufacturerKey = normalizedPartKey(row && row.assy_manufacturer_part_number);
     var genuineKey = normalizedPartKey(row && row.assy_genuine_part_number);
-    var makers = uniqueTextValues((manufacturerMap[manufacturerKey] || []).concat(genuineMap[genuineKey] || []));
+    var makers = manufacturerKey && genuineKey
+      ? (pairMap[componentReverseVehicleAssyPairKey(manufacturerKey, genuineKey)] || [])
+      : manufacturerKey
+        ? (manufacturerMap[manufacturerKey] || [])
+        : (genuineMap[genuineKey] || []);
     if (!makers.length) return out;
     out.push(Object.assign({}, row, { component_reverse_vehicle_makers: makers }));
     return out;
@@ -19218,11 +19246,15 @@ function componentReverseRowsForVehicleMakerMaps(rows, manufacturerMap, genuineM
 
 async function filterComponentReverseRowsByVehicleMaker(rows, makerGroup) {
   if (!makerGroup || !rows || !rows.length) return rows || [];
-  var maps = await Promise.all([
-    loadComponentReverseVehicleMakerMap(rows, "normalized_manufacturer_part_number", "assy_manufacturer_part_number", makerGroup),
-    loadComponentReverseVehicleMakerMap(rows, "normalized_genuine_part_number", "assy_genuine_part_number", makerGroup)
+  var genuineOnlyRows = rows.filter(function(row) {
+    return !normalizedPartKey(row && row.assy_manufacturer_part_number) &&
+      !!normalizedPartKey(row && row.assy_genuine_part_number);
+  });
+  var applicationGroups = await Promise.all([
+    loadComponentReverseVehicleApplicationRows(rows, "normalized_manufacturer_part_number", "assy_manufacturer_part_number", makerGroup),
+    loadComponentReverseVehicleApplicationRows(genuineOnlyRows, "normalized_genuine_part_number", "assy_genuine_part_number", makerGroup)
   ]);
-  return componentReverseRowsForVehicleMakerMaps(rows, maps[0], maps[1]);
+  return componentReverseRowsForVehicleApplications(rows, applicationGroups[0].concat(applicationGroups[1]));
 }
 
 function componentReverseKindLabel(row) {

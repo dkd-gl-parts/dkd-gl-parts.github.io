@@ -53,7 +53,9 @@ vm.runInContext(functionSource("componentReverseCatalogAssyKey"), context);
 vm.runInContext(functionSource("componentReverseHasCatalogAssyNumbers"), context);
 vm.runInContext(functionSource("componentReversePreferCatalogAssyRows"), context);
 context.uniqueTextValues = values => Array.from(new Set((values || []).filter(Boolean)));
-vm.runInContext(functionSource("componentReverseRowsForVehicleMakerMaps"), context);
+vm.runInContext(functionSource("componentReverseVehicleAssyPairKey"), context);
+vm.runInContext(functionSource("componentReverseAddVehicleMaker"), context);
+vm.runInContext(functionSource("componentReverseRowsForVehicleApplications"), context);
 
 const rows = [
   { id: 1, assy_manufacturer: "DENSO", assy_manufacturer_part_number: "101211-1120", assy_genuine_part_number: null },
@@ -67,17 +69,27 @@ assert.deepStrictEqual(Array.from(preferred, row => row.id), [2, 3, 4]);
 assert(!preferred.some(row => row.id === 1), "blank catalog row must be removed when the same ASSY has genuine-number rows");
 assert(preferred.some(row => row.id === 4), "blank catalog row must remain when the ASSY has no genuine-number row");
 
-const vehicleRows = context.componentReverseRowsForVehicleMakerMaps(rows, {
-  "1012111120": ["Toyota"]
-}, {});
-assert.deepStrictEqual(Array.from(vehicleRows, row => row.id), [1, 2, 3]);
-assert(vehicleRows.every(row => Array.from(row.component_reverse_vehicle_makers).join(",") === "Toyota"));
+const sharedAssyRows = [
+  { id: 10, assy_manufacturer_part_number: "101211-2640", assy_genuine_part_number: "1A62-18-300" },
+  { id: 11, assy_manufacturer_part_number: "101211-2640", assy_genuine_part_number: "31400-73G20" },
+  { id: 12, assy_manufacturer_part_number: "101211-2640", assy_genuine_part_number: null }
+];
+const mazdaApplications = [{
+  normalized_manufacturer_part_number: "1012112640",
+  normalized_genuine_part_number: "1A6218300",
+  vehicle_manufacturer: "Mazda"
+}];
+const vehicleRows = context.componentReverseRowsForVehicleApplications(sharedAssyRows, mazdaApplications);
+assert.deepStrictEqual(Array.from(vehicleRows, row => row.id), [10, 12]);
+assert(!vehicleRows.some(row => row.id === 11), "a Suzuki genuine ASSY number must not match Mazda through a shared manufacturer ASSY number");
+assert(vehicleRows.every(row => Array.from(row.component_reverse_vehicle_makers).join(",") === "Mazda"));
 
-const vehicleLoaderStart = source.indexOf("async function loadComponentReverseVehicleMakerMap");
-const vehicleLoaderEnd = source.indexOf("function componentReverseRowsForVehicleMakerMaps", vehicleLoaderStart);
+const vehicleLoaderStart = source.indexOf("async function loadComponentReverseVehicleApplicationRows");
+const vehicleLoaderEnd = source.indexOf("function componentReverseVehicleAssyPairKey", vehicleLoaderStart);
 const vehicleLoaderSource = source.slice(vehicleLoaderStart, vehicleLoaderEnd);
 if (vehicleLoaderStart < 0 || vehicleLoaderEnd < vehicleLoaderStart ||
     !vehicleLoaderSource.includes('from("catalog_vehicle_applications")') ||
+    !vehicleLoaderSource.includes("normalized_manufacturer_part_number,normalized_genuine_part_number") ||
     !vehicleLoaderSource.includes('.in("vehicle_manufacturer", makerGroup.aliases)') ||
     !vehicleLoaderSource.includes(".in(field, chunk)")) {
   throw new Error("vehicle maker filtering must use indexed exact catalog application lookups");
