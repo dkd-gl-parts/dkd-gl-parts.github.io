@@ -3452,7 +3452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.546";
+var APP_VERSION       = "v1.1.547";
 var userPermissionOverviewShowAll = false;
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
@@ -28169,172 +28169,417 @@ function userPermissionDetailHtml(roleCode, companyCode, costAllowed) {
   }).join("");
 }
 
-var USER_PERMISSION_OVERVIEW_COLUMNS = [
-  "操作権限",
-  "所属/範囲",
-  "商品・画像",
-  "構成部品",
-  "販売/基準価格",
-  "仕入/価格調査",
-  "製造原価",
-  "ユーザー管理"
+var USER_PERMISSION_OVERVIEW_ROLE_CODES = [
+  "system_admin",
+  "company_admin",
+  "dept_admin",
+  "master_editor",
+  "production_editor",
+  "core_image_editor",
+  "all_viewer",
+  "sales_viewer",
+  "internal_viewer",
+  "customer_viewer",
+  "external_viewer"
 ];
 
-var USER_PERMISSION_OVERVIEW_ROWS = [
-  {
-    roleCode: "system_admin",
-    scope: "全体",
-    productImage: "追加・修正・削除",
-    component: "追加・修正・削除",
-    price: "販売・基準編集",
-    purchaseResearch: "仕入紐づけ・価格調査管理",
-    manufacturingCost: "基本許可",
-    userMgmt: "全体"
-  },
-  {
-    roleCode: "company_admin",
-    scope: "自社",
-    productImage: "追加・修正・削除",
-    component: "追加・修正・削除",
-    price: "販売・基準編集",
-    purchaseResearch: "仕入紐づけ・価格調査管理",
-    manufacturingCost: "基本許可",
-    userMgmt: "自社"
-  },
-  {
-    roleCode: "dept_admin",
-    scope: "自部署",
-    productImage: "追加・修正",
-    component: "追加・修正・削除",
-    price: "販売・基準閲覧",
-    purchaseResearch: "仕入閲覧",
-    manufacturingCost: "基本許可",
-    userMgmt: "自部署"
-  },
-  {
-    roleCode: "master_editor",
-    scope: "自部署",
-    productImage: "追加・修正",
-    component: "閲覧",
-    price: "販売編集・基準閲覧",
-    purchaseResearch: "仕入紐づけ・価格調査管理",
-    manufacturingCost: "個別許可可",
-    userMgmt: "自部署"
-  },
-  {
-    roleCode: "production_editor",
-    scope: "製造",
-    productImage: "追加・修正",
-    component: "追加・修正・削除",
-    price: "販売価格閲覧",
-    purchaseResearch: "-",
-    manufacturingCost: "個別許可可",
-    userMgmt: "-"
-  },
-  {
-    roleCode: "core_image_editor",
-    scope: "商品管理 / 製造",
-    productImage: "使用済みコア画像の登録・削除",
-    component: "-",
-    price: "販売価格閲覧",
-    purchaseResearch: "-",
-    manufacturingCost: "個別許可可",
-    userMgmt: "-"
-  },
-  {
-    roleCode: "all_viewer",
-    scope: "社内",
-    productImage: "閲覧",
-    component: "閲覧",
-    price: "販売・基準閲覧",
-    purchaseResearch: "仕入閲覧・価格調査履歴",
-    manufacturingCost: "個別許可可",
-    userMgmt: "-"
-  },
-  {
-    roleCode: "sales_viewer",
-    scope: "営業",
-    productImage: "閲覧",
-    component: "-",
-    price: "販売価格閲覧",
-    purchaseResearch: "価格調査履歴",
-    manufacturingCost: "個別許可可",
-    userMgmt: "-"
-  },
-  {
-    roleCode: "internal_viewer",
-    scope: "社内",
-    productImage: "閲覧",
-    component: "-",
-    price: "販売価格閲覧",
-    purchaseResearch: "-",
-    manufacturingCost: "個別許可可",
-    userMgmt: "-"
-  },
-  {
-    roleCode: "customer_viewer",
-    scope: "紐づいた得意先",
-    productImage: "制限閲覧",
-    component: "-",
-    price: "得意先価格閲覧",
-    purchaseResearch: "-",
-    manufacturingCost: "対象外",
-    userMgmt: "-"
-  },
-  {
-    roleCode: "external_viewer",
-    scope: "公開範囲",
-    productImage: "制限閲覧",
-    component: "-",
-    price: "-",
-    purchaseResearch: "-",
-    manufacturingCost: "対象外",
-    userMgmt: "-"
+function permissionOverviewState(text, tone) {
+  return { text: text, tone: tone || "allowed" };
+}
+
+function permissionOverviewAllowed(text) {
+  return permissionOverviewState(text || "利用可", "allowed");
+}
+
+function permissionOverviewLimited(text) {
+  return permissionOverviewState(text || "制限あり", "limited");
+}
+
+function permissionOverviewOptional(text) {
+  return permissionOverviewState(text || "個別許可で利用可", "optional");
+}
+
+function permissionOverviewDenied(text) {
+  return permissionOverviewState(text || "利用不可", "denied");
+}
+
+function permissionOverviewRoleIn(roleCode, roleCodes) {
+  return roleCodes.indexOf(roleCode) >= 0;
+}
+
+function permissionOverviewStaticScope(roleCode) {
+  switch (roleCode) {
+    case "system_admin": return "全体";
+    case "company_admin": return "自社";
+    case "dept_admin": return "自部署";
+    case "master_editor": return "自部署";
+    case "production_editor": return "製造";
+    case "core_image_editor": return "商品管理 / 製造";
+    case "all_viewer": return "社内";
+    case "sales_viewer": return "営業";
+    case "internal_viewer": return "社内";
+    case "customer_viewer": return "紐づいた得意先";
+    case "external_viewer": return "公開範囲";
+    default: return "-";
   }
-];
-
-function permissionOverviewCellClass(text) {
-  if (!text || text === "-" || text.indexOf("対象外") >= 0 || text.indexOf("未許可") >= 0) return "permission-no";
-  return "permission-ok";
 }
 
-function currentUserPermissionOverviewCostText(roleCode) {
-  if (!userProfile) return "-";
-  return manufacturingCostPermissionNote(roleCode, canUseManufacturingCost(userProfile), userCompanyCode(userProfile));
-}
-
-function fallbackPermissionOverviewRow(roleCode) {
-  var companyLabel = optionLabel(USER_COMPANY_OPTIONS, userCompanyCode(userProfile));
-  var departmentLabel = optionLabel(USER_DEPARTMENT_OPTIONS, userDepartmentCode(userProfile));
-  var items = userPermissionDetailItems(roleCode, userCompanyCode(userProfile), canUseManufacturingCost(userProfile));
+function permissionOverviewContext(roleCode, ownRole) {
+  var companyCode = ownRole ? userCompanyCode(userProfile) :
+    (permissionOverviewRoleIn(roleCode, ["customer_viewer", "external_viewer"]) ? "external" : "daiko");
+  var scope = permissionOverviewStaticScope(roleCode);
+  if (ownRole && userProfile) {
+    scope = accessScopeLabel(
+      roleCode,
+      optionLabel(USER_COMPANY_OPTIONS, companyCode),
+      optionLabel(USER_DEPARTMENT_OPTIONS, userDepartmentCode(userProfile))
+    );
+  }
   return {
     roleCode: roleCode,
-    scope: accessScopeLabel(roleCode, companyLabel, departmentLabel),
-    productImage: items[0] ? items[0].text : "-",
-    component: items[1] ? items[1].text : "-",
-    price: items[2] ? items[2].text : "-",
-    purchaseResearch: items[3] ? items[3].text : "-",
-    manufacturingCost: currentUserPermissionOverviewCostText(roleCode),
-    userMgmt: items[5] ? items[5].text : "-"
+    companyCode: companyCode,
+    ownRole: !!ownRole,
+    scope: scope,
+    manufacturingCostAllowed: ownRole ? canUseManufacturingCost(userProfile) : null
   };
 }
 
-function permissionOverviewRowHtml(row, ownOnly) {
-  var costText = ownOnly ? currentUserPermissionOverviewCostText(row.roleCode) : row.manufacturingCost;
-  var cells = [
-    accessRoleLabel(row.roleCode),
-    row.scope,
-    row.productImage,
-    row.component,
-    row.price,
-    row.purchaseResearch,
-    costText,
-    row.userMgmt
+function permissionOverviewScreenGroups(context) {
+  var role = context.roleCode;
+  var editors = ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"];
+  var companyAdmins = ["system_admin", "company_admin"];
+  var managementViewers = editors.concat(["all_viewer"]);
+  var componentEditors = ["system_admin", "company_admin", "dept_admin", "production_editor"];
+  var internalRoles = ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "core_image_editor", "all_viewer", "sales_viewer", "internal_viewer"];
+  var basePriceViewers = ["system_admin", "company_admin", "dept_admin", "master_editor", "all_viewer"];
+  var priceResearchViewers = ["system_admin", "company_admin", "master_editor", "all_viewer", "sales_viewer"];
+  var priceResearchers = ["system_admin", "company_admin", "master_editor"];
+  var userManagers = ["system_admin", "company_admin", "dept_admin", "master_editor"];
+  var roleCanEdit = permissionOverviewRoleIn(role, editors);
+  var roleCanManageCompany = permissionOverviewRoleIn(role, companyAdmins);
+  var roleCanViewManagement = permissionOverviewRoleIn(role, managementViewers);
+  var roleIsInternal = permissionOverviewRoleIn(role, internalRoles);
+  var roleCanViewBasePrice = permissionOverviewRoleIn(role, basePriceViewers);
+  var roleCanManageComponents = permissionOverviewRoleIn(role, componentEditors);
+  var roleCanManageUsers = permissionOverviewRoleIn(role, userManagers);
+  var isCustomer = role === "customer_viewer";
+  var isExternal = role === "external_viewer";
+
+  function yesNo(condition, allowedText, deniedText) {
+    return condition ? permissionOverviewAllowed(allowedText) : permissionOverviewDenied(deniedText);
+  }
+
+  function screenState(condition) {
+    return yesNo(condition, "利用可", "利用不可");
+  }
+
+  function productInformationState() {
+    if (isCustomer) return permissionOverviewLimited("得意先設定範囲を閲覧");
+    if (isExternal) return permissionOverviewLimited("公開範囲を閲覧");
+    return permissionOverviewAllowed("閲覧可");
+  }
+
+  function salesPriceState() {
+    if (isCustomer) return permissionOverviewLimited("得意先価格のみ閲覧");
+    if (isExternal) return permissionOverviewDenied("閲覧不可");
+    return permissionOverviewAllowed("閲覧可");
+  }
+
+  function imageManagementState() {
+    if (roleCanEdit) return permissionOverviewAllowed("全画像の登録・修正・削除可");
+    if (role === "core_image_editor") return permissionOverviewLimited("使用済みコア画像の登録・削除のみ可");
+    return permissionOverviewDenied("登録・削除不可");
+  }
+
+  function manufacturingCostUseState() {
+    if (permissionOverviewRoleIn(role, ["system_admin", "company_admin", "dept_admin"])) {
+      return permissionOverviewAllowed("基本権限で利用可");
+    }
+    if (!manufacturingCostOptionalAllowedFor(role, context.companyCode)) {
+      return permissionOverviewDenied("対象外");
+    }
+    if (!context.ownRole) return permissionOverviewOptional("個別許可で利用可");
+    return context.manufacturingCostAllowed
+      ? permissionOverviewLimited("個別許可で利用可")
+      : permissionOverviewDenied("個別許可なし");
+  }
+
+  function userManagementState() {
+    switch (role) {
+      case "system_admin": return permissionOverviewAllowed("全ユーザーを管理可");
+      case "company_admin": return permissionOverviewAllowed("自社ユーザーを管理可");
+      case "dept_admin":
+      case "master_editor": return permissionOverviewLimited("自部署ユーザーを管理可");
+      default: return permissionOverviewDenied("利用不可");
+    }
+  }
+
+  function componentCompatibilityState() {
+    var roleAllowed = permissionOverviewRoleIn(role, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]);
+    if (!roleAllowed) return permissionOverviewDenied("利用不可");
+    if (context.ownRole) {
+      return context.companyCode === "daiko"
+        ? permissionOverviewAllowed("利用・設定可")
+        : permissionOverviewDenied("対象外（大光電機のみ）");
+    }
+    return permissionOverviewLimited("大光電機所属時のみ利用・設定可");
+  }
+
+  var manufacturingCostUse = manufacturingCostUseState();
+  var coreListVisible = roleCanViewManagement || role === "core_image_editor";
+  var salesPricingVisible = roleIsInternal;
+  var purchaseVisible = permissionOverviewRoleIn(role, basePriceViewers);
+  var researchHistoryVisible = permissionOverviewRoleIn(role, priceResearchViewers);
+  var researchManageable = permissionOverviewRoleIn(role, priceResearchers);
+  var customerAccessManageable = permissionOverviewRoleIn(role, ["system_admin", "company_admin", "master_editor"]);
+  var userManagement = userManagementState();
+
+  return [
+    {
+      title: "商品・検索",
+      screens: [
+        {
+          title: "商品検索",
+          items: [
+            { label: "画面", state: permissionOverviewAllowed("利用可") },
+            { label: "商品情報", state: productInformationState() },
+            { label: "販売価格", state: salesPriceState() },
+            { label: "基準価格・仕入価格", state: yesNo(roleCanViewBasePrice, "閲覧可", "閲覧不可") },
+            { label: "商品登録・修正", state: yesNo(roleCanEdit, "可", "不可") },
+            { label: "画像登録・削除", state: imageManagementState() }
+          ]
+        },
+        {
+          title: "商品管理",
+          items: [
+            { label: "画面", state: screenState(roleCanViewManagement) },
+            { label: "商品登録・修正", state: yesNo(roleCanEdit, "可", "不可") },
+            { label: "商品削除", state: yesNo(roleCanEdit, "可", "不可") }
+          ]
+        },
+        {
+          title: "構成部品名マスタ",
+          items: [
+            { label: "画面・マスタ設定", state: screenState(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "dept_admin", "master_editor"])) }
+          ]
+        },
+        {
+          title: "構成部品互換設定",
+          items: [
+            { label: "画面・互換設定", state: componentCompatibilityState() }
+          ]
+        }
+      ]
+    },
+    {
+      title: "製造・在庫",
+      screens: [
+        {
+          title: "製造管理",
+          items: [
+            { label: "画面", state: screenState(roleCanViewManagement) },
+            { label: "商品登録・修正", state: yesNo(roleCanEdit, "可", "不可") },
+            { label: "構成部品", state: roleCanManageComponents
+              ? permissionOverviewAllowed("追加・修正・削除可")
+              : (permissionOverviewRoleIn(role, ["master_editor", "all_viewer"])
+                ? permissionOverviewLimited("閲覧のみ")
+                : permissionOverviewDenied("利用不可")) },
+            { label: "製造画像", state: roleCanEdit
+              ? permissionOverviewAllowed("登録・修正・削除可")
+              : (role === "all_viewer" ? permissionOverviewLimited("閲覧のみ") : permissionOverviewDenied("利用不可")) }
+          ]
+        },
+        {
+          title: "完成品ラベル",
+          items: [
+            { label: "画面・登録・修正", state: screenState(role === "system_admin") }
+          ]
+        },
+        {
+          title: "コア一覧",
+          items: [
+            { label: "画面", state: screenState(coreListVisible) },
+            { label: "収集・在庫リスト", state: roleCanEdit
+              ? permissionOverviewAllowed("追加・修正・削除可")
+              : (coreListVisible ? permissionOverviewLimited("閲覧のみ") : permissionOverviewDenied("利用不可")) },
+            { label: "使用済みコア画像", state: imageManagementState() }
+          ]
+        },
+        {
+          title: "商品区分別在庫",
+          items: [
+            { label: "画面・在庫情報", state: screenState(roleIsInternal) },
+            { label: "在庫数・保管情報の更新", state: yesNo(roleCanEdit, "可", "不可") }
+          ]
+        },
+        {
+          title: "製造原価",
+          items: [
+            { label: "画面", state: manufacturingCostUse },
+            { label: "原価計算・CSV出力", state: manufacturingCostUse },
+            { label: "原価設定・リスト保存・削除", state: yesNo(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "dept_admin"]), "可", "不可") }
+          ]
+        },
+        {
+          title: "製造ランキングレポート",
+          items: [
+            { label: "画面・レポート閲覧", state: screenState(roleCanViewManagement) }
+          ]
+        },
+        {
+          title: "互換管理",
+          items: [
+            { label: "画面", state: screenState(roleCanViewManagement) },
+            { label: "互換グループの追加・修正・削除", state: yesNo(roleCanEdit, "可", "不可") }
+          ]
+        }
+      ]
+    },
+    {
+      title: "価格・取引",
+      screens: [
+        {
+          title: "販売・基準価格",
+          items: [
+            { label: "画面・販売価格", state: screenState(salesPricingVisible) },
+            { label: "販売価格設定", state: yesNo(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "master_editor"]), "修正可", "修正不可") },
+            { label: "基準価格", state: permissionOverviewRoleIn(role, ["system_admin", "company_admin"])
+              ? permissionOverviewAllowed("閲覧・修正可")
+              : (permissionOverviewRoleIn(role, ["dept_admin", "master_editor", "all_viewer"])
+                ? permissionOverviewLimited("閲覧のみ")
+                : permissionOverviewDenied("閲覧不可")) }
+          ]
+        },
+        {
+          title: "仕入価格管理",
+          items: [
+            { label: "画面・仕入価格", state: screenState(purchaseVisible) },
+            { label: "商品との紐づけ", state: yesNo(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "master_editor"]), "追加・修正・解除可", "不可") }
+          ]
+        },
+        {
+          title: "楽天価格調査",
+          items: [
+            { label: "調査履歴", state: yesNo(researchHistoryVisible, "閲覧可", "閲覧不可") },
+            { label: "価格調査の実行・管理", state: yesNo(researchManageable, "可", "不可") },
+            { label: "自動取得設定", state: yesNo(roleCanManageCompany, "設定可", "設定不可") }
+          ]
+        },
+        {
+          title: "得意先公開設定",
+          items: [
+            { label: "画面・得意先紐づけ・表示範囲", state: screenState(customerAccessManageable) }
+          ]
+        }
+      ]
+    },
+    {
+      title: "ユーザー・システム",
+      screens: [
+        {
+          title: "ユーザー権限",
+          items: [
+            { label: "自分の権限一覧", state: permissionOverviewAllowed("閲覧可") },
+            { label: "ユーザー一覧・設定", state: userManagement },
+            { label: "履歴・停止・PW再設定送信", state: roleCanManageUsers ? userManagement : permissionOverviewDenied("利用不可") }
+          ]
+        },
+        {
+          title: "パスワード変更",
+          items: [
+            { label: "自分のパスワード変更", state: permissionOverviewAllowed("利用可") }
+          ]
+        },
+        {
+          title: "操作ログ",
+          items: [
+            { label: "画面・ログ閲覧", state: screenState(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "all_viewer"])) }
+          ]
+        },
+        {
+          title: "API設定",
+          items: [
+            { label: "画面・設定変更", state: screenState(role === "system_admin") }
+          ]
+        }
+      ]
+    }
   ];
-  return "<tr>" + cells.map(function(text, idx) {
-    var cls = idx === 0 ? "" : " class='" + permissionOverviewCellClass(text) + "'";
-    return "<td" + cls + ">" + esc(text || "-") + "</td>";
-  }).join("") + "</tr>";
+}
+
+function permissionOverviewStatusHtml(state) {
+  state = state || permissionOverviewDenied();
+  return "<span class='permission-status permission-status-" + esc(state.tone) + "'>" + esc(state.text) + "</span>";
+}
+
+function permissionOverviewTableHtml(context) {
+  var groups = permissionOverviewScreenGroups(context);
+  var html = "<div class='permission-screen-table-wrap'><table class='permission-screen-table'>";
+  html += "<thead><tr><th>画面</th><th>確認項目</th><th>状態</th></tr></thead><tbody>";
+  groups.forEach(function(group) {
+    html += "<tr class='permission-screen-group-row'><th colspan='3'>" + esc(group.title) + "</th></tr>";
+    group.screens.forEach(function(screen) {
+      screen.items.forEach(function(item, index) {
+        html += "<tr>";
+        if (index === 0) {
+          html += "<th class='permission-screen-name' scope='rowgroup' rowspan='" + screen.items.length + "'>" + esc(screen.title) + "</th>";
+        }
+        html += "<td class='permission-screen-item'>" + esc(item.label) + "</td>";
+        html += "<td class='permission-screen-state'>" + permissionOverviewStatusHtml(item.state) + "</td>";
+        html += "</tr>";
+      });
+    });
+  });
+  html += "</tbody></table></div>";
+  return html;
+}
+
+function permissionOverviewCounts(context) {
+  var counts = { allowed: 0, limited: 0, optional: 0, denied: 0 };
+  permissionOverviewScreenGroups(context).forEach(function(group) {
+    group.screens.forEach(function(screen) {
+      screen.items.forEach(function(item) {
+        var tone = item.state && item.state.tone;
+        if (counts[tone] !== undefined) counts[tone]++;
+      });
+    });
+  });
+  return counts;
+}
+
+function permissionOverviewCountHtml(context) {
+  var counts = permissionOverviewCounts(context);
+  var html = "<span class='permission-role-count allowed'>利用可 " + counts.allowed + "</span>";
+  if (counts.limited) html += "<span class='permission-role-count limited'>制限 " + counts.limited + "</span>";
+  if (counts.optional) html += "<span class='permission-role-count optional'>個別許可 " + counts.optional + "</span>";
+  html += "<span class='permission-role-count denied'>不可 " + counts.denied + "</span>";
+  return html;
+}
+
+function permissionOverviewCurrentRoleHtml(roleCode) {
+  var context = permissionOverviewContext(roleCode, true);
+  var html = "<div class='permission-role-current'>";
+  html += "<div class='permission-role-current-head'>";
+  html += "<div><strong>" + esc(accessRoleLabel(roleCode)) + "</strong><span>操作範囲: " + esc(context.scope) + "</span></div>";
+  html += "<div class='permission-role-counts'>" + permissionOverviewCountHtml(context) + "</div>";
+  html += "</div>";
+  html += permissionOverviewTableHtml(context);
+  html += "</div>";
+  return html;
+}
+
+function permissionOverviewAllRolesHtml(currentRoleCode) {
+  var html = "<div class='permission-role-list'>";
+  USER_PERMISSION_OVERVIEW_ROLE_CODES.forEach(function(roleCode) {
+    var context = permissionOverviewContext(roleCode, false);
+    html += "<details class='permission-role-panel'" + (roleCode === currentRoleCode ? " open" : "") + ">";
+    html += "<summary><span class='permission-role-summary-main'><strong>" + esc(accessRoleLabel(roleCode)) + "</strong><span>操作範囲: " + esc(context.scope) + "</span></span>";
+    html += "<span class='permission-role-counts'>" + permissionOverviewCountHtml(context) + "</span></summary>";
+    html += permissionOverviewTableHtml(context);
+    html += "</details>";
+  });
+  html += "</div>";
+  return html;
 }
 
 function renderUserPermissionOverview() {
@@ -28342,27 +28587,15 @@ function renderUserPermissionOverview() {
   if (!host || !userProfile) return;
   var roleCode = normalizeAccessRoleForCompany(userAccessRoleCode(userProfile), userCompanyCode(userProfile));
   var showAll = isSystemAdmin() && userPermissionOverviewShowAll;
-  var rows = showAll
-    ? USER_PERMISSION_OVERVIEW_ROWS
-    : USER_PERMISSION_OVERVIEW_ROWS.filter(function(row) { return row.roleCode === roleCode; });
-  if (!rows.length) rows = [fallbackPermissionOverviewRow(roleCode)];
-
-  var html = "<table class='permission-table'><tr>";
-  USER_PERMISSION_OVERVIEW_COLUMNS.forEach(function(col) {
-    html += "<th>" + esc(col) + "</th>";
-  });
-  html += "</tr>";
-  rows.forEach(function(row) {
-    html += permissionOverviewRowHtml(row, !showAll);
-  });
-  html += "</table>";
-  host.innerHTML = html;
+  host.innerHTML = showAll
+    ? permissionOverviewAllRolesHtml(roleCode)
+    : permissionOverviewCurrentRoleHtml(roleCode);
 
   var note = document.getElementById("user-permission-overview-note");
   if (note) {
     note.textContent = showAll
-      ? "システム管理者表示: 全ユーザー権限一覧を表示しています。"
-      : "ログイン中のユーザー権限のみ表示しています。";
+      ? "システム管理者表示: 画面・項目別に全ユーザー権限を表示しています。"
+      : "ログイン中の権限を、画面・項目別に表示しています。";
   }
   var toggle = document.getElementById("btn-permission-overview-toggle");
   if (toggle) {
