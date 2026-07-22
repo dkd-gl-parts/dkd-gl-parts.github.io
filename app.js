@@ -3452,7 +3452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.540";
+var APP_VERSION       = "v1.1.541";
 var userPermissionOverviewShowAll = false;
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
@@ -24035,6 +24035,37 @@ async function loadAssemblyComponentsForCurrent() {
   renderAssemblyComponentRows();
 }
 
+function catalogComponentRowsNeedDkdRecovery(rows, selectedKind) {
+  if (selectedKind !== "catalog_spec" || !Array.isArray(rows) || rows.length !== 1) return false;
+  var onlyRow = rows[0] || {};
+  return componentIsCurrentProductSelfReference(onlyRow) && !!onlyRow.has_child_catalog_components;
+}
+
+async function fetchCatalogComponentRowsByDkd(dkdId) {
+  var selectColumns = "id, dkd_component_id, dkd_shohin_id, product_kind, product_variant_id, assy_manufacturer, assy_manufacturer_part_number, normalized_assy_manufacturer_part_number, assy_genuine_part_number, normalized_assy_genuine_part_number, component_manufacturer_part_number, component_genuine_part_number, component_name, quantity, unit_price_jpy, replacement_rate, procurement_category, manufacturing_memo, interchange_code, effective_start, effective_end, component_position, component_manufacturer, component_part_name, source_code, is_catalog_evidence";
+  var r = await sb.from("assembly_component_usage_details")
+    .select(selectColumns)
+    .eq("dkd_shohin_id", dkdId)
+    .eq("is_catalog_evidence", true)
+    .order("component_position", { ascending: true, nullsFirst: false })
+    .order("component_manufacturer_part_number", { ascending: true });
+  if (r.error) return { rows: [], error: r.error };
+
+  var manufacturer = String((currentProduct && currentProduct.manufacturer) || "").toUpperCase();
+  var manufacturerPartKeys = componentAssyLookupKeys(currentProduct);
+  var genuinePartKeys = componentCurrentProductGenuineKeys();
+  var rows = (r.data || []).filter(function(row) {
+    if (manufacturer && String(row.assy_manufacturer || "").toUpperCase() !== manufacturer) return false;
+    var manufacturerPartKey = String(row.normalized_assy_manufacturer_part_number || normalizedPartKey(row.assy_manufacturer_part_number));
+    if (manufacturerPartKeys.length && manufacturerPartKeys.indexOf(manufacturerPartKey) < 0) return false;
+    var genuinePartKey = String(row.normalized_assy_genuine_part_number || normalizedPartKey(row.assy_genuine_part_number));
+    return !genuinePartKey || !genuinePartKeys.length || genuinePartKeys.indexOf(genuinePartKey) >= 0;
+  }).map(function(row) {
+    return normalizeComponentTreeRow(row, null);
+  });
+  return { rows: rows, error: null };
+}
+
 async function loadAssemblyComponentsForCurrent() {
   var wrap = document.getElementById("component-wrap");
   if (!wrap) return;
@@ -24071,11 +24102,25 @@ async function loadAssemblyComponentsForCurrent() {
       var rpcRows = (rpc.data || []).map(function(row) {
         return normalizeComponentTreeRow(row, null);
       });
+      var recoveredCatalogRows = false;
+      if (catalogComponentRowsNeedDkdRecovery(rpcRows, selectedKind)) {
+        var recovery = await fetchCatalogComponentRowsByDkd(dkdId);
+        if (recovery.error) {
+          console.warn("catalog component DKD recovery failed", recovery.error);
+        } else if (recovery.rows.length > rpcRows.length) {
+          rpcRows = recovery.rows;
+          recoveredCatalogRows = true;
+        }
+      }
       if (rpcRows.length || selectedKind === "catalog_spec") {
         assemblyComponentRows = rpcRows;
         updateComponentTargetSummary(rpcRows.length);
         renderAssemblyComponentRows();
         loadCatalogIllustrationsForCurrent(dkdId, selectedKind);
+        if (recoveredCatalogRows) {
+          await loadComponentAlternativesForRows(rpcRows);
+          renderAssemblyComponentRows();
+        }
         return;
       }
     } else {

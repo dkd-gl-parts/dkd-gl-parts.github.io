@@ -5,11 +5,13 @@ on:
     paths:
       - "app.js"
       - "scripts/verify-search-workload-guard.js"
+      - "scripts/verify-component-catalog-recovery.js"
       - ".github/workflows/search-performance-guard.yml"
   pull_request:
     paths:
       - "app.js"
       - "scripts/verify-search-workload-guard.js"
+      - "scripts/verify-component-catalog-recovery.js"
       - ".github/workflows/search-performance-guard.yml"
   workflow_dispatch:
 
@@ -27,3 +29,5 @@ jobs:
         run: node --check app.js
       - name: Verify search workload ordering
         run: node scripts/verify-search-workload-guard.js
+      - name: Verify component catalog recovery
+        run: node scripts/verify-component-catalog-recovery.js
