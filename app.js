@@ -3452,7 +3452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.543";
+var APP_VERSION       = "v1.1.544";
 var userPermissionOverviewShowAll = false;
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
@@ -19053,83 +19053,64 @@ function componentReverseDedupRows(rows) {
   return out;
 }
 
-function componentReverseAssyMasterKey(manufacturer, manufacturerPartNumber) {
-  return normalizedPartKey(manufacturer) + "|" + normalizedPartKey(manufacturerPartNumber);
+var COMPONENT_REVERSE_PAGE_SIZE = 1000;
+var COMPONENT_REVERSE_CATALOG_SOURCE_LIMIT = 5000;
+var COMPONENT_REVERSE_RESULT_LIMIT = 1000;
+
+function componentReverseCatalogAssyKey(row) {
+  var manufacturerPartKey = normalizedPartKey(row && row.assy_manufacturer_part_number);
+  if (!manufacturerPartKey) return "row|" + String((row && row.id) || "");
+  return normalizedPartKey(row && row.assy_manufacturer) + "|" + manufacturerPartKey;
 }
 
-function componentReverseMasterCandidates(row, strictMap, partMap) {
-  var partKey = normalizedPartKey(row && row.assy_manufacturer_part_number);
-  if (!partKey) return [];
-  var strictKey = componentReverseAssyMasterKey(row && row.assy_manufacturer, partKey);
-  var strict = strictMap[strictKey] || [];
-  if (strict.length) return strict;
-  var byPart = partMap[partKey] || [];
-  var manufacturerKeys = uniqueTextValues(byPart.map(function(product) {
-    return normalizedPartKey(product.manufacturer);
-  }).filter(Boolean));
-  return manufacturerKeys.length === 1 ? byPart : [];
+function componentReverseHasCatalogAssyNumbers(row) {
+  return !!normalizedPartKey(row && row.assy_manufacturer_part_number) &&
+    !!normalizedPartKey(row && row.assy_genuine_part_number);
 }
 
-function componentReverseExpandRowWithMasters(row, strictMap, partMap) {
-  var candidates = componentReverseMasterCandidates(row, strictMap, partMap);
-  if (!candidates.length) return [row];
-  var dkdId = String(row.dkd_shohin_id || "");
-  var genuineKey = normalizedPartKey(row.assy_genuine_part_number);
-  var selected = dkdId ? candidates.filter(function(product) {
-    return String(product.dkd_shohin_id || "") === dkdId;
-  }) : [];
-  if (!selected.length && genuineKey) {
-    selected = candidates.filter(function(product) {
-      return [product.genuine_part_number, product.genuine_part_number_2].some(function(value) {
-        return normalizedPartKey(value) === genuineKey;
-      });
-    });
-  }
-  if (!selected.length && !genuineKey) selected = candidates;
-  if (!selected.length) return [row];
-  return selected.map(function(product) {
-    return Object.assign({}, row, {
-      dkd_shohin_id: row.dkd_shohin_id || product.dkd_shohin_id || null,
-      assy_manufacturer: row.assy_manufacturer || product.manufacturer || "",
-      assy_manufacturer_part_number: row.assy_manufacturer_part_number || product.manufacturer_part_number || "",
-      assy_genuine_part_number: row.assy_genuine_part_number || product.genuine_part_number || product.genuine_part_number_2 || ""
-    });
-  });
-}
-
-async function hydrateComponentReverseAssyProducts(rows) {
-  rows = Array.isArray(rows) ? rows : [];
-  var partKeys = uniqueTextValues(rows.map(function(row) {
-    return normalizedPartKey(row.assy_manufacturer_part_number);
-  }).filter(Boolean));
-  if (!partKeys.length) return rows;
-  var products = [];
-  var chunks = chunkArray(partKeys, 100);
-  for (var i = 0; i < chunks.length; i++) {
-    var r = await sb.from("core_products")
-      .select("dkd_shohin_id,manufacturer,manufacturer_part_number,genuine_part_number,genuine_part_number_2,category_code,normalized_manufacturer_part_number")
-      .in("normalized_manufacturer_part_number", chunks[i])
-      .limit(1000);
-    if (r.error) {
-      console.warn("component reverse ASSY master lookup failed", r.error);
-      return rows;
+function componentReversePreferCatalogAssyRows(rows) {
+  var groups = {};
+  var groupOrder = [];
+  (rows || []).forEach(function(row) {
+    var key = componentReverseCatalogAssyKey(row);
+    if (!groups[key]) {
+      groups[key] = [];
+      groupOrder.push(key);
     }
-    products = products.concat(r.data || []);
-  }
-  var strictMap = {};
-  var partMap = {};
-  products.forEach(function(product) {
-    var partKey = String(product.normalized_manufacturer_part_number || normalizedPartKey(product.manufacturer_part_number));
-    if (!partKey) return;
-    var strictKey = componentReverseAssyMasterKey(product.manufacturer, partKey);
-    if (!strictMap[strictKey]) strictMap[strictKey] = [];
-    if (!partMap[partKey]) partMap[partKey] = [];
-    strictMap[strictKey].push(product);
-    partMap[partKey].push(product);
+    groups[key].push(row);
   });
-  return rows.reduce(function(out, row) {
-    return out.concat(componentReverseExpandRowWithMasters(row, strictMap, partMap));
+  return groupOrder.reduce(function(out, key) {
+    var group = groups[key];
+    var completeRows = group.filter(componentReverseHasCatalogAssyNumbers);
+    return out.concat(completeRows.length ? completeRows : group);
   }, []);
+}
+
+async function loadComponentReverseUsageRows(componentIds, scope, selectColumns) {
+  if (scope !== "catalog_spec") {
+    var scopedQuery = sb.from("assembly_component_usage_details")
+      .select(selectColumns)
+      .in("dkd_component_id", componentIds)
+      .limit(300);
+    if (scope !== "all") scopedQuery = scopedQuery.eq("product_kind", scope);
+    return await scopedQuery;
+  }
+
+  var rows = [];
+  for (var from = 0; from < COMPONENT_REVERSE_CATALOG_SOURCE_LIMIT; from += COMPONENT_REVERSE_PAGE_SIZE) {
+    var to = Math.min(from + COMPONENT_REVERSE_PAGE_SIZE - 1, COMPONENT_REVERSE_CATALOG_SOURCE_LIMIT - 1);
+    var page = await sb.from("assembly_component_usage_details")
+      .select(selectColumns)
+      .in("dkd_component_id", componentIds)
+      .eq("product_kind", "catalog_spec")
+      .order("id", { ascending: true })
+      .range(from, to);
+    if (page.error) return page;
+    var pageRows = page.data || [];
+    rows = rows.concat(pageRows);
+    if (pageRows.length < COMPONENT_REVERSE_PAGE_SIZE) break;
+  }
+  return { data: componentReversePreferCatalogAssyRows(rows), error: null };
 }
 
 function componentReverseKindLabel(row) {
@@ -19206,13 +19187,8 @@ async function runComponentReverseLookup() {
   try {
     var componentIds = await loadComponentReverseComponentIds(keys);
     if (componentIds.length) {
-      var usageQuery = sb.from("assembly_component_usage_details")
-        .select(selectColumns)
-        .in("dkd_component_id", componentIds)
-        .limit(300);
       var scope = componentReverseScopeValue();
-      if (scope !== "all") usageQuery = usageQuery.eq("product_kind", scope);
-      r = await usageQuery;
+      r = await loadComponentReverseUsageRows(componentIds, scope, selectColumns);
     }
   } catch (e) {
     r = { data: [], error: e };
@@ -19227,13 +19203,12 @@ async function runComponentReverseLookup() {
     if (result) result.innerHTML = "<div class='component-empty'>" + esc(t("component_reverse_no_results")) + "</div>";
     return;
   }
-  var hydratedRows = await hydrateComponentReverseAssyProducts(r.data || []);
   if (button) {
     button.disabled = false;
     button.textContent = t("component_reverse_search");
   }
   var partName = componentReverseValue("component-reverse-part-name");
-  var rows = componentReverseDedupRows(hydratedRows).filter(function(row) {
+  var rows = componentReverseDedupRows(r.data || []).filter(function(row) {
     return componentReverseNameMatches(row, partName);
   });
   rows.sort(function(a, b) {
@@ -19244,6 +19219,7 @@ async function runComponentReverseLookup() {
     if (assyA !== assyB) return assyA.localeCompare(assyB, "ja", { numeric: true });
     return String(a.component_position || "").localeCompare(String(b.component_position || ""), "ja", { numeric: true });
   });
+  rows = rows.slice(0, COMPONENT_REVERSE_RESULT_LIMIT);
   setComponentReverseStatus(tf("component_reverse_count", { n: rows.length }), false);
   renderComponentReverseLookupRows(rows);
 }
