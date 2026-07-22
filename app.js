@@ -3452,7 +3452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.539";
+var APP_VERSION       = "v1.1.540";
 var userPermissionOverviewShowAll = false;
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
@@ -16874,6 +16874,7 @@ function getFiltered() {
     var partMatch = !q || [
       p.genuine_part_number, p.genuine_part_number_2,
       p.manufacturer_part_number, p.daiko_part_number,
+      p.dks_shohin_cd, p.shohin_cd, p.gltek_part_number,
       p.pulley_assy_part_number,
       p.genuine_body_part_number, p.manufacturer_body_part_number,
       p.genuine_clutch_part_number, p.manufacturer_clutch_part_number
@@ -17272,6 +17273,10 @@ async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows) {
     "normalized_genuine_clutch_part_number",
     "normalized_manufacturer_clutch_part_number"
   ];
+  var directExactFields = [
+    "dks_shohin_cd",
+    "gltek_part_number"
+  ];
 
   async function runCoreProductQuery(orParts, limitMultiplier) {
     if (!orParts.length) return { data: [] };
@@ -17291,7 +17296,9 @@ async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows) {
   // Equality operators remain indexable under the current RLS policies; prefix LIKE does not.
   var exactParts = normalized ? normalizedFields.map(function(column) {
     return column + ".eq." + normalized;
-  }) : [];
+  }).concat(directExactFields.map(function(column) {
+    return column + ".eq." + normalized;
+  })) : [];
   var exact = await runCoreProductQuery(exactParts, 1);
   if (exact.error || (exact.data || []).length) return exact;
 

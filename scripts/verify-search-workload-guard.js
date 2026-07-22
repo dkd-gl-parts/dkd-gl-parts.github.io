@@ -36,6 +36,12 @@ const prefixQueryIndex = masterSource.indexOf("var fast = await runCoreProductQu
 if (exactPartsIndex < 0 || exactQueryIndex < exactPartsIndex || prefixPartsIndex < exactQueryIndex || prefixQueryIndex < prefixPartsIndex) {
   throw new Error("indexed exact product-number lookup must run before prefix matching");
 }
+if (!masterSource.includes('"dks_shohin_cd"') || !masterSource.includes('"gltek_part_number"')) {
+  throw new Error("exact lookup must include DKS and GLTEK product numbers");
+}
+if (!source.includes("p.dks_shohin_cd, p.shohin_cd, p.gltek_part_number")) {
+  throw new Error("visible search filtering must retain DKS and GLTEK exact matches");
+}
 
 const aliasIndex = searchSource.indexOf("var aliasResult = await fetchSourceAliasProducts(q)");
 const slIndex = searchSource.indexOf("var slResult = await fetchSlPartProducts(q");
