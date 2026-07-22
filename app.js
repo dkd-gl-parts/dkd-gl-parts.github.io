@@ -3452,7 +3452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.544";
+var APP_VERSION       = "v1.1.545";
 var userPermissionOverviewShowAll = false;
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
@@ -4310,6 +4310,7 @@ function applyI18n() {
   });
   refreshCategorySelectLabels();
   applySpecFormCategory();
+  renderComponentReverseVehicleMakerOptions();
 }
 
 // 全ての言語切り替えボタンのactiveクラスを更新する
@@ -18948,6 +18949,7 @@ function openComponentReverseLookup() {
   overlay.classList.add("show");
   var scope = document.getElementById("component-reverse-scope");
   if (scope) scope.value = "catalog_spec";
+  renderComponentReverseVehicleMakerOptions("all");
   var input = document.getElementById("component-reverse-mfr-pn");
   if (input) setTimeout(function() { input.focus(); }, 50);
 }
@@ -18966,6 +18968,51 @@ function componentReverseScopeValue() {
   var el = document.getElementById("component-reverse-scope");
   var value = el ? String(el.value || "all") : "all";
   return ["catalog_spec", "rebuilt", "aftermarket_new"].indexOf(value) >= 0 ? value : "all";
+}
+
+function componentReverseVehicleMakerGroups() {
+  return [
+    { value: "toyota", labels: { ja: "トヨタ", en: "Toyota", zh: "丰田" }, aliases: ["トヨタ"] },
+    { value: "nissan", labels: { ja: "日産", en: "Nissan", zh: "日产" }, aliases: ["日産", "ニッサン"] },
+    { value: "honda", labels: { ja: "ホンダ", en: "Honda", zh: "本田" }, aliases: ["ホンダ"] },
+    { value: "mazda", labels: { ja: "マツダ", en: "Mazda", zh: "马自达" }, aliases: ["マツダ"] },
+    { value: "mitsubishi", labels: { ja: "三菱", en: "Mitsubishi", zh: "三菱" }, aliases: ["三菱", "ＭＭＣ", "MMC"] },
+    { value: "subaru", labels: { ja: "スバル", en: "Subaru", zh: "斯巴鲁" }, aliases: ["スバル", "ＳＵＢＡＲＵ", "SUBARU"] },
+    { value: "suzuki", labels: { ja: "スズキ", en: "Suzuki", zh: "铃木" }, aliases: ["スズキ"] },
+    { value: "daihatsu", labels: { ja: "ダイハツ", en: "Daihatsu", zh: "大发" }, aliases: ["ダイハツ"] },
+    { value: "isuzu", labels: { ja: "いすゞ", en: "Isuzu", zh: "五十铃" }, aliases: ["いすゞ", "いすゞ自動車"] },
+    { value: "hino", labels: { ja: "日野", en: "Hino", zh: "日野" }, aliases: ["日野", "日野自動車"] },
+    { value: "fuso", labels: { ja: "ふそう", en: "Fuso", zh: "扶桑" }, aliases: ["ふそう", "三菱ふそう"] },
+    { value: "ud", labels: { ja: "UDトラックス", en: "UD Trucks", zh: "UD卡车" }, aliases: ["UDトラックス", "ＵＤトラックス", "ＵＤ", "日産ディーゼル"] },
+    { value: "kubota", labels: { ja: "クボタ", en: "Kubota", zh: "久保田" }, aliases: ["クボタ"] },
+    { value: "yanmar", labels: { ja: "ヤンマー", en: "Yanmar", zh: "洋马" }, aliases: ["ヤンマー", "ヤンマ－"] },
+    { value: "iseki", labels: { ja: "井関", en: "Iseki", zh: "井关" }, aliases: ["井関"] },
+    { value: "komatsu", labels: { ja: "コマツ", en: "Komatsu", zh: "小松" }, aliases: ["コマツ", "小松", "小松製作所"] },
+    { value: "other", labels: { ja: "その他", en: "Other", zh: "其他" }, aliases: ["その他"] }
+  ];
+}
+
+function componentReverseVehicleMakerLabel(group) {
+  if (!group || !group.labels) return "";
+  return group.labels[currentLang] || group.labels.en || group.labels.ja || group.value;
+}
+
+function renderComponentReverseVehicleMakerOptions(selectedValue) {
+  var el = document.getElementById("component-reverse-vehicle-maker");
+  if (!el) return;
+  var selected = selectedValue || String(el.value || "all");
+  var html = "<option value='all'>" + esc(t("component_reverse_scope_all")) + "</option>";
+  componentReverseVehicleMakerGroups().forEach(function(group) {
+    html += "<option value='" + esc(group.value) + "'>" + esc(componentReverseVehicleMakerLabel(group)) + "</option>";
+  });
+  el.innerHTML = html;
+  el.value = componentReverseVehicleMakerGroups().some(function(group) { return group.value === selected; }) ? selected : "all";
+}
+
+function componentReverseVehicleMakerGroup() {
+  var value = componentReverseValue("component-reverse-vehicle-maker");
+  if (!value || value === "all") return null;
+  return componentReverseVehicleMakerGroups().filter(function(group) { return group.value === value; })[0] || null;
 }
 
 function setComponentReverseStatus(message, isError) {
@@ -19056,6 +19103,9 @@ function componentReverseDedupRows(rows) {
 var COMPONENT_REVERSE_PAGE_SIZE = 1000;
 var COMPONENT_REVERSE_CATALOG_SOURCE_LIMIT = 5000;
 var COMPONENT_REVERSE_RESULT_LIMIT = 1000;
+var COMPONENT_REVERSE_VEHICLE_CHUNK_SIZE = 100;
+var COMPONENT_REVERSE_VEHICLE_CHUNK_CONCURRENCY = 4;
+var COMPONENT_REVERSE_VEHICLE_SOURCE_LIMIT = 5000;
 
 function componentReverseCatalogAssyKey(row) {
   var manufacturerPartKey = normalizedPartKey(row && row.assy_manufacturer_part_number);
@@ -19113,6 +19163,68 @@ async function loadComponentReverseUsageRows(componentIds, scope, selectColumns)
   return { data: componentReversePreferCatalogAssyRows(rows), error: null };
 }
 
+async function loadComponentReverseVehicleMakerMap(rows, field, rowField, makerGroup) {
+  var keys = uniqueTextValues((rows || []).map(function(row) {
+    return normalizedPartKey(row && row[rowField]);
+  }).filter(Boolean));
+  var matches = {};
+  if (!keys.length || !makerGroup) return matches;
+
+  async function loadChunk(chunk) {
+    var loaded = [];
+    for (var from = 0; from < COMPONENT_REVERSE_VEHICLE_SOURCE_LIMIT; from += COMPONENT_REVERSE_PAGE_SIZE) {
+      var to = Math.min(from + COMPONENT_REVERSE_PAGE_SIZE - 1, COMPONENT_REVERSE_VEHICLE_SOURCE_LIMIT - 1);
+      var page = await sb.from("catalog_vehicle_applications")
+        .select("id," + field + ",vehicle_manufacturer")
+        .in("vehicle_manufacturer", makerGroup.aliases)
+        .in(field, chunk)
+        .order("id", { ascending: true })
+        .range(from, to);
+      if (page.error) throw page.error;
+      var pageRows = page.data || [];
+      loaded = loaded.concat(pageRows);
+      if (pageRows.length < COMPONENT_REVERSE_PAGE_SIZE) break;
+    }
+    return loaded;
+  }
+
+  var chunks = chunkArray(keys, COMPONENT_REVERSE_VEHICLE_CHUNK_SIZE);
+  for (var i = 0; i < chunks.length; i += COMPONENT_REVERSE_VEHICLE_CHUNK_CONCURRENCY) {
+    var batch = chunks.slice(i, i + COMPONENT_REVERSE_VEHICLE_CHUNK_CONCURRENCY);
+    var batchRows = await Promise.all(batch.map(loadChunk));
+    batchRows.forEach(function(loaded) {
+      loaded.forEach(function(row) {
+        var key = String(row[field] || "");
+        if (!key) return;
+        if (!matches[key]) matches[key] = [];
+        var maker = String(row.vehicle_manufacturer || "").trim();
+        if (maker && matches[key].indexOf(maker) < 0) matches[key].push(maker);
+      });
+    });
+  }
+  return matches;
+}
+
+function componentReverseRowsForVehicleMakerMaps(rows, manufacturerMap, genuineMap) {
+  return (rows || []).reduce(function(out, row) {
+    var manufacturerKey = normalizedPartKey(row && row.assy_manufacturer_part_number);
+    var genuineKey = normalizedPartKey(row && row.assy_genuine_part_number);
+    var makers = uniqueTextValues((manufacturerMap[manufacturerKey] || []).concat(genuineMap[genuineKey] || []));
+    if (!makers.length) return out;
+    out.push(Object.assign({}, row, { component_reverse_vehicle_makers: makers }));
+    return out;
+  }, []);
+}
+
+async function filterComponentReverseRowsByVehicleMaker(rows, makerGroup) {
+  if (!makerGroup || !rows || !rows.length) return rows || [];
+  var maps = await Promise.all([
+    loadComponentReverseVehicleMakerMap(rows, "normalized_manufacturer_part_number", "assy_manufacturer_part_number", makerGroup),
+    loadComponentReverseVehicleMakerMap(rows, "normalized_genuine_part_number", "assy_genuine_part_number", makerGroup)
+  ]);
+  return componentReverseRowsForVehicleMakerMaps(rows, maps[0], maps[1]);
+}
+
 function componentReverseKindLabel(row) {
   if (row && row.is_catalog_evidence) return productKindLabel("catalog_spec");
   return productKindLabel((row && row.product_kind) || "rebuilt");
@@ -19131,8 +19243,12 @@ function renderComponentReverseLookupRows(rows) {
     html += "<div>";
     html += "<div class='component-reverse-label'>" + esc(t("f_mfr_assy_pn")) + "</div>";
     html += "<div class='component-reverse-assy'>" + esc(row.assy_manufacturer_part_number || "-") + "</div>";
-    html += "<div class='component-reverse-sub'>" + esc(t("f_genuine_assy_pn")) + ": " + esc(row.assy_genuine_part_number || "-") + "</div>";
+    html += "<div class='component-reverse-label'>" + esc(t("f_genuine_assy_pn")) + "</div>";
+    html += "<div class='component-reverse-assy component-reverse-assy-genuine'>" + esc(row.assy_genuine_part_number || "-") + "</div>";
     html += "<div class='component-reverse-sub'>" + esc(t("f_manufacturer")) + ": " + esc(row.assy_manufacturer || "-") + " / " + esc(t("product_kind_section")) + ": " + esc(componentReverseKindLabel(row)) + "</div>";
+    if (row.component_reverse_vehicle_makers && row.component_reverse_vehicle_makers.length) {
+      html += "<div class='component-reverse-sub'>" + esc(t("f_vehicle_mfr")) + ": " + esc(row.component_reverse_vehicle_makers.map(vehicleMakerLabel).join(" / ")) + "</div>";
+    }
     html += "</div>";
     html += "<div>";
     html += "<div class='component-reverse-label'>" + esc(t("component_reverse_component")) + "</div>";
@@ -19203,14 +19319,22 @@ async function runComponentReverseLookup() {
     if (result) result.innerHTML = "<div class='component-empty'>" + esc(t("component_reverse_no_results")) + "</div>";
     return;
   }
-  if (button) {
-    button.disabled = false;
-    button.textContent = t("component_reverse_search");
-  }
   var partName = componentReverseValue("component-reverse-part-name");
   var rows = componentReverseDedupRows(r.data || []).filter(function(row) {
     return componentReverseNameMatches(row, partName);
   });
+  try {
+    rows = await filterComponentReverseRowsByVehicleMaker(rows, componentReverseVehicleMakerGroup());
+  } catch (e) {
+    if (button) {
+      button.disabled = false;
+      button.textContent = t("component_reverse_search");
+    }
+    console.warn("component reverse vehicle maker lookup failed", e);
+    setComponentReverseStatus(t("msg_kikan_err") + ": " + (e.message || String(e)), true);
+    if (result) result.innerHTML = "<div class='component-empty'>" + esc(t("component_reverse_no_results")) + "</div>";
+    return;
+  }
   rows.sort(function(a, b) {
     var scoreDiff = componentReverseMatchScore(b, values) - componentReverseMatchScore(a, values);
     if (scoreDiff) return scoreDiff;
@@ -19220,6 +19344,10 @@ async function runComponentReverseLookup() {
     return String(a.component_position || "").localeCompare(String(b.component_position || ""), "ja", { numeric: true });
   });
   rows = rows.slice(0, COMPONENT_REVERSE_RESULT_LIMIT);
+  if (button) {
+    button.disabled = false;
+    button.textContent = t("component_reverse_search");
+  }
   setComponentReverseStatus(tf("component_reverse_count", { n: rows.length }), false);
   renderComponentReverseLookupRows(rows);
 }

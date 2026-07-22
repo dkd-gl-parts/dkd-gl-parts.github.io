@@ -52,6 +52,8 @@ vm.createContext(context);
 vm.runInContext(functionSource("componentReverseCatalogAssyKey"), context);
 vm.runInContext(functionSource("componentReverseHasCatalogAssyNumbers"), context);
 vm.runInContext(functionSource("componentReversePreferCatalogAssyRows"), context);
+context.uniqueTextValues = values => Array.from(new Set((values || []).filter(Boolean)));
+vm.runInContext(functionSource("componentReverseRowsForVehicleMakerMaps"), context);
 
 const rows = [
   { id: 1, assy_manufacturer: "DENSO", assy_manufacturer_part_number: "101211-1120", assy_genuine_part_number: null },
@@ -64,5 +66,27 @@ const preferred = context.componentReversePreferCatalogAssyRows(rows);
 assert.deepStrictEqual(Array.from(preferred, row => row.id), [2, 3, 4]);
 assert(!preferred.some(row => row.id === 1), "blank catalog row must be removed when the same ASSY has genuine-number rows");
 assert(preferred.some(row => row.id === 4), "blank catalog row must remain when the ASSY has no genuine-number row");
+
+const vehicleRows = context.componentReverseRowsForVehicleMakerMaps(rows, {
+  "1012111120": ["Toyota"]
+}, {});
+assert.deepStrictEqual(Array.from(vehicleRows, row => row.id), [1, 2, 3]);
+assert(vehicleRows.every(row => Array.from(row.component_reverse_vehicle_makers).join(",") === "Toyota"));
+
+const vehicleLoaderStart = source.indexOf("async function loadComponentReverseVehicleMakerMap");
+const vehicleLoaderEnd = source.indexOf("function componentReverseRowsForVehicleMakerMaps", vehicleLoaderStart);
+const vehicleLoaderSource = source.slice(vehicleLoaderStart, vehicleLoaderEnd);
+if (vehicleLoaderStart < 0 || vehicleLoaderEnd < vehicleLoaderStart ||
+    !vehicleLoaderSource.includes('from("catalog_vehicle_applications")') ||
+    !vehicleLoaderSource.includes('.in("vehicle_manufacturer", makerGroup.aliases)') ||
+    !vehicleLoaderSource.includes(".in(field, chunk)")) {
+  throw new Error("vehicle maker filtering must use indexed exact catalog application lookups");
+}
+if (vehicleLoaderSource.includes(".like(") || vehicleLoaderSource.includes(".ilike(")) {
+  throw new Error("vehicle maker filtering must not use partial catalog scans");
+}
+if (!source.includes("component-reverse-assy component-reverse-assy-genuine")) {
+  throw new Error("genuine ASSY part numbers must use the same primary font class as manufacturer ASSY part numbers");
+}
 
 console.log("component reverse lookup guard passed");
