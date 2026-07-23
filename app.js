@@ -3452,7 +3452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.551";
+var APP_VERSION       = "v1.1.552";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -28195,6 +28195,15 @@ function applyPermissionOverviewOverride(item, context) {
       ? permissionOverviewLimited("個別許可")
       : permissionOverviewDenied("個別停止");
   }
+  var dependencyBlocked = (item.requiredPermissions || []).some(function(required) {
+    var hasRequiredOverride = Object.prototype.hasOwnProperty.call(overrides, required.key)
+      && typeof overrides[required.key] === "boolean";
+    return !(hasRequiredOverride ? overrides[required.key] : required.defaultAllowed);
+  });
+  if (dependencyBlocked) {
+    item.effectiveAllowed = false;
+    item.state = permissionOverviewDenied(item.dependencyDeniedText || "前提権限なし");
+  }
   return item;
 }
 
@@ -28308,6 +28317,9 @@ function permissionOverviewScreenGroups(context) {
             { label: "基準価格", permissionKey: "base_price.view", state: yesNo(roleCanViewBasePrice, "閲覧可", "閲覧不可") },
             { label: "仕入価格", permissionKey: "purchase_price.view", state: yesNo(roleCanViewBasePrice, "閲覧可", "閲覧不可") },
             { label: "商品登録・修正", permissionKey: "product.manage", state: yesNo(roleCanEdit, "可", "不可") },
+            { label: "通常商品追加時のGLTEK品番", permissionKey: "product.manage", state: roleCanEdit
+              ? permissionOverviewLimited("既存番号のみ自動引継ぎ（新規発行なし）")
+              : permissionOverviewDenied("対象外") },
             { label: "画像登録・削除", permissionKey: "image.manage", state: fullImageManagementState() }
           ]
         },
@@ -28316,8 +28328,7 @@ function permissionOverviewScreenGroups(context) {
           items: [
             { label: "画面", permissionKey: "product_management.view", state: screenState(roleCanViewManagement) },
             { label: "商品登録・修正", permissionKey: "product.manage", state: yesNo(roleCanEdit, "可", "不可") },
-            { label: "商品削除", permissionKey: "product.delete", state: yesNo(roleCanManageCompany, "可", "不可") },
-            { label: "GLTEK品番発行", permissionKey: "gltek_part_number.issue", state: yesNo(gltekPartNumberIssueAllowed, "可", "不可") }
+            { label: "商品削除", permissionKey: "product.delete", state: yesNo(roleCanManageCompany, "可", "不可") }
           ]
         },
         {
@@ -28342,6 +28353,11 @@ function permissionOverviewScreenGroups(context) {
           items: [
             { label: "画面", permissionKey: "production.view", state: screenState(roleCanViewManagement) },
             { label: "商品登録・修正", permissionKey: "product.manage", state: yesNo(roleCanEdit, "可", "不可") },
+            { label: "通常商品追加時のGLTEK品番", permissionKey: "product.manage", state: roleCanEdit
+              ? permissionOverviewLimited("既存番号のみ自動引継ぎ（新規発行なし）")
+              : permissionOverviewDenied("対象外") },
+            { label: "GLTEK製商品の追加（製造管理のみ）", permissionKey: "gltek_part_number.issue", state: yesNo(gltekPartNumberIssueAllowed, "登録可", "利用不可"), requiredPermissions: [{ key: "product.manage", defaultAllowed: roleCanEdit }], dependencyDeniedText: "商品追加権限が必要" },
+            { label: "新規GLTEK品番の発行", permissionKey: "gltek_part_number.issue", state: yesNo(gltekPartNumberIssueAllowed, "GLTEK製登録時に自動発行", "利用不可"), requiredPermissions: [{ key: "product.manage", defaultAllowed: roleCanEdit }], dependencyDeniedText: "商品追加権限が必要" },
             { label: "構成部品閲覧", permissionKey: "component.view", state: yesNo(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "all_viewer"]), "閲覧可", "利用不可") },
             { label: "構成部品追加・修正・削除", permissionKey: "component.manage", state: yesNo(roleCanManageComponents, "可", "不可") },
             { label: "製造画像登録・修正・削除", permissionKey: "image.manage", state: fullImageManagementState() }
