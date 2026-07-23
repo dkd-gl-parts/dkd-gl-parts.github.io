@@ -3452,11 +3452,12 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.548";
+var APP_VERSION       = "v1.1.549";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
 var currentPermissionEditUserId = null;
+var currentPermissionEditOverrides = {};
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -3726,6 +3727,17 @@ function hasAccessRole(profile, roleCodes) {
   if (!profile) return false;
   return roleCodes.indexOf(accessRoleCode(profile)) >= 0;
 }
+function userPermissionOverrides(profile) {
+  var overrides = profile && profile.permission_overrides;
+  return overrides && typeof overrides === "object" && !Array.isArray(overrides) ? overrides : {};
+}
+function userPermissionAllowed(profile, permissionKey, roleDefault) {
+  if (!profile || !permissionKey) return !!roleDefault;
+  var overrides = userPermissionOverrides(profile);
+  return Object.prototype.hasOwnProperty.call(overrides, permissionKey) && typeof overrides[permissionKey] === "boolean"
+    ? overrides[permissionKey]
+    : !!roleDefault;
+}
 function isSystemAdmin() {
   return !!(userProfile && (userProfile.role === "system_admin" || accessRoleCode(userProfile) === "system_admin"));
 }
@@ -3740,13 +3752,17 @@ function hasOwnDepartmentUserScope(profile) {
 }
 function canEdit() {
   if (!userProfile || isExternalViewer()) return false;
-  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]);
+  return userPermissionAllowed(userProfile, "product.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]));
 }
 function canIssueGltekPartNumber() {
   if (!userProfile) return false;
   if (isSystemAdmin()) return true;
-  return userCompanyCode(userProfile) === "gltek" &&
-    hasAccessRole(userProfile, ["company_admin", "master_editor"]);
+  if (userCompanyCode(userProfile) !== "gltek") return false;
+  return userPermissionAllowed(userProfile, "gltek_part_number.issue", hasAccessRole(userProfile, ["company_admin", "master_editor"]));
+}
+function canManageAllImages() {
+  if (!userProfile || isExternalViewer()) return false;
+  return userPermissionAllowed(userProfile, "image.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]));
 }
 function canUploadCoreImages() {
   return canManageUsedCoreImages();
@@ -3755,11 +3771,12 @@ function isCoreImageEditorRole(profile) {
   return hasAccessRole(profile || userProfile, ["core_image_editor"]);
 }
 function canManageUsedCoreImages() {
-  return canEdit() || isCoreImageEditorRole(userProfile);
+  if (!userProfile || isExternalViewer()) return false;
+  return userPermissionAllowed(userProfile, "used_core_image.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "core_image_editor"]));
 }
 function canManageImageKind(kind, context) {
-  if (canEdit()) return true;
-  if (!isCoreImageEditorRole(userProfile)) return false;
+  if (canManageAllImages()) return true;
+  if (!canManageUsedCoreImages()) return false;
   context = context === "production" ? "production" : "sales";
   return context !== "production" && normalizeProductKind(kind || "used_core") === "used_core";
 }
@@ -3770,8 +3787,8 @@ function imageTargetContext(target, fallbackContext) {
   return fallbackContext === "production" ? "production" : "sales";
 }
 function canDeleteImageTarget(target, context) {
-  if (canEdit()) return true;
-  if (!isCoreImageEditorRole(userProfile)) return false;
+  if (canManageAllImages()) return true;
+  if (!canManageUsedCoreImages()) return false;
   context = imageTargetContext(target, context);
   var kind = normalizeProductKind((target && target.product_kind) || selectedProductKind() || "used_core");
   var origin = String((target && target.image_origin) || "").toLowerCase();
@@ -3779,13 +3796,13 @@ function canDeleteImageTarget(target, context) {
   return context !== "production" && kind === "used_core" && origin !== "production" && !productionShown;
 }
 function canDelete() {
-  return isCompanyAdminRole(userProfile);
+  return userPermissionAllowed(userProfile, "product.delete", isCompanyAdminRole(userProfile));
 }
 function isAdmin() {
   return isCompanyAdminRole(userProfile);
 }
 function canUseUserManagement() {
-  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor"]);
+  return userPermissionAllowed(userProfile, "users.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor"]));
 }
 function canAssignUserRole(roleCode) {
   if (isSystemAdmin()) return true;
@@ -3812,44 +3829,44 @@ function canManageUser(targetProfile) {
 }
 
 function canSeePurchasePrice() {
-  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "all_viewer"]);
+  return userPermissionAllowed(userProfile, "purchase_price.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "all_viewer"]));
 }
 function canViewPurchaseMgmt() {
-  return canSeePurchasePrice();
+  return userPermissionAllowed(userProfile, "purchase_management.view", canSeePurchasePrice());
 }
 function canManagePurchaseLinks() {
-  return hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"]);
+  return userPermissionAllowed(userProfile, "purchase.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"]));
 }
 
 function canSeeSalesPrice() {
-  return !!userProfile && (isCustomerViewer() || !isExternalViewer());
+  return !!userProfile && userPermissionAllowed(userProfile, "sales_price.view", isCustomerViewer() || !isExternalViewer());
 }
 function canViewBasePrice() {
-  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "all_viewer"]);
+  return userPermissionAllowed(userProfile, "base_price.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "all_viewer"]));
 }
 function canEditBasePrice() {
-  return hasAccessRole(userProfile, ["system_admin", "company_admin"]);
+  return userPermissionAllowed(userProfile, "base_price.manage", hasAccessRole(userProfile, ["system_admin", "company_admin"]));
 }
 function canEditSalesPricing() {
-  return hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"]);
+  return userPermissionAllowed(userProfile, "sales_pricing.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"]));
 }
 function canUseRakutenResearch() {
-  return hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"]);
+  return userPermissionAllowed(userProfile, "price_research.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"]));
 }
 function canManageEcResearchSchedule() {
-  return hasAccessRole(userProfile, ["system_admin", "company_admin"]);
+  return userPermissionAllowed(userProfile, "price_research.schedule", hasAccessRole(userProfile, ["system_admin", "company_admin"]));
 }
 function canViewInternalComponents() {
-  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "all_viewer"]);
+  return userPermissionAllowed(userProfile, "component.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "all_viewer"]));
 }
 function canEditInternalComponents() {
-  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]);
+  return userPermissionAllowed(userProfile, "component.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]));
 }
 function canManageComponentNameMaster() {
-  return hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor"]);
+  return userPermissionAllowed(userProfile, "component_name.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor"]));
 }
 function canManageComponentCompatibility() {
-  return userCompanyCode(userProfile) === "daiko" && hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]);
+  return userCompanyCode(userProfile) === "daiko" && userPermissionAllowed(userProfile, "component_compatibility.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]));
 }
 function isCustomerViewerProfile(profile) {
   return userAccessRoleCode(profile) === "customer_viewer";
@@ -3874,19 +3891,19 @@ function canViewAllReadOnly() {
   return !!(userProfile && userAccessRoleCode(userProfile) === "all_viewer");
 }
 function canSeeComponentInfo() {
-  return canSeeInternalBusinessInfo();
+  return userPermissionAllowed(userProfile, "component.view", canSeeInternalBusinessInfo());
 }
 function canSeeCatalogSpec() {
   return canSeeComponentInfo();
 }
 function canSeeCoreStockInfo() {
-  return canSeeInternalBusinessInfo();
+  return userPermissionAllowed(userProfile, "stock.view", canSeeInternalBusinessInfo());
 }
 function canViewProductKindStockMgmt() {
   return canSeeCoreStockInfo();
 }
 function canEditProductKindStockMgmt() {
-  return canEdit();
+  return userPermissionAllowed(userProfile, "stock.manage", canEdit());
 }
 function hasBaseManufacturingCostRole(profile) {
   return hasAccessRole(profile || userProfile, ["system_admin", "company_admin", "dept_admin"]);
@@ -3904,13 +3921,13 @@ function hasOptionalManufacturingCostPermission(profile) {
   return !!(profile && profile.manufacturing_cost_allowed === true && manufacturingCostOptionalAllowedForProfile(profile));
 }
 function canUseManufacturingCost(profile) {
-  return !!(profile && (hasBaseManufacturingCostRole(profile) || hasOptionalManufacturingCostPermission(profile)));
+  return !!(profile && userPermissionAllowed(profile, "manufacturing_cost.use", hasBaseManufacturingCostRole(profile) || hasOptionalManufacturingCostPermission(profile)));
 }
 function canViewManufacturingCostMgmt() {
   return canUseManufacturingCost(userProfile);
 }
 function canEditManufacturingCostMgmt() {
-  return hasBaseManufacturingCostRole(userProfile);
+  return userPermissionAllowed(userProfile, "manufacturing_cost.manage", hasBaseManufacturingCostRole(userProfile));
 }
 function isDaikoGroup() {
   return userProfile && (isSystemAdmin() || userProfile.group_name === "daiko");
@@ -4229,40 +4246,58 @@ function accessRoleOptionHtmlForCompany(companyCode, selected) {
   }, function(opt) { return accessRoleLabel(opt[0]); });
 }
 function canManageSharedSettings() {
-  return isSystemAdmin();
+  return userPermissionAllowed(userProfile, "app_settings.manage", isSystemAdmin());
+}
+function canViewProductSearch() {
+  return userPermissionAllowed(userProfile, "product_search.view", !!userProfile);
+}
+function canViewProductInfo() {
+  return userPermissionAllowed(userProfile, "product_info.view", !!userProfile);
 }
 function canManageProductSpecs() {
-  return !!(userProfile && (isSystemAdmin() || (userProfile.role === "admin" && userProfile.group_name === "daiko")));
+  return !!(userProfile && userPermissionAllowed(userProfile, "product.manage", isSystemAdmin() || (userProfile.role === "admin" && userProfile.group_name === "daiko")));
 }
 function canManageSalesPricing() {
   return canEditSalesPricing();
 }
 function canManageCustomerAccess() {
-  return hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"]);
+  return userPermissionAllowed(userProfile, "customer_access.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"]));
 }
 function canViewSalesPricing() {
-  return canSeeSalesPrice() && !isCustomerViewer();
+  return canSeeSalesPrice() && !isCustomerViewer() && userPermissionAllowed(userProfile, "sales_pricing.view", true);
 }
 function canViewProductionFeatures() {
-  return canEdit() || canViewAllReadOnly();
+  return userPermissionAllowed(userProfile, "production.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "all_viewer"]));
 }
 function canViewFinishedLabelMgmt() {
-  return isSystemAdmin();
+  return userPermissionAllowed(userProfile, "finished_label.manage", isSystemAdmin());
 }
 function canEditFinishedLabelMgmt() {
-  return isSystemAdmin();
+  return canViewFinishedLabelMgmt();
 }
 function canViewManagementScreen() {
-  return canEdit() || canViewAllReadOnly();
+  return userPermissionAllowed(userProfile, "product_management.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "all_viewer"]));
 }
 function canViewCoreManagement() {
-  return canViewManagementScreen() || canUploadCoreImages();
+  return userPermissionAllowed(userProfile, "core_list.view", canViewManagementScreen() || canUploadCoreImages());
+}
+function canManageProductionRecords() {
+  return userPermissionAllowed(userProfile, "production_records.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]));
 }
 function canViewPriceResearchHistory() {
-  return hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor", "sales_viewer", "all_viewer"]);
+  return userPermissionAllowed(userProfile, "price_research.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor", "sales_viewer", "all_viewer"]));
 }
 function canViewOperationLogs() {
-  return isAdmin() || canViewAllReadOnly();
+  return userPermissionAllowed(userProfile, "operation_logs.view", isAdmin() || canViewAllReadOnly());
+}
+function canViewManufacturingReport() {
+  return userPermissionAllowed(userProfile, "manufacturing_report.view", canViewManagementScreen());
+}
+function canManageCompatibility() {
+  return userPermissionAllowed(userProfile, "compatibility.view", canViewManagementScreen());
+}
+function canEditCompatibility() {
+  return userPermissionAllowed(userProfile, "compatibility.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]));
 }
 
 // =============================================
@@ -5146,7 +5181,7 @@ function renderMenu() {
   var canManageUsers = canUseUserManagement();
 
   var mainItems = [
-    { icon: "&#x1F50D;", titleKey: "mi_search_title", descKey: "mi_search_desc", action: "search", available: true, tag: null },
+    { icon: "&#x1F50D;", titleKey: "mi_search_title", descKey: "mi_search_desc", action: "search", available: canViewProductSearch(), tag: null },
     { icon: "&#x1F3ED;", titleKey: "mi_production_title", descKey: "mi_production_desc", action: "production-search", available: canViewProductionFeatures(), tag: null },
     { icon: "&#x1F3F7;", titleKey: "mi_finished_label_title", descKey: "mi_finished_label_desc", action: "finished-label-mgmt", available: canViewFinishedLabelMgmt(), tag: null },
     { icon: "&#x1F4E6;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canViewCoreManagement(), tag: null },
@@ -5164,8 +5199,8 @@ function renderMenu() {
     { icon: "&#x1F517;", titleKey: "mi_component_compat_title", descKey: "mi_component_compat_desc", action: "component-compat-mgmt", available: canManageComponentCompatibility() },
     { icon: "&#x1F4B0;", titleKey: "sales_pricing_title", descKey: "sales_pricing_mgmt_desc", action: "sales-pricing-mgmt", available: canViewSalesPricing() },
     { icon: "&#x1F6D2;", titleKey: "mi_purchase_mgmt_title", descKey: "mi_purchase_mgmt_desc", action: "purchase-mgmt", available: canViewPurchaseMgmt() },
-    { icon: "&#x1F4CA;", titleKey: "mi_report_title", descKey: "mi_report_desc", action: "manufacturing-ranking-report", available: canViewManagementScreen() },
-    { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canViewManagementScreen() },
+    { icon: "&#x1F4CA;", titleKey: "mi_report_title", descKey: "mi_report_desc", action: "manufacturing-ranking-report", available: canViewManufacturingReport() },
+    { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canManageCompatibility() },
     { icon: "&#x2699;", titleKey: "mi_api_settings_title", descKey: "mi_api_settings_desc", action: "api-settings", available: canManageSharedSettings() },
     { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: canViewOperationLogs() }
   ].filter(function(item) { return item.available; });
@@ -5250,12 +5285,14 @@ function configureSalesProductAddButton() {
 }
 
 async function enterSearch() {
+  if (!canViewProductSearch()) { showPermissionDenied("open_product_search", "core_products"); return; }
   showScreen("search");
   configureSalesProductAddButton();
   if (!dataLoaded) { await initSearch(); dataLoaded = true; }
 }
 
 async function enterProductionSearch() {
+  if (!canViewProductionFeatures()) { showPermissionDenied("open_production_search", "core_products"); return; }
   showScreen("production-search");
   var productionAddBtn = document.getElementById("production-add-core-product");
   if (productionAddBtn) setCspStyle(productionAddBtn, "display", canEdit() ? "" : "none");
@@ -6600,7 +6637,7 @@ async function renderProductionDetail(row) {
   html += "<div class='production-actions'>";
   if (canViewFinishedLabelMgmt()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-finished-label'>" + esc(t("mi_finished_label_title")) + "</button>";
   if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-edit-core'>品番修正</button>";
-  if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-image-actions'>" + esc(t("image_actions_title")) + "</button>";
+  if (canManageAllImages()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-image-actions'>" + esc(t("image_actions_title")) + "</button>";
   html += "</div></div>";
   html += "<div class='production-mobile-stock'>" + renderProductionCoreSummary(row, detail) + "</div>";
   html += "<div class='production-image-panel'><div class='production-image-title'>" + esc(t("production_images_section")) + "</div><div class='production-image-count' id='production-image-count'>" + esc(t("production_images_loading")) + "</div><div class='production-image-strip' id='production-image-strip'><span class='production-image-empty'>" + esc(t("production_images_loading")) + "</span></div></div>";
@@ -6720,6 +6757,10 @@ async function openProductionCoreEdit() {
 
 async function openProductionImageUpload() {
   if (!currentProductionRow) return;
+  if (!canManageImageKind(selectedImageActionKind("production"), "production")) {
+    showPermissionDenied("upload_image", "core_product_images");
+    return;
+  }
   currentProduct = currentProductionRow;
   await loadSlPartsForProduct(currentProductionRow);
   var input = document.getElementById("upload-input");
@@ -6732,7 +6773,7 @@ async function openProductionImageUpload() {
 }
 
 function openProductionImageActionsDialog() {
-  if (!canEdit()) { showPermissionDenied("open_image_actions", "core_product_images"); return; }
+  if (!canManageAllImages()) { showPermissionDenied("open_image_actions", "core_product_images"); return; }
   if (!currentProductionRow) return;
   fillImageKindSelect(document.getElementById("production-image-action-kind"), currentProductionImageKind || "rebuilt");
   document.getElementById("production-image-actions-overlay").classList.add("show");
@@ -6765,7 +6806,7 @@ function buildProductionAiCameraUrl(row, mode) {
 }
 
 function openProductionCameraAi() {
-  if (!canEdit()) { showPermissionDenied("open_production_camera_ai", "core_product_images"); return; }
+  if (!canManageAllImages()) { showPermissionDenied("open_production_camera_ai", "core_product_images"); return; }
   if (!currentProductionRow || !currentProductionRow.dkd_shohin_id) {
     alert("カメラAIにはDKD商品IDが必要です。");
     return;
@@ -10388,9 +10429,9 @@ async function enterCoreListMgmt() {
   var addBtn = document.getElementById("btn-add-core-list");
   var collectionAddBtn = document.getElementById("btn-add-core-collection");
   var createBtn = document.getElementById("btn-create-core-list-from-ranking");
-  if (addBtn) setCspStyle(addBtn, "display", canEdit() ? "" : "none");
-  if (collectionAddBtn) setCspStyle(collectionAddBtn, "display", canEdit() ? "" : "none");
-  if (createBtn) setCspStyle(createBtn, "display", canEdit() ? "" : "none");
+  if (addBtn) setCspStyle(addBtn, "display", canManageProductionRecords() ? "" : "none");
+  if (collectionAddBtn) setCspStyle(collectionAddBtn, "display", canManageProductionRecords() ? "" : "none");
+  if (createBtn) setCspStyle(createBtn, "display", canManageProductionRecords() ? "" : "none");
   resetCoreCollectionControls();
   await setCoreListMode("collection");
 }
@@ -10706,7 +10747,7 @@ function renderCoreCollectionList() {
 function bindCoreCollectionActions() {
   var list = document.getElementById("core-list-list");
   if (!list) return;
-  if (!canEdit()) {
+  if (!canManageProductionRecords()) {
     list.querySelectorAll("[data-core-collection-edit], [data-core-collection-complete], [data-core-collection-delete]").forEach(function(btn) { btn.remove(); });
     return;
   }
@@ -10734,7 +10775,7 @@ function renderCoreCollectionSelectedProduct(product) {
 }
 
 function openCoreCollectionForm(mode, rowId) {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canManageProductionRecords()) { alert(t("err_perm")); return; }
   coreCollectionFormMode = mode === "edit" ? "edit" : "add";
   var row = coreCollectionFormMode === "edit" ? coreCollectionRows.find(function(item) { return item.id === rowId; }) : null;
   var product = row ? (coreCollectionProductMap[String(row.dkd_shohin_id)] || {}) : null;
@@ -10871,7 +10912,7 @@ async function selectCoreCollectionProductCandidate(index) {
 async function saveCoreCollectionForm() {
   var errorEl = document.getElementById("core-collection-form-error");
   errorEl.textContent = "";
-  if (!canEdit()) { errorEl.textContent = t("err_perm"); return; }
+  if (!canManageProductionRecords()) { errorEl.textContent = t("err_perm"); return; }
   var dkdId = nullableIntFromInput("ccf-dkd-id");
   var targetQty = nullableIntFromInput("ccf-target-quantity");
   if (!dkdId) { errorEl.textContent = "対象商品を選択してください。"; return; }
@@ -10922,7 +10963,7 @@ async function saveCoreCollectionForm() {
 }
 
 async function toggleCoreCollectionCompleted(id) {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canManageProductionRecords()) { alert(t("err_perm")); return; }
   var row = coreCollectionRows.find(function(item) { return item.id === id; });
   if (!row) return;
   var status = row.status === "completed" ? "collecting" : "completed";
@@ -10934,7 +10975,7 @@ async function toggleCoreCollectionCompleted(id) {
 }
 
 async function deleteCoreCollectionRow(id) {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canManageProductionRecords()) { alert(t("err_perm")); return; }
   var row = coreCollectionRows.find(function(item) { return item.id === id; });
   if (!row || !confirm("この収集対象を削除しますか？")) return;
   var r = await sb.from("core_collection_list_items").delete().eq("id", id);
@@ -11138,7 +11179,7 @@ function renderCoreListMgmt() {
         btn.addEventListener("click", function() { openCorePhotoChoice(parseInt(btn.dataset.coreImage, 10)); });
       });
     }
-    if (!canEdit()) {
+    if (!canManageProductionRecords()) {
       list.querySelectorAll("[data-core-edit], [data-core-del]").forEach(function(btn) { btn.remove(); });
       return;
     }
@@ -11179,7 +11220,7 @@ function renderCoreListMgmt() {
       btn.addEventListener("click", function() { openCorePhotoChoice(parseInt(btn.dataset.coreImage, 10)); });
     });
   }
-  if (!canEdit()) {
+  if (!canManageProductionRecords()) {
     list.querySelectorAll("[data-core-edit], [data-core-del]").forEach(function(btn) { btn.remove(); });
     if (countEl) {
       var readonlyTotalQty = sumProductionCoreEntryQty(coreListMgmtRows);
@@ -11412,7 +11453,7 @@ async function openCoreListImageDelete(rowId) {
 }
 
 function openCoreListForm(mode, rowId) {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canManageProductionRecords()) { alert(t("err_perm")); return; }
   coreListFormMode = mode;
   var row = mode === "edit" ? coreListMgmtRows.find(function(x) { return x.id === rowId; }) : null;
   var p = row ? (coreListProductMap[String(row.dkd_shohin_id)] || {}) : {};
@@ -11491,7 +11532,7 @@ function selectCoreListProductCandidate(index) {
 async function saveCoreListForm() {
   var errEl = document.getElementById("core-list-form-error");
   errEl.textContent = "";
-  if (!canEdit()) { errEl.textContent = t("err_perm"); return; }
+  if (!canManageProductionRecords()) { errEl.textContent = t("err_perm"); return; }
   var dkdId = nullableIntFromInput("clf-dkd-id");
   var qty = nullableIntFromInput("clf-quantity");
   if (!dkdId) { errEl.textContent = "DKD商品IDは必須です"; return; }
@@ -11524,7 +11565,7 @@ async function saveCoreListForm() {
 }
 
 async function createCoreListFromRanking() {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canManageProductionRecords()) { alert(t("err_perm")); return; }
   var btn = document.getElementById("btn-create-core-list-from-ranking");
   if (btn) btn.disabled = true;
   try {
@@ -11587,7 +11628,7 @@ async function createCoreListFromRanking() {
 }
 
 async function deleteCoreListRow(id) {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canManageProductionRecords()) { alert(t("err_perm")); return; }
   var row = coreListMgmtRows.find(function(x) { return x.id === id; });
   if (!confirm(t("core_list_delete_confirm"))) return;
   var r = await sb.from("production_core_list_entries").delete().eq("id", id);
@@ -14148,7 +14189,7 @@ function buildFinishedLabelPrintHtml(record) {
 // 製造予定ランキング管理
 // =============================================
 async function enterProductionRankingMgmt() {
-  if (!canViewManagementScreen()) { alert(t("err_perm")); return; }
+  if (!canViewManufacturingReport()) { alert(t("err_perm")); return; }
   showScreen("production-ranking-mgmt");
   var addBtn = document.getElementById("btn-add-production-ranking");
   if (addBtn) setCspStyle(addBtn, "display", canEdit() ? "" : "none");
@@ -14885,12 +14926,12 @@ var kikanExistingParts = [];
 var kikanExistingMemberIdSet = {};
 
 async function enterKikanMgmt() {
-  if (!canViewManagementScreen()) { alert(t("err_perm")); return; }
+  if (!canManageCompatibility()) { alert(t("err_perm")); return; }
   showScreen("kikan-mgmt");
   var nameEl = document.getElementById("kikan-mgmt-username");
   if (nameEl) nameEl.textContent = userProfile.name || userProfile.email.split("@")[0];
   var newBtn = document.getElementById("btn-new-kikan-group");
-  if (newBtn) setCspStyle(newBtn, "display", canEdit() ? "" : "none");
+  if (newBtn) setCspStyle(newBtn, "display", canEditCompatibility() ? "" : "none");
   await loadKikanMgmt();
 }
 
@@ -15271,7 +15312,7 @@ function isConfirmedKikanCategory(categoryCode) {
 async function saveKikanForm() {
   var errEl   = document.getElementById("kikan-form-error");
   errEl.textContent = "";
-  if (!canEdit()) { errEl.textContent = t("err_perm"); return; }
+  if (!canEditCompatibility()) { errEl.textContent = t("err_perm"); return; }
   if (!kikanSelectedParts.length) {
     await searchKikanPartCandidates();
     var terms = parseKikanPartSearchTerms(document.getElementById("kf-part-search").value);
@@ -15373,7 +15414,7 @@ async function saveKikanForm() {
 }
 
 async function removeKikanMember(groupId, dkdGokanId, keepFormOpen) {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canEditCompatibility()) { alert(t("err_perm")); return; }
   if (!confirm(t("del_kikan_confirm"))) return;
   var r = await sb.from("kikan_group_members").delete().eq("kikan_group_id", groupId).eq("dkd_gokan_id", dkdGokanId);
   if (r.error) { alert(t("msg_kikan_err")); return; }
@@ -15445,6 +15486,7 @@ async function enterUsers() {
   userManagementLoaded = false;
   userManagementLoadError = null;
   currentPermissionEditUserId = null;
+  currentPermissionEditOverrides = {};
   showScreen("users");
   configureUsersScreenMode();
   renderUserPermissionOverview();
@@ -18071,6 +18113,11 @@ function syncFirstSearchResultDetail() {
 
 function openPanel(id, options) {
   options = options || {};
+  if (!canViewProductInfo()) {
+    if (!options.autoSelect) showPermissionDenied("open_product_detail", "core_product_search_view", id);
+    closePanel();
+    return;
+  }
   currentProduct = null;
   currentCoreDkdShohinId = null;
   currentProductSpecs = [];
@@ -27481,15 +27528,15 @@ function selectedImageActionKind(context) {
 }
 
 function openImageActionsDialog() {
-  var actionKind = canEdit() ? selectedProductKind() : "used_core";
+  var actionKind = canManageAllImages() ? selectedProductKind() : "used_core";
   if (!canManageImageKind(actionKind, "sales")) { showPermissionDenied("open_image_actions", "core_product_images"); return; }
   var select = document.getElementById("image-action-product-kind");
   fillImageKindSelect(select, actionKind);
-  if (select) select.disabled = !canEdit();
+  if (select) select.disabled = !canManageAllImages();
   var picker = select ? select.closest(".image-kind-picker") : null;
-  if (picker) setCspStyle(picker, "display", canEdit() ? "" : "none");
+  if (picker) setCspStyle(picker, "display", canManageAllImages() ? "" : "none");
   var editBtn = document.getElementById("btn-image-action-edit");
-  if (editBtn) setCspStyle(editBtn, "display", canEdit() ? "" : "none");
+  if (editBtn) setCspStyle(editBtn, "display", canManageAllImages() ? "" : "none");
   document.getElementById("image-actions-overlay").classList.add("show");
 }
 
@@ -27510,7 +27557,7 @@ function triggerSalesImageUpload() {
 }
 
 function openImageDeleteDialog() {
-  if (!canEdit() && !isCoreImageEditorRole(userProfile)) { showPermissionDenied("delete_image", "core_product_images"); return; }
+  if (!canManageAllImages() && !canManageUsedCoreImages()) { showPermissionDenied("delete_image", "core_product_images"); return; }
   currentImageDeleteContext = "sales";
   currentImageDeleteCoreListRowId = null;
   currentImageDeleteActivityProduct = currentProduct || null;
@@ -27560,7 +27607,7 @@ function renderImageDeleteDialog() {
 }
 
 async function openImageEditDialog(context) {
-  if (!canEdit()) { alert(t("err_perm")); return; }
+  if (!canManageAllImages()) { alert(t("err_perm")); return; }
   context = context === "production" ? "production" : "sales";
   currentImageEditContext = context;
   imageEditFilterKind = "";
@@ -27682,7 +27729,7 @@ function productVariantIdForKind(kind) {
 }
 
 async function saveImageEditDialog() {
-  if (!canEdit()) { showPermissionDenied("edit_image_kind", "core_product_images"); return; }
+  if (!canManageAllImages()) { showPermissionDenied("edit_image_kind", "core_product_images"); return; }
   var error = document.getElementById("image-edit-error");
   if (error) error.textContent = "";
   var context = currentImageEditContext === "production" ? "production" : "sales";
@@ -27757,7 +27804,7 @@ async function refreshAfterImageDelete() {
 }
 
 async function deleteSelectedImagesFromDialog() {
-  if (!canEdit() && !isCoreImageEditorRole(userProfile)) { showPermissionDenied("delete_image", "core_product_images"); return; }
+  if (!canManageAllImages() && !canManageUsedCoreImages()) { showPermissionDenied("delete_image", "core_product_images"); return; }
   var indexes = selectedImageDeleteIndexes();
   if (!indexes.length) {
     alert(t("image_delete_none_selected"));
@@ -28108,8 +28155,45 @@ function permissionOverviewUserContext(user, roleCode, manufacturingCostAllowed)
     companyCode: companyCode,
     ownRole: true,
     scope: accessScopeLabel(roleCode, companyLabel, departmentLabel),
-    manufacturingCostAllowed: !!manufacturingCostAllowed
+    manufacturingCostAllowed: !!manufacturingCostAllowed,
+    permissionOverrides: userPermissionOverrides(user),
+    canEditStates: false
   };
+}
+
+function permissionOverviewCanOverride(context, permissionKey) {
+  if (!context.canEditStates || !permissionKey || context.roleCode === "system_admin") return false;
+  if (context.companyCode === "external") {
+    return ["product_search.view", "product_info.view", "sales_price.view"].indexOf(permissionKey) >= 0;
+  }
+  if (permissionKey === "users.manage") {
+    return permissionOverviewRoleIn(context.roleCode, ["company_admin", "dept_admin", "master_editor"]);
+  }
+  if (permissionKey === "gltek_part_number.issue") return context.companyCode === "gltek";
+  if (permissionKey === "component_compatibility.manage") return context.companyCode === "daiko";
+  return true;
+}
+
+function applyPermissionOverviewOverride(item, context) {
+  if (!item.permissionKey) {
+    item.effectiveAllowed = item.state && item.state.tone !== "denied";
+    item.editable = false;
+    return item;
+  }
+  var overrides = context.permissionOverrides || {};
+  var hasOverride = Object.prototype.hasOwnProperty.call(overrides, item.permissionKey)
+    && typeof overrides[item.permissionKey] === "boolean";
+  item.baseState = item.state;
+  item.baseAllowed = item.state && item.state.tone !== "denied";
+  item.overrideValue = hasOverride ? overrides[item.permissionKey] : null;
+  item.effectiveAllowed = hasOverride ? overrides[item.permissionKey] : item.baseAllowed;
+  item.editable = permissionOverviewCanOverride(context, item.permissionKey);
+  if (hasOverride) {
+    item.state = item.effectiveAllowed
+      ? permissionOverviewLimited("個別許可")
+      : permissionOverviewDenied("個別停止");
+  }
+  return item;
 }
 
 function permissionOverviewScreenGroups(context) {
@@ -28159,6 +28243,10 @@ function permissionOverviewScreenGroups(context) {
     return permissionOverviewDenied("登録・削除不可");
   }
 
+  function fullImageManagementState() {
+    return yesNo(roleCanEdit, "全画像の登録・修正・削除可", "登録・削除不可");
+  }
+
   function manufacturingCostUseState() {
     if (permissionOverviewRoleIn(role, ["system_admin", "company_admin", "dept_admin"])) {
       return permissionOverviewAllowed("基本権限で利用可");
@@ -28200,41 +28288,46 @@ function permissionOverviewScreenGroups(context) {
   var researchHistoryVisible = permissionOverviewRoleIn(role, priceResearchViewers);
   var researchManageable = permissionOverviewRoleIn(role, priceResearchers);
   var customerAccessManageable = permissionOverviewRoleIn(role, ["system_admin", "company_admin", "master_editor"]);
+  var gltekPartNumberIssueAllowed = role === "system_admin" || (
+    context.companyCode === "gltek" && permissionOverviewRoleIn(role, ["company_admin", "master_editor"])
+  );
   var userManagement = userManagementState();
 
-  return [
+  var groups = [
     {
       title: "商品・検索",
       screens: [
         {
           title: "商品検索",
           items: [
-            { label: "画面", state: permissionOverviewAllowed("利用可") },
-            { label: "商品情報", state: productInformationState() },
-            { label: "販売価格", state: salesPriceState() },
-            { label: "基準価格・仕入価格", state: yesNo(roleCanViewBasePrice, "閲覧可", "閲覧不可") },
-            { label: "商品登録・修正", state: yesNo(roleCanEdit, "可", "不可") },
-            { label: "画像登録・削除", state: imageManagementState() }
+            { label: "画面", permissionKey: "product_search.view", state: permissionOverviewAllowed("利用可") },
+            { label: "商品情報", permissionKey: "product_info.view", state: productInformationState() },
+            { label: "販売価格", permissionKey: "sales_price.view", state: salesPriceState() },
+            { label: "基準価格", permissionKey: "base_price.view", state: yesNo(roleCanViewBasePrice, "閲覧可", "閲覧不可") },
+            { label: "仕入価格", permissionKey: "purchase_price.view", state: yesNo(roleCanViewBasePrice, "閲覧可", "閲覧不可") },
+            { label: "商品登録・修正", permissionKey: "product.manage", state: yesNo(roleCanEdit, "可", "不可") },
+            { label: "画像登録・削除", permissionKey: "image.manage", state: fullImageManagementState() }
           ]
         },
         {
           title: "商品管理",
           items: [
-            { label: "画面", state: screenState(roleCanViewManagement) },
-            { label: "商品登録・修正", state: yesNo(roleCanEdit, "可", "不可") },
-            { label: "商品削除", state: yesNo(roleCanEdit, "可", "不可") }
+            { label: "画面", permissionKey: "product_management.view", state: screenState(roleCanViewManagement) },
+            { label: "商品登録・修正", permissionKey: "product.manage", state: yesNo(roleCanEdit, "可", "不可") },
+            { label: "商品削除", permissionKey: "product.delete", state: yesNo(roleCanManageCompany, "可", "不可") },
+            { label: "GLTEK品番発行", permissionKey: "gltek_part_number.issue", state: yesNo(gltekPartNumberIssueAllowed, "可", "不可") }
           ]
         },
         {
           title: "構成部品名マスタ",
           items: [
-            { label: "画面・マスタ設定", state: screenState(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "dept_admin", "master_editor"])) }
+            { label: "画面・マスタ設定", permissionKey: "component_name.manage", state: screenState(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "dept_admin", "master_editor"])) }
           ]
         },
         {
           title: "構成部品互換設定",
           items: [
-            { label: "画面・互換設定", state: componentCompatibilityState() }
+            { label: "画面・互換設定", permissionKey: "component_compatibility.manage", state: componentCompatibilityState() }
           ]
         }
       ]
@@ -28245,60 +28338,55 @@ function permissionOverviewScreenGroups(context) {
         {
           title: "製造管理",
           items: [
-            { label: "画面", state: screenState(roleCanViewManagement) },
-            { label: "商品登録・修正", state: yesNo(roleCanEdit, "可", "不可") },
-            { label: "構成部品", state: roleCanManageComponents
-              ? permissionOverviewAllowed("追加・修正・削除可")
-              : (permissionOverviewRoleIn(role, ["master_editor", "all_viewer"])
-                ? permissionOverviewLimited("閲覧のみ")
-                : permissionOverviewDenied("利用不可")) },
-            { label: "製造画像", state: roleCanEdit
-              ? permissionOverviewAllowed("登録・修正・削除可")
-              : (role === "all_viewer" ? permissionOverviewLimited("閲覧のみ") : permissionOverviewDenied("利用不可")) }
+            { label: "画面", permissionKey: "production.view", state: screenState(roleCanViewManagement) },
+            { label: "商品登録・修正", permissionKey: "product.manage", state: yesNo(roleCanEdit, "可", "不可") },
+            { label: "構成部品閲覧", permissionKey: "component.view", state: yesNo(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "all_viewer"]), "閲覧可", "利用不可") },
+            { label: "構成部品追加・修正・削除", permissionKey: "component.manage", state: yesNo(roleCanManageComponents, "可", "不可") },
+            { label: "製造画像登録・修正・削除", permissionKey: "image.manage", state: fullImageManagementState() }
           ]
         },
         {
           title: "完成品ラベル",
           items: [
-            { label: "画面・登録・修正", state: screenState(role === "system_admin") }
+            { label: "画面・登録・修正", permissionKey: "finished_label.manage", state: screenState(role === "system_admin") }
           ]
         },
         {
           title: "コア一覧",
           items: [
-            { label: "画面", state: screenState(coreListVisible) },
-            { label: "収集・在庫リスト", state: roleCanEdit
+            { label: "画面", permissionKey: "core_list.view", state: screenState(coreListVisible) },
+            { label: "収集・在庫リスト", permissionKey: "production_records.manage", state: roleCanEdit
               ? permissionOverviewAllowed("追加・修正・削除可")
               : (coreListVisible ? permissionOverviewLimited("閲覧のみ") : permissionOverviewDenied("利用不可")) },
-            { label: "使用済みコア画像", state: imageManagementState() }
+            { label: "使用済みコア画像", permissionKey: "used_core_image.manage", state: imageManagementState() }
           ]
         },
         {
           title: "商品区分別在庫",
           items: [
-            { label: "画面・在庫情報", state: screenState(roleIsInternal) },
-            { label: "在庫数・保管情報の更新", state: yesNo(roleCanEdit, "可", "不可") }
+            { label: "画面・在庫情報", permissionKey: "stock.view", state: screenState(roleIsInternal) },
+            { label: "在庫数・保管情報の更新", permissionKey: "stock.manage", state: yesNo(roleCanEdit, "可", "不可") }
           ]
         },
         {
           title: "製造原価",
           items: [
-            { label: "画面", state: manufacturingCostUse },
-            { label: "原価計算・CSV出力", state: manufacturingCostUse },
-            { label: "原価設定・リスト保存・削除", state: yesNo(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "dept_admin"]), "可", "不可") }
+            { label: "画面", permissionKey: "manufacturing_cost.use", state: manufacturingCostUse },
+            { label: "原価計算・CSV出力", permissionKey: "manufacturing_cost.use", state: manufacturingCostUse },
+            { label: "原価設定・リスト保存・削除", permissionKey: "manufacturing_cost.manage", state: yesNo(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "dept_admin"]), "可", "不可") }
           ]
         },
         {
           title: "製造ランキングレポート",
           items: [
-            { label: "画面・レポート閲覧", state: screenState(roleCanViewManagement) }
+            { label: "画面・レポート閲覧", permissionKey: "manufacturing_report.view", state: screenState(roleCanViewManagement) }
           ]
         },
         {
           title: "互換管理",
           items: [
-            { label: "画面", state: screenState(roleCanViewManagement) },
-            { label: "互換グループの追加・修正・削除", state: yesNo(roleCanEdit, "可", "不可") }
+            { label: "画面", permissionKey: "compatibility.view", state: screenState(roleCanViewManagement) },
+            { label: "互換グループの追加・修正・削除", permissionKey: "compatibility.manage", state: yesNo(roleCanEdit, "可", "不可") }
           ]
         }
       ]
@@ -28309,34 +28397,31 @@ function permissionOverviewScreenGroups(context) {
         {
           title: "販売・基準価格",
           items: [
-            { label: "画面・販売価格", state: screenState(salesPricingVisible) },
-            { label: "販売価格設定", state: yesNo(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "master_editor"]), "修正可", "修正不可") },
-            { label: "基準価格", state: permissionOverviewRoleIn(role, ["system_admin", "company_admin"])
-              ? permissionOverviewAllowed("閲覧・修正可")
-              : (permissionOverviewRoleIn(role, ["dept_admin", "master_editor", "all_viewer"])
-                ? permissionOverviewLimited("閲覧のみ")
-                : permissionOverviewDenied("閲覧不可")) }
+            { label: "画面・販売価格", permissionKey: "sales_pricing.view", state: screenState(salesPricingVisible) },
+            { label: "販売価格設定", permissionKey: "sales_pricing.manage", state: yesNo(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "master_editor"]), "修正可", "修正不可") },
+            { label: "基準価格閲覧", permissionKey: "base_price.view", state: yesNo(roleCanViewBasePrice, "閲覧可", "閲覧不可") },
+            { label: "基準価格設定", permissionKey: "base_price.manage", state: yesNo(permissionOverviewRoleIn(role, ["system_admin", "company_admin"]), "修正可", "修正不可") }
           ]
         },
         {
           title: "仕入価格管理",
           items: [
-            { label: "画面・仕入価格", state: screenState(purchaseVisible) },
-            { label: "商品との紐づけ", state: yesNo(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "master_editor"]), "追加・修正・解除可", "不可") }
+            { label: "画面・仕入価格", permissionKey: "purchase_management.view", state: screenState(purchaseVisible) },
+            { label: "商品との紐づけ", permissionKey: "purchase.manage", state: yesNo(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "master_editor"]), "追加・修正・解除可", "不可") }
           ]
         },
         {
           title: "楽天価格調査",
           items: [
-            { label: "調査履歴", state: yesNo(researchHistoryVisible, "閲覧可", "閲覧不可") },
-            { label: "価格調査の実行・管理", state: yesNo(researchManageable, "可", "不可") },
-            { label: "自動取得設定", state: yesNo(roleCanManageCompany, "設定可", "設定不可") }
+            { label: "調査履歴", permissionKey: "price_research.view", state: yesNo(researchHistoryVisible, "閲覧可", "閲覧不可") },
+            { label: "価格調査の実行・管理", permissionKey: "price_research.manage", state: yesNo(researchManageable, "可", "不可") },
+            { label: "自動取得設定", permissionKey: "price_research.schedule", state: yesNo(roleCanManageCompany, "設定可", "設定不可") }
           ]
         },
         {
           title: "得意先公開設定",
           items: [
-            { label: "画面・得意先紐づけ・表示範囲", state: screenState(customerAccessManageable) }
+            { label: "画面・得意先紐づけ・表示範囲", permissionKey: "customer_access.manage", state: screenState(customerAccessManageable) }
           ]
         }
       ]
@@ -28347,9 +28432,9 @@ function permissionOverviewScreenGroups(context) {
         {
           title: "ユーザー権限",
           items: [
-            { label: "ユーザー別の権限一覧・変更", state: userManagement },
-            { label: "ユーザー一覧・所属設定", state: userManagement },
-            { label: "履歴・停止・PW再設定送信", state: roleCanManageUsers ? userManagement : permissionOverviewDenied("利用不可") }
+            { label: "ユーザー別の権限一覧・変更", permissionKey: "users.manage", state: userManagement },
+            { label: "ユーザー一覧・所属設定", permissionKey: "users.manage", state: userManagement },
+            { label: "履歴・停止・PW再設定送信", permissionKey: "users.manage", state: roleCanManageUsers ? userManagement : permissionOverviewDenied("利用不可") }
           ]
         },
         {
@@ -28361,23 +28446,41 @@ function permissionOverviewScreenGroups(context) {
         {
           title: "操作ログ",
           items: [
-            { label: "画面・ログ閲覧", state: screenState(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "all_viewer"])) }
+            { label: "画面・ログ閲覧", permissionKey: "operation_logs.view", state: screenState(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "all_viewer"])) }
           ]
         },
         {
           title: "API設定",
           items: [
-            { label: "画面・設定変更", state: screenState(role === "system_admin") }
+            { label: "画面・設定変更", permissionKey: "app_settings.manage", state: screenState(role === "system_admin") }
           ]
         }
       ]
     }
   ];
+  groups.forEach(function(group) {
+    group.screens.forEach(function(screen) {
+      screen.items.forEach(function(item) { applyPermissionOverviewOverride(item, context); });
+    });
+  });
+  return groups;
 }
 
 function permissionOverviewStatusHtml(state) {
   state = state || permissionOverviewDenied();
   return "<span class='permission-status permission-status-" + esc(state.tone) + "'>" + esc(state.text) + "</span>";
+}
+
+function permissionOverviewStateCellHtml(item) {
+  if (!item || !item.editable) return permissionOverviewStatusHtml(item && item.state);
+  var nextText = item.effectiveAllowed ? "停止に変更" : "許可に変更";
+  var html = "<div class='permission-state-editor'>";
+  html += "<button class='permission-status permission-status-" + esc(item.state.tone) + " permission-state-toggle' type='button' data-permission-key='" + esc(item.permissionKey) + "' aria-pressed='" + (item.effectiveAllowed ? "true" : "false") + "' title='" + esc(nextText) + "'>" + esc(item.state.text) + "</button>";
+  if (item.overrideValue !== null) {
+    html += "<button class='permission-state-reset' type='button' data-permission-key='" + esc(item.permissionKey) + "' title='基準権限に戻す' aria-label='基準権限に戻す'>&#x21BA;</button>";
+  }
+  html += "</div>";
+  return html;
 }
 
 function permissionOverviewTableHtml(context) {
@@ -28393,7 +28496,7 @@ function permissionOverviewTableHtml(context) {
           html += "<th class='permission-screen-name' scope='rowgroup' rowspan='" + screen.items.length + "'>" + esc(screen.title) + "</th>";
         }
         html += "<td class='permission-screen-item'>" + esc(item.label) + "</td>";
-        html += "<td class='permission-screen-state'>" + permissionOverviewStatusHtml(item.state) + "</td>";
+        html += "<td class='permission-screen-state'>" + permissionOverviewStateCellHtml(item) + "</td>";
         html += "</tr>";
       });
     });
@@ -28425,16 +28528,9 @@ function permissionOverviewCountHtml(context) {
 }
 
 function canEditUserPermission(user) {
-  if (!user || !canManageUser(user)) return false;
+  if (!user || !isSystemAdmin()) return false;
   var targetRole = normalizeAccessRoleForCompany(userAccessRoleCode(user), userCompanyCode(user));
-  return canAssignUserRole(targetRole);
-}
-
-function userPermissionRoleOptionHtml(companyCode, selected) {
-  var value = normalizeAccessRoleForCompany(selected, companyCode) || defaultAccessRoleForCompany(companyCode, selected);
-  return optionHtml(USER_ACCESS_ROLE_OPTIONS, value, function(option) {
-    return option[0] !== value && (skipAccessRoleForCompany(companyCode, option) || !canAssignUserRole(option[0]));
-  }, function(option) { return accessRoleLabel(option[0]); });
+  return targetRole !== "system_admin";
 }
 
 function renderUserPermissionOverview() {
@@ -28468,32 +28564,37 @@ function renderUserPermissionOverview() {
     ].filter(Boolean).join(" ")).indexOf(query) >= 0;
   });
   if (count) count.textContent = rows.length + " / " + userManagementRows.length + " 件";
-  if (note) note.textContent = "ユーザーごとの現在の権限を確認・変更できます。";
+  if (note) note.textContent = "ユーザーごとの状態を確認し、システム管理者は状態欄から直接変更できます。";
   if (!rows.length) {
     host.innerHTML = "<div class='empty'>該当するユーザーがありません</div>";
     return;
   }
 
   var html = "<div class='user-permission-management-table-wrap'><table class='user-permission-management-table'>";
-  html += "<thead><tr><th>ユーザー</th><th>所属</th><th>ユーザー権限</th><th>製造原価</th><th></th></tr></thead><tbody>";
+  html += "<thead><tr><th>ユーザー</th><th>所属</th><th>基準権限</th><th>製造原価</th><th></th></tr></thead><tbody>";
   rows.forEach(function(user) {
     var companyCode = userCompanyCode(user);
     var roleCode = normalizeAccessRoleForCompany(userAccessRoleCode(user), companyCode);
     var baseCost = manufacturingCostBaseRoleByCode(roleCode);
     var optionalCost = manufacturingCostOptionalAllowedFor(roleCode, companyCode);
-    var effectiveCost = baseCost || (optionalCost && user.manufacturing_cost_allowed === true);
-    var costState = baseCost
-      ? permissionOverviewAllowed("基本権限")
-      : (optionalCost
-        ? (effectiveCost ? permissionOverviewLimited("個別許可") : permissionOverviewDenied("未許可"))
-        : permissionOverviewDenied("対象外"));
+    var costDefault = baseCost || (optionalCost && user.manufacturing_cost_allowed === true);
+    var effectiveCost = userPermissionAllowed(user, "manufacturing_cost.use", costDefault);
+    var costOverride = userPermissionOverrides(user)["manufacturing_cost.use"];
+    var costState = typeof costOverride === "boolean"
+      ? (effectiveCost ? permissionOverviewLimited("個別許可") : permissionOverviewDenied("個別停止"))
+      : (baseCost
+        ? permissionOverviewAllowed("基準権限")
+        : (optionalCost
+          ? (effectiveCost ? permissionOverviewLimited("従来の個別許可") : permissionOverviewDenied("未許可"))
+          : permissionOverviewDenied("対象外")));
     var status = user.status || "active";
     var statusBadge = "<span class='status-badge status-" + esc(status) + "'>" + esc(t("users_" + status + "_badge")) + "</span>";
     var customerText = roleCode === "customer_viewer" ? permissionManagementCustomerLabel(user) : "";
     html += "<tr>";
     html += "<td><div class='user-permission-person'><strong>" + esc(user.name || "-") + "</strong>" + statusBadge + "</div><div class='mgmt-sub'>" + esc(user.email || "-") + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(optionLabel(USER_COMPANY_OPTIONS, companyCode)) + "</div><div class='mgmt-sub'>" + esc(optionLabel(USER_DEPARTMENT_OPTIONS, userDepartmentCode(user))) + "</div></td>";
-    html += "<td><div class='mgmt-pn'>" + esc(accessRoleLabel(roleCode)) + "</div><div class='mgmt-sub'>" + esc(accessScopeLabel(roleCode, optionLabel(USER_COMPANY_OPTIONS, companyCode), optionLabel(USER_DEPARTMENT_OPTIONS, userDepartmentCode(user)))) + "</div>" + (customerText ? "<div class='mgmt-sub'>得意先: " + esc(customerText) + "</div>" : "") + "</td>";
+    var overrideCount = Object.keys(userPermissionOverrides(user)).filter(function(key) { return typeof userPermissionOverrides(user)[key] === "boolean"; }).length;
+    html += "<td><div class='mgmt-pn'>" + esc(accessRoleLabel(roleCode)) + "</div><div class='mgmt-sub'>" + esc(accessScopeLabel(roleCode, optionLabel(USER_COMPANY_OPTIONS, companyCode), optionLabel(USER_DEPARTMENT_OPTIONS, userDepartmentCode(user)))) + "</div>" + (overrideCount ? "<div class='mgmt-sub permission-override-count'>個別設定: " + overrideCount + "件</div>" : "") + (customerText ? "<div class='mgmt-sub'>得意先: " + esc(customerText) + "</div>" : "") + "</td>";
     html += "<td>" + permissionOverviewStatusHtml(costState) + "</td>";
     html += "<td><button class='btn-user-permission-open' type='button' data-uid='" + esc(user.id) + "'>" + (canEditUserPermission(user) ? "確認・変更" : "確認") + "</button></td>";
     html += "</tr>";
@@ -28521,6 +28622,7 @@ function currentPermissionEditUser() {
 
 function closeUserPermissionEditor() {
   currentPermissionEditUserId = null;
+  currentPermissionEditOverrides = {};
   var overlay = document.getElementById("user-permission-edit-overlay");
   if (overlay) overlay.classList.remove("show");
 }
@@ -28530,19 +28632,15 @@ function openUserPermissionEditor(user) {
   currentPermissionEditUserId = user.id;
   var overlay = document.getElementById("user-permission-edit-overlay");
   var summary = document.getElementById("user-permission-edit-summary");
-  var roleSelect = document.getElementById("user-permission-edit-role");
-  var costCheck = document.getElementById("user-permission-edit-cost");
+  var roleDisplay = document.getElementById("user-permission-edit-role");
   var customerSelect = document.getElementById("user-permission-edit-customer");
   var message = document.getElementById("user-permission-edit-message");
-  if (!overlay || !roleSelect || !costCheck || !customerSelect) return;
+  if (!overlay || !roleDisplay || !customerSelect) return;
   var companyCode = userCompanyCode(user);
   var roleCode = normalizeAccessRoleForCompany(userAccessRoleCode(user), companyCode);
   var canManage = canEditUserPermission(user);
-  roleSelect.innerHTML = userPermissionRoleOptionHtml(companyCode, roleCode);
-  roleSelect.value = roleCode;
-  roleSelect.disabled = !canManage;
-  costCheck.dataset.savedAllowed = user.manufacturing_cost_allowed === true ? "1" : "0";
-  costCheck.checked = manufacturingCostBaseRoleByCode(roleCode) || user.manufacturing_cost_allowed === true;
+  currentPermissionEditOverrides = Object.assign({}, userPermissionOverrides(user));
+  roleDisplay.textContent = accessRoleLabel(roleCode);
   customerSelect.innerHTML = customerOptionHtml(customerUserLinkMap[user.id] || "");
   customerSelect.disabled = !canManage;
   if (summary) {
@@ -28550,43 +28648,47 @@ function openUserPermissionEditor(user) {
   }
   if (message) { message.className = "save-msg"; message.textContent = ""; }
   overlay.classList.add("show");
-  refreshUserPermissionEditor(true);
+  refreshUserPermissionEditor();
 }
 
-function refreshUserPermissionEditor(roleChanged) {
+function refreshUserPermissionEditor() {
   var user = currentPermissionEditUser();
   if (!user) return;
-  var roleSelect = document.getElementById("user-permission-edit-role");
   var roleNote = document.getElementById("user-permission-edit-role-note");
-  var costCheck = document.getElementById("user-permission-edit-cost");
-  var costLabel = document.getElementById("user-permission-edit-cost-label");
-  var costNote = document.getElementById("user-permission-edit-cost-note");
   var customerField = document.getElementById("user-permission-edit-customer-field");
   var preview = document.getElementById("user-permission-edit-preview");
   var counts = document.getElementById("user-permission-edit-counts");
   var saveButton = document.getElementById("btn-user-permission-edit-save");
-  if (!roleSelect || !costCheck || !preview) return;
+  var guide = document.getElementById("user-permission-edit-guide");
+  if (!preview) return;
   var companyCode = userCompanyCode(user);
-  var roleCode = normalizeAccessRoleForCompany(roleSelect.value, companyCode);
+  var roleCode = normalizeAccessRoleForCompany(userAccessRoleCode(user), companyCode);
   var baseAllowed = manufacturingCostBaseRoleByCode(roleCode);
   var optionalAllowed = manufacturingCostOptionalAllowedFor(roleCode, companyCode);
   var canManage = canEditUserPermission(user);
-  if (roleChanged) {
-    costCheck.checked = baseAllowed ? true : (optionalAllowed && costCheck.dataset.savedAllowed === "1");
-  } else if (baseAllowed) {
-    costCheck.checked = true;
-  } else if (!optionalAllowed) {
-    costCheck.checked = false;
-  }
-  costCheck.disabled = !canManage || baseAllowed || !optionalAllowed;
-  if (costLabel) costLabel.classList.toggle("disabled", costCheck.disabled);
   if (roleNote) roleNote.textContent = accessRoleScopeText(roleCode);
-  if (costNote) costNote.textContent = manufacturingCostPermissionNote(roleCode, baseAllowed || costCheck.checked, companyCode);
   if (customerField) setCspStyle(customerField, "display", roleCode === "customer_viewer" ? "" : "none");
   if (saveButton) setCspStyle(saveButton, "display", canManage ? "" : "none");
-  var context = permissionOverviewUserContext(user, roleCode, baseAllowed || (optionalAllowed && costCheck.checked));
+  if (guide) guide.textContent = canManage
+    ? "状態をクリックして許可・停止を変更します。丸い矢印で基準権限に戻せます。"
+    : "このユーザーは確認のみです。個別状態の変更はシステム管理者が行います。";
+  var previewUser = Object.assign({}, user, { permission_overrides: currentPermissionEditOverrides });
+  var context = permissionOverviewUserContext(previewUser, roleCode, baseAllowed || (optionalAllowed && user.manufacturing_cost_allowed === true));
+  context.canEditStates = canManage;
   preview.innerHTML = permissionOverviewTableHtml(context);
   if (counts) counts.innerHTML = permissionOverviewCountHtml(context);
+}
+
+function changeUserPermissionState(permissionKey, allowed) {
+  if (!permissionKey || !canEditUserPermission(currentPermissionEditUser())) return;
+  currentPermissionEditOverrides[permissionKey] = !!allowed;
+  refreshUserPermissionEditor();
+}
+
+function resetUserPermissionState(permissionKey) {
+  if (!permissionKey || !canEditUserPermission(currentPermissionEditUser())) return;
+  delete currentPermissionEditOverrides[permissionKey];
+  refreshUserPermissionEditor();
 }
 
 async function saveUserPermissionEditor() {
@@ -28595,36 +28697,25 @@ async function saveUserPermissionEditor() {
     showPermissionDenied("save_user_permission", "profiles", user && user.id);
     return;
   }
-  var roleSelect = document.getElementById("user-permission-edit-role");
-  var costCheck = document.getElementById("user-permission-edit-cost");
   var customerSelect = document.getElementById("user-permission-edit-customer");
   var message = document.getElementById("user-permission-edit-message");
   var saveButton = document.getElementById("btn-user-permission-edit-save");
   var companyCode = userCompanyCode(user);
-  var roleCode = normalizeAccessRoleForCompany(roleSelect.value, companyCode);
-  if (!canAssignUserRole(roleCode)) {
-    showPermissionDenied("assign_user_role", "profiles", user.id, roleCode);
-    return;
-  }
+  var roleCode = normalizeAccessRoleForCompany(userAccessRoleCode(user), companyCode);
   var salesCustomerId = customerSelect ? customerSelect.value : "";
   if (roleCode === "customer_viewer" && !salesCustomerId) {
     if (message) { message.className = "save-msg save-err"; message.textContent = "得意先を選択してください"; }
     return;
   }
-  var manufacturingCostAllowed = !manufacturingCostBaseRoleByCode(roleCode) && manufacturingCostOptionalAllowedFor(roleCode, companyCode)
-    ? !!costCheck.checked
-    : false;
-  var departmentCode = permissionOverviewRoleIn(roleCode, ["customer_viewer", "external_viewer"])
-    ? "viewer"
-    : userDepartmentCode(user);
-  var payload = {
-    role: legacyRoleFromAccessRole(roleCode, companyCode),
-    group_name: legacyGroupFromCompany(companyCode),
-    department_code: departmentCode,
-    role_code: roleCode,
-    manufacturing_cost_allowed: manufacturingCostAllowed,
-    updated_at: new Date().toISOString()
-  };
+  var cleanOverrides = {};
+  Object.keys(currentPermissionEditOverrides).sort().forEach(function(key) {
+    if (typeof currentPermissionEditOverrides[key] === "boolean") cleanOverrides[key] = currentPermissionEditOverrides[key];
+  });
+  var originalOverrides = userPermissionOverrides(user);
+  var changedPermissionKeys = Array.from(new Set(Object.keys(originalOverrides).concat(Object.keys(cleanOverrides)))).filter(function(key) {
+    return originalOverrides[key] !== cleanOverrides[key];
+  });
+  var payload = { permission_overrides: cleanOverrides, updated_at: new Date().toISOString() };
   if (saveButton) saveButton.disabled = true;
   if (message) { message.className = "save-msg"; message.textContent = t("loading"); }
   var result = await sb.from("profiles").update(payload).eq("id", user.id);
@@ -28647,20 +28738,14 @@ async function saveUserPermissionEditor() {
     target_desc: user.email || user.id,
     metadata: {
       company_code: companyCode,
-      department_code: departmentCode,
       role_code: roleCode,
-      manufacturing_cost_allowed: manufacturingCostAllowed,
+      changed_permission_keys: changedPermissionKeys,
+      permission_overrides: cleanOverrides,
       sales_customer_id: roleCode === "customer_viewer" ? salesCustomerId : null
     }
   });
-  if (currentUser && String(currentUser.id) === String(user.id)) await loadProfile();
   if (saveButton) saveButton.disabled = false;
   closeUserPermissionEditor();
-  if (!canUseUserManagement()) {
-    showScreen("menu");
-    renderMenu();
-    return;
-  }
   await loadUsers();
 }
 
@@ -28784,7 +28869,8 @@ function activityMetadataSummaryText(row) {
       meta.company_code ? "会社: " + meta.company_code : "",
       meta.department_code ? "部署: " + meta.department_code : "",
       meta.role_code ? "権限: " + meta.role_code : "",
-      meta.manufacturing_cost_allowed !== undefined ? "製造原価: " + (meta.manufacturing_cost_allowed ? "個別許可（閲覧・計算・出力のみ）" : "個別許可なし") : ""
+      meta.manufacturing_cost_allowed !== undefined ? "製造原価: " + (meta.manufacturing_cost_allowed ? "個別許可（閲覧・計算・出力のみ）" : "個別許可なし") : "",
+      Array.isArray(meta.changed_permission_keys) ? "個別権限変更: " + meta.changed_permission_keys.length + "件" : ""
     ].filter(Boolean).join(" / ");
   }
   var parts = activitySummaryParts(meta.before_summary || meta.after_summary);
@@ -29535,8 +29621,15 @@ document.getElementById("pf-part-manufacturer-type").addEventListener("change", 
 document.getElementById("btn-gltek-product-mode-open").addEventListener("click", openGltekProductAddMode);
 document.getElementById("btn-gltek-product-mode-close").addEventListener("click", closeGltekProductAddMode);
 document.getElementById("user-permission-search").addEventListener("input", renderUserPermissionOverview);
-document.getElementById("user-permission-edit-role").addEventListener("change", function(){ refreshUserPermissionEditor(true); });
-document.getElementById("user-permission-edit-cost").addEventListener("change", function(){ refreshUserPermissionEditor(false); });
+document.getElementById("user-permission-edit-preview").addEventListener("click", function(e) {
+  var toggle = e.target.closest(".permission-state-toggle");
+  if (toggle) {
+    changeUserPermissionState(toggle.dataset.permissionKey, toggle.getAttribute("aria-pressed") !== "true");
+    return;
+  }
+  var reset = e.target.closest(".permission-state-reset");
+  if (reset) resetUserPermissionState(reset.dataset.permissionKey);
+});
 document.getElementById("btn-user-permission-edit-close").addEventListener("click", closeUserPermissionEditor);
 document.getElementById("btn-user-permission-edit-save").addEventListener("click", saveUserPermissionEditor);
 document.getElementById("user-permission-edit-overlay").addEventListener("click", function(e){ if (e.target === this) closeUserPermissionEditor(); });
