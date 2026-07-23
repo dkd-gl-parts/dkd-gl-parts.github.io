@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.547">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.547"; -->
+<meta name="dcats-app-version" content="v1.1.548">
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.548"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co; form-action 'self';">
 <title>D-CATS</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233c7df0'/%3E%3Cpath d='M8 17h16M16 9v14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.547&amp;ranking=4">
+<link rel="stylesheet" href="styles.css?v=1.1.548&amp;ranking=4">
 </head>
 <body>
 
@@ -128,7 +128,7 @@
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.547</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.548</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -157,7 +157,7 @@
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.547</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.548</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -187,7 +187,7 @@
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.547</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.548</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -651,14 +651,17 @@
   </div>
   <div class="users-body">
     <h2 id="users-heading" data-i18n="screen_users_title">ユーザー管理</h2>
-    <p class="users-desc" data-i18n="users_desc">会社・部署は所属、ユーザー権限は操作できる範囲です。製造原価は基本権限または個別許可で管理します。</p>
+    <p class="users-desc">操作権限と製造原価の許可はユーザー権限一覧、表示名・所属・アカウント状態はユーザー一覧で管理します。</p>
     <section class="user-permission-overview">
       <div class="user-permission-overview-head">
         <div>
           <h3>ユーザー権限一覧</h3>
-          <p id="user-permission-overview-note">ログイン中の権限を、画面・項目別に表示しています。</p>
+          <p id="user-permission-overview-note">ユーザーごとの現在の権限を確認・変更できます。</p>
         </div>
-        <button class="btn-permission-overview-toggle" id="btn-permission-overview-toggle" type="button" hidden>全権限を表示</button>
+      </div>
+      <div class="user-permission-toolbar">
+        <input class="mgmt-search" id="user-permission-search" type="search" placeholder="名前・メール・会社・部署・権限で検索">
+        <span class="mgmt-count" id="user-permission-count"></span>
       </div>
       <div class="permission-table-wrap" id="user-permission-overview">
         <div class="loading" data-i18n="loading">読み込み中...</div>
@@ -670,6 +673,42 @@
       </div>
       <div id="users-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
     </section>
+  </div>
+</div>
+
+<div class="form-overlay" id="user-permission-edit-overlay">
+  <div class="form-card user-permission-edit-modal">
+    <h3>ユーザー権限の確認・変更</h3>
+    <div class="user-permission-edit-summary" id="user-permission-edit-summary">-</div>
+    <div class="user-permission-edit-controls">
+      <div class="user-field">
+        <label class="user-field-label" for="user-permission-edit-role">ユーザー権限</label>
+        <select class="role-select" id="user-permission-edit-role"></select>
+        <div class="user-field-note" id="user-permission-edit-role-note"></div>
+      </div>
+      <div class="user-field">
+        <label class="user-field-label">製造原価</label>
+        <label class="user-check-field" id="user-permission-edit-cost-label">
+          <input id="user-permission-edit-cost" type="checkbox"> 個別許可
+        </label>
+        <div class="user-field-note" id="user-permission-edit-cost-note"></div>
+      </div>
+      <div class="user-field" id="user-permission-edit-customer-field">
+        <label class="user-field-label" for="user-permission-edit-customer">紐づける得意先</label>
+        <select class="group-select" id="user-permission-edit-customer"></select>
+        <div class="user-field-note">得意先閲覧で表示する商品・価格の範囲</div>
+      </div>
+    </div>
+    <div class="user-permission-edit-preview-head">
+      <strong>画面・項目別の実効権限</strong>
+      <div class="permission-role-counts" id="user-permission-edit-counts"></div>
+    </div>
+    <div class="user-permission-edit-preview" id="user-permission-edit-preview"></div>
+    <div class="form-footer user-permission-edit-footer">
+      <span class="save-msg" id="user-permission-edit-message"></span>
+      <button class="btn-cancel" id="btn-user-permission-edit-close" type="button">閉じる</button>
+      <button class="btn-primary" id="btn-user-permission-edit-save" type="button">権限を保存</button>
+    </div>
   </div>
 </div>
 
@@ -2584,7 +2623,7 @@
   <div class="fs-thumbs" id="fs-thumbs"></div>
 </div>
 
-<script src="app.js?v=1.1.547"></script>
+<script src="app.js?v=1.1.548"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.522&amp;ranking=8"></script>
 </body>
 </html>

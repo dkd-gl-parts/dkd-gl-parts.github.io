@@ -2692,35 +2692,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .user-permission-overview-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 .user-permission-overview-head h3 { margin: 0 0 2px; color: #1f2937; font-size: 14px; font-weight: 800; }
 .user-permission-overview-head p { margin: 0; color: #667085; font-size: 12px; line-height: 1.45; }
-.btn-permission-overview-toggle { min-height: 30px; border: 1px solid #bfdbfe; border-radius: 7px; background: #eef4ff; color: #1d4ed8; padding: 0 12px; font-size: 12px; font-weight: 800; white-space: nowrap; cursor: pointer; }
-.btn-permission-overview-toggle:hover { background: #dbeafe; }
+.user-permission-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 8px; }
+.user-permission-toolbar .mgmt-search { width: min(440px, 100%); }
+.user-permission-toolbar .mgmt-count { margin: 0; white-space: nowrap; }
 .permission-table-wrap { overflow-x: auto; margin: 12px 0 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; }
 .user-permission-overview .permission-table-wrap { overflow: visible; margin: 0; background: transparent; border: 0; border-radius: 0; }
-.permission-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 1120px; }
-.permission-table th { background: #f5f7fa; color: #555; font-weight: 700; padding: 8px 10px; text-align: left; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
-.permission-table td { padding: 8px 10px; border-bottom: 1px solid #edf0f3; color: #333; vertical-align: top; }
-.permission-table tr:last-child td { border-bottom: none; }
 .permission-ok { color: #157f3b; font-weight: 700; }
 .permission-no { color: #aaa; }
-.permission-role-current { overflow: hidden; background: #fff; border: 1px solid #dfe5ec; border-radius: 8px; }
-.permission-role-current-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 54px; padding: 10px 12px; background: #f8fafc; border-bottom: 1px solid #e5e7eb; }
-.permission-role-current-head > div:first-child { min-width: 0; }
-.permission-role-current-head strong,
-.permission-role-summary-main strong { display: block; color: #172033; font-size: 13px; font-weight: 800; line-height: 1.35; }
-.permission-role-current-head > div:first-child span,
-.permission-role-summary-main > span { display: block; margin-top: 2px; color: #667085; font-size: 11px; line-height: 1.35; }
 .permission-role-counts { display: flex; align-items: center; justify-content: flex-end; gap: 5px; flex-wrap: wrap; }
 .permission-role-count { display: inline-flex; align-items: center; min-height: 22px; padding: 2px 7px; border: 1px solid transparent; border-radius: 999px; font-size: 10px; font-weight: 800; line-height: 1; white-space: nowrap; }
 .permission-role-count.allowed { color: #157f3b; background: #edf9f1; border-color: #c9ead4; }
 .permission-role-count.limited { color: #175cd3; background: #eff6ff; border-color: #c7dcff; }
 .permission-role-count.optional { color: #9a6700; background: #fff8e6; border-color: #f3d58b; }
 .permission-role-count.denied { color: #667085; background: #f2f4f7; border-color: #e4e7ec; }
-.permission-role-list { display: grid; gap: 8px; }
-.permission-role-panel { overflow: hidden; background: #fff; border: 1px solid #dfe5ec; border-radius: 8px; }
-.permission-role-panel summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 54px; padding: 10px 12px; background: #f8fafc; cursor: pointer; }
-.permission-role-panel[open] summary { border-bottom: 1px solid #e5e7eb; }
-.permission-role-panel summary:hover { background: #f3f6fa; }
-.permission-role-summary-main { min-width: 0; }
 .permission-screen-table-wrap { overflow-x: auto; background: #fff; }
 .permission-screen-table { width: 100%; min-width: 680px; border-collapse: collapse; table-layout: fixed; font-size: 12px; }
 .permission-screen-table thead th { padding: 8px 10px; color: #475467; background: #f8fafc; border-bottom: 1px solid #dfe5ec; font-size: 11px; font-weight: 800; text-align: left; }
@@ -2741,6 +2725,30 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .permission-status-limited { color: #175cd3; background: #eff6ff; border-color: #c7dcff; }
 .permission-status-optional { color: #9a6700; background: #fff8e6; border-color: #f3d58b; }
 .permission-status-denied { color: #667085; background: #f2f4f7; border-color: #e4e7ec; }
+.user-permission-management-table-wrap { overflow-x: auto; background: #fff; border: 1px solid #dfe5ec; border-radius: 8px; }
+.user-permission-management-table { width: 100%; min-width: 900px; border-collapse: collapse; table-layout: fixed; font-size: 12px; }
+.user-permission-management-table th { padding: 8px 10px; color: #475467; background: #f5f7fa; border-bottom: 1px solid #dfe5ec; font-size: 11px; font-weight: 800; text-align: left; }
+.user-permission-management-table th:first-child { width: 28%; }
+.user-permission-management-table th:nth-child(2) { width: 18%; }
+.user-permission-management-table th:nth-child(3) { width: 27%; }
+.user-permission-management-table th:nth-child(4) { width: 15%; }
+.user-permission-management-table th:last-child { width: 12%; }
+.user-permission-management-table td { padding: 9px 10px; color: #344054; border-bottom: 1px solid #edf0f3; vertical-align: middle; }
+.user-permission-management-table tr:last-child td { border-bottom: 0; }
+.user-permission-person { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.user-permission-person strong { min-width: 0; color: #1f2937; font-size: 12px; overflow-wrap: anywhere; }
+.btn-user-permission-open { min-height: 30px; border: 1px solid #b9d3ff; border-radius: 6px; background: #eef4ff; color: #175cd3; padding: 5px 10px; font-size: 11px; font-weight: 800; white-space: nowrap; cursor: pointer; }
+.btn-user-permission-open:hover { background: #dbeafe; }
+.user-permission-edit-modal { width: min(1120px, calc(100vw - 24px)); max-width: 1120px; padding: 20px; }
+.user-permission-edit-summary { display: flex; align-items: center; gap: 6px 14px; flex-wrap: wrap; margin: -8px 0 14px; color: #667085; font-size: 11px; }
+.user-permission-edit-summary strong { color: #1f2937; font-size: 13px; }
+.user-permission-edit-controls { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(190px, 0.8fr) minmax(260px, 1.2fr); gap: 12px; padding: 12px; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; }
+.user-permission-edit-preview-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 16px 0 8px; }
+.user-permission-edit-preview-head strong { color: #344054; font-size: 12px; }
+.user-permission-edit-preview { max-height: 45vh; overflow: auto; border: 1px solid #dfe5ec; border-radius: 8px; }
+.user-permission-edit-preview .permission-screen-table thead th { position: sticky; top: 0; z-index: 2; }
+.user-permission-edit-footer { position: sticky; bottom: -20px; align-items: center; background: #fff; padding-bottom: 4px; }
+.user-permission-edit-footer .save-msg { margin-right: auto; }
 .users-list-section { margin-top: 18px; }
 .users-list-section-head { margin: 0 0 8px; }
 .users-list-section-head h3 { margin: 0; color: #1f2937; font-size: 14px; font-weight: 800; }
@@ -2754,6 +2762,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .user-summary-chip.role { background: #eef4ff; color: #1d4ed8; border-color: #bfdbfe; font-weight: 700; }
 .user-created  { font-size: 11px; color: #aaa; margin-top: 2px; }
 .user-settings-grid { display: grid; grid-template-columns: minmax(200px, 0.8fr) minmax(300px, 1fr) minmax(360px, 1.45fr) minmax(210px, 0.85fr); gap: 12px; align-items: start; border-top: 1px solid #eef1f5; padding-top: 12px; }
+.user-settings-grid.account-only { grid-template-columns: minmax(220px, 0.8fr) minmax(420px, 1.4fr); }
 .user-settings-section { min-width: 0; }
 .user-settings-section-title { font-size: 11px; color: #344054; font-weight: 700; margin-bottom: 8px; }
 .user-settings-section-fields { display: grid; gap: 10px; }
@@ -2764,16 +2773,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .user-check-field { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 7px 9px; border: 1px solid #d7dce5; border-radius: 7px; background: #fff; font-size: 12px; color: #1f2937; font-weight: 700; cursor: pointer; }
 .user-check-field input { width: 16px; height: 16px; flex: 0 0 auto; }
 .user-check-field.disabled { background: #f7f8fb; color: #8a94a6; cursor: not-allowed; }
-.user-permission-detail-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
-.user-permission-detail-item { min-width: 0; border: 1px solid #e2e8f0; border-radius: 8px; background: #fbfdff; padding: 6px 8px; }
-.user-permission-detail-item span { display: block; color: #667085; font-size: 10px; font-weight: 800; line-height: 1.2; margin-bottom: 3px; }
-.user-permission-detail-item b { display: block; color: #1f2937; font-size: 11px; font-weight: 800; line-height: 1.35; overflow-wrap: anywhere; }
-.user-permission-detail-item.ok { border-color: #c9ead4; background: #fbfffc; }
-.user-permission-detail-item.ok b { color: #157f3b; }
-.user-permission-detail-item.limited { border-color: #d7e8ff; background: #f8fbff; }
-.user-permission-detail-item.limited b { color: #175cd3; }
-.user-permission-detail-item.no { border-color: #edf0f3; background: #f8fafc; }
-.user-permission-detail-item.no b { color: #98a2b3; }
 .user-name-input { width: 100%; min-height: 32px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 6px; padding: 6px 10px; font-size: 13px; outline: none; }
 .user-name-input:focus { border-color: #4f8ef7; }
 .user-card-bottom { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -2803,6 +2802,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .save-ok  { color: #1a8c3e; }
 .save-err { color: #e24b4a; }
 @media (max-width: 900px) {
+  .user-permission-edit-controls { grid-template-columns: 1fr; }
   .user-card-top { flex-direction: column; }
   .user-actions { justify-content: flex-start; width: 100%; min-width: 0; }
   .user-actions-label { text-align: left; }
@@ -2810,8 +2810,26 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 }
 @media (max-width: 560px) {
   .user-permission-overview-head { align-items: flex-start; flex-direction: column; }
-  .permission-role-current-head,
-  .permission-role-panel summary { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .user-permission-toolbar { align-items: stretch; flex-direction: column; }
+  .user-permission-toolbar .mgmt-search { width: 100%; }
+  .user-permission-toolbar .mgmt-count { text-align: left; }
+  .user-permission-management-table-wrap { overflow: visible; border: 0; background: transparent; }
+  .user-permission-management-table { display: block; min-width: 0; background: transparent; }
+  .user-permission-management-table thead { display: none; }
+  .user-permission-management-table tbody { display: grid; gap: 8px; }
+  .user-permission-management-table tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); overflow: hidden; border: 1px solid #dfe5ec; border-radius: 8px; background: #fff; }
+  .user-permission-management-table td { display: block; min-width: 0; padding: 8px 10px; border-bottom: 0 !important; }
+  .user-permission-management-table td:first-child { grid-column: 1 / -1; padding-top: 10px; border-bottom: 1px solid #edf0f3 !important; }
+  .user-permission-management-table td:nth-child(n + 2)::before { display: block; margin-bottom: 3px; color: #98a2b3; font-size: 10px; font-weight: 800; }
+  .user-permission-management-table td:nth-child(2)::before { content: "所属"; }
+  .user-permission-management-table td:nth-child(3)::before { content: "ユーザー権限"; }
+  .user-permission-management-table td:nth-child(4)::before { content: "製造原価"; }
+  .user-permission-management-table td:nth-child(5)::before { content: "操作"; }
+  .user-permission-management-table .btn-user-permission-open { width: 100%; }
+  .user-permission-edit-modal { width: calc(100vw - 12px); margin: 6px; padding: 14px; }
+  .user-permission-edit-preview-head { align-items: flex-start; flex-direction: column; }
+  .user-permission-edit-footer { bottom: -14px; flex-wrap: wrap; }
+  .user-permission-edit-footer .save-msg { width: 100%; }
   .permission-role-counts { justify-content: flex-start; }
   .permission-screen-table { min-width: 0; font-size: 11px; }
   .permission-screen-table thead th:first-child { width: 25%; }
@@ -2823,7 +2841,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .permission-status { padding: 3px 6px; font-size: 10px; }
   .user-settings-grid { grid-template-columns: 1fr; }
   .user-settings-section-fields.two-col { grid-template-columns: 1fr; }
-  .user-permission-detail-list { grid-template-columns: 1fr; }
 }
 
 /* =============================================
