@@ -3452,7 +3452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.550";
+var APP_VERSION       = "v1.1.551";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -7710,6 +7710,8 @@ function applyEcResearchScheduleForm(settings) {
 
 function updateEcResearchScheduleFormAccess() {
   var canManage = canManageEcResearchSchedule();
+  var panel = document.getElementById("ec-research-schedule-panel");
+  if (panel) panel.hidden = !canManage;
   ["ec-schedule-enabled","ec-schedule-start","ec-schedule-end","ec-schedule-hits","ec-schedule-sort"].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.disabled = !canManage;
@@ -28471,6 +28473,20 @@ function permissionOverviewStatusHtml(state) {
   return "<span class='permission-status permission-status-" + esc(state.tone) + "'>" + esc(state.text) + "</span>";
 }
 
+function permissionOverviewVisibility(item) {
+  if (item && item.state && item.state.tone === "optional" && item.overrideValue === null) {
+    return { text: "許可後に表示", tone: "conditional" };
+  }
+  return item && item.effectiveAllowed
+    ? { text: "表示", tone: "visible" }
+    : { text: "非表示", tone: "hidden" };
+}
+
+function permissionOverviewVisibilityHtml(item) {
+  var visibility = permissionOverviewVisibility(item);
+  return "<span class='permission-visibility permission-visibility-" + esc(visibility.tone) + "'>" + esc(visibility.text) + "</span>";
+}
+
 function permissionOverviewStateCellHtml(item) {
   if (!item || !item.editable) return permissionOverviewStatusHtml(item && item.state);
   var nextText = item.effectiveAllowed ? "停止に変更" : "許可に変更";
@@ -28486,9 +28502,9 @@ function permissionOverviewStateCellHtml(item) {
 function permissionOverviewTableHtml(context) {
   var groups = permissionOverviewScreenGroups(context);
   var html = "<div class='permission-screen-table-wrap'><table class='permission-screen-table'>";
-  html += "<thead><tr><th>画面</th><th>確認項目</th><th>状態</th></tr></thead><tbody>";
+  html += "<thead><tr><th>画面</th><th>確認項目</th><th>項目表示</th><th>状態</th></tr></thead><tbody>";
   groups.forEach(function(group) {
-    html += "<tr class='permission-screen-group-row'><th colspan='3'>" + esc(group.title) + "</th></tr>";
+    html += "<tr class='permission-screen-group-row'><th colspan='4'>" + esc(group.title) + "</th></tr>";
     group.screens.forEach(function(screen) {
       screen.items.forEach(function(item, index) {
         html += "<tr>";
@@ -28496,6 +28512,7 @@ function permissionOverviewTableHtml(context) {
           html += "<th class='permission-screen-name' scope='rowgroup' rowspan='" + screen.items.length + "'>" + esc(screen.title) + "</th>";
         }
         html += "<td class='permission-screen-item'>" + esc(item.label) + "</td>";
+        html += "<td class='permission-screen-visibility'>" + permissionOverviewVisibilityHtml(item) + "</td>";
         html += "<td class='permission-screen-state'>" + permissionOverviewStateCellHtml(item) + "</td>";
         html += "</tr>";
       });
@@ -28520,10 +28537,10 @@ function permissionOverviewCounts(context) {
 
 function permissionOverviewCountHtml(context) {
   var counts = permissionOverviewCounts(context);
-  var html = "<span class='permission-role-count allowed'>利用可 " + counts.allowed + "</span>";
-  if (counts.limited) html += "<span class='permission-role-count limited'>制限 " + counts.limited + "</span>";
-  if (counts.optional) html += "<span class='permission-role-count optional'>個別許可 " + counts.optional + "</span>";
-  html += "<span class='permission-role-count denied'>不可 " + counts.denied + "</span>";
+  var html = "<span class='permission-role-count allowed'>利用可・表示 " + counts.allowed + "</span>";
+  if (counts.limited) html += "<span class='permission-role-count limited'>制限・表示 " + counts.limited + "</span>";
+  if (counts.optional) html += "<span class='permission-role-count optional'>個別許可後に表示 " + counts.optional + "</span>";
+  html += "<span class='permission-role-count denied'>不可・非表示 " + counts.denied + "</span>";
   return html;
 }
 
@@ -28701,11 +28718,11 @@ function refreshUserPermissionEditor() {
   if (saveButton) setCspStyle(saveButton, "display", canManage ? "" : "none");
   if (guide) {
     if (!canManage) {
-      guide.textContent = "自分自身の基準権限はこの画面では変更できません。現在の実効権限を確認できます。";
+      guide.textContent = "表示ルール: 利用可・制限は表示、不可は非表示です。自分自身の基準権限はこの画面では変更できません。";
     } else if (roleCode === "system_admin") {
-      guide.textContent = "基準権限を変更できます。システム管理者は全機能を利用できるため、個別設定は使用しません。";
+      guide.textContent = "表示ルール: 利用可・制限は表示、不可は非表示です。システム管理者は全機能を利用できるため、個別設定は使用しません。";
     } else {
-      guide.textContent = "基準権限を選び、個別の許可・停止は状態をクリックして変更します。丸い矢印で基準権限に戻せます。";
+      guide.textContent = "表示ルール: 利用可・制限は表示、不可は非表示です。個別の許可・停止は状態をクリックして変更します。";
     }
   }
   var previewOverrides = permissionOverridesForRole(user, roleCode, currentPermissionEditOverrides);
