@@ -3452,7 +3452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.549";
+var APP_VERSION       = "v1.1.550";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -28529,8 +28529,34 @@ function permissionOverviewCountHtml(context) {
 
 function canEditUserPermission(user) {
   if (!user || !isSystemAdmin()) return false;
-  var targetRole = normalizeAccessRoleForCompany(userAccessRoleCode(user), userCompanyCode(user));
-  return targetRole !== "system_admin";
+  var actorId = (currentUser && currentUser.id) || (userProfile && userProfile.id) || "";
+  return !!actorId && String(user.id) !== String(actorId);
+}
+
+function currentPermissionEditRoleCode(user) {
+  if (!user) return "";
+  var companyCode = userCompanyCode(user);
+  var roleSelect = document.getElementById("user-permission-edit-role");
+  return normalizeAccessRoleForCompany(
+    roleSelect && roleSelect.value ? roleSelect.value : userAccessRoleCode(user),
+    companyCode
+  );
+}
+
+function canEditUserPermissionStates(user, roleCode) {
+  return canEditUserPermission(user) && roleCode !== "system_admin";
+}
+
+function permissionOverridesForRole(user, roleCode, overrides) {
+  var clean = {};
+  var context = permissionOverviewUserContext(user, roleCode, false);
+  context.canEditStates = true;
+  Object.keys(overrides || {}).sort().forEach(function(key) {
+    if (typeof overrides[key] === "boolean" && permissionOverviewCanOverride(context, key)) {
+      clean[key] = overrides[key];
+    }
+  });
+  return clean;
 }
 
 function renderUserPermissionOverview() {
@@ -28564,7 +28590,7 @@ function renderUserPermissionOverview() {
     ].filter(Boolean).join(" ")).indexOf(query) >= 0;
   });
   if (count) count.textContent = rows.length + " / " + userManagementRows.length + " 件";
-  if (note) note.textContent = "ユーザーごとの状態を確認し、システム管理者は状態欄から直接変更できます。";
+  if (note) note.textContent = "ユーザーごとの基準権限を選択し、機能ごとの許可・停止は状態欄から直接変更できます。";
   if (!rows.length) {
     host.innerHTML = "<div class='empty'>該当するユーザーがありません</div>";
     return;
@@ -28640,7 +28666,8 @@ function openUserPermissionEditor(user) {
   var roleCode = normalizeAccessRoleForCompany(userAccessRoleCode(user), companyCode);
   var canManage = canEditUserPermission(user);
   currentPermissionEditOverrides = Object.assign({}, userPermissionOverrides(user));
-  roleDisplay.textContent = accessRoleLabel(roleCode);
+  roleDisplay.innerHTML = accessRoleOptionHtmlForCompany(companyCode, roleCode);
+  roleDisplay.disabled = !canManage;
   customerSelect.innerHTML = customerOptionHtml(customerUserLinkMap[user.id] || "");
   customerSelect.disabled = !canManage;
   if (summary) {
@@ -28655,6 +28682,7 @@ function refreshUserPermissionEditor() {
   var user = currentPermissionEditUser();
   if (!user) return;
   var roleNote = document.getElementById("user-permission-edit-role-note");
+  var controls = document.querySelector(".user-permission-edit-controls");
   var customerField = document.getElementById("user-permission-edit-customer-field");
   var preview = document.getElementById("user-permission-edit-preview");
   var counts = document.getElementById("user-permission-edit-counts");
@@ -28662,31 +28690,42 @@ function refreshUserPermissionEditor() {
   var guide = document.getElementById("user-permission-edit-guide");
   if (!preview) return;
   var companyCode = userCompanyCode(user);
-  var roleCode = normalizeAccessRoleForCompany(userAccessRoleCode(user), companyCode);
+  var roleCode = currentPermissionEditRoleCode(user);
   var baseAllowed = manufacturingCostBaseRoleByCode(roleCode);
   var optionalAllowed = manufacturingCostOptionalAllowedFor(roleCode, companyCode);
   var canManage = canEditUserPermission(user);
+  var canEditStates = canEditUserPermissionStates(user, roleCode);
   if (roleNote) roleNote.textContent = accessRoleScopeText(roleCode);
+  if (controls) controls.classList.toggle("has-customer-field", roleCode === "customer_viewer");
   if (customerField) setCspStyle(customerField, "display", roleCode === "customer_viewer" ? "" : "none");
   if (saveButton) setCspStyle(saveButton, "display", canManage ? "" : "none");
-  if (guide) guide.textContent = canManage
-    ? "状態をクリックして許可・停止を変更します。丸い矢印で基準権限に戻せます。"
-    : "このユーザーは確認のみです。個別状態の変更はシステム管理者が行います。";
-  var previewUser = Object.assign({}, user, { permission_overrides: currentPermissionEditOverrides });
+  if (guide) {
+    if (!canManage) {
+      guide.textContent = "自分自身の基準権限はこの画面では変更できません。現在の実効権限を確認できます。";
+    } else if (roleCode === "system_admin") {
+      guide.textContent = "基準権限を変更できます。システム管理者は全機能を利用できるため、個別設定は使用しません。";
+    } else {
+      guide.textContent = "基準権限を選び、個別の許可・停止は状態をクリックして変更します。丸い矢印で基準権限に戻せます。";
+    }
+  }
+  var previewOverrides = permissionOverridesForRole(user, roleCode, currentPermissionEditOverrides);
+  var previewUser = Object.assign({}, user, { role_code: roleCode, permission_overrides: previewOverrides });
   var context = permissionOverviewUserContext(previewUser, roleCode, baseAllowed || (optionalAllowed && user.manufacturing_cost_allowed === true));
-  context.canEditStates = canManage;
+  context.canEditStates = canEditStates;
   preview.innerHTML = permissionOverviewTableHtml(context);
   if (counts) counts.innerHTML = permissionOverviewCountHtml(context);
 }
 
 function changeUserPermissionState(permissionKey, allowed) {
-  if (!permissionKey || !canEditUserPermission(currentPermissionEditUser())) return;
+  var user = currentPermissionEditUser();
+  if (!permissionKey || !canEditUserPermissionStates(user, currentPermissionEditRoleCode(user))) return;
   currentPermissionEditOverrides[permissionKey] = !!allowed;
   refreshUserPermissionEditor();
 }
 
 function resetUserPermissionState(permissionKey) {
-  if (!permissionKey || !canEditUserPermission(currentPermissionEditUser())) return;
+  var user = currentPermissionEditUser();
+  if (!permissionKey || !canEditUserPermissionStates(user, currentPermissionEditRoleCode(user))) return;
   delete currentPermissionEditOverrides[permissionKey];
   refreshUserPermissionEditor();
 }
@@ -28698,24 +28737,38 @@ async function saveUserPermissionEditor() {
     return;
   }
   var customerSelect = document.getElementById("user-permission-edit-customer");
+  var roleSelect = document.getElementById("user-permission-edit-role");
   var message = document.getElementById("user-permission-edit-message");
   var saveButton = document.getElementById("btn-user-permission-edit-save");
   var companyCode = userCompanyCode(user);
-  var roleCode = normalizeAccessRoleForCompany(userAccessRoleCode(user), companyCode);
+  var previousRoleCode = normalizeAccessRoleForCompany(userAccessRoleCode(user), companyCode);
+  var roleCode = normalizeAccessRoleForCompany(roleSelect && roleSelect.value, companyCode);
+  var roleExists = USER_ACCESS_ROLE_OPTIONS.some(function(option) { return option[0] === roleCode; });
+  if (!roleExists || skipAccessRoleForCompany(companyCode, [roleCode, roleCode]) || !canAssignUserRole(roleCode)) {
+    showPermissionDenied("assign_user_role", "profiles", user.id, roleCode);
+    return;
+  }
   var salesCustomerId = customerSelect ? customerSelect.value : "";
   if (roleCode === "customer_viewer" && !salesCustomerId) {
     if (message) { message.className = "save-msg save-err"; message.textContent = "得意先を選択してください"; }
     return;
   }
-  var cleanOverrides = {};
-  Object.keys(currentPermissionEditOverrides).sort().forEach(function(key) {
-    if (typeof currentPermissionEditOverrides[key] === "boolean") cleanOverrides[key] = currentPermissionEditOverrides[key];
-  });
+  var cleanOverrides = permissionOverridesForRole(user, roleCode, currentPermissionEditOverrides);
   var originalOverrides = userPermissionOverrides(user);
   var changedPermissionKeys = Array.from(new Set(Object.keys(originalOverrides).concat(Object.keys(cleanOverrides)))).filter(function(key) {
     return originalOverrides[key] !== cleanOverrides[key];
   });
-  var payload = { permission_overrides: cleanOverrides, updated_at: new Date().toISOString() };
+  var manufacturingCostAllowed = (!manufacturingCostBaseRoleByCode(roleCode) && manufacturingCostOptionalAllowedFor(roleCode, companyCode))
+    ? user.manufacturing_cost_allowed === true
+    : false;
+  var payload = {
+    role_code: roleCode,
+    role: legacyRoleFromAccessRole(roleCode, companyCode),
+    group_name: legacyGroupFromCompany(companyCode),
+    manufacturing_cost_allowed: manufacturingCostAllowed,
+    permission_overrides: cleanOverrides,
+    updated_at: new Date().toISOString()
+  };
   if (saveButton) saveButton.disabled = true;
   if (message) { message.className = "save-msg"; message.textContent = t("loading"); }
   var result = await sb.from("profiles").update(payload).eq("id", user.id);
@@ -28738,7 +28791,10 @@ async function saveUserPermissionEditor() {
     target_desc: user.email || user.id,
     metadata: {
       company_code: companyCode,
+      previous_role_code: previousRoleCode,
       role_code: roleCode,
+      baseline_role_changed: previousRoleCode !== roleCode,
+      manufacturing_cost_allowed: manufacturingCostAllowed,
       changed_permission_keys: changedPermissionKeys,
       permission_overrides: cleanOverrides,
       sales_customer_id: roleCode === "customer_viewer" ? salesCustomerId : null
@@ -28868,7 +28924,9 @@ function activityMetadataSummaryText(row) {
     return [
       meta.company_code ? "会社: " + meta.company_code : "",
       meta.department_code ? "部署: " + meta.department_code : "",
-      meta.role_code ? "権限: " + meta.role_code : "",
+      meta.previous_role_code && meta.role_code
+        ? "基準権限: " + accessRoleLabel(meta.previous_role_code) + " -> " + accessRoleLabel(meta.role_code)
+        : (meta.role_code ? "権限: " + accessRoleLabel(meta.role_code) : ""),
       meta.manufacturing_cost_allowed !== undefined ? "製造原価: " + (meta.manufacturing_cost_allowed ? "個別許可（閲覧・計算・出力のみ）" : "個別許可なし") : "",
       Array.isArray(meta.changed_permission_keys) ? "個別権限変更: " + meta.changed_permission_keys.length + "件" : ""
     ].filter(Boolean).join(" / ");
@@ -29630,6 +29688,7 @@ document.getElementById("user-permission-edit-preview").addEventListener("click"
   var reset = e.target.closest(".permission-state-reset");
   if (reset) resetUserPermissionState(reset.dataset.permissionKey);
 });
+document.getElementById("user-permission-edit-role").addEventListener("change", refreshUserPermissionEditor);
 document.getElementById("btn-user-permission-edit-close").addEventListener("click", closeUserPermissionEditor);
 document.getElementById("btn-user-permission-edit-save").addEventListener("click", saveUserPermissionEditor);
 document.getElementById("user-permission-edit-overlay").addEventListener("click", function(e){ if (e.target === this) closeUserPermissionEditor(); });
