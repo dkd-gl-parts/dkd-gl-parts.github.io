@@ -76,6 +76,26 @@ var TRANSLATIONS = {
     menu_section_admin_note: "設定・マスタ・履歴",
     menu_admin_title: "管理メニュー",
     menu_admin_desc: "権限のある管理機能をここにまとめて表示します",
+    customer_portal_title: "得意先ポータル",
+    customer_portal_search_title: "商品を検索",
+    customer_portal_search_ph: "品番・メーカー品番で検索",
+    customer_portal_show_all: "商品一覧",
+    customer_portal_customer_info: "お取引先情報",
+    customer_portal_customer_name: "会社名",
+    customer_portal_customer_code: "得意先コード",
+    customer_portal_price_display: "販売価格",
+    customer_portal_product_scope: "商品公開範囲",
+    customer_portal_price_visible: "表示",
+    customer_portal_price_hidden: "非表示",
+    customer_portal_scope_standard: "標準設定",
+    customer_portal_scope_custom: "個別設定あり",
+    customer_portal_account: "アカウント",
+    customer_portal_change_password: "パスワード変更",
+    customer_portal_link_missing: "得意先との紐づけがありません",
+    customer_portal_inactive: "利用停止中",
+    customer_portal_search_unavailable: "商品検索権限なし",
+    customer_portal_back: "← 得意先ホーム",
+    customer_search_title: "商品検索",
     greeting: "ようこそ、{name} さん",
     mi_search_title: "販売管理",
     mi_search_desc: "販売商品の品番を検索し、画像・構成部品・販売価格・製造予定を確認します。",
@@ -1191,6 +1211,26 @@ var TRANSLATIONS = {
     menu_section_admin_note: "Settings, masters, and history",
     menu_admin_title: "Admin Menu",
     menu_admin_desc: "Available administration features are grouped here",
+    customer_portal_title: "Customer Portal",
+    customer_portal_search_title: "Search Products",
+    customer_portal_search_ph: "Search by part or manufacturer number",
+    customer_portal_show_all: "Product List",
+    customer_portal_customer_info: "Customer Account",
+    customer_portal_customer_name: "Company",
+    customer_portal_customer_code: "Customer Code",
+    customer_portal_price_display: "Sales Price",
+    customer_portal_product_scope: "Product Access",
+    customer_portal_price_visible: "Visible",
+    customer_portal_price_hidden: "Hidden",
+    customer_portal_scope_standard: "Standard",
+    customer_portal_scope_custom: "Custom Rules",
+    customer_portal_account: "Account",
+    customer_portal_change_password: "Change Password",
+    customer_portal_link_missing: "No customer account is linked",
+    customer_portal_inactive: "Account Inactive",
+    customer_portal_search_unavailable: "Product Search Unavailable",
+    customer_portal_back: "← Customer Home",
+    customer_search_title: "Product Search",
     greeting: "Welcome, {name}",
     mi_search_title: "Sales Management",
     mi_search_desc: "Search sales products by part number and review images, components, sales prices, and production instructions.",
@@ -2293,6 +2333,26 @@ var TRANSLATIONS = {
     menu_section_admin_note: "设置、主数据、历史",
     menu_admin_title: "管理菜单",
     menu_admin_desc: "有权限的管理功能会集中显示在这里",
+    customer_portal_title: "客户门户",
+    customer_portal_search_title: "搜索商品",
+    customer_portal_search_ph: "按品号或厂家品号搜索",
+    customer_portal_show_all: "商品一览",
+    customer_portal_customer_info: "客户信息",
+    customer_portal_customer_name: "公司名称",
+    customer_portal_customer_code: "客户代码",
+    customer_portal_price_display: "销售价格",
+    customer_portal_product_scope: "商品公开范围",
+    customer_portal_price_visible: "显示",
+    customer_portal_price_hidden: "隐藏",
+    customer_portal_scope_standard: "标准设置",
+    customer_portal_scope_custom: "有单独设置",
+    customer_portal_account: "账户",
+    customer_portal_change_password: "修改密码",
+    customer_portal_link_missing: "尚未关联客户",
+    customer_portal_inactive: "已停止使用",
+    customer_portal_search_unavailable: "无商品搜索权限",
+    customer_portal_back: "← 客户首页",
+    customer_search_title: "商品搜索",
     spec_note_ph: "例：内部确认、实物标签",
     part_form_add_title: "添加商品",
     part_form_edit_title: "修改商品",
@@ -3452,7 +3512,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.553";
+var APP_VERSION       = "v1.1.554";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -4377,6 +4437,7 @@ async function applyLanguage(lang) {
   componentCatalogNameCandidateMetaMap = {};
   componentCatalogNameCandidateMasterMap = {};
   renderMenu();
+  renderCustomerPortal();
   if (dataLoaded) { renderCategoryChips(); render(); }
   renderProductionFilterChips();
   renderProductionCategoryFilterOptions();
@@ -4500,6 +4561,16 @@ function returnToMenuFresh() {
   appDiscardRestoreStateOnExit = true;
   clearAppRestoreState();
   window.location.reload();
+}
+
+function showAuthenticatedHome() {
+  if (isCustomerViewer()) {
+    showScreen("customer-portal");
+    renderCustomerPortal();
+    return;
+  }
+  showScreen("menu");
+  renderMenu();
 }
 
 function consumeAppRestoreState() {
@@ -4800,8 +4871,7 @@ async function handleAuthState() {
     var ok = await loadProfile();
     if (!ok) return;
     resetAutoLogoutTimer();
-    showScreen("menu");
-    renderMenu();
+    showAuthenticatedHome();
     setTimeout(function() { restoreAppStateAfterRefresh(); }, 0);
   } else {
     showScreen("login");
@@ -5125,7 +5195,7 @@ function updateAllHeaders() {
   var cls   = roleClass(userProfile.role);
   var greet = tf("greeting", { name: name });
 
-  ["menu","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","component-compat-mgmt","product-kind-stock-mgmt","manufacturing-cost-mgmt","finished-label-mgmt","production-ranking-mgmt","manufacturing-ranking-report","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","logs"].forEach(function(sc) {
+  ["menu","customer-portal","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","component-compat-mgmt","product-kind-stock-mgmt","manufacturing-cost-mgmt","finished-label-mgmt","production-ranking-mgmt","manufacturing-ranking-report","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","logs"].forEach(function(sc) {
     var nameEl  = document.getElementById(sc + "-username");
     var badgeEl = document.getElementById(sc + "-role-badge");
     if (nameEl)  nameEl.textContent = name;
@@ -5133,6 +5203,7 @@ function updateAllHeaders() {
   });
   var g = document.getElementById("menu-greeting");
   if (g) g.textContent = greet;
+  configureCustomerSearchShell();
   updateComponentsReturnButton();
 }
 
@@ -5154,7 +5225,7 @@ async function doLogin() {
   if (!profileOk) { btnEl.disabled=false; btnEl.textContent=t("btn_login"); return; }
   await recordAuthEvent("login");
   resetAutoLogoutTimer();
-  showScreen("menu"); renderMenu();
+  showAuthenticatedHome();
   document.getElementById("login-password").value = "";
   btnEl.disabled = false; btnEl.textContent = t("btn_login");
 }
@@ -5273,6 +5344,73 @@ function renderMenu() {
   });
 }
 
+function customerPortalValue(id, value) {
+  var el = document.getElementById(id);
+  if (el) el.textContent = value || "-";
+}
+
+function configureCustomerSearchShell() {
+  var customerMode = isCustomerViewer();
+  var searchScreen = document.getElementById("screen-search");
+  if (searchScreen) searchScreen.classList.toggle("customer-search-mode", customerMode);
+  var backButton = document.getElementById("btn-back-search");
+  if (backButton) backButton.textContent = customerMode ? t("customer_portal_back") : t("btn_back");
+  var searchTitle = document.getElementById("search-screen-title");
+  if (searchTitle) searchTitle.textContent = customerMode ? t("customer_search_title") : "D-CATS";
+  var changePasswordBack = document.getElementById("btn-back-change-pw");
+  if (changePasswordBack) changePasswordBack.textContent = customerMode ? t("customer_portal_back") : t("btn_back");
+}
+
+function renderCustomerPortal() {
+  var portal = document.getElementById("screen-customer-portal");
+  if (!portal || !isCustomerViewer()) return;
+  var context = customerViewerContext || {};
+  var customer = context.customer || null;
+  var settings = context.settings || defaultCustomerDisplaySettings();
+  var linked = !!(context.sales_customer_id && customer);
+  var active = linked && customer.is_active !== false;
+  var searchable = active && canViewProductSearch();
+  var searchInput = document.getElementById("customer-portal-q");
+  var searchButton = document.getElementById("customer-portal-search-btn");
+  var allButton = document.getElementById("customer-portal-all-btn");
+
+  customerPortalValue("customer-portal-customer-name", linked ? customer.customer_name : t("customer_portal_link_missing"));
+  customerPortalValue("customer-portal-customer-name-value", linked ? customer.customer_name : t("customer_portal_link_missing"));
+  customerPortalValue("customer-portal-customer-code", linked ? customer.source_customer_code : "-");
+  customerPortalValue("customer-portal-price-state", settings.show_sales_price ? t("customer_portal_price_visible") : t("customer_portal_price_hidden"));
+  customerPortalValue("customer-portal-scope-state", (context.visibilityRows || []).length ? t("customer_portal_scope_custom") : t("customer_portal_scope_standard"));
+
+  var status = document.getElementById("customer-portal-status");
+  if (status) {
+    status.textContent = !linked
+      ? t("customer_portal_link_missing")
+      : (!active ? t("customer_portal_inactive") : (searchable ? t("customer_access_active") : t("customer_portal_search_unavailable")));
+    status.className = "customer-portal-status " + (searchable ? "active" : "inactive");
+  }
+  [searchInput, searchButton, allButton].forEach(function(el) {
+    if (el) el.disabled = !searchable;
+  });
+  configureCustomerSearchShell();
+}
+
+async function openCustomerPortalSearch(showAll) {
+  if (!isCustomerViewer() || !customerViewerContext || !customerViewerContext.sales_customer_id || !canViewProductSearch()) return;
+  var portalInput = document.getElementById("customer-portal-q");
+  var query = portalInput ? portalInput.value.trim() : "";
+  if (!showAll && !query) {
+    if (portalInput) portalInput.focus();
+    return;
+  }
+  await enterSearch();
+  var searchInput = document.getElementById("q");
+  if (searchInput) searchInput.value = showAll ? "" : query;
+  currentFilter = "all";
+  searchSlOnly = false;
+  productSearchLimit = SEARCH_INITIAL_LIMIT;
+  syncSearchFilterControls();
+  await runProductSearch({ resetLimit: true, logActivity: true, source: "customer_portal" });
+}
+
 // =============================================
 // 検索画面
 // =============================================
@@ -5287,6 +5425,7 @@ function configureSalesProductAddButton() {
 async function enterSearch() {
   if (!canViewProductSearch()) { showPermissionDenied("open_product_search", "core_products"); return; }
   showScreen("search");
+  configureCustomerSearchShell();
   configureSalesProductAddButton();
   if (!dataLoaded) { await initSearch(); dataLoaded = true; }
 }
@@ -28104,7 +28243,7 @@ function accessRoleScopeText(roleCode) {
     case "sales_viewer": return "商品・販売価格・価格調査履歴の閲覧。製造原価は個別許可";
     case "all_viewer": return "社内全体の閲覧のみ。製造原価は個別許可";
     case "internal_viewer": return "社内一般閲覧。製造原価は個別許可";
-    case "customer_viewer": return "紐づいた得意先だけ閲覧";
+    case "customer_viewer": return "得意先専用ホーム・紐づいた得意先の商品/価格閲覧";
     case "external_viewer": return "公開範囲のみ閲覧";
     default: return "-";
   }
@@ -28315,6 +28454,21 @@ function permissionOverviewScreenGroups(context) {
   var userManagement = userManagementState();
 
   var groups = [
+    {
+      title: "得意先向け",
+      screens: [
+        {
+          title: "得意先ポータル",
+          items: [
+            { label: "専用ホーム", state: isCustomer ? permissionOverviewAllowed("利用可") : permissionOverviewDenied("対象外") },
+            { label: "紐づいた得意先の商品検索", permissionKey: isCustomer ? "product_search.view" : null, state: isCustomer ? permissionOverviewLimited("得意先設定範囲のみ") : permissionOverviewDenied("対象外") },
+            { label: "商品詳細", permissionKey: isCustomer ? "product_info.view" : null, state: isCustomer ? permissionOverviewLimited("得意先設定範囲のみ") : permissionOverviewDenied("対象外") },
+            { label: "得意先販売価格", permissionKey: isCustomer ? "sales_price.view" : null, state: isCustomer ? permissionOverviewLimited("得意先表示設定に従う") : permissionOverviewDenied("対象外") },
+            { label: "発注", state: permissionOverviewDenied("注文基盤未設定") }
+          ]
+        }
+      ]
+    },
     {
       title: "商品・検索",
       screens: [
@@ -29517,7 +29671,11 @@ document.getElementById("btn-back-to-login").addEventListener("click", function(
 document.getElementById("btn-submit-reg").addEventListener("click", doRegister);
 document.getElementById("reg-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doRegister(); });
 document.getElementById("login-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
-["btn-logout-menu","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-component-compat-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-manufacturing-cost-mgmt","btn-logout-finished-label-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
+["btn-logout-menu","btn-logout-customer-portal","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-component-compat-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-manufacturing-cost-mgmt","btn-logout-finished-label-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
+document.getElementById("customer-portal-search-btn").addEventListener("click", function(){ openCustomerPortalSearch(false); });
+document.getElementById("customer-portal-all-btn").addEventListener("click", function(){ openCustomerPortalSearch(true); });
+document.getElementById("customer-portal-q").addEventListener("keydown", function(e){ if (e.key === "Enter") openCustomerPortalSearch(false); });
+document.getElementById("customer-portal-change-password").addEventListener("click", enterChangePw);
 document.getElementById("btn-back-search").addEventListener("click", function(){ closePanel(); returnToMenuFresh(); });
 document.getElementById("btn-back-production-search").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-components").addEventListener("click", async function(){

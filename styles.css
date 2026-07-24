@@ -2199,6 +2199,69 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 }
 
 /* =============================================
+   得意先ポータル
+============================================= */
+.customer-portal-header,
+#screen-search.customer-search-mode .page-header { background: #173d34; }
+.customer-portal-body { flex: 1; width: 100%; background: #f4f6f5; }
+.customer-portal-inner { width: min(1080px, calc(100% - 32px)); margin: 0 auto; }
+.customer-portal-search-band { padding: 44px 0 40px; border-bottom: 1px solid #d9e2de; background: #fff; }
+.customer-portal-search-layout { display: grid; grid-template-columns: minmax(220px, .75fr) minmax(420px, 1.25fr); align-items: end; gap: 40px; }
+.customer-portal-kicker { margin-bottom: 7px; color: #2f6d59; font-size: 12px; font-weight: 800; }
+.customer-portal-heading h1 { color: #17231f; font-size: 28px; line-height: 1.25; letter-spacing: 0; }
+.customer-portal-customer-line { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-top: 12px; color: #42514b; }
+.customer-portal-customer-line strong { overflow-wrap: anywhere; font-size: 14px; }
+.customer-portal-status { display: inline-flex; align-items: center; min-height: 22px; padding: 2px 8px; border: 1px solid #b8c7c1; border-radius: 6px; background: #f3f6f5; color: #596861; font-size: 11px; font-weight: 800; }
+.customer-portal-status.active { border-color: #9bc8ae; background: #edf8f1; color: #23623f; }
+.customer-portal-status.inactive { border-color: #e4b0a8; background: #fff3f1; color: #9b382b; }
+.customer-portal-search-form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; }
+.customer-portal-search-form input { width: 100%; min-width: 0; height: 46px; border: 1px solid #aebdb7; border-radius: 7px; padding: 0 14px; background: #fff; color: #17231f; font-size: 15px; outline: none; }
+.customer-portal-search-form input:focus { border-color: #287356; box-shadow: 0 0 0 3px rgba(40,115,86,.12); }
+.customer-portal-search-button,
+.customer-portal-list-button,
+.customer-portal-account-button { min-height: 42px; border-radius: 7px; padding: 0 16px; font-size: 13px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.customer-portal-search-button { height: 46px; border: 1px solid #245f49; background: #245f49; color: #fff; }
+.customer-portal-list-button { height: 46px; border: 1px solid #b7c4bf; background: #fff; color: #31473e; }
+.customer-portal-search-button:disabled,
+.customer-portal-list-button:disabled { border-color: #d5dbd8; background: #e7ebe9; color: #8a9691; cursor: not-allowed; }
+.customer-portal-info-band { padding: 30px 0 34px; border-bottom: 1px solid #dce2df; background: #f4f6f5; }
+.customer-portal-info-band h2,
+.customer-portal-account-band h2 { margin-bottom: 13px; color: #36443e; font-size: 14px; letter-spacing: 0; }
+.customer-portal-info-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid #cfd8d4; border-bottom: 1px solid #cfd8d4; }
+.customer-portal-info-grid > div { min-width: 0; padding: 14px 16px; border-right: 1px solid #dbe2df; }
+.customer-portal-info-grid > div:last-child { border-right: 0; }
+.customer-portal-info-grid dt { color: #78847f; font-size: 11px; font-weight: 700; }
+.customer-portal-info-grid dd { margin-top: 6px; overflow-wrap: anywhere; color: #1f2d27; font-size: 14px; font-weight: 800; }
+.customer-portal-account-band { padding: 26px 0 40px; background: #fff; }
+.customer-portal-account-layout { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.customer-portal-account-layout h2 { margin-bottom: 0; }
+.customer-portal-account-button { border: 1px solid #b7c4bf; background: #fff; color: #31473e; }
+.customer-portal-search-button:hover { background: #1d513d; }
+.customer-portal-list-button:hover,
+.customer-portal-account-button:hover { border-color: #6f8f82; background: #f6faf8; }
+@media (max-width: 760px) {
+  .customer-portal-header .header-username { display: none; }
+  .customer-portal-header .page-header-right { flex-shrink: 1; }
+  .customer-portal-inner { width: min(100% - 24px, 1080px); }
+  .customer-portal-search-band { padding: 28px 0 26px; }
+  .customer-portal-search-layout { grid-template-columns: 1fr; gap: 22px; }
+  .customer-portal-heading h1 { font-size: 23px; }
+  .customer-portal-search-form { grid-template-columns: minmax(0, 1fr) auto; }
+  .customer-portal-list-button { grid-column: 1 / -1; width: 100%; }
+  .customer-portal-info-grid { grid-template-columns: 1fr 1fr; }
+  .customer-portal-info-grid > div:nth-child(2) { border-right: 0; }
+  .customer-portal-info-grid > div:nth-child(-n+2) { border-bottom: 1px solid #dbe2df; }
+}
+@media (max-width: 420px) {
+  .customer-portal-search-form { grid-template-columns: 1fr; }
+  .customer-portal-search-button,
+  .customer-portal-list-button { grid-column: 1; width: 100%; }
+  .customer-portal-info-grid { grid-template-columns: 1fr; }
+  .customer-portal-info-grid > div { border-right: 0; border-bottom: 1px solid #dbe2df; }
+  .customer-portal-info-grid > div:last-child { border-bottom: 0; }
+}
+
+/* =============================================
    検索画面
 ============================================= */
 .badge-sl  { background: #e8f4ff; color: #1a6fd4; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
