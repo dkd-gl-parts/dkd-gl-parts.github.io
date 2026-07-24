@@ -3512,7 +3512,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.554";
+var APP_VERSION       = "v1.1.555";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -25124,7 +25124,7 @@ function ecMallProductTypeSort(type) {
 
 async function fetchEcMallLatestBest3ForProduct(product) {
   product = product || {};
-  var selectCols = "id,dkd_shohin_id,search_number,provider_key,product_type,rank_no,seller_id,seller_name,item_url,price_jpy,total_price_jpy,raw_payload,surveyed_at";
+  var selectCols = "id,dkd_shohin_id,search_number,provider_key,product_type,rank_no,seller_id,seller_name,item_url,price_jpy,total_price_jpy,surveyed_at";
   async function runBest3Query(buildQuery) {
     var res = await buildQuery(selectCols);
     if (res.error && selectCols.indexOf("raw_payload") >= 0) {
@@ -25134,6 +25134,20 @@ async function fetchEcMallLatestBest3ForProduct(product) {
     return res;
   }
   var dkdId = parseInt(productDkdId(product), 10);
+  var candidates = [
+    buildRakutenProductQuery(product),
+    product.manufacturer_part_number,
+    product.genuine_part_number,
+    product.genuine_part_number_2
+  ].map(cleanPartNumberValue).filter(Boolean);
+  candidates = Array.from(new Set(candidates));
+  var fastResult = await sb.rpc("get_ec_mall_latest_best3_for_product", {
+    target_dkd_shohin_id: isNaN(dkdId) ? null : dkdId,
+    target_search_numbers: candidates,
+    max_rows: 30
+  });
+  if (!fastResult.error) return fastResult.data || [];
+  console.warn("fast ec mall detail summary failed; falling back to latest view", fastResult.error);
   if (!isNaN(dkdId)) {
     var byDkd = await runBest3Query(function(cols) {
       return sb.from("ec_price_research_latest_best3")
@@ -25146,13 +25160,6 @@ async function fetchEcMallLatestBest3ForProduct(product) {
     if (byDkd.error) throw byDkd.error;
     if ((byDkd.data || []).length) return byDkd.data || [];
   }
-  var candidates = [
-    buildRakutenProductQuery(product),
-    product.manufacturer_part_number,
-    product.genuine_part_number,
-    product.genuine_part_number_2
-  ].map(cleanPartNumberValue).filter(Boolean);
-  candidates = Array.from(new Set(candidates));
   if (!candidates.length) return [];
   var byKeyword = await runBest3Query(function(cols) {
     return sb.from("ec_price_research_latest_best3")
