@@ -94,6 +94,10 @@ var TRANSLATIONS = {
     customer_portal_link_missing: "得意先との紐づけがありません",
     customer_portal_inactive: "利用停止中",
     customer_portal_search_unavailable: "商品検索権限なし",
+    customer_portal_preview_desc: "得意先を選択して、公開商品と価格表示を確認します。",
+    customer_portal_select_customer: "表示する得意先",
+    customer_portal_select_customer_placeholder: "得意先を選択",
+    customer_portal_previewing: "プレビュー中",
     customer_portal_back: "← 得意先ホーム",
     customer_search_title: "商品検索",
     greeting: "ようこそ、{name} さん",
@@ -1229,6 +1233,10 @@ var TRANSLATIONS = {
     customer_portal_link_missing: "No customer account is linked",
     customer_portal_inactive: "Account Inactive",
     customer_portal_search_unavailable: "Product Search Unavailable",
+    customer_portal_preview_desc: "Select a customer to review product and price visibility.",
+    customer_portal_select_customer: "Customer to Preview",
+    customer_portal_select_customer_placeholder: "Select Customer",
+    customer_portal_previewing: "Preview",
     customer_portal_back: "← Customer Home",
     customer_search_title: "Product Search",
     greeting: "Welcome, {name}",
@@ -2351,6 +2359,10 @@ var TRANSLATIONS = {
     customer_portal_link_missing: "尚未关联客户",
     customer_portal_inactive: "已停止使用",
     customer_portal_search_unavailable: "无商品搜索权限",
+    customer_portal_preview_desc: "选择客户以确认公开商品和价格显示。",
+    customer_portal_select_customer: "预览客户",
+    customer_portal_select_customer_placeholder: "选择客户",
+    customer_portal_previewing: "预览中",
     customer_portal_back: "← 客户首页",
     customer_search_title: "商品搜索",
     spec_note_ph: "例：内部确认、实物标签",
@@ -3512,7 +3524,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.555";
+var APP_VERSION       = "v1.1.556";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -3692,6 +3704,8 @@ var currentPurchaseLinkRow = null;
 var currentPurchaseCatalogRow = null;
 var purchaseLinkSelectedProduct = null;
 var customerViewerContext = null;
+var customerPortalPreviewContext = null;
+var customerPortalSearchActive = false;
 var salesCustomerOptions = [];
 var detailSalesCustomerOptions = [];
 var detailSelectedSalesCustomerId = "";
@@ -3811,17 +3825,17 @@ function hasOwnDepartmentUserScope(profile) {
   return hasAccessRole(profile || userProfile, ["dept_admin", "master_editor"]);
 }
 function canEdit() {
-  if (!userProfile || isExternalViewer()) return false;
+  if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
   return userPermissionAllowed(userProfile, "product.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]));
 }
 function canIssueGltekPartNumber() {
-  if (!userProfile) return false;
+  if (!userProfile || isCustomerPortalSearchMode()) return false;
   if (isSystemAdmin()) return true;
   if (userCompanyCode(userProfile) !== "gltek") return false;
   return userPermissionAllowed(userProfile, "gltek_part_number.issue", hasAccessRole(userProfile, ["company_admin", "master_editor"]));
 }
 function canManageAllImages() {
-  if (!userProfile || isExternalViewer()) return false;
+  if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
   return userPermissionAllowed(userProfile, "image.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]));
 }
 function canUploadCoreImages() {
@@ -3831,7 +3845,7 @@ function isCoreImageEditorRole(profile) {
   return hasAccessRole(profile || userProfile, ["core_image_editor"]);
 }
 function canManageUsedCoreImages() {
-  if (!userProfile || isExternalViewer()) return false;
+  if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
   return userPermissionAllowed(userProfile, "used_core_image.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "core_image_editor"]));
 }
 function canManageImageKind(kind, context) {
@@ -3856,6 +3870,7 @@ function canDeleteImageTarget(target, context) {
   return context !== "production" && kind === "used_core" && origin !== "production" && !productionShown;
 }
 function canDelete() {
+  if (isCustomerPortalSearchMode()) return false;
   return userPermissionAllowed(userProfile, "product.delete", isCompanyAdminRole(userProfile));
 }
 function isAdmin() {
@@ -3889,6 +3904,7 @@ function canManageUser(targetProfile) {
 }
 
 function canSeePurchasePrice() {
+  if (isCustomerPortalSearchMode()) return false;
   return userPermissionAllowed(userProfile, "purchase_price.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "all_viewer"]));
 }
 function canViewPurchaseMgmt() {
@@ -3902,15 +3918,19 @@ function canSeeSalesPrice() {
   return !!userProfile && userPermissionAllowed(userProfile, "sales_price.view", isCustomerViewer() || !isExternalViewer());
 }
 function canViewBasePrice() {
+  if (isCustomerPortalSearchMode()) return false;
   return userPermissionAllowed(userProfile, "base_price.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "all_viewer"]));
 }
 function canEditBasePrice() {
+  if (isCustomerPortalSearchMode()) return false;
   return userPermissionAllowed(userProfile, "base_price.manage", hasAccessRole(userProfile, ["system_admin", "company_admin"]));
 }
 function canEditSalesPricing() {
+  if (isCustomerPortalSearchMode()) return false;
   return userPermissionAllowed(userProfile, "sales_pricing.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"]));
 }
 function canUseRakutenResearch() {
+  if (isCustomerPortalSearchMode()) return false;
   return userPermissionAllowed(userProfile, "price_research.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"]));
 }
 function canManageEcResearchSchedule() {
@@ -3934,6 +3954,16 @@ function isCustomerViewerProfile(profile) {
 function isCustomerViewer() {
   return isCustomerViewerProfile(userProfile);
 }
+function canPreviewCustomerPortal(profile) {
+  profile = profile || userProfile;
+  return !!profile && !isCustomerViewerProfile(profile) && !isExternalViewerProfile(profile);
+}
+function isCustomerPortalSearchMode() {
+  return !!customerPortalSearchActive;
+}
+function activeCustomerPortalContext() {
+  return isCustomerViewer() ? customerViewerContext : customerPortalPreviewContext;
+}
 function isExternalViewerProfile(profile) {
   if (!profile) return false;
   var company = userCompanyCode(profile);
@@ -3945,7 +3975,7 @@ function isExternalViewer() {
   return isExternalViewerProfile(userProfile);
 }
 function canSeeInternalBusinessInfo() {
-  return !!userProfile && !isExternalViewer();
+  return !!userProfile && !isExternalViewer() && !isCustomerPortalSearchMode();
 }
 function canViewAllReadOnly() {
   return !!(userProfile && userAccessRoleCode(userProfile) === "all_viewer");
@@ -4062,7 +4092,7 @@ function clearSlLinkCachesForDkdIds(dkdIds) {
 }
 function isVisibleProduct(p) {
   if (!p) return false;
-  if (isCustomerViewer()) return isCustomerVisibleProduct(p);
+  if (isCustomerViewer() || isCustomerPortalSearchMode()) return isCustomerVisibleProduct(p);
   return !!userProfile;
 }
 function filterVisibleProducts(products) {
@@ -4080,8 +4110,9 @@ function defaultCustomerDisplaySettings() {
   };
 }
 function customerViewerSetting(key, fallback) {
-  if (!isCustomerViewer()) return fallback;
-  var settings = customerViewerContext && customerViewerContext.settings;
+  if (!isCustomerViewer() && !isCustomerPortalSearchMode()) return fallback;
+  var context = activeCustomerPortalContext();
+  var settings = context && context.settings;
   if (!settings || settings[key] == null) return fallback;
   return !!settings[key];
 }
@@ -4095,9 +4126,10 @@ function customerCanShowCompatibleParts() {
   return customerViewerSetting("show_compatible_parts", true);
 }
 function isCustomerVisibleProduct(p) {
-  if (!userProfile || !isCustomerViewer()) return false;
-  if (!customerViewerContext || !customerViewerContext.sales_customer_id) return false;
-  var rows = customerViewerContext.visibilityRows || [];
+  if (!userProfile || (!isCustomerViewer() && !isCustomerPortalSearchMode())) return false;
+  var context = activeCustomerPortalContext();
+  if (!context || !context.sales_customer_id) return false;
+  var rows = context.visibilityRows || [];
   if (!rows.length) return true;
   var dkdId = String(p.dkd_shohin_id || p.id || "");
   var category = String(p.category_code || p.category || "");
@@ -4114,6 +4146,29 @@ function isCustomerVisibleProduct(p) {
   });
   return allRule ? !!allRule.is_visible : true;
 }
+
+async function loadCustomerPortalContextForCustomer(customer) {
+  if (!customer || !customer.id) {
+    return { sales_customer_id: null, customer: null, settings: defaultCustomerDisplaySettings(), visibilityRows: [] };
+  }
+  var settingsR = await sb.from("customer_display_settings")
+    .select("*")
+    .eq("sales_customer_id", customer.id)
+    .maybeSingle();
+  if (settingsR.error) console.warn("customer display settings lookup failed", settingsR.error);
+  var visibilityR = await sb.from("customer_product_visibility")
+    .select("visibility_scope,category_code,dkd_shohin_id,is_visible")
+    .eq("sales_customer_id", customer.id)
+    .limit(2000);
+  if (visibilityR.error) console.warn("customer visibility lookup failed", visibilityR.error);
+  return {
+    sales_customer_id: customer.id,
+    customer: customer,
+    settings: Object.assign(defaultCustomerDisplaySettings(), settingsR.data || {}),
+    visibilityRows: visibilityR.data || []
+  };
+}
+
 async function loadCustomerViewerContext() {
   customerViewerContext = null;
   if (!currentUser || !isCustomerViewerProfile(userProfile)) return;
@@ -4135,22 +4190,7 @@ async function loadCustomerViewerContext() {
       .eq("id", link.sales_customer_id)
       .maybeSingle();
     if (customerR.error) throw customerR.error;
-    var settingsR = await sb.from("customer_display_settings")
-      .select("*")
-      .eq("sales_customer_id", link.sales_customer_id)
-      .maybeSingle();
-    if (settingsR.error) console.warn("customer display settings lookup failed", settingsR.error);
-    var visibilityR = await sb.from("customer_product_visibility")
-      .select("visibility_scope,category_code,dkd_shohin_id,is_visible")
-      .eq("sales_customer_id", link.sales_customer_id)
-      .limit(2000);
-    if (visibilityR.error) console.warn("customer visibility lookup failed", visibilityR.error);
-    customerViewerContext = {
-      sales_customer_id: link.sales_customer_id,
-      customer: customerR.data || null,
-      settings: Object.assign(defaultCustomerDisplaySettings(), settingsR.data || {}),
-      visibilityRows: visibilityR.data || []
-    };
+    customerViewerContext = await loadCustomerPortalContextForCustomer(customerR.data || null);
   } catch (e) {
     console.warn("customer viewer context lookup failed", e);
     customerViewerContext = { sales_customer_id: null, settings: defaultCustomerDisplaySettings(), visibilityRows: [] };
@@ -4315,7 +4355,7 @@ function canViewProductInfo() {
   return userPermissionAllowed(userProfile, "product_info.view", !!userProfile);
 }
 function canManageProductSpecs() {
-  return !!(userProfile && userPermissionAllowed(userProfile, "product.manage", isSystemAdmin() || (userProfile.role === "admin" && userProfile.group_name === "daiko")));
+  return !!(userProfile && !isCustomerPortalSearchMode() && userPermissionAllowed(userProfile, "product.manage", isSystemAdmin() || (userProfile.role === "admin" && userProfile.group_name === "daiko")));
 }
 function canManageSalesPricing() {
   return canEditSalesPricing();
@@ -4324,7 +4364,7 @@ function canManageCustomerAccess() {
   return userPermissionAllowed(userProfile, "customer_access.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"]));
 }
 function canViewSalesPricing() {
-  return canSeeSalesPrice() && !isCustomerViewer() && userPermissionAllowed(userProfile, "sales_pricing.view", true);
+  return canSeeSalesPrice() && !isCustomerViewer() && !isCustomerPortalSearchMode() && userPermissionAllowed(userProfile, "sales_pricing.view", true);
 }
 function canViewProductionFeatures() {
   return userPermissionAllowed(userProfile, "production.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "all_viewer"]));
@@ -4345,6 +4385,7 @@ function canManageProductionRecords() {
   return userPermissionAllowed(userProfile, "production_records.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]));
 }
 function canViewPriceResearchHistory() {
+  if (isCustomerPortalSearchMode()) return false;
   return userPermissionAllowed(userProfile, "price_research.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor", "sales_viewer", "all_viewer"]));
 }
 function canViewOperationLogs() {
@@ -4506,11 +4547,14 @@ function captureAppRestoreState(reason) {
   };
   function captureSearchState() {
     var qEl = document.getElementById("q");
+    var portalContext = activeCustomerPortalContext();
     state.screen = "search";
     state.q = qEl ? qEl.value : "";
     state.filter = currentFilter || "all";
     state.selectedDkdId = currentProduct ? productDkdId(currentProduct) : "";
     state.limit = productSearchLimit || SEARCH_INITIAL_LIMIT;
+    state.customerPortalMode = !!(customerPortalSearchActive || isCustomerViewer());
+    state.customerPortalCustomerId = portalContext && portalContext.sales_customer_id ? portalContext.sales_customer_id : "";
   }
   function captureProductionState() {
     var pqEl = document.getElementById("production-q");
@@ -4612,7 +4656,11 @@ async function restoreAppStateAfterRefresh() {
         await renderProductionDetail(currentProductionRow || null);
       }
     } else if (state.screen === "search") {
-      await enterSearch();
+      var restoreCustomerPortalMode = !!state.customerPortalMode || isCustomerViewer();
+      if (restoreCustomerPortalMode && !isCustomerViewer() && state.customerPortalCustomerId) {
+        await loadCustomerPortalPreviewContext(state.customerPortalCustomerId);
+      }
+      await enterSearch({ fromCustomerPortal: restoreCustomerPortalMode });
       var qEl = document.getElementById("q");
       if (qEl) qEl.value = state.q || "";
       currentFilter = state.filter || "all";
@@ -5237,6 +5285,8 @@ async function doLogout() {
   clearActivitySessionId();
   currentUser = null; userProfile = null;
   customerViewerContext = null;
+  customerPortalPreviewContext = null;
+  customerPortalSearchActive = false;
   allProducts = []; dataLoaded = false;
   slPartsMap = {}; slPresenceMap = {}; currentSlPartIds = [];
   currentProduct = null; currentProductSpecs = []; currentProductNominalSpec = null; currentImages = [];
@@ -5253,6 +5303,7 @@ function renderMenu() {
 
   var mainItems = [
     { icon: "&#x1F50D;", titleKey: "mi_search_title", descKey: "mi_search_desc", action: "search", available: canViewProductSearch(), tag: null },
+    { icon: "&#x1F6CD;", titleKey: "customer_portal_title", descKey: "customer_portal_preview_desc", action: "customer-portal", available: canPreviewCustomerPortal(), tag: null },
     { icon: "&#x1F3ED;", titleKey: "mi_production_title", descKey: "mi_production_desc", action: "production-search", available: canViewProductionFeatures(), tag: null },
     { icon: "&#x1F3F7;", titleKey: "mi_finished_label_title", descKey: "mi_finished_label_desc", action: "finished-label-mgmt", available: canViewFinishedLabelMgmt(), tag: null },
     { icon: "&#x1F4E6;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canViewCoreManagement(), tag: null },
@@ -5319,6 +5370,7 @@ function renderMenu() {
   grid.querySelectorAll(".menu-card:not(.disabled)[data-action], .menu-admin-link:not(.disabled)[data-action]").forEach(function(card) {
     card.addEventListener("click", function() {
       if (card.dataset.action === "search") enterSearch();
+      else if (card.dataset.action === "customer-portal") enterCustomerPortal();
       else if (card.dataset.action === "production-search") enterProductionSearch();
       else if (card.dataset.action === "finished-label-mgmt") enterFinishedLabelMgmt();
       else if (card.dataset.action === "users") enterUsers();
@@ -5350,7 +5402,7 @@ function customerPortalValue(id, value) {
 }
 
 function configureCustomerSearchShell() {
-  var customerMode = isCustomerViewer();
+  var customerMode = isCustomerViewer() || isCustomerPortalSearchMode();
   var searchScreen = document.getElementById("screen-search");
   if (searchScreen) searchScreen.classList.toggle("customer-search-mode", customerMode);
   var backButton = document.getElementById("btn-back-search");
@@ -5361,10 +5413,30 @@ function configureCustomerSearchShell() {
   if (changePasswordBack) changePasswordBack.textContent = customerMode ? t("customer_portal_back") : t("btn_back");
 }
 
+function renderCustomerPortalPreviewControls() {
+  var previewMode = canPreviewCustomerPortal();
+  var previewControl = document.getElementById("customer-portal-preview-control");
+  var portalBack = document.getElementById("btn-back-customer-portal");
+  if (previewControl) setCspStyle(previewControl, "display", previewMode ? "" : "none");
+  if (portalBack) setCspStyle(portalBack, "display", previewMode ? "" : "none");
+  var select = document.getElementById("customer-portal-customer-select");
+  if (!select || !previewMode) return;
+  var selectedId = customerPortalPreviewContext && customerPortalPreviewContext.sales_customer_id
+    ? String(customerPortalPreviewContext.sales_customer_id)
+    : "";
+  var html = "<option value=''>" + esc(t("customer_portal_select_customer_placeholder")) + "</option>";
+  detailSalesCustomerOptions.forEach(function(customer) {
+    var selected = String(customer.id) === selectedId ? " selected" : "";
+    html += "<option value='" + esc(String(customer.id)) + "'" + selected + ">" + esc(detailCustomerOptionLabel(customer)) + "</option>";
+  });
+  select.innerHTML = html;
+}
+
 function renderCustomerPortal() {
   var portal = document.getElementById("screen-customer-portal");
-  if (!portal || !isCustomerViewer()) return;
-  var context = customerViewerContext || {};
+  if (!portal || (!isCustomerViewer() && !canPreviewCustomerPortal())) return;
+  var previewMode = canPreviewCustomerPortal();
+  var context = activeCustomerPortalContext() || {};
   var customer = context.customer || null;
   var settings = context.settings || defaultCustomerDisplaySettings();
   var linked = !!(context.sales_customer_id && customer);
@@ -5377,31 +5449,54 @@ function renderCustomerPortal() {
   customerPortalValue("customer-portal-customer-name", linked ? customer.customer_name : t("customer_portal_link_missing"));
   customerPortalValue("customer-portal-customer-name-value", linked ? customer.customer_name : t("customer_portal_link_missing"));
   customerPortalValue("customer-portal-customer-code", linked ? customer.source_customer_code : "-");
-  customerPortalValue("customer-portal-price-state", settings.show_sales_price ? t("customer_portal_price_visible") : t("customer_portal_price_hidden"));
+  customerPortalValue("customer-portal-price-state", settings.show_sales_price && canSeeSalesPrice() ? t("customer_portal_price_visible") : t("customer_portal_price_hidden"));
   customerPortalValue("customer-portal-scope-state", (context.visibilityRows || []).length ? t("customer_portal_scope_custom") : t("customer_portal_scope_standard"));
 
   var status = document.getElementById("customer-portal-status");
   if (status) {
     status.textContent = !linked
-      ? t("customer_portal_link_missing")
-      : (!active ? t("customer_portal_inactive") : (searchable ? t("customer_access_active") : t("customer_portal_search_unavailable")));
+      ? (previewMode ? t("customer_portal_select_customer_placeholder") : t("customer_portal_link_missing"))
+      : (!active ? t("customer_portal_inactive") : (searchable ? (previewMode ? t("customer_portal_previewing") : t("customer_access_active")) : t("customer_portal_search_unavailable")));
     status.className = "customer-portal-status " + (searchable ? "active" : "inactive");
   }
   [searchInput, searchButton, allButton].forEach(function(el) {
     if (el) el.disabled = !searchable;
   });
+  renderCustomerPortalPreviewControls();
   configureCustomerSearchShell();
 }
 
+async function loadCustomerPortalPreviewContext(customerId) {
+  if (!canPreviewCustomerPortal()) return;
+  customerId = String(customerId || "");
+  if (!detailSalesCustomerOptions.length) await loadDetailSalesCustomerOptions();
+  var customer = detailSalesCustomerOptions.find(function(row) { return String(row.id) === customerId; }) || null;
+  customerPortalPreviewContext = customer ? await loadCustomerPortalContextForCustomer(customer) : null;
+  detailSelectedSalesCustomerId = customer ? String(customer.id) : "";
+  renderCustomerPortal();
+}
+
+async function enterCustomerPortal() {
+  if (!isCustomerViewer() && !canPreviewCustomerPortal()) {
+    showPermissionDenied("open_customer_portal", "sales_customers");
+    return;
+  }
+  customerPortalSearchActive = false;
+  showScreen("customer-portal");
+  if (canPreviewCustomerPortal()) await loadDetailSalesCustomerOptions();
+  renderCustomerPortal();
+}
+
 async function openCustomerPortalSearch(showAll) {
-  if (!isCustomerViewer() || !customerViewerContext || !customerViewerContext.sales_customer_id || !canViewProductSearch()) return;
+  var context = activeCustomerPortalContext();
+  if ((!isCustomerViewer() && !canPreviewCustomerPortal()) || !context || !context.sales_customer_id || !canViewProductSearch()) return;
   var portalInput = document.getElementById("customer-portal-q");
   var query = portalInput ? portalInput.value.trim() : "";
   if (!showAll && !query) {
     if (portalInput) portalInput.focus();
     return;
   }
-  await enterSearch();
+  await enterSearch({ fromCustomerPortal: true });
   var searchInput = document.getElementById("q");
   if (searchInput) searchInput.value = showAll ? "" : query;
   currentFilter = "all";
@@ -5409,6 +5504,17 @@ async function openCustomerPortalSearch(showAll) {
   productSearchLimit = SEARCH_INITIAL_LIMIT;
   syncSearchFilterControls();
   await runProductSearch({ resetLimit: true, logActivity: true, source: "customer_portal" });
+}
+
+function returnFromProductSearch() {
+  closePanel();
+  if (customerPortalSearchActive || isCustomerViewer()) {
+    customerPortalSearchActive = false;
+    showScreen("customer-portal");
+    renderCustomerPortal();
+    return;
+  }
+  returnToMenuFresh();
 }
 
 // =============================================
@@ -5422,7 +5528,9 @@ function configureSalesProductAddButton() {
   button.onclick = canEdit() ? openCoreProductAddFromSearch : null;
 }
 
-async function enterSearch() {
+async function enterSearch(options) {
+  options = options || {};
+  customerPortalSearchActive = !!options.fromCustomerPortal;
   if (!canViewProductSearch()) { showPermissionDenied("open_product_search", "core_products"); return; }
   showScreen("search");
   configureCustomerSearchShell();
@@ -16707,7 +16815,7 @@ function getProductImageCount(p) {
     if (Object.prototype.hasOwnProperty.call(imageCountMap, key)) {
       count = Math.max(count, parseInt(imageCountMap[key] || 0, 10) || 0);
     }
-    if (Object.prototype.hasOwnProperty.call(imageCountCache, key)) {
+    if (!isCustomerPortalSearchMode() && Object.prototype.hasOwnProperty.call(imageCountCache, key)) {
       count = Math.max(count, parseInt(imageCountCache[key] || 0, 10) || 0);
     }
   });
@@ -16730,7 +16838,7 @@ function getProductionImageCount(p) {
 function getProductImageThumbnail(p) {
   var thumb = "";
   productImageCacheKeys(p).some(function(key) {
-    thumb = imageThumbnailMap[key] || imageThumbnailCache[key] || "";
+    thumb = imageThumbnailMap[key] || (!isCustomerPortalSearchMode() ? imageThumbnailCache[key] : "") || "";
     return !!thumb;
   });
   return thumb;
@@ -16819,7 +16927,7 @@ function applyProductSearchCardFlags(rows, products) {
       p.has_sl_part = hasSl || !!p.has_sl_part;
       if (hasKikan) p.has_kikan_compatible = true;
       if (hasCatalogSpec) p.has_catalog_spec = true;
-      setProductImageCache(p, imageCount, thumbUrl);
+      if (!isCustomerPortalSearchMode()) setProductImageCache(p, imageCount, thumbUrl);
       productSlCacheKeys(p).forEach(function(key) {
         slPresenceMap[key] = hasSl;
         slPresenceCache[key] = hasSl;
@@ -25349,6 +25457,10 @@ async function loadSalesPriceSummaryForCurrent() {
     await loadCustomerSalesPriceSummary(wrap, dkdId);
     return;
   }
+  if (isCustomerPortalSearchMode()) {
+    await loadCustomerPortalPreviewSalesPriceSummary(wrap, dkdId);
+    return;
+  }
   var r = await sb.from("product_base_prices")
     .select("id,base_price_jpy,tax_included,price_basis,basis_note,effective_start,updated_at")
     .eq("dkd_shohin_id", dkdId)
@@ -25397,6 +25509,26 @@ async function loadCustomerSalesPriceSummary(wrap, dkdId) {
     "</div>";
   } catch (e) {
     console.warn("customer sales price summary failed", e);
+    wrap.innerHTML = "<div class='sales-price-summary'><div class='sales-price-summary-main primary'><span class='sales-price-summary-value'>-</span></div></div>";
+  }
+}
+
+async function loadCustomerPortalPreviewSalesPriceSummary(wrap, dkdId) {
+  var context = activeCustomerPortalContext();
+  var customer = context && context.customer;
+  if (!customer || !customerViewerSetting("show_sales_price", true) || !canSeeSalesPrice()) {
+    wrap.innerHTML = "<div class='sales-price-summary'><div class='sales-price-summary-main primary'><span class='sales-price-summary-value'>-</span></div></div>";
+    return;
+  }
+  try {
+    var info = await fetchDetailCustomerPriceInfo(customer, dkdId);
+    var priceText = info.salesPrice == null ? "-" : "JPY " + esc(formatYen(info.salesPrice));
+    wrap.innerHTML = "<div class='sales-price-summary'>" +
+      "<div class='sales-price-summary-main primary'><span class='sales-price-summary-value'>" + priceText + "</span></div>" +
+      "<div class='sales-price-summary-sub'>" + esc(customer.customer_name || "") + "</div>" +
+    "</div>";
+  } catch (e) {
+    console.warn("customer portal preview price summary failed", e);
     wrap.innerHTML = "<div class='sales-price-summary'><div class='sales-price-summary-main primary'><span class='sales-price-summary-value'>-</span></div></div>";
   }
 }
@@ -25457,6 +25589,8 @@ async function fetchDetailCustomerPriceInfo(customer, dkdId) {
   var info = { salesPrice: null, basePrice: null };
   var id = parseInt(dkdId, 10);
   if (!customer || isNaN(id)) return info;
+  if ((isCustomerViewer() || isCustomerPortalSearchMode()) &&
+      (!customerViewerSetting("show_sales_price", true) || !canSeeSalesPrice())) return info;
   if (isCustomerViewer()) {
     var rpc = await sb.rpc("get_customer_product_sales_price", {
       target_dkd_shohin_id: id,
@@ -25485,20 +25619,22 @@ async function fetchDetailCustomerPriceInfo(customer, dkdId) {
     .maybeSingle() : { data: null, error: null };
   if (rankR.error) throw rankR.error;
   info.salesPrice = calculateSalesPriceClient(info.basePrice, rankR.data || {});
+  if (info.salesPrice === 0 && !customerViewerSetting("show_zero_price", false)) info.salesPrice = null;
   return info;
 }
 
 async function loadDetailCustomerInfoForCurrent(seq) {
   var wrap = document.getElementById("detail-customer-wrap");
   if (!wrap || !isCurrentDetailLoad(seq)) return;
-  var canSelect = !isCustomerViewer();
+  var canSelect = !isCustomerViewer() && !isCustomerPortalSearchMode();
   var customer = null;
   if (canSelect) {
     await loadDetailSalesCustomerOptions();
     customer = detailSalesCustomerOptions.find(function(row) { return String(row.id) === String(detailSelectedSalesCustomerId || ""); }) || null;
     if (!customer && detailSelectedSalesCustomerId) detailSelectedSalesCustomerId = "";
   } else {
-    customer = customerViewerContext && customerViewerContext.customer ? customerViewerContext.customer : null;
+    var context = activeCustomerPortalContext();
+    customer = context && context.customer ? context.customer : null;
   }
   wrap.innerHTML = renderDetailCustomerInfoHtml(customer, null, canSelect);
   var select = document.getElementById("detail-sales-customer-select");
@@ -28467,10 +28603,18 @@ function permissionOverviewScreenGroups(context) {
         {
           title: "得意先ポータル",
           items: [
-            { label: "専用ホーム", state: isCustomer ? permissionOverviewAllowed("利用可") : permissionOverviewDenied("対象外") },
-            { label: "紐づいた得意先の商品検索", permissionKey: isCustomer ? "product_search.view" : null, state: isCustomer ? permissionOverviewLimited("得意先設定範囲のみ") : permissionOverviewDenied("対象外") },
-            { label: "商品詳細", permissionKey: isCustomer ? "product_info.view" : null, state: isCustomer ? permissionOverviewLimited("得意先設定範囲のみ") : permissionOverviewDenied("対象外") },
-            { label: "得意先販売価格", permissionKey: isCustomer ? "sales_price.view" : null, state: isCustomer ? permissionOverviewLimited("得意先表示設定に従う") : permissionOverviewDenied("対象外") },
+            { label: "専用ホーム", state: isCustomer
+              ? permissionOverviewAllowed("利用可")
+              : (roleIsInternal ? permissionOverviewLimited("得意先選択でプレビュー可") : permissionOverviewDenied("対象外")) },
+            { label: "得意先の商品検索", permissionKey: (isCustomer || roleIsInternal) ? "product_search.view" : null, state: isCustomer
+              ? permissionOverviewLimited("紐づいた得意先設定範囲のみ")
+              : (roleIsInternal ? permissionOverviewLimited("選択した得意先設定範囲") : permissionOverviewDenied("対象外")) },
+            { label: "商品詳細", permissionKey: (isCustomer || roleIsInternal) ? "product_info.view" : null, state: isCustomer
+              ? permissionOverviewLimited("紐づいた得意先設定範囲のみ")
+              : (roleIsInternal ? permissionOverviewLimited("選択した得意先設定範囲") : permissionOverviewDenied("対象外")) },
+            { label: "得意先販売価格", permissionKey: (isCustomer || roleIsInternal) ? "sales_price.view" : null, state: isCustomer
+              ? permissionOverviewLimited("得意先表示設定に従う")
+              : (roleIsInternal ? permissionOverviewLimited("選択した得意先の表示設定に従う") : permissionOverviewDenied("対象外")) },
             { label: "発注", state: permissionOverviewDenied("注文基盤未設定") }
           ]
         }
@@ -29682,8 +29826,10 @@ document.getElementById("login-password").addEventListener("keydown", function(e
 document.getElementById("customer-portal-search-btn").addEventListener("click", function(){ openCustomerPortalSearch(false); });
 document.getElementById("customer-portal-all-btn").addEventListener("click", function(){ openCustomerPortalSearch(true); });
 document.getElementById("customer-portal-q").addEventListener("keydown", function(e){ if (e.key === "Enter") openCustomerPortalSearch(false); });
+document.getElementById("customer-portal-customer-select").addEventListener("change", function(){ loadCustomerPortalPreviewContext(this.value); });
+document.getElementById("btn-back-customer-portal").addEventListener("click", returnToMenuFresh);
 document.getElementById("customer-portal-change-password").addEventListener("click", enterChangePw);
-document.getElementById("btn-back-search").addEventListener("click", function(){ closePanel(); returnToMenuFresh(); });
+document.getElementById("btn-back-search").addEventListener("click", returnFromProductSearch);
 document.getElementById("btn-back-production-search").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-components").addEventListener("click", async function(){
   if (componentReturnScreen === "production-search") {

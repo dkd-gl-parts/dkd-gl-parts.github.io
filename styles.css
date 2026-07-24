@@ -2214,6 +2214,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-portal-status { display: inline-flex; align-items: center; min-height: 22px; padding: 2px 8px; border: 1px solid #b8c7c1; border-radius: 6px; background: #f3f6f5; color: #596861; font-size: 11px; font-weight: 800; }
 .customer-portal-status.active { border-color: #9bc8ae; background: #edf8f1; color: #23623f; }
 .customer-portal-status.inactive { border-color: #e4b0a8; background: #fff3f1; color: #9b382b; }
+.customer-portal-search-tools { display: grid; gap: 10px; min-width: 0; }
+.customer-portal-preview-control { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px; }
+.customer-portal-preview-control label { color: #596861; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.customer-portal-preview-control select { width: 100%; min-width: 0; height: 38px; border: 1px solid #aebdb7; border-radius: 7px; padding: 0 34px 0 10px; background: #f8faf9; color: #17231f; font-size: 13px; outline: none; }
+.customer-portal-preview-control select:focus { border-color: #287356; box-shadow: 0 0 0 3px rgba(40,115,86,.12); }
 .customer-portal-search-form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; }
 .customer-portal-search-form input { width: 100%; min-width: 0; height: 46px; border: 1px solid #aebdb7; border-radius: 7px; padding: 0 14px; background: #fff; color: #17231f; font-size: 15px; outline: none; }
 .customer-portal-search-form input:focus { border-color: #287356; box-shadow: 0 0 0 3px rgba(40,115,86,.12); }
@@ -2246,6 +2251,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .customer-portal-search-band { padding: 28px 0 26px; }
   .customer-portal-search-layout { grid-template-columns: 1fr; gap: 22px; }
   .customer-portal-heading h1 { font-size: 23px; }
+  .customer-portal-preview-control { grid-template-columns: 1fr; gap: 6px; }
   .customer-portal-search-form { grid-template-columns: minmax(0, 1fr) auto; }
   .customer-portal-list-button { grid-column: 1 / -1; width: 100%; }
   .customer-portal-info-grid { grid-template-columns: 1fr 1fr; }
