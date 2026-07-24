@@ -3524,7 +3524,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.556";
+var APP_VERSION       = "v1.1.557";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -17824,18 +17824,10 @@ async function runDeferredProductSearchEnrichment(seq, auxSeq, products, options
   if (!lookupProducts.length) return;
   if (!await waitForProductSearchDetailLoads(seq, auxSeq)) return;
 
-  var firstBefore = getFiltered()[0] || null;
-  var selectedWasFirst = currentProduct && firstBefore && productDkdId(currentProduct) === productDkdId(firstBefore);
   var cardFlags = await fetchProductSearchCardFlags(lookupProducts);
   if (isProductSearchEnrichmentStale(seq, auxSeq)) return;
   applyProductSearchCardFlags(cardFlags, lookupProducts);
   render();
-  if (!options.preserveSelection && selectedWasFirst) {
-    var firstAfterFlags = getFiltered()[0] || null;
-    if (firstAfterFlags && productDkdId(firstAfterFlags) !== productDkdId(firstBefore)) {
-      syncFirstSearchResultDetail();
-    }
-  }
 
   if (!await waitForProductSearchDetailLoads(seq, auxSeq)) return;
   var salesImageInfo = await fetchProductImageCountMapForContext(lookupProducts, "sales");
@@ -18075,8 +18067,6 @@ async function loadProductSearchAuxiliaryData(seq, products, options) {
   options = options || {};
   var auxSeq = productAuxSeq;
   var lookupProducts = (products || []).slice(0, SEARCH_RENDER_LIMIT);
-  var firstBefore = getFiltered()[0] || null;
-  var selectedWasFirst = currentProduct && firstBefore && productDkdId(currentProduct) === productDkdId(firstBefore);
   function isStale() {
     return seq !== searchRequestSeq || auxSeq !== productAuxSeq;
   }
@@ -18128,12 +18118,6 @@ async function loadProductSearchAuxiliaryData(seq, products, options) {
     }
   });
   render();
-  if (selectedWasFirst) {
-    var firstAfter = getFiltered()[0] || null;
-    if (firstAfter && productDkdId(firstAfter) !== productDkdId(firstBefore)) {
-      syncFirstSearchResultDetail();
-    }
-  }
 }
 
 function productDkdId(p) {
