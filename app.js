@@ -3452,7 +3452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.552";
+var APP_VERSION       = "v1.1.553";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -17355,7 +17355,17 @@ async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows) {
     return column + ".like." + normalized + "%";
   }) : [];
 
-  var fast = await runCoreProductQuery(prefixParts, 2);
+  var fast = normalized ? await sb.rpc("search_core_products_by_prefix_fast", {
+    search_prefix: normalized,
+    category_filter: categoryFilter || null,
+    max_rows: maxRows
+  }) : { data: [] };
+  if (fast.error) {
+    console.warn("Fast core product prefix search failed; falling back to direct lookup", fast.error);
+    fast = await runCoreProductQuery(prefixParts, 2);
+  } else {
+    fast.data = normalizeCoreProductFastRows(fast.data || []).slice(0, maxRows);
+  }
   if (fast.error || (fast.data || []).length) return fast;
 
   var orParts = normalized ? normalizedFields.map(function(column) {
