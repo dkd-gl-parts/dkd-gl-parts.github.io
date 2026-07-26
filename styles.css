@@ -2849,7 +2849,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .users-body { flex: 1; padding: 20px 16px; max-width: 1280px; width: 100%; margin: 0 auto; overflow-y: auto; }
 .users-body h2 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
 .users-desc { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.6; }
-.customer-account-issuance { display: none; margin: 12px 0 18px; border: 1px solid #d8e2df; border-radius: 8px; background: #fff; }
+.customer-account-issuance { margin: 12px 0 18px; border: 1px solid #d8e2df; border-radius: 8px; background: #fff; }
 .customer-account-issuance-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 13px 14px; border-bottom: 1px solid #e5ebe8; background: #f7faf8; }
 .customer-account-issuance-head h3 { margin: 0 0 3px; color: #1f2937; font-size: 14px; font-weight: 800; }
 .customer-account-issuance-head p { margin: 0; color: #667085; font-size: 11px; line-height: 1.45; }

@@ -3566,7 +3566,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.560";
+var APP_VERSION       = "v1.1.561";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -29389,7 +29389,7 @@ function renderCustomerAccountIssuance() {
   var select = document.getElementById("customer-account-customer");
   if (!section || !select) return;
   var visible = isSystemAdmin();
-  setCspStyle(section, "display", visible ? "" : "none");
+  section.hidden = !visible;
   if (!visible) return;
   var selectedId = select.value;
   select.innerHTML = customerOptionHtml(selectedId);
