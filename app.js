@@ -119,12 +119,12 @@ var TRANSLATIONS = {
     mi_search_desc: "販売商品の品番を検索し、画像・構成部品・販売価格・製造予定を確認します。",
     mi_production_title: "製造管理",
     mi_production_desc: "製造予定リスト・互換品・在庫を確認します。",
-    mi_users_title: "ユーザー管理",
-    mi_users_desc: "ユーザーの表示名とロール（権限）を設定します。",
+    mi_users_title: "社内ユーザー管理",
+    mi_users_desc: "社内ユーザーの表示名・所属・操作権限・アカウント状態を管理します。",
     mi_user_permissions_title: "ユーザー権限",
     mi_user_permissions_desc: "自分の操作権限と製造原価の許可を確認します。",
-    mi_customer_access_title: "得意先表示管理",
-    mi_customer_access_desc: "得意先閲覧ユーザーに見せる商品範囲・価格表示ルールを設定します。",
+    mi_customer_access_title: "得意先管理",
+    mi_customer_access_desc: "得意先ログインIDと、商品範囲・価格表示ルールを管理します。",
     mi_core_list_title: "コア管理",
     mi_core_list_desc: "買い集めるコアの目標数と現在庫を管理します。",
     mi_product_kind_stock_title: "在庫管理",
@@ -509,8 +509,8 @@ var TRANSLATIONS = {
     access_role_internal_viewer: "社内閲覧",
     access_role_customer_viewer: "得意先閲覧",
     access_role_external_viewer: "社外閲覧",
-    screen_users_title: "ユーザー管理",
-    users_heading: "ユーザー一覧",
+    screen_users_title: "社内ユーザー管理",
+    users_heading: "社内ユーザー一覧",
     user_permissions_heading: "ユーザー権限",
     users_desc: "会社・部署は所属、ユーザー権限は操作できる範囲です。製造原価は基本権限または個別許可で管理します。",
     perm_group: "グループ",
@@ -536,7 +536,7 @@ var TRANSLATIONS = {
     btn_cancel: "キャンセル",
     msg_saved: "保存しました",
     msg_save_err: "保存失敗",
-    no_users: "ユーザーがいません",
+    no_users: "社内ユーザーがいません",
     users_management_hidden: "ユーザー管理は管理権限があるユーザーのみ表示されます。",
     cat_Alternator:        "オルタネータ",
     cat_Starter:           "スタータ",
@@ -657,7 +657,7 @@ var TRANSLATIONS = {
     production_ranking_component_summary: "構成部品メモ",
     production_ranking_delete_confirm: "この予定リスト行を削除しますか？",
     production_ranking_edit_title: "予定リスト修正",
-    customer_access_title: "得意先表示管理",
+    customer_access_title: "得意先管理",
     detail_customer_section: "得意先情報",
     detail_customer_select: "選択",
     detail_customer_select_none: "未選択",
@@ -667,6 +667,7 @@ var TRANSLATIONS = {
     customer_access_search_ph: "得意先コード・得意先名で検索",
     customer_access_customers: "得意先",
     customer_access_settings: "表示設定",
+    customer_access_save_display: "表示設定を保存",
     customer_access_select_hint: "得意先を選択してください",
     customer_access_code: "コード",
     customer_access_customer: "得意先",
@@ -1272,12 +1273,12 @@ var TRANSLATIONS = {
     mi_search_desc: "Search sales products by part number and review images, components, sales prices, and production instructions.",
     mi_production_title: "Production Management",
     mi_production_desc: "Review production plans, compatible parts, and stock.",
-    mi_users_title: "User Management",
-    mi_users_desc: "Set user display names and access roles.",
+    mi_users_title: "Internal User Management",
+    mi_users_desc: "Manage internal user names, affiliations, permissions, and account status.",
     mi_user_permissions_title: "User Permissions",
     mi_user_permissions_desc: "Review your allowed operations and manufacturing cost permission.",
-    mi_customer_access_title: "Customer View",
-    mi_customer_access_desc: "Configure product visibility and sales price display for customer viewer users.",
+    mi_customer_access_title: "Customer Management",
+    mi_customer_access_desc: "Manage customer login IDs, product visibility, and sales price display rules.",
     mi_core_list_title: "CORE Management",
     mi_core_list_desc: "Manage core collection targets and current inventory.",
     mi_product_kind_stock_title: "Stock Management",
@@ -1662,8 +1663,8 @@ var TRANSLATIONS = {
     access_role_internal_viewer: "Internal Viewer",
     access_role_customer_viewer: "Customer Viewer",
     access_role_external_viewer: "External Viewer",
-    screen_users_title: "User Management",
-    users_heading: "User List",
+    screen_users_title: "Internal User Management",
+    users_heading: "Internal User List",
     user_permissions_heading: "User Permissions",
     users_desc: "Company and department define affiliation. User role defines allowed operations. Manufacturing cost is controlled by base role or per-user permission.",
     perm_group: "Group",
@@ -1689,7 +1690,7 @@ var TRANSLATIONS = {
     btn_cancel: "Cancel",
     msg_saved: "Saved",
     msg_save_err: "Save failed",
-    no_users: "No users found",
+    no_users: "No internal users found",
     users_management_hidden: "User management is shown only to users with management permission.",
     cat_Alternator:        "Alternator",
     cat_Starter:           "Starter",
@@ -1810,7 +1811,7 @@ var TRANSLATIONS = {
     production_ranking_component_summary: "Component memo",
     production_ranking_delete_confirm: "Delete this production plan row?",
     production_ranking_edit_title: "Edit Production Plan",
-    customer_access_title: "Customer View Settings",
+    customer_access_title: "Customer Management",
     detail_customer_section: "Customer Info",
     detail_customer_select: "Select",
     detail_customer_select_none: "None selected",
@@ -1820,6 +1821,7 @@ var TRANSLATIONS = {
     customer_access_search_ph: "Search by customer code or name",
     customer_access_customers: "Customers",
     customer_access_settings: "Display Settings",
+    customer_access_save_display: "Save Display Settings",
     customer_access_select_hint: "Select a customer.",
     customer_access_code: "Code",
     customer_access_customer: "Customer",
@@ -2438,12 +2440,12 @@ var TRANSLATIONS = {
     mi_search_desc: "按零件编号搜索销售商品，并确认图片、构成零件、销售价格和生产指示。",
     mi_production_title: "生产管理",
     mi_production_desc: "查看生产计划、兼容零件和库存。",
-    mi_users_title: "用户管理",
-    mi_users_desc: "设置用户的显示名称和访问权限角色。",
+    mi_users_title: "内部用户管理",
+    mi_users_desc: "管理内部用户的显示名称、所属、操作权限和账户状态。",
     mi_user_permissions_title: "用户权限",
     mi_user_permissions_desc: "确认自己的操作权限和制造成本许可。",
-    mi_customer_access_title: "客户显示管理",
-    mi_customer_access_desc: "设置客户浏览用户可见的商品范围和销售价格显示规则。",
+    mi_customer_access_title: "客户管理",
+    mi_customer_access_desc: "管理客户登录ID、商品显示范围和销售价格显示规则。",
     mi_core_list_title: "CORE管理",
     mi_core_list_desc: "管理CORE收集目标和当前库存。",
     mi_product_kind_stock_title: "库存管理",
@@ -2821,8 +2823,8 @@ var TRANSLATIONS = {
     access_role_internal_viewer: "内部查看",
     access_role_customer_viewer: "客户查看",
     access_role_external_viewer: "外部查看",
-    screen_users_title: "用户管理",
-    users_heading: "用户列表",
+    screen_users_title: "内部用户管理",
+    users_heading: "内部用户列表",
     user_permissions_heading: "用户权限",
     users_desc: "公司和部门表示所属，用户权限表示可操作范围。制造成本由基础权限或单独许可控制。",
     perm_group: "组",
@@ -2848,7 +2850,7 @@ var TRANSLATIONS = {
     btn_cancel: "取消",
     msg_saved: "已保存",
     msg_save_err: "保存失败",
-    no_users: "没有用户",
+    no_users: "没有内部用户",
     users_management_hidden: "用户管理仅显示给具有管理权限的用户。",
     cat_Alternator:        "交流发电机",
     cat_Starter:           "起动机",
@@ -2956,7 +2958,7 @@ var TRANSLATIONS = {
     production_ranking_core_summary: "CORE备注",
     production_ranking_component_summary: "构成零件备注",
     production_ranking_delete_confirm: "删除此生产计划行？",
-    customer_access_title: "客户显示管理",
+    customer_access_title: "客户管理",
     detail_customer_section: "客户信息",
     detail_customer_select: "选择",
     detail_customer_select_none: "未选择",
@@ -2966,6 +2968,7 @@ var TRANSLATIONS = {
     customer_access_search_ph: "按客户代码或名称搜索",
     customer_access_customers: "客户",
     customer_access_settings: "显示设置",
+    customer_access_save_display: "保存显示设置",
     customer_access_select_hint: "请选择客户。",
     customer_access_code: "代码",
     customer_access_customer: "客户",
@@ -3566,7 +3569,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.561";
+var APP_VERSION       = "v1.1.562";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -3769,6 +3772,8 @@ var customerAccessRuleProductMap = {};
 var customerAccessProductCandidates = [];
 var customerAccessSelectedProduct = null;
 var customerAccessPriceRanks = [];
+var customerAccountUsers = [];
+var customerAccountRequestSeq = 0;
 var CORE_PRODUCT_FAST_SELECT = [
   "dkd_shohin_id",
   "legacy_part_id",
@@ -4392,6 +4397,13 @@ function accessRoleOptionHtmlForCompany(companyCode, selected) {
   var value = normalizeAccessRoleForCompany(selected, companyCode) || defaultAccessRoleForCompany(companyCode, selected);
   return optionHtml(USER_ACCESS_ROLE_OPTIONS, value, function(opt) {
     return opt[0] !== value && skipAccessRoleForCompany(companyCode, opt);
+  }, function(opt) { return accessRoleLabel(opt[0]); });
+}
+
+function internalAccessRoleOptionHtmlForCompany(companyCode, selected) {
+  var value = normalizeAccessRoleForCompany(selected, companyCode) || defaultAccessRoleForCompany(companyCode, selected);
+  return optionHtml(USER_ACCESS_ROLE_OPTIONS, value, function(opt) {
+    return opt[0] === "customer_viewer" || (opt[0] !== value && skipAccessRoleForCompany(companyCode, opt));
   }, function(opt) { return accessRoleLabel(opt[0]); });
 }
 function canManageSharedSettings() {
@@ -27255,7 +27267,7 @@ async function loadCustomerAccessMgmt() {
   if (list) list.innerHTML = "<div class='empty'>" + esc(t("loading")) + "</div>";
   var includeInactive = !!(document.getElementById("customer-access-include-inactive") || {}).checked;
   var customerQuery = sb.from("sales_customers")
-    .select("id,source_customer_code,customer_name,customer_kana,price_rank_code,is_active")
+    .select("id,source_customer_code,customer_name,customer_kana,price_rank_code,fax,email,contact_name,contact_email,is_active")
     .order("source_customer_code", { ascending: true })
     .limit(2000);
   if (!includeInactive) customerQuery = customerQuery.eq("is_active", true);
@@ -27265,6 +27277,9 @@ async function loadCustomerAccessMgmt() {
     return;
   }
   customerAccessRows = r.data || [];
+  if (isSystemAdmin()) {
+    salesCustomerOptions = customerAccessRows.filter(function(row) { return row.is_active !== false; });
+  }
   customerAccessFilteredRows = customerAccessRows.filter(function(row) {
     if (!q) return true;
     return [
@@ -27288,8 +27303,12 @@ async function loadCustomerAccessMgmt() {
     await selectCustomerAccessCustomer(customerAccessFilteredRows[0].id);
   } else {
     currentCustomerAccessCustomer = null;
+    customerAccountRequestSeq += 1;
+    customerAccountUsers = [];
     customerAccessSettings = null;
     customerAccessVisibilityRows = [];
+    renderCustomerAccountIssuance();
+    renderCustomerAccountUsers();
     renderCustomerAccessDetail();
   }
 }
@@ -27322,8 +27341,14 @@ async function selectCustomerAccessCustomer(customerId) {
   currentCustomerAccessCustomer = customer;
   customerAccessSelectedProduct = null;
   customerAccessProductCandidates = [];
+  var accountMessage = document.getElementById("customer-account-issuance-message");
+  if (accountMessage) { accountMessage.className = "save-msg"; accountMessage.textContent = ""; }
   renderCustomerAccessList();
-  await loadCustomerAccessDetail(customerId);
+  renderCustomerAccountIssuance(true);
+  await Promise.all([
+    loadCustomerAccessDetail(customerId),
+    loadCustomerAccountUsers(customerId)
+  ]);
 }
 
 async function loadCustomerAccessDetail(customerId) {
@@ -27612,7 +27637,7 @@ async function saveCustomerAccessSettings() {
       .select("id,source_customer_code,customer_name,customer_kana,price_rank_code,is_active")
       .maybeSingle();
     if (customerR.error) throw customerR.error;
-    var updatedCustomer = customerR.data || Object.assign({}, currentCustomerAccessCustomer, { price_rank_code: nextRankCode || null });
+    var updatedCustomer = Object.assign({}, currentCustomerAccessCustomer, customerR.data || {}, { price_rank_code: nextRankCode || null });
     var r = await sb.from("customer_display_settings").upsert(data, { onConflict: "sales_customer_id" });
     if (r.error) throw r.error;
     currentCustomerAccessCustomer = updatedCustomer;
@@ -27620,6 +27645,9 @@ async function saveCustomerAccessSettings() {
       return String(row.id) === String(customerId) ? Object.assign({}, row, updatedCustomer) : row;
     });
     customerAccessFilteredRows = customerAccessFilteredRows.map(function(row) {
+      return String(row.id) === String(customerId) ? Object.assign({}, row, updatedCustomer) : row;
+    });
+    salesCustomerOptions = salesCustomerOptions.map(function(row) {
       return String(row.id) === String(customerId) ? Object.assign({}, row, updatedCustomer) : row;
     });
     detailSalesCustomerOptions = detailSalesCustomerOptions.map(function(row) {
@@ -28843,7 +28871,10 @@ async function loadUsers() {
   var r = await query;
   userManagementLoaded = true;
   userManagementLoadError = r.error || null;
-  var users = r.data || [];
+  var users = (r.data || []).filter(function(user) {
+    var roleCode = normalizeAccessRoleForCompany(userAccessRoleCode(user), userCompanyCode(user));
+    return roleCode !== "customer_viewer";
+  });
   userManagementRows = users;
   if (r.error) {
     renderUserPermissionOverview();
@@ -28851,8 +28882,8 @@ async function loadUsers() {
     if (failedList) failedList.innerHTML = "<div class='empty save-err'>ユーザー一覧の読み込みに失敗しました: " + esc(r.error.message || String(r.error)) + "</div>";
     return;
   }
-  await loadUserCustomerLinkOptions(users);
-  renderCustomerAccountIssuance();
+  salesCustomerOptions = [];
+  customerUserLinkMap = {};
   renderUserPermissionOverview();
   renderUsers(users);
 }
@@ -29279,9 +29310,11 @@ function permissionOverviewScreenGroups(context) {
           ]
         },
         {
-          title: "得意先公開設定",
+          title: "得意先管理",
           items: [
-            { label: "画面・得意先紐づけ・表示範囲", permissionKey: "customer_access.manage", state: screenState(customerAccessManageable) }
+            { label: "画面・得意先情報・表示範囲", permissionKey: "customer_access.manage", state: screenState(customerAccessManageable) },
+            { label: "得意先ログインID発行・メール/FAX案内", state: role === "system_admin" ? permissionOverviewAllowed("発行可") : permissionOverviewDenied("利用不可") },
+            { label: "得意先ログイン履歴・停止・PW再設定", state: role === "system_admin" ? permissionOverviewAllowed("管理可") : permissionOverviewDenied("利用不可") }
           ]
         }
       ]
@@ -29292,10 +29325,9 @@ function permissionOverviewScreenGroups(context) {
         {
           title: "ユーザー権限",
           items: [
-            { label: "ユーザー別の権限一覧・変更", permissionKey: "users.manage", state: userManagement },
-            { label: "ユーザー一覧・所属設定", permissionKey: "users.manage", state: userManagement },
-            { label: "得意先アカウント発行・メール/FAX案内", state: role === "system_admin" ? permissionOverviewAllowed("発行可") : permissionOverviewDenied("利用不可") },
-            { label: "履歴・停止・PW再設定送信", permissionKey: "users.manage", state: roleCanManageUsers ? userManagement : permissionOverviewDenied("利用不可") }
+            { label: "社内ユーザー別の権限一覧・変更", permissionKey: "users.manage", state: userManagement },
+            { label: "社内ユーザー一覧・所属設定", permissionKey: "users.manage", state: userManagement },
+            { label: "社内ユーザーの履歴・停止・PW再設定", permissionKey: "users.manage", state: roleCanManageUsers ? userManagement : permissionOverviewDenied("利用不可") }
           ]
         },
         {
@@ -29361,41 +29393,216 @@ function permissionOverviewStateCellHtml(item) {
 function selectedCustomerAccountCustomer() {
   var select = document.getElementById("customer-account-customer");
   var selectedId = select ? select.value : "";
-  return salesCustomerOptions.find(function(customer) {
+  var selected = salesCustomerOptions.find(function(customer) {
     return String(customer.id) === String(selectedId);
   }) || null;
+  if (selected) return selected;
+  if (currentCustomerAccessCustomer && currentCustomerAccessCustomer.is_active !== false && String(currentCustomerAccessCustomer.id) === String(selectedId)) {
+    return currentCustomerAccessCustomer;
+  }
+  return null;
 }
 
 function syncCustomerAccountFields(useCustomerDefaults) {
   var customer = selectedCustomerAccountCustomer();
+  var displayCustomer = currentCustomerAccessCustomer || customer;
   var nameInput = document.getElementById("customer-account-name");
   var emailInput = document.getElementById("customer-account-email");
   var faxInput = document.getElementById("customer-account-fax");
+  var display = document.getElementById("customer-account-customer-display");
   var note = document.getElementById("customer-account-customer-note");
   if (useCustomerDefaults) {
-    if (nameInput) nameInput.value = customer ? (customer.contact_name || "") : "";
-    if (emailInput) emailInput.value = customer ? (customer.contact_email || customer.email || "") : "";
-    if (faxInput) faxInput.value = customer ? (customer.fax || "") : "";
+    if (nameInput) nameInput.value = displayCustomer ? (displayCustomer.contact_name || "") : "";
+    if (emailInput) emailInput.value = displayCustomer ? (displayCustomer.contact_email || displayCustomer.email || "") : "";
+    if (faxInput) faxInput.value = displayCustomer ? (displayCustomer.fax || "") : "";
   }
+  var customerLabel = displayCustomer
+    ? [displayCustomer.source_customer_code, displayCustomer.customer_name].filter(Boolean).join(" / ")
+    : "得意先を選択してください";
+  if (display) display.textContent = customerLabel;
   if (note) {
-    note.textContent = customer
-      ? [customer.source_customer_code, customer.customer_name, customer.price_rank_code].filter(Boolean).join(" / ")
-      : "得意先を選択してください";
+    note.textContent = !displayCustomer
+      ? "左の得意先一覧から選択してください"
+      : (displayCustomer.is_active === false
+        ? "非表示の得意先にはアカウントを発行できません"
+        : [displayCustomer.price_rank_code ? "価格ランク: " + displayCustomer.price_rank_code : "", "得意先専用画面"].filter(Boolean).join(" / "));
   }
 }
 
-function renderCustomerAccountIssuance() {
+function renderCustomerAccountIssuance(useCustomerDefaults) {
   var section = document.getElementById("customer-account-issuance");
-  var select = document.getElementById("customer-account-customer");
-  if (!section || !select) return;
+  var customerInput = document.getElementById("customer-account-customer");
+  if (!section || !customerInput) return;
   var visible = isSystemAdmin();
   section.hidden = !visible;
   if (!visible) return;
-  var selectedId = select.value;
-  select.innerHTML = customerOptionHtml(selectedId);
-  var firstOption = select.querySelector("option[value='']");
-  if (firstOption) firstOption.textContent = "得意先を選択してください";
-  syncCustomerAccountFields(false);
+  var customer = currentCustomerAccessCustomer;
+  var enabled = !!(customer && customer.is_active !== false);
+  customerInput.value = customer ? String(customer.id) : "";
+  ["customer-account-name", "customer-account-email", "customer-account-fax"].forEach(function(id) {
+    var input = document.getElementById(id);
+    if (input) input.disabled = !enabled;
+  });
+  ["btn-customer-account-email", "btn-customer-account-fax"].forEach(function(id) {
+    var button = document.getElementById(id);
+    if (button) button.disabled = !enabled;
+  });
+  syncCustomerAccountFields(!!useCustomerDefaults);
+}
+
+async function loadCustomerAccountUsers(customerId) {
+  var requestSeq = ++customerAccountRequestSeq;
+  customerAccountUsers = [];
+  var host = document.getElementById("customer-account-list");
+  if (!isSystemAdmin() || !host) return;
+  host.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
+  if (!customerId) {
+    renderCustomerAccountUsers();
+    return;
+  }
+  try {
+    var linksR = await sb.from("customer_user_links")
+      .select("user_id,is_primary,is_active")
+      .eq("sales_customer_id", customerId)
+      .eq("is_active", true);
+    if (requestSeq !== customerAccountRequestSeq) return;
+    if (linksR.error) throw linksR.error;
+    var links = linksR.data || [];
+    var userIds = links.map(function(link) { return link.user_id; }).filter(Boolean);
+    if (!userIds.length) {
+      renderCustomerAccountUsers();
+      return;
+    }
+    var profilesR = await sb.from("profiles")
+      .select("id,email,name,status,role,role_code,group_name,company_code,department_code,created_at")
+      .in("id", userIds)
+      .order("created_at", { ascending: true });
+    if (requestSeq !== customerAccountRequestSeq) return;
+    if (profilesR.error) throw profilesR.error;
+    var linkMap = {};
+    links.forEach(function(link) { linkMap[String(link.user_id)] = link; });
+    customerAccountUsers = (profilesR.data || []).filter(function(user) {
+      return normalizeAccessRoleForCompany(userAccessRoleCode(user), userCompanyCode(user)) === "customer_viewer";
+    }).map(function(user) {
+      return Object.assign({}, user, { customer_link: linkMap[String(user.id)] || null });
+    });
+    renderCustomerAccountUsers();
+  } catch (e) {
+    if (requestSeq !== customerAccountRequestSeq) return;
+    console.warn("customer account users lookup failed", e);
+    renderCustomerAccountUsers((e && e.message) || String(e));
+  }
+}
+
+function renderCustomerAccountUsers(errorMessage) {
+  var host = document.getElementById("customer-account-list");
+  if (!host || !isSystemAdmin()) return;
+  if (errorMessage) {
+    host.innerHTML = "<div class='empty save-err'>登録済みログインIDを読み込めませんでした: " + esc(errorMessage) + "</div>";
+    return;
+  }
+  if (!currentCustomerAccessCustomer) {
+    host.innerHTML = "<div class='empty'>左の得意先一覧から選択してください</div>";
+    return;
+  }
+  if (!customerAccountUsers.length) {
+    host.innerHTML = "<div class='empty'>登録済みのログインIDはありません</div>";
+    return;
+  }
+  host.innerHTML = customerAccountUsers.map(function(user) {
+    var status = user.status || "active";
+    var statusBadge = "<span class='status-badge status-" + esc(status) + "'>" + esc(t("users_" + status + "_badge")) + "</span>";
+    var actionButton = status === "active"
+      ? "<button class='btn-suspend customer-account-status-button' type='button' data-customer-account-status='suspended' data-uid='" + esc(user.id) + "'>" + esc(t("btn_suspend")) + "</button>"
+      : "<button class='btn-approve customer-account-status-button' type='button' data-customer-account-status='active' data-uid='" + esc(user.id) + "'>" + esc(t("btn_activate")) + "</button>";
+    return "<div class='customer-account-user-row'>" +
+      "<div class='customer-account-user-identity'><strong>" + esc(user.name || "-") + "</strong><span>ログインID: " + esc(user.email || "-") + "</span></div>" +
+      "<div class='customer-account-user-status'>" + statusBadge + "</div>" +
+      "<div class='customer-account-user-actions'>" +
+        "<button class='btn-user-history customer-account-history-button' type='button' data-uid='" + esc(user.id) + "'>" + esc(t("btn_auth_history")) + "</button>" +
+        actionButton +
+        "<button class='btn-pw-reset customer-account-reset-button' type='button' data-uid='" + esc(user.id) + "'>" + esc(t("btn_send_pw_reset")) + "</button>" +
+      "</div>" +
+      "<span class='save-msg customer-account-user-message' id='customer-account-user-message-" + esc(user.id) + "'></span>" +
+    "</div>";
+  }).join("");
+  bindCustomerAccountUserEvents();
+}
+
+function customerAccountUserById(userId) {
+  return customerAccountUsers.find(function(user) { return String(user.id) === String(userId); }) || null;
+}
+
+function bindCustomerAccountUserEvents() {
+  var host = document.getElementById("customer-account-list");
+  if (!host) return;
+  host.querySelectorAll(".customer-account-history-button").forEach(function(button) {
+    button.addEventListener("click", function() { openUserAuthHistory(customerAccountUserById(button.dataset.uid)); });
+  });
+  host.querySelectorAll(".customer-account-status-button").forEach(function(button) {
+    button.addEventListener("click", function() { updateCustomerAccountUserStatus(button.dataset.uid, button.dataset.customerAccountStatus); });
+  });
+  host.querySelectorAll(".customer-account-reset-button").forEach(function(button) {
+    button.addEventListener("click", function() { sendCustomerAccountPasswordReset(button.dataset.uid, button); });
+  });
+}
+
+async function updateCustomerAccountUserStatus(userId, status) {
+  var user = customerAccountUserById(userId);
+  if (!isSystemAdmin() || !user || ["active", "suspended"].indexOf(status) < 0) {
+    showPermissionDenied("update_customer_user_status", "profiles", userId);
+    return;
+  }
+  var customerId = currentCustomerAccessCustomer && currentCustomerAccessCustomer.id;
+  if (status === "suspended" && !confirm("この得意先ログインIDを停止しますか？")) return;
+  var result = await sb.from("profiles").update({ status: status, updated_at: new Date().toISOString() }).eq("id", user.id);
+  if (result.error) {
+    var failedMessage = document.getElementById("customer-account-user-message-" + user.id);
+    if (failedMessage) { failedMessage.className = "save-msg save-err customer-account-user-message"; failedMessage.textContent = t("msg_save_err"); }
+    return;
+  }
+  await logUserActivity(status === "active" ? "approve" : "suspend", {
+    screen: "customer-access-mgmt",
+    action: status === "active" ? "activate_customer_user" : "suspend_customer_user",
+    target_type: "profiles",
+    target_id: user.id,
+    target_desc: user.email || user.id,
+    metadata: { sales_customer_id: customerId, status: status }
+  });
+  if (currentCustomerAccessCustomer && String(currentCustomerAccessCustomer.id) === String(customerId)) {
+    await loadCustomerAccountUsers(customerId);
+  }
+}
+
+async function sendCustomerAccountPasswordReset(userId, button) {
+  var user = customerAccountUserById(userId);
+  if (!isSystemAdmin() || !user || !user.email) {
+    showPermissionDenied("reset_customer_user_password", "profiles", userId);
+    return;
+  }
+  var message = document.getElementById("customer-account-user-message-" + user.id);
+  if (button) button.disabled = true;
+  var result = await sb.auth.resetPasswordForEmail(user.email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+  if (button) button.disabled = false;
+  if (result.error) {
+    if (message) { message.className = "save-msg save-err customer-account-user-message"; message.textContent = t("msg_pw_reset_err"); }
+    return;
+  }
+  await logUserActivity("password_reset_sent", {
+    screen: "customer-access-mgmt",
+    action: "send_customer_password_reset",
+    target_type: "profiles",
+    target_id: user.id,
+    target_desc: user.email,
+    metadata: { sales_customer_id: currentCustomerAccessCustomer && currentCustomerAccessCustomer.id }
+  });
+  if (message) {
+    message.className = "save-msg save-ok customer-account-user-message";
+    message.textContent = t("msg_pw_reset_sent");
+    setTimeout(function() { message.textContent = ""; }, 3000);
+  }
 }
 
 function customerAccountInviteErrorMessage(code) {
@@ -29404,7 +29611,7 @@ function customerAccountInviteErrorMessage(code) {
     name_required: "ご担当者名を入力してください",
     invalid_email: "正しいメールアドレスを入力してください",
     customer_not_found: "有効な得意先を確認できませんでした",
-    email_already_registered: "このメールアドレスは登録済みです。ユーザー一覧からPW再設定メールを送信してください",
+    email_already_registered: "このメールアドレスは登録済みです。登録済みログインIDからPW再設定メールを送信してください",
     forbidden: "システム管理者のみ実行できます",
     invite_link_missing: "FAX用の初回設定リンクを作成できませんでした",
     invite_failed: "アカウント発行に失敗しました"
@@ -29533,7 +29740,9 @@ async function issueCustomerAccount(channel) {
       return;
     }
   }
-  await loadUsers();
+  if (currentCustomerAccessCustomer && String(currentCustomerAccessCustomer.id) === String(customer.id)) {
+    await loadCustomerAccountUsers(customer.id);
+  }
   message = document.getElementById("customer-account-issuance-message");
   if (message) {
     message.className = "save-msg save-ok";
@@ -29725,7 +29934,7 @@ function openUserPermissionEditor(user) {
   var roleCode = normalizeAccessRoleForCompany(userAccessRoleCode(user), companyCode);
   var canManage = canEditUserPermission(user);
   currentPermissionEditOverrides = Object.assign({}, userPermissionOverrides(user));
-  roleDisplay.innerHTML = accessRoleOptionHtmlForCompany(companyCode, roleCode);
+  roleDisplay.innerHTML = internalAccessRoleOptionHtmlForCompany(companyCode, roleCode);
   roleDisplay.disabled = !canManage;
   customerSelect.innerHTML = customerOptionHtml(customerUserLinkMap[user.id] || "");
   customerSelect.disabled = !canManage;
@@ -29803,7 +30012,7 @@ async function saveUserPermissionEditor() {
   var previousRoleCode = normalizeAccessRoleForCompany(userAccessRoleCode(user), companyCode);
   var roleCode = normalizeAccessRoleForCompany(roleSelect && roleSelect.value, companyCode);
   var roleExists = USER_ACCESS_ROLE_OPTIONS.some(function(option) { return option[0] === roleCode; });
-  if (!roleExists || skipAccessRoleForCompany(companyCode, [roleCode, roleCode]) || !canAssignUserRole(roleCode)) {
+  if (roleCode === "customer_viewer" || !roleExists || skipAccessRoleForCompany(companyCode, [roleCode, roleCode]) || !canAssignUserRole(roleCode)) {
     showPermissionDenied("assign_user_role", "profiles", user.id, roleCode);
     return;
   }
