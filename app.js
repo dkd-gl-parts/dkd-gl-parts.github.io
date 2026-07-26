@@ -3566,7 +3566,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.559";
+var APP_VERSION       = "v1.1.560";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -4953,10 +4953,10 @@ function relocateRakutenSections(mode) {
 // 認証
 // =============================================
 async function handleAuthState() {
-  // パスワードリセットリンクからのアクセスを検出する
-  // Supabaseのリセットリンクは #access_token=xxx&type=recovery のハッシュを含む
+  // パスワード再設定・初回招待リンクからのアクセスを検出する
   var hash = window.location.hash;
-  if (hash && hash.indexOf("type=recovery") >= 0) {
+  var authLinkType = hash ? new URLSearchParams(hash.slice(1)).get("type") : "";
+  if (authLinkType === "recovery" || authLinkType === "invite") {
     // セッションをハッシュから復元する
     var hashResult = await sb.auth.getSession();
     if (!hashResult.data.session) {
@@ -4965,6 +4965,12 @@ async function handleAuthState() {
         access_token: new URLSearchParams(hash.slice(1)).get("access_token"),
         refresh_token: new URLSearchParams(hash.slice(1)).get("refresh_token") || ""
       });
+    }
+    if (authLinkType === "invite") {
+      var resetTitle = document.querySelector("#screen-reset h2");
+      var resetDesc = document.querySelector("#screen-reset .reg-desc");
+      if (resetTitle) resetTitle.textContent = "初回パスワード設定";
+      if (resetDesc) resetDesc.textContent = "D-CATSで使用するパスワードを設定してください（8文字以上）";
     }
     showScreen("reset");
     return;
@@ -28846,6 +28852,7 @@ async function loadUsers() {
     return;
   }
   await loadUserCustomerLinkOptions(users);
+  renderCustomerAccountIssuance();
   renderUserPermissionOverview();
   renderUsers(users);
 }
@@ -28853,16 +28860,16 @@ async function loadUsers() {
 async function loadUserCustomerLinkOptions(users) {
   salesCustomerOptions = [];
   customerUserLinkMap = {};
-  if (!canUseUserManagement() || !users || !users.length) return;
+  if (!canUseUserManagement()) return;
   try {
     var customersR = await sb.from("sales_customers")
-      .select("id,source_customer_code,customer_name,price_rank_code,is_active")
+      .select("id,source_customer_code,customer_name,price_rank_code,fax,email,contact_name,contact_email,is_active")
       .eq("is_active", true)
       .order("source_customer_code", { ascending: true })
       .limit(2000);
     if (customersR.error) throw customersR.error;
     salesCustomerOptions = customersR.data || [];
-    var userIds = users.map(function(u) { return u.id; }).filter(Boolean);
+    var userIds = (users || []).map(function(u) { return u.id; }).filter(Boolean);
     if (!userIds.length) return;
     var linksR = await sb.from("customer_user_links")
       .select("user_id,sales_customer_id,is_primary,is_active")
@@ -29287,6 +29294,7 @@ function permissionOverviewScreenGroups(context) {
           items: [
             { label: "ユーザー別の権限一覧・変更", permissionKey: "users.manage", state: userManagement },
             { label: "ユーザー一覧・所属設定", permissionKey: "users.manage", state: userManagement },
+            { label: "得意先アカウント発行・メール/FAX案内", state: role === "system_admin" ? permissionOverviewAllowed("発行可") : permissionOverviewDenied("利用不可") },
             { label: "履歴・停止・PW再設定送信", permissionKey: "users.manage", state: roleCanManageUsers ? userManagement : permissionOverviewDenied("利用不可") }
           ]
         },
@@ -29348,6 +29356,189 @@ function permissionOverviewStateCellHtml(item) {
   }
   html += "</div>";
   return html;
+}
+
+function selectedCustomerAccountCustomer() {
+  var select = document.getElementById("customer-account-customer");
+  var selectedId = select ? select.value : "";
+  return salesCustomerOptions.find(function(customer) {
+    return String(customer.id) === String(selectedId);
+  }) || null;
+}
+
+function syncCustomerAccountFields(useCustomerDefaults) {
+  var customer = selectedCustomerAccountCustomer();
+  var nameInput = document.getElementById("customer-account-name");
+  var emailInput = document.getElementById("customer-account-email");
+  var faxInput = document.getElementById("customer-account-fax");
+  var note = document.getElementById("customer-account-customer-note");
+  if (useCustomerDefaults) {
+    if (nameInput) nameInput.value = customer ? (customer.contact_name || "") : "";
+    if (emailInput) emailInput.value = customer ? (customer.contact_email || customer.email || "") : "";
+    if (faxInput) faxInput.value = customer ? (customer.fax || "") : "";
+  }
+  if (note) {
+    note.textContent = customer
+      ? [customer.source_customer_code, customer.customer_name, customer.price_rank_code].filter(Boolean).join(" / ")
+      : "得意先を選択してください";
+  }
+}
+
+function renderCustomerAccountIssuance() {
+  var section = document.getElementById("customer-account-issuance");
+  var select = document.getElementById("customer-account-customer");
+  if (!section || !select) return;
+  var visible = isSystemAdmin();
+  setCspStyle(section, "display", visible ? "" : "none");
+  if (!visible) return;
+  var selectedId = select.value;
+  select.innerHTML = customerOptionHtml(selectedId);
+  var firstOption = select.querySelector("option[value='']");
+  if (firstOption) firstOption.textContent = "得意先を選択してください";
+  syncCustomerAccountFields(false);
+}
+
+function customerAccountInviteErrorMessage(code) {
+  var messages = {
+    customer_required: "得意先を選択してください",
+    name_required: "ご担当者名を入力してください",
+    invalid_email: "正しいメールアドレスを入力してください",
+    customer_not_found: "有効な得意先を確認できませんでした",
+    email_already_registered: "このメールアドレスは登録済みです。ユーザー一覧からPW再設定メールを送信してください",
+    forbidden: "システム管理者のみ実行できます",
+    invite_link_missing: "FAX用の初回設定リンクを作成できませんでした",
+    invite_failed: "アカウント発行に失敗しました"
+  };
+  return messages[code] || "アカウント発行に失敗しました";
+}
+
+async function customerAccountInviteErrorCode(result) {
+  if (result && result.data && result.data.error) return result.data.error;
+  var context = result && result.error && result.error.context;
+  if (context && typeof context.json === "function") {
+    try {
+      var body = await context.json();
+      if (body && body.error) return body.error;
+    } catch (ignore) {}
+  }
+  return "invite_failed";
+}
+
+function customerInviteQrDataUrl(inviteLink) {
+  if (!inviteLink || typeof QRCode !== "function") throw new Error("qr_unavailable");
+  var host = document.createElement("div");
+  new QRCode(host, {
+    text: inviteLink,
+    width: 360,
+    height: 360,
+    correctLevel: QRCode.CorrectLevel.M
+  });
+  var canvas = host.querySelector("canvas");
+  if (canvas && typeof canvas.toDataURL === "function") return canvas.toDataURL("image/png");
+  var image = host.querySelector("img");
+  if (image && image.src) return image.src;
+  throw new Error("qr_unavailable");
+}
+
+function buildCustomerFaxInviteHtml(invite, faxNumber, qrDataUrl) {
+  var issuedAt = new Date().toLocaleDateString("ja-JP");
+  var customerLabel = [invite.source_customer_code, invite.customer_name].filter(Boolean).join(" / ");
+  return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><title>D-CATS 得意先ログイン情報</title>" +
+    "<link rel='stylesheet' href='customer-invite-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'>" +
+    "</head><body><div class='toolbar'><button id='dcats-print-customer-invite' type='button'>印刷・PDF保存</button></div>" +
+    "<main class='sheet'><header class='document-head'><div><h1>D-CATS 得意先ログイン情報</h1><p>Daiko Catalog &amp; Search System</p></div><div class='issue-date'>発行日<br><strong>" + esc(issuedAt) + "</strong></div></header>" +
+    "<dl class='destination'><dt>送信先</dt><dd>" + esc(customerLabel || "-") + "</dd><dt>ご担当者</dt><dd>" + esc(invite.name || "-") + " 様</dd><dt>FAX番号</dt><dd>" + esc(faxNumber || "-") + "</dd></dl>" +
+    "<section class='login-box'><h2>ログイン情報</h2><div class='login-row'><span>ログインURL</span><strong>https://dcats.daiko-denki.co.jp/</strong></div><div class='login-row'><span>ログインID</span><strong>" + esc(invite.email || "-") + "</strong></div>" +
+    "<div class='setup'><div><h3>初回パスワード設定</h3><ol><li>右のQRコードを読み取ります。</li><li>8文字以上のパスワードを設定します。</li><li>ログインURLでログインIDと設定したパスワードを入力します。</li></ol></div><img src='" + esc(qrDataUrl) + "' alt='初回パスワード設定QRコード'></div>" +
+    "<div class='notice'>QRコードは初回設定専用です。有効期限切れ・読み取り済みの場合は、D-CATSログイン画面の「パスワードをお忘れの方」から再設定してください。本票はログイン設定完了後に破棄してください。</div></section>" +
+    "<div class='sender'>送信元: D-CATS運用担当<br>https://dcats.daiko-denki.co.jp/</div></main></body></html>";
+}
+
+function openCustomerFaxInvitePrintWindow(win, invite, faxNumber) {
+  if (!win || !invite || !invite.invite_link) throw new Error("invite_link_missing");
+  var qrDataUrl = customerInviteQrDataUrl(invite.invite_link);
+  win.document.open();
+  win.document.write(buildCustomerFaxInviteHtml(invite, faxNumber, qrDataUrl));
+  win.document.close();
+  var printButton = win.document.getElementById("dcats-print-customer-invite");
+  if (printButton) printButton.addEventListener("click", function() { win.print(); });
+}
+
+async function issueCustomerAccount(channel) {
+  if (!isSystemAdmin()) {
+    showPermissionDenied("invite_customer_account", "profiles");
+    return;
+  }
+  var customer = selectedCustomerAccountCustomer();
+  var nameInput = document.getElementById("customer-account-name");
+  var emailInput = document.getElementById("customer-account-email");
+  var faxInput = document.getElementById("customer-account-fax");
+  var message = document.getElementById("customer-account-issuance-message");
+  var emailButton = document.getElementById("btn-customer-account-email");
+  var faxButton = document.getElementById("btn-customer-account-fax");
+  var name = nameInput ? nameInput.value.trim() : "";
+  var email = emailInput ? emailInput.value.trim().toLowerCase() : "";
+  var fax = faxInput ? faxInput.value.trim() : "";
+  if (!customer) {
+    if (message) { message.className = "save-msg save-err"; message.textContent = "得意先を選択してください"; }
+    return;
+  }
+  if (!name || !email || (channel === "fax" && !fax)) {
+    if (message) {
+      message.className = "save-msg save-err";
+      message.textContent = !name ? "ご担当者名を入力してください" : (!email ? "ログインIDを入力してください" : "FAX番号を入力してください");
+    }
+    return;
+  }
+  var channelLabel = channel === "fax" ? "FAX送付票を作成" : "招待メールを送信";
+  if (!confirm(customer.customer_name + " / " + email + " の得意先閲覧アカウントを発行し、" + channelLabel + "しますか？")) return;
+
+  var faxWindow = null;
+  if (channel === "fax") {
+    faxWindow = window.open("", "_blank");
+    if (!faxWindow) {
+      if (message) { message.className = "save-msg save-err"; message.textContent = "FAX送付票を開けません。ポップアップを許可してください"; }
+      return;
+    }
+    faxWindow.document.write("<!doctype html><html lang='ja'><head><meta charset='utf-8'><title>FAX送付票を作成中</title></head><body><p>FAX送付票を作成しています...</p></body></html>");
+    faxWindow.document.close();
+  }
+
+  if (emailButton) emailButton.disabled = true;
+  if (faxButton) faxButton.disabled = true;
+  if (message) { message.className = "save-msg"; message.textContent = t("loading"); }
+  var result = await sb.functions.invoke("invite-customer-user", {
+    body: {
+      sales_customer_id: customer.id,
+      name: name,
+      email: email,
+      channel: channel
+    }
+  });
+  if (emailButton) emailButton.disabled = false;
+  if (faxButton) faxButton.disabled = false;
+  if (result.error || !result.data || !result.data.ok) {
+    if (faxWindow) faxWindow.close();
+    var errorCode = await customerAccountInviteErrorCode(result);
+    if (message) { message.className = "save-msg save-err"; message.textContent = customerAccountInviteErrorMessage(errorCode); }
+    return;
+  }
+
+  if (channel === "fax") {
+    try {
+      openCustomerFaxInvitePrintWindow(faxWindow, result.data, fax);
+    } catch (e) {
+      if (faxWindow) faxWindow.close();
+      if (message) { message.className = "save-msg save-err"; message.textContent = "アカウントは発行されましたが、FAX送付票を作成できませんでした"; }
+      return;
+    }
+  }
+  await loadUsers();
+  message = document.getElementById("customer-account-issuance-message");
+  if (message) {
+    message.className = "save-msg save-ok";
+    message.textContent = channel === "fax" ? "アカウントを発行し、FAX送付票を作成しました" : "アカウントを発行し、招待メールを送信しました";
+  }
 }
 
 function permissionOverviewTableHtml(context) {
@@ -29485,7 +29676,7 @@ function renderUserPermissionOverview() {
     var statusBadge = "<span class='status-badge status-" + esc(status) + "'>" + esc(t("users_" + status + "_badge")) + "</span>";
     var customerText = roleCode === "customer_viewer" ? permissionManagementCustomerLabel(user) : "";
     html += "<tr>";
-    html += "<td><div class='user-permission-person'><strong>" + esc(user.name || "-") + "</strong>" + statusBadge + "</div><div class='mgmt-sub'>" + esc(user.email || "-") + "</div></td>";
+    html += "<td><div class='user-permission-person'><strong>" + esc(user.name || "-") + "</strong>" + statusBadge + "</div><div class='mgmt-sub'>ログインID: " + esc(user.email || "-") + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(optionLabel(USER_COMPANY_OPTIONS, companyCode)) + "</div><div class='mgmt-sub'>" + esc(optionLabel(USER_DEPARTMENT_OPTIONS, userDepartmentCode(user))) + "</div></td>";
     var overrideCount = Object.keys(userPermissionOverrides(user)).filter(function(key) { return typeof userPermissionOverrides(user)[key] === "boolean"; }).length;
     html += "<td><div class='mgmt-pn'>" + esc(accessRoleLabel(roleCode)) + "</div><div class='mgmt-sub'>" + esc(accessScopeLabel(roleCode, optionLabel(USER_COMPANY_OPTIONS, companyCode), optionLabel(USER_DEPARTMENT_OPTIONS, userDepartmentCode(user)))) + "</div>" + (overrideCount ? "<div class='mgmt-sub permission-override-count'>個別設定: " + overrideCount + "件</div>" : "") + (customerText ? "<div class='mgmt-sub'>得意先: " + esc(customerText) + "</div>" : "") + "</td>";
@@ -29914,7 +30105,7 @@ function renderUsers(users) {
     html += "<div class='user-card-top'>";
     html += "<div class='user-card-identity'><div class='user-avatar'>"+esc(initials)+"</div>";
     html += "<div data-dcats-inline-style='s-286372957b99'>";
-    html += "<div class='user-email'>"+esc(u.email)+" "+sbadge+"</div>";
+    html += "<div class='user-email'>ログインID: "+esc(u.email)+" "+sbadge+"</div>";
     html += "<div class='user-summary-line'>";
     html += "<span class='user-summary-chip user-affiliation-summary'>所属: "+esc(companyLabel)+" / "+esc(departmentLabel)+"</span>";
     html += "</div>";
@@ -30324,6 +30515,17 @@ document.getElementById("btn-back-from-forgot").addEventListener("click", functi
 document.getElementById("forgot-email").addEventListener("keydown", function(e) { if(e.key==="Enter") doForgotPassword(); });
 document.getElementById("btn-change-pw").addEventListener("click", doChangePassword);
 document.getElementById("btn-back-change-pw").addEventListener("click", returnToMenuFresh);
+document.getElementById("customer-account-customer").addEventListener("change", function() {
+  syncCustomerAccountFields(true);
+  var message = document.getElementById("customer-account-issuance-message");
+  if (message) { message.className = "save-msg"; message.textContent = ""; }
+});
+document.getElementById("btn-customer-account-email").addEventListener("click", function() {
+  issueCustomerAccount("email");
+});
+document.getElementById("btn-customer-account-fax").addEventListener("click", function() {
+  issueCustomerAccount("fax");
+});
 document.getElementById("new-password").addEventListener("input", function() {
   checkPasswordStrength(this.value, "changepw-strength-fill", "changepw-strength-label");
 });

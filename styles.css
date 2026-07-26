@@ -2849,6 +2849,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .users-body { flex: 1; padding: 20px 16px; max-width: 1280px; width: 100%; margin: 0 auto; overflow-y: auto; }
 .users-body h2 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
 .users-desc { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.6; }
+.customer-account-issuance { display: none; margin: 12px 0 18px; border: 1px solid #d8e2df; border-radius: 8px; background: #fff; }
+.customer-account-issuance-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 13px 14px; border-bottom: 1px solid #e5ebe8; background: #f7faf8; }
+.customer-account-issuance-head h3 { margin: 0 0 3px; color: #1f2937; font-size: 14px; font-weight: 800; }
+.customer-account-issuance-head p { margin: 0; color: #667085; font-size: 11px; line-height: 1.45; }
+.customer-account-issuance-fields { display: grid; grid-template-columns: minmax(250px, 1.35fr) minmax(160px, .7fr) minmax(240px, 1fr) minmax(150px, .6fr); gap: 12px; padding: 14px; }
+.customer-account-issuance-fields input,
+.customer-account-issuance-fields select { width: 100%; min-height: 34px; box-sizing: border-box; }
+.customer-account-issuance-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-height: 54px; padding: 10px 14px; border-top: 1px solid #edf1ef; }
+.customer-account-issuance-actions .save-msg { margin-right: auto; line-height: 1.4; }
+.customer-account-fax-button { min-height: 36px; border: 1px solid #98a2b3; border-radius: 6px; padding: 7px 13px; background: #fff; color: #344054; font-size: 12px; font-weight: 800; cursor: pointer; }
+.customer-account-fax-button:hover { background: #f2f4f7; }
+.customer-account-fax-button:disabled,
+.customer-account-issuance-actions .btn-primary:disabled { opacity: .55; cursor: not-allowed; }
 .user-permission-overview { margin: 12px 0 16px; }
 .user-permission-overview-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 .user-permission-overview-head h3 { margin: 0 0 2px; color: #1f2937; font-size: 14px; font-weight: 800; }
@@ -2979,6 +2992,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .save-ok  { color: #1a8c3e; }
 .save-err { color: #e24b4a; }
 @media (max-width: 900px) {
+  .customer-account-issuance-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .customer-account-customer-field { grid-column: 1 / -1; }
   .user-permission-edit-controls.has-customer-field { grid-template-columns: 1fr; }
   .user-card-top { flex-direction: column; }
   .user-actions { justify-content: flex-start; width: 100%; min-width: 0; }
@@ -2986,6 +3001,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .user-settings-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
+  .customer-account-issuance-head { align-items: flex-start; flex-direction: column; }
+  .customer-account-issuance-fields { grid-template-columns: 1fr; }
+  .customer-account-customer-field { grid-column: auto; }
+  .customer-account-issuance-actions { align-items: stretch; flex-direction: column; }
+  .customer-account-issuance-actions .save-msg { width: 100%; margin: 0; }
+  .customer-account-issuance-actions button { width: 100%; }
   .user-permission-overview-head { align-items: flex-start; flex-direction: column; }
   .user-permission-toolbar { align-items: stretch; flex-direction: column; }
   .user-permission-toolbar .mgmt-search { width: 100%; }
