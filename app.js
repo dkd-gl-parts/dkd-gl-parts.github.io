@@ -91,6 +91,21 @@ var TRANSLATIONS = {
     customer_portal_scope_custom: "個別設定あり",
     customer_portal_account: "アカウント",
     customer_portal_change_password: "パスワード変更",
+    customer_users_title: "担当者管理",
+    customer_users_customer: "お取引先",
+    customer_users_admin: "管理者",
+    customer_users_member: "メンバー",
+    customer_users_invite_title: "担当者を追加",
+    customer_users_invite_note: "追加した担当者へ初回設定メールを送信します。",
+    customer_users_name: "担当者名",
+    customer_users_email: "ログインID（メールアドレス）",
+    customer_users_send_invite: "招待メールを送信",
+    customer_users_list_title: "ログイン担当者",
+    customer_users_admin_rule: "管理者は1名です。移行すると現在の管理者はメンバーになります。",
+    customer_users_transfer: "管理者に変更",
+    customer_users_transfer_confirm: "この担当者へ管理者権限を移行します。移行後、現在の管理者はメンバーになります。よろしいですか？",
+    customer_users_invite_sent: "担当者を追加し、初回設定メールを送信しました。",
+    customer_users_transfer_done: "管理者権限を移行しました。",
     customer_portal_link_missing: "得意先との紐づけがありません",
     customer_portal_inactive: "利用停止中",
     customer_portal_search_unavailable: "商品検索権限なし",
@@ -1245,6 +1260,21 @@ var TRANSLATIONS = {
     customer_portal_scope_custom: "Custom Rules",
     customer_portal_account: "Account",
     customer_portal_change_password: "Change Password",
+    customer_users_title: "User Management",
+    customer_users_customer: "Customer",
+    customer_users_admin: "Administrator",
+    customer_users_member: "Member",
+    customer_users_invite_title: "Add User",
+    customer_users_invite_note: "Send an initial setup email to the new user.",
+    customer_users_name: "User Name",
+    customer_users_email: "Login ID (Email)",
+    customer_users_send_invite: "Send Invitation",
+    customer_users_list_title: "Login Users",
+    customer_users_admin_rule: "There is one administrator. A transfer changes the current administrator to a member.",
+    customer_users_transfer: "Make Administrator",
+    customer_users_transfer_confirm: "Transfer administrator access to this user? The current administrator will become a member.",
+    customer_users_invite_sent: "The user was added and the setup email was sent.",
+    customer_users_transfer_done: "Administrator access was transferred.",
     customer_portal_link_missing: "No customer account is linked",
     customer_portal_inactive: "Account Inactive",
     customer_portal_search_unavailable: "Product Search Unavailable",
@@ -2386,6 +2416,21 @@ var TRANSLATIONS = {
     customer_portal_scope_custom: "有单独设置",
     customer_portal_account: "账户",
     customer_portal_change_password: "修改密码",
+    customer_users_title: "负责人管理",
+    customer_users_customer: "客户",
+    customer_users_admin: "管理员",
+    customer_users_member: "成员",
+    customer_users_invite_title: "添加负责人",
+    customer_users_invite_note: "向新负责人发送首次设置邮件。",
+    customer_users_name: "负责人姓名",
+    customer_users_email: "登录ID（邮箱）",
+    customer_users_send_invite: "发送邀请邮件",
+    customer_users_list_title: "登录负责人",
+    customer_users_admin_rule: "每个客户仅有一名管理员。移交后，当前管理员将变为成员。",
+    customer_users_transfer: "设为管理员",
+    customer_users_transfer_confirm: "是否将管理员权限移交给此负责人？当前管理员将变为成员。",
+    customer_users_invite_sent: "已添加负责人并发送首次设置邮件。",
+    customer_users_transfer_done: "管理员权限已移交。",
     customer_portal_link_missing: "尚未关联客户",
     customer_portal_inactive: "已停止使用",
     customer_portal_search_unavailable: "无商品搜索权限",
@@ -3569,7 +3614,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.562";
+var APP_VERSION       = "v1.1.563";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -3756,6 +3801,8 @@ var customerCatalogSelectedProduct = null;
 var customerCatalogImageInfo = { counts: {}, thumbnails: {} };
 var customerCatalogRequestSeq = 0;
 var customerCatalogDetailSeq = 0;
+var customerManagedUsers = [];
+var customerManagedUsersRequestSeq = 0;
 var CUSTOMER_CATALOG_RESULT_LIMIT = 60;
 var CUSTOMER_CATALOG_SCAN_LIMIT = 180;
 var salesCustomerOptions = [];
@@ -4018,6 +4065,9 @@ function isCustomerPortalSearchMode() {
 function activeCustomerPortalContext() {
   return isCustomerViewer() ? customerViewerContext : customerPortalPreviewContext;
 }
+function canManageCustomerPortalUsers() {
+  return !!(isCustomerViewer() && customerViewerContext && customerViewerContext.sales_customer_id && customerViewerContext.customer_role === "admin");
+}
 function isExternalViewerProfile(profile) {
   if (!profile) return false;
   var company = userCompanyCode(profile);
@@ -4228,7 +4278,7 @@ async function loadCustomerViewerContext() {
   if (!currentUser || !isCustomerViewerProfile(userProfile)) return;
   try {
     var links = await sb.from("customer_user_links")
-      .select("sales_customer_id,is_primary")
+      .select("sales_customer_id,is_primary,customer_role")
       .eq("user_id", currentUser.id)
       .eq("is_active", true)
       .order("is_primary", { ascending: false })
@@ -4236,7 +4286,7 @@ async function loadCustomerViewerContext() {
     if (links.error) throw links.error;
     var link = (links.data || [])[0] || null;
     if (!link || !link.sales_customer_id) {
-      customerViewerContext = { sales_customer_id: null, settings: defaultCustomerDisplaySettings(), visibilityRows: [] };
+      customerViewerContext = { sales_customer_id: null, customer_role: null, settings: defaultCustomerDisplaySettings(), visibilityRows: [] };
       return;
     }
     var customerR = await sb.from("sales_customers")
@@ -4245,9 +4295,10 @@ async function loadCustomerViewerContext() {
       .maybeSingle();
     if (customerR.error) throw customerR.error;
     customerViewerContext = await loadCustomerPortalContextForCustomer(customerR.data || null);
+    customerViewerContext.customer_role = link.customer_role === "admin" ? "admin" : "member";
   } catch (e) {
     console.warn("customer viewer context lookup failed", e);
-    customerViewerContext = { sales_customer_id: null, settings: defaultCustomerDisplaySettings(), visibilityRows: [] };
+    customerViewerContext = { sales_customer_id: null, customer_role: null, settings: defaultCustomerDisplaySettings(), visibilityRows: [] };
   }
 }
 function dedupeParts(parts) {
@@ -4540,6 +4591,7 @@ async function applyLanguage(lang) {
   componentCatalogNameCandidateMasterMap = {};
   renderMenu();
   renderCustomerPortal();
+  if (isScreenActive("customer-users")) renderCustomerManagedUsers();
   renderCustomerCatalogShell();
   if (isScreenActive("customer-catalog")) {
     await populateCustomerCatalogCategories();
@@ -5394,6 +5446,8 @@ async function doLogout() {
   customerCatalogProducts = [];
   customerCatalogSelectedProduct = null;
   customerCatalogImageInfo = { counts: {}, thumbnails: {} };
+  customerManagedUsers = [];
+  customerManagedUsersRequestSeq += 1;
   allProducts = []; dataLoaded = false;
   slPartsMap = {}; slPresenceMap = {}; currentSlPartIds = [];
   currentProduct = null; currentProductSpecs = []; currentProductNominalSpec = null; currentImages = [];
@@ -5517,7 +5571,7 @@ function renderCustomerExperienceHeaders() {
   var name = customerModeReady ? (customer.customer_name || fallbackName) : fallbackName;
   var label = customerModeReady ? accessRoleLabel("customer_viewer") : currentRoleDisplayLabel();
   var cls = customerModeReady ? "role-viewer" : roleClass(userProfile.role);
-  ["customer-portal", "customer-catalog"].forEach(function(prefix) {
+  ["customer-portal", "customer-catalog", "customer-users"].forEach(function(prefix) {
     var nameEl = document.getElementById(prefix + "-username");
     var badgeEl = document.getElementById(prefix + "-role-badge");
     if (nameEl) nameEl.textContent = name;
@@ -5594,6 +5648,8 @@ function renderCustomerPortal() {
   renderCustomerPortalPreviewControls();
   var accountBand = document.querySelector("#screen-customer-portal .customer-portal-account-band");
   if (accountBand) setCspStyle(accountBand, "display", previewMode ? "none" : "");
+  var manageUsersButton = document.getElementById("customer-portal-manage-users");
+  if (manageUsersButton) manageUsersButton.hidden = !canManageCustomerPortalUsers();
   renderCustomerExperienceHeaders();
   configureCustomerSearchShell();
 }
@@ -5620,6 +5676,229 @@ async function enterCustomerPortal() {
   showScreen("customer-portal");
   if (canPreviewCustomerPortal()) await loadDetailSalesCustomerOptions();
   renderCustomerPortal();
+}
+
+async function customerUserEdgeErrorCode(result) {
+  if (result && result.data && result.data.error) return result.data.error;
+  var context = result && result.error && result.error.context;
+  if (context && typeof context.json === "function") {
+    try {
+      var body = await context.json();
+      if (body && body.error) return body.error;
+    } catch (ignore) {}
+  }
+  return "customer_user_management_failed";
+}
+
+function customerUserEdgeErrorMessage(code) {
+  var messages = {
+    forbidden: t("err_perm"),
+    customer_not_found: "お取引先を確認できませんでした。",
+    customer_user_not_found: "担当者を確認できませんでした。",
+    active_customer_member_required: "有効なメンバーを選択してください。",
+    customer_admin_transfer_required: "管理者を停止する前に、別のメンバーへ管理者権限を移行してください。",
+    customer_admin_required: "管理者が不在になる操作はできません。",
+    customer_user_email_missing: "この担当者にはメールアドレスが登録されていません。",
+    invalid_status: "アカウント状態が正しくありません。"
+  };
+  return messages[code] || "担当者管理の処理に失敗しました。";
+}
+
+async function invokeCustomerUserManagement(body) {
+  return sb.functions.invoke("manage-customer-users", { body: body });
+}
+
+async function enterCustomerUsers() {
+  if (!canManageCustomerPortalUsers()) {
+    showPermissionDenied("open_customer_users", "customer_user_links");
+    return;
+  }
+  showScreen("customer-users");
+  renderCustomerExperienceHeaders();
+  customerPortalValue("customer-users-customer-name", customerViewerContext.customer && customerViewerContext.customer.customer_name);
+  await loadCustomerManagedUsers();
+}
+
+function returnToCustomerPortalFromUsers() {
+  showScreen("customer-portal");
+  renderCustomerPortal();
+}
+
+async function loadCustomerManagedUsers() {
+  var requestSeq = ++customerManagedUsersRequestSeq;
+  var host = document.getElementById("customer-users-list");
+  customerManagedUsers = [];
+  if (!host) return;
+  host.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
+  if (!canManageCustomerPortalUsers()) {
+    renderCustomerManagedUsers("forbidden");
+    return;
+  }
+  var result = await invokeCustomerUserManagement({
+    action: "list",
+    sales_customer_id: customerViewerContext.sales_customer_id
+  });
+  if (requestSeq !== customerManagedUsersRequestSeq) return;
+  if (result.error || !result.data || !result.data.ok) {
+    renderCustomerManagedUsers(await customerUserEdgeErrorCode(result));
+    return;
+  }
+  customerManagedUsers = result.data.users || [];
+  renderCustomerManagedUsers();
+}
+
+function renderCustomerManagedUsers(errorCode) {
+  var host = document.getElementById("customer-users-list");
+  var count = document.getElementById("customer-users-count");
+  if (!host) return;
+  if (count) count.textContent = tf("customer_catalog_count", { n: customerManagedUsers.length });
+  if (errorCode) {
+    host.innerHTML = "<div class='empty save-err'>" + esc(customerUserEdgeErrorMessage(errorCode)) + "</div>";
+    return;
+  }
+  if (!customerManagedUsers.length) {
+    host.innerHTML = "<div class='empty'>登録済みの担当者はいません。</div>";
+    return;
+  }
+  host.innerHTML = customerManagedUsers.map(function(user) {
+    var isAdmin = user.customer_role === "admin";
+    var status = user.status || "active";
+    var roleLabel = isAdmin ? t("customer_users_admin") : t("customer_users_member");
+    var state = "<span class='customer-user-role-badge " + (isAdmin ? "admin" : "member") + "'>" + esc(roleLabel) + "</span>" +
+      "<span class='status-badge status-" + esc(status) + "'>" + esc(t("users_" + status + "_badge")) + "</span>";
+    var statusButton = "";
+    var transferButton = "";
+    if (!isAdmin) {
+      statusButton = status === "active"
+        ? "<button class='btn-suspend customer-managed-status' type='button' data-uid='" + esc(user.id) + "' data-status='suspended'>" + esc(t("btn_suspend")) + "</button>"
+        : "<button class='btn-approve customer-managed-status' type='button' data-uid='" + esc(user.id) + "' data-status='active'>" + esc(t("btn_activate")) + "</button>";
+      if (status === "active") {
+        transferButton = "<button class='btn-sm-edit customer-managed-transfer' type='button' data-uid='" + esc(user.id) + "'>" + esc(t("customer_users_transfer")) + "</button>";
+      }
+    }
+    return "<div class='customer-user-row'>" +
+      "<div class='customer-user-identity'><strong>" + esc(user.name || "-") + "</strong><span>" + esc(user.email || "-") + "</span></div>" +
+      "<div class='customer-user-state'>" + state + "</div>" +
+      "<div class='customer-user-actions'>" + transferButton + statusButton +
+        "<button class='btn-pw-reset customer-managed-reset' type='button' data-uid='" + esc(user.id) + "'>" + esc(t("btn_send_pw_reset")) + "</button>" +
+      "</div>" +
+      "<span class='save-msg customer-user-row-message' id='customer-managed-message-" + esc(user.id) + "'></span>" +
+    "</div>";
+  }).join("");
+  bindCustomerManagedUserEvents();
+}
+
+function customerManagedUserById(userId) {
+  return customerManagedUsers.find(function(user) { return String(user.id) === String(userId); }) || null;
+}
+
+function bindCustomerManagedUserEvents() {
+  var host = document.getElementById("customer-users-list");
+  if (!host) return;
+  host.querySelectorAll(".customer-managed-status").forEach(function(button) {
+    button.addEventListener("click", function() { updateCustomerManagedUserStatus(button.dataset.uid, button.dataset.status); });
+  });
+  host.querySelectorAll(".customer-managed-reset").forEach(function(button) {
+    button.addEventListener("click", function() { sendCustomerManagedUserPasswordReset(button.dataset.uid, button); });
+  });
+  host.querySelectorAll(".customer-managed-transfer").forEach(function(button) {
+    button.addEventListener("click", function() { transferCustomerManagedAdmin(button.dataset.uid, button); });
+  });
+}
+
+async function inviteCustomerManagedUser() {
+  if (!canManageCustomerPortalUsers()) {
+    showPermissionDenied("invite_customer_user", "profiles");
+    return;
+  }
+  var nameInput = document.getElementById("customer-users-invite-name");
+  var emailInput = document.getElementById("customer-users-invite-email");
+  var button = document.getElementById("btn-customer-users-invite");
+  var message = document.getElementById("customer-users-invite-message");
+  var name = nameInput ? nameInput.value.trim() : "";
+  var email = emailInput ? emailInput.value.trim().toLowerCase() : "";
+  if (!name || !email) {
+    if (message) { message.className = "save-msg save-err customer-users-invite-message"; message.textContent = !name ? "担当者名を入力してください。" : "メールアドレスを入力してください。"; }
+    return;
+  }
+  if (!confirm(name + " / " + email + " を担当者として追加しますか？")) return;
+  if (button) button.disabled = true;
+  if (message) { message.className = "save-msg customer-users-invite-message"; message.textContent = t("loading"); }
+  var result = await sb.functions.invoke("invite-customer-user", {
+    body: {
+      sales_customer_id: customerViewerContext.sales_customer_id,
+      name: name,
+      email: email,
+      channel: "email"
+    }
+  });
+  if (button) button.disabled = false;
+  if (result.error || !result.data || !result.data.ok) {
+    var errorCode = await customerAccountInviteErrorCode(result);
+    if (message) { message.className = "save-msg save-err customer-users-invite-message"; message.textContent = customerAccountInviteErrorMessage(errorCode); }
+    return;
+  }
+  if (nameInput) nameInput.value = "";
+  if (emailInput) emailInput.value = "";
+  if (message) { message.className = "save-msg save-ok customer-users-invite-message"; message.textContent = t("customer_users_invite_sent"); }
+  await loadCustomerManagedUsers();
+}
+
+async function updateCustomerManagedUserStatus(userId, status) {
+  var user = customerManagedUserById(userId);
+  if (!canManageCustomerPortalUsers() || !user || ["active", "suspended"].indexOf(status) < 0) return;
+  if (status === "suspended" && !confirm((user.name || user.email) + " のログインを停止しますか？")) return;
+  var result = await invokeCustomerUserManagement({
+    action: "set_status",
+    sales_customer_id: customerViewerContext.sales_customer_id,
+    target_user_id: user.id,
+    status: status
+  });
+  if (result.error || !result.data || !result.data.ok) {
+    var message = document.getElementById("customer-managed-message-" + user.id);
+    if (message) { message.className = "save-msg save-err customer-user-row-message"; message.textContent = customerUserEdgeErrorMessage(await customerUserEdgeErrorCode(result)); }
+    return;
+  }
+  await loadCustomerManagedUsers();
+}
+
+async function sendCustomerManagedUserPasswordReset(userId, button) {
+  var user = customerManagedUserById(userId);
+  if (!canManageCustomerPortalUsers() || !user) return;
+  if (button) button.disabled = true;
+  var result = await invokeCustomerUserManagement({
+    action: "send_password_reset",
+    sales_customer_id: customerViewerContext.sales_customer_id,
+    target_user_id: user.id
+  });
+  if (button) button.disabled = false;
+  var message = document.getElementById("customer-managed-message-" + user.id);
+  if (result.error || !result.data || !result.data.ok) {
+    if (message) { message.className = "save-msg save-err customer-user-row-message"; message.textContent = customerUserEdgeErrorMessage(await customerUserEdgeErrorCode(result)); }
+    return;
+  }
+  if (message) { message.className = "save-msg save-ok customer-user-row-message"; message.textContent = t("msg_pw_reset_sent"); }
+}
+
+async function transferCustomerManagedAdmin(userId, button) {
+  var user = customerManagedUserById(userId);
+  if (!canManageCustomerPortalUsers() || !user || user.customer_role !== "member" || user.status !== "active") return;
+  if (!confirm(t("customer_users_transfer_confirm"))) return;
+  if (button) button.disabled = true;
+  var result = await invokeCustomerUserManagement({
+    action: "transfer_admin",
+    sales_customer_id: customerViewerContext.sales_customer_id,
+    target_user_id: user.id
+  });
+  if (button) button.disabled = false;
+  if (result.error || !result.data || !result.data.ok) {
+    var message = document.getElementById("customer-managed-message-" + user.id);
+    if (message) { message.className = "save-msg save-err customer-user-row-message"; message.textContent = customerUserEdgeErrorMessage(await customerUserEdgeErrorCode(result)); }
+    return;
+  }
+  await loadCustomerViewerContext();
+  alert(t("customer_users_transfer_done"));
+  returnToCustomerPortalFromUsers();
 }
 
 async function openCustomerPortalSearch(showAll) {
@@ -28941,7 +29220,7 @@ function accessRoleScopeText(roleCode) {
     case "sales_viewer": return "商品・販売価格・価格調査履歴の閲覧。製造原価は個別許可";
     case "all_viewer": return "社内全体の閲覧のみ。製造原価は個別許可";
     case "internal_viewer": return "社内一般閲覧。製造原価は個別許可";
-    case "customer_viewer": return "得意先専用ホーム・紐づいた得意先の商品/価格閲覧";
+    case "customer_viewer": return "得意先専用ホーム・紐づいた得意先の商品/価格閲覧。得意先管理者のみ担当者管理";
     case "external_viewer": return "公開範囲のみ閲覧";
     default: return "-";
   }
@@ -29170,6 +29449,15 @@ function permissionOverviewScreenGroups(context) {
             { label: "得意先販売価格", permissionKey: (isCustomer || roleIsInternal) ? "sales_price.view" : null, state: isCustomer
               ? permissionOverviewLimited("得意先表示設定に従う")
               : (roleIsInternal ? permissionOverviewLimited("選択した得意先の表示設定に従う") : permissionOverviewDenied("対象外")) },
+            { label: "担当者管理画面", state: isCustomer
+              ? permissionOverviewLimited("得意先管理者のみ表示")
+              : (role === "system_admin" ? permissionOverviewLimited("得意先管理から管理") : permissionOverviewDenied("表示なし")) },
+            { label: "担当者追加・停止・PW再設定", state: isCustomer
+              ? permissionOverviewLimited("同じ得意先の管理者のみ可")
+              : (role === "system_admin" ? permissionOverviewAllowed("全得意先を管理可") : permissionOverviewDenied("利用不可")) },
+            { label: "管理者権限の移行", state: isCustomer
+              ? permissionOverviewLimited("有効なメンバーへ移行可")
+              : (role === "system_admin" ? permissionOverviewAllowed("有効なメンバーへ移行可") : permissionOverviewDenied("利用不可")) },
             { label: "社内向け画面・編集操作", state: isCustomer
               ? permissionOverviewDenied("表示なし")
               : (roleIsInternal ? permissionOverviewLimited("得意先として表示中は表示なし") : permissionOverviewDenied("対象外")) },
@@ -29461,31 +29749,10 @@ async function loadCustomerAccountUsers(customerId) {
     return;
   }
   try {
-    var linksR = await sb.from("customer_user_links")
-      .select("user_id,is_primary,is_active")
-      .eq("sales_customer_id", customerId)
-      .eq("is_active", true);
+    var result = await invokeCustomerUserManagement({ action: "list", sales_customer_id: customerId });
     if (requestSeq !== customerAccountRequestSeq) return;
-    if (linksR.error) throw linksR.error;
-    var links = linksR.data || [];
-    var userIds = links.map(function(link) { return link.user_id; }).filter(Boolean);
-    if (!userIds.length) {
-      renderCustomerAccountUsers();
-      return;
-    }
-    var profilesR = await sb.from("profiles")
-      .select("id,email,name,status,role,role_code,group_name,company_code,department_code,created_at")
-      .in("id", userIds)
-      .order("created_at", { ascending: true });
-    if (requestSeq !== customerAccountRequestSeq) return;
-    if (profilesR.error) throw profilesR.error;
-    var linkMap = {};
-    links.forEach(function(link) { linkMap[String(link.user_id)] = link; });
-    customerAccountUsers = (profilesR.data || []).filter(function(user) {
-      return normalizeAccessRoleForCompany(userAccessRoleCode(user), userCompanyCode(user)) === "customer_viewer";
-    }).map(function(user) {
-      return Object.assign({}, user, { customer_link: linkMap[String(user.id)] || null });
-    });
+    if (result.error || !result.data || !result.data.ok) throw new Error(await customerUserEdgeErrorCode(result));
+    customerAccountUsers = result.data.users || [];
     renderCustomerAccountUsers();
   } catch (e) {
     if (requestSeq !== customerAccountRequestSeq) return;
@@ -29510,16 +29777,22 @@ function renderCustomerAccountUsers(errorMessage) {
     return;
   }
   host.innerHTML = customerAccountUsers.map(function(user) {
+    var isAdmin = user.customer_role === "admin";
     var status = user.status || "active";
     var statusBadge = "<span class='status-badge status-" + esc(status) + "'>" + esc(t("users_" + status + "_badge")) + "</span>";
-    var actionButton = status === "active"
+    var roleBadge = "<span class='customer-user-role-badge " + (isAdmin ? "admin" : "member") + "'>" + esc(isAdmin ? t("customer_users_admin") : t("customer_users_member")) + "</span>";
+    var actionButton = isAdmin ? "" : (status === "active"
       ? "<button class='btn-suspend customer-account-status-button' type='button' data-customer-account-status='suspended' data-uid='" + esc(user.id) + "'>" + esc(t("btn_suspend")) + "</button>"
-      : "<button class='btn-approve customer-account-status-button' type='button' data-customer-account-status='active' data-uid='" + esc(user.id) + "'>" + esc(t("btn_activate")) + "</button>";
+      : "<button class='btn-approve customer-account-status-button' type='button' data-customer-account-status='active' data-uid='" + esc(user.id) + "'>" + esc(t("btn_activate")) + "</button>");
+    var transferButton = !isAdmin && status === "active"
+      ? "<button class='btn-sm-edit customer-account-transfer-button' type='button' data-uid='" + esc(user.id) + "'>" + esc(t("customer_users_transfer")) + "</button>"
+      : "";
     return "<div class='customer-account-user-row'>" +
       "<div class='customer-account-user-identity'><strong>" + esc(user.name || "-") + "</strong><span>ログインID: " + esc(user.email || "-") + "</span></div>" +
-      "<div class='customer-account-user-status'>" + statusBadge + "</div>" +
+      "<div class='customer-account-user-status'>" + roleBadge + statusBadge + "</div>" +
       "<div class='customer-account-user-actions'>" +
         "<button class='btn-user-history customer-account-history-button' type='button' data-uid='" + esc(user.id) + "'>" + esc(t("btn_auth_history")) + "</button>" +
+        transferButton +
         actionButton +
         "<button class='btn-pw-reset customer-account-reset-button' type='button' data-uid='" + esc(user.id) + "'>" + esc(t("btn_send_pw_reset")) + "</button>" +
       "</div>" +
@@ -29545,6 +29818,9 @@ function bindCustomerAccountUserEvents() {
   host.querySelectorAll(".customer-account-reset-button").forEach(function(button) {
     button.addEventListener("click", function() { sendCustomerAccountPasswordReset(button.dataset.uid, button); });
   });
+  host.querySelectorAll(".customer-account-transfer-button").forEach(function(button) {
+    button.addEventListener("click", function() { transferCustomerAccountAdmin(button.dataset.uid, button); });
+  });
 }
 
 async function updateCustomerAccountUserStatus(userId, status) {
@@ -29554,21 +29830,19 @@ async function updateCustomerAccountUserStatus(userId, status) {
     return;
   }
   var customerId = currentCustomerAccessCustomer && currentCustomerAccessCustomer.id;
-  if (status === "suspended" && !confirm("この得意先ログインIDを停止しますか？")) return;
-  var result = await sb.from("profiles").update({ status: status, updated_at: new Date().toISOString() }).eq("id", user.id);
-  if (result.error) {
-    var failedMessage = document.getElementById("customer-account-user-message-" + user.id);
-    if (failedMessage) { failedMessage.className = "save-msg save-err customer-account-user-message"; failedMessage.textContent = t("msg_save_err"); }
+  if (!customerId) return;
+  if (status === "suspended" && user.customer_role === "admin") {
+    var adminMessage = document.getElementById("customer-account-user-message-" + user.id);
+    if (adminMessage) { adminMessage.className = "save-msg save-err customer-account-user-message"; adminMessage.textContent = customerUserEdgeErrorMessage("customer_admin_transfer_required"); }
     return;
   }
-  await logUserActivity(status === "active" ? "approve" : "suspend", {
-    screen: "customer-access-mgmt",
-    action: status === "active" ? "activate_customer_user" : "suspend_customer_user",
-    target_type: "profiles",
-    target_id: user.id,
-    target_desc: user.email || user.id,
-    metadata: { sales_customer_id: customerId, status: status }
-  });
+  if (status === "suspended" && !confirm("この得意先ログインIDを停止しますか？")) return;
+  var result = await invokeCustomerUserManagement({ action: "set_status", sales_customer_id: customerId, target_user_id: user.id, status: status });
+  if (result.error || !result.data || !result.data.ok) {
+    var failedMessage = document.getElementById("customer-account-user-message-" + user.id);
+    if (failedMessage) { failedMessage.className = "save-msg save-err customer-account-user-message"; failedMessage.textContent = customerUserEdgeErrorMessage(await customerUserEdgeErrorCode(result)); }
+    return;
+  }
   if (currentCustomerAccessCustomer && String(currentCustomerAccessCustomer.id) === String(customerId)) {
     await loadCustomerAccountUsers(customerId);
   }
@@ -29582,27 +29856,34 @@ async function sendCustomerAccountPasswordReset(userId, button) {
   }
   var message = document.getElementById("customer-account-user-message-" + user.id);
   if (button) button.disabled = true;
-  var result = await sb.auth.resetPasswordForEmail(user.email, {
-    redirectTo: window.location.origin + window.location.pathname
-  });
+  var customerId = currentCustomerAccessCustomer && currentCustomerAccessCustomer.id;
+  var result = await invokeCustomerUserManagement({ action: "send_password_reset", sales_customer_id: customerId, target_user_id: user.id });
   if (button) button.disabled = false;
-  if (result.error) {
-    if (message) { message.className = "save-msg save-err customer-account-user-message"; message.textContent = t("msg_pw_reset_err"); }
+  if (result.error || !result.data || !result.data.ok) {
+    if (message) { message.className = "save-msg save-err customer-account-user-message"; message.textContent = customerUserEdgeErrorMessage(await customerUserEdgeErrorCode(result)); }
     return;
   }
-  await logUserActivity("password_reset_sent", {
-    screen: "customer-access-mgmt",
-    action: "send_customer_password_reset",
-    target_type: "profiles",
-    target_id: user.id,
-    target_desc: user.email,
-    metadata: { sales_customer_id: currentCustomerAccessCustomer && currentCustomerAccessCustomer.id }
-  });
   if (message) {
     message.className = "save-msg save-ok customer-account-user-message";
     message.textContent = t("msg_pw_reset_sent");
     setTimeout(function() { message.textContent = ""; }, 3000);
   }
+}
+
+async function transferCustomerAccountAdmin(userId, button) {
+  var user = customerAccountUserById(userId);
+  var customerId = currentCustomerAccessCustomer && currentCustomerAccessCustomer.id;
+  if (!isSystemAdmin() || !customerId || !user || user.customer_role !== "member" || user.status !== "active") return;
+  if (!confirm(t("customer_users_transfer_confirm"))) return;
+  if (button) button.disabled = true;
+  var result = await invokeCustomerUserManagement({ action: "transfer_admin", sales_customer_id: customerId, target_user_id: user.id });
+  if (button) button.disabled = false;
+  if (result.error || !result.data || !result.data.ok) {
+    var message = document.getElementById("customer-account-user-message-" + user.id);
+    if (message) { message.className = "save-msg save-err customer-account-user-message"; message.textContent = customerUserEdgeErrorMessage(await customerUserEdgeErrorCode(result)); }
+    return;
+  }
+  await loadCustomerAccountUsers(customerId);
 }
 
 function customerAccountInviteErrorMessage(code) {
@@ -29612,7 +29893,8 @@ function customerAccountInviteErrorMessage(code) {
     invalid_email: "正しいメールアドレスを入力してください",
     customer_not_found: "有効な得意先を確認できませんでした",
     email_already_registered: "このメールアドレスは登録済みです。登録済みログインIDからPW再設定メールを送信してください",
-    forbidden: "システム管理者のみ実行できます",
+    forbidden: "この操作を実行する権限がありません",
+    channel_forbidden: "得意先管理者からの発行は招待メールのみ利用できます",
     invite_link_missing: "FAX用の初回設定リンクを作成できませんでした",
     invite_failed: "アカウント発行に失敗しました"
   };
@@ -30753,13 +31035,17 @@ document.getElementById("btn-back-to-login").addEventListener("click", function(
 document.getElementById("btn-submit-reg").addEventListener("click", doRegister);
 document.getElementById("reg-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doRegister(); });
 document.getElementById("login-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
-["btn-logout-menu","btn-logout-customer-portal","btn-logout-customer-catalog","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-component-compat-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-manufacturing-cost-mgmt","btn-logout-finished-label-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
+["btn-logout-menu","btn-logout-customer-portal","btn-logout-customer-users","btn-logout-customer-catalog","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-component-compat-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-manufacturing-cost-mgmt","btn-logout-finished-label-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
 document.getElementById("customer-portal-search-btn").addEventListener("click", function(){ openCustomerPortalSearch(false); });
 document.getElementById("customer-portal-all-btn").addEventListener("click", function(){ openCustomerPortalSearch(true); });
 document.getElementById("customer-portal-q").addEventListener("keydown", function(e){ if (e.key === "Enter") openCustomerPortalSearch(false); });
 document.getElementById("customer-portal-customer-select").addEventListener("change", function(){ loadCustomerPortalPreviewContext(this.value); });
 document.getElementById("btn-back-customer-portal").addEventListener("click", exitCustomerMode);
 document.getElementById("customer-portal-change-password").addEventListener("click", enterChangePw);
+document.getElementById("customer-portal-manage-users").addEventListener("click", enterCustomerUsers);
+document.getElementById("btn-back-customer-users").addEventListener("click", returnToCustomerPortalFromUsers);
+document.getElementById("btn-customer-users-invite").addEventListener("click", inviteCustomerManagedUser);
+document.getElementById("customer-users-invite-email").addEventListener("keydown", function(e) { if (e.key === "Enter") inviteCustomerManagedUser(); });
 document.getElementById("btn-back-customer-catalog").addEventListener("click", returnToCustomerPortal);
 document.getElementById("btn-exit-customer-mode").addEventListener("click", exitCustomerMode);
 document.getElementById("customer-catalog-search-btn").addEventListener("click", function(){ runCustomerCatalogSearch({ logActivity: true }); });

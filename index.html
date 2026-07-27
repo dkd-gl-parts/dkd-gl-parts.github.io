@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.562">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.562"; -->
+<meta name="dcats-app-version" content="v1.1.563">
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.563"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co; form-action 'self';">
 <title>D-CATS</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233c7df0'/%3E%3Cpath d='M8 17h16M16 9v14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
@@ -128,7 +128,7 @@
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.562</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.563</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -157,7 +157,7 @@
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.562</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.563</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -188,7 +188,7 @@
       <button class="back-btn" id="btn-back-customer-portal" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="customer_portal_title">得意先ポータル</span>
-      <span class="app-version-wrap"><span class="app-version">v1.1.562</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version">v1.1.563</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-customer-portal">
@@ -239,7 +239,73 @@
     <section class="customer-portal-account-band">
       <div class="customer-portal-inner customer-portal-account-layout">
         <h2 data-i18n="customer_portal_account">アカウント</h2>
-        <button class="customer-portal-account-button" id="customer-portal-change-password" type="button" data-i18n="customer_portal_change_password">パスワード変更</button>
+        <div class="customer-portal-account-actions">
+          <button class="customer-portal-account-button" id="customer-portal-manage-users" type="button" data-i18n="customer_users_title" hidden>担当者管理</button>
+          <button class="customer-portal-account-button" id="customer-portal-change-password" type="button" data-i18n="customer_portal_change_password">パスワード変更</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- =============================================
+   得意先担当者管理
+============================================= -->
+<div id="screen-customer-users" class="screen">
+  <div class="page-header customer-portal-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-customer-users" data-i18n="customer_portal_back">← 得意先ホーム</button>
+      <span class="logo-text">D&#8209;CATS</span>
+      <span class="logo-sub" data-i18n="customer_users_title">担当者管理</span>
+      <span class="app-version-wrap"><span class="app-version">v1.1.563</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+    </div>
+    <div class="page-header-right">
+      <div class="lang-sw" id="lang-sw-customer-users">
+        <button class="lang-btn" data-lang="ja">日本語</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="zh">中文</button>
+      </div>
+      <span class="header-username" id="customer-users-username"></span>
+      <span class="role-badge" id="customer-users-role-badge"></span>
+      <button class="btn-logout" id="btn-logout-customer-users" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <main class="customer-users-body">
+    <section class="customer-users-summary-band">
+      <div class="customer-portal-inner customer-users-summary">
+        <div>
+          <span data-i18n="customer_users_customer">お取引先</span>
+          <strong id="customer-users-customer-name">-</strong>
+        </div>
+        <span class="customer-user-role-badge admin" data-i18n="customer_users_admin">管理者</span>
+      </div>
+    </section>
+    <section class="customer-users-invite-band">
+      <div class="customer-portal-inner">
+        <div class="customer-users-section-head">
+          <div>
+            <h1 data-i18n="customer_users_invite_title">担当者を追加</h1>
+            <p data-i18n="customer_users_invite_note">追加した担当者へ初回設定メールを送信します。</p>
+          </div>
+        </div>
+        <div class="customer-users-invite-form">
+          <label><span data-i18n="customer_users_name">担当者名</span><input id="customer-users-invite-name" type="text" maxlength="120" autocomplete="name"></label>
+          <label><span data-i18n="customer_users_email">ログインID（メールアドレス）</span><input id="customer-users-invite-email" type="email" maxlength="254" autocomplete="email"></label>
+          <button class="btn-primary" id="btn-customer-users-invite" type="button" data-i18n="customer_users_send_invite">招待メールを送信</button>
+        </div>
+        <div class="save-msg customer-users-invite-message" id="customer-users-invite-message"></div>
+      </div>
+    </section>
+    <section class="customer-users-list-band">
+      <div class="customer-portal-inner">
+        <div class="customer-users-section-head">
+          <div>
+            <h2 data-i18n="customer_users_list_title">ログイン担当者</h2>
+            <p data-i18n="customer_users_admin_rule">管理者は1名です。移行すると現在の管理者はメンバーになります。</p>
+          </div>
+          <span class="mgmt-count" id="customer-users-count"></span>
+        </div>
+        <div class="customer-users-list" id="customer-users-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
       </div>
     </section>
   </main>
@@ -254,7 +320,7 @@
       <button class="back-btn" id="btn-back-customer-catalog" data-i18n="customer_portal_back">← 得意先ホーム</button>
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="customer_catalog_title">商品カタログ</span>
-      <span class="app-version-wrap"><span class="app-version">v1.1.562</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version">v1.1.563</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <button class="customer-catalog-exit" id="btn-exit-customer-mode" type="button" data-i18n="customer_portal_exit_mode">社内メニューへ戻る</button>
@@ -311,7 +377,7 @@
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text" id="search-screen-title">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.562</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.563</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -988,7 +1054,7 @@
           <div class="customer-account-issuance-head">
             <div>
               <h3>ログインアカウント</h3>
-              <p>選択中の得意先に、得意先閲覧のログインIDを発行します。</p>
+              <p>最初の1名を管理者、2人目以降をメンバーとして発行します。</p>
             </div>
             <span class="permission-status permission-status-limited">システム管理者</span>
           </div>
