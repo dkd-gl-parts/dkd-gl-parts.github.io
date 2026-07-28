@@ -31,10 +31,14 @@ bannedPatterns.forEach((pattern) => {
 const exactPartsIndex = masterSource.indexOf('return column + ".eq." + normalized');
 const exactQueryIndex = masterSource.indexOf("var exact = await runCoreProductQuery(exactParts, 1)");
 const prefixPartsIndex = masterSource.indexOf('return column + ".like." + normalized + "%"');
-const prefixQueryIndex = masterSource.indexOf("var fast = await runCoreProductQuery(prefixParts, 2)");
+const prefixRpcIndex = masterSource.indexOf('var fast = normalized ? await sb.rpc("search_core_products_by_prefix_fast"');
+const prefixFallbackIndex = masterSource.indexOf("fast = await runCoreProductQuery(prefixParts, 2)", prefixRpcIndex);
 
-if (exactPartsIndex < 0 || exactQueryIndex < exactPartsIndex || prefixPartsIndex < exactQueryIndex || prefixQueryIndex < prefixPartsIndex) {
+if (exactPartsIndex < 0 || exactQueryIndex < exactPartsIndex || prefixPartsIndex < exactQueryIndex || prefixRpcIndex < prefixPartsIndex) {
   throw new Error("indexed exact product-number lookup must run before prefix matching");
+}
+if (prefixFallbackIndex < prefixRpcIndex || !masterSource.slice(prefixRpcIndex, prefixFallbackIndex).includes("if (fast.error)")) {
+  throw new Error("direct prefix lookup must remain an error fallback for the fast RPC");
 }
 if (!masterSource.includes('"dks_shohin_cd"') || !masterSource.includes('"gltek_part_number"')) {
   throw new Error("exact lookup must include DKS and GLTEK product numbers");
