@@ -1693,6 +1693,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-access-panel { background: #fff; border: 1px solid #e4e7ee; border-radius: 10px; overflow: hidden; }
 .customer-access-panel-head { min-height: 44px; padding: 11px 14px; border-bottom: 1px solid #edf0f5; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .customer-access-panel-title { font-size: 14px; font-weight: 800; color: #1a1a2e; }
+.customer-access-save-bar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 14px; border-bottom: 1px solid #dce4ee; background: #f7f9fc; box-shadow: 0 2px 6px rgba(26,42,70,.06); }
+.customer-access-save-copy { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.customer-access-save-copy strong { color: #36506d; font-size: 13px; line-height: 1.4; }
+.customer-access-save-copy span { color: #667085; font-size: 11px; line-height: 1.5; }
+.customer-access-save-bar.unsaved { border-bottom-color: #efb45a; background: #fff7e8; box-shadow: 0 2px 8px rgba(154,91,0,.12); }
+.customer-access-save-bar.unsaved .customer-access-save-copy strong { color: #9a5b00; font-size: 14px; }
+.customer-access-save-btn { min-height: 44px; padding: 10px 18px; font-size: 14px; flex: 0 0 auto; }
+.customer-access-save-btn:disabled { background: #c6ced9; color: #fff; cursor: not-allowed; opacity: 1; }
 .customer-access-list { max-height: calc(100vh - 230px); overflow: auto; }
 .customer-access-row { width: 100%; border: none; background: #fff; border-bottom: 1px solid #f0f2f5; padding: 10px 12px; text-align: left; cursor: pointer; display: block; }
 .customer-access-row:hover { background: #f8fbff; }
@@ -1761,6 +1769,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 }
 @media(max-width:640px){
   .customer-access-summary, .customer-setting-grid, .customer-rule-form { grid-template-columns: 1fr; }
+  .customer-access-save-bar { position: static; align-items: stretch; flex-direction: column; gap: 10px; }
+  .customer-access-save-btn { width: 100%; white-space: normal; }
   .customer-category-toolbar { align-items: flex-start; flex-direction: column; }
   .customer-category-grid { grid-template-columns: 1fr 1fr; }
 }

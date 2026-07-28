@@ -686,7 +686,16 @@ var TRANSLATIONS = {
     customer_access_search_ph: "得意先コード・得意先名で検索",
     customer_access_customers: "得意先",
     customer_access_settings: "表示設定",
-    customer_access_save_display: "表示設定を保存",
+    customer_access_save_display: "変更を保存して得意先画面へ反映",
+    customer_access_save_no_customer: "得意先を選択してください",
+    customer_access_save_no_customer_help: "左の一覧から設定する得意先を選択してください。",
+    customer_access_save_clean: "保存済みです",
+    customer_access_save_clean_help: "表示設定やカテゴリを変更した場合は、保存ボタンを押すと得意先画面へ反映されます。",
+    customer_access_save_dirty: "未保存の変更があります",
+    customer_access_save_dirty_help: "まだ得意先画面に反映されていません。右の保存ボタンを押してください。",
+    customer_access_saving: "保存中...",
+    customer_access_saving_help: "表示設定を得意先画面へ反映しています。",
+    customer_access_discard_confirm: "未保存の表示設定があります。保存せずに別の得意先へ移動しますか？",
     customer_access_select_hint: "得意先を選択してください",
     customer_access_code: "コード",
     customer_access_customer: "得意先",
@@ -703,7 +712,7 @@ var TRANSLATIONS = {
     customer_access_display_settings: "得意先向け表示ルール",
     customer_access_rule_help: "販売価格をOFFにすると、0円表示・価格あり商品のみ表示もOFFになります。価格あり商品のみ表示をONにすると、価格未設定商品は非表示になります。",
     customer_access_category_visibility: "得意先に表示するカテゴリ",
-    customer_access_category_help: "チェックしたカテゴリを商品カタログに表示します。未設定時は主要6カテゴリが初期値です。個別商品ルールがある場合は個別設定を優先します。",
+    customer_access_category_help: "チェックしたカテゴリを商品カタログに表示します。未設定時は主要6カテゴリが初期値です。変更後は上の保存ボタンを押してください。",
     customer_access_category_all: "すべて選択",
     customer_access_category_none: "すべて解除",
     customer_access_category_count: "{n}カテゴリ表示",
@@ -1864,7 +1873,16 @@ var TRANSLATIONS = {
     customer_access_search_ph: "Search by customer code or name",
     customer_access_customers: "Customers",
     customer_access_settings: "Display Settings",
-    customer_access_save_display: "Save Display Settings",
+    customer_access_save_display: "Save changes and apply to customer view",
+    customer_access_save_no_customer: "Select a customer",
+    customer_access_save_no_customer_help: "Select the customer to configure from the list on the left.",
+    customer_access_save_clean: "All changes are saved",
+    customer_access_save_clean_help: "After changing display settings or categories, press Save to apply them to the customer view.",
+    customer_access_save_dirty: "You have unsaved changes",
+    customer_access_save_dirty_help: "These changes are not visible to the customer yet. Press the Save button.",
+    customer_access_saving: "Saving...",
+    customer_access_saving_help: "Applying display settings to the customer view.",
+    customer_access_discard_confirm: "You have unsaved display settings. Move to another customer without saving them?",
     customer_access_select_hint: "Select a customer.",
     customer_access_code: "Code",
     customer_access_customer: "Customer",
@@ -1881,7 +1899,7 @@ var TRANSLATIONS = {
     customer_access_display_settings: "Customer display rules",
     customer_access_rule_help: "When sales price is off, zero-price display and priced-only display are also off. When priced-only is on, products without prices are hidden.",
     customer_access_category_visibility: "Categories visible to this customer",
-    customer_access_category_help: "Checked categories appear in the product catalog. Six primary categories are selected by default. Product-specific rules take priority as exceptions.",
+    customer_access_category_help: "Checked categories appear in the product catalog. Six primary categories are selected by default. Press the Save button above after making changes.",
     customer_access_category_all: "Select all",
     customer_access_category_none: "Clear all",
     customer_access_category_count: "{n} categories visible",
@@ -3035,7 +3053,16 @@ var TRANSLATIONS = {
     customer_access_search_ph: "按客户代码或名称搜索",
     customer_access_customers: "客户",
     customer_access_settings: "显示设置",
-    customer_access_save_display: "保存显示设置",
+    customer_access_save_display: "保存更改并应用到客户页面",
+    customer_access_save_no_customer: "请选择客户",
+    customer_access_save_no_customer_help: "请从左侧列表中选择要设置的客户。",
+    customer_access_save_clean: "已保存",
+    customer_access_save_clean_help: "更改显示设置或类别后，请按保存按钮以应用到客户页面。",
+    customer_access_save_dirty: "有未保存的更改",
+    customer_access_save_dirty_help: "这些更改尚未显示在客户页面。请按保存按钮。",
+    customer_access_saving: "正在保存...",
+    customer_access_saving_help: "正在将显示设置应用到客户页面。",
+    customer_access_discard_confirm: "有未保存的显示设置。是否不保存并切换到其他客户？",
     customer_access_select_hint: "请选择客户。",
     customer_access_code: "代码",
     customer_access_customer: "客户",
@@ -3052,7 +3079,7 @@ var TRANSLATIONS = {
     customer_access_display_settings: "客户显示规则",
     customer_access_rule_help: "关闭销售价格时，0日元显示和仅显示有价格商品也会关闭。开启仅显示有价格商品时，未设置价格的商品会隐藏。",
     customer_access_category_visibility: "向客户显示的类别",
-    customer_access_category_help: "商品目录中仅显示已勾选的类别。默认选择六个主要类别，单个商品规则作为例外优先应用。",
+    customer_access_category_help: "商品目录中仅显示已勾选的类别。默认选择六个主要类别。更改后请按上方的保存按钮。",
     customer_access_category_all: "全选",
     customer_access_category_none: "全部取消",
     customer_access_category_count: "显示{n}个类别",
@@ -3641,7 +3668,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.566";
+var APP_VERSION       = "v1.1.567";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -3843,6 +3870,8 @@ var customerAccessFilteredRows = [];
 var currentCustomerAccessCustomer = null;
 var customerAccessSettings = null;
 var customerAccessVisibilityRows = [];
+var customerAccessSavedDisplayDraft = null;
+var customerAccessSettingsSaving = false;
 var customerAccessRuleProductMap = {};
 var customerAccessProductCandidates = [];
 var customerAccessSelectedProduct = null;
@@ -4272,13 +4301,7 @@ function isCustomerVisibleProduct(p) {
   var context = activeCustomerPortalContext();
   if (!context || !context.sales_customer_id) return false;
   var rows = context.visibilityRows || [];
-  if (!rows.length) return true;
-  var dkdId = String(p.dkd_shohin_id || p.id || "");
   var category = String(p.category_code || p.category || "");
-  var productRule = rows.find(function(row) {
-    return row.visibility_scope === "product" && String(row.dkd_shohin_id || "") === dkdId;
-  });
-  if (productRule) return !!productRule.is_visible;
   return customerCategoryIsVisible(category, rows);
 }
 
@@ -4294,6 +4317,7 @@ async function loadCustomerPortalContextForCustomer(customer) {
   var visibilityR = await sb.from("customer_product_visibility")
     .select("visibility_scope,category_code,dkd_shohin_id,is_visible")
     .eq("sales_customer_id", customer.id)
+    .in("visibility_scope", ["all", "category"])
     .limit(2000);
   if (visibilityR.error) console.warn("customer visibility lookup failed", visibilityR.error);
   return {
@@ -5959,10 +5983,6 @@ function customerCatalogRequiresRegisteredPrice() {
 
 function customerCatalogRestrictedCategoryCodes() {
   var rows = customerCatalogContext().visibilityRows || [];
-  var categoryRules = rows.filter(function(row) {
-    return row.visibility_scope === "all" || row.visibility_scope === "category";
-  });
-  if (!categoryRules.length) return null;
   return (categoryOptions || []).map(function(cat) {
     return cat.category_code || cat.category || "";
   }).filter(function(code) {
@@ -27735,7 +27755,12 @@ function renderCustomerAccessList() {
 async function selectCustomerAccessCustomer(customerId) {
   var customer = customerAccessRows.find(function(row) { return String(row.id) === String(customerId); });
   if (!customer) return;
+  var changesCustomer = currentCustomerAccessCustomer && String(currentCustomerAccessCustomer.id) !== String(customerId);
+  if (changesCustomer && customerAccessHasUnsavedChanges() && !confirm(t("customer_access_discard_confirm"))) return;
   currentCustomerAccessCustomer = customer;
+  customerAccessSavedDisplayDraft = null;
+  customerAccessSettingsSaving = false;
+  updateCustomerAccessSaveState();
   customerAccessSelectedProduct = null;
   customerAccessProductCandidates = [];
   var accountMessage = document.getElementById("customer-account-issuance-message");
@@ -27760,6 +27785,7 @@ async function loadCustomerAccessDetail(customerId) {
   var visibilityR = await sb.from("customer_product_visibility")
     .select("id,sales_customer_id,visibility_scope,category_code,dkd_shohin_id,is_visible,note,updated_at")
     .eq("sales_customer_id", customerId)
+    .in("visibility_scope", ["all", "category"])
     .order("visibility_scope", { ascending: true })
     .order("id", { ascending: true });
   if (visibilityR.error) {
@@ -27768,7 +27794,6 @@ async function loadCustomerAccessDetail(customerId) {
   } else {
     customerAccessVisibilityRows = visibilityR.data || [];
   }
-  await loadCustomerAccessRuleProductMap();
   renderCustomerAccessDetail();
 }
 
@@ -27854,6 +27879,9 @@ function renderCustomerAccessDetail() {
   var detail = document.getElementById("customer-access-detail");
   if (!detail) return;
   if (!currentCustomerAccessCustomer) {
+    customerAccessSavedDisplayDraft = null;
+    customerAccessSettingsSaving = false;
+    updateCustomerAccessSaveState();
     detail.innerHTML = "<div class='empty'>" + esc(t("customer_access_select_hint")) + "</div>";
     return;
   }
@@ -27892,12 +27920,10 @@ function renderCustomerAccessDetail() {
   html += "<div class='component-section-title'>" + esc(t("customer_access_category_visibility")) + "</div>";
   html += "<div class='component-note'>" + esc(t("customer_access_category_help")) + "</div>";
   html += customerAccessCategoryChecksHtml();
-  html += "<div class='component-section-title'>" + esc(t("customer_access_visibility_rules")) + "</div>";
-  html += renderCustomerAccessRuleForm();
-  html += renderCustomerAccessRulesTable();
   detail.innerHTML = html;
   bindCustomerAccessDetailEvents();
   syncCustomerDisplayRuleControls();
+  resetCustomerAccessSaveState();
 }
 
 function renderCustomerAccessRuleForm() {
@@ -27950,11 +27976,19 @@ function bindCustomerAccessDetailEvents() {
   var detail = document.getElementById("customer-access-detail");
   if (!detail) return;
   detail.querySelectorAll("[data-customer-setting]").forEach(function(el) {
-    el.addEventListener("change", syncCustomerDisplayRuleControls);
+    el.addEventListener("change", function() {
+      syncCustomerDisplayRuleControls();
+      updateCustomerAccessSaveState();
+    });
   });
   detail.querySelectorAll("[data-customer-category]").forEach(function(el) {
-    el.addEventListener("change", syncCustomerAccessCategoryCount);
+    el.addEventListener("change", function() {
+      syncCustomerAccessCategoryCount();
+      updateCustomerAccessSaveState();
+    });
   });
+  var rankSelect = document.getElementById("customer-access-rank-select");
+  if (rankSelect) rankSelect.addEventListener("change", updateCustomerAccessSaveState);
   var categoryAllBtn = document.getElementById("btn-customer-category-all");
   if (categoryAllBtn) categoryAllBtn.addEventListener("click", function() { setCustomerAccessCategoriesChecked(true); });
   var categoryNoneBtn = document.getElementById("btn-customer-category-none");
@@ -27965,42 +27999,13 @@ function bindCustomerAccessDetailEvents() {
   if (restoreBtn) restoreBtn.addEventListener("click", function() { setCustomerAccessActive(true); });
   var deleteBtn = document.getElementById("btn-customer-access-delete");
   if (deleteBtn) deleteBtn.addEventListener("click", deleteCustomerAccessCustomer);
-  var scopeEl = document.getElementById("customer-rule-scope");
-  if (scopeEl) scopeEl.addEventListener("change", syncCustomerRuleScopeFields);
-  var productSearchBtn = document.getElementById("btn-customer-rule-product-search");
-  if (productSearchBtn) productSearchBtn.addEventListener("click", searchCustomerAccessProductCandidates);
-  var productSearch = document.getElementById("customer-rule-product-search");
-  if (productSearch) {
-    productSearch.addEventListener("input", function() {
-      customerAccessSelectedProduct = null;
-      updateCustomerAccessSelectedProduct();
-    });
-    productSearch.addEventListener("keydown", function(e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        searchCustomerAccessProductCandidates();
-      }
-    });
-  }
-  var addBtn = document.getElementById("btn-customer-rule-add");
-  if (addBtn) addBtn.addEventListener("click", addCustomerVisibilityRule);
-  var candidates = document.getElementById("customer-rule-candidates");
-  if (candidates) {
-    candidates.addEventListener("click", function(e) {
-      var item = e.target.closest("[data-customer-product-index]");
-      if (item) selectCustomerAccessProductCandidate(parseInt(item.dataset.customerProductIndex, 10));
-    });
-  }
-  detail.querySelectorAll("[data-customer-rule-delete]").forEach(function(btn) {
-    btn.addEventListener("click", function() { deleteCustomerVisibilityRule(btn.dataset.customerRuleDelete); });
-  });
-  syncCustomerRuleScopeFields();
   syncCustomerAccessCategoryCount();
 }
 
 function setCustomerAccessCategoriesChecked(checked) {
   document.querySelectorAll("[data-customer-category]").forEach(function(el) { el.checked = !!checked; });
   syncCustomerAccessCategoryCount();
+  updateCustomerAccessSaveState();
 }
 
 function syncCustomerAccessCategoryCount() {
@@ -28063,6 +28068,49 @@ function collectCustomerAccessCategoryVisibility() {
     visibility[String(el.dataset.customerCategory || "")] = !!el.checked;
   });
   return visibility;
+}
+
+function customerAccessDisplayDraftSignature() {
+  if (!currentCustomerAccessCustomer) return null;
+  var rankSelect = document.getElementById("customer-access-rank-select");
+  return JSON.stringify({
+    customerId: String(currentCustomerAccessCustomer.id || ""),
+    priceRankCode: rankSelect ? (rankSelect.value || "") : (currentCustomerAccessCustomer.price_rank_code || ""),
+    settings: collectCustomerDisplaySettings(),
+    categories: collectCustomerAccessCategoryVisibility()
+  });
+}
+
+function customerAccessHasUnsavedChanges() {
+  if (!currentCustomerAccessCustomer || customerAccessSavedDisplayDraft == null) return false;
+  return customerAccessDisplayDraftSignature() !== customerAccessSavedDisplayDraft;
+}
+
+function updateCustomerAccessSaveState() {
+  var bar = document.getElementById("customer-access-save-bar");
+  var state = document.getElementById("customer-access-save-state");
+  var help = document.getElementById("customer-access-save-help");
+  var button = document.getElementById("btn-customer-access-save");
+  if (!bar || !state || !help || !button) return;
+  var ready = !!currentCustomerAccessCustomer && customerAccessSavedDisplayDraft != null;
+  var dirty = ready && customerAccessHasUnsavedChanges();
+  var titleKey = !currentCustomerAccessCustomer ? "customer_access_save_no_customer" :
+    (customerAccessSettingsSaving ? "customer_access_saving" :
+      (!ready ? "loading" : (dirty ? "customer_access_save_dirty" : "customer_access_save_clean")));
+  var helpKey = !currentCustomerAccessCustomer ? "customer_access_save_no_customer_help" :
+    (customerAccessSettingsSaving ? "customer_access_saving_help" :
+      (!ready ? "" : (dirty ? "customer_access_save_dirty_help" : "customer_access_save_clean_help")));
+  state.textContent = t(titleKey);
+  help.textContent = helpKey ? t(helpKey) : "";
+  button.textContent = customerAccessSettingsSaving ? t("customer_access_saving") : t("customer_access_save_display");
+  button.disabled = !dirty || customerAccessSettingsSaving;
+  bar.classList.toggle("unsaved", dirty && !customerAccessSettingsSaving);
+}
+
+function resetCustomerAccessSaveState() {
+  customerAccessSettingsSaving = false;
+  customerAccessSavedDisplayDraft = customerAccessDisplayDraftSignature();
+  updateCustomerAccessSaveState();
 }
 
 async function saveCustomerAccessCategoryVisibility(customerId, desiredVisibility) {
@@ -28176,7 +28224,10 @@ async function saveCustomerAccessCategoryVisibility(customerId, desiredVisibilit
 
 async function saveCustomerAccessSettings() {
   if (!canManageCustomerAccess() || !currentCustomerAccessCustomer) { alert(t("err_perm")); return; }
+  if (customerAccessSettingsSaving) return;
   syncCustomerDisplayRuleControls();
+  customerAccessSettingsSaving = true;
+  updateCustomerAccessSaveState();
   var customerId = currentCustomerAccessCustomer.id;
   var rankSelect = document.getElementById("customer-access-rank-select");
   var nextRankCode = rankSelect ? (rankSelect.value || "") : (currentCustomerAccessCustomer.price_rank_code || "");
@@ -28218,6 +28269,9 @@ async function saveCustomerAccessSettings() {
   } catch (e) {
     console.warn("save customer access settings failed", e);
     alert(t("msg_save_err") + ": " + ((e && e.message) || String(e)));
+  } finally {
+    customerAccessSettingsSaving = false;
+    updateCustomerAccessSaveState();
   }
 }
 
