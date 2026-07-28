@@ -129,6 +129,10 @@ var TRANSLATIONS = {
     customer_catalog_load_error: "商品を読み込めませんでした",
     customer_catalog_price_note: "この得意先に設定された販売価格です",
     customer_catalog_price_none: "価格未登録",
+    customer_catalog_stock_price_title: "在庫・販売価格",
+    customer_catalog_stock_qty: "在庫数",
+    customer_catalog_stock_unit: "個",
+    customer_catalog_vehicle_list: "車両情報一覧",
     greeting: "ようこそ、{name} さん",
     mi_search_title: "販売管理",
     mi_search_desc: "販売商品の品番を検索し、画像・構成部品・販売価格・製造予定を確認します。",
@@ -1298,6 +1302,10 @@ var TRANSLATIONS = {
     customer_catalog_load_error: "Products could not be loaded",
     customer_catalog_price_note: "Sales price configured for this customer",
     customer_catalog_price_none: "Price not available",
+    customer_catalog_stock_price_title: "Stock and Sales Price",
+    customer_catalog_stock_qty: "Stock",
+    customer_catalog_stock_unit: "units",
+    customer_catalog_vehicle_list: "Vehicle Applications",
     greeting: "Welcome, {name}",
     mi_search_title: "Sales Management",
     mi_search_desc: "Search sales products by part number and review images, components, sales prices, and production instructions.",
@@ -2454,6 +2462,10 @@ var TRANSLATIONS = {
     customer_catalog_load_error: "无法读取商品",
     customer_catalog_price_note: "这是为该客户设置的销售价格",
     customer_catalog_price_none: "未登记价格",
+    customer_catalog_stock_price_title: "库存与销售价格",
+    customer_catalog_stock_qty: "库存数",
+    customer_catalog_stock_unit: "件",
+    customer_catalog_vehicle_list: "车辆信息一览",
     spec_note_ph: "例：内部确认、实物标签",
     part_form_add_title: "添加商品",
     part_form_edit_title: "修改商品",
@@ -3614,7 +3626,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.563";
+var APP_VERSION       = "v1.1.564";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6055,8 +6067,11 @@ async function fetchCustomerCatalogPriceMap(products) {
   return map;
 }
 
-async function fetchCustomerCatalogPriceInfo(product) {
-  var map = await fetchCustomerCatalogPriceMap([product]);
+async function fetchCustomerCatalogPriceInfo(product, productKind) {
+  var target = productKind
+    ? Object.assign({}, product, { default_product_kind: normalizeProductKind(productKind) })
+    : product;
+  var map = await fetchCustomerCatalogPriceMap([target]);
   return map[productDkdId(product)] == null ? null : map[productDkdId(product)];
 }
 
@@ -6146,6 +6161,18 @@ function customerCatalogSpecText(product) {
   return values.join(" / ");
 }
 
+function customerCatalogAvailabilityKindHtml(kind, stockQty, price, showPrice) {
+  var stockText = stockQty == null ? "-" : String(stockQty);
+  var priceText = price == null ? t("customer_catalog_price_none") : "JPY " + formatYen(price);
+  return "<div class='customer-catalog-availability-kind " + esc(productKindClass(kind)) + "'>" +
+    "<div class='customer-catalog-availability-kind-title'>" + esc(productKindLabel(kind)) + "</div>" +
+    "<div class='customer-catalog-availability-metrics" + (showPrice ? "" : " stock-only") + "'>" +
+      "<div class='customer-catalog-availability-metric stock'><span>" + esc(t("customer_catalog_stock_qty")) + "</span><strong>" + esc(stockText) + "</strong><small>" + esc(t("customer_catalog_stock_unit")) + "</small></div>" +
+      (showPrice ? "<div class='customer-catalog-availability-metric price'><span>" + esc(t("customer_portal_price_display")) + "</span><strong>" + esc(priceText) + "</strong></div>" : "") +
+    "</div>" +
+  "</div>";
+}
+
 function renderCustomerCatalogDetailBase(product) {
   var detail = document.getElementById("customer-catalog-detail");
   if (!detail || !product) return;
@@ -6165,11 +6192,10 @@ function renderCustomerCatalogDetailBase(product) {
   var imageHtml = settings.show_product_images
     ? "<div class='customer-catalog-images' id='customer-catalog-images'><div class='customer-catalog-image-main'>" + esc(t("img_loading")) + "</div></div>"
     : "";
-  var priceHtml = settings.show_sales_price
-    ? "<div class='customer-catalog-price' id='customer-catalog-price'><span>" + esc(t("customer_portal_price_display")) + "</span><strong>-</strong><div class='customer-catalog-price-note'>" + esc(t("customer_catalog_price_note")) + "</div></div>"
-    : "";
+  var availabilityTitle = settings.show_sales_price ? t("customer_catalog_stock_price_title") : t("product_kind_stock");
+  var availabilityHtml = "<section class='customer-catalog-availability'><h3>" + esc(availabilityTitle) + "</h3><div class='customer-catalog-availability-grid' id='customer-catalog-availability'><div class='customer-catalog-loading'>" + esc(t("loading")) + "</div></div></section>";
   var vehicleHtml = settings.show_vehicle_info
-    ? "<section class='customer-catalog-detail-section'><h3>" + esc(t("vehicle_info_button")) + "</h3><div class='customer-catalog-table-wrap' id='customer-catalog-vehicle'><div class='customer-catalog-loading'>" + esc(t("loading")) + "</div></div></section>"
+    ? "<details class='customer-catalog-detail-section customer-catalog-vehicle-section' id='customer-catalog-vehicle-disclosure'><summary>" + esc(t("customer_catalog_vehicle_list")) + "</summary><div class='customer-catalog-table-wrap' id='customer-catalog-vehicle'></div></details>"
     : "";
   var compatibleHtml = settings.show_compatible_parts
     ? "<section class='customer-catalog-detail-section'><h3>" + esc(t("kikan_section")) + "</h3><div id='customer-catalog-compatible'><div class='customer-catalog-loading'>" + esc(t("loading")) + "</div></div></section>"
@@ -6179,14 +6205,15 @@ function renderCustomerCatalogDetailBase(product) {
       "<div><div class='customer-catalog-detail-kicker'>" + esc(productCategoryLabel(product)) + "</div><h2>" + esc(product.genuine_part_number || product.manufacturer_part_number || "-") + "</h2></div>" +
       "<div class='customer-catalog-detail-gltek'><span>GLTEK</span><strong>" + esc(product.gltek_part_number || "-") + "</strong></div>" +
     "</div>" +
-    "<div class='customer-catalog-detail-main'>" + imageHtml + "<div><dl class='customer-catalog-facts'>" + facts + "</dl>" + priceHtml + "</div></div>" +
+    availabilityHtml +
+    "<div class='customer-catalog-detail-main'>" + imageHtml + "<div><dl class='customer-catalog-facts'>" + facts + "</dl></div></div>" +
     vehicleHtml + compatibleHtml;
 }
 
 async function loadCustomerCatalogImages(product, seq) {
   var wrap = document.getElementById("customer-catalog-images");
   if (!wrap) return;
-  var result = await fetchCoreProductImagesForContext(parseInt(productDkdId(product), 10), customerCatalogProductKind(product), "sales");
+  var result = await fetchAllCoreProductImagesForContext(parseInt(productDkdId(product), 10), "sales");
   if (seq !== customerCatalogDetailSeq || !wrap.isConnected) return;
   var images = result.error ? [] : (result.data || []);
   if (!images.length) {
@@ -6212,21 +6239,63 @@ async function loadCustomerCatalogImages(product, seq) {
   renderSelected(0);
 }
 
-async function loadCustomerCatalogPrice(product, seq) {
-  var wrap = document.getElementById("customer-catalog-price");
+async function loadCustomerCatalogAvailability(product, seq) {
+  var wrap = document.getElementById("customer-catalog-availability");
   if (!wrap) return;
-  var price = await fetchCustomerCatalogPriceInfo(product);
+  var dkdId = parseInt(productDkdId(product), 10);
+  var kinds = ["rebuilt", "aftermarket_new"];
+  var settings = customerCatalogContext().settings || defaultCustomerDisplaySettings();
+  var showPrice = !!settings.show_sales_price;
+  var stockRequest = sb.from("core_product_variants")
+    .select("product_kind,stock_qty")
+    .eq("dkd_shohin_id", dkdId)
+    .eq("is_active", true)
+    .in("product_kind", kinds);
+  var priceRequest = showPrice
+    ? Promise.all(kinds.map(function(kind) { return fetchCustomerCatalogPriceInfo(product, kind); }))
+    : Promise.resolve([null, null]);
+  var results = await Promise.all([stockRequest, priceRequest]);
   if (seq !== customerCatalogDetailSeq || !wrap.isConnected) return;
-  var value = wrap.querySelector("strong");
-  if (value) value.textContent = price == null ? t("customer_catalog_price_none") : "JPY " + formatYen(price);
+  var stockResult = results[0];
+  var prices = results[1] || [];
+  var stockMap = { rebuilt: 0, aftermarket_new: 0 };
+  if (stockResult.error) {
+    console.warn("customer catalog stock lookup failed", stockResult.error);
+    stockMap = { rebuilt: null, aftermarket_new: null };
+  } else {
+    (stockResult.data || []).forEach(function(row) {
+      var kind = normalizeProductKind(row.product_kind);
+      if (!Object.prototype.hasOwnProperty.call(stockMap, kind)) return;
+      var qty = parseFloat(row.stock_qty);
+      if (!isNaN(qty)) stockMap[kind] += qty;
+    });
+  }
+  wrap.innerHTML = kinds.map(function(kind, index) {
+    return customerCatalogAvailabilityKindHtml(kind, stockMap[kind], prices[index], showPrice);
+  }).join("");
 }
 
 async function loadCustomerCatalogVehicles(product, seq) {
   var wrap = document.getElementById("customer-catalog-vehicle");
   if (!wrap) return;
+  wrap.innerHTML = "<div class='customer-catalog-loading'>" + esc(t("loading")) + "</div>";
   var rows = await fetchCatalogVehicleApplications(product);
   if (seq !== customerCatalogDetailSeq || !wrap.isConnected) return;
   wrap.innerHTML = renderVehicleApplicationsTable(rows || []);
+}
+
+function bindCustomerCatalogVehicleDisclosure(product, seq) {
+  var disclosure = document.getElementById("customer-catalog-vehicle-disclosure");
+  if (!disclosure) return;
+  disclosure.addEventListener("toggle", function() {
+    if (!disclosure.open || disclosure.dataset.loaded === "true" || disclosure.dataset.loading === "true") return;
+    disclosure.dataset.loading = "true";
+    loadCustomerCatalogVehicles(product, seq).then(function() {
+      if (seq === customerCatalogDetailSeq && disclosure.isConnected) disclosure.dataset.loaded = "true";
+    }).finally(function() {
+      if (disclosure.isConnected) disclosure.dataset.loading = "false";
+    });
+  });
 }
 
 async function loadCustomerCatalogCompatible(product, seq) {
@@ -6269,10 +6338,10 @@ async function openCustomerCatalogProduct(product, options) {
     }
   }
   var settings = customerCatalogContext().settings || defaultCustomerDisplaySettings();
+  bindCustomerCatalogVehicleDisclosure(product, seq);
   var loads = [];
   if (settings.show_product_images) loads.push(loadCustomerCatalogImages(product, seq));
-  if (settings.show_sales_price) loads.push(loadCustomerCatalogPrice(product, seq));
-  if (settings.show_vehicle_info) loads.push(loadCustomerCatalogVehicles(product, seq));
+  loads.push(loadCustomerCatalogAvailability(product, seq));
   if (settings.show_compatible_parts) loads.push(loadCustomerCatalogCompatible(product, seq));
   await Promise.allSettled(loads);
 }

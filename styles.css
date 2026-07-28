@@ -2336,13 +2336,30 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-catalog-facts dd { min-width: 0; margin: 0; padding: 11px 12px; border-bottom: 1px solid #dfe5e2; }
 .customer-catalog-facts dt { background: #f4f7f6; color: #68756f; font-size: 11px; font-weight: 800; }
 .customer-catalog-facts dd { overflow-wrap: anywhere; color: #1c2a24; font-size: 13px; font-weight: 700; }
-.customer-catalog-price { margin-top: 18px; border-top: 1px solid #d99a2b; border-bottom: 1px solid #d99a2b; padding: 14px 4px; }
-.customer-catalog-price span { color: #786744; font-size: 11px; font-weight: 800; }
-.customer-catalog-price strong { display: block; margin-top: 5px; color: #1c2a24; font-size: 24px; letter-spacing: 0; }
-.customer-catalog-price-note { margin-top: 4px; color: #7a8580; font-size: 10px; }
+.customer-catalog-availability { margin-top: 20px; }
+.customer-catalog-availability h3 { margin-bottom: 9px; color: #34433d; font-size: 13px; letter-spacing: 0; }
+.customer-catalog-availability-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.customer-catalog-availability-grid > .customer-catalog-loading { grid-column: 1 / -1; border: 1px solid #d9e1de; border-radius: 6px; background: #f8faf9; }
+.customer-catalog-availability-kind { min-width: 0; overflow: hidden; border: 1px solid #cddbd5; border-left: 4px solid #3a8b69; border-radius: 6px; background: #fbfdfc; }
+.customer-catalog-availability-kind.aftermarket_new { border-color: #c9d8e7; border-left-color: #417ca8; background: #fbfdff; }
+.customer-catalog-availability-kind-title { padding: 8px 11px; border-bottom: 1px solid #dbe5e1; color: #236344; font-size: 12px; font-weight: 800; }
+.customer-catalog-availability-kind.aftermarket_new .customer-catalog-availability-kind-title { border-bottom-color: #dce5ee; color: #315f84; }
+.customer-catalog-availability-metrics { display: grid; grid-template-columns: minmax(82px, .7fr) minmax(130px, 1.3fr); }
+.customer-catalog-availability-metrics.stock-only { grid-template-columns: 1fr; }
+.customer-catalog-availability-metric { min-width: 0; padding: 10px 11px 11px; }
+.customer-catalog-availability-metric + .customer-catalog-availability-metric { border-left: 1px solid #e0e7e4; }
+.customer-catalog-availability-metric span { display: block; color: #6d7974; font-size: 10px; font-weight: 800; }
+.customer-catalog-availability-metric strong { display: inline-block; margin-top: 3px; overflow-wrap: anywhere; color: #17231f; font-size: 20px; line-height: 1.25; letter-spacing: 0; }
+.customer-catalog-availability-metric.stock strong { font-size: 28px; font-variant-numeric: tabular-nums; }
+.customer-catalog-availability-metric small { margin-left: 4px; color: #68756f; font-size: 10px; font-weight: 700; }
 .customer-catalog-detail-section { margin-top: 28px; }
 .customer-catalog-detail-section h3 { margin-bottom: 10px; color: #34433d; font-size: 14px; letter-spacing: 0; }
 .customer-catalog-detail-section .vehicle-table { min-width: 720px; }
+.customer-catalog-vehicle-section { border-top: 1px solid #d9e1de; border-bottom: 1px solid #d9e1de; }
+.customer-catalog-vehicle-section summary { padding: 13px 4px; color: #34433d; font-size: 14px; font-weight: 800; cursor: pointer; }
+.customer-catalog-vehicle-section summary:hover { color: #236344; }
+.customer-catalog-vehicle-section[open] summary { border-bottom: 1px solid #d9e1de; }
+.customer-catalog-vehicle-section .customer-catalog-table-wrap { border-top: 0; border-bottom: 0; }
 .customer-catalog-table-wrap { overflow-x: auto; border-top: 1px solid #d9e1de; border-bottom: 1px solid #d9e1de; }
 .customer-catalog-compatible-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid #d9e1de; }
 .customer-catalog-compatible { min-width: 0; border: 0; border-right: 1px solid #dfe5e2; border-bottom: 1px solid #dfe5e2; padding: 12px; background: #fff; color: #1e2b26; text-align: left; cursor: pointer; }
@@ -2384,6 +2401,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .customer-catalog-detail-head { display: grid; gap: 13px; }
   .customer-catalog-detail-head h2 { font-size: 20px; }
   .customer-catalog-detail-gltek { min-width: 0; }
+  .customer-catalog-availability-grid { grid-template-columns: 1fr; }
   .customer-catalog-detail-main { grid-template-columns: 1fr; gap: 20px; }
   .customer-catalog-facts { grid-template-columns: 118px minmax(0, 1fr); }
   .customer-catalog-compatible-list { grid-template-columns: 1fr; }
@@ -2405,6 +2423,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .customer-users-invite-form .btn-primary { grid-column: 1; }
   .customer-user-row { grid-template-columns: 1fr; align-items: stretch; }
   .customer-user-actions { grid-column: 1; }
+  .customer-catalog-availability-metrics { grid-template-columns: 90px minmax(0, 1fr); }
 }
 
 /* =============================================
