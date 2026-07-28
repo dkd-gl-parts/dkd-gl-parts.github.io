@@ -703,7 +703,7 @@ var TRANSLATIONS = {
     customer_access_display_settings: "得意先向け表示ルール",
     customer_access_rule_help: "販売価格をOFFにすると、0円表示・価格あり商品のみ表示もOFFになります。価格あり商品のみ表示をONにすると、価格未設定商品は非表示になります。",
     customer_access_category_visibility: "得意先に表示するカテゴリ",
-    customer_access_category_help: "チェックしたカテゴリを商品カタログに表示します。個別商品ルールがある場合は個別設定を優先します。",
+    customer_access_category_help: "チェックしたカテゴリを商品カタログに表示します。未設定時は主要6カテゴリが初期値です。個別商品ルールがある場合は個別設定を優先します。",
     customer_access_category_all: "すべて選択",
     customer_access_category_none: "すべて解除",
     customer_access_category_count: "{n}カテゴリ表示",
@@ -1881,7 +1881,7 @@ var TRANSLATIONS = {
     customer_access_display_settings: "Customer display rules",
     customer_access_rule_help: "When sales price is off, zero-price display and priced-only display are also off. When priced-only is on, products without prices are hidden.",
     customer_access_category_visibility: "Categories visible to this customer",
-    customer_access_category_help: "Checked categories appear in the product catalog. Product-specific rules take priority as exceptions.",
+    customer_access_category_help: "Checked categories appear in the product catalog. Six primary categories are selected by default. Product-specific rules take priority as exceptions.",
     customer_access_category_all: "Select all",
     customer_access_category_none: "Clear all",
     customer_access_category_count: "{n} categories visible",
@@ -3052,7 +3052,7 @@ var TRANSLATIONS = {
     customer_access_display_settings: "客户显示规则",
     customer_access_rule_help: "关闭销售价格时，0日元显示和仅显示有价格商品也会关闭。开启仅显示有价格商品时，未设置价格的商品会隐藏。",
     customer_access_category_visibility: "向客户显示的类别",
-    customer_access_category_help: "商品目录中仅显示已勾选的类别。单个商品规则作为例外优先应用。",
+    customer_access_category_help: "商品目录中仅显示已勾选的类别。默认选择六个主要类别，单个商品规则作为例外优先应用。",
     customer_access_category_all: "全选",
     customer_access_category_none: "全部取消",
     customer_access_category_count: "显示{n}个类别",
@@ -3641,7 +3641,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.565";
+var APP_VERSION       = "v1.1.566";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -3822,6 +3822,7 @@ var currentPurchaseCatalogRow = null;
 var purchaseLinkSelectedProduct = null;
 var customerViewerContext = null;
 var customerPortalPreviewContext = null;
+var DEFAULT_CUSTOMER_VISIBLE_CATEGORY_CODES = ["alternator", "generator", "starter", "starter_generator", "distributor", "ac_compressor"];
 var customerPortalSearchActive = false;
 var customerCatalogProducts = [];
 var customerCatalogSelectedProduct = null;
@@ -4264,7 +4265,7 @@ function customerCategoryIsVisible(categoryCode, visibilityRows) {
   });
   if (categoryRule) return !!categoryRule.is_visible;
   var allRule = rows.find(function(row) { return row.visibility_scope === "all"; });
-  return allRule ? !!allRule.is_visible : true;
+  return allRule ? !!allRule.is_visible : DEFAULT_CUSTOMER_VISIBLE_CATEGORY_CODES.indexOf(code) >= 0;
 }
 function isCustomerVisibleProduct(p) {
   if (!userProfile || (!isCustomerViewer() && !isCustomerPortalSearchMode())) return false;
@@ -28068,7 +28069,12 @@ async function saveCustomerAccessCategoryVisibility(customerId, desiredVisibilit
   var codes = Object.keys(desiredVisibility || {}).filter(Boolean);
   if (!codes.length) return;
   var selectedCodes = codes.filter(function(code) { return !!desiredVisibility[code]; });
-  var restrictCategories = selectedCodes.length < codes.length;
+  var defaultCodes = codes.filter(function(code) { return DEFAULT_CUSTOMER_VISIBLE_CATEGORY_CODES.indexOf(code) >= 0; });
+  var usesDefaultSelection = selectedCodes.length === defaultCodes.length && defaultCodes.every(function(code) {
+    return selectedCodes.indexOf(code) >= 0;
+  });
+  var showsAllCategories = selectedCodes.length === codes.length;
+  var restrictCategories = !showsAllCategories;
   var allRows = (customerAccessVisibilityRows || []).filter(function(row) { return row.visibility_scope === "all"; });
   var existingCategoryRows = (customerAccessVisibilityRows || []).filter(function(row) { return row.visibility_scope === "category"; });
   var existingCodes = {};
@@ -28079,14 +28085,43 @@ async function saveCustomerAccessCategoryVisibility(customerId, desiredVisibilit
     return !restrictCategories || selectedCodes.indexOf(String(row.category_code || "")) < 0;
   }).map(function(row) { return row.id; }).filter(Boolean);
   var now = new Date().toISOString();
-  if (!restrictCategories) {
-    var clearIds = deleteIds.concat(allRows.map(function(row) { return row.id; }).filter(Boolean));
+  if (usesDefaultSelection) {
+    var clearIds = existingCategoryRows.map(function(row) { return row.id; }).filter(Boolean)
+      .concat(allRows.map(function(row) { return row.id; }).filter(Boolean));
     if (clearIds.length) {
       var clearR = await sb.from("customer_product_visibility")
         .delete()
         .eq("sales_customer_id", customerId)
         .in("id", clearIds);
       if (clearR.error) throw clearR.error;
+    }
+    return;
+  }
+  if (showsAllCategories) {
+    if (allRows.length) {
+      var showAllUpdateR = await sb.from("customer_product_visibility")
+        .update({ is_visible: true, updated_at: now })
+        .eq("sales_customer_id", customerId)
+        .eq("visibility_scope", "all");
+      if (showAllUpdateR.error) throw showAllUpdateR.error;
+    } else {
+      var showAllInsertR = await sb.from("customer_product_visibility").insert({
+        sales_customer_id: customerId,
+        visibility_scope: "all",
+        category_code: null,
+        dkd_shohin_id: null,
+        is_visible: true,
+        note: null,
+        updated_at: now
+      });
+      if (showAllInsertR.error) throw showAllInsertR.error;
+    }
+    if (deleteIds.length) {
+      var clearCategoryR = await sb.from("customer_product_visibility")
+        .delete()
+        .eq("sales_customer_id", customerId)
+        .in("id", deleteIds);
+      if (clearCategoryR.error) throw clearCategoryR.error;
     }
     return;
   }

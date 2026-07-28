@@ -14,10 +14,19 @@ function functionSource(name, nextName) {
 }
 
 const helperSource = functionSource("customerCategoryIsVisible", "function isCustomerVisibleProduct");
-const sandbox = {};
+const expectedDefaultCategories = ["alternator", "generator", "starter", "starter_generator", "distributor", "ac_compressor"];
+const defaultCategoryDeclaration = `var DEFAULT_CUSTOMER_VISIBLE_CATEGORY_CODES = ${JSON.stringify(expectedDefaultCategories)};`;
+if (!source.replace(/\s+/g, "").includes(defaultCategoryDeclaration.replace(/\s+/g, ""))) {
+  throw new Error("the six requested primary categories must remain the customer default");
+}
+const sandbox = { DEFAULT_CUSTOMER_VISIBLE_CATEGORY_CODES: expectedDefaultCategories };
 vm.runInNewContext(`${helperSource}; result = customerCategoryIsVisible;`, sandbox);
 const isVisible = sandbox.result;
-if (!isVisible("starter", [])) throw new Error("categories must be visible when no customer rules exist");
+expectedDefaultCategories.forEach((code) => {
+  if (!isVisible(code, [])) throw new Error(`${code} must be visible by default`);
+});
+if (isVisible("radiator", [])) throw new Error("non-primary categories must be hidden by default");
+if (!isVisible("radiator", [{ visibility_scope: "all", is_visible: true }])) throw new Error("an explicit show-all rule must override primary-category defaults");
 if (isVisible("starter", [{ visibility_scope: "all", is_visible: false }])) throw new Error("all-scope hidden rule must hide categories by default");
 if (!isVisible("starter", [
   { visibility_scope: "all", is_visible: false },
@@ -38,7 +47,8 @@ if (!categoryUiSource.includes("data-customer-category") ||
 const saveSource = functionSource("saveCustomerAccessCategoryVisibility", "async function saveCustomerAccessSettings");
 if (!saveSource.includes('from("customer_product_visibility")') ||
     !saveSource.includes('visibility_scope", "category"') ||
-    !saveSource.includes("selectedCodes.length < codes.length") ||
+    !saveSource.includes("usesDefaultSelection") ||
+    !saveSource.includes("showsAllCategories") ||
     !saveSource.includes('visibility_scope: "all"')) {
   throw new Error("category selections must be persisted as customer category visibility rules");
 }
