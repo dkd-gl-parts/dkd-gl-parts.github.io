@@ -8,6 +8,7 @@ on:
       - "scripts/verify-component-catalog-recovery.js"
       - "scripts/verify-component-reverse-lookup.js"
       - "scripts/verify-customer-catalog-detail.js"
+      - "scripts/verify-customer-category-visibility.js"
       - ".github/workflows/search-performance-guard.yml"
   pull_request:
     paths:
@@ -16,6 +17,7 @@ on:
       - "scripts/verify-component-catalog-recovery.js"
       - "scripts/verify-component-reverse-lookup.js"
       - "scripts/verify-customer-catalog-detail.js"
+      - "scripts/verify-customer-category-visibility.js"
       - ".github/workflows/search-performance-guard.yml"
   workflow_dispatch:
 
@@ -39,3 +41,5 @@ jobs:
         run: node scripts/verify-component-reverse-lookup.js
       - name: Verify customer catalog detail
         run: node scripts/verify-customer-catalog-detail.js
+      - name: Verify customer category visibility
+        run: node scripts/verify-customer-category-visibility.js
