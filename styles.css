@@ -1400,10 +1400,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .manufacturing-cost-candidate-main { display: block; font-size: 13px; font-weight: 800; color: #1a1a2e; line-height: 1.35; overflow-wrap: anywhere; }
 .manufacturing-cost-candidate-sub { display: block; color: #667085; font-size: 11px; line-height: 1.45; margin-top: 2px; overflow-wrap: anywhere; }
 .manufacturing-cost-candidate-data-labels { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
-.manufacturing-cost-candidate-data-label { display: inline-flex; align-items: center; justify-content: center; min-height: 21px; padding: 2px 7px; border: 1px solid #d7dee8; border-radius: 999px; background: #f5f7fa; color: #667085; font-size: 10px; font-weight: 900; line-height: 1.3; white-space: nowrap; }
-.manufacturing-cost-candidate-data-label.catalog.available { border-color: #bdebc8; background: #e9f8ed; color: #16803a; }
-.manufacturing-cost-candidate-data-label.rebuilt.available { border-color: #bfdbfe; background: #eaf3ff; color: #1d4ed8; }
-.manufacturing-cost-candidate-data-label.missing { border-color: #e2e7ee; background: #f7f8fa; color: #8a94a6; }
 .manufacturing-cost-candidate-side { display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
 .manufacturing-cost-candidate-kind { color: #1a6fd4; background: #edf5ff; border: 1px solid #d7e9ff; border-radius: 999px; padding: 3px 8px; font-size: 11px; font-weight: 800; white-space: nowrap; }
 .manufacturing-cost-candidate-added { color: #16803a; background: #e9f8ed; border: 1px solid #bdebc8; border-radius: 999px; padding: 3px 8px; font-size: 11px; font-weight: 900; white-space: nowrap; }

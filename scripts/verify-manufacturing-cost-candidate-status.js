@@ -30,24 +30,23 @@ const sandbox = {
     "2": { hasCatalog: false, rebuiltComponentCount: 0 }
   },
   productDkdId: (product) => product.dkd_shohin_id,
+  productKindLabel: (kind) => kind === "rebuilt" ? "リビルト" : kind,
   t: (key) => ({
-    manufacturing_cost_candidate_catalog_yes: "カタログあり",
-    manufacturing_cost_candidate_catalog_no: "カタログなし",
-    manufacturing_cost_candidate_rebuilt_components_none: "リビルト構成なし"
+    product_kind_catalog_spec: "カタログ",
+    product_kind_component_count: "構成部品"
   })[key] || key,
-  tf: (_key, values) => `リビルト構成 ${values.n} 件`,
   esc: (value) => String(value)
 };
 vm.runInNewContext(`${renderSource}; result = renderManufacturingCostCandidateStatusLabels;`, sandbox);
 const available = sandbox.result({ dkd_shohin_id: 1 });
 const missing = sandbox.result({ dkd_shohin_id: 2 });
-if (!available.includes("カタログあり") || !available.includes("リビルト構成 3 件") ||
-    !available.includes("catalog available") || !available.includes("rebuilt available")) {
-  throw new Error("available catalog and rebuilt-component labels must be rendered with counts");
+if (!available.includes("class='badge-catalog'") || !available.includes(">カタログ</span>") ||
+    !available.includes("class='badge-component'") || !available.includes("&#x1F9E9; 3") ||
+    !available.includes("title='リビルト 構成部品'")) {
+  throw new Error("catalog and rebuilt-component labels must reuse sales result badges and icons");
 }
-if (!missing.includes("カタログなし") || !missing.includes("リビルト構成なし") ||
-    !missing.includes("catalog missing") || !missing.includes("rebuilt missing")) {
-  throw new Error("missing catalog and rebuilt-component labels must remain visible");
+if (missing !== "") {
+  throw new Error("missing statuses must be omitted like sales result badges");
 }
 
 const candidatesSource = functionSource("renderManufacturingCostCandidates", "function selectedManufacturingCostCandidateProducts");
@@ -63,10 +62,9 @@ if (statusLoadAt < 0 || renderAt < 0 || statusLoadAt > renderAt ||
   throw new Error("candidate statuses must load before rendering and stale searches must be ignored");
 }
 
-if (!styles.includes(".manufacturing-cost-candidate-data-label.catalog.available") ||
-    !styles.includes(".manufacturing-cost-candidate-data-label.rebuilt.available") ||
-    !styles.includes(".manufacturing-cost-candidate-data-label.missing")) {
-  throw new Error("candidate status labels must provide distinct available and missing states");
+if (!styles.includes(".badge-catalog") || !styles.includes(".badge-component") ||
+    styles.includes(".manufacturing-cost-candidate-data-label.catalog.available")) {
+  throw new Error("candidate status labels must reuse sales result badge styles without dedicated colors");
 }
 
 console.log("manufacturing cost candidate status guard passed");
