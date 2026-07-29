@@ -17,6 +17,7 @@ on:
       - "scripts/verify-customer-category-visibility.js"
       - "scripts/verify-manufacturing-cost-candidate-status.js"
       - "scripts/verify-manufacturing-cost-snapshot-status.js"
+      - "scripts/verify-manufacturing-cost-target-removal.js"
       - ".github/workflows/search-performance-guard.yml"
   pull_request:
     paths:
@@ -34,6 +35,7 @@ on:
       - "scripts/verify-customer-category-visibility.js"
       - "scripts/verify-manufacturing-cost-candidate-status.js"
       - "scripts/verify-manufacturing-cost-snapshot-status.js"
+      - "scripts/verify-manufacturing-cost-target-removal.js"
       - ".github/workflows/search-performance-guard.yml"
   workflow_dispatch:
 
@@ -71,3 +73,5 @@ jobs:
         run: node scripts/verify-manufacturing-cost-candidate-status.js
       - name: Verify manufacturing cost snapshot status
         run: node scripts/verify-manufacturing-cost-snapshot-status.js
+      - name: Verify manufacturing cost target removal
+        run: node scripts/verify-manufacturing-cost-target-removal.js
