@@ -780,6 +780,140 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .ranking-report-actions { position: static; }
 }
 
+/* Core return terms */
+.detail-kind-core-row {
+  display: grid;
+  grid-template-columns: minmax(190px, .8fr) minmax(300px, 1.2fr);
+  gap: 10px;
+  align-items: stretch;
+  margin: 10px 0;
+}
+#screen-search .detail-kind-core-row .detail-inline-kind-panel {
+  width: auto;
+  min-width: 0;
+  margin: 0;
+}
+.detail-core-policy-panel {
+  min-width: 0;
+  border: 1px solid #e5edf8;
+  border-radius: 8px;
+  background: #fbfdff;
+  padding: 9px 11px;
+}
+.core-return-policy-panel { min-width: 0; }
+.core-return-policy-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.core-return-policy-item {
+  min-width: 0;
+  padding: 7px 9px;
+  border-left: 3px solid #9aa8b8;
+  background: #f3f6f9;
+}
+.core-return-policy-item span {
+  display: block;
+  color: #667085;
+  font-size: 10px;
+  font-weight: 700;
+}
+.core-return-policy-item strong {
+  display: block;
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+  color: #1f2937;
+  font-size: 15px;
+  letter-spacing: 0;
+}
+.core-return-badge {
+  width: fit-content;
+  padding: 3px 7px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font-size: 12px !important;
+  line-height: 1.2;
+}
+.core-return-badge.required { background: #fff1ed; color: #b42318; }
+.core-return-badge.not-required { background: #ecfdf3; color: #087443; }
+
+.product-form-core-policy {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #d9e2ec;
+}
+.product-form-core-policy-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(150px, 210px);
+  gap: 10px;
+  align-items: end;
+}
+.product-form-core-policy-head .form-label { margin-bottom: 9px; }
+.product-form-core-policy-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(220px, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+.core-return-choice-group { min-width: 0; margin: 0; padding: 0; border: 0; }
+.core-return-choice {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.core-return-choice label { position: relative; min-width: 0; cursor: pointer; }
+.core-return-choice input { position: absolute; opacity: 0; pointer-events: none; }
+.core-return-choice span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #cfd8e3;
+  border-radius: 6px;
+  background: #fff;
+  color: #526074;
+  font-size: 13px;
+  font-weight: 800;
+}
+.core-return-choice .required input:checked + span { border-color: #d92d20; background: #fff1ed; color: #b42318; }
+.core-return-choice .not-required input:checked + span { border-color: #12a05c; background: #ecfdf3; color: #087443; }
+.core-charge-input { display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: center; }
+.core-charge-input > span { color: #475467; font-weight: 800; text-align: center; }
+.core-charge-input .form-input { min-width: 0; }
+.product-form-core-policy-grid .form-row.disabled { opacity: .55; }
+
+.production-core-policy-list { grid-column: 1 / -1; margin-top: 10px; border-top: 1px solid #dde5ee; }
+.production-core-policy-row {
+  display: grid;
+  grid-template-columns: minmax(100px, 150px) minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid #e6ebf1;
+}
+.production-core-policy-kind { color: #334155; font-size: 12px; font-weight: 800; }
+.production-core-policy-row.rebuilt .production-core-policy-kind { color: #236344; }
+.production-core-policy-row.aftermarket_new .production-core-policy-kind { color: #315f84; }
+
+.customer-catalog-availability-kind .core-return-policy-panel { border-top: 1px solid #dfe7e3; padding: 8px 10px 10px; }
+.customer-catalog-availability-kind .core-return-policy-grid { gap: 6px; }
+.customer-catalog-availability-kind .core-return-policy-item { padding: 6px 8px; }
+.customer-catalog-availability-kind .core-return-policy-item strong { font-size: 13px; }
+
+@media (max-width: 760px) {
+  .detail-kind-core-row,
+  .product-form-core-policy-grid { grid-template-columns: 1fr; }
+  .product-form-core-policy-head { grid-template-columns: 1fr; align-items: stretch; }
+  .product-form-core-policy-head .form-label { margin-bottom: 0; }
+  .production-core-policy-row { grid-template-columns: 1fr; gap: 6px; }
+}
+
+@media (max-width: 480px) {
+  .core-return-policy-grid,
+  .core-return-choice { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 560px) {
   .ranking-report-body { padding: 9px; }
   .ranking-report-source-copy h2 { font-size: 21px; }

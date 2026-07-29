@@ -87,7 +87,8 @@ if ((source.match(/manufacturing_cost_snapshot_unit_price_changed:/g) || []).len
 
 const saveSource = sourceBetween("async function saveManufacturingCostList", "async function loadManufacturingCostList");
 [
-  "await loadManufacturingCostComponents",
+  "loadManufacturingCostComponents",
+  "loadManufacturingCostCorePolicies",
   "manufacturingCostRowWithCurrentUnitPrices",
   "var rowsToSave =",
   "manufacturingCostRows = rowsToSave",

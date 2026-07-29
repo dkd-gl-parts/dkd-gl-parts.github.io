@@ -215,6 +215,17 @@ var TRANSLATIONS = {
     product_kind_used_core: "中古コア",
     product_kind_catalog_spec: "カタログ",
     product_kind_other: "その他",
+    core_return_policy: "コア返却条件",
+    core_return_required_label: "コア返却",
+    core_return_required: "返却必要",
+    core_return_not_required: "返却不要",
+    core_charge: "未返却時コア代金",
+    core_charge_short: "コア代金",
+    core_charge_unset: "未設定",
+    core_charge_product_source: "品番設定",
+    core_policy_form_note: "商品区分ごとに、返却条件と未返却時の代金を設定します。",
+    core_policy_selected_kind_note: "選択中の商品区分の設定を保存します。",
+    core_charge_invalid: "コア代金は0以上の整数で入力してください",
     product_kind_stock: "在庫",
     product_kind_sl: "SL",
     product_kind_none: "区分データなし",
@@ -1422,6 +1433,17 @@ var TRANSLATIONS = {
     product_kind_used_core: "Used Core",
     product_kind_catalog_spec: "Catalog",
     product_kind_other: "Other",
+    core_return_policy: "Core Return Terms",
+    core_return_required_label: "Core Return",
+    core_return_required: "Return Required",
+    core_return_not_required: "No Return Required",
+    core_charge: "Core Charge if Not Returned",
+    core_charge_short: "Core Charge",
+    core_charge_unset: "Not set",
+    core_charge_product_source: "Product setting",
+    core_policy_form_note: "Set return terms and the non-return charge for each product kind.",
+    core_policy_selected_kind_note: "The setting for the selected product kind will be saved.",
+    core_charge_invalid: "Enter a core charge as an integer of 0 or more",
     product_kind_stock: "Stock",
     product_kind_sl: "SL",
     product_kind_none: "No product-kind data",
@@ -2636,6 +2658,17 @@ var TRANSLATIONS = {
     product_kind_used_core: "旧芯",
     product_kind_catalog_spec: "目录",
     product_kind_other: "其他",
+    core_return_policy: "旧芯返还条件",
+    core_return_required_label: "旧芯返还",
+    core_return_required: "需要返还",
+    core_return_not_required: "无需返还",
+    core_charge: "未返还时旧芯费用",
+    core_charge_short: "旧芯费用",
+    core_charge_unset: "未设置",
+    core_charge_product_source: "品号设置",
+    core_policy_form_note: "按商品区分设置返还条件和未返还时的费用。",
+    core_policy_selected_kind_note: "保存当前所选商品区分的设置。",
+    core_charge_invalid: "旧芯费用请输入0以上的整数",
     product_kind_stock: "库存",
     product_kind_sl: "SL",
     product_kind_none: "无区分数据",
@@ -3705,6 +3738,7 @@ var searchSlOnly      = false;
 var currentProduct    = null;
 var currentProductVariants = [];
 var currentSelectedProductKind = "rebuilt";
+var coreProductFormVariants = [];
 var currentCoreDkdShohinId = null;
 var currentProductSpecs = [];
 var currentProductNominalSpec = null;
@@ -3728,7 +3762,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.578";
+var APP_VERSION       = "v1.1.579";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -3828,6 +3862,7 @@ var productKindStockMode = "product";
 var manufacturingCostRows = [];
 var manufacturingCostProductMap = {};
 var manufacturingCostComponentMap = {};
+var manufacturingCostCorePolicyMap = {};
 var manufacturingCostCandidateRows = [];
 var manufacturingCostCandidateMode = "";
 var manufacturingCostCandidateStatusMap = {};
@@ -6297,7 +6332,7 @@ function customerCatalogSpecText(product) {
   return values.join(" / ");
 }
 
-function customerCatalogAvailabilityKindHtml(kind, stockQty, price, showPrice) {
+function customerCatalogAvailabilityKindHtml(kind, stockQty, price, showPrice, variantRows) {
   var stockText = stockQty == null ? "-" : String(stockQty);
   var priceText = price == null ? t("customer_catalog_price_none") : "JPY " + formatYen(price);
   return "<div class='customer-catalog-availability-kind " + esc(productKindClass(kind)) + "'>" +
@@ -6306,6 +6341,7 @@ function customerCatalogAvailabilityKindHtml(kind, stockQty, price, showPrice) {
       "<div class='customer-catalog-availability-metric stock'><span>" + esc(t("customer_catalog_stock_qty")) + "</span><strong>" + esc(stockText) + "</strong><small>" + esc(t("customer_catalog_stock_unit")) + "</small></div>" +
       (showPrice ? "<div class='customer-catalog-availability-metric price'><span>" + esc(t("customer_portal_price_display")) + "</span><strong>" + esc(priceText) + "</strong></div>" : "") +
     "</div>" +
+    renderCoreReturnPolicyHtml(kind, variantRows, { compact: true, showTitle: false }) +
   "</div>";
 }
 
@@ -6383,7 +6419,7 @@ async function loadCustomerCatalogAvailability(product, seq) {
   var settings = customerCatalogContext().settings || defaultCustomerDisplaySettings();
   var showPrice = !!settings.show_sales_price;
   var stockRequest = sb.from("core_product_variants")
-    .select("product_kind,stock_qty")
+    .select("product_kind,stock_qty,core_return_required,core_charge_jpy")
     .eq("dkd_shohin_id", dkdId)
     .eq("is_active", true)
     .in("product_kind", kinds);
@@ -6394,6 +6430,7 @@ async function loadCustomerCatalogAvailability(product, seq) {
   if (seq !== customerCatalogDetailSeq || !wrap.isConnected) return;
   var stockResult = results[0];
   var prices = results[1] || [];
+  var variantRows = stockResult && !stockResult.error ? (stockResult.data || []) : [];
   var stockMap = { rebuilt: 0, aftermarket_new: 0 };
   if (stockResult.error) {
     console.warn("customer catalog stock lookup failed", stockResult.error);
@@ -6407,7 +6444,7 @@ async function loadCustomerCatalogAvailability(product, seq) {
     });
   }
   wrap.innerHTML = kinds.map(function(kind, index) {
-    return customerCatalogAvailabilityKindHtml(kind, stockMap[kind], prices[index], showPrice);
+    return customerCatalogAvailabilityKindHtml(kind, stockMap[kind], prices[index], showPrice, variantRows);
   }).join("");
 }
 
@@ -7892,6 +7929,23 @@ function renderProductMasterDetailHtml(p, componentButtonHtml) {
   "</div>";
 }
 
+function renderProductionCorePolicies(rows) {
+  rows = rows || [];
+  var kinds = [];
+  rows.forEach(function(row) {
+    var kind = normalizeProductKind(row && row.product_kind);
+    if ((kind === "rebuilt" || kind === "aftermarket_new") && kinds.indexOf(kind) < 0) kinds.push(kind);
+  });
+  if (!kinds.length) kinds.push("rebuilt");
+  kinds.sort(function(a, b) { return productKindSortValue(a) - productKindSortValue(b); });
+  return "<div class='production-core-policy-list'>" + kinds.map(function(kind) {
+    return "<div class='production-core-policy-row " + productKindClass(kind) + "'>" +
+      "<div class='production-core-policy-kind'>" + esc(productKindLabel(kind)) + "</div>" +
+      renderCoreReturnPolicyHtml(kind, rows, { compact: true, showTitle: false }) +
+    "</div>";
+  }).join("") + "</div>";
+}
+
 async function renderProductionDetail(row) {
   var el = document.getElementById("production-detail");
   if (!el) return;
@@ -7941,6 +7995,7 @@ async function renderProductionDetail(row) {
   html += productionKv("コア品番", row.core_part_number);
   html += productionKv("パレット", row.core_pallet_summary);
   html += productionKv("状態", productionStatusLabel(row));
+  html += renderProductionCorePolicies(detail.productVariants);
   html += "</section>";
   html += "<section class='production-section'><h3>" + esc(t("kikan_section")) + "</h3>";
   html += "<div id='production-kikan-wrap'><div class='production-help'>" + esc(t("loading")) + "</div></div>";
@@ -7974,14 +8029,24 @@ async function renderProductionDetail(row) {
 
 async function loadProductionDetailData(row) {
   var dkdId = row && row.dkd_shohin_id;
-  var result = { coreEntries: [] };
+  var result = { coreEntries: [], productVariants: [] };
   if (!dkdId) return result;
-  var entryR = await sb.from("production_core_list_entries")
-    .select("id, core_part_number, quantity, location, note, created_at")
-    .eq("dkd_shohin_id", dkdId)
-    .order("created_at", { ascending: false })
-    .limit(100);
+  var requests = await Promise.all([
+    sb.from("production_core_list_entries")
+      .select("id, core_part_number, quantity, location, note, created_at")
+      .eq("dkd_shohin_id", dkdId)
+      .order("created_at", { ascending: false })
+      .limit(100),
+    sb.from("core_product_variants")
+      .select("product_variant_id,dkd_shohin_id,product_kind,core_return_required,core_charge_jpy,is_active")
+      .eq("dkd_shohin_id", dkdId)
+      .eq("is_active", true)
+      .in("product_kind", ["rebuilt", "aftermarket_new"])
+  ]);
+  var entryR = requests[0];
+  var variantR = requests[1];
   result.coreEntries = entryR.data || [];
+  result.productVariants = variantR.error ? [] : (variantR.data || []);
   return result;
 }
 
@@ -13851,6 +13916,8 @@ async function addProductKindStockVariant(selectKey, dkdId) {
     stock_qty: 0,
     stock_location: null,
     stock_note: null,
+    core_return_required: coreReturnRequiredDefault(kind),
+    core_charge_jpy: null,
     is_active: true
   };
   var r = await sb.from("core_product_variants")
@@ -13906,6 +13973,8 @@ async function ensureProductKindStockVariant(row, options) {
     stock_qty: 0,
     stock_location: null,
     stock_note: null,
+    core_return_required: coreReturnRequiredDefault(kind),
+    core_charge_jpy: null,
     is_active: true
   };
   var r = await sb.from("core_product_variants")
@@ -14022,6 +14091,7 @@ function renderManufacturingCostEmpty() {
   manufacturingCostRows = [];
   manufacturingCostProductMap = {};
   manufacturingCostComponentMap = {};
+  manufacturingCostCorePolicyMap = {};
   manufacturingCostListItemSnapshotMap = null;
   var countEl = document.getElementById("manufacturing-cost-count");
   var summaryEl = document.getElementById("manufacturing-cost-summary");
@@ -14120,15 +14190,39 @@ function manufacturingCostProductCategory(product) {
 
 function manufacturingCostCoreCostForProduct(product, settings) {
   settings = settings || manufacturingCostSettings();
+  var kind = normalizeProductKind(settings.productKind || "rebuilt");
+  var productId = String(productDkdId(product) || "");
+  var policyRow = manufacturingCostCorePolicyMap[productId] || null;
+  var policy = coreReturnPolicyForKind(kind, policyRow ? [policyRow] : []);
+  if (!policy.required) {
+    return {
+      amount: 0,
+      category: manufacturingCostProductCategory(product),
+      isCategorySpecific: false,
+      isProductSpecific: !!policyRow,
+      returnRequired: false,
+      source: policyRow ? "product" : "kind_default"
+    };
+  }
+  if (policyRow && policy.hasProductCharge) {
+    return {
+      amount: policy.charge,
+      category: manufacturingCostProductCategory(product),
+      isCategorySpecific: false,
+      isProductSpecific: true,
+      returnRequired: true,
+      source: "product"
+    };
+  }
   var category = manufacturingCostProductCategory(product);
   var categoryCosts = settings.categoryCoreCosts || {};
   if (category && Object.prototype.hasOwnProperty.call(categoryCosts, category)) {
     var categoryCost = parseInt(categoryCosts[category], 10);
     if (!isNaN(categoryCost) && categoryCost >= 0) {
-      return { amount: categoryCost, category: category, isCategorySpecific: true };
+      return { amount: categoryCost, category: category, isCategorySpecific: true, isProductSpecific: false, returnRequired: true, source: "category" };
     }
   }
-  return { amount: settings.coreCost || 0, category: category, isCategorySpecific: false };
+  return { amount: settings.coreCost || 0, category: category, isCategorySpecific: false, isProductSpecific: false, returnRequired: true, source: "default" };
 }
 
 function manufacturingCostCoreCostForCategory(category, settings) {
@@ -14476,6 +14570,9 @@ function manufacturingCostRowWithCurrentUnitPrices(row, settings) {
       coreCost: coreInfo.amount,
       coreCostCategory: coreInfo.category,
       coreCostCategorySpecific: coreInfo.isCategorySpecific,
+      coreCostProductSpecific: coreInfo.isProductSpecific,
+      coreCostSource: coreInfo.source,
+      coreReturnRequired: coreInfo.returnRequired,
       laborRateCost: laborRateCost,
       laborAmount: settings.laborAmount,
       laborCost: laborCost,
@@ -14762,6 +14859,31 @@ async function loadManufacturingCostComponents(products, productKind) {
   return { data: manufacturingCostComponentMap, error: null };
 }
 
+async function loadManufacturingCostCorePolicies(products, productKind) {
+  manufacturingCostCorePolicyMap = {};
+  var ids = (products || []).map(function(product) { return productDkdId(product); }).filter(Boolean);
+  ids = Array.from(new Set(ids.map(function(id) { return parseInt(id, 10); }))).filter(function(id) { return !isNaN(id); });
+  productKind = normalizeProductKind(productKind || "rebuilt");
+  for (var i = 0; i < ids.length; i += 200) {
+    var chunk = ids.slice(i, i + 200);
+    var r = await sb.from("core_product_variants")
+      .select("dkd_shohin_id,product_kind,core_return_required,core_charge_jpy,is_active")
+      .in("dkd_shohin_id", chunk)
+      .eq("product_kind", productKind)
+      .eq("is_active", true);
+    if (r.error) return r;
+    (r.data || []).forEach(function(row) {
+      var key = String(row.dkd_shohin_id || "");
+      if (!key) return;
+      var current = manufacturingCostCorePolicyMap[key];
+      if (!current || (current.core_charge_jpy == null && row.core_charge_jpy != null)) {
+        manufacturingCostCorePolicyMap[key] = row;
+      }
+    });
+  }
+  return { data: manufacturingCostCorePolicyMap, error: null };
+}
+
 function manufacturingCostBuildRows(products, settings, options) {
   options = options || {};
   var snapshotMap = options.snapshotMap || null;
@@ -14810,6 +14932,9 @@ function manufacturingCostBuildRows(products, settings, options) {
       coreCost: coreCost,
       coreCostCategory: coreInfo.category,
       coreCostCategorySpecific: coreInfo.isCategorySpecific,
+      coreCostProductSpecific: coreInfo.isProductSpecific,
+      coreCostSource: coreInfo.source,
+      coreReturnRequired: coreInfo.returnRequired,
       laborRateCost: laborRateCost,
       laborAmount: settings.laborAmount,
       laborCost: laborCost,
@@ -14826,8 +14951,12 @@ async function buildAndRenderManufacturingCostProducts(products, settings, optio
   if (Object.prototype.hasOwnProperty.call(options, "snapshotMap")) {
     manufacturingCostListItemSnapshotMap = options.snapshotMap || null;
   }
-  await loadManufacturingCostComponents(products, settings.productKind).then(function(r) {
-    if (r.error) throw r.error;
+  var loads = await Promise.all([
+    loadManufacturingCostComponents(products, settings.productKind),
+    loadManufacturingCostCorePolicies(products, settings.productKind)
+  ]);
+  loads.forEach(function(result) {
+    if (result.error) throw result.error;
   });
   manufacturingCostRows = manufacturingCostBuildRows(products, settings, { snapshotMap: manufacturingCostListItemSnapshotMap });
   renderManufacturingCostRows();
@@ -15012,9 +15141,13 @@ function renderManufacturingCostRows() {
     if (row.missingQuantityCount) notes.push(tf("manufacturing_cost_missing_quantity", { n: row.missingQuantityCount }));
     if (row.missingReplacementRateCount) notes.push(tf("manufacturing_cost_missing_replacement_rate", { n: row.missingReplacementRateCount }));
     if (row.savedSnapshotUnitPriceDiffers) notes.push(t("manufacturing_cost_snapshot_unit_price_changed"));
-    var coreNote = row.coreCostCategorySpecific
-      ? tf("manufacturing_cost_core_category_note", { category: manufacturingCostCategoryLabel(row.coreCostCategory) })
-      : t("manufacturing_cost_core_default_note");
+    var coreNote = row.coreCostSource === "product"
+      ? t("core_charge_product_source") + (row.coreReturnRequired === false ? " / " + t("core_return_not_required") : "")
+      : row.coreCostSource === "kind_default"
+        ? t("core_return_not_required")
+        : row.coreCostCategorySpecific
+          ? tf("manufacturing_cost_core_category_note", { category: manufacturingCostCategoryLabel(row.coreCostCategory) })
+          : t("manufacturing_cost_core_default_note");
     var detailHtml = renderManufacturingCostComponentDetails(row);
     html += "<tr class='manufacturing-cost-main-row'>";
     html += "<td><div class='manufacturing-cost-product-main'>" + esc(manufacturingCostProductTitle(p)) + "</div><div class='manufacturing-cost-product-sub'>" + esc([p.manufacturer_part_number, p.genuine_part_number_2, p.manufacturer, tCat(p.category_code || p.category), "DKD " + (row.productId || "-")].filter(Boolean).join(" / ")) + "</div></td>";
@@ -15157,6 +15290,7 @@ async function calculateSelectedManufacturingCost() {
     console.warn("manufacturing cost calculation failed", e);
     manufacturingCostRows = [];
     manufacturingCostComponentMap = {};
+    manufacturingCostCorePolicyMap = {};
     if (countEl) countEl.textContent = "";
     if (list) list.innerHTML = "<div class='empty'>" + esc(t("msg_part_err") + ": " + ((e && e.message) || String(e))) + "</div>";
   }
@@ -15175,8 +15309,13 @@ async function saveManufacturingCostList() {
   var selected = selectedManufacturingCostList();
   if (!manufacturingCostRows.length && !selected) { setManufacturingCostListStatus(t("manufacturing_cost_list_rows_required"), true); return; }
   var settings = manufacturingCostSettings();
-  var currentComponentsR = await loadManufacturingCostComponents(manufacturingCostRows.map(function(row) { return row.product; }).filter(Boolean), settings.productKind);
-  if (currentComponentsR.error) { setManufacturingCostListStatus(currentComponentsR.error.message || t("msg_part_err"), true); return; }
+  var currentProducts = manufacturingCostRows.map(function(row) { return row.product; }).filter(Boolean);
+  var currentLoads = await Promise.all([
+    loadManufacturingCostComponents(currentProducts, settings.productKind),
+    loadManufacturingCostCorePolicies(currentProducts, settings.productKind)
+  ]);
+  var currentLoadError = currentLoads.find(function(result) { return result.error; });
+  if (currentLoadError) { setManufacturingCostListStatus(currentLoadError.error.message || t("msg_part_err"), true); return; }
   var updatedUnitPriceCount = 0;
   var rowsToSave = manufacturingCostRows.map(function(row) {
     var refreshed = manufacturingCostRowWithCurrentUnitPrices(row, settings);
@@ -15297,6 +15436,7 @@ async function loadManufacturingCostList() {
     console.warn("manufacturing cost list load failed", e);
     manufacturingCostRows = [];
     manufacturingCostComponentMap = {};
+    manufacturingCostCorePolicyMap = {};
     if (countEl) countEl.textContent = "";
     if (list) list.innerHTML = "<div class='empty'>" + esc(t("msg_part_err") + ": " + ((e && e.message) || String(e))) + "</div>";
     setManufacturingCostListStatus((e && e.message) || String(e), true);
@@ -16419,10 +16559,118 @@ function closeGltekProductAddMode() {
   setGltekProductAddPanel();
 }
 
+function coreProductPolicyFormKinds(product, variants, preferredKind) {
+  var kinds = [];
+  (variants || []).forEach(function(row) {
+    var kind = normalizeProductKind(row && row.product_kind);
+    if ((kind === "rebuilt" || kind === "aftermarket_new") && kinds.indexOf(kind) < 0) kinds.push(kind);
+  });
+  preferredKind = normalizeProductKind(preferredKind || (product && product.default_product_kind) || "rebuilt");
+  if (preferredKind !== "rebuilt" && preferredKind !== "aftermarket_new") preferredKind = "rebuilt";
+  if (!kinds.length) kinds.push(preferredKind);
+  kinds.sort(function(a, b) { return productKindSortValue(a) - productKindSortValue(b); });
+  return kinds;
+}
+
+function setCoreProductPolicyReturnState(required) {
+  var value = required ? "required" : "not_required";
+  document.querySelectorAll("input[name='pf-core-return-required']").forEach(function(input) {
+    input.checked = input.value === value;
+  });
+  var charge = document.getElementById("pf-core-charge");
+  if (charge) {
+    charge.disabled = !required;
+    charge.closest(".form-row").classList.toggle("disabled", !required);
+  }
+}
+
+function populateCoreProductPolicyForm(product, preferredKind) {
+  var select = document.getElementById("pf-core-policy-kind");
+  if (!select) return;
+  var kinds = coreProductPolicyFormKinds(product, coreProductFormVariants, preferredKind);
+  var selected = normalizeProductKind(preferredKind || kinds[0] || "rebuilt");
+  if (kinds.indexOf(selected) < 0) selected = kinds[0] || "rebuilt";
+  select.innerHTML = kinds.map(function(kind) {
+    return "<option value='" + esc(kind) + "'" + (kind === selected ? " selected" : "") + ">" + esc(productKindLabel(kind)) + "</option>";
+  }).join("");
+  select.value = selected;
+  setProductKindSelectClass(select);
+  var policy = coreReturnPolicyForKind(selected, coreProductFormVariants);
+  setCoreProductPolicyReturnState(policy.required);
+  var charge = document.getElementById("pf-core-charge");
+  if (charge) charge.value = policy.hasProductCharge ? String(policy.charge) : "";
+}
+
+function coreProductPolicyFormValue() {
+  var select = document.getElementById("pf-core-policy-kind");
+  var checked = document.querySelector("input[name='pf-core-return-required']:checked");
+  var kind = normalizeProductKind(select && select.value || "rebuilt");
+  var required = !checked || checked.value === "required";
+  var rawCharge = (document.getElementById("pf-core-charge") || {}).value;
+  var charge = rawCharge === "" || rawCharge === null || rawCharge === undefined ? null : Number(rawCharge);
+  if (charge !== null && (!Number.isInteger(charge) || charge < 0)) {
+    return { error: t("core_charge_invalid") };
+  }
+  return { kind: kind, required: required, charge: required ? charge : null };
+}
+
+async function saveCoreProductPolicyForDkd(dkd, errEl) {
+  var formValue = coreProductPolicyFormValue();
+  if (formValue.error) {
+    errEl.textContent = formValue.error;
+    return false;
+  }
+  var existing = await sb.from("core_product_variants")
+    .select("product_variant_id,dkd_shohin_id,product_kind,sl_part_id,display_label,stock_qty,stock_location,stock_note,core_return_required,core_charge_jpy,is_active")
+    .eq("dkd_shohin_id", dkd)
+    .eq("product_kind", formValue.kind)
+    .eq("is_active", true);
+  if (existing.error) {
+    errEl.textContent = t("msg_part_err") + ": " + existing.error.message;
+    return false;
+  }
+  var before = existing.data || [];
+  var payload = {
+    core_return_required: formValue.required,
+    core_charge_jpy: formValue.charge,
+    updated_at: new Date().toISOString()
+  };
+  var result;
+  if (before.length) {
+    result = await sb.from("core_product_variants")
+      .update(payload)
+      .eq("dkd_shohin_id", dkd)
+      .eq("product_kind", formValue.kind)
+      .eq("is_active", true)
+      .select("product_variant_id,dkd_shohin_id,product_kind,sl_part_id,display_label,stock_qty,stock_location,stock_note,core_return_required,core_charge_jpy,is_active");
+  } else {
+    result = await sb.from("core_product_variants")
+      .insert(Object.assign({
+        dkd_shohin_id: dkd,
+        product_kind: formValue.kind,
+        stock_qty: 0,
+        is_active: true
+      }, payload))
+      .select("product_variant_id,dkd_shohin_id,product_kind,sl_part_id,display_label,stock_qty,stock_location,stock_note,core_return_required,core_charge_jpy,is_active");
+  }
+  if (result.error) {
+    errEl.textContent = t("msg_part_err") + ": " + result.error.message;
+    return false;
+  }
+  var savedRows = result.data || [];
+  coreProductFormVariants = coreProductFormVariants.filter(function(row) {
+    return normalizeProductKind(row.product_kind) !== formValue.kind;
+  }).concat(savedRows);
+  currentProductVariants = coreProductFormVariants.slice();
+  await writeLog(before.length ? "update" : "insert", "core_product_variants", savedRows[0] && savedRows[0].product_variant_id || dkd, productKindLabel(formValue.kind), before, payload);
+  return true;
+}
+
 function setProductFormFieldMode(source, mode) {
   var productCodeRow = document.getElementById("pf-shohin-cd-row");
   var productCodeInput = document.getElementById("pf-shohin-cd");
   var coreInventoryFields = document.getElementById("pf-core-inventory-fields");
+  var corePolicyFields = document.getElementById("pf-core-policy-fields");
   var coreStockInput = document.getElementById("pf-core-stock-qty");
   var corePalletInput = document.getElementById("pf-core-pallet-no");
   var isCoreProduct = source === "core_products";
@@ -16430,6 +16678,7 @@ function setProductFormFieldMode(source, mode) {
 
   setCspStyle(productCodeRow, "display", isCoreProduct && isAdd ? "none" : "");
   setCspStyle(coreInventoryFields, "display", isCoreProduct && !isAdd ? "" : "none");
+  setCspStyle(corePolicyFields, "display", isCoreProduct ? "" : "none");
 
   if (productCodeInput) {
     productCodeInput.readOnly = isCoreProduct || mode === "edit";
@@ -16476,6 +16725,11 @@ async function openCoreProductForm(mode, product, context) {
   document.getElementById("part-form-title").textContent = mode === "add" ? t("btn_add_part") : t("btn_edit_part");
   setCoreProductFormFields(mode === "add" ? (product || null) : product);
   setProductFormFieldMode("core_products", mode);
+  coreProductFormVariants = [];
+  if (mode === "edit" && productDkdId(product)) {
+    coreProductFormVariants = await fetchProductVariantsByDkdId(productDkdId(product));
+  }
+  populateCoreProductPolicyForm(product, currentSelectedProductKind);
   clearUnifiedSpecForm();
   if (mode === "edit") {
     await loadProductSpecsForCurrent();
@@ -16605,6 +16859,8 @@ async function saveCoreProductForm() {
   }
   if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
   if (!dkd) { errEl.textContent = "商品コードを自動採番できませんでした"; return; }
+  var corePolicyOk = await saveCoreProductPolicyForDkd(dkd, errEl);
+  if (!corePolicyOk) return;
   var specOk = await saveUnifiedSpecForDkd(dkd, errEl);
   if (!specOk) return;
   document.getElementById("part-form-overlay").classList.remove("show");
@@ -17794,6 +18050,52 @@ function productKindClass(kind) {
   return "other";
 }
 
+function coreReturnRequiredDefault(kind) {
+  return normalizeProductKind(kind) === "rebuilt";
+}
+
+function coreReturnPolicyForKind(kind, rows) {
+  kind = normalizeProductKind(kind || "rebuilt");
+  var matches = (rows || []).filter(function(row) {
+    return normalizeProductKind(row && row.product_kind) === kind;
+  });
+  var row = matches.find(function(item) {
+    return item && item.core_charge_jpy !== null && item.core_charge_jpy !== undefined && item.core_charge_jpy !== "";
+  }) || matches[0] || null;
+  var required = row && typeof row.core_return_required === "boolean"
+    ? row.core_return_required
+    : coreReturnRequiredDefault(kind);
+  var charge = row && row.core_charge_jpy !== null && row.core_charge_jpy !== undefined && row.core_charge_jpy !== ""
+    ? parseInt(row.core_charge_jpy, 10)
+    : null;
+  if (charge !== null && (isNaN(charge) || charge < 0)) charge = null;
+  return {
+    kind: kind,
+    row: row,
+    required: required,
+    charge: charge,
+    hasProductCharge: charge !== null
+  };
+}
+
+function coreReturnChargeText(policy) {
+  if (!policy || !policy.required) return "¥0";
+  return policy.hasProductCharge ? "¥" + formatYen(policy.charge) : t("core_charge_unset");
+}
+
+function renderCoreReturnPolicyHtml(kind, rows, options) {
+  options = options || {};
+  var policy = coreReturnPolicyForKind(kind, rows);
+  var stateClass = policy.required ? "required" : "not-required";
+  var stateText = policy.required ? t("core_return_required") : t("core_return_not_required");
+  return "<div class='core-return-policy-panel" + (options.compact ? " compact" : "") + "'>" +
+    (options.showTitle === false ? "" : "<div class='detail-block-title'>" + esc(t("core_return_policy")) + "</div>") +
+    "<div class='core-return-policy-grid'>" +
+      "<div class='core-return-policy-item'><span>" + esc(t("core_return_required_label")) + "</span><strong class='core-return-badge " + stateClass + "'>" + esc(stateText) + "</strong></div>" +
+      "<div class='core-return-policy-item'><span>" + esc(t("core_charge_short")) + "</span><strong>" + esc(coreReturnChargeText(policy)) + "</strong></div>" +
+    "</div></div>";
+}
+
 function imageProductKindOptions() {
   return ["rebuilt", "aftermarket_new"];
 }
@@ -17871,7 +18173,9 @@ function addProductVariantSummaryRow(summary, row) {
     sl_part_id: row.sl_part_id || null,
     display_label: row.display_label || "",
     stock_location: row.stock_location || "",
-    stock_note: row.stock_note || ""
+    stock_note: row.stock_note || "",
+    core_return_required: typeof row.core_return_required === "boolean" ? row.core_return_required : coreReturnRequiredDefault(kind),
+    core_charge_jpy: row.core_charge_jpy === null || row.core_charge_jpy === undefined || row.core_charge_jpy === "" ? null : parseInt(row.core_charge_jpy, 10)
   });
   return summary;
 }
@@ -18216,12 +18520,19 @@ function renderProductKindWrapForCurrent() {
   bindProductKindPanelActions();
 }
 
+function renderCoreReturnPolicyWrapForCurrent() {
+  var wrap = document.getElementById("core-return-policy-wrap");
+  if (!wrap) return;
+  wrap.innerHTML = renderCoreReturnPolicyHtml(selectedProductKind(), productKindRowsForCurrent(), { showTitle: false });
+}
+
 function bindProductKindPanelActions() {
   var select = document.getElementById("product-kind-select");
   if (select) {
     select.onchange = function() {
       currentSelectedProductKind = normalizeProductKind(select.value || "rebuilt");
       renderProductKindWrapForCurrent();
+      renderCoreReturnPolicyWrapForCurrent();
       currentImages = [];
       renderImagesLoading();
       loadImages(null, detailSecondaryRequestSeq);
@@ -18237,7 +18548,7 @@ async function fetchProductVariantSummaryMap(products) {
   for (var i = 0; i < ids.length; i += 200) {
     var chunk = ids.slice(i, i + 200);
     var r = await sb.from("core_product_variants")
-      .select("product_variant_id, dkd_shohin_id, product_kind, sl_part_id, display_label, stock_qty, stock_location, stock_note, is_active")
+      .select("product_variant_id, dkd_shohin_id, product_kind, sl_part_id, display_label, stock_qty, stock_location, stock_note, core_return_required, core_charge_jpy, is_active")
       .eq("is_active", true)
       .in("dkd_shohin_id", chunk);
     if (r.error) {
@@ -20020,6 +20331,8 @@ function renderPanelStatic() {
     ? "<div class='ec-mall-summary-block'><div class='sales-price-summary-head'><div class='detail-block-title'>" + t("ec_research_detail_title") + "</div></div><div id='ec-mall-price-summary-wrap'><div data-dcats-inline-style='s-d097f1ffa2b6'>" + t("loading") + "</div></div></div>"
     : "";
   var productKindBlockHtml = "<div class='product-kind-panel detail-inline-kind-panel'><div class='detail-block-title'>" + t("product_kind_section") + "</div><div id='product-kind-wrap'>" + renderProductKindPanelHtml(productKindSummaryForProduct(p)) + "</div></div>";
+  var corePolicyBlockHtml = "<div class='detail-core-policy-panel'><div class='detail-block-title'>" + esc(t("core_return_policy")) + "</div><div id='core-return-policy-wrap'>" + renderCoreReturnPolicyHtml(selectedProductKind(), productKindRowsForCurrent(), { showTitle: false }) + "</div></div>";
+  var kindCoreRowHtml = "<div class='detail-kind-core-row'>" + productKindBlockHtml + corePolicyBlockHtml + "</div>";
   var kindPriceBlocks = [ecMallPriceBlockHtml].filter(Boolean);
   var kindPriceRowHtml = kindPriceBlocks.length
     ? "<div class='detail-kind-price-row" + (kindPriceBlocks.length > 1 ? "" : " single") + "'>" + kindPriceBlocks.join("") + "</div>"
@@ -20047,11 +20360,12 @@ function renderPanelStatic() {
   var mobileActionsHtml = mobileActionButtons.length ? "<div class='detail-mobile-actions'>" + mobileActionButtons.join("") + "</div>" : "";
   document.getElementById("panel-body").innerHTML =
     "<div class='detail-main-grid'>" +
-      "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + productKindBlockHtml + "</div>" +
+      "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + "</div>" +
       "<div class='detail-column'>" + makerHtml +
       "<div class='detail-spec-block detail-spec-after-maker'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div>" +
       "</div>" +
     "</div>" +
+    kindCoreRowHtml +
     mobileActionsHtml +
     kindPriceRowHtml +
     toolHtml +
@@ -20105,6 +20419,7 @@ async function loadProductVariantsForCurrent(seq) {
     wrap.innerHTML = renderProductKindPanelHtml(productKindSummaryForProduct(currentProduct));
     bindProductKindPanelActions();
   }
+  renderCoreReturnPolicyWrapForCurrent();
   refreshSalesMobileStockSummary();
   render();
 }
@@ -20113,7 +20428,7 @@ async function fetchProductVariantsByDkdId(dkdId) {
   var id = parseInt(dkdId, 10);
   if (isNaN(id)) return [];
   var r = await sb.from("core_product_variants")
-    .select("product_variant_id, dkd_shohin_id, product_kind, sl_part_id, display_label, stock_qty, stock_location, stock_note, is_active")
+    .select("product_variant_id, dkd_shohin_id, product_kind, sl_part_id, display_label, stock_qty, stock_location, stock_note, core_return_required, core_charge_jpy, is_active")
     .eq("dkd_shohin_id", id)
     .eq("is_active", true)
     .order("product_variant_id", { ascending: true });
@@ -32094,6 +32409,14 @@ document.getElementById("btn-back-logs").addEventListener("click", returnToMenuF
 document.getElementById("btn-add-part").addEventListener("click", function(){ openPartForm("add"); });
 document.getElementById("btn-part-form-cancel").addEventListener("click", function(){ document.getElementById("part-form-overlay").classList.remove("show"); });
 document.getElementById("btn-part-form-save").addEventListener("click", savePartForm);
+document.getElementById("pf-core-policy-kind").addEventListener("change", function() {
+  populateCoreProductPolicyForm(currentProduct, this.value);
+});
+document.querySelectorAll("input[name='pf-core-return-required']").forEach(function(input) {
+  input.addEventListener("change", function() {
+    if (input.checked) setCoreProductPolicyReturnState(input.value === "required");
+  });
+});
 document.getElementById("pf-part-manufacturer-type").addEventListener("change", setGltekProductAddPanel);
 document.getElementById("btn-gltek-product-mode-open").addEventListener("click", openGltekProductAddMode);
 document.getElementById("btn-gltek-product-mode-close").addEventListener("click", closeGltekProductAddMode);
