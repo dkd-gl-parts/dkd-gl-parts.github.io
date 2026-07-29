@@ -501,10 +501,12 @@ var TRANSLATIONS = {
     manufacturing_cost_notes: "確認",
     manufacturing_cost_no_components: "リビルト構成部品なし",
     manufacturing_cost_missing_unit: "単価未設定 {n} 件",
+    manufacturing_cost_missing_quantity: "必要数未設定 {n} 件",
+    manufacturing_cost_missing_replacement_rate: "交換率未設定 {n} 件",
     manufacturing_cost_component_detail: "構成部品明細",
     manufacturing_cost_component_detail_summary: "明細 {n} 件 / 部品原価 {amount}",
     manufacturing_cost_component_count: "{n} 件",
-    manufacturing_cost_saved_snapshot_used: "保存時点の明細",
+    manufacturing_cost_snapshot_unit_price_changed: "保存時点と現在単価に差異",
     manufacturing_cost_component_name: "部品名",
     manufacturing_cost_unit_price: "単価",
     manufacturing_cost_quantity: "必要個数",
@@ -1697,10 +1699,12 @@ var TRANSLATIONS = {
     manufacturing_cost_notes: "Check",
     manufacturing_cost_no_components: "No rebuilt components",
     manufacturing_cost_missing_unit: "{n} unit prices missing",
+    manufacturing_cost_missing_quantity: "{n} required quantities missing",
+    manufacturing_cost_missing_replacement_rate: "{n} replacement rates missing",
     manufacturing_cost_component_detail: "Component Details",
     manufacturing_cost_component_detail_summary: "Details {n} / Parts {amount}",
     manufacturing_cost_component_count: "{n} items",
-    manufacturing_cost_saved_snapshot_used: "Saved snapshot",
+    manufacturing_cost_snapshot_unit_price_changed: "Unit price differs from saved details",
     manufacturing_cost_component_name: "Part Name",
     manufacturing_cost_unit_price: "Unit Price",
     manufacturing_cost_quantity: "Required Qty",
@@ -2899,10 +2903,12 @@ var TRANSLATIONS = {
     manufacturing_cost_notes: "确认",
     manufacturing_cost_no_components: "无再制造构成零件",
     manufacturing_cost_missing_unit: "{n} 件未设置单价",
+    manufacturing_cost_missing_quantity: "{n} 件未设置所需数量",
+    manufacturing_cost_missing_replacement_rate: "{n} 件未设置更换率",
     manufacturing_cost_component_detail: "构成零件明细",
     manufacturing_cost_component_detail_summary: "明细 {n} 件 / 零件成本 {amount}",
     manufacturing_cost_component_count: "{n} 件",
-    manufacturing_cost_saved_snapshot_used: "保存时明细",
+    manufacturing_cost_snapshot_unit_price_changed: "保存时与当前单价不同",
     manufacturing_cost_component_name: "零件名",
     manufacturing_cost_unit_price: "单价",
     manufacturing_cost_quantity: "所需数量",
@@ -3695,7 +3701,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.574";
+var APP_VERSION       = "v1.1.575";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -14337,6 +14343,61 @@ function manufacturingCostComponentCalc(row) {
   };
 }
 
+function manufacturingCostComponentInputState(row) {
+  row = row || {};
+  var calc = manufacturingCostComponentCalc(row);
+  var quantityText = String(row.quantity == null ? "" : row.quantity).trim();
+  var quantityNumber = parseFloat(quantityText.replace(/[^\d.]/g, ""));
+  var rateText = String(row.replacement_rate == null ? "" : row.replacement_rate).trim();
+  var rateNumber = parseFloat(rateText.replace(/[^\d.]/g, ""));
+  return {
+    hasUnit: calc.hasUnit,
+    hasQuantity: quantityText !== "" && !isNaN(quantityNumber) && quantityNumber > 0,
+    hasReplacementRate: rateText !== "" && !isNaN(rateNumber) && rateNumber >= 0 && rateNumber <= 100
+  };
+}
+
+function manufacturingCostComponentComparisonKey(row) {
+  row = row || {};
+  function compact(value) {
+    return String(value || "").toUpperCase().replace(/[\s\u3000\-_/・･]/g, "");
+  }
+  return [
+    compact(row.component_manufacturer),
+    compact(row.component_manufacturer_part_number),
+    compact(row.component_genuine_part_number),
+    compact(row.component_name || row.component_part_name)
+  ].join("|");
+}
+
+function manufacturingCostSnapshotUnitPriceDiffers(snapshotComponents, currentComponents) {
+  snapshotComponents = snapshotComponents || [];
+  currentComponents = currentComponents || [];
+  if (!snapshotComponents.length || !currentComponents.length) return false;
+  return snapshotComponents.some(function(snapshot) {
+    var candidates = [];
+    if (snapshot.id != null && snapshot.id !== "") {
+      candidates = currentComponents.filter(function(current) {
+        return current && current.id != null && String(current.id) === String(snapshot.id);
+      });
+    }
+    if (!candidates.length) {
+      var key = manufacturingCostComponentComparisonKey(snapshot);
+      if (key.replace(/\|/g, "")) {
+        candidates = currentComponents.filter(function(current) {
+          return manufacturingCostComponentComparisonKey(current) === key;
+        });
+      }
+    }
+    if (!candidates.length) return false;
+    var savedCalc = manufacturingCostComponentCalc(snapshot);
+    return !candidates.some(function(current) {
+      var currentCalc = manufacturingCostComponentCalc(current);
+      return savedCalc.hasUnit === currentCalc.hasUnit && (!savedCalc.hasUnit || savedCalc.unit === currentCalc.unit);
+    });
+  });
+}
+
 function manufacturingCostSnapshotNumber(value, fallback) {
   var n = parseInt(value, 10);
   return isNaN(n) ? (fallback || 0) : n;
@@ -14617,14 +14678,23 @@ function manufacturingCostBuildRows(products, settings, options) {
     var id = productDkdId(product);
     var snapshotItem = snapshotMap ? snapshotMap[String(id || "")] : null;
     var snapshotComponents = manufacturingCostSnapshotComponents(snapshotItem);
-    var components = snapshotComponents.length ? snapshotComponents : (manufacturingCostComponentMap[String(id || "")] || []);
-    var usesSavedSnapshot = !!snapshotComponents.length;
+    var currentComponents = manufacturingCostComponentMap[String(id || "")] || [];
+    var components = snapshotComponents.length ? snapshotComponents : currentComponents;
+    var validationComponents = currentComponents.length ? currentComponents : components;
+    var snapshotUnitPriceDiffers = manufacturingCostSnapshotUnitPriceDiffers(snapshotComponents, currentComponents);
     var partsCost = 0;
     var missingUnitCount = 0;
+    var missingQuantityCount = 0;
+    var missingReplacementRateCount = 0;
     components.forEach(function(row) {
       var calc = manufacturingCostComponentCalc(row);
       partsCost += calc.amount;
-      if (!calc.hasUnit) missingUnitCount += 1;
+    });
+    validationComponents.forEach(function(row) {
+      var inputState = manufacturingCostComponentInputState(row);
+      if (!inputState.hasUnit) missingUnitCount += 1;
+      if (!inputState.hasQuantity) missingQuantityCount += 1;
+      if (!inputState.hasReplacementRate) missingReplacementRateCount += 1;
     });
     if (snapshotItem && !snapshotComponents.length && !components.length) {
       partsCost = manufacturingCostSnapshotNumber(snapshotItem.parts_cost_jpy_snapshot, partsCost);
@@ -14653,7 +14723,9 @@ function manufacturingCostBuildRows(products, settings, options) {
       laborAmount: settings.laborAmount,
       laborCost: laborCost,
       totalCost: partsCost + coreCost + laborCost,
-      savedSnapshotUsed: usesSavedSnapshot
+      savedSnapshotUnitPriceDiffers: snapshotUnitPriceDiffers,
+      missingQuantityCount: missingQuantityCount,
+      missingReplacementRateCount: missingReplacementRateCount
     };
   });
 }
@@ -14703,7 +14775,9 @@ function renderManufacturingCostComponentDetails(row) {
   html += "<span class='manufacturing-cost-detail-badge'>" + esc(tf("manufacturing_cost_component_count", { n: row.componentCount || row.components.length })) + "</span>";
   html += "<span class='manufacturing-cost-detail-badge total'>" + esc(t("manufacturing_cost_summary_parts")) + " " + esc(manufacturingCostYen(row.partsCost)) + "</span>";
   if (row.missingUnitCount) html += "<span class='manufacturing-cost-detail-badge warn'>" + esc(tf("manufacturing_cost_missing_unit", { n: row.missingUnitCount })) + "</span>";
-  if (row.savedSnapshotUsed) html += "<span class='manufacturing-cost-detail-badge'>" + esc(t("manufacturing_cost_saved_snapshot_used")) + "</span>";
+  if (row.missingQuantityCount) html += "<span class='manufacturing-cost-detail-badge warn'>" + esc(tf("manufacturing_cost_missing_quantity", { n: row.missingQuantityCount })) + "</span>";
+  if (row.missingReplacementRateCount) html += "<span class='manufacturing-cost-detail-badge warn'>" + esc(tf("manufacturing_cost_missing_replacement_rate", { n: row.missingReplacementRateCount })) + "</span>";
+  if (row.savedSnapshotUnitPriceDiffers) html += "<span class='manufacturing-cost-detail-badge warn'>" + esc(t("manufacturing_cost_snapshot_unit_price_changed")) + "</span>";
   html += "</div>";
   html += "<div class='manufacturing-cost-component-list'>";
   html += "<div class='manufacturing-cost-component-header'>";
@@ -14749,7 +14823,9 @@ function renderManufacturingCostRows() {
     var notes = [];
     if (!row.componentCount) notes.push(t("manufacturing_cost_no_components"));
     if (row.missingUnitCount) notes.push(tf("manufacturing_cost_missing_unit", { n: row.missingUnitCount }));
-    if (row.savedSnapshotUsed) notes.push(t("manufacturing_cost_saved_snapshot_used"));
+    if (row.missingQuantityCount) notes.push(tf("manufacturing_cost_missing_quantity", { n: row.missingQuantityCount }));
+    if (row.missingReplacementRateCount) notes.push(tf("manufacturing_cost_missing_replacement_rate", { n: row.missingReplacementRateCount }));
+    if (row.savedSnapshotUnitPriceDiffers) notes.push(t("manufacturing_cost_snapshot_unit_price_changed"));
     var coreNote = row.coreCostCategorySpecific
       ? tf("manufacturing_cost_core_category_note", { category: manufacturingCostCategoryLabel(row.coreCostCategory) })
       : t("manufacturing_cost_core_default_note");
@@ -14761,7 +14837,7 @@ function renderManufacturingCostRows() {
     html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.coreCost)) + "</div><div class='manufacturing-cost-note'>" + esc(coreNote) + "</div></td>";
     html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.laborCost)) + "</div><div class='manufacturing-cost-note'>" + esc(t("manufacturing_cost_formula_note")) + "</div></td>";
     html += "<td><div class='manufacturing-cost-money manufacturing-cost-total'>" + esc(manufacturingCostYen(row.totalCost)) + "</div></td>";
-    html += "<td>" + (notes.length ? "<div class='manufacturing-cost-missing'>" + esc(notes.join(" / ")) + "</div>" : "<div class='manufacturing-cost-note'>-</div>") + "</td>";
+    html += "<td>" + (notes.length ? "<div class='manufacturing-cost-missing'>" + esc(notes.join(" / ")) + "</div>" : "") + "</td>";
     html += "</tr>";
     if (detailHtml) html += "<tr class='manufacturing-cost-detail-row'><td colspan='7'>" + detailHtml + "</td></tr>";
   });
