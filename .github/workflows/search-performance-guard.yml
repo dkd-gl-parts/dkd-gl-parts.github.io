@@ -7,6 +7,7 @@ on:
       - "styles.css"
       - "scripts/verify-search-workload-guard.js"
       - "scripts/verify-component-catalog-recovery.js"
+      - "scripts/verify-component-manual-add.js"
       - "scripts/verify-component-reverse-lookup.js"
       - "scripts/verify-customer-catalog-detail.js"
       - "scripts/verify-customer-category-visibility.js"
@@ -18,6 +19,7 @@ on:
       - "styles.css"
       - "scripts/verify-search-workload-guard.js"
       - "scripts/verify-component-catalog-recovery.js"
+      - "scripts/verify-component-manual-add.js"
       - "scripts/verify-component-reverse-lookup.js"
       - "scripts/verify-customer-catalog-detail.js"
       - "scripts/verify-customer-category-visibility.js"
@@ -41,6 +43,8 @@ jobs:
         run: node scripts/verify-search-workload-guard.js
       - name: Verify component catalog recovery
         run: node scripts/verify-component-catalog-recovery.js
+      - name: Verify manual component add
+        run: node scripts/verify-component-manual-add.js
       - name: Verify component reverse lookup
         run: node scripts/verify-component-reverse-lookup.js
       - name: Verify customer catalog detail
