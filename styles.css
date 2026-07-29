@@ -980,7 +980,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .rakuten-stat-label { font-size: 11px; color: #888; margin-bottom: 4px; }
 .rakuten-stat-value { font-size: 18px; font-weight: 800; color: #1a6fd4; }
 .rakuten-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
-.rakuten-item { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 10px; display: grid; grid-template-columns: 72px 1fr; gap: 10px; min-width: 0; }
+.rakuten-item { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 10px; display: grid; grid-template-columns: 72px 1fr; gap: 10px; min-width: 0; content-visibility: auto; contain-intrinsic-size: 94px; }
 .rakuten-thumb { width: 72px; height: 72px; border-radius: 8px; background: #f0f0f0; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #ccc; }
 .rakuten-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .rakuten-item-name { font-size: 13px; font-weight: 600; color: #1a1a2e; line-height: 1.45; max-height: 38px; overflow: hidden; }
@@ -988,6 +988,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .rakuten-item-price { font-size: 18px; font-weight: 800; color: #1a8c3e; margin-top: 6px; }
 .rakuten-item-meta { font-size: 11px; color: #aaa; margin-top: 3px; display: flex; gap: 8px; flex-wrap: wrap; }
 .rakuten-item-link { display: inline-block; color: #4f8ef7; font-size: 12px; margin-top: 6px; text-decoration: none; font-weight: 600; }
+.rakuten-result-more { grid-column: 1 / -1; padding-top: 2px; }
 .rakuten-note { font-size: 12px; color: #888; line-height: 1.6; }
 .rakuten-debug { background: #fff8e6; border: 1px solid #f0d38a; border-radius: 8px; padding: 10px 12px; color: #8a6200; font-size: 12px; line-height: 1.6; margin-bottom: 10px; }
 .kikan-section-title { font-size: 14px; font-weight: 600; margin: 16px 0 8px; display: flex; align-items: center; gap: 6px; }
