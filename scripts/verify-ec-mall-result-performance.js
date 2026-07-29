@@ -5,6 +5,7 @@ const vm = require("vm");
 const root = path.resolve(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const styles = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+const markup = fs.readFileSync(path.join(root, "index.html"), "utf8");
 
 function functionSource(name, nextName, asyncFunction) {
   const prefix = asyncFunction ? `async function ${name}` : `function ${name}`;
@@ -100,6 +101,22 @@ if (!styles.includes(".rakuten-result-more") || !styles.includes("content-visibi
 }
 if (!source.includes("[data-rakuten-result-more]") || !source.includes("showMoreRakutenResults()")) {
   throw new Error("the EC mall continuation button must be wired to the incremental renderer");
+}
+
+const operationStart = markup.indexOf("class=\"rakuten-actions ec-research-operation-actions\"");
+const operationEnd = markup.indexOf("class=\"ec-schedule-panel\"", operationStart);
+const operationMarkup = markup.slice(operationStart, operationEnd);
+const runNowAt = operationMarkup.indexOf("id=\"btn-ec-run-now\"");
+const resultsAt = operationMarkup.indexOf("id=\"btn-rakuten-open-list\"");
+if (operationStart < 0 || operationEnd < operationStart || runNowAt < 0 || resultsAt < runNowAt) {
+  throw new Error("the EC research operation row must keep Run now on the left and Results on the right");
+}
+if (!operationMarkup.includes("ec-research-run-now-button") || !operationMarkup.includes("ec-research-results-button")) {
+  throw new Error("the EC research operation buttons must keep distinct action styles");
+}
+if (!styles.includes(".ec-research-operation-actions") || !styles.includes(".btn-sm-edit.ec-research-results-button") ||
+    !styles.includes("grid-template-columns: minmax(0, 1fr) auto")) {
+  throw new Error("the EC research result action must remain right-aligned and visually distinct");
 }
 
 console.log("EC mall result performance guard passed");

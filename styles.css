@@ -950,6 +950,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 @media(max-width:700px){ .form-card.ec-price-history-card { width: calc(100vw - 8px); max-height: calc(100vh - 8px); margin: 4px; padding: 12px 8px; } .ec-price-history-chart-wrap { padding: 6px; } .ec-price-history-chart { height: 380px; } .ec-price-history-axis { font-size: 14px; } #screen-rakuten-price-list .ec-price-list-filter-box { flex-basis: 100%; min-width: 0; } #screen-rakuten-price-list .ec-price-list-filter-toolbar .btn-primary, #screen-rakuten-price-list .ec-price-list-filter-toolbar .btn-sm-edit { width: 100%; } }
 .rakuten-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
 .rakuten-actions button:disabled { opacity: .45; cursor: not-allowed; }
+.ec-research-operation-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+.ec-research-operation-left { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
+.ec-research-run-now-button { min-height: 34px; padding: 7px 16px; }
+.btn-sm-edit.ec-research-results-button { min-height: 34px; padding: 7px 16px; border-color: #3f9b71; background: #eaf7f0; color: #176b49; font-weight: 700; }
+.btn-sm-edit.ec-research-results-button:hover { border-color: #2f815c; background: #d9f0e4; color: #11583c; }
+@media(max-width:640px){ .ec-research-operation-actions { grid-template-columns: minmax(0, 1fr) auto; align-items: start; } .ec-research-operation-left .rakuten-note { flex-basis: 100%; } }
 .rakuten-target-list { max-height: 220px; overflow: auto; border: 1px solid #eee; border-radius: 8px; margin-top: 10px; }
 .rakuten-target-row { display: grid; grid-template-columns: 32px minmax(140px, 1.35fr) minmax(105px, 1fr) minmax(105px, 1fr) 90px 130px 95px 64px; gap: 8px; padding: 8px 10px; border-bottom: 1px solid #f0f0f0; font-size: 12px; align-items: center; }
 .rakuten-target-row:last-child { border-bottom: none; }

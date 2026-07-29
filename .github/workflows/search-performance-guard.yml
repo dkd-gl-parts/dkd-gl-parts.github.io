@@ -3,6 +3,7 @@ name: Search performance guard
 on:
   push:
     paths:
+      - "index.html"
       - "app.js"
       - "styles.css"
       - "scripts/verify-search-workload-guard.js"
@@ -16,6 +17,7 @@ on:
       - ".github/workflows/search-performance-guard.yml"
   pull_request:
     paths:
+      - "index.html"
       - "app.js"
       - "styles.css"
       - "scripts/verify-search-workload-guard.js"
