@@ -12,6 +12,7 @@ on:
       - "scripts/verify-component-manual-add.js"
       - "scripts/verify-component-reverse-lookup.js"
       - "scripts/verify-ec-mall-result-performance.js"
+      - "scripts/verify-ec-mall-seller-review.js"
       - "scripts/verify-customer-catalog-detail.js"
       - "scripts/verify-customer-category-visibility.js"
       - "scripts/verify-manufacturing-cost-candidate-status.js"
@@ -27,6 +28,7 @@ on:
       - "scripts/verify-component-manual-add.js"
       - "scripts/verify-component-reverse-lookup.js"
       - "scripts/verify-ec-mall-result-performance.js"
+      - "scripts/verify-ec-mall-seller-review.js"
       - "scripts/verify-customer-catalog-detail.js"
       - "scripts/verify-customer-category-visibility.js"
       - "scripts/verify-manufacturing-cost-candidate-status.js"
@@ -57,6 +59,8 @@ jobs:
         run: node scripts/verify-component-reverse-lookup.js
       - name: Verify EC mall result performance
         run: node scripts/verify-ec-mall-result-performance.js
+      - name: Verify EC mall seller review
+        run: node scripts/verify-ec-mall-seller-review.js
       - name: Verify customer catalog detail
         run: node scripts/verify-customer-catalog-detail.js
       - name: Verify customer category visibility

@@ -36,6 +36,8 @@ const renderSandbox = {
     getElementById: (id) => id === "rakuten-results" ? resultEl : summaryEl
   },
   renderEcMallSellerPicker: () => {},
+  ecMallIndexResolvedSellerNames: () => {},
+  ecMallSellerReviewSuffixHtml: () => "",
   esc: (value) => String(value == null ? "" : value),
   t: (key) => key,
   tf: (key, values) => key === "rakuten_result_more" ? `more ${values.n}` : key,

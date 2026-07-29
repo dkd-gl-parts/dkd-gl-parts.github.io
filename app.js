@@ -971,6 +971,13 @@ var TRANSLATIONS = {
     ec_price_history_latest_price: "最新価格",
     ec_price_history_count: "履歴件数",
     ec_price_history_last_surveyed: "最終調査",
+    ec_seller_review_title: "出品者名の精査中",
+    ec_seller_review_pending: "精査中",
+    ec_seller_review_fixed_id: "固定ID",
+    ec_seller_review_occurrences: "{n}件で検出",
+    ec_seller_review_last_seen: "最終確認",
+    ec_seller_review_seller_page: "出品一覧",
+    ec_seller_review_item_page: "商品を確認",
     rakuten_latest: "調査日時",
     ec_mall_providers: "調査先",
     ec_mall_seller_ids: "出品者指定",
@@ -2160,6 +2167,13 @@ var TRANSLATIONS = {
     ec_price_history_latest_price: "Latest Price",
     ec_price_history_count: "History Rows",
     ec_price_history_last_surveyed: "Last Surveyed",
+    ec_seller_review_title: "Seller Names Under Review",
+    ec_seller_review_pending: "Reviewing",
+    ec_seller_review_fixed_id: "Fixed ID",
+    ec_seller_review_occurrences: "Found in {n} rows",
+    ec_seller_review_last_seen: "Last checked",
+    ec_seller_review_seller_page: "Seller listings",
+    ec_seller_review_item_page: "View item",
     rakuten_latest: "Surveyed At",
     ec_mall_providers: "Providers",
     ec_mall_seller_ids: "Seller Filter",
@@ -3342,6 +3356,13 @@ var TRANSLATIONS = {
     ec_price_history_latest_price: "最新价格",
     ec_price_history_count: "历史件数",
     ec_price_history_last_surveyed: "最后调查",
+    ec_seller_review_title: "正在核查卖家名称",
+    ec_seller_review_pending: "核查中",
+    ec_seller_review_fixed_id: "固定ID",
+    ec_seller_review_occurrences: "在{n}条记录中发现",
+    ec_seller_review_last_seen: "最后确认",
+    ec_seller_review_seller_page: "卖家商品",
+    ec_seller_review_item_page: "查看商品",
     rakuten_latest: "调查时间",
     ec_mall_providers: "调查平台",
     ec_mall_seller_ids: "卖家筛选",
@@ -3674,7 +3695,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.573";
+var APP_VERSION       = "v1.1.574";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -3838,6 +3859,7 @@ var ecCategoryTargetSearchResults = [];
 var EC_CATEGORY_TARGET_SEARCH_LIMIT = 300;
 var ecMallDefaultProviders = ["rakuten", "yahoo_shopping", "yahoo_auction"];
 var ecMallFallbackToLegacySurveys = false;
+var ecMallResolvedSellerNames = {};
 var EC_PRICE_LIST_DEFAULT_LIMIT = 500;
 var EC_PRICE_LIST_SEARCH_SCAN_LIMIT = 5000;
 var EC_PRICE_LIST_PAGE_SIZE = 1000;
@@ -10259,10 +10281,14 @@ function ecMallLooksLikeOnlyMask(value) {
   return /^[*＊・.\s]+$/.test(String(value || "").trim());
 }
 
+function ecMallLooksLikeMaskedSellerName(value) {
+  return /[*＊]{3,}/.test(String(value || "").trim());
+}
+
 function ecMallLooksLikeBrokenSellerName(value) {
   var text = String(value || "").trim();
   if (!text) return true;
-  return ecMallLooksLikeOpaqueSellerId(text) || ecMallLooksLikeOnlyMask(text) || text.indexOf("???") >= 0 || text.indexOf("\uFFFD") >= 0;
+  return ecMallLooksLikeOpaqueSellerId(text) || ecMallLooksLikeOnlyMask(text) || ecMallLooksLikeMaskedSellerName(text) || text.indexOf("???") >= 0 || text.indexOf("\uFFFD") >= 0;
 }
 
 function ecMallCleanSellerNameCandidate(value) {
@@ -10325,9 +10351,57 @@ function ecMallSellerNameCandidates(item) {
   return list;
 }
 
+function ecMallProviderKeyFromItem(item) {
+  item = item || {};
+  var provider = String(item.providerKey || item.provider_key || item.provider || "").trim();
+  if (provider) return provider;
+  var url = String(item.itemUrl || item.item_url || "").toLowerCase();
+  return url.indexOf("auctions.yahoo.co.jp") >= 0 ? "yahoo_auction" : "";
+}
+
+function ecMallObservedMaskedSellerName(item) {
+  item = item || {};
+  var raw = ecMallRawPayload(item);
+  var values = [
+    item.shopName, item.sellerName, item.storeName, item.seller_name, item.shop_name, item.store_name,
+    ecMallDirectValue(item, ["seller", "displayName"]),
+    ecMallDirectValue(item, ["seller", "name"]),
+    raw.shopName, raw.sellerName, raw.storeName, raw.seller_name, raw.shop_name, raw.store_name,
+    ecMallDirectValue(raw, ["seller", "displayName"]),
+    ecMallDirectValue(raw, ["seller", "name"]),
+    ecMallDirectValue(raw, ["sellerNameReview", "observedName"])
+  ];
+  for (var i=0; i<values.length; i++) {
+    var text = ecMallCleanSellerNameCandidate(values[i]);
+    if (ecMallLooksLikeMaskedSellerName(text)) return text;
+  }
+  return "";
+}
+
+function ecMallIndexResolvedSellerNames(items) {
+  (items || []).forEach(function(item) {
+    if (ecMallProviderKeyFromItem(item) !== "yahoo_auction") return;
+    var id = ecMallSellerIdFromItem(item);
+    if (!id) return;
+    var raw = ecMallRawPayload(item);
+    var names = [];
+    [
+      item.shopName, item.sellerName, item.storeName, item.seller_name, item.shop_name, item.store_name,
+      ecMallDirectValue(item, ["seller", "displayName"]),
+      ecMallDirectValue(item, ["seller", "name"]),
+      raw.shopName, raw.sellerName, raw.storeName, raw.seller_name, raw.shop_name, raw.store_name,
+      ecMallDirectValue(raw, ["seller", "displayName"]),
+      ecMallDirectValue(raw, ["seller", "name"])
+    ].forEach(function(value) {
+      ecMallPushSellerNameCandidate(names, value, id);
+    });
+    if (names[0]) ecMallResolvedSellerNames[id] = names[0];
+  });
+}
+
 function ecMallKnownSellerName(item) {
   var id = ecMallSellerIdFromItem(item);
-  return EC_MALL_KNOWN_YAHOO_AUCTION_SELLERS[id] || "";
+  return ecMallResolvedSellerNames[id] || EC_MALL_KNOWN_YAHOO_AUCTION_SELLERS[id] || "";
 }
 
 function ecMallSellerKey(item) {
@@ -10350,11 +10424,73 @@ function ecMallSellerDisplayName(item) {
   var id = ecMallSellerIdFromItem(item);
   var candidate = ecMallSellerNameCandidates(item)[0] || "";
   if (candidate) return candidate;
+  var maskedName = ecMallObservedMaskedSellerName(item);
+  if (maskedName) return maskedName;
   if (id && !ecMallLooksLikeOpaqueSellerId(id)) return id;
-  var provider = item.providerKey || item.provider || item.provider_key || "";
+  var provider = ecMallProviderKeyFromItem(item);
   if (provider === "yahoo_auction") return "ヤフオク出品者";
   if (provider === "yahoo_shopping") return "Yahooショッピング出品者";
   return id || item.shopCode || "-";
+}
+
+function ecMallSellerNeedsReview(item) {
+  if (ecMallProviderKeyFromItem(item) !== "yahoo_auction") return false;
+  var id = ecMallSellerIdFromItem(item);
+  if (!id || ecMallKnownSellerName(item)) return false;
+  return ecMallSellerNameCandidates(item).length === 0;
+}
+
+function ecMallSellerProfileUrl(item) {
+  if (ecMallProviderKeyFromItem(item) !== "yahoo_auction") return "";
+  var id = ecMallSellerIdFromItem(item);
+  return id ? "https://auctions.yahoo.co.jp/seller/" + encodeURIComponent(id) + "?user_type=c" : "";
+}
+
+function ecMallSellerReviewSuffixHtml(item) {
+  if (!ecMallSellerNeedsReview(item)) return "";
+  var id = ecMallSellerIdFromItem(item);
+  return "<span class='ec-seller-review-state'><span class='ec-seller-review-badge'>" + esc(t("ec_seller_review_pending")) + "</span><span class='ec-seller-fixed-id'>" + esc(t("ec_seller_review_fixed_id") + " " + id) + "</span></span>";
+}
+
+function renderEcMallSellerReviewPanel(rows) {
+  var groups = {};
+  (rows || []).forEach(function(row) {
+    if (!ecMallSellerNeedsReview(row)) return;
+    var id = ecMallSellerIdFromItem(row);
+    var surveyedAt = row.surveyed_at || row.searched_at || "";
+    var ts = new Date(surveyedAt || 0).getTime() || 0;
+    var itemUrl = safeHttpsUrl(row.item_url || row.itemUrl, ["auctions.yahoo.co.jp", "yahoo.co.jp"]);
+    if (!groups[id]) {
+      groups[id] = { id: id, name: ecMallObservedMaskedSellerName(row), count: 0, surveyedAt: surveyedAt, ts: ts, itemUrl: itemUrl, row: row };
+    }
+    var group = groups[id];
+    group.count++;
+    if (!group.name) group.name = ecMallObservedMaskedSellerName(row);
+    if (ts > group.ts) {
+      group.surveyedAt = surveyedAt;
+      group.ts = ts;
+      group.itemUrl = itemUrl;
+      group.row = row;
+    }
+  });
+  var pending = Object.keys(groups).map(function(id) { return groups[id]; })
+    .sort(function(a, b) { return b.ts - a.ts; });
+  if (!pending.length) return "";
+  var html = "<section class='ec-seller-review-panel' aria-label='" + esc(t("ec_seller_review_title")) + "'>";
+  html += "<div class='ec-seller-review-head'><div class='ec-seller-review-title'>" + esc(t("ec_seller_review_title")) + "</div><span class='ec-seller-review-count'>" + pending.length + "</span></div>";
+  html += "<div class='ec-seller-review-list'>";
+  pending.forEach(function(group) {
+    var profileUrl = safeHttpsUrl(ecMallSellerProfileUrl(group.row), ["auctions.yahoo.co.jp"]);
+    html += "<div class='ec-seller-review-row'>";
+    html += "<div class='ec-seller-review-identity'><div class='ec-seller-review-name'>" + esc(group.name || ecMallSellerDisplayName(group.row)) + " <span class='ec-seller-review-badge'>" + esc(t("ec_seller_review_pending")) + "</span></div><div class='ec-seller-fixed-id'>" + esc(t("ec_seller_review_fixed_id") + " " + group.id) + "</div></div>";
+    html += "<div class='ec-seller-review-meta'><span>" + esc(tf("ec_seller_review_occurrences", { n: group.count })) + "</span><span>" + esc(t("ec_seller_review_last_seen") + " " + formatDateTime(group.surveyedAt)) + "</span></div>";
+    html += "<div class='ec-seller-review-actions'>";
+    if (profileUrl) html += "<a href='" + esc(profileUrl) + "' target='_blank' rel='noopener'>" + esc(t("ec_seller_review_seller_page")) + "</a>";
+    if (group.itemUrl) html += "<a href='" + esc(group.itemUrl) + "' target='_blank' rel='noopener'>" + esc(t("ec_seller_review_item_page")) + "</a>";
+    html += "</div></div>";
+  });
+  html += "</div></section>";
+  return html;
 }
 
 function ecMallItemRuleText(item) {
@@ -10405,6 +10541,7 @@ function ecMallBest3Rows(items, includeUsed) {
 }
 
 function renderEcMallBest3Html(items, includeUsed) {
+  ecMallIndexResolvedSellerNames(items);
   var conditions = includeUsed ? ["used", "rebuilt", "new"] : ["rebuilt", "new"];
   var rows = ecMallBest3Rows(items, includeUsed);
   if (!rows.length) return "";
@@ -10421,7 +10558,7 @@ function renderEcMallBest3Html(items, includeUsed) {
         var seller = ecMallSellerDisplayName(item);
         html += "<div class='ec-best3-row'>";
         html += "<div>#" + row.rank_no + "</div>";
-        html += "<div><div class='mgmt-pn'>" + esc(seller) + "</div><div class='mgmt-sub'><span class='ec-provider-badge'>" + esc(ecMallProviderLabel(item.providerKey || item.provider)) + "</span></div></div>";
+        html += "<div><div class='mgmt-pn'>" + esc(seller) + ecMallSellerReviewSuffixHtml(item) + "</div><div class='mgmt-sub'><span class='ec-provider-badge'>" + esc(ecMallProviderLabel(item.providerKey || item.provider)) + "</span></div></div>";
         html += "<div class='price-value'>" + yen(ecMallItemTotalPrice(item)) + "</div>";
         html += "</div>";
       });
@@ -10702,6 +10839,7 @@ function renderRakutenResults(items, keyword, options) {
   var summaryEl = document.getElementById("rakuten-summary");
   rakutenLastResultKeyword = keyword || rakutenLastResultKeyword || "";
   if (!options.preserveLimit) rakutenVisibleResultCount = EC_MALL_RESULT_INITIAL_RENDER;
+  ecMallIndexResolvedSellerNames(items || []);
   renderEcMallSellerPicker(items || []);
   if (!items || items.length === 0) {
     summaryEl.innerHTML = "";
@@ -10748,7 +10886,7 @@ function renderRakutenResults(items, keyword, options) {
     html += "<div class='rakuten-thumb'>" + (img ? "<img src='" + esc(img) + "' loading='lazy' decoding='async' fetchpriority='low' width='72' height='72'>" : "No image") + "</div>";
     html += "<div>";
     html += "<div class='rakuten-item-name'>" + esc(item.itemName || "-") + "</div>";
-    html += "<div class='rakuten-item-shop'>" + esc(sellerDisplay || item.shopName || "-") + "</div>";
+    html += "<div class='rakuten-item-shop'>" + esc(sellerDisplay || item.shopName || "-") + ecMallSellerReviewSuffixHtml(item) + "</div>";
     html += "<div class='rakuten-item-price'>" + yen(ecMallItemTotalPrice(item) || item.itemPrice) + "</div>";
     html += "<div class='rakuten-item-meta'>" + meta.map(esc).join("<span>/</span>") + "</div>";
     var itemUrl = safeHttpsUrl(item.itemUrl, ["rakuten.co.jp", "shopping.yahoo.co.jp", "yahoo.co.jp", "auctions.yahoo.co.jp"]);
@@ -10957,6 +11095,7 @@ async function loadRakutenPriceList() {
       hasFilter ? EC_PRICE_LIST_SEARCH_SCAN_LIMIT : EC_PRICE_LIST_DEFAULT_LIMIT
     );
     if (r.error) throw new Error(r.error.message);
+    ecMallIndexResolvedSellerNames(r.data || []);
     renderEcMallPriceList(filterEcPriceResearchRowsForList(r.data || [], q, sellerQ));
   } catch(e) {
     console.warn("ec price research list failed; falling back to legacy rakuten list", e);
@@ -11228,7 +11367,7 @@ function renderEcPriceHistoryRecentTable(rows) {
     var rankLabel = rank > 0 ? "#" + rank + " " : "";
     html += "<tr><td>" + esc(formatDateTime(row.surveyed_at)) + "</td>";
     html += "<td>" + esc(ecMallProductTypeLabel(row.product_type)) + " <span class='ec-provider-badge'>" + esc(ecMallProviderLabel(row.provider_key)) + "</span></td>";
-    html += "<td>" + sellerHtml + "</td>";
+    html += "<td>" + sellerHtml + ecMallSellerReviewSuffixHtml(row) + "</td>";
     html += "<td><div class='price-value'>" + esc(rankLabel + yen(ecPriceHistoryPointPrice(row))) + "</div></td></tr>";
   });
   html += "</table></div>";
@@ -11267,7 +11406,7 @@ function renderEcPriceHistorySellerRanking(rows) {
     var sellerHtml = url ? "<a href='" + esc(url) + "' target='_blank' rel='noopener'>" + esc(group.seller) + "</a>" : esc(group.seller);
     html += "<tr>";
     html += "<td class='rank-cell'>" + (index + 1) + "</td>";
-    html += "<td>" + sellerHtml + "</td>";
+    html += "<td>" + sellerHtml + ecMallSellerReviewSuffixHtml((group.latest || {}).row) + "</td>";
     html += "<td><span class='ec-provider-badge'>" + esc(ecMallProviderLabel(group.providerKey)) + "</span></td>";
     html += "<td>" + esc(ecMallProductTypeLabel(group.type)) + "</td>";
     html += "<td class='price-cell'><div class='price-value'>" + esc(yen(group.lowest.price)) + "</div></td>";
@@ -11293,6 +11432,7 @@ function renderEcPriceHistoryContent() {
   var meta = document.getElementById("ec-price-history-meta");
   if (!body || !ecPriceHistoryState) return;
   var rows = ecPriceHistoryState.rows || [];
+  ecMallIndexResolvedSellerNames(rows);
   var group = ecPriceHistoryState.group || {};
   var rangeDays = ecPriceHistoryState.rangeDays || "all";
   var rowsForRange = filterEcPriceHistoryRowsByRange(rows, rangeDays);
@@ -11335,6 +11475,7 @@ async function openEcPriceHistoryForGroup(group) {
   try {
     var rows = await fetchEcPriceHistoryRowsForGroup(group);
     if (!ecPriceHistoryState || ecPriceHistoryState.group !== group) return;
+    ecMallIndexResolvedSellerNames(rows);
     ecPriceHistoryState.rows = rows;
     renderEcPriceHistoryContent();
   } catch(e) {
@@ -11352,6 +11493,7 @@ function bindEcPriceHistoryButtons() {
 }
 
 function renderEcMallPriceList(rows) {
+  ecMallIndexResolvedSellerNames(rows);
   var countEl = document.getElementById("rakuten-list-count");
   var groups = {};
   ecPriceHistoryGroupMap = {};
@@ -11378,7 +11520,7 @@ function renderEcMallPriceList(rows) {
       var seller = ecMallSellerDisplayName(row);
       var itemUrl = safeHttpsUrl(row.item_url, ["rakuten.co.jp", "shopping.yahoo.co.jp", "yahoo.co.jp", "auctions.yahoo.co.jp"]);
       var sellerHtml = itemUrl ? "<a href='" + esc(itemUrl) + "' target='_blank' rel='noopener'>" + esc(seller) + "</a>" : esc(seller);
-      return "<div class='mgmt-sub' data-dcats-inline-style='s-0d248ae75a53'><strong>#" + esc(row.rank_no) + "</strong> " + sellerHtml + " <span class='ec-provider-badge'>" + esc(ecMallProviderLabel(row.provider_key)) + "</span><div class='price-value'>" + yen(row.total_price_jpy || row.price_jpy) + "</div></div>";
+      return "<div class='mgmt-sub' data-dcats-inline-style='s-0d248ae75a53'><strong>#" + esc(row.rank_no) + "</strong> " + sellerHtml + " <span class='ec-provider-badge'>" + esc(ecMallProviderLabel(row.provider_key)) + "</span>" + ecMallSellerReviewSuffixHtml(row) + "<div class='price-value'>" + yen(row.total_price_jpy || row.price_jpy) + "</div></div>";
     }).join("");
   }
   var html = "<table class='mgmt-table ec-price-result-table ec-mall-grouped-result-table'>";
@@ -11404,7 +11546,7 @@ function renderEcMallPriceList(rows) {
     html += "</tr>";
   });
   html += "</table>";
-  list.innerHTML = html;
+  list.innerHTML = renderEcMallSellerReviewPanel(rows) + html;
   bindEcPriceHistoryButtons();
 }
 
