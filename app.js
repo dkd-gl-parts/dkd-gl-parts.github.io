@@ -478,6 +478,7 @@ var TRANSLATIONS = {
     manufacturing_cost_export_no_rows: "出力する原価計算対象がありません。",
     manufacturing_cost_export_done: "{n} 件をExcel用CSVに出力しました",
     manufacturing_cost_list_saved: "原価計算リストを保存しました",
+    manufacturing_cost_list_saved_current_prices: "原価計算リストを保存し、現在単価を {n} 件更新しました",
     manufacturing_cost_list_loaded: "原価計算リストを呼び出しました",
     manufacturing_cost_list_deleted: "原価計算リストを削除しました",
     manufacturing_cost_list_category_required: "カテゴリ未選択でも保存できます。",
@@ -1676,6 +1677,7 @@ var TRANSLATIONS = {
     manufacturing_cost_export_no_rows: "No cost calculation rows to export.",
     manufacturing_cost_export_done: "Exported {n} row(s) to Excel CSV",
     manufacturing_cost_list_saved: "Manufacturing cost list saved",
+    manufacturing_cost_list_saved_current_prices: "Manufacturing cost list saved with {n} current unit prices updated",
     manufacturing_cost_list_loaded: "Manufacturing cost list loaded",
     manufacturing_cost_list_deleted: "Manufacturing cost list deleted",
     manufacturing_cost_list_category_required: "Lists can be saved without a category.",
@@ -2880,6 +2882,7 @@ var TRANSLATIONS = {
     manufacturing_cost_export_no_rows: "没有可导出的成本计算对象。",
     manufacturing_cost_export_done: "已导出 {n} 条到Excel用CSV",
     manufacturing_cost_list_saved: "制造成本列表已保存",
+    manufacturing_cost_list_saved_current_prices: "制造成本列表已保存，并更新了 {n} 件当前单价",
     manufacturing_cost_list_loaded: "制造成本列表已调用",
     manufacturing_cost_list_deleted: "制造成本列表已删除",
     manufacturing_cost_list_category_required: "未选择类别也可以保存列表。",
@@ -3701,7 +3704,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.575";
+var APP_VERSION       = "v1.1.576";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -14370,32 +14373,96 @@ function manufacturingCostComponentComparisonKey(row) {
   ].join("|");
 }
 
+function manufacturingCostMatchingCurrentComponents(snapshot, currentComponents) {
+  var candidates = [];
+  if (snapshot && snapshot.id != null && snapshot.id !== "") {
+    candidates = (currentComponents || []).filter(function(current) {
+      return current && current.id != null && String(current.id) === String(snapshot.id);
+    });
+  }
+  if (!candidates.length) {
+    var key = manufacturingCostComponentComparisonKey(snapshot);
+    if (key.replace(/\|/g, "")) {
+      candidates = (currentComponents || []).filter(function(current) {
+        return manufacturingCostComponentComparisonKey(current) === key;
+      });
+    }
+  }
+  return candidates;
+}
+
 function manufacturingCostSnapshotUnitPriceDiffers(snapshotComponents, currentComponents) {
   snapshotComponents = snapshotComponents || [];
   currentComponents = currentComponents || [];
   if (!snapshotComponents.length || !currentComponents.length) return false;
   return snapshotComponents.some(function(snapshot) {
-    var candidates = [];
-    if (snapshot.id != null && snapshot.id !== "") {
-      candidates = currentComponents.filter(function(current) {
-        return current && current.id != null && String(current.id) === String(snapshot.id);
-      });
-    }
-    if (!candidates.length) {
-      var key = manufacturingCostComponentComparisonKey(snapshot);
-      if (key.replace(/\|/g, "")) {
-        candidates = currentComponents.filter(function(current) {
-          return manufacturingCostComponentComparisonKey(current) === key;
-        });
-      }
-    }
+    var candidates = manufacturingCostMatchingCurrentComponents(snapshot, currentComponents);
     if (!candidates.length) return false;
     var savedCalc = manufacturingCostComponentCalc(snapshot);
-    return !candidates.some(function(current) {
+    var currentWithUnit = candidates.filter(function(current) {
+      return manufacturingCostComponentCalc(current).hasUnit;
+    });
+    if (!currentWithUnit.length) return false;
+    return !currentWithUnit.some(function(current) {
       var currentCalc = manufacturingCostComponentCalc(current);
-      return savedCalc.hasUnit === currentCalc.hasUnit && (!savedCalc.hasUnit || savedCalc.unit === currentCalc.unit);
+      return savedCalc.hasUnit && savedCalc.unit === currentCalc.unit;
     });
   });
+}
+
+function manufacturingCostRowWithCurrentUnitPrices(row, settings) {
+  row = row || {};
+  var savedComponents = row.components || [];
+  var hasSnapshot = savedComponents.some(function(component) { return !!(component && component.is_cost_snapshot); });
+  var currentComponents = manufacturingCostComponentMap[String(row.productId || "")] || [];
+  if (!hasSnapshot || !currentComponents.length) return { row: row, updatedCount: 0 };
+  var updatedCount = 0;
+  var nextComponents = savedComponents.map(function(snapshot) {
+    var candidates = manufacturingCostMatchingCurrentComponents(snapshot, currentComponents);
+    var current = candidates.find(function(candidate) {
+      return manufacturingCostComponentCalc(candidate).hasUnit;
+    });
+    if (!current) return snapshot;
+    var savedCalc = manufacturingCostComponentCalc(snapshot);
+    var currentCalc = manufacturingCostComponentCalc(current);
+    if (savedCalc.hasUnit && savedCalc.unit === currentCalc.unit) return snapshot;
+    updatedCount += 1;
+    return Object.assign({}, snapshot, { unit_price_jpy: currentCalc.unit });
+  });
+  if (!updatedCount) return { row: row, updatedCount: 0 };
+  var partsCost = nextComponents.reduce(function(total, component) {
+    return total + manufacturingCostComponentCalc(component).amount;
+  }, 0);
+  var missingUnitCount = 0;
+  var missingQuantityCount = 0;
+  var missingReplacementRateCount = 0;
+  currentComponents.forEach(function(component) {
+    var inputState = manufacturingCostComponentInputState(component);
+    if (!inputState.hasUnit) missingUnitCount += 1;
+    if (!inputState.hasQuantity) missingQuantityCount += 1;
+    if (!inputState.hasReplacementRate) missingReplacementRateCount += 1;
+  });
+  var coreInfo = manufacturingCostCoreCostForProduct(row.product, settings);
+  var laborRateCost = Math.round((partsCost + coreInfo.amount) * settings.laborRate / 100);
+  var laborCost = laborRateCost + settings.laborAmount;
+  return {
+    row: Object.assign({}, row, {
+      components: nextComponents,
+      partsCost: partsCost,
+      coreCost: coreInfo.amount,
+      coreCostCategory: coreInfo.category,
+      coreCostCategorySpecific: coreInfo.isCategorySpecific,
+      laborRateCost: laborRateCost,
+      laborAmount: settings.laborAmount,
+      laborCost: laborCost,
+      totalCost: partsCost + coreInfo.amount + laborCost,
+      missingUnitCount: missingUnitCount,
+      missingQuantityCount: missingQuantityCount,
+      missingReplacementRateCount: missingReplacementRateCount,
+      savedSnapshotUnitPriceDiffers: false
+    }),
+    updatedCount: updatedCount
+  };
 }
 
 function manufacturingCostSnapshotNumber(value, fallback) {
@@ -14988,6 +15055,14 @@ async function saveManufacturingCostList() {
   if (!listName) { setManufacturingCostListStatus(t("manufacturing_cost_list_name_required"), true); if (listNameEl) listNameEl.focus(); return; }
   if (!manufacturingCostRows.length) { setManufacturingCostListStatus(t("manufacturing_cost_list_rows_required"), true); return; }
   var settings = manufacturingCostSettings();
+  var currentComponentsR = await loadManufacturingCostComponents(manufacturingCostRows.map(function(row) { return row.product; }).filter(Boolean), settings.productKind);
+  if (currentComponentsR.error) { setManufacturingCostListStatus(currentComponentsR.error.message || t("msg_part_err"), true); return; }
+  var updatedUnitPriceCount = 0;
+  var rowsToSave = manufacturingCostRows.map(function(row) {
+    var refreshed = manufacturingCostRowWithCurrentUnitPrices(row, settings);
+    updatedUnitPriceCount += refreshed.updatedCount;
+    return refreshed.row;
+  });
   var selected = selectedManufacturingCostList();
   var selectedCategory = selected ? (selected.category_code || "") : "";
   var existing = selected && selected.id && selected.list_name === listName && selectedCategory === category ? selected : null;
@@ -15022,7 +15097,7 @@ async function saveManufacturingCostList() {
   var listId = saveR.data.id;
   var delR = await sb.from("manufacturing_cost_list_items").delete().eq("list_id", listId);
   if (delR.error) { setManufacturingCostListStatus(delR.error.message || t("msg_part_err"), true); return; }
-  var items = manufacturingCostRows.map(function(row, idx) {
+  var items = rowsToSave.map(function(row, idx) {
     var p = row.product || {};
     return {
       list_id: listId,
@@ -15046,8 +15121,13 @@ async function saveManufacturingCostList() {
     if (insR.error) { setManufacturingCostListStatus(insR.error.message || t("msg_part_err"), true); return; }
   }
   manufacturingCostActiveListId = listId;
+  manufacturingCostRows = rowsToSave;
+  manufacturingCostListItemSnapshotMap = manufacturingCostBuildSnapshotMap(items);
   await refreshManufacturingCostSavedLists();
-  setManufacturingCostListStatus(t("manufacturing_cost_list_saved"), false);
+  renderManufacturingCostRows();
+  setManufacturingCostListStatus(updatedUnitPriceCount
+    ? tf("manufacturing_cost_list_saved_current_prices", { n: updatedUnitPriceCount })
+    : t("manufacturing_cost_list_saved"), false);
 }
 
 async function loadManufacturingCostList() {
