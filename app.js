@@ -461,8 +461,13 @@ var TRANSLATIONS = {
     manufacturing_cost_selected_title: "原価計算対象リスト",
     manufacturing_cost_selected_note: "ここに入っている品番だけをリスト保存します。",
     manufacturing_cost_selected_count: "決定 {n} 件",
-    manufacturing_cost_remove_target: "対象から削除",
-    manufacturing_cost_remove_target_confirm: "この品番を原価計算対象リストから削除しますか？\n{part}",
+    manufacturing_cost_remove_open: "削除画面",
+    manufacturing_cost_remove_title: "原価計算対象を削除",
+    manufacturing_cost_remove_selected: "選択した対象を削除",
+    manufacturing_cost_remove_confirm: "選択した {n} 件を原価計算対象リストから削除しますか？",
+    manufacturing_cost_remove_none: "削除する対象を選択してください。",
+    manufacturing_cost_remove_empty: "削除できる対象がありません。",
+    manufacturing_cost_remove_count: "{selected} / {total} 件選択",
     manufacturing_cost_remove_target_done: "原価計算対象から削除しました。リスト保存で確定します。",
     manufacturing_cost_no_candidate_selected: "原価計算する品番を選択してください。",
     manufacturing_cost_duplicate_selected_alert: "すでに決定リストに入っている品番があります。重複するため追加しません。",
@@ -1663,8 +1668,13 @@ var TRANSLATIONS = {
     manufacturing_cost_selected_title: "Cost Calculation List",
     manufacturing_cost_selected_note: "Only products in this list will be saved.",
     manufacturing_cost_selected_count: "{n} selected",
-    manufacturing_cost_remove_target: "Remove",
-    manufacturing_cost_remove_target_confirm: "Remove this product from the manufacturing cost target list?\n{part}",
+    manufacturing_cost_remove_open: "Remove Items",
+    manufacturing_cost_remove_title: "Remove Cost Targets",
+    manufacturing_cost_remove_selected: "Remove Selected",
+    manufacturing_cost_remove_confirm: "Remove the selected {n} item(s) from the manufacturing cost target list?",
+    manufacturing_cost_remove_none: "Select at least one item to remove.",
+    manufacturing_cost_remove_empty: "There are no targets to remove.",
+    manufacturing_cost_remove_count: "{selected} of {total} selected",
     manufacturing_cost_remove_target_done: "Removed from the cost target list. Save the list to apply the change.",
     manufacturing_cost_no_candidate_selected: "Select products to calculate.",
     manufacturing_cost_duplicate_selected_alert: "One or more products are already in the selected list. Duplicates were not added.",
@@ -2871,8 +2881,13 @@ var TRANSLATIONS = {
     manufacturing_cost_selected_title: "成本计算对象列表",
     manufacturing_cost_selected_note: "只保存此列表中的品番。",
     manufacturing_cost_selected_count: "已确定 {n} 条",
-    manufacturing_cost_remove_target: "从对象中删除",
-    manufacturing_cost_remove_target_confirm: "要从制造成本计算对象列表中删除此品番吗？\n{part}",
+    manufacturing_cost_remove_open: "删除画面",
+    manufacturing_cost_remove_title: "删除成本计算对象",
+    manufacturing_cost_remove_selected: "删除所选对象",
+    manufacturing_cost_remove_confirm: "要从制造成本计算对象列表中删除所选的 {n} 条吗？",
+    manufacturing_cost_remove_none: "请选择要删除的对象。",
+    manufacturing_cost_remove_empty: "没有可删除的对象。",
+    manufacturing_cost_remove_count: "已选择 {selected} / {total} 条",
     manufacturing_cost_remove_target_done: "已从成本计算对象中删除。保存列表后生效。",
     manufacturing_cost_no_candidate_selected: "请选择要计算成本的品番。",
     manufacturing_cost_duplicate_selected_alert: "已有品番在确定列表中。因重复，未添加。",
@@ -3713,7 +3728,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.577";
+var APP_VERSION       = "v1.1.578";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -14057,7 +14072,7 @@ async function populateManufacturingCostCategoryOptions() {
 
 function setManufacturingCostEditControls() {
   var canEditCost = canEditManufacturingCostMgmt();
-  ["btn-manufacturing-cost-save-list", "btn-manufacturing-cost-delete-list"].forEach(function(id) {
+  ["btn-manufacturing-cost-save-list", "btn-manufacturing-cost-delete-list", "btn-manufacturing-cost-remove-open"].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) setCspStyle(el, "display", canEditCost ? "" : "none");
   });
@@ -14882,19 +14897,92 @@ function renderManufacturingCostComponentDetails(row) {
   return html;
 }
 
-function removeManufacturingCostTarget(productId) {
+function setManufacturingCostTargetDeleteStatus(message, isError) {
+  var el = document.getElementById("manufacturing-cost-target-delete-status");
+  if (!el) return;
+  el.textContent = message || "";
+  el.classList.toggle("is-error", !!isError);
+}
+
+function updateManufacturingCostTargetDeleteCount() {
+  var list = document.getElementById("manufacturing-cost-target-delete-list");
+  var countEl = document.getElementById("manufacturing-cost-target-delete-count");
+  var removeBtn = document.getElementById("btn-manufacturing-cost-remove-selected");
+  if (!list) return;
+  var checks = Array.from(list.querySelectorAll("[data-manufacturing-cost-delete-check]"));
+  var selected = checks.filter(function(check) { return check.checked; }).length;
+  if (countEl) countEl.textContent = tf("manufacturing_cost_remove_count", { selected: selected, total: checks.length });
+  if (removeBtn) removeBtn.disabled = selected === 0;
+}
+
+function renderManufacturingCostTargetDeleteList() {
+  var list = document.getElementById("manufacturing-cost-target-delete-list");
+  var selectAllBtn = document.getElementById("btn-manufacturing-cost-remove-all");
+  var clearBtn = document.getElementById("btn-manufacturing-cost-remove-clear");
+  if (!list) return;
+  var rows = manufacturingCostRows || [];
+  if (!rows.length) {
+    list.innerHTML = "<div class='empty'>" + esc(t("manufacturing_cost_remove_empty")) + "</div>";
+  } else {
+    list.innerHTML = rows.map(function(row) {
+      var p = row.product || {};
+      var sub = [p.manufacturer_part_number, p.genuine_part_number_2, p.manufacturer, tCat(p.category_code || p.category), "DKD " + (row.productId || "-")].filter(Boolean).join(" / ");
+      return "<label class='manufacturing-cost-target-delete-row'>" +
+        "<input type='checkbox' value='" + esc(String(row.productId || "")) + "' data-manufacturing-cost-delete-check>" +
+        "<span class='manufacturing-cost-target-delete-info'><strong>" + esc(manufacturingCostProductTitle(p)) + "</strong><small>" + esc(sub) + "</small></span>" +
+        "<span class='manufacturing-cost-target-delete-amount'>" + esc(manufacturingCostYen(row.totalCost)) + "</span>" +
+      "</label>";
+    }).join("");
+  }
+  if (selectAllBtn) selectAllBtn.disabled = !rows.length;
+  if (clearBtn) clearBtn.disabled = !rows.length;
+  updateManufacturingCostTargetDeleteCount();
+}
+
+function openManufacturingCostTargetDelete() {
   if (!canEditManufacturingCostMgmt()) { alert(t("err_perm")); return; }
-  var key = String(productId || "");
-  var row = (manufacturingCostRows || []).find(function(item) {
-    return String((item && item.productId) || "") === key;
+  renderManufacturingCostTargetDeleteList();
+  setManufacturingCostTargetDeleteStatus("", false);
+  var overlay = document.getElementById("manufacturing-cost-target-delete-overlay");
+  if (overlay) overlay.classList.add("show");
+}
+
+function closeManufacturingCostTargetDelete() {
+  var overlay = document.getElementById("manufacturing-cost-target-delete-overlay");
+  if (overlay) overlay.classList.remove("show");
+}
+
+function setManufacturingCostTargetDeleteChecks(checked) {
+  var list = document.getElementById("manufacturing-cost-target-delete-list");
+  if (!list) return;
+  list.querySelectorAll("[data-manufacturing-cost-delete-check]").forEach(function(check) {
+    check.checked = !!checked;
   });
-  if (!row) return;
-  var part = manufacturingCostProductTitle(row.product || {});
-  if (!confirm(tf("manufacturing_cost_remove_target_confirm", { part: part }))) return;
-  manufacturingCostRows = manufacturingCostRows.filter(function(item) {
-    return String((item && item.productId) || "") !== key;
+  setManufacturingCostTargetDeleteStatus("", false);
+  updateManufacturingCostTargetDeleteCount();
+}
+
+function removeSelectedManufacturingCostTargets() {
+  if (!canEditManufacturingCostMgmt()) { alert(t("err_perm")); return; }
+  var list = document.getElementById("manufacturing-cost-target-delete-list");
+  if (!list) return;
+  var selectedIds = Array.from(list.querySelectorAll("[data-manufacturing-cost-delete-check]:checked")).map(function(check) {
+    return String(check.value || "");
+  }).filter(Boolean);
+  if (!selectedIds.length) {
+    setManufacturingCostTargetDeleteStatus(t("manufacturing_cost_remove_none"), true);
+    return;
+  }
+  if (!confirm(tf("manufacturing_cost_remove_confirm", { n: selectedIds.length }))) return;
+  var selectedMap = {};
+  selectedIds.forEach(function(id) { selectedMap[id] = true; });
+  manufacturingCostRows = (manufacturingCostRows || []).filter(function(item) {
+    return !selectedMap[String((item && item.productId) || "")];
   });
-  if (manufacturingCostListItemSnapshotMap) delete manufacturingCostListItemSnapshotMap[key];
+  if (manufacturingCostListItemSnapshotMap) {
+    selectedIds.forEach(function(id) { delete manufacturingCostListItemSnapshotMap[id]; });
+  }
+  closeManufacturingCostTargetDelete();
   renderManufacturingCostRows();
   if (manufacturingCostCandidateRows.length) {
     renderManufacturingCostCandidates(manufacturingCostCandidateRows, manufacturingCostCandidateMode);
@@ -14905,6 +14993,8 @@ function removeManufacturingCostTarget(productId) {
 function renderManufacturingCostRows() {
   var list = document.getElementById("manufacturing-cost-list");
   var countEl = document.getElementById("manufacturing-cost-count");
+  var removeOpenBtn = document.getElementById("btn-manufacturing-cost-remove-open");
+  if (removeOpenBtn) removeOpenBtn.disabled = !canEditManufacturingCostMgmt() || !manufacturingCostRows.length;
   if (!list) return;
   if (countEl) countEl.textContent = tf("manufacturing_cost_selected_count", { n: manufacturingCostRows.length || 0 });
   renderManufacturingCostSummary(manufacturingCostRows);
@@ -14926,11 +15016,8 @@ function renderManufacturingCostRows() {
       ? tf("manufacturing_cost_core_category_note", { category: manufacturingCostCategoryLabel(row.coreCostCategory) })
       : t("manufacturing_cost_core_default_note");
     var detailHtml = renderManufacturingCostComponentDetails(row);
-    var removeHtml = canEditManufacturingCostMgmt()
-      ? "<div class='manufacturing-cost-target-actions'><button class='btn-sm-del' type='button' data-manufacturing-cost-remove-id='" + esc(String(row.productId || "")) + "'>" + esc(t("manufacturing_cost_remove_target")) + "</button></div>"
-      : "";
     html += "<tr class='manufacturing-cost-main-row'>";
-    html += "<td><div class='manufacturing-cost-product-main'>" + esc(manufacturingCostProductTitle(p)) + "</div><div class='manufacturing-cost-product-sub'>" + esc([p.manufacturer_part_number, p.genuine_part_number_2, p.manufacturer, tCat(p.category_code || p.category), "DKD " + (row.productId || "-")].filter(Boolean).join(" / ")) + "</div>" + removeHtml + "</td>";
+    html += "<td><div class='manufacturing-cost-product-main'>" + esc(manufacturingCostProductTitle(p)) + "</div><div class='manufacturing-cost-product-sub'>" + esc([p.manufacturer_part_number, p.genuine_part_number_2, p.manufacturer, tCat(p.category_code || p.category), "DKD " + (row.productId || "-")].filter(Boolean).join(" / ")) + "</div></td>";
     html += "<td><div class='manufacturing-cost-money'>" + esc(String(row.componentCount || 0)) + "</div></td>";
     html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.partsCost)) + "</div></td>";
     html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.coreCost)) + "</div><div class='manufacturing-cost-note'>" + esc(coreNote) + "</div></td>";
@@ -32129,9 +32216,23 @@ document.getElementById("manufacturing-cost-candidates").addEventListener("click
   if (e.target.closest("[data-cost-clear-selection]")) { setManufacturingCostCandidateChecks(false); return; }
   if (e.target.closest("[data-cost-calc-selected]")) { calculateSelectedManufacturingCost(); }
 });
-document.getElementById("manufacturing-cost-list").addEventListener("click", function(e) {
-  var removeBtn = e.target.closest("[data-manufacturing-cost-remove-id]");
-  if (removeBtn) removeManufacturingCostTarget(removeBtn.dataset.manufacturingCostRemoveId || "");
+document.getElementById("btn-manufacturing-cost-remove-open").addEventListener("click", openManufacturingCostTargetDelete);
+document.getElementById("btn-manufacturing-cost-remove-close").addEventListener("click", closeManufacturingCostTargetDelete);
+document.getElementById("btn-manufacturing-cost-remove-all").addEventListener("click", function() {
+  setManufacturingCostTargetDeleteChecks(true);
+});
+document.getElementById("btn-manufacturing-cost-remove-clear").addEventListener("click", function() {
+  setManufacturingCostTargetDeleteChecks(false);
+});
+document.getElementById("btn-manufacturing-cost-remove-selected").addEventListener("click", removeSelectedManufacturingCostTargets);
+document.getElementById("manufacturing-cost-target-delete-list").addEventListener("change", function(e) {
+  if (e.target && e.target.matches("[data-manufacturing-cost-delete-check]")) {
+    setManufacturingCostTargetDeleteStatus("", false);
+    updateManufacturingCostTargetDeleteCount();
+  }
+});
+document.getElementById("manufacturing-cost-target-delete-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeManufacturingCostTargetDelete();
 });
 ["manufacturing-cost-core-cost","manufacturing-cost-labor-rate","manufacturing-cost-labor-amount"].forEach(function(id) {
   var el = document.getElementById(id);

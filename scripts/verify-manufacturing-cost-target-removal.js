@@ -4,6 +4,7 @@ const vm = require("vm");
 
 const root = path.resolve(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
+const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const styles = fs.readFileSync(path.join(root, "styles.css"), "utf8");
 
 function sourceBetween(startText, endText) {
@@ -13,7 +14,15 @@ function sourceBetween(startText, endText) {
   return source.slice(start, end);
 }
 
-const removeSource = sourceBetween("function removeManufacturingCostTarget", "function renderManufacturingCostRows");
+const checks = [
+  { value: "101", checked: true },
+  { value: "102", checked: false }
+];
+const overlay = { classList: { remove: () => { sandbox.closed = true; } } };
+const deleteList = {
+  querySelectorAll: (selector) => selector.includes(":checked") ? checks.filter((check) => check.checked) : checks
+};
+const removeSource = sourceBetween("function setManufacturingCostTargetDeleteStatus", "function renderManufacturingCostRows");
 const sandbox = {
   manufacturingCostRows: [
     { productId: 101, product: { manufacturer_part_number: "A-101" } },
@@ -23,43 +32,61 @@ const sandbox = {
   manufacturingCostCandidateRows: [],
   manufacturingCostCandidateMode: "",
   canEditManufacturingCostMgmt: () => true,
-  manufacturingCostProductTitle: (product) => product.manufacturer_part_number,
   t: (key) => key,
-  tf: (key, values) => `${key}:${values.part}`,
+  tf: (key, values) => `${key}:${values.n}`,
   confirm: () => true,
   alert: () => { throw new Error("permission alert must not be shown"); },
+  document: {
+    getElementById: (id) => {
+      if (id === "manufacturing-cost-target-delete-list") return deleteList;
+      if (id === "manufacturing-cost-target-delete-overlay") return overlay;
+      return null;
+    }
+  },
   renderManufacturingCostRows: () => { sandbox.rendered = true; },
   renderManufacturingCostCandidates: () => {},
   setManufacturingCostListStatus: (message, isError) => { sandbox.status = { message, isError }; }
 };
-vm.runInNewContext(`${removeSource}; result = removeManufacturingCostTarget;`, sandbox);
-sandbox.result("101");
+vm.runInNewContext(`${removeSource}; result = removeSelectedManufacturingCostTargets;`, sandbox);
+sandbox.result();
 if (sandbox.manufacturingCostRows.length !== 1 || sandbox.manufacturingCostRows[0].productId !== 102) {
-  throw new Error("removing a manufacturing cost target must preserve all other rows");
+  throw new Error("batch removal must preserve unselected manufacturing cost targets");
 }
 if (sandbox.manufacturingCostListItemSnapshotMap["101"] || !sandbox.manufacturingCostListItemSnapshotMap["102"]) {
-  throw new Error("removing a target must remove only its pending saved snapshot");
+  throw new Error("batch removal must delete only selected pending snapshots");
 }
-if (!sandbox.rendered || !sandbox.status || sandbox.status.isError) {
-  throw new Error("removing a target must rerender the working list and show a save-required status");
+if (!sandbox.closed || !sandbox.rendered || !sandbox.status || sandbox.status.isError) {
+  throw new Error("batch removal must close the dialog, rerender the list, and show a save-required status");
 }
 
 const rowRenderer = sourceBetween("function renderManufacturingCostRows", "function manufacturingCostExportFileName");
-if (!rowRenderer.includes("data-manufacturing-cost-remove-id") || !rowRenderer.includes("canEditManufacturingCostMgmt()")) {
-  throw new Error("editable manufacturing cost rows must provide a per-product remove action");
+if (rowRenderer.includes("data-manufacturing-cost-remove-id") || rowRenderer.includes("manufacturing-cost-target-actions")) {
+  throw new Error("the manufacturing cost table must not contain per-row remove controls");
 }
 const saveSource = sourceBetween("async function saveManufacturingCostList", "async function loadManufacturingCostList");
 if (!saveSource.includes("!manufacturingCostRows.length && !selected")) {
   throw new Error("an existing saved list must allow its final target row to be removed and saved");
 }
-if (!source.includes('closest("[data-manufacturing-cost-remove-id]")')) {
-  throw new Error("the manufacturing cost remove action must be delegated from the result list");
+[
+  "btn-manufacturing-cost-remove-open",
+  "manufacturing-cost-target-delete-overlay",
+  "manufacturing-cost-target-delete-list",
+  "btn-manufacturing-cost-remove-selected"
+].forEach((id) => {
+  if (!html.includes(`id="${id}"`)) throw new Error(`missing manufacturing cost removal dialog control: ${id}`);
+});
+if (!source.includes('querySelectorAll("[data-manufacturing-cost-delete-check]:checked")')) {
+  throw new Error("the removal dialog must collect checked targets");
 }
-if (!styles.includes(".manufacturing-cost-target-actions")) {
-  throw new Error("the manufacturing cost remove action must keep a stable layout");
+if (!source.includes('addEventListener("click", openManufacturingCostTargetDelete)')) {
+  throw new Error("the manufacturing cost removal dialog must open from its dedicated button");
 }
-if ((source.match(/manufacturing_cost_remove_target:/g) || []).length !== 3) {
-  throw new Error("the manufacturing cost remove action must be translated for all supported languages");
+if (!styles.includes(".manufacturing-cost-target-delete-card") || styles.includes(".manufacturing-cost-target-actions")) {
+  throw new Error("the removal dialog must have dedicated layout without legacy row-action styles");
+}
+if ((source.match(/manufacturing_cost_remove_open:/g) || []).length !== 3 ||
+    (source.match(/manufacturing_cost_remove_selected:/g) || []).length !== 3) {
+  throw new Error("the manufacturing cost removal dialog must be translated for all supported languages");
 }
 
 console.log("manufacturing cost target removal guard passed");
