@@ -458,7 +458,7 @@ var TRANSLATIONS = {
     manufacturing_cost_core_category_note: "{category} 設定",
     manufacturing_cost_core_default_note: "共通設定",
     manufacturing_cost_labor_rate: "工賃率%",
-    manufacturing_cost_labor_amount: "工賃額",
+    manufacturing_cost_labor_amount: "製造工賃",
     manufacturing_cost_calc: "原価計算",
     manufacturing_cost_find_candidates: "候補検索",
     manufacturing_cost_calc_selected: "選択品番を追加して原価計算",
@@ -502,7 +502,7 @@ var TRANSLATIONS = {
     manufacturing_cost_list_deleted: "原価計算リストを削除しました",
     manufacturing_cost_list_category_required: "カテゴリ未選択でも保存できます。",
     manufacturing_cost_list_name_required: "リスト名を入力してください。",
-    manufacturing_cost_list_rows_required: "保存する原価計算結果がありません。",
+    manufacturing_cost_list_rows_required: "対象品番が0件のため保存できません。保存済みリストは変更されていません。",
     manufacturing_cost_list_select_required: "保存リストを選択してください。",
     manufacturing_cost_list_delete_confirm: "選択した原価計算リストを削除しますか？",
     manufacturing_cost_search_hint: "条件を指定して原価計算してください。",
@@ -510,13 +510,13 @@ var TRANSLATIONS = {
     manufacturing_cost_count: "{n} 件表示",
     manufacturing_cost_summary_products: "対象品番",
     manufacturing_cost_summary_parts: "部品原価合計",
-    manufacturing_cost_summary_labor: "工賃合計",
+    manufacturing_cost_summary_labor: "製造工賃合計",
     manufacturing_cost_summary_total: "製造原価合計",
     manufacturing_cost_product: "品番",
     manufacturing_cost_components: "構成部品",
     manufacturing_cost_parts_cost: "部品原価",
     manufacturing_cost_core_cost_short: "コア代",
-    manufacturing_cost_labor_cost: "工賃",
+    manufacturing_cost_labor_cost: "製造工賃",
     manufacturing_cost_total: "製造原価",
     manufacturing_cost_notes: "確認",
     manufacturing_cost_no_components: "リビルト構成部品なし",
@@ -534,7 +534,7 @@ var TRANSLATIONS = {
     manufacturing_cost_calculated: "小計",
     manufacturing_cost_formula: "計算式",
     manufacturing_cost_unit_price_missing: "単価未設定",
-    manufacturing_cost_formula_note: "部品原価 + コア代 + 工賃率 + 工賃額",
+    manufacturing_cost_formula_note: "部品原価 + コア代 + 工賃率 + 製造工賃",
     role_admin: "管理者",
     role_system_admin: "システム管理者",
     role_editor: "編集者",
@@ -1676,7 +1676,7 @@ var TRANSLATIONS = {
     manufacturing_cost_core_category_note: "{category} setting",
     manufacturing_cost_core_default_note: "Default setting",
     manufacturing_cost_labor_rate: "Labor %",
-    manufacturing_cost_labor_amount: "Labor amount",
+    manufacturing_cost_labor_amount: "Manufacturing labor",
     manufacturing_cost_calc: "Calculate",
     manufacturing_cost_find_candidates: "Find Candidates",
     manufacturing_cost_calc_selected: "Add Selected and Calculate",
@@ -1720,7 +1720,7 @@ var TRANSLATIONS = {
     manufacturing_cost_list_deleted: "Manufacturing cost list deleted",
     manufacturing_cost_list_category_required: "Lists can be saved without a category.",
     manufacturing_cost_list_name_required: "Enter a list name.",
-    manufacturing_cost_list_rows_required: "No cost calculation results to save.",
+    manufacturing_cost_list_rows_required: "A list with no target products cannot be saved. The saved list was not changed.",
     manufacturing_cost_list_select_required: "Choose a saved list.",
     manufacturing_cost_list_delete_confirm: "Delete the selected manufacturing cost list?",
     manufacturing_cost_search_hint: "Specify conditions and calculate cost.",
@@ -1728,13 +1728,13 @@ var TRANSLATIONS = {
     manufacturing_cost_count: "{n} rows",
     manufacturing_cost_summary_products: "Products",
     manufacturing_cost_summary_parts: "Parts Cost Total",
-    manufacturing_cost_summary_labor: "Labor Total",
+    manufacturing_cost_summary_labor: "Manufacturing Labor Total",
     manufacturing_cost_summary_total: "Manufacturing Cost Total",
     manufacturing_cost_product: "Product",
     manufacturing_cost_components: "Components",
     manufacturing_cost_parts_cost: "Parts Cost",
     manufacturing_cost_core_cost_short: "Core",
-    manufacturing_cost_labor_cost: "Labor",
+    manufacturing_cost_labor_cost: "Mfg. Labor",
     manufacturing_cost_total: "Mfg. Cost",
     manufacturing_cost_notes: "Check",
     manufacturing_cost_no_components: "No rebuilt components",
@@ -1752,7 +1752,7 @@ var TRANSLATIONS = {
     manufacturing_cost_calculated: "Subtotal",
     manufacturing_cost_formula: "Formula",
     manufacturing_cost_unit_price_missing: "No unit price",
-    manufacturing_cost_formula_note: "Parts cost + core cost + labor rate + labor amount",
+    manufacturing_cost_formula_note: "Parts cost + core cost + labor rate + manufacturing labor",
     role_admin: "Admin",
     role_system_admin: "System Admin",
     role_editor: "Editor",
@@ -2900,7 +2900,7 @@ var TRANSLATIONS = {
     manufacturing_cost_core_category_note: "{category} 设置",
     manufacturing_cost_core_default_note: "通用设置",
     manufacturing_cost_labor_rate: "工费率%",
-    manufacturing_cost_labor_amount: "工费金额",
+    manufacturing_cost_labor_amount: "制造工费",
     manufacturing_cost_calc: "成本计算",
     manufacturing_cost_find_candidates: "候选搜索",
     manufacturing_cost_calc_selected: "添加所选品番并计算",
@@ -2944,7 +2944,7 @@ var TRANSLATIONS = {
     manufacturing_cost_list_deleted: "制造成本列表已删除",
     manufacturing_cost_list_category_required: "未选择类别也可以保存列表。",
     manufacturing_cost_list_name_required: "请输入列表名。",
-    manufacturing_cost_list_rows_required: "没有可保存的成本计算结果。",
+    manufacturing_cost_list_rows_required: "对象品番为0件，无法保存。已保存的列表未被更改。",
     manufacturing_cost_list_select_required: "请选择保存列表。",
     manufacturing_cost_list_delete_confirm: "要删除所选制造成本列表吗？",
     manufacturing_cost_search_hint: "请指定条件后计算成本。",
@@ -2952,13 +2952,13 @@ var TRANSLATIONS = {
     manufacturing_cost_count: "显示 {n} 条",
     manufacturing_cost_summary_products: "对象品番",
     manufacturing_cost_summary_parts: "零件成本合计",
-    manufacturing_cost_summary_labor: "工费合计",
+    manufacturing_cost_summary_labor: "制造工费合计",
     manufacturing_cost_summary_total: "制造成本合计",
     manufacturing_cost_product: "品番",
     manufacturing_cost_components: "构成零件",
     manufacturing_cost_parts_cost: "零件成本",
     manufacturing_cost_core_cost_short: "旧芯",
-    manufacturing_cost_labor_cost: "工费",
+    manufacturing_cost_labor_cost: "制造工费",
     manufacturing_cost_total: "制造成本",
     manufacturing_cost_notes: "确认",
     manufacturing_cost_no_components: "无再制造构成零件",
@@ -2976,7 +2976,7 @@ var TRANSLATIONS = {
     manufacturing_cost_calculated: "小计",
     manufacturing_cost_formula: "计算式",
     manufacturing_cost_unit_price_missing: "未设置单价",
-    manufacturing_cost_formula_note: "零件成本 + 旧芯成本 + 工费率 + 工费金额",
+    manufacturing_cost_formula_note: "零件成本 + 旧芯成本 + 工费率 + 制造工费",
     role_admin: "管理员",
     role_system_admin: "系统管理员",
     role_editor: "编辑者",
@@ -3762,7 +3762,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.586";
+var APP_VERSION       = "v1.1.587";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -3872,6 +3872,7 @@ var manufacturingCostActiveListId = null;
 var manufacturingCostCategoryCoreCosts = {};
 var manufacturingCostListItemSnapshotMap = null;
 var MANUFACTURING_COST_CATEGORY_CORE_STORAGE_KEY = "dcats_manufacturing_cost_category_core_costs";
+var MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY = 1000;
 var finishedLabelTemplates = [];
 var finishedLabelProducts = [];
 var finishedLabelInstructionMap = {};
@@ -14413,7 +14414,7 @@ function manufacturingCostSettings() {
     coreCost: Math.round(manufacturingCostNumberFromInput("manufacturing-cost-core-cost", defaultCoreCost)),
     categoryCoreCosts: Object.assign({}, manufacturingCostCategoryCoreCosts || {}),
     laborRate: manufacturingCostNumberFromInput("manufacturing-cost-labor-rate", 0),
-    laborAmount: Math.round(manufacturingCostNumberFromInput("manufacturing-cost-labor-amount", 0))
+    laborAmount: Math.round(manufacturingCostNumberFromInput("manufacturing-cost-labor-amount", MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY))
   };
 }
 
@@ -15188,7 +15189,7 @@ function exportManufacturingCostRows() {
     "メーカー品番",
     "部品原価",
     "コア代",
-    "工賃",
+    "製造工賃",
     "製造原価計"
   ]];
   manufacturingCostRows.forEach(function(row) {
@@ -15300,6 +15301,38 @@ async function calculateManufacturingCost() {
   await searchManufacturingCostCandidates();
 }
 
+async function syncManufacturingCostListItems(listId, items) {
+  if (!listId || !items.length) {
+    return { data: null, error: new Error(t("manufacturing_cost_list_rows_required")) };
+  }
+  var currentR = await sb.from("manufacturing_cost_list_items")
+    .select("id,dkd_shohin_id")
+    .eq("list_id", listId);
+  if (currentR.error) return currentR;
+  for (var i = 0; i < items.length; i += 200) {
+    var upsertR = await sb.from("manufacturing_cost_list_items")
+      .upsert(items.slice(i, i + 200), { onConflict: "list_id,dkd_shohin_id" });
+    if (upsertR.error) return upsertR;
+  }
+  var keepProductIds = {};
+  items.forEach(function(item) {
+    keepProductIds[String(item.dkd_shohin_id)] = true;
+  });
+  var staleIds = (currentR.data || []).filter(function(row) {
+    return !keepProductIds[String(row.dkd_shohin_id)];
+  }).map(function(row) {
+    return row.id;
+  }).filter(Boolean);
+  for (var j = 0; j < staleIds.length; j += 200) {
+    var deleteR = await sb.from("manufacturing_cost_list_items")
+      .delete()
+      .eq("list_id", listId)
+      .in("id", staleIds.slice(j, j + 200));
+    if (deleteR.error) return deleteR;
+  }
+  return { data: items, error: null };
+}
+
 async function saveManufacturingCostList() {
   if (!canEditManufacturingCostMgmt()) { alert(t("err_perm")); return; }
   var category = manufacturingCostSelectedCategory();
@@ -15307,7 +15340,7 @@ async function saveManufacturingCostList() {
   var listName = listNameEl ? listNameEl.value.trim() : "";
   if (!listName) { setManufacturingCostListStatus(t("manufacturing_cost_list_name_required"), true); if (listNameEl) listNameEl.focus(); return; }
   var selected = selectedManufacturingCostList();
-  if (!manufacturingCostRows.length && !selected) { setManufacturingCostListStatus(t("manufacturing_cost_list_rows_required"), true); return; }
+  if (!manufacturingCostRows.length) { setManufacturingCostListStatus(t("manufacturing_cost_list_rows_required"), true); return; }
   var settings = manufacturingCostSettings();
   var currentProducts = manufacturingCostRows.map(function(row) { return row.product; }).filter(Boolean);
   var currentLoads = await Promise.all([
@@ -15353,8 +15386,6 @@ async function saveManufacturingCostList() {
   }
   if (saveR.error) { setManufacturingCostListStatus(saveR.error.message || t("msg_part_err"), true); return; }
   var listId = saveR.data.id;
-  var delR = await sb.from("manufacturing_cost_list_items").delete().eq("list_id", listId);
-  if (delR.error) { setManufacturingCostListStatus(delR.error.message || t("msg_part_err"), true); return; }
   var items = rowsToSave.map(function(row, idx) {
     var p = row.product || {};
     return {
@@ -15374,10 +15405,9 @@ async function saveManufacturingCostList() {
       components_snapshot: manufacturingCostRowComponentSnapshots(row)
     };
   }).filter(function(row) { return !!row.dkd_shohin_id; });
-  for (var i = 0; i < items.length; i += 200) {
-    var insR = await sb.from("manufacturing_cost_list_items").insert(items.slice(i, i + 200));
-    if (insR.error) { setManufacturingCostListStatus(insR.error.message || t("msg_part_err"), true); return; }
-  }
+  if (items.length !== rowsToSave.length) { setManufacturingCostListStatus(t("manufacturing_cost_list_rows_required"), true); return; }
+  var syncR = await syncManufacturingCostListItems(listId, items);
+  if (syncR.error) { setManufacturingCostListStatus(syncR.error.message || t("msg_part_err"), true); return; }
   manufacturingCostActiveListId = listId;
   manufacturingCostRows = rowsToSave;
   manufacturingCostListItemSnapshotMap = manufacturingCostBuildSnapshotMap(items);
@@ -15411,7 +15441,7 @@ async function loadManufacturingCostList() {
     renderManufacturingCostCategoryCoreCosts();
   }
   if (rateEl) rateEl.value = selected.labor_rate_percent == null ? 0 : selected.labor_rate_percent;
-  if (amountEl) amountEl.value = selected.labor_amount_jpy == null ? 0 : selected.labor_amount_jpy;
+  if (amountEl) amountEl.value = selected.labor_amount_jpy == null ? MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY : selected.labor_amount_jpy;
   await refreshManufacturingCostSavedLists();
   renderManufacturingCostCandidateEmpty("");
   var list = document.getElementById("manufacturing-cost-list");
@@ -15426,8 +15456,10 @@ async function loadManufacturingCostList() {
       .eq("list_id", selected.id)
       .order("sort_order", { ascending: true });
     if (itemsR.error) throw itemsR.error;
-    var ids = (itemsR.data || []).map(function(row) { return row.dkd_shohin_id; });
-    var snapshotMap = manufacturingCostBuildSnapshotMap(itemsR.data || []);
+    var itemRows = itemsR.data || [];
+    if (!itemRows.length) throw new Error(t("manufacturing_cost_list_rows_required"));
+    var ids = itemRows.map(function(row) { return row.dkd_shohin_id; });
+    var snapshotMap = manufacturingCostBuildSnapshotMap(itemRows);
     var productR = await fetchManufacturingCostProductsByIds(ids);
     if (productR.error) throw productR.error;
     await buildAndRenderManufacturingCostProducts(productR.data || [], manufacturingCostSettings(), { snapshotMap: snapshotMap });

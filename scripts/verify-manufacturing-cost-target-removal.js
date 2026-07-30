@@ -64,8 +64,8 @@ if (rowRenderer.includes("data-manufacturing-cost-remove-id") || rowRenderer.inc
   throw new Error("the manufacturing cost table must not contain per-row remove controls");
 }
 const saveSource = sourceBetween("async function saveManufacturingCostList", "async function loadManufacturingCostList");
-if (!saveSource.includes("!manufacturingCostRows.length && !selected")) {
-  throw new Error("an existing saved list must allow its final target row to be removed and saved");
+if (!saveSource.includes("if (!manufacturingCostRows.length)") || saveSource.includes("!manufacturingCostRows.length && !selected")) {
+  throw new Error("an empty working list must never overwrite and erase an existing saved list");
 }
 [
   "btn-manufacturing-cost-remove-open",

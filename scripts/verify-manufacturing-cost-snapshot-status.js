@@ -4,6 +4,7 @@ const vm = require("vm");
 
 const root = path.resolve(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
+const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 
 function sourceBetween(startText, endText) {
   const start = source.indexOf(startText);
@@ -85,17 +86,108 @@ if ((source.match(/manufacturing_cost_snapshot_unit_price_changed:/g) || []).len
   throw new Error("snapshot unit-price difference must be translated for all supported languages");
 }
 
+const settingsSource = sourceBetween("function manufacturingCostSettings", "function manufacturingCostParseQty");
+if (!source.includes("MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY = 1000")) {
+  throw new Error("manufacturing labor must default to 1000 yen");
+}
+if (!settingsSource.includes('manufacturingCostNumberFromInput("manufacturing-cost-labor-amount", MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY)')) {
+  throw new Error("manufacturing cost settings must use the 1000 yen labor default");
+}
+if (!html.includes('id="manufacturing-cost-labor-amount" type="number" min="0" step="1" value="1000"')) {
+  throw new Error("manufacturing labor input must show 1000 yen by default");
+}
+
 const saveSource = sourceBetween("async function saveManufacturingCostList", "async function loadManufacturingCostList");
+const syncSource = sourceBetween("async function syncManufacturingCostListItems", "async function saveManufacturingCostList");
+const loadSource = sourceBetween("async function loadManufacturingCostList", "async function deleteManufacturingCostList");
 [
   "loadManufacturingCostComponents",
   "loadManufacturingCostCorePolicies",
   "manufacturingCostRowWithCurrentUnitPrices",
   "var rowsToSave =",
+  "syncManufacturingCostListItems",
   "manufacturingCostRows = rowsToSave",
   "manufacturingCostListItemSnapshotMap = manufacturingCostBuildSnapshotMap(items)",
   "manufacturing_cost_list_saved_current_prices"
 ].forEach((fragment) => {
   if (!saveSource.includes(fragment)) throw new Error(`manufacturing cost save refresh is missing: ${fragment}`);
 });
+if (!saveSource.includes("if (!manufacturingCostRows.length)") || saveSource.includes("!manufacturingCostRows.length && !selected")) {
+  throw new Error("saving must reject an empty working list before changing its saved data");
+}
+[
+  '.select("id,dkd_shohin_id")',
+  '.upsert(items.slice(i, i + 200), { onConflict: "list_id,dkd_shohin_id" })',
+  '.in("id", staleIds.slice(j, j + 200))'
+].forEach((fragment) => {
+  if (!syncSource.includes(fragment)) throw new Error(`safe manufacturing cost item sync is missing: ${fragment}`);
+});
+if (syncSource.indexOf(".upsert(") > syncSource.indexOf(".delete()")) {
+  throw new Error("saved manufacturing cost items must be upserted before stale rows are deleted");
+}
+if (saveSource.includes('.delete().eq("list_id", listId)')) {
+  throw new Error("saving must not delete all existing manufacturing cost items before replacement rows succeed");
+}
+if (!saveSource.includes("labor_amount_jpy: settings.laborAmount")) {
+  throw new Error("the entered manufacturing labor amount must be saved on the list");
+}
+if (!loadSource.includes("selected.labor_amount_jpy == null ? MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY : selected.labor_amount_jpy")) {
+  throw new Error("loading a list must restore its saved manufacturing labor amount");
+}
+if (!loadSource.includes("if (!itemRows.length) throw new Error")) {
+  throw new Error("an empty damaged saved list must not report a successful load");
+}
 
-console.log("manufacturing cost snapshot status guard passed");
+async function verifySafeItemSync() {
+  const operations = [];
+  const syncSandbox = {
+    t: (key) => key,
+    sb: {
+      from(table) {
+        if (table !== "manufacturing_cost_list_items") throw new Error(`unexpected table: ${table}`);
+        return {
+          select() {
+            return {
+              async eq() {
+                operations.push({ type: "select" });
+                return { data: [{ id: 1, dkd_shohin_id: 101 }, { id: 2, dkd_shohin_id: 102 }], error: null };
+              }
+            };
+          },
+          async upsert(items, options) {
+            operations.push({ type: "upsert", items, options });
+            return { data: null, error: null };
+          },
+          delete() {
+            return {
+              eq() {
+                return {
+                  async in(column, ids) {
+                    operations.push({ type: "delete", column, ids });
+                    return { data: null, error: null };
+                  }
+                };
+              }
+            };
+          }
+        };
+      }
+    }
+  };
+  vm.runInNewContext(`${syncSource}; result = syncManufacturingCostListItems;`, syncSandbox);
+  const items = [{ list_id: 4, dkd_shohin_id: 101 }, { list_id: 4, dkd_shohin_id: 103 }];
+  const result = await syncSandbox.result(4, items);
+  if (result.error || operations.map((operation) => operation.type).join(",") !== "select,upsert,delete") {
+    throw new Error("safe item sync must read existing rows, upsert replacements, then delete stale rows");
+  }
+  if (operations[1].options.onConflict !== "list_id,dkd_shohin_id" || operations[2].column !== "id" || String(operations[2].ids) !== "2") {
+    throw new Error("safe item sync must retain current products and delete only the stale row id");
+  }
+}
+
+verifySafeItemSync().then(() => {
+  console.log("manufacturing cost snapshot status guard passed");
+}).catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
