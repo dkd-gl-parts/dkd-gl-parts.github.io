@@ -69,7 +69,8 @@ if (cost.amount !== 0 || cost.source !== "kind_default") throw new Error("afterm
   "detail-kind-core-row",
   "core-return-badge.required",
   "core-return-badge.not-required",
-  "production-core-policy-row"
+  "production-core-policy-row",
+  ".core-return-policy-panel.vertical .core-return-policy-grid"
 ].forEach((fragment) => {
   if (!css.includes(fragment)) throw new Error(`core return style is missing: ${fragment}`);
 });
@@ -87,6 +88,17 @@ const saveSource = sourceBetween("async function saveCoreProductPolicyForDkd", "
 const productionSource = sourceBetween("function renderProductionCorePolicies", "function renderProductionComponents");
 if (!productionSource.includes("renderProductionCorePolicies(detail.productVariants)")) {
   throw new Error("manufacturing detail must render core return terms below inventory/core information");
+}
+if (!productionSource.includes("vertical: true")) {
+  throw new Error("manufacturing core return terms must use the compact vertical layout");
+}
+
+const salesDetailSource = sourceBetween("function renderPanelStatic", "async function loadProductVariantsForCurrent");
+if (!salesDetailSource.includes("compact: true, vertical: true, showTitle: false")) {
+  throw new Error("sales core return terms must use the compact vertical layout without a repeated heading");
+}
+if (salesDetailSource.includes("detail-core-policy-panel'><div class='detail-block-title'")) {
+  throw new Error("sales core return terms must not repeat the group heading");
 }
 
 if ((source.match(/core_return_policy:/g) || []).length !== 3) {

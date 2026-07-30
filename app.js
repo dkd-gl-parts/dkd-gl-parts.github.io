@@ -3762,7 +3762,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.579";
+var APP_VERSION       = "v1.1.580";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -7941,7 +7941,7 @@ function renderProductionCorePolicies(rows) {
   return "<div class='production-core-policy-list'>" + kinds.map(function(kind) {
     return "<div class='production-core-policy-row " + productKindClass(kind) + "'>" +
       "<div class='production-core-policy-kind'>" + esc(productKindLabel(kind)) + "</div>" +
-      renderCoreReturnPolicyHtml(kind, rows, { compact: true, showTitle: false }) +
+      renderCoreReturnPolicyHtml(kind, rows, { compact: true, vertical: true, showTitle: false }) +
     "</div>";
   }).join("") + "</div>";
 }
@@ -18088,7 +18088,7 @@ function renderCoreReturnPolicyHtml(kind, rows, options) {
   var policy = coreReturnPolicyForKind(kind, rows);
   var stateClass = policy.required ? "required" : "not-required";
   var stateText = policy.required ? t("core_return_required") : t("core_return_not_required");
-  return "<div class='core-return-policy-panel" + (options.compact ? " compact" : "") + "'>" +
+  return "<div class='core-return-policy-panel" + (options.compact ? " compact" : "") + (options.vertical ? " vertical" : "") + "'>" +
     (options.showTitle === false ? "" : "<div class='detail-block-title'>" + esc(t("core_return_policy")) + "</div>") +
     "<div class='core-return-policy-grid'>" +
       "<div class='core-return-policy-item'><span>" + esc(t("core_return_required_label")) + "</span><strong class='core-return-badge " + stateClass + "'>" + esc(stateText) + "</strong></div>" +
@@ -18523,7 +18523,7 @@ function renderProductKindWrapForCurrent() {
 function renderCoreReturnPolicyWrapForCurrent() {
   var wrap = document.getElementById("core-return-policy-wrap");
   if (!wrap) return;
-  wrap.innerHTML = renderCoreReturnPolicyHtml(selectedProductKind(), productKindRowsForCurrent(), { showTitle: false });
+  wrap.innerHTML = renderCoreReturnPolicyHtml(selectedProductKind(), productKindRowsForCurrent(), { compact: true, vertical: true, showTitle: false });
 }
 
 function bindProductKindPanelActions() {
@@ -20331,7 +20331,7 @@ function renderPanelStatic() {
     ? "<div class='ec-mall-summary-block'><div class='sales-price-summary-head'><div class='detail-block-title'>" + t("ec_research_detail_title") + "</div></div><div id='ec-mall-price-summary-wrap'><div data-dcats-inline-style='s-d097f1ffa2b6'>" + t("loading") + "</div></div></div>"
     : "";
   var productKindBlockHtml = "<div class='product-kind-panel detail-inline-kind-panel'><div class='detail-block-title'>" + t("product_kind_section") + "</div><div id='product-kind-wrap'>" + renderProductKindPanelHtml(productKindSummaryForProduct(p)) + "</div></div>";
-  var corePolicyBlockHtml = "<div class='detail-core-policy-panel'><div class='detail-block-title'>" + esc(t("core_return_policy")) + "</div><div id='core-return-policy-wrap'>" + renderCoreReturnPolicyHtml(selectedProductKind(), productKindRowsForCurrent(), { showTitle: false }) + "</div></div>";
+  var corePolicyBlockHtml = "<div class='detail-core-policy-panel'><div id='core-return-policy-wrap'>" + renderCoreReturnPolicyHtml(selectedProductKind(), productKindRowsForCurrent(), { compact: true, vertical: true, showTitle: false }) + "</div></div>";
   var kindCoreRowHtml = "<div class='detail-kind-core-row'>" + productKindBlockHtml + corePolicyBlockHtml + "</div>";
   var kindPriceBlocks = [ecMallPriceBlockHtml].filter(Boolean);
   var kindPriceRowHtml = kindPriceBlocks.length

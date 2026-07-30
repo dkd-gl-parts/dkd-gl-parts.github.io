@@ -785,7 +785,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   display: grid;
   grid-template-columns: minmax(190px, .8fr) minmax(300px, 1.2fr);
   gap: 10px;
-  align-items: stretch;
+  align-items: start;
   margin: 10px 0;
 }
 #screen-search .detail-kind-core-row .detail-inline-kind-panel {
@@ -798,7 +798,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   border: 1px solid #e5edf8;
   border-radius: 8px;
   background: #fbfdff;
-  padding: 9px 11px;
+  padding: 5px 7px;
 }
 .core-return-policy-panel { min-width: 0; }
 .core-return-policy-grid {
@@ -825,6 +825,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   color: #1f2937;
   font-size: 15px;
   letter-spacing: 0;
+}
+.core-return-policy-panel.vertical .core-return-policy-grid {
+  grid-template-columns: 1fr;
+  gap: 2px;
+}
+.core-return-policy-panel.vertical .core-return-policy-item {
+  display: grid;
+  grid-template-columns: minmax(72px, 92px) minmax(0, 1fr);
+  align-items: center;
+  min-height: 27px;
+  padding: 3px 7px;
+  border-left-width: 2px;
+}
+.core-return-policy-panel.vertical .core-return-policy-item strong {
+  justify-self: start;
+  margin-top: 0;
+  font-size: 13px;
+}
+.core-return-policy-panel.vertical .core-return-badge {
+  padding: 2px 6px;
+  font-size: 11px !important;
 }
 .core-return-badge {
   width: fit-content;
@@ -883,16 +904,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .core-charge-input .form-input { min-width: 0; }
 .product-form-core-policy-grid .form-row.disabled { opacity: .55; }
 
-.production-core-policy-list { grid-column: 1 / -1; margin-top: 10px; border-top: 1px solid #dde5ee; }
+.production-core-policy-list { grid-column: 1 / -1; margin-top: 6px; border-top: 1px solid #dde5ee; }
 .production-core-policy-row {
   display: grid;
   grid-template-columns: minmax(100px, 150px) minmax(0, 1fr);
-  gap: 10px;
-  align-items: center;
-  padding: 9px 0;
+  gap: 8px;
+  align-items: start;
+  padding: 5px 0;
   border-bottom: 1px solid #e6ebf1;
 }
-.production-core-policy-kind { color: #334155; font-size: 12px; font-weight: 800; }
+.production-core-policy-kind { padding-top: 5px; color: #334155; font-size: 12px; font-weight: 800; }
 .production-core-policy-row.rebuilt .production-core-policy-kind { color: #236344; }
 .production-core-policy-row.aftermarket_new .production-core-policy-kind { color: #315f84; }
 
