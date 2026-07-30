@@ -3762,7 +3762,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.583";
+var APP_VERSION       = "v1.1.585";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -20330,10 +20330,7 @@ function renderPanelStatic() {
     "<div id='product-kind-wrap'>" + renderProductKindPanelHtml(productKindSummaryForProduct(p)) + "</div>" +
     "<div id='core-return-policy-wrap'>" + renderCoreReturnPolicyHtml(selectedProductKind(), productKindRowsForCurrent(), { compact: true, vertical: true, showTitle: false }) + "</div>" +
   "</div></div>";
-  var kindPriceBlocks = [ecMallPriceBlockHtml].filter(Boolean);
-  var kindPriceRowHtml = kindPriceBlocks.length
-    ? "<div class='detail-kind-price-row" + (kindPriceBlocks.length > 1 ? "" : " single") + "'>" + kindPriceBlocks.join("") + "</div>"
-    : "";
+  var salesOverviewHtml = "<div class='detail-sales-overview-grid'>" + salesTermsHtml + ecMallPriceBlockHtml + "</div>";
   var kikanBlockHtml = customerCanShowCompatibleParts()
     ? "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
       "<div id='kikan-wrap'><div data-dcats-inline-style='s-d097f1ffa2b6'>" + t("loading") + "</div></div>"
@@ -20362,9 +20359,8 @@ function renderPanelStatic() {
       "<div class='detail-spec-block detail-spec-after-maker'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div>" +
       "</div>" +
     "</div>" +
-    salesTermsHtml +
+    salesOverviewHtml +
     mobileActionsHtml +
-    kindPriceRowHtml +
     toolHtml +
     detailLowerGridHtml +
     "<div id='price-table-wrap' data-dcats-inline-style='s-6aa34d7432e7'></div>";

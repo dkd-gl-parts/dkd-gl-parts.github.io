@@ -781,9 +781,26 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 }
 
 /* Core return terms */
+.detail-sales-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+  margin: 10px 0;
+}
 .detail-sales-terms-grid {
   display: block;
-  margin: 10px 0;
+  min-width: 0;
+  margin: 0;
+}
+.detail-sales-overview-grid > .ec-mall-summary-block {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 116px;
+  border: 1px solid #e5edf8;
+  border-radius: 8px;
+  background: #fbfdff;
+  padding: 10px 12px;
 }
 .detail-sales-terms-panel {
   width: min(100%, 280px);
@@ -1010,6 +1027,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-catalog-availability-kind .core-return-policy-item strong { font-size: 13px; }
 
 @media (max-width: 760px) {
+  .detail-sales-overview-grid { grid-template-columns: 1fr; gap: 8px; }
   .product-form-core-policy-grid { grid-template-columns: 1fr; }
   .product-form-core-policy-head { grid-template-columns: 1fr; align-items: stretch; }
   .product-form-core-policy-head .form-label { margin-bottom: 0; }

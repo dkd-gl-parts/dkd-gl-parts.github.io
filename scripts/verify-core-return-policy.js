@@ -68,6 +68,8 @@ if (cost.amount !== 0 || cost.source !== "kind_default") throw new Error("afterm
 [
   "detail-sales-terms-grid",
   "detail-sales-terms-panel",
+  "detail-sales-overview-grid",
+  ".detail-sales-overview-grid > .ec-mall-summary-block",
   "width: min(100%, 280px)",
   "grid-template-columns: 132px minmax(0, 1fr)",
   ".detail-sales-terms-panel .core-return-policy-panel.vertical .core-return-policy-item",
@@ -103,6 +105,12 @@ if (!salesDetailSource.includes("compact: true, vertical: true, showTitle: false
 }
 if (!salesDetailSource.includes("detail-sales-terms-grid") || !salesDetailSource.includes("detail-sales-terms-panel")) {
   throw new Error("sales product kind, stock, core return and core charge must share one compact panel");
+}
+if (!salesDetailSource.includes("salesTermsHtml + ecMallPriceBlockHtml") || !salesDetailSource.includes("salesOverviewHtml +")) {
+  throw new Error("the half-width EC mall summary must sit beside the sales terms panel");
+}
+if (salesDetailSource.includes("kindPriceRowHtml")) {
+  throw new Error("the EC mall summary must not consume a separate full-width row");
 }
 
 const productKindPanelSource = sourceBetween("function renderProductKindPanelHtml", "function renderProductKindWrapForCurrent");
