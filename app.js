@@ -191,7 +191,7 @@ var TRANSLATIONS = {
     mi_purchase_mgmt_title: "仕入管理",
     mi_purchase_mgmt_desc: "SL品番・仕入先価格・MOQを管理します。",
     mi_finished_label_title: "完品登録・製造シリアル",
-    mi_finished_label_desc: "完品を1台ずつ登録し、本体・化粧箱用45×20ラベルと在庫履歴を発行します。",
+    mi_finished_label_desc: "完品を1台ずつ登録し、1台につき45×20ラベル1枚と在庫履歴を発行します。",
     mi_production_ranking_title: "製造予定リスト",
     mi_production_ranking_desc: "2024・2025のTOP100元リストを確認・メンテナンスします。",
     mi_data_title: "データ管理",
@@ -319,7 +319,7 @@ var TRANSLATIONS = {
     finished_label_history: "発行履歴",
     finished_label_select_product: "発行対象を選択してください。",
     finished_label_issue_form: "完品登録内容",
-    finished_label_apply_template: "テンプレート適用",
+    finished_label_apply_template: "カテゴリ構成部品を再反映",
     finished_label_preview: "45×20ラベル印刷",
     finished_label_issue_code: "完品登録ID",
     finished_label_instruction_id: "製造予定ID",
@@ -329,7 +329,7 @@ var TRANSLATIONS = {
     finished_label_inspection_staff: "検査担当",
     finished_label_shelf_no: "棚番",
     finished_label_components: "交換・構成部品",
-    finished_label_component_hint: "交換した部品だけ品番・内容を入力してください。",
+    finished_label_component_hint: "選択したカテゴリに登録済みの構成部品を初期表示します。使用したメーカー・品番を入力してください。",
     finished_label_part_type: "部品種別",
     finished_label_replacement_part: "交換品番/内容",
     finished_label_issue_save: "完品登録・シリアル発行",
@@ -1464,7 +1464,7 @@ var TRANSLATIONS = {
     mi_purchase_mgmt_title: "Purchase Management",
     mi_purchase_mgmt_desc: "Manage SL numbers, supplier prices, and MOQ.",
     mi_finished_label_title: "Finished Units / Serials",
-    mi_finished_label_desc: "Register each completed unit and issue two 45×20 product-and-box labels with stock history.",
+    mi_finished_label_desc: "Register each completed unit and issue one 45×20 label per unit with stock history.",
     mi_production_ranking_title: "Production Plan List",
     mi_production_ranking_desc: "View and maintain the 2024/2025 TOP100 source list.",
     mi_data_title: "Data Management",
@@ -1592,7 +1592,7 @@ var TRANSLATIONS = {
     finished_label_history: "Issue History",
     finished_label_select_product: "Select an issue target.",
     finished_label_issue_form: "Finished Unit Details",
-    finished_label_apply_template: "Apply Template",
+    finished_label_apply_template: "Reload Category Components",
     finished_label_preview: "Print 45×20 Labels",
     finished_label_issue_code: "Registration ID",
     finished_label_instruction_id: "Production Plan ID",
@@ -1602,7 +1602,7 @@ var TRANSLATIONS = {
     finished_label_inspection_staff: "Inspection Staff",
     finished_label_shelf_no: "Shelf No.",
     finished_label_components: "Replaced / Component Parts",
-    finished_label_component_hint: "Enter only replaced parts or notes.",
+    finished_label_component_hint: "Registered components for the selected category are shown by default. Enter the maker and part number actually used.",
     finished_label_part_type: "Part Type",
     finished_label_replacement_part: "Replacement Part / Detail",
     finished_label_issue_save: "Register Units and Issue Serials",
@@ -2750,7 +2750,7 @@ var TRANSLATIONS = {
     mi_purchase_mgmt_title: "采购管理",
     mi_purchase_mgmt_desc: "管理SL编号、供应商价格和MOQ。",
     mi_finished_label_title: "完品登记・制造序列号",
-    mi_finished_label_desc: "逐台登记完品，发行产品本体和包装箱用45×20标签，并记录库存履历。",
+    mi_finished_label_desc: "逐台登记完品，每台发行一张45×20标签，并记录库存履历。",
     mi_production_ranking_title: "生产计划清单",
     mi_production_ranking_desc: "查看和维护2024/2025 TOP100来源清单。",
     mi_data_title: "数据管理",
@@ -2872,7 +2872,7 @@ var TRANSLATIONS = {
     finished_label_history: "发行历史",
     finished_label_select_product: "请选择发行对象。",
     finished_label_issue_form: "完品登记内容",
-    finished_label_apply_template: "套用模板",
+    finished_label_apply_template: "重新载入类别构成零件",
     finished_label_preview: "打印45×20标签",
     finished_label_issue_code: "完品登记ID",
     finished_label_instruction_id: "生产计划ID",
@@ -2882,7 +2882,7 @@ var TRANSLATIONS = {
     finished_label_inspection_staff: "检查担当",
     finished_label_shelf_no: "货架号",
     finished_label_components: "更换・构成零件",
-    finished_label_component_hint: "只输入更换的零件或备注。",
+    finished_label_component_hint: "默认显示所选类别中已登记的构成零件。请输入实际使用的厂家和品号。",
     finished_label_part_type: "零件种类",
     finished_label_replacement_part: "更换品号/内容",
     finished_label_issue_save: "登记完品并发行序列号",
@@ -3927,7 +3927,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.596";
+var APP_VERSION       = "v1.1.597";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -16291,7 +16291,7 @@ function resetFinishedLabelForm(product, instruction) {
   setFinishedLabelValue("finished-label-issue-code", t("finished_label_issue_pending"));
   setFinishedLabelValue("finished-label-instruction-id", instruction && instruction.id ? String(instruction.id) : "");
   setFinishedLabelValue("finished-label-quantity", instruction && instruction.merged_source_count ? String(instruction.merged_source_count) : "1");
-  setFinishedLabelValue("finished-label-print-count", "2");
+  setFinishedLabelValue("finished-label-print-count", "1");
   setFinishedLabelValue("finished-label-assembly-staff", "");
   setFinishedLabelValue("finished-label-inspection-staff", "");
   setFinishedLabelValue("finished-label-shelf-no", "");
@@ -16455,7 +16455,7 @@ function readFinishedLabelRecord() {
     inspectionStaff: finishedLabelValue("finished-label-inspection-staff"),
     shelfNo: finishedLabelValue("finished-label-shelf-no"),
     memo: finishedLabelValue("finished-label-memo"),
-    printCount: 2,
+    printCount: 1,
     issuedAt: null,
     units: [],
     components: readFinishedLabelComponents()
@@ -16658,7 +16658,7 @@ function finishedLabelRecordFromHistory(row, issued) {
     inspectionStaff: row.inspection_staff,
     shelfNo: row.shelf_no,
     memo: row.memo,
-    printCount: 2,
+    printCount: 1,
     issuedAt: row.issued_at ? new Date(row.issued_at) : new Date(),
     units: units,
     components: Array.isArray(row.components_json) ? row.components_json : []
@@ -16744,14 +16744,12 @@ function buildFinishedLabelPrintHtml(record) {
     var serial = unit.manufacturing_serial || "";
     var productNo = unit.gltek_part_number || unit.product_no || record.gltekPartNumber || record.productNo || record.manufacturerPartNumber || record.genuinePartNumber || "-";
     var qrDataUrl = finishedProductSerialQrDataUrl(serial);
-    ["製品本体", "化粧箱"].forEach(function(targetLabel) {
-      labels.push("<section class='serial-label'><div class='serial-label-head'><strong>GLTEK</strong><span>" + esc(targetLabel) + "</span></div>" +
-        "<div class='serial-label-body'><img src='" + esc(qrDataUrl) + "' alt='" + esc(serial) + "'><div class='serial-label-copy'><div class='serial-label-product'>" + esc(productNo) + "</div><div class='serial-label-number'>" + esc(serial) + "</div><div class='serial-label-caption'>MANUFACTURING SERIAL</div></div></div></section>");
-    });
+    labels.push("<section class='serial-label'><div class='serial-label-head'><strong>GLTEK</strong><span>完品</span></div>" +
+      "<div class='serial-label-body'><img src='" + esc(qrDataUrl) + "' alt='" + esc(serial) + "'><div class='serial-label-copy'><div class='serial-label-product'>" + esc(productNo) + "</div><div class='serial-label-number'>" + esc(serial) + "</div><div class='serial-label-caption'>MANUFACTURING SERIAL</div></div></div></section>");
   });
   return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><title>D-CATS " + esc(record.issueCode || "") + "</title>" +
     "<link rel='stylesheet' href='print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'>" +
-    "</head><body><div class='toolbar'><button id='dcats-print-now' type='button'>印刷</button><span>用紙サイズを45×20mm、倍率100%に設定してください。" + esc(units.length) + "台 × 2枚（本体・化粧箱）</span></div><main class='serial-labels'>" + labels.join("") + "</main></body></html>";
+    "</head><body><div class='toolbar'><button id='dcats-print-now' type='button'>印刷</button><span>用紙サイズを45×20mm、倍率100%に設定してください。" + esc(units.length) + "台 × 1枚</span></div><main class='serial-labels'>" + labels.join("") + "</main></body></html>";
 }
 
 // =============================================

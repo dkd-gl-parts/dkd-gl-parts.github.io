@@ -44,9 +44,14 @@ assert(app.includes('sb.rpc("record_finished_product_label_reprint"'), "audited 
 assert(!app.includes('.from("finished_label_issues").insert('), "browser still inserts finished-label batches directly");
 assert(!app.includes("quickchart.io/qr"), "production labels still depend on an external QR service");
 assert(html.includes('id="finished-label-quantity" type="number" min="1" max="100"'), "quantity guard is missing from the form");
-assert(html.includes('id="finished-label-print-count"') && html.includes('value="2" readonly'), "two-copy product-and-box rule is missing");
+assert(html.includes('id="finished-label-print-count"') && html.includes('min="1" max="1"') && html.includes('value="1" readonly'), "one-label-per-unit rule is missing");
 assert(/@page\s*{[^}]*size:\s*45mm\s+20mm/i.test(printCss), "print page is not fixed at 45x20mm");
 assert(/\.serial-label\s*{[^}]*width:\s*45mm;[^}]*height:\s*20mm;/i.test(printCss), "label dimensions are not exact");
+assert(functionSource("loadFinishedLabelTemplates").includes('.from("finished_label_part_templates")'), "category component master is not loaded");
+assert(functionSource("loadFinishedLabelTemplates").includes('.eq("is_active", true)'), "inactive category components are not excluded");
+const productSelectionSource = functionSource("selectFinishedLabelProduct");
+assert(productSelectionSource.indexOf("renderFinishedLabelCategoryOptions") < productSelectionSource.indexOf("applyFinishedLabelTemplate"), "category components are not applied after product category selection");
+assert(functionSource("applyFinishedLabelTemplate").includes("finishedLabelTemplatesForCategory(category)"), "registered category components are not used as defaults");
 
 const qrInputs = [];
 const sandbox = {
@@ -74,10 +79,10 @@ const output = sandbox.build({
   units: serials.map((manufacturing_serial, index) => ({ id: index + 1, manufacturing_serial }))
 });
 
-assert((output.match(/class='serial-label'/g) || []).length === 4, "two labels per finished unit were not generated");
-assert((output.match(/製品本体/g) || []).length === 2, "product-body labels are missing");
-assert((output.match(/化粧箱/g) || []).length >= 2, "box labels are missing");
+assert((output.match(/class='serial-label'/g) || []).length === 2, "one label per finished unit was not generated");
+assert((output.match(/<span>完品<\/span>/g) || []).length === 2, "finished-product label marker is missing");
+assert(!output.includes("化粧箱"), "obsolete box-label copy is still generated");
 assert(qrInputs.length === 2 && qrInputs.every((value, index) => value === serials[index]), "QR payload is not serial-only");
 assert(serials.every((serial) => output.includes(serial)), "human-readable manufacturing serial is missing");
 
-console.log("Finished-product serial issuance and 45x20 label checks passed.");
+console.log("Finished-product serial issuance, one-label rule, and category defaults passed.");
