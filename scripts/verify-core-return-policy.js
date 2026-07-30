@@ -66,7 +66,8 @@ if (cost.amount !== 0 || cost.source !== "kind_default") throw new Error("afterm
 });
 
 [
-  "detail-kind-core-row",
+  "detail-sales-terms-grid",
+  "detail-sales-terms-panel",
   "core-return-badge.required",
   "core-return-badge.not-required",
   "production-core-policy-row",
@@ -97,8 +98,13 @@ const salesDetailSource = sourceBetween("function renderPanelStatic", "async fun
 if (!salesDetailSource.includes("compact: true, vertical: true, showTitle: false")) {
   throw new Error("sales core return terms must use the compact vertical layout without a repeated heading");
 }
-if (salesDetailSource.includes("detail-core-policy-panel'><div class='detail-block-title'")) {
-  throw new Error("sales core return terms must not repeat the group heading");
+if (!salesDetailSource.includes("detail-sales-terms-grid") || !salesDetailSource.includes("detail-sales-terms-panel")) {
+  throw new Error("sales product kind, stock, core return and core charge must share one part-number-width panel");
+}
+
+const productKindPanelSource = sourceBetween("function renderProductKindPanelHtml", "function renderProductKindWrapForCurrent");
+if (!productKindPanelSource.includes("selectedMeta.stockQty") || !productKindPanelSource.includes("detail-sales-kind-row")) {
+  throw new Error("sales product kind and aggregated stock must share the first row");
 }
 
 if ((source.match(/core_return_policy:/g) || []).length !== 3) {

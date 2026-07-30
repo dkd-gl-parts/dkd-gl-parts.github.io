@@ -781,24 +781,50 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 }
 
 /* Core return terms */
-.detail-kind-core-row {
+.detail-sales-terms-grid {
   display: grid;
-  grid-template-columns: minmax(190px, .8fr) minmax(300px, 1.2fr);
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
   align-items: start;
   margin: 10px 0;
 }
-#screen-search .detail-kind-core-row .detail-inline-kind-panel {
-  width: auto;
-  min-width: 0;
-  margin: 0;
-}
-.detail-core-policy-panel {
+.detail-sales-terms-panel {
   min-width: 0;
   border: 1px solid #e5edf8;
   border-radius: 8px;
   background: #fbfdff;
-  padding: 5px 7px;
+  padding: 7px;
+}
+.detail-sales-kind-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(76px, 92px);
+  gap: 8px;
+  align-items: end;
+}
+.detail-sales-kind-field { min-width: 0; }
+.detail-sales-term-label {
+  margin-bottom: 3px;
+  color: #667085;
+  font-size: 10px;
+  font-weight: 700;
+}
+.detail-sales-terms-panel .product-kind-control-row.compact { justify-content: stretch; }
+.detail-sales-terms-panel .product-kind-select { width: 100%; min-width: 0; }
+.detail-sales-terms-panel .product-kind-stock-grid { max-width: none; margin: 0; }
+.detail-sales-terms-panel .product-kind-stock-row {
+  grid-template-columns: 1fr;
+  gap: 3px;
+}
+.detail-sales-terms-panel .product-kind-stock-value {
+  width: 100%;
+  min-height: 29px;
+  padding: 3px 6px;
+  font-size: 14px;
+}
+.detail-sales-terms-panel #core-return-policy-wrap {
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px solid #e5edf8;
 }
 .core-return-policy-panel { min-width: 0; }
 .core-return-policy-grid {
@@ -922,8 +948,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-catalog-availability-kind .core-return-policy-item { padding: 6px 8px; }
 .customer-catalog-availability-kind .core-return-policy-item strong { font-size: 13px; }
 
+@media (max-width: 1180px) {
+  .detail-sales-terms-grid { grid-template-columns: 1fr; gap: 8px; }
+}
+
 @media (max-width: 760px) {
-  .detail-kind-core-row,
   .product-form-core-policy-grid { grid-template-columns: 1fr; }
   .product-form-core-policy-head { grid-template-columns: 1fr; align-items: stretch; }
   .product-form-core-policy-head .form-label { margin-bottom: 0; }

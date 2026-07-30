@@ -3762,7 +3762,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.580";
+var APP_VERSION       = "v1.1.581";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -18489,27 +18489,23 @@ function renderProductKindPanelHtml(summary) {
   summary = summary || productKindSummaryForProduct(currentProduct);
   var selected = ensureSelectedProductKind(summary);
   var options = currentProductKindOptions(summary);
-  var html = "<div class='product-kind-control'>";
+  var selectedMeta = summary.kinds && summary.kinds[selected] ? summary.kinds[selected] : null;
+  var stockText = productKindStockKindAllowed(selected) && selectedMeta && selectedMeta.stockKnown
+    ? String(selectedMeta.stockQty)
+    : (productKindStockKindAllowed(selected) ? "0" : "-");
+  var html = "<div class='product-kind-control detail-sales-kind-control'>";
+  html += "<div class='detail-sales-kind-row'>";
+  html += "<div class='detail-sales-kind-field'><div class='detail-sales-term-label'>" + esc(t("product_kind_section")) + "</div>";
   html += "<div class='product-kind-control-row compact'>";
   html += "<select id='product-kind-select' class='product-kind-select " + productKindClass(selected) + "'>";
   options.forEach(function(kind) {
     html += "<option class='" + productKindClass(kind) + "' value='" + esc(kind) + "'" + (kind === selected ? " selected" : "") + ">" + esc(productKindSelectLabel(kind, summary)) + "</option>";
   });
-  html += "</select></div>";
-  var rows = productKindRowsForCurrent().filter(function(row) {
-    return normalizeProductKind(row.product_kind) === selected;
-  });
-  if (rows.length && productKindStockKindAllowed(selected)) {
-    html += "<div class='product-kind-stock-grid'>";
-    rows.forEach(function(row) {
-      html += "<div class='product-kind-stock-row active " + productKindClass(row.product_kind || selected) + "' data-product-kind-row='" + esc(selected) + "'>";
-      html += "<div class='product-kind-stock-label'>" + esc(t("product_kind_stock_qty")) + "</div>";
-      html += "<div class='product-kind-stock-value'>" + esc(row.stock_qty == null ? "0" : String(row.stock_qty)) + "</div>";
-      html += "</div>";
-    });
-    html += "</div>";
-  }
-  html += "</div>";
+  html += "</select></div></div>";
+  html += "<div class='product-kind-stock-grid'><div class='product-kind-stock-row active " + productKindClass(selected) + "' data-product-kind-row='" + esc(selected) + "'>";
+  html += "<div class='product-kind-stock-label'>" + esc(t("product_kind_stock_qty")) + "</div>";
+  html += "<div class='product-kind-stock-value'>" + esc(stockText) + "</div>";
+  html += "</div></div></div></div>";
   return html;
 }
 
@@ -20330,9 +20326,10 @@ function renderPanelStatic() {
   var ecMallPriceBlockHtml = canViewPriceResearchHistory()
     ? "<div class='ec-mall-summary-block'><div class='sales-price-summary-head'><div class='detail-block-title'>" + t("ec_research_detail_title") + "</div></div><div id='ec-mall-price-summary-wrap'><div data-dcats-inline-style='s-d097f1ffa2b6'>" + t("loading") + "</div></div></div>"
     : "";
-  var productKindBlockHtml = "<div class='product-kind-panel detail-inline-kind-panel'><div class='detail-block-title'>" + t("product_kind_section") + "</div><div id='product-kind-wrap'>" + renderProductKindPanelHtml(productKindSummaryForProduct(p)) + "</div></div>";
-  var corePolicyBlockHtml = "<div class='detail-core-policy-panel'><div id='core-return-policy-wrap'>" + renderCoreReturnPolicyHtml(selectedProductKind(), productKindRowsForCurrent(), { compact: true, vertical: true, showTitle: false }) + "</div></div>";
-  var kindCoreRowHtml = "<div class='detail-kind-core-row'>" + productKindBlockHtml + corePolicyBlockHtml + "</div>";
+  var salesTermsHtml = "<div class='detail-sales-terms-grid'><div class='detail-sales-terms-panel'>" +
+    "<div id='product-kind-wrap'>" + renderProductKindPanelHtml(productKindSummaryForProduct(p)) + "</div>" +
+    "<div id='core-return-policy-wrap'>" + renderCoreReturnPolicyHtml(selectedProductKind(), productKindRowsForCurrent(), { compact: true, vertical: true, showTitle: false }) + "</div>" +
+  "</div></div>";
   var kindPriceBlocks = [ecMallPriceBlockHtml].filter(Boolean);
   var kindPriceRowHtml = kindPriceBlocks.length
     ? "<div class='detail-kind-price-row" + (kindPriceBlocks.length > 1 ? "" : " single") + "'>" + kindPriceBlocks.join("") + "</div>"
@@ -20365,7 +20362,7 @@ function renderPanelStatic() {
       "<div class='detail-spec-block detail-spec-after-maker'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div>" +
       "</div>" +
     "</div>" +
-    kindCoreRowHtml +
+    salesTermsHtml +
     mobileActionsHtml +
     kindPriceRowHtml +
     toolHtml +
