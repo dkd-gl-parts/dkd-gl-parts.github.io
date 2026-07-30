@@ -95,6 +95,11 @@ const productionSource = sourceBetween("function renderProductionCorePolicies", 
 if (!productionSource.includes("renderProductionCorePolicies(detail.productVariants)")) {
   throw new Error("manufacturing detail must render core return terms below inventory/core information");
 }
+const productionLayoutSource = sourceBetween("function normalizeProductionDetailLayout", "function scrollProductionDetailIntoViewOnMobile");
+if (!productionLayoutSource.includes('productionKv("状態", productionStatusLabel(row)) +') ||
+    !productionLayoutSource.includes("renderProductionCorePolicies(detail.productVariants)")) {
+  throw new Error("manufacturing layout normalization must preserve core return terms below inventory/core information");
+}
 if (!productionSource.includes("vertical: true")) {
   throw new Error("manufacturing core return terms must use the compact vertical layout");
 }

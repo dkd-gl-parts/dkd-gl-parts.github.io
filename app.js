@@ -3771,7 +3771,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.588";
+var APP_VERSION       = "v1.1.589";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -7381,7 +7381,8 @@ function normalizeProductionDetailLayout(root, row, detail) {
       renderProductionCoreSummary(row, detail) +
       productionKv("コア品番", row.core_part_number) +
       productionKv("パレット", row.core_pallet_summary) +
-      productionKv("状態", productionStatusLabel(row));
+      productionKv("状態", productionStatusLabel(row)) +
+      renderProductionCorePolicies(detail.productVariants);
   }
   if (normalSections[1]) {
     normalSections[1].innerHTML = "<h3>" + esc(t("kikan_section")) + "</h3><div id='production-kikan-wrap'><div class='production-help'>" + esc(t("loading")) + "</div></div>";
