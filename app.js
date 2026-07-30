@@ -3771,7 +3771,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.592";
+var APP_VERSION       = "v1.1.593";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -10557,50 +10557,11 @@ function ecMallSellerProfileUrl(item) {
 }
 
 function ecMallSellerReviewSuffixHtml(item) {
-  if (!ecMallSellerNeedsReview(item)) return "";
-  var id = ecMallSellerIdFromItem(item);
-  return "<span class='ec-seller-review-state'><span class='ec-seller-review-badge'>" + esc(t("ec_seller_review_pending")) + "</span><span class='ec-seller-fixed-id'>" + esc(t("ec_seller_review_fixed_id") + " " + id) + "</span></span>";
+  return "";
 }
 
 function renderEcMallSellerReviewPanel(rows) {
-  var groups = {};
-  (rows || []).forEach(function(row) {
-    if (!ecMallSellerNeedsReview(row)) return;
-    var id = ecMallSellerIdFromItem(row);
-    var surveyedAt = row.surveyed_at || row.searched_at || "";
-    var ts = new Date(surveyedAt || 0).getTime() || 0;
-    var itemUrl = safeHttpsUrl(row.item_url || row.itemUrl, ["auctions.yahoo.co.jp", "yahoo.co.jp"]);
-    if (!groups[id]) {
-      groups[id] = { id: id, name: ecMallObservedMaskedSellerName(row), count: 0, surveyedAt: surveyedAt, ts: ts, itemUrl: itemUrl, row: row };
-    }
-    var group = groups[id];
-    group.count++;
-    if (!group.name) group.name = ecMallObservedMaskedSellerName(row);
-    if (ts > group.ts) {
-      group.surveyedAt = surveyedAt;
-      group.ts = ts;
-      group.itemUrl = itemUrl;
-      group.row = row;
-    }
-  });
-  var pending = Object.keys(groups).map(function(id) { return groups[id]; })
-    .sort(function(a, b) { return b.ts - a.ts; });
-  if (!pending.length) return "";
-  var html = "<section class='ec-seller-review-panel' aria-label='" + esc(t("ec_seller_review_title")) + "'>";
-  html += "<div class='ec-seller-review-head'><div class='ec-seller-review-title'>" + esc(t("ec_seller_review_title")) + "</div><span class='ec-seller-review-count'>" + pending.length + "</span></div>";
-  html += "<div class='ec-seller-review-list'>";
-  pending.forEach(function(group) {
-    var profileUrl = safeHttpsUrl(ecMallSellerProfileUrl(group.row), ["auctions.yahoo.co.jp"]);
-    html += "<div class='ec-seller-review-row'>";
-    html += "<div class='ec-seller-review-identity'><div class='ec-seller-review-name'>" + esc(group.name || ecMallSellerDisplayName(group.row)) + " <span class='ec-seller-review-badge'>" + esc(t("ec_seller_review_pending")) + "</span></div><div class='ec-seller-fixed-id'>" + esc(t("ec_seller_review_fixed_id") + " " + group.id) + "</div></div>";
-    html += "<div class='ec-seller-review-meta'><span>" + esc(tf("ec_seller_review_occurrences", { n: group.count })) + "</span><span>" + esc(t("ec_seller_review_last_seen") + " " + formatDateTime(group.surveyedAt)) + "</span></div>";
-    html += "<div class='ec-seller-review-actions'>";
-    if (profileUrl) html += "<a href='" + esc(profileUrl) + "' target='_blank' rel='noopener'>" + esc(t("ec_seller_review_seller_page")) + "</a>";
-    if (group.itemUrl) html += "<a href='" + esc(group.itemUrl) + "' target='_blank' rel='noopener'>" + esc(t("ec_seller_review_item_page")) + "</a>";
-    html += "</div></div>";
-  });
-  html += "</div></section>";
-  return html;
+  return "";
 }
 
 function ecMallItemRuleText(item) {
@@ -11656,7 +11617,7 @@ function renderEcMallPriceList(rows) {
     html += "</tr>";
   });
   html += "</table>";
-  list.innerHTML = renderEcMallSellerReviewPanel(rows) + html;
+  list.innerHTML = html;
   bindEcPriceHistoryButtons();
 }
 
@@ -14996,14 +14957,9 @@ function renderManufacturingCostSummary(rows) {
     "</div>";
 }
 
-function renderManufacturingCostComponentDetails(row) {
+function renderManufacturingCostComponentDetailBody(row) {
   if (!row.components.length) return "";
-  var summaryText = tf("manufacturing_cost_component_detail_summary", {
-    n: row.componentCount || row.components.length,
-    amount: manufacturingCostYen(row.partsCost)
-  });
-  var html = "<details class='manufacturing-cost-details'><summary>" + esc(summaryText) + "</summary>";
-  html += "<div class='manufacturing-cost-detail-badges'>";
+  var html = "<div class='manufacturing-cost-detail-badges'>";
   html += "<span class='manufacturing-cost-detail-badge'>" + esc(tf("manufacturing_cost_component_count", { n: row.componentCount || row.components.length })) + "</span>";
   html += "<span class='manufacturing-cost-detail-badge total'>" + esc(t("manufacturing_cost_summary_parts")) + " " + esc(manufacturingCostYen(row.partsCost)) + "</span>";
   if (row.missingUnitCount) html += "<span class='manufacturing-cost-detail-badge warn'>" + esc(tf("manufacturing_cost_missing_unit", { n: row.missingUnitCount })) + "</span>";
@@ -15034,8 +14990,41 @@ function renderManufacturingCostComponentDetails(row) {
     html += "<div class='manufacturing-cost-component-cell manufacturing-cost-component-subtotal'><b>" + esc(manufacturingCostYen(calc.amount)) + "</b></div>";
     html += "</div>";
   });
-  html += "</div></details>";
+  html += "</div>";
   return html;
+}
+
+function renderManufacturingCostComponentDetails(row, rowIndex) {
+  if (!row.components.length) return "";
+  var summaryText = tf("manufacturing_cost_component_detail_summary", {
+    n: row.componentCount || row.components.length,
+    amount: manufacturingCostYen(row.partsCost)
+  });
+  return "<details class='manufacturing-cost-details' data-manufacturing-cost-detail-index='" + esc(String(rowIndex)) + "'>" +
+    "<summary>" + esc(summaryText) + "</summary>" +
+    "<div class='manufacturing-cost-detail-lazy'><div class='manufacturing-cost-detail-loading'>" + esc(t("loading")) + "</div></div>" +
+    "</details>";
+}
+
+function populateManufacturingCostComponentDetails(detailEl) {
+  if (!detailEl || !detailEl.open || detailEl.dataset.loaded === "1") return;
+  var rowIndex = parseInt(detailEl.dataset.manufacturingCostDetailIndex || "", 10);
+  var row = !isNaN(rowIndex) ? manufacturingCostRows[rowIndex] : null;
+  var body = detailEl.querySelector(".manufacturing-cost-detail-lazy");
+  if (!body || !row) return;
+  body.innerHTML = renderManufacturingCostComponentDetailBody(row);
+  detailEl.dataset.loaded = "1";
+}
+
+function bindManufacturingCostComponentDetailToggles() {
+  var list = document.getElementById("manufacturing-cost-list");
+  if (!list) return;
+  list.querySelectorAll(".manufacturing-cost-details[data-manufacturing-cost-detail-index]").forEach(function(detailEl) {
+    detailEl.addEventListener("toggle", function() {
+      populateManufacturingCostComponentDetails(detailEl);
+    });
+    populateManufacturingCostComponentDetails(detailEl);
+  });
 }
 
 function setManufacturingCostTargetDeleteStatus(message, isError) {
@@ -15145,7 +15134,7 @@ function renderManufacturingCostRows() {
   }
   var html = "<div class='manufacturing-cost-table-wrap'><table class='mgmt-table manufacturing-cost-table'>";
   html += "<tr><th>" + esc(t("manufacturing_cost_product")) + "</th><th>" + esc(t("manufacturing_cost_components")) + "</th><th>" + esc(t("manufacturing_cost_parts_cost")) + "</th><th>" + esc(t("manufacturing_cost_core_cost_short")) + "</th><th>" + esc(t("manufacturing_cost_labor_cost")) + "</th><th>" + esc(t("manufacturing_cost_total")) + "</th><th>" + esc(t("manufacturing_cost_notes")) + "</th></tr>";
-  manufacturingCostRows.forEach(function(row) {
+  manufacturingCostRows.forEach(function(row, rowIndex) {
     var p = row.product || {};
     var notes = [];
     if (!row.componentCount) notes.push(t("manufacturing_cost_no_components"));
@@ -15160,9 +15149,18 @@ function renderManufacturingCostRows() {
         : row.coreCostCategorySpecific
           ? tf("manufacturing_cost_core_category_note", { category: manufacturingCostCategoryLabel(row.coreCostCategory) })
           : t("manufacturing_cost_core_default_note");
-    var detailHtml = renderManufacturingCostComponentDetails(row);
+    var detailHtml = renderManufacturingCostComponentDetails(row, rowIndex);
+    var productFacts = [
+      [t("f_mfr_pn"), p.manufacturer_part_number],
+      [t("f_genuine_pn"), p.genuine_part_number || p.genuine_part_number_2],
+      [t("f_manufacturer"), p.manufacturer],
+      ["DKD", row.productId]
+    ].filter(function(item) { return item[1] !== null && item[1] !== undefined && item[1] !== ""; }).map(function(item) {
+      return "<span><b>" + esc(item[0]) + "</b> " + esc(item[1]) + "</span>";
+    }).join("");
+    var productSub = [p.genuine_part_number_2, tCat(p.category_code || p.category)].filter(Boolean).join(" / ");
     html += "<tr class='manufacturing-cost-main-row'>";
-    html += "<td><div class='manufacturing-cost-product-main'>" + esc(manufacturingCostProductTitle(p)) + "</div><div class='manufacturing-cost-product-sub'>" + esc([p.manufacturer_part_number, p.genuine_part_number_2, p.manufacturer, tCat(p.category_code || p.category), "DKD " + (row.productId || "-")].filter(Boolean).join(" / ")) + "</div></td>";
+    html += "<td><div class='manufacturing-cost-product-main'>" + esc(manufacturingCostProductTitle(p)) + "</div>" + (productFacts ? "<div class='manufacturing-cost-product-facts'>" + productFacts + "</div>" : "") + "<div class='manufacturing-cost-product-sub'>" + esc(productSub) + "</div></td>";
     html += "<td><div class='manufacturing-cost-money'>" + esc(String(row.componentCount || 0)) + "</div></td>";
     html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.partsCost)) + "</div></td>";
     html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.coreCost)) + "</div><div class='manufacturing-cost-note'>" + esc(coreNote) + "</div></td>";
@@ -15174,6 +15172,7 @@ function renderManufacturingCostRows() {
   });
   html += "</table></div>";
   list.innerHTML = html;
+  bindManufacturingCostComponentDetailToggles();
 }
 
 function manufacturingCostExportFileName() {
