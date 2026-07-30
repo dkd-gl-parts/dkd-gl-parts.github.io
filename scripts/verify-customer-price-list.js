@@ -34,6 +34,7 @@ expect(!app.includes("esc(price.basis_note"), "internal price-basis notes must n
 expect(!app.includes("<th>大光品番</th>"), "Daiko part numbers must not be printed on customer price lists");
 expect(!app.includes("<span>得意先コード</span>"), "customer codes must not be printed on customer price lists");
 expect(!app.includes("<span>価格ランク</span>"), "price ranks must not be printed on customer price lists");
+expect(!app.includes("<span>掲載件数</span>"), "item counts must not be printed on customer price lists");
 expect(!app.includes("<h1>販売価格表</h1><p>Daiko Catalog &amp; Search System</p>"), "the system subtitle must not be printed on customer price lists");
 expect(/@page\s*{[^}]*size:\s*A4\s+portrait/i.test(css), "customer price list must use A4 portrait printing");
 expect(css.includes(".price-list thead { display: table-header-group; }"), "price list headers must repeat on printed pages");

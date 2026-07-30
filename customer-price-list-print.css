@@ -8,7 +8,7 @@ body { margin: 0; color: #17231f; background: #f3f5f4; font-family: Arial, "Yu G
 .document-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8mm; border-bottom: 3px solid #287356; padding-bottom: 4mm; }
 .document-head h1 { margin: 0; font-size: 20pt; letter-spacing: 0; }
 .issue-date { flex: 0 0 auto; color: #475467; font-size: 8.5pt; text-align: right; }
-.customer-summary { display: grid; grid-template-columns: minmax(45mm, 1fr) 28mm; margin: 4mm 0 2mm; border-top: 1px solid #b7c2bd; border-left: 1px solid #b7c2bd; }
+.customer-summary { display: block; margin: 4mm 0 2mm; border-top: 1px solid #b7c2bd; border-left: 1px solid #b7c2bd; }
 .customer-summary div { min-width: 0; border-right: 1px solid #b7c2bd; border-bottom: 1px solid #b7c2bd; padding: 2.2mm 2.5mm; }
 .customer-summary span { display: block; color: #66746e; font-size: 7pt; font-weight: 800; }
 .customer-summary strong { display: block; margin-top: 1mm; overflow-wrap: anywhere; font-size: 9pt; }
