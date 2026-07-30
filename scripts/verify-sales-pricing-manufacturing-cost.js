@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const vm = require("vm");
 
 const root = path.resolve(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
@@ -40,6 +41,24 @@ const fetchSource = sourceBetween("async function fetchSalesPricingManufacturing
 ].forEach((fragment) => {
   if (!fetchSource.includes(fragment)) throw new Error(`manufacturing cost lookup is missing: ${fragment}`);
 });
+
+const totalSource = sourceBetween("function parsePriceNumber", "async function fetchSalesPricingManufacturingCostMap");
+const totalSandbox = {};
+vm.runInNewContext(`${totalSource}
+result = salesPricingManufacturingCostTotal({
+  total_cost_jpy_snapshot: 2280,
+  parts_cost_jpy_snapshot: 780,
+  core_cost_jpy_snapshot: 1500,
+  labor_cost_jpy_snapshot: 0,
+  selling_expense_jpy_snapshot: 510
+});
+legacyResult = salesPricingManufacturingCostTotal({ total_cost_jpy_snapshot: 2280 });`, totalSandbox);
+if (totalSandbox.result !== 2790) {
+  throw new Error("sales pricing must display the sum of parts, core, labor, and selling expense");
+}
+if (totalSandbox.legacyResult !== 2280) {
+  throw new Error("sales pricing must retain the saved total when legacy breakdown data is incomplete");
+}
 
 const openSource = sourceBetween("async function openSalesPricingForCurrent", "async function saveSalesPricing");
 if (!openSource.includes("await loadSalesPricingCurrentManufacturingCost()")) {

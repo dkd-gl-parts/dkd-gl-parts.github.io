@@ -946,7 +946,7 @@ var TRANSLATIONS = {
     sales_dks_reference_loading: "DKS参考価格を確認中...",
     sales_dks_reference_none: "DKS価格の参考データなし",
     sales_dks_reference_line: "DKS価格 {dks} - 1,000 = 参考 {ref}",
-    sales_manufacturing_cost: "製造原価",
+    sales_manufacturing_cost: "製造原価合計",
     sales_manufacturing_cost_loading: "製造原価を確認中...",
     sales_manufacturing_cost_none: "製造原価未設定",
     sales_tax_type: "税区分",
@@ -2233,7 +2233,7 @@ var TRANSLATIONS = {
     sales_dks_reference_loading: "Checking DKS reference price...",
     sales_dks_reference_none: "No DKS reference price data",
     sales_dks_reference_line: "DKS price {dks} - 1,000 = reference {ref}",
-    sales_manufacturing_cost: "Manufacturing Cost",
+    sales_manufacturing_cost: "Total Manufacturing Cost",
     sales_manufacturing_cost_loading: "Checking manufacturing cost...",
     sales_manufacturing_cost_none: "Manufacturing cost not set",
     sales_tax_type: "Tax Type",
@@ -3513,7 +3513,7 @@ var TRANSLATIONS = {
     sales_dks_reference_loading: "正在确认DKS参考价格...",
     sales_dks_reference_none: "无DKS参考价格数据",
     sales_dks_reference_line: "DKS价格 {dks} - 1,000 = 参考 {ref}",
-    sales_manufacturing_cost: "制造成本",
+    sales_manufacturing_cost: "制造成本合计",
     sales_manufacturing_cost_loading: "正在确认制造成本...",
     sales_manufacturing_cost_none: "未设置制造成本",
     sales_tax_type: "税区分",
@@ -3969,7 +3969,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.599";
+var APP_VERSION       = "v1.1.600";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -27864,6 +27864,20 @@ function parsePriceNumber(value) {
   return isNaN(n) ? null : n;
 }
 
+function salesPricingManufacturingCostTotal(item) {
+  item = item || {};
+  var breakdown = [
+    item.parts_cost_jpy_snapshot,
+    item.core_cost_jpy_snapshot,
+    item.labor_cost_jpy_snapshot,
+    item.selling_expense_jpy_snapshot
+  ].map(parsePriceNumber);
+  if (breakdown.every(function(value) { return value !== null; })) {
+    return breakdown.reduce(function(total, value) { return total + value; }, 0);
+  }
+  return parsePriceNumber(item.total_cost_jpy_snapshot);
+}
+
 async function fetchSalesPricingManufacturingCostMap(ids, productKind) {
   var out = {};
   if (!canViewManufacturingCostMgmt()) return out;
@@ -27901,7 +27915,7 @@ async function fetchSalesPricingManufacturingCostMap(ids, productKind) {
     var list = listMap[String(item.list_id || "")];
     if (!list) return;
     var key = String(item.dkd_shohin_id || "");
-    var totalCost = parsePriceNumber(item.total_cost_jpy_snapshot);
+    var totalCost = salesPricingManufacturingCostTotal(item);
     var updatedAt = list.updated_at || item.created_at || "";
     var next = {
       totalCost: totalCost,
