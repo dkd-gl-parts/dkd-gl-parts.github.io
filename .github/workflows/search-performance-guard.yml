@@ -18,6 +18,7 @@ on:
       - "scripts/verify-manufacturing-cost-candidate-status.js"
       - "scripts/verify-manufacturing-cost-snapshot-status.js"
       - "scripts/verify-manufacturing-cost-target-removal.js"
+      - "scripts/verify-sales-pricing-manufacturing-cost.js"
       - "scripts/verify-core-return-policy.js"
       - ".github/workflows/search-performance-guard.yml"
   pull_request:
@@ -37,6 +38,7 @@ on:
       - "scripts/verify-manufacturing-cost-candidate-status.js"
       - "scripts/verify-manufacturing-cost-snapshot-status.js"
       - "scripts/verify-manufacturing-cost-target-removal.js"
+      - "scripts/verify-sales-pricing-manufacturing-cost.js"
       - "scripts/verify-core-return-policy.js"
       - ".github/workflows/search-performance-guard.yml"
   workflow_dispatch:
@@ -77,5 +79,7 @@ jobs:
         run: node scripts/verify-manufacturing-cost-snapshot-status.js
       - name: Verify manufacturing cost target removal
         run: node scripts/verify-manufacturing-cost-target-removal.js
+      - name: Verify sales pricing manufacturing cost
+        run: node scripts/verify-sales-pricing-manufacturing-cost.js
       - name: Verify core return policy
         run: node scripts/verify-core-return-policy.js

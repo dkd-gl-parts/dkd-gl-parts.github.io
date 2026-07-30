@@ -880,6 +880,9 @@ var TRANSLATIONS = {
     sales_dks_reference_loading: "DKS参考価格を確認中...",
     sales_dks_reference_none: "DKS価格の参考データなし",
     sales_dks_reference_line: "DKS価格 {dks} - 1,000 = 参考 {ref}",
+    sales_manufacturing_cost: "製造原価",
+    sales_manufacturing_cost_loading: "製造原価を確認中...",
+    sales_manufacturing_cost_none: "製造原価未設定",
     sales_tax_type: "税区分",
     sales_tax_excluded: "税抜",
     sales_tax_included: "税込",
@@ -2098,6 +2101,9 @@ var TRANSLATIONS = {
     sales_dks_reference_loading: "Checking DKS reference price...",
     sales_dks_reference_none: "No DKS reference price data",
     sales_dks_reference_line: "DKS price {dks} - 1,000 = reference {ref}",
+    sales_manufacturing_cost: "Manufacturing Cost",
+    sales_manufacturing_cost_loading: "Checking manufacturing cost...",
+    sales_manufacturing_cost_none: "Manufacturing cost not set",
     sales_tax_type: "Tax Type",
     sales_tax_excluded: "Tax excluded",
     sales_tax_included: "Tax included",
@@ -3309,6 +3315,9 @@ var TRANSLATIONS = {
     sales_dks_reference_loading: "正在确认DKS参考价格...",
     sales_dks_reference_none: "无DKS参考价格数据",
     sales_dks_reference_line: "DKS价格 {dks} - 1,000 = 参考 {ref}",
+    sales_manufacturing_cost: "制造成本",
+    sales_manufacturing_cost_loading: "正在确认制造成本...",
+    sales_manufacturing_cost_none: "未设置制造成本",
     sales_tax_type: "税区分",
     sales_tax_excluded: "不含税",
     sales_tax_included: "含税",
@@ -3762,7 +3771,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.587";
+var APP_VERSION       = "v1.1.588";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -3938,10 +3947,12 @@ var currentSalesPricingDkdId = null;
 var currentSalesPricingProductKind = "rebuilt";
 var currentSalesPricingRow = null;
 var currentSalesPricingDksReference = null;
+var currentSalesPricingManufacturingCost = null;
 var salesPricingRanks = [];
 var salesPricingCustomerCounts = {};
 var salesPricingMgmtRows = [];
 var salesPricingMgmtPriceMap = {};
+var salesPricingMgmtManufacturingCostMap = {};
 var purchaseMgmtRows = [];
 var purchaseMgmtSummary = { total: 0, linked: 0, unlinked: 0 };
 var purchaseMgmtProductMap = {};
@@ -26860,6 +26871,126 @@ function parsePriceNumber(value) {
   return isNaN(n) ? null : n;
 }
 
+async function fetchSalesPricingManufacturingCostMap(ids, productKind) {
+  var out = {};
+  if (!canViewManufacturingCostMgmt()) return out;
+  var targetKind = normalizeProductKind(productKind || "rebuilt");
+  var dkdIds = Array.from(new Set((ids || []).map(function(id) {
+    var n = parseInt(id, 10);
+    return isNaN(n) ? null : n;
+  }).filter(function(id) { return id !== null; })));
+  if (!dkdIds.length) return out;
+  var itemR = await sb.from("manufacturing_cost_list_items")
+    .select("id,list_id,dkd_shohin_id,total_cost_jpy_snapshot,parts_cost_jpy_snapshot,core_cost_jpy_snapshot,labor_cost_jpy_snapshot,component_count_snapshot,created_at")
+    .in("dkd_shohin_id", dkdIds)
+    .limit(5000);
+  if (itemR.error) {
+    console.warn("sales pricing manufacturing cost item lookup failed", itemR.error);
+    return out;
+  }
+  var items = itemR.data || [];
+  var listIds = Array.from(new Set(items.map(function(row) { return row.list_id; }).filter(Boolean)));
+  if (!listIds.length) return out;
+  var listR = await sb.from("manufacturing_cost_lists")
+    .select("id,list_name,product_kind,is_active,updated_at")
+    .in("id", listIds)
+    .eq("product_kind", targetKind)
+    .eq("is_active", true);
+  if (listR.error) {
+    console.warn("sales pricing manufacturing cost list lookup failed", listR.error);
+    return out;
+  }
+  var listMap = {};
+  (listR.data || []).forEach(function(row) {
+    listMap[String(row.id)] = row;
+  });
+  items.forEach(function(item) {
+    var list = listMap[String(item.list_id || "")];
+    if (!list) return;
+    var key = String(item.dkd_shohin_id || "");
+    var totalCost = parsePriceNumber(item.total_cost_jpy_snapshot);
+    var updatedAt = list.updated_at || item.created_at || "";
+    var next = {
+      totalCost: totalCost,
+      partsCost: parsePriceNumber(item.parts_cost_jpy_snapshot),
+      coreCost: parsePriceNumber(item.core_cost_jpy_snapshot),
+      laborCost: parsePriceNumber(item.labor_cost_jpy_snapshot),
+      componentCount: parseInt(item.component_count_snapshot || 0, 10) || 0,
+      listName: list.list_name || "",
+      productKind: list.product_kind || targetKind,
+      updatedAt: updatedAt
+    };
+    var prev = out[key];
+    var nextTime = Date.parse(updatedAt || "") || 0;
+    var prevTime = prev ? (Date.parse(prev.updatedAt || "") || 0) : -1;
+    if (!prev || nextTime >= prevTime) out[key] = next;
+  });
+  return out;
+}
+
+async function fetchSalesPricingManufacturingCost(dkdId, productKind) {
+  var map = await fetchSalesPricingManufacturingCostMap([dkdId], productKind);
+  return map[String(dkdId || "")] || null;
+}
+
+function salesPricingManufacturingCostText(cost) {
+  return cost && cost.totalCost !== null && cost.totalCost !== undefined
+    ? "JPY " + formatYen(cost.totalCost)
+    : "-";
+}
+
+function salesPricingManufacturingCostMeta(cost) {
+  if (!cost) return t("sales_manufacturing_cost_none");
+  return [
+    cost.listName || "",
+    cost.updatedAt ? String(cost.updatedAt).slice(0, 10) : ""
+  ].filter(Boolean).join(" / ");
+}
+
+function renderSalesPricingManufacturingCostMini() {
+  var el = document.getElementById("sales-pricing-manufacturing-cost");
+  if (!el) return;
+  if (!canViewManufacturingCostMgmt()) {
+    el.innerHTML = "";
+    setCspStyle(el, "display", "none");
+    return;
+  }
+  setCspStyle(el, "display", "");
+  var cost = currentSalesPricingManufacturingCost;
+  if (cost && cost.loading) {
+    el.innerHTML = esc(t("sales_manufacturing_cost_loading"));
+    return;
+  }
+  el.innerHTML =
+    "<span>" + esc(t("sales_manufacturing_cost")) + "</span>" +
+    "<strong>" + esc(salesPricingManufacturingCostText(cost)) + "</strong>" +
+    "<small>" + esc(salesPricingManufacturingCostMeta(cost)) + "</small>";
+}
+
+function salesPricingManufacturingCostCellHtml(cost) {
+  return "<div class='sales-pricing-manufacturing-cost-cell'>" +
+    "<div class='price-value'>" + esc(salesPricingManufacturingCostText(cost)) + "</div>" +
+    "<div class='mgmt-sub'>" + esc(salesPricingManufacturingCostMeta(cost)) + "</div>" +
+  "</div>";
+}
+
+async function loadSalesPricingCurrentManufacturingCost() {
+  if (!canViewManufacturingCostMgmt()) {
+    currentSalesPricingManufacturingCost = null;
+    renderSalesPricingManufacturingCostMini();
+    return;
+  }
+  if (!currentSalesPricingDkdId) {
+    currentSalesPricingManufacturingCost = null;
+    renderSalesPricingManufacturingCostMini();
+    return;
+  }
+  currentSalesPricingManufacturingCost = { loading: true };
+  renderSalesPricingManufacturingCostMini();
+  currentSalesPricingManufacturingCost = await fetchSalesPricingManufacturingCost(currentSalesPricingDkdId, salesPricingCurrentProductKind());
+  renderSalesPricingManufacturingCostMini();
+}
+
 function renderSalesBasePriceGuidance() {
   var refEl = document.getElementById("sales-base-reference");
   if (!refEl) return;
@@ -27473,6 +27604,8 @@ function closeSalesPricingOverlay() {
   var overlay = document.getElementById("sales-pricing-overlay");
   if (overlay) overlay.classList.remove("show");
   currentSalesPricingDksReference = null;
+  currentSalesPricingManufacturingCost = null;
+  renderSalesPricingManufacturingCostMini();
 }
 
 function salesPricingProductKindOptionsForCurrent() {
@@ -27545,7 +27678,9 @@ async function openSalesPricingForCurrent() {
   document.getElementById("sales-pricing-product").textContent = t("loading");
   document.getElementById("sales-rank-preview").innerHTML = "<div class='component-empty'>" + esc(t("loading")) + "</div>";
   currentSalesPricingDksReference = { loading: true };
+  currentSalesPricingManufacturingCost = null;
   renderSalesBasePriceGuidance();
+  renderSalesPricingManufacturingCostMini();
   var saveBtn = document.getElementById("btn-sales-pricing-save");
   if (saveBtn) setCspStyle(saveBtn, "display", canEditBasePrice() ? "" : "none");
   var rankSaveBtn = document.getElementById("btn-sales-rank-save");
@@ -27577,6 +27712,7 @@ async function openSalesPricingForCurrent() {
     salesPricingRanks = ranksR.data || [];
     salesPricingCustomerCounts = salesPricingRankCountMap(customersR.data || []);
     await loadSalesPricingCurrentBaseRow();
+    await loadSalesPricingCurrentManufacturingCost();
     var kindSelect = document.getElementById("sales-product-kind");
     if (kindSelect) {
       kindSelect.onchange = async function() {
@@ -27585,6 +27721,7 @@ async function openSalesPricingForCurrent() {
         try {
           currentSalesPricingProductKind = salesPricingCurrentProductKind();
           await loadSalesPricingCurrentBaseRow();
+          await loadSalesPricingCurrentManufacturingCost();
         } catch (e) {
           console.warn("sales pricing kind switch failed", e);
           if (err) err.textContent = (e && e.message) || String(e);
@@ -27597,7 +27734,9 @@ async function openSalesPricingForCurrent() {
   } catch (e) {
     console.warn("open sales pricing failed", e);
     currentSalesPricingDksReference = null;
+    currentSalesPricingManufacturingCost = null;
     renderSalesBasePriceGuidance();
+    renderSalesPricingManufacturingCostMini();
     if (errEl) errEl.textContent = (e && e.message) || String(e);
   }
 }
@@ -27682,6 +27821,7 @@ async function loadSalesPricingMgmt() {
   if (!q) {
     salesPricingMgmtRows = [];
     salesPricingMgmtPriceMap = {};
+    salesPricingMgmtManufacturingCostMap = {};
     if (countEl) countEl.textContent = "";
     if (list) list.innerHTML = "<div class='empty'>" + esc(t("sales_pricing_mgmt_hint")) + "</div>";
     return;
@@ -27710,6 +27850,7 @@ async function loadSalesPricingMgmt() {
   salesPricingMgmtRows = filterVisibleProducts(normalizeCoreProductFastRows(rows)).slice(0, 100);
   var ids = salesPricingMgmtRows.map(function(row){ return row.dkd_shohin_id; }).filter(Boolean);
   salesPricingMgmtPriceMap = {};
+  salesPricingMgmtManufacturingCostMap = {};
   if (ids.length) {
     var pr = await sb.from("product_base_prices")
       .select("id,dkd_shohin_id,base_price_jpy,price_basis,basis_note,effective_start,is_current")
@@ -27719,6 +27860,7 @@ async function loadSalesPricingMgmt() {
     (pr.data || []).forEach(function(row) {
       salesPricingMgmtPriceMap[String(row.dkd_shohin_id)] = row;
     });
+    salesPricingMgmtManufacturingCostMap = await fetchSalesPricingManufacturingCostMap(ids, "rebuilt");
   }
   renderSalesPricingMgmt();
 }
@@ -27733,11 +27875,14 @@ function renderSalesPricingMgmt() {
     return;
   }
   var showBasePrice = canViewBasePrice();
+  var showManufacturingCost = canViewManufacturingCostMgmt();
   var html = "<table class='mgmt-table'><tr><th>DKD</th><th>" + esc(t("f_genuine_pn")) + "</th><th>" + esc(t("f_mfr_pn")) + "</th><th>" + esc(t("f_manufacturer")) + "</th><th>" + esc(t("sales_price_section")) + "</th>";
+  if (showManufacturingCost) html += "<th>" + esc(t("sales_manufacturing_cost")) + "</th>";
   if (showBasePrice) html += "<th>" + esc(t("sales_base_price")) + "</th>";
   html += "<th></th></tr>";
   salesPricingMgmtRows.forEach(function(row) {
     var price = salesPricingMgmtPriceMap[String(row.dkd_shohin_id)] || null;
+    var manufacturingCost = salesPricingMgmtManufacturingCostMap[String(row.dkd_shohin_id)] || null;
     var priceText = price ? ("JPY " + formatYen(price.base_price_jpy)) : "-";
     html += "<tr>";
     html += "<td><div class='mgmt-pn'>" + esc(String(row.dkd_shohin_id || "-")) + "</div><div class='mgmt-sub'>" + esc(tCat(row.category_code || row.category) || "") + "</div></td>";
@@ -27745,6 +27890,7 @@ function renderSalesPricingMgmt() {
     html += "<td><div class='mgmt-pn'>" + esc(row.manufacturer_part_number || "-") + "</div></td>";
     html += "<td><div class='mgmt-sub'>" + esc(row.manufacturer || "-") + "</div></td>";
     html += "<td><div class='price-value' data-dcats-inline-style='s-1024138906a0'>" + esc(priceText) + "</div></td>";
+    if (showManufacturingCost) html += "<td>" + salesPricingManufacturingCostCellHtml(manufacturingCost) + "</td>";
     if (showBasePrice) html += "<td><div class='price-value'>" + esc(priceText) + "</div><div class='mgmt-sub'>" + esc(price ? ([price.price_basis, price.effective_start].filter(Boolean).join(" / ")) : "") + "</div></td>";
     html += "<td><button class='btn-sm-edit' data-sales-price-dkd='" + esc(String(row.dkd_shohin_id || "")) + "'>" + esc(t("sales_pricing_title")) + "</button></td>";
     html += "</tr>";
