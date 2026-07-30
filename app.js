@@ -3771,7 +3771,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.591";
+var APP_VERSION       = "v1.1.592";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -7954,7 +7954,7 @@ function renderProductionCorePolicies(rows) {
   return "<div class='production-core-policy-list'>" + kinds.map(function(kind) {
     return "<div class='production-core-policy-row " + productKindClass(kind) + "'>" +
       "<div class='production-core-policy-kind'>" + esc(productKindLabel(kind)) + "</div>" +
-      renderCoreReturnPolicyHtml(kind, rows, { compact: true, vertical: true, showTitle: false }) +
+      renderCoreReturnPolicyHtml(kind, rows, { compact: true, vertical: true, showTitle: false, showCharge: false }) +
     "</div>";
   }).join("") + "</div>";
 }
@@ -18295,11 +18295,14 @@ function renderCoreReturnPolicyHtml(kind, rows, options) {
   var policy = coreReturnPolicyForKind(kind, rows);
   var stateClass = policy.required ? "required" : "not-required";
   var stateText = policy.required ? t("core_return_required") : t("core_return_not_required");
+  var chargeHtml = options.showCharge === false
+    ? ""
+    : "<div class='core-return-policy-item'><span>" + esc(t("core_charge_short")) + "</span><strong>" + esc(coreReturnChargeText(policy)) + "</strong></div>";
   return "<div class='core-return-policy-panel" + (options.compact ? " compact" : "") + (options.vertical ? " vertical" : "") + "'>" +
     (options.showTitle === false ? "" : "<div class='detail-block-title'>" + esc(t("core_return_policy")) + "</div>") +
     "<div class='core-return-policy-grid'>" +
       "<div class='core-return-policy-item'><span>" + esc(t("core_return_required_label")) + "</span><strong class='core-return-badge " + stateClass + "'>" + esc(stateText) + "</strong></div>" +
-      "<div class='core-return-policy-item'><span>" + esc(t("core_charge_short")) + "</span><strong>" + esc(coreReturnChargeText(policy)) + "</strong></div>" +
+      chargeHtml +
     "</div></div>";
 }
 

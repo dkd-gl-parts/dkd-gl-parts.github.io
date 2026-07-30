@@ -21,12 +21,20 @@ const policySandbox = {
   t(key) { return key; },
   esc(value) { return String(value); }
 };
-vm.runInNewContext(`${policySource}; result = { requiredDefault: coreReturnRequiredDefault, policy: coreReturnPolicyForKind };`, policySandbox);
+vm.runInNewContext(`${policySource}; result = { requiredDefault: coreReturnRequiredDefault, policy: coreReturnPolicyForKind, render: renderCoreReturnPolicyHtml };`, policySandbox);
 
 if (!policySandbox.result.requiredDefault("rebuilt")) throw new Error("rebuilt must require core return by default");
 if (policySandbox.result.requiredDefault("aftermarket_new")) throw new Error("aftermarket new must not require core return by default");
 if (policySandbox.result.policy("rebuilt", []).required !== true) throw new Error("missing rebuilt policy must keep the rebuilt default");
 if (policySandbox.result.policy("aftermarket_new", []).required !== false) throw new Error("missing aftermarket policy must keep the no-return default");
+const productionPolicyHtml = policySandbox.result.render("rebuilt", [], { compact: true, vertical: true, showTitle: false, showCharge: false });
+if (!productionPolicyHtml.includes("core_return_required_label") || productionPolicyHtml.includes("core_charge_short")) {
+  throw new Error("manufacturing core terms must show core return without the core charge");
+}
+const standardPolicyHtml = policySandbox.result.render("rebuilt", [], { compact: true, vertical: true, showTitle: false });
+if (!standardPolicyHtml.includes("core_charge_short")) {
+  throw new Error("core charge must remain visible outside manufacturing detail");
+}
 
 const costSource = sourceBetween("function manufacturingCostCoreCostForProduct", "function manufacturingCostCoreCostForCategory");
 const costSandbox = {
@@ -102,6 +110,9 @@ if (!productionLayoutSource.includes('productionKv("状態", productionStatusLab
 }
 if (!productionSource.includes("vertical: true")) {
   throw new Error("manufacturing core return terms must use the compact vertical layout");
+}
+if (!productionSource.includes("showCharge: false")) {
+  throw new Error("manufacturing detail must hide the core charge and show only core return");
 }
 
 const salesDetailSource = sourceBetween("function renderPanelStatic", "async function loadProductVariantsForCurrent");
