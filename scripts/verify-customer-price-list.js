@@ -24,6 +24,7 @@ function expect(condition, message) {
   "販売価格",
   "メモ",
   "送料・消費税は別途となります。",
+  "在庫販売のため、ご注文前に当社システムで最新の在庫状況をご確認ください。",
   "customerAccessHasUnsavedChanges()",
   "window.open(\"\", \"_blank\")",
   "win.print()",
