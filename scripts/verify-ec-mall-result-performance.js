@@ -94,6 +94,23 @@ const listSource = functionSource("loadRakutenPriceList", "function ecPriceHisto
 if (listSource.includes("raw_payload")) {
   throw new Error("the EC mall result list must not request unused raw payloads");
 }
+if (!source.includes("var EC_PRICE_LIST_RENDER_CHUNK_SIZE =") || !source.includes("var ecPriceListRenderToken =")) {
+  throw new Error("the EC mall result list must keep bounded chunk rendering state");
+}
+if (!listSource.includes("ecPriceListRenderToken += 1")) {
+  throw new Error("new EC mall result list loads must cancel older scheduled chunks");
+}
+const bindHistorySource = functionSource("bindEcPriceHistoryButtons", "function scheduleEcPriceListRenderChunk");
+if (!bindHistorySource.includes("ecPriceHistoryBound")) {
+  throw new Error("EC price history buttons must avoid duplicate listeners during chunked rendering");
+}
+const renderListSource = functionSource("renderEcMallPriceList", "function renderRakutenPriceList");
+if (!renderListSource.includes("++ecPriceListRenderToken") ||
+    !renderListSource.includes("<tbody></tbody>") ||
+    !renderListSource.includes("insertAdjacentHTML(\"beforeend\"") ||
+    !renderListSource.includes("scheduleEcPriceListRenderChunk(renderChunk)")) {
+  throw new Error("the EC mall grouped result table must render incrementally");
+}
 const historySource = functionSource("fetchEcPriceHistoryRowsForGroup", "function buildEcPriceHistorySeries", true);
 if (historySource.includes("raw_payload")) {
   throw new Error("the EC mall history view must not request unused raw payloads");

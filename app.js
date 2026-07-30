@@ -4098,7 +4098,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.601";
+var APP_VERSION       = "v1.1.602";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -4274,6 +4274,8 @@ var ecMallResolvedSellerNames = {};
 var EC_PRICE_LIST_DEFAULT_LIMIT = 500;
 var EC_PRICE_LIST_SEARCH_SCAN_LIMIT = 5000;
 var EC_PRICE_LIST_PAGE_SIZE = 1000;
+var EC_PRICE_LIST_RENDER_CHUNK_SIZE = 40;
+var ecPriceListRenderToken = 0;
 var ecPriceHistoryGroupMap = {};
 var ecPriceHistoryState = null;
 var currentSalesPricingDkdId = null;
@@ -12010,6 +12012,7 @@ async function loadRakutenPriceList() {
   var sellerQ = (document.getElementById("rakuten-list-seller-filter") || {}).value || "";
   sellerQ = normalizeAsciiWidth(sellerQ).trim();
   var hasFilter = !!(q || sellerQ);
+  ecPriceListRenderToken += 1;
   try {
     ecMallFallbackToLegacySurveys = false;
     var r = await fetchEcPriceListRows(
@@ -12407,8 +12410,10 @@ async function openEcPriceHistoryForGroup(group) {
   }
 }
 
-function bindEcPriceHistoryButtons() {
-  document.querySelectorAll("[data-ec-price-history-key]").forEach(function(btn) {
+function bindEcPriceHistoryButtons(root) {
+  (root || document).querySelectorAll("[data-ec-price-history-key]").forEach(function(btn) {
+    if (btn.dataset.ecPriceHistoryBound === "1") return;
+    btn.dataset.ecPriceHistoryBound = "1";
     btn.addEventListener("click", function() {
       var group = ecPriceHistoryGroupMap[this.dataset.ecPriceHistoryKey || ""];
       if (group) openEcPriceHistoryForGroup(group);
@@ -12416,8 +12421,17 @@ function bindEcPriceHistoryButtons() {
   });
 }
 
+function scheduleEcPriceListRenderChunk(callback) {
+  if (typeof requestAnimationFrame === "function") {
+    requestAnimationFrame(callback);
+  } else {
+    setTimeout(callback, 0);
+  }
+}
+
 function renderEcMallPriceList(rows) {
-  ecMallIndexResolvedSellerNames(rows);
+  rows = rows || [];
+  var renderToken = ++ecPriceListRenderToken;
   var countEl = document.getElementById("rakuten-list-count");
   var groups = {};
   ecPriceHistoryGroupMap = {};
@@ -12429,12 +12443,18 @@ function renderEcMallPriceList(rows) {
   });
   var listRows = Object.keys(groups).map(function(key) { return groups[key]; })
     .sort(function(a, b) { return new Date(b.meta.surveyed_at) - new Date(a.meta.surveyed_at); });
-  if (countEl) countEl.textContent = listRows.length + " 検索条件（Best3行 " + rows.length + " 件）";
   var list = document.getElementById("rakuten-list");
+  if (!list) return;
   if (list) list.className = "ec-mall-grouped-list";
   if (!listRows.length) {
+    if (countEl) countEl.textContent = "0 検索条件（Best3行 0 件）";
     list.innerHTML = "<div class='empty'>" + t("rakuten_no_saved_results") + "</div>";
     return;
+  }
+  function countText(rendered) {
+    var text = listRows.length + " 検索条件（Best3行 " + rows.length + " 件）";
+    if (rendered != null && rendered < listRows.length) text += " / 表示中 " + rendered + " 件";
+    return text;
   }
   function bestCell(group, productType) {
     var best = group.rows.filter(function(row) { return row.product_type === productType; })
@@ -12447,9 +12467,7 @@ function renderEcMallPriceList(rows) {
       return "<div class='mgmt-sub' data-dcats-inline-style='s-0d248ae75a53'><strong>#" + esc(row.rank_no) + "</strong> " + sellerHtml + " <span class='ec-provider-badge'>" + esc(ecMallProviderLabel(row.provider_key)) + "</span>" + ecMallSellerReviewSuffixHtml(row) + "<div class='price-value'>" + yen(row.total_price_jpy || row.price_jpy) + "</div></div>";
     }).join("");
   }
-  var html = "<table class='mgmt-table ec-price-result-table ec-mall-grouped-result-table'>";
-  html += "<tr><th>" + t("rakuten_keyword") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("rakuten_condition_used") + " Best3</th><th>" + t("rakuten_condition_rebuilt") + " Best3</th><th>" + t("rakuten_condition_new") + " Best3</th><th>" + t("rakuten_latest") + "</th><th>" + t("ec_price_history") + "</th></tr>";
-  listRows.forEach(function(group, idx) {
+  function rowHtml(group, idx) {
     var r = group.meta;
     var historyKey = "g" + idx;
     ecPriceHistoryGroupMap[historyKey] = group;
@@ -12458,7 +12476,7 @@ function renderEcMallPriceList(rows) {
     var productSub = productId && String(productId) !== String(keyword) ? "DKD商品ID " + productId : "";
     var displayMfr = ecMallDisplayManufacturerPartNumber(r);
     var displayMaker = ecMallDisplayManufacturerName(r);
-    html += "<tr>";
+    var html = "<tr>";
     html += "<td><div class='mgmt-pn'>" + esc(String(keyword)) + "</div><div class='mgmt-sub'>" + esc(productSub) + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(displayMfr || "-") + "</div><div class='mgmt-sub'>" + esc(displayMaker || "") + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(r.genuine_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(r.genuine_part_number_2 || tCat(r.category) || "") + "</div></td>";
@@ -12468,10 +12486,31 @@ function renderEcMallPriceList(rows) {
     html += "<td data-dcats-inline-style='s-eb99a4c193ed'>" + esc(new Date(r.surveyed_at).toLocaleString("ja-JP")) + "</td>";
     html += "<td><button class='btn-sm-edit ec-history-btn' type='button' data-ec-price-history-key='" + esc(historyKey) + "'>" + esc(t("ec_price_history")) + "</button></td>";
     html += "</tr>";
-  });
+    return html;
+  }
+  var html = "<table class='mgmt-table ec-price-result-table ec-mall-grouped-result-table'>";
+  html += "<thead><tr><th>" + t("rakuten_keyword") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("rakuten_condition_used") + " Best3</th><th>" + t("rakuten_condition_rebuilt") + " Best3</th><th>" + t("rakuten_condition_new") + " Best3</th><th>" + t("rakuten_latest") + "</th><th>" + t("ec_price_history") + "</th></tr></thead><tbody></tbody>";
   html += "</table>";
   list.innerHTML = html;
-  bindEcPriceHistoryButtons();
+  if (countEl) countEl.textContent = countText(0);
+  var tbody = list.querySelector("tbody");
+  var rendered = 0;
+  function renderChunk() {
+    if (renderToken !== ecPriceListRenderToken || !tbody || !tbody.parentNode) return;
+    var end = Math.min(rendered + EC_PRICE_LIST_RENDER_CHUNK_SIZE, listRows.length);
+    var chunkHtml = "";
+    for (var i = rendered; i < end; i++) {
+      chunkHtml += rowHtml(listRows[i], i);
+    }
+    if (chunkHtml) {
+      tbody.insertAdjacentHTML("beforeend", chunkHtml);
+      bindEcPriceHistoryButtons(tbody);
+    }
+    rendered = end;
+    if (countEl) countEl.textContent = countText(rendered);
+    if (rendered < listRows.length) scheduleEcPriceListRenderChunk(renderChunk);
+  }
+  renderChunk();
 }
 
 function renderRakutenPriceList(rows) {
