@@ -2255,6 +2255,113 @@
 </div>
 
 <!-- =============================================
+   完品出荷・保証管理
+============================================= -->
+<div id="screen-finished-product-shipping" class="screen">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-finished-product-shipping" data-i18n="btn_back">← メニュー</button>
+      <span class="logo-text" data-i18n="finished_shipping_title">完品出荷・保証管理</span>
+    </div>
+    <div class="page-header-right">
+      <div class="lang-sw" id="lang-sw-finished-product-shipping">
+        <button class="lang-btn" data-lang="ja">日本語</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="zh">中文</button>
+      </div>
+      <span class="header-username" id="finished-product-shipping-username"></span>
+      <span class="role-badge" id="finished-product-shipping-role-badge"></span>
+      <button class="btn-logout" id="btn-logout-finished-product-shipping" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <div class="mgmt-body finished-shipment-body">
+    <div class="finished-shipment-shell">
+      <div class="finished-shipment-left">
+        <section class="finished-label-card">
+          <h3 data-i18n="finished_shipping_scan_title">製造シリアル読取</h3>
+          <div class="finished-label-search-row">
+            <input id="finished-shipment-serial-input" type="search" autocomplete="off" inputmode="text" data-i18n-ph="finished_shipping_scan_ph" placeholder="QRを読取、または MYYYY-NNNNNNN を入力">
+            <button class="btn-primary" id="btn-finished-shipment-add-serial" type="button" data-i18n="finished_shipping_add_serial">追加</button>
+          </div>
+          <div class="finished-label-help" data-i18n="finished_shipping_scan_hint">ラベルのQRを読み取るたびに出荷対象へ追加します。</div>
+          <div class="finished-shipment-message" id="finished-shipment-scan-message" aria-live="polite"></div>
+          <div class="finished-shipment-lookup" id="finished-shipment-lookup" aria-live="polite"></div>
+        </section>
+        <section class="finished-label-card">
+          <div class="finished-label-toolbar">
+            <h3><span data-i18n="finished_shipping_unit_list">出荷対象</span> <span class="finished-shipment-count" id="finished-shipment-unit-count">0</span></h3>
+            <button class="btn-sm-edit production-action-secondary" id="btn-finished-shipment-clear" type="button" data-i18n="btn_clear">クリア</button>
+          </div>
+          <div class="finished-label-table-wrap">
+            <table class="finished-label-table finished-shipment-table">
+              <thead>
+                <tr>
+                  <th data-i18n="finished_label_serial_result">製造シリアル</th>
+                  <th data-i18n="f_gltek_pn">GLTEK品番</th>
+                  <th data-i18n="f_manufacturer">メーカー</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="finished-shipment-unit-body">
+                <tr><td colspan="4" class="empty" data-i18n="finished_shipping_no_units">製造シリアルを読み取ってください。</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+      <div class="finished-shipment-right">
+        <section class="finished-label-card">
+          <h3 data-i18n="finished_shipping_form">出荷登録内容</h3>
+          <div class="finished-label-form-grid">
+            <div class="finished-label-field wide">
+              <label data-i18n="finished_shipping_customer">出荷先得意先 *</label>
+              <select id="finished-shipment-customer"><option value="" data-i18n="loading">読み込み中...</option></select>
+            </div>
+            <div class="finished-label-field">
+              <label data-i18n="finished_shipping_shipped_on">出荷日 *</label>
+              <input id="finished-shipment-shipped-on" type="date">
+            </div>
+            <div class="finished-label-field">
+              <label data-i18n="finished_shipping_warranty_months">保証月数 *</label>
+              <input id="finished-shipment-warranty-months" type="number" min="1" max="120" step="1" value="12">
+            </div>
+            <div class="finished-label-field">
+              <label data-i18n="finished_shipping_order_number">受注・伝票番号</label>
+              <input id="finished-shipment-order-number" type="text" maxlength="120">
+            </div>
+            <div class="finished-label-field">
+              <label data-i18n="finished_shipping_carrier">運送会社</label>
+              <input id="finished-shipment-carrier" type="text" maxlength="120">
+            </div>
+            <div class="finished-label-field wide">
+              <label data-i18n="finished_shipping_tracking">送り状番号</label>
+              <input id="finished-shipment-tracking" type="text" maxlength="160">
+            </div>
+            <div class="finished-label-field full">
+              <label data-i18n="component_note">メモ</label>
+              <textarea id="finished-shipment-note" maxlength="500"></textarea>
+            </div>
+          </div>
+          <div class="finished-shipment-submit-row">
+            <div class="finished-shipment-message" id="finished-shipment-save-message" aria-live="polite"></div>
+            <button class="btn-primary" id="btn-finished-shipment-save" type="button" data-i18n="finished_shipping_register">出荷登録</button>
+          </div>
+        </section>
+        <section class="finished-label-card">
+          <div class="finished-label-toolbar">
+            <h3 data-i18n="finished_shipping_history">出荷履歴</h3>
+            <button class="btn-sm-edit production-action-secondary" id="btn-finished-shipment-reload" type="button" data-i18n="btn_reload">再読込</button>
+          </div>
+          <div class="finished-shipment-history" id="finished-shipment-history">
+            <div class="loading" data-i18n="loading">読み込み中...</div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =============================================
    帳票出力 / 製造ランキング
 ============================================= -->
 <div id="screen-manufacturing-ranking-report" class="screen">
