@@ -94,6 +94,13 @@ const listSource = functionSource("loadRakutenPriceList", "function ecPriceHisto
 if (listSource.includes("raw_payload")) {
   throw new Error("the EC mall result list must not request unused raw payloads");
 }
+const enterListSource = functionSource("enterRakutenPriceList", "function ecPriceListGroupKey", true);
+if (!enterListSource.includes("clearEcMallPriceListInitialState()") || enterListSource.includes("loadRakutenPriceList()")) {
+  throw new Error("opening the EC mall result list must not fetch or render results before the user searches");
+}
+if (!listSource.includes("if (!hasFilter)") || !listSource.includes("clearEcMallPriceListInitialState()")) {
+  throw new Error("blank EC mall result list searches must not fetch every saved result");
+}
 if (!source.includes("var EC_PRICE_LIST_RENDER_CHUNK_SIZE =") || !source.includes("var ecPriceListRenderToken =")) {
   throw new Error("the EC mall result list must keep bounded chunk rendering state");
 }

@@ -4098,7 +4098,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.602";
+var APP_VERSION       = "v1.1.603";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -11832,6 +11832,18 @@ function showMoreRakutenResults() {
   renderRakutenResults(rakutenLastItems, rakutenLastResultKeyword, { preserveLimit: true });
 }
 
+function clearEcMallPriceListInitialState() {
+  ecPriceListRenderToken += 1;
+  ecPriceHistoryGroupMap = {};
+  var countEl = document.getElementById("rakuten-list-count");
+  var list = document.getElementById("rakuten-list");
+  if (countEl) countEl.textContent = "";
+  if (list) {
+    list.className = "ec-mall-grouped-list";
+    list.innerHTML = "";
+  }
+}
+
 async function enterRakutenPriceList() {
   if (!canViewPriceResearchHistory()) { alert(t("err_perm")); return; }
   showScreen("rakuten-price-list");
@@ -11839,7 +11851,7 @@ async function enterRakutenPriceList() {
   if (nameEl && userProfile) nameEl.textContent = userProfile.name || userProfile.email.split("@")[0];
   var manageBtn = document.getElementById("btn-rakuten-list-to-search");
   if (manageBtn) setCspStyle(manageBtn, "display", canUseRakutenResearch() ? "" : "none");
-  await loadRakutenPriceList();
+  clearEcMallPriceListInitialState();
 }
 
 function ecPriceListGroupKey(row) {
@@ -12013,6 +12025,10 @@ async function loadRakutenPriceList() {
   sellerQ = normalizeAsciiWidth(sellerQ).trim();
   var hasFilter = !!(q || sellerQ);
   ecPriceListRenderToken += 1;
+  if (!hasFilter) {
+    clearEcMallPriceListInitialState();
+    return;
+  }
   try {
     ecMallFallbackToLegacySurveys = false;
     var r = await fetchEcPriceListRows(
