@@ -16603,6 +16603,157 @@ function closeGltekProductAddMode() {
   setGltekProductAddPanel();
 }
 
+function gltekPartNumberPatchFromIssueResult(result) {
+  result = result || {};
+  if (!result.gltek_part_number) return null;
+  return {
+    gltek_part_number: result.gltek_part_number || null,
+    gltek_base_manufacturer_code: result.base_manufacturer_code || result.gltek_base_manufacturer_code || null,
+    gltek_category_number_code: result.category_number_code || result.gltek_category_number_code || null,
+    gltek_serial_code: result.serial_code || result.gltek_serial_code || null,
+    gltek_part_number_issued_at: result.issued_at || result.gltek_part_number_issued_at || null,
+    gltek_part_number_issued_by: result.issued_by || result.gltek_part_number_issued_by || null
+  };
+}
+
+function applyGltekPartNumberPatchToProduct(row, dkdId, patch) {
+  if (!row || !patch) return;
+  if (String(productDkdId(row)) !== String(dkdId)) return;
+  Object.assign(row, patch);
+}
+
+function applyGltekPartNumberIssueResult(dkdId, result) {
+  var patch = gltekPartNumberPatchFromIssueResult(result);
+  if (!patch) return;
+  [
+    currentProduct,
+    currentProductionRow,
+    currentParallelTargetProduct,
+    customerCatalogSelectedProduct,
+    finishedLabelSelectedProduct,
+    purchaseLinkSelectedProduct
+  ].forEach(function(row) {
+    applyGltekPartNumberPatchToProduct(row, dkdId, patch);
+  });
+  [
+    allProducts,
+    productionRows,
+    productionFilteredRows,
+    salesPricingMgmtRows,
+    customerCatalogProducts,
+    productKindStockRows,
+    manufacturingCostRows,
+    manufacturingCostCandidateRows,
+    finishedLabelProducts,
+    purchaseMgmtRows,
+    coreListProductCandidates,
+    coreCollectionProductCandidates
+  ].forEach(function(rows) {
+    (rows || []).forEach(function(row) {
+      applyGltekPartNumberPatchToProduct(row, dkdId, patch);
+    });
+  });
+  var key = String(dkdId);
+  if (coreListProductMap && coreListProductMap[key]) applyGltekPartNumberPatchToProduct(coreListProductMap[key], dkdId, patch);
+  if (coreCollectionProductMap && coreCollectionProductMap[key]) applyGltekPartNumberPatchToProduct(coreCollectionProductMap[key], dkdId, patch);
+  if (productKindStockProductMap && productKindStockProductMap[key]) applyGltekPartNumberPatchToProduct(productKindStockProductMap[key], dkdId, patch);
+  if (manufacturingCostProductMap && manufacturingCostProductMap[key]) applyGltekPartNumberPatchToProduct(manufacturingCostProductMap[key], dkdId, patch);
+  if (purchaseMgmtProductMap && purchaseMgmtProductMap[key]) applyGltekPartNumberPatchToProduct(purchaseMgmtProductMap[key], dkdId, patch);
+}
+
+function gltekAutoIssueErrorMessage(error) {
+  return (error && error.message) || String(error || "");
+}
+
+function gltekAutoIssueMissingSourceError() {
+  return new Error("\u30e1\u30fc\u30ab\u30fc\u3068\u30e1\u30fc\u30ab\u30fc\u54c1\u756a\u304c\u306a\u3044\u305f\u3081\u3001GLTEK\u54c1\u756a\u3092\u81ea\u52d5\u767a\u884c\u3067\u304d\u307e\u305b\u3093\u3002");
+}
+
+function gltekAutoIssueFailureText(context, error) {
+  var detail = gltekAutoIssueErrorMessage(error);
+  if (currentLang === "zh") {
+    return (context === "sales_pricing"
+      ? "\u9500\u552e\u4ef7\u683c\u5df2\u4fdd\u5b58\uff0c\u4f46GLTEK\u96f6\u4ef6\u7f16\u53f7\u81ea\u52a8\u53d1\u884c\u5931\u8d25"
+      : "\u5546\u54c1\u5df2\u6dfb\u52a0\uff0c\u4f46GLTEK\u96f6\u4ef6\u7f16\u53f7\u81ea\u52a8\u53d1\u884c\u5931\u8d25") + (detail ? ": " + detail : "");
+  }
+  if (currentLang === "ja") {
+    return (context === "sales_pricing"
+      ? "\u8ca9\u58f2\u4fa1\u683c\u306f\u4fdd\u5b58\u3057\u307e\u3057\u305f\u304c\u3001GLTEK\u54c1\u756a\u306e\u81ea\u52d5\u767a\u884c\u306b\u5931\u6557\u3057\u307e\u3057\u305f"
+      : "\u5546\u54c1\u306f\u8ffd\u52a0\u3057\u307e\u3057\u305f\u304c\u3001GLTEK\u54c1\u756a\u306e\u81ea\u52d5\u767a\u884c\u306b\u5931\u6557\u3057\u307e\u3057\u305f") + (detail ? ": " + detail : "");
+  }
+  return (context === "sales_pricing"
+    ? "Sales price was saved, but automatic GLTEK part-number issuance failed"
+    : "Product was added, but automatic GLTEK part-number issuance failed") + (detail ? ": " + detail : "");
+}
+
+function gltekAutoIssueSuccessText(result) {
+  var number = result && result.gltek_part_number;
+  var reused = result && result.action === "reused";
+  if (currentLang === "zh") return (reused ? "\u5df2\u5957\u7528\u73b0\u6709GLTEK\u96f6\u4ef6\u7f16\u53f7" : "\u5df2\u81ea\u52a8\u53d1\u884cGLTEK\u96f6\u4ef6\u7f16\u53f7") + (number ? ": " + number : "");
+  if (currentLang === "ja") return (reused ? "\u65e2\u5b58\u306eGLTEK\u54c1\u756a\u3092\u53cd\u6620\u3057\u307e\u3057\u305f" : "GLTEK\u54c1\u756a\u3092\u81ea\u52d5\u767a\u884c\u3057\u307e\u3057\u305f") + (number ? ": " + number : "");
+  return (reused ? "Existing GLTEK part number applied" : "GLTEK part number issued automatically") + (number ? ": " + number : "");
+}
+
+function shouldTryLegacyGltekIssueRpc(error) {
+  var code = String((error && error.code) || "");
+  var message = String((error && error.message) || "");
+  return code === "PGRST202" || code === "PGRST204" || /ensure_gltek_part_number_issued/i.test(message);
+}
+
+async function fetchCoreProductForGltekIssue(dkdId) {
+  if (!dkdId) return { data: null };
+  var r = await sb.from("core_products")
+    .select(CORE_PRODUCT_FAST_SELECT)
+    .eq("dkd_shohin_id", dkdId)
+    .maybeSingle();
+  if (r.error) return r;
+  return { data: normalizeCoreProductFastRows(r.data ? [r.data] : [])[0] || null, error: null };
+}
+
+async function callGltekPartNumberIssueRpc(dkdId, product) {
+  var params = {
+    target_dkd_shohin_id: parseInt(dkdId, 10),
+    base_manufacturer_code: (product && product.gltek_base_manufacturer_code) || null,
+    category_number_code: (product && product.gltek_category_number_code) || null
+  };
+  var r = await sb.rpc("ensure_gltek_part_number_issued", params);
+  if (r.error && shouldTryLegacyGltekIssueRpc(r.error)) {
+    r = await sb.rpc("issue_gltek_part_number", params);
+  }
+  return r;
+}
+
+async function ensureGltekPartNumberIssuedForDkdId(dkdId, options) {
+  options = options || {};
+  var id = parseInt(dkdId, 10);
+  if (!id || isNaN(id)) return { skipped: true, reason: "missing_dkd" };
+  if (!canIssueGltekPartNumber()) return { skipped: true, reason: "permission" };
+  var productR = await fetchCoreProductForGltekIssue(id);
+  if (productR.error) return { error: productR.error };
+  var product = productR.data || options.product || null;
+  if (!product) return { skipped: true, reason: "missing_product" };
+  if (product.gltek_part_number) {
+    var existing = {
+      action: "existing",
+      gltek_part_number: product.gltek_part_number,
+      base_manufacturer_code: product.gltek_base_manufacturer_code || null,
+      category_number_code: product.gltek_category_number_code || null,
+      serial_code: product.gltek_serial_code || null,
+      issued_at: product.gltek_part_number_issued_at || null,
+      issued_by: product.gltek_part_number_issued_by || null
+    };
+    applyGltekPartNumberIssueResult(id, existing);
+    return { skipped: true, reason: "existing", result: existing };
+  }
+  if (!String(product.manufacturer || "").trim() || !String(product.manufacturer_part_number || "").trim()) {
+    return { error: gltekAutoIssueMissingSourceError() };
+  }
+  var issueR = await callGltekPartNumberIssueRpc(id, product);
+  if (issueR.error) return { error: issueR.error, product: product };
+  applyGltekPartNumberIssueResult(id, issueR.data || {});
+  return { result: issueR.data || {}, product: product };
+}
+
 function coreProductPolicyFormKinds(product, variants, preferredKind) {
   var kinds = [];
   (variants || []).forEach(function(row) {
@@ -16843,6 +16994,7 @@ async function saveCoreProductForm() {
   }
   var r;
   var gltekResult = null;
+  var gltekAutoIssueOutcome = null;
   if (addingProduct) {
     if (isGltekAdd) {
       r = await sb.rpc("create_gltek_core_product", {
@@ -16907,6 +17059,9 @@ async function saveCoreProductForm() {
   if (!corePolicyOk) return;
   var specOk = await saveUnifiedSpecForDkd(dkd, errEl);
   if (!specOk) return;
+  if (addingProduct && !isGltekAdd) {
+    gltekAutoIssueOutcome = await ensureGltekPartNumberIssuedForDkdId(dkd, { context: "product_add", product: currentProduct });
+  }
   document.getElementById("part-form-overlay").classList.remove("show");
   currentProductSpecs = [];
   currentProductNominalSpec = null;
@@ -16920,6 +17075,15 @@ async function saveCoreProductForm() {
   }
   if (gltekResult && gltekResult.gltek_part_number) {
     alert(t("gltek_product_add_done") + ": " + gltekResult.gltek_part_number);
+  } else if (gltekAutoIssueOutcome && gltekAutoIssueOutcome.error) {
+    alert(gltekAutoIssueFailureText("product_add", gltekAutoIssueOutcome.error));
+  } else if (
+    gltekAutoIssueOutcome &&
+    gltekAutoIssueOutcome.result &&
+    gltekAutoIssueOutcome.result.gltek_part_number &&
+    gltekAutoIssueOutcome.result.action !== "existing"
+  ) {
+    alert(gltekAutoIssueSuccessText(gltekAutoIssueOutcome.result));
   }
 }
 
@@ -27790,6 +27954,7 @@ async function saveSalesPricing() {
       changed_by: currentUser ? currentUser.id : null,
       change_note: payload.basis_note
     });
+    var gltekAutoIssueOutcome = await ensureGltekPartNumberIssuedForDkdId(dkdId, { context: "sales_pricing", product: currentProduct });
     if (productKind === "rebuilt") salesPricingMgmtPriceMap[String(dkdId)] = ins.data;
     renderSalesPricingMgmt();
     if (productKindStockRows.length) {
@@ -27798,6 +27963,9 @@ async function saveSalesPricing() {
       renderProductKindStockMgmt();
     }
     closeSalesPricingOverlay();
+    if (gltekAutoIssueOutcome && gltekAutoIssueOutcome.error) {
+      alert(gltekAutoIssueFailureText("sales_pricing", gltekAutoIssueOutcome.error));
+    }
   } catch (e) {
     console.warn("save sales pricing failed", e);
     if (errEl) errEl.textContent = t("msg_save_err") + ": " + ((e && e.message) || String(e));
