@@ -3330,6 +3330,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .finished-label-history-main { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; font-weight: 700; }
 .finished-label-history-sub { font-size: 11px; color: #7c8492; margin-top: 4px; line-height: 1.45; word-break: break-word; }
 .finished-label-help { font-size: 11px; color: #7c8492; line-height: 1.55; margin-top: 8px; }
+.finished-label-serial-notice { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; border: 1px solid #b9d8c5; border-radius: 8px; padding: 9px 11px; background: #f1f8f4; color: #315d43; font-size: 11px; line-height: 1.5; }
+.finished-label-serial-notice strong { flex: 0 0 auto; color: #18492e; font-size: 12px; }
+.finished-label-issued-result { display: none; margin-top: 12px; border: 1px solid #9ec9ad; border-radius: 8px; padding: 11px; background: #f3faf6; }
+.finished-label-issued-result.show { display: block; }
+.finished-label-issued-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.finished-label-issued-head > div { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+.finished-label-issued-head strong { color: #16452b; font-size: 13px; }
+.finished-label-issued-head span { color: #547061; font-size: 11px; font-weight: 700; }
+.finished-label-issued-meta { margin-top: 4px; color: #547061; font-size: 11px; }
+.finished-label-serial-list { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 9px; }
+.finished-label-serial-chip { border: 1px solid #bad7c4; border-radius: 5px; padding: 4px 7px; background: #fff; color: #183f29; font-family: Consolas, "SFMono-Regular", monospace; font-size: 11px; font-weight: 800; letter-spacing: .02em; }
+.finished-label-history-serial { margin-top: 5px; color: #173f2a; font-family: Consolas, "SFMono-Regular", monospace; font-size: 11px; font-weight: 800; word-break: break-word; }
 @media (max-width: 767px) {
   #screen-production-search.active { height: 100vh; height: 100dvh; min-height: 100vh; min-height: 100dvh; overflow: hidden; }
   #screen-production-search .production-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; align-content: start; }
