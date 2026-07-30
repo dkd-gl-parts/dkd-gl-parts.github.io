@@ -648,13 +648,13 @@ var TRANSLATIONS = {
     gltek_product_mode_rule_standard: "通常リビルト・社外新品は、同じメーカー品番なら既存のGLTEK品番を共通利用します。",
     gltek_product_mode_rule_production: "GLTEK製の登録は製造管理からのみ行い、販売管理の商品追加では利用できません。",
     gltek_product_mode_save: "GLTEK製を登録",
-    gltek_base_manufacturer_code: "ベースメーカーコード（1桁）",
+    gltek_base_manufacturer_code: "ベースメーカーコード（2文字）",
     gltek_category_number_code: "GLTEK品番カテゴリコード（2桁）",
-    gltek_product_add_help: "上のメーカーとメーカー品番は選択したベース商品の情報です。登録後はメーカーがGLTEKになり、メーカー品番とGLTEK品番には同じ新しいGLTEK品番が入ります。",
+    gltek_product_add_help: "上のメーカーとメーカー品番は選択したベース商品の情報です。登録後はメーカーがGLTEKになり、メーカー品番とGLTEK品番にはGMMCC-NNNNN形式の同じ新しいGLTEK品番が入ります。",
     gltek_product_add_requires_base: "GLTEK製を登録する前に、ベースとなる登録済み商品を製造管理で選択してください。",
     gltek_product_add_requires_source: "GLTEK製には、ベースとなるメーカーとメーカー品番が必要です。",
     gltek_product_add_done: "GLTEK製の商品を追加しました",
-    gltek_part_number_invalid_base: "ベースメーカーコードは半角数字1桁で入力してください。",
+    gltek_part_number_invalid_base: "ベースメーカーコードは半角英数字2文字で入力してください。",
     gltek_part_number_invalid_category: "GLTEK品番カテゴリコードは半角数字2桁で入力してください。",
     lbl_vehicle_mfr: "車メーカー",
     lbl_body_type: "車種",
@@ -1866,13 +1866,13 @@ var TRANSLATIONS = {
     gltek_product_mode_rule_standard: "Standard rebuilt and aftermarket-new products continue sharing an existing GLTEK part number when the manufacturer part number is the same.",
     gltek_product_mode_rule_production: "GLTEK products can be registered only from Production Management and are unavailable from Sales Management product add.",
     gltek_product_mode_save: "Register GLTEK Product",
-    gltek_base_manufacturer_code: "Base Manufacturer Code (1 digit)",
+    gltek_base_manufacturer_code: "Base Manufacturer Code (2 chars)",
     gltek_category_number_code: "GLTEK Part Number Category Code (2 digits)",
-    gltek_product_add_help: "The manufacturer and part number above identify the selected base product. After registration, the manufacturer is GLTEK and one newly issued GLTEK part number is stored as both the manufacturer part number and GLTEK part number.",
+    gltek_product_add_help: "The manufacturer and part number above identify the selected base product. After registration, the manufacturer is GLTEK and the same new GMMCC-NNNNN part number is stored as both the manufacturer part number and GLTEK part number.",
     gltek_product_add_requires_base: "Select a registered base product in Production Management before creating a GLTEK product.",
     gltek_product_add_requires_source: "A base manufacturer and manufacturer part number are required for a GLTEK product.",
     gltek_product_add_done: "GLTEK product added",
-    gltek_part_number_invalid_base: "Enter a one-digit ASCII base-manufacturer code.",
+    gltek_part_number_invalid_base: "Enter a two-character ASCII alphanumeric base-manufacturer code.",
     gltek_part_number_invalid_category: "Enter a two-digit ASCII GLTEK part-number category code.",
     lbl_vehicle_mfr: "Vehicle Maker",
     lbl_body_type: "Body Type",
@@ -3084,13 +3084,13 @@ var TRANSLATIONS = {
     gltek_product_mode_rule_standard: "普通再制造品和副厂新品在制造商零件编号相同时，继续共用现有GLTEK零件编号。",
     gltek_product_mode_rule_production: "GLTEK产品只能从生产管理登记，不能从销售管理的商品添加中使用。",
     gltek_product_mode_save: "登记GLTEK产品",
-    gltek_base_manufacturer_code: "基础制造商代码（1位）",
+    gltek_base_manufacturer_code: "基础制造商代码（2位）",
     gltek_category_number_code: "GLTEK零件编号类别代码（2位）",
-    gltek_product_add_help: "上方制造商和零件编号来自所选基础产品。登记后制造商为GLTEK，并将同一个新发行的GLTEK零件编号保存为制造商零件编号和GLTEK零件编号。",
+    gltek_product_add_help: "上方制造商和零件编号来自所选基础产品。登记后制造商为GLTEK，并将同一个GMMCC-NNNNN格式的新GLTEK零件编号保存为制造商零件编号和GLTEK零件编号。",
     gltek_product_add_requires_base: "创建GLTEK产品前，请先在生产管理中选择已登记的基础产品。",
     gltek_product_add_requires_source: "GLTEK产品必须填写基础制造商和制造商零件编号。",
     gltek_product_add_done: "已添加GLTEK产品",
-    gltek_part_number_invalid_base: "基础制造商代码必须是1位半角数字。",
+    gltek_part_number_invalid_base: "基础制造商代码必须是2位半角英数字。",
     gltek_part_number_invalid_category: "GLTEK零件编号类别代码必须是2位半角数字。",
     lbl_vehicle_mfr: "汽车制造商",
     lbl_body_type: "车身类型",
@@ -3762,7 +3762,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.585";
+var APP_VERSION       = "v1.1.586";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -16775,12 +16775,12 @@ async function saveCoreProductForm() {
     : "external";
   var isGltekAdd = addingProduct && formContext === "production" && manufacturerType === "gltek";
   var baseProductId = parseInt(document.getElementById("pf-gltek-base-product-id").value, 10);
-  var baseCode = document.getElementById("pf-gltek-base-code").value.trim();
+  var baseCode = document.getElementById("pf-gltek-base-code").value.trim().toUpperCase();
   var gltekCategoryCode = document.getElementById("pf-gltek-category-code").value.trim();
   if (isGltekAdd && !canIssueGltekPartNumber()) { errEl.textContent = t("err_perm"); return; }
   if (isGltekAdd && (!baseProductId || isNaN(baseProductId))) { errEl.textContent = t("gltek_product_add_requires_base"); return; }
   if (isGltekAdd && (!manufacturer || !mfrPart)) { errEl.textContent = t("gltek_product_add_requires_source"); return; }
-  if (isGltekAdd && !/^[0-9]$/.test(baseCode)) { errEl.textContent = t("gltek_part_number_invalid_base"); return; }
+  if (isGltekAdd && !/^[0-9A-Z]{2}$/.test(baseCode)) { errEl.textContent = t("gltek_part_number_invalid_base"); return; }
   if (isGltekAdd && !/^[0-9]{2}$/.test(gltekCategoryCode)) { errEl.textContent = t("gltek_part_number_invalid_category"); return; }
   var categoryValue = document.getElementById("pf-category").value;
   var payload = {
