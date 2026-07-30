@@ -3969,7 +3969,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.598";
+var APP_VERSION       = "v1.1.599";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -4174,27 +4174,6 @@ var customerManagedUsers = [];
 var customerManagedUsersRequestSeq = 0;
 var CUSTOMER_CATALOG_RESULT_LIMIT = 60;
 var CUSTOMER_CATALOG_SCAN_LIMIT = 180;
-var SHIPPING_PREFECTURES = [
-  [1,"北海道","Hokkaido","北海道"], [2,"青森県","Aomori","青森县"], [3,"岩手県","Iwate","岩手县"],
-  [4,"宮城県","Miyagi","宫城县"], [5,"秋田県","Akita","秋田县"], [6,"山形県","Yamagata","山形县"],
-  [7,"福島県","Fukushima","福岛县"], [8,"茨城県","Ibaraki","茨城县"], [9,"栃木県","Tochigi","栃木县"],
-  [10,"群馬県","Gunma","群马县"], [11,"埼玉県","Saitama","埼玉县"], [12,"千葉県","Chiba","千叶县"],
-  [13,"東京都","Tokyo","东京都"], [14,"神奈川県","Kanagawa","神奈川县"], [15,"新潟県","Niigata","新潟县"],
-  [16,"富山県","Toyama","富山县"], [17,"石川県","Ishikawa","石川县"], [18,"福井県","Fukui","福井县"],
-  [19,"山梨県","Yamanashi","山梨县"], [20,"長野県","Nagano","长野县"], [21,"岐阜県","Gifu","岐阜县"],
-  [22,"静岡県","Shizuoka","静冈县"], [23,"愛知県","Aichi","爱知县"], [24,"三重県","Mie","三重县"],
-  [25,"滋賀県","Shiga","滋贺县"], [26,"京都府","Kyoto","京都府"], [27,"大阪府","Osaka","大阪府"],
-  [28,"兵庫県","Hyogo","兵库县"], [29,"奈良県","Nara","奈良县"], [30,"和歌山県","Wakayama","和歌山县"],
-  [31,"鳥取県","Tottori","鸟取县"], [32,"島根県","Shimane","岛根县"], [33,"岡山県","Okayama","冈山县"],
-  [34,"広島県","Hiroshima","广岛县"], [35,"山口県","Yamaguchi","山口县"], [36,"徳島県","Tokushima","德岛县"],
-  [37,"香川県","Kagawa","香川县"], [38,"愛媛県","Ehime","爱媛县"], [39,"高知県","Kochi","高知县"],
-  [40,"福岡県","Fukuoka","福冈县"], [41,"佐賀県","Saga","佐贺县"], [42,"長崎県","Nagasaki","长崎县"],
-  [43,"熊本県","Kumamoto","熊本县"], [44,"大分県","Oita","大分县"], [45,"宮崎県","Miyazaki","宫崎县"],
-  [46,"鹿児島県","Kagoshima","鹿儿岛县"], [47,"沖縄県","Okinawa","冲绳县"]
-];
-var shippingRateRows = [];
-var shippingRateLoadSeq = 0;
-var shippingRateFormSaving = false;
 var salesCustomerOptions = [];
 var detailSalesCustomerOptions = [];
 var detailSelectedSalesCustomerId = "";
@@ -4271,6 +4250,28 @@ var CORE_PRODUCT_FAST_SELECT = [
   "normalized_genuine_clutch_part_number",
   "normalized_manufacturer_clutch_part_number"
 ].join(",");
+
+var SHIPPING_PREFECTURES = [
+  [1,"北海道","Hokkaido","北海道"], [2,"青森県","Aomori","青森县"], [3,"岩手県","Iwate","岩手县"],
+  [4,"宮城県","Miyagi","宫城县"], [5,"秋田県","Akita","秋田县"], [6,"山形県","Yamagata","山形县"],
+  [7,"福島県","Fukushima","福岛县"], [8,"茨城県","Ibaraki","茨城县"], [9,"栃木県","Tochigi","栃木县"],
+  [10,"群馬県","Gunma","群马县"], [11,"埼玉県","Saitama","埼玉县"], [12,"千葉県","Chiba","千叶县"],
+  [13,"東京都","Tokyo","东京都"], [14,"神奈川県","Kanagawa","神奈川县"], [15,"新潟県","Niigata","新潟县"],
+  [16,"富山県","Toyama","富山县"], [17,"石川県","Ishikawa","石川县"], [18,"福井県","Fukui","福井县"],
+  [19,"山梨県","Yamanashi","山梨县"], [20,"長野県","Nagano","长野县"], [21,"岐阜県","Gifu","岐阜县"],
+  [22,"静岡県","Shizuoka","静冈县"], [23,"愛知県","Aichi","爱知县"], [24,"三重県","Mie","三重县"],
+  [25,"滋賀県","Shiga","滋贺县"], [26,"京都府","Kyoto","京都府"], [27,"大阪府","Osaka","大阪府"],
+  [28,"兵庫県","Hyogo","兵库县"], [29,"奈良県","Nara","奈良县"], [30,"和歌山県","Wakayama","和歌山县"],
+  [31,"鳥取県","Tottori","鸟取县"], [32,"島根県","Shimane","岛根县"], [33,"岡山県","Okayama","冈山县"],
+  [34,"広島県","Hiroshima","广岛县"], [35,"山口県","Yamaguchi","山口县"], [36,"徳島県","Tokushima","德岛县"],
+  [37,"香川県","Kagawa","香川县"], [38,"愛媛県","Ehime","爱媛县"], [39,"高知県","Kochi","高知县"],
+  [40,"福岡県","Fukuoka","福冈县"], [41,"佐賀県","Saga","佐贺县"], [42,"長崎県","Nagasaki","长崎县"],
+  [43,"熊本県","Kumamoto","熊本县"], [44,"大分県","Oita","大分县"], [45,"宮崎県","Miyazaki","宫崎县"],
+  [46,"鹿児島県","Kagoshima","鹿儿岛县"], [47,"沖縄県","Okinawa","冲绳县"]
+];
+var shippingRateRows = [];
+var shippingRateLoadSeq = 0;
+var shippingRateFormSaving = false;
 
 var FINISHED_LABEL_CATEGORIES = [
   ["オルタネータ", "オルタネータ"],

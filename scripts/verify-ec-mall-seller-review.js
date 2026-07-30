@@ -35,12 +35,15 @@ if (!sandbox.result.broken("AL4VB6SsgBkuqkpbtqN9yFn1mjSP8")) {
   "function ecMallSellerReviewSuffixHtml",
   "function renderEcMallSellerReviewPanel",
   "https://auctions.yahoo.co.jp/seller/",
-  "renderEcMallSellerReviewPanel(rows) + html",
+  "list.innerHTML = html;",
   "ecMallSellerReviewSuffixHtml(row)",
   "ecMallIndexResolvedSellerNames(rows);"
 ].forEach((fragment) => {
   if (!source.includes(fragment)) throw new Error(`seller review implementation is missing: ${fragment}`);
 });
+if (source.includes("renderEcMallSellerReviewPanel(rows) + html")) {
+  throw new Error("the retired seller review panel must not be restored to the heavy result renderer");
+}
 
 [
   ".ec-seller-review-panel",

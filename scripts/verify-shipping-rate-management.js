@@ -13,6 +13,68 @@ function sourceBetween(startText, endText) {
   return source.slice(start, end);
 }
 
+const coreSelectStart = source.indexOf("var CORE_PRODUCT_FAST_SELECT = [");
+const coreSelectEnd = source.indexOf('].join(",");', coreSelectStart);
+if (coreSelectStart < 0 || coreSelectEnd < coreSelectStart) {
+  throw new Error("CORE_PRODUCT_FAST_SELECT could not be isolated");
+}
+[
+  "var SHIPPING_PREFECTURES = [",
+  "var shippingRateRows = [];",
+  "var shippingRateLoadSeq = 0;",
+  "var shippingRateFormSaving = false;"
+].forEach((fragment) => {
+  if (source.indexOf(fragment) <= coreSelectEnd) {
+    throw new Error(`shipping state must be declared after CORE_PRODUCT_FAST_SELECT: ${fragment}`);
+  }
+});
+
+const logoutSource = sourceBetween("async function doLogout()", "// メニュー（翻訳辞書のキーを使って生成）");
+["shippingRateRows = [];", "shippingRateLoadSeq += 1;"].forEach((fragment) => {
+  if (!logoutSource.includes(fragment)) throw new Error(`shipping logout reset is missing: ${fragment}`);
+});
+
+const renderMenuSource = sourceBetween("function renderMenu()", "function renderCustomerExperienceHeaders");
+const adminItemsStart = renderMenuSource.indexOf("var adminItems = [");
+const adminItemsEnd = renderMenuSource.indexOf("].filter(function(item) { return item.available; });", adminItemsStart);
+if (adminItemsStart < 0 || adminItemsEnd < adminItemsStart) throw new Error("adminItems could not be isolated");
+const adminItemsSource = renderMenuSource.slice(adminItemsStart, adminItemsEnd);
+if (!adminItemsSource.includes('action: "shipping-rate-mgmt"')) {
+  throw new Error("shipping master must be an adminItems entry");
+}
+if (adminItemsSource.includes("shippingRateRows = [];") || adminItemsSource.includes("shippingRateLoadSeq += 1;")) {
+  throw new Error("shipping logout resets must not be inside adminItems");
+}
+if (!renderMenuSource.includes('else if (card.dataset.action === "shipping-rate-mgmt") enterShippingRateMgmt();')) {
+  throw new Error("shipping master click routing must be inside renderMenu");
+}
+
+const shippingFunctionsStart = source.indexOf("function shippingPrefectureLabel");
+const productionSearchStart = source.indexOf("async function enterProductionSearch");
+const shippingFunctionsSource = source.slice(shippingFunctionsStart, productionSearchStart);
+if (shippingFunctionsStart < 0 || productionSearchStart < shippingFunctionsStart || !shippingFunctionsSource.includes("async function saveShippingRate")) {
+  throw new Error("shipping functions must be global and outside enterProductionSearch");
+}
+
+const customerShippingListener = 'document.getElementById("customer-portal-shipping").addEventListener("click", enterCustomerShipping)';
+const componentAltInputStart = source.indexOf('componentAltReplacementRateEl.addEventListener("input"');
+const componentAltInputEnd = source.indexOf('componentAltReplacementRateEl.addEventListener("change"', componentAltInputStart);
+if (source.indexOf(customerShippingListener) < 0 || source.indexOf(customerShippingListener) > componentAltInputStart) {
+  throw new Error("customer shipping listeners must be in the normal event registration section");
+}
+if (source.slice(componentAltInputStart, componentAltInputEnd).includes("customer-shipping")) {
+  throw new Error("customer shipping listeners must not be inside the component replacement-rate input handler");
+}
+
+const languageSource = sourceBetween("async function applyLanguage", "function markAppUpdateActivity");
+const customerShippingRedraw = languageSource.indexOf('isScreenActive("customer-shipping")');
+const shippingMgmtRedraw = languageSource.indexOf('isScreenActive("shipping-rate-mgmt")');
+const historyOverlayRedraw = languageSource.indexOf('document.getElementById("ec-price-history-overlay")');
+if (customerShippingRedraw < 0 || shippingMgmtRedraw < 0 || historyOverlayRedraw < 0 ||
+    customerShippingRedraw > historyOverlayRedraw || shippingMgmtRedraw > historyOverlayRedraw) {
+  throw new Error("shipping language redraws must be outside the EC price history overlay condition");
+}
+
 [
   "screen-customer-shipping",
   "customer-shipping-prefecture",
@@ -67,10 +129,7 @@ const saveSource = sourceBetween("async function saveShippingRate", "async funct
   if (!saveSource.includes(fragment)) throw new Error(`shipping save field is missing: ${fragment}`);
 });
 
-if (!source.includes('action: "shipping-rate-mgmt"') || !source.includes("enterShippingRateMgmt()")) {
-  throw new Error("shipping master must be reachable from the internal menu");
-}
-if (!source.includes('document.getElementById("customer-portal-shipping").addEventListener("click", enterCustomerShipping)')) {
+if (!source.includes(customerShippingListener)) {
   throw new Error("customer shipping list must be reachable from the customer portal");
 }
 if ((source.match(/customer_shipping_title:/g) || []).length !== 3 || (source.match(/mi_shipping_title:/g) || []).length !== 3) {

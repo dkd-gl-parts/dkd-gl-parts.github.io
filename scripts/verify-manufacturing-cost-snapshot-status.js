@@ -27,7 +27,8 @@ const sandbox = {
   manufacturingCostComponentMap: {},
   manufacturingCostCoreCostForProduct() {
     return { amount: 1500, category: "starter", isCategorySpecific: true };
-  }
+  },
+  MANUFACTURING_COST_DEFAULT_SELLING_EXPENSE_JPY: 510
 };
 vm.runInNewContext(`${helperSource}; result = { inputState: manufacturingCostComponentInputState, priceDiffers: manufacturingCostSnapshotUnitPriceDiffers, syncRow: manufacturingCostRowWithCurrentUnitPrices };`, sandbox);
 
@@ -54,7 +55,8 @@ const refreshed = sandbox.result.syncRow({
 if (refreshed.updatedCount !== 1 || refreshed.row.components[0].unit_price_jpy !== 950) {
   throw new Error("saving must replace a differing saved unit price with the current unit price");
 }
-if (refreshed.row.partsCost !== 950 || refreshed.row.laborCost !== 345 || refreshed.row.totalCost !== 2795 || refreshed.row.savedSnapshotUnitPriceDiffers) {
+if (refreshed.row.partsCost !== 950 || refreshed.row.laborCost !== 345 || refreshed.row.sellingExpense !== 510 ||
+    refreshed.row.totalCost !== 3305 || refreshed.row.savedSnapshotUnitPriceDiffers) {
   throw new Error("saving a current unit price must recalculate costs and clear the difference warning");
 }
 
