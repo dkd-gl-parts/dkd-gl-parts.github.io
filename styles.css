@@ -1707,9 +1707,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .manufacturing-cost-table th:nth-child(5), .manufacturing-cost-table td:nth-child(5) { width: 12%; text-align: right; }
 .manufacturing-cost-table th:nth-child(6), .manufacturing-cost-table td:nth-child(6) { width: 13%; text-align: right; }
 .manufacturing-cost-table th:nth-child(7), .manufacturing-cost-table td:nth-child(7) { width: 16%; }
+.manufacturing-cost-main-row td { vertical-align: top; }
 .manufacturing-cost-product-main { font-size: 13px; font-weight: 800; color: #1a1a2e; line-height: 1.35; overflow-wrap: anywhere; }
 .manufacturing-cost-product-sub { color: #667085; font-size: 11px; line-height: 1.45; margin-top: 3px; overflow-wrap: anywhere; }
-.manufacturing-cost-money { font-size: 14px; font-weight: 800; color: #1a1a2e; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.manufacturing-cost-money { font-size: 14px; line-height: 1.35; font-weight: 800; color: #1a1a2e; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .manufacturing-cost-total { color: #1a8c3e; font-size: 16px; }
 .manufacturing-cost-note { color: #8a94a6; font-size: 11px; line-height: 1.45; margin-top: 4px; }
 .manufacturing-cost-missing { color: #b54708; font-weight: 700; }
