@@ -3762,7 +3762,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.582";
+var APP_VERSION       = "v1.1.583";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -18494,18 +18494,18 @@ function renderProductKindPanelHtml(summary) {
     ? String(selectedMeta.stockQty)
     : (productKindStockKindAllowed(selected) ? "0" : "-");
   var html = "<div class='product-kind-control detail-sales-kind-control'>";
-  html += "<div class='detail-sales-kind-row'>";
-  html += "<div class='detail-sales-kind-field'><div class='detail-sales-term-label'>" + esc(t("product_kind_section")) + "</div>";
-  html += "<div class='product-kind-control-row compact'>";
+  html += "<div class='detail-sales-term-row detail-sales-kind-row'>";
+  html += "<div class='detail-sales-term-label'>" + esc(t("product_kind_section")) + "</div>";
+  html += "<div class='detail-sales-term-value product-kind-control-row compact'>";
   html += "<select id='product-kind-select' class='product-kind-select " + productKindClass(selected) + "'>";
   options.forEach(function(kind) {
     html += "<option class='" + productKindClass(kind) + "' value='" + esc(kind) + "'" + (kind === selected ? " selected" : "") + ">" + esc(productKindSelectLabel(kind, summary)) + "</option>";
   });
   html += "</select></div></div>";
-  html += "<div class='product-kind-stock-grid'><div class='product-kind-stock-row active " + productKindClass(selected) + "' data-product-kind-row='" + esc(selected) + "'>";
-  html += "<div class='product-kind-stock-label'>" + esc(t("product_kind_stock_qty")) + "</div>";
-  html += "<div class='product-kind-stock-value'>" + esc(stockText) + "</div>";
-  html += "</div></div></div></div>";
+  html += "<div class='product-kind-stock-grid'><div class='product-kind-stock-row detail-sales-term-row active " + productKindClass(selected) + "' data-product-kind-row='" + esc(selected) + "'>";
+  html += "<div class='product-kind-stock-label detail-sales-term-label'>" + esc(t("product_kind_stock_qty")) + "</div>";
+  html += "<div class='product-kind-stock-value detail-sales-term-value'>" + esc(stockText) + "</div>";
+  html += "</div></div></div>";
   return html;
 }
 
