@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.593">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.593"; -->
+<meta name="dcats-app-version" content="v1.1.594">
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.594"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co; form-action 'self';">
 <title>D-CATS</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233c7df0'/%3E%3Cpath d='M8 17h16M16 9v14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.593&amp;ranking=4">
+<link rel="stylesheet" href="styles.css?v=1.1.594&amp;ranking=4">
 </head>
 <body>
 
@@ -1811,6 +1811,8 @@
             <span class="manufacturing-cost-formula-token added" data-i18n="manufacturing_cost_labor_rate">工賃率%</span>
             <span class="manufacturing-cost-formula-plus">+</span>
             <span class="manufacturing-cost-formula-token added" data-i18n="manufacturing_cost_labor_amount">製造工賃</span>
+            <span class="manufacturing-cost-formula-plus">+</span>
+            <span class="manufacturing-cost-formula-token added" data-i18n="manufacturing_cost_selling_expense">販売費用</span>
             <span class="manufacturing-cost-formula-eq">=</span>
             <span class="manufacturing-cost-formula-token total" data-i18n="manufacturing_cost_formula_total">製造原価</span>
           </div>
@@ -1826,6 +1828,10 @@
             <div class="manufacturing-cost-field">
               <label for="manufacturing-cost-labor-amount" data-i18n="manufacturing_cost_labor_amount">製造工賃</label>
               <input class="form-input" id="manufacturing-cost-labor-amount" type="number" min="0" step="1" value="1000" data-i18n-ph="manufacturing_cost_labor_amount">
+            </div>
+            <div class="manufacturing-cost-field">
+              <label for="manufacturing-cost-selling-expense" data-i18n="manufacturing_cost_selling_expense">販売費用</label>
+              <input class="form-input" id="manufacturing-cost-selling-expense" type="number" min="0" step="1" value="510" data-i18n-ph="manufacturing_cost_selling_expense">
             </div>
           </div>
         </div>

@@ -459,6 +459,7 @@ var TRANSLATIONS = {
     manufacturing_cost_core_default_note: "共通設定",
     manufacturing_cost_labor_rate: "工賃率%",
     manufacturing_cost_labor_amount: "製造工賃",
+    manufacturing_cost_selling_expense: "販売費用",
     manufacturing_cost_calc: "原価計算",
     manufacturing_cost_find_candidates: "候補検索",
     manufacturing_cost_calc_selected: "選択品番を追加して原価計算",
@@ -511,12 +512,14 @@ var TRANSLATIONS = {
     manufacturing_cost_summary_products: "対象品番",
     manufacturing_cost_summary_parts: "部品原価合計",
     manufacturing_cost_summary_labor: "製造工賃合計",
+    manufacturing_cost_summary_selling_expense: "販売費用合計",
     manufacturing_cost_summary_total: "製造原価合計",
     manufacturing_cost_product: "品番",
     manufacturing_cost_components: "構成部品",
     manufacturing_cost_parts_cost: "部品原価",
     manufacturing_cost_core_cost_short: "コア代",
     manufacturing_cost_labor_cost: "製造工賃",
+    manufacturing_cost_selling_expense_cost: "販売費用",
     manufacturing_cost_total: "製造原価",
     manufacturing_cost_notes: "確認",
     manufacturing_cost_no_components: "リビルト構成部品なし",
@@ -534,7 +537,7 @@ var TRANSLATIONS = {
     manufacturing_cost_calculated: "小計",
     manufacturing_cost_formula: "計算式",
     manufacturing_cost_unit_price_missing: "単価未設定",
-    manufacturing_cost_formula_note: "部品原価 + コア代 + 工賃率 + 製造工賃",
+    manufacturing_cost_formula_note: "部品原価 + コア代 + 工賃率 + 製造工賃 + 販売費用",
     role_admin: "管理者",
     role_system_admin: "システム管理者",
     role_editor: "編集者",
@@ -1680,6 +1683,7 @@ var TRANSLATIONS = {
     manufacturing_cost_core_default_note: "Default setting",
     manufacturing_cost_labor_rate: "Labor %",
     manufacturing_cost_labor_amount: "Manufacturing labor",
+    manufacturing_cost_selling_expense: "Selling expense",
     manufacturing_cost_calc: "Calculate",
     manufacturing_cost_find_candidates: "Find Candidates",
     manufacturing_cost_calc_selected: "Add Selected and Calculate",
@@ -1732,12 +1736,14 @@ var TRANSLATIONS = {
     manufacturing_cost_summary_products: "Products",
     manufacturing_cost_summary_parts: "Parts Cost Total",
     manufacturing_cost_summary_labor: "Manufacturing Labor Total",
+    manufacturing_cost_summary_selling_expense: "Selling Expense Total",
     manufacturing_cost_summary_total: "Manufacturing Cost Total",
     manufacturing_cost_product: "Product",
     manufacturing_cost_components: "Components",
     manufacturing_cost_parts_cost: "Parts Cost",
     manufacturing_cost_core_cost_short: "Core",
     manufacturing_cost_labor_cost: "Mfg. Labor",
+    manufacturing_cost_selling_expense_cost: "Selling Expense",
     manufacturing_cost_total: "Mfg. Cost",
     manufacturing_cost_notes: "Check",
     manufacturing_cost_no_components: "No rebuilt components",
@@ -1755,7 +1761,7 @@ var TRANSLATIONS = {
     manufacturing_cost_calculated: "Subtotal",
     manufacturing_cost_formula: "Formula",
     manufacturing_cost_unit_price_missing: "No unit price",
-    manufacturing_cost_formula_note: "Parts cost + core cost + labor rate + manufacturing labor",
+    manufacturing_cost_formula_note: "Parts cost + core cost + labor rate + manufacturing labor + selling expense",
     role_admin: "Admin",
     role_system_admin: "System Admin",
     role_editor: "Editor",
@@ -2907,6 +2913,7 @@ var TRANSLATIONS = {
     manufacturing_cost_core_default_note: "通用设置",
     manufacturing_cost_labor_rate: "工费率%",
     manufacturing_cost_labor_amount: "制造工费",
+    manufacturing_cost_selling_expense: "销售费用",
     manufacturing_cost_calc: "成本计算",
     manufacturing_cost_find_candidates: "候选搜索",
     manufacturing_cost_calc_selected: "添加所选品番并计算",
@@ -2959,12 +2966,14 @@ var TRANSLATIONS = {
     manufacturing_cost_summary_products: "对象品番",
     manufacturing_cost_summary_parts: "零件成本合计",
     manufacturing_cost_summary_labor: "制造工费合计",
+    manufacturing_cost_summary_selling_expense: "销售费用合计",
     manufacturing_cost_summary_total: "制造成本合计",
     manufacturing_cost_product: "品番",
     manufacturing_cost_components: "构成零件",
     manufacturing_cost_parts_cost: "零件成本",
     manufacturing_cost_core_cost_short: "旧芯",
     manufacturing_cost_labor_cost: "制造工费",
+    manufacturing_cost_selling_expense_cost: "销售费用",
     manufacturing_cost_total: "制造成本",
     manufacturing_cost_notes: "确认",
     manufacturing_cost_no_components: "无再制造构成零件",
@@ -2982,7 +2991,7 @@ var TRANSLATIONS = {
     manufacturing_cost_calculated: "小计",
     manufacturing_cost_formula: "计算式",
     manufacturing_cost_unit_price_missing: "未设置单价",
-    manufacturing_cost_formula_note: "零件成本 + 旧芯成本 + 工费率 + 制造工费",
+    manufacturing_cost_formula_note: "零件成本 + 旧芯成本 + 工费率 + 制造工费 + 销售费用",
     role_admin: "管理员",
     role_system_admin: "系统管理员",
     role_editor: "编辑者",
@@ -3771,7 +3780,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.593";
+var APP_VERSION       = "v1.1.594";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -3882,6 +3891,7 @@ var manufacturingCostCategoryCoreCosts = {};
 var manufacturingCostListItemSnapshotMap = null;
 var MANUFACTURING_COST_CATEGORY_CORE_STORAGE_KEY = "dcats_manufacturing_cost_category_core_costs";
 var MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY = 1000;
+var MANUFACTURING_COST_DEFAULT_SELLING_EXPENSE_JPY = 510;
 var finishedLabelTemplates = [];
 var finishedLabelProducts = [];
 var finishedLabelInstructionMap = {};
@@ -14386,7 +14396,8 @@ function manufacturingCostSettings() {
     coreCost: Math.round(manufacturingCostNumberFromInput("manufacturing-cost-core-cost", defaultCoreCost)),
     categoryCoreCosts: Object.assign({}, manufacturingCostCategoryCoreCosts || {}),
     laborRate: manufacturingCostNumberFromInput("manufacturing-cost-labor-rate", 0),
-    laborAmount: Math.round(manufacturingCostNumberFromInput("manufacturing-cost-labor-amount", MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY))
+    laborAmount: Math.round(manufacturingCostNumberFromInput("manufacturing-cost-labor-amount", MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY)),
+    sellingExpense: Math.round(manufacturingCostNumberFromInput("manufacturing-cost-selling-expense", MANUFACTURING_COST_DEFAULT_SELLING_EXPENSE_JPY))
   };
 }
 
@@ -14536,6 +14547,7 @@ function manufacturingCostRowWithCurrentUnitPrices(row, settings) {
   var coreInfo = manufacturingCostCoreCostForProduct(row.product, settings);
   var laborRateCost = Math.round((partsCost + coreInfo.amount) * settings.laborRate / 100);
   var laborCost = laborRateCost + settings.laborAmount;
+  var sellingExpense = Math.round(settings.sellingExpense == null ? MANUFACTURING_COST_DEFAULT_SELLING_EXPENSE_JPY : settings.sellingExpense);
   return {
     row: Object.assign({}, row, {
       components: nextComponents,
@@ -14549,7 +14561,8 @@ function manufacturingCostRowWithCurrentUnitPrices(row, settings) {
       laborRateCost: laborRateCost,
       laborAmount: settings.laborAmount,
       laborCost: laborCost,
-      totalCost: partsCost + coreInfo.amount + laborCost,
+      sellingExpense: sellingExpense,
+      totalCost: partsCost + coreInfo.amount + laborCost + sellingExpense,
       missingUnitCount: missingUnitCount,
       missingQuantityCount: missingQuantityCount,
       missingReplacementRateCount: missingReplacementRateCount,
@@ -14895,6 +14908,7 @@ function manufacturingCostBuildRows(products, settings, options) {
     var laborBase = partsCost + coreCost;
     var laborRateCost = Math.round(laborBase * settings.laborRate / 100);
     var laborCost = laborRateCost + settings.laborAmount;
+    var sellingExpense = Math.round(settings.sellingExpense == null ? MANUFACTURING_COST_DEFAULT_SELLING_EXPENSE_JPY : settings.sellingExpense);
     return {
       product: product,
       productId: id,
@@ -14911,7 +14925,8 @@ function manufacturingCostBuildRows(products, settings, options) {
       laborRateCost: laborRateCost,
       laborAmount: settings.laborAmount,
       laborCost: laborCost,
-      totalCost: partsCost + coreCost + laborCost,
+      sellingExpense: sellingExpense,
+      totalCost: partsCost + coreCost + laborCost + sellingExpense,
       savedSnapshotUnitPriceDiffers: snapshotUnitPriceDiffers,
       missingQuantityCount: missingQuantityCount,
       missingReplacementRateCount: missingReplacementRateCount
@@ -14942,10 +14957,11 @@ function renderManufacturingCostSummary(rows) {
     wrap.innerHTML = "";
     return;
   }
-  var parts = 0, labor = 0, total = 0;
+  var parts = 0, labor = 0, selling = 0, total = 0;
   rows.forEach(function(row) {
     parts += row.partsCost || 0;
     labor += row.laborCost || 0;
+    selling += row.sellingExpense || 0;
     total += row.totalCost || 0;
   });
   wrap.innerHTML =
@@ -14953,6 +14969,7 @@ function renderManufacturingCostSummary(rows) {
       "<div class='manufacturing-cost-stat'><span>" + esc(t("manufacturing_cost_summary_products")) + "</span><b>" + esc(String(rows.length)) + "</b></div>" +
       "<div class='manufacturing-cost-stat'><span>" + esc(t("manufacturing_cost_summary_parts")) + "</span><b>" + esc(manufacturingCostYen(parts)) + "</b></div>" +
       "<div class='manufacturing-cost-stat'><span>" + esc(t("manufacturing_cost_summary_labor")) + "</span><b>" + esc(manufacturingCostYen(labor)) + "</b></div>" +
+      "<div class='manufacturing-cost-stat'><span>" + esc(t("manufacturing_cost_summary_selling_expense")) + "</span><b>" + esc(manufacturingCostYen(selling)) + "</b></div>" +
       "<div class='manufacturing-cost-stat'><span>" + esc(t("manufacturing_cost_summary_total")) + "</span><b>" + esc(manufacturingCostYen(total)) + "</b></div>" +
     "</div>";
 }
@@ -15133,7 +15150,7 @@ function renderManufacturingCostRows() {
     return;
   }
   var html = "<div class='manufacturing-cost-table-wrap'><table class='mgmt-table manufacturing-cost-table'>";
-  html += "<tr><th>" + esc(t("manufacturing_cost_product")) + "</th><th>" + esc(t("manufacturing_cost_components")) + "</th><th>" + esc(t("manufacturing_cost_parts_cost")) + "</th><th>" + esc(t("manufacturing_cost_core_cost_short")) + "</th><th>" + esc(t("manufacturing_cost_labor_cost")) + "</th><th>" + esc(t("manufacturing_cost_total")) + "</th><th>" + esc(t("manufacturing_cost_notes")) + "</th></tr>";
+  html += "<tr><th>" + esc(t("manufacturing_cost_product")) + "</th><th>" + esc(t("manufacturing_cost_components")) + "</th><th>" + esc(t("manufacturing_cost_parts_cost")) + "</th><th>" + esc(t("manufacturing_cost_core_cost_short")) + "</th><th>" + esc(t("manufacturing_cost_labor_cost")) + "</th><th>" + esc(t("manufacturing_cost_selling_expense_cost")) + "</th><th>" + esc(t("manufacturing_cost_total")) + "</th><th>" + esc(t("manufacturing_cost_notes")) + "</th></tr>";
   manufacturingCostRows.forEach(function(row, rowIndex) {
     var p = row.product || {};
     var notes = [];
@@ -15164,11 +15181,12 @@ function renderManufacturingCostRows() {
     html += "<td><div class='manufacturing-cost-money'>" + esc(String(row.componentCount || 0)) + "</div></td>";
     html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.partsCost)) + "</div></td>";
     html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.coreCost)) + "</div><div class='manufacturing-cost-note'>" + esc(coreNote) + "</div></td>";
-    html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.laborCost)) + "</div><div class='manufacturing-cost-note'>" + esc(t("manufacturing_cost_formula_note")) + "</div></td>";
-    html += "<td><div class='manufacturing-cost-money manufacturing-cost-total'>" + esc(manufacturingCostYen(row.totalCost)) + "</div></td>";
+    html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.laborCost)) + "</div></td>";
+    html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.sellingExpense)) + "</div></td>";
+    html += "<td><div class='manufacturing-cost-money manufacturing-cost-total'>" + esc(manufacturingCostYen(row.totalCost)) + "</div><div class='manufacturing-cost-note'>" + esc(t("manufacturing_cost_formula_note")) + "</div></td>";
     html += "<td>" + (notes.length ? "<div class='manufacturing-cost-missing'>" + esc(notes.join(" / ")) + "</div>" : "") + "</td>";
     html += "</tr>";
-    if (detailHtml) html += "<tr class='manufacturing-cost-detail-row'><td colspan='7'>" + detailHtml + "</td></tr>";
+    if (detailHtml) html += "<tr class='manufacturing-cost-detail-row'><td colspan='8'>" + detailHtml + "</td></tr>";
   });
   html += "</table></div>";
   list.innerHTML = html;
@@ -15200,6 +15218,7 @@ function exportManufacturingCostRows() {
     "部品原価",
     "コア代",
     "製造工賃",
+    "販売費用",
     "製造原価計"
   ]];
   manufacturingCostRows.forEach(function(row) {
@@ -15212,6 +15231,7 @@ function exportManufacturingCostRows() {
       Math.round(row.partsCost || 0),
       Math.round(row.coreCost || 0),
       Math.round(row.laborCost || 0),
+      Math.round(row.sellingExpense || 0),
       Math.round(row.totalCost || 0)
     ]);
   });
@@ -15384,6 +15404,7 @@ async function saveManufacturingCostList() {
     core_cost_jpy: manufacturingCostCoreCostForCategory(category, settings),
     labor_rate_percent: settings.laborRate,
     labor_amount_jpy: settings.laborAmount,
+    selling_expense_jpy: settings.sellingExpense,
     updated_by: currentUser ? currentUser.id : null,
     updated_at: new Date().toISOString()
   };
@@ -15411,6 +15432,7 @@ async function saveManufacturingCostList() {
       parts_cost_jpy_snapshot: Math.round(row.partsCost || 0),
       core_cost_jpy_snapshot: Math.round(row.coreCost || 0),
       labor_cost_jpy_snapshot: Math.round(row.laborCost || 0),
+      selling_expense_jpy_snapshot: Math.round(row.sellingExpense || 0),
       total_cost_jpy_snapshot: Math.round(row.totalCost || 0),
       components_snapshot: manufacturingCostRowComponentSnapshots(row)
     };
@@ -15444,6 +15466,7 @@ async function loadManufacturingCostList() {
   var coreEl = document.getElementById("manufacturing-cost-core-cost");
   var rateEl = document.getElementById("manufacturing-cost-labor-rate");
   var amountEl = document.getElementById("manufacturing-cost-labor-amount");
+  var sellingEl = document.getElementById("manufacturing-cost-selling-expense");
   if (coreEl) coreEl.value = selected.core_cost_jpy == null ? 1500 : selected.core_cost_jpy;
   if (selected.category_code && selected.core_cost_jpy != null) {
     manufacturingCostCategoryCoreCosts[selected.category_code] = parseInt(selected.core_cost_jpy, 10) || 0;
@@ -15452,6 +15475,7 @@ async function loadManufacturingCostList() {
   }
   if (rateEl) rateEl.value = selected.labor_rate_percent == null ? 0 : selected.labor_rate_percent;
   if (amountEl) amountEl.value = selected.labor_amount_jpy == null ? MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY : selected.labor_amount_jpy;
+  if (sellingEl) sellingEl.value = selected.selling_expense_jpy == null ? MANUFACTURING_COST_DEFAULT_SELLING_EXPENSE_JPY : selected.selling_expense_jpy;
   await refreshManufacturingCostSavedLists();
   renderManufacturingCostCandidateEmpty("");
   var list = document.getElementById("manufacturing-cost-list");
@@ -27072,7 +27096,7 @@ async function fetchSalesPricingManufacturingCostMap(ids, productKind) {
   }).filter(function(id) { return id !== null; })));
   if (!dkdIds.length) return out;
   var itemR = await sb.from("manufacturing_cost_list_items")
-    .select("id,list_id,dkd_shohin_id,total_cost_jpy_snapshot,parts_cost_jpy_snapshot,core_cost_jpy_snapshot,labor_cost_jpy_snapshot,component_count_snapshot,created_at")
+    .select("id,list_id,dkd_shohin_id,total_cost_jpy_snapshot,parts_cost_jpy_snapshot,core_cost_jpy_snapshot,labor_cost_jpy_snapshot,selling_expense_jpy_snapshot,component_count_snapshot,created_at")
     .in("dkd_shohin_id", dkdIds)
     .limit(5000);
   if (itemR.error) {
@@ -27106,6 +27130,7 @@ async function fetchSalesPricingManufacturingCostMap(ids, productKind) {
       partsCost: parsePriceNumber(item.parts_cost_jpy_snapshot),
       coreCost: parsePriceNumber(item.core_cost_jpy_snapshot),
       laborCost: parsePriceNumber(item.labor_cost_jpy_snapshot),
+      sellingExpense: parsePriceNumber(item.selling_expense_jpy_snapshot),
       componentCount: parseInt(item.component_count_snapshot || 0, 10) || 0,
       listName: list.list_name || "",
       productKind: list.product_kind || targetKind,
@@ -32923,7 +32948,7 @@ document.getElementById("manufacturing-cost-target-delete-list").addEventListene
 document.getElementById("manufacturing-cost-target-delete-overlay").addEventListener("click", function(e) {
   if (e.target === this) closeManufacturingCostTargetDelete();
 });
-["manufacturing-cost-core-cost","manufacturing-cost-labor-rate","manufacturing-cost-labor-amount"].forEach(function(id) {
+["manufacturing-cost-core-cost","manufacturing-cost-labor-rate","manufacturing-cost-labor-amount","manufacturing-cost-selling-expense"].forEach(function(id) {
   var el = document.getElementById(id);
   if (!el) return;
   el.addEventListener("input", function() {
