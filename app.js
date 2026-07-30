@@ -3771,7 +3771,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.589";
+var APP_VERSION       = "v1.1.590";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -8087,17 +8087,16 @@ function renderProductionComponents(rows, fallbackSummary) {
 
 async function openProductionComponents() {
   if (!currentProductionRow || !currentProductionRow.dkd_shohin_id) return;
-  await enterSearch();
-  var row = allProducts.find(function(p) { return String(p.dkd_shohin_id) === String(currentProductionRow.dkd_shohin_id); });
-  if (!row) {
-    var r = await sb.from("core_product_search_view").select("*").eq("dkd_shohin_id", currentProductionRow.dkd_shohin_id).maybeSingle();
-    row = r.data || null;
-  }
-  if (row) {
-    currentProduct = row;
-    currentSelectedProductKind = normalizeProductKind(currentProductionImageKind || "rebuilt");
-    enterComponentsScreen("production-search");
-  }
+  var cached = allProducts.find(function(p) { return String(p.dkd_shohin_id) === String(currentProductionRow.dkd_shohin_id); });
+  var row = Object.assign({}, currentProductionRow, cached || {});
+  currentProduct = row;
+  currentCoreDkdShohinId = productDkdId(row);
+  currentProductSpecs = [];
+  currentProductNominalSpec = null;
+  currentImages = [];
+  currentSelectedProductKind = normalizeProductKind(currentProductionImageKind || "rebuilt");
+  currentSelectedComponentVariantId = "";
+  await enterComponentsScreen("production-search");
 }
 
 async function openProductionFinishedLabel() {
@@ -21171,13 +21170,38 @@ function updateComponentsReturnButton() {
   if (backBtn) backBtn.textContent = componentReturnButtonText(componentReturnScreen);
 }
 
+function renderComponentsScreenLoading() {
+  var title = document.getElementById("components-context-title");
+  var sub = document.getElementById("components-context-sub");
+  var addWrap = document.getElementById("component-add-wrap");
+  var wrap = document.getElementById("component-wrap");
+  if (title) title.textContent = selectedProductTitle();
+  if (sub) sub.textContent = selectedProductSub();
+  if (addWrap) addWrap.innerHTML = "";
+  if (wrap) wrap.innerHTML = "<div class='component-empty'>" + esc(t("loading")) + "</div>";
+}
+
+function waitForScreenPaint() {
+  return new Promise(function(resolve) {
+    if (typeof requestAnimationFrame !== "function") {
+      setTimeout(resolve, 0);
+      return;
+    }
+    requestAnimationFrame(function() {
+      requestAnimationFrame(resolve);
+    });
+  });
+}
+
 async function enterComponentsScreen(returnScreen) {
   if (!currentProduct) { alert(t("welcome_panel")); return; }
   if (!canSeeComponentInfo()) { alert(t("err_perm")); return; }
   componentReturnScreen = returnScreen || "search";
+  updateComponentsReturnButton();
+  renderComponentsScreenLoading();
   showScreen("components");
   updateAllHeaders();
-  updateComponentsReturnButton();
+  await waitForScreenPaint();
   await ensureProductVariantsForCurrentDkd(productDkdId(currentProduct));
   updateComponentsContextHeader();
   renderComponentAddPanel();
