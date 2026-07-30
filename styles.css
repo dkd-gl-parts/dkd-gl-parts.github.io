@@ -2098,6 +2098,67 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .customer-category-grid { grid-template-columns: 1fr 1fr; }
 }
 
+/* 送料マスタ */
+.shipping-rate-mgmt-body { flex: 1; width: min(1240px, calc(100% - 32px)); margin: 0 auto; padding: 22px 0 42px; }
+.shipping-rate-mgmt-intro { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
+.shipping-rate-mgmt-intro h1 { color: #1a1a2e; font-size: 20px; letter-spacing: 0; }
+.shipping-rate-mgmt-intro p { margin-top: 5px; color: #667085; font-size: 12px; line-height: 1.6; }
+.shipping-rate-mgmt-toolbar { display: grid; grid-template-columns: minmax(180px, 230px) minmax(180px, 230px) minmax(140px, 180px) 1fr; gap: 10px; align-items: end; margin-bottom: 12px; }
+.shipping-rate-mgmt-toolbar label { display: grid; gap: 5px; color: #667085; font-size: 11px; font-weight: 700; }
+.shipping-rate-mgmt-toolbar select { width: 100%; height: 38px; border: 1px solid #d0d5dd; border-radius: 6px; padding: 0 32px 0 10px; background: #fff; color: #1d2939; font-size: 12px; }
+.shipping-rate-mgmt-toolbar .mgmt-count { justify-self: end; padding-bottom: 10px; }
+.shipping-rate-mgmt-message { min-height: 18px; margin: -4px 0 8px; }
+.shipping-rate-mgmt-list { overflow: hidden; border: 1px solid #dfe4eb; border-radius: 7px; background: #fff; }
+.shipping-rate-mgmt-head,
+.shipping-rate-mgmt-row { display: grid; grid-template-columns: minmax(130px, .85fr) 92px 112px 112px minmax(170px, 1.2fr) minmax(130px, .9fr) 72px 128px; align-items: stretch; }
+.shipping-rate-mgmt-head { min-height: 38px; border-bottom: 1px solid #dfe4eb; background: #f5f7fa; color: #596579; font-size: 11px; font-weight: 800; }
+.shipping-rate-mgmt-head > span { display: flex; align-items: center; padding: 8px 10px; border-right: 1px solid #e8ecf1; }
+.shipping-rate-mgmt-head > span:last-child { border-right: 0; }
+.shipping-rate-mgmt-row { min-height: 66px; border-bottom: 1px solid #edf0f4; color: #273246; font-size: 12px; }
+.shipping-rate-mgmt-row:last-child { border-bottom: 0; }
+.shipping-rate-mgmt-row.inactive { background: #fafafa; color: #7b8494; }
+.shipping-rate-mgmt-cell { min-width: 0; padding: 10px; border-right: 1px solid #f0f2f5; overflow-wrap: anywhere; line-height: 1.5; }
+.shipping-rate-mgmt-cell:last-child { border-right: 0; }
+.shipping-rate-mgmt-cell strong { color: #162033; font-size: 13px; }
+.shipping-rate-mgmt-row.inactive .shipping-rate-mgmt-cell strong { color: #6d7583; }
+.shipping-rate-cell-label { display: none; color: #7a8494; font-size: 10px; font-weight: 700; }
+.shipping-rate-fee { color: #1e5b45; font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.shipping-rate-fee.pending { color: #9a6700; font-size: 12px; }
+.shipping-rate-status { display: inline-flex; align-items: center; min-height: 22px; border: 1px solid #a9d3ba; border-radius: 5px; padding: 2px 7px; background: #edf8f1; color: #23623f; font-size: 10px; font-weight: 800; }
+.shipping-rate-status.inactive { border-color: #d5d9df; background: #f2f4f7; color: #667085; }
+.shipping-rate-row-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.form-card.shipping-rate-form-card { max-width: 720px; border-radius: 8px; }
+.shipping-rate-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; }
+.shipping-rate-form-wide { grid-column: 1 / -1; }
+.shipping-rate-form-card .form-textarea { width: 100%; box-sizing: border-box; resize: vertical; border: 1px solid #d7dce5; border-radius: 6px; padding: 9px 10px; color: #1d2939; font: inherit; font-size: 12px; line-height: 1.5; }
+.shipping-rate-form-card .form-textarea:focus { border-color: #4f8ef7; outline: none; box-shadow: 0 0 0 2px rgba(79,142,247,.12); }
+.shipping-rate-money-input { position: relative; }
+.shipping-rate-money-input > span { position: absolute; z-index: 1; top: 50%; left: 11px; transform: translateY(-50%); color: #667085; font-size: 12px; font-weight: 800; }
+.shipping-rate-money-input .form-input { padding-left: 28px; }
+.shipping-rate-active-check { display: flex; align-items: center; gap: 8px; min-height: 40px; color: #344054; font-size: 12px; font-weight: 800; }
+.shipping-rate-form-note { margin: 2px 0 8px; border-left: 3px solid #4f8ef7; padding: 7px 9px; background: #f5f9ff; color: #53657a; font-size: 11px; line-height: 1.6; }
+@media(max-width:1000px){
+  .shipping-rate-mgmt-head { display: none; }
+  .shipping-rate-mgmt-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .shipping-rate-mgmt-cell { border-bottom: 1px solid #f0f2f5; }
+  .shipping-rate-mgmt-cell:nth-child(4n) { border-right: 0; }
+  .shipping-rate-mgmt-cell:nth-last-child(-n+4) { border-bottom: 0; }
+  .shipping-rate-cell-label { display: block; margin-bottom: 3px; }
+}
+@media(max-width:720px){
+  .shipping-rate-mgmt-body { width: min(100% - 20px, 1240px); padding-top: 16px; }
+  .shipping-rate-mgmt-intro { align-items: stretch; flex-direction: column; }
+  .shipping-rate-mgmt-intro .btn-primary { width: 100%; }
+  .shipping-rate-mgmt-toolbar { grid-template-columns: 1fr 1fr; }
+  .shipping-rate-mgmt-toolbar .mgmt-count { justify-self: start; padding: 0; }
+  .shipping-rate-mgmt-row { grid-template-columns: 1fr 1fr; }
+  .shipping-rate-mgmt-cell:nth-child(2n) { border-right: 0; }
+  .shipping-rate-mgmt-cell:nth-last-child(-n+4) { border-bottom: 1px solid #f0f2f5; }
+  .shipping-rate-mgmt-cell:nth-last-child(-n+2) { border-bottom: 0; }
+  .shipping-rate-form-grid { grid-template-columns: 1fr; }
+  .shipping-rate-form-wide { grid-column: 1; }
+}
+
 /* 商品登録フォーム（モーダル風） */
 .form-overlay   { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 400; align-items: center; justify-content: center; }
 .form-overlay.show { display: flex; }
@@ -2574,13 +2635,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-portal-list-button:disabled { border-color: #d5dbd8; background: #e7ebe9; color: #8a9691; cursor: not-allowed; }
 .customer-portal-info-band { padding: 30px 0 34px; border-bottom: 1px solid #dce2df; background: #f4f6f5; }
 .customer-portal-info-band h2,
-.customer-portal-account-band h2 { margin-bottom: 13px; color: #36443e; font-size: 14px; letter-spacing: 0; }
+.customer-portal-account-band h2,
+.customer-portal-guide-band h2 { margin-bottom: 13px; color: #36443e; font-size: 14px; letter-spacing: 0; }
 .customer-portal-info-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid #cfd8d4; border-bottom: 1px solid #cfd8d4; }
 .customer-portal-info-grid > div { min-width: 0; padding: 14px 16px; border-right: 1px solid #dbe2df; }
 .customer-portal-info-grid > div:last-child { border-right: 0; }
 .customer-portal-info-grid dt { color: #78847f; font-size: 11px; font-weight: 700; }
 .customer-portal-info-grid dd { margin-top: 6px; overflow-wrap: anywhere; color: #1f2d27; font-size: 14px; font-weight: 800; }
 .customer-portal-account-band { padding: 26px 0 40px; background: #fff; }
+.customer-portal-guide-band { padding: 22px 0; border-bottom: 1px solid #dce2df; background: #fff; }
+.customer-portal-guide-layout { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.customer-portal-guide-layout h2 { margin-bottom: 4px; }
+.customer-portal-guide-layout p { color: #66736e; font-size: 11px; line-height: 1.5; }
+.customer-portal-guide-button { min-height: 42px; flex: 0 0 auto; border: 1px solid #245f49; border-radius: 7px; padding: 0 18px; background: #245f49; color: #fff; font-size: 13px; font-weight: 800; cursor: pointer; }
+.customer-portal-guide-button:hover { background: #1d513d; }
 .customer-portal-account-layout { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .customer-portal-account-layout h2 { margin-bottom: 0; }
 .customer-portal-account-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
@@ -2588,6 +2656,42 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-portal-search-button:hover { background: #1d513d; }
 .customer-portal-list-button:hover,
 .customer-portal-account-button:hover { border-color: #6f8f82; background: #f6faf8; }
+
+.customer-shipping-body { flex: 1; background: #f4f6f5; }
+.customer-shipping-toolbar-band { border-bottom: 1px solid #d5ddda; padding: 28px 0 24px; background: #fff; }
+.customer-shipping-toolbar-layout { display: grid; grid-template-columns: minmax(280px, .8fr) minmax(480px, 1.2fr); align-items: end; gap: 34px; }
+.customer-shipping-heading h1 { color: #17231f; font-size: 25px; letter-spacing: 0; }
+.customer-shipping-heading p { margin-top: 7px; color: #66736e; font-size: 11px; line-height: 1.6; }
+.customer-shipping-filters { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(160px, 1fr) auto; align-items: end; gap: 8px; }
+.customer-shipping-filters label { display: grid; gap: 5px; color: #596861; font-size: 11px; font-weight: 800; }
+.customer-shipping-filters select { width: 100%; height: 42px; border: 1px solid #aebdb7; border-radius: 7px; padding: 0 32px 0 10px; background: #fff; color: #17231f; font-size: 13px; }
+.customer-shipping-filters .customer-portal-list-button { height: 42px; }
+.customer-shipping-list-band { padding: 24px 0 44px; }
+.customer-shipping-result-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.customer-shipping-result-head h2 { color: #34433d; font-size: 14px; letter-spacing: 0; }
+.customer-shipping-result-head span { color: #66736e; font-size: 11px; font-weight: 800; }
+.customer-shipping-list { overflow: hidden; border: 1px solid #d4ddd9; border-radius: 7px; background: #fff; }
+.customer-shipping-head,
+.customer-shipping-row { display: grid; grid-template-columns: minmax(130px, .85fr) 100px 122px 122px minmax(190px, 1.2fr) minmax(150px, 1fr); }
+.customer-shipping-head { min-height: 40px; border-bottom: 1px solid #d4ddd9; background: #eef3f1; color: #53625c; font-size: 11px; font-weight: 800; }
+.customer-shipping-head span { display: flex; align-items: center; padding: 8px 12px; border-right: 1px solid #dce4e0; }
+.customer-shipping-head span:last-child { border-right: 0; }
+.customer-shipping-row { min-height: 68px; border-bottom: 1px solid #e5ebe8; color: #25332d; font-size: 12px; }
+.customer-shipping-row:last-child { border-bottom: 0; }
+.customer-shipping-cell { min-width: 0; padding: 12px; border-right: 1px solid #edf1ef; overflow-wrap: anywhere; line-height: 1.55; }
+.customer-shipping-cell:last-child { border-right: 0; }
+.customer-shipping-cell strong { color: #17231f; font-size: 13px; }
+.customer-shipping-mobile-label { display: none; color: #78847f; font-size: 10px; font-weight: 800; }
+.customer-shipping-empty { padding: 34px 18px; color: #78847f; font-size: 12px; text-align: center; }
+@media(max-width:900px){
+  .customer-shipping-toolbar-layout { grid-template-columns: 1fr; gap: 18px; }
+  .customer-shipping-head { display: none; }
+  .customer-shipping-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .customer-shipping-cell { border-bottom: 1px solid #edf1ef; }
+  .customer-shipping-cell:nth-child(3n) { border-right: 0; }
+  .customer-shipping-cell:nth-last-child(-n+3) { border-bottom: 0; }
+  .customer-shipping-mobile-label { display: block; margin-bottom: 3px; }
+}
 
 .customer-users-body { min-height: calc(100vh - 52px); background: #f4f6f5; }
 .customer-users-summary-band { border-bottom: 1px solid #d9e2de; padding: 20px 0; background: #fff; }
@@ -2758,15 +2862,37 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .customer-portal-info-grid > div { border-right: 0; border-bottom: 1px solid #dbe2df; }
   .customer-portal-info-grid > div:last-child { border-bottom: 0; }
   .customer-portal-account-layout,
+  .customer-portal-guide-layout,
   .customer-users-summary,
   .customer-users-section-head { align-items: stretch; flex-direction: column; }
   .customer-portal-account-actions { justify-content: stretch; }
-  .customer-portal-account-actions button { width: 100%; }
+  .customer-portal-account-actions button,
+  .customer-portal-guide-button { width: 100%; }
   .customer-users-invite-form { grid-template-columns: 1fr; }
   .customer-users-invite-form .btn-primary { grid-column: 1; }
   .customer-user-row { grid-template-columns: 1fr; align-items: stretch; }
   .customer-user-actions { grid-column: 1; }
   .customer-catalog-availability-metrics { grid-template-columns: 90px minmax(0, 1fr); }
+}
+
+@media(max-width:640px){
+  .customer-shipping-toolbar-band { padding: 22px 0 18px; }
+  .customer-shipping-filters { grid-template-columns: 1fr 1fr; }
+  .customer-shipping-filters .customer-portal-list-button { grid-column: 1 / -1; width: 100%; }
+  .customer-shipping-row { grid-template-columns: 1fr 1fr; }
+  .customer-shipping-cell:nth-child(3n) { border-right: 1px solid #edf1ef; }
+  .customer-shipping-cell:nth-child(2n) { border-right: 0; }
+  .customer-shipping-cell:nth-last-child(-n+3) { border-bottom: 1px solid #edf1ef; }
+  .customer-shipping-cell:nth-last-child(-n+2) { border-bottom: 0; }
+}
+@media(max-width:420px){
+  .customer-shipping-filters,
+  .customer-shipping-row { grid-template-columns: 1fr; }
+  .customer-shipping-filters .customer-portal-list-button { grid-column: 1; }
+  .customer-shipping-cell { border-right: 0; border-bottom: 1px solid #edf1ef; }
+  .customer-shipping-cell:nth-child(3n) { border-right: 0; }
+  .customer-shipping-cell:nth-last-child(-n+2) { border-bottom: 1px solid #edf1ef; }
+  .customer-shipping-cell:last-child { border-bottom: 0; }
 }
 
 /* =============================================

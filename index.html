@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.594">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.594"; -->
+<meta name="dcats-app-version" content="v1.1.595">
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.595"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co; form-action 'self';">
 <title>D-CATS</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233c7df0'/%3E%3Cpath d='M8 17h16M16 9v14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.594&amp;ranking=4">
+<link rel="stylesheet" href="styles.css?v=1.1.595&amp;ranking=4">
 </head>
 <body>
 
@@ -128,7 +128,7 @@
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.593</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.595</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -157,7 +157,7 @@
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.593</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.595</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -188,7 +188,7 @@
       <button class="back-btn" id="btn-back-customer-portal" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="customer_portal_title">得意先ポータル</span>
-      <span class="app-version-wrap"><span class="app-version">v1.1.593</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version">v1.1.595</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-customer-portal">
@@ -236,12 +236,78 @@
         </dl>
       </div>
     </section>
+    <section class="customer-portal-guide-band">
+      <div class="customer-portal-inner customer-portal-guide-layout">
+        <div>
+          <h2 data-i18n="customer_portal_guide">ご案内</h2>
+          <p data-i18n="customer_shipping_portal_note">運送業者・お届け先ごとの送料と離島条件を確認できます。</p>
+        </div>
+        <button class="customer-portal-guide-button" id="customer-portal-shipping" type="button" data-i18n="customer_shipping_title">送料一覧</button>
+      </div>
+    </section>
     <section class="customer-portal-account-band">
       <div class="customer-portal-inner customer-portal-account-layout">
         <h2 data-i18n="customer_portal_account">アカウント</h2>
         <div class="customer-portal-account-actions">
           <button class="customer-portal-account-button" id="customer-portal-manage-users" type="button" data-i18n="customer_users_title" hidden>担当者管理</button>
           <button class="customer-portal-account-button" id="customer-portal-change-password" type="button" data-i18n="customer_portal_change_password">パスワード変更</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- =============================================
+   得意先向け送料一覧
+============================================= -->
+<div id="screen-customer-shipping" class="screen">
+  <div class="page-header customer-portal-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-customer-shipping" data-i18n="customer_portal_back">← 得意先ホーム</button>
+      <span class="logo-text">D&#8209;CATS</span>
+      <span class="logo-sub" data-i18n="customer_shipping_title">送料一覧</span>
+      <span class="app-version-wrap"><span class="app-version">v1.1.595</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+    </div>
+    <div class="page-header-right">
+      <div class="lang-sw" id="lang-sw-customer-shipping">
+        <button class="lang-btn" data-lang="ja">日本語</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="zh">中文</button>
+      </div>
+      <span class="header-username" id="customer-shipping-username"></span>
+      <span class="role-badge" id="customer-shipping-role-badge"></span>
+      <button class="btn-logout" id="btn-logout-customer-shipping" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <main class="customer-shipping-body">
+    <section class="customer-shipping-toolbar-band">
+      <div class="customer-portal-inner customer-shipping-toolbar-layout">
+        <div class="customer-shipping-heading">
+          <div class="customer-portal-kicker" data-i18n="customer_shipping_guide">SHIPPING GUIDE</div>
+          <h1 data-i18n="customer_shipping_title">送料一覧</h1>
+          <p data-i18n="customer_shipping_help">通常送料と離島送料は、お届け先ごとの送料合計額です。未設定はお問い合わせください。</p>
+        </div>
+        <div class="customer-shipping-filters">
+          <label>
+            <span data-i18n="shipping_prefecture">都道府県</span>
+            <select id="customer-shipping-prefecture"></select>
+          </label>
+          <label>
+            <span data-i18n="shipping_carrier">運送業者</span>
+            <select id="customer-shipping-carrier"></select>
+          </label>
+          <button class="customer-portal-list-button" id="customer-shipping-reset" type="button" data-i18n="shipping_clear_filters">条件をクリア</button>
+        </div>
+      </div>
+    </section>
+    <section class="customer-shipping-list-band">
+      <div class="customer-portal-inner">
+        <div class="customer-shipping-result-head">
+          <h2 data-i18n="customer_shipping_rates">送料</h2>
+          <span id="customer-shipping-count">-</span>
+        </div>
+        <div class="customer-shipping-list" id="customer-shipping-list" aria-live="polite">
+          <div class="customer-shipping-empty" data-i18n="loading">読み込み中...</div>
         </div>
       </div>
     </section>
@@ -257,7 +323,7 @@
       <button class="back-btn" id="btn-back-customer-users" data-i18n="customer_portal_back">← 得意先ホーム</button>
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="customer_users_title">担当者管理</span>
-      <span class="app-version-wrap"><span class="app-version">v1.1.593</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version">v1.1.595</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-customer-users">
@@ -320,7 +386,7 @@
       <button class="back-btn" id="btn-back-customer-catalog" data-i18n="customer_portal_back">← 得意先ホーム</button>
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="customer_catalog_title">商品カタログ</span>
-      <span class="app-version-wrap"><span class="app-version">v1.1.593</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version">v1.1.595</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <button class="customer-catalog-exit" id="btn-exit-customer-mode" type="button" data-i18n="customer_portal_exit_mode">社内メニューへ戻る</button>
@@ -377,7 +443,7 @@
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text" id="search-screen-title">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.593</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.595</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1099,6 +1165,100 @@
           <div class="empty" data-i18n="customer_access_select_hint">得意先を選択してください</div>
         </div>
       </section>
+    </div>
+  </div>
+</div>
+
+<!-- =============================================
+   送料マスタ
+============================================= -->
+<div id="screen-shipping-rate-mgmt" class="screen">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-shipping-rate-mgmt" data-i18n="btn_back">← メニュー</button>
+      <span class="logo-text" data-i18n="shipping_mgmt_title">送料マスタ</span>
+    </div>
+    <div class="page-header-right">
+      <span class="header-username" id="shipping-rate-mgmt-username"></span>
+      <span class="role-badge" id="shipping-rate-mgmt-role-badge"></span>
+      <button class="btn-logout" id="btn-logout-shipping-rate-mgmt" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <main class="shipping-rate-mgmt-body">
+    <section class="shipping-rate-mgmt-intro">
+      <div>
+        <h1 data-i18n="shipping_mgmt_title">送料マスタ</h1>
+        <p data-i18n="shipping_mgmt_help">運送業者と都道府県ごとに、得意先へ表示する通常送料・離島送料・条件を管理します。</p>
+      </div>
+      <button class="btn-primary" id="btn-new-shipping-rate" type="button" data-i18n="shipping_add">送料を登録</button>
+    </section>
+    <div class="shipping-rate-mgmt-toolbar">
+      <label>
+        <span data-i18n="shipping_prefecture">都道府県</span>
+        <select id="shipping-rate-prefecture-filter"></select>
+      </label>
+      <label>
+        <span data-i18n="shipping_carrier">運送業者</span>
+        <select id="shipping-rate-carrier-filter"></select>
+      </label>
+      <label>
+        <span data-i18n="shipping_status">表示状態</span>
+        <select id="shipping-rate-status-filter">
+          <option value="all" data-i18n="filter_all">すべて</option>
+          <option value="active" data-i18n="shipping_active">表示中</option>
+          <option value="inactive" data-i18n="shipping_inactive">非表示</option>
+        </select>
+      </label>
+      <span class="mgmt-count" id="shipping-rate-count">-</span>
+    </div>
+    <div class="save-msg shipping-rate-mgmt-message" id="shipping-rate-mgmt-message" aria-live="polite"></div>
+    <div class="shipping-rate-mgmt-list" id="shipping-rate-list" aria-live="polite">
+      <div class="empty" data-i18n="loading">読み込み中...</div>
+    </div>
+  </main>
+</div>
+
+<div class="form-overlay" id="shipping-rate-form-overlay">
+  <div class="form-card shipping-rate-form-card" role="dialog" aria-modal="true" aria-labelledby="shipping-rate-form-title">
+    <h3 id="shipping-rate-form-title" data-i18n="shipping_add">送料を登録</h3>
+    <input id="shipping-rate-form-id" type="hidden">
+    <div class="shipping-rate-form-grid">
+      <div class="form-row">
+        <label class="form-label" for="shipping-rate-carrier" data-i18n="shipping_carrier_required">運送業者 *</label>
+        <input class="form-input" id="shipping-rate-carrier" type="text" maxlength="120" autocomplete="organization" list="shipping-rate-carrier-list">
+        <datalist id="shipping-rate-carrier-list"></datalist>
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="shipping-rate-prefecture" data-i18n="shipping_prefecture_required">都道府県 *</label>
+        <select class="form-select" id="shipping-rate-prefecture"></select>
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="shipping-rate-standard-fee" data-i18n="shipping_standard_fee">通常送料</label>
+        <div class="shipping-rate-money-input"><span>¥</span><input class="form-input" id="shipping-rate-standard-fee" type="number" min="0" step="1" inputmode="numeric"></div>
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="shipping-rate-island-fee" data-i18n="shipping_island_fee">離島送料</label>
+        <div class="shipping-rate-money-input"><span>¥</span><input class="form-input" id="shipping-rate-island-fee" type="number" min="0" step="1" inputmode="numeric"></div>
+      </div>
+      <div class="form-row shipping-rate-form-wide">
+        <label class="form-label" for="shipping-rate-island-condition" data-i18n="shipping_island_condition">離島条件</label>
+        <textarea class="form-textarea" id="shipping-rate-island-condition" maxlength="500" rows="3"></textarea>
+      </div>
+      <div class="form-row shipping-rate-form-wide">
+        <label class="form-label" for="shipping-rate-note" data-i18n="shipping_note">備考</label>
+        <textarea class="form-textarea" id="shipping-rate-note" maxlength="500" rows="2"></textarea>
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="shipping-rate-display-order" data-i18n="shipping_display_order">表示順</label>
+        <input class="form-input" id="shipping-rate-display-order" type="number" step="1" value="0" inputmode="numeric">
+      </div>
+      <label class="shipping-rate-active-check"><input id="shipping-rate-active" type="checkbox" checked> <span data-i18n="shipping_active">表示中</span></label>
+    </div>
+    <p class="shipping-rate-form-note" data-i18n="shipping_fee_note">離島送料は追加料金ではなく、得意先へ表示する合計送料を入力してください。空欄は「要確認」と表示します。</p>
+    <div class="save-msg" id="shipping-rate-form-message"></div>
+    <div class="form-footer">
+      <button class="btn-cancel" id="btn-shipping-rate-cancel" type="button" data-i18n="btn_cancel">取消</button>
+      <button class="btn-primary" id="btn-shipping-rate-save" type="button" data-i18n="btn_save">保存</button>
     </div>
   </div>
 </div>
@@ -2903,7 +3063,7 @@
 </div>
 
 <script src="vendor/qrcode.min.js?v=1.0.0"></script>
-<script src="app.js?v=1.1.593"></script>
+<script src="app.js?v=1.1.595"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.522&amp;ranking=8"></script>
 </body>
 </html>

@@ -91,6 +91,42 @@ var TRANSLATIONS = {
     customer_portal_scope_custom: "個別設定あり",
     customer_portal_account: "アカウント",
     customer_portal_change_password: "パスワード変更",
+    customer_portal_guide: "ご案内",
+    customer_shipping_title: "送料一覧",
+    customer_shipping_portal_note: "運送業者・お届け先ごとの送料と離島条件を確認できます。",
+    customer_shipping_guide: "SHIPPING GUIDE",
+    customer_shipping_help: "通常送料と離島送料は、お届け先ごとの送料合計額です。未設定はお問い合わせください。",
+    customer_shipping_rates: "送料",
+    shipping_all_prefectures: "すべての都道府県",
+    shipping_all_carriers: "すべての運送業者",
+    shipping_prefecture: "都道府県",
+    shipping_carrier: "運送業者",
+    shipping_clear_filters: "条件をクリア",
+    shipping_standard_fee: "通常送料",
+    shipping_island_fee: "離島送料",
+    shipping_island_condition: "離島条件",
+    shipping_note: "備考",
+    actions: "操作",
+    shipping_inquiry: "要確認",
+    shipping_no_rates: "該当する送料はありません。",
+    shipping_load_error: "送料を読み込めませんでした。",
+    shipping_status: "表示状態",
+    shipping_active: "表示中",
+    shipping_inactive: "非表示",
+    shipping_mgmt_title: "送料マスタ",
+    shipping_mgmt_help: "運送業者と都道府県ごとに、得意先へ表示する通常送料・離島送料・条件を管理します。",
+    shipping_add: "送料を登録",
+    shipping_edit: "送料を編集",
+    shipping_carrier_required: "運送業者 *",
+    shipping_prefecture_required: "都道府県 *",
+    shipping_display_order: "表示順",
+    shipping_fee_note: "離島送料は追加料金ではなく、得意先へ表示する合計送料を入力してください。空欄は「要確認」と表示します。",
+    shipping_save_success: "送料を保存しました。",
+    shipping_duplicate_error: "同じ運送業者・都道府県の送料がすでに登録されています。",
+    shipping_validation_error: "運送業者と都道府県を選択し、送料または条件・備考を入力してください。",
+    shipping_toggle_hide: "非表示にする",
+    shipping_toggle_show: "表示する",
+    shipping_update_failed: "送料を更新できませんでした。",
     customer_users_title: "担当者管理",
     customer_users_customer: "お取引先",
     customer_users_admin: "管理者",
@@ -144,6 +180,8 @@ var TRANSLATIONS = {
     mi_user_permissions_desc: "自分の操作権限と製造原価の許可を確認します。",
     mi_customer_access_title: "得意先管理",
     mi_customer_access_desc: "得意先ログインIDと、商品範囲・価格表示ルールを管理します。",
+    mi_shipping_title: "送料マスタ",
+    mi_shipping_desc: "運送業者・都道府県別の通常送料と離島条件を管理します。",
     mi_core_list_title: "コア管理",
     mi_core_list_desc: "買い集めるコアの目標数と現在庫を管理します。",
     mi_product_kind_stock_title: "在庫管理",
@@ -1326,6 +1364,42 @@ var TRANSLATIONS = {
     customer_users_send_invite: "Send Invitation",
     customer_users_list_title: "Login Users",
     customer_users_admin_rule: "There is one administrator. A transfer changes the current administrator to a member.",
+    customer_portal_guide: "Information",
+    customer_shipping_title: "Shipping Rates",
+    customer_shipping_portal_note: "Review shipping rates and remote-island conditions by carrier and destination.",
+    customer_shipping_guide: "SHIPPING GUIDE",
+    customer_shipping_help: "Standard and remote-island rates are the total shipping amounts for each destination. Contact us when a rate is not set.",
+    customer_shipping_rates: "Rates",
+    shipping_all_prefectures: "All Prefectures",
+    shipping_all_carriers: "All Carriers",
+    shipping_prefecture: "Prefecture",
+    shipping_carrier: "Carrier",
+    shipping_clear_filters: "Clear Filters",
+    shipping_standard_fee: "Standard Rate",
+    shipping_island_fee: "Remote-Island Rate",
+    shipping_island_condition: "Remote-Island Conditions",
+    shipping_note: "Notes",
+    actions: "Actions",
+    shipping_inquiry: "Contact Us",
+    shipping_no_rates: "No shipping rates match these filters.",
+    shipping_load_error: "Shipping rates could not be loaded.",
+    shipping_status: "Status",
+    shipping_active: "Visible",
+    shipping_inactive: "Hidden",
+    shipping_mgmt_title: "Shipping Master",
+    shipping_mgmt_help: "Manage customer-visible standard rates, remote-island rates, and conditions by carrier and prefecture.",
+    shipping_add: "Add Shipping Rate",
+    shipping_edit: "Edit Shipping Rate",
+    shipping_carrier_required: "Carrier *",
+    shipping_prefecture_required: "Prefecture *",
+    shipping_display_order: "Display Order",
+    shipping_fee_note: "Enter the total remote-island shipping rate, not a surcharge. A blank amount is shown as Contact Us.",
+    shipping_save_success: "The shipping rate was saved.",
+    shipping_duplicate_error: "A rate for this carrier and prefecture is already registered.",
+    shipping_validation_error: "Select a carrier and prefecture, then enter a rate, condition, or note.",
+    shipping_toggle_hide: "Hide",
+    shipping_toggle_show: "Show",
+    shipping_update_failed: "The shipping rate could not be updated.",
     customer_users_transfer: "Make Administrator",
     customer_users_transfer_confirm: "Transfer administrator access to this user? The current administrator will become a member.",
     customer_users_invite_sent: "The user was added and the setup email was sent.",
@@ -1379,6 +1453,8 @@ var TRANSLATIONS = {
     mi_finished_label_title: "Finished Label / QR",
     mi_finished_label_desc: "Issue A6 finished-product labels and QR seals, then save the issue history.",
     mi_production_ranking_title: "Production Plan List",
+    mi_shipping_title: "Shipping Master",
+    mi_shipping_desc: "Manage standard rates and remote-island conditions by carrier and prefecture.",
     mi_production_ranking_desc: "View and maintain the 2024/2025 TOP100 source list.",
     mi_data_title: "Data Management",
     mi_data_desc: "Bulk import and edit part number data.",
@@ -2548,6 +2624,42 @@ var TRANSLATIONS = {
     customer_portal_select_customer: "客户",
     customer_portal_select_customer_placeholder: "选择客户",
     customer_portal_previewing: "以客户身份显示中",
+    customer_portal_guide: "相关信息",
+    customer_shipping_title: "运费一览",
+    customer_shipping_portal_note: "可按承运公司和收货地区确认运费及离岛条件。",
+    customer_shipping_guide: "运费指南",
+    customer_shipping_help: "普通运费和离岛运费均为各收货地区的运费总额。未设置时请联系我们。",
+    customer_shipping_rates: "运费",
+    shipping_all_prefectures: "全部都道府县",
+    shipping_all_carriers: "全部承运公司",
+    shipping_prefecture: "都道府县",
+    shipping_carrier: "承运公司",
+    shipping_clear_filters: "清除条件",
+    shipping_standard_fee: "普通运费",
+    shipping_island_fee: "离岛运费",
+    shipping_island_condition: "离岛条件",
+    shipping_note: "备注",
+    actions: "操作",
+    shipping_inquiry: "请咨询",
+    shipping_no_rates: "没有符合条件的运费。",
+    shipping_load_error: "无法读取运费。",
+    shipping_status: "显示状态",
+    shipping_active: "显示中",
+    shipping_inactive: "隐藏",
+    shipping_mgmt_title: "运费主数据",
+    shipping_mgmt_help: "按承运公司和都道府县管理向客户显示的普通运费、离岛运费及条件。",
+    shipping_add: "登记运费",
+    shipping_edit: "编辑运费",
+    shipping_carrier_required: "承运公司 *",
+    shipping_prefecture_required: "都道府县 *",
+    shipping_display_order: "显示顺序",
+    shipping_fee_note: "离岛运费请输入向客户显示的总运费，而非追加费用。空白金额将显示为“请咨询”。",
+    shipping_save_success: "运费已保存。",
+    shipping_duplicate_error: "该承运公司和都道府县的运费已登记。",
+    shipping_validation_error: "请选择承运公司和都道府县，并输入运费、条件或备注。",
+    shipping_toggle_hide: "设为隐藏",
+    shipping_toggle_show: "设为显示",
+    shipping_update_failed: "无法更新运费。",
     customer_portal_back: "← 客户首页",
     customer_search_title: "商品搜索",
     customer_portal_exit_mode: "返回内部菜单",
@@ -2627,6 +2739,8 @@ var TRANSLATIONS = {
     btn_search: "搜索",
     btn_clear: "清除",
     btn_reload: "重新读取",
+    mi_shipping_title: "运费主数据",
+    mi_shipping_desc: "按承运公司和都道府县管理普通运费及离岛条件。",
     filter_all: "全部",
     filter_scope: "搜索对象",
     filter_sl: "有SL编号",
@@ -3780,7 +3894,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.594";
+var APP_VERSION       = "v1.1.595";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -4018,6 +4132,27 @@ var CORE_PRODUCT_FAST_SELECT = [
   "gltek_part_number_issued_at",
   "gltek_part_number_issued_by",
   "part_manufacturer_type",
+var SHIPPING_PREFECTURES = [
+  [1,"北海道","Hokkaido","北海道"], [2,"青森県","Aomori","青森县"], [3,"岩手県","Iwate","岩手县"],
+  [4,"宮城県","Miyagi","宫城县"], [5,"秋田県","Akita","秋田县"], [6,"山形県","Yamagata","山形县"],
+  [7,"福島県","Fukushima","福岛县"], [8,"茨城県","Ibaraki","茨城县"], [9,"栃木県","Tochigi","栃木县"],
+  [10,"群馬県","Gunma","群马县"], [11,"埼玉県","Saitama","埼玉县"], [12,"千葉県","Chiba","千叶县"],
+  [13,"東京都","Tokyo","东京都"], [14,"神奈川県","Kanagawa","神奈川县"], [15,"新潟県","Niigata","新潟县"],
+  [16,"富山県","Toyama","富山县"], [17,"石川県","Ishikawa","石川县"], [18,"福井県","Fukui","福井县"],
+  [19,"山梨県","Yamanashi","山梨县"], [20,"長野県","Nagano","长野县"], [21,"岐阜県","Gifu","岐阜县"],
+  [22,"静岡県","Shizuoka","静冈县"], [23,"愛知県","Aichi","爱知县"], [24,"三重県","Mie","三重县"],
+  [25,"滋賀県","Shiga","滋贺县"], [26,"京都府","Kyoto","京都府"], [27,"大阪府","Osaka","大阪府"],
+  [28,"兵庫県","Hyogo","兵库县"], [29,"奈良県","Nara","奈良县"], [30,"和歌山県","Wakayama","和歌山县"],
+  [31,"鳥取県","Tottori","鸟取县"], [32,"島根県","Shimane","岛根县"], [33,"岡山県","Okayama","冈山县"],
+  [34,"広島県","Hiroshima","广岛县"], [35,"山口県","Yamaguchi","山口县"], [36,"徳島県","Tokushima","德岛县"],
+  [37,"香川県","Kagawa","香川县"], [38,"愛媛県","Ehime","爱媛县"], [39,"高知県","Kochi","高知县"],
+  [40,"福岡県","Fukuoka","福冈县"], [41,"佐賀県","Saga","佐贺县"], [42,"長崎県","Nagasaki","长崎县"],
+  [43,"熊本県","Kumamoto","熊本县"], [44,"大分県","Oita","大分县"], [45,"宮崎県","Miyazaki","宫崎县"],
+  [46,"鹿児島県","Kagoshima","鹿儿岛县"], [47,"沖縄県","Okinawa","冲绳县"]
+];
+var shippingRateRows = [];
+var shippingRateLoadSeq = 0;
+var shippingRateFormSaving = false;
   "pulley_assy_part_number",
   "daiko_part_number",
   "dks_shohin_cd",
@@ -4688,6 +4823,12 @@ function canViewManufacturingReport() {
 function canManageCompatibility() {
   return userPermissionAllowed(userProfile, "compatibility.view", canViewManagementScreen());
 }
+function canManageShippingRates() {
+  return canManageCustomerAccess();
+}
+function canViewCustomerShippingRates() {
+  return !!userProfile && (isCustomerViewer() || canPreviewCustomerPortal());
+}
 function canEditCompatibility() {
   return userPermissionAllowed(userProfile, "compatibility.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]));
 }
@@ -4805,6 +4946,16 @@ async function applyLanguage(lang) {
     openVehicleApplicationsDialog(currentVehicleApplicationRows || [], currentProduct);
   }
   if (document.getElementById("ec-price-history-overlay") && document.getElementById("ec-price-history-overlay").classList.contains("show") && ecPriceHistoryState) {
+  if (isScreenActive("customer-shipping")) {
+    populateShippingPrefectureSelects();
+    populateShippingCarrierSelects();
+    renderCustomerShippingRates();
+  }
+  if (isScreenActive("shipping-rate-mgmt")) {
+    populateShippingPrefectureSelects();
+    populateShippingCarrierSelects();
+    renderShippingRateMgmt();
+  }
     renderEcPriceHistoryContent();
   }
 
@@ -5577,7 +5728,7 @@ function updateAllHeaders() {
   var cls   = roleClass(userProfile.role);
   var greet = tf("greeting", { name: name });
 
-  ["menu","customer-portal","customer-catalog","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","component-compat-mgmt","product-kind-stock-mgmt","manufacturing-cost-mgmt","finished-label-mgmt","production-ranking-mgmt","manufacturing-ranking-report","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","logs"].forEach(function(sc) {
+  ["menu","customer-portal","customer-shipping","customer-catalog","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","component-compat-mgmt","product-kind-stock-mgmt","manufacturing-cost-mgmt","finished-label-mgmt","production-ranking-mgmt","manufacturing-ranking-report","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","shipping-rate-mgmt","logs"].forEach(function(sc) {
     var nameEl  = document.getElementById(sc + "-username");
     var badgeEl = document.getElementById(sc + "-role-badge");
     if (nameEl)  nameEl.textContent = name;
@@ -5661,6 +5812,8 @@ function renderMenu() {
     { icon: "&#x1F517;", titleKey: "mi_component_compat_title", descKey: "mi_component_compat_desc", action: "component-compat-mgmt", available: canManageComponentCompatibility() },
     { icon: "&#x1F4B0;", titleKey: "sales_pricing_title", descKey: "sales_pricing_mgmt_desc", action: "sales-pricing-mgmt", available: canViewSalesPricing() },
     { icon: "&#x1F6D2;", titleKey: "mi_purchase_mgmt_title", descKey: "mi_purchase_mgmt_desc", action: "purchase-mgmt", available: canViewPurchaseMgmt() },
+  shippingRateRows = [];
+  shippingRateLoadSeq += 1;
     { icon: "&#x1F4CA;", titleKey: "mi_report_title", descKey: "mi_report_desc", action: "manufacturing-ranking-report", available: canViewManufacturingReport() },
     { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canManageCompatibility() },
     { icon: "&#x2699;", titleKey: "mi_api_settings_title", descKey: "mi_api_settings_desc", action: "api-settings", available: canManageSharedSettings() },
@@ -5690,6 +5843,7 @@ function renderMenu() {
 
   var html = "";
   html += "<section class=\"menu-section\">";
+    { icon: "&#x1F69A;", titleKey: "mi_shipping_title", descKey: "mi_shipping_desc", action: "shipping-rate-mgmt", available: canManageShippingRates() },
   html += "<div class=\"menu-section-head\"><h3 class=\"menu-section-title\">" + t("menu_section_main_title") + "</h3><span class=\"menu-section-note\">" + t("menu_section_main_note") + "</span></div>";
   html += "<div class=\"menu-card-grid\">";
   mainItems.forEach(function(item) { html += renderCard(item); });
@@ -5749,8 +5903,9 @@ function renderCustomerExperienceHeaders() {
   var fallbackName = userProfile.name || (userProfile.email || "").split("@")[0];
   var name = customerModeReady ? (customer.customer_name || fallbackName) : fallbackName;
   var label = customerModeReady ? accessRoleLabel("customer_viewer") : currentRoleDisplayLabel();
+      else if (card.dataset.action === "shipping-rate-mgmt") enterShippingRateMgmt();
   var cls = customerModeReady ? "role-viewer" : roleClass(userProfile.role);
-  ["customer-portal", "customer-catalog", "customer-users"].forEach(function(prefix) {
+  ["customer-portal", "customer-shipping", "customer-catalog", "customer-users"].forEach(function(prefix) {
     var nameEl = document.getElementById(prefix + "-username");
     var badgeEl = document.getElementById(prefix + "-role-badge");
     if (nameEl) nameEl.textContent = name;
@@ -6641,6 +6796,375 @@ async function enterProductionSearch() {
   productionCategoryFilter = "all";
   productionSearchLimit = SEARCH_INITIAL_LIMIT;
   productionLoaded = false;
+// =============================================
+// 送料一覧・送料マスタ
+// =============================================
+function shippingPrefectureLabel(code) {
+  var numericCode = parseInt(code, 10);
+  var row = SHIPPING_PREFECTURES.find(function(item) { return item[0] === numericCode; });
+  if (!row) return "-";
+  if (currentLang === "en") return row[2];
+  if (currentLang === "zh") return row[3];
+  return row[1];
+}
+
+function shippingPrefectureOptionsHtml(selected, includeAll) {
+  selected = String(selected == null ? "" : selected);
+  var html = includeAll ? "<option value='all'>" + esc(t("shipping_all_prefectures")) + "</option>" : "";
+  SHIPPING_PREFECTURES.forEach(function(row) {
+    var value = String(row[0]);
+    html += "<option value='" + value + "'" + (value === selected ? " selected" : "") + ">" + esc(shippingPrefectureLabel(row[0])) + "</option>";
+  });
+  return html;
+}
+
+function populateShippingPrefectureSelects() {
+  [
+    ["customer-shipping-prefecture", true],
+    ["shipping-rate-prefecture-filter", true],
+    ["shipping-rate-prefecture", false]
+  ].forEach(function(config) {
+    var select = document.getElementById(config[0]);
+    if (!select) return;
+    var selected = select.value || (config[1] ? "all" : "1");
+    select.innerHTML = shippingPrefectureOptionsHtml(selected, config[1]);
+    if (Array.from(select.options).some(function(option) { return option.value === selected; })) select.value = selected;
+  });
+}
+
+function shippingCarrierNames() {
+  var seen = {};
+  return shippingRateRows.map(function(row) { return String(row.carrier_name || "").trim(); }).filter(function(name) {
+    if (!name || seen[name]) return false;
+    seen[name] = true;
+    return true;
+  }).sort(function(a, b) { return a.localeCompare(b, "ja"); });
+}
+
+function populateShippingCarrierSelects() {
+  var carriers = shippingCarrierNames();
+  ["customer-shipping-carrier", "shipping-rate-carrier-filter"].forEach(function(id) {
+    var select = document.getElementById(id);
+    if (!select) return;
+    var selected = select.value || "all";
+    var html = "<option value='all'>" + esc(t("shipping_all_carriers")) + "</option>";
+    carriers.forEach(function(name) {
+      html += "<option value='" + esc(name) + "'>" + esc(name) + "</option>";
+    });
+    select.innerHTML = html;
+    select.value = carriers.indexOf(selected) >= 0 ? selected : "all";
+  });
+  var datalist = document.getElementById("shipping-rate-carrier-list");
+  if (datalist) datalist.innerHTML = carriers.map(function(name) { return "<option value='" + esc(name) + "'></option>"; }).join("");
+}
+
+function shippingFeeHtml(value) {
+  if (value === null || value === undefined || value === "") {
+    return "<span class='shipping-rate-fee pending'>" + esc(t("shipping_inquiry")) + "</span>";
+  }
+  var amount = parseInt(value, 10);
+  if (isNaN(amount)) return "<span class='shipping-rate-fee pending'>" + esc(t("shipping_inquiry")) + "</span>";
+  return "<span class='shipping-rate-fee'>¥" + esc(amount.toLocaleString("ja-JP")) + "</span>";
+}
+
+function shippingRateCell(labelKey, content, className) {
+  var cellClass = className || "customer-shipping-cell";
+  var labelClass = cellClass === "shipping-rate-mgmt-cell" ? "shipping-rate-cell-label" : "customer-shipping-mobile-label";
+  return "<div class='" + esc(cellClass) + "'><span class='" + labelClass + "'>" + esc(t(labelKey)) + "</span>" + content + "</div>";
+}
+
+function sortedShippingRows(rows) {
+  return (rows || []).slice().sort(function(a, b) {
+    var orderDiff = (parseInt(a.display_order, 10) || 0) - (parseInt(b.display_order, 10) || 0);
+    if (orderDiff) return orderDiff;
+    var carrierDiff = String(a.carrier_name || "").localeCompare(String(b.carrier_name || ""), "ja");
+    if (carrierDiff) return carrierDiff;
+    return (parseInt(a.prefecture_code, 10) || 0) - (parseInt(b.prefecture_code, 10) || 0);
+  });
+}
+
+function filteredShippingRows(prefectureId, carrierId, statusId) {
+  var prefecture = (document.getElementById(prefectureId) || {}).value || "all";
+  var carrier = (document.getElementById(carrierId) || {}).value || "all";
+  var status = statusId ? ((document.getElementById(statusId) || {}).value || "all") : "active";
+  return sortedShippingRows(shippingRateRows.filter(function(row) {
+    if (prefecture !== "all" && String(row.prefecture_code) !== prefecture) return false;
+    if (carrier !== "all" && String(row.carrier_name || "") !== carrier) return false;
+    if (status === "active" && row.is_active === false) return false;
+    if (status === "inactive" && row.is_active !== false) return false;
+    return true;
+  }));
+}
+
+async function enterCustomerShipping() {
+  if (!canViewCustomerShippingRates()) {
+    showPermissionDenied("open_customer_shipping", "customer_shipping_rates");
+    return;
+  }
+  customerPortalSearchActive = false;
+  showScreen("customer-shipping");
+  renderCustomerExperienceHeaders();
+  populateShippingPrefectureSelects();
+  var prefecture = document.getElementById("customer-shipping-prefecture");
+  var carrier = document.getElementById("customer-shipping-carrier");
+  if (prefecture) prefecture.value = "all";
+  if (carrier) carrier.value = "all";
+  await loadCustomerShippingRates();
+}
+
+function returnToCustomerPortalFromShipping() {
+  showScreen("customer-portal");
+  renderCustomerPortal();
+}
+
+async function loadCustomerShippingRates() {
+  var requestSeq = ++shippingRateLoadSeq;
+  var host = document.getElementById("customer-shipping-list");
+  if (host) host.innerHTML = "<div class='customer-shipping-empty'>" + esc(t("loading")) + "</div>";
+  var result = await sb.from("customer_shipping_rates")
+    .select("shipping_rate_id,carrier_name,prefecture_code,standard_fee_jpy,remote_island_fee_jpy,remote_island_condition,note,display_order,is_active")
+    .eq("is_active", true)
+    .order("display_order", { ascending: true })
+    .order("carrier_name", { ascending: true })
+    .order("prefecture_code", { ascending: true })
+    .limit(1000);
+  if (requestSeq !== shippingRateLoadSeq) return;
+  if (result.error) {
+    console.warn("customer shipping rates lookup failed", result.error);
+    shippingRateRows = [];
+    renderCustomerShippingRates(true);
+    return;
+  }
+  shippingRateRows = result.data || [];
+  populateShippingCarrierSelects();
+  renderCustomerShippingRates();
+}
+
+function renderCustomerShippingRates(loadError) {
+  var host = document.getElementById("customer-shipping-list");
+  var count = document.getElementById("customer-shipping-count");
+  if (!host) return;
+  if (loadError) {
+    if (count) count.textContent = "-";
+    host.innerHTML = "<div class='customer-shipping-empty save-err'>" + esc(t("shipping_load_error")) + "</div>";
+    return;
+  }
+  var rows = filteredShippingRows("customer-shipping-prefecture", "customer-shipping-carrier");
+  if (count) count.textContent = tf("customer_catalog_count", { n: rows.length });
+  if (!rows.length) {
+    host.innerHTML = "<div class='customer-shipping-empty'>" + esc(t("shipping_no_rates")) + "</div>";
+    return;
+  }
+  var html = "<div class='customer-shipping-head'>" +
+    "<span>" + esc(t("shipping_carrier")) + "</span>" +
+    "<span>" + esc(t("shipping_prefecture")) + "</span>" +
+    "<span>" + esc(t("shipping_standard_fee")) + "</span>" +
+    "<span>" + esc(t("shipping_island_fee")) + "</span>" +
+    "<span>" + esc(t("shipping_island_condition")) + "</span>" +
+    "<span>" + esc(t("shipping_note")) + "</span></div>";
+  rows.forEach(function(row) {
+    html += "<div class='customer-shipping-row'>";
+    html += shippingRateCell("shipping_carrier", "<strong>" + esc(row.carrier_name || "-") + "</strong>");
+    html += shippingRateCell("shipping_prefecture", "<strong>" + esc(shippingPrefectureLabel(row.prefecture_code)) + "</strong>");
+    html += shippingRateCell("shipping_standard_fee", shippingFeeHtml(row.standard_fee_jpy));
+    html += shippingRateCell("shipping_island_fee", shippingFeeHtml(row.remote_island_fee_jpy));
+    html += shippingRateCell("shipping_island_condition", esc(row.remote_island_condition || "-"));
+    html += shippingRateCell("shipping_note", esc(row.note || "-"));
+    html += "</div>";
+  });
+  host.innerHTML = html;
+}
+
+async function enterShippingRateMgmt() {
+  if (!canManageShippingRates()) {
+    showPermissionDenied("open_shipping_rate_management", "customer_shipping_rates");
+    return;
+  }
+  showScreen("shipping-rate-mgmt");
+  populateShippingPrefectureSelects();
+  var prefecture = document.getElementById("shipping-rate-prefecture-filter");
+  var carrier = document.getElementById("shipping-rate-carrier-filter");
+  var status = document.getElementById("shipping-rate-status-filter");
+  if (prefecture) prefecture.value = "all";
+  if (carrier) carrier.value = "all";
+  if (status) status.value = "all";
+  await loadShippingRateMgmt();
+}
+
+async function loadShippingRateMgmt() {
+  if (!canManageShippingRates()) return;
+  var requestSeq = ++shippingRateLoadSeq;
+  var host = document.getElementById("shipping-rate-list");
+  if (host) host.innerHTML = "<div class='empty'>" + esc(t("loading")) + "</div>";
+  var result = await sb.from("customer_shipping_rates")
+    .select("shipping_rate_id,carrier_name,prefecture_code,standard_fee_jpy,remote_island_fee_jpy,remote_island_condition,note,display_order,is_active,updated_at")
+    .order("display_order", { ascending: true })
+    .order("carrier_name", { ascending: true })
+    .order("prefecture_code", { ascending: true })
+    .limit(1000);
+  if (requestSeq !== shippingRateLoadSeq) return;
+  if (result.error) {
+    console.warn("shipping rate management lookup failed", result.error);
+    shippingRateRows = [];
+    renderShippingRateMgmt(true);
+    return;
+  }
+  shippingRateRows = result.data || [];
+  populateShippingCarrierSelects();
+  renderShippingRateMgmt();
+}
+
+function renderShippingRateMgmt(loadError) {
+  var host = document.getElementById("shipping-rate-list");
+  var count = document.getElementById("shipping-rate-count");
+  if (!host) return;
+  if (loadError) {
+    if (count) count.textContent = "-";
+    host.innerHTML = "<div class='empty save-err'>" + esc(t("shipping_load_error")) + "</div>";
+    return;
+  }
+  var rows = filteredShippingRows("shipping-rate-prefecture-filter", "shipping-rate-carrier-filter", "shipping-rate-status-filter");
+  if (count) count.textContent = tf("customer_catalog_count", { n: rows.length });
+  if (!rows.length) {
+    host.innerHTML = "<div class='empty'>" + esc(t("shipping_no_rates")) + "</div>";
+    return;
+  }
+  var headers = ["shipping_carrier", "shipping_prefecture", "shipping_standard_fee", "shipping_island_fee", "shipping_island_condition", "shipping_note", "shipping_status", "actions"];
+  var html = "<div class='shipping-rate-mgmt-head'>" + headers.map(function(key) { return "<span>" + esc(t(key)) + "</span>"; }).join("") + "</div>";
+  rows.forEach(function(row) {
+    var active = row.is_active !== false;
+    var rowId = esc(String(row.shipping_rate_id));
+    html += "<div class='shipping-rate-mgmt-row" + (active ? "" : " inactive") + "'>";
+    html += shippingRateCell("shipping_carrier", "<strong>" + esc(row.carrier_name || "-") + "</strong>", "shipping-rate-mgmt-cell");
+    html += shippingRateCell("shipping_prefecture", "<strong>" + esc(shippingPrefectureLabel(row.prefecture_code)) + "</strong>", "shipping-rate-mgmt-cell");
+    html += shippingRateCell("shipping_standard_fee", shippingFeeHtml(row.standard_fee_jpy), "shipping-rate-mgmt-cell");
+    html += shippingRateCell("shipping_island_fee", shippingFeeHtml(row.remote_island_fee_jpy), "shipping-rate-mgmt-cell");
+    html += shippingRateCell("shipping_island_condition", esc(row.remote_island_condition || "-"), "shipping-rate-mgmt-cell");
+    html += shippingRateCell("shipping_note", esc(row.note || "-"), "shipping-rate-mgmt-cell");
+    html += shippingRateCell("shipping_status", "<span class='shipping-rate-status" + (active ? "" : " inactive") + "'>" + esc(active ? t("shipping_active") : t("shipping_inactive")) + "</span>", "shipping-rate-mgmt-cell");
+    html += shippingRateCell("actions", "<div class='shipping-rate-row-actions'><button class='btn-sm-edit' type='button' data-shipping-action='edit' data-shipping-id='" + rowId + "'>" + esc(t("btn_edit")) + "</button><button class='" + (active ? "btn-sm-del" : "btn-sm-edit") + "' type='button' data-shipping-action='toggle' data-shipping-id='" + rowId + "'>" + esc(active ? t("shipping_toggle_hide") : t("shipping_toggle_show")) + "</button></div>", "shipping-rate-mgmt-cell");
+    html += "</div>";
+  });
+  host.innerHTML = html;
+}
+
+function shippingRateById(id) {
+  return shippingRateRows.find(function(row) { return String(row.shipping_rate_id) === String(id); }) || null;
+}
+
+function openShippingRateForm(row) {
+  if (!canManageShippingRates()) return;
+  populateShippingPrefectureSelects();
+  populateShippingCarrierSelects();
+  row = row || null;
+  document.getElementById("shipping-rate-form-id").value = row ? row.shipping_rate_id : "";
+  document.getElementById("shipping-rate-form-title").textContent = t(row ? "shipping_edit" : "shipping_add");
+  document.getElementById("shipping-rate-carrier").value = row ? (row.carrier_name || "") : "";
+  document.getElementById("shipping-rate-prefecture").value = row ? String(row.prefecture_code) : "1";
+  document.getElementById("shipping-rate-standard-fee").value = row && row.standard_fee_jpy != null ? row.standard_fee_jpy : "";
+  document.getElementById("shipping-rate-island-fee").value = row && row.remote_island_fee_jpy != null ? row.remote_island_fee_jpy : "";
+  document.getElementById("shipping-rate-island-condition").value = row ? (row.remote_island_condition || "") : "";
+  document.getElementById("shipping-rate-note").value = row ? (row.note || "") : "";
+  document.getElementById("shipping-rate-display-order").value = row ? (parseInt(row.display_order, 10) || 0) : 0;
+  document.getElementById("shipping-rate-active").checked = row ? row.is_active !== false : true;
+  var message = document.getElementById("shipping-rate-form-message");
+  if (message) { message.className = "save-msg"; message.textContent = ""; }
+  document.getElementById("shipping-rate-form-overlay").classList.add("show");
+  document.getElementById("shipping-rate-carrier").focus();
+}
+
+function closeShippingRateForm() {
+  if (shippingRateFormSaving) return;
+  document.getElementById("shipping-rate-form-overlay").classList.remove("show");
+}
+
+function shippingOptionalAmount(id) {
+  var raw = String((document.getElementById(id) || {}).value || "").trim();
+  if (!raw) return { valid: true, value: null };
+  var value = Number(raw);
+  return { valid: Number.isInteger(value) && value >= 0, value: value };
+}
+
+function setShippingRateFormMessage(message, isError) {
+  var el = document.getElementById("shipping-rate-form-message");
+  if (!el) return;
+  el.className = "save-msg " + (isError ? "save-err" : "save-ok");
+  el.textContent = message || "";
+}
+
+function setShippingRateMgmtMessage(message, isError) {
+  var el = document.getElementById("shipping-rate-mgmt-message");
+  if (!el) return;
+  el.className = "save-msg shipping-rate-mgmt-message " + (isError ? "save-err" : "save-ok");
+  el.textContent = message || "";
+}
+
+async function saveShippingRate() {
+  if (!canManageShippingRates() || shippingRateFormSaving) return;
+  var id = String(document.getElementById("shipping-rate-form-id").value || "").trim();
+  var carrier = String(document.getElementById("shipping-rate-carrier").value || "").trim();
+  var prefectureCode = parseInt(document.getElementById("shipping-rate-prefecture").value, 10);
+  var standardFee = shippingOptionalAmount("shipping-rate-standard-fee");
+  var islandFee = shippingOptionalAmount("shipping-rate-island-fee");
+  var islandCondition = String(document.getElementById("shipping-rate-island-condition").value || "").trim();
+  var note = String(document.getElementById("shipping-rate-note").value || "").trim();
+  var displayOrder = Number(String(document.getElementById("shipping-rate-display-order").value || "0").trim());
+  var hasContent = standardFee.value != null || islandFee.value != null || islandCondition || note;
+  if (!carrier || carrier.length > 120 || prefectureCode < 1 || prefectureCode > 47 || !standardFee.valid || !islandFee.valid || !Number.isInteger(displayOrder) || !hasContent) {
+    setShippingRateFormMessage(t("shipping_validation_error"), true);
+    return;
+  }
+  var payload = {
+    carrier_name: carrier,
+    prefecture_code: prefectureCode,
+    standard_fee_jpy: standardFee.value,
+    remote_island_fee_jpy: islandFee.value,
+    remote_island_condition: islandCondition || null,
+    note: note || null,
+    display_order: displayOrder,
+    is_active: document.getElementById("shipping-rate-active").checked,
+    updated_at: new Date().toISOString(),
+    updated_by: currentUser ? currentUser.id : null
+  };
+  shippingRateFormSaving = true;
+  var saveButton = document.getElementById("btn-shipping-rate-save");
+  if (saveButton) saveButton.disabled = true;
+  var result;
+  if (id) {
+    result = await sb.from("customer_shipping_rates").update(payload).eq("shipping_rate_id", id).select("shipping_rate_id").maybeSingle();
+  } else {
+    payload.created_by = currentUser ? currentUser.id : null;
+    result = await sb.from("customer_shipping_rates").insert(payload).select("shipping_rate_id").single();
+  }
+  shippingRateFormSaving = false;
+  if (saveButton) saveButton.disabled = false;
+  if (result.error) {
+    console.warn("shipping rate save failed", result.error);
+    setShippingRateFormMessage(result.error.code === "23505" ? t("shipping_duplicate_error") : t("shipping_update_failed"), true);
+    return;
+  }
+  document.getElementById("shipping-rate-form-overlay").classList.remove("show");
+  setShippingRateMgmtMessage(t("shipping_save_success"), false);
+  await loadShippingRateMgmt();
+}
+
+async function toggleShippingRateVisibility(row) {
+  if (!canManageShippingRates() || !row) return;
+  var nextActive = row.is_active === false;
+  var result = await sb.from("customer_shipping_rates").update({
+    is_active: nextActive,
+    updated_at: new Date().toISOString(),
+    updated_by: currentUser ? currentUser.id : null
+  }).eq("shipping_rate_id", row.shipping_rate_id).select("shipping_rate_id").maybeSingle();
+  if (result.error) {
+    console.warn("shipping rate visibility update failed", result.error);
+    setShippingRateMgmtMessage(t("shipping_update_failed"), true);
+    return;
+  }
+  setShippingRateMgmtMessage(t("shipping_save_success"), false);
+  await loadShippingRateMgmt();
+}
+
   currentProductionRow = null;
   var qEl = document.getElementById("production-q");
   if (qEl) qEl.value = "";
@@ -32579,7 +33103,7 @@ document.getElementById("btn-back-to-login").addEventListener("click", function(
 document.getElementById("btn-submit-reg").addEventListener("click", doRegister);
 document.getElementById("reg-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doRegister(); });
 document.getElementById("login-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
-["btn-logout-menu","btn-logout-customer-portal","btn-logout-customer-users","btn-logout-customer-catalog","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-component-compat-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-manufacturing-cost-mgmt","btn-logout-finished-label-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
+["btn-logout-menu","btn-logout-customer-portal","btn-logout-customer-shipping","btn-logout-customer-users","btn-logout-customer-catalog","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-shipping-rate-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-component-compat-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-manufacturing-cost-mgmt","btn-logout-finished-label-mgmt","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
 document.getElementById("customer-portal-search-btn").addEventListener("click", function(){ openCustomerPortalSearch(false); });
 document.getElementById("customer-portal-all-btn").addEventListener("click", function(){ openCustomerPortalSearch(true); });
 document.getElementById("customer-portal-q").addEventListener("keydown", function(e){ if (e.key === "Enter") openCustomerPortalSearch(false); });
@@ -32704,6 +33228,15 @@ if (componentAltReplacementRateEl) {
   });
   componentAltReplacementRateEl.addEventListener("input", function() {
     normalizeComponentAlternativeReplacementRateElement(false);
+document.getElementById("customer-portal-shipping").addEventListener("click", enterCustomerShipping);
+document.getElementById("btn-back-customer-shipping").addEventListener("click", returnToCustomerPortalFromShipping);
+document.getElementById("customer-shipping-prefecture").addEventListener("change", renderCustomerShippingRates);
+document.getElementById("customer-shipping-carrier").addEventListener("change", renderCustomerShippingRates);
+document.getElementById("customer-shipping-reset").addEventListener("click", function() {
+  document.getElementById("customer-shipping-prefecture").value = "all";
+  document.getElementById("customer-shipping-carrier").value = "all";
+  renderCustomerShippingRates();
+});
   });
   componentAltReplacementRateEl.addEventListener("change", function() {
     normalizeComponentAlternativeReplacementRateElement(false);
@@ -32846,6 +33379,7 @@ document.getElementById("pf-category").addEventListener("change", applySpecFormC
 document.getElementById("btn-core-list-mode-collection").addEventListener("click", function(){ setCoreListMode("collection"); });
 document.getElementById("btn-core-list-mode-inventory").addEventListener("click", function(){ setCoreListMode("inventory"); });
 document.getElementById("btn-add-core-collection").addEventListener("click", function(){ openCoreCollectionForm("add"); });
+document.getElementById("btn-back-shipping-rate-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-add-core-list").addEventListener("click", function(){ openCoreListForm("add"); });
 document.getElementById("btn-create-core-list-from-ranking").addEventListener("click", createCoreListFromRanking);
 document.getElementById("btn-export-core-collection").addEventListener("click", exportCoreCollectionCsv);
@@ -33169,6 +33703,22 @@ document.getElementById("ec-category-target-category").addEventListener("change"
       setRakutenStatus(tf("ec_category_target_failed", { error: err.message || err }), true);
     });
   });
+});
+document.getElementById("shipping-rate-prefecture-filter").addEventListener("change", renderShippingRateMgmt);
+document.getElementById("shipping-rate-carrier-filter").addEventListener("change", renderShippingRateMgmt);
+document.getElementById("shipping-rate-status-filter").addEventListener("change", renderShippingRateMgmt);
+document.getElementById("btn-new-shipping-rate").addEventListener("click", function() { openShippingRateForm(null); });
+document.getElementById("btn-shipping-rate-cancel").addEventListener("click", closeShippingRateForm);
+document.getElementById("btn-shipping-rate-save").addEventListener("click", saveShippingRate);
+document.getElementById("shipping-rate-form-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeShippingRateForm();
+});
+document.getElementById("shipping-rate-list").addEventListener("click", function(e) {
+  var button = e.target.closest("[data-shipping-action][data-shipping-id]");
+  if (!button) return;
+  var row = shippingRateById(button.dataset.shippingId);
+  if (button.dataset.shippingAction === "edit") openShippingRateForm(row);
+  else if (button.dataset.shippingAction === "toggle") toggleShippingRateVisibility(row);
 });
 document.getElementById("btn-ec-save-targets").addEventListener("click", function(){
   saveEcMallTargets({ conditionsOnly: true }).catch(function(e) {
