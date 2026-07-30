@@ -849,6 +849,12 @@ var TRANSLATIONS = {
     customer_access_show_zero_price: "0円の価格も表示",
     customer_access_priced_only: "販売価格がある商品だけ表示",
     customer_access_show_no_price: "価格未設定の商品も表示",
+    customer_access_price_list: "価格表を印刷・PDF保存",
+    customer_access_price_list_loading: "価格表を作成中...",
+    customer_access_price_list_empty: "価格設定済みの商品がありません。",
+    customer_access_price_list_unsaved: "表示設定または価格ランクに未保存の変更があります。先に変更を保存してください。",
+    customer_access_price_list_popup_blocked: "価格表を開けませんでした。ポップアップを許可してください。",
+    customer_access_price_list_failed: "価格表を作成できませんでした。",
     customer_access_scope: "範囲",
     customer_access_scope_all: "全商品",
     customer_access_scope_category: "カテゴリ",
@@ -2173,6 +2179,12 @@ var TRANSLATIONS = {
     customer_access_show_zero_price: "Show zero-yen prices",
     customer_access_priced_only: "Show only products with sales price",
     customer_access_show_no_price: "Show products without price",
+    customer_access_price_list: "Print / Save Price List as PDF",
+    customer_access_price_list_loading: "Preparing price list...",
+    customer_access_price_list_empty: "No products have a configured price.",
+    customer_access_price_list_unsaved: "Display settings or the price rank have unsaved changes. Save the changes first.",
+    customer_access_price_list_popup_blocked: "Could not open the price list. Allow pop-ups and try again.",
+    customer_access_price_list_failed: "Could not create the price list.",
     customer_access_scope: "Scope",
     customer_access_scope_all: "All products",
     customer_access_scope_category: "Category",
@@ -3490,6 +3502,12 @@ var TRANSLATIONS = {
     customer_access_show_zero_price: "显示0日元价格",
     customer_access_priced_only: "仅显示有销售价格的商品",
     customer_access_show_no_price: "显示未设置价格的商品",
+    customer_access_price_list: "打印价格表／保存PDF",
+    customer_access_price_list_loading: "正在生成价格表...",
+    customer_access_price_list_empty: "没有已设置价格的商品。",
+    customer_access_price_list_unsaved: "显示设置或价格等级有未保存的更改。请先保存更改。",
+    customer_access_price_list_popup_blocked: "无法打开价格表。请允许弹出窗口。",
+    customer_access_price_list_failed: "无法生成价格表。",
     customer_access_scope: "范围",
     customer_access_scope_all: "全部商品",
     customer_access_scope_category: "类别",
@@ -4080,7 +4098,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.600";
+var APP_VERSION       = "v1.1.601";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -30301,6 +30319,177 @@ function customerAccessRankOptionsHtml(selected) {
   }).join("");
 }
 
+async function loadCustomerPriceListBaseRows() {
+  var rows = [];
+  var pageSize = 1000;
+  for (var from = 0; ; from += pageSize) {
+    var r = await sb.from("product_base_prices")
+      .select("id,dkd_shohin_id,product_kind,product_variant_id,base_price_jpy,tax_included,effective_start,updated_at")
+      .eq("is_current", true)
+      .order("id", { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (r.error) throw r.error;
+    var page = r.data || [];
+    rows = rows.concat(page);
+    if (page.length < pageSize) break;
+  }
+  return rows;
+}
+
+async function loadCustomerPriceListProductMap(ids) {
+  var map = {};
+  var numericIds = Array.from(new Set((ids || []).map(function(id) {
+    var value = parseInt(id, 10);
+    return isNaN(value) ? null : value;
+  }).filter(function(id) { return id !== null; })));
+  for (var i = 0; i < numericIds.length; i += 150) {
+    var r = await sb.from("core_products")
+      .select("dkd_shohin_id,category_code,category,gltek_part_number,daiko_part_number,genuine_part_number,genuine_part_number_2,manufacturer_part_number,manufacturer")
+      .in("dkd_shohin_id", numericIds.slice(i, i + 150));
+    if (r.error) throw r.error;
+    (r.data || []).forEach(function(product) {
+      map[String(product.dkd_shohin_id)] = product;
+    });
+  }
+  return map;
+}
+
+function customerPriceListRank(customer) {
+  var code = String((customer && customer.price_rank_code) || "");
+  return (customerAccessPriceRanks || []).find(function(rank) {
+    return String(rank.rank_code || "") === code;
+  }) || {};
+}
+
+function customerPriceListSortRows(rows) {
+  var categoryOrder = {};
+  (categoryOptions || []).forEach(function(category, index) {
+    categoryOrder[String(category.category_code || category.category || "")] = index;
+  });
+  return (rows || []).slice().sort(function(a, b) {
+    var categoryA = String(a.product.category_code || a.product.category || "");
+    var categoryB = String(b.product.category_code || b.product.category || "");
+    var orderA = Object.prototype.hasOwnProperty.call(categoryOrder, categoryA) ? categoryOrder[categoryA] : 9999;
+    var orderB = Object.prototype.hasOwnProperty.call(categoryOrder, categoryB) ? categoryOrder[categoryB] : 9999;
+    if (orderA !== orderB) return orderA - orderB;
+    return [
+      a.product.gltek_part_number || a.product.daiko_part_number || "",
+      a.product.genuine_part_number || "",
+      a.product.manufacturer_part_number || "",
+      normalizeProductKind(a.price.product_kind)
+    ].join("|").localeCompare([
+      b.product.gltek_part_number || b.product.daiko_part_number || "",
+      b.product.genuine_part_number || "",
+      b.product.manufacturer_part_number || "",
+      normalizeProductKind(b.price.product_kind)
+    ].join("|"), "ja");
+  });
+}
+
+async function loadCustomerPriceListRows(customer, context) {
+  context = context || {};
+  await ensureCustomerAccessPriceRanks();
+  var priceRows = await loadCustomerPriceListBaseRows();
+  var productMap = await loadCustomerPriceListProductMap(priceRows.map(function(row) { return row.dkd_shohin_id; }));
+  var settings = Object.assign(defaultCustomerDisplaySettings(), context.settings || customerAccessSettings || {});
+  var visibilityRows = context.visibilityRows || customerAccessVisibilityRows || [];
+  var rank = customerPriceListRank(customer);
+  var grouped = {};
+  priceRows.forEach(function(price) {
+    var product = productMap[String(price.dkd_shohin_id || "")];
+    if (!product) return;
+    var category = String(product.category_code || product.category || "");
+    if (!customerCategoryIsVisible(category, visibilityRows)) return;
+    var salesPrice = calculateSalesPriceClient(price.base_price_jpy, rank);
+    if (salesPrice === null || (salesPrice === 0 && !settings.show_zero_price)) return;
+    var key = String(price.dkd_shohin_id) + "|" + normalizeProductKind(price.product_kind);
+    var previous = grouped[key];
+    if (!previous || (previous.price.product_variant_id && !price.product_variant_id)) {
+      grouped[key] = { product: product, price: price, salesPrice: salesPrice };
+    }
+  });
+  return customerPriceListSortRows(Object.keys(grouped).map(function(key) { return grouped[key]; }));
+}
+
+function customerPriceListPartNumbers(product) {
+  return uniqueTextValues([
+    product && product.genuine_part_number,
+    product && product.genuine_part_number_2
+  ]).join(" / ") || "-";
+}
+
+function buildCustomerPriceListHtml(customer, rows) {
+  var issuedAt = new Date().toLocaleDateString("ja-JP");
+  var rank = customerPriceListRank(customer);
+  var rankLabel = salesRankDisplayName(rank);
+  if (customer.price_rank_code && rankLabel !== customer.price_rank_code) rankLabel += " / " + customer.price_rank_code;
+  var body = rows.map(function(row, index) {
+    var product = row.product || {};
+    var price = row.price || {};
+    return "<tr>" +
+      "<td class='number-cell'>" + esc(String(index + 1)) + "</td>" +
+      "<td>" + esc(tCat(product.category_code || product.category || "")) + "</td>" +
+      "<td>" + esc(productKindLabel(price.product_kind)) + "</td>" +
+      "<td class='part-number'>" + esc(product.gltek_part_number || "-") + "</td>" +
+      "<td class='part-number'>" + esc(product.daiko_part_number || "-") + "</td>" +
+      "<td class='part-number'>" + esc(customerPriceListPartNumbers(product)) + "</td>" +
+      "<td class='part-number'>" + esc(product.manufacturer_part_number || "-") + "</td>" +
+      "<td>" + esc(product.manufacturer || "-") + "</td>" +
+      "<td class='price-cell'><strong>¥" + esc(formatYen(row.salesPrice)) + "</strong><small>" + esc(price.tax_included ? "税込" : "税抜") + "</small></td>" +
+      "<td class='memo-cell'></td>" +
+    "</tr>";
+  }).join("");
+  return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><meta name='referrer' content='no-referrer'><title>" + esc(customer.customer_name || "得意先") + " 価格表</title>" +
+    "<link rel='stylesheet' href='customer-price-list-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'>" +
+    "</head><body><div class='toolbar'><button id='dcats-print-customer-price-list' type='button'>印刷・PDF保存</button><button class='secondary' id='dcats-close-customer-price-list' type='button'>閉じる</button></div>" +
+    "<main class='sheet'><header class='document-head'><div><h1>販売価格表</h1><p>Daiko Catalog &amp; Search System</p></div><div class='issue-date'>発行日<br><strong>" + esc(issuedAt) + "</strong></div></header>" +
+    "<section class='customer-summary'><div><span>得意先コード</span><strong>" + esc(customer.source_customer_code || "-") + "</strong></div><div><span>得意先名</span><strong>" + esc(customer.customer_name || "-") + "</strong></div><div><span>価格ランク</span><strong>" + esc(rankLabel || customer.price_rank_code || "-") + "</strong></div><div><span>掲載件数</span><strong>" + esc(String(rows.length)) + " 件</strong></div></section>" +
+    "<table class='price-list'><thead><tr><th>No.</th><th>カテゴリ</th><th>商品区分</th><th>G品番</th><th>大光品番</th><th>純正品番</th><th>メーカー品番</th><th>メーカー</th><th>販売価格</th><th>メモ</th></tr></thead><tbody>" + body + "</tbody></table>" +
+    "<footer><span>表示カテゴリと価格ランクは発行時点の得意先設定を使用しています。</span><span>価格・仕様は予告なく変更する場合があります。</span></footer></main></body></html>";
+}
+
+function writeCustomerPriceListWindow(win, html) {
+  if (!win || win.closed) return false;
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+  var printButton = win.document.getElementById("dcats-print-customer-price-list");
+  if (printButton) printButton.addEventListener("click", function() { win.print(); });
+  var closeButton = win.document.getElementById("dcats-close-customer-price-list");
+  if (closeButton) closeButton.addEventListener("click", function() { win.close(); });
+  return true;
+}
+
+async function openCustomerPriceList() {
+  if (!canManageCustomerAccess() || !currentCustomerAccessCustomer) { alert(t("err_perm")); return; }
+  if (customerAccessHasUnsavedChanges()) { alert(t("customer_access_price_list_unsaved")); return; }
+  var button = document.getElementById("btn-customer-price-list");
+  var originalText = button ? button.textContent : "";
+  var win = window.open("", "_blank");
+  if (!win) { alert(t("customer_access_price_list_popup_blocked")); return; }
+  try { win.opener = null; } catch (e) { /* Browser controls the opener relationship. */ }
+  if (button) { button.disabled = true; button.textContent = t("customer_access_price_list_loading"); }
+  writeCustomerPriceListWindow(win, "<!doctype html><html lang='ja'><head><meta charset='utf-8'><link rel='stylesheet' href='customer-price-list-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></head><body><main class='message-page'>" + esc(t("customer_access_price_list_loading")) + "</main></body></html>");
+  try {
+    var customer = Object.assign({}, currentCustomerAccessCustomer);
+    var priceListContext = {
+      settings: Object.assign({}, customerAccessSettings || {}),
+      visibilityRows: (customerAccessVisibilityRows || []).map(function(row) { return Object.assign({}, row); })
+    };
+    var rows = await loadCustomerPriceListRows(customer, priceListContext);
+    if (!rows.length) {
+      writeCustomerPriceListWindow(win, "<!doctype html><html lang='ja'><head><meta charset='utf-8'><link rel='stylesheet' href='customer-price-list-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></head><body><div class='toolbar'><button class='secondary' id='dcats-close-customer-price-list' type='button'>閉じる</button></div><main class='message-page'>" + esc(t("customer_access_price_list_empty")) + "</main></body></html>");
+      return;
+    }
+    writeCustomerPriceListWindow(win, buildCustomerPriceListHtml(customer, rows));
+  } catch (e) {
+    console.warn("customer price list failed", e);
+    if (!win.closed) writeCustomerPriceListWindow(win, "<!doctype html><html lang='ja'><head><meta charset='utf-8'><link rel='stylesheet' href='customer-price-list-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></head><body><div class='toolbar'><button class='secondary' id='dcats-close-customer-price-list' type='button'>閉じる</button></div><main class='message-page error'>" + esc(t("customer_access_price_list_failed")) + "</main></body></html>");
+  } finally {
+    if (button && button.isConnected) { button.disabled = false; button.textContent = originalText || t("customer_access_price_list"); }
+  }
+}
+
 function customerAccessCategoryChecksHtml() {
   var rows = customerAccessVisibilityRows || [];
   var visibleCount = 0;
@@ -30337,6 +30526,7 @@ function renderCustomerAccessDetail() {
   html += "<div class='customer-access-stat'><div class='customer-access-stat-label'>" + esc(t("customer_access_status")) + "</div><div class='customer-access-stat-value'><span class='customer-access-status" + (customer.is_active === false ? " inactive" : "") + "'>" + esc(customer.is_active === false ? t("customer_access_inactive") : t("customer_access_active")) + "</span></div></div>";
   html += "</div>";
   html += "<div class='customer-access-management-actions'>";
+  html += "<button class='btn-primary' id='btn-customer-price-list' type='button'>" + esc(t("customer_access_price_list")) + "</button>";
   if (customer.is_active === false) {
     html += "<button class='btn-sm-edit' id='btn-customer-access-restore' type='button'>" + esc(t("customer_access_restore_customer")) + "</button>";
   } else {
@@ -30431,6 +30621,8 @@ function bindCustomerAccessDetailEvents() {
   });
   var rankSelect = document.getElementById("customer-access-rank-select");
   if (rankSelect) rankSelect.addEventListener("change", updateCustomerAccessSaveState);
+  var priceListBtn = document.getElementById("btn-customer-price-list");
+  if (priceListBtn) priceListBtn.addEventListener("click", openCustomerPriceList);
   var categoryAllBtn = document.getElementById("btn-customer-category-all");
   if (categoryAllBtn) categoryAllBtn.addEventListener("click", function() { setCustomerAccessCategoriesChecked(true); });
   var categoryNoneBtn = document.getElementById("btn-customer-category-none");

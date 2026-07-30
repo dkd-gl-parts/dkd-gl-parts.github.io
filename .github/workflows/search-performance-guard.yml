@@ -15,6 +15,8 @@ on:
       - "scripts/verify-ec-mall-seller-review.js"
       - "scripts/verify-customer-catalog-detail.js"
       - "scripts/verify-customer-category-visibility.js"
+      - "scripts/verify-customer-price-list.js"
+      - "customer-price-list-print.css"
       - "scripts/verify-manufacturing-cost-candidate-status.js"
       - "scripts/verify-manufacturing-cost-snapshot-status.js"
       - "scripts/verify-manufacturing-cost-target-removal.js"
@@ -35,6 +37,8 @@ on:
       - "scripts/verify-ec-mall-seller-review.js"
       - "scripts/verify-customer-catalog-detail.js"
       - "scripts/verify-customer-category-visibility.js"
+      - "scripts/verify-customer-price-list.js"
+      - "customer-price-list-print.css"
       - "scripts/verify-manufacturing-cost-candidate-status.js"
       - "scripts/verify-manufacturing-cost-snapshot-status.js"
       - "scripts/verify-manufacturing-cost-target-removal.js"
@@ -73,6 +77,8 @@ jobs:
         run: node scripts/verify-customer-catalog-detail.js
       - name: Verify customer category visibility
         run: node scripts/verify-customer-category-visibility.js
+      - name: Verify customer price list
+        run: node scripts/verify-customer-price-list.js
       - name: Verify manufacturing cost candidate status
         run: node scripts/verify-manufacturing-cost-candidate-status.js
       - name: Verify manufacturing cost snapshot status
