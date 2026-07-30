@@ -19,11 +19,11 @@ function expect(condition, message) {
   "calculateSalesPriceClient(price.base_price_jpy, rank)",
   "function buildCustomerPriceListHtml",
   "G品番",
-  "大光品番",
   "純正品番",
   "メーカー品番",
   "販売価格",
   "メモ",
+  "送料・消費税は別途となります。",
   "customerAccessHasUnsavedChanges()",
   "window.open(\"\", \"_blank\")",
   "win.print()",
@@ -31,7 +31,10 @@ function expect(condition, message) {
 ].forEach((fragment) => expect(app.includes(fragment), `customer price list wiring is missing: ${fragment}`));
 
 expect(!app.includes("esc(price.basis_note"), "internal price-basis notes must not be printed for customers");
-expect(/@page\s*{[^}]*size:\s*A4\s+landscape/i.test(css), "customer price list must use A4 landscape printing");
+expect(!app.includes("<th>大光品番</th>"), "Daiko part numbers must not be printed on customer price lists");
+expect(!app.includes("<span>得意先コード</span>"), "customer codes must not be printed on customer price lists");
+expect(!app.includes("<span>価格ランク</span>"), "price ranks must not be printed on customer price lists");
+expect(/@page\s*{[^}]*size:\s*A4\s+portrait/i.test(css), "customer price list must use A4 portrait printing");
 expect(css.includes(".price-list thead { display: table-header-group; }"), "price list headers must repeat on printed pages");
 expect(workflow.includes('run: node scripts/verify-customer-price-list.js'), "GitHub Actions must verify the customer price list");
 

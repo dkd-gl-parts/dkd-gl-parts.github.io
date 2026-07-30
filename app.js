@@ -4098,7 +4098,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.603";
+var APP_VERSION       = "v1.1.604";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -30379,7 +30379,7 @@ async function loadCustomerPriceListBaseRows() {
   var pageSize = 1000;
   for (var from = 0; ; from += pageSize) {
     var r = await sb.from("product_base_prices")
-      .select("id,dkd_shohin_id,product_kind,product_variant_id,base_price_jpy,tax_included,effective_start,updated_at")
+      .select("id,dkd_shohin_id,product_kind,product_variant_id,base_price_jpy,effective_start,updated_at")
       .eq("is_current", true)
       .order("id", { ascending: true })
       .range(from, from + pageSize - 1);
@@ -30399,7 +30399,7 @@ async function loadCustomerPriceListProductMap(ids) {
   }).filter(function(id) { return id !== null; })));
   for (var i = 0; i < numericIds.length; i += 150) {
     var r = await sb.from("core_products")
-      .select("dkd_shohin_id,category_code,category,gltek_part_number,daiko_part_number,genuine_part_number,genuine_part_number_2,manufacturer_part_number,manufacturer")
+      .select("dkd_shohin_id,category_code,category,gltek_part_number,genuine_part_number,genuine_part_number_2,manufacturer_part_number,manufacturer")
       .in("dkd_shohin_id", numericIds.slice(i, i + 150));
     if (r.error) throw r.error;
     (r.data || []).forEach(function(product) {
@@ -30428,12 +30428,12 @@ function customerPriceListSortRows(rows) {
     var orderB = Object.prototype.hasOwnProperty.call(categoryOrder, categoryB) ? categoryOrder[categoryB] : 9999;
     if (orderA !== orderB) return orderA - orderB;
     return [
-      a.product.gltek_part_number || a.product.daiko_part_number || "",
+      a.product.gltek_part_number || "",
       a.product.genuine_part_number || "",
       a.product.manufacturer_part_number || "",
       normalizeProductKind(a.price.product_kind)
     ].join("|").localeCompare([
-      b.product.gltek_part_number || b.product.daiko_part_number || "",
+      b.product.gltek_part_number || "",
       b.product.genuine_part_number || "",
       b.product.manufacturer_part_number || "",
       normalizeProductKind(b.price.product_kind)
@@ -30475,9 +30475,6 @@ function customerPriceListPartNumbers(product) {
 
 function buildCustomerPriceListHtml(customer, rows) {
   var issuedAt = new Date().toLocaleDateString("ja-JP");
-  var rank = customerPriceListRank(customer);
-  var rankLabel = salesRankDisplayName(rank);
-  if (customer.price_rank_code && rankLabel !== customer.price_rank_code) rankLabel += " / " + customer.price_rank_code;
   var body = rows.map(function(row, index) {
     var product = row.product || {};
     var price = row.price || {};
@@ -30486,11 +30483,10 @@ function buildCustomerPriceListHtml(customer, rows) {
       "<td>" + esc(tCat(product.category_code || product.category || "")) + "</td>" +
       "<td>" + esc(productKindLabel(price.product_kind)) + "</td>" +
       "<td class='part-number'>" + esc(product.gltek_part_number || "-") + "</td>" +
-      "<td class='part-number'>" + esc(product.daiko_part_number || "-") + "</td>" +
       "<td class='part-number'>" + esc(customerPriceListPartNumbers(product)) + "</td>" +
       "<td class='part-number'>" + esc(product.manufacturer_part_number || "-") + "</td>" +
       "<td>" + esc(product.manufacturer || "-") + "</td>" +
-      "<td class='price-cell'><strong>¥" + esc(formatYen(row.salesPrice)) + "</strong><small>" + esc(price.tax_included ? "税込" : "税抜") + "</small></td>" +
+      "<td class='price-cell'><strong>¥" + esc(formatYen(row.salesPrice)) + "</strong></td>" +
       "<td class='memo-cell'></td>" +
     "</tr>";
   }).join("");
@@ -30498,9 +30494,10 @@ function buildCustomerPriceListHtml(customer, rows) {
     "<link rel='stylesheet' href='customer-price-list-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'>" +
     "</head><body><div class='toolbar'><button id='dcats-print-customer-price-list' type='button'>印刷・PDF保存</button><button class='secondary' id='dcats-close-customer-price-list' type='button'>閉じる</button></div>" +
     "<main class='sheet'><header class='document-head'><div><h1>販売価格表</h1><p>Daiko Catalog &amp; Search System</p></div><div class='issue-date'>発行日<br><strong>" + esc(issuedAt) + "</strong></div></header>" +
-    "<section class='customer-summary'><div><span>得意先コード</span><strong>" + esc(customer.source_customer_code || "-") + "</strong></div><div><span>得意先名</span><strong>" + esc(customer.customer_name || "-") + "</strong></div><div><span>価格ランク</span><strong>" + esc(rankLabel || customer.price_rank_code || "-") + "</strong></div><div><span>掲載件数</span><strong>" + esc(String(rows.length)) + " 件</strong></div></section>" +
-    "<table class='price-list'><thead><tr><th>No.</th><th>カテゴリ</th><th>商品区分</th><th>G品番</th><th>大光品番</th><th>純正品番</th><th>メーカー品番</th><th>メーカー</th><th>販売価格</th><th>メモ</th></tr></thead><tbody>" + body + "</tbody></table>" +
-    "<footer><span>表示カテゴリと価格ランクは発行時点の得意先設定を使用しています。</span><span>価格・仕様は予告なく変更する場合があります。</span></footer></main></body></html>";
+    "<section class='customer-summary'><div><span>得意先名</span><strong>" + esc(customer.customer_name || "-") + "</strong></div><div><span>掲載件数</span><strong>" + esc(String(rows.length)) + " 件</strong></div></section>" +
+    "<p class='terms-note'>送料・消費税は別途となります。</p>" +
+    "<table class='price-list'><thead><tr><th>No.</th><th>カテゴリ</th><th>商品区分</th><th>G品番</th><th>純正品番</th><th>メーカー品番</th><th>メーカー</th><th>販売価格</th><th>メモ</th></tr></thead><tbody>" + body + "</tbody></table>" +
+    "<footer><span>本価格表は発行日時点の価格です。</span><span>価格・仕様は予告なく変更する場合があります。</span></footer></main></body></html>";
 }
 
 function writeCustomerPriceListWindow(win, html) {
