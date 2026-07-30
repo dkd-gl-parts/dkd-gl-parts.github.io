@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.597">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.597"; -->
+<meta name="dcats-app-version" content="v1.1.598">
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.598"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co; form-action 'self';">
 <title>D-CATS</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233c7df0'/%3E%3Cpath d='M8 17h16M16 9v14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.597&amp;ranking=4">
+<link rel="stylesheet" href="styles.css?v=1.1.598&amp;ranking=4">
 </head>
 <body>
 
@@ -128,7 +128,7 @@
     <div class="login-logo">
       <h1>D&#8209;CATS</h1>
       <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.597</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.598</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
     </div>
     <hr class="login-divider">
     <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
@@ -157,7 +157,7 @@
     <div class="page-header-left">
       <span class="logo-text" data-i18n="mi_search_title">販売管理</span>
       <span class="logo-sub" data-i18n="app_sub">Daiko Catalog &amp; Search System</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.597</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cbf07ff3b656">v1.1.598</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-menu">
@@ -188,7 +188,7 @@
       <button class="back-btn" id="btn-back-customer-portal" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="customer_portal_title">得意先ポータル</span>
-      <span class="app-version-wrap"><span class="app-version">v1.1.597</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version">v1.1.598</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-customer-portal">
@@ -266,7 +266,7 @@
       <button class="back-btn" id="btn-back-customer-shipping" data-i18n="customer_portal_back">← 得意先ホーム</button>
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="customer_shipping_title">送料一覧</span>
-      <span class="app-version-wrap"><span class="app-version">v1.1.597</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version">v1.1.598</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-customer-shipping">
@@ -285,7 +285,7 @@
         <div class="customer-shipping-heading">
           <div class="customer-portal-kicker" data-i18n="customer_shipping_guide">SHIPPING GUIDE</div>
           <h1 data-i18n="customer_shipping_title">送料一覧</h1>
-          <p data-i18n="customer_shipping_help">通常送料と離島送料は、お届け先ごとの送料合計額です。未設定はお問い合わせください。</p>
+          <p data-i18n="customer_shipping_help">配送サービス・サイズ・お届け先ごとの契約運賃です。離島料金の未設定はお問い合わせください。</p>
         </div>
         <div class="customer-shipping-filters">
           <label>
@@ -295,6 +295,14 @@
           <label>
             <span data-i18n="shipping_carrier">運送業者</span>
             <select id="customer-shipping-carrier"></select>
+          </label>
+          <label>
+            <span data-i18n="shipping_service">配送サービス</span>
+            <select id="customer-shipping-service"></select>
+          </label>
+          <label>
+            <span data-i18n="shipping_package_size">サイズ</span>
+            <select id="customer-shipping-size"></select>
           </label>
           <button class="customer-portal-list-button" id="customer-shipping-reset" type="button" data-i18n="shipping_clear_filters">条件をクリア</button>
         </div>
@@ -323,7 +331,7 @@
       <button class="back-btn" id="btn-back-customer-users" data-i18n="customer_portal_back">← 得意先ホーム</button>
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="customer_users_title">担当者管理</span>
-      <span class="app-version-wrap"><span class="app-version">v1.1.597</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version">v1.1.598</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-customer-users">
@@ -386,7 +394,7 @@
       <button class="back-btn" id="btn-back-customer-catalog" data-i18n="customer_portal_back">← 得意先ホーム</button>
       <span class="logo-text">D&#8209;CATS</span>
       <span class="logo-sub" data-i18n="customer_catalog_title">商品カタログ</span>
-      <span class="app-version-wrap"><span class="app-version">v1.1.597</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version">v1.1.598</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <button class="customer-catalog-exit" id="btn-exit-customer-mode" type="button" data-i18n="customer_portal_exit_mode">社内メニューへ戻る</button>
@@ -443,7 +451,7 @@
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
       <span class="logo-text" id="search-screen-title">D&#8209;CATS</span>
-      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.597</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+      <span class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-adb7c4442a0f">v1.1.598</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-search">
@@ -1126,7 +1134,7 @@
               <h3>ログインアカウント</h3>
               <p>最初の1名を管理者、2人目以降をメンバーとして発行します。</p>
             </div>
-            <span class="permission-status permission-status-limited">システム管理者</span>
+            <span class="permission-status permission-status-limited">得意先管理権限</span>
           </div>
           <div class="customer-account-issuance-fields">
             <div class="user-field customer-account-customer-field">
@@ -1202,6 +1210,14 @@
         <select id="shipping-rate-carrier-filter"></select>
       </label>
       <label>
+        <span data-i18n="shipping_service">配送サービス</span>
+        <select id="shipping-rate-service-filter"></select>
+      </label>
+      <label>
+        <span data-i18n="shipping_package_size">サイズ</span>
+        <select id="shipping-rate-size-filter"></select>
+      </label>
+      <label>
         <span data-i18n="shipping_status">表示状態</span>
         <select id="shipping-rate-status-filter">
           <option value="all" data-i18n="filter_all">すべて</option>
@@ -1229,8 +1245,26 @@
         <datalist id="shipping-rate-carrier-list"></datalist>
       </div>
       <div class="form-row">
+        <label class="form-label" for="shipping-rate-service" data-i18n="shipping_service_required">配送サービス *</label>
+        <input class="form-input" id="shipping-rate-service" type="text" maxlength="120" list="shipping-rate-service-list">
+        <datalist id="shipping-rate-service-list"></datalist>
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="shipping-rate-package-size" data-i18n="shipping_package_size_required">サイズ *</label>
+        <input class="form-input" id="shipping-rate-package-size" type="text" maxlength="80" list="shipping-rate-size-list">
+        <datalist id="shipping-rate-size-list"></datalist>
+      </div>
+      <div class="form-row">
         <label class="form-label" for="shipping-rate-prefecture" data-i18n="shipping_prefecture_required">都道府県 *</label>
         <select class="form-select" id="shipping-rate-prefecture"></select>
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="shipping-rate-max-size" data-i18n="shipping_max_size">3辺合計上限 (cm)</label>
+        <input class="form-input" id="shipping-rate-max-size" type="number" min="1" step="1" inputmode="numeric">
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="shipping-rate-max-weight" data-i18n="shipping_max_weight">重量上限 (kg)</label>
+        <input class="form-input" id="shipping-rate-max-weight" type="number" min="0.1" step="0.1" inputmode="decimal">
       </div>
       <div class="form-row">
         <label class="form-label" for="shipping-rate-standard-fee" data-i18n="shipping_standard_fee">通常送料</label>
@@ -1247,6 +1281,18 @@
       <div class="form-row shipping-rate-form-wide">
         <label class="form-label" for="shipping-rate-note" data-i18n="shipping_note">備考</label>
         <textarea class="form-textarea" id="shipping-rate-note" maxlength="500" rows="2"></textarea>
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="shipping-rate-origin-region" data-i18n="shipping_origin_region">発送地域</label>
+        <input class="form-input" id="shipping-rate-origin-region" type="text" maxlength="120">
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="shipping-rate-tax-type" data-i18n="shipping_tax_type">税区分</label>
+        <select class="form-select" id="shipping-rate-tax-type">
+          <option value="included" data-i18n="shipping_tax_included">税込</option>
+          <option value="excluded" data-i18n="shipping_tax_excluded">税抜</option>
+          <option value="unknown" data-i18n="shipping_tax_unknown">税区分未設定</option>
+        </select>
       </div>
       <div class="form-row">
         <label class="form-label" for="shipping-rate-display-order" data-i18n="shipping_display_order">表示順</label>
@@ -3068,7 +3114,7 @@
 </div>
 
 <script src="vendor/qrcode.min.js?v=1.0.0"></script>
-<script src="app.js?v=1.1.597"></script>
+<script src="app.js?v=1.1.598"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.522&amp;ranking=8"></script>
 </body>
 </html>

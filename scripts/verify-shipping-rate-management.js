@@ -17,11 +17,21 @@ function sourceBetween(startText, endText) {
   "screen-customer-shipping",
   "customer-shipping-prefecture",
   "customer-shipping-carrier",
+  "customer-shipping-service",
+  "customer-shipping-size",
   "screen-shipping-rate-mgmt",
   "shipping-rate-prefecture-filter",
   "shipping-rate-carrier-filter",
+  "shipping-rate-service-filter",
+  "shipping-rate-size-filter",
   "shipping-rate-status-filter",
   "shipping-rate-form-overlay",
+  "shipping-rate-service",
+  "shipping-rate-package-size",
+  "shipping-rate-max-size",
+  "shipping-rate-max-weight",
+  "shipping-rate-origin-region",
+  "shipping-rate-tax-type",
   "shipping-rate-standard-fee",
   "shipping-rate-island-fee",
   "shipping-rate-island-condition"
@@ -42,10 +52,16 @@ if (!managementLoad.includes('from("customer_shipping_rates")') || managementLoa
 const saveSource = sourceBetween("async function saveShippingRate", "async function toggleShippingRateVisibility");
 [
   "carrier_name: carrier",
+  "service_name: serviceName",
+  "package_size_label: packageSize",
+  "max_size_cm: maxSize.value",
+  "max_weight_kg: maxWeight.value",
   "prefecture_code: prefectureCode",
   "standard_fee_jpy: standardFee.value",
   "remote_island_fee_jpy: islandFee.value",
   "remote_island_condition: islandCondition || null",
+  "origin_region: originRegion || null",
+  "tax_type: taxType",
   "updated_by: currentUser ? currentUser.id : null"
 ].forEach((fragment) => {
   if (!saveSource.includes(fragment)) throw new Error(`shipping save field is missing: ${fragment}`);
@@ -59,6 +75,15 @@ if (!source.includes('document.getElementById("customer-portal-shipping").addEve
 }
 if ((source.match(/customer_shipping_title:/g) || []).length !== 3 || (source.match(/mi_shipping_title:/g) || []).length !== 3) {
   throw new Error("shipping labels must be translated for all supported languages");
+}
+if ((source.match(/shipping_all_services:/g) || []).length !== 3 || (source.match(/shipping_tax_excluded:/g) || []).length !== 3) {
+  throw new Error("shipping service, size, and tax labels must be translated for all supported languages");
+}
+if (!customerLoad.includes("service_name,package_size_label,max_size_cm,max_weight_kg") || !managementLoad.includes("origin_region,tax_type")) {
+  throw new Error("shipping loads must include service, size, limit, origin, and tax fields");
+}
+if (!source.includes('filteredShippingRows("customer-shipping-prefecture", "customer-shipping-carrier", "customer-shipping-service", "customer-shipping-size")')) {
+  throw new Error("customer shipping list must support service and package-size filters");
 }
 if ((source.match(/\[47,"沖縄県"/g) || []).length !== 1 || !source.includes('[1,"北海道"')) {
   throw new Error("all 47 prefectures must be available");

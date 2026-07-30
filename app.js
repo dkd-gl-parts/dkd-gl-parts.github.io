@@ -95,12 +95,24 @@ var TRANSLATIONS = {
     customer_shipping_title: "送料一覧",
     customer_shipping_portal_note: "運送業者・お届け先ごとの送料と離島条件を確認できます。",
     customer_shipping_guide: "SHIPPING GUIDE",
-    customer_shipping_help: "通常送料と離島送料は、お届け先ごとの送料合計額です。未設定はお問い合わせください。",
+    customer_shipping_help: "配送サービス・サイズ・お届け先ごとの契約運賃です。離島料金の未設定はお問い合わせください。",
     customer_shipping_rates: "送料",
     shipping_all_prefectures: "すべての都道府県",
     shipping_all_carriers: "すべての運送業者",
+    shipping_all_services: "すべての配送サービス",
+    shipping_all_sizes: "すべてのサイズ",
     shipping_prefecture: "都道府県",
     shipping_carrier: "運送業者",
+    shipping_service: "配送サービス",
+    shipping_package_size: "サイズ",
+    shipping_max_size: "3辺合計上限 (cm)",
+    shipping_max_weight: "重量上限 (kg)",
+    shipping_origin_region: "発送地域",
+    shipping_tax_type: "税区分",
+    shipping_tax_included: "税込",
+    shipping_tax_excluded: "税抜",
+    shipping_tax_unknown: "税区分未設定",
+    shipping_rate_detail: "条件・備考",
     shipping_clear_filters: "条件をクリア",
     shipping_standard_fee: "通常送料",
     shipping_island_fee: "離島送料",
@@ -118,12 +130,14 @@ var TRANSLATIONS = {
     shipping_add: "送料を登録",
     shipping_edit: "送料を編集",
     shipping_carrier_required: "運送業者 *",
+    shipping_service_required: "配送サービス *",
+    shipping_package_size_required: "サイズ *",
     shipping_prefecture_required: "都道府県 *",
     shipping_display_order: "表示順",
     shipping_fee_note: "離島送料は追加料金ではなく、得意先へ表示する合計送料を入力してください。空欄は「要確認」と表示します。",
     shipping_save_success: "送料を保存しました。",
-    shipping_duplicate_error: "同じ運送業者・都道府県の送料がすでに登録されています。",
-    shipping_validation_error: "運送業者と都道府県を選択し、送料または条件・備考を入力してください。",
+    shipping_duplicate_error: "同じ運送業者・配送サービス・サイズ・都道府県の送料がすでに登録されています。",
+    shipping_validation_error: "運送業者・配送サービス・サイズ・都道府県を入力し、送料または条件・備考を入力してください。",
     shipping_toggle_hide: "非表示にする",
     shipping_toggle_show: "表示する",
     shipping_update_failed: "送料を更新できませんでした。",
@@ -595,7 +609,7 @@ var TRANSLATIONS = {
     access_role_system_admin: "システム管理者",
     access_role_company_admin: "会社管理者",
     access_role_dept_admin: "製造管理",
-    access_role_master_editor: "商品管理",
+    access_role_master_editor: "販売管理",
     access_role_production_editor: "製造担当",
     access_role_sales_viewer: "営業閲覧",
     access_role_all_viewer: "全機能閲覧",
@@ -1368,12 +1382,24 @@ var TRANSLATIONS = {
     customer_shipping_title: "Shipping Rates",
     customer_shipping_portal_note: "Review shipping rates and remote-island conditions by carrier and destination.",
     customer_shipping_guide: "SHIPPING GUIDE",
-    customer_shipping_help: "Standard and remote-island rates are the total shipping amounts for each destination. Contact us when a rate is not set.",
+    customer_shipping_help: "Contract rates by delivery service, package size, and destination. Contact us when a remote-island rate is not set.",
     customer_shipping_rates: "Rates",
     shipping_all_prefectures: "All Prefectures",
     shipping_all_carriers: "All Carriers",
+    shipping_all_services: "All Services",
+    shipping_all_sizes: "All Sizes",
     shipping_prefecture: "Prefecture",
     shipping_carrier: "Carrier",
+    shipping_service: "Delivery Service",
+    shipping_package_size: "Package Size",
+    shipping_max_size: "Max Total Size (cm)",
+    shipping_max_weight: "Max Weight (kg)",
+    shipping_origin_region: "Origin Region",
+    shipping_tax_type: "Tax",
+    shipping_tax_included: "Tax Included",
+    shipping_tax_excluded: "Tax Excluded",
+    shipping_tax_unknown: "Tax Not Set",
+    shipping_rate_detail: "Conditions / Notes",
     shipping_clear_filters: "Clear Filters",
     shipping_standard_fee: "Standard Rate",
     shipping_island_fee: "Remote-Island Rate",
@@ -1391,12 +1417,14 @@ var TRANSLATIONS = {
     shipping_add: "Add Shipping Rate",
     shipping_edit: "Edit Shipping Rate",
     shipping_carrier_required: "Carrier *",
+    shipping_service_required: "Delivery Service *",
+    shipping_package_size_required: "Package Size *",
     shipping_prefecture_required: "Prefecture *",
     shipping_display_order: "Display Order",
     shipping_fee_note: "Enter the total remote-island shipping rate, not a surcharge. A blank amount is shown as Contact Us.",
     shipping_save_success: "The shipping rate was saved.",
-    shipping_duplicate_error: "A rate for this carrier and prefecture is already registered.",
-    shipping_validation_error: "Select a carrier and prefecture, then enter a rate, condition, or note.",
+    shipping_duplicate_error: "A rate for this carrier, service, size, and prefecture is already registered.",
+    shipping_validation_error: "Enter a carrier, service, size, and prefecture, then enter a rate, condition, or note.",
     shipping_toggle_hide: "Hide",
     shipping_toggle_show: "Show",
     shipping_update_failed: "The shipping rate could not be updated.",
@@ -1868,7 +1896,7 @@ var TRANSLATIONS = {
     access_role_system_admin: "System Admin",
     access_role_company_admin: "Company Admin",
     access_role_dept_admin: "Manufacturing Admin",
-    access_role_master_editor: "Product Management",
+    access_role_master_editor: "Sales Management",
     access_role_production_editor: "Production Staff",
     access_role_sales_viewer: "Sales Viewer",
     access_role_all_viewer: "Full Viewer",
@@ -2628,12 +2656,24 @@ var TRANSLATIONS = {
     customer_shipping_title: "运费一览",
     customer_shipping_portal_note: "可按承运公司和收货地区确认运费及离岛条件。",
     customer_shipping_guide: "运费指南",
-    customer_shipping_help: "普通运费和离岛运费均为各收货地区的运费总额。未设置时请联系我们。",
+    customer_shipping_help: "按配送服务、包裹尺寸和收货地区显示合同运费。未设置离岛运费时请联系我们。",
     customer_shipping_rates: "运费",
     shipping_all_prefectures: "全部都道府县",
     shipping_all_carriers: "全部承运公司",
+    shipping_all_services: "全部配送服务",
+    shipping_all_sizes: "全部尺寸",
     shipping_prefecture: "都道府县",
     shipping_carrier: "承运公司",
+    shipping_service: "配送服务",
+    shipping_package_size: "包裹尺寸",
+    shipping_max_size: "三边合计上限 (cm)",
+    shipping_max_weight: "重量上限 (kg)",
+    shipping_origin_region: "发货地区",
+    shipping_tax_type: "税费区分",
+    shipping_tax_included: "含税",
+    shipping_tax_excluded: "未税",
+    shipping_tax_unknown: "税费未设置",
+    shipping_rate_detail: "条件及备注",
     shipping_clear_filters: "清除条件",
     shipping_standard_fee: "普通运费",
     shipping_island_fee: "离岛运费",
@@ -2651,12 +2691,14 @@ var TRANSLATIONS = {
     shipping_add: "登记运费",
     shipping_edit: "编辑运费",
     shipping_carrier_required: "承运公司 *",
+    shipping_service_required: "配送服务 *",
+    shipping_package_size_required: "包裹尺寸 *",
     shipping_prefecture_required: "都道府县 *",
     shipping_display_order: "显示顺序",
     shipping_fee_note: "离岛运费请输入向客户显示的总运费，而非追加费用。空白金额将显示为“请咨询”。",
     shipping_save_success: "运费已保存。",
-    shipping_duplicate_error: "该承运公司和都道府县的运费已登记。",
-    shipping_validation_error: "请选择承运公司和都道府县，并输入运费、条件或备注。",
+    shipping_duplicate_error: "该承运公司、配送服务、尺寸和都道府县的运费已登记。",
+    shipping_validation_error: "请输入承运公司、配送服务、尺寸和都道府县，并输入运费、条件或备注。",
     shipping_toggle_hide: "设为隐藏",
     shipping_toggle_show: "设为显示",
     shipping_update_failed: "无法更新运费。",
@@ -3147,7 +3189,7 @@ var TRANSLATIONS = {
     access_role_system_admin: "系统管理员",
     access_role_company_admin: "公司管理员",
     access_role_dept_admin: "制造管理",
-    access_role_master_editor: "商品管理",
+    access_role_master_editor: "销售管理",
     access_role_production_editor: "制造担当",
     access_role_sales_viewer: "营业查看",
     access_role_all_viewer: "全功能查看",
@@ -3927,7 +3969,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.597";
+var APP_VERSION       = "v1.1.598";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -4283,7 +4325,7 @@ function canIssueGltekPartNumber() {
   if (!userProfile || isCustomerPortalSearchMode()) return false;
   if (isSystemAdmin()) return true;
   if (userCompanyCode(userProfile) !== "gltek") return false;
-  return userPermissionAllowed(userProfile, "gltek_part_number.issue", hasAccessRole(userProfile, ["company_admin", "master_editor"]));
+  return userPermissionAllowed(userProfile, "gltek_part_number.issue", hasAccessRole(userProfile, ["company_admin", "dept_admin"]));
 }
 function canManageAllImages() {
   if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
@@ -4297,7 +4339,7 @@ function isCoreImageEditorRole(profile) {
 }
 function canManageUsedCoreImages() {
   if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
-  return userPermissionAllowed(userProfile, "used_core_image.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "core_image_editor"]));
+  return userPermissionAllowed(userProfile, "used_core_image.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor", "core_image_editor"]));
 }
 function canManageImageKind(kind, context) {
   if (canManageAllImages()) return true;
@@ -4328,7 +4370,7 @@ function isAdmin() {
   return isCompanyAdminRole(userProfile);
 }
 function canUseUserManagement() {
-  return userPermissionAllowed(userProfile, "users.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor"]));
+  return userPermissionAllowed(userProfile, "users.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin"]));
 }
 function canAssignUserRole(roleCode) {
   if (isSystemAdmin()) return true;
@@ -4339,7 +4381,7 @@ function canAssignUserRole(roleCode) {
   return false;
 }
 
-// ユーザー管理：system_adminは全体、会社管理者は自社、製造管理・商品管理は自部署のみ
+// ユーザー管理：system_adminは全体、会社管理者は自社、製造管理は自部署のみ。販売管理は個別許可時のみ自部署を管理する。
 function canManageUser(targetProfile) {
   if (!userProfile || !targetProfile) return false;
   if (isSystemAdmin()) return true;
@@ -4374,7 +4416,7 @@ function canViewBasePrice() {
 }
 function canEditBasePrice() {
   if (isCustomerPortalSearchMode()) return false;
-  return userPermissionAllowed(userProfile, "base_price.manage", hasAccessRole(userProfile, ["system_admin", "company_admin"]));
+  return userPermissionAllowed(userProfile, "base_price.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"]));
 }
 function canEditSalesPricing() {
   if (isCustomerPortalSearchMode()) return false;
@@ -4388,16 +4430,16 @@ function canManageEcResearchSchedule() {
   return userPermissionAllowed(userProfile, "price_research.schedule", hasAccessRole(userProfile, ["system_admin", "company_admin"]));
 }
 function canViewInternalComponents() {
-  return userPermissionAllowed(userProfile, "component.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "all_viewer"]));
+  return userPermissionAllowed(userProfile, "component.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor", "all_viewer"]));
 }
 function canEditInternalComponents() {
   return userPermissionAllowed(userProfile, "component.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]));
 }
 function canManageComponentNameMaster() {
-  return userPermissionAllowed(userProfile, "component_name.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor"]));
+  return userPermissionAllowed(userProfile, "component_name.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin"]));
 }
 function canManageComponentCompatibility() {
-  return userCompanyCode(userProfile) === "daiko" && userPermissionAllowed(userProfile, "component_compatibility.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]));
+  return userCompanyCode(userProfile) === "daiko" && userPermissionAllowed(userProfile, "component_compatibility.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]));
 }
 function isCustomerViewerProfile(profile) {
   return userAccessRoleCode(profile) === "customer_viewer";
@@ -4435,7 +4477,7 @@ function canViewAllReadOnly() {
   return !!(userProfile && userAccessRoleCode(userProfile) === "all_viewer");
 }
 function canSeeComponentInfo() {
-  return userPermissionAllowed(userProfile, "component.view", canSeeInternalBusinessInfo());
+  return userPermissionAllowed(userProfile, "component.view", canViewInternalComponents());
 }
 function canSeeCatalogSpec() {
   return canSeeComponentInfo();
@@ -4447,7 +4489,7 @@ function canViewProductKindStockMgmt() {
   return canSeeCoreStockInfo();
 }
 function canEditProductKindStockMgmt() {
-  return userPermissionAllowed(userProfile, "stock.manage", canEdit());
+  return userPermissionAllowed(userProfile, "stock.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]));
 }
 function hasBaseManufacturingCostRole(profile) {
   return hasAccessRole(profile || userProfile, ["system_admin", "company_admin", "dept_admin"]);
@@ -4701,7 +4743,7 @@ var USER_ACCESS_ROLE_OPTIONS = [
   ["system_admin", "システム管理者"],
   ["company_admin", "会社管理者"],
   ["dept_admin", "製造管理"],
-  ["master_editor", "商品管理"],
+  ["master_editor", "販売管理"],
   ["production_editor", "製造担当"],
   ["sales_viewer", "営業閲覧"],
   ["internal_viewer", "社内閲覧"],
@@ -4823,6 +4865,9 @@ function canManageSalesPricing() {
 function canManageCustomerAccess() {
   return userPermissionAllowed(userProfile, "customer_access.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"]));
 }
+function canManageCustomerAccounts() {
+  return canManageCustomerAccess();
+}
 function canManageShippingRates() {
   return canManageCustomerAccess();
 }
@@ -4833,7 +4878,7 @@ function canViewSalesPricing() {
   return canSeeSalesPrice() && !isCustomerViewer() && !isCustomerPortalSearchMode() && userPermissionAllowed(userProfile, "sales_pricing.view", true);
 }
 function canViewProductionFeatures() {
-  return userPermissionAllowed(userProfile, "production.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "all_viewer"]));
+  return userPermissionAllowed(userProfile, "production.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor", "all_viewer"]));
 }
 function canViewFinishedLabelMgmt() {
   return userPermissionAllowed(userProfile, "finished_label.manage", isSystemAdmin());
@@ -4845,10 +4890,10 @@ function canViewManagementScreen() {
   return userPermissionAllowed(userProfile, "product_management.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "all_viewer"]));
 }
 function canViewCoreManagement() {
-  return userPermissionAllowed(userProfile, "core_list.view", canViewManagementScreen() || canUploadCoreImages());
+  return userPermissionAllowed(userProfile, "core_list.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor", "core_image_editor", "all_viewer"]));
 }
 function canManageProductionRecords() {
-  return userPermissionAllowed(userProfile, "production_records.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]));
+  return userPermissionAllowed(userProfile, "production_records.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]));
 }
 function canViewPriceResearchHistory() {
   if (isCustomerPortalSearchMode()) return false;
@@ -4858,13 +4903,13 @@ function canViewOperationLogs() {
   return userPermissionAllowed(userProfile, "operation_logs.view", isAdmin() || canViewAllReadOnly());
 }
 function canViewManufacturingReport() {
-  return userPermissionAllowed(userProfile, "manufacturing_report.view", canViewManagementScreen());
+  return userPermissionAllowed(userProfile, "manufacturing_report.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor", "all_viewer"]));
 }
 function canManageCompatibility() {
-  return userPermissionAllowed(userProfile, "compatibility.view", canViewManagementScreen());
+  return userPermissionAllowed(userProfile, "compatibility.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor", "all_viewer"]));
 }
 function canEditCompatibility() {
-  return userPermissionAllowed(userProfile, "compatibility.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]));
+  return userPermissionAllowed(userProfile, "compatibility.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]));
 }
 
 // =============================================
@@ -4949,11 +4994,13 @@ async function applyLanguage(lang) {
   if (isScreenActive("customer-shipping")) {
     populateShippingPrefectureSelects();
     populateShippingCarrierSelects();
+    populateShippingDetailSelects();
     renderCustomerShippingRates();
   }
   if (isScreenActive("shipping-rate-mgmt")) {
     populateShippingPrefectureSelects();
     populateShippingCarrierSelects();
+    populateShippingDetailSelects();
     renderShippingRateMgmt();
   }
   renderCustomerCatalogShell();
@@ -6833,8 +6880,12 @@ function populateShippingPrefectureSelects() {
 }
 
 function shippingCarrierNames() {
+  return shippingUniqueValues("carrier_name");
+}
+
+function shippingUniqueValues(fieldName) {
   var seen = {};
-  return shippingRateRows.map(function(row) { return String(row.carrier_name || "").trim(); }).filter(function(name) {
+  return shippingRateRows.map(function(row) { return String(row[fieldName] || "").trim(); }).filter(function(name) {
     if (!name || seen[name]) return false;
     seen[name] = true;
     return true;
@@ -6858,13 +6909,57 @@ function populateShippingCarrierSelects() {
   if (datalist) datalist.innerHTML = carriers.map(function(name) { return "<option value='" + esc(name) + "'></option>"; }).join("");
 }
 
-function shippingFeeHtml(value) {
+function populateShippingDetailSelects() {
+  [
+    ["service_name", "shipping_all_services", ["customer-shipping-service", "shipping-rate-service-filter"], "shipping-rate-service-list"],
+    ["package_size_label", "shipping_all_sizes", ["customer-shipping-size", "shipping-rate-size-filter"], "shipping-rate-size-list"]
+  ].forEach(function(config) {
+    var values = shippingUniqueValues(config[0]);
+    config[2].forEach(function(id) {
+      var select = document.getElementById(id);
+      if (!select) return;
+      var selected = select.value || "all";
+      select.innerHTML = "<option value='all'>" + esc(t(config[1])) + "</option>" + values.map(function(value) {
+        return "<option value='" + esc(value) + "'>" + esc(value) + "</option>";
+      }).join("");
+      select.value = values.indexOf(selected) >= 0 ? selected : "all";
+    });
+    var datalist = document.getElementById(config[3]);
+    if (datalist) datalist.innerHTML = values.map(function(value) { return "<option value='" + esc(value) + "'></option>"; }).join("");
+  });
+}
+
+function shippingTaxLabel(taxType) {
+  if (taxType === "included") return t("shipping_tax_included");
+  if (taxType === "excluded") return t("shipping_tax_excluded");
+  return t("shipping_tax_unknown");
+}
+
+function shippingFeeHtml(value, taxType) {
   if (value === null || value === undefined || value === "") {
     return "<span class='shipping-rate-fee pending'>" + esc(t("shipping_inquiry")) + "</span>";
   }
   var amount = parseInt(value, 10);
   if (isNaN(amount)) return "<span class='shipping-rate-fee pending'>" + esc(t("shipping_inquiry")) + "</span>";
-  return "<span class='shipping-rate-fee'>¥" + esc(amount.toLocaleString("ja-JP")) + "</span>";
+  var normalizedTaxType = ["included", "excluded"].indexOf(taxType) >= 0 ? taxType : "unknown";
+  return "<span class='shipping-rate-fee'>¥" + esc(amount.toLocaleString("ja-JP")) + "</span>" +
+    "<span class='shipping-rate-tax-label " + normalizedTaxType + "'>" + esc(shippingTaxLabel(normalizedTaxType)) + "</span>";
+}
+
+function shippingPackageHtml(row) {
+  var limits = [];
+  if (row.max_size_cm != null) limits.push(esc(String(row.max_size_cm)) + " cm");
+  if (row.max_weight_kg != null) limits.push(esc(String(Number(row.max_weight_kg))) + " kg");
+  return "<strong>" + esc(row.package_size_label || "-") + "</strong>" +
+    (limits.length ? "<span class='shipping-rate-package-limits'>" + limits.join(" / ") + "</span>" : "");
+}
+
+function shippingRateDetailHtml(row) {
+  var html = "";
+  if (row.origin_region) html += "<span class='shipping-rate-origin'>" + esc(t("shipping_origin_region")) + ": " + esc(row.origin_region) + "</span>";
+  if (row.remote_island_condition) html += "<span><b>" + esc(t("shipping_island_condition")) + ":</b> " + esc(row.remote_island_condition) + "</span>";
+  if (row.note) html += "<span><b>" + esc(t("shipping_note")) + ":</b> " + esc(row.note) + "</span>";
+  return html || "-";
 }
 
 function shippingRateCell(labelKey, content, className) {
@@ -6883,13 +6978,17 @@ function sortedShippingRows(rows) {
   });
 }
 
-function filteredShippingRows(prefectureId, carrierId, statusId) {
+function filteredShippingRows(prefectureId, carrierId, serviceId, sizeId, statusId) {
   var prefecture = (document.getElementById(prefectureId) || {}).value || "all";
   var carrier = (document.getElementById(carrierId) || {}).value || "all";
+  var service = serviceId ? ((document.getElementById(serviceId) || {}).value || "all") : "all";
+  var packageSize = sizeId ? ((document.getElementById(sizeId) || {}).value || "all") : "all";
   var status = statusId ? ((document.getElementById(statusId) || {}).value || "all") : "active";
   return sortedShippingRows(shippingRateRows.filter(function(row) {
     if (prefecture !== "all" && String(row.prefecture_code) !== prefecture) return false;
     if (carrier !== "all" && String(row.carrier_name || "") !== carrier) return false;
+    if (service !== "all" && String(row.service_name || "") !== service) return false;
+    if (packageSize !== "all" && String(row.package_size_label || "") !== packageSize) return false;
     if (status === "active" && row.is_active === false) return false;
     if (status === "inactive" && row.is_active !== false) return false;
     return true;
@@ -6907,8 +7006,12 @@ async function enterCustomerShipping() {
   populateShippingPrefectureSelects();
   var prefecture = document.getElementById("customer-shipping-prefecture");
   var carrier = document.getElementById("customer-shipping-carrier");
+  var service = document.getElementById("customer-shipping-service");
+  var packageSize = document.getElementById("customer-shipping-size");
   if (prefecture) prefecture.value = "all";
   if (carrier) carrier.value = "all";
+  if (service) service.value = "all";
+  if (packageSize) packageSize.value = "all";
   await loadCustomerShippingRates();
 }
 
@@ -6922,7 +7025,7 @@ async function loadCustomerShippingRates() {
   var host = document.getElementById("customer-shipping-list");
   if (host) host.innerHTML = "<div class='customer-shipping-empty'>" + esc(t("loading")) + "</div>";
   var result = await sb.from("customer_shipping_rates")
-    .select("shipping_rate_id,carrier_name,prefecture_code,standard_fee_jpy,remote_island_fee_jpy,remote_island_condition,note,display_order,is_active")
+    .select("shipping_rate_id,carrier_name,service_name,package_size_label,max_size_cm,max_weight_kg,prefecture_code,standard_fee_jpy,remote_island_fee_jpy,remote_island_condition,note,origin_region,tax_type,display_order,is_active")
     .eq("is_active", true)
     .order("display_order", { ascending: true })
     .order("carrier_name", { ascending: true })
@@ -6937,6 +7040,7 @@ async function loadCustomerShippingRates() {
   }
   shippingRateRows = result.data || [];
   populateShippingCarrierSelects();
+  populateShippingDetailSelects();
   renderCustomerShippingRates();
 }
 
@@ -6949,7 +7053,7 @@ function renderCustomerShippingRates(loadError) {
     host.innerHTML = "<div class='customer-shipping-empty save-err'>" + esc(t("shipping_load_error")) + "</div>";
     return;
   }
-  var rows = filteredShippingRows("customer-shipping-prefecture", "customer-shipping-carrier");
+  var rows = filteredShippingRows("customer-shipping-prefecture", "customer-shipping-carrier", "customer-shipping-service", "customer-shipping-size");
   if (count) count.textContent = tf("customer_catalog_count", { n: rows.length });
   if (!rows.length) {
     host.innerHTML = "<div class='customer-shipping-empty'>" + esc(t("shipping_no_rates")) + "</div>";
@@ -6957,19 +7061,21 @@ function renderCustomerShippingRates(loadError) {
   }
   var html = "<div class='customer-shipping-head'>" +
     "<span>" + esc(t("shipping_carrier")) + "</span>" +
+    "<span>" + esc(t("shipping_service")) + "</span>" +
+    "<span>" + esc(t("shipping_package_size")) + "</span>" +
     "<span>" + esc(t("shipping_prefecture")) + "</span>" +
     "<span>" + esc(t("shipping_standard_fee")) + "</span>" +
     "<span>" + esc(t("shipping_island_fee")) + "</span>" +
-    "<span>" + esc(t("shipping_island_condition")) + "</span>" +
-    "<span>" + esc(t("shipping_note")) + "</span></div>";
+    "<span>" + esc(t("shipping_rate_detail")) + "</span></div>";
   rows.forEach(function(row) {
     html += "<div class='customer-shipping-row'>";
     html += shippingRateCell("shipping_carrier", "<strong>" + esc(row.carrier_name || "-") + "</strong>");
+    html += shippingRateCell("shipping_service", "<strong>" + esc(row.service_name || "-") + "</strong>");
+    html += shippingRateCell("shipping_package_size", shippingPackageHtml(row));
     html += shippingRateCell("shipping_prefecture", "<strong>" + esc(shippingPrefectureLabel(row.prefecture_code)) + "</strong>");
-    html += shippingRateCell("shipping_standard_fee", shippingFeeHtml(row.standard_fee_jpy));
-    html += shippingRateCell("shipping_island_fee", shippingFeeHtml(row.remote_island_fee_jpy));
-    html += shippingRateCell("shipping_island_condition", esc(row.remote_island_condition || "-"));
-    html += shippingRateCell("shipping_note", esc(row.note || "-"));
+    html += shippingRateCell("shipping_standard_fee", shippingFeeHtml(row.standard_fee_jpy, row.tax_type));
+    html += shippingRateCell("shipping_island_fee", shippingFeeHtml(row.remote_island_fee_jpy, row.tax_type));
+    html += shippingRateCell("shipping_rate_detail", "<div class='shipping-rate-detail'>" + shippingRateDetailHtml(row) + "</div>");
     html += "</div>";
   });
   host.innerHTML = html;
@@ -6984,9 +7090,13 @@ async function enterShippingRateMgmt() {
   populateShippingPrefectureSelects();
   var prefecture = document.getElementById("shipping-rate-prefecture-filter");
   var carrier = document.getElementById("shipping-rate-carrier-filter");
+  var service = document.getElementById("shipping-rate-service-filter");
+  var packageSize = document.getElementById("shipping-rate-size-filter");
   var status = document.getElementById("shipping-rate-status-filter");
   if (prefecture) prefecture.value = "all";
   if (carrier) carrier.value = "all";
+  if (service) service.value = "all";
+  if (packageSize) packageSize.value = "all";
   if (status) status.value = "all";
   await loadShippingRateMgmt();
 }
@@ -6997,7 +7107,7 @@ async function loadShippingRateMgmt() {
   var host = document.getElementById("shipping-rate-list");
   if (host) host.innerHTML = "<div class='empty'>" + esc(t("loading")) + "</div>";
   var result = await sb.from("customer_shipping_rates")
-    .select("shipping_rate_id,carrier_name,prefecture_code,standard_fee_jpy,remote_island_fee_jpy,remote_island_condition,note,display_order,is_active,updated_at")
+    .select("shipping_rate_id,carrier_name,service_name,package_size_label,max_size_cm,max_weight_kg,prefecture_code,standard_fee_jpy,remote_island_fee_jpy,remote_island_condition,note,origin_region,tax_type,display_order,is_active,updated_at")
     .order("display_order", { ascending: true })
     .order("carrier_name", { ascending: true })
     .order("prefecture_code", { ascending: true })
@@ -7011,6 +7121,7 @@ async function loadShippingRateMgmt() {
   }
   shippingRateRows = result.data || [];
   populateShippingCarrierSelects();
+  populateShippingDetailSelects();
   renderShippingRateMgmt();
 }
 
@@ -7023,24 +7134,24 @@ function renderShippingRateMgmt(loadError) {
     host.innerHTML = "<div class='empty save-err'>" + esc(t("shipping_load_error")) + "</div>";
     return;
   }
-  var rows = filteredShippingRows("shipping-rate-prefecture-filter", "shipping-rate-carrier-filter", "shipping-rate-status-filter");
+  var rows = filteredShippingRows("shipping-rate-prefecture-filter", "shipping-rate-carrier-filter", "shipping-rate-service-filter", "shipping-rate-size-filter", "shipping-rate-status-filter");
   if (count) count.textContent = tf("customer_catalog_count", { n: rows.length });
   if (!rows.length) {
     host.innerHTML = "<div class='empty'>" + esc(t("shipping_no_rates")) + "</div>";
     return;
   }
-  var headers = ["shipping_carrier", "shipping_prefecture", "shipping_standard_fee", "shipping_island_fee", "shipping_island_condition", "shipping_note", "shipping_status", "actions"];
+  var headers = ["shipping_carrier", "shipping_service", "shipping_prefecture", "shipping_standard_fee", "shipping_island_fee", "shipping_rate_detail", "shipping_status", "actions"];
   var html = "<div class='shipping-rate-mgmt-head'>" + headers.map(function(key) { return "<span>" + esc(t(key)) + "</span>"; }).join("") + "</div>";
   rows.forEach(function(row) {
     var active = row.is_active !== false;
     var rowId = esc(String(row.shipping_rate_id));
     html += "<div class='shipping-rate-mgmt-row" + (active ? "" : " inactive") + "'>";
     html += shippingRateCell("shipping_carrier", "<strong>" + esc(row.carrier_name || "-") + "</strong>", "shipping-rate-mgmt-cell");
+    html += shippingRateCell("shipping_service", "<strong>" + esc(row.service_name || "-") + "</strong>" + shippingPackageHtml(row), "shipping-rate-mgmt-cell");
     html += shippingRateCell("shipping_prefecture", "<strong>" + esc(shippingPrefectureLabel(row.prefecture_code)) + "</strong>", "shipping-rate-mgmt-cell");
-    html += shippingRateCell("shipping_standard_fee", shippingFeeHtml(row.standard_fee_jpy), "shipping-rate-mgmt-cell");
-    html += shippingRateCell("shipping_island_fee", shippingFeeHtml(row.remote_island_fee_jpy), "shipping-rate-mgmt-cell");
-    html += shippingRateCell("shipping_island_condition", esc(row.remote_island_condition || "-"), "shipping-rate-mgmt-cell");
-    html += shippingRateCell("shipping_note", esc(row.note || "-"), "shipping-rate-mgmt-cell");
+    html += shippingRateCell("shipping_standard_fee", shippingFeeHtml(row.standard_fee_jpy, row.tax_type), "shipping-rate-mgmt-cell");
+    html += shippingRateCell("shipping_island_fee", shippingFeeHtml(row.remote_island_fee_jpy, row.tax_type), "shipping-rate-mgmt-cell");
+    html += shippingRateCell("shipping_rate_detail", "<div class='shipping-rate-detail'>" + shippingRateDetailHtml(row) + "</div>", "shipping-rate-mgmt-cell");
     html += shippingRateCell("shipping_status", "<span class='shipping-rate-status" + (active ? "" : " inactive") + "'>" + esc(active ? t("shipping_active") : t("shipping_inactive")) + "</span>", "shipping-rate-mgmt-cell");
     html += shippingRateCell("actions", "<div class='shipping-rate-row-actions'><button class='btn-sm-edit' type='button' data-shipping-action='edit' data-shipping-id='" + rowId + "'>" + esc(t("btn_edit")) + "</button><button class='" + (active ? "btn-sm-del" : "btn-sm-edit") + "' type='button' data-shipping-action='toggle' data-shipping-id='" + rowId + "'>" + esc(active ? t("shipping_toggle_hide") : t("shipping_toggle_show")) + "</button></div>", "shipping-rate-mgmt-cell");
     html += "</div>";
@@ -7060,11 +7171,17 @@ function openShippingRateForm(row) {
   document.getElementById("shipping-rate-form-id").value = row ? row.shipping_rate_id : "";
   document.getElementById("shipping-rate-form-title").textContent = t(row ? "shipping_edit" : "shipping_add");
   document.getElementById("shipping-rate-carrier").value = row ? (row.carrier_name || "") : "";
+  document.getElementById("shipping-rate-service").value = row ? (row.service_name || "") : "";
+  document.getElementById("shipping-rate-package-size").value = row ? (row.package_size_label || "") : "";
+  document.getElementById("shipping-rate-max-size").value = row && row.max_size_cm != null ? row.max_size_cm : "";
+  document.getElementById("shipping-rate-max-weight").value = row && row.max_weight_kg != null ? row.max_weight_kg : "";
   document.getElementById("shipping-rate-prefecture").value = row ? String(row.prefecture_code) : "1";
   document.getElementById("shipping-rate-standard-fee").value = row && row.standard_fee_jpy != null ? row.standard_fee_jpy : "";
   document.getElementById("shipping-rate-island-fee").value = row && row.remote_island_fee_jpy != null ? row.remote_island_fee_jpy : "";
   document.getElementById("shipping-rate-island-condition").value = row ? (row.remote_island_condition || "") : "";
   document.getElementById("shipping-rate-note").value = row ? (row.note || "") : "";
+  document.getElementById("shipping-rate-origin-region").value = row ? (row.origin_region || "") : "";
+  document.getElementById("shipping-rate-tax-type").value = row ? (row.tax_type || "unknown") : "included";
   document.getElementById("shipping-rate-display-order").value = row ? (parseInt(row.display_order, 10) || 0) : 0;
   document.getElementById("shipping-rate-active").checked = row ? row.is_active !== false : true;
   var message = document.getElementById("shipping-rate-form-message");
@@ -7085,6 +7202,13 @@ function shippingOptionalAmount(id) {
   return { valid: Number.isInteger(value) && value >= 0, value: value };
 }
 
+function shippingOptionalPositiveNumber(id, integerOnly) {
+  var raw = String((document.getElementById(id) || {}).value || "").trim();
+  if (!raw) return { valid: true, value: null };
+  var value = Number(raw);
+  return { valid: isFinite(value) && value > 0 && (!integerOnly || Number.isInteger(value)), value: value };
+}
+
 function setShippingRateFormMessage(message, isError) {
   var el = document.getElementById("shipping-rate-form-message");
   if (!el) return;
@@ -7103,24 +7227,38 @@ async function saveShippingRate() {
   if (!canManageShippingRates() || shippingRateFormSaving) return;
   var id = String(document.getElementById("shipping-rate-form-id").value || "").trim();
   var carrier = String(document.getElementById("shipping-rate-carrier").value || "").trim();
+  var serviceName = String(document.getElementById("shipping-rate-service").value || "").trim();
+  var packageSize = String(document.getElementById("shipping-rate-package-size").value || "").trim();
+  var maxSize = shippingOptionalPositiveNumber("shipping-rate-max-size", true);
+  var maxWeight = shippingOptionalPositiveNumber("shipping-rate-max-weight", false);
   var prefectureCode = parseInt(document.getElementById("shipping-rate-prefecture").value, 10);
   var standardFee = shippingOptionalAmount("shipping-rate-standard-fee");
   var islandFee = shippingOptionalAmount("shipping-rate-island-fee");
   var islandCondition = String(document.getElementById("shipping-rate-island-condition").value || "").trim();
   var note = String(document.getElementById("shipping-rate-note").value || "").trim();
+  var originRegion = String(document.getElementById("shipping-rate-origin-region").value || "").trim();
+  var taxType = String(document.getElementById("shipping-rate-tax-type").value || "unknown");
   var displayOrder = Number(String(document.getElementById("shipping-rate-display-order").value || "0").trim());
   var hasContent = standardFee.value != null || islandFee.value != null || islandCondition || note;
-  if (!carrier || carrier.length > 120 || prefectureCode < 1 || prefectureCode > 47 || !standardFee.valid || !islandFee.valid || !Number.isInteger(displayOrder) || !hasContent) {
+  if (!carrier || carrier.length > 120 || !serviceName || serviceName.length > 120 || !packageSize || packageSize.length > 80 ||
+      prefectureCode < 1 || prefectureCode > 47 || !maxSize.valid || !maxWeight.valid || !standardFee.valid || !islandFee.valid ||
+      originRegion.length > 120 || ["included", "excluded", "unknown"].indexOf(taxType) < 0 || !Number.isInteger(displayOrder) || !hasContent) {
     setShippingRateFormMessage(t("shipping_validation_error"), true);
     return;
   }
   var payload = {
     carrier_name: carrier,
+    service_name: serviceName,
+    package_size_label: packageSize,
+    max_size_cm: maxSize.value,
+    max_weight_kg: maxWeight.value,
     prefecture_code: prefectureCode,
     standard_fee_jpy: standardFee.value,
     remote_island_fee_jpy: islandFee.value,
     remote_island_condition: islandCondition || null,
     note: note || null,
+    origin_region: originRegion || null,
+    tax_type: taxType,
     display_order: displayOrder,
     is_active: document.getElementById("shipping-rate-active").checked,
     updated_at: new Date().toISOString(),
@@ -31397,7 +31535,7 @@ function accessRoleScopeText(roleCode) {
     case "system_admin": return "全機能・全ユーザー管理";
     case "company_admin": return "自社ユーザー管理・商品/価格/構成部品管理";
     case "dept_admin": return "製造/構成部品管理・製造原価基本許可・自部署ユーザー";
-    case "master_editor": return "商品/販売価格/価格調査管理。製造原価は個別許可";
+    case "master_editor": return "商品/画像・販売/基準価格・得意先・仕入/価格調査管理。在庫は閲覧のみ、製造原価は個別許可";
     case "production_editor": return "製造/構成部品管理。製造原価は個別許可";
     case "core_image_editor": return "商品/販売価格閲覧・使用済みコア画像の登録/削除。製造原価は個別許可";
     case "sales_viewer": return "商品・販売価格・価格調査履歴の閲覧。製造原価は個別許可";
@@ -31519,6 +31657,8 @@ function applyPermissionOverviewOverride(item, context) {
 function permissionOverviewScreenGroups(context) {
   var role = context.roleCode;
   var editors = ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"];
+  var productionEditors = ["system_admin", "company_admin", "dept_admin", "production_editor"];
+  var productionViewers = productionEditors.concat(["all_viewer"]);
   var companyAdmins = ["system_admin", "company_admin"];
   var managementViewers = editors.concat(["all_viewer"]);
   var componentEditors = ["system_admin", "company_admin", "dept_admin", "production_editor"];
@@ -31526,8 +31666,10 @@ function permissionOverviewScreenGroups(context) {
   var basePriceViewers = ["system_admin", "company_admin", "dept_admin", "master_editor", "all_viewer"];
   var priceResearchViewers = ["system_admin", "company_admin", "master_editor", "all_viewer", "sales_viewer"];
   var priceResearchers = ["system_admin", "company_admin", "master_editor"];
-  var userManagers = ["system_admin", "company_admin", "dept_admin", "master_editor"];
+  var userManagers = ["system_admin", "company_admin", "dept_admin"];
   var roleCanEdit = permissionOverviewRoleIn(role, editors);
+  var roleCanEditProduction = permissionOverviewRoleIn(role, productionEditors);
+  var roleCanViewProduction = permissionOverviewRoleIn(role, productionViewers);
   var roleCanManageCompany = permissionOverviewRoleIn(role, companyAdmins);
   var roleCanViewManagement = permissionOverviewRoleIn(role, managementViewers);
   var roleIsInternal = permissionOverviewRoleIn(role, internalRoles);
@@ -31558,7 +31700,7 @@ function permissionOverviewScreenGroups(context) {
   }
 
   function imageManagementState() {
-    if (roleCanEdit) return permissionOverviewAllowed("全画像の登録・修正・削除可");
+    if (roleCanEditProduction) return permissionOverviewAllowed("使用済みコア画像の登録・修正・削除可");
     if (role === "core_image_editor") return permissionOverviewLimited("使用済みコア画像の登録・削除のみ可");
     return permissionOverviewDenied("登録・削除不可");
   }
@@ -31584,14 +31726,13 @@ function permissionOverviewScreenGroups(context) {
     switch (role) {
       case "system_admin": return permissionOverviewAllowed("全ユーザーを管理可");
       case "company_admin": return permissionOverviewAllowed("自社ユーザーを管理可");
-      case "dept_admin":
-      case "master_editor": return permissionOverviewLimited("自部署ユーザーを管理可");
+      case "dept_admin": return permissionOverviewLimited("自部署ユーザーを管理可");
       default: return permissionOverviewDenied("利用不可");
     }
   }
 
   function componentCompatibilityState() {
-    var roleAllowed = permissionOverviewRoleIn(role, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]);
+    var roleAllowed = permissionOverviewRoleIn(role, ["system_admin", "company_admin", "dept_admin", "production_editor"]);
     if (!roleAllowed) return permissionOverviewDenied("利用不可");
     if (context.ownRole) {
       return context.companyCode === "daiko"
@@ -31602,14 +31743,15 @@ function permissionOverviewScreenGroups(context) {
   }
 
   var manufacturingCostUse = manufacturingCostUseState();
-  var coreListVisible = roleCanViewManagement || role === "core_image_editor";
+  var coreListVisible = permissionOverviewRoleIn(role, productionViewers.concat(["core_image_editor"]));
   var salesPricingVisible = roleIsInternal;
   var purchaseVisible = permissionOverviewRoleIn(role, basePriceViewers);
   var researchHistoryVisible = permissionOverviewRoleIn(role, priceResearchViewers);
   var researchManageable = permissionOverviewRoleIn(role, priceResearchers);
   var customerAccessManageable = permissionOverviewRoleIn(role, ["system_admin", "company_admin", "master_editor"]);
+  var customerAccountManageable = customerAccessManageable;
   var gltekPartNumberIssueAllowed = role === "system_admin" || (
-    context.companyCode === "gltek" && permissionOverviewRoleIn(role, ["company_admin", "master_editor"])
+    context.companyCode === "gltek" && permissionOverviewRoleIn(role, ["company_admin", "dept_admin"])
   );
   var userManagement = userManagementState();
 
@@ -31634,13 +31776,13 @@ function permissionOverviewScreenGroups(context) {
               : (roleIsInternal ? permissionOverviewLimited("選択した得意先の表示設定に従う") : permissionOverviewDenied("対象外")) },
             { label: "担当者管理画面", state: isCustomer
               ? permissionOverviewLimited("得意先管理者のみ表示")
-              : (role === "system_admin" ? permissionOverviewLimited("得意先管理から管理") : permissionOverviewDenied("表示なし")) },
+              : (customerAccountManageable ? permissionOverviewLimited("得意先管理から管理") : permissionOverviewDenied("表示なし")) },
             { label: "担当者追加・停止・PW再設定", state: isCustomer
               ? permissionOverviewLimited("同じ得意先の管理者のみ可")
-              : (role === "system_admin" ? permissionOverviewAllowed("全得意先を管理可") : permissionOverviewDenied("利用不可")) },
+              : (customerAccountManageable ? permissionOverviewAllowed("全得意先を管理可") : permissionOverviewDenied("利用不可")) },
             { label: "管理者権限の移行", state: isCustomer
               ? permissionOverviewLimited("有効なメンバーへ移行可")
-              : (role === "system_admin" ? permissionOverviewAllowed("有効なメンバーへ移行可") : permissionOverviewDenied("利用不可")) },
+              : (customerAccountManageable ? permissionOverviewAllowed("有効なメンバーへ移行可") : permissionOverviewDenied("利用不可")) },
             { label: "社内向け画面・編集操作", state: isCustomer
               ? permissionOverviewDenied("表示なし")
               : (roleIsInternal ? permissionOverviewLimited("得意先として表示中は表示なし") : permissionOverviewDenied("対象外")) },
@@ -31678,7 +31820,7 @@ function permissionOverviewScreenGroups(context) {
         {
           title: "構成部品名マスタ",
           items: [
-            { label: "画面・マスタ設定", permissionKey: "component_name.manage", state: screenState(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "dept_admin", "master_editor"])) }
+            { label: "画面・マスタ設定", permissionKey: "component_name.manage", state: screenState(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "dept_admin"])) }
           ]
         },
         {
@@ -31695,16 +31837,16 @@ function permissionOverviewScreenGroups(context) {
         {
           title: "製造管理",
           items: [
-            { label: "画面", permissionKey: "production.view", state: screenState(roleCanViewManagement) },
-            { label: "商品登録・修正", permissionKey: "product.manage", state: yesNo(roleCanEdit, "可", "不可") },
-            { label: "通常商品追加時のGLTEK品番", permissionKey: "product.manage", state: roleCanEdit
+            { label: "画面", permissionKey: "production.view", state: screenState(roleCanViewProduction) },
+            { label: "商品登録・修正", permissionKey: "product.manage", state: yesNo(roleCanEditProduction, "可", "不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }] },
+            { label: "通常商品追加時のGLTEK品番", permissionKey: "product.manage", state: roleCanEditProduction
               ? permissionOverviewLimited("既存番号のみ自動引継ぎ（新規発行なし）")
-              : permissionOverviewDenied("対象外") },
-            { label: "GLTEK製商品の追加（製造管理のみ）", permissionKey: "gltek_part_number.issue", state: yesNo(gltekPartNumberIssueAllowed, "登録可", "利用不可"), requiredPermissions: [{ key: "product.manage", defaultAllowed: roleCanEdit }], dependencyDeniedText: "商品追加権限が必要" },
-            { label: "新規GLTEK品番の発行", permissionKey: "gltek_part_number.issue", state: yesNo(gltekPartNumberIssueAllowed, "GLTEK製登録時に自動発行", "利用不可"), requiredPermissions: [{ key: "product.manage", defaultAllowed: roleCanEdit }], dependencyDeniedText: "商品追加権限が必要" },
-            { label: "構成部品閲覧", permissionKey: "component.view", state: yesNo(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "all_viewer"]), "閲覧可", "利用不可") },
-            { label: "構成部品追加・修正・削除", permissionKey: "component.manage", state: yesNo(roleCanManageComponents, "可", "不可") },
-            { label: "製造画像登録・修正・削除", permissionKey: "image.manage", state: fullImageManagementState() }
+              : permissionOverviewDenied("対象外"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }] },
+            { label: "GLTEK製商品の追加（製造管理のみ）", permissionKey: "gltek_part_number.issue", state: yesNo(gltekPartNumberIssueAllowed, "登録可", "利用不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }, { key: "product.manage", defaultAllowed: roleCanEditProduction }], dependencyDeniedText: "製造管理の商品追加権限が必要" },
+            { label: "新規GLTEK品番の発行", permissionKey: "gltek_part_number.issue", state: yesNo(gltekPartNumberIssueAllowed, "GLTEK製登録時に自動発行", "利用不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }, { key: "product.manage", defaultAllowed: roleCanEditProduction }], dependencyDeniedText: "製造管理の商品追加権限が必要" },
+            { label: "構成部品閲覧", permissionKey: "component.view", state: yesNo(roleCanViewProduction, "閲覧可", "利用不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }] },
+            { label: "構成部品追加・修正・削除", permissionKey: "component.manage", state: yesNo(roleCanManageComponents, "可", "不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }] },
+            { label: "製造画像登録・修正・削除", permissionKey: "image.manage", state: yesNo(roleCanEditProduction, "全画像の登録・修正・削除可", "登録・削除不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }] }
           ]
         },
         {
@@ -31717,7 +31859,7 @@ function permissionOverviewScreenGroups(context) {
           title: "コア一覧",
           items: [
             { label: "画面", permissionKey: "core_list.view", state: screenState(coreListVisible) },
-            { label: "収集・在庫リスト", permissionKey: "production_records.manage", state: roleCanEdit
+            { label: "収集・在庫リスト", permissionKey: "production_records.manage", state: roleCanEditProduction
               ? permissionOverviewAllowed("追加・修正・削除可")
               : (coreListVisible ? permissionOverviewLimited("閲覧のみ") : permissionOverviewDenied("利用不可")) },
             { label: "使用済みコア画像", permissionKey: "used_core_image.manage", state: imageManagementState() }
@@ -31727,7 +31869,7 @@ function permissionOverviewScreenGroups(context) {
           title: "商品区分別在庫",
           items: [
             { label: "画面・在庫情報", permissionKey: "stock.view", state: screenState(roleIsInternal) },
-            { label: "在庫数・保管情報の更新", permissionKey: "stock.manage", state: yesNo(roleCanEdit, "可", "不可") }
+            { label: "在庫数・保管情報の更新", permissionKey: "stock.manage", state: yesNo(roleCanEditProduction, "可", "不可") }
           ]
         },
         {
@@ -31741,14 +31883,14 @@ function permissionOverviewScreenGroups(context) {
         {
           title: "製造ランキングレポート",
           items: [
-            { label: "画面・レポート閲覧", permissionKey: "manufacturing_report.view", state: screenState(roleCanViewManagement) }
+            { label: "画面・レポート閲覧", permissionKey: "manufacturing_report.view", state: screenState(roleCanViewProduction) }
           ]
         },
         {
           title: "互換管理",
           items: [
-            { label: "画面", permissionKey: "compatibility.view", state: screenState(roleCanViewManagement) },
-            { label: "互換グループの追加・修正・削除", permissionKey: "compatibility.manage", state: yesNo(roleCanEdit, "可", "不可") }
+            { label: "画面", permissionKey: "compatibility.view", state: screenState(roleCanViewProduction) },
+            { label: "互換グループの追加・修正・削除", permissionKey: "compatibility.manage", state: yesNo(roleCanEditProduction, "可", "不可") }
           ]
         }
       ]
@@ -31762,7 +31904,7 @@ function permissionOverviewScreenGroups(context) {
             { label: "画面・販売価格", permissionKey: "sales_pricing.view", state: screenState(salesPricingVisible) },
             { label: "販売価格設定", permissionKey: "sales_pricing.manage", state: yesNo(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "master_editor"]), "修正可", "修正不可") },
             { label: "基準価格閲覧", permissionKey: "base_price.view", state: yesNo(roleCanViewBasePrice, "閲覧可", "閲覧不可") },
-            { label: "基準価格設定", permissionKey: "base_price.manage", state: yesNo(permissionOverviewRoleIn(role, ["system_admin", "company_admin"]), "修正可", "修正不可") }
+            { label: "基準価格設定", permissionKey: "base_price.manage", state: yesNo(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "master_editor"]), "修正可", "修正不可") }
           ]
         },
         {
@@ -31784,8 +31926,8 @@ function permissionOverviewScreenGroups(context) {
           title: "得意先管理",
           items: [
             { label: "画面・得意先情報・表示範囲", permissionKey: "customer_access.manage", state: screenState(customerAccessManageable) },
-            { label: "得意先ログインID発行・メール/FAX案内", state: role === "system_admin" ? permissionOverviewAllowed("発行可") : permissionOverviewDenied("利用不可") },
-            { label: "得意先ログイン履歴・停止・PW再設定", state: role === "system_admin" ? permissionOverviewAllowed("管理可") : permissionOverviewDenied("利用不可") }
+            { label: "得意先ログインID発行・メール/FAX案内", permissionKey: "customer_access.manage", state: customerAccountManageable ? permissionOverviewAllowed("発行可") : permissionOverviewDenied("利用不可") },
+            { label: "得意先ログイン履歴・停止・PW再設定・管理者移行", permissionKey: "customer_access.manage", state: customerAccountManageable ? permissionOverviewAllowed("管理可") : permissionOverviewDenied("利用不可") }
           ]
         }
       ]
@@ -31904,7 +32046,7 @@ function renderCustomerAccountIssuance(useCustomerDefaults) {
   var section = document.getElementById("customer-account-issuance");
   var customerInput = document.getElementById("customer-account-customer");
   if (!section || !customerInput) return;
-  var visible = isSystemAdmin();
+  var visible = canManageCustomerAccounts();
   section.hidden = !visible;
   if (!visible) return;
   var customer = currentCustomerAccessCustomer;
@@ -31925,7 +32067,7 @@ async function loadCustomerAccountUsers(customerId) {
   var requestSeq = ++customerAccountRequestSeq;
   customerAccountUsers = [];
   var host = document.getElementById("customer-account-list");
-  if (!isSystemAdmin() || !host) return;
+  if (!canManageCustomerAccounts() || !host) return;
   host.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
   if (!customerId) {
     renderCustomerAccountUsers();
@@ -31946,7 +32088,7 @@ async function loadCustomerAccountUsers(customerId) {
 
 function renderCustomerAccountUsers(errorMessage) {
   var host = document.getElementById("customer-account-list");
-  if (!host || !isSystemAdmin()) return;
+  if (!host || !canManageCustomerAccounts()) return;
   if (errorMessage) {
     host.innerHTML = "<div class='empty save-err'>登録済みログインIDを読み込めませんでした: " + esc(errorMessage) + "</div>";
     return;
@@ -32008,7 +32150,7 @@ function bindCustomerAccountUserEvents() {
 
 async function updateCustomerAccountUserStatus(userId, status) {
   var user = customerAccountUserById(userId);
-  if (!isSystemAdmin() || !user || ["active", "suspended"].indexOf(status) < 0) {
+  if (!canManageCustomerAccounts() || !user || ["active", "suspended"].indexOf(status) < 0) {
     showPermissionDenied("update_customer_user_status", "profiles", userId);
     return;
   }
@@ -32033,7 +32175,7 @@ async function updateCustomerAccountUserStatus(userId, status) {
 
 async function sendCustomerAccountPasswordReset(userId, button) {
   var user = customerAccountUserById(userId);
-  if (!isSystemAdmin() || !user || !user.email) {
+  if (!canManageCustomerAccounts() || !user || !user.email) {
     showPermissionDenied("reset_customer_user_password", "profiles", userId);
     return;
   }
@@ -32056,7 +32198,7 @@ async function sendCustomerAccountPasswordReset(userId, button) {
 async function transferCustomerAccountAdmin(userId, button) {
   var user = customerAccountUserById(userId);
   var customerId = currentCustomerAccessCustomer && currentCustomerAccessCustomer.id;
-  if (!isSystemAdmin() || !customerId || !user || user.customer_role !== "member" || user.status !== "active") return;
+  if (!canManageCustomerAccounts() || !customerId || !user || user.customer_role !== "member" || user.status !== "active") return;
   if (!confirm(t("customer_users_transfer_confirm"))) return;
   if (button) button.disabled = true;
   var result = await invokeCustomerUserManagement({ action: "transfer_admin", sales_customer_id: customerId, target_user_id: user.id });
@@ -32137,7 +32279,7 @@ function openCustomerFaxInvitePrintWindow(win, invite, faxNumber) {
 }
 
 async function issueCustomerAccount(channel) {
-  if (!isSystemAdmin()) {
+  if (!canManageCustomerAccounts()) {
     showPermissionDenied("invite_customer_account", "profiles");
     return;
   }
@@ -33230,9 +33372,13 @@ document.getElementById("customer-portal-shipping").addEventListener("click", en
 document.getElementById("btn-back-customer-shipping").addEventListener("click", returnToCustomerPortalFromShipping);
 document.getElementById("customer-shipping-prefecture").addEventListener("change", renderCustomerShippingRates);
 document.getElementById("customer-shipping-carrier").addEventListener("change", renderCustomerShippingRates);
+document.getElementById("customer-shipping-service").addEventListener("change", renderCustomerShippingRates);
+document.getElementById("customer-shipping-size").addEventListener("change", renderCustomerShippingRates);
 document.getElementById("customer-shipping-reset").addEventListener("click", function() {
   document.getElementById("customer-shipping-prefecture").value = "all";
   document.getElementById("customer-shipping-carrier").value = "all";
+  document.getElementById("customer-shipping-service").value = "all";
+  document.getElementById("customer-shipping-size").value = "all";
   renderCustomerShippingRates();
 });
 document.getElementById("btn-back-customer-users").addEventListener("click", returnToCustomerPortalFromUsers);
@@ -33704,6 +33850,8 @@ document.getElementById("customer-access-include-inactive").addEventListener("ch
 document.getElementById("btn-customer-access-save").addEventListener("click", saveCustomerAccessSettings);
 document.getElementById("shipping-rate-prefecture-filter").addEventListener("change", renderShippingRateMgmt);
 document.getElementById("shipping-rate-carrier-filter").addEventListener("change", renderShippingRateMgmt);
+document.getElementById("shipping-rate-service-filter").addEventListener("change", renderShippingRateMgmt);
+document.getElementById("shipping-rate-size-filter").addEventListener("change", renderShippingRateMgmt);
 document.getElementById("shipping-rate-status-filter").addEventListener("change", renderShippingRateMgmt);
 document.getElementById("btn-new-shipping-rate").addEventListener("click", function() { openShippingRateForm(null); });
 document.getElementById("btn-shipping-rate-cancel").addEventListener("click", closeShippingRateForm);
