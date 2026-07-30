@@ -31839,15 +31839,15 @@ function permissionOverviewScreenGroups(context) {
           title: "製造管理",
           items: [
             { label: "画面", permissionKey: "production.view", state: screenState(roleCanViewProduction) },
-            { label: "商品登録・修正", permissionKey: "product.manage", state: yesNo(roleCanEditProduction, "可", "不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }] },
-            { label: "通常商品追加時のGLTEK品番", permissionKey: "product.manage", state: roleCanEditProduction
+            { label: "商品登録・修正", permissionKey: "product.manage", state: yesNo(roleCanEdit, "可", "不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }] },
+            { label: "通常商品追加時のGLTEK品番", permissionKey: "product.manage", state: roleCanEdit
               ? permissionOverviewLimited("既存番号のみ自動引継ぎ（新規発行なし）")
               : permissionOverviewDenied("対象外"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }] },
-            { label: "GLTEK製商品の追加（製造管理のみ）", permissionKey: "gltek_part_number.issue", state: yesNo(gltekPartNumberIssueAllowed, "登録可", "利用不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }, { key: "product.manage", defaultAllowed: roleCanEditProduction }], dependencyDeniedText: "製造管理の商品追加権限が必要" },
-            { label: "新規GLTEK品番の発行", permissionKey: "gltek_part_number.issue", state: yesNo(gltekPartNumberIssueAllowed, "GLTEK製登録時に自動発行", "利用不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }, { key: "product.manage", defaultAllowed: roleCanEditProduction }], dependencyDeniedText: "製造管理の商品追加権限が必要" },
+            { label: "GLTEK製商品の追加（製造管理のみ）", permissionKey: "gltek_part_number.issue", state: yesNo(gltekPartNumberIssueAllowed, "登録可", "利用不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }, { key: "product.manage", defaultAllowed: roleCanEdit }], dependencyDeniedText: "製造管理の商品追加権限が必要" },
+            { label: "新規GLTEK品番の発行", permissionKey: "gltek_part_number.issue", state: yesNo(gltekPartNumberIssueAllowed, "GLTEK製登録時に自動発行", "利用不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }, { key: "product.manage", defaultAllowed: roleCanEdit }], dependencyDeniedText: "製造管理の商品追加権限が必要" },
             { label: "構成部品閲覧", permissionKey: "component.view", state: yesNo(roleCanViewProduction, "閲覧可", "利用不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }] },
             { label: "構成部品追加・修正・削除", permissionKey: "component.manage", state: yesNo(roleCanManageComponents, "可", "不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }] },
-            { label: "製造画像登録・修正・削除", permissionKey: "image.manage", state: yesNo(roleCanEditProduction, "全画像の登録・修正・削除可", "登録・削除不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }] }
+            { label: "製造画像登録・修正・削除", permissionKey: "image.manage", state: fullImageManagementState(), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }] }
           ]
         },
         {
