@@ -4098,7 +4098,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.604";
+var APP_VERSION       = "v1.1.605";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -30493,7 +30493,7 @@ function buildCustomerPriceListHtml(customer, rows) {
   return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><meta name='referrer' content='no-referrer'><title>" + esc(customer.customer_name || "得意先") + " 価格表</title>" +
     "<link rel='stylesheet' href='customer-price-list-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'>" +
     "</head><body><div class='toolbar'><button id='dcats-print-customer-price-list' type='button'>印刷・PDF保存</button><button class='secondary' id='dcats-close-customer-price-list' type='button'>閉じる</button></div>" +
-    "<main class='sheet'><header class='document-head'><div><h1>販売価格表</h1><p>Daiko Catalog &amp; Search System</p></div><div class='issue-date'>発行日<br><strong>" + esc(issuedAt) + "</strong></div></header>" +
+    "<main class='sheet'><header class='document-head'><div><h1>販売価格表</h1></div><div class='issue-date'>発行日<br><strong>" + esc(issuedAt) + "</strong></div></header>" +
     "<section class='customer-summary'><div><span>得意先名</span><strong>" + esc(customer.customer_name || "-") + "</strong></div><div><span>掲載件数</span><strong>" + esc(String(rows.length)) + " 件</strong></div></section>" +
     "<p class='terms-note'>送料・消費税は別途となります。</p>" +
     "<table class='price-list'><thead><tr><th>No.</th><th>カテゴリ</th><th>商品区分</th><th>G品番</th><th>純正品番</th><th>メーカー品番</th><th>メーカー</th><th>販売価格</th><th>メモ</th></tr></thead><tbody>" + body + "</tbody></table>" +
