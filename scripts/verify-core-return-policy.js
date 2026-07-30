@@ -68,6 +68,8 @@ if (cost.amount !== 0 || cost.source !== "kind_default") throw new Error("afterm
 [
   "detail-sales-terms-grid",
   "detail-sales-terms-panel",
+  "width: min(100%, 280px)",
+  ".detail-sales-terms-panel .core-return-policy-panel.vertical .core-return-policy-item",
   "core-return-badge.required",
   "core-return-badge.not-required",
   "production-core-policy-row",
@@ -99,7 +101,7 @@ if (!salesDetailSource.includes("compact: true, vertical: true, showTitle: false
   throw new Error("sales core return terms must use the compact vertical layout without a repeated heading");
 }
 if (!salesDetailSource.includes("detail-sales-terms-grid") || !salesDetailSource.includes("detail-sales-terms-panel")) {
-  throw new Error("sales product kind, stock, core return and core charge must share one part-number-width panel");
+  throw new Error("sales product kind, stock, core return and core charge must share one compact panel");
 }
 
 const productKindPanelSource = sourceBetween("function renderProductKindPanelHtml", "function renderProductKindWrapForCurrent");

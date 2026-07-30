@@ -782,17 +782,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 
 /* Core return terms */
 .detail-sales-terms-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  align-items: start;
+  display: block;
   margin: 10px 0;
 }
 .detail-sales-terms-panel {
+  width: min(100%, 280px);
   min-width: 0;
   border: 1px solid #e5edf8;
-  border-radius: 8px;
-  background: #fbfdff;
+  border-radius: 6px;
+  background: #fff;
   padding: 7px;
 }
 .detail-sales-kind-row {
@@ -823,7 +821,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 }
 .detail-sales-terms-panel #core-return-policy-wrap {
   margin-top: 5px;
-  padding-top: 5px;
+  padding-top: 0;
   border-top: 1px solid #e5edf8;
 }
 .core-return-policy-panel { min-width: 0; }
@@ -883,6 +881,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 }
 .core-return-badge.required { background: #fff1ed; color: #b42318; }
 .core-return-badge.not-required { background: #ecfdf3; color: #087443; }
+.detail-sales-terms-panel .core-return-policy-panel.vertical .core-return-policy-grid { gap: 0; }
+.detail-sales-terms-panel .core-return-policy-panel.vertical .core-return-policy-item {
+  grid-template-columns: 86px minmax(0, 1fr);
+  min-height: 33px;
+  padding: 0;
+  border-left: 0;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+}
+.detail-sales-terms-panel .core-return-policy-panel.vertical .core-return-policy-item:last-child { border-bottom: 0; }
+.detail-sales-terms-panel .core-return-policy-panel.vertical .core-return-policy-item span {
+  padding: 7px 4px;
+  color: #888;
+  font-size: 11px;
+}
+.detail-sales-terms-panel .core-return-policy-panel.vertical .core-return-policy-item strong {
+  margin: 0 4px;
+  font-size: 13px;
+}
 
 .product-form-core-policy {
   margin-top: 14px;
@@ -947,10 +964,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-catalog-availability-kind .core-return-policy-grid { gap: 6px; }
 .customer-catalog-availability-kind .core-return-policy-item { padding: 6px 8px; }
 .customer-catalog-availability-kind .core-return-policy-item strong { font-size: 13px; }
-
-@media (max-width: 1180px) {
-  .detail-sales-terms-grid { grid-template-columns: 1fr; gap: 8px; }
-}
 
 @media (max-width: 760px) {
   .product-form-core-policy-grid { grid-template-columns: 1fr; }
