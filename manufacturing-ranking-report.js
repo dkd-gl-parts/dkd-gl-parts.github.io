@@ -7,6 +7,11 @@
   var DATA_PAGE_SIZE = 1000;
   var DATA_PAGE_CONCURRENCY = 4;
   var REFERENCE_QUERY_CHUNK_SIZE = 400;
+  var REFERENCE_QUERY_CONCURRENCY = 4;
+  var SUPPLIER_NAMES = {
+    "1": "Stronghold",
+    "3": "STAL / Santian"
+  };
   var MASTER_PART_FIELDS = [
     { normalized: "normalized_genuine_part_number", value: "genuine_part_number", label: "純正" },
     { normalized: "normalized_genuine_part_number_2", value: "genuine_part_number_2", label: "純正2" },
@@ -26,6 +31,8 @@
     rankingReady: false,
     masterDataReady: false,
     masterDataError: false,
+    supplierDataReady: false,
+    supplierDataError: false,
     rows: [],
     sheets: [],
     masterPartNumbers: Object.create(null),
@@ -38,6 +45,8 @@
     stockedProductCount: 0,
     kikanGroupCount: 0,
     kikanMemberCount: 0,
+    supplierItemsByProductId: Object.create(null),
+    supplierItemCount: 0,
     results: [],
     summary: null,
     options: null
@@ -216,9 +225,13 @@
     if (reload) reload.disabled = isLoading;
     if (preview) preview.disabled = !state.rankingReady || !state.rows.length;
     if (pdf) {
-      pdf.disabled = !state.masterDataReady || !state.results.length;
+      var reportType = byId("manufacturing-ranking-report-type");
+      var supplierReport = reportType && reportType.value === "supplier_availability";
+      var reportDataReady = state.masterDataReady && (!supplierReport || state.supplierDataReady);
+      pdf.disabled = !reportDataReady || !state.results.length;
       if (!state.rankingReady) pdf.textContent = "PDF準備中...";
       else if (!state.masterDataReady) pdf.textContent = state.masterDataError ? "PDF準備エラー" : "在庫照合中...";
+      else if (supplierReport && !state.supplierDataReady) pdf.textContent = state.supplierDataError ? "仕入先照合エラー" : "仕入先照合中...";
       else pdf.textContent = "PDF出力";
     }
   }
@@ -368,6 +381,68 @@
     return rows;
   }
 
+  async function fetchRowsByValuesBatched(table, selectColumns, field, values, chunkSize) {
+    var ids = uniqueIds(values);
+    if (!ids.length) return [];
+    var size = Math.max(1, Number(chunkSize || REFERENCE_QUERY_CHUNK_SIZE));
+    var chunks = [];
+    for (var index = 0; index < ids.length; index += size) chunks.push(ids.slice(index, index + size));
+    var rows = [];
+    for (var batchStart = 0; batchStart < chunks.length; batchStart += REFERENCE_QUERY_CONCURRENCY) {
+      var batch = chunks.slice(batchStart, batchStart + REFERENCE_QUERY_CONCURRENCY);
+      var responses = await Promise.all(batch.map(function(valuesChunk) {
+        return sb.from(table).select(selectColumns).in(field, valuesChunk);
+      }));
+      responses.forEach(function(response) {
+        if (response.error) throw response.error;
+        rows = rows.concat(response.data || []);
+      });
+    }
+    return rows;
+  }
+
+  function indexSupplierCatalogData(links, items) {
+    var itemsById = Object.create(null);
+    var itemsByProductId = Object.create(null);
+    var usedItemIds = Object.create(null);
+    (items || []).forEach(function(item) {
+      if (!item || item.id == null || item.is_active === false) return;
+      itemsById[String(item.id)] = item;
+    });
+    (links || []).forEach(function(link) {
+      if (!link || link.status !== "active" || link.dkd_shohin_id == null) return;
+      var item = itemsById[String(link.supplier_catalog_item_id)];
+      if (!item) return;
+      var productId = String(link.dkd_shohin_id);
+      if (!itemsByProductId[productId]) itemsByProductId[productId] = [];
+      if (itemsByProductId[productId].some(function(existing) { return String(existing.id) === String(item.id); })) return;
+      itemsByProductId[productId].push(item);
+      usedItemIds[String(item.id)] = true;
+    });
+    return {
+      itemsByProductId: itemsByProductId,
+      itemCount: Object.keys(usedItemIds).length
+    };
+  }
+
+  async function fetchSupplierCatalogData(productIds) {
+    var links = await fetchRowsByValuesBatched(
+      "supplier_catalog_item_links",
+      "id,supplier_catalog_item_id,dkd_shohin_id,status",
+      "dkd_shohin_id",
+      productIds
+    );
+    links = links.filter(function(link) { return link.status === "active"; });
+    var itemIds = uniqueIds(links.map(function(link) { return link.supplier_catalog_item_id; }));
+    var items = await fetchRowsByValuesBatched(
+      "supplier_catalog_items",
+      "id,supplier_id,source_item_id,supplier_pn,category_label,genuine_part_number,manufacturer_part_number,manufacturer,model,is_active",
+      "id",
+      itemIds
+    );
+    return indexSupplierCatalogData(links, items);
+  }
+
   async function fetchMasterProducts(productIds) {
     var numbers = Object.create(null);
     var productsById = Object.create(null);
@@ -502,6 +577,8 @@
     state.rankingReady = false;
     state.masterDataReady = false;
     state.masterDataError = false;
+    state.supplierDataReady = false;
+    state.supplierDataError = false;
     state.masterPartNumbers = Object.create(null);
     state.masterProductsById = Object.create(null);
     state.masterProductsByPart = Object.create(null);
@@ -512,6 +589,8 @@
     state.stockedProductCount = 0;
     state.kikanGroupCount = 0;
     state.kikanMemberCount = 0;
+    state.supplierItemsByProductId = Object.create(null);
+    state.supplierItemCount = 0;
     state.results = [];
     state.summary = null;
     state.options = null;
@@ -570,10 +649,23 @@
         state.kikanGroupCount = kikan.groupCount;
         state.kikanMemberCount = kikan.memberCount;
         state.masterDataReady = true;
-        setSourceStatus("D-CATS保存データを読み込みました。元データ: " + state.fileName + " / マスタ照合済み " + formatNumber(state.masterCacheRowCount) + "行 / 現在庫あり " + formatNumber(state.stockedProductCount) + "商品 / 互換 " + formatNumber(state.kikanGroupCount) + "グループ", "success");
+        setSourceStatus("ランキングを表示しました。仕入先商品を照合しています...", "loading");
         updatePreview();
+        try {
+          var supplierData = await fetchSupplierCatalogData(Object.keys(master.productsById));
+          state.supplierItemsByProductId = supplierData.itemsByProductId;
+          state.supplierItemCount = supplierData.itemCount;
+          state.supplierDataReady = true;
+          setSourceStatus("D-CATS保存データを読み込みました。元データ: " + state.fileName + " / マスタ照合済み " + formatNumber(state.masterCacheRowCount) + "行 / 現在庫あり " + formatNumber(state.stockedProductCount) + "商品 / 仕入先商品 " + formatNumber(state.supplierItemCount) + "件 / 互換 " + formatNumber(state.kikanGroupCount) + "グループ", "success");
+          updatePreview();
+        } catch (supplierError) {
+          state.supplierDataError = true;
+          setSourceStatus("ランキング・コア在庫は利用できますが、仕入先商品を取得できませんでした。再読み込みしてください。", "error");
+          updatePreview();
+        }
       } catch (referenceError) {
         state.masterDataError = true;
+        state.supplierDataError = true;
         setSourceStatus("ランキングは利用できますが、コア在庫・互換情報を取得できませんでした。再読み込みしてください。", "error");
         updatePreview();
       }
@@ -585,6 +677,8 @@
       state.rankingReady = false;
       state.masterDataReady = false;
       state.masterDataError = false;
+      state.supplierDataReady = false;
+      state.supplierDataError = false;
       state.masterPartNumbers = Object.create(null);
       state.masterProductsById = Object.create(null);
       state.masterProductsByPart = Object.create(null);
@@ -595,6 +689,8 @@
       state.stockedProductCount = 0;
       state.kikanGroupCount = 0;
       state.kikanMemberCount = 0;
+      state.supplierItemsByProductId = Object.create(null);
+      state.supplierItemCount = 0;
       state.results = [];
       state.summary = null;
       renderCategoryOptions();
@@ -641,8 +737,10 @@
       startRank = endRank;
       endRank = swap;
     }
+    var reportType = byId("manufacturing-ranking-report-type").value;
     return {
       categories: selectedCategories(),
+      reportType: reportType,
       metric: byId("manufacturing-ranking-metric").value,
       rankScope: byId("manufacturing-ranking-scope").value,
       startRank: startRank,
@@ -652,9 +750,23 @@
       compatibilityMode: byId("manufacturing-ranking-compat-mode").value,
       compatibilityBasis: byId("manufacturing-ranking-compat-basis").value,
       orientation: byId("manufacturing-ranking-orientation").value,
-      showCoreStock: byId("manufacturing-ranking-show-core-stock").checked,
-      showMissingMaster: byId("manufacturing-ranking-show-missing").checked
+      supplierId: byId("manufacturing-ranking-supplier").value,
+      supplierStatus: byId("manufacturing-ranking-supplier-status").value,
+      showCoreStock: reportType !== "supplier_availability" && byId("manufacturing-ranking-show-core-stock").checked,
+      showMissingMaster: reportType !== "supplier_availability" && byId("manufacturing-ranking-show-missing").checked
     };
+  }
+
+  function syncReportTypeControls() {
+    var reportType = byId("manufacturing-ranking-report-type");
+    if (!reportType) return;
+    var supplierReport = reportType.value === "supplier_availability";
+    var supplierOptions = byId("manufacturing-ranking-supplier-options");
+    var coreStockOption = byId("manufacturing-ranking-core-stock-option");
+    var missingOption = byId("manufacturing-ranking-missing-option");
+    if (supplierOptions) supplierOptions.hidden = !supplierReport;
+    if (coreStockOption) coreStockOption.hidden = supplierReport;
+    if (missingOption) missingOption.hidden = supplierReport;
   }
 
   function metricValue(row, metric) {
@@ -830,7 +942,7 @@
     return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate());
   }
 
-  function printFileTitle(categories, startRank, endRank, date) {
+  function printFileTitle(categories, startRank, endRank, date, reportType) {
     var categoryNames = (categories || []).map(function(category) {
       return normalizeText(category)
         .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "・")
@@ -840,7 +952,8 @@
     var firstRank = Math.max(1, parseInt(startRank, 10) || 1);
     var lastRank = Math.max(firstRank, parseInt(endRank, 10) || firstRank);
     var rankRange = firstRank === lastRank ? String(firstRank) : firstRank + "-" + lastRank;
-    return (categoryNames.join("・") || "カテゴリ") + "＆製造ランキング" + rankRange + "位＆" + printFileDate(date);
+    var reportName = reportType === "supplier_availability" ? "仕入先商品照合" : "製造ランキング";
+    return (categoryNames.join("・") || "カテゴリ") + "＆" + reportName + rankRange + "位＆" + printFileDate(date);
   }
 
   function rowPartNumberEntries(row) {
@@ -928,6 +1041,86 @@
     }).filter(Boolean).sort(function(left, right) {
       return right.coreStockQty - left.coreStockQty ||
         masterProductPartNumber(left).localeCompare(masterProductPartNumber(right), "ja");
+    });
+  }
+
+  function supplierName(supplierId) {
+    var key = String(supplierId == null ? "" : supplierId);
+    return SUPPLIER_NAMES[key] || (key ? "仕入先 #" + key : "仕入先未設定");
+  }
+
+  function matchedProductsForSupplier(result, compatibilityMode) {
+    var productsById = Object.create(null);
+    var rows = compatibilityMode === "all" ? [result.row] : result.group;
+    rows.forEach(function(row) {
+      masterProductsForRow(row).forEach(function(product) {
+        productsById[product.id] = product;
+        (state.kikanGroupIdsByProductId[product.id] || []).forEach(function(groupId) {
+          (state.kikanMembersByGroupId[groupId] || []).forEach(function(productId) {
+            var compatible = state.masterProductsById[String(productId)];
+            if (compatible) productsById[compatible.id] = compatible;
+          });
+        });
+      });
+    });
+    return Object.keys(productsById).map(function(productId) { return productsById[productId]; });
+  }
+
+  function supplierItemsForResult(result, options) {
+    var itemsById = Object.create(null);
+    matchedProductsForSupplier(result, options.compatibilityMode).forEach(function(product) {
+      (state.supplierItemsByProductId[product.id] || []).forEach(function(item) {
+        if (options.supplierId !== "all" && String(item.supplier_id) !== String(options.supplierId)) return;
+        itemsById[String(item.id)] = item;
+      });
+    });
+    return Object.keys(itemsById).map(function(itemId) { return itemsById[itemId]; }).sort(function(left, right) {
+      return supplierName(left.supplier_id).localeCompare(supplierName(right.supplier_id), "ja") ||
+        normalizeSearch(left.supplier_pn || left.source_item_id).localeCompare(normalizeSearch(right.supplier_pn || right.source_item_id), "ja");
+    });
+  }
+
+  function supplierItemPartText(item) {
+    var parts = [];
+    if (isLikelyPartNumber(item.genuine_part_number)) parts.push("純正 " + item.genuine_part_number);
+    if (isLikelyPartNumber(item.manufacturer_part_number)) parts.push("メーカー " + item.manufacturer_part_number);
+    return parts.join(" / ") || "品番情報なし";
+  }
+
+  function supplierItemManagementNumber(item) {
+    return normalizeText(item.supplier_pn || item.source_item_id) || "-";
+  }
+
+  function buildSupplierItemsHtml(items, printMode) {
+    if (!items.length) return "<span class='ranking-report-none'>-</span>";
+    var itemClass = printMode ? "supplier-item" : "ranking-report-supplier-item";
+    return "<div class='" + (printMode ? "supplier-items" : "ranking-report-supplier-items") + "'>" + items.map(function(item) {
+      var maker = normalizeText(item.manufacturer);
+      return "<div class='" + itemClass + "'><strong>" + escapeHtml(supplierName(item.supplier_id)) + " / " + escapeHtml(supplierItemManagementNumber(item)) + "</strong>" +
+        "<small>" + escapeHtml(supplierItemPartText(item)) + (maker ? " / " + escapeHtml(maker) : "") + "</small></div>";
+    }).join("") + "</div>";
+  }
+
+  function supplierAvailabilitySummary(results, options) {
+    var itemIds = Object.create(null);
+    var availableCount = 0;
+    (results || []).forEach(function(result) {
+      var items = supplierItemsForResult(result, options);
+      if (items.length) availableCount++;
+      items.forEach(function(item) { itemIds[String(item.id)] = true; });
+    });
+    return {
+      availableCount: availableCount,
+      unavailableCount: Math.max(0, (results || []).length - availableCount),
+      itemCount: Object.keys(itemIds).length
+    };
+  }
+
+  function filterSupplierResults(results, options) {
+    if (options.reportType !== "supplier_availability" || options.supplierStatus === "all" || !state.supplierDataReady) return results;
+    return results.filter(function(result) {
+      var available = supplierItemsForResult(result, options).length > 0;
+      return options.supplierStatus === "available" ? available : !available;
     });
   }
 
@@ -1065,6 +1258,19 @@
   function renderSummary(summary, options) {
     var host = byId("manufacturing-ranking-summary");
     if (!host) return;
+    if (options.reportType === "supplier_availability") {
+      var supplierSummary = supplierAvailabilitySummary(summary.results, options);
+      host.innerHTML = [
+        ["出力件数", formatNumber(summary.results.length)],
+        ["仕入先商品あり", state.supplierDataReady ? formatNumber(supplierSummary.availableCount) : (state.supplierDataError ? "取得失敗" : "照合中")],
+        ["仕入先商品なし", state.supplierDataReady ? formatNumber(supplierSummary.unavailableCount) : (state.supplierDataError ? "取得失敗" : "照合中")],
+        ["紐づく仕入先商品", state.supplierDataReady ? formatNumber(supplierSummary.itemCount) + "件" : (state.supplierDataError ? "取得失敗" : "照合中")],
+        ["順位範囲", formatNumber(options.startRank) + " - " + formatNumber(options.endRank)]
+      ].map(function(card) {
+        return "<div class='ranking-report-summary-card'><span>" + card[0] + "</span><strong>" + card[1] + "</strong></div>";
+      }).join("");
+      return;
+    }
     var missingPartNumberCount = summary.results.reduce(function(total, result) {
       return total + missingMasterPartNumbers(result, options.compatibilityMode).length;
     }, 0);
@@ -1087,6 +1293,15 @@
     var hasAggregate = selectedSheets.some(function(sheet) { return sheet.isAggregate; });
     var hasDetail = selectedSheets.some(function(sheet) { return !sheet.isAggregate; });
     var messages = [];
+    if (options.reportType === "supplier_availability") {
+      if (!state.supplierDataReady) messages.push(state.supplierDataError || state.masterDataError ? "仕入先商品の照合に失敗しました。再読み込みしてください。" : "仕入先商品を照合しています。完了後に自動更新します。");
+      else if (!supplierAvailabilitySummary(summary.results, options).availableCount) messages.push("選択した条件で紐づく仕入先商品はありません。");
+      if (hasAggregate && hasDetail) messages.push("全体集計シートとカテゴリ別シートを同時に選択しています。重複集計に注意してください。");
+      if (options.compatibilityMode !== "all" && summary.omittedRows) messages.push("互換品番 " + formatNumber(summary.omittedRows) + "行を代表品番へまとめています。");
+      warning.hidden = messages.length === 0;
+      warning.textContent = messages.join(" ");
+      return;
+    }
     var compatibleRows = summary.results.filter(function(result) {
       return compatibilityDetails(result, options.showCoreStock).length > 0;
     }).length;
@@ -1112,10 +1327,33 @@
 
   function renderPreviewTable(results, options) {
     if (!results.length) {
-      renderEmptyPreview("条件に一致する明細がありません", "カテゴリ・順位範囲・最小出荷数を見直してください。");
+      renderEmptyPreview("条件に一致する明細がありません", options.reportType === "supplier_availability" ? "ランキング条件・対象仕入先・仕入先商品の有無を見直してください。" : "カテゴリ・順位範囲・最小出荷数を見直してください。");
       return;
     }
     var visible = results.slice(0, PREVIEW_LIMIT);
+    if (options.reportType === "supplier_availability") {
+      var supplierHtml = "<table class='ranking-report-table is-supplier-report'><thead><tr>" +
+        "<th>順位</th><th>商品名</th><th>純正品番</th><th>メーカー品番</th><th class='ranking-report-supplier-status-column'>仕入先商品</th><th class='ranking-report-supplier-column'>仕入先商品情報</th>" +
+        "</tr></thead><tbody>";
+      visible.forEach(function(result) {
+        var row = result.row;
+        var items = state.supplierDataReady ? supplierItemsForResult(result, options) : [];
+        var status = state.supplierDataReady
+          ? (items.length ? "<span class='ranking-report-supplier-status is-available'>あり</span>" : "<span class='ranking-report-supplier-status is-unavailable'>なし</span>")
+          : "<span class='ranking-report-none'>" + (state.supplierDataError ? "取得失敗" : "照合中") + "</span>";
+        supplierHtml += "<tr><td class='ranking-report-rank-cell'>" + formatNumber(result.rank) + "</td>" +
+          "<td><strong>" + escapeHtml(row.productName || "-") + "</strong><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
+          "<td class='ranking-report-part-cell'>" + escapeHtml(row.genuine || "-") + "</td>" +
+          "<td class='ranking-report-part-cell'>" + escapeHtml(row.maker || "-") + "</td>" +
+          "<td>" + status + "</td><td class='ranking-report-supplier-cell'>" + (state.supplierDataReady ? buildSupplierItemsHtml(items, false) : "<span class='ranking-report-none'>" + (state.supplierDataError ? "取得失敗" : "照合中") + "</span>") + "</td></tr>";
+      });
+      supplierHtml += "</tbody></table>";
+      byId("manufacturing-ranking-table").innerHTML = supplierHtml;
+      var supplierNote = byId("manufacturing-ranking-preview-note");
+      if (supplierNote) supplierNote.textContent = results.length > PREVIEW_LIMIT ? "全" + formatNumber(results.length) + "行中、上位" + formatNumber(PREVIEW_LIMIT) + "行を画面表示" : "全" + formatNumber(results.length) + "行を表示";
+      setLoading(state.isLoading);
+      return;
+    }
     var html = "<table class='ranking-report-table'><thead><tr>" +
       "<th>順位</th><th>商品名</th><th>純正品番</th><th>メーカー品番</th><th>出荷数</th>";
     if (options.metric !== "shipment") html += "<th>順位値</th>";
@@ -1166,6 +1404,7 @@
       return false;
     }
     var summary = buildRanking(state.rows, options);
+    summary.results = filterSupplierResults(summary.results, options);
     state.results = summary.results;
     state.summary = summary;
     state.options = options;
@@ -1178,6 +1417,19 @@
   function buildPrintRows(results, options) {
     return results.map(function(result) {
       var row = result.row;
+      if (options.reportType === "supplier_availability") {
+        var supplierItems = supplierItemsForResult(result, options);
+        var supplierStatus = supplierItems.length
+          ? "<span class='supplier-status is-available'>あり</span>"
+          : "<span class='supplier-status is-unavailable'>なし</span>";
+        var supplierRow = "<tr><td class='rank'>" + formatNumber(result.rank) + "</td>" +
+          "<td class='product'><b>" + escapeHtml(row.productName || "-") + "</b><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
+          "<td class='part genuine-part'>" + escapeHtml(row.genuine || "-") + "</td>" +
+          "<td class='part maker-part'>" + escapeHtml(row.maker || "-") + "</td>" +
+          "<td class='supplier-status-cell'>" + supplierStatus + "</td>" +
+          "<td class='supplier-detail'>" + buildSupplierItemsHtml(supplierItems, true) + "</td></tr>";
+        return "<tbody class='print-item'>" + supplierRow + "</tbody>";
+      }
       var missing = missingMasterPartNumbers(result, options.compatibilityMode);
       var html = "<tr><td class='rank'>" + formatNumber(result.rank) + "</td>" +
         "<td class='product'><b>" + escapeHtml(row.productName || "-") + "</b><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
@@ -1198,28 +1450,42 @@
     var generatedDate = new Date();
     var generatedAt = generatedDate.toLocaleString("ja-JP");
     var categoryText = options.categories.join(" / ");
-    var title = printFileTitle(options.categories, options.startRank, options.endRank, generatedDate);
+    var supplierReport = options.reportType === "supplier_availability";
+    var title = printFileTitle(options.categories, options.startRank, options.endRank, generatedDate, options.reportType);
     var coreStockSummary = rankingCoreStockSummary(results);
-    var header = "<tr><th class='rank-head'>順位</th><th class='product-head'>商品名</th><th class='genuine-head'>純正品番</th><th class='maker-head'>メーカー品番</th><th class='shipment-head'>出荷数</th>";
-    if (options.metric !== "shipment") header += "<th class='score-head'>順位値</th>";
-    if (options.showCoreStock) header += "<th class='stock-head'>コア在庫</th>";
-    if (options.showMissingMaster) header += "<th class='missing-head'>未登録</th>";
-    header += "</tr>";
+    var supplierSummary = supplierAvailabilitySummary(results, options);
+    var header;
+    if (supplierReport) {
+      header = "<tr><th class='rank-head'>順位</th><th class='product-head'>商品名</th><th class='genuine-head'>純正品番</th><th class='maker-head'>メーカー品番</th><th class='supplier-status-head'>仕入先商品</th><th class='supplier-detail-head'>仕入先商品情報</th></tr>";
+    } else {
+      header = "<tr><th class='rank-head'>順位</th><th class='product-head'>商品名</th><th class='genuine-head'>純正品番</th><th class='maker-head'>メーカー品番</th><th class='shipment-head'>出荷数</th>";
+      if (options.metric !== "shipment") header += "<th class='score-head'>順位値</th>";
+      if (options.showCoreStock) header += "<th class='stock-head'>コア在庫</th>";
+      if (options.showMissingMaster) header += "<th class='missing-head'>未登録</th>";
+      header += "</tr>";
+    }
+    var conditions = supplierReport
+      ? "<section class='conditions'><div><span>D-CATSデータ</span><b>" + escapeHtml(state.fileName) + "</b></div>" +
+        "<div><span>順位基準</span><b>" + escapeHtml(metricLabel(options.metric) + " / " + rankScopeLabel(options.rankScope)) + "</b></div>" +
+        "<div><span>対象仕入先</span><b>" + escapeHtml(options.supplierId === "all" ? "すべて" : supplierName(options.supplierId)) + "</b></div>" +
+        "<div><span>仕入先商品</span><b>あり " + formatNumber(supplierSummary.availableCount) + "件 / なし " + formatNumber(supplierSummary.unavailableCount) + "件</b></div>" +
+        "<div><span>出力件数</span><b>" + formatNumber(results.length) + "件</b></div></section>"
+      : "<section class='conditions'><div><span>D-CATSデータ</span><b>" + escapeHtml(state.fileName) + "</b></div>" +
+        "<div><span>順位基準</span><b>" + escapeHtml(metricLabel(options.metric) + " / " + rankScopeLabel(options.rankScope)) + "</b></div>" +
+        "<div><span>互換品番</span><b>" + escapeHtml(compatibilityModeLabel(options.compatibilityMode)) + "</b></div>" +
+        "<div><span>コア在庫合計（互換含む）</span><b>" + (coreStockSummary.ready ? formatNumber(coreStockSummary.total) + "台" : "照合中") + "</b></div>" +
+        "<div><span>出力件数</span><b>" + formatNumber(results.length) + "件</b></div></section>";
 
     return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" +
       "<title>" + escapeHtml(title) + "</title>" +
       "<link rel='stylesheet' href='ranking-report-print.css?dcats_version=" + encodeURIComponent(version) + "&amp;layout=6'>" +
       "<link rel='stylesheet' href='" + orientationCss + "?dcats_version=" + encodeURIComponent(version) + "&amp;layout=6'>" +
       "</head><body><div class='print-toolbar'><button id='dcats-ranking-print' type='button'>PDFとして保存 / 印刷</button><span>印刷先で「PDFに保存」を選択してください。</span></div>" +
-      "<main class='report'><header><div><span class='eyebrow'>D-CATS MANUFACTURING REPORT</span><h1>製造ランキング</h1><p>" + escapeHtml(categoryText) + "</p></div>" +
+      "<main class='report" + (supplierReport ? " supplier-report" : "") + "'><header><div><span class='eyebrow'>D-CATS MANUFACTURING REPORT</span><h1>" + (supplierReport ? "仕入先商品照合リスト" : "製造ランキング") + "</h1><p>" + escapeHtml(categoryText) + "</p></div>" +
       "<div class='report-meta'><b>順位 " + formatNumber(options.startRank) + " - " + formatNumber(options.endRank) + "</b><span>" + escapeHtml(generatedAt) + " 作成</span></div></header>" +
-      "<section class='conditions'><div><span>D-CATSデータ</span><b>" + escapeHtml(state.fileName) + "</b></div>" +
-      "<div><span>順位基準</span><b>" + escapeHtml(metricLabel(options.metric) + " / " + rankScopeLabel(options.rankScope)) + "</b></div>" +
-      "<div><span>互換品番</span><b>" + escapeHtml(compatibilityModeLabel(options.compatibilityMode)) + "</b></div>" +
-      "<div><span>コア在庫合計（互換含む）</span><b>" + (coreStockSummary.ready ? formatNumber(coreStockSummary.total) + "台" : "照合中") + "</b></div>" +
-      "<div><span>出力件数</span><b>" + formatNumber(results.length) + "件</b></div></section>" +
+      conditions +
       "<table><thead>" + header + "</thead>" + buildPrintRows(results, options) + "</table>" +
-      "<footer><span>D-CATS / 製造ランキング</span><span>順位は連番で重複なし / コア在庫・互換・未登録品番はD-CATS照合時点</span></footer></main></body></html>";
+      "<footer><span>D-CATS / " + (supplierReport ? "仕入先商品照合" : "製造ランキング") + "</span><span>" + (supplierReport ? "順位はD-CATS出荷実績に基づく / 出荷数・コア在庫は非表示 / 仕入先商品はD-CATS照合時点" : "順位は連番で重複なし / コア在庫・互換・未登録品番はD-CATS照合時点") + "</span></footer></main></body></html>";
   }
 
   function openPdfPreview() {
@@ -1228,9 +1494,16 @@
       alert("PDFプレビューを開けませんでした。ブラウザのポップアップ許可を確認してください。");
       return;
     }
+    var reportType = byId("manufacturing-ranking-report-type");
+    var supplierReport = reportType && reportType.value === "supplier_availability";
     if (!state.masterDataReady) {
       popup.close();
       alert("コア在庫・互換情報の照合完了後にPDF出力できます。");
+      return;
+    }
+    if (supplierReport && !state.supplierDataReady) {
+      popup.close();
+      alert(state.supplierDataError ? "仕入先商品の照合に失敗しました。再読み込みしてください。" : "仕入先商品の照合完了後にPDF出力できます。");
       return;
     }
     if (!updatePreview()) {
@@ -1278,6 +1551,12 @@
     byId("manufacturing-ranking-category-clear").addEventListener("click", function() { selectAllCategories(false); updatePreview(); });
     byId("manufacturing-ranking-preview").addEventListener("click", updatePreview);
     byId("manufacturing-ranking-pdf").addEventListener("click", openPdfPreview);
+    byId("manufacturing-ranking-report-type").addEventListener("change", function() {
+      syncReportTypeControls();
+      updatePreview();
+    });
+    byId("manufacturing-ranking-supplier").addEventListener("change", updatePreview);
+    byId("manufacturing-ranking-supplier-status").addEventListener("change", updatePreview);
     byId("btn-back-manufacturing-ranking-report").addEventListener("click", function() {
       if (typeof returnToMenuFresh === "function") returnToMenuFresh();
       else if (typeof showScreen === "function") showScreen("menu");
@@ -1288,6 +1567,7 @@
     byId("manufacturing-ranking-query").addEventListener("keydown", function(event) {
       if (event.key === "Enter") updatePreview();
     });
+    syncReportTypeControls();
   }
 
   window.enterManufacturingRankingReport = enterManufacturingRankingReport;
@@ -1301,6 +1581,10 @@
     coreStockDetails: coreStockDetails,
     rankingCoreStockSummary: rankingCoreStockSummary,
     printFileTitle: printFileTitle,
+    supplierItemsForResult: supplierItemsForResult,
+    supplierAvailabilitySummary: supplierAvailabilitySummary,
+    filterSupplierResults: filterSupplierResults,
+    indexSupplierCatalogData: indexSupplierCatalogData,
     setMasterPartNumbers: function(values) {
       state.masterPartNumbers = Object.create(null);
       (values || []).forEach(function(value) {
@@ -1342,6 +1626,13 @@
       });
       state.masterDataReady = true;
       state.masterDataError = false;
+    },
+    setSupplierCatalogData: function(links, items) {
+      var indexed = indexSupplierCatalogData(links, items);
+      state.supplierItemsByProductId = indexed.itemsByProductId;
+      state.supplierItemCount = indexed.itemCount;
+      state.supplierDataReady = true;
+      state.supplierDataError = false;
     }
   };
   bindEvents();

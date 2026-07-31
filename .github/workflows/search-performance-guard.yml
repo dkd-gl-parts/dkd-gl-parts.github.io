@@ -26,6 +26,7 @@ on:
       - "scripts/verify-product-shipping-estimate.js"
       - "manufacturing-ranking-report.js"
       - "scripts/verify-manufacturing-ranking-performance.js"
+      - "scripts/verify-manufacturing-ranking-suppliers.js"
       - ".github/workflows/search-performance-guard.yml"
   pull_request:
     paths:
@@ -52,6 +53,7 @@ on:
       - "scripts/verify-product-shipping-estimate.js"
       - "manufacturing-ranking-report.js"
       - "scripts/verify-manufacturing-ranking-performance.js"
+      - "scripts/verify-manufacturing-ranking-suppliers.js"
       - ".github/workflows/search-performance-guard.yml"
   workflow_dispatch:
 
@@ -103,3 +105,5 @@ jobs:
         run: node scripts/verify-product-shipping-estimate.js
       - name: Verify manufacturing ranking performance
         run: node scripts/verify-manufacturing-ranking-performance.js
+      - name: Verify manufacturing ranking supplier report
+        run: node scripts/verify-manufacturing-ranking-suppliers.js

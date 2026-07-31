@@ -5,3 +5,8 @@
 
 .report,
 .print-toolbar { max-width: 297mm; }
+
+.supplier-report .supplier-status-head,
+.supplier-report .supplier-status-cell { width: 22mm; }
+.supplier-report .supplier-detail-head,
+.supplier-report .supplier-detail { width: 100mm; }

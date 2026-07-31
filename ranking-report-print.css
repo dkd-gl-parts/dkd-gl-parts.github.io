@@ -228,6 +228,37 @@ td small { display: block; margin-top: .3mm; color: #738094; font-size: 5.9pt; }
 }
 .missing-part { margin-top: .25mm; color: #795321; }
 
+.supplier-status-cell { text-align: center; }
+.supplier-status {
+  display: inline-block;
+  min-width: 11mm;
+  border: .25mm solid #cbd5e1;
+  border-radius: 4mm;
+  padding: .55mm 1.2mm;
+  font-size: 6.2pt;
+  font-weight: 900;
+  text-align: center;
+}
+.supplier-status.is-available {
+  border-color: #67bb83;
+  background: #e5f7eb;
+  color: #126334;
+}
+.supplier-status.is-unavailable {
+  border-color: #e5a0a0;
+  background: #fff0f0;
+  color: #a32626;
+}
+.supplier-detail { font-size: 6pt; }
+.supplier-items { display: flex; flex-direction: column; gap: .8mm; }
+.supplier-item {
+  border-left: .6mm solid #2f6fed;
+  padding-left: 1.2mm;
+}
+.supplier-item strong { display: block; color: #17243a; font-size: 6.4pt; }
+.supplier-item small { display: block; margin-top: .25mm; color: #66758b; font-size: 5.6pt; }
+.ranking-report-none { color: #9ca5b3; }
+
 footer {
   display: flex;
   justify-content: space-between;

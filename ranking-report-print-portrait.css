@@ -32,6 +32,16 @@
   .stock { font-size: 6pt; line-height: 1.2; }
   .missing-head,
   .missing { min-width: 0; width: 33mm; }
+  .supplier-report .product-head,
+  .supplier-report .product { width: 29mm; }
+  .supplier-report .genuine-head,
+  .supplier-report .genuine-part,
+  .supplier-report .maker-head,
+  .supplier-report .maker-part { width: 28mm; }
+  .supplier-report .supplier-status-head,
+  .supplier-report .supplier-status-cell { width: 18mm; }
+  .supplier-report .supplier-detail-head,
+  .supplier-report .supplier-detail { width: 68mm; }
   td small { font-size: 5.7pt; }
   footer { font-size: 5.4pt; }
 }
