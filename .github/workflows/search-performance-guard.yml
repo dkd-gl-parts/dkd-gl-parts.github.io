@@ -24,6 +24,7 @@ on:
       - "scripts/verify-core-return-policy.js"
       - "scripts/verify-sales-detail-workspace.js"
       - "scripts/verify-product-shipping-estimate.js"
+      - "scripts/verify-purchase-multiple-links.js"
       - "manufacturing-ranking-report.js"
       - "scripts/verify-manufacturing-ranking-performance.js"
       - "scripts/verify-manufacturing-ranking-suppliers.js"
@@ -51,6 +52,7 @@ on:
       - "scripts/verify-core-return-policy.js"
       - "scripts/verify-sales-detail-workspace.js"
       - "scripts/verify-product-shipping-estimate.js"
+      - "scripts/verify-purchase-multiple-links.js"
       - "manufacturing-ranking-report.js"
       - "scripts/verify-manufacturing-ranking-performance.js"
       - "scripts/verify-manufacturing-ranking-suppliers.js"
@@ -103,6 +105,8 @@ jobs:
         run: node scripts/verify-sales-detail-workspace.js
       - name: Verify product shipping estimate
         run: node scripts/verify-product-shipping-estimate.js
+      - name: Verify purchase multiple-link management
+        run: node scripts/verify-purchase-multiple-links.js
       - name: Verify manufacturing ranking performance
         run: node scripts/verify-manufacturing-ranking-performance.js
       - name: Verify manufacturing ranking supplier report

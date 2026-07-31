@@ -517,13 +517,15 @@ var TRANSLATIONS = {
     purchase_link_filter_all: "紐づけ状態：すべて",
     purchase_link_filter_unlinked: "未紐づけ",
     purchase_link_filter_linked: "紐づけ済み",
+    purchase_link_filter_multiple: "複数紐づけ",
+    purchase_multiple_link_badge: "複数紐づけ {count}件",
     purchase_linked_product: "紐づけ商品",
     purchase_price: "仕入価格",
     purchase_sales_price: "販売価格",
     purchase_no_rows: "該当するSL品番はありません",
     purchase_count: "{n} 件表示",
-    purchase_count_summary: "{shown} 件表示 / 対象 {total} 件（未紐づけ {unlinked} 件・紐づけ済み {linked} 件）",
-    purchase_catalog_count_summary: "{shown} 件表示 / 全 {total} 行（SL未設定 {missingSl} 行・基幹未紐づけ {coreUnlinked} 行・紐づけ済み {linked} 行）",
+    purchase_count_summary: "{shown} 件表示 / 対象 {total} 件（未紐づけ {unlinked} 件・紐づけ済み {linked} 件・複数紐づけ {multiple} 件）",
+    purchase_catalog_count_summary: "{shown} 件表示 / 全 {total} 行（SL未設定 {missingSl} 行・基幹未紐づけ {coreUnlinked} 行・紐づけ済み {linked} 行・複数紐づけ {multiple} 行）",
     purchase_catalog_row: "行",
     purchase_catalog_part: "仕入カタログ品番",
     purchase_catalog_status: "状態",
@@ -1881,13 +1883,15 @@ var TRANSLATIONS = {
     purchase_link_filter_all: "Link status: All",
     purchase_link_filter_unlinked: "Unlinked",
     purchase_link_filter_linked: "Linked",
+    purchase_link_filter_multiple: "Multiple links",
+    purchase_multiple_link_badge: "Multiple links: {count}",
     purchase_linked_product: "Linked Product",
     purchase_price: "Purchase Price",
     purchase_sales_price: "Sales Price",
     purchase_no_rows: "No matching SL numbers",
     purchase_count: "{n} rows",
-    purchase_count_summary: "{shown} shown / {total} total (Unlinked {unlinked}, Linked {linked})",
-    purchase_catalog_count_summary: "{shown} shown / {total} rows (SL missing {missingSl}, Core unlinked {coreUnlinked}, Linked {linked})",
+    purchase_count_summary: "{shown} shown / {total} total (Unlinked {unlinked}, Linked {linked}, Multiple {multiple})",
+    purchase_catalog_count_summary: "{shown} shown / {total} rows (SL missing {missingSl}, Core unlinked {coreUnlinked}, Linked {linked}, Multiple {multiple})",
     purchase_catalog_row: "Row",
     purchase_catalog_part: "Supplier Catalog Part",
     purchase_catalog_status: "Status",
@@ -3251,13 +3255,15 @@ var TRANSLATIONS = {
     purchase_link_filter_all: "关联状态：全部",
     purchase_link_filter_unlinked: "未关联",
     purchase_link_filter_linked: "已关联",
+    purchase_link_filter_multiple: "多个关联",
+    purchase_multiple_link_badge: "多个关联 {count} 条",
     purchase_linked_product: "关联商品",
     purchase_price: "采购价格",
     purchase_sales_price: "销售价格",
     purchase_no_rows: "没有匹配的SL编号",
     purchase_count: "显示 {n} 条",
-    purchase_count_summary: "显示 {shown} 条 / 共 {total} 条（未关联 {unlinked}・已关联 {linked}）",
-    purchase_catalog_count_summary: "显示 {shown} 条 / 共 {total} 行（SL未设置 {missingSl}・基础商品未关联 {coreUnlinked}・已关联 {linked}）",
+    purchase_count_summary: "显示 {shown} 条 / 共 {total} 条（未关联 {unlinked}・已关联 {linked}・多个关联 {multiple}）",
+    purchase_catalog_count_summary: "显示 {shown} 条 / 共 {total} 行（SL未设置 {missingSl}・基础商品未关联 {coreUnlinked}・已关联 {linked}・多个关联 {multiple}）",
     purchase_catalog_row: "行",
     purchase_catalog_part: "供应商目录品番",
     purchase_catalog_status: "状态",
@@ -4200,7 +4206,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.617";
+var APP_VERSION       = "v1.1.618";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -4391,7 +4397,7 @@ var salesPricingMgmtRows = [];
 var salesPricingMgmtPriceMap = {};
 var salesPricingMgmtManufacturingCostMap = {};
 var purchaseMgmtRows = [];
-var purchaseMgmtSummary = { total: 0, linked: 0, unlinked: 0 };
+var purchaseMgmtSummary = { total: 0, linked: 0, unlinked: 0, multiple: 0 };
 var purchaseMgmtProductMap = {};
 var purchaseMgmtLinkMap = {};
 var purchaseLinkCandidates = [];
@@ -30161,6 +30167,30 @@ function purchaseCatalogStatusLabel(status) {
   return t("purchase_catalog_linked");
 }
 
+function purchaseMgmtLinkCount(row) {
+  return row && Array.isArray(row.products) ? row.products.length : 0;
+}
+
+function purchaseMgmtMatchesLinkFilter(row, linkStatusFilter, catalogMode) {
+  var linkCount = purchaseMgmtLinkCount(row);
+  if (linkStatusFilter === "multiple") return linkCount > 1;
+  if (catalogMode) {
+    var status = purchaseCatalogRowStatus(row);
+    if (linkStatusFilter === "unlinked") return status !== "linked";
+    if (linkStatusFilter === "linked") return status === "linked";
+    return true;
+  }
+  if (linkStatusFilter === "unlinked") return linkCount === 0;
+  if (linkStatusFilter === "linked") return linkCount > 0;
+  return true;
+}
+
+function purchaseMgmtMultipleBadgeHtml(row) {
+  var linkCount = purchaseMgmtLinkCount(row);
+  if (linkCount <= 1) return "";
+  return "<div><span class='purchase-multiple-link-badge'>" + esc(tf("purchase_multiple_link_badge", { count: linkCount })) + "</span></div>";
+}
+
 async function loadStrongholdCatalogMgmt(qRaw, qNorm, linkStatusFilter) {
   var list = document.getElementById("purchase-mgmt-list");
   var itemR = await sb.from("supplier_catalog_items")
@@ -30237,14 +30267,12 @@ async function loadStrongholdCatalogMgmt(qRaw, qNorm, linkStatusFilter) {
     if (!hasSl) summary.missingSl++;
     if (!hasCore) summary.coreUnlinked++;
     if (hasSl && hasCore) summary.linked++;
+    if (purchaseMgmtLinkCount(row) > 1) summary.multiple++;
     return summary;
-  }, { total: 0, missingSl: 0, coreUnlinked: 0, linked: 0 });
+  }, { total: 0, missingSl: 0, coreUnlinked: 0, linked: 0, multiple: 0 });
 
   purchaseMgmtRows = matchedRows.filter(function(row) {
-    var status = purchaseCatalogRowStatus(row);
-    if (linkStatusFilter === "unlinked") return status !== "linked";
-    if (linkStatusFilter === "linked") return status === "linked";
-    return true;
+    return purchaseMgmtMatchesLinkFilter(row, linkStatusFilter, true);
   });
   renderStrongholdCatalogMgmt();
   if (list) list.scrollTop = 0;
@@ -30261,7 +30289,8 @@ function renderStrongholdCatalogMgmt() {
       total: purchaseMgmtSummary.total,
       missingSl: purchaseMgmtSummary.missingSl,
       coreUnlinked: purchaseMgmtSummary.coreUnlinked,
-      linked: purchaseMgmtSummary.linked
+      linked: purchaseMgmtSummary.linked,
+      multiple: purchaseMgmtSummary.multiple
     });
   }
   if (!purchaseMgmtRows.length) {
@@ -30276,7 +30305,7 @@ function renderStrongholdCatalogMgmt() {
     var item = row.catalogItem || {};
     var status = purchaseCatalogRowStatus(row);
     var products = row.products || [];
-    var productHtml = products.length ? "<div class='purchase-product-list'>" + products.map(function(entry) {
+    var productHtml = products.length ? purchaseMgmtMultipleBadgeHtml(row) + "<div class='purchase-product-list'>" + products.map(function(entry) {
       var product = purchaseLinkedProductEntryProduct(entry);
       var link = entry.link || {};
       var actions = editable && link.id
@@ -30286,7 +30315,7 @@ function renderStrongholdCatalogMgmt() {
     }).join("") + "</div>" : "<span class='mgmt-sub'>-</span>";
     var sourceSub = [tCat(item.category_code || item.category_label), item.manufacturer, item.vehicle_manufacturer].filter(Boolean).join(" / ");
     var vehicleSub = [item.compatible_car_models, item.model].filter(Boolean).join(" / ");
-    html += "<tr>";
+    html += "<tr data-purchase-record-kind='catalog' data-purchase-record-id='" + esc(String(item.id || "")) + "'>";
     html += "<td><div class='mgmt-pn'>" + esc(String(item.source_row_number || "-")) + "</div><div class='mgmt-sub'>ID " + esc(String(item.source_item_id || "-")) + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(item.supplier_pn || "-") + "</div><div class='mgmt-sub'>" + esc(purchaseMoneyText(item.unit_price, item.currency)) + " / MOQ " + esc(item.moq == null ? "-" : String(item.moq)) + "</div></td>";
     html += "<td><div class='purchase-product-main'>" + esc([item.manufacturer_part_number, item.genuine_part_number].filter(Boolean).join(" / ") || "-") + "</div><div class='purchase-catalog-source'>" + esc(sourceSub) + "</div><div class='purchase-catalog-source'>" + esc(vehicleSub) + "</div></td>";
@@ -30403,18 +30432,17 @@ async function loadPurchaseMgmt() {
       var linked = !!(row.products && row.products.length);
       summary.total++;
       summary[linked ? "linked" : "unlinked"]++;
+      if (purchaseMgmtLinkCount(row) > 1) summary.multiple++;
       return summary;
-    }, { total: 0, linked: 0, unlinked: 0 });
+    }, { total: 0, linked: 0, unlinked: 0, multiple: 0 });
     purchaseMgmtRows = matchedRows.filter(function(row) {
-      if (linkStatusFilter === "unlinked") return !(row.products && row.products.length);
-      if (linkStatusFilter === "linked") return !!(row.products && row.products.length);
-      return true;
+      return purchaseMgmtMatchesLinkFilter(row, linkStatusFilter, false);
     });
     renderPurchaseMgmt();
   } catch (e) {
     console.warn("purchase management load failed", e);
     purchaseMgmtRows = [];
-    purchaseMgmtSummary = { total: 0, linked: 0, unlinked: 0 };
+    purchaseMgmtSummary = { total: 0, linked: 0, unlinked: 0, multiple: 0 };
     purchaseMgmtProductMap = {};
     purchaseMgmtLinkMap = {};
     if (list) list.innerHTML = "<div class='empty'>" + esc((e && e.message) || t("msg_kikan_err")) + "</div>";
@@ -30431,7 +30459,8 @@ function renderPurchaseMgmt() {
       shown: purchaseMgmtRows.length,
       total: purchaseMgmtSummary.total,
       unlinked: purchaseMgmtSummary.unlinked,
-      linked: purchaseMgmtSummary.linked
+      linked: purchaseMgmtSummary.linked,
+      multiple: purchaseMgmtSummary.multiple
     });
   }
   if (!purchaseMgmtRows.length) {
@@ -30444,7 +30473,7 @@ function renderPurchaseMgmt() {
   purchaseMgmtRows.forEach(function(row) {
     var sl = row.sl || {};
     var products = row.products || [];
-    var productHtml = products.length ? "<div class='purchase-product-list'>" + products.map(function(entry) {
+    var productHtml = products.length ? purchaseMgmtMultipleBadgeHtml(row) + "<div class='purchase-product-list'>" + products.map(function(entry) {
       var p = purchaseLinkedProductEntryProduct(entry);
       var link = entry && entry.link ? entry.link : {};
       var actions = editable && link.id
@@ -30452,7 +30481,7 @@ function renderPurchaseMgmt() {
         : "";
       return "<div class='purchase-product-item'><div class='purchase-product-main'>" + esc(purchaseLinkedProductMain(p)) + "</div><div class='purchase-product-sub'>" + esc(purchaseLinkedProductSub(p)) + "</div>" + actions + "</div>";
     }).join("") + "</div>" : "<span class='purchase-unlinked-badge'>" + esc(t("purchase_unlinked_badge")) + "</span>";
-    html += "<tr>";
+    html += "<tr data-purchase-record-kind='sl' data-purchase-record-id='" + esc(String(sl.id || "")) + "'>";
     html += "<td><div class='price-supplier'>" + esc(purchaseSupplierLabel(sl)) + "</div><div class='price-country'>" + esc(purchaseSupplierSub(sl)) + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(sl.supplier_pn || "-") + "</div></td>";
     html += "<td><div class='purchase-price-cell'>" + esc(purchaseMoneyText(sl.unit_price, sl.currency)) + "</div></td>";
@@ -30473,6 +30502,87 @@ function renderPurchaseMgmt() {
       btn.addEventListener("click", function() { unlinkPurchaseProduct(btn.dataset.purchaseUnlink); });
     });
   }
+}
+
+function purchaseMgmtRecordElement(kind, recordId) {
+  var rows = document.querySelectorAll("[data-purchase-record-kind][data-purchase-record-id]");
+  for (var i = 0; i < rows.length; i++) {
+    if (rows[i].dataset.purchaseRecordKind === String(kind || "") &&
+        rows[i].dataset.purchaseRecordId === String(recordId || "")) return rows[i];
+  }
+  return null;
+}
+
+function purchaseMgmtScrollElement() {
+  var body = document.querySelector("#screen-purchase-mgmt .mgmt-body");
+  if (body && body.scrollHeight > body.clientHeight + 1) return body;
+  return document.scrollingElement || document.documentElement || document.body;
+}
+
+function capturePurchaseMgmtRecordAnchor(kind, recordId) {
+  var row = purchaseMgmtRecordElement(kind, recordId);
+  var scroller = purchaseMgmtScrollElement();
+  return {
+    kind: String(kind || ""),
+    recordId: String(recordId || ""),
+    viewportTop: row ? row.getBoundingClientRect().top : null,
+    scrollTop: scroller ? scroller.scrollTop : 0,
+    scroller: scroller
+  };
+}
+
+function restorePurchaseMgmtRecordAnchor(anchor) {
+  if (!anchor) return;
+  var row = purchaseMgmtRecordElement(anchor.kind, anchor.recordId);
+  var scroller = anchor.scroller || purchaseMgmtScrollElement();
+  if (row && anchor.viewportTop !== null && scroller) {
+    scroller.scrollTop += row.getBoundingClientRect().top - anchor.viewportTop;
+    row.classList.add("purchase-record-updated");
+    setTimeout(function() {
+      if (row && row.classList) row.classList.remove("purchase-record-updated");
+    }, 1800);
+    return;
+  }
+  if (scroller) scroller.scrollTop = anchor.scrollTop || 0;
+}
+
+function applyPurchaseMgmtUnlinkLocally(row, linkId, catalogMode, anchor) {
+  if (!row) return false;
+  var id = parseInt(linkId, 10);
+  var beforeCount = purchaseMgmtLinkCount(row);
+  var beforeLinks = Array.isArray(row.links) ? row.links.length : beforeCount;
+  row.products = (row.products || []).filter(function(entry) {
+    return !(entry && entry.link && parseInt(entry.link.id, 10) === id);
+  });
+  row.links = (row.links || []).filter(function(link) {
+    return !(link && parseInt(link.id, 10) === id);
+  });
+  var afterCount = purchaseMgmtLinkCount(row);
+  if (afterCount === beforeCount && row.links.length === beforeLinks) return false;
+
+  if (beforeCount > 1 && afterCount <= 1) {
+    purchaseMgmtSummary.multiple = Math.max(0, Number(purchaseMgmtSummary.multiple || 0) - 1);
+  }
+  if (catalogMode) {
+    if (beforeCount > 0 && afterCount === 0) {
+      purchaseMgmtSummary.coreUnlinked = Number(purchaseMgmtSummary.coreUnlinked || 0) + 1;
+      if (String(row.catalogItem && row.catalogItem.supplier_pn || "").trim()) {
+        purchaseMgmtSummary.linked = Math.max(0, Number(purchaseMgmtSummary.linked || 0) - 1);
+      }
+    }
+    renderStrongholdCatalogMgmt();
+  } else {
+    if (beforeCount > 0 && afterCount === 0) {
+      purchaseMgmtSummary.linked = Math.max(0, Number(purchaseMgmtSummary.linked || 0) - 1);
+      purchaseMgmtSummary.unlinked = Number(purchaseMgmtSummary.unlinked || 0) + 1;
+    }
+    var slId = String(row.sl && row.sl.id || "");
+    purchaseMgmtProductMap[slId] = row.products;
+    purchaseMgmtLinkMap[slId] = row.links;
+    renderPurchaseMgmt();
+  }
+  restorePurchaseMgmtRecordAnchor(anchor);
+  return true;
 }
 
 function purchaseMgmtRowBySlId(slId) {
@@ -30714,9 +30824,11 @@ async function unlinkPurchaseCatalogProduct(linkId) {
   if (!id || !confirm(t("purchase_link_unlink_confirm"))) return;
   var before = null;
   var affectedDkdId = null;
+  var affectedRow = null;
   (purchaseMgmtRows || []).some(function(row) {
     return (row.products || []).some(function(entry) {
       if (entry.link && parseInt(entry.link.id, 10) === id) {
+        affectedRow = row;
         before = Object.assign({}, entry.link, { product: purchaseLinkedProductEntryProduct(entry) });
         affectedDkdId = before.product && before.product.dkd_shohin_id;
         return true;
@@ -30724,6 +30836,7 @@ async function unlinkPurchaseCatalogProduct(linkId) {
       return false;
     });
   });
+  var anchor = capturePurchaseMgmtRecordAnchor("catalog", affectedRow && affectedRow.catalogItem && affectedRow.catalogItem.id);
   var payload = {
     status: "inactive",
     updated_by: currentUser && currentUser.id,
@@ -30733,7 +30846,7 @@ async function unlinkPurchaseCatalogProduct(linkId) {
   if (r.error) { alert(t("msg_save_err") + ": " + r.error.message); return; }
   await writeLog("update", "supplier_catalog_item_links", id, "unlink Stronghold catalog item", before, payload);
   clearSlLinkCachesForDkdIds([affectedDkdId]);
-  await loadPurchaseMgmt();
+  if (!applyPurchaseMgmtUnlinkLocally(affectedRow, id, true, anchor)) await loadPurchaseMgmt();
   alert(t("purchase_catalog_unlinked"));
 }
 
@@ -30742,21 +30855,24 @@ async function unlinkPurchaseProduct(linkId) {
   var id = parseInt(linkId, 10);
   if (!id || !confirm(t("purchase_link_unlink_confirm"))) return;
   var before = null;
+  var affectedRow = null;
   (purchaseMgmtRows || []).some(function(row) {
     return (row.products || []).some(function(entry) {
       if (entry.link && parseInt(entry.link.id, 10) === id) {
+        affectedRow = row;
         before = Object.assign({}, entry.link, { product: purchaseLinkedProductEntryProduct(entry) });
         return true;
       }
       return false;
     });
   });
+  var anchor = capturePurchaseMgmtRecordAnchor("sl", affectedRow && affectedRow.sl && affectedRow.sl.id);
   var payload = { status: "inactive", updated_at: new Date().toISOString() };
   var r = await sb.from("core_product_sl_links").update(payload).eq("id", id);
   if (r.error) { alert(t("msg_save_err") + ": " + r.error.message); return; }
   await writeLog("update", "core_product_sl_links", id, "unlink purchase SL", before, payload);
   clearSlLinkCachesForDkdIds([before && before.product && before.product.dkd_shohin_id]);
-  await loadPurchaseMgmt();
+  if (!applyPurchaseMgmtUnlinkLocally(affectedRow, id, false, anchor)) await loadPurchaseMgmt();
   alert(t("purchase_link_removed"));
 }
 

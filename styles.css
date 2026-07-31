@@ -1651,6 +1651,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .purchase-link-status { min-width: 150px; }
 .purchase-link-summary { color: #526173; font-weight: 700; }
 .purchase-unlinked-badge { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 8px; border: 1px solid #e9b949; border-radius: 6px; background: #fff8df; color: #8a5b00; font-size: 11px; font-weight: 800; }
+.purchase-multiple-link-badge { display: inline-flex; align-items: center; min-height: 22px; margin-bottom: 6px; padding: 1px 7px; border: 1px solid #7ca8e8; border-radius: 6px; background: #eef5ff; color: #1857a4; font-size: 11px; font-weight: 800; }
 .purchase-mgmt-table-wrap { width: 100%; overflow-x: hidden; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); background: #fff; }
 .purchase-mgmt-table { box-shadow: none; border-radius: 0; table-layout: fixed; }
  .purchase-mgmt-table th:nth-child(1), .purchase-mgmt-table td:nth-child(1) { width: 14%; }
@@ -1661,6 +1662,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
  .purchase-mgmt-table th:nth-child(6), .purchase-mgmt-table td:nth-child(6) { width: auto; }
  .purchase-mgmt-table th:nth-child(7), .purchase-mgmt-table td:nth-child(7) { width: 92px; text-align: right; }
 .purchase-mgmt-table td { vertical-align: top; }
+.purchase-mgmt-table tr.purchase-record-updated td { animation: purchase-record-updated 1.8s ease-out; }
+@keyframes purchase-record-updated {
+  0% { background: #fff3bf; }
+  100% { background: #fff; }
+}
 .purchase-catalog-table th:nth-child(1), .purchase-catalog-table td:nth-child(1) { width: 62px; }
 .purchase-catalog-table th:nth-child(2), .purchase-catalog-table td:nth-child(2) { width: 13%; }
 .purchase-catalog-table th:nth-child(3), .purchase-catalog-table td:nth-child(3) { width: 24%; }
