@@ -4206,7 +4206,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.626";
+var APP_VERSION       = "v1.1.627";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5126,7 +5126,7 @@ function canManageShippingRates() {
   return canManageCustomerAccess();
 }
 function canViewCustomerShippingRates() {
-  return !!userProfile && (isCustomerViewer() || canPreviewCustomerPortal());
+  return !!userProfile && canPreviewCustomerPortal();
 }
 function canViewSalesPricing() {
   return canSeeSalesPrice() && !isCustomerViewer() && !isCustomerPortalSearchMode() && userPermissionAllowed(userProfile, "sales_pricing.view", true);
@@ -6340,6 +6340,8 @@ function renderCustomerPortal() {
   renderCustomerPortalPreviewControls();
   var accountBand = document.querySelector("#screen-customer-portal .customer-portal-account-band");
   if (accountBand) setCspStyle(accountBand, "display", previewMode ? "none" : "");
+  var shippingGuide = document.getElementById("customer-portal-shipping-guide");
+  if (shippingGuide) shippingGuide.hidden = !canViewCustomerShippingRates();
   var manageUsersButton = document.getElementById("customer-portal-manage-users");
   if (manageUsersButton) manageUsersButton.hidden = !canManageCustomerPortalUsers();
   renderCustomerExperienceHeaders();

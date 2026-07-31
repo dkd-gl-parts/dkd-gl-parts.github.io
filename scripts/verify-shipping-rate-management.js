@@ -66,6 +66,18 @@ if (source.slice(componentAltInputStart, componentAltInputEnd).includes("custome
   throw new Error("customer shipping listeners must not be inside the component replacement-rate input handler");
 }
 
+const customerShippingAccess = sourceBetween("function canViewCustomerShippingRates()", "function canViewSalesPricing");
+if (!customerShippingAccess.includes("canPreviewCustomerPortal()") || customerShippingAccess.includes("isCustomerViewer()")) {
+  throw new Error("customer users must not have access to shipping master rates");
+}
+const customerPortalRender = sourceBetween("function renderCustomerPortal()", "async function loadCustomerPortalPreviewContext");
+if (!customerPortalRender.includes('shippingGuide.hidden = !canViewCustomerShippingRates()')) {
+  throw new Error("customer portal shipping guide must stay hidden for customer users");
+}
+if (!html.includes('id="customer-portal-shipping-guide" hidden')) {
+  throw new Error("customer portal shipping guide must be hidden before permissions are evaluated");
+}
+
 const languageSource = sourceBetween("async function applyLanguage", "function markAppUpdateActivity");
 const customerShippingRedraw = languageSource.indexOf('isScreenActive("customer-shipping")');
 const shippingMgmtRedraw = languageSource.indexOf('isScreenActive("shipping-rate-mgmt")');
@@ -130,7 +142,7 @@ const saveSource = sourceBetween("async function saveShippingRate", "async funct
 });
 
 if (!source.includes(customerShippingListener)) {
-  throw new Error("customer shipping list must be reachable from the customer portal");
+  throw new Error("customer shipping list must remain reachable in the internal customer preview");
 }
 if ((source.match(/customer_shipping_title:/g) || []).length !== 3 || (source.match(/mi_shipping_title:/g) || []).length !== 3) {
   throw new Error("shipping labels must be translated for all supported languages");
