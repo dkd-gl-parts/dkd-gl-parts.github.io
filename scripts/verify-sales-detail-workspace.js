@@ -93,6 +93,9 @@ if (!compatibleSource.includes('updateSalesDetailTabCount("compatible", parts_li
   ".detail-customer-price-focus:not(.empty) > strong",
   "white-space: nowrap; overflow-wrap: normal; word-break: keep-all",
   ".sales-detail-tab-panel[hidden]",
+  "align-items: stretch",
+  "height: 43px",
+  ".sales-detail-tab:focus-visible { outline: none; background: #eef4ff; color: #174ea6; }",
   "@media (max-width: 767px)"
 ].forEach((fragment) => {
   if (!css.includes(fragment)) throw new Error(`sales workspace styling is missing: ${fragment}`);
