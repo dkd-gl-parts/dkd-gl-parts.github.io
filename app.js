@@ -4146,7 +4146,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.609";
+var APP_VERSION       = "v1.1.610";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -21689,7 +21689,7 @@ function render() {
     html += "<div class='card-pn card-pn-primary'>"+esc(p.genuine_part_number||p.manufacturer_part_number||"-")+"</div>";
     html += "<div class='card-name'>"+esc(productCategoryLabel(p))+"</div>";
     if (p.genuine_part_number_2) html += "<div class='card-sub'>純正2: "+esc(p.genuine_part_number_2)+"</div>";
-    html += renderProductKindPills(kindSummary, { compact: true, detail: true });
+    html += renderProductKindPills(kindSummary, { compact: true });
     html += renderResultBadgeSlots({
       className: "badges card-badges-inline",
       hasCatalogSpec: false,

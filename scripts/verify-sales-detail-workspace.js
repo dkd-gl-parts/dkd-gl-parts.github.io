@@ -34,6 +34,14 @@ if (!openPanelSource.includes('setCspStyle(document.getElementById("panel-inner"
   throw new Error("sales product workspace must open as a grid");
 }
 
+const searchResultSource = sourceBetween("function render()", "function openPanel");
+if (!searchResultSource.includes("renderProductKindPills(kindSummary, { compact: true })")) {
+  throw new Error("search result product-kind labels must remain compact");
+}
+if (searchResultSource.includes("renderProductKindPills(kindSummary, { compact: true, detail: true })")) {
+  throw new Error("search result product-kind labels must not repeat stock quantities");
+}
+
 const primaryPartSource = sourceBetween("function salesDetailPrimaryPartNumber", "function salesDetailSelectedStock");
 if (!primaryPartSource.includes("product.genuine_part_number || product.genuine_part_number_2 || product.manufacturer_part_number")) {
   throw new Error("the genuine part number must remain the primary product heading");
