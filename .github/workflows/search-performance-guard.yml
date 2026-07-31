@@ -23,6 +23,7 @@ on:
       - "scripts/verify-sales-pricing-manufacturing-cost.js"
       - "scripts/verify-core-return-policy.js"
       - "scripts/verify-sales-detail-workspace.js"
+      - "scripts/verify-product-shipping-estimate.js"
       - ".github/workflows/search-performance-guard.yml"
   pull_request:
     paths:
@@ -46,6 +47,7 @@ on:
       - "scripts/verify-sales-pricing-manufacturing-cost.js"
       - "scripts/verify-core-return-policy.js"
       - "scripts/verify-sales-detail-workspace.js"
+      - "scripts/verify-product-shipping-estimate.js"
       - ".github/workflows/search-performance-guard.yml"
   workflow_dispatch:
 
@@ -93,3 +95,5 @@ jobs:
         run: node scripts/verify-core-return-policy.js
       - name: Verify sales detail workspace
         run: node scripts/verify-sales-detail-workspace.js
+      - name: Verify product shipping estimate
+        run: node scripts/verify-product-shipping-estimate.js

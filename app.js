@@ -263,6 +263,13 @@ var TRANSLATIONS = {
     production_vehicle_section: "車両情報",
     production_component_section: "構成部品",
     product_kind_section: "商品区分",
+    product_shipping_section: "配送情報",
+    product_shipping_help: "品番ごとの梱包重量と通常の出荷サイズを設定します。",
+    product_shipping_add_help: "商品を保存した後、品番修正画面で配送情報を設定できます。",
+    product_shipping_weight: "梱包重量 (kg)",
+    product_shipping_size: "出荷サイズ",
+    product_shipping_unset: "未設定",
+    product_shipping_invalid: "梱包重量と出荷サイズを確認してください。",
     inventory_kind_section: "在庫区分",
     product_kind_rebuilt: "リビルト",
     product_kind_aftermarket_new: "社外新品",
@@ -815,6 +822,17 @@ var TRANSLATIONS = {
     detail_customer_no_price: "販売価格は未設定です",
     sales_detail_title: "商品詳細",
     sales_conditions_title: "販売条件",
+    sales_shipping_estimate_title: "送料目安",
+    sales_shipping_destination: "お届け先",
+    sales_shipping_profile: "品番の配送設定",
+    sales_shipping_manual_size_note: "出荷サイズが未設定です。確認するサイズを選択してください。",
+    sales_shipping_select_prefecture: "都道府県を選択",
+    sales_shipping_select_size: "サイズを選択",
+    sales_shipping_rate: "送料",
+    sales_shipping_weight_over: "選択したサイズの重量上限を超えています。出荷サイズを変更してください。",
+    sales_shipping_no_rate: "この条件の送料は送料マスタにありません。",
+    sales_shipping_island_note: "離島・条件付き地域は下記条件を確認してください。",
+    sales_shipping_profile_load_error: "品番の配送情報を読み込めませんでした。",
     sales_customer_label: "得意先",
     sales_basic_tab: "基本情報",
     sales_vehicle_tab: "適合車両",
@@ -1609,6 +1627,13 @@ var TRANSLATIONS = {
     production_vehicle_section: "Vehicle info",
     production_component_section: "Components",
     product_kind_section: "Product Kind",
+    product_shipping_section: "Shipping Profile",
+    product_shipping_help: "Set the packed weight and standard package size for this product.",
+    product_shipping_add_help: "Save the product first, then set shipping information from Edit Product.",
+    product_shipping_weight: "Packed Weight (kg)",
+    product_shipping_size: "Package Size",
+    product_shipping_unset: "Not set",
+    product_shipping_invalid: "Review the packed weight and package size.",
     inventory_kind_section: "Inventory Type",
     product_kind_rebuilt: "Rebuilt",
     product_kind_aftermarket_new: "Aftermarket New",
@@ -2161,6 +2186,17 @@ var TRANSLATIONS = {
     detail_customer_no_price: "Sales price is not set",
     sales_detail_title: "Product Details",
     sales_conditions_title: "Sales Terms",
+    sales_shipping_estimate_title: "Shipping Estimate",
+    sales_shipping_destination: "Destination",
+    sales_shipping_profile: "Product Shipping Profile",
+    sales_shipping_manual_size_note: "No package size is saved. Select a size to check the rate.",
+    sales_shipping_select_prefecture: "Select Prefecture",
+    sales_shipping_select_size: "Select Size",
+    sales_shipping_rate: "Shipping Rate",
+    sales_shipping_weight_over: "The package exceeds the selected size's weight limit. Select another size.",
+    sales_shipping_no_rate: "No shipping-master rate matches these conditions.",
+    sales_shipping_island_note: "Check the conditions below for remote islands and special areas.",
+    sales_shipping_profile_load_error: "The product shipping profile could not be loaded.",
     sales_customer_label: "Customer",
     sales_basic_tab: "Details",
     sales_vehicle_tab: "Vehicles",
@@ -2962,6 +2998,13 @@ var TRANSLATIONS = {
     production_vehicle_section: "车辆信息",
     production_component_section: "构成零件",
     product_kind_section: "商品区分",
+    product_shipping_section: "配送信息",
+    product_shipping_help: "设置该商品的包装重量和通常出货尺寸。",
+    product_shipping_add_help: "保存商品后，可在商品编辑画面设置配送信息。",
+    product_shipping_weight: "包装重量 (kg)",
+    product_shipping_size: "出货尺寸",
+    product_shipping_unset: "未设置",
+    product_shipping_invalid: "请确认包装重量和出货尺寸。",
     inventory_kind_section: "库存区分",
     product_kind_rebuilt: "再制造",
     product_kind_aftermarket_new: "副厂新品",
@@ -3500,6 +3543,17 @@ var TRANSLATIONS = {
     detail_customer_no_price: "尚未设置销售价格",
     sales_detail_title: "商品详情",
     sales_conditions_title: "销售条件",
+    sales_shipping_estimate_title: "运费参考",
+    sales_shipping_destination: "收货地区",
+    sales_shipping_profile: "商品配送设置",
+    sales_shipping_manual_size_note: "尚未设置出货尺寸。请选择要确认的尺寸。",
+    sales_shipping_select_prefecture: "选择都道府县",
+    sales_shipping_select_size: "选择尺寸",
+    sales_shipping_rate: "运费",
+    sales_shipping_weight_over: "包裹重量超过所选尺寸的重量上限。请选择其他尺寸。",
+    sales_shipping_no_rate: "运费主数据中没有符合此条件的运费。",
+    sales_shipping_island_note: "离岛及特殊地区请确认以下条件。",
+    sales_shipping_profile_load_error: "无法读取商品配送信息。",
     sales_customer_label: "客户",
     sales_basic_tab: "基本信息",
     sales_vehicle_tab: "适配车辆",
@@ -4146,7 +4200,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.612";
+var APP_VERSION       = "v1.1.613";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -4455,6 +4509,16 @@ var SHIPPING_PREFECTURES = [
 var shippingRateRows = [];
 var shippingRateLoadSeq = 0;
 var shippingRateFormSaving = false;
+var salesShippingRateRows = [];
+var salesShippingRatesLoaded = false;
+var salesShippingRatesPromise = null;
+var salesShippingProfile = null;
+var salesShippingProfileDkdId = null;
+var salesShippingPrefectureCode = "";
+var salesShippingCarrierName = "";
+var salesShippingServiceName = "";
+var salesShippingPackageKeyValue = "";
+var productShippingSizeRows = [];
 
 var FINISHED_LABEL_CATEGORIES = [
   ["オルタネータ", "オルタネータ"],
@@ -6052,6 +6116,16 @@ async function doLogout() {
   customerManagedUsersRequestSeq += 1;
   shippingRateRows = [];
   shippingRateLoadSeq += 1;
+  salesShippingRateRows = [];
+  salesShippingRatesLoaded = false;
+  salesShippingRatesPromise = null;
+  salesShippingProfile = null;
+  salesShippingProfileDkdId = null;
+  salesShippingPrefectureCode = "";
+  salesShippingCarrierName = "";
+  salesShippingServiceName = "";
+  salesShippingPackageKeyValue = "";
+  productShippingSizeRows = [];
   finishedShipmentCustomers = [];
   finishedShipmentUnits = [];
   finishedShipmentHistoryRows = [];
@@ -7163,6 +7237,291 @@ function shippingRateCell(labelKey, content, className) {
   var cellClass = className || "customer-shipping-cell";
   var labelClass = cellClass === "shipping-rate-mgmt-cell" ? "shipping-rate-cell-label" : "customer-shipping-mobile-label";
   return "<div class='" + esc(cellClass) + "'><span class='" + labelClass + "'>" + esc(t(labelKey)) + "</span>" + content + "</div>";
+}
+
+function shippingPackageKey(row) {
+  row = row || {};
+  return [
+    row.carrier_name || "",
+    row.service_name || "",
+    row.package_size_label || "",
+    row.max_size_cm == null ? "" : row.max_size_cm,
+    row.max_weight_kg == null ? "" : Number(row.max_weight_kg)
+  ].map(function(value) { return encodeURIComponent(String(value)); }).join("|");
+}
+
+function shippingPackageDefinitionKey(row) {
+  row = row || {};
+  return [
+    row.package_size_label || "",
+    row.max_size_cm == null ? "" : row.max_size_cm,
+    row.max_weight_kg == null ? "" : Number(row.max_weight_kg)
+  ].map(function(value) { return encodeURIComponent(String(value)); }).join("|");
+}
+
+function uniqueShippingPackages(rows, definitionOnly) {
+  var seen = {};
+  return (rows || []).filter(function(row) {
+    var key = definitionOnly ? shippingPackageDefinitionKey(row) : shippingPackageKey(row);
+    if (!key || seen[key]) return false;
+    seen[key] = true;
+    return true;
+  }).sort(function(a, b) {
+    var sizeA = a.max_size_cm == null ? Number.MAX_SAFE_INTEGER : Number(a.max_size_cm);
+    var sizeB = b.max_size_cm == null ? Number.MAX_SAFE_INTEGER : Number(b.max_size_cm);
+    if (sizeA !== sizeB) return sizeA - sizeB;
+    var weightA = a.max_weight_kg == null ? Number.MAX_SAFE_INTEGER : Number(a.max_weight_kg);
+    var weightB = b.max_weight_kg == null ? Number.MAX_SAFE_INTEGER : Number(b.max_weight_kg);
+    if (weightA !== weightB) return weightA - weightB;
+    return String(a.package_size_label || "").localeCompare(String(b.package_size_label || ""), "ja");
+  });
+}
+
+function shippingPackageOptionLabel(row) {
+  var limits = [];
+  if (row.max_size_cm != null) limits.push(String(row.max_size_cm) + " cm");
+  if (row.max_weight_kg != null) limits.push(String(Number(row.max_weight_kg)) + " kg");
+  return String(row.package_size_label || "-") + (limits.length ? " / " + limits.join(" / ") : "");
+}
+
+async function ensureSalesShippingRateRows() {
+  if (salesShippingRatesLoaded) return salesShippingRateRows;
+  if (salesShippingRatesPromise) return salesShippingRatesPromise;
+  salesShippingRatesPromise = (async function() {
+    var result = await sb.from("customer_shipping_rates")
+      .select("shipping_rate_id,carrier_name,service_name,package_size_label,max_size_cm,max_weight_kg,prefecture_code,standard_fee_jpy,remote_island_fee_jpy,remote_island_condition,note,origin_region,tax_type,display_order,is_active")
+      .eq("is_active", true)
+      .order("display_order", { ascending: true })
+      .order("carrier_name", { ascending: true })
+      .order("prefecture_code", { ascending: true })
+      .limit(1000);
+    if (result.error) throw result.error;
+    salesShippingRateRows = result.data || [];
+    salesShippingRatesLoaded = true;
+    return salesShippingRateRows;
+  })();
+  try {
+    return await salesShippingRatesPromise;
+  } finally {
+    salesShippingRatesPromise = null;
+  }
+}
+
+async function fetchCoreProductShippingProfile(dkdId) {
+  var id = parseInt(dkdId, 10);
+  if (isNaN(id)) return null;
+  var result = await sb.from("core_products")
+    .select("dkd_shohin_id,shipping_weight_kg,shipping_size_cm,shipping_package_size_label")
+    .eq("dkd_shohin_id", id)
+    .maybeSingle();
+  if (result.error) throw result.error;
+  return result.data || {
+    dkd_shohin_id: id,
+    shipping_weight_kg: null,
+    shipping_size_cm: null,
+    shipping_package_size_label: null
+  };
+}
+
+function shippingProfileText(profile) {
+  profile = profile || {};
+  var values = [];
+  if (profile.shipping_package_size_label) values.push(String(profile.shipping_package_size_label));
+  else if (profile.shipping_size_cm != null) values.push(String(profile.shipping_size_cm) + " cm");
+  if (profile.shipping_weight_kg != null) values.push(String(Number(profile.shipping_weight_kg)) + " kg");
+  return values.length ? values.join(" / ") : t("product_shipping_unset");
+}
+
+async function populateProductShippingSizeSelect(product) {
+  var select = document.getElementById("pf-shipping-package-size");
+  if (!select) return;
+  select.innerHTML = "<option value=''>" + esc(t("product_shipping_unset")) + "</option>";
+  try {
+    await ensureSalesShippingRateRows();
+    productShippingSizeRows = uniqueShippingPackages(salesShippingRateRows, true);
+    productShippingSizeRows.forEach(function(row) {
+      var option = document.createElement("option");
+      option.value = shippingPackageDefinitionKey(row);
+      option.textContent = shippingPackageOptionLabel(row);
+      select.appendChild(option);
+    });
+    product = product || {};
+    var selected = productShippingSizeRows.find(function(row) {
+      var labelMatches = String(row.package_size_label || "") === String(product.shipping_package_size_label || "");
+      var sizeMatches = String(row.max_size_cm == null ? "" : row.max_size_cm) === String(product.shipping_size_cm == null ? "" : product.shipping_size_cm);
+      return labelMatches && sizeMatches;
+    });
+    if (!selected && (product.shipping_package_size_label || product.shipping_size_cm != null)) {
+      selected = {
+        package_size_label: product.shipping_package_size_label || (String(product.shipping_size_cm) + " cm"),
+        max_size_cm: product.shipping_size_cm,
+        max_weight_kg: null
+      };
+      productShippingSizeRows.push(selected);
+      var retainedOption = document.createElement("option");
+      retainedOption.value = shippingPackageDefinitionKey(selected);
+      retainedOption.textContent = shippingPackageOptionLabel(selected);
+      select.appendChild(retainedOption);
+    }
+    select.value = selected ? shippingPackageDefinitionKey(selected) : "";
+  } catch (error) {
+    console.warn("product shipping sizes lookup failed", error);
+    productShippingSizeRows = [];
+  }
+}
+
+function productShippingFormValue() {
+  var weightInput = document.getElementById("pf-shipping-weight");
+  var sizeSelect = document.getElementById("pf-shipping-package-size");
+  var rawWeight = weightInput ? String(weightInput.value || "").trim() : "";
+  var weight = rawWeight ? Number(rawWeight) : null;
+  if (rawWeight && (!isFinite(weight) || weight <= 0 || weight > 99999.999)) return { error: true };
+  var selectedKey = sizeSelect ? sizeSelect.value : "";
+  var selected = selectedKey ? productShippingSizeRows.find(function(row) {
+    return shippingPackageDefinitionKey(row) === selectedKey;
+  }) : null;
+  if (selectedKey && !selected) return { error: true };
+  return {
+    error: false,
+    shipping_weight_kg: weight,
+    shipping_size_cm: selected && selected.max_size_cm != null ? Number(selected.max_size_cm) : null,
+    shipping_package_size_label: selected ? (selected.package_size_label || null) : null
+  };
+}
+
+function salesShippingUniqueValues(rows, fieldName) {
+  var seen = {};
+  return (rows || []).map(function(row) { return String(row[fieldName] || "").trim(); }).filter(function(value) {
+    if (!value || seen[value]) return false;
+    seen[value] = true;
+    return true;
+  });
+}
+
+function salesShippingMatchingPackage(packages, profile) {
+  profile = profile || {};
+  return (packages || []).find(function(row) {
+    var labelMatches = String(row.package_size_label || "") === String(profile.shipping_package_size_label || "");
+    var sizeMatches = String(row.max_size_cm == null ? "" : row.max_size_cm) === String(profile.shipping_size_cm == null ? "" : profile.shipping_size_cm);
+    return labelMatches && sizeMatches;
+  }) || null;
+}
+
+function bindSalesShippingEstimateActions() {
+  var prefecture = document.getElementById("sales-shipping-prefecture");
+  var carrier = document.getElementById("sales-shipping-carrier");
+  var service = document.getElementById("sales-shipping-service");
+  var packageSize = document.getElementById("sales-shipping-package-size");
+  if (prefecture) prefecture.onchange = function() {
+    salesShippingPrefectureCode = prefecture.value || "";
+    renderSalesShippingEstimate();
+  };
+  if (carrier) carrier.onchange = function() {
+    salesShippingCarrierName = carrier.value || "";
+    salesShippingServiceName = "";
+    salesShippingPackageKeyValue = "";
+    renderSalesShippingEstimate();
+  };
+  if (service) service.onchange = function() {
+    salesShippingServiceName = service.value || "";
+    salesShippingPackageKeyValue = "";
+    renderSalesShippingEstimate();
+  };
+  if (packageSize) packageSize.onchange = function() {
+    salesShippingPackageKeyValue = packageSize.value || "";
+    renderSalesShippingEstimate();
+  };
+}
+
+function renderSalesShippingEstimate(loadError) {
+  var host = document.getElementById("sales-shipping-estimate-wrap");
+  if (!host) return;
+  if (loadError) {
+    host.innerHTML = "<div class='sales-shipping-message error'>" + esc(t("sales_shipping_profile_load_error")) + "</div>";
+    return;
+  }
+  var rows = salesShippingRateRows || [];
+  var carriers = salesShippingUniqueValues(rows, "carrier_name");
+  if (!carriers.length) {
+    host.innerHTML = "<div class='sales-shipping-message'>" + esc(t("shipping_no_rates")) + "</div>";
+    return;
+  }
+  if (carriers.indexOf(salesShippingCarrierName) < 0) salesShippingCarrierName = carriers[0];
+  var carrierRows = rows.filter(function(row) { return String(row.carrier_name || "") === salesShippingCarrierName; });
+  var services = salesShippingUniqueValues(carrierRows, "service_name");
+  if (services.indexOf(salesShippingServiceName) < 0) {
+    var profileService = services.find(function(serviceName) {
+      return !!salesShippingMatchingPackage(uniqueShippingPackages(carrierRows.filter(function(row) {
+        return String(row.service_name || "") === serviceName;
+      }), false), salesShippingProfile);
+    });
+    salesShippingServiceName = profileService || services[0] || "";
+  }
+  var serviceRows = carrierRows.filter(function(row) { return String(row.service_name || "") === salesShippingServiceName; });
+  var packages = uniqueShippingPackages(serviceRows, false);
+  var savedPackage = salesShippingMatchingPackage(packages, salesShippingProfile);
+  var selectedPackage = packages.find(function(row) { return shippingPackageKey(row) === salesShippingPackageKeyValue; }) || savedPackage;
+  if (selectedPackage && !salesShippingPackageKeyValue) salesShippingPackageKeyValue = shippingPackageKey(selectedPackage);
+  if (!selectedPackage) salesShippingPackageKeyValue = "";
+
+  var profileHasSize = !!(salesShippingProfile && (salesShippingProfile.shipping_package_size_label || salesShippingProfile.shipping_size_cm != null));
+  var html = "<div class='sales-shipping-profile'><span>" + esc(t("sales_shipping_profile")) + "</span><strong>" + esc(shippingProfileText(salesShippingProfile)) + "</strong></div>";
+  if (!profileHasSize) html += "<div class='sales-shipping-message manual'>" + esc(t("sales_shipping_manual_size_note")) + "</div>";
+  html += "<div class='sales-shipping-controls'>";
+  html += "<label><span>" + esc(t("sales_shipping_destination")) + "</span><select id='sales-shipping-prefecture'><option value=''>" + esc(t("sales_shipping_select_prefecture")) + "</option>" + shippingPrefectureOptionsHtml(salesShippingPrefectureCode, false) + "</select></label>";
+  html += "<label><span>" + esc(t("shipping_carrier")) + "</span><select id='sales-shipping-carrier'>" + carriers.map(function(name) { return "<option value='" + esc(name) + "'" + (name === salesShippingCarrierName ? " selected" : "") + ">" + esc(name) + "</option>"; }).join("") + "</select></label>";
+  html += "<label><span>" + esc(t("shipping_service")) + "</span><select id='sales-shipping-service'>" + services.map(function(name) { return "<option value='" + esc(name) + "'" + (name === salesShippingServiceName ? " selected" : "") + ">" + esc(name) + "</option>"; }).join("") + "</select></label>";
+  html += "<label class='sales-shipping-size-control'><span>" + esc(t("shipping_package_size")) + "</span><select id='sales-shipping-package-size'><option value=''>" + esc(t("sales_shipping_select_size")) + "</option>" + packages.map(function(row) { var key = shippingPackageKey(row); return "<option value='" + esc(key) + "'" + (key === salesShippingPackageKeyValue ? " selected" : "") + ">" + esc(shippingPackageOptionLabel(row)) + "</option>"; }).join("") + "</select></label>";
+  html += "</div>";
+
+  var selectedRate = null;
+  if (selectedPackage && salesShippingPrefectureCode) {
+    selectedRate = serviceRows.find(function(row) {
+      return String(row.prefecture_code) === String(salesShippingPrefectureCode) && shippingPackageKey(row) === shippingPackageKey(selectedPackage);
+    }) || null;
+  }
+  if (selectedPackage && salesShippingProfile && salesShippingProfile.shipping_weight_kg != null && selectedPackage.max_weight_kg != null && Number(salesShippingProfile.shipping_weight_kg) > Number(selectedPackage.max_weight_kg)) {
+    html += "<div class='sales-shipping-message warning'>" + esc(t("sales_shipping_weight_over")) + "</div>";
+  } else if (!salesShippingPrefectureCode || !selectedPackage) {
+    html += "<div class='sales-shipping-result pending'>" + esc(!salesShippingPrefectureCode ? t("sales_shipping_select_prefecture") : t("sales_shipping_select_size")) + "</div>";
+  } else if (!selectedRate) {
+    html += "<div class='sales-shipping-message warning'>" + esc(t("sales_shipping_no_rate")) + "</div>";
+  } else {
+    html += "<div class='sales-shipping-result'><span>" + esc(t("sales_shipping_rate")) + "</span><div>" + shippingFeeHtml(selectedRate.standard_fee_jpy, selectedRate.tax_type) + "</div></div>";
+    html += "<div class='sales-shipping-island'><span><b>" + esc(t("shipping_island_fee")) + ":</b> " + shippingFeeHtml(selectedRate.remote_island_fee_jpy, selectedRate.tax_type) + "</span>";
+    if (selectedRate.remote_island_condition) html += "<span><b>" + esc(t("shipping_island_condition")) + ":</b> " + esc(selectedRate.remote_island_condition) + "</span>";
+    if (selectedRate.note) html += "<span><b>" + esc(t("shipping_note")) + ":</b> " + esc(selectedRate.note) + "</span>";
+    html += "</div>";
+  }
+  host.innerHTML = html;
+  var prefectureSelect = document.getElementById("sales-shipping-prefecture");
+  if (prefectureSelect) prefectureSelect.value = salesShippingPrefectureCode;
+  bindSalesShippingEstimateActions();
+}
+
+async function loadSalesShippingEstimateForCurrent(seq) {
+  var section = document.getElementById("sales-shipping-estimate-section");
+  var host = document.getElementById("sales-shipping-estimate-wrap");
+  if (!section || !host || !currentProduct || !canViewCustomerShippingRates()) {
+    if (section) setCspStyle(section, "display", "none");
+    return;
+  }
+  setCspStyle(section, "display", "block");
+  host.innerHTML = "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>";
+  var dkdId = parseInt(productDkdId(currentProduct), 10);
+  if (isNaN(dkdId)) return;
+  try {
+    var values = await Promise.all([ensureSalesShippingRateRows(), fetchCoreProductShippingProfile(dkdId)]);
+    if (seq !== detailSecondaryRequestSeq || !currentProduct || parseInt(productDkdId(currentProduct), 10) !== dkdId) return;
+    salesShippingProfile = values[1];
+    salesShippingProfileDkdId = dkdId;
+    salesShippingPackageKeyValue = "";
+    currentProduct = Object.assign({}, currentProduct, salesShippingProfile || {});
+    renderSalesShippingEstimate();
+  } catch (error) {
+    console.warn("sales shipping estimate lookup failed", error);
+    if (seq === detailSecondaryRequestSeq) renderSalesShippingEstimate(true);
+  }
 }
 
 function sortedShippingRows(rows) {
@@ -18278,14 +18637,19 @@ function setProductFormFieldMode(source, mode) {
   var productCodeInput = document.getElementById("pf-shohin-cd");
   var coreInventoryFields = document.getElementById("pf-core-inventory-fields");
   var corePolicyFields = document.getElementById("pf-core-policy-fields");
+  var shippingFields = document.getElementById("pf-shipping-fields");
   var coreStockInput = document.getElementById("pf-core-stock-qty");
   var corePalletInput = document.getElementById("pf-core-pallet-no");
+  var shippingWeightInput = document.getElementById("pf-shipping-weight");
+  var shippingSizeSelect = document.getElementById("pf-shipping-package-size");
+  var shippingHelp = document.getElementById("pf-shipping-help");
   var isCoreProduct = source === "core_products";
   var isAdd = mode === "add";
 
   setCspStyle(productCodeRow, "display", isCoreProduct && isAdd ? "none" : "");
   setCspStyle(coreInventoryFields, "display", isCoreProduct && !isAdd ? "" : "none");
   setCspStyle(corePolicyFields, "display", isCoreProduct ? "" : "none");
+  setCspStyle(shippingFields, "display", isCoreProduct ? "" : "none");
 
   if (productCodeInput) {
     productCodeInput.readOnly = isCoreProduct || mode === "edit";
@@ -18299,6 +18663,12 @@ function setProductFormFieldMode(source, mode) {
     input.disabled = !isCoreProduct || isAdd;
     if (isAdd) input.value = "";
   });
+  [shippingWeightInput, shippingSizeSelect].forEach(function(input) {
+    if (!input) return;
+    input.disabled = !isCoreProduct || isAdd;
+    if (isAdd) input.value = "";
+  });
+  if (shippingHelp) shippingHelp.textContent = t(isAdd ? "product_shipping_add_help" : "product_shipping_help");
 }
 
 function setCoreProductFormFields(p) {
@@ -18316,6 +18686,7 @@ function setCoreProductFormFields(p) {
   document.getElementById("pf-category").value         = formValueFromCategoryCode(p && (p.category_code || p.category));
   document.getElementById("pf-core-stock-qty").value   = p && p.core_stock_qty != null ? p.core_stock_qty : "";
   document.getElementById("pf-core-pallet-no").value   = p ? (p.core_pallet_no || p.core_pallet_summary || "") : "";
+  document.getElementById("pf-shipping-weight").value = p && p.shipping_weight_kg != null ? Number(p.shipping_weight_kg) : "";
   document.getElementById("pf-part-manufacturer-type").value = partFormMode === "edit" && p && p.part_manufacturer_type === "gltek" ? "gltek" : "external";
   document.getElementById("pf-gltek-base-code").value = "";
   document.getElementById("pf-gltek-category-code").value = "";
@@ -18324,19 +18695,29 @@ function setCoreProductFormFields(p) {
 
 async function openCoreProductForm(mode, product, context) {
   if (!canEdit()) { alert(t("err_perm")); return; }
-  if (mode === "edit" && product) currentProduct = product;
+  var formProduct = mode === "add" ? (product || null) : product;
+  if (mode === "edit" && product && productDkdId(product)) {
+    try {
+      var shippingProfile = await fetchCoreProductShippingProfile(productDkdId(product));
+      formProduct = Object.assign({}, product, shippingProfile || {});
+    } catch (error) {
+      console.warn("product shipping profile lookup failed", error);
+    }
+  }
+  if (mode === "edit" && formProduct) currentProduct = formProduct;
   partFormSource = "core_products";
   partFormMode = mode;
   coreProductFormContext = context === "production" ? "production" : "sales";
   document.getElementById("part-form-error").textContent = "";
   document.getElementById("part-form-title").textContent = mode === "add" ? t("btn_add_part") : t("btn_edit_part");
-  setCoreProductFormFields(mode === "add" ? (product || null) : product);
+  setCoreProductFormFields(formProduct);
   setProductFormFieldMode("core_products", mode);
+  await populateProductShippingSizeSelect(formProduct);
   coreProductFormVariants = [];
-  if (mode === "edit" && productDkdId(product)) {
-    coreProductFormVariants = await fetchProductVariantsByDkdId(productDkdId(product));
+  if (mode === "edit" && productDkdId(formProduct)) {
+    coreProductFormVariants = await fetchProductVariantsByDkdId(productDkdId(formProduct));
   }
-  populateCoreProductPolicyForm(product, currentSelectedProductKind);
+  populateCoreProductPolicyForm(formProduct, currentSelectedProductKind);
   clearUnifiedSpecForm();
   if (mode === "edit") {
     await loadProductSpecsForCurrent();
@@ -18389,6 +18770,8 @@ async function saveCoreProductForm() {
   if (isGltekAdd && (!manufacturer || !mfrPart)) { errEl.textContent = t("gltek_product_add_requires_source"); return; }
   if (isGltekAdd && !/^[0-9A-Z]{2}$/.test(baseCode)) { errEl.textContent = t("gltek_part_number_invalid_base"); return; }
   if (isGltekAdd && !/^[0-9]{2}$/.test(gltekCategoryCode)) { errEl.textContent = t("gltek_part_number_invalid_category"); return; }
+  var shippingFormValue = productShippingFormValue();
+  if (!addingProduct && shippingFormValue.error) { errEl.textContent = t("product_shipping_invalid"); return; }
   var categoryValue = document.getElementById("pf-category").value;
   var payload = {
     category_code: categoryCodeFromForm(categoryValue),
@@ -18403,6 +18786,9 @@ async function saveCoreProductForm() {
   if (!addingProduct) {
     payload.core_stock_qty = nullableIntFromInput("pf-core-stock-qty");
     payload.core_pallet_no = nullableTextFromInput("pf-core-pallet-no");
+    payload.shipping_weight_kg = shippingFormValue.shipping_weight_kg;
+    payload.shipping_size_cm = shippingFormValue.shipping_size_cm;
+    payload.shipping_package_size_label = shippingFormValue.shipping_package_size_label;
   }
   var r;
   var gltekResult = null;
@@ -22022,6 +22408,9 @@ function renderPanelStatic() {
   setCspStyle(document.getElementById("detail-customer-section"), "display", canSeeSalesPrice() ? "block" : "none");
   var customerWrap = document.getElementById("detail-customer-wrap");
   if (customerWrap) customerWrap.innerHTML = canSeeSalesPrice() ? "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>" : "";
+  setCspStyle(document.getElementById("sales-shipping-estimate-section"), "display", canViewCustomerShippingRates() ? "block" : "none");
+  var shippingEstimateWrap = document.getElementById("sales-shipping-estimate-wrap");
+  if (shippingEstimateWrap) shippingEstimateWrap.innerHTML = canViewCustomerShippingRates() ? "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>" : "";
   setCspStyle(document.getElementById("sales-conditions-market"), "display", canViewPriceResearchHistory() ? "block" : "none");
   var ecWrap = document.getElementById("ec-mall-price-summary-wrap");
   if (ecWrap) ecWrap.innerHTML = canViewPriceResearchHistory() ? "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>" : "";
@@ -22103,6 +22492,7 @@ function renderPanelStatic() {
   ];
   if (canViewPriceResearchHistory()) detailLoads.push(loadEcMallPriceSummaryForCurrent(detailSeq));
   if (canSeeSalesPrice()) detailLoads.push(loadDetailCustomerInfoForCurrent(detailSeq));
+  if (canViewCustomerShippingRates()) detailLoads.push(loadSalesShippingEstimateForCurrent(detailSeq));
   if (customerCanShowCompatibleParts()) detailLoads.push(loadKikanForCurrentProduct(detailSeq));
   productSearchDetailReadyPromise = Promise.allSettled(detailLoads);
 }
