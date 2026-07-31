@@ -64,6 +64,7 @@ api.setSupplierCatalogData([
 function row(id, productId, genuine, maker) {
   return {
     id,
+    sheet: "alternator",
     productName: "オルタネータ",
     productCode: id,
     genuine,
@@ -71,6 +72,8 @@ function row(id, productId, genuine, maker) {
     maker,
     body: "",
     clutch: "",
+    shipment: 1,
+    substitute: 0,
     masterCacheReady: true,
     masterProductIds: [productId]
   };
@@ -111,6 +114,16 @@ if (api.supplierItemsForResult(unlinkedResult, options).length !== 0) {
 }
 if ([daikoResult, alternatorDaikoResult].some((result) => api.supplierItemsForResult(result, options).length !== 0)) {
   throw new Error("Daiko manufacturer part numbers must not resolve supplier products even with cached master links");
+}
+
+const supplierRankingOptions = { ...options, categories: ["alternator"], minShipment: 0, compatibilityBasis: "maker_genuine" };
+const supplierRanking = api.buildRanking([linkedRow, unlinkedRow, daikoRow, alternatorDaikoRow], supplierRankingOptions);
+if (supplierRanking.results.length !== 2 || supplierRanking.results.some((result) => /^(?:AL|ST)DK/.test(result.row.maker))) {
+  throw new Error("Daiko manufacturer rows must be excluded before supplier compatibility grouping and ranking");
+}
+const manufacturingRanking = api.buildRanking([daikoRow], { ...supplierRankingOptions, reportType: "manufacturing" });
+if (manufacturingRanking.results.length !== 1 || manufacturingRanking.results[0].row !== daikoRow) {
+  throw new Error("Daiko manufacturer rows must remain available to the normal manufacturing ranking");
 }
 
 const available = api.filterSupplierResults([linkedResult, unlinkedResult], { ...options, supplierStatus: "available" });

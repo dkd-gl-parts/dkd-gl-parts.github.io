@@ -878,7 +878,10 @@
   function buildRanking(rows, options) {
     var categorySet = Object.create(null);
     options.categories.forEach(function(category) { categorySet[category] = true; });
-    var sourceRows = rows.filter(function(row) { return categorySet[row.sheet]; });
+    var sourceRows = rows.filter(function(row) {
+      if (!categorySet[row.sheet]) return false;
+      return options.reportType !== "supplier_availability" || !isDaikoManufacturerPart(row.maker);
+    });
     var groups = createCompatibilityGroups(sourceRows, options.compatibilityBasis);
     var compatibleGroupCount = groups.filter(function(group) { return group.length > 1; }).length;
     var candidates = [];
