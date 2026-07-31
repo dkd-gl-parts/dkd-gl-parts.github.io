@@ -89,6 +89,7 @@ if (!compatibleSource.includes('updateSalesDetailTabCount("compatible", parts_li
   "#screen-search .sales-conditions-panel",
   "position: sticky",
   "font-variant-numeric: tabular-nums",
+  ".detail-customer-price-focus:not(.empty) > strong",
   ".sales-detail-tab-panel[hidden]",
   "@media (max-width: 767px)"
 ].forEach((fragment) => {
