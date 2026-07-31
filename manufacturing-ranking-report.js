@@ -220,14 +220,22 @@
   function setLoading(isLoading) {
     var reload = byId("manufacturing-ranking-reload");
     var preview = byId("manufacturing-ranking-preview");
+    var excel = byId("manufacturing-ranking-excel");
     var pdf = byId("manufacturing-ranking-pdf");
     state.isLoading = isLoading;
     if (reload) reload.disabled = isLoading;
     if (preview) preview.disabled = !state.rankingReady || !state.rows.length;
+    var reportType = byId("manufacturing-ranking-report-type");
+    var supplierReport = reportType && reportType.value === "supplier_availability";
+    var reportDataReady = state.masterDataReady && (!supplierReport || state.supplierDataReady);
+    if (excel) {
+      excel.disabled = !reportDataReady || !state.results.length;
+      if (!state.rankingReady) excel.textContent = "Excel準備中...";
+      else if (!state.masterDataReady) excel.textContent = state.masterDataError ? "Excel準備エラー" : "在庫照合中...";
+      else if (supplierReport && !state.supplierDataReady) excel.textContent = state.supplierDataError ? "仕入先照合エラー" : "仕入先照合中...";
+      else excel.textContent = "Excel出力";
+    }
     if (pdf) {
-      var reportType = byId("manufacturing-ranking-report-type");
-      var supplierReport = reportType && reportType.value === "supplier_availability";
-      var reportDataReady = state.masterDataReady && (!supplierReport || state.supplierDataReady);
       pdf.disabled = !reportDataReady || !state.results.length;
       if (!state.rankingReady) pdf.textContent = "PDF準備中...";
       else if (!state.masterDataReady) pdf.textContent = state.masterDataError ? "PDF準備エラー" : "在庫照合中...";
@@ -1445,6 +1453,109 @@
     return summary.results.length > 0;
   }
 
+  function buildExcelRows(results, options) {
+    var exportResults = options.reportType === "supplier_availability"
+      ? filterSupplierResults(results || [], options)
+      : (results || []);
+    if (options.reportType === "supplier_availability") {
+      var supplierRows = [[
+        "順位", "カテゴリ", "商品名", "商品CD", "純正品番", "純正品番2", "メーカー品番",
+        "仕入先商品", "仕入先名称", "仕入先品番", "仕入先メーカー", "仕入先純正品番", "仕入先メーカー品番"
+      ]];
+      exportResults.forEach(function(result) {
+        var row = result.row;
+        var items = supplierItemsForResult(result, options);
+        (items.length ? items : [null]).forEach(function(item) {
+          supplierRows.push([
+            result.rank,
+            row.sheet || "",
+            row.productName || "",
+            row.productCode || "",
+            row.genuine || "",
+            row.genuine2 || "",
+            row.maker || "",
+            items.length ? "あり" : "なし",
+            item ? supplierName(item.supplier_id) : "",
+            item ? supplierItemManagementNumber(item) : "",
+            item ? normalizeText(item.manufacturer) : "",
+            item ? normalizeText(item.genuine_part_number) : "",
+            item ? normalizeText(item.manufacturer_part_number) : ""
+          ]);
+        });
+      });
+      return supplierRows;
+    }
+
+    var headers = ["順位", "カテゴリ", "商品名", "商品CD", "純正品番", "純正品番2", "メーカー品番", "出荷数", "代替台数", "順位値"];
+    if (options.showCoreStock) headers.push("現在コア在庫", "互換コア在庫", "コア在庫合計");
+    if (options.showMissingMaster) headers.push("マスタ未登録品番");
+    var rows = [headers];
+    exportResults.forEach(function(result) {
+      var row = result.row;
+      var values = [
+        result.rank,
+        row.sheet || "",
+        row.productName || "",
+        row.productCode || "",
+        row.genuine || "",
+        row.genuine2 || "",
+        row.maker || "",
+        Number(result.shipment || 0),
+        Number(result.substitute || 0),
+        Number(result.score || 0)
+      ];
+      if (options.showCoreStock) {
+        var stock = coreStockDetails(result);
+        values.push(stock.currentTotal, stock.compatibleTotal, stock.currentTotal + stock.compatibleTotal);
+      }
+      if (options.showMissingMaster) {
+        values.push(missingMasterPartNumbers(result, options.compatibilityMode).map(function(entry) {
+          return entry.label + " " + entry.value;
+        }).join(" / "));
+      }
+      rows.push(values);
+    });
+    return rows;
+  }
+
+  function excelCsvCell(value) {
+    if (typeof value === "number" && Number.isFinite(value)) return String(value);
+    var text = String(value == null ? "" : value);
+    if (/^[=+\-@]/.test(text)) text = "'" + text;
+    return '"' + text.replace(/"/g, '""') + '"';
+  }
+
+  function buildExcelCsv(results, options) {
+    return buildExcelRows(results, options).map(function(row) {
+      return row.map(excelCsvCell).join(",");
+    }).join("\r\n") + "\r\n";
+  }
+
+  function exportRankingExcel() {
+    var reportType = byId("manufacturing-ranking-report-type");
+    var supplierReport = reportType && reportType.value === "supplier_availability";
+    if (!state.masterDataReady) {
+      alert("コア在庫・互換情報の照合完了後にExcel出力できます。");
+      return;
+    }
+    if (supplierReport && !state.supplierDataReady) {
+      alert(state.supplierDataError ? "仕入先商品の照合に失敗しました。再読み込みしてください。" : "仕入先商品の照合完了後にExcel出力できます。");
+      return;
+    }
+    if (!updatePreview()) return;
+    var csv = buildExcelCsv(state.results, state.options);
+    var blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = printFileTitle(state.options.categories, state.options.startRank, state.options.endRank, new Date(), state.options.reportType) + ".csv";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+    setSourceStatus("Excel用CSVを " + formatNumber(state.results.length) + " 件出力しました。", "success");
+  }
+
   function buildPrintRows(results, options) {
     return results.map(function(result) {
       var row = result.row;
@@ -1589,6 +1700,7 @@
     byId("manufacturing-ranking-category-all").addEventListener("click", function() { selectAllCategories(true); updatePreview(); });
     byId("manufacturing-ranking-category-clear").addEventListener("click", function() { selectAllCategories(false); updatePreview(); });
     byId("manufacturing-ranking-preview").addEventListener("click", updatePreview);
+    byId("manufacturing-ranking-excel").addEventListener("click", exportRankingExcel);
     byId("manufacturing-ranking-pdf").addEventListener("click", openPdfPreview);
     byId("manufacturing-ranking-report-type").addEventListener("change", function() {
       syncReportTypeControls();
@@ -1620,6 +1732,8 @@
     coreStockDetails: coreStockDetails,
     rankingCoreStockSummary: rankingCoreStockSummary,
     printFileTitle: printFileTitle,
+    buildExcelRows: buildExcelRows,
+    buildExcelCsv: buildExcelCsv,
     supplierItemsForResult: supplierItemsForResult,
     supplierAvailabilitySummary: supplierAvailabilitySummary,
     filterSupplierResults: filterSupplierResults,

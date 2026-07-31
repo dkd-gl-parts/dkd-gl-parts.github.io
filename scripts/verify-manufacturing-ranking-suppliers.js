@@ -9,7 +9,8 @@ const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 [
   "manufacturing-ranking-report-type",
   "manufacturing-ranking-supplier",
-  "manufacturing-ranking-supplier-status"
+  "manufacturing-ranking-supplier-status",
+  "manufacturing-ranking-excel"
 ].forEach((id) => {
   if (!html.includes(`id="${id}"`)) throw new Error(`${id} control is missing`);
 });
@@ -138,6 +139,32 @@ if (supplierResults.length !== 1 || supplierResults[0] !== linkedResult) {
 const daikoUnavailable = api.filterSupplierResults([daikoResult, alternatorDaikoResult], { ...options, supplierStatus: "unavailable" });
 if (daikoUnavailable.length !== 0) {
   throw new Error("STDK and ALDK manufacturer rows must not appear as unavailable supplier rows");
+}
+
+const supplierExcelRows = api.buildExcelRows([linkedResult, unlinkedResult, daikoResult, alternatorDaikoResult], options);
+const supplierExcelHeader = supplierExcelRows[0];
+const supplierNameColumn = supplierExcelHeader.indexOf("仕入先名称");
+const supplierPartColumn = supplierExcelHeader.indexOf("仕入先品番");
+if (supplierNameColumn < 0 || supplierPartColumn < 0 || supplierNameColumn === supplierPartColumn) {
+  throw new Error("Excel supplier name and supplier part number must use separate columns");
+}
+if (supplierExcelHeader.includes("出荷数") || supplierExcelHeader.includes("コア在庫")) {
+  throw new Error("supplier Excel output must not include shipment or core-stock columns");
+}
+if (supplierExcelRows.length !== 4 || JSON.stringify(supplierExcelRows).includes("ALDK00079") || JSON.stringify(supplierExcelRows).includes("STDK87538")) {
+  throw new Error("supplier Excel output must include linked and unlinked rows without Daiko manufacturer records");
+}
+if (supplierExcelRows.filter((row) => row[supplierPartColumn] === "SL-200").length !== 1) {
+  throw new Error("supplier Excel output must not duplicate the same supplier part number");
+}
+
+const manufacturingExcelRows = api.buildExcelRows([linkedResult], { ...options, reportType: "manufacturing", showCoreStock: false, showMissingMaster: false });
+if (!manufacturingExcelRows[0].includes("出荷数") || manufacturingExcelRows[0].includes("仕入先名称") || manufacturingExcelRows[1][0] !== 1) {
+  throw new Error("manufacturing Excel output must contain ranking and shipment columns");
+}
+const supplierCsv = api.buildExcelCsv([linkedResult, unlinkedResult], options);
+if (!supplierCsv.includes("仕入先名称") || !supplierCsv.includes("SL-200") || !source.includes('manufacturing-ranking-excel").addEventListener("click", exportRankingExcel)')) {
+  throw new Error("manufacturing ranking Excel download must be wired to the export button");
 }
 
 const printHtml = api.buildPrintHtml([linkedResult, unlinkedResult], options);
