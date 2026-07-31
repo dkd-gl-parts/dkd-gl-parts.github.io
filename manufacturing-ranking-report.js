@@ -5,6 +5,7 @@
   var MAX_SOURCE_ROWS = 150000;
   var PREVIEW_LIMIT = 200;
   var DATA_PAGE_SIZE = 1000;
+  var DATA_PAGE_CONCURRENCY = 4;
   var REFERENCE_QUERY_CHUNK_SIZE = 400;
   var MASTER_PART_FIELDS = [
     { normalized: "normalized_genuine_part_number", value: "genuine_part_number", label: "純正" },
@@ -302,6 +303,7 @@
         .eq("dataset_id", datasetId)
         .order("category_order", { ascending: true })
         .order("source_row_number", { ascending: true })
+        .order("id", { ascending: true })
         .range(offset, offset + DATA_PAGE_SIZE - 1);
   }
 
@@ -309,15 +311,20 @@
     var rows = [];
     var count = Number(expectedCount || 0);
     if (count > 0) {
-      var requests = [];
+      var offsets = [];
       for (var parallelOffset = 0; parallelOffset < count; parallelOffset += DATA_PAGE_SIZE) {
-        requests.push(fetchDatasetRowPage(datasetId, parallelOffset));
+        offsets.push(parallelOffset);
       }
-      var responses = await Promise.all(requests);
-      responses.forEach(function(response) {
-        if (response.error) throw response.error;
-        rows = rows.concat(response.data || []);
-      });
+      for (var batchStart = 0; batchStart < offsets.length; batchStart += DATA_PAGE_CONCURRENCY) {
+        var batchOffsets = offsets.slice(batchStart, batchStart + DATA_PAGE_CONCURRENCY);
+        var responses = await Promise.all(batchOffsets.map(function(offset) {
+          return fetchDatasetRowPage(datasetId, offset);
+        }));
+        responses.forEach(function(response) {
+          if (response.error) throw response.error;
+          rows = rows.concat(response.data || []);
+        });
+      }
       return rows;
     }
 
