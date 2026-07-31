@@ -3337,6 +3337,41 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .finished-label-help { font-size: 11px; color: #7c8492; line-height: 1.55; margin-top: 8px; }
 .finished-label-serial-notice { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; border: 1px solid #b9d8c5; border-radius: 8px; padding: 9px 11px; background: #f1f8f4; color: #315d43; font-size: 11px; line-height: 1.5; }
 .finished-label-serial-notice strong { flex: 0 0 auto; color: #18492e; font-size: 12px; }
+.finished-label-layout-panel { margin-bottom: 12px; border: 1px solid #dfe4eb; border-radius: 10px; padding: 12px; background: #f8fafc; }
+.finished-label-layout-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.finished-label-layout-head h4 { margin: 0; color: #172033; font-size: 13px; font-weight: 800; }
+.finished-label-layout-head p { max-width: 620px; margin: 4px 0 0; color: #697386; font-size: 11px; line-height: 1.45; }
+.finished-label-layout-badges { display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
+.finished-label-layout-badges span { border: 1px solid #b9c5d5; border-radius: 999px; padding: 3px 8px; background: #fff; color: #344054; font-size: 10px; font-weight: 800; white-space: nowrap; }
+.finished-label-layout-stage { display: grid; grid-template-columns: 32px max-content; grid-template-rows: 24px max-content; margin-top: 12px; overflow-x: auto; border: 1px solid #d9dee7; border-radius: 8px; padding: 12px 16px 16px 10px; background-color: #eef1f5; background-image: linear-gradient(#e3e7ed 1px, transparent 1px), linear-gradient(90deg, #e3e7ed 1px, transparent 1px); background-size: 10px 10px; }
+.finished-label-layout-width { grid-column: 2; grid-row: 1; position: relative; width: 450px; border-top: 1px solid #5e6878; color: #465061; text-align: center; }
+.finished-label-layout-width::before, .finished-label-layout-width::after { position: absolute; top: -4px; width: 1px; height: 8px; background: #5e6878; content: ""; }
+.finished-label-layout-width::before { left: 0; }
+.finished-label-layout-width::after { right: 0; }
+.finished-label-layout-width span { position: relative; top: -9px; padding: 0 7px; background: #eef1f5; font-size: 10px; font-weight: 800; }
+.finished-label-layout-height { grid-column: 1; grid-row: 2; position: relative; height: 200px; border-left: 1px solid #5e6878; color: #465061; }
+.finished-label-layout-height::before, .finished-label-layout-height::after { position: absolute; left: -4px; width: 8px; height: 1px; background: #5e6878; content: ""; }
+.finished-label-layout-height::before { top: 0; }
+.finished-label-layout-height::after { bottom: 0; }
+.finished-label-layout-height span { position: absolute; top: 50%; left: 1px; padding: 4px 0; background: #eef1f5; font-size: 10px; font-weight: 800; line-height: 1; writing-mode: vertical-rl; transform: translateY(-50%); }
+.finished-label-layout-preview { grid-column: 2; grid-row: 2; width: 450px; height: 200px; box-shadow: 0 5px 16px rgba(20, 30, 46, .17); background: #fff; }
+.finished-label-layout-preview .serial-label { width: 450px; height: 200px; overflow: hidden; border: 2px solid #000; padding: 7px 8px; background: #fff; color: #000; font-family: Arial, "Noto Sans JP", sans-serif; }
+.finished-label-layout-preview .serial-label-head { display: flex; align-items: center; justify-content: space-between; height: 31px; border-bottom: 2px solid #000; line-height: 1; }
+.finished-label-layout-preview .serial-label-head strong { font-size: 18px; font-weight: 900; letter-spacing: .11em; }
+.finished-label-layout-preview .serial-label-head span { font-size: 11px; font-weight: 900; letter-spacing: .08em; }
+.finished-label-layout-preview .serial-label-body { display: grid; grid-template-columns: 136px minmax(0, 1fr); gap: 8px; align-items: center; height: 149px; }
+.finished-label-layout-preview .serial-label-qr { display: block; width: 130px; height: 130px; image-rendering: pixelated; }
+.finished-label-layout-preview .serial-label-copy { min-width: 0; overflow: hidden; }
+.finished-label-layout-preview .serial-label-field-name { font-size: 9px; font-weight: 900; letter-spacing: .09em; line-height: 1; }
+.finished-label-layout-preview .serial-label-product { overflow: hidden; margin-top: 4px; font-size: 20px; font-weight: 900; line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
+.finished-label-layout-preview .serial-label-product.compact { font-size: 17px; letter-spacing: -.02em; }
+.finished-label-layout-preview .serial-label-product.long { font-size: 14px; letter-spacing: -.035em; }
+.finished-label-layout-preview .serial-label-rule { margin: 8px 0 7px; border-top: 2px solid #000; }
+.finished-label-layout-preview .serial-label-number { margin-top: 5px; font-family: Consolas, "Courier New", monospace; font-size: 24px; font-weight: 900; letter-spacing: -.035em; line-height: 1; white-space: nowrap; }
+.finished-label-layout-error { display: grid; height: 100%; place-items: center; color: #a33b2e; font-size: 12px; font-weight: 700; }
+.finished-label-layout-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 9px; color: #5f6b7a; font-size: 10px; line-height: 1.4; }
+.finished-label-layout-foot strong { color: #172033; font-family: Consolas, "SFMono-Regular", monospace; font-size: 11px; }
+.finished-label-layout-sample { border-radius: 4px; padding: 3px 6px; background: #fff3cd; color: #6d5310; font-weight: 800; }
 .finished-label-issued-result { display: none; margin-top: 12px; border: 1px solid #9ec9ad; border-radius: 8px; padding: 11px; background: #f3faf6; }
 .finished-label-issued-result.show { display: block; }
 .finished-label-issued-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -3413,6 +3448,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .finished-label-selected, .finished-label-form-grid { grid-template-columns: 1fr; }
   .finished-label-form-grid .wide { grid-column: 1 / -1; }
   .finished-label-actions { position: static; flex-wrap: wrap; }
+  .finished-label-layout-head, .finished-label-layout-foot { align-items: flex-start; flex-direction: column; }
+  .finished-label-layout-badges { justify-content: flex-start; }
   .finished-shipment-body { overflow: auto; padding: 12px; }
   .finished-shipment-shell { grid-template-columns: 1fr; height: auto; }
   .finished-shipment-left, .finished-shipment-right { overflow: visible; }

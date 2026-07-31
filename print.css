@@ -52,7 +52,7 @@ body {
   height: 20mm;
   overflow: hidden;
   border: .25mm solid #000;
-  padding: .7mm .8mm;
+  padding: .65mm .75mm;
   background: #fff;
   break-after: page;
   page-break-after: always;
@@ -67,19 +67,21 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 3.1mm;
+  height: 3.15mm;
   border-bottom: .22mm solid #000;
   line-height: 1;
 }
 
 .serial-label-head strong {
-  font-size: 7.2pt;
-  letter-spacing: .08em;
+  font-size: 7.4pt;
+  font-weight: 900;
+  letter-spacing: .11em;
 }
 
 .serial-label-head span {
-  font-size: 5.2pt;
-  font-weight: 700;
+  font-size: 4.4pt;
+  font-weight: 900;
+  letter-spacing: .08em;
 }
 
 .serial-label-body {
@@ -87,10 +89,10 @@ body {
   grid-template-columns: 13.6mm minmax(0, 1fr);
   gap: .8mm;
   align-items: center;
-  height: 14.9mm;
+  height: 14.95mm;
 }
 
-.serial-label-body img {
+.serial-label-qr {
   display: block;
   width: 13mm;
   height: 13mm;
@@ -102,31 +104,46 @@ body {
   overflow: hidden;
 }
 
+.serial-label-field-name {
+  font-size: 3.4pt;
+  font-weight: 900;
+  letter-spacing: .09em;
+  line-height: 1;
+}
+
 .serial-label-product {
   overflow: hidden;
-  font-size: 6.1pt;
-  font-weight: 800;
-  line-height: 1.15;
+  margin-top: .35mm;
+  font-size: 7.4pt;
+  font-weight: 900;
+  line-height: 1.05;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.serial-label-number {
-  margin-top: .7mm;
-  font-family: Consolas, "Courier New", monospace;
-  font-size: 10.2pt;
-  font-weight: 900;
-  letter-spacing: -.03em;
-  line-height: 1;
-  white-space: nowrap;
+.serial-label-product.compact {
+  font-size: 6.3pt;
+  letter-spacing: -.02em;
 }
 
-.serial-label-caption {
-  margin-top: .8mm;
-  font-size: 4.2pt;
-  font-weight: 700;
-  letter-spacing: .08em;
+.serial-label-product.long {
+  font-size: 5.3pt;
+  letter-spacing: -.035em;
+}
+
+.serial-label-rule {
+  margin: .65mm 0 .55mm;
+  border-top: .2mm solid #000;
+}
+
+.serial-label-number {
+  margin-top: .45mm;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 8.7pt;
+  font-weight: 900;
+  letter-spacing: -.035em;
   line-height: 1;
+  white-space: nowrap;
 }
 
 @media print {

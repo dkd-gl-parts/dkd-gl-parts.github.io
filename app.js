@@ -337,6 +337,11 @@ var TRANSLATIONS = {
     finished_label_issue_form: "完品登録内容",
     finished_label_apply_template: "カテゴリ構成部品を再反映",
     finished_label_preview: "45×20ラベル印刷",
+    finished_label_layout_title: "製品本体シール レイアウト",
+    finished_label_layout_hint: "黒1色・熱転写用。選択したGLTEK品番と発行予定の製造シリアルを実寸比率で確認できます。",
+    finished_label_layout_one_per_unit: "1台につき1枚",
+    finished_label_layout_sample: "発行前はサンプルシリアルを表示",
+    finished_label_layout_qr_value: "QR格納値",
     finished_label_issue_code: "完品登録ID",
     finished_label_instruction_id: "製造予定ID",
     finished_label_product_category: "製品カテゴリ",
@@ -1667,6 +1672,11 @@ var TRANSLATIONS = {
     finished_label_issue_form: "Finished Unit Details",
     finished_label_apply_template: "Reload Category Components",
     finished_label_preview: "Print 45×20 Labels",
+    finished_label_layout_title: "Product Label Layout",
+    finished_label_layout_hint: "Black-only thermal-transfer layout. Preview the selected GLTEK part number and manufacturing serial at the correct aspect ratio.",
+    finished_label_layout_one_per_unit: "One label per unit",
+    finished_label_layout_sample: "A sample serial is shown before issue",
+    finished_label_layout_qr_value: "QR payload",
     finished_label_issue_code: "Registration ID",
     finished_label_instruction_id: "Production Plan ID",
     finished_label_product_category: "Product Category",
@@ -3004,6 +3014,11 @@ var TRANSLATIONS = {
     finished_label_issue_form: "完品登记内容",
     finished_label_apply_template: "重新载入类别构成零件",
     finished_label_preview: "打印45×20标签",
+    finished_label_layout_title: "产品本体标签版式",
+    finished_label_layout_hint: "黑色单色热转印版式。可按实际比例预览所选GLTEK品号和制造序列号。",
+    finished_label_layout_one_per_unit: "每台1张",
+    finished_label_layout_sample: "发行前显示示例序列号",
+    finished_label_layout_qr_value: "QR内容",
     finished_label_issue_code: "完品登记ID",
     finished_label_instruction_id: "生产计划ID",
     finished_label_product_category: "产品类别",
@@ -4098,7 +4113,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.607";
+var APP_VERSION       = "v1.1.608";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -16640,6 +16655,7 @@ function resetFinishedLabelForm(product, instruction) {
   renderFinishedLabelIssuedResult(null);
   var preview = document.getElementById("btn-finished-label-preview");
   if (preview) preview.disabled = true;
+  renderFinishedLabelLayoutPreview();
 }
 
 function setFinishedLabelValue(id, value) {
@@ -16817,9 +16833,53 @@ function updateFinishedLabelQrPayload() {
     var value = units[0].manufacturing_serial;
     if (units.length > 1) value += " ～ " + units[units.length - 1].manufacturing_serial;
     setFinishedLabelValue("finished-label-qr-payload", value);
+    renderFinishedLabelLayoutPreview();
     return;
   }
   setFinishedLabelValue("finished-label-qr-payload", t("finished_label_code_pending"));
+  renderFinishedLabelLayoutPreview();
+}
+
+function finishedLabelPreviewProductNo() {
+  var product = finishedLabelSelectedProduct || {};
+  return product.gltek_part_number || product.manufacturer_part_number || product.genuine_part_number || product.daiko_part_number || "G0101-00001";
+}
+
+function finishedLabelPreviewSerial() {
+  if (finishedLabelLastIssuedRecord && Array.isArray(finishedLabelLastIssuedRecord.units) && finishedLabelLastIssuedRecord.units.length) {
+    return finishedLabelLastIssuedRecord.units[0].manufacturing_serial || "M2026-0000123";
+  }
+  return "M" + new Date().getFullYear() + "-0000123";
+}
+
+function buildFinishedLabelMarkup(serial, productNo) {
+  productNo = String(productNo || "-");
+  var productLength = Array.from(productNo).length;
+  var productSizeClass = productLength > 18 ? " long" : (productLength > 14 ? " compact" : "");
+  var qrDataUrl = finishedProductSerialQrDataUrl(serial);
+  return "<section class='serial-label'>" +
+    "<div class='serial-label-head'><strong>GLTEK</strong><span>PRODUCT ID</span></div>" +
+    "<div class='serial-label-body'><img class='serial-label-qr' src='" + esc(qrDataUrl) + "' alt='" + esc(serial) + "'>" +
+    "<div class='serial-label-copy'>" +
+    "<div class='serial-label-field-name'>GLTEK PART NO.</div>" +
+    "<div class='serial-label-product" + productSizeClass + "'>" + esc(productNo) + "</div>" +
+    "<div class='serial-label-rule'></div>" +
+    "<div class='serial-label-field-name'>MFG SERIAL / S/N</div>" +
+    "<div class='serial-label-number'>" + esc(serial) + "</div>" +
+    "</div></div></section>";
+}
+
+function renderFinishedLabelLayoutPreview() {
+  var host = document.getElementById("finished-label-layout-preview");
+  if (!host) return;
+  var serial = finishedLabelPreviewSerial();
+  try {
+    host.innerHTML = buildFinishedLabelMarkup(serial, finishedLabelPreviewProductNo());
+  } catch (e) {
+    host.innerHTML = "<div class='finished-label-layout-error'>QR preview unavailable</div>";
+  }
+  var qrValue = document.getElementById("finished-label-layout-qr-value");
+  if (qrValue) qrValue.textContent = serial;
 }
 
 async function saveFinishedLabelIssue() {
@@ -17083,9 +17143,7 @@ function buildFinishedLabelPrintHtml(record) {
   units.forEach(function(unit) {
     var serial = unit.manufacturing_serial || "";
     var productNo = unit.gltek_part_number || unit.product_no || record.gltekPartNumber || record.productNo || record.manufacturerPartNumber || record.genuinePartNumber || "-";
-    var qrDataUrl = finishedProductSerialQrDataUrl(serial);
-    labels.push("<section class='serial-label'><div class='serial-label-head'><strong>GLTEK</strong><span>完品</span></div>" +
-      "<div class='serial-label-body'><img src='" + esc(qrDataUrl) + "' alt='" + esc(serial) + "'><div class='serial-label-copy'><div class='serial-label-product'>" + esc(productNo) + "</div><div class='serial-label-number'>" + esc(serial) + "</div><div class='serial-label-caption'>MANUFACTURING SERIAL</div></div></div></section>");
+    labels.push(buildFinishedLabelMarkup(serial, productNo));
   });
   return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><title>D-CATS " + esc(record.issueCode || "") + "</title>" +
     "<link rel='stylesheet' href='print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'>" +
