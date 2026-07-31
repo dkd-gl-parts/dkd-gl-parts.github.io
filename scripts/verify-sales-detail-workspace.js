@@ -51,6 +51,7 @@ const panelSource = sourceBetween("function renderPanelStatic", "async function 
 [
   'currentSelectedProductKind = "rebuilt"',
   'renderSalesProductIdentity(p)',
+  'renderCatalogVehicleSummaryHtml("", { showButton: false })',
   'loadDetailCustomerInfoForCurrent(detailSeq)',
   'loadEcMallPriceSummaryForCurrent(detailSeq)',
   'loadCatalogVehicleSummary(document.getElementById("panel-body"), p)',
@@ -90,6 +91,7 @@ if (!compatibleSource.includes('updateSalesDetailTabCount("compatible", parts_li
   "position: sticky",
   "font-variant-numeric: tabular-nums",
   ".detail-customer-price-focus:not(.empty) > strong",
+  "white-space: nowrap; overflow-wrap: normal; word-break: keep-all",
   ".sales-detail-tab-panel[hidden]",
   "@media (max-width: 767px)"
 ].forEach((fragment) => {

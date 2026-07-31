@@ -4146,7 +4146,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.611";
+var APP_VERSION       = "v1.1.612";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -8329,11 +8329,15 @@ function formatComponentRate(value) {
   return text ? (/%$/.test(text) ? text : text + "%") : "-";
 }
 
-function renderCatalogVehicleSummaryHtml(offsetClass) {
+function renderCatalogVehicleSummaryHtml(offsetClass, options) {
   if (!customerCanShowVehicleInfo()) return "";
+  options = options || {};
+  var buttonHtml = options.showButton === false
+    ? ""
+    : "<button class='btn-sm-edit catalog-vehicle-button' type='button'>" + esc(t("vehicle_info_button")) + "</button>";
   return "<div class='detail-vehicle-grid" + (offsetClass || "") + "'>" +
     "<div class='detail-vehicle-label'>" + esc(t("f_vehicle_mfr")) + "</div>" +
-    "<div class='detail-vehicle-value detail-vehicle-maker-row'><span class='catalog-vehicle-maker-value'>" + esc(t("loading")) + "</span><button class='btn-sm-edit catalog-vehicle-button' type='button'>" + esc(t("vehicle_info_button")) + "</button></div>" +
+    "<div class='detail-vehicle-value detail-vehicle-maker-row'><span class='catalog-vehicle-maker-value'>" + esc(t("loading")) + "</span>" + buttonHtml + "</div>" +
   "</div>";
 }
 
@@ -22069,7 +22073,7 @@ function renderPanelStatic() {
   }
   document.getElementById("panel-body").innerHTML =
     "<div class='detail-main-grid'>" +
-      "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + "</div>" +
+      "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("", { showButton: false }) + genuineHtml + "</div>" +
       "<div class='detail-column'>" + makerHtml +
       "<div class='detail-spec-block detail-spec-after-maker'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div>" +
       "</div>" +
