@@ -1125,8 +1125,12 @@
   }
 
   function filterSupplierResults(results, options) {
-    if (options.reportType !== "supplier_availability" || options.supplierStatus === "all" || !state.supplierDataReady) return results;
-    return results.filter(function(result) {
+    if (options.reportType !== "supplier_availability") return results;
+    var supplierResults = results.filter(function(result) {
+      return !isDaikoManufacturerPart(result && result.row && result.row.maker);
+    });
+    if (options.supplierStatus === "all" || !state.supplierDataReady) return supplierResults;
+    return supplierResults.filter(function(result) {
       var available = supplierItemsForResult(result, options).length > 0;
       return options.supplierStatus === "available" ? available : !available;
     });

@@ -118,9 +118,13 @@ const unavailable = api.filterSupplierResults([linkedResult, unlinkedResult], { 
 if (available.length !== 1 || available[0] !== linkedResult || unavailable.length !== 1 || unavailable[0] !== unlinkedResult) {
   throw new Error("supplier availability filters must preserve the original ranking rows");
 }
+const supplierResults = api.filterSupplierResults([linkedResult, daikoResult, alternatorDaikoResult], options);
+if (supplierResults.length !== 1 || supplierResults[0] !== linkedResult) {
+  throw new Error("Daiko manufacturer rows must be excluded from the supplier report");
+}
 const daikoUnavailable = api.filterSupplierResults([daikoResult, alternatorDaikoResult], { ...options, supplierStatus: "unavailable" });
-if (daikoUnavailable.length !== 2 || daikoUnavailable[0] !== daikoResult || daikoUnavailable[1] !== alternatorDaikoResult) {
-  throw new Error("STDK and ALDK manufacturer rows must be classified as unavailable");
+if (daikoUnavailable.length !== 0) {
+  throw new Error("STDK and ALDK manufacturer rows must not appear as unavailable supplier rows");
 }
 
 const printHtml = api.buildPrintHtml([linkedResult, unlinkedResult], options);
