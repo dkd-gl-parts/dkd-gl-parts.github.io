@@ -1050,6 +1050,10 @@
     return SUPPLIER_NAMES[key] || (key ? "仕入先 #" + key : "仕入先未設定");
   }
 
+  function isDaikoManufacturerPart(value) {
+    return /^STDK[A-Z0-9]+$/.test(normalizeSearch(value));
+  }
+
   function supplierItemIdentityKey(item) {
     var supplierId = item && item.supplier_id != null ? String(item.supplier_id) : "";
     var managementNumber = item ? normalizeSearch(item.supplier_pn || item.source_item_id) : "";
@@ -1059,7 +1063,7 @@
   function matchedProductsForSupplier(result, compatibilityMode) {
     var productsById = Object.create(null);
     var rows = compatibilityMode === "all" ? [result.row] : result.group;
-    rows.forEach(function(row) {
+    rows.filter(function(row) { return !isDaikoManufacturerPart(row && row.maker); }).forEach(function(row) {
       masterProductsForRow(row).forEach(function(product) {
         productsById[product.id] = product;
         (state.kikanGroupIdsByProductId[product.id] || []).forEach(function(groupId) {
@@ -1074,6 +1078,7 @@
   }
 
   function supplierItemsForResult(result, options) {
+    if (isDaikoManufacturerPart(result && result.row && result.row.maker)) return [];
     var itemsByKey = Object.create(null);
     matchedProductsForSupplier(result, options.compatibilityMode).forEach(function(product) {
       (state.supplierItemsByProductId[product.id] || []).forEach(function(item) {

@@ -78,8 +78,10 @@ function row(id, productId, genuine, maker) {
 
 const linkedRow = row("R1", "100", "27060-1000", "ALT-100");
 const unlinkedRow = row("R2", "300", "27060-3000", "ALT-300");
+const daikoRow = row("R3", "100", "28100-28053", "STDK87538");
 const linkedResult = { row: linkedRow, group: [linkedRow], rank: 1, shipment: 50, score: 50 };
 const unlinkedResult = { row: unlinkedRow, group: [unlinkedRow], rank: 2, shipment: 40, score: 40 };
+const daikoResult = { row: daikoRow, group: [daikoRow], rank: 3, shipment: 30, score: 30 };
 const options = {
   reportType: "supplier_availability",
   supplierId: "all",
@@ -105,11 +107,18 @@ if (linkedItems.filter((item) => item.supplier_pn === "SL-200").length !== 1) {
 if (api.supplierItemsForResult(unlinkedResult, options).length !== 0) {
   throw new Error("unlinked ranking rows must remain unavailable");
 }
+if (api.supplierItemsForResult(daikoResult, options).length !== 0) {
+  throw new Error("STDK manufacturer part numbers must not resolve supplier products even with cached master links");
+}
 
 const available = api.filterSupplierResults([linkedResult, unlinkedResult], { ...options, supplierStatus: "available" });
 const unavailable = api.filterSupplierResults([linkedResult, unlinkedResult], { ...options, supplierStatus: "unavailable" });
 if (available.length !== 1 || available[0] !== linkedResult || unavailable.length !== 1 || unavailable[0] !== unlinkedResult) {
   throw new Error("supplier availability filters must preserve the original ranking rows");
+}
+const daikoUnavailable = api.filterSupplierResults([daikoResult], { ...options, supplierStatus: "unavailable" });
+if (daikoUnavailable.length !== 1 || daikoUnavailable[0] !== daikoResult) {
+  throw new Error("STDK manufacturer rows must be classified as unavailable");
 }
 
 const printHtml = api.buildPrintHtml([linkedResult, unlinkedResult], options);
