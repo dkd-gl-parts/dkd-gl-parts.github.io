@@ -1051,7 +1051,7 @@
   }
 
   function isDaikoManufacturerPart(value) {
-    return /^STDK[A-Z0-9]+$/.test(normalizeSearch(value));
+    return /^[A-Z]{2}DK\d{3,}$/.test(normalizeSearch(value));
   }
 
   function supplierItemIdentityKey(item) {
