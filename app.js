@@ -4206,7 +4206,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.622";
+var APP_VERSION       = "v1.1.623";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6391,6 +6391,10 @@ function customerUserEdgeErrorMessage(code) {
     customer_admin_transfer_required: "管理者を停止する前に、別のメンバーへ管理者権限を移行してください。",
     customer_admin_required: "管理者が不在になる操作はできません。",
     customer_user_email_missing: "この担当者にはメールアドレスが登録されていません。",
+    customer_user_edit_forbidden: "登録情報の修正は社内の得意先管理権限を持つユーザーだけが実行できます。",
+    name_required: "ご担当者名を入力してください。",
+    invalid_email: "正しいメールアドレスを入力してください。",
+    email_already_registered: "このメールアドレスは別のログインIDで登録済みです。",
     invalid_status: "アカウント状態が正しくありません。"
   };
   return messages[code] || "担当者管理の処理に失敗しました。";
@@ -33471,11 +33475,25 @@ function renderCustomerAccountIssuance(useCustomerDefaults) {
     var input = document.getElementById(id);
     if (input) input.disabled = !enabled;
   });
-  ["btn-customer-account-email", "btn-customer-account-fax"].forEach(function(id) {
+  ["btn-customer-account-email", "btn-customer-account-fax", "btn-customer-account-email-preview"].forEach(function(id) {
     var button = document.getElementById(id);
     if (button) button.disabled = !enabled;
   });
   syncCustomerAccountFields(!!useCustomerDefaults);
+}
+
+function updateCustomerAccountFaxCache(fax) {
+  var nextFax = String(fax || "").trim();
+  var customerId = currentCustomerAccessCustomer && currentCustomerAccessCustomer.id;
+  if (!customerId) return;
+  currentCustomerAccessCustomer.fax = nextFax;
+  [customerAccessRows, customerAccessFilteredRows].forEach(function(rows) {
+    (rows || []).forEach(function(row) {
+      if (String(row.id) === String(customerId)) row.fax = nextFax;
+    });
+  });
+  var faxInput = document.getElementById("customer-account-fax");
+  if (faxInput) faxInput.value = nextFax;
 }
 
 async function loadCustomerAccountUsers(customerId) {
@@ -33492,6 +33510,7 @@ async function loadCustomerAccountUsers(customerId) {
     var result = await invokeCustomerUserManagement({ action: "list", sales_customer_id: customerId });
     if (requestSeq !== customerAccountRequestSeq) return;
     if (result.error || !result.data || !result.data.ok) throw new Error(await customerUserEdgeErrorCode(result));
+    if (Object.prototype.hasOwnProperty.call(result.data, "fax")) updateCustomerAccountFaxCache(result.data.fax);
     customerAccountUsers = result.data.users || [];
     renderCustomerAccountUsers();
   } catch (e) {
@@ -33531,6 +33550,7 @@ function renderCustomerAccountUsers(errorMessage) {
       "<div class='customer-account-user-identity'><strong>" + esc(user.name || "-") + "</strong><span>ログインID: " + esc(user.email || "-") + "</span></div>" +
       "<div class='customer-account-user-status'>" + roleBadge + statusBadge + "</div>" +
       "<div class='customer-account-user-actions'>" +
+        "<button class='btn-sm-edit customer-account-edit-button' type='button' data-uid='" + esc(user.id) + "'>修正</button>" +
         "<button class='btn-user-history customer-account-history-button' type='button' data-uid='" + esc(user.id) + "'>" + esc(t("btn_auth_history")) + "</button>" +
         transferButton +
         actionButton +
@@ -33546,9 +33566,102 @@ function customerAccountUserById(userId) {
   return customerAccountUsers.find(function(user) { return String(user.id) === String(userId); }) || null;
 }
 
+function closeCustomerAccountEdit() {
+  var overlay = document.getElementById("customer-account-edit-overlay");
+  var message = document.getElementById("customer-account-edit-message");
+  if (overlay) overlay.classList.remove("show");
+  if (message) { message.className = "save-msg"; message.textContent = ""; }
+}
+
+function openCustomerAccountEdit(userId) {
+  var user = customerAccountUserById(userId);
+  var customer = currentCustomerAccessCustomer;
+  if (!canManageCustomerAccounts() || !user || !customer) {
+    showPermissionDenied("edit_customer_user_details", "profiles", userId);
+    return;
+  }
+  var userIdInput = document.getElementById("customer-account-edit-user-id");
+  var nameInput = document.getElementById("customer-account-edit-name");
+  var emailInput = document.getElementById("customer-account-edit-email");
+  var faxInput = document.getElementById("customer-account-edit-fax");
+  var summary = document.getElementById("customer-account-edit-summary");
+  var overlay = document.getElementById("customer-account-edit-overlay");
+  if (userIdInput) userIdInput.value = user.id;
+  if (nameInput) nameInput.value = user.name || "";
+  if (emailInput) emailInput.value = user.email || "";
+  if (faxInput) faxInput.value = customer.fax || "";
+  if (summary) {
+    summary.textContent = [customer.source_customer_code, customer.customer_name].filter(Boolean).join(" / ");
+  }
+  if (overlay) overlay.classList.add("show");
+  if (nameInput) nameInput.focus();
+}
+
+async function saveCustomerAccountEdit() {
+  var userIdInput = document.getElementById("customer-account-edit-user-id");
+  var nameInput = document.getElementById("customer-account-edit-name");
+  var emailInput = document.getElementById("customer-account-edit-email");
+  var faxInput = document.getElementById("customer-account-edit-fax");
+  var message = document.getElementById("customer-account-edit-message");
+  var button = document.getElementById("btn-customer-account-edit-save");
+  var userId = userIdInput ? userIdInput.value : "";
+  var user = customerAccountUserById(userId);
+  var customerId = currentCustomerAccessCustomer && currentCustomerAccessCustomer.id;
+  var name = nameInput ? nameInput.value.trim() : "";
+  var email = emailInput ? emailInput.value.trim().toLowerCase() : "";
+  var fax = faxInput ? faxInput.value.trim() : "";
+  if (!canManageCustomerAccounts() || !user || !customerId) {
+    showPermissionDenied("edit_customer_user_details", "profiles", userId);
+    return;
+  }
+  if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (message) {
+      message.className = "save-msg save-err";
+      message.textContent = !name ? customerUserEdgeErrorMessage("name_required") : customerUserEdgeErrorMessage("invalid_email");
+    }
+    return;
+  }
+  var emailChanged = email !== String(user.email || "").trim().toLowerCase();
+  var faxChanged = fax !== String(currentCustomerAccessCustomer.fax || "").trim();
+  var nameChanged = name !== String(user.name || "").trim();
+  if (!emailChanged && !faxChanged && !nameChanged) {
+    if (message) { message.className = "save-msg"; message.textContent = "変更はありません。"; }
+    return;
+  }
+  var confirmText = emailChanged
+    ? "ログインIDを " + email + " に変更します。以後は新しいメールアドレスでログインします。よろしいですか？"
+    : "担当者情報の変更を保存しますか？";
+  if (!confirm(confirmText)) return;
+
+  if (button) button.disabled = true;
+  if (message) { message.className = "save-msg"; message.textContent = t("loading"); }
+  var result = await invokeCustomerUserManagement({
+    action: "update_details",
+    sales_customer_id: customerId,
+    target_user_id: user.id,
+    name: name,
+    email: email,
+    fax: fax
+  });
+  if (button) button.disabled = false;
+  if (result.error || !result.data || !result.data.ok) {
+    if (message) {
+      message.className = "save-msg save-err";
+      message.textContent = customerUserEdgeErrorMessage(await customerUserEdgeErrorCode(result));
+    }
+    return;
+  }
+  updateCustomerAccountFaxCache(result.data.fax);
+  await loadCustomerAccountUsers(customerId);
+  closeCustomerAccountEdit();
+}
+
 function bindCustomerAccountUserEvents() {
   var host = document.getElementById("customer-account-list");
   if (!host) return;
+  host.querySelectorAll(".customer-account-edit-button").forEach(function(button) {
+    button.addEventListener("click", function() { openCustomerAccountEdit(button.dataset.uid); });
+  });
   host.querySelectorAll(".customer-account-history-button").forEach(function(button) {
     button.addEventListener("click", function() { openUserAuthHistory(customerAccountUserById(button.dataset.uid)); });
   });
@@ -33691,6 +33804,34 @@ function openCustomerFaxInvitePrintWindow(win, invite, faxNumber) {
   win.document.close();
   var printButton = win.document.getElementById("dcats-print-customer-invite");
   if (printButton) printButton.addEventListener("click", function() { win.print(); });
+}
+
+function closeCustomerAccountEmailPreview() {
+  var overlay = document.getElementById("customer-account-email-preview-overlay");
+  if (overlay) overlay.classList.remove("show");
+}
+
+function openCustomerAccountEmailPreview() {
+  if (!canManageCustomerAccounts()) {
+    showPermissionDenied("preview_customer_account_invitation", "profiles");
+    return;
+  }
+  var customer = selectedCustomerAccountCustomer();
+  var nameInput = document.getElementById("customer-account-name");
+  var emailInput = document.getElementById("customer-account-email");
+  var to = document.getElementById("customer-account-email-preview-to");
+  var customerLabel = document.getElementById("customer-account-email-preview-customer");
+  var name = document.getElementById("customer-account-email-preview-name");
+  var overlay = document.getElementById("customer-account-email-preview-overlay");
+  var closeButton = document.getElementById("btn-customer-account-email-preview-close");
+  if (!customer || !overlay) return;
+  if (to) to.textContent = emailInput && emailInput.value.trim() ? emailInput.value.trim().toLowerCase() : "（メールアドレス未入力）";
+  if (customerLabel) {
+    customerLabel.textContent = [customer.source_customer_code, customer.customer_name].filter(Boolean).join(" / ") || "-";
+  }
+  if (name) name.textContent = nameInput && nameInput.value.trim() ? nameInput.value.trim() : "（担当者名未入力）";
+  overlay.classList.add("show");
+  if (closeButton) closeButton.focus();
 }
 
 async function issueCustomerAccount(channel) {
@@ -34756,6 +34897,16 @@ document.getElementById("btn-customer-account-email").addEventListener("click", 
 });
 document.getElementById("btn-customer-account-fax").addEventListener("click", function() {
   issueCustomerAccount("fax");
+});
+document.getElementById("btn-customer-account-email-preview").addEventListener("click", openCustomerAccountEmailPreview);
+document.getElementById("btn-customer-account-email-preview-close").addEventListener("click", closeCustomerAccountEmailPreview);
+document.getElementById("customer-account-email-preview-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeCustomerAccountEmailPreview();
+});
+document.getElementById("btn-customer-account-edit-cancel").addEventListener("click", closeCustomerAccountEdit);
+document.getElementById("btn-customer-account-edit-save").addEventListener("click", saveCustomerAccountEdit);
+document.getElementById("customer-account-edit-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeCustomerAccountEdit();
 });
 document.getElementById("new-password").addEventListener("input", function() {
   checkPasswordStrength(this.value, "changepw-strength-fill", "changepw-strength-label");

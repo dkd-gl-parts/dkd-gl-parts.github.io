@@ -3935,9 +3935,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-account-issuance-fields select { width: 100%; min-height: 34px; box-sizing: border-box; }
 .customer-account-issuance-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-height: 54px; padding: 10px 14px; border-top: 1px solid #edf1ef; }
 .customer-account-issuance-actions .save-msg { margin-right: auto; line-height: 1.4; }
+.customer-account-preview-button { min-height: 36px; border: 1px solid #b9d3ff; border-radius: 6px; padding: 7px 12px; background: #eef4ff; color: #175cd3; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.customer-account-preview-button:hover { background: #dbeafe; }
 .customer-account-fax-button { min-height: 36px; border: 1px solid #98a2b3; border-radius: 6px; padding: 7px 13px; background: #fff; color: #344054; font-size: 12px; font-weight: 800; cursor: pointer; }
 .customer-account-fax-button:hover { background: #f2f4f7; }
 .customer-account-fax-button:disabled,
+.customer-account-preview-button:disabled,
 .customer-account-issuance-actions .btn-primary:disabled { opacity: .55; cursor: not-allowed; }
 .customer-access-panel .customer-account-issuance { margin: 0; border: 0; border-bottom: 1px solid #dfe5ec; border-radius: 0; }
 .customer-access-panel .customer-account-issuance-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -3955,6 +3958,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-account-user-actions { display: flex; gap: 6px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
 .customer-account-user-actions button { min-height: 30px; }
 .customer-account-user-message { grid-column: 1 / -1; min-height: 0; }
+.customer-account-edit-modal { width: min(640px, calc(100vw - 24px)); max-width: 640px; }
+.customer-account-edit-summary { margin: -7px 0 14px; color: #667085; font-size: 12px; line-height: 1.45; }
+.customer-account-edit-grid { display: grid; gap: 13px; padding: 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f8fafc; }
+.customer-account-edit-footer { align-items: center; }
+.customer-account-edit-footer .save-msg { margin-right: auto; }
+.customer-account-email-preview-modal { width: min(700px, calc(100vw - 24px)); max-width: 700px; }
+.customer-account-email-preview-note { margin: -5px 0 14px; padding: 10px 12px; border: 1px solid #f2d38b; border-radius: 8px; background: #fff9e8; color: #6b5216; font-size: 12px; line-height: 1.55; }
+.customer-account-email-preview-meta { display: grid; grid-template-columns: 110px minmax(0, 1fr); margin: 0; border: 1px solid #dfe5ec; border-radius: 8px; overflow: hidden; font-size: 12px; }
+.customer-account-email-preview-meta dt,
+.customer-account-email-preview-meta dd { margin: 0; padding: 9px 11px; border-bottom: 1px solid #edf1ef; }
+.customer-account-email-preview-meta dt { color: #475467; background: #f8fafc; font-weight: 800; }
+.customer-account-email-preview-meta dd { color: #1f2937; overflow-wrap: anywhere; }
+.customer-account-email-preview-meta dt:nth-last-of-type(1),
+.customer-account-email-preview-meta dd:last-of-type { border-bottom: 0; }
+.customer-account-email-preview-body { margin-top: 12px; padding: 13px 14px; border: 1px solid #dbe7ff; border-radius: 8px; background: #f7faff; color: #344054; font-size: 12px; line-height: 1.6; }
+.customer-account-email-preview-body strong { color: #1f2937; }
+.customer-account-email-preview-body ul { margin: 8px 0 8px 20px; padding: 0; }
+.customer-account-email-preview-body p { margin: 8px 0 0; color: #667085; }
+.customer-account-email-preview-admin { margin-top: 11px; text-align: right; font-size: 12px; }
+.customer-account-email-preview-admin a { color: #175cd3; font-weight: 800; text-decoration: none; }
+.customer-account-email-preview-admin a:hover { text-decoration: underline; }
 .user-permission-overview { margin: 12px 0 16px; }
 .user-permission-overview-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 .user-permission-overview-head h3 { margin: 0 0 2px; color: #1f2937; font-size: 14px; font-weight: 800; }
