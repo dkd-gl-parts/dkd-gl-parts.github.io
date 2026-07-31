@@ -22,6 +22,7 @@ on:
       - "scripts/verify-manufacturing-cost-target-removal.js"
       - "scripts/verify-sales-pricing-manufacturing-cost.js"
       - "scripts/verify-core-return-policy.js"
+      - "scripts/verify-sales-detail-workspace.js"
       - ".github/workflows/search-performance-guard.yml"
   pull_request:
     paths:
@@ -44,6 +45,7 @@ on:
       - "scripts/verify-manufacturing-cost-target-removal.js"
       - "scripts/verify-sales-pricing-manufacturing-cost.js"
       - "scripts/verify-core-return-policy.js"
+      - "scripts/verify-sales-detail-workspace.js"
       - ".github/workflows/search-performance-guard.yml"
   workflow_dispatch:
 
@@ -89,3 +91,5 @@ jobs:
         run: node scripts/verify-sales-pricing-manufacturing-cost.js
       - name: Verify core return policy
         run: node scripts/verify-core-return-policy.js
+      - name: Verify sales detail workspace
+        run: node scripts/verify-sales-detail-workspace.js

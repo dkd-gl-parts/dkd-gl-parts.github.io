@@ -1,5 +1,5 @@
 var DCATS_CSP_STYLE_MAP = {
-  display: { "none": "none", "block": "block", "flex": "flex" },
+  display: { "none": "none", "block": "block", "flex": "flex", "grid": "grid" },
   color: {
     "#888": "888", "#b07800": "b07800", "#c0392b": "c0392b",
     "#e24b4a": "e24b4a", "#d33": "d33", "#64748b": "64748b",
@@ -813,6 +813,17 @@ var TRANSLATIONS = {
     detail_customer_no_customers: "選択できる得意先がありません",
     detail_customer_sales_price_note: "選択した得意先の売値区分で販売価格を計算しています。",
     detail_customer_no_price: "販売価格は未設定です",
+    sales_detail_title: "商品詳細",
+    sales_conditions_title: "販売条件",
+    sales_customer_label: "得意先",
+    sales_basic_tab: "基本情報",
+    sales_vehicle_tab: "適合車両",
+    sales_compatible_tab: "互換品",
+    sales_components_tab: "構成部品",
+    sales_images_tab: "画像",
+    sales_components_open_hint: "登録済みの構成部品を専用画面で確認・編集します。",
+    sales_reference_market_price: "参考市場価格",
+    sales_tax_excluded: "税別",
     customer_access_search_ph: "得意先コード・得意先名で検索",
     customer_access_customers: "得意先",
     customer_access_settings: "表示設定",
@@ -2148,6 +2159,17 @@ var TRANSLATIONS = {
     detail_customer_no_customers: "No selectable customers",
     detail_customer_sales_price_note: "Sales price is calculated using the selected customer's sales rank.",
     detail_customer_no_price: "Sales price is not set",
+    sales_detail_title: "Product Details",
+    sales_conditions_title: "Sales Terms",
+    sales_customer_label: "Customer",
+    sales_basic_tab: "Details",
+    sales_vehicle_tab: "Vehicles",
+    sales_compatible_tab: "Compatible",
+    sales_components_tab: "Components",
+    sales_images_tab: "Images",
+    sales_components_open_hint: "Review and edit registered components in the component workspace.",
+    sales_reference_market_price: "Reference Market Price",
+    sales_tax_excluded: "Tax excluded",
     customer_access_search_ph: "Search by customer code or name",
     customer_access_customers: "Customers",
     customer_access_settings: "Display Settings",
@@ -3476,6 +3498,17 @@ var TRANSLATIONS = {
     detail_customer_no_customers: "没有可选择的客户",
     detail_customer_sales_price_note: "销售价格按所选客户的销售等级计算。",
     detail_customer_no_price: "尚未设置销售价格",
+    sales_detail_title: "商品详情",
+    sales_conditions_title: "销售条件",
+    sales_customer_label: "客户",
+    sales_basic_tab: "基本信息",
+    sales_vehicle_tab: "适配车辆",
+    sales_compatible_tab: "兼容品",
+    sales_components_tab: "构成零件",
+    sales_images_tab: "图片",
+    sales_components_open_hint: "在构成零件专用画面中确认和编辑已登记的零件。",
+    sales_reference_market_price: "参考市场价格",
+    sales_tax_excluded: "未税",
     customer_access_search_ph: "按客户代码或名称搜索",
     customer_access_customers: "客户",
     customer_access_settings: "显示设置",
@@ -4113,7 +4146,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.608";
+var APP_VERSION       = "v1.1.609";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -8724,10 +8757,15 @@ async function loadCatalogVehicleSummary(root, product) {
   var valueEl = root.querySelector(".catalog-vehicle-maker-value");
   var buttons = Array.prototype.slice.call(root.querySelectorAll(".catalog-vehicle-button"));
   var rows = await fetchCatalogVehicleApplications(product);
-  if (product === currentProduct) currentVehicleApplicationRows = rows;
+  var detailCount = rows.filter(hasVehicleApplicationDetail).length;
+  if (product === currentProduct) {
+    currentVehicleApplicationRows = rows;
+    updateSalesDetailTabCount("vehicles", detailCount || rows.length);
+    var tabContent = document.getElementById("detail-vehicle-tab-content");
+    if (tabContent) tabContent.innerHTML = renderVehicleApplicationsTable(rows);
+  }
   if (valueEl) valueEl.textContent = representativeVehicleMaker(rows);
   if (buttons.length) {
-    var detailCount = rows.filter(hasVehicleApplicationDetail).length;
     buttons.forEach(function(button) {
       button.textContent = detailCount ? (t("vehicle_info_button") + " (" + detailCount + ")") : (rows.length ? t("vehicle_info_button") + " (" + t("vehicle_info_maker_only") + ")" : t("vehicle_info_button"));
       button.disabled = false;
@@ -19668,7 +19706,7 @@ function renderCoreReturnPolicyHtml(kind, rows, options) {
   var stateText = policy.required ? t("core_return_required") : t("core_return_not_required");
   var chargeHtml = options.showCharge === false
     ? ""
-    : "<div class='core-return-policy-item'><span>" + esc(t("core_charge_short")) + "</span><strong>" + esc(coreReturnChargeText(policy)) + "</strong></div>";
+    : "<div class='core-return-policy-item'><span>" + esc(t("core_charge_short")) + "</span><strong class='core-charge-value" + (policy.required && !policy.hasProductCharge ? " unset" : "") + "'>" + esc(coreReturnChargeText(policy)) + "</strong></div>";
   return "<div class='core-return-policy-panel" + (options.compact ? " compact" : "") + (options.vertical ? " vertical" : "") + "'>" +
     (options.showTitle === false ? "" : "<div class='detail-block-title'>" + esc(t("core_return_policy")) + "</div>") +
     "<div class='core-return-policy-grid'>" +
@@ -20073,7 +20111,7 @@ function renderProductKindPanelHtml(summary) {
   var selectedMeta = summary.kinds && summary.kinds[selected] ? summary.kinds[selected] : null;
   var stockText = productKindStockKindAllowed(selected) && selectedMeta && selectedMeta.stockKnown
     ? String(selectedMeta.stockQty)
-    : (productKindStockKindAllowed(selected) ? "0" : "-");
+    : "-";
   var html = "<div class='product-kind-control detail-sales-kind-control'>";
   html += "<div class='detail-sales-term-row detail-sales-kind-row'>";
   html += "<div class='detail-sales-term-label'>" + esc(t("product_kind_section")) + "</div>";
@@ -20110,6 +20148,7 @@ function bindProductKindPanelActions() {
       currentSelectedProductKind = normalizeProductKind(select.value || "rebuilt");
       renderProductKindWrapForCurrent();
       renderCoreReturnPolicyWrapForCurrent();
+      updateSalesProductStatusBadges();
       currentImages = [];
       renderImagesLoading();
       loadImages(null, detailSecondaryRequestSeq);
@@ -21640,8 +21679,6 @@ function render() {
     var hasKikan = hasProductKikanCompatible(p);
     var kindSummary = productKindSummaryForProduct(p);
     var hasCatalogSpec = productHasCatalogData(p);
-    var mfr   = [p.manufacturer, p.vehicle_manufacturer].filter(Boolean).join(" / ");
-    var showMfrLine = !!mfr && (!p.manufacturer_part_number || mfr !== p.manufacturer);
     var sel   = (currentProduct && currentProduct.id===p.id) ? " selected" : "";
     html += "<div class='card"+sel+"' data-id='"+p.id+"' data-result-index='"+idx+"'><div class='card-top'>";
     html += "<div class='card-media'>";
@@ -21649,10 +21686,10 @@ function render() {
     if (hasCatalogSpec) html += "<div class='card-media-catalog'><span class='badge-catalog'>" + esc(t("product_kind_catalog_spec")) + "</span></div>";
     html += "</div>";
     html += "<div class='card-left'>";
+    html += "<div class='card-pn card-pn-primary'>"+esc(p.genuine_part_number||p.manufacturer_part_number||"-")+"</div>";
     html += "<div class='card-name'>"+esc(productCategoryLabel(p))+"</div>";
-    html += "<div class='card-pn'>"+esc(p.genuine_part_number||"-")+"</div>";
     if (p.genuine_part_number_2) html += "<div class='card-sub'>純正2: "+esc(p.genuine_part_number_2)+"</div>";
-    html += renderProductKindPills(kindSummary, { compact: true });
+    html += renderProductKindPills(kindSummary, { compact: true, detail: true });
     html += renderResultBadgeSlots({
       className: "badges card-badges-inline",
       hasCatalogSpec: false,
@@ -21661,11 +21698,10 @@ function render() {
       imageCount: cnt,
       hideWhenEmpty: true
     });
-    if (showMfrLine) html += "<div class='card-mfr'>"+esc(mfr)+"</div>";
     if (p.manufacturer || p.manufacturer_part_number) {
-      html += "<div class='card-sub'>";
+      html += "<div class='card-mfr'>";
       if (p.manufacturer) html += esc(p.manufacturer);
-      if (p.manufacturer && p.manufacturer_part_number) html += "　";
+      if (p.manufacturer && p.manufacturer_part_number) html += " / ";
       if (p.manufacturer_part_number) html += "<span data-dcats-inline-style='s-7b8c3df56487'>"+esc(p.manufacturer_part_number)+"</span>";
       html += "</div>";
     }
@@ -21737,7 +21773,7 @@ function openPanel(id, options) {
   if (!currentProduct) return;
   if (!options.autoSelect) logProductDetailOpen("search", currentProduct);
   setCspStyle(document.getElementById("panel-welcome"), "display", "none");
-  setCspStyle(document.getElementById("panel-inner"), "display", "flex");
+  setCspStyle(document.getElementById("panel-inner"), "display", "grid");
   setCspStyle(document.getElementById("panel-footer"), "display", canManageUsedCoreImages() ? "block" : "none");
   document.getElementById("panel-topbar-title").textContent = productCategoryLabel(currentProduct) || "-";
   configureSalesProductAddButton();
@@ -21843,12 +21879,148 @@ function applyVisibleSearchScopeFilter() {
   syncSearchFilterControls();
 }
 
+var currentSalesDetailTab = "basic";
+
+function updateSalesDetailTabCount(tab, count) {
+  var idMap = {
+    vehicles: "sales-vehicle-tab-count",
+    compatible: "sales-compatible-tab-count",
+    components: "sales-components-tab-count",
+    images: "img-count"
+  };
+  var el = document.getElementById(idMap[tab] || "");
+  if (!el) return;
+  if (count === null || count === undefined || count === "") {
+    el.textContent = "";
+    return;
+  }
+  var value = parseInt(count, 10);
+  el.textContent = !isNaN(value) && value >= 0 ? String(value) : "";
+}
+
+function activateSalesDetailTab(tab) {
+  var requested = String(tab || "basic");
+  var button = document.querySelector("[data-sales-detail-tab='" + requested + "']");
+  if (!button || button.hidden) requested = "basic";
+  currentSalesDetailTab = requested;
+  document.querySelectorAll("[data-sales-detail-tab]").forEach(function(item) {
+    var active = item.dataset.salesDetailTab === requested;
+    item.classList.toggle("active", active);
+    item.setAttribute("aria-selected", active ? "true" : "false");
+    item.tabIndex = active ? 0 : -1;
+  });
+  document.querySelectorAll("[data-sales-detail-panel]").forEach(function(panel) {
+    var active = panel.dataset.salesDetailPanel === requested;
+    panel.hidden = !active;
+    panel.classList.toggle("active", active);
+  });
+  var scroll = document.querySelector("#screen-search .panel-left");
+  if (scroll) scroll.scrollTop = 0;
+}
+
+function bindSalesDetailTabs() {
+  document.querySelectorAll("[data-sales-detail-tab]").forEach(function(button) {
+    button.onclick = function() { activateSalesDetailTab(button.dataset.salesDetailTab); };
+  });
+}
+
+function configureSalesDetailTabAvailability() {
+  var availability = {
+    basic: true,
+    vehicles: customerCanShowVehicleInfo(),
+    compatible: customerCanShowCompatibleParts(),
+    components: canSeeComponentInfo(),
+    images: customerCanShowProductImages()
+  };
+  Object.keys(availability).forEach(function(tab) {
+    var button = document.querySelector("[data-sales-detail-tab='" + tab + "']");
+    if (button) button.hidden = !availability[tab];
+  });
+}
+
+function salesDetailPrimaryPartNumber(product) {
+  product = product || {};
+  return product.genuine_part_number || product.genuine_part_number_2 || product.manufacturer_part_number || "-";
+}
+
+function salesDetailSelectedStock() {
+  var summary = productKindSummaryForProduct(currentProduct);
+  var selected = selectedProductKind();
+  var meta = summary.kinds && summary.kinds[selected] ? summary.kinds[selected] : null;
+  if (!productKindStockKindAllowed(selected)) return { known: false, qty: null };
+  return {
+    known: !!(meta && meta.stockKnown),
+    qty: meta && meta.stockKnown ? Number(meta.stockQty || 0) : null
+  };
+}
+
+function updateSalesProductStatusBadges() {
+  var wrap = document.getElementById("sales-detail-status");
+  if (!wrap || !currentProduct) return;
+  var kind = selectedProductKind();
+  var stock = salesDetailSelectedStock();
+  var policy = coreReturnPolicyForKind(kind, productKindRowsForCurrent());
+  var html = "<span class='sales-status-badge kind " + productKindClass(kind) + "'>" + esc(productKindLabel(kind)) + "</span>";
+  if (productKindStockKindAllowed(kind)) {
+    var stockClass = stock.known ? (stock.qty > 0 ? "available" : "empty") : "unknown";
+    html += "<span class='sales-status-badge stock " + stockClass + "'>" + esc(t("product_kind_stock_qty")) + " " + esc(stock.known ? String(stock.qty) : "-") + "</span>";
+  }
+  html += "<span class='sales-status-badge core " + (policy.required ? "required" : "not-required") + "'>" + esc(policy.required ? t("core_return_required") : t("core_return_not_required")) + "</span>";
+  if (policy.required && !policy.hasProductCharge) {
+    html += "<span class='sales-status-badge warning'>" + esc(t("core_charge_unset")) + "</span>";
+  }
+  wrap.innerHTML = html;
+}
+
+function renderSalesProductIdentity(product) {
+  var wrap = document.getElementById("sales-product-identity");
+  if (!wrap) return;
+  product = product || {};
+  var makerLine = [product.manufacturer, product.manufacturer_part_number].filter(Boolean).join(" / ") || "-";
+  var editHtml = canEdit()
+    ? "<button class='btn-sm-edit sales-product-edit' id='btn-edit-current-product' type='button'>" + esc(t("btn_edit_part")) + "</button>"
+    : "";
+  wrap.innerHTML = "<div class='sales-product-identity-copy'>" +
+    "<h2>" + esc(salesDetailPrimaryPartNumber(product)) + "</h2>" +
+    "<div class='sales-product-category'>" + esc(productCategoryLabel(product) || "-") + "</div>" +
+    "<div class='sales-product-maker'>" + esc(makerLine) + "</div>" +
+    "<div class='sales-product-status' id='sales-detail-status'></div>" +
+  "</div>" + editHtml;
+  updateSalesProductStatusBadges();
+}
+
 function renderPanelStatic() {
   var p = currentProduct;
   var detailSeq = ++detailSecondaryRequestSeq;
   currentSelectedProductKind = "rebuilt";
-  document.getElementById("panel-topbar-title").textContent = productCategoryLabel(p) || "-";
+  document.getElementById("panel-topbar-title").textContent = t("sales_detail_title");
   configureSalesProductAddButton();
+  configureSalesDetailTabAvailability();
+  activateSalesDetailTab("basic");
+  bindSalesDetailTabs();
+  updateSalesDetailTabCount("vehicles", null);
+  updateSalesDetailTabCount("compatible", null);
+  updateSalesDetailTabCount("components", productComponentCount(p));
+  updateSalesDetailTabCount("images", null);
+  renderSalesProductIdentity(p);
+  var vehicleTab = document.getElementById("detail-vehicle-tab-content");
+  if (vehicleTab) vehicleTab.innerHTML = customerCanShowVehicleInfo()
+    ? "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>"
+    : "";
+  var kikanWrap = document.getElementById("kikan-wrap");
+  if (kikanWrap) kikanWrap.innerHTML = customerCanShowCompatibleParts()
+    ? "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>"
+    : "";
+  var productKindWrap = document.getElementById("product-kind-wrap");
+  if (productKindWrap) productKindWrap.innerHTML = renderProductKindPanelHtml(productKindSummaryForProduct(p));
+  renderCoreReturnPolicyWrapForCurrent();
+  updateSalesProductStatusBadges();
+  setCspStyle(document.getElementById("detail-customer-section"), "display", canSeeSalesPrice() ? "block" : "none");
+  var customerWrap = document.getElementById("detail-customer-wrap");
+  if (customerWrap) customerWrap.innerHTML = canSeeSalesPrice() ? "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>" : "";
+  setCspStyle(document.getElementById("sales-conditions-market"), "display", canViewPriceResearchHistory() ? "block" : "none");
+  var ecWrap = document.getElementById("ec-mall-price-summary-wrap");
+  if (ecWrap) ecWrap.innerHTML = canViewPriceResearchHistory() ? "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>" : "";
   var isAcProduct = (p.category_code || p.category || "") === "ac_compressor";
   // parts テーブルのフィールド定義
   function renderAcPartRows(rows) {
@@ -21863,9 +22035,7 @@ function renderPanelStatic() {
     });
     return html;
   }
-  var componentButtonHtml = canSeeComponentInfo()
-    ? "<button class='btn-sm-edit btn-component-action detail-inline-action' id='btn-open-components'><span class='component-icon'>&#x1F9E9;</span> " + t("component_open_parts") + "</button>"
-    : "";
+  var componentButtonHtml = "";
   var genuineHtml = "";
   var makerHtml = "";
   var vehicleOffsetClass = "";
@@ -21897,42 +22067,6 @@ function renderPanelStatic() {
     makerHtml = "<div class='ac-part-grid'>" + renderAcPartRows(makerRows) + "</div>";
     vehicleOffsetClass = " detail-maker-offset detail-maker-offset-standard";
   }
-  var toolHtml = "<div class='detail-toolbar'>";
-  if (canSeeComponentInfo()) {
-  }
-  if (canEdit()) {
-    toolHtml += "<button class='btn-sm-edit detail-toolbar-edit' id='btn-edit-current-product'>&#9998; " + t("btn_edit_part") + "</button>";
-  }
-  toolHtml += "</div>";
-  var ecMallPriceBlockHtml = canViewPriceResearchHistory()
-    ? "<div class='ec-mall-summary-block'><div class='sales-price-summary-head'><div class='detail-block-title'>" + t("ec_research_detail_title") + "</div></div><div id='ec-mall-price-summary-wrap'><div data-dcats-inline-style='s-d097f1ffa2b6'>" + t("loading") + "</div></div></div>"
-    : "";
-  var salesTermsHtml = "<div class='detail-sales-terms-grid'><div class='detail-sales-terms-panel'>" +
-    "<div id='product-kind-wrap'>" + renderProductKindPanelHtml(productKindSummaryForProduct(p)) + "</div>" +
-    "<div id='core-return-policy-wrap'>" + renderCoreReturnPolicyHtml(selectedProductKind(), productKindRowsForCurrent(), { compact: true, vertical: true, showTitle: false }) + "</div>" +
-  "</div></div>";
-  var salesOverviewHtml = "<div class='detail-sales-overview-grid'>" + salesTermsHtml + ecMallPriceBlockHtml + "</div>";
-  var kikanBlockHtml = customerCanShowCompatibleParts()
-    ? "<div class='kikan-section-title'>&#x1F504; " + t("kikan_section") + "</div>" +
-      "<div id='kikan-wrap'><div data-dcats-inline-style='s-d097f1ffa2b6'>" + t("loading") + "</div></div>"
-    : "";
-  var detailCustomerBlockHtml = canSeeSalesPrice()
-    ? "<div class='detail-customer-section'><div class='price-section-title'>&#x1F464; " + t("detail_customer_section") + "</div><div id='detail-customer-wrap'><div data-dcats-inline-style='s-d097f1ffa2b6'>" + t("loading") + "</div></div></div>"
-    : "";
-  var detailLowerBlocks = [];
-  if (kikanBlockHtml) detailLowerBlocks.push("<div class='detail-lower-panel detail-lower-kikan'>" + kikanBlockHtml + "</div>");
-  if (detailCustomerBlockHtml) detailLowerBlocks.push("<div class='detail-lower-panel detail-lower-customer'>" + detailCustomerBlockHtml + "</div>");
-  var detailLowerGridHtml = detailLowerBlocks.length
-    ? "<div class='detail-lower-grid detail-lower-count-" + detailLowerBlocks.length + "'>" + detailLowerBlocks.join("") + "</div>"
-    : "";
-  var mobileActionButtons = [];
-  if (customerCanShowVehicleInfo()) {
-    mobileActionButtons.push("<button class='btn-sm-edit detail-mobile-action catalog-vehicle-button' type='button'>" + esc(t("vehicle_info_button")) + "</button>");
-  }
-  if (canSeeComponentInfo()) {
-    mobileActionButtons.push("<button class='btn-sm-edit btn-component-action detail-mobile-action btn-open-components-mobile' type='button'><span class='component-icon'>&#x1F9E9;</span> " + t("component_open_parts") + "</button>");
-  }
-  var mobileActionsHtml = mobileActionButtons.length ? "<div class='detail-mobile-actions'>" + mobileActionButtons.join("") + "</div>" : "";
   document.getElementById("panel-body").innerHTML =
     "<div class='detail-main-grid'>" +
       "<div class='detail-column'>" + renderCatalogVehicleSummaryHtml("") + genuineHtml + "</div>" +
@@ -21940,10 +22074,6 @@ function renderPanelStatic() {
       "<div class='detail-spec-block detail-spec-after-maker'><div class='detail-block-title'>" + t("spec_section") + "</div><div id='product-spec-wrap' class='detail-vehicle-grid detail-spec-grid'>" + renderSpecPlaceholderRows() + "</div></div>" +
       "</div>" +
     "</div>" +
-    salesOverviewHtml +
-    mobileActionsHtml +
-    toolHtml +
-    detailLowerGridHtml +
     "<div id='price-table-wrap' data-dcats-inline-style='s-6aa34d7432e7'></div>";
   // 画像エリアをリセット（右カラムはpanel-rightに固定表示）
   document.getElementById("img-grid").innerHTML = customerCanShowProductImages()
@@ -21952,14 +22082,13 @@ function renderPanelStatic() {
   document.getElementById("img-count").textContent = "";
   if (customerCanShowProductImages()) renderCachedPanelThumbnail();
   document.getElementById("panel-scroll").scrollTop = 0;
+  var detailScroll = document.querySelector("#screen-search .panel-left");
+  if (detailScroll) detailScroll.scrollTop = 0;
   var editCurrentBtn = document.getElementById("btn-edit-current-product");
   if (editCurrentBtn) editCurrentBtn.addEventListener("click", openCoreProductEditFromSearch);
   bindProductKindPanelActions();
   var componentBtn = document.getElementById("btn-open-components");
   if (componentBtn) componentBtn.addEventListener("click", function(){ enterComponentsScreen("search"); });
-  Array.prototype.slice.call(document.querySelectorAll(".btn-open-components-mobile")).forEach(function(btn) {
-    btn.addEventListener("click", function(){ enterComponentsScreen("search"); });
-  });
   currentVehicleApplicationRows = [];
   var detailLoads = [
     loadCatalogVehicleSummary(document.getElementById("panel-body"), p),
@@ -21994,6 +22123,7 @@ async function loadProductVariantsForCurrent(seq) {
     bindProductKindPanelActions();
   }
   renderCoreReturnPolicyWrapForCurrent();
+  updateSalesProductStatusBadges();
   refreshSalesMobileStockSummary();
   render();
 }
@@ -22041,10 +22171,9 @@ function renderCachedPanelThumbnail() {
   if (!thumb) return false;
   var count = getProductImageCount(currentProduct);
   var grid = document.getElementById("img-grid");
-  var countEl = document.getElementById("img-count");
   if (!grid) return false;
   preloadThumbImage(thumb, { width: 240, height: 240, resize: "contain" });
-  if (countEl) countEl.textContent = count > 0 ? count + " 枚" : "";
+  updateSalesDetailTabCount("images", count);
   grid.innerHTML = "<div class='img-wrap cached-panel-thumb'>" + thumbImgHtml(thumb, {
     width: 240,
     height: 240,
@@ -22058,8 +22187,7 @@ function renderCachedPanelThumbnail() {
 
 function renderImagesLoading() {
   var grid = document.getElementById("img-grid");
-  var countEl = document.getElementById("img-count");
-  if (countEl) countEl.textContent = "";
+  updateSalesDetailTabCount("images", null);
   if (!grid) return;
   grid.innerHTML = customerCanShowProductImages()
     ? "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + t("img_loading") + "</div></div>"
@@ -28307,6 +28435,7 @@ function loadKikanForCurrentProduct(seq) {
   } else {
     var wrap = document.getElementById("kikan-wrap");
     if (wrap) wrap.innerHTML = "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>";
+    updateSalesDetailTabCount("compatible", 0);
   }
   return Promise.resolve();
 }
@@ -29068,7 +29197,7 @@ function renderDetailCustomerInfoHtml(customer, priceInfo, canSelect) {
   priceInfo = priceInfo || {};
   var html = "<div class='detail-customer-panel'>";
   if (canSelect) {
-    html += "<div class='detail-customer-head'><label for='detail-sales-customer-select'>" + esc(t("detail_customer_select")) + "</label>";
+    html += "<div class='detail-customer-head'><label for='detail-sales-customer-select'>" + esc(t("sales_customer_label")) + "</label>";
     html += "<select class='detail-customer-select' id='detail-sales-customer-select'>";
     html += "<option value=''>" + esc(t("detail_customer_select_none")) + "</option>";
     detailSalesCustomerOptions.forEach(function(row) {
@@ -29076,23 +29205,31 @@ function renderDetailCustomerInfoHtml(customer, priceInfo, canSelect) {
       html += "<option value='" + esc(String(row.id)) + "'" + selected + ">" + esc(detailCustomerOptionLabel(row)) + "</option>";
     });
     html += "</select></div>";
+  } else if (customer) {
+    html += "<div class='detail-customer-head static'><span>" + esc(t("sales_customer_label")) + "</span><strong>" + esc(detailCustomerOptionLabel(customer)) + "</strong></div>";
   }
   if (!customer) {
     if (!detailSalesCustomerOptions.length) {
       html += "<div class='detail-customer-note'>" + esc(t("detail_customer_no_customers")) + "</div>";
     }
+    html += "<div class='detail-customer-price-focus empty'><span>" + esc(t("sales_price_section")) + "</span><strong>" + esc(t("detail_customer_no_price")) + "</strong></div>";
     html += "</div>";
     return html;
   }
-  html += "<div class='detail-customer-grid'>";
-  html += detailCustomerCell(t("sales_price_section"), priceInfo.salesPrice == null ? "-" : "JPY " + formatYen(priceInfo.salesPrice), "price");
+  var taxLabel = priceInfo.taxIncluded === true
+    ? t("sales_tax_included")
+    : (priceInfo.taxIncluded === false ? t("sales_tax_excluded") : "");
+  html += "<div class='detail-customer-price-focus" + (priceInfo.salesPrice == null ? " empty" : "") + "'>";
+  html += "<span>" + esc(t("sales_price_section")) + "</span>";
+  html += "<strong>" + (priceInfo.salesPrice == null ? esc(t("detail_customer_no_price")) : "&yen;" + esc(formatYen(priceInfo.salesPrice))) + "</strong>";
+  if (taxLabel) html += "<small>" + esc(taxLabel) + "</small>";
   html += "</div>";
   html += "</div>";
   return html;
 }
 
 async function fetchDetailCustomerPriceInfo(customer, dkdId) {
-  var info = { salesPrice: null, basePrice: null };
+  var info = { salesPrice: null, basePrice: null, taxIncluded: null };
   var id = parseInt(dkdId, 10);
   if (!customer || isNaN(id)) return info;
   if ((isCustomerViewer() || isCustomerPortalSearchMode()) &&
@@ -29105,16 +29242,18 @@ async function fetchDetailCustomerPriceInfo(customer, dkdId) {
     if (rpc.error) throw rpc.error;
     var row = (rpc.data || [])[0] || null;
     if (row && row.sales_price_jpy != null) info.salesPrice = parseInt(row.sales_price_jpy, 10);
+    if (row && typeof row.tax_included === "boolean") info.taxIncluded = row.tax_included;
     return info;
   }
   var baseR = await sb.from("product_base_prices")
-    .select("base_price_jpy")
+    .select("base_price_jpy,tax_included")
     .eq("dkd_shohin_id", id)
     .eq("product_kind", selectedProductKind())
     .eq("is_current", true)
     .maybeSingle();
   if (baseR.error) throw baseR.error;
   var base = baseR.data && baseR.data.base_price_jpy != null ? parseInt(baseR.data.base_price_jpy, 10) : null;
+  if (baseR.data && typeof baseR.data.tax_included === "boolean") info.taxIncluded = baseR.data.tax_included;
   info.basePrice = isNaN(base) ? null : base;
   if (info.basePrice == null) return info;
   var rankCode = customer.price_rank_code || "";
@@ -31220,6 +31359,7 @@ async function loadKikanVariantSummaryCache(partsList) {
 function renderKikanPartsList(parts_list, dkdShohinIdNum, product, wrap) {
   if (!wrap) return;
   parts_list = parts_list || [];
+  updateSalesDetailTabCount("compatible", parts_list.length);
   if (parts_list.length === 0) {
     wrap.innerHTML = "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>";
     return;
@@ -31262,6 +31402,7 @@ async function loadKikan(dkdShohinId, seq, productSnapshot) {
   var dkdShohinIdNum = parseInt(dkdShohinId, 10);
   if (isNaN(dkdShohinIdNum)) {
     wrap.innerHTML = "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>";
+    updateSalesDetailTabCount("compatible", 0);
     return;
   }
   var product = productSnapshot || currentProduct;
@@ -31281,6 +31422,7 @@ async function loadKikan(dkdShohinId, seq, productSnapshot) {
   if (r.error) {
     console.warn("get_kikan_compatible_parts failed", r.error);
     if (!hasCachedKikan) wrap.innerHTML = "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>";
+    if (!hasCachedKikan) updateSalesDetailTabCount("compatible", 0);
     return;
   }
 
@@ -31301,6 +31443,7 @@ async function loadKikan(dkdShohinId, seq, productSnapshot) {
   kikanPartsCache[cacheKey] = parts_list;
   if (parts_list.length === 0) {
     wrap.innerHTML = "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>";
+    updateSalesDetailTabCount("compatible", 0);
     return;
   }
 
@@ -31688,9 +31831,8 @@ async function loadImages(slPartIds, seq) {
 
 function renderImages() {
   var grid    = document.getElementById("img-grid");
-  var countEl = document.getElementById("img-count");
   if (!grid) return;
-  if (countEl) countEl.textContent = currentImages.length > 0 ? currentImages.length + " 枚" : "";
+  updateSalesDetailTabCount("images", currentImages.length);
   if (currentImages.length === 0) {
     grid.innerHTML = "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + t("img_none") + "</div></div>";
     return;

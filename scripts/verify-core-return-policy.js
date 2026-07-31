@@ -116,17 +116,18 @@ if (!productionSource.includes("showCharge: false")) {
 }
 
 const salesDetailSource = sourceBetween("function renderPanelStatic", "async function loadProductVariantsForCurrent");
-if (!salesDetailSource.includes("compact: true, vertical: true, showTitle: false")) {
+const salesCoreWrapSource = sourceBetween("function renderCoreReturnPolicyWrapForCurrent", "function bindProductKindPanelActions");
+if (!salesCoreWrapSource.includes("compact: true, vertical: true, showTitle: false")) {
   throw new Error("sales core return terms must use the compact vertical layout without a repeated heading");
 }
-if (!salesDetailSource.includes("detail-sales-terms-grid") || !salesDetailSource.includes("detail-sales-terms-panel")) {
+if (!html.includes("sales-conditions-terms") || !html.includes('id="product-kind-wrap"') || !html.includes('id="core-return-policy-wrap"')) {
   throw new Error("sales product kind, stock, core return and core charge must share one compact panel");
 }
-if (!salesDetailSource.includes("salesTermsHtml + ecMallPriceBlockHtml") || !salesDetailSource.includes("salesOverviewHtml +")) {
-  throw new Error("the half-width EC mall summary must sit beside the sales terms panel");
+if (!html.includes("sales-conditions-market") || !css.includes(".sales-conditions-panel")) {
+  throw new Error("the EC market summary must remain in the fixed sales conditions panel");
 }
-if (salesDetailSource.includes("kindPriceRowHtml")) {
-  throw new Error("the EC mall summary must not consume a separate full-width row");
+if (!salesDetailSource.includes("renderCoreReturnPolicyWrapForCurrent()") || !salesDetailSource.includes("updateSalesProductStatusBadges()")) {
+  throw new Error("sales detail must render and summarize the selected product-kind core policy");
 }
 
 const productKindPanelSource = sourceBetween("function renderProductKindPanelHtml", "function renderProductKindWrapForCurrent");
