@@ -4206,7 +4206,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.627";
+var APP_VERSION       = "v1.1.628";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6260,7 +6260,9 @@ function renderCustomerExperienceHeaders() {
   var customer = context.customer || null;
   var customerModeReady = !!(context.sales_customer_id && customer);
   var fallbackName = userProfile.name || (userProfile.email || "").split("@")[0];
-  var name = customerModeReady ? (customer.customer_name || fallbackName) : fallbackName;
+  var name = isCustomerViewer()
+    ? fallbackName
+    : (customerModeReady ? (customer.customer_name || fallbackName) : fallbackName);
   var label = customerModeReady ? accessRoleLabel("customer_viewer") : currentRoleDisplayLabel();
   var cls = customerModeReady ? "role-viewer" : roleClass(userProfile.role);
   ["customer-portal", "customer-shipping", "customer-catalog", "customer-users"].forEach(function(prefix) {
@@ -6323,9 +6325,6 @@ function renderCustomerPortal() {
 
   customerPortalValue("customer-portal-customer-name", linked ? customer.customer_name : t("customer_portal_link_missing"));
   customerPortalValue("customer-portal-customer-name-value", linked ? customer.customer_name : t("customer_portal_link_missing"));
-  customerPortalValue("customer-portal-customer-code", linked ? customer.source_customer_code : "-");
-  customerPortalValue("customer-portal-price-state", settings.show_sales_price ? t("customer_portal_price_visible") : t("customer_portal_price_hidden"));
-  customerPortalValue("customer-portal-scope-state", (context.visibilityRows || []).length ? t("customer_portal_scope_custom") : t("customer_portal_scope_standard"));
 
   var status = document.getElementById("customer-portal-status");
   if (status) {
@@ -33739,6 +33738,7 @@ async function transferCustomerAccountAdmin(userId, button) {
     return;
   }
   await loadCustomerAccountUsers(customerId);
+  alert(t("customer_users_transfer_done"));
 }
 
 function customerAccountInviteErrorMessage(code) {

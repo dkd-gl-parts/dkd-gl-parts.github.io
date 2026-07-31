@@ -57,4 +57,43 @@ if (!editAction.includes("name: name") ||
   throw new Error("saving account details must send all editable fields and refresh the registered account list");
 }
 
+[
+  'id="customer-portal-customer-code"',
+  'id="customer-portal-price-state"',
+  'id="customer-portal-scope-state"',
+].forEach((removed) => {
+  if (html.includes(removed)) throw new Error(`unnecessary customer portal field is still rendered: ${removed}`);
+});
+
+const customerHeader = app.slice(
+  app.indexOf("function renderCustomerExperienceHeaders"),
+  app.indexOf("function configureCustomerSearchShell"),
+);
+if (!customerHeader.includes("var name = isCustomerViewer()") ||
+    !customerHeader.includes("? fallbackName")) {
+  throw new Error("customer login headers must show the registered profile name");
+}
+
+const customerPortal = app.slice(
+  app.indexOf("function renderCustomerPortal()"),
+  app.indexOf("async function loadCustomerManagedUsers"),
+);
+[
+  'customerPortalValue("customer-portal-customer-code"',
+  'customerPortalValue("customer-portal-price-state"',
+  'customerPortalValue("customer-portal-scope-state"',
+].forEach((removed) => {
+  if (customerPortal.includes(removed)) throw new Error(`removed customer portal field is still updated: ${removed}`);
+});
+
+const transferAction = app.slice(
+  app.indexOf("async function transferCustomerAccountAdmin"),
+  app.indexOf("function customerAccountInviteErrorMessage"),
+);
+if (!transferAction.includes('action: "transfer_admin"') ||
+    !transferAction.includes("await loadCustomerAccountUsers(customerId)") ||
+    !transferAction.includes('alert(t("customer_users_transfer_done"))')) {
+  throw new Error("customer administrator transfer must use the protected server action and refresh the account list");
+}
+
 console.log("customer account profile edit guard passed");
