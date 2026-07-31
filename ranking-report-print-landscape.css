@@ -8,5 +8,9 @@
 
 .supplier-report .supplier-status-head,
 .supplier-report .supplier-status-cell { width: 22mm; }
-.supplier-report .supplier-detail-head,
-.supplier-report .supplier-detail { width: 100mm; }
+.supplier-report .supplier-name-head,
+.supplier-report .supplier-name { width: 30mm; }
+.supplier-report .supplier-part-head,
+.supplier-report .supplier-part { width: 30mm; }
+.supplier-report .supplier-product-detail-head,
+.supplier-report .supplier-product-detail { width: 60mm; }

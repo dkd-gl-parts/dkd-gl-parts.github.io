@@ -731,7 +731,7 @@
 
   function readOptions() {
     var startRank = positiveInteger("manufacturing-ranking-start", 1);
-    var endRank = positiveInteger("manufacturing-ranking-end", 100);
+    var endRank = positiveInteger("manufacturing-ranking-end", 200);
     if (endRank < startRank) {
       var swap = startRank;
       startRank = endRank;
@@ -1091,14 +1091,9 @@
     return normalizeText(item.supplier_pn || item.source_item_id) || "-";
   }
 
-  function buildSupplierItemsHtml(items, printMode) {
-    if (!items.length) return "<span class='ranking-report-none'>-</span>";
-    var itemClass = printMode ? "supplier-item" : "ranking-report-supplier-item";
-    return "<div class='" + (printMode ? "supplier-items" : "ranking-report-supplier-items") + "'>" + items.map(function(item) {
-      var maker = normalizeText(item.manufacturer);
-      return "<div class='" + itemClass + "'><strong>" + escapeHtml(supplierName(item.supplier_id)) + " / " + escapeHtml(supplierItemManagementNumber(item)) + "</strong>" +
-        "<small>" + escapeHtml(supplierItemPartText(item)) + (maker ? " / " + escapeHtml(maker) : "") + "</small></div>";
-    }).join("") + "</div>";
+  function supplierItemDetailText(item) {
+    var maker = normalizeText(item.manufacturer);
+    return supplierItemPartText(item) + (maker ? " / " + maker : "");
   }
 
   function supplierAvailabilitySummary(results, options) {
@@ -1333,19 +1328,35 @@
     var visible = results.slice(0, PREVIEW_LIMIT);
     if (options.reportType === "supplier_availability") {
       var supplierHtml = "<table class='ranking-report-table is-supplier-report'><thead><tr>" +
-        "<th>順位</th><th>商品名</th><th>純正品番</th><th>メーカー品番</th><th class='ranking-report-supplier-status-column'>仕入先商品</th><th class='ranking-report-supplier-column'>仕入先商品情報</th>" +
+        "<th>順位</th><th>商品名</th><th>純正品番</th><th>メーカー品番</th><th class='ranking-report-supplier-status-column'>仕入先商品</th><th class='ranking-report-supplier-name-column'>仕入先名称</th><th class='ranking-report-supplier-part-column'>仕入先品番</th><th class='ranking-report-supplier-detail-column'>品番情報</th>" +
         "</tr></thead><tbody>";
       visible.forEach(function(result) {
         var row = result.row;
         var items = state.supplierDataReady ? supplierItemsForResult(result, options) : [];
+        var rowSpan = Math.max(1, items.length);
         var status = state.supplierDataReady
           ? (items.length ? "<span class='ranking-report-supplier-status is-available'>あり</span>" : "<span class='ranking-report-supplier-status is-unavailable'>なし</span>")
           : "<span class='ranking-report-none'>" + (state.supplierDataError ? "取得失敗" : "照合中") + "</span>";
-        supplierHtml += "<tr><td class='ranking-report-rank-cell'>" + formatNumber(result.rank) + "</td>" +
-          "<td><strong>" + escapeHtml(row.productName || "-") + "</strong><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
-          "<td class='ranking-report-part-cell'>" + escapeHtml(row.genuine || "-") + "</td>" +
-          "<td class='ranking-report-part-cell'>" + escapeHtml(row.maker || "-") + "</td>" +
-          "<td>" + status + "</td><td class='ranking-report-supplier-cell'>" + (state.supplierDataReady ? buildSupplierItemsHtml(items, false) : "<span class='ranking-report-none'>" + (state.supplierDataError ? "取得失敗" : "照合中") + "</span>") + "</td></tr>";
+        var displayItems = items.length ? items : [null];
+        displayItems.forEach(function(item, itemIndex) {
+          supplierHtml += "<tr" + (itemIndex ? " class='ranking-report-supplier-continuation'" : "") + ">";
+          if (itemIndex === 0) {
+            supplierHtml += "<td class='ranking-report-rank-cell' rowspan='" + rowSpan + "'>" + formatNumber(result.rank) + "</td>" +
+              "<td rowspan='" + rowSpan + "'><strong>" + escapeHtml(row.productName || "-") + "</strong><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
+              "<td class='ranking-report-part-cell' rowspan='" + rowSpan + "'>" + escapeHtml(row.genuine || "-") + "</td>" +
+              "<td class='ranking-report-part-cell' rowspan='" + rowSpan + "'>" + escapeHtml(row.maker || "-") + "</td>" +
+              "<td rowspan='" + rowSpan + "'>" + status + "</td>";
+          }
+          if (item) {
+            supplierHtml += "<td class='ranking-report-supplier-name-cell'>" + escapeHtml(supplierName(item.supplier_id)) + "</td>" +
+              "<td class='ranking-report-supplier-part-cell'>" + escapeHtml(supplierItemManagementNumber(item)) + "</td>" +
+              "<td class='ranking-report-supplier-detail-cell'>" + escapeHtml(supplierItemDetailText(item)) + "</td>";
+          } else {
+            var emptyLabel = state.supplierDataReady ? "-" : (state.supplierDataError ? "取得失敗" : "照合中");
+            supplierHtml += "<td class='ranking-report-none'>" + emptyLabel + "</td><td class='ranking-report-none'>" + emptyLabel + "</td><td class='ranking-report-none'>" + emptyLabel + "</td>";
+          }
+          supplierHtml += "</tr>";
+        });
       });
       supplierHtml += "</tbody></table>";
       byId("manufacturing-ranking-table").innerHTML = supplierHtml;
@@ -1419,16 +1430,24 @@
       var row = result.row;
       if (options.reportType === "supplier_availability") {
         var supplierItems = supplierItemsForResult(result, options);
+        var supplierRowSpan = Math.max(1, supplierItems.length);
         var supplierStatus = supplierItems.length
           ? "<span class='supplier-status is-available'>あり</span>"
           : "<span class='supplier-status is-unavailable'>なし</span>";
-        var supplierRow = "<tr><td class='rank'>" + formatNumber(result.rank) + "</td>" +
-          "<td class='product'><b>" + escapeHtml(row.productName || "-") + "</b><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
-          "<td class='part genuine-part'>" + escapeHtml(row.genuine || "-") + "</td>" +
-          "<td class='part maker-part'>" + escapeHtml(row.maker || "-") + "</td>" +
-          "<td class='supplier-status-cell'>" + supplierStatus + "</td>" +
-          "<td class='supplier-detail'>" + buildSupplierItemsHtml(supplierItems, true) + "</td></tr>";
-        return "<tbody class='print-item'>" + supplierRow + "</tbody>";
+        var supplierRows = (supplierItems.length ? supplierItems : [null]).map(function(item, itemIndex) {
+          var html = "<tr>";
+          if (itemIndex === 0) {
+            html += "<td class='rank' rowspan='" + supplierRowSpan + "'>" + formatNumber(result.rank) + "</td>" +
+              "<td class='product' rowspan='" + supplierRowSpan + "'><b>" + escapeHtml(row.productName || "-") + "</b><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
+              "<td class='part genuine-part' rowspan='" + supplierRowSpan + "'>" + escapeHtml(row.genuine || "-") + "</td>" +
+              "<td class='part maker-part' rowspan='" + supplierRowSpan + "'>" + escapeHtml(row.maker || "-") + "</td>" +
+              "<td class='supplier-status-cell' rowspan='" + supplierRowSpan + "'>" + supplierStatus + "</td>";
+          }
+          return html + (item
+            ? "<td class='supplier-name'>" + escapeHtml(supplierName(item.supplier_id)) + "</td><td class='supplier-part'>" + escapeHtml(supplierItemManagementNumber(item)) + "</td><td class='supplier-product-detail'>" + escapeHtml(supplierItemDetailText(item)) + "</td>"
+            : "<td class='supplier-name'>-</td><td class='supplier-part'>-</td><td class='supplier-product-detail'>-</td>") + "</tr>";
+        }).join("");
+        return "<tbody class='print-item'>" + supplierRows + "</tbody>";
       }
       var missing = missingMasterPartNumbers(result, options.compatibilityMode);
       var html = "<tr><td class='rank'>" + formatNumber(result.rank) + "</td>" +
@@ -1456,7 +1475,7 @@
     var supplierSummary = supplierAvailabilitySummary(results, options);
     var header;
     if (supplierReport) {
-      header = "<tr><th class='rank-head'>順位</th><th class='product-head'>商品名</th><th class='genuine-head'>純正品番</th><th class='maker-head'>メーカー品番</th><th class='supplier-status-head'>仕入先商品</th><th class='supplier-detail-head'>仕入先商品情報</th></tr>";
+      header = "<tr><th class='rank-head'>順位</th><th class='product-head'>商品名</th><th class='genuine-head'>純正品番</th><th class='maker-head'>メーカー品番</th><th class='supplier-status-head'>仕入先商品</th><th class='supplier-name-head'>仕入先名称</th><th class='supplier-part-head'>仕入先品番</th><th class='supplier-product-detail-head'>品番情報</th></tr>";
     } else {
       header = "<tr><th class='rank-head'>順位</th><th class='product-head'>商品名</th><th class='genuine-head'>純正品番</th><th class='maker-head'>メーカー品番</th><th class='shipment-head'>出荷数</th>";
       if (options.metric !== "shipment") header += "<th class='score-head'>順位値</th>";

@@ -33,15 +33,19 @@
   .missing-head,
   .missing { min-width: 0; width: 33mm; }
   .supplier-report .product-head,
-  .supplier-report .product { width: 29mm; }
+  .supplier-report .product { width: 27mm; }
   .supplier-report .genuine-head,
   .supplier-report .genuine-part,
   .supplier-report .maker-head,
-  .supplier-report .maker-part { width: 28mm; }
+  .supplier-report .maker-part { width: 25mm; }
   .supplier-report .supplier-status-head,
-  .supplier-report .supplier-status-cell { width: 18mm; }
-  .supplier-report .supplier-detail-head,
-  .supplier-report .supplier-detail { width: 68mm; }
+  .supplier-report .supplier-status-cell { width: 16mm; }
+  .supplier-report .supplier-name-head,
+  .supplier-report .supplier-name { width: 24mm; }
+  .supplier-report .supplier-part-head,
+  .supplier-report .supplier-part { width: 24mm; }
+  .supplier-report .supplier-product-detail-head,
+  .supplier-report .supplier-product-detail { width: 45mm; }
   td small { font-size: 5.7pt; }
   footer { font-size: 5.4pt; }
 }

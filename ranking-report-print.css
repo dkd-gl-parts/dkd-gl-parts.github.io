@@ -249,14 +249,14 @@ td small { display: block; margin-top: .3mm; color: #738094; font-size: 5.9pt; }
   background: #fff0f0;
   color: #a32626;
 }
-.supplier-detail { font-size: 6pt; }
-.supplier-items { display: flex; flex-direction: column; gap: .8mm; }
-.supplier-item {
-  border-left: .6mm solid #2f6fed;
-  padding-left: 1.2mm;
+.supplier-name { color: #17243a; font-weight: 800; }
+.supplier-part {
+  color: #17243a;
+  font-family: Consolas, "Yu Gothic", "Meiryo", monospace;
+  font-weight: 900;
+  white-space: nowrap;
 }
-.supplier-item strong { display: block; color: #17243a; font-size: 6.4pt; }
-.supplier-item small { display: block; margin-top: .25mm; color: #66758b; font-size: 5.6pt; }
+.supplier-product-detail { color: #66758b; font-size: 5.7pt; }
 .ranking-report-none { color: #9ca5b3; }
 
 footer {
