@@ -108,4 +108,33 @@ if (!customerManagedTransfer.includes('action: "transfer_admin"') ||
   throw new Error("customer-side administrator transfer must identify the target and refresh portal permissions");
 }
 
+const customerManagedRemoval = app.slice(
+  app.indexOf("async function removeCustomerManagedMember"),
+  app.indexOf("async function transferCustomerManagedAdmin"),
+);
+if (!customerManagedRemoval.includes('action: "remove_member"') ||
+    !customerManagedRemoval.includes('user.customer_role !== "member"') ||
+    !customerManagedRemoval.includes("await loadCustomerManagedUsers()") ||
+    !app.includes("customer-managed-remove")) {
+  throw new Error("customer administrators must be able to remove members through the protected server action");
+}
+
+[
+  'id="customer-portal-all-btn"',
+  'id="customer-catalog-reset-btn"',
+].forEach((removed) => {
+  if (html.includes(removed)) throw new Error(`unfiltered customer product-list control is still rendered: ${removed}`);
+});
+
+const catalogSearch = app.slice(
+  app.indexOf("async function runCustomerCatalogSearch"),
+  app.indexOf("function customerCatalogFact"),
+);
+if (!catalogSearch.includes("if (!query && !category)") ||
+    catalogSearch.includes("search_text: null") ||
+    catalogSearch.includes('target_desc: query || category || "all"') ||
+    app.includes("options.showAll")) {
+  throw new Error("customer product searches must require a part number or category and must not retain an all-products path");
+}
+
 console.log("customer account profile edit guard passed");

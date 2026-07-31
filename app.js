@@ -158,6 +158,9 @@ var TRANSLATIONS = {
     customer_users_invite_sent: "担当者を追加し、初回設定メールを送信しました。",
     customer_users_transfer_done: "管理者権限を移行しました。",
     customer_users_transfer_done_detail: "{email} を管理者に変更しました。以前の管理者はメンバーに変更されました。",
+    customer_users_remove: "削除",
+    customer_users_remove_confirm_detail: "{name} / {email} をこの得意先の担当者から削除します。削除後はログインできなくなります。よろしいですか？",
+    customer_users_remove_done: "担当者を削除しました。",
     customer_portal_link_missing: "得意先との紐づけがありません",
     customer_portal_inactive: "利用停止中",
     customer_portal_search_unavailable: "商品検索権限なし",
@@ -171,7 +174,7 @@ var TRANSLATIONS = {
     customer_catalog_title: "商品カタログ",
     customer_catalog_for: "お取引先",
     customer_catalog_results: "検索結果",
-    customer_catalog_search_hint: "品番を検索するか、商品一覧を開いてください",
+    customer_catalog_search_hint: "品番を入力するか、カテゴリを選択して検索してください",
     customer_catalog_select_product: "商品を選択してください",
     customer_catalog_select_product_note: "公開されている商品情報を確認できます",
     customer_catalog_customer_status: "得意先閲覧",
@@ -1526,6 +1529,9 @@ var TRANSLATIONS = {
     customer_users_invite_sent: "The user was added and the setup email was sent.",
     customer_users_transfer_done: "Administrator access was transferred.",
     customer_users_transfer_done_detail: "{email} is now the administrator. The previous administrator is now a member.",
+    customer_users_remove: "Remove",
+    customer_users_remove_confirm_detail: "Remove {name} / {email} from this customer? The user will no longer be able to sign in.",
+    customer_users_remove_done: "The user was removed.",
     customer_portal_link_missing: "No customer account is linked",
     customer_portal_inactive: "Account Inactive",
     customer_portal_search_unavailable: "Product Search Unavailable",
@@ -1539,7 +1545,7 @@ var TRANSLATIONS = {
     customer_catalog_title: "Product Catalog",
     customer_catalog_for: "Customer",
     customer_catalog_results: "Results",
-    customer_catalog_search_hint: "Search by part number or open the product list",
+    customer_catalog_search_hint: "Enter a part number or select a category to search",
     customer_catalog_select_product: "Select a product",
     customer_catalog_select_product_note: "View the product information available to this customer",
     customer_catalog_customer_status: "Customer Access",
@@ -2881,6 +2887,9 @@ var TRANSLATIONS = {
     customer_users_invite_sent: "已添加负责人并发送首次设置邮件。",
     customer_users_transfer_done: "管理员权限已移交。",
     customer_users_transfer_done_detail: "已将 {email} 设为管理员。原管理员已变更为成员。",
+    customer_users_remove: "删除",
+    customer_users_remove_confirm_detail: "是否从该客户中删除 {name} / {email}？删除后该用户将无法登录。",
+    customer_users_remove_done: "已删除负责人。",
     customer_portal_link_missing: "尚未关联客户",
     customer_portal_inactive: "已停止使用",
     customer_portal_search_unavailable: "无商品搜索权限",
@@ -2894,7 +2903,7 @@ var TRANSLATIONS = {
     customer_catalog_title: "商品目录",
     customer_catalog_for: "客户",
     customer_catalog_results: "搜索结果",
-    customer_catalog_search_hint: "请输入品号搜索，或打开商品一览",
+    customer_catalog_search_hint: "请输入品号或选择类别后搜索",
     customer_catalog_select_product: "请选择商品",
     customer_catalog_select_product_note: "可确认向该客户公开的商品信息",
     customer_catalog_customer_status: "客户浏览",
@@ -4212,7 +4221,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.629";
+var APP_VERSION       = "v1.1.630";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6327,7 +6336,6 @@ function renderCustomerPortal() {
   var searchable = active && (isCustomerViewer() ? canViewProductSearch() : canPreviewCustomerPortal());
   var searchInput = document.getElementById("customer-portal-q");
   var searchButton = document.getElementById("customer-portal-search-btn");
-  var allButton = document.getElementById("customer-portal-all-btn");
 
   customerPortalValue("customer-portal-customer-name", linked ? customer.customer_name : t("customer_portal_link_missing"));
   customerPortalValue("customer-portal-customer-name-value", linked ? customer.customer_name : t("customer_portal_link_missing"));
@@ -6339,7 +6347,7 @@ function renderCustomerPortal() {
       : (!active ? t("customer_portal_inactive") : (searchable ? (previewMode ? t("customer_catalog_acting_status") : t("customer_catalog_customer_status")) : t("customer_portal_search_unavailable")));
     status.className = "customer-portal-status " + (searchable ? "active" : "inactive");
   }
-  [searchInput, searchButton, allButton].forEach(function(el) {
+  [searchInput, searchButton].forEach(function(el) {
     if (el) el.disabled = !searchable;
   });
   renderCustomerPortalPreviewControls();
@@ -6471,6 +6479,7 @@ function renderCustomerManagedUsers(errorCode) {
       "<span class='status-badge status-" + esc(status) + "'>" + esc(t("users_" + status + "_badge")) + "</span>";
     var statusButton = "";
     var transferButton = "";
+    var removeButton = "";
     if (!isAdmin) {
       statusButton = status === "active"
         ? "<button class='btn-suspend customer-managed-status' type='button' data-uid='" + esc(user.id) + "' data-status='suspended'>" + esc(t("btn_suspend")) + "</button>"
@@ -6478,12 +6487,14 @@ function renderCustomerManagedUsers(errorCode) {
       if (status === "active") {
         transferButton = "<button class='btn-sm-edit customer-managed-transfer' type='button' data-uid='" + esc(user.id) + "'>" + esc(t("customer_users_transfer")) + "</button>";
       }
+      removeButton = "<button class='btn-suspend customer-managed-remove' type='button' data-uid='" + esc(user.id) + "'>" + esc(t("customer_users_remove")) + "</button>";
     }
     return "<div class='customer-user-row'>" +
       "<div class='customer-user-identity'><strong>" + esc(user.name || "-") + "</strong><span>" + esc(user.email || "-") + "</span></div>" +
       "<div class='customer-user-state'>" + state + "</div>" +
       "<div class='customer-user-actions'>" + transferButton + statusButton +
         "<button class='btn-pw-reset customer-managed-reset' type='button' data-uid='" + esc(user.id) + "'>" + esc(t("btn_send_pw_reset")) + "</button>" +
+        removeButton +
       "</div>" +
       "<span class='save-msg customer-user-row-message' id='customer-managed-message-" + esc(user.id) + "'></span>" +
     "</div>";
@@ -6506,6 +6517,9 @@ function bindCustomerManagedUserEvents() {
   });
   host.querySelectorAll(".customer-managed-transfer").forEach(function(button) {
     button.addEventListener("click", function() { transferCustomerManagedAdmin(button.dataset.uid, button); });
+  });
+  host.querySelectorAll(".customer-managed-remove").forEach(function(button) {
+    button.addEventListener("click", function() { removeCustomerManagedMember(button.dataset.uid, button); });
   });
 }
 
@@ -6583,6 +6597,26 @@ async function sendCustomerManagedUserPasswordReset(userId, button) {
   if (message) { message.className = "save-msg save-ok customer-user-row-message"; message.textContent = t("msg_pw_reset_sent"); }
 }
 
+async function removeCustomerManagedMember(userId, button) {
+  var user = customerManagedUserById(userId);
+  if (!canManageCustomerPortalUsers() || !user || user.customer_role !== "member") return;
+  if (!confirm(tf("customer_users_remove_confirm_detail", { name: user.name || "-", email: user.email || "-" }))) return;
+  if (button) button.disabled = true;
+  var result = await invokeCustomerUserManagement({
+    action: "remove_member",
+    sales_customer_id: customerViewerContext.sales_customer_id,
+    target_user_id: user.id
+  });
+  if (button) button.disabled = false;
+  if (result.error || !result.data || !result.data.ok) {
+    var message = document.getElementById("customer-managed-message-" + user.id);
+    if (message) { message.className = "save-msg save-err customer-user-row-message"; message.textContent = customerUserEdgeErrorMessage(await customerUserEdgeErrorCode(result)); }
+    return;
+  }
+  alert(t("customer_users_remove_done"));
+  await loadCustomerManagedUsers();
+}
+
 async function transferCustomerManagedAdmin(userId, button) {
   var user = customerManagedUserById(userId);
   if (!canManageCustomerPortalUsers() || !user || user.customer_role !== "member" || user.status !== "active") return;
@@ -6604,16 +6638,16 @@ async function transferCustomerManagedAdmin(userId, button) {
   returnToCustomerPortalFromUsers();
 }
 
-async function openCustomerPortalSearch(showAll) {
+async function openCustomerPortalSearch() {
   var context = activeCustomerPortalContext();
   if ((!isCustomerViewer() && !canPreviewCustomerPortal()) || !context || !context.sales_customer_id || (isCustomerViewer() && !canViewProductSearch())) return;
   var portalInput = document.getElementById("customer-portal-q");
   var query = portalInput ? portalInput.value.trim() : "";
-  if (!showAll && !query) {
+  if (!query) {
     if (portalInput) portalInput.focus();
     return;
   }
-  await enterCustomerCatalog({ query: showAll ? "" : query, showAll: !!showAll, logActivity: true });
+  await enterCustomerCatalog({ query: query, logActivity: true });
 }
 
 function customerCatalogContext() {
@@ -6627,28 +6661,6 @@ function customerCatalogProductKind(product) {
 function customerCatalogRequiresRegisteredPrice() {
   var settings = customerCatalogContext().settings || defaultCustomerDisplaySettings();
   return !!(settings.priced_products_only || settings.show_parts_without_price === false);
-}
-
-function customerCatalogRestrictedCategoryCodes() {
-  var rows = customerCatalogContext().visibilityRows || [];
-  return (categoryOptions || []).map(function(cat) {
-    return cat.category_code || cat.category || "";
-  }).filter(function(code) {
-    return code && customerCategoryIsVisible(code, rows);
-  });
-}
-
-async function fetchCustomerCatalogCategoryScopeProducts(categoryCodes, maxRows) {
-  if (!categoryCodes || !categoryCodes.length) return { data: [], error: null };
-  var result = await sb.from("core_products")
-    .select(CORE_PRODUCT_FAST_SELECT)
-    .in("category_code", categoryCodes)
-    .order("manufacturer_part_number", { ascending: true, nullsFirst: false })
-    .order("genuine_part_number", { ascending: true, nullsFirst: false })
-    .order("dkd_shohin_id", { ascending: true })
-    .limit(maxRows || CUSTOMER_CATALOG_SCAN_LIMIT);
-  if (!result.error) result.data = normalizeCoreProductFastRows(result.data || []);
-  return result;
 }
 
 async function populateCustomerCatalogCategories() {
@@ -6799,6 +6811,18 @@ async function runCustomerCatalogSearch(options) {
   var category = categoryEl && categoryEl.value !== "all" ? categoryEl.value : null;
   var list = document.getElementById("customer-catalog-list");
   var count = document.getElementById("customer-catalog-count");
+  if (!query && !category) {
+    customerCatalogRequestSeq += 1;
+    customerCatalogProducts = [];
+    customerCatalogSelectedProduct = null;
+    customerCatalogImageInfo = { counts: {}, thumbnails: {} };
+    if (list) list.innerHTML = "<div class='customer-catalog-empty'>" + esc(t("customer_catalog_search_hint")) + "</div>";
+    if (count) count.textContent = "-";
+    var emptyDetail = document.getElementById("customer-catalog-detail");
+    if (emptyDetail) emptyDetail.innerHTML = "<div class='customer-catalog-detail-empty'><strong>" + esc(t("customer_catalog_select_product")) + "</strong><span>" + esc(t("customer_catalog_select_product_note")) + "</span></div>";
+    if (input) input.focus();
+    return;
+  }
   var seq = ++customerCatalogRequestSeq;
   if (list) list.innerHTML = "<div class='customer-catalog-loading'>" + esc(t("loading")) + "</div>";
   if (count) count.textContent = "-";
@@ -6808,18 +6832,8 @@ async function runCustomerCatalogSearch(options) {
   var result;
   if (query) {
     result = await fetchCoreProductMasterMatches(query, category, CUSTOMER_CATALOG_SCAN_LIMIT);
-  } else if (category) {
-    result = await fetchCategoryProducts(category, CUSTOMER_CATALOG_SCAN_LIMIT);
   } else {
-    var restrictedCategories = customerCatalogRestrictedCategoryCodes();
-    result = restrictedCategories
-      ? await fetchCustomerCatalogCategoryScopeProducts(restrictedCategories, CUSTOMER_CATALOG_SCAN_LIMIT)
-      : await sb.rpc("search_core_products", {
-        search_text: null,
-        category_filter: null,
-        require_sl: false,
-        max_rows: CUSTOMER_CATALOG_SCAN_LIMIT
-      });
+    result = await fetchCategoryProducts(category, CUSTOMER_CATALOG_SCAN_LIMIT);
   }
   if (seq !== customerCatalogRequestSeq) return;
   if (result.error) {
@@ -6848,7 +6862,7 @@ async function runCustomerCatalogSearch(options) {
       screen: "customer-catalog",
       action: "customer_product_search",
       target_type: "search",
-      target_desc: query || category || "all",
+      target_desc: query || category,
       metadata: {
         query: query,
         category_filter: category,
@@ -6856,7 +6870,7 @@ async function runCustomerCatalogSearch(options) {
         sales_customer_id: context.sales_customer_id,
         acting_as_customer: !isCustomerViewer()
       },
-      throttleKey: "customer-catalog:" + context.sales_customer_id + ":" + query + ":" + (category || "all"),
+      throttleKey: "customer-catalog:" + context.sales_customer_id + ":" + query + ":" + (category || ""),
       throttleMs: 3000
     });
   }
@@ -7092,7 +7106,7 @@ async function enterCustomerCatalog(options) {
   var category = document.getElementById("customer-catalog-category");
   if (input && options.query !== undefined) input.value = options.query || "";
   if (category && options.category) category.value = options.category;
-  if (options.showAll || (options.query !== undefined && options.query !== "") || options.runSearch) {
+  if ((options.query !== undefined && options.query !== "") || options.runSearch) {
     await runCustomerCatalogSearch({ logActivity: !!options.logActivity });
   } else {
     renderCustomerCatalogList();
@@ -34935,9 +34949,8 @@ document.getElementById("btn-submit-reg").addEventListener("click", doRegister);
 document.getElementById("reg-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doRegister(); });
 document.getElementById("login-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
 ["btn-logout-menu","btn-logout-customer-portal","btn-logout-customer-shipping","btn-logout-customer-users","btn-logout-customer-catalog","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-shipping-rate-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-component-compat-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-manufacturing-cost-mgmt","btn-logout-finished-label-mgmt","btn-logout-finished-product-shipping","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
-document.getElementById("customer-portal-search-btn").addEventListener("click", function(){ openCustomerPortalSearch(false); });
-document.getElementById("customer-portal-all-btn").addEventListener("click", function(){ openCustomerPortalSearch(true); });
-document.getElementById("customer-portal-q").addEventListener("keydown", function(e){ if (e.key === "Enter") openCustomerPortalSearch(false); });
+document.getElementById("customer-portal-search-btn").addEventListener("click", function(){ openCustomerPortalSearch(); });
+document.getElementById("customer-portal-q").addEventListener("keydown", function(e){ if (e.key === "Enter") openCustomerPortalSearch(); });
 document.getElementById("customer-portal-customer-select").addEventListener("change", function(){ loadCustomerPortalPreviewContext(this.value); });
 document.getElementById("btn-back-customer-portal").addEventListener("click", exitCustomerMode);
 document.getElementById("customer-portal-change-password").addEventListener("click", enterChangePw);
@@ -34963,11 +34976,6 @@ document.getElementById("btn-exit-customer-mode").addEventListener("click", exit
 document.getElementById("customer-catalog-search-btn").addEventListener("click", function(){ runCustomerCatalogSearch({ logActivity: true }); });
 document.getElementById("customer-catalog-q").addEventListener("keydown", function(e){ if (e.key === "Enter") runCustomerCatalogSearch({ logActivity: true }); });
 document.getElementById("customer-catalog-category").addEventListener("change", function(){ runCustomerCatalogSearch({ logActivity: true }); });
-document.getElementById("customer-catalog-reset-btn").addEventListener("click", function(){
-  document.getElementById("customer-catalog-q").value = "";
-  document.getElementById("customer-catalog-category").value = "all";
-  runCustomerCatalogSearch({ logActivity: true });
-});
 document.getElementById("btn-back-search").addEventListener("click", returnFromProductSearch);
 document.getElementById("btn-back-production-search").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-components").addEventListener("click", async function(){

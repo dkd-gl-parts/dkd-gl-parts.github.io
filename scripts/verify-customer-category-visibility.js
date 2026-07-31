@@ -116,14 +116,11 @@ if (!catalogSource.includes("customerCategoryIsVisible(code, visibilityRows)")) 
 }
 
 const searchSource = functionSource("runCustomerCatalogSearch", "function customerCatalogFact");
-if (!searchSource.includes("customerCatalogRestrictedCategoryCodes()") ||
-    !searchSource.includes("fetchCustomerCatalogCategoryScopeProducts")) {
-  throw new Error("customer product lists must query only the allowed category scope");
-}
-
-const restrictedCategorySource = functionSource("customerCatalogRestrictedCategoryCodes", "async function fetchCustomerCatalogCategoryScopeProducts");
-if (!restrictedCategorySource.includes("customerCategoryIsVisible(code, rows)") || restrictedCategorySource.includes("return null")) {
-  throw new Error("unconfigured customers must still be restricted to the six default categories");
+if (!searchSource.includes("if (!query && !category)") ||
+    !searchSource.includes("fetchCategoryProducts(category") ||
+    !searchSource.includes("filterVisibleProducts") ||
+    searchSource.includes("search_text: null")) {
+  throw new Error("customer product searches must require a visible category or query and must not load all products");
 }
 
 const settingsSaveSource = functionSource("saveCustomerAccessSettings", "async function setCustomerAccessActive");
