@@ -52,11 +52,13 @@ api.setMasterProducts([
 api.setSupplierCatalogData([
   { id: 1, supplier_catalog_item_id: 10, dkd_shohin_id: 200, status: "active" },
   { id: 2, supplier_catalog_item_id: 11, dkd_shohin_id: 100, status: "inactive" },
-  { id: 3, supplier_catalog_item_id: 12, dkd_shohin_id: 100, status: "active" }
+  { id: 3, supplier_catalog_item_id: 12, dkd_shohin_id: 100, status: "active" },
+  { id: 4, supplier_catalog_item_id: 13, dkd_shohin_id: 100, status: "active" }
 ], [
   { id: 10, supplier_id: 1, supplier_pn: "SL-200", genuine_part_number: "27060-2000", manufacturer_part_number: "ALT-200", manufacturer: "DENSO", is_active: true },
   { id: 11, supplier_id: 1, supplier_pn: "SL-INACTIVE", is_active: true },
-  { id: 12, supplier_id: 3, supplier_pn: "ST-100", genuine_part_number: "27060-1000", manufacturer_part_number: "ALT-100", is_active: true }
+  { id: 12, supplier_id: 3, supplier_pn: "ST-100", genuine_part_number: "27060-1000", manufacturer_part_number: "ALT-100", is_active: true },
+  { id: 13, supplier_id: 1, supplier_pn: "SL-200", genuine_part_number: "27060-1000", manufacturer_part_number: "ALT-100", manufacturer: "DENSO", is_active: true }
 ]);
 
 function row(id, productId, genuine, maker) {
@@ -95,7 +97,10 @@ const options = {
 
 const linkedItems = api.supplierItemsForResult(linkedResult, options);
 if (linkedItems.length !== 2 || !linkedItems.some((item) => item.supplier_pn === "SL-200") || !linkedItems.some((item) => item.supplier_pn === "ST-100")) {
-  throw new Error("direct and registered-compatible supplier products must be resolved once");
+  throw new Error("direct, compatible, and duplicate catalog rows must resolve to one supplier part number");
+}
+if (linkedItems.filter((item) => item.supplier_pn === "SL-200").length !== 1) {
+  throw new Error("the same supplier and supplier part number must not be duplicated");
 }
 if (api.supplierItemsForResult(unlinkedResult, options).length !== 0) {
   throw new Error("unlinked ranking rows must remain unavailable");
@@ -113,6 +118,9 @@ if (!printHtml.includes("仕入先商品照合リスト") || !printHtml.includes
 }
 if (!printHtml.includes("class='supplier-name'>Stronghold</td>") || !printHtml.includes("class='supplier-part'>SL-200</td>") || !printHtml.includes("rowspan='2'")) {
   throw new Error("supplier name and supplier part number must render in separate cells");
+}
+if ((printHtml.match(/class='supplier-part'>SL-200<\/td>/g) || []).length !== 1) {
+  throw new Error("the supplier report must print a duplicate supplier part number only once");
 }
 if (/<th[^>]*>出荷数<\/th>/.test(printHtml) || /<th[^>]*>コア在庫<\/th>/.test(printHtml)) {
   throw new Error("supplier report must not output shipment or core-stock columns");

@@ -404,7 +404,7 @@
   function indexSupplierCatalogData(links, items) {
     var itemsById = Object.create(null);
     var itemsByProductId = Object.create(null);
-    var usedItemIds = Object.create(null);
+    var usedItemKeys = Object.create(null);
     (items || []).forEach(function(item) {
       if (!item || item.id == null || item.is_active === false) return;
       itemsById[String(item.id)] = item;
@@ -414,14 +414,15 @@
       var item = itemsById[String(link.supplier_catalog_item_id)];
       if (!item) return;
       var productId = String(link.dkd_shohin_id);
+      var itemKey = supplierItemIdentityKey(item);
       if (!itemsByProductId[productId]) itemsByProductId[productId] = [];
-      if (itemsByProductId[productId].some(function(existing) { return String(existing.id) === String(item.id); })) return;
+      if (itemsByProductId[productId].some(function(existing) { return supplierItemIdentityKey(existing) === itemKey; })) return;
       itemsByProductId[productId].push(item);
-      usedItemIds[String(item.id)] = true;
+      usedItemKeys[itemKey] = true;
     });
     return {
       itemsByProductId: itemsByProductId,
-      itemCount: Object.keys(usedItemIds).length
+      itemCount: Object.keys(usedItemKeys).length
     };
   }
 
@@ -1049,6 +1050,12 @@
     return SUPPLIER_NAMES[key] || (key ? "仕入先 #" + key : "仕入先未設定");
   }
 
+  function supplierItemIdentityKey(item) {
+    var supplierId = item && item.supplier_id != null ? String(item.supplier_id) : "";
+    var managementNumber = item ? normalizeSearch(item.supplier_pn || item.source_item_id) : "";
+    return supplierId + "|" + (managementNumber || "item:" + String(item && item.id || ""));
+  }
+
   function matchedProductsForSupplier(result, compatibilityMode) {
     var productsById = Object.create(null);
     var rows = compatibilityMode === "all" ? [result.row] : result.group;
@@ -1067,14 +1074,15 @@
   }
 
   function supplierItemsForResult(result, options) {
-    var itemsById = Object.create(null);
+    var itemsByKey = Object.create(null);
     matchedProductsForSupplier(result, options.compatibilityMode).forEach(function(product) {
       (state.supplierItemsByProductId[product.id] || []).forEach(function(item) {
         if (options.supplierId !== "all" && String(item.supplier_id) !== String(options.supplierId)) return;
-        itemsById[String(item.id)] = item;
+        var itemKey = supplierItemIdentityKey(item);
+        if (!itemsByKey[itemKey]) itemsByKey[itemKey] = item;
       });
     });
-    return Object.keys(itemsById).map(function(itemId) { return itemsById[itemId]; }).sort(function(left, right) {
+    return Object.keys(itemsByKey).map(function(itemKey) { return itemsByKey[itemKey]; }).sort(function(left, right) {
       return supplierName(left.supplier_id).localeCompare(supplierName(right.supplier_id), "ja") ||
         normalizeSearch(left.supplier_pn || left.source_item_id).localeCompare(normalizeSearch(right.supplier_pn || right.source_item_id), "ja");
     });
@@ -1097,17 +1105,17 @@
   }
 
   function supplierAvailabilitySummary(results, options) {
-    var itemIds = Object.create(null);
+    var itemKeys = Object.create(null);
     var availableCount = 0;
     (results || []).forEach(function(result) {
       var items = supplierItemsForResult(result, options);
       if (items.length) availableCount++;
-      items.forEach(function(item) { itemIds[String(item.id)] = true; });
+      items.forEach(function(item) { itemKeys[supplierItemIdentityKey(item)] = true; });
     });
     return {
       availableCount: availableCount,
       unavailableCount: Math.max(0, (results || []).length - availableCount),
-      itemCount: Object.keys(itemIds).length
+      itemCount: Object.keys(itemKeys).length
     };
   }
 
