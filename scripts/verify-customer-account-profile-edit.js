@@ -92,8 +92,20 @@ const transferAction = app.slice(
 );
 if (!transferAction.includes('action: "transfer_admin"') ||
     !transferAction.includes("await loadCustomerAccountUsers(customerId)") ||
-    !transferAction.includes('alert(t("customer_users_transfer_done"))')) {
+    !transferAction.includes('customer_users_transfer_confirm_detail') ||
+    !transferAction.includes('customer_users_transfer_done_detail')) {
   throw new Error("customer administrator transfer must use the protected server action and refresh the account list");
+}
+
+const customerManagedTransfer = app.slice(
+  app.indexOf("async function transferCustomerManagedAdmin"),
+  app.indexOf("async function openCustomerPortalSearch"),
+);
+if (!customerManagedTransfer.includes('action: "transfer_admin"') ||
+    !customerManagedTransfer.includes("await loadCustomerViewerContext()") ||
+    !customerManagedTransfer.includes('customer_users_transfer_confirm_detail') ||
+    !customerManagedTransfer.includes('customer_users_transfer_done_detail')) {
+  throw new Error("customer-side administrator transfer must identify the target and refresh portal permissions");
 }
 
 console.log("customer account profile edit guard passed");

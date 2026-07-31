@@ -154,8 +154,10 @@ var TRANSLATIONS = {
     customer_users_admin_rule: "管理者は1名です。移行すると現在の管理者はメンバーになります。",
     customer_users_transfer: "管理者に変更",
     customer_users_transfer_confirm: "この担当者へ管理者権限を移行します。移行後、現在の管理者はメンバーになります。よろしいですか？",
+    customer_users_transfer_confirm_detail: "{name} / {email} を管理者に変更します。現在の管理者はメンバーになります。よろしいですか？",
     customer_users_invite_sent: "担当者を追加し、初回設定メールを送信しました。",
     customer_users_transfer_done: "管理者権限を移行しました。",
+    customer_users_transfer_done_detail: "{email} を管理者に変更しました。以前の管理者はメンバーに変更されました。",
     customer_portal_link_missing: "得意先との紐づけがありません",
     customer_portal_inactive: "利用停止中",
     customer_portal_search_unavailable: "商品検索権限なし",
@@ -1520,8 +1522,10 @@ var TRANSLATIONS = {
     customer_users_admin_rule: "There is one administrator. A transfer changes the current administrator to a member.",
     customer_users_transfer: "Make Administrator",
     customer_users_transfer_confirm: "Transfer administrator access to this user? The current administrator will become a member.",
+    customer_users_transfer_confirm_detail: "Make {name} / {email} the administrator? The current administrator will become a member.",
     customer_users_invite_sent: "The user was added and the setup email was sent.",
     customer_users_transfer_done: "Administrator access was transferred.",
+    customer_users_transfer_done_detail: "{email} is now the administrator. The previous administrator is now a member.",
     customer_portal_link_missing: "No customer account is linked",
     customer_portal_inactive: "Account Inactive",
     customer_portal_search_unavailable: "Product Search Unavailable",
@@ -2873,8 +2877,10 @@ var TRANSLATIONS = {
     customer_users_admin_rule: "每个客户仅有一名管理员。移交后，当前管理员将变为成员。",
     customer_users_transfer: "设为管理员",
     customer_users_transfer_confirm: "是否将管理员权限移交给此负责人？当前管理员将变为成员。",
+    customer_users_transfer_confirm_detail: "是否将 {name} / {email} 设为管理员？当前管理员将变为成员。",
     customer_users_invite_sent: "已添加负责人并发送首次设置邮件。",
     customer_users_transfer_done: "管理员权限已移交。",
+    customer_users_transfer_done_detail: "已将 {email} 设为管理员。原管理员已变更为成员。",
     customer_portal_link_missing: "尚未关联客户",
     customer_portal_inactive: "已停止使用",
     customer_portal_search_unavailable: "无商品搜索权限",
@@ -4206,7 +4212,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.628";
+var APP_VERSION       = "v1.1.629";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6580,7 +6586,7 @@ async function sendCustomerManagedUserPasswordReset(userId, button) {
 async function transferCustomerManagedAdmin(userId, button) {
   var user = customerManagedUserById(userId);
   if (!canManageCustomerPortalUsers() || !user || user.customer_role !== "member" || user.status !== "active") return;
-  if (!confirm(t("customer_users_transfer_confirm"))) return;
+  if (!confirm(tf("customer_users_transfer_confirm_detail", { name: user.name || "-", email: user.email || "-" }))) return;
   if (button) button.disabled = true;
   var result = await invokeCustomerUserManagement({
     action: "transfer_admin",
@@ -6594,7 +6600,7 @@ async function transferCustomerManagedAdmin(userId, button) {
     return;
   }
   await loadCustomerViewerContext();
-  alert(t("customer_users_transfer_done"));
+  alert(tf("customer_users_transfer_done_detail", { email: user.email || "-" }));
   returnToCustomerPortalFromUsers();
 }
 
@@ -33728,7 +33734,7 @@ async function transferCustomerAccountAdmin(userId, button) {
   var user = customerAccountUserById(userId);
   var customerId = currentCustomerAccessCustomer && currentCustomerAccessCustomer.id;
   if (!canManageCustomerAccounts() || !customerId || !user || user.customer_role !== "member" || user.status !== "active") return;
-  if (!confirm(t("customer_users_transfer_confirm"))) return;
+  if (!confirm(tf("customer_users_transfer_confirm_detail", { name: user.name || "-", email: user.email || "-" }))) return;
   if (button) button.disabled = true;
   var result = await invokeCustomerUserManagement({ action: "transfer_admin", sales_customer_id: customerId, target_user_id: user.id });
   if (button) button.disabled = false;
@@ -33738,7 +33744,7 @@ async function transferCustomerAccountAdmin(userId, button) {
     return;
   }
   await loadCustomerAccountUsers(customerId);
-  alert(t("customer_users_transfer_done"));
+  alert(tf("customer_users_transfer_done_detail", { email: user.email || "-" }));
 }
 
 function customerAccountInviteErrorMessage(code) {
