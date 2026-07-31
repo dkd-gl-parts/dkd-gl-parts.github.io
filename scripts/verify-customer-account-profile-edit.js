@@ -38,10 +38,12 @@ const styles = fs.readFileSync(path.join(root, "styles.css"), "utf8");
   if (!styles.includes(expected)) throw new Error(`customer account styling is missing: ${expected}`);
 });
 
-if (!html.includes("Supabase Authの「Invite user」テンプレート") ||
-    !html.includes("Supabaseで最終テンプレートを確認") ||
-    !html.includes("You've been invited")) {
-  throw new Error("the invitation preview must explain the actual Supabase template source and standard subject");
+if (!html.includes("【D-CATS】アカウント登録のご案内") ||
+    !html.includes("平素より大光電機株式会社をご愛顧いただき") ||
+    !html.includes("D-CATSの利用を開始する") ||
+    !html.includes("本メールにお心当たりがない場合") ||
+    !html.includes("Supabaseで最終テンプレートを確認")) {
+  throw new Error("the invitation preview must match the approved Japanese business email template");
 }
 
 const editAction = app.slice(
