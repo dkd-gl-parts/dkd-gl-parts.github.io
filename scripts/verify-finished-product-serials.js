@@ -47,6 +47,9 @@ assert(html.includes('id="finished-label-quantity" type="number" min="1" max="10
 assert(html.includes('id="finished-label-print-count"') && html.includes('min="1" max="1"') && html.includes('value="1" readonly'), "one-label-per-unit rule is missing");
 assert(html.includes('id="finished-label-layout-preview"'), "live 45x20 label layout preview is missing");
 assert(html.includes('id="finished-label-layout-qr-value"'), "QR payload preview is missing");
+assert(html.includes('data-i18n="finished_label_preview" disabled>完品シール印刷</button>'), "45x20 label is not named 完品シール");
+assert(html.includes('data-i18n="finished_label_layout_title">完品シール レイアウト</h4>'), "finished-label layout title is inconsistent");
+assert(!html.includes("製品本体シール"), "obsolete 製品本体シール name remains in the screen");
 assert(/@page\s*{[^}]*size:\s*45mm\s+20mm/i.test(printCss), "print page is not fixed at 45x20mm");
 assert(/\.serial-label\s*{[^}]*width:\s*45mm;[^}]*height:\s*20mm;/i.test(printCss), "label dimensions are not exact");
 assert(/\.serial-label-field-name\s*{[^}]*font-size:/i.test(printCss), "print field hierarchy is missing");

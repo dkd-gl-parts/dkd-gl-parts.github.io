@@ -217,7 +217,7 @@ var TRANSLATIONS = {
     mi_purchase_mgmt_title: "仕入管理",
     mi_purchase_mgmt_desc: "SL品番・仕入先価格・MOQを管理します。",
     mi_finished_label_title: "完品登録・製造シリアル",
-    mi_finished_label_desc: "完品を1台ずつ登録し、1台につき45×20ラベル1枚と在庫履歴を発行します。",
+    mi_finished_label_desc: "完品を1台ずつ登録し、1台につき完品シール1枚と在庫履歴を発行します。",
     mi_finished_shipping_title: "完品出荷・保証管理",
     mi_finished_shipping_desc: "製造シリアルを出荷先・出荷日・保証期限へ紐づけます。",
     mi_production_ranking_title: "製造予定リスト",
@@ -355,18 +355,18 @@ var TRANSLATIONS = {
     finished_label_select_product: "発行対象を選択してください。",
     finished_label_issue_form: "完品登録内容",
     finished_label_apply_template: "カテゴリ構成部品を再反映",
-    finished_label_preview: "45×20ラベル印刷",
-    finished_label_layout_title: "製品本体シール レイアウト",
+    finished_label_preview: "完品シール印刷",
+    finished_label_layout_title: "完品シール レイアウト",
     finished_label_layout_hint: "黒1色・熱転写用。選択したGLTEK品番と発行予定の製造シリアルを実寸比率で確認できます。",
     finished_label_layout_one_per_unit: "1台につき1枚",
     finished_label_layout_sample: "発行前はサンプルシリアルを表示",
     finished_label_layout_qr_value: "QR格納値",
-    finished_box_label_preview: "80×60箱シール印刷",
+    finished_box_label_preview: "箱シール印刷",
     finished_box_label_layout_title: "箱シール レイアウト",
     finished_box_label_layout_hint: "GLTEK品番はCode 128、製造シリアルはQRで表示します。黒1色・熱転写用です。",
     finished_box_label_layout_one_per_unit: "1台につき1枚",
     finished_box_label_barcode_value: "品番バーコード",
-    finished_product_label_reprint: "製品シール再印刷",
+    finished_product_label_reprint: "完品シール再印刷",
     finished_box_label_reprint: "箱シール再印刷",
     finished_label_issue_code: "完品登録ID",
     finished_label_instruction_id: "製造予定ID",
@@ -1602,7 +1602,7 @@ var TRANSLATIONS = {
     mi_purchase_mgmt_title: "Purchase Management",
     mi_purchase_mgmt_desc: "Manage SL numbers, supplier prices, and MOQ.",
     mi_finished_label_title: "Finished Units / Serials",
-    mi_finished_label_desc: "Register each completed unit and issue one 45×20 label per unit with stock history.",
+    mi_finished_label_desc: "Register each completed unit and issue one finished-unit label per unit with stock history.",
     mi_finished_shipping_title: "Finished-Unit Shipping / Warranty",
     mi_finished_shipping_desc: "Link manufacturing serials to the customer, shipment date, and warranty period.",
     mi_production_ranking_title: "Production Plan List",
@@ -1740,18 +1740,18 @@ var TRANSLATIONS = {
     finished_label_select_product: "Select an issue target.",
     finished_label_issue_form: "Finished Unit Details",
     finished_label_apply_template: "Reload Category Components",
-    finished_label_preview: "Print 45×20 Labels",
-    finished_label_layout_title: "Product Label Layout",
+    finished_label_preview: "Print Finished Labels",
+    finished_label_layout_title: "Finished Label Layout",
     finished_label_layout_hint: "Black-only thermal-transfer layout. Preview the selected GLTEK part number and manufacturing serial at the correct aspect ratio.",
     finished_label_layout_one_per_unit: "One label per unit",
     finished_label_layout_sample: "A sample serial is shown before issue",
     finished_label_layout_qr_value: "QR payload",
-    finished_box_label_preview: "Print 80×60 Box Labels",
+    finished_box_label_preview: "Print Box Labels",
     finished_box_label_layout_title: "Box Label Layout",
     finished_box_label_layout_hint: "The GLTEK part number uses Code 128 and the manufacturing serial uses QR. Black-only thermal-transfer layout.",
     finished_box_label_layout_one_per_unit: "One label per unit",
     finished_box_label_barcode_value: "Part-number barcode",
-    finished_product_label_reprint: "Reprint Product Label",
+    finished_product_label_reprint: "Reprint Finished Label",
     finished_box_label_reprint: "Reprint Box Label",
     finished_label_issue_code: "Registration ID",
     finished_label_instruction_id: "Production Plan ID",
@@ -3000,7 +3000,7 @@ var TRANSLATIONS = {
     mi_purchase_mgmt_title: "采购管理",
     mi_purchase_mgmt_desc: "管理SL编号、供应商价格和MOQ。",
     mi_finished_label_title: "完品登记・制造序列号",
-    mi_finished_label_desc: "逐台登记完品，每台发行一张45×20标签，并记录库存履历。",
+    mi_finished_label_desc: "逐台登记完品，每台发行一张完品标签，并记录库存履历。",
     mi_finished_shipping_title: "完品出货・保修管理",
     mi_finished_shipping_desc: "将制造序列号与客户、出货日期和保修期限关联。",
     mi_production_ranking_title: "生产计划清单",
@@ -3132,18 +3132,18 @@ var TRANSLATIONS = {
     finished_label_select_product: "请选择发行对象。",
     finished_label_issue_form: "完品登记内容",
     finished_label_apply_template: "重新载入类别构成零件",
-    finished_label_preview: "打印45×20标签",
-    finished_label_layout_title: "产品本体标签版式",
+    finished_label_preview: "打印完品标签",
+    finished_label_layout_title: "完品标签版式",
     finished_label_layout_hint: "黑色单色热转印版式。可按实际比例预览所选GLTEK品号和制造序列号。",
     finished_label_layout_one_per_unit: "每台1张",
     finished_label_layout_sample: "发行前显示示例序列号",
     finished_label_layout_qr_value: "QR内容",
-    finished_box_label_preview: "打印80×60箱标签",
+    finished_box_label_preview: "打印箱标签",
     finished_box_label_layout_title: "箱标签版式",
     finished_box_label_layout_hint: "GLTEK品号使用Code 128，制造序列号使用QR。黑色单色热转印版式。",
     finished_box_label_layout_one_per_unit: "每台1张",
     finished_box_label_barcode_value: "品号条码",
-    finished_product_label_reprint: "重新打印产品标签",
+    finished_product_label_reprint: "重新打印完品标签",
     finished_box_label_reprint: "重新打印箱标签",
     finished_label_issue_code: "完品登记ID",
     finished_label_instruction_id: "生产计划ID",
@@ -4263,7 +4263,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.633";
+var APP_VERSION       = "v1.1.634";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -17739,7 +17739,7 @@ function buildFinishedLabelPrintHtml(record) {
   });
   return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><title>D-CATS " + esc(record.issueCode || "") + "</title>" +
     "<link rel='stylesheet' href='print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'>" +
-    "</head><body><div class='toolbar'><button id='dcats-print-now' type='button'>印刷</button><span>用紙サイズを45×20mm、倍率100%に設定してください。" + esc(units.length) + "台 × 1枚</span></div><main class='serial-labels'>" + labels.join("") + "</main></body></html>";
+    "</head><body><div class='toolbar'><button id='dcats-print-now' type='button'>印刷</button><span>完品シール：用紙サイズを45×20mm、倍率100%に設定してください。" + esc(units.length) + "台 × 1枚</span></div><main class='serial-labels'>" + labels.join("") + "</main></body></html>";
 }
 
 function openFinishedBoxLabelPrintPreview(record, existingWindow) {
@@ -17770,7 +17770,7 @@ function buildFinishedBoxLabelPrintHtml(record) {
   });
   return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><title>D-CATS BOX " + esc(record.issueCode || "") + "</title>" +
     "<link rel='stylesheet' href='box-label-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'>" +
-    "</head><body><div class='toolbar'><button id='dcats-print-now' type='button'>印刷</button><span>用紙サイズを80×60mm、倍率100%に設定してください。" + esc(units.length) + "台 × 1枚</span></div><main class='box-product-labels'>" + labels.join("") + "</main></body></html>";
+    "</head><body><div class='toolbar'><button id='dcats-print-now' type='button'>印刷</button><span>箱シール：用紙サイズを80×60mm、倍率100%に設定してください。" + esc(units.length) + "台 × 1枚</span></div><main class='box-product-labels'>" + labels.join("") + "</main></body></html>";
 }
 
 // =============================================
