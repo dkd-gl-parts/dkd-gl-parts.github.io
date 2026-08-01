@@ -1,0 +1,130 @@
+const fs = require("fs");
+const path = require("path");
+const vm = require("vm");
+
+const root = path.resolve(__dirname, "..");
+const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const styles = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+const printCss = fs.readFileSync(path.join(root, "box-label-print.css"), "utf8");
+
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+function functionSource(name) {
+  const start = app.indexOf(`function ${name}(`);
+  assert(start >= 0, `${name} is missing`);
+  const brace = app.indexOf("{", start);
+  let depth = 0;
+  let quote = "";
+  let escaped = false;
+  for (let index = brace; index < app.length; index += 1) {
+    const char = app[index];
+    if (quote) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === quote) quote = "";
+      continue;
+    }
+    if (char === '"' || char === "'" || char === "`") {
+      quote = char;
+      continue;
+    }
+    if (char === "{") depth += 1;
+    if (char === "}") {
+      depth -= 1;
+      if (depth === 0) return app.slice(start, index + 1);
+    }
+  }
+  throw new Error(`${name} could not be parsed`);
+}
+
+assert(html.includes('id="btn-finished-box-label-preview"'), "80x60 box-label print action is missing");
+assert(html.includes('id="finished-box-label-layout-preview"'), "80x60 live layout preview is missing");
+assert(html.includes('id="finished-box-label-barcode-value"'), "part-number barcode payload preview is missing");
+assert(html.includes('id="finished-box-label-qr-value"'), "serial QR payload preview is missing");
+assert(html.includes("jsbarcode@3.12.3/dist/JsBarcode.all.min.js"), "fixed JsBarcode dependency is missing");
+assert(html.indexOf("jsbarcode@3.12.3") < html.indexOf('src="app.js'), "JsBarcode must load before app.js");
+assert(!app.includes("quickchart.io") && !app.includes("bwip-js.metafloor.com"), "label generation depends on an external barcode image service");
+assert(/@page\s*{[^}]*size:\s*80mm\s+60mm/i.test(printCss), "print page is not fixed at 80x60mm");
+assert(/\.box-product-label\s*{[^}]*width:\s*80mm;[^}]*height:\s*60mm;/i.test(printCss), "box label dimensions are not exact");
+assert(styles.includes("width: 480px; height: 360px;"), "live box-label preview does not preserve the 4:3 ratio");
+assert(functionSource("finishedProductPartBarcodeDataUrl").includes('format: "CODE128"'), "GLTEK part-number barcode is not Code 128");
+assert(functionSource("renderFinishedBoxLabelLayoutPreview").includes("buildFinishedBoxLabelMarkup"), "live box-label preview is not connected to production markup");
+assert(functionSource("previewCurrentFinishedBoxLabel").includes("openFinishedBoxLabelPrintPreview"), "current box-label print action is not connected");
+assert(functionSource("openFinishedBoxLabelPrintPreview").includes("buildFinishedBoxLabelPrintHtml"), "box-label print preview is not connected");
+assert(app.includes("data-finished-box-label-history-preview"), "box-label history reprint action is missing");
+const reprintSource = functionSource("reprintFinishedLabelIssue");
+assert(reprintSource.includes('labelType === "box"'), "product and box reprints are not distinguished");
+assert(reprintSource.includes('event_type: labelType === "box" ? "box_label_reprint" : "product_label_reprint"'), "reprint audit type is missing");
+assert(reprintSource.includes('label_size: labelType === "box" ? "80x60" : "45x20"'), "reprint label size is missing from audit details");
+assert(reprintSource.includes("copies_per_unit: 1"), "one-label-per-unit audit rule is missing");
+
+const barcodeInputs = [];
+const qrInputs = [];
+const sandbox = {
+  APP_VERSION: "v-test",
+  esc(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  },
+  productKindLabel(value) {
+    return value === "rebuilt" ? "リビルト" : value;
+  },
+  finishedProductPartBarcodeDataUrl(value) {
+    barcodeInputs.push(value);
+    return `data:image/png;base64,barcode-${value}`;
+  },
+  finishedProductSerialQrDataUrl(value) {
+    qrInputs.push(value);
+    return `data:image/png;base64,qr-${value}`;
+  }
+};
+vm.createContext(sandbox);
+vm.runInContext(`${functionSource("buildFinishedBoxLabelMarkup")}; ${functionSource("buildFinishedBoxLabelPrintHtml")}; this.build = buildFinishedBoxLabelPrintHtml;`, sandbox);
+
+const serials = ["M2026-0000001", "M2026-0000002"];
+const record = {
+  issueCode: "FB2026-0000001",
+  productNo: "G0101-00001",
+  gltekPartNumber: "G0101-00001",
+  manufacturer: "DENSO",
+  manufacturerPartNumber: "104210-4120",
+  genuinePartNumber: "27060-30110",
+  genuinePartNumber2: "27060-30111",
+  productCategory: "オルタネータ",
+  productKind: "rebuilt",
+  nominalVoltage: "12V",
+  nominalOutput: "130A",
+  nominalSpec: "SC6",
+  units: serials.map((manufacturing_serial, index) => ({ id: index + 1, manufacturing_serial }))
+};
+const output = sandbox.build(record);
+
+assert((output.match(/class='box-product-label'/g) || []).length === 2, "one box label per finished unit was not generated");
+assert((output.match(/BOX LABEL/g) || []).length === 2, "box-label marker is missing");
+assert((output.match(/GLTEK PART NO\./g) || []).length === 2, "GLTEK part-number heading is missing");
+assert((output.match(/MANUFACTURER \/ MFR PART NO\./g) || []).length === 2, "manufacturer part-number field is missing");
+assert((output.match(/GENUINE PART NO\./g) || []).length === 2, "genuine part-number field is missing");
+assert(output.includes("DENSO / 104210-4120"), "manufacturer data is missing");
+assert(output.includes("27060-30110 / 27060-30111"), "genuine part-number data is missing");
+assert(output.includes("12V / 130A / SC6"), "specification data is missing");
+assert(barcodeInputs.length === 2 && barcodeInputs.every((value) => value === record.productNo), "Code 128 payload is not the GLTEK part number");
+assert(qrInputs.length === 2 && qrInputs.every((value, index) => value === serials[index]), "QR payload is not the unit manufacturing serial");
+assert(serials.every((serial) => output.includes(serial)), "human-readable manufacturing serial is missing");
+assert(output.includes("box-label-print.css?dcats_version=v-test"), "80x60 print stylesheet is not versioned");
+
+const longOutput = sandbox.build({
+  ...record,
+  productNo: "GEXTENDEDMANUFACTURERCODE01-00001",
+  gltekPartNumber: "GEXTENDEDMANUFACTURERCODE01-00001",
+  units: [{ manufacturing_serial: "M2026-0000003" }]
+});
+assert(longOutput.includes("box-product-label-part long"), "long GLTEK part numbers do not receive adaptive type size");
+
+console.log("80x60 box-label layout, Code 128, serial QR, and separate reprint flow passed.");

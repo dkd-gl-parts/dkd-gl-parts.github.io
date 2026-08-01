@@ -361,6 +361,13 @@ var TRANSLATIONS = {
     finished_label_layout_one_per_unit: "1台につき1枚",
     finished_label_layout_sample: "発行前はサンプルシリアルを表示",
     finished_label_layout_qr_value: "QR格納値",
+    finished_box_label_preview: "80×60箱シール印刷",
+    finished_box_label_layout_title: "箱シール レイアウト",
+    finished_box_label_layout_hint: "GLTEK品番はCode 128、製造シリアルはQRで表示します。黒1色・熱転写用です。",
+    finished_box_label_layout_one_per_unit: "1台につき1枚",
+    finished_box_label_barcode_value: "品番バーコード",
+    finished_product_label_reprint: "製品シール再印刷",
+    finished_box_label_reprint: "箱シール再印刷",
     finished_label_issue_code: "完品登録ID",
     finished_label_instruction_id: "製造予定ID",
     finished_label_product_category: "製品カテゴリ",
@@ -1739,6 +1746,13 @@ var TRANSLATIONS = {
     finished_label_layout_one_per_unit: "One label per unit",
     finished_label_layout_sample: "A sample serial is shown before issue",
     finished_label_layout_qr_value: "QR payload",
+    finished_box_label_preview: "Print 80×60 Box Labels",
+    finished_box_label_layout_title: "Box Label Layout",
+    finished_box_label_layout_hint: "The GLTEK part number uses Code 128 and the manufacturing serial uses QR. Black-only thermal-transfer layout.",
+    finished_box_label_layout_one_per_unit: "One label per unit",
+    finished_box_label_barcode_value: "Part-number barcode",
+    finished_product_label_reprint: "Reprint Product Label",
+    finished_box_label_reprint: "Reprint Box Label",
     finished_label_issue_code: "Registration ID",
     finished_label_instruction_id: "Production Plan ID",
     finished_label_product_category: "Product Category",
@@ -3124,6 +3138,13 @@ var TRANSLATIONS = {
     finished_label_layout_one_per_unit: "每台1张",
     finished_label_layout_sample: "发行前显示示例序列号",
     finished_label_layout_qr_value: "QR内容",
+    finished_box_label_preview: "打印80×60箱标签",
+    finished_box_label_layout_title: "箱标签版式",
+    finished_box_label_layout_hint: "GLTEK品号使用Code 128，制造序列号使用QR。黑色单色热转印版式。",
+    finished_box_label_layout_one_per_unit: "每台1张",
+    finished_box_label_barcode_value: "品号条码",
+    finished_product_label_reprint: "重新打印产品标签",
+    finished_box_label_reprint: "重新打印箱标签",
     finished_label_issue_code: "完品登记ID",
     finished_label_instruction_id: "生产计划ID",
     finished_label_product_category: "产品类别",
@@ -4242,7 +4263,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.632";
+var APP_VERSION       = "v1.1.633";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -17121,7 +17142,10 @@ function resetFinishedLabelForm(product, instruction) {
   renderFinishedLabelIssuedResult(null);
   var preview = document.getElementById("btn-finished-label-preview");
   if (preview) preview.disabled = true;
+  var boxPreview = document.getElementById("btn-finished-box-label-preview");
+  if (boxPreview) boxPreview.disabled = true;
   renderFinishedLabelLayoutPreview();
+  renderFinishedBoxLabelLayoutPreview();
 }
 
 function setFinishedLabelValue(id, value) {
@@ -17300,10 +17324,12 @@ function updateFinishedLabelQrPayload() {
     if (units.length > 1) value += " ～ " + units[units.length - 1].manufacturing_serial;
     setFinishedLabelValue("finished-label-qr-payload", value);
     renderFinishedLabelLayoutPreview();
+    renderFinishedBoxLabelLayoutPreview();
     return;
   }
   setFinishedLabelValue("finished-label-qr-payload", t("finished_label_code_pending"));
   renderFinishedLabelLayoutPreview();
+  renderFinishedBoxLabelLayoutPreview();
 }
 
 function finishedLabelPreviewProductNo() {
@@ -17348,6 +17374,86 @@ function renderFinishedLabelLayoutPreview() {
   if (qrValue) qrValue.textContent = serial;
 }
 
+function finishedProductPartBarcodeDataUrl(partNumber) {
+  partNumber = String(partNumber || "").trim();
+  if (!partNumber || typeof JsBarcode !== "function") throw new Error("Code 128 barcode library is unavailable");
+  var canvas = document.createElement("canvas");
+  JsBarcode(canvas, partNumber, {
+    format: "CODE128",
+    displayValue: false,
+    margin: 8,
+    width: 2,
+    height: 96,
+    background: "#ffffff",
+    lineColor: "#000000"
+  });
+  return canvas.toDataURL("image/png");
+}
+
+function finishedBoxLabelPreviewRecord() {
+  var product = finishedLabelSelectedProduct || {};
+  var variant = selectedFinishedLabelVariant();
+  return {
+    productNo: finishedLabelPreviewProductNo(),
+    gltekPartNumber: product.gltek_part_number || "",
+    genuinePartNumber: product.genuine_part_number || "",
+    genuinePartNumber2: product.genuine_part_number_2 || "",
+    manufacturerPartNumber: product.manufacturer_part_number || "",
+    manufacturer: product.manufacturer || "",
+    productCategory: finishedLabelValue("finished-label-product-category") || finishedLabelCategoryForProduct(product),
+    productKind: variant && variant.product_kind || product.default_product_kind || "",
+    nominalVoltage: specNumberText(product.nominal_voltage_v, "V"),
+    nominalOutput: finishedLabelOutputText(product),
+    nominalSpec: product.spec || product.nominal_raw_spec || "",
+    units: [{ manufacturing_serial: finishedLabelPreviewSerial() }]
+  };
+}
+
+function buildFinishedBoxLabelMarkup(record, unit) {
+  record = record || {};
+  unit = unit || {};
+  var serial = unit.manufacturing_serial || "-";
+  var productNo = String(unit.gltek_part_number || unit.product_no || record.gltekPartNumber || record.productNo || record.manufacturerPartNumber || record.genuinePartNumber || "-");
+  var productLength = Array.from(productNo).length;
+  var productSizeClass = productLength > 24 ? " long" : (productLength > 18 ? " compact" : "");
+  var manufacturer = unit.manufacturer || record.manufacturer || "";
+  var manufacturerPartNumber = unit.manufacturer_part_number || record.manufacturerPartNumber || "";
+  var manufacturerLine = [manufacturer, manufacturerPartNumber].filter(Boolean).join(" / ") || "-";
+  var genuineLine = [unit.genuine_part_number || record.genuinePartNumber, record.genuinePartNumber2].filter(Boolean).join(" / ") || "-";
+  var specification = [record.nominalVoltage, record.nominalOutput, record.nominalSpec].filter(Boolean).join(" / ") || "-";
+  var category = record.productCategory || "-";
+  var productKind = record.productKind ? productKindLabel(record.productKind) : "-";
+  var barcodeDataUrl = finishedProductPartBarcodeDataUrl(productNo);
+  var qrDataUrl = finishedProductSerialQrDataUrl(serial);
+  return "<section class='box-product-label'>" +
+    "<div class='box-product-label-head'><strong>GLTEK</strong><span>BOX LABEL</span><em>" + esc(category) + "</em></div>" +
+    "<div class='box-product-label-number'><span>GLTEK PART NO.</span><strong class='box-product-label-part" + productSizeClass + "'>" + esc(productNo) + "</strong></div>" +
+    "<div class='box-product-label-barcode'><img src='" + esc(barcodeDataUrl) + "' alt='Code 128 " + esc(productNo) + "'><strong>" + esc(productNo) + "</strong></div>" +
+    "<div class='box-product-label-lower'><div class='box-product-label-details'>" +
+    "<div><span>MANUFACTURER / MFR PART NO.</span><strong>" + esc(manufacturerLine) + "</strong></div>" +
+    "<div><span>GENUINE PART NO.</span><strong>" + esc(genuineLine) + "</strong></div>" +
+    "<div><span>SPECIFICATION</span><strong>" + esc(specification) + "</strong></div>" +
+    "<div><span>PRODUCT TYPE</span><strong>" + esc(productKind) + "</strong></div>" +
+    "</div><div class='box-product-label-serial'><img src='" + esc(qrDataUrl) + "' alt='" + esc(serial) + "'><span>MFG SERIAL / S/N</span><strong>" + esc(serial) + "</strong></div></div>" +
+    "</section>";
+}
+
+function renderFinishedBoxLabelLayoutPreview() {
+  var host = document.getElementById("finished-box-label-layout-preview");
+  if (!host) return;
+  var record = finishedBoxLabelPreviewRecord();
+  var unit = record.units[0];
+  try {
+    host.innerHTML = buildFinishedBoxLabelMarkup(record, unit);
+  } catch (e) {
+    host.innerHTML = "<div class='finished-label-layout-error'>Barcode preview unavailable</div>";
+  }
+  var barcodeValue = document.getElementById("finished-box-label-barcode-value");
+  if (barcodeValue) barcodeValue.textContent = record.productNo;
+  var qrValue = document.getElementById("finished-box-label-qr-value");
+  if (qrValue) qrValue.textContent = unit.manufacturing_serial;
+}
+
 async function saveFinishedLabelIssue() {
   if (!canEditFinishedLabelMgmt()) { alert(t("err_perm")); return; }
   var btn = document.getElementById("btn-finished-label-save");
@@ -17386,6 +17492,8 @@ async function saveFinishedLabelIssue() {
     renderFinishedLabelIssuedResult(record);
     var preview = document.getElementById("btn-finished-label-preview");
     if (preview) preview.disabled = false;
+    var boxPreview = document.getElementById("btn-finished-box-label-preview");
+    if (boxPreview) boxPreview.disabled = false;
     await writeLog("insert", "finished_product_units", record.issueId, record.issueCode, null, {
       issue_code: record.issueCode,
       quantity: record.quantity,
@@ -17419,12 +17527,14 @@ function renderFinishedLabelIssuedResult(record) {
   var stockText = Number.isFinite(record.stockQtyAfter)
     ? tf("finished_label_stock_after", { n: record.stockQtyAfter })
     : "";
-  host.innerHTML = "<div class='finished-label-issued-head'><div><strong>" + esc(t("finished_label_serial_result")) + "</strong><span>" + esc(record.issueCode || "") + "</span></div><button class='btn-sm-edit' id='btn-finished-label-issued-print'>" + esc(t("finished_label_preview")) + "</button></div>" +
+  host.innerHTML = "<div class='finished-label-issued-head'><div><strong>" + esc(t("finished_label_serial_result")) + "</strong><span>" + esc(record.issueCode || "") + "</span></div><div class='finished-label-issued-actions'><button class='btn-sm-edit production-action-secondary' id='btn-finished-label-issued-print'>" + esc(t("finished_label_preview")) + "</button><button class='btn-sm-edit' id='btn-finished-box-label-issued-print'>" + esc(t("finished_box_label_preview")) + "</button></div></div>" +
     "<div class='finished-label-issued-meta'>" + esc([record.quantity + " 台", stockText].filter(Boolean).join(" / ")) + "</div>" +
     "<div class='finished-label-serial-list'>" + serials + "</div>";
   host.classList.add("show");
   var btn = document.getElementById("btn-finished-label-issued-print");
   if (btn) btn.addEventListener("click", function() { openFinishedLabelPrintPreview(record); });
+  var boxBtn = document.getElementById("btn-finished-box-label-issued-print");
+  if (boxBtn) boxBtn.addEventListener("click", function() { openFinishedBoxLabelPrintPreview(record); });
 }
 
 async function loadFinishedLabelHistory() {
@@ -17483,7 +17593,7 @@ function renderFinishedLabelHistory() {
     var serialText = units.length ? units[0].manufacturing_serial : "-";
     if (units.length > 1) serialText += " ～ " + units[units.length - 1].manufacturing_serial;
     html += "<div class='finished-label-history-row'>";
-    html += "<div class='finished-label-history-main'><span>" + esc(row.issue_code || "-") + "</span><button class='btn-sm-edit production-action-secondary' data-finished-label-history-preview='" + esc(String(row.id)) + "'" + (units.length ? "" : " disabled") + ">" + esc(t("finished_label_reprint")) + "</button></div>";
+    html += "<div class='finished-label-history-main'><span>" + esc(row.issue_code || "-") + "</span><div class='finished-label-history-actions'><button class='btn-sm-edit production-action-secondary' data-finished-label-history-preview='" + esc(String(row.id)) + "'" + (units.length ? "" : " disabled") + ">" + esc(t("finished_product_label_reprint")) + "</button><button class='btn-sm-edit production-action-secondary' data-finished-box-label-history-preview='" + esc(String(row.id)) + "'" + (units.length ? "" : " disabled") + ">" + esc(t("finished_box_label_reprint")) + "</button></div></div>";
     html += "<div class='finished-label-history-serial'>" + esc(serialText) + "</div>";
     html += "<div class='finished-label-history-sub'>" + esc([formatDateTime(row.issued_at), row.product_category, productKindLabel(row.product_kind), row.quantity + " units", comps + " parts"].filter(Boolean).join(" / ")) + "</div>";
     html += "</div>";
@@ -17492,7 +17602,13 @@ function renderFinishedLabelHistory() {
   list.querySelectorAll("[data-finished-label-history-preview]").forEach(function(btn) {
     btn.addEventListener("click", function() {
       var row = finishedLabelHistoryRows.find(function(x) { return String(x.id) === String(btn.dataset.finishedLabelHistoryPreview); });
-      if (row) reprintFinishedLabelIssue(row);
+      if (row) reprintFinishedLabelIssue(row, "product");
+    });
+  });
+  list.querySelectorAll("[data-finished-box-label-history-preview]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var row = finishedLabelHistoryRows.find(function(x) { return String(x.id) === String(btn.dataset.finishedBoxLabelHistoryPreview); });
+      if (row) reprintFinishedLabelIssue(row, "box");
     });
   });
 }
@@ -17531,7 +17647,8 @@ function finishedLabelRecordFromHistory(row, issued) {
   };
 }
 
-async function reprintFinishedLabelIssue(row) {
+async function reprintFinishedLabelIssue(row, labelType) {
+  labelType = labelType === "box" ? "box" : "product";
   var reason = window.prompt(t("finished_label_reprint_reason"), "ラベル汚損・貼り替え");
   if (reason === null) return;
   reason = String(reason || "").trim();
@@ -17548,12 +17665,16 @@ async function reprintFinishedLabelIssue(row) {
     if (result.error) throw result.error;
     var record = finishedLabelRecordFromHistory(row, result.data || {});
     await writeLog("insert", "finished_product_label_prints", row.id, row.issue_code, null, {
-      event_type: "reprint",
+      event_type: labelType === "box" ? "box_label_reprint" : "product_label_reprint",
+      label_size: labelType === "box" ? "80x60" : "45x20",
       reason: reason,
       quantity: record.units.length,
-      copies_per_unit: 2
+      copies_per_unit: 1
     });
-    if (printWindow) openFinishedLabelPrintPreview(record, printWindow);
+    if (printWindow) {
+      if (labelType === "box") openFinishedBoxLabelPrintPreview(record, printWindow);
+      else openFinishedLabelPrintPreview(record, printWindow);
+    }
     else alert(t("finished_label_popup_blocked"));
   } catch (e) {
     if (printWindow && !printWindow.closed) printWindow.close();
@@ -17564,6 +17685,11 @@ async function reprintFinishedLabelIssue(row) {
 function previewCurrentFinishedLabel() {
   if (!finishedLabelLastIssuedRecord) return;
   openFinishedLabelPrintPreview(finishedLabelLastIssuedRecord);
+}
+
+function previewCurrentFinishedBoxLabel() {
+  if (!finishedLabelLastIssuedRecord) return;
+  openFinishedBoxLabelPrintPreview(finishedLabelLastIssuedRecord);
 }
 
 function finishedProductSerialQrDataUrl(serial) {
@@ -17614,6 +17740,37 @@ function buildFinishedLabelPrintHtml(record) {
   return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><title>D-CATS " + esc(record.issueCode || "") + "</title>" +
     "<link rel='stylesheet' href='print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'>" +
     "</head><body><div class='toolbar'><button id='dcats-print-now' type='button'>印刷</button><span>用紙サイズを45×20mm、倍率100%に設定してください。" + esc(units.length) + "台 × 1枚</span></div><main class='serial-labels'>" + labels.join("") + "</main></body></html>";
+}
+
+function openFinishedBoxLabelPrintPreview(record, existingWindow) {
+  var win = existingWindow || window.open("", "_blank");
+  if (!win) {
+    alert(t("finished_label_popup_blocked"));
+    return false;
+  }
+  try {
+    win.document.open();
+    win.document.write(buildFinishedBoxLabelPrintHtml(record));
+    win.document.close();
+    var printBtn = win.document.getElementById("dcats-print-now");
+    if (printBtn) printBtn.addEventListener("click", function() { win.print(); });
+    return true;
+  } catch (e) {
+    if (!win.closed) win.close();
+    alert(e.message || e);
+    return false;
+  }
+}
+
+function buildFinishedBoxLabelPrintHtml(record) {
+  var units = Array.isArray(record.units) ? record.units : [];
+  if (!units.length) throw new Error("No manufacturing serials to print");
+  var labels = units.map(function(unit) {
+    return buildFinishedBoxLabelMarkup(record, unit);
+  });
+  return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><title>D-CATS BOX " + esc(record.issueCode || "") + "</title>" +
+    "<link rel='stylesheet' href='box-label-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'>" +
+    "</head><body><div class='toolbar'><button id='dcats-print-now' type='button'>印刷</button><span>用紙サイズを80×60mm、倍率100%に設定してください。" + esc(units.length) + "台 × 1枚</span></div><main class='box-product-labels'>" + labels.join("") + "</main></body></html>";
 }
 
 // =============================================
@@ -35407,6 +35564,7 @@ document.getElementById("finished-label-search").addEventListener("keydown", fun
 document.getElementById("btn-finished-label-load-history").addEventListener("click", loadFinishedLabelHistory);
 document.getElementById("btn-finished-label-template").addEventListener("click", applyFinishedLabelTemplate);
 document.getElementById("btn-finished-label-preview").addEventListener("click", previewCurrentFinishedLabel);
+document.getElementById("btn-finished-box-label-preview").addEventListener("click", previewCurrentFinishedBoxLabel);
 document.getElementById("btn-finished-label-clear").addEventListener("click", function(){
   resetFinishedLabelForm(finishedLabelSelectedProduct, finishedLabelSelectedInstruction);
   applyFinishedLabelTemplate();

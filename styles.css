@@ -3853,6 +3853,43 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .finished-label-layout-preview .serial-label-product.long { font-size: 14px; letter-spacing: -.035em; }
 .finished-label-layout-preview .serial-label-rule { margin: 8px 0 7px; border-top: 2px solid #000; }
 .finished-label-layout-preview .serial-label-number { margin-top: 5px; font-family: Consolas, "Courier New", monospace; font-size: 24px; font-weight: 900; letter-spacing: -.035em; line-height: 1; white-space: nowrap; }
+.finished-label-toolbar > div, .finished-label-issued-actions, .finished-label-history-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.finished-box-label-layout-panel { border-color: #cbd8e8; background: #f7faff; }
+.finished-box-label-layout-stage { display: grid; grid-template-columns: 32px max-content; grid-template-rows: 24px max-content; margin-top: 12px; overflow: auto; border: 1px solid #d9dee7; border-radius: 8px; padding: 12px 16px 16px 10px; background-color: #eef1f5; background-image: linear-gradient(#e3e7ed 1px, transparent 1px), linear-gradient(90deg, #e3e7ed 1px, transparent 1px); background-size: 10px 10px; }
+.finished-box-label-layout-width { grid-column: 2; grid-row: 1; position: relative; width: 480px; border-top: 1px solid #5e6878; color: #465061; text-align: center; }
+.finished-box-label-layout-width::before, .finished-box-label-layout-width::after { position: absolute; top: -4px; width: 1px; height: 8px; background: #5e6878; content: ""; }
+.finished-box-label-layout-width::before { left: 0; }
+.finished-box-label-layout-width::after { right: 0; }
+.finished-box-label-layout-width span { position: relative; top: -9px; padding: 0 7px; background: #eef1f5; font-size: 10px; font-weight: 800; }
+.finished-box-label-layout-height { grid-column: 1; grid-row: 2; position: relative; height: 360px; border-left: 1px solid #5e6878; color: #465061; }
+.finished-box-label-layout-height::before, .finished-box-label-layout-height::after { position: absolute; left: -4px; width: 8px; height: 1px; background: #5e6878; content: ""; }
+.finished-box-label-layout-height::before { top: 0; }
+.finished-box-label-layout-height::after { bottom: 0; }
+.finished-box-label-layout-height span { position: absolute; top: 50%; left: 1px; padding: 4px 0; background: #eef1f5; font-size: 10px; font-weight: 800; line-height: 1; writing-mode: vertical-rl; transform: translateY(-50%); }
+.finished-box-label-layout-preview { grid-column: 2; grid-row: 2; width: 480px; height: 360px; box-shadow: 0 5px 16px rgba(20, 30, 46, .17); background: #fff; }
+.finished-box-label-layout-preview .box-product-label { width: 480px; height: 360px; overflow: hidden; border: 2px solid #000; padding: 10px; background: #fff; color: #000; font-family: Arial, "Noto Sans JP", sans-serif; }
+.finished-box-label-layout-preview .box-product-label-head { display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-items: center; gap: 11px; height: 40px; border-bottom: 2px solid #000; line-height: 1; }
+.finished-box-label-layout-preview .box-product-label-head strong { font-size: 25px; font-weight: 900; letter-spacing: .12em; }
+.finished-box-label-layout-preview .box-product-label-head span { font-size: 10px; font-weight: 900; letter-spacing: .08em; }
+.finished-box-label-layout-preview .box-product-label-head em { overflow: hidden; font-size: 12px; font-style: normal; font-weight: 900; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+.finished-box-label-layout-preview .box-product-label-number { display: grid; grid-template-columns: 132px minmax(0, 1fr); align-items: end; gap: 8px; height: 46px; padding-top: 5px; }
+.finished-box-label-layout-preview .box-product-label-number > span { padding-bottom: 4px; font-size: 9px; font-weight: 900; letter-spacing: .06em; white-space: nowrap; }
+.finished-box-label-layout-preview .box-product-label-part { overflow: hidden; font-family: Consolas, "Courier New", monospace; font-size: 29px; font-weight: 900; letter-spacing: -.025em; line-height: 1; text-overflow: ellipsis; white-space: nowrap; }
+.finished-box-label-layout-preview .box-product-label-part.compact { font-size: 25px; }
+.finished-box-label-layout-preview .box-product-label-part.long { font-size: 21px; letter-spacing: -.04em; }
+.finished-box-label-layout-preview .box-product-label-barcode { display: grid; grid-template-rows: 72px 14px; height: 91px; padding: 2px 4px 3px; text-align: center; }
+.finished-box-label-layout-preview .box-product-label-barcode img { display: block; width: 100%; height: 72px; image-rendering: crisp-edges; }
+.finished-box-label-layout-preview .box-product-label-barcode strong { overflow: hidden; font-family: Consolas, "Courier New", monospace; font-size: 12px; line-height: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.finished-box-label-layout-preview .box-product-label-lower { display: grid; grid-template-columns: minmax(0, 1fr) 134px; gap: 9px; height: 159px; border-top: 2px solid #000; padding-top: 7px; }
+.finished-box-label-layout-preview .box-product-label-details { display: grid; grid-template-rows: repeat(4, minmax(0, 1fr)); min-width: 0; }
+.finished-box-label-layout-preview .box-product-label-details > div { min-width: 0; overflow: hidden; border-bottom: 1px solid #000; padding: 3px 0; }
+.finished-box-label-layout-preview .box-product-label-details > div:last-child { border-bottom: 0; }
+.finished-box-label-layout-preview .box-product-label-details span { display: block; font-size: 8px; font-weight: 900; letter-spacing: .05em; line-height: 1; }
+.finished-box-label-layout-preview .box-product-label-details strong { display: block; overflow: hidden; margin-top: 3px; font-size: 14px; font-weight: 900; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
+.finished-box-label-layout-preview .box-product-label-serial { display: flex; align-items: center; flex-direction: column; min-width: 0; border-left: 2px solid #000; padding-left: 8px; }
+.finished-box-label-layout-preview .box-product-label-serial img { display: block; width: 112px; height: 112px; image-rendering: pixelated; }
+.finished-box-label-layout-preview .box-product-label-serial span { margin-top: 3px; font-size: 8px; font-weight: 900; letter-spacing: .05em; line-height: 1; }
+.finished-box-label-layout-preview .box-product-label-serial strong { margin-top: 4px; font-family: Consolas, "Courier New", monospace; font-size: 13px; font-weight: 900; letter-spacing: -.04em; line-height: 1; white-space: nowrap; }
 .finished-label-layout-error { display: grid; height: 100%; place-items: center; color: #a33b2e; font-size: 12px; font-weight: 700; }
 .finished-label-layout-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 9px; color: #5f6b7a; font-size: 10px; line-height: 1.4; }
 .finished-label-layout-foot strong { color: #172033; font-family: Consolas, "SFMono-Regular", monospace; font-size: 11px; }
