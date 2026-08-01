@@ -1396,7 +1396,7 @@ var TRANSLATIONS = {
     component_assy_mfr_pn_required: "対象ASSYのメーカー品番が未登録のため、構成部品を追加できません。品番マスタを確認してください。",
     component_name_required: "構成部品の部品名を入力してください。",
     component_part_number_invalid_chars: "{field}は半角英数字 A-Z 0-9 とハイフン - のみで入力してください。",
-    component_mfr_part_number_invalid_chars: "{field}は半角英数字 A-Z 0-9、ハイフン -、カンマ , のみで入力してください。",
+    component_mfr_part_number_invalid_chars: "{field}は半角英数字 A-Z 0-9、ハイフン -、ピリオド .、カンマ , のみで入力してください。",
     component_part_number_length_warning: "{field}は{min}〜{max}文字が標準です。現在 {count} 文字です。",
     component_part_number_duplicate_warning: "同じメーカー + 品番がこの構成部品一覧にあります: {value}",
     component_part_number_confirm: "入力内容を確認してください。\n{messages}\n\nこのまま保存しますか？",
@@ -2767,7 +2767,7 @@ var TRANSLATIONS = {
     component_assy_mfr_pn_required: "A manufacturer part number is not registered for the target ASSY. Check the product master before adding a component.",
     component_name_required: "Enter the component part name.",
     component_part_number_invalid_chars: "{field} may contain only half-width A-Z, 0-9, and hyphen -.",
-    component_mfr_part_number_invalid_chars: "{field} may contain only half-width A-Z, 0-9, hyphen -, and comma ,.",
+    component_mfr_part_number_invalid_chars: "{field} may contain only half-width A-Z, 0-9, hyphen -, period ., and comma ,.",
     component_part_number_length_warning: "{field} is normally {min}-{max} characters. Current length is {count}.",
     component_part_number_duplicate_warning: "The same manufacturer + part number already exists in this component list: {value}",
     component_part_number_confirm: "Please confirm the entered part numbers.\n{messages}\n\nSave anyway?",
@@ -4128,7 +4128,7 @@ var TRANSLATIONS = {
     component_assy_mfr_pn_required: "目标总成未登记制造商品号，无法添加构成部件。请检查商品主数据。",
     component_name_required: "请输入构成部件的部件名。",
     component_part_number_invalid_chars: "{field}只能输入半角 A-Z、0-9 和连字符 -。",
-    component_mfr_part_number_invalid_chars: "{field}只能输入半角 A-Z、0-9、连字符 - 和逗号 ,。",
+    component_mfr_part_number_invalid_chars: "{field}只能输入半角 A-Z、0-9、连字符 -、句点 . 和逗号 ,。",
     component_part_number_length_warning: "{field}通常为 {min}-{max} 个字符。当前为 {count} 个字符。",
     component_part_number_duplicate_warning: "此构成部件列表中已有相同厂家 + 品号: {value}",
     component_part_number_confirm: "请确认输入的品号。\n{messages}\n\n仍要保存吗？",
@@ -4221,7 +4221,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.630";
+var APP_VERSION       = "v1.1.631";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -23777,7 +23777,12 @@ function normalizeComponentPartNumberInput(value) {
     .trim()
     .toUpperCase()
     .replace(/[\u2010-\u2015\u2212\u30FC\uFF0D]/g, "-")
+    .replace(/[\u3002\uFF0E]/g, ".")
     .replace(/[\u3001\uFF0C]/g, ",");
+}
+
+function normalizedComponentPartKey(value) {
+  return normalizeComponentPartNumberInput(value).replace(/[-,\s]/g, "");
 }
 
 function normalizeComponentManufacturerInput(value) {
@@ -23806,7 +23811,7 @@ function componentPartNumberValidation(value, kind) {
     if (spec.required) errors.push(t("component_mfr_pn_required"));
     return { value: normalized, errors: errors, warnings: warnings };
   }
-  var validPattern = kind === "manufacturer" ? /^[A-Z0-9,-]+$/ : /^[A-Z0-9-]+$/;
+  var validPattern = kind === "manufacturer" ? /^[A-Z0-9.,-]+$/ : /^[A-Z0-9-]+$/;
   if (!validPattern.test(normalized)) {
     errors.push(tf(kind === "manufacturer" ? "component_mfr_part_number_invalid_chars" : "component_part_number_invalid_chars", { field: spec.label }));
   }
@@ -23826,12 +23831,12 @@ function validateComponentPartNumberInputs(manufacturerPartNumber, genuinePartNu
   var errors = mfr.errors.concat(genuine.errors);
   var warnings = mfr.warnings.concat(genuine.warnings);
   var makerKey = normalizeComponentManufacturerInput(manufacturer || "UNKNOWN");
-  var partKey = normalizedPartKey(mfr.value);
+  var partKey = normalizedComponentPartKey(mfr.value);
   if (partKey) {
     (assemblyComponentRows || []).forEach(function(row) {
       if (excludeUsageId && String(row.id) === String(excludeUsageId)) return;
       var rowMakerKey = normalizeComponentManufacturerInput(row.component_manufacturer || "UNKNOWN");
-      var rowPartKey = normalizedPartKey(row.component_manufacturer_part_number);
+      var rowPartKey = normalizedComponentPartKey(row.component_manufacturer_part_number);
       if (rowMakerKey === makerKey && rowPartKey === partKey) {
         warnings.push(tf("component_part_number_duplicate_warning", {
           value: [makerKey, mfr.value].filter(Boolean).join(" / ")
@@ -23944,7 +23949,7 @@ async function lookupCoreProductPartNumberPair(mfrKey, genuineKey) {
 }
 
 async function lookupComponentPartNumberPair(mfrValue, genuineValue) {
-  if (String(mfrValue || "").indexOf(",") >= 0) return null;
+  if (/[.,]/.test(String(mfrValue || ""))) return null;
   var mfrKey = normalizedPartKey(mfrValue);
   var genuineKey = normalizedPartKey(genuineValue);
   var keys = [];
@@ -27697,11 +27702,11 @@ function validateComponentAlternativePartNumberInputs(manufacturerPartNumber, ge
   var errors = mfr.errors.concat(genuine.errors);
   var warnings = mfr.warnings.concat(genuine.warnings);
   var makerKey = normalizeComponentManufacturerInput(manufacturer || "UNKNOWN");
-  var partKey = normalizedPartKey(mfr.value);
+  var partKey = normalizedComponentPartKey(mfr.value);
   if (partKey) {
     (assemblyComponentRows || []).forEach(function(row) {
       var rowMakerKey = normalizeComponentManufacturerInput(row.component_manufacturer || "UNKNOWN");
-      var rowPartKey = normalizedPartKey(row.component_manufacturer_part_number);
+      var rowPartKey = normalizedComponentPartKey(row.component_manufacturer_part_number);
       if (rowMakerKey === makerKey && rowPartKey === partKey) {
         warnings.push(tf("component_part_number_duplicate_warning", {
           value: [makerKey, mfr.value].filter(Boolean).join(" / ")
@@ -27711,7 +27716,7 @@ function validateComponentAlternativePartNumberInputs(manufacturerPartNumber, ge
     (componentAlternativeRows || []).forEach(function(alt) {
       var part = alt.internal_component_parts || {};
       var rowMakerKey = normalizeComponentManufacturerInput(part.manufacturer || "UNKNOWN");
-      var rowPartKey = normalizedPartKey(part.part_number);
+      var rowPartKey = normalizedComponentPartKey(part.part_number);
       if (rowMakerKey === makerKey && rowPartKey === partKey) {
         warnings.push(tf("component_part_number_duplicate_warning", {
           value: [makerKey, mfr.value].filter(Boolean).join(" / ")

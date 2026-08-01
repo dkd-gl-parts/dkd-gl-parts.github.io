@@ -12,6 +12,40 @@ function functionSource(name, nextName) {
   return source.slice(start, end);
 }
 
+function sourceBetween(startText, endText) {
+  const start = source.indexOf(startText);
+  const end = source.indexOf(endText, start + 1);
+  if (start < 0 || end < start) throw new Error(`${startText} could not be isolated`);
+  return source.slice(start, end);
+}
+
+const validationSandbox = {
+  normalizeAsciiWidth: (value) => String(value || "").replace(/[\uFF01-\uFF5E]/g, (char) => String.fromCharCode(char.charCodeAt(0) - 0xFEE0)),
+  t: (key) => key,
+  tf: (key) => key
+};
+const normalizeSource = sourceBetween("function normalizeComponentPartNumberInput", "function normalizeComponentManufacturerInput");
+const validationSource = sourceBetween("function componentPartNumberSpec", "function setComponentPartNumberInputState");
+vm.runInNewContext(`${normalizeSource}\n${validationSource}\nvalidationResults = {
+  period: componentPartNumberValidation("4.5", "manufacturer"),
+  fullWidthPeriod: componentPartNumberValidation("４．５", "manufacturer"),
+  comma: componentPartNumberValidation("4,5", "manufacturer"),
+  invalidSlash: componentPartNumberValidation("4/5", "manufacturer"),
+  periodKey: normalizedComponentPartKey("4.5"),
+  integerKey: normalizedComponentPartKey("45")
+};`, validationSandbox);
+if (validationSandbox.validationResults.period.errors.length || validationSandbox.validationResults.period.value !== "4.5" ||
+    validationSandbox.validationResults.fullWidthPeriod.errors.length || validationSandbox.validationResults.fullWidthPeriod.value !== "4.5" ||
+    validationSandbox.validationResults.comma.errors.length || !validationSandbox.validationResults.invalidSlash.errors.length ||
+    validationSandbox.validationResults.periodKey !== "4.5" || validationSandbox.validationResults.integerKey !== "45") {
+  throw new Error("component manufacturer part numbers must allow periods and commas while rejecting unsupported punctuation");
+}
+
+const lookupSource = functionSource("lookupComponentPartNumberPair", "async function reconcileComponentAddPartNumbers");
+if (!lookupSource.includes('/[.,]/.test(String(mfrValue || ""))')) {
+  throw new Error("period or comma part numbers must bypass punctuation-stripping candidate replacement");
+}
+
 const addSource = functionSource("addAssemblyComponentForCurrent", "function componentEditInput");
 if (!addSource.includes('normalizeComponentManufacturerInput(currentProduct.manufacturer) || "UNKNOWN"') ||
     !addSource.includes('t("component_assy_mfr_pn_required")') ||
@@ -22,7 +56,7 @@ if (!addSource.includes('normalizeComponentManufacturerInput(currentProduct.manu
 const values = {
   "component-add-name": "B接点",
   "component-add-mfr": "",
-  "component-add-mfr-pn": "A-2050-9",
+  "component-add-mfr-pn": "4.5",
   "component-add-genuine-pn": "",
   "component-add-position": "",
   "component-add-qty": "1",
@@ -117,7 +151,7 @@ vm.runInNewContext(`${addSource}; result = addAssemblyComponentForCurrent;`, san
   }
   if (rpcCall.payload.target_manufacturer !== "UNKNOWN" ||
       rpcCall.payload.target_manufacturer_part_number !== "SM-760-04" ||
-      rpcCall.payload.component_manufacturer_part_number !== "A-2050-9") {
+      rpcCall.payload.component_manufacturer_part_number !== "4.5") {
     throw new Error("manual component add must preserve ASSY and component part numbers while defaulting the ASSY manufacturer");
   }
   if (elements["component-add-error"].textContent || alertMessage) {
