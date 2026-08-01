@@ -38,6 +38,36 @@ const styles = fs.readFileSync(path.join(root, "styles.css"), "utf8");
   if (!styles.includes(expected)) throw new Error(`customer account styling is missing: ${expected}`);
 });
 
+[
+  'id="customer-users-open-invite"',
+  'id="customer-users-invite-card"',
+  'id="customer-users-invite-help"',
+  'id="customer-users-invite-name" type="text" maxlength="120" autocomplete="name" required aria-describedby="customer-users-invite-help"',
+  'id="customer-users-invite-email" type="email" maxlength="254" autocomplete="email" required aria-describedby="customer-users-invite-help"',
+  'id="customer-users-invite-message" aria-live="polite"',
+].forEach((expected) => {
+  if (!html.includes(expected)) throw new Error(`customer invitation layout is missing: ${expected}`);
+});
+
+[
+  "function focusCustomerUserInviteForm",
+  'document.getElementById("customer-users-open-invite").addEventListener("click", focusCustomerUserInviteForm)',
+  "customer_users_invite_flow_note",
+  "customer_users_name_placeholder",
+  "customer_users_email_placeholder",
+].forEach((expected) => {
+  if (!app.includes(expected)) throw new Error(`customer invitation guidance is missing: ${expected}`);
+});
+
+[
+  ".customer-users-open-invite",
+  ".customer-users-invite-card",
+  ".customer-users-invite-intro",
+  ".customer-users-invite-flow",
+].forEach((expected) => {
+  if (!styles.includes(expected)) throw new Error(`customer invitation emphasis styling is missing: ${expected}`);
+});
+
 if (!html.includes("【D-CATS】アカウント登録のご案内") ||
     !html.includes("平素より大光電機株式会社をご愛顧いただき") ||
     !html.includes("D-CATSの利用を開始する") ||

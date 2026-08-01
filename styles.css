@@ -2795,21 +2795,42 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-users-summary > div { min-width: 0; }
 .customer-users-summary span { display: block; color: #78847f; font-size: 11px; font-weight: 700; }
 .customer-users-summary strong { display: block; margin-top: 4px; overflow-wrap: anywhere; color: #1f2d27; font-size: 18px; }
+.customer-users-summary-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.customer-users-open-invite { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 38px; border: 1px solid #245f49; border-radius: 8px; padding: 0 14px; background: #245f49; color: #fff; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.customer-users-open-invite:hover { background: #1d503d; }
+.customer-users-open-invite > span { display: inline; color: inherit; font-size: inherit; }
+.customer-users-open-invite > span:first-child { font-size: 18px; font-weight: 500; line-height: 1; }
 .customer-user-role-badge { display: inline-flex; align-items: center; min-height: 24px; border: 1px solid #b8c7c1; border-radius: 6px; padding: 2px 8px; background: #f3f6f5; color: #596861; font-size: 11px; font-weight: 800; white-space: nowrap; }
 .customer-user-role-badge.admin { border-color: #d4b46a; background: #fff8e6; color: #745410; }
 .customer-user-role-badge.member { border-color: #b8c7c1; background: #f3f6f5; color: #4f5e57; }
-.customer-users-invite-band { border-bottom: 1px solid #d9e2de; padding: 26px 0 28px; background: #fff; }
+.customer-users-invite-band { border-bottom: 1px solid #cbded5; padding: 28px 0 30px; background: #eaf4ef; }
 .customer-users-list-band { padding: 26px 0 44px; background: #f4f6f5; }
 .customer-users-section-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
 .customer-users-section-head h1,
 .customer-users-section-head h2 { margin: 0; color: #25322d; font-size: 17px; letter-spacing: 0; }
 .customer-users-section-head p { margin: 4px 0 0; color: #69766f; font-size: 11px; line-height: 1.5; }
-.customer-users-invite-form { display: grid; grid-template-columns: minmax(160px, .7fr) minmax(260px, 1.2fr) auto; align-items: end; gap: 12px; }
-.customer-users-invite-form label { display: grid; gap: 6px; min-width: 0; color: #4a5952; font-size: 11px; font-weight: 800; }
-.customer-users-invite-form input { width: 100%; min-width: 0; height: 40px; border: 1px solid #aebdb7; border-radius: 7px; padding: 0 11px; background: #fff; color: #17231f; font-size: 13px; outline: none; box-sizing: border-box; }
+.customer-users-invite-card { display: grid; grid-template-columns: minmax(220px, .72fr) minmax(0, 1.28fr); align-items: start; gap: 34px; border: 2px solid #2f765b; border-radius: 14px; padding: 24px; background: #fff; box-shadow: 0 10px 28px rgba(37, 96, 73, .1); }
+.customer-users-invite-card.is-highlighted { animation: customer-invite-highlight 1.35s ease-out; }
+@keyframes customer-invite-highlight { 0%, 100% { box-shadow: 0 10px 28px rgba(37, 96, 73, .1); } 35% { box-shadow: 0 0 0 6px rgba(47, 118, 91, .2), 0 14px 34px rgba(37, 96, 73, .18); } }
+.customer-users-invite-intro { display: flex; align-items: flex-start; gap: 13px; min-width: 0; }
+.customer-users-invite-icon { display: grid; place-items: center; flex: 0 0 46px; width: 46px; height: 46px; border-radius: 50%; background: #245f49; color: #fff; font-size: 22px; line-height: 1; }
+.customer-users-invite-eyebrow { display: block; margin-bottom: 6px; color: #287356; font-size: 10px; font-weight: 900; letter-spacing: .12em; }
+.customer-users-invite-intro h1 { margin: 0; color: #18382b; font-size: 21px; letter-spacing: 0; line-height: 1.35; }
+.customer-users-invite-intro p { margin: 8px 0 0; color: #66756e; font-size: 12px; line-height: 1.7; }
+.customer-users-invite-form { display: grid; grid-template-columns: minmax(150px, .72fr) minmax(240px, 1.28fr); align-items: start; gap: 14px 12px; min-width: 0; }
+.customer-users-invite-form label { display: grid; gap: 7px; min-width: 0; color: #374840; font-size: 11px; font-weight: 800; }
+.customer-users-invite-form label > span { display: flex; align-items: center; gap: 7px; }
+.customer-users-invite-form label em { border-radius: 4px; padding: 1px 5px; background: #fff0ed; color: #b93f2f; font-size: 9px; font-style: normal; font-weight: 900; }
+.customer-users-invite-form input { width: 100%; min-width: 0; height: 46px; border: 1px solid #9fb5ab; border-radius: 8px; padding: 0 12px; background: #fff; color: #17231f; font-size: 14px; outline: none; box-sizing: border-box; }
+.customer-users-invite-form input::placeholder { color: #9aa7a1; }
 .customer-users-invite-form input:focus { border-color: #287356; box-shadow: 0 0 0 3px rgba(40,115,86,.12); }
-.customer-users-invite-form .btn-primary { min-height: 40px; white-space: nowrap; }
-.customer-users-invite-message { min-height: 18px; margin-top: 8px; }
+.customer-users-invite-flow { grid-column: 1 / -1; display: grid; gap: 3px; border-left: 3px solid #74aa91; border-radius: 0 6px 6px 0; padding: 8px 10px; background: #f2f8f5; color: #52645b; }
+.customer-users-invite-flow strong { color: #315c49; font-size: 10px; }
+.customer-users-invite-flow span { font-size: 10px; line-height: 1.55; }
+.customer-users-invite-form .btn-primary { grid-column: 1 / -1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; background: #245f49; font-size: 14px; font-weight: 800; white-space: nowrap; }
+.customer-users-invite-form .btn-primary:hover { background: #1d503d; }
+.customer-users-invite-form .btn-primary > span:first-child { font-size: 18px; line-height: 1; }
+.customer-users-invite-message { grid-column: 1 / -1; min-height: 18px; margin-top: -4px; }
 .customer-users-list { overflow: hidden; border: 1px solid #d4ddd9; border-radius: 7px; background: #fff; }
 .customer-users-list .loading,
 .customer-users-list .empty { padding: 20px; }
@@ -2926,6 +2947,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .customer-portal-info-grid { grid-template-columns: 1fr 1fr; }
   .customer-portal-info-grid > div:nth-child(2) { border-right: 0; }
   .customer-portal-info-grid > div:nth-child(-n+2) { border-bottom: 1px solid #dbe2df; }
+  .customer-users-invite-card { grid-template-columns: 1fr; gap: 22px; padding: 22px; }
   .customer-users-invite-form { grid-template-columns: 1fr 1fr; }
   .customer-users-invite-form .btn-primary { grid-column: 1 / -1; width: 100%; }
   .customer-user-row { grid-template-columns: minmax(180px, 1fr) auto; }
@@ -2959,14 +2981,24 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .customer-portal-guide-layout,
   .customer-users-summary,
   .customer-users-section-head { align-items: stretch; flex-direction: column; }
+  .customer-users-summary-actions { align-items: stretch; flex-direction: column; width: 100%; }
+  .customer-users-summary-actions .customer-user-role-badge { align-self: flex-start; }
+  .customer-users-open-invite { width: 100%; }
   .customer-portal-account-actions { justify-content: stretch; }
   .customer-portal-account-actions button,
   .customer-portal-guide-button { width: 100%; }
+  .customer-users-invite-card { gap: 18px; padding: 18px 15px; }
+  .customer-users-invite-icon { flex-basis: 40px; width: 40px; height: 40px; font-size: 19px; }
+  .customer-users-invite-intro h1 { font-size: 19px; }
   .customer-users-invite-form { grid-template-columns: 1fr; }
   .customer-users-invite-form .btn-primary { grid-column: 1; }
   .customer-user-row { grid-template-columns: 1fr; align-items: stretch; }
   .customer-user-actions { grid-column: 1; }
   .customer-catalog-availability-metrics { grid-template-columns: 90px minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .customer-users-invite-card.is-highlighted { animation: none; }
 }
 
 @media(max-width:640px){

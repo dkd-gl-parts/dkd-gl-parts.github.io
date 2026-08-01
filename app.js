@@ -145,11 +145,18 @@ var TRANSLATIONS = {
     customer_users_customer: "お取引先",
     customer_users_admin: "管理者",
     customer_users_member: "メンバー",
-    customer_users_invite_title: "担当者を追加",
-    customer_users_invite_note: "追加した担当者へ初回設定メールを送信します。",
+    customer_users_open_invite: "新しい担当者を招待",
+    customer_users_invite_eyebrow: "新規招待",
+    customer_users_invite_title: "新しい担当者を招待する",
+    customer_users_invite_note: "担当者名とメールアドレスを入力し、初回設定メールを送信します。",
     customer_users_name: "担当者名",
     customer_users_email: "ログインID（メールアドレス）",
-    customer_users_send_invite: "招待メールを送信",
+    customer_users_required: "必須",
+    customer_users_name_placeholder: "例：山田 太郎",
+    customer_users_email_placeholder: "例：taro.yamada@example.com",
+    customer_users_invite_flow_title: "送信後の流れ",
+    customer_users_invite_flow_note: "担当者がメールからパスワードを設定すると、D-CATSにログインできるようになります。",
+    customer_users_send_invite: "この内容で招待メールを送信",
     customer_users_list_title: "ログイン担当者",
     customer_users_admin_rule: "管理者は1名です。移行すると現在の管理者はメンバーになります。",
     customer_users_transfer: "管理者に変更",
@@ -1516,11 +1523,18 @@ var TRANSLATIONS = {
     customer_users_customer: "Customer",
     customer_users_admin: "Administrator",
     customer_users_member: "Member",
-    customer_users_invite_title: "Add User",
-    customer_users_invite_note: "Send an initial setup email to the new user.",
+    customer_users_open_invite: "Invite a New User",
+    customer_users_invite_eyebrow: "NEW INVITATION",
+    customer_users_invite_title: "Invite a new user",
+    customer_users_invite_note: "Enter the user's name and email address to send an initial setup email.",
     customer_users_name: "User Name",
     customer_users_email: "Login ID (Email)",
-    customer_users_send_invite: "Send Invitation",
+    customer_users_required: "Required",
+    customer_users_name_placeholder: "e.g. Taro Yamada",
+    customer_users_email_placeholder: "e.g. taro.yamada@example.com",
+    customer_users_invite_flow_title: "After sending",
+    customer_users_invite_flow_note: "The user can sign in to D-CATS after setting a password from the email.",
+    customer_users_send_invite: "Send Invitation Email",
     customer_users_list_title: "Login Users",
     customer_users_admin_rule: "There is one administrator. A transfer changes the current administrator to a member.",
     customer_users_transfer: "Make Administrator",
@@ -2874,10 +2888,17 @@ var TRANSLATIONS = {
     customer_users_customer: "客户",
     customer_users_admin: "管理员",
     customer_users_member: "成员",
-    customer_users_invite_title: "添加负责人",
-    customer_users_invite_note: "向新负责人发送首次设置邮件。",
+    customer_users_open_invite: "邀请新负责人",
+    customer_users_invite_eyebrow: "新建邀请",
+    customer_users_invite_title: "邀请新负责人",
+    customer_users_invite_note: "输入负责人姓名和邮箱，发送首次设置邮件。",
     customer_users_name: "负责人姓名",
     customer_users_email: "登录ID（邮箱）",
+    customer_users_required: "必填",
+    customer_users_name_placeholder: "例：山田 太郎",
+    customer_users_email_placeholder: "例：taro.yamada@example.com",
+    customer_users_invite_flow_title: "发送后",
+    customer_users_invite_flow_note: "负责人通过邮件设置密码后，即可登录D-CATS。",
     customer_users_send_invite: "发送邀请邮件",
     customer_users_list_title: "登录负责人",
     customer_users_admin_rule: "每个客户仅有一名管理员。移交后，当前管理员将变为成员。",
@@ -4221,7 +4242,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.631";
+var APP_VERSION       = "v1.1.632";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6433,6 +6454,19 @@ async function enterCustomerUsers() {
 function returnToCustomerPortalFromUsers() {
   showScreen("customer-portal");
   renderCustomerPortal();
+}
+
+function focusCustomerUserInviteForm() {
+  var card = document.getElementById("customer-users-invite-card");
+  var nameInput = document.getElementById("customer-users-invite-name");
+  if (card) {
+    card.classList.remove("is-highlighted");
+    void card.offsetWidth;
+    card.classList.add("is-highlighted");
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(function() { card.classList.remove("is-highlighted"); }, 1400);
+  }
+  if (nameInput) window.setTimeout(function() { nameInput.focus(); }, 300);
 }
 
 async function loadCustomerManagedUsers() {
@@ -34974,6 +35008,7 @@ document.getElementById("customer-shipping-reset").addEventListener("click", fun
   renderCustomerShippingRates();
 });
 document.getElementById("btn-back-customer-users").addEventListener("click", returnToCustomerPortalFromUsers);
+document.getElementById("customer-users-open-invite").addEventListener("click", focusCustomerUserInviteForm);
 document.getElementById("btn-customer-users-invite").addEventListener("click", inviteCustomerManagedUser);
 document.getElementById("customer-users-invite-email").addEventListener("keydown", function(e) { if (e.key === "Enter") inviteCustomerManagedUser(); });
 document.getElementById("btn-back-customer-catalog").addEventListener("click", returnToCustomerPortal);
