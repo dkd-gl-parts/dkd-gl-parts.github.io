@@ -46,6 +46,7 @@ assert(html.includes('data-i18n="finished_box_label_preview" disabled>箱シー�
 assert(!html.includes("80×60箱シール印刷"), "box-label action still exposes the dimension as its name");
 assert(html.includes('id="finished-box-label-barcode-value"'), "part-number barcode payload preview is missing");
 assert(html.includes('id="finished-box-label-qr-value"'), "serial QR payload preview is missing");
+assert(html.includes('data-finished-label-box-only'), "box label does not have a dedicated print workspace");
 assert(html.includes("jsbarcode@3.12.3/dist/JsBarcode.all.min.js"), "fixed JsBarcode dependency is missing");
 assert(html.indexOf("jsbarcode@3.12.3") < html.indexOf('src="app.js'), "JsBarcode must load before app.js");
 assert(!app.includes("quickchart.io") && !app.includes("bwip-js.metafloor.com"), "label generation depends on an external barcode image service");
@@ -54,11 +55,16 @@ assert(/\.box-product-label\s*{[^}]*width:\s*80mm;[^}]*height:\s*60mm;/i.test(pr
 assert(styles.includes("width: 480px; height: 360px;"), "live box-label preview does not preserve the 4:3 ratio");
 assert(functionSource("finishedProductPartBarcodeDataUrl").includes('format: "CODE128"'), "GLTEK part-number barcode is not Code 128");
 assert(functionSource("renderFinishedBoxLabelLayoutPreview").includes("buildFinishedBoxLabelMarkup"), "live box-label preview is not connected to production markup");
-assert(functionSource("previewCurrentFinishedBoxLabel").includes("openFinishedBoxLabelPrintPreview"), "current box-label print action is not connected");
+assert(functionSource("previewCurrentFinishedBoxLabel").includes("printFinishedBoxLabelIssue"), "current box-label print action is not routed through the audited print flow");
 assert(functionSource("openFinishedBoxLabelPrintPreview").includes("buildFinishedBoxLabelPrintHtml"), "box-label print preview is not connected");
 assert(app.includes("data-finished-box-label-history-preview"), "box-label history reprint action is missing");
 const reprintSource = functionSource("reprintFinishedLabelIssue");
 assert(reprintSource.includes('labelType === "box"'), "product and box reprints are not distinguished");
+assert(reprintSource.includes('sb.rpc("record_finished_product_label_print"'), "generic audited print RPC is not used for reprints");
+const boxPrintSource = functionSource("printFinishedBoxLabelIssue");
+assert(boxPrintSource.includes('row.boxLabelPrinted ? "reprint" : "initial"'), "box initial print and reprint are not distinguished");
+assert(boxPrintSource.includes('target_label_target: "box"'), "box print audit target is missing");
+assert(boxPrintSource.includes('target_print_event_type: eventType'), "box print event type is not recorded");
 assert(reprintSource.includes('event_type: labelType === "box" ? "box_label_reprint" : "product_label_reprint"'), "reprint audit type is missing");
 assert(reprintSource.includes('label_size: labelType === "box" ? "80x60" : "45x20"'), "reprint label size is missing from audit details");
 assert(reprintSource.includes("copies_per_unit: 1"), "one-label-per-unit audit rule is missing");

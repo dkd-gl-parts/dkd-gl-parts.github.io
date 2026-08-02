@@ -4263,7 +4263,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.634";
+var APP_VERSION       = "v1.1.635";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -4383,6 +4383,10 @@ var finishedLabelSelectedInstruction = null;
 var finishedLabelVariants = [];
 var finishedLabelHistoryRows = [];
 var finishedLabelLastIssuedRecord = null;
+var finishedLabelPrintMode = "";
+var finishedLabelComponentCandidates = [];
+var finishedLabelSelectedComponentIds = {};
+var finishedLabelComponentLoadSeq = 0;
 var finishedShipmentCustomers = [];
 var finishedShipmentUnits = [];
 var finishedShipmentHistoryRows = [];
@@ -16932,9 +16936,50 @@ async function enterFinishedLabelMgmt(options) {
   renderFinishedLabelCategoryOptions();
   renderFinishedLabelEmpty();
   await loadFinishedLabelTemplates();
+  setFinishedLabelPrintMode(options && options.mode ? options.mode : "");
   if (options && options.product) {
+    if (!finishedLabelPrintMode) setFinishedLabelPrintMode("product");
     await selectFinishedLabelProduct(options.product, options.instruction || null);
   }
+}
+
+function setFinishedLabelPrintMode(mode) {
+  mode = mode === "box" ? "box" : (mode === "product" ? "product" : "");
+  var previousMode = finishedLabelPrintMode;
+  finishedLabelPrintMode = mode;
+  if (!mode || (previousMode && previousMode !== mode)) {
+    finishedLabelLastIssuedRecord = null;
+    var productPrint = document.getElementById("btn-finished-label-preview");
+    var boxPrint = document.getElementById("btn-finished-box-label-preview");
+    if (productPrint) productPrint.disabled = true;
+    if (boxPrint) boxPrint.disabled = true;
+    renderFinishedLabelIssuedResult(null);
+  }
+  var hub = document.getElementById("finished-label-mode-hub");
+  var workspace = document.getElementById("finished-label-workspace");
+  if (hub) hub.hidden = !!mode;
+  if (workspace) workspace.hidden = !mode;
+  document.querySelectorAll("[data-finished-label-product-only]").forEach(function(el) {
+    el.hidden = mode !== "product";
+  });
+  document.querySelectorAll("[data-finished-label-box-only]").forEach(function(el) {
+    el.hidden = mode !== "box";
+  });
+  var title = document.getElementById("finished-label-screen-title");
+  var badge = document.getElementById("finished-label-mode-badge");
+  var searchTitle = document.getElementById("finished-label-product-search-title");
+  var editorTitle = document.getElementById("finished-label-editor-title");
+  if (!mode) {
+    if (title) title.textContent = "完品登録・シール印刷";
+    return;
+  }
+  var isBox = mode === "box";
+  if (title) title.textContent = isBox ? "箱シール印刷" : "完品シール印刷・完品登録";
+  if (badge) badge.textContent = isBox ? "80 × 60 mm / 箱シール" : "45 × 20 mm / 完品シール";
+  if (searchTitle) searchTitle.textContent = isBox ? "箱シール対象品番検索" : "完品登録対象品番検索";
+  if (editorTitle) editorTitle.textContent = isBox ? "箱シール印刷内容" : "完品登録内容";
+  renderFinishedLabelHistory();
+  renderFinishedLabelIssuedResult(finishedLabelLastIssuedRecord);
 }
 
 function renderFinishedLabelEmpty() {
@@ -16945,6 +16990,9 @@ function renderFinishedLabelEmpty() {
   finishedLabelVariants = [];
   finishedLabelHistoryRows = [];
   finishedLabelLastIssuedRecord = null;
+  finishedLabelComponentCandidates = [];
+  finishedLabelSelectedComponentIds = {};
+  finishedLabelComponentLoadSeq += 1;
   var results = document.getElementById("finished-label-results");
   var count = document.getElementById("finished-label-search-count");
   var history = document.getElementById("finished-label-history-list");
@@ -16954,7 +17002,7 @@ function renderFinishedLabelEmpty() {
   renderFinishedLabelSelectedSummary(null);
   renderFinishedLabelVariantOptions([]);
   resetFinishedLabelForm();
-  renderFinishedLabelComponents([]);
+  renderFinishedLabelComponents();
   renderFinishedLabelIssuedResult(null);
 }
 
@@ -17109,7 +17157,8 @@ async function selectFinishedLabelProduct(product, instruction) {
   await loadFinishedLabelVariants(dkdId);
   renderFinishedLabelVariantOptions(finishedLabelVariants);
   renderFinishedLabelCategoryOptions(finishedLabelCategoryForProduct(full));
-  applyFinishedLabelTemplate();
+  if (finishedLabelPrintMode === "product") await loadFinishedLabelComponentCandidates({ resetDefaults: true });
+  else renderFinishedLabelComponents();
   updateFinishedLabelQrPayload();
   await loadFinishedLabelHistory();
 }
@@ -17199,69 +17248,190 @@ function selectedFinishedLabelVariant() {
 }
 
 function applyFinishedLabelTemplate() {
-  var category = finishedLabelValue("finished-label-product-category") || "その他";
-  var rows = finishedLabelTemplatesForCategory(category).map(function(row, idx) {
-    return {
-      no: idx + 1,
-      type: row.part_type || "",
-      maker: row.default_maker || "",
-      partNo: row.default_part_number || "",
-      memo: ""
-    };
+  if (!finishedLabelSelectedProduct) {
+    finishedLabelSelectedComponentIds = {};
+    renderFinishedLabelComponents();
+    return;
+  }
+  finishedLabelSelectedComponentIds = {};
+  (finishedLabelComponentCandidates || []).forEach(function(row) {
+    if (Number(row.replacement_rate) === 100) {
+      finishedLabelSelectedComponentIds[String(row.id)] = true;
+    }
   });
-  renderFinishedLabelComponents(rows);
+  renderFinishedLabelComponents();
   updateFinishedLabelQrPayload();
 }
 
-function renderFinishedLabelComponents(rows) {
+function finishedLabelComponentName(row) {
+  return String((row && (row.component_name || row.component_part_name)) || "").trim() || "未分類部品";
+}
+
+function finishedLabelComponentPartNumber(row) {
+  return String((row && (row.component_manufacturer_part_number || row.component_genuine_part_number)) || "").trim() || "-";
+}
+
+function finishedLabelComponentSort(a, b) {
+  var aDefault = Number(a && a.replacement_rate) === 100 ? 0 : 1;
+  var bDefault = Number(b && b.replacement_rate) === 100 ? 0 : 1;
+  if (aDefault !== bDefault) return aDefault - bDefault;
+  var aPosition = String((a && a.component_position) || "");
+  var bPosition = String((b && b.component_position) || "");
+  if (aPosition !== bPosition) return aPosition.localeCompare(bPosition, "ja");
+  return finishedLabelComponentName(a).localeCompare(finishedLabelComponentName(b), "ja");
+}
+
+async function loadFinishedLabelComponentCandidates(options) {
+  options = options || {};
+  var seq = ++finishedLabelComponentLoadSeq;
+  var product = finishedLabelSelectedProduct;
+  var variant = selectedFinishedLabelVariant();
+  if (!product || !variant || !variant.product_variant_id) {
+    finishedLabelComponentCandidates = [];
+    finishedLabelSelectedComponentIds = {};
+    renderFinishedLabelComponents();
+    return;
+  }
+  var body = document.getElementById("finished-label-component-body");
+  if (body) body.innerHTML = "<tr><td colspan='7' class='finished-label-component-empty'>" + esc(t("loading")) + "</td></tr>";
+  var previous = Object.assign({}, finishedLabelSelectedComponentIds || {});
+  var query = sb.from("assembly_component_usage_details")
+    .select("id,dkd_component_id,dkd_shohin_id,product_kind,product_variant_id,component_name,component_part_name,component_manufacturer,component_manufacturer_part_number,component_genuine_part_number,quantity,replacement_rate,procurement_category,manufacturing_memo,component_position,is_catalog_evidence")
+    .eq("dkd_shohin_id", productDkdId(product))
+    .eq("product_kind", normalizeProductKind(variant.product_kind))
+    .or("product_variant_id.is.null,product_variant_id.eq." + String(variant.product_variant_id))
+    .limit(1000);
+  var r = await query;
+  if (seq !== finishedLabelComponentLoadSeq) return;
+  if (r.error) {
+    console.warn("finished label component lookup failed", r.error);
+    finishedLabelComponentCandidates = [];
+    finishedLabelSelectedComponentIds = {};
+    renderFinishedLabelComponents(r.error.message || t("msg_part_err"));
+    return;
+  }
+  var seen = {};
+  finishedLabelComponentCandidates = (r.data || []).filter(function(row) {
+    var key = String(row.id || "");
+    if (!key || seen[key]) return false;
+    seen[key] = true;
+    return true;
+  }).sort(finishedLabelComponentSort);
+  finishedLabelSelectedComponentIds = {};
+  finishedLabelComponentCandidates.forEach(function(row) {
+    var key = String(row.id);
+    if (options.resetDefaults) {
+      if (Number(row.replacement_rate) === 100) finishedLabelSelectedComponentIds[key] = true;
+    } else if (previous[key] || String(options.includeUsageId || "") === key || Number(row.replacement_rate) === 100) {
+      finishedLabelSelectedComponentIds[key] = true;
+    }
+  });
+  renderFinishedLabelComponents();
+  updateFinishedLabelQrPayload();
+}
+
+function renderFinishedLabelComponents(errorMessage) {
   var body = document.getElementById("finished-label-component-body");
   if (!body) return;
-  rows = rows && rows.length ? rows : [];
-  var category = finishedLabelValue("finished-label-product-category") || "その他";
-  var options = finishedLabelTemplatesForCategory(category).map(function(row) {
-    return row.part_type || "";
+  var selectedRows = (finishedLabelComponentCandidates || []).filter(function(row) {
+    return !!finishedLabelSelectedComponentIds[String(row.id)];
+  }).sort(finishedLabelComponentSort);
+  var availableRows = (finishedLabelComponentCandidates || []).filter(function(row) {
+    return !finishedLabelSelectedComponentIds[String(row.id)];
   });
-  var html = "";
-  for (var i = 0; i < Math.max(rows.length, 10); i++) {
-    var row = rows[i] || { no: i + 1, type: options[i] || "", maker: "", partNo: "", memo: "" };
-    var typeOptions = options.map(function(type) {
-      return "<option value='" + esc(type) + "'" + (type === row.type ? " selected" : "") + ">" + esc(type) + "</option>";
+  var picker = document.getElementById("finished-label-component-add-select");
+  var addBtn = document.getElementById("btn-finished-label-component-add");
+  var count = document.getElementById("finished-label-component-count");
+  if (picker) {
+    picker.innerHTML = "<option value=''>" + esc(availableRows.length ? "この品番に登録済みの部品を選択" : "追加できる登録済み部品はありません") + "</option>" + availableRows.map(function(row) {
+      var text = [finishedLabelComponentName(row), row.component_manufacturer, finishedLabelComponentPartNumber(row), row.replacement_rate == null ? "" : ("使用率 " + row.replacement_rate + "%")].filter(Boolean).join(" / ");
+      return "<option value='" + esc(String(row.id)) + "'>" + esc(text) + "</option>";
     }).join("");
-    if (typeOptions.indexOf("value='" + esc(row.type) + "'") < 0 && row.type) {
-      typeOptions = "<option value='" + esc(row.type) + "' selected>" + esc(row.type) + "</option>" + typeOptions;
-    }
-    html += "<tr data-finished-label-component-row='" + i + "'>";
-    html += "<td>" + (i + 1) + "</td>";
-    html += "<td><select data-finished-label-component-field='type'>" + typeOptions + "</select></td>";
-    html += "<td><input type='text' data-finished-label-component-field='maker' value='" + esc(row.maker || "") + "'></td>";
-    html += "<td><input type='text' data-finished-label-component-field='partNo' value='" + esc(row.partNo || "") + "'></td>";
-    html += "<td><input type='text' data-finished-label-component-field='memo' value='" + esc(row.memo || "") + "'></td>";
-    html += "</tr>";
+    picker.disabled = !availableRows.length;
   }
-  body.innerHTML = html;
-  body.querySelectorAll("input,select").forEach(function(el) {
-    el.addEventListener("input", updateFinishedLabelQrPayload);
-    el.addEventListener("change", updateFinishedLabelQrPayload);
+  if (addBtn) addBtn.disabled = !availableRows.length;
+  if (count) count.textContent = "選択 " + selectedRows.length + "件 / 登録 " + finishedLabelComponentCandidates.length + "件";
+  if (errorMessage) {
+    body.innerHTML = "<tr><td colspan='7' class='finished-label-component-empty'>" + esc(errorMessage) + "</td></tr>";
+    return;
+  }
+  if (!finishedLabelSelectedProduct) {
+    body.innerHTML = "<tr><td colspan='7' class='finished-label-component-empty'>品番を選択してください。</td></tr>";
+    return;
+  }
+  if (!selectedRows.length) {
+    body.innerHTML = "<tr><td colspan='7' class='finished-label-component-empty'>使用率100%の初期部品はありません。上の選択欄から、この品番に登録済みの部品を追加してください。</td></tr>";
+    return;
+  }
+  body.innerHTML = selectedRows.map(function(row, idx) {
+    var rate = row.replacement_rate == null ? "未設定" : (String(row.replacement_rate) + "%");
+    var defaultClass = Number(row.replacement_rate) === 100 ? " default" : "";
+    var genuine = row.component_genuine_part_number ? "純正 " + row.component_genuine_part_number : "";
+    var memo = row.manufacturing_memo || row.procurement_category || "";
+    return "<tr data-finished-label-component-row='" + esc(String(row.id)) + "'>" +
+      "<td>" + (idx + 1) + "</td>" +
+      "<td><span class='finished-label-component-name'>" + esc(finishedLabelComponentName(row)) + "</span><span class='finished-label-component-sub'>" + esc([row.component_position, memo].filter(Boolean).join(" / ")) + "</span></td>" +
+      "<td>" + esc(row.component_manufacturer || "-") + "</td>" +
+      "<td><span class='finished-label-component-part'>" + esc(finishedLabelComponentPartNumber(row)) + "</span><span class='finished-label-component-sub'>" + esc(genuine) + "</span></td>" +
+      "<td><span class='finished-label-component-rate" + defaultClass + "'>" + esc(rate) + "</span></td>" +
+      "<td>" + esc(row.quantity || "1") + "</td>" +
+      "<td><button class='btn-sm-edit production-action-secondary' type='button' data-finished-label-component-remove='" + esc(String(row.id)) + "'>外す</button></td>" +
+    "</tr>";
+  }).join("");
+  body.querySelectorAll("[data-finished-label-component-remove]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      delete finishedLabelSelectedComponentIds[String(btn.dataset.finishedLabelComponentRemove)];
+      renderFinishedLabelComponents();
+      updateFinishedLabelQrPayload();
+    });
   });
 }
 
 function readFinishedLabelComponents() {
-  var rows = [];
-  document.querySelectorAll("#finished-label-component-body tr").forEach(function(tr, idx) {
-    function val(field) {
-      var el = tr.querySelector("[data-finished-label-component-field='" + field + "']");
-      return el ? el.value.trim() : "";
-    }
-    var row = {
+  return (finishedLabelComponentCandidates || []).filter(function(row) {
+    return !!finishedLabelSelectedComponentIds[String(row.id)];
+  }).sort(finishedLabelComponentSort).map(function(row, idx) {
+    return {
       no: idx + 1,
-      type: val("type"),
-      maker: val("maker"),
-      partNo: val("partNo"),
-      memo: val("memo")
+      usageId: row.id,
+      componentId: row.dkd_component_id,
+      type: finishedLabelComponentName(row),
+      maker: row.component_manufacturer || "",
+      partNo: row.component_manufacturer_part_number || row.component_genuine_part_number || "",
+      genuinePartNo: row.component_genuine_part_number || "",
+      quantity: row.quantity || "1",
+      usageRate: row.replacement_rate,
+      procurementCategory: row.procurement_category || "",
+      memo: row.manufacturing_memo || ""
     };
-    if (row.type || row.maker || row.partNo || row.memo) rows.push(row);
   });
-  return rows;
+}
+
+function addFinishedLabelSelectedComponent() {
+  var picker = document.getElementById("finished-label-component-add-select");
+  var usageId = picker ? String(picker.value || "") : "";
+  if (!usageId) return;
+  var belongsToSelectedProduct = (finishedLabelComponentCandidates || []).some(function(row) {
+    return String(row.id) === usageId;
+  });
+  if (!belongsToSelectedProduct) return;
+  finishedLabelSelectedComponentIds[usageId] = true;
+  renderFinishedLabelComponents();
+  updateFinishedLabelQrPayload();
+}
+
+async function openFinishedLabelComponentRegistration() {
+  if (!finishedLabelSelectedProduct) { alert(t("finished_label_no_product")); return; }
+  var variant = selectedFinishedLabelVariant();
+  if (!variant || !variant.product_variant_id) { alert(t("finished_label_variant_required")); return; }
+  currentProduct = finishedLabelSelectedProduct;
+  currentProductVariants = finishedLabelVariants.slice();
+  currentSelectedProductKind = normalizeProductKind(variant.product_kind);
+  currentSelectedComponentVariantId = String(variant.product_variant_id);
+  componentReturnScreen = "finished-label-mgmt";
+  assemblyComponentRows = finishedLabelComponentCandidates.slice();
+  await openComponentAddForm();
+  setComponentAddValue("component-add-replacement-rate", "100");
 }
 
 function readFinishedLabelRecord() {
@@ -17493,7 +17663,7 @@ async function saveFinishedLabelIssue() {
     var preview = document.getElementById("btn-finished-label-preview");
     if (preview) preview.disabled = false;
     var boxPreview = document.getElementById("btn-finished-box-label-preview");
-    if (boxPreview) boxPreview.disabled = false;
+    if (boxPreview) boxPreview.disabled = true;
     await writeLog("insert", "finished_product_units", record.issueId, record.issueCode, null, {
       issue_code: record.issueCode,
       quantity: record.quantity,
@@ -17527,14 +17697,17 @@ function renderFinishedLabelIssuedResult(record) {
   var stockText = Number.isFinite(record.stockQtyAfter)
     ? tf("finished_label_stock_after", { n: record.stockQtyAfter })
     : "";
-  host.innerHTML = "<div class='finished-label-issued-head'><div><strong>" + esc(t("finished_label_serial_result")) + "</strong><span>" + esc(record.issueCode || "") + "</span></div><div class='finished-label-issued-actions'><button class='btn-sm-edit production-action-secondary' id='btn-finished-label-issued-print'>" + esc(t("finished_label_preview")) + "</button><button class='btn-sm-edit' id='btn-finished-box-label-issued-print'>" + esc(t("finished_box_label_preview")) + "</button></div></div>" +
+  var actionHtml = finishedLabelPrintMode === "box"
+    ? "<button class='btn-sm-edit' id='btn-finished-box-label-issued-print'>" + esc(t("finished_box_label_reprint")) + "</button>"
+    : "<button class='btn-sm-edit production-action-secondary' id='btn-finished-label-issued-print'>" + esc(t("finished_label_preview")) + "</button>";
+  host.innerHTML = "<div class='finished-label-issued-head'><div><strong>" + esc(t("finished_label_serial_result")) + "</strong><span>" + esc(record.issueCode || "") + "</span></div><div class='finished-label-issued-actions'>" + actionHtml + "</div></div>" +
     "<div class='finished-label-issued-meta'>" + esc([record.quantity + " 台", stockText].filter(Boolean).join(" / ")) + "</div>" +
     "<div class='finished-label-serial-list'>" + serials + "</div>";
   host.classList.add("show");
   var btn = document.getElementById("btn-finished-label-issued-print");
   if (btn) btn.addEventListener("click", function() { openFinishedLabelPrintPreview(record); });
   var boxBtn = document.getElementById("btn-finished-box-label-issued-print");
-  if (boxBtn) boxBtn.addEventListener("click", function() { openFinishedBoxLabelPrintPreview(record); });
+  if (boxBtn) boxBtn.addEventListener("click", previewCurrentFinishedBoxLabel);
 }
 
 async function loadFinishedLabelHistory() {
@@ -17575,6 +17748,31 @@ async function loadFinishedLabelHistory() {
     finishedLabelHistoryRows.forEach(function(row) {
       row.finishedUnits = byIssue[String(row.id)] || [];
     });
+    var unitIds = (unitsResult.data || []).map(function(unit) { return unit.id; });
+    if (unitIds.length) {
+      var printResult = await sb.from("finished_product_label_prints")
+        .select("finished_product_unit_id,print_event_type,label_target,requested_at")
+        .in("finished_product_unit_id", unitIds)
+        .eq("label_target", "box");
+      if (printResult.error) {
+        console.warn("box label print history lookup failed", printResult.error);
+        finishedLabelHistoryRows.forEach(function(row) { row.boxPrintAuditUnavailable = true; });
+      } else {
+        var boxInitialUnitIds = {};
+        (printResult.data || []).forEach(function(printRow) {
+          if (printRow.print_event_type === "initial") boxInitialUnitIds[String(printRow.finished_product_unit_id)] = true;
+        });
+        finishedLabelHistoryRows.forEach(function(row) {
+          var units = row.finishedUnits || [];
+          row.boxLabelPrinted = !!units.length && units.every(function(unit) {
+            return !!boxInitialUnitIds[String(unit.id)];
+          });
+          row.boxLabelPartiallyPrinted = !row.boxLabelPrinted && units.some(function(unit) {
+            return !!boxInitialUnitIds[String(unit.id)];
+          });
+        });
+      }
+    }
   }
   renderFinishedLabelHistory();
 }
@@ -17592,8 +17790,17 @@ function renderFinishedLabelHistory() {
     var units = Array.isArray(row.finishedUnits) ? row.finishedUnits : [];
     var serialText = units.length ? units[0].manufacturing_serial : "-";
     if (units.length > 1) serialText += " ～ " + units[units.length - 1].manufacturing_serial;
+    var actionHtml = "";
+    if (finishedLabelPrintMode === "box") {
+      var auditBlocked = row.boxPrintAuditUnavailable || row.boxLabelPartiallyPrinted;
+      var boxActionLabel = row.boxLabelPrinted ? "箱シール再印刷" : "箱シール印刷";
+      var boxActionTitle = row.boxLabelPartiallyPrinted ? "一部のみ初回印刷済みです。管理者に確認してください。" : "";
+      actionHtml = "<button class='btn-sm-edit production-action-secondary' data-finished-box-label-history-preview='" + esc(String(row.id)) + "'" + (units.length && !auditBlocked ? "" : " disabled") + (boxActionTitle ? " title='" + esc(boxActionTitle) + "'" : "") + ">" + esc(boxActionLabel) + "</button>";
+    } else {
+      actionHtml = "<button class='btn-sm-edit production-action-secondary' data-finished-label-history-preview='" + esc(String(row.id)) + "'" + (units.length ? "" : " disabled") + ">" + esc(t("finished_product_label_reprint")) + "</button>";
+    }
     html += "<div class='finished-label-history-row'>";
-    html += "<div class='finished-label-history-main'><span>" + esc(row.issue_code || "-") + "</span><div class='finished-label-history-actions'><button class='btn-sm-edit production-action-secondary' data-finished-label-history-preview='" + esc(String(row.id)) + "'" + (units.length ? "" : " disabled") + ">" + esc(t("finished_product_label_reprint")) + "</button><button class='btn-sm-edit production-action-secondary' data-finished-box-label-history-preview='" + esc(String(row.id)) + "'" + (units.length ? "" : " disabled") + ">" + esc(t("finished_box_label_reprint")) + "</button></div></div>";
+    html += "<div class='finished-label-history-main'><span>" + esc(row.issue_code || "-") + "</span><div class='finished-label-history-actions'>" + actionHtml + "</div></div>";
     html += "<div class='finished-label-history-serial'>" + esc(serialText) + "</div>";
     html += "<div class='finished-label-history-sub'>" + esc([formatDateTime(row.issued_at), row.product_category, productKindLabel(row.product_kind), row.quantity + " units", comps + " parts"].filter(Boolean).join(" / ")) + "</div>";
     html += "</div>";
@@ -17608,7 +17815,7 @@ function renderFinishedLabelHistory() {
   list.querySelectorAll("[data-finished-box-label-history-preview]").forEach(function(btn) {
     btn.addEventListener("click", function() {
       var row = finishedLabelHistoryRows.find(function(x) { return String(x.id) === String(btn.dataset.finishedBoxLabelHistoryPreview); });
-      if (row) reprintFinishedLabelIssue(row, "box");
+      if (row) printFinishedBoxLabelIssue(row);
     });
   });
 }
@@ -17658,12 +17865,15 @@ async function reprintFinishedLabelIssue(row, labelType) {
     printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>再印刷履歴を登録しています...</p>");
   }
   try {
-    var result = await sb.rpc("record_finished_product_label_reprint", {
+    var result = await sb.rpc("record_finished_product_label_print", {
       target_finished_label_issue_id: row.id,
+      target_label_target: labelType === "box" ? "box" : "finished_product",
+      target_print_event_type: "reprint",
       target_reason: reason
     });
     if (result.error) throw result.error;
     var record = finishedLabelRecordFromHistory(row, result.data || {});
+    record.sourceHistoryRow = row;
     await writeLog("insert", "finished_product_label_prints", row.id, row.issue_code, null, {
       event_type: labelType === "box" ? "box_label_reprint" : "product_label_reprint",
       label_size: labelType === "box" ? "80x60" : "45x20",
@@ -17682,14 +17892,62 @@ async function reprintFinishedLabelIssue(row, labelType) {
   }
 }
 
+async function printFinishedBoxLabelIssue(row) {
+  if (!row || !Array.isArray(row.finishedUnits) || !row.finishedUnits.length) return;
+  var eventType = row.boxLabelPrinted ? "reprint" : "initial";
+  var reason = null;
+  if (eventType === "reprint") {
+    reason = window.prompt(t("finished_label_reprint_reason"), "ラベル汚損・貼り替え");
+    if (reason === null) return;
+    reason = String(reason || "").trim();
+    if (!reason) { alert(t("finished_label_reprint_reason")); return; }
+  }
+  var printWindow = window.open("", "_blank");
+  if (printWindow) {
+    printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>箱シールの印刷履歴を登録しています...</p>");
+  }
+  try {
+    var result = await sb.rpc("record_finished_product_label_print", {
+      target_finished_label_issue_id: row.id,
+      target_label_target: "box",
+      target_print_event_type: eventType,
+      target_reason: reason
+    });
+    if (result.error) throw result.error;
+    var record = finishedLabelRecordFromHistory(row, result.data || {});
+    record.sourceHistoryRow = row;
+    finishedLabelLastIssuedRecord = record;
+    row.boxLabelPrinted = true;
+    renderFinishedLabelIssuedResult(record);
+    var boxPreview = document.getElementById("btn-finished-box-label-preview");
+    if (boxPreview) boxPreview.disabled = false;
+    await writeLog("insert", "finished_product_label_prints", row.id, row.issue_code, null, {
+      event_type: eventType === "initial" ? "box_label_initial" : "box_label_reprint",
+      label_size: "80x60",
+      reason: reason,
+      quantity: record.units.length,
+      copies_per_unit: 1
+    });
+    if (printWindow) openFinishedBoxLabelPrintPreview(record, printWindow);
+    else alert(t("finished_label_popup_blocked"));
+    renderFinishedLabelHistory();
+  } catch (e) {
+    if (printWindow && !printWindow.closed) printWindow.close();
+    alert(t("msg_save_err") + ": " + (e.message || e));
+  }
+}
+
 function previewCurrentFinishedLabel() {
   if (!finishedLabelLastIssuedRecord) return;
   openFinishedLabelPrintPreview(finishedLabelLastIssuedRecord);
 }
 
 function previewCurrentFinishedBoxLabel() {
-  if (!finishedLabelLastIssuedRecord) return;
-  openFinishedBoxLabelPrintPreview(finishedLabelLastIssuedRecord);
+  if (!finishedLabelLastIssuedRecord || !finishedLabelLastIssuedRecord.sourceHistoryRow) {
+    alert("左側の発行履歴から箱シール対象を選択してください。");
+    return;
+  }
+  printFinishedBoxLabelIssue(finishedLabelLastIssuedRecord.sourceHistoryRow);
 }
 
 function finishedProductSerialQrDataUrl(serial) {
@@ -23274,7 +23532,7 @@ function updateComponentsContextHeader() {
 }
 
 function canManageComponentsInCurrentContext() {
-  return componentReturnScreen === "production-search" && canEditInternalComponents();
+  return (componentReturnScreen === "production-search" || componentReturnScreen === "finished-label-mgmt") && canEditInternalComponents();
 }
 
 function componentReturnButtonText(returnScreen) {
@@ -24360,6 +24618,10 @@ async function addAssemblyComponentForCurrent() {
   recordComponentNameCandidateUsageForCurrent(componentPartName);
   clearComponentAddForm();
   closeComponentAddForm();
+  if (typeof componentReturnScreen !== "undefined" && componentReturnScreen === "finished-label-mgmt") {
+    await loadFinishedLabelComponentCandidates({ includeUsageId: r.data });
+    return;
+  }
   await loadAssemblyComponentsForCurrent();
 }
 
@@ -35561,17 +35823,26 @@ document.getElementById("manufacturing-cost-saved-list").addEventListener("chang
 });
 document.getElementById("btn-finished-label-search").addEventListener("click", searchFinishedLabelProducts);
 document.getElementById("finished-label-search").addEventListener("keydown", function(e){ if(e.key==="Enter") searchFinishedLabelProducts(); });
+document.querySelectorAll("[data-finished-label-mode]").forEach(function(btn) {
+  btn.addEventListener("click", function() { setFinishedLabelPrintMode(btn.dataset.finishedLabelMode); });
+});
+document.getElementById("btn-finished-label-mode-back").addEventListener("click", function() { setFinishedLabelPrintMode(""); });
 document.getElementById("btn-finished-label-load-history").addEventListener("click", loadFinishedLabelHistory);
 document.getElementById("btn-finished-label-template").addEventListener("click", applyFinishedLabelTemplate);
 document.getElementById("btn-finished-label-preview").addEventListener("click", previewCurrentFinishedLabel);
 document.getElementById("btn-finished-box-label-preview").addEventListener("click", previewCurrentFinishedBoxLabel);
+document.getElementById("btn-finished-label-component-add").addEventListener("click", addFinishedLabelSelectedComponent);
+document.getElementById("btn-finished-label-register-component").addEventListener("click", openFinishedLabelComponentRegistration);
 document.getElementById("btn-finished-label-clear").addEventListener("click", function(){
   resetFinishedLabelForm(finishedLabelSelectedProduct, finishedLabelSelectedInstruction);
   applyFinishedLabelTemplate();
   updateFinishedLabelQrPayload();
 });
 document.getElementById("btn-finished-label-save").addEventListener("click", saveFinishedLabelIssue);
-document.getElementById("finished-label-product-category").addEventListener("change", applyFinishedLabelTemplate);
+document.getElementById("finished-label-product-category").addEventListener("change", updateFinishedLabelQrPayload);
+document.getElementById("finished-label-variant-kind").addEventListener("change", function() {
+  if (finishedLabelPrintMode === "product") loadFinishedLabelComponentCandidates({ resetDefaults: true });
+});
 ["btn-finished-shipment-add-serial","btn-finished-shipment-save","btn-finished-shipment-reload","btn-finished-shipment-clear"].forEach(function(id) {
   var el = document.getElementById(id);
   if (!el) return;

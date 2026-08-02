@@ -3786,7 +3786,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .core-qty-sub { font-size: 11px; color: #7c8492; margin-top: 4px; word-break: break-word; }
 .core-count-pill { display: inline-flex; align-items: center; gap: 4px; margin-left: 10px; padding: 3px 8px; border-radius: 999px; background: #eaf2ff; color: #174ea6; font-weight: 700; }
 .finished-label-body { max-width: none; padding: 16px; overflow: hidden; }
-.finished-label-shell { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 14px; height: 100%; min-height: 0; }
+.finished-label-mode-hub { width: min(960px, 100%); margin: auto; border: 1px solid #dce5ef; border-radius: 16px; padding: 28px; background: linear-gradient(145deg, #fff, #f6f9fd); box-shadow: 0 12px 34px rgba(27, 52, 85, .08); }
+.finished-label-mode-intro { max-width: 720px; }
+.finished-label-mode-kicker { display: inline-flex; border-radius: 999px; padding: 4px 10px; background: #eaf2ff; color: #174ea6; font-size: 11px; font-weight: 800; }
+.finished-label-mode-intro h2 { margin: 10px 0 6px; color: #14213a; font-size: 24px; }
+.finished-label-mode-intro p { margin: 0; color: #647084; font-size: 13px; line-height: 1.7; }
+.finished-label-mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+.finished-label-mode-card { display: flex; align-items: flex-start; flex-direction: column; min-height: 210px; border: 1px solid #d8e1ec; border-radius: 14px; padding: 22px; background: #fff; color: #1b2942; text-align: left; cursor: pointer; transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
+.finished-label-mode-card:hover, .finished-label-mode-card:focus-visible { border-color: #4f8ef7; box-shadow: 0 10px 25px rgba(45, 94, 160, .12); transform: translateY(-2px); }
+.finished-label-mode-card.box { background: linear-gradient(145deg, #fff, #f5f9ff); }
+.finished-label-mode-card strong { margin-top: 14px; font-size: 22px; font-weight: 900; }
+.finished-label-mode-card > span:not(.finished-label-mode-size) { margin-top: 9px; color: #667085; font-size: 12px; line-height: 1.65; }
+.finished-label-mode-card em { margin-top: auto; padding-top: 18px; color: #174ea6; font-size: 12px; font-style: normal; font-weight: 800; }
+.finished-label-mode-size { border-radius: 6px; padding: 5px 8px; background: #172033; color: #fff; font-family: Consolas, "SFMono-Regular", monospace; font-size: 11px; font-weight: 800; }
+.finished-label-workspace { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; }
+.finished-label-workspace[hidden], [data-finished-label-product-only][hidden], [data-finished-label-box-only][hidden] { display: none !important; }
+.finished-label-mode-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 10px; }
+.finished-label-mode-bar .back-btn { color: #344054; background: #fff; border: 1px solid #d8e1ec; border-radius: 7px; padding: 7px 10px; }
+#finished-label-mode-badge { border-radius: 999px; padding: 5px 10px; background: #eaf2ff; color: #174ea6; font-size: 11px; font-weight: 800; }
+.finished-label-shell { display: grid; flex: 1; grid-template-columns: 360px minmax(0, 1fr); gap: 14px; height: 100%; min-height: 0; }
 .finished-label-left, .finished-label-editor { min-height: 0; overflow: auto; }
 .finished-label-left { display: flex; flex-direction: column; gap: 12px; }
 .finished-label-card { background: #fff; border: 1px solid #e5eaf0; border-radius: 8px; padding: 12px; }
@@ -3815,6 +3833,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .finished-label-table td { padding: 6px 8px; border-bottom: 1px solid #f0f2f5; vertical-align: top; }
 .finished-label-table tr:last-child td { border-bottom: 0; }
 .finished-label-table input, .finished-label-table select { width: 100%; border: 1px solid #d7dce5; border-radius: 6px; padding: 6px 7px; font-size: 12px; }
+.finished-label-component-picker { display: grid; grid-template-columns: minmax(280px, 1fr) auto auto; align-items: center; gap: 8px; margin: 10px 0; }
+.finished-label-component-picker select { min-width: 0; border: 1px solid #d7dce5; border-radius: 7px; padding: 8px 9px; background: #fff; color: #263248; font-size: 12px; }
+.finished-label-component-picker > span { color: #667085; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.finished-label-component-name { min-width: 180px; color: #172033; font-weight: 800; }
+.finished-label-component-sub { display: block; margin-top: 2px; color: #7c8492; font-size: 10px; font-weight: 500; }
+.finished-label-component-part { color: #223047; font-family: Consolas, "SFMono-Regular", monospace; font-weight: 700; white-space: nowrap; }
+.finished-label-component-rate { display: inline-flex; border-radius: 999px; padding: 3px 7px; background: #edf6f0; color: #24603b; font-size: 10px; font-weight: 800; white-space: nowrap; }
+.finished-label-component-rate.default { background: #dff3e5; color: #15592f; }
+.finished-label-component-empty { padding: 18px 10px !important; color: #7c8492; text-align: center; }
 .finished-label-actions { position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: 8px; padding: 10px 0 0; background: linear-gradient(rgba(246,248,251,0), #f6f8fb 35%); }
 .finished-label-history-row { border: 1px solid #edf0f4; border-radius: 8px; background: #fff; padding: 9px 10px; }
 .finished-label-history-main { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; font-weight: 700; }
@@ -3822,6 +3849,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .finished-label-help { font-size: 11px; color: #7c8492; line-height: 1.55; margin-top: 8px; }
 .finished-label-serial-notice { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; border: 1px solid #b9d8c5; border-radius: 8px; padding: 9px 11px; background: #f1f8f4; color: #315d43; font-size: 11px; line-height: 1.5; }
 .finished-label-serial-notice strong { flex: 0 0 auto; color: #18492e; font-size: 12px; }
+.finished-box-label-guide { display: flex; align-items: flex-start; flex-direction: column; gap: 4px; margin-bottom: 12px; border: 1px solid #cbd8e8; border-radius: 8px; padding: 10px 12px; background: #f4f8fd; color: #4c6078; font-size: 11px; line-height: 1.55; }
+.finished-box-label-guide strong { color: #173d6c; font-size: 12px; }
 .finished-label-layout-panel { margin-bottom: 12px; border: 1px solid #dfe4eb; border-radius: 10px; padding: 12px; background: #f8fafc; }
 .finished-label-layout-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
 .finished-label-layout-head h4 { margin: 0; color: #172033; font-size: 13px; font-weight: 800; }
@@ -3966,9 +3995,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .production-ranking-tools { grid-template-columns: 1fr 1fr; }
   .production-ranking-tools .form-select { grid-column: 1 / -1; }
   .finished-label-body { overflow: auto; padding: 12px; }
+  .finished-label-mode-hub { margin: 0; padding: 18px; }
+  .finished-label-mode-grid { grid-template-columns: 1fr; }
+  .finished-label-mode-card { min-height: 170px; }
+  .finished-label-workspace { height: auto; }
+  .finished-label-mode-bar { align-items: flex-start; flex-direction: column; }
   .finished-label-shell { grid-template-columns: 1fr; height: auto; }
   .finished-label-selected, .finished-label-form-grid { grid-template-columns: 1fr; }
   .finished-label-form-grid .wide { grid-column: 1 / -1; }
+  .finished-label-component-picker { grid-template-columns: 1fr; }
   .finished-label-actions { position: static; flex-wrap: wrap; }
   .finished-label-layout-head, .finished-label-layout-foot { align-items: flex-start; flex-direction: column; }
   .finished-label-layout-badges { justify-content: flex-start; }
