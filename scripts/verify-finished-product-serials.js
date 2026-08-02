@@ -52,7 +52,9 @@ assert(html.indexOf('id="btn-finished-label-save"') < html.indexOf('id="finished
 assert(html.includes('data-i18n="finished_label_g_part_number">G品番'), "selected-product summary does not expose the G part number");
 assert(html.includes('id="finished-label-mode-hub"'), "finished registration label-screen chooser is missing");
 assert(html.includes('data-finished-label-mode="product"') && html.includes('data-finished-label-mode="box"'), "separate product and box label entries are missing");
-assert(html.includes('data-i18n="finished_label_preview" disabled>完品シール印刷</button>'), "45x20 label is not named 完品シール");
+assert(html.includes('id="btn-finished-label-save"') && html.includes('data-i18n="finished_label_issue_save">登録・印刷</button>'), "register-and-print button label is not concise");
+assert(html.includes('data-i18n="finished_label_preview" disabled>印刷</button>'), "finished-label print button label is not concise");
+assert(html.includes('id="btn-finished-label-load-more"') && html.includes('data-i18n="btn_load_more" hidden>さらに表示</button>'), "finished-label search load-more action is missing");
 assert(html.includes('data-i18n="finished_label_layout_title">完品シール レイアウト</h4>'), "finished-label layout title is inconsistent");
 assert(!html.includes("製品本体シール"), "obsolete 製品本体シール name remains in the screen");
 assert(html.includes('data-i18n="finished_label_hub_title"'), "label-screen chooser title is not localized");
@@ -68,7 +70,9 @@ assert(languageSource.includes("renderFinishedLabelComponents()") && languageSou
   "finished_label_component_picker_prompt",
   "finished_label_variant_stock",
   "finished_label_print_setup",
-  "finished_box_label_print_setup"
+  "finished_box_label_print_setup",
+  "finished_label_count_summary",
+  "finished_label_priority_both_kinds"
 ].forEach((key) => {
   assert((app.match(new RegExp(`${key}:`, "g")) || []).length === 3, `${key} is not translated in all three languages`);
 });
@@ -86,6 +90,14 @@ assert(functionSource("setFinishedLabelPrintMode").includes('t(isBox ? "finished
 assert(functionSource("renderFinishedLabelCategoryOptions").includes("tCat(row[0])"), "finished-label category options are not localized");
 assert(functionSource("buildFinishedLabelPrintHtml").includes("esc(currentLang)"), "finished-label print document language is hard-coded");
 assert(functionSource("buildFinishedBoxLabelPrintHtml").includes('tf("finished_box_label_print_setup"'), "box-label print instructions are not localized");
+const readinessSource = functionSource("loadFinishedLabelProductReadiness");
+assert(readinessSource.includes("fetchProductionPartRegistrationCountMap(products)"), "finished-label result priority does not read registered component kinds");
+assert(readinessSource.includes('.from("core_product_variants")') && readinessSource.includes('["rebuilt", "aftermarket_new"]'), "finished-label result priority does not inspect both product kinds");
+assert(functionSource("finishedLabelProductPriority").includes("hasBothComponents"), "products with rebuilt and new components are not given the highest priority");
+const resultRenderSource = functionSource("renderFinishedLabelResults");
+assert(resultRenderSource.includes("finishedLabelProducts.slice(0, finishedLabelVisibleLimit)"), "finished-label results are not capped before rendering");
+assert(resultRenderSource.includes("loadMore.hidden = visibleProducts.length >= finishedLabelProducts.length"), "finished-label load-more visibility is not tied to remaining results");
+assert(functionSource("showMoreFinishedLabelProducts").includes("FINISHED_LABEL_PAGE_STEP"), "finished-label load-more does not advance in fixed pages");
 assert(/@page\s*{[^}]*size:\s*45mm\s+20mm/i.test(printCss), "print page is not fixed at 45x20mm");
 assert(/\.serial-label\s*{[^}]*width:\s*45mm;[^}]*height:\s*20mm;/i.test(printCss), "label dimensions are not exact");
 assert(/\.serial-label-field-name\s*{[^}]*font-size:/i.test(printCss), "print field hierarchy is missing");
@@ -106,6 +118,29 @@ assert(!previewProductNoSource.includes("product.manufacturer_part_number"), "fi
 assert(functionSource("readFinishedLabelRecord").includes("if (!p.gltek_part_number)"), "finished-label printing is not blocked when the G part number is missing");
 assert(styles.includes("grid-template-columns: 280px minmax(0, 1fr)") && styles.includes("grid-template-columns: minmax(470px, 1.08fr) minmax(360px, .92fr)"), "desktop no-scroll label workspace layout is missing");
 assert(styles.includes("table-layout: fixed") && styles.includes("overflow-x: hidden; overflow-y: auto"), "component columns can still force horizontal scrolling in the compact layout");
+assert(styles.includes(".finished-label-toolbar .finished-label-print-action") && styles.includes("font-size: 15px"), "finished-label print actions are not visually enlarged");
+
+const readinessSandbox = {
+  finishedLabelProductReadinessMap: {
+    both_components: { rebuiltComponents: 2, aftermarketNewComponents: 1, hasRebuiltVariant: true, hasAftermarketNewVariant: true },
+    both_variants: { rebuiltComponents: 1, aftermarketNewComponents: 0, hasRebuiltVariant: true, hasAftermarketNewVariant: true },
+    rebuilt_only: { rebuiltComponents: 3, aftermarketNewComponents: 0, hasRebuiltVariant: true, hasAftermarketNewVariant: false },
+    variants_only: { rebuiltComponents: 0, aftermarketNewComponents: 0, hasRebuiltVariant: true, hasAftermarketNewVariant: true },
+    empty: {}
+  },
+  finishedLabelInstructionMap: {},
+  productDkdId(product) { return product.id; }
+};
+vm.createContext(readinessSandbox);
+vm.runInContext(`${functionSource("finishedLabelProductPriority")}; ${functionSource("sortFinishedLabelProducts")}; this.sortReady = sortFinishedLabelProducts;`, readinessSandbox);
+const readinessOrder = readinessSandbox.sortReady([
+  { id: "empty" },
+  { id: "rebuilt_only" },
+  { id: "both_components" },
+  { id: "variants_only" },
+  { id: "both_variants" }
+]).map((product) => product.id);
+assert(readinessOrder.join(",") === "both_components,both_variants,rebuilt_only,variants_only,empty", "finished-label readiness priority order is incorrect");
 
 const qrInputs = [];
 const sandbox = {

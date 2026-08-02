@@ -372,13 +372,13 @@ var TRANSLATIONS = {
     finished_label_issue_form: "完品登録内容",
     finished_box_label_issue_form: "箱シール印刷内容",
     finished_label_apply_template: "100%使用部品を再セット",
-    finished_label_preview: "完品シール印刷",
+    finished_label_preview: "印刷",
     finished_label_layout_title: "完品シール レイアウト",
     finished_label_layout_hint: "黒1色・熱転写用。選択したGLTEK品番と発行予定の製造シリアルを実寸比率で確認できます。",
     finished_label_layout_one_per_unit: "1台につき1枚",
     finished_label_layout_sample: "発行前はサンプルシリアルを表示",
     finished_label_layout_qr_value: "QR格納値",
-    finished_box_label_preview: "箱シール印刷",
+    finished_box_label_preview: "印刷",
     finished_box_label_layout_title: "箱シール レイアウト",
     finished_box_label_layout_hint: "GLTEK品番はCode 128、製造シリアルはQRで表示します。黒1色・熱転写用です。",
     finished_box_label_layout_one_per_unit: "1台につき1枚",
@@ -398,7 +398,7 @@ var TRANSLATIONS = {
     finished_label_g_part_number_required: "G品番が登録されていません。品番マスタを確認してください。",
     finished_label_part_type: "部品種別",
     finished_label_replacement_part: "交換品番/内容",
-    finished_label_issue_save: "完品登録・シリアル発行・印刷",
+    finished_label_issue_save: "登録・印刷",
     finished_label_saved: "製造シリアルを発行し、完品在庫へ登録しました。",
     finished_label_no_product: "先に発行対象を選択してください。",
     finished_label_variant_required: "在庫区分を選択してください。区分がない商品は先に在庫区分を登録してください。",
@@ -482,6 +482,8 @@ var TRANSLATIONS = {
     finished_shipping_cancelled: "出荷を取り消し、完品在庫を戻しました。",
     finished_shipping_quantity: "{n} 台",
     finished_label_count: "{n} 件表示",
+    finished_label_count_summary: "{shown} / {total} 件表示",
+    finished_label_priority_both_kinds: "リビルト・新品 部品登録済",
     finished_label_history_empty: "この品番の発行履歴はありません。",
     screen_product_kind_stock_title: "在庫管理",
     img_section: "画像",
@@ -1844,13 +1846,13 @@ var TRANSLATIONS = {
     btn_print: "Print",
     finished_label_print_setup: "Finished Label: Set paper size to 45 × 20 mm and scale to 100%. {n} unit(s) × 1 label",
     finished_box_label_print_setup: "Box Label: Set paper size to 80 × 60 mm and scale to 100%. {n} unit(s) × 1 label",
-    finished_label_preview: "Print Finished Labels",
+    finished_label_preview: "Print",
     finished_label_layout_title: "Finished Label Layout",
     finished_label_layout_hint: "Black-only thermal-transfer layout. Preview the selected GLTEK part number and manufacturing serial at the correct aspect ratio.",
     finished_label_layout_one_per_unit: "One label per unit",
     finished_label_layout_sample: "A sample serial is shown before issue",
     finished_label_layout_qr_value: "QR payload",
-    finished_box_label_preview: "Print Box Labels",
+    finished_box_label_preview: "Print",
     finished_box_label_layout_title: "Box Label Layout",
     finished_box_label_layout_hint: "The GLTEK part number uses Code 128 and the manufacturing serial uses QR. Black-only thermal-transfer layout.",
     finished_box_label_layout_one_per_unit: "One label per unit",
@@ -1870,7 +1872,7 @@ var TRANSLATIONS = {
     finished_label_g_part_number_required: "No G part number is registered. Check the product master.",
     finished_label_part_type: "Part Type",
     finished_label_replacement_part: "Replacement Part / Detail",
-    finished_label_issue_save: "Register, Issue Serials, and Print",
+    finished_label_issue_save: "Register & Print",
     finished_label_saved: "Manufacturing serials were issued and finished stock was registered.",
     finished_label_no_product: "Select an issue target first.",
     finished_label_variant_required: "Select a stock variant. Create the product's stock variant first if none exists.",
@@ -1920,6 +1922,8 @@ var TRANSLATIONS = {
     finished_shipping_cancelled: "Shipment cancelled and finished stock restored.",
     finished_shipping_quantity: "{n} unit(s)",
     finished_label_count: "{n} rows",
+    finished_label_count_summary: "Showing {shown} of {total}",
+    finished_label_priority_both_kinds: "Rebuilt + New Parts Ready",
     finished_label_history_empty: "No issue history for this product.",
     screen_product_kind_stock_title: "Stock Management",
     img_section: "Images",
@@ -3289,13 +3293,13 @@ var TRANSLATIONS = {
     btn_print: "打印",
     finished_label_print_setup: "完品标签：请将纸张尺寸设置为45×20mm、缩放比例设置为100%。{n}台 × 1张",
     finished_box_label_print_setup: "箱标签：请将纸张尺寸设置为80×60mm、缩放比例设置为100%。{n}台 × 1张",
-    finished_label_preview: "打印完品标签",
+    finished_label_preview: "打印",
     finished_label_layout_title: "完品标签版式",
     finished_label_layout_hint: "黑色单色热转印版式。可按实际比例预览所选GLTEK品号和制造序列号。",
     finished_label_layout_one_per_unit: "每台1张",
     finished_label_layout_sample: "发行前显示示例序列号",
     finished_label_layout_qr_value: "QR内容",
-    finished_box_label_preview: "打印箱标签",
+    finished_box_label_preview: "打印",
     finished_box_label_layout_title: "箱标签版式",
     finished_box_label_layout_hint: "GLTEK品号使用Code 128，制造序列号使用QR。黑色单色热转印版式。",
     finished_box_label_layout_one_per_unit: "每台1张",
@@ -3315,7 +3319,7 @@ var TRANSLATIONS = {
     finished_label_g_part_number_required: "尚未登记G品号。请检查品号主数据。",
     finished_label_part_type: "零件种类",
     finished_label_replacement_part: "更换品号/内容",
-    finished_label_issue_save: "登记完品、发行序列号并打印",
+    finished_label_issue_save: "登记・打印",
     finished_label_saved: "已发行制造序列号并登记完品库存。",
     finished_label_no_product: "请先选择发行对象。",
     finished_label_variant_required: "请选择库存区分。没有区分的商品请先登记库存区分。",
@@ -3365,6 +3369,8 @@ var TRANSLATIONS = {
     finished_shipping_cancelled: "已取消出货并恢复完品库存。",
     finished_shipping_quantity: "{n} 台",
     finished_label_count: "显示 {n} 条",
+    finished_label_count_summary: "显示 {shown} / {total} 条",
+    finished_label_priority_both_kinds: "再制造・新品零件已登记",
     finished_label_history_empty: "此品号没有发行历史。",
     screen_product_kind_stock_title: "库存管理",
     img_section: "图片",
@@ -4422,7 +4428,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.639";
+var APP_VERSION       = "v1.1.640";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -4536,6 +4542,10 @@ var MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY = 1000;
 var MANUFACTURING_COST_DEFAULT_SELLING_EXPENSE_JPY = 510;
 var finishedLabelTemplates = [];
 var finishedLabelProducts = [];
+var finishedLabelProductReadinessMap = {};
+var finishedLabelVisibleLimit = 10;
+var finishedLabelSearchRequestSeq = 0;
+var FINISHED_LABEL_PAGE_STEP = 10;
 var finishedLabelInstructionMap = {};
 var finishedLabelSelectedProduct = null;
 var finishedLabelSelectedInstruction = null;
@@ -17161,6 +17171,9 @@ function setFinishedLabelPrintMode(mode) {
 
 function renderFinishedLabelEmpty() {
   finishedLabelProducts = [];
+  finishedLabelProductReadinessMap = {};
+  finishedLabelVisibleLimit = FINISHED_LABEL_PAGE_STEP;
+  finishedLabelSearchRequestSeq += 1;
   finishedLabelInstructionMap = {};
   finishedLabelSelectedProduct = null;
   finishedLabelSelectedInstruction = null;
@@ -17172,8 +17185,10 @@ function renderFinishedLabelEmpty() {
   finishedLabelComponentLoadSeq += 1;
   var results = document.getElementById("finished-label-results");
   var count = document.getElementById("finished-label-search-count");
+  var loadMore = document.getElementById("btn-finished-label-load-more");
   var history = document.getElementById("finished-label-history-list");
   if (count) count.textContent = "";
+  if (loadMore) loadMore.hidden = true;
   if (results) results.innerHTML = "<div class='empty'>" + esc(t("finished_label_search_hint")) + "</div>";
   if (history) history.innerHTML = "<div class='empty'>" + esc(t("finished_label_select_product")) + "</div>";
   renderFinishedLabelSelectedSummary(null);
@@ -17224,14 +17239,95 @@ function finishedLabelTemplatesForCategory(category) {
   return [{ part_type: "備考", default_maker: "", default_part_number: "", sort_order: 10 }];
 }
 
+async function loadFinishedLabelProductReadiness(products) {
+  var readinessMap = {};
+  var ids = Array.from(new Set((products || []).map(function(product) {
+    return parseInt(productDkdId(product), 10);
+  }).filter(function(id) {
+    return !isNaN(id);
+  })));
+  if (!ids.length) return readinessMap;
+
+  var requests = await Promise.all([
+    fetchProductionPartRegistrationCountMap(products),
+    sb.from("core_product_variants")
+      .select("dkd_shohin_id,product_kind")
+      .in("dkd_shohin_id", ids)
+      .in("product_kind", ["rebuilt", "aftermarket_new"])
+      .eq("is_active", true)
+      .limit(Math.max(ids.length * 3, 100))
+  ]);
+  var componentCounts = requests[0] && requests[0].byKind || {};
+  var variantResult = requests[1] || {};
+  ids.forEach(function(id) {
+    var key = String(id);
+    var counts = componentCounts[key] || {};
+    readinessMap[key] = {
+      rebuiltComponents: parseInt(counts.rebuilt || 0, 10) || 0,
+      aftermarketNewComponents: parseInt(counts.aftermarket_new || 0, 10) || 0,
+      hasRebuiltVariant: false,
+      hasAftermarketNewVariant: false
+    };
+  });
+  if (variantResult.error) {
+    console.warn("finished label product-kind readiness lookup failed", variantResult.error);
+    return readinessMap;
+  }
+  (variantResult.data || []).forEach(function(row) {
+    var readiness = readinessMap[String(row.dkd_shohin_id || "")];
+    if (!readiness) return;
+    var kind = normalizeProductKind(row.product_kind);
+    if (kind === "rebuilt") readiness.hasRebuiltVariant = true;
+    if (kind === "aftermarket_new") readiness.hasAftermarketNewVariant = true;
+  });
+  return readinessMap;
+}
+
+function finishedLabelProductPriority(product) {
+  var readiness = finishedLabelProductReadinessMap[String(productDkdId(product) || "")] || {};
+  var rebuiltComponents = parseInt(readiness.rebuiltComponents || 0, 10) || 0;
+  var aftermarketNewComponents = parseInt(readiness.aftermarketNewComponents || 0, 10) || 0;
+  var hasBothComponents = rebuiltComponents > 0 && aftermarketNewComponents > 0;
+  var hasBothVariants = !!readiness.hasRebuiltVariant && !!readiness.hasAftermarketNewVariant;
+  var hasComponents = rebuiltComponents + aftermarketNewComponents > 0;
+  if (hasBothComponents) return 0;
+  if (hasBothVariants && hasComponents) return 1;
+  if (hasComponents) return 2;
+  if (hasBothVariants) return 3;
+  return 4;
+}
+
+function sortFinishedLabelProducts(products) {
+  return (products || []).map(function(product, index) {
+    return { product: product, index: index };
+  }).sort(function(a, b) {
+    var priorityDiff = finishedLabelProductPriority(a.product) - finishedLabelProductPriority(b.product);
+    if (priorityDiff) return priorityDiff;
+    var aInstruction = finishedLabelInstructionMap[String(productDkdId(a.product))] || {};
+    var bInstruction = finishedLabelInstructionMap[String(productDkdId(b.product))] || {};
+    var aRank = parseInt(aInstruction.priority_rank, 10);
+    var bRank = parseInt(bInstruction.priority_rank, 10);
+    aRank = isNaN(aRank) ? Number.MAX_SAFE_INTEGER : aRank;
+    bRank = isNaN(bRank) ? Number.MAX_SAFE_INTEGER : bRank;
+    return aRank === bRank ? a.index - b.index : aRank - bRank;
+  }).map(function(entry) {
+    return entry.product;
+  });
+}
+
 async function searchFinishedLabelProducts() {
   if (!canViewFinishedLabelMgmt()) return;
+  var requestSeq = ++finishedLabelSearchRequestSeq;
+  finishedLabelVisibleLimit = FINISHED_LABEL_PAGE_STEP;
+  finishedLabelProductReadinessMap = {};
   var qEl = document.getElementById("finished-label-search");
   var q = qEl ? normalizeAsciiWidth(qEl.value.trim()) : "";
   var results = document.getElementById("finished-label-results");
   var count = document.getElementById("finished-label-search-count");
+  var loadMore = document.getElementById("btn-finished-label-load-more");
   if (results) results.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
   if (count) count.textContent = t("loading");
+  if (loadMore) loadMore.hidden = true;
 
   var rows = [];
   finishedLabelInstructionMap = {};
@@ -17246,7 +17342,17 @@ async function searchFinishedLabelProducts() {
   } else {
     rows = await fetchFinishedLabelProductionProducts();
   }
-  finishedLabelProducts = filterVisibleProducts(rows);
+  if (requestSeq !== finishedLabelSearchRequestSeq) return;
+  var visibleProducts = filterVisibleProducts(rows);
+  var readinessMap = {};
+  try {
+    readinessMap = await loadFinishedLabelProductReadiness(visibleProducts);
+  } catch (error) {
+    console.warn("finished label readiness ranking failed", error);
+  }
+  if (requestSeq !== finishedLabelSearchRequestSeq) return;
+  finishedLabelProductReadinessMap = readinessMap;
+  finishedLabelProducts = sortFinishedLabelProducts(visibleProducts);
   renderFinishedLabelResults();
 }
 
@@ -17288,7 +17394,10 @@ async function fetchFinishedLabelProductionProducts() {
 function renderFinishedLabelResults() {
   var results = document.getElementById("finished-label-results");
   var count = document.getElementById("finished-label-search-count");
-  if (count) count.textContent = tf("finished_label_count", { n: finishedLabelProducts.length });
+  var loadMore = document.getElementById("btn-finished-label-load-more");
+  var visibleProducts = finishedLabelProducts.slice(0, finishedLabelVisibleLimit);
+  if (count) count.textContent = tf("finished_label_count_summary", { shown: visibleProducts.length, total: finishedLabelProducts.length });
+  if (loadMore) loadMore.hidden = visibleProducts.length >= finishedLabelProducts.length;
   if (!results) return;
   if (!finishedLabelProducts.length) {
     results.innerHTML = "<div class='empty'>" + esc(t("no_results")) + "</div>";
@@ -17296,13 +17405,16 @@ function renderFinishedLabelResults() {
   }
   var selectedId = productDkdId(finishedLabelSelectedProduct);
   var html = "";
-  finishedLabelProducts.forEach(function(p) {
+  visibleProducts.forEach(function(p) {
     var dkdId = productDkdId(p);
     var inst = finishedLabelInstructionMap[String(dkdId)] || null;
+    var readiness = finishedLabelProductReadinessMap[String(dkdId || "")] || {};
+    var hasBothComponentKinds = Number(readiness.rebuiltComponents) > 0 && Number(readiness.aftermarketNewComponents) > 0;
     var active = selectedId && String(selectedId) === String(dkdId) ? " active" : "";
     var title = p.gltek_part_number || p.genuine_part_number || p.manufacturer_part_number || p.daiko_part_number || ("DKD " + dkdId);
-    html += "<button type='button' class='finished-label-result" + active + "' data-finished-label-dkd='" + esc(String(dkdId || "")) + "'>";
+    html += "<button type='button' class='finished-label-result" + active + (hasBothComponentKinds ? " priority" : "") + "' data-finished-label-dkd='" + esc(String(dkdId || "")) + "'>";
     html += "<div class='finished-label-result-title'>" + esc(title || "-") + "</div>";
+    if (hasBothComponentKinds) html += "<div class='finished-label-result-priority'>" + esc(t("finished_label_priority_both_kinds")) + "</div>";
     html += "<div class='finished-label-result-sub'>" + esc([productCategoryLabel(p), p.manufacturer, p.manufacturer_part_number].filter(Boolean).join(" / ")) + "</div>";
     html += "<div class='finished-label-result-sub'>" + esc(inst ? ("#" + (inst.priority_rank || "-") + " / " + (inst.source_year || "-")) : ("DKD " + (dkdId || "-"))) + "</div>";
     html += "</button>";
@@ -17315,6 +17427,12 @@ function renderFinishedLabelResults() {
       selectFinishedLabelProduct(p, finishedLabelInstructionMap[String(id)] || null);
     });
   });
+}
+
+function showMoreFinishedLabelProducts() {
+  if (finishedLabelVisibleLimit >= finishedLabelProducts.length) return;
+  finishedLabelVisibleLimit = Math.min(finishedLabelVisibleLimit + FINISHED_LABEL_PAGE_STEP, finishedLabelProducts.length);
+  renderFinishedLabelResults();
 }
 
 async function selectFinishedLabelProduct(product, instruction) {
@@ -36002,6 +36120,7 @@ document.getElementById("manufacturing-cost-saved-list").addEventListener("chang
 });
 document.getElementById("btn-finished-label-search").addEventListener("click", searchFinishedLabelProducts);
 document.getElementById("finished-label-search").addEventListener("keydown", function(e){ if(e.key==="Enter") searchFinishedLabelProducts(); });
+document.getElementById("btn-finished-label-load-more").addEventListener("click", showMoreFinishedLabelProducts);
 document.querySelectorAll("[data-finished-label-mode]").forEach(function(btn) {
   btn.addEventListener("click", function() { setFinishedLabelPrintMode(btn.dataset.finishedLabelMode); });
 });

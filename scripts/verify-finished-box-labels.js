@@ -42,7 +42,7 @@ function functionSource(name) {
 
 assert(html.includes('id="btn-finished-box-label-preview"'), "80x60 box-label print action is missing");
 assert(html.includes('id="finished-box-label-layout-preview"'), "80x60 live layout preview is missing");
-assert(html.includes('data-i18n="finished_box_label_preview" disabled>箱シール印刷</button>'), "80x60 label is not named 箱シール");
+assert(html.includes('data-i18n="finished_box_label_preview" disabled>印刷</button>'), "80x60 print button label is not concise");
 assert(!html.includes("80×60箱シール印刷"), "box-label action still exposes the dimension as its name");
 assert(html.includes('id="finished-box-label-barcode-value"'), "part-number barcode payload preview is missing");
 assert(html.includes('id="finished-box-label-qr-value"'), "serial QR payload preview is missing");
