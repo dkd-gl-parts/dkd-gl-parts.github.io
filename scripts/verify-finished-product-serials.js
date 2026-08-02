@@ -47,6 +47,7 @@ assert(html.includes('id="finished-label-quantity" type="number" min="1" max="10
 assert(html.includes('id="finished-label-print-count"') && html.includes('min="1" max="1"') && html.includes('value="1" readonly'), "one-label-per-unit rule is missing");
 assert(html.includes('id="finished-label-layout-preview"'), "live 45x20 label layout preview is missing");
 assert(html.includes('id="finished-label-layout-qr-value"'), "QR payload preview is missing");
+assert(html.includes('選択したG品番') && !html.includes('選択したGLTEK品番'), "finished-label guidance is not using G品番 terminology");
 assert(html.includes('id="finished-label-mode-hub"'), "finished registration label-screen chooser is missing");
 assert(html.includes('data-finished-label-mode="product"') && html.includes('data-finished-label-mode="box"'), "separate product and box label entries are missing");
 assert(html.includes('data-i18n="finished_label_preview" disabled>完品シール印刷</button>'), "45x20 label is not named 完品シール");
@@ -94,7 +95,8 @@ const output = sandbox.build({
 
 assert((output.match(/class='serial-label'/g) || []).length === 2, "one label per finished unit was not generated");
 assert((output.match(/<span>PRODUCT ID<\/span>/g) || []).length === 2, "product-label marker is missing");
-assert((output.match(/GLTEK PART NO\./g) || []).length === 2, "GLTEK part-number heading is missing");
+assert((output.match(/G PART NO\./g) || []).length === 2, "G-part-number heading is missing");
+assert(!output.includes("GLTEK PART NO."), "obsolete GLTEK part-number heading remains");
 assert((output.match(/MFG SERIAL \/ S\/N/g) || []).length === 2, "manufacturing-serial heading is missing");
 assert(!output.includes("化粧箱"), "obsolete box-label copy is still generated");
 assert(qrInputs.length === 2 && qrInputs.every((value, index) => value === serials[index]), "QR payload is not serial-only");
