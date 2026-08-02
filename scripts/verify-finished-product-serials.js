@@ -55,6 +55,37 @@ assert(html.includes('data-finished-label-mode="product"') && html.includes('dat
 assert(html.includes('data-i18n="finished_label_preview" disabled>完品シール印刷</button>'), "45x20 label is not named 完品シール");
 assert(html.includes('data-i18n="finished_label_layout_title">完品シール レイアウト</h4>'), "finished-label layout title is inconsistent");
 assert(!html.includes("製品本体シール"), "obsolete 製品本体シール name remains in the screen");
+assert(html.includes('data-i18n="finished_label_hub_title"'), "label-screen chooser title is not localized");
+assert(html.includes('data-i18n="finished_label_component_default_hint"'), "component default hint is not localized");
+assert(html.includes('data-i18n-aria-label="finished_label_preview_aria"'), "finished-label preview aria label is not localized");
+assert(html.includes('data-i18n-aria-label="finished_box_label_preview_aria"'), "box-label preview aria label is not localized");
+assert(functionSource("applyI18n").includes('[data-i18n-aria-label]'), "localized aria labels are not applied");
+const languageSource = functionSource("applyLanguage");
+assert(languageSource.includes('isScreenActive("finished-label-mgmt")'), "active finished-label screen is not rerendered after a language change");
+assert(languageSource.includes("renderFinishedLabelComponents()") && languageSource.includes("renderFinishedLabelHistory()"), "dynamic finished-label content is not rerendered after a language change");
+[
+  "finished_label_hub_title",
+  "finished_label_component_picker_prompt",
+  "finished_label_variant_stock",
+  "finished_label_print_setup",
+  "finished_box_label_print_setup"
+].forEach((key) => {
+  assert((app.match(new RegExp(`${key}:`, "g")) || []).length === 3, `${key} is not translated in all three languages`);
+});
+const finishedLabelStart = app.indexOf("function enterFinishedLabelMgmt");
+const finishedLabelEnd = app.indexOf("// 完品出荷・保証管理", finishedLabelStart);
+const finishedLabelSource = app.slice(finishedLabelStart, finishedLabelEnd);
+[
+  "品番を選択してください。",
+  "追加できる登録済み部品はありません",
+  "一部のみ初回印刷済みです。管理者に確認してください。",
+  "ラベル汚損・貼り替え",
+  "左側の発行履歴から箱シール対象を選択してください。"
+].forEach((copy) => assert(!finishedLabelSource.includes(`\"${copy}\"`), `dynamic UI copy is still hard-coded: ${copy}`));
+assert(functionSource("setFinishedLabelPrintMode").includes('t(isBox ? "finished_box_label_screen_title"'), "label mode titles do not follow the selected language");
+assert(functionSource("renderFinishedLabelCategoryOptions").includes("tCat(row[0])"), "finished-label category options are not localized");
+assert(functionSource("buildFinishedLabelPrintHtml").includes("esc(currentLang)"), "finished-label print document language is hard-coded");
+assert(functionSource("buildFinishedBoxLabelPrintHtml").includes('tf("finished_box_label_print_setup"'), "box-label print instructions are not localized");
 assert(/@page\s*{[^}]*size:\s*45mm\s+20mm/i.test(printCss), "print page is not fixed at 45x20mm");
 assert(/\.serial-label\s*{[^}]*width:\s*45mm;[^}]*height:\s*20mm;/i.test(printCss), "label dimensions are not exact");
 assert(/\.serial-label-field-name\s*{[^}]*font-size:/i.test(printCss), "print field hierarchy is missing");
@@ -79,6 +110,23 @@ assert(styles.includes("table-layout: fixed") && styles.includes("overflow-x: hi
 const qrInputs = [];
 const sandbox = {
   APP_VERSION: "v-test",
+  currentLang: "en",
+  t(key) {
+    return {
+      btn_print: "Print",
+      finished_label_print_setup: "Finished Label: 2 units"
+    }[key] || key;
+  },
+  tf(key, vars) {
+    let value = {
+      btn_print: "Print",
+      finished_label_print_setup: "Finished Label: {n} units"
+    }[key] || key;
+    Object.keys(vars || {}).forEach((name) => {
+      value = value.replace(new RegExp(`\\{${name}\\}`, "g"), vars[name]);
+    });
+    return value;
+  },
   esc(value) {
     return String(value == null ? "" : value)
       .replace(/&/g, "&amp;")

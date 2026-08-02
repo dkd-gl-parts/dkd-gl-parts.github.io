@@ -73,6 +73,26 @@ const barcodeInputs = [];
 const qrInputs = [];
 const sandbox = {
   APP_VERSION: "v-test",
+  currentLang: "ja",
+  t(key) {
+    return {
+      btn_print: "印刷",
+      finished_box_label_print_setup: "箱シール: {n}台"
+    }[key] || key;
+  },
+  tf(key, vars) {
+    let value = {
+      btn_print: "印刷",
+      finished_box_label_print_setup: "箱シール: {n}台"
+    }[key] || key;
+    Object.keys(vars || {}).forEach((name) => {
+      value = value.replace(new RegExp(`\\{${name}\\}`, "g"), vars[name]);
+    });
+    return value;
+  },
+  tCat(value) {
+    return value;
+  },
   esc(value) {
     return String(value == null ? "" : value)
       .replace(/&/g, "&amp;")

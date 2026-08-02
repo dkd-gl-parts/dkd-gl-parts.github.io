@@ -348,13 +348,30 @@ var TRANSLATIONS = {
     stock_movement_inventory_adjustment: "棚卸調整",
     stock_movement_manual_set: "在庫設定",
     finished_label_title: "完品登録・製造シリアル発行",
+    finished_label_screen_title: "完品登録・シール印刷",
+    finished_label_hub_kicker: "完品登録",
+    finished_label_hub_title: "印刷するシールを選択",
+    finished_label_hub_intro: "シールごとに専用の印刷画面へ進みます。完品シールでは製造シリアルを発行し、箱シールでは発行済みの完品登録を選択します。",
+    finished_label_product_mode_name: "完品シール",
+    finished_label_product_mode_desc: "品番を選択し、構成部品を確認して製造シリアルを発行・印刷",
+    finished_label_product_mode_open: "完品シール印刷画面へ →",
+    finished_label_box_mode_name: "箱シール",
+    finished_label_box_mode_desc: "発行済みの完品登録から製造シリアルを選択して印刷",
+    finished_label_box_mode_open: "箱シール印刷画面へ →",
+    finished_label_mode_back: "← 印刷画面を選び直す",
+    finished_label_product_screen_title: "完品シール印刷・完品登録",
+    finished_box_label_screen_title: "箱シール印刷",
+    finished_label_product_badge: "45 × 20 mm / 完品シール",
+    finished_box_label_badge: "80 × 60 mm / 箱シール",
     finished_label_product_search: "完品登録対象検索",
+    finished_box_label_product_search: "箱シール対象品番検索",
     finished_label_search_ph: "品番・製造予定Noで検索",
     finished_label_search_hint: "空欄の場合は製造予定リスト上位を表示します。",
     finished_label_history: "発行履歴",
     finished_label_select_product: "発行対象を選択してください。",
     finished_label_issue_form: "完品登録内容",
-    finished_label_apply_template: "カテゴリ構成部品を再反映",
+    finished_box_label_issue_form: "箱シール印刷内容",
+    finished_label_apply_template: "100%使用部品を再セット",
     finished_label_preview: "完品シール印刷",
     finished_label_layout_title: "完品シール レイアウト",
     finished_label_layout_hint: "黒1色・熱転写用。選択したGLTEK品番と発行予定の製造シリアルを実寸比率で確認できます。",
@@ -395,6 +412,40 @@ var TRANSLATIONS = {
     finished_label_reprint_reason: "再印刷理由を入力してください。",
     finished_label_reprint_cancelled: "再印刷を取り消しました。",
     finished_label_popup_blocked: "ラベル画面を開けませんでした。ポップアップ許可を確認してください。発行履歴から再印刷できます。",
+    finished_label_serial_notice_title: "1台につき固有の製造シリアルを発行",
+    finished_box_label_guide_title: "発行済みの完品登録から印刷",
+    finished_box_label_guide_desc: "左側の発行履歴で対象を選びます。初回印刷と、理由が必要な再印刷は履歴上で区別されます。",
+    finished_label_qr_serial: "QR（製造シリアル）",
+    finished_label_component_default_hint: "選択品番に登録済みで、使用率100%の部品を自動セットします。",
+    finished_label_component_register: "＋ 未登録部品を登録",
+    finished_label_component_picker_aria: "選択品番の構成部品を追加",
+    finished_label_component_picker_prompt: "この品番に登録済みの部品を選択",
+    finished_label_component_picker_empty: "追加できる登録済み部品はありません",
+    finished_label_component_add: "選択した部品を追加",
+    finished_label_usage_rate: "使用率",
+    finished_label_operation: "操作",
+    finished_label_component_selected_count: "選択 {selected}件 / 登録 {total}件",
+    finished_label_component_select_first: "品番を選択してください。",
+    finished_label_component_default_empty: "使用率100%の初期部品はありません。上の選択欄から、この品番に登録済みの部品を追加してください。",
+    finished_label_component_uncategorized: "未分類部品",
+    finished_label_rate_unset: "未設定",
+    finished_label_genuine_prefix: "純正 {number}",
+    finished_label_component_remove: "外す",
+    finished_label_g_number_missing_value: "G品番未登録",
+    finished_label_variant_stock: "{kind} / 在庫 {n}",
+    finished_box_label_partial_print: "一部のみ初回印刷済みです。管理者に確認してください。",
+    finished_label_history_units: "{n} 台",
+    finished_label_history_parts: "構成部品 {n} 件",
+    finished_label_reprint_default_reason: "ラベル汚損・貼り替え",
+    finished_label_issuing: "製造シリアルを発行しています...",
+    finished_label_reprint_recording: "再印刷履歴を登録しています...",
+    finished_box_label_print_recording: "箱シールの印刷履歴を登録しています...",
+    finished_box_label_select_history: "左側の発行履歴から箱シール対象を選択してください。",
+    finished_label_preview_aria: "45×20mm完品シールプレビュー",
+    finished_box_label_preview_aria: "80×60mm箱シールプレビュー",
+    btn_print: "印刷",
+    finished_label_print_setup: "完品シール：用紙サイズを45×20mm、倍率100%に設定してください。{n}台 × 1枚",
+    finished_box_label_print_setup: "箱シール：用紙サイズを80×60mm、倍率100%に設定してください。{n}台 × 1枚",
     finished_shipping_title: "完品出荷・保証管理",
     finished_shipping_scan_title: "製造シリアル読取",
     finished_shipping_scan_ph: "QRを読取、または MYYYY-NNNNNNN を入力",
@@ -1734,6 +1785,23 @@ var TRANSLATIONS = {
     stock_movement_production_use: "Production Use",
     stock_movement_inventory_adjustment: "Inventory Adjustment",
     stock_movement_manual_set: "Stock Set",
+    finished_label_screen_title: "Finished Unit Registration / Label Printing",
+    finished_label_hub_kicker: "Finished Unit Registration",
+    finished_label_hub_title: "Choose a Label to Print",
+    finished_label_hub_intro: "Open the dedicated print screen for each label. Finished labels issue manufacturing serials; box labels use an existing finished-unit registration.",
+    finished_label_product_mode_name: "Finished Label",
+    finished_label_product_mode_desc: "Select a part number, review components, then issue and print a manufacturing serial",
+    finished_label_product_mode_open: "Open Finished Label Screen →",
+    finished_label_box_mode_name: "Box Label",
+    finished_label_box_mode_desc: "Select a manufacturing serial from an existing finished-unit registration and print",
+    finished_label_box_mode_open: "Open Box Label Screen →",
+    finished_label_mode_back: "← Choose Another Print Screen",
+    finished_label_product_screen_title: "Finished Label Printing / Registration",
+    finished_box_label_screen_title: "Box Label Printing",
+    finished_label_product_badge: "45 × 20 mm / Finished Label",
+    finished_box_label_badge: "80 × 60 mm / Box Label",
+    finished_box_label_product_search: "Box Label Product Search",
+    finished_box_label_issue_form: "Box Label Print Details",
     finished_label_title: "Finished Unit / Manufacturing Serial Issue",
     finished_label_product_search: "Finished Unit Target Search",
     finished_label_search_ph: "Search part number or production plan No.",
@@ -1741,7 +1809,41 @@ var TRANSLATIONS = {
     finished_label_history: "Issue History",
     finished_label_select_product: "Select an issue target.",
     finished_label_issue_form: "Finished Unit Details",
-    finished_label_apply_template: "Reload Category Components",
+    finished_label_apply_template: "Reset 100% Usage Parts",
+    finished_label_serial_notice_title: "Issue a unique manufacturing serial for each unit",
+    finished_box_label_guide_title: "Print from an issued finished-unit registration",
+    finished_box_label_guide_desc: "Choose the target from issue history on the left. History distinguishes the initial print from reason-required reprints.",
+    finished_label_qr_serial: "QR (Manufacturing Serial)",
+    finished_label_component_default_hint: "Automatically selects registered parts with a 100% usage rate for the chosen product.",
+    finished_label_component_register: "+ Register Missing Part",
+    finished_label_component_picker_aria: "Add a component for the selected product",
+    finished_label_component_picker_prompt: "Choose a registered part for this product",
+    finished_label_component_picker_empty: "No additional registered parts are available",
+    finished_label_component_add: "Add Selected Part",
+    finished_label_usage_rate: "Usage Rate",
+    finished_label_operation: "Action",
+    finished_label_component_selected_count: "Selected {selected} / Registered {total}",
+    finished_label_component_select_first: "Select a part number.",
+    finished_label_component_default_empty: "No 100% usage parts are preselected. Add a registered part for this product from the selector above.",
+    finished_label_component_uncategorized: "Uncategorized Part",
+    finished_label_rate_unset: "Not Set",
+    finished_label_genuine_prefix: "Genuine {number}",
+    finished_label_component_remove: "Remove",
+    finished_label_g_number_missing_value: "G Part No. Not Registered",
+    finished_label_variant_stock: "{kind} / Stock {n}",
+    finished_box_label_partial_print: "Only some initial labels have been printed. Contact an administrator.",
+    finished_label_history_units: "{n} unit(s)",
+    finished_label_history_parts: "{n} component(s)",
+    finished_label_reprint_default_reason: "Damaged label / replacement",
+    finished_label_issuing: "Issuing manufacturing serials...",
+    finished_label_reprint_recording: "Recording reprint history...",
+    finished_box_label_print_recording: "Recording box-label print history...",
+    finished_box_label_select_history: "Select a box-label target from issue history on the left.",
+    finished_label_preview_aria: "45 × 20 mm finished-label preview",
+    finished_box_label_preview_aria: "80 × 60 mm box-label preview",
+    btn_print: "Print",
+    finished_label_print_setup: "Finished Label: Set paper size to 45 × 20 mm and scale to 100%. {n} unit(s) × 1 label",
+    finished_box_label_print_setup: "Box Label: Set paper size to 80 × 60 mm and scale to 100%. {n} unit(s) × 1 label",
     finished_label_preview: "Print Finished Labels",
     finished_label_layout_title: "Finished Label Layout",
     finished_label_layout_hint: "Black-only thermal-transfer layout. Preview the selected GLTEK part number and manufacturing serial at the correct aspect ratio.",
@@ -3128,6 +3230,23 @@ var TRANSLATIONS = {
     stock_movement_production_use: "生产使用",
     stock_movement_inventory_adjustment: "盘点调整",
     stock_movement_manual_set: "库存设置",
+    finished_label_screen_title: "完品登记・标签打印",
+    finished_label_hub_kicker: "完品登记",
+    finished_label_hub_title: "选择要打印的标签",
+    finished_label_hub_intro: "请进入各标签专用的打印画面。完品标签用于发行制造序列号，箱标签从已发行的完品登记中选择。",
+    finished_label_product_mode_name: "完品标签",
+    finished_label_product_mode_desc: "选择品号、确认构成零件后发行并打印制造序列号",
+    finished_label_product_mode_open: "进入完品标签打印画面 →",
+    finished_label_box_mode_name: "箱标签",
+    finished_label_box_mode_desc: "从已发行的完品登记中选择制造序列号并打印",
+    finished_label_box_mode_open: "进入箱标签打印画面 →",
+    finished_label_mode_back: "← 重新选择打印画面",
+    finished_label_product_screen_title: "完品标签打印・完品登记",
+    finished_box_label_screen_title: "箱标签打印",
+    finished_label_product_badge: "45 × 20 mm / 完品标签",
+    finished_box_label_badge: "80 × 60 mm / 箱标签",
+    finished_box_label_product_search: "箱标签对象品号搜索",
+    finished_box_label_issue_form: "箱标签打印内容",
     finished_label_title: "完品登记・制造序列号发行",
     finished_label_product_search: "完品登记对象搜索",
     finished_label_search_ph: "按品号或生产计划编号搜索",
@@ -3135,7 +3254,41 @@ var TRANSLATIONS = {
     finished_label_history: "发行历史",
     finished_label_select_product: "请选择发行对象。",
     finished_label_issue_form: "完品登记内容",
-    finished_label_apply_template: "重新载入类别构成零件",
+    finished_label_apply_template: "重新设置100%使用零件",
+    finished_label_serial_notice_title: "每台发行唯一的制造序列号",
+    finished_box_label_guide_title: "从已发行的完品登记中打印",
+    finished_box_label_guide_desc: "请从左侧发行历史选择对象。历史中会区分首次打印和需要理由的重新打印。",
+    finished_label_qr_serial: "QR（制造序列号）",
+    finished_label_component_default_hint: "自动选择所选品号中已登记且使用率为100%的零件。",
+    finished_label_component_register: "＋ 登记未登记零件",
+    finished_label_component_picker_aria: "添加所选品号的构成零件",
+    finished_label_component_picker_prompt: "选择此品号中已登记的零件",
+    finished_label_component_picker_empty: "没有可追加的已登记零件",
+    finished_label_component_add: "添加所选零件",
+    finished_label_usage_rate: "使用率",
+    finished_label_operation: "操作",
+    finished_label_component_selected_count: "已选 {selected}件 / 已登记 {total}件",
+    finished_label_component_select_first: "请选择品号。",
+    finished_label_component_default_empty: "没有使用率100%的初始零件。请从上方选择框添加此品号中已登记的零件。",
+    finished_label_component_uncategorized: "未分类零件",
+    finished_label_rate_unset: "未设置",
+    finished_label_genuine_prefix: "纯正 {number}",
+    finished_label_component_remove: "移除",
+    finished_label_g_number_missing_value: "G品号未登记",
+    finished_label_variant_stock: "{kind} / 库存 {n}",
+    finished_box_label_partial_print: "仅部分完成了首次打印。请联系管理员。",
+    finished_label_history_units: "{n} 台",
+    finished_label_history_parts: "构成零件 {n} 件",
+    finished_label_reprint_default_reason: "标签污损・更换",
+    finished_label_issuing: "正在发行制造序列号...",
+    finished_label_reprint_recording: "正在登记重新打印历史...",
+    finished_box_label_print_recording: "正在登记箱标签打印历史...",
+    finished_box_label_select_history: "请从左侧发行历史选择箱标签对象。",
+    finished_label_preview_aria: "45×20mm完品标签预览",
+    finished_box_label_preview_aria: "80×60mm箱标签预览",
+    btn_print: "打印",
+    finished_label_print_setup: "完品标签：请将纸张尺寸设置为45×20mm、缩放比例设置为100%。{n}台 × 1张",
+    finished_box_label_print_setup: "箱标签：请将纸张尺寸设置为80×60mm、缩放比例设置为100%。{n}台 × 1张",
     finished_label_preview: "打印完品标签",
     finished_label_layout_title: "完品标签版式",
     finished_label_layout_hint: "黑色单色热转印版式。可按实际比例预览所选GLTEK品号和制造序列号。",
@@ -4269,7 +4422,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.638";
+var APP_VERSION       = "v1.1.639";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5286,6 +5439,9 @@ function applyI18n() {
   document.querySelectorAll("[data-i18n-ph]").forEach(function(el) {
     el.placeholder = t(el.dataset.i18nPh);
   });
+  document.querySelectorAll("[data-i18n-aria-label]").forEach(function(el) {
+    el.setAttribute("aria-label", t(el.dataset.i18nAriaLabel));
+  });
   refreshCategorySelectLabels();
   applySpecFormCategory();
   renderComponentReverseVehicleMakerOptions();
@@ -5356,6 +5512,17 @@ async function applyLanguage(lang) {
     renderManufacturingCostSavedListOptions();
     if (manufacturingCostRows.length) renderManufacturingCostRows();
     else renderManufacturingCostEmpty();
+  }
+  if (isScreenActive("finished-label-mgmt")) {
+    setFinishedLabelPrintMode(finishedLabelPrintMode);
+    renderFinishedLabelCategoryOptions();
+    renderFinishedLabelResults();
+    renderFinishedLabelSelectedSummary(finishedLabelSelectedProduct);
+    renderFinishedLabelVariantOptions(finishedLabelVariants);
+    renderFinishedLabelComponents();
+    renderFinishedLabelHistory();
+    renderFinishedLabelIssuedResult(finishedLabelLastIssuedRecord);
+    updateFinishedLabelQrPayload();
   }
   if (isScreenActive("kikan-mgmt")) await loadKikanMgmt();
   if (document.getElementById("kikan-form-overlay") && document.getElementById("kikan-form-overlay").classList.contains("show")) {
@@ -16980,14 +17147,14 @@ function setFinishedLabelPrintMode(mode) {
   var searchTitle = document.getElementById("finished-label-product-search-title");
   var editorTitle = document.getElementById("finished-label-editor-title");
   if (!mode) {
-    if (title) title.textContent = "完品登録・シール印刷";
+    if (title) title.textContent = t("finished_label_screen_title");
     return;
   }
   var isBox = mode === "box";
-  if (title) title.textContent = isBox ? "箱シール印刷" : "完品シール印刷・完品登録";
-  if (badge) badge.textContent = isBox ? "80 × 60 mm / 箱シール" : "45 × 20 mm / 完品シール";
-  if (searchTitle) searchTitle.textContent = isBox ? "箱シール対象品番検索" : "完品登録対象品番検索";
-  if (editorTitle) editorTitle.textContent = isBox ? "箱シール印刷内容" : "完品登録内容";
+  if (title) title.textContent = t(isBox ? "finished_box_label_screen_title" : "finished_label_product_screen_title");
+  if (badge) badge.textContent = t(isBox ? "finished_box_label_badge" : "finished_label_product_badge");
+  if (searchTitle) searchTitle.textContent = t(isBox ? "finished_box_label_product_search" : "finished_label_product_search");
+  if (editorTitle) editorTitle.textContent = t(isBox ? "finished_box_label_issue_form" : "finished_label_issue_form");
   renderFinishedLabelHistory();
   renderFinishedLabelIssuedResult(finishedLabelLastIssuedRecord);
 }
@@ -17021,7 +17188,7 @@ function renderFinishedLabelCategoryOptions(selected) {
   if (!select) return;
   selected = selected || select.value || "オルタネータ";
   select.innerHTML = FINISHED_LABEL_CATEGORIES.map(function(row) {
-    return "<option value='" + esc(row[0]) + "'" + (row[0] === selected ? " selected" : "") + ">" + esc(row[1]) + "</option>";
+    return "<option value='" + esc(row[0]) + "'" + (row[0] === selected ? " selected" : "") + ">" + esc(tCat(row[0])) + "</option>";
   }).join("");
 }
 
@@ -17243,7 +17410,7 @@ function renderFinishedLabelVariantOptions(rows) {
   }
   select.innerHTML = rows.map(function(row) {
     var stock = row.stock_qty == null ? "0" : row.stock_qty;
-    var label = productKindLabel(row.product_kind) + " / 在庫 " + stock;
+    var label = tf("finished_label_variant_stock", { kind: productKindLabel(row.product_kind), n: stock });
     if (row.display_label) label += " / " + row.display_label;
     return "<option value='" + esc(String(row.product_variant_id)) + "'>" + esc(label) + "</option>";
   }).join("");
@@ -17275,7 +17442,7 @@ function applyFinishedLabelTemplate() {
 }
 
 function finishedLabelComponentName(row) {
-  return String((row && (row.component_name || row.component_part_name)) || "").trim() || "未分類部品";
+  return String((row && (row.component_name || row.component_part_name)) || "").trim() || t("finished_label_component_uncategorized");
 }
 
 function finishedLabelComponentPartNumber(row) {
@@ -17354,30 +17521,30 @@ function renderFinishedLabelComponents(errorMessage) {
   var addBtn = document.getElementById("btn-finished-label-component-add");
   var count = document.getElementById("finished-label-component-count");
   if (picker) {
-    picker.innerHTML = "<option value=''>" + esc(availableRows.length ? "この品番に登録済みの部品を選択" : "追加できる登録済み部品はありません") + "</option>" + availableRows.map(function(row) {
-      var text = [finishedLabelComponentName(row), row.component_manufacturer, finishedLabelComponentPartNumber(row), row.replacement_rate == null ? "" : ("使用率 " + row.replacement_rate + "%")].filter(Boolean).join(" / ");
+    picker.innerHTML = "<option value=''>" + esc(t(availableRows.length ? "finished_label_component_picker_prompt" : "finished_label_component_picker_empty")) + "</option>" + availableRows.map(function(row) {
+      var text = [finishedLabelComponentName(row), row.component_manufacturer, finishedLabelComponentPartNumber(row), row.replacement_rate == null ? "" : (t("finished_label_usage_rate") + " " + row.replacement_rate + "%")].filter(Boolean).join(" / ");
       return "<option value='" + esc(String(row.id)) + "'>" + esc(text) + "</option>";
     }).join("");
     picker.disabled = !availableRows.length;
   }
   if (addBtn) addBtn.disabled = !availableRows.length;
-  if (count) count.textContent = "選択 " + selectedRows.length + "件 / 登録 " + finishedLabelComponentCandidates.length + "件";
+  if (count) count.textContent = tf("finished_label_component_selected_count", { selected: selectedRows.length, total: finishedLabelComponentCandidates.length });
   if (errorMessage) {
     body.innerHTML = "<tr><td colspan='7' class='finished-label-component-empty'>" + esc(errorMessage) + "</td></tr>";
     return;
   }
   if (!finishedLabelSelectedProduct) {
-    body.innerHTML = "<tr><td colspan='7' class='finished-label-component-empty'>品番を選択してください。</td></tr>";
+    body.innerHTML = "<tr><td colspan='7' class='finished-label-component-empty'>" + esc(t("finished_label_component_select_first")) + "</td></tr>";
     return;
   }
   if (!selectedRows.length) {
-    body.innerHTML = "<tr><td colspan='7' class='finished-label-component-empty'>使用率100%の初期部品はありません。上の選択欄から、この品番に登録済みの部品を追加してください。</td></tr>";
+    body.innerHTML = "<tr><td colspan='7' class='finished-label-component-empty'>" + esc(t("finished_label_component_default_empty")) + "</td></tr>";
     return;
   }
   body.innerHTML = selectedRows.map(function(row, idx) {
-    var rate = row.replacement_rate == null ? "未設定" : (String(row.replacement_rate) + "%");
+    var rate = row.replacement_rate == null ? t("finished_label_rate_unset") : (String(row.replacement_rate) + "%");
     var defaultClass = Number(row.replacement_rate) === 100 ? " default" : "";
-    var genuine = row.component_genuine_part_number ? "純正 " + row.component_genuine_part_number : "";
+    var genuine = row.component_genuine_part_number ? tf("finished_label_genuine_prefix", { number: row.component_genuine_part_number }) : "";
     var memo = row.manufacturing_memo || row.procurement_category || "";
     return "<tr data-finished-label-component-row='" + esc(String(row.id)) + "'>" +
       "<td>" + (idx + 1) + "</td>" +
@@ -17386,7 +17553,7 @@ function renderFinishedLabelComponents(errorMessage) {
       "<td><span class='finished-label-component-part'>" + esc(finishedLabelComponentPartNumber(row)) + "</span><span class='finished-label-component-sub'>" + esc(genuine) + "</span></td>" +
       "<td><span class='finished-label-component-rate" + defaultClass + "'>" + esc(rate) + "</span></td>" +
       "<td>" + esc(row.quantity || "1") + "</td>" +
-      "<td><button class='btn-sm-edit production-action-secondary' type='button' data-finished-label-component-remove='" + esc(String(row.id)) + "'>外す</button></td>" +
+      "<td><button class='btn-sm-edit production-action-secondary' type='button' data-finished-label-component-remove='" + esc(String(row.id)) + "'>" + esc(t("finished_label_component_remove")) + "</button></td>" +
     "</tr>";
   }).join("");
   body.querySelectorAll("[data-finished-label-component-remove]").forEach(function(btn) {
@@ -17516,7 +17683,7 @@ function updateFinishedLabelQrPayload() {
 
 function finishedLabelPreviewProductNo() {
   var product = finishedLabelSelectedProduct || {};
-  return product.gltek_part_number || "G品番未登録";
+  return product.gltek_part_number || t("finished_label_g_number_missing_value");
 }
 
 function finishedLabelPreviewSerial() {
@@ -17603,7 +17770,7 @@ function buildFinishedBoxLabelMarkup(record, unit) {
   var manufacturerLine = [manufacturer, manufacturerPartNumber].filter(Boolean).join(" / ") || "-";
   var genuineLine = [unit.genuine_part_number || record.genuinePartNumber, record.genuinePartNumber2].filter(Boolean).join(" / ") || "-";
   var specification = [record.nominalVoltage, record.nominalOutput, record.nominalSpec].filter(Boolean).join(" / ") || "-";
-  var category = record.productCategory || "-";
+  var category = record.productCategory ? tCat(record.productCategory) : "-";
   var productKind = record.productKind ? productKindLabel(record.productKind) : "-";
   var barcodeDataUrl = finishedProductPartBarcodeDataUrl(productNo);
   var qrDataUrl = finishedProductSerialQrDataUrl(serial);
@@ -17645,7 +17812,7 @@ async function saveFinishedLabelIssue() {
     var record = readFinishedLabelRecord();
     printWindow = window.open("", "_blank");
     if (printWindow) {
-      printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>製造シリアルを発行しています...</p>");
+      printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_label_issuing")) + "</p>");
     }
     var r = await sb.rpc("issue_finished_product_serials", {
       target_dkd_shohin_id: record.dkdShohinId,
@@ -17713,7 +17880,7 @@ function renderFinishedLabelIssuedResult(record) {
     ? "<button class='btn-sm-edit' id='btn-finished-box-label-issued-print'>" + esc(t("finished_box_label_reprint")) + "</button>"
     : "<button class='btn-sm-edit production-action-secondary' id='btn-finished-label-issued-print'>" + esc(t("finished_label_preview")) + "</button>";
   host.innerHTML = "<div class='finished-label-issued-head'><div><strong>" + esc(t("finished_label_serial_result")) + "</strong><span>" + esc(record.issueCode || "") + "</span></div><div class='finished-label-issued-actions'>" + actionHtml + "</div></div>" +
-    "<div class='finished-label-issued-meta'>" + esc([record.quantity + " 台", stockText].filter(Boolean).join(" / ")) + "</div>" +
+    "<div class='finished-label-issued-meta'>" + esc([tf("finished_label_history_units", { n: record.quantity }), stockText].filter(Boolean).join(" / ")) + "</div>" +
     "<div class='finished-label-serial-list'>" + serials + "</div>";
   host.classList.add("show");
   var btn = document.getElementById("btn-finished-label-issued-print");
@@ -17805,8 +17972,8 @@ function renderFinishedLabelHistory() {
     var actionHtml = "";
     if (finishedLabelPrintMode === "box") {
       var auditBlocked = row.boxPrintAuditUnavailable || row.boxLabelPartiallyPrinted;
-      var boxActionLabel = row.boxLabelPrinted ? "箱シール再印刷" : "箱シール印刷";
-      var boxActionTitle = row.boxLabelPartiallyPrinted ? "一部のみ初回印刷済みです。管理者に確認してください。" : "";
+      var boxActionLabel = t(row.boxLabelPrinted ? "finished_box_label_reprint" : "finished_box_label_preview");
+      var boxActionTitle = row.boxLabelPartiallyPrinted ? t("finished_box_label_partial_print") : "";
       actionHtml = "<button class='btn-sm-edit production-action-secondary' data-finished-box-label-history-preview='" + esc(String(row.id)) + "'" + (units.length && !auditBlocked ? "" : " disabled") + (boxActionTitle ? " title='" + esc(boxActionTitle) + "'" : "") + ">" + esc(boxActionLabel) + "</button>";
     } else {
       actionHtml = "<button class='btn-sm-edit production-action-secondary' data-finished-label-history-preview='" + esc(String(row.id)) + "'" + (units.length ? "" : " disabled") + ">" + esc(t("finished_product_label_reprint")) + "</button>";
@@ -17814,7 +17981,7 @@ function renderFinishedLabelHistory() {
     html += "<div class='finished-label-history-row'>";
     html += "<div class='finished-label-history-main'><span>" + esc(row.issue_code || "-") + "</span><div class='finished-label-history-actions'>" + actionHtml + "</div></div>";
     html += "<div class='finished-label-history-serial'>" + esc(serialText) + "</div>";
-    html += "<div class='finished-label-history-sub'>" + esc([formatDateTime(row.issued_at), row.product_category, productKindLabel(row.product_kind), row.quantity + " units", comps + " parts"].filter(Boolean).join(" / ")) + "</div>";
+    html += "<div class='finished-label-history-sub'>" + esc([formatDateTime(row.issued_at), row.product_category ? tCat(row.product_category) : "", productKindLabel(row.product_kind), tf("finished_label_history_units", { n: row.quantity }), tf("finished_label_history_parts", { n: comps })].filter(Boolean).join(" / ")) + "</div>";
     html += "</div>";
   });
   list.innerHTML = html;
@@ -17868,13 +18035,13 @@ function finishedLabelRecordFromHistory(row, issued) {
 
 async function reprintFinishedLabelIssue(row, labelType) {
   labelType = labelType === "box" ? "box" : "product";
-  var reason = window.prompt(t("finished_label_reprint_reason"), "ラベル汚損・貼り替え");
+  var reason = window.prompt(t("finished_label_reprint_reason"), t("finished_label_reprint_default_reason"));
   if (reason === null) return;
   reason = String(reason || "").trim();
   if (!reason) { alert(t("finished_label_reprint_reason")); return; }
   var printWindow = window.open("", "_blank");
   if (printWindow) {
-    printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>再印刷履歴を登録しています...</p>");
+    printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_label_reprint_recording")) + "</p>");
   }
   try {
     var result = await sb.rpc("record_finished_product_label_print", {
@@ -17909,14 +18076,14 @@ async function printFinishedBoxLabelIssue(row) {
   var eventType = row.boxLabelPrinted ? "reprint" : "initial";
   var reason = null;
   if (eventType === "reprint") {
-    reason = window.prompt(t("finished_label_reprint_reason"), "ラベル汚損・貼り替え");
+    reason = window.prompt(t("finished_label_reprint_reason"), t("finished_label_reprint_default_reason"));
     if (reason === null) return;
     reason = String(reason || "").trim();
     if (!reason) { alert(t("finished_label_reprint_reason")); return; }
   }
   var printWindow = window.open("", "_blank");
   if (printWindow) {
-    printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>箱シールの印刷履歴を登録しています...</p>");
+    printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_box_label_print_recording")) + "</p>");
   }
   try {
     var result = await sb.rpc("record_finished_product_label_print", {
@@ -17956,7 +18123,7 @@ function previewCurrentFinishedLabel() {
 
 function previewCurrentFinishedBoxLabel() {
   if (!finishedLabelLastIssuedRecord || !finishedLabelLastIssuedRecord.sourceHistoryRow) {
-    alert("左側の発行履歴から箱シール対象を選択してください。");
+    alert(t("finished_box_label_select_history"));
     return;
   }
   printFinishedBoxLabelIssue(finishedLabelLastIssuedRecord.sourceHistoryRow);
@@ -18007,9 +18174,9 @@ function buildFinishedLabelPrintHtml(record) {
     var productNo = unit.gltek_part_number || unit.product_no || record.gltekPartNumber || record.productNo || record.manufacturerPartNumber || record.genuinePartNumber || "-";
     labels.push(buildFinishedLabelMarkup(serial, productNo));
   });
-  return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><title>D-CATS " + esc(record.issueCode || "") + "</title>" +
+  return "<!doctype html><html lang='" + esc(currentLang) + "'><head><meta charset='utf-8'><title>D-CATS " + esc(record.issueCode || "") + "</title>" +
     "<link rel='stylesheet' href='print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'>" +
-    "</head><body><div class='toolbar'><button id='dcats-print-now' type='button'>印刷</button><span>完品シール：用紙サイズを45×20mm、倍率100%に設定してください。" + esc(units.length) + "台 × 1枚</span></div><main class='serial-labels'>" + labels.join("") + "</main></body></html>";
+    "</head><body><div class='toolbar'><button id='dcats-print-now' type='button'>" + esc(t("btn_print")) + "</button><span>" + esc(tf("finished_label_print_setup", { n: units.length })) + "</span></div><main class='serial-labels'>" + labels.join("") + "</main></body></html>";
 }
 
 function openFinishedBoxLabelPrintPreview(record, existingWindow) {
@@ -18038,9 +18205,9 @@ function buildFinishedBoxLabelPrintHtml(record) {
   var labels = units.map(function(unit) {
     return buildFinishedBoxLabelMarkup(record, unit);
   });
-  return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><title>D-CATS BOX " + esc(record.issueCode || "") + "</title>" +
+  return "<!doctype html><html lang='" + esc(currentLang) + "'><head><meta charset='utf-8'><title>D-CATS BOX " + esc(record.issueCode || "") + "</title>" +
     "<link rel='stylesheet' href='box-label-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'>" +
-    "</head><body><div class='toolbar'><button id='dcats-print-now' type='button'>印刷</button><span>箱シール：用紙サイズを80×60mm、倍率100%に設定してください。" + esc(units.length) + "台 × 1枚</span></div><main class='box-product-labels'>" + labels.join("") + "</main></body></html>";
+    "</head><body><div class='toolbar'><button id='dcats-print-now' type='button'>" + esc(t("btn_print")) + "</button><span>" + esc(tf("finished_box_label_print_setup", { n: units.length })) + "</span></div><main class='box-product-labels'>" + labels.join("") + "</main></body></html>";
 }
 
 // =============================================
