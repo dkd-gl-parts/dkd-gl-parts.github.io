@@ -46,7 +46,6 @@ assert(html.includes('data-i18n="finished_box_label_preview" disabled>箱シー�
 assert(!html.includes("80×60箱シール印刷"), "box-label action still exposes the dimension as its name");
 assert(html.includes('id="finished-box-label-barcode-value"'), "part-number barcode payload preview is missing");
 assert(html.includes('id="finished-box-label-qr-value"'), "serial QR payload preview is missing");
-assert(html.includes('G品番はCode 128') && !html.includes('GLTEK品番はCode 128'), "box-label guidance is not using G品番 terminology");
 assert(html.includes('data-finished-label-box-only'), "box label does not have a dedicated print workspace");
 assert(html.includes("jsbarcode@3.12.3/dist/JsBarcode.all.min.js"), "fixed JsBarcode dependency is missing");
 assert(html.indexOf("jsbarcode@3.12.3") < html.indexOf('src="app.js'), "JsBarcode must load before app.js");
@@ -100,7 +99,7 @@ vm.runInContext(`${functionSource("buildFinishedBoxLabelMarkup")}; ${functionSou
 const serials = ["M2026-0000001", "M2026-0000002"];
 const record = {
   issueCode: "FB2026-0000001",
-  productNo: "G0101-00001",
+  productNo: "104210-4120",
   gltekPartNumber: "G0101-00001",
   manufacturer: "DENSO",
   manufacturerPartNumber: "104210-4120",
@@ -117,14 +116,14 @@ const output = sandbox.build(record);
 
 assert((output.match(/class='box-product-label'/g) || []).length === 2, "one box label per finished unit was not generated");
 assert((output.match(/BOX LABEL/g) || []).length === 2, "box-label marker is missing");
-assert((output.match(/G PART NO\./g) || []).length === 2, "G-part-number heading is missing");
-assert(!output.includes("GLTEK PART NO."), "obsolete GLTEK part-number heading remains");
+assert((output.match(/GLTEK PART NO\./g) || []).length === 2, "GLTEK part-number heading is missing");
+assert((output.match(/<div class='box-product-label-number'><span>GLTEK PART NO\.<\/span><strong class='box-product-label-part'>G0101-00001<\/strong><\/div>/g) || []).length === 2, "GLTEK PART NO. does not display the G part number");
 assert((output.match(/MANUFACTURER \/ MFR PART NO\./g) || []).length === 2, "manufacturer part-number field is missing");
 assert((output.match(/GENUINE PART NO\./g) || []).length === 2, "genuine part-number field is missing");
 assert(output.includes("DENSO / 104210-4120"), "manufacturer data is missing");
 assert(output.includes("27060-30110 / 27060-30111"), "genuine part-number data is missing");
 assert(output.includes("12V / 130A / SC6"), "specification data is missing");
-assert(barcodeInputs.length === 2 && barcodeInputs.every((value) => value === record.productNo), "Code 128 payload is not the GLTEK part number");
+assert(barcodeInputs.length === 2 && barcodeInputs.every((value) => value === record.gltekPartNumber), "Code 128 payload is not the G part number");
 assert(qrInputs.length === 2 && qrInputs.every((value, index) => value === serials[index]), "QR payload is not the unit manufacturing serial");
 assert(serials.every((serial) => output.includes(serial)), "human-readable manufacturing serial is missing");
 assert(output.includes("box-label-print.css?dcats_version=v-test"), "80x60 print stylesheet is not versioned");

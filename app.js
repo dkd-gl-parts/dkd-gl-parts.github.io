@@ -357,15 +357,15 @@ var TRANSLATIONS = {
     finished_label_apply_template: "カテゴリ構成部品を再反映",
     finished_label_preview: "完品シール印刷",
     finished_label_layout_title: "完品シール レイアウト",
-    finished_label_layout_hint: "黒1色・熱転写用。選択したG品番と発行予定の製造シリアルを実寸比率で確認できます。",
+    finished_label_layout_hint: "黒1色・熱転写用。選択したGLTEK品番と発行予定の製造シリアルを実寸比率で確認できます。",
     finished_label_layout_one_per_unit: "1台につき1枚",
     finished_label_layout_sample: "発行前はサンプルシリアルを表示",
     finished_label_layout_qr_value: "QR格納値",
     finished_box_label_preview: "箱シール印刷",
     finished_box_label_layout_title: "箱シール レイアウト",
-    finished_box_label_layout_hint: "G品番はCode 128、製造シリアルはQRで表示します。黒1色・熱転写用です。",
+    finished_box_label_layout_hint: "GLTEK品番はCode 128、製造シリアルはQRで表示します。黒1色・熱転写用です。",
     finished_box_label_layout_one_per_unit: "1台につき1枚",
-    finished_box_label_barcode_value: "G品番バーコード",
+    finished_box_label_barcode_value: "品番バーコード",
     finished_product_label_reprint: "完品シール再印刷",
     finished_box_label_reprint: "箱シール再印刷",
     finished_label_issue_code: "完品登録ID",
@@ -469,7 +469,6 @@ var TRANSLATIONS = {
     err_perm: "編集者以上の権限が必要です",
     f_genuine_pn: "純正品番",
     f_mfr_pn: "メーカー品番",
-    f_gltek_pn: "G品番",
     f_daiko_pn: "大光品番",
     f_genuine_assy_pn: "純正ASSY品番",
     f_mfr_assy_pn: "メーカーASSY品番",
@@ -766,33 +765,33 @@ var TRANSLATIONS = {
     f_genuine_pn2: "純正品番2",
     lbl_mfr_pn: "メーカー品番",
     lbl_mfr: "メーカー",
-    gltek_part_number_section: "G品番",
-    gltek_part_number_label: "G品番",
+    gltek_part_number_section: "GLTEK品番",
+    gltek_part_number_label: "GLTEK品番",
     gltek_product_add_section: "部品メーカー区分／GLTEK製",
     gltek_manufacturer_type: "部品メーカー区分",
     gltek_manufacturer_external: "外部メーカー製",
-    gltek_manufacturer_gltek: "GLTEK製（新しいG品番を発行）",
+    gltek_manufacturer_gltek: "GLTEK製（新しいGLTEK品番を発行）",
     gltek_product_mode_entry_title: "GLTEK製として登録する場合",
     gltek_product_mode_entry_help: "製造管理で選択した商品をベースに、専用のGLTEK製登録画面へ進みます。",
     gltek_product_mode_open: "GLTEK製を登録する",
     gltek_product_mode_close: "通常の商品登録に戻る",
     gltek_product_mode_title: "GLTEK製登録モード",
-    gltek_product_mode_intro: "選択中の商品をベースに改造品を登録し、独立したG品番を新規発行します。",
-    gltek_product_mode_rule_fresh: "ベース商品と同じメーカー品番でも、GLTEK製には必ず別の新しいG品番を発行します。",
-    gltek_product_mode_rule_identity: "登録後はメーカーをGLTEKとし、メーカー品番とG品番に同じG品番を保存します。",
+    gltek_product_mode_intro: "選択中の商品をベースに改造品を登録し、独立したGLTEK品番を新規発行します。",
+    gltek_product_mode_rule_fresh: "ベース商品と同じメーカー品番でも、GLTEK製には必ず別の新しいGLTEK品番を発行します。",
+    gltek_product_mode_rule_identity: "登録後はメーカーをGLTEKとし、メーカー品番とGLTEK品番に同じGLTEK品番を保存します。",
     gltek_product_mode_rule_private: "ベース商品・元メーカー・元メーカー品番・設計系譜は製造機密として非公開で保存します。",
-    gltek_product_mode_rule_immutable: "発行したG品番は、品番修正画面から追加・削除・修正できません。",
-    gltek_product_mode_rule_standard: "通常リビルト・社外新品は、同じメーカー品番なら既存のG品番を共通利用します。",
+    gltek_product_mode_rule_immutable: "発行したGLTEK品番は、品番修正画面から追加・削除・修正できません。",
+    gltek_product_mode_rule_standard: "通常リビルト・社外新品は、同じメーカー品番なら既存のGLTEK品番を共通利用します。",
     gltek_product_mode_rule_production: "GLTEK製の登録は製造管理からのみ行い、販売管理の商品追加では利用できません。",
     gltek_product_mode_save: "GLTEK製を登録",
     gltek_base_manufacturer_code: "ベースメーカーコード（2文字）",
-    gltek_category_number_code: "G品番カテゴリコード（2桁）",
-    gltek_product_add_help: "上のメーカーとメーカー品番は選択したベース商品の情報です。登録後はメーカーがGLTEKになり、メーカー品番とG品番にはGMMCC-NNNNN形式の同じ新しいG品番が入ります。",
+    gltek_category_number_code: "GLTEK品番カテゴリコード（2桁）",
+    gltek_product_add_help: "上のメーカーとメーカー品番は選択したベース商品の情報です。登録後はメーカーがGLTEKになり、メーカー品番とGLTEK品番にはGMMCC-NNNNN形式の同じ新しいGLTEK品番が入ります。",
     gltek_product_add_requires_base: "GLTEK製を登録する前に、ベースとなる登録済み商品を製造管理で選択してください。",
     gltek_product_add_requires_source: "GLTEK製には、ベースとなるメーカーとメーカー品番が必要です。",
     gltek_product_add_done: "GLTEK製の商品を追加しました",
     gltek_part_number_invalid_base: "ベースメーカーコードは半角英数字2文字で入力してください。",
-    gltek_part_number_invalid_category: "G品番カテゴリコードは半角数字2桁で入力してください。",
+    gltek_part_number_invalid_category: "GLTEK品番カテゴリコードは半角数字2桁で入力してください。",
     lbl_vehicle_mfr: "車メーカー",
     lbl_body_type: "車種",
     lbl_compatible: "適合車名",
@@ -1743,15 +1742,15 @@ var TRANSLATIONS = {
     finished_label_apply_template: "Reload Category Components",
     finished_label_preview: "Print Finished Labels",
     finished_label_layout_title: "Finished Label Layout",
-    finished_label_layout_hint: "Black-only thermal-transfer layout. Preview the selected G part number and manufacturing serial at the correct aspect ratio.",
+    finished_label_layout_hint: "Black-only thermal-transfer layout. Preview the selected GLTEK part number and manufacturing serial at the correct aspect ratio.",
     finished_label_layout_one_per_unit: "One label per unit",
     finished_label_layout_sample: "A sample serial is shown before issue",
     finished_label_layout_qr_value: "QR payload",
     finished_box_label_preview: "Print Box Labels",
     finished_box_label_layout_title: "Box Label Layout",
-    finished_box_label_layout_hint: "The G part number uses Code 128 and the manufacturing serial uses QR. Black-only thermal-transfer layout.",
+    finished_box_label_layout_hint: "The GLTEK part number uses Code 128 and the manufacturing serial uses QR. Black-only thermal-transfer layout.",
     finished_box_label_layout_one_per_unit: "One label per unit",
-    finished_box_label_barcode_value: "G-part-number barcode",
+    finished_box_label_barcode_value: "Part-number barcode",
     finished_product_label_reprint: "Reprint Finished Label",
     finished_box_label_reprint: "Reprint Box Label",
     finished_label_issue_code: "Registration ID",
@@ -1855,7 +1854,6 @@ var TRANSLATIONS = {
     err_perm: "Editor permission or higher required",
     f_genuine_pn: "Genuine Part No.",
     f_mfr_pn: "Manufacturer Part No.",
-    f_gltek_pn: "G Part No.",
     f_daiko_pn: "Daiko Part No.",
     f_genuine_assy_pn: "Genuine ASSY No.",
     f_mfr_assy_pn: "Manufacturer ASSY No.",
@@ -2152,33 +2150,33 @@ var TRANSLATIONS = {
     f_genuine_pn2: "Genuine Part No. 2",
     lbl_mfr_pn: "Manufacturer Part No.",
     lbl_mfr: "Manufacturer",
-    gltek_part_number_section: "G Part Number",
-    gltek_part_number_label: "G Part Number",
+    gltek_part_number_section: "GLTEK Part Number",
+    gltek_part_number_label: "GLTEK Part Number",
     gltek_product_add_section: "Part Manufacturer Type / GLTEK Product",
     gltek_manufacturer_type: "Part Manufacturer Type",
     gltek_manufacturer_external: "External Manufacturer",
-    gltek_manufacturer_gltek: "GLTEK Product (issue a new G part number)",
+    gltek_manufacturer_gltek: "GLTEK Product (issue a new GLTEK part number)",
     gltek_product_mode_entry_title: "Register as a GLTEK product",
     gltek_product_mode_entry_help: "Continue to the dedicated GLTEK registration view using the product selected in Production Management as the base.",
     gltek_product_mode_open: "Register GLTEK Product",
     gltek_product_mode_close: "Return to Standard Product",
     gltek_product_mode_title: "GLTEK Product Registration",
-    gltek_product_mode_intro: "Register a modified product from the selected base and issue a separate new G part number.",
-    gltek_product_mode_rule_fresh: "A GLTEK product always receives a separate new G part number, even when its base manufacturer part number matches another product.",
-    gltek_product_mode_rule_identity: "After registration, the manufacturer is GLTEK and the same G part number is stored as both manufacturer part number and G part number.",
+    gltek_product_mode_intro: "Register a modified product from the selected base and issue a separate new GLTEK part number.",
+    gltek_product_mode_rule_fresh: "A GLTEK product always receives a separate new GLTEK part number, even when its base manufacturer part number matches another product.",
+    gltek_product_mode_rule_identity: "After registration, the manufacturer is GLTEK and the same GLTEK part number is stored as both manufacturer part number and GLTEK part number.",
     gltek_product_mode_rule_private: "The base product, original manufacturer and part number, and design lineage are stored privately as manufacturing-confidential information.",
-    gltek_product_mode_rule_immutable: "An issued G part number cannot be added, deleted, or changed from the part-number edit screen.",
-    gltek_product_mode_rule_standard: "Standard rebuilt and aftermarket-new products continue sharing an existing G part number when the manufacturer part number is the same.",
+    gltek_product_mode_rule_immutable: "An issued GLTEK part number cannot be added, deleted, or changed from the part-number edit screen.",
+    gltek_product_mode_rule_standard: "Standard rebuilt and aftermarket-new products continue sharing an existing GLTEK part number when the manufacturer part number is the same.",
     gltek_product_mode_rule_production: "GLTEK products can be registered only from Production Management and are unavailable from Sales Management product add.",
     gltek_product_mode_save: "Register GLTEK Product",
     gltek_base_manufacturer_code: "Base Manufacturer Code (2 chars)",
-    gltek_category_number_code: "G Part Number Category Code (2 digits)",
-    gltek_product_add_help: "The manufacturer and part number above identify the selected base product. After registration, the manufacturer is GLTEK and the same new GMMCC-NNNNN part number is stored as both the manufacturer part number and G part number.",
+    gltek_category_number_code: "GLTEK Part Number Category Code (2 digits)",
+    gltek_product_add_help: "The manufacturer and part number above identify the selected base product. After registration, the manufacturer is GLTEK and the same new GMMCC-NNNNN part number is stored as both the manufacturer part number and GLTEK part number.",
     gltek_product_add_requires_base: "Select a registered base product in Production Management before creating a GLTEK product.",
     gltek_product_add_requires_source: "A base manufacturer and manufacturer part number are required for a GLTEK product.",
     gltek_product_add_done: "GLTEK product added",
     gltek_part_number_invalid_base: "Enter a two-character ASCII alphanumeric base-manufacturer code.",
-    gltek_part_number_invalid_category: "Enter a two-digit ASCII G-part-number category code.",
+    gltek_part_number_invalid_category: "Enter a two-digit ASCII GLTEK part-number category code.",
     lbl_vehicle_mfr: "Vehicle Maker",
     lbl_body_type: "Body Type",
     lbl_compatible: "Compatible Models",
@@ -3136,15 +3134,15 @@ var TRANSLATIONS = {
     finished_label_apply_template: "重新载入类别构成零件",
     finished_label_preview: "打印完品标签",
     finished_label_layout_title: "完品标签版式",
-    finished_label_layout_hint: "黑色单色热转印版式。可按实际比例预览所选G品号和制造序列号。",
+    finished_label_layout_hint: "黑色单色热转印版式。可按实际比例预览所选GLTEK品号和制造序列号。",
     finished_label_layout_one_per_unit: "每台1张",
     finished_label_layout_sample: "发行前显示示例序列号",
     finished_label_layout_qr_value: "QR内容",
     finished_box_label_preview: "打印箱标签",
     finished_box_label_layout_title: "箱标签版式",
-    finished_box_label_layout_hint: "G品号使用Code 128，制造序列号使用QR。黑色单色热转印版式。",
+    finished_box_label_layout_hint: "GLTEK品号使用Code 128，制造序列号使用QR。黑色单色热转印版式。",
     finished_box_label_layout_one_per_unit: "每台1张",
-    finished_box_label_barcode_value: "G品号条码",
+    finished_box_label_barcode_value: "品号条码",
     finished_product_label_reprint: "重新打印完品标签",
     finished_box_label_reprint: "重新打印箱标签",
     finished_label_issue_code: "完品登记ID",
@@ -3248,7 +3246,6 @@ var TRANSLATIONS = {
     err_perm: "需要编辑者或更高权限",
     f_genuine_pn: "纯正零件编号",
     f_mfr_pn: "制造商零件编号",
-    f_gltek_pn: "G零件编号",
     f_daiko_pn: "大光零件编号",
     f_genuine_assy_pn: "纯正ASSY编号",
     f_mfr_assy_pn: "制造商ASSY编号",
@@ -3538,33 +3535,33 @@ var TRANSLATIONS = {
     f_genuine_pn2: "纯正零件编号2",
     lbl_mfr_pn: "制造商零件编号",
     lbl_mfr: "制造商",
-    gltek_part_number_section: "G零件编号",
-    gltek_part_number_label: "G零件编号",
+    gltek_part_number_section: "GLTEK零件编号",
+    gltek_part_number_label: "GLTEK零件编号",
     gltek_product_add_section: "零件制造商类别／GLTEK产品",
     gltek_manufacturer_type: "零件制造商类别",
     gltek_manufacturer_external: "外部制造商产品",
-    gltek_manufacturer_gltek: "GLTEK产品（发行新的G零件编号）",
+    gltek_manufacturer_gltek: "GLTEK产品（发行新的GLTEK零件编号）",
     gltek_product_mode_entry_title: "登记为GLTEK产品",
     gltek_product_mode_entry_help: "以生产管理中选择的商品为基础，进入专用的GLTEK产品登记界面。",
     gltek_product_mode_open: "登记GLTEK产品",
     gltek_product_mode_close: "返回普通商品登记",
     gltek_product_mode_title: "GLTEK产品登记模式",
-    gltek_product_mode_intro: "以所选商品为基础登记改造品，并单独发行新的G零件编号。",
-    gltek_product_mode_rule_fresh: "即使基础商品的制造商零件编号相同，GLTEK产品也必须发行不同的新G零件编号。",
-    gltek_product_mode_rule_identity: "登记后制造商为GLTEK，并将同一个G零件编号保存为制造商零件编号和G零件编号。",
+    gltek_product_mode_intro: "以所选商品为基础登记改造品，并单独发行新的GLTEK零件编号。",
+    gltek_product_mode_rule_fresh: "即使基础商品的制造商零件编号相同，GLTEK产品也必须发行不同的新GLTEK零件编号。",
+    gltek_product_mode_rule_identity: "登记后制造商为GLTEK，并将同一个GLTEK零件编号保存为制造商零件编号和GLTEK零件编号。",
     gltek_product_mode_rule_private: "基础商品、原制造商及零件编号和设计沿革作为制造机密进行非公开保存。",
-    gltek_product_mode_rule_immutable: "已发行的G零件编号不能在零件编号修改界面中新增、删除或修改。",
-    gltek_product_mode_rule_standard: "普通再制造品和副厂新品在制造商零件编号相同时，继续共用现有G零件编号。",
+    gltek_product_mode_rule_immutable: "已发行的GLTEK零件编号不能在零件编号修改界面中新增、删除或修改。",
+    gltek_product_mode_rule_standard: "普通再制造品和副厂新品在制造商零件编号相同时，继续共用现有GLTEK零件编号。",
     gltek_product_mode_rule_production: "GLTEK产品只能从生产管理登记，不能从销售管理的商品添加中使用。",
     gltek_product_mode_save: "登记GLTEK产品",
     gltek_base_manufacturer_code: "基础制造商代码（2位）",
-    gltek_category_number_code: "G零件编号类别代码（2位）",
-    gltek_product_add_help: "上方制造商和零件编号来自所选基础产品。登记后制造商为GLTEK，并将同一个GMMCC-NNNNN格式的新G零件编号保存为制造商零件编号和G零件编号。",
+    gltek_category_number_code: "GLTEK零件编号类别代码（2位）",
+    gltek_product_add_help: "上方制造商和零件编号来自所选基础产品。登记后制造商为GLTEK，并将同一个GMMCC-NNNNN格式的新GLTEK零件编号保存为制造商零件编号和GLTEK零件编号。",
     gltek_product_add_requires_base: "创建GLTEK产品前，请先在生产管理中选择已登记的基础产品。",
     gltek_product_add_requires_source: "GLTEK产品必须填写基础制造商和制造商零件编号。",
     gltek_product_add_done: "已添加GLTEK产品",
     gltek_part_number_invalid_base: "基础制造商代码必须是2位半角英数字。",
-    gltek_part_number_invalid_category: "G零件编号类别代码必须是2位半角数字。",
+    gltek_part_number_invalid_category: "GLTEK零件编号类别代码必须是2位半角数字。",
     lbl_vehicle_mfr: "汽车制造商",
     lbl_body_type: "车身类型",
     lbl_compatible: "适用车型",
@@ -4266,7 +4263,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.636";
+var APP_VERSION       = "v1.1.637";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6793,7 +6790,7 @@ function renderCustomerCatalogList() {
         "<span class='customer-catalog-item-category'>" + esc(productCategoryLabel(product)) + "</span>" +
         "<span class='customer-catalog-item-pn'>" + esc(product.genuine_part_number || product.manufacturer_part_number || "-") + "</span>" +
         (makerLine ? "<span class='customer-catalog-item-sub'>" + esc(makerLine) + "</span>" : "") +
-        (product.gltek_part_number ? "<span class='customer-catalog-item-sub'>G品番: " + esc(product.gltek_part_number) + "</span>" : "") +
+        (product.gltek_part_number ? "<span class='customer-catalog-item-sub'>GLTEK: " + esc(product.gltek_part_number) + "</span>" : "") +
       "</span>" +
     "</button>";
   }).join("");
@@ -13188,7 +13185,7 @@ function renderPartsMgmt() {
   var countEl  = document.getElementById("parts-mgmt-count");
   if (countEl) countEl.textContent = partsMgmtData.length + " 件";
   if (!partsMgmtData.length) { list.innerHTML = "<div class='empty'>該当する商品がありません</div>"; return; }
-  var html = "<table class='mgmt-table'><tr><th>商品コード</th><th>純正品番</th><th>メーカー品番</th><th>G品番</th><th>メーカー</th><th>カテゴリ</th><th></th></tr>";
+  var html = "<table class='mgmt-table'><tr><th>商品コード</th><th>純正品番</th><th>メーカー品番</th><th>GLTEK品番</th><th>メーカー</th><th>カテゴリ</th><th></th></tr>";
   partsMgmtData.forEach(function(p) {
     html += "<tr>";
     html += "<td><div class='mgmt-pn'>" + esc(String(p.dkd_shohin_id || p.shohin_cd || "-")) + "</div></td>";
@@ -17526,7 +17523,7 @@ function buildFinishedLabelMarkup(serial, productNo) {
     "<div class='serial-label-head'><strong>GLTEK</strong><span>PRODUCT ID</span></div>" +
     "<div class='serial-label-body'><img class='serial-label-qr' src='" + esc(qrDataUrl) + "' alt='" + esc(serial) + "'>" +
     "<div class='serial-label-copy'>" +
-    "<div class='serial-label-field-name'>G PART NO.</div>" +
+    "<div class='serial-label-field-name'>GLTEK PART NO.</div>" +
     "<div class='serial-label-product" + productSizeClass + "'>" + esc(productNo) + "</div>" +
     "<div class='serial-label-rule'></div>" +
     "<div class='serial-label-field-name'>MFG SERIAL / S/N</div>" +
@@ -17600,7 +17597,7 @@ function buildFinishedBoxLabelMarkup(record, unit) {
   var qrDataUrl = finishedProductSerialQrDataUrl(serial);
   return "<section class='box-product-label'>" +
     "<div class='box-product-label-head'><strong>GLTEK</strong><span>BOX LABEL</span><em>" + esc(category) + "</em></div>" +
-    "<div class='box-product-label-number'><span>G PART NO.</span><strong class='box-product-label-part" + productSizeClass + "'>" + esc(productNo) + "</strong></div>" +
+    "<div class='box-product-label-number'><span>GLTEK PART NO.</span><strong class='box-product-label-part" + productSizeClass + "'>" + esc(productNo) + "</strong></div>" +
     "<div class='box-product-label-barcode'><img src='" + esc(barcodeDataUrl) + "' alt='Code 128 " + esc(productNo) + "'><strong>" + esc(productNo) + "</strong></div>" +
     "<div class='box-product-label-lower'><div class='box-product-label-details'>" +
     "<div><span>MANUFACTURER / MFR PART NO.</span><strong>" + esc(manufacturerLine) + "</strong></div>" +
@@ -18936,16 +18933,16 @@ function gltekAutoIssueFailureText(context, error) {
       : "\u5546\u54c1\u306f\u8ffd\u52a0\u3057\u307e\u3057\u305f\u304c\u3001GLTEK\u54c1\u756a\u306e\u81ea\u52d5\u767a\u884c\u306b\u5931\u6557\u3057\u307e\u3057\u305f") + (detail ? ": " + detail : "");
   }
   return (context === "sales_pricing"
-    ? "Sales price was saved, but automatic G-part-number issuance failed"
-    : "Product was added, but automatic G-part-number issuance failed") + (detail ? ": " + detail : "");
+    ? "Sales price was saved, but automatic GLTEK part-number issuance failed"
+    : "Product was added, but automatic GLTEK part-number issuance failed") + (detail ? ": " + detail : "");
 }
 
 function gltekAutoIssueSuccessText(result) {
   var number = result && result.gltek_part_number;
   var reused = result && result.action === "reused";
-  if (currentLang === "zh") return (reused ? "\u5df2\u5957\u7528\u73b0\u6709G\u96f6\u4ef6\u7f16\u53f7" : "\u5df2\u81ea\u52a8\u53d1\u884cG\u96f6\u4ef6\u7f16\u53f7") + (number ? ": " + number : "");
-  if (currentLang === "ja") return (reused ? "\u65e2\u5b58\u306eG\u54c1\u756a\u3092\u53cd\u6620\u3057\u307e\u3057\u305f" : "G\u54c1\u756a\u3092\u81ea\u52d5\u767a\u884c\u3057\u307e\u3057\u305f") + (number ? ": " + number : "");
-  return (reused ? "Existing G part number applied" : "G part number issued automatically") + (number ? ": " + number : "");
+  if (currentLang === "zh") return (reused ? "\u5df2\u5957\u7528\u73b0\u6709GLTEK\u96f6\u4ef6\u7f16\u53f7" : "\u5df2\u81ea\u52a8\u53d1\u884cGLTEK\u96f6\u4ef6\u7f16\u53f7") + (number ? ": " + number : "");
+  if (currentLang === "ja") return (reused ? "\u65e2\u5b58\u306eGLTEK\u54c1\u756a\u3092\u53cd\u6620\u3057\u307e\u3057\u305f" : "GLTEK\u54c1\u756a\u3092\u81ea\u52d5\u767a\u884c\u3057\u307e\u3057\u305f") + (number ? ": " + number : "");
+  return (reused ? "Existing GLTEK part number applied" : "GLTEK part number issued automatically") + (number ? ": " + number : "");
 }
 
 function shouldTryLegacyGltekIssueRpc(error) {
@@ -33698,7 +33695,7 @@ function permissionOverviewScreenGroups(context) {
             { label: "基準価格", permissionKey: "base_price.view", state: yesNo(roleCanViewBasePrice, "閲覧可", "閲覧不可") },
             { label: "仕入価格", permissionKey: "purchase_price.view", state: yesNo(roleCanViewBasePrice, "閲覧可", "閲覧不可") },
             { label: "商品登録・修正", permissionKey: "product.manage", state: yesNo(roleCanEdit, "可", "不可") },
-            { label: "通常商品追加時のG品番", permissionKey: "product.manage", state: roleCanEdit
+            { label: "通常商品追加時のGLTEK品番", permissionKey: "product.manage", state: roleCanEdit
               ? permissionOverviewLimited("既存番号のみ自動引継ぎ（新規発行なし）")
               : permissionOverviewDenied("対象外") },
             { label: "画像登録・削除", permissionKey: "image.manage", state: fullImageManagementState() }
@@ -33734,11 +33731,11 @@ function permissionOverviewScreenGroups(context) {
           items: [
             { label: "画面", permissionKey: "production.view", state: screenState(roleCanViewProduction) },
             { label: "商品登録・修正", permissionKey: "product.manage", state: yesNo(roleCanEdit, "可", "不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }] },
-            { label: "通常商品追加時のG品番", permissionKey: "product.manage", state: roleCanEdit
+            { label: "通常商品追加時のGLTEK品番", permissionKey: "product.manage", state: roleCanEdit
               ? permissionOverviewLimited("既存番号のみ自動引継ぎ（新規発行なし）")
               : permissionOverviewDenied("対象外"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }] },
             { label: "GLTEK製商品の追加（製造管理のみ）", permissionKey: "gltek_part_number.issue", state: yesNo(gltekPartNumberIssueAllowed, "登録可", "利用不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }, { key: "product.manage", defaultAllowed: roleCanEdit }], dependencyDeniedText: "製造管理の商品追加権限が必要" },
-            { label: "新規G品番の発行", permissionKey: "gltek_part_number.issue", state: yesNo(gltekPartNumberIssueAllowed, "GLTEK製登録時に自動発行", "利用不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }, { key: "product.manage", defaultAllowed: roleCanEdit }], dependencyDeniedText: "製造管理の商品追加権限が必要" },
+            { label: "新規GLTEK品番の発行", permissionKey: "gltek_part_number.issue", state: yesNo(gltekPartNumberIssueAllowed, "GLTEK製登録時に自動発行", "利用不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }, { key: "product.manage", defaultAllowed: roleCanEdit }], dependencyDeniedText: "製造管理の商品追加権限が必要" },
             { label: "構成部品閲覧", permissionKey: "component.view", state: yesNo(roleCanViewProduction, "閲覧可", "利用不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }] },
             { label: "構成部品追加・修正・削除", permissionKey: "component.manage", state: yesNo(roleCanManageComponents, "可", "不可"), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }] },
             { label: "製造画像登録・修正・削除", permissionKey: "image.manage", state: fullImageManagementState(), requiredPermissions: [{ key: "production.view", defaultAllowed: roleCanViewProduction }] }
