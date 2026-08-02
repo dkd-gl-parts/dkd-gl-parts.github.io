@@ -367,6 +367,9 @@ var TRANSLATIONS = {
     finished_box_label_product_search: "箱シール対象品番検索",
     finished_label_search_ph: "品番・製造予定Noで検索",
     finished_label_search_hint: "空欄の場合は製造予定リスト上位を表示します。",
+    finished_box_label_search_hint: "空欄の場合は、箱シールを印刷できる最新の完品登録品番を表示します。",
+    finished_box_label_ready_summary: "完品登録 {n}件 / 最新 {date}",
+    finished_box_label_no_history: "発行済み製造シリアルなし",
     finished_label_history: "発行履歴",
     finished_label_select_product: "発行対象を選択してください。",
     finished_label_issue_form: "完品登録内容",
@@ -382,6 +385,7 @@ var TRANSLATIONS = {
     finished_box_label_layout_title: "箱シール レイアウト",
     finished_box_label_layout_hint: "GLTEK品番はCode 128、製造シリアルはQRで表示します。黒1色・熱転写用です。",
     finished_box_label_layout_one_per_unit: "1台につき1枚",
+    finished_box_label_layout_sample: "選択した履歴の製造シリアルを表示",
     finished_box_label_barcode_value: "品番バーコード",
     finished_product_label_reprint: "完品シール再印刷",
     finished_box_label_reprint: "箱シール再印刷",
@@ -414,7 +418,12 @@ var TRANSLATIONS = {
     finished_label_popup_blocked: "ラベル画面を開けませんでした。ポップアップ許可を確認してください。発行履歴から再印刷できます。",
     finished_label_serial_notice_title: "1台につき固有の製造シリアルを発行",
     finished_box_label_guide_title: "発行済みの完品登録から印刷",
-    finished_box_label_guide_desc: "左側の発行履歴で対象を選びます。初回印刷と、理由が必要な再印刷は履歴上で区別されます。",
+    finished_box_label_guide_desc: "品番を選ぶと最新の発行履歴を自動セットします。別の製造ロットは左側の発行履歴から選択できます。",
+    finished_box_label_history_select: "選択",
+    finished_box_label_history_selected: "選択中",
+    finished_box_label_initial_status: "初回印刷",
+    finished_box_label_reprint_status: "再印刷（理由必須）",
+    finished_box_label_selected_serials: "選択した製造シリアル",
     finished_label_qr_serial: "QR（製造シリアル）",
     finished_label_component_default_hint: "選択品番に登録済みで、使用率100%の部品を自動セットします。",
     finished_label_component_register: "＋ 未登録部品を登録",
@@ -1808,13 +1817,21 @@ var TRANSLATIONS = {
     finished_label_product_search: "Finished Unit Target Search",
     finished_label_search_ph: "Search part number or production plan No.",
     finished_label_search_hint: "Blank search shows top production plan rows.",
+    finished_box_label_search_hint: "A blank search shows the latest registered products available for box-label printing.",
+    finished_box_label_ready_summary: "{n} registration(s) / Latest {date}",
+    finished_box_label_no_history: "No issued manufacturing serial",
     finished_label_history: "Issue History",
     finished_label_select_product: "Select an issue target.",
     finished_label_issue_form: "Finished Unit Details",
     finished_label_apply_template: "Reset 100% Usage Parts",
     finished_label_serial_notice_title: "Issue a unique manufacturing serial for each unit",
     finished_box_label_guide_title: "Print from an issued finished-unit registration",
-    finished_box_label_guide_desc: "Choose the target from issue history on the left. History distinguishes the initial print from reason-required reprints.",
+    finished_box_label_guide_desc: "Selecting a product automatically sets its latest issue. Choose another production lot from issue history on the left.",
+    finished_box_label_history_select: "Select",
+    finished_box_label_history_selected: "Selected",
+    finished_box_label_initial_status: "Initial Print",
+    finished_box_label_reprint_status: "Reprint (reason required)",
+    finished_box_label_selected_serials: "Selected Manufacturing Serials",
     finished_label_qr_serial: "QR (Manufacturing Serial)",
     finished_label_component_default_hint: "Automatically selects registered parts with a 100% usage rate for the chosen product.",
     finished_label_component_register: "+ Register Missing Part",
@@ -1856,6 +1873,7 @@ var TRANSLATIONS = {
     finished_box_label_layout_title: "Box Label Layout",
     finished_box_label_layout_hint: "The GLTEK part number uses Code 128 and the manufacturing serial uses QR. Black-only thermal-transfer layout.",
     finished_box_label_layout_one_per_unit: "One label per unit",
+    finished_box_label_layout_sample: "Shows the manufacturing serials from the selected issue",
     finished_box_label_barcode_value: "Part-number barcode",
     finished_product_label_reprint: "Reprint Finished Label",
     finished_box_label_reprint: "Reprint Box Label",
@@ -3255,13 +3273,21 @@ var TRANSLATIONS = {
     finished_label_product_search: "完品登记对象搜索",
     finished_label_search_ph: "按品号或生产计划编号搜索",
     finished_label_search_hint: "空白搜索时显示生产计划上位项目。",
+    finished_box_label_search_hint: "空白搜索时显示可打印箱标签的最新完品登记品号。",
+    finished_box_label_ready_summary: "完品登记 {n}件 / 最新 {date}",
+    finished_box_label_no_history: "无已发行制造序列号",
     finished_label_history: "发行历史",
     finished_label_select_product: "请选择发行对象。",
     finished_label_issue_form: "完品登记内容",
     finished_label_apply_template: "重新设置100%使用零件",
     finished_label_serial_notice_title: "每台发行唯一的制造序列号",
     finished_box_label_guide_title: "从已发行的完品登记中打印",
-    finished_box_label_guide_desc: "请从左侧发行历史选择对象。历史中会区分首次打印和需要理由的重新打印。",
+    finished_box_label_guide_desc: "选择品号后会自动设置最新发行记录。其他生产批次可从左侧发行历史选择。",
+    finished_box_label_history_select: "选择",
+    finished_box_label_history_selected: "选择中",
+    finished_box_label_initial_status: "首次打印",
+    finished_box_label_reprint_status: "重新打印（必须填写理由）",
+    finished_box_label_selected_serials: "已选择的制造序列号",
     finished_label_qr_serial: "QR（制造序列号）",
     finished_label_component_default_hint: "自动选择所选品号中已登记且使用率为100%的零件。",
     finished_label_component_register: "＋ 登记未登记零件",
@@ -3303,6 +3329,7 @@ var TRANSLATIONS = {
     finished_box_label_layout_title: "箱标签版式",
     finished_box_label_layout_hint: "GLTEK品号使用Code 128，制造序列号使用QR。黑色单色热转印版式。",
     finished_box_label_layout_one_per_unit: "每台1张",
+    finished_box_label_layout_sample: "显示所选发行记录的制造序列号",
     finished_box_label_barcode_value: "品号条码",
     finished_product_label_reprint: "重新打印完品标签",
     finished_box_label_reprint: "重新打印箱标签",
@@ -4428,7 +4455,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.642";
+var APP_VERSION       = "v1.1.643";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -4543,6 +4570,7 @@ var MANUFACTURING_COST_DEFAULT_SELLING_EXPENSE_JPY = 510;
 var finishedLabelTemplates = [];
 var finishedLabelProducts = [];
 var finishedLabelProductReadinessMap = {};
+var finishedLabelBoxReadinessMap = {};
 var finishedLabelVisibleLimit = 10;
 var finishedLabelSearchRequestSeq = 0;
 var FINISHED_LABEL_PAGE_STEP = 10;
@@ -4552,6 +4580,7 @@ var finishedLabelSelectedInstruction = null;
 var finishedLabelVariants = [];
 var finishedLabelHistoryRows = [];
 var finishedLabelLastIssuedRecord = null;
+var finishedLabelSelectedHistoryId = null;
 var finishedLabelPrintMode = "";
 var finishedLabelComponentCandidates = [];
 var finishedLabelSelectedComponentIds = {};
@@ -17132,6 +17161,7 @@ function setFinishedLabelPrintMode(mode) {
   finishedLabelPrintMode = mode;
   if (!mode || (previousMode && previousMode !== mode)) {
     finishedLabelLastIssuedRecord = null;
+    finishedLabelSelectedHistoryId = null;
     var productPrint = document.getElementById("btn-finished-label-preview");
     var boxPrint = document.getElementById("btn-finished-box-label-preview");
     if (productPrint) productPrint.disabled = true;
@@ -17155,6 +17185,7 @@ function setFinishedLabelPrintMode(mode) {
   var title = document.getElementById("finished-label-screen-title");
   var badge = document.getElementById("finished-label-mode-badge");
   var searchTitle = document.getElementById("finished-label-product-search-title");
+  var searchHint = document.getElementById("finished-label-search-hint");
   var editorTitle = document.getElementById("finished-label-editor-title");
   if (!mode) {
     if (title) title.textContent = t("finished_label_screen_title");
@@ -17164,6 +17195,7 @@ function setFinishedLabelPrintMode(mode) {
   if (title) title.textContent = t(isBox ? "finished_box_label_screen_title" : "finished_label_product_screen_title");
   if (badge) badge.textContent = t(isBox ? "finished_box_label_badge" : "finished_label_product_badge");
   if (searchTitle) searchTitle.textContent = t(isBox ? "finished_box_label_product_search" : "finished_label_product_search");
+  if (searchHint) searchHint.textContent = t(isBox ? "finished_box_label_search_hint" : "finished_label_search_hint");
   if (editorTitle) editorTitle.textContent = t(isBox ? "finished_box_label_issue_form" : "finished_label_issue_form");
   renderFinishedLabelHistory();
   renderFinishedLabelIssuedResult(finishedLabelLastIssuedRecord);
@@ -17172,6 +17204,7 @@ function setFinishedLabelPrintMode(mode) {
 function renderFinishedLabelEmpty() {
   finishedLabelProducts = [];
   finishedLabelProductReadinessMap = {};
+  finishedLabelBoxReadinessMap = {};
   finishedLabelVisibleLimit = FINISHED_LABEL_PAGE_STEP;
   finishedLabelSearchRequestSeq += 1;
   finishedLabelInstructionMap = {};
@@ -17180,6 +17213,7 @@ function renderFinishedLabelEmpty() {
   finishedLabelVariants = [];
   finishedLabelHistoryRows = [];
   finishedLabelLastIssuedRecord = null;
+  finishedLabelSelectedHistoryId = null;
   finishedLabelComponentCandidates = [];
   finishedLabelSelectedComponentIds = {};
   finishedLabelComponentLoadSeq += 1;
@@ -17189,7 +17223,7 @@ function renderFinishedLabelEmpty() {
   var history = document.getElementById("finished-label-history-list");
   if (count) count.textContent = "";
   if (loadMore) loadMore.hidden = true;
-  if (results) results.innerHTML = "<div class='empty'>" + esc(t("finished_label_search_hint")) + "</div>";
+  if (results) results.innerHTML = "<div class='empty'>" + esc(t(finishedLabelPrintMode === "box" ? "finished_box_label_search_hint" : "finished_label_search_hint")) + "</div>";
   if (history) history.innerHTML = "<div class='empty'>" + esc(t("finished_label_select_product")) + "</div>";
   renderFinishedLabelSelectedSummary(null);
   renderFinishedLabelVariantOptions([]);
@@ -17328,7 +17362,45 @@ async function loadFinishedLabelProductReadiness(products) {
   return readinessMap;
 }
 
+async function loadFinishedBoxLabelProductReadiness(products) {
+  var ids = Array.from(new Set((products || []).map(function(product) {
+    return parseInt(productDkdId(product), 10);
+  }).filter(function(id) {
+    return !isNaN(id);
+  })));
+  if (!ids.length) return {};
+  var result = await sb.from("finished_label_issues")
+    .select("id,dkd_shohin_id,issue_code,quantity,issued_at")
+    .in("dkd_shohin_id", ids)
+    .order("issued_at", { ascending: false })
+    .limit(1000);
+  if (result.error) {
+    console.warn("finished box label readiness lookup failed", result.error);
+    return {};
+  }
+  var readinessMap = {};
+  ids.forEach(function(id) {
+    readinessMap[String(id)] = { issueCount: 0, latestIssuedAt: "", latestIssueCode: "", totalUnits: 0 };
+  });
+  (result.data || []).forEach(function(row) {
+    var readiness = readinessMap[String(row.dkd_shohin_id || "")];
+    if (!readiness) return;
+    readiness.issueCount += 1;
+    readiness.totalUnits += parseInt(row.quantity || 0, 10) || 0;
+    if (!readiness.latestIssuedAt || String(row.issued_at || "") > readiness.latestIssuedAt) {
+      readiness.latestIssuedAt = row.issued_at || "";
+      readiness.latestIssueCode = row.issue_code || "";
+    }
+  });
+  return readinessMap;
+}
+
 function finishedLabelProductPriority(product) {
+  if (finishedLabelPrintMode === "box") {
+    var boxReadiness = finishedLabelBoxReadinessMap[String(productDkdId(product) || "")];
+    if (!boxReadiness) return 2;
+    return Number(boxReadiness.issueCount) > 0 ? 0 : 1;
+  }
   var readiness = finishedLabelProductReadinessMap[String(productDkdId(product) || "")] || {};
   var rebuiltComponents = parseInt(readiness.rebuiltComponents || 0, 10) || 0;
   var aftermarketNewComponents = parseInt(readiness.aftermarketNewComponents || 0, 10) || 0;
@@ -17348,6 +17420,12 @@ function sortFinishedLabelProducts(products) {
   }).sort(function(a, b) {
     var priorityDiff = finishedLabelProductPriority(a.product) - finishedLabelProductPriority(b.product);
     if (priorityDiff) return priorityDiff;
+    if (finishedLabelPrintMode === "box") {
+      var aBox = finishedLabelBoxReadinessMap[String(productDkdId(a.product) || "")] || {};
+      var bBox = finishedLabelBoxReadinessMap[String(productDkdId(b.product) || "")] || {};
+      var latestDiff = String(bBox.latestIssuedAt || "").localeCompare(String(aBox.latestIssuedAt || ""));
+      if (latestDiff) return latestDiff;
+    }
     var aInstruction = finishedLabelInstructionMap[String(productDkdId(a.product))] || {};
     var bInstruction = finishedLabelInstructionMap[String(productDkdId(b.product))] || {};
     var aRank = parseInt(aInstruction.priority_rank, 10);
@@ -17365,6 +17443,7 @@ async function searchFinishedLabelProducts() {
   var requestSeq = ++finishedLabelSearchRequestSeq;
   finishedLabelVisibleLimit = FINISHED_LABEL_PAGE_STEP;
   finishedLabelProductReadinessMap = {};
+  finishedLabelBoxReadinessMap = {};
   var qEl = document.getElementById("finished-label-search");
   var q = normalizeFinishedLabelSearchInput(qEl);
   var results = document.getElementById("finished-label-results");
@@ -17384,6 +17463,8 @@ async function searchFinishedLabelProducts() {
       return;
     }
     rows = normalizeCoreProductFastRows(pr.data || []);
+  } else if (finishedLabelPrintMode === "box") {
+    rows = await fetchFinishedBoxLabelProducts();
   } else {
     rows = await fetchFinishedLabelProductionProducts();
   }
@@ -17391,14 +17472,47 @@ async function searchFinishedLabelProducts() {
   var visibleProducts = filterVisibleProducts(rows);
   var readinessMap = {};
   try {
-    readinessMap = await loadFinishedLabelProductReadiness(visibleProducts);
+    readinessMap = finishedLabelPrintMode === "box"
+      ? await loadFinishedBoxLabelProductReadiness(visibleProducts)
+      : await loadFinishedLabelProductReadiness(visibleProducts);
   } catch (error) {
     console.warn("finished label readiness ranking failed", error);
   }
   if (requestSeq !== finishedLabelSearchRequestSeq) return;
-  finishedLabelProductReadinessMap = readinessMap;
+  if (finishedLabelPrintMode === "box") finishedLabelBoxReadinessMap = readinessMap;
+  else finishedLabelProductReadinessMap = readinessMap;
   finishedLabelProducts = sortFinishedLabelProducts(visibleProducts);
   renderFinishedLabelResults();
+}
+
+async function fetchFinishedBoxLabelProducts() {
+  var issueResult = await sb.from("finished_label_issues")
+    .select("dkd_shohin_id,issued_at")
+    .order("issued_at", { ascending: false })
+    .limit(300);
+  if (issueResult.error) {
+    console.warn("finished box label recent issue lookup failed", issueResult.error);
+    return [];
+  }
+  var ids = [];
+  (issueResult.data || []).forEach(function(row) {
+    var id = parseInt(row.dkd_shohin_id, 10);
+    if (!isNaN(id) && ids.indexOf(id) < 0 && ids.length < 60) ids.push(id);
+  });
+  if (!ids.length) return [];
+  var productResult = await sb.from("core_products")
+    .select(CORE_PRODUCT_FAST_SELECT)
+    .in("dkd_shohin_id", ids)
+    .limit(ids.length);
+  if (productResult.error) {
+    console.warn("finished box label product lookup failed", productResult.error);
+    return [];
+  }
+  var productMap = {};
+  normalizeCoreProductFastRows(productResult.data || []).forEach(function(product) {
+    productMap[String(productDkdId(product))] = product;
+  });
+  return ids.map(function(id) { return productMap[String(id)]; }).filter(Boolean);
 }
 
 async function fetchFinishedLabelProductionProducts() {
@@ -17454,12 +17568,21 @@ function renderFinishedLabelResults() {
     var dkdId = productDkdId(p);
     var inst = finishedLabelInstructionMap[String(dkdId)] || null;
     var readiness = finishedLabelProductReadinessMap[String(dkdId || "")] || {};
+    var boxReadiness = finishedLabelBoxReadinessMap[String(dkdId || "")] || null;
     var hasBothComponentKinds = Number(readiness.rebuiltComponents) > 0 && Number(readiness.aftermarketNewComponents) > 0;
+    var hasBoxHistory = !!boxReadiness && Number(boxReadiness.issueCount) > 0;
     var active = selectedId && String(selectedId) === String(dkdId) ? " active" : "";
     var title = p.gltek_part_number || p.genuine_part_number || p.manufacturer_part_number || p.daiko_part_number || ("DKD " + dkdId);
-    html += "<button type='button' class='finished-label-result" + active + (hasBothComponentKinds ? " priority" : "") + "' data-finished-label-dkd='" + esc(String(dkdId || "")) + "'>";
+    html += "<button type='button' class='finished-label-result" + active + ((finishedLabelPrintMode === "box" ? hasBoxHistory : hasBothComponentKinds) ? " priority" : "") + "' data-finished-label-dkd='" + esc(String(dkdId || "")) + "'>";
     html += "<div class='finished-label-result-title'>" + esc(title || "-") + "</div>";
-    if (hasBothComponentKinds) html += "<div class='finished-label-result-priority'>" + esc(t("finished_label_priority_both_kinds")) + "</div>";
+    if (finishedLabelPrintMode === "box" && boxReadiness) {
+      var boxStatus = hasBoxHistory
+        ? tf("finished_box_label_ready_summary", { n: boxReadiness.issueCount, date: formatDateTime(boxReadiness.latestIssuedAt) })
+        : t("finished_box_label_no_history");
+      html += "<div class='finished-label-result-priority" + (hasBoxHistory ? "" : " unavailable") + "'>" + esc(boxStatus) + "</div>";
+    } else if (hasBothComponentKinds) {
+      html += "<div class='finished-label-result-priority'>" + esc(t("finished_label_priority_both_kinds")) + "</div>";
+    }
     html += "<div class='finished-label-result-sub'>" + esc([productCategoryLabel(p), p.manufacturer, p.manufacturer_part_number].filter(Boolean).join(" / ")) + "</div>";
     html += "<div class='finished-label-result-sub'>" + esc(inst ? ("#" + (inst.priority_rank || "-") + " / " + (inst.source_year || "-")) : ("DKD " + (dkdId || "-"))) + "</div>";
     html += "</button>";
@@ -17518,6 +17641,7 @@ function renderFinishedLabelSelectedSummary(product) {
 
 function resetFinishedLabelForm(product, instruction) {
   finishedLabelLastIssuedRecord = null;
+  finishedLabelSelectedHistoryId = null;
   setFinishedLabelValue("finished-label-issue-code", t("finished_label_issue_pending"));
   setFinishedLabelValue("finished-label-instruction-id", instruction && instruction.id ? String(instruction.id) : "");
   setFinishedLabelValue("finished-label-quantity", instruction && instruction.merged_source_count ? String(instruction.merged_source_count) : "1");
@@ -17531,7 +17655,10 @@ function resetFinishedLabelForm(product, instruction) {
   var preview = document.getElementById("btn-finished-label-preview");
   if (preview) preview.disabled = true;
   var boxPreview = document.getElementById("btn-finished-box-label-preview");
-  if (boxPreview) boxPreview.disabled = true;
+  if (boxPreview) {
+    boxPreview.disabled = true;
+    boxPreview.textContent = t("finished_box_label_preview");
+  }
   var save = document.getElementById("btn-finished-label-save");
   if (save) save.disabled = !product || !product.gltek_part_number;
   renderFinishedLabelLayoutPreview();
@@ -17903,6 +18030,9 @@ function finishedProductPartBarcodeDataUrl(partNumber) {
 }
 
 function finishedBoxLabelPreviewRecord() {
+  if (finishedLabelPrintMode === "box" && finishedLabelLastIssuedRecord && Array.isArray(finishedLabelLastIssuedRecord.units) && finishedLabelLastIssuedRecord.units.length) {
+    return finishedLabelLastIssuedRecord;
+  }
   var product = finishedLabelSelectedProduct || {};
   var variant = selectedFinishedLabelVariant();
   return {
@@ -17921,11 +18051,17 @@ function finishedBoxLabelPreviewRecord() {
   };
 }
 
+function finishedBoxLabelProductNo(record, unit) {
+  record = record || {};
+  unit = unit || {};
+  return String(unit.gltek_part_number || record.gltekPartNumber || unit.product_no || record.productNo || record.manufacturerPartNumber || record.genuinePartNumber || "-");
+}
+
 function buildFinishedBoxLabelMarkup(record, unit) {
   record = record || {};
   unit = unit || {};
   var serial = unit.manufacturing_serial || "-";
-  var productNo = String(unit.gltek_part_number || unit.product_no || record.gltekPartNumber || record.productNo || record.manufacturerPartNumber || record.genuinePartNumber || "-");
+  var productNo = finishedBoxLabelProductNo(record, unit);
   var productLength = Array.from(productNo).length;
   var productSizeClass = productLength > 24 ? " long" : (productLength > 18 ? " compact" : "");
   var manufacturer = unit.manufacturer || record.manufacturer || "";
@@ -17961,7 +18097,7 @@ function renderFinishedBoxLabelLayoutPreview() {
     host.innerHTML = "<div class='finished-label-layout-error'>Barcode preview unavailable</div>";
   }
   var barcodeValue = document.getElementById("finished-box-label-barcode-value");
-  if (barcodeValue) barcodeValue.textContent = record.productNo;
+  if (barcodeValue) barcodeValue.textContent = finishedBoxLabelProductNo(record, unit);
   var qrValue = document.getElementById("finished-box-label-qr-value");
   if (qrValue) qrValue.textContent = unit.manufacturing_serial;
 }
@@ -18031,6 +18167,7 @@ function renderFinishedLabelIssuedResult(record) {
   if (!record || !Array.isArray(record.units) || !record.units.length) {
     host.innerHTML = "";
     host.classList.remove("show");
+    setFinishedBoxLabelPrintButton(null);
     return;
   }
   var serials = record.units.map(function(unit) {
@@ -18039,23 +18176,56 @@ function renderFinishedLabelIssuedResult(record) {
   var stockText = Number.isFinite(record.stockQtyAfter)
     ? tf("finished_label_stock_after", { n: record.stockQtyAfter })
     : "";
-  var actionHtml = finishedLabelPrintMode === "box"
-    ? "<button class='btn-sm-edit' id='btn-finished-box-label-issued-print'>" + esc(t("finished_box_label_reprint")) + "</button>"
+  var isBox = finishedLabelPrintMode === "box";
+  var sourceRow = record.sourceHistoryRow || null;
+  var actionHtml = isBox
+    ? "<span class='finished-box-label-print-status " + (sourceRow && sourceRow.boxLabelPrinted ? "reprint" : "initial") + "'>" + esc(t(sourceRow && sourceRow.boxLabelPrinted ? "finished_box_label_reprint_status" : "finished_box_label_initial_status")) + "</span>"
     : "<button class='btn-sm-edit production-action-secondary' id='btn-finished-label-issued-print'>" + esc(t("finished_label_preview")) + "</button>";
-  host.innerHTML = "<div class='finished-label-issued-head'><div><strong>" + esc(t("finished_label_serial_result")) + "</strong><span>" + esc(record.issueCode || "") + "</span></div><div class='finished-label-issued-actions'>" + actionHtml + "</div></div>" +
+  host.innerHTML = "<div class='finished-label-issued-head'><div><strong>" + esc(t(isBox ? "finished_box_label_selected_serials" : "finished_label_serial_result")) + "</strong><span>" + esc(record.issueCode || "") + "</span></div><div class='finished-label-issued-actions'>" + actionHtml + "</div></div>" +
     "<div class='finished-label-issued-meta'>" + esc([tf("finished_label_history_units", { n: record.quantity }), stockText].filter(Boolean).join(" / ")) + "</div>" +
     "<div class='finished-label-serial-list'>" + serials + "</div>";
   host.classList.add("show");
   var btn = document.getElementById("btn-finished-label-issued-print");
   if (btn) btn.addEventListener("click", function() { openFinishedLabelPrintPreview(record); });
-  var boxBtn = document.getElementById("btn-finished-box-label-issued-print");
-  if (boxBtn) boxBtn.addEventListener("click", previewCurrentFinishedBoxLabel);
+  if (isBox) setFinishedBoxLabelPrintButton(sourceRow);
+}
+
+function setFinishedBoxLabelPrintButton(row) {
+  var button = document.getElementById("btn-finished-box-label-preview");
+  if (!button) return;
+  var units = row && Array.isArray(row.finishedUnits) ? row.finishedUnits : [];
+  var blocked = !!(row && (row.boxPrintAuditUnavailable || row.boxLabelPartiallyPrinted));
+  button.disabled = !row || !units.length || blocked;
+  button.textContent = t(row && row.boxLabelPrinted ? "finished_label_reprint" : "finished_box_label_preview");
+  button.title = row && row.boxLabelPartiallyPrinted ? t("finished_box_label_partial_print") : "";
+}
+
+function selectFinishedBoxLabelHistory(row, options) {
+  options = options || {};
+  if (!row || !Array.isArray(row.finishedUnits) || !row.finishedUnits.length) {
+    finishedLabelSelectedHistoryId = null;
+    finishedLabelLastIssuedRecord = null;
+    renderFinishedLabelIssuedResult(null);
+    renderFinishedBoxLabelLayoutPreview();
+    if (!options.skipHistoryRender) renderFinishedLabelHistory();
+    return;
+  }
+  finishedLabelSelectedHistoryId = row.id;
+  var record = finishedLabelRecordFromHistory(row);
+  record.sourceHistoryRow = row;
+  finishedLabelLastIssuedRecord = record;
+  updateFinishedLabelQrPayload();
+  renderFinishedLabelIssuedResult(record);
+  if (!options.skipHistoryRender) renderFinishedLabelHistory();
 }
 
 async function loadFinishedLabelHistory() {
   var list = document.getElementById("finished-label-history-list");
   if (!list) return;
   if (!finishedLabelSelectedProduct) {
+    finishedLabelSelectedHistoryId = null;
+    finishedLabelLastIssuedRecord = null;
+    renderFinishedLabelIssuedResult(null);
     list.innerHTML = "<div class='empty'>" + esc(t("finished_label_select_product")) + "</div>";
     return;
   }
@@ -18067,6 +18237,9 @@ async function loadFinishedLabelHistory() {
     .order("issued_at", { ascending: false })
     .limit(30);
   if (r.error) {
+    finishedLabelSelectedHistoryId = null;
+    finishedLabelLastIssuedRecord = null;
+    renderFinishedLabelIssuedResult(null);
     list.innerHTML = "<div class='empty'>" + esc(r.error.message) + "</div>";
     return;
   }
@@ -18116,6 +18289,15 @@ async function loadFinishedLabelHistory() {
       }
     }
   }
+  if (finishedLabelPrintMode === "box") {
+    var selectedRow = finishedLabelHistoryRows.find(function(row) {
+      return String(row.id) === String(finishedLabelSelectedHistoryId || "") && Array.isArray(row.finishedUnits) && row.finishedUnits.length;
+    }) || finishedLabelHistoryRows.find(function(row) {
+      return Array.isArray(row.finishedUnits) && row.finishedUnits.length;
+    });
+    if (selectedRow) selectFinishedBoxLabelHistory(selectedRow, { skipHistoryRender: true });
+    else selectFinishedBoxLabelHistory(null, { skipHistoryRender: true });
+  }
   renderFinishedLabelHistory();
 }
 
@@ -18134,14 +18316,16 @@ function renderFinishedLabelHistory() {
     if (units.length > 1) serialText += " ～ " + units[units.length - 1].manufacturing_serial;
     var actionHtml = "";
     if (finishedLabelPrintMode === "box") {
-      var auditBlocked = row.boxPrintAuditUnavailable || row.boxLabelPartiallyPrinted;
-      var boxActionLabel = t(row.boxLabelPrinted ? "finished_box_label_reprint" : "finished_box_label_preview");
+      var selected = String(row.id) === String(finishedLabelSelectedHistoryId || "");
+      var boxActionLabel = t(selected ? "finished_box_label_history_selected" : "finished_box_label_history_select");
       var boxActionTitle = row.boxLabelPartiallyPrinted ? t("finished_box_label_partial_print") : "";
-      actionHtml = "<button class='btn-sm-edit production-action-secondary' data-finished-box-label-history-preview='" + esc(String(row.id)) + "'" + (units.length && !auditBlocked ? "" : " disabled") + (boxActionTitle ? " title='" + esc(boxActionTitle) + "'" : "") + ">" + esc(boxActionLabel) + "</button>";
+      var statusKey = row.boxLabelPrinted ? "finished_box_label_reprint_status" : "finished_box_label_initial_status";
+      actionHtml = "<span class='finished-box-label-print-status " + (row.boxLabelPrinted ? "reprint" : "initial") + "'>" + esc(t(statusKey)) + "</span>" +
+        "<button class='btn-sm-edit production-action-secondary' data-finished-box-label-history-select='" + esc(String(row.id)) + "'" + (units.length ? "" : " disabled") + (boxActionTitle ? " title='" + esc(boxActionTitle) + "'" : "") + ">" + esc(boxActionLabel) + "</button>";
     } else {
       actionHtml = "<button class='btn-sm-edit production-action-secondary' data-finished-label-history-preview='" + esc(String(row.id)) + "'" + (units.length ? "" : " disabled") + ">" + esc(t("finished_product_label_reprint")) + "</button>";
     }
-    html += "<div class='finished-label-history-row'>";
+    html += "<div class='finished-label-history-row" + (finishedLabelPrintMode === "box" && String(row.id) === String(finishedLabelSelectedHistoryId || "") ? " active" : "") + "'>";
     html += "<div class='finished-label-history-main'><span>" + esc(row.issue_code || "-") + "</span><div class='finished-label-history-actions'>" + actionHtml + "</div></div>";
     html += "<div class='finished-label-history-serial'>" + esc(serialText) + "</div>";
     html += "<div class='finished-label-history-sub'>" + esc([formatDateTime(row.issued_at), row.product_category ? tCat(row.product_category) : "", productKindLabel(row.product_kind), tf("finished_label_history_units", { n: row.quantity }), tf("finished_label_history_parts", { n: comps })].filter(Boolean).join(" / ")) + "</div>";
@@ -18154,10 +18338,10 @@ function renderFinishedLabelHistory() {
       if (row) reprintFinishedLabelIssue(row, "product");
     });
   });
-  list.querySelectorAll("[data-finished-box-label-history-preview]").forEach(function(btn) {
+  list.querySelectorAll("[data-finished-box-label-history-select]").forEach(function(btn) {
     btn.addEventListener("click", function() {
-      var row = finishedLabelHistoryRows.find(function(x) { return String(x.id) === String(btn.dataset.finishedBoxLabelHistoryPreview); });
-      if (row) printFinishedBoxLabelIssue(row);
+      var row = finishedLabelHistoryRows.find(function(x) { return String(x.id) === String(btn.dataset.finishedBoxLabelHistorySelect); });
+      if (row) selectFinishedBoxLabelHistory(row);
     });
   });
 }
@@ -18244,6 +18428,8 @@ async function printFinishedBoxLabelIssue(row) {
     reason = String(reason || "").trim();
     if (!reason) { alert(t("finished_label_reprint_reason")); return; }
   }
+  var boxPreview = document.getElementById("btn-finished-box-label-preview");
+  if (boxPreview) boxPreview.disabled = true;
   var printWindow = window.open("", "_blank");
   if (printWindow) {
     printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_box_label_print_recording")) + "</p>");
@@ -18259,10 +18445,9 @@ async function printFinishedBoxLabelIssue(row) {
     var record = finishedLabelRecordFromHistory(row, result.data || {});
     record.sourceHistoryRow = row;
     finishedLabelLastIssuedRecord = record;
+    finishedLabelSelectedHistoryId = row.id;
     row.boxLabelPrinted = true;
     renderFinishedLabelIssuedResult(record);
-    var boxPreview = document.getElementById("btn-finished-box-label-preview");
-    if (boxPreview) boxPreview.disabled = false;
     await writeLog("insert", "finished_product_label_prints", row.id, row.issue_code, null, {
       event_type: eventType === "initial" ? "box_label_initial" : "box_label_reprint",
       label_size: "80x60",
@@ -18276,6 +18461,8 @@ async function printFinishedBoxLabelIssue(row) {
   } catch (e) {
     if (printWindow && !printWindow.closed) printWindow.close();
     alert(t("msg_save_err") + ": " + (e.message || e));
+  } finally {
+    setFinishedBoxLabelPrintButton(row);
   }
 }
 
@@ -36192,7 +36379,12 @@ finishedLabelSearchInput.addEventListener("keydown", function(e) {
 });
 document.getElementById("btn-finished-label-load-more").addEventListener("click", showMoreFinishedLabelProducts);
 document.querySelectorAll("[data-finished-label-mode]").forEach(function(btn) {
-  btn.addEventListener("click", function() { setFinishedLabelPrintMode(btn.dataset.finishedLabelMode); });
+  btn.addEventListener("click", function() {
+    setFinishedLabelPrintMode(btn.dataset.finishedLabelMode);
+    renderFinishedLabelEmpty();
+    searchFinishedLabelProducts();
+    if (finishedLabelSearchInput) finishedLabelSearchInput.focus();
+  });
 });
 document.getElementById("btn-finished-label-mode-back").addEventListener("click", function() { setFinishedLabelPrintMode(""); });
 document.getElementById("btn-finished-label-load-history").addEventListener("click", loadFinishedLabelHistory);

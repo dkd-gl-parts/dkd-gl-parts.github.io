@@ -3817,6 +3817,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .finished-label-result.priority { border-left: 4px solid #2e8b57; }
 .finished-label-result-title { font-size: 14px; font-weight: 800; color: #111a33; word-break: break-word; }
 .finished-label-result-priority { display: inline-flex; margin-top: 5px; border-radius: 999px; padding: 2px 7px; background: #e5f5eb; color: #1f6b3e; font-size: 9px; font-weight: 900; }
+.finished-label-result-priority.unavailable { background: #f2f4f7; color: #667085; }
 .finished-label-result-sub { font-size: 11px; color: #667085; margin-top: 3px; line-height: 1.45; word-break: break-word; }
 .finished-label-load-more { margin-top: 8px; padding: 8px; font-size: 12px; }
 .finished-label-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
@@ -3848,7 +3849,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .finished-label-component-empty { padding: 18px 10px !important; color: #7c8492; text-align: center; }
 .finished-label-actions { position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: 8px; padding: 10px 0 0; background: linear-gradient(rgba(246,248,251,0), #f6f8fb 35%); }
 .finished-label-history-row { border: 1px solid #edf0f4; border-radius: 8px; background: #fff; padding: 9px 10px; }
-.finished-label-history-main { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; font-weight: 700; }
+.finished-label-history-row.active { border-color: #4f8ef7; box-shadow: 0 0 0 2px rgba(79, 142, 247, .12); background: #f7faff; }
+.finished-label-history-main { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 12px; font-weight: 700; }
+.finished-label-history-main > span:first-child { font-family: Consolas, "SFMono-Regular", monospace; white-space: nowrap; }
 .finished-label-history-sub { font-size: 11px; color: #7c8492; margin-top: 4px; line-height: 1.45; word-break: break-word; }
 .finished-label-help { font-size: 11px; color: #7c8492; line-height: 1.55; margin-top: 8px; }
 .finished-label-serial-notice { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; border: 1px solid #b9d8c5; border-radius: 8px; padding: 9px 11px; background: #f1f8f4; color: #315d43; font-size: 11px; line-height: 1.5; }
@@ -3937,6 +3940,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .finished-label-serial-list { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 9px; }
 .finished-label-serial-chip { border: 1px solid #bad7c4; border-radius: 5px; padding: 4px 7px; background: #fff; color: #183f29; font-family: Consolas, "SFMono-Regular", monospace; font-size: 11px; font-weight: 800; letter-spacing: .02em; }
 .finished-label-history-serial { margin-top: 5px; color: #173f2a; font-family: Consolas, "SFMono-Regular", monospace; font-size: 11px; font-weight: 800; word-break: break-word; }
+.finished-box-label-print-status { display: inline-flex; align-items: center; min-height: 22px; border-radius: 999px; padding: 3px 8px; background: #e8f6ed; color: #17603a; font-size: 9px; font-weight: 900; white-space: nowrap; }
+.finished-box-label-print-status.reprint { background: #fff3dd; color: #8a4b08; }
 @media (min-width: 1180px) and (min-height: 680px) {
   #screen-finished-label-mgmt.active { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
   #screen-finished-label-mgmt .finished-label-body { min-height: 0; padding: 10px; }

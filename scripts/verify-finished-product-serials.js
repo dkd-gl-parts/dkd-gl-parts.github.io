@@ -152,6 +152,8 @@ directKeySandbox.insertKey(directInput, "A");
 assert(directInput.value === "GA-0001" && directInput.selectionStart === 2, "direct ASCII insertion does not preserve selection and caret behavior");
 
 const readinessSandbox = {
+  finishedLabelPrintMode: "product",
+  finishedLabelBoxReadinessMap: {},
   finishedLabelProductReadinessMap: {
     both_components: { rebuiltComponents: 2, aftermarketNewComponents: 1, hasRebuiltVariant: true, hasAftermarketNewVariant: true },
     both_variants: { rebuiltComponents: 1, aftermarketNewComponents: 0, hasRebuiltVariant: true, hasAftermarketNewVariant: true },
