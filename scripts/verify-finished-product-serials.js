@@ -55,7 +55,7 @@ assert(html.includes('data-finished-label-mode="product"') && html.includes('dat
 assert(html.includes('id="btn-finished-label-save"') && html.includes('data-i18n="finished_label_issue_save">登録・印刷</button>'), "register-and-print button label is not concise");
 assert(html.includes('data-i18n="finished_label_preview" disabled>印刷</button>'), "finished-label print button label is not concise");
 assert(html.includes('id="btn-finished-label-load-more"') && html.includes('data-i18n="btn_load_more" hidden>さらに表示</button>'), "finished-label search load-more action is missing");
-assert(html.includes('id="finished-label-search" type="search" inputmode="latin" autocapitalize="characters" autocomplete="off" spellcheck="false"'), "finished-label search input is not configured for half-width alphanumeric entry");
+assert(html.includes('id="finished-label-search" type="search" inputmode="latin" lang="en" enterkeyhint="search" autocapitalize="characters" autocomplete="off" spellcheck="false"'), "finished-label search input is not configured for immediate half-width alphanumeric entry");
 assert(html.includes('data-i18n="finished_label_layout_title">完品シール レイアウト</h4>'), "finished-label layout title is inconsistent");
 assert(!html.includes("製品本体シール"), "obsolete 製品本体シール name remains in the screen");
 assert(html.includes('data-i18n="finished_label_hub_title"'), "label-screen chooser title is not localized");
@@ -101,6 +101,7 @@ assert(resultRenderSource.includes("loadMore.hidden = visibleProducts.length >= 
 assert(functionSource("showMoreFinishedLabelProducts").includes("FINISHED_LABEL_PAGE_STEP"), "finished-label load-more does not advance in fixed pages");
 assert(functionSource("searchFinishedLabelProducts").includes("normalizeFinishedLabelSearchInput(qEl)"), "finished-label search does not normalize the visible input before querying");
 assert(app.includes('finishedLabelSearchInput.addEventListener("compositionend"') && app.includes('finishedLabelSearchInput.addEventListener("input"'), "finished-label search does not normalize typing and IME-confirmed input");
+assert(app.includes('finishedLabelSearchInput.addEventListener("focus"') && app.includes("finishedLabelAsciiKeyFromEvent(e)"), "finished-label search does not switch to direct ASCII handling on focus");
 assert(/@page\s*{[^}]*size:\s*45mm\s+20mm/i.test(printCss), "print page is not fixed at 45x20mm");
 assert(/\.serial-label\s*{[^}]*width:\s*45mm;[^}]*height:\s*20mm;/i.test(printCss), "label dimensions are not exact");
 assert(/\.serial-label-field-name\s*{[^}]*font-size:/i.test(printCss), "print field hierarchy is missing");
@@ -128,6 +129,27 @@ vm.createContext(searchInputSandbox);
 vm.runInContext(`${functionSource("normalizeAsciiWidth")}; ${functionSource("normalizeFinishedLabelSearchValue")}; this.normalizeSearch = normalizeFinishedLabelSearchValue;`, searchInputSandbox);
 assert(searchInputSandbox.normalizeSearch("ｇ０１０１－００００１") === "G0101-00001", "full-width G part number is not normalized to half-width alphanumeric text");
 assert(searchInputSandbox.normalizeSearch(" １０４２１０―１２３４ abc テスト ") === "104210-1234ABC", "finished-label search does not remove non-alphanumeric text after width normalization");
+
+const directKeySandbox = {};
+vm.createContext(directKeySandbox);
+vm.runInContext(`${functionSource("finishedLabelAsciiKeyFromEvent")}; ${functionSource("insertFinishedLabelAsciiKey")}; this.asciiKey = finishedLabelAsciiKeyFromEvent; this.insertKey = insertFinishedLabelAsciiKey;`, directKeySandbox);
+assert(directKeySandbox.asciiKey({ code: "KeyE", key: "Process", isComposing: true }) === "E", "IME-active E key is not handled as direct half-width E");
+assert(directKeySandbox.asciiKey({ code: "KeyA", key: "あ", isComposing: true }) === "A", "IME-active A key is not handled as direct half-width A");
+assert(directKeySandbox.asciiKey({ code: "Digit5" }) === "5", "top-row number key is not handled as direct half-width input");
+assert(directKeySandbox.asciiKey({ code: "Numpad7" }) === "7", "numpad key is not handled as direct half-width input");
+assert(directKeySandbox.asciiKey({ code: "Minus" }) === "-", "hyphen key is not handled as direct half-width input");
+assert(directKeySandbox.asciiKey({ code: "KeyV", ctrlKey: true }) === "", "paste shortcut is incorrectly intercepted");
+const directInput = {
+  value: "G01-0001",
+  selectionStart: 1,
+  selectionEnd: 3,
+  setRangeText(value, start, end) {
+    this.value = this.value.slice(0, start) + value + this.value.slice(end);
+    this.selectionStart = this.selectionEnd = start + value.length;
+  }
+};
+directKeySandbox.insertKey(directInput, "A");
+assert(directInput.value === "GA-0001" && directInput.selectionStart === 2, "direct ASCII insertion does not preserve selection and caret behavior");
 
 const readinessSandbox = {
   finishedLabelProductReadinessMap: {

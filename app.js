@@ -4428,7 +4428,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.641";
+var APP_VERSION       = "v1.1.642";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -17257,6 +17257,31 @@ function normalizeFinishedLabelSearchInput(input) {
     input.setSelectionRange(cursor, cursor);
   }
   return normalized;
+}
+
+function finishedLabelAsciiKeyFromEvent(event) {
+  if (!event || event.ctrlKey || event.metaKey || event.altKey) return "";
+  var code = String(event.code || "");
+  if (/^Key[A-Z]$/.test(code)) return code.slice(3);
+  if (/^Digit[0-9]$/.test(code)) return code.slice(5);
+  if (/^Numpad[0-9]$/.test(code)) return code.slice(6);
+  if (code === "Minus" || code === "NumpadSubtract") return "-";
+  return "";
+}
+
+function insertFinishedLabelAsciiKey(input, value) {
+  if (!input || !value) return;
+  var start = typeof input.selectionStart === "number" ? input.selectionStart : input.value.length;
+  var end = typeof input.selectionEnd === "number" ? input.selectionEnd : start;
+  if (typeof input.setRangeText === "function") {
+    input.setRangeText(value, start, end, "end");
+    return;
+  }
+  input.value = input.value.slice(0, start) + value + input.value.slice(end);
+  if (typeof input.setSelectionRange === "function") {
+    var nextCursor = start + value.length;
+    input.setSelectionRange(nextCursor, nextCursor);
+  }
 }
 
 async function loadFinishedLabelProductReadiness(products) {
@@ -36141,6 +36166,10 @@ document.getElementById("manufacturing-cost-saved-list").addEventListener("chang
 document.getElementById("btn-finished-label-search").addEventListener("click", searchFinishedLabelProducts);
 var finishedLabelSearchInput = document.getElementById("finished-label-search");
 var finishedLabelSearchIsComposing = false;
+finishedLabelSearchInput.addEventListener("focus", function() {
+  finishedLabelSearchIsComposing = false;
+  normalizeFinishedLabelSearchInput(finishedLabelSearchInput);
+});
 finishedLabelSearchInput.addEventListener("compositionstart", function() { finishedLabelSearchIsComposing = true; });
 finishedLabelSearchInput.addEventListener("compositionend", function() {
   finishedLabelSearchIsComposing = false;
@@ -36151,7 +36180,16 @@ finishedLabelSearchInput.addEventListener("input", function(event) {
   normalizeFinishedLabelSearchInput(finishedLabelSearchInput);
 });
 finishedLabelSearchInput.addEventListener("blur", function() { normalizeFinishedLabelSearchInput(finishedLabelSearchInput); });
-finishedLabelSearchInput.addEventListener("keydown", function(e){ if(e.key==="Enter") searchFinishedLabelProducts(); });
+finishedLabelSearchInput.addEventListener("keydown", function(e) {
+  var asciiKey = finishedLabelAsciiKeyFromEvent(e);
+  if (asciiKey) {
+    e.preventDefault();
+    finishedLabelSearchIsComposing = false;
+    insertFinishedLabelAsciiKey(finishedLabelSearchInput, asciiKey);
+    return;
+  }
+  if (e.key === "Enter") searchFinishedLabelProducts();
+});
 document.getElementById("btn-finished-label-load-more").addEventListener("click", showMoreFinishedLabelProducts);
 document.querySelectorAll("[data-finished-label-mode]").forEach(function(btn) {
   btn.addEventListener("click", function() { setFinishedLabelPrintMode(btn.dataset.finishedLabelMode); });
