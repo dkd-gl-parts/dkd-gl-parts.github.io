@@ -102,6 +102,8 @@ assert(functionSource("showMoreFinishedLabelProducts").includes("FINISHED_LABEL_
 assert(functionSource("searchFinishedLabelProducts").includes("normalizeFinishedLabelSearchInput(qEl)"), "finished-label search does not normalize the visible input before querying");
 assert(app.includes('finishedLabelSearchInput.addEventListener("compositionend"') && app.includes('finishedLabelSearchInput.addEventListener("input"'), "finished-label search does not normalize typing and IME-confirmed input");
 assert(app.includes('finishedLabelSearchInput.addEventListener("focus"') && app.includes("finishedLabelAsciiKeyFromEvent(e)"), "finished-label search does not switch to direct ASCII handling on focus");
+assert(app.includes('finishedLabelSearchInput.addEventListener("beforeinput"') && app.includes("finishedLabelSearchSuppressComposition"), "IME follow-up input is not suppressed after direct ASCII insertion");
+assert(app.includes("restoreFinishedLabelSearchCommittedInput();\n    releaseFinishedLabelSearchCompositionSuppression(80);"), "IME composition completion can duplicate a directly inserted character");
 assert(/@page\s*{[^}]*size:\s*45mm\s+20mm/i.test(printCss), "print page is not fixed at 45x20mm");
 assert(/\.serial-label\s*{[^}]*width:\s*45mm;[^}]*height:\s*20mm;/i.test(printCss), "label dimensions are not exact");
 assert(/\.serial-label-field-name\s*{[^}]*font-size:/i.test(printCss), "print field hierarchy is missing");
@@ -150,6 +152,25 @@ const directInput = {
 };
 directKeySandbox.insertKey(directInput, "A");
 assert(directInput.value === "GA-0001" && directInput.selectionStart === 2, "direct ASCII insertion does not preserve selection and caret behavior");
+
+const committedInputSandbox = {};
+vm.createContext(committedInputSandbox);
+vm.runInContext(`${functionSource("captureFinishedLabelSearchInputState")}; ${functionSource("restoreFinishedLabelSearchInputState")}; ${functionSource("isFinishedLabelSearchCompositionFollowup")}; this.capture = captureFinishedLabelSearchInputState; this.restore = restoreFinishedLabelSearchInputState; this.isFollowup = isFinishedLabelSearchCompositionFollowup;`, committedInputSandbox);
+assert(committedInputSandbox.isFollowup({ inputType: "insertCompositionText", isComposing: true }, true), "active IME composition input is not identified as a duplicate follow-up");
+assert(committedInputSandbox.isFollowup({ inputType: "insertText", data: "Ｅ" }, false), "IME final insertText is not identified as a duplicate follow-up");
+assert(!committedInputSandbox.isFollowup({ inputType: "deleteContentBackward" }, false), "backspace is incorrectly suppressed after direct ASCII input");
+assert(!committedInputSandbox.isFollowup({ inputType: "insertFromPaste" }, false), "paste is incorrectly suppressed after direct ASCII input");
+const committedInput = {
+  value: "EA1-",
+  selectionStart: 4,
+  selectionEnd: 4,
+  setSelectionRange(start, end) { this.selectionStart = start; this.selectionEnd = end; }
+};
+const committedState = committedInputSandbox.capture(committedInput);
+committedInput.value = "EA1-Ｅ";
+committedInput.selectionStart = committedInput.selectionEnd = 5;
+committedInputSandbox.restore(committedInput, committedState);
+assert(committedInput.value === "EA1-" && committedInput.selectionStart === 4, "IME follow-up text is not restored to the single committed ASCII value");
 
 const readinessSandbox = {
   finishedLabelPrintMode: "product",

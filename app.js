@@ -4455,7 +4455,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.643";
+var APP_VERSION       = "v1.1.644";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -17316,6 +17316,30 @@ function insertFinishedLabelAsciiKey(input, value) {
     var nextCursor = start + value.length;
     input.setSelectionRange(nextCursor, nextCursor);
   }
+}
+
+function captureFinishedLabelSearchInputState(input) {
+  if (!input) return { value: "", start: 0, end: 0 };
+  var value = String(input.value || "");
+  var start = typeof input.selectionStart === "number" ? input.selectionStart : value.length;
+  var end = typeof input.selectionEnd === "number" ? input.selectionEnd : start;
+  return { value: value, start: start, end: end };
+}
+
+function restoreFinishedLabelSearchInputState(input, state) {
+  if (!input || !state) return;
+  input.value = String(state.value || "");
+  if (typeof input.setSelectionRange === "function") {
+    var start = Math.min(Number(state.start) || 0, input.value.length);
+    var end = Math.min(Number(state.end) || start, input.value.length);
+    input.setSelectionRange(start, end);
+  }
+}
+
+function isFinishedLabelSearchCompositionFollowup(event, composing) {
+  if (!event) return false;
+  var inputType = String(event.inputType || "");
+  return !!composing || !!event.isComposing || inputType === "insertCompositionText" || inputType === "insertText";
 }
 
 async function loadFinishedLabelProductReadiness(products) {
@@ -36353,29 +36377,87 @@ document.getElementById("manufacturing-cost-saved-list").addEventListener("chang
 document.getElementById("btn-finished-label-search").addEventListener("click", searchFinishedLabelProducts);
 var finishedLabelSearchInput = document.getElementById("finished-label-search");
 var finishedLabelSearchIsComposing = false;
+var finishedLabelSearchSuppressComposition = false;
+var finishedLabelSearchCommittedState = captureFinishedLabelSearchInputState(finishedLabelSearchInput);
+var finishedLabelSearchSuppressTimer = null;
+function clearFinishedLabelSearchSuppressTimer() {
+  if (finishedLabelSearchSuppressTimer) clearTimeout(finishedLabelSearchSuppressTimer);
+  finishedLabelSearchSuppressTimer = null;
+}
+function rememberFinishedLabelSearchInput() {
+  finishedLabelSearchCommittedState = captureFinishedLabelSearchInputState(finishedLabelSearchInput);
+}
+function restoreFinishedLabelSearchCommittedInput() {
+  restoreFinishedLabelSearchInputState(finishedLabelSearchInput, finishedLabelSearchCommittedState);
+}
+function releaseFinishedLabelSearchCompositionSuppression(delayMs) {
+  clearFinishedLabelSearchSuppressTimer();
+  finishedLabelSearchSuppressTimer = setTimeout(function() {
+    finishedLabelSearchSuppressComposition = false;
+    finishedLabelSearchSuppressTimer = null;
+  }, Number(delayMs) > 0 ? Number(delayMs) : 80);
+}
 finishedLabelSearchInput.addEventListener("focus", function() {
+  clearFinishedLabelSearchSuppressTimer();
   finishedLabelSearchIsComposing = false;
+  finishedLabelSearchSuppressComposition = false;
   normalizeFinishedLabelSearchInput(finishedLabelSearchInput);
+  rememberFinishedLabelSearchInput();
 });
-finishedLabelSearchInput.addEventListener("compositionstart", function() { finishedLabelSearchIsComposing = true; });
+finishedLabelSearchInput.addEventListener("compositionstart", function() {
+  if (!finishedLabelSearchSuppressComposition) rememberFinishedLabelSearchInput();
+  finishedLabelSearchIsComposing = true;
+});
+finishedLabelSearchInput.addEventListener("beforeinput", function(event) {
+  if (!finishedLabelSearchSuppressComposition || !isFinishedLabelSearchCompositionFollowup(event, finishedLabelSearchIsComposing)) return;
+  if (event.cancelable) event.preventDefault();
+  restoreFinishedLabelSearchCommittedInput();
+});
 finishedLabelSearchInput.addEventListener("compositionend", function() {
   finishedLabelSearchIsComposing = false;
+  if (finishedLabelSearchSuppressComposition) {
+    restoreFinishedLabelSearchCommittedInput();
+    releaseFinishedLabelSearchCompositionSuppression(80);
+    return;
+  }
   normalizeFinishedLabelSearchInput(finishedLabelSearchInput);
+  rememberFinishedLabelSearchInput();
 });
 finishedLabelSearchInput.addEventListener("input", function(event) {
+  if (finishedLabelSearchSuppressComposition && isFinishedLabelSearchCompositionFollowup(event, finishedLabelSearchIsComposing)) {
+    restoreFinishedLabelSearchCommittedInput();
+    return;
+  }
   if (finishedLabelSearchIsComposing || event.isComposing) return;
   normalizeFinishedLabelSearchInput(finishedLabelSearchInput);
+  rememberFinishedLabelSearchInput();
 });
-finishedLabelSearchInput.addEventListener("blur", function() { normalizeFinishedLabelSearchInput(finishedLabelSearchInput); });
+finishedLabelSearchInput.addEventListener("blur", function() {
+  clearFinishedLabelSearchSuppressTimer();
+  if (finishedLabelSearchSuppressComposition) restoreFinishedLabelSearchCommittedInput();
+  finishedLabelSearchIsComposing = false;
+  finishedLabelSearchSuppressComposition = false;
+  normalizeFinishedLabelSearchInput(finishedLabelSearchInput);
+  rememberFinishedLabelSearchInput();
+});
 finishedLabelSearchInput.addEventListener("keydown", function(e) {
   var asciiKey = finishedLabelAsciiKeyFromEvent(e);
   if (asciiKey) {
+    clearFinishedLabelSearchSuppressTimer();
+    if (finishedLabelSearchIsComposing || finishedLabelSearchSuppressComposition) restoreFinishedLabelSearchCommittedInput();
     e.preventDefault();
-    finishedLabelSearchIsComposing = false;
     insertFinishedLabelAsciiKey(finishedLabelSearchInput, asciiKey);
+    rememberFinishedLabelSearchInput();
+    finishedLabelSearchSuppressComposition = true;
+    releaseFinishedLabelSearchCompositionSuppression(1000);
     return;
   }
   if (e.key === "Enter") searchFinishedLabelProducts();
+});
+finishedLabelSearchInput.addEventListener("keyup", function(e) {
+  if (finishedLabelAsciiKeyFromEvent(e) && finishedLabelSearchSuppressComposition && !finishedLabelSearchIsComposing) {
+    releaseFinishedLabelSearchCompositionSuppression(80);
+  }
 });
 document.getElementById("btn-finished-label-load-more").addEventListener("click", showMoreFinishedLabelProducts);
 document.querySelectorAll("[data-finished-label-mode]").forEach(function(btn) {
