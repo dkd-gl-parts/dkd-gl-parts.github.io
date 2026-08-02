@@ -5,6 +5,7 @@ const vm = require("vm");
 const root = path.resolve(__dirname, "..");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const styles = fs.readFileSync(path.join(root, "styles.css"), "utf8");
 const printCss = fs.readFileSync(path.join(root, "print.css"), "utf8");
 
 function assert(condition, message) {
@@ -47,6 +48,8 @@ assert(html.includes('id="finished-label-quantity" type="number" min="1" max="10
 assert(html.includes('id="finished-label-print-count"') && html.includes('min="1" max="1"') && html.includes('value="1" readonly'), "one-label-per-unit rule is missing");
 assert(html.includes('id="finished-label-layout-preview"'), "live 45x20 label layout preview is missing");
 assert(html.includes('id="finished-label-layout-qr-value"'), "QR payload preview is missing");
+assert(html.indexOf('id="btn-finished-label-save"') < html.indexOf('id="finished-label-layout-preview"'), "register-and-print action is not visible above the label details");
+assert(html.includes('data-i18n="finished_label_g_part_number">G品番'), "selected-product summary does not expose the G part number");
 assert(html.includes('id="finished-label-mode-hub"'), "finished registration label-screen chooser is missing");
 assert(html.includes('data-finished-label-mode="product"') && html.includes('data-finished-label-mode="box"'), "separate product and box label entries are missing");
 assert(html.includes('data-i18n="finished_label_preview" disabled>完品シール印刷</button>'), "45x20 label is not named 完品シール");
@@ -64,9 +67,14 @@ assert(functionSource("addFinishedLabelSelectedComponent").includes("belongsToSe
 assert(functionSource("openFinishedLabelComponentRegistration").includes('componentReturnScreen = "finished-label-mgmt"'), "category-based component registration is not available from the finished-label screen");
 const productSelectionSource = functionSource("selectFinishedLabelProduct");
 assert(productSelectionSource.indexOf("renderFinishedLabelCategoryOptions") < productSelectionSource.indexOf("loadFinishedLabelComponentCandidates"), "registered product components are not loaded after product selection");
+assert(productSelectionSource.includes('.from("core_products").select(CORE_PRODUCT_FAST_SELECT)'), "selected products are not refreshed from the authoritative product master");
 assert(functionSource("applyFinishedLabelTemplate").includes("finishedLabelComponentCandidates"), "100-percent component reset is not based on registered product components");
 const previewProductNoSource = functionSource("finishedLabelPreviewProductNo");
-assert(previewProductNoSource.indexOf("product.gltek_part_number") < previewProductNoSource.indexOf("product.manufacturer_part_number"), "G part number is not preferred in the finished-label preview");
+assert(previewProductNoSource.includes("product.gltek_part_number"), "G part number is missing from the finished-label preview");
+assert(!previewProductNoSource.includes("product.manufacturer_part_number"), "finished-label preview still falls back to the manufacturer part number");
+assert(functionSource("readFinishedLabelRecord").includes("if (!p.gltek_part_number)"), "finished-label printing is not blocked when the G part number is missing");
+assert(styles.includes("grid-template-columns: 280px minmax(0, 1fr)") && styles.includes("grid-template-columns: minmax(470px, 1.08fr) minmax(360px, .92fr)"), "desktop no-scroll label workspace layout is missing");
+assert(styles.includes("table-layout: fixed") && styles.includes("overflow-x: hidden; overflow-y: auto"), "component columns can still force horizontal scrolling in the compact layout");
 
 const qrInputs = [];
 const sandbox = {

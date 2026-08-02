@@ -3817,7 +3817,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .finished-label-result-title { font-size: 14px; font-weight: 800; color: #111a33; word-break: break-word; }
 .finished-label-result-sub { font-size: 11px; color: #667085; margin-top: 3px; line-height: 1.45; word-break: break-word; }
 .finished-label-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-.finished-label-selected { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.finished-label-selected { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
 .finished-label-selected-cell { border: 1px solid #edf0f4; border-radius: 8px; background: #fbfcfe; padding: 9px 10px; min-height: 54px; }
 .finished-label-selected-label { font-size: 11px; color: #7c8492; font-weight: 700; margin-bottom: 3px; }
 .finished-label-selected-value { font-size: 14px; color: #111a33; font-weight: 800; word-break: break-word; }
@@ -3933,6 +3933,77 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .finished-label-serial-list { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 9px; }
 .finished-label-serial-chip { border: 1px solid #bad7c4; border-radius: 5px; padding: 4px 7px; background: #fff; color: #183f29; font-family: Consolas, "SFMono-Regular", monospace; font-size: 11px; font-weight: 800; letter-spacing: .02em; }
 .finished-label-history-serial { margin-top: 5px; color: #173f2a; font-family: Consolas, "SFMono-Regular", monospace; font-size: 11px; font-weight: 800; word-break: break-word; }
+@media (min-width: 1180px) and (min-height: 680px) {
+  #screen-finished-label-mgmt.active { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
+  #screen-finished-label-mgmt .finished-label-body { min-height: 0; padding: 10px; }
+  #screen-finished-label-mgmt .finished-label-mode-bar { padding-bottom: 6px; }
+  #screen-finished-label-mgmt .finished-label-mode-bar .back-btn { padding: 5px 8px; font-size: 11px; }
+  #screen-finished-label-mgmt .finished-label-shell { grid-template-columns: 280px minmax(0, 1fr); gap: 10px; overflow: hidden; }
+  #screen-finished-label-mgmt .finished-label-left { gap: 8px; overflow: hidden; }
+  #screen-finished-label-mgmt .finished-label-left > .finished-label-card { display: flex; flex: 1 1 0; flex-direction: column; min-height: 0; padding: 8px; overflow: hidden; }
+  #screen-finished-label-mgmt .finished-label-results,
+  #screen-finished-label-mgmt .finished-label-history-list { min-height: 0; overflow-y: auto; }
+  #screen-finished-label-mgmt .finished-label-result { padding: 7px 8px; }
+  #screen-finished-label-mgmt .finished-label-result-title { font-size: 12px; }
+  #screen-finished-label-mgmt .finished-label-result-sub { margin-top: 2px; font-size: 10px; line-height: 1.3; }
+  #screen-finished-label-mgmt .finished-label-editor { display: grid; grid-template-columns: minmax(470px, 1.08fr) minmax(360px, .92fr); gap: 10px; min-width: 0; overflow: hidden; }
+  #screen-finished-label-mgmt .finished-label-editor > .finished-label-card { min-width: 0; min-height: 0; padding: 8px; overflow: hidden; }
+  #screen-finished-label-mgmt .finished-label-workspace.is-box-mode .finished-label-editor > .finished-label-card:first-child { grid-column: 1 / -1; }
+  #screen-finished-label-mgmt .finished-label-editor > .finished-label-card[data-finished-label-product-only] { display: flex; flex-direction: column; }
+  #screen-finished-label-mgmt .finished-label-editor > .finished-label-card[data-finished-label-product-only] .finished-label-table-wrap { flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; }
+  #screen-finished-label-mgmt .finished-label-card h3 { margin-bottom: 5px; font-size: 12px; }
+  #screen-finished-label-mgmt .finished-label-toolbar { gap: 5px; margin-bottom: 5px; }
+  #screen-finished-label-mgmt .finished-label-toolbar > div { gap: 4px; }
+  #screen-finished-label-mgmt .finished-label-toolbar button { min-height: 28px; padding: 5px 7px; font-size: 10px; }
+  #screen-finished-label-mgmt #btn-finished-label-preview:disabled { display: none; }
+  #screen-finished-label-mgmt .finished-label-serial-notice { gap: 7px; margin-bottom: 6px; padding: 5px 7px; line-height: 1.3; }
+  #screen-finished-label-mgmt .finished-label-serial-notice strong { font-size: 10px; }
+  #screen-finished-label-mgmt .finished-label-serial-notice span { font-size: 9px; }
+  #screen-finished-label-mgmt .finished-label-layout-panel { margin-bottom: 6px; padding: 7px; }
+  #screen-finished-label-mgmt .finished-label-layout-head { gap: 8px; }
+  #screen-finished-label-mgmt .finished-label-layout-head h4 { font-size: 11px; }
+  #screen-finished-label-mgmt .finished-label-layout-head p { display: none; }
+  #screen-finished-label-mgmt .finished-label-layout-badges { gap: 3px; }
+  #screen-finished-label-mgmt .finished-label-layout-badges span { padding: 2px 5px; font-size: 8px; }
+  #screen-finished-label-mgmt .finished-label-layout-stage { grid-template-columns: 22px 270px; grid-template-rows: 16px 120px; justify-content: center; margin-top: 6px; padding: 7px 9px 9px 5px; overflow: hidden; }
+  #screen-finished-label-mgmt .finished-label-layout-width { width: 270px; }
+  #screen-finished-label-mgmt .finished-label-layout-height { height: 120px; }
+  #screen-finished-label-mgmt .finished-label-layout-preview { width: 270px; height: 120px; overflow: hidden; }
+  #screen-finished-label-mgmt .finished-label-layout-preview .serial-label { width: 450px; height: 200px; transform: scale(.6); transform-origin: 0 0; }
+  #screen-finished-label-mgmt .finished-label-layout-foot { gap: 5px; margin-top: 4px; font-size: 8px; }
+  #screen-finished-label-mgmt .finished-label-layout-foot strong { font-size: 9px; }
+  #screen-finished-label-mgmt .finished-label-layout-sample { padding: 2px 4px; }
+  #screen-finished-label-mgmt .finished-label-selected { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-bottom: 6px; }
+  #screen-finished-label-mgmt .finished-label-selected-cell { min-height: 40px; padding: 5px 6px; }
+  #screen-finished-label-mgmt .finished-label-selected-label { margin-bottom: 1px; font-size: 9px; }
+  #screen-finished-label-mgmt .finished-label-selected-value { font-size: 11px; }
+  #screen-finished-label-mgmt .finished-label-form-grid { gap: 5px; }
+  #screen-finished-label-mgmt .finished-label-field label { margin-bottom: 2px; font-size: 9px; }
+  #screen-finished-label-mgmt .finished-label-field input,
+  #screen-finished-label-mgmt .finished-label-field select,
+  #screen-finished-label-mgmt .finished-label-field textarea { min-height: 28px; padding: 4px 6px; font-size: 11px; }
+  #screen-finished-label-mgmt .finished-label-component-picker { grid-template-columns: minmax(0, 1fr) auto; gap: 5px; margin: 5px 0; }
+  #screen-finished-label-mgmt .finished-label-component-picker > span { grid-column: 1 / -1; font-size: 9px; }
+  #screen-finished-label-mgmt .finished-label-component-picker select { padding: 5px 6px; font-size: 10px; }
+  #screen-finished-label-mgmt .finished-label-table { min-width: 0; table-layout: fixed; font-size: 9px; }
+  #screen-finished-label-mgmt .finished-label-table th,
+  #screen-finished-label-mgmt .finished-label-table td { overflow: hidden; padding: 4px; overflow-wrap: anywhere; }
+  #screen-finished-label-mgmt .finished-label-table th:nth-child(1) { width: 28px; }
+  #screen-finished-label-mgmt .finished-label-table th:nth-child(2) { width: 22%; }
+  #screen-finished-label-mgmt .finished-label-table th:nth-child(3) { width: 15%; }
+  #screen-finished-label-mgmt .finished-label-table th:nth-child(4) { width: 28%; }
+  #screen-finished-label-mgmt .finished-label-table th:nth-child(5) { width: 48px; }
+  #screen-finished-label-mgmt .finished-label-table th:nth-child(6) { width: 32px; }
+  #screen-finished-label-mgmt .finished-label-table th:nth-child(7) { width: 42px; }
+  #screen-finished-label-mgmt .finished-label-component-name { display: block; min-width: 0; }
+  #screen-finished-label-mgmt .finished-label-component-part { font-size: 8px; white-space: normal; }
+  #screen-finished-label-mgmt .finished-label-table button { min-height: 24px; padding: 3px 4px; font-size: 8px; }
+  #screen-finished-label-mgmt .finished-box-label-layout-stage { grid-template-columns: 22px 320px; grid-template-rows: 16px 240px; justify-content: center; margin-top: 6px; padding: 7px 9px 9px 5px; overflow: hidden; }
+  #screen-finished-label-mgmt .finished-box-label-layout-width { width: 320px; }
+  #screen-finished-label-mgmt .finished-box-label-layout-height { height: 240px; }
+  #screen-finished-label-mgmt .finished-box-label-layout-preview { width: 320px; height: 240px; overflow: hidden; }
+  #screen-finished-label-mgmt .finished-box-label-layout-preview .box-product-label { width: 480px; height: 360px; transform: scale(.666667); transform-origin: 0 0; }
+}
 .finished-shipment-body { max-width: none; padding: 16px; overflow: hidden; }
 .finished-shipment-shell { display: grid; grid-template-columns: minmax(420px, .9fr) minmax(520px, 1.1fr); gap: 14px; width: 100%; min-width: 0; height: 100%; min-height: 0; }
 .finished-shipment-left, .finished-shipment-right { display: flex; flex-direction: column; gap: 12px; min-width: 0; min-height: 0; overflow: auto; }

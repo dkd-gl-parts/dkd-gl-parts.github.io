@@ -377,9 +377,11 @@ var TRANSLATIONS = {
     finished_label_shelf_no: "棚番",
     finished_label_components: "交換・構成部品",
     finished_label_component_hint: "選択したカテゴリに登録済みの構成部品を初期表示します。使用したメーカー・品番を入力してください。",
+    finished_label_g_part_number: "G品番",
+    finished_label_g_part_number_required: "G品番が登録されていません。品番マスタを確認してください。",
     finished_label_part_type: "部品種別",
     finished_label_replacement_part: "交換品番/内容",
-    finished_label_issue_save: "完品登録・シリアル発行",
+    finished_label_issue_save: "完品登録・シリアル発行・印刷",
     finished_label_saved: "製造シリアルを発行し、完品在庫へ登録しました。",
     finished_label_no_product: "先に発行対象を選択してください。",
     finished_label_variant_required: "在庫区分を選択してください。区分がない商品は先に在庫区分を登録してください。",
@@ -1762,9 +1764,11 @@ var TRANSLATIONS = {
     finished_label_shelf_no: "Shelf No.",
     finished_label_components: "Replaced / Component Parts",
     finished_label_component_hint: "Registered components for the selected category are shown by default. Enter the maker and part number actually used.",
+    finished_label_g_part_number: "G Part No.",
+    finished_label_g_part_number_required: "No G part number is registered. Check the product master.",
     finished_label_part_type: "Part Type",
     finished_label_replacement_part: "Replacement Part / Detail",
-    finished_label_issue_save: "Register Units and Issue Serials",
+    finished_label_issue_save: "Register, Issue Serials, and Print",
     finished_label_saved: "Manufacturing serials were issued and finished stock was registered.",
     finished_label_no_product: "Select an issue target first.",
     finished_label_variant_required: "Select a stock variant. Create the product's stock variant first if none exists.",
@@ -3154,9 +3158,11 @@ var TRANSLATIONS = {
     finished_label_shelf_no: "货架号",
     finished_label_components: "更换・构成零件",
     finished_label_component_hint: "默认显示所选类别中已登记的构成零件。请输入实际使用的厂家和品号。",
+    finished_label_g_part_number: "G品号",
+    finished_label_g_part_number_required: "尚未登记G品号。请检查品号主数据。",
     finished_label_part_type: "零件种类",
     finished_label_replacement_part: "更换品号/内容",
-    finished_label_issue_save: "登记完品并发行序列号",
+    finished_label_issue_save: "登记完品、发行序列号并打印",
     finished_label_saved: "已发行制造序列号并登记完品库存。",
     finished_label_no_product: "请先选择发行对象。",
     finished_label_variant_required: "请选择库存区分。没有区分的商品请先登记库存区分。",
@@ -4263,7 +4269,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.637";
+var APP_VERSION       = "v1.1.638";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -16958,7 +16964,11 @@ function setFinishedLabelPrintMode(mode) {
   var hub = document.getElementById("finished-label-mode-hub");
   var workspace = document.getElementById("finished-label-workspace");
   if (hub) hub.hidden = !!mode;
-  if (workspace) workspace.hidden = !mode;
+  if (workspace) {
+    workspace.hidden = !mode;
+    workspace.classList.toggle("is-product-mode", mode === "product");
+    workspace.classList.toggle("is-box-mode", mode === "box");
+  }
   document.querySelectorAll("[data-finished-label-product-only]").forEach(function(el) {
     el.hidden = mode !== "product";
   });
@@ -17123,7 +17133,7 @@ function renderFinishedLabelResults() {
     var dkdId = productDkdId(p);
     var inst = finishedLabelInstructionMap[String(dkdId)] || null;
     var active = selectedId && String(selectedId) === String(dkdId) ? " active" : "";
-    var title = p.genuine_part_number || p.manufacturer_part_number || p.daiko_part_number || ("DKD " + dkdId);
+    var title = p.gltek_part_number || p.genuine_part_number || p.manufacturer_part_number || p.daiko_part_number || ("DKD " + dkdId);
     html += "<button type='button' class='finished-label-result" + active + "' data-finished-label-dkd='" + esc(String(dkdId || "")) + "'>";
     html += "<div class='finished-label-result-title'>" + esc(title || "-") + "</div>";
     html += "<div class='finished-label-result-sub'>" + esc([productCategoryLabel(p), p.manufacturer, p.manufacturer_part_number].filter(Boolean).join(" / ")) + "</div>";
@@ -17145,10 +17155,8 @@ async function selectFinishedLabelProduct(product, instruction) {
   var dkdId = productDkdId(product);
   if (!dkdId) return;
   var full = product;
-  if (!full.manufacturer_part_number || !full.category_code) {
-    var r = await sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).eq("dkd_shohin_id", dkdId).maybeSingle();
-    if (!r.error && r.data) full = normalizeCoreProductFastRows([r.data])[0];
-  }
+  var r = await sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).eq("dkd_shohin_id", dkdId).maybeSingle();
+  if (!r.error && r.data) full = Object.assign({}, product, normalizeCoreProductFastRows([r.data])[0]);
   finishedLabelSelectedProduct = full;
   finishedLabelSelectedInstruction = instruction || finishedLabelInstructionMap[String(dkdId)] || null;
   renderFinishedLabelResults();
@@ -17167,6 +17175,7 @@ function renderFinishedLabelSelectedSummary(product) {
   var wrap = document.getElementById("finished-label-selected-summary");
   if (!wrap) return;
   var cells = [
+    [t("finished_label_g_part_number"), product && product.gltek_part_number],
     [t("f_genuine_pn"), product && product.genuine_part_number],
     [t("f_mfr_pn"), product && product.manufacturer_part_number],
     [t("f_manufacturer"), product && product.manufacturer],
@@ -17193,6 +17202,8 @@ function resetFinishedLabelForm(product, instruction) {
   if (preview) preview.disabled = true;
   var boxPreview = document.getElementById("btn-finished-box-label-preview");
   if (boxPreview) boxPreview.disabled = true;
+  var save = document.getElementById("btn-finished-label-save");
+  if (save) save.disabled = !product || !product.gltek_part_number;
   renderFinishedLabelLayoutPreview();
   renderFinishedBoxLabelLayoutPreview();
 }
@@ -17437,6 +17448,7 @@ async function openFinishedLabelComponentRegistration() {
 function readFinishedLabelRecord() {
   var p = finishedLabelSelectedProduct;
   if (!p) throw new Error(t("finished_label_no_product"));
+  if (!p.gltek_part_number) throw new Error(t("finished_label_g_part_number_required"));
   var variant = selectedFinishedLabelVariant();
   if (!variant || !variant.product_variant_id) throw new Error(t("finished_label_variant_required"));
   var instIdText = finishedLabelValue("finished-label-instruction-id");
@@ -17504,7 +17516,7 @@ function updateFinishedLabelQrPayload() {
 
 function finishedLabelPreviewProductNo() {
   var product = finishedLabelSelectedProduct || {};
-  return product.gltek_part_number || product.manufacturer_part_number || product.genuine_part_number || product.daiko_part_number || "G0101-00001";
+  return product.gltek_part_number || "G品番未登録";
 }
 
 function finishedLabelPreviewSerial() {
