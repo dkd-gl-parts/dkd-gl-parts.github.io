@@ -55,6 +55,7 @@ assert(html.includes('data-finished-label-mode="product"') && html.includes('dat
 assert(html.includes('id="btn-finished-label-save"') && html.includes('data-i18n="finished_label_issue_save">登録・印刷</button>'), "register-and-print button label is not concise");
 assert(html.includes('data-i18n="finished_label_preview" disabled>印刷</button>'), "finished-label print button label is not concise");
 assert(html.includes('id="btn-finished-label-load-more"') && html.includes('data-i18n="btn_load_more" hidden>さらに表示</button>'), "finished-label search load-more action is missing");
+assert(html.includes('id="finished-label-search" type="search" inputmode="latin" autocapitalize="characters" autocomplete="off" spellcheck="false"'), "finished-label search input is not configured for half-width alphanumeric entry");
 assert(html.includes('data-i18n="finished_label_layout_title">完品シール レイアウト</h4>'), "finished-label layout title is inconsistent");
 assert(!html.includes("製品本体シール"), "obsolete 製品本体シール name remains in the screen");
 assert(html.includes('data-i18n="finished_label_hub_title"'), "label-screen chooser title is not localized");
@@ -98,6 +99,8 @@ const resultRenderSource = functionSource("renderFinishedLabelResults");
 assert(resultRenderSource.includes("finishedLabelProducts.slice(0, finishedLabelVisibleLimit)"), "finished-label results are not capped before rendering");
 assert(resultRenderSource.includes("loadMore.hidden = visibleProducts.length >= finishedLabelProducts.length"), "finished-label load-more visibility is not tied to remaining results");
 assert(functionSource("showMoreFinishedLabelProducts").includes("FINISHED_LABEL_PAGE_STEP"), "finished-label load-more does not advance in fixed pages");
+assert(functionSource("searchFinishedLabelProducts").includes("normalizeFinishedLabelSearchInput(qEl)"), "finished-label search does not normalize the visible input before querying");
+assert(app.includes('finishedLabelSearchInput.addEventListener("compositionend"') && app.includes('finishedLabelSearchInput.addEventListener("input"'), "finished-label search does not normalize typing and IME-confirmed input");
 assert(/@page\s*{[^}]*size:\s*45mm\s+20mm/i.test(printCss), "print page is not fixed at 45x20mm");
 assert(/\.serial-label\s*{[^}]*width:\s*45mm;[^}]*height:\s*20mm;/i.test(printCss), "label dimensions are not exact");
 assert(/\.serial-label-field-name\s*{[^}]*font-size:/i.test(printCss), "print field hierarchy is missing");
@@ -119,6 +122,12 @@ assert(functionSource("readFinishedLabelRecord").includes("if (!p.gltek_part_num
 assert(styles.includes("grid-template-columns: 280px minmax(0, 1fr)") && styles.includes("grid-template-columns: minmax(470px, 1.08fr) minmax(360px, .92fr)"), "desktop no-scroll label workspace layout is missing");
 assert(styles.includes("table-layout: fixed") && styles.includes("overflow-x: hidden; overflow-y: auto"), "component columns can still force horizontal scrolling in the compact layout");
 assert(styles.includes(".finished-label-toolbar .finished-label-print-action") && styles.includes("font-size: 15px"), "finished-label print actions are not visually enlarged");
+
+const searchInputSandbox = {};
+vm.createContext(searchInputSandbox);
+vm.runInContext(`${functionSource("normalizeAsciiWidth")}; ${functionSource("normalizeFinishedLabelSearchValue")}; this.normalizeSearch = normalizeFinishedLabelSearchValue;`, searchInputSandbox);
+assert(searchInputSandbox.normalizeSearch("ｇ０１０１－００００１") === "G0101-00001", "full-width G part number is not normalized to half-width alphanumeric text");
+assert(searchInputSandbox.normalizeSearch(" １０４２１０―１２３４ abc テスト ") === "104210-1234ABC", "finished-label search does not remove non-alphanumeric text after width normalization");
 
 const readinessSandbox = {
   finishedLabelProductReadinessMap: {

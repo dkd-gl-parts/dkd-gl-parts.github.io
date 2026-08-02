@@ -4428,7 +4428,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.640";
+var APP_VERSION       = "v1.1.641";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -17239,6 +17239,26 @@ function finishedLabelTemplatesForCategory(category) {
   return [{ part_type: "備考", default_maker: "", default_part_number: "", sort_order: 10 }];
 }
 
+function normalizeFinishedLabelSearchValue(value) {
+  return normalizeAsciiWidth(value)
+    .replace(/[\u2010-\u2015\u2212\u30FC\uFF0D]/g, "-")
+    .toUpperCase()
+    .replace(/[^0-9A-Z-]/g, "");
+}
+
+function normalizeFinishedLabelSearchInput(input) {
+  if (!input) return "";
+  var normalized = normalizeFinishedLabelSearchValue(input.value);
+  if (input.value === normalized) return normalized;
+  var cursor = input.selectionStart;
+  input.value = normalized;
+  if (typeof cursor === "number" && typeof input.setSelectionRange === "function") {
+    cursor = Math.min(cursor, normalized.length);
+    input.setSelectionRange(cursor, cursor);
+  }
+  return normalized;
+}
+
 async function loadFinishedLabelProductReadiness(products) {
   var readinessMap = {};
   var ids = Array.from(new Set((products || []).map(function(product) {
@@ -17321,7 +17341,7 @@ async function searchFinishedLabelProducts() {
   finishedLabelVisibleLimit = FINISHED_LABEL_PAGE_STEP;
   finishedLabelProductReadinessMap = {};
   var qEl = document.getElementById("finished-label-search");
-  var q = qEl ? normalizeAsciiWidth(qEl.value.trim()) : "";
+  var q = normalizeFinishedLabelSearchInput(qEl);
   var results = document.getElementById("finished-label-results");
   var count = document.getElementById("finished-label-search-count");
   var loadMore = document.getElementById("btn-finished-label-load-more");
@@ -36119,7 +36139,19 @@ document.getElementById("manufacturing-cost-saved-list").addEventListener("chang
   if (nameEl && selected) nameEl.value = selected.list_name || "";
 });
 document.getElementById("btn-finished-label-search").addEventListener("click", searchFinishedLabelProducts);
-document.getElementById("finished-label-search").addEventListener("keydown", function(e){ if(e.key==="Enter") searchFinishedLabelProducts(); });
+var finishedLabelSearchInput = document.getElementById("finished-label-search");
+var finishedLabelSearchIsComposing = false;
+finishedLabelSearchInput.addEventListener("compositionstart", function() { finishedLabelSearchIsComposing = true; });
+finishedLabelSearchInput.addEventListener("compositionend", function() {
+  finishedLabelSearchIsComposing = false;
+  normalizeFinishedLabelSearchInput(finishedLabelSearchInput);
+});
+finishedLabelSearchInput.addEventListener("input", function(event) {
+  if (finishedLabelSearchIsComposing || event.isComposing) return;
+  normalizeFinishedLabelSearchInput(finishedLabelSearchInput);
+});
+finishedLabelSearchInput.addEventListener("blur", function() { normalizeFinishedLabelSearchInput(finishedLabelSearchInput); });
+finishedLabelSearchInput.addEventListener("keydown", function(e){ if(e.key==="Enter") searchFinishedLabelProducts(); });
 document.getElementById("btn-finished-label-load-more").addEventListener("click", showMoreFinishedLabelProducts);
 document.querySelectorAll("[data-finished-label-mode]").forEach(function(btn) {
   btn.addEventListener("click", function() { setFinishedLabelPrintMode(btn.dataset.finishedLabelMode); });
