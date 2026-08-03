@@ -4458,7 +4458,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.646";
+var APP_VERSION       = "v1.1.647";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -33946,6 +33946,175 @@ function closeFullscreen() { document.getElementById("fullscreen").classList.rem
 // =============================================
 // ユーザー管理
 // =============================================
+function internalInviteCompanyOptions() {
+  var internalCompanies = USER_COMPANY_OPTIONS.filter(function(option) {
+    return option[0] === "daiko" || option[0] === "gltek";
+  });
+  if (isSystemAdmin()) return internalCompanies;
+  var actorCompany = userCompanyCode(userProfile);
+  return internalCompanies.filter(function(option) { return option[0] === actorCompany; });
+}
+
+function internalInviteDepartmentOptions() {
+  if (!hasOwnDepartmentUserScope(userProfile)) return USER_DEPARTMENT_OPTIONS;
+  var actorDepartment = userDepartmentCode(userProfile);
+  return USER_DEPARTMENT_OPTIONS.filter(function(option) { return option[0] === actorDepartment; });
+}
+
+function internalInviteRoleOptions(companyCode) {
+  return USER_ACCESS_ROLE_OPTIONS.filter(function(option) {
+    return option[0] !== "customer_viewer"
+      && option[0] !== "external_viewer"
+      && companyCode !== "external"
+      && canAssignUserRole(option[0]);
+  });
+}
+
+function internalInviteDefaultOption(options, preferred) {
+  if ((options || []).some(function(option) { return option[0] === preferred; })) return preferred;
+  return options && options.length ? options[0][0] : "";
+}
+
+function syncInternalUserInviteNotes() {
+  var company = document.getElementById("internal-user-invite-company");
+  var department = document.getElementById("internal-user-invite-department");
+  var role = document.getElementById("internal-user-invite-role");
+  var companyNote = document.getElementById("internal-user-invite-company-note");
+  var departmentNote = document.getElementById("internal-user-invite-department-note");
+  var roleNote = document.getElementById("internal-user-invite-role-note");
+  if (companyNote && company) companyNote.textContent = optionLabel(USER_COMPANY_OPTIONS, company.value);
+  if (departmentNote && department) departmentNote.textContent = optionLabel(USER_DEPARTMENT_OPTIONS, department.value);
+  if (roleNote && role) roleNote.textContent = accessRoleScopeText(role.value);
+}
+
+function refreshInternalUserInviteRoles() {
+  var company = document.getElementById("internal-user-invite-company");
+  var role = document.getElementById("internal-user-invite-role");
+  if (!company || !role) return;
+  var previous = role.value || "internal_viewer";
+  var options = internalInviteRoleOptions(company.value);
+  var selected = internalInviteDefaultOption(options, previous);
+  role.innerHTML = optionHtml(options, selected, null, function(option) { return accessRoleLabel(option[0]); });
+  role.value = selected;
+  syncInternalUserInviteNotes();
+}
+
+function openInternalUserInvite() {
+  if (!canUseUserManagement()) {
+    showPermissionDenied("invite_internal_user", "profiles");
+    return;
+  }
+  var overlay = document.getElementById("internal-user-invite-overlay");
+  var nameInput = document.getElementById("internal-user-invite-name");
+  var emailInput = document.getElementById("internal-user-invite-email");
+  var company = document.getElementById("internal-user-invite-company");
+  var department = document.getElementById("internal-user-invite-department");
+  var result = document.getElementById("internal-user-invite-result");
+  if (!overlay || !nameInput || !emailInput || !company || !department) return;
+
+  var companyOptions = internalInviteCompanyOptions();
+  var departmentOptions = internalInviteDepartmentOptions();
+  var defaultCompany = internalInviteDefaultOption(companyOptions, userCompanyCode(userProfile));
+  var defaultDepartment = internalInviteDefaultOption(departmentOptions, userDepartmentCode(userProfile));
+  company.innerHTML = optionHtml(companyOptions, defaultCompany);
+  company.value = defaultCompany;
+  company.disabled = !isSystemAdmin();
+  department.innerHTML = optionHtml(departmentOptions, defaultDepartment);
+  department.value = defaultDepartment;
+  department.disabled = hasOwnDepartmentUserScope(userProfile);
+  nameInput.value = "";
+  emailInput.value = "";
+  if (result) { result.className = "internal-user-invite-result"; result.textContent = ""; }
+  refreshInternalUserInviteRoles();
+  overlay.classList.add("show");
+  nameInput.focus();
+}
+
+function closeInternalUserInvite() {
+  var overlay = document.getElementById("internal-user-invite-overlay");
+  if (overlay) overlay.classList.remove("show");
+}
+
+function internalUserInviteErrorMessage(code) {
+  var messages = {
+    name_required: "表示名を入力してください",
+    invalid_email: "正しいメールアドレスを入力してください",
+    invalid_company: "社内の会社を選択してください",
+    invalid_department: "部署を選択してください",
+    invalid_role: "基準権限を選択してください",
+    scope_forbidden: "選択した所属または基準権限を発行する権限がありません",
+    forbidden: "社内ユーザーを発行する権限がありません",
+    email_already_registered: "このメールアドレスは登録済みです。ユーザー一覧からPW再設定を送信してください",
+    profile_setup_failed: "ユーザーの所属・権限設定を保存できませんでした",
+    invite_failed: "社内ユーザーIDの発行に失敗しました"
+  };
+  return messages[code] || messages.invite_failed;
+}
+
+async function internalUserInviteErrorCode(result) {
+  if (result && result.data && result.data.error) return result.data.error;
+  var context = result && result.error && result.error.context;
+  if (context && typeof context.json === "function") {
+    try {
+      var body = await context.json();
+      if (body && body.error) return body.error;
+    } catch (ignore) {}
+  }
+  return "invite_failed";
+}
+
+async function inviteInternalUser() {
+  var nameInput = document.getElementById("internal-user-invite-name");
+  var emailInput = document.getElementById("internal-user-invite-email");
+  var company = document.getElementById("internal-user-invite-company");
+  var department = document.getElementById("internal-user-invite-department");
+  var role = document.getElementById("internal-user-invite-role");
+  var button = document.getElementById("btn-internal-user-invite-submit");
+  var resultMessage = document.getElementById("internal-user-invite-result");
+  if (!canUseUserManagement()) {
+    showPermissionDenied("invite_internal_user", "profiles");
+    return;
+  }
+  var payload = {
+    name: nameInput ? nameInput.value.trim() : "",
+    email: emailInput ? emailInput.value.trim().toLowerCase() : "",
+    company_code: company ? company.value : "",
+    department_code: department ? department.value : "",
+    role_code: role ? role.value : ""
+  };
+  var localError = !payload.name
+    ? "name_required"
+    : (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email) ? "invalid_email" : "");
+  if (localError) {
+    if (resultMessage) {
+      resultMessage.className = "internal-user-invite-result save-err";
+      resultMessage.textContent = internalUserInviteErrorMessage(localError);
+    }
+    return;
+  }
+  if (button) button.disabled = true;
+  if (resultMessage) {
+    resultMessage.className = "internal-user-invite-result";
+    resultMessage.textContent = t("loading");
+  }
+  var response = await sb.functions.invoke("invite-internal-user", { body: payload });
+  if (button) button.disabled = false;
+  if (response.error || !response.data || !response.data.ok) {
+    if (resultMessage) {
+      resultMessage.className = "internal-user-invite-result save-err";
+      resultMessage.textContent = internalUserInviteErrorMessage(await internalUserInviteErrorCode(response));
+    }
+    return;
+  }
+  if (resultMessage) {
+    resultMessage.className = "internal-user-invite-result save-ok";
+    resultMessage.textContent = "社内ユーザーIDを発行し、初回設定メールを送信しました。";
+  }
+  if (nameInput) nameInput.value = "";
+  if (emailInput) emailInput.value = "";
+  await loadUsers();
+}
+
 async function loadUsers() {
   if (!canUseUserManagement()) return;
   configureUsersScreenMode();
@@ -35317,8 +35486,10 @@ function configureUsersScreenMode() {
   var canManage = canUseUserManagement();
   var heading = document.getElementById("users-heading");
   var title = document.getElementById("users-screen-title");
+  var issuance = document.getElementById("internal-user-issuance");
   if (heading) heading.textContent = t("screen_users_title");
   if (title) title.textContent = t("screen_users_title");
+  if (issuance) issuance.hidden = !canManage;
   var listSection = document.getElementById("users-list-section");
   var list = document.getElementById("users-list");
   if (!list) return;
@@ -35821,47 +35992,6 @@ async function doChangePassword() {
 }
 
 // =============================================
-// アカウント登録申請
-// =============================================
-async function doRegister() {
-  var name     = document.getElementById("reg-name").value.trim();
-  var company  = document.getElementById("reg-company").value.trim();
-  var email    = document.getElementById("reg-email").value.trim();
-  var password = document.getElementById("reg-password").value;
-  var errorEl  = document.getElementById("reg-error");
-  var btnEl    = document.getElementById("btn-submit-reg");
-
-  errorEl.textContent = "";
-  if (!name || !company || !email || !password) { errorEl.textContent = t("err_reg_empty"); return; }
-  if (password.length < 8) { errorEl.textContent = t("err_reg_pass"); return; }
-
-  btnEl.disabled = true; btnEl.textContent = t("loading");
-
-  var result = await sb.auth.signUp({
-    email: email,
-    password: password,
-    options: {
-      data: { name: name, company: company, self_registered: "true" }
-    }
-  });
-
-  btnEl.disabled = false; btnEl.textContent = t("btn_submit_reg");
-
-  if (result.error) {
-    if (result.error.message && result.error.message.toLowerCase().indexOf("already") >= 0) {
-      errorEl.textContent = t("err_reg_dup");
-    } else {
-      errorEl.textContent = t("reg_error") + ": " + result.error.message;
-    }
-    return;
-  }
-
-  // 成功：フォームを隠して成功メッセージを表示
-  setCspStyle(document.getElementById("reg-form"), "display", "none");
-  setCspStyle(document.getElementById("reg-success-box"), "display", "block");
-}
-
-// =============================================
 // ログイン：pending / suspended のハンドリング追加
 // =============================================
 
@@ -35929,14 +36059,6 @@ function checkPasswordStrength(password, fillId, labelId) {
   label.textContent  = level.label + (hints.length > 0 ? "  (" + hints.slice(0,2).join(", ") + ")" : "");
 }
 
-// 申請画面のパスワード強度チェック
-var regPassEl = document.getElementById("reg-password");
-if (regPassEl) {
-  regPassEl.addEventListener("input", function() {
-    checkPasswordStrength(this.value, "reg-strength-fill", "reg-strength-label");
-  });
-}
-
 // リセット画面のパスワード強度チェック
 var resetPassEl = document.getElementById("reset-password");
 if (resetPassEl) {
@@ -35951,7 +36073,6 @@ document.getElementById("btn-back-from-reset").addEventListener("click", functio
 document.getElementById("reset-confirm").addEventListener("keydown", function(e) {
   if (e.key === "Enter") doResetPassword();
 });
-document.getElementById("btn-to-register").addEventListener("click", function() { showScreen("register"); });
 document.getElementById("btn-to-forgot").addEventListener("click", function() {
   setCspStyle(document.getElementById("forgot-form"), "display", "");
   setCspStyle(document.getElementById("forgot-success-box"), "display", "none");
@@ -35994,14 +36115,6 @@ document.getElementById("new-password-confirm").addEventListener("keydown", func
 document.getElementById("current-password").addEventListener("keydown", function(e) {
   if(e.key==="Enter") doChangePassword();
 });
-document.getElementById("btn-back-to-login").addEventListener("click", function() {
-  setCspStyle(document.getElementById("reg-form"), "display", "");
-  setCspStyle(document.getElementById("reg-success-box"), "display", "none");
-  document.getElementById("reg-error").textContent = "";
-  showScreen("login");
-});
-document.getElementById("btn-submit-reg").addEventListener("click", doRegister);
-document.getElementById("reg-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doRegister(); });
 document.getElementById("login-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
 ["btn-logout-menu","btn-logout-customer-portal","btn-logout-customer-shipping","btn-logout-customer-users","btn-logout-customer-catalog","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-shipping-rate-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-component-compat-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-manufacturing-cost-mgmt","btn-logout-finished-label-mgmt","btn-logout-finished-product-shipping","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
 document.getElementById("customer-portal-search-btn").addEventListener("click", function(){ openCustomerPortalSearch(); });
@@ -36217,6 +36330,18 @@ document.querySelectorAll("input[name='pf-core-return-required']").forEach(funct
 document.getElementById("pf-part-manufacturer-type").addEventListener("change", setGltekProductAddPanel);
 document.getElementById("btn-gltek-product-mode-open").addEventListener("click", openGltekProductAddMode);
 document.getElementById("btn-gltek-product-mode-close").addEventListener("click", closeGltekProductAddMode);
+document.getElementById("btn-open-internal-user-invite").addEventListener("click", openInternalUserInvite);
+document.getElementById("btn-internal-user-invite-close").addEventListener("click", closeInternalUserInvite);
+document.getElementById("btn-internal-user-invite-submit").addEventListener("click", inviteInternalUser);
+document.getElementById("internal-user-invite-company").addEventListener("change", refreshInternalUserInviteRoles);
+document.getElementById("internal-user-invite-department").addEventListener("change", syncInternalUserInviteNotes);
+document.getElementById("internal-user-invite-role").addEventListener("change", syncInternalUserInviteNotes);
+document.getElementById("internal-user-invite-email").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") inviteInternalUser();
+});
+document.getElementById("internal-user-invite-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeInternalUserInvite();
+});
 document.getElementById("user-permission-search").addEventListener("input", renderUserPermissionOverview);
 document.getElementById("user-permission-edit-preview").addEventListener("click", function(e) {
   var toggle = e.target.closest(".permission-state-toggle");

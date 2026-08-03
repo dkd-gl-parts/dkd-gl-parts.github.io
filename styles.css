@@ -4121,6 +4121,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .users-body { flex: 1; padding: 20px 16px; max-width: 1280px; width: 100%; margin: 0 auto; overflow-y: auto; }
 .users-body h2 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
 .users-desc { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.6; }
+.internal-user-issuance { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 0 0 18px; padding: 13px 14px; border: 1px solid #cfe0d8; border-radius: 8px; background: #f4faf7; }
+.internal-user-issuance h3 { margin: 0 0 3px; color: #1f2937; font-size: 14px; font-weight: 800; }
+.internal-user-issuance p { margin: 0; color: #667085; font-size: 11px; line-height: 1.5; }
+.internal-user-invite-open { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 150px; min-height: 36px; white-space: nowrap; }
+.internal-user-invite-open > span:first-child { font-size: 17px; line-height: 1; }
+.internal-user-invite-modal { width: min(760px, calc(100vw - 24px)); max-width: 760px; }
+.internal-user-invite-summary { margin: -6px 0 14px; color: #667085; font-size: 12px; line-height: 1.5; }
+.internal-user-invite-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px 14px; padding: 14px; border: 1px solid #dfe5ec; border-radius: 8px; background: #f8fafc; }
+.internal-user-invite-grid input,
+.internal-user-invite-grid select { width: 100%; min-height: 36px; box-sizing: border-box; }
+.internal-user-invite-role-field { grid-column: 1 / -1; }
+.internal-user-invite-result { min-height: 20px; margin-top: 10px; font-size: 12px; line-height: 1.5; }
+.internal-user-invite-footer { align-items: center; justify-content: flex-end; }
+.internal-user-invite-footer .btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 190px; }
+.internal-user-invite-footer .btn-primary:disabled { opacity: .55; cursor: not-allowed; }
 .customer-account-issuance { margin: 12px 0 18px; border: 1px solid #d8e2df; border-radius: 8px; background: #fff; }
 .customer-account-issuance-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 13px 14px; border-bottom: 1px solid #e5ebe8; background: #f7faf8; }
 .customer-account-issuance-head h3 { margin: 0 0 3px; color: #1f2937; font-size: 14px; font-weight: 800; }
@@ -4316,6 +4331,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .user-settings-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
+  .internal-user-issuance { align-items: stretch; flex-direction: column; }
+  .internal-user-invite-open { width: 100%; }
+  .internal-user-invite-modal { width: calc(100vw - 12px); margin: 6px; padding: 14px; }
+  .internal-user-invite-grid { grid-template-columns: 1fr; padding: 12px; }
+  .internal-user-invite-role-field { grid-column: auto; }
+  .internal-user-invite-footer { align-items: stretch; flex-direction: column-reverse; }
+  .internal-user-invite-footer button { width: 100%; }
   .customer-account-issuance-head { align-items: flex-start; flex-direction: column; }
   .customer-account-issuance-fields { grid-template-columns: 1fr; }
   .customer-access-panel .customer-account-issuance-fields { grid-template-columns: 1fr; }

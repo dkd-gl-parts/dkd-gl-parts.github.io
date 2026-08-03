@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.646">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.646"; -->
+<meta name="dcats-app-version" content="v1.1.647">
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.647"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co; form-action 'self';">
 <title>D-CATS</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233c7df0'/%3E%3Cpath d='M8 17h16M16 9v14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.646&amp;ranking=7">
+<link rel="stylesheet" href="styles.css?v=1.1.647&amp;ranking=7">
 </head>
 <body>
 
@@ -84,43 +84,6 @@
 </div>
 
 <!-- =============================================
-   登録申請画面
-============================================= -->
-<div id="screen-register" class="screen">
-  <div class="reg-card">
-    <h2 data-i18n="reg_title">アカウント申請</h2>
-    <p class="reg-desc" data-i18n="reg_desc">登録後、確認メールが届いた場合はメール内リンクを開いてからログインしてください。</p>
-    <hr class="reg-divider">
-    <div id="reg-success-box" data-dcats-inline-style="s-6aa34d7432e7" class="reg-success-box">
-      <div data-dcats-inline-style="s-7850688acbb3">&#x2713;</div>
-      <div data-i18n="reg_success">登録を受け付けました。</div>
-    </div>
-    <div id="reg-form">
-      <label class="login-label" data-i18n="lbl_name">お名前</label>
-      <input class="login-input" id="reg-name" type="text" data-i18n-ph="ph_name">
-      <label class="login-label" data-i18n="lbl_company">会社名</label>
-      <input class="login-input" id="reg-company" type="text" data-i18n-ph="ph_company">
-      <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
-      <input class="login-input" id="reg-email" type="email" autocomplete="email">
-      <label class="login-label" data-i18n="lbl_password">パスワード</label>
-      <input class="login-input" id="reg-password" type="password" placeholder="8文字以上 / 8+ characters">
-      <div class="pass-strength-wrap">
-        <div class="pass-strength-bar"><div class="pass-strength-fill" id="reg-strength-fill"></div></div>
-        <span class="pass-strength-label" id="reg-strength-label"></span>
-      </div>
-      <button class="btn-login" id="btn-submit-reg" data-i18n="btn_submit_reg">申請する</button>
-      <div class="reg-error" id="reg-error"></div>
-    </div>
-    <button class="btn-back-login" id="btn-back-to-login" data-i18n="btn_back_login">ログイン画面に戻る</button>
-    <div class="lang-sw-login" id="lang-sw-register">
-      <button class="lang-btn-login active" data-lang="ja">日本語</button>
-      <button class="lang-btn-login" data-lang="en">EN</button>
-      <button class="lang-btn-login" data-lang="zh">中文</button>
-    </div>
-  </div>
-</div>
-
-<!-- =============================================
    ログイン画面
 ============================================= -->
 <div id="screen-login" class="screen">
@@ -139,7 +102,6 @@
     <div class="login-error" id="login-error"></div>
     <div data-dcats-inline-style="s-19f890a2e2b5">
       <button class="btn-back-login" id="btn-to-forgot" data-i18n="btn_forgot">パスワードをお忘れの方</button>
-      <button class="btn-back-login" id="btn-to-register" data-i18n="btn_register">アカウント申請</button>
     </div>
     <div class="lang-sw-login" id="lang-sw-login">
       <button class="lang-btn-login active" data-lang="ja">日本語</button>
@@ -973,6 +935,13 @@
   <div class="users-body">
     <h2 id="users-heading" data-i18n="screen_users_title">社内ユーザー管理</h2>
     <p class="users-desc">社内ユーザーの操作権限・製造原価の許可・所属・アカウント状態を管理します。得意先閲覧アカウントは得意先管理で管理します。</p>
+    <section class="internal-user-issuance" id="internal-user-issuance">
+      <div>
+        <h3>社内ユーザーID発行</h3>
+        <p>初回設定メールを送信し、社内ユーザーを発行します。得意先ログインIDは得意先管理から発行します。</p>
+      </div>
+      <button class="btn-primary internal-user-invite-open" id="btn-open-internal-user-invite" type="button"><span aria-hidden="true">＋</span><span>新規ユーザー発行</span></button>
+    </section>
     <section class="user-permission-overview">
       <div class="user-permission-overview-head">
         <div>
@@ -994,6 +963,43 @@
       </div>
       <div id="users-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
     </section>
+  </div>
+</div>
+
+<div class="form-overlay" id="internal-user-invite-overlay">
+  <div class="form-card internal-user-invite-modal">
+    <h3>社内ユーザーID発行</h3>
+    <p class="internal-user-invite-summary">所属と基準権限を指定し、初回設定メールを送信します。</p>
+    <div class="internal-user-invite-grid">
+      <div class="user-field">
+        <label class="user-field-label" for="internal-user-invite-name">表示名</label>
+        <input class="user-name-input" id="internal-user-invite-name" type="text" maxlength="120" autocomplete="name" placeholder="例：山田 太郎">
+      </div>
+      <div class="user-field">
+        <label class="user-field-label" for="internal-user-invite-email">ログインID（メールアドレス）</label>
+        <input class="user-name-input" id="internal-user-invite-email" type="email" maxlength="254" autocomplete="email" placeholder="例：taro.yamada@daiko-denki.co.jp">
+      </div>
+      <div class="user-field">
+        <label class="user-field-label" for="internal-user-invite-company">会社名</label>
+        <select class="group-select" id="internal-user-invite-company"></select>
+        <div class="user-field-note" id="internal-user-invite-company-note"></div>
+      </div>
+      <div class="user-field">
+        <label class="user-field-label" for="internal-user-invite-department">部署</label>
+        <select class="group-select" id="internal-user-invite-department"></select>
+        <div class="user-field-note" id="internal-user-invite-department-note"></div>
+      </div>
+      <div class="user-field internal-user-invite-role-field">
+        <label class="user-field-label" for="internal-user-invite-role">基準権限</label>
+        <select class="role-select" id="internal-user-invite-role"></select>
+        <div class="user-field-note" id="internal-user-invite-role-note"></div>
+      </div>
+    </div>
+    <div class="internal-user-invite-result" id="internal-user-invite-result" aria-live="polite"></div>
+    <div class="form-footer internal-user-invite-footer">
+      <button class="btn-cancel" id="btn-internal-user-invite-close" type="button">閉じる</button>
+      <button class="btn-primary" id="btn-internal-user-invite-submit" type="button"><span aria-hidden="true">✉</span><span>初回設定メールを送信</span></button>
+    </div>
   </div>
 </div>
 
@@ -3474,7 +3480,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
 <script src="vendor/qrcode.min.js?v=1.0.0"></script>
-<script src="app.js?v=1.1.646"></script>
+<script src="app.js?v=1.1.647"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.625&amp;ranking=17"></script>
 </body>
 </html>
