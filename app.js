@@ -415,7 +415,7 @@ var TRANSLATIONS = {
     finished_label_reprint: "再印刷",
     finished_label_reprint_reason: "再印刷理由を入力してください。",
     finished_label_reprint_cancelled: "再印刷を取り消しました。",
-    finished_label_popup_blocked: "ラベル画面を開けませんでした。ポップアップ許可を確認してください。発行履歴から再印刷できます。",
+    finished_label_popup_blocked: "ラベル画面を開けませんでした。ポップアップを許可してから、もう一度印刷操作をしてください。この操作は登録・印刷履歴に記録していません。",
     finished_label_no_print_record: "印刷対象がありません。先に完品登録するか、発行履歴から再印刷してください。",
     finished_label_serial_notice_title: "1台につき固有の製造シリアルを発行",
     finished_box_label_guide_title: "発行済みの完品登録から印刷",
@@ -1904,7 +1904,7 @@ var TRANSLATIONS = {
     finished_label_reprint: "Reprint",
     finished_label_reprint_reason: "Enter the reason for reprinting.",
     finished_label_reprint_cancelled: "Reprint cancelled.",
-    finished_label_popup_blocked: "Could not open the label window. Allow pop-ups, then reprint from issue history.",
+    finished_label_popup_blocked: "Could not open the label window. Allow pop-ups, then try the print action again. This attempt was not recorded as registration or printing.",
     finished_label_no_print_record: "There is no label to print. Register the finished product first, or reprint it from issue history.",
     finished_shipping_title: "Finished-Unit Shipping / Warranty",
     finished_shipping_scan_title: "Scan Manufacturing Serial",
@@ -3361,7 +3361,7 @@ var TRANSLATIONS = {
     finished_label_reprint: "重新打印",
     finished_label_reprint_reason: "请输入重新打印理由。",
     finished_label_reprint_cancelled: "已取消重新打印。",
-    finished_label_popup_blocked: "无法打开标签窗口。请允许弹出窗口后从发行历史重新打印。",
+    finished_label_popup_blocked: "无法打开标签窗口。请允许弹出窗口后再次执行打印。此次操作未登记为完品登记或打印履历。",
     finished_label_no_print_record: "没有可打印的标签。请先登记完品，或从发行历史重新打印。",
     finished_shipping_title: "完品出货・保修管理",
     finished_shipping_scan_title: "读取制造序列号",
@@ -4458,7 +4458,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.647";
+var APP_VERSION       = "v1.1.648";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -18137,9 +18137,13 @@ async function saveFinishedLabelIssue() {
   try {
     var record = readFinishedLabelRecord();
     printWindow = window.open("", "_blank");
-    if (printWindow) {
-      printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_label_issuing")) + "</p>");
+    if (!printWindow) {
+      alert(t("finished_label_popup_blocked"));
+      return;
     }
+    printWindow.document.open();
+    printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_label_issuing")) + "</p>");
+    printWindow.document.close();
     var r = await sb.rpc("issue_finished_product_serials", {
       target_dkd_shohin_id: record.dkdShohinId,
       target_product_variant_id: record.productVariantId,
@@ -18176,8 +18180,7 @@ async function saveFinishedLabelIssue() {
       last_serial: issued.last_serial,
       stock_qty_after: issued.stock_qty_after
     });
-    if (printWindow) openFinishedLabelPrintPreview(record, printWindow);
-    else alert(t("finished_label_popup_blocked"));
+    openFinishedLabelPrintPreview(record, printWindow);
     alert(t("finished_label_saved"));
     await loadFinishedLabelHistory();
   } catch (e) {
@@ -18414,9 +18417,13 @@ async function reprintFinishedLabelIssue(row, labelType) {
   reason = String(reason || "").trim();
   if (!reason) { alert(t("finished_label_reprint_reason")); return; }
   var printWindow = window.open("", "_blank");
-  if (printWindow) {
-    printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_label_reprint_recording")) + "</p>");
+  if (!printWindow) {
+    alert(t("finished_label_popup_blocked"));
+    return;
   }
+  printWindow.document.open();
+  printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_label_reprint_recording")) + "</p>");
+  printWindow.document.close();
   try {
     var result = await sb.rpc("record_finished_product_label_print", {
       target_finished_label_issue_id: row.id,
@@ -18434,11 +18441,8 @@ async function reprintFinishedLabelIssue(row, labelType) {
       quantity: record.units.length,
       copies_per_unit: 1
     });
-    if (printWindow) {
-      if (labelType === "box") openFinishedBoxLabelPrintPreview(record, printWindow);
-      else openFinishedLabelPrintPreview(record, printWindow);
-    }
-    else alert(t("finished_label_popup_blocked"));
+    if (labelType === "box") openFinishedBoxLabelPrintPreview(record, printWindow);
+    else openFinishedLabelPrintPreview(record, printWindow);
   } catch (e) {
     if (printWindow && !printWindow.closed) printWindow.close();
     alert(t("msg_save_err") + ": " + (e.message || e));
@@ -18455,12 +18459,16 @@ async function printFinishedBoxLabelIssue(row) {
     reason = String(reason || "").trim();
     if (!reason) { alert(t("finished_label_reprint_reason")); return; }
   }
+  var printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    alert(t("finished_label_popup_blocked"));
+    return;
+  }
   var boxPreview = document.getElementById("btn-finished-box-label-preview");
   if (boxPreview) boxPreview.disabled = true;
-  var printWindow = window.open("", "_blank");
-  if (printWindow) {
-    printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_box_label_print_recording")) + "</p>");
-  }
+  printWindow.document.open();
+  printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_box_label_print_recording")) + "</p>");
+  printWindow.document.close();
   try {
     var result = await sb.rpc("record_finished_product_label_print", {
       target_finished_label_issue_id: row.id,
@@ -18482,8 +18490,7 @@ async function printFinishedBoxLabelIssue(row) {
       quantity: record.units.length,
       copies_per_unit: 1
     });
-    if (printWindow) openFinishedBoxLabelPrintPreview(record, printWindow);
-    else alert(t("finished_label_popup_blocked"));
+    openFinishedBoxLabelPrintPreview(record, printWindow);
     renderFinishedLabelHistory();
   } catch (e) {
     if (printWindow && !printWindow.closed) printWindow.close();
@@ -18525,6 +18532,18 @@ function finishedProductSerialQrDataUrl(serial) {
   throw new Error("QR code generation failed");
 }
 
+function printFinishedLabelWindow(win) {
+  if (!win || win.closed) return false;
+  try {
+    win.focus();
+    win.print();
+    return true;
+  } catch (e) {
+    console.warn("label print dialog failed", e);
+    return false;
+  }
+}
+
 function openFinishedLabelPrintPreview(record, existingWindow) {
   var win = existingWindow || window.open("", "_blank");
   if (!win) {
@@ -18535,6 +18554,7 @@ function openFinishedLabelPrintPreview(record, existingWindow) {
     win.document.open();
     win.document.write(buildFinishedLabelPrintHtml(record));
     win.document.close();
+    printFinishedLabelWindow(win);
     return true;
   } catch (e) {
     if (!win.closed) win.close();
@@ -18554,7 +18574,7 @@ function buildFinishedLabelPrintHtml(record) {
   });
   return "<!doctype html><html lang='" + esc(currentLang) + "'><head><meta charset='utf-8'><title>D-CATS " + esc(record.issueCode || "") + "</title>" +
     "<link rel='stylesheet' href='print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'>" +
-    "</head><body data-dcats-auto-print='true'><div class='toolbar'><button id='dcats-print-now' type='button'>" + esc(t("btn_print")) + "</button><span>" + esc(tf("finished_label_print_setup", { n: units.length })) + "</span></div><main class='serial-labels'>" + labels.join("") + "</main>" +
+    "</head><body><div class='toolbar'><button id='dcats-print-now' type='button'>" + esc(t("btn_print")) + "</button><span>" + esc(tf("finished_label_print_setup", { n: units.length })) + "</span></div><main class='serial-labels'>" + labels.join("") + "</main>" +
     "<script src='label-print-window.js?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></script></body></html>";
 }
 
@@ -18568,6 +18588,7 @@ function openFinishedBoxLabelPrintPreview(record, existingWindow) {
     win.document.open();
     win.document.write(buildFinishedBoxLabelPrintHtml(record));
     win.document.close();
+    printFinishedLabelWindow(win);
     return true;
   } catch (e) {
     if (!win.closed) win.close();
@@ -18584,7 +18605,7 @@ function buildFinishedBoxLabelPrintHtml(record) {
   });
   return "<!doctype html><html lang='" + esc(currentLang) + "'><head><meta charset='utf-8'><title>D-CATS BOX " + esc(record.issueCode || "") + "</title>" +
     "<link rel='stylesheet' href='box-label-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'>" +
-    "</head><body data-dcats-auto-print='true'><div class='toolbar'><button id='dcats-print-now' type='button'>" + esc(t("btn_print")) + "</button><span>" + esc(tf("finished_box_label_print_setup", { n: units.length })) + "</span></div><main class='box-product-labels'>" + labels.join("") + "</main>" +
+    "</head><body><div class='toolbar'><button id='dcats-print-now' type='button'>" + esc(t("btn_print")) + "</button><span>" + esc(tf("finished_box_label_print_setup", { n: units.length })) + "</span></div><main class='box-product-labels'>" + labels.join("") + "</main>" +
     "<script src='label-print-window.js?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></script></body></html>";
 }
 

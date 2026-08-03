@@ -248,17 +248,15 @@ assert((output.match(/MFG SERIAL \/ S\/N/g) || []).length === 2, "manufacturing-
 assert(!output.includes("化粧箱"), "obsolete box-label copy is still generated");
 assert(qrInputs.length === 2 && qrInputs.every((value, index) => value === serials[index]), "QR payload is not serial-only");
 assert(serials.every((serial) => output.includes(serial)), "human-readable manufacturing serial is missing");
-assert(output.includes("data-dcats-auto-print='true'"), "finished-label print window does not request the print dialog");
 assert(output.includes("label-print-window.js?dcats_version=v-test"), "finished-label print runtime is missing or unversioned");
 assert(!output.includes("onclick="), "finished-label print window uses a CSP-blocked inline handler");
 
-let autoPrintCount = 0;
+let printCount = 0;
 let focusCount = 0;
 let printClickHandler = null;
 const printRuntimeSandbox = {
   document: {
     readyState: "complete",
-    body: { dataset: { dcatsAutoPrint: "true" } },
     getElementById(id) {
       return id === "dcats-print-now" ? {
         addEventListener(type, handler) {
@@ -269,17 +267,29 @@ const printRuntimeSandbox = {
   },
   window: {
     focus() { focusCount += 1; },
-    print() { autoPrintCount += 1; },
-    setTimeout(handler) { handler(); },
-    addEventListener() {}
+    print() { printCount += 1; }
   }
 };
 vm.createContext(printRuntimeSandbox);
 vm.runInContext(printRuntime, printRuntimeSandbox);
-assert(autoPrintCount === 1 && focusCount === 1, "opening the finished-label window does not invoke printing");
 assert(typeof printClickHandler === "function", "finished-label print button is not bound inside its own window");
 printClickHandler();
-assert(autoPrintCount === 2 && focusCount === 2, "finished-label print button does not invoke printing");
+assert(printCount === 1 && focusCount === 1, "finished-label print button does not invoke printing");
+
+const directPrintWindow = {
+  closed: false,
+  focus() { focusCount += 1; },
+  print() { printCount += 1; }
+};
+const directPrintSandbox = { console: { warn() {} } };
+vm.createContext(directPrintSandbox);
+vm.runInContext(`${functionSource("printFinishedLabelWindow")}; this.printWindow = printFinishedLabelWindow;`, directPrintSandbox);
+assert(directPrintSandbox.printWindow(directPrintWindow), "finished-label window print request is rejected");
+assert(printCount === 2 && focusCount === 2, "finished-label registration does not invoke the print dialog directly");
+
+const saveSource = functionSource("saveFinishedLabelIssue");
+assert(saveSource.indexOf('if (!printWindow)') < saveSource.indexOf('sb.rpc("issue_finished_product_serials"'), "finished-product registration can proceed after a blocked print window");
+assert(saveSource.includes("printWindow.document.close()"), "finished-product registration loading window is left open");
 
 const longOutput = sandbox.build({
   issueCode: "FB2026-0000002",

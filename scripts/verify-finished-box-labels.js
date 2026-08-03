@@ -206,8 +206,9 @@ assert(barcodeInputs.length === 2 && barcodeInputs.every((value) => value === re
 assert(qrInputs.length === 2 && qrInputs.every((value, index) => value === serials[index]), "QR payload is not the unit manufacturing serial");
 assert(serials.every((serial) => output.includes(serial)), "human-readable manufacturing serial is missing");
 assert(output.includes("box-label-print.css?dcats_version=v-test"), "80x60 print stylesheet is not versioned");
-assert(output.includes("data-dcats-auto-print='true'"), "box-label print window does not request the print dialog");
 assert(output.includes("label-print-window.js?dcats_version=v-test"), "box-label print runtime is missing or unversioned");
+assert(functionSource("openFinishedBoxLabelPrintPreview").includes("printFinishedLabelWindow(win)"), "box-label registration does not invoke the print dialog directly");
+assert(functionSource("printFinishedBoxLabelIssue").indexOf('if (!printWindow)') < functionSource("printFinishedBoxLabelIssue").indexOf('sb.rpc("record_finished_product_label_print"'), "box-label print history can be recorded after a blocked print window");
 
 const longOutput = sandbox.build({
   ...record,
