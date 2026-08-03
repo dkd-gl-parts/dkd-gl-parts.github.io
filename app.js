@@ -4458,7 +4458,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.656";
+var APP_VERSION       = "v1.1.657";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -13506,18 +13506,26 @@ async function savePartForm() {
   if (!gpn) { errEl.textContent = t("required_part_number"); return; }
   var scd = document.getElementById("pf-shohin-cd").value.trim();
   if (!scd) { errEl.textContent = t("required_shohin_cd"); return; }
+  var partId = document.getElementById("part-form-id").value;
+  var before = partFormMode === "edit"
+    ? partsMgmtData.find(function(x){ return x.id === parseInt(partId,10); })
+    : null;
+  var manufacturerValue = document.getElementById("pf-mfr").value.trim() || null;
+  if (manualDksManufacturerSelectionBlocked(manufacturerValue, before && before.manufacturer, partFormMode === "add")) {
+    errEl.textContent = dksManualManufacturerBlockedMessage();
+    return;
+  }
 
   var data = {
     genuine_part_number:      gpn,
     genuine_part_number_2:    document.getElementById("pf-genuine-pn2").value.trim() || null,
     manufacturer_part_number: document.getElementById("pf-mfr-pn").value.trim() || null,
-    manufacturer:             document.getElementById("pf-mfr").value.trim() || null,
+    manufacturer:             manufacturerValue,
     category:                 document.getElementById("pf-category").value,
     updated_at:               new Date().toISOString()
   };
   data.dkd_shohin_id = parseInt(scd, 10);
 
-  var partId = document.getElementById("part-form-id").value;
   var r;
   if (partFormMode === "add") {
     r = await sb.from("parts").insert(data).select();
@@ -13525,7 +13533,6 @@ async function savePartForm() {
     var newId = (r.data && r.data[0]) ? r.data[0].id : null;
     await writeLog("insert", "parts", newId, gpn, null, data);
   } else {
-    var before = partsMgmtData.find(function(x){ return x.id === parseInt(partId,10); });
     r = await sb.from("parts").update(data).eq("id", partId);
     if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
     await writeLog("update", "parts", parseInt(partId,10), gpn, before, data);
@@ -19399,6 +19406,35 @@ function formValueFromCategoryCode(code) {
   return map[code] || map[String(code || "").toLowerCase()] || "Alternator";
 }
 
+function normalizeManualManufacturerSelection(value) {
+  var key = String(value || "").trim();
+  if (key.normalize) key = key.normalize("NFKC");
+  return key.toUpperCase().replace(/[\s\u3000._\-‐‑‒–—―・/\\]+/g, "");
+}
+
+function isDksManagedManufacturer(value) {
+  var key = normalizeManualManufacturerSelection(value);
+  return key === "\u5927\u5149" ||
+    key.indexOf("\u5927\u5149\u30b5\u30fc\u30d3\u30b9") === 0 ||
+    key.indexOf("\u5927\u5149\u96fb\u6a5f") === 0 ||
+    key === "DAIKO" ||
+    key.indexOf("DAIKOSERVICE") === 0 ||
+    key.indexOf("DAIKODENKI") === 0 ||
+    key === "DKS";
+}
+
+function manualDksManufacturerSelectionBlocked(value, existingValue, addingProduct) {
+  if (!isDksManagedManufacturer(value)) return false;
+  if (addingProduct) return true;
+  return normalizeManualManufacturerSelection(value) !== normalizeManualManufacturerSelection(existingValue);
+}
+
+function dksManualManufacturerBlockedMessage() {
+  if (currentLang === "zh") return "\u5927\u5149\u670d\u52a1\uff08DKS\uff09\u4ea7\u54c1\u4ec5\u7531\u6293\u53d6\u6d41\u7a0b\u7ba1\u7406\uff0c\u6dfb\u52a0\u6216\u4fee\u6539\u5546\u54c1\u65f6\u4e0d\u80fd\u9009\u62e9\u4e3a\u5236\u9020\u5546\u3002";
+  if (currentLang === "ja") return "\u5927\u5149\u30b5\u30fc\u30d3\u30b9\uff08DKS\uff09\u88fd\u306f\u30b9\u30af\u30ec\u30a4\u30d4\u30f3\u30b0\u5c02\u7528\u306e\u305f\u3081\u3001\u5546\u54c1\u8ffd\u52a0\u30fb\u4fee\u6b63\u3067\u306f\u30e1\u30fc\u30ab\u30fc\u306b\u6307\u5b9a\u3067\u304d\u307e\u305b\u3093\u3002";
+  return "Daiko Service (DKS) products are scraping-managed and cannot be selected as the manufacturer when adding or editing a product.";
+}
+
 function setGltekProductAddPanel() {
   var panel = document.getElementById("gltek-product-add-panel");
   var typeEl = document.getElementById("pf-part-manufacturer-type");
@@ -19432,12 +19468,14 @@ function setGltekProductAddPanel() {
     baseEl.value = "";
     categoryEl.value = "";
     var lockExistingGltekIdentity = partFormMode === "edit" && typeEl.value === "gltek";
-    manufacturerEl.readOnly = lockExistingGltekIdentity;
-    manufacturerPartEl.readOnly = lockExistingGltekIdentity;
-    manufacturerEl.classList.toggle("gltek-base-identity", lockExistingGltekIdentity);
-    manufacturerPartEl.classList.toggle("gltek-base-identity", lockExistingGltekIdentity);
-    manufacturerEl.setAttribute("aria-readonly", lockExistingGltekIdentity ? "true" : "false");
-    manufacturerPartEl.setAttribute("aria-readonly", lockExistingGltekIdentity ? "true" : "false");
+    var lockExistingDksIdentity = partFormMode === "edit" && isDksManagedManufacturer(manufacturerEl.value);
+    var lockExistingManufacturerIdentity = lockExistingGltekIdentity || lockExistingDksIdentity;
+    manufacturerEl.readOnly = lockExistingManufacturerIdentity;
+    manufacturerPartEl.readOnly = lockExistingManufacturerIdentity;
+    manufacturerEl.classList.toggle("gltek-base-identity", lockExistingManufacturerIdentity);
+    manufacturerPartEl.classList.toggle("gltek-base-identity", lockExistingManufacturerIdentity);
+    manufacturerEl.setAttribute("aria-readonly", lockExistingManufacturerIdentity ? "true" : "false");
+    manufacturerPartEl.setAttribute("aria-readonly", lockExistingManufacturerIdentity ? "true" : "false");
     if (saveButton) saveButton.textContent = t("btn_save_part");
     return;
   }
@@ -19783,13 +19821,14 @@ function setProductFormFieldMode(source, mode) {
 }
 
 function setCoreProductFormFields(p) {
+  var clearDksManualCopy = partFormMode === "add" && p && isDksManagedManufacturer(p.manufacturer);
   document.getElementById("part-form-id").value        = p && p.dkd_shohin_id ? p.dkd_shohin_id : "";
   document.getElementById("pf-gltek-base-product-id").value = p ? (productDkdId(p) || "") : "";
   document.getElementById("pf-shohin-cd").value        = p && p.dkd_shohin_id ? p.dkd_shohin_id : "";
   document.getElementById("pf-genuine-pn").value       = p ? (p.genuine_part_number || "") : "";
   document.getElementById("pf-genuine-pn2").value      = p ? (p.genuine_part_number_2 || "") : "";
-  document.getElementById("pf-mfr-pn").value           = p ? (p.manufacturer_part_number || "") : "";
-  document.getElementById("pf-mfr").value              = p ? (p.manufacturer || "") : "";
+  document.getElementById("pf-mfr-pn").value           = clearDksManualCopy ? "" : (p ? (p.manufacturer_part_number || "") : "");
+  document.getElementById("pf-mfr").value              = clearDksManualCopy ? "" : (p ? (p.manufacturer || "") : "");
   document.getElementById("pf-vehicle-mfr").value      = p ? (p.vehicle_manufacturer || "") : "";
   document.getElementById("pf-body-type").value        = p ? (p.body_type || "") : "";
   document.getElementById("pf-compatible").value       = p ? (p.compatible_car_models || "") : "";
@@ -19869,6 +19908,11 @@ async function saveCoreProductForm() {
   var genuine2 = document.getElementById("pf-genuine-pn2").value.trim() || null;
   var mfrPart = document.getElementById("pf-mfr-pn").value.trim() || null;
   var manufacturer = document.getElementById("pf-mfr").value.trim() || null;
+  var existingManufacturer = !addingProduct && currentProduct ? currentProduct.manufacturer : null;
+  if (manualDksManufacturerSelectionBlocked(manufacturer, existingManufacturer, addingProduct)) {
+    errEl.textContent = dksManualManufacturerBlockedMessage();
+    return;
+  }
   if (!genuine && !mfrPart) { errEl.textContent = t("lbl_genuine_pn") + "または" + t("lbl_mfr_pn") + "を入力してください"; return; }
   var manufacturerType = addingProduct && formContext === "production"
     ? document.getElementById("pf-part-manufacturer-type").value
@@ -19969,7 +20013,7 @@ async function saveCoreProductForm() {
   if (!corePolicyOk) return;
   var specOk = await saveUnifiedSpecForDkd(dkd, errEl);
   if (!specOk) return;
-  if (!isGltekAdd) {
+  if (!isGltekAdd && !isDksManagedManufacturer(manufacturer)) {
     gltekAutoIssueOutcome = await ensureGltekPartNumberIssuedForDkdId(dkd, { context: gltekAutoIssueContext, product: currentProduct });
   }
   document.getElementById("part-form-overlay").classList.remove("show");
