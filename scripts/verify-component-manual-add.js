@@ -46,6 +46,51 @@ if (!lookupSource.includes('/[.,]/.test(String(mfrValue || ""))')) {
   throw new Error("period or comma part numbers must bypass punctuation-stripping candidate replacement");
 }
 
+const inputEventSource = sourceBetween("function bindComponentPartNumberInputEvents", "function componentPartNumberSpec");
+const inputHandlers = {};
+let pendingNormalize = null;
+let normalizeCount = 0;
+let stateChangeCount = 0;
+let commitCount = 0;
+const imeInput = {
+  value: "",
+  addEventListener(type, handler) { inputHandlers[type] = handler; }
+};
+const inputEventSandbox = {
+  normalizeComponentPartNumberElement: (el) => {
+    normalizeCount += 1;
+    el.value = String(el.value || "").replace(/[\uFF01-\uFF5E]/g, (char) => String.fromCharCode(char.charCodeAt(0) - 0xFEE0)).toUpperCase();
+    return el.value;
+  },
+  setTimeout: (handler) => { pendingNormalize = handler; return 1; },
+  clearTimeout: () => { pendingNormalize = null; }
+};
+vm.runInNewContext(`${inputEventSource}; bind = bindComponentPartNumberInputEvents;`, inputEventSandbox);
+inputEventSandbox.bind(imeInput, () => { stateChangeCount += 1; }, () => { commitCount += 1; });
+imeInput.value = "９Ｘ９１３３Ｘ";
+inputHandlers.compositionstart();
+inputHandlers.input({ isComposing: true, inputType: "insertCompositionText" });
+if (normalizeCount || imeInput.value !== "９Ｘ９１３３Ｘ") {
+  throw new Error("component part-number input must not rewrite an active IME composition");
+}
+inputHandlers.compositionend();
+inputHandlers.input({ isComposing: false, inputType: "insertText" });
+if (normalizeCount || typeof pendingNormalize !== "function") {
+  throw new Error("component part-number input must defer normalization until the IME follow-up input completes");
+}
+pendingNormalize();
+if (normalizeCount !== 1 || imeInput.value !== "9X9133X" || commitCount) {
+  throw new Error("IME-confirmed component part number must normalize exactly once without duplication");
+}
+imeInput.value = "４．５";
+inputHandlers.blur();
+if (imeInput.value !== "4.5" || normalizeCount !== 2 || commitCount !== 1 || stateChangeCount < 2) {
+  throw new Error("component part-number blur must normalize and commit the final value");
+}
+if (!source.includes("bindComponentPartNumberInputEvents(el, updateComponentAddPartNumberInputState, reconcileComponentAddPartNumbers)")) {
+  throw new Error("manual component add inputs must use the IME-safe part-number binding");
+}
+
 const addSource = functionSource("addAssemblyComponentForCurrent", "function componentEditInput");
 if (!addSource.includes('normalizeComponentManufacturerInput(currentProduct.manufacturer) || "UNKNOWN"') ||
     !addSource.includes('t("component_assy_mfr_pn_required")') ||

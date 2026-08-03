@@ -4455,7 +4455,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.644";
+var APP_VERSION       = "v1.1.645";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -24798,6 +24798,46 @@ function normalizeComponentPartNumberElement(el) {
   return value;
 }
 
+function bindComponentPartNumberInputEvents(el, onStateChange, onCommit) {
+  if (!el) return;
+  var composing = false;
+  var normalizeTimer = null;
+  function clearNormalizeTimer() {
+    if (normalizeTimer === null) return;
+    clearTimeout(normalizeTimer);
+    normalizeTimer = null;
+  }
+  function updateState() {
+    if (typeof onStateChange === "function") onStateChange();
+  }
+  function commitValue() {
+    clearNormalizeTimer();
+    normalizeComponentPartNumberElement(el);
+    updateState();
+    if (typeof onCommit === "function") onCommit();
+  }
+  el.addEventListener("compositionstart", function() {
+    clearNormalizeTimer();
+    composing = true;
+  });
+  el.addEventListener("compositionend", function() {
+    composing = false;
+    clearNormalizeTimer();
+    normalizeTimer = setTimeout(function() {
+      normalizeTimer = null;
+      if (composing) return;
+      normalizeComponentPartNumberElement(el);
+      updateState();
+    }, 0);
+  });
+  el.addEventListener("input", function(event) {
+    if (composing || (event && event.isComposing)) return;
+    updateState();
+  });
+  el.addEventListener("change", commitValue);
+  el.addEventListener("blur", commitValue);
+}
+
 function componentPartNumberSpec(kind) {
   return kind === "genuine"
     ? { required: false, label: t("f_genuine_pn") }
@@ -36011,9 +36051,7 @@ document.getElementById("btn-component-reverse-search").addEventListener("click"
 ["component-reverse-mfr-pn", "component-reverse-genuine-pn"].forEach(function(id) {
   var el = document.getElementById(id);
   if (!el) return;
-  el.addEventListener("input", function() { normalizeComponentPartNumberElement(el); });
-  el.addEventListener("change", function() { normalizeComponentPartNumberElement(el); });
-  el.addEventListener("blur", function() { normalizeComponentPartNumberElement(el); });
+  bindComponentPartNumberInputEvents(el);
   el.addEventListener("keydown", function(e) { if (e.key === "Enter") runComponentReverseLookup(); });
 });
 var componentReverseNameEl = document.getElementById("component-reverse-part-name");
@@ -36028,20 +36066,7 @@ document.getElementById("btn-component-name-request-submit").addEventListener("c
 ["component-add-mfr-pn", "component-add-genuine-pn"].forEach(function(id) {
   var el = document.getElementById(id);
   if (!el) return;
-  el.addEventListener("input", function() {
-    normalizeComponentPartNumberElement(el);
-    updateComponentAddPartNumberInputState();
-  });
-  el.addEventListener("change", function() {
-    normalizeComponentPartNumberElement(el);
-    updateComponentAddPartNumberInputState();
-    reconcileComponentAddPartNumbers();
-  });
-  el.addEventListener("blur", function() {
-    normalizeComponentPartNumberElement(el);
-    updateComponentAddPartNumberInputState();
-    reconcileComponentAddPartNumbers();
-  });
+  bindComponentPartNumberInputEvents(el, updateComponentAddPartNumberInputState, reconcileComponentAddPartNumbers);
 });
 var componentAddReplacementRateEl = document.getElementById("component-add-replacement-rate");
 if (componentAddReplacementRateEl) {
@@ -36069,20 +36094,7 @@ document.getElementById("btn-component-alt-name-request").addEventListener("clic
 ["component-alt-pn", "component-alt-genuine-pn"].forEach(function(id) {
   var el = document.getElementById(id);
   if (!el) return;
-  el.addEventListener("input", function() {
-    normalizeComponentPartNumberElement(el);
-    updateComponentAlternativePartNumberInputState();
-  });
-  el.addEventListener("change", function() {
-    normalizeComponentPartNumberElement(el);
-    updateComponentAlternativePartNumberInputState();
-    reconcileComponentAlternativePartNumbers();
-  });
-  el.addEventListener("blur", function() {
-    normalizeComponentPartNumberElement(el);
-    updateComponentAlternativePartNumberInputState();
-    reconcileComponentAlternativePartNumbers();
-  });
+  bindComponentPartNumberInputEvents(el, updateComponentAlternativePartNumberInputState, reconcileComponentAlternativePartNumbers);
 });
 var componentAltReplacementRateEl = document.getElementById("component-alt-replacement-rate");
 if (componentAltReplacementRateEl) {
