@@ -3,5 +3,7 @@
 !.env.example
 *.local
 outputs/
+dist/
+.wrangler/
 node_modules/
 *.log

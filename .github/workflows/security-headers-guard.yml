@@ -1,0 +1,36 @@
+name: Security response headers guard
+
+on:
+  push:
+    paths:
+      - "_headers"
+      - ".gitignore"
+      - "index.html"
+      - "scripts/build-static-site.js"
+      - "scripts/verify-security-response-headers.js"
+      - ".github/workflows/security-headers-guard.yml"
+  pull_request:
+    paths:
+      - "_headers"
+      - ".gitignore"
+      - "index.html"
+      - "scripts/build-static-site.js"
+      - "scripts/verify-security-response-headers.js"
+      - ".github/workflows/security-headers-guard.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build static deployment
+        run: node scripts/build-static-site.js
+      - name: Verify security response headers
+        run: node scripts/verify-security-response-headers.js dist
