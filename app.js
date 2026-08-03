@@ -416,6 +416,7 @@ var TRANSLATIONS = {
     finished_label_reprint_reason: "再印刷理由を入力してください。",
     finished_label_reprint_cancelled: "再印刷を取り消しました。",
     finished_label_popup_blocked: "ラベル画面を開けませんでした。ポップアップ許可を確認してください。発行履歴から再印刷できます。",
+    finished_label_no_print_record: "印刷対象がありません。先に完品登録するか、発行履歴から再印刷してください。",
     finished_label_serial_notice_title: "1台につき固有の製造シリアルを発行",
     finished_box_label_guide_title: "発行済みの完品登録から印刷",
     finished_box_label_guide_desc: "品番を選ぶと最新の発行履歴を自動セットします。別の製造ロットは左側の発行履歴から選択できます。",
@@ -1904,6 +1905,7 @@ var TRANSLATIONS = {
     finished_label_reprint_reason: "Enter the reason for reprinting.",
     finished_label_reprint_cancelled: "Reprint cancelled.",
     finished_label_popup_blocked: "Could not open the label window. Allow pop-ups, then reprint from issue history.",
+    finished_label_no_print_record: "There is no label to print. Register the finished product first, or reprint it from issue history.",
     finished_shipping_title: "Finished-Unit Shipping / Warranty",
     finished_shipping_scan_title: "Scan Manufacturing Serial",
     finished_shipping_scan_ph: "Scan QR or enter MYYYY-NNNNNNN",
@@ -3360,6 +3362,7 @@ var TRANSLATIONS = {
     finished_label_reprint_reason: "请输入重新打印理由。",
     finished_label_reprint_cancelled: "已取消重新打印。",
     finished_label_popup_blocked: "无法打开标签窗口。请允许弹出窗口后从发行历史重新打印。",
+    finished_label_no_print_record: "没有可打印的标签。请先登记完品，或从发行历史重新打印。",
     finished_shipping_title: "完品出货・保修管理",
     finished_shipping_scan_title: "读取制造序列号",
     finished_shipping_scan_ph: "扫描QR或输入 MYYYY-NNNNNNN",
@@ -4455,7 +4458,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.645";
+var APP_VERSION       = "v1.1.646";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -18491,7 +18494,10 @@ async function printFinishedBoxLabelIssue(row) {
 }
 
 function previewCurrentFinishedLabel() {
-  if (!finishedLabelLastIssuedRecord) return;
+  if (!finishedLabelLastIssuedRecord) {
+    alert(t("finished_label_no_print_record"));
+    return;
+  }
   openFinishedLabelPrintPreview(finishedLabelLastIssuedRecord);
 }
 
@@ -18529,8 +18535,6 @@ function openFinishedLabelPrintPreview(record, existingWindow) {
     win.document.open();
     win.document.write(buildFinishedLabelPrintHtml(record));
     win.document.close();
-    var printBtn = win.document.getElementById("dcats-print-now");
-    if (printBtn) printBtn.addEventListener("click", function() { win.print(); });
     return true;
   } catch (e) {
     if (!win.closed) win.close();
@@ -18550,7 +18554,8 @@ function buildFinishedLabelPrintHtml(record) {
   });
   return "<!doctype html><html lang='" + esc(currentLang) + "'><head><meta charset='utf-8'><title>D-CATS " + esc(record.issueCode || "") + "</title>" +
     "<link rel='stylesheet' href='print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'>" +
-    "</head><body><div class='toolbar'><button id='dcats-print-now' type='button'>" + esc(t("btn_print")) + "</button><span>" + esc(tf("finished_label_print_setup", { n: units.length })) + "</span></div><main class='serial-labels'>" + labels.join("") + "</main></body></html>";
+    "</head><body data-dcats-auto-print='true'><div class='toolbar'><button id='dcats-print-now' type='button'>" + esc(t("btn_print")) + "</button><span>" + esc(tf("finished_label_print_setup", { n: units.length })) + "</span></div><main class='serial-labels'>" + labels.join("") + "</main>" +
+    "<script src='label-print-window.js?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></script></body></html>";
 }
 
 function openFinishedBoxLabelPrintPreview(record, existingWindow) {
@@ -18563,8 +18568,6 @@ function openFinishedBoxLabelPrintPreview(record, existingWindow) {
     win.document.open();
     win.document.write(buildFinishedBoxLabelPrintHtml(record));
     win.document.close();
-    var printBtn = win.document.getElementById("dcats-print-now");
-    if (printBtn) printBtn.addEventListener("click", function() { win.print(); });
     return true;
   } catch (e) {
     if (!win.closed) win.close();
@@ -18581,7 +18584,8 @@ function buildFinishedBoxLabelPrintHtml(record) {
   });
   return "<!doctype html><html lang='" + esc(currentLang) + "'><head><meta charset='utf-8'><title>D-CATS BOX " + esc(record.issueCode || "") + "</title>" +
     "<link rel='stylesheet' href='box-label-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'>" +
-    "</head><body><div class='toolbar'><button id='dcats-print-now' type='button'>" + esc(t("btn_print")) + "</button><span>" + esc(tf("finished_box_label_print_setup", { n: units.length })) + "</span></div><main class='box-product-labels'>" + labels.join("") + "</main></body></html>";
+    "</head><body data-dcats-auto-print='true'><div class='toolbar'><button id='dcats-print-now' type='button'>" + esc(t("btn_print")) + "</button><span>" + esc(tf("finished_box_label_print_setup", { n: units.length })) + "</span></div><main class='box-product-labels'>" + labels.join("") + "</main>" +
+    "<script src='label-print-window.js?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></script></body></html>";
 }
 
 // =============================================

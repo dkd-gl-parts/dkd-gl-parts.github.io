@@ -10,6 +10,7 @@ const files = [
   "customer-invite-print.css",
   "customer-price-list-print.css",
   "index.html",
+  "label-print-window.js",
   "manufacturing-ranking-report.js",
   "print.css",
   "ranking-report-print-landscape.css",
