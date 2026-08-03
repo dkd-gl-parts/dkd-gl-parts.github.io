@@ -4458,7 +4458,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.655";
+var APP_VERSION       = "v1.1.656";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -29311,8 +29311,9 @@ function renderAssemblyComponentRows() {
   }
   var hasActions = canManageComponentsInCurrentContext();
   var catalogMode = selectedProductKind() === "catalog_spec";
+  var tableModeClass = catalogMode ? " component-table-catalog" : " component-table-manual";
   var colspan = 9 + (hasActions ? 1 : 0);
-  var html = "<table class='component-table component-table-basic'>";
+  var html = "<table class='component-table component-table-basic" + tableModeClass + "'>";
   html += "<tr><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th>";
   if (catalogMode) {
     html += "<th>" + t("component_position") + "</th><th class='component-cell-qty'>" + t("component_quantity") + "</th><th class='component-cell-money'>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
@@ -29426,8 +29427,9 @@ function renderAssemblyComponentRows() {
   }
   var hasActions = canManageComponentsInCurrentContext();
   var catalogMode = selectedProductKind() === "catalog_spec";
+  var tableModeClass = catalogMode ? " component-table-catalog" : " component-table-manual";
   var colspan = 11 + (hasActions ? 1 : 0);
-  var html = "<table class='component-table component-table-tree'>";
+  var html = "<table class='component-table component-table-tree" + tableModeClass + "'>";
   html += "<tr><th class='component-tree-col'>" + t("component_child") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th>";
   if (catalogMode) {
     html += "<th>" + t("component_position") + "</th><th class='component-cell-qty'>" + t("component_quantity") + "</th><th class='component-cell-money'>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";

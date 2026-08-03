@@ -3,6 +3,7 @@ const path = require("path");
 
 const root = path.resolve(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
+const styles = fs.readFileSync(path.join(root, "styles.css"), "utf8");
 
 function sourceBetween(startText, endText) {
   const start = source.indexOf(startText);
@@ -50,6 +51,11 @@ const rateHeader = '<th class=\'component-cell-rate\'>" + t("component_replaceme
 const countText = (text) => source.split(text).length - 1;
 if (countText(quantityHeader) !== 4 || countText(moneyHeader) !== 4 || countText(rateHeader) !== 2) {
   throw new Error("component numeric headers must use the same alignment classes as their values in every table mode");
+}
+if (countText('catalogMode ? " component-table-catalog" : " component-table-manual"') !== 2 ||
+    !styles.includes(".component-table-basic.component-table-manual th:nth-child(9), .component-table-basic.component-table-manual td:nth-child(9) { width: 15%; }") ||
+    !styles.includes(".component-table-tree.component-table-manual th:nth-child(10), .component-table-tree.component-table-manual td:nth-child(10) { width: 13%; }")) {
+  throw new Error("manual component tables must reserve a wider manufacturing-memo column without changing catalog columns");
 }
 
 console.log("component screen transition guard passed");

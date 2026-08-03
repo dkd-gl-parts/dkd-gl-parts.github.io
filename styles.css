@@ -1520,6 +1520,26 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .component-table-tree th:nth-child(9), .component-table-tree td:nth-child(9) { width: 6%; }
 .component-table-tree th:nth-child(10), .component-table-tree td:nth-child(10) { width: 7%; }
 .component-table-tree th:nth-child(11), .component-table-tree td:nth-child(11) { width: 4%; }
+.component-table-basic.component-table-manual th:nth-child(1), .component-table-basic.component-table-manual td:nth-child(1) { width: 14%; }
+.component-table-basic.component-table-manual th:nth-child(2), .component-table-basic.component-table-manual td:nth-child(2) { width: 12%; }
+.component-table-basic.component-table-manual th:nth-child(3), .component-table-basic.component-table-manual td:nth-child(3) { width: 17%; }
+.component-table-basic.component-table-manual th:nth-child(4), .component-table-basic.component-table-manual td:nth-child(4) { width: 5%; }
+.component-table-basic.component-table-manual th:nth-child(5), .component-table-basic.component-table-manual td:nth-child(5) { width: 7%; }
+.component-table-basic.component-table-manual th:nth-child(6), .component-table-basic.component-table-manual td:nth-child(6) { width: 5%; }
+.component-table-basic.component-table-manual th:nth-child(7), .component-table-basic.component-table-manual td:nth-child(7) { width: 8%; }
+.component-table-basic.component-table-manual th:nth-child(8), .component-table-basic.component-table-manual td:nth-child(8) { width: 6%; }
+.component-table-basic.component-table-manual th:nth-child(9), .component-table-basic.component-table-manual td:nth-child(9) { width: 15%; }
+.component-table-tree.component-table-manual th:nth-child(1), .component-table-tree.component-table-manual td:nth-child(1) { width: 4%; }
+.component-table-tree.component-table-manual th:nth-child(2), .component-table-tree.component-table-manual td:nth-child(2) { width: 13%; }
+.component-table-tree.component-table-manual th:nth-child(3), .component-table-tree.component-table-manual td:nth-child(3) { width: 11%; }
+.component-table-tree.component-table-manual th:nth-child(4), .component-table-tree.component-table-manual td:nth-child(4) { width: 16%; }
+.component-table-tree.component-table-manual th:nth-child(5), .component-table-tree.component-table-manual td:nth-child(5) { width: 5%; }
+.component-table-tree.component-table-manual th:nth-child(6), .component-table-tree.component-table-manual td:nth-child(6) { width: 7%; }
+.component-table-tree.component-table-manual th:nth-child(7), .component-table-tree.component-table-manual td:nth-child(7) { width: 4%; }
+.component-table-tree.component-table-manual th:nth-child(8), .component-table-tree.component-table-manual td:nth-child(8) { width: 7%; }
+.component-table-tree.component-table-manual th:nth-child(9), .component-table-tree.component-table-manual td:nth-child(9) { width: 6%; }
+.component-table-tree.component-table-manual th:nth-child(10), .component-table-tree.component-table-manual td:nth-child(10) { width: 13%; }
+.component-table-tree.component-table-manual th:nth-child(11), .component-table-tree.component-table-manual td:nth-child(11) { width: 4%; }
 .component-table .component-action-col { width: 132px; position: sticky; right: 0; z-index: 2; background: #fff; box-shadow: -1px 0 0 #edf0f5; }
 .component-table th.component-action-col { z-index: 3; background: #f5f7fa; }
 .component-table .component-cell-qty { text-align: left; white-space: nowrap; }
