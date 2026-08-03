@@ -4458,7 +4458,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.651";
+var APP_VERSION       = "v1.1.652";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -19521,21 +19521,33 @@ function gltekAutoIssueMissingSourceError() {
   return new Error("\u30e1\u30fc\u30ab\u30fc\u3068\u30e1\u30fc\u30ab\u30fc\u54c1\u756a\u304c\u306a\u3044\u305f\u3081\u3001GLTEK\u54c1\u756a\u3092\u81ea\u52d5\u767a\u884c\u3067\u304d\u307e\u305b\u3093\u3002");
 }
 
+function gltekAutoIssuePermissionError() {
+  if (currentLang === "zh") return new Error("\u6ca1\u6709G\u96f6\u4ef6\u7f16\u53f7\u7684\u53d1\u884c\u6743\u9650\u3002");
+  if (currentLang === "ja") return new Error("G\u54c1\u756a\u306e\u767a\u884c\u6a29\u9650\u304c\u3042\u308a\u307e\u305b\u3093\u3002");
+  return new Error("You do not have permission to issue a G part number.");
+}
+
 function gltekAutoIssueFailureText(context, error) {
   var detail = gltekAutoIssueErrorMessage(error);
   if (currentLang === "zh") {
     return (context === "sales_pricing"
       ? "\u9500\u552e\u4ef7\u683c\u5df2\u4fdd\u5b58\uff0c\u4f46GLTEK\u96f6\u4ef6\u7f16\u53f7\u81ea\u52a8\u53d1\u884c\u5931\u8d25"
-      : "\u5546\u54c1\u5df2\u6dfb\u52a0\uff0c\u4f46GLTEK\u96f6\u4ef6\u7f16\u53f7\u81ea\u52a8\u53d1\u884c\u5931\u8d25") + (detail ? ": " + detail : "");
+      : context === "product_edit"
+        ? "\u5546\u54c1\u7f16\u53f7\u5df2\u4fee\u6539\uff0c\u4f46G\u96f6\u4ef6\u7f16\u53f7\u81ea\u52a8\u53d1\u884c\u5931\u8d25"
+        : "\u5546\u54c1\u5df2\u6dfb\u52a0\uff0c\u4f46G\u96f6\u4ef6\u7f16\u53f7\u81ea\u52a8\u53d1\u884c\u5931\u8d25") + (detail ? ": " + detail : "");
   }
   if (currentLang === "ja") {
     return (context === "sales_pricing"
       ? "\u8ca9\u58f2\u4fa1\u683c\u306f\u4fdd\u5b58\u3057\u307e\u3057\u305f\u304c\u3001GLTEK\u54c1\u756a\u306e\u81ea\u52d5\u767a\u884c\u306b\u5931\u6557\u3057\u307e\u3057\u305f"
-      : "\u5546\u54c1\u306f\u8ffd\u52a0\u3057\u307e\u3057\u305f\u304c\u3001GLTEK\u54c1\u756a\u306e\u81ea\u52d5\u767a\u884c\u306b\u5931\u6557\u3057\u307e\u3057\u305f") + (detail ? ": " + detail : "");
+      : context === "product_edit"
+        ? "\u54c1\u756a\u306f\u4fee\u6b63\u3057\u307e\u3057\u305f\u304c\u3001G\u54c1\u756a\u306e\u81ea\u52d5\u767a\u884c\u306b\u5931\u6557\u3057\u307e\u3057\u305f"
+        : "\u5546\u54c1\u306f\u8ffd\u52a0\u3057\u307e\u3057\u305f\u304c\u3001G\u54c1\u756a\u306e\u81ea\u52d5\u767a\u884c\u306b\u5931\u6557\u3057\u307e\u3057\u305f") + (detail ? ": " + detail : "");
   }
   return (context === "sales_pricing"
     ? "Sales price was saved, but automatic GLTEK part-number issuance failed"
-    : "Product was added, but automatic GLTEK part-number issuance failed") + (detail ? ": " + detail : "");
+    : context === "product_edit"
+      ? "Part number was updated, but automatic G part-number issuance failed"
+      : "Product was added, but automatic G part-number issuance failed") + (detail ? ": " + detail : "");
 }
 
 function gltekAutoIssueSuccessText(result) {
@@ -19579,7 +19591,6 @@ async function ensureGltekPartNumberIssuedForDkdId(dkdId, options) {
   options = options || {};
   var id = parseInt(dkdId, 10);
   if (!id || isNaN(id)) return { skipped: true, reason: "missing_dkd" };
-  if (!canIssueGltekPartNumber()) return { skipped: true, reason: "permission" };
   var productR = await fetchCoreProductForGltekIssue(id);
   if (productR.error) return { error: productR.error };
   var product = productR.data || options.product || null;
@@ -19597,6 +19608,7 @@ async function ensureGltekPartNumberIssuedForDkdId(dkdId, options) {
     applyGltekPartNumberIssueResult(id, existing);
     return { skipped: true, reason: "existing", result: existing };
   }
+  if (!canIssueGltekPartNumber()) return { error: gltekAutoIssuePermissionError(), product: product };
   if (!String(product.manufacturer || "").trim() || !String(product.manufacturer_part_number || "").trim()) {
     return { error: gltekAutoIssueMissingSourceError() };
   }
@@ -19829,6 +19841,7 @@ async function saveCoreProductForm() {
   errEl.textContent = "";
   if (!canEdit()) { errEl.textContent = t("err_perm"); return; }
   var addingProduct = partFormMode === "add";
+  var gltekAutoIssueContext = addingProduct ? "product_add" : "product_edit";
   var formContext = coreProductFormContext;
   var dkdInput = document.getElementById("pf-shohin-cd").value.trim();
   var dkd = dkdInput ? parseInt(dkdInput, 10) : null;
@@ -19938,8 +19951,8 @@ async function saveCoreProductForm() {
   if (!corePolicyOk) return;
   var specOk = await saveUnifiedSpecForDkd(dkd, errEl);
   if (!specOk) return;
-  if (addingProduct && !isGltekAdd) {
-    gltekAutoIssueOutcome = await ensureGltekPartNumberIssuedForDkdId(dkd, { context: "product_add", product: currentProduct });
+  if (!isGltekAdd) {
+    gltekAutoIssueOutcome = await ensureGltekPartNumberIssuedForDkdId(dkd, { context: gltekAutoIssueContext, product: currentProduct });
   }
   document.getElementById("part-form-overlay").classList.remove("show");
   currentProductSpecs = [];
@@ -19955,7 +19968,7 @@ async function saveCoreProductForm() {
   if (gltekResult && gltekResult.gltek_part_number) {
     alert(t("gltek_product_add_done") + ": " + gltekResult.gltek_part_number);
   } else if (gltekAutoIssueOutcome && gltekAutoIssueOutcome.error) {
-    alert(gltekAutoIssueFailureText("product_add", gltekAutoIssueOutcome.error));
+    alert(gltekAutoIssueFailureText(gltekAutoIssueContext, gltekAutoIssueOutcome.error));
   } else if (
     gltekAutoIssueOutcome &&
     gltekAutoIssueOutcome.result &&

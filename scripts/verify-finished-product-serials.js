@@ -125,6 +125,46 @@ const previewProductNoSource = functionSource("finishedLabelPreviewProductNo");
 assert(previewProductNoSource.includes("product.gltek_part_number"), "G part number is missing from the finished-label preview");
 assert(!previewProductNoSource.includes("product.manufacturer_part_number"), "finished-label preview still falls back to the manufacturer part number");
 assert(functionSource("readFinishedLabelRecord").includes("if (!p.gltek_part_number)"), "finished-label printing is not blocked when the G part number is missing");
+const productSaveSource = functionSource("saveCoreProductForm");
+assert(productSaveSource.includes('var gltekAutoIssueContext = addingProduct ? "product_add" : "product_edit";'), "product save does not distinguish add and edit G-number checks");
+assert(productSaveSource.includes('if (!isGltekAdd)') && productSaveSource.includes('context: gltekAutoIssueContext'), "both external-product add and edit saves do not check G-number issuance");
+assert(productSaveSource.includes('gltekAutoIssueFailureText(gltekAutoIssueContext'), "G-number issuance failures do not identify whether the part number was added or edited");
+const ensureGltekSource = functionSource("ensureGltekPartNumberIssuedForDkdId");
+assert(ensureGltekSource.indexOf("if (product.gltek_part_number)") < ensureGltekSource.indexOf("if (!canIssueGltekPartNumber())"), "existing G numbers are not checked before issue permission");
+const issuedPatches = [];
+let issueRpcCount = 0;
+let canIssueGNumber = false;
+let issueLookupProduct = { dkd_shohin_id: 101, gltek_part_number: "G0101-00001" };
+const issueSandbox = {
+  canIssueGltekPartNumber() { return canIssueGNumber; },
+  async fetchCoreProductForGltekIssue() { return { data: issueLookupProduct, error: null }; },
+  applyGltekPartNumberIssueResult(id, result) { issuedPatches.push({ id, result }); },
+  gltekAutoIssuePermissionError() { return new Error("permission"); },
+  gltekAutoIssueMissingSourceError() { return new Error("missing-source"); },
+  async callGltekPartNumberIssueRpc() {
+    issueRpcCount += 1;
+    return { data: { action: "issued", gltek_part_number: "G0101-00002" }, error: null };
+  }
+};
+vm.createContext(issueSandbox);
+vm.runInContext(`${ensureGltekSource.replace(/^function /, "async function ")}; this.ensureGNumber = ensureGltekPartNumberIssuedForDkdId;`, issueSandbox);
+
+(async function verifyProductSaveGNumberChecks() {
+  let outcome = await issueSandbox.ensureGNumber(101, {});
+  assert(outcome.reason === "existing" && issueRpcCount === 0, "an existing G number is reissued or blocked by issue permission");
+
+  canIssueGNumber = true;
+  issueLookupProduct = { dkd_shohin_id: 102, manufacturer: "DENSO", manufacturer_part_number: "104210-0001", gltek_part_number: null };
+  outcome = await issueSandbox.ensureGNumber(102, {});
+  assert(outcome.result && outcome.result.gltek_part_number === "G0101-00002" && issueRpcCount === 1, "a missing G number is not issued for an authorized save");
+
+  canIssueGNumber = false;
+  issueLookupProduct = { dkd_shohin_id: 103, manufacturer: "DENSO", manufacturer_part_number: "104210-0002", gltek_part_number: null };
+  outcome = await issueSandbox.ensureGNumber(103, {});
+  assert(outcome.error && outcome.error.message === "permission" && issueRpcCount === 1, "a missing G number is silently skipped without issue permission");
+})().catch((error) => {
+  process.nextTick(() => { throw error; });
+});
 assert(styles.includes("grid-template-columns: 280px minmax(0, 1fr)") && styles.includes("grid-template-columns: minmax(470px, 1.08fr) minmax(360px, .92fr)"), "desktop no-scroll label workspace layout is missing");
 assert(styles.includes("table-layout: fixed") && styles.includes("overflow-x: hidden; overflow-y: auto"), "component columns can still force horizontal scrolling in the compact layout");
 assert(styles.includes(".finished-label-toolbar .finished-label-print-action") && styles.includes("font-size: 15px"), "finished-label print actions are not visually enlarged");
