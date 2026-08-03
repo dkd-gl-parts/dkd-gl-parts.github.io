@@ -104,6 +104,49 @@ if (!addSource.includes('normalizeComponentManufacturerInput(currentProduct.manu
     addSource.includes("if (!targetManufacturer || !targetManufacturerPartNumber)")) {
   throw new Error("manual component add must allow a missing ASSY manufacturer and validate only the ASSY part number");
 }
+if (!addSource.includes("if (componentAddSaving) return;") ||
+    !addSource.includes("componentAddSaving = true;") ||
+    !addSource.includes("finally {") ||
+    !addSource.includes("componentAddSaving = false;")) {
+  throw new Error("manual component add must hold an immediate in-flight lock until every exit path completes");
+}
+
+const refreshSource = sourceBetween("function setAppRefreshControlsDisabled", 'window.addEventListener("pagehide"');
+let replaceCount = 0;
+const refreshButton = { disabled: false };
+const refreshEvent = {
+  preventDefault() {},
+  stopPropagation() {},
+  stopImmediatePropagation() {}
+};
+const refreshSandbox = {
+  appManualRefreshInProgress: false,
+  componentAddSaving: false,
+  appUpdateReloadTimer: 1,
+  document: { querySelectorAll: () => [refreshButton] },
+  window: {
+    location: {
+      href: "https://dcats.example.test/",
+      replace: () => { replaceCount += 1; },
+      reload: () => { replaceCount += 1; }
+    }
+  },
+  URL,
+  clearTimeout() {},
+  saveAppRestoreState() {}
+};
+vm.runInNewContext(`${refreshSource}; refresh = manualRefreshApp;`, refreshSandbox);
+refreshSandbox.refresh(refreshEvent);
+refreshSandbox.refresh(refreshEvent);
+if (replaceCount !== 1 || !refreshButton.disabled) {
+  throw new Error("the app update action must accept only its first click while navigation is pending");
+}
+refreshSandbox.appManualRefreshInProgress = false;
+refreshSandbox.componentAddSaving = true;
+refreshSandbox.refresh(refreshEvent);
+if (replaceCount !== 1) {
+  throw new Error("the app update action must not reload while a component registration is in flight");
+}
 
 const values = {
   "component-add-name": "B接点",
@@ -125,9 +168,12 @@ const elements = {
   "btn-component-add": { disabled: false, textContent: "" }
 };
 let rpcCall = null;
+let rpcCallCount = 0;
 let alertMessage = "";
+let dkdLookupGate = null;
 
 const sandbox = {
+  componentAddSaving: false,
   currentProduct: {
     dkd_shohin_id: 36628,
     manufacturer: null,
@@ -142,7 +188,10 @@ const sandbox = {
   },
   canManageComponentsInCurrentContext: () => true,
   selectedProductKind: () => "rebuilt",
-  resolveCurrentCoreDkdShohinId: async () => 36628,
+  resolveCurrentCoreDkdShohinId: async () => {
+    if (dkdLookupGate) await dkdLookupGate;
+    return 36628;
+  },
   normalizeComponentManufacturerInput: (value) => String(value || "").trim().toUpperCase(),
   normalizeComponentPartNumberInput: (value) => String(value || "").trim().toUpperCase(),
   normalizeComponentPartNumberElement: (el) => { if (el) el.value = String(el.value || "").trim().toUpperCase(); },
@@ -171,6 +220,7 @@ const sandbox = {
   selectedComponentVariantId: () => 101,
   sb: {
     rpc: async (name, payload) => {
+      rpcCallCount += 1;
       rpcCall = { name, payload };
       return { data: 999, error: null };
     }
@@ -197,7 +247,19 @@ const sandbox = {
 vm.runInNewContext(`${addSource}; result = addAssemblyComponentForCurrent;`, sandbox);
 
 (async () => {
-  await sandbox.result();
+  let releaseDkdLookup;
+  dkdLookupGate = new Promise((resolve) => { releaseDkdLookup = resolve; });
+  const firstAdd = sandbox.result();
+  const repeatedAdd = sandbox.result();
+  if (!elements["btn-component-add"].disabled || !sandbox.componentAddSaving) {
+    throw new Error("manual component add must lock before its first asynchronous lookup");
+  }
+  releaseDkdLookup();
+  await Promise.all([firstAdd, repeatedAdd]);
+  dkdLookupGate = null;
+  if (rpcCallCount !== 1 || sandbox.componentAddSaving || elements["btn-component-add"].disabled) {
+    throw new Error("repeated component add clicks must produce one RPC and release the lock afterward");
+  }
   if (!rpcCall || rpcCall.name !== "add_manual_assembly_component") {
     throw new Error("manual component add must reach the RPC when only the ASSY manufacturer is missing");
   }

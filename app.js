@@ -4458,7 +4458,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.652";
+var APP_VERSION       = "v1.1.654";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -4473,6 +4473,7 @@ var appDiscardRestoreStateOnExit = false;
 var appUpdateTimer = null;
 var appUpdateReloadTimer = null;
 var appUpdateDetected = false;
+var appManualRefreshInProgress = false;
 var appUpdateLastActivityAt = Date.now();
 var ecResearchScheduleSettings = null;
 var kikanCandidateParts = [];
@@ -4522,6 +4523,7 @@ var componentCompatSourceComponentMap = {};
 var componentCompatLoadSeq = 0;
 var componentCompatAssistSeq = 0;
 var componentAddPartNumberLookupSeq = 0;
+var componentAddSaving = false;
 var componentEditPartNumberLookupSeq = 0;
 var componentAlternativePartNumberLookupSeq = 0;
 var currentSelectedComponentVariantId = "";
@@ -5789,7 +5791,22 @@ async function restoreAppStateAfterRefresh() {
   }
 }
 
-function manualRefreshApp() {
+function setAppRefreshControlsDisabled(disabled) {
+  document.querySelectorAll(".app-manual-refresh, #app-update-reload").forEach(function(btn) {
+    btn.disabled = !!disabled;
+  });
+}
+
+function manualRefreshApp(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof event.stopImmediatePropagation === "function") event.stopImmediatePropagation();
+  }
+  if (appManualRefreshInProgress || componentAddSaving) return;
+  appManualRefreshInProgress = true;
+  clearTimeout(appUpdateReloadTimer);
+  setAppRefreshControlsDisabled(true);
   saveAppRestoreState("manual-refresh");
   try {
     var url = new URL(window.location.href);
@@ -5814,6 +5831,7 @@ document.addEventListener("freeze", function() {
 });
 
 function isAppSafeForAutoReload() {
+  if (componentAddSaving) return false;
   if (document.querySelector(".form-overlay.show")) return false;
   var el = document.activeElement;
   if (el) {
@@ -25169,114 +25187,120 @@ async function addAssemblyComponentForCurrent() {
   if (!currentProduct) return;
   if (!canManageComponentsInCurrentContext()) { alert(t("err_perm")); return; }
   if (selectedProductKind() === "catalog_spec") { alert(t("component_catalog_locked_save")); return; }
-  var err = document.getElementById("component-add-error");
-  if (err) err.textContent = "";
-  var dkdId = await resolveCurrentCoreDkdShohinId();
-  var targetManufacturer = normalizeComponentManufacturerInput(currentProduct.manufacturer) || "UNKNOWN";
-  var targetManufacturerPartNumber = normalizeComponentPartNumberInput(currentProduct.manufacturer_part_number || "");
-  if (!targetManufacturerPartNumber) {
-    if (err) err.textContent = t("component_assy_mfr_pn_required");
-    else alert(t("component_assy_mfr_pn_required"));
-    return;
-  }
-  normalizeComponentPartNumberElement(document.getElementById("component-add-mfr-pn"));
-  normalizeComponentPartNumberElement(document.getElementById("component-add-genuine-pn"));
-  var preAddMfrCheck = componentPartNumberValidation(componentAddValue("component-add-mfr-pn"), "manufacturer");
-  var preAddGenuineCheck = componentPartNumberValidation(componentAddValue("component-add-genuine-pn"), "genuine");
-  var preAddErrors = preAddMfrCheck.errors.concat(preAddGenuineCheck.errors).filter(function(msg) {
-    return msg !== t("component_mfr_pn_required");
-  });
-  if (preAddErrors.length) {
-    updateComponentAddPartNumberInputState();
-    if (err) err.textContent = uniqueTextValues(preAddErrors).join("\n");
-    else alert(uniqueTextValues(preAddErrors).join("\n"));
-    return;
-  }
-  await reconcileComponentAddPartNumbers();
-  normalizeComponentPartNumberElement(document.getElementById("component-add-mfr-pn"));
-  normalizeComponentPartNumberElement(document.getElementById("component-add-genuine-pn"));
-  var componentMfr = normalizeComponentManufacturerInput(componentAddValue("component-add-mfr")) || "UNKNOWN";
-  setComponentAddValue("component-add-mfr", componentMfr);
-  var addPartCheck = validateComponentPartNumberInputs(
-    componentAddValue("component-add-mfr-pn"),
-    componentAddValue("component-add-genuine-pn"),
-    componentMfr,
-    null
-  );
-  setComponentAddValue("component-add-mfr-pn", addPartCheck.manufacturerPartNumber);
-  setComponentAddValue("component-add-genuine-pn", addPartCheck.genuinePartNumber);
-  updateComponentAddPartNumberInputState();
-  if (addPartCheck.errors.length) {
-    if (err) err.textContent = uniqueTextValues(addPartCheck.errors).join("\n");
-    else alert(uniqueTextValues(addPartCheck.errors).join("\n"));
-    return;
-  }
-  if (!confirmComponentPartNumberWarnings(addPartCheck.warnings)) return;
-  var componentPartName = canonicalComponentNameForStorage(componentAddValue("component-add-name"));
-  setComponentAddValue("component-add-name", componentPartName);
-  var componentNameError = componentNameMasterValidationMessage(componentPartName);
-  if (componentNameError) {
-    if (err) err.textContent = componentNameError;
-    else alert(componentNameError);
-    return;
-  }
-  var componentMfrPn = addPartCheck.manufacturerPartNumber;
-  if (!componentMfrPn) {
-    if (err) err.textContent = t("component_mfr_pn_required");
-    else alert(t("component_mfr_pn_required"));
-    return;
-  }
-  applyComponentProcurementRateDefault();
-  var replacementRate = normalizeComponentReplacementRateElement(false);
-  if (isNaN(replacementRate)) {
-    if (err) err.textContent = t("component_replacement_rate_digits");
-    else alert(t("component_replacement_rate_digits"));
-    return;
-  }
-  if (replacementRate != null && (replacementRate < 0 || replacementRate > 100)) {
-    if (err) err.textContent = t("component_replacement_rate_range");
-    else alert(t("component_replacement_rate_range"));
-    return;
-  }
-  var payload = {
-    target_dkd_shohin_id: dkdId || null,
-    target_manufacturer: targetManufacturer,
-    target_manufacturer_part_number: targetManufacturerPartNumber,
-    target_genuine_part_number: currentProduct.genuine_part_number || null,
-    target_product_kind: selectedProductKind(),
-    target_product_variant_id: selectedComponentVariantId(),
-    component_manufacturer: componentMfr,
-    component_manufacturer_part_number: componentMfrPn,
-    component_genuine_part_number: addPartCheck.genuinePartNumber || null,
-    component_part_name: componentPartName,
-    component_position: componentAddValue("component-add-position") || null,
-    component_quantity: componentAddValue("component-add-qty") || "1",
-    component_unit_price_jpy: nullableIntFromInput("component-add-unit-price"),
-    component_replacement_rate: replacementRate,
-    component_manufacturing_memo: componentAddValue("component-add-manufacturing-memo") || null,
-    component_interchange_code: componentAddValue("component-add-interchange") || null,
-    component_procurement_category: componentAddValue("component-add-procurement-category") || null,
-    component_effective_start: componentAddValue("component-add-start") || null,
-    component_effective_end: componentAddValue("component-add-end") || null
-  };
+  if (componentAddSaving) return;
+  componentAddSaving = true;
   var addBtn = document.getElementById("btn-component-add");
   if (addBtn) { addBtn.disabled = true; addBtn.textContent = t("component_add_loading"); }
-  var r = await sb.rpc("add_manual_assembly_component", payload);
-  if (addBtn) { addBtn.disabled = false; addBtn.textContent = t("component_add"); }
-  if (r.error) {
-    if (err) err.textContent = t("component_add_failed") + ": " + r.error.message;
-    else alert(t("component_add_failed") + ": " + r.error.message);
-    return;
+  var err = document.getElementById("component-add-error");
+  if (err) err.textContent = "";
+  try {
+    var dkdId = await resolveCurrentCoreDkdShohinId();
+    var targetManufacturer = normalizeComponentManufacturerInput(currentProduct.manufacturer) || "UNKNOWN";
+    var targetManufacturerPartNumber = normalizeComponentPartNumberInput(currentProduct.manufacturer_part_number || "");
+    if (!targetManufacturerPartNumber) {
+      if (err) err.textContent = t("component_assy_mfr_pn_required");
+      else alert(t("component_assy_mfr_pn_required"));
+      return;
+    }
+    normalizeComponentPartNumberElement(document.getElementById("component-add-mfr-pn"));
+    normalizeComponentPartNumberElement(document.getElementById("component-add-genuine-pn"));
+    var preAddMfrCheck = componentPartNumberValidation(componentAddValue("component-add-mfr-pn"), "manufacturer");
+    var preAddGenuineCheck = componentPartNumberValidation(componentAddValue("component-add-genuine-pn"), "genuine");
+    var preAddErrors = preAddMfrCheck.errors.concat(preAddGenuineCheck.errors).filter(function(msg) {
+      return msg !== t("component_mfr_pn_required");
+    });
+    if (preAddErrors.length) {
+      updateComponentAddPartNumberInputState();
+      if (err) err.textContent = uniqueTextValues(preAddErrors).join("\n");
+      else alert(uniqueTextValues(preAddErrors).join("\n"));
+      return;
+    }
+    await reconcileComponentAddPartNumbers();
+    normalizeComponentPartNumberElement(document.getElementById("component-add-mfr-pn"));
+    normalizeComponentPartNumberElement(document.getElementById("component-add-genuine-pn"));
+    var componentMfr = normalizeComponentManufacturerInput(componentAddValue("component-add-mfr")) || "UNKNOWN";
+    setComponentAddValue("component-add-mfr", componentMfr);
+    var addPartCheck = validateComponentPartNumberInputs(
+      componentAddValue("component-add-mfr-pn"),
+      componentAddValue("component-add-genuine-pn"),
+      componentMfr,
+      null
+    );
+    setComponentAddValue("component-add-mfr-pn", addPartCheck.manufacturerPartNumber);
+    setComponentAddValue("component-add-genuine-pn", addPartCheck.genuinePartNumber);
+    updateComponentAddPartNumberInputState();
+    if (addPartCheck.errors.length) {
+      if (err) err.textContent = uniqueTextValues(addPartCheck.errors).join("\n");
+      else alert(uniqueTextValues(addPartCheck.errors).join("\n"));
+      return;
+    }
+    if (!confirmComponentPartNumberWarnings(addPartCheck.warnings)) return;
+    var componentPartName = canonicalComponentNameForStorage(componentAddValue("component-add-name"));
+    setComponentAddValue("component-add-name", componentPartName);
+    var componentNameError = componentNameMasterValidationMessage(componentPartName);
+    if (componentNameError) {
+      if (err) err.textContent = componentNameError;
+      else alert(componentNameError);
+      return;
+    }
+    var componentMfrPn = addPartCheck.manufacturerPartNumber;
+    if (!componentMfrPn) {
+      if (err) err.textContent = t("component_mfr_pn_required");
+      else alert(t("component_mfr_pn_required"));
+      return;
+    }
+    applyComponentProcurementRateDefault();
+    var replacementRate = normalizeComponentReplacementRateElement(false);
+    if (isNaN(replacementRate)) {
+      if (err) err.textContent = t("component_replacement_rate_digits");
+      else alert(t("component_replacement_rate_digits"));
+      return;
+    }
+    if (replacementRate != null && (replacementRate < 0 || replacementRate > 100)) {
+      if (err) err.textContent = t("component_replacement_rate_range");
+      else alert(t("component_replacement_rate_range"));
+      return;
+    }
+    var payload = {
+      target_dkd_shohin_id: dkdId || null,
+      target_manufacturer: targetManufacturer,
+      target_manufacturer_part_number: targetManufacturerPartNumber,
+      target_genuine_part_number: currentProduct.genuine_part_number || null,
+      target_product_kind: selectedProductKind(),
+      target_product_variant_id: selectedComponentVariantId(),
+      component_manufacturer: componentMfr,
+      component_manufacturer_part_number: componentMfrPn,
+      component_genuine_part_number: addPartCheck.genuinePartNumber || null,
+      component_part_name: componentPartName,
+      component_position: componentAddValue("component-add-position") || null,
+      component_quantity: componentAddValue("component-add-qty") || "1",
+      component_unit_price_jpy: nullableIntFromInput("component-add-unit-price"),
+      component_replacement_rate: replacementRate,
+      component_manufacturing_memo: componentAddValue("component-add-manufacturing-memo") || null,
+      component_interchange_code: componentAddValue("component-add-interchange") || null,
+      component_procurement_category: componentAddValue("component-add-procurement-category") || null,
+      component_effective_start: componentAddValue("component-add-start") || null,
+      component_effective_end: componentAddValue("component-add-end") || null
+    };
+    var r = await sb.rpc("add_manual_assembly_component", payload);
+    if (r.error) {
+      if (err) err.textContent = t("component_add_failed") + ": " + r.error.message;
+      else alert(t("component_add_failed") + ": " + r.error.message);
+      return;
+    }
+    await writeLog("insert", "assembly_component_usages", r.data || dkdId, componentMfrPn, null, payload);
+    recordComponentNameCandidateUsageForCurrent(componentPartName);
+    clearComponentAddForm();
+    closeComponentAddForm();
+    if (typeof componentReturnScreen !== "undefined" && componentReturnScreen === "finished-label-mgmt") {
+      await loadFinishedLabelComponentCandidates({ includeUsageId: r.data });
+      return;
+    }
+    await loadAssemblyComponentsForCurrent();
+  } finally {
+    componentAddSaving = false;
+    if (addBtn) { addBtn.disabled = false; addBtn.textContent = t("component_add"); }
   }
-  await writeLog("insert", "assembly_component_usages", r.data || dkdId, componentMfrPn, null, payload);
-  recordComponentNameCandidateUsageForCurrent(componentPartName);
-  clearComponentAddForm();
-  closeComponentAddForm();
-  if (typeof componentReturnScreen !== "undefined" && componentReturnScreen === "finished-label-mgmt") {
-    await loadFinishedLabelComponentCandidates({ includeUsageId: r.data });
-    return;
-  }
-  await loadAssemblyComponentsForCurrent();
 }
 
 function componentEditInput(row, field, value) {
