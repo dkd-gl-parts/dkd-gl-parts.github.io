@@ -366,7 +366,7 @@ var TRANSLATIONS = {
     finished_label_product_search: "完品登録対象検索",
     finished_box_label_product_search: "箱シール対象品番検索",
     finished_label_search_ph: "品番・製造予定Noで検索",
-    finished_label_search_hint: "空欄の場合は製造予定リスト上位を表示します。",
+    finished_label_search_hint: "品番または製造予定Noを入力して検索してください。",
     finished_box_label_search_hint: "空欄の場合は、箱シールを印刷できる最新の完品登録品番を表示します。",
     finished_box_label_ready_summary: "完品登録 {n}件 / 最新 {date}",
     finished_box_label_no_history: "発行済み製造シリアルなし",
@@ -1817,7 +1817,7 @@ var TRANSLATIONS = {
     finished_label_title: "Finished Unit / Manufacturing Serial Issue",
     finished_label_product_search: "Finished Unit Target Search",
     finished_label_search_ph: "Search part number or production plan No.",
-    finished_label_search_hint: "Blank search shows top production plan rows.",
+    finished_label_search_hint: "Enter a part number or production plan No. to search.",
     finished_box_label_search_hint: "A blank search shows the latest registered products available for box-label printing.",
     finished_box_label_ready_summary: "{n} registration(s) / Latest {date}",
     finished_box_label_no_history: "No issued manufacturing serial",
@@ -3274,7 +3274,7 @@ var TRANSLATIONS = {
     finished_label_title: "完品登记・制造序列号发行",
     finished_label_product_search: "完品登记对象搜索",
     finished_label_search_ph: "按品号或生产计划编号搜索",
-    finished_label_search_hint: "空白搜索时显示生产计划上位项目。",
+    finished_label_search_hint: "请输入品号或生产计划编号后搜索。",
     finished_box_label_search_hint: "空白搜索时显示可打印箱标签的最新完品登记品号。",
     finished_box_label_ready_summary: "完品登记 {n}件 / 最新 {date}",
     finished_box_label_no_history: "无已发行制造序列号",
@@ -4458,7 +4458,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.648";
+var APP_VERSION       = "v1.1.649";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5564,6 +5564,7 @@ async function applyLanguage(lang) {
     renderFinishedLabelComponents();
     renderFinishedLabelHistory();
     renderFinishedLabelIssuedResult(finishedLabelLastIssuedRecord);
+    updateFinishedLabelSaveButton(finishedLabelSelectedProduct);
     updateFinishedLabelQrPayload();
   }
   if (isScreenActive("kikan-mgmt")) await loadKikanMgmt();
@@ -17476,6 +17477,11 @@ async function searchFinishedLabelProducts() {
   var results = document.getElementById("finished-label-results");
   var count = document.getElementById("finished-label-search-count");
   var loadMore = document.getElementById("btn-finished-label-load-more");
+  if (!q && finishedLabelPrintMode !== "box") {
+    renderFinishedLabelEmpty();
+    if (qEl) qEl.focus();
+    return;
+  }
   if (results) results.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
   if (count) count.textContent = t("loading");
   if (loadMore) loadMore.hidden = true;
@@ -17666,6 +17672,18 @@ function renderFinishedLabelSelectedSummary(product) {
   }).join("");
 }
 
+function updateFinishedLabelSaveButton(product) {
+  var save = document.getElementById("btn-finished-label-save");
+  if (!save) return;
+  var hasProduct = !!product;
+  var missingGNumber = hasProduct && !product.gltek_part_number;
+  save.disabled = !hasProduct;
+  save.textContent = t(missingGNumber ? "finished_label_g_number_missing_value" : "finished_label_issue_save");
+  save.title = missingGNumber ? t("finished_label_g_part_number_required") : "";
+  save.classList.toggle("missing-g-number", missingGNumber);
+  save.setAttribute("aria-disabled", save.disabled ? "true" : "false");
+}
+
 function resetFinishedLabelForm(product, instruction) {
   finishedLabelLastIssuedRecord = null;
   finishedLabelSelectedHistoryId = null;
@@ -17686,8 +17704,7 @@ function resetFinishedLabelForm(product, instruction) {
     boxPreview.disabled = true;
     boxPreview.textContent = t("finished_box_label_preview");
   }
-  var save = document.getElementById("btn-finished-label-save");
-  if (save) save.disabled = !product || !product.gltek_part_number;
+  updateFinishedLabelSaveButton(product);
   renderFinishedLabelLayoutPreview();
   renderFinishedBoxLabelLayoutPreview();
 }
@@ -18131,6 +18148,12 @@ function renderFinishedBoxLabelLayoutPreview() {
 
 async function saveFinishedLabelIssue() {
   if (!canEditFinishedLabelMgmt()) { alert(t("err_perm")); return; }
+  if (!finishedLabelSelectedProduct) { alert(t("finished_label_no_product")); return; }
+  if (!finishedLabelSelectedProduct.gltek_part_number) {
+    alert(t("finished_label_g_part_number_required"));
+    updateFinishedLabelSaveButton(finishedLabelSelectedProduct);
+    return;
+  }
   var btn = document.getElementById("btn-finished-label-save");
   if (btn) btn.disabled = true;
   var printWindow = null;
@@ -36626,7 +36649,7 @@ document.querySelectorAll("[data-finished-label-mode]").forEach(function(btn) {
   btn.addEventListener("click", function() {
     setFinishedLabelPrintMode(btn.dataset.finishedLabelMode);
     renderFinishedLabelEmpty();
-    searchFinishedLabelProducts();
+    if (finishedLabelPrintMode === "box") searchFinishedLabelProducts();
     if (finishedLabelSearchInput) finishedLabelSearchInput.focus();
   });
 });

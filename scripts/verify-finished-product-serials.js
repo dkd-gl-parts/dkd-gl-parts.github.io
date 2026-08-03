@@ -101,6 +101,8 @@ assert(resultRenderSource.includes("finishedLabelProducts.slice(0, finishedLabel
 assert(resultRenderSource.includes("loadMore.hidden = visibleProducts.length >= finishedLabelProducts.length"), "finished-label load-more visibility is not tied to remaining results");
 assert(functionSource("showMoreFinishedLabelProducts").includes("FINISHED_LABEL_PAGE_STEP"), "finished-label load-more does not advance in fixed pages");
 assert(functionSource("searchFinishedLabelProducts").includes("normalizeFinishedLabelSearchInput(qEl)"), "finished-label search does not normalize the visible input before querying");
+assert(functionSource("searchFinishedLabelProducts").includes('if (!q && finishedLabelPrintMode !== "box")'), "blank finished-label search is not stopped before loading production candidates");
+assert(app.includes('if (finishedLabelPrintMode === "box") searchFinishedLabelProducts();'), "opening the finished-label screen still performs a blank product search");
 assert(app.includes('finishedLabelSearchInput.addEventListener("compositionend"') && app.includes('finishedLabelSearchInput.addEventListener("input"'), "finished-label search does not normalize typing and IME-confirmed input");
 assert(app.includes('finishedLabelSearchInput.addEventListener("focus"') && app.includes("finishedLabelAsciiKeyFromEvent(e)"), "finished-label search does not switch to direct ASCII handling on focus");
 assert(app.includes('finishedLabelSearchInput.addEventListener("beforeinput"') && app.includes("finishedLabelSearchSuppressComposition"), "IME follow-up input is not suppressed after direct ASCII insertion");
@@ -126,6 +128,31 @@ assert(functionSource("readFinishedLabelRecord").includes("if (!p.gltek_part_num
 assert(styles.includes("grid-template-columns: 280px minmax(0, 1fr)") && styles.includes("grid-template-columns: minmax(470px, 1.08fr) minmax(360px, .92fr)"), "desktop no-scroll label workspace layout is missing");
 assert(styles.includes("table-layout: fixed") && styles.includes("overflow-x: hidden; overflow-y: auto"), "component columns can still force horizontal scrolling in the compact layout");
 assert(styles.includes(".finished-label-toolbar .finished-label-print-action") && styles.includes("font-size: 15px"), "finished-label print actions are not visually enlarged");
+assert(styles.includes(".finished-label-print-action.missing-g-number"), "missing G part number is not visible on the register-and-print action");
+const saveButtonSource = functionSource("updateFinishedLabelSaveButton");
+assert(saveButtonSource.includes('finished_label_g_number_missing_value') && saveButtonSource.includes('missing-g-number'), "register-and-print does not explain a missing G part number");
+assert(functionSource("saveFinishedLabelIssue").includes('alert(t("finished_label_g_part_number_required"))'), "register-and-print does not explain why a product without a G part number cannot print");
+const saveButtonClasses = new Set();
+const saveButton = {
+  disabled: false,
+  textContent: "",
+  title: "",
+  ariaDisabled: "",
+  classList: { toggle(name, active) { if (active) saveButtonClasses.add(name); else saveButtonClasses.delete(name); } },
+  setAttribute(name, value) { if (name === "aria-disabled") this.ariaDisabled = value; }
+};
+const saveButtonSandbox = {
+  document: { getElementById(id) { return id === "btn-finished-label-save" ? saveButton : null; } },
+  t(key) { return key; }
+};
+vm.createContext(saveButtonSandbox);
+vm.runInContext(`${saveButtonSource}; this.updateSave = updateFinishedLabelSaveButton;`, saveButtonSandbox);
+saveButtonSandbox.updateSave({ gltek_part_number: "" });
+assert(!saveButton.disabled && saveButton.textContent === "finished_label_g_number_missing_value" && saveButtonClasses.has("missing-g-number"), "missing G part number is not presented as an actionable explanation");
+saveButtonSandbox.updateSave({ gltek_part_number: "G0101-00001" });
+assert(!saveButton.disabled && saveButton.textContent === "finished_label_issue_save" && !saveButtonClasses.has("missing-g-number"), "valid G part number does not restore register-and-print");
+saveButtonSandbox.updateSave(null);
+assert(saveButton.disabled && saveButton.ariaDisabled === "true", "register-and-print is enabled before a product is selected");
 
 const searchInputSandbox = {};
 vm.createContext(searchInputSandbox);

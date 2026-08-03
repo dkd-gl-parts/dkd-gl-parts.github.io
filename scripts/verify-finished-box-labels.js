@@ -74,7 +74,7 @@ assert(boxSelectionSource.includes("finishedLabelRecordFromHistory(row)") && box
 assert(functionSource("loadFinishedLabelHistory").includes("selectFinishedBoxLabelHistory(selectedRow"), "latest box-label issue is not automatically selected");
 assert(functionSource("finishedBoxLabelPreviewRecord").includes('finishedLabelPrintMode === "box"') && functionSource("finishedBoxLabelPreviewRecord").includes("finishedLabelLastIssuedRecord"), "box-label preview does not use the selected issued record");
 assert(functionSource("setFinishedBoxLabelPrintButton").includes('"finished_label_reprint"'), "box-label reprint action is not concise");
-assert(app.includes("renderFinishedLabelEmpty();\n    searchFinishedLabelProducts();"), "opening a label mode does not automatically load the first product page");
+assert(app.includes('if (finishedLabelPrintMode === "box") searchFinishedLabelProducts();'), "opening box-label mode does not automatically load printable history");
 [
   "finished_box_label_search_hint",
   "finished_box_label_ready_summary",
