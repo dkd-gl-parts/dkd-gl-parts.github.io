@@ -44,4 +44,12 @@ if (!loadingSource.includes('document.getElementById("component-wrap")') || !loa
   throw new Error("the component screen must show a loading state immediately");
 }
 
+const quantityHeader = '<th class=\'component-cell-qty\'>" + t("component_quantity")';
+const moneyHeader = '<th class=\'component-cell-money\'>" + t("component_unit_price")';
+const rateHeader = '<th class=\'component-cell-rate\'>" + t("component_replacement_rate")';
+const countText = (text) => source.split(text).length - 1;
+if (countText(quantityHeader) !== 4 || countText(moneyHeader) !== 4 || countText(rateHeader) !== 2) {
+  throw new Error("component numeric headers must use the same alignment classes as their values in every table mode");
+}
+
 console.log("component screen transition guard passed");

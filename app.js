@@ -4458,7 +4458,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.654";
+var APP_VERSION       = "v1.1.655";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -29315,9 +29315,9 @@ function renderAssemblyComponentRows() {
   var html = "<table class='component-table component-table-basic'>";
   html += "<tr><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th>";
   if (catalogMode) {
-    html += "<th>" + t("component_position") + "</th><th>" + t("component_quantity") + "</th><th>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
+    html += "<th>" + t("component_position") + "</th><th class='component-cell-qty'>" + t("component_quantity") + "</th><th class='component-cell-money'>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
   } else {
-    html += "<th>" + t("component_quantity") + "</th><th>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_procurement_category") + "</th><th>" + t("component_replacement_rate") + "</th><th>" + t("component_manufacturing_memo") + "</th>";
+    html += "<th class='component-cell-qty'>" + t("component_quantity") + "</th><th class='component-cell-money'>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_procurement_category") + "</th><th class='component-cell-rate'>" + t("component_replacement_rate") + "</th><th>" + t("component_manufacturing_memo") + "</th>";
   }
   if (hasActions) html += "<th class='component-action-col'>" + t("component_actions") + "</th>";
   html += "</tr>";
@@ -29430,9 +29430,9 @@ function renderAssemblyComponentRows() {
   var html = "<table class='component-table component-table-tree'>";
   html += "<tr><th class='component-tree-col'>" + t("component_child") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th>";
   if (catalogMode) {
-    html += "<th>" + t("component_position") + "</th><th>" + t("component_quantity") + "</th><th>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
+    html += "<th>" + t("component_position") + "</th><th class='component-cell-qty'>" + t("component_quantity") + "</th><th class='component-cell-money'>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
   } else {
-    html += "<th>" + t("component_quantity") + "</th><th>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_procurement_category") + "</th><th>" + t("component_replacement_rate") + "</th><th>" + t("component_manufacturing_memo") + "</th>";
+    html += "<th class='component-cell-qty'>" + t("component_quantity") + "</th><th class='component-cell-money'>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_procurement_category") + "</th><th class='component-cell-rate'>" + t("component_replacement_rate") + "</th><th>" + t("component_manufacturing_memo") + "</th>";
   }
   html += "<th>" + t("component_alternative_title") + "</th>";
   if (hasActions) html += "<th class='component-action-col'>" + t("component_actions") + "</th>";
