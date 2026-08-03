@@ -30,20 +30,27 @@ vm.runInNewContext(`${normalizeSource}\n${validationSource}\nvalidationResults =
   period: componentPartNumberValidation("4.5", "manufacturer"),
   fullWidthPeriod: componentPartNumberValidation("４．５", "manufacturer"),
   comma: componentPartNumberValidation("4,5", "manufacturer"),
+  multiplication: componentPartNumberValidation("4×5", "manufacturer"),
+  letterX: componentPartNumberValidation("4X5", "manufacturer"),
   invalidSlash: componentPartNumberValidation("4/5", "manufacturer"),
   periodKey: normalizedComponentPartKey("4.5"),
-  integerKey: normalizedComponentPartKey("45")
+  integerKey: normalizedComponentPartKey("45"),
+  multiplicationKey: normalizedComponentPartKey("4×5"),
+  letterXKey: normalizedComponentPartKey("4X5")
 };`, validationSandbox);
 if (validationSandbox.validationResults.period.errors.length || validationSandbox.validationResults.period.value !== "4.5" ||
     validationSandbox.validationResults.fullWidthPeriod.errors.length || validationSandbox.validationResults.fullWidthPeriod.value !== "4.5" ||
-    validationSandbox.validationResults.comma.errors.length || !validationSandbox.validationResults.invalidSlash.errors.length ||
-    validationSandbox.validationResults.periodKey !== "4.5" || validationSandbox.validationResults.integerKey !== "45") {
-  throw new Error("component manufacturer part numbers must allow periods and commas while rejecting unsupported punctuation");
+    validationSandbox.validationResults.comma.errors.length || validationSandbox.validationResults.multiplication.errors.length ||
+    validationSandbox.validationResults.letterX.errors.length || !validationSandbox.validationResults.invalidSlash.errors.length ||
+    validationSandbox.validationResults.periodKey !== "4.5" || validationSandbox.validationResults.integerKey !== "45" ||
+    validationSandbox.validationResults.multiplicationKey !== "4×5" || validationSandbox.validationResults.letterXKey !== "4X5" ||
+    validationSandbox.validationResults.multiplicationKey === validationSandbox.validationResults.letterXKey) {
+  throw new Error("component manufacturer part numbers must distinguish multiplication signs from the letter X");
 }
 
 const lookupSource = functionSource("lookupComponentPartNumberPair", "async function reconcileComponentAddPartNumbers");
-if (!lookupSource.includes('/[.,]/.test(String(mfrValue || ""))')) {
-  throw new Error("period or comma part numbers must bypass punctuation-stripping candidate replacement");
+if (!lookupSource.includes('/[.,×]/.test(String(mfrValue || ""))')) {
+  throw new Error("period, comma, or multiplication-sign part numbers must bypass punctuation-stripping candidate replacement");
 }
 
 const inputEventSource = sourceBetween("function bindComponentPartNumberInputEvents", "function componentPartNumberSpec");
@@ -101,7 +108,7 @@ if (!addSource.includes('normalizeComponentManufacturerInput(currentProduct.manu
 const values = {
   "component-add-name": "B接点",
   "component-add-mfr": "",
-  "component-add-mfr-pn": "4.5",
+  "component-add-mfr-pn": "4×5",
   "component-add-genuine-pn": "",
   "component-add-position": "",
   "component-add-qty": "1",
@@ -196,7 +203,7 @@ vm.runInNewContext(`${addSource}; result = addAssemblyComponentForCurrent;`, san
   }
   if (rpcCall.payload.target_manufacturer !== "UNKNOWN" ||
       rpcCall.payload.target_manufacturer_part_number !== "SM-760-04" ||
-      rpcCall.payload.component_manufacturer_part_number !== "4.5") {
+      rpcCall.payload.component_manufacturer_part_number !== "4×5") {
     throw new Error("manual component add must preserve ASSY and component part numbers while defaulting the ASSY manufacturer");
   }
   if (elements["component-add-error"].textContent || alertMessage) {
