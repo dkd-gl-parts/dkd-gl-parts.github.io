@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const vm = require("vm");
 
 const root = path.resolve(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
@@ -33,10 +34,45 @@ const openPanelSource = sourceBetween("function openPanel", "async function open
 if (!openPanelSource.includes('setCspStyle(document.getElementById("panel-inner"), "display", "grid")')) {
   throw new Error("sales product workspace must open as a grid");
 }
+if (!openPanelSource.includes("isSalesHiddenDaikoProduct(currentProduct)")) {
+  throw new Error("direct sales-detail opening must reject hidden Daiko products");
+}
+
+const daikoVisibilitySource = sourceBetween("var salesDaikoVisibilityCache", "function defaultCustomerDisplaySettings");
+const daikoSandbox = {
+  productDkdId: (product) => product && product.dkd_shohin_id,
+  isDksManagedManufacturer: (value) => /^(?:大光|大光サービス|大光電機|DAIKO|DKS)$/i.test(String(value || "")),
+  filterVisibleProducts: (products) => products
+};
+vm.createContext(daikoSandbox);
+vm.runInContext(`${daikoVisibilitySource}; this.visibilityApi = { isSalesHiddenDaikoProduct, filterSalesVisibleProducts };`, daikoSandbox);
+const visibilityApi = daikoSandbox.visibilityApi;
+[
+  { row: { dkd_shohin_id: 1, manufacturer: "大光", manufacturer_part_number: "X1" }, hidden: true },
+  { row: { dkd_shohin_id: 2, manufacturer: "DENSO", manufacturer_part_number: "STDK87538" }, hidden: true },
+  { row: { dkd_shohin_id: 3, manufacturer: "DENSO", manufacturer_part_number: "ALDK00079" }, hidden: true },
+  { row: { dkd_shohin_id: 4, manufacturer: "DENSO", manufacturer_part_number: "PREFIXALDK00079", daiko_part_number: "ALDK00079" }, hidden: true },
+  { row: { dkd_shohin_id: 5, manufacturer: "DENSO", manufacturer_part_number: "102211-6240", daiko_part_number: "ALDK00079" }, hidden: false }
+].forEach(({ row, hidden }) => {
+  if (visibilityApi.isSalesHiddenDaikoProduct(row) !== hidden) {
+    throw new Error(`Daiko sales visibility classification failed for ${row.manufacturer_part_number}`);
+  }
+});
+if (visibilityApi.filterSalesVisibleProducts([
+  { dkd_shohin_id: 6, manufacturer: "大光", manufacturer_part_number: "X2" },
+  { dkd_shohin_id: 7, manufacturer: "DENSO", manufacturer_part_number: "102211-6240" }
+]).length !== 1) {
+  throw new Error("sales results must remove Daiko products without affecting external products");
+}
 
 const searchResultSource = sourceBetween("function render()", "function openPanel");
 if (!searchResultSource.includes("renderProductKindPills(kindSummary, { compact: true })")) {
   throw new Error("search result product-kind labels must remain compact");
+}
+
+const productSearchSource = sourceBetween("async function runProductSearch(options)", "function waitForProductSearchEnrichmentDelay");
+if ((productSearchSource.match(/filterSalesVisibleProducts\(rawProducts\)/g) || []).length < 2) {
+  throw new Error("sales search must filter both category pages and part-number results");
 }
 if (searchResultSource.includes("renderProductKindPills(kindSummary, { compact: true, detail: true })")) {
   throw new Error("search result product-kind labels must not repeat stock quantities");
@@ -83,6 +119,15 @@ if (!vehicleSource.includes('document.getElementById("detail-vehicle-tab-content
 const compatibleSource = sourceBetween("function renderKikanPartsList", "async function loadKikan");
 if (!compatibleSource.includes('updateSalesDetailTabCount("compatible", parts_list.length)')) {
   throw new Error("compatible parts must update their tab count");
+}
+if (!compatibleSource.includes("filterSalesVisibleProducts(parts_list || [])")) {
+  throw new Error("cached compatible rows must not render Daiko products");
+}
+
+const compatibleLoadSource = sourceBetween("async function loadKikan(dkdShohinId", "function isImageVisibilitySchemaError");
+if (!compatibleLoadSource.includes("await hydrateSalesDaikoVisibility(parts_list)") ||
+    !compatibleLoadSource.includes("parts_list = filterSalesVisibleProducts(parts_list)")) {
+  throw new Error("compatible rows must resolve and apply Daiko visibility before rendering");
 }
 
 [
