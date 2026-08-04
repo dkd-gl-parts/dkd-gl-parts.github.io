@@ -109,7 +109,9 @@ assert(app.includes('finishedLabelSearchInput.addEventListener("beforeinput"') &
 assert(app.includes("deleteFinishedLabelSearchKey(finishedLabelSearchInput, deleteDirection)") && app.includes('e.key === "Backspace"'), "finished-label search does not commit Backspace and Delete operations");
 assert(/restoreFinishedLabelSearchCommittedInput\(\);\r?\n\s+releaseFinishedLabelSearchCompositionSuppression\(80\);/.test(app), "IME composition completion can duplicate a directly inserted character");
 assert(/@page\s*{[^}]*size:\s*45mm\s+20mm/i.test(printCss), "print page is not fixed at 45x20mm");
-assert(/\.serial-label\s*{[^}]*width:\s*45mm;[^}]*height:\s*20mm;/i.test(printCss), "label dimensions are not exact");
+assert(/\.serial-label\s*{[^}]*width:\s*45mm;[^}]*height:\s*19\.4mm;/i.test(printCss), "finished-label safe print frame is not fixed within the 45x20mm page");
+assert(/@media\s+print\s*{[\s\S]*?\.serial-label\s*{[^}]*transform:\s*translateY\(\.6mm\)/i.test(printCss), "finished-label content is not offset below the printer's clipped top edge");
+assert(/\.serial-label-qr\s*{[^}]*width:\s*12\.4mm;[^}]*height:\s*12\.4mm;/i.test(printCss), "finished-label QR is not square inside the safe print area");
 assert(/\.serial-label-field-name\s*{[^}]*font-size:/i.test(printCss), "print field hierarchy is missing");
 const componentLoadSource = functionSource("loadFinishedLabelComponentCandidates");
 assert(componentLoadSource.includes('.from("assembly_component_usage_details")'), "product-scoped registered components are not loaded");
