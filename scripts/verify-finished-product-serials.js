@@ -106,6 +106,7 @@ assert(app.includes('if (finishedLabelPrintMode === "box") searchFinishedLabelPr
 assert(app.includes('finishedLabelSearchInput.addEventListener("compositionend"') && app.includes('finishedLabelSearchInput.addEventListener("input"'), "finished-label search does not normalize typing and IME-confirmed input");
 assert(app.includes('finishedLabelSearchInput.addEventListener("focus"') && app.includes("finishedLabelAsciiKeyFromEvent(e)"), "finished-label search does not switch to direct ASCII handling on focus");
 assert(app.includes('finishedLabelSearchInput.addEventListener("beforeinput"') && app.includes("finishedLabelSearchSuppressComposition"), "IME follow-up input is not suppressed after direct ASCII insertion");
+assert(app.includes("deleteFinishedLabelSearchKey(finishedLabelSearchInput, deleteDirection)") && app.includes('e.key === "Backspace"'), "finished-label search does not commit Backspace and Delete operations");
 assert(/restoreFinishedLabelSearchCommittedInput\(\);\r?\n\s+releaseFinishedLabelSearchCompositionSuppression\(80\);/.test(app), "IME composition completion can duplicate a directly inserted character");
 assert(/@page\s*{[^}]*size:\s*45mm\s+20mm/i.test(printCss), "print page is not fixed at 45x20mm");
 assert(/\.serial-label\s*{[^}]*width:\s*45mm;[^}]*height:\s*20mm;/i.test(printCss), "label dimensions are not exact");
@@ -219,7 +220,7 @@ assert(searchInputSandbox.normalizeSearch(" １０４２１０―１２３４ ab
 
 const directKeySandbox = {};
 vm.createContext(directKeySandbox);
-vm.runInContext(`${functionSource("finishedLabelAsciiKeyFromEvent")}; ${functionSource("insertFinishedLabelAsciiKey")}; this.asciiKey = finishedLabelAsciiKeyFromEvent; this.insertKey = insertFinishedLabelAsciiKey;`, directKeySandbox);
+vm.runInContext(`${functionSource("finishedLabelAsciiKeyFromEvent")}; ${functionSource("insertFinishedLabelAsciiKey")}; ${functionSource("deleteFinishedLabelSearchKey")}; this.asciiKey = finishedLabelAsciiKeyFromEvent; this.insertKey = insertFinishedLabelAsciiKey; this.deleteKey = deleteFinishedLabelSearchKey;`, directKeySandbox);
 assert(directKeySandbox.asciiKey({ code: "KeyE", key: "Process", isComposing: true }) === "E", "IME-active E key is not handled as direct half-width E");
 assert(directKeySandbox.asciiKey({ code: "KeyA", key: "あ", isComposing: true }) === "A", "IME-active A key is not handled as direct half-width A");
 assert(directKeySandbox.asciiKey({ code: "Digit5" }) === "5", "top-row number key is not handled as direct half-width input");
@@ -237,6 +238,12 @@ const directInput = {
 };
 directKeySandbox.insertKey(directInput, "A");
 assert(directInput.value === "GA-0001" && directInput.selectionStart === 2, "direct ASCII insertion does not preserve selection and caret behavior");
+directKeySandbox.deleteKey(directInput, "backward");
+assert(directInput.value === "G-0001" && directInput.selectionStart === 1, "backspace does not persistently delete the preceding search character");
+directInput.selectionStart = 1;
+directInput.selectionEnd = 3;
+directKeySandbox.deleteKey(directInput, "forward");
+assert(directInput.value === "G001" && directInput.selectionStart === 1, "delete does not remove the selected search range");
 
 const committedInputSandbox = {};
 vm.createContext(committedInputSandbox);

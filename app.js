@@ -4458,7 +4458,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.661";
+var APP_VERSION       = "v1.1.662";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -17346,6 +17346,31 @@ function insertFinishedLabelAsciiKey(input, value) {
     var nextCursor = start + value.length;
     input.setSelectionRange(nextCursor, nextCursor);
   }
+}
+
+function deleteFinishedLabelSearchKey(input, direction) {
+  if (!input || (direction !== "backward" && direction !== "forward")) return false;
+  var value = String(input.value || "");
+  var start = typeof input.selectionStart === "number" ? input.selectionStart : value.length;
+  var end = typeof input.selectionEnd === "number" ? input.selectionEnd : start;
+  var deleteStart = start;
+  var deleteEnd = end;
+  if (start === end) {
+    if (direction === "backward") {
+      if (start <= 0) return false;
+      deleteStart = start - 1;
+    } else {
+      if (end >= value.length) return false;
+      deleteEnd = end + 1;
+    }
+  }
+  if (typeof input.setRangeText === "function") {
+    input.setRangeText("", deleteStart, deleteEnd, "start");
+    return true;
+  }
+  input.value = value.slice(0, deleteStart) + value.slice(deleteEnd);
+  if (typeof input.setSelectionRange === "function") input.setSelectionRange(deleteStart, deleteStart);
+  return true;
 }
 
 function captureFinishedLabelSearchInputState(input) {
@@ -36823,6 +36848,21 @@ finishedLabelSearchInput.addEventListener("keydown", function(e) {
     e.preventDefault();
     insertFinishedLabelAsciiKey(finishedLabelSearchInput, asciiKey);
     rememberFinishedLabelSearchInput();
+    finishedLabelSearchSuppressComposition = true;
+    releaseFinishedLabelSearchCompositionSuppression(1000);
+    return;
+  }
+  var deleteDirection = !e.ctrlKey && !e.metaKey && !e.altKey
+    ? (e.key === "Backspace" ? "backward" : (e.key === "Delete" ? "forward" : ""))
+    : "";
+  if (deleteDirection) {
+    clearFinishedLabelSearchSuppressTimer();
+    if (finishedLabelSearchIsComposing || finishedLabelSearchSuppressComposition) restoreFinishedLabelSearchCommittedInput();
+    e.preventDefault();
+    deleteFinishedLabelSearchKey(finishedLabelSearchInput, deleteDirection);
+    normalizeFinishedLabelSearchInput(finishedLabelSearchInput);
+    rememberFinishedLabelSearchInput();
+    finishedLabelSearchIsComposing = false;
     finishedLabelSearchSuppressComposition = true;
     releaseFinishedLabelSearchCompositionSuppression(1000);
     return;
