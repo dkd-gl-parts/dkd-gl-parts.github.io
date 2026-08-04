@@ -4458,7 +4458,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.659";
+var APP_VERSION       = "v1.1.660";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -18460,13 +18460,20 @@ function finishedLabelRecordFromHistory(row, issued) {
 
 async function reprintFinishedLabelIssue(row, labelType) {
   labelType = labelType === "box" ? "box" : "product";
-  var reason = window.prompt(t("finished_label_reprint_reason"), t("finished_label_reprint_default_reason"));
-  if (reason === null) return;
-  reason = String(reason || "").trim();
-  if (!reason) { alert(t("finished_label_reprint_reason")); return; }
   var printWindow = window.open("", "_blank");
   if (!printWindow) {
     alert(t("finished_label_popup_blocked"));
+    return;
+  }
+  var reason = window.prompt(t("finished_label_reprint_reason"), t("finished_label_reprint_default_reason"));
+  if (reason === null) {
+    if (!printWindow.closed) printWindow.close();
+    return;
+  }
+  reason = String(reason || "").trim();
+  if (!reason) {
+    if (!printWindow.closed) printWindow.close();
+    alert(t("finished_label_reprint_reason"));
     return;
   }
   printWindow.document.open();
@@ -18500,17 +18507,24 @@ async function reprintFinishedLabelIssue(row, labelType) {
 async function printFinishedBoxLabelIssue(row) {
   if (!row || !Array.isArray(row.finishedUnits) || !row.finishedUnits.length) return;
   var eventType = row.boxLabelPrinted ? "reprint" : "initial";
-  var reason = null;
-  if (eventType === "reprint") {
-    reason = window.prompt(t("finished_label_reprint_reason"), t("finished_label_reprint_default_reason"));
-    if (reason === null) return;
-    reason = String(reason || "").trim();
-    if (!reason) { alert(t("finished_label_reprint_reason")); return; }
-  }
   var printWindow = window.open("", "_blank");
   if (!printWindow) {
     alert(t("finished_label_popup_blocked"));
     return;
+  }
+  var reason = null;
+  if (eventType === "reprint") {
+    reason = window.prompt(t("finished_label_reprint_reason"), t("finished_label_reprint_default_reason"));
+    if (reason === null) {
+      if (!printWindow.closed) printWindow.close();
+      return;
+    }
+    reason = String(reason || "").trim();
+    if (!reason) {
+      if (!printWindow.closed) printWindow.close();
+      alert(t("finished_label_reprint_reason"));
+      return;
+    }
   }
   var boxPreview = document.getElementById("btn-finished-box-label-preview");
   if (boxPreview) boxPreview.disabled = true;

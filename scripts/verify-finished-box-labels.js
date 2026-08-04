@@ -91,8 +91,14 @@ assert(app.includes('if (finishedLabelPrintMode === "box") searchFinishedLabelPr
 const reprintSource = functionSource("reprintFinishedLabelIssue");
 assert(reprintSource.includes('labelType === "box"'), "product and box reprints are not distinguished");
 assert(reprintSource.includes('sb.rpc("record_finished_product_label_print"'), "generic audited print RPC is not used for reprints");
+assert(reprintSource.indexOf('window.open("", "_blank")') < reprintSource.indexOf('window.prompt('), "finished-label reprint opens its print tab after the browser user action expires");
+const reprintCancelIndex = reprintSource.indexOf("if (reason === null)");
+assert(reprintCancelIndex >= 0 && reprintSource.indexOf("printWindow.close()", reprintCancelIndex) > reprintCancelIndex, "cancelled finished-label reprints leave an empty print tab open");
 const boxPrintSource = functionSource("printFinishedBoxLabelIssue");
 assert(boxPrintSource.includes('row.boxLabelPrinted ? "reprint" : "initial"'), "box initial print and reprint are not distinguished");
+assert(boxPrintSource.indexOf('window.open("", "_blank")') < boxPrintSource.indexOf('window.prompt('), "box-label reprint opens its print tab after the browser user action expires");
+const boxCancelIndex = boxPrintSource.indexOf("if (reason === null)");
+assert(boxCancelIndex >= 0 && boxPrintSource.indexOf("printWindow.close()", boxCancelIndex) > boxCancelIndex, "cancelled box-label reprints leave an empty print tab open");
 assert(boxPrintSource.includes('target_label_target: "box"'), "box print audit target is missing");
 assert(boxPrintSource.includes('target_print_event_type: eventType'), "box print event type is not recorded");
 assert(reprintSource.includes('event_type: labelType === "box" ? "box_label_reprint" : "product_label_reprint"'), "reprint audit type is missing");
