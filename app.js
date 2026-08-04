@@ -4458,7 +4458,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.658";
+var APP_VERSION       = "v1.1.659";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -18580,9 +18580,23 @@ function finishedProductSerialQrDataUrl(serial) {
   throw new Error("QR code generation failed");
 }
 
+function closeFinishedLabelPrintWindow(win) {
+  if (!win || win.closed) return;
+  try {
+    win.close();
+  } catch (e) {
+    console.warn("label print window close failed", e);
+  }
+}
+
 function printFinishedLabelWindow(win) {
   if (!win || win.closed) return false;
   try {
+    if (typeof win.addEventListener === "function") {
+      win.addEventListener("afterprint", function() {
+        closeFinishedLabelPrintWindow(win);
+      }, { once: true });
+    }
     win.focus();
     win.print();
     return true;

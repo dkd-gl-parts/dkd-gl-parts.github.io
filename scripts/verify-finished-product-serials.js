@@ -338,6 +338,8 @@ assert(!output.includes("onclick="), "finished-label print window uses a CSP-blo
 let printCount = 0;
 let focusCount = 0;
 let printClickHandler = null;
+let runtimeAfterPrintHandler = null;
+let runtimeCloseCount = 0;
 const printRuntimeButton = {
   bound: "",
   getAttribute(name) {
@@ -358,8 +360,16 @@ const printRuntimeSandbox = {
     }
   },
   window: {
+    closed: false,
     focus() { focusCount += 1; },
-    print() { printCount += 1; }
+    print() { printCount += 1; },
+    addEventListener(type, handler) {
+      if (type === "afterprint") runtimeAfterPrintHandler = handler;
+    },
+    close() {
+      runtimeCloseCount += 1;
+      this.closed = true;
+    }
   }
 };
 vm.createContext(printRuntimeSandbox);
@@ -368,19 +378,36 @@ assert(typeof printClickHandler === "function", "finished-label print button is 
 assert(printRuntimeButton.bound === "true", "finished-label print runtime does not mark the button as bound");
 printClickHandler();
 assert(printCount === 1 && focusCount === 1, "finished-label print button does not invoke printing");
+assert(typeof runtimeAfterPrintHandler === "function", "finished-label print runtime does not watch for print completion");
+runtimeAfterPrintHandler();
+assert(runtimeCloseCount === 1 && printRuntimeSandbox.window.closed, "finished-label print runtime does not close after printing or cancellation");
 
+let directAfterPrintHandler = null;
+let directCloseCount = 0;
 const directPrintWindow = {
   closed: false,
   focus() { focusCount += 1; },
-  print() { printCount += 1; }
+  print() { printCount += 1; },
+  addEventListener(type, handler) {
+    if (type === "afterprint") directAfterPrintHandler = handler;
+  },
+  close() {
+    directCloseCount += 1;
+    this.closed = true;
+  }
 };
 const directPrintSandbox = { console: { warn() {} } };
 vm.createContext(directPrintSandbox);
-vm.runInContext(`${functionSource("printFinishedLabelWindow")}; ${functionSource("bindFinishedLabelPrintButton")}; this.printWindow = printFinishedLabelWindow; this.bindButton = bindFinishedLabelPrintButton;`, directPrintSandbox);
+vm.runInContext(`${functionSource("closeFinishedLabelPrintWindow")}; ${functionSource("printFinishedLabelWindow")}; ${functionSource("bindFinishedLabelPrintButton")}; this.printWindow = printFinishedLabelWindow; this.bindButton = bindFinishedLabelPrintButton;`, directPrintSandbox);
 assert(directPrintSandbox.printWindow(directPrintWindow), "finished-label window print request is rejected");
 assert(printCount === 2 && focusCount === 2, "finished-label registration does not invoke the print dialog directly");
+assert(typeof directAfterPrintHandler === "function", "finished-label registration does not watch for print completion");
+directAfterPrintHandler();
+assert(directCloseCount === 1 && directPrintWindow.closed, "finished-label registration does not close the print tab after printing or cancellation");
 
 let parentClickHandler = null;
+let parentAfterPrintHandler = null;
+let parentCloseCount = 0;
 const parentBoundButton = {
   bound: "",
   getAttribute() { return this.bound; },
@@ -391,12 +418,23 @@ const parentBoundWindow = {
   closed: false,
   document: { getElementById() { return parentBoundButton; } },
   focus() { focusCount += 1; },
-  print() { printCount += 1; }
+  print() { printCount += 1; },
+  addEventListener(type, handler) {
+    if (type === "afterprint") parentAfterPrintHandler = handler;
+  },
+  close() {
+    parentCloseCount += 1;
+    this.closed = true;
+  }
 };
 assert(directPrintSandbox.bindButton(parentBoundWindow), "parent window does not bind the label print action");
 assert(typeof parentClickHandler === "function" && parentBoundButton.bound === "true", "parent-bound print action is missing");
 parentClickHandler();
 assert(printCount === 3 && focusCount === 3, "parent-bound print button does not invoke printing");
+assert(typeof parentAfterPrintHandler === "function", "parent-bound print button does not watch for print completion");
+parentAfterPrintHandler();
+assert(parentCloseCount === 1 && parentBoundWindow.closed, "parent-bound print button does not close the print tab after printing or cancellation");
+assert(functionSource("printFinishedLabelWindow").includes('"afterprint"'), "finished-label printing does not close its tab after the print dialog");
 assert(functionSource("printFinishedLabelWindowWhenReady").includes('win.addEventListener("load"'), "automatic printing does not wait for print assets");
 assert(functionSource("printFinishedLabelWindowWhenReady").includes("win.document.fonts.ready"), "automatic printing does not wait for fonts");
 assert(functionSource("openFinishedLabelPrintPreview").includes("printFinishedLabelWindowWhenReady(win)"), "finished-label printing starts before assets are ready");
