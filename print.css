@@ -49,10 +49,10 @@ body {
 
 .serial-label {
   width: 45mm;
-  height: 19.4mm;
+  height: 18.5mm;
   overflow: hidden;
   border: .25mm solid #000;
-  padding: 1.15mm .75mm .25mm;
+  padding: .9mm .75mm .25mm;
   background: #fff;
   break-after: page;
   page-break-after: always;
@@ -67,35 +67,35 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 2.95mm;
+  height: 2.75mm;
   border-bottom: .22mm solid #000;
   line-height: 1;
 }
 
 .serial-label-head strong {
-  font-size: 7.4pt;
+  font-size: 7pt;
   font-weight: 900;
   letter-spacing: .11em;
 }
 
 .serial-label-head span {
-  font-size: 4.4pt;
+  font-size: 4.2pt;
   font-weight: 900;
   letter-spacing: .08em;
 }
 
 .serial-label-body {
   display: grid;
-  grid-template-columns: 13mm minmax(0, 1fr);
-  gap: .75mm;
+  grid-template-columns: 12.5mm minmax(0, 1fr);
+  gap: .7mm;
   align-items: center;
-  height: 14.45mm;
+  height: 14mm;
 }
 
 .serial-label-qr {
   display: block;
-  width: 12.4mm;
-  height: 12.4mm;
+  width: 11.9mm;
+  height: 11.9mm;
   image-rendering: pixelated;
 }
 
@@ -164,7 +164,7 @@ body {
 
   .serial-label {
     margin: 0;
-    transform: translateY(.6mm);
+    transform: translateY(1.5mm);
     transform-origin: top left;
   }
 }
