@@ -121,6 +121,7 @@ const reprintFlowSandbox = {
   window: {
     open() { reprintFlowEvents.push("open"); return reprintFlowChild; }
   },
+  finishedLabelUsesRemotePrintQueue() { return false; },
   t(key) { return key; },
   alert() {},
   closeFinishedLabelReprintDialog() { reprintFlowEvents.push("close-dialog"); },
@@ -152,6 +153,7 @@ assert(boxSortSandbox.sortProducts([{ id: "none" }, { id: "old" }, { id: "recent
 const printButton = { disabled: true, textContent: "", title: "" };
 const printButtonSandbox = {
   document: { getElementById(id) { return id === "btn-finished-box-label-preview" ? printButton : null; } },
+  finishedLabelUsesRemotePrintQueue() { return false; },
   t(key) { return key; }
 };
 vm.createContext(printButtonSandbox);

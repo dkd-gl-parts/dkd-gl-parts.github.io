@@ -358,6 +358,46 @@ var TRANSLATIONS = {
     finished_label_box_mode_name: "箱シール",
     finished_label_box_mode_desc: "発行済みの完品登録から製造シリアルを選択して印刷",
     finished_label_box_mode_open: "箱シール印刷画面へ →",
+    finished_label_station_mode_name: "Windows印刷端末",
+    finished_label_station_mode_desc: "スマホから送信された印刷待ちをBrotherドライバーへ出力",
+    finished_label_station_mode_open: "印刷端末画面へ →",
+    finished_label_station_badge: "Windows / TD-4420TN 印刷端末",
+    finished_label_station_title: "スマホ印刷待ち",
+    finished_label_station_desc: "この画面をTD-4420TNのBrotherドライバーが設定されたWindows PCで使用します。",
+    finished_label_station_stopped: "停止中",
+    finished_label_station_waiting: "印刷待ちを監視中",
+    finished_label_station_printing: "印刷画面へ送信中",
+    finished_label_station_error: "エラー",
+    finished_label_station_media: "現在セットしている用紙",
+    finished_label_station_media_product: "完品シール 45×20mm",
+    finished_label_station_media_box: "箱シール 80×60mm",
+    finished_label_station_printer_code: "印刷先コード",
+    finished_label_station_start: "印刷待ちの受信を開始",
+    finished_label_station_stop: "停止",
+    finished_label_station_history: "印刷ジョブ履歴",
+    finished_label_station_history_empty: "印刷ジョブはありません。",
+    finished_label_station_kiosk_note: "自動印刷する場合は、EdgeまたはChromeをキオスク印刷モードで起動してください。通常起動では印刷確認画面が表示されます。",
+    finished_label_station_started: "受信を開始しました。印刷待ちが届くと、登録順に印刷画面へ送信します。",
+    finished_label_station_idle: "印刷待ちはありません。",
+    finished_label_station_sent: "{code} を印刷画面へ送信しました。",
+    finished_label_station_failed: "印刷ジョブの処理に失敗しました: {message}",
+    finished_label_station_retry: "再試行",
+    finished_label_job_status_queued: "印刷待ち",
+    finished_label_job_status_claimed: "処理中",
+    finished_label_job_status_sent: "ドライバー送信済み",
+    finished_label_job_status_error: "エラー",
+    finished_label_job_status_cancelled: "取消",
+    finished_label_mobile_rule_title: "スマホ印刷",
+    finished_label_mobile_rule_desc: "登録後、印刷待ちへ送信します。Windows印刷端末からTD-4420TNへ出力してください。",
+    finished_label_mobile_issue_save: "登録・送信",
+    finished_label_mobile_queueing: "印刷待ちへ送信しています...",
+    finished_label_mobile_queue_saved: "製造シリアルを発行して完品在庫へ登録し、印刷待ちへ送信しました。",
+    finished_label_mobile_queue_already: "このシールはすでに印刷待ちです。二重送信はしていません。",
+    finished_label_mobile_queue_failed: "製造シリアルと完品在庫は登録しましたが、印刷待ちの送信に失敗しました。印刷待ちへ再送してください。",
+    finished_label_mobile_queue_retry: "印刷待ちへ再送",
+    finished_label_mobile_print_queue_saved: "印刷待ちへ送信しました。Windows印刷端末から出力してください。",
+    finished_label_mobile_print_queue_failed: "印刷履歴は登録しましたが、印刷待ちの送信に失敗しました。もう一度送信してください。",
+    finished_label_mobile_queued_button: "印刷待ち登録済",
     finished_label_mode_back: "← 印刷画面を選び直す",
     finished_label_product_screen_title: "完品シール印刷・完品登録",
     finished_box_label_screen_title: "箱シール印刷",
@@ -1807,6 +1847,46 @@ var TRANSLATIONS = {
     finished_label_box_mode_name: "Box Label",
     finished_label_box_mode_desc: "Select a manufacturing serial from an existing finished-unit registration and print",
     finished_label_box_mode_open: "Open Box Label Screen →",
+    finished_label_station_mode_name: "Windows Print Station",
+    finished_label_station_mode_desc: "Send mobile print jobs to the Brother driver",
+    finished_label_station_mode_open: "Open Print Station →",
+    finished_label_station_badge: "Windows / TD-4420TN Print Station",
+    finished_label_station_title: "Mobile Print Queue",
+    finished_label_station_desc: "Use this screen on the Windows PC configured with the TD-4420TN Brother driver.",
+    finished_label_station_stopped: "Stopped",
+    finished_label_station_waiting: "Watching print queue",
+    finished_label_station_printing: "Sending to print dialog",
+    finished_label_station_error: "Error",
+    finished_label_station_media: "Media currently loaded",
+    finished_label_station_media_product: "Finished Label 45×20 mm",
+    finished_label_station_media_box: "Box Label 80×60 mm",
+    finished_label_station_printer_code: "Printer Code",
+    finished_label_station_start: "Start Receiving Jobs",
+    finished_label_station_stop: "Stop",
+    finished_label_station_history: "Print Job History",
+    finished_label_station_history_empty: "No print jobs.",
+    finished_label_station_kiosk_note: "For automatic printing, start Edge or Chrome in kiosk-printing mode. A print confirmation dialog appears in normal mode.",
+    finished_label_station_started: "Receiving started. Queued labels are sent to the print dialog in order.",
+    finished_label_station_idle: "No labels are waiting.",
+    finished_label_station_sent: "{code} was sent to the print dialog.",
+    finished_label_station_failed: "Print job failed: {message}",
+    finished_label_station_retry: "Retry",
+    finished_label_job_status_queued: "Queued",
+    finished_label_job_status_claimed: "Processing",
+    finished_label_job_status_sent: "Sent to driver",
+    finished_label_job_status_error: "Error",
+    finished_label_job_status_cancelled: "Cancelled",
+    finished_label_mobile_rule_title: "Mobile Printing",
+    finished_label_mobile_rule_desc: "After registration, the label is queued. Print it from the Windows TD-4420TN station.",
+    finished_label_mobile_issue_save: "Register & Send",
+    finished_label_mobile_queueing: "Sending to the print queue...",
+    finished_label_mobile_queue_saved: "Manufacturing serials and finished stock were registered, and the labels were queued.",
+    finished_label_mobile_queue_already: "This label is already queued. No duplicate job was created.",
+    finished_label_mobile_queue_failed: "Manufacturing serials and stock were registered, but the print job could not be queued. Send it to the print queue again.",
+    finished_label_mobile_queue_retry: "Retry Queue",
+    finished_label_mobile_print_queue_saved: "Sent to the print queue. Output it from the Windows print station.",
+    finished_label_mobile_print_queue_failed: "The print history was recorded, but the job could not be queued. Send it again.",
+    finished_label_mobile_queued_button: "Queued",
     finished_label_mode_back: "← Choose Another Print Screen",
     finished_label_product_screen_title: "Finished Label Printing / Registration",
     finished_box_label_screen_title: "Box Label Printing",
@@ -3264,6 +3344,46 @@ var TRANSLATIONS = {
     finished_label_box_mode_name: "箱标签",
     finished_label_box_mode_desc: "从已发行的完品登记中选择制造序列号并打印",
     finished_label_box_mode_open: "进入箱标签打印画面 →",
+    finished_label_station_mode_name: "Windows打印终端",
+    finished_label_station_mode_desc: "将手机发送的打印任务输出到Brother驱动程序",
+    finished_label_station_mode_open: "进入打印终端 →",
+    finished_label_station_badge: "Windows / TD-4420TN 打印终端",
+    finished_label_station_title: "手机打印队列",
+    finished_label_station_desc: "请在已设置TD-4420TN Brother驱动程序的Windows电脑上使用此画面。",
+    finished_label_station_stopped: "已停止",
+    finished_label_station_waiting: "正在监视打印队列",
+    finished_label_station_printing: "正在发送到打印画面",
+    finished_label_station_error: "错误",
+    finished_label_station_media: "当前装入的纸张",
+    finished_label_station_media_product: "完品标签 45×20mm",
+    finished_label_station_media_box: "箱标签 80×60mm",
+    finished_label_station_printer_code: "打印目标代码",
+    finished_label_station_start: "开始接收打印任务",
+    finished_label_station_stop: "停止",
+    finished_label_station_history: "打印任务历史",
+    finished_label_station_history_empty: "没有打印任务。",
+    finished_label_station_kiosk_note: "如需自动打印，请以自助打印模式启动Edge或Chrome。普通模式下会显示打印确认画面。",
+    finished_label_station_started: "已开始接收。打印任务到达后将按登记顺序发送到打印画面。",
+    finished_label_station_idle: "没有等待打印的标签。",
+    finished_label_station_sent: "已将 {code} 发送到打印画面。",
+    finished_label_station_failed: "打印任务处理失败：{message}",
+    finished_label_station_retry: "重试",
+    finished_label_job_status_queued: "等待打印",
+    finished_label_job_status_claimed: "处理中",
+    finished_label_job_status_sent: "已发送到驱动程序",
+    finished_label_job_status_error: "错误",
+    finished_label_job_status_cancelled: "已取消",
+    finished_label_mobile_rule_title: "手机打印",
+    finished_label_mobile_rule_desc: "登记后将发送到打印队列。请从Windows打印终端输出到TD-4420TN。",
+    finished_label_mobile_issue_save: "登记并发送",
+    finished_label_mobile_queueing: "正在发送到打印队列...",
+    finished_label_mobile_queue_saved: "已发行制造序列号、登记完品库存并发送到打印队列。",
+    finished_label_mobile_queue_already: "此标签已在打印队列中，没有重复发送。",
+    finished_label_mobile_queue_failed: "制造序列号和完品库存已登记，但发送打印任务失败。请重新发送到打印队列。",
+    finished_label_mobile_queue_retry: "重新发送到打印队列",
+    finished_label_mobile_print_queue_saved: "已发送到打印队列。请从Windows打印终端输出。",
+    finished_label_mobile_print_queue_failed: "打印历史已登记，但发送到打印队列失败。请重新发送。",
+    finished_label_mobile_queued_button: "已加入打印队列",
     finished_label_mode_back: "← 重新选择打印画面",
     finished_label_product_screen_title: "完品标签打印・完品登记",
     finished_box_label_screen_title: "箱标签打印",
@@ -4458,7 +4578,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.667";
+var APP_VERSION       = "v1.1.668";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -4587,6 +4707,12 @@ var finishedLabelHistoryRows = [];
 var finishedLabelLastIssuedRecord = null;
 var finishedLabelSelectedHistoryId = null;
 var finishedLabelPrintMode = "";
+var finishedLabelLastQueuedJob = null;
+var finishedLabelPrintStationRunning = false;
+var finishedLabelPrintStationTimer = null;
+var finishedLabelPrintStationBusy = false;
+var finishedLabelPrintStationRows = [];
+var FINISHED_LABEL_PRINT_STATION_POLL_MS = 4000;
 var finishedLabelComponentCandidates = [];
 var finishedLabelSelectedComponentIds = {};
 var finishedLabelComponentLoadSeq = 0;
@@ -17259,13 +17385,325 @@ async function enterFinishedLabelMgmt(options) {
   }
 }
 
+function isFinishedLabelMobilePrintClient() {
+  var ua = String(navigator.userAgent || "");
+  if (navigator.userAgentData && typeof navigator.userAgentData.mobile === "boolean") {
+    if (navigator.userAgentData.mobile) return true;
+  }
+  if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) return true;
+  return /Macintosh/i.test(ua) && Number(navigator.maxTouchPoints) > 1;
+}
+
+function finishedLabelUsesRemotePrintQueue() {
+  return isFinishedLabelMobilePrintClient();
+}
+
+function finishedLabelPrinterCode(labelTarget) {
+  return labelTarget === "box" ? "TD-4420TN-80X60" : "TD-4420TN-45X20";
+}
+
+function finishedLabelPrintRequestKey() {
+  if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(ch) {
+    var value = Math.floor(Math.random() * 16);
+    return (ch === "x" ? value : (value & 3) | 8).toString(16);
+  });
+}
+
+function renderFinishedLabelMobilePrintRule() {
+  var mobile = finishedLabelUsesRemotePrintQueue();
+  var activeLabelMode = finishedLabelPrintMode === "product" || finishedLabelPrintMode === "box";
+  var rule = document.getElementById("finished-label-mobile-print-rule");
+  if (rule) rule.hidden = !(mobile && activeLabelMode);
+  var save = document.getElementById("btn-finished-label-save");
+  if (save && !save.classList.contains("missing-g-number")) {
+    save.textContent = t(mobile ? "finished_label_mobile_issue_save" : "finished_label_issue_save");
+  }
+  var productPrint = document.getElementById("btn-finished-label-preview");
+  if (productPrint && mobile && finishedLabelLastQueuedJob && finishedLabelLastQueuedJob.label_target === "finished_product" && finishedLabelLastIssuedRecord && String(finishedLabelLastQueuedJob.issue_id) === String(finishedLabelLastIssuedRecord.issueId)) {
+    productPrint.textContent = t("finished_label_mobile_queued_button");
+    productPrint.disabled = true;
+  } else if (productPrint) {
+    productPrint.textContent = t(mobile && finishedLabelLastIssuedRecord ? "finished_label_mobile_queue_retry" : "finished_label_preview");
+    if (mobile) productPrint.disabled = !finishedLabelLastIssuedRecord;
+  }
+}
+
+async function enqueueFinishedLabelPrintJob(record, labelTarget, eventType, reason) {
+  labelTarget = labelTarget === "box" ? "box" : "finished_product";
+  var result = await sb.rpc("enqueue_finished_label_print_job", {
+    target_finished_label_issue_id: record.issueId,
+    target_label_target: labelTarget,
+    target_printer_code: finishedLabelPrinterCode(labelTarget),
+    target_print_event_type: eventType === "reprint" ? "reprint" : "initial",
+    target_reason: reason || null,
+    target_request_key: finishedLabelPrintRequestKey()
+  });
+  if (result.error) throw result.error;
+  finishedLabelLastQueuedJob = result.data || null;
+  renderFinishedLabelMobilePrintRule();
+  return result.data || {};
+}
+
+function finishedLabelPrintStationCode() {
+  var input = document.getElementById("finished-label-station-printer-code");
+  return String(input ? input.value : "").trim().toUpperCase();
+}
+
+function setFinishedLabelPrintStationState(state, message, messageType) {
+  var badge = document.getElementById("finished-label-station-state");
+  var messageEl = document.getElementById("finished-label-station-message");
+  var key = state === "printing"
+    ? "finished_label_station_printing"
+    : (state === "waiting" ? "finished_label_station_waiting" : (state === "error" ? "finished_label_station_error" : "finished_label_station_stopped"));
+  if (badge) {
+    badge.className = "finished-label-station-state " + state;
+    badge.textContent = t(key);
+  }
+  if (messageEl) {
+    messageEl.className = "finished-label-station-message" + (messageType ? " " + messageType : "");
+    messageEl.textContent = message || "";
+  }
+}
+
+function clearFinishedLabelPrintStationTimer() {
+  if (finishedLabelPrintStationTimer !== null) {
+    window.clearTimeout(finishedLabelPrintStationTimer);
+    finishedLabelPrintStationTimer = null;
+  }
+}
+
+function scheduleFinishedLabelPrintStation(delay) {
+  clearFinishedLabelPrintStationTimer();
+  if (!finishedLabelPrintStationRunning) return;
+  finishedLabelPrintStationTimer = window.setTimeout(processNextFinishedLabelPrintJob, Math.max(0, Number(delay) || 0));
+}
+
+function updateFinishedLabelPrintStationTarget() {
+  var target = document.getElementById("finished-label-station-target");
+  var code = document.getElementById("finished-label-station-printer-code");
+  if (!target || !code) return;
+  code.value = finishedLabelPrinterCode(target.value);
+}
+
+function finishedLabelPrintStationJobStatusKey(status) {
+  return "finished_label_job_status_" + (status || "queued");
+}
+
+function renderFinishedLabelPrintStationHistory() {
+  var host = document.getElementById("finished-label-station-history");
+  if (!host) return;
+  if (!finishedLabelPrintStationRows.length) {
+    host.innerHTML = "<div class='empty'>" + esc(t("finished_label_station_history_empty")) + "</div>";
+    return;
+  }
+  host.innerHTML = finishedLabelPrintStationRows.map(function(row) {
+    var status = String(row.status || "queued");
+    var productNo = row.product_no || row.manufacturer_part_number || row.genuine_part_number || "-";
+    var serial = row.first_serial || "-";
+    if (row.last_serial && row.last_serial !== row.first_serial) serial += " ～ " + row.last_serial;
+    var retry = status === "error"
+      ? "<button type='button' class='btn-sm-edit production-action-secondary' data-finished-label-job-retry='" + esc(String(row.id)) + "'>" + esc(t("finished_label_station_retry")) + "</button>"
+      : "";
+    return "<article class='finished-label-station-job'>" +
+      "<div class='finished-label-station-job-head'><strong>" + esc(row.issue_code || ("JOB " + row.id)) + "</strong><span class='" + esc(status) + "'>" + esc(t(finishedLabelPrintStationJobStatusKey(status))) + "</span></div>" +
+      "<div class='finished-label-station-job-main'>" + esc(productNo + " / " + serial) + "</div>" +
+      "<div class='finished-label-station-job-sub'>" + esc([row.label_format, row.print_event_type, formatDateTime(row.requested_at), "#" + row.attempt_count].filter(Boolean).join(" / ")) + "</div>" +
+      (row.last_error ? "<div class='finished-label-station-job-error'>" + esc(row.last_error) + "</div>" : "") +
+      (retry ? "<div class='finished-label-station-job-actions'>" + retry + "</div>" : "") +
+      "</article>";
+  }).join("");
+  host.querySelectorAll("[data-finished-label-job-retry]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      retryFinishedLabelPrintStationJob(Number(button.dataset.finishedLabelJobRetry));
+    });
+  });
+}
+
+async function loadFinishedLabelPrintStationHistory() {
+  var code = finishedLabelPrintStationCode();
+  if (!code) return;
+  var result = await sb.rpc("list_finished_label_print_jobs", {
+    target_printer_code: code,
+    target_limit: 30
+  });
+  if (result.error) {
+    setFinishedLabelPrintStationState("error", result.error.message || String(result.error), "error");
+    return;
+  }
+  finishedLabelPrintStationRows = Array.isArray(result.data) ? result.data : [];
+  renderFinishedLabelPrintStationHistory();
+}
+
+async function retryFinishedLabelPrintStationJob(jobId) {
+  var result = await sb.rpc("retry_finished_label_print_job", { target_job_id: jobId });
+  if (result.error) {
+    setFinishedLabelPrintStationState("error", result.error.message || String(result.error), "error");
+    return;
+  }
+  await loadFinishedLabelPrintStationHistory();
+  if (finishedLabelPrintStationRunning && !finishedLabelPrintStationBusy) scheduleFinishedLabelPrintStation(0);
+}
+
+function finishedLabelRecordFromPrintQueuePayload(payload) {
+  var issue = payload && payload.issue ? payload.issue : {};
+  var units = payload && Array.isArray(payload.units) ? payload.units : [];
+  var record = finishedLabelRecordFromHistory(issue, {
+    quantity: units.length || issue.quantity,
+    units: units
+  });
+  record.issueId = issue.id;
+  return record;
+}
+
+function buildFinishedLabelStationPrintHtml(payload) {
+  var job = payload && payload.job ? payload.job : {};
+  var record = finishedLabelRecordFromPrintQueuePayload(payload);
+  var units = Array.isArray(record.units) ? record.units : [];
+  if (!units.length) throw new Error("No manufacturing serials to print");
+  var box = job.label_target === "box";
+  var labels = units.map(function(unit) {
+    if (box) return buildFinishedBoxLabelMarkup(record, unit);
+    var productNo = unit.gltek_part_number || unit.product_no || record.gltekPartNumber || record.productNo || record.manufacturerPartNumber || record.genuinePartNumber || "-";
+    return buildFinishedLabelMarkup(unit.manufacturing_serial || "", productNo);
+  });
+  var cssUrl = new URL(box ? "box-label-print.css" : "print.css", document.baseURI);
+  cssUrl.searchParams.set("dcats_version", APP_VERSION);
+  return "<!doctype html><html lang='" + esc(currentLang) + "'><head><meta charset='utf-8'><title>D-CATS " + esc(record.issueCode || "") + "</title>" +
+    "<link rel='stylesheet' href='" + esc(cssUrl.href) + "'></head><body><main class='" + (box ? "box-product-labels" : "serial-labels") + "'>" + labels.join("") + "</main></body></html>";
+}
+
+function printFinishedLabelStationFrame(payload) {
+  return new Promise(function(resolve, reject) {
+    var frame = document.getElementById("finished-label-station-frame");
+    if (!frame) {
+      reject(new Error("Print station frame is unavailable"));
+      return;
+    }
+    var settled = false;
+    var timeoutId = null;
+    function settle(error) {
+      if (settled) return;
+      settled = true;
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+      if (error) reject(error);
+      else resolve();
+    }
+    frame.hidden = false;
+    frame.addEventListener("load", function() {
+      try {
+        var printWindow = frame.contentWindow;
+        var printDocument = frame.contentDocument;
+        if (!printWindow || !printDocument) throw new Error("Print frame could not be opened");
+        printWindow.addEventListener("afterprint", function() { settle(); }, { once: true });
+        var printNow = function() {
+          try {
+            printWindow.focus();
+            printWindow.print();
+          } catch (error) {
+            settle(error);
+          }
+        };
+        var fontsReady = printDocument.fonts && printDocument.fonts.ready;
+        if (fontsReady && typeof fontsReady.then === "function") {
+          fontsReady.then(function() { window.setTimeout(printNow, 80); }, function() { window.setTimeout(printNow, 80); });
+        } else {
+          window.setTimeout(printNow, 80);
+        }
+      } catch (error) {
+        settle(error);
+      }
+    }, { once: true });
+    timeoutId = window.setTimeout(function() {
+      settle(new Error("Print confirmation did not complete within 14 minutes"));
+    }, 14 * 60 * 1000);
+    frame.srcdoc = buildFinishedLabelStationPrintHtml(payload);
+  });
+}
+
+function resetFinishedLabelPrintStationFrame() {
+  var frame = document.getElementById("finished-label-station-frame");
+  if (!frame) return;
+  frame.hidden = true;
+  frame.removeAttribute("srcdoc");
+}
+
+async function processNextFinishedLabelPrintJob() {
+  clearFinishedLabelPrintStationTimer();
+  if (!finishedLabelPrintStationRunning || finishedLabelPrintStationBusy) return;
+  finishedLabelPrintStationBusy = true;
+  var claimedJob = null;
+  try {
+    var result = await sb.rpc("claim_finished_label_print_job", {
+      target_printer_code: finishedLabelPrintStationCode()
+    });
+    if (result.error) throw result.error;
+    if (!result.data) {
+      setFinishedLabelPrintStationState("waiting", t("finished_label_station_idle"), "");
+      return;
+    }
+    claimedJob = result.data.job || null;
+    setFinishedLabelPrintStationState("printing", claimedJob && claimedJob.printer_code ? claimedJob.printer_code : "", "");
+    await printFinishedLabelStationFrame(result.data);
+    var finishResult = await sb.rpc("finish_finished_label_print_job", {
+      target_job_id: claimedJob.id,
+      target_success: true,
+      target_error_message: null
+    });
+    if (finishResult.error) throw finishResult.error;
+    setFinishedLabelPrintStationState("waiting", tf("finished_label_station_sent", { code: claimedJob.printer_code }), "success");
+  } catch (error) {
+    if (claimedJob && claimedJob.id) {
+      var failedResult = await sb.rpc("finish_finished_label_print_job", {
+        target_job_id: claimedJob.id,
+        target_success: false,
+        target_error_message: error.message || String(error)
+      });
+      if (failedResult.error) console.warn("print job failure status update failed", failedResult.error);
+    }
+    setFinishedLabelPrintStationState("error", tf("finished_label_station_failed", { message: error.message || String(error) }), "error");
+  } finally {
+    resetFinishedLabelPrintStationFrame();
+    finishedLabelPrintStationBusy = false;
+    await loadFinishedLabelPrintStationHistory();
+    if (finishedLabelPrintStationRunning) scheduleFinishedLabelPrintStation(FINISHED_LABEL_PRINT_STATION_POLL_MS);
+  }
+}
+
+function startFinishedLabelPrintStation() {
+  if (finishedLabelPrintStationRunning) return;
+  finishedLabelPrintStationRunning = true;
+  var target = document.getElementById("finished-label-station-target");
+  var start = document.getElementById("btn-finished-label-station-start");
+  var stop = document.getElementById("btn-finished-label-station-stop");
+  if (target) target.disabled = true;
+  if (start) start.disabled = true;
+  if (stop) stop.disabled = false;
+  setFinishedLabelPrintStationState("waiting", t("finished_label_station_started"), "success");
+  scheduleFinishedLabelPrintStation(0);
+}
+
+function stopFinishedLabelPrintStation() {
+  finishedLabelPrintStationRunning = false;
+  clearFinishedLabelPrintStationTimer();
+  var target = document.getElementById("finished-label-station-target");
+  var start = document.getElementById("btn-finished-label-station-start");
+  var stop = document.getElementById("btn-finished-label-station-stop");
+  if (target) target.disabled = false;
+  if (start) start.disabled = false;
+  if (stop) stop.disabled = true;
+  if (!finishedLabelPrintStationBusy) setFinishedLabelPrintStationState("stopped", "", "");
+}
+
 function setFinishedLabelPrintMode(mode) {
-  mode = mode === "box" ? "box" : (mode === "product" ? "product" : "");
+  mode = mode === "station" ? "station" : (mode === "box" ? "box" : (mode === "product" ? "product" : ""));
   var previousMode = finishedLabelPrintMode;
   finishedLabelPrintMode = mode;
+  if (previousMode === "station" && mode !== "station") stopFinishedLabelPrintStation();
   if (!mode || (previousMode && previousMode !== mode)) {
     finishedLabelLastIssuedRecord = null;
     finishedLabelSelectedHistoryId = null;
+    finishedLabelLastQueuedJob = null;
     var productPrint = document.getElementById("btn-finished-label-preview");
     var boxPrint = document.getElementById("btn-finished-box-label-preview");
     if (productPrint) productPrint.disabled = true;
@@ -17274,12 +17712,14 @@ function setFinishedLabelPrintMode(mode) {
   }
   var hub = document.getElementById("finished-label-mode-hub");
   var workspace = document.getElementById("finished-label-workspace");
+  var station = document.getElementById("finished-label-print-station");
   if (hub) hub.hidden = !!mode;
   if (workspace) {
-    workspace.hidden = !mode;
+    workspace.hidden = mode !== "product" && mode !== "box";
     workspace.classList.toggle("is-product-mode", mode === "product");
     workspace.classList.toggle("is-box-mode", mode === "box");
   }
+  if (station) station.hidden = mode !== "station";
   document.querySelectorAll("[data-finished-label-product-only]").forEach(function(el) {
     el.hidden = mode !== "product";
   });
@@ -17293,6 +17733,14 @@ function setFinishedLabelPrintMode(mode) {
   var editorTitle = document.getElementById("finished-label-editor-title");
   if (!mode) {
     if (title) title.textContent = t("finished_label_screen_title");
+    renderFinishedLabelMobilePrintRule();
+    return;
+  }
+  if (mode === "station") {
+    if (title) title.textContent = t("finished_label_station_mode_name");
+    updateFinishedLabelPrintStationTarget();
+    loadFinishedLabelPrintStationHistory();
+    renderFinishedLabelMobilePrintRule();
     return;
   }
   var isBox = mode === "box";
@@ -17303,6 +17751,7 @@ function setFinishedLabelPrintMode(mode) {
   if (editorTitle) editorTitle.textContent = t(isBox ? "finished_box_label_issue_form" : "finished_label_issue_form");
   renderFinishedLabelHistory();
   renderFinishedLabelIssuedResult(finishedLabelLastIssuedRecord);
+  renderFinishedLabelMobilePrintRule();
 }
 
 function renderFinishedLabelEmpty() {
@@ -17803,7 +18252,9 @@ function updateFinishedLabelSaveButton(product) {
   var hasProduct = !!product;
   var missingGNumber = hasProduct && !product.gltek_part_number;
   save.disabled = !hasProduct;
-  save.textContent = t(missingGNumber ? "finished_label_g_number_missing_value" : "finished_label_issue_save");
+  save.textContent = t(missingGNumber
+    ? "finished_label_g_number_missing_value"
+    : (finishedLabelUsesRemotePrintQueue() ? "finished_label_mobile_issue_save" : "finished_label_issue_save"));
   save.title = missingGNumber ? t("finished_label_g_part_number_required") : "";
   save.classList.toggle("missing-g-number", missingGNumber);
   save.setAttribute("aria-disabled", save.disabled ? "true" : "false");
@@ -18281,17 +18732,20 @@ async function saveFinishedLabelIssue() {
   }
   var btn = document.getElementById("btn-finished-label-save");
   if (btn) btn.disabled = true;
+  var remotePrint = finishedLabelUsesRemotePrintQueue();
   var printWindow = null;
   try {
     var record = readFinishedLabelRecord();
-    printWindow = window.open("", "_blank");
-    if (!printWindow) {
-      alert(t("finished_label_popup_blocked"));
-      return;
+    if (!remotePrint) {
+      printWindow = window.open("", "_blank");
+      if (!printWindow) {
+        alert(t("finished_label_popup_blocked"));
+        return;
+      }
+      printWindow.document.open();
+      printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_label_issuing")) + "</p>");
+      printWindow.document.close();
     }
-    printWindow.document.open();
-    printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_label_issuing")) + "</p>");
-    printWindow.document.close();
     var r = await sb.rpc("issue_finished_product_serials", {
       target_dkd_shohin_id: record.dkdShohinId,
       target_product_variant_id: record.productVariantId,
@@ -18314,11 +18768,11 @@ async function saveFinishedLabelIssue() {
     record.units = Array.isArray(issued.units) ? issued.units : [];
     if (!record.units.length) throw new Error("Manufacturing serial response was empty");
     finishedLabelLastIssuedRecord = record;
+    finishedLabelLastQueuedJob = null;
     setFinishedLabelValue("finished-label-issue-code", record.issueCode);
     updateFinishedLabelQrPayload();
-    renderFinishedLabelIssuedResult(record);
     var preview = document.getElementById("btn-finished-label-preview");
-    if (preview) preview.disabled = false;
+    if (preview) preview.disabled = remotePrint;
     var boxPreview = document.getElementById("btn-finished-box-label-preview");
     if (boxPreview) boxPreview.disabled = true;
     await writeLog("insert", "finished_product_units", record.issueId, record.issueCode, null, {
@@ -18328,8 +18782,30 @@ async function saveFinishedLabelIssue() {
       last_serial: issued.last_serial,
       stock_qty_after: issued.stock_qty_after
     });
-    openFinishedLabelPrintPreview(record, printWindow);
-    alert(t("finished_label_saved"));
+    var queueResult = null;
+    var queueError = null;
+    if (remotePrint) {
+      try {
+        queueResult = await enqueueFinishedLabelPrintJob(record, "finished_product", "initial", null);
+      } catch (printQueueError) {
+        queueError = printQueueError;
+        console.warn("finished label mobile print queue failed", printQueueError);
+        if (preview) {
+          preview.disabled = false;
+          preview.textContent = t("finished_label_mobile_queue_retry");
+        }
+      }
+    } else {
+      openFinishedLabelPrintPreview(record, printWindow);
+    }
+    renderFinishedLabelIssuedResult(record);
+    if (remotePrint) {
+      alert(queueError
+        ? t("finished_label_mobile_queue_failed") + "\n" + (queueError.message || queueError)
+        : t(queueResult && queueResult.already_queued ? "finished_label_mobile_queue_already" : "finished_label_mobile_queue_saved"));
+    } else {
+      alert(t("finished_label_saved"));
+    }
     await loadFinishedLabelHistory();
   } catch (e) {
     if (printWindow && !printWindow.closed) printWindow.close();
@@ -18355,16 +18831,22 @@ function renderFinishedLabelIssuedResult(record) {
     ? tf("finished_label_stock_after", { n: record.stockQtyAfter })
     : "";
   var isBox = finishedLabelPrintMode === "box";
+  var mobileQueue = !isBox && finishedLabelUsesRemotePrintQueue();
   var sourceRow = record.sourceHistoryRow || null;
   var actionHtml = isBox
     ? "<span class='finished-box-label-print-status " + (sourceRow && sourceRow.boxLabelPrinted ? "reprint" : "initial") + "'>" + esc(t(sourceRow && sourceRow.boxLabelPrinted ? "finished_box_label_reprint_status" : "finished_box_label_initial_status")) + "</span>"
-    : "<button class='btn-sm-edit production-action-secondary' id='btn-finished-label-issued-print'>" + esc(t("finished_label_preview")) + "</button>";
+    : (mobileQueue && finishedLabelLastQueuedJob && String(finishedLabelLastQueuedJob.issue_id) === String(record.issueId)
+      ? "<span class='finished-box-label-print-status initial'>" + esc(t("finished_label_mobile_queued_button")) + "</span>"
+      : "<button class='btn-sm-edit production-action-secondary' id='btn-finished-label-issued-print'>" + esc(t(mobileQueue ? "finished_label_mobile_queue_retry" : "finished_label_preview")) + "</button>");
   host.innerHTML = "<div class='finished-label-issued-head'><div><strong>" + esc(t(isBox ? "finished_box_label_selected_serials" : "finished_label_serial_result")) + "</strong><span>" + esc(record.issueCode || "") + "</span></div><div class='finished-label-issued-actions'>" + actionHtml + "</div></div>" +
     "<div class='finished-label-issued-meta'>" + esc([tf("finished_label_history_units", { n: record.quantity }), stockText].filter(Boolean).join(" / ")) + "</div>" +
     "<div class='finished-label-serial-list'>" + serials + "</div>";
   host.classList.add("show");
   var btn = document.getElementById("btn-finished-label-issued-print");
-  if (btn) btn.addEventListener("click", function() { openFinishedLabelPrintPreview(record); });
+  if (btn) btn.addEventListener("click", function() {
+    if (finishedLabelUsesRemotePrintQueue()) previewCurrentFinishedLabel();
+    else openFinishedLabelPrintPreview(record);
+  });
   if (isBox) setFinishedBoxLabelPrintButton(sourceRow);
 }
 
@@ -18373,6 +18855,18 @@ function setFinishedBoxLabelPrintButton(row) {
   if (!button) return;
   var units = row && Array.isArray(row.finishedUnits) ? row.finishedUnits : [];
   var blocked = !!(row && (row.boxPrintAuditUnavailable || row.boxLabelPartiallyPrinted));
+  if (finishedLabelUsesRemotePrintQueue() && row && row.boxLabelQueued) {
+    button.disabled = true;
+    button.textContent = t("finished_label_mobile_queued_button");
+    button.title = "";
+    return;
+  }
+  if (finishedLabelUsesRemotePrintQueue() && row && row.boxLabelQueueRetry) {
+    button.disabled = false;
+    button.textContent = t("finished_label_mobile_queue_retry");
+    button.title = "";
+    return;
+  }
   button.disabled = !row || !units.length || blocked;
   button.textContent = t(row && row.boxLabelPrinted ? "finished_label_reprint" : "finished_box_label_preview");
   button.title = row && row.boxLabelPartiallyPrinted ? t("finished_box_label_partial_print") : "";
@@ -18586,9 +19080,12 @@ function reprintFinishedLabelIssue(row, labelType) {
 }
 
 async function executeFinishedLabelHistoryReprint(row, labelType, reason, printWindow) {
-  printWindow.document.open();
-  printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_label_reprint_recording")) + "</p>");
-  printWindow.document.close();
+  var remotePrint = finishedLabelUsesRemotePrintQueue();
+  if (printWindow) {
+    printWindow.document.open();
+    printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_label_reprint_recording")) + "</p>");
+    printWindow.document.close();
+  }
   try {
     var result = await sb.rpc("record_finished_product_label_print", {
       target_finished_label_issue_id: row.id,
@@ -18606,11 +19103,18 @@ async function executeFinishedLabelHistoryReprint(row, labelType, reason, printW
       quantity: record.units.length,
       copies_per_unit: 1
     });
-    if (labelType === "box") openFinishedBoxLabelPrintPreview(record, printWindow);
-    else openFinishedLabelPrintPreview(record, printWindow);
+    if (remotePrint) {
+      var queueResult = await enqueueFinishedLabelPrintJob(record, labelType === "box" ? "box" : "finished_product", "reprint", reason);
+      alert(t(queueResult && queueResult.already_queued ? "finished_label_mobile_queue_already" : "finished_label_mobile_print_queue_saved"));
+      await loadFinishedLabelHistory();
+    } else if (labelType === "box") {
+      openFinishedBoxLabelPrintPreview(record, printWindow);
+    } else {
+      openFinishedLabelPrintPreview(record, printWindow);
+    }
   } catch (e) {
     if (printWindow && !printWindow.closed) printWindow.close();
-    alert(t("msg_save_err") + ": " + (e.message || e));
+    alert(t(remotePrint ? "finished_label_mobile_print_queue_failed" : "msg_save_err") + ": " + (e.message || e));
   }
 }
 
@@ -18627,10 +19131,13 @@ function confirmFinishedLabelReprint() {
     if (input) input.focus();
     return;
   }
-  var printWindow = window.open("", "_blank");
-  if (!printWindow) {
-    alert(t("finished_label_popup_blocked"));
-    return;
+  var printWindow = null;
+  if (!finishedLabelUsesRemotePrintQueue()) {
+    printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      alert(t("finished_label_popup_blocked"));
+      return;
+    }
   }
   closeFinishedLabelReprintDialog();
   if (pending.source === "box_main") {
@@ -18651,16 +19158,22 @@ function printFinishedBoxLabelIssue(row) {
 }
 
 async function executeFinishedBoxLabelIssue(row, eventType, reason, existingWindow) {
-  var printWindow = existingWindow || window.open("", "_blank");
-  if (!printWindow) {
-    alert(t("finished_label_popup_blocked"));
-    return;
+  var remotePrint = finishedLabelUsesRemotePrintQueue();
+  var printWindow = existingWindow || null;
+  if (!remotePrint && !printWindow) {
+    printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      alert(t("finished_label_popup_blocked"));
+      return;
+    }
   }
   var boxPreview = document.getElementById("btn-finished-box-label-preview");
   if (boxPreview) boxPreview.disabled = true;
-  printWindow.document.open();
-  printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_box_label_print_recording")) + "</p>");
-  printWindow.document.close();
+  if (printWindow) {
+    printWindow.document.open();
+    printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_box_label_print_recording")) + "</p>");
+    printWindow.document.close();
+  }
   try {
     var result = await sb.rpc("record_finished_product_label_print", {
       target_finished_label_issue_id: row.id,
@@ -18682,7 +19195,20 @@ async function executeFinishedBoxLabelIssue(row, eventType, reason, existingWind
       quantity: record.units.length,
       copies_per_unit: 1
     });
-    openFinishedBoxLabelPrintPreview(record, printWindow);
+    if (remotePrint) {
+      try {
+        var queueResult = await enqueueFinishedLabelPrintJob(record, "box", eventType, reason);
+        row.boxLabelQueued = true;
+        row.boxLabelQueueRetry = null;
+        alert(t(queueResult && queueResult.already_queued ? "finished_label_mobile_queue_already" : "finished_label_mobile_print_queue_saved"));
+      } catch (queueError) {
+        row.boxLabelQueued = false;
+        row.boxLabelQueueRetry = { record: record, eventType: eventType, reason: reason };
+        alert(t("finished_label_mobile_print_queue_failed") + ": " + (queueError.message || queueError));
+      }
+    } else {
+      openFinishedBoxLabelPrintPreview(record, printWindow);
+    }
     renderFinishedLabelHistory();
   } catch (e) {
     if (printWindow && !printWindow.closed) printWindow.close();
@@ -18692,12 +19218,45 @@ async function executeFinishedBoxLabelIssue(row, eventType, reason, existingWind
   }
 }
 
-function previewCurrentFinishedLabel() {
+async function previewCurrentFinishedLabel() {
   if (!finishedLabelLastIssuedRecord) {
     alert(t("finished_label_no_print_record"));
     return;
   }
-  openFinishedLabelPrintPreview(finishedLabelLastIssuedRecord);
+  if (!finishedLabelUsesRemotePrintQueue()) {
+    openFinishedLabelPrintPreview(finishedLabelLastIssuedRecord);
+    return;
+  }
+  var buttons = [document.getElementById("btn-finished-label-preview"), document.getElementById("btn-finished-label-issued-print")];
+  buttons.forEach(function(button) { if (button) button.disabled = true; });
+  try {
+    var queueResult = await enqueueFinishedLabelPrintJob(finishedLabelLastIssuedRecord, "finished_product", "initial", null);
+    renderFinishedLabelIssuedResult(finishedLabelLastIssuedRecord);
+    alert(t(queueResult && queueResult.already_queued ? "finished_label_mobile_queue_already" : "finished_label_mobile_print_queue_saved"));
+  } catch (error) {
+    finishedLabelLastQueuedJob = null;
+    renderFinishedLabelIssuedResult(finishedLabelLastIssuedRecord);
+    alert(t("finished_label_mobile_print_queue_failed") + ": " + (error.message || error));
+  } finally {
+    renderFinishedLabelMobilePrintRule();
+  }
+}
+
+async function retryFinishedBoxLabelQueue(row) {
+  var pending = row && row.boxLabelQueueRetry;
+  if (!pending || !pending.record) return;
+  var button = document.getElementById("btn-finished-box-label-preview");
+  if (button) button.disabled = true;
+  try {
+    var queueResult = await enqueueFinishedLabelPrintJob(pending.record, "box", pending.eventType, pending.reason);
+    row.boxLabelQueued = true;
+    row.boxLabelQueueRetry = null;
+    alert(t(queueResult && queueResult.already_queued ? "finished_label_mobile_queue_already" : "finished_label_mobile_print_queue_saved"));
+  } catch (error) {
+    alert(t("finished_label_mobile_print_queue_failed") + ": " + (error.message || error));
+  } finally {
+    setFinishedBoxLabelPrintButton(row);
+  }
 }
 
 function previewCurrentFinishedBoxLabel() {
@@ -36657,7 +37216,10 @@ document.getElementById("component-compat-form-overlay").addEventListener("click
 document.getElementById("component-compat-form-part-number").addEventListener("blur", function(){ normalizeComponentPartNumberElement(this); });
 document.getElementById("btn-back-product-kind-stock-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-manufacturing-cost-mgmt").addEventListener("click", returnToMenuFresh);
-document.getElementById("btn-back-finished-label-mgmt").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-finished-label-mgmt").addEventListener("click", function() {
+  stopFinishedLabelPrintStation();
+  returnToMenuFresh();
+});
 document.getElementById("btn-back-finished-product-shipping").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-production-ranking-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-kikan-mgmt").addEventListener("click", returnToMenuFresh);
@@ -36969,12 +37531,21 @@ document.getElementById("btn-finished-label-load-more").addEventListener("click"
 document.querySelectorAll("[data-finished-label-mode]").forEach(function(btn) {
   btn.addEventListener("click", function() {
     setFinishedLabelPrintMode(btn.dataset.finishedLabelMode);
+    if (finishedLabelPrintMode === "station") return;
     renderFinishedLabelEmpty();
     if (finishedLabelPrintMode === "box") searchFinishedLabelProducts();
     if (finishedLabelSearchInput) finishedLabelSearchInput.focus();
   });
 });
 document.getElementById("btn-finished-label-mode-back").addEventListener("click", function() { setFinishedLabelPrintMode(""); });
+document.getElementById("btn-finished-label-station-back").addEventListener("click", function() { setFinishedLabelPrintMode(""); });
+document.getElementById("btn-finished-label-station-start").addEventListener("click", startFinishedLabelPrintStation);
+document.getElementById("btn-finished-label-station-stop").addEventListener("click", stopFinishedLabelPrintStation);
+document.getElementById("btn-finished-label-station-reload").addEventListener("click", loadFinishedLabelPrintStationHistory);
+document.getElementById("finished-label-station-target").addEventListener("change", function() {
+  updateFinishedLabelPrintStationTarget();
+  loadFinishedLabelPrintStationHistory();
+});
 document.getElementById("btn-finished-label-load-history").addEventListener("click", loadFinishedLabelHistory);
 document.getElementById("btn-finished-label-reprint-cancel").addEventListener("click", closeFinishedLabelReprintDialog);
 document.getElementById("btn-finished-label-reprint-confirm").addEventListener("click", confirmFinishedLabelReprint);

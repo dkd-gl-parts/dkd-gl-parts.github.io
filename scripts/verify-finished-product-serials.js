@@ -204,6 +204,7 @@ const saveButton = {
 };
 const saveButtonSandbox = {
   document: { getElementById(id) { return id === "btn-finished-label-save" ? saveButton : null; } },
+  finishedLabelUsesRemotePrintQueue() { return false; },
   t(key) { return key; }
 };
 vm.createContext(saveButtonSandbox);

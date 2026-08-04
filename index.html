@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.667">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.667"; -->
+<meta name="dcats-app-version" content="v1.1.668">
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.668"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co; form-action 'self';">
 <title>D-CATS</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233c7df0'/%3E%3Cpath d='M8 17h16M16 9v14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.667&amp;ranking=7">
+<link rel="stylesheet" href="styles.css?v=1.1.668&amp;ranking=7">
 </head>
 <body>
 
@@ -2314,6 +2314,12 @@
           <span data-i18n="finished_label_box_mode_desc">発行済みの完品登録から製造シリアルを選択して印刷</span>
           <em data-i18n="finished_label_box_mode_open">箱シール印刷画面へ →</em>
         </button>
+        <button class="finished-label-mode-card station" type="button" data-finished-label-mode="station">
+          <span class="finished-label-mode-size">TD-4420TN</span>
+          <strong data-i18n="finished_label_station_mode_name">Windows印刷端末</strong>
+          <span data-i18n="finished_label_station_mode_desc">スマホから送信された印刷待ちをBrotherドライバーへ出力</span>
+          <em data-i18n="finished_label_station_mode_open">印刷端末画面へ →</em>
+        </button>
       </div>
     </section>
     <div class="finished-label-workspace" id="finished-label-workspace" hidden>
@@ -2357,6 +2363,10 @@
               <button class="btn-sm-edit finished-label-print-action" id="btn-finished-label-preview" data-finished-label-product-only data-i18n="finished_label_preview" disabled>印刷</button>
               <button class="btn-sm-edit finished-label-print-action" id="btn-finished-box-label-preview" data-finished-label-box-only data-i18n="finished_box_label_preview" disabled>印刷</button>
             </div>
+          </div>
+          <div class="finished-label-mobile-print-rule" id="finished-label-mobile-print-rule" hidden>
+            <strong data-i18n="finished_label_mobile_rule_title">スマホ印刷</strong>
+            <span data-i18n="finished_label_mobile_rule_desc">登録後、印刷待ちへ送信します。Windows印刷端末からTD-4420TNへ出力してください。</span>
           </div>
           <div class="finished-label-serial-notice" data-finished-label-product-only>
             <strong data-i18n="finished_label_serial_notice_title">1台につき固有の製造シリアルを発行</strong>
@@ -2497,6 +2507,52 @@
       </div>
     </div>
   </div>
+  <section class="finished-label-print-station" id="finished-label-print-station" hidden>
+    <div class="finished-label-mode-bar">
+      <button class="back-btn" id="btn-finished-label-station-back" type="button" data-i18n="finished_label_mode_back">← 印刷画面を選び直す</button>
+      <span data-i18n="finished_label_station_badge">Windows / TD-4420TN 印刷端末</span>
+    </div>
+    <div class="finished-label-station-shell">
+      <section class="finished-label-card finished-label-station-control">
+        <div class="finished-label-toolbar">
+          <div>
+            <h3 data-i18n="finished_label_station_title">スマホ印刷待ち</h3>
+            <span class="finished-label-help" data-i18n="finished_label_station_desc">この画面をTD-4420TNのBrotherドライバーが設定されたWindows PCで使用します。</span>
+          </div>
+          <span class="finished-label-station-state stopped" id="finished-label-station-state" data-i18n="finished_label_station_stopped">停止中</span>
+        </div>
+        <div class="finished-label-station-settings">
+          <label>
+            <span data-i18n="finished_label_station_media">現在セットしている用紙</span>
+            <select id="finished-label-station-target">
+              <option value="finished_product" data-i18n="finished_label_station_media_product">完品シール 45×20mm</option>
+              <option value="box" data-i18n="finished_label_station_media_box">箱シール 80×60mm</option>
+            </select>
+          </label>
+          <label>
+            <span data-i18n="finished_label_station_printer_code">印刷先コード</span>
+            <input id="finished-label-station-printer-code" type="text" value="TD-4420TN-45X20" readonly>
+          </label>
+        </div>
+        <div class="finished-label-station-actions">
+          <button class="btn-primary" id="btn-finished-label-station-start" type="button" data-i18n="finished_label_station_start">印刷待ちの受信を開始</button>
+          <button class="btn-cancel" id="btn-finished-label-station-stop" type="button" data-i18n="finished_label_station_stop" disabled>停止</button>
+          <button class="btn-sm-edit production-action-secondary" id="btn-finished-label-station-reload" type="button" data-i18n="btn_reload">再読込</button>
+        </div>
+        <div class="finished-label-station-message" id="finished-label-station-message" aria-live="polite"></div>
+        <div class="finished-label-station-note" data-i18n="finished_label_station_kiosk_note">自動印刷する場合は、EdgeまたはChromeをキオスク印刷モードで起動してください。通常起動では印刷確認画面が表示されます。</div>
+        <iframe class="finished-label-station-frame" id="finished-label-station-frame" title="D-CATS label print station" hidden></iframe>
+      </section>
+      <section class="finished-label-card finished-label-station-history-card">
+        <div class="finished-label-toolbar">
+          <h3 data-i18n="finished_label_station_history">印刷ジョブ履歴</h3>
+        </div>
+        <div class="finished-label-station-history" id="finished-label-station-history">
+          <div class="empty" data-i18n="finished_label_station_history_empty">印刷ジョブはありません。</div>
+        </div>
+      </section>
+    </div>
+  </section>
 </div>
 </div>
 
@@ -3494,7 +3550,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
 <script src="vendor/qrcode.min.js?v=1.0.0"></script>
-<script src="app.js?v=1.1.667"></script>
+<script src="app.js?v=1.1.668"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.625&amp;ranking=17"></script>
 </body>
 </html>
