@@ -89,21 +89,50 @@ assert(app.includes('if (finishedLabelPrintMode === "box") searchFinishedLabelPr
   assert((app.match(new RegExp(`${key}:`, "g")) || []).length === 3, `${key} is not translated in all three languages`);
 });
 const reprintSource = functionSource("reprintFinishedLabelIssue");
-assert(reprintSource.includes('labelType === "box"'), "product and box reprints are not distinguished");
-assert(reprintSource.includes('sb.rpc("record_finished_product_label_print"'), "generic audited print RPC is not used for reprints");
-assert(reprintSource.indexOf('window.open("", "_blank")') < reprintSource.indexOf('window.prompt('), "finished-label reprint opens its print tab after the browser user action expires");
-const reprintCancelIndex = reprintSource.indexOf("if (reason === null)");
-assert(reprintCancelIndex >= 0 && reprintSource.indexOf("printWindow.close()", reprintCancelIndex) > reprintCancelIndex, "cancelled finished-label reprints leave an empty print tab open");
+const reprintDialogSource = functionSource("openFinishedLabelReprintDialog");
+const confirmReprintSource = functionSource("confirmFinishedLabelReprint");
+const executeReprintSource = functionSource("executeFinishedLabelHistoryReprint");
+assert(html.includes('id="finished-label-reprint-overlay"') && html.includes('id="finished-label-reprint-reason"'), "in-page reprint reason dialog is missing");
+assert(styles.includes(".finished-label-reprint-card"), "in-page reprint reason dialog layout is missing");
+assert(reprintSource.includes('openFinishedLabelReprintDialog(row, labelType, "history")'), "finished-label history does not open the in-page reprint dialog");
+assert(reprintDialogSource.includes('labelType === "box"') && reprintDialogSource.includes('overlay.classList.add("show")'), "product and box reprints are not prepared in the shared dialog");
+assert(confirmReprintSource.includes('window.open("", "_blank")'), "reprint confirmation does not open a print tab directly from its click");
+assert(!confirmReprintSource.includes("prompt("), "reprint confirmation still depends on a browser prompt");
+assert(confirmReprintSource.indexOf('window.open("", "_blank")') < confirmReprintSource.indexOf("executeFinishedLabelHistoryReprint("), "finished-label reprint opens its print tab after asynchronous work starts");
+assert(executeReprintSource.includes('sb.rpc("record_finished_product_label_print"'), "generic audited print RPC is not used for reprints");
 const boxPrintSource = functionSource("printFinishedBoxLabelIssue");
+const boxExecutionSource = functionSource("executeFinishedBoxLabelIssue");
 assert(boxPrintSource.includes('row.boxLabelPrinted ? "reprint" : "initial"'), "box initial print and reprint are not distinguished");
-assert(boxPrintSource.indexOf('window.open("", "_blank")') < boxPrintSource.indexOf('window.prompt('), "box-label reprint opens its print tab after the browser user action expires");
-const boxCancelIndex = boxPrintSource.indexOf("if (reason === null)");
-assert(boxCancelIndex >= 0 && boxPrintSource.indexOf("printWindow.close()", boxCancelIndex) > boxCancelIndex, "cancelled box-label reprints leave an empty print tab open");
-assert(boxPrintSource.includes('target_label_target: "box"'), "box print audit target is missing");
-assert(boxPrintSource.includes('target_print_event_type: eventType'), "box print event type is not recorded");
-assert(reprintSource.includes('event_type: labelType === "box" ? "box_label_reprint" : "product_label_reprint"'), "reprint audit type is missing");
-assert(reprintSource.includes('label_size: labelType === "box" ? "80x60" : "45x20"'), "reprint label size is missing from audit details");
-assert(reprintSource.includes("copies_per_unit: 1"), "one-label-per-unit audit rule is missing");
+assert(boxPrintSource.includes('openFinishedLabelReprintDialog(row, "box", "box_main")'), "box-label reprint does not open the in-page reason dialog");
+assert(boxExecutionSource.includes('target_label_target: "box"'), "box print audit target is missing");
+assert(boxExecutionSource.includes('target_print_event_type: eventType'), "box print event type is not recorded");
+assert(executeReprintSource.includes('event_type: labelType === "box" ? "box_label_reprint" : "product_label_reprint"'), "reprint audit type is missing");
+assert(executeReprintSource.includes('label_size: labelType === "box" ? "80x60" : "45x20"'), "reprint label size is missing from audit details");
+assert(executeReprintSource.includes("copies_per_unit: 1"), "one-label-per-unit audit rule is missing");
+
+const reprintFlowEvents = [];
+const reprintFlowChild = { closed: false };
+const reprintReasonInput = { value: "ラベル汚損", focus() {} };
+const reprintFlowSandbox = {
+  finishedLabelPendingReprint: { source: "history", row: { id: 1 }, labelType: "product" },
+  document: {
+    getElementById(id) { return id === "finished-label-reprint-reason" ? reprintReasonInput : null; }
+  },
+  window: {
+    open() { reprintFlowEvents.push("open"); return reprintFlowChild; }
+  },
+  t(key) { return key; },
+  alert() {},
+  closeFinishedLabelReprintDialog() { reprintFlowEvents.push("close-dialog"); },
+  executeFinishedLabelHistoryReprint(row, labelType, reason, printWindow) {
+    reprintFlowEvents.push(["execute-history", row.id, labelType, reason, printWindow === reprintFlowChild].join(":"));
+  },
+  executeFinishedBoxLabelIssue() { reprintFlowEvents.push("execute-box"); }
+};
+vm.createContext(reprintFlowSandbox);
+vm.runInContext(`${confirmReprintSource}; this.confirmReprint = confirmFinishedLabelReprint;`, reprintFlowSandbox);
+reprintFlowSandbox.confirmReprint();
+assert(reprintFlowEvents.join(",") === "open,close-dialog,execute-history:1:product:ラベル汚損:true", "finished-label reprint does not open its print tab directly from the in-page confirmation click");
 
 const boxSortSandbox = {
   finishedLabelPrintMode: "box",
@@ -214,7 +243,7 @@ assert(serials.every((serial) => output.includes(serial)), "human-readable manuf
 assert(output.includes("box-label-print.css?dcats_version=v-test"), "80x60 print stylesheet is not versioned");
 assert(output.includes("label-print-window.js?dcats_version=v-test"), "box-label print runtime is missing or unversioned");
 assert(functionSource("openFinishedBoxLabelPrintPreview").includes("printFinishedLabelWindowWhenReady(win)"), "box-label printing starts before assets are ready");
-assert(functionSource("printFinishedBoxLabelIssue").indexOf('if (!printWindow)') < functionSource("printFinishedBoxLabelIssue").indexOf('sb.rpc("record_finished_product_label_print"'), "box-label print history can be recorded after a blocked print window");
+assert(boxExecutionSource.indexOf('if (!printWindow)') < boxExecutionSource.indexOf('sb.rpc("record_finished_product_label_print"'), "box-label print history can be recorded after a blocked print window");
 
 const longOutput = sandbox.build({
   ...record,

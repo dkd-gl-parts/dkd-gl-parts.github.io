@@ -4458,7 +4458,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.660";
+var APP_VERSION       = "v1.1.661";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -4590,6 +4590,7 @@ var finishedLabelPrintMode = "";
 var finishedLabelComponentCandidates = [];
 var finishedLabelSelectedComponentIds = {};
 var finishedLabelComponentLoadSeq = 0;
+var finishedLabelPendingReprint = null;
 var finishedShipmentCustomers = [];
 var finishedShipmentUnits = [];
 var finishedShipmentHistoryRows = [];
@@ -18458,24 +18459,34 @@ function finishedLabelRecordFromHistory(row, issued) {
   };
 }
 
-async function reprintFinishedLabelIssue(row, labelType) {
-  labelType = labelType === "box" ? "box" : "product";
-  var printWindow = window.open("", "_blank");
-  if (!printWindow) {
-    alert(t("finished_label_popup_blocked"));
-    return;
+function openFinishedLabelReprintDialog(row, labelType, source) {
+  if (!row) return;
+  finishedLabelPendingReprint = {
+    row: row,
+    labelType: labelType === "box" ? "box" : "product",
+    source: source === "box_main" ? "box_main" : "history"
+  };
+  var input = document.getElementById("finished-label-reprint-reason");
+  var overlay = document.getElementById("finished-label-reprint-overlay");
+  if (input) input.value = t("finished_label_reprint_default_reason");
+  if (overlay) overlay.classList.add("show");
+  if (input) {
+    input.focus();
+    input.select();
   }
-  var reason = window.prompt(t("finished_label_reprint_reason"), t("finished_label_reprint_default_reason"));
-  if (reason === null) {
-    if (!printWindow.closed) printWindow.close();
-    return;
-  }
-  reason = String(reason || "").trim();
-  if (!reason) {
-    if (!printWindow.closed) printWindow.close();
-    alert(t("finished_label_reprint_reason"));
-    return;
-  }
+}
+
+function closeFinishedLabelReprintDialog() {
+  var overlay = document.getElementById("finished-label-reprint-overlay");
+  if (overlay) overlay.classList.remove("show");
+  finishedLabelPendingReprint = null;
+}
+
+function reprintFinishedLabelIssue(row, labelType) {
+  openFinishedLabelReprintDialog(row, labelType, "history");
+}
+
+async function executeFinishedLabelHistoryReprint(row, labelType, reason, printWindow) {
   printWindow.document.open();
   printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_label_reprint_recording")) + "</p>");
   printWindow.document.close();
@@ -18504,27 +18515,47 @@ async function reprintFinishedLabelIssue(row, labelType) {
   }
 }
 
-async function printFinishedBoxLabelIssue(row) {
-  if (!row || !Array.isArray(row.finishedUnits) || !row.finishedUnits.length) return;
-  var eventType = row.boxLabelPrinted ? "reprint" : "initial";
+function confirmFinishedLabelReprint() {
+  var pending = finishedLabelPendingReprint;
+  var input = document.getElementById("finished-label-reprint-reason");
+  var reason = String(input ? input.value : "").trim();
+  if (!pending || !pending.row) {
+    closeFinishedLabelReprintDialog();
+    return;
+  }
+  if (!reason) {
+    alert(t("finished_label_reprint_reason"));
+    if (input) input.focus();
+    return;
+  }
   var printWindow = window.open("", "_blank");
   if (!printWindow) {
     alert(t("finished_label_popup_blocked"));
     return;
   }
-  var reason = null;
+  closeFinishedLabelReprintDialog();
+  if (pending.source === "box_main") {
+    executeFinishedBoxLabelIssue(pending.row, "reprint", reason, printWindow);
+  } else {
+    executeFinishedLabelHistoryReprint(pending.row, pending.labelType, reason, printWindow);
+  }
+}
+
+function printFinishedBoxLabelIssue(row) {
+  if (!row || !Array.isArray(row.finishedUnits) || !row.finishedUnits.length) return;
+  var eventType = row.boxLabelPrinted ? "reprint" : "initial";
   if (eventType === "reprint") {
-    reason = window.prompt(t("finished_label_reprint_reason"), t("finished_label_reprint_default_reason"));
-    if (reason === null) {
-      if (!printWindow.closed) printWindow.close();
-      return;
-    }
-    reason = String(reason || "").trim();
-    if (!reason) {
-      if (!printWindow.closed) printWindow.close();
-      alert(t("finished_label_reprint_reason"));
-      return;
-    }
+    openFinishedLabelReprintDialog(row, "box", "box_main");
+    return;
+  }
+  executeFinishedBoxLabelIssue(row, eventType, null, null);
+}
+
+async function executeFinishedBoxLabelIssue(row, eventType, reason, existingWindow) {
+  var printWindow = existingWindow || window.open("", "_blank");
+  if (!printWindow) {
+    alert(t("finished_label_popup_blocked"));
+    return;
   }
   var boxPreview = document.getElementById("btn-finished-box-label-preview");
   if (boxPreview) boxPreview.disabled = true;
@@ -36814,6 +36845,15 @@ document.querySelectorAll("[data-finished-label-mode]").forEach(function(btn) {
 });
 document.getElementById("btn-finished-label-mode-back").addEventListener("click", function() { setFinishedLabelPrintMode(""); });
 document.getElementById("btn-finished-label-load-history").addEventListener("click", loadFinishedLabelHistory);
+document.getElementById("btn-finished-label-reprint-cancel").addEventListener("click", closeFinishedLabelReprintDialog);
+document.getElementById("btn-finished-label-reprint-confirm").addEventListener("click", confirmFinishedLabelReprint);
+document.getElementById("finished-label-reprint-reason").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") confirmFinishedLabelReprint();
+  if (e.key === "Escape") closeFinishedLabelReprintDialog();
+});
+document.getElementById("finished-label-reprint-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeFinishedLabelReprintDialog();
+});
 document.getElementById("btn-finished-label-template").addEventListener("click", applyFinishedLabelTemplate);
 document.getElementById("btn-finished-label-preview").addEventListener("click", previewCurrentFinishedLabel);
 document.getElementById("btn-finished-box-label-preview").addEventListener("click", previewCurrentFinishedBoxLabel);

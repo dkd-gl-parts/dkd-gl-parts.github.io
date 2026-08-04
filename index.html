@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.660">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.660"; -->
+<meta name="dcats-app-version" content="v1.1.661">
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.661"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co; form-action 'self';">
 <title>D-CATS</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233c7df0'/%3E%3Cpath d='M8 17h16M16 9v14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.660&amp;ranking=7">
+<link rel="stylesheet" href="styles.css?v=1.1.661&amp;ranking=7">
 </head>
 <body>
 
@@ -2260,6 +2260,20 @@
   </div>
 </div>
 
+<div class="form-overlay" id="finished-label-reprint-overlay" role="dialog" aria-modal="true" aria-labelledby="finished-label-reprint-title">
+  <div class="form-card finished-label-reprint-card">
+    <h3 id="finished-label-reprint-title" data-i18n="finished_label_reprint">再印刷</h3>
+    <div class="form-row">
+      <label class="form-label" for="finished-label-reprint-reason" data-i18n="finished_label_reprint_reason">再印刷理由を入力してください。</label>
+      <input class="form-input" id="finished-label-reprint-reason" type="text" maxlength="200" autocomplete="off">
+    </div>
+    <div class="form-footer">
+      <button class="btn-cancel" id="btn-finished-label-reprint-cancel" type="button" data-i18n="btn_cancel">キャンセル</button>
+      <button class="btn-primary" id="btn-finished-label-reprint-confirm" type="button" data-i18n="finished_label_reprint">再印刷</button>
+    </div>
+  </div>
+</div>
+
 <!-- =============================================
    完品登録・製造シリアル発行画面
 ============================================= -->
@@ -3480,7 +3494,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
 <script src="vendor/qrcode.min.js?v=1.0.0"></script>
-<script src="app.js?v=1.1.660"></script>
+<script src="app.js?v=1.1.661"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.625&amp;ranking=17"></script>
 </body>
 </html>
