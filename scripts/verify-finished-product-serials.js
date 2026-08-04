@@ -106,7 +106,7 @@ assert(app.includes('if (finishedLabelPrintMode === "box") searchFinishedLabelPr
 assert(app.includes('finishedLabelSearchInput.addEventListener("compositionend"') && app.includes('finishedLabelSearchInput.addEventListener("input"'), "finished-label search does not normalize typing and IME-confirmed input");
 assert(app.includes('finishedLabelSearchInput.addEventListener("focus"') && app.includes("finishedLabelAsciiKeyFromEvent(e)"), "finished-label search does not switch to direct ASCII handling on focus");
 assert(app.includes('finishedLabelSearchInput.addEventListener("beforeinput"') && app.includes("finishedLabelSearchSuppressComposition"), "IME follow-up input is not suppressed after direct ASCII insertion");
-assert(app.includes("restoreFinishedLabelSearchCommittedInput();\n    releaseFinishedLabelSearchCompositionSuppression(80);"), "IME composition completion can duplicate a directly inserted character");
+assert(/restoreFinishedLabelSearchCommittedInput\(\);\r?\n\s+releaseFinishedLabelSearchCompositionSuppression\(80\);/.test(app), "IME composition completion can duplicate a directly inserted character");
 assert(/@page\s*{[^}]*size:\s*45mm\s+20mm/i.test(printCss), "print page is not fixed at 45x20mm");
 assert(/\.serial-label\s*{[^}]*width:\s*45mm;[^}]*height:\s*20mm;/i.test(printCss), "label dimensions are not exact");
 assert(/\.serial-label-field-name\s*{[^}]*font-size:/i.test(printCss), "print field hierarchy is missing");
