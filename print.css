@@ -51,7 +51,7 @@ body {
   width: 45mm;
   height: 18.5mm;
   overflow: hidden;
-  border: .25mm solid #000;
+  border: 0;
   padding: .9mm .75mm .25mm;
   background: #fff;
   break-after: page;
