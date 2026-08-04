@@ -4458,7 +4458,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.663";
+var APP_VERSION       = "v1.1.664";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -25029,6 +25029,10 @@ function setComponentAddValue(id, value) {
   if (el) el.value = value || "";
 }
 
+function componentLookupAutofillValue(currentValue, candidateValue) {
+  return String(currentValue || "").trim() ? currentValue : (candidateValue || "");
+}
+
 function normalizeComponentPartNumberInput(value) {
   return normalizeAsciiWidth(value)
     .trim()
@@ -25301,9 +25305,9 @@ async function reconcileComponentAddPartNumbers() {
   if (!mfrPn && !genuinePn) return null;
   var row = await lookupComponentPartNumberPair(mfrPn, genuinePn);
   if (seq !== componentAddPartNumberLookupSeq || !row) return row;
-  if (row.manufacturer) setComponentAddValue("component-add-mfr", row.manufacturer);
-  if (row.manufacturer_part_number) setComponentAddValue("component-add-mfr-pn", row.manufacturer_part_number);
-  if (row.genuine_part_number) setComponentAddValue("component-add-genuine-pn", row.genuine_part_number);
+  setComponentAddValue("component-add-mfr", componentLookupAutofillValue(componentAddValue("component-add-mfr"), row.manufacturer));
+  setComponentAddValue("component-add-mfr-pn", componentLookupAutofillValue(componentAddValue("component-add-mfr-pn"), row.manufacturer_part_number));
+  setComponentAddValue("component-add-genuine-pn", componentLookupAutofillValue(componentAddValue("component-add-genuine-pn"), row.genuine_part_number));
   var currentName = componentAddValue("component-add-name");
   if (!currentName && row.part_name) setComponentAddValue("component-add-name", row.part_name);
   renderComponentAddNameOptions(componentAddValue("component-add-name"));
@@ -25601,9 +25605,9 @@ async function reconcileComponentEditPartNumbers(usageId) {
   if (!isCurrentCategoryAssyComponentName(payload.component_part_name)) return null;
   var row = await lookupComponentPartNumberPair(payload.component_manufacturer_part_number, payload.component_genuine_part_number);
   if (seq !== componentEditPartNumberLookupSeq || !row) return row;
-  if (row.manufacturer) setComponentEditFieldValue(tr, "component_manufacturer", row.manufacturer);
-  if (row.manufacturer_part_number) setComponentEditFieldValue(tr, "component_manufacturer_part_number", row.manufacturer_part_number);
-  if (row.genuine_part_number) setComponentEditFieldValue(tr, "component_genuine_part_number", row.genuine_part_number);
+  setComponentEditFieldValue(tr, "component_manufacturer", componentLookupAutofillValue(payload.component_manufacturer, row.manufacturer));
+  setComponentEditFieldValue(tr, "component_manufacturer_part_number", componentLookupAutofillValue(payload.component_manufacturer_part_number, row.manufacturer_part_number));
+  setComponentEditFieldValue(tr, "component_genuine_part_number", componentLookupAutofillValue(payload.component_genuine_part_number, row.genuine_part_number));
   if (!payload.component_part_name && row.part_name) setComponentEditFieldValue(tr, "component_part_name", row.part_name);
   updateComponentEditPartNumberInputStates(tr);
   return row;
@@ -29047,9 +29051,9 @@ async function reconcileComponentAlternativePartNumbers() {
   if (!mfrPn && !genuinePn) return null;
   var row = await lookupComponentPartNumberPair(mfrPn, genuinePn);
   if (seq !== componentAlternativePartNumberLookupSeq || !row) return row;
-  if (row.manufacturer) setComponentAddValue("component-alt-mfr", row.manufacturer);
-  if (row.manufacturer_part_number) setComponentAddValue("component-alt-pn", row.manufacturer_part_number);
-  if (row.genuine_part_number) setComponentAddValue("component-alt-genuine-pn", row.genuine_part_number);
+  setComponentAddValue("component-alt-mfr", componentLookupAutofillValue(componentAddValue("component-alt-mfr"), row.manufacturer));
+  setComponentAddValue("component-alt-pn", componentLookupAutofillValue(componentAddValue("component-alt-pn"), row.manufacturer_part_number));
+  setComponentAddValue("component-alt-genuine-pn", componentLookupAutofillValue(componentAddValue("component-alt-genuine-pn"), row.genuine_part_number));
   var currentName = componentAddValue("component-alt-name");
   if (!currentName && row.part_name) setComponentAlternativeNameValue(row.part_name);
   renderComponentAlternativeNameOptions(componentAddValue("component-alt-name"));

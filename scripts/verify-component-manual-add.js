@@ -53,6 +53,28 @@ if (!lookupSource.includes('/[.,×]/.test(String(mfrValue || ""))')) {
   throw new Error("period, comma, or multiplication-sign part numbers must bypass punctuation-stripping candidate replacement");
 }
 
+const autofillSource = sourceBetween("function componentLookupAutofillValue", "function normalizeComponentPartNumberInput");
+const autofillSandbox = {};
+vm.runInNewContext(`${autofillSource}; autofillResults = {
+  preserveManufacturer: componentLookupAutofillValue("BUHINDORI", "G TYPE"),
+  preservePartNumber: componentLookupAutofillValue("OTHER-100", "BUHINDORI"),
+  fillEmpty: componentLookupAutofillValue("", "G TYPE")
+};`, autofillSandbox);
+if (autofillSandbox.autofillResults.preserveManufacturer !== "BUHINDORI" ||
+    autofillSandbox.autofillResults.preservePartNumber !== "OTHER-100" ||
+    autofillSandbox.autofillResults.fillEmpty !== "G TYPE") {
+  throw new Error("component lookup suggestions must fill only empty fields and preserve manually entered combinations");
+}
+[
+  sourceBetween("async function reconcileComponentAddPartNumbers", "function clearComponentAddForm"),
+  sourceBetween("async function reconcileComponentEditPartNumbers", "async function saveComponentEdit"),
+  sourceBetween("async function reconcileComponentAlternativePartNumbers", "function clearComponentAlternativeForm")
+].forEach((reconcileSource) => {
+  if (!reconcileSource.includes("componentLookupAutofillValue")) {
+    throw new Error("component add, edit, and alternative lookup must preserve manually entered combinations");
+  }
+});
+
 const inputEventSource = sourceBetween("function bindComponentPartNumberInputEvents", "function componentPartNumberSpec");
 const inputHandlers = {};
 let pendingNormalize = null;
