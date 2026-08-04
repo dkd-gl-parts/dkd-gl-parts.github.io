@@ -4458,7 +4458,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.657";
+var APP_VERSION       = "v1.1.658";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -18592,6 +18592,54 @@ function printFinishedLabelWindow(win) {
   }
 }
 
+function bindFinishedLabelPrintButton(win) {
+  if (!win || win.closed || !win.document) return false;
+  var button = win.document.getElementById("dcats-print-now");
+  if (!button) return false;
+  if (button.getAttribute("data-dcats-print-bound") === "true") return true;
+  button.setAttribute("data-dcats-print-bound", "true");
+  button.addEventListener("click", function() {
+    printFinishedLabelWindow(win);
+  });
+  return true;
+}
+
+function printFinishedLabelWindowWhenReady(win) {
+  if (!win || win.closed || !win.document) return false;
+  var completed = false;
+  var fallbackTimer = null;
+
+  function printReadyWindow() {
+    if (completed || win.closed) return;
+    completed = true;
+    if (fallbackTimer !== null && typeof win.clearTimeout === "function") {
+      win.clearTimeout(fallbackTimer);
+    }
+    bindFinishedLabelPrintButton(win);
+    var fontReady = win.document.fonts && win.document.fonts.ready;
+    if (fontReady && typeof fontReady.then === "function") {
+      fontReady.then(function() {
+        printFinishedLabelWindow(win);
+      }, function() {
+        printFinishedLabelWindow(win);
+      });
+      return;
+    }
+    printFinishedLabelWindow(win);
+  }
+
+  bindFinishedLabelPrintButton(win);
+  if (win.document.readyState === "complete") {
+    printReadyWindow();
+  } else {
+    win.addEventListener("load", printReadyWindow, { once: true });
+    if (typeof win.setTimeout === "function") {
+      fallbackTimer = win.setTimeout(printReadyWindow, 2000);
+    }
+  }
+  return true;
+}
+
 function openFinishedLabelPrintPreview(record, existingWindow) {
   var win = existingWindow || window.open("", "_blank");
   if (!win) {
@@ -18602,7 +18650,7 @@ function openFinishedLabelPrintPreview(record, existingWindow) {
     win.document.open();
     win.document.write(buildFinishedLabelPrintHtml(record));
     win.document.close();
-    printFinishedLabelWindow(win);
+    printFinishedLabelWindowWhenReady(win);
     return true;
   } catch (e) {
     if (!win.closed) win.close();
@@ -18636,7 +18684,7 @@ function openFinishedBoxLabelPrintPreview(record, existingWindow) {
     win.document.open();
     win.document.write(buildFinishedBoxLabelPrintHtml(record));
     win.document.close();
-    printFinishedLabelWindow(win);
+    printFinishedLabelWindowWhenReady(win);
     return true;
   } catch (e) {
     if (!win.closed) win.close();

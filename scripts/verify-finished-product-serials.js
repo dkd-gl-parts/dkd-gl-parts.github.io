@@ -338,15 +338,23 @@ assert(!output.includes("onclick="), "finished-label print window uses a CSP-blo
 let printCount = 0;
 let focusCount = 0;
 let printClickHandler = null;
+const printRuntimeButton = {
+  bound: "",
+  getAttribute(name) {
+    return name === "data-dcats-print-bound" ? this.bound : null;
+  },
+  setAttribute(name, value) {
+    if (name === "data-dcats-print-bound") this.bound = value;
+  },
+  addEventListener(type, handler) {
+    if (type === "click") printClickHandler = handler;
+  }
+};
 const printRuntimeSandbox = {
   document: {
     readyState: "complete",
     getElementById(id) {
-      return id === "dcats-print-now" ? {
-        addEventListener(type, handler) {
-          if (type === "click") printClickHandler = handler;
-        }
-      } : null;
+      return id === "dcats-print-now" ? printRuntimeButton : null;
     }
   },
   window: {
@@ -357,6 +365,7 @@ const printRuntimeSandbox = {
 vm.createContext(printRuntimeSandbox);
 vm.runInContext(printRuntime, printRuntimeSandbox);
 assert(typeof printClickHandler === "function", "finished-label print button is not bound inside its own window");
+assert(printRuntimeButton.bound === "true", "finished-label print runtime does not mark the button as bound");
 printClickHandler();
 assert(printCount === 1 && focusCount === 1, "finished-label print button does not invoke printing");
 
@@ -367,9 +376,30 @@ const directPrintWindow = {
 };
 const directPrintSandbox = { console: { warn() {} } };
 vm.createContext(directPrintSandbox);
-vm.runInContext(`${functionSource("printFinishedLabelWindow")}; this.printWindow = printFinishedLabelWindow;`, directPrintSandbox);
+vm.runInContext(`${functionSource("printFinishedLabelWindow")}; ${functionSource("bindFinishedLabelPrintButton")}; this.printWindow = printFinishedLabelWindow; this.bindButton = bindFinishedLabelPrintButton;`, directPrintSandbox);
 assert(directPrintSandbox.printWindow(directPrintWindow), "finished-label window print request is rejected");
 assert(printCount === 2 && focusCount === 2, "finished-label registration does not invoke the print dialog directly");
+
+let parentClickHandler = null;
+const parentBoundButton = {
+  bound: "",
+  getAttribute() { return this.bound; },
+  setAttribute(name, value) { this.bound = value; },
+  addEventListener(type, handler) { if (type === "click") parentClickHandler = handler; }
+};
+const parentBoundWindow = {
+  closed: false,
+  document: { getElementById() { return parentBoundButton; } },
+  focus() { focusCount += 1; },
+  print() { printCount += 1; }
+};
+assert(directPrintSandbox.bindButton(parentBoundWindow), "parent window does not bind the label print action");
+assert(typeof parentClickHandler === "function" && parentBoundButton.bound === "true", "parent-bound print action is missing");
+parentClickHandler();
+assert(printCount === 3 && focusCount === 3, "parent-bound print button does not invoke printing");
+assert(functionSource("printFinishedLabelWindowWhenReady").includes('win.addEventListener("load"'), "automatic printing does not wait for print assets");
+assert(functionSource("printFinishedLabelWindowWhenReady").includes("win.document.fonts.ready"), "automatic printing does not wait for fonts");
+assert(functionSource("openFinishedLabelPrintPreview").includes("printFinishedLabelWindowWhenReady(win)"), "finished-label printing starts before assets are ready");
 
 const saveSource = functionSource("saveFinishedLabelIssue");
 assert(saveSource.indexOf('if (!printWindow)') < saveSource.indexOf('sb.rpc("issue_finished_product_serials"'), "finished-product registration can proceed after a blocked print window");
