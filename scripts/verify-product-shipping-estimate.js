@@ -135,6 +135,7 @@ if (customerSectionIndex < 0 || shippingSectionIndex < customerSectionIndex || p
 [
   ".product-form-shipping",
   ".sales-shipping-controls",
+  ".sales-shipping-size-control { grid-column: auto; }",
   ".sales-shipping-result",
   ".sales-shipping-message.warning",
   "@media (max-width: 430px)"

@@ -151,9 +151,12 @@ if (!compatibleLoadSource.includes("await hydrateSalesDaikoVisibility(parts_list
 }
 
 [
-  "grid-template-columns: minmax(0, 1fr) 340px",
+  "grid-template-columns: minmax(0, 1fr) 320px",
   "#screen-search .sales-conditions-panel",
   "position: sticky",
+  "justify-self: end",
+  "grid-template-columns: 72px minmax(0, 1fr)",
+  "grid-template-columns: 92px minmax(0, 1fr)",
   "font-variant-numeric: tabular-nums",
   ".detail-customer-price-focus:not(.empty) > strong",
   ".detail-customer-shipping-rule.separate > strong",
