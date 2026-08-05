@@ -43,9 +43,10 @@ function functionSource(name) {
   throw new Error(`${name} could not be parsed`);
 }
 
-assert(app.includes('var APP_VERSION       = "v1.1.682";'), "app version is not v1.1.682");
-assert(html.includes('content="v1.1.682"'), "HTML version is not v1.1.682");
+assert(app.includes('var APP_VERSION       = "v1.1.683";'), "app version is not v1.1.683");
+assert(html.includes('content="v1.1.683"'), "HTML version is not v1.1.683");
 assert(html.includes('data-finished-label-mode="station"'), "Windows print-station mode is missing");
+assert(html.includes('id="dcats-auto-notice"') && html.includes('aria-live="polite"'), "auto-dismiss print notice is missing or inaccessible");
 [
   "finished-label-mobile-print-rule",
   "finished-label-mobile-print-status",
@@ -113,13 +114,52 @@ assert(enqueueAndWait.includes('"queued", "claimed", "timeout"') && enqueueAndWa
 const save = functionSource("saveFinishedLabelIssue");
 assert(save.includes("if (!remotePrint)") && save.includes('enqueueAndWaitForFinishedLabelPrint(record, "finished_product", "initial", null)'), "finished-label registration does not wait for mobile print completion");
 assert(save.indexOf("if (!remotePrint)") < save.indexOf('window.open("", "_blank")'), "mobile registration can still open a print popup");
+assert(save.includes('showDcatsAutoNotice(t("finished_label_mobile_queue_saved"))') && save.includes('alert(finishedLabelMobilePrintErrorText(queueError'), "registration success is not auto-dismissed or its error is no longer blocking");
 const preview = functionSource("previewCurrentFinishedLabel");
 assert(preview.includes('enqueueAndWaitForFinishedLabelPrint(finishedLabelLastIssuedRecord, "finished_product", "initial", null)'), "failed mobile printing cannot be retried without issuing a new serial");
+assert(preview.includes('showDcatsAutoNotice(t("finished_label_mobile_print_queue_saved"))'), "registration retry success is not auto-dismissed");
 const reprint = functionSource("executeFinishedLabelHistoryReprint");
 assert(reprint.includes('enqueueAndWaitForFinishedLabelPrint(record, labelType === "box" ? "box" : "finished_product", "reprint", reason)'), "mobile reprints are not tracked through completion with their reason");
+assert(reprint.includes('showDcatsAutoNotice(t("finished_label_mobile_print_queue_saved"))'), "reprint success is not auto-dismissed");
 const box = functionSource("executeFinishedBoxLabelIssue");
 assert(box.includes('enqueueAndWaitForFinishedLabelPrint(record, "box", eventType, reason)'), "box-label mobile printing is not tracked through completion");
+assert(box.includes('showDcatsAutoNotice(t("finished_label_mobile_print_queue_saved"))'), "box-label success is not auto-dismissed");
+assert(functionSource("retryFinishedBoxLabelQueue").includes('showDcatsAutoNotice(t("finished_label_mobile_print_queue_saved"))'), "box-label retry success is not auto-dismissed");
 assert(functionSource("confirmFinishedLabelReprint").includes("if (!finishedLabelUsesRemotePrintQueue())"), "mobile reprints can still be blocked by popup rules");
+
+const autoNotice = functionSource("showDcatsAutoNotice");
+assert(autoNotice.includes("window.clearTimeout") && autoNotice.includes("window.setTimeout"), "repeated print notices do not reset their auto-dismiss timer");
+assert(autoNotice.includes("notice.hidden = false") && autoNotice.includes("notice.hidden = true"), "print notice does not show and dismiss automatically");
+assert(!app.includes('alert(t("finished_label_mobile_print_queue_saved"))'), "a blocking mobile print-success popup remains");
+{
+  const notice = { hidden: true, textContent: "" };
+  const timers = new Map();
+  let nextTimerId = 1;
+  const noticeSandbox = {
+    dcatsAutoNoticeTimer: null,
+    document: { getElementById(id) { return id === "dcats-auto-notice" ? notice : null; } },
+    window: {
+      setTimeout(callback, delay) {
+        const id = nextTimerId++;
+        timers.set(id, { callback, delay });
+        return id;
+      },
+      clearTimeout(id) { timers.delete(id); }
+    },
+    Math,
+    Number,
+    String
+  };
+  vm.createContext(noticeSandbox);
+  vm.runInContext(`${autoNotice}\nthis.showNotice = showDcatsAutoNotice;`, noticeSandbox);
+  noticeSandbox.showNotice("印刷しました");
+  assert(notice.hidden === false && notice.textContent === "印刷しました", "print success notice does not become visible");
+  assert(timers.size === 1 && [...timers.values()][0].delay === 2800, "print success notice has the wrong auto-dismiss delay");
+  noticeSandbox.showNotice("再印刷しました", 2000);
+  assert(timers.size === 1 && notice.textContent === "再印刷しました", "a repeated print notice does not replace the previous timer and message");
+  [...timers.values()][0].callback();
+  assert(notice.hidden === true && notice.textContent === "", "print success notice remains visible after its timer completes");
+}
 
 const station = functionSource("processNextFinishedLabelPrintJob");
 assert(station.includes('sb.rpc("claim_finished_label_print_job"'), "print station does not claim jobs atomically");
@@ -163,6 +203,7 @@ assert(styles.includes(".finished-label-print-station") && styles.includes(".fin
 assert(styles.includes("grid-template-columns: repeat(3, minmax(0, 1fr))"), "three print-mode cards are not laid out consistently");
 assert(styles.includes(".finished-label-mobile-print-rule.success") && styles.includes(".finished-label-mobile-print-rule.error"), "mobile print result states are not styled");
 assert(styles.includes(".finished-label-mobile-destination-option.active") && styles.includes("@media (max-width: 600px)"), "mobile destination cards are not styled responsively");
+assert(styles.includes(".dcats-auto-notice") && styles.includes(".dcats-auto-notice[hidden]") && styles.includes("env(safe-area-inset-bottom)"), "auto-dismiss notice is not styled safely for mobile screens");
 assert(launcher.includes("--kiosk-printing") && launcher.includes("TD-4420TN-PrintStation"), "Windows launcher does not use a dedicated kiosk-printing profile");
 assert(launcher.includes("dcats_print_station=td4420tn") && launcher.includes("label_target=$LabelTarget"), "Windows launcher does not request automatic station startup");
 assert(launcher.includes("[switch]$Watch") && launcher.includes("Get-CimInstance Win32_Process") && launcher.includes("while ($true)") && launcher.includes("DcatsTD4420TNPrintStationWatchdog"), "Windows launcher cannot recover safely after Edge closes");

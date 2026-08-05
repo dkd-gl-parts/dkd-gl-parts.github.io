@@ -4656,7 +4656,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.682";
+var APP_VERSION       = "v1.1.683";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -4786,6 +4786,7 @@ var finishedLabelLastIssuedRecord = null;
 var finishedLabelSelectedHistoryId = null;
 var finishedLabelPrintMode = "";
 var finishedLabelLastQueuedJob = null;
+var dcatsAutoNoticeTimer = null;
 var finishedLabelPrintDestinations = [];
 var finishedLabelPrintDestinationsTarget = "";
 var finishedLabelSelectedSiteCode = "";
@@ -17578,6 +17579,22 @@ function finishedLabelUsesRemotePrintQueue() {
   return isFinishedLabelMobilePrintClient();
 }
 
+function showDcatsAutoNotice(message, durationMs) {
+  var notice = document.getElementById("dcats-auto-notice");
+  if (!notice) return;
+  if (dcatsAutoNoticeTimer !== null) {
+    window.clearTimeout(dcatsAutoNoticeTimer);
+    dcatsAutoNoticeTimer = null;
+  }
+  notice.textContent = String(message || "");
+  notice.hidden = false;
+  dcatsAutoNoticeTimer = window.setTimeout(function() {
+    notice.hidden = true;
+    notice.textContent = "";
+    dcatsAutoNoticeTimer = null;
+  }, Math.max(1200, Number(durationMs) || 2800));
+}
+
 function savedFinishedLabelPrintSiteCode() {
   try {
     var raw = localStorage.getItem(FINISHED_LABEL_PRINT_SITE_STORAGE_KEY);
@@ -19285,9 +19302,11 @@ async function saveFinishedLabelIssue() {
     }
     renderFinishedLabelIssuedResult(record);
     if (remotePrint) {
-      alert(queueError
-        ? finishedLabelMobilePrintErrorText(queueError, "finished_label_mobile_queue_failed")
-        : t("finished_label_mobile_queue_saved"));
+      if (queueError) {
+        alert(finishedLabelMobilePrintErrorText(queueError, "finished_label_mobile_queue_failed"));
+      } else {
+        showDcatsAutoNotice(t("finished_label_mobile_queue_saved"));
+      }
     } else {
       alert(t("finished_label_saved"));
     }
@@ -19602,7 +19621,7 @@ async function executeFinishedLabelHistoryReprint(row, labelType, reason, printW
     });
     if (remotePrint) {
       await enqueueAndWaitForFinishedLabelPrint(record, labelType === "box" ? "box" : "finished_product", "reprint", reason);
-      alert(t("finished_label_mobile_print_queue_saved"));
+      showDcatsAutoNotice(t("finished_label_mobile_print_queue_saved"));
       await loadFinishedLabelHistory();
     } else if (labelType === "box") {
       openFinishedBoxLabelPrintPreview(record, printWindow);
@@ -19698,7 +19717,7 @@ async function executeFinishedBoxLabelIssue(row, eventType, reason, existingWind
         row.boxLabelQueued = true;
         row.boxLabelPrintStatus = "sent";
         row.boxLabelQueueRetry = null;
-        alert(t("finished_label_mobile_print_queue_saved"));
+        showDcatsAutoNotice(t("finished_label_mobile_print_queue_saved"));
       } catch (queueError) {
         row.boxLabelQueued = false;
         row.boxLabelPrintStatus = queueError.finishedLabelPrintStatus || "error";
@@ -19731,7 +19750,7 @@ async function previewCurrentFinishedLabel() {
   try {
     await enqueueAndWaitForFinishedLabelPrint(finishedLabelLastIssuedRecord, "finished_product", "initial", null);
     renderFinishedLabelIssuedResult(finishedLabelLastIssuedRecord);
-    alert(t("finished_label_mobile_print_queue_saved"));
+    showDcatsAutoNotice(t("finished_label_mobile_print_queue_saved"));
   } catch (error) {
     if (!error.finishedLabelPrintPending) finishedLabelLastQueuedJob = null;
     renderFinishedLabelIssuedResult(finishedLabelLastIssuedRecord);
@@ -19751,7 +19770,7 @@ async function retryFinishedBoxLabelQueue(row) {
     row.boxLabelQueued = true;
     row.boxLabelPrintStatus = "sent";
     row.boxLabelQueueRetry = null;
-    alert(t("finished_label_mobile_print_queue_saved"));
+    showDcatsAutoNotice(t("finished_label_mobile_print_queue_saved"));
   } catch (error) {
     row.boxLabelQueued = false;
     row.boxLabelPrintStatus = error.finishedLabelPrintStatus || "error";
