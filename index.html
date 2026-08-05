@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.671">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.671"; -->
+<meta name="dcats-app-version" content="v1.1.672">
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.672"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co; form-action 'self';">
 <title>D-CATS</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233c7df0'/%3E%3Cpath d='M8 17h16M16 9v14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.671&amp;ranking=7">
+<link rel="stylesheet" href="styles.css?v=1.1.672&amp;ranking=7">
 </head>
 <body>
 
@@ -1587,22 +1587,6 @@
             </div>
           </div>
         </div>
-        <div class="product-form-shipping" id="pf-shipping-fields">
-          <div class="spec-title" data-i18n="product_shipping_section">配送情報</div>
-          <div class="spec-form-help" id="pf-shipping-help" data-i18n="product_shipping_help">品番ごとの梱包重量と通常の出荷サイズを設定します。</div>
-          <div class="spec-form-grid product-form-shipping-grid">
-            <div class="form-row">
-              <label class="form-label" for="pf-shipping-weight" data-i18n="product_shipping_weight">梱包重量 (kg)</label>
-              <input class="form-input" id="pf-shipping-weight" type="number" min="0.001" max="99999.999" step="0.001" inputmode="decimal">
-            </div>
-            <div class="form-row">
-              <label class="form-label" for="pf-shipping-package-size" data-i18n="product_shipping_size">出荷サイズ</label>
-              <select class="form-input" id="pf-shipping-package-size">
-                <option value="" data-i18n="product_shipping_unset">未設定</option>
-              </select>
-            </div>
-          </div>
-        </div>
       </section>
       <section class="product-form-section" aria-labelledby="product-form-spec-title">
         <div class="product-form-section-head">
@@ -1647,6 +1631,22 @@
         <div class="form-row product-form-note">
           <label class="form-label" data-i18n="spec_note">情報元メモ</label>
           <input class="form-input" id="sf-source-note" type="text" placeholder="例: 社内確認、現品ラベル" data-i18n-ph="spec_note_ph">
+        </div>
+        <div class="product-form-shipping" id="pf-shipping-fields">
+          <div class="spec-title" data-i18n="product_shipping_section">配送情報</div>
+          <div class="spec-form-help" id="pf-shipping-help" data-i18n="product_shipping_help">品番ごとの梱包重量と通常の出荷サイズを設定します。</div>
+          <div class="spec-form-grid product-form-shipping-grid">
+            <div class="form-row">
+              <label class="form-label" for="pf-shipping-weight" data-i18n="product_shipping_weight">梱包重量 (kg)</label>
+              <input class="form-input" id="pf-shipping-weight" type="number" min="0.001" max="99999.999" step="0.001" inputmode="decimal">
+            </div>
+            <div class="form-row">
+              <label class="form-label" for="pf-shipping-package-size" data-i18n="product_shipping_size">出荷サイズ</label>
+              <select class="form-input" id="pf-shipping-package-size">
+                <option value="" data-i18n="product_shipping_unset">未設定</option>
+              </select>
+            </div>
+          </div>
         </div>
       </section>
     </div>
@@ -3550,7 +3550,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
 <script src="vendor/qrcode.min.js?v=1.0.0"></script>
-<script src="app.js?v=1.1.671"></script>
+<script src="app.js?v=1.1.672"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.625&amp;ranking=17"></script>
 </body>
 </html>

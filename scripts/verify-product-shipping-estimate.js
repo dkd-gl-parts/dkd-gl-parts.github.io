@@ -103,4 +103,19 @@ const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
 const duplicateIds = ids.filter((id, index) => ids.indexOf(id) !== index);
 if (duplicateIds.length) throw new Error(`duplicate HTML ids: ${[...new Set(duplicateIds)].join(", ")}`);
 
+const specSectionIndex = html.indexOf('aria-labelledby="product-form-spec-title"');
+const sourceNoteIndex = html.indexOf('id="sf-source-note"', specSectionIndex);
+const shippingFieldsIndex = html.indexOf('id="pf-shipping-fields"', specSectionIndex);
+if (specSectionIndex < 0 || sourceNoteIndex < 0 || shippingFieldsIndex < sourceNoteIndex) {
+  throw new Error("product shipping fields must balance the edit form below the nominal-output fields");
+}
+
+[
+  "@media(max-height:900px) and (min-width:961px)",
+  ".product-form-core-policy,\n  .product-form-shipping { margin-top: 10px; padding-top: 10px; }",
+  ".product-form-shipping-grid { margin-top: 7px; }"
+].forEach((fragment) => {
+  if (!css.includes(fragment)) throw new Error(`compact product edit layout is missing: ${fragment}`);
+});
+
 console.log("product shipping estimate guard passed");

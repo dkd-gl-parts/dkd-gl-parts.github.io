@@ -2630,12 +2630,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 @media(max-width:400px) {
   .product-form-spec-grid { grid-template-columns: 1fr; }
 }
-@media(max-height:680px) and (min-width:961px) {
+@media(max-height:900px) and (min-width:961px) {
   .product-form-header { padding-top: 12px; padding-bottom: 10px; }
-  .product-form-layout { padding-top: 10px; }
+  .product-form-layout { gap: 12px; padding: 10px 16px 8px; }
   .product-form-section { padding: 11px; }
   .product-form-section-head { margin-bottom: 8px; }
   .product-form-basic-grid, .product-form-spec-grid { gap: 7px 10px; }
+  .product-form-core-grid { margin-top: 9px; }
+  .product-form-core-policy,
+  .product-form-shipping { margin-top: 10px; padding-top: 10px; }
+  .product-form-core-policy-grid { gap: 10px; margin-top: 8px; }
+  .product-form-shipping-grid { margin-top: 7px; }
+  .product-form-raw-spec { margin-bottom: 8px !important; }
+  .product-form-note { margin-top: 8px !important; }
   .product-form-card .form-input, .product-form-card .form-select { min-height: 34px; padding-top: 6px; padding-bottom: 6px; }
   .form-footer.product-form-footer { padding-top: 9px; padding-bottom: 10px; }
 }
