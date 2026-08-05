@@ -4656,7 +4656,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.679";
+var APP_VERSION       = "v1.1.680";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5996,7 +5996,9 @@ function showAuthenticatedHome() {
 }
 
 function openRequestedPrintStationAfterAuth() {
-  if (!automaticFinishedLabelPrintStationTarget()) return false;
+  // A saved legacy receiver preference must never override normal update
+  // restoration. Only the dedicated print-station URL may open this screen.
+  if (!requestedFinishedLabelPrintStationTarget()) return false;
   window.setTimeout(function() {
     openRequestedFinishedLabelPrintStation().catch(function(error) {
       console.warn("finished label print station auto-start failed", error);

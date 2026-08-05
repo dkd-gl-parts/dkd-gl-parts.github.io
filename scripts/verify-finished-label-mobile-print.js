@@ -43,8 +43,8 @@ function functionSource(name) {
   throw new Error(`${name} could not be parsed`);
 }
 
-assert(app.includes('var APP_VERSION       = "v1.1.679";'), "app version is not v1.1.679");
-assert(html.includes('content="v1.1.679"'), "HTML version is not v1.1.679");
+assert(app.includes('var APP_VERSION       = "v1.1.680";'), "app version is not v1.1.680");
+assert(html.includes('content="v1.1.680"'), "HTML version is not v1.1.680");
 assert(html.includes('data-finished-label-mode="station"'), "Windows print-station mode is missing");
 [
   "finished-label-mobile-print-rule",
@@ -128,7 +128,22 @@ assert(functionSource("printFinishedLabelStationFrame").includes('addEventListen
 assert(functionSource("retryFinishedLabelPrintStationJob").includes('sb.rpc("retry_finished_label_print_job"'), "failed station jobs cannot be retried");
 assert(functionSource("loadFinishedLabelPrintStationHistory").includes('sb.rpc("list_finished_label_print_jobs"'), "print-station history is not loaded through an RPC");
 assert(functionSource("requestedFinishedLabelPrintStationTarget").includes("dcats_print_station") && functionSource("openRequestedFinishedLabelPrintStation").includes("resumeFinishedLabelPrintStationIfEnabled()"), "dedicated Windows station does not auto-start receiving");
-assert(functionSource("openRequestedPrintStationAfterAuth").includes("automaticFinishedLabelPrintStationTarget") && functionSource("openRequestedPrintStationAfterAuth").includes("openRequestedFinishedLabelPrintStation"), "saved print station is not resumed after authentication or refresh");
+assert(functionSource("openRequestedPrintStationAfterAuth").includes("requestedFinishedLabelPrintStationTarget") && !functionSource("openRequestedPrintStationAfterAuth").includes("automaticFinishedLabelPrintStationTarget") && functionSource("openRequestedPrintStationAfterAuth").includes("openRequestedFinishedLabelPrintStation"), "a saved legacy print-station preference can override normal update restoration");
+{
+  let explicitTarget = "";
+  let openCalls = 0;
+  const updateRestoreSandbox = {
+    requestedFinishedLabelPrintStationTarget() { return explicitTarget; },
+    openRequestedFinishedLabelPrintStation() { openCalls += 1; return Promise.resolve(); },
+    console: { warn() {} },
+    window: { setTimeout(callback) { callback(); } }
+  };
+  vm.createContext(updateRestoreSandbox);
+  vm.runInContext(`${functionSource("openRequestedPrintStationAfterAuth")}\nthis.openAfterAuth = openRequestedPrintStationAfterAuth;`, updateRestoreSandbox);
+  assert(updateRestoreSandbox.openAfterAuth() === false && openCalls === 0, "normal update restoration is still redirected to the legacy Windows print-station screen");
+  explicitTarget = "finished_product";
+  assert(updateRestoreSandbox.openAfterAuth() === true && openCalls === 1, "the explicit dedicated print-station URL no longer opens its requested screen");
+}
 assert(functionSource("startFinishedLabelPrintStation").includes("saveFinishedLabelPrintStationPreference(true)"), "starting the receiver does not persist its active state");
 assert(functionSource("pauseFinishedLabelPrintStation").includes("finishedLabelPrintStationRunning = false") && !functionSource("pauseFinishedLabelPrintStation").includes("saveFinishedLabelPrintStationPreference(false)"), "leaving the station screen clears its saved active state");
 assert(functionSource("stopFinishedLabelPrintStation").includes("pauseFinishedLabelPrintStation()") && functionSource("stopFinishedLabelPrintStation").includes("saveFinishedLabelPrintStationPreference(false)"), "the explicit Stop action does not clear its active state");
