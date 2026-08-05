@@ -4602,7 +4602,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.672";
+var APP_VERSION       = "v1.1.673";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -17492,6 +17492,16 @@ function automaticFinishedLabelPrintStationTarget() {
   return saved ? saved.label_target : "";
 }
 
+function resumeFinishedLabelPrintStationIfEnabled() {
+  var targetValue = automaticFinishedLabelPrintStationTarget();
+  if (!targetValue || !currentUser || !canViewFinishedLabelMgmt()) return false;
+  var target = document.getElementById("finished-label-station-target");
+  if (target) target.value = targetValue;
+  updateFinishedLabelPrintStationTarget();
+  startFinishedLabelPrintStation();
+  return true;
+}
+
 function isFinishedLabelDedicatedPrintStationActive() {
   return !!automaticFinishedLabelPrintStationTarget()
     && finishedLabelPrintMode === "station"
@@ -17506,7 +17516,7 @@ async function openRequestedFinishedLabelPrintStation() {
   if (target) target.value = targetValue;
   updateFinishedLabelPrintStationTarget();
   await loadFinishedLabelPrintStationHistory();
-  startFinishedLabelPrintStation();
+  resumeFinishedLabelPrintStationIfEnabled();
 }
 
 function finishedLabelPrintRequestKey() {
@@ -17888,9 +17898,8 @@ function startFinishedLabelPrintStation() {
   scheduleFinishedLabelPrintStation(0);
 }
 
-function stopFinishedLabelPrintStation() {
+function pauseFinishedLabelPrintStation() {
   finishedLabelPrintStationRunning = false;
-  saveFinishedLabelPrintStationPreference(false);
   clearFinishedLabelPrintStationTimer();
   resetAutoLogoutTimer();
   var target = document.getElementById("finished-label-station-target");
@@ -17902,11 +17911,22 @@ function stopFinishedLabelPrintStation() {
   if (!finishedLabelPrintStationBusy) setFinishedLabelPrintStationState("stopped", "", "");
 }
 
+function stopFinishedLabelPrintStation() {
+  pauseFinishedLabelPrintStation();
+  saveFinishedLabelPrintStationPreference(false);
+}
+
+function returnFromFinishedLabelMgmtToMenu() {
+  setFinishedLabelPrintMode("");
+  clearAppRestoreState();
+  showAuthenticatedHome();
+}
+
 function setFinishedLabelPrintMode(mode) {
   mode = mode === "station" ? "station" : (mode === "box" ? "box" : (mode === "product" ? "product" : ""));
   var previousMode = finishedLabelPrintMode;
   finishedLabelPrintMode = mode;
-  if (previousMode === "station" && mode !== "station") stopFinishedLabelPrintStation();
+  if (previousMode === "station" && mode !== "station") pauseFinishedLabelPrintStation();
   if (!mode || (previousMode && previousMode !== mode)) {
     finishedLabelLastIssuedRecord = null;
     finishedLabelSelectedHistoryId = null;
@@ -37442,10 +37462,7 @@ document.getElementById("component-compat-form-overlay").addEventListener("click
 document.getElementById("component-compat-form-part-number").addEventListener("blur", function(){ normalizeComponentPartNumberElement(this); });
 document.getElementById("btn-back-product-kind-stock-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-manufacturing-cost-mgmt").addEventListener("click", returnToMenuFresh);
-document.getElementById("btn-back-finished-label-mgmt").addEventListener("click", function() {
-  stopFinishedLabelPrintStation();
-  returnToMenuFresh();
-});
+document.getElementById("btn-back-finished-label-mgmt").addEventListener("click", returnFromFinishedLabelMgmtToMenu);
 document.getElementById("btn-back-finished-product-shipping").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-production-ranking-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-kikan-mgmt").addEventListener("click", returnToMenuFresh);
@@ -37757,7 +37774,10 @@ document.getElementById("btn-finished-label-load-more").addEventListener("click"
 document.querySelectorAll("[data-finished-label-mode]").forEach(function(btn) {
   btn.addEventListener("click", function() {
     setFinishedLabelPrintMode(btn.dataset.finishedLabelMode);
-    if (finishedLabelPrintMode === "station") return;
+    if (finishedLabelPrintMode === "station") {
+      resumeFinishedLabelPrintStationIfEnabled();
+      return;
+    }
     renderFinishedLabelEmpty();
     if (finishedLabelPrintMode === "box") searchFinishedLabelProducts();
     if (finishedLabelSearchInput) finishedLabelSearchInput.focus();
