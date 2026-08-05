@@ -4602,7 +4602,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.670";
+var APP_VERSION       = "v1.1.671";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -35742,8 +35742,9 @@ function permissionOverviewScreenGroups(context) {
           ]
         },
         {
-          title: "パスワード変更",
+          title: "ログイン・パスワード",
           items: [
+            { label: "トップ画面のPW再発行（社内・得意先共通）", state: permissionOverviewAllowed("登録済みメールで利用可") },
             { label: "自分のパスワード変更", state: permissionOverviewAllowed("利用可") }
           ]
         },

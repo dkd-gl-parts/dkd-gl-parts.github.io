@@ -43,8 +43,8 @@ function functionSource(name) {
   throw new Error(`${name} could not be parsed`);
 }
 
-assert(app.includes('var APP_VERSION       = "v1.1.670";'), "app version is not v1.1.670");
-assert(html.includes('content="v1.1.670"'), "HTML version is not v1.1.670");
+assert(app.includes('var APP_VERSION       = "v1.1.671";'), "app version is not v1.1.671");
+assert(html.includes('content="v1.1.671"'), "HTML version is not v1.1.671");
 assert(html.includes('data-finished-label-mode="station"'), "Windows print-station mode is missing");
 [
   "finished-label-mobile-print-rule",
