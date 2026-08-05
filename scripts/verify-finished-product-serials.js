@@ -99,6 +99,8 @@ assert(functionSource("finishedLabelProductPriority").includes("hasBothComponent
 const resultRenderSource = functionSource("renderFinishedLabelResults");
 assert(resultRenderSource.includes("finishedLabelProducts.slice(0, finishedLabelVisibleLimit)"), "finished-label results are not capped before rendering");
 assert(resultRenderSource.includes("loadMore.hidden = visibleProducts.length >= finishedLabelProducts.length"), "finished-label load-more visibility is not tied to remaining results");
+assert(resultRenderSource.includes('t("f_genuine_pn")') && resultRenderSource.includes("p.genuine_part_number"), "finished-label search results do not identify the genuine part number");
+assert(styles.includes(".finished-label-result-number-row") && styles.includes(".finished-label-result-number-value"), "finished-label genuine part number lacks a readable result-card layout");
 assert(functionSource("showMoreFinishedLabelProducts").includes("FINISHED_LABEL_PAGE_STEP"), "finished-label load-more does not advance in fixed pages");
 assert(functionSource("searchFinishedLabelProducts").includes("normalizeFinishedLabelSearchInput(qEl)"), "finished-label search does not normalize the visible input before querying");
 assert(functionSource("searchFinishedLabelProducts").includes('if (!q && finishedLabelPrintMode !== "box")'), "blank finished-label search is not stopped before loading production candidates");

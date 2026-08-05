@@ -4605,7 +4605,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.675";
+var APP_VERSION       = "v1.1.676";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -18460,6 +18460,7 @@ function renderFinishedLabelResults() {
     var title = p.gltek_part_number || p.genuine_part_number || p.manufacturer_part_number || p.daiko_part_number || ("DKD " + dkdId);
     html += "<button type='button' class='finished-label-result" + active + ((finishedLabelPrintMode === "box" ? hasBoxHistory : hasBothComponentKinds) ? " priority" : "") + "' data-finished-label-dkd='" + esc(String(dkdId || "")) + "'>";
     html += "<div class='finished-label-result-title'>" + esc(title || "-") + "</div>";
+    html += "<div class='finished-label-result-number-row'><span class='finished-label-result-number-label'>" + esc(t("f_genuine_pn")) + "</span><span class='finished-label-result-number-value'>" + esc(p.genuine_part_number || "-") + "</span></div>";
     if (finishedLabelPrintMode === "box" && boxReadiness) {
       var boxStatus = hasBoxHistory
         ? tf("finished_box_label_ready_summary", { n: boxReadiness.issueCount, date: formatDateTime(boxReadiness.latestIssuedAt) })
