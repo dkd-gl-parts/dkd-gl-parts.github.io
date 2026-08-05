@@ -2171,6 +2171,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-check { border: 1px solid #e6ebf3; border-radius: 8px; padding: 9px 10px; display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #334155; background: #fff; line-height: 1.45; }
 .customer-check input { margin-top: 2px; flex: 0 0 auto; }
 .customer-check.disabled { color: #9aa3b2; background: #f7f8fa; }
+.customer-shipping-rule-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0 8px; }
+.customer-shipping-rule-option { min-width: 0; border: 1px solid #dce4ee; border-radius: 8px; padding: 10px; display: flex; align-items: flex-start; gap: 8px; background: #fff; cursor: pointer; }
+.customer-shipping-rule-option:hover { border-color: #9eb8dc; }
+.customer-shipping-rule-option input { margin-top: 2px; accent-color: #2563c7; flex: 0 0 auto; }
+.customer-shipping-rule-option span { min-width: 0; }
+.customer-shipping-rule-option strong { display: block; color: #26384d; font-size: 12px; line-height: 1.35; }
+.customer-shipping-rule-option small { display: block; margin-top: 3px; color: #667085; font-size: 10px; line-height: 1.45; }
+.customer-shipping-rule-option.separate:has(input:checked) { border-color: #d49a28; background: #fff8e6; }
+.customer-shipping-rule-option.free:has(input:checked) { border-color: #4ca66a; background: #eef9f1; }
 .customer-category-control { margin: 10px 0 16px; border: 1px solid #dce4ee; border-radius: 8px; overflow: hidden; background: #fff; }
 .customer-category-toolbar { min-height: 42px; padding: 7px 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #e7ecf3; background: #f7f9fc; }
 .customer-category-toolbar > span { color: #405268; font-size: 12px; font-weight: 800; }
@@ -3570,8 +3579,24 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .detail-customer-price-focus > small { display: block; margin-top: 4px; color: #667085; font-size: 10px; }
 .detail-customer-price-focus:not(.empty) > strong { text-align: right; white-space: nowrap; overflow-wrap: normal; word-break: keep-all; }
 .detail-customer-price-focus:not(.empty) > small { text-align: right; }
+.detail-customer-shipping-rule {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 5px 10px;
+  align-items: center;
+  margin-top: 10px;
+  border-top: 1px solid #d9e1eb;
+  padding-top: 10px;
+}
+.detail-customer-shipping-rule > span { color: #667085; font-size: 11px; font-weight: 700; }
+.detail-customer-shipping-rule > strong { justify-self: end; border: 1px solid currentColor; border-radius: 4px; padding: 3px 7px; font-size: 12px; font-weight: 800; line-height: 1.25; }
+.detail-customer-shipping-rule > small { grid-column: 1 / -1; color: #667085; font-size: 10px; line-height: 1.45; }
+.detail-customer-shipping-rule.separate > strong { background: #fff8e6; color: #9a6700; }
+.detail-customer-shipping-rule.free > strong { background: #eef9f1; color: #18743a; }
+.detail-customer-shipping-rule.loading > strong { border-color: #c7d0dc; background: #f5f7fa; color: #667085; }
 #screen-search .sales-conditions-terms {
   width: 100%;
+  margin-top: 12px;
   border-color: #d9e1eb;
   border-radius: 6px;
   padding: 7px;
@@ -3583,9 +3608,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   grid-template-columns: 110px minmax(0, 1fr);
 }
 #screen-search .sales-shipping-estimate {
-  margin-top: 12px;
-  border-top: 1px solid #d9e1eb;
-  padding-top: 12px;
+  margin: 0 0 12px;
+  border: 1px solid #d9e1eb;
+  border-radius: 6px;
+  padding: 10px;
+  background: #fff;
 }
 #screen-search .sales-shipping-estimate > .detail-block-title { margin-bottom: 8px; color: #344054; font-size: 12px; }
 .sales-shipping-profile {
@@ -3708,6 +3735,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   }
   #screen-search .panel-left { grid-column: 1; grid-row: 3; overflow: visible; }
   .sales-shipping-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .customer-shipping-rule-options { grid-template-columns: minmax(0, 1fr); }
   .sales-detail-tabs { position: sticky; top: 0; }
   .sales-detail-tab-panel { padding: 14px; }
   .sales-detail-component-entry { align-items: stretch; flex-direction: column; }

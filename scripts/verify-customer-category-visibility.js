@@ -56,6 +56,26 @@ const detailSource = functionSource("renderCustomerAccessDetail", "function rend
 if (detailSource.includes("renderCustomerAccessRuleForm") || detailSource.includes("renderCustomerAccessRulesTable")) {
   throw new Error("the obsolete detailed visibility rule interface must not be shown");
 }
+if (!detailSource.includes("data-customer-shipping-rule") ||
+    !detailSource.includes('normalizeCustomerShippingChargeRule(s)') ||
+    !detailSource.includes('customer_access_shipping_rule_help')) {
+  throw new Error("customer management must provide separate/free shipping terms in the saved display settings");
+}
+
+const defaultSettingsSource = functionSource("defaultCustomerDisplaySettings", "function customerViewerSetting");
+if (!defaultSettingsSource.includes('shipping_charge_rule: "separate"') ||
+    !defaultSettingsSource.includes('value.shipping_charge_rule') ||
+    !defaultSettingsSource.includes('=== "free" ? "free" : "separate"')) {
+  throw new Error("customer shipping terms must default safely to shipping charged separately");
+}
+const shippingRuleSandbox = {};
+vm.runInNewContext(`${defaultSettingsSource}; result = { defaults: defaultCustomerDisplaySettings, normalize: normalizeCustomerShippingChargeRule };`, shippingRuleSandbox);
+if (shippingRuleSandbox.result.defaults().shipping_charge_rule !== "separate" ||
+    shippingRuleSandbox.result.normalize(null) !== "separate" ||
+    shippingRuleSandbox.result.normalize({ shipping_charge_rule: "free" }) !== "free" ||
+    shippingRuleSandbox.result.normalize("unexpected") !== "separate") {
+  throw new Error("customer shipping terms must accept only free and otherwise fall back to separate");
+}
 
 if (!html.includes('id="customer-access-save-bar"') ||
     !html.includes('id="customer-access-save-state"') ||
@@ -126,6 +146,7 @@ if (!searchSource.includes("if (!query && !category)") ||
 const settingsSaveSource = functionSource("saveCustomerAccessSettings", "async function setCustomerAccessActive");
 if (!settingsSaveSource.includes("loadCustomerPortalContextForCustomer(updatedCustomer)") ||
     !settingsSaveSource.includes("customerAccessSettingsSaving = true") ||
+    !settingsSaveSource.includes("detailCustomerDisplaySettingsCache[String(customerId)]") ||
     !settingsSaveSource.includes("updateCustomerAccessSaveState()")) {
   throw new Error("saving category visibility must show progress and refresh an active internal customer preview");
 }

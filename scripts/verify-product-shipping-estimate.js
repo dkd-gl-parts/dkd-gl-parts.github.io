@@ -78,6 +78,12 @@ const estimateRender = sourceBetween("function renderSalesShippingEstimate", "as
   if (!estimateRender.includes(fragment)) throw new Error(`sales shipping estimate is incomplete: ${fragment}`);
 });
 
+const estimateVisibility = sourceBetween("function salesShippingEstimateShouldShow", "function bindSalesShippingEstimateActions");
+if (!estimateVisibility.includes('detailCustomerShippingChargeRule !== "free"') ||
+    !estimateVisibility.includes("updateSalesShippingEstimateVisibility")) {
+  throw new Error("free-shipping customers must not be shown a separate shipping estimate");
+}
+
 const weightPackageMatch = sourceBetween("function salesShippingPackageFromWeight", "function bindSalesShippingEstimateActions");
 [
   "Number(row.max_weight_kg) >= weight",
@@ -118,6 +124,13 @@ if (!source.includes("productShippingSizeRows.push(selected)")) {
   const count = (source.match(new RegExp(`${key}:`, "g")) || []).length;
   if (count !== 3) throw new Error(`${key} must be translated for all supported languages`);
 });
+
+const customerSectionIndex = html.indexOf('id="detail-customer-section"');
+const shippingSectionIndex = html.indexOf('id="sales-shipping-estimate-section"');
+const productTermsIndex = html.indexOf('class="detail-sales-terms-panel sales-conditions-terms"');
+if (customerSectionIndex < 0 || shippingSectionIndex < customerSectionIndex || productTermsIndex < shippingSectionIndex) {
+  throw new Error("shipping estimates must sit directly below the customer price before product and core terms");
+}
 
 [
   ".product-form-shipping",

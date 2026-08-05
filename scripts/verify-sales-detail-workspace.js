@@ -22,6 +22,7 @@ function sourceBetween(startText, endText) {
   'data-sales-detail-tab="components"',
   'data-sales-detail-tab="images"',
   'id="detail-customer-wrap"',
+  'id="sales-shipping-estimate-section"',
   'id="product-kind-wrap"',
   'id="core-return-policy-wrap"',
   'id="ec-mall-price-summary-wrap"',
@@ -111,6 +112,25 @@ if (!customerPriceSource.includes('.select("base_price_jpy,tax_included")') || !
   throw new Error("customer sales price must preserve the stored tax classification");
 }
 
+const customerTermsSource = sourceBetween("async function fetchDetailCustomerDisplaySettings", "async function fetchDetailCustomerPriceInfo");
+[
+  'select("sales_customer_id,shipping_charge_rule")',
+  "detailCustomerShippingRuleHtml",
+  'sales_shipping_charge_separate',
+  'sales_shipping_charge_free'
+].forEach((fragment) => {
+  if (!customerTermsSource.includes(fragment)) throw new Error(`customer shipping terms are missing from sales detail: ${fragment}`);
+});
+[
+  "sales_shipping_charge_rule",
+  "sales_shipping_charge_separate",
+  "sales_shipping_charge_free",
+  "customer_access_shipping_rule"
+].forEach((key) => {
+  const count = (source.match(new RegExp(`${key}:`, "g")) || []).length;
+  if (count !== 3) throw new Error(`${key} must be translated for all supported languages`);
+});
+
 const vehicleSource = sourceBetween("async function loadCatalogVehicleSummary", "function renderGltekPartNumberRow");
 if (!vehicleSource.includes('document.getElementById("detail-vehicle-tab-content")') || !vehicleSource.includes('updateSalesDetailTabCount("vehicles"')) {
   throw new Error("vehicle applications must render in the detail tab with a count");
@@ -136,6 +156,8 @@ if (!compatibleLoadSource.includes("await hydrateSalesDaikoVisibility(parts_list
   "position: sticky",
   "font-variant-numeric: tabular-nums",
   ".detail-customer-price-focus:not(.empty) > strong",
+  ".detail-customer-shipping-rule.separate > strong",
+  ".detail-customer-shipping-rule.free > strong",
   "white-space: nowrap; overflow-wrap: normal; word-break: keep-all",
   ".sales-detail-tab-panel[hidden]",
   "align-items: stretch",

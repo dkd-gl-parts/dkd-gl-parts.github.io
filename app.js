@@ -956,6 +956,12 @@ var TRANSLATIONS = {
     detail_customer_no_price: "販売価格は未設定です",
     sales_detail_title: "商品詳細",
     sales_conditions_title: "販売条件",
+    sales_shipping_charge_rule: "送料条件",
+    sales_shipping_charge_separate: "送料別途",
+    sales_shipping_charge_free: "送料無料",
+    sales_shipping_charge_loading: "送料条件を確認中",
+    sales_shipping_separate_note: "商品価格に送料は含まれていません。お届け先を選択して送料をご確認ください。",
+    sales_shipping_free_note: "この得意先は送料無料です。",
     sales_shipping_estimate_title: "送料目安",
     sales_shipping_destination: "お届け先",
     sales_shipping_profile: "品番の配送設定",
@@ -1005,6 +1011,10 @@ var TRANSLATIONS = {
     customer_access_delete_confirm: "この得意先を削除しますか？表示設定・表示範囲・ユーザー紐づけも削除されます。",
     customer_access_display_settings: "得意先向け表示ルール",
     customer_access_rule_help: "販売価格をOFFにすると、0円表示・価格あり商品のみ表示もOFFになります。価格あり商品のみ表示をONにすると、価格未設定商品は非表示になります。",
+    customer_access_shipping_rule: "送料条件",
+    customer_access_shipping_rule_help: "未設定時は送料別途です。変更後は上の保存ボタンを押すと販売管理と得意先向け価格表へ反映されます。",
+    customer_access_shipping_separate_desc: "商品価格とは別に、お届け先に応じた送料をご案内します。",
+    customer_access_shipping_free_desc: "この得意先には送料を請求しません。",
     customer_access_category_visibility: "得意先に表示するカテゴリ",
     customer_access_category_help: "チェックしたカテゴリを商品カタログに表示します。未設定時は主要6カテゴリが初期値です。変更後は上の保存ボタンを押してください。",
     customer_access_category_all: "すべて選択",
@@ -2455,6 +2465,12 @@ var TRANSLATIONS = {
     detail_customer_no_price: "Sales price is not set",
     sales_detail_title: "Product Details",
     sales_conditions_title: "Sales Terms",
+    sales_shipping_charge_rule: "Shipping Terms",
+    sales_shipping_charge_separate: "Shipping charged separately",
+    sales_shipping_charge_free: "Free shipping",
+    sales_shipping_charge_loading: "Checking shipping terms",
+    sales_shipping_separate_note: "Shipping is not included in the product price. Select the destination to check the rate.",
+    sales_shipping_free_note: "This customer receives free shipping.",
     sales_shipping_estimate_title: "Shipping Estimate",
     sales_shipping_destination: "Destination",
     sales_shipping_profile: "Product Shipping Profile",
@@ -2504,6 +2520,10 @@ var TRANSLATIONS = {
     customer_access_delete_confirm: "Delete this customer? Display settings, visibility rules, and user links will also be deleted.",
     customer_access_display_settings: "Customer display rules",
     customer_access_rule_help: "When sales price is off, zero-price display and priced-only display are also off. When priced-only is on, products without prices are hidden.",
+    customer_access_shipping_rule: "Shipping Terms",
+    customer_access_shipping_rule_help: "Shipping is charged separately by default. Save changes to apply them to Sales Management and the customer price list.",
+    customer_access_shipping_separate_desc: "Show a destination-based shipping charge separately from the product price.",
+    customer_access_shipping_free_desc: "Do not charge this customer for shipping.",
     customer_access_category_visibility: "Categories visible to this customer",
     customer_access_category_help: "Checked categories appear in the product catalog. Six primary categories are selected by default. Press the Save button above after making changes.",
     customer_access_category_all: "Select all",
@@ -3947,6 +3967,12 @@ var TRANSLATIONS = {
     detail_customer_no_price: "尚未设置销售价格",
     sales_detail_title: "商品详情",
     sales_conditions_title: "销售条件",
+    sales_shipping_charge_rule: "运费条件",
+    sales_shipping_charge_separate: "运费另计",
+    sales_shipping_charge_free: "免运费",
+    sales_shipping_charge_loading: "正在确认运费条件",
+    sales_shipping_separate_note: "商品价格不含运费。请选择收货地区以确认运费。",
+    sales_shipping_free_note: "此客户免运费。",
     sales_shipping_estimate_title: "运费参考",
     sales_shipping_destination: "收货地区",
     sales_shipping_profile: "商品配送设置",
@@ -3996,6 +4022,10 @@ var TRANSLATIONS = {
     customer_access_delete_confirm: "要删除此客户吗？显示设置、显示范围和用户关联也会被删除。",
     customer_access_display_settings: "客户显示规则",
     customer_access_rule_help: "关闭销售价格时，0日元显示和仅显示有价格商品也会关闭。开启仅显示有价格商品时，未设置价格的商品会隐藏。",
+    customer_access_shipping_rule: "运费条件",
+    customer_access_shipping_rule_help: "默认运费另计。保存更改后将应用到销售管理和客户价格表。",
+    customer_access_shipping_separate_desc: "商品价格之外，按收货地区另行显示运费。",
+    customer_access_shipping_free_desc: "不向此客户收取运费。",
     customer_access_category_visibility: "向客户显示的类别",
     customer_access_category_help: "商品目录中仅显示已勾选的类别。默认选择六个主要类别。更改后请按上方的保存按钮。",
     customer_access_category_all: "全选",
@@ -4605,7 +4635,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.676";
+var APP_VERSION       = "v1.1.677";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -4842,6 +4872,8 @@ var salesCustomerOptions = [];
 var detailSalesCustomerOptions = [];
 var detailSelectedSalesCustomerId = "";
 var detailCustomerPriceSeq = 0;
+var detailCustomerDisplaySettingsCache = {};
+var detailCustomerShippingChargeRule = "separate";
 var customerUserLinkMap = {};
 var customerAccessRows = [];
 var customerAccessFilteredRows = [];
@@ -5352,8 +5384,13 @@ function defaultCustomerDisplaySettings() {
     show_sales_price: true,
     show_zero_price: false,
     priced_products_only: false,
-    show_parts_without_price: true
+    show_parts_without_price: true,
+    shipping_charge_rule: "separate"
   };
+}
+function normalizeCustomerShippingChargeRule(value) {
+  if (value && typeof value === "object") value = value.shipping_charge_rule;
+  return String(value || "").toLowerCase() === "free" ? "free" : "separate";
 }
 function customerViewerSetting(key, fallback) {
   if (!isCustomerViewer() && !isCustomerPortalSearchMode()) return fallback;
@@ -6673,6 +6710,8 @@ async function doLogout() {
   salesShippingServiceName = "";
   salesShippingPackageKeyValue = "";
   productShippingSizeRows = [];
+  detailCustomerDisplaySettingsCache = {};
+  detailCustomerShippingChargeRule = "separate";
   finishedShipmentCustomers = [];
   finishedShipmentUnits = [];
   finishedShipmentHistoryRows = [];
@@ -8016,6 +8055,15 @@ function salesShippingPackageFromWeight(packages, weight) {
   }) || weightedPackages[weightedPackages.length - 1] || null;
 }
 
+function salesShippingEstimateShouldShow() {
+  return canViewCustomerShippingRates() && detailCustomerShippingChargeRule != null && detailCustomerShippingChargeRule !== "free";
+}
+
+function updateSalesShippingEstimateVisibility() {
+  var section = document.getElementById("sales-shipping-estimate-section");
+  if (section) setCspStyle(section, "display", salesShippingEstimateShouldShow() ? "block" : "none");
+}
+
 function bindSalesShippingEstimateActions() {
   var prefecture = document.getElementById("sales-shipping-prefecture");
   var carrier = document.getElementById("sales-shipping-carrier");
@@ -8125,7 +8173,7 @@ async function loadSalesShippingEstimateForCurrent(seq) {
     if (section) setCspStyle(section, "display", "none");
     return;
   }
-  setCspStyle(section, "display", "block");
+  updateSalesShippingEstimateVisibility();
   host.innerHTML = "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>";
   var dkdId = parseInt(productDkdId(currentProduct), 10);
   if (isNaN(dkdId)) return;
@@ -8139,6 +8187,7 @@ async function loadSalesShippingEstimateForCurrent(seq) {
     salesShippingPackageKeyValue = "";
     currentProduct = Object.assign({}, currentProduct, salesShippingProfile || {});
     renderSalesShippingEstimate();
+    updateSalesShippingEstimateVisibility();
   } catch (error) {
     console.warn("sales shipping estimate lookup failed", error);
     if (seq === detailSecondaryRequestSeq) renderSalesShippingEstimate(true);
@@ -24636,7 +24685,7 @@ function renderPanelStatic() {
   setCspStyle(document.getElementById("detail-customer-section"), "display", canSeeSalesPrice() ? "block" : "none");
   var customerWrap = document.getElementById("detail-customer-wrap");
   if (customerWrap) customerWrap.innerHTML = canSeeSalesPrice() ? "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>" : "";
-  setCspStyle(document.getElementById("sales-shipping-estimate-section"), "display", canViewCustomerShippingRates() ? "block" : "none");
+  setCspStyle(document.getElementById("sales-shipping-estimate-section"), "display", salesShippingEstimateShouldShow() ? "block" : "none");
   var shippingEstimateWrap = document.getElementById("sales-shipping-estimate-wrap");
   if (shippingEstimateWrap) shippingEstimateWrap.innerHTML = canViewCustomerShippingRates() ? "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>" : "";
   setCspStyle(document.getElementById("sales-conditions-market"), "display", canViewPriceResearchHistory() ? "block" : "none");
@@ -31876,7 +31925,40 @@ function detailCustomerCell(label, value, cls) {
   return "<div class='detail-customer-cell'><div class='detail-customer-label'>" + esc(label) + "</div><div class='detail-customer-value" + (cls ? " " + cls : "") + "'>" + esc(value || "-") + "</div></div>";
 }
 
-function renderDetailCustomerInfoHtml(customer, priceInfo, canSelect) {
+async function fetchDetailCustomerDisplaySettings(customer) {
+  if (!customer || !customer.id) return defaultCustomerDisplaySettings();
+  var customerId = String(customer.id);
+  var context = activeCustomerPortalContext();
+  if (context && String(context.sales_customer_id || "") === customerId && context.settings) {
+    var contextSettings = Object.assign(defaultCustomerDisplaySettings(), context.settings);
+    contextSettings.shipping_charge_rule = normalizeCustomerShippingChargeRule(contextSettings);
+    detailCustomerDisplaySettingsCache[customerId] = contextSettings;
+    return contextSettings;
+  }
+  if (detailCustomerDisplaySettingsCache[customerId]) return detailCustomerDisplaySettingsCache[customerId];
+  var result = await sb.from("customer_display_settings")
+    .select("sales_customer_id,shipping_charge_rule")
+    .eq("sales_customer_id", customer.id)
+    .maybeSingle();
+  if (result.error) throw result.error;
+  var settings = Object.assign(defaultCustomerDisplaySettings(), result.data || {});
+  settings.shipping_charge_rule = normalizeCustomerShippingChargeRule(settings);
+  detailCustomerDisplaySettingsCache[customerId] = settings;
+  return settings;
+}
+
+function detailCustomerShippingRuleHtml(displaySettings) {
+  var loaded = !!displaySettings;
+  var rule = loaded ? normalizeCustomerShippingChargeRule(displaySettings) : "loading";
+  var labelKey = rule === "free" ? "sales_shipping_charge_free" : (rule === "separate" ? "sales_shipping_charge_separate" : "sales_shipping_charge_loading");
+  var noteKey = rule === "free" ? "sales_shipping_free_note" : (rule === "separate" ? "sales_shipping_separate_note" : "");
+  var html = "<div class='detail-customer-shipping-rule " + esc(rule) + "'>";
+  html += "<span>" + esc(t("sales_shipping_charge_rule")) + "</span><strong>" + esc(t(labelKey)) + "</strong>";
+  if (noteKey) html += "<small>" + esc(t(noteKey)) + "</small>";
+  return html + "</div>";
+}
+
+function renderDetailCustomerInfoHtml(customer, priceInfo, canSelect, displaySettings) {
   priceInfo = priceInfo || {};
   var html = "<div class='detail-customer-panel'>";
   if (canSelect) {
@@ -31907,6 +31989,7 @@ function renderDetailCustomerInfoHtml(customer, priceInfo, canSelect) {
   html += "<strong>" + (priceInfo.salesPrice == null ? esc(t("detail_customer_no_price")) : "&yen;" + esc(formatYen(priceInfo.salesPrice))) + "</strong>";
   if (taxLabel) html += "<small>" + esc(taxLabel) + "</small>";
   html += "</div>";
+  html += detailCustomerShippingRuleHtml(displaySettings);
   html += "</div>";
   return html;
 }
@@ -31951,6 +32034,15 @@ async function fetchDetailCustomerPriceInfo(customer, dkdId) {
   return info;
 }
 
+function bindDetailSalesCustomerSelect() {
+  var select = document.getElementById("detail-sales-customer-select");
+  if (!select) return;
+  select.addEventListener("change", function() {
+    detailSelectedSalesCustomerId = select.value || "";
+    loadDetailCustomerInfoForCurrent(detailSecondaryRequestSeq);
+  });
+}
+
 async function loadDetailCustomerInfoForCurrent(seq) {
   var wrap = document.getElementById("detail-customer-wrap");
   if (!wrap || !isCurrentDetailLoad(seq)) return;
@@ -31964,31 +32056,41 @@ async function loadDetailCustomerInfoForCurrent(seq) {
     var context = activeCustomerPortalContext();
     customer = context && context.customer ? context.customer : null;
   }
-  wrap.innerHTML = renderDetailCustomerInfoHtml(customer, null, canSelect);
-  var select = document.getElementById("detail-sales-customer-select");
-  if (select) {
-    select.addEventListener("change", function() {
-      detailSelectedSalesCustomerId = select.value || "";
-      loadDetailCustomerInfoForCurrent(detailSecondaryRequestSeq);
-    });
-  }
+  var customerId = customer && customer.id ? String(customer.id) : "";
+  var portalContext = activeCustomerPortalContext();
+  var initialSettings = customerId && portalContext && String(portalContext.sales_customer_id || "") === customerId
+    ? Object.assign(defaultCustomerDisplaySettings(), portalContext.settings || {})
+    : (detailCustomerDisplaySettingsCache[customerId] || null);
+  detailCustomerShippingChargeRule = customer ? (initialSettings ? normalizeCustomerShippingChargeRule(initialSettings) : null) : "separate";
+  updateSalesShippingEstimateVisibility();
+  wrap.innerHTML = renderDetailCustomerInfoHtml(customer, null, canSelect, initialSettings);
+  bindDetailSalesCustomerSelect();
   if (!customer) return;
   try {
     var dkdId = currentCoreDkdShohinId || await resolveCurrentCoreDkdShohinId();
     var requestedCustomerId = customer.id || "";
-    var priceInfo = await fetchDetailCustomerPriceInfo(customer, dkdId);
+    var detailValues = await Promise.allSettled([
+      fetchDetailCustomerPriceInfo(customer, dkdId),
+      fetchDetailCustomerDisplaySettings(customer)
+    ]);
+    if (detailValues[0].status === "rejected") console.warn("detail customer sales price lookup failed", detailValues[0].reason);
+    if (detailValues[1].status === "rejected") console.warn("detail customer shipping rule lookup failed", detailValues[1].reason);
+    var priceInfo = detailValues[0].status === "fulfilled" ? detailValues[0].value : {};
+    var displaySettings = detailValues[1].status === "fulfilled" ? detailValues[1].value : defaultCustomerDisplaySettings();
     if (!isCurrentDetailLoad(seq)) return;
     if (canSelect && String(detailSelectedSalesCustomerId || "") !== String(requestedCustomerId || "")) return;
-    wrap.innerHTML = renderDetailCustomerInfoHtml(customer, priceInfo, canSelect);
-    select = document.getElementById("detail-sales-customer-select");
-    if (select) {
-      select.addEventListener("change", function() {
-        detailSelectedSalesCustomerId = select.value || "";
-        loadDetailCustomerInfoForCurrent(detailSecondaryRequestSeq);
-      });
-    }
+    detailCustomerShippingChargeRule = normalizeCustomerShippingChargeRule(displaySettings);
+    updateSalesShippingEstimateVisibility();
+    wrap.innerHTML = renderDetailCustomerInfoHtml(customer, priceInfo, canSelect, displaySettings);
+    bindDetailSalesCustomerSelect();
   } catch (e) {
     console.warn("detail customer sales price lookup failed", e);
+    if (detailCustomerShippingChargeRule == null) {
+      detailCustomerShippingChargeRule = "separate";
+      updateSalesShippingEstimateVisibility();
+      wrap.innerHTML = renderDetailCustomerInfoHtml(customer, null, canSelect, defaultCustomerDisplaySettings());
+      bindDetailSalesCustomerSelect();
+    }
   }
 }
 
@@ -33463,7 +33565,13 @@ function customerPriceListPartNumbers(product) {
   ]).join(" / ") || "-";
 }
 
-function buildCustomerPriceListHtml(customer, rows) {
+function customerPriceListShippingTerms(settings) {
+  return normalizeCustomerShippingChargeRule(settings) === "free"
+    ? "送料は無料です。消費税は別途となります。"
+    : "送料・消費税は別途となります。";
+}
+
+function buildCustomerPriceListHtml(customer, rows, settings) {
   var issuedAt = new Date().toLocaleDateString("ja-JP");
   var body = rows.map(function(row, index) {
     var product = row.product || {};
@@ -33485,7 +33593,7 @@ function buildCustomerPriceListHtml(customer, rows) {
     "</head><body><div class='toolbar'><button id='dcats-print-customer-price-list' type='button'>印刷・PDF保存</button><button class='secondary' id='dcats-close-customer-price-list' type='button'>閉じる</button></div>" +
     "<main class='sheet'><header class='document-head'><div><h1>販売価格表</h1></div><div class='issue-date'>発行日<br><strong>" + esc(issuedAt) + "</strong></div></header>" +
     "<section class='customer-summary'><div><span>得意先名</span><strong>" + esc(customer.customer_name || "-") + "</strong></div></section>" +
-    "<div class='terms-note'><strong>送料・消費税は別途となります。</strong><span>在庫販売のため、ご注文前に当社システムで最新の在庫状況をご確認ください。</span></div>" +
+    "<div class='terms-note'><strong>" + esc(customerPriceListShippingTerms(settings)) + "</strong><span>在庫販売のため、ご注文前に当社システムで最新の在庫状況をご確認ください。</span></div>" +
     "<table class='price-list'><thead><tr><th>No.</th><th>カテゴリ</th><th>商品区分</th><th>G品番</th><th>純正品番</th><th>メーカー品番</th><th>メーカー</th><th>販売価格</th><th>メモ</th></tr></thead><tbody>" + body + "</tbody></table>" +
     "<footer><span>本価格表は発行日時点の価格です。</span><span>価格・仕様は予告なく変更する場合があります。</span></footer></main></body></html>";
 }
@@ -33523,7 +33631,7 @@ async function openCustomerPriceList() {
       writeCustomerPriceListWindow(win, "<!doctype html><html lang='ja'><head><meta charset='utf-8'><link rel='stylesheet' href='customer-price-list-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></head><body><div class='toolbar'><button class='secondary' id='dcats-close-customer-price-list' type='button'>閉じる</button></div><main class='message-page'>" + esc(t("customer_access_price_list_empty")) + "</main></body></html>");
       return;
     }
-    writeCustomerPriceListWindow(win, buildCustomerPriceListHtml(customer, rows));
+    writeCustomerPriceListWindow(win, buildCustomerPriceListHtml(customer, rows, priceListContext.settings));
   } catch (e) {
     console.warn("customer price list failed", e);
     if (!win.closed) writeCustomerPriceListWindow(win, "<!doctype html><html lang='ja'><head><meta charset='utf-8'><link rel='stylesheet' href='customer-price-list-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></head><body><div class='toolbar'><button class='secondary' id='dcats-close-customer-price-list' type='button'>閉じる</button></div><main class='message-page error'>" + esc(t("customer_access_price_list_failed")) + "</main></body></html>");
@@ -33591,6 +33699,17 @@ function renderCustomerAccessDetail() {
   });
   html += "</div>";
   html += "<div class='component-note'>" + esc(t("customer_access_rule_help")) + "</div>";
+  var shippingRule = normalizeCustomerShippingChargeRule(s);
+  html += "<div class='component-section-title'>" + esc(t("customer_access_shipping_rule")) + "</div>";
+  html += "<div class='customer-shipping-rule-options' role='radiogroup' aria-label='" + esc(t("customer_access_shipping_rule")) + "'>";
+  [
+    ["separate", "sales_shipping_charge_separate", "customer_access_shipping_separate_desc"],
+    ["free", "sales_shipping_charge_free", "customer_access_shipping_free_desc"]
+  ].forEach(function(row) {
+    html += "<label class='customer-shipping-rule-option " + esc(row[0]) + "'><input type='radio' name='customer-shipping-charge-rule' data-customer-shipping-rule value='" + esc(row[0]) + "'" + (shippingRule === row[0] ? " checked" : "") + "><span><strong>" + esc(t(row[1])) + "</strong><small>" + esc(t(row[2])) + "</small></span></label>";
+  });
+  html += "</div>";
+  html += "<div class='component-note'>" + esc(t("customer_access_shipping_rule_help")) + "</div>";
   html += "<div class='component-section-title'>" + esc(t("customer_access_category_visibility")) + "</div>";
   html += "<div class='component-note'>" + esc(t("customer_access_category_help")) + "</div>";
   html += customerAccessCategoryChecksHtml();
@@ -33654,6 +33773,9 @@ function bindCustomerAccessDetailEvents() {
       syncCustomerDisplayRuleControls();
       updateCustomerAccessSaveState();
     });
+  });
+  detail.querySelectorAll("[data-customer-shipping-rule]").forEach(function(el) {
+    el.addEventListener("change", updateCustomerAccessSaveState);
   });
   detail.querySelectorAll("[data-customer-category]").forEach(function(el) {
     el.addEventListener("change", function() {
@@ -33727,9 +33849,12 @@ function syncCustomerRuleScopeFields() {
 function collectCustomerDisplaySettings() {
   var data = defaultCustomerDisplaySettings();
   Object.keys(data).forEach(function(key) {
+    if (key === "shipping_charge_rule") return;
     var el = document.querySelector("[data-customer-setting='" + key + "']");
     if (el) data[key] = !!el.checked;
   });
+  var shippingRule = document.querySelector("[data-customer-shipping-rule]:checked");
+  data.shipping_charge_rule = normalizeCustomerShippingChargeRule(shippingRule ? shippingRule.value : data.shipping_charge_rule);
   if (!data.show_sales_price) {
     data.show_zero_price = false;
     data.priced_products_only = false;
@@ -33939,6 +34064,7 @@ async function saveCustomerAccessSettings() {
       customerPortalPreviewContext = await loadCustomerPortalContextForCustomer(updatedCustomer);
     }
     customerAccessSettings = Object.assign(defaultCustomerDisplaySettings(), data);
+    detailCustomerDisplaySettingsCache[String(customerId)] = Object.assign({}, customerAccessSettings);
     alert(t("msg_saved"));
     renderCustomerAccessList();
     await loadCustomerAccessDetail(customerId);
