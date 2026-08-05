@@ -4041,7 +4041,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .finished-box-label-print-status.reprint { background: #fff3dd; color: #8a4b08; }
 .finished-label-mode-card.station { border-color: #c6d2e5; background: linear-gradient(145deg, #fff, #f3f7fd); }
 .finished-label-mode-card.station .finished-label-mode-size { background: #e7eef9; color: #27496f; }
-.finished-label-mobile-print-rule { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; border: 1px solid #9fc0ed; border-radius: 8px; padding: 7px 9px; background: #eef6ff; color: #1f4d7a; font-size: 11px; line-height: 1.4; }
+.finished-label-mobile-print-rule { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; border: 1px solid #9fc0ed; border-radius: 8px; padding: 7px 9px; background: #eef6ff; color: #1f4d7a; font-size: 11px; line-height: 1.4; }
 .finished-label-mobile-print-rule[hidden] { display: none; }
 .finished-label-mobile-print-rule strong { flex: 0 0 auto; border-radius: 999px; padding: 3px 7px; background: #276fd2; color: #fff; font-size: 10px; }
 .finished-label-mobile-print-rule.waiting { border-color: #e3b45d; background: #fff8e8; color: #765019; }
@@ -4050,6 +4050,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .finished-label-mobile-print-rule.success strong { background: #21854e; }
 .finished-label-mobile-print-rule.error { border-color: #e3a0a0; background: #fff0f0; color: #8e2929; }
 .finished-label-mobile-print-rule.error strong { background: #bb3a3a; }
+.finished-label-mobile-print-copy { flex: 1 1 auto; min-width: 0; }
+.finished-label-mobile-destination { display: flex; align-items: center; gap: 7px; margin-top: 6px; }
+.finished-label-mobile-destination-label { flex: 0 0 auto; color: #173f69; font-weight: 900; }
+.finished-label-mobile-destination-options { display: flex; flex: 1 1 auto; gap: 6px; min-width: 0; }
+.finished-label-mobile-destination-option { flex: 1 1 140px; min-width: 0; border: 1px solid #a9bfdc; border-radius: 7px; padding: 6px 8px; background: #fff; color: #213f62; text-align: left; cursor: pointer; }
+.finished-label-mobile-destination-option.active { border-color: #2c72d6; background: #e8f2ff; box-shadow: inset 0 0 0 1px #2c72d6; }
+.finished-label-mobile-destination-option-name { display: block; overflow: hidden; font-size: 12px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
+.finished-label-mobile-destination-option-state { display: block; margin-top: 2px; font-size: 9px; font-weight: 800; }
+.finished-label-mobile-destination-option.ready .finished-label-mobile-destination-option-state { color: #17603a; }
+.finished-label-mobile-destination-option.error .finished-label-mobile-destination-option-state { color: #9b2f2f; }
+.finished-label-mobile-destination-option.stopped .finished-label-mobile-destination-option-state { color: #687485; }
+@media (max-width: 600px) {
+  .finished-label-mobile-print-rule { align-items: stretch; flex-direction: column; }
+  .finished-label-mobile-destination { align-items: stretch; flex-direction: column; gap: 4px; }
+  .finished-label-mobile-destination-options { flex-direction: column; }
+  .finished-label-mobile-destination-option { flex-basis: auto; width: 100%; }
+}
 .finished-label-print-station { width: 100%; min-height: 0; padding: 10px; }
 .finished-label-print-station[hidden] { display: none; }
 .finished-label-station-shell { display: grid; grid-template-columns: minmax(430px, .85fr) minmax(480px, 1.15fr); gap: 12px; min-height: 0; }

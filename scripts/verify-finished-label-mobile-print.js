@@ -43,12 +43,13 @@ function functionSource(name) {
   throw new Error(`${name} could not be parsed`);
 }
 
-assert(app.includes('var APP_VERSION       = "v1.1.673";'), "app version is not v1.1.673");
-assert(html.includes('content="v1.1.673"'), "HTML version is not v1.1.673");
+assert(app.includes('var APP_VERSION       = "v1.1.679";'), "app version is not v1.1.679");
+assert(html.includes('content="v1.1.679"'), "HTML version is not v1.1.679");
 assert(html.includes('data-finished-label-mode="station"'), "Windows print-station mode is missing");
 [
   "finished-label-mobile-print-rule",
   "finished-label-mobile-print-status",
+  "finished-label-mobile-destination-options",
   "finished-label-print-station",
   "finished-label-station-target",
   "finished-label-station-printer-code",
@@ -69,7 +70,10 @@ assert(html.includes('data-finished-label-mode="station"'), "Windows print-stati
   "finished_label_mobile_printed",
   "finished_label_mobile_status_retrying",
   "finished_label_mobile_timeout",
-  "finished_label_mobile_station_error"
+  "finished_label_mobile_station_error",
+  "finished_label_print_destination",
+  "finished_label_print_destination_ready",
+  "finished_label_print_destination_stopped"
 ].forEach((key) => {
   assert((app.match(new RegExp(`${key}:`, "g")) || []).length === 3, `${key} is not translated in all three languages`);
 });
@@ -79,6 +83,26 @@ assert(mobileDetection.includes("userAgentData.mobile") && mobileDetection.inclu
 const enqueue = functionSource("enqueueFinishedLabelPrintJob");
 assert(enqueue.includes('sb.rpc("enqueue_finished_label_print_job"'), "mobile jobs do not use the secure queue RPC");
 assert(enqueue.includes("target_request_key: finishedLabelPrintRequestKey()"), "mobile queue idempotency key is missing");
+assert(enqueue.includes("loadFinishedLabelPrintDestinations") && enqueue.includes("target_printer_code: printerCode"), "mobile jobs are not routed through the selected destination");
+assert(functionSource("loadFinishedLabelPrintDestinations").includes('sb.rpc("list_finished_label_print_stations"'), "mobile cannot load the printer master");
+assert(functionSource("selectedFinishedLabelPrintDestination").includes("site_code === siteCode"), "mobile destination selection is not site-specific");
+assert(functionSource("saveFinishedLabelPrintSiteCode").includes("currentUser.id"), "saved site selection is not isolated by signed-in user");
+{
+  const routingSandbox = {
+    finishedLabelSelectedSiteCode: "PH",
+    finishedLabelPrintDestinations: [
+      { site_code: "JP", label_target: "finished_product", printer_code: "TD-4420TN-45X20", is_default: true },
+      { site_code: "JP", label_target: "box", printer_code: "TD-4420TN-80X60", is_default: true },
+      { site_code: "PH", label_target: "finished_product", printer_code: "PH-TD-4420TN-45X20" },
+      { site_code: "PH", label_target: "box", printer_code: "PH-TD-4420TN-80X60" }
+    ],
+    savedFinishedLabelPrintSiteCode() { return ""; }
+  };
+  vm.createContext(routingSandbox);
+  vm.runInContext(`${functionSource("selectedFinishedLabelPrintDestination")}\n${functionSource("finishedLabelPrinterCode")}\nthis.codeFor = finishedLabelPrinterCode;`, routingSandbox);
+  assert(routingSandbox.codeFor("finished_product") === "PH-TD-4420TN-45X20", "Philippines finished labels are routed to the wrong printer");
+  assert(routingSandbox.codeFor("box") === "PH-TD-4420TN-80X60", "Philippines box labels are routed to the wrong printer");
+}
 const waitForPrint = functionSource("waitForFinishedLabelPrintJob");
 assert(functionSource("getFinishedLabelPrintJobStatus").includes('sb.rpc("get_finished_label_print_job_status"'), "mobile cannot track its exact print job");
 assert(waitForPrint.includes('status === "sent"') && waitForPrint.includes('status === "error"'), "mobile does not wait for terminal print status");
@@ -117,6 +141,7 @@ assert(functionSource("isFinishedLabelDedicatedPrintStationActive").includes('fi
 assert(styles.includes(".finished-label-print-station") && styles.includes(".finished-label-station-job"), "print-station layout is missing");
 assert(styles.includes("grid-template-columns: repeat(3, minmax(0, 1fr))"), "three print-mode cards are not laid out consistently");
 assert(styles.includes(".finished-label-mobile-print-rule.success") && styles.includes(".finished-label-mobile-print-rule.error"), "mobile print result states are not styled");
+assert(styles.includes(".finished-label-mobile-destination-option.active") && styles.includes("@media (max-width: 600px)"), "mobile destination cards are not styled responsively");
 assert(launcher.includes("--kiosk-printing") && launcher.includes("TD-4420TN-PrintStation"), "Windows launcher does not use a dedicated kiosk-printing profile");
 assert(launcher.includes("dcats_print_station=td4420tn") && launcher.includes("label_target=$LabelTarget"), "Windows launcher does not request automatic station startup");
 assert(launcher.includes("[switch]$Watch") && launcher.includes("Get-CimInstance Win32_Process") && launcher.includes("while ($true)") && launcher.includes("DcatsTD4420TNPrintStationWatchdog"), "Windows launcher cannot recover safely after Edge closes");

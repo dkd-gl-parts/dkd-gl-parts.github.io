@@ -388,7 +388,14 @@ var TRANSLATIONS = {
     finished_label_job_status_error: "エラー",
     finished_label_job_status_cancelled: "取消",
     finished_label_mobile_rule_title: "スマホ印刷",
-    finished_label_mobile_rule_desc: "登録・印刷を押すだけで、Windows印刷端末を経由してTD-4420TNへ出力します。",
+    finished_label_mobile_rule_desc: "印刷先の拠点を選び、登録・印刷を押してください。完品と箱は別のプリンターへ自動で振り分けます。",
+    finished_label_print_destination: "印刷先",
+    finished_label_print_destination_loading: "印刷先を確認中...",
+    finished_label_print_destination_unavailable: "利用できる印刷先がありません。",
+    finished_label_print_destination_required: "印刷先を選択してください。",
+    finished_label_print_destination_ready: "起動中",
+    finished_label_print_destination_error: "プリンターエラー",
+    finished_label_print_destination_stopped: "停止中",
     finished_label_mobile_issue_save: "登録・印刷",
     finished_label_mobile_queueing: "TD-4420TNへ印刷指示を送信しています...",
     finished_label_mobile_queue_saved: "製造シリアルと完品在庫を登録し、TD-4420TNへの印刷指示が完了しました。",
@@ -1896,7 +1903,14 @@ var TRANSLATIONS = {
     finished_label_job_status_error: "Error",
     finished_label_job_status_cancelled: "Cancelled",
     finished_label_mobile_rule_title: "Mobile Printing",
-    finished_label_mobile_rule_desc: "Tap Register & Print to output through the Windows print station to the TD-4420TN.",
+    finished_label_mobile_rule_desc: "Choose a site, then tap Register & Print. Finished and box labels are routed to separate printers.",
+    finished_label_print_destination: "Destination",
+    finished_label_print_destination_loading: "Checking destinations...",
+    finished_label_print_destination_unavailable: "No print destination is available.",
+    finished_label_print_destination_required: "Select a print destination.",
+    finished_label_print_destination_ready: "Online",
+    finished_label_print_destination_error: "Printer error",
+    finished_label_print_destination_stopped: "Stopped",
     finished_label_mobile_issue_save: "Register & Print",
     finished_label_mobile_queueing: "Sending the print command to the TD-4420TN...",
     finished_label_mobile_queue_saved: "Manufacturing serials and finished stock were registered, and the TD-4420TN print command completed.",
@@ -3412,7 +3426,14 @@ var TRANSLATIONS = {
     finished_label_job_status_error: "错误",
     finished_label_job_status_cancelled: "已取消",
     finished_label_mobile_rule_title: "手机打印",
-    finished_label_mobile_rule_desc: "只需点击登记并打印，即可通过Windows打印终端输出到TD-4420TN。",
+    finished_label_mobile_rule_desc: "请选择打印站点，然后点击登记并打印。完品标签和箱标签会自动发送到不同的打印机。",
+    finished_label_print_destination: "打印站点",
+    finished_label_print_destination_loading: "正在确认打印站点...",
+    finished_label_print_destination_unavailable: "没有可用的打印站点。",
+    finished_label_print_destination_required: "请选择打印站点。",
+    finished_label_print_destination_ready: "运行中",
+    finished_label_print_destination_error: "打印机错误",
+    finished_label_print_destination_stopped: "已停止",
     finished_label_mobile_issue_save: "登记并打印",
     finished_label_mobile_queueing: "正在向TD-4420TN发送打印指令...",
     finished_label_mobile_queue_saved: "已发行制造序列号、登记完品库存并完成TD-4420TN打印指令。",
@@ -4635,7 +4656,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.678";
+var APP_VERSION       = "v1.1.679";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -4765,12 +4786,17 @@ var finishedLabelLastIssuedRecord = null;
 var finishedLabelSelectedHistoryId = null;
 var finishedLabelPrintMode = "";
 var finishedLabelLastQueuedJob = null;
+var finishedLabelPrintDestinations = [];
+var finishedLabelPrintDestinationsTarget = "";
+var finishedLabelSelectedSiteCode = "";
+var finishedLabelPrintDestinationRequestSeq = 0;
 var finishedLabelPrintStationRunning = false;
 var finishedLabelPrintStationTimer = null;
 var finishedLabelPrintStationBusy = false;
 var finishedLabelPrintStationRows = [];
 var FINISHED_LABEL_PRINT_STATION_POLL_MS = 4000;
 var FINISHED_LABEL_PRINT_STATION_STORAGE_KEY = "dcats_finished_label_print_station_v1";
+var FINISHED_LABEL_PRINT_SITE_STORAGE_KEY = "dcats_finished_label_print_site_v1";
 var FINISHED_LABEL_MOBILE_PRINT_POLL_MS = 1500;
 var FINISHED_LABEL_MOBILE_PRINT_TIMEOUT_MS = 120000;
 var finishedLabelComponentCandidates = [];
@@ -5758,6 +5784,7 @@ function applyI18n() {
   refreshCategorySelectLabels();
   applySpecFormCategory();
   renderComponentReverseVehicleMakerOptions();
+  if (finishedLabelPrintDestinations.length) renderFinishedLabelPrintDestinations();
 }
 
 // 全ての言語切り替えボタンのactiveクラスを更新する
@@ -17538,8 +17565,116 @@ function finishedLabelUsesRemotePrintQueue() {
   return isFinishedLabelMobilePrintClient();
 }
 
+function savedFinishedLabelPrintSiteCode() {
+  try {
+    var raw = localStorage.getItem(FINISHED_LABEL_PRINT_SITE_STORAGE_KEY);
+    if (!raw || !currentUser) return "";
+    var saved = JSON.parse(raw);
+    return saved && String(saved.user_id || "") === String(currentUser.id || "")
+      ? String(saved.site_code || "").trim().toUpperCase()
+      : "";
+  } catch (error) {
+    return "";
+  }
+}
+
+function saveFinishedLabelPrintSiteCode(siteCode) {
+  try {
+    if (!currentUser || !siteCode) return;
+    localStorage.setItem(FINISHED_LABEL_PRINT_SITE_STORAGE_KEY, JSON.stringify({
+      user_id: String(currentUser.id || ""),
+      site_code: String(siteCode).trim().toUpperCase()
+    }));
+  } catch (error) {}
+}
+
+function finishedLabelPrintDestinationName(row) {
+  if (!row) return "";
+  var key = currentLang === "zh" ? "display_name_zh" : (currentLang === "en" ? "display_name_en" : "display_name_ja");
+  return String(row[key] || row.display_name_en || row.printer_code || "");
+}
+
+function finishedLabelPrintDestinationStateLabel(state) {
+  state = String(state || "stopped").toLowerCase();
+  return t(state === "ready"
+    ? "finished_label_print_destination_ready"
+    : (state === "error" ? "finished_label_print_destination_error" : "finished_label_print_destination_stopped"));
+}
+
+function selectedFinishedLabelPrintDestination(labelTarget) {
+  labelTarget = labelTarget === "box" ? "box" : "finished_product";
+  var siteCode = finishedLabelSelectedSiteCode || savedFinishedLabelPrintSiteCode();
+  return finishedLabelPrintDestinations.find(function(row) {
+    return row.label_target === labelTarget && row.site_code === siteCode;
+  }) || finishedLabelPrintDestinations.find(function(row) {
+    return row.label_target === labelTarget && row.is_default;
+  }) || finishedLabelPrintDestinations.find(function(row) {
+    return row.label_target === labelTarget;
+  }) || null;
+}
+
 function finishedLabelPrinterCode(labelTarget) {
-  return labelTarget === "box" ? "TD-4420TN-80X60" : "TD-4420TN-45X20";
+  var destination = selectedFinishedLabelPrintDestination(labelTarget);
+  return destination ? String(destination.printer_code || "") : "";
+}
+
+function renderFinishedLabelPrintDestinations(messageKey) {
+  var host = document.getElementById("finished-label-mobile-destination-options");
+  if (!host) return;
+  var target = finishedLabelPrintMode === "box" ? "box" : "finished_product";
+  var rows = finishedLabelPrintDestinations.filter(function(row) { return row.label_target === target; });
+  if (!rows.length) {
+    host.innerHTML = "<span class='finished-label-mobile-destination-empty'>" + esc(t(messageKey || "finished_label_print_destination_loading")) + "</span>";
+    return;
+  }
+  var selected = selectedFinishedLabelPrintDestination(target);
+  if (selected && selected.site_code !== finishedLabelSelectedSiteCode) finishedLabelSelectedSiteCode = selected.site_code;
+  host.innerHTML = rows.map(function(row) {
+    var state = ["ready", "error", "stopped"].includes(String(row.state)) ? String(row.state) : "stopped";
+    var active = selected && String(selected.printer_code) === String(row.printer_code);
+    return "<button type='button' class='finished-label-mobile-destination-option " + esc(state) + (active ? " active" : "") + "' data-finished-label-site='" + esc(row.site_code) + "' aria-pressed='" + (active ? "true" : "false") + "'>" +
+      "<span class='finished-label-mobile-destination-option-name'>" + esc(finishedLabelPrintDestinationName(row)) + "</span>" +
+      "<span class='finished-label-mobile-destination-option-state'>" + esc(finishedLabelPrintDestinationStateLabel(state)) + "</span></button>";
+  }).join("");
+  host.querySelectorAll("[data-finished-label-site]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      finishedLabelSelectedSiteCode = String(button.dataset.finishedLabelSite || "").toUpperCase();
+      saveFinishedLabelPrintSiteCode(finishedLabelSelectedSiteCode);
+      finishedLabelLastQueuedJob = null;
+      renderFinishedLabelPrintDestinations();
+      setFinishedLabelMobilePrintStatus("", t("finished_label_mobile_rule_desc"));
+    });
+  });
+}
+
+async function loadFinishedLabelPrintDestinations(labelTarget, force) {
+  labelTarget = labelTarget === "box" ? "box" : "finished_product";
+  if (!force && finishedLabelPrintDestinationsTarget === labelTarget && finishedLabelPrintDestinations.length) {
+    renderFinishedLabelPrintDestinations();
+    return finishedLabelPrintDestinations;
+  }
+  finishedLabelPrintDestinationsTarget = labelTarget;
+  finishedLabelPrintDestinations = [];
+  var requestSeq = ++finishedLabelPrintDestinationRequestSeq;
+  renderFinishedLabelPrintDestinations("finished_label_print_destination_loading");
+  var result = await sb.rpc("list_finished_label_print_stations", { target_label_target: labelTarget });
+  if (requestSeq !== finishedLabelPrintDestinationRequestSeq) return finishedLabelPrintDestinations;
+  if (result.error) {
+    finishedLabelPrintDestinationsTarget = "";
+    renderFinishedLabelPrintDestinations("finished_label_print_destination_unavailable");
+    throw result.error;
+  }
+  finishedLabelPrintDestinations = Array.isArray(result.data) ? result.data : [];
+  var savedSite = savedFinishedLabelPrintSiteCode();
+  if (savedSite && finishedLabelPrintDestinations.some(function(row) { return row.site_code === savedSite; })) {
+    finishedLabelSelectedSiteCode = savedSite;
+  } else {
+    var initial = finishedLabelPrintDestinations.find(function(row) { return row.is_default; }) || finishedLabelPrintDestinations[0];
+    finishedLabelSelectedSiteCode = initial ? String(initial.site_code || "") : "";
+    if (finishedLabelSelectedSiteCode) saveFinishedLabelPrintSiteCode(finishedLabelSelectedSiteCode);
+  }
+  renderFinishedLabelPrintDestinations(finishedLabelPrintDestinations.length ? "" : "finished_label_print_destination_unavailable");
+  return finishedLabelPrintDestinations;
 }
 
 function requestedFinishedLabelPrintStationTarget() {
@@ -17659,10 +17794,13 @@ function setFinishedLabelMobilePrintStatus(state, message) {
 
 async function enqueueFinishedLabelPrintJob(record, labelTarget, eventType, reason) {
   labelTarget = labelTarget === "box" ? "box" : "finished_product";
+  await loadFinishedLabelPrintDestinations(labelTarget, false);
+  var printerCode = finishedLabelPrinterCode(labelTarget);
+  if (!printerCode) throw new Error(t("finished_label_print_destination_required"));
   var result = await sb.rpc("enqueue_finished_label_print_job", {
     target_finished_label_issue_id: record.issueId,
     target_label_target: labelTarget,
-    target_printer_code: finishedLabelPrinterCode(labelTarget),
+    target_printer_code: printerCode,
     target_print_event_type: eventType === "reprint" ? "reprint" : "initial",
     target_reason: reason || null,
     target_request_key: finishedLabelPrintRequestKey()
@@ -18079,6 +18217,12 @@ function setFinishedLabelPrintMode(mode) {
   renderFinishedLabelHistory();
   renderFinishedLabelIssuedResult(finishedLabelLastIssuedRecord);
   renderFinishedLabelMobilePrintRule();
+  if (isFinishedLabelMobilePrintClient()) {
+    loadFinishedLabelPrintDestinations(isBox ? "box" : "finished_product", false).catch(function(error) {
+      console.warn("finished label print destinations failed", error);
+      renderFinishedLabelPrintDestinations("finished_label_print_destination_unavailable");
+    });
+  }
 }
 
 function renderFinishedLabelEmpty() {
