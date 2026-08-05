@@ -54,8 +54,13 @@ const formSave = sourceBetween("async function saveCoreProductForm", "async func
 });
 
 const rateLoad = sourceBetween("async function ensureSalesShippingRateRows", "async function fetchCoreProductShippingProfile");
-if (!rateLoad.includes('from("customer_shipping_rates")') || !rateLoad.includes('.eq("is_active", true)')) {
+if (!rateLoad.includes("fetchAllShippingRateRows(") || !rateLoad.includes("true")) {
   throw new Error("sales shipping estimates must use active shipping-master rows only");
+}
+const pagedRateLoad = sourceBetween("async function fetchAllShippingRateRows", "async function ensureSalesShippingRateRows");
+if (!pagedRateLoad.includes('.range(from, from + SHIPPING_RATE_PAGE_SIZE - 1)') ||
+    !pagedRateLoad.includes('if (activeOnly) query = query.eq("is_active", true)')) {
+  throw new Error("sales shipping estimates must fetch every active shipping-master page");
 }
 
 const estimateRender = sourceBetween("function renderSalesShippingEstimate", "async function loadSalesShippingEstimateForCurrent");
@@ -112,7 +117,8 @@ if (specSectionIndex < 0 || sourceNoteIndex < 0 || shippingFieldsIndex < sourceN
 
 [
   "@media(max-height:900px) and (min-width:961px)",
-  ".product-form-core-policy,\n  .product-form-shipping { margin-top: 10px; padding-top: 10px; }",
+  ".product-form-core-policy,",
+  ".product-form-shipping { margin-top: 10px; padding-top: 10px; }",
   ".product-form-shipping-grid { margin-top: 7px; }"
 ].forEach((fragment) => {
   if (!css.includes(fragment)) throw new Error(`compact product edit layout is missing: ${fragment}`);

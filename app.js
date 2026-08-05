@@ -4602,7 +4602,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.673";
+var APP_VERSION       = "v1.1.674";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -4933,6 +4933,7 @@ var SHIPPING_PREFECTURES = [
 var shippingRateRows = [];
 var shippingRateLoadSeq = 0;
 var shippingRateFormSaving = false;
+var SHIPPING_RATE_PAGE_SIZE = 1000;
 var salesShippingRateRows = [];
 var salesShippingRatesLoaded = false;
 var salesShippingRatesPromise = null;
@@ -7850,17 +7851,35 @@ function shippingPackageOptionLabel(row) {
   return String(row.package_size_label || "-") + (limits.length ? " / " + limits.join(" / ") : "");
 }
 
+async function fetchAllShippingRateRows(selectColumns, activeOnly) {
+  var rows = [];
+  for (var from = 0; ; from += SHIPPING_RATE_PAGE_SIZE) {
+    var query = sb.from("customer_shipping_rates").select(selectColumns);
+    if (activeOnly) query = query.eq("is_active", true);
+    var result = await query
+      .order("display_order", { ascending: true })
+      .order("carrier_name", { ascending: true })
+      .order("service_name", { ascending: true })
+      .order("package_size_label", { ascending: true })
+      .order("prefecture_code", { ascending: true })
+      .order("shipping_rate_id", { ascending: true })
+      .range(from, from + SHIPPING_RATE_PAGE_SIZE - 1);
+    if (result.error) return result;
+    var pageRows = result.data || [];
+    rows = rows.concat(pageRows);
+    if (pageRows.length < SHIPPING_RATE_PAGE_SIZE) break;
+  }
+  return { data: rows, error: null };
+}
+
 async function ensureSalesShippingRateRows() {
   if (salesShippingRatesLoaded) return salesShippingRateRows;
   if (salesShippingRatesPromise) return salesShippingRatesPromise;
   salesShippingRatesPromise = (async function() {
-    var result = await sb.from("customer_shipping_rates")
-      .select("shipping_rate_id,carrier_name,service_name,package_size_label,max_size_cm,max_weight_kg,prefecture_code,standard_fee_jpy,remote_island_fee_jpy,remote_island_condition,note,origin_region,tax_type,display_order,is_active")
-      .eq("is_active", true)
-      .order("display_order", { ascending: true })
-      .order("carrier_name", { ascending: true })
-      .order("prefecture_code", { ascending: true })
-      .limit(1000);
+    var result = await fetchAllShippingRateRows(
+      "shipping_rate_id,carrier_name,service_name,package_size_label,max_size_cm,max_weight_kg,prefecture_code,standard_fee_jpy,remote_island_fee_jpy,remote_island_condition,note,origin_region,tax_type,display_order,is_active",
+      true
+    );
     if (result.error) throw result.error;
     salesShippingRateRows = result.data || [];
     salesShippingRatesLoaded = true;
@@ -8146,13 +8165,10 @@ async function loadCustomerShippingRates() {
   var requestSeq = ++shippingRateLoadSeq;
   var host = document.getElementById("customer-shipping-list");
   if (host) host.innerHTML = "<div class='customer-shipping-empty'>" + esc(t("loading")) + "</div>";
-  var result = await sb.from("customer_shipping_rates")
-    .select("shipping_rate_id,carrier_name,service_name,package_size_label,max_size_cm,max_weight_kg,prefecture_code,standard_fee_jpy,remote_island_fee_jpy,remote_island_condition,note,origin_region,tax_type,display_order,is_active")
-    .eq("is_active", true)
-    .order("display_order", { ascending: true })
-    .order("carrier_name", { ascending: true })
-    .order("prefecture_code", { ascending: true })
-    .limit(1000);
+  var result = await fetchAllShippingRateRows(
+    "shipping_rate_id,carrier_name,service_name,package_size_label,max_size_cm,max_weight_kg,prefecture_code,standard_fee_jpy,remote_island_fee_jpy,remote_island_condition,note,origin_region,tax_type,display_order,is_active",
+    true
+  );
   if (requestSeq !== shippingRateLoadSeq) return;
   if (result.error) {
     console.warn("customer shipping rates lookup failed", result.error);
@@ -8228,12 +8244,10 @@ async function loadShippingRateMgmt() {
   var requestSeq = ++shippingRateLoadSeq;
   var host = document.getElementById("shipping-rate-list");
   if (host) host.innerHTML = "<div class='empty'>" + esc(t("loading")) + "</div>";
-  var result = await sb.from("customer_shipping_rates")
-    .select("shipping_rate_id,carrier_name,service_name,package_size_label,max_size_cm,max_weight_kg,prefecture_code,standard_fee_jpy,remote_island_fee_jpy,remote_island_condition,note,origin_region,tax_type,display_order,is_active,updated_at")
-    .order("display_order", { ascending: true })
-    .order("carrier_name", { ascending: true })
-    .order("prefecture_code", { ascending: true })
-    .limit(1000);
+  var result = await fetchAllShippingRateRows(
+    "shipping_rate_id,carrier_name,service_name,package_size_label,max_size_cm,max_weight_kg,prefecture_code,standard_fee_jpy,remote_island_fee_jpy,remote_island_condition,note,origin_region,tax_type,display_order,is_active,updated_at",
+    false
+  );
   if (requestSeq !== shippingRateLoadSeq) return;
   if (result.error) {
     console.warn("shipping rate management lookup failed", result.error);

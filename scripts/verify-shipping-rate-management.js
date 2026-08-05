@@ -114,13 +114,29 @@ if (customerShippingRedraw < 0 || shippingMgmtRedraw < 0 || historyOverlayRedraw
 });
 
 const customerLoad = sourceBetween("async function loadCustomerShippingRates", "function renderCustomerShippingRates");
-if (!customerLoad.includes('from("customer_shipping_rates")') || !customerLoad.includes('.eq("is_active", true)')) {
+if (!customerLoad.includes("fetchAllShippingRateRows(") || !customerLoad.includes("true")) {
   throw new Error("customer shipping list must load only active master rows");
 }
 
 const managementLoad = sourceBetween("async function loadShippingRateMgmt", "function renderShippingRateMgmt");
-if (!managementLoad.includes('from("customer_shipping_rates")') || managementLoad.includes('.eq("is_active", true)')) {
+if (!managementLoad.includes("fetchAllShippingRateRows(") || !managementLoad.includes("false")) {
   throw new Error("shipping management must load active and inactive master rows");
+}
+
+const pagedLoad = sourceBetween("async function fetchAllShippingRateRows", "async function ensureSalesShippingRateRows");
+[
+  'from("customer_shipping_rates")',
+  'if (activeOnly) query = query.eq("is_active", true)',
+  '.order("service_name", { ascending: true })',
+  '.order("package_size_label", { ascending: true })',
+  '.order("shipping_rate_id", { ascending: true })',
+  '.range(from, from + SHIPPING_RATE_PAGE_SIZE - 1)',
+  'if (pageRows.length < SHIPPING_RATE_PAGE_SIZE) break'
+].forEach((fragment) => {
+  if (!pagedLoad.includes(fragment)) throw new Error(`shipping pagination is incomplete: ${fragment}`);
+});
+if (!source.includes("var SHIPPING_RATE_PAGE_SIZE = 1000;") || pagedLoad.includes(".limit(1000)")) {
+  throw new Error("shipping rows must be fetched page by page without a fixed total limit");
 }
 
 const saveSource = sourceBetween("async function saveShippingRate", "async function toggleShippingRateVisibility");
