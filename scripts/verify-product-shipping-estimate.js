@@ -70,12 +70,37 @@ const estimateRender = sourceBetween("function renderSalesShippingEstimate", "as
   'id=\'sales-shipping-service\'',
   'id=\'sales-shipping-package-size\'',
   't("sales_shipping_manual_size_note")',
+  't("sales_shipping_weight_size_note")',
   't("sales_shipping_weight_over")',
   "shippingFeeHtml(selectedRate.standard_fee_jpy, selectedRate.tax_type)",
   "shippingFeeHtml(selectedRate.remote_island_fee_jpy, selectedRate.tax_type)"
 ].forEach((fragment) => {
   if (!estimateRender.includes(fragment)) throw new Error(`sales shipping estimate is incomplete: ${fragment}`);
 });
+
+const weightPackageMatch = sourceBetween("function salesShippingPackageFromWeight", "function bindSalesShippingEstimateActions");
+[
+  "Number(row.max_weight_kg) >= weight",
+  "Number(a.max_weight_kg) - Number(b.max_weight_kg)",
+  "weightedPackages[weightedPackages.length - 1]"
+].forEach((fragment) => {
+  if (!weightPackageMatch.includes(fragment)) throw new Error(`weight-based package matching is incomplete: ${fragment}`);
+});
+const weightPackageFn = new Function(`${weightPackageMatch}\nreturn salesShippingPackageFromWeight;`)();
+const weightFixtures = [
+  { package_size_label: "100", max_size_cm: 100, max_weight_kg: 10 },
+  { package_size_label: "60", max_size_cm: 60, max_weight_kg: 2 },
+  { package_size_label: "80", max_size_cm: 80, max_weight_kg: 5 }
+];
+if (weightPackageFn(weightFixtures, 4.5).package_size_label !== "80" ||
+    weightPackageFn(weightFixtures, 1).package_size_label !== "60" ||
+    weightPackageFn(weightFixtures, 12).package_size_label !== "100") {
+  throw new Error("weight-based package matching must choose the smallest eligible tier and retain the largest tier for the overweight warning");
+}
+if (!estimateRender.includes("|| savedPackage || weightPackage") ||
+    !estimateRender.includes("!profileHasSize && profileWeight != null")) {
+  throw new Error("weight-only products must automatically select a compatible service and package size");
+}
 
 const panelRender = sourceBetween("function renderPanelStatic", "async function loadProductVariantsForCurrent");
 if (!panelRender.includes("loadSalesShippingEstimateForCurrent(detailSeq)")) {
@@ -89,7 +114,7 @@ if (!source.includes("productShippingSizeRows.push(selected)")) {
   throw new Error("saved package sizes must be retained when the current master no longer contains them");
 }
 
-["product_shipping_section", "sales_shipping_estimate_title", "sales_shipping_manual_size_note"].forEach((key) => {
+["product_shipping_section", "sales_shipping_estimate_title", "sales_shipping_manual_size_note", "sales_shipping_weight_size_note"].forEach((key) => {
   const count = (source.match(new RegExp(`${key}:`, "g")) || []).length;
   if (count !== 3) throw new Error(`${key} must be translated for all supported languages`);
 });

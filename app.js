@@ -960,6 +960,7 @@ var TRANSLATIONS = {
     sales_shipping_destination: "お届け先",
     sales_shipping_profile: "品番の配送設定",
     sales_shipping_manual_size_note: "出荷サイズが未設定です。確認するサイズを選択してください。",
+    sales_shipping_weight_size_note: "出荷サイズが未設定のため、重量に対応する最小サイズを選択しています。実際の梱包サイズが大きい場合は変更してください。",
     sales_shipping_select_prefecture: "都道府県を選択",
     sales_shipping_select_size: "サイズを選択",
     sales_shipping_rate: "送料",
@@ -2458,6 +2459,7 @@ var TRANSLATIONS = {
     sales_shipping_destination: "Destination",
     sales_shipping_profile: "Product Shipping Profile",
     sales_shipping_manual_size_note: "No package size is saved. Select a size to check the rate.",
+    sales_shipping_weight_size_note: "No package size is saved, so the smallest size allowed for the product weight is selected. Change it if the actual package is larger.",
     sales_shipping_select_prefecture: "Select Prefecture",
     sales_shipping_select_size: "Select Size",
     sales_shipping_rate: "Shipping Rate",
@@ -3949,6 +3951,7 @@ var TRANSLATIONS = {
     sales_shipping_destination: "收货地区",
     sales_shipping_profile: "商品配送设置",
     sales_shipping_manual_size_note: "尚未设置出货尺寸。请选择要确认的尺寸。",
+    sales_shipping_weight_size_note: "尚未设置出货尺寸，因此已按商品重量选择可用的最小尺寸。如果实际包装更大，请更改尺寸。",
     sales_shipping_select_prefecture: "选择都道府县",
     sales_shipping_select_size: "选择尺寸",
     sales_shipping_rate: "运费",
@@ -4602,7 +4605,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.674";
+var APP_VERSION       = "v1.1.675";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -7992,6 +7995,27 @@ function salesShippingMatchingPackage(packages, profile) {
   }) || null;
 }
 
+function salesShippingProfileWeight(profile) {
+  var value = profile && profile.shipping_weight_kg != null ? Number(profile.shipping_weight_kg) : null;
+  return value != null && isFinite(value) && value > 0 ? value : null;
+}
+
+function salesShippingPackageFromWeight(packages, weight) {
+  if (weight == null) return null;
+  var weightedPackages = (packages || []).filter(function(row) {
+    return row.max_weight_kg != null && isFinite(Number(row.max_weight_kg)) && Number(row.max_weight_kg) > 0;
+  }).slice().sort(function(a, b) {
+    var weightDiff = Number(a.max_weight_kg) - Number(b.max_weight_kg);
+    if (weightDiff) return weightDiff;
+    var sizeA = a.max_size_cm == null ? Number.MAX_SAFE_INTEGER : Number(a.max_size_cm);
+    var sizeB = b.max_size_cm == null ? Number.MAX_SAFE_INTEGER : Number(b.max_size_cm);
+    return sizeA - sizeB;
+  });
+  return weightedPackages.find(function(row) {
+    return Number(row.max_weight_kg) >= weight;
+  }) || weightedPackages[weightedPackages.length - 1] || null;
+}
+
 function bindSalesShippingEstimateActions() {
   var prefecture = document.getElementById("sales-shipping-prefecture");
   var carrier = document.getElementById("sales-shipping-carrier");
@@ -8034,24 +8058,34 @@ function renderSalesShippingEstimate(loadError) {
   if (carriers.indexOf(salesShippingCarrierName) < 0) salesShippingCarrierName = carriers[0];
   var carrierRows = rows.filter(function(row) { return String(row.carrier_name || "") === salesShippingCarrierName; });
   var services = salesShippingUniqueValues(carrierRows, "service_name");
+  var profileHasSize = !!(salesShippingProfile && (salesShippingProfile.shipping_package_size_label || salesShippingProfile.shipping_size_cm != null));
+  var profileWeight = salesShippingProfileWeight(salesShippingProfile);
   if (services.indexOf(salesShippingServiceName) < 0) {
     var profileService = services.find(function(serviceName) {
       return !!salesShippingMatchingPackage(uniqueShippingPackages(carrierRows.filter(function(row) {
         return String(row.service_name || "") === serviceName;
       }), false), salesShippingProfile);
     });
+    if (!profileService && !profileHasSize && profileWeight != null) {
+      profileService = services.find(function(serviceName) {
+        return !!salesShippingPackageFromWeight(uniqueShippingPackages(carrierRows.filter(function(row) {
+          return String(row.service_name || "") === serviceName;
+        }), false), profileWeight);
+      });
+    }
     salesShippingServiceName = profileService || services[0] || "";
   }
   var serviceRows = carrierRows.filter(function(row) { return String(row.service_name || "") === salesShippingServiceName; });
   var packages = uniqueShippingPackages(serviceRows, false);
   var savedPackage = salesShippingMatchingPackage(packages, salesShippingProfile);
-  var selectedPackage = packages.find(function(row) { return shippingPackageKey(row) === salesShippingPackageKeyValue; }) || savedPackage;
+  var weightPackage = !profileHasSize ? salesShippingPackageFromWeight(packages, profileWeight) : null;
+  var selectedPackage = packages.find(function(row) { return shippingPackageKey(row) === salesShippingPackageKeyValue; }) || savedPackage || weightPackage;
   if (selectedPackage && !salesShippingPackageKeyValue) salesShippingPackageKeyValue = shippingPackageKey(selectedPackage);
   if (!selectedPackage) salesShippingPackageKeyValue = "";
 
-  var profileHasSize = !!(salesShippingProfile && (salesShippingProfile.shipping_package_size_label || salesShippingProfile.shipping_size_cm != null));
   var html = "<div class='sales-shipping-profile'><span>" + esc(t("sales_shipping_profile")) + "</span><strong>" + esc(shippingProfileText(salesShippingProfile)) + "</strong></div>";
-  if (!profileHasSize) html += "<div class='sales-shipping-message manual'>" + esc(t("sales_shipping_manual_size_note")) + "</div>";
+  if (!profileHasSize && weightPackage) html += "<div class='sales-shipping-message manual'>" + esc(t("sales_shipping_weight_size_note")) + "</div>";
+  else if (!profileHasSize) html += "<div class='sales-shipping-message manual'>" + esc(t("sales_shipping_manual_size_note")) + "</div>";
   html += "<div class='sales-shipping-controls'>";
   html += "<label><span>" + esc(t("sales_shipping_destination")) + "</span><select id='sales-shipping-prefecture'><option value=''>" + esc(t("sales_shipping_select_prefecture")) + "</option>" + shippingPrefectureOptionsHtml(salesShippingPrefectureCode, false) + "</select></label>";
   html += "<label><span>" + esc(t("shipping_carrier")) + "</span><select id='sales-shipping-carrier'>" + carriers.map(function(name) { return "<option value='" + esc(name) + "'" + (name === salesShippingCarrierName ? " selected" : "") + ">" + esc(name) + "</option>"; }).join("") + "</select></label>";
@@ -8098,8 +8132,10 @@ async function loadSalesShippingEstimateForCurrent(seq) {
   try {
     var values = await Promise.all([ensureSalesShippingRateRows(), fetchCoreProductShippingProfile(dkdId)]);
     if (seq !== detailSecondaryRequestSeq || !currentProduct || parseInt(productDkdId(currentProduct), 10) !== dkdId) return;
+    var productChanged = salesShippingProfileDkdId !== dkdId;
     salesShippingProfile = values[1];
     salesShippingProfileDkdId = dkdId;
+    if (productChanged) salesShippingServiceName = "";
     salesShippingPackageKeyValue = "";
     currentProduct = Object.assign({}, currentProduct, salesShippingProfile || {});
     renderSalesShippingEstimate();
