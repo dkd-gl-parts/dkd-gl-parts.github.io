@@ -43,8 +43,8 @@ function functionSource(name) {
   throw new Error(`${name} could not be parsed`);
 }
 
-assert(app.includes('var APP_VERSION       = "v1.1.669";'), "app version is not v1.1.669");
-assert(html.includes('content="v1.1.669"'), "HTML version is not v1.1.669");
+assert(app.includes('var APP_VERSION       = "v1.1.670";'), "app version is not v1.1.670");
+assert(html.includes('content="v1.1.670"'), "HTML version is not v1.1.670");
 assert(html.includes('data-finished-label-mode="station"'), "Windows print-station mode is missing");
 [
   "finished-label-mobile-print-rule",
@@ -104,7 +104,10 @@ assert(functionSource("printFinishedLabelStationFrame").includes('addEventListen
 assert(functionSource("retryFinishedLabelPrintStationJob").includes('sb.rpc("retry_finished_label_print_job"'), "failed station jobs cannot be retried");
 assert(functionSource("loadFinishedLabelPrintStationHistory").includes('sb.rpc("list_finished_label_print_jobs"'), "print-station history is not loaded through an RPC");
 assert(functionSource("requestedFinishedLabelPrintStationTarget").includes("dcats_print_station") && functionSource("openRequestedFinishedLabelPrintStation").includes("startFinishedLabelPrintStation()"), "dedicated Windows station does not auto-start receiving");
-assert(functionSource("openRequestedPrintStationAfterAuth").includes("openRequestedFinishedLabelPrintStation"), "print station is not resumed after authentication");
+assert(functionSource("openRequestedPrintStationAfterAuth").includes("automaticFinishedLabelPrintStationTarget") && functionSource("openRequestedPrintStationAfterAuth").includes("openRequestedFinishedLabelPrintStation"), "saved print station is not resumed after authentication or refresh");
+assert(functionSource("startFinishedLabelPrintStation").includes("saveFinishedLabelPrintStationPreference(true)"), "starting the receiver does not persist its active state");
+assert(functionSource("stopFinishedLabelPrintStation").includes("saveFinishedLabelPrintStationPreference(false)"), "stopping the receiver does not clear its active state");
+assert(station.includes("scheduleFinishedLabelPrintStation(claimedJob ? 0 : FINISHED_LABEL_PRINT_STATION_POLL_MS)"), "queued labels are not drained automatically without another button press");
 assert(functionSource("isFinishedLabelDedicatedPrintStationActive").includes('finishedLabelPrintMode === "station"') && functionSource("resetAutoLogoutTimer").includes("isFinishedLabelDedicatedPrintStationActive()"), "the dedicated station will be logged out after eight unattended hours");
 
 assert(styles.includes(".finished-label-print-station") && styles.includes(".finished-label-station-job"), "print-station layout is missing");
@@ -116,7 +119,46 @@ assert(launcher.includes("[switch]$Watch") && launcher.includes("Get-CimInstance
 assert(installer.includes('[Environment]::GetFolderPath("Startup")') && installer.includes("[switch]$PreventSleep") && installer.includes("Copy-Item"), "Windows automatic-start installer is incomplete");
 assert(installer.includes("TD[- ]?4420TN") && installer.includes("WorkOffline") && installer.includes("LegacyDefaultPrinterMode"), "Windows printer validation is incomplete");
 assert(installer.includes("[string]$PrinterName") && installer.includes("SetDefaultPrinter") && installer.includes("Multiple TD-4420TN printers were found"), "Windows default-printer setup is incomplete");
-assert(guide.includes("45 × 20 mm") && guide.includes("80×60mm") && guide.includes("既定のプリンター") && guide.includes("スマホだけで完結") && guide.includes("8時間無操作ログアウト"), "print-station setup guide is incomplete");
+assert(guide.includes("45 × 20 mm") && guide.includes("80×60mm") && guide.includes("既定のプリンター") && guide.includes("スマホだけで完結") && guide.includes("8時間無操作ログアウト") && guide.includes("更新やブラウザー再起動後も受信中へ自動復帰"), "print-station setup guide is incomplete");
+
+function verifyRuntimeStationPreference() {
+  const storage = new Map();
+  const target = { value: "finished_product" };
+  const sandbox = {
+    FINISHED_LABEL_PRINT_STATION_STORAGE_KEY: "dcats_finished_label_print_station_v1",
+    currentUser: { id: "station-user" },
+    localStorage: {
+      getItem(key) { return storage.has(key) ? storage.get(key) : null; },
+      setItem(key, value) { storage.set(key, String(value)); },
+      removeItem(key) { storage.delete(key); }
+    },
+    document: { getElementById(id) { return id === "finished-label-station-target" ? target : null; } },
+    requestedFinishedLabelPrintStationTarget() { return ""; },
+    JSON,
+    String
+  };
+  vm.createContext(sandbox);
+  vm.runInContext([
+    functionSource("savedFinishedLabelPrintStationPreference"),
+    functionSource("saveFinishedLabelPrintStationPreference"),
+    functionSource("automaticFinishedLabelPrintStationTarget"),
+    "this.savePreference = saveFinishedLabelPrintStationPreference;",
+    "this.savedPreference = savedFinishedLabelPrintStationPreference;",
+    "this.automaticTarget = automaticFinishedLabelPrintStationTarget;"
+  ].join("\n"), sandbox);
+  sandbox.savePreference(true);
+  assert(sandbox.automaticTarget() === "finished_product", "an active receiver is not restored after refresh");
+  target.value = "box";
+  sandbox.savePreference(true);
+  assert(sandbox.savedPreference().label_target === "box", "the selected label roll is not persisted");
+  sandbox.currentUser = { id: "another-user" };
+  assert(sandbox.automaticTarget() === "", "a receiver preference can leak to another signed-in user");
+  sandbox.currentUser = { id: "station-user" };
+  sandbox.savePreference(false);
+  assert(sandbox.automaticTarget() === "", "an explicitly stopped receiver restarts unexpectedly");
+}
+
+verifyRuntimeStationPreference();
 
 async function verifyRuntimeStatusTracking() {
   const observedResponses = [

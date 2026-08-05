@@ -377,7 +377,7 @@ var TRANSLATIONS = {
     finished_label_station_history: "印刷ジョブ履歴",
     finished_label_station_history_empty: "印刷ジョブはありません。",
     finished_label_station_kiosk_note: "自動印刷する場合は、EdgeまたはChromeをキオスク印刷モードで起動してください。通常起動では印刷確認画面が表示されます。",
-    finished_label_station_started: "受信を開始しました。印刷待ちが届くと、登録順に印刷画面へ送信します。",
+    finished_label_station_started: "受信中です。印刷キューが届くと、操作なしで登録順に自動印刷します。",
     finished_label_station_idle: "印刷待ちはありません。",
     finished_label_station_sent: "{code} を印刷画面へ送信しました。",
     finished_label_station_failed: "印刷ジョブの処理に失敗しました: {message}",
@@ -1874,7 +1874,7 @@ var TRANSLATIONS = {
     finished_label_station_history: "Print Job History",
     finished_label_station_history_empty: "No print jobs.",
     finished_label_station_kiosk_note: "For automatic printing, start Edge or Chrome in kiosk-printing mode. A print confirmation dialog appears in normal mode.",
-    finished_label_station_started: "Receiving started. Queued labels are sent to the print dialog in order.",
+    finished_label_station_started: "Receiving is active. New queued labels are printed automatically in order without another button press.",
     finished_label_station_idle: "No labels are waiting.",
     finished_label_station_sent: "{code} was sent to the print dialog.",
     finished_label_station_failed: "Print job failed: {message}",
@@ -3379,7 +3379,7 @@ var TRANSLATIONS = {
     finished_label_station_history: "打印任务历史",
     finished_label_station_history_empty: "没有打印任务。",
     finished_label_station_kiosk_note: "如需自动打印，请以自助打印模式启动Edge或Chrome。普通模式下会显示打印确认画面。",
-    finished_label_station_started: "已开始接收。打印任务到达后将按登记顺序发送到打印画面。",
+    finished_label_station_started: "正在接收。新打印任务到达后无需再次操作，将按登记顺序自动打印。",
     finished_label_station_idle: "没有等待打印的标签。",
     finished_label_station_sent: "已将 {code} 发送到打印画面。",
     finished_label_station_failed: "打印任务处理失败：{message}",
@@ -4602,7 +4602,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.669";
+var APP_VERSION       = "v1.1.670";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -4737,6 +4737,7 @@ var finishedLabelPrintStationTimer = null;
 var finishedLabelPrintStationBusy = false;
 var finishedLabelPrintStationRows = [];
 var FINISHED_LABEL_PRINT_STATION_POLL_MS = 4000;
+var FINISHED_LABEL_PRINT_STATION_STORAGE_KEY = "dcats_finished_label_print_station_v1";
 var FINISHED_LABEL_MOBILE_PRINT_POLL_MS = 1500;
 var FINISHED_LABEL_MOBILE_PRINT_TIMEOUT_MS = 120000;
 var finishedLabelComponentCandidates = [];
@@ -5927,7 +5928,7 @@ function showAuthenticatedHome() {
 }
 
 function openRequestedPrintStationAfterAuth() {
-  if (!requestedFinishedLabelPrintStationTarget()) return false;
+  if (!automaticFinishedLabelPrintStationTarget()) return false;
   window.setTimeout(function() {
     openRequestedFinishedLabelPrintStation().catch(function(error) {
       console.warn("finished label print station auto-start failed", error);
@@ -6641,6 +6642,9 @@ async function doLogin() {
 
 async function doLogout() {
   clearAppRestoreState();
+  stopFinishedLabelPrintStation();
+  clearTimeout(autoLogoutTimer);
+  autoLogoutTimer = null;
   await recordAuthEvent("logout");
   await sb.auth.signOut();
   clearActivitySessionId();
@@ -17450,14 +17454,52 @@ function requestedFinishedLabelPrintStationTarget() {
   return params.get("label_target") === "box" ? "box" : "finished_product";
 }
 
+function savedFinishedLabelPrintStationPreference() {
+  try {
+    var raw = localStorage.getItem(FINISHED_LABEL_PRINT_STATION_STORAGE_KEY);
+    if (!raw) return null;
+    var saved = JSON.parse(raw);
+    if (!saved || saved.enabled !== true || !currentUser || String(saved.user_id || "") !== String(currentUser.id || "")) return null;
+    return {
+      enabled: true,
+      user_id: String(saved.user_id),
+      label_target: saved.label_target === "box" ? "box" : "finished_product"
+    };
+  } catch (error) {
+    return null;
+  }
+}
+
+function saveFinishedLabelPrintStationPreference(enabled) {
+  try {
+    if (!enabled || !currentUser) {
+      localStorage.removeItem(FINISHED_LABEL_PRINT_STATION_STORAGE_KEY);
+      return;
+    }
+    var target = document.getElementById("finished-label-station-target");
+    localStorage.setItem(FINISHED_LABEL_PRINT_STATION_STORAGE_KEY, JSON.stringify({
+      enabled: true,
+      user_id: String(currentUser.id || ""),
+      label_target: target && target.value === "box" ? "box" : "finished_product"
+    }));
+  } catch (error) {}
+}
+
+function automaticFinishedLabelPrintStationTarget() {
+  var requestedTarget = requestedFinishedLabelPrintStationTarget();
+  if (requestedTarget) return requestedTarget;
+  var saved = savedFinishedLabelPrintStationPreference();
+  return saved ? saved.label_target : "";
+}
+
 function isFinishedLabelDedicatedPrintStationActive() {
-  return !!requestedFinishedLabelPrintStationTarget()
+  return !!automaticFinishedLabelPrintStationTarget()
     && finishedLabelPrintMode === "station"
     && finishedLabelPrintStationRunning;
 }
 
 async function openRequestedFinishedLabelPrintStation() {
-  var targetValue = requestedFinishedLabelPrintStationTarget();
+  var targetValue = automaticFinishedLabelPrintStationTarget();
   if (!targetValue || !currentUser || !canViewFinishedLabelMgmt()) return;
   await enterFinishedLabelMgmt({ mode: "station" });
   var target = document.getElementById("finished-label-station-target");
@@ -17827,13 +17869,14 @@ async function processNextFinishedLabelPrintJob() {
     resetFinishedLabelPrintStationFrame();
     finishedLabelPrintStationBusy = false;
     await loadFinishedLabelPrintStationHistory();
-    if (finishedLabelPrintStationRunning) scheduleFinishedLabelPrintStation(FINISHED_LABEL_PRINT_STATION_POLL_MS);
+    if (finishedLabelPrintStationRunning) scheduleFinishedLabelPrintStation(claimedJob ? 0 : FINISHED_LABEL_PRINT_STATION_POLL_MS);
   }
 }
 
 function startFinishedLabelPrintStation() {
   if (finishedLabelPrintStationRunning) return;
   finishedLabelPrintStationRunning = true;
+  saveFinishedLabelPrintStationPreference(true);
   resetAutoLogoutTimer();
   var target = document.getElementById("finished-label-station-target");
   var start = document.getElementById("btn-finished-label-station-start");
@@ -17847,6 +17890,7 @@ function startFinishedLabelPrintStation() {
 
 function stopFinishedLabelPrintStation() {
   finishedLabelPrintStationRunning = false;
+  saveFinishedLabelPrintStationPreference(false);
   clearFinishedLabelPrintStationTimer();
   resetAutoLogoutTimer();
   var target = document.getElementById("finished-label-station-target");
