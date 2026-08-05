@@ -4656,7 +4656,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.681";
+var APP_VERSION       = "v1.1.682";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6360,7 +6360,7 @@ async function loadProfile() {
 
   // pending / suspended の場合はログアウトしてメッセージを表示する
   if (userProfile.status === "pending") {
-    await signOutCurrentDevice();
+    await signOutAllDevices();
     currentUser = null; userProfile = null;
     showScreen("login");
     var el = document.getElementById("login-error");
@@ -6368,7 +6368,7 @@ async function loadProfile() {
     return false;
   }
   if (userProfile.status === "suspended") {
-    await signOutCurrentDevice();
+    await signOutAllDevices();
     currentUser = null; userProfile = null;
     showScreen("login");
     var el = document.getElementById("login-error");
@@ -6714,6 +6714,11 @@ async function signOutCurrentDevice() {
   // Supabase defaults to global sign-out, which would also revoke the
   // independently stored Windows print-agent session for this user.
   return sb.auth.signOut({ scope: "local" });
+}
+
+async function signOutAllDevices() {
+  // Account blocking and password reset must still revoke every active session.
+  return sb.auth.signOut({ scope: "global" });
 }
 
 async function doLogout() {
@@ -37420,7 +37425,7 @@ async function doResetPassword() {
   setCspStyle(document.getElementById("reset-success-box"), "display", "block");
   // 3秒後にログイン画面へ
   setTimeout(async function() {
-    await signOutCurrentDevice();
+    await signOutAllDevices();
     showScreen("login");
   }, 3000);
 }

@@ -43,8 +43,8 @@ function functionSource(name) {
   throw new Error(`${name} could not be parsed`);
 }
 
-assert(app.includes('var APP_VERSION       = "v1.1.681";'), "app version is not v1.1.681");
-assert(html.includes('content="v1.1.681"'), "HTML version is not v1.1.681");
+assert(app.includes('var APP_VERSION       = "v1.1.682";'), "app version is not v1.1.682");
+assert(html.includes('content="v1.1.682"'), "HTML version is not v1.1.682");
 assert(html.includes('data-finished-label-mode="station"'), "Windows print-station mode is missing");
 [
   "finished-label-mobile-print-rule",
@@ -130,10 +130,11 @@ assert(functionSource("loadFinishedLabelPrintStationHistory").includes('sb.rpc("
 assert(functionSource("requestedFinishedLabelPrintStationTarget").includes("dcats_print_station") && functionSource("openRequestedFinishedLabelPrintStation").includes("resumeFinishedLabelPrintStationIfEnabled()"), "dedicated Windows station does not auto-start receiving");
 assert(functionSource("openRequestedPrintStationAfterAuth").includes("requestedFinishedLabelPrintStationTarget") && !functionSource("openRequestedPrintStationAfterAuth").includes("automaticFinishedLabelPrintStationTarget") && functionSource("openRequestedPrintStationAfterAuth").includes("openRequestedFinishedLabelPrintStation"), "a saved legacy print-station preference can override normal update restoration");
 assert(functionSource("signOutCurrentDevice").includes('scope: "local"'), "D-CATS logout can revoke the Windows print-agent session");
-assert(!app.includes("sb.auth.signOut();"), "a global Supabase logout remains in the browser application");
+assert(functionSource("signOutAllDevices").includes('scope: "global"'), "security-sensitive logout does not revoke every user session");
+assert(!app.includes("sb.auth.signOut();"), "an implicit Supabase logout remains in the browser application");
 assert(functionSource("doLogout").includes("signOutCurrentDevice()"), "manual or inactivity logout does not preserve the print-agent session");
-assert(functionSource("loadProfile").includes("signOutCurrentDevice()"), "blocked-profile logout does not preserve other device sessions");
-assert(functionSource("doResetPassword").includes("signOutCurrentDevice()"), "post-password-change logout does not use the current-device scope");
+assert(functionSource("loadProfile").includes("signOutAllDevices()"), "blocked-profile logout does not revoke other device sessions");
+assert(functionSource("doResetPassword").includes("signOutAllDevices()"), "post-password-change logout does not revoke other device sessions");
 {
   let explicitTarget = "";
   let openCalls = 0;
