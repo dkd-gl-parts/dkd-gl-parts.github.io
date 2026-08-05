@@ -4656,7 +4656,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.680";
+var APP_VERSION       = "v1.1.681";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6360,7 +6360,7 @@ async function loadProfile() {
 
   // pending / suspended の場合はログアウトしてメッセージを表示する
   if (userProfile.status === "pending") {
-    await sb.auth.signOut();
+    await signOutCurrentDevice();
     currentUser = null; userProfile = null;
     showScreen("login");
     var el = document.getElementById("login-error");
@@ -6368,7 +6368,7 @@ async function loadProfile() {
     return false;
   }
   if (userProfile.status === "suspended") {
-    await sb.auth.signOut();
+    await signOutCurrentDevice();
     currentUser = null; userProfile = null;
     showScreen("login");
     var el = document.getElementById("login-error");
@@ -6710,13 +6710,19 @@ async function doLogin() {
   btnEl.disabled = false; btnEl.textContent = t("btn_login");
 }
 
+async function signOutCurrentDevice() {
+  // Supabase defaults to global sign-out, which would also revoke the
+  // independently stored Windows print-agent session for this user.
+  return sb.auth.signOut({ scope: "local" });
+}
+
 async function doLogout() {
   clearAppRestoreState();
   stopFinishedLabelPrintStation();
   clearTimeout(autoLogoutTimer);
   autoLogoutTimer = null;
   await recordAuthEvent("logout");
-  await sb.auth.signOut();
+  await signOutCurrentDevice();
   clearActivitySessionId();
   currentUser = null; userProfile = null;
   customerViewerContext = null;
@@ -37414,7 +37420,7 @@ async function doResetPassword() {
   setCspStyle(document.getElementById("reset-success-box"), "display", "block");
   // 3秒後にログイン画面へ
   setTimeout(async function() {
-    await sb.auth.signOut();
+    await signOutCurrentDevice();
     showScreen("login");
   }, 3000);
 }
