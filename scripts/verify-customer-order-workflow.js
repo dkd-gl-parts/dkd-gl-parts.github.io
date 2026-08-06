@@ -21,6 +21,7 @@ function sourceBetween(startText, endText) {
   "customer-order-preview-button",
   "customer-order-submit",
   "customer-order-history-list",
+  "customer-order-development-preview",
   "screen-sales-order-mgmt",
   "sales-order-list",
   "sales-order-detail",
@@ -65,6 +66,34 @@ if (!evaluateCustomerOrderingAccess({ customerViewer: true, featureEnabled: true
     evaluateCustomerOrderingAccess({ customerViewer: false, featureEnabled: true, published: true, productSearch: true }) ||
     evaluateCustomerOrderingAccess({ customerViewer: true, featureEnabled: true, published: true, productSearch: false })) {
   throw new Error("customer ordering access must fail closed unless every access condition is true");
+}
+const previewOrderAccess = sourceBetween("function canPreviewCustomerOrdering", "function canManageSalesOrders");
+function evaluatePreviewOrderingAccess(options) {
+  return vm.runInNewContext(`${previewOrderAccess}\n({ preview: canPreviewCustomerOrdering(), open: canOpenCustomerOrdering() });`, {
+    canPreviewCustomerPortal: () => options.internalPreviewRole,
+    customerPortalPreviewContext: options.context,
+    canUseCustomerOrdering: () => options.customerOrdering
+  });
+}
+const validPreviewAccess = evaluatePreviewOrderingAccess({
+  internalPreviewRole: true,
+  customerOrdering: false,
+  context: { sales_customer_id: 10, customer: { id: 10, is_active: true } }
+});
+const inactivePreviewAccess = evaluatePreviewOrderingAccess({
+  internalPreviewRole: true,
+  customerOrdering: false,
+  context: { sales_customer_id: 10, customer: { id: 10, is_active: false } }
+});
+const externalPreviewAccess = evaluatePreviewOrderingAccess({
+  internalPreviewRole: false,
+  customerOrdering: false,
+  context: { sales_customer_id: 10, customer: { id: 10, is_active: true } }
+});
+const liveCustomerAccess = evaluatePreviewOrderingAccess({ internalPreviewRole: false, customerOrdering: true, context: null });
+if (!validPreviewAccess.preview || !validPreviewAccess.open || inactivePreviewAccess.preview ||
+    externalPreviewAccess.preview || !liveCustomerAccess.open) {
+  throw new Error("internal order preview must require an internal preview role and an active selected customer");
 }
 const internalOrderAccess = sourceBetween("function canManageSalesOrders", "function canViewManagementScreen");
 if (!internalOrderAccess.includes('customerOrderFeatureEnabled("internal_management")') || !internalOrderAccess.includes('"sales_order.manage"')) {
@@ -120,19 +149,34 @@ if (!menuSource.includes('action: "sales-order-mgmt"') || !menuSource.includes("
   throw new Error("internal order management must be permission-gated in the menu");
 }
 const portalRender = sourceBetween("function renderCustomerPortal", "async function loadCustomerPortalPreviewContext");
-if (!portalRender.includes('orderGuide.hidden = !canUseCustomerOrdering()')) {
-  throw new Error("customer order entry must stay hidden until ordering is enabled");
+if (!portalRender.includes('orderGuide.hidden = !canOpenCustomerOrdering()')) {
+  throw new Error("customer order entry must allow only live customer ordering or internal development preview");
 }
 const customerAccessRender = sourceBetween("function renderCustomerAccessDetail", "function renderCustomerAccessRuleForm");
 if (!customerAccessRender.includes("data-customer-setting='customer_ordering_enabled'") ||
     !customerAccessRender.includes("role='switch'") ||
-    !customerAccessRender.includes("customer_access_order_hidden")) {
-  throw new Error("customer management must render a per-customer ordering publication switch");
+    !customerAccessRender.includes("customer_access_order_hidden") ||
+    !customerAccessRender.includes("id='btn-customer-order-preview'")) {
+  throw new Error("customer management must render ordering publication and internal preview controls");
 }
 const customerAccessSave = sourceBetween("async function saveCustomerAccessSettings", "async function setCustomerAccessActive");
 if (!customerAccessSave.includes('.from("customer_display_settings").upsert(data')) {
   throw new Error("customer ordering publication must be saved with customer display settings");
 }
+const orderPreviewRequest = sourceBetween("async function previewCustomerOrder", "function customerOrderIdempotencyKey");
+const orderSubmitRequest = sourceBetween("async function submitCustomerOrder", "function renderCustomerOrderHistory");
+const orderHistoryRequest = sourceBetween("async function loadCustomerOrderHistory", "function returnToCustomerPortalFromOrders");
+[
+  [orderPreviewRequest, 'sb.rpc("preview_customer_order"', "preview"],
+  [orderSubmitRequest, 'sb.rpc("place_customer_order"', "submit"],
+  [orderHistoryRequest, 'sb.rpc("list_customer_orders"', "history"]
+].forEach(([block, rpc, label]) => {
+  const guardIndex = block.indexOf("if (canPreviewCustomerOrdering())");
+  const rpcIndex = block.indexOf(rpc);
+  if (guardIndex < 0 || rpcIndex < 0 || guardIndex > rpcIndex) {
+    throw new Error(`development preview must exit before the ${label} RPC`);
+  }
+});
 
 [
   ".customer-order-workspace",
@@ -141,6 +185,7 @@ if (!customerAccessSave.includes('.from("customer_display_settings").upsert(data
   ".sales-order-tracking-grid",
   ".customer-order-publication",
   ".customer-order-publication-slider",
+  ".customer-order-development-preview-band",
   "@media (max-width: 820px)"
 ].forEach((fragment) => {
   if (!css.includes(fragment)) throw new Error(`responsive order style is missing: ${fragment}`);
@@ -154,12 +199,18 @@ if ((source.match(/customer_access_order_publication:/g) || []).length !== 3 ||
     (source.match(/customer_access_order_visible:/g) || []).length !== 3) {
   throw new Error("customer ordering publication controls must be translated for all supported languages");
 }
+if ((source.match(/customer_order_development_preview_title:/g) || []).length !== 3 ||
+    (source.match(/customer_order_submit_disabled:/g) || []).length !== 3 ||
+    (source.match(/customer_access_order_preview:/g) || []).length !== 3) {
+  throw new Error("internal order development preview must be translated for all supported languages");
+}
 
 [
   "API連携は保留",
   "target_idempotency_key",
   "customer_ordering_enabled boolean not null default false",
   "注文RPCも拒否",
+  "注文履歴RPCを呼び出さない",
   "出力列数: 95列",
   "feature statusをfalse"
 ].forEach((fragment) => {

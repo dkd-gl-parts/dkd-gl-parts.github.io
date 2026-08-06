@@ -207,6 +207,11 @@ var TRANSLATIONS = {
     customer_order_shipping_note: "送り状に印字する内容です。",
     customer_order_preview: "価格・在庫を確認",
     customer_order_submit: "注文を確定",
+    customer_order_development_preview_title: "社内向け開発プレビュー",
+    customer_order_development_preview_note: "画面確認用です。価格・在庫確認、注文送信、注文履歴の取得は行いません。",
+    customer_order_preview_disabled: "価格・在庫確認は無効",
+    customer_order_submit_disabled: "注文確定は無効",
+    customer_order_preview_history_disabled: "開発プレビューでは注文履歴を取得しません。",
     customer_order_history_note: "受付、出荷、コア返却の状況を確認できます。",
     customer_order_add: "注文に追加",
     customer_order_added: "追加済み",
@@ -1049,6 +1054,8 @@ var TRANSLATIONS = {
     customer_access_order_publication_help: "公開にすると、受注機能全体が有効な場合に、この得意先の商品画面へ注文ボタンを表示します。初期値は非公開です。",
     customer_access_order_hidden: "非公開",
     customer_access_order_visible: "公開",
+    customer_access_order_preview: "受注画面をプレビュー",
+    customer_access_order_preview_unsaved: "表示設定に未保存の変更があります。先に変更を保存してください。",
     customer_access_rule_help: "販売価格をOFFにすると、0円表示・価格あり商品のみ表示もOFFになります。価格あり商品のみ表示をONにすると、価格未設定商品は非表示になります。",
     customer_access_shipping_rule: "送料条件",
     customer_access_shipping_rule_help: "未設定時は送料別途です。変更後は上の保存ボタンを押すと販売管理と得意先向け価格表へ反映されます。",
@@ -1755,6 +1762,11 @@ var TRANSLATIONS = {
     customer_order_shipping_note: "This information will be printed on the shipping label.",
     customer_order_preview: "Check Price / Stock",
     customer_order_submit: "Place Order",
+    customer_order_development_preview_title: "Internal Development Preview",
+    customer_order_development_preview_note: "For screen review only. Price and stock checks, order submission, and order history requests are disabled.",
+    customer_order_preview_disabled: "Price / Stock Disabled",
+    customer_order_submit_disabled: "Order Disabled",
+    customer_order_preview_history_disabled: "Order history is not requested in development preview.",
     customer_order_history_note: "Review acceptance, shipping, and core-return status.",
     customer_order_add: "Add to Order",
     customer_order_added: "Added",
@@ -2597,6 +2609,8 @@ var TRANSLATIONS = {
     customer_access_order_publication_help: "When enabled, order actions appear for this customer only while the overall ordering feature is available. The default is hidden.",
     customer_access_order_hidden: "Hidden",
     customer_access_order_visible: "Published",
+    customer_access_order_preview: "Preview Order Screen",
+    customer_access_order_preview_unsaved: "Display settings have unsaved changes. Save them before opening the preview.",
     customer_access_rule_help: "When sales price is off, zero-price display and priced-only display are also off. When priced-only is on, products without prices are hidden.",
     customer_access_shipping_rule: "Shipping Terms",
     customer_access_shipping_rule_help: "Shipping is charged separately by default. Save changes to apply them to Sales Management and the customer price list.",
@@ -3290,6 +3304,11 @@ var TRANSLATIONS = {
     customer_order_shipping_note: "此内容将打印在运单上。",
     customer_order_preview: "确认价格・库存",
     customer_order_submit: "提交订单",
+    customer_order_development_preview_title: "内部开发预览",
+    customer_order_development_preview_note: "仅用于画面确认。不会确认价格和库存、提交订单或读取订单记录。",
+    customer_order_preview_disabled: "价格・库存确认已禁用",
+    customer_order_submit_disabled: "订单提交已禁用",
+    customer_order_preview_history_disabled: "开发预览中不会读取订单记录。",
     customer_order_history_note: "可确认受理、出货和旧件返还状态。",
     customer_order_add: "加入订单",
     customer_order_added: "已加入",
@@ -4138,6 +4157,8 @@ var TRANSLATIONS = {
     customer_access_order_publication_help: "开启后，仅在整体订购功能可用时向该客户显示订购操作。默认不公开。",
     customer_access_order_hidden: "不公开",
     customer_access_order_visible: "已公开",
+    customer_access_order_preview: "预览订购画面",
+    customer_access_order_preview_unsaved: "显示设置有未保存的更改。请先保存后再打开预览。",
     customer_access_rule_help: "关闭销售价格时，0日元显示和仅显示有价格商品也会关闭。开启仅显示有价格商品时，未设置价格的商品会隐藏。",
     customer_access_shipping_rule: "运费条件",
     customer_access_shipping_rule_help: "默认运费另计。保存更改后将应用到销售管理和客户价格表。",
@@ -5834,6 +5855,19 @@ function canUseCustomerOrdering() {
     canViewProductSearch()
   );
 }
+function canPreviewCustomerOrdering() {
+  var context = customerPortalPreviewContext;
+  return !!(
+    canPreviewCustomerPortal() &&
+    context &&
+    context.sales_customer_id &&
+    context.customer &&
+    context.customer.is_active !== false
+  );
+}
+function canOpenCustomerOrdering() {
+  return canUseCustomerOrdering() || canPreviewCustomerOrdering();
+}
 function canManageSalesOrders() {
   if (!customerOrderFeatureEnabled("internal_management") || isExternalViewer() || isCustomerPortalSearchMode()) return false;
   return userPermissionAllowed(
@@ -6088,8 +6122,10 @@ function captureAppRestoreState(reason) {
     state.customerPortalCustomerId = portalContext && portalContext.sales_customer_id ? portalContext.sales_customer_id : "";
   }
   function captureCustomerOrderState() {
+    var portalContext = activeCustomerPortalContext();
     state.screen = "customer-orders";
     state.customerOrderView = customerOrderActiveView;
+    state.customerPortalCustomerId = portalContext && portalContext.sales_customer_id ? portalContext.sales_customer_id : "";
     state.customerOrderAddress = customerOrderAddressPayload();
     state.customerOrderDeliveryDate = (document.getElementById("customer-order-delivery-date") || {}).value || "";
     state.customerOrderDeliveryTime = (document.getElementById("customer-order-delivery-time") || {}).value || "";
@@ -6219,16 +6255,21 @@ async function restoreAppStateAfterRefresh() {
         renderProductionList();
         await renderProductionDetail(currentProductionRow || null);
       }
-    } else if (state.screen === "customer-orders" && canUseCustomerOrdering()) {
-      await enterCustomerOrders({ view: state.customerOrderView || "cart", preview: false });
-      applyCustomerOrderAddress(state.customerOrderAddress || {}, true);
-      var restoreDeliveryDate = document.getElementById("customer-order-delivery-date");
-      var restoreDeliveryTime = document.getElementById("customer-order-delivery-time");
-      var restoreOrderNote = document.getElementById("customer-order-note");
-      if (restoreDeliveryDate) restoreDeliveryDate.value = state.customerOrderDeliveryDate || "";
-      if (restoreDeliveryTime) restoreDeliveryTime.value = state.customerOrderDeliveryTime || "";
-      if (restoreOrderNote) restoreOrderNote.value = state.customerOrderNote || "";
-      if (customerOrderCart.length && (state.customerOrderView || "cart") === "cart") await previewCustomerOrder({ silent: true });
+    } else if (state.screen === "customer-orders") {
+      if (!isCustomerViewer() && state.customerPortalCustomerId) {
+        await loadCustomerPortalPreviewContext(state.customerPortalCustomerId);
+      }
+      if (canOpenCustomerOrdering()) {
+        await enterCustomerOrders({ view: state.customerOrderView || "cart", preview: false });
+        applyCustomerOrderAddress(state.customerOrderAddress || {}, true);
+        var restoreDeliveryDate = document.getElementById("customer-order-delivery-date");
+        var restoreDeliveryTime = document.getElementById("customer-order-delivery-time");
+        var restoreOrderNote = document.getElementById("customer-order-note");
+        if (restoreDeliveryDate) restoreDeliveryDate.value = state.customerOrderDeliveryDate || "";
+        if (restoreDeliveryTime) restoreDeliveryTime.value = state.customerOrderDeliveryTime || "";
+        if (restoreOrderNote) restoreOrderNote.value = state.customerOrderNote || "";
+        if (customerOrderCart.length && (state.customerOrderView || "cart") === "cart") await previewCustomerOrder({ silent: true });
+      }
     } else if (state.screen === "customer-catalog") {
       if (!isCustomerViewer() && state.customerPortalCustomerId) {
         await loadCustomerPortalPreviewContext(state.customerPortalCustomerId);
@@ -7100,7 +7141,7 @@ function renderCustomerExperienceHeaders() {
   var exitButton = document.getElementById("btn-exit-customer-mode");
   if (exitButton) setCspStyle(exitButton, "display", canPreviewCustomerPortal() ? "" : "none");
   var orderLink = document.getElementById("customer-catalog-orders");
-  if (orderLink) orderLink.hidden = !canUseCustomerOrdering();
+  if (orderLink) orderLink.hidden = !canOpenCustomerOrdering();
 }
 
 function configureCustomerSearchShell() {
@@ -7166,7 +7207,7 @@ function renderCustomerPortal() {
   var shippingGuide = document.getElementById("customer-portal-shipping-guide");
   if (shippingGuide) shippingGuide.hidden = !canViewCustomerShippingRates();
   var orderGuide = document.getElementById("customer-portal-order-guide");
-  if (orderGuide) orderGuide.hidden = !canUseCustomerOrdering();
+  if (orderGuide) orderGuide.hidden = !canOpenCustomerOrdering();
   var manageUsersButton = document.getElementById("customer-portal-manage-users");
   if (manageUsersButton) manageUsersButton.hidden = !canManageCustomerPortalUsers();
   renderCustomerExperienceHeaders();
@@ -7175,11 +7216,16 @@ function renderCustomerPortal() {
 
 async function loadCustomerPortalPreviewContext(customerId) {
   if (!canPreviewCustomerPortal()) return;
+  if (customerPortalPreviewContext && customerOrderCart.length) persistCustomerOrderCart();
   customerId = String(customerId || "");
   if (!detailSalesCustomerOptions.length) await loadDetailSalesCustomerOptions();
   var customer = detailSalesCustomerOptions.find(function(row) { return String(row.id) === customerId; }) || null;
   customerPortalPreviewContext = customer ? await loadCustomerPortalContextForCustomer(customer) : null;
   detailSelectedSalesCustomerId = customer ? String(customer.id) : "";
+  customerOrderCart = [];
+  customerOrderPreview = null;
+  customerOrderHistoryRows = [];
+  if (customerPortalPreviewContext) restoreCustomerOrderCart();
   customerCatalogProducts = [];
   customerCatalogSelectedProduct = null;
   customerCatalogImageInfo = { counts: {}, thumbnails: {} };
@@ -7728,8 +7774,8 @@ function customerCatalogAvailabilityKindHtml(product, kind, stockQty, price, sho
   var priceText = price == null ? t("customer_catalog_price_none") : "JPY " + formatYen(price);
   var orderKey = customerOrderCartKey(productDkdId(product), kind);
   var orderAdded = customerOrderCart.some(function(item) { return item.key === orderKey; });
-  var canOrder = canUseCustomerOrdering() && stockQty != null && Number(stockQty) > 0 && (!showPrice || price != null);
-  var orderButton = canUseCustomerOrdering()
+  var canOrder = canOpenCustomerOrdering() && stockQty != null && Number(stockQty) > 0 && (!showPrice || price != null);
+  var orderButton = canOpenCustomerOrdering()
     ? "<button class='customer-catalog-order-button" + (orderAdded ? " added" : "") + "' type='button' data-customer-order-add='" + esc(kind) + "'" + (canOrder ? "" : " disabled") + ">" + esc(t(orderAdded ? "customer_order_added" : "customer_order_add")) + "</button>"
     : "";
   return "<div class='customer-catalog-availability-kind " + esc(productKindClass(kind)) + "'>" +
@@ -8026,7 +8072,8 @@ function customerOrderCartKey(dkdId, productKind) {
 
 function customerOrderCartStorageKey() {
   var context = activeCustomerPortalContext() || {};
-  return CUSTOMER_ORDER_CART_STORAGE_KEY + ":" + String(context.sales_customer_id || "none");
+  var previewSuffix = canPreviewCustomerPortal() ? ":development-preview" : "";
+  return CUSTOMER_ORDER_CART_STORAGE_KEY + ":" + String(context.sales_customer_id || "none") + previewSuffix;
 }
 
 function persistCustomerOrderCart() {
@@ -8034,7 +8081,7 @@ function persistCustomerOrderCart() {
 }
 
 function restoreCustomerOrderCart() {
-  if (!canUseCustomerOrdering()) return;
+  if (!canOpenCustomerOrdering()) return;
   try {
     var raw = sessionStorage.getItem(customerOrderCartStorageKey());
     var rows = raw ? JSON.parse(raw) : [];
@@ -8051,7 +8098,7 @@ function clearPersistedCustomerOrderCart() {
 }
 
 function addCustomerCatalogProductToOrder(product, productKind, stockQty, price, variantRows) {
-  if (!canUseCustomerOrdering() || !product || !productDkdId(product)) return;
+  if (!canOpenCustomerOrdering() || !product || !productDkdId(product)) return;
   var kind = normalizeProductKind(productKind || "rebuilt");
   var key = customerOrderCartKey(productDkdId(product), kind);
   var existing = customerOrderCart.find(function(item) { return item.key === key; });
@@ -8171,6 +8218,24 @@ function customerOrderPreviewItemMap() {
   return map;
 }
 
+function configureCustomerOrderDevelopmentPreview() {
+  var previewMode = canPreviewCustomerOrdering();
+  var banner = document.getElementById("customer-order-development-preview");
+  var previewButton = document.getElementById("customer-order-preview-button");
+  var submitButton = document.getElementById("customer-order-submit");
+  var historyReload = document.getElementById("customer-order-history-reload");
+  if (banner) banner.hidden = !previewMode;
+  if (previewButton) {
+    previewButton.textContent = previewMode ? t("customer_order_preview_disabled") : t("customer_order_preview");
+    previewButton.disabled = previewMode;
+  }
+  if (submitButton) {
+    submitButton.textContent = previewMode ? t("customer_order_submit_disabled") : t("customer_order_submit");
+    if (previewMode) submitButton.disabled = true;
+  }
+  if (historyReload) historyReload.disabled = previewMode;
+}
+
 function renderCustomerOrderCart() {
   var host = document.getElementById("customer-order-cart-list");
   var summary = document.getElementById("customer-order-preview-summary");
@@ -8182,6 +8247,7 @@ function renderCustomerOrderCart() {
     if (summary) summary.innerHTML = "";
     if (submit) submit.disabled = true;
     if (coreNotice) coreNotice.hidden = true;
+    configureCustomerOrderDevelopmentPreview();
     return;
   }
   var previewMap = customerOrderPreviewItemMap();
@@ -8236,7 +8302,8 @@ function renderCustomerOrderCart() {
       summary.innerHTML = "<p>価格と在庫は未確認です。</p>";
     }
   }
-  if (submit) submit.disabled = customerOrderSaving || !(customerOrderPreview && customerOrderPreview.valid === true && customerOrderPreview.preview_token);
+  if (submit) submit.disabled = canPreviewCustomerOrdering() || customerOrderSaving || !(customerOrderPreview && customerOrderPreview.valid === true && customerOrderPreview.preview_token);
+  configureCustomerOrderDevelopmentPreview();
 }
 
 function customerOrderSetStatus(message, isError) {
@@ -8262,7 +8329,7 @@ function showCustomerOrderView(view) {
 
 async function enterCustomerOrders(options) {
   options = options || {};
-  if (!canUseCustomerOrdering()) {
+  if (!canOpenCustomerOrdering()) {
     showPermissionDenied("open_customer_orders", "customer_orders");
     return;
   }
@@ -8273,11 +8340,18 @@ async function enterCustomerOrders(options) {
   customerPortalValue("customer-orders-customer-name", context.customer && context.customer.customer_name);
   renderCustomerOrderCart();
   showCustomerOrderView(options.view || customerOrderActiveView);
+  if (canPreviewCustomerOrdering()) customerOrderSetStatus(t("customer_order_development_preview_note"), false);
   if (customerOrderCart.length && options.preview !== false) await previewCustomerOrder({ silent: true });
 }
 
 async function previewCustomerOrder(options) {
   options = options || {};
+  if (canPreviewCustomerOrdering()) {
+    customerOrderPreview = null;
+    customerOrderSetStatus(t("customer_order_development_preview_note"), false);
+    renderCustomerOrderCart();
+    return;
+  }
   if (!canUseCustomerOrdering() || !customerOrderCart.length) {
     renderCustomerOrderCart();
     return;
@@ -8311,6 +8385,10 @@ function customerOrderIdempotencyKey() {
 }
 
 async function submitCustomerOrder() {
+  if (canPreviewCustomerOrdering()) {
+    customerOrderSetStatus(t("customer_order_development_preview_note"), false);
+    return;
+  }
   if (!canUseCustomerOrdering() || customerOrderSaving || !customerOrderPreview || customerOrderPreview.valid !== true || !customerOrderPreview.preview_token) return;
   customerOrderSaving = true;
   renderCustomerOrderCart();
@@ -8345,6 +8423,10 @@ async function submitCustomerOrder() {
 function renderCustomerOrderHistory() {
   var host = document.getElementById("customer-order-history-list");
   if (!host) return;
+  if (canPreviewCustomerOrdering()) {
+    host.innerHTML = "<div class='customer-order-empty'>" + esc(t("customer_order_preview_history_disabled")) + "</div>";
+    return;
+  }
   if (!customerOrderHistoryRows.length) {
     host.innerHTML = "<div class='customer-order-empty'>注文履歴はありません。</div>";
     return;
@@ -8364,6 +8446,13 @@ function renderCustomerOrderHistory() {
 }
 
 async function loadCustomerOrderHistory() {
+  if (canPreviewCustomerOrdering()) {
+    customerOrderHistoryRows = [];
+    var previewHost = document.getElementById("customer-order-history-list");
+    if (previewHost) previewHost.innerHTML = "<div class='customer-order-empty'>" + esc(t("customer_order_preview_history_disabled")) + "</div>";
+    configureCustomerOrderDevelopmentPreview();
+    return;
+  }
   if (!canUseCustomerOrdering()) return;
   var requestSeq = ++customerOrderHistorySeq;
   var host = document.getElementById("customer-order-history-list");
@@ -34854,6 +34943,24 @@ function customerAccessCategoryChecksHtml() {
   "</div>";
 }
 
+async function openCustomerOrderDevelopmentPreview() {
+  if (!canManageCustomerAccess() || !currentCustomerAccessCustomer) {
+    alert(t("err_perm"));
+    return;
+  }
+  if (customerAccessHasUnsavedChanges()) {
+    alert(t("customer_access_order_preview_unsaved"));
+    return;
+  }
+  await loadCustomerPortalPreviewContext(currentCustomerAccessCustomer.id);
+  if (!canPreviewCustomerOrdering()) {
+    showPermissionDenied("preview_customer_orders", "sales_customers");
+    return;
+  }
+  customerPortalSearchActive = false;
+  await enterCustomerOrders({ view: "cart", preview: false });
+}
+
 function renderCustomerAccessDetail() {
   var detail = document.getElementById("customer-access-detail");
   if (!detail) return;
@@ -34875,6 +34982,7 @@ function renderCustomerAccessDetail() {
   html += "</div>";
   html += "<div class='customer-access-management-actions'>";
   html += "<button class='btn-primary' id='btn-customer-price-list' type='button'>" + esc(t("customer_access_price_list")) + "</button>";
+  html += "<button class='btn-sm-edit customer-order-preview-launch' id='btn-customer-order-preview' type='button'" + (customer.is_active === false ? " disabled" : "") + ">" + esc(t("customer_access_order_preview")) + "</button>";
   if (customer.is_active === false) {
     html += "<button class='btn-sm-edit' id='btn-customer-access-restore' type='button'>" + esc(t("customer_access_restore_customer")) + "</button>";
   } else {
@@ -34992,6 +35100,8 @@ function bindCustomerAccessDetailEvents() {
   if (rankSelect) rankSelect.addEventListener("change", updateCustomerAccessSaveState);
   var priceListBtn = document.getElementById("btn-customer-price-list");
   if (priceListBtn) priceListBtn.addEventListener("click", openCustomerPriceList);
+  var orderPreviewBtn = document.getElementById("btn-customer-order-preview");
+  if (orderPreviewBtn) orderPreviewBtn.addEventListener("click", openCustomerOrderDevelopmentPreview);
   var categoryAllBtn = document.getElementById("btn-customer-category-all");
   if (categoryAllBtn) categoryAllBtn.addEventListener("click", function() { setCustomerAccessCategoriesChecked(true); });
   var categoryNoneBtn = document.getElementById("btn-customer-category-none");
