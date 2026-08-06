@@ -77,6 +77,12 @@ const estimateRender = sourceBetween("function renderSalesShippingEstimate", "as
 ].forEach((fragment) => {
   if (!estimateRender.includes(fragment)) throw new Error(`sales shipping estimate is incomplete: ${fragment}`);
 });
+const destinationControl = estimateRender.indexOf("id='sales-shipping-prefecture'");
+const sizeControl = estimateRender.indexOf("id='sales-shipping-package-size'");
+const carrierControl = estimateRender.indexOf("id='sales-shipping-carrier'");
+if (!(destinationControl >= 0 && sizeControl > destinationControl && carrierControl > sizeControl)) {
+  throw new Error("shipping estimate must group destination and package size before carrier details");
+}
 
 const estimateVisibility = sourceBetween("function salesShippingEstimateShouldShow", "function bindSalesShippingEstimateActions");
 if (!estimateVisibility.includes('detailCustomerShippingChargeRule !== "free"') ||
@@ -124,6 +130,10 @@ if (!source.includes("productShippingSizeRows.push(selected)")) {
   const count = (source.match(new RegExp(`${key}:`, "g")) || []).length;
   if (count !== 3) throw new Error(`${key} must be translated for all supported languages`);
 });
+if (!source.includes('sales_shipping_estimate_title: "登録済み品番の送料試算"') ||
+    !html.includes('data-i18n="sales_shipping_estimate_title">登録済み品番の送料試算</div>')) {
+  throw new Error("registered-product shipping estimate must use one clear section title");
+}
 
 const customerSectionIndex = html.indexOf('id="detail-customer-section"');
 const shippingSectionIndex = html.indexOf('id="sales-shipping-estimate-section"');

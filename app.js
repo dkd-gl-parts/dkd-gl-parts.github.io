@@ -970,7 +970,7 @@ var TRANSLATIONS = {
     sales_shipping_charge_loading: "送料条件を確認中",
     sales_shipping_separate_note: "商品価格に送料は含まれていません。お届け先を選択して送料をご確認ください。",
     sales_shipping_free_note: "この得意先は送料無料です。",
-    sales_shipping_estimate_title: "送料目安",
+    sales_shipping_estimate_title: "登録済み品番の送料試算",
     sales_shipping_destination: "お届け先",
     sales_shipping_profile: "品番の配送設定",
     sales_shipping_manual_size_note: "出荷サイズが未設定です。確認するサイズを選択してください。",
@@ -2487,7 +2487,7 @@ var TRANSLATIONS = {
     sales_shipping_charge_loading: "Checking shipping terms",
     sales_shipping_separate_note: "Shipping is not included in the product price. Select the destination to check the rate.",
     sales_shipping_free_note: "This customer receives free shipping.",
-    sales_shipping_estimate_title: "Shipping Estimate",
+    sales_shipping_estimate_title: "Registered Product Shipping Estimate",
     sales_shipping_destination: "Destination",
     sales_shipping_profile: "Product Shipping Profile",
     sales_shipping_manual_size_note: "No package size is saved. Select a size to check the rate.",
@@ -3997,7 +3997,7 @@ var TRANSLATIONS = {
     sales_shipping_charge_loading: "正在确认运费条件",
     sales_shipping_separate_note: "商品价格不含运费。请选择收货地区以确认运费。",
     sales_shipping_free_note: "此客户免运费。",
-    sales_shipping_estimate_title: "运费参考",
+    sales_shipping_estimate_title: "已登记商品运费试算",
     sales_shipping_destination: "收货地区",
     sales_shipping_profile: "商品配送设置",
     sales_shipping_manual_size_note: "尚未设置出货尺寸。请选择要确认的尺寸。",
@@ -4660,7 +4660,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.689";
+var APP_VERSION       = "v1.1.690";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -8229,9 +8229,9 @@ function renderSalesShippingEstimate(loadError) {
   else if (!profileHasSize) html += "<div class='sales-shipping-message manual'>" + esc(t("sales_shipping_manual_size_note")) + "</div>";
   html += "<div class='sales-shipping-controls'>";
   html += "<label><span>" + esc(t("sales_shipping_destination")) + "</span><select id='sales-shipping-prefecture'><option value=''>" + esc(t("sales_shipping_select_prefecture")) + "</option>" + shippingPrefectureOptionsHtml(salesShippingPrefectureCode, false) + "</select></label>";
+  html += "<label class='sales-shipping-size-control'><span>" + esc(t("shipping_package_size")) + "</span><select id='sales-shipping-package-size'><option value=''>" + esc(t("sales_shipping_select_size")) + "</option>" + packages.map(function(row) { var key = shippingPackageKey(row); return "<option value='" + esc(key) + "'" + (key === salesShippingPackageKeyValue ? " selected" : "") + ">" + esc(shippingPackageOptionLabel(row)) + "</option>"; }).join("") + "</select></label>";
   html += "<label><span>" + esc(t("shipping_carrier")) + "</span><select id='sales-shipping-carrier'>" + carriers.map(function(name) { return "<option value='" + esc(name) + "'" + (name === salesShippingCarrierName ? " selected" : "") + ">" + esc(name) + "</option>"; }).join("") + "</select></label>";
   html += "<label><span>" + esc(t("shipping_service")) + "</span><select id='sales-shipping-service'>" + services.map(function(name) { return "<option value='" + esc(name) + "'" + (name === salesShippingServiceName ? " selected" : "") + ">" + esc(name) + "</option>"; }).join("") + "</select></label>";
-  html += "<label class='sales-shipping-size-control'><span>" + esc(t("shipping_package_size")) + "</span><select id='sales-shipping-package-size'><option value=''>" + esc(t("sales_shipping_select_size")) + "</option>" + packages.map(function(row) { var key = shippingPackageKey(row); return "<option value='" + esc(key) + "'" + (key === salesShippingPackageKeyValue ? " selected" : "") + ">" + esc(shippingPackageOptionLabel(row)) + "</option>"; }).join("") + "</select></label>";
   html += "</div>";
 
   var selectedRate = null;
