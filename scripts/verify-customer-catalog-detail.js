@@ -24,6 +24,16 @@ if (!availabilitySource.includes('var kinds = ["rebuilt", "aftermarket_new"]') |
   throw new Error("customer catalog detail must show rebuilt and aftermarket-new stock with kind-specific prices");
 }
 
+const availabilityHtmlSource = functionSource("customerCatalogAvailabilityKindHtml", "function renderCustomerCatalogDetailBase");
+if (!availabilityHtmlSource.includes("customerProductKindLabel(kind)")) {
+  throw new Error("customer catalog must use the customer-facing product-kind label");
+}
+
+const customerKindLabelSource = functionSource("customerProductKindLabel", "function productKindClass");
+if (!customerKindLabelSource.includes('kind === "aftermarket_new" ? t("customer_product_kind_new")')) {
+  throw new Error("customer catalog must label aftermarket-new products as new");
+}
+
 const openSource = functionSource("openCustomerCatalogProduct", "async function openCustomerCatalogProductById");
 if (!openSource.includes("bindCustomerCatalogVehicleDisclosure(product, seq)") ||
     openSource.includes("loads.push(loadCustomerCatalogVehicles")) {

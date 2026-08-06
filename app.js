@@ -285,6 +285,7 @@ var TRANSLATIONS = {
     inventory_kind_section: "在庫区分",
     product_kind_rebuilt: "リビルト",
     product_kind_aftermarket_new: "社外新品",
+    customer_product_kind_new: "新品",
     product_kind_used_core: "中古コア",
     product_kind_catalog_spec: "カタログ",
     product_kind_other: "その他",
@@ -1801,6 +1802,7 @@ var TRANSLATIONS = {
     inventory_kind_section: "Inventory Type",
     product_kind_rebuilt: "Rebuilt",
     product_kind_aftermarket_new: "Aftermarket New",
+    customer_product_kind_new: "New",
     product_kind_used_core: "Used Core",
     product_kind_catalog_spec: "Catalog",
     product_kind_other: "Other",
@@ -3324,6 +3326,7 @@ var TRANSLATIONS = {
     inventory_kind_section: "库存区分",
     product_kind_rebuilt: "再制造",
     product_kind_aftermarket_new: "副厂新品",
+    customer_product_kind_new: "新品",
     product_kind_used_core: "旧芯",
     product_kind_catalog_spec: "目录",
     product_kind_other: "其他",
@@ -4656,7 +4659,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.683";
+var APP_VERSION       = "v1.1.684";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -7515,7 +7518,7 @@ function customerCatalogAvailabilityKindHtml(kind, stockQty, price, showPrice, v
   var stockText = stockQty == null ? "-" : String(stockQty);
   var priceText = price == null ? t("customer_catalog_price_none") : "JPY " + formatYen(price);
   return "<div class='customer-catalog-availability-kind " + esc(productKindClass(kind)) + "'>" +
-    "<div class='customer-catalog-availability-kind-title'>" + esc(productKindLabel(kind)) + "</div>" +
+    "<div class='customer-catalog-availability-kind-title'>" + esc(customerProductKindLabel(kind)) + "</div>" +
     "<div class='customer-catalog-availability-metrics" + (showPrice ? "" : " stock-only") + "'>" +
       "<div class='customer-catalog-availability-metric stock'><span>" + esc(t("customer_catalog_stock_qty")) + "</span><strong>" + esc(stockText) + "</strong><small>" + esc(t("customer_catalog_stock_unit")) + "</small></div>" +
       (showPrice ? "<div class='customer-catalog-availability-metric price'><span>" + esc(t("customer_portal_price_display")) + "</span><strong>" + esc(priceText) + "</strong></div>" : "") +
@@ -22492,6 +22495,11 @@ function productKindLabel(kind) {
   return t("product_kind_other");
 }
 
+function customerProductKindLabel(kind) {
+  kind = normalizeProductKind(kind);
+  return kind === "aftermarket_new" ? t("customer_product_kind_new") : productKindLabel(kind);
+}
+
 function productKindClass(kind) {
   kind = normalizeProductKind(kind);
   if (kind === "rebuilt" || kind === "aftermarket_new" || kind === "used_core" || kind === "catalog_spec") return kind;
@@ -33755,7 +33763,7 @@ function buildCustomerPriceListHtml(customer, rows, settings) {
     return "<tr>" +
       "<td class='number-cell'>" + esc(String(index + 1)) + "</td>" +
       "<td>" + esc(tCat(product.category_code || product.category || "")) + "</td>" +
-      "<td>" + esc(productKindLabel(price.product_kind)) + "</td>" +
+      "<td>" + esc(customerProductKindLabel(price.product_kind)) + "</td>" +
       "<td class='part-number'>" + esc(product.gltek_part_number || "-") + "</td>" +
       "<td class='part-number'>" + esc(customerPriceListPartNumbers(product)) + "</td>" +
       "<td class='part-number'>" + esc(product.manufacturer_part_number || "-") + "</td>" +

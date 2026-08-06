@@ -18,6 +18,7 @@ function expect(condition, message) {
   "customerCategoryIsVisible(category, visibilityRows)",
   "calculateSalesPriceClient(price.base_price_jpy, rank)",
   "function buildCustomerPriceListHtml",
+  "customerProductKindLabel(price.product_kind)",
   "function customerPriceListShippingTerms",
   "送料は無料です。消費税は別途となります。",
   "送料・消費税は別途となります。",
