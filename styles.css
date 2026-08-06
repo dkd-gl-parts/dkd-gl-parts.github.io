@@ -3160,24 +3160,24 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .empty   { text-align: center; padding: 40px; color: #bbb; font-size: 13px; line-height: 1.8; }
 .search-header { background: #fff; border-bottom: 1px solid #e0e0e0; padding: 10px 16px; flex-shrink: 0; }
 .search-row    { display: flex; gap: 8px; align-items: center; }
-.search-input  { flex: 1; min-width: 0; border: 1px solid #d0d0d0; border-radius: 8px; padding: 8px 12px; font-size: 14px; outline: none; }
+.search-input  { flex: 1; min-width: 0; border: 1px solid #d0d0d0; border-radius: 8px; padding: 8px 12px; font-size: 15px; font-weight: 600; letter-spacing: .01em; outline: none; }
 .search-input:focus { border-color: var(--dcats-brand-red); box-shadow: 0 0 0 3px var(--dcats-brand-red-focus); }
-.btn-search { border: none; border-radius: 8px; padding: 8px 16px; font-size: 14px; cursor: pointer; font-weight: 600; white-space: nowrap; flex-shrink: 0; background: var(--dcats-brand-red); color: #fff; }
+.btn-search { border: none; border-radius: 8px; padding: 8px 16px; font-size: 15px; cursor: pointer; font-weight: 700; white-space: nowrap; flex-shrink: 0; background: var(--dcats-brand-red); color: #fff; }
 .btn-search:hover { background: var(--dcats-brand-red-hover); }
 .clear-row  { margin-top: 6px; text-align: right; }
 .btn-clear  { background: none; border: none; color: #aaa; font-size: 12px; cursor: pointer; text-decoration: underline; }
 .filter-row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; padding: 8px 16px; background: #fff; border-bottom: 1px solid #e8e8e8; flex-shrink: 0; }
-.filter-row label { color: #667085; font-size: 11px; font-weight: 700; white-space: nowrap; }
-.filter-row .form-select { min-width: 0; min-height: 34px; padding: 6px 32px 6px 10px; font-size: 13px; }
+.filter-row label { color: #667085; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.filter-row .form-select { min-width: 0; min-height: 34px; padding: 6px 32px 6px 10px; font-size: 14px; font-weight: 500; }
 .search-count-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 40px; padding: 4px 10px 4px 16px; background: #fafafa; border-bottom: 1px solid #eee; flex-shrink: 0; }
 .search-count-row .count-bar { min-width: 0; flex: 1; padding: 0; background: transparent; border: 0; }
-.search-clear-btn { min-height: 30px; padding: 4px 9px; border: 1px solid #d7dce5; border-radius: 7px; background: #fff; color: #667085; font-size: 11px; font-weight: 600; line-height: 1.4; text-decoration: none; white-space: nowrap; }
+.search-clear-btn { min-height: 30px; padding: 4px 9px; border: 1px solid #d7dce5; border-radius: 7px; background: #fff; color: #667085; font-size: 12px; font-weight: 700; line-height: 1.4; text-decoration: none; white-space: nowrap; }
 .search-clear-btn:hover:not(:disabled) { background: var(--dcats-brand-red-soft); border-color: #e58a96; color: #a50016; }
 .search-clear-btn:focus-visible { outline: 3px solid var(--dcats-brand-red-focus); outline-offset: 2px; }
 .search-clear-btn:disabled { background: #f7f7f8; color: #a8adb7; border-color: #e1e3e8; cursor: default; opacity: .72; }
 .chip       { border: 1px solid #d0d0d0; border-radius: 16px; padding: 4px 12px; font-size: 12px; cursor: pointer; background: #fff; color: #555; white-space: nowrap; flex-shrink: 0; }
 .chip.active { background: var(--dcats-brand-red); color: #fff; border-color: var(--dcats-brand-red); }
-.count-bar  { padding: 6px 16px; font-size: 12px; color: #888; background: #fafafa; border-bottom: 1px solid #eee; flex-shrink: 0; }
+.count-bar  { padding: 6px 16px; font-size: 13px; font-weight: 600; color: #888; background: #fafafa; border-bottom: 1px solid #eee; flex-shrink: 0; }
 .list-area  { flex: 1; overflow-y: auto; }
 .list       { padding: 8px; }
 .load-more-wrap { padding: 8px; }
@@ -3398,9 +3398,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 #screen-search .card.selected { border-color: #e58a96; box-shadow: inset 3px 0 0 var(--dcats-brand-red); }
 #screen-search .card-media { width: 48px; }
 #screen-search .card-thumb { width: 48px; height: 48px; border-radius: 6px; }
-#screen-search .card-pn-primary { margin-top: 0; color: #172033; font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
-#screen-search .card-name { margin-top: 3px; color: #526173; font-size: 11px; font-weight: 700; }
-#screen-search .card-mfr { color: #667085; font-size: 11px; }
+#screen-search .card-pn-primary { margin-top: 0; color: #172033; font-size: 15px; font-weight: 800; line-height: 1.35; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+#screen-search .card-name { margin-top: 3px; color: #526173; font-size: 12px; font-weight: 700; line-height: 1.4; }
+#screen-search .card-mfr { color: #667085; font-size: 12px; line-height: 1.4; }
 #screen-search .product-kind-list.compact { margin-top: 5px; }
 #screen-search .panel-inner {
   display: grid;

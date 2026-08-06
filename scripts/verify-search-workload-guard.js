@@ -112,6 +112,22 @@ if (searchPanel.slice(0, countRowIndex).includes('id="clear-btn"')) {
 if (!styles.includes(".search-count-row") || !styles.includes(".search-clear-btn:disabled")) {
   throw new Error("search utility row and disabled clear-control styles are required");
 }
+const searchTypographyContracts = [
+  [/\.search-input\s*\{[^}]*font-size:\s*15px[^}]*font-weight:\s*600/s, "search input"],
+  [/\.btn-search\s*\{[^}]*font-size:\s*15px[^}]*font-weight:\s*700/s, "search action"],
+  [/\.filter-row label\s*\{[^}]*font-size:\s*12px/s, "category label"],
+  [/\.filter-row \.form-select\s*\{[^}]*font-size:\s*14px/s, "category select"],
+  [/\.search-clear-btn\s*\{[^}]*font-size:\s*12px[^}]*font-weight:\s*700/s, "clear action"],
+  [/\.count-bar\s*\{[^}]*font-size:\s*13px[^}]*font-weight:\s*600/s, "result count"],
+  [/#screen-search \.card-pn-primary\s*\{[^}]*font-size:\s*15px[^}]*font-weight:\s*800/s, "result part number"],
+  [/#screen-search \.card-name\s*\{[^}]*font-size:\s*12px[^}]*font-weight:\s*700/s, "result category"],
+  [/#screen-search \.card-mfr\s*\{[^}]*font-size:\s*12px/s, "result manufacturer"]
+];
+searchTypographyContracts.forEach(([pattern, label]) => {
+  if (!pattern.test(styles)) {
+    throw new Error(`search typography contract is missing for ${label}`);
+  }
+});
 if (!source.includes("function syncSearchClearButtonState()") ||
     !source.includes('document.getElementById("q").addEventListener("input", syncSearchClearButtonState)')) {
   throw new Error("search clear control must reflect active query and filter conditions");
