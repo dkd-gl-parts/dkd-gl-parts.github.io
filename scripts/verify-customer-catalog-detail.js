@@ -3,6 +3,10 @@ const path = require("path");
 
 const source = fs.readFileSync(path.resolve(__dirname, "..", "app.js"), "utf8");
 
+if (!source.includes('customer_catalog_price_none: "価格はお問い合わせください"')) {
+  throw new Error("customer catalog must present missing prices as a customer inquiry");
+}
+
 function functionSource(name, nextName) {
   const start = source.indexOf(`function ${name}`);
   const asyncStart = source.indexOf(`async function ${name}`);

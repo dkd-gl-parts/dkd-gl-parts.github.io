@@ -190,7 +190,7 @@ var TRANSLATIONS = {
     customer_catalog_limit_note: "上位 {n} 件を表示",
     customer_catalog_load_error: "商品を読み込めませんでした",
     customer_catalog_price_note: "この得意先に設定された販売価格です",
-    customer_catalog_price_none: "価格未登録",
+    customer_catalog_price_none: "価格はお問い合わせください",
     customer_catalog_stock_price_title: "在庫・販売価格",
     customer_catalog_stock_qty: "在庫数",
     customer_catalog_stock_unit: "個",
@@ -1707,7 +1707,7 @@ var TRANSLATIONS = {
     customer_catalog_limit_note: "Showing the first {n} items",
     customer_catalog_load_error: "Products could not be loaded",
     customer_catalog_price_note: "Sales price configured for this customer",
-    customer_catalog_price_none: "Price not available",
+    customer_catalog_price_none: "Please contact us for pricing",
     customer_catalog_stock_price_title: "Stock and Sales Price",
     customer_catalog_stock_qty: "Stock",
     customer_catalog_stock_unit: "units",
@@ -3211,7 +3211,7 @@ var TRANSLATIONS = {
     customer_catalog_limit_note: "显示前 {n} 件",
     customer_catalog_load_error: "无法读取商品",
     customer_catalog_price_note: "这是为该客户设置的销售价格",
-    customer_catalog_price_none: "未登记价格",
+    customer_catalog_price_none: "价格请联系我们",
     customer_catalog_stock_price_title: "库存与销售价格",
     customer_catalog_stock_qty: "库存数",
     customer_catalog_stock_unit: "件",
@@ -4659,7 +4659,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.684";
+var APP_VERSION       = "v1.1.685";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
