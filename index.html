@@ -4,22 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.691">
+<meta name="dcats-app-version" content="v1.1.692">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="application-name" content="D-CATS">
 <meta name="apple-mobile-web-app-title" content="D-CATS">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.691"; -->
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.692"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co; form-action 'self';">
 <title>D-CATS</title>
-<link rel="manifest" href="site.webmanifest?v=1.1.691&amp;brand=2">
-<link rel="icon" href="favicon.ico?v=1.1.691&amp;brand=2" sizes="any">
-<link rel="shortcut icon" href="favicon.ico?v=1.1.691&amp;brand=2">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png?v=1.1.691&amp;brand=2">
-<link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png?v=1.1.691&amp;brand=2">
-<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png?v=1.1.691&amp;brand=2">
+<link rel="manifest" href="site.webmanifest?v=1.1.692&amp;brand=2">
+<link rel="icon" href="favicon.ico?v=1.1.692&amp;brand=2" sizes="any">
+<link rel="shortcut icon" href="favicon.ico?v=1.1.692&amp;brand=2">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png?v=1.1.692&amp;brand=2">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png?v=1.1.692&amp;brand=2">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png?v=1.1.692&amp;brand=2">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.691&amp;ranking=7&amp;brand=2">
+<link rel="stylesheet" href="styles.css?v=1.1.692&amp;ranking=7&amp;brand=2">
 </head>
 <body>
 
@@ -457,9 +457,6 @@
           <input class="search-input" id="q" type="search" inputmode="search" autocapitalize="characters" autocomplete="off" data-i18n-ph="ph_search">
           <button class="btn-search" id="search-btn" data-i18n="btn_search">検索</button>
         </div>
-        <div class="clear-row">
-          <button class="btn-clear" id="clear-btn" data-i18n="btn_clear">クリア</button>
-        </div>
       </div>
       <div class="filter-row" id="filter-row">
         <label for="search-category-filter" data-i18n="production_category_filter">カテゴリ</label>
@@ -467,7 +464,10 @@
           <option value="all" data-i18n="filter_all">すべて</option>
         </select>
       </div>
-      <div class="count-bar" id="count-bar" data-i18n="loading">読み込み中...</div>
+      <div class="search-count-row">
+        <div class="count-bar" id="count-bar" data-i18n="loading" aria-live="polite">読み込み中...</div>
+        <button class="btn-clear search-clear-btn" id="clear-btn" type="button" data-i18n="btn_clear_conditions" disabled>条件をクリア</button>
+      </div>
       <div class="list-area">
         <div class="list" id="list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
         <div class="load-more-wrap" id="load-more-wrap" data-dcats-inline-style="s-6aa34d7432e7">
@@ -3570,7 +3570,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
 <script src="vendor/qrcode.min.js?v=1.0.0"></script>
-<script src="app.js?v=1.1.691"></script>
+<script src="app.js?v=1.1.692"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.625&amp;ranking=17"></script>
 </body>
 </html>

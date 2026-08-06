@@ -3167,6 +3167,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .filter-row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; padding: 8px 16px; background: #fff; border-bottom: 1px solid #e8e8e8; flex-shrink: 0; }
 .filter-row label { color: #667085; font-size: 11px; font-weight: 700; white-space: nowrap; }
 .filter-row .form-select { min-width: 0; min-height: 34px; padding: 6px 32px 6px 10px; font-size: 13px; }
+.search-count-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 40px; padding: 4px 10px 4px 16px; background: #fafafa; border-bottom: 1px solid #eee; flex-shrink: 0; }
+.search-count-row .count-bar { min-width: 0; flex: 1; padding: 0; background: transparent; border: 0; }
+.search-clear-btn { min-height: 30px; padding: 4px 9px; border: 1px solid #d7dce5; border-radius: 7px; background: #fff; color: #667085; font-size: 11px; font-weight: 600; line-height: 1.4; text-decoration: none; white-space: nowrap; }
+.search-clear-btn:hover:not(:disabled) { background: var(--dcats-brand-red-soft); border-color: #e58a96; color: #a50016; }
+.search-clear-btn:focus-visible { outline: 3px solid var(--dcats-brand-red-focus); outline-offset: 2px; }
+.search-clear-btn:disabled { background: #f7f7f8; color: #a8adb7; border-color: #e1e3e8; cursor: default; opacity: .72; }
 .chip       { border: 1px solid #d0d0d0; border-radius: 16px; padding: 4px 12px; font-size: 12px; cursor: pointer; background: #fff; color: #555; white-space: nowrap; flex-shrink: 0; }
 .chip.active { background: var(--dcats-brand-red); color: #fff; border-color: var(--dcats-brand-red); }
 .count-bar  { padding: 6px 16px; font-size: 12px; color: #888; background: #fafafa; border-bottom: 1px solid #eee; flex-shrink: 0; }

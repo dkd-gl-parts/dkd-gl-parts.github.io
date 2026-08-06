@@ -231,6 +231,7 @@ var TRANSLATIONS = {
     ph_search: "品番で検索 (ハイフン有無OK)",
     btn_search: "検索",
     btn_clear: "クリア",
+    btn_clear_conditions: "条件をクリア",
     btn_reload: "再読込",
     btn_load_more: "さらに表示",
     search_count_loaded: "{loaded} 件表示 / 全 {total} 件",
@@ -1748,6 +1749,7 @@ var TRANSLATIONS = {
     ph_search: "Search by part number (hyphens optional)",
     btn_search: "Search",
     btn_clear: "Clear",
+    btn_clear_conditions: "Clear filters",
     btn_reload: "Reload",
     btn_load_more: "Show More",
     search_count_loaded: "{loaded} shown / {total} total",
@@ -3278,6 +3280,7 @@ var TRANSLATIONS = {
     ph_search: "按零件编号搜索（有无连字符均可）",
     btn_search: "搜索",
     btn_clear: "清除",
+    btn_clear_conditions: "清除条件",
     btn_reload: "重新读取",
     filter_all: "全部",
     filter_scope: "搜索对象",
@@ -4660,7 +4663,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.691";
+var APP_VERSION       = "v1.1.692";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -24597,6 +24600,7 @@ function render() {
   var q    = document.getElementById("q").value.trim();
   var list = document.getElementById("list");
   var moreWrap = document.getElementById("load-more-wrap");
+  syncSearchClearButtonState();
   if (!q && currentFilter === "all" && !searchSlOnly) {
     document.getElementById("count-bar").textContent = t("hint_search");
     list.innerHTML = "<div class='empty'>" + t("hint_search") + "</div>";
@@ -24820,6 +24824,15 @@ function syncSearchFilterControls() {
   var select = document.getElementById("search-category-filter");
   if (select) select.value = currentFilter || "all";
   searchSlOnly = false;
+  syncSearchClearButtonState();
+}
+
+function syncSearchClearButtonState() {
+  var query = document.getElementById("q");
+  var button = document.getElementById("clear-btn");
+  if (!button) return;
+  var hasQuery = !!(query && query.value.trim());
+  button.disabled = !hasQuery && currentFilter === "all" && !searchSlOnly;
 }
 
 function activateSearchFilterValue(filterValue, options) {
@@ -38556,6 +38569,7 @@ document.getElementById("kf-existing-members").addEventListener("click", functio
   removeKikanMember(kikanFormGroupId, id, true);
 });
 document.getElementById("search-btn").addEventListener("click", function(){ searchSlOnly=false; runProductSearch({ resetLimit: true, logActivity: true, source: "button" }); });
+document.getElementById("q").addEventListener("input", syncSearchClearButtonState);
 document.getElementById("q").addEventListener("keydown", function(e){ if(e.key==="Enter") { searchSlOnly=false; runProductSearch({ resetLimit: true, logActivity: true, source: "enter" }); } });
 document.getElementById("clear-btn").addEventListener("click", function(){ document.getElementById("q").value=""; currentFilter="all"; searchSlOnly=false; productSearchLimit=SEARCH_INITIAL_LIMIT; syncSearchFilterControls(); runProductSearch(); });
 document.getElementById("search-category-filter").addEventListener("change", function() {

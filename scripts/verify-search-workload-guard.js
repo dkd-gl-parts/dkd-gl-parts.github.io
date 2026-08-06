@@ -3,6 +3,8 @@ const path = require("path");
 
 const root = path.resolve(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
+const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const styles = fs.readFileSync(path.join(root, "styles.css"), "utf8");
 const masterStart = source.indexOf("async function fetchCoreProductMasterMatches");
 const start = source.indexOf("async function runProductSearch(options)");
 const deferredStart = source.indexOf("async function runDeferredProductSearchEnrichment", start);
@@ -95,6 +97,24 @@ if (stockFetchStart < 0 || stockSortStart < stockFetchStart ||
 }
 if (!source.includes("productAvailableStockMap[productDkdId(p)]") || !source.includes("score += 1000000")) {
   throw new Error("sales product search must rank stocked products before existing priorities");
+}
+
+const searchPanel = html.slice(html.indexOf('<div class="search-header">'), html.indexOf('<div class="list-area">'));
+const countRowIndex = searchPanel.indexOf('<div class="search-count-row">');
+const countIndex = searchPanel.indexOf('id="count-bar"', countRowIndex);
+const clearIndex = searchPanel.indexOf('id="clear-btn"', countIndex);
+if (countRowIndex < 0 || countIndex < countRowIndex || clearIndex < countIndex) {
+  throw new Error("search count and clear control must share the search-count-row utility bar");
+}
+if (searchPanel.slice(0, countRowIndex).includes('id="clear-btn"')) {
+  throw new Error("search clear control must not create a standalone row below the query field");
+}
+if (!styles.includes(".search-count-row") || !styles.includes(".search-clear-btn:disabled")) {
+  throw new Error("search utility row and disabled clear-control styles are required");
+}
+if (!source.includes("function syncSearchClearButtonState()") ||
+    !source.includes('document.getElementById("q").addEventListener("input", syncSearchClearButtonState)')) {
+  throw new Error("search clear control must reflect active query and filter conditions");
 }
 
 console.log("search workload guard passed");
