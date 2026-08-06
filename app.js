@@ -195,6 +195,32 @@ var TRANSLATIONS = {
     customer_catalog_stock_qty: "在庫数",
     customer_catalog_stock_unit: "個",
     customer_catalog_vehicle_list: "車両情報一覧",
+    customer_order_title: "ご注文",
+    customer_order_portal_note: "注文内容の確認と、受付後の出荷状況を確認できます。",
+    customer_order_open: "注文内容・履歴",
+    customer_order_eyebrow: "ORDER",
+    customer_order_cart: "注文内容",
+    customer_order_history: "注文履歴",
+    customer_order_revalidate_note: "注文確定時に価格と在庫を再確認します。",
+    customer_order_continue: "商品を追加",
+    customer_order_shipping: "お届け先",
+    customer_order_shipping_note: "送り状に印字する内容です。",
+    customer_order_preview: "価格・在庫を確認",
+    customer_order_submit: "注文を確定",
+    customer_order_history_note: "受付、出荷、コア返却の状況を確認できます。",
+    customer_order_add: "注文に追加",
+    customer_order_added: "追加済み",
+    customer_order_empty: "注文する商品がありません。商品カタログから追加してください。",
+    customer_order_preview_error: "価格・在庫を確認できませんでした。内容を確認して再試行してください。",
+    customer_order_submit_success: "注文を受け付けました。",
+    customer_order_core_required_note: "コア返却が必要な商品を含みます。返送用送り状を商品に同梱します。",
+    customer_order_quantity: "数量",
+    customer_order_unit_price: "単価",
+    customer_order_subtotal: "小計",
+    customer_order_total: "合計",
+    sales_order_mgmt_title: "受注・出荷管理",
+    sales_order_mgmt_desc: "得意先注文の受付、B2クラウド出力、往復送り状番号を管理します。",
+    sales_order_mgmt_note: "注文受付からB2クラウド用CSV出力、往復送り状番号の登録まで管理します。",
     greeting: "ようこそ、{name} さん",
     mi_search_title: "販売管理",
     mi_search_desc: "販売商品の品番を検索し、画像・構成部品・販売価格・製造予定を確認します。",
@@ -1713,6 +1739,32 @@ var TRANSLATIONS = {
     customer_catalog_stock_qty: "Stock",
     customer_catalog_stock_unit: "units",
     customer_catalog_vehicle_list: "Vehicle Applications",
+    customer_order_title: "Orders",
+    customer_order_portal_note: "Review your order and track its fulfillment status.",
+    customer_order_open: "Order / History",
+    customer_order_eyebrow: "ORDER",
+    customer_order_cart: "Current Order",
+    customer_order_history: "Order History",
+    customer_order_revalidate_note: "Prices and inventory are revalidated when the order is placed.",
+    customer_order_continue: "Add Products",
+    customer_order_shipping: "Ship To",
+    customer_order_shipping_note: "This information will be printed on the shipping label.",
+    customer_order_preview: "Check Price / Stock",
+    customer_order_submit: "Place Order",
+    customer_order_history_note: "Review acceptance, shipping, and core-return status.",
+    customer_order_add: "Add to Order",
+    customer_order_added: "Added",
+    customer_order_empty: "No products have been added. Add products from the catalog.",
+    customer_order_preview_error: "Price and inventory could not be verified. Review the order and try again.",
+    customer_order_submit_success: "Your order has been received.",
+    customer_order_core_required_note: "This order includes products that require core return. A return label will be enclosed.",
+    customer_order_quantity: "Qty",
+    customer_order_unit_price: "Unit Price",
+    customer_order_subtotal: "Subtotal",
+    customer_order_total: "Total",
+    sales_order_mgmt_title: "Orders / Shipping",
+    sales_order_mgmt_desc: "Manage customer orders, B2 Cloud exports, and outbound/return tracking numbers.",
+    sales_order_mgmt_note: "Manage order acceptance, B2 Cloud CSV export, and outbound/return tracking numbers.",
     greeting: "Welcome, {name}",
     mi_search_title: "Sales Management",
     mi_search_desc: "Search sales products by part number and review images, components, sales prices, and production instructions.",
@@ -3218,6 +3270,32 @@ var TRANSLATIONS = {
     customer_catalog_stock_qty: "库存数",
     customer_catalog_stock_unit: "件",
     customer_catalog_vehicle_list: "车辆信息一览",
+    customer_order_title: "订单",
+    customer_order_portal_note: "确认订单内容并查看受理后的出货状态。",
+    customer_order_open: "订单内容・记录",
+    customer_order_eyebrow: "ORDER",
+    customer_order_cart: "订单内容",
+    customer_order_history: "订单记录",
+    customer_order_revalidate_note: "提交订单时会重新确认价格和库存。",
+    customer_order_continue: "添加商品",
+    customer_order_shipping: "送货地址",
+    customer_order_shipping_note: "此内容将打印在运单上。",
+    customer_order_preview: "确认价格・库存",
+    customer_order_submit: "提交订单",
+    customer_order_history_note: "可确认受理、出货和旧件返还状态。",
+    customer_order_add: "加入订单",
+    customer_order_added: "已加入",
+    customer_order_empty: "订单中没有商品。请从商品目录中添加。",
+    customer_order_preview_error: "无法确认价格和库存。请检查订单后重试。",
+    customer_order_submit_success: "订单已受理。",
+    customer_order_core_required_note: "订单中包含需要返还旧件的商品。商品中将附上返送运单。",
+    customer_order_quantity: "数量",
+    customer_order_unit_price: "单价",
+    customer_order_subtotal: "小计",
+    customer_order_total: "合计",
+    sales_order_mgmt_title: "订单・出货管理",
+    sales_order_mgmt_desc: "管理客户订单、B2 Cloud输出以及寄出和返还运单号。",
+    sales_order_mgmt_note: "管理订单受理、B2 Cloud CSV输出以及寄出和返还运单号。",
     spec_note_ph: "例：内部确认、实物标签",
     part_form_add_title: "添加商品",
     part_form_edit_title: "修改商品",
@@ -4898,6 +4976,21 @@ var customerCatalogSelectedProduct = null;
 var customerCatalogImageInfo = { counts: {}, thumbnails: {} };
 var customerCatalogRequestSeq = 0;
 var customerCatalogDetailSeq = 0;
+var customerOrderFeatureStatus = { loaded: false, customer_ordering: false, internal_management: false, reason: "" };
+var CUSTOMER_ORDER_CART_STORAGE_KEY = "dcats_customer_order_cart_v1";
+var customerOrderCart = [];
+var customerOrderPreview = null;
+var customerOrderHistoryRows = [];
+var customerOrderHistorySeq = 0;
+var customerOrderPreviewSeq = 0;
+var customerOrderSaving = false;
+var customerOrderActiveView = "cart";
+var salesOrderRows = [];
+var salesOrderSelectedId = null;
+var salesOrderDetail = null;
+var salesOrderListSeq = 0;
+var salesOrderDetailSeq = 0;
+var salesOrderSaving = false;
 var customerManagedUsers = [];
 var customerManagedUsersRequestSeq = 0;
 var CUSTOMER_CATALOG_RESULT_LIMIT = 60;
@@ -5714,6 +5807,20 @@ function canManageFinishedProductShipping() {
     hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"])
   );
 }
+function customerOrderFeatureEnabled(key) {
+  return !!(customerOrderFeatureStatus && customerOrderFeatureStatus.loaded && customerOrderFeatureStatus[key] === true);
+}
+function canUseCustomerOrdering() {
+  return !!(isCustomerViewer() && customerOrderFeatureEnabled("customer_ordering") && canViewProductSearch());
+}
+function canManageSalesOrders() {
+  if (!customerOrderFeatureEnabled("internal_management") || isExternalViewer() || isCustomerPortalSearchMode()) return false;
+  return userPermissionAllowed(
+    userProfile,
+    "sales_order.manage",
+    hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor", "sales_editor"])
+  );
+}
 function canViewManagementScreen() {
   return userPermissionAllowed(userProfile, "product_management.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "all_viewer"]));
 }
@@ -5841,6 +5948,14 @@ async function applyLanguage(lang) {
     renderCustomerCatalogList();
     if (customerCatalogSelectedProduct) await openCustomerCatalogProduct(customerCatalogSelectedProduct, { autoSelect: true });
   }
+  if (isScreenActive("customer-orders")) {
+    renderCustomerOrderCart();
+    renderCustomerOrderHistory();
+  }
+  if (isScreenActive("sales-order-mgmt")) {
+    renderSalesOrderList();
+    renderSalesOrderDetail();
+  }
   if (dataLoaded) { renderCategoryChips(); render(); }
   renderProductionFilterChips();
   renderProductionCategoryFilterOptions();
@@ -5951,7 +6066,17 @@ function captureAppRestoreState(reason) {
     state.selectedDkdId = customerCatalogSelectedProduct ? productDkdId(customerCatalogSelectedProduct) : "";
     state.customerPortalCustomerId = portalContext && portalContext.sales_customer_id ? portalContext.sales_customer_id : "";
   }
-  if (screen === "customer-catalog") {
+  function captureCustomerOrderState() {
+    state.screen = "customer-orders";
+    state.customerOrderView = customerOrderActiveView;
+    state.customerOrderAddress = customerOrderAddressPayload();
+    state.customerOrderDeliveryDate = (document.getElementById("customer-order-delivery-date") || {}).value || "";
+    state.customerOrderDeliveryTime = (document.getElementById("customer-order-delivery-time") || {}).value || "";
+    state.customerOrderNote = (document.getElementById("customer-order-note") || {}).value || "";
+  }
+  if (screen === "customer-orders") {
+    captureCustomerOrderState();
+  } else if (screen === "customer-catalog") {
     captureCustomerCatalogState();
   } else if (screen === "search") {
     captureSearchState();
@@ -5991,6 +6116,26 @@ function returnToMenuFresh() {
   appDiscardRestoreStateOnExit = true;
   clearAppRestoreState();
   window.location.reload();
+}
+
+async function refreshCustomerOrderFeatureStatus() {
+  customerOrderFeatureStatus = { loaded: false, customer_ordering: false, internal_management: false, reason: "" };
+  if (!currentUser || !sb) return customerOrderFeatureStatus;
+  var result = await sb.rpc("get_customer_order_feature_status");
+  if (result.error) {
+    console.info("customer order feature is not ready", result.error.message || result.error);
+    customerOrderFeatureStatus.loaded = true;
+    customerOrderFeatureStatus.reason = "backend_not_ready";
+    return customerOrderFeatureStatus;
+  }
+  var row = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
+  customerOrderFeatureStatus = {
+    loaded: true,
+    customer_ordering: row.enabled !== false && row.customer_ordering === true,
+    internal_management: row.enabled !== false && row.internal_management === true,
+    reason: row.reason || ""
+  };
+  return customerOrderFeatureStatus;
 }
 
 function showAuthenticatedHome() {
@@ -6053,6 +6198,16 @@ async function restoreAppStateAfterRefresh() {
         renderProductionList();
         await renderProductionDetail(currentProductionRow || null);
       }
+    } else if (state.screen === "customer-orders" && canUseCustomerOrdering()) {
+      await enterCustomerOrders({ view: state.customerOrderView || "cart", preview: false });
+      applyCustomerOrderAddress(state.customerOrderAddress || {}, true);
+      var restoreDeliveryDate = document.getElementById("customer-order-delivery-date");
+      var restoreDeliveryTime = document.getElementById("customer-order-delivery-time");
+      var restoreOrderNote = document.getElementById("customer-order-note");
+      if (restoreDeliveryDate) restoreDeliveryDate.value = state.customerOrderDeliveryDate || "";
+      if (restoreDeliveryTime) restoreDeliveryTime.value = state.customerOrderDeliveryTime || "";
+      if (restoreOrderNote) restoreOrderNote.value = state.customerOrderNote || "";
+      if (customerOrderCart.length && (state.customerOrderView || "cart") === "cart") await previewCustomerOrder({ silent: true });
     } else if (state.screen === "customer-catalog") {
       if (!isCustomerViewer() && state.customerPortalCustomerId) {
         await loadCustomerPortalPreviewContext(state.customerPortalCustomerId);
@@ -6384,6 +6539,8 @@ async function loadProfile() {
     return false;
   }
   await loadCustomerViewerContext();
+  await refreshCustomerOrderFeatureStatus();
+  restoreCustomerOrderCart();
 
   // プロファイルの言語設定を優先する
   var lang = userProfile.language || "ja";
@@ -6681,7 +6838,7 @@ function updateAllHeaders() {
   var cls   = roleClass(userProfile.role);
   var greet = tf("greeting", { name: name });
 
-  ["menu","customer-portal","customer-shipping","customer-catalog","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","component-compat-mgmt","product-kind-stock-mgmt","manufacturing-cost-mgmt","finished-label-mgmt","finished-product-shipping","production-ranking-mgmt","manufacturing-ranking-report","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","shipping-rate-mgmt","logs"].forEach(function(sc) {
+  ["menu","customer-portal","customer-shipping","customer-catalog","customer-orders","sales-order-mgmt","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","component-compat-mgmt","product-kind-stock-mgmt","manufacturing-cost-mgmt","finished-label-mgmt","finished-product-shipping","production-ranking-mgmt","manufacturing-ranking-report","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","shipping-rate-mgmt","logs"].forEach(function(sc) {
     var nameEl  = document.getElementById(sc + "-username");
     var badgeEl = document.getElementById(sc + "-role-badge");
     if (nameEl)  nameEl.textContent = name;
@@ -6737,6 +6894,7 @@ async function doLogout() {
   await recordAuthEvent("logout");
   await signOutCurrentDevice();
   clearActivitySessionId();
+  clearPersistedCustomerOrderCart();
   currentUser = null; userProfile = null;
   customerViewerContext = null;
   customerPortalPreviewContext = null;
@@ -6744,6 +6902,20 @@ async function doLogout() {
   customerCatalogProducts = [];
   customerCatalogSelectedProduct = null;
   customerCatalogImageInfo = { counts: {}, thumbnails: {} };
+  customerOrderFeatureStatus = { loaded: false, customer_ordering: false, internal_management: false, reason: "" };
+  customerOrderCart = [];
+  customerOrderPreview = null;
+  customerOrderHistoryRows = [];
+  customerOrderHistorySeq += 1;
+  customerOrderPreviewSeq += 1;
+  customerOrderSaving = false;
+  customerOrderActiveView = "cart";
+  salesOrderRows = [];
+  salesOrderSelectedId = null;
+  salesOrderDetail = null;
+  salesOrderListSeq += 1;
+  salesOrderDetailSeq += 1;
+  salesOrderSaving = false;
   customerManagedUsers = [];
   customerManagedUsersRequestSeq += 1;
   shippingRateRows = [];
@@ -6781,6 +6953,7 @@ function renderMenu() {
   var mainItems = [
     { icon: "&#x1F50D;", titleKey: "mi_search_title", descKey: "mi_search_desc", action: "search", available: canViewProductSearch(), tag: null },
     { icon: "&#x1F6CD;", titleKey: "customer_portal_title", descKey: "customer_portal_preview_desc", action: "customer-portal", available: canPreviewCustomerPortal(), tag: null },
+    { icon: "&#x1F4E5;", titleKey: "sales_order_mgmt_title", descKey: "sales_order_mgmt_desc", action: "sales-order-mgmt", available: canManageSalesOrders(), tag: null },
     { icon: "&#x1F3ED;", titleKey: "mi_production_title", descKey: "mi_production_desc", action: "production-search", available: canViewProductionFeatures(), tag: null },
     { icon: "&#x1F3F7;", titleKey: "mi_finished_label_title", descKey: "mi_finished_label_desc", action: "finished-label-mgmt", available: canViewFinishedLabelMgmt(), tag: null },
     { icon: "&#x1F69A;", titleKey: "mi_finished_shipping_title", descKey: "mi_finished_shipping_desc", action: "finished-product-shipping", available: canManageFinishedProductShipping(), tag: null },
@@ -6850,6 +7023,7 @@ function renderMenu() {
     card.addEventListener("click", function() {
       if (card.dataset.action === "search") enterSearch();
       else if (card.dataset.action === "customer-portal") enterCustomerPortal();
+      else if (card.dataset.action === "sales-order-mgmt") enterSalesOrderMgmt();
       else if (card.dataset.action === "production-search") enterProductionSearch();
       else if (card.dataset.action === "finished-label-mgmt") enterFinishedLabelMgmt();
       else if (card.dataset.action === "finished-product-shipping") enterFinishedProductShipping();
@@ -6893,7 +7067,7 @@ function renderCustomerExperienceHeaders() {
     : (customerModeReady ? (customer.customer_name || fallbackName) : fallbackName);
   var label = customerModeReady ? accessRoleLabel("customer_viewer") : currentRoleDisplayLabel();
   var cls = customerModeReady ? "role-viewer" : roleClass(userProfile.role);
-  ["customer-portal", "customer-shipping", "customer-catalog", "customer-users"].forEach(function(prefix) {
+  ["customer-portal", "customer-shipping", "customer-catalog", "customer-users", "customer-orders"].forEach(function(prefix) {
     var nameEl = document.getElementById(prefix + "-username");
     var badgeEl = document.getElementById(prefix + "-role-badge");
     if (nameEl) nameEl.textContent = name;
@@ -6904,6 +7078,8 @@ function renderCustomerExperienceHeaders() {
   });
   var exitButton = document.getElementById("btn-exit-customer-mode");
   if (exitButton) setCspStyle(exitButton, "display", canPreviewCustomerPortal() ? "" : "none");
+  var orderLink = document.getElementById("customer-catalog-orders");
+  if (orderLink) orderLink.hidden = !canUseCustomerOrdering();
 }
 
 function configureCustomerSearchShell() {
@@ -6968,6 +7144,8 @@ function renderCustomerPortal() {
   if (accountBand) setCspStyle(accountBand, "display", previewMode ? "none" : "");
   var shippingGuide = document.getElementById("customer-portal-shipping-guide");
   if (shippingGuide) shippingGuide.hidden = !canViewCustomerShippingRates();
+  var orderGuide = document.getElementById("customer-portal-order-guide");
+  if (orderGuide) orderGuide.hidden = !canUseCustomerOrdering();
   var manageUsersButton = document.getElementById("customer-portal-manage-users");
   if (manageUsersButton) manageUsersButton.hidden = !canManageCustomerPortalUsers();
   renderCustomerExperienceHeaders();
@@ -7524,9 +7702,15 @@ function customerCatalogSpecText(product) {
   return values.join(" / ");
 }
 
-function customerCatalogAvailabilityKindHtml(kind, stockQty, price, showPrice, variantRows) {
+function customerCatalogAvailabilityKindHtml(product, kind, stockQty, price, showPrice, variantRows) {
   var stockText = stockQty == null ? "-" : String(stockQty);
   var priceText = price == null ? t("customer_catalog_price_none") : "JPY " + formatYen(price);
+  var orderKey = customerOrderCartKey(productDkdId(product), kind);
+  var orderAdded = customerOrderCart.some(function(item) { return item.key === orderKey; });
+  var canOrder = canUseCustomerOrdering() && stockQty != null && Number(stockQty) > 0 && (!showPrice || price != null);
+  var orderButton = canUseCustomerOrdering()
+    ? "<button class='customer-catalog-order-button" + (orderAdded ? " added" : "") + "' type='button' data-customer-order-add='" + esc(kind) + "'" + (canOrder ? "" : " disabled") + ">" + esc(t(orderAdded ? "customer_order_added" : "customer_order_add")) + "</button>"
+    : "";
   return "<div class='customer-catalog-availability-kind " + esc(productKindClass(kind)) + "'>" +
     "<div class='customer-catalog-availability-kind-title'>" + esc(customerProductKindLabel(kind)) + "</div>" +
     "<div class='customer-catalog-availability-metrics" + (showPrice ? "" : " stock-only") + "'>" +
@@ -7534,6 +7718,7 @@ function customerCatalogAvailabilityKindHtml(kind, stockQty, price, showPrice, v
       (showPrice ? "<div class='customer-catalog-availability-metric price'><span>" + esc(t("customer_portal_price_display")) + "</span><strong>" + esc(priceText) + "</strong></div>" : "") +
     "</div>" +
     renderCoreReturnPolicyHtml(kind, variantRows, { compact: true, showTitle: false }) +
+    orderButton +
   "</div>";
 }
 
@@ -7636,8 +7821,14 @@ async function loadCustomerCatalogAvailability(product, seq) {
     });
   }
   wrap.innerHTML = kinds.map(function(kind, index) {
-    return customerCatalogAvailabilityKindHtml(kind, stockMap[kind], prices[index], showPrice, variantRows);
+    return customerCatalogAvailabilityKindHtml(product, kind, stockMap[kind], prices[index], showPrice, variantRows);
   }).join("");
+  wrap.querySelectorAll("[data-customer-order-add]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      addCustomerCatalogProductToOrder(product, button.dataset.customerOrderAdd, stockMap[button.dataset.customerOrderAdd], prices[kinds.indexOf(button.dataset.customerOrderAdd)], variantRows);
+      loadCustomerCatalogAvailability(product, seq);
+    });
+  });
 }
 
 async function loadCustomerCatalogVehicles(product, seq) {
@@ -7806,6 +7997,687 @@ function exitCustomerMode() {
   showScreen("menu");
   renderMenu();
   updateAllHeaders();
+}
+
+function customerOrderCartKey(dkdId, productKind) {
+  return String(dkdId || "") + ":" + normalizeProductKind(productKind || "rebuilt");
+}
+
+function customerOrderCartStorageKey() {
+  var context = activeCustomerPortalContext() || {};
+  return CUSTOMER_ORDER_CART_STORAGE_KEY + ":" + String(context.sales_customer_id || "none");
+}
+
+function persistCustomerOrderCart() {
+  try { sessionStorage.setItem(customerOrderCartStorageKey(), JSON.stringify(customerOrderCart)); } catch (e) {}
+}
+
+function restoreCustomerOrderCart() {
+  if (!canUseCustomerOrdering()) return;
+  try {
+    var raw = sessionStorage.getItem(customerOrderCartStorageKey());
+    var rows = raw ? JSON.parse(raw) : [];
+    customerOrderCart = Array.isArray(rows) ? rows.filter(function(item) {
+      return item && item.dkd_shohin_id && item.product && item.key === customerOrderCartKey(item.dkd_shohin_id, item.product_kind);
+    }).slice(0, 100) : [];
+  } catch (e) {
+    customerOrderCart = [];
+  }
+}
+
+function clearPersistedCustomerOrderCart() {
+  try { sessionStorage.removeItem(customerOrderCartStorageKey()); } catch (e) {}
+}
+
+function addCustomerCatalogProductToOrder(product, productKind, stockQty, price, variantRows) {
+  if (!canUseCustomerOrdering() || !product || !productDkdId(product)) return;
+  var kind = normalizeProductKind(productKind || "rebuilt");
+  var key = customerOrderCartKey(productDkdId(product), kind);
+  var existing = customerOrderCart.find(function(item) { return item.key === key; });
+  if (existing) {
+    existing.quantity = Math.min(99, Math.max(1, Number(existing.quantity || 1) + 1));
+  } else {
+    var policy = coreReturnPolicyForKind(kind, variantRows || []);
+    customerOrderCart.push({
+      key: key,
+      dkd_shohin_id: parseInt(productDkdId(product), 10),
+      product_kind: kind,
+      quantity: 1,
+      product: {
+        dkd_shohin_id: parseInt(productDkdId(product), 10),
+        category_code: product.category_code || product.category || "",
+        category: product.category || "",
+        genuine_part_number: product.genuine_part_number || "",
+        manufacturer_part_number: product.manufacturer_part_number || "",
+        manufacturer: product.manufacturer || "",
+        gltek_part_number: product.gltek_part_number || ""
+      },
+      display_stock_qty: stockQty == null ? null : Number(stockQty),
+      display_unit_price: price == null ? null : Number(price),
+      core_return_required: !!(policy && policy.required),
+      core_charge_jpy: policy && policy.charge != null ? Number(policy.charge) : null
+    });
+  }
+  customerOrderPreview = null;
+  persistCustomerOrderCart();
+  renderCustomerOrderCart();
+}
+
+function customerOrderPayloadItems() {
+  return customerOrderCart.map(function(item) {
+    return {
+      dkd_shohin_id: parseInt(item.dkd_shohin_id, 10),
+      product_kind: normalizeProductKind(item.product_kind),
+      quantity: Math.max(1, Math.min(99, parseInt(item.quantity, 10) || 1))
+    };
+  });
+}
+
+function customerOrderAddressPayload() {
+  function value(id) {
+    var el = document.getElementById(id);
+    return el ? String(el.value || "").trim() : "";
+  }
+  return {
+    company_name: value("customer-order-company"),
+    recipient_name: value("customer-order-recipient"),
+    phone_number: value("customer-order-phone"),
+    postal_code: value("customer-order-postal-code"),
+    prefecture_code: value("customer-order-prefecture"),
+    address_line_1: value("customer-order-address1"),
+    address_line_2: value("customer-order-address2")
+  };
+}
+
+function populateCustomerOrderPrefectures() {
+  var select = document.getElementById("customer-order-prefecture");
+  if (!select) return;
+  var selected = select.value || "";
+  select.innerHTML = "<option value=''>選択してください</option>" + SHIPPING_PREFECTURES.map(function(prefecture) {
+    var code = Array.isArray(prefecture) ? prefecture[0] : prefecture.code;
+    var label = Array.isArray(prefecture) ? prefecture[1] : prefecture.name;
+    return "<option value='" + esc(code) + "'>" + esc(label) + "</option>";
+  }).join("");
+  if (selected) select.value = selected;
+}
+
+function applyCustomerOrderAddress(address, overwrite) {
+  address = address || {};
+  var map = {
+    "customer-order-company": address.company_name || address.recipient_company || "",
+    "customer-order-recipient": address.recipient_name || address.name || "",
+    "customer-order-phone": address.phone_number || address.phone || "",
+    "customer-order-postal-code": address.postal_code || "",
+    "customer-order-prefecture": address.prefecture_code || "",
+    "customer-order-address1": address.address_line_1 || address.address || "",
+    "customer-order-address2": address.address_line_2 || address.building || ""
+  };
+  Object.keys(map).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && (overwrite || !String(el.value || "").trim())) el.value = map[id];
+  });
+}
+
+function customerOrderCurrency(value) {
+  return value == null || value === "" || isNaN(Number(value)) ? "-" : "JPY " + formatYen(Number(value));
+}
+
+function customerOrderStatusLabel(status) {
+  var labels = {
+    submitted: "受付待ち",
+    accepted: "受付済み",
+    shipping_ready: "出荷準備",
+    shipped: "出荷済み",
+    completed: "完了",
+    cancelled: "取消"
+  };
+  return labels[String(status || "").toLowerCase()] || status || "-";
+}
+
+function customerOrderDateTimeText(value) {
+  if (!value) return "-";
+  var date = new Date(value);
+  if (isNaN(date.getTime())) return String(value);
+  return date.toLocaleString(currentLang === "ja" ? "ja-JP" : (currentLang === "zh" ? "zh-CN" : "en-US"), { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+
+function customerOrderPreviewItemMap() {
+  var map = {};
+  var rows = customerOrderPreview && Array.isArray(customerOrderPreview.items) ? customerOrderPreview.items : [];
+  rows.forEach(function(row) {
+    map[customerOrderCartKey(row.dkd_shohin_id, row.product_kind)] = row;
+  });
+  return map;
+}
+
+function renderCustomerOrderCart() {
+  var host = document.getElementById("customer-order-cart-list");
+  var summary = document.getElementById("customer-order-preview-summary");
+  var submit = document.getElementById("customer-order-submit");
+  var coreNotice = document.getElementById("customer-order-core-notice");
+  if (!host) return;
+  if (!customerOrderCart.length) {
+    host.innerHTML = "<div class='customer-order-empty'>" + esc(t("customer_order_empty")) + "</div>";
+    if (summary) summary.innerHTML = "";
+    if (submit) submit.disabled = true;
+    if (coreNotice) coreNotice.hidden = true;
+    return;
+  }
+  var previewMap = customerOrderPreviewItemMap();
+  host.innerHTML = customerOrderCart.map(function(item) {
+    var product = item.product || {};
+    var confirmed = previewMap[item.key] || null;
+    var unitPrice = confirmed ? confirmed.unit_price_jpy : item.display_unit_price;
+    var stockQty = confirmed ? confirmed.available_stock_qty : item.display_stock_qty;
+    var lineTotal = confirmed ? confirmed.line_total_jpy : (unitPrice == null ? null : Number(unitPrice) * Number(item.quantity || 1));
+    var coreRequired = confirmed ? confirmed.core_return_required === true : item.core_return_required === true;
+    return "<div class='customer-order-line' data-order-key='" + esc(item.key) + "'>" +
+      "<div class='customer-order-product'><span>" + esc(productCategoryLabel(product) || product.category || "-") + "</span><strong>" + esc(product.genuine_part_number || product.manufacturer_part_number || "-") + "</strong><small>" + esc([product.manufacturer, product.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small>" + (coreRequired ? "<em>コア返却必要</em>" : "") + "</div>" +
+      "<label class='customer-order-qty'><span>" + esc(t("customer_order_quantity")) + "</span><input type='number' min='1' max='99' step='1' value='" + esc(item.quantity) + "' data-order-quantity='" + esc(item.key) + "'></label>" +
+      "<div class='customer-order-line-metric'><span>" + esc(t("customer_order_unit_price")) + "</span><strong>" + esc(customerOrderCurrency(unitPrice)) + "</strong><small>在庫 " + esc(stockQty == null ? "-" : stockQty) + "</small></div>" +
+      "<div class='customer-order-line-metric total'><span>" + esc(t("customer_order_subtotal")) + "</span><strong>" + esc(customerOrderCurrency(lineTotal)) + "</strong></div>" +
+      "<button class='customer-order-remove' type='button' data-order-remove='" + esc(item.key) + "' aria-label='削除'>×</button>" +
+    "</div>";
+  }).join("");
+  host.querySelectorAll("[data-order-quantity]").forEach(function(input) {
+    input.addEventListener("change", function() {
+      var item = customerOrderCart.find(function(row) { return row.key === input.dataset.orderQuantity; });
+      if (!item) return;
+      item.quantity = Math.max(1, Math.min(99, parseInt(input.value, 10) || 1));
+      customerOrderPreview = null;
+      persistCustomerOrderCart();
+      renderCustomerOrderCart();
+    });
+  });
+  host.querySelectorAll("[data-order-remove]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      customerOrderCart = customerOrderCart.filter(function(row) { return row.key !== button.dataset.orderRemove; });
+      customerOrderPreview = null;
+      persistCustomerOrderCart();
+      renderCustomerOrderCart();
+    });
+  });
+  var requiresCore = customerOrderCart.some(function(item) {
+    var confirmed = previewMap[item.key];
+    return confirmed ? confirmed.core_return_required === true : item.core_return_required === true;
+  });
+  if (coreNotice) {
+    coreNotice.hidden = !requiresCore;
+    coreNotice.textContent = requiresCore ? t("customer_order_core_required_note") : "";
+  }
+  if (summary) {
+    if (customerOrderPreview && customerOrderPreview.valid === true) {
+      summary.innerHTML = "<div><span>商品計</span><strong>" + esc(customerOrderCurrency(customerOrderPreview.subtotal_jpy)) + "</strong></div>" +
+        "<div><span>送料</span><strong>" + esc(customerOrderCurrency(customerOrderPreview.shipping_fee_jpy)) + "</strong></div>" +
+        "<div><span>消費税</span><strong>" + esc(customerOrderCurrency(customerOrderPreview.tax_jpy)) + "</strong></div>" +
+        "<div class='grand-total'><span>" + esc(t("customer_order_total")) + "</span><strong>" + esc(customerOrderCurrency(customerOrderPreview.total_jpy)) + "</strong></div>";
+    } else {
+      summary.innerHTML = "<p>価格と在庫は未確認です。</p>";
+    }
+  }
+  if (submit) submit.disabled = customerOrderSaving || !(customerOrderPreview && customerOrderPreview.valid === true && customerOrderPreview.preview_token);
+}
+
+function customerOrderSetStatus(message, isError) {
+  var host = document.getElementById("customer-order-cart-status");
+  if (!host) return;
+  host.textContent = message || "";
+  host.className = "customer-order-status" + (isError ? " error" : "");
+}
+
+function showCustomerOrderView(view) {
+  customerOrderActiveView = view === "history" ? "history" : "cart";
+  var cart = document.getElementById("customer-order-cart-view");
+  var history = document.getElementById("customer-order-history-view");
+  if (cart) cart.hidden = customerOrderActiveView !== "cart";
+  if (history) history.hidden = customerOrderActiveView !== "history";
+  document.querySelectorAll("[data-order-view]").forEach(function(button) {
+    var active = button.dataset.orderView === customerOrderActiveView;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", active ? "true" : "false");
+  });
+  if (customerOrderActiveView === "history") loadCustomerOrderHistory();
+}
+
+async function enterCustomerOrders(options) {
+  options = options || {};
+  if (!canUseCustomerOrdering()) {
+    showPermissionDenied("open_customer_orders", "customer_orders");
+    return;
+  }
+  showScreen("customer-orders");
+  renderCustomerExperienceHeaders();
+  populateCustomerOrderPrefectures();
+  var context = activeCustomerPortalContext() || {};
+  customerPortalValue("customer-orders-customer-name", context.customer && context.customer.customer_name);
+  renderCustomerOrderCart();
+  showCustomerOrderView(options.view || customerOrderActiveView);
+  if (customerOrderCart.length && options.preview !== false) await previewCustomerOrder({ silent: true });
+}
+
+async function previewCustomerOrder(options) {
+  options = options || {};
+  if (!canUseCustomerOrdering() || !customerOrderCart.length) {
+    renderCustomerOrderCart();
+    return;
+  }
+  var requestSeq = ++customerOrderPreviewSeq;
+  var button = document.getElementById("customer-order-preview-button");
+  if (button) button.disabled = true;
+  if (!options.silent) customerOrderSetStatus("最新の価格と在庫を確認しています。", false);
+  var result = await sb.rpc("preview_customer_order", {
+    target_items: customerOrderPayloadItems(),
+    target_shipping_address: customerOrderAddressPayload()
+  });
+  if (requestSeq !== customerOrderPreviewSeq) return;
+  if (button) button.disabled = false;
+  if (result.error) {
+    customerOrderPreview = null;
+    customerOrderSetStatus(t("customer_order_preview_error"), true);
+    renderCustomerOrderCart();
+    return;
+  }
+  var data = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
+  customerOrderPreview = data && typeof data === "object" ? data : null;
+  if (customerOrderPreview && customerOrderPreview.shipping_address) applyCustomerOrderAddress(customerOrderPreview.shipping_address, false);
+  customerOrderSetStatus(customerOrderPreview && customerOrderPreview.valid === true ? "価格と在庫を確認しました。" : t("customer_order_preview_error"), !(customerOrderPreview && customerOrderPreview.valid === true));
+  renderCustomerOrderCart();
+}
+
+function customerOrderIdempotencyKey() {
+  if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
+  return "order-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
+}
+
+async function submitCustomerOrder() {
+  if (!canUseCustomerOrdering() || customerOrderSaving || !customerOrderPreview || customerOrderPreview.valid !== true || !customerOrderPreview.preview_token) return;
+  customerOrderSaving = true;
+  renderCustomerOrderCart();
+  customerOrderSetStatus("注文を登録しています。", false);
+  var deliveryDate = document.getElementById("customer-order-delivery-date");
+  var deliveryTime = document.getElementById("customer-order-delivery-time");
+  var note = document.getElementById("customer-order-note");
+  var result = await sb.rpc("place_customer_order", {
+    target_items: customerOrderPayloadItems(),
+    target_shipping_address: customerOrderAddressPayload(),
+    target_requested_delivery_date: deliveryDate && deliveryDate.value ? deliveryDate.value : null,
+    target_delivery_time: deliveryTime && deliveryTime.value ? deliveryTime.value : null,
+    target_customer_note: note && note.value ? note.value.trim() : null,
+    target_preview_token: customerOrderPreview.preview_token,
+    target_idempotency_key: customerOrderIdempotencyKey()
+  });
+  customerOrderSaving = false;
+  if (result.error) {
+    customerOrderPreview = null;
+    customerOrderSetStatus(result.error.message || t("customer_order_preview_error"), true);
+    renderCustomerOrderCart();
+    return;
+  }
+  customerOrderCart = [];
+  customerOrderPreview = null;
+  clearPersistedCustomerOrderCart();
+  customerOrderSetStatus(t("customer_order_submit_success"), false);
+  renderCustomerOrderCart();
+  showCustomerOrderView("history");
+}
+
+function renderCustomerOrderHistory() {
+  var host = document.getElementById("customer-order-history-list");
+  if (!host) return;
+  if (!customerOrderHistoryRows.length) {
+    host.innerHTML = "<div class='customer-order-empty'>注文履歴はありません。</div>";
+    return;
+  }
+  host.innerHTML = customerOrderHistoryRows.map(function(order) {
+    var items = Array.isArray(order.items) ? order.items : [];
+    var itemText = items.map(function(item) {
+      return (item.genuine_part_number || item.manufacturer_part_number || "-") + " × " + (item.quantity || 1);
+    }).join("、");
+    return "<article class='customer-order-history-row'>" +
+      "<div><span class='customer-order-number'>" + esc(order.order_number || ("注文 " + (order.id || "-"))) + "</span><strong>" + esc(customerOrderStatusLabel(order.status)) + "</strong><small>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small></div>" +
+      "<div class='customer-order-history-items'>" + esc(itemText || "-") + "</div>" +
+      "<div class='customer-order-history-total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div>" +
+      "<dl><div><dt>送り状番号</dt><dd>" + esc(order.outbound_tracking_number || "未登録") + "</dd></div><div><dt>返送用送り状</dt><dd>" + esc(order.return_tracking_number || (order.core_return_required ? "未登録" : "対象外")) + "</dd></div><div><dt>コア返却</dt><dd>" + esc(order.core_return_status || (order.core_return_required ? "返却待ち" : "対象外")) + "</dd></div></dl>" +
+    "</article>";
+  }).join("");
+}
+
+async function loadCustomerOrderHistory() {
+  if (!canUseCustomerOrdering()) return;
+  var requestSeq = ++customerOrderHistorySeq;
+  var host = document.getElementById("customer-order-history-list");
+  if (host) host.innerHTML = "<div class='customer-order-empty'>" + esc(t("loading")) + "</div>";
+  var result = await sb.rpc("list_customer_orders", { target_limit: 100 });
+  if (requestSeq !== customerOrderHistorySeq) return;
+  if (result.error) {
+    if (host) host.innerHTML = "<div class='customer-order-empty error'>注文履歴を読み込めませんでした。</div>";
+    return;
+  }
+  var data = result.data || [];
+  customerOrderHistoryRows = Array.isArray(data) ? data : (Array.isArray(data.orders) ? data.orders : []);
+  renderCustomerOrderHistory();
+}
+
+function returnToCustomerPortalFromOrders() {
+  customerOrderActiveView = "cart";
+  customerOrderPreview = null;
+  showScreen("customer-portal");
+  renderCustomerPortal();
+}
+
+var B2_BASIC_LAYOUT_HEADERS = [
+  "お客様管理番号", "送り状種類", "クール区分", "伝票番号", "出荷予定日", "お届け予定日", "配達時間帯", "お届け先コード",
+  "お届け先電話番号", "お届け先電話番号枝番", "お届け先郵便番号", "お届け先住所", "お届け先アパートマンション名", "お届け先会社・部門１",
+  "お届け先会社・部門２", "お届け先名", "お届け先名(ｶﾅ)", "敬称", "ご依頼主コード", "ご依頼主電話番号", "ご依頼主電話番号枝番",
+  "ご依頼主郵便番号", "ご依頼主住所", "ご依頼主アパートマンション", "ご依頼主名", "ご依頼主名(ｶﾅ)", "品名コード１", "品名１",
+  "品名コード２", "品名２", "荷扱い１", "荷扱い２", "記事", "ｺﾚｸﾄ代金引換額（税込)", "内消費税額等", "止置き", "営業所コード",
+  "発行枚数", "個数口表示フラグ", "請求先顧客コード", "請求先分類コード", "運賃管理番号", "クロネコwebコレクトデータ登録",
+  "クロネコwebコレクト加盟店番号", "クロネコwebコレクト申込受付番号１", "クロネコwebコレクト申込受付番号２", "クロネコwebコレクト申込受付番号３",
+  "お届け予定ｅメール利用区分", "お届け予定ｅメールe-mailアドレス", "入力機種", "お届け予定ｅメールメッセージ", "お届け完了ｅメール利用区分",
+  "お届け完了ｅメールe-mailアドレス", "お届け完了ｅメールメッセージ", "クロネコ収納代行利用区分", "予備", "収納代行請求金額(税込)",
+  "収納代行内消費税額等", "収納代行請求先郵便番号", "収納代行請求先住所", "収納代行請求先住所（アパートマンション名）", "収納代行請求先会社・部門名１",
+  "収納代行請求先会社・部門名２", "収納代行請求先名(漢字)", "収納代行請求先名(カナ)", "収納代行問合せ先名(漢字)", "収納代行問合せ先郵便番号",
+  "収納代行問合せ先住所", "収納代行問合せ先住所（アパートマンション名）", "収納代行問合せ先電話番号", "収納代行管理番号", "収納代行品名",
+  "収納代行備考", "複数口くくりキー", "検索キータイトル1", "検索キー1", "検索キータイトル2", "検索キー2", "検索キータイトル3", "検索キー3",
+  "検索キータイトル4", "検索キー4", "検索キータイトル5", "検索キー5", "予備", "予備", "投函予定メール利用区分", "投函予定メールe-mailアドレス",
+  "投函予定メールメッセージ", "投函完了メール（お届け先宛）利用区分", "投函完了メール（お届け先宛）e-mailアドレス", "投函完了メール（お届け先宛）メールメッセージ",
+  "投函完了メール（ご依頼主宛）利用区分", "投函完了メール（ご依頼主宛）e-mailアドレス", "投函完了メール（ご依頼主宛）メールメッセージ"
+];
+
+function salesOrderListStatus() {
+  var select = document.getElementById("sales-order-status");
+  return select ? select.value || "all" : "all";
+}
+
+function salesOrderListSearch() {
+  var input = document.getElementById("sales-order-search");
+  return input ? input.value.trim() : "";
+}
+
+function salesOrderCheckedIds() {
+  return Array.prototype.map.call(document.querySelectorAll("[data-sales-order-check]:checked"), function(input) {
+    return parseInt(input.value, 10);
+  }).filter(function(id) { return !isNaN(id); });
+}
+
+function updateSalesOrderExportButton() {
+  var button = document.getElementById("sales-order-export-b2");
+  if (button) button.disabled = salesOrderCheckedIds().length === 0 || salesOrderSaving;
+}
+
+async function enterSalesOrderMgmt() {
+  if (!canManageSalesOrders()) {
+    showPermissionDenied("open_sales_order_management", "customer_orders");
+    return;
+  }
+  salesOrderSelectedId = null;
+  salesOrderDetail = null;
+  showScreen("sales-order-mgmt");
+  updateAllHeaders();
+  await loadSalesOrders();
+}
+
+function renderSalesOrderList() {
+  var host = document.getElementById("sales-order-list");
+  var count = document.getElementById("sales-order-count");
+  if (!host) return;
+  if (count) count.textContent = salesOrderRows.length + " 件";
+  if (!salesOrderRows.length) {
+    host.innerHTML = "<div class='sales-order-empty'>該当する注文はありません。</div>";
+    updateSalesOrderExportButton();
+    return;
+  }
+  host.innerHTML = salesOrderRows.map(function(order) {
+    var selected = String(order.id) === String(salesOrderSelectedId);
+    return "<div class='sales-order-list-row" + (selected ? " selected" : "") + "' data-sales-order-open='" + esc(order.id) + "'>" +
+      "<label class='sales-order-check' aria-label='CSV出力対象'><input type='checkbox' data-sales-order-check value='" + esc(order.id) + "'></label>" +
+      "<div class='sales-order-list-main'><strong>" + esc(order.order_number || ("注文 " + order.id)) + "</strong><span>" + esc(order.customer_name || "-") + "</span><small>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small></div>" +
+      "<div class='sales-order-list-count'><span>明細</span><strong>" + esc(order.item_count == null ? "-" : order.item_count) + "</strong></div>" +
+      "<div class='sales-order-list-total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div>" +
+      "<span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span>" +
+    "</div>";
+  }).join("");
+  host.querySelectorAll("[data-sales-order-open]").forEach(function(row) {
+    row.addEventListener("click", function(event) {
+      if (event.target && event.target.matches("input[type='checkbox']")) return;
+      loadSalesOrderDetail(parseInt(row.dataset.salesOrderOpen, 10));
+    });
+  });
+  host.querySelectorAll("[data-sales-order-check]").forEach(function(input) {
+    input.addEventListener("change", updateSalesOrderExportButton);
+  });
+  updateSalesOrderExportButton();
+}
+
+async function loadSalesOrders() {
+  if (!canManageSalesOrders()) return;
+  var requestSeq = ++salesOrderListSeq;
+  var host = document.getElementById("sales-order-list");
+  if (host) host.innerHTML = "<div class='sales-order-empty'>" + esc(t("loading")) + "</div>";
+  var result = await sb.rpc("list_sales_orders", {
+    target_status: salesOrderListStatus() === "all" ? null : salesOrderListStatus(),
+    target_search: salesOrderListSearch() || null,
+    target_limit: 300
+  });
+  if (requestSeq !== salesOrderListSeq) return;
+  if (result.error) {
+    salesOrderRows = [];
+    if (host) host.innerHTML = "<div class='sales-order-empty error'>注文一覧を読み込めませんでした。</div>";
+    return;
+  }
+  var data = result.data || [];
+  salesOrderRows = Array.isArray(data) ? data : (Array.isArray(data.orders) ? data.orders : []);
+  renderSalesOrderList();
+}
+
+function salesOrderItemRowsHtml(items) {
+  items = Array.isArray(items) ? items : [];
+  if (!items.length) return "<div class='sales-order-empty'>明細がありません。</div>";
+  return "<div class='sales-order-item-table'><div class='sales-order-item-head'><span>品番</span><span>区分</span><span>数量</span><span>単価</span><span>小計</span><span>コア返却</span></div>" + items.map(function(item) {
+    return "<div class='sales-order-item-row'><div><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || "-") + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small></div><span>" + esc(customerProductKindLabel(item.product_kind)) + "</span><strong>" + esc(item.quantity || 1) + "</strong><span>" + esc(customerOrderCurrency(item.unit_price_jpy)) + "</span><strong>" + esc(customerOrderCurrency(item.line_total_jpy)) + "</strong><span class='sales-order-core " + (item.core_return_required ? "required" : "none") + "'>" + esc(item.core_return_required ? "必要" : "不要") + "</span></div>";
+  }).join("") + "</div>";
+}
+
+function renderSalesOrderDetail() {
+  var host = document.getElementById("sales-order-detail");
+  var order = salesOrderDetail;
+  if (!host) return;
+  if (!order) {
+    host.innerHTML = "<div class='sales-order-empty'>左の一覧から注文を選択してください</div>";
+    return;
+  }
+  var address = order.shipping_address || {};
+  var allowed = Array.isArray(order.allowed_actions) ? order.allowed_actions : [];
+  var actionLabels = { accept: "受付", prepare_shipping: "出荷準備へ", ship: "出荷済みにする", complete: "完了", cancel: "取消" };
+  var actions = allowed.map(function(action) {
+    return "<button type='button' class='sales-order-action " + esc(action) + "' data-sales-order-action='" + esc(action) + "'>" + esc(actionLabels[action] || action) + "</button>";
+  }).join("");
+  host.innerHTML = "<div class='sales-order-detail-head'><div><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span></div>" +
+    "<div class='sales-order-detail-summary'><div><span>商品計</span><strong>" + esc(customerOrderCurrency(order.subtotal_jpy)) + "</strong></div><div><span>送料</span><strong>" + esc(customerOrderCurrency(order.shipping_fee_jpy)) + "</strong></div><div><span>消費税</span><strong>" + esc(customerOrderCurrency(order.tax_jpy)) + "</strong></div><div class='total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div></div>" +
+    "<section class='sales-order-detail-section'><h3>注文明細</h3>" + salesOrderItemRowsHtml(order.items) + "</section>" +
+    "<section class='sales-order-detail-section sales-order-address'><h3>お届け先</h3><p><strong>" + esc(address.company_name || "-") + "　" + esc(address.recipient_name || "-") + "</strong><br>〒" + esc(address.postal_code || "-") + "　" + esc(address.prefecture_name || "") + esc(address.address_line_1 || "-") + " " + esc(address.address_line_2 || "") + "<br>TEL " + esc(address.phone_number || "-") + "</p><dl><div><dt>お届け希望</dt><dd>" + esc(order.requested_delivery_date || "指定なし") + " / " + esc(order.delivery_time_label || "指定なし") + "</dd></div><div><dt>注文メモ</dt><dd>" + esc(order.customer_note || "-") + "</dd></div></dl></section>" +
+    "<section class='sales-order-detail-section sales-order-tracking'><h3>送り状番号</h3><div class='sales-order-tracking-grid'><label><span>出荷送り状番号</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>返送用送り状番号</span><input id='sales-order-return-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.return_tracking_number || "") + "'" + (order.core_return_required ? "" : " disabled") + "></label><label><span>出荷日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>送り状番号を登録</button></div><p>返送用送り状番号は、コア返却が必要な注文だけ登録します。</p></section>" +
+    "<div class='sales-order-detail-actions'>" + actions + "</div><div id='sales-order-detail-message' class='sales-order-detail-message' aria-live='polite'></div>";
+  host.querySelectorAll("[data-sales-order-action]").forEach(function(button) {
+    button.addEventListener("click", function() { updateSalesOrderStatus(button.dataset.salesOrderAction); });
+  });
+  var trackingButton = document.getElementById("sales-order-save-tracking");
+  if (trackingButton) trackingButton.addEventListener("click", registerSalesOrderTracking);
+}
+
+async function loadSalesOrderDetail(orderId) {
+  if (!canManageSalesOrders() || !orderId) return;
+  salesOrderSelectedId = orderId;
+  renderSalesOrderList();
+  var requestSeq = ++salesOrderDetailSeq;
+  var host = document.getElementById("sales-order-detail");
+  if (host) host.innerHTML = "<div class='sales-order-empty'>" + esc(t("loading")) + "</div>";
+  var result = await sb.rpc("get_sales_order_detail", { target_order_id: orderId });
+  if (requestSeq !== salesOrderDetailSeq) return;
+  if (result.error) {
+    if (host) host.innerHTML = "<div class='sales-order-empty error'>注文詳細を読み込めませんでした。</div>";
+    return;
+  }
+  salesOrderDetail = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
+  renderSalesOrderDetail();
+}
+
+function setSalesOrderDetailMessage(message, isError) {
+  var host = document.getElementById("sales-order-detail-message");
+  if (!host) return;
+  host.textContent = message || "";
+  host.className = "sales-order-detail-message" + (isError ? " error" : "");
+}
+
+async function updateSalesOrderStatus(action) {
+  if (!canManageSalesOrders() || salesOrderSaving || !salesOrderDetail || !action) return;
+  if ((action === "cancel" || action === "complete") && !confirm((action === "cancel" ? "この注文を取り消します。" : "この注文を完了にします。") + "よろしいですか？")) return;
+  salesOrderSaving = true;
+  setSalesOrderDetailMessage("更新しています。", false);
+  var result = await sb.rpc("update_sales_order_status", {
+    target_order_id: salesOrderDetail.id,
+    target_action: action,
+    target_note: null,
+    target_expected_version: salesOrderDetail.version == null ? null : salesOrderDetail.version
+  });
+  salesOrderSaving = false;
+  if (result.error) {
+    setSalesOrderDetailMessage(result.error.message || "状態を更新できませんでした。", true);
+    return;
+  }
+  await loadSalesOrders();
+  await loadSalesOrderDetail(salesOrderSelectedId);
+}
+
+function normalizedTrackingNumber(value) {
+  return String(value || "").replace(/[^0-9]/g, "").slice(0, 12);
+}
+
+async function registerSalesOrderTracking() {
+  if (!canManageSalesOrders() || salesOrderSaving || !salesOrderDetail) return;
+  var outbound = normalizedTrackingNumber((document.getElementById("sales-order-outbound-tracking") || {}).value);
+  var returned = normalizedTrackingNumber((document.getElementById("sales-order-return-tracking") || {}).value);
+  var shippedOn = (document.getElementById("sales-order-shipped-on") || {}).value || null;
+  if (outbound.length !== 12 || (salesOrderDetail.core_return_required && returned.length !== 12)) {
+    setSalesOrderDetailMessage("送り状番号は12桁で入力してください。", true);
+    return;
+  }
+  salesOrderSaving = true;
+  setSalesOrderDetailMessage("送り状番号を登録しています。", false);
+  var result = await sb.rpc("register_sales_order_shipping", {
+    target_order_id: salesOrderDetail.id,
+    target_outbound_tracking_number: outbound,
+    target_return_tracking_number: salesOrderDetail.core_return_required ? returned : null,
+    target_carrier_name: "ヤマト運輸",
+    target_shipped_on: shippedOn,
+    target_expected_version: salesOrderDetail.version == null ? null : salesOrderDetail.version
+  });
+  salesOrderSaving = false;
+  if (result.error) {
+    setSalesOrderDetailMessage(result.error.message || "送り状番号を登録できませんでした。", true);
+    return;
+  }
+  await loadSalesOrders();
+  await loadSalesOrderDetail(salesOrderSelectedId);
+}
+
+function b2ExportField(row, keys) {
+  for (var i = 0; i < keys.length; i++) {
+    if (row[keys[i]] !== null && row[keys[i]] !== undefined) return row[keys[i]];
+  }
+  return "";
+}
+
+function b2ExportValues(row) {
+  if (Array.isArray(row.b2_values)) return row.b2_values.slice(0, B2_BASIC_LAYOUT_HEADERS.length).concat(new Array(B2_BASIC_LAYOUT_HEADERS.length).fill("")).slice(0, B2_BASIC_LAYOUT_HEADERS.length);
+  var data = row.b2_fields && typeof row.b2_fields === "object" ? row.b2_fields : row;
+  var values = new Array(B2_BASIC_LAYOUT_HEADERS.length).fill("");
+  values[0] = b2ExportField(data, ["customer_management_number", "order_number"]);
+  values[1] = b2ExportField(data, ["waybill_type", "shipment_type"]);
+  values[2] = b2ExportField(data, ["cool_type"]);
+  values[3] = b2ExportField(data, ["tracking_number"]);
+  values[4] = b2ExportField(data, ["planned_ship_date", "ship_on"]);
+  values[5] = b2ExportField(data, ["planned_delivery_date", "delivery_date"]);
+  values[6] = b2ExportField(data, ["delivery_time_code"]);
+  values[7] = b2ExportField(data, ["recipient_code"]);
+  values[8] = b2ExportField(data, ["recipient_phone"]);
+  values[10] = b2ExportField(data, ["recipient_postal_code"]);
+  values[11] = b2ExportField(data, ["recipient_address"]);
+  values[12] = b2ExportField(data, ["recipient_building"]);
+  values[13] = b2ExportField(data, ["recipient_company"]);
+  values[14] = b2ExportField(data, ["recipient_department"]);
+  values[15] = b2ExportField(data, ["recipient_name"]);
+  values[17] = b2ExportField(data, ["recipient_honorific"]);
+  values[18] = b2ExportField(data, ["sender_code"]);
+  values[19] = b2ExportField(data, ["sender_phone"]);
+  values[21] = b2ExportField(data, ["sender_postal_code"]);
+  values[22] = b2ExportField(data, ["sender_address"]);
+  values[23] = b2ExportField(data, ["sender_building"]);
+  values[24] = b2ExportField(data, ["sender_name"]);
+  values[26] = b2ExportField(data, ["item_code_1"]);
+  values[27] = b2ExportField(data, ["item_name_1"]);
+  values[28] = b2ExportField(data, ["item_code_2"]);
+  values[29] = b2ExportField(data, ["item_name_2"]);
+  values[30] = b2ExportField(data, ["handling_1"]);
+  values[31] = b2ExportField(data, ["handling_2"]);
+  values[32] = b2ExportField(data, ["note"]);
+  values[35] = b2ExportField(data, ["hold_at_office"]);
+  values[36] = b2ExportField(data, ["office_code"]);
+  values[37] = b2ExportField(data, ["print_count"]);
+  values[38] = b2ExportField(data, ["package_count_display"]);
+  values[39] = b2ExportField(data, ["billing_customer_code"]);
+  values[40] = b2ExportField(data, ["billing_classification_code"]);
+  values[41] = b2ExportField(data, ["fare_management_number"]);
+  values[42] = "0";
+  values[47] = b2ExportField(data, ["delivery_notice_email_enabled"]);
+  values[48] = b2ExportField(data, ["delivery_notice_email"]);
+  values[49] = b2ExportField(data, ["delivery_notice_device"]);
+  values[50] = b2ExportField(data, ["delivery_notice_message"]);
+  values[51] = b2ExportField(data, ["delivery_complete_email_enabled"]);
+  values[52] = b2ExportField(data, ["delivery_complete_email"]);
+  values[53] = b2ExportField(data, ["delivery_complete_message"]);
+  values[73] = b2ExportField(data, ["multi_package_key"]);
+  values[74] = "D-CATS注文番号";
+  values[75] = b2ExportField(data, ["order_number", "customer_management_number"]);
+  values[76] = "方向";
+  values[77] = b2ExportField(data, ["direction"]);
+  return values;
+}
+
+function downloadUtf8Csv(rows, fileName) {
+  var csv = rows.map(function(row) { return row.map(ecMallCsvCell).join(","); }).join("\r\n") + "\r\n";
+  var blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+  var url = URL.createObjectURL(blob);
+  var link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+}
+
+async function exportSalesOrdersB2() {
+  if (!canManageSalesOrders() || salesOrderSaving) return;
+  var orderIds = salesOrderCheckedIds();
+  if (!orderIds.length) return;
+  salesOrderSaving = true;
+  updateSalesOrderExportButton();
+  var result = await sb.rpc("get_sales_order_b2_export", { target_order_ids: orderIds });
+  salesOrderSaving = false;
+  updateSalesOrderExportButton();
+  if (result.error) {
+    alert(result.error.message || "B2 CSVを作成できませんでした。");
+    return;
+  }
+  var data = result.data || [];
+  var rows = Array.isArray(data) ? data : (Array.isArray(data.rows) ? data.rows : []);
+  var errors = rows.filter(function(row) { return Array.isArray(row.errors) && row.errors.length; });
+  if (!rows.length || errors.length) {
+    alert(errors.length ? "住所やB2契約情報が不足している注文があります。詳細を確認してください。" : "出力対象がありません。");
+    return;
+  }
+  downloadUtf8Csv([B2_BASIC_LAYOUT_HEADERS].concat(rows.map(b2ExportValues)), "D-CATS_B2基本レイアウト_" + new Date().toISOString().slice(0, 10) + ".csv");
 }
 
 function returnFromProductSearch() {
@@ -37753,7 +38625,7 @@ document.getElementById("current-password").addEventListener("keydown", function
   if(e.key==="Enter") doChangePassword();
 });
 document.getElementById("login-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
-["btn-logout-menu","btn-logout-customer-portal","btn-logout-customer-shipping","btn-logout-customer-users","btn-logout-customer-catalog","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-shipping-rate-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-component-compat-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-manufacturing-cost-mgmt","btn-logout-finished-label-mgmt","btn-logout-finished-product-shipping","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
+["btn-logout-menu","btn-logout-customer-portal","btn-logout-customer-shipping","btn-logout-customer-users","btn-logout-customer-catalog","btn-logout-customer-orders","btn-logout-sales-order-mgmt","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-shipping-rate-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-component-compat-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-manufacturing-cost-mgmt","btn-logout-finished-label-mgmt","btn-logout-finished-product-shipping","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
 document.getElementById("customer-portal-search-btn").addEventListener("click", function(){ openCustomerPortalSearch(); });
 document.getElementById("customer-portal-q").addEventListener("keydown", function(e){ if (e.key === "Enter") openCustomerPortalSearch(); });
 document.getElementById("customer-portal-customer-select").addEventListener("change", function(){ loadCustomerPortalPreviewContext(this.value); });
@@ -37761,6 +38633,7 @@ document.getElementById("btn-back-customer-portal").addEventListener("click", ex
 document.getElementById("customer-portal-change-password").addEventListener("click", enterChangePw);
 document.getElementById("customer-portal-manage-users").addEventListener("click", enterCustomerUsers);
 document.getElementById("customer-portal-shipping").addEventListener("click", enterCustomerShipping);
+document.getElementById("customer-portal-orders").addEventListener("click", function() { enterCustomerOrders({ view: "cart" }); });
 document.getElementById("btn-back-customer-shipping").addEventListener("click", returnToCustomerPortalFromShipping);
 document.getElementById("customer-shipping-prefecture").addEventListener("change", renderCustomerShippingRates);
 document.getElementById("customer-shipping-carrier").addEventListener("change", renderCustomerShippingRates);
@@ -37778,10 +38651,23 @@ document.getElementById("customer-users-open-invite").addEventListener("click", 
 document.getElementById("btn-customer-users-invite").addEventListener("click", inviteCustomerManagedUser);
 document.getElementById("customer-users-invite-email").addEventListener("keydown", function(e) { if (e.key === "Enter") inviteCustomerManagedUser(); });
 document.getElementById("btn-back-customer-catalog").addEventListener("click", returnToCustomerPortal);
+document.getElementById("customer-catalog-orders").addEventListener("click", function() { enterCustomerOrders({ view: "cart" }); });
 document.getElementById("btn-exit-customer-mode").addEventListener("click", exitCustomerMode);
 document.getElementById("customer-catalog-search-btn").addEventListener("click", function(){ runCustomerCatalogSearch({ logActivity: true }); });
 document.getElementById("customer-catalog-q").addEventListener("keydown", function(e){ if (e.key === "Enter") runCustomerCatalogSearch({ logActivity: true }); });
 document.getElementById("customer-catalog-category").addEventListener("change", function(){ runCustomerCatalogSearch({ logActivity: true }); });
+document.getElementById("btn-back-customer-orders").addEventListener("click", returnToCustomerPortalFromOrders);
+document.getElementById("customer-order-tab-cart").addEventListener("click", function() { showCustomerOrderView("cart"); });
+document.getElementById("customer-order-tab-history").addEventListener("click", function() { showCustomerOrderView("history"); });
+document.getElementById("customer-order-continue-shopping").addEventListener("click", function() { enterCustomerCatalog({}); });
+document.getElementById("customer-order-preview-button").addEventListener("click", function() { previewCustomerOrder({ silent: false }); });
+document.getElementById("customer-order-submit").addEventListener("click", submitCustomerOrder);
+document.getElementById("customer-order-history-reload").addEventListener("click", loadCustomerOrderHistory);
+document.getElementById("btn-back-sales-order-mgmt").addEventListener("click", returnToMenuFresh);
+document.getElementById("sales-order-reload").addEventListener("click", loadSalesOrders);
+document.getElementById("sales-order-search").addEventListener("keydown", function(e) { if (e.key === "Enter") loadSalesOrders(); });
+document.getElementById("sales-order-status").addEventListener("change", loadSalesOrders);
+document.getElementById("sales-order-export-b2").addEventListener("click", exportSalesOrdersB2);
 document.getElementById("btn-back-search").addEventListener("click", returnFromProductSearch);
 document.getElementById("btn-back-production-search").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-components").addEventListener("click", async function(){

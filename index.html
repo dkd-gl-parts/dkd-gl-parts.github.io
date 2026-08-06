@@ -221,6 +221,15 @@
         <button class="customer-portal-guide-button" id="customer-portal-shipping" type="button" data-i18n="customer_shipping_title">送料一覧</button>
       </div>
     </section>
+    <section class="customer-portal-order-band" id="customer-portal-order-guide" hidden>
+      <div class="customer-portal-inner customer-portal-guide-layout">
+        <div>
+          <h2 data-i18n="customer_order_title">ご注文</h2>
+          <p data-i18n="customer_order_portal_note">注文内容の確認と、受付後の出荷状況を確認できます。</p>
+        </div>
+        <button class="customer-portal-order-button" id="customer-portal-orders" type="button" data-i18n="customer_order_open">注文内容・履歴</button>
+      </div>
+    </section>
     <section class="customer-portal-account-band">
       <div class="customer-portal-inner customer-portal-account-layout">
         <h2 data-i18n="customer_portal_account">アカウント</h2>
@@ -390,6 +399,7 @@
       <span class="app-version-wrap"><span class="app-version">v1.1.641</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
     </div>
     <div class="page-header-right">
+      <button class="customer-catalog-order-link" id="customer-catalog-orders" type="button" data-i18n="customer_order_open" hidden>注文内容・履歴</button>
       <button class="customer-catalog-exit" id="btn-exit-customer-mode" type="button" data-i18n="customer_portal_exit_mode">社内メニューへ戻る</button>
       <div class="lang-sw" id="lang-sw-customer-catalog">
         <button class="lang-btn" data-lang="ja">日本語</button>
@@ -432,6 +442,125 @@
         </div>
       </section>
     </div>
+  </main>
+</div>
+
+<!-- =============================================
+   得意先向け注文内容・注文履歴
+============================================= -->
+<div id="screen-customer-orders" class="screen">
+  <div class="page-header customer-portal-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-customer-orders" data-i18n="customer_portal_back">← 得意先ホーム</button>
+      <span class="logo-text">D&#8209;CATS</span>
+      <span class="logo-sub" data-i18n="customer_order_title">ご注文</span>
+      <span class="app-version-wrap"><span class="app-version">v1.1.641</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+    </div>
+    <div class="page-header-right">
+      <div class="lang-sw" id="lang-sw-customer-orders">
+        <button class="lang-btn" data-lang="ja">日本語</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="zh">中文</button>
+      </div>
+      <span class="header-username" id="customer-orders-username"></span>
+      <span class="role-badge" id="customer-orders-role-badge"></span>
+      <button class="btn-logout" id="btn-logout-customer-orders" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <main class="customer-order-body">
+    <section class="customer-order-heading-band">
+      <div class="customer-portal-inner customer-order-heading">
+        <div>
+          <div class="customer-portal-kicker" data-i18n="customer_order_eyebrow">ORDER</div>
+          <h1 data-i18n="customer_order_title">ご注文</h1>
+          <p><strong id="customer-orders-customer-name">-</strong></p>
+        </div>
+        <div class="customer-order-tabs" role="tablist" aria-label="注文表示">
+          <button type="button" id="customer-order-tab-cart" class="active" role="tab" aria-selected="true" data-order-view="cart" data-i18n="customer_order_cart">注文内容</button>
+          <button type="button" id="customer-order-tab-history" role="tab" aria-selected="false" data-order-view="history" data-i18n="customer_order_history">注文履歴</button>
+        </div>
+      </div>
+    </section>
+    <section class="customer-order-workspace customer-portal-inner" id="customer-order-cart-view">
+      <div class="customer-order-cart-pane">
+        <div class="customer-order-section-head">
+          <div><h2 data-i18n="customer_order_cart">注文内容</h2><p data-i18n="customer_order_revalidate_note">注文確定時に価格と在庫を再確認します。</p></div>
+          <button type="button" class="customer-order-secondary-button" id="customer-order-continue-shopping" data-i18n="customer_order_continue">商品を追加</button>
+        </div>
+        <div id="customer-order-cart-status" class="customer-order-status" aria-live="polite"></div>
+        <div id="customer-order-cart-list" class="customer-order-cart-list"></div>
+        <div id="customer-order-preview-summary" class="customer-order-preview-summary"></div>
+      </div>
+      <aside class="customer-order-shipping-pane" aria-labelledby="customer-order-shipping-title">
+        <div class="customer-order-section-head compact"><div><h2 id="customer-order-shipping-title" data-i18n="customer_order_shipping">お届け先</h2><p data-i18n="customer_order_shipping_note">送り状に印字する内容です。</p></div></div>
+        <div class="customer-order-form-grid">
+          <label class="wide"><span>会社名</span><input id="customer-order-company" type="text" maxlength="50" autocomplete="organization"></label>
+          <label><span>ご担当者名</span><input id="customer-order-recipient" type="text" maxlength="32" autocomplete="name"></label>
+          <label><span>電話番号</span><input id="customer-order-phone" type="tel" maxlength="15" autocomplete="tel"></label>
+          <label><span>郵便番号</span><input id="customer-order-postal-code" type="text" maxlength="8" inputmode="numeric" autocomplete="postal-code"></label>
+          <label><span>都道府県</span><select id="customer-order-prefecture"></select></label>
+          <label class="wide"><span>住所</span><input id="customer-order-address1" type="text" maxlength="64" autocomplete="address-line1"></label>
+          <label class="wide"><span>建物名・部門</span><input id="customer-order-address2" type="text" maxlength="64" autocomplete="address-line2"></label>
+          <label><span>お届け希望日</span><input id="customer-order-delivery-date" type="date"></label>
+          <label><span>時間帯</span><select id="customer-order-delivery-time"><option value="">指定なし</option><option value="0812">午前中</option><option value="1416">14～16時</option><option value="1618">16～18時</option><option value="1820">18～20時</option><option value="1921">19～21時</option></select></label>
+          <label class="wide"><span>注文メモ</span><textarea id="customer-order-note" maxlength="500" rows="3"></textarea></label>
+        </div>
+        <div class="customer-order-core-notice" id="customer-order-core-notice" hidden></div>
+        <div class="customer-order-submit-actions">
+          <button type="button" class="customer-order-secondary-button" id="customer-order-preview-button" data-i18n="customer_order_preview">価格・在庫を確認</button>
+          <button type="button" class="customer-order-submit-button" id="customer-order-submit" data-i18n="customer_order_submit" disabled>注文を確定</button>
+        </div>
+      </aside>
+    </section>
+    <section class="customer-order-history customer-portal-inner" id="customer-order-history-view" hidden>
+      <div class="customer-order-section-head">
+        <div><h2 data-i18n="customer_order_history">注文履歴</h2><p data-i18n="customer_order_history_note">受付、出荷、コア返却の状況を確認できます。</p></div>
+        <button type="button" class="customer-order-secondary-button" id="customer-order-history-reload" data-i18n="btn_reload">再読込</button>
+      </div>
+      <div id="customer-order-history-list" class="customer-order-history-list" aria-live="polite"></div>
+    </section>
+  </main>
+</div>
+
+<!-- =============================================
+   社内向け受注・B2出荷管理
+============================================= -->
+<div id="screen-sales-order-mgmt" class="screen">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-sales-order-mgmt" data-i18n="btn_back">← メニュー</button>
+      <span class="logo-text" data-i18n="sales_order_mgmt_title">受注・出荷管理</span>
+      <span class="app-version-wrap"><span class="app-version">v1.1.641</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+    </div>
+    <div class="page-header-right">
+      <span class="header-username" id="sales-order-mgmt-username"></span>
+      <span class="role-badge" id="sales-order-mgmt-role-badge"></span>
+      <button class="btn-logout" id="btn-logout-sales-order-mgmt" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <main class="sales-order-mgmt-body">
+    <section class="sales-order-toolbar">
+      <div>
+        <div class="sales-order-kicker">ORDER OPERATIONS</div>
+        <h1 data-i18n="sales_order_mgmt_title">受注・出荷管理</h1>
+        <p data-i18n="sales_order_mgmt_note">注文受付からB2クラウド用CSV出力、往復送り状番号の登録まで管理します。</p>
+      </div>
+      <div class="sales-order-filter-row">
+        <input id="sales-order-search" type="search" autocomplete="off" placeholder="注文番号・得意先・品番で検索">
+        <select id="sales-order-status"><option value="all">すべての状態</option><option value="submitted">受付待ち</option><option value="accepted">受付済み</option><option value="shipping_ready">出荷準備</option><option value="shipped">出荷済み</option><option value="completed">完了</option><option value="cancelled">取消</option></select>
+        <button type="button" class="btn-primary" id="sales-order-reload">検索</button>
+        <button type="button" class="sales-order-b2-button" id="sales-order-export-b2" disabled>B2 CSV出力</button>
+      </div>
+    </section>
+    <section class="sales-order-workspace">
+      <div class="sales-order-list-pane">
+        <div class="sales-order-list-head"><strong>注文一覧</strong><span id="sales-order-count">-</span></div>
+        <div id="sales-order-list" class="sales-order-list" aria-live="polite"></div>
+      </div>
+      <div class="sales-order-detail-pane" id="sales-order-detail">
+        <div class="sales-order-empty">左の一覧から注文を選択してください</div>
+      </div>
+    </section>
   </main>
 </div>
 

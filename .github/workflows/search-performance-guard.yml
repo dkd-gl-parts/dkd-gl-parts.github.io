@@ -16,6 +16,8 @@ on:
       - "scripts/verify-customer-catalog-detail.js"
       - "scripts/verify-customer-category-visibility.js"
       - "scripts/verify-customer-price-list.js"
+      - "scripts/verify-customer-order-workflow.js"
+      - "docs/customer-order-b2-manual-contract.md"
       - "customer-price-list-print.css"
       - "scripts/verify-manufacturing-cost-candidate-status.js"
       - "scripts/verify-manufacturing-cost-snapshot-status.js"
@@ -44,6 +46,8 @@ on:
       - "scripts/verify-customer-catalog-detail.js"
       - "scripts/verify-customer-category-visibility.js"
       - "scripts/verify-customer-price-list.js"
+      - "scripts/verify-customer-order-workflow.js"
+      - "docs/customer-order-b2-manual-contract.md"
       - "customer-price-list-print.css"
       - "scripts/verify-manufacturing-cost-candidate-status.js"
       - "scripts/verify-manufacturing-cost-snapshot-status.js"
@@ -91,6 +95,8 @@ jobs:
         run: node scripts/verify-customer-category-visibility.js
       - name: Verify customer price list
         run: node scripts/verify-customer-price-list.js
+      - name: Verify customer order and manual B2 workflow
+        run: node scripts/verify-customer-order-workflow.js
       - name: Verify manufacturing cost candidate status
         run: node scripts/verify-manufacturing-cost-candidate-status.js
       - name: Verify manufacturing cost snapshot status
