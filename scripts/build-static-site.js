@@ -16,6 +16,8 @@ const files = [
   "ranking-report-print-landscape.css",
   "ranking-report-print-portrait.css",
   "ranking-report-print.css",
+  "favicon.ico",
+  "site.webmanifest",
   "styles.css",
 ];
 
@@ -29,4 +31,5 @@ for (const file of files) {
 }
 
 fs.cpSync(path.join(root, "vendor"), path.join(output, "vendor"), { recursive: true });
-console.log(`Static site build complete (${files.length} files + vendor)`);
+fs.cpSync(path.join(root, "assets"), path.join(output, "assets"), { recursive: true });
+console.log(`Static site build complete (${files.length} files + vendor + assets)`);

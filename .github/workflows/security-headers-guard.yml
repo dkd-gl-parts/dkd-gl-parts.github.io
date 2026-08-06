@@ -5,7 +5,10 @@ on:
     paths:
       - "_headers"
       - ".gitignore"
+      - "assets/icons/**"
+      - "favicon.ico"
       - "index.html"
+      - "site.webmanifest"
       - "scripts/build-static-site.js"
       - "scripts/verify-security-response-headers.js"
       - ".github/workflows/security-headers-guard.yml"
@@ -13,7 +16,10 @@ on:
     paths:
       - "_headers"
       - ".gitignore"
+      - "assets/icons/**"
+      - "favicon.ico"
       - "index.html"
+      - "site.webmanifest"
       - "scripts/build-static-site.js"
       - "scripts/verify-security-response-headers.js"
       - ".github/workflows/security-headers-guard.yml"
