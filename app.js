@@ -4659,7 +4659,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.685";
+var APP_VERSION       = "v1.1.686";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -7464,7 +7464,10 @@ async function runCustomerCatalogSearch(options) {
     if (list) list.innerHTML = "<div class='customer-catalog-empty'>" + esc(t("customer_catalog_load_error")) + "</div>";
     return;
   }
-  var products = filterVisibleProducts(normalizeCoreProductFastRows(result.data || [])).slice(0, CUSTOMER_CATALOG_SCAN_LIMIT);
+  var products = normalizeCoreProductFastRows(result.data || []);
+  await hydrateSalesDaikoVisibility(products);
+  if (seq !== customerCatalogRequestSeq) return;
+  products = filterSalesVisibleProducts(products).slice(0, CUSTOMER_CATALOG_SCAN_LIMIT);
   if (customerCatalogRequiresRegisteredPrice() && products.length) {
     products = products.slice(0, CUSTOMER_CATALOG_RESULT_LIMIT);
     var priceMap = await fetchCustomerCatalogPriceMap(products);
@@ -7663,7 +7666,10 @@ async function loadCustomerCatalogCompatible(product, seq) {
     target_genuine_part_number: product.genuine_part_number || null
   });
   if (seq !== customerCatalogDetailSeq || !wrap.isConnected) return;
-  var rows = result.error ? [] : filterVisibleProducts(result.data || []).filter(function(row) {
+  var rows = result.error ? [] : (result.data || []);
+  await hydrateSalesDaikoVisibility(rows);
+  if (seq !== customerCatalogDetailSeq || !wrap.isConnected) return;
+  rows = filterSalesVisibleProducts(rows).filter(function(row) {
     return productDkdId(row) !== productDkdId(product);
   }).slice(0, 20);
   if (!rows.length) {
@@ -7680,7 +7686,7 @@ async function loadCustomerCatalogCompatible(product, seq) {
 
 async function openCustomerCatalogProduct(product, options) {
   options = options || {};
-  if (!product || !isCustomerVisibleProduct(product)) return;
+  if (!product || !isCustomerVisibleProduct(product) || isSalesHiddenDaikoProduct(product)) return;
   customerCatalogSelectedProduct = product;
   var seq = ++customerCatalogDetailSeq;
   renderCustomerCatalogList();

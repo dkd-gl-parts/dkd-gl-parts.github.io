@@ -28,6 +28,18 @@ if (!availabilitySource.includes('var kinds = ["rebuilt", "aftermarket_new"]') |
   throw new Error("customer catalog detail must show rebuilt and aftermarket-new stock with kind-specific prices");
 }
 
+const searchSource = functionSource("runCustomerCatalogSearch", "function customerCatalogFact");
+if (!searchSource.includes("await hydrateSalesDaikoVisibility(products)") ||
+    !searchSource.includes("products = filterSalesVisibleProducts(products)")) {
+  throw new Error("customer catalog search must exclude Daiko products with the sales visibility rules");
+}
+
+const compatibleSource = functionSource("loadCustomerCatalogCompatible", "async function openCustomerCatalogProduct");
+if (!compatibleSource.includes("await hydrateSalesDaikoVisibility(rows)") ||
+    !compatibleSource.includes("rows = filterSalesVisibleProducts(rows)")) {
+  throw new Error("customer catalog compatible products must exclude Daiko products");
+}
+
 const availabilityHtmlSource = functionSource("customerCatalogAvailabilityKindHtml", "function renderCustomerCatalogDetailBase");
 if (!availabilityHtmlSource.includes("customerProductKindLabel(kind)")) {
   throw new Error("customer catalog must use the customer-facing product-kind label");
@@ -40,8 +52,9 @@ if (!customerKindLabelSource.includes('kind === "aftermarket_new" ? t("customer_
 
 const openSource = functionSource("openCustomerCatalogProduct", "async function openCustomerCatalogProductById");
 if (!openSource.includes("bindCustomerCatalogVehicleDisclosure(product, seq)") ||
+    !openSource.includes("isSalesHiddenDaikoProduct(product)") ||
     openSource.includes("loads.push(loadCustomerCatalogVehicles")) {
-  throw new Error("customer catalog vehicle applications must remain collapsed and load on demand");
+  throw new Error("customer catalog detail access or vehicle loading rules are incomplete");
 }
 
 console.log("customer catalog detail guard passed");

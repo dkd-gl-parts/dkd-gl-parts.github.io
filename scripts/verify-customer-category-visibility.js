@@ -138,7 +138,7 @@ if (!catalogSource.includes("customerCategoryIsVisible(code, visibilityRows)")) 
 const searchSource = functionSource("runCustomerCatalogSearch", "function customerCatalogFact");
 if (!searchSource.includes("if (!query && !category)") ||
     !searchSource.includes("fetchCategoryProducts(category") ||
-    !searchSource.includes("filterVisibleProducts") ||
+    !searchSource.includes("filterSalesVisibleProducts") ||
     searchSource.includes("search_text: null")) {
   throw new Error("customer product searches must require a visible category or query and must not load all products");
 }
