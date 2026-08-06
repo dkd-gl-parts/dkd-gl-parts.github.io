@@ -4627,6 +4627,7 @@ var componentUsageCountMap = {};
 var productionComponentKindCountMap = {};
 var coreStockQtyMap = {};
 var kikanCompatibleMap = {};
+var productAvailableStockMap = {};
 var productVariantSummaryMap = {};
 var productVariantSummaryCache = {};
 var currentSlPartIds  = [];  // 現在表示中のSL品番IDリスト（画像ロード用）
@@ -4659,7 +4660,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.687";
+var APP_VERSION       = "v1.1.688";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -7468,6 +7469,9 @@ async function runCustomerCatalogSearch(options) {
   await hydrateSalesDaikoVisibility(products);
   if (seq !== customerCatalogRequestSeq) return;
   products = filterSalesVisibleProducts(products).slice(0, CUSTOMER_CATALOG_SCAN_LIMIT);
+  var stockPriorityResult = await fetchProductAvailableStockMap(products);
+  if (seq !== customerCatalogRequestSeq) return;
+  if (!stockPriorityResult.error) products = sortProductsByAvailableStock(products, stockPriorityResult.map);
   if (customerCatalogRequiresRegisteredPrice() && products.length) {
     products = products.slice(0, CUSTOMER_CATALOG_RESULT_LIMIT);
     var priceMap = await fetchCustomerCatalogPriceMap(products);
@@ -22522,6 +22526,41 @@ function productSearchCardDkdIds(products) {
   return ids;
 }
 
+async function fetchProductAvailableStockMap(products) {
+  var map = {};
+  var ids = productSearchCardDkdIds(products);
+  if (!ids.length) return { map: map, error: null };
+  for (var i = 0; i < ids.length; i += 200) {
+    var chunk = ids.slice(i, i + 200);
+    var result = await sb.from("core_product_variants")
+      .select("dkd_shohin_id,stock_qty")
+      .eq("is_active", true)
+      .in("product_kind", ["rebuilt", "aftermarket_new"])
+      .in("dkd_shohin_id", chunk)
+      .gt("stock_qty", 0);
+    if (result.error) {
+      console.warn("product available stock lookup failed", result.error);
+      return { map: {}, error: result.error };
+    }
+    (result.data || []).forEach(function(row) {
+      var key = String(row.dkd_shohin_id || "");
+      if (key) map[key] = true;
+    });
+  }
+  return { map: map, error: null };
+}
+
+function sortProductsByAvailableStock(products, stockMap) {
+  return (products || []).map(function(product, index) {
+    return { product: product, index: index };
+  }).sort(function(a, b) {
+    var aHasStock = !!(stockMap && stockMap[productDkdId(a.product)]);
+    var bHasStock = !!(stockMap && stockMap[productDkdId(b.product)]);
+    if (aHasStock !== bHasStock) return bHasStock ? 1 : -1;
+    return a.index - b.index;
+  }).map(function(item) { return item.product; });
+}
+
 function normalizeProductKind(kind) {
   kind = String(kind || "").trim().toLowerCase();
   if (kind === "aftermarket" || kind === "aftermarket-new" || kind === "aftermarket new") return "aftermarket_new";
@@ -23430,6 +23469,7 @@ function productRebuiltComponentCount(p) {
 
 function productSearchPriorityScore(p) {
   var score = 0;
+  if (productAvailableStockMap[productDkdId(p)]) score += 1000000;
   var rebuiltCount = productRebuiltComponentCount(p);
   if (rebuiltCount > 0) score += 200000 + Math.min(rebuiltCount, 999);
   if (productHasCatalogData(p)) score += 100000;
@@ -23951,6 +23991,7 @@ async function runProductSearch(options) {
     productionComponentKindCountMap = {};
     coreStockQtyMap = {};
     kikanCompatibleMap = {};
+    productAvailableStockMap = {};
     productVariantSummaryMap = {};
     renderCategoryChips();
     closePanel();
@@ -23985,6 +24026,7 @@ async function runProductSearch(options) {
     productSearchFetchedCount = 0;
     productSearchTotalCount = null;
     productSearchHasMore = false;
+    productAvailableStockMap = {};
     closePanel();
     document.getElementById("count-bar").textContent = "";
     var moreWrap = document.getElementById("load-more-wrap");
@@ -24044,7 +24086,15 @@ async function runProductSearch(options) {
     productionComponentKindCountMap = {};
     coreStockQtyMap = {};
     kikanCompatibleMap = {};
+    productAvailableStockMap = {};
     productVariantSummaryMap = {};
+  }
+  var stockPriorityResult = await fetchProductAvailableStockMap(auxiliaryProducts);
+  if (seq !== searchRequestSeq) return;
+  if (!stockPriorityResult.error) {
+    productAvailableStockMap = appendCategoryPage
+      ? mergeObjectMap(productAvailableStockMap, stockPriorityResult.map)
+      : stockPriorityResult.map;
   }
   applyCachedSearchAuxiliaryMaps(auxiliaryProducts);
   renderCategoryChips();

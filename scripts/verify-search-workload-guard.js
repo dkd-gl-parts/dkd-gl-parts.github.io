@@ -50,6 +50,7 @@ if (!source.includes("p.dks_shohin_cd, p.shohin_cd, p.gltek_part_number")) {
 const aliasIndex = searchSource.indexOf("var aliasResult = await fetchSourceAliasProducts(q)");
 const slIndex = searchSource.indexOf("var slResult = await fetchSlPartProducts(q");
 const cacheIndex = searchSource.indexOf("applyCachedSearchAuxiliaryMaps(auxiliaryProducts)");
+const stockPriorityIndex = searchSource.indexOf("await fetchProductAvailableStockMap(auxiliaryProducts)");
 const initialRenderIndex = searchSource.indexOf("render();", cacheIndex);
 const detailSyncIndex = searchSource.indexOf("syncFirstSearchResultDetail();", initialRenderIndex);
 const scheduleIndex = searchSource.indexOf("scheduleProductSearchEnrichment(", initialRenderIndex);
@@ -57,7 +58,7 @@ const scheduleIndex = searchSource.indexOf("scheduleProductSearchEnrichment(", i
 if (aliasIndex < 0 || slIndex < aliasIndex) {
   throw new Error("fallback searches must remain sequential");
 }
-if (cacheIndex < 0 || initialRenderIndex < cacheIndex || detailSyncIndex < initialRenderIndex || scheduleIndex < detailSyncIndex) {
+if (stockPriorityIndex < 0 || cacheIndex < stockPriorityIndex || initialRenderIndex < cacheIndex || detailSyncIndex < initialRenderIndex || scheduleIndex < detailSyncIndex) {
   throw new Error("primary results must render before detail loading and deferred enrichment");
 }
 if (searchSource.includes("await fetchProductSearchCardFlags") || searchSource.includes("await fetchProductImageCountMapForContext")) {
@@ -80,6 +81,20 @@ if (!source.includes('!isScreenActive("search")')) {
 }
 if (!source.includes("productSearchDetailReadyPromise = Promise.allSettled(detailLoads)")) {
   throw new Error("detail requests must be tracked before deferred enrichment starts");
+}
+
+const stockFetchStart = source.indexOf("async function fetchProductAvailableStockMap");
+const stockSortStart = source.indexOf("function sortProductsByAvailableStock", stockFetchStart);
+const stockFetchSource = source.slice(stockFetchStart, stockSortStart);
+if (stockFetchStart < 0 || stockSortStart < stockFetchStart ||
+    !stockFetchSource.includes('select("dkd_shohin_id,stock_qty")') ||
+    !stockFetchSource.includes('.in("dkd_shohin_id", chunk)') ||
+    !stockFetchSource.includes('.in("product_kind", ["rebuilt", "aftermarket_new"])') ||
+    !stockFetchSource.includes('.gt("stock_qty", 0)')) {
+  throw new Error("stock priority must use a lightweight batched availability lookup");
+}
+if (!source.includes("productAvailableStockMap[productDkdId(p)]") || !source.includes("score += 1000000")) {
+  throw new Error("sales product search must rank stocked products before existing priorities");
 }
 
 console.log("search workload guard passed");
