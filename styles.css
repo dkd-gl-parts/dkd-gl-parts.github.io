@@ -5004,6 +5004,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-order-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding-top: 20px; padding-bottom: 18px; }
 .customer-order-heading h1 { margin-top: 3px; color: #17231f; font-size: 24px; letter-spacing: 0; }
 .customer-order-heading p { margin-top: 7px; color: #51625a; font-size: 12px; }
+.customer-order-development-preview-band { border-bottom: 1px solid #e7c567; background: #fff7dd; }
+.customer-order-development-preview-copy { min-height: 48px; display: flex; align-items: center; gap: 12px; padding-top: 8px; padding-bottom: 8px; }
+.customer-order-development-preview-copy strong { flex: 0 0 auto; border: 1px solid #bd7c00; border-radius: 4px; padding: 3px 7px; background: #fff; color: #8a5700; font-size: 10px; }
+.customer-order-development-preview-copy span { color: #6b4a0a; font-size: 11px; font-weight: 700; line-height: 1.5; }
 .customer-order-tabs { display: inline-flex; align-items: center; border: 1px solid #cbd5d1; border-radius: 7px; padding: 3px; background: #f2f5f4; }
 .customer-order-tabs button { min-width: 112px; min-height: 34px; border: 0; border-radius: 5px; padding: 0 12px; background: transparent; color: #53635c; font-size: 12px; font-weight: 800; cursor: pointer; }
 .customer-order-tabs button.active { background: #fff; box-shadow: 0 1px 3px rgba(21, 45, 35, .13); color: #1e5e43; }
@@ -5016,6 +5020,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-order-section-head p { margin-top: 4px; color: #718078; font-size: 10px; line-height: 1.5; }
 .customer-order-secondary-button { min-height: 34px; border: 1px solid #9fafaa; border-radius: 6px; padding: 0 12px; background: #fff; color: #31433b; font-size: 11px; font-weight: 800; cursor: pointer; white-space: nowrap; }
 .customer-order-secondary-button:hover { background: #f1f5f3; }
+.customer-order-secondary-button:disabled { border-color: #cfd6d3; background: #ecefed; color: #87918c; cursor: not-allowed; }
 .customer-order-status { min-height: 19px; margin-bottom: 8px; color: #236344; font-size: 11px; font-weight: 700; }
 .customer-order-status.error,
 .customer-order-empty.error { color: #b42318; }
@@ -5194,6 +5199,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 }
 @media (max-width: 560px) {
   .customer-portal-order-button { width: 100%; }
+  .customer-order-development-preview-copy { align-items: flex-start; flex-direction: column; gap: 5px; }
   .customer-order-tabs { width: 100%; }
   .customer-order-tabs button { flex: 1; min-width: 0; }
   .customer-order-cart-pane,
