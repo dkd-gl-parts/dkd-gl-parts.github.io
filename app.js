@@ -4659,7 +4659,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.686";
+var APP_VERSION       = "v1.1.687";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -7656,6 +7656,32 @@ function bindCustomerCatalogVehicleDisclosure(product, seq) {
   });
 }
 
+async function fetchCustomerCatalogCompatibleStockMap(rows) {
+  var ids = productSearchCardDkdIds(rows || []);
+  var map = {};
+  ids.forEach(function(id) {
+    map[String(id)] = { rebuilt: 0, aftermarket_new: 0 };
+  });
+  if (!ids.length) return { map: map, error: null };
+  var result = await sb.from("core_product_variants")
+    .select("dkd_shohin_id,product_kind,stock_qty")
+    .eq("is_active", true)
+    .in("product_kind", ["rebuilt", "aftermarket_new"])
+    .in("dkd_shohin_id", ids);
+  if (result.error) {
+    console.warn("customer compatible stock lookup failed", result.error);
+    return { map: map, error: result.error };
+  }
+  (result.data || []).forEach(function(row) {
+    var key = String(row.dkd_shohin_id || "");
+    var kind = normalizeProductKind(row.product_kind);
+    if (!map[key] || !Object.prototype.hasOwnProperty.call(map[key], kind)) return;
+    var qty = parseFloat(row.stock_qty);
+    if (!isNaN(qty)) map[key][kind] += qty;
+  });
+  return { map: map, error: null };
+}
+
 async function loadCustomerCatalogCompatible(product, seq) {
   var wrap = document.getElementById("customer-catalog-compatible");
   if (!wrap) return;
@@ -7676,8 +7702,21 @@ async function loadCustomerCatalogCompatible(product, seq) {
     wrap.innerHTML = "<div class='customer-catalog-empty'>" + esc(t("kikan_none")) + "</div>";
     return;
   }
+  var stockResult = await fetchCustomerCatalogCompatibleStockMap(rows);
+  if (seq !== customerCatalogDetailSeq || !wrap.isConnected) return;
+  var stockMap = stockResult.map || {};
   wrap.innerHTML = "<div class='customer-catalog-compatible-list'>" + rows.map(function(row) {
-    return "<button class='customer-catalog-compatible' type='button' data-customer-compatible-dkd='" + esc(productDkdId(row)) + "'><strong>" + esc(row.genuine_part_number || row.manufacturer_part_number || "-") + "</strong><span>" + esc([row.manufacturer, row.manufacturer_part_number].filter(Boolean).join(" / ")) + "</span></button>";
+    var stock = stockMap[String(productDkdId(row))] || { rebuilt: 0, aftermarket_new: 0 };
+    var rebuiltQty = stockResult.error ? "-" : String(stock.rebuilt || 0);
+    var newQty = stockResult.error ? "-" : String(stock.aftermarket_new || 0);
+    return "<button class='customer-catalog-compatible' type='button' data-customer-compatible-dkd='" + esc(productDkdId(row)) + "'>" +
+      "<strong>" + esc(row.genuine_part_number || row.manufacturer_part_number || "-") + "</strong>" +
+      "<span class='customer-catalog-compatible-code'>" + esc([row.manufacturer, row.manufacturer_part_number].filter(Boolean).join(" / ")) + "</span>" +
+      "<span class='customer-catalog-compatible-stock'>" +
+        "<span class='customer-catalog-compatible-stock-item rebuilt'>" + esc(customerProductKindLabel("rebuilt")) + " " + esc(t("customer_catalog_stock_qty")) + " <b>" + esc(rebuiltQty) + "</b></span>" +
+        "<span class='customer-catalog-compatible-stock-item aftermarket_new'>" + esc(customerProductKindLabel("aftermarket_new")) + " " + esc(t("customer_catalog_stock_qty")) + " <b>" + esc(newQty) + "</b></span>" +
+      "</span>" +
+    "</button>";
   }).join("") + "</div>";
   wrap.querySelectorAll("[data-customer-compatible-dkd]").forEach(function(button) {
     button.addEventListener("click", function() { openCustomerCatalogProductById(button.dataset.customerCompatibleDkd); });

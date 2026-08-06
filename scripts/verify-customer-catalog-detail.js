@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const source = fs.readFileSync(path.resolve(__dirname, "..", "app.js"), "utf8");
+const styles = fs.readFileSync(path.resolve(__dirname, "..", "styles.css"), "utf8");
 
 if (!source.includes('customer_catalog_price_none: "価格はお問い合わせください"')) {
   throw new Error("customer catalog must present missing prices as a customer inquiry");
@@ -38,6 +39,23 @@ const compatibleSource = functionSource("loadCustomerCatalogCompatible", "async 
 if (!compatibleSource.includes("await hydrateSalesDaikoVisibility(rows)") ||
     !compatibleSource.includes("rows = filterSalesVisibleProducts(rows)")) {
   throw new Error("customer catalog compatible products must exclude Daiko products");
+}
+if (!compatibleSource.includes("await fetchCustomerCatalogCompatibleStockMap(rows)") ||
+    !compatibleSource.includes("customer-catalog-compatible-stock-item") ||
+    !compatibleSource.includes('customerProductKindLabel("rebuilt")') ||
+    !compatibleSource.includes('customerProductKindLabel("aftermarket_new")')) {
+  throw new Error("customer catalog compatible products must show rebuilt and new stock");
+}
+
+const compatibleStockSource = functionSource("fetchCustomerCatalogCompatibleStockMap", "async function loadCustomerCatalogCompatible");
+if (!compatibleStockSource.includes('from("core_product_variants")') ||
+    !compatibleStockSource.includes('.in("dkd_shohin_id", ids)') ||
+    !compatibleStockSource.includes('.in("product_kind", ["rebuilt", "aftermarket_new"])')) {
+  throw new Error("customer catalog compatible stock must be loaded in one batched query");
+}
+if (!styles.includes(".customer-catalog-compatible-stock-item.rebuilt") &&
+    !styles.includes(".customer-catalog-compatible-stock-item {")) {
+  throw new Error("customer catalog compatible stock styles are missing");
 }
 
 const availabilityHtmlSource = functionSource("customerCatalogAvailabilityKindHtml", "function renderCustomerCatalogDetailBase");
