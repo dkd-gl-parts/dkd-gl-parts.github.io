@@ -7,7 +7,17 @@
 - B2クラウドで送り状を発行した後、出荷送り状番号と返送用送り状番号をD-CATSへ手動登録する。
 - APIアクセス認証キー、請求先コードなどの秘密・契約情報をpublic frontendへ保存しない。
 - 最終価格、税、送料、在庫確保、注文状態の変更はすべてDB関数またはEdge Function内で確定する。
-- frontend `v1.1.692`は、`get_customer_order_feature_status`が有効を返すまで注文機能を表示しない。
+- frontend `v1.1.693`は、`get_customer_order_feature_status`と得意先別公開設定の両方が有効になるまで注文機能を表示しない。
+
+## 得意先別の受注公開設定
+
+- `customer_display_settings.customer_ordering_enabled boolean not null default false`を追加する。
+- migration適用時は既存得意先をすべて`false`にし、明示的に公開した得意先だけ`true`へ変更する。
+- 得意先管理の既存権限とRLSでのみ更新を許可し、得意先ユーザー自身には変更を許可しない。
+- `get_customer_order_feature_status`の`customer_ordering`は、全体機能が有効かつログイン中の得意先の`customer_ordering_enabled = true`の場合だけ`true`を返す。
+- `preview_customer_order`、`place_customer_order`、`list_customer_orders`も同じ公開条件をサーバー側で再確認し、非公開中は注文作成・参照を許可しない。
+- 社内向けの`internal_management`は得意先別公開設定と分離し、受注準備・テストを継続できるようにする。
+- ロールバック時は全得意先の`customer_ordering_enabled`を`false`へ戻し、作成済み注文は削除しない。
 
 ## 業務フロー
 
@@ -176,6 +186,7 @@
 
 ## 受入条件
 
+- 受注公開が未設定または`false`の得意先には、注文入口と注文操作を表示せず、注文RPCも拒否する。
 - 得意先は自社注文以外を参照できない。
 - ブラウザで価格や合計を改変しても、保存値へ反映されない。
 - 二重クリック、通信再送、更新ボタン連打で注文が重複しない。
@@ -190,7 +201,7 @@
 
 1. DB migrationとRPCをprivate repositoryで実装・検証する。
 2. `get_customer_order_feature_status`は初期状態で両機能をfalseにする。
-3. frontend `v1.1.692`を本番反映する。
+3. frontend `v1.1.693`を本番反映する。
 4. 社内管理だけを有効化し、テスト注文とB2 CSV取込みを確認する。
 5. 得意先テストアカウントだけ注文を有効化する。
 6. 受注、在庫引当、取消、出荷、返送番号、コア返却まで通しで確認後、対象を拡大する。

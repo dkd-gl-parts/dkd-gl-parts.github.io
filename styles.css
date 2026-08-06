@@ -2157,6 +2157,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-access-status { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 2px 8px; font-size: 11px; font-weight: 800; background: #eef8f1; color: #188344; }
 .customer-access-status.inactive { background: #fff3e0; color: #9a5b00; }
 .customer-access-management-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: -2px 0 14px; }
+.customer-order-publication { min-width: 0; margin: 9px 0 14px; padding: 11px 12px; border: 1px solid #efb4aa; border-radius: 8px; background: #fff6f4; display: flex; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer; }
+.customer-order-publication.enabled { border-color: #7bc493; background: #eef9f1; }
+.customer-order-publication-copy { min-width: 0; }
+.customer-order-publication-copy strong { display: block; color: #9f2f25; font-size: 13px; line-height: 1.4; }
+.customer-order-publication.enabled .customer-order-publication-copy strong { color: #18743a; }
+.customer-order-publication-copy small { display: block; margin-top: 3px; color: #667085; font-size: 10px; line-height: 1.5; }
+.customer-order-publication-control { position: relative; flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; }
+.customer-order-publication-control input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.customer-order-publication-slider { position: relative; width: 46px; height: 26px; border-radius: 999px; background: #aeb7c4; box-shadow: inset 0 0 0 1px rgba(27,39,55,.14); transition: background .16s ease; }
+.customer-order-publication-slider::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(27,39,55,.25); transition: transform .16s ease; }
+.customer-order-publication-control input:checked + .customer-order-publication-slider { background: #258348; }
+.customer-order-publication-control input:checked + .customer-order-publication-slider::after { transform: translateX(20px); }
+.customer-order-publication-control input:focus-visible + .customer-order-publication-slider { outline: 3px solid rgba(37,99,199,.28); outline-offset: 2px; }
+.customer-order-publication-state { min-width: 44px; color: #9f2f25; font-size: 12px; font-weight: 800; text-align: center; white-space: nowrap; }
+.customer-order-publication.enabled .customer-order-publication-state { color: #18743a; }
 .detail-customer-section { margin-top: 12px; }
 .detail-customer-panel { border: 1px solid #e5edf8; border-radius: 8px; background: #fbfdff; padding: 10px 12px; }
 .detail-customer-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
@@ -2217,6 +2232,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .customer-access-summary, .customer-setting-grid, .customer-rule-form { grid-template-columns: 1fr; }
   .customer-access-save-bar { position: static; align-items: stretch; flex-direction: column; gap: 10px; }
   .customer-access-save-btn { width: 100%; white-space: normal; }
+  .customer-order-publication { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .customer-order-publication-control { width: 100%; justify-content: flex-end; }
   .customer-category-toolbar { align-items: flex-start; flex-direction: column; }
   .customer-category-grid { grid-template-columns: 1fr 1fr; }
 }
