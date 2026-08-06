@@ -117,6 +117,16 @@ const customerLoad = sourceBetween("async function loadCustomerShippingRates", "
 if (!customerLoad.includes("fetchAllShippingRateRows(") || !customerLoad.includes("true")) {
   throw new Error("customer shipping list must load only active master rows");
 }
+if ((customerLoad.match(/fetchAllShippingRateRows\(/g) || []).length < 2 ||
+    !customerLoad.includes("result.error && requestSeq === shippingRateLoadSeq")) {
+  throw new Error("customer shipping list must automatically retry one transient load failure");
+}
+const customerShippingRender = sourceBetween("function renderCustomerShippingRates", "async function enterShippingRateMgmt");
+if (!customerShippingRender.includes('id=\'customer-shipping-retry\'') ||
+    !customerShippingRender.includes("bindCustomerShippingRetry()") ||
+    !customerLoad.includes('addEventListener("click", loadCustomerShippingRates)')) {
+  throw new Error("customer shipping load errors must provide a working reload action");
+}
 
 const managementLoad = sourceBetween("async function loadShippingRateMgmt", "function renderShippingRateMgmt");
 if (!managementLoad.includes("fetchAllShippingRateRows(") || !managementLoad.includes("false")) {

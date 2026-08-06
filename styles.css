@@ -2818,6 +2818,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-shipping-cell strong { color: #17231f; font-size: 13px; }
 .customer-shipping-mobile-label { display: none; color: #78847f; font-size: 10px; font-weight: 800; }
 .customer-shipping-empty { padding: 34px 18px; color: #78847f; font-size: 12px; text-align: center; }
+.customer-shipping-empty.save-err { display: grid; justify-items: center; gap: 12px; }
+.customer-shipping-retry { min-width: 112px; }
 @media(max-width:900px){
   .customer-shipping-toolbar-layout { grid-template-columns: 1fr; gap: 18px; }
   .customer-shipping-head { display: none; }

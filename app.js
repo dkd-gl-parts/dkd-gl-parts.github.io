@@ -4660,7 +4660,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.688";
+var APP_VERSION       = "v1.1.689";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -8343,14 +8343,21 @@ async function loadCustomerShippingRates() {
   var requestSeq = ++shippingRateLoadSeq;
   var host = document.getElementById("customer-shipping-list");
   if (host) host.innerHTML = "<div class='customer-shipping-empty'>" + esc(t("loading")) + "</div>";
+  var selectColumns = "shipping_rate_id,carrier_name,service_name,package_size_label,max_size_cm,max_weight_kg,prefecture_code,standard_fee_jpy,remote_island_fee_jpy,remote_island_condition,note,origin_region,tax_type,display_order,is_active";
   var result = await fetchAllShippingRateRows(
-    "shipping_rate_id,carrier_name,service_name,package_size_label,max_size_cm,max_weight_kg,prefecture_code,standard_fee_jpy,remote_island_fee_jpy,remote_island_condition,note,origin_region,tax_type,display_order,is_active",
+    selectColumns,
     true
   );
+  if (result.error && requestSeq === shippingRateLoadSeq) {
+    console.warn("customer shipping rates initial lookup failed; retrying", result.error);
+    result = await fetchAllShippingRateRows(
+      selectColumns,
+      true
+    );
+  }
   if (requestSeq !== shippingRateLoadSeq) return;
   if (result.error) {
     console.warn("customer shipping rates lookup failed", result.error);
-    shippingRateRows = [];
     renderCustomerShippingRates(true);
     return;
   }
@@ -8360,13 +8367,19 @@ async function loadCustomerShippingRates() {
   renderCustomerShippingRates();
 }
 
+function bindCustomerShippingRetry() {
+  var retry = document.getElementById("customer-shipping-retry");
+  if (retry) retry.addEventListener("click", loadCustomerShippingRates);
+}
+
 function renderCustomerShippingRates(loadError) {
   var host = document.getElementById("customer-shipping-list");
   var count = document.getElementById("customer-shipping-count");
   if (!host) return;
   if (loadError) {
     if (count) count.textContent = "-";
-    host.innerHTML = "<div class='customer-shipping-empty save-err'>" + esc(t("shipping_load_error")) + "</div>";
+    host.innerHTML = "<div class='customer-shipping-empty save-err'><span>" + esc(t("shipping_load_error")) + "</span><button class='customer-portal-list-button customer-shipping-retry' id='customer-shipping-retry' type='button'>" + esc(t("btn_reload")) + "</button></div>";
+    bindCustomerShippingRetry();
     return;
   }
   var rows = filteredShippingRows("customer-shipping-prefecture", "customer-shipping-carrier", "customer-shipping-service", "customer-shipping-size");
