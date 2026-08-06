@@ -1,36 +1,43 @@
-# D-CATS search layout design QA
+# D-CATS authentication brand lockup design QA
 
 ## Source and implementation
 
-- Source mock: `C:\Users\yamam\.codex\generated_images\019fd0a8-f714-7391-a0ee-d2ae6b8cf62d\exec-f7fee378-26b2-4780-906b-7c08d98ade78.png`
-- Desktop implementation capture: `outputs/dcats-search-layout-desktop.png`
-- Mobile implementation capture: `outputs/dcats-search-layout-mobile.png`
-- Browser preview: `outputs/search-layout-preview.html`
+- Source visual truth: `outputs/dcats-brand-lockup-before.png`
+- Revised desktop capture: `outputs/dcats-brand-lockup-after.png`
+- Revised mobile capture: `outputs/dcats-brand-lockup-mobile.png`
+- Revised password-reset capture: `outputs/dcats-brand-lockup-forgot-mobile-after.png`
+- Local implementation URL: `http://127.0.0.1:4175/`
 
-## Viewports and state
+## Viewports, pixels, and state
 
-- Desktop: 1440 × 900; the authenticated search shell is represented at its production 320 px left-column width.
-- Mobile: 390 × 844; no horizontal overflow.
-- State: query `27060-b2070`, category `すべて`, one selected result, clear control enabled.
-- Empty-state interaction: clearing the query and keeping category `すべて` disables `条件をクリア` and changes the result hint to `品番を入力してください`.
+- Desktop source and implementation: 640 x 720 pixels at a 640 x 720 CSS viewport and browser density 1.
+- Mobile implementation: 390 x 844 pixels at a 390 x 844 CSS viewport and browser density 1.
+- State: unauthenticated Japanese login screen, followed by the password-reset entry screen.
+- No density normalization was required because captures used matching CSS and pixel dimensions.
 
 ## Comparison evidence
 
-- The query input and primary red search action remain on the first row.
-- Category remains a full-width secondary row with the existing compact label/select proportions.
-- Result count and `条件をクリア` now share one 40 px utility row, matching the selected mock's hierarchy and eliminating the former standalone clear-link row.
-- The secondary action uses a subtle border and neutral text so it does not compete with the red primary action.
-- The selected product card begins immediately after the utility row and retains the DAIKO-red selected state.
-- Desktop and mobile captures were compared with the source mock in the same visual comparison input.
+- Full-view comparison: the source stacked a 72 px icon above a 30 px wordmark, creating two competing focal points. The revision combines a 54 px icon and 30 px wordmark in one horizontal lockup with a 12 px gap.
+- Focused brand region: the revised lockup measures 192.3 x 54 CSS px on mobile; the icon is 54 x 54 and the wordmark is 126.3 x 30, vertically centered.
+- Typography: the existing system font and 800 weight are retained; letter spacing was reduced from 0.10 em to 0.08 em for a tighter wordmark.
+- Spacing: the icon, wordmark, subtitle, and version now read as one compact brand block while the rest of the login-card rhythm remains unchanged.
+- Colors: the navy, white, DAIKO red, and existing semantic tokens are unchanged.
+- Asset quality: the existing raster D-CATS mark is reused without stretching, replacement, or reconstruction.
+- Copy: D-CATS, subtitle, version, and authentication copy are unchanged.
 
-## Findings and resolution history
+## Findings and comparison history
 
+- Earlier P2: the vertically stacked icon and wordmark appeared as separate brand elements and made the card top-heavy.
+  - Fix: introduced a shared horizontal `.login-brand-lockup`, reduced the mark to 54 px on login and 48 px on reset-related cards, and aligned it with the wordmark.
+  - Post-fix evidence: `outputs/dcats-brand-lockup-after.png` and `outputs/dcats-brand-lockup-mobile.png`.
+- Earlier P2: the password-reset card extended past the 390 px mobile viewport.
+  - Fix: changed `.reg-card` to `width: calc(100% - 40px)` with centered margins.
+  - Post-fix evidence: `outputs/dcats-brand-lockup-forgot-mobile-after.png`; measured card bounds are x=20 through x=370 with no horizontal overflow.
 - P0: none.
 - P1: none.
-- P2: none after implementation.
-- Interaction check: clear control correctly resets query/category in the preview and becomes disabled in the initial state.
+- P2 after fixes: none.
+- Primary interaction tested: opened password-reset entry and returned to login.
 - Console check: no warning or error entries.
-- Automated verification: syntax, release assets, search workload, shared frontend regression guards, static build, and security-header contract all passed.
 
 ## Final result
 
