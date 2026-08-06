@@ -36,10 +36,35 @@ if (!featureStatus.includes('sb.rpc("get_customer_order_feature_status")')) {
 if (!source.includes('var customerOrderFeatureStatus = { loaded: false, customer_ordering: false, internal_management: false')) {
   throw new Error("order features must default to disabled");
 }
+const displayDefaults = sourceBetween("function defaultCustomerDisplaySettings", "function normalizeCustomerShippingChargeRule");
+if (!displayDefaults.includes("customer_ordering_enabled: false")) {
+  throw new Error("customer ordering publication must default to hidden");
+}
 
 const customerOrderAccess = sourceBetween("function canUseCustomerOrdering", "function canManageSalesOrders");
-if (!customerOrderAccess.includes("isCustomerViewer()") || !customerOrderAccess.includes('customerOrderFeatureEnabled("customer_ordering")')) {
-  throw new Error("customer ordering must require both the customer role and backend readiness");
+if (!customerOrderAccess.includes("isCustomerViewer()") ||
+    !customerOrderAccess.includes('customerOrderFeatureEnabled("customer_ordering")') ||
+    !customerOrderAccess.includes("customerOrderingPublishedForViewer()")) {
+  throw new Error("customer ordering must require the customer role, backend readiness, and per-customer publication");
+}
+const publicationAccess = sourceBetween("function customerOrderingPublishedForViewer", "function canUseCustomerOrdering");
+if (!publicationAccess.includes('customerViewerSetting("customer_ordering_enabled", false)')) {
+  throw new Error("customer ordering publication must fail closed for missing settings");
+}
+function evaluateCustomerOrderingAccess(options) {
+  return vm.runInNewContext(`${publicationAccess}\n${customerOrderAccess}\ncanUseCustomerOrdering();`, {
+    isCustomerViewer: () => options.customerViewer,
+    customerOrderFeatureEnabled: (key) => key === "customer_ordering" && options.featureEnabled,
+    customerViewerSetting: (key, fallback) => key === "customer_ordering_enabled" ? options.published : fallback,
+    canViewProductSearch: () => options.productSearch
+  });
+}
+if (!evaluateCustomerOrderingAccess({ customerViewer: true, featureEnabled: true, published: true, productSearch: true }) ||
+    evaluateCustomerOrderingAccess({ customerViewer: true, featureEnabled: true, published: false, productSearch: true }) ||
+    evaluateCustomerOrderingAccess({ customerViewer: true, featureEnabled: false, published: true, productSearch: true }) ||
+    evaluateCustomerOrderingAccess({ customerViewer: false, featureEnabled: true, published: true, productSearch: true }) ||
+    evaluateCustomerOrderingAccess({ customerViewer: true, featureEnabled: true, published: true, productSearch: false })) {
+  throw new Error("customer ordering access must fail closed unless every access condition is true");
 }
 const internalOrderAccess = sourceBetween("function canManageSalesOrders", "function canViewManagementScreen");
 if (!internalOrderAccess.includes('customerOrderFeatureEnabled("internal_management")') || !internalOrderAccess.includes('"sales_order.manage"')) {
@@ -98,12 +123,24 @@ const portalRender = sourceBetween("function renderCustomerPortal", "async funct
 if (!portalRender.includes('orderGuide.hidden = !canUseCustomerOrdering()')) {
   throw new Error("customer order entry must stay hidden until ordering is enabled");
 }
+const customerAccessRender = sourceBetween("function renderCustomerAccessDetail", "function renderCustomerAccessRuleForm");
+if (!customerAccessRender.includes("data-customer-setting='customer_ordering_enabled'") ||
+    !customerAccessRender.includes("role='switch'") ||
+    !customerAccessRender.includes("customer_access_order_hidden")) {
+  throw new Error("customer management must render a per-customer ordering publication switch");
+}
+const customerAccessSave = sourceBetween("async function saveCustomerAccessSettings", "async function setCustomerAccessActive");
+if (!customerAccessSave.includes('.from("customer_display_settings").upsert(data')) {
+  throw new Error("customer ordering publication must be saved with customer display settings");
+}
 
 [
   ".customer-order-workspace",
   ".customer-order-shipping-pane",
   ".sales-order-workspace",
   ".sales-order-tracking-grid",
+  ".customer-order-publication",
+  ".customer-order-publication-slider",
   "@media (max-width: 820px)"
 ].forEach((fragment) => {
   if (!css.includes(fragment)) throw new Error(`responsive order style is missing: ${fragment}`);
@@ -112,10 +149,17 @@ if (!portalRender.includes('orderGuide.hidden = !canUseCustomerOrdering()')) {
 if ((source.match(/customer_order_title:/g) || []).length !== 3 || (source.match(/sales_order_mgmt_title:/g) || []).length !== 3) {
   throw new Error("order screen titles must be translated for all supported languages");
 }
+if ((source.match(/customer_access_order_publication:/g) || []).length !== 3 ||
+    (source.match(/customer_access_order_hidden:/g) || []).length !== 3 ||
+    (source.match(/customer_access_order_visible:/g) || []).length !== 3) {
+  throw new Error("customer ordering publication controls must be translated for all supported languages");
+}
 
 [
   "API連携は保留",
   "target_idempotency_key",
+  "customer_ordering_enabled boolean not null default false",
+  "注文RPCも拒否",
   "出力列数: 95列",
   "feature statusをfalse"
 ].forEach((fragment) => {

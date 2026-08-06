@@ -1045,6 +1045,10 @@ var TRANSLATIONS = {
     customer_access_restore_confirm: "この得意先を再表示しますか？",
     customer_access_delete_confirm: "この得意先を削除しますか？表示設定・表示範囲・ユーザー紐づけも削除されます。",
     customer_access_display_settings: "得意先向け表示ルール",
+    customer_access_order_publication: "受注機能の公開",
+    customer_access_order_publication_help: "公開にすると、受注機能全体が有効な場合に、この得意先の商品画面へ注文ボタンを表示します。初期値は非公開です。",
+    customer_access_order_hidden: "非公開",
+    customer_access_order_visible: "公開",
     customer_access_rule_help: "販売価格をOFFにすると、0円表示・価格あり商品のみ表示もOFFになります。価格あり商品のみ表示をONにすると、価格未設定商品は非表示になります。",
     customer_access_shipping_rule: "送料条件",
     customer_access_shipping_rule_help: "未設定時は送料別途です。変更後は上の保存ボタンを押すと販売管理と得意先向け価格表へ反映されます。",
@@ -2589,6 +2593,10 @@ var TRANSLATIONS = {
     customer_access_restore_confirm: "Restore this customer?",
     customer_access_delete_confirm: "Delete this customer? Display settings, visibility rules, and user links will also be deleted.",
     customer_access_display_settings: "Customer display rules",
+    customer_access_order_publication: "Publish ordering",
+    customer_access_order_publication_help: "When enabled, order actions appear for this customer only while the overall ordering feature is available. The default is hidden.",
+    customer_access_order_hidden: "Hidden",
+    customer_access_order_visible: "Published",
     customer_access_rule_help: "When sales price is off, zero-price display and priced-only display are also off. When priced-only is on, products without prices are hidden.",
     customer_access_shipping_rule: "Shipping Terms",
     customer_access_shipping_rule_help: "Shipping is charged separately by default. Save changes to apply them to Sales Management and the customer price list.",
@@ -4126,6 +4134,10 @@ var TRANSLATIONS = {
     customer_access_restore_confirm: "要恢复显示此客户吗？",
     customer_access_delete_confirm: "要删除此客户吗？显示设置、显示范围和用户关联也会被删除。",
     customer_access_display_settings: "客户显示规则",
+    customer_access_order_publication: "公开订购功能",
+    customer_access_order_publication_help: "开启后，仅在整体订购功能可用时向该客户显示订购操作。默认不公开。",
+    customer_access_order_hidden: "不公开",
+    customer_access_order_visible: "已公开",
     customer_access_rule_help: "关闭销售价格时，0日元显示和仅显示有价格商品也会关闭。开启仅显示有价格商品时，未设置价格的商品会隐藏。",
     customer_access_shipping_rule: "运费条件",
     customer_access_shipping_rule_help: "默认运费另计。保存更改后将应用到销售管理和客户价格表。",
@@ -5512,6 +5524,7 @@ function defaultCustomerDisplaySettings() {
     show_zero_price: false,
     priced_products_only: false,
     show_parts_without_price: true,
+    customer_ordering_enabled: false,
     shipping_charge_rule: "separate"
   };
 }
@@ -5810,8 +5823,16 @@ function canManageFinishedProductShipping() {
 function customerOrderFeatureEnabled(key) {
   return !!(customerOrderFeatureStatus && customerOrderFeatureStatus.loaded && customerOrderFeatureStatus[key] === true);
 }
+function customerOrderingPublishedForViewer() {
+  return customerViewerSetting("customer_ordering_enabled", false) === true;
+}
 function canUseCustomerOrdering() {
-  return !!(isCustomerViewer() && customerOrderFeatureEnabled("customer_ordering") && canViewProductSearch());
+  return !!(
+    isCustomerViewer() &&
+    customerOrderFeatureEnabled("customer_ordering") &&
+    customerOrderingPublishedForViewer() &&
+    canViewProductSearch()
+  );
 }
 function canManageSalesOrders() {
   if (!customerOrderFeatureEnabled("internal_management") || isExternalViewer() || isCustomerPortalSearchMode()) return false;
@@ -34861,6 +34882,12 @@ function renderCustomerAccessDetail() {
   }
   html += "<button class='btn-sm-del' id='btn-customer-access-delete' type='button'>" + esc(t("customer_access_delete_customer")) + "</button>";
   html += "</div>";
+  var orderingEnabled = s.customer_ordering_enabled === true;
+  html += "<div class='component-section-title'>" + esc(t("customer_access_order_publication")) + "</div>";
+  html += "<label class='customer-order-publication" + (orderingEnabled ? " enabled" : "") + "' data-customer-order-publication for='customer-ordering-enabled'>";
+  html += "<span class='customer-order-publication-copy'><strong>" + esc(t("customer_access_order_publication")) + "</strong><small id='customer-order-publication-help'>" + esc(t("customer_access_order_publication_help")) + "</small></span>";
+  html += "<span class='customer-order-publication-control'><input type='checkbox' role='switch' id='customer-ordering-enabled' data-customer-setting='customer_ordering_enabled' aria-describedby='customer-order-publication-help'" + (orderingEnabled ? " checked" : "") + "><span class='customer-order-publication-slider' aria-hidden='true'></span><span class='customer-order-publication-state' id='customer-order-publication-state'>" + esc(t(orderingEnabled ? "customer_access_order_visible" : "customer_access_order_hidden")) + "</span></span>";
+  html += "</label>";
   html += "<div class='component-section-title'>" + esc(t("customer_access_display_settings")) + "</div>";
   html += "<div class='customer-setting-grid'>";
   [
@@ -34948,6 +34975,7 @@ function bindCustomerAccessDetailEvents() {
   detail.querySelectorAll("[data-customer-setting]").forEach(function(el) {
     el.addEventListener("change", function() {
       syncCustomerDisplayRuleControls();
+      syncCustomerOrderPublicationControl();
       updateCustomerAccessSaveState();
     });
   });
@@ -34975,6 +35003,7 @@ function bindCustomerAccessDetailEvents() {
   var deleteBtn = document.getElementById("btn-customer-access-delete");
   if (deleteBtn) deleteBtn.addEventListener("click", deleteCustomerAccessCustomer);
   syncCustomerAccessCategoryCount();
+  syncCustomerOrderPublicationControl();
 }
 
 function setCustomerAccessCategoriesChecked(checked) {
@@ -35010,6 +35039,16 @@ function syncCustomerDisplayRuleControls() {
     var label = document.querySelector("[data-customer-check='" + row[0] + "']");
     if (label) label.classList.toggle("disabled", !!row[2]);
   });
+}
+
+function syncCustomerOrderPublicationControl() {
+  var input = document.querySelector("[data-customer-setting='customer_ordering_enabled']");
+  var wrapper = document.querySelector("[data-customer-order-publication]");
+  var state = document.getElementById("customer-order-publication-state");
+  var enabled = !!(input && input.checked);
+  if (wrapper) wrapper.classList.toggle("enabled", enabled);
+  if (state) state.textContent = t(enabled ? "customer_access_order_visible" : "customer_access_order_hidden");
+  if (input) input.setAttribute("aria-label", t(enabled ? "customer_access_order_visible" : "customer_access_order_hidden"));
 }
 
 function syncCustomerRuleScopeFields() {
