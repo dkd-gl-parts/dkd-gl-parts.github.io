@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.701">
+<meta name="dcats-app-version" content="v1.1.702">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="application-name" content="D-CATS">
 <meta name="apple-mobile-web-app-title" content="D-CATS">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.701"; -->
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.702"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co https://zipcloud.ibsnet.co.jp; form-action 'self';">
 <title>D-CATS</title>
 <link rel="manifest" href="site.webmanifest?v=1.1.697&amp;brand=2">
@@ -19,7 +19,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png?v=1.1.697&amp;brand=2">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.701&amp;ranking=7&amp;brand=3">
+<link rel="stylesheet" href="styles.css?v=1.1.702&amp;ranking=7&amp;brand=3">
 </head>
 <body>
 
@@ -609,6 +609,20 @@
         <select id="sales-order-status"><option value="all">すべての状態</option><option value="submitted">受付待ち</option><option value="accepted">受付済み</option><option value="shipping_ready">出荷準備</option><option value="shipped">出荷済み</option><option value="completed">完了</option><option value="cancelled">取消</option></select>
         <button type="button" class="btn-primary" id="sales-order-reload">検索</button>
         <button type="button" class="sales-order-b2-button" id="sales-order-export-b2" disabled>B2 CSV出力</button>
+        <button type="button" class="sales-order-b2-import-button" id="sales-order-import-b2">B2発送データ取込</button>
+        <input type="file" id="sales-order-import-b2-file" accept=".csv,text/csv" hidden>
+      </div>
+    </section>
+    <section class="sales-order-b2-import" id="sales-order-b2-import" hidden aria-labelledby="sales-order-b2-import-title">
+      <div class="sales-order-b2-import-head">
+        <div><span>B2 ISSUED DATA</span><h2 id="sales-order-b2-import-title">B2発送データの確認</h2><p id="sales-order-b2-import-summary">発行済データCSVを確認しています。</p></div>
+        <button type="button" class="sales-order-b2-import-close" id="sales-order-import-b2-close" aria-label="閉じる">&#10005;</button>
+      </div>
+      <div class="sales-order-b2-import-table" id="sales-order-b2-import-table" aria-live="polite"></div>
+      <div class="sales-order-b2-import-actions">
+        <span id="sales-order-b2-import-message" aria-live="polite"></span>
+        <button type="button" class="sales-order-b2-import-cancel" id="sales-order-import-b2-cancel">取消</button>
+        <button type="button" class="sales-order-b2-import-confirm" id="sales-order-import-b2-confirm" disabled>発送データを反映</button>
       </div>
     </section>
     <section class="sales-order-workspace">
@@ -3764,7 +3778,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
 <script src="vendor/qrcode.min.js?v=1.0.0"></script>
-<script src="app.js?v=1.1.701"></script>
+<script src="app.js?v=1.1.702"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.625&amp;ranking=17"></script>
 </body>
 </html>

@@ -2204,6 +2204,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-shipping-rule-option small { display: block; margin-top: 3px; color: #667085; font-size: 10px; line-height: 1.45; }
 .customer-shipping-rule-option.separate:has(input:checked) { border-color: #d49a28; background: #fff8e6; }
 .customer-shipping-rule-option.free:has(input:checked) { border-color: #4ca66a; background: #eef9f1; }
+.customer-default-shipping-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0 8px; }
+.customer-default-shipping-grid label { min-width: 0; border-left: 3px solid #287356; padding: 9px 10px; background: #f3f8f5; }
+.customer-default-shipping-grid label:last-child { border-left-color: #b85a45; background: #fff5f2; }
+.customer-default-shipping-grid span { display: block; margin-bottom: 5px; color: #405268; font-size: 11px; font-weight: 800; }
+.customer-default-shipping-grid select { width: 100%; min-width: 0; height: 36px; border: 1px solid #c4cfca; border-radius: 5px; padding: 0 8px; background: #fff; color: #26384d; font-size: 11px; }
 .customer-category-control { margin: 10px 0 16px; border: 1px solid #dce4ee; border-radius: 8px; overflow: hidden; background: #fff; }
 .customer-category-toolbar { min-height: 42px; padding: 7px 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #e7ecf3; background: #f7f9fc; }
 .customer-category-toolbar > span { color: #405268; font-size: 12px; font-weight: 800; }
@@ -2229,7 +2234,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .customer-rule-candidates, .customer-rule-selected { margin-left: 0; }
 }
 @media(max-width:640px){
-  .customer-access-summary, .customer-setting-grid, .customer-rule-form { grid-template-columns: 1fr; }
+  .customer-access-summary, .customer-setting-grid, .customer-default-shipping-grid, .customer-rule-form { grid-template-columns: 1fr; }
   .customer-access-save-bar { position: static; align-items: stretch; flex-direction: column; gap: 10px; }
   .customer-access-save-btn { width: 100%; white-space: normal; }
   .customer-order-publication { align-items: flex-start; flex-direction: column; gap: 10px; }
@@ -5160,12 +5165,47 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .sales-order-kicker { color: var(--dcats-brand-red); font-size: 9px; font-weight: 900; }
 .sales-order-toolbar h1 { margin-top: 3px; color: #182230; font-size: 22px; letter-spacing: 0; }
 .sales-order-toolbar p { margin-top: 5px; color: #667085; font-size: 11px; }
-.sales-order-filter-row { display: grid; grid-template-columns: minmax(230px, 1fr) 150px auto auto; gap: 8px; }
+.sales-order-filter-row { display: grid; grid-template-columns: minmax(230px, 1fr) 150px auto auto auto; gap: 8px; }
 .sales-order-filter-row input,
 .sales-order-filter-row select { height: 38px; min-width: 0; border: 1px solid #b8c1cc; border-radius: 6px; padding: 0 10px; background: #fff; color: #263241; font-size: 12px; }
 .sales-order-b2-button { min-height: 38px; border: 1px solid #1f65a8; border-radius: 6px; padding: 0 13px; background: #fff; color: #1f65a8; font-size: 11px; font-weight: 800; cursor: pointer; white-space: nowrap; }
 .sales-order-b2-button:hover { background: #eff6fc; }
 .sales-order-b2-button:disabled { border-color: #c8cfd7; color: #929ba5; cursor: not-allowed; }
+.sales-order-b2-import-button { min-height: 38px; border: 1px solid #287356; border-radius: 6px; padding: 0 13px; background: #287356; color: #fff; font-size: 11px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.sales-order-b2-import-button:hover { background: #1f6248; }
+.sales-order-b2-import { border-bottom: 1px solid #cfd8d3; padding: 18px 24px; background: #f7faf8; }
+.sales-order-b2-import[hidden] { display: none; }
+.sales-order-b2-import-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 12px; }
+.sales-order-b2-import-head span { color: #287356; font-size: 9px; font-weight: 900; }
+.sales-order-b2-import-head h2 { margin-top: 2px; color: #1d2c25; font-size: 17px; letter-spacing: 0; }
+.sales-order-b2-import-head p { margin-top: 4px; color: #64736c; font-size: 10px; }
+.sales-order-b2-import-close { width: 30px; height: 30px; border: 1px solid #c8d1cc; border-radius: 5px; background: #fff; color: #617068; cursor: pointer; }
+.sales-order-b2-import-table { max-height: 300px; overflow: auto; border: 1px solid #d3dcd7; background: #fff; }
+.sales-order-b2-import-row { display: grid; grid-template-columns: 42px minmax(190px, 1.2fr) 82px 118px minmax(125px, .8fr) minmax(180px, 1fr); align-items: center; gap: 10px; min-width: 850px; border-bottom: 1px solid #e4e9e6; padding: 9px 10px; color: #34433c; font-size: 10px; }
+.sales-order-b2-import-row:last-child { border-bottom: 0; }
+.sales-order-b2-import-row.head { position: sticky; top: 0; z-index: 1; min-height: 34px; background: #edf2ef; color: #617068; font-size: 9px; font-weight: 800; }
+.sales-order-b2-import-row.ready { box-shadow: inset 3px 0 0 #2b8a57; background: #f8fcfa; }
+.sales-order-b2-import-row.duplicate { box-shadow: inset 3px 0 0 #88939d; background: #fafbfb; }
+.sales-order-b2-import-row.invalid,
+.sales-order-b2-import-row.not_found,
+.sales-order-b2-import-row.conflict { box-shadow: inset 3px 0 0 #c94840; background: #fff8f7; }
+.sales-order-b2-import-row strong,
+.sales-order-b2-import-row small { display: block; min-width: 0; overflow-wrap: anywhere; }
+.sales-order-b2-import-row small { margin-top: 2px; color: #748078; font-size: 9px; }
+.sales-order-b2-import-row .tracking { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-weight: 800; letter-spacing: 0; }
+.sales-order-b2-import-row em { display: inline-block; border-radius: 3px; padding: 2px 5px; background: #eaf6ef; color: #236444; font-size: 9px; font-style: normal; font-weight: 800; }
+.sales-order-b2-import-row:not(.ready) em { background: #f1f2f3; color: #59636b; }
+.sales-order-b2-import-row.invalid em,
+.sales-order-b2-import-row.not_found em,
+.sales-order-b2-import-row.conflict em { background: #fff0ee; color: #a9322a; }
+.sales-order-b2-import-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.sales-order-b2-import-actions > span { flex: 1; color: #496057; font-size: 10px; font-weight: 700; }
+.sales-order-b2-import-actions > span.error { color: #b42318; }
+.sales-order-b2-import-cancel,
+.sales-order-b2-import-confirm { min-height: 36px; border-radius: 6px; padding: 0 14px; font-size: 11px; font-weight: 800; cursor: pointer; }
+.sales-order-b2-import-cancel { border: 1px solid #a8b3ad; background: #fff; color: #44554d; }
+.sales-order-b2-import-confirm { border: 1px solid #287356; background: #287356; color: #fff; }
+.sales-order-b2-import-confirm:disabled { border-color: #cbd3cf; background: #dfe4e2; color: #87918c; cursor: not-allowed; }
 .sales-order-workspace { display: grid; grid-template-columns: minmax(360px, 430px) minmax(0, 1fr); min-height: calc(100vh - 138px); }
 .sales-order-list-pane { min-width: 0; border-right: 1px solid #d5dbe1; background: #f8f9fb; }
 .sales-order-list-head { display: flex; align-items: center; justify-content: space-between; height: 44px; border-bottom: 1px solid #d5dbe1; padding: 0 14px; background: #e9edf1; color: #344054; font-size: 11px; }
@@ -5243,13 +5283,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .sales-order-action.cancel { border-color: #d64545; color: #b42318; }
 .sales-order-detail-message { min-height: 18px; margin-top: 9px; color: #22643e; font-size: 10px; font-weight: 700; text-align: right; }
 .sales-order-detail-message.error { color: #b42318; }
+.sales-order-shipment-history { border-top: 1px solid #dbe1e6; }
+.sales-order-shipment-history-row { display: grid; grid-template-columns: 86px minmax(180px, 1fr) minmax(170px, .8fr) 54px; align-items: center; gap: 12px; border-bottom: 1px solid #e1e5e9; padding: 10px; }
+.sales-order-shipment-history-row.superseded { opacity: .58; background: #f7f8f9; }
+.sales-order-shipment-history-row .direction { justify-self: start; border: 1px solid #80ae98; border-radius: 4px; padding: 3px 6px; background: #edf8f2; color: #236444; font-size: 9px; font-weight: 800; }
+.sales-order-shipment-history-row .direction.core_return { border-color: #d9a091; background: #fff4f1; color: #934536; }
+.sales-order-shipment-history-row strong,
+.sales-order-shipment-history-row small { display: block; overflow-wrap: anywhere; }
+.sales-order-shipment-history-row strong { color: #26352f; font-size: 11px; }
+.sales-order-shipment-history-row small { margin-top: 2px; color: #748078; font-size: 9px; }
+.sales-order-shipment-history-row .state { justify-self: end; color: #64736c; font-size: 9px; font-weight: 800; }
 
 @media (max-width: 1080px) {
   .customer-order-workspace { grid-template-columns: minmax(0, 1fr) 330px; }
   .customer-order-line { grid-template-columns: minmax(180px, 1fr) 70px 112px 28px; }
   .customer-order-line-metric.total { display: none; }
   .sales-order-toolbar { align-items: stretch; flex-direction: column; }
-  .sales-order-filter-row { grid-template-columns: minmax(220px, 1fr) 150px auto auto; }
+  .sales-order-filter-row { grid-template-columns: minmax(220px, 1fr) 150px auto auto auto; }
   .sales-order-workspace { grid-template-columns: 360px minmax(0, 1fr); }
   .sales-order-list-row { grid-template-columns: 22px minmax(120px, 1fr) 70px auto; }
   .sales-order-list-count { display: none; }
@@ -5304,5 +5354,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .sales-order-address { grid-template-columns: 1fr; }
   .sales-order-address h3 { grid-column: 1; }
   .sales-order-tracking-grid { grid-template-columns: 1fr; }
+  .sales-order-shipment-history-row { grid-template-columns: 74px minmax(0, 1fr); }
+  .sales-order-shipment-history-row .state { justify-self: start; }
   .sales-order-detail-actions { align-items: stretch; flex-direction: column; }
 }
