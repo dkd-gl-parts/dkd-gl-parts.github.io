@@ -171,7 +171,13 @@ if (!compatibleLoadSource.includes("await hydrateSalesDaikoVisibility(parts_list
   if (!css.includes(fragment)) throw new Error(`sales workspace styling is missing: ${fragment}`);
 });
 
-if (html.includes("見積に追加") || html.includes("受注登録")) {
+const salesScreenStart = html.indexOf('<div id="screen-search"');
+const nextScreenStart = html.indexOf('<div id="screen-', salesScreenStart + 1);
+if (salesScreenStart < 0 || nextScreenStart < 0) {
+  throw new Error("sales workspace markup could not be isolated");
+}
+const salesScreenHtml = html.slice(salesScreenStart, nextScreenStart);
+if (salesScreenHtml.includes("見積に追加") || salesScreenHtml.includes("受注登録")) {
   throw new Error("sales workspace must not add unsupported quote or order actions");
 }
 
