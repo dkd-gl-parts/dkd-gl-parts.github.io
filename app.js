@@ -212,9 +212,27 @@ var TRANSLATIONS = {
     customer_order_preview_disabled: "価格・在庫確認は無効",
     customer_order_submit_disabled: "注文確定は無効",
     customer_order_preview_history_disabled: "開発プレビューでは注文履歴を取得しません。",
+    customer_order_address_saved_title: "以前のお届け先",
+    customer_order_address_search_placeholder: "電話番号またはお名前で検索",
+    customer_order_address_search: "検索",
+    customer_order_address_new: "新しいお届け先",
+    customer_order_address_search_hint: "過去の注文で使用したお届け先を検索できます。",
+    customer_order_address_search_loading: "お届け先を検索しています。",
+    customer_order_address_search_empty: "一致するお届け先はありません。",
+    customer_order_address_search_error: "お届け先を検索できませんでした。新規入力してください。",
+    customer_order_address_search_preview: "開発プレビューでは保存済みお届け先を検索しません。",
+    customer_order_address_selected: "お届け先を入力しました。",
+    customer_order_postal_lookup: "住所検索",
+    customer_order_postal_lookup_hint: "郵便番号7桁から住所を入力します。",
+    customer_order_postal_lookup_loading: "住所を検索しています。",
+    customer_order_postal_lookup_invalid: "郵便番号を7桁で入力してください。",
+    customer_order_postal_lookup_empty: "住所が見つかりませんでした。手入力してください。",
+    customer_order_postal_lookup_error: "住所を検索できませんでした。手入力してください。",
+    customer_order_postal_lookup_multiple: "該当する住所を選択してください。",
+    customer_order_postal_lookup_applied: "住所を入力しました。番地以降を確認してください。",
     customer_order_history_note: "受付、出荷、コア返却の状況を確認できます。",
-    customer_order_add: "注文に追加",
-    customer_order_added: "追加済み",
+    customer_order_add: "この商品を注文",
+    customer_order_added: "注文内容を確認",
     customer_order_empty: "注文する商品がありません。商品カタログから追加してください。",
     customer_order_preview_error: "価格・在庫を確認できませんでした。内容を確認して再試行してください。",
     customer_order_submit_success: "注文を受け付けました。",
@@ -1767,9 +1785,27 @@ var TRANSLATIONS = {
     customer_order_preview_disabled: "Price / Stock Disabled",
     customer_order_submit_disabled: "Order Disabled",
     customer_order_preview_history_disabled: "Order history is not requested in development preview.",
+    customer_order_address_saved_title: "Previous Delivery Addresses",
+    customer_order_address_search_placeholder: "Search by phone number or name",
+    customer_order_address_search: "Search",
+    customer_order_address_new: "New Address",
+    customer_order_address_search_hint: "Search delivery addresses used for previous orders.",
+    customer_order_address_search_loading: "Searching delivery addresses.",
+    customer_order_address_search_empty: "No matching delivery address was found.",
+    customer_order_address_search_error: "Delivery addresses could not be searched. Enter a new address.",
+    customer_order_address_search_preview: "Saved delivery addresses are not searched in development preview.",
+    customer_order_address_selected: "The delivery address has been filled in.",
+    customer_order_postal_lookup: "Find Address",
+    customer_order_postal_lookup_hint: "Fill the address from a 7-digit postal code.",
+    customer_order_postal_lookup_loading: "Searching for the address.",
+    customer_order_postal_lookup_invalid: "Enter a 7-digit postal code.",
+    customer_order_postal_lookup_empty: "No address was found. Enter it manually.",
+    customer_order_postal_lookup_error: "The address could not be searched. Enter it manually.",
+    customer_order_postal_lookup_multiple: "Select the matching address.",
+    customer_order_postal_lookup_applied: "The address has been filled in. Confirm the street number.",
     customer_order_history_note: "Review acceptance, shipping, and core-return status.",
-    customer_order_add: "Add to Order",
-    customer_order_added: "Added",
+    customer_order_add: "Order This Product",
+    customer_order_added: "Review Order",
     customer_order_empty: "No products have been added. Add products from the catalog.",
     customer_order_preview_error: "Price and inventory could not be verified. Review the order and try again.",
     customer_order_submit_success: "Your order has been received.",
@@ -3309,9 +3345,27 @@ var TRANSLATIONS = {
     customer_order_preview_disabled: "价格・库存确认已禁用",
     customer_order_submit_disabled: "订单提交已禁用",
     customer_order_preview_history_disabled: "开发预览中不会读取订单记录。",
+    customer_order_address_saved_title: "以前的收货地址",
+    customer_order_address_search_placeholder: "按电话号码或姓名搜索",
+    customer_order_address_search: "搜索",
+    customer_order_address_new: "新收货地址",
+    customer_order_address_search_hint: "可搜索以前订单中使用的收货地址。",
+    customer_order_address_search_loading: "正在搜索收货地址。",
+    customer_order_address_search_empty: "没有找到匹配的收货地址。",
+    customer_order_address_search_error: "无法搜索收货地址。请新建地址。",
+    customer_order_address_search_preview: "开发预览中不会搜索已保存的收货地址。",
+    customer_order_address_selected: "已填写收货地址。",
+    customer_order_postal_lookup: "搜索地址",
+    customer_order_postal_lookup_hint: "根据7位邮政编码填写地址。",
+    customer_order_postal_lookup_loading: "正在搜索地址。",
+    customer_order_postal_lookup_invalid: "请输入7位邮政编码。",
+    customer_order_postal_lookup_empty: "未找到地址。请手动输入。",
+    customer_order_postal_lookup_error: "无法搜索地址。请手动输入。",
+    customer_order_postal_lookup_multiple: "请选择对应地址。",
+    customer_order_postal_lookup_applied: "已填写地址。请确认街道门牌号。",
     customer_order_history_note: "可确认受理、出货和旧件返还状态。",
-    customer_order_add: "加入订单",
-    customer_order_added: "已加入",
+    customer_order_add: "订购此商品",
+    customer_order_added: "确认订单",
     customer_order_empty: "订单中没有商品。请从商品目录中添加。",
     customer_order_preview_error: "无法确认价格和库存。请检查订单后重试。",
     customer_order_submit_success: "订单已受理。",
@@ -4774,7 +4828,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.695";
+var APP_VERSION       = "v1.1.696";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5016,6 +5070,12 @@ var customerOrderPreview = null;
 var customerOrderHistoryRows = [];
 var customerOrderHistorySeq = 0;
 var customerOrderPreviewSeq = 0;
+var customerOrderAddressRows = [];
+var customerOrderAddressSearchSeq = 0;
+var customerOrderAddressSearching = false;
+var customerOrderPostalRows = [];
+var customerOrderPostalLookupSeq = 0;
+var customerOrderPostalLookingUp = false;
 var customerOrderSaving = false;
 var customerOrderActiveView = "cart";
 var salesOrderRows = [];
@@ -6006,6 +6066,7 @@ async function applyLanguage(lang) {
   if (isScreenActive("customer-orders")) {
     renderCustomerOrderCart();
     renderCustomerOrderHistory();
+    configureCustomerOrderAddressTools();
   }
   if (isScreenActive("sales-order-mgmt")) {
     renderSalesOrderList();
@@ -6970,6 +7031,12 @@ async function doLogout() {
   customerOrderHistoryRows = [];
   customerOrderHistorySeq += 1;
   customerOrderPreviewSeq += 1;
+  customerOrderAddressRows = [];
+  customerOrderAddressSearchSeq += 1;
+  customerOrderAddressSearching = false;
+  customerOrderPostalRows = [];
+  customerOrderPostalLookupSeq += 1;
+  customerOrderPostalLookingUp = false;
   customerOrderSaving = false;
   customerOrderActiveView = "cart";
   salesOrderRows = [];
@@ -7225,6 +7292,12 @@ async function loadCustomerPortalPreviewContext(customerId) {
   customerOrderCart = [];
   customerOrderPreview = null;
   customerOrderHistoryRows = [];
+  customerOrderAddressRows = [];
+  customerOrderAddressSearchSeq += 1;
+  customerOrderAddressSearching = false;
+  customerOrderPostalRows = [];
+  customerOrderPostalLookupSeq += 1;
+  customerOrderPostalLookingUp = false;
   if (customerPortalPreviewContext) restoreCustomerOrderCart();
   customerCatalogProducts = [];
   customerCatalogSelectedProduct = null;
@@ -7891,9 +7964,10 @@ async function loadCustomerCatalogAvailability(product, seq) {
     return customerCatalogAvailabilityKindHtml(product, kind, stockMap[kind], prices[index], showPrice, variantRows);
   }).join("");
   wrap.querySelectorAll("[data-customer-order-add]").forEach(function(button) {
-    button.addEventListener("click", function() {
-      addCustomerCatalogProductToOrder(product, button.dataset.customerOrderAdd, stockMap[button.dataset.customerOrderAdd], prices[kinds.indexOf(button.dataset.customerOrderAdd)], variantRows);
-      loadCustomerCatalogAvailability(product, seq);
+    button.addEventListener("click", async function() {
+      var added = addCustomerCatalogProductToOrder(product, button.dataset.customerOrderAdd, stockMap[button.dataset.customerOrderAdd], prices[kinds.indexOf(button.dataset.customerOrderAdd)], variantRows);
+      if (!added) return;
+      await enterCustomerOrders({ view: "cart", preview: false });
     });
   });
 }
@@ -8098,13 +8172,11 @@ function clearPersistedCustomerOrderCart() {
 }
 
 function addCustomerCatalogProductToOrder(product, productKind, stockQty, price, variantRows) {
-  if (!canOpenCustomerOrdering() || !product || !productDkdId(product)) return;
+  if (!canOpenCustomerOrdering() || !product || !productDkdId(product)) return false;
   var kind = normalizeProductKind(productKind || "rebuilt");
   var key = customerOrderCartKey(productDkdId(product), kind);
   var existing = customerOrderCart.find(function(item) { return item.key === key; });
-  if (existing) {
-    existing.quantity = Math.min(99, Math.max(1, Number(existing.quantity || 1) + 1));
-  } else {
+  if (!existing) {
     var policy = coreReturnPolicyForKind(kind, variantRows || []);
     customerOrderCart.push({
       key: key,
@@ -8129,6 +8201,7 @@ function addCustomerCatalogProductToOrder(product, productKind, stockQty, price,
   customerOrderPreview = null;
   persistCustomerOrderCart();
   renderCustomerOrderCart();
+  return true;
 }
 
 function customerOrderPayloadItems() {
@@ -8184,6 +8257,238 @@ function applyCustomerOrderAddress(address, overwrite) {
     var el = document.getElementById(id);
     if (el && (overwrite || !String(el.value || "").trim())) el.value = map[id];
   });
+}
+
+function customerOrderAddressSetStatus(message, isError) {
+  var host = document.getElementById("customer-order-address-status");
+  if (!host) return;
+  host.textContent = message || "";
+  host.className = "customer-order-address-status" + (isError ? " error" : "");
+}
+
+function customerOrderAddressResultRows(data) {
+  var rows = Array.isArray(data) ? data : (data && Array.isArray(data.addresses) ? data.addresses : []);
+  return rows.filter(function(row) {
+    return row && (row.recipient_name || row.company_name || row.phone_number);
+  }).slice(0, 8);
+}
+
+function customerOrderAddressLine(row) {
+  return [row.postal_code ? "〒" + row.postal_code : "", row.prefecture_name || "", row.address_line_1 || row.address || "", row.address_line_2 || row.building || ""].filter(Boolean).join(" ");
+}
+
+function renderCustomerOrderAddressResults() {
+  var host = document.getElementById("customer-order-address-results");
+  if (!host) return;
+  host.hidden = !customerOrderAddressRows.length;
+  host.innerHTML = customerOrderAddressRows.map(function(row, index) {
+    var title = [row.company_name || row.recipient_company || "", row.recipient_name || row.name || ""].filter(Boolean).join(" / ") || "-";
+    return "<button class='customer-order-address-result' type='button' data-order-address-index='" + esc(index) + "'>" +
+      "<strong>" + esc(title) + "</strong>" +
+      "<span>" + esc(row.phone_number || row.phone || "-") + "</span>" +
+      "<small>" + esc(customerOrderAddressLine(row) || "-") + "</small>" +
+    "</button>";
+  }).join("");
+  host.querySelectorAll("[data-order-address-index]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      var row = customerOrderAddressRows[parseInt(button.dataset.orderAddressIndex, 10)];
+      if (!row) return;
+      applyCustomerOrderAddress(row, true);
+      customerOrderAddressRows = [];
+      renderCustomerOrderAddressResults();
+      customerOrderAddressSetStatus(t("customer_order_address_selected"), false);
+      customerOrderPreview = null;
+      renderCustomerOrderCart();
+    });
+  });
+}
+
+async function searchCustomerOrderAddresses() {
+  if (canPreviewCustomerOrdering()) {
+    customerOrderAddressRows = [];
+    renderCustomerOrderAddressResults();
+    customerOrderAddressSetStatus(t("customer_order_address_search_preview"), false);
+    return;
+  }
+  if (!canUseCustomerOrdering() || customerOrderAddressSearching) return;
+  var input = document.getElementById("customer-order-address-search");
+  var query = input ? String(input.value || "").trim() : "";
+  if (!query) {
+    customerOrderAddressRows = [];
+    renderCustomerOrderAddressResults();
+    customerOrderAddressSetStatus(t("customer_order_address_search_hint"), false);
+    return;
+  }
+  var requestSeq = ++customerOrderAddressSearchSeq;
+  customerOrderAddressSearching = true;
+  configureCustomerOrderAddressTools();
+  customerOrderAddressSetStatus(t("customer_order_address_search_loading"), false);
+  try {
+    var result = await sb.rpc("search_customer_delivery_addresses", { target_query: query, target_limit: 8 });
+    if (requestSeq !== customerOrderAddressSearchSeq) return;
+    if (result.error) {
+      customerOrderAddressRows = [];
+      renderCustomerOrderAddressResults();
+      customerOrderAddressSetStatus(t("customer_order_address_search_error"), true);
+      return;
+    }
+    customerOrderAddressRows = customerOrderAddressResultRows(result.data);
+    renderCustomerOrderAddressResults();
+    customerOrderAddressSetStatus(t(customerOrderAddressRows.length ? "customer_order_address_search_hint" : "customer_order_address_search_empty"), false);
+  } catch (error) {
+    if (requestSeq !== customerOrderAddressSearchSeq) return;
+    customerOrderAddressRows = [];
+    renderCustomerOrderAddressResults();
+    customerOrderAddressSetStatus(t("customer_order_address_search_error"), true);
+  } finally {
+    if (requestSeq === customerOrderAddressSearchSeq) {
+      customerOrderAddressSearching = false;
+      configureCustomerOrderAddressTools();
+    }
+  }
+}
+
+function clearCustomerOrderAddress() {
+  [
+    "customer-order-company", "customer-order-recipient", "customer-order-phone", "customer-order-postal-code",
+    "customer-order-prefecture", "customer-order-address1", "customer-order-address2"
+  ].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+  var searchInput = document.getElementById("customer-order-address-search");
+  if (searchInput) searchInput.value = "";
+  customerOrderAddressRows = [];
+  customerOrderPostalRows = [];
+  renderCustomerOrderAddressResults();
+  renderCustomerOrderPostalResults();
+  customerOrderAddressSetStatus(t("customer_order_address_search_hint"), false);
+  customerOrderPostalSetStatus(t("customer_order_postal_lookup_hint"), false);
+  customerOrderPreview = null;
+  renderCustomerOrderCart();
+  var recipient = document.getElementById("customer-order-recipient");
+  if (recipient) recipient.focus();
+}
+
+function normalizeCustomerOrderPostalCode(value) {
+  return String(value == null ? "" : value).normalize("NFKC").replace(/[^0-9]/g, "").slice(0, 7);
+}
+
+function customerOrderPostalSetStatus(message, isError) {
+  var host = document.getElementById("customer-order-postal-status");
+  if (!host) return;
+  host.textContent = message || "";
+  host.className = isError ? "error" : "";
+}
+
+function customerOrderPostalRow(row) {
+  if (!row) return null;
+  var code = normalizeCustomerOrderPostalCode(row.zipcode);
+  var prefectureCode = String(parseInt(row.prefcode, 10) || "");
+  var prefectureName = String(row.address1 || "").trim();
+  var city = String(row.address2 || "").trim();
+  var town = String(row.address3 || "").trim();
+  if (code.length !== 7 || !prefectureCode || !prefectureName) return null;
+  return {
+    postal_code: code.slice(0, 3) + "-" + code.slice(3),
+    prefecture_code: prefectureCode,
+    prefecture_name: prefectureName,
+    address_line_1: city + town,
+    display_address: prefectureName + city + town
+  };
+}
+
+function applyCustomerOrderPostalAddress(row) {
+  if (!row) return;
+  var postal = document.getElementById("customer-order-postal-code");
+  var prefecture = document.getElementById("customer-order-prefecture");
+  var address1 = document.getElementById("customer-order-address1");
+  if (postal) postal.value = row.postal_code || "";
+  if (prefecture) prefecture.value = row.prefecture_code || "";
+  if (address1) address1.value = row.address_line_1 || "";
+  customerOrderPostalRows = [];
+  renderCustomerOrderPostalResults();
+  customerOrderPostalSetStatus(t("customer_order_postal_lookup_applied"), false);
+  customerOrderPreview = null;
+  renderCustomerOrderCart();
+  if (address1) address1.focus();
+}
+
+function renderCustomerOrderPostalResults() {
+  var host = document.getElementById("customer-order-postal-results");
+  if (!host) return;
+  host.hidden = !customerOrderPostalRows.length;
+  host.innerHTML = customerOrderPostalRows.map(function(row, index) {
+    return "<button class='customer-order-postal-result' type='button' data-order-postal-index='" + esc(index) + "'>" + esc(row.display_address) + "</button>";
+  }).join("");
+  host.querySelectorAll("[data-order-postal-index]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      applyCustomerOrderPostalAddress(customerOrderPostalRows[parseInt(button.dataset.orderPostalIndex, 10)] || null);
+    });
+  });
+}
+
+async function lookupCustomerOrderPostalCode() {
+  if (customerOrderPostalLookingUp) return;
+  var input = document.getElementById("customer-order-postal-code");
+  var postalCode = normalizeCustomerOrderPostalCode(input ? input.value : "");
+  if (postalCode.length !== 7) {
+    customerOrderPostalRows = [];
+    renderCustomerOrderPostalResults();
+    customerOrderPostalSetStatus(t("customer_order_postal_lookup_invalid"), true);
+    return;
+  }
+  if (input) input.value = postalCode.slice(0, 3) + "-" + postalCode.slice(3);
+  var requestSeq = ++customerOrderPostalLookupSeq;
+  customerOrderPostalLookingUp = true;
+  configureCustomerOrderAddressTools();
+  customerOrderPostalSetStatus(t("customer_order_postal_lookup_loading"), false);
+  try {
+    var response = await fetch("https://zipcloud.ibsnet.co.jp/api/search?zipcode=" + encodeURIComponent(postalCode) + "&limit=10", {
+      method: "GET",
+      cache: "no-store",
+      credentials: "omit"
+    });
+    if (requestSeq !== customerOrderPostalLookupSeq) return;
+    var data = response.ok ? await response.json() : null;
+    if (requestSeq !== customerOrderPostalLookupSeq) return;
+    customerOrderPostalRows = data && Number(data.status) === 200 && Array.isArray(data.results)
+      ? data.results.map(customerOrderPostalRow).filter(Boolean).slice(0, 10)
+      : [];
+    if (!customerOrderPostalRows.length) {
+      renderCustomerOrderPostalResults();
+      customerOrderPostalSetStatus(t("customer_order_postal_lookup_empty"), true);
+    } else if (customerOrderPostalRows.length === 1) {
+      applyCustomerOrderPostalAddress(customerOrderPostalRows[0]);
+    } else {
+      renderCustomerOrderPostalResults();
+      customerOrderPostalSetStatus(t("customer_order_postal_lookup_multiple"), false);
+    }
+  } catch (error) {
+    if (requestSeq !== customerOrderPostalLookupSeq) return;
+    customerOrderPostalRows = [];
+    renderCustomerOrderPostalResults();
+    customerOrderPostalSetStatus(t("customer_order_postal_lookup_error"), true);
+  } finally {
+    if (requestSeq === customerOrderPostalLookupSeq) {
+      customerOrderPostalLookingUp = false;
+      configureCustomerOrderAddressTools();
+    }
+  }
+}
+
+function configureCustomerOrderAddressTools() {
+  var previewMode = canPreviewCustomerOrdering();
+  var searchInput = document.getElementById("customer-order-address-search");
+  var searchButton = document.getElementById("customer-order-address-search-button");
+  var postalButton = document.getElementById("customer-order-postal-lookup");
+  if (searchInput) searchInput.disabled = previewMode || customerOrderAddressSearching;
+  if (searchButton) searchButton.disabled = previewMode || customerOrderAddressSearching;
+  if (postalButton) postalButton.disabled = customerOrderPostalLookingUp;
+  var status = document.getElementById("customer-order-address-status");
+  if (status && !String(status.textContent || "").trim()) {
+    customerOrderAddressSetStatus(t(previewMode ? "customer_order_address_search_preview" : "customer_order_address_search_hint"), false);
+  }
 }
 
 function customerOrderCurrency(value) {
@@ -8336,6 +8641,7 @@ async function enterCustomerOrders(options) {
   showScreen("customer-orders");
   renderCustomerExperienceHeaders();
   populateCustomerOrderPrefectures();
+  configureCustomerOrderAddressTools();
   var context = activeCustomerPortalContext() || {};
   customerPortalValue("customer-orders-customer-name", context.customer && context.customer.customer_name);
   renderCustomerOrderCart();
@@ -38809,6 +39115,21 @@ document.getElementById("btn-back-customer-orders").addEventListener("click", re
 document.getElementById("customer-order-tab-cart").addEventListener("click", function() { showCustomerOrderView("cart"); });
 document.getElementById("customer-order-tab-history").addEventListener("click", function() { showCustomerOrderView("history"); });
 document.getElementById("customer-order-continue-shopping").addEventListener("click", function() { enterCustomerCatalog({}); });
+document.getElementById("customer-order-address-search-button").addEventListener("click", searchCustomerOrderAddresses);
+document.getElementById("customer-order-address-search").addEventListener("keydown", function(e) { if (e.key === "Enter") searchCustomerOrderAddresses(); });
+document.getElementById("customer-order-address-new").addEventListener("click", clearCustomerOrderAddress);
+document.getElementById("customer-order-postal-lookup").addEventListener("click", lookupCustomerOrderPostalCode);
+document.getElementById("customer-order-postal-code").addEventListener("keydown", function(e) { if (e.key === "Enter") lookupCustomerOrderPostalCode(); });
+[
+  "customer-order-company", "customer-order-recipient", "customer-order-phone", "customer-order-postal-code",
+  "customer-order-prefecture", "customer-order-address1", "customer-order-address2"
+].forEach(function(id) {
+  document.getElementById(id).addEventListener("input", function() {
+    if (!customerOrderPreview) return;
+    customerOrderPreview = null;
+    renderCustomerOrderCart();
+  });
+});
 document.getElementById("customer-order-preview-button").addEventListener("click", function() { previewCustomerOrder({ silent: false }); });
 document.getElementById("customer-order-submit").addEventListener("click", submitCustomerOrder);
 document.getElementById("customer-order-history-reload").addEventListener("click", loadCustomerOrderHistory);

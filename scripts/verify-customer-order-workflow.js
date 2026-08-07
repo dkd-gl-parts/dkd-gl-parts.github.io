@@ -6,6 +6,7 @@ const root = path.resolve(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+const headersFile = fs.readFileSync(path.join(root, "_headers"), "utf8");
 const contract = fs.readFileSync(path.join(root, "docs", "customer-order-b2-manual-contract.md"), "utf8");
 
 function sourceBetween(startText, endText) {
@@ -22,6 +23,12 @@ function sourceBetween(startText, endText) {
   "customer-order-submit",
   "customer-order-history-list",
   "customer-order-development-preview",
+  "customer-order-address-search",
+  "customer-order-address-search-button",
+  "customer-order-address-results",
+  "customer-order-address-new",
+  "customer-order-postal-lookup",
+  "customer-order-postal-results",
   "screen-sales-order-mgmt",
   "sales-order-list",
   "sales-order-detail",
@@ -104,6 +111,7 @@ if (!internalOrderAccess.includes('customerOrderFeatureEnabled("internal_managem
   "preview_customer_order",
   "place_customer_order",
   "list_customer_orders",
+  "search_customer_delivery_addresses",
   "list_sales_orders",
   "get_sales_order_detail",
   "update_sales_order_status",
@@ -163,6 +171,15 @@ const customerAccessSave = sourceBetween("async function saveCustomerAccessSetti
 if (!customerAccessSave.includes('.from("customer_display_settings").upsert(data')) {
   throw new Error("customer ordering publication must be saved with customer display settings");
 }
+const catalogOrderEntry = sourceBetween("async function loadCustomerCatalogAvailability", "async function loadCustomerCatalogVehicles");
+if (!catalogOrderEntry.includes("addCustomerCatalogProductToOrder") ||
+    !catalogOrderEntry.includes('await enterCustomerOrders({ view: "cart", preview: false })')) {
+  throw new Error("catalog order action must set the selected product before opening the order screen");
+}
+const addOrderItem = sourceBetween("function addCustomerCatalogProductToOrder", "function customerOrderPayloadItems");
+if (!addOrderItem.includes("if (!existing)") || addOrderItem.includes("existing.quantity")) {
+  throw new Error("an already selected product must open the order screen without silently increasing quantity");
+}
 const orderPreviewRequest = sourceBetween("async function previewCustomerOrder", "function customerOrderIdempotencyKey");
 const orderSubmitRequest = sourceBetween("async function submitCustomerOrder", "function renderCustomerOrderHistory");
 const orderHistoryRequest = sourceBetween("async function loadCustomerOrderHistory", "function returnToCustomerPortalFromOrders");
@@ -178,6 +195,33 @@ const orderHistoryRequest = sourceBetween("async function loadCustomerOrderHisto
   }
 });
 
+const addressSearchRequest = sourceBetween("async function searchCustomerOrderAddresses", "function clearCustomerOrderAddress");
+const addressPreviewGuard = addressSearchRequest.indexOf("if (canPreviewCustomerOrdering())");
+const addressRpc = addressSearchRequest.indexOf('sb.rpc("search_customer_delivery_addresses"');
+if (addressPreviewGuard < 0 || addressRpc < 0 || addressPreviewGuard > addressRpc) {
+  throw new Error("internal development preview must exit before saved-address search RPC");
+}
+if (!addressSearchRequest.includes("target_query: query") || !addressSearchRequest.includes("target_limit: 8")) {
+  throw new Error("saved delivery address search must use a bounded server-side phone/name query");
+}
+if (!addressSearchRequest.includes("} finally {") ||
+    !addressSearchRequest.includes("customerOrderAddressSearching = false;")) {
+  throw new Error("saved delivery address search must restore controls after network failure");
+}
+const postalLookup = sourceBetween("async function lookupCustomerOrderPostalCode", "function configureCustomerOrderAddressTools");
+if (!postalLookup.includes("https://zipcloud.ibsnet.co.jp/api/search?zipcode=") ||
+    !postalLookup.includes('credentials: "omit"') ||
+    !postalLookup.includes("postalCode.length !== 7")) {
+  throw new Error("postal lookup must send only a validated 7-digit postal code without credentials");
+}
+if (!source.includes('"customer-order-prefecture", "customer-order-address1", "customer-order-address2"') ||
+    !source.includes("customerOrderPreview = null;")) {
+  throw new Error("changing a delivery address must invalidate the confirmed order preview");
+}
+if (!html.includes("https://zipcloud.ibsnet.co.jp") || !headersFile.includes("https://zipcloud.ibsnet.co.jp")) {
+  throw new Error("postal lookup host must be allowed by both document and deployment CSP");
+}
+
 [
   ".customer-order-workspace",
   ".customer-order-shipping-pane",
@@ -186,6 +230,9 @@ const orderHistoryRequest = sourceBetween("async function loadCustomerOrderHisto
   ".customer-order-publication",
   ".customer-order-publication-slider",
   ".customer-order-development-preview-band",
+  ".customer-order-address-book",
+  ".customer-order-address-result",
+  ".customer-order-postal-row",
   "@media (max-width: 820px)"
 ].forEach((fragment) => {
   if (!css.includes(fragment)) throw new Error(`responsive order style is missing: ${fragment}`);
@@ -204,6 +251,11 @@ if ((source.match(/customer_order_development_preview_title:/g) || []).length !=
     (source.match(/customer_access_order_preview:/g) || []).length !== 3) {
   throw new Error("internal order development preview must be translated for all supported languages");
 }
+if ((source.match(/customer_order_address_saved_title:/g) || []).length !== 3 ||
+    (source.match(/customer_order_address_search_placeholder:/g) || []).length !== 3 ||
+    (source.match(/customer_order_postal_lookup:/g) || []).length !== 3) {
+  throw new Error("delivery address search and postal lookup must be translated for all supported languages");
+}
 
 [
   "API連携は保留",
@@ -211,6 +263,9 @@ if ((source.match(/customer_order_development_preview_title:/g) || []).length !=
   "customer_ordering_enabled boolean not null default false",
   "注文RPCも拒否",
   "注文履歴RPCを呼び出さない",
+  "search_customer_delivery_addresses(target_query text, target_limit int)",
+  "氏名で検索",
+  "郵便番号検索が失敗しても",
   "出力列数: 95列",
   "feature statusをfalse"
 ].forEach((fragment) => {

@@ -4,22 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.695">
+<meta name="dcats-app-version" content="v1.1.696">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="application-name" content="D-CATS">
 <meta name="apple-mobile-web-app-title" content="D-CATS">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.695"; -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co; form-action 'self';">
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.696"; -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co https://zipcloud.ibsnet.co.jp; form-action 'self';">
 <title>D-CATS</title>
-<link rel="manifest" href="site.webmanifest?v=1.1.695&amp;brand=2">
-<link rel="icon" href="favicon.ico?v=1.1.695&amp;brand=2" sizes="any">
-<link rel="shortcut icon" href="favicon.ico?v=1.1.695&amp;brand=2">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png?v=1.1.695&amp;brand=2">
-<link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png?v=1.1.695&amp;brand=2">
-<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png?v=1.1.695&amp;brand=2">
+<link rel="manifest" href="site.webmanifest?v=1.1.696&amp;brand=2">
+<link rel="icon" href="favicon.ico?v=1.1.696&amp;brand=2" sizes="any">
+<link rel="shortcut icon" href="favicon.ico?v=1.1.696&amp;brand=2">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png?v=1.1.696&amp;brand=2">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png?v=1.1.696&amp;brand=2">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png?v=1.1.696&amp;brand=2">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.695&amp;ranking=7&amp;brand=3">
+<link rel="stylesheet" href="styles.css?v=1.1.696&amp;ranking=7&amp;brand=3">
 </head>
 <body>
 
@@ -499,11 +499,34 @@
       </div>
       <aside class="customer-order-shipping-pane" aria-labelledby="customer-order-shipping-title">
         <div class="customer-order-section-head compact"><div><h2 id="customer-order-shipping-title" data-i18n="customer_order_shipping">お届け先</h2><p data-i18n="customer_order_shipping_note">送り状に印字する内容です。</p></div></div>
+        <section class="customer-order-address-book" aria-labelledby="customer-order-address-saved-title">
+          <div class="customer-order-address-book-head">
+            <div>
+              <strong id="customer-order-address-saved-title" data-i18n="customer_order_address_saved_title">以前のお届け先</strong>
+              <span data-i18n="customer_order_address_search_hint">過去の注文で使用したお届け先を検索できます。</span>
+            </div>
+            <button type="button" class="customer-order-secondary-button" id="customer-order-address-new" data-i18n="customer_order_address_new">新しいお届け先</button>
+          </div>
+          <div class="customer-order-address-search-row">
+            <input id="customer-order-address-search" type="search" maxlength="40" autocomplete="off" data-i18n-ph="customer_order_address_search_placeholder" placeholder="電話番号またはお名前で検索">
+            <button type="button" class="customer-order-address-search-button" id="customer-order-address-search-button" data-i18n="customer_order_address_search">検索</button>
+          </div>
+          <div class="customer-order-address-status" id="customer-order-address-status" aria-live="polite"></div>
+          <div class="customer-order-address-results" id="customer-order-address-results" hidden></div>
+        </section>
         <div class="customer-order-form-grid">
           <label class="wide"><span>会社名</span><input id="customer-order-company" type="text" maxlength="50" autocomplete="organization"></label>
           <label><span>ご担当者名</span><input id="customer-order-recipient" type="text" maxlength="32" autocomplete="name"></label>
           <label><span>電話番号</span><input id="customer-order-phone" type="tel" maxlength="15" autocomplete="tel"></label>
-          <label><span>郵便番号</span><input id="customer-order-postal-code" type="text" maxlength="8" inputmode="numeric" autocomplete="postal-code"></label>
+          <div class="customer-order-form-field customer-order-postal-field">
+            <label for="customer-order-postal-code">郵便番号</label>
+            <div class="customer-order-postal-row">
+              <input id="customer-order-postal-code" type="text" maxlength="8" inputmode="numeric" autocomplete="postal-code">
+              <button type="button" id="customer-order-postal-lookup" data-i18n="customer_order_postal_lookup">住所検索</button>
+            </div>
+            <small id="customer-order-postal-status" data-i18n="customer_order_postal_lookup_hint" aria-live="polite">郵便番号7桁から住所を入力します。</small>
+            <div class="customer-order-postal-results" id="customer-order-postal-results" hidden></div>
+          </div>
           <label><span>都道府県</span><select id="customer-order-prefecture"></select></label>
           <label class="wide"><span>住所</span><input id="customer-order-address1" type="text" maxlength="64" autocomplete="address-line1"></label>
           <label class="wide"><span>建物名・部門</span><input id="customer-order-address2" type="text" maxlength="64" autocomplete="address-line2"></label>
@@ -3711,7 +3734,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
 <script src="vendor/qrcode.min.js?v=1.0.0"></script>
-<script src="app.js?v=1.1.695"></script>
+<script src="app.js?v=1.1.696"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.625&amp;ranking=17"></script>
 </body>
 </html>

@@ -5029,6 +5029,30 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-order-secondary-button { min-height: 34px; border: 1px solid #9fafaa; border-radius: 6px; padding: 0 12px; background: #fff; color: #31433b; font-size: 11px; font-weight: 800; cursor: pointer; white-space: nowrap; }
 .customer-order-secondary-button:hover { background: #f1f5f3; }
 .customer-order-secondary-button:disabled { border-color: #cfd6d3; background: #ecefed; color: #87918c; cursor: not-allowed; }
+.customer-order-address-book { margin-bottom: 14px; border-top: 1px solid #dce3e0; border-bottom: 1px solid #dce3e0; padding: 12px 0; }
+.customer-order-address-book-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.customer-order-address-book-head > div { min-width: 0; }
+.customer-order-address-book-head strong { display: block; color: #31433b; font-size: 11px; }
+.customer-order-address-book-head span { display: block; margin-top: 3px; color: #75827c; font-size: 9px; line-height: 1.45; }
+.customer-order-address-book-head .customer-order-secondary-button { min-height: 30px; padding: 0 9px; font-size: 10px; }
+.customer-order-address-search-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px; margin-top: 9px; }
+.customer-order-address-search-row input { width: 100%; min-width: 0; height: 36px; border: 1px solid #b9c6c0; border-radius: 5px; padding: 0 9px; background: #fff; color: #1b2923; font-size: 11px; outline: none; }
+.customer-order-address-search-row input:focus { border-color: #287356; box-shadow: 0 0 0 2px rgba(40,115,86,.12); }
+.customer-order-address-search-button { min-width: 62px; min-height: 36px; border: 1px solid #287356; border-radius: 5px; padding: 0 10px; background: #287356; color: #fff; font-size: 11px; font-weight: 800; cursor: pointer; }
+.customer-order-address-search-button:hover { background: #1f6248; }
+.customer-order-address-search-button:disabled { border-color: #c8d0cc; background: #dfe4e2; color: #89938f; cursor: not-allowed; }
+.customer-order-address-status { min-height: 17px; padding-top: 5px; color: #65736d; font-size: 9px; line-height: 1.45; }
+.customer-order-address-status.error { color: #b42318; }
+.customer-order-address-results { max-height: 180px; overflow-y: auto; border: 1px solid #cfd9d4; background: #fff; }
+.customer-order-address-result { display: grid; grid-template-columns: minmax(0, 1fr) auto; width: 100%; border: 0; border-bottom: 1px solid #e2e8e5; padding: 9px 10px; background: #fff; color: #26352f; text-align: left; cursor: pointer; }
+.customer-order-address-result:last-child { border-bottom: 0; }
+.customer-order-address-result:hover { background: #f0f7f3; }
+.customer-order-address-result strong,
+.customer-order-address-result span,
+.customer-order-address-result small { min-width: 0; overflow-wrap: anywhere; }
+.customer-order-address-result strong { font-size: 11px; }
+.customer-order-address-result span { color: #365f4d; font-size: 10px; font-weight: 700; }
+.customer-order-address-result small { grid-column: 1 / -1; margin-top: 3px; color: #707d77; font-size: 9px; line-height: 1.45; }
 .customer-order-status { min-height: 19px; margin-bottom: 8px; color: #236344; font-size: 11px; font-weight: 700; }
 .customer-order-status.error,
 .customer-order-empty.error { color: #b42318; }
@@ -5061,6 +5085,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-order-form-grid label { min-width: 0; }
 .customer-order-form-grid label.wide { grid-column: 1 / -1; }
 .customer-order-form-grid label > span { display: block; margin-bottom: 4px; color: #526159; font-size: 10px; font-weight: 800; }
+.customer-order-form-field { min-width: 0; }
+.customer-order-form-field > label { display: block; margin-bottom: 4px; color: #526159; font-size: 10px; font-weight: 800; }
 .customer-order-form-grid input,
 .customer-order-form-grid select,
 .customer-order-form-grid textarea { width: 100%; min-width: 0; border: 1px solid #b9c6c0; border-radius: 5px; padding: 8px 9px; background: #fff; color: #1b2923; font: inherit; font-size: 12px; outline: none; }
@@ -5070,6 +5096,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-order-form-grid input:focus,
 .customer-order-form-grid select:focus,
 .customer-order-form-grid textarea:focus { border-color: #287356; box-shadow: 0 0 0 2px rgba(40,115,86,.12); }
+.customer-order-postal-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+.customer-order-postal-row button { min-width: 64px; height: 37px; border: 1px solid #287356; border-radius: 5px; padding: 0 8px; background: #fff; color: #246148; font-size: 10px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.customer-order-postal-row button:hover { background: #edf7f1; }
+.customer-order-postal-row button:disabled { border-color: #c8d0cc; background: #eef1ef; color: #89938f; cursor: not-allowed; }
+.customer-order-postal-field > small { display: block; min-height: 15px; margin-top: 4px; color: #75827c; font-size: 8px; line-height: 1.45; }
+.customer-order-postal-field > small.error { color: #b42318; }
+.customer-order-postal-results { grid-column: 1 / -1; margin-top: 5px; border: 1px solid #cfd9d4; background: #fff; }
+.customer-order-postal-result { display: block; width: 100%; border: 0; border-bottom: 1px solid #e2e8e5; padding: 7px 8px; background: #fff; color: #304039; font-size: 9px; line-height: 1.45; text-align: left; cursor: pointer; }
+.customer-order-postal-result:last-child { border-bottom: 0; }
+.customer-order-postal-result:hover { background: #f0f7f3; }
 .customer-order-core-notice { margin-top: 12px; border-left: 3px solid #d64545; padding: 9px 10px; background: #fff2f2; color: #8f2f2f; font-size: 10px; font-weight: 700; line-height: 1.55; }
 .customer-order-submit-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #dce3e0; }
 .customer-order-submit-button { min-height: 40px; border: 1px solid var(--dcats-brand-red); border-radius: 6px; background: var(--dcats-brand-red); color: #fff; font-size: 12px; font-weight: 800; cursor: pointer; }
@@ -5219,6 +5255,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .customer-order-preview-summary > div:nth-child(2) { border-right: 0; }
   .customer-order-form-grid { grid-template-columns: 1fr; }
   .customer-order-form-grid label.wide { grid-column: 1; }
+  .customer-order-address-book-head { align-items: stretch; flex-direction: column; }
+  .customer-order-address-book-head .customer-order-secondary-button { width: 100%; }
+  .customer-order-address-result { grid-template-columns: 1fr; }
+  .customer-order-address-result span { margin-top: 2px; }
   .customer-order-submit-actions { grid-template-columns: 1fr; }
   .customer-order-history-row { grid-template-columns: 1fr; }
   .customer-order-history-total { text-align: left; }
