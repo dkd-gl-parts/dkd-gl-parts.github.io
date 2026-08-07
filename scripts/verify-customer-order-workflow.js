@@ -29,6 +29,7 @@ function sourceBetween(startText, endText) {
   "customer-order-address-new",
   "customer-order-postal-lookup",
   "customer-order-postal-results",
+  "customer-catalog-order-preview-guide",
   "screen-sales-order-mgmt",
   "sales-order-list",
   "sales-order-detail",
@@ -171,6 +172,42 @@ const customerAccessSave = sourceBetween("async function saveCustomerAccessSetti
 if (!customerAccessSave.includes('.from("customer_display_settings").upsert(data')) {
   throw new Error("customer ordering publication must be saved with customer display settings");
 }
+const orderFlowPreviewLaunch = sourceBetween("async function openCustomerOrderDevelopmentPreview", "function renderCustomerAccessDetail");
+if (!orderFlowPreviewLaunch.includes('await enterCustomerCatalog({ query: "" })') ||
+    orderFlowPreviewLaunch.includes("enterCustomerOrders")) {
+  throw new Error("internal order-flow preview must start from customer part-number search");
+}
+const catalogShell = sourceBetween("function renderCustomerCatalogShell", "function customerCatalogImageForProduct");
+if (!catalogShell.includes('orderPreviewGuide.hidden = !canPreviewCustomerOrdering()')) {
+  throw new Error("customer catalog must identify the internal order-flow preview");
+}
+const availabilityRenderer = sourceBetween("function customerCatalogAvailabilityKindHtml", "function renderCustomerCatalogDetailBase");
+function renderAvailability(stockQty, price) {
+  return vm.runInNewContext(`${availabilityRenderer}\ncustomerCatalogAvailabilityKindHtml({ dkd_shohin_id: 1 }, "rebuilt", stockQty, price, true, []);`, {
+    stockQty,
+    price,
+    formatYen: (value) => String(value),
+    t: (key) => key,
+    customerOrderCartKey: () => "1:rebuilt",
+    productDkdId: () => 1,
+    customerOrderCart: [],
+    canOpenCustomerOrdering: () => true,
+    esc: (value) => String(value),
+    productKindClass: () => "rebuilt",
+    customerProductKindLabel: () => "rebuilt",
+    renderCoreReturnPolicyHtml: () => ""
+  });
+}
+const inStockAvailability = renderAvailability(2, 1000);
+const outOfStockAvailability = renderAvailability(0, 1000);
+const unknownStockAvailability = renderAvailability(null, 1000);
+const missingPriceAvailability = renderAvailability(2, null);
+if (inStockAvailability.includes(" disabled") || !inStockAvailability.includes("customer_order_add") ||
+    !outOfStockAvailability.includes(" disabled") || !outOfStockAvailability.includes("customer_order_out_of_stock") ||
+    !unknownStockAvailability.includes(" disabled") || !unknownStockAvailability.includes("customer_order_stock_unavailable") ||
+    !missingPriceAvailability.includes(" disabled") || !missingPriceAvailability.includes("customer_order_price_unavailable")) {
+  throw new Error("only in-stock, price-ready product types may continue to the order screen");
+}
 const catalogOrderEntry = sourceBetween("async function loadCustomerCatalogAvailability", "async function loadCustomerCatalogVehicles");
 if (!catalogOrderEntry.includes("addCustomerCatalogProductToOrder") ||
     !catalogOrderEntry.includes('await enterCustomerOrders({ view: "cart", preview: false })')) {
@@ -230,6 +267,7 @@ if (!html.includes("https://zipcloud.ibsnet.co.jp") || !headersFile.includes("ht
   ".customer-order-publication",
   ".customer-order-publication-slider",
   ".customer-order-development-preview-band",
+  ".customer-catalog-order-preview-guide",
   ".customer-order-address-book",
   ".customer-order-address-result",
   ".customer-order-postal-row",
@@ -247,6 +285,8 @@ if ((source.match(/customer_access_order_publication:/g) || []).length !== 3 ||
   throw new Error("customer ordering publication controls must be translated for all supported languages");
 }
 if ((source.match(/customer_order_development_preview_title:/g) || []).length !== 3 ||
+    (source.match(/customer_order_flow_preview_title:/g) || []).length !== 3 ||
+    (source.match(/customer_order_out_of_stock:/g) || []).length !== 3 ||
     (source.match(/customer_order_submit_disabled:/g) || []).length !== 3 ||
     (source.match(/customer_access_order_preview:/g) || []).length !== 3) {
   throw new Error("internal order development preview must be translated for all supported languages");
@@ -263,6 +303,7 @@ if ((source.match(/customer_order_address_saved_title:/g) || []).length !== 3 ||
   "customer_ordering_enabled boolean not null default false",
   "注文RPCも拒否",
   "注文履歴RPCを呼び出さない",
+  "受注導線をプレビュー",
   "search_customer_delivery_addresses(target_query text, target_limit int)",
   "氏名で検索",
   "郵便番号検索が失敗しても",

@@ -209,6 +209,8 @@ var TRANSLATIONS = {
     customer_order_submit: "注文を確定",
     customer_order_development_preview_title: "社内向け開発プレビュー",
     customer_order_development_preview_note: "画面確認用です。価格・在庫確認、注文送信、注文履歴の取得は行いません。",
+    customer_order_flow_preview_title: "受注導線の開発プレビュー",
+    customer_order_flow_preview_note: "品番を検索し、在庫がある商品区分の「この商品を注文」から受注画面まで確認できます。実注文は作成されません。",
     customer_order_preview_disabled: "価格・在庫確認は無効",
     customer_order_submit_disabled: "注文確定は無効",
     customer_order_preview_history_disabled: "開発プレビューでは注文履歴を取得しません。",
@@ -233,6 +235,9 @@ var TRANSLATIONS = {
     customer_order_history_note: "受付、出荷、コア返却の状況を確認できます。",
     customer_order_add: "この商品を注文",
     customer_order_added: "注文内容を確認",
+    customer_order_out_of_stock: "在庫なし",
+    customer_order_stock_unavailable: "在庫を確認できません",
+    customer_order_price_unavailable: "販売価格未設定",
     customer_order_empty: "注文する商品がありません。商品カタログから追加してください。",
     customer_order_preview_error: "価格・在庫を確認できませんでした。内容を確認して再試行してください。",
     customer_order_submit_success: "注文を受け付けました。",
@@ -1072,7 +1077,7 @@ var TRANSLATIONS = {
     customer_access_order_publication_help: "公開にすると、受注機能全体が有効な場合に、この得意先の商品画面へ注文ボタンを表示します。初期値は非公開です。",
     customer_access_order_hidden: "非公開",
     customer_access_order_visible: "公開",
-    customer_access_order_preview: "受注画面をプレビュー",
+    customer_access_order_preview: "受注導線をプレビュー",
     customer_access_order_preview_unsaved: "表示設定に未保存の変更があります。先に変更を保存してください。",
     customer_access_rule_help: "販売価格をOFFにすると、0円表示・価格あり商品のみ表示もOFFになります。価格あり商品のみ表示をONにすると、価格未設定商品は非表示になります。",
     customer_access_shipping_rule: "送料条件",
@@ -1782,6 +1787,8 @@ var TRANSLATIONS = {
     customer_order_submit: "Place Order",
     customer_order_development_preview_title: "Internal Development Preview",
     customer_order_development_preview_note: "For screen review only. Price and stock checks, order submission, and order history requests are disabled.",
+    customer_order_flow_preview_title: "Order Flow Development Preview",
+    customer_order_flow_preview_note: "Search for a part and open the order screen from an in-stock product type. No real order will be created.",
     customer_order_preview_disabled: "Price / Stock Disabled",
     customer_order_submit_disabled: "Order Disabled",
     customer_order_preview_history_disabled: "Order history is not requested in development preview.",
@@ -1806,6 +1813,9 @@ var TRANSLATIONS = {
     customer_order_history_note: "Review acceptance, shipping, and core-return status.",
     customer_order_add: "Order This Product",
     customer_order_added: "Review Order",
+    customer_order_out_of_stock: "Out of Stock",
+    customer_order_stock_unavailable: "Stock Unavailable",
+    customer_order_price_unavailable: "Price Not Configured",
     customer_order_empty: "No products have been added. Add products from the catalog.",
     customer_order_preview_error: "Price and inventory could not be verified. Review the order and try again.",
     customer_order_submit_success: "Your order has been received.",
@@ -2645,7 +2655,7 @@ var TRANSLATIONS = {
     customer_access_order_publication_help: "When enabled, order actions appear for this customer only while the overall ordering feature is available. The default is hidden.",
     customer_access_order_hidden: "Hidden",
     customer_access_order_visible: "Published",
-    customer_access_order_preview: "Preview Order Screen",
+    customer_access_order_preview: "Preview Order Flow",
     customer_access_order_preview_unsaved: "Display settings have unsaved changes. Save them before opening the preview.",
     customer_access_rule_help: "When sales price is off, zero-price display and priced-only display are also off. When priced-only is on, products without prices are hidden.",
     customer_access_shipping_rule: "Shipping Terms",
@@ -3342,6 +3352,8 @@ var TRANSLATIONS = {
     customer_order_submit: "提交订单",
     customer_order_development_preview_title: "内部开发预览",
     customer_order_development_preview_note: "仅用于画面确认。不会确认价格和库存、提交订单或读取订单记录。",
+    customer_order_flow_preview_title: "订单流程开发预览",
+    customer_order_flow_preview_note: "搜索零件编号，并从有库存的商品类别进入订单画面。不会创建实际订单。",
     customer_order_preview_disabled: "价格・库存确认已禁用",
     customer_order_submit_disabled: "订单提交已禁用",
     customer_order_preview_history_disabled: "开发预览中不会读取订单记录。",
@@ -3366,6 +3378,9 @@ var TRANSLATIONS = {
     customer_order_history_note: "可确认受理、出货和旧件返还状态。",
     customer_order_add: "订购此商品",
     customer_order_added: "确认订单",
+    customer_order_out_of_stock: "无库存",
+    customer_order_stock_unavailable: "无法确认库存",
+    customer_order_price_unavailable: "未设置销售价格",
     customer_order_empty: "订单中没有商品。请从商品目录中添加。",
     customer_order_preview_error: "无法确认价格和库存。请检查订单后重试。",
     customer_order_submit_success: "订单已受理。",
@@ -4211,7 +4226,7 @@ var TRANSLATIONS = {
     customer_access_order_publication_help: "开启后，仅在整体订购功能可用时向该客户显示订购操作。默认不公开。",
     customer_access_order_hidden: "不公开",
     customer_access_order_visible: "已公开",
-    customer_access_order_preview: "预览订购画面",
+    customer_access_order_preview: "预览订单流程",
     customer_access_order_preview_unsaved: "显示设置有未保存的更改。请先保存后再打开预览。",
     customer_access_rule_help: "关闭销售价格时，0日元显示和仅显示有价格商品也会关闭。开启仅显示有价格商品时，未设置价格的商品会隐藏。",
     customer_access_shipping_rule: "运费条件",
@@ -4828,7 +4843,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.696";
+var APP_VERSION       = "v1.1.697";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -7642,6 +7657,8 @@ function renderCustomerCatalogShell() {
     status.textContent = canPreviewCustomerPortal() ? t("customer_catalog_acting_status") : t("customer_catalog_customer_status");
     status.className = "customer-portal-status active";
   }
+  var orderPreviewGuide = document.getElementById("customer-catalog-order-preview-guide");
+  if (orderPreviewGuide) orderPreviewGuide.hidden = !canPreviewCustomerOrdering();
   renderCustomerExperienceHeaders();
 }
 
@@ -7847,9 +7864,16 @@ function customerCatalogAvailabilityKindHtml(product, kind, stockQty, price, sho
   var priceText = price == null ? t("customer_catalog_price_none") : "JPY " + formatYen(price);
   var orderKey = customerOrderCartKey(productDkdId(product), kind);
   var orderAdded = customerOrderCart.some(function(item) { return item.key === orderKey; });
-  var canOrder = canOpenCustomerOrdering() && stockQty != null && Number(stockQty) > 0 && (!showPrice || price != null);
+  var hasStock = stockQty != null && Number(stockQty) > 0;
+  var priceReady = !showPrice || price != null;
+  var canOrder = canOpenCustomerOrdering() && hasStock && priceReady;
+  var orderLabelKey = canOrder
+    ? (orderAdded ? "customer_order_added" : "customer_order_add")
+    : (stockQty == null
+      ? "customer_order_stock_unavailable"
+      : (!hasStock ? "customer_order_out_of_stock" : "customer_order_price_unavailable"));
   var orderButton = canOpenCustomerOrdering()
-    ? "<button class='customer-catalog-order-button" + (orderAdded ? " added" : "") + "' type='button' data-customer-order-add='" + esc(kind) + "'" + (canOrder ? "" : " disabled") + ">" + esc(t(orderAdded ? "customer_order_added" : "customer_order_add")) + "</button>"
+    ? "<button class='customer-catalog-order-button" + (orderAdded && canOrder ? " added" : "") + "' type='button' data-customer-order-add='" + esc(kind) + "'" + (canOrder ? "" : " disabled") + ">" + esc(t(orderLabelKey)) + "</button>"
     : "";
   return "<div class='customer-catalog-availability-kind " + esc(productKindClass(kind)) + "'>" +
     "<div class='customer-catalog-availability-kind-title'>" + esc(customerProductKindLabel(kind)) + "</div>" +
@@ -35264,7 +35288,9 @@ async function openCustomerOrderDevelopmentPreview() {
     return;
   }
   customerPortalSearchActive = false;
-  await enterCustomerOrders({ view: "cart", preview: false });
+  await enterCustomerCatalog({ query: "" });
+  var searchInput = document.getElementById("customer-catalog-q");
+  if (searchInput) searchInput.focus();
 }
 
 function renderCustomerAccessDetail() {
