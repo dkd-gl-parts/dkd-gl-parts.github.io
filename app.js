@@ -243,6 +243,17 @@ var TRANSLATIONS = {
     customer_order_postal_local_preparing: "端末内データを準備中 {ready}/10",
     customer_order_postal_local_ready: "端末内データ準備済み {version}",
     customer_order_postal_local_error: "端末内データを準備できませんでした",
+    customer_order_delivery_service: "配送サービス",
+    customer_order_delivery_service_loading: "配送サービスを読み込み中...",
+    customer_order_delivery_service_error: "配送サービスを読み込めませんでした。希望日は手入力してください。",
+    customer_order_delivery_service_empty: "利用できる配送サービスがありません",
+    customer_order_delivery_date: "お届け希望日",
+    customer_order_delivery_time: "時間帯",
+    customer_order_delivery_wait: "都道府県と配送サービスを選ぶと、最短のお届け希望日を自動設定します。",
+    customer_order_delivery_auto: "最短 {date}（{service}）を自動設定しました。交通事情などにより遅れる場合があります。",
+    customer_order_delivery_manual: "最短 {date}（{service}）です。希望日は手入力で変更できます。",
+    customer_order_delivery_not_specifiable: "{service}は日時指定できません。到着目安は {start}～{end} です。",
+    customer_order_delivery_unknown: "この配送サービスは到着日数が未設定です。希望日を手入力してください。",
     customer_order_history_note: "受付、出荷、コア返却の状況を確認できます。",
     customer_order_add: "この商品を注文",
     customer_order_added: "注文内容を確認",
@@ -1832,6 +1843,17 @@ var TRANSLATIONS = {
     customer_order_postal_local_preparing: "Preparing local data {ready}/10",
     customer_order_postal_local_ready: "Local data ready {version}",
     customer_order_postal_local_error: "Local data could not be prepared",
+    customer_order_delivery_service: "Delivery Service",
+    customer_order_delivery_service_loading: "Loading delivery services...",
+    customer_order_delivery_service_error: "Delivery services could not be loaded. Enter the requested date manually.",
+    customer_order_delivery_service_empty: "No delivery service is available",
+    customer_order_delivery_date: "Requested Delivery Date",
+    customer_order_delivery_time: "Time Window",
+    customer_order_delivery_wait: "Select a prefecture and delivery service to set the earliest requested delivery date.",
+    customer_order_delivery_auto: "The earliest date, {date} ({service}), was set automatically. Delivery may be delayed.",
+    customer_order_delivery_manual: "The earliest date is {date} ({service}). You may change it manually.",
+    customer_order_delivery_not_specifiable: "{service} does not accept date or time requests. Estimated arrival is {start} to {end}.",
+    customer_order_delivery_unknown: "Transit time is not configured for this service. Enter the requested date manually.",
     customer_order_history_note: "Review acceptance, shipping, and core-return status.",
     customer_order_add: "Order This Product",
     customer_order_added: "Review Order",
@@ -3408,6 +3430,17 @@ var TRANSLATIONS = {
     customer_order_postal_local_preparing: "正在准备本地数据 {ready}/10",
     customer_order_postal_local_ready: "本地数据已准备 {version}",
     customer_order_postal_local_error: "无法准备本地数据",
+    customer_order_delivery_service: "配送服务",
+    customer_order_delivery_service_loading: "正在读取配送服务...",
+    customer_order_delivery_service_error: "无法读取配送服务。请手动输入希望送达日期。",
+    customer_order_delivery_service_empty: "没有可用的配送服务",
+    customer_order_delivery_date: "希望送达日期",
+    customer_order_delivery_time: "时间段",
+    customer_order_delivery_wait: "选择都道府县和配送服务后，将自动设置最早希望送达日期。",
+    customer_order_delivery_auto: "已自动设置最早日期 {date}（{service}）。可能因交通情况延迟。",
+    customer_order_delivery_manual: "最早日期为 {date}（{service}）。可手动更改。",
+    customer_order_delivery_not_specifiable: "{service} 不支持指定日期或时间。预计 {start}～{end} 送达。",
+    customer_order_delivery_unknown: "此配送服务尚未设置运输天数。请手动输入希望日期。",
     customer_order_history_note: "可确认受理、出货和旧件返还状态。",
     customer_order_add: "订购此商品",
     customer_order_added: "确认订单",
@@ -4876,7 +4909,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.698";
+var APP_VERSION       = "v1.1.699";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5137,6 +5170,20 @@ var customerOrderPostalPrepareState = "idle";
 var customerOrderPostalBackgroundScheduled = false;
 var customerOrderSaving = false;
 var customerOrderActiveView = "cart";
+var customerOrderDeliveryServiceLoadSeq = 0;
+var customerOrderDeliveryServiceKeyValue = "";
+var customerOrderDeliveryDateManual = false;
+var customerOrderDeliveryServiceCache = {};
+var CUSTOMER_ORDER_DISPATCH_CUTOFF_HOUR = 15;
+var CUSTOMER_ORDER_DELIVERY_FAR_PREFECTURE_CODES = [1, 2, 3, 4, 5, 6, 7, 47];
+var CUSTOMER_ORDER_DELIVERY_SERVICE_LEVELS = {
+  "宅急便": { earliest_days: 1, latest_days: 1, far_extra_days: 1, requested_date: true, requested_time: true },
+  "宅急便コンパクト": { earliest_days: 1, latest_days: 1, far_extra_days: 1, requested_date: true, requested_time: true },
+  "宅急便タイムサービス": { earliest_days: 1, latest_days: 1, far_extra_days: 0, requested_date: true, requested_time: true },
+  "ネコポス": { earliest_days: 1, latest_days: 2, far_extra_days: 1, requested_date: false, requested_time: false },
+  "クロネコゆうパケット": { earliest_days: 3, latest_days: 7, far_extra_days: 0, requested_date: false, requested_time: false },
+  "クロネコゆうメール": { earliest_days: 3, latest_days: 7, far_extra_days: 0, requested_date: false, requested_time: false }
+};
 var salesOrderRows = [];
 var salesOrderSelectedId = null;
 var salesOrderDetail = null;
@@ -6126,6 +6173,7 @@ async function applyLanguage(lang) {
     renderCustomerOrderCart();
     renderCustomerOrderHistory();
     configureCustomerOrderAddressTools();
+    updateCustomerOrderDeliveryEstimate({ forceDate: false });
   }
   if (isScreenActive("sales-order-mgmt")) {
     renderSalesOrderList();
@@ -6247,7 +6295,9 @@ function captureAppRestoreState(reason) {
     state.customerOrderView = customerOrderActiveView;
     state.customerPortalCustomerId = portalContext && portalContext.sales_customer_id ? portalContext.sales_customer_id : "";
     state.customerOrderAddress = customerOrderAddressPayload();
+    state.customerOrderDeliveryServiceKey = (document.getElementById("customer-order-delivery-service") || {}).value || customerOrderDeliveryServiceKeyValue || "";
     state.customerOrderDeliveryDate = (document.getElementById("customer-order-delivery-date") || {}).value || "";
+    state.customerOrderDeliveryDateManual = customerOrderDeliveryDateManual;
     state.customerOrderDeliveryTime = (document.getElementById("customer-order-delivery-time") || {}).value || "";
     state.customerOrderNote = (document.getElementById("customer-order-note") || {}).value || "";
   }
@@ -6382,12 +6432,16 @@ async function restoreAppStateAfterRefresh() {
       if (canOpenCustomerOrdering()) {
         await enterCustomerOrders({ view: state.customerOrderView || "cart", preview: false });
         applyCustomerOrderAddress(state.customerOrderAddress || {}, true);
+        customerOrderDeliveryServiceKeyValue = state.customerOrderDeliveryServiceKey || "";
+        customerOrderDeliveryDateManual = state.customerOrderDeliveryDateManual === true;
+        await loadCustomerOrderDeliveryServices({ preferredKey: customerOrderDeliveryServiceKeyValue, forceDate: false });
         var restoreDeliveryDate = document.getElementById("customer-order-delivery-date");
         var restoreDeliveryTime = document.getElementById("customer-order-delivery-time");
         var restoreOrderNote = document.getElementById("customer-order-note");
         if (restoreDeliveryDate) restoreDeliveryDate.value = state.customerOrderDeliveryDate || "";
         if (restoreDeliveryTime) restoreDeliveryTime.value = state.customerOrderDeliveryTime || "";
         if (restoreOrderNote) restoreOrderNote.value = state.customerOrderNote || "";
+        updateCustomerOrderDeliveryEstimate({ forceDate: false });
         if (customerOrderCart.length && (state.customerOrderView || "cart") === "cart") await previewCustomerOrder({ silent: true });
       }
     } else if (state.screen === "customer-catalog") {
@@ -7098,6 +7152,10 @@ async function doLogout() {
   customerOrderPostalLookingUp = false;
   customerOrderSaving = false;
   customerOrderActiveView = "cart";
+  customerOrderDeliveryServiceLoadSeq += 1;
+  customerOrderDeliveryServiceKeyValue = "";
+  customerOrderDeliveryDateManual = false;
+  customerOrderDeliveryServiceCache = {};
   salesOrderRows = [];
   salesOrderSelectedId = null;
   salesOrderDetail = null;
@@ -8208,6 +8266,222 @@ function exitCustomerMode() {
   updateAllHeaders();
 }
 
+function customerOrderDeliveryServiceKey(carrierName, serviceName) {
+  if (carrierName && typeof carrierName === "object") {
+    serviceName = carrierName.service_name;
+    carrierName = carrierName.carrier_name;
+  }
+  carrierName = String(carrierName || "").trim();
+  serviceName = String(serviceName || "").trim();
+  return carrierName && serviceName ? encodeURIComponent(carrierName) + "|" + encodeURIComponent(serviceName) : "";
+}
+
+function customerOrderDeliveryServiceFromKey(value) {
+  var parts = String(value || "").split("|");
+  if (parts.length !== 2) return null;
+  try {
+    var carrierName = decodeURIComponent(parts[0]);
+    var serviceName = decodeURIComponent(parts[1]);
+    return carrierName && serviceName ? { carrier_name: carrierName, service_name: serviceName } : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function customerOrderDeliveryServiceLevel(serviceName) {
+  return CUSTOMER_ORDER_DELIVERY_SERVICE_LEVELS[String(serviceName || "").trim()] || null;
+}
+
+function customerOrderAddCalendarDays(value, days) {
+  var date = value instanceof Date ? value : new Date(value);
+  var result = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  result.setDate(result.getDate() + Number(days || 0));
+  return result;
+}
+
+function customerOrderDeliveryDateValue(value) {
+  var date = value instanceof Date ? value : new Date(value);
+  if (isNaN(date.getTime())) return "";
+  return [
+    String(date.getFullYear()).padStart(4, "0"),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0")
+  ].join("-");
+}
+
+function customerOrderNextDispatchDate(now) {
+  now = now instanceof Date ? now : (now ? new Date(now) : new Date());
+  var dispatch = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (dispatch.getDay() === 0 || dispatch.getDay() === 6 || now.getHours() >= CUSTOMER_ORDER_DISPATCH_CUTOFF_HOUR) {
+    dispatch.setDate(dispatch.getDate() + 1);
+  }
+  while (dispatch.getDay() === 0 || dispatch.getDay() === 6) dispatch.setDate(dispatch.getDate() + 1);
+  return dispatch;
+}
+
+function customerOrderDeliveryEstimate(serviceName, prefectureCode, now) {
+  var level = customerOrderDeliveryServiceLevel(serviceName);
+  var code = parseInt(prefectureCode, 10);
+  if (!level || isNaN(code) || code < 1 || code > 47) return null;
+  var dispatch = customerOrderNextDispatchDate(now);
+  var farExtra = CUSTOMER_ORDER_DELIVERY_FAR_PREFECTURE_CODES.indexOf(code) >= 0 ? Number(level.far_extra_days || 0) : 0;
+  var earliest = customerOrderAddCalendarDays(dispatch, Number(level.earliest_days || 0) + farExtra);
+  var latest = customerOrderAddCalendarDays(dispatch, Number(level.latest_days || level.earliest_days || 0) + farExtra);
+  return {
+    dispatch_date: customerOrderDeliveryDateValue(dispatch),
+    earliest_date: customerOrderDeliveryDateValue(earliest),
+    latest_date: customerOrderDeliveryDateValue(latest),
+    max_requested_date: level.requested_date ? customerOrderDeliveryDateValue(customerOrderAddCalendarDays(earliest, 6)) : "",
+    requested_date: level.requested_date === true,
+    requested_time: level.requested_time === true
+  };
+}
+
+function customerOrderDeliveryDateLabel(value) {
+  if (!value) return "-";
+  var date = new Date(String(value) + "T00:00:00");
+  if (isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString(currentLang === "ja" ? "ja-JP" : (currentLang === "zh" ? "zh-CN" : "en-US"), {
+    month: "numeric",
+    day: "numeric",
+    weekday: "short"
+  });
+}
+
+function customerOrderDeliverySetMessage(message, state) {
+  var host = document.getElementById("customer-order-delivery-estimate");
+  if (!host) return;
+  host.textContent = message || "";
+  host.className = "customer-order-delivery-estimate" + (state ? " " + state : "");
+}
+
+function customerOrderShippingMethodPayload() {
+  var select = document.getElementById("customer-order-delivery-service");
+  return customerOrderDeliveryServiceFromKey(select ? select.value : customerOrderDeliveryServiceKeyValue);
+}
+
+function updateCustomerOrderDeliveryEstimate(options) {
+  options = options || {};
+  var dateInput = document.getElementById("customer-order-delivery-date");
+  var timeInput = document.getElementById("customer-order-delivery-time");
+  var prefecture = document.getElementById("customer-order-prefecture");
+  var method = customerOrderShippingMethodPayload();
+  if (!dateInput || !timeInput) return;
+  dateInput.disabled = false;
+  timeInput.disabled = false;
+  dateInput.removeAttribute("min");
+  dateInput.removeAttribute("max");
+  if (!method || !prefecture || !prefecture.value) {
+    customerOrderDeliverySetMessage(t("customer_order_delivery_wait"), "pending");
+    return;
+  }
+  var estimate = customerOrderDeliveryEstimate(method.service_name, prefecture.value, options.now);
+  if (!estimate) {
+    customerOrderDeliverySetMessage(t("customer_order_delivery_unknown"), "warning");
+    return;
+  }
+  if (!estimate.requested_date) {
+    dateInput.value = "";
+    timeInput.value = "";
+    dateInput.disabled = true;
+    timeInput.disabled = true;
+    customerOrderDeliveryDateManual = false;
+    customerOrderDeliverySetMessage(tf("customer_order_delivery_not_specifiable", {
+      service: method.service_name,
+      start: customerOrderDeliveryDateLabel(estimate.earliest_date),
+      end: customerOrderDeliveryDateLabel(estimate.latest_date)
+    }), "restricted");
+    return;
+  }
+  dateInput.min = estimate.earliest_date;
+  dateInput.max = estimate.max_requested_date;
+  timeInput.disabled = !estimate.requested_time;
+  var valueOutsideRange = dateInput.value && (dateInput.value < estimate.earliest_date || dateInput.value > estimate.max_requested_date);
+  if (options.forceDate || !dateInput.value || !customerOrderDeliveryDateManual || valueOutsideRange) {
+    dateInput.value = estimate.earliest_date;
+    customerOrderDeliveryDateManual = false;
+  }
+  customerOrderDeliverySetMessage(tf(customerOrderDeliveryDateManual ? "customer_order_delivery_manual" : "customer_order_delivery_auto", {
+    date: customerOrderDeliveryDateLabel(estimate.earliest_date),
+    service: method.service_name
+  }), "ready");
+}
+
+function customerOrderDeliveryServiceSortValue(row) {
+  var order = ["宅急便", "宅急便コンパクト", "宅急便タイムサービス", "ネコポス", "クロネコゆうパケット", "クロネコゆうメール"];
+  var index = order.indexOf(String(row && row.service_name || ""));
+  return (index < 0 ? 100 : index) * 1000 + Number(row && row.display_order || 0);
+}
+
+async function loadCustomerOrderDeliveryServices(options) {
+  options = options || {};
+  var select = document.getElementById("customer-order-delivery-service");
+  if (!select) return;
+  var requestSeq = ++customerOrderDeliveryServiceLoadSeq;
+  var preferredKey = options.preferredKey || customerOrderDeliveryServiceKeyValue || select.value || "";
+  select.disabled = true;
+  select.innerHTML = "<option value=''>" + esc(t("customer_order_delivery_service_loading")) + "</option>";
+  customerOrderDeliverySetMessage(t("customer_order_delivery_wait"), "pending");
+  try {
+    var prefecture = document.getElementById("customer-order-prefecture");
+    var prefectureCode = prefecture ? prefecture.value : "";
+    var lookupPrefectureCode = prefectureCode || "27";
+    var rows = customerOrderDeliveryServiceCache[lookupPrefectureCode] || null;
+    if (!rows) {
+      var result = await sb.from("customer_shipping_rates")
+        .select("carrier_name,service_name,prefecture_code,display_order")
+        .eq("is_active", true)
+        .eq("prefecture_code", parseInt(lookupPrefectureCode, 10))
+        .order("display_order", { ascending: true })
+        .order("service_name", { ascending: true })
+        .limit(200);
+      if (result.error) throw result.error;
+      rows = result.data || [];
+      customerOrderDeliveryServiceCache[lookupPrefectureCode] = rows;
+    }
+    if (requestSeq !== customerOrderDeliveryServiceLoadSeq) return;
+    var seen = {};
+    var services = (rows || []).filter(function(row) {
+      var key = customerOrderDeliveryServiceKey(row);
+      if (!key || seen[key]) return false;
+      seen[key] = true;
+      return true;
+    }).sort(function(a, b) {
+      var orderDiff = customerOrderDeliveryServiceSortValue(a) - customerOrderDeliveryServiceSortValue(b);
+      if (orderDiff) return orderDiff;
+      return String(a.service_name || "").localeCompare(String(b.service_name || ""), "ja");
+    });
+    if (!services.length) {
+      customerOrderDeliveryServiceKeyValue = "";
+      select.innerHTML = "<option value=''>" + esc(t("customer_order_delivery_service_empty")) + "</option>";
+      select.disabled = true;
+      updateCustomerOrderDeliveryEstimate(options);
+      return;
+    }
+    select.innerHTML = services.map(function(row) {
+      var key = customerOrderDeliveryServiceKey(row);
+      return "<option value='" + esc(key) + "'>" + esc([row.carrier_name, row.service_name].filter(Boolean).join(" / ")) + "</option>";
+    }).join("");
+    var availableKeys = services.map(function(row) { return customerOrderDeliveryServiceKey(row); });
+    if (availableKeys.indexOf(preferredKey) < 0) {
+      var defaultRow = services.find(function(row) { return String(row.service_name || "") === "宅急便"; }) || services[0];
+      preferredKey = customerOrderDeliveryServiceKey(defaultRow);
+      customerOrderDeliveryDateManual = false;
+    }
+    select.value = preferredKey;
+    select.disabled = false;
+    customerOrderDeliveryServiceKeyValue = select.value;
+    updateCustomerOrderDeliveryEstimate(options);
+  } catch (error) {
+    if (requestSeq !== customerOrderDeliveryServiceLoadSeq) return;
+    console.warn("customer order delivery services failed", error);
+    customerOrderDeliveryServiceKeyValue = "";
+    select.innerHTML = "<option value=''>" + esc(t("customer_order_delivery_service_error")) + "</option>";
+    select.disabled = true;
+    customerOrderDeliverySetMessage(t("customer_order_delivery_service_error"), "error");
+  }
+}
+
 function customerOrderCartKey(dkdId, productKind) {
   return String(dkdId || "") + ":" + normalizeProductKind(productKind || "rebuilt");
 }
@@ -8325,6 +8599,8 @@ function applyCustomerOrderAddress(address, overwrite) {
     var el = document.getElementById(id);
     if (el && (overwrite || !String(el.value || "").trim())) el.value = map[id];
   });
+  customerOrderDeliveryDateManual = false;
+  loadCustomerOrderDeliveryServices({ forceDate: true });
 }
 
 function customerOrderAddressSetStatus(message, isError) {
@@ -8433,6 +8709,8 @@ function clearCustomerOrderAddress() {
   customerOrderAddressSetStatus(t("customer_order_address_search_hint"), false);
   customerOrderPostalSetStatus(t("customer_order_postal_lookup_hint"), false);
   customerOrderPreview = null;
+  customerOrderDeliveryDateManual = false;
+  loadCustomerOrderDeliveryServices({ forceDate: true });
   renderCustomerOrderCart();
   var recipient = document.getElementById("customer-order-recipient");
   if (recipient) recipient.focus();
@@ -8670,6 +8948,8 @@ function applyCustomerOrderPostalAddress(row) {
     ? tf("customer_order_postal_lookup_applied_local", { version: row.data_version || "-" })
     : t("customer_order_postal_lookup_applied_api"), false);
   customerOrderPreview = null;
+  customerOrderDeliveryDateManual = false;
+  loadCustomerOrderDeliveryServices({ forceDate: true });
   renderCustomerOrderCart();
   if (address1) address1.focus();
 }
@@ -8915,6 +9195,7 @@ async function enterCustomerOrders(options) {
   showScreen("customer-orders");
   renderCustomerExperienceHeaders();
   populateCustomerOrderPrefectures();
+  await loadCustomerOrderDeliveryServices({ forceDate: false });
   configureCustomerOrderAddressTools();
   var context = activeCustomerPortalContext() || {};
   customerPortalValue("customer-orders-customer-name", context.customer && context.customer.customer_name);
@@ -8943,7 +9224,8 @@ async function previewCustomerOrder(options) {
   if (!options.silent) customerOrderSetStatus("最新の価格と在庫を確認しています。", false);
   var result = await sb.rpc("preview_customer_order", {
     target_items: customerOrderPayloadItems(),
-    target_shipping_address: customerOrderAddressPayload()
+    target_shipping_address: customerOrderAddressPayload(),
+    target_shipping_method: customerOrderShippingMethodPayload()
   });
   if (requestSeq !== customerOrderPreviewSeq) return;
   if (button) button.disabled = false;
@@ -8980,6 +9262,7 @@ async function submitCustomerOrder() {
   var result = await sb.rpc("place_customer_order", {
     target_items: customerOrderPayloadItems(),
     target_shipping_address: customerOrderAddressPayload(),
+    target_shipping_method: customerOrderShippingMethodPayload(),
     target_requested_delivery_date: deliveryDate && deliveryDate.value ? deliveryDate.value : null,
     target_delivery_time: deliveryTime && deliveryTime.value ? deliveryTime.value : null,
     target_customer_note: note && note.value ? note.value.trim() : null,
@@ -39409,6 +39692,29 @@ document.querySelectorAll("[data-order-postal-mode]").forEach(function(button) {
     customerOrderPreview = null;
     renderCustomerOrderCart();
   });
+});
+document.getElementById("customer-order-prefecture").addEventListener("change", function() {
+  customerOrderDeliveryDateManual = false;
+  customerOrderPreview = null;
+  loadCustomerOrderDeliveryServices({ forceDate: true });
+  renderCustomerOrderCart();
+});
+document.getElementById("customer-order-delivery-service").addEventListener("change", function() {
+  customerOrderDeliveryServiceKeyValue = this.value || "";
+  customerOrderDeliveryDateManual = false;
+  customerOrderPreview = null;
+  updateCustomerOrderDeliveryEstimate({ forceDate: true });
+  renderCustomerOrderCart();
+});
+document.getElementById("customer-order-delivery-date").addEventListener("input", function() {
+  customerOrderDeliveryDateManual = !!this.value;
+  customerOrderPreview = null;
+  updateCustomerOrderDeliveryEstimate({ forceDate: false });
+  renderCustomerOrderCart();
+});
+document.getElementById("customer-order-delivery-time").addEventListener("change", function() {
+  customerOrderPreview = null;
+  renderCustomerOrderCart();
 });
 document.getElementById("customer-order-preview-button").addEventListener("click", function() { previewCustomerOrder({ silent: false }); });
 document.getElementById("customer-order-submit").addEventListener("click", submitCustomerOrder);

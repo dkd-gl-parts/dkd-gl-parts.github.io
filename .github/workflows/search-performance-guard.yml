@@ -17,6 +17,7 @@ on:
       - "scripts/verify-customer-category-visibility.js"
       - "scripts/verify-customer-price-list.js"
       - "scripts/verify-customer-order-workflow.js"
+      - "scripts/verify-customer-order-delivery-service.js"
       - "scripts/verify-postal-data.js"
       - "scripts/verify-postal-lookup-fallback.js"
       - "scripts/update-postal-data.js"
@@ -51,6 +52,7 @@ on:
       - "scripts/verify-customer-category-visibility.js"
       - "scripts/verify-customer-price-list.js"
       - "scripts/verify-customer-order-workflow.js"
+      - "scripts/verify-customer-order-delivery-service.js"
       - "scripts/verify-postal-data.js"
       - "scripts/verify-postal-lookup-fallback.js"
       - "scripts/update-postal-data.js"
@@ -105,6 +107,8 @@ jobs:
         run: node scripts/verify-customer-price-list.js
       - name: Verify customer order and manual B2 workflow
         run: node scripts/verify-customer-order-workflow.js
+      - name: Verify customer order delivery service
+        run: node scripts/verify-customer-order-delivery-service.js
       - name: Verify offline postal data
         run: node scripts/verify-postal-data.js
       - name: Verify postal lookup fallback

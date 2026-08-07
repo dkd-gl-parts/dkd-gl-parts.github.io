@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.698">
+<meta name="dcats-app-version" content="v1.1.699">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="application-name" content="D-CATS">
 <meta name="apple-mobile-web-app-title" content="D-CATS">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.698"; -->
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.699"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co https://zipcloud.ibsnet.co.jp; form-action 'self';">
 <title>D-CATS</title>
 <link rel="manifest" href="site.webmanifest?v=1.1.697&amp;brand=2">
@@ -19,7 +19,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png?v=1.1.697&amp;brand=2">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.698&amp;ranking=7&amp;brand=3">
+<link rel="stylesheet" href="styles.css?v=1.1.699&amp;ranking=7&amp;brand=3">
 </head>
 <body>
 
@@ -547,8 +547,10 @@
           <label><span>都道府県</span><select id="customer-order-prefecture"></select></label>
           <label class="wide"><span>住所</span><input id="customer-order-address1" type="text" maxlength="64" autocomplete="address-line1"></label>
           <label class="wide"><span>建物名・部門</span><input id="customer-order-address2" type="text" maxlength="64" autocomplete="address-line2"></label>
-          <label><span>お届け希望日</span><input id="customer-order-delivery-date" type="date"></label>
-          <label><span>時間帯</span><select id="customer-order-delivery-time"><option value="">指定なし</option><option value="0812">午前中</option><option value="1416">14～16時</option><option value="1618">16～18時</option><option value="1820">18～20時</option><option value="1921">19～21時</option></select></label>
+          <label class="wide customer-order-delivery-service-field"><span data-i18n="customer_order_delivery_service">配送サービス</span><select id="customer-order-delivery-service"><option value="" data-i18n="customer_order_delivery_service_loading">配送サービスを読み込み中...</option></select></label>
+          <label><span data-i18n="customer_order_delivery_date">お届け希望日</span><input id="customer-order-delivery-date" type="date"></label>
+          <label><span data-i18n="customer_order_delivery_time">時間帯</span><select id="customer-order-delivery-time"><option value="">指定なし</option><option value="0812">午前中</option><option value="1416">14～16時</option><option value="1618">16～18時</option><option value="1820">18～20時</option><option value="1921">19～21時</option></select></label>
+          <div class="customer-order-delivery-estimate pending" id="customer-order-delivery-estimate" data-i18n="customer_order_delivery_wait" aria-live="polite">都道府県と配送サービスを選ぶと、最短のお届け希望日を自動設定します。</div>
           <label class="wide"><span>注文メモ</span><textarea id="customer-order-note" maxlength="500" rows="3"></textarea></label>
         </div>
         <div class="customer-order-core-notice" id="customer-order-core-notice" hidden></div>
@@ -3751,7 +3753,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
 <script src="vendor/qrcode.min.js?v=1.0.0"></script>
-<script src="app.js?v=1.1.698"></script>
+<script src="app.js?v=1.1.699"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.625&amp;ranking=17"></script>
 </body>
 </html>

@@ -5089,6 +5089,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-order-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .customer-order-form-grid label { min-width: 0; }
 .customer-order-form-grid label.wide { grid-column: 1 / -1; }
+.customer-order-delivery-service-field { margin-top: 2px; padding-top: 10px; border-top: 1px solid #dce3e0; }
+.customer-order-delivery-estimate { grid-column: 1 / -1; min-height: 34px; border-left: 3px solid #8da49a; padding: 8px 10px; background: #f1f5f3; color: #526159; font-size: 9px; font-weight: 700; line-height: 1.55; }
+.customer-order-delivery-estimate.ready { border-left-color: #287356; background: #edf7f1; color: #205a42; }
+.customer-order-delivery-estimate.restricted { border-left-color: #b87818; background: #fff7e8; color: #795216; }
+.customer-order-delivery-estimate.warning { border-left-color: #b87818; background: #fff9ef; color: #765522; }
+.customer-order-delivery-estimate.error { border-left-color: #c33d32; background: #fff1f0; color: #a12d24; }
 .customer-order-form-grid label > span { display: block; margin-bottom: 4px; color: #526159; font-size: 10px; font-weight: 800; }
 .customer-order-form-field { min-width: 0; }
 .customer-order-form-field > label { display: block; margin-bottom: 4px; color: #526159; font-size: 10px; font-weight: 800; }
