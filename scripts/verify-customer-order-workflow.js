@@ -261,6 +261,9 @@ if (!orderPreviewRequest.includes('internalRegistration ? "preview_internal_cust
     !orderPreviewRequest.includes("previewParams.target_sales_customer_id = customerPortalPreviewContext.sales_customer_id")) {
   throw new Error("internal preview must use the server RPC for the selected customer");
 }
+if (!orderPreviewRequest.includes('result.error.message || t("customer_order_preview_error")')) {
+  throw new Error("order preview must show the server validation reason");
+}
 if (!orderSubmitRequest.includes('internalRegistration ? "place_internal_customer_order" : "place_customer_order"')) {
   throw new Error("internal submission must use the server-side proxy-registration RPC");
 }

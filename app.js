@@ -4945,7 +4945,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.703";
+var APP_VERSION       = "v1.1.705";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -9386,7 +9386,7 @@ async function previewCustomerOrder(options) {
   if (button) button.disabled = false;
   if (result.error) {
     customerOrderPreview = null;
-    customerOrderSetStatus(t("customer_order_preview_error"), true);
+    customerOrderSetStatus(result.error.message || t("customer_order_preview_error"), true);
     renderCustomerOrderCart();
     return;
   }
