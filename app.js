@@ -4909,7 +4909,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.699";
+var APP_VERSION       = "v1.1.700";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5068,6 +5068,7 @@ var productionDetailRequestSeq = 0;
 var SEARCH_FETCH_LIMIT = 200;
 var SEARCH_INITIAL_LIMIT = 30;
 var SEARCH_PAGE_STEP = 30;
+var SEARCH_PRIMARY_BADGE_PREFETCH_LIMIT = 8;
 var CATEGORY_SEARCH_PAGE_STEP = 100;
 var KIKAN_FLAG_LOOKUP_LIMIT = 80;
 var productSearchLimit = SEARCH_INITIAL_LIMIT;
@@ -25951,14 +25952,28 @@ async function runProductSearch(options) {
     productAvailableStockMap = {};
     productVariantSummaryMap = {};
   }
-  var stockPriorityResult = await fetchProductAvailableStockMap(auxiliaryProducts);
+  var shouldPrefetchPrimaryBadges = auxiliaryProducts.length <= SEARCH_PRIMARY_BADGE_PREFETCH_LIMIT;
+  var primarySearchData = await Promise.all([
+    fetchProductAvailableStockMap(auxiliaryProducts),
+    shouldPrefetchPrimaryBadges ? fetchProductSearchCardFlags(auxiliaryProducts) : Promise.resolve(null),
+    canSeeComponentInfo()
+      ? fetchProductionPartRegistrationCountMap(auxiliaryProducts)
+      : Promise.resolve({ total: {}, byKind: {} })
+  ]);
   if (seq !== searchRequestSeq) return;
+  var stockPriorityResult = primarySearchData[0] || { map: {} };
   if (!stockPriorityResult.error) {
     productAvailableStockMap = appendCategoryPage
       ? mergeObjectMap(productAvailableStockMap, stockPriorityResult.map)
       : stockPriorityResult.map;
   }
+  var primaryProductionCounts = primarySearchData[2] || { total: {}, byKind: {} };
+  productionComponentKindCountMap = appendCategoryPage
+    ? mergeObjectMap(productionComponentKindCountMap, primaryProductionCounts.byKind || {})
+    : (primaryProductionCounts.byKind || {});
   applyCachedSearchAuxiliaryMaps(auxiliaryProducts);
+  var primaryBadgeFlags = primarySearchData[1];
+  if (primaryBadgeFlags) applyProductSearchCardFlags(primaryBadgeFlags, auxiliaryProducts);
   renderCategoryChips();
   render();
   if (!options.preserveSelection) {
@@ -25984,7 +25999,9 @@ async function runProductSearch(options) {
   }
   scheduleProductSearchEnrichment(seq, auxiliaryProducts.slice(), {
     append: appendCategoryPage,
-    preserveSelection: !!options.preserveSelection
+    preserveSelection: !!options.preserveSelection,
+    primaryBadgeFlagsReady: Array.isArray(primaryBadgeFlags),
+    productionCounts: primaryProductionCounts
   });
 }
 
@@ -26020,14 +26037,16 @@ async function runDeferredProductSearchEnrichment(seq, auxSeq, products, options
   options = options || {};
   var lookupProducts = (products || []).slice(0, SEARCH_RENDER_LIMIT);
   if (!lookupProducts.length) return;
+  if (!options.primaryBadgeFlagsReady) {
+    await waitForProductSearchEnrichmentDelay(75);
+    if (isProductSearchEnrichmentStale(seq, auxSeq)) return;
+    var deferredBadgeFlags = await fetchProductSearchCardFlags(lookupProducts);
+    if (isProductSearchEnrichmentStale(seq, auxSeq)) return;
+    applyProductSearchCardFlags(deferredBadgeFlags, lookupProducts);
+    render();
+  }
   if (!await waitForProductSearchDetailLoads(seq, auxSeq)) return;
 
-  var cardFlags = await fetchProductSearchCardFlags(lookupProducts);
-  if (isProductSearchEnrichmentStale(seq, auxSeq)) return;
-  applyProductSearchCardFlags(cardFlags, lookupProducts);
-  render();
-
-  if (!await waitForProductSearchDetailLoads(seq, auxSeq)) return;
   var salesImageInfo = await fetchProductImageCountMapForContext(lookupProducts, "sales");
   if (isProductSearchEnrichmentStale(seq, auxSeq)) return;
   applyProductImageCountMapForContext(lookupProducts, salesImageInfo, "sales");
@@ -26035,7 +26054,10 @@ async function runDeferredProductSearchEnrichment(seq, auxSeq, products, options
   render();
 
   if (!await waitForProductSearchDetailLoads(seq, auxSeq)) return;
-  await loadProductSearchAuxiliaryData(seq, lookupProducts, { append: !!options.append });
+  await loadProductSearchAuxiliaryData(seq, lookupProducts, {
+    append: !!options.append,
+    productionCounts: options.productionCounts || null
+  });
 }
 
 async function fetchComponentUsageCountMap(products) {
@@ -26273,7 +26295,9 @@ async function loadProductSearchAuxiliaryData(seq, products, options) {
     canSeeComponentInfo() ? fetchComponentUsageCountMap(lookupProducts) : Promise.resolve({}),
     canSeeCoreStockInfo() ? fetchCoreStockQtyMap(lookupProducts) : Promise.resolve({}),
     fetchProductVariantSummaryMap(lookupProducts),
-    canSeeComponentInfo() ? fetchProductionPartRegistrationCountMap(lookupProducts) : Promise.resolve({ total: {}, byKind: {} }),
+    options.productionCounts
+      ? Promise.resolve(options.productionCounts)
+      : (canSeeComponentInfo() ? fetchProductionPartRegistrationCountMap(lookupProducts) : Promise.resolve({ total: {}, byKind: {} })),
     shouldLoadKikanFlags ? fetchKikanCompatibleMap(lookupProducts, isStale) : Promise.resolve({})
   ]);
   if (isStale()) return;
