@@ -207,13 +207,17 @@ var TRANSLATIONS = {
     customer_order_shipping_note: "送り状に印字する内容です。",
     customer_order_preview: "価格・在庫を確認",
     customer_order_submit: "注文を確定",
-    customer_order_development_preview_title: "社内向け開発プレビュー",
-    customer_order_development_preview_note: "画面確認用です。価格・在庫確認、注文送信、注文履歴の取得は行いません。",
+    customer_order_development_preview_title: "社内向け受注登録",
+    customer_order_development_preview_note: "この画面から得意先注文として社内登録できます。登録時に価格・在庫を確定し、在庫を予約します。得意先には未公開です。",
     customer_order_flow_preview_title: "受注導線の開発プレビュー",
-    customer_order_flow_preview_note: "品番を検索し、在庫がある商品区分の「この商品を注文」から受注画面まで確認できます。実注文は作成されません。",
+    customer_order_flow_preview_note: "品番を検索し、在庫がある商品区分の「この商品を注文」から、得意先注文として社内登録できます。得意先には未公開です。",
     customer_order_preview_disabled: "価格・在庫確認は無効",
     customer_order_submit_disabled: "注文確定は無効",
-    customer_order_preview_history_disabled: "開発プレビューでは注文履歴を取得しません。",
+    customer_order_internal_submit: "得意先注文として登録",
+    customer_order_internal_confirm: "この得意先の注文として登録します。価格と在庫を確定し、在庫を予約します。よろしいですか？",
+    customer_order_internal_registering: "得意先注文を登録しています。",
+    customer_order_internal_source: "社内登録",
+    customer_order_preview_history_disabled: "社内登録画面では注文履歴を取得しません。登録後は受注管理で確認してください。",
     customer_order_address_saved_title: "以前のお届け先",
     customer_order_address_search_placeholder: "電話番号またはお名前で検索",
     customer_order_address_search: "検索",
@@ -222,7 +226,7 @@ var TRANSLATIONS = {
     customer_order_address_search_loading: "お届け先を検索しています。",
     customer_order_address_search_empty: "一致するお届け先はありません。",
     customer_order_address_search_error: "お届け先を検索できませんでした。新規入力してください。",
-    customer_order_address_search_preview: "開発プレビューでは保存済みお届け先を検索しません。",
+    customer_order_address_search_preview: "社内登録画面では保存済みお届け先を検索しません。新しいお届け先を入力してください。",
     customer_order_address_selected: "お届け先を入力しました。",
     customer_order_postal_lookup: "住所検索",
     customer_order_postal_lookup_hint: "郵便番号7桁から住所を入力します。",
@@ -1103,7 +1107,7 @@ var TRANSLATIONS = {
     customer_access_order_publication_help: "公開にすると、受注機能全体が有効な場合に、この得意先の商品画面へ注文ボタンを表示します。初期値は非公開です。",
     customer_access_order_hidden: "非公開",
     customer_access_order_visible: "公開",
-    customer_access_order_preview: "受注導線をプレビュー",
+    customer_access_order_preview: "受注を社内登録",
     customer_access_order_preview_unsaved: "表示設定に未保存の変更があります。先に変更を保存してください。",
     customer_access_rule_help: "販売価格をOFFにすると、0円表示・価格あり商品のみ表示もOFFになります。価格あり商品のみ表示をONにすると、価格未設定商品は非表示になります。",
     customer_access_shipping_rule: "送料条件",
@@ -1815,13 +1819,17 @@ var TRANSLATIONS = {
     customer_order_shipping_note: "This information will be printed on the shipping label.",
     customer_order_preview: "Check Price / Stock",
     customer_order_submit: "Place Order",
-    customer_order_development_preview_title: "Internal Development Preview",
-    customer_order_development_preview_note: "For screen review only. Price and stock checks, order submission, and order history requests are disabled.",
+    customer_order_development_preview_title: "Internal Order Entry",
+    customer_order_development_preview_note: "You can register an order for this customer from this screen. Registration revalidates price and stock and reserves inventory. Customer access remains unpublished.",
     customer_order_flow_preview_title: "Order Flow Development Preview",
-    customer_order_flow_preview_note: "Search for a part and open the order screen from an in-stock product type. No real order will be created.",
+    customer_order_flow_preview_note: "Search for a part and register an in-stock product as an internal order for the selected customer. Customer access remains unpublished.",
     customer_order_preview_disabled: "Price / Stock Disabled",
     customer_order_submit_disabled: "Order Disabled",
-    customer_order_preview_history_disabled: "Order history is not requested in development preview.",
+    customer_order_internal_submit: "Register Customer Order",
+    customer_order_internal_confirm: "Register this order for the selected customer? Price and stock will be finalized and inventory will be reserved.",
+    customer_order_internal_registering: "Registering the customer order.",
+    customer_order_internal_source: "Internal Entry",
+    customer_order_preview_history_disabled: "Order history is not loaded here. Review the registered order in order management.",
     customer_order_address_saved_title: "Previous Delivery Addresses",
     customer_order_address_search_placeholder: "Search by phone number or name",
     customer_order_address_search: "Search",
@@ -1830,7 +1838,7 @@ var TRANSLATIONS = {
     customer_order_address_search_loading: "Searching delivery addresses.",
     customer_order_address_search_empty: "No matching delivery address was found.",
     customer_order_address_search_error: "Delivery addresses could not be searched. Enter a new address.",
-    customer_order_address_search_preview: "Saved delivery addresses are not searched in development preview.",
+    customer_order_address_search_preview: "Saved delivery addresses are not searched during internal entry. Enter a new address.",
     customer_order_address_selected: "The delivery address has been filled in.",
     customer_order_postal_lookup: "Find Address",
     customer_order_postal_lookup_hint: "Fill the address from a 7-digit postal code.",
@@ -2711,7 +2719,7 @@ var TRANSLATIONS = {
     customer_access_order_publication_help: "When enabled, order actions appear for this customer only while the overall ordering feature is available. The default is hidden.",
     customer_access_order_hidden: "Hidden",
     customer_access_order_visible: "Published",
-    customer_access_order_preview: "Preview Order Flow",
+    customer_access_order_preview: "Register Customer Order",
     customer_access_order_preview_unsaved: "Display settings have unsaved changes. Save them before opening the preview.",
     customer_access_rule_help: "When sales price is off, zero-price display and priced-only display are also off. When priced-only is on, products without prices are hidden.",
     customer_access_shipping_rule: "Shipping Terms",
@@ -3410,13 +3418,17 @@ var TRANSLATIONS = {
     customer_order_shipping_note: "此内容将打印在运单上。",
     customer_order_preview: "确认价格・库存",
     customer_order_submit: "提交订单",
-    customer_order_development_preview_title: "内部开发预览",
-    customer_order_development_preview_note: "仅用于画面确认。不会确认价格和库存、提交订单或读取订单记录。",
+    customer_order_development_preview_title: "内部订单登记",
+    customer_order_development_preview_note: "可从此画面为该客户进行内部订单登记。登记时会重新确认价格和库存并预留库存。客户功能仍未公开。",
     customer_order_flow_preview_title: "订单流程开发预览",
-    customer_order_flow_preview_note: "搜索零件编号，并从有库存的商品类别进入订单画面。不会创建实际订单。",
+    customer_order_flow_preview_note: "搜索零件编号，并将有库存的商品作为所选客户的内部订单登记。客户功能仍未公开。",
     customer_order_preview_disabled: "价格・库存确认已禁用",
     customer_order_submit_disabled: "订单提交已禁用",
-    customer_order_preview_history_disabled: "开发预览中不会读取订单记录。",
+    customer_order_internal_submit: "登记客户订单",
+    customer_order_internal_confirm: "要为所选客户登记此订单吗？价格和库存将被确认并预留库存。",
+    customer_order_internal_registering: "正在登记客户订单。",
+    customer_order_internal_source: "内部登记",
+    customer_order_preview_history_disabled: "此处不会读取订单记录。登记后请在订单管理中确认。",
     customer_order_address_saved_title: "以前的收货地址",
     customer_order_address_search_placeholder: "按电话号码或姓名搜索",
     customer_order_address_search: "搜索",
@@ -3425,7 +3437,7 @@ var TRANSLATIONS = {
     customer_order_address_search_loading: "正在搜索收货地址。",
     customer_order_address_search_empty: "没有找到匹配的收货地址。",
     customer_order_address_search_error: "无法搜索收货地址。请新建地址。",
-    customer_order_address_search_preview: "开发预览中不会搜索已保存的收货地址。",
+    customer_order_address_search_preview: "内部登记时不会搜索已保存的收货地址。请输入新的收货地址。",
     customer_order_address_selected: "已填写收货地址。",
     customer_order_postal_lookup: "搜索地址",
     customer_order_postal_lookup_hint: "根据7位邮政编码填写地址。",
@@ -4312,7 +4324,7 @@ var TRANSLATIONS = {
     customer_access_order_publication_help: "开启后，仅在整体订购功能可用时向该客户显示订购操作。默认不公开。",
     customer_access_order_hidden: "不公开",
     customer_access_order_visible: "已公开",
-    customer_access_order_preview: "预览订单流程",
+    customer_access_order_preview: "登记客户订单",
     customer_access_order_preview_unsaved: "显示设置有未保存的更改。请先保存后再打开预览。",
     customer_access_rule_help: "关闭销售价格时，0日元显示和仅显示有价格商品也会关闭。开启仅显示有价格商品时，未设置价格的商品会隐藏。",
     customer_access_shipping_rule: "运费条件",
@@ -4933,7 +4945,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.702";
+var APP_VERSION       = "v1.1.703";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6062,6 +6074,14 @@ function canPreviewCustomerOrdering() {
     context.sales_customer_id &&
     context.customer &&
     context.customer.is_active !== false
+  );
+}
+function canRegisterInternalCustomerOrder() {
+  if (!canPreviewCustomerOrdering() || !customerOrderFeatureEnabled("internal_management") || isExternalViewer()) return false;
+  return userPermissionAllowed(
+    userProfile,
+    "sales_order.manage",
+    hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor", "sales_editor"])
   );
 }
 function canOpenCustomerOrdering() {
@@ -9181,6 +9201,12 @@ function customerOrderStatusLabel(status) {
   return labels[String(status || "").toLowerCase()] || status || "-";
 }
 
+function customerOrderSourceBadgeHtml(orderSource) {
+  return orderSource === "internal_entry"
+    ? "<em class='sales-order-source internal'>" + esc(t("customer_order_internal_source")) + "</em>"
+    : "";
+}
+
 function customerOrderDateTimeText(value) {
   if (!value) return "-";
   var date = new Date(value);
@@ -9199,18 +9225,21 @@ function customerOrderPreviewItemMap() {
 
 function configureCustomerOrderDevelopmentPreview() {
   var previewMode = canPreviewCustomerOrdering();
+  var internalRegistration = canRegisterInternalCustomerOrder();
   var banner = document.getElementById("customer-order-development-preview");
   var previewButton = document.getElementById("customer-order-preview-button");
   var submitButton = document.getElementById("customer-order-submit");
   var historyReload = document.getElementById("customer-order-history-reload");
   if (banner) banner.hidden = !previewMode;
   if (previewButton) {
-    previewButton.textContent = previewMode ? t("customer_order_preview_disabled") : t("customer_order_preview");
-    previewButton.disabled = previewMode;
+    previewButton.textContent = previewMode && !internalRegistration ? t("customer_order_preview_disabled") : t("customer_order_preview");
+    if (previewMode) previewButton.disabled = !internalRegistration || customerOrderSaving || !customerOrderCart.length;
   }
   if (submitButton) {
-    submitButton.textContent = previewMode ? t("customer_order_submit_disabled") : t("customer_order_submit");
-    if (previewMode) submitButton.disabled = true;
+    submitButton.textContent = previewMode
+      ? (internalRegistration ? t("customer_order_internal_submit") : t("customer_order_submit_disabled"))
+      : t("customer_order_submit");
+    if (previewMode && !internalRegistration) submitButton.disabled = true;
   }
   if (historyReload) historyReload.disabled = previewMode;
 }
@@ -9280,7 +9309,9 @@ function renderCustomerOrderCart() {
       summary.innerHTML = "<p>価格と在庫は未確認です。</p>";
     }
   }
-  if (submit) submit.disabled = canPreviewCustomerOrdering() || customerOrderSaving || !(customerOrderPreview && customerOrderPreview.valid === true && customerOrderPreview.preview_token);
+  if (submit) submit.disabled = customerOrderSaving ||
+    (!canUseCustomerOrdering() && !canRegisterInternalCustomerOrder()) ||
+    !(customerOrderPreview && customerOrderPreview.valid === true && customerOrderPreview.preview_token);
   configureCustomerOrderDevelopmentPreview();
 }
 
@@ -9327,13 +9358,14 @@ async function enterCustomerOrders(options) {
 
 async function previewCustomerOrder(options) {
   options = options || {};
-  if (canPreviewCustomerOrdering()) {
+  var internalRegistration = canRegisterInternalCustomerOrder();
+  if (canPreviewCustomerOrdering() && !internalRegistration) {
     customerOrderPreview = null;
     customerOrderSetStatus(t("customer_order_development_preview_note"), false);
     renderCustomerOrderCart();
     return;
   }
-  if (!canUseCustomerOrdering() || !customerOrderCart.length) {
+  if ((!canUseCustomerOrdering() && !internalRegistration) || !customerOrderCart.length) {
     renderCustomerOrderCart();
     return;
   }
@@ -9341,12 +9373,15 @@ async function previewCustomerOrder(options) {
   var button = document.getElementById("customer-order-preview-button");
   if (button) button.disabled = true;
   if (!options.silent) customerOrderSetStatus("最新の価格と在庫を確認しています。", false);
-  var result = await sb.rpc("preview_customer_order", {
+  var previewRpc = internalRegistration ? "preview_internal_customer_order" : "preview_customer_order";
+  var previewParams = {
     target_items: customerOrderPayloadItems(),
     target_shipping_address: customerOrderAddressPayload(),
     target_shipping_method: customerOrderShippingMethodPayload(),
     target_core_return_shipping_method: customerOrderCoreReturnShippingMethodPayload()
-  });
+  };
+  if (internalRegistration) previewParams.target_sales_customer_id = customerPortalPreviewContext.sales_customer_id;
+  var result = await sb.rpc(previewRpc, previewParams);
   if (requestSeq !== customerOrderPreviewSeq) return;
   if (button) button.disabled = false;
   if (result.error) {
@@ -9368,18 +9403,21 @@ function customerOrderIdempotencyKey() {
 }
 
 async function submitCustomerOrder() {
-  if (canPreviewCustomerOrdering()) {
+  var internalRegistration = canRegisterInternalCustomerOrder();
+  if (canPreviewCustomerOrdering() && !internalRegistration) {
     customerOrderSetStatus(t("customer_order_development_preview_note"), false);
     return;
   }
-  if (!canUseCustomerOrdering() || customerOrderSaving || !customerOrderPreview || customerOrderPreview.valid !== true || !customerOrderPreview.preview_token) return;
+  if ((!canUseCustomerOrdering() && !internalRegistration) || customerOrderSaving || !customerOrderPreview || customerOrderPreview.valid !== true || !customerOrderPreview.preview_token) return;
+  if (internalRegistration && !window.confirm(t("customer_order_internal_confirm"))) return;
   customerOrderSaving = true;
   renderCustomerOrderCart();
-  customerOrderSetStatus("注文を登録しています。", false);
+  customerOrderSetStatus(internalRegistration ? t("customer_order_internal_registering") : "注文を登録しています。", false);
   var deliveryDate = document.getElementById("customer-order-delivery-date");
   var deliveryTime = document.getElementById("customer-order-delivery-time");
   var note = document.getElementById("customer-order-note");
-  var result = await sb.rpc("place_customer_order", {
+  var submitRpc = internalRegistration ? "place_internal_customer_order" : "place_customer_order";
+  var submitParams = {
     target_items: customerOrderPayloadItems(),
     target_shipping_address: customerOrderAddressPayload(),
     target_shipping_method: customerOrderShippingMethodPayload(),
@@ -9389,7 +9427,9 @@ async function submitCustomerOrder() {
     target_customer_note: note && note.value ? note.value.trim() : null,
     target_preview_token: customerOrderPreview.preview_token,
     target_idempotency_key: customerOrderIdempotencyKey()
-  });
+  };
+  if (internalRegistration) submitParams.target_sales_customer_id = customerPortalPreviewContext.sales_customer_id;
+  var result = await sb.rpc(submitRpc, submitParams);
   customerOrderSaving = false;
   if (result.error) {
     customerOrderPreview = null;
@@ -9402,6 +9442,15 @@ async function submitCustomerOrder() {
   clearPersistedCustomerOrderCart();
   customerOrderSetStatus(t("customer_order_submit_success"), false);
   renderCustomerOrderCart();
+  if (internalRegistration) {
+    var registeredOrder = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
+    var registeredOrderId = parseInt(registeredOrder.id, 10);
+    customerPortalSearchActive = false;
+    customerPortalPreviewContext = null;
+    await enterSalesOrderMgmt();
+    if (!isNaN(registeredOrderId)) await loadSalesOrderDetail(registeredOrderId);
+    return;
+  }
   showCustomerOrderView("history");
 }
 
@@ -9532,7 +9581,7 @@ function renderSalesOrderList() {
     var selected = String(order.id) === String(salesOrderSelectedId);
     return "<div class='sales-order-list-row" + (selected ? " selected" : "") + "' data-sales-order-open='" + esc(order.id) + "'>" +
       "<label class='sales-order-check' aria-label='CSV出力対象'><input type='checkbox' data-sales-order-check value='" + esc(order.id) + "'></label>" +
-      "<div class='sales-order-list-main'><strong>" + esc(order.order_number || ("注文 " + order.id)) + "</strong><span>" + esc(order.customer_name || "-") + "</span><small>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small></div>" +
+      "<div class='sales-order-list-main'><strong>" + esc(order.order_number || ("注文 " + order.id)) + "</strong><span>" + esc(order.customer_name || "-") + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "<small>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small></div>" +
       "<div class='sales-order-list-count'><span>明細</span><strong>" + esc(order.item_count == null ? "-" : order.item_count) + "</strong></div>" +
       "<div class='sales-order-list-total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div>" +
       "<span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span>" +
@@ -9611,7 +9660,7 @@ function renderSalesOrderDetail() {
   var coreReturnService = order.core_return_required
     ? customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "core_return"), "未登録")
     : "対象外";
-  host.innerHTML = "<div class='sales-order-detail-head'><div><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span></div>" +
+  host.innerHTML = "<div class='sales-order-detail-head'><div><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "<h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span></div>" +
     "<div class='sales-order-detail-summary'><div><span>商品計</span><strong>" + esc(customerOrderCurrency(order.subtotal_jpy)) + "</strong></div><div><span>送料</span><strong>" + esc(customerOrderCurrency(order.shipping_fee_jpy)) + "</strong></div><div><span>消費税</span><strong>" + esc(customerOrderCurrency(order.tax_jpy)) + "</strong></div><div class='total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div></div>" +
     "<section class='sales-order-detail-section'><h3>注文明細</h3>" + salesOrderItemRowsHtml(order.items) + "</section>" +
     "<section class='sales-order-detail-section sales-order-address'><h3>お届け先・運送便</h3><p><strong>" + esc(address.company_name || "-") + "　" + esc(address.recipient_name || "-") + "</strong><br>〒" + esc(address.postal_code || "-") + "　" + esc(address.prefecture_name || "") + esc(address.address_line_1 || "-") + " " + esc(address.address_line_2 || "") + "<br>TEL " + esc(address.phone_number || "-") + "</p><dl><div><dt>商品発送便</dt><dd>" + esc(outboundService) + "</dd></div><div><dt>コア返却便</dt><dd>" + esc(coreReturnService) + "</dd></div><div><dt>お届け希望</dt><dd>" + esc(order.requested_delivery_date || "指定なし") + " / " + esc(order.delivery_time_label || "指定なし") + "</dd></div><div><dt>注文メモ</dt><dd>" + esc(order.customer_note || "-") + "</dd></div></dl></section>" +

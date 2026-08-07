@@ -5221,6 +5221,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .sales-order-list-main strong { color: #17231f; font-size: 12px; }
 .sales-order-list-main span { margin-top: 3px; color: #42514b; font-size: 10px; }
 .sales-order-list-main small { margin-top: 3px; color: #78837e; font-size: 9px; }
+.sales-order-source { display: inline-flex; width: fit-content; margin-top: 4px; border: 1px solid #b7791f; border-radius: 3px; padding: 1px 5px; background: #fff7db; color: #7a4c00; font-size: 9px; font-style: normal; font-weight: 700; line-height: 1.4; }
 .sales-order-list-count,
 .sales-order-list-total { text-align: right; }
 .sales-order-list-count span,

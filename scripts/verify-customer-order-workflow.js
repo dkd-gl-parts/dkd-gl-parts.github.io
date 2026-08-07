@@ -109,10 +109,31 @@ const internalOrderAccess = sourceBetween("function canManageSalesOrders", "func
 if (!internalOrderAccess.includes('customerOrderFeatureEnabled("internal_management")') || !internalOrderAccess.includes('"sales_order.manage"')) {
   throw new Error("internal order management must require backend readiness and a dedicated permission");
 }
+const internalRegistrationAccess = sourceBetween("function canRegisterInternalCustomerOrder", "function canOpenCustomerOrdering");
+if (!internalRegistrationAccess.includes("canPreviewCustomerOrdering()") ||
+    !internalRegistrationAccess.includes('customerOrderFeatureEnabled("internal_management")') ||
+    !internalRegistrationAccess.includes('"sales_order.manage"')) {
+  throw new Error("internal customer-order registration must require preview context, backend readiness, and sales-order permission");
+}
+function evaluateInternalRegistrationAccess(options) {
+  return vm.runInNewContext(`${internalRegistrationAccess}\ncanRegisterInternalCustomerOrder();`, {
+    canPreviewCustomerOrdering: () => options.preview,
+    customerOrderFeatureEnabled: () => options.featureEnabled,
+    isExternalViewer: () => options.externalViewer,
+    userPermissionAllowed: () => options.permission,
+    hasAccessRole: () => false,
+    userProfile: {}
+  });
+}
+if (!evaluateInternalRegistrationAccess({ preview: true, featureEnabled: true, externalViewer: false, permission: true }) ||
+    evaluateInternalRegistrationAccess({ preview: false, featureEnabled: true, externalViewer: false, permission: true }) ||
+    evaluateInternalRegistrationAccess({ preview: true, featureEnabled: false, externalViewer: false, permission: true }) ||
+    evaluateInternalRegistrationAccess({ preview: true, featureEnabled: true, externalViewer: true, permission: true }) ||
+    evaluateInternalRegistrationAccess({ preview: true, featureEnabled: true, externalViewer: false, permission: false })) {
+  throw new Error("internal customer-order registration access must fail closed");
+}
 
 [
-  "preview_customer_order",
-  "place_customer_order",
   "list_customer_orders",
   "search_customer_delivery_addresses",
   "list_sales_orders",
@@ -122,6 +143,14 @@ if (!internalOrderAccess.includes('customerOrderFeatureEnabled("internal_managem
   "register_sales_order_shipping"
 ].forEach((rpc) => {
   if (!source.includes(`sb.rpc("${rpc}"`)) throw new Error(`required order RPC is missing: ${rpc}`);
+});
+[
+  "preview_customer_order",
+  "preview_internal_customer_order",
+  "place_customer_order",
+  "place_internal_customer_order"
+].forEach((rpc) => {
+  if (!source.includes(`"${rpc}"`)) throw new Error(`required order RPC is missing: ${rpc}`);
 });
 
 if (source.includes('.from("customer_orders")') || source.includes('.from("customer_order_items")')) {
@@ -134,6 +163,12 @@ if (!submitSource.includes("target_preview_token") || !submitSource.includes("ta
 }
 if (!submitSource.includes("customerOrderSaving")) {
   throw new Error("order submission must block duplicate clicks");
+}
+if (!submitSource.includes('window.confirm(t("customer_order_internal_confirm"))') ||
+    !submitSource.includes("submitParams.target_sales_customer_id = customerPortalPreviewContext.sales_customer_id") ||
+    !submitSource.includes("await enterSalesOrderMgmt()") ||
+    !submitSource.includes("await loadSalesOrderDetail(registeredOrderId)")) {
+  throw new Error("internal registration must confirm, bind the selected customer, and open the registered order in management");
 }
 
 const trackingSource = sourceBetween("async function registerSalesOrderTracking", "function b2ExportField");
@@ -222,17 +257,18 @@ if (!addOrderItem.includes("if (!existing)") || addOrderItem.includes("existing.
 const orderPreviewRequest = sourceBetween("async function previewCustomerOrder", "function customerOrderIdempotencyKey");
 const orderSubmitRequest = sourceBetween("async function submitCustomerOrder", "function renderCustomerOrderHistory");
 const orderHistoryRequest = sourceBetween("async function loadCustomerOrderHistory", "function returnToCustomerPortalFromOrders");
-[
-  [orderPreviewRequest, 'sb.rpc("preview_customer_order"', "preview"],
-  [orderSubmitRequest, 'sb.rpc("place_customer_order"', "submit"],
-  [orderHistoryRequest, 'sb.rpc("list_customer_orders"', "history"]
-].forEach(([block, rpc, label]) => {
-  const guardIndex = block.indexOf("if (canPreviewCustomerOrdering())");
-  const rpcIndex = block.indexOf(rpc);
-  if (guardIndex < 0 || rpcIndex < 0 || guardIndex > rpcIndex) {
-    throw new Error(`development preview must exit before the ${label} RPC`);
-  }
-});
+if (!orderPreviewRequest.includes('internalRegistration ? "preview_internal_customer_order" : "preview_customer_order"') ||
+    !orderPreviewRequest.includes("previewParams.target_sales_customer_id = customerPortalPreviewContext.sales_customer_id")) {
+  throw new Error("internal preview must use the server RPC for the selected customer");
+}
+if (!orderSubmitRequest.includes('internalRegistration ? "place_internal_customer_order" : "place_customer_order"')) {
+  throw new Error("internal submission must use the server-side proxy-registration RPC");
+}
+const historyGuardIndex = orderHistoryRequest.indexOf("if (canPreviewCustomerOrdering())");
+const historyRpcIndex = orderHistoryRequest.indexOf('sb.rpc("list_customer_orders"');
+if (historyGuardIndex < 0 || historyRpcIndex < 0 || historyGuardIndex > historyRpcIndex) {
+  throw new Error("development preview must not read customer-owned order history");
+}
 
 const addressSearchRequest = sourceBetween("async function searchCustomerOrderAddresses", "function clearCustomerOrderAddress");
 const addressPreviewGuard = addressSearchRequest.indexOf("if (canPreviewCustomerOrdering())");
