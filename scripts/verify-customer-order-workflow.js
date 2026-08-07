@@ -29,6 +29,8 @@ function sourceBetween(startText, endText) {
   "customer-order-address-new",
   "customer-order-postal-lookup",
   "customer-order-postal-results",
+  "customer-order-postal-test",
+  "customer-order-postal-local-status",
   "customer-catalog-order-preview-guide",
   "screen-sales-order-mgmt",
   "sales-order-list",
@@ -245,11 +247,31 @@ if (!addressSearchRequest.includes("} finally {") ||
     !addressSearchRequest.includes("customerOrderAddressSearching = false;")) {
   throw new Error("saved delivery address search must restore controls after network failure");
 }
+const postalApiLookup = sourceBetween("async function lookupCustomerOrderPostalApi", "function configureCustomerOrderPostalTest");
+if (!postalApiLookup.includes("https://zipcloud.ibsnet.co.jp/api/search?zipcode=") ||
+    !postalApiLookup.includes('credentials: "omit"') ||
+    !postalApiLookup.includes("customerOrderPostalFetch")) {
+  throw new Error("postal API lookup must send only the postal code without credentials and use a bounded request");
+}
+const postalLocalLookup = sourceBetween("async function loadCustomerOrderPostalManifest", "async function lookupCustomerOrderPostalApi");
+if (!postalLocalLookup.includes("CUSTOMER_ORDER_POSTAL_MANIFEST_CACHE") ||
+    !postalLocalLookup.includes("CUSTOMER_ORDER_POSTAL_DATA_CACHE_PREFIX") ||
+    !postalLocalLookup.includes("cache.match(url)") ||
+    !postalLocalLookup.includes("cache.put(url, response.clone())")) {
+  throw new Error("postal local lookup must retain the versioned Japan Post data in Cache Storage");
+}
 const postalLookup = sourceBetween("async function lookupCustomerOrderPostalCode", "function configureCustomerOrderAddressTools");
-if (!postalLookup.includes("https://zipcloud.ibsnet.co.jp/api/search?zipcode=") ||
-    !postalLookup.includes('credentials: "omit"') ||
-    !postalLookup.includes("postalCode.length !== 7")) {
-  throw new Error("postal lookup must send only a validated 7-digit postal code without credentials");
+if (!postalLookup.includes("postalCode.length !== 7") ||
+    !postalLookup.includes('canPreviewCustomerOrdering() ? customerOrderPostalLookupMode : "auto"') ||
+    !postalLookup.includes("lookupCustomerOrderPostalApi(postalCode)") ||
+    !postalLookup.includes("lookupCustomerOrderPostalLocal(postalCode)")) {
+  throw new Error("postal lookup must validate seven digits, expose preview modes, and force automatic fallback for customers");
+}
+const postalPreparation = sourceBetween("async function prepareCustomerOrderPostalLocalData", "function customerOrderPostalSetStatus");
+if (!postalPreparation.includes("manifest.shards.length") ||
+    !postalPreparation.includes("requestIdleCallback") ||
+    !postalPreparation.includes('customerOrderPostalPrepareState = "ready"')) {
+  throw new Error("postal data must be prepared in the background without blocking the order screen");
 }
 if (!source.includes('"customer-order-prefecture", "customer-order-address1", "customer-order-address2"') ||
     !source.includes("customerOrderPreview = null;")) {
@@ -271,6 +293,8 @@ if (!html.includes("https://zipcloud.ibsnet.co.jp") || !headersFile.includes("ht
   ".customer-order-address-book",
   ".customer-order-address-result",
   ".customer-order-postal-row",
+  ".customer-order-postal-test",
+  ".customer-order-postal-mode",
   "@media (max-width: 820px)"
 ].forEach((fragment) => {
   if (!css.includes(fragment)) throw new Error(`responsive order style is missing: ${fragment}`);
@@ -293,7 +317,10 @@ if ((source.match(/customer_order_development_preview_title:/g) || []).length !=
 }
 if ((source.match(/customer_order_address_saved_title:/g) || []).length !== 3 ||
     (source.match(/customer_order_address_search_placeholder:/g) || []).length !== 3 ||
-    (source.match(/customer_order_postal_lookup:/g) || []).length !== 3) {
+    (source.match(/customer_order_postal_lookup:/g) || []).length !== 3 ||
+    (source.match(/customer_order_postal_mode_auto:/g) || []).length !== 3 ||
+    (source.match(/customer_order_postal_mode_api:/g) || []).length !== 3 ||
+    (source.match(/customer_order_postal_mode_local:/g) || []).length !== 3) {
   throw new Error("delivery address search and postal lookup must be translated for all supported languages");
 }
 

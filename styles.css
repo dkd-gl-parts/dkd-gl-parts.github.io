@@ -5111,6 +5111,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-order-postal-result { display: block; width: 100%; border: 0; border-bottom: 1px solid #e2e8e5; padding: 7px 8px; background: #fff; color: #304039; font-size: 9px; line-height: 1.45; text-align: left; cursor: pointer; }
 .customer-order-postal-result:last-child { border-bottom: 0; }
 .customer-order-postal-result:hover { background: #f0f7f3; }
+.customer-order-postal-test { grid-column: 1 / -1; margin-top: 7px; border: 1px solid #d3ddd8; padding: 7px; background: #f7faf8; }
+.customer-order-postal-test-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.customer-order-postal-test-head strong { color: #3d4f47; font-size: 9px; }
+.customer-order-postal-test-head span { min-width: 0; color: #68766f; font-size: 8px; line-height: 1.4; text-align: right; }
+.customer-order-postal-mode { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #b9c9c1; border-radius: 5px; overflow: hidden; }
+.customer-order-postal-mode button { min-width: 0; height: 30px; border: 0; border-right: 1px solid #c8d4ce; padding: 0 5px; background: #fff; color: #526159; font-size: 9px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.customer-order-postal-mode button:last-child { border-right: 0; }
+.customer-order-postal-mode button:hover { background: #edf5f1; }
+.customer-order-postal-mode button.active { background: #246148; color: #fff; }
+.customer-order-postal-mode button:focus-visible { position: relative; z-index: 1; outline: 2px solid #2f80ed; outline-offset: -2px; }
 .customer-order-core-notice { margin-top: 12px; border-left: 3px solid #d64545; padding: 9px 10px; background: #fff2f2; color: #8f2f2f; font-size: 10px; font-weight: 700; line-height: 1.55; }
 .customer-order-submit-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #dce3e0; }
 .customer-order-submit-button { min-height: 40px; border: 1px solid var(--dcats-brand-red); border-radius: 6px; background: var(--dcats-brand-red); color: #fff; font-size: 12px; font-weight: 800; cursor: pointer; }
@@ -5249,6 +5259,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 @media (max-width: 560px) {
   .customer-portal-order-button { width: 100%; }
   .customer-order-development-preview-copy { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .customer-order-postal-test-head { align-items: flex-start; flex-direction: column; gap: 2px; }
+  .customer-order-postal-test-head span { text-align: left; }
   .customer-order-tabs { width: 100%; }
   .customer-order-tabs button { flex: 1; min-width: 0; }
   .customer-order-cart-pane,

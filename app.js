@@ -232,6 +232,17 @@ var TRANSLATIONS = {
     customer_order_postal_lookup_error: "住所を検索できませんでした。手入力してください。",
     customer_order_postal_lookup_multiple: "該当する住所を選択してください。",
     customer_order_postal_lookup_applied: "住所を入力しました。番地以降を確認してください。",
+    customer_order_postal_lookup_applied_api: "APIから住所を入力しました。番地以降を確認してください。",
+    customer_order_postal_lookup_applied_local: "端末内住所データ（{version}）から入力しました。番地以降を確認してください。",
+    customer_order_postal_lookup_multiple_api: "APIの検索結果から該当する住所を選択してください。",
+    customer_order_postal_lookup_multiple_local: "端末内住所データ（{version}）から該当する住所を選択してください。",
+    customer_order_postal_test_title: "住所検索方式",
+    customer_order_postal_mode_auto: "自動",
+    customer_order_postal_mode_api: "APIのみ",
+    customer_order_postal_mode_local: "ローカルのみ",
+    customer_order_postal_local_preparing: "端末内データを準備中 {ready}/10",
+    customer_order_postal_local_ready: "端末内データ準備済み {version}",
+    customer_order_postal_local_error: "端末内データを準備できませんでした",
     customer_order_history_note: "受付、出荷、コア返却の状況を確認できます。",
     customer_order_add: "この商品を注文",
     customer_order_added: "注文内容を確認",
@@ -1810,6 +1821,17 @@ var TRANSLATIONS = {
     customer_order_postal_lookup_error: "The address could not be searched. Enter it manually.",
     customer_order_postal_lookup_multiple: "Select the matching address.",
     customer_order_postal_lookup_applied: "The address has been filled in. Confirm the street number.",
+    customer_order_postal_lookup_applied_api: "The address was filled from the API. Confirm the street number.",
+    customer_order_postal_lookup_applied_local: "The address was filled from local data ({version}). Confirm the street number.",
+    customer_order_postal_lookup_multiple_api: "Select an address returned by the API.",
+    customer_order_postal_lookup_multiple_local: "Select an address from local data ({version}).",
+    customer_order_postal_test_title: "Address Lookup Source",
+    customer_order_postal_mode_auto: "Automatic",
+    customer_order_postal_mode_api: "API Only",
+    customer_order_postal_mode_local: "Local Only",
+    customer_order_postal_local_preparing: "Preparing local data {ready}/10",
+    customer_order_postal_local_ready: "Local data ready {version}",
+    customer_order_postal_local_error: "Local data could not be prepared",
     customer_order_history_note: "Review acceptance, shipping, and core-return status.",
     customer_order_add: "Order This Product",
     customer_order_added: "Review Order",
@@ -3375,6 +3397,17 @@ var TRANSLATIONS = {
     customer_order_postal_lookup_error: "无法搜索地址。请手动输入。",
     customer_order_postal_lookup_multiple: "请选择对应地址。",
     customer_order_postal_lookup_applied: "已填写地址。请确认街道门牌号。",
+    customer_order_postal_lookup_applied_api: "已通过API填写地址。请确认门牌号。",
+    customer_order_postal_lookup_applied_local: "已通过本地地址数据（{version}）填写。请确认门牌号。",
+    customer_order_postal_lookup_multiple_api: "请从API搜索结果中选择地址。",
+    customer_order_postal_lookup_multiple_local: "请从本地地址数据（{version}）中选择地址。",
+    customer_order_postal_test_title: "地址搜索方式",
+    customer_order_postal_mode_auto: "自动",
+    customer_order_postal_mode_api: "仅API",
+    customer_order_postal_mode_local: "仅本地",
+    customer_order_postal_local_preparing: "正在准备本地数据 {ready}/10",
+    customer_order_postal_local_ready: "本地数据已准备 {version}",
+    customer_order_postal_local_error: "无法准备本地数据",
     customer_order_history_note: "可确认受理、出货和旧件返还状态。",
     customer_order_add: "订购此商品",
     customer_order_added: "确认订单",
@@ -4843,7 +4876,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.697";
+var APP_VERSION       = "v1.1.698";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5091,6 +5124,17 @@ var customerOrderAddressSearching = false;
 var customerOrderPostalRows = [];
 var customerOrderPostalLookupSeq = 0;
 var customerOrderPostalLookingUp = false;
+var CUSTOMER_ORDER_POSTAL_MANIFEST_URL = "assets/postal/manifest.json";
+var CUSTOMER_ORDER_POSTAL_MANIFEST_CACHE = "dcats-postal-manifest-v1";
+var CUSTOMER_ORDER_POSTAL_DATA_CACHE_PREFIX = "dcats-postal-data-";
+var customerOrderPostalLookupMode = "auto";
+var customerOrderPostalResultSource = "";
+var customerOrderPostalManifest = null;
+var customerOrderPostalShardCache = {};
+var customerOrderPostalPreparePromise = null;
+var customerOrderPostalReadyShards = 0;
+var customerOrderPostalPrepareState = "idle";
+var customerOrderPostalBackgroundScheduled = false;
 var customerOrderSaving = false;
 var customerOrderActiveView = "cart";
 var salesOrderRows = [];
@@ -8398,6 +8442,193 @@ function normalizeCustomerOrderPostalCode(value) {
   return String(value == null ? "" : value).normalize("NFKC").replace(/[^0-9]/g, "").slice(0, 7);
 }
 
+function customerOrderPostalAbsoluteUrl(relativeUrl) {
+  return new URL(relativeUrl, document.baseURI).toString();
+}
+
+async function customerOrderPostalFetch(url, options, timeoutMs) {
+  var controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+  var timer = controller ? setTimeout(function() { controller.abort(); }, timeoutMs || 5000) : null;
+  var fetchOptions = Object.assign({}, options || {});
+  if (controller) fetchOptions.signal = controller.signal;
+  try {
+    return await fetch(url, fetchOptions);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+async function customerOrderPostalOpenCache(name) {
+  if (typeof caches === "undefined" || !caches || typeof caches.open !== "function") return null;
+  try {
+    return await caches.open(name);
+  } catch (error) {
+    return null;
+  }
+}
+
+function validCustomerOrderPostalManifest(manifest) {
+  return manifest && manifest.schema_version === 1 && /^20\d{2}-\d{2}-\d{2}$/.test(String(manifest.data_version || "")) &&
+    Array.isArray(manifest.shards) && manifest.shards.length === 10;
+}
+
+async function cleanupCustomerOrderPostalCaches(dataVersion) {
+  if (typeof caches === "undefined" || !caches || typeof caches.keys !== "function") return;
+  try {
+    var names = await caches.keys();
+    await Promise.all(names.filter(function(name) {
+      return name.indexOf(CUSTOMER_ORDER_POSTAL_DATA_CACHE_PREFIX) === 0 && name !== CUSTOMER_ORDER_POSTAL_DATA_CACHE_PREFIX + dataVersion;
+    }).map(function(name) { return caches.delete(name); }));
+  } catch (error) {}
+}
+
+async function loadCustomerOrderPostalManifest() {
+  if (validCustomerOrderPostalManifest(customerOrderPostalManifest)) return customerOrderPostalManifest;
+  var url = customerOrderPostalAbsoluteUrl(CUSTOMER_ORDER_POSTAL_MANIFEST_URL);
+  var cache = await customerOrderPostalOpenCache(CUSTOMER_ORDER_POSTAL_MANIFEST_CACHE);
+  var cachedResponse = cache ? await cache.match(url) : null;
+  var response = null;
+  if (typeof navigator === "undefined" || navigator.onLine !== false) {
+    try {
+      response = await customerOrderPostalFetch(url, { method: "GET", cache: "no-store", credentials: "same-origin" }, 4000);
+      if (!response.ok) response = null;
+    } catch (error) {
+      response = null;
+    }
+  }
+  if (!response) response = cachedResponse;
+  if (!response) throw new Error("postal manifest unavailable");
+  var manifest = await response.clone().json();
+  if (!validCustomerOrderPostalManifest(manifest)) throw new Error("postal manifest invalid");
+  if (cache && response !== cachedResponse) {
+    try { await cache.put(url, response.clone()); } catch (error) {}
+  }
+  customerOrderPostalManifest = manifest;
+  cleanupCustomerOrderPostalCaches(manifest.data_version);
+  return manifest;
+}
+
+async function loadCustomerOrderPostalShard(prefix) {
+  var manifest = await loadCustomerOrderPostalManifest();
+  var metadata = manifest.shards.find(function(row) { return String(row.prefix) === String(prefix); });
+  if (!metadata || !/^postal-[0-9]\.json$/.test(String(metadata.file || ""))) throw new Error("postal shard missing");
+  var memoryKey = manifest.data_version + ":" + prefix;
+  if (customerOrderPostalShardCache[memoryKey]) return customerOrderPostalShardCache[memoryKey];
+  var relativeUrl = "assets/postal/" + metadata.file + "?v=" + encodeURIComponent(manifest.data_version);
+  var url = customerOrderPostalAbsoluteUrl(relativeUrl);
+  var cache = await customerOrderPostalOpenCache(CUSTOMER_ORDER_POSTAL_DATA_CACHE_PREFIX + manifest.data_version);
+  var response = cache ? await cache.match(url) : null;
+  if (!response) {
+    response = await customerOrderPostalFetch(url, { method: "GET", cache: "no-cache", credentials: "same-origin" }, 6000);
+    if (!response.ok) throw new Error("postal shard unavailable");
+    if (cache) {
+      try { await cache.put(url, response.clone()); } catch (error) {}
+    }
+  }
+  var shard = await response.json();
+  if (!shard || shard.v !== manifest.data_version || !Array.isArray(shard.c) || !shard.z || typeof shard.z !== "object") {
+    throw new Error("postal shard invalid");
+  }
+  customerOrderPostalShardCache[memoryKey] = shard;
+  return shard;
+}
+
+async function lookupCustomerOrderPostalLocal(postalCode) {
+  var manifest = await loadCustomerOrderPostalManifest();
+  var shard = await loadCustomerOrderPostalShard(postalCode[0]);
+  var rows = Array.isArray(shard.z[postalCode]) ? shard.z[postalCode] : [];
+  return rows.map(function(row) {
+    var city = shard.c[row[0]] || [];
+    return customerOrderPostalRow({
+      zipcode: postalCode,
+      prefcode: city[0],
+      address1: city[1],
+      address2: city[2],
+      address3: row[1]
+    }, "local", manifest.data_version);
+  }).filter(Boolean).slice(0, 10);
+}
+
+async function lookupCustomerOrderPostalApi(postalCode) {
+  var response = await customerOrderPostalFetch("https://zipcloud.ibsnet.co.jp/api/search?zipcode=" + encodeURIComponent(postalCode) + "&limit=10", {
+    method: "GET",
+    cache: "no-store",
+    credentials: "omit"
+  }, 5000);
+  if (!response.ok) throw new Error("postal api unavailable");
+  var data = await response.json();
+  return data && Number(data.status) === 200 && Array.isArray(data.results)
+    ? data.results.map(function(row) { return customerOrderPostalRow(row, "api", ""); }).filter(Boolean).slice(0, 10)
+    : [];
+}
+
+function configureCustomerOrderPostalTest() {
+  var previewMode = canPreviewCustomerOrdering();
+  var host = document.getElementById("customer-order-postal-test");
+  var status = document.getElementById("customer-order-postal-local-status");
+  if (host) host.hidden = !previewMode;
+  document.querySelectorAll("[data-order-postal-mode]").forEach(function(button) {
+    var active = button.dataset.orderPostalMode === customerOrderPostalLookupMode;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+  if (!status) return;
+  if (customerOrderPostalPrepareState === "loading") {
+    status.textContent = tf("customer_order_postal_local_preparing", { ready: customerOrderPostalReadyShards });
+  } else if (customerOrderPostalPrepareState === "ready" && customerOrderPostalManifest) {
+    status.textContent = tf("customer_order_postal_local_ready", { version: customerOrderPostalManifest.data_version });
+  } else if (customerOrderPostalPrepareState === "error") {
+    status.textContent = t("customer_order_postal_local_error");
+  } else {
+    status.textContent = "";
+  }
+}
+
+async function prepareCustomerOrderPostalLocalData() {
+  if (customerOrderPostalPreparePromise) return customerOrderPostalPreparePromise;
+  customerOrderPostalPrepareState = "loading";
+  customerOrderPostalReadyShards = 0;
+  configureCustomerOrderPostalTest();
+  customerOrderPostalPreparePromise = (async function() {
+    try {
+      var manifest = await loadCustomerOrderPostalManifest();
+      var persistentCache = await customerOrderPostalOpenCache(CUSTOMER_ORDER_POSTAL_DATA_CACHE_PREFIX + manifest.data_version);
+      for (var prefix = 0; prefix < manifest.shards.length; prefix += 1) {
+        await loadCustomerOrderPostalShard(String(prefix));
+        if (persistentCache) delete customerOrderPostalShardCache[manifest.data_version + ":" + prefix];
+        customerOrderPostalReadyShards = prefix + 1;
+        configureCustomerOrderPostalTest();
+        await new Promise(function(resolve) { setTimeout(resolve, 0); });
+      }
+      customerOrderPostalPrepareState = "ready";
+    } catch (error) {
+      customerOrderPostalPrepareState = "error";
+      customerOrderPostalPreparePromise = null;
+      customerOrderPostalBackgroundScheduled = false;
+    }
+    configureCustomerOrderPostalTest();
+  })();
+  return customerOrderPostalPreparePromise;
+}
+
+function scheduleCustomerOrderPostalLocalData() {
+  if (customerOrderPostalBackgroundScheduled || customerOrderPostalPrepareState === "ready") return;
+  customerOrderPostalBackgroundScheduled = true;
+  var run = function() { prepareCustomerOrderPostalLocalData(); };
+  if (typeof requestIdleCallback === "function") requestIdleCallback(run, { timeout: 1800 });
+  else setTimeout(run, 1200);
+}
+
+function setCustomerOrderPostalLookupMode(mode) {
+  if (!["auto", "api", "local"].includes(mode) || !canPreviewCustomerOrdering()) return;
+  customerOrderPostalLookupMode = mode;
+  customerOrderPostalRows = [];
+  renderCustomerOrderPostalResults();
+  customerOrderPostalSetStatus(t("customer_order_postal_lookup_hint"), false);
+  configureCustomerOrderPostalTest();
+  if (mode === "local") prepareCustomerOrderPostalLocalData();
+}
+
 function customerOrderPostalSetStatus(message, isError) {
   var host = document.getElementById("customer-order-postal-status");
   if (!host) return;
@@ -8405,7 +8636,7 @@ function customerOrderPostalSetStatus(message, isError) {
   host.className = isError ? "error" : "";
 }
 
-function customerOrderPostalRow(row) {
+function customerOrderPostalRow(row, source, dataVersion) {
   if (!row) return null;
   var code = normalizeCustomerOrderPostalCode(row.zipcode);
   var prefectureCode = String(parseInt(row.prefcode, 10) || "");
@@ -8418,7 +8649,9 @@ function customerOrderPostalRow(row) {
     prefecture_code: prefectureCode,
     prefecture_name: prefectureName,
     address_line_1: city + town,
-    display_address: prefectureName + city + town
+    display_address: prefectureName + city + town,
+    lookup_source: source || "api",
+    data_version: dataVersion || ""
   };
 }
 
@@ -8432,7 +8665,10 @@ function applyCustomerOrderPostalAddress(row) {
   if (address1) address1.value = row.address_line_1 || "";
   customerOrderPostalRows = [];
   renderCustomerOrderPostalResults();
-  customerOrderPostalSetStatus(t("customer_order_postal_lookup_applied"), false);
+  customerOrderPostalResultSource = row.lookup_source || "";
+  customerOrderPostalSetStatus(customerOrderPostalResultSource === "local"
+    ? tf("customer_order_postal_lookup_applied_local", { version: row.data_version || "-" })
+    : t("customer_order_postal_lookup_applied_api"), false);
   customerOrderPreview = null;
   renderCustomerOrderCart();
   if (address1) address1.focus();
@@ -8467,18 +8703,27 @@ async function lookupCustomerOrderPostalCode() {
   customerOrderPostalLookingUp = true;
   configureCustomerOrderAddressTools();
   customerOrderPostalSetStatus(t("customer_order_postal_lookup_loading"), false);
+  var completedLookup = false;
   try {
-    var response = await fetch("https://zipcloud.ibsnet.co.jp/api/search?zipcode=" + encodeURIComponent(postalCode) + "&limit=10", {
-      method: "GET",
-      cache: "no-store",
-      credentials: "omit"
-    });
+    var mode = canPreviewCustomerOrdering() ? customerOrderPostalLookupMode : "auto";
+    customerOrderPostalRows = [];
+    if (mode !== "local") {
+      try {
+        customerOrderPostalRows = await lookupCustomerOrderPostalApi(postalCode);
+        completedLookup = true;
+      } catch (error) {
+        if (mode === "api") throw error;
+      }
+    }
+    if (!customerOrderPostalRows.length && mode !== "api") {
+      try {
+        customerOrderPostalRows = await lookupCustomerOrderPostalLocal(postalCode);
+        completedLookup = true;
+      } catch (error) {
+        if (!completedLookup) throw error;
+      }
+    }
     if (requestSeq !== customerOrderPostalLookupSeq) return;
-    var data = response.ok ? await response.json() : null;
-    if (requestSeq !== customerOrderPostalLookupSeq) return;
-    customerOrderPostalRows = data && Number(data.status) === 200 && Array.isArray(data.results)
-      ? data.results.map(customerOrderPostalRow).filter(Boolean).slice(0, 10)
-      : [];
     if (!customerOrderPostalRows.length) {
       renderCustomerOrderPostalResults();
       customerOrderPostalSetStatus(t("customer_order_postal_lookup_empty"), true);
@@ -8486,7 +8731,11 @@ async function lookupCustomerOrderPostalCode() {
       applyCustomerOrderPostalAddress(customerOrderPostalRows[0]);
     } else {
       renderCustomerOrderPostalResults();
-      customerOrderPostalSetStatus(t("customer_order_postal_lookup_multiple"), false);
+      var firstRow = customerOrderPostalRows[0] || {};
+      customerOrderPostalResultSource = firstRow.lookup_source || "";
+      customerOrderPostalSetStatus(customerOrderPostalResultSource === "local"
+        ? tf("customer_order_postal_lookup_multiple_local", { version: firstRow.data_version || "-" })
+        : t("customer_order_postal_lookup_multiple_api"), false);
     }
   } catch (error) {
     if (requestSeq !== customerOrderPostalLookupSeq) return;
@@ -8509,6 +8758,7 @@ function configureCustomerOrderAddressTools() {
   if (searchInput) searchInput.disabled = previewMode || customerOrderAddressSearching;
   if (searchButton) searchButton.disabled = previewMode || customerOrderAddressSearching;
   if (postalButton) postalButton.disabled = customerOrderPostalLookingUp;
+  configureCustomerOrderPostalTest();
   var status = document.getElementById("customer-order-address-status");
   if (status && !String(status.textContent || "").trim()) {
     customerOrderAddressSetStatus(t(previewMode ? "customer_order_address_search_preview" : "customer_order_address_search_hint"), false);
@@ -8670,6 +8920,7 @@ async function enterCustomerOrders(options) {
   customerPortalValue("customer-orders-customer-name", context.customer && context.customer.customer_name);
   renderCustomerOrderCart();
   showCustomerOrderView(options.view || customerOrderActiveView);
+  scheduleCustomerOrderPostalLocalData();
   if (canPreviewCustomerOrdering()) customerOrderSetStatus(t("customer_order_development_preview_note"), false);
   if (customerOrderCart.length && options.preview !== false) await previewCustomerOrder({ silent: true });
 }
@@ -39146,6 +39397,9 @@ document.getElementById("customer-order-address-search").addEventListener("keydo
 document.getElementById("customer-order-address-new").addEventListener("click", clearCustomerOrderAddress);
 document.getElementById("customer-order-postal-lookup").addEventListener("click", lookupCustomerOrderPostalCode);
 document.getElementById("customer-order-postal-code").addEventListener("keydown", function(e) { if (e.key === "Enter") lookupCustomerOrderPostalCode(); });
+document.querySelectorAll("[data-order-postal-mode]").forEach(function(button) {
+  button.addEventListener("click", function() { setCustomerOrderPostalLookupMode(button.dataset.orderPostalMode); });
+});
 [
   "customer-order-company", "customer-order-recipient", "customer-order-phone", "customer-order-postal-code",
   "customer-order-prefecture", "customer-order-address1", "customer-order-address2"

@@ -17,6 +17,10 @@ on:
       - "scripts/verify-customer-category-visibility.js"
       - "scripts/verify-customer-price-list.js"
       - "scripts/verify-customer-order-workflow.js"
+      - "scripts/verify-postal-data.js"
+      - "scripts/verify-postal-lookup-fallback.js"
+      - "scripts/update-postal-data.js"
+      - "assets/postal/**"
       - "docs/customer-order-b2-manual-contract.md"
       - "customer-price-list-print.css"
       - "scripts/verify-manufacturing-cost-candidate-status.js"
@@ -47,6 +51,10 @@ on:
       - "scripts/verify-customer-category-visibility.js"
       - "scripts/verify-customer-price-list.js"
       - "scripts/verify-customer-order-workflow.js"
+      - "scripts/verify-postal-data.js"
+      - "scripts/verify-postal-lookup-fallback.js"
+      - "scripts/update-postal-data.js"
+      - "assets/postal/**"
       - "docs/customer-order-b2-manual-contract.md"
       - "customer-price-list-print.css"
       - "scripts/verify-manufacturing-cost-candidate-status.js"
@@ -97,6 +105,10 @@ jobs:
         run: node scripts/verify-customer-price-list.js
       - name: Verify customer order and manual B2 workflow
         run: node scripts/verify-customer-order-workflow.js
+      - name: Verify offline postal data
+        run: node scripts/verify-postal-data.js
+      - name: Verify postal lookup fallback
+        run: node scripts/verify-postal-lookup-fallback.js
       - name: Verify manufacturing cost candidate status
         run: node scripts/verify-manufacturing-cost-candidate-status.js
       - name: Verify manufacturing cost snapshot status
