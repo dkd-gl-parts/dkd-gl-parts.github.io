@@ -7,7 +7,7 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   X-Robots-Tag: noindex, nofollow
 
-/assets/postal/*
+/assets/postal/postal-*.json
   Cache-Control: public, max-age=31536000, immutable
 
 /assets/postal/manifest.json
