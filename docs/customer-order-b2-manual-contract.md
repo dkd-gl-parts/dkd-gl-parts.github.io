@@ -17,7 +17,7 @@
 - 社内向け開発プレビューでは「自動」「APIのみ」「ローカルのみ」を切り替え、検索結果の表示文で使用したデータ源とローカルデータ版を確認できる。実得意先には切替UIを表示しない。
 - ローカル住所データはGitHub Actionsで毎月、日本郵便のUTF-8全国一括データから再生成する。件数、47都道府県、代表郵便番号、分割ファイルのSHA-256検証を通過した場合だけ更新する。
 - APIとローカルデータの両方で検索不能な場合も住所の手入力を継続できる。通信断中は住所変換だけが可能で、注文確定はサーバー接続回復後に行う。
-- 配送サービスは有効な送料マスタから選択する。社内プレビューでは関西発・15時締切の暫定サービスレベルを使って最短日を表示するが、実注文公開前にサーバー側のサービスレベル設定を正とし、ブラウザ計算を信用しない。
+- 商品発送便とコア返却便は、用途を分けて有効な送料マスタから選択する。コア返却便は返却必要商品を含む場合だけ表示し、返送用送り状へ使用する。社内プレビューでは商品発送便に関西発・15時締切の暫定サービスレベルを使って最短日を表示するが、実注文公開前にサーバー側のサービスレベル設定を正とし、ブラウザ計算を信用しない。
 - 宅急便系は最短日をお届け希望日へ自動設定し、得意先は指定可能範囲内で変更できる。ネコポス、クロネコゆうパケット、クロネコゆうメールなど日時指定不可のサービスは、希望日・時間帯を送信せず到着目安だけを表示する。
 
 ## 得意先別の受注公開設定
@@ -35,7 +35,7 @@
 1. 得意先が商品カタログで品番を検索し、リビルトまたは新品の注文ボタンを押す。
 2. 選択した商品を注文内容へ設定した状態で受注画面を開く。
 3. 以前のお届け先を電話番号または氏名で検索して選択するか、郵便番号検索を使って新規入力する。
-4. 配送サービスを選択し、送り先都道府県とサービスレベルから自動設定された最短のお届け希望日を確認する。
+4. 商品発送便を選択し、送り先都道府県とサービスレベルから自動設定された最短のお届け希望日を確認する。コア返却必要商品を含む場合は、返送用送り状へ使用するコア返却便も別に選択する。
 5. `preview_customer_order`で最新の販売価格、在庫、送料、コア返却条件を確認する。
 6. `place_customer_order`が同じ条件を再検証し、注文作成と在庫引当を1トランザクションで行う。
 7. 社内担当者が注文を受付し、出荷準備へ進める。
@@ -61,7 +61,7 @@
 
 社内ユーザーには`internal_management`、得意先ユーザーには`customer_ordering`だけを権限に応じて返す。
 
-### `preview_customer_order(target_items jsonb, target_shipping_address jsonb, target_shipping_method jsonb)`
+### `preview_customer_order(target_items jsonb, target_shipping_address jsonb, target_shipping_method jsonb, target_core_return_shipping_method jsonb)`
 
 入力例:
 
@@ -93,6 +93,8 @@
   "shipping_fee_jpy": 900,
   "tax_jpy": 1590,
   "total_jpy": 17490,
+  "outbound_shipping_method": { "carrier_name": "ヤマト運輸", "service_name": "宅急便" },
+  "core_return_shipping_method": { "carrier_name": "ヤマト運輸", "service_name": "宅急便" },
   "shipping_address": {}
 }
 ```
@@ -100,6 +102,8 @@
 - 得意先ID、価格ランク、表示対象はAuthユーザーから確定する。ブラウザの得意先IDを信用しない。
 - 大光製・非公開カテゴリ・価格対象外の商品を拒否する。
 - `target_shipping_method`は`carrier_name`と`service_name`を含む。サーバーは有効な送料・サービスレベル、商品サイズ・重量、お届け先を使って送料と最短日を再計算する。
+- `target_core_return_shipping_method`はコア返却必要商品を含む場合だけ必須とし、`carrier_name`と`service_name`を含む。返却不要の場合はnullを要求する。
+- 商品発送便とコア返却便を注文スナップショットへ別々に保存し、B2出荷行とコア返却行へそれぞれ使用する。
 - `preview_token`は短時間のみ有効とし、ユーザー、得意先、明細、価格、在庫確認時刻へ結び付ける。
 
 ### `place_customer_order(...)`
@@ -109,6 +113,7 @@
 - `target_items jsonb`
 - `target_shipping_address jsonb`
 - `target_shipping_method jsonb`
+- `target_core_return_shipping_method jsonb`
 - `target_requested_delivery_date date`
 - `target_delivery_time text`
 - `target_customer_note text`
@@ -130,6 +135,7 @@
 - `id`, `order_number`, `status`, `ordered_at`
 - `subtotal_jpy`, `shipping_fee_jpy`, `tax_jpy`, `total_jpy`
 - `core_return_required`, `core_return_status`
+- `outbound_shipping_method`, `core_return_shipping_method`
 - `outbound_tracking_number`, `return_tracking_number`
 - `items[]`
 
@@ -159,7 +165,7 @@
 
 ### `get_sales_order_detail(target_order_id bigint)`
 
-注文・明細・住所・金額・送り状・コア返却状態と、現在実行可能な`allowed_actions[]`を返す。
+注文・明細・住所・金額・商品発送便・コア返却便・送り状・コア返却状態と、現在実行可能な`allowed_actions[]`を返す。
 
 ### `update_sales_order_status(target_order_id bigint, target_action text, target_note text, target_expected_version bigint)`
 
@@ -174,6 +180,7 @@
 
 - `direction: outbound`: 大光電機から得意先への出荷用
 - `direction: core_return`: 得意先から大光電機への返送用
+- 各行の運送便は、注文に保存した`outbound_shipping_method`と`core_return_shipping_method`を混同せずに使用する
 - `b2_values`: B2基本レイアウトと同じ順序の95要素配列を推奨
 - またはfrontend契約に定義した`b2_fields`オブジェクト
 - 住所、電話、郵便番号、請求先顧客コード、運賃管理番号の不足は`errors[]`で返し、CSV出力を止める
@@ -235,7 +242,8 @@
 - 過去のお届け先は自社注文分だけを電話番号または氏名で検索でき、他の得意先住所は返らない。
 - 郵便番号検索が失敗しても、住所を手入力して注文処理を続行できる。
 - 送り先を変更した場合は価格・送料確認済み状態を破棄し、再確認するまで注文確定できない。
-- 配送サービスを変更した場合も価格・送料確認済み状態を破棄し、希望日は新しいサービスレベルから再計算する。
+- 商品発送便を変更した場合も価格・送料確認済み状態を破棄し、希望日は新しいサービスレベルから再計算する。
+- コア返却便を変更した場合も確認済み状態を破棄するが、商品発送のお届け希望日は変更しない。返却不要注文ではコア返却便を表示・保存しない。
 - お届け希望日のブラウザ改変ではサーバー算出の最短日より前を指定できず、日時指定不可サービスへ希望日・時間帯を保存できない。
 - API認証キーはpublic frontend、Git、operation logへ残らない。
 - Security Advisorに新しい未解決警告がない。

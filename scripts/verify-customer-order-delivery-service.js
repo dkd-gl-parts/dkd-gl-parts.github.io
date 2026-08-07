@@ -52,6 +52,8 @@ assert(decodedService.carrier_name === "ヤマト運輸" && decodedService.servi
 
 [
   'id="customer-order-delivery-service"',
+  'id="customer-order-core-return-service-field"',
+  'id="customer-order-core-return-service"',
   'id="customer-order-delivery-date"',
   'id="customer-order-delivery-time"',
   'id="customer-order-delivery-estimate"'
@@ -61,25 +63,52 @@ const previewRequest = sourceBetween("async function previewCustomerOrder", "fun
 const submitRequest = sourceBetween("async function submitCustomerOrder", "function renderCustomerOrderHistory");
 assert(previewRequest.includes("target_shipping_method: customerOrderShippingMethodPayload()"), "order preview must send the selected shipping method");
 assert(submitRequest.includes("target_shipping_method: customerOrderShippingMethodPayload()"), "order submission must send the selected shipping method");
+assert(previewRequest.includes("target_core_return_shipping_method: customerOrderCoreReturnShippingMethodPayload()"), "order preview must send the core-return shipping method separately");
+assert(submitRequest.includes("target_core_return_shipping_method: customerOrderCoreReturnShippingMethodPayload()"), "order submission must send the core-return shipping method separately");
+
+const returnMethod = sourceBetween("function customerOrderCoreReturnShippingMethodPayload", "function customerOrderSavedShippingMethod");
+assert(returnMethod.includes("customerOrderCartRequiresCoreReturn()") && returnMethod.includes("customer-order-core-return-service"), "core-return shipping must only be sent for orders that require core return");
+
+const returnLogic = sourceBetween("function customerOrderCartRequiresCoreReturn", "function updateCustomerOrderDeliveryEstimate");
+const returnContext = {
+  customerOrderCart: [{ key: "12011:rebuilt", core_return_required: true }],
+  customerOrderPreviewItemMap: () => ({}),
+  customerOrderDeliveryServiceFromKey: context.customerOrderDeliveryServiceFromKey,
+  customerOrderCoreReturnServiceKeyValue: serviceKey,
+  document: { getElementById: (id) => id === "customer-order-core-return-service" ? { value: serviceKey } : null }
+};
+vm.runInNewContext(returnLogic, returnContext);
+assert(returnContext.customerOrderCoreReturnShippingMethodPayload().service_name === "宅急便", "core-return orders must keep their selected return service");
+returnContext.customerOrderCart = [{ key: "12011:aftermarket_new", core_return_required: false }];
+assert(returnContext.customerOrderCoreReturnShippingMethodPayload() === null, "orders without core return must not send a return service");
+
+const returnServiceEvent = sourceBetween('document.getElementById("customer-order-core-return-service").addEventListener', 'document.getElementById("customer-order-delivery-date").addEventListener');
+assert(returnServiceEvent.includes("customerOrderPreview = null") && !returnServiceEvent.includes("updateCustomerOrderDeliveryEstimate"), "changing the return service must invalidate preview without changing the outbound delivery date");
 
 const estimateUi = sourceBetween("function updateCustomerOrderDeliveryEstimate", "function customerOrderDeliveryServiceSortValue");
 assert(estimateUi.includes('dateInput.min = estimate.earliest_date') && estimateUi.includes('dateInput.max = estimate.max_requested_date'), "requested dates must be bounded by the service level");
 assert(estimateUi.includes('dateInput.disabled = true') && estimateUi.includes('timeInput.disabled = true'), "services without date/time requests must disable both controls");
 
 [
-  ".customer-order-delivery-service-field",
+  ".customer-order-shipping-methods",
+  ".customer-order-shipping-method.core-return",
   ".customer-order-delivery-estimate.ready",
   ".customer-order-delivery-estimate.restricted"
 ].forEach((fragment) => assert(css.includes(fragment), `order delivery style is missing: ${fragment}`));
 
 [
   "target_shipping_method jsonb",
+  "target_core_return_shipping_method jsonb",
+  "outbound_shipping_method",
+  "core_return_shipping_method",
   "ブラウザ計算を信用しない",
   "日時指定不可サービス",
   "最短日より前を指定できず"
 ].forEach((fragment) => assert(contract.includes(fragment), `server handoff contract is missing: ${fragment}`));
 
 if ((source.match(/customer_order_delivery_service:/g) || []).length !== 3 ||
+    (source.match(/customer_order_outbound_service:/g) || []).length !== 3 ||
+    (source.match(/customer_order_core_return_service:/g) || []).length !== 3 ||
     (source.match(/customer_order_delivery_not_specifiable:/g) || []).length !== 3) {
   throw new Error("delivery service guidance must be translated for all supported languages");
 }

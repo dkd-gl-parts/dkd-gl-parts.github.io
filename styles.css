@@ -5089,7 +5089,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-order-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .customer-order-form-grid label { min-width: 0; }
 .customer-order-form-grid label.wide { grid-column: 1 / -1; }
-.customer-order-delivery-service-field { margin-top: 2px; padding-top: 10px; border-top: 1px solid #dce3e0; }
+.customer-order-shipping-methods { grid-column: 1 / -1; display: grid; gap: 8px; margin-top: 2px; padding-top: 10px; border-top: 1px solid #dce3e0; }
+.customer-order-shipping-method { display: grid; grid-template-columns: minmax(112px, .42fr) minmax(0, 1fr); align-items: center; gap: 3px 9px; border-left: 3px solid #287356; padding: 8px 9px; background: #f1f7f4; }
+.customer-order-shipping-method[hidden] { display: none !important; }
+.customer-order-shipping-method.core-return { border-left-color: #b85a45; background: #fff5f2; }
+.customer-order-shipping-method > span { color: #2e4b3e; font-size: 10px; font-weight: 800; }
+.customer-order-shipping-method.core-return > span { color: #8b3b2e; }
+.customer-order-shipping-method > select { grid-column: 2; grid-row: 1 / span 2; }
+.customer-order-shipping-method > small { grid-column: 1; color: #718078; font-size: 8px; font-weight: 700; line-height: 1.45; }
 .customer-order-delivery-estimate { grid-column: 1 / -1; min-height: 34px; border-left: 3px solid #8da49a; padding: 8px 10px; background: #f1f5f3; color: #526159; font-size: 9px; font-weight: 700; line-height: 1.55; }
 .customer-order-delivery-estimate.ready { border-left-color: #287356; background: #edf7f1; color: #205a42; }
 .customer-order-delivery-estimate.restricted { border-left-color: #b87818; background: #fff7e8; color: #795216; }
@@ -5278,6 +5285,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .customer-order-preview-summary > div:nth-child(2) { border-right: 0; }
   .customer-order-form-grid { grid-template-columns: 1fr; }
   .customer-order-form-grid label.wide { grid-column: 1; }
+  .customer-order-shipping-method { grid-template-columns: 1fr; }
+  .customer-order-shipping-method > select,
+  .customer-order-shipping-method > small { grid-column: 1; grid-row: auto; }
   .customer-order-address-book-head { align-items: stretch; flex-direction: column; }
   .customer-order-address-book-head .customer-order-secondary-button { width: 100%; }
   .customer-order-address-result { grid-template-columns: 1fr; }

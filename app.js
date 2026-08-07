@@ -244,6 +244,10 @@ var TRANSLATIONS = {
     customer_order_postal_local_ready: "端末内データ準備済み {version}",
     customer_order_postal_local_error: "端末内データを準備できませんでした",
     customer_order_delivery_service: "配送サービス",
+    customer_order_outbound_service: "商品発送時の運送便",
+    customer_order_outbound_service_note: "お届け先へ商品を発送する便です。",
+    customer_order_core_return_service: "コア返却時の運送便",
+    customer_order_core_return_service_note: "商品に同梱する返送用送り状に使用する便です。",
     customer_order_delivery_service_loading: "配送サービスを読み込み中...",
     customer_order_delivery_service_error: "配送サービスを読み込めませんでした。希望日は手入力してください。",
     customer_order_delivery_service_empty: "利用できる配送サービスがありません",
@@ -1844,6 +1848,10 @@ var TRANSLATIONS = {
     customer_order_postal_local_ready: "Local data ready {version}",
     customer_order_postal_local_error: "Local data could not be prepared",
     customer_order_delivery_service: "Delivery Service",
+    customer_order_outbound_service: "Outbound Shipping Service",
+    customer_order_outbound_service_note: "This service delivers the ordered products to the destination.",
+    customer_order_core_return_service: "Core Return Shipping Service",
+    customer_order_core_return_service_note: "This service is printed on the return label enclosed with the products.",
     customer_order_delivery_service_loading: "Loading delivery services...",
     customer_order_delivery_service_error: "Delivery services could not be loaded. Enter the requested date manually.",
     customer_order_delivery_service_empty: "No delivery service is available",
@@ -3431,6 +3439,10 @@ var TRANSLATIONS = {
     customer_order_postal_local_ready: "本地数据已准备 {version}",
     customer_order_postal_local_error: "无法准备本地数据",
     customer_order_delivery_service: "配送服务",
+    customer_order_outbound_service: "商品寄出运输方式",
+    customer_order_outbound_service_note: "用于将订购商品寄送到收货地址。",
+    customer_order_core_return_service: "旧件返还运输方式",
+    customer_order_core_return_service_note: "用于随商品附带的返还运单。",
     customer_order_delivery_service_loading: "正在读取配送服务...",
     customer_order_delivery_service_error: "无法读取配送服务。请手动输入希望送达日期。",
     customer_order_delivery_service_empty: "没有可用的配送服务",
@@ -4909,7 +4921,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.700";
+var APP_VERSION       = "v1.1.701";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5173,6 +5185,7 @@ var customerOrderSaving = false;
 var customerOrderActiveView = "cart";
 var customerOrderDeliveryServiceLoadSeq = 0;
 var customerOrderDeliveryServiceKeyValue = "";
+var customerOrderCoreReturnServiceKeyValue = "";
 var customerOrderDeliveryDateManual = false;
 var customerOrderDeliveryServiceCache = {};
 var CUSTOMER_ORDER_DISPATCH_CUTOFF_HOUR = 15;
@@ -6297,6 +6310,7 @@ function captureAppRestoreState(reason) {
     state.customerPortalCustomerId = portalContext && portalContext.sales_customer_id ? portalContext.sales_customer_id : "";
     state.customerOrderAddress = customerOrderAddressPayload();
     state.customerOrderDeliveryServiceKey = (document.getElementById("customer-order-delivery-service") || {}).value || customerOrderDeliveryServiceKeyValue || "";
+    state.customerOrderCoreReturnServiceKey = (document.getElementById("customer-order-core-return-service") || {}).value || customerOrderCoreReturnServiceKeyValue || "";
     state.customerOrderDeliveryDate = (document.getElementById("customer-order-delivery-date") || {}).value || "";
     state.customerOrderDeliveryDateManual = customerOrderDeliveryDateManual;
     state.customerOrderDeliveryTime = (document.getElementById("customer-order-delivery-time") || {}).value || "";
@@ -6434,8 +6448,13 @@ async function restoreAppStateAfterRefresh() {
         await enterCustomerOrders({ view: state.customerOrderView || "cart", preview: false });
         applyCustomerOrderAddress(state.customerOrderAddress || {}, true);
         customerOrderDeliveryServiceKeyValue = state.customerOrderDeliveryServiceKey || "";
+        customerOrderCoreReturnServiceKeyValue = state.customerOrderCoreReturnServiceKey || "";
         customerOrderDeliveryDateManual = state.customerOrderDeliveryDateManual === true;
-        await loadCustomerOrderDeliveryServices({ preferredKey: customerOrderDeliveryServiceKeyValue, forceDate: false });
+        await loadCustomerOrderDeliveryServices({
+          preferredKey: customerOrderDeliveryServiceKeyValue,
+          preferredCoreReturnKey: customerOrderCoreReturnServiceKeyValue,
+          forceDate: false
+        });
         var restoreDeliveryDate = document.getElementById("customer-order-delivery-date");
         var restoreDeliveryTime = document.getElementById("customer-order-delivery-time");
         var restoreOrderNote = document.getElementById("customer-order-note");
@@ -7155,6 +7174,7 @@ async function doLogout() {
   customerOrderActiveView = "cart";
   customerOrderDeliveryServiceLoadSeq += 1;
   customerOrderDeliveryServiceKeyValue = "";
+  customerOrderCoreReturnServiceKeyValue = "";
   customerOrderDeliveryDateManual = false;
   customerOrderDeliveryServiceCache = {};
   salesOrderRows = [];
@@ -8361,6 +8381,56 @@ function customerOrderShippingMethodPayload() {
   return customerOrderDeliveryServiceFromKey(select ? select.value : customerOrderDeliveryServiceKeyValue);
 }
 
+function customerOrderCartRequiresCoreReturn() {
+  var previewMap = customerOrderPreviewItemMap();
+  return customerOrderCart.some(function(item) {
+    var confirmed = previewMap[item.key];
+    return confirmed ? confirmed.core_return_required === true : item.core_return_required === true;
+  });
+}
+
+function customerOrderCoreReturnShippingMethodPayload() {
+  if (!customerOrderCartRequiresCoreReturn()) return null;
+  var select = document.getElementById("customer-order-core-return-service");
+  return customerOrderDeliveryServiceFromKey(select ? select.value : customerOrderCoreReturnServiceKeyValue);
+}
+
+function customerOrderSavedShippingMethod(order, purpose) {
+  order = order || {};
+  if (purpose === "core_return") {
+    return order.core_return_shipping_method || order.return_shipping_method || {
+      carrier_name: order.return_carrier_name || "",
+      service_name: order.return_service_name || ""
+    };
+  }
+  return order.outbound_shipping_method || order.shipping_method || {
+    carrier_name: order.carrier_name || order.outbound_carrier_name || "",
+    service_name: order.service_name || order.outbound_service_name || ""
+  };
+}
+
+function customerOrderShippingMethodLabel(method, fallback) {
+  if (typeof method === "string") {
+    try { method = JSON.parse(method); } catch (error) { return method.trim() || fallback || "-"; }
+  }
+  method = method || {};
+  return [method.carrier_name, method.service_name].filter(Boolean).join(" / ") || fallback || "-";
+}
+
+function updateCustomerOrderCoreReturnServiceVisibility() {
+  var field = document.getElementById("customer-order-core-return-service-field");
+  var select = document.getElementById("customer-order-core-return-service");
+  var outboundSelect = document.getElementById("customer-order-delivery-service");
+  var requiresCore = customerOrderCartRequiresCoreReturn();
+  if (field) field.hidden = !requiresCore;
+  if (!select) return;
+  if (requiresCore && !select.value && outboundSelect && outboundSelect.value) {
+    select.value = outboundSelect.value;
+    customerOrderCoreReturnServiceKeyValue = select.value;
+  }
+  select.disabled = !requiresCore || !select.value;
+}
+
 function updateCustomerOrderDeliveryEstimate(options) {
   options = options || {};
   var dateInput = document.getElementById("customer-order-delivery-date");
@@ -8417,11 +8487,15 @@ function customerOrderDeliveryServiceSortValue(row) {
 async function loadCustomerOrderDeliveryServices(options) {
   options = options || {};
   var select = document.getElementById("customer-order-delivery-service");
-  if (!select) return;
+  var coreReturnSelect = document.getElementById("customer-order-core-return-service");
+  if (!select || !coreReturnSelect) return;
   var requestSeq = ++customerOrderDeliveryServiceLoadSeq;
   var preferredKey = options.preferredKey || customerOrderDeliveryServiceKeyValue || select.value || "";
+  var preferredCoreReturnKey = options.preferredCoreReturnKey || customerOrderCoreReturnServiceKeyValue || coreReturnSelect.value || "";
   select.disabled = true;
+  coreReturnSelect.disabled = true;
   select.innerHTML = "<option value=''>" + esc(t("customer_order_delivery_service_loading")) + "</option>";
+  coreReturnSelect.innerHTML = select.innerHTML;
   customerOrderDeliverySetMessage(t("customer_order_delivery_wait"), "pending");
   try {
     var prefecture = document.getElementById("customer-order-prefecture");
@@ -8454,15 +8528,21 @@ async function loadCustomerOrderDeliveryServices(options) {
     });
     if (!services.length) {
       customerOrderDeliveryServiceKeyValue = "";
+      customerOrderCoreReturnServiceKeyValue = "";
       select.innerHTML = "<option value=''>" + esc(t("customer_order_delivery_service_empty")) + "</option>";
+      coreReturnSelect.innerHTML = select.innerHTML;
       select.disabled = true;
+      coreReturnSelect.disabled = true;
       updateCustomerOrderDeliveryEstimate(options);
+      updateCustomerOrderCoreReturnServiceVisibility();
       return;
     }
-    select.innerHTML = services.map(function(row) {
+    var serviceOptions = services.map(function(row) {
       var key = customerOrderDeliveryServiceKey(row);
       return "<option value='" + esc(key) + "'>" + esc([row.carrier_name, row.service_name].filter(Boolean).join(" / ")) + "</option>";
     }).join("");
+    select.innerHTML = serviceOptions;
+    coreReturnSelect.innerHTML = serviceOptions;
     var availableKeys = services.map(function(row) { return customerOrderDeliveryServiceKey(row); });
     if (availableKeys.indexOf(preferredKey) < 0) {
       var defaultRow = services.find(function(row) { return String(row.service_name || "") === "宅急便"; }) || services[0];
@@ -8472,14 +8552,22 @@ async function loadCustomerOrderDeliveryServices(options) {
     select.value = preferredKey;
     select.disabled = false;
     customerOrderDeliveryServiceKeyValue = select.value;
+    if (availableKeys.indexOf(preferredCoreReturnKey) < 0) preferredCoreReturnKey = preferredKey;
+    coreReturnSelect.value = preferredCoreReturnKey;
+    customerOrderCoreReturnServiceKeyValue = coreReturnSelect.value;
     updateCustomerOrderDeliveryEstimate(options);
+    updateCustomerOrderCoreReturnServiceVisibility();
   } catch (error) {
     if (requestSeq !== customerOrderDeliveryServiceLoadSeq) return;
     console.warn("customer order delivery services failed", error);
     customerOrderDeliveryServiceKeyValue = "";
+    customerOrderCoreReturnServiceKeyValue = "";
     select.innerHTML = "<option value=''>" + esc(t("customer_order_delivery_service_error")) + "</option>";
+    coreReturnSelect.innerHTML = select.innerHTML;
     select.disabled = true;
+    coreReturnSelect.disabled = true;
     customerOrderDeliverySetMessage(t("customer_order_delivery_service_error"), "error");
+    updateCustomerOrderCoreReturnServiceVisibility();
   }
 }
 
@@ -9107,6 +9195,7 @@ function renderCustomerOrderCart() {
     if (summary) summary.innerHTML = "";
     if (submit) submit.disabled = true;
     if (coreNotice) coreNotice.hidden = true;
+    updateCustomerOrderCoreReturnServiceVisibility();
     configureCustomerOrderDevelopmentPreview();
     return;
   }
@@ -9144,14 +9233,12 @@ function renderCustomerOrderCart() {
       renderCustomerOrderCart();
     });
   });
-  var requiresCore = customerOrderCart.some(function(item) {
-    var confirmed = previewMap[item.key];
-    return confirmed ? confirmed.core_return_required === true : item.core_return_required === true;
-  });
+  var requiresCore = customerOrderCartRequiresCoreReturn();
   if (coreNotice) {
     coreNotice.hidden = !requiresCore;
     coreNotice.textContent = requiresCore ? t("customer_order_core_required_note") : "";
   }
+  updateCustomerOrderCoreReturnServiceVisibility();
   if (summary) {
     if (customerOrderPreview && customerOrderPreview.valid === true) {
       summary.innerHTML = "<div><span>商品計</span><strong>" + esc(customerOrderCurrency(customerOrderPreview.subtotal_jpy)) + "</strong></div>" +
@@ -9226,7 +9313,8 @@ async function previewCustomerOrder(options) {
   var result = await sb.rpc("preview_customer_order", {
     target_items: customerOrderPayloadItems(),
     target_shipping_address: customerOrderAddressPayload(),
-    target_shipping_method: customerOrderShippingMethodPayload()
+    target_shipping_method: customerOrderShippingMethodPayload(),
+    target_core_return_shipping_method: customerOrderCoreReturnShippingMethodPayload()
   });
   if (requestSeq !== customerOrderPreviewSeq) return;
   if (button) button.disabled = false;
@@ -9264,6 +9352,7 @@ async function submitCustomerOrder() {
     target_items: customerOrderPayloadItems(),
     target_shipping_address: customerOrderAddressPayload(),
     target_shipping_method: customerOrderShippingMethodPayload(),
+    target_core_return_shipping_method: customerOrderCoreReturnShippingMethodPayload(),
     target_requested_delivery_date: deliveryDate && deliveryDate.value ? deliveryDate.value : null,
     target_delivery_time: deliveryTime && deliveryTime.value ? deliveryTime.value : null,
     target_customer_note: note && note.value ? note.value.trim() : null,
@@ -9301,11 +9390,15 @@ function renderCustomerOrderHistory() {
     var itemText = items.map(function(item) {
       return (item.genuine_part_number || item.manufacturer_part_number || "-") + " × " + (item.quantity || 1);
     }).join("、");
+    var outboundService = customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "outbound"), "未登録");
+    var coreReturnService = order.core_return_required
+      ? customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "core_return"), "未登録")
+      : "対象外";
     return "<article class='customer-order-history-row'>" +
       "<div><span class='customer-order-number'>" + esc(order.order_number || ("注文 " + (order.id || "-"))) + "</span><strong>" + esc(customerOrderStatusLabel(order.status)) + "</strong><small>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small></div>" +
       "<div class='customer-order-history-items'>" + esc(itemText || "-") + "</div>" +
       "<div class='customer-order-history-total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div>" +
-      "<dl><div><dt>送り状番号</dt><dd>" + esc(order.outbound_tracking_number || "未登録") + "</dd></div><div><dt>返送用送り状</dt><dd>" + esc(order.return_tracking_number || (order.core_return_required ? "未登録" : "対象外")) + "</dd></div><div><dt>コア返却</dt><dd>" + esc(order.core_return_status || (order.core_return_required ? "返却待ち" : "対象外")) + "</dd></div></dl>" +
+      "<dl><div><dt>商品発送便</dt><dd>" + esc(outboundService) + "</dd></div><div><dt>商品発送送り状</dt><dd>" + esc(order.outbound_tracking_number || "未登録") + "</dd></div><div><dt>コア返却便</dt><dd>" + esc(coreReturnService) + "</dd></div><div><dt>コア返却用送り状</dt><dd>" + esc(order.return_tracking_number || (order.core_return_required ? "未登録" : "対象外")) + "</dd></div><div><dt>コア返却</dt><dd>" + esc(order.core_return_status || (order.core_return_required ? "返却待ち" : "対象外")) + "</dd></div></dl>" +
     "</article>";
   }).join("");
 }
@@ -9467,11 +9560,15 @@ function renderSalesOrderDetail() {
   var actions = allowed.map(function(action) {
     return "<button type='button' class='sales-order-action " + esc(action) + "' data-sales-order-action='" + esc(action) + "'>" + esc(actionLabels[action] || action) + "</button>";
   }).join("");
+  var outboundService = customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "outbound"), "未登録");
+  var coreReturnService = order.core_return_required
+    ? customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "core_return"), "未登録")
+    : "対象外";
   host.innerHTML = "<div class='sales-order-detail-head'><div><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span></div>" +
     "<div class='sales-order-detail-summary'><div><span>商品計</span><strong>" + esc(customerOrderCurrency(order.subtotal_jpy)) + "</strong></div><div><span>送料</span><strong>" + esc(customerOrderCurrency(order.shipping_fee_jpy)) + "</strong></div><div><span>消費税</span><strong>" + esc(customerOrderCurrency(order.tax_jpy)) + "</strong></div><div class='total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div></div>" +
     "<section class='sales-order-detail-section'><h3>注文明細</h3>" + salesOrderItemRowsHtml(order.items) + "</section>" +
-    "<section class='sales-order-detail-section sales-order-address'><h3>お届け先</h3><p><strong>" + esc(address.company_name || "-") + "　" + esc(address.recipient_name || "-") + "</strong><br>〒" + esc(address.postal_code || "-") + "　" + esc(address.prefecture_name || "") + esc(address.address_line_1 || "-") + " " + esc(address.address_line_2 || "") + "<br>TEL " + esc(address.phone_number || "-") + "</p><dl><div><dt>お届け希望</dt><dd>" + esc(order.requested_delivery_date || "指定なし") + " / " + esc(order.delivery_time_label || "指定なし") + "</dd></div><div><dt>注文メモ</dt><dd>" + esc(order.customer_note || "-") + "</dd></div></dl></section>" +
-    "<section class='sales-order-detail-section sales-order-tracking'><h3>送り状番号</h3><div class='sales-order-tracking-grid'><label><span>出荷送り状番号</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>返送用送り状番号</span><input id='sales-order-return-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.return_tracking_number || "") + "'" + (order.core_return_required ? "" : " disabled") + "></label><label><span>出荷日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>送り状番号を登録</button></div><p>返送用送り状番号は、コア返却が必要な注文だけ登録します。</p></section>" +
+    "<section class='sales-order-detail-section sales-order-address'><h3>お届け先・運送便</h3><p><strong>" + esc(address.company_name || "-") + "　" + esc(address.recipient_name || "-") + "</strong><br>〒" + esc(address.postal_code || "-") + "　" + esc(address.prefecture_name || "") + esc(address.address_line_1 || "-") + " " + esc(address.address_line_2 || "") + "<br>TEL " + esc(address.phone_number || "-") + "</p><dl><div><dt>商品発送便</dt><dd>" + esc(outboundService) + "</dd></div><div><dt>コア返却便</dt><dd>" + esc(coreReturnService) + "</dd></div><div><dt>お届け希望</dt><dd>" + esc(order.requested_delivery_date || "指定なし") + " / " + esc(order.delivery_time_label || "指定なし") + "</dd></div><div><dt>注文メモ</dt><dd>" + esc(order.customer_note || "-") + "</dd></div></dl></section>" +
+    "<section class='sales-order-detail-section sales-order-tracking'><h3>送り状番号</h3><div class='sales-order-tracking-grid'><label><span>商品発送送り状番号</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>コア返却用送り状番号</span><input id='sales-order-return-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.return_tracking_number || "") + "'" + (order.core_return_required ? "" : " disabled") + "></label><label><span>出荷日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>送り状番号を登録</button></div><p>コア返却用送り状番号は、コア返却が必要な注文だけ登録します。</p></section>" +
     "<div class='sales-order-detail-actions'>" + actions + "</div><div id='sales-order-detail-message' class='sales-order-detail-message' aria-live='polite'></div>";
   host.querySelectorAll("[data-sales-order-action]").forEach(function(button) {
     button.addEventListener("click", function() { updateSalesOrderStatus(button.dataset.salesOrderAction); });
@@ -9533,6 +9630,7 @@ async function registerSalesOrderTracking() {
   var outbound = normalizedTrackingNumber((document.getElementById("sales-order-outbound-tracking") || {}).value);
   var returned = normalizedTrackingNumber((document.getElementById("sales-order-return-tracking") || {}).value);
   var shippedOn = (document.getElementById("sales-order-shipped-on") || {}).value || null;
+  var outboundShippingMethod = customerOrderSavedShippingMethod(salesOrderDetail, "outbound") || {};
   if (outbound.length !== 12 || (salesOrderDetail.core_return_required && returned.length !== 12)) {
     setSalesOrderDetailMessage("送り状番号は12桁で入力してください。", true);
     return;
@@ -9543,7 +9641,7 @@ async function registerSalesOrderTracking() {
     target_order_id: salesOrderDetail.id,
     target_outbound_tracking_number: outbound,
     target_return_tracking_number: salesOrderDetail.core_return_required ? returned : null,
-    target_carrier_name: "ヤマト運輸",
+    target_carrier_name: outboundShippingMethod.carrier_name || "ヤマト運輸",
     target_shipped_on: shippedOn,
     target_expected_version: salesOrderDetail.version == null ? null : salesOrderDetail.version
   });
@@ -39728,6 +39826,11 @@ document.getElementById("customer-order-delivery-service").addEventListener("cha
   customerOrderDeliveryDateManual = false;
   customerOrderPreview = null;
   updateCustomerOrderDeliveryEstimate({ forceDate: true });
+  renderCustomerOrderCart();
+});
+document.getElementById("customer-order-core-return-service").addEventListener("change", function() {
+  customerOrderCoreReturnServiceKeyValue = this.value || "";
+  customerOrderPreview = null;
   renderCustomerOrderCart();
 });
 document.getElementById("customer-order-delivery-date").addEventListener("input", function() {
