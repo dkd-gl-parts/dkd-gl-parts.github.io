@@ -19,7 +19,6 @@ function sourceBetween(startText, endText) {
 [
   "screen-customer-orders",
   "customer-order-cart-list",
-  "customer-order-preview-button",
   "customer-order-submit",
   "customer-order-history-list",
   "customer-order-development-preview",
@@ -39,6 +38,12 @@ function sourceBetween(startText, endText) {
 ].forEach((id) => {
   if (!html.includes(`id="${id}"`)) throw new Error(`order workflow UI is missing: ${id}`);
 });
+if (html.includes('id="customer-order-preview-button"')) {
+  throw new Error("price and stock confirmation must be included in the order action");
+}
+if (!css.includes(".customer-order-submit-actions { display: grid; grid-template-columns: 1fr;")) {
+  throw new Error("the combined order action must use the full action width");
+}
 
 const featureStatus = sourceBetween("async function refreshCustomerOrderFeatureStatus", "function showAuthenticatedHome");
 if (!featureStatus.includes('sb.rpc("get_customer_order_feature_status")')) {
@@ -263,6 +268,13 @@ if (!orderPreviewRequest.includes('internalRegistration ? "preview_internal_cust
 }
 if (!orderPreviewRequest.includes('result.error.message || t("customer_order_preview_error")')) {
   throw new Error("order preview must show the server validation reason");
+}
+if (!orderSubmitRequest.includes("await previewCustomerOrder({ silent: true })") ||
+    orderSubmitRequest.indexOf("await previewCustomerOrder({ silent: true })") > orderSubmitRequest.indexOf("await sb.rpc(submitRpc, submitParams)")) {
+  throw new Error("the order action must validate price, stock, and shipping before registration");
+}
+if (orderSubmitRequest.includes("customerOrderPreview.valid !== true || !customerOrderPreview.preview_token) return")) {
+  throw new Error("the order button must not require a separate preview action");
 }
 if (!orderSubmitRequest.includes('internalRegistration ? "place_internal_customer_order" : "place_customer_order"')) {
   throw new Error("internal submission must use the server-side proxy-registration RPC");

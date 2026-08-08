@@ -207,6 +207,8 @@ var TRANSLATIONS = {
     customer_order_shipping_note: "送り状に印字する内容です。",
     customer_order_preview: "価格・在庫を確認",
     customer_order_submit: "注文を確定",
+    customer_order_validating: "価格・在庫・送料を確認しています。",
+    customer_order_review_on_submit: "注文登録時に価格・在庫・送料を確認します。",
     customer_order_development_preview_title: "社内向け受注登録",
     customer_order_development_preview_note: "この画面から得意先注文として社内登録できます。登録時に価格・在庫を確定し、在庫を予約します。得意先には未公開です。",
     customer_order_flow_preview_title: "受注導線の開発プレビュー",
@@ -1819,6 +1821,8 @@ var TRANSLATIONS = {
     customer_order_shipping_note: "This information will be printed on the shipping label.",
     customer_order_preview: "Check Price / Stock",
     customer_order_submit: "Place Order",
+    customer_order_validating: "Checking price, stock, and shipping.",
+    customer_order_review_on_submit: "Price, stock, and shipping will be checked when the order is placed.",
     customer_order_development_preview_title: "Internal Order Entry",
     customer_order_development_preview_note: "You can register an order for this customer from this screen. Registration revalidates price and stock and reserves inventory. Customer access remains unpublished.",
     customer_order_flow_preview_title: "Order Flow Development Preview",
@@ -3418,6 +3422,8 @@ var TRANSLATIONS = {
     customer_order_shipping_note: "此内容将打印在运单上。",
     customer_order_preview: "确认价格・库存",
     customer_order_submit: "提交订单",
+    customer_order_validating: "正在确认价格、库存和运费。",
+    customer_order_review_on_submit: "提交订单时将确认价格、库存和运费。",
     customer_order_development_preview_title: "内部订单登记",
     customer_order_development_preview_note: "可从此画面为该客户进行内部订单登记。登记时会重新确认价格和库存并预留库存。客户功能仍未公开。",
     customer_order_flow_preview_title: "订单流程开发预览",
@@ -4945,7 +4951,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.705";
+var APP_VERSION       = "v1.1.706";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6501,7 +6507,6 @@ async function restoreAppStateAfterRefresh() {
         if (restoreDeliveryTime) restoreDeliveryTime.value = state.customerOrderDeliveryTime || "";
         if (restoreOrderNote) restoreOrderNote.value = state.customerOrderNote || "";
         updateCustomerOrderDeliveryEstimate({ forceDate: false });
-        if (customerOrderCart.length && (state.customerOrderView || "cart") === "cart") await previewCustomerOrder({ silent: true });
       }
     } else if (state.screen === "customer-catalog") {
       if (!isCustomerViewer() && state.customerPortalCustomerId) {
@@ -9227,14 +9232,9 @@ function configureCustomerOrderDevelopmentPreview() {
   var previewMode = canPreviewCustomerOrdering();
   var internalRegistration = canRegisterInternalCustomerOrder();
   var banner = document.getElementById("customer-order-development-preview");
-  var previewButton = document.getElementById("customer-order-preview-button");
   var submitButton = document.getElementById("customer-order-submit");
   var historyReload = document.getElementById("customer-order-history-reload");
   if (banner) banner.hidden = !previewMode;
-  if (previewButton) {
-    previewButton.textContent = previewMode && !internalRegistration ? t("customer_order_preview_disabled") : t("customer_order_preview");
-    if (previewMode) previewButton.disabled = !internalRegistration || customerOrderSaving || !customerOrderCart.length;
-  }
   if (submitButton) {
     submitButton.textContent = previewMode
       ? (internalRegistration ? t("customer_order_internal_submit") : t("customer_order_submit_disabled"))
@@ -9306,12 +9306,12 @@ function renderCustomerOrderCart() {
         "<div><span>消費税</span><strong>" + esc(customerOrderCurrency(customerOrderPreview.tax_jpy)) + "</strong></div>" +
         "<div class='grand-total'><span>" + esc(t("customer_order_total")) + "</span><strong>" + esc(customerOrderCurrency(customerOrderPreview.total_jpy)) + "</strong></div>";
     } else {
-      summary.innerHTML = "<p>価格と在庫は未確認です。</p>";
+      summary.innerHTML = "<p>" + esc(t("customer_order_review_on_submit")) + "</p>";
     }
   }
   if (submit) submit.disabled = customerOrderSaving ||
     (!canUseCustomerOrdering() && !canRegisterInternalCustomerOrder()) ||
-    !(customerOrderPreview && customerOrderPreview.valid === true && customerOrderPreview.preview_token);
+    !customerOrderCart.length;
   configureCustomerOrderDevelopmentPreview();
 }
 
@@ -9353,7 +9353,6 @@ async function enterCustomerOrders(options) {
   showCustomerOrderView(options.view || customerOrderActiveView);
   scheduleCustomerOrderPostalLocalData();
   if (canPreviewCustomerOrdering()) customerOrderSetStatus(t("customer_order_development_preview_note"), false);
-  if (customerOrderCart.length && options.preview !== false) await previewCustomerOrder({ silent: true });
 }
 
 async function previewCustomerOrder(options) {
@@ -9370,8 +9369,6 @@ async function previewCustomerOrder(options) {
     return;
   }
   var requestSeq = ++customerOrderPreviewSeq;
-  var button = document.getElementById("customer-order-preview-button");
-  if (button) button.disabled = true;
   if (!options.silent) customerOrderSetStatus("最新の価格と在庫を確認しています。", false);
   var previewRpc = internalRegistration ? "preview_internal_customer_order" : "preview_customer_order";
   var previewParams = {
@@ -9383,7 +9380,6 @@ async function previewCustomerOrder(options) {
   if (internalRegistration) previewParams.target_sales_customer_id = customerPortalPreviewContext.sales_customer_id;
   var result = await sb.rpc(previewRpc, previewParams);
   if (requestSeq !== customerOrderPreviewSeq) return;
-  if (button) button.disabled = false;
   if (result.error) {
     customerOrderPreview = null;
     customerOrderSetStatus(result.error.message || t("customer_order_preview_error"), true);
@@ -9408,10 +9404,27 @@ async function submitCustomerOrder() {
     customerOrderSetStatus(t("customer_order_development_preview_note"), false);
     return;
   }
-  if ((!canUseCustomerOrdering() && !internalRegistration) || customerOrderSaving || !customerOrderPreview || customerOrderPreview.valid !== true || !customerOrderPreview.preview_token) return;
-  if (internalRegistration && !window.confirm(t("customer_order_internal_confirm"))) return;
+  if ((!canUseCustomerOrdering() && !internalRegistration) || customerOrderSaving || !customerOrderCart.length) return;
   customerOrderSaving = true;
+  customerOrderPreview = null;
   renderCustomerOrderCart();
+  customerOrderSetStatus(t("customer_order_validating"), false);
+  try {
+    await previewCustomerOrder({ silent: true });
+  } catch (error) {
+    customerOrderPreview = null;
+    customerOrderSetStatus(error && error.message ? error.message : t("customer_order_preview_error"), true);
+  }
+  if (!customerOrderPreview || customerOrderPreview.valid !== true || !customerOrderPreview.preview_token) {
+    customerOrderSaving = false;
+    renderCustomerOrderCart();
+    return;
+  }
+  if (internalRegistration && !window.confirm(t("customer_order_internal_confirm"))) {
+    customerOrderSaving = false;
+    renderCustomerOrderCart();
+    return;
+  }
   customerOrderSetStatus(internalRegistration ? t("customer_order_internal_registering") : "注文を登録しています。", false);
   var deliveryDate = document.getElementById("customer-order-delivery-date");
   var deliveryTime = document.getElementById("customer-order-delivery-time");
@@ -40199,7 +40212,6 @@ document.getElementById("customer-order-delivery-time").addEventListener("change
   customerOrderPreview = null;
   renderCustomerOrderCart();
 });
-document.getElementById("customer-order-preview-button").addEventListener("click", function() { previewCustomerOrder({ silent: false }); });
 document.getElementById("customer-order-submit").addEventListener("click", submitCustomerOrder);
 document.getElementById("customer-order-history-reload").addEventListener("click", loadCustomerOrderHistory);
 document.getElementById("btn-back-sales-order-mgmt").addEventListener("click", returnToMenuFresh);

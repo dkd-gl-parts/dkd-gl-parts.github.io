@@ -5140,7 +5140,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-order-postal-mode button.active { background: #246148; color: #fff; }
 .customer-order-postal-mode button:focus-visible { position: relative; z-index: 1; outline: 2px solid #2f80ed; outline-offset: -2px; }
 .customer-order-core-notice { margin-top: 12px; border-left: 3px solid #d64545; padding: 9px 10px; background: #fff2f2; color: #8f2f2f; font-size: 10px; font-weight: 700; line-height: 1.55; }
-.customer-order-submit-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #dce3e0; }
+.customer-order-submit-actions { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #dce3e0; }
 .customer-order-submit-button { min-height: 40px; border: 1px solid var(--dcats-brand-red); border-radius: 6px; background: var(--dcats-brand-red); color: #fff; font-size: 12px; font-weight: 800; cursor: pointer; }
 .customer-order-submit-button:hover { background: var(--dcats-brand-red-hover); }
 .customer-order-submit-button:disabled { border-color: #cfd6d3; background: #dfe4e2; color: #89938f; cursor: not-allowed; }
