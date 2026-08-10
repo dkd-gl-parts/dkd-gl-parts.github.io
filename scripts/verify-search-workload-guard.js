@@ -131,11 +131,11 @@ if (!styles.includes(".search-count-row") || !styles.includes(".search-clear-btn
   throw new Error("search utility row and disabled clear-control styles are required");
 }
 const searchTypographyContracts = [
-  [/\.search-input\s*\{[^}]*font-size:\s*15px[^}]*font-weight:\s*600/s, "search input"],
-  [/\.btn-search\s*\{[^}]*font-size:\s*15px[^}]*font-weight:\s*700/s, "search action"],
-  [/\.filter-row label\s*\{[^}]*font-size:\s*12px/s, "category label"],
-  [/\.filter-row \.form-select\s*\{[^}]*font-size:\s*14px/s, "category select"],
-  [/\.search-clear-btn\s*\{[^}]*font-size:\s*12px[^}]*font-weight:\s*700/s, "clear action"],
+  [/\.search-input\s*\{[^}]*font-size:\s*var\(--dcats-type-body\)[^}]*font-weight:\s*600/s, "search input"],
+  [/\.btn-search\s*\{[^}]*font-size:\s*var\(--dcats-type-body\)[^}]*font-weight:\s*700/s, "search action"],
+  [/\.filter-row label\s*\{[^}]*font-size:\s*var\(--dcats-type-supporting\)/s, "category label"],
+  [/\.filter-row \.form-select\s*\{[^}]*font-size:\s*var\(--dcats-type-body\)/s, "category select"],
+  [/\.search-clear-btn\s*\{[^}]*font-size:\s*var\(--dcats-type-supporting\)[^}]*font-weight:\s*700/s, "clear action"],
   [/\.count-bar\s*\{[^}]*font-size:\s*13px[^}]*font-weight:\s*600/s, "result count"],
   [/#screen-search \.card-pn-primary\s*\{[^}]*font-size:\s*15px[^}]*font-weight:\s*800/s, "result part number"],
   [/#screen-search \.card-name\s*\{[^}]*font-size:\s*12px[^}]*font-weight:\s*700/s, "result category"],
@@ -149,6 +149,31 @@ searchTypographyContracts.forEach(([pattern, label]) => {
 if (!source.includes("function syncSearchClearButtonState()") ||
     !source.includes('document.getElementById("q").addEventListener("input", syncSearchClearButtonState)')) {
   throw new Error("search clear control must reflect active query and filter conditions");
+}
+
+const renderStart = source.indexOf("function render()");
+const renderEnd = source.indexOf("function focusSearchResultIndex", renderStart);
+const renderSource = source.slice(renderStart, renderEnd);
+const emptyCountIndex = renderSource.indexOf('document.getElementById("count-bar").textContent = t("search_count_empty")');
+const emptyListIndex = renderSource.indexOf('list.innerHTML = "<div class=\'empty\'>" + t("no_results") + "</div>"', emptyCountIndex);
+if (renderStart < 0 || renderEnd < renderStart || emptyCountIndex < 0 || emptyListIndex < emptyCountIndex) {
+  throw new Error("zero-result searches must replace the loading count before rendering the empty state");
+}
+if (!source.includes('search_count_empty: "0 件表示"') ||
+    !source.includes('search_count_empty: "0 results"') ||
+    !source.includes('search_count_empty: "显示 0 件"')) {
+  throw new Error("zero-result count must remain localized in Japanese, English, and Chinese");
+}
+
+if (!renderSource.includes("role='button' tabindex='0' aria-label='") ||
+    !source.includes('document.getElementById("list").addEventListener("keydown"') ||
+    !source.includes('e.key !== "Enter" && e.key !== " "') ||
+    !source.includes("activateSalesSearchResultCard(card)")) {
+  throw new Error("sales search result cards must be named, keyboard-focusable controls supporting Enter and Space");
+}
+if (!styles.includes("#screen-search .card:focus-visible") ||
+    !styles.includes("outline: 2px solid var(--dcats-focus)")) {
+  throw new Error("sales search result cards must retain a visible keyboard focus treatment");
 }
 
 console.log("search workload guard passed");

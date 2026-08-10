@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.708">
+<meta name="dcats-app-version" content="v1.1.709">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="application-name" content="D-CATS">
 <meta name="apple-mobile-web-app-title" content="D-CATS">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.708"; -->
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.709"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co https://zipcloud.ibsnet.co.jp; form-action 'self';">
 <title>D-CATS</title>
 <link rel="manifest" href="site.webmanifest?v=1.1.697&amp;brand=2">
@@ -19,7 +19,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png?v=1.1.697&amp;brand=2">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.708&amp;ranking=7&amp;brand=3">
+<link rel="stylesheet" href="styles.css?v=1.1.709&amp;ranking=7&amp;brand=3">
 </head>
 <body>
 
@@ -162,7 +162,7 @@
 <!-- =============================================
    得意先ポータル
 ============================================= -->
-<div id="screen-customer-portal" class="screen">
+<div id="screen-customer-portal" class="screen dcats-ui-screen">
   <div class="page-header customer-portal-header">
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-customer-portal" data-i18n="btn_back">← メニュー</button>
@@ -245,7 +245,7 @@
 <!-- =============================================
    得意先向け送料一覧
 ============================================= -->
-<div id="screen-customer-shipping" class="screen">
+<div id="screen-customer-shipping" class="screen dcats-ui-screen">
   <div class="page-header customer-portal-header">
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-customer-shipping" data-i18n="customer_portal_back">← 得意先ホーム</button>
@@ -310,7 +310,7 @@
 <!-- =============================================
    得意先担当者管理
 ============================================= -->
-<div id="screen-customer-users" class="screen">
+<div id="screen-customer-users" class="screen dcats-ui-screen">
   <div class="page-header customer-portal-header">
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-customer-users" data-i18n="customer_portal_back">← 得意先ホーム</button>
@@ -390,7 +390,7 @@
 <!-- =============================================
    得意先専用商品カタログ
 ============================================= -->
-<div id="screen-customer-catalog" class="screen">
+<div id="screen-customer-catalog" class="screen dcats-ui-screen">
   <div class="page-header customer-portal-header customer-catalog-header">
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-customer-catalog" data-i18n="customer_portal_back">← 得意先ホーム</button>
@@ -454,7 +454,7 @@
 <!-- =============================================
    得意先向け注文内容・注文履歴
 ============================================= -->
-<div id="screen-customer-orders" class="screen">
+<div id="screen-customer-orders" class="screen dcats-ui-screen">
   <div class="page-header customer-portal-header">
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-customer-orders" data-i18n="customer_portal_back">← 得意先ホーム</button>
@@ -532,19 +532,19 @@
             </div>
             <small id="customer-order-postal-status" data-i18n="customer_order_postal_lookup_hint" aria-live="polite">郵便番号7桁から住所を入力します。</small>
             <div class="customer-order-postal-results" id="customer-order-postal-results" hidden></div>
-            <div class="customer-order-postal-test" id="customer-order-postal-test" hidden>
-              <div class="customer-order-postal-test-head">
-                <strong data-i18n="customer_order_postal_test_title">住所検索方式</strong>
-                <span id="customer-order-postal-local-status" aria-live="polite"></span>
-              </div>
-              <div class="customer-order-postal-mode" role="group" aria-label="住所検索方式">
-                <button type="button" class="active" data-order-postal-mode="auto" aria-pressed="true" data-i18n="customer_order_postal_mode_auto">自動</button>
-                <button type="button" data-order-postal-mode="api" aria-pressed="false" data-i18n="customer_order_postal_mode_api">APIのみ</button>
-                <button type="button" data-order-postal-mode="local" aria-pressed="false" data-i18n="customer_order_postal_mode_local">ローカルのみ</button>
-              </div>
-            </div>
           </div>
           <label><span>都道府県</span><select id="customer-order-prefecture"></select></label>
+          <div class="customer-order-postal-test" id="customer-order-postal-test" hidden>
+            <div class="customer-order-postal-test-head">
+              <strong data-i18n="customer_order_postal_test_title">住所検索方式</strong>
+              <span id="customer-order-postal-local-status" aria-live="polite"></span>
+            </div>
+            <div class="customer-order-postal-mode" role="group" aria-label="住所検索方式">
+              <button type="button" class="active" data-order-postal-mode="auto" aria-pressed="true" data-i18n="customer_order_postal_mode_auto">自動</button>
+              <button type="button" data-order-postal-mode="api" aria-pressed="false" data-i18n="customer_order_postal_mode_api">APIのみ</button>
+              <button type="button" data-order-postal-mode="local" aria-pressed="false" data-i18n="customer_order_postal_mode_local">ローカルのみ</button>
+            </div>
+          </div>
           <label class="wide"><span>住所</span><input id="customer-order-address1" type="text" maxlength="64" autocomplete="address-line1"></label>
           <label class="wide"><span>建物名・部門</span><input id="customer-order-address2" type="text" maxlength="64" autocomplete="address-line2"></label>
           <div class="customer-order-shipping-methods">
@@ -639,7 +639,7 @@
 <!-- =============================================
    検索画面（左右2カラム対応）
 ============================================= -->
-<div id="screen-search" class="screen">
+<div id="screen-search" class="screen dcats-ui-screen">
   <div class="page-header">
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-search" data-i18n="btn_back">← メニュー</button>
@@ -771,7 +771,7 @@
 <!-- =============================================
    構成部品画面
 ============================================= -->
-<div id="screen-production-search" class="screen">
+<div id="screen-production-search" class="screen dcats-ui-screen">
   <div class="page-header">
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-production-search" data-i18n="btn_back">← メニュー</button>
@@ -2824,9 +2824,9 @@
               <thead>
                 <tr>
                   <th data-i18n="finished_label_serial_result">製造シリアル</th>
-                  <th data-i18n="f_gltek_pn">GLTEK品番</th>
+                  <th data-i18n="gltek_part_number_label">GLTEK品番</th>
                   <th data-i18n="f_manufacturer">メーカー</th>
-                  <th></th>
+                  <th data-i18n="actions">操作</th>
                 </tr>
               </thead>
               <tbody id="finished-shipment-unit-body">
@@ -3777,7 +3777,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
 <script src="vendor/qrcode.min.js?v=1.0.0"></script>
-<script src="app.js?v=1.1.708"></script>
+<script src="app.js?v=1.1.709"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.625&amp;ranking=17"></script>
 </body>
 </html>
