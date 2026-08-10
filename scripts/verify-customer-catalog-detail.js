@@ -52,6 +52,11 @@ if (!compatibleSource.includes("await fetchCustomerCatalogCompatibleStockMap(row
     !compatibleSource.includes('customerProductKindLabel("aftermarket_new")')) {
   throw new Error("customer catalog compatible products must show rebuilt and new stock");
 }
+if (!source.includes('customer_product_kind_rebuilt: "リビルト品"') ||
+    !source.includes('customer_product_kind_new: "新品"') ||
+    !source.includes('if (kind === "rebuilt") return t("customer_product_kind_rebuilt")')) {
+  throw new Error("customer-facing product kinds must be labeled as rebuilt product and new product");
+}
 
 const compatibleStockSource = functionSource("fetchCustomerCatalogCompatibleStockMap", "async function loadCustomerCatalogCompatible");
 if (!compatibleStockSource.includes('from("core_product_variants")') ||

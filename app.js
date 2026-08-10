@@ -372,6 +372,7 @@ var TRANSLATIONS = {
     inventory_kind_section: "在庫区分",
     product_kind_rebuilt: "リビルト",
     product_kind_aftermarket_new: "社外新品",
+    customer_product_kind_rebuilt: "リビルト品",
     customer_product_kind_new: "新品",
     product_kind_used_core: "中古コア",
     product_kind_catalog_spec: "カタログ",
@@ -1985,6 +1986,7 @@ var TRANSLATIONS = {
     product_shipping_invalid: "Review the packed weight and package size.",
     inventory_kind_section: "Inventory Type",
     product_kind_rebuilt: "Rebuilt",
+    customer_product_kind_rebuilt: "Rebuilt",
     product_kind_aftermarket_new: "Aftermarket New",
     customer_product_kind_new: "New",
     product_kind_used_core: "Used Core",
@@ -3607,6 +3609,7 @@ var TRANSLATIONS = {
     inventory_kind_section: "库存区分",
     product_kind_rebuilt: "再制造",
     product_kind_aftermarket_new: "副厂新品",
+    customer_product_kind_rebuilt: "再制造品",
     customer_product_kind_new: "新品",
     product_kind_used_core: "旧芯",
     product_kind_catalog_spec: "目录",
@@ -4951,7 +4954,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.706";
+var APP_VERSION       = "v1.1.707";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -24836,6 +24839,7 @@ function productKindLabel(kind) {
 
 function customerProductKindLabel(kind) {
   kind = normalizeProductKind(kind);
+  if (kind === "rebuilt") return t("customer_product_kind_rebuilt");
   return kind === "aftermarket_new" ? t("customer_product_kind_new") : productKindLabel(kind);
 }
 
