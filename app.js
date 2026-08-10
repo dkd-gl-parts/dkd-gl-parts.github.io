@@ -4954,7 +4954,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.707";
+var APP_VERSION       = "v1.1.708";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -8248,8 +8248,8 @@ async function loadCustomerCatalogCompatible(product, seq) {
       "<strong>" + esc(row.genuine_part_number || row.manufacturer_part_number || "-") + "</strong>" +
       "<span class='customer-catalog-compatible-code'>" + esc([row.manufacturer, row.manufacturer_part_number].filter(Boolean).join(" / ")) + "</span>" +
       "<span class='customer-catalog-compatible-stock'>" +
-        "<span class='customer-catalog-compatible-stock-item rebuilt'>" + esc(customerProductKindLabel("rebuilt")) + " " + esc(t("customer_catalog_stock_qty")) + " <b>" + esc(rebuiltQty) + "</b></span>" +
-        "<span class='customer-catalog-compatible-stock-item aftermarket_new'>" + esc(customerProductKindLabel("aftermarket_new")) + " " + esc(t("customer_catalog_stock_qty")) + " <b>" + esc(newQty) + "</b></span>" +
+        "<span class='customer-catalog-compatible-stock-item rebuilt'>" + esc(customerProductKindLabel("rebuilt")) + " <b>" + esc(rebuiltQty) + "</b></span>" +
+        "<span class='customer-catalog-compatible-stock-item aftermarket_new'>" + esc(customerProductKindLabel("aftermarket_new")) + " <b>" + esc(newQty) + "</b></span>" +
       "</span>" +
     "</button>";
   }).join("") + "</div>";

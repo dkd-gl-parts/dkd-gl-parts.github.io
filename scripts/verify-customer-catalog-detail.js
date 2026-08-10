@@ -49,8 +49,13 @@ if (!compatibleSource.includes("await hydrateSalesDaikoVisibility(rows)") ||
 if (!compatibleSource.includes("await fetchCustomerCatalogCompatibleStockMap(rows)") ||
     !compatibleSource.includes("customer-catalog-compatible-stock-item") ||
     !compatibleSource.includes('customerProductKindLabel("rebuilt")') ||
-    !compatibleSource.includes('customerProductKindLabel("aftermarket_new")')) {
-  throw new Error("customer catalog compatible products must show rebuilt and new stock");
+    !compatibleSource.includes('customerProductKindLabel("aftermarket_new")') ||
+    !compatibleSource.includes("rebuiltQty") ||
+    !compatibleSource.includes("newQty")) {
+  throw new Error("customer catalog compatible products must show rebuilt and new stock quantities");
+}
+if (compatibleSource.includes('t("customer_catalog_stock_qty")')) {
+  throw new Error("customer catalog compatible stock badges must omit the stock quantity label");
 }
 if (!source.includes('customer_product_kind_rebuilt: "リビルト品"') ||
     !source.includes('customer_product_kind_new: "新品"') ||
