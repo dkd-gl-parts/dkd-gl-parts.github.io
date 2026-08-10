@@ -58,6 +58,11 @@ var TRANSLATIONS = {
 
   ja: {
     app_sub: "Daiko Catalog &amp; Search System",
+    login_system_subtitle: "自動車部品検索・受発注システム",
+    login_heading: "ログイン",
+    login_welcome: "D-CATSへようこそ",
+    password_show: "パスワードを表示",
+    password_hide: "パスワードを隠す",
     lbl_email: "メールアドレス",
     lbl_password: "パスワード",
     btn_login: "ログイン",
@@ -1674,6 +1679,11 @@ var TRANSLATIONS = {
 
   en: {
     app_sub: "Daiko Catalog &amp; Search System",
+    login_system_subtitle: "Automotive Parts Search & Ordering System",
+    login_heading: "Login",
+    login_welcome: "Welcome to D-CATS",
+    password_show: "Show password",
+    password_hide: "Hide password",
     lbl_email: "Email address",
     lbl_password: "Password",
     btn_login: "Login",
@@ -3515,6 +3525,11 @@ var TRANSLATIONS = {
     production_search_hint: "请指定搜索条件后搜索。",
     btn_edit_selected_row: "修改所选行",
     app_sub: "大光目录与搜索系统",
+    login_system_subtitle: "汽车零部件搜索与订购系统",
+    login_heading: "登录",
+    login_welcome: "欢迎使用 D-CATS",
+    password_show: "显示密码",
+    password_hide: "隐藏密码",
     lbl_email: "邮箱地址",
     lbl_password: "密码",
     btn_login: "登录",
@@ -4957,7 +4972,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.709";
+var APP_VERSION       = "v1.1.710";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -7157,6 +7172,16 @@ function updateAllHeaders() {
   updateComponentsReturnButton();
 }
 
+function setLoginPasswordVisibility(visible) {
+  var input = document.getElementById("login-password");
+  var btn = document.getElementById("btn-toggle-login-password");
+  if (!input || !btn) return;
+  input.type = visible ? "text" : "password";
+  btn.setAttribute("aria-pressed", visible ? "true" : "false");
+  btn.dataset.i18nAriaLabel = visible ? "password_hide" : "password_show";
+  btn.setAttribute("aria-label", t(btn.dataset.i18nAriaLabel));
+}
+
 async function doLogin() {
   var email    = document.getElementById("login-email").value.trim();
   var password = document.getElementById("login-password").value;
@@ -7178,6 +7203,7 @@ async function doLogin() {
   showAuthenticatedHome();
   openRequestedPrintStationAfterAuth();
   document.getElementById("login-password").value = "";
+  setLoginPasswordVisibility(false);
   btnEl.disabled = false; btnEl.textContent = t("btn_login");
 }
 
@@ -40035,6 +40061,13 @@ document.querySelectorAll(".app-manual-refresh").forEach(function(btn) {
 // その他イベント登録
 // =============================================
 document.getElementById("btn-login").addEventListener("click", doLogin);
+var loginPasswordToggle = document.getElementById("btn-toggle-login-password");
+if (loginPasswordToggle) {
+  loginPasswordToggle.addEventListener("click", function() {
+    var input = document.getElementById("login-password");
+    setLoginPasswordVisibility(input && input.type === "password");
+  });
+}
 
 // =============================================
 // パスワード強度チェック

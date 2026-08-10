@@ -2,6 +2,39 @@
 
 final result: passed
 
+## Login redesign release QA (v1.1.710)
+
+- Approved desktop concept: `C:\Users\yamam\.codex\generated_images\019fd0a8-f714-7391-a0ee-d2ae6b8cf62d\exec-67ffce8e-1a4c-41d2-9ad2-12c4a30247de.png`
+- Approved mobile concept: `C:\Users\yamam\.codex\generated_images\019fd0a8-f714-7391-a0ee-d2ae6b8cf62d\exec-f6be2d9d-6602-4cd6-988e-6a1532e7802d.png`
+- Desktop implementation: `C:\Users\yamam\Documents\GitHub\dcats-login-release-20260810\outputs\dcats-login-v1.1.710-desktop.png`
+- Mobile implementation: `C:\Users\yamam\Documents\GitHub\dcats-login-release-20260810\outputs\dcats-login-v1.1.710-mobile.png`
+- Desktop comparison: `C:\Users\yamam\Documents\GitHub\dcats-login-release-20260810\outputs\dcats-login-v1.1.710-desktop-comparison.png`
+- Mobile comparison: `C:\Users\yamam\Documents\GitHub\dcats-login-release-20260810\outputs\dcats-login-v1.1.710-mobile-comparison.png`
+
+### Verified presentation
+
+- D-CATS is the primary brand and the exact subtitle is `自動車部品検索・受発注システム`.
+- DAIKO and GLTEK are visible as secondary partner brands using their source image assets.
+- Desktop 1440 x 1024, mobile 390 x 844, and compact mobile 360 x 800 were inspected.
+- The 390 px and 360 px states have no horizontal overflow and fit the complete login surface in the viewport.
+- Reference and implementation were compared side by side after the final desktop partner-position adjustment.
+
+### Verified behavior
+
+- Password visibility updates the input type, `aria-pressed`, and the translated accessible label.
+- Japanese and English switching updates the login heading, subtitle, welcome text, and visibility label.
+- Empty submission shows the existing local validation error without issuing an authentication request.
+- Password-reset navigation opens and returns to login.
+- Browser console warnings and errors: none.
+- No credentials were used and no production data was changed.
+
+### Release checks
+
+- JavaScript syntax, version consistency (`v1.1.710`), static build, security response headers, and all non-postal workflow checks passed.
+- `verify-postal-data.js` remains the documented Windows checkout exception: `core.autocrlf=true` adds one checkout byte to shard 0. The postal files are unchanged by this release and the Git blob/manifest contract remains the release source of truth.
+
+final result: passed
+
 Reference: `C:\Users\yamam\Documents\New project\outputs\design-ideation\dcats-common-components-20260807\04-final-unified-component-system.png`
 
 ## Verified states

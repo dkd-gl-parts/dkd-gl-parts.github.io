@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.709">
+<meta name="dcats-app-version" content="v1.1.710">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="application-name" content="D-CATS">
 <meta name="apple-mobile-web-app-title" content="D-CATS">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.709"; -->
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.710"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co https://zipcloud.ibsnet.co.jp; form-action 'self';">
 <title>D-CATS</title>
 <link rel="manifest" href="site.webmanifest?v=1.1.697&amp;brand=2">
@@ -19,7 +19,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png?v=1.1.697&amp;brand=2">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.709&amp;ranking=7&amp;brand=3">
+<link rel="stylesheet" href="styles.css?v=1.1.710&amp;ranking=7&amp;brand=4">
 </head>
 <body>
 
@@ -102,30 +102,61 @@
    ログイン画面
 ============================================= -->
 <div id="screen-login" class="screen">
-  <div class="login-card">
-    <div class="login-logo">
+  <div class="login-card login-shell">
+    <section class="login-brand-panel" aria-labelledby="login-brand-title">
       <div class="login-brand-lockup">
-        <img class="login-logo-mark" src="assets/icons/dcats-mark-256.png" alt="" aria-hidden="true" width="54" height="54">
-        <h1>D&#8209;CATS</h1>
+        <img class="login-brand-mark" src="assets/icons/dcats-mark-256.png" alt="" aria-hidden="true" width="108" height="108">
+        <div class="login-brand-copy">
+          <h1 id="login-brand-title">D&#8209;CATS</h1>
+          <p data-i18n="login_system_subtitle">自動車部品検索・受発注システム</p>
+        </div>
       </div>
-      <p data-i18n="app_sub">Daiko Catalog &amp; Search System</p>
-      <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.641</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
-    </div>
-    <hr class="login-divider">
-    <label class="login-label" data-i18n="lbl_email">メールアドレス</label>
-    <input class="login-input" id="login-email" type="email" autocomplete="email" data-i18n-ph="lbl_email">
-    <label class="login-label" data-i18n="lbl_password">パスワード</label>
-    <input class="login-input" id="login-password" type="password" autocomplete="current-password" data-i18n-ph="lbl_password">
-    <button class="btn-login" id="btn-login" data-i18n="btn_login">ログイン</button>
-    <div class="login-error" id="login-error"></div>
-    <div data-dcats-inline-style="s-19f890a2e2b5">
-      <button class="btn-back-login" id="btn-to-forgot" data-i18n="btn_forgot">パスワードをお忘れの方</button>
-    </div>
-    <div class="lang-sw-login" id="lang-sw-login">
-      <button class="lang-btn-login active" data-lang="ja">日本語</button>
-      <button class="lang-btn-login" data-lang="en">EN</button>
-      <button class="lang-btn-login" data-lang="zh">中文</button>
-    </div>
+    </section>
+
+    <main class="login-form-panel">
+      <div class="login-form-content">
+        <header class="login-form-header">
+          <h2 data-i18n="login_heading">ログイン</h2>
+          <p data-i18n="login_welcome">D-CATSへようこそ</p>
+        </header>
+
+        <div class="login-fields">
+          <label class="login-label" for="login-email" data-i18n="lbl_email">メールアドレス</label>
+          <input class="login-input" id="login-email" type="email" autocomplete="email" inputmode="email" data-i18n-ph="lbl_email">
+          <label class="login-label" for="login-password" data-i18n="lbl_password">パスワード</label>
+          <div class="login-password-field">
+            <input class="login-input" id="login-password" type="password" autocomplete="current-password" data-i18n-ph="lbl_password">
+            <button class="login-password-toggle" id="btn-toggle-login-password" type="button" aria-pressed="false" data-i18n-aria-label="password_show" aria-label="パスワードを表示">
+              <img src="assets/icons/eye-outline.svg" alt="" aria-hidden="true" width="24" height="24">
+            </button>
+          </div>
+          <button class="btn-login" id="btn-login" data-i18n="btn_login">ログイン</button>
+          <div class="login-error" id="login-error" role="alert" aria-live="polite"></div>
+          <button class="btn-back-login login-forgot-link" id="btn-to-forgot" data-i18n="btn_forgot">パスワードをお忘れの方</button>
+        </div>
+
+        <div class="login-utility">
+          <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.710</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+          <div class="lang-sw-login" id="lang-sw-login">
+            <button class="lang-btn-login active" data-lang="ja">日本語</button>
+            <button class="lang-btn-login" data-lang="en">EN</button>
+            <button class="lang-btn-login" data-lang="zh">中文</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="login-partners" aria-label="DAIKO and GLTEK">
+      <span class="login-partner">
+        <img class="login-partner-mark login-partner-mark-daiko" src="assets/brand/daiko-mark.jpg" alt="" aria-hidden="true" width="40" height="40">
+        <span>DAIKO</span>
+      </span>
+      <span class="login-partner-separator" aria-hidden="true">×</span>
+      <span class="login-partner">
+        <img class="login-partner-mark login-partner-mark-gltek" src="assets/brand/gltek-mark.webp" alt="" aria-hidden="true" width="46" height="32">
+        <span>GLTEK</span>
+      </span>
+    </footer>
   </div>
 </div>
 
@@ -3777,7 +3808,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
 <script src="vendor/qrcode.min.js?v=1.0.0"></script>
-<script src="app.js?v=1.1.709"></script>
+<script src="app.js?v=1.1.710"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.625&amp;ranking=17"></script>
 </body>
 </html>
