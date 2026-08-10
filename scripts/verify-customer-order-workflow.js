@@ -300,6 +300,18 @@ if (!html.includes("https://zipcloud.ibsnet.co.jp") || !headersFile.includes("ht
   if (!css.includes(fragment)) throw new Error(`responsive order style is missing: ${fragment}`);
 });
 
+const postalFieldStart = html.indexOf('class="customer-order-form-field customer-order-postal-field"');
+const postalFieldEnd = html.indexOf("</div>", postalFieldStart);
+const postalTestStart = html.indexOf('class="customer-order-postal-test"');
+const prefectureStart = html.indexOf('id="customer-order-prefecture"');
+if (postalFieldStart < 0 || postalFieldEnd < postalFieldStart || prefectureStart < postalFieldEnd || postalTestStart < prefectureStart) {
+  throw new Error("postal search-mode controls must occupy a full form-grid row after the postal and prefecture fields");
+}
+if (!/\.customer-order-postal-test\s*\{[^}]*grid-column:\s*1\s*\/\s*-1/s.test(css) ||
+    !/\.customer-order-postal-mode\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/s.test(css)) {
+  throw new Error("postal search-mode controls must distribute all three labels across the available row width");
+}
+
 if ((source.match(/customer_order_title:/g) || []).length !== 3 || (source.match(/sales_order_mgmt_title:/g) || []).length !== 3) {
   throw new Error("order screen titles must be translated for all supported languages");
 }

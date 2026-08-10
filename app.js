@@ -311,6 +311,7 @@ var TRANSLATIONS = {
     btn_reload: "再読込",
     btn_load_more: "さらに表示",
     search_count_loaded: "{loaded} 件表示 / 全 {total} 件",
+    search_count_empty: "0 件表示",
     filter_all: "すべて",
     filter_scope: "検索対象",
     filter_sl: "SL品番あり",
@@ -1911,6 +1912,7 @@ var TRANSLATIONS = {
     btn_reload: "Reload",
     btn_load_more: "Show More",
     search_count_loaded: "{loaded} shown / {total} total",
+    search_count_empty: "0 results",
     filter_all: "All",
     filter_scope: "Search target",
     filter_sl: "Has SL No.",
@@ -3467,6 +3469,7 @@ var TRANSLATIONS = {
     production_ranking_edit_title: "修改生产计划",
     btn_load_more: "显示更多",
     search_count_loaded: "已显示 {loaded} 件 / 共 {total} 件",
+    search_count_empty: "显示 0 件",
     production_year_all: "全部年度",
     production_search_wait: "等待搜索",
     production_search_hint: "请指定搜索条件后搜索。",
@@ -4909,7 +4912,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.699";
+var APP_VERSION       = "v1.1.704";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -21939,7 +21942,7 @@ function renderFinishedShipmentUnits() {
       "<td><strong class='finished-shipment-serial'>" + esc(unit.manufacturing_serial) + "</strong></td>" +
       "<td>" + esc(productNo) + "</td>" +
       "<td>" + esc(unit.manufacturer || "-") + "</td>" +
-      "<td><button type='button' class='btn-sm-edit production-action-secondary' data-finished-shipment-remove='" + esc(String(unit.id)) + "'>×</button></td>" +
+      "<td><button type='button' class='btn-sm-edit production-action-secondary' aria-label='" + esc(t("finished_label_component_remove") + " " + unit.manufacturing_serial) + "' title='" + esc(t("finished_label_component_remove")) + "' data-finished-shipment-remove='" + esc(String(unit.id)) + "'>×</button></td>" +
       "</tr>";
   }).join("");
   body.querySelectorAll("[data-finished-shipment-remove]").forEach(function(btn) {
@@ -26455,6 +26458,7 @@ function render() {
   }
   var items = getFiltered();
   if (items.length === 0) {
+    document.getElementById("count-bar").textContent = t("search_count_empty");
     list.innerHTML = "<div class='empty'>" + t("no_results") + "</div>";
     if (moreWrap) setCspStyle(moreWrap, "display", productSearchHasMore ? "block" : "none");
     return;
@@ -26480,13 +26484,15 @@ function render() {
     var kindSummary = productKindSummaryForProduct(p);
     var hasCatalogSpec = productHasCatalogData(p);
     var sel   = (currentProduct && currentProduct.id===p.id) ? " selected" : "";
-    html += "<div class='card"+sel+"' data-id='"+p.id+"' data-result-index='"+idx+"'><div class='card-top'>";
+    var cardPartNumber = p.genuine_part_number || p.manufacturer_part_number || "-";
+    var cardLabel = [cardPartNumber, productCategoryLabel(p)].filter(Boolean).join(" / ");
+    html += "<div class='card"+sel+"' role='button' tabindex='0' aria-label='"+esc(cardLabel)+"' data-id='"+p.id+"' data-result-index='"+idx+"'><div class='card-top'>";
     html += "<div class='card-media'>";
     html += "<div class='card-thumb card-thumb-icon " + (cnt > 0 ? "has-image" : "no-image") + "'>&#x1F5BC;<span>" + esc(cnt > 0 ? t("image_has") : t("image_none_short")) + "</span></div>";
     if (hasCatalogSpec) html += "<div class='card-media-catalog'><span class='badge-catalog'>" + esc(t("product_kind_catalog_spec")) + "</span></div>";
     html += "</div>";
     html += "<div class='card-left'>";
-    html += "<div class='card-pn card-pn-primary'>"+esc(p.genuine_part_number||p.manufacturer_part_number||"-")+"</div>";
+    html += "<div class='card-pn card-pn-primary'>"+esc(cardPartNumber)+"</div>";
     html += "<div class='card-name'>"+esc(productCategoryLabel(p))+"</div>";
     if (p.genuine_part_number_2) html += "<div class='card-sub'>純正2: "+esc(p.genuine_part_number_2)+"</div>";
     html += renderProductKindPills(kindSummary, { compact: true });
@@ -26520,7 +26526,7 @@ function focusSearchResultIndex(index) {
   requestAnimationFrame(function() {
     var card = document.querySelector("#list .card[data-result-index='" + index + "']");
     if (!card) return;
-    card.setAttribute("tabindex", "-1");
+    card.setAttribute("tabindex", "0");
     card.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
     try { card.focus({ preventScroll: true }); } catch (e) { card.focus(); }
   });
@@ -40527,7 +40533,21 @@ document.getElementById("btn-load-more").addEventListener("click", async functio
   await runProductSearch({ preserveSelection: true, append: categoryPaging });
   focusSearchResultIndex(firstAddedIndex);
 });
-document.getElementById("list").addEventListener("click", function(e){ var c=e.target.closest(".card"); if(c) openPanel(parseInt(c.dataset.id,10)); });
+function activateSalesSearchResultCard(card) {
+  if (!card) return;
+  var id = parseInt(card.dataset.id, 10);
+  if (!isNaN(id)) openPanel(id);
+}
+document.getElementById("list").addEventListener("click", function(e) {
+  activateSalesSearchResultCard(e.target.closest(".card"));
+});
+document.getElementById("list").addEventListener("keydown", function(e) {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  var card = e.target.closest(".card");
+  if (!card) return;
+  e.preventDefault();
+  activateSalesSearchResultCard(card);
+});
 document.getElementById("production-search-btn").addEventListener("click", async function(){
   productionSearchLimit = SEARCH_INITIAL_LIMIT;
   productionLoaded = false;

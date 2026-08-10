@@ -43,8 +43,9 @@ function functionSource(name) {
   throw new Error(`${name} could not be parsed`);
 }
 
-assert(app.includes('var APP_VERSION       = "v1.1.699";'), "app version is not v1.1.699");
-assert(html.includes('content="v1.1.699"'), "HTML version is not v1.1.699");
+const appVersionMatch = app.match(/var\s+APP_VERSION\s*=\s*"(v[^"]+)"/);
+assert(appVersionMatch, "app version is missing");
+assert(html.includes(`content="${appVersionMatch[1]}"`), "HTML version does not match the app version");
 assert(html.includes('data-finished-label-mode="station"'), "Windows print-station mode is missing");
 assert(html.includes('id="dcats-auto-notice"') && html.includes('aria-live="polite"'), "auto-dismiss print notice is missing or inaccessible");
 [
