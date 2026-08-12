@@ -16,6 +16,7 @@ const files = [
   "ranking-report-print-landscape.css",
   "ranking-report-print-portrait.css",
   "ranking-report-print.css",
+  "shipment-instruction-print.css",
   "favicon.ico",
   "site.webmanifest",
   "styles.css",

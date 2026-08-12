@@ -309,8 +309,8 @@ var TRANSLATIONS = {
     mi_purchase_mgmt_desc: "SL品番・仕入先価格・MOQを管理します。",
     mi_finished_label_title: "完品登録・製造シリアル",
     mi_finished_label_desc: "完品を1台ずつ登録し、1台につき完品シール1枚と在庫履歴を発行します。",
-    mi_finished_shipping_title: "完品出荷・保証管理",
-    mi_finished_shipping_desc: "製造シリアルを出荷先・出荷日・保証期限へ紐づけます。",
+    mi_finished_shipping_title: "出荷照合・保証管理",
+    mi_finished_shipping_desc: "出荷済み製造シリアルの保証期限・履歴を確認します。出荷登録は受注・出荷管理から行います。",
     mi_production_ranking_title: "製造予定リスト",
     mi_production_ranking_desc: "2024・2025のTOP100元リストを確認・メンテナンスします。",
     mi_data_title: "データ管理",
@@ -606,23 +606,38 @@ var TRANSLATIONS = {
     btn_print: "印刷",
     finished_label_print_setup: "完品シール：用紙サイズを45×20mm、倍率100%に設定してください。{n}台 × 1枚",
     finished_box_label_print_setup: "箱シール：用紙サイズを80×60mm、倍率100%に設定してください。{n}台 × 1枚",
-    finished_shipping_title: "完品出荷・保証管理",
-    finished_shipping_scan_title: "製造シリアル読取",
+    finished_shipping_title: "出荷照合・保証管理",
+    finished_shipping_dispatch_scan_title: "出荷指示書を読取",
+    finished_shipping_dispatch_scan_ph: "QRを読取、または出荷指示番号を入力",
+    finished_shipping_load_dispatch: "読込",
+    finished_shipping_dispatch_scan_hint: "スキャナーがない場合は、出荷指示番号を手入力できます。",
+    finished_shipping_dispatch_required: "出荷指示書を読み取るか、出荷指示番号を入力してください。",
+    finished_shipping_dispatch_loaded: "出荷指示を読み込みました。商品の製造シリアルを照合してください。",
+    finished_shipping_scan_title: "製造シリアル照合・保証照会",
     finished_shipping_scan_ph: "QRを読取、または MYYYY-NNNNNNN を入力",
     finished_shipping_add_serial: "追加",
-    finished_shipping_scan_hint: "ラベルのQRを読み取るたびに出荷対象へ追加します。出荷済みシリアルは保証情報を照会します。",
-    finished_shipping_unit_list: "出荷対象",
-    finished_shipping_no_units: "製造シリアルを読み取ってください。",
-    finished_shipping_form: "出荷登録内容",
+    finished_shipping_scan_hint: "出荷指示の読込後に製造シリアルを照合します。指示未読込時は保証情報を照会できます。",
+    finished_shipping_manual_candidates: "未出荷シリアルから選択",
+    finished_shipping_candidate_ph: "製造シリアルで絞り込み",
+    finished_shipping_candidate_empty: "選択できる未出荷シリアルがありません。",
+    finished_shipping_candidate_select: "選択",
+    finished_shipping_unit_list: "割当済み製造シリアル",
+    finished_shipping_no_units: "割り当て済みの製造シリアルはありません。",
+    finished_shipping_form: "出荷確定",
     finished_shipping_customer: "出荷先得意先 *",
     finished_shipping_shipped_on: "出荷日 *",
     finished_shipping_order_number: "受注・伝票番号",
     finished_shipping_carrier: "運送会社",
     finished_shipping_tracking: "送り状番号",
     finished_shipping_warranty_months: "保証月数 *",
-    finished_shipping_register: "出荷登録",
-    finished_shipping_saved: "出荷を登録し、完品在庫を更新しました。",
-    finished_shipping_history: "出荷履歴",
+    finished_shipping_register: "出荷確定",
+    finished_shipping_saved: "出荷を確定しました。在庫・製造シリアル・保証情報を更新しました。",
+    finished_shipping_confirm: "この出荷指示を確定します。在庫・製造シリアル・保証情報を更新してよろしいですか？",
+    finished_shipping_tracking_required: "B2発行済CSVまたは手入力で、商品発送用の送り状番号を先に登録してください。",
+    finished_shipping_return_tracking_required: "コア返却用の送り状番号を先に登録してください。",
+    finished_shipping_assignment_cleared: "割り当て済みの製造シリアルをすべて解除しました。",
+    finished_shipping_assignment_clear_confirm: "割り当て済みの製造シリアルをすべて解除してよろしいですか？",
+    finished_shipping_history: "シリアル・保証履歴",
     finished_shipping_history_empty: "出荷履歴はありません。",
     finished_shipping_available: "出荷可能",
     finished_shipping_shipped: "出荷済み",
@@ -637,6 +652,15 @@ var TRANSLATIONS = {
     finished_shipping_serial_duplicate: "この製造シリアルは追加済みです。",
     finished_shipping_serial_not_found: "製造シリアルが見つかりません。",
     finished_shipping_serial_unavailable: "この製造シリアルは出荷可能な状態ではありません。",
+    finished_shipping_lookup_only: "出荷指示書のQRを読み取るか、出荷指示番号を手入力してください。製造シリアルだけを入力した場合は保証情報を照会します。",
+    finished_shipping_order_context: "出荷指示・送り状情報",
+    finished_shipping_order_source_note: "得意先・運送便・送り状番号は受注データを使用します。B2取込だけでは在庫を減らしません。",
+    finished_shipping_order_link: "出荷照合",
+    finished_shipping_order_link_wait: "先に出荷指示書を発行してください。",
+    finished_shipping_order_mismatch: "この製造シリアルは注文商品と一致しません。",
+    finished_shipping_order_quantity_complete: "この注文商品に必要な製造シリアルは割り当て済みです。",
+    finished_shipping_lookup_available: "未出荷の製造シリアルです。",
+    finished_shipping_assignment_load_error: "注文に割り当て済みの製造シリアルを読み込めませんでした。",
     finished_shipping_cancel: "出荷取消",
     finished_shipping_cancel_reason: "取消理由を入力してください。",
     finished_shipping_cancelled: "出荷を取り消し、完品在庫を戻しました。",
@@ -1930,8 +1954,8 @@ var TRANSLATIONS = {
     mi_purchase_mgmt_desc: "Manage SL numbers, supplier prices, and MOQ.",
     mi_finished_label_title: "Finished Units / Serials",
     mi_finished_label_desc: "Register each completed unit and issue one finished-unit label per unit with stock history.",
-    mi_finished_shipping_title: "Finished-Unit Shipping / Warranty",
-    mi_finished_shipping_desc: "Link manufacturing serials to the customer, shipment date, and warranty period.",
+    mi_finished_shipping_title: "Dispatch Check / Warranty",
+    mi_finished_shipping_desc: "Review warranty terms and history for shipped serials. Start shipment registration from Orders / Shipping.",
     mi_production_ranking_title: "Production Plan List",
     mi_production_ranking_desc: "View and maintain the 2024/2025 TOP100 source list.",
     mi_data_title: "Data Management",
@@ -2227,23 +2251,38 @@ var TRANSLATIONS = {
     finished_label_reprint_cancelled: "Reprint cancelled.",
     finished_label_popup_blocked: "Could not open the label window. Allow pop-ups, then try the print action again. This attempt was not recorded as registration or printing.",
     finished_label_no_print_record: "There is no label to print. Register the finished product first, or reprint it from issue history.",
-    finished_shipping_title: "Finished-Unit Shipping / Warranty",
-    finished_shipping_scan_title: "Scan Manufacturing Serial",
+    finished_shipping_title: "Dispatch Check / Warranty",
+    finished_shipping_dispatch_scan_title: "Scan Shipment Instruction",
+    finished_shipping_dispatch_scan_ph: "Scan QR or enter dispatch number",
+    finished_shipping_load_dispatch: "Load",
+    finished_shipping_dispatch_scan_hint: "Without a scanner, enter the dispatch number manually.",
+    finished_shipping_dispatch_required: "Scan a shipment instruction or enter its dispatch number.",
+    finished_shipping_dispatch_loaded: "Shipment instruction loaded. Verify each manufacturing serial.",
+    finished_shipping_scan_title: "Serial Check / Warranty Lookup",
     finished_shipping_scan_ph: "Scan QR or enter MYYYY-NNNNNNN",
     finished_shipping_add_serial: "Add",
-    finished_shipping_scan_hint: "Each scan adds a shipment unit. Scanning a shipped serial shows its warranty information.",
-    finished_shipping_unit_list: "Shipment Units",
-    finished_shipping_no_units: "Scan a manufacturing serial.",
-    finished_shipping_form: "Shipment Details",
+    finished_shipping_scan_hint: "After loading a shipment instruction, verify manufacturing serials. Without one, the field looks up warranty information.",
+    finished_shipping_manual_candidates: "Select an Unshipped Serial",
+    finished_shipping_candidate_ph: "Filter by manufacturing serial",
+    finished_shipping_candidate_empty: "No unshipped serial is available.",
+    finished_shipping_candidate_select: "Select",
+    finished_shipping_unit_list: "Assigned Manufacturing Serials",
+    finished_shipping_no_units: "No manufacturing serial has been assigned.",
+    finished_shipping_form: "Confirm Shipment",
     finished_shipping_customer: "Customer *",
     finished_shipping_shipped_on: "Shipment Date *",
     finished_shipping_order_number: "Order / Slip No.",
     finished_shipping_carrier: "Carrier",
     finished_shipping_tracking: "Tracking No.",
     finished_shipping_warranty_months: "Warranty Months *",
-    finished_shipping_register: "Register Shipment",
-    finished_shipping_saved: "Shipment registered and finished stock updated.",
-    finished_shipping_history: "Shipment History",
+    finished_shipping_register: "Confirm Shipment",
+    finished_shipping_saved: "Shipment confirmed. Stock, serial lifecycle, and warranty information were updated.",
+    finished_shipping_confirm: "Confirm this dispatch and update stock, serial lifecycle, and warranty information?",
+    finished_shipping_tracking_required: "Register the outbound tracking number from a B2 issued CSV or by manual entry first.",
+    finished_shipping_return_tracking_required: "Register the core-return tracking number first.",
+    finished_shipping_assignment_cleared: "All assigned manufacturing serials were released.",
+    finished_shipping_assignment_clear_confirm: "Release all assigned manufacturing serials?",
+    finished_shipping_history: "Serial / Warranty History",
     finished_shipping_history_empty: "No shipment history.",
     finished_shipping_available: "Available",
     finished_shipping_shipped: "Shipped",
@@ -2258,6 +2297,15 @@ var TRANSLATIONS = {
     finished_shipping_serial_duplicate: "This manufacturing serial is already added.",
     finished_shipping_serial_not_found: "Manufacturing serial not found.",
     finished_shipping_serial_unavailable: "This manufacturing serial is not available for shipment.",
+    finished_shipping_lookup_only: "Scan the instruction QR or enter its dispatch number. Entering only a serial looks up warranty information.",
+    finished_shipping_order_context: "Dispatch / Waybill Information",
+    finished_shipping_order_source_note: "Customer, carrier, and tracking numbers come from the order. B2 import alone does not reduce stock.",
+    finished_shipping_order_link: "Dispatch Check",
+    finished_shipping_order_link_wait: "Issue a shipment instruction first.",
+    finished_shipping_order_mismatch: "This manufacturing serial does not match an order item.",
+    finished_shipping_order_quantity_complete: "All required serials are already assigned for this order item.",
+    finished_shipping_lookup_available: "This manufacturing serial has not shipped.",
+    finished_shipping_assignment_load_error: "Assigned manufacturing serials could not be loaded for this order.",
     finished_shipping_cancel: "Cancel Shipment",
     finished_shipping_cancel_reason: "Enter the cancellation reason.",
     finished_shipping_cancelled: "Shipment cancelled and finished stock restored.",
@@ -3565,8 +3613,8 @@ var TRANSLATIONS = {
     mi_purchase_mgmt_desc: "管理SL编号、供应商价格和MOQ。",
     mi_finished_label_title: "完品登记・制造序列号",
     mi_finished_label_desc: "逐台登记完品，每台发行一张完品标签，并记录库存履历。",
-    mi_finished_shipping_title: "完品出货・保修管理",
-    mi_finished_shipping_desc: "将制造序列号与客户、出货日期和保修期限关联。",
+    mi_finished_shipping_title: "出货核对・保修管理",
+    mi_finished_shipping_desc: "查看已出货制造序列号的保修期限和履历。出货登记请从订单・出货管理开始。",
     mi_production_ranking_title: "生产计划清单",
     mi_production_ranking_desc: "查看和维护2024/2025 TOP100来源清单。",
     mi_data_title: "数据管理",
@@ -3855,23 +3903,38 @@ var TRANSLATIONS = {
     finished_label_reprint_cancelled: "已取消重新打印。",
     finished_label_popup_blocked: "无法打开标签窗口。请允许弹出窗口后再次执行打印。此次操作未登记为完品登记或打印履历。",
     finished_label_no_print_record: "没有可打印的标签。请先登记完品，或从发行历史重新打印。",
-    finished_shipping_title: "完品出货・保修管理",
-    finished_shipping_scan_title: "读取制造序列号",
+    finished_shipping_title: "出货核对・保修管理",
+    finished_shipping_dispatch_scan_title: "扫描出货指示书",
+    finished_shipping_dispatch_scan_ph: "扫描QR或输入出货指示编号",
+    finished_shipping_load_dispatch: "读取",
+    finished_shipping_dispatch_scan_hint: "没有扫描器时可手动输入出货指示编号。",
+    finished_shipping_dispatch_required: "请扫描出货指示书或输入出货指示编号。",
+    finished_shipping_dispatch_loaded: "已读取出货指示，请核对商品制造序列号。",
+    finished_shipping_scan_title: "制造序列号核对・保修查询",
     finished_shipping_scan_ph: "扫描QR或输入 MYYYY-NNNNNNN",
     finished_shipping_add_serial: "添加",
-    finished_shipping_scan_hint: "每次扫描都会添加出货对象。扫描已出货序列号可查看保修信息。",
-    finished_shipping_unit_list: "出货对象",
-    finished_shipping_no_units: "请扫描制造序列号。",
-    finished_shipping_form: "出货登记内容",
+    finished_shipping_scan_hint: "读取出货指示后核对制造序列号。未读取指示时用于查询保修信息。",
+    finished_shipping_manual_candidates: "从未出货序列号中选择",
+    finished_shipping_candidate_ph: "按制造序列号筛选",
+    finished_shipping_candidate_empty: "没有可选择的未出货序列号。",
+    finished_shipping_candidate_select: "选择",
+    finished_shipping_unit_list: "已分配制造序列号",
+    finished_shipping_no_units: "尚未分配制造序列号。",
+    finished_shipping_form: "确认出货",
     finished_shipping_customer: "出货客户 *",
     finished_shipping_shipped_on: "出货日期 *",
     finished_shipping_order_number: "订单・单据编号",
     finished_shipping_carrier: "运输公司",
     finished_shipping_tracking: "运单编号",
     finished_shipping_warranty_months: "保修月数 *",
-    finished_shipping_register: "登记出货",
-    finished_shipping_saved: "已登记出货并更新完品库存。",
-    finished_shipping_history: "出货历史",
+    finished_shipping_register: "确认出货",
+    finished_shipping_saved: "已确认出货，并更新库存、制造序列号和保修信息。",
+    finished_shipping_confirm: "确认该出货指示并更新库存、制造序列号和保修信息吗？",
+    finished_shipping_tracking_required: "请先通过B2已发行CSV或手动输入登记商品发货运单编号。",
+    finished_shipping_return_tracking_required: "请先登记核心返还用运单编号。",
+    finished_shipping_assignment_cleared: "已解除全部制造序列号分配。",
+    finished_shipping_assignment_clear_confirm: "要解除全部已分配的制造序列号吗？",
+    finished_shipping_history: "序列号・保修履历",
     finished_shipping_history_empty: "没有出货历史。",
     finished_shipping_available: "可出货",
     finished_shipping_shipped: "已出货",
@@ -3886,6 +3949,15 @@ var TRANSLATIONS = {
     finished_shipping_serial_duplicate: "该制造序列号已添加。",
     finished_shipping_serial_not_found: "找不到制造序列号。",
     finished_shipping_serial_unavailable: "该制造序列号当前不可出货。",
+    finished_shipping_lookup_only: "请扫描出货指示书QR或手动输入出货指示编号。只输入制造序列号时查询保修信息。",
+    finished_shipping_order_context: "出货指示・运单信息",
+    finished_shipping_order_source_note: "客户、承运公司和运单编号使用订单数据。仅导入B2不会扣减库存。",
+    finished_shipping_order_link: "出货核对",
+    finished_shipping_order_link_wait: "请先发行出货指示书。",
+    finished_shipping_order_mismatch: "该制造序列号与订单商品不一致。",
+    finished_shipping_order_quantity_complete: "该订单商品所需的制造序列号已全部分配。",
+    finished_shipping_lookup_available: "该制造序列号尚未出货。",
+    finished_shipping_assignment_load_error: "无法读取该订单已分配的制造序列号。",
     finished_shipping_cancel: "取消出货",
     finished_shipping_cancel_reason: "请输入取消理由。",
     finished_shipping_cancelled: "已取消出货并恢复完品库存。",
@@ -4972,7 +5044,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.710";
+var APP_VERSION       = "v1.1.711";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5120,10 +5192,13 @@ var finishedLabelComponentCandidates = [];
 var finishedLabelSelectedComponentIds = {};
 var finishedLabelComponentLoadSeq = 0;
 var finishedLabelPendingReprint = null;
-var finishedShipmentCustomers = [];
 var finishedShipmentUnits = [];
 var finishedShipmentHistoryRows = [];
 var finishedShipmentSaving = false;
+var finishedShipmentOrderContext = null;
+var finishedShipmentOrderAssignments = [];
+var finishedShipmentCandidateOrderItemId = null;
+var finishedShipmentCandidateRows = [];
 var productionRankingMgmtRows = [];
 var productionRankingFormMode = "add";
 var productionRankingLinkCandidates = [];
@@ -7277,10 +7352,13 @@ async function doLogout() {
   productShippingSizeRows = [];
   detailCustomerDisplaySettingsCache = {};
   detailCustomerShippingChargeRule = "separate";
-  finishedShipmentCustomers = [];
   finishedShipmentUnits = [];
   finishedShipmentHistoryRows = [];
   finishedShipmentSaving = false;
+  finishedShipmentOrderContext = null;
+  finishedShipmentOrderAssignments = [];
+  finishedShipmentCandidateOrderItemId = null;
+  finishedShipmentCandidateRows = [];
   allProducts = []; dataLoaded = false;
   slPartsMap = {}; slPresenceMap = {}; currentSlPartIds = [];
   currentProduct = null; currentProductSpecs = []; currentProductNominalSpec = null; currentImages = [];
@@ -9687,6 +9765,64 @@ function salesOrderShipmentHistoryHtml(rows) {
   }).join("") + "</div>";
 }
 
+function salesOrderRebuiltItems(order) {
+  return (Array.isArray(order && order.items) ? order.items : []).filter(function(item) {
+    return normalizeProductKind(item.product_kind) === "rebuilt";
+  });
+}
+
+function salesOrderOutboundShipment(order) {
+  return (Array.isArray(order && order.shipment_history) ? order.shipment_history : []).find(function(row) {
+    return row.direction === "outbound" && row.is_active !== false;
+  }) || null;
+}
+
+function salesOrderDispatch(order) {
+  var dispatch = order && order.dispatch;
+  return dispatch && typeof dispatch === "object" && dispatch.id ? dispatch : null;
+}
+
+function salesOrderDispatchStatusLabel(status) {
+  return ({ preparing: "シリアル照合待ち", ready: "出荷確定可能", shipped: "出荷済み", cancelled: "取消済み" })[status] || "未発行";
+}
+
+function salesOrderDispatchRebuiltQuantity(dispatch) {
+  return (Array.isArray(dispatch && dispatch.items) ? dispatch.items : []).reduce(function(total, item) {
+    var orderItem = item.order_item || {};
+    return total + (normalizeProductKind(orderItem.product_kind) === "rebuilt" ? (parseInt(item.quantity, 10) || 0) : 0);
+  }, 0);
+}
+
+function salesOrderDispatchAssignedQuantity(dispatch) {
+  return (Array.isArray(dispatch && dispatch.items) ? dispatch.items : []).reduce(function(total, item) {
+    return total + (Array.isArray(item.serials) ? item.serials.length : 0);
+  }, 0);
+}
+
+function salesOrderDispatchHtml(order) {
+  var dispatch = salesOrderDispatch(order);
+  var canIssue = !dispatch && ["accepted", "shipping_ready"].indexOf(order.status) >= 0;
+  var canWork = dispatch && ["preparing", "ready"].indexOf(dispatch.status) >= 0 && canManageFinishedProductShipping();
+  var rebuiltQuantity = dispatch ? salesOrderDispatchRebuiltQuantity(dispatch) : salesOrderRebuiltItems(order).reduce(function(total, item) {
+    return total + (parseInt(item.quantity, 10) || 0);
+  }, 0);
+  var assignedQuantity = dispatch ? salesOrderDispatchAssignedQuantity(dispatch) : 0;
+  var controls = "";
+  if (canIssue) controls += "<button type='button' class='sales-order-dispatch-primary' id='sales-order-issue-dispatch'>出荷指示書を発行</button>";
+  if (dispatch) {
+    controls += "<button type='button' id='sales-order-print-dispatch'>出荷指示書</button>";
+    if (order.core_return_required) controls += "<button type='button' id='sales-order-print-core-return'>コア返却シート</button>";
+    if (["preparing", "ready"].indexOf(dispatch.status) >= 0) controls += "<button type='button' id='sales-order-export-single-b2'>B2データ出力</button>";
+    if (canWork) controls += "<button type='button' class='sales-order-dispatch-primary' id='sales-order-open-serial-warranty'>出荷照合を開く</button>";
+  }
+  return "<section class='sales-order-detail-section sales-order-dispatch'>" +
+    "<div class='sales-order-dispatch-head'><div><h3>出荷指示・現場照合</h3><p>出荷指示書、送り状、製造シリアルを一つの出荷処理として管理します。</p></div>" +
+    "<span class='sales-order-dispatch-status " + esc(dispatch ? dispatch.status : "unissued") + "'>" + esc(salesOrderDispatchStatusLabel(dispatch && dispatch.status)) + "</span></div>" +
+    (dispatch ? "<div class='sales-order-dispatch-summary'><div><span>出荷指示番号</span><strong>" + esc(dispatch.dispatch_number) + "</strong></div><div><span>リビルト品の照合</span><strong>" + esc(String(assignedQuantity)) + " / " + esc(String(rebuiltQuantity)) + "</strong></div><div><span>商品発送送り状</span><strong>" + esc(order.outbound_tracking_number || "未登録") + "</strong></div><div><span>返送用送り状</span><strong>" + esc(order.core_return_required ? (order.return_tracking_number || "未登録") : "対象外") + "</strong></div></div>" : "<p class='sales-order-dispatch-empty'>受注受付後に出荷指示書を発行してください。スキャナーがない場合も番号入力と候補選択で作業できます。</p>") +
+    "<div class='sales-order-dispatch-actions'>" + controls + "</div>" +
+  "</section>";
+}
+
 function renderSalesOrderDetail() {
   var host = document.getElementById("sales-order-detail");
   var order = salesOrderDetail;
@@ -9709,7 +9845,8 @@ function renderSalesOrderDetail() {
     "<div class='sales-order-detail-summary'><div><span>商品計</span><strong>" + esc(customerOrderCurrency(order.subtotal_jpy)) + "</strong></div><div><span>送料</span><strong>" + esc(customerOrderCurrency(order.shipping_fee_jpy)) + "</strong></div><div><span>消費税</span><strong>" + esc(customerOrderCurrency(order.tax_jpy)) + "</strong></div><div class='total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div></div>" +
     "<section class='sales-order-detail-section'><h3>注文明細</h3>" + salesOrderItemRowsHtml(order.items) + "</section>" +
     "<section class='sales-order-detail-section sales-order-address'><h3>お届け先・運送便</h3><p><strong>" + esc(address.company_name || "-") + "　" + esc(address.recipient_name || "-") + "</strong><br>〒" + esc(address.postal_code || "-") + "　" + esc(address.prefecture_name || "") + esc(address.address_line_1 || "-") + " " + esc(address.address_line_2 || "") + "<br>TEL " + esc(address.phone_number || "-") + "</p><dl><div><dt>商品発送便</dt><dd>" + esc(outboundService) + "</dd></div><div><dt>コア返却便</dt><dd>" + esc(coreReturnService) + "</dd></div><div><dt>お届け希望</dt><dd>" + esc(order.requested_delivery_date || "指定なし") + " / " + esc(order.delivery_time_label || "指定なし") + "</dd></div><div><dt>注文メモ</dt><dd>" + esc(order.customer_note || "-") + "</dd></div></dl></section>" +
-    "<section class='sales-order-detail-section sales-order-tracking'><h3>送り状番号</h3><div class='sales-order-tracking-grid'><label><span>商品発送送り状番号</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>コア返却用送り状番号</span><input id='sales-order-return-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.return_tracking_number || "") + "'" + (order.core_return_required ? "" : " disabled") + "></label><label><span>出荷日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>送り状番号を登録</button></div><p>コア返却用送り状番号は、コア返却が必要な注文だけ登録します。</p></section>" +
+    salesOrderDispatchHtml(order) +
+    "<section class='sales-order-detail-section sales-order-tracking'><h3>B2送り状番号</h3><div class='sales-order-tracking-grid'><label><span>商品発送送り状番号</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>コア返却用送り状番号</span><input id='sales-order-return-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.return_tracking_number || "") + "'" + (order.core_return_required ? "" : " disabled") + "></label><label><span>B2出荷予定日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>番号を登録</button></div><p>送り状番号の登録だけでは在庫を減らしません。現場照合後の「出荷確定」で在庫と保証情報を更新します。</p></section>" +
     "<section class='sales-order-detail-section'><h3>発送履歴</h3>" + salesOrderShipmentHistoryHtml(order.shipment_history) + "</section>" +
     "<div class='sales-order-detail-actions'>" + actions + "</div><div id='sales-order-detail-message' class='sales-order-detail-message' aria-live='polite'></div>";
   host.querySelectorAll("[data-sales-order-action]").forEach(function(button) {
@@ -9717,6 +9854,98 @@ function renderSalesOrderDetail() {
   });
   var trackingButton = document.getElementById("sales-order-save-tracking");
   if (trackingButton) trackingButton.addEventListener("click", registerSalesOrderTracking);
+  var issueDispatchButton = document.getElementById("sales-order-issue-dispatch");
+  if (issueDispatchButton) issueDispatchButton.addEventListener("click", issueSalesOrderDispatch);
+  var printDispatchButton = document.getElementById("sales-order-print-dispatch");
+  if (printDispatchButton) printDispatchButton.addEventListener("click", function() { printSalesOrderDocument("dispatch"); });
+  var printCoreReturnButton = document.getElementById("sales-order-print-core-return");
+  if (printCoreReturnButton) printCoreReturnButton.addEventListener("click", function() { printSalesOrderDocument("core_return"); });
+  var exportSingleB2Button = document.getElementById("sales-order-export-single-b2");
+  if (exportSingleB2Button) exportSingleB2Button.addEventListener("click", function() { exportSalesOrderIdsB2([order.id]); });
+  var serialButton = document.getElementById("sales-order-open-serial-warranty");
+  if (serialButton) serialButton.addEventListener("click", openSalesOrderSerialWarranty);
+}
+
+async function openSalesOrderSerialWarranty() {
+  if (!canManageSalesOrders() || !canManageFinishedProductShipping() || !salesOrderDetail || !salesOrderDispatch(salesOrderDetail)) return;
+  await enterFinishedProductShipping({ order: salesOrderDetail });
+}
+
+async function issueSalesOrderDispatch() {
+  if (!canManageSalesOrders() || salesOrderSaving || !salesOrderDetail) return;
+  salesOrderSaving = true;
+  setSalesOrderDetailMessage("出荷指示書を発行しています。", false);
+  var result = await sb.rpc("issue_sales_order_dispatch", {
+    target_order_id: salesOrderDetail.id,
+    target_expected_version: salesOrderDetail.version == null ? null : salesOrderDetail.version
+  });
+  salesOrderSaving = false;
+  if (result.error) {
+    setSalesOrderDetailMessage(result.error.message || "出荷指示書を発行できませんでした。", true);
+    return;
+  }
+  salesOrderDetail = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
+  renderSalesOrderDetail();
+  await loadSalesOrders();
+}
+
+function salesOrderPrintItemRows(order, coreOnly) {
+  var dispatch = salesOrderDispatch(order);
+  var dispatchItems = Array.isArray(dispatch && dispatch.items) ? dispatch.items : [];
+  return dispatchItems.filter(function(item) {
+    var orderItem = item.order_item || {};
+    return !coreOnly || orderItem.core_return_required;
+  }).map(function(item, index) {
+    var orderItem = item.order_item || {};
+    var partNo = orderItem.genuine_part_number || orderItem.manufacturer_part_number || "-";
+    var detail = [orderItem.manufacturer, orderItem.manufacturer_part_number].filter(Boolean).join(" / ") || "-";
+    var serials = (Array.isArray(item.serials) ? item.serials : []).map(function(row) { return row.manufacturing_serial; }).join(" / ");
+    return "<tr><td>" + esc(String(index + 1)) + "</td><td><strong>" + esc(partNo) + "</strong><small>" + esc(detail) + "</small></td><td>" + esc(customerProductKindLabel(orderItem.product_kind)) + "</td><td>" + esc(String(item.quantity || 0)) + "</td><td>" + esc(orderItem.core_return_required ? "必要" : "不要") + "</td><td>" + esc(serials || "読取時に登録") + "</td></tr>";
+  }).join("");
+}
+
+function buildSalesOrderDocumentHtml(order, type, qrDataUrl) {
+  var dispatch = salesOrderDispatch(order) || {};
+  var address = order.shipping_address || {};
+  var coreSheet = type === "core_return";
+  var title = coreSheet ? "コア返却シート" : "出荷指示書";
+  var outbound = customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "outbound"), "未登録");
+  var returned = order.core_return_required ? customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "core_return"), "未登録") : "対象外";
+  var note = coreSheet
+    ? "返送用送り状を使用してコアをご返却ください。返送品と本紙の品番・数量をご確認ください。"
+    : "現場では最初に本紙のQRを読み取り、続けて商品の製造シリアルを読み取ってください。スキャナーがない場合は番号入力または候補選択を使用できます。";
+  return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><title>" + esc(title + " " + (dispatch.dispatch_number || "")) + "</title>" +
+    "<link rel='stylesheet' href='shipment-instruction-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></head><body>" +
+    "<div class='print-toolbar'><button id='dcats-print-shipment-document' type='button'>印刷・PDF保存</button></div>" +
+    "<main class='shipment-document'><header><div><span>D-CATS / SHIPPING</span><h1>" + esc(title) + "</h1><strong>" + esc(dispatch.dispatch_number || "-") + "</strong></div><img src='" + esc(qrDataUrl) + "' alt='" + esc(dispatch.dispatch_number || "") + "'></header>" +
+    "<section class='shipment-document-meta'><dl><div><dt>注文番号</dt><dd>" + esc(order.order_number || "-") + "</dd></div><div><dt>得意先</dt><dd>" + esc(order.customer_name || "-") + "</dd></div><div><dt>発行日</dt><dd>" + esc(String(dispatch.issued_at || "").slice(0, 10) || new Date().toISOString().slice(0, 10)) + "</dd></div><div><dt>お届け先</dt><dd>〒" + esc(address.postal_code || "-") + " " + esc(address.prefecture_name || "") + esc(address.address_line_1 || "") + " " + esc(address.address_line_2 || "") + "<br>" + esc(address.company_name || "") + " " + esc(address.recipient_name || "") + " / TEL " + esc(address.phone_number || "-") + "</dd></div></dl></section>" +
+    "<table><thead><tr><th>No.</th><th>品番</th><th>区分</th><th>数量</th><th>コア返却</th><th>製造シリアル</th></tr></thead><tbody>" + salesOrderPrintItemRows(order, coreSheet) + "</tbody></table>" +
+    "<section class='shipment-document-shipping'><div><span>商品発送便</span><strong>" + esc(outbound) + "</strong><small>送り状 " + esc(order.outbound_tracking_number || "未登録") + "</small></div><div><span>コア返却便</span><strong>" + esc(returned) + "</strong><small>返送用送り状 " + esc(order.core_return_required ? (order.return_tracking_number || "未登録") : "対象外") + "</small></div></section>" +
+    "<p class='shipment-document-note'>" + esc(note) + "</p>" +
+    "<footer><span>梱包担当</span><i></i><span>照合担当</span><i></i><span>出荷確定</span><i></i></footer></main></body></html>";
+}
+
+function printSalesOrderDocument(type) {
+  var order = salesOrderDetail;
+  var dispatch = salesOrderDispatch(order);
+  if (!order || !dispatch) return;
+  var popup = window.open("", "_blank");
+  if (!popup) {
+    alert("印刷画面を開けませんでした。ポップアップを許可してください。");
+    return;
+  }
+  try {
+    popup.opener = null;
+    var qrDataUrl = finishedProductSerialQrDataUrl(dispatch.dispatch_number);
+    popup.document.open();
+    popup.document.write(buildSalesOrderDocumentHtml(order, type, qrDataUrl));
+    popup.document.close();
+    var button = popup.document.getElementById("dcats-print-shipment-document");
+    if (button) button.addEventListener("click", function() { popup.print(); });
+  } catch (error) {
+    popup.close();
+    alert(error && error.message ? error.message : "帳票を作成できませんでした。");
+  }
 }
 
 async function loadSalesOrderDetail(orderId) {
@@ -9872,10 +10101,8 @@ function downloadUtf8Csv(rows, fileName) {
   setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
 }
 
-async function exportSalesOrdersB2() {
-  if (!canManageSalesOrders() || salesOrderSaving) return;
-  var orderIds = salesOrderCheckedIds();
-  if (!orderIds.length) return;
+async function exportSalesOrderIdsB2(orderIds) {
+  if (!canManageSalesOrders() || salesOrderSaving || !Array.isArray(orderIds) || !orderIds.length) return;
   salesOrderSaving = true;
   updateSalesOrderExportButton();
   var result = await sb.rpc("get_sales_order_b2_export", { target_order_ids: orderIds });
@@ -9893,6 +10120,10 @@ async function exportSalesOrdersB2() {
     return;
   }
   downloadUtf8Csv([B2_BASIC_LAYOUT_HEADERS].concat(rows.map(b2ExportValues)), "D-CATS_B2基本レイアウト_" + new Date().toISOString().slice(0, 10) + ".csv");
+}
+
+async function exportSalesOrdersB2() {
+  return exportSalesOrderIdsB2(salesOrderCheckedIds());
 }
 
 function decodeSalesOrderB2Csv(buffer) {
@@ -22311,70 +22542,291 @@ function finishedShipmentWarrantyState(expiresOn) {
   };
 }
 
-async function enterFinishedProductShipping() {
+function finishedShipmentDispatch() {
+  return salesOrderDispatch(finishedShipmentOrderContext);
+}
+
+function finishedShipmentOrderItems() {
+  var dispatch = finishedShipmentDispatch();
+  return (Array.isArray(dispatch && dispatch.items) ? dispatch.items : []).filter(function(item) {
+    return normalizeProductKind((item.order_item || {}).product_kind) === "rebuilt";
+  });
+}
+
+function finishedShipmentUnitMatchesItem(unit, dispatchItem) {
+  var item = dispatchItem && dispatchItem.order_item || dispatchItem || {};
+  if (!unit || !item) return false;
+  if (unit.product_variant_id != null && item.product_variant_id != null) {
+    return String(unit.product_variant_id) === String(item.product_variant_id);
+  }
+  return String(unit.dkd_shohin_id || "") === String(item.dkd_shohin_id || "");
+}
+
+function finishedShipmentOrderItemForUnit(unit) {
+  return finishedShipmentOrderItems().find(function(item) {
+    return finishedShipmentUnitMatchesItem(unit, item);
+  }) || null;
+}
+
+function finishedShipmentFlattenAssignments() {
+  return finishedShipmentOrderItems().reduce(function(rows, dispatchItem) {
+    var orderItem = dispatchItem.order_item || {};
+    (Array.isArray(dispatchItem.serials) ? dispatchItem.serials : []).forEach(function(serial) {
+      rows.push(Object.assign({}, serial, {
+        order_item_id: orderItem.id,
+        dispatch_item_id: dispatchItem.id
+      }));
+    });
+    return rows;
+  }, []);
+}
+
+function refreshFinishedShipmentContext(order) {
+  finishedShipmentOrderContext = order || null;
+  finishedShipmentOrderAssignments = finishedShipmentFlattenAssignments();
+  finishedShipmentUnits = finishedShipmentOrderAssignments.slice();
+  renderFinishedShipmentOrderContext();
+  renderFinishedShipmentUnits();
+}
+
+function renderFinishedShipmentOrderContext() {
+  var host = document.getElementById("finished-shipment-order-context");
+  var selectionCard = document.getElementById("finished-shipment-selection-card");
+  var form = document.getElementById("finished-shipment-order-form");
+  var order = finishedShipmentOrderContext;
+  var dispatch = finishedShipmentDispatch();
+  var active = !!(order && dispatch && ["preparing", "ready"].indexOf(dispatch.status) >= 0);
+  if (selectionCard) selectionCard.hidden = !active;
+  if (form) form.hidden = !active;
+  if (!host) return;
+  if (!order || !dispatch) {
+    host.innerHTML = "<p>" + esc(t("finished_shipping_lookup_only")) + "</p>";
+    return;
+  }
+  var outbound = salesOrderOutboundShipment(order) || {};
+  var items = finishedShipmentOrderItems();
+  var itemRows = items.map(function(dispatchItem) {
+    var item = dispatchItem.order_item || {};
+    var required = parseInt(dispatchItem.quantity, 10) || 0;
+    var assigned = Array.isArray(dispatchItem.serials) ? dispatchItem.serials.length : 0;
+    var partNo = item.genuine_part_number || item.manufacturer_part_number || "-";
+    return "<div class='finished-shipment-order-item" + (assigned >= required ? " complete" : "") + "'>" +
+      "<div><strong>" + esc(partNo) + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small></div>" +
+      "<span>" + esc(customerProductKindLabel(item.product_kind)) + "</span>" +
+      "<b>" + esc(String(assigned)) + " / " + esc(String(required)) + "</b>" +
+      (active && assigned < required ? "<button type='button' data-finished-candidate-item='" + esc(String(item.id)) + "'>候補から選択</button>" : "") +
+    "</div>";
+  }).join("");
+  host.innerHTML = "<div class='finished-shipment-order-head'><div><strong>" + esc(dispatch.dispatch_number) + "</strong><span>" + esc((order.order_number || ("注文 " + order.id)) + " / " + (order.customer_name || "-")) + "</span></div><em>" + esc(salesOrderDispatchStatusLabel(dispatch.status)) + "</em></div>" +
+    "<dl class='finished-shipment-order-grid'>" +
+      "<div><dt>商品発送便</dt><dd>" + esc([outbound.carrier_name, outbound.service_name].filter(Boolean).join(" / ") || "-") + "</dd></div>" +
+      "<div><dt>商品発送送り状</dt><dd>" + esc(order.outbound_tracking_number || outbound.tracking_number || "未登録") + "</dd></div>" +
+      "<div><dt>返送用送り状</dt><dd>" + esc(order.core_return_required ? (order.return_tracking_number || "未登録") : "対象外") + "</dd></div>" +
+    "</dl>" +
+    "<div class='finished-shipment-order-items'>" + (itemRows || "<p class='finished-shipment-order-note'>シリアル管理対象のリビルト品はありません。</p>") + "</div>" +
+    "<p class='finished-shipment-order-note'>" + esc(t("finished_shipping_order_source_note")) + "</p>";
+  host.querySelectorAll("[data-finished-candidate-item]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      openFinishedShipmentCandidates(parseInt(button.dataset.finishedCandidateItem, 10));
+    });
+  });
+}
+
+async function loadFinishedShipmentDispatch() {
+  if (!canManageFinishedProductShipping() || !canManageSalesOrders()) return;
+  var input = document.getElementById("finished-shipment-dispatch-input");
+  var dispatchNumber = String(input ? input.value : "").trim().toUpperCase();
+  setFinishedShipmentMessage("finished-shipment-dispatch-message", "", false);
+  if (!/^D[0-9]{10}$/.test(dispatchNumber)) {
+    setFinishedShipmentMessage("finished-shipment-dispatch-message", t("finished_shipping_dispatch_required"), true);
+    if (input) input.select();
+    return;
+  }
+  var result = await sb.rpc("get_sales_order_dispatch", { target_dispatch_number: dispatchNumber });
+  if (result.error) {
+    setFinishedShipmentMessage("finished-shipment-dispatch-message", result.error.message || t("msg_part_err"), true);
+    if (input) input.select();
+    return;
+  }
+  var order = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
+  refreshFinishedShipmentContext(order);
+  closeFinishedShipmentCandidates();
+  setFinishedShipmentMessage("finished-shipment-dispatch-message", t("finished_shipping_dispatch_loaded"), false);
+  var serialInput = document.getElementById("finished-shipment-serial-input");
+  if (serialInput) { serialInput.value = ""; serialInput.focus(); }
+}
+
+async function enterFinishedProductShipping(options) {
   if (!canManageFinishedProductShipping()) { alert(t("err_perm")); return; }
-  showScreen("finished-product-shipping");
+  options = options || {};
+  finishedShipmentOrderContext = options.order || null;
+  finishedShipmentOrderAssignments = [];
   finishedShipmentUnits = [];
+  finishedShipmentCandidateOrderItemId = null;
+  finishedShipmentCandidateRows = [];
+  showScreen("finished-product-shipping");
+  setFinishedShipmentMessage("finished-shipment-dispatch-message", "", false);
   setFinishedShipmentMessage("finished-shipment-scan-message", "", false);
   setFinishedShipmentMessage("finished-shipment-save-message", "", false);
   var lookup = document.getElementById("finished-shipment-lookup");
   if (lookup) lookup.innerHTML = "";
+  var dispatchInput = document.getElementById("finished-shipment-dispatch-input");
+  var dispatch = finishedShipmentDispatch();
+  if (dispatchInput) dispatchInput.value = dispatch ? dispatch.dispatch_number : "";
   var shippedOn = document.getElementById("finished-shipment-shipped-on");
-  if (shippedOn) shippedOn.value = finishedShipmentTodayValue();
-  renderFinishedShipmentUnits();
-  await Promise.all([loadFinishedShipmentCustomers(), loadFinishedShipmentHistory()]);
-  var input = document.getElementById("finished-shipment-serial-input");
-  if (input) input.focus();
+  if (shippedOn) shippedOn.value = new Date().toISOString().slice(0, 10);
+  refreshFinishedShipmentContext(finishedShipmentOrderContext);
+  closeFinishedShipmentCandidates();
+  var back = document.getElementById("btn-back-finished-product-shipping");
+  if (back) back.textContent = finishedShipmentOrderContext ? "← " + t("sales_order_mgmt_title") : t("btn_back");
+  var addButton = document.getElementById("btn-finished-shipment-add-serial");
+  if (addButton) addButton.textContent = finishedShipmentOrderContext ? t("finished_shipping_add_serial") : t("btn_search");
+  await loadFinishedShipmentHistory();
+  var focusTarget = finishedShipmentOrderContext ? document.getElementById("finished-shipment-serial-input") : dispatchInput;
+  if (focusTarget) focusTarget.focus();
 }
 
-async function loadFinishedShipmentCustomers() {
-  var select = document.getElementById("finished-shipment-customer");
-  if (select) select.innerHTML = "<option value=''>" + esc(t("loading")) + "</option>";
-  var r = await sb.from("sales_customers")
-    .select("id,source_customer_code,customer_name,customer_kana")
-    .eq("is_active", true)
-    .order("customer_kana", { ascending: true })
-    .order("customer_name", { ascending: true })
-    .limit(2000);
-  if (r.error) {
-    finishedShipmentCustomers = [];
-    if (select) select.innerHTML = "<option value=''>" + esc(r.error.message || t("msg_part_err")) + "</option>";
+async function returnFromFinishedProductShipping() {
+  var orderId = finishedShipmentOrderContext && finishedShipmentOrderContext.id;
+  finishedShipmentOrderContext = null;
+  finishedShipmentOrderAssignments = [];
+  finishedShipmentUnits = [];
+  finishedShipmentCandidateOrderItemId = null;
+  finishedShipmentCandidateRows = [];
+  if (orderId && canManageSalesOrders()) {
+    showScreen("sales-order-mgmt");
+    updateAllHeaders();
+    await loadSalesOrders();
+    await loadSalesOrderDetail(orderId);
     return;
   }
-  finishedShipmentCustomers = r.data || [];
-  if (!select) return;
-  select.innerHTML = "<option value=''>-</option>" + finishedShipmentCustomers.map(function(row) {
-    var label = [row.source_customer_code, row.customer_name].filter(Boolean).join(" / ");
-    return "<option value='" + esc(String(row.id)) + "'>" + esc(label || ("ID " + row.id)) + "</option>";
-  }).join("");
+  returnToMenuFresh();
 }
 
 function renderFinishedShipmentUnits() {
   var body = document.getElementById("finished-shipment-unit-body");
   var count = document.getElementById("finished-shipment-unit-count");
+  finishedShipmentUnits = finishedShipmentFlattenAssignments();
   if (count) count.textContent = String(finishedShipmentUnits.length);
   if (!body) return;
   if (!finishedShipmentUnits.length) {
     body.innerHTML = "<tr><td colspan='4' class='empty'>" + esc(t("finished_shipping_no_units")) + "</td></tr>";
     return;
   }
+  var dispatch = finishedShipmentDispatch();
+  var removable = dispatch && ["preparing", "ready"].indexOf(dispatch.status) >= 0;
   body.innerHTML = finishedShipmentUnits.map(function(unit) {
     var productNo = unit.gltek_part_number || unit.product_no || unit.manufacturer_part_number || unit.genuine_part_number || "-";
     return "<tr>" +
       "<td><strong class='finished-shipment-serial'>" + esc(unit.manufacturing_serial) + "</strong></td>" +
       "<td>" + esc(productNo) + "</td>" +
       "<td>" + esc(unit.manufacturer || "-") + "</td>" +
-      "<td><button type='button' class='btn-sm-edit production-action-secondary' aria-label='" + esc(t("finished_label_component_remove") + " " + unit.manufacturing_serial) + "' title='" + esc(t("finished_label_component_remove")) + "' data-finished-shipment-remove='" + esc(String(unit.id)) + "'>×</button></td>" +
+      "<td>" + (removable ? "<button type='button' class='btn-sm-edit production-action-secondary' aria-label='" + esc(t("finished_label_component_remove") + " " + unit.manufacturing_serial) + "' title='" + esc(t("finished_label_component_remove")) + "' data-finished-shipment-remove='" + esc(String(unit.assignment_id)) + "'>×</button>" : "-") + "</td>" +
       "</tr>";
   }).join("");
   body.querySelectorAll("[data-finished-shipment-remove]").forEach(function(btn) {
     btn.addEventListener("click", function() {
-      finishedShipmentUnits = finishedShipmentUnits.filter(function(unit) {
-        return String(unit.id) !== String(btn.dataset.finishedShipmentRemove);
-      });
-      renderFinishedShipmentUnits();
+      releaseFinishedShipmentAssignment(parseInt(btn.dataset.finishedShipmentRemove, 10));
     });
   });
+}
+
+function closeFinishedShipmentCandidates() {
+  finishedShipmentCandidateOrderItemId = null;
+  finishedShipmentCandidateRows = [];
+  var card = document.getElementById("finished-shipment-candidate-card");
+  var host = document.getElementById("finished-shipment-candidates");
+  if (card) card.hidden = true;
+  if (host) host.innerHTML = "";
+}
+
+async function openFinishedShipmentCandidates(orderItemId) {
+  if (!finishedShipmentDispatch() || !orderItemId) return;
+  finishedShipmentCandidateOrderItemId = orderItemId;
+  var card = document.getElementById("finished-shipment-candidate-card");
+  var search = document.getElementById("finished-shipment-candidate-search");
+  if (card) card.hidden = false;
+  if (search) search.value = "";
+  await loadFinishedShipmentCandidates();
+  if (search) search.focus();
+}
+
+async function loadFinishedShipmentCandidates() {
+  var dispatch = finishedShipmentDispatch();
+  var host = document.getElementById("finished-shipment-candidates");
+  if (!dispatch || !finishedShipmentCandidateOrderItemId || !host) return;
+  host.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
+  var search = ((document.getElementById("finished-shipment-candidate-search") || {}).value || "").trim();
+  var result = await sb.rpc("list_sales_order_serial_candidates", {
+    target_dispatch_id: dispatch.id,
+    target_order_item_id: finishedShipmentCandidateOrderItemId,
+    target_search: search || null,
+    target_limit: 30
+  });
+  if (result.error) {
+    host.innerHTML = "<div class='empty error'>" + esc(result.error.message || t("msg_part_err")) + "</div>";
+    return;
+  }
+  finishedShipmentCandidateRows = Array.isArray(result.data) ? result.data : [];
+  renderFinishedShipmentCandidates();
+}
+
+function renderFinishedShipmentCandidates() {
+  var host = document.getElementById("finished-shipment-candidates");
+  if (!host) return;
+  if (!finishedShipmentCandidateRows.length) {
+    host.innerHTML = "<div class='empty'>" + esc(t("finished_shipping_candidate_empty")) + "</div>";
+    return;
+  }
+  host.innerHTML = finishedShipmentCandidateRows.map(function(unit) {
+    var productNo = unit.gltek_part_number || unit.product_no || unit.manufacturer_part_number || unit.genuine_part_number || "-";
+    return "<div class='finished-shipment-candidate'><div><strong>" + esc(unit.manufacturing_serial) + "</strong><span>" + esc([productNo, unit.manufacturer].filter(Boolean).join(" / ") || "-") + "</span></div><button type='button' data-finished-candidate-serial='" + esc(unit.manufacturing_serial) + "'>" + esc(t("finished_shipping_candidate_select")) + "</button></div>";
+  }).join("");
+  host.querySelectorAll("[data-finished-candidate-serial]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      assignFinishedShipmentSerial(finishedShipmentCandidateOrderItemId, button.dataset.finishedCandidateSerial);
+    });
+  });
+}
+
+async function assignFinishedShipmentSerial(orderItemId, serial) {
+  var dispatch = finishedShipmentDispatch();
+  if (!dispatch || !orderItemId || finishedShipmentSaving) return;
+  finishedShipmentSaving = true;
+  setFinishedShipmentMessage("finished-shipment-scan-message", t("loading"), false);
+  var result = await sb.rpc("assign_sales_order_dispatch_serial", {
+    target_dispatch_id: dispatch.id,
+    target_order_item_id: orderItemId,
+    target_manufacturing_serial: serial
+  });
+  finishedShipmentSaving = false;
+  if (result.error) {
+    setFinishedShipmentMessage("finished-shipment-scan-message", result.error.message || t("msg_part_err"), true);
+    return;
+  }
+  var order = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
+  refreshFinishedShipmentContext(order);
+  setFinishedShipmentMessage("finished-shipment-scan-message", serial + " を割り当てました。", false);
+  if (finishedShipmentCandidateOrderItemId) await loadFinishedShipmentCandidates();
+  var input = document.getElementById("finished-shipment-serial-input");
+  if (input) { input.value = ""; input.focus(); }
+}
+
+async function releaseFinishedShipmentAssignment(assignmentId) {
+  if (!assignmentId || finishedShipmentSaving) return;
+  finishedShipmentSaving = true;
+  var result = await sb.rpc("release_sales_order_dispatch_serial", {
+    target_assignment_id: assignmentId,
+    target_reason: "出荷前の割当解除"
+  });
+  finishedShipmentSaving = false;
+  if (result.error) {
+    setFinishedShipmentMessage("finished-shipment-scan-message", result.error.message || t("msg_part_err"), true);
+    return;
+  }
+  var order = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
+  refreshFinishedShipmentContext(order);
+  setFinishedShipmentMessage("finished-shipment-scan-message", "製造シリアルの割当を解除しました。", false);
 }
 
 async function loadFinishedShipmentForUnit(unitId) {
@@ -22425,7 +22877,7 @@ async function addFinishedShipmentSerial() {
     if (input) input.select();
     return;
   }
-  if (finishedShipmentUnits.some(function(unit) { return unit.manufacturing_serial === serial; })) {
+  if (finishedShipmentFlattenAssignments().some(function(unit) { return unit.manufacturing_serial === serial; })) {
     setFinishedShipmentMessage("finished-shipment-scan-message", t("finished_shipping_serial_duplicate"), true);
     if (input) input.select();
     return;
@@ -22440,54 +22892,100 @@ async function addFinishedShipmentSerial() {
     return;
   }
   await renderFinishedShipmentLookup(r.data);
+  var dispatch = finishedShipmentDispatch();
+  if (!dispatch) {
+    setFinishedShipmentMessage("finished-shipment-scan-message", t(r.data.status === "available" ? "finished_shipping_lookup_available" : "finished_shipping_shipped"), false);
+    if (input) { input.value = ""; input.focus(); }
+    return;
+  }
   if (r.data.status !== "available") {
     setFinishedShipmentMessage("finished-shipment-scan-message", t("finished_shipping_serial_unavailable"), true);
     if (input) input.select();
     return;
   }
-  finishedShipmentUnits.push(r.data);
-  renderFinishedShipmentUnits();
-  setFinishedShipmentMessage("finished-shipment-scan-message", t("finished_shipping_available"), false);
-  if (input) { input.value = ""; input.focus(); }
+  var dispatchItem = finishedShipmentOrderItemForUnit(r.data);
+  if (!dispatchItem) {
+    setFinishedShipmentMessage("finished-shipment-scan-message", t("finished_shipping_order_mismatch"), true);
+    if (input) input.select();
+    return;
+  }
+  var required = parseInt(dispatchItem.quantity, 10) || 0;
+  var assigned = Array.isArray(dispatchItem.serials) ? dispatchItem.serials.length : 0;
+  if (assigned >= required) {
+    setFinishedShipmentMessage("finished-shipment-scan-message", t("finished_shipping_order_quantity_complete"), true);
+    if (input) input.select();
+    return;
+  }
+  await assignFinishedShipmentSerial((dispatchItem.order_item || {}).id, serial);
 }
 
-function clearFinishedShipmentUnits() {
-  finishedShipmentUnits = [];
-  renderFinishedShipmentUnits();
-  setFinishedShipmentMessage("finished-shipment-scan-message", "", false);
+async function clearFinishedShipmentUnits() {
+  var assignments = finishedShipmentFlattenAssignments();
+  if (!assignments.length) {
+    setFinishedShipmentMessage("finished-shipment-scan-message", "", false);
+    var emptyLookup = document.getElementById("finished-shipment-lookup");
+    if (emptyLookup) emptyLookup.innerHTML = "";
+    return;
+  }
+  if (finishedShipmentSaving || !window.confirm(t("finished_shipping_assignment_clear_confirm"))) return;
+  finishedShipmentSaving = true;
+  var button = document.getElementById("btn-finished-shipment-clear");
+  if (button) button.disabled = true;
+  setFinishedShipmentMessage("finished-shipment-scan-message", t("loading"), false);
+  try {
+    var order = null;
+    for (var index = 0; index < assignments.length; index += 1) {
+      var result = await sb.rpc("release_sales_order_dispatch_serial", {
+        target_assignment_id: assignments[index].assignment_id,
+        target_reason: "出荷前の一括割当解除"
+      });
+      if (result.error) throw result.error;
+      order = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
+    }
+    refreshFinishedShipmentContext(order);
+    closeFinishedShipmentCandidates();
+    setFinishedShipmentMessage("finished-shipment-scan-message", t("finished_shipping_assignment_cleared"), false);
+  } catch (error) {
+    setFinishedShipmentMessage("finished-shipment-scan-message", (error && error.message) || t("msg_part_err"), true);
+  } finally {
+    finishedShipmentSaving = false;
+    if (button) button.disabled = false;
+  }
   var lookup = document.getElementById("finished-shipment-lookup");
   if (lookup) lookup.innerHTML = "";
 }
 
 async function saveFinishedProductShipment() {
   if (!canManageFinishedProductShipping() || finishedShipmentSaving) return;
-  var customerId = parseInt((document.getElementById("finished-shipment-customer") || {}).value, 10);
-  var shippedOn = ((document.getElementById("finished-shipment-shipped-on") || {}).value || "").trim();
+  var order = finishedShipmentOrderContext;
+  var dispatch = finishedShipmentDispatch();
+  var shippedOn = String((document.getElementById("finished-shipment-shipped-on") || {}).value || "").trim();
   var warrantyMonths = parseInt((document.getElementById("finished-shipment-warranty-months") || {}).value, 10);
-  if (!finishedShipmentUnits.length) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_serial_required"), true); return; }
-  if (isNaN(customerId)) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_customer_required"), true); return; }
+  if (!order || !dispatch) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_order_link_wait"), true); return; }
+  if (dispatch.status !== "ready") { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_serial_required"), true); return; }
+  if (!String(order.outbound_tracking_number || "").trim()) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_tracking_required"), true); return; }
+  if (order.core_return_required && !String(order.return_tracking_number || "").trim()) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_return_tracking_required"), true); return; }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(shippedOn)) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_date_required"), true); return; }
   if (isNaN(warrantyMonths) || warrantyMonths < 1 || warrantyMonths > 120) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_warranty_months"), true); return; }
+  if (!window.confirm(t("finished_shipping_confirm"))) return;
 
   finishedShipmentSaving = true;
   var button = document.getElementById("btn-finished-shipment-save");
   if (button) button.disabled = true;
   setFinishedShipmentMessage("finished-shipment-save-message", t("loading"), false);
   try {
-    var r = await sb.rpc("ship_finished_product_units", {
-      target_manufacturing_serials: finishedShipmentUnits.map(function(unit) { return unit.manufacturing_serial; }),
-      target_sales_customer_id: customerId,
+    var r = await sb.rpc("confirm_sales_order_dispatch", {
+      target_dispatch_id: dispatch.id,
       target_shipped_on: shippedOn,
-      target_external_order_number: ((document.getElementById("finished-shipment-order-number") || {}).value || "").trim() || null,
-      target_carrier_name: ((document.getElementById("finished-shipment-carrier") || {}).value || "").trim() || null,
-      target_tracking_number: ((document.getElementById("finished-shipment-tracking") || {}).value || "").trim() || null,
       target_warranty_months: warrantyMonths,
-      target_note: ((document.getElementById("finished-shipment-note") || {}).value || "").trim() || null
+      target_note: ((document.getElementById("finished-shipment-note") || {}).value || "").trim() || null,
+      target_expected_version: order.version == null ? null : order.version
     });
     if (r.error) throw r.error;
-    var result = r.data || {};
-    clearFinishedShipmentUnits();
-    setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_saved") + " " + (result.shipment_code || ""), false);
+    var result = Array.isArray(r.data) ? (r.data[0] || null) : r.data;
+    refreshFinishedShipmentContext(result);
+    closeFinishedShipmentCandidates();
+    setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_saved"), false);
     await loadFinishedShipmentHistory();
   } catch (e) {
     console.warn("finished-product shipment save failed", e);
@@ -40436,7 +40934,7 @@ document.getElementById("component-compat-form-part-number").addEventListener("b
 document.getElementById("btn-back-product-kind-stock-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-manufacturing-cost-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-finished-label-mgmt").addEventListener("click", returnFromFinishedLabelMgmtToMenu);
-document.getElementById("btn-back-finished-product-shipping").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-finished-product-shipping").addEventListener("click", returnFromFinishedProductShipping);
 document.getElementById("btn-back-production-ranking-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-kikan-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-rakuten-price").addEventListener("click", returnToMenuFresh);
@@ -40797,6 +41295,19 @@ document.getElementById("finished-label-variant-kind").addEventListener("change"
   else if (id === "btn-finished-shipment-save") el.addEventListener("click", saveFinishedProductShipment);
   else if (id === "btn-finished-shipment-reload") el.addEventListener("click", loadFinishedShipmentHistory);
   else el.addEventListener("click", clearFinishedShipmentUnits);
+});
+document.getElementById("btn-finished-shipment-load-dispatch").addEventListener("click", loadFinishedShipmentDispatch);
+document.getElementById("finished-shipment-dispatch-input").addEventListener("keydown", function(e) {
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  loadFinishedShipmentDispatch();
+});
+document.getElementById("btn-finished-shipment-candidate-close").addEventListener("click", closeFinishedShipmentCandidates);
+document.getElementById("btn-finished-shipment-candidate-reload").addEventListener("click", loadFinishedShipmentCandidates);
+document.getElementById("finished-shipment-candidate-search").addEventListener("keydown", function(e) {
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  loadFinishedShipmentCandidates();
 });
 document.getElementById("finished-shipment-serial-input").addEventListener("keydown", function(e) {
   if (e.key !== "Enter") return;

@@ -34,6 +34,8 @@ on:
       - "scripts/verify-sales-detail-workspace.js"
       - "scripts/verify-product-shipping-estimate.js"
       - "scripts/verify-finished-product-shipments.js"
+      - "shipment-instruction-print.css"
+      - "scripts/build-static-site.js"
       - "scripts/verify-purchase-multiple-links.js"
       - "manufacturing-ranking-report.js"
       - "scripts/verify-manufacturing-ranking-performance.js"
@@ -72,6 +74,8 @@ on:
       - "scripts/verify-sales-detail-workspace.js"
       - "scripts/verify-product-shipping-estimate.js"
       - "scripts/verify-finished-product-shipments.js"
+      - "shipment-instruction-print.css"
+      - "scripts/build-static-site.js"
       - "scripts/verify-purchase-multiple-links.js"
       - "manufacturing-ranking-report.js"
       - "scripts/verify-manufacturing-ranking-performance.js"
@@ -139,6 +143,8 @@ jobs:
         run: node scripts/verify-product-shipping-estimate.js
       - name: Verify finished-product shipment layout and workflow
         run: node scripts/verify-finished-product-shipments.js
+      - name: Verify static deployment assets
+        run: node scripts/build-static-site.js
       - name: Verify purchase multiple-link management
         run: node scripts/verify-purchase-multiple-links.js
       - name: Verify manufacturing ranking performance

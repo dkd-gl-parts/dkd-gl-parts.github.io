@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.710">
+<meta name="dcats-app-version" content="v1.1.711">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="application-name" content="D-CATS">
 <meta name="apple-mobile-web-app-title" content="D-CATS">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.710"; -->
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.711"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co https://zipcloud.ibsnet.co.jp; form-action 'self';">
 <title>D-CATS</title>
 <link rel="manifest" href="site.webmanifest?v=1.1.697&amp;brand=2">
@@ -19,7 +19,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png?v=1.1.697&amp;brand=2">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.710&amp;ranking=7&amp;brand=4">
+<link rel="stylesheet" href="styles.css?v=1.1.711&amp;ranking=7&amp;brand=4">
 </head>
 <body>
 
@@ -136,7 +136,7 @@
         </div>
 
         <div class="login-utility">
-          <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.710</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+          <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.711</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
           <div class="lang-sw-login" id="lang-sw-login">
             <button class="lang-btn-login active" data-lang="ja">日本語</button>
             <button class="lang-btn-login" data-lang="en">EN</button>
@@ -2813,13 +2813,13 @@
 </div>
 
 <!-- =============================================
-   完品出荷・保証管理
+   製造シリアル・保証管理
 ============================================= -->
 <div id="screen-finished-product-shipping" class="screen">
   <div class="page-header">
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-finished-product-shipping" data-i18n="btn_back">← メニュー</button>
-      <span class="logo-text" data-i18n="finished_shipping_title">完品出荷・保証管理</span>
+      <span class="logo-text" data-i18n="finished_shipping_title">出荷照合・保証管理</span>
     </div>
     <div class="page-header-right">
       <div class="lang-sw" id="lang-sw-finished-product-shipping">
@@ -2835,19 +2835,39 @@
   <div class="mgmt-body finished-shipment-body">
     <div class="finished-shipment-shell">
       <div class="finished-shipment-left">
+        <section class="finished-label-card finished-shipment-dispatch-load">
+          <h3 data-i18n="finished_shipping_dispatch_scan_title">出荷指示書を読取</h3>
+          <div class="finished-label-search-row">
+            <input id="finished-shipment-dispatch-input" type="search" autocomplete="off" inputmode="text" data-i18n-ph="finished_shipping_dispatch_scan_ph" placeholder="QRを読取、または出荷指示番号を入力">
+            <button class="btn-primary" id="btn-finished-shipment-load-dispatch" type="button" data-i18n="finished_shipping_load_dispatch">読込</button>
+          </div>
+          <div class="finished-label-help" data-i18n="finished_shipping_dispatch_scan_hint">スキャナーがない場合は、出荷指示番号を手入力できます。</div>
+          <div class="finished-shipment-message" id="finished-shipment-dispatch-message" aria-live="polite"></div>
+        </section>
         <section class="finished-label-card">
-          <h3 data-i18n="finished_shipping_scan_title">製造シリアル読取</h3>
+          <h3 data-i18n="finished_shipping_scan_title">製造シリアル照合・保証照会</h3>
           <div class="finished-label-search-row">
             <input id="finished-shipment-serial-input" type="search" autocomplete="off" inputmode="text" data-i18n-ph="finished_shipping_scan_ph" placeholder="QRを読取、または MYYYY-NNNNNNN を入力">
             <button class="btn-primary" id="btn-finished-shipment-add-serial" type="button" data-i18n="finished_shipping_add_serial">追加</button>
           </div>
-          <div class="finished-label-help" data-i18n="finished_shipping_scan_hint">ラベルのQRを読み取るたびに出荷対象へ追加します。</div>
+          <div class="finished-label-help" data-i18n="finished_shipping_scan_hint">出荷指示の読込後に製造シリアルを照合します。指示未読込時は保証情報を照会できます。</div>
           <div class="finished-shipment-message" id="finished-shipment-scan-message" aria-live="polite"></div>
           <div class="finished-shipment-lookup" id="finished-shipment-lookup" aria-live="polite"></div>
         </section>
-        <section class="finished-label-card">
+        <section class="finished-label-card" id="finished-shipment-candidate-card" hidden>
           <div class="finished-label-toolbar">
-            <h3><span data-i18n="finished_shipping_unit_list">出荷対象</span> <span class="finished-shipment-count" id="finished-shipment-unit-count">0</span></h3>
+            <h3 data-i18n="finished_shipping_manual_candidates">未出荷シリアルから選択</h3>
+            <button class="btn-sm-edit production-action-secondary" id="btn-finished-shipment-candidate-close" type="button" data-i18n="btn_close">閉じる</button>
+          </div>
+          <div class="finished-label-search-row finished-shipment-candidate-search">
+            <input id="finished-shipment-candidate-search" type="search" autocomplete="off" data-i18n-ph="finished_shipping_candidate_ph" placeholder="製造シリアルで絞り込み">
+            <button class="btn-sm-edit production-action-secondary" id="btn-finished-shipment-candidate-reload" type="button" data-i18n="btn_search">検索</button>
+          </div>
+          <div class="finished-shipment-candidates" id="finished-shipment-candidates"></div>
+        </section>
+        <section class="finished-label-card" id="finished-shipment-selection-card" hidden>
+          <div class="finished-label-toolbar">
+            <h3><span data-i18n="finished_shipping_unit_list">割当済み製造シリアル</span> <span class="finished-shipment-count" id="finished-shipment-unit-count">0</span></h3>
             <button class="btn-sm-edit production-action-secondary" id="btn-finished-shipment-clear" type="button" data-i18n="btn_clear">クリア</button>
           </div>
           <div class="finished-label-table-wrap">
@@ -2861,20 +2881,22 @@
                 </tr>
               </thead>
               <tbody id="finished-shipment-unit-body">
-                <tr><td colspan="4" class="empty" data-i18n="finished_shipping_no_units">製造シリアルを読み取ってください。</td></tr>
+                <tr><td colspan="4" class="empty" data-i18n="finished_shipping_no_units">割り当て済みの製造シリアルはありません。</td></tr>
               </tbody>
             </table>
           </div>
         </section>
       </div>
       <div class="finished-shipment-right">
-        <section class="finished-label-card">
-          <h3 data-i18n="finished_shipping_form">出荷登録内容</h3>
+        <section class="finished-label-card finished-shipment-order-context-card">
+          <h3 data-i18n="finished_shipping_order_context">受注・出荷情報</h3>
+          <div id="finished-shipment-order-context" class="finished-shipment-order-context" aria-live="polite">
+            <p data-i18n="finished_shipping_lookup_only">出荷指示書のQRを読み取るか、出荷指示番号を手入力してください。製造シリアルだけを入力した場合は保証情報を照会します。</p>
+          </div>
+        </section>
+        <section class="finished-label-card" id="finished-shipment-order-form" hidden>
+          <h3 data-i18n="finished_shipping_form">出荷確定</h3>
           <div class="finished-label-form-grid">
-            <div class="finished-label-field wide">
-              <label data-i18n="finished_shipping_customer">出荷先得意先 *</label>
-              <select id="finished-shipment-customer"><option value="" data-i18n="loading">読み込み中...</option></select>
-            </div>
             <div class="finished-label-field">
               <label data-i18n="finished_shipping_shipped_on">出荷日 *</label>
               <input id="finished-shipment-shipped-on" type="date">
@@ -2883,18 +2905,6 @@
               <label data-i18n="finished_shipping_warranty_months">保証月数 *</label>
               <input id="finished-shipment-warranty-months" type="number" min="1" max="120" step="1" value="12">
             </div>
-            <div class="finished-label-field">
-              <label data-i18n="finished_shipping_order_number">受注・伝票番号</label>
-              <input id="finished-shipment-order-number" type="text" maxlength="120">
-            </div>
-            <div class="finished-label-field">
-              <label data-i18n="finished_shipping_carrier">運送会社</label>
-              <input id="finished-shipment-carrier" type="text" maxlength="120">
-            </div>
-            <div class="finished-label-field wide">
-              <label data-i18n="finished_shipping_tracking">送り状番号</label>
-              <input id="finished-shipment-tracking" type="text" maxlength="160">
-            </div>
             <div class="finished-label-field full">
               <label data-i18n="component_note">メモ</label>
               <textarea id="finished-shipment-note" maxlength="500"></textarea>
@@ -2902,12 +2912,12 @@
           </div>
           <div class="finished-shipment-submit-row">
             <div class="finished-shipment-message" id="finished-shipment-save-message" aria-live="polite"></div>
-            <button class="btn-primary" id="btn-finished-shipment-save" type="button" data-i18n="finished_shipping_register">出荷登録</button>
+            <button class="btn-primary" id="btn-finished-shipment-save" type="button" data-i18n="finished_shipping_register">出荷確定</button>
           </div>
         </section>
         <section class="finished-label-card">
           <div class="finished-label-toolbar">
-            <h3 data-i18n="finished_shipping_history">出荷履歴</h3>
+            <h3 data-i18n="finished_shipping_history">シリアル・保証履歴</h3>
             <button class="btn-sm-edit production-action-secondary" id="btn-finished-shipment-reload" type="button" data-i18n="btn_reload">再読込</button>
           </div>
           <div class="finished-shipment-history" id="finished-shipment-history">
@@ -3808,7 +3818,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
 <script src="vendor/qrcode.min.js?v=1.0.0"></script>
-<script src="app.js?v=1.1.710"></script>
+<script src="app.js?v=1.1.711"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.625&amp;ranking=17"></script>
 </body>
 </html>
