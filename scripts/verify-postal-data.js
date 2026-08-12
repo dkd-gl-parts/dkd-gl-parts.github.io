@@ -14,6 +14,10 @@ function sha256(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
 }
 
+function canonicalJsonBytes(value) {
+  return Buffer.from(value.toString("utf8").replace(/\r\n$/, "\n"), "utf8");
+}
+
 assert(fs.existsSync(manifestPath), "postal manifest is missing");
 const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
 assert(manifest.schema_version === 1, "postal schema version is unsupported");
@@ -34,7 +38,7 @@ manifest.shards.forEach((metadata, prefix) => {
   assert(metadata.file === `postal-${prefix}.json`, `postal shard ${prefix} has an unexpected file name`);
   const filePath = path.join(directory, metadata.file);
   assert(fs.existsSync(filePath), `postal shard ${prefix} is missing`);
-  const content = fs.readFileSync(filePath);
+  const content = canonicalJsonBytes(fs.readFileSync(filePath));
   assert(content.length === metadata.bytes, `postal shard ${prefix} byte count changed`);
   assert(sha256(content) === metadata.sha256, `postal shard ${prefix} checksum changed`);
   const shard = JSON.parse(content.toString("utf8"));

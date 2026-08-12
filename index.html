@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.711">
+<meta name="dcats-app-version" content="v1.1.712">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="application-name" content="D-CATS">
 <meta name="apple-mobile-web-app-title" content="D-CATS">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.711"; -->
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.712"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co https://zipcloud.ibsnet.co.jp; form-action 'self';">
 <title>D-CATS</title>
 <link rel="manifest" href="site.webmanifest?v=1.1.697&amp;brand=2">
@@ -19,7 +19,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png?v=1.1.697&amp;brand=2">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.711&amp;ranking=7&amp;brand=4">
+<link rel="stylesheet" href="styles.css?v=1.1.712&amp;ranking=7&amp;brand=4">
 </head>
 <body>
 
@@ -136,7 +136,7 @@
         </div>
 
         <div class="login-utility">
-          <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.711</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+          <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.712</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
           <div class="lang-sw-login" id="lang-sw-login">
             <button class="lang-btn-login active" data-lang="ja">日本語</button>
             <button class="lang-btn-login" data-lang="en">EN</button>
@@ -654,6 +654,21 @@
         <button type="button" class="sales-order-b2-import-cancel" id="sales-order-import-b2-cancel">取消</button>
         <button type="button" class="sales-order-b2-import-confirm" id="sales-order-import-b2-confirm" disabled>発送データを反映</button>
       </div>
+    </section>
+    <section class="sales-order-auto-print" id="sales-order-auto-print">
+      <div class="sales-order-auto-print-copy">
+        <div class="sales-order-auto-print-heading">
+          <strong>受注時の自動印刷</strong>
+          <span class="sales-order-auto-print-state" id="sales-order-auto-print-state">確認中</span>
+        </div>
+        <p>注文確定時に出荷指示書を印刷待ちへ登録します。コア返却対象ではコア返却シートも印刷します。</p>
+      </div>
+      <div class="sales-order-auto-print-controls">
+        <label><span>印刷端末</span><select id="sales-order-auto-print-station"><option value="">未設定</option></select></label>
+        <label class="sales-order-auto-print-toggle"><input id="sales-order-auto-print-enabled" type="checkbox"><span>自動印刷を有効にする</span></label>
+        <button type="button" class="btn-primary" id="sales-order-auto-print-save">設定を保存</button>
+      </div>
+      <div class="sales-order-auto-print-message" id="sales-order-auto-print-message" aria-live="polite"></div>
     </section>
     <section class="sales-order-workspace">
       <div class="sales-order-list-pane">
@@ -3818,7 +3833,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
 <script src="vendor/qrcode.min.js?v=1.0.0"></script>
-<script src="app.js?v=1.1.711"></script>
+<script src="app.js?v=1.1.712"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.625&amp;ranking=17"></script>
 </body>
 </html>

@@ -278,6 +278,7 @@ var TRANSLATIONS = {
     customer_order_empty: "注文する商品がありません。商品カタログから追加してください。",
     customer_order_preview_error: "価格・在庫を確認できませんでした。内容を確認して再試行してください。",
     customer_order_submit_success: "注文を受け付けました。",
+    customer_order_submit_print_queued: "注文を受け付け、出荷指示書を印刷待ちに登録しました。",
     customer_order_core_required_note: "コア返却が必要な商品を含みます。返送用送り状を商品に同梱します。",
     customer_order_quantity: "数量",
     customer_order_unit_price: "単価",
@@ -1923,6 +1924,7 @@ var TRANSLATIONS = {
     customer_order_empty: "No products have been added. Add products from the catalog.",
     customer_order_preview_error: "Price and inventory could not be verified. Review the order and try again.",
     customer_order_submit_success: "Your order has been received.",
+    customer_order_submit_print_queued: "Your order was received and its shipment documents were queued for printing.",
     customer_order_core_required_note: "This order includes products that require core return. A return label will be enclosed.",
     customer_order_quantity: "Qty",
     customer_order_unit_price: "Unit Price",
@@ -3550,6 +3552,7 @@ var TRANSLATIONS = {
     customer_order_empty: "订单中没有商品。请从商品目录中添加。",
     customer_order_preview_error: "无法确认价格和库存。请检查订单后重试。",
     customer_order_submit_success: "订单已受理。",
+    customer_order_submit_print_queued: "订单已受理，出货指示文件已加入打印队列。",
     customer_order_core_required_note: "订单中包含需要返还旧件的商品。商品中将附上返送运单。",
     customer_order_quantity: "数量",
     customer_order_unit_price: "单价",
@@ -5044,7 +5047,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.711";
+var APP_VERSION       = "v1.1.712";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5332,6 +5335,8 @@ var salesOrderDetailSeq = 0;
 var salesOrderSaving = false;
 var salesOrderB2ImportState = null;
 var salesOrderB2ImportSaving = false;
+var salesOrderPrintSettings = null;
+var salesOrderPrintSettingsSaving = false;
 var customerManagedUsers = [];
 var customerManagedUsersRequestSeq = 0;
 var CUSTOMER_CATALOG_RESULT_LIMIT = 60;
@@ -7336,6 +7341,8 @@ async function doLogout() {
   salesOrderSaving = false;
   salesOrderB2ImportState = null;
   salesOrderB2ImportSaving = false;
+  salesOrderPrintSettings = null;
+  salesOrderPrintSettingsSaving = false;
   customerManagedUsers = [];
   customerManagedUsersRequestSeq += 1;
   shippingRateRows = [];
@@ -9560,13 +9567,14 @@ async function submitCustomerOrder() {
     renderCustomerOrderCart();
     return;
   }
+  var registeredOrder = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
+  var queuedPrintCount = parseInt(registeredOrder.print_job_count, 10) || 0;
   customerOrderCart = [];
   customerOrderPreview = null;
   clearPersistedCustomerOrderCart();
-  customerOrderSetStatus(t("customer_order_submit_success"), false);
+  customerOrderSetStatus(t(queuedPrintCount > 0 ? "customer_order_submit_print_queued" : "customer_order_submit_success"), false);
   renderCustomerOrderCart();
   if (internalRegistration) {
-    var registeredOrder = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
     var registeredOrderId = parseInt(registeredOrder.id, 10);
     customerPortalSearchActive = false;
     customerPortalPreviewContext = null;
@@ -9676,6 +9684,97 @@ function updateSalesOrderExportButton() {
   if (button) button.disabled = salesOrderCheckedIds().length === 0 || salesOrderSaving;
 }
 
+function salesOrderPrintStationStateLabel(state) {
+  return ({ ready: "接続中", stopped: "停止中", error: "エラー", inactive: "無効", unconfigured: "未設定" })[state] || "未確認";
+}
+
+function setSalesOrderPrintSettingsMessage(message, isError) {
+  var host = document.getElementById("sales-order-auto-print-message");
+  if (!host) return;
+  host.textContent = message || "";
+  host.className = "sales-order-auto-print-message" + (isError ? " error" : "");
+}
+
+function renderSalesOrderPrintSettings() {
+  var panel = document.getElementById("sales-order-auto-print");
+  var stateHost = document.getElementById("sales-order-auto-print-state");
+  var stationSelect = document.getElementById("sales-order-auto-print-station");
+  var enabledInput = document.getElementById("sales-order-auto-print-enabled");
+  var saveButton = document.getElementById("sales-order-auto-print-save");
+  if (!panel || !stateHost || !stationSelect || !enabledInput || !saveButton) return;
+  panel.hidden = !canManageSalesOrders();
+  var settings = salesOrderPrintSettings || {};
+  var config = settings.config || {};
+  var stations = Array.isArray(settings.stations) ? settings.stations : [];
+  stationSelect.innerHTML = "<option value=''>未設定</option>" + stations.map(function(station) {
+    var label = (station.display_name || station.station_code) + " / " + (station.printer_name || "-") + " / " + salesOrderPrintStationStateLabel(station.state);
+    return "<option value='" + esc(station.station_code) + "'>" + esc(label) + "</option>";
+  }).join("");
+  stationSelect.value = config.station_code || "";
+  enabledInput.checked = !!config.auto_print_enabled;
+  stateHost.textContent = config.auto_print_enabled
+    ? "有効 / " + salesOrderPrintStationStateLabel(config.station_state)
+    : "無効 / " + salesOrderPrintStationStateLabel(config.station_state);
+  var stationState = ["ready", "stopped", "error", "inactive", "unconfigured"].indexOf(config.station_state) >= 0
+    ? config.station_state
+    : "unconfigured";
+  stateHost.className = "sales-order-auto-print-state " + (config.auto_print_enabled ? stationState : "disabled");
+  var canSave = canManageSharedSettings();
+  stationSelect.disabled = !canSave || salesOrderPrintSettingsSaving;
+  enabledInput.disabled = !canSave || salesOrderPrintSettingsSaving;
+  saveButton.disabled = !canSave || salesOrderPrintSettingsSaving;
+  saveButton.hidden = !canSave;
+}
+
+async function loadSalesOrderPrintSettings() {
+  if (!canManageSalesOrders()) return;
+  setSalesOrderPrintSettingsMessage("印刷端末を確認しています。", false);
+  var result = await sb.rpc("get_customer_order_print_settings");
+  if (result.error) {
+    salesOrderPrintSettings = null;
+    renderSalesOrderPrintSettings();
+    setSalesOrderPrintSettingsMessage(result.error.message || "自動印刷設定を読み込めませんでした。", true);
+    return;
+  }
+  salesOrderPrintSettings = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
+  renderSalesOrderPrintSettings();
+  var config = salesOrderPrintSettings.config || {};
+  setSalesOrderPrintSettingsMessage(config.station_code
+    ? "対象: " + (config.station_name || config.station_code) + " / " + (config.printer_name || "-")
+    : "印刷端末をセットアップすると自動印刷を有効にできます。", false);
+}
+
+async function saveSalesOrderPrintSettings() {
+  if (!canManageSharedSettings() || salesOrderPrintSettingsSaving) return;
+  var stationSelect = document.getElementById("sales-order-auto-print-station");
+  var enabledInput = document.getElementById("sales-order-auto-print-enabled");
+  if (!stationSelect || !enabledInput) return;
+  if (enabledInput.checked) {
+    var station = (salesOrderPrintSettings && Array.isArray(salesOrderPrintSettings.stations))
+      ? salesOrderPrintSettings.stations.find(function(row) { return row.station_code === stationSelect.value; })
+      : null;
+    if (!station || station.state !== "ready") {
+      setSalesOrderPrintSettingsMessage("接続中の印刷端末を選択してください。", true);
+      return;
+    }
+  }
+  salesOrderPrintSettingsSaving = true;
+  renderSalesOrderPrintSettings();
+  setSalesOrderPrintSettingsMessage("自動印刷設定を保存しています。", false);
+  var result = await sb.rpc("update_customer_order_print_settings", {
+    target_auto_print_enabled: enabledInput.checked,
+    target_station_code: stationSelect.value || null
+  });
+  salesOrderPrintSettingsSaving = false;
+  if (result.error) {
+    renderSalesOrderPrintSettings();
+    setSalesOrderPrintSettingsMessage(result.error.message || "自動印刷設定を保存できませんでした。", true);
+    return;
+  }
+  await loadSalesOrderPrintSettings();
+  setSalesOrderPrintSettingsMessage("自動印刷設定を保存しました。", false);
+}
+
 async function enterSalesOrderMgmt() {
   if (!canManageSalesOrders()) {
     showPermissionDenied("open_sales_order_management", "customer_orders");
@@ -9687,7 +9786,8 @@ async function enterSalesOrderMgmt() {
   salesOrderB2ImportSaving = false;
   showScreen("sales-order-mgmt");
   updateAllHeaders();
-  await loadSalesOrders();
+  renderSalesOrderPrintSettings();
+  await Promise.all([loadSalesOrders(), loadSalesOrderPrintSettings()]);
 }
 
 function renderSalesOrderList() {
@@ -9799,6 +9899,29 @@ function salesOrderDispatchAssignedQuantity(dispatch) {
   }, 0);
 }
 
+function salesOrderPrintJobStatusLabel(status) {
+  return ({ queued: "印刷待ち", claimed: "印刷中", printed: "印刷済み", error: "印刷エラー", cancelled: "取消" })[status] || "未登録";
+}
+
+function salesOrderPrintJobsHtml(order) {
+  var jobs = Array.isArray(order && order.print_jobs) ? order.print_jobs : [];
+  var latest = [];
+  ["dispatch", "core_return"].forEach(function(type) {
+    var job = jobs.find(function(row) { return row.document_type === type; });
+    if (job) latest.push(job);
+  });
+  var rows = latest.length ? latest.map(function(job) {
+    var title = job.document_type === "core_return" ? "コア返却シート" : "出荷指示書";
+    var dateText = job.printed_at || job.failed_at || job.requested_at;
+    return "<div class='sales-order-print-job'><div><strong>" + esc(title) + "</strong><span>" + esc(job.station_name || job.station_code || "-") + " / " + esc(job.printer_name || "-") + "</span></div>" +
+      "<span class='sales-order-print-job-status " + esc(job.status || "") + "'>" + esc(salesOrderPrintJobStatusLabel(job.status)) + "</span>" +
+      "<time>" + esc(dateText ? customerOrderDateTimeText(dateText) : "-") + (job.last_error ? " / " + esc(job.last_error) : "") + "</time></div>";
+  }).join("") : "<p class='sales-order-dispatch-empty'>印刷端末への送信履歴はありません。画面からの印刷は上のボタンを使用できます。</p>";
+  return "<div class='sales-order-print-jobs'><div class='sales-order-print-jobs-head'><strong>自動印刷</strong>" +
+    (salesOrderDispatch(order) ? "<button type='button' id='sales-order-requeue-print'>印刷端末へ再送</button>" : "") +
+    "</div>" + rows + "</div>";
+}
+
 function salesOrderDispatchHtml(order) {
   var dispatch = salesOrderDispatch(order);
   var canIssue = !dispatch && ["accepted", "shipping_ready"].indexOf(order.status) >= 0;
@@ -9819,6 +9942,7 @@ function salesOrderDispatchHtml(order) {
     "<div class='sales-order-dispatch-head'><div><h3>出荷指示・現場照合</h3><p>出荷指示書、送り状、製造シリアルを一つの出荷処理として管理します。</p></div>" +
     "<span class='sales-order-dispatch-status " + esc(dispatch ? dispatch.status : "unissued") + "'>" + esc(salesOrderDispatchStatusLabel(dispatch && dispatch.status)) + "</span></div>" +
     (dispatch ? "<div class='sales-order-dispatch-summary'><div><span>出荷指示番号</span><strong>" + esc(dispatch.dispatch_number) + "</strong></div><div><span>リビルト品の照合</span><strong>" + esc(String(assignedQuantity)) + " / " + esc(String(rebuiltQuantity)) + "</strong></div><div><span>商品発送送り状</span><strong>" + esc(order.outbound_tracking_number || "未登録") + "</strong></div><div><span>返送用送り状</span><strong>" + esc(order.core_return_required ? (order.return_tracking_number || "未登録") : "対象外") + "</strong></div></div>" : "<p class='sales-order-dispatch-empty'>受注受付後に出荷指示書を発行してください。スキャナーがない場合も番号入力と候補選択で作業できます。</p>") +
+    (dispatch ? salesOrderPrintJobsHtml(order) : "") +
     "<div class='sales-order-dispatch-actions'>" + controls + "</div>" +
   "</section>";
 }
@@ -9864,6 +9988,8 @@ function renderSalesOrderDetail() {
   if (exportSingleB2Button) exportSingleB2Button.addEventListener("click", function() { exportSalesOrderIdsB2([order.id]); });
   var serialButton = document.getElementById("sales-order-open-serial-warranty");
   if (serialButton) serialButton.addEventListener("click", openSalesOrderSerialWarranty);
+  var requeuePrintButton = document.getElementById("sales-order-requeue-print");
+  if (requeuePrintButton) requeuePrintButton.addEventListener("click", requeueSalesOrderPrintJobs);
 }
 
 async function openSalesOrderSerialWarranty() {
@@ -9887,6 +10013,24 @@ async function issueSalesOrderDispatch() {
   salesOrderDetail = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
   renderSalesOrderDetail();
   await loadSalesOrders();
+}
+
+async function requeueSalesOrderPrintJobs() {
+  if (!canManageSalesOrders() || salesOrderSaving || !salesOrderDetail || !salesOrderDispatch(salesOrderDetail)) return;
+  salesOrderSaving = true;
+  setSalesOrderDetailMessage("出荷指示書を印刷端末へ送信しています。", false);
+  var orderId = salesOrderDetail.id;
+  var result = await sb.rpc("requeue_customer_order_print_jobs", { target_order_id: orderId });
+  salesOrderSaving = false;
+  if (result.error) {
+    setSalesOrderDetailMessage(result.error.message || "出荷指示書を印刷端末へ送信できませんでした。", true);
+    return;
+  }
+  await loadSalesOrderDetail(orderId);
+  var queued = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
+  setSalesOrderDetailMessage((parseInt(queued.queued_count, 10) || 0) > 0
+    ? "出荷指示書を印刷待ちに登録しました。"
+    : "同じ帳票はすでに印刷待ちまたは印刷中です。", false);
 }
 
 function salesOrderPrintItemRows(order, coreOnly) {
@@ -40759,6 +40903,7 @@ document.getElementById("btn-back-sales-order-mgmt").addEventListener("click", r
 document.getElementById("sales-order-reload").addEventListener("click", loadSalesOrders);
 document.getElementById("sales-order-search").addEventListener("keydown", function(e) { if (e.key === "Enter") loadSalesOrders(); });
 document.getElementById("sales-order-status").addEventListener("change", loadSalesOrders);
+document.getElementById("sales-order-auto-print-save").addEventListener("click", saveSalesOrderPrintSettings);
 document.getElementById("sales-order-export-b2").addEventListener("click", exportSalesOrdersB2);
 document.getElementById("sales-order-import-b2").addEventListener("click", function() {
   var input = document.getElementById("sales-order-import-b2-file");

@@ -20,6 +20,7 @@ on:
       - "scripts/verify-customer-order-workflow.js"
       - "scripts/verify-customer-order-delivery-service.js"
       - "scripts/verify-customer-order-b2-import.js"
+      - "scripts/verify-customer-order-auto-print.js"
       - "scripts/verify-postal-data.js"
       - "scripts/verify-postal-lookup-fallback.js"
       - "scripts/update-postal-data.js"
@@ -60,6 +61,7 @@ on:
       - "scripts/verify-customer-order-workflow.js"
       - "scripts/verify-customer-order-delivery-service.js"
       - "scripts/verify-customer-order-b2-import.js"
+      - "scripts/verify-customer-order-auto-print.js"
       - "scripts/verify-postal-data.js"
       - "scripts/verify-postal-lookup-fallback.js"
       - "scripts/update-postal-data.js"
@@ -123,6 +125,8 @@ jobs:
         run: node scripts/verify-customer-order-delivery-service.js
       - name: Verify Yamato B2 issued-data import
         run: node scripts/verify-customer-order-b2-import.js
+      - name: Verify customer order automatic printing
+        run: node scripts/verify-customer-order-auto-print.js
       - name: Verify offline postal data
         run: node scripts/verify-postal-data.js
       - name: Verify postal lookup fallback
