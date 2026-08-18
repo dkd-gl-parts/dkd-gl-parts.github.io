@@ -5047,7 +5047,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.712";
+var APP_VERSION       = "v1.1.713";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -10019,7 +10019,14 @@ function renderSalesOrderDetail() {
   }
   var address = order.shipping_address || {};
   var allowed = Array.isArray(order.allowed_actions) ? order.allowed_actions : [];
-  var actionLabels = { accept: "受付して出荷指示書を発行", prepare_shipping: "出荷準備へ", ship: "出荷済みにする", complete: "完了", cancel: "取消" };
+  var actionLabels = {
+    accept: "受付して出荷指示書を発行",
+    prepare_shipping: "出荷準備へ",
+    ship: "出荷済みにする",
+    complete: "運送会社へ引渡し済み",
+    cancel: "取消",
+    cancel_shipped_in_house: "社内在庫へ戻して受注取消"
+  };
   var actions = allowed.map(function(action) {
     return "<button type='button' class='sales-order-action " + esc(action) + "' data-sales-order-action='" + esc(action) + "'>" + esc(actionLabels[action] || action) + "</button>";
   }).join("");
@@ -10034,6 +10041,7 @@ function renderSalesOrderDetail() {
     salesOrderDispatchHtml(order) +
     "<section class='sales-order-detail-section sales-order-tracking'><h3>B2送り状番号</h3><div class='sales-order-tracking-grid'><label><span>商品発送送り状番号</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>コア返却用送り状番号</span><input id='sales-order-return-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.return_tracking_number || "") + "'" + (order.core_return_required ? "" : " disabled") + "></label><label><span>B2出荷予定日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>番号を登録</button></div><p>送り状番号の登録だけでは在庫を減らしません。現場照合後の「出荷確定」で在庫と保証情報を更新します。</p></section>" +
     "<section class='sales-order-detail-section'><h3>発送履歴</h3>" + salesOrderShipmentHistoryHtml(order.shipment_history) + "</section>" +
+    (order.status === "shipped" ? "<div class='sales-order-handover-boundary'><strong>運送会社への引渡し確認</strong><span>商品が社内にある間は受注取消、引渡し後は返品処理として扱います。</span></div>" : "") +
     "<div class='sales-order-detail-actions'>" + actions + "</div><div id='sales-order-detail-message' class='sales-order-detail-message' aria-live='polite'></div>";
   host.querySelectorAll("[data-sales-order-action]").forEach(function(button) {
     button.addEventListener("click", function() { updateSalesOrderStatus(button.dataset.salesOrderAction); });
@@ -10178,10 +10186,93 @@ function setSalesOrderDetailMessage(message, isError) {
   host.className = "sales-order-detail-message" + (isError ? " error" : "");
 }
 
+function updateSalesOrderInHouseCancelButton() {
+  var checkbox = document.getElementById("sales-order-in-house-cancel-confirm");
+  var reason = document.getElementById("sales-order-in-house-cancel-reason");
+  var button = document.getElementById("sales-order-in-house-cancel-submit");
+  if (!checkbox || !reason || !button) return;
+  button.disabled = salesOrderSaving || !checkbox.checked || !reason.value.trim();
+}
+
+function openSalesOrderInHouseCancelDialog() {
+  var order = salesOrderDetail;
+  if (!order || order.status !== "shipped") return;
+  var overlay = document.getElementById("sales-order-in-house-cancel-overlay");
+  var orderLabel = document.getElementById("sales-order-in-house-cancel-order");
+  var checkbox = document.getElementById("sales-order-in-house-cancel-confirm");
+  var reason = document.getElementById("sales-order-in-house-cancel-reason");
+  var result = document.getElementById("sales-order-in-house-cancel-result");
+  if (!overlay || !checkbox || !reason || !result) return;
+  overlay.dataset.orderId = String(order.id);
+  overlay.dataset.orderVersion = order.version == null ? "" : String(order.version);
+  if (orderLabel) orderLabel.textContent = (order.order_number || ("注文 " + order.id)) + " / " + (order.customer_name || "-");
+  checkbox.checked = false;
+  reason.value = "";
+  result.textContent = "";
+  result.className = "sales-order-in-house-cancel-result";
+  overlay.classList.add("show");
+  updateSalesOrderInHouseCancelButton();
+  checkbox.focus();
+}
+
+function closeSalesOrderInHouseCancelDialog(force) {
+  if (salesOrderSaving && !force) return;
+  var overlay = document.getElementById("sales-order-in-house-cancel-overlay");
+  if (!overlay) return;
+  overlay.classList.remove("show");
+  delete overlay.dataset.orderId;
+  delete overlay.dataset.orderVersion;
+}
+
+async function submitSalesOrderInHouseCancellation() {
+  if (!canManageSalesOrders() || salesOrderSaving) return;
+  var overlay = document.getElementById("sales-order-in-house-cancel-overlay");
+  var checkbox = document.getElementById("sales-order-in-house-cancel-confirm");
+  var reason = document.getElementById("sales-order-in-house-cancel-reason");
+  var resultHost = document.getElementById("sales-order-in-house-cancel-result");
+  if (!overlay || !checkbox || !reason || !resultHost) return;
+  var orderId = parseInt(overlay.dataset.orderId, 10);
+  var expectedVersion = parseInt(overlay.dataset.orderVersion, 10);
+  var cleanReason = reason.value.trim();
+  if (isNaN(orderId) || !checkbox.checked || !cleanReason) {
+    resultHost.textContent = "未引渡しの確認と取消理由を入力してください。";
+    resultHost.className = "sales-order-in-house-cancel-result error";
+    return;
+  }
+
+  salesOrderSaving = true;
+  resultHost.textContent = "在庫・シリアル・送り状を確認して取り消しています。";
+  resultHost.className = "sales-order-in-house-cancel-result";
+  updateSalesOrderInHouseCancelButton();
+  var rpcResult = await sb.rpc("update_sales_order_status", {
+    target_order_id: orderId,
+    target_action: "cancel_shipped_in_house",
+    target_note: cleanReason,
+    target_expected_version: isNaN(expectedVersion) ? null : expectedVersion
+  });
+  salesOrderSaving = false;
+  if (rpcResult.error) {
+    resultHost.textContent = rpcResult.error.message || "出荷済み受注を取り消せませんでした。";
+    resultHost.className = "sales-order-in-house-cancel-result error";
+    updateSalesOrderInHouseCancelButton();
+    return;
+  }
+
+  closeSalesOrderInHouseCancelDialog(true);
+  await loadSalesOrders();
+  salesOrderSelectedId = orderId;
+  await loadSalesOrderDetail(orderId);
+}
+
 async function updateSalesOrderStatus(action) {
   if (!canManageSalesOrders() || salesOrderSaving || !salesOrderDetail || !action) return;
+  if (action === "cancel_shipped_in_house") {
+    openSalesOrderInHouseCancelDialog();
+    return;
+  }
   if (action === "accept" && !confirm("在庫を再確認して受付し、出荷指示書を発行します。よろしいですか？")) return;
-  if ((action === "cancel" || action === "complete") && !confirm((action === "cancel" ? "この注文を取り消します。" : "この注文を完了にします。") + "よろしいですか？")) return;
+  if (action === "complete" && !confirm("運送会社へ引渡し済みとして確定します。以後は受注取消ではなく返品処理になります。よろしいですか？")) return;
+  if (action === "cancel" && !confirm("この注文を取り消します。よろしいですか？")) return;
   salesOrderSaving = true;
   setSalesOrderDetailMessage("更新しています。", false);
   var result = await sb.rpc("update_sales_order_status", {
@@ -40980,6 +41071,13 @@ document.getElementById("sales-order-import-b2-file").addEventListener("change",
 document.getElementById("sales-order-import-b2-close").addEventListener("click", closeSalesOrderB2Import);
 document.getElementById("sales-order-import-b2-cancel").addEventListener("click", closeSalesOrderB2Import);
 document.getElementById("sales-order-import-b2-confirm").addEventListener("click", importSalesOrderB2Shipments);
+document.getElementById("sales-order-in-house-cancel-confirm").addEventListener("change", updateSalesOrderInHouseCancelButton);
+document.getElementById("sales-order-in-house-cancel-reason").addEventListener("input", updateSalesOrderInHouseCancelButton);
+document.getElementById("sales-order-in-house-cancel-close").addEventListener("click", function() { closeSalesOrderInHouseCancelDialog(false); });
+document.getElementById("sales-order-in-house-cancel-submit").addEventListener("click", submitSalesOrderInHouseCancellation);
+document.getElementById("sales-order-in-house-cancel-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeSalesOrderInHouseCancelDialog(false);
+});
 document.getElementById("btn-back-search").addEventListener("click", returnFromProductSearch);
 document.getElementById("btn-back-production-search").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-components").addEventListener("click", async function(){

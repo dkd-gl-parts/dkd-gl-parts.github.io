@@ -22,6 +22,7 @@ on:
       - "scripts/verify-customer-order-b2-import.js"
       - "scripts/verify-customer-order-auto-print.js"
       - "scripts/verify-customer-order-batch-accept.js"
+      - "scripts/verify-customer-order-in-house-cancel.js"
       - "scripts/verify-postal-data.js"
       - "scripts/verify-postal-lookup-fallback.js"
       - "scripts/update-postal-data.js"
@@ -64,6 +65,7 @@ on:
       - "scripts/verify-customer-order-b2-import.js"
       - "scripts/verify-customer-order-auto-print.js"
       - "scripts/verify-customer-order-batch-accept.js"
+      - "scripts/verify-customer-order-in-house-cancel.js"
       - "scripts/verify-postal-data.js"
       - "scripts/verify-postal-lookup-fallback.js"
       - "scripts/update-postal-data.js"
@@ -131,6 +133,8 @@ jobs:
         run: node scripts/verify-customer-order-auto-print.js
       - name: Verify customer order batch acceptance
         run: node scripts/verify-customer-order-batch-accept.js
+      - name: Verify customer order in-house shipment cancellation
+        run: node scripts/verify-customer-order-in-house-cancel.js
       - name: Verify offline postal data
         run: node scripts/verify-postal-data.js
       - name: Verify postal lookup fallback
