@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.714">
+<meta name="dcats-app-version" content="v1.1.715">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="application-name" content="D-CATS">
 <meta name="apple-mobile-web-app-title" content="D-CATS">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.714"; -->
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.715"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co https://zipcloud.ibsnet.co.jp; form-action 'self';">
 <title>D-CATS</title>
 <link rel="manifest" href="site.webmanifest?v=1.1.697&amp;brand=2">
@@ -19,7 +19,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png?v=1.1.697&amp;brand=2">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.714&amp;ranking=7&amp;brand=4">
+<link rel="stylesheet" href="styles.css?v=1.1.715&amp;ranking=7&amp;brand=4">
 </head>
 <body>
 
@@ -136,7 +136,7 @@
         </div>
 
         <div class="login-utility">
-          <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.714</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+          <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.715</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
           <div class="lang-sw-login" id="lang-sw-login">
             <button class="lang-btn-login active" data-lang="ja">日本語</button>
             <button class="lang-btn-login" data-lang="en">EN</button>
@@ -687,16 +687,16 @@
 <div class="form-overlay" id="sales-order-in-house-cancel-overlay" role="dialog" aria-modal="true" aria-labelledby="sales-order-in-house-cancel-title">
   <div class="form-card sales-order-in-house-cancel-card">
     <div class="sales-order-in-house-cancel-heading">
-      <span>SHIPPED ORDER CANCELLATION</span>
-      <h3 id="sales-order-in-house-cancel-title">出荷済み受注の取消</h3>
+      <span>ORDER CANCELLATION</span>
+      <h3 id="sales-order-in-house-cancel-title">受注取消</h3>
       <p id="sales-order-in-house-cancel-order"></p>
     </div>
     <div class="sales-order-in-house-cancel-warning">
-      出荷済みですが、商品がまだ社内にある場合だけ実行できます。すでに発送されている場合は返品処理の対象です。
+      この受注は出荷済みです。商品がまだ社内にあることを確認してください。取消後、在庫とシリアルを戻します。発送済みの場合は返品処理を行ってください。
     </div>
     <label class="sales-order-in-house-cancel-confirm">
       <input id="sales-order-in-house-cancel-confirm" type="checkbox">
-      <span>出荷済みの商品がまだ社内にあることを確認しました</span>
+      <span>商品がまだ社内にあることを確認しました</span>
     </label>
     <div class="form-row">
       <label class="form-label" for="sales-order-in-house-cancel-reason">取消理由 *</label>
@@ -705,7 +705,7 @@
     <div class="sales-order-in-house-cancel-result" id="sales-order-in-house-cancel-result" aria-live="polite"></div>
     <div class="form-footer">
       <button class="btn-cancel" id="sales-order-in-house-cancel-close" type="button">閉じる</button>
-      <button class="btn-danger" id="sales-order-in-house-cancel-submit" type="button" disabled>在庫へ戻して受注取消</button>
+      <button class="btn-danger" id="sales-order-in-house-cancel-submit" type="button" disabled>受注取消</button>
     </div>
   </div>
 </div>
@@ -3861,7 +3861,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
 <script src="vendor/qrcode.min.js?v=1.0.0"></script>
-<script src="app.js?v=1.1.714"></script>
+<script src="app.js?v=1.1.715"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.625&amp;ranking=17"></script>
 </body>
 </html>

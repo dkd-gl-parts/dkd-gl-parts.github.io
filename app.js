@@ -5047,7 +5047,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.714";
+var APP_VERSION       = "v1.1.715";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -10023,8 +10023,7 @@ function renderSalesOrderDetail() {
     accept: "受付して出荷指示書を発行",
     prepare_shipping: "出荷準備へ",
     ship: "出荷済みにする",
-    cancel: "取消",
-    cancel_shipped_in_house: "出荷済み受注を取消"
+    cancel: "受注取消"
   };
   var actions = allowed.map(function(action) {
     return "<button type='button' class='sales-order-action " + esc(action) + "' data-sales-order-action='" + esc(action) + "'>" + esc(actionLabels[action] || action) + "</button>";
@@ -10233,7 +10232,7 @@ async function submitSalesOrderInHouseCancellation() {
   var expectedVersion = parseInt(overlay.dataset.orderVersion, 10);
   var cleanReason = reason.value.trim();
   if (isNaN(orderId) || !checkbox.checked || !cleanReason) {
-    resultHost.textContent = "未引渡しの確認と取消理由を入力してください。";
+    resultHost.textContent = "商品が社内にあることの確認と取消理由を入力してください。";
     resultHost.className = "sales-order-in-house-cancel-result error";
     return;
   }
@@ -10244,7 +10243,7 @@ async function submitSalesOrderInHouseCancellation() {
   updateSalesOrderInHouseCancelButton();
   var rpcResult = await sb.rpc("update_sales_order_status", {
     target_order_id: orderId,
-    target_action: "cancel_shipped_in_house",
+    target_action: "cancel",
     target_note: cleanReason,
     target_expected_version: isNaN(expectedVersion) ? null : expectedVersion
   });
@@ -10264,12 +10263,12 @@ async function submitSalesOrderInHouseCancellation() {
 
 async function updateSalesOrderStatus(action) {
   if (!canManageSalesOrders() || salesOrderSaving || !salesOrderDetail || !action) return;
-  if (action === "cancel_shipped_in_house") {
+  if (action === "cancel" && salesOrderDetail.status === "shipped") {
     openSalesOrderInHouseCancelDialog();
     return;
   }
   if (action === "accept" && !confirm("在庫を再確認して受付し、出荷指示書を発行します。よろしいですか？")) return;
-  if (action === "cancel" && !confirm("この注文を取り消します。よろしいですか？")) return;
+  if (action === "cancel" && !confirm("この受注を取り消します。よろしいですか？")) return;
   salesOrderSaving = true;
   setSalesOrderDetailMessage("更新しています。", false);
   var result = await sb.rpc("update_sales_order_status", {

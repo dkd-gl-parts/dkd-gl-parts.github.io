@@ -5762,7 +5762,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .sales-order-action.prepare_shipping,
 .sales-order-action.ship { border-color: #287356; background: #287356; color: #fff; }
 .sales-order-action.cancel { border-color: #d64545; color: #b42318; }
-.sales-order-action.cancel_shipped_in_house { border-color: #b42318; background: #b42318; color: #fff; }
 .sales-order-detail-message { min-height: 18px; margin-top: 9px; color: #22643e; font-size: 10px; font-weight: 700; text-align: right; }
 .sales-order-detail-message.error { color: #b42318; }
 .sales-order-in-house-cancel-card { width: min(520px, calc(100vw - 28px)); padding: 24px; }

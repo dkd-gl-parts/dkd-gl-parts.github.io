@@ -5,9 +5,9 @@ const html = fs.readFileSync("index.html", "utf8");
 const css = fs.readFileSync("styles.css", "utf8");
 
 for (const fragment of [
-  'cancel_shipped_in_house: "出荷済み受注を取消"',
-  'action === "cancel_shipped_in_house"',
-  'target_action: "cancel_shipped_in_house"',
+  'cancel: "受注取消"',
+  'action === "cancel" && salesOrderDetail.status === "shipped"',
+  'target_action: "cancel"',
   "submitSalesOrderInHouseCancellation",
   "updateSalesOrderInHouseCancelButton"
 ]) {
@@ -23,11 +23,13 @@ for (const id of [
   if (!html.includes(`id="${id}"`)) throw new Error(`In-house cancellation dialog field is missing: ${id}`);
 }
 
-if (!html.includes("出荷済みですが、商品がまだ社内にある場合だけ実行できます")
-    || !html.includes("すでに発送されている場合は返品処理の対象です")) {
+if (!html.includes("この受注は出荷済みです。商品がまだ社内にあることを確認してください")
+    || !html.includes("取消後、在庫とシリアルを戻します")) {
   throw new Error("The UI must explain when a shipped order may be cancelled");
 }
 for (const forbidden of [
+  "cancel_shipped_in_house",
+  "出荷済み受注を取消",
   'complete: "運送会社へ引渡し済み"',
   'action === "complete"',
   "sales-order-handover-boundary",
@@ -37,8 +39,8 @@ for (const forbidden of [
     throw new Error(`Carrier handover must not be managed by D-CATS: ${forbidden}`);
   }
 }
-if (!css.includes(".sales-order-action.cancel_shipped_in_house")) {
-  throw new Error("The high-risk in-house cancellation action needs distinct styling");
+if (!css.includes(".sales-order-action.cancel")) {
+  throw new Error("The shared order cancellation action styling is missing");
 }
 if (!css.includes(".sales-order-in-house-cancel-card")) {
   throw new Error("The confirmation dialog styling is missing");
