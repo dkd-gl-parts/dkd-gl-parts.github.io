@@ -5047,7 +5047,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.713";
+var APP_VERSION       = "v1.1.714";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -10023,9 +10023,8 @@ function renderSalesOrderDetail() {
     accept: "受付して出荷指示書を発行",
     prepare_shipping: "出荷準備へ",
     ship: "出荷済みにする",
-    complete: "運送会社へ引渡し済み",
     cancel: "取消",
-    cancel_shipped_in_house: "社内在庫へ戻して受注取消"
+    cancel_shipped_in_house: "出荷済み受注を取消"
   };
   var actions = allowed.map(function(action) {
     return "<button type='button' class='sales-order-action " + esc(action) + "' data-sales-order-action='" + esc(action) + "'>" + esc(actionLabels[action] || action) + "</button>";
@@ -10041,7 +10040,6 @@ function renderSalesOrderDetail() {
     salesOrderDispatchHtml(order) +
     "<section class='sales-order-detail-section sales-order-tracking'><h3>B2送り状番号</h3><div class='sales-order-tracking-grid'><label><span>商品発送送り状番号</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>コア返却用送り状番号</span><input id='sales-order-return-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.return_tracking_number || "") + "'" + (order.core_return_required ? "" : " disabled") + "></label><label><span>B2出荷予定日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>番号を登録</button></div><p>送り状番号の登録だけでは在庫を減らしません。現場照合後の「出荷確定」で在庫と保証情報を更新します。</p></section>" +
     "<section class='sales-order-detail-section'><h3>発送履歴</h3>" + salesOrderShipmentHistoryHtml(order.shipment_history) + "</section>" +
-    (order.status === "shipped" ? "<div class='sales-order-handover-boundary'><strong>運送会社への引渡し確認</strong><span>商品が社内にある間は受注取消、引渡し後は返品処理として扱います。</span></div>" : "") +
     "<div class='sales-order-detail-actions'>" + actions + "</div><div id='sales-order-detail-message' class='sales-order-detail-message' aria-live='polite'></div>";
   host.querySelectorAll("[data-sales-order-action]").forEach(function(button) {
     button.addEventListener("click", function() { updateSalesOrderStatus(button.dataset.salesOrderAction); });
@@ -10271,7 +10269,6 @@ async function updateSalesOrderStatus(action) {
     return;
   }
   if (action === "accept" && !confirm("在庫を再確認して受付し、出荷指示書を発行します。よろしいですか？")) return;
-  if (action === "complete" && !confirm("運送会社へ引渡し済みとして確定します。以後は受注取消ではなく返品処理になります。よろしいですか？")) return;
   if (action === "cancel" && !confirm("この注文を取り消します。よろしいですか？")) return;
   salesOrderSaving = true;
   setSalesOrderDetailMessage("更新しています。", false);

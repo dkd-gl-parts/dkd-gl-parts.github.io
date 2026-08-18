@@ -5,14 +5,11 @@ const html = fs.readFileSync("index.html", "utf8");
 const css = fs.readFileSync("styles.css", "utf8");
 
 for (const fragment of [
-  'cancel_shipped_in_house: "社内在庫へ戻して受注取消"',
-  'complete: "運送会社へ引渡し済み"',
+  'cancel_shipped_in_house: "出荷済み受注を取消"',
   'action === "cancel_shipped_in_house"',
   'target_action: "cancel_shipped_in_house"',
   "submitSalesOrderInHouseCancellation",
-  "updateSalesOrderInHouseCancelButton",
-  "運送会社へ引渡し済みとして確定します",
-  "商品が社内にある間は受注取消"
+  "updateSalesOrderInHouseCancelButton"
 ]) {
   if (!app.includes(fragment)) throw new Error(`In-house cancellation UI contract is missing: ${fragment}`);
 }
@@ -26,8 +23,19 @@ for (const id of [
   if (!html.includes(`id="${id}"`)) throw new Error(`In-house cancellation dialog field is missing: ${id}`);
 }
 
-if (!html.includes("引渡し後は返品処理の対象です")) {
-  throw new Error("The UI must separate in-house cancellation from post-handover returns");
+if (!html.includes("出荷済みですが、商品がまだ社内にある場合だけ実行できます")
+    || !html.includes("すでに発送されている場合は返品処理の対象です")) {
+  throw new Error("The UI must explain when a shipped order may be cancelled");
+}
+for (const forbidden of [
+  'complete: "運送会社へ引渡し済み"',
+  'action === "complete"',
+  "sales-order-handover-boundary",
+  "運送会社への引渡し確認"
+]) {
+  if (app.includes(forbidden) || css.includes(forbidden)) {
+    throw new Error(`Carrier handover must not be managed by D-CATS: ${forbidden}`);
+  }
 }
 if (!css.includes(".sales-order-action.cancel_shipped_in_house")) {
   throw new Error("The high-risk in-house cancellation action needs distinct styling");
