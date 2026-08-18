@@ -5329,6 +5329,7 @@ var CUSTOMER_ORDER_DELIVERY_SERVICE_LEVELS = {
 };
 var salesOrderRows = [];
 var salesOrderSelectedId = null;
+var salesOrderCheckedIdsState = new Set();
 var salesOrderDetail = null;
 var salesOrderListSeq = 0;
 var salesOrderDetailSeq = 0;
@@ -7335,6 +7336,7 @@ async function doLogout() {
   customerOrderDeliveryServiceCache = {};
   salesOrderRows = [];
   salesOrderSelectedId = null;
+  salesOrderCheckedIdsState = new Set();
   salesOrderDetail = null;
   salesOrderListSeq += 1;
   salesOrderDetailSeq += 1;
@@ -9568,11 +9570,10 @@ async function submitCustomerOrder() {
     return;
   }
   var registeredOrder = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
-  var queuedPrintCount = parseInt(registeredOrder.print_job_count, 10) || 0;
   customerOrderCart = [];
   customerOrderPreview = null;
   clearPersistedCustomerOrderCart();
-  customerOrderSetStatus(t(queuedPrintCount > 0 ? "customer_order_submit_print_queued" : "customer_order_submit_success"), false);
+  customerOrderSetStatus(t("customer_order_submit_success"), false);
   renderCustomerOrderCart();
   if (internalRegistration) {
     var registeredOrderId = parseInt(registeredOrder.id, 10);
@@ -9674,14 +9675,29 @@ function salesOrderListSearch() {
 }
 
 function salesOrderCheckedIds() {
-  return Array.prototype.map.call(document.querySelectorAll("[data-sales-order-check]:checked"), function(input) {
-    return parseInt(input.value, 10);
-  }).filter(function(id) { return !isNaN(id); });
+  return Array.from(salesOrderCheckedIdsState).filter(function(id) { return !isNaN(id); });
 }
 
-function updateSalesOrderExportButton() {
-  var button = document.getElementById("sales-order-export-b2");
-  if (button) button.disabled = salesOrderCheckedIds().length === 0 || salesOrderSaving;
+function setSalesOrderBatchMessage(message, isError) {
+  var host = document.getElementById("sales-order-batch-message");
+  if (!host) return;
+  host.textContent = message || "";
+  host.className = "sales-order-batch-message" + (isError ? " error" : "");
+}
+
+function updateSalesOrderSelectionButtons() {
+  var checkedIds = salesOrderCheckedIds();
+  var selectedRows = salesOrderRows.filter(function(row) {
+    return checkedIds.indexOf(parseInt(row.id, 10)) >= 0;
+  });
+  var acceptIds = selectedRows.filter(function(row) { return row.status === "submitted"; });
+  var exportButton = document.getElementById("sales-order-export-b2");
+  var acceptButton = document.getElementById("sales-order-batch-accept");
+  if (exportButton) exportButton.disabled = checkedIds.length === 0 || salesOrderSaving;
+  if (acceptButton) {
+    acceptButton.disabled = acceptIds.length === 0 || salesOrderSaving;
+    acceptButton.textContent = acceptIds.length ? "選択を受付（" + acceptIds.length + "件）" : "選択を受付";
+  }
 }
 
 function salesOrderPrintStationStateLabel(state) {
@@ -9781,6 +9797,7 @@ async function enterSalesOrderMgmt() {
     return;
   }
   salesOrderSelectedId = null;
+  salesOrderCheckedIdsState = new Set();
   salesOrderDetail = null;
   salesOrderB2ImportState = null;
   salesOrderB2ImportSaving = false;
@@ -9797,13 +9814,14 @@ function renderSalesOrderList() {
   if (count) count.textContent = salesOrderRows.length + " 件";
   if (!salesOrderRows.length) {
     host.innerHTML = "<div class='sales-order-empty'>該当する注文はありません。</div>";
-    updateSalesOrderExportButton();
+    updateSalesOrderSelectionButtons();
     return;
   }
   host.innerHTML = salesOrderRows.map(function(order) {
     var selected = String(order.id) === String(salesOrderSelectedId);
+    var checked = salesOrderCheckedIdsState.has(parseInt(order.id, 10));
     return "<div class='sales-order-list-row" + (selected ? " selected" : "") + "' data-sales-order-open='" + esc(order.id) + "'>" +
-      "<label class='sales-order-check' aria-label='CSV出力対象'><input type='checkbox' data-sales-order-check value='" + esc(order.id) + "'></label>" +
+      "<label class='sales-order-check' aria-label='処理対象'><input type='checkbox' data-sales-order-check value='" + esc(order.id) + "'" + (checked ? " checked" : "") + "></label>" +
       "<div class='sales-order-list-main'><strong>" + esc(order.order_number || ("注文 " + order.id)) + "</strong><span>" + esc(order.customer_name || "-") + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "<small>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small></div>" +
       "<div class='sales-order-list-count'><span>明細</span><strong>" + esc(order.item_count == null ? "-" : order.item_count) + "</strong></div>" +
       "<div class='sales-order-list-total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div>" +
@@ -9817,13 +9835,20 @@ function renderSalesOrderList() {
     });
   });
   host.querySelectorAll("[data-sales-order-check]").forEach(function(input) {
-    input.addEventListener("change", updateSalesOrderExportButton);
+    input.addEventListener("change", function() {
+      var id = parseInt(input.value, 10);
+      if (input.checked) salesOrderCheckedIdsState.add(id);
+      else salesOrderCheckedIdsState.delete(id);
+      updateSalesOrderSelectionButtons();
+    });
   });
-  updateSalesOrderExportButton();
+  updateSalesOrderSelectionButtons();
 }
 
 async function loadSalesOrders() {
   if (!canManageSalesOrders()) return;
+  salesOrderCheckedIdsState = new Set();
+  updateSalesOrderSelectionButtons();
   var requestSeq = ++salesOrderListSeq;
   var host = document.getElementById("sales-order-list");
   if (host) host.innerHTML = "<div class='sales-order-empty'>" + esc(t("loading")) + "</div>";
@@ -9841,6 +9866,43 @@ async function loadSalesOrders() {
   var data = result.data || [];
   salesOrderRows = Array.isArray(data) ? data : (Array.isArray(data.orders) ? data.orders : []);
   renderSalesOrderList();
+}
+
+async function acceptCheckedSalesOrders() {
+  if (!canManageSalesOrders() || salesOrderSaving) return;
+  var selected = salesOrderRows.filter(function(order) {
+    return order.status === "submitted" && salesOrderCheckedIdsState.has(parseInt(order.id, 10));
+  });
+  var orderIds = selected.map(function(order) { return parseInt(order.id, 10); }).filter(function(id) { return !isNaN(id); });
+  if (!orderIds.length) return;
+  if (!confirm(orderIds.length + "件を受付して出荷指示書を発行します。よろしいですか？")) return;
+
+  salesOrderSaving = true;
+  updateSalesOrderSelectionButtons();
+  setSalesOrderBatchMessage("在庫を再確認して受付しています。", false);
+  var result = await sb.rpc("accept_sales_orders", { target_order_ids: orderIds });
+  salesOrderSaving = false;
+  if (result.error) {
+    updateSalesOrderSelectionButtons();
+    setSalesOrderBatchMessage(result.error.message || "注文を受付できませんでした。", true);
+    return;
+  }
+
+  var summary = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
+  var acceptedCount = parseInt(summary.accepted_count, 10) || 0;
+  var failedRows = (Array.isArray(summary.results) ? summary.results : []).filter(function(row) { return row.success !== true; });
+  var printWarnings = (Array.isArray(summary.results) ? summary.results : []).filter(function(row) { return !!row.print_error; });
+  var message = acceptedCount + "件を受付し、出荷指示書を発行しました。";
+  if (failedRows.length) {
+    message += " " + failedRows.length + "件は受付できません: " + failedRows.slice(0, 3).map(function(row) {
+      return (row.order_number || ("注文 " + row.id)) + " / " + (row.message || "確認が必要です");
+    }).join("、");
+  }
+  if (printWarnings.length) message += " 印刷待ち登録に失敗した注文があります。注文詳細から再送してください。";
+  var hadFailure = failedRows.length > 0;
+  await loadSalesOrders();
+  if (salesOrderSelectedId) await loadSalesOrderDetail(salesOrderSelectedId);
+  setSalesOrderBatchMessage(message, hadFailure);
 }
 
 function salesOrderItemRowsHtml(items) {
@@ -9957,7 +10019,7 @@ function renderSalesOrderDetail() {
   }
   var address = order.shipping_address || {};
   var allowed = Array.isArray(order.allowed_actions) ? order.allowed_actions : [];
-  var actionLabels = { accept: "受付", prepare_shipping: "出荷準備へ", ship: "出荷済みにする", complete: "完了", cancel: "取消" };
+  var actionLabels = { accept: "受付して出荷指示書を発行", prepare_shipping: "出荷準備へ", ship: "出荷済みにする", complete: "完了", cancel: "取消" };
   var actions = allowed.map(function(action) {
     return "<button type='button' class='sales-order-action " + esc(action) + "' data-sales-order-action='" + esc(action) + "'>" + esc(actionLabels[action] || action) + "</button>";
   }).join("");
@@ -10118,6 +10180,7 @@ function setSalesOrderDetailMessage(message, isError) {
 
 async function updateSalesOrderStatus(action) {
   if (!canManageSalesOrders() || salesOrderSaving || !salesOrderDetail || !action) return;
+  if (action === "accept" && !confirm("在庫を再確認して受付し、出荷指示書を発行します。よろしいですか？")) return;
   if ((action === "cancel" || action === "complete") && !confirm((action === "cancel" ? "この注文を取り消します。" : "この注文を完了にします。") + "よろしいですか？")) return;
   salesOrderSaving = true;
   setSalesOrderDetailMessage("更新しています。", false);
@@ -40904,6 +40967,7 @@ document.getElementById("sales-order-reload").addEventListener("click", loadSale
 document.getElementById("sales-order-search").addEventListener("keydown", function(e) { if (e.key === "Enter") loadSalesOrders(); });
 document.getElementById("sales-order-status").addEventListener("change", loadSalesOrders);
 document.getElementById("sales-order-auto-print-save").addEventListener("click", saveSalesOrderPrintSettings);
+document.getElementById("sales-order-batch-accept").addEventListener("click", acceptCheckedSalesOrders);
 document.getElementById("sales-order-export-b2").addEventListener("click", exportSalesOrdersB2);
 document.getElementById("sales-order-import-b2").addEventListener("click", function() {
   var input = document.getElementById("sales-order-import-b2-file");

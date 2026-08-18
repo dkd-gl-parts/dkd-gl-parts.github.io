@@ -638,9 +638,11 @@
         <input id="sales-order-search" type="search" autocomplete="off" placeholder="注文番号・得意先・品番で検索">
         <select id="sales-order-status"><option value="all">すべての状態</option><option value="submitted">受付待ち</option><option value="accepted">受付済み</option><option value="shipping_ready">出荷準備</option><option value="shipped">出荷済み</option><option value="completed">完了</option><option value="cancelled">取消</option></select>
         <button type="button" class="btn-primary" id="sales-order-reload">検索</button>
+        <button type="button" class="sales-order-accept-button" id="sales-order-batch-accept" disabled>選択を受付</button>
         <button type="button" class="sales-order-b2-button" id="sales-order-export-b2" disabled>B2 CSV出力</button>
         <button type="button" class="sales-order-b2-import-button" id="sales-order-import-b2">B2発送データ取込</button>
         <input type="file" id="sales-order-import-b2-file" accept=".csv,text/csv" hidden>
+        <span class="sales-order-batch-message" id="sales-order-batch-message" aria-live="polite"></span>
       </div>
     </section>
     <section class="sales-order-b2-import" id="sales-order-b2-import" hidden aria-labelledby="sales-order-b2-import-title">
@@ -658,10 +660,10 @@
     <section class="sales-order-auto-print" id="sales-order-auto-print">
       <div class="sales-order-auto-print-copy">
         <div class="sales-order-auto-print-heading">
-          <strong>受注時の自動印刷</strong>
+          <strong>受付時の自動印刷</strong>
           <span class="sales-order-auto-print-state" id="sales-order-auto-print-state">確認中</span>
         </div>
-        <p>注文確定時に出荷指示書を印刷待ちへ登録します。コア返却対象ではコア返却シートも印刷します。</p>
+        <p>注文を受付した時に出荷指示書を印刷待ちへ登録します。コア返却対象ではコア返却シートも印刷します。</p>
       </div>
       <div class="sales-order-auto-print-controls">
         <label><span>印刷端末</span><select id="sales-order-auto-print-station"><option value="">未設定</option></select></label>

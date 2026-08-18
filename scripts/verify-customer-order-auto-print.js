@@ -52,11 +52,17 @@ if (!enterManagement.includes("Promise.all([loadSalesOrders(), loadSalesOrderPri
 }
 
 const submitOrder = sourceBetween("async function submitCustomerOrder", "function renderCustomerOrderHistory");
-if (!submitOrder.includes("print_job_count") || !submitOrder.includes("customer_order_submit_print_queued")) {
-  throw new Error("Order confirmation must report a successfully queued automatic print");
+if (submitOrder.includes("print_job_count") || submitOrder.includes("customer_order_submit_print_queued")) {
+  throw new Error("Order submission must not issue or report shipment-document printing");
+}
+if (!submitOrder.includes('customerOrderSetStatus(t("customer_order_submit_success"), false)')) {
+  throw new Error("Order submission must finish as a submitted order awaiting staff acceptance");
 }
 if (/window\.print\s*\(/.test(submitOrder)) {
   throw new Error("Order submission must not depend on browser window.print");
+}
+if (!html.includes("受付時の自動印刷") || !html.includes("注文を受付した時に出荷指示書を印刷待ちへ登録します")) {
+  throw new Error("Automatic-print settings must describe the acceptance-time trigger");
 }
 
 const printHistory = sourceBetween("function salesOrderPrintJobsHtml", "function salesOrderDispatchHtml");
