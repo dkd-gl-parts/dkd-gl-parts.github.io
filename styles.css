@@ -5061,9 +5061,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   #screen-production-search .production-left,
   #screen-production-search .production-right { height: 100%; min-height: 0; }
   #screen-production-search .production-detail { max-width: none; min-height: 100%; padding-top: 12px; padding-bottom: 8px; }
-  #screen-production-search .detail-maker-offset,
-  #screen-production-search .detail-maker-offset-standard,
-  #screen-production-search .detail-maker-offset-ac { margin-top: 0; }
+  #screen-production-search .production-section { padding: 10px; }
+  #screen-production-search .production-section h3 { margin-bottom: 6px; }
+  #screen-production-search .detail-main-grid { gap: 10px; padding-bottom: 6px; margin-bottom: 4px; }
+  #screen-production-search .detail-vehicle-grid,
+  #screen-production-search .ac-part-row { grid-template-columns: 100px minmax(0, 1fr); }
+  #screen-production-search .detail-vehicle-label,
+  #screen-production-search .detail-vehicle-value,
+  #screen-production-search .ac-part-label,
+  #screen-production-search .ac-part-value { min-height: 30px; padding: 5px 4px; }
+  #screen-production-search .detail-spec-after-maker { margin-top: 6px; }
+  #screen-production-search .detail-spec-grid { grid-template-columns: 82px minmax(0, 1fr) 82px minmax(0, 1fr); }
+  #screen-production-search .production-core-section .core-qty-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 6px; }
+  #screen-production-search .production-core-section .core-qty-card { padding: 6px 8px; }
+  #screen-production-search .production-core-section .core-qty-label { margin-bottom: 2px; }
+  #screen-production-search .production-core-section .core-qty-value { font-size: 18px; }
+  #screen-production-search .production-core-section .core-qty-sub { margin-top: 2px; }
+  #screen-production-search .production-kv div { padding: 4px; }
+  #screen-production-search .production-core-policy-list { margin-top: 4px; }
+  #screen-production-search .production-core-policy-row { padding: 3px 0; }
+  #screen-production-search .production-core-policy-kind { padding-top: 3px; }
+  #screen-production-search .production-core-policy-row .core-return-policy-panel.vertical .core-return-policy-item { min-height: 24px; }
 }
 
 /* CSP-safe replacements for former inline styles. */
