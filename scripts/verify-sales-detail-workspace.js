@@ -105,12 +105,29 @@ const panelSource = sourceBetween("function renderPanelStatic", "async function 
 const kindSwitchSource = sourceBetween("function bindProductKindPanelActions", "async function fetchProductVariantSummaryMap");
 [
   "updateSalesProductStatusBadges()",
-  "renderImagesLoading()",
-  "loadImages(null, detailSecondaryRequestSeq)",
   "loadDetailCustomerInfoForCurrent(detailSecondaryRequestSeq)"
 ].forEach((fragment) => {
   if (!kindSwitchSource.includes(fragment)) throw new Error(`product-kind switching is incomplete: ${fragment}`);
 });
+if (kindSwitchSource.includes("renderImagesLoading()") || kindSwitchSource.includes("loadImages(null, detailSecondaryRequestSeq)")) {
+  throw new Error("product-kind switching must not hide or reload the combined rebuilt/new image tab");
+}
+
+const salesImageSource = sourceBetween("function salesImageKinds", "function fillImageKindSelect");
+[
+  'return ["rebuilt", "aftermarket_new"]',
+  'fetchAllCoreProductImagesForContext(dkdId, "sales")',
+  "salesImageGroupHtml(kind, salesImagesForKind(kind), false)",
+  "data-sales-image-kind"
+].forEach((fragment) => {
+  if (!salesImageSource.includes(fragment)) throw new Error(`sales image grouping is missing: ${fragment}`);
+});
+if (salesImageSource.includes("selectedProductKind()")) {
+  throw new Error("sales image loading must be independent of the selected product kind");
+}
+if (!css.includes(".sales-detail-image-group") || !css.includes(".sales-detail-image-kind-grid")) {
+  throw new Error("sales image groups need distinct rebuilt/new layouts");
+}
 
 const customerPriceSource = sourceBetween("async function fetchDetailCustomerPriceInfo", "async function loadDetailCustomerInfoForCurrent");
 if (!customerPriceSource.includes('.select("base_price_jpy,tax_included")') || !customerPriceSource.includes("info.taxIncluded")) {

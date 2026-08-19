@@ -3927,11 +3927,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .sales-detail-component-entry span { display: block; margin-top: 4px; color: #667085; font-size: 11px; line-height: 1.5; }
 .sales-detail-image-grid {
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
-  gap: 10px !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 16px !important;
 }
 .sales-detail-image-grid .panel-right-empty { grid-column: 1 / -1; min-height: 92px; }
-.sales-detail-image-grid .img-wrap { border: 1px solid #e5e9f0; }
+.sales-detail-image-group { min-width: 0; }
+.sales-detail-image-group-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 28px; margin-bottom: 8px; border-bottom: 1px solid #dfe5ec; padding-bottom: 6px; }
+.sales-detail-image-group-head strong { color: #344054; font-size: 13px; font-weight: 800; }
+.sales-detail-image-group.rebuilt .sales-detail-image-group-head strong { color: var(--kind-rebuilt-fg); }
+.sales-detail-image-group.aftermarket_new .sales-detail-image-group-head strong { color: var(--kind-aftermarket-fg); }
+.sales-detail-image-group-head span { color: #8a93a3; font-size: 11px; white-space: nowrap; }
+.sales-detail-image-kind-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; min-width: 0; }
+.sales-detail-image-kind-grid.empty { display: block; }
+.sales-detail-image-empty { min-height: 80px; display: flex; align-items: center; justify-content: center; border: 1px dashed #d8dee8; color: #98a2b3; font-size: 12px; }
+.sales-detail-image-kind-grid .img-wrap { border: 1px solid #e5e9f0; }
 #screen-search #panel-footer {
   width: auto;
   margin-top: 12px !important;
@@ -4212,7 +4222,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .sales-detail-tab-panel { padding: 14px; }
   .sales-detail-component-entry { align-items: stretch; flex-direction: column; }
   .sales-detail-component-entry .btn-sm-edit { width: 100%; min-height: 36px; }
-  .sales-detail-image-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sales-detail-image-grid { grid-template-columns: minmax(0, 1fr); }
+  .sales-detail-image-kind-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #screen-search #img-grid { max-height: none; overflow: visible; }
   #screen-search .sales-detail-image-grid .img-wrap { width: 100%; height: auto; aspect-ratio: 1; flex: initial; }
 }

@@ -5047,7 +5047,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.723";
+var APP_VERSION       = "v1.1.724";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -26153,9 +26153,6 @@ function bindProductKindPanelActions() {
       renderProductKindWrapForCurrent();
       renderCoreReturnPolicyWrapForCurrent();
       updateSalesProductStatusBadges();
-      currentImages = [];
-      renderImagesLoading();
-      loadImages(null, detailSecondaryRequestSeq);
       if (canSeeSalesPrice()) loadDetailCustomerInfoForCurrent(detailSecondaryRequestSeq);
     };
   }
@@ -27811,6 +27808,7 @@ function openPanel(id, options) {
   currentProductSpecs = [];
   currentProductNominalSpec = null;
   currentProductVariants = [];
+  currentImages = [];
   for (var i=0;i<allProducts.length;i++) {
     if (parseInt(productDkdId(allProducts[i]), 10) === id) {
       currentProduct = allProducts[i];
@@ -28142,11 +28140,7 @@ function renderPanelStatic() {
     "</div>" +
     "<div id='price-table-wrap' data-dcats-inline-style='s-6aa34d7432e7'></div>";
   // 画像エリアをリセット（右カラムはpanel-rightに固定表示）
-  document.getElementById("img-grid").innerHTML = customerCanShowProductImages()
-    ? "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + t("img_loading") + "</div></div>"
-    : "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>-</div></div>";
-  document.getElementById("img-count").textContent = "";
-  if (customerCanShowProductImages()) renderCachedPanelThumbnail();
+  renderImagesLoading();
   document.getElementById("panel-scroll").scrollTop = 0;
   var detailScroll = document.querySelector("#screen-search .panel-left");
   if (detailScroll) detailScroll.scrollTop = 0;
@@ -28228,37 +28222,6 @@ async function ensureProductVariantsForCurrentDkd(dkdId) {
   productVariantSummaryMap[String(id)] = summary;
   productVariantSummaryCache[String(id)] = summary;
   return currentProductVariants;
-}
-
-function renderCachedPanelThumbnail() {
-  if (!customerCanShowProductImages()) return false;
-  if (!currentProduct) return false;
-  if (selectedProductKind() !== "rebuilt") return false;
-  var thumb = getProductImageThumbnail(currentProduct);
-  if (!thumb) return false;
-  var count = getProductImageCount(currentProduct);
-  var grid = document.getElementById("img-grid");
-  if (!grid) return false;
-  preloadThumbImage(thumb, { width: 240, height: 240, resize: "contain" });
-  updateSalesDetailTabCount("images", count);
-  grid.innerHTML = "<div class='img-wrap cached-panel-thumb'>" + thumbImgHtml(thumb, {
-    width: 240,
-    height: 240,
-    resize: "contain",
-    loading: "eager",
-    decoding: "sync",
-    fetchPriority: "high"
-  }) + "</div>";
-  return true;
-}
-
-function renderImagesLoading() {
-  var grid = document.getElementById("img-grid");
-  updateSalesDetailTabCount("images", null);
-  if (!grid) return;
-  grid.innerHTML = customerCanShowProductImages()
-    ? "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + t("img_loading") + "</div></div>"
-    : "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>-</div></div>";
 }
 
 function specNumberText(value, suffix) {
@@ -38276,6 +38239,58 @@ function renderProductionImages() {
   });
 }
 
+function salesImageKinds() {
+  return ["rebuilt", "aftermarket_new"];
+}
+
+function salesImageKindLabel(kind) {
+  return normalizeProductKind(kind) === "aftermarket_new"
+    ? t("customer_product_kind_new")
+    : t("product_kind_rebuilt");
+}
+
+function salesImagesForKind(kind) {
+  kind = normalizeProductKind(kind || "rebuilt");
+  return (currentImages || []).filter(function(img) {
+    return normalizeProductKind((img && img.product_kind) || "rebuilt") === kind;
+  });
+}
+
+function salesImageGroupHtml(kind, images, loading) {
+  images = images || [];
+  var body = "";
+  if (loading) {
+    body = "<div class='sales-detail-image-empty'>" + esc(t("img_loading")) + "</div>";
+  } else if (!images.length) {
+    body = "<div class='sales-detail-image-empty'>" + esc(t("img_none")) + "</div>";
+  } else {
+    body = images.map(function(img, i) {
+      return "<div class='img-wrap'>" + thumbImgHtml(img, {
+        width: 240,
+        height: 240,
+        resize: "contain",
+        loading: "eager",
+        decoding: "sync",
+        fetchPriority: i < 2 ? "high" : "auto"
+      }).replace("<img", "<img data-index='" + i + "' data-sales-image-kind='" + esc(kind) + "' data-url='" + esc(img.image_url) + "'") + "</div>";
+    }).join("");
+  }
+  return "<section class='sales-detail-image-group " + esc(productKindClass(kind)) + "'>" +
+    "<div class='sales-detail-image-group-head'><strong>" + esc(salesImageKindLabel(kind)) + "</strong>" +
+    "<span>" + (loading ? esc(t("img_loading")) : esc(String(images.length) + " 枚")) + "</span></div>" +
+    "<div class='sales-detail-image-kind-grid" + (!images.length ? " empty" : "") + "'>" + body + "</div>" +
+  "</section>";
+}
+
+function renderImagesLoading() {
+  var grid = document.getElementById("img-grid");
+  updateSalesDetailTabCount("images", null);
+  if (!grid) return;
+  grid.innerHTML = customerCanShowProductImages()
+    ? salesImageKinds().map(function(kind) { return salesImageGroupHtml(kind, [], true); }).join("")
+    : "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>-</div></div>";
+}
+
 async function loadImages(slPartIds, seq) {
   if (!customerCanShowProductImages()) {
     if (!isCurrentDetailLoad(seq)) return;
@@ -38290,8 +38305,7 @@ async function loadImages(slPartIds, seq) {
     renderImages();
     return;
   }
-  var kind = selectedProductKind();
-  var r = await fetchCoreProductImagesForContext(dkdId, kind, "sales");
+  var r = await fetchAllCoreProductImagesForContext(dkdId, "sales");
   if (r.error) {
     console.warn("product image lookup failed", r.error);
     if (!isCurrentDetailLoad(seq)) return;
@@ -38300,7 +38314,9 @@ async function loadImages(slPartIds, seq) {
     return;
   }
   if (!isCurrentDetailLoad(seq)) return;
-  currentImages = r.data || [];
+  currentImages = uniqueCoreProductImageRows(r.data || []).filter(function(img) {
+    return salesImageKinds().indexOf(normalizeProductKind((img && img.product_kind) || "rebuilt")) >= 0;
+  });
   preloadCurrentImageThumbnails(currentImages);
   renderImages();
 }
@@ -38309,24 +38325,9 @@ function renderImages() {
   var grid    = document.getElementById("img-grid");
   if (!grid) return;
   updateSalesDetailTabCount("images", currentImages.length);
-  if (currentImages.length === 0) {
-    grid.innerHTML = "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + t("img_none") + "</div></div>";
-    return;
-  }
-  var html = "";
-  currentImages.forEach(function(img, i) {
-    html += "<div class='img-wrap'>";
-    html += thumbImgHtml(img, {
-      width: 240,
-      height: 240,
-      resize: "contain",
-      loading: "eager",
-      decoding: "sync",
-      fetchPriority: i < 2 ? "high" : "auto"
-    }).replace("<img", "<img data-index='" + i + "' data-url='" + esc(img.image_url) + "'");
-    html += "</div>";
-  });
-  grid.innerHTML = html;
+  grid.innerHTML = salesImageKinds().map(function(kind) {
+    return salesImageGroupHtml(kind, salesImagesForKind(kind), false);
+  }).join("");
 }
 
 function fillImageKindSelect(select, selected) {
@@ -42064,7 +42065,10 @@ document.getElementById("production-list").addEventListener("click", async funct
 document.getElementById("overlay").addEventListener("click", closePanel);
 document.getElementById("panel-close-btn").addEventListener("click", closePanel);
 document.getElementById("panel").addEventListener("click", function(e){
-  var img=e.target.closest("img[data-index]"); if(img) openFullscreen(parseInt(img.dataset.index,10));
+  var img=e.target.closest("img[data-index]");
+  if(!img) return;
+  var kind=img.dataset.salesImageKind;
+  openFullscreen(parseInt(img.dataset.index,10), kind ? salesImagesForKind(kind) : null);
 });
 document.getElementById("btn-open-image-actions").addEventListener("click", openImageActionsDialog);
 document.getElementById("btn-image-actions-cancel").addEventListener("click", closeImageActionsDialog);
