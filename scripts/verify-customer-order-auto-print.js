@@ -82,10 +82,10 @@ if (!requeue.includes('sb.rpc("requeue_customer_order_print_jobs"') || !requeue.
 }
 
 for (const versionFragment of [
-  'content="v1.1.721"',
-  'styles.css?v=1.1.721',
-  'app.js?v=1.1.721',
-  'var APP_VERSION       = "v1.1.721"'
+  'content="v1.1.722"',
+  'styles.css?v=1.1.722',
+  'app.js?v=1.1.722',
+  'var APP_VERSION       = "v1.1.722"'
 ]) {
   const versionSource = versionFragment.startsWith("var ") ? source : html;
   if (!versionSource.includes(versionFragment)) throw new Error(`Release version is inconsistent: ${versionFragment}`);

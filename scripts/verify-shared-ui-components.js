@@ -56,7 +56,7 @@ function requireFragment(source, fragment, label) {
   [".production-card.selected { border-color: #e58a96; background: var(--dcats-brand-red-soft); box-shadow: inset 3px 0 0 var(--dcats-brand-red); }", "manufacturing selected state"],
   [".production-detail-title { font-size: var(--dcats-type-heading)", "manufacturing heading typography"],
   [".production-section { border: 1px solid var(--dcats-border); border-radius: var(--dcats-card-radius)", "manufacturing section geometry"],
-  ["#screen-production-search .production-detail { max-width: none; min-height: 0; padding-top: 8px; padding-bottom: 0; }", "manufacturing viewport-fit detail spacing"],
+  ["#screen-production-search .production-detail { max-width: none; min-height: 0; padding-top: 4px; padding-bottom: 0; }", "manufacturing viewport-fit detail spacing"],
   ["#screen-production-search .production-image-panel { margin-top: 5px; }", "manufacturing compact image spacing"],
   ["#screen-production-search .detail-spec-grid { grid-template-columns: 82px minmax(0, 1fr) 82px minmax(0, 1fr); }", "manufacturing compact specification grid"],
   ["#screen-production-search .production-core-section .core-qty-summary { grid-template-columns: repeat(3, minmax(0, 1fr));", "manufacturing compact stock summary"],
