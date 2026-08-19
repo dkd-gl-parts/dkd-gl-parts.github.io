@@ -5047,7 +5047,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.725";
+var APP_VERSION       = "v1.1.726";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -12858,6 +12858,7 @@ async function renderProductionDetail(row) {
   el.innerHTML = html;
   normalizeProductionDetailLayout(el, row, detail);
   currentProduct = row;
+  currentProductVariants = detail.productVariants.slice();
   currentCoreDkdShohinId = row.dkd_shohin_id || null;
   currentProductSpecs = [];
   currentProductNominalSpec = null;
@@ -38461,12 +38462,15 @@ async function openImageEditDialog(context) {
   if (error) error.textContent = "";
   if (list) list.innerHTML = "<div class='panel-right-empty'>" + esc(t("loading")) + "</div>";
   document.getElementById("image-edit-overlay").classList.add("show");
-  var r = await fetchAllCoreProductImagesForContext(dkdId, context);
+  var imageQueryContext = context === "production" ? "all" : context;
+  var r = await fetchAllCoreProductImagesForContext(dkdId, imageQueryContext);
   if (r.error) {
     if (list) list.innerHTML = "<div class='panel-right-empty'>" + esc(r.error.message || t("msg_kikan_err")) + "</div>";
     return;
   }
-  imageEditRows = r.data || [];
+  imageEditRows = uniqueCoreProductImageRows(r.data || []).filter(function(img) {
+    return imageProductKindOptions().indexOf(normalizeProductKind((img && img.product_kind) || "rebuilt")) >= 0;
+  });
   renderImageEditDialog();
 }
 
@@ -38580,18 +38584,10 @@ async function saveImageEditDialog() {
     var nextKind = normalizeProductKind((select && select.value) || img.product_kind || "rebuilt");
     var currentKind = normalizeProductKind(img.product_kind || "rebuilt");
     if (nextKind === currentKind) continue;
-    var payload = {
-      product_kind: nextKind,
-      product_variant_id: context === "sales" ? productVariantIdForKind(nextKind) : null,
-      image_origin: context,
-      show_in_sales: context === "sales",
-      show_in_production: context === "production"
-    };
-    if (context === "sales") {
-      payload.sl_part_id = currentSlPartIds && currentSlPartIds.length ? currentSlPartIds[0] : null;
-    } else {
-      payload.sl_part_id = null;
-    }
+    var payload = { product_kind: nextKind };
+    var imageOrigin = String(img.image_origin || "").toLowerCase();
+    var salesRegistration = imageOrigin === "sales" || img.show_in_sales === true || !!img.product_variant_id || !!img.sl_part_id;
+    if (salesRegistration) payload.product_variant_id = productVariantIdForKind(nextKind);
     var r = await sb.from("core_product_images").update(payload).eq("id", img.id);
     if (r.error) {
       if (error) error.textContent = r.error.message || t("msg_save_err");

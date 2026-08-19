@@ -63,6 +63,32 @@ if (!source.includes('selectedImageActionKind("production")') ||
   throw new Error("production image registration must remain separated by the selected product kind");
 }
 
+const editLoaderSource = sourceBetween("async function openImageEditDialog", "function closeImageEditDialog");
+[
+  'context === "production" ? "all" : context',
+  "uniqueCoreProductImageRows(r.data || [])",
+  "imageProductKindOptions().indexOf"
+].forEach((fragment) => {
+  if (!editLoaderSource.includes(fragment)) throw new Error(`production image editing must match displayed thumbnails: ${fragment}`);
+});
+
+const editSaveSource = sourceBetween("async function saveImageEditDialog", "async function deleteImageFromDialog");
+[
+  'var payload = { product_kind: nextKind }',
+  'imageOrigin === "sales"',
+  "img.show_in_sales === true",
+  "payload.product_variant_id = productVariantIdForKind(nextKind)"
+].forEach((fragment) => {
+  if (!editSaveSource.includes(fragment)) throw new Error(`image kind editing must preserve its registration context: ${fragment}`);
+});
+[
+  "image_origin: context",
+  'show_in_sales: context === "sales"',
+  'show_in_production: context === "production"'
+].forEach((fragment) => {
+  if (editSaveSource.includes(fragment)) throw new Error(`image kind editing must not overwrite visibility: ${fragment}`);
+});
+
 [
   ".production-image-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));",
   ".production-image-group.rebuilt .production-image-kind",
