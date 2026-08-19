@@ -92,11 +92,13 @@ if (statusBadgeSource.includes("core_charge_unset") || statusBadgeSource.include
 const panelSource = sourceBetween("function renderPanelStatic", "async function loadProductVariantsForCurrent");
 [
   'currentSelectedProductKind = "rebuilt"',
+  'updateSalesComponentTabCountForSelectedKind()',
   'renderSalesProductIdentity(p)',
   'renderCatalogVehicleSummaryHtml("", { showButton: false })',
   'loadDetailCustomerInfoForCurrent(detailSeq)',
   'loadEcMallPriceSummaryForCurrent(detailSeq)',
   'loadCatalogVehicleSummary(document.getElementById("panel-body"), p)',
+  'loadSalesComponentKindCountsForCurrent(detailSeq)',
   'loadKikanForCurrentProduct(detailSeq)'
 ].forEach((fragment) => {
   if (!panelSource.includes(fragment)) throw new Error(`sales detail data flow is missing: ${fragment}`);
@@ -105,12 +107,25 @@ const panelSource = sourceBetween("function renderPanelStatic", "async function 
 const kindSwitchSource = sourceBetween("function bindProductKindPanelActions", "async function fetchProductVariantSummaryMap");
 [
   "updateSalesProductStatusBadges()",
+  "updateSalesComponentTabCountForSelectedKind()",
   "loadDetailCustomerInfoForCurrent(detailSecondaryRequestSeq)"
 ].forEach((fragment) => {
   if (!kindSwitchSource.includes(fragment)) throw new Error(`product-kind switching is incomplete: ${fragment}`);
 });
 if (kindSwitchSource.includes("renderImagesLoading()") || kindSwitchSource.includes("loadImages(null, detailSecondaryRequestSeq)")) {
   throw new Error("product-kind switching must not hide or reload the combined rebuilt/new image tab");
+}
+
+const componentCountSource = sourceBetween("function updateSalesComponentTabCountForSelectedKind", "function activateSalesDetailTab");
+[
+  'productionComponentKindCount(currentProduct, selectedProductKind())',
+  'fetchProductionPartRegistrationCountMap([product])',
+  'productionComponentKindCountMap[key]'
+].forEach((fragment) => {
+  if (!componentCountSource.includes(fragment)) throw new Error(`sales component tab kind count is missing: ${fragment}`);
+});
+if (componentCountSource.includes("productComponentCount(")) {
+  throw new Error("sales component tab must not use the catalog-inclusive total count");
 }
 
 const salesImageSource = sourceBetween("function salesImageKinds", "function fillImageKindSelect");

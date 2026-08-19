@@ -5047,7 +5047,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.724";
+var APP_VERSION       = "v1.1.725";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -26153,6 +26153,7 @@ function bindProductKindPanelActions() {
       renderProductKindWrapForCurrent();
       renderCoreReturnPolicyWrapForCurrent();
       updateSalesProductStatusBadges();
+      updateSalesComponentTabCountForSelectedKind();
       if (canSeeSalesPrice()) loadDetailCustomerInfoForCurrent(detailSecondaryRequestSeq);
     };
   }
@@ -27962,6 +27963,23 @@ function updateSalesDetailTabCount(tab, count) {
   el.textContent = !isNaN(value) && value >= 0 ? String(value) : "";
 }
 
+function updateSalesComponentTabCountForSelectedKind() {
+  updateSalesDetailTabCount("components", productionComponentKindCount(currentProduct, selectedProductKind()));
+}
+
+async function loadSalesComponentKindCountsForCurrent(seq) {
+  if (!currentProduct || !canSeeComponentInfo()) return;
+  var product = currentProduct;
+  var key = productDkdId(product);
+  if (!key) return;
+  if (!Object.prototype.hasOwnProperty.call(productionComponentKindCountMap, key)) {
+    var counts = await fetchProductionPartRegistrationCountMap([product]);
+    if (seq !== detailSecondaryRequestSeq || !currentProduct || productDkdId(currentProduct) !== key) return;
+    productionComponentKindCountMap[key] = (counts.byKind && counts.byKind[key]) || { rebuilt: 0, aftermarket_new: 0 };
+  }
+  updateSalesComponentTabCountForSelectedKind();
+}
+
 function activateSalesDetailTab(tab) {
   var requested = String(tab || "basic");
   var button = document.querySelector("[data-sales-detail-tab='" + requested + "']");
@@ -28061,7 +28079,7 @@ function renderPanelStatic() {
   bindSalesDetailTabs();
   updateSalesDetailTabCount("vehicles", null);
   updateSalesDetailTabCount("compatible", null);
-  updateSalesDetailTabCount("components", productComponentCount(p));
+  updateSalesComponentTabCountForSelectedKind();
   updateSalesDetailTabCount("images", null);
   renderSalesProductIdentity(p);
   var vehicleTab = document.getElementById("detail-vehicle-tab-content");
@@ -28155,6 +28173,7 @@ function renderPanelStatic() {
     loadGltekPartNumberValue(document.getElementById("panel-body"), p),
     loadProductSpecsForCurrent(),
     loadProductVariantsForCurrent(detailSeq),
+    loadSalesComponentKindCountsForCurrent(detailSeq),
     loadSlPartsForProduct(p, detailSeq)
   ];
   if (canViewPriceResearchHistory()) detailLoads.push(loadEcMallPriceSummaryForCurrent(detailSeq));
@@ -28185,6 +28204,7 @@ async function loadProductVariantsForCurrent(seq) {
   }
   renderCoreReturnPolicyWrapForCurrent();
   updateSalesProductStatusBadges();
+  updateSalesComponentTabCountForSelectedKind();
   refreshSalesMobileStockSummary();
   render();
 }
