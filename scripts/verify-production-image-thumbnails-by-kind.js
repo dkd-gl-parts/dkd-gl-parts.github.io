@@ -15,6 +15,7 @@ function sourceBetween(startText, endText) {
 [
   'var productionImages  = { rebuilt: [], aftermarket_new: [] };',
   'class=\'production-image-groups\'',
+  'id=\'production-image-groups\'',
   'return ["rebuilt", "aftermarket_new"]',
   'id=\'production-image-count-',
   'id=\'production-image-strip-',
