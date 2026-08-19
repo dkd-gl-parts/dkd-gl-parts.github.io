@@ -37,6 +37,7 @@ on:
       - "scripts/verify-sales-detail-workspace.js"
       - "scripts/verify-product-shipping-estimate.js"
       - "scripts/verify-finished-product-shipments.js"
+      - "scripts/verify-production-image-thumbnails-by-kind.js"
       - "shipment-instruction-print.css"
       - "scripts/build-static-site.js"
       - "scripts/verify-purchase-multiple-links.js"
@@ -80,6 +81,7 @@ on:
       - "scripts/verify-sales-detail-workspace.js"
       - "scripts/verify-product-shipping-estimate.js"
       - "scripts/verify-finished-product-shipments.js"
+      - "scripts/verify-production-image-thumbnails-by-kind.js"
       - "shipment-instruction-print.css"
       - "scripts/build-static-site.js"
       - "scripts/verify-purchase-multiple-links.js"
@@ -155,6 +157,8 @@ jobs:
         run: node scripts/verify-product-shipping-estimate.js
       - name: Verify finished-product shipment layout and workflow
         run: node scripts/verify-finished-product-shipments.js
+      - name: Verify production image thumbnails by product kind
+        run: node scripts/verify-production-image-thumbnails-by-kind.js
       - name: Verify static deployment assets
         run: node scripts/build-static-site.js
       - name: Verify purchase multiple-link management

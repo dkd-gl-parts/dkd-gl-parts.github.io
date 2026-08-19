@@ -5035,7 +5035,7 @@ var parallelCandidateMap = {};
 var assemblyComponentRows = [];
 var editingComponentUsageId = null;
 var currentImages     = [];
-var productionImages  = [];
+var productionImages  = { rebuilt: [], aftermarket_new: [] };
 var imageEditRows = [];
 var imageEditFilterKind = "";
 var currentProductionImageKind = "rebuilt";
@@ -5047,7 +5047,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.715";
+var APP_VERSION       = "v1.1.716";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -12830,7 +12830,7 @@ async function renderProductionDetail(row) {
   if (canManageAllImages()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-image-actions'>" + esc(t("image_actions_title")) + "</button>";
   html += "</div></div>";
   html += "<div class='production-mobile-stock'>" + renderProductionCoreSummary(row, detail) + "</div>";
-  html += "<div class='production-image-panel'><div class='production-image-title'>" + esc(t("production_images_section")) + "</div><div class='production-image-count' id='production-image-count'>" + esc(t("production_images_loading")) + "</div><div class='production-image-strip' id='production-image-strip'><span class='production-image-empty'>" + esc(t("production_images_loading")) + "</span></div></div>";
+  html += "<div class='production-image-panel'><div class='production-image-title'>" + esc(t("production_images_section")) + "</div><div class='production-image-groups'>" + productionImageKinds().map(productionImageGroupShellHtml).join("") + "</div></div>";
   html += "<div class='production-grid'>";
   html += "<section class='production-section production-wide'><h3>" + esc(productCategoryLabel(row)) + "</h3>";
   html += renderProductMasterDetailHtml(row, componentButtonHtml);
@@ -38180,54 +38180,80 @@ async function copyProductionImagesToSales() {
 }
 
 async function loadProductionImagesForRow(row, seq) {
-  var countEl = document.getElementById("production-image-count");
-  var strip = document.getElementById("production-image-strip");
-  if (!row || !strip) return;
+  if (!row || !document.getElementById("production-image-groups")) return;
   var dkdId = parseInt(productDkdId(row), 10);
   if (isNaN(dkdId)) {
-    productionImages = [];
+    productionImages = emptyProductionImageGroups();
     renderProductionImages();
     return;
   }
-  var kind = normalizeProductKind(currentProductionImageKind || "rebuilt");
-  var r = await fetchCoreProductImagesForContext(dkdId, kind, "production");
+  var r = await fetchAllCoreProductImagesForContext(dkdId, "production");
   if (seq !== productionDetailRequestSeq) return;
   if (r.error) {
     console.warn("production image lookup failed", r.error);
-    productionImages = [];
-    if (countEl) countEl.textContent = "";
-    if (strip) strip.innerHTML = "<span class='production-image-empty'>" + esc(t("production_images_empty")) + "</span>";
+    productionImages = emptyProductionImageGroups();
+    renderProductionImages();
     return;
   }
-  productionImages = r.data || [];
-  preloadCurrentImageThumbnails(productionImages.slice(0, 8));
+  productionImages = emptyProductionImageGroups();
+  (r.data || []).forEach(function(img) {
+    var kind = normalizeProductKind(img && img.product_kind);
+    if (productionImages[kind]) productionImages[kind].push(img);
+  });
+  productionImageKinds().forEach(function(kind) {
+    preloadCurrentImageThumbnails(productionImages[kind].slice(0, 8));
+  });
   renderProductionImages();
 }
 
+function productionImageKinds() {
+  return ["rebuilt", "aftermarket_new"];
+}
+
+function emptyProductionImageGroups() {
+  return { rebuilt: [], aftermarket_new: [] };
+}
+
+function productionImageKindLabel(kind) {
+  return kind === "aftermarket_new" ? t("customer_product_kind_new") : t("product_kind_rebuilt");
+}
+
+function productionImageGroupShellHtml(kind) {
+  return "<section class='production-image-group " + esc(kind) + "'>" +
+    "<div class='production-image-group-head'><span class='production-image-kind'>" + esc(productionImageKindLabel(kind)) + "</span>" +
+    "<span class='production-image-count' id='production-image-count-" + esc(kind) + "'>" + esc(t("production_images_loading")) + "</span></div>" +
+    "<div class='production-image-strip' id='production-image-strip-" + esc(kind) + "'><span class='production-image-empty'>" + esc(t("production_images_loading")) + "</span></div>" +
+  "</section>";
+}
+
 function renderProductionImages() {
-  var strip = document.getElementById("production-image-strip");
-  var countEl = document.getElementById("production-image-count");
-  if (!strip) return;
-  if (countEl) countEl.textContent = productionImages.length ? (productionImages.length + " 枚") : "";
-  if (!productionImages.length) {
-    strip.classList.add("empty");
-    strip.innerHTML = "<span class='production-image-empty'>" + esc(t("production_images_empty")) + "</span>";
-    return;
-  }
-  strip.classList.remove("empty");
-  var shown = productionImages.slice(0, 8);
-  var html = shown.map(function(img, i) {
-    return "<button class='production-image-thumb' type='button' data-production-image-index='" + i + "'>" +
-      thumbImgHtml(img, { width: 96, height: 96, resize: "cover", loading: i < 3 ? "eager" : "lazy", fetchPriority: i < 2 ? "high" : "low" }) +
-    "</button>";
-  }).join("");
-  if (productionImages.length > shown.length) {
-    html += "<span class='production-image-more'>" + esc(tf("production_images_more", { n: productionImages.length - shown.length })) + "</span>";
-  }
-  strip.innerHTML = html;
-  strip.querySelectorAll("[data-production-image-index]").forEach(function(btn) {
-    btn.addEventListener("click", function() {
-      openFullscreen(parseInt(btn.dataset.productionImageIndex, 10), productionImages);
+  productionImageKinds().forEach(function(kind) {
+    var strip = document.getElementById("production-image-strip-" + kind);
+    var countEl = document.getElementById("production-image-count-" + kind);
+    if (!strip) return;
+    var images = productionImages[kind] || [];
+    if (countEl) countEl.textContent = images.length + " 枚";
+    if (!images.length) {
+      strip.classList.add("empty");
+      strip.innerHTML = "<span class='production-image-empty'>" + esc(t("production_images_empty")) + "</span>";
+      return;
+    }
+    strip.classList.remove("empty");
+    var shown = images.slice(0, 8);
+    var html = shown.map(function(img, i) {
+      return "<button class='production-image-thumb' type='button' data-production-image-kind='" + esc(kind) + "' data-production-image-index='" + i + "' aria-label='" + esc(productionImageKindLabel(kind) + " " + (i + 1)) + "'>" +
+        thumbImgHtml(img, { width: 96, height: 96, resize: "cover", loading: i < 3 ? "eager" : "lazy", fetchPriority: i < 2 ? "high" : "low" }) +
+      "</button>";
+    }).join("");
+    if (images.length > shown.length) {
+      html += "<span class='production-image-more'>" + esc(tf("production_images_more", { n: images.length - shown.length })) + "</span>";
+    }
+    strip.innerHTML = html;
+    strip.querySelectorAll("[data-production-image-index]").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        var selectedKind = normalizeProductKind(btn.dataset.productionImageKind);
+        openFullscreen(parseInt(btn.dataset.productionImageIndex, 10), productionImages[selectedKind] || []);
+      });
     });
   });
 }

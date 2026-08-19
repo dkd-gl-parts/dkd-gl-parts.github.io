@@ -4273,10 +4273,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .production-detail-title { font-size: var(--dcats-type-heading); font-weight: 800; color: var(--dcats-ink); }
 .production-detail-sub { font-size: var(--dcats-type-supporting); color: #7c8492; margin-top: var(--dcats-space-1); }
 .production-actions { display: flex; gap: var(--dcats-space-2); flex-wrap: wrap; justify-content: flex-end; }
-.production-image-panel { margin-top: 9px; max-width: 560px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 8px; align-items: center; }
+.production-image-panel { margin-top: 9px; max-width: 720px; }
 .production-image-title { font-size: var(--dcats-type-supporting); font-weight: 700; color: #667085; white-space: nowrap; }
+.production-image-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 5px; }
+.production-image-group { min-width: 0; padding-top: 6px; border-top: 1px solid #e4e8ef; }
+.production-image-group-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 20px; }
+.production-image-kind { font-size: var(--dcats-type-supporting); font-weight: 800; color: #344054; white-space: nowrap; }
+.production-image-group.rebuilt .production-image-kind { color: #1f6b3b; }
+.production-image-group.aftermarket_new .production-image-kind { color: #245ea8; }
 .production-image-count { font-size: var(--dcats-type-supporting); color: #8a93a3; min-width: 0; }
-.production-image-strip { grid-column: 1 / -1; display: flex; gap: 6px; overflow-x: auto; min-height: 48px; padding: 1px 0 2px; }
+.production-image-strip { display: flex; gap: 6px; overflow-x: auto; min-height: 48px; padding: 3px 0 2px; }
 .production-image-strip.empty { min-height: 24px; }
 .production-image-thumb { flex: 0 0 46px; width: 46px; height: 46px; border: 1px solid #dbe3ef; border-radius: 6px; background: #f8fafc; padding: 0; overflow: hidden; cursor: pointer; }
 .production-image-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -4712,6 +4718,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .production-detail-head { flex-direction: column; }
   .production-actions { justify-content: flex-start; }
   .production-image-panel { max-width: 100%; width: 100%; }
+  .production-image-groups { grid-template-columns: 1fr; gap: 7px; }
   .production-mobile-stock { display: block; margin-bottom: 10px; }
   .production-mobile-stock .core-qty-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 0; }
   .production-mobile-stock .core-qty-card { padding: 8px 7px; }
