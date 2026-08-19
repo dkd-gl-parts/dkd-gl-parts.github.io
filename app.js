@@ -5047,7 +5047,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.726";
+var APP_VERSION       = "v1.1.727";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -25891,9 +25891,9 @@ function renderResultBadgeSlots(options) {
   var kikanHtml = options.hasKikan ? "<span class='badge-kikan' title='" + esc(t("kikan_section")) + "'>&#x1F504;</span>" : "";
   var imageHtml = "";
   if (imageCount > 0) {
-    imageHtml = "<span class='badge-img'>&#x1F4F7;" + esc(String(imageCount)) + "</span>";
+    imageHtml = "<span class='badge-img'><span class='icon-image' aria-hidden='true'></span>" + esc(String(imageCount)) + "</span>";
   } else if (options.showEmptyImageBadge) {
-    imageHtml = "<span class='badge-img no-image'>&#x1F5BC; " + esc(t("image_none_short")) + "</span>";
+    imageHtml = "<span class='badge-img no-image'><span class='icon-image' aria-hidden='true'></span>" + esc(t("image_none_short")) + "</span>";
   }
   if (options.hideWhenEmpty && !catalogHtml && !slHtml && !kikanHtml && !imageHtml) return "";
   return "<div class='" + esc(cls) + " badge-slot-list'>" +
@@ -27729,7 +27729,7 @@ function render() {
     var cardLabel = [cardPartNumber, productCategoryLabel(p)].filter(Boolean).join(" / ");
     html += "<div class='card"+sel+"' role='button' tabindex='0' aria-label='"+esc(cardLabel)+"' data-id='"+p.id+"' data-result-index='"+idx+"'><div class='card-top'>";
     html += "<div class='card-media'>";
-    html += "<div class='card-thumb card-thumb-icon " + (cnt > 0 ? "has-image" : "no-image") + "'>&#x1F5BC;<span>" + esc(cnt > 0 ? t("image_has") : t("image_none_short")) + "</span></div>";
+    html += "<div class='card-thumb card-thumb-icon " + (cnt > 0 ? "has-image" : "no-image") + "'><span class='icon-image' aria-hidden='true'></span><span class='card-thumb-icon-label'>" + esc(cnt > 0 ? t("image_has") : t("image_none_short")) + "</span></div>";
     if (hasCatalogSpec) html += "<div class='card-media-catalog'><span class='badge-catalog'>" + esc(t("product_kind_catalog_spec")) + "</span></div>";
     html += "</div>";
     html += "<div class='card-left'>";
@@ -38309,7 +38309,7 @@ function renderImagesLoading() {
   if (!grid) return;
   grid.innerHTML = customerCanShowProductImages()
     ? salesImageKinds().map(function(kind) { return salesImageGroupHtml(kind, [], true); }).join("")
-    : "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>-</div></div>";
+    : "<div class='panel-right-empty'><div class='empty-icon'><span class='icon-image' aria-hidden='true'></span></div><div>-</div></div>";
 }
 
 async function loadImages(slPartIds, seq) {
@@ -38427,7 +38427,7 @@ function renderImageDeleteDialog() {
   if (bulkBtn) bulkBtn.disabled = !rows.length;
   if (!list) return;
   if (!rows.length) {
-    list.innerHTML = "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + t("img_none") + "</div></div>";
+    list.innerHTML = "<div class='panel-right-empty'><div class='empty-icon'><span class='icon-image' aria-hidden='true'></span></div><div>" + t("img_none") + "</div></div>";
     return;
   }
   var html = "";
@@ -38525,12 +38525,12 @@ function renderImageEditDialog() {
   if (!list) return;
   bindImageEditToolbar();
   if (!imageEditRows.length) {
-    list.innerHTML = "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + esc(t("img_none")) + "</div></div>";
+    list.innerHTML = "<div class='panel-right-empty'><div class='empty-icon'><span class='icon-image' aria-hidden='true'></span></div><div>" + esc(t("img_none")) + "</div></div>";
     return;
   }
   var rows = imageEditVisibleRows();
   if (!rows.length) {
-    list.innerHTML = "<div class='panel-right-empty'><div class='empty-icon'>&#x1F5BC;</div><div>" + esc(t("img_none")) + "</div></div>";
+    list.innerHTML = "<div class='panel-right-empty'><div class='empty-icon'><span class='icon-image' aria-hidden='true'></span></div><div>" + esc(t("img_none")) + "</div></div>";
     return;
   }
   list.innerHTML = rows.map(function(item) {

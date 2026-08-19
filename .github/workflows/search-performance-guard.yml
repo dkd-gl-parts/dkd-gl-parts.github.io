@@ -38,6 +38,8 @@ on:
       - "scripts/verify-product-shipping-estimate.js"
       - "scripts/verify-finished-product-shipments.js"
       - "scripts/verify-production-image-thumbnails-by-kind.js"
+      - "scripts/verify-image-icon-consistency.js"
+      - "assets/icons/image.svg"
       - "shipment-instruction-print.css"
       - "scripts/build-static-site.js"
       - "scripts/verify-purchase-multiple-links.js"
@@ -82,6 +84,8 @@ on:
       - "scripts/verify-product-shipping-estimate.js"
       - "scripts/verify-finished-product-shipments.js"
       - "scripts/verify-production-image-thumbnails-by-kind.js"
+      - "scripts/verify-image-icon-consistency.js"
+      - "assets/icons/image.svg"
       - "shipment-instruction-print.css"
       - "scripts/build-static-site.js"
       - "scripts/verify-purchase-multiple-links.js"
@@ -159,6 +163,8 @@ jobs:
         run: node scripts/verify-finished-product-shipments.js
       - name: Verify production image thumbnails by product kind
         run: node scripts/verify-production-image-thumbnails-by-kind.js
+      - name: Verify shared image icon consistency
+        run: node scripts/verify-image-icon-consistency.js
       - name: Verify static deployment assets
         run: node scripts/build-static-site.js
       - name: Verify purchase multiple-link management
