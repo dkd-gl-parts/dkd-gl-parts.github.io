@@ -26,14 +26,27 @@ function sourceBetween(startText, endText) {
 });
 
 const loaderSource = sourceBetween("async function loadProductionImagesForRow", "function productionImageKinds");
-if (!loaderSource.includes('fetchAllCoreProductImagesForContext(dkdId, "production")')) {
-  throw new Error("production thumbnails must be loaded in one request for both product kinds");
+if (!loaderSource.includes('fetchAllCoreProductImagesForContext(dkdId, "all")')) {
+  throw new Error("production thumbnails must include sales and production image registrations");
 }
 if (loaderSource.includes("fetchCoreProductImagesForContext")) {
   throw new Error("production thumbnail loading must not issue one request per selected product kind");
 }
 if (!loaderSource.includes("productionImages[kind].push(img)")) {
   throw new Error("production images must be grouped by their stored product kind");
+}
+if (!loaderSource.includes("uniqueCoreProductImageRows(r.data || [])")) {
+  throw new Error("production thumbnails must not duplicate copied image registrations");
+}
+
+const auxiliarySource = sourceBetween("async function loadProductionAuxiliaryData", "function productionMatchesQuery");
+if (!auxiliarySource.includes('fetchProductImageCountMapForContext(products, "all")') ||
+    !auxiliarySource.includes('applyProductImageCountMapForContext(products, fast[4] || {}, "production")')) {
+  throw new Error("production image badges must count all product images while retaining the production cache");
+}
+
+if (!source.includes("function coreProductImageIdentity") || !source.includes("function uniqueCoreProductImageRows")) {
+  throw new Error("shared production image identity helpers are missing");
 }
 
 const rendererSource = sourceBetween("function renderProductionImages", "async function loadImages");

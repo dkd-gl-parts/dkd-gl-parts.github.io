@@ -5047,7 +5047,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.717";
+var APP_VERSION       = "v1.1.718";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -11897,7 +11897,7 @@ async function loadProductionAuxiliaryData(products, options) {
     fetchCoreStockQtyMap(products),
     fetchProductVariantSummaryMap(products),
     fetchProductSearchCardFlags(products),
-    fetchProductImageCountMapForContext(products, "production")
+    fetchProductImageCountMapForContext(products, "all")
   ]);
   if (auxSeq !== productionAuxRequestSeq) return;
   var componentCounts = fast[0] || {};
@@ -26251,6 +26251,7 @@ function getProductImageThumbnail(p) {
 async function fetchProductImageCountMapForContext(products, context) {
   var ids = productSearchCardDkdIds(products || []);
   var result = { counts: {}, thumbnails: {} };
+  var seenImages = {};
   if (!ids.length) return result;
   for (var i = 0; i < ids.length; i += 200) {
     var chunk = ids.slice(i, i + 200);
@@ -26274,11 +26275,14 @@ async function fetchProductImageCountMapForContext(products, context) {
       continue;
     }
     (r.data || []).forEach(function(img) {
-      if (!img || !img.dkd_shohin_id || !img.image_url) return;
+      if (!img || !img.dkd_shohin_id || (!img.image_url && !img.storage_path)) return;
       var kind = normalizeProductKind(img.product_kind || "rebuilt");
       if (img.product_kind && imageProductKindOptions().indexOf(kind) < 0) return;
       if (!imageContextMatches(img, context)) return;
       var key = "dkd:" + String(img.dkd_shohin_id);
+      var identity = key + "|" + coreProductImageIdentity(img);
+      if (seenImages[identity]) return;
+      seenImages[identity] = true;
       result.counts[key] = (result.counts[key] || 0) + 1;
       if (!result.thumbnails[key]) result.thumbnails[key] = img.storage_path || img.image_url;
     });
@@ -37918,6 +37922,23 @@ function isLegacyImageFallbackRow(row) {
   return !row.product_kind && !origin && row.show_in_sales == null && row.show_in_production == null;
 }
 
+function coreProductImageIdentity(row) {
+  row = row || {};
+  var kind = normalizeProductKind(row.product_kind || "rebuilt");
+  var asset = String(row.storage_path || row.image_url || row.id || "");
+  return kind + "|" + asset;
+}
+
+function uniqueCoreProductImageRows(rows) {
+  var seen = {};
+  return (rows || []).filter(function(row) {
+    var key = coreProductImageIdentity(row);
+    if (seen[key]) return false;
+    seen[key] = true;
+    return true;
+  });
+}
+
 function chooseImageRowsForContext(rows, kind, context) {
   rows = rows || [];
   var exactRows = rows.filter(function(row) {
@@ -38187,7 +38208,7 @@ async function loadProductionImagesForRow(row, seq) {
     renderProductionImages();
     return;
   }
-  var r = await fetchAllCoreProductImagesForContext(dkdId, "production");
+  var r = await fetchAllCoreProductImagesForContext(dkdId, "all");
   if (seq !== productionDetailRequestSeq) return;
   if (r.error) {
     console.warn("production image lookup failed", r.error);
@@ -38196,7 +38217,7 @@ async function loadProductionImagesForRow(row, seq) {
     return;
   }
   productionImages = emptyProductionImageGroups();
-  (r.data || []).forEach(function(img) {
+  uniqueCoreProductImageRows(r.data || []).forEach(function(img) {
     var kind = normalizeProductKind(img && img.product_kind);
     if (productionImages[kind]) productionImages[kind].push(img);
   });
