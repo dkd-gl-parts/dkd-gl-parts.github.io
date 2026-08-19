@@ -84,6 +84,11 @@ if (!primaryPartSource.includes("product.genuine_part_number || product.genuine_
   throw new Error("the genuine part number must remain the primary product heading");
 }
 
+const statusBadgeSource = sourceBetween("function updateSalesProductStatusBadges", "function renderSalesProductIdentity");
+if (statusBadgeSource.includes("core_charge_unset") || statusBadgeSource.includes("sales-status-badge warning")) {
+  throw new Error("sales product status must not show a core-charge-unset warning badge");
+}
+
 const panelSource = sourceBetween("function renderPanelStatic", "async function loadProductVariantsForCurrent");
 [
   'currentSelectedProductKind = "rebuilt"',

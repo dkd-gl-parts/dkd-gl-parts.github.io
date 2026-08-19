@@ -5047,7 +5047,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.722";
+var APP_VERSION       = "v1.1.723";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -28032,9 +28032,6 @@ function updateSalesProductStatusBadges() {
     html += "<span class='sales-status-badge stock " + stockClass + "'>" + esc(t("product_kind_stock_qty")) + " " + esc(stock.known ? String(stock.qty) : "-") + "</span>";
   }
   html += "<span class='sales-status-badge core " + (policy.required ? "required" : "not-required") + "'>" + esc(policy.required ? t("core_return_required") : t("core_return_not_required")) + "</span>";
-  if (policy.required && !policy.hasProductCharge) {
-    html += "<span class='sales-status-badge warning'>" + esc(t("core_charge_unset")) + "</span>";
-  }
   wrap.innerHTML = html;
 }
 
