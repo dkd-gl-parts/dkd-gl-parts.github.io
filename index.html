@@ -659,7 +659,7 @@
     </section>
     <section class="sales-order-auto-print" id="sales-order-auto-print">
       <div class="sales-order-auto-print-heading">
-        <strong>受付時の自動印刷</strong>
+        <strong>受注帳票の自動印刷</strong>
         <span class="sales-order-auto-print-state" id="sales-order-auto-print-state">確認中</span>
       </div>
       <button type="button" class="sales-order-print-settings-button" id="sales-order-print-settings-open">印刷設定</button>
@@ -679,7 +679,7 @@
 <div class="form-overlay" id="sales-order-print-settings-overlay" role="dialog" aria-modal="true" aria-labelledby="sales-order-print-settings-title">
   <div class="form-card sales-order-print-settings-card">
     <div class="sales-order-print-settings-heading">
-      <div><span>PRINT SETTINGS</span><h3 id="sales-order-print-settings-title">受注自動印刷設定</h3><p>注文を受付した時に出荷指示書を印刷待ちへ登録します。コア返却対象ではコア返却シートも印刷します。</p></div>
+      <div><span>PRINT SETTINGS</span><h3 id="sales-order-print-settings-title">受注自動印刷設定</h3><p>受付時はA4出荷指示書だけを印刷します。B2発行済データ取込時にA5コア返却シート（対象注文のみ）と保証書を印刷します。</p></div>
       <button type="button" id="sales-order-print-settings-close" aria-label="閉じる">&#10005;</button>
     </div>
     <div class="sales-order-print-settings-current" id="sales-order-print-settings-current" aria-live="polite"></div>
@@ -690,7 +690,7 @@
     </div>
     <div class="sales-order-auto-print-message" id="sales-order-auto-print-message" aria-live="polite"></div>
     <div class="sales-order-print-settings-launch-row">
-      <div><strong>このPCのプリンター</strong><p>Windowsに登録されている物理A4プリンターから選択します。</p></div>
+      <div><strong>このPCのプリンター</strong><p>Windowsに登録されているA4/A5対応の物理プリンターから選択します。</p></div>
       <a href="dcats-print-settings://open" id="sales-order-print-settings-launch">プリンターを変更</a>
     </div>
     <div class="sales-order-print-settings-message" id="sales-order-print-settings-message" aria-live="polite"></div>
