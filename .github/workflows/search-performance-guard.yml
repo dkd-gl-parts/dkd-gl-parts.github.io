@@ -2,51 +2,8 @@ name: Search performance guard
 
 on:
   push:
-    paths:
-      - "index.html"
-      - "app.js"
-      - "styles.css"
-      - "scripts/verify-app-version-assets.js"
-      - "scripts/verify-shared-ui-components.js"
-      - "scripts/verify-search-workload-guard.js"
-      - "scripts/verify-component-catalog-recovery.js"
-      - "scripts/verify-component-manual-add.js"
-      - "scripts/verify-component-reverse-lookup.js"
-      - "scripts/verify-ec-mall-result-performance.js"
-      - "scripts/verify-ec-mall-seller-review.js"
-      - "scripts/verify-customer-catalog-detail.js"
-      - "scripts/verify-customer-category-visibility.js"
-      - "scripts/verify-customer-price-list.js"
-      - "scripts/verify-customer-order-workflow.js"
-      - "scripts/verify-customer-order-delivery-service.js"
-      - "scripts/verify-customer-order-b2-import.js"
-      - "scripts/verify-customer-order-auto-print.js"
-      - "scripts/verify-customer-order-batch-accept.js"
-      - "scripts/verify-customer-order-in-house-cancel.js"
-      - "scripts/verify-postal-data.js"
-      - "scripts/verify-postal-lookup-fallback.js"
-      - "scripts/update-postal-data.js"
-      - "assets/postal/**"
-      - "docs/customer-order-b2-manual-contract.md"
-      - "customer-price-list-print.css"
-      - "scripts/verify-manufacturing-cost-candidate-status.js"
-      - "scripts/verify-manufacturing-cost-snapshot-status.js"
-      - "scripts/verify-manufacturing-cost-target-removal.js"
-      - "scripts/verify-sales-pricing-manufacturing-cost.js"
-      - "scripts/verify-core-return-policy.js"
-      - "scripts/verify-sales-detail-workspace.js"
-      - "scripts/verify-product-shipping-estimate.js"
-      - "scripts/verify-finished-product-shipments.js"
-      - "scripts/verify-production-image-thumbnails-by-kind.js"
-      - "scripts/verify-image-icon-consistency.js"
-      - "assets/icons/image.svg"
-      - "shipment-instruction-print.css"
-      - "scripts/build-static-site.js"
-      - "scripts/verify-purchase-multiple-links.js"
-      - "manufacturing-ranking-report.js"
-      - "scripts/verify-manufacturing-ranking-performance.js"
-      - "scripts/verify-manufacturing-ranking-suppliers.js"
-      - ".github/workflows/search-performance-guard.yml"
+    branches:
+      - main
   pull_request:
     paths:
       - "index.html"
@@ -98,6 +55,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: frontend-release-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify-search-workload:
     runs-on: ubuntu-latest
@@ -105,6 +66,10 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Check JavaScript syntax
         run: node --check app.js
       - name: Verify release asset versions
@@ -167,6 +132,8 @@ jobs:
         run: node scripts/verify-image-icon-consistency.js
       - name: Verify static deployment assets
         run: node scripts/build-static-site.js
+      - name: Verify security response headers
+        run: node scripts/verify-security-response-headers.js dist
       - name: Verify purchase multiple-link management
         run: node scripts/verify-purchase-multiple-links.js
       - name: Verify manufacturing ranking performance
@@ -175,3 +142,44 @@ jobs:
         run: node scripts/verify-manufacturing-ranking-suppliers.js
       - name: Verify mobile label printer routing
         run: node scripts/verify-finished-label-mobile-print.js
+
+  deploy-cloudflare-pages:
+    name: Deploy verified frontend to Cloudflare Pages
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: verify-search-workload
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      deployments: write
+    environment:
+      name: production
+      url: https://dcats.daiko-denki.co.jp
+    steps:
+      - name: Check out verified commit
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Confirm Cloudflare credentials
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "CLOUDFLARE_API_TOKEN is not configured." >&2; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "CLOUDFLARE_ACCOUNT_ID is not configured." >&2; exit 1; }
+      - name: Build static deployment
+        run: node scripts/build-static-site.js
+      - name: Verify security response headers
+        run: node scripts/verify-security-response-headers.js dist
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4.124.0"
+          command: pages deploy dist --project-name=dcats --branch=main --commit-hash=${{ github.sha }} --commit-dirty=false
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
