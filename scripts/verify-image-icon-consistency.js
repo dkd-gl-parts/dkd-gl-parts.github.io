@@ -23,7 +23,7 @@ if ((combined.match(/class=['\"]icon-image['\"]/g) || []).length < 8) {
   throw new Error("Shared image icon is not used in every image state");
 }
 if (!css.includes('.icon-image { display: inline-block;') ||
-    !css.includes('mask: url("assets/icons/image.svg?v=1.1.733")')) {
+    !css.includes('mask: url("assets/icons/image.svg?v=1.1.734")')) {
   throw new Error("Shared image icon styling or cache version is missing");
 }
 if (!icon.includes('viewBox="0 0 24 24"') || !icon.includes('<circle cx="9" cy="9" r="2"/>')) {

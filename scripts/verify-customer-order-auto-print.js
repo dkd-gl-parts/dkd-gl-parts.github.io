@@ -40,9 +40,11 @@ const saveSettings = sourceBetween("async function saveSalesOrderPrintSettings",
 for (const fragment of [
   "canManageSharedSettings()",
   'station.state !== "ready"',
+  "var targetAutoPrintEnabled = enabledInput.checked",
+  "var targetStationCode = stationSelect.value || null",
   'sb.rpc("update_customer_order_print_settings"',
-  "target_auto_print_enabled",
-  "target_station_code"
+  "target_auto_print_enabled: targetAutoPrintEnabled",
+  "target_station_code: targetStationCode"
 ]) {
   if (!saveSettings.includes(fragment)) throw new Error(`Auto-print save guard is missing: ${fragment}`);
 }
@@ -82,10 +84,10 @@ if (!requeue.includes('sb.rpc("requeue_customer_order_print_jobs"') || !requeue.
 }
 
 for (const versionFragment of [
-  'content="v1.1.733"',
-  'styles.css?v=1.1.733',
-  'app.js?v=1.1.733',
-  'var APP_VERSION       = "v1.1.733"'
+  'content="v1.1.734"',
+  'styles.css?v=1.1.734',
+  'app.js?v=1.1.734',
+  'var APP_VERSION       = "v1.1.734"'
 ]) {
   const versionSource = versionFragment.startsWith("var ") ? source : html;
   if (!versionSource.includes(versionFragment)) throw new Error(`Release version is inconsistent: ${versionFragment}`);

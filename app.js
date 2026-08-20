@@ -5050,7 +5050,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.733";
+var APP_VERSION       = "v1.1.734";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -9771,9 +9771,11 @@ async function saveSalesOrderPrintSettings() {
   var stationSelect = document.getElementById("sales-order-auto-print-station");
   var enabledInput = document.getElementById("sales-order-auto-print-enabled");
   if (!stationSelect || !enabledInput) return;
-  if (enabledInput.checked) {
+  var targetAutoPrintEnabled = enabledInput.checked;
+  var targetStationCode = stationSelect.value || null;
+  if (targetAutoPrintEnabled) {
     var station = (salesOrderPrintSettings && Array.isArray(salesOrderPrintSettings.stations))
-      ? salesOrderPrintSettings.stations.find(function(row) { return row.station_code === stationSelect.value; })
+      ? salesOrderPrintSettings.stations.find(function(row) { return row.station_code === targetStationCode; })
       : null;
     if (!station || station.state !== "ready") {
       setSalesOrderPrintSettingsMessage("接続中の印刷端末を選択してください。", true);
@@ -9784,8 +9786,8 @@ async function saveSalesOrderPrintSettings() {
   renderSalesOrderPrintSettings();
   setSalesOrderPrintSettingsMessage("自動印刷設定を保存しています。", false);
   var result = await sb.rpc("update_customer_order_print_settings", {
-    target_auto_print_enabled: enabledInput.checked,
-    target_station_code: stationSelect.value || null
+    target_auto_print_enabled: targetAutoPrintEnabled,
+    target_station_code: targetStationCode
   });
   salesOrderPrintSettingsSaving = false;
   if (result.error) {
