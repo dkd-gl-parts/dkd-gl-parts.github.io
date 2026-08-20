@@ -5047,7 +5047,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.731";
+var APP_VERSION       = "v1.1.732";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -24482,21 +24482,36 @@ var kikanFormGroupId = null;
 var kikanSelectedParts = [];
 var kikanExistingParts = [];
 var kikanExistingMemberIdSet = {};
+var kikanMgmtKeyword = "";
+var kikanMgmtLoadSeq = 0;
 
 async function enterKikanMgmt() {
   if (!canManageCompatibility()) { alert(t("err_perm")); return; }
   showScreen("kikan-mgmt");
   var nameEl = document.getElementById("kikan-mgmt-username");
   if (nameEl) nameEl.textContent = userProfile.name || userProfile.email.split("@")[0];
+  var searchEl = document.getElementById("kikan-mgmt-search");
+  kikanMgmtKeyword = "";
+  if (searchEl) searchEl.value = "";
   var newBtn = document.getElementById("btn-new-kikan-group");
   if (newBtn) setCspStyle(newBtn, "display", canEditCompatibility() ? "" : "none");
   await loadKikanMgmt();
 }
 
+function searchKikanMgmt() {
+  var searchEl = document.getElementById("kikan-mgmt-search");
+  kikanMgmtKeyword = normalizeAsciiWidth(searchEl ? searchEl.value : "").trim();
+  return loadKikanMgmt();
+}
+
 async function loadKikanMgmt() {
-  var q = document.getElementById("kikan-mgmt-search").value.trim();
+  var loadSeq = ++kikanMgmtLoadSeq;
+  var q = kikanMgmtKeyword;
+  var kikanListEl = document.getElementById("kikan-mgmt-list");
+  if (kikanListEl) kikanListEl.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
   // 一覧は登録済み品番を正とし、空の親グループだけが見える状態を避ける。
   var groupRows = await sb.from("kikan_group_members").select("kikan_group_id").order("kikan_group_id").limit(5000);
+  if (loadSeq !== kikanMgmtLoadSeq) return;
   if (groupRows.error) {
     var kikanListErrEl = document.getElementById("kikan-mgmt-list");
     if (kikanListErrEl) kikanListErrEl.innerHTML = "<div class='empty'>" + esc(groupRows.error.message || t("msg_kikan_err")) + "</div>";
@@ -24514,6 +24529,7 @@ async function loadKikanMgmt() {
 
   if (!isDaikoGroup()) {
     var visibleDkdIds = await fetchActiveSlLinkedDkdIds(10000);
+    if (loadSeq !== kikanMgmtLoadSeq) return;
     visibleShohinCdSet = {};
     visibleDkdIds.forEach(function(id) {
       if (id != null) visibleShohinCdSet[String(id)] = true;
@@ -24526,10 +24542,12 @@ async function loadKikanMgmt() {
     if (/^\d+$/.test(qAscii)) {
       var qNum = parseInt(qAscii, 10);
       var rm = await sb.from("kikan_group_members").select("kikan_group_id").eq("dkd_gokan_id", qNum);
+      if (loadSeq !== kikanMgmtLoadSeq) return;
       (rm.data || []).forEach(function(m){ groupIdSet[String(m.kikan_group_id)] = true; });
       if (baseGroupSet[String(qNum)]) groupIdSet[String(qNum)] = true;
     }
     var productMatches = await fetchCoreProductMasterMatches(qAscii, "", 50);
+    if (loadSeq !== kikanMgmtLoadSeq) return;
     var matchIds = ((productMatches && productMatches.data) || []).map(function(p) {
       return parseInt(productDkdId(p), 10);
     }).filter(function(id) {
@@ -24538,6 +24556,7 @@ async function loadKikanMgmt() {
     matchIds = Array.from(new Set(matchIds));
     if (matchIds.length) {
       var rmByPart = await sb.from("kikan_group_members").select("kikan_group_id").in("dkd_gokan_id", matchIds);
+      if (loadSeq !== kikanMgmtLoadSeq) return;
       (rmByPart.data || []).forEach(function(m){ groupIdSet[String(m.kikan_group_id)] = true; });
     }
     groups = Object.keys(groupIdSet).map(function(gid) { return { kikan_group_id: parseInt(gid, 10) }; })
@@ -24551,6 +24570,7 @@ async function loadKikanMgmt() {
       groups = [];
     } else {
       var rg = await sb.from("kikan_group_members").select("kikan_group_id").in("dkd_gokan_id", visibleShohinCds);
+      if (loadSeq !== kikanMgmtLoadSeq) return;
       var visibleGroupSet = {};
       (rg.data || []).forEach(function(m) { visibleGroupSet[String(m.kikan_group_id)] = true; });
       groups = groups.filter(function(g) { return visibleGroupSet[String(g.kikan_group_id)]; });
@@ -24566,6 +24586,7 @@ async function loadKikanMgmt() {
   for (var i = 0; i < groups.length; i++) {
     var gid   = groups[i].kikan_group_id;
     var rm    = await sb.from("kikan_group_members").select("dkd_gokan_id, shohin_cd").eq("kikan_group_id", gid);
+    if (loadSeq !== kikanMgmtLoadSeq) return;
     var members = rm.data || [];
     if (visibleShohinCdSet) {
       members = members.filter(function(m) { return visibleShohinCdSet[String(m.dkd_gokan_id)]; });
@@ -24574,6 +24595,7 @@ async function loadKikanMgmt() {
     var rp = memberIds.length > 0
       ? await sb.from("core_products").select("dkd_shohin_id, genuine_part_number, manufacturer_part_number, manufacturer").in("dkd_shohin_id", memberIds)
       : { data: [] };
+    if (loadSeq !== kikanMgmtLoadSeq) return;
     var partByDkdId = {};
     (rp.data || []).forEach(function(p) { partByDkdId[String(p.dkd_shohin_id)] = p; });
     html += "<div data-dcats-inline-style='s-ece6801155a3'>";
@@ -24596,7 +24618,7 @@ async function loadKikanMgmt() {
     });
     html += "</table></div>";
   }
-  var kikanListEl = document.getElementById("kikan-mgmt-list");
+  if (loadSeq !== kikanMgmtLoadSeq) return;
   kikanListEl.innerHTML = html || "<div class='empty'>" + esc(t("kikan_no_groups")) + "</div>";
   if (!canEdit()) {
     kikanListEl.querySelectorAll("[data-kgid], .btn-sm-del").forEach(function(btn) { btn.remove(); });
@@ -41785,7 +41807,13 @@ document.getElementById("shipping-rate-list").addEventListener("click", function
   if (button.dataset.shippingAction === "edit") openShippingRateForm(row);
   else if (button.dataset.shippingAction === "toggle") toggleShippingRateVisibility(row);
 });
-document.getElementById("kikan-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadKikanMgmt(); });
+document.getElementById("btn-kikan-mgmt-search").addEventListener("click", searchKikanMgmt);
+document.getElementById("kikan-mgmt-search").addEventListener("keydown", function(e){
+  if (e.key === "Enter") {
+    e.preventDefault();
+    searchKikanMgmt();
+  }
+});
 document.getElementById("btn-rakuten-search").addEventListener("click", searchRakutenPrices);
 document.getElementById("rakuten-results").addEventListener("click", function(e) {
   if (e.target && e.target.closest && e.target.closest("[data-rakuten-result-more]")) showMoreRakutenResults();

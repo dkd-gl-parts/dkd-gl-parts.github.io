@@ -15,6 +15,7 @@ on:
       - "scripts/verify-component-catalog-recovery.js"
       - "scripts/verify-component-manual-add.js"
       - "scripts/verify-component-reverse-lookup.js"
+      - "scripts/verify-kikan-management-search.js"
       - "scripts/verify-ec-mall-result-performance.js"
       - "scripts/verify-ec-mall-seller-review.js"
       - "scripts/verify-customer-catalog-detail.js"
@@ -84,6 +85,8 @@ jobs:
         run: node scripts/verify-component-manual-add.js
       - name: Verify component reverse lookup
         run: node scripts/verify-component-reverse-lookup.js
+      - name: Verify compatibility management search
+        run: node scripts/verify-kikan-management-search.js
       - name: Verify EC mall result performance
         run: node scripts/verify-ec-mall-result-performance.js
       - name: Verify EC mall seller review
