@@ -5047,7 +5047,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.728";
+var APP_VERSION       = "v1.1.729";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -27950,24 +27950,18 @@ var currentSalesDetailTab = "basic";
 function updateSalesDetailTabCount(tab, count) {
   var idMap = {
     vehicles: "sales-vehicle-tab-count",
-    compatible: "sales-compatible-tab-count",
     components: "sales-components-tab-count",
     images: "img-count"
   };
   var el = document.getElementById(idMap[tab] || "");
-  var basicCompatibleCount = tab === "compatible"
-    ? document.getElementById("sales-basic-compatible-count")
-    : null;
-  if (!el && !basicCompatibleCount) return;
+  if (!el) return;
   if (count === null || count === undefined || count === "") {
-    if (el) el.textContent = "";
-    if (basicCompatibleCount) basicCompatibleCount.textContent = "";
+    el.textContent = "";
     return;
   }
   var value = parseInt(count, 10);
   var text = !isNaN(value) && value >= 0 ? String(value) : "";
-  if (el) el.textContent = text;
-  if (basicCompatibleCount) basicCompatibleCount.textContent = text;
+  el.textContent = text;
 }
 
 function updateSalesComponentTabCountForSelectedKind() {
@@ -28017,7 +28011,6 @@ function configureSalesDetailTabAvailability() {
   var availability = {
     basic: true,
     vehicles: customerCanShowVehicleInfo(),
-    compatible: customerCanShowCompatibleParts(),
     components: canSeeComponentInfo(),
     images: customerCanShowProductImages()
   };
@@ -28085,7 +28078,6 @@ function renderPanelStatic() {
   activateSalesDetailTab("basic");
   bindSalesDetailTabs();
   updateSalesDetailTabCount("vehicles", null);
-  updateSalesDetailTabCount("compatible", null);
   updateSalesComponentTabCountForSelectedKind();
   updateSalesDetailTabCount("images", null);
   renderSalesProductIdentity(p);
@@ -28093,7 +28085,7 @@ function renderPanelStatic() {
   if (vehicleTab) vehicleTab.innerHTML = customerCanShowVehicleInfo()
     ? "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>"
     : "";
-  var kikanWrap = document.getElementById("kikan-wrap");
+  var kikanWrap = document.getElementById("sales-basic-compatible-wrap");
   var showCompatibleParts = customerCanShowCompatibleParts();
   var basicCompatibleSection = document.getElementById("sales-basic-compatible-section");
   if (basicCompatibleSection) setCspStyle(basicCompatibleSection, "display", showCompatibleParts ? "block" : "none");
@@ -34554,9 +34546,8 @@ function loadKikanForCurrentProduct(seq) {
   if (scd !== null && scd !== undefined && scd !== '') {
     return loadKikan(scd, seq, currentProduct);
   } else {
-    var wrap = document.getElementById("kikan-wrap");
+    var wrap = document.getElementById("sales-basic-compatible-wrap");
     setSalesKikanWrapContent(wrap, "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>");
-    updateSalesDetailTabCount("compatible", 0);
   }
   return Promise.resolve();
 }
@@ -37781,10 +37772,7 @@ async function loadKikanVariantSummaryCache(partsList) {
 }
 
 function salesKikanTargetWraps(primaryWrap) {
-  var wraps = [primaryWrap, document.getElementById("sales-basic-compatible-wrap")];
-  return wraps.filter(function(wrap, index) {
-    return !!wrap && wraps.indexOf(wrap) === index;
-  });
+  return primaryWrap ? [primaryWrap] : [];
 }
 
 function setSalesKikanWrapContent(primaryWrap, html) {
@@ -37797,7 +37785,6 @@ function renderKikanPartsList(parts_list, dkdShohinIdNum, product, wrap) {
   var targetWraps = salesKikanTargetWraps(wrap);
   if (!targetWraps.length) return;
   parts_list = filterSalesVisibleProducts(parts_list || []);
-  updateSalesDetailTabCount("compatible", parts_list.length);
   if (parts_list.length === 0) {
     setSalesKikanWrapContent(wrap, "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>");
     return;
@@ -37836,13 +37823,12 @@ function renderKikanPartsList(parts_list, dkdShohinIdNum, product, wrap) {
 }
 
 async function loadKikan(dkdShohinId, seq, productSnapshot) {
-  var wrap = document.getElementById("kikan-wrap");
+  var wrap = document.getElementById("sales-basic-compatible-wrap");
   if (!wrap) return;
 
   var dkdShohinIdNum = parseInt(dkdShohinId, 10);
   if (isNaN(dkdShohinIdNum)) {
     setSalesKikanWrapContent(wrap, "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>");
-    updateSalesDetailTabCount("compatible", 0);
     return;
   }
   var product = productSnapshot || currentProduct;
@@ -37862,7 +37848,6 @@ async function loadKikan(dkdShohinId, seq, productSnapshot) {
   if (r.error) {
     console.warn("get_kikan_compatible_parts failed", r.error);
     if (!hasCachedKikan) setSalesKikanWrapContent(wrap, "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>");
-    if (!hasCachedKikan) updateSalesDetailTabCount("compatible", 0);
     return;
   }
 
@@ -37885,7 +37870,6 @@ async function loadKikan(dkdShohinId, seq, productSnapshot) {
   kikanPartsCache[cacheKey] = parts_list;
   if (parts_list.length === 0) {
     setSalesKikanWrapContent(wrap, "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>");
-    updateSalesDetailTabCount("compatible", 0);
     return;
   }
 

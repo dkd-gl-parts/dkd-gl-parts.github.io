@@ -18,7 +18,6 @@ function sourceBetween(startText, endText) {
   'id="sales-product-identity"',
   'data-sales-detail-tab="basic"',
   'data-sales-detail-tab="vehicles"',
-  'data-sales-detail-tab="compatible"',
   'data-sales-detail-tab="components"',
   'data-sales-detail-tab="images"',
   'id="sales-basic-compatible-section"',
@@ -31,6 +30,15 @@ function sourceBetween(startText, endText) {
   'class="panel-right sales-conditions-panel"'
 ].forEach((fragment) => {
   if (!html.includes(fragment)) throw new Error(`sales workspace markup is missing: ${fragment}`);
+});
+
+[
+  'data-sales-detail-tab="compatible"',
+  'id="sales-detail-compatible"',
+  'id="sales-compatible-tab-count"',
+  'id="sales-basic-compatible-count"'
+].forEach((fragment) => {
+  if (html.includes(fragment)) throw new Error(`removed compatibility UI must stay absent: ${fragment}`);
 });
 
 const openPanelSource = sourceBetween("function openPanel", "async function openProductByDkdId");
@@ -176,27 +184,28 @@ if (!vehicleSource.includes('document.getElementById("detail-vehicle-tab-content
 }
 
 const compatibleSource = sourceBetween("function renderKikanPartsList", "async function loadKikan");
-if (!compatibleSource.includes('updateSalesDetailTabCount("compatible", parts_list.length)')) {
-  throw new Error("compatible parts must update their tab count");
+if (compatibleSource.includes('updateSalesDetailTabCount("compatible"')) {
+  throw new Error("compatible parts must not show a count badge");
 }
 if (!compatibleSource.includes("filterSalesVisibleProducts(parts_list || [])")) {
   throw new Error("cached compatible rows must not render Daiko products");
 }
 if (!compatibleSource.includes("salesKikanTargetWraps(wrap)") ||
     !compatibleSource.includes("targetWraps.forEach(function(targetWrap)")) {
-  throw new Error("compatible parts must render in both the basic panel and compatibility tab");
+  throw new Error("compatible parts must render in the basic information panel");
 }
 
 const compatibleTargetSource = sourceBetween("function salesKikanTargetWraps", "function renderKikanPartsList");
-if (!compatibleTargetSource.includes('document.getElementById("sales-basic-compatible-wrap")') ||
+if (!compatibleTargetSource.includes("return primaryWrap ? [primaryWrap] : []") ||
     !compatibleTargetSource.includes("setSalesKikanWrapContent")) {
-  throw new Error("the basic information compatibility target is not wired to the shared result");
+  throw new Error("compatibility rendering must use only its supplied basic-information target");
 }
 
 const compatibleLoadSource = sourceBetween("async function loadKikan(dkdShohinId", "function isImageVisibilitySchemaError");
-if (!compatibleLoadSource.includes("await hydrateSalesDaikoVisibility(parts_list)") ||
+if (!compatibleLoadSource.includes('document.getElementById("sales-basic-compatible-wrap")') ||
+    !compatibleLoadSource.includes("await hydrateSalesDaikoVisibility(parts_list)") ||
     !compatibleLoadSource.includes("parts_list = filterSalesVisibleProducts(parts_list)")) {
-  throw new Error("compatible rows must resolve and apply Daiko visibility before rendering");
+  throw new Error("compatible rows must load into basic information and apply Daiko visibility");
 }
 
 [
@@ -220,6 +229,9 @@ if (!compatibleLoadSource.includes("await hydrateSalesDaikoVisibility(parts_list
 ].forEach((fragment) => {
   if (!css.includes(fragment)) throw new Error(`sales workspace styling is missing: ${fragment}`);
 });
+if (css.includes(".sales-basic-compatible-count")) {
+  throw new Error("the lower compatibility section must not style a count badge");
+}
 
 const salesScreenStart = html.indexOf('<div id="screen-search"');
 const nextScreenStart = html.indexOf('<div id="screen-', salesScreenStart + 1);
