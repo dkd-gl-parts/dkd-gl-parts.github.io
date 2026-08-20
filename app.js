@@ -5047,7 +5047,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.729";
+var APP_VERSION       = "v1.1.730";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -37803,7 +37803,6 @@ function renderKikanPartsList(parts_list, dkdShohinIdNum, product, wrap) {
     html += "</tr>";
   });
   html += "</table>";
-  html += "<div data-dcats-inline-style='s-619ae7a66513'>" + esc(tf("kikan_member_count", { n: parts_list.length })) + "</div>";
   targetWraps.forEach(function(targetWrap) {
     targetWrap.innerHTML = html;
     targetWrap.querySelectorAll(".kikan-search-btn[data-dkd-id]").forEach(function(btn) {

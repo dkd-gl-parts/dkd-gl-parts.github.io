@@ -187,6 +187,9 @@ const compatibleSource = sourceBetween("function renderKikanPartsList", "async f
 if (compatibleSource.includes('updateSalesDetailTabCount("compatible"')) {
   throw new Error("compatible parts must not show a count badge");
 }
+if (compatibleSource.includes('tf("kikan_member_count"')) {
+  throw new Error("the lower compatibility list must not show a result count");
+}
 if (!compatibleSource.includes("filterSalesVisibleProducts(parts_list || [])")) {
   throw new Error("cached compatible rows must not render Daiko products");
 }
