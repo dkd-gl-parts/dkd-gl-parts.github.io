@@ -5,6 +5,7 @@ const root = path.resolve(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+const printCss = fs.readFileSync(path.join(root, "shipment-instruction-print.css"), "utf8");
 
 function sourceBetween(startText, endText) {
   const start = source.indexOf(startText);
@@ -121,14 +122,17 @@ if (!submitOrder.includes('customerOrderSetStatus(t("customer_order_submit_succe
 if (/window\.print\s*\(/.test(submitOrder)) {
   throw new Error("Order submission must not depend on browser window.print");
 }
-if (!html.includes("受付時の自動印刷") || !html.includes("注文を受付した時に出荷指示書を印刷待ちへ登録します")) {
-  throw new Error("Automatic-print settings must describe the acceptance-time trigger");
+if (!html.includes("受注帳票の自動印刷") ||
+    !html.includes("受付時はA4出荷指示書だけを印刷します") ||
+    !html.includes("B2発行済データ取込時にA5コア返却シート")) {
+  throw new Error("Automatic-print settings must describe the separate acceptance and shipment triggers");
 }
 
 const printHistory = sourceBetween("function salesOrderPrintJobsHtml", "function salesOrderDispatchHtml");
 for (const fragment of [
   '"dispatch"',
   '"core_return"',
+  '"warranty"',
   "station_name",
   "printer_name",
   "sales-order-print-job-status",
@@ -140,12 +144,29 @@ const requeue = sourceBetween("async function requeueSalesOrderPrintJobs", "func
 if (!requeue.includes('sb.rpc("requeue_customer_order_print_jobs"') || !requeue.includes("target_order_id")) {
   throw new Error("Failed or completed documents must be requeueable through the reviewed RPC");
 }
+const printDocument = sourceBetween("function salesOrderPrintItemRows", "function printSalesOrderDocument");
+for (const fragment of [
+  'type === "core_return"',
+  'type === "warranty"',
+  "複写式返送用送り状",
+  "document-a5",
+  "商品発送日から"
+]) {
+  if (!printDocument.includes(fragment)) throw new Error(`Manual shipment document rendering is missing: ${fragment}`);
+}
+for (const fragment of [
+  "@page dcats-a5 { size: A5 portrait",
+  ".document-a5 .shipment-document { page: dcats-a5; }",
+  ".shipment-document-a5"
+]) {
+  if (!printCss.includes(fragment)) throw new Error(`A5 shipment document styling is missing: ${fragment}`);
+}
 
 for (const versionFragment of [
-  'content="v1.1.736"',
-  'styles.css?v=1.1.736',
-  'app.js?v=1.1.736',
-  'var APP_VERSION       = "v1.1.736"'
+  'content="v1.1.737"',
+  'styles.css?v=1.1.737',
+  'app.js?v=1.1.737',
+  'var APP_VERSION       = "v1.1.737"'
 ]) {
   const versionSource = versionFragment.startsWith("var ") ? source : html;
   if (!versionSource.includes(versionFragment)) throw new Error(`Release version is inconsistent: ${versionFragment}`);

@@ -54,7 +54,11 @@ const commitImport = between("async function importSalesOrderB2Shipments", "func
   'sb.rpc("import_sales_order_b2_shipments"',
   "target_file_name",
   "target_file_sha256",
-  "target_rows"
+  "target_rows",
+  "print_job_count",
+  "print_warning_count",
+  "コア返却シート・保証書",
+  "注文詳細から再送してください"
 ].forEach((fragment) => {
   if (!commitImport.includes(fragment)) throw new Error(`B2 import mutation is missing: ${fragment}`);
 });
