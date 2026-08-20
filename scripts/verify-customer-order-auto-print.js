@@ -39,6 +39,44 @@ for (const fragment of [
   if (!css.includes(fragment)) throw new Error(`Auto-print styling is missing: ${fragment}`);
 }
 
+const summaryStart = html.indexOf('<section class="sales-order-auto-print" id="sales-order-auto-print">');
+const summaryEnd = html.indexOf('<section class="sales-order-workspace">', summaryStart);
+if (summaryStart < 0 || summaryEnd < summaryStart) {
+  throw new Error("Compact automatic-print summary could not be isolated");
+}
+const summaryHtml = html.slice(summaryStart, summaryEnd);
+for (const required of ["sales-order-auto-print-state", "sales-order-print-settings-open"]) {
+  if (!summaryHtml.includes(required)) throw new Error(`Automatic-print summary is missing: ${required}`);
+}
+for (const movedControl of [
+  "sales-order-auto-print-station",
+  "sales-order-auto-print-enabled",
+  "sales-order-auto-print-save"
+]) {
+  if (summaryHtml.includes(movedControl)) {
+    throw new Error(`Automatic-print setting must stay out of the order list screen: ${movedControl}`);
+  }
+}
+const setupStart = html.indexOf('id="sales-order-print-settings-overlay"');
+const setupEnd = html.indexOf('id="sales-order-in-house-cancel-overlay"', setupStart);
+if (setupStart < 0 || setupEnd < setupStart) {
+  throw new Error("Automatic-print settings overlay could not be isolated");
+}
+const setupHtml = html.slice(setupStart, setupEnd);
+for (const movedControl of [
+  "sales-order-auto-print-station",
+  "sales-order-auto-print-enabled",
+  "sales-order-auto-print-save"
+]) {
+  if (!setupHtml.includes(movedControl)) {
+    throw new Error(`Automatic-print setting must be available in the settings overlay: ${movedControl}`);
+  }
+}
+if (!css.includes(".sales-order-workspace { display: grid; flex: 1;") ||
+    !css.includes(".sales-order-list { height: calc(100% - 44px);")) {
+  throw new Error("Order list must use the remaining viewport height");
+}
+
 const loadSettings = sourceBetween("async function loadSalesOrderPrintSettings", "async function saveSalesOrderPrintSettings");
 if (!loadSettings.includes('sb.rpc("get_customer_order_print_settings")')) {
   throw new Error("Order management must load printer station state through an RPC");
@@ -104,10 +142,10 @@ if (!requeue.includes('sb.rpc("requeue_customer_order_print_jobs"') || !requeue.
 }
 
 for (const versionFragment of [
-  'content="v1.1.735"',
-  'styles.css?v=1.1.735',
-  'app.js?v=1.1.735',
-  'var APP_VERSION       = "v1.1.735"'
+  'content="v1.1.736"',
+  'styles.css?v=1.1.736',
+  'app.js?v=1.1.736',
+  'var APP_VERSION       = "v1.1.736"'
 ]) {
   const versionSource = versionFragment.startsWith("var ") ? source : html;
   if (!versionSource.includes(versionFragment)) throw new Error(`Release version is inconsistent: ${versionFragment}`);
