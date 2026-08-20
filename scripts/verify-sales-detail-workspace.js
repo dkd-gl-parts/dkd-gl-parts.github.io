@@ -21,6 +21,8 @@ function sourceBetween(startText, endText) {
   'data-sales-detail-tab="compatible"',
   'data-sales-detail-tab="components"',
   'data-sales-detail-tab="images"',
+  'id="sales-basic-compatible-section"',
+  'id="sales-basic-compatible-wrap"',
   'id="detail-customer-wrap"',
   'id="sales-shipping-estimate-section"',
   'id="product-kind-wrap"',
@@ -180,6 +182,16 @@ if (!compatibleSource.includes('updateSalesDetailTabCount("compatible", parts_li
 if (!compatibleSource.includes("filterSalesVisibleProducts(parts_list || [])")) {
   throw new Error("cached compatible rows must not render Daiko products");
 }
+if (!compatibleSource.includes("salesKikanTargetWraps(wrap)") ||
+    !compatibleSource.includes("targetWraps.forEach(function(targetWrap)")) {
+  throw new Error("compatible parts must render in both the basic panel and compatibility tab");
+}
+
+const compatibleTargetSource = sourceBetween("function salesKikanTargetWraps", "function renderKikanPartsList");
+if (!compatibleTargetSource.includes('document.getElementById("sales-basic-compatible-wrap")') ||
+    !compatibleTargetSource.includes("setSalesKikanWrapContent")) {
+  throw new Error("the basic information compatibility target is not wired to the shared result");
+}
 
 const compatibleLoadSource = sourceBetween("async function loadKikan(dkdShohinId", "function isImageVisibilitySchemaError");
 if (!compatibleLoadSource.includes("await hydrateSalesDaikoVisibility(parts_list)") ||
@@ -200,6 +212,7 @@ if (!compatibleLoadSource.includes("await hydrateSalesDaikoVisibility(parts_list
   ".detail-customer-shipping-rule.free > strong",
   "white-space: nowrap; overflow-wrap: normal; word-break: keep-all",
   ".sales-detail-tab-panel[hidden]",
+  ".sales-basic-compatible",
   "align-items: stretch",
   "height: 43px",
   ".sales-detail-tab:focus-visible { outline: none; background: #eef4ff; color: #174ea6; }",

@@ -5047,7 +5047,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.727";
+var APP_VERSION       = "v1.1.728";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -27955,13 +27955,19 @@ function updateSalesDetailTabCount(tab, count) {
     images: "img-count"
   };
   var el = document.getElementById(idMap[tab] || "");
-  if (!el) return;
+  var basicCompatibleCount = tab === "compatible"
+    ? document.getElementById("sales-basic-compatible-count")
+    : null;
+  if (!el && !basicCompatibleCount) return;
   if (count === null || count === undefined || count === "") {
-    el.textContent = "";
+    if (el) el.textContent = "";
+    if (basicCompatibleCount) basicCompatibleCount.textContent = "";
     return;
   }
   var value = parseInt(count, 10);
-  el.textContent = !isNaN(value) && value >= 0 ? String(value) : "";
+  var text = !isNaN(value) && value >= 0 ? String(value) : "";
+  if (el) el.textContent = text;
+  if (basicCompatibleCount) basicCompatibleCount.textContent = text;
 }
 
 function updateSalesComponentTabCountForSelectedKind() {
@@ -28088,9 +28094,12 @@ function renderPanelStatic() {
     ? "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>"
     : "";
   var kikanWrap = document.getElementById("kikan-wrap");
-  if (kikanWrap) kikanWrap.innerHTML = customerCanShowCompatibleParts()
+  var showCompatibleParts = customerCanShowCompatibleParts();
+  var basicCompatibleSection = document.getElementById("sales-basic-compatible-section");
+  if (basicCompatibleSection) setCspStyle(basicCompatibleSection, "display", showCompatibleParts ? "block" : "none");
+  setSalesKikanWrapContent(kikanWrap, showCompatibleParts
     ? "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>"
-    : "";
+    : "");
   var productKindWrap = document.getElementById("product-kind-wrap");
   if (productKindWrap) productKindWrap.innerHTML = renderProductKindPanelHtml(productKindSummaryForProduct(p));
   renderCoreReturnPolicyWrapForCurrent();
@@ -34546,7 +34555,7 @@ function loadKikanForCurrentProduct(seq) {
     return loadKikan(scd, seq, currentProduct);
   } else {
     var wrap = document.getElementById("kikan-wrap");
-    if (wrap) wrap.innerHTML = "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>";
+    setSalesKikanWrapContent(wrap, "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>");
     updateSalesDetailTabCount("compatible", 0);
   }
   return Promise.resolve();
@@ -37771,12 +37780,26 @@ async function loadKikanVariantSummaryCache(partsList) {
   return map;
 }
 
+function salesKikanTargetWraps(primaryWrap) {
+  var wraps = [primaryWrap, document.getElementById("sales-basic-compatible-wrap")];
+  return wraps.filter(function(wrap, index) {
+    return !!wrap && wraps.indexOf(wrap) === index;
+  });
+}
+
+function setSalesKikanWrapContent(primaryWrap, html) {
+  salesKikanTargetWraps(primaryWrap).forEach(function(wrap) {
+    wrap.innerHTML = html;
+  });
+}
+
 function renderKikanPartsList(parts_list, dkdShohinIdNum, product, wrap) {
-  if (!wrap) return;
+  var targetWraps = salesKikanTargetWraps(wrap);
+  if (!targetWraps.length) return;
   parts_list = filterSalesVisibleProducts(parts_list || []);
   updateSalesDetailTabCount("compatible", parts_list.length);
   if (parts_list.length === 0) {
-    wrap.innerHTML = "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>";
+    setSalesKikanWrapContent(wrap, "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>");
     return;
   }
   var html = "<table class='kikan-table'>";
@@ -37794,18 +37817,20 @@ function renderKikanPartsList(parts_list, dkdShohinIdNum, product, wrap) {
   });
   html += "</table>";
   html += "<div data-dcats-inline-style='s-619ae7a66513'>" + esc(tf("kikan_member_count", { n: parts_list.length })) + "</div>";
-  wrap.innerHTML = html;
-  wrap.querySelectorAll(".kikan-search-btn[data-dkd-id]").forEach(function(btn) {
-    btn.addEventListener("click", function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      openProductByDkdId(parseInt(btn.dataset.dkdId, 10));
+  targetWraps.forEach(function(targetWrap) {
+    targetWrap.innerHTML = html;
+    targetWrap.querySelectorAll(".kikan-search-btn[data-dkd-id]").forEach(function(btn) {
+      btn.addEventListener("click", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        openProductByDkdId(parseInt(btn.dataset.dkdId, 10));
+      });
     });
-  });
-  wrap.querySelectorAll("tr.kikan-other[data-dkd-id]").forEach(function(row) {
-    row.addEventListener("click", function(e) {
-      if (e.target && e.target.closest && e.target.closest("button")) return;
-      openProductByDkdId(parseInt(row.dataset.dkdId, 10));
+    targetWrap.querySelectorAll("tr.kikan-other[data-dkd-id]").forEach(function(row) {
+      row.addEventListener("click", function(e) {
+        if (e.target && e.target.closest && e.target.closest("button")) return;
+        openProductByDkdId(parseInt(row.dataset.dkdId, 10));
+      });
     });
   });
 }
@@ -37816,7 +37841,7 @@ async function loadKikan(dkdShohinId, seq, productSnapshot) {
 
   var dkdShohinIdNum = parseInt(dkdShohinId, 10);
   if (isNaN(dkdShohinIdNum)) {
-    wrap.innerHTML = "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>";
+    setSalesKikanWrapContent(wrap, "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>");
     updateSalesDetailTabCount("compatible", 0);
     return;
   }
@@ -37836,7 +37861,7 @@ async function loadKikan(dkdShohinId, seq, productSnapshot) {
   if (!isCurrentDetailLoad(seq)) return;
   if (r.error) {
     console.warn("get_kikan_compatible_parts failed", r.error);
-    if (!hasCachedKikan) wrap.innerHTML = "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>";
+    if (!hasCachedKikan) setSalesKikanWrapContent(wrap, "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>");
     if (!hasCachedKikan) updateSalesDetailTabCount("compatible", 0);
     return;
   }
@@ -37859,7 +37884,7 @@ async function loadKikan(dkdShohinId, seq, productSnapshot) {
   });
   kikanPartsCache[cacheKey] = parts_list;
   if (parts_list.length === 0) {
-    wrap.innerHTML = "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>";
+    setSalesKikanWrapContent(wrap, "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>");
     updateSalesDetailTabCount("compatible", 0);
     return;
   }
