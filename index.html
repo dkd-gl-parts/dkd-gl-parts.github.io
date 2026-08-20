@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.732">
+<meta name="dcats-app-version" content="v1.1.733">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="application-name" content="D-CATS">
 <meta name="apple-mobile-web-app-title" content="D-CATS">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.732"; -->
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.733"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co https://zipcloud.ibsnet.co.jp; form-action 'self';">
 <title>D-CATS</title>
 <link rel="manifest" href="site.webmanifest?v=1.1.697&amp;brand=2">
@@ -19,7 +19,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png?v=1.1.697&amp;brand=2">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.732&amp;ranking=7&amp;brand=4">
+<link rel="stylesheet" href="styles.css?v=1.1.733&amp;ranking=7&amp;brand=4">
 </head>
 <body>
 
@@ -136,7 +136,7 @@
         </div>
 
         <div class="login-utility">
-          <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.732</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+          <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.733</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
           <div class="lang-sw-login" id="lang-sw-login">
             <button class="lang-btn-login active" data-lang="ja">日本語</button>
             <button class="lang-btn-login" data-lang="en">EN</button>
@@ -3319,7 +3319,7 @@
       <button class="btn-primary kikan-mgmt-new-group" id="btn-new-kikan-group" type="button" data-i18n="btn_new_kikan">新しいグループを作成</button>
     </div>
     <div class="mgmt-count" id="kikan-mgmt-count"></div>
-    <div id="kikan-mgmt-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
+    <div id="kikan-mgmt-list"><div class="empty" data-i18n="kikan_search_hint">キーワードを入力して検索してください。検索ボタンを押すまで一覧は読み込みません。</div></div>
   </div>
 </div>
 
@@ -3866,7 +3866,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
 <script src="vendor/qrcode.min.js?v=1.0.0"></script>
-<script src="app.js?v=1.1.732"></script>
+<script src="app.js?v=1.1.733"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.625&amp;ranking=17"></script>
 </body>
 </html>

@@ -27,8 +27,13 @@ const managementSource = sourceBetween("var kikanMgmtData", "function openKikanF
 [
   'var kikanMgmtKeyword = ""',
   "var kikanMgmtLoadSeq = 0",
+  "var kikanMgmtHasSearched = false",
+  "function renderKikanMgmtInitialState()",
+  't("kikan_search_hint")',
   "function searchKikanMgmt()",
   "kikanMgmtKeyword = normalizeAsciiWidth",
+  "kikanMgmtHasSearched = true",
+  "if (!kikanMgmtHasSearched)",
   "var loadSeq = ++kikanMgmtLoadSeq",
   "var q = kikanMgmtKeyword",
   'fetchCoreProductMasterMatches(qAscii, "", 50)',
@@ -38,6 +43,22 @@ const managementSource = sourceBetween("var kikanMgmtData", "function openKikanF
 });
 if ((managementSource.match(/if \(loadSeq !== kikanMgmtLoadSeq\) return;/g) || []).length < 7) {
   throw new Error("stale compatibility loads must be rejected after asynchronous queries");
+}
+
+const enterSource = sourceBetween("async function enterKikanMgmt", "function searchKikanMgmt");
+if (!enterSource.includes("kikanMgmtHasSearched = false") ||
+    !enterSource.includes("renderKikanMgmtInitialState()") ||
+    enterSource.includes("loadKikanMgmt()")) {
+  throw new Error("opening compatibility management must render the initial state without loading groups");
+}
+if ((source.match(/kikan_search_hint:/g) || []).length !== 3 ||
+    !html.includes('data-i18n="kikan_search_hint"')) {
+  throw new Error("compatibility pre-search guidance must be translated and visible initially");
+}
+if (!source.includes('if (isScreenActive("kikan-mgmt")) {') ||
+    !source.includes("if (kikanMgmtHasSearched) await loadKikanMgmt();") ||
+    !source.includes("else renderKikanMgmtInitialState();")) {
+  throw new Error("language changes must not load compatibility groups before the first search");
 }
 
 const eventSource = sourceBetween('document.getElementById("btn-new-kikan-group")', 'document.getElementById("btn-rakuten-search")');

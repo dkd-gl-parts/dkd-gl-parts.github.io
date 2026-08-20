@@ -1186,6 +1186,7 @@ var TRANSLATIONS = {
     customer_access_delete_rule_confirm: "この表示範囲ルールを削除しますか？",
     lbl_kikan_group: "互換グループID",
     kikan_search_ph: "商品コード・品番で検索",
+    kikan_search_hint: "キーワードを入力して検索してください。検索ボタンを押すまで一覧は読み込みません。",
     kikan_add_part_label: "追加する品番",
     kikan_add_part_ph: "商品ID・純正品番・メーカー品番で検索",
     kikan_group_id: "グループID",
@@ -2832,6 +2833,7 @@ var TRANSLATIONS = {
     customer_access_delete_rule_confirm: "Delete this visibility rule?",
     lbl_kikan_group: "Compatibility Group ID",
     kikan_search_ph: "Search by product code or part number",
+    kikan_search_hint: "Enter a keyword and search. The list is not loaded until you press Search.",
     kikan_add_part_label: "Part to add",
     kikan_add_part_ph: "Search by product ID, genuine part, or maker part",
     kikan_group_id: "Group ID",
@@ -4471,6 +4473,7 @@ var TRANSLATIONS = {
     customer_access_delete_rule_confirm: "删除此显示范围规则？",
     lbl_kikan_group: "兼容组ID",
     kikan_search_ph: "按商品代码或品番搜索",
+    kikan_search_hint: "请输入关键词并搜索。点击“搜索”前不会加载列表。",
     kikan_add_part_label: "要添加的品番",
     kikan_add_part_ph: "按商品ID、纯正品番或制造商品番搜索",
     kikan_group_id: "组ID",
@@ -5047,7 +5050,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.732";
+var APP_VERSION       = "v1.1.733";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6372,7 +6375,10 @@ async function applyLanguage(lang) {
     updateFinishedLabelSaveButton(finishedLabelSelectedProduct);
     updateFinishedLabelQrPayload();
   }
-  if (isScreenActive("kikan-mgmt")) await loadKikanMgmt();
+  if (isScreenActive("kikan-mgmt")) {
+    if (kikanMgmtHasSearched) await loadKikanMgmt();
+    else renderKikanMgmtInitialState();
+  }
   if (document.getElementById("kikan-form-overlay") && document.getElementById("kikan-form-overlay").classList.contains("show")) {
     document.getElementById("kikan-form-title").textContent = kikanFormGroupId ? tf("kikan_group_member_add_title", { id: kikanFormGroupId }) : t("kikan_group_new_title");
   }
@@ -24484,6 +24490,16 @@ var kikanExistingParts = [];
 var kikanExistingMemberIdSet = {};
 var kikanMgmtKeyword = "";
 var kikanMgmtLoadSeq = 0;
+var kikanMgmtHasSearched = false;
+
+function renderKikanMgmtInitialState() {
+  kikanMgmtData = [];
+  kikanMgmtLoadSeq += 1;
+  var countEl = document.getElementById("kikan-mgmt-count");
+  if (countEl) countEl.textContent = "";
+  var listEl = document.getElementById("kikan-mgmt-list");
+  if (listEl) listEl.innerHTML = "<div class='empty'>" + esc(t("kikan_search_hint")) + "</div>";
+}
 
 async function enterKikanMgmt() {
   if (!canManageCompatibility()) { alert(t("err_perm")); return; }
@@ -24492,19 +24508,25 @@ async function enterKikanMgmt() {
   if (nameEl) nameEl.textContent = userProfile.name || userProfile.email.split("@")[0];
   var searchEl = document.getElementById("kikan-mgmt-search");
   kikanMgmtKeyword = "";
+  kikanMgmtHasSearched = false;
   if (searchEl) searchEl.value = "";
   var newBtn = document.getElementById("btn-new-kikan-group");
   if (newBtn) setCspStyle(newBtn, "display", canEditCompatibility() ? "" : "none");
-  await loadKikanMgmt();
+  renderKikanMgmtInitialState();
 }
 
 function searchKikanMgmt() {
   var searchEl = document.getElementById("kikan-mgmt-search");
   kikanMgmtKeyword = normalizeAsciiWidth(searchEl ? searchEl.value : "").trim();
+  kikanMgmtHasSearched = true;
   return loadKikanMgmt();
 }
 
 async function loadKikanMgmt() {
+  if (!kikanMgmtHasSearched) {
+    renderKikanMgmtInitialState();
+    return;
+  }
   var loadSeq = ++kikanMgmtLoadSeq;
   var q = kikanMgmtKeyword;
   var kikanListEl = document.getElementById("kikan-mgmt-list");
