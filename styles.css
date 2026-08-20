@@ -3458,7 +3458,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
    検索画面
 ============================================= */
 .badge-sl  { background: #e8f4ff; color: #1a6fd4; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
-.icon-image { display: inline-block; width: 1em; height: 1em; flex: 0 0 auto; background-color: currentColor; -webkit-mask: url("assets/icons/image.svg?v=1.1.734") center / contain no-repeat; mask: url("assets/icons/image.svg?v=1.1.734") center / contain no-repeat; }
+.icon-image { display: inline-block; width: 1em; height: 1em; flex: 0 0 auto; background-color: currentColor; -webkit-mask: url("assets/icons/image.svg?v=1.1.735") center / contain no-repeat; mask: url("assets/icons/image.svg?v=1.1.735") center / contain no-repeat; }
 .badge-img { display: inline-flex; align-items: center; gap: 3px; background: #e8f7ee; color: #1a8c3e; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .badge-img .icon-image { width: 13px; height: 13px; }
 .badge-img.no-image { background: #f1f3f6; color: #98a2b3; }
@@ -5706,15 +5706,39 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .sales-order-auto-print-state.ready { border-color: #79b48f; background: #edf8f2; color: #236444; }
 .sales-order-auto-print-state.error { border-color: #dc918b; background: #fff2f0; color: #a42d25; }
 .sales-order-auto-print-state.stopped { border-color: #d6b36c; background: #fff8e8; color: #76570f; }
-.sales-order-auto-print-controls { display: grid; grid-template-columns: minmax(180px, 240px) auto auto; align-items: end; gap: 9px; }
+.sales-order-auto-print-controls { display: grid; grid-template-columns: minmax(180px, 240px) auto auto auto; align-items: end; gap: 9px; }
 .sales-order-auto-print-controls label > span { display: block; margin-bottom: 4px; color: #65726b; font-size: 9px; font-weight: 800; }
 .sales-order-auto-print-controls select { width: 100%; height: 34px; border: 1px solid #b8c4be; border-radius: 5px; padding: 0 8px; background: #fff; color: #2c3b34; font-size: 10px; }
 .sales-order-auto-print-toggle { display: flex; align-items: center; min-height: 34px; gap: 6px; border: 1px solid #ccd5d0; border-radius: 5px; padding: 0 9px; background: #fff; color: #35463e; font-size: 10px; font-weight: 800; white-space: nowrap; }
 .sales-order-auto-print-toggle input { width: 15px; height: 15px; accent-color: #287356; }
 .sales-order-auto-print-controls .btn-primary { min-height: 34px; border-radius: 5px; padding: 0 12px; font-size: 10px; white-space: nowrap; }
+.sales-order-print-settings-button { min-height: 34px; border: 1px solid #287356; border-radius: 5px; padding: 0 12px; background: #fff; color: #287356; font-size: 10px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.sales-order-print-settings-button:hover { background: #eef7f2; }
 .sales-order-auto-print-controls :disabled { cursor: not-allowed; opacity: .62; }
 .sales-order-auto-print-message { grid-column: 1 / -1; min-height: 14px; color: #456057; font-size: 9px; font-weight: 700; }
 .sales-order-auto-print-message.error { color: #b42318; }
+.form-card.sales-order-print-settings-card { width: min(680px, calc(100vw - 24px)); max-width: 680px; border-radius: 8px; padding: 0; overflow: hidden; }
+.sales-order-print-settings-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; border-bottom: 1px solid #d8dfdb; padding: 18px 20px 14px; }
+.sales-order-print-settings-heading span { color: #287356; font-size: 9px; font-weight: 900; }
+.sales-order-print-settings-heading h3 { margin: 2px 0 0; color: #1d2c25; font-size: 18px; letter-spacing: 0; }
+.sales-order-print-settings-heading button { width: 30px; height: 30px; border: 1px solid #c8d1cc; border-radius: 5px; background: #fff; color: #617068; cursor: pointer; }
+.sales-order-print-settings-current { display: grid; grid-template-columns: 1.2fr 1.4fr .7fr; border-bottom: 1px solid #d8dfdb; background: #f7faf8; }
+.sales-order-print-settings-current > div { min-width: 0; border-right: 1px solid #d8dfdb; padding: 14px 16px; }
+.sales-order-print-settings-current > div:last-child { border-right: 0; }
+.sales-order-print-settings-current span,
+.sales-order-print-settings-current strong { display: block; overflow-wrap: anywhere; }
+.sales-order-print-settings-current span { color: #718078; font-size: 9px; font-weight: 800; }
+.sales-order-print-settings-current strong { margin-top: 4px; color: #27372f; font-size: 12px; }
+.sales-order-print-settings-current strong.ready { color: #236444; }
+.sales-order-print-settings-current strong.stopped { color: #76570f; }
+.sales-order-print-settings-current strong.error { color: #a42d25; }
+.sales-order-print-settings-launch-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 20px; }
+.sales-order-print-settings-launch-row strong { color: #25352e; font-size: 12px; }
+.sales-order-print-settings-launch-row p { margin-top: 3px; color: #6b7871; font-size: 10px; }
+.sales-order-print-settings-launch-row a { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; border: 1px solid #287356; border-radius: 5px; padding: 0 14px; background: #287356; color: #fff; font-size: 11px; font-weight: 800; text-decoration: none; white-space: nowrap; }
+.sales-order-print-settings-launch-row a:hover { background: #1f6248; }
+.sales-order-print-settings-message { min-height: 18px; padding: 0 20px 10px; color: #496057; font-size: 10px; font-weight: 700; }
+.sales-order-print-settings-card .form-footer { margin-top: 0; padding: 14px 20px; }
 .sales-order-workspace { display: grid; grid-template-columns: minmax(360px, 430px) minmax(0, 1fr); min-height: calc(100vh - 138px); }
 .sales-order-list-pane { min-width: 0; border-right: 1px solid #d5dbe1; background: #f8f9fb; }
 .sales-order-list-head { display: flex; align-items: center; justify-content: space-between; height: 44px; border-bottom: 1px solid #d5dbe1; padding: 0 14px; background: #e9edf1; color: #344054; font-size: 11px; }
@@ -5911,6 +5935,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .sales-order-auto-print-heading { align-items: flex-start; flex-direction: column; gap: 5px; }
   .sales-order-auto-print-controls { grid-template-columns: 1fr; }
   .sales-order-auto-print-toggle { white-space: normal; }
+  .sales-order-print-settings-current { grid-template-columns: 1fr; }
+  .sales-order-print-settings-current > div { border-right: 0; border-bottom: 1px solid #d8dfdb; }
+  .sales-order-print-settings-current > div:last-child { border-bottom: 0; }
+  .sales-order-print-settings-launch-row { align-items: stretch; flex-direction: column; }
+  .sales-order-print-settings-launch-row a { width: 100%; }
   .sales-order-detail-pane { padding: 18px 12px 36px; }
   .sales-order-detail-summary { grid-template-columns: 1fr 1fr; }
   .sales-order-detail-summary > div:nth-child(2) { border-right: 0; }

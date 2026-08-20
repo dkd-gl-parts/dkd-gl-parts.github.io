@@ -19,13 +19,20 @@ for (const id of [
   "sales-order-auto-print-station",
   "sales-order-auto-print-enabled",
   "sales-order-auto-print-save",
-  "sales-order-auto-print-message"
+  "sales-order-auto-print-message",
+  "sales-order-print-settings-open",
+  "sales-order-print-settings-overlay",
+  "sales-order-print-settings-current",
+  "sales-order-print-settings-launch",
+  "sales-order-print-settings-refresh"
 ]) {
   if (!html.includes(`id="${id}"`)) throw new Error(`Auto-print setting UI is missing: ${id}`);
 }
 for (const fragment of [
   ".sales-order-auto-print {",
   ".sales-order-auto-print-state.ready",
+  ".sales-order-print-settings-card",
+  ".sales-order-print-settings-current",
   ".sales-order-print-job-status.printed",
   ".sales-order-print-job-status.error"
 ]) {
@@ -51,6 +58,19 @@ for (const fragment of [
 const enterManagement = sourceBetween("async function enterSalesOrderMgmt", "function renderSalesOrderList");
 if (!enterManagement.includes("Promise.all([loadSalesOrders(), loadSalesOrderPrintSettings()])")) {
   throw new Error("Orders and print-station state must load together");
+}
+const printerSetup = sourceBetween("function renderSalesOrderPrinterSetup", "async function enterSalesOrderMgmt");
+for (const fragment of [
+  "config.printer_name",
+  "salesOrderPrintStationStateLabel(config.station_state)",
+  "async function openSalesOrderPrinterSetup",
+  "async function refreshSalesOrderPrinterSetup",
+  "loadSalesOrderPrintSettings()"
+]) {
+  if (!printerSetup.includes(fragment)) throw new Error(`Self-service printer setup is missing: ${fragment}`);
+}
+if (!html.includes('href="dcats-print-settings://open"')) {
+  throw new Error("Order management must open the installed Windows printer settings handler");
 }
 
 const submitOrder = sourceBetween("async function submitCustomerOrder", "function renderCustomerOrderHistory");
@@ -84,10 +104,10 @@ if (!requeue.includes('sb.rpc("requeue_customer_order_print_jobs"') || !requeue.
 }
 
 for (const versionFragment of [
-  'content="v1.1.734"',
-  'styles.css?v=1.1.734',
-  'app.js?v=1.1.734',
-  'var APP_VERSION       = "v1.1.734"'
+  'content="v1.1.735"',
+  'styles.css?v=1.1.735',
+  'app.js?v=1.1.735',
+  'var APP_VERSION       = "v1.1.735"'
 ]) {
   const versionSource = versionFragment.startsWith("var ") ? source : html;
   if (!versionSource.includes(versionFragment)) throw new Error(`Release version is inconsistent: ${versionFragment}`);

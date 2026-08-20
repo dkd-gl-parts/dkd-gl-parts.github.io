@@ -5050,7 +5050,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.734";
+var APP_VERSION       = "v1.1.735";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -9755,15 +9755,18 @@ async function loadSalesOrderPrintSettings() {
   if (result.error) {
     salesOrderPrintSettings = null;
     renderSalesOrderPrintSettings();
+    renderSalesOrderPrinterSetup();
     setSalesOrderPrintSettingsMessage(result.error.message || "自動印刷設定を読み込めませんでした。", true);
-    return;
+    return false;
   }
   salesOrderPrintSettings = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
   renderSalesOrderPrintSettings();
+  renderSalesOrderPrinterSetup();
   var config = salesOrderPrintSettings.config || {};
   setSalesOrderPrintSettingsMessage(config.station_code
     ? "対象: " + (config.station_name || config.station_code) + " / " + (config.printer_name || "-")
     : "印刷端末をセットアップすると自動印刷を有効にできます。", false);
+  return true;
 }
 
 async function saveSalesOrderPrintSettings() {
@@ -9797,6 +9800,43 @@ async function saveSalesOrderPrintSettings() {
   }
   await loadSalesOrderPrintSettings();
   setSalesOrderPrintSettingsMessage("自動印刷設定を保存しました。", false);
+}
+
+function renderSalesOrderPrinterSetup() {
+  var host = document.getElementById("sales-order-print-settings-current");
+  if (!host) return;
+  var settings = salesOrderPrintSettings || {};
+  var config = settings.config || {};
+  var state = salesOrderPrintStationStateLabel(config.station_state);
+  var stateClass = ["ready", "stopped", "error"].indexOf(config.station_state) >= 0 ? config.station_state : "unconfigured";
+  host.innerHTML = "<div><span>印刷端末</span><strong>" + esc(config.station_name || config.station_code || "未設定") + "</strong></div>" +
+    "<div><span>プリンター</span><strong>" + esc(config.printer_name || "未設定") + "</strong></div>" +
+    "<div><span>接続状態</span><strong class='" + esc(stateClass) + "'>" + esc(state) + "</strong></div>";
+}
+
+async function openSalesOrderPrinterSetup() {
+  var overlay = document.getElementById("sales-order-print-settings-overlay");
+  if (!overlay) return;
+  overlay.classList.add("show");
+  renderSalesOrderPrinterSetup();
+  await refreshSalesOrderPrinterSetup(false);
+}
+
+function closeSalesOrderPrinterSetup() {
+  var overlay = document.getElementById("sales-order-print-settings-overlay");
+  if (overlay) overlay.classList.remove("show");
+}
+
+async function refreshSalesOrderPrinterSetup(showMessage) {
+  var button = document.getElementById("sales-order-print-settings-refresh");
+  var message = document.getElementById("sales-order-print-settings-message");
+  if (button) button.disabled = true;
+  if (message && showMessage) message.textContent = "印刷設定を再読み込みしています。";
+  var loaded = await loadSalesOrderPrintSettings();
+  if (button) button.disabled = false;
+  if (message) message.textContent = showMessage
+    ? (loaded ? "最新の印刷設定を表示しました。" : "印刷設定を読み込めませんでした。")
+    : "";
 }
 
 async function enterSalesOrderMgmt() {
@@ -41193,6 +41233,22 @@ document.getElementById("sales-order-reload").addEventListener("click", loadSale
 document.getElementById("sales-order-search").addEventListener("keydown", function(e) { if (e.key === "Enter") loadSalesOrders(); });
 document.getElementById("sales-order-status").addEventListener("change", loadSalesOrders);
 document.getElementById("sales-order-auto-print-save").addEventListener("click", saveSalesOrderPrintSettings);
+document.getElementById("sales-order-print-settings-open").addEventListener("click", openSalesOrderPrinterSetup);
+document.getElementById("sales-order-print-settings-close").addEventListener("click", closeSalesOrderPrinterSetup);
+document.getElementById("sales-order-print-settings-cancel").addEventListener("click", closeSalesOrderPrinterSetup);
+document.getElementById("sales-order-print-settings-refresh").addEventListener("click", function() { refreshSalesOrderPrinterSetup(true); });
+document.getElementById("sales-order-print-settings-launch").addEventListener("click", function() {
+  var message = document.getElementById("sales-order-print-settings-message");
+  if (message) message.textContent = "Windowsのプリンター設定画面を開いています。";
+});
+document.getElementById("sales-order-print-settings-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeSalesOrderPrinterSetup();
+});
+window.addEventListener("focus", function() {
+  var overlay = document.getElementById("sales-order-print-settings-overlay");
+  if (!overlay || !overlay.classList.contains("show")) return;
+  window.setTimeout(function() { refreshSalesOrderPrinterSetup(false); }, 600);
+});
 document.getElementById("sales-order-batch-accept").addEventListener("click", acceptCheckedSalesOrders);
 document.getElementById("sales-order-export-b2").addEventListener("click", exportSalesOrdersB2);
 document.getElementById("sales-order-import-b2").addEventListener("click", function() {
