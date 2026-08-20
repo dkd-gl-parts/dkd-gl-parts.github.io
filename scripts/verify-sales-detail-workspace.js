@@ -193,9 +193,36 @@ if (compatibleSource.includes('tf("kikan_member_count"')) {
 if (!compatibleSource.includes("filterSalesVisibleProducts(parts_list || [])")) {
   throw new Error("cached compatible rows must not render Daiko products");
 }
+if (!compatibleSource.includes(".slice().sort(compareKikanParts)")) {
+  throw new Error("compatible parts must be sorted after applying sales visibility");
+}
 if (!compatibleSource.includes("salesKikanTargetWraps(wrap)") ||
     !compatibleSource.includes("targetWraps.forEach(function(targetWrap)")) {
   throw new Error("compatible parts must render in the basic information panel");
+}
+
+const compatibleSortSource = sourceBetween("function kikanStockQtyText", "function renderKikanStockHtml");
+const compatibleSortSandbox = {
+  productVariantSummaryMap: {
+    "1": { kinds: { rebuilt: { stockKnown: true, stockQty: 2 }, aftermarket_new: { stockKnown: true, stockQty: 3 } } },
+    "2": { kinds: { rebuilt: { stockKnown: true, stockQty: 7 } } },
+    "3": { kinds: { aftermarket_new: { stockKnown: true, stockQty: 5 } } }
+  },
+  productVariantSummaryCache: {},
+  productDkdId: (product) => String(product && product.dkd_shohin_id || ""),
+  normalizeProductKind: (kind) => kind
+};
+vm.createContext(compatibleSortSandbox);
+vm.runInContext(`${compatibleSortSource}; this.compatibleSortApi = { kikanStockTotal, compareKikanParts };`, compatibleSortSandbox);
+const compatibleRows = [
+  { dkd_shohin_id: 1, genuine_part_number: "A-10", manufacturer_part_number: "M-1" },
+  { dkd_shohin_id: 2, genuine_part_number: "Z-1", manufacturer_part_number: "M-2" },
+  { dkd_shohin_id: 3, genuine_part_number: "A-2", manufacturer_part_number: "M-3" },
+  { dkd_shohin_id: 4, genuine_part_number: "B-1", manufacturer_part_number: "M-4" }
+];
+const compatibleOrder = compatibleRows.slice().sort(compatibleSortSandbox.compatibleSortApi.compareKikanParts).map((row) => row.dkd_shohin_id).join(",");
+if (compatibleSortSandbox.compatibleSortApi.kikanStockTotal(compatibleRows[0]) !== 5 || compatibleOrder !== "2,3,1,4") {
+  throw new Error(`compatible parts sort order is invalid: ${compatibleOrder}`);
 }
 
 const compatibleTargetSource = sourceBetween("function salesKikanTargetWraps", "function renderKikanPartsList");

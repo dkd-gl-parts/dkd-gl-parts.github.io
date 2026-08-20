@@ -5047,7 +5047,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.730";
+var APP_VERSION       = "v1.1.731";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -37755,6 +37755,30 @@ function kikanStockQtyText(product, kind) {
   return Number.isInteger(qty) ? String(qty) : String(meta.stockQty);
 }
 
+function kikanStockTotal(product) {
+  var key = productDkdId(product);
+  var summary = key ? (productVariantSummaryMap[key] || productVariantSummaryCache[key]) : null;
+  return ["rebuilt", "aftermarket_new"].reduce(function(total, kind) {
+    var meta = summary && summary.kinds ? summary.kinds[normalizeProductKind(kind)] : null;
+    var qty = meta && meta.stockKnown ? Number(meta.stockQty || 0) : 0;
+    return total + (isNaN(qty) ? 0 : qty);
+  }, 0);
+}
+
+function compareKikanParts(a, b) {
+  var stockDiff = kikanStockTotal(b) - kikanStockTotal(a);
+  if (stockDiff) return stockDiff;
+  var genuineA = String(a && a.genuine_part_number || "");
+  var genuineB = String(b && b.genuine_part_number || "");
+  if (genuineA && !genuineB) return -1;
+  if (!genuineA && genuineB) return 1;
+  var genuineDiff = genuineA.localeCompare(genuineB, "ja", { numeric: true, sensitivity: "base" });
+  if (genuineDiff) return genuineDiff;
+  var manufacturerDiff = String(a && a.manufacturer_part_number || "").localeCompare(String(b && b.manufacturer_part_number || ""), "ja", { numeric: true, sensitivity: "base" });
+  if (manufacturerDiff) return manufacturerDiff;
+  return String(productDkdId(a) || "").localeCompare(String(productDkdId(b) || ""), "ja", { numeric: true });
+}
+
 function renderKikanStockHtml(product) {
   return "<div class='kikan-stock-list'>" +
     "<span class='kikan-stock-pill rebuilt'><span>" + esc(productKindLabel("rebuilt")) + "</span><b>" + esc(kikanStockQtyText(product, "rebuilt")) + "</b></span>" +
@@ -37784,7 +37808,7 @@ function setSalesKikanWrapContent(primaryWrap, html) {
 function renderKikanPartsList(parts_list, dkdShohinIdNum, product, wrap) {
   var targetWraps = salesKikanTargetWraps(wrap);
   if (!targetWraps.length) return;
-  parts_list = filterSalesVisibleProducts(parts_list || []);
+  parts_list = filterSalesVisibleProducts(parts_list || []).slice().sort(compareKikanParts);
   if (parts_list.length === 0) {
     setSalesKikanWrapContent(wrap, "<div data-dcats-inline-style='s-928d79dfb0e2'>" + t("kikan_none") + "</div>");
     return;
