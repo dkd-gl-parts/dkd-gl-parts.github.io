@@ -5068,7 +5068,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.739";
+var APP_VERSION       = "v1.1.740";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -30271,7 +30271,7 @@ function applyComponentProcurementRateDefault() {
   var procurement = document.getElementById("component-add-procurement-category");
   var rate = document.getElementById("component-add-replacement-rate");
   if (!procurement || !rate) return;
-  if (procurement.value === "新品交換") rate.value = "100";
+  if (procurement.value === "新品交換" && !String(rate.value || "").trim()) rate.value = "100";
 }
 
 async function addAssemblyComponentForCurrent() {
@@ -34009,7 +34009,7 @@ function applyComponentAlternativeProcurementRateDefault() {
   var procurement = document.getElementById("component-alt-procurement-category");
   var rate = document.getElementById("component-alt-replacement-rate");
   if (!procurement || !rate) return;
-  if (procurement.value === "新品交換") rate.value = "100";
+  if (procurement.value === "新品交換" && !String(rate.value || "").trim()) rate.value = "100";
 }
 
 function componentAlternativeStructuredNote(values) {

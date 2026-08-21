@@ -133,6 +133,39 @@ if (!addSource.includes("if (componentAddSaving) return;") ||
   throw new Error("manual component add must hold an immediate in-flight lock until every exit path completes");
 }
 
+[
+  {
+    source: sourceBetween("function applyComponentProcurementRateDefault", "async function addAssemblyComponentForCurrent"),
+    functionName: "applyComponentProcurementRateDefault",
+    procurementId: "component-add-procurement-category",
+    rateId: "component-add-replacement-rate"
+  },
+  {
+    source: sourceBetween("function applyComponentAlternativeProcurementRateDefault", "function componentAlternativeStructuredNote"),
+    functionName: "applyComponentAlternativeProcurementRateDefault",
+    procurementId: "component-alt-procurement-category",
+    rateId: "component-alt-replacement-rate"
+  }
+].forEach((target) => {
+  const defaultElements = {
+    [target.procurementId]: { value: "新品交換" },
+    [target.rateId]: { value: "60" }
+  };
+  const defaultSandbox = {
+    document: { getElementById: (id) => defaultElements[id] || null }
+  };
+  vm.runInNewContext(`${target.source}; applyDefault = ${target.functionName};`, defaultSandbox);
+  defaultSandbox.applyDefault();
+  if (defaultElements[target.rateId].value !== "60") {
+    throw new Error("a manually entered replacement rate must not be overwritten when the component is saved");
+  }
+  defaultElements[target.rateId].value = "";
+  defaultSandbox.applyDefault();
+  if (defaultElements[target.rateId].value !== "100") {
+    throw new Error("new replacement procurement must still default an empty replacement rate to 100 percent");
+  }
+});
+
 const refreshSource = sourceBetween("function setAppRefreshControlsDisabled", 'window.addEventListener("pagehide"');
 let replaceCount = 0;
 const refreshButton = { disabled: false };
@@ -178,10 +211,10 @@ const values = {
   "component-add-position": "",
   "component-add-qty": "1",
   "component-add-unit-price": "",
-  "component-add-replacement-rate": "",
+  "component-add-replacement-rate": "60",
   "component-add-manufacturing-memo": "",
   "component-add-interchange": "",
-  "component-add-procurement-category": "",
+  "component-add-procurement-category": "新品交換",
   "component-add-start": "",
   "component-add-end": ""
 };
@@ -236,8 +269,12 @@ const sandbox = {
   confirmComponentPartNumberWarnings: () => true,
   canonicalComponentNameForStorage: (value) => value,
   componentNameMasterValidationMessage: () => "",
-  applyComponentProcurementRateDefault: () => {},
-  normalizeComponentReplacementRateElement: () => null,
+  applyComponentProcurementRateDefault: () => {
+    if (values["component-add-procurement-category"] === "新品交換" && !String(values["component-add-replacement-rate"] || "").trim()) {
+      values["component-add-replacement-rate"] = "100";
+    }
+  },
+  normalizeComponentReplacementRateElement: () => parseInt(values["component-add-replacement-rate"], 10),
   nullableIntFromInput: () => null,
   selectedComponentVariantId: () => 101,
   sb: {
@@ -287,8 +324,9 @@ vm.runInNewContext(`${addSource}; result = addAssemblyComponentForCurrent;`, san
   }
   if (rpcCall.payload.target_manufacturer !== "UNKNOWN" ||
       rpcCall.payload.target_manufacturer_part_number !== "SM-760-04" ||
-      rpcCall.payload.component_manufacturer_part_number !== "4×5") {
-    throw new Error("manual component add must preserve ASSY and component part numbers while defaulting the ASSY manufacturer");
+      rpcCall.payload.component_manufacturer_part_number !== "4×5" ||
+      rpcCall.payload.component_replacement_rate !== 60) {
+    throw new Error("manual component add must preserve ASSY, component part number, and the manually entered replacement rate");
   }
   if (elements["component-add-error"].textContent || alertMessage) {
     throw new Error("manual component add must not show a required-field error for the valid component part number");
