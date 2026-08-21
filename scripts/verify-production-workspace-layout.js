@@ -38,6 +38,13 @@ if (renderSource.includes("normalizeProductionDetailLayout")) {
   throw new Error("production workspace must be rendered in its final structure without post-render DOM rewriting");
 }
 
+const vehicleSummarySource = sourceBetween(app, "async function loadCatalogVehicleSummary", "function renderGltekPartNumberRow");
+[
+  'root.closest("#screen-production-search")',
+  "button.textContent = compactProductionButton ? t(\"vehicle_info_button\") : fullLabel",
+  'button.setAttribute("aria-label", fullLabel)'
+].forEach((fragment) => requireFragment(vehicleSummarySource, fragment, "production compact vehicle action"));
+
 const kikanIndex = renderSource.indexOf("production-section production-kikan-section");
 const operationsIndex = renderSource.indexOf("class='production-operations-column'");
 const coreIndex = renderSource.indexOf("production-section production-core-section");
@@ -58,6 +65,12 @@ requireFragment(searchRow, 'id="production-clear-btn"', "production search clear
   ".production-master-column { grid-template-rows: auto minmax(150px, 1fr); }",
   ".production-operations-column { grid-template-rows: auto auto; align-content: start; }",
   "#production-kikan-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; }",
+  ".production-core-meta { display: grid; grid-template-columns: minmax(190px, 1.5fr) minmax(90px, .5fr);",
+  "#screen-production-search .detail-vehicle-grid:not(.detail-spec-grid),",
+  "#screen-production-search .ac-part-label { font-size: 12px; white-space: nowrap; }",
+  "#screen-production-search .detail-spec-grid { grid-template-columns: 86px minmax(0, 1fr) 86px minmax(0, 1fr); }",
+  "#screen-production-search .production-core-policy-row { grid-template-columns: 70px minmax(0, 1fr);",
+  "#screen-production-search .production-core-policy-row .core-return-badge { white-space: nowrap; overflow-wrap: normal; }",
   "@media (min-width: 768px) and (max-width: 1180px)",
   ".production-workspace { display: grid; grid-template-columns: 1fr; overflow: visible; }"
 ].forEach((fragment) => requireFragment(css, fragment, "production workspace CSS"));

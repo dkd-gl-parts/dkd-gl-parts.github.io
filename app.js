@@ -5068,7 +5068,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.741";
+var APP_VERSION       = "v1.1.742";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -13178,8 +13178,12 @@ async function loadCatalogVehicleSummary(root, product) {
   }
   if (valueEl) valueEl.textContent = representativeVehicleMaker(rows);
   if (buttons.length) {
+    var compactProductionButton = !!(root.closest && root.closest("#screen-production-search"));
     buttons.forEach(function(button) {
-      button.textContent = detailCount ? (t("vehicle_info_button") + " (" + detailCount + ")") : (rows.length ? t("vehicle_info_button") + " (" + t("vehicle_info_maker_only") + ")" : t("vehicle_info_button"));
+      var fullLabel = detailCount ? (t("vehicle_info_button") + " (" + detailCount + ")") : (rows.length ? t("vehicle_info_button") + " (" + t("vehicle_info_maker_only") + ")" : t("vehicle_info_button"));
+      button.textContent = compactProductionButton ? t("vehicle_info_button") : fullLabel;
+      button.title = fullLabel;
+      button.setAttribute("aria-label", fullLabel);
       button.disabled = false;
       button.onclick = function() { openVehicleApplicationsDialog(rows, product); };
     });
