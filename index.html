@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="referrer" content="origin">
-<meta name="dcats-app-version" content="v1.1.737">
+<meta name="dcats-app-version" content="v1.1.738">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="application-name" content="D-CATS">
 <meta name="apple-mobile-web-app-title" content="D-CATS">
-<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.737"; -->
+<!-- Legacy updater compatibility: var APP_VERSION = "v1.1.738"; -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data: https:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co https://zipcloud.ibsnet.co.jp; form-action 'self';">
 <title>D-CATS</title>
 <link rel="manifest" href="site.webmanifest?v=1.1.697&amp;brand=2">
@@ -19,7 +19,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png?v=1.1.697&amp;brand=2">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.737&amp;ranking=7&amp;brand=4">
+<link rel="stylesheet" href="styles.css?v=1.1.738&amp;ranking=7&amp;brand=4">
 </head>
 <body>
 
@@ -136,7 +136,7 @@
         </div>
 
         <div class="login-utility">
-          <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.737</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
+          <p class="app-version-wrap"><span class="app-version" data-dcats-inline-style="s-cce7201d5294">v1.1.738</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></p>
           <div class="lang-sw-login" id="lang-sw-login">
             <button class="lang-btn-login active" data-lang="ja">日本語</button>
             <button class="lang-btn-login" data-lang="en">EN</button>
@@ -632,14 +632,14 @@
       <div>
         <div class="sales-order-kicker">ORDER OPERATIONS</div>
         <h1 data-i18n="sales_order_mgmt_title">受注・出荷管理</h1>
-        <p data-i18n="sales_order_mgmt_note">注文受付からB2クラウド用CSV出力、往復送り状番号の登録まで管理します。</p>
+        <p data-i18n="sales_order_mgmt_note">注文受付、商品発送用B2 CSV、現場の製造シリアル照合を管理します。</p>
       </div>
       <div class="sales-order-filter-row">
         <input id="sales-order-search" type="search" autocomplete="off" placeholder="注文番号・得意先・品番で検索">
         <select id="sales-order-status"><option value="all">すべての状態</option><option value="submitted">受付待ち</option><option value="accepted">受付済み</option><option value="shipping_ready">出荷準備</option><option value="shipped">出荷済み</option><option value="completed">完了</option><option value="cancelled">取消</option></select>
         <button type="button" class="btn-primary" id="sales-order-reload">検索</button>
         <button type="button" class="sales-order-accept-button" id="sales-order-batch-accept" disabled>選択を受付</button>
-        <button type="button" class="sales-order-b2-button" id="sales-order-export-b2" disabled>B2 CSV出力</button>
+        <button type="button" class="sales-order-b2-button" id="sales-order-export-b2" disabled>商品発送用B2 CSV発行</button>
         <button type="button" class="sales-order-b2-import-button" id="sales-order-import-b2">B2発送データ取込</button>
         <input type="file" id="sales-order-import-b2-file" accept=".csv,text/csv" hidden>
         <span class="sales-order-batch-message" id="sales-order-batch-message" aria-live="polite"></span>
@@ -676,10 +676,55 @@
   </main>
 </div>
 
+<!-- =============================================
+   出荷帳票発行・B2発行履歴
+============================================= -->
+<div id="screen-shipping-document-mgmt" class="screen">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-shipping-document-mgmt" data-i18n="btn_back">← メニュー</button>
+      <span class="logo-text" data-i18n="shipping_document_mgmt_title">出荷帳票発行</span>
+      <span class="app-version-wrap"><span class="app-version">v1.1.738</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+    </div>
+    <div class="page-header-right">
+      <span class="header-username" id="shipping-document-mgmt-username"></span>
+      <span class="role-badge" id="shipping-document-mgmt-role-badge"></span>
+      <button class="btn-logout" id="btn-logout-shipping-document-mgmt" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <main class="shipping-document-mgmt-body">
+    <section class="shipping-document-toolbar">
+      <div>
+        <div class="sales-order-kicker">SHIPPING DOCUMENTS</div>
+        <h1>出荷帳票発行</h1>
+        <p>商品発送用B2 CSV、保証書、コア返却シートと複写伝票番号を注文単位で管理します。</p>
+      </div>
+      <div class="shipping-document-filter-row">
+        <input id="shipping-document-search" type="search" autocomplete="off" placeholder="注文番号・得意先・品番で検索">
+        <select id="shipping-document-status">
+          <option value="active">出荷処理中</option>
+          <option value="shipped">出荷済み</option>
+          <option value="all">すべて</option>
+        </select>
+        <button type="button" class="btn-primary" id="shipping-document-reload">検索</button>
+      </div>
+    </section>
+    <section class="shipping-document-workspace">
+      <div class="shipping-document-list-pane">
+        <div class="shipping-document-list-head"><strong>対象注文</strong><span id="shipping-document-count">-</span></div>
+        <div id="shipping-document-list" class="shipping-document-list" aria-live="polite"></div>
+      </div>
+      <div class="shipping-document-detail-pane" id="shipping-document-detail">
+        <div class="sales-order-empty">左の一覧から注文を選択してください</div>
+      </div>
+    </section>
+  </main>
+</div>
+
 <div class="form-overlay" id="sales-order-print-settings-overlay" role="dialog" aria-modal="true" aria-labelledby="sales-order-print-settings-title">
   <div class="form-card sales-order-print-settings-card">
     <div class="sales-order-print-settings-heading">
-      <div><span>PRINT SETTINGS</span><h3 id="sales-order-print-settings-title">受注自動印刷設定</h3><p>受付時はA4出荷指示書だけを印刷します。B2発行済データ取込時にA5コア返却シート（対象注文のみ）と保証書を印刷します。</p></div>
+      <div><span>PRINT SETTINGS</span><h3 id="sales-order-print-settings-title">受注自動印刷設定</h3><p>受付時はA4出荷指示書だけを印刷します。B2発行済データ取込と商品・製造シリアル照合の両方が完了した時に、A5コア返却シート（対象注文のみ）と保証書を印刷します。</p></div>
       <button type="button" id="sales-order-print-settings-close" aria-label="閉じる">&#10005;</button>
     </div>
     <div class="sales-order-print-settings-current" id="sales-order-print-settings-current" aria-live="polite"></div>
@@ -3883,7 +3928,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
 <script src="vendor/qrcode.min.js?v=1.0.0"></script>
-<script src="app.js?v=1.1.737"></script>
+<script src="app.js?v=1.1.738"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.625&amp;ranking=17"></script>
 </body>
 </html>

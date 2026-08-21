@@ -25,6 +25,7 @@ on:
       - "scripts/verify-customer-order-delivery-service.js"
       - "scripts/verify-customer-order-b2-import.js"
       - "scripts/verify-customer-order-auto-print.js"
+      - "scripts/verify-order-fulfillment-documents.js"
       - "scripts/verify-customer-order-batch-accept.js"
       - "scripts/verify-customer-order-in-house-cancel.js"
       - "scripts/verify-postal-data.js"
@@ -106,6 +107,8 @@ jobs:
         run: node scripts/verify-customer-order-b2-import.js
       - name: Verify customer order automatic printing
         run: node scripts/verify-customer-order-auto-print.js
+      - name: Verify order fulfillment document workflow
+        run: node scripts/verify-order-fulfillment-documents.js
       - name: Verify customer order batch acceptance
         run: node scripts/verify-customer-order-batch-accept.js
       - name: Verify customer order in-house shipment cancellation

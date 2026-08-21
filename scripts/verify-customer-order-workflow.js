@@ -144,7 +144,9 @@ if (!evaluateInternalRegistrationAccess({ preview: true, featureEnabled: true, e
   "list_sales_orders",
   "get_sales_order_detail",
   "update_sales_order_status",
-  "get_sales_order_b2_export",
+  "create_sales_order_b2_export",
+  "get_sales_order_b2_export_batch",
+  "list_sales_order_b2_exports",
   "register_sales_order_shipping"
 ].forEach((rpc) => {
   if (!source.includes(`sb.rpc("${rpc}"`)) throw new Error(`required order RPC is missing: ${rpc}`);
@@ -388,7 +390,7 @@ if ((source.match(/customer_order_address_saved_title:/g) || []).length !== 3 ||
 }
 
 [
-  "API連携は保留",
+  "API直接連携は、有料・大口契約向けのため導入を見送る",
   "target_idempotency_key",
   "customer_ordering_enabled boolean not null default false",
   "注文RPCも拒否",
