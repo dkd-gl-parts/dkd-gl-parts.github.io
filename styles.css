@@ -5952,6 +5952,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .shipping-document-waybill-form input { width: 100%; height: 36px; border: 1px solid #b8c1cc; border-radius: 5px; padding: 0 9px; background: #fff; color: #253140; font-size: 11px; }
 .shipping-document-waybill-form button { min-height: 36px; border: 1px solid #287356; border-radius: 5px; padding: 0 12px; background: #287356; color: #fff; font-size: 10px; font-weight: 800; cursor: pointer; white-space: nowrap; }
 .shipping-document-waybill-form button:disabled { border-color: #c6cdd5; background: #e6e9ed; color: #8b939d; cursor: not-allowed; }
+.shipping-document-waybill-print-row { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 10px; border-top: 1px solid #e2e7ec; padding-top: 10px; }
+.shipping-document-waybill-print-row > div { min-width: 150px; margin-right: auto; }
+.shipping-document-waybill-print-row span,
+.shipping-document-waybill-print-row strong { display: block; }
+.shipping-document-waybill-print-row span { color: #667085; font-size: 9px; font-weight: 800; }
+.shipping-document-waybill-print-row strong { margin-top: 3px; color: #344054; font-size: 11px; }
+.shipping-document-waybill-print-row strong.printed { color: #236444; }
+.shipping-document-waybill-print-row strong.error { color: #a42d25; }
+.shipping-document-waybill-print-row button,
+.shipping-document-waybill-print-row a { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; border: 1px solid #287356; border-radius: 5px; padding: 0 11px; font-size: 10px; font-weight: 800; text-decoration: none; white-space: nowrap; }
+.shipping-document-waybill-print-row a { background: #fff; color: #287356; }
+.shipping-document-waybill-print-row button:disabled { border-color: #c6cdd5; background: #e6e9ed; color: #8b939d; cursor: not-allowed; }
 .shipping-document-form-note { margin-top: 7px; color: #737e88; font-size: 9px; line-height: 1.55; }
 .shipping-document-welcome { max-width: 860px; margin: 0 auto; padding-top: 14px; }
 .shipping-document-welcome > strong { color: #2b3846; font-size: 14px; }
@@ -6068,4 +6080,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .shipping-document-print-state { align-items: stretch; flex-direction: column; }
   .shipping-document-print-actions button { width: 100%; }
   .shipping-document-waybill-form { grid-template-columns: 1fr; }
+  .shipping-document-waybill-print-row { align-items: stretch; flex-direction: column; }
+  .shipping-document-waybill-print-row > div { margin-right: 0; }
+  .shipping-document-waybill-print-row button,
+  .shipping-document-waybill-print-row a { width: 100%; }
 }

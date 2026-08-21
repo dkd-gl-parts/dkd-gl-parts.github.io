@@ -122,9 +122,10 @@ if (!submitOrder.includes('customerOrderSetStatus(t("customer_order_submit_succe
 if (/window\.print\s*\(/.test(submitOrder)) {
   throw new Error("Order submission must not depend on browser window.print");
 }
-if (!html.includes("受注帳票の自動印刷") ||
+if (!html.includes("受注・出荷帳票の印刷設定") ||
     !html.includes("受付時はA4出荷指示書だけを印刷します") ||
-    !html.includes("B2発行済データ取込と商品・製造シリアル照合の両方が完了")) {
+    !html.includes("B2発行済データ取込と商品・製造シリアル照合の両方が完了") ||
+    !html.includes("コア返却用複写伝票は別のプリンターへ送信します")) {
   throw new Error("Automatic-print settings must describe the separate acceptance and shipment triggers");
 }
 
@@ -163,10 +164,10 @@ for (const fragment of [
 }
 
 for (const versionFragment of [
-  'content="v1.1.738"',
-  'styles.css?v=1.1.738',
-  'app.js?v=1.1.738',
-  'var APP_VERSION       = "v1.1.738"'
+  'content="v1.1.739"',
+  'styles.css?v=1.1.739',
+  'app.js?v=1.1.739',
+  'var APP_VERSION       = "v1.1.739"'
 ]) {
   const versionSource = versionFragment.startsWith("var ") ? source : html;
   if (!versionSource.includes(versionFragment)) throw new Error(`Release version is inconsistent: ${versionFragment}`);

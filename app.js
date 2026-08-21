@@ -5068,7 +5068,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.738";
+var APP_VERSION       = "v1.1.739";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -10077,12 +10077,28 @@ function shippingDocumentReturnWaybillHtml(order) {
   var waybill = order.return_waybill && typeof order.return_waybill === "object" ? order.return_waybill : {};
   var carrier = waybill.carrier_code || "yamato_collect";
   var method = waybill.handling_method || "handwritten";
+  var dispatch = salesOrderDispatch(order);
+  var printJob = shippingDocumentPrintJob(order, "return_waybill");
+  var printBusy = !!(printJob && ["queued", "claimed"].indexOf(printJob.status) >= 0);
+  var shipmentReady = !!(dispatch && dispatch.status === "shipped" && order.outbound_tracking_number);
+  var savedForDotPrint = !!(waybill.id && method === "dot_matrix" && waybill.tracking_number);
+  var canPrint = shipmentReady && savedForDotPrint && !printBusy && !shippingDocumentSaving;
+  var carrierLabel = carrier === "sagawa_collect" ? "佐川急便着払い" : "ヤマト宅急便　着払い";
+  var printState = printJob ? salesOrderPrintJobStatusLabel(printJob.status) : "未発行";
+  var printGuidance = method !== "dot_matrix" ? "手書き運用では、使用する複写伝票の番号だけを登録します。"
+    : !waybill.id ? "作成方法と返送用伝票番号を入力し、先に設定を保存してください。"
+      : !waybill.tracking_number ? "複写伝票に印刷されている返送用伝票番号を登録してください。"
+        : !shipmentReady ? "商品・製造シリアル照合とB2発行済データ取込の完了後に印刷できます。"
+          : printBusy ? "複写伝票を印刷端末へ送信済みです。" : "ドットプリンターに " + carrierLabel + " の複写伝票をセットして印刷します。";
   return "<section class='shipping-document-section'><div class='shipping-document-section-head'><div><h3>コア返却用複写伝票</h3><p>着払い伝票の種類と伝票番号を登録し、返却状況の照合に使用します。</p></div><span class='shipping-document-ready-state " + (waybill.id ? "ready" : "pending") + "'>" + esc(waybill.id ? "設定済み" : "未設定") + "</span></div>" +
-    "<div class='shipping-document-waybill-form'><label><span>運送会社・サービス</span><select id='shipping-document-return-carrier'><option value='yamato_collect'" + (carrier === "yamato_collect" ? " selected" : "") + ">ヤマト宅急便着払い</option><option value='sagawa_collect'" + (carrier === "sagawa_collect" ? " selected" : "") + ">佐川急便着払い</option></select></label>" +
+    "<div class='shipping-document-waybill-form'><label><span>運送会社・サービス</span><select id='shipping-document-return-carrier'><option value='yamato_collect'" + (carrier === "yamato_collect" ? " selected" : "") + ">ヤマト宅急便　着払い</option><option value='sagawa_collect'" + (carrier === "sagawa_collect" ? " selected" : "") + ">佐川急便着払い</option></select></label>" +
     "<label><span>作成方法</span><select id='shipping-document-return-method'><option value='handwritten'" + (method === "handwritten" ? " selected" : "") + ">手書き</option><option value='dot_matrix'" + (method === "dot_matrix" ? " selected" : "") + ">ドットプリンタ</option></select></label>" +
     "<label><span>返送用伝票番号</span><input id='shipping-document-return-tracking' type='text' inputmode='numeric' maxlength='14' value='" + esc(waybill.tracking_number || "") + "' placeholder='10〜14桁（後から登録も可）'></label>" +
     "<button type='button' id='shipping-document-return-save'" + (shippingDocumentSaving ? " disabled" : "") + ">設定を保存</button></div>" +
-    "<p class='shipping-document-form-note'>ドットプリンタ印刷は、ヤマト・佐川それぞれの複写伝票実物の印字位置を確定後に有効化します。現在は種類と番号の管理までです。</p></section>";
+    "<div class='shipping-document-waybill-print-row'><div><span>複写伝票の印刷状態</span><strong class='" + esc(printJob ? printJob.status : "") + "'>" + esc(printState) + "</strong></div>" +
+    (method === "dot_matrix" ? "<button type='button' class='shipping-document-primary' id='shipping-document-return-print'" + (canPrint ? "" : " disabled") + ">" + esc(printJob && printJob.status === "printed" ? "ドットプリンタで再印刷" : "ドットプリンタで印刷") + "</button>" : "") +
+    "<a href='dcats-print-settings://open'>複写伝票の印刷設定</a></div>" +
+    "<p class='shipping-document-form-note'>" + esc(printGuidance) + "</p></section>";
 }
 
 function renderShippingDocumentDetail() {
@@ -10120,6 +10136,8 @@ function bindShippingDocumentDetailActions() {
   });
   var saveWaybill = document.getElementById("shipping-document-return-save");
   if (saveWaybill) saveWaybill.addEventListener("click", saveShippingDocumentReturnWaybill);
+  var printWaybill = document.getElementById("shipping-document-return-print");
+  if (printWaybill) printWaybill.addEventListener("click", queueShippingDocumentReturnWaybillPrint);
 }
 
 function setShippingDocumentMessage(message, isError) {
@@ -10184,6 +10202,33 @@ async function saveShippingDocumentReturnWaybill() {
   shippingDocumentDetail = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
   renderShippingDocumentDetail();
   setShippingDocumentMessage("コア返却用伝票の設定を保存しました。", false);
+}
+
+async function queueShippingDocumentReturnWaybillPrint() {
+  var order = shippingDocumentDetail;
+  if (!order || !order.core_return_required || shippingDocumentSaving) return;
+  var waybill = order.return_waybill && typeof order.return_waybill === "object" ? order.return_waybill : {};
+  if (waybill.handling_method !== "dot_matrix" || !waybill.tracking_number) {
+    setShippingDocumentMessage("作成方法をドットプリンタにし、返送用伝票番号を登録してください。", true);
+    return;
+  }
+  shippingDocumentSaving = true;
+  renderShippingDocumentDetail();
+  var result = await sb.rpc("queue_sales_order_return_waybill_print", {
+    target_order_id: order.id,
+    target_expected_version: order.version == null ? null : order.version
+  });
+  shippingDocumentSaving = false;
+  if (result.error) {
+    renderShippingDocumentDetail();
+    setShippingDocumentMessage(result.error.message || "コア返却用複写伝票を印刷端末へ送信できませんでした。", true);
+    return;
+  }
+  var queued = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
+  await loadShippingDocumentDetail(order.id);
+  setShippingDocumentMessage((parseInt(queued.queued_count, 10) || 0) > 0
+    ? "コア返却用複写伝票を印刷待ちに登録しました。"
+    : "同じ複写伝票はすでに印刷待ちまたは印刷中です。", false);
 }
 
 function renderSalesOrderList() {
@@ -10345,13 +10390,13 @@ function salesOrderPrintJobStatusLabel(status) {
 }
 
 function salesOrderDocumentTypeLabel(type) {
-  return ({ dispatch: "出荷指示書", core_return: "コア返却シート", warranty: "保証書" })[type] || "受注帳票";
+  return ({ dispatch: "出荷指示書", core_return: "コア返却シート", warranty: "保証書", return_waybill: "コア返却用複写伝票" })[type] || "受注帳票";
 }
 
 function salesOrderPrintJobsHtml(order) {
   var jobs = Array.isArray(order && order.print_jobs) ? order.print_jobs : [];
   var latest = [];
-  ["dispatch", "core_return", "warranty"].forEach(function(type) {
+  ["dispatch", "core_return", "warranty", "return_waybill"].forEach(function(type) {
     var job = jobs.find(function(row) { return row.document_type === type; });
     if (job) latest.push(job);
   });
@@ -10362,7 +10407,7 @@ function salesOrderPrintJobsHtml(order) {
       "<span class='sales-order-print-job-status " + esc(job.status || "") + "'>" + esc(salesOrderPrintJobStatusLabel(job.status)) + "</span>" +
       "<time>" + esc(dateText ? customerOrderDateTimeText(dateText) : "-") + (job.last_error ? " / " + esc(job.last_error) : "") + "</time></div>";
   }).join("") : "<p class='sales-order-dispatch-empty'>印刷端末への送信履歴はありません。画面からの印刷は上のボタンを使用できます。</p>";
-  return "<div class='sales-order-print-jobs'><div class='sales-order-print-jobs-head'><strong>自動印刷</strong>" +
+  return "<div class='sales-order-print-jobs'><div class='sales-order-print-jobs-head'><strong>印刷端末への送信</strong>" +
     (salesOrderDispatch(order) ? "<button type='button' id='sales-order-requeue-print'>印刷端末へ再送</button>" : "") +
     "</div>" + rows + "</div>";
 }
@@ -10423,7 +10468,7 @@ function renderSalesOrderDetail() {
     "<section class='sales-order-detail-section'><h3>注文明細</h3>" + salesOrderItemRowsHtml(order.items) + "</section>" +
     "<section class='sales-order-detail-section sales-order-address'><h3>お届け先・運送便</h3><p><strong>" + esc(address.company_name || "-") + "　" + esc(address.recipient_name || "-") + "</strong><br>〒" + esc(address.postal_code || "-") + "　" + esc(address.prefecture_name || "") + esc(address.address_line_1 || "-") + " " + esc(address.address_line_2 || "") + "<br>TEL " + esc(address.phone_number || "-") + "</p><dl><div><dt>商品発送便</dt><dd>" + esc(outboundService) + "</dd></div><div><dt>コア返却便</dt><dd>" + esc(coreReturnService) + "</dd></div><div><dt>お届け希望</dt><dd>" + esc(order.requested_delivery_date || "指定なし") + " / " + esc(order.delivery_time_label || "指定なし") + "</dd></div><div><dt>注文メモ</dt><dd>" + esc(order.customer_note || "-") + "</dd></div></dl></section>" +
     salesOrderDispatchHtml(order) +
-    "<section class='sales-order-detail-section sales-order-tracking'><h3>商品発送送り状番号</h3><div class='sales-order-tracking-grid outbound-only'><label><span>送り状番号</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>B2出荷予定日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>商品発送番号を登録</button></div><p>コア返却用複写伝票は「出荷帳票発行」画面で、ヤマト宅急便着払いまたは佐川急便着払いとして管理します。送り状番号の登録だけでは在庫を減らしません。</p></section>" +
+    "<section class='sales-order-detail-section sales-order-tracking'><h3>商品発送送り状番号</h3><div class='sales-order-tracking-grid outbound-only'><label><span>送り状番号</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>B2出荷予定日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>商品発送番号を登録</button></div><p>コア返却用複写伝票は「出荷帳票発行」画面で、ヤマト宅急便　着払いまたは佐川急便着払いとして管理します。送り状番号の登録だけでは在庫を減らしません。</p></section>" +
     "<section class='sales-order-detail-section'><h3>発送履歴</h3>" + salesOrderShipmentHistoryHtml(order.shipment_history) + "</section>" +
     "<div class='sales-order-detail-actions'>" + actions + "</div><div id='sales-order-detail-message' class='sales-order-detail-message' aria-live='polite'></div>";
   host.querySelectorAll("[data-sales-order-action]").forEach(function(button) {

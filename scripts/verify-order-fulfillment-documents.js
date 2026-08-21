@@ -36,10 +36,13 @@ for (const fragment of [
   'sb.rpc("create_sales_order_b2_export"',
   'sb.rpc("get_sales_order_b2_export_batch"',
   'sb.rpc("save_sales_order_return_waybill"',
+  'sb.rpc("queue_sales_order_return_waybill_print"',
   '"yamato_collect"',
   '"sagawa_collect"',
-  'ヤマト宅急便着払い',
+  'ヤマト宅急便　着払い',
   '佐川急便着払い',
+  'ドットプリンタで印刷',
+  'dcats-print-settings://open',
   'データ破損など同じ内容が必要な場合',
   'reason.length < 5'
 ]) requireFragment(source, fragment);
@@ -65,24 +68,25 @@ for (const fragment of [
   ".shipping-document-workspace",
   ".shipping-document-stages",
   ".shipping-document-waybill-form",
+  ".shipping-document-waybill-print-row",
   ".shipping-document-print-actions"
 ]) requireFragment(css, fragment);
 requireFragment(printCss, ".shipment-document-table-warranty th:nth-child(5)");
 
 for (const fragment of [
   "API直接連携は、有料・大口契約向けのため導入を見送る",
-  "ヤマト宅急便着払い",
+  "ヤマト宅急便　着払い",
   "佐川急便着払い",
   "発行済み注文の重複出力は防止",
   "同一データを再ダウンロード"
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.738"',
-  'styles.css?v=1.1.738',
-  'app.js?v=1.1.738'
+  'content="v1.1.739"',
+  'styles.css?v=1.1.739',
+  'app.js?v=1.1.739'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.738"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.739"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
