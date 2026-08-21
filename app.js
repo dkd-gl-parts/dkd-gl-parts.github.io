@@ -5068,7 +5068,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.740";
+var APP_VERSION       = "v1.1.741";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -12700,29 +12700,6 @@ async function loadProductionKikanForRow(row, seq) {
   renderProductionKikanPartsList(partsList, wrap);
 }
 
-function normalizeProductionDetailLayout(root, row, detail) {
-  if (!root) return;
-  var grid = root.querySelector(".production-grid");
-  if (!grid) return;
-  var normalSections = Array.prototype.slice.call(grid.querySelectorAll(":scope > .production-section:not(.production-wide)"));
-  if (normalSections.length >= 3) {
-    normalSections[0].remove();
-  }
-  normalSections = Array.prototype.slice.call(grid.querySelectorAll(":scope > .production-section:not(.production-wide)"));
-  if (normalSections[0]) {
-    normalSections[0].innerHTML =
-      "<h3>" + esc(t("production_core_section")) + "</h3>" +
-      renderProductionCoreSummary(row, detail) +
-      productionKv("コア品番", row.core_part_number) +
-      productionKv("パレット", row.core_pallet_summary) +
-      productionKv("状態", productionStatusLabel(row)) +
-      renderProductionCorePolicies(detail.productVariants);
-  }
-  if (normalSections[1]) {
-    normalSections[1].innerHTML = "<h3>" + esc(t("kikan_section")) + "</h3><div id='production-kikan-wrap'><div class='production-help'>" + esc(t("loading")) + "</div></div>";
-  }
-}
-
 function scrollProductionDetailIntoViewOnMobile() {
   if (!window.matchMedia || !window.matchMedia("(max-width: 767px)").matches) return;
   var detail = document.getElementById("production-detail");
@@ -13322,43 +13299,46 @@ async function renderProductionDetail(row) {
   if (seq !== productionDetailRequestSeq) return;
   var title = row.manufacturer_part_number || row.genuine_part_number || row.daiko_part_number || ("DKD " + row.dkd_shohin_id);
   var componentButtonHtml = "<button class='btn-sm-edit btn-component-action detail-inline-action' id='production-open-components'><span class='component-icon'>&#x1F9E9;</span> " + esc(t("component_section")) + "</button>";
+  var priorityHtml = inst
+    ? "<span class='production-priority'>" + esc(t("production_ranking_rank")) + " #" + esc(inst.priority_rank || "-") + "</span>"
+    : "";
   var html = "";
   html += "<div class='production-detail-head'>";
-  html += "<div class='production-head-main'><div class='production-detail-title'>" + (inst ? "#" + esc(inst.priority_rank || "-") + " " : "") + esc(title) + "</div>";
-  html += "<div class='production-detail-sub'>" + esc(productionCategoryLabel(row)) + " / " + esc(t("f_genuine_pn")) + " " + esc(row.genuine_part_number || "-") + " / " + esc(row.manufacturer || "-") + "</div></div>";
+  html += "<div class='production-head-main'><div class='production-head-context'><span>" + esc(productionCategoryLabel(row)) + "</span>" + priorityHtml + "</div>";
+  html += "<div class='production-detail-title'>" + esc(title) + "</div>";
+  html += "<div class='production-detail-meta'>";
+  html += "<span><small>" + esc(t("f_genuine_pn")) + "</small><strong>" + esc(row.genuine_part_number || "-") + "</strong></span>";
+  html += "<span><small>" + esc(t("f_manufacturer")) + "</small><strong>" + esc(row.manufacturer || "-") + "</strong></span>";
+  html += "<span><small>DKD</small><strong>" + esc(row.dkd_shohin_id || "-") + "</strong></span>";
+  html += "</div></div>";
   html += "<div class='production-actions'>";
   if (canViewFinishedLabelMgmt()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-finished-label'>" + esc(t("mi_finished_label_title")) + "</button>";
   if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-edit-core'>品番修正</button>";
   if (canManageAllImages()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-image-actions'>" + esc(t("image_actions_title")) + "</button>";
   html += "</div></div>";
-  html += "<div class='production-mobile-stock'>" + renderProductionCoreSummary(row, detail) + "</div>";
-  html += "<div class='production-image-panel'><div class='production-image-title'>" + esc(t("production_images_section")) + "</div><div class='production-image-groups' id='production-image-groups'>" + productionImageKinds().map(productionImageGroupShellHtml).join("") + "</div></div>";
-  html += "<div class='production-grid'>";
-  html += "<section class='production-section production-wide'><h3>" + esc(productCategoryLabel(row)) + "</h3>";
+  html += "<div class='production-workspace'>";
+  html += "<div class='production-master-column'>";
+  html += "<section class='production-section production-master-section'><div class='production-section-heading'><h3>" + esc(productCategoryLabel(row)) + "</h3><span>DKD " + esc(row.dkd_shohin_id || "-") + "</span></div>";
   html += renderProductMasterDetailHtml(row, componentButtonHtml);
   html += "</section>";
-  html += "<section class='production-section'><h3>製造予定リスト</h3>";
-  if (inst) {
-    html += productionKv("BEST100順位", "#" + (inst.priority_rank || "-"));
-    html += productionKv("元データ", [inst.source_year, inst.source_sheet].filter(Boolean).join(" / "));
-    html += productionKv("統合元件数", inst.merged_source_count || 1);
-  } else {
-    html += "<div class='production-help'>この商品は現在の製造予定リストにはありません。商品マスタ上の商品として操作できます。</div>";
-  }
-  html += "</section>";
-  html += "<section class='production-section production-core-section'><h3>" + esc(t("production_core_section")) + "</h3>";
-  html += productionKv("コア在庫数", row.core_stock_qty || 0);
-  html += productionKv("コア品番", row.core_part_number);
-  html += productionKv("パレット", row.core_pallet_summary);
-  html += productionKv("状態", productionStatusLabel(row));
-  html += renderProductionCorePolicies(detail.productVariants);
-  html += "</section>";
-  html += "<section class='production-section'><h3>" + esc(t("kikan_section")) + "</h3>";
+  html += "<section class='production-section production-kikan-section'><div class='production-section-heading'><h3>" + esc(t("kikan_section")) + "</h3></div>";
   html += "<div id='production-kikan-wrap'><div class='production-help'>" + esc(t("loading")) + "</div></div>";
   html += "</section>";
   html += "</div>";
+  html += "<div class='production-operations-column'>";
+  html += "<section class='production-section production-core-section'><div class='production-section-heading'><h3>" + esc(t("production_core_section")) + "</h3><span>" + esc(productionStatusLabel(row)) + "</span></div>";
+  html += renderProductionCoreSummary(row, detail);
+  html += "<div class='production-core-meta'>";
+  html += productionKv("コア品番", row.core_part_number);
+  html += productionKv("パレット", row.core_pallet_summary);
+  html += "</div>";
+  html += renderProductionCorePolicies(detail.productVariants);
+  html += "</section>";
+  html += "<section class='production-section production-image-panel'><div class='production-section-heading'><h3 class='production-image-title'>" + esc(t("production_images_section")) + "</h3></div><div class='production-image-groups' id='production-image-groups'>" + productionImageKinds().map(productionImageGroupShellHtml).join("") + "</div>";
+  html += "</section>";
+  html += "</div>";
+  html += "</div>";
   el.innerHTML = html;
-  normalizeProductionDetailLayout(el, row, detail);
   currentProduct = row;
   currentProductVariants = detail.productVariants.slice();
   currentCoreDkdShohinId = row.dkd_shohin_id || null;

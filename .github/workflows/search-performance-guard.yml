@@ -44,6 +44,7 @@ on:
       - "scripts/verify-finished-product-shipments.js"
       - "scripts/verify-customer-order-compatible-serial-dispatch.js"
       - "scripts/verify-production-image-thumbnails-by-kind.js"
+      - "scripts/verify-production-workspace-layout.js"
       - "scripts/verify-image-icon-consistency.js"
       - "assets/icons/image.svg"
       - "shipment-instruction-print.css"
@@ -137,6 +138,8 @@ jobs:
         run: node scripts/verify-customer-order-compatible-serial-dispatch.js
       - name: Verify production image thumbnails by product kind
         run: node scripts/verify-production-image-thumbnails-by-kind.js
+      - name: Verify production management workspace layout
+        run: node scripts/verify-production-workspace-layout.js
       - name: Verify shared image icon consistency
         run: node scripts/verify-image-icon-consistency.js
       - name: Verify static deployment assets

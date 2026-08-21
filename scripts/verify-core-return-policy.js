@@ -103,10 +103,20 @@ const productionSource = sourceBetween("function renderProductionCorePolicies", 
 if (!productionSource.includes("renderProductionCorePolicies(detail.productVariants)")) {
   throw new Error("manufacturing detail must render core return terms below inventory/core information");
 }
-const productionLayoutSource = sourceBetween("function normalizeProductionDetailLayout", "function scrollProductionDetailIntoViewOnMobile");
-if (!productionLayoutSource.includes('productionKv("状態", productionStatusLabel(row)) +') ||
-    !productionLayoutSource.includes("renderProductionCorePolicies(detail.productVariants)")) {
-  throw new Error("manufacturing layout normalization must preserve core return terms below inventory/core information");
+const productionLayoutSource = sourceBetween("async function renderProductionDetail", "async function loadProductionDetailData");
+[
+  "production-section production-core-section",
+  "renderProductionCoreSummary(row, detail)",
+  "class='production-core-meta'",
+  "renderProductionCorePolicies(detail.productVariants)"
+].forEach((fragment) => {
+  if (!productionLayoutSource.includes(fragment)) throw new Error(`manufacturing core layout is missing: ${fragment}`);
+});
+const summaryIndex = productionLayoutSource.indexOf("renderProductionCoreSummary(row, detail)");
+const metaIndex = productionLayoutSource.indexOf("class='production-core-meta'");
+const policyIndex = productionLayoutSource.lastIndexOf("renderProductionCorePolicies(detail.productVariants)");
+if (!(summaryIndex < metaIndex && metaIndex < policyIndex)) {
+  throw new Error("manufacturing core return terms must remain below the inventory/core summary");
 }
 if (!productionSource.includes("vertical: true")) {
   throw new Error("manufacturing core return terms must use the compact vertical layout");

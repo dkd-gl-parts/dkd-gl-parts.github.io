@@ -164,10 +164,10 @@ for (const fragment of [
 }
 
 for (const versionFragment of [
-  'content="v1.1.740"',
-  'styles.css?v=1.1.740',
-  'app.js?v=1.1.740',
-  'var APP_VERSION       = "v1.1.740"'
+  'content="v1.1.741"',
+  'styles.css?v=1.1.741',
+  'app.js?v=1.1.741',
+  'var APP_VERSION       = "v1.1.741"'
 ]) {
   const versionSource = versionFragment.startsWith("var ") ? source : html;
   if (!versionSource.includes(versionFragment)) throw new Error(`Release version is inconsistent: ${versionFragment}`);
