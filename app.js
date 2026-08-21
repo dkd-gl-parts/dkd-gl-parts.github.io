@@ -5068,7 +5068,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.743";
+var APP_VERSION       = "v1.1.744";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5349,6 +5349,10 @@ var CUSTOMER_ORDER_DELIVERY_SERVICE_LEVELS = {
   "クロネコゆうメール": { earliest_days: 3, latest_days: 7, far_extra_days: 0, requested_date: false, requested_time: false }
 };
 var salesOrderRows = [];
+var salesOrderDashboardRows = [];
+var salesOrderDashboardSeq = 0;
+var salesOrderDashboardLoading = false;
+var salesOrderDashboardError = "";
 var salesOrderSelectedId = null;
 var salesOrderCheckedIdsState = new Set();
 var salesOrderDetail = null;
@@ -7367,6 +7371,10 @@ async function doLogout() {
   customerOrderDeliveryDateManual = false;
   customerOrderDeliveryServiceCache = {};
   salesOrderRows = [];
+  salesOrderDashboardRows = [];
+  salesOrderDashboardSeq += 1;
+  salesOrderDashboardLoading = false;
+  salesOrderDashboardError = "";
   salesOrderSelectedId = null;
   salesOrderCheckedIdsState = new Set();
   salesOrderDetail = null;
@@ -9716,6 +9724,76 @@ function salesOrderListSearch() {
   return input ? input.value.trim() : "";
 }
 
+function salesOrderDashboardCounts() {
+  var counts = { all: salesOrderDashboardRows.length, submitted: 0, accepted: 0, shipping_ready: 0, shipped: 0, completed: 0, cancelled: 0 };
+  salesOrderDashboardRows.forEach(function(order) {
+    var status = String(order && order.status || "").toLowerCase();
+    if (Object.prototype.hasOwnProperty.call(counts, status)) counts[status] += 1;
+  });
+  return counts;
+}
+
+function renderSalesOrderDashboard() {
+  var dashboard = document.getElementById("sales-order-dashboard");
+  var summary = document.getElementById("sales-order-dashboard-summary");
+  if (!dashboard || !summary) return;
+  var counts = salesOrderDashboardCounts();
+  var activeStatus = salesOrderListStatus();
+  dashboard.classList.toggle("loading", salesOrderDashboardLoading);
+  dashboard.classList.toggle("error", !!salesOrderDashboardError);
+  if (salesOrderDashboardLoading) summary.textContent = "受注データを集計しています。";
+  else if (salesOrderDashboardError) summary.textContent = "処理状況を読み込めませんでした。検索はそのまま使用できます。";
+  else if (salesOrderDashboardRows.length >= 300) summary.textContent = "直近300件を集計しています。";
+  else summary.textContent = salesOrderDashboardRows.length + "件を状態別に集計しています。";
+  dashboard.querySelectorAll("[data-sales-order-dashboard-status]").forEach(function(button) {
+    var status = button.dataset.salesOrderDashboardStatus || "all";
+    var count = button.querySelector("[data-sales-order-dashboard-count]");
+    var active = status === activeStatus;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+    if (count) count.textContent = salesOrderDashboardLoading ? "…" : (salesOrderDashboardError ? "-" : String(counts[status] || 0));
+  });
+}
+
+async function loadSalesOrderDashboard() {
+  if (!canManageSalesOrders()) return;
+  var requestSeq = ++salesOrderDashboardSeq;
+  salesOrderDashboardLoading = true;
+  salesOrderDashboardError = "";
+  renderSalesOrderDashboard();
+  var result = await sb.rpc("list_sales_orders", {
+    target_status: null,
+    target_search: null,
+    target_limit: 300
+  });
+  if (requestSeq !== salesOrderDashboardSeq) return;
+  salesOrderDashboardLoading = false;
+  if (result.error) {
+    salesOrderDashboardRows = [];
+    salesOrderDashboardError = result.error.message || "処理状況を読み込めませんでした。";
+    renderSalesOrderDashboard();
+    return;
+  }
+  var data = result.data || [];
+  salesOrderDashboardRows = Array.isArray(data) ? data : (Array.isArray(data.orders) ? data.orders : []);
+  salesOrderDashboardError = "";
+  renderSalesOrderDashboard();
+}
+
+async function refreshSalesOrderManagement() {
+  await Promise.all([loadSalesOrders(), loadSalesOrderDashboard()]);
+}
+
+function selectSalesOrderDashboardStatus(status) {
+  var select = document.getElementById("sales-order-status");
+  var search = document.getElementById("sales-order-search");
+  if (!select || !Array.from(select.options).some(function(option) { return option.value === status; })) return;
+  select.value = status;
+  if (search) search.value = "";
+  renderSalesOrderDashboard();
+  loadSalesOrders();
+}
+
 function salesOrderCheckedIds() {
   return Array.from(salesOrderCheckedIdsState).filter(function(id) { return !isNaN(id); });
 }
@@ -9883,12 +9961,16 @@ async function enterSalesOrderMgmt() {
   salesOrderSelectedId = null;
   salesOrderCheckedIdsState = new Set();
   salesOrderDetail = null;
+  salesOrderDashboardRows = [];
+  salesOrderDashboardError = "";
+  salesOrderDashboardLoading = true;
   salesOrderB2ImportState = null;
   salesOrderB2ImportSaving = false;
   showScreen("sales-order-mgmt");
   updateAllHeaders();
+  renderSalesOrderDashboard();
   renderSalesOrderPrintSettings();
-  await Promise.all([loadSalesOrders(), loadSalesOrderPrintSettings()]);
+  await Promise.all([refreshSalesOrderManagement(), loadSalesOrderPrintSettings()]);
 }
 
 function shippingDocumentStatusValue() {
@@ -10273,6 +10355,7 @@ async function loadSalesOrders() {
   if (!canManageSalesOrders()) return;
   salesOrderCheckedIdsState = new Set();
   updateSalesOrderSelectionButtons();
+  renderSalesOrderDashboard();
   var requestSeq = ++salesOrderListSeq;
   var host = document.getElementById("sales-order-list");
   if (host) host.innerHTML = "<div class='sales-order-empty'>" + esc(t("loading")) + "</div>";
@@ -10324,7 +10407,7 @@ async function acceptCheckedSalesOrders() {
   }
   if (printWarnings.length) message += " 印刷待ち登録に失敗した注文があります。注文詳細から再送してください。";
   var hadFailure = failedRows.length > 0;
-  await loadSalesOrders();
+  await refreshSalesOrderManagement();
   if (salesOrderSelectedId) await loadSalesOrderDetail(salesOrderSelectedId);
   setSalesOrderBatchMessage(message, hadFailure);
 }
@@ -10512,7 +10595,7 @@ async function issueSalesOrderDispatch() {
   }
   salesOrderDetail = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
   renderSalesOrderDetail();
-  await loadSalesOrders();
+  await refreshSalesOrderManagement();
 }
 
 async function requeueSalesOrderPrintJobs() {
@@ -10715,7 +10798,7 @@ async function submitSalesOrderInHouseCancellation() {
   }
 
   closeSalesOrderInHouseCancelDialog(true);
-  await loadSalesOrders();
+  await refreshSalesOrderManagement();
   salesOrderSelectedId = orderId;
   await loadSalesOrderDetail(orderId);
 }
@@ -10741,7 +10824,7 @@ async function updateSalesOrderStatus(action) {
     setSalesOrderDetailMessage(result.error.message || "状態を更新できませんでした。", true);
     return;
   }
-  await loadSalesOrders();
+  await refreshSalesOrderManagement();
   await loadSalesOrderDetail(salesOrderSelectedId);
 }
 
@@ -10773,7 +10856,7 @@ async function registerSalesOrderTracking() {
     setSalesOrderDetailMessage(result.error.message || "送り状番号を登録できませんでした。", true);
     return;
   }
-  await loadSalesOrders();
+  await refreshSalesOrderManagement();
   await loadSalesOrderDetail(salesOrderSelectedId);
 }
 
@@ -11102,7 +11185,7 @@ async function importSalesOrderB2Shipments() {
       (printWarningCount ? " 同梱帳票を印刷待ちにできなかった発送が " + printWarningCount + " 件あります。注文詳細から再送してください。" : "");
   salesOrderB2ImportState.resultError = Number(data.error_count || 0) > 0 || printWarningCount > 0;
   renderSalesOrderB2Import();
-  await loadSalesOrders();
+  await refreshSalesOrderManagement();
   if (salesOrderSelectedId) await loadSalesOrderDetail(salesOrderSelectedId);
 }
 
@@ -23476,7 +23559,7 @@ async function returnFromFinishedProductShipping() {
   if (orderId && canManageSalesOrders()) {
     showScreen("sales-order-mgmt");
     updateAllHeaders();
-    await loadSalesOrders();
+    await refreshSalesOrderManagement();
     await loadSalesOrderDetail(orderId);
     return;
   }
@@ -41675,9 +41758,12 @@ document.getElementById("shipping-document-reload").addEventListener("click", fu
 document.getElementById("shipping-document-search").addEventListener("keydown", function(e) {
   if (e.key === "Enter") Promise.all([loadShippingDocumentOrders(), loadShippingDocumentB2History()]);
 });
-document.getElementById("sales-order-reload").addEventListener("click", loadSalesOrders);
-document.getElementById("sales-order-search").addEventListener("keydown", function(e) { if (e.key === "Enter") loadSalesOrders(); });
+document.getElementById("sales-order-reload").addEventListener("click", refreshSalesOrderManagement);
+document.getElementById("sales-order-search").addEventListener("keydown", function(e) { if (e.key === "Enter") refreshSalesOrderManagement(); });
 document.getElementById("sales-order-status").addEventListener("change", loadSalesOrders);
+document.querySelectorAll("[data-sales-order-dashboard-status]").forEach(function(button) {
+  button.addEventListener("click", function() { selectSalesOrderDashboardStatus(button.dataset.salesOrderDashboardStatus || "all"); });
+});
 document.getElementById("sales-order-auto-print-save").addEventListener("click", saveSalesOrderPrintSettings);
 document.getElementById("sales-order-print-settings-open").addEventListener("click", openSalesOrderPrinterSetup);
 document.getElementById("sales-order-print-settings-close").addEventListener("click", closeSalesOrderPrinterSetup);

@@ -5757,6 +5757,28 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .sales-order-auto-print-controls .btn-primary { min-height: 34px; border-radius: 5px; padding: 0 12px; font-size: 10px; white-space: nowrap; }
 .sales-order-print-settings-button { min-height: 34px; border: 1px solid #287356; border-radius: 5px; padding: 0 12px; background: #fff; color: #287356; font-size: 10px; font-weight: 800; cursor: pointer; white-space: nowrap; }
 .sales-order-print-settings-button:hover { background: #eef7f2; }
+.sales-order-dashboard { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 16px; border-bottom: 1px solid #d5dbe1; padding: 8px 24px; background: #fff; }
+.sales-order-dashboard-heading { min-width: 120px; }
+.sales-order-dashboard-heading strong,
+.sales-order-dashboard-heading span { display: block; }
+.sales-order-dashboard-heading strong { color: #26352f; font-size: 12px; }
+.sales-order-dashboard-heading span { margin-top: 2px; color: #74817b; font-size: 9px; line-height: 1.4; }
+.sales-order-dashboard.error .sales-order-dashboard-heading span { color: #b42318; }
+.sales-order-dashboard-metrics { display: grid; grid-template-columns: repeat(7, minmax(84px, 1fr)); gap: 6px; min-width: 0; }
+.sales-order-dashboard-metric { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; min-height: 46px; border: 1px solid #d5dce2; border-left-width: 3px; border-radius: 5px; padding: 6px 9px; background: #f8fafb; color: #43505c; cursor: pointer; text-align: left; }
+.sales-order-dashboard-metric:hover { border-color: #9dacb8; background: #fff; }
+.sales-order-dashboard-metric:focus-visible { outline: 3px solid rgba(37,99,199,.25); outline-offset: 1px; }
+.sales-order-dashboard-metric span { min-width: 0; overflow: hidden; font-size: 9px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.sales-order-dashboard-metric strong { flex: 0 0 auto; color: #24303c; font-size: 18px; font-variant-numeric: tabular-nums; line-height: 1; }
+.sales-order-dashboard-metric.all { border-left-color: #778493; }
+.sales-order-dashboard-metric.submitted { border-left-color: #d59b36; }
+.sales-order-dashboard-metric.accepted { border-left-color: #4e8dbd; }
+.sales-order-dashboard-metric.shipping-ready { border-left-color: #346c9a; }
+.sales-order-dashboard-metric.shipped { border-left-color: #3c9260; }
+.sales-order-dashboard-metric.completed { border-left-color: #668173; }
+.sales-order-dashboard-metric.cancelled { border-left-color: #bf6262; }
+.sales-order-dashboard-metric.active { border-color: #287356; box-shadow: inset 0 0 0 1px #287356; background: #eef7f2; color: #1f6248; }
+.sales-order-dashboard.loading .sales-order-dashboard-metric { cursor: progress; }
 .sales-order-auto-print-controls :disabled { cursor: not-allowed; opacity: .62; }
 .sales-order-auto-print-message { min-height: 18px; padding: 9px 20px; color: #456057; font-size: 9px; font-weight: 700; }
 .sales-order-auto-print-message.error { color: #b42318; }
@@ -6019,6 +6041,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .sales-order-filter-row { grid-template-columns: minmax(220px, 1fr) 150px auto auto auto auto; }
   .sales-order-auto-print { grid-template-columns: 1fr; }
   .sales-order-auto-print-message { grid-column: 1; }
+  .sales-order-dashboard { grid-template-columns: 1fr; gap: 6px; }
   .sales-order-workspace { grid-template-columns: 360px minmax(0, 1fr); }
   .shipping-document-toolbar { align-items: stretch; flex-direction: column; }
   .shipping-document-workspace { grid-template-columns: 330px minmax(0, 1fr); }
@@ -6035,6 +6058,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .customer-order-shipping-pane { position: static; border-top: 0; border-radius: 0 0 var(--dcats-card-radius) var(--dcats-card-radius); }
   .customer-order-history-row { grid-template-columns: 1fr 1fr; }
   .sales-order-workspace { grid-template-columns: 1fr; }
+  .sales-order-dashboard { padding: 8px 12px; }
+  .sales-order-dashboard-metrics { display: flex; overflow-x: auto; padding-bottom: 3px; }
+  .sales-order-dashboard-metric { flex: 0 0 104px; }
   .sales-order-list-pane { border-right: 0; border-bottom: 7px solid #e4e8ec; }
   .sales-order-list { max-height: 42vh; }
   .sales-order-item-table { overflow-x: auto; }

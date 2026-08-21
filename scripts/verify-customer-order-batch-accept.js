@@ -45,7 +45,7 @@ for (const fragment of [
   "accepted_count",
   "failedRows",
   "print_error",
-  "await loadSalesOrders()"
+  "await refreshSalesOrderManagement()"
 ]) {
   if (!batchAccept.includes(fragment)) throw new Error(`Batch acceptance contract is missing: ${fragment}`);
 }
