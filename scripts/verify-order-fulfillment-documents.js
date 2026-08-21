@@ -23,6 +23,7 @@ for (const id of [
   "screen-shipping-document-mgmt",
   "btn-back-shipping-document-mgmt",
   "shipping-document-search",
+  "shipping-document-lookup-message",
   "shipping-document-status",
   "shipping-document-reload",
   "shipping-document-list",
@@ -47,6 +48,42 @@ for (const fragment of [
   'reason.length < 5'
 ]) requireFragment(source, fragment);
 
+const enterSource = sourceBetween("async function enterShippingDocumentMgmt", "function renderShippingDocumentList");
+for (const fragment of [
+  "options = options || {}",
+  "options.order",
+  "shippingDocumentDetail = options.order",
+  "loadShippingDocumentB2History"
+]) requireFragment(enterSource, fragment);
+if (enterSource.includes("loadShippingDocumentOrders()")) {
+  throw new Error("Shipping document management must wait for an order ID or dispatch scan instead of loading every order on entry");
+}
+
+const lookupSource = sourceBetween("async function lookupShippingDocumentOrder", "function shippingDocumentRecentBatchesHtml");
+for (const fragment of [
+  'sb.rpc("get_sales_order_dispatch"',
+  "target_dispatch_number: normalized",
+  "shippingDocumentExactOrder",
+  "loadShippingDocumentDetail",
+  "loadShippingDocumentB2History(resolvedOrder.order_number",
+  "受注ID、注文番号または出荷指示番号"
+]) requireFragment(lookupSource, fragment);
+
+const requiredDocuments = sourceBetween("function shippingDocumentShipmentDocumentsHtml", "function shippingDocumentReturnWaybillHtml");
+for (const fragment of [
+  'key: "dispatch"',
+  'key: "warranty"',
+  'key: "core_return"',
+  'key: "return_waybill"',
+  "shipping-document-required-list",
+  "出荷指示書を印刷・PDF保存",
+  "返却伝票を設定"
+]) requireFragment(requiredDocuments, fragment);
+
+const salesOrderDispatchUi = sourceBetween("function salesOrderDispatchHtml", "function renderSalesOrderDetail");
+requireFragment(salesOrderDispatchUi, 'id=\'sales-order-open-shipping-documents\'');
+requireFragment(source, "enterShippingDocumentMgmt({ order: salesOrderDetail })");
+
 const issueSource = sourceBetween("async function issueSalesOrderB2Export", "async function downloadSalesOrderB2Batch");
 if (issueSource.includes('sb.rpc("get_sales_order_b2_export"')) {
   throw new Error("B2 initial issue must use the audited issue RPC rather than the legacy preview RPC");
@@ -69,7 +106,10 @@ for (const fragment of [
   ".shipping-document-stages",
   ".shipping-document-waybill-form",
   ".shipping-document-waybill-print-row",
-  ".shipping-document-print-actions"
+  ".shipping-document-print-actions",
+  ".shipping-document-required-list",
+  ".shipping-document-required-row",
+  ".shipping-document-lookup-message"
 ]) requireFragment(css, fragment);
 requireFragment(printCss, ".shipment-document-table-warranty th:nth-child(5)");
 
@@ -82,11 +122,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.744"',
-  'styles.css?v=1.1.744',
-  'app.js?v=1.1.744'
+  'content="v1.1.745"',
+  'styles.css?v=1.1.745',
+  'app.js?v=1.1.745'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.744"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.745"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");

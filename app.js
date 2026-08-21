@@ -5068,7 +5068,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.744";
+var APP_VERSION       = "v1.1.745";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5370,6 +5370,7 @@ var shippingDocumentB2Batches = [];
 var shippingDocumentListSeq = 0;
 var shippingDocumentDetailSeq = 0;
 var shippingDocumentHistorySeq = 0;
+var shippingDocumentLookupSeq = 0;
 var shippingDocumentSaving = false;
 var customerManagedUsers = [];
 var customerManagedUsersRequestSeq = 0;
@@ -7392,6 +7393,7 @@ async function doLogout() {
   shippingDocumentListSeq += 1;
   shippingDocumentDetailSeq += 1;
   shippingDocumentHistorySeq += 1;
+  shippingDocumentLookupSeq += 1;
   shippingDocumentSaving = false;
   customerManagedUsers = [];
   customerManagedUsersRequestSeq += 1;
@@ -9983,6 +9985,13 @@ function shippingDocumentSearchValue() {
   return input ? input.value.trim() : "";
 }
 
+function setShippingDocumentLookupMessage(message, isError) {
+  var host = document.getElementById("shipping-document-lookup-message");
+  if (!host) return;
+  host.textContent = message || "";
+  host.className = "shipping-document-lookup-message" + (isError ? " error" : "");
+}
+
 function shippingDocumentOrderIsVisible(order) {
   var status = String(order && order.status || "");
   var filter = shippingDocumentStatusValue();
@@ -9991,11 +10000,12 @@ function shippingDocumentOrderIsVisible(order) {
   return ["accepted", "shipping_ready", "shipped", "completed"].indexOf(status) >= 0;
 }
 
-async function enterShippingDocumentMgmt() {
+async function enterShippingDocumentMgmt(options) {
   if (!canManageSalesOrders()) {
     showPermissionDenied("open_shipping_document_management", "customer_orders");
     return;
   }
+  options = options || {};
   shippingDocumentRows = [];
   shippingDocumentSelectedId = null;
   shippingDocumentDetail = null;
@@ -10003,9 +10013,20 @@ async function enterShippingDocumentMgmt() {
   shippingDocumentSaving = false;
   showScreen("shipping-document-mgmt");
   updateAllHeaders();
+  var input = document.getElementById("shipping-document-search");
+  var statusSelect = document.getElementById("shipping-document-status");
+  if (input) input.value = options.order ? (options.order.order_number || String(options.order.id || "")) : "";
+  if (statusSelect) statusSelect.value = options.order ? "all" : "active";
+  setShippingDocumentLookupMessage("", false);
+  if (options.order) {
+    shippingDocumentRows = [options.order];
+    shippingDocumentSelectedId = options.order.id;
+    shippingDocumentDetail = options.order;
+  }
   renderShippingDocumentList();
   renderShippingDocumentDetail();
-  await Promise.all([loadShippingDocumentOrders(), loadShippingDocumentB2History()]);
+  await loadShippingDocumentB2History(options.order ? (options.order.order_number || null) : null);
+  if (input) input.focus();
 }
 
 function renderShippingDocumentList() {
@@ -10014,7 +10035,7 @@ function renderShippingDocumentList() {
   if (!host) return;
   if (count) count.textContent = shippingDocumentRows.length + " 件";
   if (!shippingDocumentRows.length) {
-    host.innerHTML = "<div class='sales-order-empty'>該当する出荷帳票対象はありません。</div>";
+    host.innerHTML = "<div class='sales-order-empty'>" + esc(shippingDocumentSearchValue() ? "該当する出荷帳票対象はありません。" : "受注IDまたは出荷指示番号を入力してください。") + "</div>";
     return;
   }
   host.innerHTML = shippingDocumentRows.map(function(order) {
@@ -10033,7 +10054,7 @@ function renderShippingDocumentList() {
 }
 
 async function loadShippingDocumentOrders() {
-  if (!canManageSalesOrders()) return;
+  if (!canManageSalesOrders()) return [];
   var requestSeq = ++shippingDocumentListSeq;
   var host = document.getElementById("shipping-document-list");
   if (host) host.innerHTML = "<div class='sales-order-empty'>" + esc(t("loading")) + "</div>";
@@ -10046,7 +10067,7 @@ async function loadShippingDocumentOrders() {
   if (result.error) {
     shippingDocumentRows = [];
     if (host) host.innerHTML = "<div class='sales-order-empty error'>対象注文を読み込めませんでした。</div>";
-    return;
+    return [];
   }
   var data = result.data || [];
   var rows = Array.isArray(data) ? data : (Array.isArray(data.orders) ? data.orders : []);
@@ -10057,6 +10078,86 @@ async function loadShippingDocumentOrders() {
   }
   renderShippingDocumentList();
   renderShippingDocumentDetail();
+  return shippingDocumentRows;
+}
+
+function shippingDocumentExactOrder(rows, searchValue) {
+  var key = String(searchValue || "").replace(/\s+/g, "").toUpperCase();
+  if (!key) return null;
+  return (rows || []).find(function(order) {
+    return String(order.id || "") === key || String(order.order_number || "").replace(/\s+/g, "").toUpperCase() === key;
+  }) || ((rows || []).length === 1 ? rows[0] : null);
+}
+
+async function lookupShippingDocumentOrder() {
+  if (!canManageSalesOrders()) return;
+  var searchValue = shippingDocumentSearchValue();
+  var input = document.getElementById("shipping-document-search");
+  if (!searchValue) {
+    setShippingDocumentLookupMessage("受注ID、注文番号または出荷指示番号を入力してください。", true);
+    if (input) input.focus();
+    return;
+  }
+  var requestSeq = ++shippingDocumentLookupSeq;
+  var normalized = searchValue.replace(/\s+/g, "").toUpperCase();
+  var status = document.getElementById("shipping-document-status");
+  if (status && (/^D[0-9]{10}$/.test(normalized) || /^DC[0-9]{8}-[0-9]{6}$/.test(normalized) || /^[0-9]+$/.test(normalized))) status.value = "all";
+  shippingDocumentSelectedId = null;
+  shippingDocumentDetail = null;
+  renderShippingDocumentDetail();
+  setShippingDocumentLookupMessage("注文と必要帳票を読み込んでいます。", false);
+
+  if (/^D[0-9]{10}$/.test(normalized)) {
+    var dispatchResult = await sb.rpc("get_sales_order_dispatch", { target_dispatch_number: normalized });
+    if (requestSeq !== shippingDocumentLookupSeq) return;
+    if (dispatchResult.error) {
+      setShippingDocumentLookupMessage(dispatchResult.error.message || "出荷指示番号に一致する注文を読み込めませんでした。", true);
+      if (input) input.select();
+      return;
+    }
+    var dispatchOrder = Array.isArray(dispatchResult.data) ? (dispatchResult.data[0] || null) : dispatchResult.data;
+    if (!dispatchOrder || !dispatchOrder.id) {
+      setShippingDocumentLookupMessage("出荷指示番号に一致する注文はありません。", true);
+      return;
+    }
+    var resolvedOrder = await loadShippingDocumentDetail(dispatchOrder.id);
+    if (requestSeq !== shippingDocumentLookupSeq) return;
+    if (!resolvedOrder) {
+      setShippingDocumentLookupMessage("出荷指示に対応する注文詳細を読み込めませんでした。", true);
+      return;
+    }
+    shippingDocumentRows = [resolvedOrder];
+    renderShippingDocumentList();
+    await loadShippingDocumentB2History(resolvedOrder.order_number || null);
+    if (requestSeq !== shippingDocumentLookupSeq) return;
+    setShippingDocumentLookupMessage("出荷指示書から " + (resolvedOrder.order_number || ("注文 " + resolvedOrder.id)) + " を呼び出しました。", false);
+    return;
+  }
+
+  if (/^[0-9]+$/.test(normalized)) {
+    var directOrder = await loadShippingDocumentDetail(parseInt(normalized, 10));
+    if (requestSeq !== shippingDocumentLookupSeq) return;
+    if (directOrder) {
+      shippingDocumentRows = [directOrder];
+      renderShippingDocumentList();
+      await loadShippingDocumentB2History(directOrder.order_number || null);
+      setShippingDocumentLookupMessage((directOrder.order_number || ("注文 " + directOrder.id)) + " を呼び出しました。", false);
+      return;
+    }
+    setShippingDocumentLookupMessage("受注IDに一致する注文はありません。", true);
+    return;
+  }
+
+  var lookupResults = await Promise.all([loadShippingDocumentOrders(), loadShippingDocumentB2History(searchValue)]);
+  if (requestSeq !== shippingDocumentLookupSeq) return;
+  var exactOrder = shippingDocumentExactOrder(lookupResults[0], searchValue);
+  if (!exactOrder) {
+    setShippingDocumentLookupMessage(lookupResults[0].length ? "候補から注文を選択してください。" : "一致する注文はありません。", !lookupResults[0].length);
+    return;
+  }
+  var loadedOrder = await loadShippingDocumentDetail(exactOrder.id);
+  if (requestSeq !== shippingDocumentLookupSeq) return;
+  setShippingDocumentLookupMessage(loadedOrder ? ((loadedOrder.order_number || ("注文 " + loadedOrder.id)) + " を呼び出しました。") : "注文詳細を読み込めませんでした。", !loadedOrder);
 }
 
 function shippingDocumentRecentBatchesHtml() {
@@ -10069,11 +10170,11 @@ function shippingDocumentRecentBatchesHtml() {
   }).join("") + "</div></div>";
 }
 
-async function loadShippingDocumentB2History() {
+async function loadShippingDocumentB2History(searchOverride) {
   if (!canManageSalesOrders()) return;
   var requestSeq = ++shippingDocumentHistorySeq;
   var result = await sb.rpc("list_sales_order_b2_exports", {
-    target_search: shippingDocumentSearchValue() || null,
+    target_search: searchOverride == null ? (shippingDocumentSearchValue() || null) : (searchOverride || null),
     target_limit: 100
   });
   if (requestSeq !== shippingDocumentHistorySeq) return;
@@ -10088,7 +10189,7 @@ async function loadShippingDocumentB2History() {
 }
 
 async function loadShippingDocumentDetail(orderId) {
-  if (!canManageSalesOrders() || !orderId) return;
+  if (!canManageSalesOrders() || !orderId) return null;
   shippingDocumentSelectedId = orderId;
   renderShippingDocumentList();
   var requestSeq = ++shippingDocumentDetailSeq;
@@ -10099,10 +10200,11 @@ async function loadShippingDocumentDetail(orderId) {
   if (result.error) {
     shippingDocumentDetail = null;
     if (host) host.innerHTML = "<div class='sales-order-empty error'>注文詳細を読み込めませんでした。</div>";
-    return;
+    return null;
   }
   shippingDocumentDetail = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
   renderShippingDocumentDetail();
+  return shippingDocumentDetail;
 }
 
 function shippingDocumentPrintJob(order, type) {
@@ -10139,22 +10241,33 @@ function shippingDocumentOrderB2HistoryHtml(order) {
 function shippingDocumentShipmentDocumentsHtml(order) {
   var dispatch = salesOrderDispatch(order);
   var ready = !!(dispatch && dispatch.status === "shipped" && order.outbound_tracking_number);
+  var dispatchJob = shippingDocumentPrintJob(order, "dispatch");
   var warrantyJob = shippingDocumentPrintJob(order, "warranty");
   var coreJob = shippingDocumentPrintJob(order, "core_return");
+  var returnJob = shippingDocumentPrintJob(order, "return_waybill");
+  var waybill = order.return_waybill && typeof order.return_waybill === "object" ? order.return_waybill : {};
   var reason = !dispatch ? "出荷指示書が未発行です。"
     : dispatch.status !== "shipped" ? "商品と製造シリアルの照合を完了してください。"
       : !order.outbound_tracking_number ? "B2発行済データを取り込んでください。" : "";
-  return "<section class='shipping-document-section'><div class='shipping-document-section-head'><div><h3>出荷同梱帳票</h3><p>保証書はA5・注文単位で、商品と製造シリアルを掲載します。</p></div><span class='shipping-document-ready-state " + (ready ? "ready" : "pending") + "'>" + esc(ready ? "発行可" : "待機中") + "</span></div>" +
+  var rows = [
+    { key: "dispatch", name: "出荷指示書", format: "A4", required: "必要", state: dispatchJob ? salesOrderPrintJobStatusLabel(dispatchJob.status) : (dispatch ? "発行済み" : "未発行"), ready: !!dispatch, action: "出荷指示書を印刷・PDF保存" },
+    { key: "warranty", name: "保証書", format: "A5", required: "必要", state: warrantyJob ? salesOrderPrintJobStatusLabel(warrantyJob.status) : (ready ? "発行可" : "待機中"), ready: ready, action: "保証書を印刷・PDF保存" },
+    { key: "core_return", name: "コア返却シート", format: "A5", required: order.core_return_required ? "必要" : "対象外", state: order.core_return_required ? (coreJob ? salesOrderPrintJobStatusLabel(coreJob.status) : (ready ? "発行可" : "待機中")) : "対象外", ready: ready && !!order.core_return_required, action: "コア返却シートを印刷・PDF保存" },
+    { key: "return_waybill", name: "コア返却用複写伝票", format: "運送会社別", required: order.core_return_required ? "必要" : "対象外", state: order.core_return_required ? (returnJob ? salesOrderPrintJobStatusLabel(returnJob.status) : (waybill.id ? "設定済み" : "未設定")) : "対象外", ready: !!order.core_return_required, action: "返却伝票を設定" }
+  ];
+  return "<section class='shipping-document-section shipping-document-required-documents'><div class='shipping-document-section-head'><div><h3>必要帳票</h3><p>注文条件から必要な帳票だけを表示します。出荷指示書はいつでも再印刷・PDF保存できます。</p></div><span class='shipping-document-ready-state " + (ready ? "ready" : "pending") + "'>" + esc(ready ? "同梱帳票を発行可" : "出荷処理中") + "</span></div>" +
     (reason ? "<p class='shipping-document-guidance'>" + esc(reason) + "</p>" : "") +
-    "<div class='shipping-document-print-actions'><button type='button' data-shipping-document-print='warranty'" + (ready ? "" : " disabled") + ">保証書を印刷・PDF保存</button>" +
-    (order.core_return_required ? "<button type='button' data-shipping-document-print='core_return'" + (ready ? "" : " disabled") + ">コア返却シートを印刷・PDF保存</button>" : "") + "</div>" +
-    "<div class='shipping-document-print-state'><span>保証書の自動印刷: <strong>" + esc(warrantyJob ? salesOrderPrintJobStatusLabel(warrantyJob.status) : "未登録") + "</strong></span>" +
-    (order.core_return_required ? "<span>コア返却シート: <strong>" + esc(coreJob ? salesOrderPrintJobStatusLabel(coreJob.status) : "未登録") + "</strong></span>" : "") + "</div></section>";
+    "<div class='shipping-document-required-list'>" + rows.map(function(row) {
+      var action = row.key === "return_waybill"
+        ? "<button type='button' data-shipping-document-return-focus" + (row.ready ? "" : " disabled") + ">" + esc(row.action) + "</button>"
+        : "<button type='button' data-shipping-document-print='" + esc(row.key) + "'" + (row.ready ? "" : " disabled") + ">" + esc(row.action) + "</button>";
+      return "<div class='shipping-document-required-row " + (row.ready ? "ready" : "pending") + "'><div><strong>" + esc(row.name) + "</strong><span>" + esc(row.format) + " / " + esc(row.required) + "</span></div><em>" + esc(row.state) + "</em>" + action + "</div>";
+    }).join("") + "</div></section>";
 }
 
 function shippingDocumentReturnWaybillHtml(order) {
   if (!order.core_return_required) {
-    return "<section class='shipping-document-section'><div class='shipping-document-section-head'><div><h3>コア返却用複写伝票</h3><p>この注文はコア返却不要のため、返却用伝票は作成しません。</p></div><span class='shipping-document-ready-state neutral'>対象外</span></div></section>";
+    return "<section class='shipping-document-section' id='shipping-document-return-waybill-section'><div class='shipping-document-section-head'><div><h3>コア返却用複写伝票</h3><p>この注文はコア返却不要のため、返却用伝票は作成しません。</p></div><span class='shipping-document-ready-state neutral'>対象外</span></div></section>";
   }
   var waybill = order.return_waybill && typeof order.return_waybill === "object" ? order.return_waybill : {};
   var carrier = waybill.carrier_code || "yamato_collect";
@@ -10172,7 +10285,7 @@ function shippingDocumentReturnWaybillHtml(order) {
       : !waybill.tracking_number ? "複写伝票に印刷されている返送用伝票番号を登録してください。"
         : !shipmentReady ? "商品・製造シリアル照合とB2発行済データ取込の完了後に印刷できます。"
           : printBusy ? "複写伝票を印刷端末へ送信済みです。" : "ドットプリンターに " + carrierLabel + " の複写伝票をセットして印刷します。";
-  return "<section class='shipping-document-section'><div class='shipping-document-section-head'><div><h3>コア返却用複写伝票</h3><p>着払い伝票の種類と伝票番号を登録し、返却状況の照合に使用します。</p></div><span class='shipping-document-ready-state " + (waybill.id ? "ready" : "pending") + "'>" + esc(waybill.id ? "設定済み" : "未設定") + "</span></div>" +
+  return "<section class='shipping-document-section' id='shipping-document-return-waybill-section'><div class='shipping-document-section-head'><div><h3>コア返却用複写伝票</h3><p>着払い伝票の種類と伝票番号を登録し、返却状況の照合に使用します。</p></div><span class='shipping-document-ready-state " + (waybill.id ? "ready" : "pending") + "'>" + esc(waybill.id ? "設定済み" : "未設定") + "</span></div>" +
     "<div class='shipping-document-waybill-form'><label><span>運送会社・サービス</span><select id='shipping-document-return-carrier'><option value='yamato_collect'" + (carrier === "yamato_collect" ? " selected" : "") + ">ヤマト宅急便　着払い</option><option value='sagawa_collect'" + (carrier === "sagawa_collect" ? " selected" : "") + ">佐川急便着払い</option></select></label>" +
     "<label><span>作成方法</span><select id='shipping-document-return-method'><option value='handwritten'" + (method === "handwritten" ? " selected" : "") + ">手書き</option><option value='dot_matrix'" + (method === "dot_matrix" ? " selected" : "") + ">ドットプリンタ</option></select></label>" +
     "<label><span>返送用伝票番号</span><input id='shipping-document-return-tracking' type='text' inputmode='numeric' maxlength='14' value='" + esc(waybill.tracking_number || "") + "' placeholder='10〜14桁（後から登録も可）'></label>" +
@@ -10215,6 +10328,11 @@ function bindShippingDocumentDetailActions() {
   if (openOrder) openOrder.addEventListener("click", openShippingDocumentOrderInSalesOrderMgmt);
   document.querySelectorAll("[data-shipping-document-print]").forEach(function(button) {
     button.addEventListener("click", function() { printSalesOrderDocument(button.dataset.shippingDocumentPrint, shippingDocumentDetail); });
+  });
+  var returnFocus = document.querySelector("[data-shipping-document-return-focus]");
+  if (returnFocus) returnFocus.addEventListener("click", function() {
+    var target = document.getElementById("shipping-document-return-waybill-section");
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
   });
   var saveWaybill = document.getElementById("shipping-document-return-save");
   if (saveWaybill) saveWaybill.addEventListener("click", saveShippingDocumentReturnWaybill);
@@ -10509,6 +10627,7 @@ function salesOrderDispatchHtml(order) {
   if (canIssue) controls += "<button type='button' class='sales-order-dispatch-primary' id='sales-order-issue-dispatch'>出荷指示書を発行</button>";
   if (dispatch) {
     controls += "<button type='button' id='sales-order-print-dispatch'>出荷指示書</button>";
+    controls += "<button type='button' id='sales-order-open-shipping-documents'>出荷帳票発行</button>";
     if (shipmentDocumentsReady && order.core_return_required) controls += "<button type='button' id='sales-order-print-core-return'>コア返却シート</button>";
     if (shipmentDocumentsReady) controls += "<button type='button' id='sales-order-print-warranty'>保証書</button>";
     if (["preparing", "ready"].indexOf(dispatch.status) >= 0 && !b2Issued) controls += "<button type='button' id='sales-order-export-single-b2'>商品発送用B2 CSV発行</button>";
@@ -10563,6 +10682,8 @@ function renderSalesOrderDetail() {
   if (issueDispatchButton) issueDispatchButton.addEventListener("click", issueSalesOrderDispatch);
   var printDispatchButton = document.getElementById("sales-order-print-dispatch");
   if (printDispatchButton) printDispatchButton.addEventListener("click", function() { printSalesOrderDocument("dispatch"); });
+  var shippingDocumentsButton = document.getElementById("sales-order-open-shipping-documents");
+  if (shippingDocumentsButton) shippingDocumentsButton.addEventListener("click", openSalesOrderShippingDocuments);
   var printCoreReturnButton = document.getElementById("sales-order-print-core-return");
   if (printCoreReturnButton) printCoreReturnButton.addEventListener("click", function() { printSalesOrderDocument("core_return"); });
   var printWarrantyButton = document.getElementById("sales-order-print-warranty");
@@ -10578,6 +10699,11 @@ function renderSalesOrderDetail() {
 async function openSalesOrderSerialWarranty() {
   if (!canManageSalesOrders() || !canManageFinishedProductShipping() || !salesOrderDetail || !salesOrderDispatch(salesOrderDetail)) return;
   await enterFinishedProductShipping({ order: salesOrderDetail });
+}
+
+async function openSalesOrderShippingDocuments() {
+  if (!canManageSalesOrders() || !salesOrderDetail) return;
+  await enterShippingDocumentMgmt({ order: salesOrderDetail });
 }
 
 async function issueSalesOrderDispatch() {
@@ -41752,11 +41878,12 @@ document.getElementById("customer-order-submit").addEventListener("click", submi
 document.getElementById("customer-order-history-reload").addEventListener("click", loadCustomerOrderHistory);
 document.getElementById("btn-back-sales-order-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-shipping-document-mgmt").addEventListener("click", returnToMenuFresh);
-document.getElementById("shipping-document-reload").addEventListener("click", function() {
-  Promise.all([loadShippingDocumentOrders(), loadShippingDocumentB2History()]);
-});
+document.getElementById("shipping-document-reload").addEventListener("click", lookupShippingDocumentOrder);
 document.getElementById("shipping-document-search").addEventListener("keydown", function(e) {
-  if (e.key === "Enter") Promise.all([loadShippingDocumentOrders(), loadShippingDocumentB2History()]);
+  if (e.key === "Enter") lookupShippingDocumentOrder();
+});
+document.getElementById("shipping-document-status").addEventListener("change", function() {
+  if (shippingDocumentSearchValue()) lookupShippingDocumentOrder();
 });
 document.getElementById("sales-order-reload").addEventListener("click", refreshSalesOrderManagement);
 document.getElementById("sales-order-search").addEventListener("keydown", function(e) { if (e.key === "Enter") refreshSalesOrderManagement(); });

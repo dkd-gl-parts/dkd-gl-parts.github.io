@@ -5946,9 +5946,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .shipping-document-toolbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; border-bottom: 1px solid #d5dbe1; padding: 18px 24px; background: #fff; }
 .shipping-document-toolbar h1 { margin-top: 3px; color: #182230; font-size: 22px; letter-spacing: 0; }
 .shipping-document-toolbar p { max-width: 680px; margin-top: 5px; color: #667085; font-size: 11px; line-height: 1.55; }
+.shipping-document-lookup { width: min(660px, 56vw); min-width: 0; }
 .shipping-document-filter-row { display: grid; grid-template-columns: minmax(240px, 1fr) 140px auto; gap: 8px; }
 .shipping-document-filter-row input,
 .shipping-document-filter-row select { height: 38px; min-width: 0; border: 1px solid #b8c1cc; border-radius: 6px; padding: 0 10px; background: #fff; color: #263241; font-size: 12px; }
+.shipping-document-lookup-message { min-height: 16px; margin-top: 5px; color: #557064; font-size: 9px; font-weight: 700; line-height: 1.4; }
+.shipping-document-lookup-message.error { color: #b42318; }
 .shipping-document-workspace { display: grid; flex: 1; grid-template-columns: minmax(320px, 380px) minmax(0, 1fr); min-height: 0; overflow: hidden; }
 .shipping-document-list-pane { min-width: 0; min-height: 0; border-right: 1px solid #d5dbe1; background: #f8f9fb; }
 .shipping-document-list-head { display: flex; align-items: center; justify-content: space-between; height: 44px; border-bottom: 1px solid #d5dbe1; padding: 0 14px; background: #e9edf1; color: #344054; font-size: 11px; }
@@ -5994,6 +5997,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .shipping-document-ready-state { flex: 0 0 auto; border: 1px solid #d4b574; border-radius: 4px; padding: 4px 7px; background: #fff8e8; color: #79590f; font-size: 9px; font-weight: 800; white-space: nowrap; }
 .shipping-document-ready-state.ready { border-color: #79b48f; background: #edf8f2; color: #236444; }
 .shipping-document-ready-state.neutral { border-color: #b9c2ca; background: #f3f5f7; color: #58636e; }
+.shipping-document-required-list { border-top: 1px solid #dbe1e6; }
+.shipping-document-required-row { display: grid; grid-template-columns: minmax(180px, 1fr) 110px minmax(190px, auto); align-items: center; gap: 14px; min-height: 58px; border-bottom: 1px solid #e1e5e9; padding: 8px 10px; }
+.shipping-document-required-row > div { min-width: 0; }
+.shipping-document-required-row strong,
+.shipping-document-required-row span { display: block; }
+.shipping-document-required-row strong { color: #2a3745; font-size: 11px; }
+.shipping-document-required-row span { margin-top: 3px; color: #73808b; font-size: 9px; }
+.shipping-document-required-row em { justify-self: start; border: 1px solid #c4ccd3; border-radius: 4px; padding: 3px 6px; background: #f5f7f8; color: #5c6873; font-size: 9px; font-style: normal; font-weight: 800; white-space: nowrap; }
+.shipping-document-required-row.ready em { border-color: #83b898; background: #edf8f2; color: #236444; }
+.shipping-document-required-row button { justify-self: end; min-height: 32px; border: 1px solid #287356; border-radius: 5px; padding: 0 10px; background: #fff; color: #287356; font-size: 9px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.shipping-document-required-row button:disabled { border-color: #c6cdd5; background: #e6e9ed; color: #8b939d; cursor: not-allowed; }
 .shipping-document-section-empty,
 .shipping-document-guidance { border-left: 3px solid #8ba7c4; padding: 8px 10px; background: #f4f8fb; color: #586777; font-size: 10px; line-height: 1.55; }
 .shipping-document-b2-history { border-top: 1px solid #dbe1e6; }
@@ -6044,6 +6058,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .sales-order-dashboard { grid-template-columns: 1fr; gap: 6px; }
   .sales-order-workspace { grid-template-columns: 360px minmax(0, 1fr); }
   .shipping-document-toolbar { align-items: stretch; flex-direction: column; }
+  .shipping-document-lookup { width: 100%; }
   .shipping-document-workspace { grid-template-columns: 330px minmax(0, 1fr); }
   .shipping-document-waybill-form { grid-template-columns: 1fr 1fr; }
   .sales-order-list-row { grid-template-columns: 22px minmax(120px, 1fr) 70px auto; }
@@ -6072,6 +6087,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .shipping-document-detail-pane { overflow: visible; }
   .shipping-document-stages { grid-template-columns: 1fr 1fr; }
   .shipping-document-stages > div:nth-child(2) { border-right: 0; }
+  .shipping-document-required-row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+  .shipping-document-required-row button { grid-column: 1 / -1; justify-self: stretch; }
 }
 @media (max-width: 560px) {
   .customer-portal-order-button { width: 100%; }
