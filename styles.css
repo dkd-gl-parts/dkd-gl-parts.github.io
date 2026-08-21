@@ -4679,6 +4679,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .finished-shipment-candidate span { display: block; overflow-wrap: anywhere; }
 .finished-shipment-candidate strong { color: #173f71; font: 700 12px Consolas, "SFMono-Regular", monospace; }
 .finished-shipment-candidate span { margin-top: 2px; color: #687386; font-size: 9px; }
+.finished-shipment-match-badge { display: inline-flex !important; width: fit-content; margin: 3px 0 0; border: 1px solid #d0a844; border-radius: 4px; padding: 1px 5px; background: #fff7d8; color: #765500 !important; font-size: 9px !important; font-weight: 800; line-height: 1.35; white-space: nowrap; }
 .finished-shipment-candidate button,
 .finished-shipment-order-item button { min-height: 30px; border: 1px solid #2d6fae; border-radius: 5px; padding: 0 9px; background: #fff; color: #225b94; font-size: 10px; font-weight: 800; cursor: pointer; white-space: nowrap; }
 .finished-shipment-candidate button:hover,
@@ -4718,6 +4719,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .finished-shipment-order-item > b { color: #254e87; font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .finished-shipment-order-item.complete > b { color: #267142; }
 .finished-shipment-order-note { margin-top: 9px; color: #687386; font-size: 10px; line-height: 1.55; }
+.finished-shipment-order-note.ready { border-left: 3px solid #2b7a4b; padding: 7px 9px; background: #edf8f1; color: #205e39; font-weight: 800; }
 .finished-shipment-count { display: inline-flex; min-width: 24px; justify-content: center; margin-left: 5px; border-radius: 999px; padding: 2px 7px; background: #eaf2ff; color: #174ea6; font-size: 11px; }
 .finished-shipment-table { min-width: 0; table-layout: fixed; }
 .finished-shipment-table th,
@@ -4728,6 +4730,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .finished-shipment-table th:nth-child(4) { width: 52px; text-align: center; }
 .finished-shipment-table td:nth-child(4) { text-align: center; }
 .finished-shipment-table td:nth-child(4) button { width: 32px; min-width: 32px; min-height: 32px; padding: 0; }
+.finished-shipment-table td .finished-shipment-match-badge { margin-top: 4px; }
 .finished-shipment-status { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 8px; font-size: 10px; font-weight: 800; white-space: nowrap; }
 .finished-shipment-status.available { background: #e9f7ee; color: #21643a; }
 .finished-shipment-status.shipped { background: #eaf2ff; color: #174ea6; }

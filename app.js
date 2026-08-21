@@ -622,16 +622,20 @@ var TRANSLATIONS = {
     finished_shipping_candidate_ph: "製造シリアルで絞り込み",
     finished_shipping_candidate_empty: "選択できる未出荷シリアルがありません。",
     finished_shipping_candidate_select: "選択",
+    finished_shipping_compatible_badge: "互換品",
+    finished_shipping_exact_assigned: " を割り当てました。",
+    finished_shipping_compatible_assigned: " を互換品として割り当てました。",
+    finished_shipping_all_verified: "必要数の照合が完了しました。送り状番号を確認して出荷済みにしてください。",
     finished_shipping_unit_list: "割当済み製造シリアル",
     finished_shipping_no_units: "割り当て済みの製造シリアルはありません。",
-    finished_shipping_form: "出荷確定",
+    finished_shipping_form: "照合完了・出荷確定",
     finished_shipping_customer: "出荷先得意先 *",
     finished_shipping_shipped_on: "出荷日 *",
     finished_shipping_order_number: "受注・伝票番号",
     finished_shipping_carrier: "運送会社",
     finished_shipping_tracking: "送り状番号",
     finished_shipping_warranty_months: "保証月数 *",
-    finished_shipping_register: "出荷確定",
+    finished_shipping_register: "照合を完了して出荷済みにする",
     finished_shipping_saved: "出荷を確定しました。在庫・製造シリアル・保証情報を更新しました。",
     finished_shipping_confirm: "この出荷指示を確定します。在庫・製造シリアル・保証情報を更新してよろしいですか？",
     finished_shipping_tracking_required: "B2発行済CSVまたは手入力で、商品発送用の送り状番号を先に登録してください。",
@@ -648,7 +652,7 @@ var TRANSLATIONS = {
     finished_shipping_warranty_until: "保証期限: {date}",
     finished_shipping_customer_required: "出荷先得意先を選択してください。",
     finished_shipping_date_required: "出荷日を入力してください。",
-    finished_shipping_serial_required: "製造シリアルを1台以上追加してください。",
+    finished_shipping_serial_required: "必要な製造シリアルの照合を完了してください。",
     finished_shipping_serial_invalid: "製造シリアルは MYYYY-NNNNNNN 形式で入力してください。",
     finished_shipping_serial_duplicate: "この製造シリアルは追加済みです。",
     finished_shipping_serial_not_found: "製造シリアルが見つかりません。",
@@ -2269,16 +2273,20 @@ var TRANSLATIONS = {
     finished_shipping_candidate_ph: "Filter by manufacturing serial",
     finished_shipping_candidate_empty: "No unshipped serial is available.",
     finished_shipping_candidate_select: "Select",
+    finished_shipping_compatible_badge: "Compatible",
+    finished_shipping_exact_assigned: " assigned.",
+    finished_shipping_compatible_assigned: " assigned as a compatible product.",
+    finished_shipping_all_verified: "All required units are verified. Confirm the waybill numbers, then mark the order shipped.",
     finished_shipping_unit_list: "Assigned Manufacturing Serials",
     finished_shipping_no_units: "No manufacturing serial has been assigned.",
-    finished_shipping_form: "Confirm Shipment",
+    finished_shipping_form: "Complete Check / Confirm Shipment",
     finished_shipping_customer: "Customer *",
     finished_shipping_shipped_on: "Shipment Date *",
     finished_shipping_order_number: "Order / Slip No.",
     finished_shipping_carrier: "Carrier",
     finished_shipping_tracking: "Tracking No.",
     finished_shipping_warranty_months: "Warranty Months *",
-    finished_shipping_register: "Confirm Shipment",
+    finished_shipping_register: "Complete Check and Mark Shipped",
     finished_shipping_saved: "Shipment confirmed. Stock, serial lifecycle, and warranty information were updated.",
     finished_shipping_confirm: "Confirm this dispatch and update stock, serial lifecycle, and warranty information?",
     finished_shipping_tracking_required: "Register the outbound tracking number from a B2 issued CSV or by manual entry first.",
@@ -2295,7 +2303,7 @@ var TRANSLATIONS = {
     finished_shipping_warranty_until: "Warranty until: {date}",
     finished_shipping_customer_required: "Select a shipment customer.",
     finished_shipping_date_required: "Enter the shipment date.",
-    finished_shipping_serial_required: "Add at least one manufacturing serial.",
+    finished_shipping_serial_required: "Verify all required manufacturing serials.",
     finished_shipping_serial_invalid: "Enter a serial in MYYYY-NNNNNNN format.",
     finished_shipping_serial_duplicate: "This manufacturing serial is already added.",
     finished_shipping_serial_not_found: "Manufacturing serial not found.",
@@ -3923,16 +3931,20 @@ var TRANSLATIONS = {
     finished_shipping_candidate_ph: "按制造序列号筛选",
     finished_shipping_candidate_empty: "没有可选择的未出货序列号。",
     finished_shipping_candidate_select: "选择",
+    finished_shipping_compatible_badge: "互换品",
+    finished_shipping_exact_assigned: " 已分配。",
+    finished_shipping_compatible_assigned: " 已作为互换品分配。",
+    finished_shipping_all_verified: "所需数量已核对完成。请确认运单编号后设为已出货。",
     finished_shipping_unit_list: "已分配制造序列号",
     finished_shipping_no_units: "尚未分配制造序列号。",
-    finished_shipping_form: "确认出货",
+    finished_shipping_form: "完成核对・确认出货",
     finished_shipping_customer: "出货客户 *",
     finished_shipping_shipped_on: "出货日期 *",
     finished_shipping_order_number: "订单・单据编号",
     finished_shipping_carrier: "运输公司",
     finished_shipping_tracking: "运单编号",
     finished_shipping_warranty_months: "保修月数 *",
-    finished_shipping_register: "确认出货",
+    finished_shipping_register: "完成核对并设为已出货",
     finished_shipping_saved: "已确认出货，并更新库存、制造序列号和保修信息。",
     finished_shipping_confirm: "确认该出货指示并更新库存、制造序列号和保修信息吗？",
     finished_shipping_tracking_required: "请先通过B2已发行CSV或手动输入登记商品发货运单编号。",
@@ -3949,7 +3961,7 @@ var TRANSLATIONS = {
     finished_shipping_warranty_until: "保修期限: {date}",
     finished_shipping_customer_required: "请选择出货客户。",
     finished_shipping_date_required: "请输入出货日期。",
-    finished_shipping_serial_required: "请至少添加一个制造序列号。",
+    finished_shipping_serial_required: "请完成所有必要制造序列号的核对。",
     finished_shipping_serial_invalid: "请输入 MYYYY-NNNNNNN 格式的序列号。",
     finished_shipping_serial_duplicate: "该制造序列号已添加。",
     finished_shipping_serial_not_found: "找不到制造序列号。",
@@ -5050,7 +5062,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.736";
+var APP_VERSION       = "v1.1.737";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -9993,7 +10005,7 @@ function salesOrderDispatch(order) {
 }
 
 function salesOrderDispatchStatusLabel(status) {
-  return ({ preparing: "シリアル照合待ち", ready: "出荷確定可能", shipped: "出荷済み", cancelled: "取消済み" })[status] || "未発行";
+  return ({ preparing: "シリアル照合待ち", ready: "照合完了・出荷確定待ち", shipped: "出荷済み", cancelled: "取消済み" })[status] || "未発行";
 }
 
 function salesOrderDispatchRebuiltQuantity(dispatch) {
@@ -22905,19 +22917,15 @@ function finishedShipmentUnitMatchesItem(unit, dispatchItem) {
   return String(unit.dkd_shohin_id || "") === String(item.dkd_shohin_id || "");
 }
 
-function finishedShipmentOrderItemForUnit(unit) {
-  return finishedShipmentOrderItems().find(function(item) {
-    return finishedShipmentUnitMatchesItem(unit, item);
-  }) || null;
-}
-
 function finishedShipmentFlattenAssignments() {
   return finishedShipmentOrderItems().reduce(function(rows, dispatchItem) {
     var orderItem = dispatchItem.order_item || {};
     (Array.isArray(dispatchItem.serials) ? dispatchItem.serials : []).forEach(function(serial) {
       rows.push(Object.assign({}, serial, {
         order_item_id: orderItem.id,
-        dispatch_item_id: dispatchItem.id
+        dispatch_item_id: dispatchItem.id,
+        ordered_product_variant_id: orderItem.product_variant_id,
+        match_type: finishedShipmentUnitMatchesItem(serial, orderItem) ? "exact" : "compatible"
       }));
     });
     return rows;
@@ -22939,8 +22947,10 @@ function renderFinishedShipmentOrderContext() {
   var order = finishedShipmentOrderContext;
   var dispatch = finishedShipmentDispatch();
   var active = !!(order && dispatch && ["preparing", "ready"].indexOf(dispatch.status) >= 0);
+  var saveButton = document.getElementById("btn-finished-shipment-save");
   if (selectionCard) selectionCard.hidden = !active;
   if (form) form.hidden = !active;
+  if (saveButton && !finishedShipmentSaving) saveButton.disabled = !active || dispatch.status !== "ready";
   if (!host) return;
   if (!order || !dispatch) {
     host.innerHTML = "<p>" + esc(t("finished_shipping_lookup_only")) + "</p>";
@@ -22967,7 +22977,8 @@ function renderFinishedShipmentOrderContext() {
       "<div><dt>返送用送り状</dt><dd>" + esc(order.core_return_required ? (order.return_tracking_number || "未登録") : "対象外") + "</dd></div>" +
     "</dl>" +
     "<div class='finished-shipment-order-items'>" + (itemRows || "<p class='finished-shipment-order-note'>シリアル管理対象のリビルト品はありません。</p>") + "</div>" +
-    "<p class='finished-shipment-order-note'>" + esc(t("finished_shipping_order_source_note")) + "</p>";
+    "<p class='finished-shipment-order-note'>" + esc(t("finished_shipping_order_source_note")) + "</p>" +
+    (dispatch.status === "ready" ? "<p class='finished-shipment-order-note ready'>" + esc(t("finished_shipping_all_verified")) + "</p>" : "");
   host.querySelectorAll("[data-finished-candidate-item]").forEach(function(button) {
     button.addEventListener("click", function() {
       openFinishedShipmentCandidates(parseInt(button.dataset.finishedCandidateItem, 10));
@@ -23060,9 +23071,12 @@ function renderFinishedShipmentUnits() {
   var removable = dispatch && ["preparing", "ready"].indexOf(dispatch.status) >= 0;
   body.innerHTML = finishedShipmentUnits.map(function(unit) {
     var productNo = unit.gltek_part_number || unit.product_no || unit.manufacturer_part_number || unit.genuine_part_number || "-";
+    var matchBadge = unit.match_type === "compatible"
+      ? "<span class='finished-shipment-match-badge'>" + esc(t("finished_shipping_compatible_badge")) + "</span>"
+      : "";
     return "<tr>" +
       "<td><strong class='finished-shipment-serial'>" + esc(unit.manufacturing_serial) + "</strong></td>" +
-      "<td>" + esc(productNo) + "</td>" +
+      "<td>" + esc(productNo) + matchBadge + "</td>" +
       "<td>" + esc(unit.manufacturer || "-") + "</td>" +
       "<td>" + (removable ? "<button type='button' class='btn-sm-edit production-action-secondary' aria-label='" + esc(t("finished_label_component_remove") + " " + unit.manufacturing_serial) + "' title='" + esc(t("finished_label_component_remove")) + "' data-finished-shipment-remove='" + esc(String(unit.assignment_id)) + "'>×</button>" : "-") + "</td>" +
       "</tr>";
@@ -23123,7 +23137,10 @@ function renderFinishedShipmentCandidates() {
   }
   host.innerHTML = finishedShipmentCandidateRows.map(function(unit) {
     var productNo = unit.gltek_part_number || unit.product_no || unit.manufacturer_part_number || unit.genuine_part_number || "-";
-    return "<div class='finished-shipment-candidate'><div><strong>" + esc(unit.manufacturing_serial) + "</strong><span>" + esc([productNo, unit.manufacturer].filter(Boolean).join(" / ") || "-") + "</span></div><button type='button' data-finished-candidate-serial='" + esc(unit.manufacturing_serial) + "'>" + esc(t("finished_shipping_candidate_select")) + "</button></div>";
+    var matchBadge = unit.match_type === "compatible"
+      ? "<span class='finished-shipment-match-badge'>" + esc(t("finished_shipping_compatible_badge")) + "</span>"
+      : "";
+    return "<div class='finished-shipment-candidate'><div><strong>" + esc(unit.manufacturing_serial) + "</strong>" + matchBadge + "<span>" + esc([productNo, unit.manufacturer].filter(Boolean).join(" / ") || "-") + "</span></div><button type='button' data-finished-candidate-serial='" + esc(unit.manufacturing_serial) + "'>" + esc(t("finished_shipping_candidate_select")) + "</button></div>";
   }).join("");
   host.querySelectorAll("[data-finished-candidate-serial]").forEach(function(button) {
     button.addEventListener("click", function() {
@@ -23134,12 +23151,12 @@ function renderFinishedShipmentCandidates() {
 
 async function assignFinishedShipmentSerial(orderItemId, serial) {
   var dispatch = finishedShipmentDispatch();
-  if (!dispatch || !orderItemId || finishedShipmentSaving) return;
+  if (!dispatch || !serial || finishedShipmentSaving) return;
   finishedShipmentSaving = true;
   setFinishedShipmentMessage("finished-shipment-scan-message", t("loading"), false);
   var result = await sb.rpc("assign_sales_order_dispatch_serial", {
     target_dispatch_id: dispatch.id,
-    target_order_item_id: orderItemId,
+    target_order_item_id: orderItemId || null,
     target_manufacturing_serial: serial
   });
   finishedShipmentSaving = false;
@@ -23149,7 +23166,16 @@ async function assignFinishedShipmentSerial(orderItemId, serial) {
   }
   var order = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
   refreshFinishedShipmentContext(order);
-  setFinishedShipmentMessage("finished-shipment-scan-message", serial + " を割り当てました。", false);
+  var assignedRow = finishedShipmentFlattenAssignments().find(function(row) {
+    return row.manufacturing_serial === serial;
+  });
+  var assignedKey = assignedRow && assignedRow.match_type === "compatible"
+    ? "finished_shipping_compatible_assigned"
+    : "finished_shipping_exact_assigned";
+  var readyMessage = finishedShipmentDispatch() && finishedShipmentDispatch().status === "ready"
+    ? " " + t("finished_shipping_all_verified")
+    : "";
+  setFinishedShipmentMessage("finished-shipment-scan-message", serial + t(assignedKey) + readyMessage, false);
   if (finishedShipmentCandidateOrderItemId) await loadFinishedShipmentCandidates();
   var input = document.getElementById("finished-shipment-serial-input");
   if (input) { input.value = ""; input.focus(); }
@@ -23246,20 +23272,7 @@ async function addFinishedShipmentSerial() {
     if (input) input.select();
     return;
   }
-  var dispatchItem = finishedShipmentOrderItemForUnit(r.data);
-  if (!dispatchItem) {
-    setFinishedShipmentMessage("finished-shipment-scan-message", t("finished_shipping_order_mismatch"), true);
-    if (input) input.select();
-    return;
-  }
-  var required = parseInt(dispatchItem.quantity, 10) || 0;
-  var assigned = Array.isArray(dispatchItem.serials) ? dispatchItem.serials.length : 0;
-  if (assigned >= required) {
-    setFinishedShipmentMessage("finished-shipment-scan-message", t("finished_shipping_order_quantity_complete"), true);
-    if (input) input.select();
-    return;
-  }
-  await assignFinishedShipmentSerial((dispatchItem.order_item || {}).id, serial);
+  await assignFinishedShipmentSerial(null, serial);
 }
 
 async function clearFinishedShipmentUnits() {

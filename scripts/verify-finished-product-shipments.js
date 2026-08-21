@@ -90,11 +90,14 @@ const candidateSource = functionSource("loadFinishedShipmentCandidates");
 assert(candidateSource.includes('sb.rpc("list_sales_order_serial_candidates"'), "manual fallback candidate RPC is not called");
 const assignmentSource = functionSource("assignFinishedShipmentSerial");
 assert(assignmentSource.includes('sb.rpc("assign_sales_order_dispatch_serial"'), "serial assignment RPC is not called");
+assert(assignmentSource.includes("target_order_item_id: orderItemId || null"), "scanner assignment must allow server-side order-line selection");
+assert(!assignmentSource.includes("!orderItemId"), "scanner assignment must not require an exact client-side order-line match");
 
 const scanSource = functionSource("addFinishedShipmentSerial");
 assert(scanSource.includes('.from("finished_product_units")'), "serial scan does not look up finished units");
 assert(scanSource.includes('r.data.status !== "available"'), "unavailable units are not blocked");
-assert(scanSource.includes("finishedShipmentOrderItemForUnit"), "scanned serial is not matched to an order line");
+assert(scanSource.includes("assignFinishedShipmentSerial(null, serial)"), "scanned serial must use the server-side exact-or-compatible matcher");
+assert(!scanSource.includes("finishedShipmentOrderItemForUnit"), "scanner must not reject compatible products through exact client matching");
 assert(scanSource.includes("assignFinishedShipmentSerial"), "scanner input and manual selection do not share assignment logic");
 assert(scanSource.includes("if (!dispatch)"), "standalone serial lookup must remain available without a dispatch");
 
@@ -108,6 +111,10 @@ assert(saveSource.includes("finished_shipping_return_tracking_required"), "core-
 assert(!saveSource.includes("ship_finished_product_units"), "legacy shipment RPC would double-decrement stock");
 assert(!saveSource.includes('.from("finished_product_units").update('), "browser mutates unit lifecycle directly");
 assert(!saveSource.includes('.from("core_product_variants").update('), "browser mutates stock directly");
+assert(html.includes('data-i18n="finished_shipping_register">照合を完了して出荷済みにする</button>'), "final shipment action must describe check completion and shipment status");
+assert(functionSource("renderFinishedShipmentCandidates").includes("unit.match_type === \"compatible\""), "compatible candidates need a visible badge");
+assert(functionSource("finishedShipmentFlattenAssignments").includes('match_type: finishedShipmentUnitMatchesItem(serial, orderItem) ? "exact" : "compatible"'), "assigned compatible units must remain identifiable");
+assert(css.includes(".finished-shipment-match-badge"), "compatible serial badge styles are missing");
 
 const cancelSource = functionSource("cancelFinishedProductShipment");
 assert(cancelSource.includes('sb.rpc("cancel_finished_product_shipment"'), "audited standalone cancellation RPC is not called");
