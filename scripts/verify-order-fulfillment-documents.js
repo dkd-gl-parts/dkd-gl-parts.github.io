@@ -25,8 +25,14 @@ for (const id of [
   "shipping-document-search",
   "shipping-document-lookup-message",
   "shipping-document-status",
+  "shipping-document-print-state",
+  "shipping-document-date-from",
+  "shipping-document-date-to",
   "shipping-document-reload",
   "shipping-document-list",
+  "shipping-document-check-all",
+  "shipping-document-batch-print",
+  "shipping-document-batch-message",
   "shipping-document-detail"
 ]) requireFragment(html, `id="${id}"`);
 
@@ -38,6 +44,12 @@ for (const fragment of [
   'sb.rpc("get_sales_order_b2_export_batch"',
   'sb.rpc("save_sales_order_return_waybill"',
   'sb.rpc("queue_sales_order_return_waybill_print"',
+  'sb.rpc("list_sales_order_fulfillment_documents"',
+  'sb.rpc("save_sales_order_outbound_waybill"',
+  'sb.rpc("queue_sales_order_outbound_waybill_print"',
+  'sb.rpc("queue_sales_order_fulfillment_documents"',
+  '"yamato_prepaid"',
+  '"sagawa_prepaid"',
   '"yamato_collect"',
   '"sagawa_collect"',
   'ヤマト宅急便　着払い',
@@ -66,19 +78,46 @@ for (const fragment of [
   "shippingDocumentExactOrder",
   "loadShippingDocumentDetail",
   "loadShippingDocumentB2History(resolvedOrder.order_number",
-  "受注ID、注文番号または出荷指示番号"
+  "shippingDocumentHasSearched = true"
 ]) requireFragment(lookupSource, fragment);
 
 const requiredDocuments = sourceBetween("function shippingDocumentShipmentDocumentsHtml", "function shippingDocumentReturnWaybillHtml");
 for (const fragment of [
   'key: "dispatch"',
+  'key: "outbound_waybill"',
   'key: "warranty"',
   'key: "core_return"',
   'key: "return_waybill"',
   "shipping-document-required-list",
   "出荷指示書を印刷・PDF保存",
+  "発送用送り状を設定",
   "返却伝票を設定"
 ]) requireFragment(requiredDocuments, fragment);
+
+const outboundWaybill = sourceBetween("function shippingDocumentOutboundWaybillHtml", "function shippingDocumentShipmentDocumentsHtml");
+for (const fragment of [
+  "商品発送送り状",
+  "ヤマト宅急便　元払い",
+  "佐川急便　元払い",
+  "B2クラウド",
+  "手書き",
+  "ドットプリンタ",
+  "商品発送用伝票番号"
+]) requireFragment(outboundWaybill, fragment);
+
+const outboundSave = sourceBetween("async function saveShippingDocumentOutboundWaybill", "async function queueShippingDocumentOutboundWaybillPrint");
+for (const fragment of [
+  "tracking.length !== 12",
+  'sb.rpc("save_sales_order_outbound_waybill"',
+  "target_expected_version"
+]) requireFragment(outboundSave, fragment);
+
+const batchQueue = sourceBetween("async function queueSelectedShippingDocuments", "async function loadShippingDocumentOrders");
+for (const fragment of [
+  "shippingDocumentCheckedIdsState",
+  "shippingDocumentSelectedTypes",
+  'sb.rpc("queue_sales_order_fulfillment_documents"'
+]) requireFragment(batchQueue, fragment);
 
 const salesOrderDispatchUi = sourceBetween("function salesOrderDispatchHtml", "function renderSalesOrderDetail");
 requireFragment(salesOrderDispatchUi, 'id=\'sales-order-open-shipping-documents\'');
@@ -106,6 +145,8 @@ for (const fragment of [
   ".shipping-document-stages",
   ".shipping-document-waybill-form",
   ".shipping-document-waybill-print-row",
+  ".shipping-document-batch-panel",
+  ".shipping-document-row-check",
   ".shipping-document-print-actions",
   ".shipping-document-required-list",
   ".shipping-document-required-row",
@@ -122,11 +163,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.745"',
-  'styles.css?v=1.1.745',
-  'app.js?v=1.1.745'
+  'content="v1.1.746"',
+  'styles.css?v=1.1.746',
+  'app.js?v=1.1.746'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.745"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.746"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
