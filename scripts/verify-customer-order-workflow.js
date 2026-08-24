@@ -146,7 +146,6 @@ if (!evaluateInternalRegistrationAccess({ preview: true, featureEnabled: true, e
   "update_sales_order_status",
   "create_sales_order_b2_export",
   "get_sales_order_b2_export_batch",
-  "list_sales_order_b2_exports",
   "register_sales_order_shipping"
 ].forEach((rpc) => {
   if (!source.includes(`sb.rpc("${rpc}"`)) throw new Error(`required order RPC is missing: ${rpc}`);

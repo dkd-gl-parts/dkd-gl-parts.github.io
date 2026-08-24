@@ -6013,18 +6013,36 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .shipping-document-ready-state { flex: 0 0 auto; border: 1px solid #d4b574; border-radius: 4px; padding: 4px 7px; background: #fff8e8; color: #79590f; font-size: 9px; font-weight: 800; white-space: nowrap; }
 .shipping-document-ready-state.ready { border-color: #79b48f; background: #edf8f2; color: #236444; }
 .shipping-document-ready-state.neutral { border-color: #b9c2ca; background: #f3f5f7; color: #58636e; }
+.shipping-document-defaults { max-width: 980px; margin: 0 auto; }
+.shipping-document-defaults-head { border-bottom: 2px solid #d9dfe4; padding: 2px 0 16px; }
+.shipping-document-defaults-head > span { color: #287356; font-size: 9px; font-weight: 900; }
+.shipping-document-defaults-head h2 { margin-top: 3px; color: #182230; font-size: 20px; letter-spacing: 0; }
+.shipping-document-defaults-head p { margin-top: 5px; color: #687386; font-size: 10px; line-height: 1.55; }
+.shipping-document-default-head,
+.shipping-document-default-row { display: grid; grid-template-columns: minmax(170px, .8fr) minmax(250px, 1.25fr) minmax(200px, 1fr); align-items: center; gap: 16px; }
+.shipping-document-default-head { min-height: 34px; border-bottom: 1px solid #dbe1e6; padding: 0 12px; background: #f1f4f6; color: #66717d; font-size: 9px; font-weight: 800; }
+.shipping-document-default-row { min-height: 58px; border-bottom: 1px solid #e1e5e9; padding: 9px 12px; background: #fff; }
+.shipping-document-default-row strong { color: #263543; font-size: 11px; }
+.shipping-document-default-row span { color: #344b5d; font-size: 10px; font-weight: 700; }
+.shipping-document-default-row small { color: #707d88; font-size: 9px; line-height: 1.45; }
 .shipping-document-required-list { border-top: 1px solid #dbe1e6; }
-.shipping-document-required-row { display: grid; grid-template-columns: minmax(180px, 1fr) 110px minmax(190px, auto); align-items: center; gap: 14px; min-height: 58px; border-bottom: 1px solid #e1e5e9; padding: 8px 10px; }
+.shipping-document-required-head,
+.shipping-document-required-row { display: grid; grid-template-columns: minmax(150px, .75fr) minmax(210px, 1.1fr) minmax(150px, .8fr) minmax(210px, auto); align-items: center; gap: 14px; }
+.shipping-document-required-head { min-height: 34px; border-bottom: 1px solid #dbe1e6; padding: 0 10px; background: #f1f4f6; color: #65717d; font-size: 9px; font-weight: 800; }
+.shipping-document-required-row { min-height: 62px; border-bottom: 1px solid #e1e5e9; padding: 8px 10px; }
 .shipping-document-required-row > div { min-width: 0; }
 .shipping-document-required-row strong,
 .shipping-document-required-row span { display: block; }
 .shipping-document-required-row strong { color: #2a3745; font-size: 11px; }
-.shipping-document-required-row span { margin-top: 3px; color: #73808b; font-size: 9px; }
+.shipping-document-required-row span { color: #73808b; font-size: 9px; }
+.shipping-document-required-row .shipping-document-standard { color: #3e5365; font-size: 10px; font-weight: 700; line-height: 1.45; }
 .shipping-document-required-row em { justify-self: start; border: 1px solid #c4ccd3; border-radius: 4px; padding: 3px 6px; background: #f5f7f8; color: #5c6873; font-size: 9px; font-style: normal; font-weight: 800; white-space: nowrap; }
 .shipping-document-required-row.ready em { border-color: #83b898; background: #edf8f2; color: #236444; }
 .shipping-document-required-row button { justify-self: end; min-height: 32px; border: 1px solid #287356; border-radius: 5px; padding: 0 10px; background: #fff; color: #287356; font-size: 9px; font-weight: 800; cursor: pointer; white-space: nowrap; }
 .shipping-document-required-row button:disabled { border-color: #c6cdd5; background: #e6e9ed; color: #8b939d; cursor: not-allowed; }
-.shipping-document-row-actions { display: flex; justify-content: flex-end; gap: 6px; }
+.shipping-document-row-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; }
+.shipping-document-row-actions button.primary { background: #287356; color: #fff; }
+.shipping-document-no-action { width: 100%; color: #7a858f !important; text-align: right; }
 .shipping-document-section-empty,
 .shipping-document-guidance { border-left: 3px solid #8ba7c4; padding: 8px 10px; background: #f4f8fb; color: #586777; font-size: 10px; line-height: 1.55; }
 .shipping-document-b2-history { border-top: 1px solid #dbe1e6; }
@@ -6063,6 +6081,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .shipping-document-welcome { max-width: 860px; margin: 0 auto; padding-top: 14px; }
 .shipping-document-welcome > strong { color: #2b3846; font-size: 14px; }
 .shipping-document-welcome > p { margin: 5px 0 14px; color: #697581; font-size: 10px; line-height: 1.55; }
+.form-card.shipping-document-settings-card { width: min(760px, calc(100vw - 24px)); max-width: 760px; max-height: calc(100vh - 24px); border-radius: 8px; padding: 0; overflow: auto; }
+.shipping-document-settings-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; border-bottom: 1px solid #d8dfdb; padding: 18px 20px 14px; }
+.shipping-document-settings-heading span { color: #287356; font-size: 9px; font-weight: 900; }
+.shipping-document-settings-heading h3 { margin: 2px 0 0; color: #1d2c25; font-size: 18px; letter-spacing: 0; }
+.shipping-document-settings-heading p { margin-top: 5px; color: #68766f; font-size: 9px; line-height: 1.5; }
+.shipping-document-settings-heading button { flex: 0 0 auto; width: 30px; height: 30px; border: 1px solid #c8d1cc; border-radius: 5px; background: #fff; color: #617068; cursor: pointer; }
+#shipping-document-settings-content { padding: 18px 20px; }
+.shipping-document-settings-card .shipping-document-waybill-form { grid-template-columns: 1fr 1fr; }
+.shipping-document-settings-card .shipping-document-waybill-form > label:last-of-type { grid-column: 1 / -1; }
+.shipping-document-settings-card .shipping-document-waybill-form > button { grid-column: 1 / -1; justify-self: end; min-width: 132px; }
+.shipping-document-settings-card .sales-order-detail-message { min-height: 18px; margin: 0 20px; }
+.shipping-document-settings-card .form-footer { margin-top: 0; padding: 14px 20px; }
 
 @media (max-width: 1080px) {
   .customer-order-workspace { grid-template-columns: minmax(0, 1fr) 330px; }
@@ -6108,8 +6138,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .shipping-document-detail-pane { overflow: visible; }
   .shipping-document-stages { grid-template-columns: 1fr 1fr; }
   .shipping-document-stages > div:nth-child(2) { border-right: 0; }
+  .shipping-document-default-head,
+  .shipping-document-required-head { display: none; }
+  .shipping-document-default-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 5px 12px; }
+  .shipping-document-default-row small { grid-column: 1 / -1; }
   .shipping-document-required-row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
-  .shipping-document-required-row > button,
   .shipping-document-required-row > .shipping-document-row-actions { grid-column: 1 / -1; justify-self: stretch; }
   .shipping-document-row-actions button { flex: 1; }
 }
@@ -6193,4 +6226,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .shipping-document-waybill-print-row > div { margin-right: 0; }
   .shipping-document-waybill-print-row button,
   .shipping-document-waybill-print-row a { width: 100%; }
+  .shipping-document-default-row { grid-template-columns: 1fr; }
+  .shipping-document-default-row small { grid-column: 1; }
+  .shipping-document-settings-heading { padding: 16px 14px 12px; }
+  #shipping-document-settings-content { padding: 14px; }
+  .shipping-document-settings-card .shipping-document-waybill-form { grid-template-columns: 1fr; }
+  .shipping-document-settings-card .shipping-document-waybill-form > label:last-of-type,
+  .shipping-document-settings-card .shipping-document-waybill-form > button { grid-column: 1; width: 100%; }
+  .shipping-document-settings-card .sales-order-detail-message { margin: 0 14px; }
+  .shipping-document-settings-card .form-footer { padding: 12px 14px; }
 }
