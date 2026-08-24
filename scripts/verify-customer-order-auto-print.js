@@ -124,8 +124,9 @@ if (/window\.print\s*\(/.test(submitOrder)) {
 }
 if (!html.includes("受注・出荷帳票の印刷設定") ||
     !html.includes("受付時はA4出荷指示書だけを印刷します") ||
-    !html.includes("B2発行済データ取込と商品・製造シリアル照合の両方が完了") ||
-    !html.includes("コア返却用複写伝票は別のプリンターへ送信します")) {
+    !html.includes("出荷指示書・保証書・コア返却シートは、それぞれ標準プリンターを設定できます") ||
+    !html.includes("PowerShell画面を表示せず") ||
+    !html.includes("各帳票と複写伝票の標準プリンターを個別に設定できます")) {
   throw new Error("Automatic-print settings must describe the separate acceptance and shipment triggers");
 }
 
@@ -164,10 +165,10 @@ for (const fragment of [
 }
 
 for (const versionFragment of [
-  'content="v1.1.748"',
-  'styles.css?v=1.1.748',
-  'app.js?v=1.1.748',
-  'var APP_VERSION       = "v1.1.748"'
+  'content="v1.1.749"',
+  'styles.css?v=1.1.749',
+  'app.js?v=1.1.749',
+  'var APP_VERSION       = "v1.1.749"'
 ]) {
   const versionSource = versionFragment.startsWith("var ") ? source : html;
   if (!versionSource.includes(versionFragment)) throw new Error(`Release version is inconsistent: ${versionFragment}`);

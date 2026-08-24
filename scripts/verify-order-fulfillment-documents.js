@@ -136,10 +136,26 @@ for (const fragment of [
   "帳票の標準設定",
   "A4 / 受付時に自動発行",
   "B2クラウド / ヤマト宅急便 元払い",
-  "A5 / 注文単位",
-  "A5 / コア返却必要時",
+  "A5 / 注文単位 / 端末印刷",
+  "A5 / コア返却必要時 / 端末印刷",
   "手書き / ヤマト宅急便 着払い"
 ]) requireFragment(defaultDocuments, fragment);
+
+const temporaryOutput = sourceBetween("function shippingDocumentLocalOutputType", "function shippingDocumentDefaultStateHtml");
+for (const fragment of [
+  'return ["dispatch", "warranty", "core_return"].indexOf(type) >= 0',
+  "shippingDocumentTemporaryOutputs",
+  'mode === "browser" ? "表示・PDF" : "端末印刷"',
+  "この画面でこの受注を開いている間だけ有効です",
+  "自動印刷や保存済みの標準プリンターは変更しません",
+  "端末印刷（保存済みの標準プリンター）",
+  "表示・PDF（印刷画面でプリンターを選択）",
+  "標準プリンターを変更",
+  "shippingDocumentManualOutputActions"
+]) requireFragment(temporaryOutput, fragment);
+if (temporaryOutput.includes("sb.rpc(")) {
+  throw new Error("Temporary output selection must not persist or mutate server-side print settings");
+}
 
 const requiredDocuments = sourceBetween("function shippingDocumentShipmentDocumentsHtml", "function shippingDocumentReturnWaybillHtml");
 for (const fragment of [
@@ -154,7 +170,11 @@ for (const fragment of [
   "現在の状態",
   "発行操作",
   "data-shipping-document-open-settings='outbound'",
-  "data-shipping-document-open-settings='return'"
+  "data-shipping-document-open-settings='return'",
+  'shippingDocumentManualOutputActions(order, "dispatch"',
+  'shippingDocumentManualOutputActions(order, "warranty"',
+  'shippingDocumentManualOutputActions(order, "core_return"',
+  "今回のみ:"
 ]) requireFragment(requiredDocuments, fragment);
 
 const detailSource = sourceBetween("function renderShippingDocumentDetail", "function bindShippingDocumentDetailActions");
@@ -174,6 +194,10 @@ for (const fragment of [
   'shippingDocumentOverlayMode = mode',
   'mode === "outbound"',
   'mode === "return"',
+  "shippingDocumentLocalOutputType(mode)",
+  "shippingDocumentTemporaryOutputHtml(order, mode)",
+  "applyShippingDocumentTemporaryOutput",
+  "resetShippingDocumentTemporaryOutput",
   "shippingDocumentOutboundWaybillHtml(order)",
   "shippingDocumentReturnWaybillHtml(order)",
   "shippingDocumentOrderB2HistoryHtml(order)"
@@ -238,6 +262,8 @@ for (const fragment of [
   ".shipping-document-required-list",
   ".shipping-document-required-head",
   ".shipping-document-required-row",
+  ".shipping-document-temporary-setting",
+  ".shipping-document-temporary-setting-actions",
   ".shipping-document-defaults",
   ".shipping-document-default-row",
   ".shipping-document-settings-card",
@@ -255,11 +281,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.748"',
-  'styles.css?v=1.1.748',
-  'app.js?v=1.1.748'
+  'content="v1.1.749"',
+  'styles.css?v=1.1.749',
+  'app.js?v=1.1.749'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.748"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.749"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
