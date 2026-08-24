@@ -5068,7 +5068,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.749";
+var APP_VERSION       = "v1.1.750";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5359,6 +5359,7 @@ var salesOrderDetail = null;
 var salesOrderListSeq = 0;
 var salesOrderDetailSeq = 0;
 var salesOrderSaving = false;
+var salesOrderPricingSaving = false;
 var salesOrderB2ImportState = null;
 var salesOrderB2ImportSaving = false;
 var salesOrderPrintSettings = null;
@@ -7385,6 +7386,7 @@ async function doLogout() {
   salesOrderListSeq += 1;
   salesOrderDetailSeq += 1;
   salesOrderSaving = false;
+  salesOrderPricingSaving = false;
   salesOrderB2ImportState = null;
   salesOrderB2ImportSaving = false;
   salesOrderPrintSettings = null;
@@ -9971,6 +9973,7 @@ async function enterSalesOrderMgmt() {
   salesOrderSelectedId = null;
   salesOrderCheckedIdsState = new Set();
   salesOrderDetail = null;
+  salesOrderPricingSaving = false;
   salesOrderDashboardRows = [];
   salesOrderDashboardError = "";
   salesOrderDashboardLoading = true;
@@ -10936,9 +10939,188 @@ async function acceptCheckedSalesOrders() {
 function salesOrderItemRowsHtml(items) {
   items = Array.isArray(items) ? items : [];
   if (!items.length) return "<div class='sales-order-empty'>明細がありません。</div>";
-  return "<div class='sales-order-item-table'><div class='sales-order-item-head'><span>品番</span><span>区分</span><span>数量</span><span>単価</span><span>小計</span><span>コア返却</span></div>" + items.map(function(item) {
-    return "<div class='sales-order-item-row'><div><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || "-") + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small></div><span>" + esc(customerProductKindLabel(item.product_kind)) + "</span><strong>" + esc(item.quantity || 1) + "</strong><span>" + esc(customerOrderCurrency(item.unit_price_jpy)) + "</span><strong>" + esc(customerOrderCurrency(item.line_total_jpy)) + "</strong><span class='sales-order-core " + (item.core_return_required ? "required" : "none") + "'>" + esc(item.core_return_required ? "必要" : "不要") + "</span></div>";
+  return "<div class='sales-order-item-table'><div class='sales-order-item-head'><span>品番</span><span>区分</span><span>数量</span><span>単価</span><span>明細値引き</span><span>小計</span><span>コア返却</span></div>" + items.map(function(item) {
+    var discount = Math.max(0, parseInt(item.discount_jpy, 10) || 0);
+    return "<div class='sales-order-item-row'><div><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || "-") + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small></div><span>" + esc(customerProductKindLabel(item.product_kind)) + "</span><strong>" + esc(item.quantity || 1) + "</strong><span>" + esc(customerOrderCurrency(item.unit_price_jpy)) + "</span><span class='sales-order-item-discount'>" + esc(discount ? ("-" + customerOrderCurrency(discount)) : "-") + "</span><strong>" + esc(customerOrderCurrency(item.line_total_jpy)) + "</strong><span class='sales-order-core " + (item.core_return_required ? "required" : "none") + "'>" + esc(item.core_return_required ? "必要" : "不要") + "</span></div>";
   }).join("") + "</div>";
+}
+
+function salesOrderPricingHistoryHtml(rows) {
+  rows = Array.isArray(rows) ? rows : [];
+  if (!rows.length) return "";
+  return "<section class='sales-order-detail-section sales-order-pricing-history'><h3>金額修正履歴</h3><div>" + rows.map(function(row) {
+    var beforeData = row.before_data && typeof row.before_data === "object" ? row.before_data : {};
+    var afterData = row.after_data && typeof row.after_data === "object" ? row.after_data : {};
+    return "<div class='sales-order-pricing-history-row'><time>" + esc(customerOrderDateTimeText(row.created_at)) + "</time><strong>" + esc(row.reason || "変更理由なし") + "</strong><span>" + esc(customerOrderCurrency(beforeData.total_jpy)) + " → " + esc(customerOrderCurrency(afterData.total_jpy)) + "</span></div>";
+  }).join("") + "</div></section>";
+}
+
+function salesOrderPricingInputValue(value) {
+  var number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? String(Math.floor(number)) : "0";
+}
+
+function salesOrderPricingEditorHtml(order) {
+  var items = Array.isArray(order && order.items) ? order.items : [];
+  var rows = items.map(function(item) {
+    var quantity = Math.max(1, parseInt(item.quantity, 10) || 1);
+    return "<div class='sales-order-pricing-item' data-sales-order-pricing-item data-item-id='" + esc(item.id) + "' data-quantity='" + esc(quantity) + "'>" +
+      "<div class='sales-order-pricing-product'><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || "-") + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number, customerProductKindLabel(item.product_kind)].filter(Boolean).join(" / ") || "-") + "</small></div>" +
+      "<div class='sales-order-pricing-quantity'><span>数量</span><strong>" + esc(quantity) + "</strong></div>" +
+      "<label><span>単価</span><input type='number' inputmode='numeric' min='0' max='100000000' step='1' data-pricing-unit value='" + esc(salesOrderPricingInputValue(item.unit_price_jpy)) + "'></label>" +
+      "<label><span>明細値引き</span><input type='number' inputmode='numeric' min='0' max='2000000000' step='1' data-pricing-discount value='" + esc(salesOrderPricingInputValue(item.discount_jpy)) + "'></label>" +
+      "<div class='sales-order-pricing-line-total'><span>小計</span><strong data-pricing-line-total>" + esc(customerOrderCurrency(item.line_total_jpy)) + "</strong></div>" +
+    "</div>";
+  }).join("");
+  return "<div class='sales-order-pricing-items'><div class='sales-order-pricing-item-head'><span>商品</span><span>数量</span><span>単価</span><span>明細値引き</span><span>小計</span></div>" + rows + "</div>" +
+    "<div class='sales-order-pricing-order-fields'>" +
+      "<label><span>受注全体の値引き</span><input id='sales-order-pricing-order-discount' type='number' inputmode='numeric' min='0' max='2000000000' step='1' value='" + esc(salesOrderPricingInputValue(order.order_discount_jpy)) + "'></label>" +
+      "<label><span>送料</span><div class='sales-order-pricing-shipping-input'><input id='sales-order-pricing-shipping' type='number' inputmode='numeric' min='0' max='100000000' step='1' value='" + esc(salesOrderPricingInputValue(order.shipping_fee_jpy)) + "'><button type='button' id='sales-order-pricing-free-shipping'>送料無料</button></div></label>" +
+    "</div>" +
+    "<div class='sales-order-pricing-preview' aria-live='polite'><div><span>商品計（明細値引後）</span><strong id='sales-order-pricing-preview-subtotal'>-</strong></div><div><span>受注値引き</span><strong id='sales-order-pricing-preview-discount'>-</strong></div><div><span>送料</span><strong id='sales-order-pricing-preview-shipping'>-</strong></div><div><span>消費税</span><strong id='sales-order-pricing-preview-tax'>-</strong></div><div class='total'><span>合計</span><strong id='sales-order-pricing-preview-total'>-</strong></div></div>" +
+    "<label class='sales-order-pricing-reason'><span>変更理由 *</span><textarea id='sales-order-pricing-reason' maxlength='240' rows='3' placeholder='例：得意先との価格調整、送料サービス'></textarea><small>変更前後の金額と一緒に履歴へ記録します。</small></label>" +
+    "<div id='sales-order-pricing-validation' class='sales-order-pricing-validation' aria-live='polite'></div>";
+}
+
+function readSalesOrderPricingEditor() {
+  var result = { items: [], subtotal: 0, orderDiscount: 0, shipping: 0, tax: 0, total: 0, error: "" };
+  var rows = Array.from(document.querySelectorAll("#sales-order-pricing-content [data-sales-order-pricing-item]"));
+  if (!rows.length) { result.error = "注文明細がありません。"; return result; }
+  for (var index = 0; index < rows.length; index += 1) {
+    var row = rows[index];
+    var itemId = parseInt(row.dataset.itemId, 10);
+    var quantity = parseInt(row.dataset.quantity, 10);
+    var unit = Number((row.querySelector("[data-pricing-unit]") || {}).value);
+    var discount = Number((row.querySelector("[data-pricing-discount]") || {}).value);
+    if (!itemId || !Number.isInteger(quantity) || quantity < 1 || !Number.isInteger(unit) || unit < 0 || unit > 100000000 || !Number.isInteger(discount) || discount < 0) {
+      result.error = "単価と明細値引きは0円以上の整数で入力してください。";
+      return result;
+    }
+    var base = unit * quantity;
+    if (!Number.isSafeInteger(base) || base > 2000000000 || discount > base) {
+      result.error = "明細値引きは単価×数量以下にしてください。";
+      return result;
+    }
+    var lineTotal = base - discount;
+    result.items.push({ item_id: itemId, unit_price_jpy: unit, discount_jpy: discount, line_total_jpy: lineTotal });
+    result.subtotal += lineTotal;
+  }
+  var orderDiscount = Number((document.getElementById("sales-order-pricing-order-discount") || {}).value);
+  var shipping = Number((document.getElementById("sales-order-pricing-shipping") || {}).value);
+  if (!Number.isInteger(orderDiscount) || orderDiscount < 0 || orderDiscount > result.subtotal) {
+    result.error = "受注全体の値引きは商品計以下で入力してください。";
+    return result;
+  }
+  if (!Number.isInteger(shipping) || shipping < 0 || shipping > 100000000) {
+    result.error = "送料は0円以上の整数で入力してください。";
+    return result;
+  }
+  result.orderDiscount = orderDiscount;
+  result.shipping = shipping;
+  result.tax = Math.floor((result.subtotal - orderDiscount) * 0.10) + Math.floor(shipping * 0.10);
+  result.total = result.subtotal - orderDiscount + shipping + result.tax;
+  if (!Number.isSafeInteger(result.total) || result.total > 2000000000) result.error = "合計金額が上限を超えています。";
+  return result;
+}
+
+function renderSalesOrderPricingPreview() {
+  var values = readSalesOrderPricingEditor();
+  values.items.forEach(function(item) {
+    var row = document.querySelector("#sales-order-pricing-content [data-item-id='" + item.item_id + "']");
+    var total = row && row.querySelector("[data-pricing-line-total]");
+    if (total) total.textContent = customerOrderCurrency(item.line_total_jpy);
+  });
+  var targets = {
+    "sales-order-pricing-preview-subtotal": values.error ? "-" : customerOrderCurrency(values.subtotal),
+    "sales-order-pricing-preview-discount": values.error ? "-" : (values.orderDiscount ? "-" + customerOrderCurrency(values.orderDiscount) : customerOrderCurrency(0)),
+    "sales-order-pricing-preview-shipping": values.error ? "-" : (values.shipping ? customerOrderCurrency(values.shipping) : "送料無料"),
+    "sales-order-pricing-preview-tax": values.error ? "-" : customerOrderCurrency(values.tax),
+    "sales-order-pricing-preview-total": values.error ? "-" : customerOrderCurrency(values.total)
+  };
+  Object.keys(targets).forEach(function(id) { var element = document.getElementById(id); if (element) element.textContent = targets[id]; });
+  var validation = document.getElementById("sales-order-pricing-validation");
+  if (validation) { validation.textContent = values.error; validation.classList.toggle("error", !!values.error); }
+  var save = document.getElementById("sales-order-pricing-save");
+  if (save) save.disabled = salesOrderPricingSaving || !!values.error;
+  return values;
+}
+
+function openSalesOrderPricingEditor() {
+  var order = salesOrderDetail;
+  if (!order || !order.pricing_editable || salesOrderPricingSaving) {
+    setSalesOrderDetailMessage("出荷済み・完了・取消済みの受注金額は変更できません。", true);
+    return;
+  }
+  var overlay = document.getElementById("sales-order-pricing-overlay");
+  var intro = document.getElementById("sales-order-pricing-order");
+  var content = document.getElementById("sales-order-pricing-content");
+  if (!overlay || !content) return;
+  if (intro) intro.textContent = (order.order_number || ("注文 " + order.id)) + " / " + (order.customer_name || "-");
+  content.innerHTML = salesOrderPricingEditorHtml(order);
+  var message = document.getElementById("sales-order-pricing-message");
+  if (message) { message.textContent = ""; message.className = "sales-order-pricing-message"; }
+  overlay.classList.add("show");
+  content.querySelectorAll("input").forEach(function(input) { input.addEventListener("input", renderSalesOrderPricingPreview); });
+  var reason = document.getElementById("sales-order-pricing-reason");
+  if (reason) reason.addEventListener("input", function() { if (message) message.textContent = ""; });
+  var freeShipping = document.getElementById("sales-order-pricing-free-shipping");
+  if (freeShipping) freeShipping.addEventListener("click", function() {
+    var shipping = document.getElementById("sales-order-pricing-shipping");
+    if (shipping) { shipping.value = "0"; shipping.focus(); }
+    renderSalesOrderPricingPreview();
+  });
+  renderSalesOrderPricingPreview();
+  var firstInput = content.querySelector("[data-pricing-unit]");
+  if (firstInput) firstInput.focus();
+}
+
+function closeSalesOrderPricingEditor(force) {
+  if (salesOrderPricingSaving && !force) return;
+  var overlay = document.getElementById("sales-order-pricing-overlay");
+  if (overlay) overlay.classList.remove("show");
+  var content = document.getElementById("sales-order-pricing-content");
+  if (content) content.innerHTML = "";
+}
+
+function setSalesOrderPricingMessage(message, isError) {
+  var host = document.getElementById("sales-order-pricing-message");
+  if (!host) return;
+  host.textContent = message || "";
+  host.className = "sales-order-pricing-message" + (isError ? " error" : "");
+}
+
+async function saveSalesOrderPricing() {
+  if (!canManageSalesOrders() || salesOrderPricingSaving || !salesOrderDetail || !salesOrderDetail.pricing_editable) return;
+  var values = renderSalesOrderPricingPreview();
+  var reason = String((document.getElementById("sales-order-pricing-reason") || {}).value || "").trim();
+  if (values.error) { setSalesOrderPricingMessage(values.error, true); return; }
+  if (reason.length < 2) { setSalesOrderPricingMessage("変更理由を2文字以上で入力してください。", true); return; }
+  salesOrderPricingSaving = true;
+  var save = document.getElementById("sales-order-pricing-save");
+  var cancel = document.getElementById("sales-order-pricing-cancel");
+  if (save) { save.disabled = true; save.textContent = "保存中..."; }
+  if (cancel) cancel.disabled = true;
+  setSalesOrderPricingMessage("金額を再計算して保存しています。", false);
+  var result = await sb.rpc("adjust_sales_order_pricing", {
+    target_order_id: salesOrderDetail.id,
+    target_items: values.items.map(function(item) { return { item_id: item.item_id, unit_price_jpy: item.unit_price_jpy, discount_jpy: item.discount_jpy }; }),
+    target_order_discount_jpy: values.orderDiscount,
+    target_shipping_fee_jpy: values.shipping,
+    target_reason: reason,
+    target_expected_version: salesOrderDetail.version == null ? null : salesOrderDetail.version
+  });
+  salesOrderPricingSaving = false;
+  if (result.error) {
+    if (save) { save.disabled = false; save.textContent = "変更を保存"; }
+    if (cancel) cancel.disabled = false;
+    setSalesOrderPricingMessage(result.error.message || "受注金額を保存できませんでした。", true);
+    return;
+  }
+  salesOrderDetail = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
+  closeSalesOrderPricingEditor(true);
+  renderSalesOrderDetail();
+  await refreshSalesOrderManagement();
+  setSalesOrderDetailMessage("受注金額を更新し、変更履歴を記録しました。", false);
 }
 
 function salesOrderShipmentHistoryHtml(rows) {
@@ -11068,9 +11250,12 @@ function renderSalesOrderDetail() {
   var coreReturnService = order.core_return_required
     ? customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "core_return"), "未登録")
     : "対象外";
+  var orderDiscount = Math.max(0, parseInt(order.order_discount_jpy, 10) || 0);
+  var pricingButton = order.pricing_editable ? "<button type='button' class='sales-order-pricing-open' id='sales-order-pricing-open'>金額を修正</button>" : "";
   host.innerHTML = "<div class='sales-order-detail-head'><div><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "<h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span></div>" +
-    "<div class='sales-order-detail-summary'><div><span>商品計</span><strong>" + esc(customerOrderCurrency(order.subtotal_jpy)) + "</strong></div><div><span>送料</span><strong>" + esc(customerOrderCurrency(order.shipping_fee_jpy)) + "</strong></div><div><span>消費税</span><strong>" + esc(customerOrderCurrency(order.tax_jpy)) + "</strong></div><div class='total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div></div>" +
-    "<section class='sales-order-detail-section'><h3>注文明細</h3>" + salesOrderItemRowsHtml(order.items) + "</section>" +
+    "<div class='sales-order-detail-summary'><div><span>商品計（明細値引後）</span><strong>" + esc(customerOrderCurrency(order.subtotal_jpy)) + "</strong></div><div class='discount'><span>受注値引き</span><strong>" + esc(orderDiscount ? ("-" + customerOrderCurrency(orderDiscount)) : customerOrderCurrency(0)) + "</strong></div><div><span>送料</span><strong>" + esc(Number(order.shipping_fee_jpy) === 0 ? "送料無料" : customerOrderCurrency(order.shipping_fee_jpy)) + "</strong></div><div><span>消費税</span><strong>" + esc(customerOrderCurrency(order.tax_jpy)) + "</strong></div><div class='total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div></div>" +
+    "<section class='sales-order-detail-section'><div class='sales-order-section-heading'><h3>注文明細</h3>" + pricingButton + "</div>" + salesOrderItemRowsHtml(order.items) + "</section>" +
+    salesOrderPricingHistoryHtml(order.pricing_adjustments) +
     "<section class='sales-order-detail-section sales-order-address'><h3>お届け先・運送便</h3><p><strong>" + esc(address.company_name || "-") + "　" + esc(address.recipient_name || "-") + "</strong><br>〒" + esc(address.postal_code || "-") + "　" + esc(address.prefecture_name || "") + esc(address.address_line_1 || "-") + " " + esc(address.address_line_2 || "") + "<br>TEL " + esc(address.phone_number || "-") + "</p><dl><div><dt>商品発送便</dt><dd>" + esc(outboundService) + "</dd></div><div><dt>コア返却便</dt><dd>" + esc(coreReturnService) + "</dd></div><div><dt>お届け希望</dt><dd>" + esc(order.requested_delivery_date || "指定なし") + " / " + esc(order.delivery_time_label || "指定なし") + "</dd></div><div><dt>注文メモ</dt><dd>" + esc(order.customer_note || "-") + "</dd></div></dl></section>" +
     salesOrderDispatchHtml(order) +
     "<section class='sales-order-detail-section sales-order-tracking'><h3>商品発送送り状番号</h3><div class='sales-order-tracking-grid outbound-only'><label><span>送り状番号</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>B2出荷予定日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>商品発送番号を登録</button></div><p>コア返却用複写伝票は「出荷帳票発行」画面で、ヤマト宅急便　着払いまたは佐川急便着払いとして管理します。送り状番号の登録だけでは在庫を減らしません。</p></section>" +
@@ -11097,6 +11282,8 @@ function renderSalesOrderDetail() {
   if (serialButton) serialButton.addEventListener("click", openSalesOrderSerialWarranty);
   var requeuePrintButton = document.getElementById("sales-order-requeue-print");
   if (requeuePrintButton) requeuePrintButton.addEventListener("click", requeueSalesOrderPrintJobs);
+  var pricingOpenButton = document.getElementById("sales-order-pricing-open");
+  if (pricingOpenButton) pricingOpenButton.addEventListener("click", openSalesOrderPricingEditor);
 }
 
 async function openSalesOrderSerialWarranty() {
@@ -42324,6 +42511,12 @@ document.getElementById("sales-order-print-settings-launch").addEventListener("c
 });
 document.getElementById("sales-order-print-settings-overlay").addEventListener("click", function(e) {
   if (e.target === this) closeSalesOrderPrinterSetup();
+});
+document.getElementById("sales-order-pricing-close").addEventListener("click", function() { closeSalesOrderPricingEditor(false); });
+document.getElementById("sales-order-pricing-cancel").addEventListener("click", function() { closeSalesOrderPricingEditor(false); });
+document.getElementById("sales-order-pricing-save").addEventListener("click", saveSalesOrderPricing);
+document.getElementById("sales-order-pricing-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeSalesOrderPricingEditor(false);
 });
 window.addEventListener("focus", function() {
   var overlay = document.getElementById("sales-order-print-settings-overlay");

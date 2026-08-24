@@ -29,6 +29,7 @@ on:
       - "scripts/verify-customer-order-batch-accept.js"
       - "scripts/verify-sales-order-dashboard.js"
       - "scripts/verify-customer-order-in-house-cancel.js"
+      - "scripts/verify-sales-order-price-adjustment.js"
       - "scripts/verify-postal-data.js"
       - "scripts/verify-postal-lookup-fallback.js"
       - "scripts/update-postal-data.js"
@@ -117,6 +118,8 @@ jobs:
         run: node scripts/verify-sales-order-dashboard.js
       - name: Verify customer order in-house shipment cancellation
         run: node scripts/verify-customer-order-in-house-cancel.js
+      - name: Verify sales order price adjustment
+        run: node scripts/verify-sales-order-price-adjustment.js
       - name: Verify offline postal data
         run: node scripts/verify-postal-data.js
       - name: Verify postal lookup fallback
