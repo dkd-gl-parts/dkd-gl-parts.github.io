@@ -59,8 +59,8 @@ for (const fragment of [
   ".sales-order-detail-nav",
   ".sales-order-history-groups",
   ".sales-order-pricing-lower-grid",
-  ".sales-order-pricing-mobile-label { display: none; }",
-  ".sales-order-pricing-mobile-label { display: block; }"
+  ".sales-order-pricing-item .sales-order-pricing-mobile-label { display: none; }",
+  ".sales-order-pricing-item .sales-order-pricing-mobile-label { display: block; }"
 ]) requireFragment(css, fragment);
 
 console.log("Sales order list, detail, and price-editor usability verification passed.");
