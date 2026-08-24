@@ -5068,7 +5068,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.750";
+var APP_VERSION       = "v1.1.751";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5364,6 +5364,10 @@ var salesOrderB2ImportState = null;
 var salesOrderB2ImportSaving = false;
 var salesOrderPrintSettings = null;
 var salesOrderPrintSettingsSaving = false;
+var salesAccountingExportState = null;
+var salesAccountingExportLoading = false;
+var salesAccountingExportSaving = false;
+var salesAccountingExportCodeSavingKey = "";
 var shippingDocumentRows = [];
 var shippingDocumentSelectedId = null;
 var shippingDocumentCheckedIdsState = new Set();
@@ -7391,6 +7395,10 @@ async function doLogout() {
   salesOrderB2ImportSaving = false;
   salesOrderPrintSettings = null;
   salesOrderPrintSettingsSaving = false;
+  salesAccountingExportState = null;
+  salesAccountingExportLoading = false;
+  salesAccountingExportSaving = false;
+  salesAccountingExportCodeSavingKey = "";
   shippingDocumentRows = [];
   shippingDocumentSelectedId = null;
   shippingDocumentCheckedIdsState = new Set();
@@ -9979,11 +9987,364 @@ async function enterSalesOrderMgmt() {
   salesOrderDashboardLoading = true;
   salesOrderB2ImportState = null;
   salesOrderB2ImportSaving = false;
+  salesAccountingExportState = null;
+  salesAccountingExportLoading = false;
+  salesAccountingExportSaving = false;
+  salesAccountingExportCodeSavingKey = "";
   showScreen("sales-order-mgmt");
   updateAllHeaders();
   renderSalesOrderDashboard();
   renderSalesOrderPrintSettings();
   await Promise.all([refreshSalesOrderManagement(), loadSalesOrderPrintSettings()]);
+}
+
+function salesAccountingExportLocalDate(value) {
+  var date = value instanceof Date ? value : new Date(value || Date.now());
+  var local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+}
+
+function initialSalesAccountingExportState() {
+  var today = new Date();
+  var monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  return {
+    targetSystem: "yayoi_sales",
+    dateFrom: salesAccountingExportLocalDate(monthStart),
+    dateTo: salesAccountingExportLocalDate(today),
+    includeExported: false,
+    profile: null,
+    orders: [],
+    batches: [],
+    selectedIds: new Set(),
+    hasSearched: false
+  };
+}
+
+function ensureSalesAccountingExportState() {
+  if (!salesAccountingExportState) salesAccountingExportState = initialSalesAccountingExportState();
+  return salesAccountingExportState;
+}
+
+function setSalesAccountingExportMessage(message, isError) {
+  var host = document.getElementById("sales-accounting-export-message");
+  if (!host) return;
+  host.textContent = message || "";
+  host.className = "sales-accounting-export-message" + (isError ? " error" : "");
+}
+
+function setSalesAccountingExportSummary(message, isError) {
+  var host = document.getElementById("sales-accounting-export-summary");
+  if (!host) return;
+  host.textContent = message || "";
+  host.className = "sales-accounting-export-summary" + (isError ? " error" : "");
+}
+
+function syncSalesAccountingExportFilters() {
+  var state = ensureSalesAccountingExportState();
+  var target = document.getElementById("sales-accounting-export-target");
+  var dateFrom = document.getElementById("sales-accounting-export-date-from");
+  var dateTo = document.getElementById("sales-accounting-export-date-to");
+  var includeExported = document.getElementById("sales-accounting-export-include-exported");
+  if (target) target.value = state.targetSystem;
+  if (dateFrom) dateFrom.value = state.dateFrom;
+  if (dateTo) dateTo.value = state.dateTo;
+  if (includeExported) includeExported.checked = state.includeExported;
+}
+
+function readSalesAccountingExportFilters() {
+  var state = ensureSalesAccountingExportState();
+  state.targetSystem = String((document.getElementById("sales-accounting-export-target") || {}).value || "yayoi_sales");
+  state.dateFrom = String((document.getElementById("sales-accounting-export-date-from") || {}).value || "");
+  state.dateTo = String((document.getElementById("sales-accounting-export-date-to") || {}).value || "");
+  state.includeExported = !!((document.getElementById("sales-accounting-export-include-exported") || {}).checked);
+  return state;
+}
+
+function salesAccountingExportIssueRows(order) {
+  return Array.isArray(order && order.issues) ? order.issues.filter(Boolean) : [];
+}
+
+function salesAccountingExportCanSelect(order) {
+  return !!order && !order.exported_batch_number && salesAccountingExportIssueRows(order).length === 0;
+}
+
+function updateSalesAccountingExportSelection() {
+  var state = ensureSalesAccountingExportState();
+  var selectedOrders = state.orders.filter(function(order) {
+    return state.selectedIds.has(parseInt(order.order_id, 10));
+  });
+  var selectedTotal = selectedOrders.reduce(function(total, order) { return total + Number(order.total_jpy || 0); }, 0);
+  var summary = document.getElementById("sales-accounting-export-selected-summary");
+  var createButton = document.getElementById("sales-accounting-export-create");
+  var checkAll = document.getElementById("sales-accounting-export-check-all");
+  var selectable = state.orders.filter(salesAccountingExportCanSelect);
+  if (summary) summary.textContent = selectedOrders.length + "件選択 / " + customerOrderCurrency(selectedTotal) + " / 上限100件";
+  if (createButton) {
+    createButton.disabled = salesAccountingExportLoading || salesAccountingExportSaving || selectedOrders.length === 0 || selectedOrders.length > 100;
+    createButton.textContent = salesAccountingExportSaving ? "CSV作成中..." : "選択した受注をCSV出力";
+  }
+  if (checkAll) {
+    var selectedSelectable = selectable.filter(function(order) { return state.selectedIds.has(parseInt(order.order_id, 10)); }).length;
+    checkAll.checked = selectable.length > 0 && selectedSelectable === Math.min(selectable.length, 100);
+    checkAll.indeterminate = selectedSelectable > 0 && !checkAll.checked;
+    checkAll.disabled = salesAccountingExportLoading || salesAccountingExportSaving || selectable.length === 0;
+  }
+}
+
+function salesAccountingExportCodeBlockHtml(kind, sourceId, code, name, mapped, maxLength, label) {
+  var key = kind + ":" + sourceId;
+  var disabled = !sourceId || salesAccountingExportSaving || !!salesAccountingExportCodeSavingKey;
+  return "<div class='sales-accounting-export-code-block'><span>" + esc(label) + "</span>" +
+    "<div class='sales-accounting-export-code-row'><input type='text' maxlength='" + esc(maxLength || 33) + "' value='" + esc(code || "") + "' data-sales-accounting-code-input='" + esc(key) + "'><button type='button' data-sales-accounting-code-save='" + esc(key) + "' data-mapping-kind='" + esc(kind) + "' data-source-id='" + esc(sourceId || "") + "' data-external-name='" + esc(name || "") + "'" + (disabled ? " disabled" : "") + ">保存</button></div>" +
+    "<em>" + esc(mapped ? "専用コード登録済み" : "D-CATS既定コード") + " / " + esc(maxLength || "-") + "文字以内</em></div>";
+}
+
+function renderSalesAccountingExportCandidates() {
+  var state = ensureSalesAccountingExportState();
+  var host = document.getElementById("sales-accounting-export-candidate-list");
+  if (!host) return;
+  if (salesAccountingExportLoading) {
+    host.innerHTML = "<div class='sales-accounting-export-candidate-empty'>出力対象を読み込んでいます。</div>";
+    updateSalesAccountingExportSelection();
+    return;
+  }
+  if (!state.hasSearched) {
+    host.innerHTML = "<div class='sales-accounting-export-candidate-empty'>出力先と期間を指定して検索してください。</div>";
+    updateSalesAccountingExportSelection();
+    return;
+  }
+  if (!state.orders.length) {
+    host.innerHTML = "<div class='sales-accounting-export-candidate-empty'>対象期間に出力できる出荷済み受注はありません。</div>";
+    updateSalesAccountingExportSelection();
+    return;
+  }
+  var profile = state.profile || {};
+  host.innerHTML = state.orders.map(function(order) {
+    var orderId = parseInt(order.order_id, 10);
+    var issues = salesAccountingExportIssueRows(order);
+    var selectable = salesAccountingExportCanSelect(order);
+    var items = Array.isArray(order.items) ? order.items : [];
+    var products = items.map(function(item) {
+      return "<div class='sales-accounting-export-product'><strong>" + esc(item.part_number || item.product_name || "-") + " / " + esc(item.product_kind || "-") + "</strong>" +
+        salesAccountingExportCodeBlockHtml("product", item.product_variant_id, item.external_product_code, item.product_name, item.product_code_is_mapped, profile.product_code_max_length, "商品コード") + "</div>";
+    }).join("");
+    return "<div class='sales-accounting-export-order" + (issues.length ? " has-issues" : "") + (order.exported_batch_number ? " exported" : "") + "'>" +
+      "<input type='checkbox' data-sales-accounting-order-check value='" + esc(orderId) + "'" + (state.selectedIds.has(orderId) ? " checked" : "") + (selectable ? "" : " disabled") + " aria-label='出力対象'>" +
+      "<div class='sales-accounting-export-order-meta'><strong>" + esc(order.order_number || ("注文 " + orderId)) + "</strong><span>出荷日 " + esc(order.shipped_on || "-") + "</span><small>" + esc(order.status === "completed" ? "完了" : "出荷済み") + (order.exported_batch_number ? " / " + order.exported_batch_number + "で出力済み" : "") + "</small></div>" +
+      salesAccountingExportCodeBlockHtml("customer", order.customer_id, order.external_customer_code, order.customer_name, order.customer_code_is_mapped, profile.customer_code_max_length, order.customer_name || "得意先コード") +
+      "<div class='sales-accounting-export-product-list'>" + products + "</div>" +
+      "<div class='sales-accounting-export-total'><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong><span>明細 " + esc(items.length) + "件</span></div>" +
+      (issues.length ? "<div class='sales-accounting-export-issues'>" + issues.map(function(issue) { return "<span>" + esc(issue) + "</span>"; }).join("") + "</div>" : "") + "</div>";
+  }).join("");
+  host.querySelectorAll("[data-sales-accounting-order-check]").forEach(function(input) {
+    input.addEventListener("change", function() {
+      var orderId = parseInt(input.value, 10);
+      if (input.checked && state.selectedIds.size >= 100) {
+        input.checked = false;
+        setSalesAccountingExportMessage("1回に出力できる受注は100件までです。", true);
+        return;
+      }
+      if (input.checked) state.selectedIds.add(orderId);
+      else state.selectedIds.delete(orderId);
+      updateSalesAccountingExportSelection();
+    });
+  });
+  host.querySelectorAll("[data-sales-accounting-code-save]").forEach(function(button) {
+    button.addEventListener("click", function() { saveSalesAccountingExportCode(button); });
+  });
+  updateSalesAccountingExportSelection();
+}
+
+function renderSalesAccountingExportHistory() {
+  var state = ensureSalesAccountingExportState();
+  var host = document.getElementById("sales-accounting-export-history-list");
+  if (!host) return;
+  if (salesAccountingExportLoading && !state.batches.length) {
+    host.innerHTML = "<div class='sales-accounting-export-candidate-empty'>出力履歴を読み込んでいます。</div>";
+    return;
+  }
+  if (!state.batches.length) {
+    host.innerHTML = "<div class='sales-accounting-export-candidate-empty'>この出力先の履歴はありません。</div>";
+    return;
+  }
+  host.innerHTML = state.batches.map(function(batch) {
+    return "<div class='sales-accounting-export-history-row'><strong>" + esc(batch.batch_number || "-") + "</strong><span>" + esc(batch.display_name || batch.target_system || "-") + " / " + esc(batch.order_count || 0) + "件 / " + esc(customerOrderCurrency(batch.total_jpy)) + "</span><small>" + esc(customerOrderDateTimeText(batch.created_at)) + "<br>" + esc(batch.file_name || "-") + "</small><button type='button' data-sales-accounting-download='" + esc(batch.batch_id) + "'>同じCSVを再取得</button></div>";
+  }).join("");
+  host.querySelectorAll("[data-sales-accounting-download]").forEach(function(button) {
+    button.addEventListener("click", function() { redownloadSalesAccountingExport(parseInt(button.dataset.salesAccountingDownload, 10)); });
+  });
+}
+
+function renderSalesAccountingExport() {
+  var state = ensureSalesAccountingExportState();
+  syncSalesAccountingExportFilters();
+  renderSalesAccountingExportCandidates();
+  renderSalesAccountingExportHistory();
+  var search = document.getElementById("sales-accounting-export-search");
+  if (search) {
+    search.disabled = salesAccountingExportLoading || salesAccountingExportSaving;
+    search.textContent = salesAccountingExportLoading ? "検索中..." : "対象を検索";
+  }
+  if (state.hasSearched && !salesAccountingExportLoading) {
+    var selectableCount = state.orders.filter(salesAccountingExportCanSelect).length;
+    var issueCount = state.orders.filter(function(order) { return salesAccountingExportIssueRows(order).length > 0; }).length;
+    var profileName = state.profile && state.profile.display_name ? state.profile.display_name : state.targetSystem;
+    setSalesAccountingExportSummary(profileName + " / 対象 " + state.orders.length + "件 / 出力可能 " + selectableCount + "件" + (issueCount ? " / コード確認 " + issueCount + "件" : ""), false);
+  }
+}
+
+async function loadSalesAccountingExportData(options) {
+  if (!canManageSalesOrders() || salesAccountingExportLoading || salesAccountingExportSaving) return;
+  var state = readSalesAccountingExportFilters();
+  if (state.dateFrom && state.dateTo && state.dateFrom > state.dateTo) {
+    setSalesAccountingExportSummary("出荷日の開始・終了を確認してください。", true);
+    return;
+  }
+  salesAccountingExportLoading = true;
+  state.hasSearched = true;
+  state.selectedIds = new Set();
+  if (!options || !options.preserveMessage) setSalesAccountingExportMessage("", false);
+  setSalesAccountingExportSummary("出力対象を確認しています。", false);
+  renderSalesAccountingExport();
+  var results = await Promise.all([
+    sb.rpc("list_sales_accounting_export_candidates", {
+      target_system: state.targetSystem,
+      target_date_from: state.dateFrom || null,
+      target_date_to: state.dateTo || null,
+      include_exported: state.includeExported
+    }),
+    sb.rpc("list_sales_accounting_export_batches", { target_system: state.targetSystem, row_limit: 50 })
+  ]);
+  salesAccountingExportLoading = false;
+  if (results[0].error || results[1].error) {
+    state.orders = [];
+    state.batches = [];
+    setSalesAccountingExportSummary((results[0].error || results[1].error).message || "売上データを読み込めませんでした。", true);
+    renderSalesAccountingExportCandidates();
+    renderSalesAccountingExportHistory();
+    return;
+  }
+  var candidateData = Array.isArray(results[0].data) ? (results[0].data[0] || {}) : (results[0].data || {});
+  var batchData = Array.isArray(results[1].data) ? results[1].data : (results[1].data || []);
+  state.profile = candidateData.profile || null;
+  state.orders = Array.isArray(candidateData.orders) ? candidateData.orders : [];
+  state.batches = Array.isArray(batchData) ? batchData : [];
+  renderSalesAccountingExport();
+}
+
+async function openSalesAccountingExport() {
+  if (!canManageSalesOrders()) return;
+  var overlay = document.getElementById("sales-accounting-export-overlay");
+  if (!overlay) return;
+  ensureSalesAccountingExportState();
+  overlay.classList.add("show");
+  renderSalesAccountingExport();
+  await loadSalesAccountingExportData();
+}
+
+function closeSalesAccountingExport() {
+  if (salesAccountingExportSaving || salesAccountingExportCodeSavingKey) return;
+  var overlay = document.getElementById("sales-accounting-export-overlay");
+  if (overlay) overlay.classList.remove("show");
+}
+
+async function saveSalesAccountingExportCode(button) {
+  if (!canManageSalesOrders() || salesAccountingExportSaving || salesAccountingExportCodeSavingKey || !button) return;
+  var state = ensureSalesAccountingExportState();
+  var key = button.dataset.salesAccountingCodeSave || "";
+  var input = document.querySelector("[data-sales-accounting-code-input='" + key + "']");
+  var code = String(input && input.value || "").trim();
+  if (!code) {
+    setSalesAccountingExportMessage("外部コードを入力してください。", true);
+    if (input) input.focus();
+    return;
+  }
+  salesAccountingExportCodeSavingKey = key;
+  setSalesAccountingExportMessage("外部コードを保存しています。", false);
+  renderSalesAccountingExportCandidates();
+  var result = await sb.rpc("save_sales_accounting_export_code", {
+    target_system: state.targetSystem,
+    mapping_kind: button.dataset.mappingKind,
+    source_id: parseInt(button.dataset.sourceId, 10),
+    external_code: code,
+    external_name: button.dataset.externalName || null
+  });
+  salesAccountingExportCodeSavingKey = "";
+  if (result.error) {
+    setSalesAccountingExportMessage(result.error.message || "外部コードを保存できませんでした。", true);
+    renderSalesAccountingExportCandidates();
+    return;
+  }
+  setSalesAccountingExportMessage("外部コードを保存しました。対象を再確認します。", false);
+  await loadSalesAccountingExportData({ preserveMessage: true });
+}
+
+function downloadSalesAccountingExportFile(data) {
+  if (!data || !data.content_base64) throw new Error("CSVデータがありません。");
+  var binary = window.atob(String(data.content_base64));
+  var bytes = new Uint8Array(binary.length);
+  for (var i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  var blob = new Blob([bytes], { type: "text/csv;charset=shift_jis" });
+  var url = URL.createObjectURL(blob);
+  var link = document.createElement("a");
+  link.href = url;
+  link.download = data.file_name || ("D-CATS_売上データ_" + salesAccountingExportLocalDate() + ".csv");
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+}
+
+async function createSalesAccountingExport() {
+  if (!canManageSalesOrders() || salesAccountingExportLoading || salesAccountingExportSaving) return;
+  var state = ensureSalesAccountingExportState();
+  var orderIds = Array.from(state.selectedIds).filter(function(id) { return !isNaN(id); }).slice(0, 100);
+  if (!orderIds.length) return;
+  salesAccountingExportSaving = true;
+  setSalesAccountingExportMessage("出荷済み状態と金額を再確認してCSVを作成しています。", false);
+  updateSalesAccountingExportSelection();
+  var result = await sb.rpc("create_sales_accounting_export", {
+    target_system: state.targetSystem,
+    target_order_ids: orderIds
+  });
+  salesAccountingExportSaving = false;
+  if (result.error) {
+    setSalesAccountingExportMessage(result.error.message || "売上データを作成できませんでした。", true);
+    updateSalesAccountingExportSelection();
+    return;
+  }
+  var data = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
+  try {
+    downloadSalesAccountingExportFile(data);
+  } catch (error) {
+    setSalesAccountingExportMessage(error.message || "CSVをダウンロードできませんでした。履歴から再取得できます。", true);
+    await loadSalesAccountingExportData({ preserveMessage: true });
+    return;
+  }
+  setSalesAccountingExportMessage((data.display_name || "売上データ") + "を" + (data.order_count || orderIds.length) + "件出力しました。", false);
+  await loadSalesAccountingExportData({ preserveMessage: true });
+}
+
+async function redownloadSalesAccountingExport(batchId) {
+  if (!canManageSalesOrders() || salesAccountingExportSaving || !batchId) return;
+  salesAccountingExportSaving = true;
+  setSalesAccountingExportMessage("作成時のCSVを取得しています。", false);
+  updateSalesAccountingExportSelection();
+  var result = await sb.rpc("get_sales_accounting_export_download", { target_batch_id: batchId });
+  salesAccountingExportSaving = false;
+  if (result.error) {
+    setSalesAccountingExportMessage(result.error.message || "CSVを再取得できませんでした。", true);
+    updateSalesAccountingExportSelection();
+    return;
+  }
+  var data = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
+  try {
+    downloadSalesAccountingExportFile(data);
+    setSalesAccountingExportMessage("作成時と同一のCSVを再取得しました。", false);
+  } catch (error) {
+    setSalesAccountingExportMessage(error.message || "CSVを再取得できませんでした。", true);
+  }
+  updateSalesAccountingExportSelection();
 }
 
 function shippingDocumentStatusValue() {
@@ -42528,6 +42889,39 @@ document.getElementById("sales-order-export-b2").addEventListener("click", expor
 document.getElementById("sales-order-import-b2").addEventListener("click", function() {
   var input = document.getElementById("sales-order-import-b2-file");
   if (input) input.click();
+});
+document.getElementById("sales-order-accounting-export").addEventListener("click", openSalesAccountingExport);
+document.getElementById("sales-accounting-export-search").addEventListener("click", loadSalesAccountingExportData);
+document.getElementById("sales-accounting-export-target").addEventListener("change", function() {
+  var state = readSalesAccountingExportFilters();
+  state.profile = null;
+  state.orders = [];
+  state.batches = [];
+  state.selectedIds = new Set();
+  state.hasSearched = false;
+  setSalesAccountingExportSummary("出力先を変更しました。「対象を検索」を押してください。", false);
+  setSalesAccountingExportMessage("", false);
+  renderSalesAccountingExportCandidates();
+  renderSalesAccountingExportHistory();
+});
+document.getElementById("sales-accounting-export-check-all").addEventListener("change", function() {
+  var state = ensureSalesAccountingExportState();
+  state.selectedIds = new Set();
+  if (this.checked) {
+    state.orders.filter(salesAccountingExportCanSelect).slice(0, 100).forEach(function(order) {
+      state.selectedIds.add(parseInt(order.order_id, 10));
+    });
+    if (state.orders.filter(salesAccountingExportCanSelect).length > 100) {
+      setSalesAccountingExportMessage("出力上限に合わせて先頭100件を選択しました。", false);
+    }
+  }
+  renderSalesAccountingExportCandidates();
+});
+document.getElementById("sales-accounting-export-create").addEventListener("click", createSalesAccountingExport);
+document.getElementById("sales-accounting-export-close").addEventListener("click", closeSalesAccountingExport);
+document.getElementById("sales-accounting-export-cancel").addEventListener("click", closeSalesAccountingExport);
+document.getElementById("sales-accounting-export-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeSalesAccountingExport();
 });
 document.getElementById("sales-order-import-b2-file").addEventListener("change", function() {
   var file = this.files && this.files[0];
