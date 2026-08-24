@@ -5068,7 +5068,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.753";
+var APP_VERSION       = "v1.1.754";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -11298,9 +11298,19 @@ async function acceptCheckedSalesOrders() {
 function salesOrderItemRowsHtml(items) {
   items = Array.isArray(items) ? items : [];
   if (!items.length) return "<div class='sales-order-empty'>明細がありません。</div>";
-  return "<div class='sales-order-item-table'><div class='sales-order-item-head'><span>品番</span><span>区分</span><span>数量</span><span>単価</span><span>明細値引き</span><span>小計</span><span>コア返却</span></div>" + items.map(function(item) {
-    var discount = Math.max(0, parseInt(item.discount_jpy, 10) || 0);
-    return "<div class='sales-order-item-row'><div><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || "-") + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small></div><span>" + esc(customerProductKindLabel(item.product_kind)) + "</span><strong>" + esc(item.quantity || 1) + "</strong><span>" + esc(customerOrderCurrency(item.unit_price_jpy)) + "</span><span class='sales-order-item-discount'>" + esc(discount ? ("-" + customerOrderCurrency(discount)) : "-") + "</span><strong>" + esc(customerOrderCurrency(item.line_total_jpy)) + "</strong><span class='sales-order-core " + (item.core_return_required ? "required" : "none") + "'>" + esc(item.core_return_required ? "必要" : "不要") + "</span></div>";
+  return "<div class='sales-order-item-table'><div class='sales-order-item-head'><span>品番</span><span>区分</span><span>数量</span><span>単価</span><span>小計</span><span>コア返却</span></div>" + items.map(function(item) {
+    return "<div class='sales-order-item-row'><div><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || "-") + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small></div><span>" + esc(customerProductKindLabel(item.product_kind)) + "</span><strong>" + esc(item.quantity || 1) + "</strong><span>" + esc(customerOrderCurrency(item.unit_price_jpy)) + "</span><strong>" + esc(customerOrderCurrency(item.line_total_jpy)) + "</strong><span class='sales-order-core " + (item.core_return_required ? "required" : "none") + "'>" + esc(item.core_return_required ? "必要" : "不要") + "</span></div>";
+  }).join("") + "</div>";
+}
+
+function salesOrderAdjustmentRowsHtml(rows, fallbackAmount) {
+  rows = Array.isArray(rows) ? rows.slice() : [];
+  if (!rows.length && Number(fallbackAmount) > 0) {
+    rows.push({ adjustment_name: "旧受注値引", amount_jpy: fallbackAmount, note: "旧形式で保存された値引き" });
+  }
+  if (!rows.length) return "";
+  return "<div class='sales-order-adjustment-table'><div class='sales-order-adjustment-head'><span>値引・調整</span><span>メモ</span><span>金額</span></div>" + rows.map(function(row) {
+    return "<div class='sales-order-adjustment-row'><strong>" + esc(row.adjustment_name || "値引") + "</strong><span>" + esc(row.note || "-") + "</span><strong>-" + esc(customerOrderCurrency(row.amount_jpy)) + "</strong></div>";
   }).join("") + "</div>";
 }
 
@@ -11319,32 +11329,60 @@ function salesOrderPricingInputValue(value) {
   return Number.isFinite(number) && number >= 0 ? String(Math.floor(number)) : "0";
 }
 
+function salesOrderPricingAdjustmentOptionsHtml(masters, selectedCode) {
+  masters = Array.isArray(masters) ? masters : [];
+  return masters.map(function(master) {
+    var code = String(master.adjustment_code || "");
+    return "<option value='" + esc(code) + "' data-adjustment-scope='" + esc(master.application_scope || "product") + "'" + (code === selectedCode ? " selected" : "") + ">" + esc(master.adjustment_name || code) + "</option>";
+  }).join("");
+}
+
+function salesOrderPricingAdjustmentRowHtml(adjustment, masters) {
+  adjustment = adjustment && typeof adjustment === "object" ? adjustment : {};
+  masters = Array.isArray(masters) ? masters : [];
+  var selectedCode = String(adjustment.adjustment_code || (masters[0] && masters[0].adjustment_code) || "");
+  return "<div class='sales-order-pricing-adjustment-row' data-pricing-adjustment>" +
+    "<label><span>項目</span><select data-pricing-adjustment-code>" + salesOrderPricingAdjustmentOptionsHtml(masters, selectedCode) + "</select></label>" +
+    "<label><span>金額</span><input aria-label='値引・調整額' type='number' inputmode='numeric' min='1' max='100000000' step='1' data-pricing-adjustment-amount value='" + esc(salesOrderPricingInputValue(adjustment.amount_jpy)) + "'></label>" +
+    "<label><span>メモ</span><input aria-label='値引・調整メモ' type='text' maxlength='120' data-pricing-adjustment-note value='" + esc(adjustment.note || "") + "' placeholder='任意'></label>" +
+    "<button type='button' data-pricing-adjustment-remove aria-label='この値引・調整行を削除'>削除</button>" +
+  "</div>";
+}
+
 function salesOrderPricingEditorHtml(order) {
   var items = Array.isArray(order && order.items) ? order.items : [];
+  var masters = Array.isArray(order && order.adjustment_masters) ? order.adjustment_masters : [];
+  var adjustments = Array.isArray(order && order.order_adjustments) ? order.order_adjustments.slice() : [];
+  var hasShippingAdjustment = masters.some(function(master) { return master.application_scope === "shipping"; });
+  if (!adjustments.length && Number(order && order.order_discount_jpy) > 0 && masters.length) {
+    adjustments.push({ adjustment_code: "discount", amount_jpy: order.order_discount_jpy, note: "旧形式から引継ぎ" });
+  }
   var rows = items.map(function(item) {
     var quantity = Math.max(1, parseInt(item.quantity, 10) || 1);
     return "<div class='sales-order-pricing-item' data-sales-order-pricing-item data-item-id='" + esc(item.id) + "' data-quantity='" + esc(quantity) + "'>" +
       "<div class='sales-order-pricing-product'><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || "-") + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number, customerProductKindLabel(item.product_kind)].filter(Boolean).join(" / ") || "-") + "</small></div>" +
       "<div class='sales-order-pricing-quantity'><span class='sales-order-pricing-mobile-label'>数量</span><strong>" + esc(quantity) + "</strong></div>" +
       "<label><span class='sales-order-pricing-mobile-label'>単価</span><input aria-label='単価' type='number' inputmode='numeric' min='0' max='100000000' step='1' data-pricing-unit value='" + esc(salesOrderPricingInputValue(item.unit_price_jpy)) + "'></label>" +
-      "<label><span class='sales-order-pricing-mobile-label'>明細値引き</span><input aria-label='明細値引き' type='number' inputmode='numeric' min='0' max='2000000000' step='1' data-pricing-discount value='" + esc(salesOrderPricingInputValue(item.discount_jpy)) + "'></label>" +
       "<div class='sales-order-pricing-line-total'><span class='sales-order-pricing-mobile-label'>変更後小計</span><strong data-pricing-line-total>" + esc(customerOrderCurrency(item.line_total_jpy)) + "</strong></div>" +
     "</div>";
   }).join("");
-  return "<section class='sales-order-pricing-section sales-order-pricing-product-section'><div class='sales-order-pricing-section-title'><div><span>1</span><h4>商品別の金額</h4></div><p>単価または明細値引きを変更します。</p></div><div class='sales-order-pricing-items'><div class='sales-order-pricing-item-head'><span>商品</span><span>数量</span><span>単価</span><span>明細値引き</span><span>変更後小計</span></div>" + rows + "</div></section>" +
+  var adjustmentRows = adjustments.map(function(adjustment) { return salesOrderPricingAdjustmentRowHtml(adjustment, masters); }).join("");
+  return "<section class='sales-order-pricing-section sales-order-pricing-product-section'><div class='sales-order-pricing-section-title'><div><span>1</span><h4>商品別の金額</h4></div><p>商品マスタの品番は変えず、販売単価だけを修正します。</p></div><div class='sales-order-pricing-items'><div class='sales-order-pricing-item-head'><span>商品</span><span>数量</span><span>単価</span><span>変更後小計</span></div>" + rows + "</div></section>" +
     "<div class='sales-order-pricing-lower-grid'>" +
-      "<section class='sales-order-pricing-section sales-order-pricing-adjustments'><div class='sales-order-pricing-section-title'><div><span>2</span><h4>受注全体の調整</h4></div><p>注文全体の値引きと送料を設定します。</p></div><div class='sales-order-pricing-order-fields'>" +
-        "<label><span>受注全体の値引き</span><input id='sales-order-pricing-order-discount' type='number' inputmode='numeric' min='0' max='2000000000' step='1' value='" + esc(salesOrderPricingInputValue(order.order_discount_jpy)) + "'></label>" +
-        "<label><span>送料</span><div class='sales-order-pricing-shipping-input'><input id='sales-order-pricing-shipping' type='number' inputmode='numeric' min='0' max='100000000' step='1' value='" + esc(salesOrderPricingInputValue(order.shipping_fee_jpy)) + "'><button type='button' id='sales-order-pricing-free-shipping'>送料無料</button></div></label>" +
+      "<section class='sales-order-pricing-section sales-order-pricing-adjustments'><div class='sales-order-pricing-section-title'><div><span>2</span><h4>値引・調整と送料</h4></div><p>値引きは商品と分けたマイナス明細として追加します。</p></div>" +
+        "<div id='sales-order-pricing-adjustment-rows' class='sales-order-pricing-adjustment-rows'>" + adjustmentRows + "</div>" +
+        "<button type='button' id='sales-order-pricing-adjustment-add' class='sales-order-pricing-adjustment-add'" + (masters.length ? "" : " disabled") + ">値引・調整行を追加</button>" +
+        "<div class='sales-order-pricing-order-fields'>" +
+        "<label><span>送料（実費）</span><div class='sales-order-pricing-shipping-input'><input id='sales-order-pricing-shipping' type='number' inputmode='numeric' min='0' max='100000000' step='1' value='" + esc(salesOrderPricingInputValue(order.shipping_fee_jpy)) + "'><button type='button' id='sales-order-pricing-free-shipping'" + (hasShippingAdjustment ? "" : " disabled") + ">送料を全額値引</button></div></label>" +
       "</div></section>" +
-      "<section class='sales-order-pricing-section sales-order-pricing-result'><div class='sales-order-pricing-section-title'><div><span>3</span><h4>変更後の請求額</h4></div><p>入力内容を即時計算します。</p></div><div class='sales-order-pricing-preview' aria-live='polite'><div><span>商品計</span><strong id='sales-order-pricing-preview-subtotal'>-</strong></div><div><span>受注値引き</span><strong id='sales-order-pricing-preview-discount'>-</strong></div><div><span>送料</span><strong id='sales-order-pricing-preview-shipping'>-</strong></div><div><span>消費税</span><strong id='sales-order-pricing-preview-tax'>-</strong></div><div class='total'><span>お支払い合計</span><strong id='sales-order-pricing-preview-total'>-</strong></div></div></section>" +
+      "<section class='sales-order-pricing-section sales-order-pricing-result'><div class='sales-order-pricing-section-title'><div><span>3</span><h4>変更後の請求額</h4></div><p>入力内容を即時計算します。</p></div><div class='sales-order-pricing-preview' aria-live='polite'><div><span>商品計</span><strong id='sales-order-pricing-preview-subtotal'>-</strong></div><div><span>値引・調整</span><strong id='sales-order-pricing-preview-discount'>-</strong></div><div><span>送料</span><strong id='sales-order-pricing-preview-shipping'>-</strong></div><div><span>消費税</span><strong id='sales-order-pricing-preview-tax'>-</strong></div><div class='total'><span>お支払い合計</span><strong id='sales-order-pricing-preview-total'>-</strong></div></div></section>" +
     "</div>" +
     "<label class='sales-order-pricing-reason'><span>変更理由 *</span><textarea id='sales-order-pricing-reason' maxlength='240' rows='3' placeholder='例：得意先との価格調整、送料サービス'></textarea><small>変更前後の金額と理由を履歴へ記録します。</small></label>" +
     "<div id='sales-order-pricing-validation' class='sales-order-pricing-validation' aria-live='polite'></div>";
 }
 
 function readSalesOrderPricingEditor() {
-  var result = { items: [], subtotal: 0, orderDiscount: 0, shipping: 0, tax: 0, total: 0, error: "" };
+  var result = { items: [], adjustments: [], subtotal: 0, productAdjustment: 0, shippingAdjustment: 0, adjustmentTotal: 0, shipping: 0, tax: 0, total: 0, error: "" };
   var rows = Array.from(document.querySelectorAll("#sales-order-pricing-content [data-sales-order-pricing-item]"));
   if (!rows.length) { result.error = "注文明細がありません。"; return result; }
   for (var index = 0; index < rows.length; index += 1) {
@@ -11352,34 +11390,56 @@ function readSalesOrderPricingEditor() {
     var itemId = parseInt(row.dataset.itemId, 10);
     var quantity = parseInt(row.dataset.quantity, 10);
     var unit = Number((row.querySelector("[data-pricing-unit]") || {}).value);
-    var discount = Number((row.querySelector("[data-pricing-discount]") || {}).value);
-    if (!itemId || !Number.isInteger(quantity) || quantity < 1 || !Number.isInteger(unit) || unit < 0 || unit > 100000000 || !Number.isInteger(discount) || discount < 0) {
-      result.error = "単価と明細値引きは0円以上の整数で入力してください。";
+    if (!itemId || !Number.isInteger(quantity) || quantity < 1 || !Number.isInteger(unit) || unit < 0 || unit > 100000000) {
+      result.error = "単価は0円以上の整数で入力してください。";
       return result;
     }
     var base = unit * quantity;
-    if (!Number.isSafeInteger(base) || base > 2000000000 || discount > base) {
-      result.error = "明細値引きは単価×数量以下にしてください。";
+    if (!Number.isSafeInteger(base) || base > 2000000000) {
+      result.error = "商品小計が上限を超えています。";
       return result;
     }
-    var lineTotal = base - discount;
-    result.items.push({ item_id: itemId, unit_price_jpy: unit, discount_jpy: discount, line_total_jpy: lineTotal });
-    result.subtotal += lineTotal;
+    result.items.push({ item_id: itemId, unit_price_jpy: unit, line_total_jpy: base });
+    result.subtotal += base;
   }
-  var orderDiscount = Number((document.getElementById("sales-order-pricing-order-discount") || {}).value);
   var shipping = Number((document.getElementById("sales-order-pricing-shipping") || {}).value);
-  if (!Number.isInteger(orderDiscount) || orderDiscount < 0 || orderDiscount > result.subtotal) {
-    result.error = "受注全体の値引きは商品計以下で入力してください。";
-    return result;
-  }
   if (!Number.isInteger(shipping) || shipping < 0 || shipping > 100000000) {
     result.error = "送料は0円以上の整数で入力してください。";
     return result;
   }
-  result.orderDiscount = orderDiscount;
   result.shipping = shipping;
-  result.tax = Math.floor((result.subtotal - orderDiscount) * 0.10) + Math.floor(shipping * 0.10);
-  result.total = result.subtotal - orderDiscount + shipping + result.tax;
+  var adjustmentRows = Array.from(document.querySelectorAll("#sales-order-pricing-content [data-pricing-adjustment]"));
+  for (var adjustmentIndex = 0; adjustmentIndex < adjustmentRows.length; adjustmentIndex += 1) {
+    var adjustmentRow = adjustmentRows[adjustmentIndex];
+    var select = adjustmentRow.querySelector("[data-pricing-adjustment-code]");
+    var selectedOption = select && select.options ? select.options[select.selectedIndex] : null;
+    var code = String(select && select.value || "");
+    var scope = String(selectedOption && selectedOption.dataset.adjustmentScope || "product");
+    var amount = Number((adjustmentRow.querySelector("[data-pricing-adjustment-amount]") || {}).value);
+    var note = String((adjustmentRow.querySelector("[data-pricing-adjustment-note]") || {}).value || "").trim();
+    if (!code || !Number.isInteger(amount) || amount < 1 || amount > 100000000) {
+      result.error = "値引・調整額は1円以上の整数で入力してください。";
+      return result;
+    }
+    if (note.length > 120) {
+      result.error = "値引・調整行のメモは120文字以内にしてください。";
+      return result;
+    }
+    result.adjustments.push({ adjustment_code: code, amount_jpy: amount, note: note || null });
+    result.adjustmentTotal += amount;
+    if (scope === "shipping") result.shippingAdjustment += amount;
+    else result.productAdjustment += amount;
+  }
+  if (result.productAdjustment > result.subtotal) {
+    result.error = "商品に対する値引・調整額は商品計以下にしてください。";
+    return result;
+  }
+  if (result.shippingAdjustment > shipping) {
+    result.error = "送料値引きは送料以下にしてください。";
+    return result;
+  }
+  result.tax = Math.floor((result.subtotal - result.productAdjustment) * 0.10) + Math.floor((shipping - result.shippingAdjustment) * 0.10);
+  result.total = result.subtotal - result.adjustmentTotal + shipping + result.tax;
   if (!Number.isSafeInteger(result.total) || result.total > 2000000000) result.error = "合計金額が上限を超えています。";
   return result;
 }
@@ -11393,7 +11453,7 @@ function renderSalesOrderPricingPreview() {
   });
   var targets = {
     "sales-order-pricing-preview-subtotal": values.error ? "-" : customerOrderCurrency(values.subtotal),
-    "sales-order-pricing-preview-discount": values.error ? "-" : (values.orderDiscount ? "-" + customerOrderCurrency(values.orderDiscount) : customerOrderCurrency(0)),
+    "sales-order-pricing-preview-discount": values.error ? "-" : (values.adjustmentTotal ? "-" + customerOrderCurrency(values.adjustmentTotal) : customerOrderCurrency(0)),
     "sales-order-pricing-preview-shipping": values.error ? "-" : (values.shipping ? customerOrderCurrency(values.shipping) : "送料無料"),
     "sales-order-pricing-preview-tax": values.error ? "-" : customerOrderCurrency(values.tax),
     "sales-order-pricing-preview-total": values.error ? "-" : customerOrderCurrency(values.total)
@@ -11404,6 +11464,58 @@ function renderSalesOrderPricingPreview() {
   var save = document.getElementById("sales-order-pricing-save");
   if (save) save.disabled = salesOrderPricingSaving || !!values.error;
   return values;
+}
+
+function bindSalesOrderPricingAdjustmentRow(row) {
+  if (!row) return;
+  row.querySelectorAll("input, select").forEach(function(input) {
+    input.addEventListener(input.tagName === "SELECT" ? "change" : "input", renderSalesOrderPricingPreview);
+  });
+  var remove = row.querySelector("[data-pricing-adjustment-remove]");
+  if (remove) remove.addEventListener("click", function() {
+    row.remove();
+    renderSalesOrderPricingPreview();
+  });
+}
+
+function addSalesOrderPricingAdjustmentRow(adjustmentCode, amountValue, noteValue) {
+  var order = salesOrderDetail || {};
+  var masters = Array.isArray(order.adjustment_masters) ? order.adjustment_masters : [];
+  var host = document.getElementById("sales-order-pricing-adjustment-rows");
+  if (!host || !masters.length) return;
+  var selectedMaster = masters.find(function(master) { return master.adjustment_code === adjustmentCode; }) || masters[0];
+  var wrapper = document.createElement("div");
+  wrapper.innerHTML = salesOrderPricingAdjustmentRowHtml({
+    adjustment_code: selectedMaster.adjustment_code,
+    amount_jpy: amountValue == null ? 0 : amountValue,
+    note: noteValue || ""
+  }, masters);
+  var row = wrapper.firstElementChild;
+  if (!row) return;
+  host.appendChild(row);
+  bindSalesOrderPricingAdjustmentRow(row);
+  var amount = row.querySelector("[data-pricing-adjustment-amount]");
+  if (amount && amountValue == null) amount.value = "";
+  if (amount) amount.focus();
+  renderSalesOrderPricingPreview();
+}
+
+function setSalesOrderFullShippingDiscount() {
+  var order = salesOrderDetail || {};
+  var masters = Array.isArray(order.adjustment_masters) ? order.adjustment_masters : [];
+  var shippingMaster = masters.find(function(master) { return master.application_scope === "shipping"; });
+  var shippingInput = document.getElementById("sales-order-pricing-shipping");
+  var shippingAmount = Number(shippingInput && shippingInput.value);
+  if (!shippingMaster || !Number.isInteger(shippingAmount) || shippingAmount < 1) {
+    if (shippingInput) shippingInput.focus();
+    return;
+  }
+  document.querySelectorAll("#sales-order-pricing-content [data-pricing-adjustment]").forEach(function(row) {
+    var select = row.querySelector("[data-pricing-adjustment-code]");
+    var option = select && select.options ? select.options[select.selectedIndex] : null;
+    if (option && option.dataset.adjustmentScope === "shipping") row.remove();
+  });
+  addSalesOrderPricingAdjustmentRow(shippingMaster.adjustment_code, shippingAmount, "送料サービス");
 }
 
 function openSalesOrderPricingEditor() {
@@ -11421,15 +11533,14 @@ function openSalesOrderPricingEditor() {
   var message = document.getElementById("sales-order-pricing-message");
   if (message) { message.textContent = ""; message.className = "sales-order-pricing-message"; }
   overlay.classList.add("show");
-  content.querySelectorAll("input").forEach(function(input) { input.addEventListener("input", renderSalesOrderPricingPreview); });
+  content.querySelectorAll("input:not([data-pricing-adjustment-amount]):not([data-pricing-adjustment-note])").forEach(function(input) { input.addEventListener("input", renderSalesOrderPricingPreview); });
+  content.querySelectorAll("[data-pricing-adjustment]").forEach(bindSalesOrderPricingAdjustmentRow);
+  var addAdjustment = document.getElementById("sales-order-pricing-adjustment-add");
+  if (addAdjustment) addAdjustment.addEventListener("click", function() { addSalesOrderPricingAdjustmentRow(); });
   var reason = document.getElementById("sales-order-pricing-reason");
   if (reason) reason.addEventListener("input", function() { if (message) message.textContent = ""; });
   var freeShipping = document.getElementById("sales-order-pricing-free-shipping");
-  if (freeShipping) freeShipping.addEventListener("click", function() {
-    var shipping = document.getElementById("sales-order-pricing-shipping");
-    if (shipping) { shipping.value = "0"; shipping.focus(); }
-    renderSalesOrderPricingPreview();
-  });
+  if (freeShipping) freeShipping.addEventListener("click", setSalesOrderFullShippingDiscount);
   renderSalesOrderPricingPreview();
   var firstInput = content.querySelector("[data-pricing-unit]");
   if (firstInput) firstInput.focus();
@@ -11462,10 +11573,10 @@ async function saveSalesOrderPricing() {
   if (save) { save.disabled = true; save.textContent = "保存中..."; }
   if (cancel) cancel.disabled = true;
   setSalesOrderPricingMessage("金額を再計算して保存しています。", false);
-  var result = await sb.rpc("adjust_sales_order_pricing", {
+  var result = await sb.rpc("adjust_sales_order_pricing_v2", {
     target_order_id: salesOrderDetail.id,
-    target_items: values.items.map(function(item) { return { item_id: item.item_id, unit_price_jpy: item.unit_price_jpy, discount_jpy: item.discount_jpy }; }),
-    target_order_discount_jpy: values.orderDiscount,
+    target_items: values.items.map(function(item) { return { item_id: item.item_id, unit_price_jpy: item.unit_price_jpy }; }),
+    target_adjustments: values.adjustments,
     target_shipping_fee_jpy: values.shipping,
     target_reason: reason,
     target_expected_version: salesOrderDetail.version == null ? null : salesOrderDetail.version
@@ -11612,14 +11723,15 @@ function renderSalesOrderDetail() {
     ? customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "core_return"), "未登録")
     : "対象外";
   var orderDiscount = Math.max(0, parseInt(order.order_discount_jpy, 10) || 0);
+  var orderAdjustments = Array.isArray(order.order_adjustments) ? order.order_adjustments : [];
   var pricingButton = order.pricing_editable ? "<button type='button' class='sales-order-pricing-open' id='sales-order-pricing-open'>金額を修正</button>" : "";
   var nextActions = actions
     ? "<div class='sales-order-detail-next-actions'><span>次の操作</span><div>" + actions + "</div></div>"
     : "<div class='sales-order-detail-next-actions complete'><span>次の操作</span><strong>現在必要な操作はありません</strong></div>";
   host.innerHTML = "<div class='sales-order-detail-head'><div class='sales-order-detail-identity'><div class='sales-order-detail-meta'><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "</div><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div><div class='sales-order-detail-state'><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span>" + nextActions + "</div></div>" +
-    "<div class='sales-order-detail-summary'><div><span>商品計（明細値引後）</span><strong>" + esc(customerOrderCurrency(order.subtotal_jpy)) + "</strong></div><div class='discount'><span>受注値引き</span><strong>" + esc(orderDiscount ? ("-" + customerOrderCurrency(orderDiscount)) : customerOrderCurrency(0)) + "</strong></div><div><span>送料</span><strong>" + esc(Number(order.shipping_fee_jpy) === 0 ? "送料無料" : customerOrderCurrency(order.shipping_fee_jpy)) + "</strong></div><div><span>消費税</span><strong>" + esc(customerOrderCurrency(order.tax_jpy)) + "</strong></div><div class='total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div></div>" +
+    "<div class='sales-order-detail-summary'><div><span>商品計</span><strong>" + esc(customerOrderCurrency(order.subtotal_jpy)) + "</strong></div><div class='discount'><span>値引・調整</span><strong>" + esc(orderDiscount ? ("-" + customerOrderCurrency(orderDiscount)) : customerOrderCurrency(0)) + "</strong></div><div><span>送料</span><strong>" + esc(Number(order.shipping_fee_jpy) === 0 ? "送料無料" : customerOrderCurrency(order.shipping_fee_jpy)) + "</strong></div><div><span>消費税</span><strong>" + esc(customerOrderCurrency(order.tax_jpy)) + "</strong></div><div class='total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div></div>" +
     "<nav class='sales-order-detail-nav' aria-label='注文詳細の項目'><a href='#sales-order-detail-products'>商品</a><a href='#sales-order-detail-delivery'>お届け先</a><a href='#sales-order-detail-fulfillment'>出荷処理</a><a href='#sales-order-detail-tracking'>送り状</a><a href='#sales-order-detail-history'>履歴</a></nav>" +
-    "<section class='sales-order-detail-section' id='sales-order-detail-products'><div class='sales-order-section-heading'><div><h3>注文商品</h3><p>販売価格、数量、コア返却条件を確認します。</p></div>" + pricingButton + "</div>" + salesOrderItemRowsHtml(order.items) + "</section>" +
+    "<section class='sales-order-detail-section' id='sales-order-detail-products'><div class='sales-order-section-heading'><div><h3>注文商品</h3><p>販売価格、数量、コア返却条件と値引・調整行を確認します。</p></div>" + pricingButton + "</div>" + salesOrderItemRowsHtml(order.items) + salesOrderAdjustmentRowsHtml(orderAdjustments, orderDiscount) + "</section>" +
     "<section class='sales-order-detail-section sales-order-address' id='sales-order-detail-delivery'><div class='sales-order-section-heading'><div><h3>お届け先・運送便</h3><p>送り状へ反映する配送情報です。</p></div></div><div class='sales-order-address-destination'><strong>" + esc(address.company_name || "-") + "　" + esc(address.recipient_name || "-") + "</strong><span>〒" + esc(address.postal_code || "-") + "　" + esc(address.prefecture_name || "") + esc(address.address_line_1 || "-") + " " + esc(address.address_line_2 || "") + "</span><span>TEL " + esc(address.phone_number || "-") + "</span></div><dl><div><dt>商品発送便</dt><dd>" + esc(outboundService) + "</dd></div><div><dt>コア返却便</dt><dd>" + esc(coreReturnService) + "</dd></div><div><dt>お届け希望</dt><dd>" + esc(order.requested_delivery_date || "指定なし") + " / " + esc(order.delivery_time_label || "指定なし") + "</dd></div><div><dt>注文メモ</dt><dd>" + esc(order.customer_note || "-") + "</dd></div></dl></section>" +
     salesOrderDispatchHtml(order) +
     "<section class='sales-order-detail-section sales-order-tracking' id='sales-order-detail-tracking'><div class='sales-order-section-heading'><div><h3>商品発送送り状</h3><p>B2発行済データの取込後に番号を確認・修正できます。</p></div></div><div class='sales-order-tracking-grid outbound-only'><label><span>送り状番号</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>B2出荷予定日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>商品発送番号を登録</button></div><p>コア返却用複写伝票は「出荷帳票発行」で管理します。送り状番号の登録だけでは在庫を減らしません。</p></section>" +

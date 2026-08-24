@@ -46,7 +46,8 @@ if (detail.includes("sales-order-detail-actions")) {
 const pricing = functionSource("salesOrderPricingEditorHtml");
 for (const fragment of [
   "商品別の金額",
-  "受注全体の調整",
+  "値引・調整と送料",
+  "値引・調整行を追加",
   "変更後の請求額",
   "sales-order-pricing-lower-grid",
   "sales-order-pricing-mobile-label"
