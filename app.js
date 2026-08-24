@@ -5068,7 +5068,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.751";
+var APP_VERSION       = "v1.1.752";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -11213,10 +11213,8 @@ function renderSalesOrderList() {
     var checked = salesOrderCheckedIdsState.has(parseInt(order.id, 10));
     return "<div class='sales-order-list-row" + (selected ? " selected" : "") + "' data-sales-order-open='" + esc(order.id) + "'>" +
       "<label class='sales-order-check' aria-label='処理対象'><input type='checkbox' data-sales-order-check value='" + esc(order.id) + "'" + (checked ? " checked" : "") + "></label>" +
-      "<div class='sales-order-list-main'><strong>" + esc(order.order_number || ("注文 " + order.id)) + "</strong><span>" + esc(order.customer_name || "-") + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "<small>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small></div>" +
-      "<div class='sales-order-list-count'><span>明細</span><strong>" + esc(order.item_count == null ? "-" : order.item_count) + "</strong></div>" +
-      "<div class='sales-order-list-total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div>" +
-      "<span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span>" +
+      "<div class='sales-order-list-main'><div class='sales-order-list-identity'><strong>" + esc(order.order_number || ("注文 " + order.id)) + "</strong><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span></div><span class='sales-order-list-customer'>" + esc(order.customer_name || "-") + "</span><div class='sales-order-list-meta'>" + customerOrderSourceBadgeHtml(order.order_source) + "<time>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</time></div></div>" +
+      "<div class='sales-order-list-metrics'><div><span>明細</span><strong>" + esc(order.item_count == null ? "-" : order.item_count) + "</strong></div><div class='sales-order-list-total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div></div>" +
     "</div>";
   }).join("");
   host.querySelectorAll("[data-sales-order-open]").forEach(function(row) {
@@ -11309,11 +11307,11 @@ function salesOrderItemRowsHtml(items) {
 function salesOrderPricingHistoryHtml(rows) {
   rows = Array.isArray(rows) ? rows : [];
   if (!rows.length) return "";
-  return "<section class='sales-order-detail-section sales-order-pricing-history'><h3>金額修正履歴</h3><div>" + rows.map(function(row) {
+  return "<div class='sales-order-pricing-history'><h4>金額修正履歴</h4><div>" + rows.map(function(row) {
     var beforeData = row.before_data && typeof row.before_data === "object" ? row.before_data : {};
     var afterData = row.after_data && typeof row.after_data === "object" ? row.after_data : {};
     return "<div class='sales-order-pricing-history-row'><time>" + esc(customerOrderDateTimeText(row.created_at)) + "</time><strong>" + esc(row.reason || "変更理由なし") + "</strong><span>" + esc(customerOrderCurrency(beforeData.total_jpy)) + " → " + esc(customerOrderCurrency(afterData.total_jpy)) + "</span></div>";
-  }).join("") + "</div></section>";
+  }).join("") + "</div></div>";
 }
 
 function salesOrderPricingInputValue(value) {
@@ -11327,19 +11325,21 @@ function salesOrderPricingEditorHtml(order) {
     var quantity = Math.max(1, parseInt(item.quantity, 10) || 1);
     return "<div class='sales-order-pricing-item' data-sales-order-pricing-item data-item-id='" + esc(item.id) + "' data-quantity='" + esc(quantity) + "'>" +
       "<div class='sales-order-pricing-product'><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || "-") + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number, customerProductKindLabel(item.product_kind)].filter(Boolean).join(" / ") || "-") + "</small></div>" +
-      "<div class='sales-order-pricing-quantity'><span>数量</span><strong>" + esc(quantity) + "</strong></div>" +
-      "<label><span>単価</span><input type='number' inputmode='numeric' min='0' max='100000000' step='1' data-pricing-unit value='" + esc(salesOrderPricingInputValue(item.unit_price_jpy)) + "'></label>" +
-      "<label><span>明細値引き</span><input type='number' inputmode='numeric' min='0' max='2000000000' step='1' data-pricing-discount value='" + esc(salesOrderPricingInputValue(item.discount_jpy)) + "'></label>" +
-      "<div class='sales-order-pricing-line-total'><span>小計</span><strong data-pricing-line-total>" + esc(customerOrderCurrency(item.line_total_jpy)) + "</strong></div>" +
+      "<div class='sales-order-pricing-quantity'><span class='sales-order-pricing-mobile-label'>数量</span><strong>" + esc(quantity) + "</strong></div>" +
+      "<label><span class='sales-order-pricing-mobile-label'>単価</span><input aria-label='単価' type='number' inputmode='numeric' min='0' max='100000000' step='1' data-pricing-unit value='" + esc(salesOrderPricingInputValue(item.unit_price_jpy)) + "'></label>" +
+      "<label><span class='sales-order-pricing-mobile-label'>明細値引き</span><input aria-label='明細値引き' type='number' inputmode='numeric' min='0' max='2000000000' step='1' data-pricing-discount value='" + esc(salesOrderPricingInputValue(item.discount_jpy)) + "'></label>" +
+      "<div class='sales-order-pricing-line-total'><span class='sales-order-pricing-mobile-label'>変更後小計</span><strong data-pricing-line-total>" + esc(customerOrderCurrency(item.line_total_jpy)) + "</strong></div>" +
     "</div>";
   }).join("");
-  return "<div class='sales-order-pricing-items'><div class='sales-order-pricing-item-head'><span>商品</span><span>数量</span><span>単価</span><span>明細値引き</span><span>小計</span></div>" + rows + "</div>" +
-    "<div class='sales-order-pricing-order-fields'>" +
-      "<label><span>受注全体の値引き</span><input id='sales-order-pricing-order-discount' type='number' inputmode='numeric' min='0' max='2000000000' step='1' value='" + esc(salesOrderPricingInputValue(order.order_discount_jpy)) + "'></label>" +
-      "<label><span>送料</span><div class='sales-order-pricing-shipping-input'><input id='sales-order-pricing-shipping' type='number' inputmode='numeric' min='0' max='100000000' step='1' value='" + esc(salesOrderPricingInputValue(order.shipping_fee_jpy)) + "'><button type='button' id='sales-order-pricing-free-shipping'>送料無料</button></div></label>" +
+  return "<section class='sales-order-pricing-section sales-order-pricing-product-section'><div class='sales-order-pricing-section-title'><div><span>1</span><h4>商品別の金額</h4></div><p>単価または明細値引きを変更します。</p></div><div class='sales-order-pricing-items'><div class='sales-order-pricing-item-head'><span>商品</span><span>数量</span><span>単価</span><span>明細値引き</span><span>変更後小計</span></div>" + rows + "</div></section>" +
+    "<div class='sales-order-pricing-lower-grid'>" +
+      "<section class='sales-order-pricing-section sales-order-pricing-adjustments'><div class='sales-order-pricing-section-title'><div><span>2</span><h4>受注全体の調整</h4></div><p>注文全体の値引きと送料を設定します。</p></div><div class='sales-order-pricing-order-fields'>" +
+        "<label><span>受注全体の値引き</span><input id='sales-order-pricing-order-discount' type='number' inputmode='numeric' min='0' max='2000000000' step='1' value='" + esc(salesOrderPricingInputValue(order.order_discount_jpy)) + "'></label>" +
+        "<label><span>送料</span><div class='sales-order-pricing-shipping-input'><input id='sales-order-pricing-shipping' type='number' inputmode='numeric' min='0' max='100000000' step='1' value='" + esc(salesOrderPricingInputValue(order.shipping_fee_jpy)) + "'><button type='button' id='sales-order-pricing-free-shipping'>送料無料</button></div></label>" +
+      "</div></section>" +
+      "<section class='sales-order-pricing-section sales-order-pricing-result'><div class='sales-order-pricing-section-title'><div><span>3</span><h4>変更後の請求額</h4></div><p>入力内容を即時計算します。</p></div><div class='sales-order-pricing-preview' aria-live='polite'><div><span>商品計</span><strong id='sales-order-pricing-preview-subtotal'>-</strong></div><div><span>受注値引き</span><strong id='sales-order-pricing-preview-discount'>-</strong></div><div><span>送料</span><strong id='sales-order-pricing-preview-shipping'>-</strong></div><div><span>消費税</span><strong id='sales-order-pricing-preview-tax'>-</strong></div><div class='total'><span>お支払い合計</span><strong id='sales-order-pricing-preview-total'>-</strong></div></div></section>" +
     "</div>" +
-    "<div class='sales-order-pricing-preview' aria-live='polite'><div><span>商品計（明細値引後）</span><strong id='sales-order-pricing-preview-subtotal'>-</strong></div><div><span>受注値引き</span><strong id='sales-order-pricing-preview-discount'>-</strong></div><div><span>送料</span><strong id='sales-order-pricing-preview-shipping'>-</strong></div><div><span>消費税</span><strong id='sales-order-pricing-preview-tax'>-</strong></div><div class='total'><span>合計</span><strong id='sales-order-pricing-preview-total'>-</strong></div></div>" +
-    "<label class='sales-order-pricing-reason'><span>変更理由 *</span><textarea id='sales-order-pricing-reason' maxlength='240' rows='3' placeholder='例：得意先との価格調整、送料サービス'></textarea><small>変更前後の金額と一緒に履歴へ記録します。</small></label>" +
+    "<label class='sales-order-pricing-reason'><span>変更理由 *</span><textarea id='sales-order-pricing-reason' maxlength='240' rows='3' placeholder='例：得意先との価格調整、送料サービス'></textarea><small>変更前後の金額と理由を履歴へ記録します。</small></label>" +
     "<div id='sales-order-pricing-validation' class='sales-order-pricing-validation' aria-live='polite'></div>";
 }
 
@@ -11579,7 +11579,7 @@ function salesOrderDispatchHtml(order) {
     if (["preparing", "ready"].indexOf(dispatch.status) >= 0 && !b2Issued) controls += "<button type='button' id='sales-order-export-single-b2'>商品発送用B2 CSV発行</button>";
     if (canWork) controls += "<button type='button' class='sales-order-dispatch-primary' id='sales-order-open-serial-warranty'>出荷照合を開く</button>";
   }
-  return "<section class='sales-order-detail-section sales-order-dispatch'>" +
+  return "<section class='sales-order-detail-section sales-order-dispatch' id='sales-order-detail-fulfillment'>" +
     "<div class='sales-order-dispatch-head'><div><h3>出荷指示・現場照合</h3><p>出荷指示書、送り状、製造シリアルを一つの出荷処理として管理します。</p></div>" +
     "<span class='sales-order-dispatch-status " + esc(dispatch ? dispatch.status : "unissued") + "'>" + esc(salesOrderDispatchStatusLabel(dispatch && dispatch.status)) + "</span></div>" +
     (dispatch ? "<div class='sales-order-dispatch-summary'><div><span>出荷指示番号</span><strong>" + esc(dispatch.dispatch_number) + "</strong></div><div><span>リビルト品の照合</span><strong>" + esc(String(assignedQuantity)) + " / " + esc(String(rebuiltQuantity)) + "</strong></div><div><span>商品発送送り状</span><strong>" + esc(order.outbound_tracking_number || "未登録") + "</strong></div><div><span>返送用送り状</span><strong>" + esc(order.core_return_required ? (order.return_tracking_number || "未登録") : "対象外") + "</strong></div></div>" : "<p class='sales-order-dispatch-empty'>受注受付後に出荷指示書を発行してください。スキャナーがない場合も番号入力と候補選択で作業できます。</p>") +
@@ -11613,15 +11613,18 @@ function renderSalesOrderDetail() {
     : "対象外";
   var orderDiscount = Math.max(0, parseInt(order.order_discount_jpy, 10) || 0);
   var pricingButton = order.pricing_editable ? "<button type='button' class='sales-order-pricing-open' id='sales-order-pricing-open'>金額を修正</button>" : "";
-  host.innerHTML = "<div class='sales-order-detail-head'><div><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "<h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span></div>" +
+  var nextActions = actions
+    ? "<div class='sales-order-detail-next-actions'><span>次の操作</span><div>" + actions + "</div></div>"
+    : "<div class='sales-order-detail-next-actions complete'><span>次の操作</span><strong>現在必要な操作はありません</strong></div>";
+  host.innerHTML = "<div class='sales-order-detail-head'><div class='sales-order-detail-identity'><div class='sales-order-detail-meta'><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "</div><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div><div class='sales-order-detail-state'><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span>" + nextActions + "</div></div>" +
     "<div class='sales-order-detail-summary'><div><span>商品計（明細値引後）</span><strong>" + esc(customerOrderCurrency(order.subtotal_jpy)) + "</strong></div><div class='discount'><span>受注値引き</span><strong>" + esc(orderDiscount ? ("-" + customerOrderCurrency(orderDiscount)) : customerOrderCurrency(0)) + "</strong></div><div><span>送料</span><strong>" + esc(Number(order.shipping_fee_jpy) === 0 ? "送料無料" : customerOrderCurrency(order.shipping_fee_jpy)) + "</strong></div><div><span>消費税</span><strong>" + esc(customerOrderCurrency(order.tax_jpy)) + "</strong></div><div class='total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div></div>" +
-    "<section class='sales-order-detail-section'><div class='sales-order-section-heading'><h3>注文明細</h3>" + pricingButton + "</div>" + salesOrderItemRowsHtml(order.items) + "</section>" +
-    salesOrderPricingHistoryHtml(order.pricing_adjustments) +
-    "<section class='sales-order-detail-section sales-order-address'><h3>お届け先・運送便</h3><p><strong>" + esc(address.company_name || "-") + "　" + esc(address.recipient_name || "-") + "</strong><br>〒" + esc(address.postal_code || "-") + "　" + esc(address.prefecture_name || "") + esc(address.address_line_1 || "-") + " " + esc(address.address_line_2 || "") + "<br>TEL " + esc(address.phone_number || "-") + "</p><dl><div><dt>商品発送便</dt><dd>" + esc(outboundService) + "</dd></div><div><dt>コア返却便</dt><dd>" + esc(coreReturnService) + "</dd></div><div><dt>お届け希望</dt><dd>" + esc(order.requested_delivery_date || "指定なし") + " / " + esc(order.delivery_time_label || "指定なし") + "</dd></div><div><dt>注文メモ</dt><dd>" + esc(order.customer_note || "-") + "</dd></div></dl></section>" +
+    "<nav class='sales-order-detail-nav' aria-label='注文詳細の項目'><a href='#sales-order-detail-products'>商品</a><a href='#sales-order-detail-delivery'>お届け先</a><a href='#sales-order-detail-fulfillment'>出荷処理</a><a href='#sales-order-detail-tracking'>送り状</a><a href='#sales-order-detail-history'>履歴</a></nav>" +
+    "<section class='sales-order-detail-section' id='sales-order-detail-products'><div class='sales-order-section-heading'><div><h3>注文商品</h3><p>販売価格、数量、コア返却条件を確認します。</p></div>" + pricingButton + "</div>" + salesOrderItemRowsHtml(order.items) + "</section>" +
+    "<section class='sales-order-detail-section sales-order-address' id='sales-order-detail-delivery'><div class='sales-order-section-heading'><div><h3>お届け先・運送便</h3><p>送り状へ反映する配送情報です。</p></div></div><div class='sales-order-address-destination'><strong>" + esc(address.company_name || "-") + "　" + esc(address.recipient_name || "-") + "</strong><span>〒" + esc(address.postal_code || "-") + "　" + esc(address.prefecture_name || "") + esc(address.address_line_1 || "-") + " " + esc(address.address_line_2 || "") + "</span><span>TEL " + esc(address.phone_number || "-") + "</span></div><dl><div><dt>商品発送便</dt><dd>" + esc(outboundService) + "</dd></div><div><dt>コア返却便</dt><dd>" + esc(coreReturnService) + "</dd></div><div><dt>お届け希望</dt><dd>" + esc(order.requested_delivery_date || "指定なし") + " / " + esc(order.delivery_time_label || "指定なし") + "</dd></div><div><dt>注文メモ</dt><dd>" + esc(order.customer_note || "-") + "</dd></div></dl></section>" +
     salesOrderDispatchHtml(order) +
-    "<section class='sales-order-detail-section sales-order-tracking'><h3>商品発送送り状番号</h3><div class='sales-order-tracking-grid outbound-only'><label><span>送り状番号</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>B2出荷予定日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>商品発送番号を登録</button></div><p>コア返却用複写伝票は「出荷帳票発行」画面で、ヤマト宅急便　着払いまたは佐川急便着払いとして管理します。送り状番号の登録だけでは在庫を減らしません。</p></section>" +
-    "<section class='sales-order-detail-section'><h3>発送履歴</h3>" + salesOrderShipmentHistoryHtml(order.shipment_history) + "</section>" +
-    "<div class='sales-order-detail-actions'>" + actions + "</div><div id='sales-order-detail-message' class='sales-order-detail-message' aria-live='polite'></div>";
+    "<section class='sales-order-detail-section sales-order-tracking' id='sales-order-detail-tracking'><div class='sales-order-section-heading'><div><h3>商品発送送り状</h3><p>B2発行済データの取込後に番号を確認・修正できます。</p></div></div><div class='sales-order-tracking-grid outbound-only'><label><span>送り状番号</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>B2出荷予定日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>商品発送番号を登録</button></div><p>コア返却用複写伝票は「出荷帳票発行」で管理します。送り状番号の登録だけでは在庫を減らしません。</p></section>" +
+    "<section class='sales-order-detail-section sales-order-history' id='sales-order-detail-history'><div class='sales-order-section-heading'><div><h3>処理履歴</h3><p>発送と金額修正の記録を確認できます。</p></div></div><div class='sales-order-history-groups'><div><h4>発送履歴</h4>" + salesOrderShipmentHistoryHtml(order.shipment_history) + "</div><div>" + (salesOrderPricingHistoryHtml(order.pricing_adjustments) || "<div class='sales-order-history-empty'><h4>金額修正履歴</h4><span>履歴はありません。</span></div>") + "</div></div></section>" +
+    "<div id='sales-order-detail-message' class='sales-order-detail-message' aria-live='polite'></div>";
   host.querySelectorAll("[data-sales-order-action]").forEach(function(button) {
     button.addEventListener("click", function() { updateSalesOrderStatus(button.dataset.salesOrderAction); });
   });

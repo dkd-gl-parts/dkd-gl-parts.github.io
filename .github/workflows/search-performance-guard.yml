@@ -28,6 +28,7 @@ on:
       - "scripts/verify-order-fulfillment-documents.js"
       - "scripts/verify-customer-order-batch-accept.js"
       - "scripts/verify-sales-order-dashboard.js"
+      - "scripts/verify-sales-order-detail-usability.js"
       - "scripts/verify-customer-order-in-house-cancel.js"
       - "scripts/verify-sales-order-price-adjustment.js"
       - "scripts/verify-sales-accounting-export.js"
@@ -117,6 +118,8 @@ jobs:
         run: node scripts/verify-customer-order-batch-accept.js
       - name: Verify sales order operations dashboard
         run: node scripts/verify-sales-order-dashboard.js
+      - name: Verify sales order detail usability
+        run: node scripts/verify-sales-order-detail-usability.js
       - name: Verify customer order in-house shipment cancellation
         run: node scripts/verify-customer-order-in-house-cancel.js
       - name: Verify sales order price adjustment
