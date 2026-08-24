@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const vm = require("vm");
 
 const root = path.resolve(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
@@ -33,6 +34,7 @@ for (const id of [
   "shipping-document-check-all",
   "shipping-document-batch-print",
   "shipping-document-batch-message",
+  "shipping-document-batch-default-note",
   "shipping-document-detail",
   "shipping-document-settings-overlay",
   "shipping-document-settings-title",
@@ -71,11 +73,50 @@ for (const fragment of [
   "shippingDocumentDetail = options.order",
   'shippingDocumentOverlayMode = ""'
 ]) requireFragment(enterSource, fragment);
+for (const fragment of [
+  "loadSalesOrderPrintSettings()",
+  "shippingDocumentBatchSelectionDirty",
+  "syncShippingDocumentBatchDefaults"
+]) requireFragment(enterSource, fragment);
 if (enterSource.includes("loadShippingDocumentOrders()")) {
   throw new Error("Shipping document management must wait for an order ID or dispatch scan instead of loading every order on entry");
 }
 if (enterSource.includes("list_sales_order_b2_exports") || enterSource.includes("loadShippingDocumentB2History")) {
   throw new Error("Shipping document management must not load B2 history on entry");
+}
+
+const batchDefaultsSource = sourceBetween("function salesOrderAutoPrintIsEnabled", "async function enterShippingDocumentMgmt");
+for (const fragment of [
+  'input.value === "dispatch" ? !autoPrintEnabled : true',
+  "受付時自動印刷：有効 / 出荷指示書は初期選択から除外",
+  "受付時自動印刷：無効 / 出荷指示書を初期選択に含めます",
+  "受付時自動印刷を確認できないため、出荷指示書を初期選択に含めます"
+]) requireFragment(batchDefaultsSource, fragment);
+
+function evaluateBatchDefaults(autoPrintEnabled, state) {
+  const inputs = [{ value: "dispatch", checked: true }, { value: "warranty", checked: false }];
+  const note = { textContent: "", className: "" };
+  vm.runInNewContext(`${batchDefaultsSource}\nsyncShippingDocumentBatchDefaults(${JSON.stringify(state)});`, {
+    salesOrderPrintSettings: { config: { auto_print_enabled: autoPrintEnabled } },
+    document: {
+      querySelectorAll: () => inputs,
+      getElementById: () => note
+    },
+    updateShippingDocumentBatchControls: () => {}
+  });
+  return { inputs, note };
+}
+const autoDefaults = evaluateBatchDefaults(true, "loaded");
+const manualDefaults = evaluateBatchDefaults(false, "loaded");
+const errorDefaults = evaluateBatchDefaults(true, "error");
+if (autoDefaults.inputs[0].checked || !autoDefaults.inputs[1].checked || !autoDefaults.note.textContent.includes("初期選択から除外")) {
+  throw new Error("Enabled acceptance auto-print must exclude only the dispatch instruction from batch defaults");
+}
+if (!manualDefaults.inputs.every((input) => input.checked) || !manualDefaults.note.textContent.includes("初期選択に含めます")) {
+  throw new Error("Disabled acceptance auto-print must include the dispatch instruction in batch defaults");
+}
+if (!errorDefaults.inputs.every((input) => input.checked) || !errorDefaults.note.textContent.includes("確認できないため")) {
+  throw new Error("Unknown auto-print state must fail safe by including the dispatch instruction");
 }
 
 const lookupSource = sourceBetween("async function lookupShippingDocumentOrder", "async function loadShippingDocumentDetail");
@@ -191,6 +232,7 @@ for (const fragment of [
   ".shipping-document-waybill-form",
   ".shipping-document-waybill-print-row",
   ".shipping-document-batch-panel",
+  ".shipping-document-batch-default-note",
   ".shipping-document-row-check",
   ".shipping-document-print-actions",
   ".shipping-document-required-list",
@@ -213,11 +255,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.747"',
-  'styles.css?v=1.1.747',
-  'app.js?v=1.1.747'
+  'content="v1.1.748"',
+  'styles.css?v=1.1.748',
+  'app.js?v=1.1.748'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.747"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.748"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");

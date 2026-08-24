@@ -5068,7 +5068,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.747";
+var APP_VERSION       = "v1.1.748";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5373,6 +5373,7 @@ var shippingDocumentListSeq = 0;
 var shippingDocumentDetailSeq = 0;
 var shippingDocumentLookupSeq = 0;
 var shippingDocumentSaving = false;
+var shippingDocumentBatchSelectionDirty = false;
 var customerManagedUsers = [];
 var customerManagedUsersRequestSeq = 0;
 var CUSTOMER_CATALOG_RESULT_LIMIT = 60;
@@ -7397,6 +7398,7 @@ async function doLogout() {
   shippingDocumentDetailSeq += 1;
   shippingDocumentLookupSeq += 1;
   shippingDocumentSaving = false;
+  shippingDocumentBatchSelectionDirty = false;
   var shippingSettingsOverlay = document.getElementById("shipping-document-settings-overlay");
   if (shippingSettingsOverlay) shippingSettingsOverlay.classList.remove("show");
   customerManagedUsers = [];
@@ -10014,6 +10016,31 @@ function shippingDocumentOrderIsVisible(order) {
   return ["accepted", "shipping_ready", "shipped", "completed"].indexOf(status) >= 0;
 }
 
+function salesOrderAutoPrintIsEnabled() {
+  var settings = salesOrderPrintSettings || {};
+  var config = settings.config || {};
+  return !!config.auto_print_enabled;
+}
+
+function syncShippingDocumentBatchDefaults(printSettingsState) {
+  var autoPrintEnabled = printSettingsState === "loaded" && salesOrderAutoPrintIsEnabled();
+  document.querySelectorAll("[data-shipping-document-batch-type]").forEach(function(input) {
+    input.checked = input.value === "dispatch" ? !autoPrintEnabled : true;
+  });
+  var note = document.getElementById("shipping-document-batch-default-note");
+  if (note) {
+    note.textContent = autoPrintEnabled
+      ? "受付時自動印刷：有効 / 出荷指示書は初期選択から除外"
+      : printSettingsState === "loaded"
+        ? "受付時自動印刷：無効 / 出荷指示書を初期選択に含めます"
+        : printSettingsState === "error"
+          ? "受付時自動印刷を確認できないため、出荷指示書を初期選択に含めます"
+          : "受付時自動印刷を確認中 / 出荷指示書を初期選択に含めます";
+    note.className = "shipping-document-batch-default-note " + (autoPrintEnabled ? "auto" : printSettingsState === "error" ? "error" : "manual");
+  }
+  updateShippingDocumentBatchControls();
+}
+
 async function enterShippingDocumentMgmt(options) {
   if (!canManageSalesOrders()) {
     showPermissionDenied("open_shipping_document_management", "customer_orders");
@@ -10027,6 +10054,7 @@ async function enterShippingDocumentMgmt(options) {
   shippingDocumentDetail = null;
   shippingDocumentOverlayMode = "";
   shippingDocumentSaving = false;
+  shippingDocumentBatchSelectionDirty = false;
   var settingsOverlay = document.getElementById("shipping-document-settings-overlay");
   if (settingsOverlay) settingsOverlay.classList.remove("show");
   showScreen("shipping-document-mgmt");
@@ -10037,6 +10065,7 @@ async function enterShippingDocumentMgmt(options) {
   if (input) input.value = options.order ? (options.order.order_number || String(options.order.id || "")) : "";
   if (statusSelect) statusSelect.value = options.order ? "all" : "active";
   if (stateSelect) stateSelect.value = options.order ? "all" : "unprinted";
+  syncShippingDocumentBatchDefaults(salesOrderPrintSettings ? "loaded" : "loading");
   setShippingDocumentLookupMessage("", false);
   if (options.order) {
     shippingDocumentRows = [options.order];
@@ -10044,6 +10073,9 @@ async function enterShippingDocumentMgmt(options) {
     shippingDocumentDetail = options.order;
   }
   renderShippingDocumentList();
+  renderShippingDocumentDetail();
+  var printSettingsLoaded = await loadSalesOrderPrintSettings();
+  if (!shippingDocumentBatchSelectionDirty) syncShippingDocumentBatchDefaults(printSettingsLoaded ? "loaded" : "error");
   renderShippingDocumentDetail();
   if (input) input.focus();
 }
@@ -10314,8 +10346,9 @@ function shippingDocumentOrderB2HistoryHtml(order) {
 }
 
 function shippingDocumentDefaultStateHtml() {
+  var dispatchStandard = salesOrderAutoPrintIsEnabled() ? "A4 / 受付時に自動発行" : "A4 / 出荷帳票発行で印刷";
   var rows = [
-    { name: "出荷指示書", standard: "A4 / 受付時に自動発行", condition: "受付後に再印刷・PDF保存可" },
+    { name: "出荷指示書", standard: dispatchStandard, condition: "受付後に再印刷・PDF保存可" },
     { name: "商品発送送り状", standard: "B2クラウド / ヤマト宅急便 元払い", condition: "注文ごとに作成方法を変更可" },
     { name: "保証書", standard: "A5 / 注文単位", condition: "商品・製造シリアルを掲載" },
     { name: "コア返却シート", standard: "A5 / コア返却必要時", condition: "返却不要の注文は対象外" },
@@ -10376,12 +10409,13 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var returnCanPrint = !!(ready && returnMethod === "dot_matrix" && waybill.id && waybill.tracking_number && !returnPrintBusy && !shippingDocumentSaving);
   var b2Issued = Array.isArray(order.b2_exports) && order.b2_exports.length > 0;
   var canCreateB2 = ["accepted", "shipping_ready", "shipped"].indexOf(order.status) >= 0 && outboundMethod === "b2_cloud";
+  var dispatchStandard = salesOrderAutoPrintIsEnabled() ? "A4 / 受付時に自動発行" : "A4 / 出荷帳票発行で印刷";
   var reason = !dispatch ? "出荷指示書が未発行です。"
     : dispatch.status !== "shipped" ? "商品と製造シリアルの照合を完了してください。"
       : !order.outbound_tracking_number ? "B2発行済データを取り込んでください。" : "";
   var rows = [
     {
-      key: "dispatch", name: "出荷指示書", standard: "A4 / 受付時に自動発行",
+      key: "dispatch", name: "出荷指示書", standard: dispatchStandard,
       state: dispatchJob ? salesOrderPrintJobStatusLabel(dispatchJob.status) : (dispatch ? "発行済み" : "未発行"), ready: !!dispatch,
       actions: "<button type='button' data-shipping-document-queue='dispatch'" + (dispatch ? "" : " disabled") + ">端末印刷</button><button type='button' data-shipping-document-print='dispatch'" + (dispatch ? "" : " disabled") + ">表示・PDF</button>"
     },
@@ -42183,7 +42217,10 @@ document.getElementById("shipping-document-check-all").addEventListener("change"
   renderShippingDocumentList();
 });
 document.querySelectorAll("[data-shipping-document-batch-type]").forEach(function(input) {
-  input.addEventListener("change", updateShippingDocumentBatchControls);
+  input.addEventListener("change", function() {
+    shippingDocumentBatchSelectionDirty = true;
+    updateShippingDocumentBatchControls();
+  });
 });
 document.getElementById("shipping-document-batch-print").addEventListener("click", queueSelectedShippingDocuments);
 document.getElementById("shipping-document-settings-close").addEventListener("click", closeShippingDocumentSettings);
