@@ -5068,7 +5068,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.754";
+var APP_VERSION       = "v1.1.756";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -18354,7 +18354,7 @@ async function writeLog(operation, tableName, targetId, targetDesc, beforeData, 
 var partsMgmtData = [];
 var partFormMode  = "add"; // "add" or "edit"
 var partFormSource = "parts"; // "parts" or "core_products"
-var coreProductFormContext = "sales"; // "sales" or "production"
+var coreProductFormContext = "sales"; // "sales", "production", or "management"
 
 async function enterPartsMgmt() {
   if (!canViewManagementScreen()) { alert(t("err_perm")); return; }
@@ -18419,6 +18419,21 @@ async function loadPartsMgmt() {
   }
   var r = await query;
   partsMgmtData = r.data || [];
+
+  if (q && /^\d+$/.test(q)) {
+    var coreId = parseInt(q, 10);
+    var coreResult = await sb.from("core_products")
+      .select(CORE_PRODUCT_FAST_SELECT)
+      .eq("dkd_shohin_id", coreId)
+      .maybeSingle();
+    if (!coreResult.error && coreResult.data) {
+      var coreProduct = normalizeCoreProductFastRows([coreResult.data])[0];
+      coreProduct._coreManaged = true;
+      partsMgmtData = [coreProduct].concat(partsMgmtData.filter(function(row) {
+        return parseInt(row.dkd_shohin_id || row.shohin_cd, 10) !== coreId;
+      }));
+    }
+  }
   renderPartsMgmt();
 }
 
@@ -18437,7 +18452,9 @@ function renderPartsMgmt() {
     html += "<td><div class='mgmt-sub'>" + esc(p.manufacturer || "-") + "</div></td>";
     html += "<td><div class='mgmt-sub'>" + tCat(p.category) + "</div></td>";
     html += "<td><div class='mgmt-actions'>";
-    if (!p._coreLinkedOnly) {
+    if (p._coreManaged) {
+      html += "<button class='btn-sm-edit' data-core-pid='" + p.dkd_shohin_id + "'>" + t("btn_edit") + "</button>";
+    } else if (!p._coreLinkedOnly) {
       html += "<button class='btn-sm-edit' data-pid='" + p.id + "'>" + t("btn_edit") + "</button>";
       html += "<button class='btn-sm-del' data-pdel='" + p.id + "'>" + t("btn_delete") + "</button>";
     }
@@ -18447,12 +18464,20 @@ function renderPartsMgmt() {
   html += "</table>";
   list.innerHTML = html;
   if (!canEdit()) {
-    list.querySelectorAll("[data-pid], [data-pdel]").forEach(function(btn) { btn.remove(); });
+    list.querySelectorAll("[data-core-pid], [data-pid], [data-pdel]").forEach(function(btn) { btn.remove(); });
     return;
   }
 
+  list.querySelectorAll("[data-core-pid]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var product = partsMgmtData.find(function(row) {
+        return parseInt(row.dkd_shohin_id, 10) === parseInt(btn.dataset.corePid, 10);
+      });
+      if (product) openCoreProductForm("edit", product, "management");
+    });
+  });
   list.querySelectorAll(".btn-sm-edit").forEach(function(btn) {
-    btn.addEventListener("click", function() { openPartForm("edit", parseInt(btn.dataset.pid,10)); });
+    if (btn.dataset.pid) btn.addEventListener("click", function() { openPartForm("edit", parseInt(btn.dataset.pid,10)); });
   });
   list.querySelectorAll(".btn-sm-del").forEach(function(btn) {
     btn.addEventListener("click", function() { deletePart(parseInt(btn.dataset.pdel,10)); });
@@ -26037,7 +26062,9 @@ async function openCoreProductForm(mode, product, context) {
   if (mode === "edit" && formProduct) currentProduct = formProduct;
   partFormSource = "core_products";
   partFormMode = mode;
-  coreProductFormContext = context === "production" ? "production" : "sales";
+  coreProductFormContext = context === "production"
+    ? "production"
+    : (context === "management" ? "management" : "sales");
   document.getElementById("part-form-error").textContent = "";
   document.getElementById("part-form-title").textContent = mode === "add" ? t("btn_add_part") : t("btn_edit_part");
   setCoreProductFormFields(formProduct);
@@ -26065,6 +26092,11 @@ async function openCoreProductAddFromSearch() {
 
 async function openCoreProductAddFromProduction() {
   await openCoreProductForm("add", currentProductionRow || null, "production");
+  document.getElementById("pf-shohin-cd").value = "";
+}
+
+async function openCoreProductAddFromManagement() {
+  await openCoreProductForm("add", null, "management");
   document.getElementById("pf-shohin-cd").value = "";
 }
 
@@ -26204,6 +26236,10 @@ async function saveCoreProductForm() {
       return parseInt(productDkdId(row), 10) !== parseInt(dkd, 10);
     });
     await openProductionProductByDkdId(dkd, { syncSearch: addingProduct });
+  } else if (formContext === "management") {
+    var managementSearch = document.getElementById("parts-mgmt-search");
+    if (managementSearch) managementSearch.value = String(dkd);
+    await loadPartsMgmt();
   } else {
     await runProductSearch();
   }
@@ -43223,7 +43259,7 @@ document.getElementById("btn-back-rakuten-bulk").addEventListener("click", retur
 document.getElementById("btn-back-api-settings").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-rakuten-price-list").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-logs").addEventListener("click", returnToMenuFresh);
-document.getElementById("btn-add-part").addEventListener("click", function(){ openPartForm("add"); });
+document.getElementById("btn-add-part").addEventListener("click", openCoreProductAddFromManagement);
 document.getElementById("btn-part-form-cancel").addEventListener("click", function(){ document.getElementById("part-form-overlay").classList.remove("show"); });
 document.getElementById("btn-part-form-save").addEventListener("click", savePartForm);
 document.getElementById("pf-core-policy-kind").addEventListener("change", function() {

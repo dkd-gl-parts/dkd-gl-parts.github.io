@@ -45,6 +45,7 @@ on:
       - "scripts/verify-core-return-policy.js"
       - "scripts/verify-sales-detail-workspace.js"
       - "scripts/verify-product-shipping-estimate.js"
+      - "scripts/verify-product-management-auto-code.js"
       - "scripts/verify-finished-product-shipments.js"
       - "scripts/verify-customer-order-compatible-serial-dispatch.js"
       - "scripts/verify-production-image-thumbnails-by-kind.js"
@@ -144,6 +145,8 @@ jobs:
         run: node scripts/verify-sales-detail-workspace.js
       - name: Verify product shipping estimate
         run: node scripts/verify-product-shipping-estimate.js
+      - name: Verify product management automatic product code
+        run: node scripts/verify-product-management-auto-code.js
       - name: Verify finished-product shipment layout and workflow
         run: node scripts/verify-finished-product-shipments.js
       - name: Verify compatible-product serial dispatch
