@@ -753,7 +753,7 @@
     elements["product-3d-viewer-loading"].hidden = false;
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.758");
+      var module = await import("./product-3d-viewer.js?v=1.1.759");
       var createdViewer = await module.createProduct3DViewer({
         host: elements["product-3d-viewer-stage"],
         url: signed.data.signedUrl,
