@@ -5134,7 +5134,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.758";
+var APP_VERSION       = "v1.1.759";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -14816,7 +14816,7 @@ function renderProductionStampPairsHtml(rows) {
     "</div>";
   }).join("");
   return "<div class='production-stamp-detail'>" +
-    "<div class='production-stamp-detail-head'><span>" + esc(t("stamp_pair_section")) + "</span><div><strong>" + esc(tf("stamp_pair_total", { n: rows.length })) + "</strong><em>" + esc(t("stamp_pair_confirm_required")) + "</em></div></div>" +
+    "<div class='production-stamp-detail-head'><span>" + esc(t("stamp_pair_section")) + "</span></div>" +
     "<div class='production-stamp-pair-grid'>" + items + "</div>" +
   "</div>";
 }

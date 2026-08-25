@@ -46,6 +46,18 @@ const stampSearch = sourceBetween(app, "async function fetchProductionStampPairM
 const detail = sourceBetween(app, "async function renderProductionDetail", "async function loadProductionDetailData");
 requireFragment(detail, "renderProductionStampPairsHtml(detail.stampPairs)", "manufacturing detail stamp display");
 
+const detailStampPairs = sourceBetween(app, "function renderProductionStampPairsHtml", "function renderProductionCorePolicies");
+if (detailStampPairs.includes("stamp_pair_total") || detailStampPairs.includes("stamp_pair_confirm_required")) {
+  throw new Error("manufacturing detail must show only the F/R pair cards without count or confirmation labels");
+}
+
+const specSectionIndex = productForm.indexOf('aria-labelledby="product-form-spec-title"');
+const corePolicyIndex = productForm.indexOf('id="pf-core-policy-fields"');
+const shippingFieldsIndex = productForm.indexOf('id="pf-shipping-fields"');
+if (!(specSectionIndex >= 0 && corePolicyIndex > specSectionIndex && shippingFieldsIndex > corePolicyIndex)) {
+  throw new Error("core return policy must sit in the right column between nominal output and shipping fields");
+}
+
 const detailLoad = sourceBetween(app, "async function loadProductionDetailData", "function renderProductionCoreEntries");
 requireFragment(detailLoad, 'sb.from("core_product_stamp_pairs")', "manufacturing detail stamp query");
 
@@ -69,7 +81,9 @@ const pairForm = sourceBetween(app, "async function fetchCoreProductStampPairs",
   ".production-stamp-pair-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; max-height: 157px; overflow-y: auto;",
   ".production-stamp-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); min-height: 34px; overflow: hidden; border: 1px solid #cfd9e6; border-left: 3px solid #4f8fea;",
   ".production-stamp-pair-grid { grid-template-columns: 1fr; max-height: 157px; }",
-  ".product-form-stamp-pair-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 32px; gap: 8px; align-items: end; border: 1px solid #d5dfeb;"
+  ".product-form-stamp-pair-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 32px; gap: 8px; align-items: end; border: 1px solid #d5dfeb;",
+  ".product-form-header p,",
+  ".product-form-section-head p { display: none; }"
 ].forEach((fragment) => requireFragment(css, fragment, "stamp-pair responsive layout"));
 
 if (sourceBetween(app, "function renderPanelStatic", "async function loadImages").includes("renderProductionStampPairsHtml")) {
