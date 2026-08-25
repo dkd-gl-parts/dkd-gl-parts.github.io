@@ -707,6 +707,23 @@ var TRANSLATIONS = {
     sales_copy_production_images_failed: "製造画像のコピーに失敗しました",
     image_kind_target: "登録・編集する区分",
     image_edit_title: "画像編集",
+    product_3d_photos: "写真",
+    product_3d_model: "3Dモデル",
+    product_3d_create: "3Dモデルを作成",
+    product_3d_camera_ready: "カメラを開始して商品を枠へ合わせます",
+    product_3d_start_camera: "カメラを開始",
+    product_3d_snapshot: "スナップショット",
+    product_3d_video_supplement: "動画で補完",
+    product_3d_bottom_mode: "反転して底面",
+    product_3d_video_retention: "動画自体は保存せず、不足方向の鮮明なフレームだけを保存します。",
+    product_3d_coverage: "撮影方向",
+    product_3d_existing_analysis: "保存済み画像の解析",
+    product_3d_quality: "品質チェック",
+    product_3d_submit: "3D生成を依頼",
+    product_3d_reset: "リセット",
+    product_3d_auto_rotate: "自動回転",
+    product_3d_fullscreen: "全画面",
+    product_3d_controls_hint: "ドラッグ: 回転 / ホイール・ピンチ: 拡大 / 右ドラッグ・2本指: 移動",
     image_edit_help: "画像ごとに区分を変更できます。保存すると、選択中の画面で該当区分に表示されます。",
     image_edit_filter_kind: "表示区分",
     image_edit_filter_all: "すべて",
@@ -2381,6 +2398,23 @@ var TRANSLATIONS = {
     sales_copy_production_images_failed: "Failed to copy production images",
     image_kind_target: "Target Kind",
     image_edit_title: "Edit Images",
+    product_3d_photos: "Photos",
+    product_3d_model: "3D Model",
+    product_3d_create: "Create 3D Model",
+    product_3d_camera_ready: "Start the camera and align the product with the guide",
+    product_3d_start_camera: "Start Camera",
+    product_3d_snapshot: "Snapshot",
+    product_3d_video_supplement: "Fill gaps with video",
+    product_3d_bottom_mode: "Flip for bottom",
+    product_3d_video_retention: "The video is not stored. Only sharp frames covering missing directions are saved.",
+    product_3d_coverage: "Capture directions",
+    product_3d_existing_analysis: "Saved image analysis",
+    product_3d_quality: "Quality check",
+    product_3d_submit: "Request 3D generation",
+    product_3d_reset: "Reset",
+    product_3d_auto_rotate: "Auto rotate",
+    product_3d_fullscreen: "Fullscreen",
+    product_3d_controls_hint: "Drag: rotate / wheel or pinch: zoom / right drag or two fingers: pan",
     image_edit_help: "Change product kind for each image. After saving, it appears under that kind in this screen.",
     image_edit_filter_kind: "Filter Kind",
     image_edit_filter_all: "All",
@@ -4062,6 +4096,23 @@ var TRANSLATIONS = {
     sales_copy_production_images_failed: "生产图片复制失败",
     image_kind_target: "登记・编辑区分",
     image_edit_title: "图片编辑",
+    product_3d_photos: "照片",
+    product_3d_model: "3D模型",
+    product_3d_create: "创建3D模型",
+    product_3d_camera_ready: "启动相机并将商品对准轮廓框",
+    product_3d_start_camera: "启动相机",
+    product_3d_snapshot: "快照",
+    product_3d_video_supplement: "用视频补充",
+    product_3d_bottom_mode: "翻转拍摄底面",
+    product_3d_video_retention: "不保存视频本身，仅保存缺失方向中清晰的帧。",
+    product_3d_coverage: "拍摄方向",
+    product_3d_existing_analysis: "已保存图片分析",
+    product_3d_quality: "质量检查",
+    product_3d_submit: "请求生成3D",
+    product_3d_reset: "重置",
+    product_3d_auto_rotate: "自动旋转",
+    product_3d_fullscreen: "全屏",
+    product_3d_controls_hint: "拖动：旋转 / 滚轮或捏合：缩放 / 右键拖动或双指：平移",
     image_edit_help: "可以按图片更改区分。保存后会显示在当前画面的对应区分。",
     image_edit_filter_kind: "显示区分",
     image_edit_filter_all: "全部",
@@ -8334,7 +8385,11 @@ function renderCustomerCatalogDetailBase(product) {
   var spec = customerCatalogSpecText(product);
   if (spec) facts += customerCatalogFact(t("spec_section"), spec);
   var imageHtml = settings.show_product_images
-    ? "<div class='customer-catalog-images' id='customer-catalog-images'><div class='customer-catalog-image-main'>" + esc(t("img_loading")) + "</div></div>"
+    ? "<div class='customer-product-media'><div class='product-media-switch customer-product-media-switch' role='tablist' aria-label='商品メディア'>" +
+        "<button class='product-media-switch-btn active' type='button' role='tab' aria-selected='true' data-product-media='photos' data-product-media-context='customer'>写真</button>" +
+        "<button class='product-media-switch-btn' type='button' role='tab' aria-selected='false' data-product-media='model' data-product-media-context='customer'>3Dモデル</button></div>" +
+        "<div class='customer-catalog-images' id='customer-catalog-images' data-product-media-pane='photos' data-product-media-context='customer'><div class='customer-catalog-image-main'>" + esc(t("img_loading")) + "</div></div>" +
+        "<div class='product-3d-detail-pane' id='customer-product-3d-pane' data-product-media-pane='model' data-product-media-context='customer' hidden><div class='product-3d-model-list' id='customer-product-3d-list'></div></div></div>"
     : "";
   var availabilityTitle = settings.show_sales_price ? t("customer_catalog_stock_price_title") : t("product_kind_stock");
   var availabilityHtml = "<section class='customer-catalog-availability'><h3>" + esc(availabilityTitle) + "</h3><div class='customer-catalog-availability-grid' id='customer-catalog-availability'><div class='customer-catalog-loading'>" + esc(t("loading")) + "</div></div></section>";
@@ -14043,7 +14098,7 @@ function renderProductionList() {
       productKindLabel("rebuilt") + " " + productionProductKindStockQty(row, "rebuilt"),
       productKindLabel("aftermarket_new") + " " + productionProductKindStockQty(row, "aftermarket_new")
     ].join(" / ");
-    return "<div class='production-card" + selected + "' data-production-index='" + i + "'>" +
+    return "<div class='production-card" + selected + "' data-production-index='" + i + "' data-dkd-id='" + esc(productDkdId(row)) + "'>" +
       "<div class='production-card-top'>" + rankHtml + renderProductionComponentCountBadges(row) + "</div>" +
       "<div class='production-number'>" + esc(title) + "</div>" +
       "<div class='production-sub-number'>純正 " + esc(subGenuinePartNumber) + "</div>" +
@@ -14894,7 +14949,10 @@ async function renderProductionDetail(row) {
   html += "</div>";
   html += renderProductionCorePolicies(detail.productVariants);
   html += "</section>";
-  html += "<section class='production-section production-image-panel'><div class='production-section-heading'><h3 class='production-image-title'>" + esc(t("production_images_section")) + "</h3></div><div class='production-image-groups' id='production-image-groups'>" + productionImageKinds().map(productionImageGroupShellHtml).join("") + "</div>";
+  html += "<section class='production-section production-image-panel'><div class='production-section-heading'><h3 class='production-image-title'>" + esc(t("production_images_section")) + "</h3></div>";
+  html += "<div class='product-media-switch' role='tablist' aria-label='商品メディア'><button class='product-media-switch-btn active' type='button' role='tab' aria-selected='true' data-product-media='photos' data-product-media-context='production'>写真</button><button class='product-media-switch-btn' type='button' role='tab' aria-selected='false' data-product-media='model' data-product-media-context='production'>3Dモデル</button></div>";
+  html += "<div data-product-media-pane='photos' data-product-media-context='production'><div class='production-image-groups' id='production-image-groups'>" + productionImageKinds().map(productionImageGroupShellHtml).join("") + "</div></div>";
+  html += "<div class='product-3d-detail-pane' data-product-media-pane='model' data-product-media-context='production' hidden><div class='product-3d-model-list' id='production-product-3d-list'></div></div>";
   html += "</section>";
   html += "</div>";
   html += "</div>";
@@ -29997,7 +30055,7 @@ function render() {
     var sel   = (currentProduct && currentProduct.id===p.id) ? " selected" : "";
     var cardPartNumber = p.genuine_part_number || p.manufacturer_part_number || "-";
     var cardLabel = [cardPartNumber, productCategoryLabel(p)].filter(Boolean).join(" / ");
-    html += "<div class='card"+sel+"' role='button' tabindex='0' aria-label='"+esc(cardLabel)+"' data-id='"+p.id+"' data-result-index='"+idx+"'><div class='card-top'>";
+    html += "<div class='card"+sel+"' role='button' tabindex='0' aria-label='"+esc(cardLabel)+"' data-id='"+p.id+"' data-dkd-id='"+esc(productDkdId(p))+"' data-result-index='"+idx+"'><div class='card-top'>";
     html += "<div class='card-media'>";
     html += "<div class='card-thumb card-thumb-icon " + (cnt > 0 ? "has-image" : "no-image") + "'><span class='icon-image' aria-hidden='true'></span><span class='card-thumb-icon-label'>" + esc(cnt > 0 ? t("image_has") : t("image_none_short")) + "</span></div>";
     if (hasCatalogSpec) html += "<div class='card-media-catalog'><span class='badge-catalog'>" + esc(t("product_kind_catalog_spec")) + "</span></div>";

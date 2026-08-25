@@ -12,6 +12,8 @@ const files = [
   "index.html",
   "label-print-window.js",
   "manufacturing-ranking-report.js",
+  "product-3d.js",
+  "product-3d-viewer.js",
   "print.css",
   "ranking-report-print-landscape.css",
   "ranking-report-print-portrait.css",

@@ -9,6 +9,10 @@ on:
       - "index.html"
       - "app.js"
       - "styles.css"
+      - "product-3d.js"
+      - "product-3d-viewer.js"
+      - "vendor/three/**"
+      - "scripts/verify-product-3d-workflow.js"
       - "scripts/verify-app-version-assets.js"
       - "scripts/verify-shared-ui-components.js"
       - "scripts/verify-search-workload-guard.js"
@@ -160,6 +164,8 @@ jobs:
         run: node scripts/verify-production-stamp-pairs.js
       - name: Verify shared image icon consistency
         run: node scripts/verify-image-icon-consistency.js
+      - name: Verify product 3D capture and viewer workflow
+        run: node scripts/verify-product-3d-workflow.js
       - name: Verify static deployment assets
         run: node scripts/build-static-site.js
       - name: Verify security response headers

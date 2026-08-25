@@ -967,17 +967,26 @@
                   </div>
                 </section>
                 <section class="sales-detail-tab-panel" id="sales-detail-images" role="tabpanel" data-sales-detail-panel="images" hidden>
-                  <div id="img-grid" class="sales-detail-image-grid">
-                    <div class="panel-right-empty">
-                      <div class="empty-icon"><span class="icon-image" aria-hidden="true"></span></div>
-                      <div data-i18n="img_none">画像なし</div>
+                  <div class="product-media-switch" role="tablist" aria-label="商品メディア">
+                    <button class="product-media-switch-btn active" id="sales-media-photos" type="button" role="tab" aria-selected="true" data-product-media="photos" data-product-media-context="sales" data-i18n="product_3d_photos">写真</button>
+                    <button class="product-media-switch-btn" id="sales-media-model" type="button" role="tab" aria-selected="false" data-product-media="model" data-product-media-context="sales" data-i18n="product_3d_model">3Dモデル</button>
+                  </div>
+                  <div id="sales-product-photo-pane" data-product-media-pane="photos" data-product-media-context="sales">
+                    <div id="img-grid" class="sales-detail-image-grid">
+                      <div class="panel-right-empty">
+                        <div class="empty-icon"><span class="icon-image" aria-hidden="true"></span></div>
+                        <div data-i18n="img_none">画像なし</div>
+                      </div>
+                    </div>
+                    <div id="panel-footer" data-dcats-inline-style="s-087d6e2d74b9">
+                      <button class="image-actions-open-btn" id="btn-open-image-actions" type="button">
+                        <span data-i18n="image_actions_title">画像操作</span>
+                      </button>
+                      <input class="upload-input" id="upload-input" type="file" accept="image/*" multiple>
                     </div>
                   </div>
-                  <div id="panel-footer" data-dcats-inline-style="s-087d6e2d74b9">
-                    <button class="image-actions-open-btn" id="btn-open-image-actions" type="button">
-                      <span data-i18n="image_actions_title">画像操作</span>
-                    </button>
-                    <input class="upload-input" id="upload-input" type="file" accept="image/*" multiple>
+                  <div class="product-3d-detail-pane" id="sales-product-3d-pane" data-product-media-pane="model" data-product-media-context="sales" hidden>
+                    <div class="product-3d-model-list" id="sales-product-3d-list"></div>
                   </div>
                 </section>
               </div>
@@ -3959,6 +3968,9 @@
       <button class="image-action-btn" id="btn-image-action-edit" type="button">
         &#9998; <span data-i18n="image_edit_title">画像編集</span>
       </button>
+      <button class="image-action-btn model" id="btn-image-action-create-3d" type="button">
+        <span class="product-3d-cube" aria-hidden="true">3D</span><span data-i18n="product_3d_create">3Dモデルを作成</span>
+      </button>
       <button class="image-action-btn danger" id="btn-image-action-delete" type="button">
         &#x1F5D1; <span data-i18n="btn_delete_images">写真を削除</span>
       </button>
@@ -3986,12 +3998,80 @@
       <button class="image-action-btn" id="production-image-action-camera-ai" type="button">
         &#x1F4F9; <span data-i18n="core_camera_ai">カメラAI</span>
       </button>
+      <button class="image-action-btn model" id="production-image-action-create-3d" type="button">
+        <span class="product-3d-cube" aria-hidden="true">3D</span><span data-i18n="product_3d_create">3Dモデルを作成</span>
+      </button>
       <button class="image-action-btn" id="production-image-action-copy-sales" type="button">
         &#x1F504; <span data-i18n="production_copy_sales_images">販売画像をコピー</span>
       </button>
     </div>
     <div class="form-footer">
       <button class="btn-cancel" id="production-image-actions-cancel" data-i18n="btn_back">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<div class="form-overlay product-3d-capture-overlay" id="product-3d-capture-overlay" aria-hidden="true">
+  <div class="product-3d-capture-shell" role="dialog" aria-modal="true" aria-labelledby="product-3d-capture-title">
+    <header class="product-3d-capture-head">
+      <div>
+        <span class="product-3d-eyebrow">PRODUCT 3D CAPTURE</span>
+        <h2 id="product-3d-capture-title" data-i18n="product_3d_create">3Dモデルを作成</h2>
+        <div class="product-3d-capture-context" id="product-3d-capture-context"></div>
+      </div>
+      <button class="product-3d-close" id="product-3d-capture-close" type="button" aria-label="閉じる">&times;</button>
+    </header>
+    <div class="product-3d-capture-body">
+      <section class="product-3d-camera-column">
+        <div class="product-3d-camera-stage" id="product-3d-camera-stage">
+          <video id="product-3d-camera-video" playsinline muted></video>
+          <canvas id="product-3d-guide-canvas"></canvas>
+          <div class="product-3d-camera-placeholder" id="product-3d-camera-placeholder" data-i18n="product_3d_camera_ready">カメラを開始して商品を枠へ合わせます</div>
+          <div class="product-3d-direction-callout" id="product-3d-direction-callout"></div>
+        </div>
+        <canvas id="product-3d-analysis-canvas" class="product-3d-analysis-canvas" width="240" height="180"></canvas>
+        <div class="product-3d-live-feedback" id="product-3d-live-feedback" role="status"></div>
+        <div class="product-3d-camera-actions">
+          <button class="btn-sm-edit" id="product-3d-start-camera" type="button" data-i18n="product_3d_start_camera">カメラを開始</button>
+          <button class="btn-primary" id="product-3d-snapshot" type="button" disabled data-i18n="product_3d_snapshot">スナップショット</button>
+          <button class="btn-sm-edit" id="product-3d-video-supplement" type="button" hidden data-i18n="product_3d_video_supplement">動画で補完</button>
+          <button class="btn-sm-edit" id="product-3d-bottom-mode" type="button" data-i18n="product_3d_bottom_mode">反転して底面</button>
+        </div>
+        <p class="product-3d-retention-note" data-i18n="product_3d_video_retention">動画自体は保存せず、不足方向の鮮明なフレームだけを保存します。</p>
+      </section>
+      <aside class="product-3d-review-column">
+        <section class="product-3d-review-card">
+          <div class="product-3d-review-title"><strong data-i18n="product_3d_coverage">撮影方向</strong><span id="product-3d-capture-count">0 / 12</span></div>
+          <div class="product-3d-capture-dial" id="product-3d-capture-dial"></div>
+        </section>
+        <section class="product-3d-review-card">
+          <div class="product-3d-review-title"><strong data-i18n="product_3d_existing_analysis">保存済み画像の解析</strong><span id="product-3d-analysis-progress"></span></div>
+          <div class="product-3d-analysis-results" id="product-3d-analysis-results"></div>
+        </section>
+        <section class="product-3d-review-card">
+          <div class="product-3d-review-title"><strong data-i18n="product_3d_quality">品質チェック</strong><span id="product-3d-quality-score"></span></div>
+          <ul class="product-3d-quality-list" id="product-3d-quality-list"></ul>
+        </section>
+        <div class="product-3d-submit-status" id="product-3d-submit-status"></div>
+        <button class="btn-primary product-3d-submit" id="product-3d-submit" type="button" disabled data-i18n="product_3d_submit">3D生成を依頼</button>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<div class="form-overlay product-3d-viewer-overlay" id="product-3d-viewer-overlay" aria-hidden="true">
+  <div class="product-3d-viewer-shell" role="dialog" aria-modal="true" aria-labelledby="product-3d-viewer-title">
+    <header class="product-3d-viewer-head">
+      <div><span class="product-3d-eyebrow">PRODUCT 3D</span><h2 id="product-3d-viewer-title">3Dモデル</h2></div>
+      <button class="product-3d-close" id="product-3d-viewer-close" type="button" aria-label="閉じる">&times;</button>
+    </header>
+    <div class="product-3d-viewer-stage" id="product-3d-viewer-stage"></div>
+    <div class="product-3d-viewer-loading" id="product-3d-viewer-loading">3Dモデルを読み込んでいます...</div>
+    <div class="product-3d-viewer-toolbar">
+      <button type="button" id="product-3d-viewer-reset" data-i18n="product_3d_reset">リセット</button>
+      <button type="button" id="product-3d-viewer-autorotate" aria-pressed="false" data-i18n="product_3d_auto_rotate">自動回転</button>
+      <button type="button" id="product-3d-viewer-fullscreen" data-i18n="product_3d_fullscreen">全画面</button>
+      <span data-i18n="product_3d_controls_hint">ドラッグ: 回転 / ホイール・ピンチ: 拡大 / 右ドラッグ・2本指: 移動</span>
     </div>
   </div>
 </div>
@@ -4068,6 +4148,7 @@
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
 <script src="vendor/qrcode.min.js?v=1.0.0"></script>
 <script src="app.js?v=1.1.759"></script>
+<script src="product-3d.js?v=1.1.759"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.625&amp;ranking=17"></script>
 </body>
 </html>

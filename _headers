@@ -4,7 +4,7 @@
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: no-referrer
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=(), usb=()
   X-Robots-Tag: noindex, nofollow
 
 /assets/postal/postal-*.json

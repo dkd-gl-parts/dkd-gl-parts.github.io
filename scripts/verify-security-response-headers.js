@@ -52,7 +52,8 @@ expect(headerValue("X-Frame-Options").toUpperCase() === "DENY", "X-Frame-Options
 expect(headerValue("Referrer-Policy").toLowerCase() === "no-referrer", "Referrer policy must not disclose source URLs");
 
 const permissions = headerValue("Permissions-Policy");
-for (const feature of ["camera", "microphone", "geolocation", "payment", "usb"]) {
+expect(/(?:^|,\s*)camera=\(self\)/i.test(permissions), "Permissions-Policy must limit camera access to this origin");
+for (const feature of ["microphone", "geolocation", "payment", "usb"]) {
   expect(new RegExp(`(?:^|,\\s*)${feature}=\\(\\)`, "i").test(permissions), `Permissions-Policy must disable ${feature}`);
 }
 
