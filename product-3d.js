@@ -24,6 +24,7 @@
   var state = freshState();
   var elements = {};
   var viewer = null;
+  var viewerRequestId = 0;
   var modelCache = Object.create(null);
   var internalModelCache = Object.create(null);
   var modelBadgeCache = Object.create(null);
@@ -99,7 +100,9 @@
     var product = context === "production" ? window.currentProductionRow : (context === "customer" ? window.customerCatalogSelectedProduct : window.currentProduct);
     var kind = context === "production"
       ? (typeof selectedImageActionKind === "function" ? selectedImageActionKind("production") : window.currentProductionImageKind)
-      : (context === "customer" ? "rebuilt" : (typeof selectedImageActionKind === "function" ? selectedImageActionKind("sales") : (typeof selectedProductKind === "function" ? selectedProductKind() : "rebuilt")));
+      : (context === "customer"
+        ? (typeof customerCatalogProductKind === "function" ? customerCatalogProductKind(product) : (product && product.default_product_kind))
+        : (typeof selectedImageActionKind === "function" ? selectedImageActionKind("sales") : (typeof selectedProductKind === "function" ? selectedProductKind() : "rebuilt")));
     return { product: product, kind: cleanKind(kind) };
   }
 
@@ -425,11 +428,16 @@
     var pendingPath = null;
     try {
       var blob = await sourceToJpeg(video);
+      var blobSha256 = await contentSha256(blob);
       var path = captureStoragePath(analysis.direction);
-      var upload = await sb.storage.from(BUCKET).upload(path, blob, { contentType: "image/jpeg", upsert: false });
+      var upload = await sb.storage.from(BUCKET).upload(path, blob, {
+        contentType: "image/jpeg",
+        upsert: false,
+        metadata: { sha256: blobSha256 }
+      });
       if (upload.error) throw upload.error;
       pendingPath = path;
-      var registration = await registerAnalysis(analysis, path, await contentSha256(blob));
+      var registration = await registerAnalysis(analysis, path, blobSha256);
       if (registration.duplicate) {
         var duplicateRemoval = await sb.storage.from(BUCKET).remove([path]);
         if (duplicateRemoval.error) throw duplicateRemoval.error;
@@ -695,7 +703,7 @@
       host.innerHTML = "<div class='product-3d-empty-card'><span class='product-3d-cube'>3D</span><strong>公開済み3Dモデルはありません</strong>" + createAction + "</div>";
       return;
     }
-    host.innerHTML = visible.map(function (model) {
+    function modelCardHtml(model) {
       var size = model.model_bytes ? (model.model_bytes / 1048576).toFixed(1) + " MB" : "";
       var status = modelStatusLabel(model.status);
       var canOpen = model.published_model_path && (model.status === "published" || model.status === "review");
@@ -704,7 +712,18 @@
       if (internal && (model.status === "needs_capture" || model.status === "failed")) action += "<button type='button' class='product-3d-card-action' data-create-3d='" + context + "'>撮影を再開</button>";
       var note = model.failure_message || (model.additional_capture_instructions && model.additional_capture_instructions.length ? "追加撮影: " + model.additional_capture_instructions.join(" / ") : "");
       return "<div class='product-3d-model-card'><span class='product-3d-cube'>3D</span><span><strong>" + esc(kindLabel(model.product_kind)) + " 3Dモデル <i data-model-status='" + esc(model.status) + "'>" + esc(status) + "</i></strong><small>rev." + model.revision + " " + size + (note ? " / " + esc(note) : "") + "</small></span><span class='product-3d-card-actions'>" + action + "</span></div>";
-    }).join("");
+    }
+    if (context === "customer") {
+      host.innerHTML = ["rebuilt", "aftermarket_new"].map(function (kind) {
+        var grouped = visible.filter(function (model) { return model.product_kind === kind; });
+        var body = grouped.length
+          ? grouped.map(modelCardHtml).join("")
+          : "<div class='product-3d-kind-empty'>公開済み3Dモデルはありません</div>";
+        return "<section class='product-3d-kind-group " + esc(kind) + "'><div class='product-3d-kind-group-head'><strong>" + esc(kindLabel(kind)) + "</strong><span>" + grouped.length + " 件</span></div><div class='product-3d-kind-group-list'>" + body + "</div></section>";
+      }).join("");
+      return;
+    }
+    host.innerHTML = visible.map(modelCardHtml).join("");
   }
   function modelStatusLabel(status) {
     return ({ draft: "撮影中", waiting: "待機", processing: "処理中", needs_capture: "要追加撮影", failed: "失敗", review: "確認待ち", published: "公開済み", archived: "旧版" })[status] || status;
@@ -718,34 +737,43 @@
     await renderMediaPane(context || "sales"); scheduleBadgeRefresh();
   }
   async function openViewerById(modelId, context, dkdId) {
+    var requestId = ++viewerRequestId;
     var target = selectedTarget(context || "sales");
     var internal = context !== "customer" && typeof canManageAllImages === "function" && canManageAllImages();
     var models = internal ? await fetchInternalModels(dkdId || productId(target.product)) : await fetchPublishedModels(dkdId || productId(target.product));
+    if (requestId !== viewerRequestId) return;
     var model = models.find(function (row) { return String(row.id) === String(modelId); });
     if (!model) return;
     var signed = await sb.storage.from(BUCKET).createSignedUrl(model.published_model_path, 600);
+    if (requestId !== viewerRequestId) return;
     if (signed.error) { alert("3Dモデルを開けませんでした: " + friendlyError(signed.error)); return; }
     elements["product-3d-viewer-overlay"].classList.add("show");
     elements["product-3d-viewer-overlay"].setAttribute("aria-hidden", "false");
     elements["product-3d-viewer-title"].textContent = productTitle(target.product) + " / " + kindLabel(model.product_kind);
     elements["product-3d-viewer-loading"].hidden = false;
     try {
-      if (viewer) viewer.dispose();
+      if (viewer) { viewer.dispose(); viewer = null; }
       var module = await import("./product-3d-viewer.js?v=1.1.757");
-      viewer = await module.createProduct3DViewer({
+      var createdViewer = await module.createProduct3DViewer({
         host: elements["product-3d-viewer-stage"],
         url: signed.data.signedUrl,
         fullscreenElement: elements["product-3d-viewer-shell"] || elements["product-3d-viewer-stage"],
         autoRotate: false
       });
+      if (requestId !== viewerRequestId) { createdViewer.dispose(); return; }
+      viewer = createdViewer;
       elements["product-3d-viewer-loading"].hidden = true;
     } catch (error) {
+      if (requestId !== viewerRequestId) return;
       elements["product-3d-viewer-loading"].textContent = "3Dモデルの読込に失敗しました: " + friendlyError(error);
     }
   }
   function closeViewer() {
+    viewerRequestId += 1;
+    if (viewer) { viewer.dispose(); viewer = null; }
     elements["product-3d-viewer-overlay"].classList.remove("show");
     elements["product-3d-viewer-overlay"].setAttribute("aria-hidden", "true");
+    elements["product-3d-viewer-loading"].hidden = true;
   }
   function closeCapture() {
     stopCamera();

@@ -51,14 +51,29 @@ export async function createProduct3DViewer(options) {
   loader.setKTX2Loader(ktx2);
   loader.setMeshoptDecoder(MeshoptDecoder);
 
-  const gltf = await loader.loadAsync(options.url);
+  let gltf;
+  try {
+    gltf = await loader.loadAsync(options.url);
+  } catch (error) {
+    controls.dispose();
+    draco.dispose();
+    ktx2.dispose();
+    renderer.dispose();
+    renderer.domElement.remove();
+    throw error;
+  }
   const root = gltf.scene || gltf.scenes[0];
-  if (!root) throw new Error('GLB does not contain a scene.');
+  if (!root) {
+    controls.dispose(); draco.dispose(); ktx2.dispose(); renderer.dispose(); renderer.domElement.remove();
+    throw new Error('GLB does not contain a scene.');
+  }
   scene.add(root);
 
   const initialBox = new THREE.Box3().setFromObject(root);
   const initialSize = initialBox.getSize(new THREE.Vector3());
   if (!Number.isFinite(initialSize.length()) || initialSize.length() <= 0) {
+    disposeObject(root);
+    controls.dispose(); draco.dispose(); ktx2.dispose(); renderer.dispose(); renderer.domElement.remove();
     throw new Error('GLB bounds are invalid.');
   }
   const center = initialBox.getCenter(new THREE.Vector3());

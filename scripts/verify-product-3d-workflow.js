@@ -31,12 +31,15 @@ function requireText(source, fragment, label) {
   "register_product_3d_capture",
   "contentSha256(loaded.blob)",
   "contentSha256(blob)",
+  "metadata: { sha256: blobSha256 }",
   "signProductImageUrl(imageRow.storage_path)",
   "perceptual_hash: analysis.hash",
   "orphan product 3D source cleanup failed",
   "if (duplicateRemoval.error) throw duplicateRemoval.error",
   "customer: \"customer-product-3d-list\"",
   "context === \"customer\" ? \"\"",
+  "product-3d-kind-group",
+  "[\"rebuilt\", \"aftermarket_new\"]",
   "submit_product_3d_model",
   "source/dkd_",
   "VIDEO_PROPOSAL_DELAY_MS = 30000",
@@ -52,11 +55,14 @@ function requireText(source, fragment, label) {
   "確認待ち",
   "data-publish-model",
   "createSignedUrl(model.published_model_path, 600)",
-  "import(\"./product-3d-viewer.js?v=1.1.757\")"
+  "import(\"./product-3d-viewer.js?v=1.1.757\")",
+  "if (viewer) { viewer.dispose(); viewer = null; }",
+  "if (requestId !== viewerRequestId) { createdViewer.dispose(); return; }"
 ].forEach((fragment) => requireText(client, fragment, "3D capture contract"));
 
 if (client.includes("analysisDigest")) throw new Error("Capture dedupe must hash source bytes, not analysis metadata");
 if (client.includes('signProductImageUrl(imageRow.storage_path, { width:')) throw new Error("Existing capture SHA must cover the original stored image bytes");
+if (client.includes('context === "customer" ? "rebuilt"')) throw new Error("Customer 3D models must not collapse both product kinds into rebuilt");
 
 [
   "customer-product-3d-list",
@@ -71,10 +77,13 @@ if (client.includes('signProductImageUrl(imageRow.storage_path, { width:')) thro
   "KTX2Loader",
   "DRACOLoader",
   "setMeshoptDecoder",
-  "requestFullscreen"
+  "requestFullscreen",
+  "cancelAnimationFrame(animationFrame)",
+  "renderer.domElement.remove()"
 ].forEach((fragment) => requireText(viewer, fragment, "3D viewer contract"));
 
 requireText(css, "@media (max-width: 820px)", "mobile capture layout");
+requireText(css, ".product-3d-kind-group.aftermarket_new", "customer product-kind grouping");
 requireText(headers, "Permissions-Policy: camera=(self)", "same-origin camera policy");
 requireText(build, '"product-3d.js"', "3D deployment asset");
 requireText(build, '"product-3d-viewer.js"', "3D viewer deployment asset");
