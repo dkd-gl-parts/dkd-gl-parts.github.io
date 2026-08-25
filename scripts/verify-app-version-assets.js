@@ -5,6 +5,7 @@ const root = path.resolve(__dirname, "..");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const styles = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+const manifest = JSON.parse(fs.readFileSync(path.join(root, "site.webmanifest"), "utf8"));
 
 function requiredMatch(source, pattern, label) {
   const match = source.match(pattern);
@@ -16,14 +17,37 @@ const appVersion = requiredMatch(app, /var\s+APP_VERSION\s*=\s*"(v[^\"]+)"/, "AP
 const metaVersion = requiredMatch(html, /name="dcats-app-version"\s+content="(v[^\"]+)"/, "version meta");
 const legacyVersion = requiredMatch(html, /Legacy updater compatibility: var APP_VERSION = "(v[^\"]+)"/, "legacy updater version");
 const scriptVersion = "v" + requiredMatch(html, /<script\s+src="app\.js\?v=([^\"]+)"/, "app.js cache version");
+const installScriptVersion = "v" + requiredMatch(html, /<script\s+src="install-app\.js\?v=([^\"]+)"/, "install-app.js cache version");
 const styleVersion = "v" + requiredMatch(html, /<link\s+rel="stylesheet"\s+href="styles\.css\?v=([^&\"]+)/, "styles.css cache version");
+const manifestVersion = "v" + requiredMatch(html, /<link\s+rel="manifest"\s+href="site\.webmanifest\?v=([^&\"]+)/, "manifest cache version");
 
-const versions = { metaVersion, legacyVersion, scriptVersion, styleVersion };
+const versions = { metaVersion, legacyVersion, scriptVersion, installScriptVersion, styleVersion, manifestVersion };
 Object.entries(versions).forEach(([label, version]) => {
   if (version !== appVersion) {
     throw new Error(`${label} ${version} must match ${appVersion}`);
   }
 });
+
+const requiredInstallIcons = [
+  "assets/icons/apple-touch-icon-v4.png",
+  "assets/icons/icon-192-v4.png",
+  "assets/icons/icon-512-v4.png",
+  "assets/icons/icon-maskable-512-v4.png",
+  "apple-touch-icon.png",
+];
+requiredInstallIcons.forEach((file) => {
+  if (!fs.existsSync(path.join(root, file))) throw new Error(`Missing install icon: ${file}`);
+});
+if (!html.includes('href="assets/icons/apple-touch-icon-v4.png"')) {
+  throw new Error("Apple touch icon must use the cache-safe versioned filename");
+}
+const manifestIconSources = (manifest.icons || []).map((icon) => icon.src);
+for (const source of requiredInstallIcons.slice(1, 4)) {
+  if (!manifestIconSources.includes(source)) throw new Error(`Manifest install icon is missing: ${source}`);
+}
+if (manifest.id !== "/" || manifest.start_url !== "/" || manifest.scope !== "/") {
+  throw new Error("Manifest identity, start_url, and scope must be rooted at D-CATS");
+}
 
 if (!app.includes('url.searchParams.set("_dcats_refresh", String(Date.now()))')) {
   throw new Error("manual refresh must request a fresh index document");

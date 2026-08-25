@@ -12,3 +12,12 @@
 
 /assets/postal/manifest.json
   Cache-Control: no-cache
+
+/site.webmanifest
+  Cache-Control: no-cache
+
+/apple-touch-icon.png
+  Cache-Control: no-cache
+
+/assets/icons/*-v4.png
+  Cache-Control: public, max-age=31536000, immutable

@@ -61,6 +61,17 @@ var TRANSLATIONS = {
     login_system_subtitle: "自動車部品検索・受発注システム",
     login_heading: "ログイン",
     login_welcome: "D-CATSへようこそ",
+    app_install_action: "ホーム画面に追加",
+    app_install_note: "次回からアプリのようにすぐ起動できます",
+    app_install_title: "D-CATSをホーム画面に追加",
+    app_install_lead: "ホーム画面のD-CATSアイコンから、すぐにシステムを開けます。",
+    app_install_ios_safari_required: "SafariでD-CATSを開いてから操作してください。",
+    app_install_ios_step_share: "画面の共有ボタンをタップします。",
+    app_install_ios_step_add_home: "「ホーム画面に追加」を選択します。",
+    app_install_ios_step_confirm: "右上の「追加」をタップします。",
+    app_install_manual_step_menu: "ブラウザ右上のメニューを開きます。",
+    app_install_manual_step_install: "「アプリをインストール」または「ホーム画面に追加」を選択します。",
+    app_install_manual_step_confirm: "表示内容を確認して追加します。",
     password_show: "パスワードを表示",
     password_hide: "パスワードを隠す",
     lbl_email: "メールアドレス",
@@ -1753,6 +1764,17 @@ var TRANSLATIONS = {
     login_system_subtitle: "Automotive Parts Search & Ordering System",
     login_heading: "Login",
     login_welcome: "Welcome to D-CATS",
+    app_install_action: "Add to Home Screen",
+    app_install_note: "Open D-CATS quickly like an app next time",
+    app_install_title: "Add D-CATS to your Home Screen",
+    app_install_lead: "Open the system directly from the D-CATS icon on your Home Screen.",
+    app_install_ios_safari_required: "Open D-CATS in Safari before continuing.",
+    app_install_ios_step_share: "Tap the Share button in the browser.",
+    app_install_ios_step_add_home: "Select “Add to Home Screen.”",
+    app_install_ios_step_confirm: "Tap “Add” in the top-right corner.",
+    app_install_manual_step_menu: "Open the browser menu in the top-right corner.",
+    app_install_manual_step_install: "Select “Install app” or “Add to Home screen.”",
+    app_install_manual_step_confirm: "Review the details and confirm the installation.",
     password_show: "Show password",
     password_hide: "Hide password",
     lbl_email: "Email address",
@@ -3694,6 +3716,17 @@ var TRANSLATIONS = {
     login_system_subtitle: "汽车零部件搜索与订购系统",
     login_heading: "登录",
     login_welcome: "欢迎使用 D-CATS",
+    app_install_action: "添加到主屏幕",
+    app_install_note: "下次可像应用一样快速启动",
+    app_install_title: "将D-CATS添加到主屏幕",
+    app_install_lead: "通过主屏幕上的D-CATS图标快速打开系统。",
+    app_install_ios_safari_required: "请先使用Safari打开D-CATS。",
+    app_install_ios_step_share: "点击浏览器中的共享按钮。",
+    app_install_ios_step_add_home: "选择“添加到主屏幕”。",
+    app_install_ios_step_confirm: "点击右上角的“添加”。",
+    app_install_manual_step_menu: "打开浏览器右上角的菜单。",
+    app_install_manual_step_install: "选择“安装应用”或“添加到主屏幕”。",
+    app_install_manual_step_confirm: "确认显示内容后完成添加。",
     password_show: "显示密码",
     password_hide: "隐藏密码",
     lbl_email: "邮箱地址",
@@ -5188,7 +5221,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.763";
+var APP_VERSION       = "v1.1.764";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;

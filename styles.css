@@ -3011,6 +3011,191 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 }
 .login-utility .lang-btn-login:hover:not(.active) { border-color: #9eabbd; color: #273750; }
 .login-utility .lang-btn-login.active { border-color: var(--dcats-brand-red); background: var(--dcats-brand-red); color: #fff; }
+.app-install-entry {
+  width: 100%;
+  text-align: center;
+}
+.app-install-entry[hidden],
+.app-install-header-entry[hidden],
+.app-install-dialog[hidden],
+.app-install-instructions[hidden],
+.app-install-safari-note[hidden] { display: none; }
+.app-install-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 9px 16px;
+  border: 1px solid #b9c5d5;
+  border-radius: 10px;
+  background: rgba(255,255,255,.72);
+  color: #183253;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color .15s, background .15s, box-shadow .15s, transform .15s;
+}
+.app-install-button img { display: block; width: 28px; height: 28px; border-radius: 7px; }
+.app-install-button:hover { border-color: #7588a2; background: #fff; box-shadow: 0 6px 18px rgba(19,35,63,.1); }
+.app-install-button:active { transform: translateY(1px); }
+.app-install-button:focus-visible { outline: 3px solid rgba(47,111,237,.3); outline-offset: 3px; }
+.app-install-entry p {
+  margin-top: 7px;
+  color: #7f899c;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.app-install-header-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 5px 11px;
+  border: 1px solid rgba(255,255,255,.38);
+  border-radius: 8px;
+  background: rgba(255,255,255,.12);
+  color: #fff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.app-install-header-button img { display: block; width: 22px; height: 22px; border-radius: 5px; }
+.app-install-header-button:hover { border-color: rgba(255,255,255,.7); background: rgba(255,255,255,.2); }
+.app-install-header-button:focus-visible { outline: 3px solid rgba(255,255,255,.65); outline-offset: 2px; }
+.app-install-dialog {
+  position: fixed;
+  z-index: 5000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.app-install-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10,22,42,.58);
+  backdrop-filter: blur(3px);
+}
+.app-install-dialog-card {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 430px);
+  max-height: calc(100vh - 40px);
+  max-height: calc(100svh - 40px);
+  overflow-y: auto;
+  padding: 30px;
+  border: 1px solid rgba(255,255,255,.7);
+  border-radius: 18px;
+  background: #fff;
+  color: #13233f;
+  box-shadow: 0 24px 70px rgba(10,22,42,.3);
+  text-align: center;
+}
+.app-install-dialog-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: #f2f5f8;
+  color: #59677b;
+  font-size: 17px;
+  cursor: pointer;
+}
+.app-install-dialog-close:hover { background: #e7ebf0; color: #13233f; }
+.app-install-dialog-close:focus-visible,
+.app-install-dialog-done:focus-visible { outline: 3px solid rgba(47,111,237,.3); outline-offset: 2px; }
+.app-install-dialog-brand {
+  display: inline-flex;
+  margin-bottom: 14px;
+  padding: 4px;
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(19,35,63,.14);
+}
+.app-install-dialog-brand img { display: block; width: 54px; height: 54px; border-radius: 11px; }
+.app-install-dialog-card h2 { font-size: 22px; font-weight: 800; line-height: 1.35; }
+.app-install-dialog-card > p {
+  margin: 9px auto 20px;
+  color: #66748a;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.app-install-instructions { text-align: left; }
+.app-install-instructions ol {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: app-install-step;
+}
+.app-install-instructions li {
+  position: relative;
+  min-height: 44px;
+  padding: 12px 12px 12px 52px;
+  border: 1px solid #dfe5ec;
+  border-radius: 10px;
+  background: #f7f9fb;
+  color: #233750;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.55;
+  counter-increment: app-install-step;
+}
+.app-install-instructions li::before {
+  content: counter(app-install-step);
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #183253;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+.app-install-safari-note {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-left: 4px solid var(--dcats-brand-red);
+  border-radius: 6px;
+  background: #fff4f5;
+  color: #8e2631;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.app-install-dialog-done {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 20px;
+  border: 0;
+  border-radius: 10px;
+  background: #183253;
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.app-install-dialog-done:hover { background: #102743; }
+body.app-install-dialog-open { overflow: hidden; }
 .login-partners {
   position: absolute;
   bottom: clamp(48px, 6vh, 72px);
@@ -3067,6 +3252,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   #screen-login .login-error { min-height: 18px; margin-top: 6px; }
   .login-forgot-link { margin-top: 2px; }
   .login-utility { gap: 16px; margin-top: 20px; }
+  .app-install-button { min-height: 50px; font-size: 14px; }
   .login-utility .lang-btn-login { min-width: 62px; min-height: 36px; }
   .login-partners {
     position: static;
@@ -3082,6 +3268,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .login-partner-mark-daiko { width: 32px; height: 32px; }
   .login-partner-mark-gltek { width: 38px; height: 28px; }
   .login-partner-separator { font-size: 24px; }
+  .app-install-header-button { width: 36px; min-height: 34px; padding: 5px; }
+  .app-install-header-button span { display: none; }
 }
 
 @media (max-width: 420px) {
@@ -3091,6 +3279,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .login-brand-copy h1 { font-size: 38px; }
   .login-brand-copy p { font-size: 12px; }
   .login-form-panel { padding-right: 20px; padding-left: 20px; }
+  .app-install-dialog { padding: 12px; }
+  .app-install-dialog-card { max-height: calc(100svh - 24px); padding: 26px 20px 20px; border-radius: 15px; }
+  .app-install-dialog-card h2 { padding: 0 28px; font-size: 20px; }
 }
 
 @media (max-width: 360px) {
@@ -3103,7 +3294,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 
 @media (prefers-reduced-motion: reduce) {
   #screen-login .login-input,
-  #screen-login .btn-login { transition: none; }
+  #screen-login .btn-login,
+  .app-install-button { transition: none; }
 }
 
 /* =============================================

@@ -8,12 +8,15 @@ on:
     paths:
       - "index.html"
       - "app.js"
+      - "install-app.js"
+      - "site.webmanifest"
       - "styles.css"
       - "product-3d.js"
       - "product-3d-viewer.js"
       - "vendor/three/**"
       - "scripts/verify-product-3d-workflow.js"
       - "scripts/verify-app-version-assets.js"
+      - "scripts/verify-install-app.js"
       - "scripts/verify-shared-ui-components.js"
       - "scripts/verify-search-workload-guard.js"
       - "scripts/verify-component-catalog-recovery.js"
@@ -85,9 +88,13 @@ jobs:
         with:
           node-version: 22
       - name: Check JavaScript syntax
-        run: node --check app.js
+        run: |
+          node --check app.js
+          node --check install-app.js
       - name: Verify release asset versions
         run: node scripts/verify-app-version-assets.js
+      - name: Verify install experience
+        run: node scripts/verify-install-app.js
       - name: Verify shared customer, internal, and manufacturing UI components
         run: node scripts/verify-shared-ui-components.js
       - name: Verify search workload ordering
