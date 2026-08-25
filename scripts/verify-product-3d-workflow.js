@@ -29,6 +29,14 @@ function requireText(source, fragment, label) {
 [
   "open_product_3d_workspace",
   "register_product_3d_capture",
+  "contentSha256(loaded.blob)",
+  "contentSha256(blob)",
+  "signProductImageUrl(imageRow.storage_path)",
+  "perceptual_hash: analysis.hash",
+  "orphan product 3D source cleanup failed",
+  "if (duplicateRemoval.error) throw duplicateRemoval.error",
+  "customer: \"customer-product-3d-list\"",
+  "context === \"customer\" ? \"\"",
   "submit_product_3d_model",
   "source/dkd_",
   "VIDEO_PROPOSAL_DELAY_MS = 30000",
@@ -46,6 +54,9 @@ function requireText(source, fragment, label) {
   "createSignedUrl(model.published_model_path, 600)",
   "import(\"./product-3d-viewer.js?v=1.1.757\")"
 ].forEach((fragment) => requireText(client, fragment, "3D capture contract"));
+
+if (client.includes("analysisDigest")) throw new Error("Capture dedupe must hash source bytes, not analysis metadata");
+if (client.includes('signProductImageUrl(imageRow.storage_path, { width:')) throw new Error("Existing capture SHA must cover the original stored image bytes");
 
 [
   "customer-product-3d-list",

@@ -153,12 +153,17 @@
   function hydrateRegisteredCaptures() {
     var captures = state.workspace && state.workspace.captures || [];
     captures.forEach(function (capture) {
-      state.analyses.push(Object.assign({ accepted: true, registered: true }, capture.quality_metrics || {}, {
+      var quality = capture.quality_metrics || {};
+      var hash = typeof quality.perceptual_hash === "string" ? quality.perceptual_hash : null;
+      state.analyses.push(Object.assign({ accepted: true, registered: true }, quality, {
         id: capture.id,
+        coreProductImageId: capture.core_product_image_id,
         sourceKind: capture.source_kind,
         direction: capture.direction,
-        silhouette: capture.silhouette || {}
+        silhouette: capture.silhouette || {},
+        hash: hash
       }));
+      if (hash && state.hashes.indexOf(hash) < 0) state.hashes.push(hash);
     });
   }
 
@@ -168,11 +173,12 @@
       var imageRow = images[index];
       if (state.analyses.some(function (a) { return Number(a.coreProductImageId) === Number(imageRow.id); })) continue;
       var url = imageRow.storage_path && typeof signProductImageUrl === "function"
-        ? await signProductImageUrl(imageRow.storage_path, { width: 1600, height: 1600 })
+        ? await signProductImageUrl(imageRow.storage_path)
         : imageRow.image_url;
+      var loaded = null;
       try {
-        var source = await loadImage(url);
-        var analysis = analyzeSource(source, "existing_image");
+        loaded = await loadImageBlob(url);
+        var analysis = analyzeSource(loaded.image, "existing_image");
         analysis.direction = inferExistingDirection(index, images.length, analysis);
         applyCaptureContextChecks(analysis);
         analysis.coreProductImageId = imageRow.id;
@@ -183,12 +189,14 @@
           analysis.issues.push("生成に使える非公開元画像がありません");
         }
         if (analysis.accepted && !analysis.duplicate) {
-          await registerAnalysis(analysis, null);
+          await registerAnalysis(analysis, null, await contentSha256(loaded.blob));
         } else {
           state.analyses.push(analysis);
         }
       } catch (error) {
         state.analyses.push({ accepted: false, label: "保存済み画像 " + (index + 1), issues: ["画像を解析できません"], direction: "detail", sourceKind: "existing_image" });
+      } finally {
+        if (loaded && loaded.objectUrl) URL.revokeObjectURL(loaded.objectUrl);
       }
       elements["product-3d-analysis-progress"].textContent = (index + 1) + " / " + images.length;
       renderAll();
@@ -210,6 +218,19 @@
       image.onerror = reject;
       image.src = url;
     });
+  }
+  async function loadImageBlob(url) {
+    if (!url) throw new Error("image URL missing");
+    var response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) throw new Error("image fetch failed: " + response.status);
+    var blob = await response.blob();
+    var objectUrl = URL.createObjectURL(blob);
+    try {
+      return { image: await loadImage(objectUrl), blob: blob, objectUrl: objectUrl };
+    } catch (error) {
+      URL.revokeObjectURL(objectUrl);
+      throw error;
+    }
   }
 
   async function startCamera() {
@@ -401,18 +422,34 @@
     }
     state.busy = true;
     elements["product-3d-snapshot"].disabled = true;
+    var pendingPath = null;
     try {
       var blob = await sourceToJpeg(video);
       var path = captureStoragePath(analysis.direction);
       var upload = await sb.storage.from(BUCKET).upload(path, blob, { contentType: "image/jpeg", upsert: false });
       if (upload.error) throw upload.error;
-      await registerAnalysis(analysis, path);
+      pendingPath = path;
+      var registration = await registerAnalysis(analysis, path, await contentSha256(blob));
+      if (registration.duplicate) {
+        var duplicateRemoval = await sb.storage.from(BUCKET).remove([path]);
+        if (duplicateRemoval.error) throw duplicateRemoval.error;
+        pendingPath = null;
+        state.failures += 1;
+        setLiveFeedback(["同じ画像は保存しません。別の方向へ移動してください"], false);
+        if (state.failures >= 3) proposeVideoIfNeeded();
+        renderAll(); return false;
+      }
+      pendingPath = null;
       state.failures = 0;
       state.lastAcceptedAt = Date.now();
       state.currentDirection = nextDirection();
       setLiveFeedback([direction(state.currentDirection).label + "へ移動してください"], true);
       renderAll(); return true;
     } catch (error) {
+      if (pendingPath) {
+        var removal = await sb.storage.from(BUCKET).remove([pendingPath]);
+        if (removal.error) console.warn("orphan product 3D source cleanup failed", removal.error);
+      }
       state.failures += 1;
       setLiveFeedback(["保存できませんでした: " + friendlyError(error)], false);
       return false;
@@ -437,8 +474,7 @@
     return "source/dkd_" + productId(state.product) + "/" + state.kind + "/model_" + model.id + "/" +
       Date.now() + "_" + directionId + "_" + crypto.randomUUID().slice(0, 8) + ".jpg";
   }
-  async function registerAnalysis(analysis, storagePath) {
-    var digest = await analysisDigest(analysis, storagePath);
+  async function registerAnalysis(analysis, storagePath, contentSha) {
     var response = await sb.rpc("register_product_3d_capture", {
       target_model_id: state.workspace.model.id,
       target_core_product_image_id: analysis.coreProductImageId || null,
@@ -448,21 +484,30 @@
       target_quality_metrics: {
         score: analysis.score, sharpness: analysis.sharpness, brightness: analysis.brightness,
         clipped: analysis.clipped, reflection_ratio: analysis.reflectionRatio,
+        perceptual_hash: analysis.hash,
         browser_analyzer_version: "pilot-1"
       },
       target_silhouette: analysis.silhouette,
-      target_content_sha256: digest,
+      target_content_sha256: contentSha,
       target_captured_at: new Date().toISOString()
     });
     if (response.error) throw response.error;
+    if (response.data && response.data.duplicate) {
+      analysis.accepted = false;
+      analysis.duplicate = true;
+      analysis.issues = Array.isArray(analysis.issues) ? analysis.issues : [];
+      analysis.issues.push("同じ画像はすでに登録済みです");
+      state.analyses.push(analysis);
+      return { duplicate: true };
+    }
     analysis.accepted = true; analysis.registered = true; analysis.storagePath = storagePath;
-    state.hashes.push(analysis.hash);
+    if (analysis.hash && state.hashes.indexOf(analysis.hash) < 0) state.hashes.push(analysis.hash);
     state.analyses.push(analysis);
     state.workspace.model = response.data.model;
+    return { duplicate: false };
   }
-  async function analysisDigest(analysis, salt) {
-    var bytes = new TextEncoder().encode([analysis.hash, salt || analysis.coreProductImageId, analysis.direction, analysis.sharpness].join("|"));
-    var digest = await crypto.subtle.digest("SHA-256", bytes);
+  async function contentSha256(blob) {
+    var digest = await crypto.subtle.digest("SHA-256", await blob.arrayBuffer());
     return Array.from(new Uint8Array(digest)).map(function (byte) { return byte.toString(16).padStart(2, "0"); }).join("");
   }
 
@@ -638,14 +683,16 @@
   }
   async function renderMediaPane(context) {
     var target = selectedTarget(context);
-    var host = el(context === "sales" ? "sales-product-3d-list" : "production-product-3d-list");
+    var hostId = { sales: "sales-product-3d-list", production: "production-product-3d-list", customer: "customer-product-3d-list" }[context];
+    var host = el(hostId);
     if (!host || !target.product) return;
     host.innerHTML = "<div class='product-3d-loading-card'>3Dモデルを確認しています…</div>";
     var internal = context !== "customer" && typeof canManageAllImages === "function" && canManageAllImages();
     var models = internal ? await fetchInternalModels(productId(target.product)) : await fetchPublishedModels(productId(target.product));
     var visible = context === "customer" ? models : models.filter(function (model) { return model.product_kind === target.kind; });
     if (!visible.length) {
-      host.innerHTML = "<div class='product-3d-empty-card'><span class='product-3d-cube'>3D</span><strong>公開済み3Dモデルはありません</strong><button type='button' data-create-3d='" + context + "'>3Dモデルを作成</button></div>";
+      var createAction = context === "customer" ? "" : "<button type='button' data-create-3d='" + context + "'>3Dモデルを作成</button>";
+      host.innerHTML = "<div class='product-3d-empty-card'><span class='product-3d-cube'>3D</span><strong>公開済み3Dモデルはありません</strong>" + createAction + "</div>";
       return;
     }
     host.innerHTML = visible.map(function (model) {
