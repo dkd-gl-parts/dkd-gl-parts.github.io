@@ -66,9 +66,10 @@ const pairForm = sourceBetween(app, "async function fetchCoreProductStampPairs",
 ].forEach((fragment) => requireFragment(pairForm, fragment, "stamp-pair editor validation"));
 
 [
-  ".production-stamp-pair-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 137px; overflow-y: auto;",
-  ".production-stamp-pair-grid { grid-template-columns: 1fr; max-height: 137px; }",
-  ".product-form-stamp-pair-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 32px;"
+  ".production-stamp-pair-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; max-height: 157px; overflow-y: auto;",
+  ".production-stamp-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); min-height: 34px; overflow: hidden; border: 1px solid #cfd9e6; border-left: 3px solid #4f8fea;",
+  ".production-stamp-pair-grid { grid-template-columns: 1fr; max-height: 157px; }",
+  ".product-form-stamp-pair-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 32px; gap: 8px; align-items: end; border: 1px solid #d5dfeb;"
 ].forEach((fragment) => requireFragment(css, fragment, "stamp-pair responsive layout"));
 
 if (sourceBetween(app, "function renderPanelStatic", "async function loadImages").includes("renderProductionStampPairsHtml")) {
