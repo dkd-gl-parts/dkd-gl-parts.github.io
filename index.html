@@ -1041,6 +1041,7 @@
           <select class="form-select" id="production-category-filter"></select>
         </div>
         <div class="production-ranking-tools">
+          <button class="btn-sm-edit production-action-secondary" id="production-stamp-search-open" type="button" data-i18n="stamp_search_open">F/R刻印検索</button>
           <button class="btn-sm-edit production-action-secondary" id="production-add-ranking-inline" data-i18n="btn_add_production_ranking">製造リスト追加</button>
           <button class="btn-sm-edit production-action-secondary" id="production-edit-ranking-inline" data-i18n="btn_edit_selected_row">選択行修正</button>
         </div>
@@ -1066,6 +1067,34 @@
           <div data-i18n="production_select_hint">製造候補を選択してください</div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="form-overlay" id="production-stamp-search-overlay">
+  <div class="form-card production-stamp-search-card" role="dialog" aria-modal="true" aria-labelledby="production-stamp-search-title">
+    <div class="production-stamp-search-head">
+      <div>
+        <div class="product-form-eyebrow">STAMP PAIR SEARCH</div>
+        <h3 id="production-stamp-search-title" data-i18n="stamp_search_title">F/R刻印組合せを検索</h3>
+        <p data-i18n="stamp_search_help">FまたはRだけでも検索できます。両方を入力すると組合せが一致する品番だけを表示します。</p>
+      </div>
+      <button class="btn-cancel production-stamp-search-close" id="production-stamp-search-close" type="button" aria-label="閉じる">&#215;</button>
+    </div>
+    <div class="production-stamp-search-fields">
+      <div class="form-row">
+        <label class="form-label" for="production-stamp-f-number" data-i18n="stamp_f_number">Fナンバー</label>
+        <input class="form-input" id="production-stamp-f-number" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="例: 1234">
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="production-stamp-r-number" data-i18n="stamp_r_number">Rナンバー</label>
+        <input class="form-input" id="production-stamp-r-number" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="例: 5678">
+      </div>
+    </div>
+    <div class="reg-error production-stamp-search-error" id="production-stamp-search-error" aria-live="polite"></div>
+    <div class="form-footer">
+      <button class="btn-cancel" id="production-stamp-search-cancel" type="button" data-i18n="btn_cancel">キャンセル</button>
+      <button class="btn-primary" id="production-stamp-search-submit" type="button" data-i18n="btn_search">検索</button>
     </div>
   </div>
 </div>
@@ -2009,6 +2038,16 @@
             </div>
             <div class="spec-form-help" id="gltek-product-add-status" data-i18n="gltek_product_add_help">上のメーカーとメーカー品番は選択したベース商品の情報です。登録後はメーカーがGLTEKになり、メーカー品番とGLTEK品番にはGMMCC-NNNNN形式の同じ新しいGLTEK品番が入ります。</div>
           </div>
+        </div>
+        <div class="product-form-stamp-pairs" id="pf-stamp-pair-fields">
+          <div class="product-form-stamp-pair-head">
+            <div>
+              <div class="spec-title" data-i18n="stamp_pair_section">F/R刻印組合せ</div>
+              <div class="spec-form-help" data-i18n="stamp_pair_form_help">組み立て時に確認するFナンバーとRナンバーを、組合せごとに登録します。</div>
+            </div>
+            <button class="btn-sm-edit" id="pf-stamp-pair-add" type="button" data-i18n="stamp_pair_add">組合せを追加</button>
+          </div>
+          <div class="product-form-stamp-pair-list" id="pf-stamp-pair-list"></div>
         </div>
         <div class="spec-form-grid product-form-core-grid" id="pf-core-inventory-fields">
           <div class="form-row">
