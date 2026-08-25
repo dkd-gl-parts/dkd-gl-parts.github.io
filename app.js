@@ -347,6 +347,27 @@ var TRANSLATIONS = {
     production_year_all: "年度すべて",
     production_search_wait: "検索待ち",
     production_search_hint: "検索条件を指定して検索してください。",
+    stamp_search_open: "F/R刻印検索",
+    stamp_search_title: "F/R刻印組合せを検索",
+    stamp_search_help: "FまたはRだけでも検索できます。両方を入力すると組合せが一致する品番だけを表示します。",
+    stamp_f_number: "Fナンバー",
+    stamp_r_number: "Rナンバー",
+    stamp_pair_section: "F/R刻印組合せ",
+    stamp_pair_form_help: "組み立て時に確認するFナンバーとRナンバーを、組合せごとに登録します。",
+    stamp_pair_add: "組合せを追加",
+    stamp_pair_remove: "この組合せを削除",
+    stamp_pair_empty: "F/R刻印組合せは未登録です",
+    stamp_pair_confirm_required: "確認必要",
+    stamp_pair_total: "全{n}組",
+    stamp_pair_match: "一致した刻印",
+    stamp_search_required: "FナンバーまたはRナンバーを入力してください。",
+    stamp_number_invalid: "FナンバーとRナンバーは3～4桁の数字で入力してください。",
+    stamp_pair_incomplete: "FナンバーとRナンバーを組み合わせて入力してください。",
+    stamp_pair_duplicate: "同じF/R刻印組合せが重複しています。",
+    stamp_pair_load_failed: "F/R刻印組合せを読み込めませんでした。",
+    stamp_pair_save_failed: "F/R刻印組合せを保存できませんでした。",
+    stamp_search_failed: "F/R刻印検索に失敗しました。",
+    stamp_search_count: "F/R刻印検索 {n}件",
     btn_edit_selected_row: "選択行修正",
     production_instruction_filter: "製造予定リスト",
     production_category_filter: "カテゴリ",
@@ -2000,6 +2021,27 @@ var TRANSLATIONS = {
     production_year_all: "All years",
     production_search_wait: "Waiting for search",
     production_search_hint: "Set search conditions and run a search.",
+    stamp_search_open: "F/R Stamp Search",
+    stamp_search_title: "Search F/R Stamp Pairs",
+    stamp_search_help: "Search by F or R alone, or enter both to find an exact pair.",
+    stamp_f_number: "F Number",
+    stamp_r_number: "R Number",
+    stamp_pair_section: "F/R Stamp Pairs",
+    stamp_pair_form_help: "Register each F and R stamp-number combination used during assembly.",
+    stamp_pair_add: "Add Pair",
+    stamp_pair_remove: "Remove this pair",
+    stamp_pair_empty: "No F/R stamp pairs registered",
+    stamp_pair_confirm_required: "Check required",
+    stamp_pair_total: "{n} pairs",
+    stamp_pair_match: "Matched stamp",
+    stamp_search_required: "Enter an F number or R number.",
+    stamp_number_invalid: "F and R numbers must contain 3 or 4 digits.",
+    stamp_pair_incomplete: "Enter both the F number and R number for each pair.",
+    stamp_pair_duplicate: "The same F/R stamp pair is entered more than once.",
+    stamp_pair_load_failed: "Could not load F/R stamp pairs.",
+    stamp_pair_save_failed: "Could not save F/R stamp pairs.",
+    stamp_search_failed: "F/R stamp search failed.",
+    stamp_search_count: "F/R stamp search: {n}",
     btn_edit_selected_row: "Edit Selected Row",
     production_instruction_filter: "Production Plan",
     production_category_filter: "Category",
@@ -3590,6 +3632,27 @@ var TRANSLATIONS = {
     production_year_all: "全部年度",
     production_search_wait: "等待搜索",
     production_search_hint: "请指定搜索条件后搜索。",
+    stamp_search_open: "F/R刻印搜索",
+    stamp_search_title: "搜索F/R刻印组合",
+    stamp_search_help: "可仅输入F或R搜索；同时输入时仅显示组合完全一致的商品。",
+    stamp_f_number: "F编号",
+    stamp_r_number: "R编号",
+    stamp_pair_section: "F/R刻印组合",
+    stamp_pair_form_help: "按组合登记组装时需要确认的F编号和R编号。",
+    stamp_pair_add: "添加组合",
+    stamp_pair_remove: "删除此组合",
+    stamp_pair_empty: "尚未登记F/R刻印组合",
+    stamp_pair_confirm_required: "需要确认",
+    stamp_pair_total: "共{n}组",
+    stamp_pair_match: "匹配刻印",
+    stamp_search_required: "请输入F编号或R编号。",
+    stamp_number_invalid: "F编号和R编号必须为3～4位数字。",
+    stamp_pair_incomplete: "请成对输入F编号和R编号。",
+    stamp_pair_duplicate: "存在重复的F/R刻印组合。",
+    stamp_pair_load_failed: "无法读取F/R刻印组合。",
+    stamp_pair_save_failed: "无法保存F/R刻印组合。",
+    stamp_search_failed: "F/R刻印搜索失败。",
+    stamp_search_count: "F/R刻印搜索 {n}件",
     btn_edit_selected_row: "修改所选行",
     app_sub: "大光目录与搜索系统",
     login_system_subtitle: "汽车零部件搜索与订购系统",
@@ -5045,6 +5108,9 @@ var currentProduct    = null;
 var currentProductVariants = [];
 var currentSelectedProductKind = "rebuilt";
 var coreProductFormVariants = [];
+var coreProductFormStampPairs = [];
+var coreProductFormStampPairsOriginalRows = [];
+var coreProductFormStampPairsOriginalSignature = "";
 var currentCoreDkdShohinId = null;
 var currentProductSpecs = [];
 var currentProductNominalSpec = null;
@@ -5094,6 +5160,10 @@ var productionFilteredRows = [];
 var productionFilter = "all";
 var productionCategoryFilter = "all";
 var currentProductionRow = null;
+var productionStampSearchActive = false;
+var productionStampSearchCriteria = { f_number: "", r_number: "" };
+var productionStampMatchMap = {};
+var productionStampSearchSeq = 0;
 var componentReturnScreen = "search";
 var componentParallelReturnScreen = "search";
 var componentAlternativeRows = [];
@@ -6385,6 +6455,9 @@ async function applyLanguage(lang) {
   if (dataLoaded) { renderCategoryChips(); render(); }
   renderProductionFilterChips();
   renderProductionCategoryFilterOptions();
+  if (document.getElementById("part-form-overlay") && document.getElementById("part-form-overlay").classList.contains("show") && partFormSource === "core_products") {
+    renderCoreProductStampPairForm();
+  }
   if (currentProduct) { renderPanelStatic(); }
   renderComponentAddPanel();
   renderAssemblyComponentRows();
@@ -13217,6 +13290,186 @@ function configureSalesProductAddButton() {
   button.onclick = canEdit() ? openCoreProductAddFromSearch : null;
 }
 
+function normalizeStampNumberValue(value) {
+  return normalizeAsciiWidth(String(value == null ? "" : value)).trim();
+}
+
+function isValidStampNumberValue(value) {
+  return /^[0-9]{3,4}$/.test(String(value || ""));
+}
+
+function stampPairSignature(pairs) {
+  return (pairs || []).map(function(pair) {
+    return normalizeStampNumberValue(pair.f_number) + ":" + normalizeStampNumberValue(pair.r_number);
+  }).join("|");
+}
+
+function clearProductionStampSearchState() {
+  productionStampSearchSeq += 1;
+  productionStampSearchActive = false;
+  productionStampSearchCriteria = { f_number: "", r_number: "" };
+  productionStampMatchMap = {};
+  var submit = document.getElementById("production-stamp-search-submit");
+  if (submit) submit.disabled = false;
+}
+
+function openProductionStampSearch() {
+  var overlay = document.getElementById("production-stamp-search-overlay");
+  var fInput = document.getElementById("production-stamp-f-number");
+  var rInput = document.getElementById("production-stamp-r-number");
+  var errorEl = document.getElementById("production-stamp-search-error");
+  if (!overlay || !fInput || !rInput) return;
+  fInput.value = productionStampSearchCriteria.f_number || "";
+  rInput.value = productionStampSearchCriteria.r_number || "";
+  if (errorEl) errorEl.textContent = "";
+  overlay.classList.add("show");
+  window.setTimeout(function() { (fInput.value ? rInput : fInput).focus(); }, 0);
+}
+
+function closeProductionStampSearch() {
+  var overlay = document.getElementById("production-stamp-search-overlay");
+  if (overlay) overlay.classList.remove("show");
+}
+
+async function fetchProductionStampPairMatches(fNumber, rNumber) {
+  var rows = [];
+  var pageSize = 1000;
+  for (var offset = 0; offset < 10000; offset += pageSize) {
+    var query = sb.from("core_product_stamp_pairs")
+      .select("dkd_shohin_id,f_number,r_number,sort_order")
+      .order("dkd_shohin_id", { ascending: true })
+      .order("sort_order", { ascending: true })
+      .range(offset, offset + pageSize - 1);
+    if (fNumber) query = query.eq("f_number", fNumber);
+    if (rNumber) query = query.eq("r_number", rNumber);
+    var result = await query;
+    if (result.error) return result;
+    var pageRows = result.data || [];
+    rows = rows.concat(pageRows);
+    if (pageRows.length < pageSize) break;
+  }
+  return { data: rows, error: null };
+}
+
+async function fetchProductionProductsForStampMatches(ids) {
+  var requests = [];
+  for (var i = 0; i < ids.length; i += 200) {
+    requests.push(
+      sb.from("core_products")
+        .select(CORE_PRODUCT_FAST_SELECT)
+        .in("dkd_shohin_id", ids.slice(i, i + 200))
+    );
+  }
+  var results = await Promise.all(requests);
+  var rows = [];
+  for (var j = 0; j < results.length; j++) {
+    if (results[j].error) return { data: [], error: results[j].error };
+    rows = rows.concat(results[j].data || []);
+  }
+  return { data: normalizeCoreProductFastRows(rows), error: null };
+}
+
+function renderProductionStampMatchHtml(row) {
+  if (!productionStampSearchActive) return "";
+  var matches = productionStampMatchMap[productDkdId(row)] || [];
+  if (!matches.length) return "";
+  var visible = matches.slice(0, 3).map(function(pair) {
+    return "<span>F " + esc(pair.f_number) + " / R " + esc(pair.r_number) + "</span>";
+  }).join("");
+  var remaining = matches.length > 3 ? "<span>+" + esc(String(matches.length - 3)) + "</span>" : "";
+  return "<div class='production-stamp-result-pairs' title='" + esc(t("stamp_pair_match")) + "'>" + visible + remaining + "</div>";
+}
+
+async function runProductionStampSearch() {
+  var fInput = document.getElementById("production-stamp-f-number");
+  var rInput = document.getElementById("production-stamp-r-number");
+  var errorEl = document.getElementById("production-stamp-search-error");
+  var submit = document.getElementById("production-stamp-search-submit");
+  var fNumber = normalizeStampNumberValue(fInput && fInput.value);
+  var rNumber = normalizeStampNumberValue(rInput && rInput.value);
+  if (fInput) fInput.value = fNumber;
+  if (rInput) rInput.value = rNumber;
+  if (errorEl) errorEl.textContent = "";
+  if (!fNumber && !rNumber) {
+    if (errorEl) errorEl.textContent = t("stamp_search_required");
+    return;
+  }
+  if ((fNumber && !isValidStampNumberValue(fNumber)) || (rNumber && !isValidStampNumberValue(rNumber))) {
+    if (errorEl) errorEl.textContent = t("stamp_number_invalid");
+    return;
+  }
+
+  var seq = ++productionStampSearchSeq;
+  if (submit) submit.disabled = true;
+  var countEl = document.getElementById("production-count");
+  if (countEl) countEl.textContent = t("loading");
+  var pairResult = await fetchProductionStampPairMatches(fNumber, rNumber);
+  if (seq !== productionStampSearchSeq) return;
+  if (pairResult.error) {
+    if (submit) submit.disabled = false;
+    if (errorEl) errorEl.textContent = t("stamp_search_failed") + " " + (pairResult.error.message || "");
+    return;
+  }
+
+  var matchMap = {};
+  (pairResult.data || []).forEach(function(pair) {
+    var key = String(pair.dkd_shohin_id || "");
+    if (!key) return;
+    if (!matchMap[key]) matchMap[key] = [];
+    matchMap[key].push(pair);
+  });
+  var ids = Object.keys(matchMap).map(function(id) { return parseInt(id, 10); }).filter(function(id) { return !isNaN(id); });
+  var productResult = ids.length
+    ? await fetchProductionProductsForStampMatches(ids)
+    : { data: [], error: null };
+  if (seq !== productionStampSearchSeq) return;
+  if (submit) submit.disabled = false;
+  if (productResult.error) {
+    if (errorEl) errorEl.textContent = t("stamp_search_failed") + " " + (productResult.error.message || "");
+    return;
+  }
+
+  productionStampSearchActive = true;
+  productionStampSearchCriteria = { f_number: fNumber, r_number: rNumber };
+  productionStampMatchMap = matchMap;
+  productionFilter = "all";
+  productionCategoryFilter = "all";
+  productionSearchLimit = Math.max(SEARCH_INITIAL_LIMIT, ids.length);
+  productionSearchFetchedCount = ids.length;
+  productionSearchTotalCount = ids.length;
+  productionSearchHasMore = false;
+  productionSearchPageKey = "";
+  productionLoaded = true;
+  var qEl = document.getElementById("production-q");
+  if (qEl) qEl.value = "";
+  document.querySelectorAll("[data-production-filter]").forEach(function(chip) {
+    chip.classList.toggle("active", chip.dataset.productionFilter === "all");
+  });
+  renderProductionCategoryFilterOptions();
+  productionRows = (productResult.data || []).map(enrichProductionProduct);
+  applyCachedSearchAuxiliaryMaps(productionRows);
+  productionRows = productionRows.map(enrichProductionProduct);
+  sortProductionRows();
+  currentProductionRow = productionRows[0] || null;
+  closeProductionStampSearch();
+  renderProductionList();
+  await renderProductionDetail(currentProductionRow);
+  if (productionRows.length) {
+    loadProductionAuxiliaryData(productionRows.slice()).catch(function(error) {
+      console.warn("production stamp-search auxiliary lookup failed", error);
+    });
+  }
+  logUserActivity("search", {
+    screen: "production-search",
+    action: "production_stamp_pair_search",
+    target_type: "core_product_stamp_pairs",
+    target_desc: [fNumber ? "F " + fNumber : "", rNumber ? "R " + rNumber : ""].filter(Boolean).join(" / "),
+    metadata: { f_number: fNumber || null, r_number: rNumber || null, result_count: productionRows.length },
+    throttleKey: "production-stamp:" + fNumber + ":" + rNumber,
+    throttleMs: 3000
+  });
+}
+
 async function enterSearch(options) {
   options = options || {};
   if (options.fromCustomerPortal || isCustomerViewer()) {
@@ -13240,6 +13493,7 @@ async function enterProductionSearch() {
   productionCategoryFilter = "all";
   productionSearchLimit = SEARCH_INITIAL_LIMIT;
   productionLoaded = false;
+  clearProductionStampSearchState();
   currentProductionRow = null;
   var qEl = document.getElementById("production-q");
   if (qEl) qEl.value = "";
@@ -13249,6 +13503,7 @@ async function enterProductionSearch() {
 }
 
 function resetProductionSearchView() {
+  clearProductionStampSearchState();
   productionRows = [];
   productionFilteredRows = [];
   productionSearchFetchedCount = 0;
@@ -13533,6 +13788,7 @@ function sortProductionRows() {
 
 async function loadProductionProducts(options) {
   options = options || {};
+  clearProductionStampSearchState();
   productionAuxRequestSeq++;
   var countEl = document.getElementById("production-count");
   if (countEl) countEl.textContent = t("loading");
@@ -13754,13 +14010,15 @@ function renderProductionList() {
     return productionMatchesFilter(row) && productionMatchesQuery(row, q);
   });
   if (countEl) {
-    countEl.textContent = productionSearchTotalCount !== null
+    countEl.textContent = productionStampSearchActive
+      ? tf("stamp_search_count", { n: productionFilteredRows.length })
+      : productionSearchTotalCount !== null
       ? tf("search_count_loaded", { loaded: productionFilteredRows.length, total: productionSearchTotalCount })
       : productionFilteredRows.length + " 件表示 / 商品 " + productionRows.length + " 件";
   }
   if (moreWrap) setCspStyle(moreWrap, "display", productionSearchHasMore ? "block" : "none");
   if (!productionRows.length) {
-    list.innerHTML = "<div class='loading'>商品を検索してください。</div>";
+    list.innerHTML = "<div class='loading'>" + (productionStampSearchActive ? esc(t("no_results")) : "商品を検索してください。") + "</div>";
     return;
   }
   if (!productionFilteredRows.length) {
@@ -13789,6 +14047,7 @@ function renderProductionList() {
       "<div class='production-card-top'>" + rankHtml + renderProductionComponentCountBadges(row) + "</div>" +
       "<div class='production-number'>" + esc(title) + "</div>" +
       "<div class='production-sub-number'>純正 " + esc(subGenuinePartNumber) + "</div>" +
+      renderProductionStampMatchHtml(row) +
       "<div class='production-label-row'>" +
         renderProductKindPills(kindSummary, { compact: true }) +
         renderResultBadgeSlots({
@@ -14541,6 +14800,27 @@ function renderProductMasterDetailHtml(p, componentButtonHtml) {
   "</div>";
 }
 
+function renderProductionStampPairsHtml(rows) {
+  rows = (rows || []).slice().sort(function(a, b) {
+    var orderDiff = (parseInt(a.sort_order || 0, 10) || 0) - (parseInt(b.sort_order || 0, 10) || 0);
+    if (orderDiff) return orderDiff;
+    return String(a.f_number || "").localeCompare(String(b.f_number || ""));
+  });
+  if (!rows.length) {
+    return "<div class='production-stamp-detail empty'><div class='production-stamp-detail-head'><span>" + esc(t("stamp_pair_section")) + "</span></div><div class='production-stamp-empty'>" + esc(t("stamp_pair_empty")) + "</div></div>";
+  }
+  var items = rows.map(function(pair) {
+    return "<div class='production-stamp-pair'>" +
+      "<span><small>F</small><strong>" + esc(pair.f_number || "-") + "</strong></span>" +
+      "<span><small>R</small><strong>" + esc(pair.r_number || "-") + "</strong></span>" +
+    "</div>";
+  }).join("");
+  return "<div class='production-stamp-detail'>" +
+    "<div class='production-stamp-detail-head'><span>" + esc(t("stamp_pair_section")) + "</span><div><strong>" + esc(tf("stamp_pair_total", { n: rows.length })) + "</strong><em>" + esc(t("stamp_pair_confirm_required")) + "</em></div></div>" +
+    "<div class='production-stamp-pair-grid'>" + items + "</div>" +
+  "</div>";
+}
+
 function renderProductionCorePolicies(rows) {
   rows = rows || [];
   var kinds = [];
@@ -14599,6 +14879,7 @@ async function renderProductionDetail(row) {
   html += "<div class='production-master-column'>";
   html += "<section class='production-section production-master-section'><div class='production-section-heading'><h3>" + esc(productCategoryLabel(row)) + "</h3><span>DKD " + esc(row.dkd_shohin_id || "-") + "</span></div>";
   html += renderProductMasterDetailHtml(row, componentButtonHtml);
+  html += renderProductionStampPairsHtml(detail.stampPairs);
   html += "</section>";
   html += "<section class='production-section production-kikan-section'><div class='production-section-heading'><h3>" + esc(t("kikan_section")) + "</h3></div>";
   html += "<div id='production-kikan-wrap'><div class='production-help'>" + esc(t("loading")) + "</div></div>";
@@ -14645,7 +14926,7 @@ async function renderProductionDetail(row) {
 
 async function loadProductionDetailData(row) {
   var dkdId = row && row.dkd_shohin_id;
-  var result = { coreEntries: [], productVariants: [] };
+  var result = { coreEntries: [], productVariants: [], stampPairs: [] };
   if (!dkdId) return result;
   var requests = await Promise.all([
     sb.from("production_core_list_entries")
@@ -14657,12 +14938,20 @@ async function loadProductionDetailData(row) {
       .select("product_variant_id,dkd_shohin_id,product_kind,core_return_required,core_charge_jpy,is_active")
       .eq("dkd_shohin_id", dkdId)
       .eq("is_active", true)
-      .in("product_kind", ["rebuilt", "aftermarket_new"])
+      .in("product_kind", ["rebuilt", "aftermarket_new"]),
+    sb.from("core_product_stamp_pairs")
+      .select("id,dkd_shohin_id,f_number,r_number,sort_order")
+      .eq("dkd_shohin_id", dkdId)
+      .order("sort_order", { ascending: true })
+      .order("id", { ascending: true })
   ]);
   var entryR = requests[0];
   var variantR = requests[1];
+  var stampPairR = requests[2];
   result.coreEntries = entryR.data || [];
   result.productVariants = variantR.error ? [] : (variantR.data || []);
+  if (stampPairR.error) console.warn("product stamp-pair detail lookup failed", stampPairR.error);
+  result.stampPairs = stampPairR.error ? [] : (stampPairR.data || []);
   return result;
 }
 
@@ -25986,12 +26275,137 @@ async function saveCoreProductPolicyForDkd(dkd, errEl) {
   return true;
 }
 
+async function fetchCoreProductStampPairs(dkdId) {
+  var numericId = parseInt(dkdId, 10);
+  if (isNaN(numericId)) return [];
+  var result = await sb.from("core_product_stamp_pairs")
+    .select("id,dkd_shohin_id,f_number,r_number,sort_order")
+    .eq("dkd_shohin_id", numericId)
+    .order("sort_order", { ascending: true })
+    .order("id", { ascending: true });
+  if (result.error) throw result.error;
+  return result.data || [];
+}
+
+function renderCoreProductStampPairForm() {
+  var list = document.getElementById("pf-stamp-pair-list");
+  if (!list) return;
+  if (!coreProductFormStampPairs.length) {
+    coreProductFormStampPairs = [{ f_number: "", r_number: "" }];
+  }
+  list.innerHTML = coreProductFormStampPairs.map(function(pair, index) {
+    return "<div class='product-form-stamp-pair-row' data-stamp-pair-index='" + index + "'>" +
+      "<label><span>" + esc(t("stamp_f_number")) + "</span><input class='form-input' type='text' inputmode='numeric' maxlength='4' autocomplete='off' data-stamp-pair-field='f_number' value='" + esc(pair.f_number || "") + "'></label>" +
+      "<label><span>" + esc(t("stamp_r_number")) + "</span><input class='form-input' type='text' inputmode='numeric' maxlength='4' autocomplete='off' data-stamp-pair-field='r_number' value='" + esc(pair.r_number || "") + "'></label>" +
+      "<button class='product-form-stamp-pair-remove' type='button' data-stamp-pair-remove='" + index + "' aria-label='" + esc(t("stamp_pair_remove")) + "' title='" + esc(t("stamp_pair_remove")) + "'>&#215;</button>" +
+    "</div>";
+  }).join("");
+  list.querySelectorAll("[data-stamp-pair-field]").forEach(function(input) {
+    input.addEventListener("input", function() {
+      var row = input.closest("[data-stamp-pair-index]");
+      var index = row ? parseInt(row.dataset.stampPairIndex, 10) : -1;
+      if (index < 0 || !coreProductFormStampPairs[index]) return;
+      coreProductFormStampPairs[index][input.dataset.stampPairField] = input.value;
+    });
+    input.addEventListener("blur", function() {
+      var normalized = normalizeStampNumberValue(input.value);
+      input.value = normalized;
+      var row = input.closest("[data-stamp-pair-index]");
+      var index = row ? parseInt(row.dataset.stampPairIndex, 10) : -1;
+      if (index >= 0 && coreProductFormStampPairs[index]) {
+        coreProductFormStampPairs[index][input.dataset.stampPairField] = normalized;
+      }
+    });
+  });
+  list.querySelectorAll("[data-stamp-pair-remove]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      var index = parseInt(button.dataset.stampPairRemove, 10);
+      if (!isNaN(index)) coreProductFormStampPairs.splice(index, 1);
+      renderCoreProductStampPairForm();
+    });
+  });
+}
+
+function initializeCoreProductStampPairForm(rows) {
+  var cleanRows = (rows || []).map(function(pair) {
+    return {
+      f_number: normalizeStampNumberValue(pair.f_number),
+      r_number: normalizeStampNumberValue(pair.r_number)
+    };
+  }).filter(function(pair) { return pair.f_number || pair.r_number; });
+  coreProductFormStampPairsOriginalRows = cleanRows.map(function(pair) { return Object.assign({}, pair); });
+  coreProductFormStampPairsOriginalSignature = stampPairSignature(cleanRows);
+  coreProductFormStampPairs = cleanRows.length ? cleanRows : [{ f_number: "", r_number: "" }];
+  renderCoreProductStampPairForm();
+}
+
+function coreProductStampPairFormValue() {
+  var list = document.getElementById("pf-stamp-pair-list");
+  var pairs = [];
+  var seen = {};
+  var error = "";
+  if (!list) return { pairs: pairs, error: error };
+  list.querySelectorAll("[data-stamp-pair-index]").forEach(function(row) {
+    if (error) return;
+    var fInput = row.querySelector("[data-stamp-pair-field='f_number']");
+    var rInput = row.querySelector("[data-stamp-pair-field='r_number']");
+    var fNumber = normalizeStampNumberValue(fInput && fInput.value);
+    var rNumber = normalizeStampNumberValue(rInput && rInput.value);
+    if (fInput) fInput.value = fNumber;
+    if (rInput) rInput.value = rNumber;
+    if (!fNumber && !rNumber) return;
+    if (!fNumber || !rNumber) {
+      error = t("stamp_pair_incomplete");
+      return;
+    }
+    if (!isValidStampNumberValue(fNumber) || !isValidStampNumberValue(rNumber)) {
+      error = t("stamp_number_invalid");
+      return;
+    }
+    var key = fNumber + ":" + rNumber;
+    if (seen[key]) {
+      error = t("stamp_pair_duplicate");
+      return;
+    }
+    seen[key] = true;
+    pairs.push({ f_number: fNumber, r_number: rNumber });
+  });
+  if (pairs.length > 100) error = "F/R刻印組合せは1品番につき100組までです。";
+  return { pairs: pairs, error: error };
+}
+
+async function saveCoreProductStampPairsForDkd(dkd, pairs, errEl) {
+  var nextSignature = stampPairSignature(pairs);
+  if (nextSignature === coreProductFormStampPairsOriginalSignature) return true;
+  var result = await sb.rpc("replace_core_product_stamp_pairs", {
+    target_dkd_shohin_id: parseInt(dkd, 10),
+    target_pairs: pairs
+  });
+  if (result.error) {
+    console.warn("product stamp-pair save failed", result.error);
+    errEl.textContent = t("stamp_pair_save_failed") + " " + (result.error.message || "");
+    return false;
+  }
+  var savedRows = result.data || [];
+  await writeLog(
+    coreProductFormStampPairsOriginalRows.length ? "update" : "insert",
+    "core_product_stamp_pairs",
+    dkd,
+    tf("stamp_pair_total", { n: savedRows.length }),
+    coreProductFormStampPairsOriginalRows,
+    savedRows
+  );
+  initializeCoreProductStampPairForm(savedRows);
+  return true;
+}
+
 function setProductFormFieldMode(source, mode) {
   var productCodeRow = document.getElementById("pf-shohin-cd-row");
   var productCodeInput = document.getElementById("pf-shohin-cd");
   var coreInventoryFields = document.getElementById("pf-core-inventory-fields");
   var corePolicyFields = document.getElementById("pf-core-policy-fields");
   var shippingFields = document.getElementById("pf-shipping-fields");
+  var stampPairFields = document.getElementById("pf-stamp-pair-fields");
   var coreStockInput = document.getElementById("pf-core-stock-qty");
   var corePalletInput = document.getElementById("pf-core-pallet-no");
   var shippingWeightInput = document.getElementById("pf-shipping-weight");
@@ -26004,6 +26418,7 @@ function setProductFormFieldMode(source, mode) {
   setCspStyle(coreInventoryFields, "display", isCoreProduct && !isAdd ? "" : "none");
   setCspStyle(corePolicyFields, "display", isCoreProduct ? "" : "none");
   setCspStyle(shippingFields, "display", isCoreProduct ? "" : "none");
+  setCspStyle(stampPairFields, "display", isCoreProduct ? "" : "none");
 
   if (productCodeInput) {
     productCodeInput.readOnly = isCoreProduct || mode === "edit";
@@ -26045,6 +26460,7 @@ function setCoreProductFormFields(p) {
   document.getElementById("pf-part-manufacturer-type").value = partFormMode === "edit" && p && p.part_manufacturer_type === "gltek" ? "gltek" : "external";
   document.getElementById("pf-gltek-base-code").value = "";
   document.getElementById("pf-gltek-category-code").value = "";
+  initializeCoreProductStampPairForm([]);
   setGltekProductAddPanel();
 }
 
@@ -26071,9 +26487,23 @@ async function openCoreProductForm(mode, product, context) {
   setProductFormFieldMode("core_products", mode);
   await populateProductShippingSizeSelect(formProduct);
   coreProductFormVariants = [];
+  var stampPairRows = [];
   if (mode === "edit" && productDkdId(formProduct)) {
-    coreProductFormVariants = await fetchProductVariantsByDkdId(productDkdId(formProduct));
+    var formData = await Promise.all([
+      fetchProductVariantsByDkdId(productDkdId(formProduct)),
+      fetchCoreProductStampPairs(productDkdId(formProduct))
+    ]).catch(function(error) {
+      console.warn("product form supplemental lookup failed", error);
+      return null;
+    });
+    if (!formData) {
+      document.getElementById("part-form-error").textContent = t("stamp_pair_load_failed");
+      return;
+    }
+    coreProductFormVariants = formData[0] || [];
+    stampPairRows = formData[1] || [];
   }
+  initializeCoreProductStampPairForm(stampPairRows);
   populateCoreProductPolicyForm(formProduct, currentSelectedProductKind);
   clearUnifiedSpecForm();
   if (mode === "edit") {
@@ -26109,12 +26539,14 @@ async function saveCoreProductForm() {
   var errEl = document.getElementById("part-form-error");
   errEl.textContent = "";
   if (!canEdit()) { errEl.textContent = t("err_perm"); return; }
+  var stampPairFormValue = coreProductStampPairFormValue();
+  if (stampPairFormValue.error) { errEl.textContent = stampPairFormValue.error; return; }
   var addingProduct = partFormMode === "add";
   var gltekAutoIssueContext = addingProduct ? "product_add" : "product_edit";
   var formContext = coreProductFormContext;
   var dkdInput = document.getElementById("pf-shohin-cd").value.trim();
   var dkd = dkdInput ? parseInt(dkdInput, 10) : null;
-  if (isNaN(dkd)) { errEl.textContent = t("lbl_shohin_cd") + "を入力してください"; return; }
+  if (dkdInput && isNaN(dkd)) { errEl.textContent = t("lbl_shohin_cd") + "を入力してください"; return; }
   if (!addingProduct && !dkd) { errEl.textContent = "商品コードを入力してください"; return; }
   var genuine = document.getElementById("pf-genuine-pn").value.trim() || null;
   var genuine2 = document.getElementById("pf-genuine-pn2").value.trim() || null;
@@ -26221,6 +26653,8 @@ async function saveCoreProductForm() {
   }
   if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
   if (!dkd) { errEl.textContent = "商品コードを自動採番できませんでした"; return; }
+  var stampPairsOk = await saveCoreProductStampPairsForDkd(dkd, stampPairFormValue.pairs, errEl);
+  if (!stampPairsOk) return;
   var corePolicyOk = await saveCoreProductPolicyForDkd(dkd, errEl);
   if (!corePolicyOk) return;
   var specOk = await saveUnifiedSpecForDkd(dkd, errEl);
@@ -43262,6 +43696,15 @@ document.getElementById("btn-back-logs").addEventListener("click", returnToMenuF
 document.getElementById("btn-add-part").addEventListener("click", openCoreProductAddFromManagement);
 document.getElementById("btn-part-form-cancel").addEventListener("click", function(){ document.getElementById("part-form-overlay").classList.remove("show"); });
 document.getElementById("btn-part-form-save").addEventListener("click", savePartForm);
+document.getElementById("pf-stamp-pair-add").addEventListener("click", function() {
+  if (coreProductFormStampPairs.length >= 100) return;
+  coreProductFormStampPairs.push({ f_number: "", r_number: "" });
+  renderCoreProductStampPairForm();
+  var rows = document.querySelectorAll("#pf-stamp-pair-list [data-stamp-pair-index]");
+  var lastRow = rows.length ? rows[rows.length - 1] : null;
+  var input = lastRow && lastRow.querySelector("[data-stamp-pair-field='f_number']");
+  if (input) input.focus();
+});
 document.getElementById("pf-core-policy-kind").addEventListener("change", function() {
   populateCoreProductPolicyForm(currentProduct, this.value);
 });
@@ -43924,6 +44367,24 @@ document.getElementById("list").addEventListener("keydown", function(e) {
   if (!card) return;
   e.preventDefault();
   activateSalesSearchResultCard(card);
+});
+document.getElementById("production-stamp-search-open").addEventListener("click", openProductionStampSearch);
+document.getElementById("production-stamp-search-close").addEventListener("click", closeProductionStampSearch);
+document.getElementById("production-stamp-search-cancel").addEventListener("click", closeProductionStampSearch);
+document.getElementById("production-stamp-search-submit").addEventListener("click", runProductionStampSearch);
+document.getElementById("production-stamp-search-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeProductionStampSearch();
+});
+["production-stamp-f-number", "production-stamp-r-number"].forEach(function(id) {
+  document.getElementById(id).addEventListener("keydown", function(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      runProductionStampSearch();
+    }
+  });
+  document.getElementById(id).addEventListener("blur", function() {
+    this.value = normalizeStampNumberValue(this.value);
+  });
 });
 document.getElementById("production-search-btn").addEventListener("click", async function(){
   productionSearchLimit = SEARCH_INITIAL_LIMIT;
