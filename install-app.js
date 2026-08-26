@@ -11,15 +11,15 @@
   var manualGuide = document.getElementById("app-install-manual-guide");
   var guideActions = document.getElementById("app-install-guide-actions");
   var startButton = document.getElementById("btn-install-dialog-start");
-  var confirmedButton = document.getElementById("btn-install-dialog-confirmed");
   var iosSafariNote = document.getElementById("app-install-ios-safari-note");
   var returnFocus = null;
   var installAllowed = false;
-  var INSTALL_CAMPAIGN_ID = "dcats-icon-v4";
+  var publishedVerificationMethods = {};
+  var INSTALL_CAMPAIGN_ID = "dcats-icon-v4-verified";
   var INSTALL_COMPLETE_KEY = "dcats_install_complete_" + INSTALL_CAMPAIGN_ID;
   var INSTALL_SESSION_PROMPT_KEY = "dcats_install_prompted_" + INSTALL_CAMPAIGN_ID;
 
-  if (!installEntries.length || !installButtons.length || !installDialog || !introGuide || !iosGuide || !manualGuide || !guideActions || !startButton || !confirmedButton) return;
+  if (!installEntries.length || !installButtons.length || !installDialog || !introGuide || !iosGuide || !manualGuide || !guideActions || !startButton) return;
 
   function isStandalone() {
     return window.matchMedia("(display-mode: standalone)").matches ||
@@ -74,8 +74,35 @@
     return !!(deferredInstallPrompt || isIos() || isAndroid() || isNarrowViewport());
   }
 
+  function currentDisplayMode() {
+    if (window.navigator.standalone === true) return "standalone";
+    if (window.matchMedia("(display-mode: standalone)").matches) return "standalone";
+    if (window.matchMedia("(display-mode: fullscreen)").matches) return "fullscreen";
+    return "browser";
+  }
+
+  function publishInstallVerification(method) {
+    if (!method || publishedVerificationMethods[method]) return;
+    publishedVerificationMethods[method] = true;
+    var detail = {
+      id: method + ":" + Date.now() + ":" + Math.random().toString(36).slice(2, 9),
+      method: method,
+      campaign_id: INSTALL_CAMPAIGN_ID,
+      display_mode: currentDisplayMode(),
+      detected_at: new Date().toISOString()
+    };
+    if (!Array.isArray(window.DCATS_INSTALL_EVENT_QUEUE)) window.DCATS_INSTALL_EVENT_QUEUE = [];
+    window.DCATS_INSTALL_EVENT_QUEUE.push(detail);
+    if (typeof window.CustomEvent === "function") {
+      window.dispatchEvent(new window.CustomEvent("dcats:install-verified", { detail: detail }));
+    }
+  }
+
   function syncInstallEntry() {
-    if (isStandalone()) recordInstallConfirmed();
+    if (isStandalone()) {
+      recordInstallConfirmed();
+      publishInstallVerification("standalone_launch");
+    }
     var shouldHide = !installAllowed || isStandalone() || !canOfferInstall();
     installEntries.forEach(function(entry) { entry.hidden = shouldHide; });
   }
@@ -101,8 +128,9 @@
     returnFocus = null;
   }
 
-  function markInstallConfirmed() {
+  function markInstallConfirmed(method) {
     recordInstallConfirmed();
+    publishInstallVerification(method);
     closeInstallGuide();
     syncInstallEntry();
   }
@@ -123,7 +151,7 @@
 
   window.addEventListener("appinstalled", function() {
     deferredInstallPrompt = null;
-    markInstallConfirmed();
+    markInstallConfirmed("browser_appinstalled");
   });
 
   window.addEventListener("dcats:install-access", function(event) {
@@ -143,7 +171,7 @@
       return;
     }
     if (isStandalone()) {
-      markInstallConfirmed();
+      markInstallConfirmed("standalone_launch");
       return;
     }
 
@@ -155,8 +183,7 @@
       try {
         await promptEvent.prompt();
         var choice = await promptEvent.userChoice;
-        if (choice && choice.outcome === "accepted") markInstallConfirmed();
-        else syncInstallEntry();
+        syncInstallEntry();
       } catch (error) {
         console.warn("D-CATS install prompt failed", error);
         syncInstallEntry();
@@ -173,7 +200,6 @@
   });
 
   startButton.addEventListener("click", beginInstall);
-  confirmedButton.addEventListener("click", markInstallConfirmed);
 
   installDialog.querySelectorAll("[data-install-dialog-close]").forEach(function(element) {
     element.addEventListener("click", closeInstallGuide);

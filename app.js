@@ -70,8 +70,9 @@ var TRANSLATIONS = {
     app_install_repeat_note: "作成するまで、ログイン時にご案内します。不要な場合は「今回はしない」を選べます。",
     app_install_primary: "ホーム画面に追加する",
     app_install_later: "今回はしない",
-    app_install_confirmed: "追加できました",
-    app_install_close_guide: "今回は閉じる",
+    app_install_verification_title: "作成完了は自動で記録します",
+    app_install_verification_note: "追加後、ホーム画面のD-CATSアイコンから一度開いてください。ショートカットからの起動を確認した時点で、作成完了ログを記録します。",
+    app_install_close_guide: "この画面を閉じる",
     app_install_ios_safari_required: "SafariでD-CATSを開いてから操作してください。",
     app_install_ios_step_share: "画面の共有ボタンをタップします。",
     app_install_ios_step_add_home: "「ホーム画面に追加」を選択します。",
@@ -1780,8 +1781,9 @@ var TRANSLATIONS = {
     app_install_repeat_note: "We will ask after login until it is added. Select “Not now” to skip this time.",
     app_install_primary: "Add to Home Screen",
     app_install_later: "Not now",
-    app_install_confirmed: "I added it",
-    app_install_close_guide: "Close for now",
+    app_install_verification_title: "Completion is recorded automatically",
+    app_install_verification_note: "After adding it, open D-CATS once from its Home Screen icon. We record completion only after detecting that shortcut launch.",
+    app_install_close_guide: "Close this screen",
     app_install_ios_safari_required: "Open D-CATS in Safari before continuing.",
     app_install_ios_step_share: "Tap the Share button in the browser.",
     app_install_ios_step_add_home: "Select “Add to Home Screen.”",
@@ -3739,8 +3741,9 @@ var TRANSLATIONS = {
     app_install_repeat_note: "添加完成前，每次登录时都会提示。暂时不添加时请选择“暂不添加”。",
     app_install_primary: "添加到主屏幕",
     app_install_later: "暂不添加",
-    app_install_confirmed: "已添加",
-    app_install_close_guide: "暂时关闭",
+    app_install_verification_title: "自动记录创建完成",
+    app_install_verification_note: "添加后，请从主屏幕上的D-CATS图标打开一次。系统仅在检测到快捷方式启动后记录创建完成。",
+    app_install_close_guide: "关闭此画面",
     app_install_ios_safari_required: "请先使用Safari打开D-CATS。",
     app_install_ios_step_share: "点击浏览器中的共享按钮。",
     app_install_ios_step_add_home: "选择“添加到主屏幕”。",
@@ -5242,7 +5245,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.767";
+var APP_VERSION       = "v1.1.768";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5250,6 +5253,8 @@ var currentPermissionEditUserId = null;
 var currentPermissionEditOverrides = {};
 var currentActivitySessionId = null;
 var activityEventThrottleMap = {};
+var installVerificationLoggedIds = {};
+var installVerificationPendingIds = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
@@ -5714,11 +5719,47 @@ function isSystemAdmin() {
 function canUseInstallApp() {
   return !!userProfile && !isExternalViewer() && canViewProductSearch();
 }
-function syncInstallAppAccess() {
-  window.dispatchEvent(new CustomEvent("dcats:install-access", {
-    detail: { allowed: canUseInstallApp() }
-  }));
+function flushInstallVerificationEvents() {
+  if (!currentUser || !canUseInstallApp()) return;
+  var queue = Array.isArray(window.DCATS_INSTALL_EVENT_QUEUE) ? window.DCATS_INSTALL_EVENT_QUEUE : [];
+  queue.forEach(function(detail) {
+    if (!detail || ["browser_appinstalled", "standalone_launch"].indexOf(detail.method) < 0) return;
+    var eventId = String(detail.id || "").slice(0, 180);
+    if (!eventId || installVerificationLoggedIds[eventId] || installVerificationPendingIds[eventId]) return;
+    installVerificationPendingIds[eventId] = true;
+    var standaloneLaunch = detail.method === "standalone_launch";
+    logUserActivity("screen_open", {
+      screen: standaloneLaunch ? "installed-app" : "browser",
+      action: standaloneLaunch ? "pwa_launch_verified" : "pwa_install_confirmed",
+      target_type: "pwa_shortcut",
+      target_id: String(detail.campaign_id || "dcats-icon-v4-verified").slice(0, 100),
+      target_desc: standaloneLaunch
+        ? "D-CATSショートカット（ホーム画面からの起動確認済み）"
+        : "D-CATSアプリ（ブラウザーのインストール完了確認済み）",
+      metadata: {
+        verification_method: detail.method,
+        display_mode: String(detail.display_mode || "").slice(0, 40),
+        detected_at: String(detail.detected_at || "").slice(0, 60),
+        install_campaign: String(detail.campaign_id || "dcats-icon-v4-verified").slice(0, 100)
+      }
+    }).then(function(result) {
+      delete installVerificationPendingIds[eventId];
+      if (!result || result.error) return;
+      installVerificationLoggedIds[eventId] = true;
+      window.DCATS_INSTALL_EVENT_QUEUE = (window.DCATS_INSTALL_EVENT_QUEUE || []).filter(function(candidate) {
+        return !candidate || candidate.id !== detail.id;
+      });
+    });
+  });
 }
+function syncInstallAppAccess() {
+  var allowed = canUseInstallApp();
+  window.dispatchEvent(new CustomEvent("dcats:install-access", {
+    detail: { allowed: allowed }
+  }));
+  if (allowed) flushInstallVerificationEvents();
+}
+window.addEventListener("dcats:install-verified", flushInstallVerificationEvents);
 function isCompanyAdminRole(profile) {
   return hasAccessRole(profile || userProfile, ["system_admin", "company_admin"]);
 }
@@ -42855,7 +42896,9 @@ function authEventLabel(eventType) {
   return eventType === "logout" ? t("auth_event_logout") : t("auth_event_login");
 }
 
-function activityEventLabel(eventType) {
+function activityEventLabel(eventType, action) {
+  if (eventType === "screen_open" && action === "pwa_launch_verified") return "ショートカット起動確認";
+  if (eventType === "screen_open" && action === "pwa_install_confirmed") return "アプリ追加確認";
   var labels = {
     session_start: t("auth_event_login"),
     session_end: t("auth_event_logout"),
@@ -42894,6 +42937,13 @@ function activitySummaryParts(summary) {
 
 function activityMetadataSummaryText(row) {
   var meta = row && row.metadata && typeof row.metadata === "object" ? row.metadata : {};
+  if (row && row.event_type === "screen_open" && (row.action === "pwa_launch_verified" || row.action === "pwa_install_confirmed")) {
+    return [
+      row.action === "pwa_launch_verified" ? "確認方法: ホーム画面アイコンから起動" : "確認方法: ブラウザーのインストール完了イベント",
+      meta.display_mode ? "表示モード: " + meta.display_mode : "",
+      meta.install_campaign ? "アイコン: " + meta.install_campaign : ""
+    ].filter(Boolean).join(" / ");
+  }
   if (row && row.event_type === "search") {
     var q = meta.query || row.target_desc || "";
     return [
@@ -43000,7 +43050,7 @@ function renderUserAuthHistory(authRows, activityRows, authError, activityError)
     var metaText = activityMetadataSummaryText(row);
     html += "<tr>";
     html += "<td data-dcats-inline-style='s-eb99a4c193ed'>" + esc(dt) + "</td>";
-      html += "<td><span class='activity-event-badge'>" + esc(activityEventLabel(row.event_type)) + "</span></td>";
+      html += "<td><span class='activity-event-badge'>" + esc(activityEventLabel(row.event_type, row.action)) + "</span></td>";
       html += "<td>" + esc(row.screen || "-") + "</td>";
       html += "<td><div class='mgmt-pn'>" + esc(row.action || "-") + "</div><div class='mgmt-sub'>" + esc(row.result || "ok") + "</div>" + (metaText ? "<div class='mgmt-sub'>" + esc(metaText) + "</div>" : "") + "</td>";
       html += "<td><div class='mgmt-pn'>" + esc(row.target_desc || row.target_id || "-") + "</div><div class='mgmt-sub'>" + esc(row.target_type || "-") + "</div></td>";

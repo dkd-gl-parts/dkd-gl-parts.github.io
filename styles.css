@@ -3220,6 +3220,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   gap: 10px;
   margin-top: 20px;
 }
+.app-install-verification-note {
+  display: grid;
+  gap: 5px;
+  padding: 12px 14px;
+  border: 1px solid #cfe0d5;
+  border-radius: 10px;
+  background: #f0f8f3;
+  color: #244b34;
+  line-height: 1.55;
+  text-align: left;
+}
+.app-install-verification-note strong { font-size: 13px; }
+.app-install-verification-note span { color: #4c6858; font-size: 12px; font-weight: 600; }
 .app-install-dialog-secondary {
   width: 100%;
   min-height: 44px;

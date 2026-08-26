@@ -24,7 +24,8 @@ expect(html.includes('id="btn-install-app"'), "Login install button is missing")
 expect(html.includes('id="app-install-dialog"'), "Install guidance dialog is missing");
 expect(html.includes('id="app-install-intro-guide"'), "Post-login install explanation is missing");
 expect(html.includes('id="btn-install-dialog-start"'), "Post-login install action is missing");
-expect(html.includes('id="btn-install-dialog-confirmed"'), "Manual install completion action is missing");
+expect(html.includes('class="app-install-verification-note"'), "Verified shortcut-launch guidance is missing");
+expect(!html.includes('id="btn-install-dialog-confirmed"'), "Manual self-confirmation must not be treated as verified installation");
 const appVersionMatch = app.match(/var\s+APP_VERSION\s*=\s*"v([^"]+)"/);
 expect(appVersionMatch, "D-CATS app version is missing");
 expect(html.includes(`src="install-app.js?v=${appVersionMatch[1]}"`), "Install runtime is missing or unversioned");
@@ -33,9 +34,11 @@ expect(html.includes('href="assets/icons/apple-touch-icon-v4.png"'), "Versioned 
 expect((html.match(/data-install-entry/g) || []).length === 4, "Install action slots must exist on login, internal home, customer home, and sales management");
 expect((html.match(/data-i18n="app_install_short_action"/g) || []).length === 3, "Authenticated header install actions must have a readable compact label");
 expect(install.includes("var installAllowed = false;"), "Install access must default to denied");
-expect(install.includes('var INSTALL_CAMPAIGN_ID = "dcats-icon-v4";'), "Install prompting must be tied to the current icon campaign");
+expect(install.includes('var INSTALL_CAMPAIGN_ID = "dcats-icon-v4-verified";'), "Install prompting must be tied to the verified icon campaign");
 expect(install.includes("window.localStorage"), "Install completion must persist on the device");
 expect(install.includes("window.sessionStorage"), "Install prompting must be limited to once per login session");
+expect(install.includes("function publishInstallVerification(method)"), "Verified browser installation and shortcut launch must be queued for logging");
+expect(install.includes("window.DCATS_INSTALL_EVENT_QUEUE"), "Install verification events must survive until authentication is ready");
 expect(install.includes("function maybeOpenLoginPrompt()"), "Eligible users must receive a post-login install prompt");
 expect(install.includes('window.addEventListener("dcats:install-access"'), "Install access must follow the authenticated role event");
 expect(install.includes("!installAllowed || isStandalone()"), "Install entries must remain hidden without approved access");
@@ -44,7 +47,10 @@ expect(app.includes("function canUseInstallApp()"), "App must define the install
 expect(app.includes("!!userProfile && !isExternalViewer() && canViewProductSearch()"), "Install access must require an internal sales-management user");
 expect(app.includes("function syncInstallAppAccess()"), "App must synchronize install access after authentication changes");
 expect(app.includes('new CustomEvent("dcats:install-access"'), "App must publish the install access event");
-expect(app.includes("detail: { allowed: canUseInstallApp() }"), "Install access must use the sales-management audience check");
+expect(app.includes("detail: { allowed: allowed }"), "Install access must use the sales-management audience check");
+expect(app.includes("function flushInstallVerificationEvents()"), "App must persist verified shortcut events after authentication");
+expect(app.includes('action: standaloneLaunch ? "pwa_launch_verified" : "pwa_install_confirmed"'), "App must distinguish shortcut launches from browser install completion");
+expect(app.includes('target_type: "pwa_shortcut"'), "Verified install logs must use a specific audit target");
 
 function verifyInstallRoleGate() {
   const listeners = {};
@@ -56,7 +62,6 @@ function verifyInstallRoleGate() {
   const manualGuide = { hidden: true };
   const guideActions = { hidden: true };
   const startButton = { listeners: {}, addEventListener(type, handler) { this.listeners[type] = handler; }, focus() {} };
-  const confirmedButton = { listeners: {}, addEventListener(type, handler) { this.listeners[type] = handler; }, focus() {} };
   const storage = () => {
     const values = new Map();
     return {
@@ -67,8 +72,9 @@ function verifyInstallRoleGate() {
   };
   const localStorage = storage();
   const sessionStorage = storage();
+  let standalone = false;
   const media = (query) => ({
-    matches: query === "(max-width: 900px)",
+    matches: query === "(max-width: 900px)" || (standalone && query === "(display-mode: standalone)"),
     addEventListener() {}
   });
   const document = {
@@ -82,7 +88,6 @@ function verifyInstallRoleGate() {
       if (id === "app-install-manual-guide") return manualGuide;
       if (id === "app-install-guide-actions") return guideActions;
       if (id === "btn-install-dialog-start") return startButton;
-      if (id === "btn-install-dialog-confirmed") return confirmedButton;
       if (id === "app-install-ios-safari-note") return { hidden: true };
       if (id === "btn-install-dialog-close") return { focus() {} };
       return null;
@@ -104,22 +109,62 @@ function verifyInstallRoleGate() {
   listeners["dcats:install-access"]({ detail: { allowed: true } });
   expect(entries.every((entry) => !entry.hidden), "Install entries must be visible for authorized sales-management users on eligible devices");
   expect(dialog.hidden === false && introGuide.hidden === false, "Install explanation must open after eligible login");
-  expect(sessionStorage.getItem("dcats_install_prompted_dcats-icon-v4") === "1", "Install prompt must be recorded for the current login session");
+  expect(sessionStorage.getItem("dcats_install_prompted_dcats-icon-v4-verified") === "1", "Install prompt must be recorded for the current login session");
   listeners["dcats:install-access"]({ detail: { allowed: false } });
   expect(entries.every((entry) => entry.hidden), "Install entries must be hidden immediately after access is revoked");
   expect(dialog.hidden, "Install explanation must close on logout");
-  expect(sessionStorage.getItem("dcats_install_prompted_dcats-icon-v4") === null, "Logout must allow the prompt on the next login");
+  expect(sessionStorage.getItem("dcats_install_prompted_dcats-icon-v4-verified") === null, "Logout must allow the prompt on the next login");
   listeners["dcats:install-access"]({ detail: { allowed: true } });
   expect(dialog.hidden === false, "Install explanation must return on the next login when incomplete");
-  confirmedButton.listeners.click();
-  expect(dialog.hidden, "Completion confirmation must close the install explanation");
-  expect(localStorage.getItem("dcats_install_complete_dcats-icon-v4") === "1", "Completion confirmation must persist for the current icon campaign");
+  listeners.appinstalled();
+  expect(dialog.hidden, "Browser-confirmed installation must close the install explanation");
+  expect(localStorage.getItem("dcats_install_complete_dcats-icon-v4-verified") === "1", "Browser-confirmed installation must persist for the verified icon campaign");
+  expect(window.DCATS_INSTALL_EVENT_QUEUE.length === 1, "Browser-confirmed installation must be queued for authenticated audit logging");
+  expect(window.DCATS_INSTALL_EVENT_QUEUE[0].method === "browser_appinstalled", "Install audit queue must record the browser confirmation method");
   listeners["dcats:install-access"]({ detail: { allowed: false } });
   listeners["dcats:install-access"]({ detail: { allowed: true } });
   expect(dialog.hidden, "Completed installations must not prompt again");
+  standalone = true;
+  listeners["dcats:install-access"]({ detail: { allowed: false } });
+  listeners["dcats:install-access"]({ detail: { allowed: true } });
+  expect(entries.every((entry) => entry.hidden), "Install entries must remain hidden when launched from a shortcut");
+  expect(window.DCATS_INSTALL_EVENT_QUEUE.some((event) => event.method === "standalone_launch"), "Shortcut launch must be queued for authenticated audit logging");
 }
 
 verifyInstallRoleGate();
+
+function verifyInstallAuditLogging() {
+  const start = app.indexOf("function flushInstallVerificationEvents()");
+  const end = app.indexOf("function syncInstallAppAccess()", start);
+  expect(start >= 0 && end > start, "Install audit logging function could not be isolated");
+  const calls = [];
+  const sandbox = {
+    currentUser: { id: "test-user" },
+    canUseInstallApp() { return true; },
+    installVerificationLoggedIds: {},
+    installVerificationPendingIds: {},
+    window: {
+      DCATS_INSTALL_EVENT_QUEUE: [
+        { id: "install-1", method: "browser_appinstalled", campaign_id: "dcats-icon-v4-verified", display_mode: "browser", detected_at: "2026-08-26T00:00:00.000Z" },
+        { id: "launch-1", method: "standalone_launch", campaign_id: "dcats-icon-v4-verified", display_mode: "standalone", detected_at: "2026-08-26T00:01:00.000Z" }
+      ]
+    },
+    logUserActivity(eventType, options) {
+      calls.push({ eventType, options });
+      return { then(handler) { handler({ error: null }); } };
+    },
+    Array,
+    String
+  };
+  vm.runInNewContext(app.slice(start, end) + "\nflushInstallVerificationEvents();", sandbox);
+  expect(calls.length === 2, "Both browser installation and shortcut launch must be audit logged");
+  expect(calls.every((call) => call.eventType === "screen_open" && call.options.target_type === "pwa_shortcut"), "Install verification must use the approved activity event contract");
+  expect(calls.some((call) => call.options.action === "pwa_install_confirmed"), "Browser installation completion audit is missing");
+  expect(calls.some((call) => call.options.action === "pwa_launch_verified"), "Shortcut launch verification audit is missing");
+  expect(sandbox.window.DCATS_INSTALL_EVENT_QUEUE.length === 0, "Successfully logged install events must leave the retry queue");
+}
+
+verifyInstallAuditLogging();
 
 for (const fragment of [
   'window.addEventListener("beforeinstallprompt"',
@@ -133,6 +178,8 @@ for (const fragment of [
   "function isAndroid()",
   "function isNarrowViewport()",
   "function isIosSafari()",
+  'publishInstallVerification("standalone_launch")',
+  'markInstallConfirmed("browser_appinstalled")',
 ]) {
   expect(install.includes(fragment), `Install runtime contract is missing: ${fragment}`);
 }
@@ -146,7 +193,8 @@ for (const key of [
   "app_install_repeat_note",
   "app_install_primary",
   "app_install_later",
-  "app_install_confirmed",
+  "app_install_verification_title",
+  "app_install_verification_note",
   "app_install_close_guide",
   "app_install_ios_safari_required",
   "app_install_ios_step_share",
@@ -159,6 +207,7 @@ for (const key of [
 expect(styles.includes(".app-install-entry[hidden]"), "Hidden install controls must remain hidden");
 expect(styles.includes(".app-install-header-entry[hidden]"), "Hidden header install controls must remain hidden");
 expect(styles.includes(".app-install-dialog-card"), "Install dialog styling is missing");
+expect(styles.includes(".app-install-verification-note"), "Verified shortcut-launch guidance styling is missing");
 expect(styles.includes(".app-install-header-button span { display: inline;"), "Mobile install action must not collapse to an unexplained icon");
 expect(styles.includes("body.app-install-dialog-open"), "Install dialog scroll lock is missing");
 expect(/\/site\.webmanifest\r?\n\s+Cache-Control: no-cache/.test(headers), "Manifest must be revalidated after releases");
