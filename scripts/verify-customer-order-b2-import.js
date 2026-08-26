@@ -70,8 +70,8 @@ const defaults = between("function defaultCustomerDisplaySettings", "function no
 [
   'default_outbound_carrier_name: "ヤマト運輸"',
   'default_outbound_service_name: "宅急便"',
-  'default_core_return_carrier_name: "ヤマト運輸"',
-  'default_core_return_service_name: "宅急便"'
+  'default_core_return_carrier_name: "佐川急便"',
+  'default_core_return_service_name: "飛脚宅配便"'
 ].forEach((fragment) => {
   if (!defaults.includes(fragment)) throw new Error(`Customer default shipping setting is missing: ${fragment}`);
 });

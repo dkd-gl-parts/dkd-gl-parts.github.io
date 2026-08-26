@@ -32,6 +32,22 @@ assert(outboundServices.length === 1, "core-return additions must not mutate out
 assert(coreReturnServices.some((row) => row.carrier_name === "佐川急便" && row.service_name === "飛脚宅配便"), "Sagawa Hikyaku delivery must be available for core returns");
 assert(!outboundServices.some((row) => row.carrier_name === "佐川急便"), "Sagawa core-return service must not appear in outbound shipping");
 
+const displayDefaultsLogic = sourceBetween("function defaultCustomerDisplaySettings", "function normalizeCustomerShippingChargeRule");
+vm.runInNewContext(displayDefaultsLogic, context);
+const displayDefaults = context.defaultCustomerDisplaySettings();
+assert(displayDefaults.default_outbound_carrier_name === "ヤマト運輸" && displayDefaults.default_outbound_service_name === "宅急便", "new customers must keep Yamato Takkyubin as the outbound default");
+assert(displayDefaults.default_core_return_carrier_name === "佐川急便" && displayDefaults.default_core_return_service_name === "飛脚宅配便", "new customers must default core returns to Sagawa Hikyaku delivery");
+
+const defaultServiceContext = {
+  activeCustomerPortalContext: () => ({ settings: {} }),
+  customerOrderDeliveryServiceKey: context.customerOrderDeliveryServiceKey
+};
+vm.runInNewContext(sourceBetween("function customerOrderDefaultShippingKey", "function customerOrderSavedShippingMethod"), defaultServiceContext);
+const defaultOutbound = context.customerOrderDeliveryServiceFromKey(defaultServiceContext.customerOrderDefaultShippingKey("outbound"));
+const defaultCoreReturn = context.customerOrderDeliveryServiceFromKey(defaultServiceContext.customerOrderDefaultShippingKey("core_return"));
+assert(defaultOutbound.carrier_name === "ヤマト運輸" && defaultOutbound.service_name === "宅急便", "outbound fallback must remain Yamato Takkyubin");
+assert(defaultCoreReturn.carrier_name === "佐川急便" && defaultCoreReturn.service_name === "飛脚宅配便", "core-return fallback must default to Sagawa Hikyaku delivery");
+
 const mondayMorning = new Date(2026, 7, 3, 10, 0, 0);
 const kansai = context.customerOrderDeliveryEstimate("宅急便", 27, mondayMorning);
 assert(kansai.earliest_date === "2026-08-04", "Kansai takkyubin must default to next-day delivery");
@@ -82,6 +98,9 @@ assert(customerAccessServices.includes('purpose === "core_return"') && customerA
 const customerAccessDetail = sourceBetween("function renderCustomerAccessDetail", "function renderCustomerAccessRuleForm");
 assert(customerAccessDetail.includes('customerAccessShippingServiceOptionsHtml(customerAccessShippingServiceKey(s, "outbound"), "outbound")'), "outbound defaults must keep the rate-master service list");
 assert(customerAccessDetail.includes('customerAccessShippingServiceOptionsHtml(customerAccessShippingServiceKey(s, "core_return"), "core_return")'), "core-return defaults must use the dedicated service list");
+const customerAccessSave = sourceBetween("function collectCustomerDisplaySettings", "function collectCustomerAccessCategoryVisibility");
+assert(customerAccessSave.includes('default_core_return_carrier_name = (returnMethod && returnMethod.carrier_name) || "佐川急便"'), "customer registration must save Sagawa as the fallback core-return carrier");
+assert(customerAccessSave.includes('default_core_return_service_name = (returnMethod && returnMethod.service_name) || "飛脚宅配便"'), "customer registration must save Hikyaku delivery as the fallback core-return service");
 
 const returnLogic = sourceBetween("function customerOrderCartRequiresCoreReturn", "function updateCustomerOrderDeliveryEstimate");
 const returnContext = {

@@ -5316,7 +5316,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.782";
+var APP_VERSION       = "v1.1.783";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6218,8 +6218,8 @@ function defaultCustomerDisplaySettings() {
     shipping_charge_rule: "separate",
     default_outbound_carrier_name: "ヤマト運輸",
     default_outbound_service_name: "宅急便",
-    default_core_return_carrier_name: "ヤマト運輸",
-    default_core_return_service_name: "宅急便"
+    default_core_return_carrier_name: "佐川急便",
+    default_core_return_service_name: "飛脚宅配便"
   };
 }
 function normalizeCustomerShippingChargeRule(value) {
@@ -8957,10 +8957,11 @@ function customerOrderCoreReturnShippingMethodPayload() {
 function customerOrderDefaultShippingKey(purpose) {
   var context = activeCustomerPortalContext() || {};
   var settings = context.settings || {};
-  var prefix = purpose === "core_return" ? "default_core_return_" : "default_outbound_";
+  var coreReturn = purpose === "core_return";
+  var prefix = coreReturn ? "default_core_return_" : "default_outbound_";
   return customerOrderDeliveryServiceKey({
-    carrier_name: settings[prefix + "carrier_name"] || "ヤマト運輸",
-    service_name: settings[prefix + "service_name"] || "宅急便"
+    carrier_name: settings[prefix + "carrier_name"] || (coreReturn ? "佐川急便" : "ヤマト運輸"),
+    service_name: settings[prefix + "service_name"] || (coreReturn ? "飛脚宅配便" : "宅急便")
   });
 }
 
@@ -39984,8 +39985,8 @@ function collectCustomerDisplaySettings() {
   var returnMethod = customerOrderDeliveryServiceFromKey((document.getElementById("customer-default-core-return-shipping") || {}).value);
   data.default_outbound_carrier_name = (outboundMethod && outboundMethod.carrier_name) || "ヤマト運輸";
   data.default_outbound_service_name = (outboundMethod && outboundMethod.service_name) || "宅急便";
-  data.default_core_return_carrier_name = (returnMethod && returnMethod.carrier_name) || "ヤマト運輸";
-  data.default_core_return_service_name = (returnMethod && returnMethod.service_name) || "宅急便";
+  data.default_core_return_carrier_name = (returnMethod && returnMethod.carrier_name) || "佐川急便";
+  data.default_core_return_service_name = (returnMethod && returnMethod.service_name) || "飛脚宅配便";
   if (!data.show_sales_price) {
     data.show_zero_price = false;
     data.priced_products_only = false;
