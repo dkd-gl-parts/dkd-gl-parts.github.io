@@ -5310,7 +5310,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.775";
+var APP_VERSION       = "v1.1.776";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -14978,8 +14978,7 @@ async function loadGltekPartNumberValue(root, product) {
   target.textContent = product.gltek_part_number || "-";
 }
 
-function renderProductMasterDetailHtml(p, componentButtonHtml) {
-  componentButtonHtml = componentButtonHtml || "";
+function renderProductMasterDetailHtml(p) {
   var isAcProduct = (p.category_code || p.category || "") === "ac_compressor";
   function renderAcRows(rows) {
     var html = "";
@@ -15003,7 +15002,7 @@ function renderProductMasterDetailHtml(p, componentButtonHtml) {
       ["f_genuine_clutch_pn", p.genuine_clutch_part_number]
     ]) + renderGltekPartNumberRow(p) + "</div>";
     makerHtml = "<div class='ac-part-grid'>" + renderAcRows([
-      ["f_manufacturer", p.manufacturer, componentButtonHtml],
+      ["f_manufacturer", p.manufacturer],
       ["f_mfr_assy_pn", p.manufacturer_part_number],
       ["f_mfr_body_pn", p.manufacturer_body_part_number],
       ["f_mfr_clutch_pn", p.manufacturer_clutch_part_number]
@@ -15015,7 +15014,7 @@ function renderProductMasterDetailHtml(p, componentButtonHtml) {
       ["f_genuine_pn2", p.genuine_part_number_2]
     ]) + renderGltekPartNumberRow(p) + "</div>";
     makerHtml = "<div class='ac-part-grid'>" + renderAcRows([
-      ["f_manufacturer", p.manufacturer, componentButtonHtml],
+      ["f_manufacturer", p.manufacturer],
       ["f_mfr_pn",      p.manufacturer_part_number]
     ]) + "</div>";
     vehicleOffsetClass = " detail-maker-offset detail-maker-offset-standard";
@@ -15088,7 +15087,6 @@ async function renderProductionDetail(row) {
   var detail = await loadProductionDetailData(row);
   if (seq !== productionDetailRequestSeq) return;
   var title = row.manufacturer_part_number || row.genuine_part_number || row.daiko_part_number || ("DKD " + row.dkd_shohin_id);
-  var componentButtonHtml = "<button class='btn-sm-edit btn-component-action detail-inline-action' id='production-open-components'><span class='component-icon'>&#x1F9E9;</span> " + esc(t("component_section")) + "</button>";
   var priorityHtml = inst
     ? "<span class='production-priority'>" + esc(t("production_ranking_rank")) + " #" + esc(inst.priority_rank || "-") + "</span>"
     : "";
@@ -15109,7 +15107,7 @@ async function renderProductionDetail(row) {
   html += "<div class='production-workspace'>";
   html += "<div class='production-master-column'>";
   html += "<section class='production-section production-master-section'><div class='production-section-heading'><h3>" + esc(productCategoryLabel(row)) + "</h3><span>DKD " + esc(row.dkd_shohin_id || "-") + "</span></div>";
-  html += renderProductMasterDetailHtml(row, componentButtonHtml);
+  html += renderProductMasterDetailHtml(row);
   html += renderProductionStampPairsHtml(detail.stampPairs);
   html += "</section>";
   html += renderProductionComponentSummaryShell(currentProductionComponentSummaryKind);
@@ -15145,8 +15143,6 @@ async function renderProductionDetail(row) {
   loadProductionComponentSummaryForRow(row, currentProductionComponentSummaryKind, seq);
   loadProductionKikanForRow(row, seq);
   loadProductionImagesForRow(row, seq);
-  var compBtn = document.getElementById("production-open-components");
-  if (compBtn) compBtn.addEventListener("click", openProductionComponents);
   var componentSummaryBtn = document.getElementById("production-component-summary-open");
   if (componentSummaryBtn) componentSummaryBtn.addEventListener("click", openProductionComponents);
   el.querySelectorAll("[data-production-component-summary-kind]").forEach(function(btn) {
@@ -15222,7 +15218,7 @@ function renderProductionComponentSummaryShell(kind) {
   }).join("");
   return "<section class='production-section production-component-summary-section'>" +
     "<div class='production-section-heading production-component-summary-heading'><div><h3>" + esc(t("production_component_section")) + "</h3><span id='production-component-summary-count'>" + esc(productionImageKindLabel(kind) + " / " + t("loading")) + "</span></div>" +
-    "<div class='production-component-summary-actions'><div class='production-component-kind-switch' role='tablist' aria-label='" + esc(t("product_kind_section")) + "'>" + controls + "</div><button class='btn-sm-edit production-action-secondary' id='production-component-summary-open' type='button'>" + esc(t("component_open_parts")) + "</button></div></div>" +
+    "<div class='production-component-summary-actions'><div class='production-component-kind-switch' role='tablist' aria-label='" + esc(t("product_kind_section")) + "'>" + controls + "</div><button class='btn-sm-edit btn-component-action detail-inline-action' id='production-component-summary-open' type='button'><span class='component-icon'>&#x1F9E9;</span> " + esc(t("component_open_parts")) + "</button></div></div>" +
     "<div class='production-component-summary-wrap' id='production-component-summary-wrap'><div class='production-help'>" + esc(t("loading")) + "</div></div>" +
   "</section>";
 }

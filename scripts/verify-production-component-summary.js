@@ -27,6 +27,10 @@ const detailSource = sourceBetween(app, "async function renderProductionDetail",
   "production-component-summary-open"
 ].forEach((fragment) => requireFragment(detailSource, fragment, "production detail component summary"));
 
+if (detailSource.includes("production-open-components") || detailSource.includes("componentButtonHtml")) {
+  throw new Error("product overview must not contain a duplicate component-management button");
+}
+
 const masterIndex = detailSource.indexOf("production-section production-master-section");
 const componentIndex = detailSource.indexOf("renderProductionComponentSummaryShell(currentProductionComponentSummaryKind)");
 const compatibilityIndex = detailSource.indexOf("production-section production-kikan-section");
@@ -38,6 +42,8 @@ const summarySource = sourceBetween(app, "function renderProductionComponentSumm
 [
   'var kinds = ["rebuilt", "aftermarket_new"]',
   "production-component-kind-switch",
+  "btn-component-action detail-inline-action",
+  "component-icon",
   "production-component-summary-table",
   "component_manufacturer_part_number",
   "component_genuine_part_number",
