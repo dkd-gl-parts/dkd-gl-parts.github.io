@@ -431,6 +431,8 @@ var TRANSLATIONS = {
     production_component_summary_count: "{kind} / {n}件",
     production_component_summary_empty: "{kind}の構成部品は未登録です。",
     production_component_summary_failed: "構成部品を読み込めませんでした。",
+    production_component_part_number: "部品品番",
+    production_component_interchange_procurement: "互・調達区分",
     product_kind_section: "商品区分",
     product_shipping_section: "配送情報",
     product_shipping_help: "品番ごとの梱包重量と通常の出荷サイズを設定します。",
@@ -2163,6 +2165,8 @@ var TRANSLATIONS = {
     production_component_summary_count: "{kind} / {n}",
     production_component_summary_empty: "No {kind} components are registered.",
     production_component_summary_failed: "Could not load components.",
+    production_component_part_number: "Part No.",
+    production_component_interchange_procurement: "Int. / Procurement",
     product_kind_section: "Product Kind",
     product_shipping_section: "Shipping Profile",
     product_shipping_help: "Set the packed weight and standard package size for this product.",
@@ -3902,6 +3906,8 @@ var TRANSLATIONS = {
     production_component_summary_count: "{kind} / {n}件",
     production_component_summary_empty: "尚未登记{kind}构成零件。",
     production_component_summary_failed: "无法读取构成零件。",
+    production_component_part_number: "零件品号",
+    production_component_interchange_procurement: "互・采购区分",
     product_kind_section: "商品区分",
     product_shipping_section: "配送信息",
     product_shipping_help: "设置该商品的包装重量和通常出货尺寸。",
@@ -5310,7 +5316,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.778";
+var APP_VERSION       = "v1.1.779";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6677,6 +6683,10 @@ async function applyLanguage(lang) {
   if (dataLoaded) { renderCategoryChips(); render(); }
   renderProductionFilterChips();
   renderProductionCategoryFilterOptions();
+  if (isScreenActive("production-search")) {
+    renderProductionList();
+    await renderProductionDetail(currentProductionRow || null);
+  }
   if (document.getElementById("part-form-overlay") && document.getElementById("part-form-overlay").classList.contains("show") && partFormSource === "core_products") {
     renderCoreProductStampPairForm();
   }
@@ -15237,7 +15247,7 @@ function renderProductionComponents(rows, kind) {
   if (!rows || !rows.length) {
     return "<div class='production-component-summary-empty'>" + esc(tf("production_component_summary_empty", { kind: productionImageKindLabel(kind) })) + "</div>";
   }
-  var html = "<table class='production-component-summary-table'><thead><tr><th>部品品番</th><th>部品名</th><th>数量</th><th>互・調達区分</th><th>交換率</th><th>" + esc(t("component_manufacturing_memo")) + "</th></tr></thead><tbody>";
+  var html = "<table class='production-component-summary-table'><thead><tr><th>" + esc(t("production_component_part_number")) + "</th><th>" + esc(t("component_name")) + "</th><th>" + esc(t("component_quantity")) + "</th><th>" + esc(t("production_component_interchange_procurement")) + "</th><th>" + esc(t("component_replacement_rate")) + "</th><th>" + esc(t("component_manufacturing_memo")) + "</th></tr></thead><tbody>";
   rows.forEach(function(row) {
     var manufacturerMeta = [row.component_manufacturer, row.component_genuine_part_number ? (t("f_genuine_pn") + " " + row.component_genuine_part_number) : ""].filter(Boolean).join(" / ");
     var partName = row.component_name || row.component_part_name || "-";
@@ -32433,7 +32443,16 @@ function componentProcurementCategoryLabel(value) {
   var keyMap = {
     "部品どり": "component_procurement_parts_donor",
     "自コア再利用": "component_procurement_reuse_core",
-    "新品交換": "component_procurement_new_replacement"
+    "新品交換": "component_procurement_new_replacement",
+    "Parts Donor": "component_procurement_parts_donor",
+    "Reuse Own Core": "component_procurement_reuse_core",
+    "New Replacement": "component_procurement_new_replacement",
+    "拆件使用": "component_procurement_parts_donor",
+    "自有旧件再利用": "component_procurement_reuse_core",
+    "新品更换": "component_procurement_new_replacement",
+    "parts_donor": "component_procurement_parts_donor",
+    "reuse_core": "component_procurement_reuse_core",
+    "new_replacement": "component_procurement_new_replacement"
   };
   var key = keyMap[String(value || "")];
   return key ? t(key) : (value || "-");

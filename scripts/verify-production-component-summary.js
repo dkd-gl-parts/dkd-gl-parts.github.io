@@ -18,6 +18,22 @@ function sourceBetween(source, startText, endText) {
 
 requireFragment(app, 'var currentProductionComponentSummaryKind = "rebuilt";', "rebuilt summary default");
 
+[
+  'production_component_part_number: "部品品番"',
+  'production_component_part_number: "Part No."',
+  'production_component_part_number: "零件品号"',
+  'production_component_interchange_procurement: "互・調達区分"',
+  'production_component_interchange_procurement: "Int. / Procurement"',
+  'production_component_interchange_procurement: "互・采购区分"'
+].forEach((fragment) => requireFragment(app, fragment, "production component translations"));
+
+const languageSource = sourceBetween(app, "async function applyLanguage", "function markAppUpdateActivity");
+[
+  'if (isScreenActive("production-search"))',
+  "renderProductionList();",
+  "await renderProductionDetail(currentProductionRow || null);"
+].forEach((fragment) => requireFragment(languageSource, fragment, "production language refresh"));
+
 const detailSource = sourceBetween(app, "async function renderProductionDetail", "async function loadProductionDetailData");
 [
   'currentProductionComponentSummaryKind = "rebuilt"',
@@ -45,6 +61,11 @@ const summarySource = sourceBetween(app, "function renderProductionComponentSumm
   "btn-component-action detail-inline-action",
   "component-icon",
   "production-component-summary-table",
+  't("production_component_part_number")',
+  't("component_name")',
+  't("component_quantity")',
+  't("production_component_interchange_procurement")',
+  't("component_replacement_rate")',
   "component_manufacturer_part_number",
   "component_genuine_part_number",
   "component_name",
@@ -61,6 +82,18 @@ const summarySource = sourceBetween(app, "function renderProductionComponentSumm
   '.eq("product_kind", kind)',
   '.eq("is_catalog_evidence", false)'
 ].forEach((fragment) => requireFragment(summarySource, fragment, "production component summary contract"));
+
+if (summarySource.includes("<th>部品品番</th>") || summarySource.includes("<th>互・調達区分</th>")) {
+  throw new Error("production component summary headings must follow the active language");
+}
+
+const procurementSource = sourceBetween(app, "function componentProcurementCategoryLabel", "function componentProcurementOptionsHtml");
+[
+  '"新品交換": "component_procurement_new_replacement"',
+  '"New Replacement": "component_procurement_new_replacement"',
+  '"新品更换": "component_procurement_new_replacement"',
+  '"new_replacement": "component_procurement_new_replacement"'
+].forEach((fragment) => requireFragment(procurementSource, fragment, "localized procurement aliases"));
 
 if (summarySource.includes("unit_price_jpy") || summarySource.includes("formatComponentYen")) {
   throw new Error("production component summary must not select or render component unit prices");
