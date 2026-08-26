@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const vm = require("vm");
 
 const root = path.resolve(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
@@ -26,7 +27,54 @@ expect(appVersionMatch, "D-CATS app version is missing");
 expect(html.includes(`src="install-app.js?v=${appVersionMatch[1]}"`), "Install runtime is missing or unversioned");
 expect(html.includes('name="apple-mobile-web-app-capable" content="yes"'), "iOS standalone metadata is missing");
 expect(html.includes('href="assets/icons/apple-touch-icon-v4.png"'), "Versioned Apple touch icon is missing");
-expect((html.match(/data-install-entry/g) || []).length === 3, "Install action must be available on login, internal home, and customer home");
+expect((html.match(/data-install-entry/g) || []).length === 3, "Install action slots must exist on login, internal home, and customer home");
+expect(install.includes("var systemAdminAllowed = false;"), "Install access must default to denied");
+expect(install.includes('window.addEventListener("dcats:install-access"'), "Install access must follow the authenticated role event");
+expect(install.includes("!systemAdminAllowed || isStandalone()"), "Install entries must remain hidden without system-admin access");
+expect(install.includes("if (!systemAdminAllowed)"), "Install button must reject non-admin interaction");
+expect(app.includes("function syncSystemAdminInstallAccess()"), "App must synchronize install access after authentication changes");
+expect(app.includes('new CustomEvent("dcats:install-access"'), "App must publish the install access event");
+expect(app.includes("detail: { systemAdmin: isSystemAdmin() }"), "Install access must use the existing system-admin role check");
+
+function verifyInstallRoleGate() {
+  const listeners = {};
+  const entries = [{ hidden: true }, { hidden: true }, { hidden: true }];
+  const buttons = [{ addEventListener() {} }, { addEventListener() {} }, { addEventListener() {} }];
+  const dialog = { hidden: true, querySelectorAll() { return []; } };
+  const media = (query) => ({
+    matches: query === "(max-width: 900px)",
+    addEventListener() {}
+  });
+  const document = {
+    activeElement: null,
+    body: { classList: { add() {}, remove() {} } },
+    querySelectorAll(selector) { return selector === "[data-install-entry]" ? entries : buttons; },
+    getElementById(id) {
+      if (id === "app-install-dialog") return dialog;
+      if (id === "app-install-ios-guide" || id === "app-install-manual-guide") return { hidden: true };
+      if (id === "app-install-ios-safari-note") return { hidden: true };
+      if (id === "btn-install-dialog-close") return { focus() {} };
+      return null;
+    },
+    addEventListener() {}
+  };
+  const window = {
+    matchMedia: media,
+    navigator: { userAgent: "D-CATS test", platform: "Win32", maxTouchPoints: 0, standalone: false },
+    addEventListener(type, handler) { listeners[type] = handler; }
+  };
+
+  vm.runInNewContext(install, { window, document, console, Array });
+  expect(entries.every((entry) => entry.hidden), "Install entries must be hidden before authentication");
+  listeners["dcats:install-access"]({ detail: { systemAdmin: false } });
+  expect(entries.every((entry) => entry.hidden), "Install entries must be hidden for non-admin users");
+  listeners["dcats:install-access"]({ detail: { systemAdmin: true } });
+  expect(entries.every((entry) => !entry.hidden), "Install entries must be visible for system administrators on eligible devices");
+  listeners["dcats:install-access"]({ detail: { systemAdmin: false } });
+  expect(entries.every((entry) => entry.hidden), "Install entries must be hidden immediately after access is revoked");
+}
+
+verifyInstallRoleGate();
 
 for (const fragment of [
   'window.addEventListener("beforeinstallprompt"',
