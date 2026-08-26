@@ -25,6 +25,10 @@ const productionScreen = sourceBetween(html, 'id="screen-production-search"', 'i
   'id="production-stamp-r-number"',
   'id="production-stamp-search-submit"'
 ].forEach((fragment) => requireFragment(productionScreen, fragment, "manufacturing stamp search UI"));
+[
+  'id="production-stamp-f-number" type="text" inputmode="numeric" maxlength="8"',
+  'id="production-stamp-r-number" type="text" inputmode="numeric" maxlength="8"'
+].forEach((fragment) => requireFragment(productionScreen, fragment, "eight-digit manufacturing stamp search input"));
 
 const productForm = sourceBetween(html, 'id="part-form-overlay"', 'id="kikan-form-overlay"');
 [
@@ -94,6 +98,14 @@ const pairForm = sourceBetween(app, "async function fetchCoreProductStampPairs",
   "stamp_pair_duplicate",
   "pairs.length > 100"
 ].forEach((fragment) => requireFragment(pairForm, fragment, "stamp-pair editor validation"));
+[
+  "return /^[0-9]{3,8}$/.test",
+  "maxlength='8'",
+  "3～8桁の数字"
+].forEach((fragment) => requireFragment(app, fragment, "eight-digit stamp-pair editor"));
+if (/\^\[0-9\]\{3,4\}\$/.test(app) || /data-stamp-pair-field='[fr]_number'[^>]*maxlength='4'/.test(app)) {
+  throw new Error("legacy four-digit stamp-number validation must not remain in the editor");
+}
 
 [
   ".production-stamp-pair-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; max-height: 157px; overflow-y: auto;",

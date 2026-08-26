@@ -23,7 +23,7 @@ function requireText(source, fragment, label) {
   "product-3d-video-supplement",
   "product-3d-viewer-overlay",
   "data-product-media=\"model\"",
-  "product-3d.js?v=1.1.762"
+  "product-3d.js?v=1.1.763"
 ].forEach((fragment) => requireText(html, fragment, "3D UI contract"));
 
 [
@@ -55,7 +55,7 @@ function requireText(source, fragment, label) {
   "確認待ち",
   "data-publish-model",
   "createSignedUrl(model.published_model_path, 600)",
-  "import(\"./product-3d-viewer.js?v=1.1.762\")",
+  "import(\"./product-3d-viewer.js?v=1.1.763\")",
   "if (viewer) { viewer.dispose(); viewer = null; }",
   "if (requestId !== viewerRequestId) { createdViewer.dispose(); return; }"
 ].forEach((fragment) => requireText(client, fragment, "3D capture contract"));

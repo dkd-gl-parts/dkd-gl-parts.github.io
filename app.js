@@ -361,7 +361,7 @@ var TRANSLATIONS = {
     stamp_pair_total: "全{n}組",
     stamp_pair_match: "一致した刻印",
     stamp_search_required: "FナンバーまたはRナンバーを入力してください。",
-    stamp_number_invalid: "FナンバーとRナンバーは3～4桁の数字で入力してください。",
+    stamp_number_invalid: "FナンバーとRナンバーは3～8桁の数字で入力してください。",
     stamp_pair_incomplete: "FナンバーとRナンバーを組み合わせて入力してください。",
     stamp_pair_duplicate: "同じF/R刻印組合せが重複しています。",
     stamp_pair_load_failed: "F/R刻印組合せを読み込めませんでした。",
@@ -2053,7 +2053,7 @@ var TRANSLATIONS = {
     stamp_pair_total: "{n} pairs",
     stamp_pair_match: "Matched stamp",
     stamp_search_required: "Enter an F number or R number.",
-    stamp_number_invalid: "F and R numbers must contain 3 or 4 digits.",
+    stamp_number_invalid: "F and R numbers must contain 3 to 8 digits.",
     stamp_pair_incomplete: "Enter both the F number and R number for each pair.",
     stamp_pair_duplicate: "The same F/R stamp pair is entered more than once.",
     stamp_pair_load_failed: "Could not load F/R stamp pairs.",
@@ -3682,7 +3682,7 @@ var TRANSLATIONS = {
     stamp_pair_total: "共{n}组",
     stamp_pair_match: "匹配刻印",
     stamp_search_required: "请输入F编号或R编号。",
-    stamp_number_invalid: "F编号和R编号必须为3～4位数字。",
+    stamp_number_invalid: "F编号和R编号必须为3～8位数字。",
     stamp_pair_incomplete: "请成对输入F编号和R编号。",
     stamp_pair_duplicate: "存在重复的F/R刻印组合。",
     stamp_pair_load_failed: "无法读取F/R刻印组合。",
@@ -5188,7 +5188,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.762";
+var APP_VERSION       = "v1.1.763";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -13353,7 +13353,7 @@ function normalizeStampNumberValue(value) {
 }
 
 function isValidStampNumberValue(value) {
-  return /^[0-9]{3,4}$/.test(String(value || ""));
+  return /^[0-9]{3,8}$/.test(String(value || ""));
 }
 
 function stampPairSignature(pairs) {
@@ -26356,8 +26356,8 @@ function renderCoreProductStampPairForm() {
   }
   list.innerHTML = coreProductFormStampPairs.map(function(pair, index) {
     return "<div class='product-form-stamp-pair-row' data-stamp-pair-index='" + index + "'>" +
-      "<label><span>" + esc(t("stamp_f_number")) + "</span><input class='form-input' type='text' inputmode='numeric' maxlength='4' autocomplete='off' data-stamp-pair-field='f_number' value='" + esc(pair.f_number || "") + "'></label>" +
-      "<label><span>" + esc(t("stamp_r_number")) + "</span><input class='form-input' type='text' inputmode='numeric' maxlength='4' autocomplete='off' data-stamp-pair-field='r_number' value='" + esc(pair.r_number || "") + "'></label>" +
+      "<label><span>" + esc(t("stamp_f_number")) + "</span><input class='form-input' type='text' inputmode='numeric' maxlength='8' autocomplete='off' data-stamp-pair-field='f_number' value='" + esc(pair.f_number || "") + "'></label>" +
+      "<label><span>" + esc(t("stamp_r_number")) + "</span><input class='form-input' type='text' inputmode='numeric' maxlength='8' autocomplete='off' data-stamp-pair-field='r_number' value='" + esc(pair.r_number || "") + "'></label>" +
       "<button class='product-form-stamp-pair-remove' type='button' data-stamp-pair-remove='" + index + "' aria-label='" + esc(t("stamp_pair_remove")) + "' title='" + esc(t("stamp_pair_remove")) + "'>&#215;</button>" +
     "</div>";
   }).join("");
