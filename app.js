@@ -5310,7 +5310,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.774";
+var APP_VERSION       = "v1.1.775";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -14986,7 +14986,7 @@ function renderProductMasterDetailHtml(p, componentButtonHtml) {
     rows.forEach(function(d) {
       var text = (d[1] != null && String(d[1]) !== "None" && String(d[1]) !== "") ? String(d[1]) : "-";
       var actionHtml = d[2] || "";
-      html += "<div class='ac-part-row'>" +
+      html += "<div class='ac-part-row" + (actionHtml ? " ac-part-row-with-action" : "") + "'>" +
         "<div class='ac-part-label'>" + t(d[0]) + "</div>" +
         "<div class='ac-part-value" + (actionHtml ? " ac-part-value-with-action" : "") + "'><span class='ac-part-value-text'>" + esc(text) + "</span>" + actionHtml + "</div>" +
       "</div>";
