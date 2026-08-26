@@ -2659,7 +2659,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .product-form-card .product-form-stamp-pair-row .form-input { min-height: 34px; font-variant-numeric: tabular-nums; }
 .product-form-stamp-pair-remove { display: inline-flex; width: 32px; min-width: 32px; height: 34px; align-items: center; justify-content: center; border: 1px solid #efb4b0; border-radius: 6px; background: #fff8f7; color: #bd352e; font-size: 18px; line-height: 1; cursor: pointer; }
 .product-form-stamp-pair-remove:hover { border-color: #d95a52; background: #fff0ee; }
-.product-form-core-grid { margin-top: 12px; }
 .product-form-raw-spec { margin-bottom: 12px !important; }
 .product-form-raw-spec .spec-form-help {
   margin-top: 4px;
@@ -2730,7 +2729,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .product-form-section { padding: 11px; }
   .product-form-section-head { min-height: 30px; margin-bottom: 7px; }
   .product-form-basic-grid, .product-form-spec-grid { gap: 7px 10px; }
-  .product-form-core-grid { margin-top: 9px; }
   .product-form-core-policy,
   .product-form-shipping { margin-top: 10px; padding-top: 10px; }
   .product-form-core-policy-grid { gap: 10px; margin-top: 8px; }

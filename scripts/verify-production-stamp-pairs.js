@@ -32,6 +32,13 @@ const productForm = sourceBetween(html, 'id="part-form-overlay"', 'id="kikan-for
   'id="pf-stamp-pair-add"',
   'id="pf-stamp-pair-list"'
 ].forEach((fragment) => requireFragment(productForm, fragment, "shared product form stamp editor"));
+[
+  'id="pf-core-inventory-fields"',
+  'id="pf-core-stock-qty"',
+  'id="pf-core-pallet-no"'
+].forEach((fragment) => {
+  if (productForm.includes(fragment)) throw new Error(`core inventory control must not remain in the product form: ${fragment}`);
+});
 
 const stampSearch = sourceBetween(app, "async function fetchProductionStampPairMatches", "async function enterSearch");
 [
@@ -67,6 +74,17 @@ const productSave = sourceBetween(app, "async function saveCoreProductForm", "as
   "saveCoreProductStampPairsForDkd(dkd, stampPairFormValue.pairs, errEl)",
   'if (dkdInput && isNaN(dkd))'
 ].forEach((fragment) => requireFragment(productSave, fragment, "product stamp-pair save flow"));
+if (productSave.includes("payload.core_stock_qty") || productSave.includes("payload.core_pallet_no")) {
+  throw new Error("product edits must preserve core inventory and pallet values managed outside this form");
+}
+
+const productFieldMode = sourceBetween(app, "function setProductFormFieldMode", "function setCoreProductFormFields");
+const productFieldValues = sourceBetween(app, "function setCoreProductFormFields", "async function openCoreProductForm");
+[productFieldMode, productFieldValues].forEach((block) => {
+  if (block.includes("pf-core-inventory-fields") || block.includes("pf-core-stock-qty") || block.includes("pf-core-pallet-no")) {
+    throw new Error("removed core inventory controls must not be referenced by the product form");
+  }
+});
 
 const pairForm = sourceBetween(app, "async function fetchCoreProductStampPairs", "function setProductFormFieldMode");
 [

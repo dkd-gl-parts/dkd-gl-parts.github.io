@@ -5185,7 +5185,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.760";
+var APP_VERSION       = "v1.1.761";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -26460,12 +26460,9 @@ async function saveCoreProductStampPairsForDkd(dkd, pairs, errEl) {
 function setProductFormFieldMode(source, mode) {
   var productCodeRow = document.getElementById("pf-shohin-cd-row");
   var productCodeInput = document.getElementById("pf-shohin-cd");
-  var coreInventoryFields = document.getElementById("pf-core-inventory-fields");
   var corePolicyFields = document.getElementById("pf-core-policy-fields");
   var shippingFields = document.getElementById("pf-shipping-fields");
   var stampPairFields = document.getElementById("pf-stamp-pair-fields");
-  var coreStockInput = document.getElementById("pf-core-stock-qty");
-  var corePalletInput = document.getElementById("pf-core-pallet-no");
   var shippingWeightInput = document.getElementById("pf-shipping-weight");
   var shippingSizeSelect = document.getElementById("pf-shipping-package-size");
   var shippingHelp = document.getElementById("pf-shipping-help");
@@ -26473,7 +26470,6 @@ function setProductFormFieldMode(source, mode) {
   var isAdd = mode === "add";
 
   setCspStyle(productCodeRow, "display", isCoreProduct && isAdd ? "none" : "");
-  setCspStyle(coreInventoryFields, "display", isCoreProduct && !isAdd ? "" : "none");
   setCspStyle(corePolicyFields, "display", isCoreProduct ? "" : "none");
   setCspStyle(shippingFields, "display", isCoreProduct ? "" : "none");
   setCspStyle(stampPairFields, "display", isCoreProduct ? "" : "none");
@@ -26485,11 +26481,6 @@ function setProductFormFieldMode(source, mode) {
     if (isCoreProduct && isAdd) productCodeInput.value = "";
   }
 
-  [coreStockInput, corePalletInput].forEach(function(input) {
-    if (!input) return;
-    input.disabled = !isCoreProduct || isAdd;
-    if (isAdd) input.value = "";
-  });
   [shippingWeightInput, shippingSizeSelect].forEach(function(input) {
     if (!input) return;
     input.disabled = !isCoreProduct || isAdd;
@@ -26512,8 +26503,6 @@ function setCoreProductFormFields(p) {
   document.getElementById("pf-compatible").value       = p ? (p.compatible_car_models || "") : "";
   document.getElementById("pf-model").value            = p ? (p.model || "") : "";
   document.getElementById("pf-category").value         = formValueFromCategoryCode(p && (p.category_code || p.category));
-  document.getElementById("pf-core-stock-qty").value   = p && p.core_stock_qty != null ? p.core_stock_qty : "";
-  document.getElementById("pf-core-pallet-no").value   = p ? (p.core_pallet_no || p.core_pallet_summary || "") : "";
   document.getElementById("pf-shipping-weight").value = p && p.shipping_weight_kg != null ? Number(p.shipping_weight_kg) : "";
   document.getElementById("pf-part-manufacturer-type").value = partFormMode === "edit" && p && p.part_manufacturer_type === "gltek" ? "gltek" : "external";
   document.getElementById("pf-gltek-base-code").value = "";
@@ -26642,8 +26631,6 @@ async function saveCoreProductForm() {
     updated_at: new Date().toISOString()
   };
   if (!addingProduct) {
-    payload.core_stock_qty = nullableIntFromInput("pf-core-stock-qty");
-    payload.core_pallet_no = nullableTextFromInput("pf-core-pallet-no");
     payload.shipping_weight_kg = shippingFormValue.shipping_weight_kg;
     payload.shipping_size_cm = shippingFormValue.shipping_size_cm;
     payload.shipping_package_size_label = shippingFormValue.shipping_package_size_label;
