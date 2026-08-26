@@ -10,7 +10,7 @@
   var manualGuide = document.getElementById("app-install-manual-guide");
   var iosSafariNote = document.getElementById("app-install-ios-safari-note");
   var returnFocus = null;
-  var systemAdminAllowed = false;
+  var installAllowed = false;
 
   if (!installEntries.length || !installButtons.length || !installDialog || !iosGuide || !manualGuide) return;
 
@@ -40,7 +40,7 @@
   }
 
   function syncInstallEntry() {
-    var shouldHide = !systemAdminAllowed || isStandalone() || !(deferredInstallPrompt || isIos() || isAndroid() || isNarrowViewport());
+    var shouldHide = !installAllowed || isStandalone() || !(deferredInstallPrompt || isIos() || isAndroid() || isNarrowViewport());
     installEntries.forEach(function(entry) { entry.hidden = shouldHide; });
   }
 
@@ -75,14 +75,14 @@
   });
 
   window.addEventListener("dcats:install-access", function(event) {
-    systemAdminAllowed = !!(event.detail && event.detail.systemAdmin);
-    if (!systemAdminAllowed) closeInstallGuide();
+    installAllowed = !!(event.detail && event.detail.allowed);
+    if (!installAllowed) closeInstallGuide();
     syncInstallEntry();
   });
 
   installButtons.forEach(function(button) {
     button.addEventListener("click", async function() {
-      if (!systemAdminAllowed) {
+      if (!installAllowed) {
         syncInstallEntry();
         return;
       }

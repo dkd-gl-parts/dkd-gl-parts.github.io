@@ -5221,7 +5221,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.765";
+var APP_VERSION       = "v1.1.766";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5690,9 +5690,12 @@ function userPermissionAllowed(profile, permissionKey, roleDefault) {
 function isSystemAdmin() {
   return !!(userProfile && (userProfile.role === "system_admin" || accessRoleCode(userProfile) === "system_admin"));
 }
-function syncSystemAdminInstallAccess() {
+function canUseInstallApp() {
+  return !!userProfile && !isExternalViewer() && canViewProductSearch();
+}
+function syncInstallAppAccess() {
   window.dispatchEvent(new CustomEvent("dcats:install-access", {
-    detail: { systemAdmin: isSystemAdmin() }
+    detail: { allowed: canUseInstallApp() }
   }));
 }
 function isCompanyAdminRole(profile) {
@@ -7031,7 +7034,7 @@ function resetAutoLogoutTimer() {
 // スクリーン管理
 // =============================================
 function showScreen(id) {
-  syncSystemAdminInstallAccess();
+  syncInstallAppAccess();
   document.querySelectorAll(".screen").forEach(function(s) { s.classList.remove("active"); });
   var el = document.getElementById("screen-" + id);
   if (el) el.classList.add("active");
