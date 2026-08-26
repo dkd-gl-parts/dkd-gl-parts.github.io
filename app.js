@@ -77,6 +77,12 @@ var TRANSLATIONS = {
     app_install_ios_step_share: "画面の共有ボタンをタップします。",
     app_install_ios_step_add_home: "「ホーム画面に追加」を選択します。",
     app_install_ios_step_confirm: "右上の「追加」をタップします。",
+    app_install_toolbar_hint: "画面下では、この共有マークを探してください",
+    app_install_nav_start: "共有ボタンを案内する",
+    app_install_nav_step: "ホーム画面追加 1 / 3",
+    app_install_nav_title: "画面下の共有ボタンをタップ",
+    app_install_nav_next: "開いたメニューで「ホーム画面に追加」を選び、右上の「追加」をタップします。",
+    app_install_nav_close: "ナビを終了",
     app_install_manual_step_menu: "ブラウザ右上のメニューを開きます。",
     app_install_manual_step_install: "「アプリをインストール」または「ホーム画面に追加」を選択します。",
     app_install_manual_step_confirm: "表示内容を確認して追加します。",
@@ -1788,6 +1794,12 @@ var TRANSLATIONS = {
     app_install_ios_step_share: "Tap the Share button in the browser.",
     app_install_ios_step_add_home: "Select “Add to Home Screen.”",
     app_install_ios_step_confirm: "Tap “Add” in the top-right corner.",
+    app_install_toolbar_hint: "Look for this Share icon at the bottom of the screen",
+    app_install_nav_start: "Show me the Share button",
+    app_install_nav_step: "Add to Home Screen 1 / 3",
+    app_install_nav_title: "Tap the Share button below",
+    app_install_nav_next: "In the menu, select “Add to Home Screen,” then tap “Add” in the top-right corner.",
+    app_install_nav_close: "End guidance",
     app_install_manual_step_menu: "Open the browser menu in the top-right corner.",
     app_install_manual_step_install: "Select “Install app” or “Add to Home screen.”",
     app_install_manual_step_confirm: "Review the details and confirm the installation.",
@@ -3748,6 +3760,12 @@ var TRANSLATIONS = {
     app_install_ios_step_share: "点击浏览器中的共享按钮。",
     app_install_ios_step_add_home: "选择“添加到主屏幕”。",
     app_install_ios_step_confirm: "点击右上角的“添加”。",
+    app_install_toolbar_hint: "请在画面底部查找此共享图标",
+    app_install_nav_start: "指引共享按钮",
+    app_install_nav_step: "添加到主屏幕 1 / 3",
+    app_install_nav_title: "点击下方的共享按钮",
+    app_install_nav_next: "在菜单中选择“添加到主屏幕”，然后点击右上角的“添加”。",
+    app_install_nav_close: "结束指引",
     app_install_manual_step_menu: "打开浏览器右上角的菜单。",
     app_install_manual_step_install: "选择“安装应用”或“添加到主屏幕”。",
     app_install_manual_step_confirm: "确认显示内容后完成添加。",
@@ -5245,7 +5263,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.768";
+var APP_VERSION       = "v1.1.769";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;

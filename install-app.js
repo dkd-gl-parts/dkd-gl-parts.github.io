@@ -11,6 +11,8 @@
   var manualGuide = document.getElementById("app-install-manual-guide");
   var guideActions = document.getElementById("app-install-guide-actions");
   var startButton = document.getElementById("btn-install-dialog-start");
+  var coachmarkButton = document.getElementById("btn-install-ios-coachmark");
+  var shareCoachmark = document.getElementById("app-install-share-coachmark");
   var iosSafariNote = document.getElementById("app-install-ios-safari-note");
   var returnFocus = null;
   var installAllowed = false;
@@ -18,8 +20,9 @@
   var INSTALL_CAMPAIGN_ID = "dcats-icon-v4-verified";
   var INSTALL_COMPLETE_KEY = "dcats_install_complete_" + INSTALL_CAMPAIGN_ID;
   var INSTALL_SESSION_PROMPT_KEY = "dcats_install_prompted_" + INSTALL_CAMPAIGN_ID;
+  var INSTALL_COACHMARK_KEY = "dcats_install_coachmark_" + INSTALL_CAMPAIGN_ID;
 
-  if (!installEntries.length || !installButtons.length || !installDialog || !introGuide || !iosGuide || !manualGuide || !guideActions || !startButton) return;
+  if (!installEntries.length || !installButtons.length || !installDialog || !introGuide || !iosGuide || !manualGuide || !guideActions || !startButton || !coachmarkButton || !shareCoachmark) return;
 
   function isStandalone() {
     return window.matchMedia("(display-mode: standalone)").matches ||
@@ -100,6 +103,7 @@
 
   function syncInstallEntry() {
     if (isStandalone()) {
+      closeShareCoachmark();
       recordInstallConfirmed();
       publishInstallVerification("standalone_launch");
     }
@@ -113,6 +117,7 @@
     iosGuide.hidden = kind !== "ios";
     manualGuide.hidden = kind !== "manual";
     guideActions.hidden = kind === "intro";
+    coachmarkButton.hidden = kind !== "ios";
     if (iosSafariNote) iosSafariNote.hidden = kind !== "ios" || isIosSafari();
     installDialog.hidden = false;
     document.body.classList.add("app-install-dialog-open");
@@ -128,15 +133,38 @@
     returnFocus = null;
   }
 
+  function closeShareCoachmark() {
+    shareCoachmark.hidden = true;
+    storageRemove(window.sessionStorage, INSTALL_COACHMARK_KEY);
+  }
+
+  function openShareCoachmark() {
+    closeInstallGuide();
+    storageSet(window.sessionStorage, INSTALL_COACHMARK_KEY);
+    shareCoachmark.hidden = false;
+    var dismissButton = shareCoachmark.querySelector("[data-install-coachmark-close]");
+    if (dismissButton && typeof dismissButton.focus === "function") dismissButton.focus();
+  }
+
+  function maybeRestoreShareCoachmark() {
+    if (!installAllowed || isStandalone() || !isIos()) return false;
+    if (!storageHas(window.sessionStorage, INSTALL_COACHMARK_KEY)) return false;
+    closeInstallGuide();
+    shareCoachmark.hidden = false;
+    return true;
+  }
+
   function markInstallConfirmed(method) {
     recordInstallConfirmed();
     publishInstallVerification(method);
     closeInstallGuide();
+    closeShareCoachmark();
     syncInstallEntry();
   }
 
   function maybeOpenLoginPrompt() {
     if (!installAllowed || isStandalone() || !canOfferInstall() || isInstallConfirmed()) return;
+    if (storageHas(window.sessionStorage, INSTALL_COACHMARK_KEY)) return;
     if (storageHas(window.sessionStorage, INSTALL_SESSION_PROMPT_KEY)) return;
     storageSet(window.sessionStorage, INSTALL_SESSION_PROMPT_KEY);
     openInstallGuide("intro");
@@ -159,10 +187,11 @@
     installAllowed = !!(event.detail && event.detail.allowed);
     if (!installAllowed) {
       closeInstallGuide();
+      closeShareCoachmark();
       if (wasAllowed) storageRemove(window.sessionStorage, INSTALL_SESSION_PROMPT_KEY);
     }
     syncInstallEntry();
-    if (installAllowed && !wasAllowed) maybeOpenLoginPrompt();
+    if (installAllowed && !wasAllowed && !maybeRestoreShareCoachmark()) maybeOpenLoginPrompt();
   });
 
   async function beginInstall() {
@@ -201,11 +230,21 @@
 
   startButton.addEventListener("click", beginInstall);
 
+  coachmarkButton.addEventListener("click", openShareCoachmark);
+
+  shareCoachmark.querySelectorAll("[data-install-coachmark-close]").forEach(function(element) {
+    element.addEventListener("click", closeShareCoachmark);
+  });
+
   installDialog.querySelectorAll("[data-install-dialog-close]").forEach(function(element) {
     element.addEventListener("click", closeInstallGuide);
   });
 
   document.addEventListener("keydown", function(event) {
+    if (event.key === "Escape" && !shareCoachmark.hidden) {
+      closeShareCoachmark();
+      return;
+    }
     if (installDialog.hidden) return;
     if (event.key === "Escape") {
       closeInstallGuide();

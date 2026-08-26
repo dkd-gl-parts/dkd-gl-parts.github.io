@@ -25,6 +25,9 @@ expect(html.includes('id="app-install-dialog"'), "Install guidance dialog is mis
 expect(html.includes('id="app-install-intro-guide"'), "Post-login install explanation is missing");
 expect(html.includes('id="btn-install-dialog-start"'), "Post-login install action is missing");
 expect(html.includes('class="app-install-verification-note"'), "Verified shortcut-launch guidance is missing");
+expect(html.includes('id="btn-install-ios-coachmark"'), "iPhone Share-button navigation action is missing");
+expect(html.includes('id="app-install-share-coachmark"'), "iPhone Share-button coachmark is missing");
+expect(html.includes('class="app-install-toolbar-demo"'), "iPhone browser toolbar preview is missing");
 expect(!html.includes('id="btn-install-dialog-confirmed"'), "Manual self-confirmation must not be treated as verified installation");
 const appVersionMatch = app.match(/var\s+APP_VERSION\s*=\s*"v([^"]+)"/);
 expect(appVersionMatch, "D-CATS app version is missing");
@@ -40,6 +43,8 @@ expect(install.includes("window.sessionStorage"), "Install prompting must be lim
 expect(install.includes("function publishInstallVerification(method)"), "Verified browser installation and shortcut launch must be queued for logging");
 expect(install.includes("window.DCATS_INSTALL_EVENT_QUEUE"), "Install verification events must survive until authentication is ready");
 expect(install.includes("function maybeOpenLoginPrompt()"), "Eligible users must receive a post-login install prompt");
+expect(install.includes("function openShareCoachmark()"), "iPhone guidance must open a Share-button coachmark");
+expect(install.includes("function maybeRestoreShareCoachmark()"), "iPhone guidance must survive a page reload during manual installation");
 expect(install.includes('window.addEventListener("dcats:install-access"'), "Install access must follow the authenticated role event");
 expect(install.includes("!installAllowed || isStandalone()"), "Install entries must remain hidden without approved access");
 expect(install.includes("if (!installAllowed)"), "Install button must reject unauthorized interaction");
@@ -62,6 +67,13 @@ function verifyInstallRoleGate() {
   const manualGuide = { hidden: true };
   const guideActions = { hidden: true };
   const startButton = { listeners: {}, addEventListener(type, handler) { this.listeners[type] = handler; }, focus() {} };
+  const coachmarkButton = { hidden: true, listeners: {}, addEventListener(type, handler) { this.listeners[type] = handler; }, focus() {} };
+  const coachmarkCloseButton = { listeners: {}, addEventListener(type, handler) { this.listeners[type] = handler; }, focus() {} };
+  const shareCoachmark = {
+    hidden: true,
+    querySelectorAll(selector) { return selector === "[data-install-coachmark-close]" ? [coachmarkCloseButton] : []; },
+    querySelector(selector) { return selector === "[data-install-coachmark-close]" ? coachmarkCloseButton : null; }
+  };
   const storage = () => {
     const values = new Map();
     return {
@@ -88,6 +100,8 @@ function verifyInstallRoleGate() {
       if (id === "app-install-manual-guide") return manualGuide;
       if (id === "app-install-guide-actions") return guideActions;
       if (id === "btn-install-dialog-start") return startButton;
+      if (id === "btn-install-ios-coachmark") return coachmarkButton;
+      if (id === "app-install-share-coachmark") return shareCoachmark;
       if (id === "app-install-ios-safari-note") return { hidden: true };
       if (id === "btn-install-dialog-close") return { focus() {} };
       return null;
@@ -96,7 +110,7 @@ function verifyInstallRoleGate() {
   };
   const window = {
     matchMedia: media,
-    navigator: { userAgent: "D-CATS test", platform: "Win32", maxTouchPoints: 0, standalone: false },
+    navigator: { userAgent: "Mozilla/5.0 (iPhone) AppleWebKit/605.1.15 Version/18.0 Mobile Safari/604.1", platform: "iPhone", maxTouchPoints: 5, standalone: false },
     localStorage,
     sessionStorage,
     addEventListener(type, handler) { listeners[type] = handler; }
@@ -116,8 +130,13 @@ function verifyInstallRoleGate() {
   expect(sessionStorage.getItem("dcats_install_prompted_dcats-icon-v4-verified") === null, "Logout must allow the prompt on the next login");
   listeners["dcats:install-access"]({ detail: { allowed: true } });
   expect(dialog.hidden === false, "Install explanation must return on the next login when incomplete");
+  startButton.listeners.click();
+  expect(iosGuide.hidden === false && coachmarkButton.hidden === false, "iPhone install flow must reveal the visual Share-button navigation action");
+  coachmarkButton.listeners.click();
+  expect(dialog.hidden && shareCoachmark.hidden === false, "Share-button navigation must replace the dialog with a bottom-screen coachmark");
+  expect(sessionStorage.getItem("dcats_install_coachmark_dcats-icon-v4-verified") === "1", "Share-button navigation must survive a page reload while installation is in progress");
   listeners.appinstalled();
-  expect(dialog.hidden, "Browser-confirmed installation must close the install explanation");
+  expect(dialog.hidden && shareCoachmark.hidden, "Browser-confirmed installation must close install guidance");
   expect(localStorage.getItem("dcats_install_complete_dcats-icon-v4-verified") === "1", "Browser-confirmed installation must persist for the verified icon campaign");
   expect(window.DCATS_INSTALL_EVENT_QUEUE.length === 1, "Browser-confirmed installation must be queued for authenticated audit logging");
   expect(window.DCATS_INSTALL_EVENT_QUEUE[0].method === "browser_appinstalled", "Install audit queue must record the browser confirmation method");
@@ -178,6 +197,9 @@ for (const fragment of [
   "function isAndroid()",
   "function isNarrowViewport()",
   "function isIosSafari()",
+  "var INSTALL_COACHMARK_KEY",
+  "function openShareCoachmark()",
+  "function maybeRestoreShareCoachmark()",
   'publishInstallVerification("standalone_launch")',
   'markInstallConfirmed("browser_appinstalled")',
 ]) {
@@ -199,6 +221,12 @@ for (const key of [
   "app_install_ios_safari_required",
   "app_install_ios_step_share",
   "app_install_manual_step_install",
+  "app_install_toolbar_hint",
+  "app_install_nav_start",
+  "app_install_nav_step",
+  "app_install_nav_title",
+  "app_install_nav_next",
+  "app_install_nav_close",
 ]) {
   const matches = app.match(new RegExp(`${key}:`, "g")) || [];
   expect(matches.length === 3, `${key} must be translated in Japanese, English, and Chinese`);
@@ -208,6 +236,9 @@ expect(styles.includes(".app-install-entry[hidden]"), "Hidden install controls m
 expect(styles.includes(".app-install-header-entry[hidden]"), "Hidden header install controls must remain hidden");
 expect(styles.includes(".app-install-dialog-card"), "Install dialog styling is missing");
 expect(styles.includes(".app-install-verification-note"), "Verified shortcut-launch guidance styling is missing");
+expect(styles.includes(".app-install-toolbar-demo"), "iPhone browser toolbar preview styling is missing");
+expect(styles.includes(".app-install-share-coachmark"), "iPhone Share-button coachmark styling is missing");
+expect(styles.includes(".app-install-coachmark-pointer"), "iPhone Share-button pointer styling is missing");
 expect(styles.includes(".app-install-header-button span { display: inline;"), "Mobile install action must not collapse to an unexplained icon");
 expect(styles.includes("body.app-install-dialog-open"), "Install dialog scroll lock is missing");
 expect(/\/site\.webmanifest\r?\n\s+Cache-Control: no-cache/.test(headers), "Manifest must be revalidated after releases");
