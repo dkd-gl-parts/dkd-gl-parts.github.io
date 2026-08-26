@@ -8,21 +8,26 @@
   var closeButton = document.getElementById("btn-install-dialog-close");
   var introGuide = document.getElementById("app-install-intro-guide");
   var iosGuide = document.getElementById("app-install-ios-guide");
+  var iosBrowserGuide = document.getElementById("app-install-ios-browser-guide");
   var manualGuide = document.getElementById("app-install-manual-guide");
   var guideActions = document.getElementById("app-install-guide-actions");
   var startButton = document.getElementById("btn-install-dialog-start");
   var coachmarkButton = document.getElementById("btn-install-ios-coachmark");
   var shareCoachmark = document.getElementById("app-install-share-coachmark");
-  var iosSafariNote = document.getElementById("app-install-ios-safari-note");
+  var installUrlInput = document.getElementById("app-install-url");
+  var copyUrlButton = document.getElementById("btn-install-copy-url");
+  var copyDone = document.getElementById("app-install-copy-done");
+  var copyFailed = document.getElementById("app-install-copy-failed");
   var returnFocus = null;
   var installAllowed = false;
   var publishedVerificationMethods = {};
   var INSTALL_CAMPAIGN_ID = "dcats-icon-v4-verified";
+  var INSTALL_GUIDE_REVISION = "safari-v1";
   var INSTALL_COMPLETE_KEY = "dcats_install_complete_" + INSTALL_CAMPAIGN_ID;
-  var INSTALL_SESSION_PROMPT_KEY = "dcats_install_prompted_" + INSTALL_CAMPAIGN_ID;
-  var INSTALL_COACHMARK_KEY = "dcats_install_coachmark_" + INSTALL_CAMPAIGN_ID;
+  var INSTALL_SESSION_PROMPT_KEY = "dcats_install_prompted_" + INSTALL_CAMPAIGN_ID + "_" + INSTALL_GUIDE_REVISION;
+  var INSTALL_COACHMARK_KEY = "dcats_install_coachmark_" + INSTALL_CAMPAIGN_ID + "_" + INSTALL_GUIDE_REVISION;
 
-  if (!installEntries.length || !installButtons.length || !installDialog || !introGuide || !iosGuide || !manualGuide || !guideActions || !startButton || !coachmarkButton || !shareCoachmark) return;
+  if (!installEntries.length || !installButtons.length || !installDialog || !introGuide || !iosGuide || !iosBrowserGuide || !manualGuide || !guideActions || !startButton || !coachmarkButton || !shareCoachmark || !installUrlInput || !copyUrlButton || !copyDone || !copyFailed) return;
 
   function isStandalone() {
     return window.matchMedia("(display-mode: standalone)").matches ||
@@ -46,7 +51,8 @@
 
   function isIosSafari() {
     var ua = window.navigator.userAgent || "";
-    return isIos() && /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua);
+    return isIos() && /Version\/[\d.]+.*Safari\//i.test(ua) &&
+      !/CriOS|FxiOS|EdgiOS|OPiOS|GSA|DuckDuckGo|YaBrowser|YJApp|Line|Instagram|FBAN|FBAV|Twitter|TikTok/i.test(ua);
   }
 
   function storageHas(storage, key) {
@@ -115,10 +121,14 @@
     if (installDialog.hidden) returnFocus = document.activeElement;
     introGuide.hidden = kind !== "intro";
     iosGuide.hidden = kind !== "ios";
+    iosBrowserGuide.hidden = kind !== "ios-browser";
     manualGuide.hidden = kind !== "manual";
     guideActions.hidden = kind === "intro";
     coachmarkButton.hidden = kind !== "ios";
-    if (iosSafariNote) iosSafariNote.hidden = kind !== "ios" || isIosSafari();
+    if (kind === "ios-browser") {
+      copyDone.hidden = true;
+      copyFailed.hidden = true;
+    }
     installDialog.hidden = false;
     document.body.classList.add("app-install-dialog-open");
     if (kind === "intro") startButton.focus();
@@ -147,7 +157,7 @@
   }
 
   function maybeRestoreShareCoachmark() {
-    if (!installAllowed || isStandalone() || !isIos()) return false;
+    if (!installAllowed || isStandalone() || !isIosSafari()) return false;
     if (!storageHas(window.sessionStorage, INSTALL_COACHMARK_KEY)) return false;
     closeInstallGuide();
     shareCoachmark.hidden = false;
@@ -164,7 +174,7 @@
 
   function maybeOpenLoginPrompt() {
     if (!installAllowed || isStandalone() || !canOfferInstall() || isInstallConfirmed()) return;
-    if (storageHas(window.sessionStorage, INSTALL_COACHMARK_KEY)) return;
+    if (isIosSafari() && storageHas(window.sessionStorage, INSTALL_COACHMARK_KEY)) return;
     if (storageHas(window.sessionStorage, INSTALL_SESSION_PROMPT_KEY)) return;
     storageSet(window.sessionStorage, INSTALL_SESSION_PROMPT_KEY);
     openInstallGuide("intro");
@@ -194,6 +204,30 @@
     if (installAllowed && !wasAllowed && !maybeRestoreShareCoachmark()) maybeOpenLoginPrompt();
   });
 
+  async function copyInstallUrl() {
+    var installUrl = (window.location && window.location.origin) ? window.location.origin + "/" : installUrlInput.value;
+    installUrlInput.value = installUrl;
+    copyDone.hidden = true;
+    copyFailed.hidden = true;
+    var copied = false;
+    try {
+      if (window.navigator.clipboard && typeof window.navigator.clipboard.writeText === "function") {
+        await window.navigator.clipboard.writeText(installUrl);
+        copied = true;
+      }
+    } catch (error) {
+      copied = false;
+    }
+    if (!copied) {
+      installUrlInput.focus();
+      installUrlInput.select();
+      try { copied = typeof document.execCommand === "function" && document.execCommand("copy"); }
+      catch (error) { copied = false; }
+    }
+    copyDone.hidden = !copied;
+    copyFailed.hidden = copied;
+  }
+
   async function beginInstall() {
     if (!installAllowed) {
       syncInstallEntry();
@@ -216,12 +250,12 @@
       } catch (error) {
         console.warn("D-CATS install prompt failed", error);
         syncInstallEntry();
-        openInstallGuide(isIos() ? "ios" : "manual");
+        openInstallGuide(isIos() ? (isIosSafari() ? "ios" : "ios-browser") : "manual");
       }
       return;
     }
 
-    openInstallGuide(isIos() ? "ios" : "manual");
+    openInstallGuide(isIos() ? (isIosSafari() ? "ios" : "ios-browser") : "manual");
   }
 
   installButtons.forEach(function(button) {
@@ -231,6 +265,8 @@
   startButton.addEventListener("click", beginInstall);
 
   coachmarkButton.addEventListener("click", openShareCoachmark);
+
+  copyUrlButton.addEventListener("click", copyInstallUrl);
 
   shareCoachmark.querySelectorAll("[data-install-coachmark-close]").forEach(function(element) {
     element.addEventListener("click", closeShareCoachmark);

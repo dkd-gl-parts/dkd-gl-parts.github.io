@@ -28,6 +28,9 @@ expect(html.includes('class="app-install-verification-note"'), "Verified shortcu
 expect(html.includes('id="btn-install-ios-coachmark"'), "iPhone Share-button navigation action is missing");
 expect(html.includes('id="app-install-share-coachmark"'), "iPhone Share-button coachmark is missing");
 expect(html.includes('class="app-install-toolbar-demo"'), "iPhone browser toolbar preview is missing");
+expect(html.includes('id="app-install-ios-browser-guide"'), "Non-Safari iPhone guidance is missing");
+expect(html.includes('id="btn-install-copy-url"'), "Non-Safari URL-copy action is missing");
+expect(html.includes('data-i18n="app_install_ios_missing_note"'), "Safari Edit Actions fallback is missing");
 expect(!html.includes('id="btn-install-dialog-confirmed"'), "Manual self-confirmation must not be treated as verified installation");
 const appVersionMatch = app.match(/var\s+APP_VERSION\s*=\s*"v([^"]+)"/);
 expect(appVersionMatch, "D-CATS app version is missing");
@@ -38,6 +41,7 @@ expect((html.match(/data-install-entry/g) || []).length === 4, "Install action s
 expect((html.match(/data-i18n="app_install_short_action"/g) || []).length === 3, "Authenticated header install actions must have a readable compact label");
 expect(install.includes("var installAllowed = false;"), "Install access must default to denied");
 expect(install.includes('var INSTALL_CAMPAIGN_ID = "dcats-icon-v4-verified";'), "Install prompting must be tied to the verified icon campaign");
+expect(install.includes('var INSTALL_GUIDE_REVISION = "safari-v1";'), "The corrected Safari guidance must prompt incomplete users again");
 expect(install.includes("window.localStorage"), "Install completion must persist on the device");
 expect(install.includes("window.sessionStorage"), "Install prompting must be limited to once per login session");
 expect(install.includes("function publishInstallVerification(method)"), "Verified browser installation and shortcut launch must be queued for logging");
@@ -64,6 +68,7 @@ function verifyInstallRoleGate() {
   const dialog = { hidden: true, querySelectorAll() { return []; } };
   const introGuide = { hidden: true };
   const iosGuide = { hidden: true };
+  const iosBrowserGuide = { hidden: true };
   const manualGuide = { hidden: true };
   const guideActions = { hidden: true };
   const startButton = { listeners: {}, addEventListener(type, handler) { this.listeners[type] = handler; }, focus() {} };
@@ -74,6 +79,10 @@ function verifyInstallRoleGate() {
     querySelectorAll(selector) { return selector === "[data-install-coachmark-close]" ? [coachmarkCloseButton] : []; },
     querySelector(selector) { return selector === "[data-install-coachmark-close]" ? coachmarkCloseButton : null; }
   };
+  const installUrlInput = { value: "https://dcats.daiko-denki.co.jp/", selected: false, focus() {}, select() { this.selected = true; } };
+  const copyUrlButton = { listeners: {}, addEventListener(type, handler) { this.listeners[type] = handler; } };
+  const copyDone = { hidden: true };
+  const copyFailed = { hidden: true };
   const storage = () => {
     const values = new Map();
     return {
@@ -97,20 +106,27 @@ function verifyInstallRoleGate() {
       if (id === "app-install-dialog") return dialog;
       if (id === "app-install-intro-guide") return introGuide;
       if (id === "app-install-ios-guide") return iosGuide;
+      if (id === "app-install-ios-browser-guide") return iosBrowserGuide;
       if (id === "app-install-manual-guide") return manualGuide;
       if (id === "app-install-guide-actions") return guideActions;
       if (id === "btn-install-dialog-start") return startButton;
       if (id === "btn-install-ios-coachmark") return coachmarkButton;
       if (id === "app-install-share-coachmark") return shareCoachmark;
-      if (id === "app-install-ios-safari-note") return { hidden: true };
+      if (id === "app-install-url") return installUrlInput;
+      if (id === "btn-install-copy-url") return copyUrlButton;
+      if (id === "app-install-copy-done") return copyDone;
+      if (id === "app-install-copy-failed") return copyFailed;
       if (id === "btn-install-dialog-close") return { focus() {} };
       return null;
     },
-    addEventListener() {}
+    addEventListener() {},
+    execCommand(command) { return command === "copy"; }
   };
+  const navigator = { userAgent: "Mozilla/5.0 (iPhone) AppleWebKit/605.1.15 Mobile/15E148 GSA/382.0 Safari/604.1", platform: "iPhone", maxTouchPoints: 5, standalone: false };
   const window = {
     matchMedia: media,
-    navigator: { userAgent: "Mozilla/5.0 (iPhone) AppleWebKit/605.1.15 Version/18.0 Mobile Safari/604.1", platform: "iPhone", maxTouchPoints: 5, standalone: false },
+    navigator,
+    location: { origin: "https://dcats.daiko-denki.co.jp" },
     localStorage,
     sessionStorage,
     addEventListener(type, handler) { listeners[type] = handler; }
@@ -123,18 +139,26 @@ function verifyInstallRoleGate() {
   listeners["dcats:install-access"]({ detail: { allowed: true } });
   expect(entries.every((entry) => !entry.hidden), "Install entries must be visible for authorized sales-management users on eligible devices");
   expect(dialog.hidden === false && introGuide.hidden === false, "Install explanation must open after eligible login");
-  expect(sessionStorage.getItem("dcats_install_prompted_dcats-icon-v4-verified") === "1", "Install prompt must be recorded for the current login session");
+  expect(sessionStorage.getItem("dcats_install_prompted_dcats-icon-v4-verified_safari-v1") === "1", "Install prompt must be recorded for the corrected guide revision");
   listeners["dcats:install-access"]({ detail: { allowed: false } });
   expect(entries.every((entry) => entry.hidden), "Install entries must be hidden immediately after access is revoked");
   expect(dialog.hidden, "Install explanation must close on logout");
-  expect(sessionStorage.getItem("dcats_install_prompted_dcats-icon-v4-verified") === null, "Logout must allow the prompt on the next login");
+  expect(sessionStorage.getItem("dcats_install_prompted_dcats-icon-v4-verified_safari-v1") === null, "Logout must allow the prompt on the next login");
   listeners["dcats:install-access"]({ detail: { allowed: true } });
   expect(dialog.hidden === false, "Install explanation must return on the next login when incomplete");
+  startButton.listeners.click();
+  expect(iosBrowserGuide.hidden === false && iosGuide.hidden && coachmarkButton.hidden, "Google app and embedded iPhone browsers must route to Safari transfer guidance");
+  copyUrlButton.listeners.click();
+  expect(installUrlInput.value === "https://dcats.daiko-denki.co.jp/" && installUrlInput.selected, "Safari transfer guidance must provide a copyable D-CATS URL");
+  expect(copyDone.hidden === false && copyFailed.hidden, "Successful URL copy must show the next Safari instruction");
+  listeners["dcats:install-access"]({ detail: { allowed: false } });
+  navigator.userAgent = "Mozilla/5.0 (iPhone) AppleWebKit/605.1.15 Version/18.0 Mobile Safari/604.1";
+  listeners["dcats:install-access"]({ detail: { allowed: true } });
   startButton.listeners.click();
   expect(iosGuide.hidden === false && coachmarkButton.hidden === false, "iPhone install flow must reveal the visual Share-button navigation action");
   coachmarkButton.listeners.click();
   expect(dialog.hidden && shareCoachmark.hidden === false, "Share-button navigation must replace the dialog with a bottom-screen coachmark");
-  expect(sessionStorage.getItem("dcats_install_coachmark_dcats-icon-v4-verified") === "1", "Share-button navigation must survive a page reload while installation is in progress");
+  expect(sessionStorage.getItem("dcats_install_coachmark_dcats-icon-v4-verified_safari-v1") === "1", "Share-button navigation must survive a page reload while installation is in progress");
   listeners.appinstalled();
   expect(dialog.hidden && shareCoachmark.hidden, "Browser-confirmed installation must close install guidance");
   expect(localStorage.getItem("dcats_install_complete_dcats-icon-v4-verified") === "1", "Browser-confirmed installation must persist for the verified icon campaign");
@@ -197,6 +221,8 @@ for (const fragment of [
   "function isAndroid()",
   "function isNarrowViewport()",
   "function isIosSafari()",
+  '"ios-browser"',
+  "function copyInstallUrl()",
   "var INSTALL_COACHMARK_KEY",
   "function openShareCoachmark()",
   "function maybeRestoreShareCoachmark()",
@@ -219,7 +245,18 @@ for (const key of [
   "app_install_verification_note",
   "app_install_close_guide",
   "app_install_ios_safari_required",
+  "app_install_browser_required_title",
+  "app_install_browser_required_note",
+  "app_install_browser_step_copy",
+  "app_install_browser_step_safari",
+  "app_install_browser_step_add",
+  "app_install_url_label",
+  "app_install_copy_url",
+  "app_install_copy_done",
+  "app_install_copy_failed",
   "app_install_ios_step_share",
+  "app_install_ios_missing_title",
+  "app_install_ios_missing_note",
   "app_install_manual_step_install",
   "app_install_toolbar_hint",
   "app_install_nav_start",
@@ -237,6 +274,9 @@ expect(styles.includes(".app-install-header-entry[hidden]"), "Hidden header inst
 expect(styles.includes(".app-install-dialog-card"), "Install dialog styling is missing");
 expect(styles.includes(".app-install-verification-note"), "Verified shortcut-launch guidance styling is missing");
 expect(styles.includes(".app-install-toolbar-demo"), "iPhone browser toolbar preview styling is missing");
+expect(styles.includes(".app-install-browser-warning"), "Non-Safari warning styling is missing");
+expect(styles.includes(".app-install-copy-row"), "Non-Safari URL-copy styling is missing");
+expect(styles.includes(".app-install-missing-action-note"), "Safari Edit Actions fallback styling is missing");
 expect(styles.includes(".app-install-share-coachmark"), "iPhone Share-button coachmark styling is missing");
 expect(styles.includes(".app-install-coachmark-pointer"), "iPhone Share-button pointer styling is missing");
 expect(styles.includes(".app-install-header-button span { display: inline;"), "Mobile install action must not collapse to an unexplained icon");
