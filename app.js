@@ -5310,7 +5310,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.776";
+var APP_VERSION       = "v1.1.777";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -15237,7 +15237,7 @@ function renderProductionComponents(rows, kind) {
   if (!rows || !rows.length) {
     return "<div class='production-component-summary-empty'>" + esc(tf("production_component_summary_empty", { kind: productionImageKindLabel(kind) })) + "</div>";
   }
-  var html = "<table class='production-component-summary-table'><thead><tr><th>部品品番</th><th>部品名・製造メモ</th><th>数量</th><th>互・調達区分</th><th>交換率</th></tr></thead><tbody>";
+  var html = "<table class='production-component-summary-table'><thead><tr><th>部品品番</th><th>部品名</th><th>数量</th><th>互・調達区分</th><th>交換率</th><th>" + esc(t("component_manufacturing_memo")) + "</th></tr></thead><tbody>";
   rows.forEach(function(row) {
     var manufacturerMeta = [row.component_manufacturer, row.component_genuine_part_number ? (t("f_genuine_pn") + " " + row.component_genuine_part_number) : ""].filter(Boolean).join(" / ");
     var partName = row.component_name || row.component_part_name || "-";
@@ -15246,10 +15246,11 @@ function renderProductionComponents(rows, kind) {
     var procurement = componentProcurementCategoryLabel(row.procurement_category);
     html += "<tr>" +
       "<td><strong>" + esc(row.component_manufacturer_part_number || "-") + "</strong><small>" + esc(manufacturerMeta || "-") + "</small></td>" +
-      "<td><strong>" + esc(partName) + "</strong>" + (memo ? "<small>" + esc(memo) + "</small>" : "") + "</td>" +
+      "<td><strong>" + esc(partName) + "</strong></td>" +
       "<td class='production-component-summary-number'>" + esc(row.quantity || "-") + "</td>" +
       "<td><strong>" + esc(interchange || "-") + "</strong><small>" + esc(procurement || "-") + "</small></td>" +
       "<td class='production-component-summary-number'>" + esc(formatComponentRate(row.replacement_rate)) + "</td>" +
+      "<td class='production-component-summary-memo'>" + esc(memo || "-") + "</td>" +
     "</tr>";
   });
   return html + "</tbody></table>";

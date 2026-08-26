@@ -50,6 +50,8 @@ const summarySource = sourceBetween(app, "function renderProductionComponentSumm
   "component_name",
   "component_part_name",
   "manufacturing_memo",
+  't("component_manufacturing_memo")',
+  "production-component-summary-memo",
   "quantity",
   "formatComponentInterchange(row)",
   "componentProcurementCategoryLabel(row.procurement_category)",
@@ -70,7 +72,8 @@ if (summarySource.includes("unit_price_jpy") || summarySource.includes("formatCo
   ".production-component-summary-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; }",
   ".production-component-summary-table { width: 100%; border-collapse: collapse; table-layout: fixed;",
   ".production-component-summary-table th { position: sticky; top: 0;",
-  ".production-component-summary-table { min-width: 620px; }"
+  ".production-component-summary-table td.production-component-summary-memo { line-height: 1.4; white-space: pre-wrap; }",
+  ".production-component-summary-table { min-width: 680px; }"
 ].forEach((fragment) => requireFragment(css, fragment, "production component summary CSS"));
 
 console.log("Production component summary verified.");

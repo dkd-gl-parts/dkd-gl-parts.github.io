@@ -4876,16 +4876,18 @@ body.app-install-dialog-open { overflow: hidden; }
 .production-component-summary-table th { position: sticky; top: 0; z-index: 1; border-bottom: 1px solid #dbe3ec; padding: 5px 6px; background: #f5f7fa; color: #667085; font-size: 9px; font-weight: 800; text-align: left; white-space: nowrap; }
 .production-component-summary-table td { min-width: 0; border-bottom: 1px solid #e9edf2; padding: 6px; vertical-align: top; overflow-wrap: anywhere; }
 .production-component-summary-table tr:last-child td { border-bottom: 0; }
-.production-component-summary-table th:nth-child(1) { width: 27%; }
-.production-component-summary-table th:nth-child(2) { width: 27%; }
+.production-component-summary-table th:nth-child(1) { width: 24%; }
+.production-component-summary-table th:nth-child(2) { width: 20%; }
 .production-component-summary-table th:nth-child(3) { width: 44px; text-align: right; }
-.production-component-summary-table th:nth-child(4) { width: 112px; }
+.production-component-summary-table th:nth-child(4) { width: 102px; }
 .production-component-summary-table th:nth-child(5) { width: 58px; text-align: right; }
+.production-component-summary-table th:nth-child(6) { width: 24%; }
 .production-component-summary-table strong,
 .production-component-summary-table small { display: block; min-width: 0; }
 .production-component-summary-table strong { color: #17243a; font-size: 11px; font-weight: 800; }
 .production-component-summary-table small { margin-top: 2px; color: #7a8492; font-size: 9px; line-height: 1.35; }
 .production-component-summary-number { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.production-component-summary-table td.production-component-summary-memo { line-height: 1.4; white-space: pre-wrap; }
 .production-component-summary-empty,
 .production-component-summary-error { display: flex; min-height: 64px; align-items: center; justify-content: center; color: #8993a2; font-size: 11px; }
 .production-component-summary-error { color: #b42318; }
@@ -5348,7 +5350,7 @@ body.app-install-dialog-open { overflow: hidden; }
   .production-master-column, .production-operations-column { display: flex; flex-direction: column; overflow: visible; }
   .production-master-section, .production-component-summary-section, .production-kikan-section, .production-core-section, #production-kikan-wrap { overflow: visible; }
   .production-component-summary-wrap { max-height: 320px; overflow: auto; }
-  .production-component-summary-table { min-width: 620px; }
+  .production-component-summary-table { min-width: 680px; }
   .core-qty-summary { grid-template-columns: 1fr; }
   .core-qty-card + .core-qty-card { border-top: 1px solid #dbe3ec; border-left-width: 3px; }
   .production-core-meta { grid-template-columns: 1fr; }
