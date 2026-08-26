@@ -3018,6 +3018,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .app-install-entry[hidden],
 .app-install-header-entry[hidden],
 .app-install-dialog[hidden],
+.app-install-intro[hidden],
+.app-install-dialog-actions[hidden],
 .app-install-instructions[hidden],
 .app-install-safari-note[hidden] { display: none; }
 .app-install-button {
@@ -3116,7 +3118,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 }
 .app-install-dialog-close:hover { background: #e7ebf0; color: #13233f; }
 .app-install-dialog-close:focus-visible,
-.app-install-dialog-done:focus-visible { outline: 3px solid rgba(47,111,237,.3); outline-offset: 2px; }
+.app-install-dialog-done:focus-visible,
+.app-install-dialog-secondary:focus-visible { outline: 3px solid rgba(47,111,237,.3); outline-offset: 2px; }
 .app-install-dialog-brand {
   display: inline-flex;
   margin-bottom: 14px;
@@ -3131,6 +3134,24 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   color: #66748a;
   font-size: 13px;
   line-height: 1.65;
+}
+.app-install-intro > p {
+  margin: 0;
+  color: #233750;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.7;
+  text-align: left;
+}
+.app-install-intro .app-install-repeat-note {
+  margin-top: 12px;
+  padding: 11px 12px;
+  border-radius: 9px;
+  background: #f2f5f8;
+  color: #66748a;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.55;
 }
 .app-install-instructions { text-align: left; }
 .app-install-instructions ol {
@@ -3184,7 +3205,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .app-install-dialog-done {
   width: 100%;
   min-height: 46px;
-  margin-top: 20px;
   border: 0;
   border-radius: 10px;
   background: #183253;
@@ -3195,6 +3215,24 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   cursor: pointer;
 }
 .app-install-dialog-done:hover { background: #102743; }
+.app-install-dialog-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+}
+.app-install-dialog-secondary {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #cfd7e2;
+  border-radius: 10px;
+  background: #fff;
+  color: #52627a;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.app-install-dialog-secondary:hover { border-color: #9eabbd; background: #f7f9fb; color: #233750; }
 body.app-install-dialog-open { overflow: hidden; }
 .login-partners {
   position: absolute;
@@ -3268,8 +3306,8 @@ body.app-install-dialog-open { overflow: hidden; }
   .login-partner-mark-daiko { width: 32px; height: 32px; }
   .login-partner-mark-gltek { width: 38px; height: 28px; }
   .login-partner-separator { font-size: 24px; }
-  .app-install-header-button { width: 36px; min-height: 34px; padding: 5px; }
-  .app-install-header-button span { display: none; }
+  .app-install-header-button { width: auto; min-height: 34px; padding: 5px 8px; gap: 5px; }
+  .app-install-header-button span { display: inline; font-size: 10px; }
 }
 
 @media (max-width: 420px) {

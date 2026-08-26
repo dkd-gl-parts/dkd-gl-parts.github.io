@@ -62,9 +62,16 @@ var TRANSLATIONS = {
     login_heading: "ログイン",
     login_welcome: "D-CATSへようこそ",
     app_install_action: "ホーム画面に追加",
+    app_install_short_action: "アプリ追加",
     app_install_note: "次回からアプリのようにすぐ起動できます",
     app_install_title: "D-CATSをホーム画面に追加",
     app_install_lead: "ホーム画面のD-CATSアイコンから、すぐにシステムを開けます。",
+    app_install_intro: "この端末にD-CATSのショートカットを作成しますか？ 新しいD-CATSアイコンと名前でホーム画面から直接開けます。",
+    app_install_repeat_note: "作成するまで、ログイン時にご案内します。不要な場合は「今回はしない」を選べます。",
+    app_install_primary: "ホーム画面に追加する",
+    app_install_later: "今回はしない",
+    app_install_confirmed: "追加できました",
+    app_install_close_guide: "今回は閉じる",
     app_install_ios_safari_required: "SafariでD-CATSを開いてから操作してください。",
     app_install_ios_step_share: "画面の共有ボタンをタップします。",
     app_install_ios_step_add_home: "「ホーム画面に追加」を選択します。",
@@ -1765,9 +1772,16 @@ var TRANSLATIONS = {
     login_heading: "Login",
     login_welcome: "Welcome to D-CATS",
     app_install_action: "Add to Home Screen",
+    app_install_short_action: "Add app",
     app_install_note: "Open D-CATS quickly like an app next time",
     app_install_title: "Add D-CATS to your Home Screen",
     app_install_lead: "Open the system directly from the D-CATS icon on your Home Screen.",
+    app_install_intro: "Would you like to create a D-CATS shortcut on this device? Open it directly from the new D-CATS icon and name on your Home Screen.",
+    app_install_repeat_note: "We will ask after login until it is added. Select “Not now” to skip this time.",
+    app_install_primary: "Add to Home Screen",
+    app_install_later: "Not now",
+    app_install_confirmed: "I added it",
+    app_install_close_guide: "Close for now",
     app_install_ios_safari_required: "Open D-CATS in Safari before continuing.",
     app_install_ios_step_share: "Tap the Share button in the browser.",
     app_install_ios_step_add_home: "Select “Add to Home Screen.”",
@@ -3717,9 +3731,16 @@ var TRANSLATIONS = {
     login_heading: "登录",
     login_welcome: "欢迎使用 D-CATS",
     app_install_action: "添加到主屏幕",
+    app_install_short_action: "添加应用",
     app_install_note: "下次可像应用一样快速启动",
     app_install_title: "将D-CATS添加到主屏幕",
     app_install_lead: "通过主屏幕上的D-CATS图标快速打开系统。",
+    app_install_intro: "是否在此设备上创建D-CATS快捷方式？可通过新的D-CATS图标和名称从主屏幕直接打开。",
+    app_install_repeat_note: "添加完成前，每次登录时都会提示。暂时不添加时请选择“暂不添加”。",
+    app_install_primary: "添加到主屏幕",
+    app_install_later: "暂不添加",
+    app_install_confirmed: "已添加",
+    app_install_close_guide: "暂时关闭",
     app_install_ios_safari_required: "请先使用Safari打开D-CATS。",
     app_install_ios_step_share: "点击浏览器中的共享按钮。",
     app_install_ios_step_add_home: "选择“添加到主屏幕”。",
@@ -5221,7 +5242,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.766";
+var APP_VERSION       = "v1.1.767";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
