@@ -2517,18 +2517,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   font-size: 12px;
   line-height: 1.5;
 }
-.product-form-required-note {
-  flex: 0 0 auto;
-  margin-top: 5px;
-  padding: 5px 9px;
-  border: 1px solid #ffd9d6;
-  border-radius: 999px;
-  background: #fff7f6;
-  color: #7f3f3b;
-  font-size: 11px;
-  font-weight: 700;
+.product-form-required-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
-.product-form-required-note span { color: #d43f35; }
+.product-form-either-required {
+  flex: 0 0 auto;
+  padding: 1px 5px;
+  border: 1px solid #f2b8b3;
+  border-radius: 3px;
+  background: #fff4f2;
+  color: #c72d24;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.35;
+}
 .product-form-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.04fr);
@@ -2703,7 +2708,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     border-radius: 0;
   }
   .product-form-header { padding: 14px 14px 11px; }
-  .product-form-header p, .product-form-required-note { display: none; }
+  .product-form-header p { display: none; }
   .product-form-layout { gap: 10px; padding: 10px; }
   .product-form-section { padding: 11px; }
   .product-form-basic-grid { grid-template-columns: 1fr; }

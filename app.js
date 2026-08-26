@@ -1048,6 +1048,7 @@ var TRANSLATIONS = {
     lbl_genuine_pn: "純正品番",
     f_genuine_pn2: "純正品番2",
     lbl_mfr_pn: "メーカー品番",
+    product_part_number_either_required: "いずれか必須",
     lbl_mfr: "メーカー",
     gltek_part_number_section: "GLTEK品番",
     gltek_part_number_label: "GLTEK品番",
@@ -2739,6 +2740,7 @@ var TRANSLATIONS = {
     lbl_genuine_pn: "Genuine Part No.",
     f_genuine_pn2: "Genuine Part No. 2",
     lbl_mfr_pn: "Manufacturer Part No.",
+    product_part_number_either_required: "Either required",
     lbl_mfr: "Manufacturer",
     gltek_part_number_section: "GLTEK Part Number",
     gltek_part_number_label: "GLTEK Part Number",
@@ -4430,6 +4432,7 @@ var TRANSLATIONS = {
     lbl_genuine_pn: "纯正零件编号",
     f_genuine_pn2: "纯正零件编号2",
     lbl_mfr_pn: "制造商零件编号",
+    product_part_number_either_required: "二者选一必填",
     lbl_mfr: "制造商",
     gltek_part_number_section: "GLTEK零件编号",
     gltek_part_number_label: "GLTEK零件编号",
@@ -5185,7 +5188,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.761";
+var APP_VERSION       = "v1.1.762";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
