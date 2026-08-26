@@ -24,6 +24,7 @@ const renderSource = sourceBetween(app, "async function renderProductionDetail",
   "class='production-workspace'",
   "class='production-master-column'",
   "production-section production-master-section",
+  "renderProductionComponentSummaryShell(currentProductionComponentSummaryKind)",
   "production-section production-kikan-section",
   "class='production-operations-column'",
   "production-section production-core-section",
@@ -45,12 +46,14 @@ const vehicleSummarySource = sourceBetween(app, "async function loadCatalogVehic
   'button.setAttribute("aria-label", fullLabel)'
 ].forEach((fragment) => requireFragment(vehicleSummarySource, fragment, "production compact vehicle action"));
 
+const masterIndex = renderSource.indexOf("production-section production-master-section");
+const componentIndex = renderSource.indexOf("renderProductionComponentSummaryShell(currentProductionComponentSummaryKind)");
 const kikanIndex = renderSource.indexOf("production-section production-kikan-section");
 const operationsIndex = renderSource.indexOf("class='production-operations-column'");
 const coreIndex = renderSource.indexOf("production-section production-core-section");
 const imageIndex = renderSource.indexOf("production-section production-image-panel");
-if (!(kikanIndex < operationsIndex && operationsIndex < coreIndex && coreIndex < imageIndex)) {
-  throw new Error("production workspace section order must keep product/compatibility on the left and operations/images on the right");
+if (!(masterIndex < componentIndex && componentIndex < kikanIndex && kikanIndex < operationsIndex && operationsIndex < coreIndex && coreIndex < imageIndex)) {
+  throw new Error("production workspace section order must keep overview/components/compatibility on the left and operations/images on the right");
 }
 
 const searchBlock = sourceBetween(html, '<div class="production-search">', '<div class="production-filter-row"');
@@ -62,7 +65,9 @@ requireFragment(searchRow, 'id="production-clear-btn"', "production search clear
   ".production-right { display: flex; flex-direction: column; min-width: 0; overflow: hidden;",
   ".production-detail { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0;",
   ".production-workspace { display: grid; flex: 1 1 auto;",
-  ".production-master-column { grid-template-rows: auto minmax(150px, 1fr); }",
+  ".production-master-column { grid-template-rows: minmax(250px, 1.05fr) minmax(165px, .75fr) minmax(90px, .4fr); }",
+  ".production-component-summary-section { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }",
+  ".production-component-summary-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; }",
   ".production-operations-column { grid-template-rows: auto auto; align-content: start; }",
   "#production-kikan-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; }",
   ".production-core-meta { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(110px, .56fr);",
@@ -74,7 +79,8 @@ requireFragment(searchRow, 'id="production-clear-btn"', "production search clear
   "#screen-production-search .production-core-policy-row { grid-template-columns: 70px minmax(0, 1fr);",
   "#screen-production-search .production-core-policy-row .core-return-badge { white-space: nowrap; overflow-wrap: normal; }",
   "@media (min-width: 768px) and (max-width: 1180px)",
-  ".production-workspace { display: grid; grid-template-columns: 1fr; overflow: visible; }"
+  ".production-workspace { display: grid; grid-template-columns: 1fr; overflow: visible; }",
+  ".production-master-section, .production-component-summary-section, .production-kikan-section, .production-core-section, #production-kikan-wrap { overflow: visible; }"
 ].forEach((fragment) => requireFragment(css, fragment, "production workspace CSS"));
 
 console.log("Production management workspace layout verified.");

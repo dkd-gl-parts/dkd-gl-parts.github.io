@@ -428,6 +428,9 @@ var TRANSLATIONS = {
     production_core_section: "在庫・コア情報",
     production_vehicle_section: "車両情報",
     production_component_section: "構成部品",
+    production_component_summary_count: "{kind} / {n}件",
+    production_component_summary_empty: "{kind}の構成部品は未登録です。",
+    production_component_summary_failed: "構成部品を読み込めませんでした。",
     product_kind_section: "商品区分",
     product_shipping_section: "配送情報",
     product_shipping_help: "品番ごとの梱包重量と通常の出荷サイズを設定します。",
@@ -2157,6 +2160,9 @@ var TRANSLATIONS = {
     production_core_section: "Inventory / Core Info",
     production_vehicle_section: "Vehicle info",
     production_component_section: "Components",
+    production_component_summary_count: "{kind} / {n}",
+    production_component_summary_empty: "No {kind} components are registered.",
+    production_component_summary_failed: "Could not load components.",
     product_kind_section: "Product Kind",
     product_shipping_section: "Shipping Profile",
     product_shipping_help: "Set the packed weight and standard package size for this product.",
@@ -3893,6 +3899,9 @@ var TRANSLATIONS = {
     production_core_section: "库存・CORE信息",
     production_vehicle_section: "车辆信息",
     production_component_section: "构成零件",
+    production_component_summary_count: "{kind} / {n}件",
+    production_component_summary_empty: "尚未登记{kind}构成零件。",
+    production_component_summary_failed: "无法读取构成零件。",
     product_kind_section: "商品区分",
     product_shipping_section: "配送信息",
     product_shipping_help: "设置该商品的包装重量和通常出货尺寸。",
@@ -5292,6 +5301,8 @@ var imageEditRows = [];
 var imageEditFilterKind = "";
 var currentProductionImageKind = "rebuilt";
 var currentProductionImageDkdId = null;
+var currentProductionComponentSummaryKind = "rebuilt";
+var currentProductionComponentSummaryDkdId = null;
 var currentImageEditContext = "sales";
 var currentImageDeleteContext = "sales";
 var currentImageDeleteCoreListRowId = null;
@@ -5299,7 +5310,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.772";
+var APP_VERSION       = "v1.1.773";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -15069,6 +15080,10 @@ async function renderProductionDetail(row) {
     currentProductionImageKind = "rebuilt";
     currentProductionImageDkdId = dkdId || null;
   }
+  if (String(currentProductionComponentSummaryDkdId || "") !== String(dkdId || "")) {
+    currentProductionComponentSummaryKind = "rebuilt";
+    currentProductionComponentSummaryDkdId = dkdId || null;
+  }
   currentSelectedProductKind = normalizeProductKind(currentProductionImageKind || "rebuilt");
   var detail = await loadProductionDetailData(row);
   if (seq !== productionDetailRequestSeq) return;
@@ -15097,6 +15112,7 @@ async function renderProductionDetail(row) {
   html += renderProductMasterDetailHtml(row, componentButtonHtml);
   html += renderProductionStampPairsHtml(detail.stampPairs);
   html += "</section>";
+  html += renderProductionComponentSummaryShell(currentProductionComponentSummaryKind);
   html += "<section class='production-section production-kikan-section'><div class='production-section-heading'><h3>" + esc(t("kikan_section")) + "</h3></div>";
   html += "<div id='production-kikan-wrap'><div class='production-help'>" + esc(t("loading")) + "</div></div>";
   html += "</section>";
@@ -15126,10 +15142,22 @@ async function renderProductionDetail(row) {
   loadCatalogVehicleSummary(el, row);
   loadGltekPartNumberValue(el, row);
   loadProductSpecsForCurrent();
+  loadProductionComponentSummaryForRow(row, currentProductionComponentSummaryKind, seq);
   loadProductionKikanForRow(row, seq);
   loadProductionImagesForRow(row, seq);
   var compBtn = document.getElementById("production-open-components");
   if (compBtn) compBtn.addEventListener("click", openProductionComponents);
+  var componentSummaryBtn = document.getElementById("production-component-summary-open");
+  if (componentSummaryBtn) componentSummaryBtn.addEventListener("click", openProductionComponents);
+  el.querySelectorAll("[data-production-component-summary-kind]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var kind = normalizeProductKind(btn.dataset.productionComponentSummaryKind || "rebuilt");
+      if (kind !== "rebuilt" && kind !== "aftermarket_new") return;
+      currentProductionComponentSummaryKind = kind;
+      updateProductionComponentSummaryKindButtons(kind);
+      loadProductionComponentSummaryForRow(row, kind, seq);
+    });
+  });
   var labelBtn = document.getElementById("production-open-finished-label");
   if (labelBtn) labelBtn.addEventListener("click", openProductionFinishedLabel);
   var editBtn = document.getElementById("production-edit-core");
@@ -15185,15 +15213,77 @@ function renderProductionCoreEntries(rows) {
   return html + "</table>";
 }
 
-function renderProductionComponents(rows, fallbackSummary) {
-  if (rows && rows.length) {
-    var html = "<table class='production-mini-table'><tr><th>メーカー品番</th><th>純正品番</th><th>部品名</th><th>数</th></tr>";
-    rows.forEach(function(row) {
-      html += "<tr><td>" + esc(row.component_manufacturer_part_number || "-") + "</td><td>" + esc(row.component_genuine_part_number || "-") + "</td><td>" + esc(row.component_name || row.component_part_name || "-") + "</td><td>" + esc(row.quantity || "-") + "</td></tr>";
-    });
-    return html + "</table>";
+function renderProductionComponentSummaryShell(kind) {
+  kind = normalizeProductKind(kind || "rebuilt");
+  var kinds = ["rebuilt", "aftermarket_new"];
+  var controls = kinds.map(function(itemKind) {
+    var active = itemKind === kind;
+    return "<button class='production-component-kind-button " + (active ? "active" : "") + "' type='button' role='tab' aria-selected='" + String(active) + "' data-production-component-summary-kind='" + esc(itemKind) + "'>" + esc(productionImageKindLabel(itemKind)) + "</button>";
+  }).join("");
+  return "<section class='production-section production-component-summary-section'>" +
+    "<div class='production-section-heading production-component-summary-heading'><div><h3>" + esc(t("production_component_section")) + "</h3><span id='production-component-summary-count'>" + esc(productionImageKindLabel(kind) + " / " + t("loading")) + "</span></div>" +
+    "<div class='production-component-summary-actions'><div class='production-component-kind-switch' role='tablist' aria-label='" + esc(t("product_kind_section")) + "'>" + controls + "</div><button class='btn-sm-edit production-action-secondary' id='production-component-summary-open' type='button'>" + esc(t("component_open_parts")) + "</button></div></div>" +
+    "<div class='production-component-summary-wrap' id='production-component-summary-wrap'><div class='production-help'>" + esc(t("loading")) + "</div></div>" +
+  "</section>";
+}
+
+function updateProductionComponentSummaryKindButtons(kind) {
+  kind = normalizeProductKind(kind || "rebuilt");
+  document.querySelectorAll("[data-production-component-summary-kind]").forEach(function(btn) {
+    var active = btn.dataset.productionComponentSummaryKind === kind;
+    btn.classList.toggle("active", active);
+    btn.setAttribute("aria-selected", String(active));
+  });
+}
+
+function renderProductionComponents(rows, kind) {
+  kind = normalizeProductKind(kind || "rebuilt");
+  if (!rows || !rows.length) {
+    return "<div class='production-component-summary-empty'>" + esc(tf("production_component_summary_empty", { kind: productionImageKindLabel(kind) })) + "</div>";
   }
-  return "<div class='production-pre'>" + esc(fallbackSummary || "構成部品未登録") + "</div>";
+  var html = "<table class='production-component-summary-table'><thead><tr><th>部品品番</th><th>部品名・製造メモ</th><th>数量</th><th>互・調達区分</th><th>交換率</th></tr></thead><tbody>";
+  rows.forEach(function(row) {
+    var manufacturerMeta = [row.component_manufacturer, row.component_genuine_part_number ? (t("f_genuine_pn") + " " + row.component_genuine_part_number) : ""].filter(Boolean).join(" / ");
+    var partName = row.component_name || row.component_part_name || "-";
+    var memo = row.manufacturing_memo || "";
+    var interchange = formatComponentInterchange(row);
+    var procurement = componentProcurementCategoryLabel(row.procurement_category);
+    html += "<tr>" +
+      "<td><strong>" + esc(row.component_manufacturer_part_number || "-") + "</strong><small>" + esc(manufacturerMeta || "-") + "</small></td>" +
+      "<td><strong>" + esc(partName) + "</strong>" + (memo ? "<small>" + esc(memo) + "</small>" : "") + "</td>" +
+      "<td class='production-component-summary-number'>" + esc(row.quantity || "-") + "</td>" +
+      "<td><strong>" + esc(interchange || "-") + "</strong><small>" + esc(procurement || "-") + "</small></td>" +
+      "<td class='production-component-summary-number'>" + esc(formatComponentRate(row.replacement_rate)) + "</td>" +
+    "</tr>";
+  });
+  return html + "</tbody></table>";
+}
+
+async function loadProductionComponentSummaryForRow(row, kind, seq) {
+  var wrap = document.getElementById("production-component-summary-wrap");
+  var count = document.getElementById("production-component-summary-count");
+  var dkdId = productDkdId(row);
+  kind = normalizeProductKind(kind || "rebuilt");
+  if (!wrap || !dkdId) return;
+  wrap.innerHTML = "<div class='production-help'>" + esc(t("loading")) + "</div>";
+  if (count) count.textContent = productionImageKindLabel(kind) + " / " + t("loading");
+  var r = await sb.from("assembly_component_usage_details")
+    .select("id,dkd_component_id,dkd_shohin_id,product_kind,product_variant_id,component_manufacturer,component_manufacturer_part_number,component_genuine_part_number,component_name,component_part_name,quantity,replacement_rate,procurement_category,manufacturing_memo,interchange_code,component_position,is_catalog_evidence")
+    .eq("dkd_shohin_id", dkdId)
+    .eq("product_kind", kind)
+    .eq("is_catalog_evidence", false)
+    .order("component_position", { ascending: true, nullsFirst: false })
+    .order("component_manufacturer_part_number", { ascending: true });
+  if (seq !== productionDetailRequestSeq || String(currentProductionComponentSummaryDkdId || "") !== String(dkdId) || currentProductionComponentSummaryKind !== kind) return;
+  if (r.error) {
+    console.warn("production component summary lookup failed", r.error);
+    wrap.innerHTML = "<div class='production-component-summary-error'>" + esc(t("production_component_summary_failed")) + "</div>";
+    if (count) count.textContent = productionImageKindLabel(kind) + " / -";
+    return;
+  }
+  var rows = r.data || [];
+  wrap.innerHTML = renderProductionComponents(rows, kind);
+  if (count) count.textContent = tf("production_component_summary_count", { kind: productionImageKindLabel(kind), n: rows.length });
 }
 
 async function openProductionComponents() {
@@ -15205,7 +15295,7 @@ async function openProductionComponents() {
   currentProductSpecs = [];
   currentProductNominalSpec = null;
   currentImages = [];
-  currentSelectedProductKind = normalizeProductKind(currentProductionImageKind || "rebuilt");
+  currentSelectedProductKind = normalizeProductKind(currentProductionComponentSummaryKind || "rebuilt");
   currentSelectedComponentVariantId = "";
   await enterComponentsScreen("production-search");
 }

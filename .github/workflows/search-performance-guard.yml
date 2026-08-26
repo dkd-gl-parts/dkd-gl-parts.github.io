@@ -57,6 +57,7 @@ on:
       - "scripts/verify-customer-order-compatible-serial-dispatch.js"
       - "scripts/verify-production-image-thumbnails-by-kind.js"
       - "scripts/verify-production-workspace-layout.js"
+      - "scripts/verify-production-component-summary.js"
       - "scripts/verify-production-stamp-pairs.js"
       - "scripts/verify-image-icon-consistency.js"
       - "assets/icons/image.svg"
@@ -167,6 +168,8 @@ jobs:
         run: node scripts/verify-production-image-thumbnails-by-kind.js
       - name: Verify production management workspace layout
         run: node scripts/verify-production-workspace-layout.js
+      - name: Verify production component summary
+        run: node scripts/verify-production-component-summary.js
       - name: Verify production F/R stamp-pair management
         run: node scripts/verify-production-stamp-pairs.js
       - name: Verify shared image icon consistency
