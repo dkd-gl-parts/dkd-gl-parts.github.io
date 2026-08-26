@@ -75,6 +75,7 @@ requireFragment(searchRow, 'id="production-clear-btn"', "production search clear
   "#screen-production-search .detail-vehicle-grid:not(.detail-spec-grid) { grid-template-columns: 118px minmax(0, 1fr); }",
   "#screen-production-search .ac-part-row { grid-template-columns: 136px minmax(0, 1fr); }",
   "#screen-production-search .ac-part-label { font-size: 12px; white-space: nowrap; }",
+  "#screen-production-search .ac-part-value-with-action .ac-part-value-text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;",
   "#screen-production-search .detail-spec-grid { grid-template-columns: 86px minmax(0, 1fr) 86px minmax(0, 1fr); }",
   "#screen-production-search .production-core-policy-row { grid-template-columns: 70px minmax(0, 1fr);",
   "#screen-production-search .production-core-policy-row .core-return-badge { white-space: nowrap; overflow-wrap: normal; }",

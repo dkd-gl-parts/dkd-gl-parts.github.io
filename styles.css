@@ -5700,6 +5700,7 @@ body.app-install-dialog-open { overflow: hidden; }
   #screen-production-search .ac-part-label { font-size: 12px; white-space: nowrap; }
   #screen-production-search .detail-vehicle-maker-row .catalog-vehicle-maker-value { flex: 0 1 auto; min-width: 42px; white-space: nowrap; }
   #screen-production-search .detail-vehicle-maker-row .catalog-vehicle-button { min-width: 0; padding: 2px 6px; white-space: nowrap; }
+  #screen-production-search .ac-part-value-with-action .ac-part-value-text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; word-break: normal; overflow-wrap: normal; }
   #screen-production-search .detail-spec-after-maker { margin-top: 6px; }
   #screen-production-search .detail-spec-grid { grid-template-columns: 86px minmax(0, 1fr) 86px minmax(0, 1fr); }
   #screen-production-search .detail-spec-grid .detail-vehicle-label { padding-right: 2px; padding-left: 2px; font-size: 11px; white-space: nowrap; }
