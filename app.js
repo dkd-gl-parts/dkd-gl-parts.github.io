@@ -5316,7 +5316,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.783";
+var APP_VERSION       = "v1.1.784";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -10798,6 +10798,21 @@ async function enterShippingDocumentMgmt(options) {
   if (input) input.focus();
 }
 
+function shippingDocumentPendingCount(order) {
+  var serverCount = Number(order && order.pending_document_count);
+  if (Number.isFinite(serverCount) && serverCount >= 0) return Math.floor(serverCount);
+  var statuses = order && order.document_statuses && typeof order.document_statuses === "object"
+    ? order.document_statuses
+    : {};
+  var requiredTypes = ["dispatch", "warranty"];
+  if (order && order.core_return_required) requiredTypes.push("core_return");
+  if (order && order.outbound_waybill_method === "dot_matrix") requiredTypes.push("outbound_waybill");
+  if (order && order.core_return_required && order.return_waybill_method === "dot_matrix") requiredTypes.push("return_waybill");
+  return requiredTypes.filter(function(type) {
+    return !statuses[type] || statuses[type] !== "printed";
+  }).length;
+}
+
 function renderShippingDocumentList() {
   var host = document.getElementById("shipping-document-list");
   var count = document.getElementById("shipping-document-count");
@@ -10811,10 +10826,7 @@ function renderShippingDocumentList() {
   host.innerHTML = shippingDocumentRows.map(function(order) {
     var selected = String(order.id) === String(shippingDocumentSelectedId);
     var checked = shippingDocumentCheckedIdsState.has(parseInt(order.id, 10));
-    var statuses = order.document_statuses && typeof order.document_statuses === "object" ? order.document_statuses : {};
-    var pendingCount = ["dispatch", "outbound_waybill", "warranty", "core_return", "return_waybill"].filter(function(type) {
-      return statuses[type] && statuses[type] !== "printed";
-    }).length;
+    var pendingCount = shippingDocumentPendingCount(order);
     return "<div class='shipping-document-list-row" + (selected ? " selected" : "") + "' data-shipping-document-order='" + esc(order.id) + "'>" +
       "<label class='shipping-document-row-check' aria-label='印刷対象'><input type='checkbox' data-shipping-document-check value='" + esc(order.id) + "'" + (checked ? " checked" : "") + "></label>" +
       "<span class='shipping-document-list-main'><strong>" + esc(order.order_number || ("注文 " + order.id)) + "</strong><small>" + esc(order.customer_name || "-") + "</small><span class='shipping-document-list-progress'>" + esc(order.dispatch_number || "指示書未発行") + (pendingCount ? " / 未印刷 " + pendingCount : " / 印刷済み") + "</span></span>" +

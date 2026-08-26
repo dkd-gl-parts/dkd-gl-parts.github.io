@@ -85,6 +85,32 @@ if (enterSource.includes("list_sales_order_b2_exports") || enterSource.includes(
   throw new Error("Shipping document management must not load B2 history on entry");
 }
 
+const pendingCountSource = sourceBetween("function shippingDocumentPendingCount", "function renderShippingDocumentList");
+for (const fragment of [
+  "pending_document_count",
+  '["dispatch", "warranty"]',
+  'requiredTypes.push("core_return")',
+  'outbound_waybill_method === "dot_matrix"',
+  'return_waybill_method === "dot_matrix"'
+]) requireFragment(pendingCountSource, fragment);
+const pendingCountContext = {};
+vm.runInNewContext(pendingCountSource, pendingCountContext);
+if (pendingCountContext.shippingDocumentPendingCount({ pending_document_count: 1 }) !== 1) {
+  throw new Error("The server-calculated pending document count must drive the order list");
+}
+if (pendingCountContext.shippingDocumentPendingCount({
+  core_return_required: true,
+  document_statuses: { dispatch: "printed", warranty: "unissued", core_return: "printed" }
+}) !== 1) {
+  throw new Error("One remaining warranty must keep the order in the unprinted state");
+}
+if (pendingCountContext.shippingDocumentPendingCount({
+  core_return_required: false,
+  document_statuses: { dispatch: "printed", warranty: "printed", core_return: "unissued", return_waybill: "unissued" }
+}) !== 0) {
+  throw new Error("Core-return documents must not count for an order that does not require a core return");
+}
+
 const batchDefaultsSource = sourceBetween("function salesOrderAutoPrintIsEnabled", "async function enterShippingDocumentMgmt");
 for (const fragment of [
   'input.value === "dispatch" ? !autoPrintEnabled : true',
@@ -281,11 +307,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.783"',
-  'styles.css?v=1.1.783',
-  'app.js?v=1.1.783'
+  'content="v1.1.784"',
+  'styles.css?v=1.1.784',
+  'app.js?v=1.1.784'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.783"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.784"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
