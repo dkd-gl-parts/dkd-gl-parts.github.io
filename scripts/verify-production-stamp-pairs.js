@@ -26,9 +26,9 @@ const productionScreen = sourceBetween(html, 'id="screen-production-search"', 'i
   'id="production-stamp-search-submit"'
 ].forEach((fragment) => requireFragment(productionScreen, fragment, "manufacturing stamp search UI"));
 [
-  'id="production-stamp-f-number" type="text" inputmode="numeric" maxlength="8"',
-  'id="production-stamp-r-number" type="text" inputmode="numeric" maxlength="8"'
-].forEach((fragment) => requireFragment(productionScreen, fragment, "eight-digit manufacturing stamp search input"));
+  'id="production-stamp-f-number" type="text" inputmode="text" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false"',
+  'id="production-stamp-r-number" type="text" inputmode="text" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false"'
+].forEach((fragment) => requireFragment(productionScreen, fragment, "alphanumeric manufacturing stamp search input"));
 
 const productForm = sourceBetween(html, 'id="part-form-overlay"', 'id="kikan-form-overlay"');
 [
@@ -99,12 +99,14 @@ const pairForm = sourceBetween(app, "async function fetchCoreProductStampPairs",
   "pairs.length > 100"
 ].forEach((fragment) => requireFragment(pairForm, fragment, "stamp-pair editor validation"));
 [
-  "return /^[0-9]{3,8}$/.test",
+  ".trim().toUpperCase()",
+  "return /^[A-Z0-9]{3,8}$/.test",
   "maxlength='8'",
-  "3～8桁の数字"
-].forEach((fragment) => requireFragment(app, fragment, "eight-digit stamp-pair editor"));
-if (/\^\[0-9\]\{3,4\}\$/.test(app) || /data-stamp-pair-field='[fr]_number'[^>]*maxlength='4'/.test(app)) {
-  throw new Error("legacy four-digit stamp-number validation must not remain in the editor");
+  "autocapitalize='characters'",
+  "半角英数字（大文字）"
+].forEach((fragment) => requireFragment(app, fragment, "alphanumeric stamp-pair editor"));
+if (app.includes("return /^[0-9]{3,8}$/.test") || /data-stamp-pair-field='[fr]_number'[^>]*inputmode='numeric'/.test(app)) {
+  throw new Error("numeric-only stamp-number validation must not remain in the editor");
 }
 
 [
