@@ -5316,7 +5316,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.784";
+var APP_VERSION       = "v1.1.785";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -11050,6 +11050,14 @@ function shippingDocumentPrintJob(order, type) {
   }) || null;
 }
 
+function shippingDocumentPrintStateLabel(job, fallback) {
+  if (!job) return fallback || "未発行";
+  var label = salesOrderPrintJobStatusLabel(job.status);
+  if (job.source === "accept_auto") return label + " / 受付時自動発行";
+  if (job.source === "shipment_auto") return label + " / 出荷完了時自動発行";
+  return label;
+}
+
 function shippingDocumentStageHtml(order) {
   var dispatch = salesOrderDispatch(order);
   var b2Issued = Array.isArray(order && order.b2_exports) && order.b2_exports.length > 0;
@@ -11183,7 +11191,7 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var rows = [
     {
       key: "dispatch", name: "出荷指示書", standard: dispatchStandard,
-      state: dispatchJob ? salesOrderPrintJobStatusLabel(dispatchJob.status) : (dispatch ? "発行済み" : "未発行"), ready: !!dispatch,
+      state: shippingDocumentPrintStateLabel(dispatchJob, dispatch ? "発行済み" : "未発行"), ready: !!dispatch,
       temporary: shippingDocumentHasTemporaryOutput(order, "dispatch") ? "今回のみ: " + shippingDocumentOutputModeLabel(shippingDocumentTemporaryOutputMode(order, "dispatch")) : "",
       actions: shippingDocumentManualOutputActions(order, "dispatch", !!dispatch)
     },
@@ -11194,13 +11202,13 @@ function shippingDocumentShipmentDocumentsHtml(order) {
     },
     {
       key: "warranty", name: "保証書", standard: "A5 / 注文単位 / 端末印刷",
-      state: warrantyJob ? salesOrderPrintJobStatusLabel(warrantyJob.status) : (ready ? "発行可" : "待機中"), ready: ready,
+      state: shippingDocumentPrintStateLabel(warrantyJob, "未発行"), ready: ready,
       temporary: shippingDocumentHasTemporaryOutput(order, "warranty") ? "今回のみ: " + shippingDocumentOutputModeLabel(shippingDocumentTemporaryOutputMode(order, "warranty")) : "",
       actions: shippingDocumentManualOutputActions(order, "warranty", ready)
     },
     {
       key: "core_return", name: "コア返却シート", standard: "A5 / コア返却必要時 / 端末印刷",
-      state: order.core_return_required ? (coreJob ? salesOrderPrintJobStatusLabel(coreJob.status) : (ready ? "発行可" : "待機中")) : "対象外", ready: ready && !!order.core_return_required,
+      state: order.core_return_required ? shippingDocumentPrintStateLabel(coreJob, "未発行") : "対象外", ready: ready && !!order.core_return_required,
       temporary: shippingDocumentHasTemporaryOutput(order, "core_return") ? "今回のみ: " + shippingDocumentOutputModeLabel(shippingDocumentTemporaryOutputMode(order, "core_return")) : "",
       actions: order.core_return_required ? shippingDocumentManualOutputActions(order, "core_return", ready) : "<span class='shipping-document-no-action'>発行不要</span>"
     },

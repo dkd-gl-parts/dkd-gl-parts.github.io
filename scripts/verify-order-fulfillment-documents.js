@@ -183,6 +183,15 @@ if (temporaryOutput.includes("sb.rpc(")) {
   throw new Error("Temporary output selection must not persist or mutate server-side print settings");
 }
 
+const printState = sourceBetween("function shippingDocumentPrintStateLabel", "function shippingDocumentStageHtml");
+for (const fragment of [
+  'job.source === "accept_auto"',
+  'job.source === "shipment_auto"',
+  "受付時自動発行",
+  "出荷完了時自動発行",
+  "未発行"
+]) requireFragment(printState, fragment);
+
 const requiredDocuments = sourceBetween("function shippingDocumentShipmentDocumentsHtml", "function shippingDocumentReturnWaybillHtml");
 for (const fragment of [
   'key: "dispatch"',
@@ -200,8 +209,13 @@ for (const fragment of [
   'shippingDocumentManualOutputActions(order, "dispatch"',
   'shippingDocumentManualOutputActions(order, "warranty"',
   'shippingDocumentManualOutputActions(order, "core_return"',
+  'shippingDocumentPrintStateLabel(warrantyJob, "未発行")',
+  'shippingDocumentPrintStateLabel(coreJob, "未発行")',
   "今回のみ:"
 ]) requireFragment(requiredDocuments, fragment);
+if (requiredDocuments.includes("待機中")) {
+  throw new Error("Unissued shipment documents must be labeled as unissued, not as an active print wait state");
+}
 
 const detailSource = sourceBetween("function renderShippingDocumentDetail", "function bindShippingDocumentDetailActions");
 for (const fragment of [
@@ -307,11 +321,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.784"',
-  'styles.css?v=1.1.784',
-  'app.js?v=1.1.784'
+  'content="v1.1.785"',
+  'styles.css?v=1.1.785',
+  'app.js?v=1.1.785'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.784"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.785"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
