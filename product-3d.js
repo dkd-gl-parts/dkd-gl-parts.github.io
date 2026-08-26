@@ -64,10 +64,24 @@
   }
   function cleanKind(kind) {
     kind = typeof normalizeProductKind === "function" ? normalizeProductKind(kind) : String(kind || "rebuilt");
-    return kind === "aftermarket_new" ? kind : "rebuilt";
+    return kind === "rebuilt" || kind === "aftermarket_new" ? kind : "";
   }
   function kindLabel(kind) {
-    return cleanKind(kind) === "aftermarket_new" ? "新品" : "リビルト";
+    kind = cleanKind(kind);
+    return kind === "aftermarket_new" ? "新品" : (kind === "rebuilt" ? "リビルト" : "対象外");
+  }
+  function canManage3D() {
+    return typeof canManageProduct3D === "function" && canManageProduct3D();
+  }
+  function canPublish3D() {
+    return typeof canPublishProduct3D === "function" && canPublishProduct3D();
+  }
+  function canReview3D() {
+    return typeof canReviewProduct3D === "function" && canReviewProduct3D();
+  }
+  function deny3D(action) {
+    if (typeof showPermissionDenied === "function") showPermissionDenied(action, "product_3d_models");
+    else alert("商品3D管理の権限がありません。");
   }
   function direction(id) { return DIRECTIONS.find(function (row) { return row.id === id; }) || DIRECTIONS[0]; }
   function nextDirection() {
@@ -108,9 +122,14 @@
 
   async function openCapture(context) {
     if (state.busy) return;
+    if (!canManage3D()) { deny3D("open_product_3d_capture"); return; }
     var target = selectedTarget(context || "sales");
     if (!target.product || !productId(target.product)) {
       alert("3Dモデルを作成する商品を選択してください。");
+      return;
+    }
+    if (!target.kind) {
+      alert("3Dモデルを作成できる商品区分は「リビルト」と「新品」です。");
       return;
     }
     closeImageActionOverlays();
@@ -237,6 +256,7 @@
   }
 
   async function startCamera() {
+    if (!canManage3D()) { deny3D("start_product_3d_camera"); return; }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       setLiveFeedback(["この端末ではカメラを利用できません"], false); return;
     }
@@ -411,6 +431,7 @@
   }
 
   async function captureSnapshot(sourceKind) {
+    if (!canManage3D()) { deny3D("capture_product_3d_snapshot"); return false; }
     if (!state.stream || state.busy) return false;
     var video = elements["product-3d-camera-video"];
     var analysis = analyzeSource(video, sourceKind || "camera_still");
@@ -525,6 +546,7 @@
     setLiveFeedback(["不足方向が続いています。「動画で補完」で鮮明なフレームだけを抽出できます"], false);
   }
   function toggleVideoSupplement() {
+    if (!canManage3D()) { deny3D("supplement_product_3d_video"); return; }
     if (!state.stream) { startCamera(); return; }
     state.videoMode = !state.videoMode;
     elements["product-3d-video-supplement"].classList.toggle("active", state.videoMode);
@@ -541,6 +563,7 @@
     }
   }
   function toggleBottomMode() {
+    if (!canManage3D()) { deny3D("set_product_3d_bottom_mode"); return; }
     state.bottomMode = !state.bottomMode;
     state.currentDirection = state.bottomMode ? "bottom" : nextDirection();
     elements["product-3d-bottom-mode"].classList.toggle("active", state.bottomMode);
@@ -549,6 +572,7 @@
   }
 
   async function submitWorkspace() {
+    if (!canManage3D()) { deny3D("submit_product_3d_model"); return; }
     if (!state.workspace || state.busy || coveredDirections().length < MIN_CAPTURES) return;
     state.busy = true; renderAll();
     try {
@@ -667,10 +691,12 @@
     }).filter(Boolean)));
     var missing = ids.filter(function (id) { return !Object.prototype.hasOwnProperty.call(modelBadgeCache, String(id)); });
     if (missing.length) {
-      var result = await sb.from("product_3d_models").select("dkd_shohin_id").eq("status", "published").in("dkd_shohin_id", missing.slice(0, 300));
+      var batch = missing.slice(0, 300);
+      var result = await sb.from("product_3d_models").select("dkd_shohin_id").eq("status", "published").in("dkd_shohin_id", batch);
       if (!result.error) {
-        missing.forEach(function (id) { modelBadgeCache[String(id)] = false; });
+        batch.forEach(function (id) { modelBadgeCache[String(id)] = false; });
         (result.data || []).forEach(function (row) { modelBadgeCache[String(row.dkd_shohin_id)] = true; });
+        if (missing.length > batch.length) scheduleBadgeRefresh();
       }
     }
     nodes.forEach(function (node) {
@@ -695,21 +721,23 @@
     var host = el(hostId);
     if (!host || !target.product) return;
     host.innerHTML = "<div class='product-3d-loading-card'>3Dモデルを確認しています…</div>";
-    var internal = context !== "customer" && typeof canManageAllImages === "function" && canManageAllImages();
+    var internal = context !== "customer" && canReview3D();
+    var manageable = context !== "customer" && !!target.kind && canManage3D();
+    var publishable = context !== "customer" && canPublish3D();
     var models = internal ? await fetchInternalModels(productId(target.product)) : await fetchPublishedModels(productId(target.product));
     var visible = context === "customer" ? models : models.filter(function (model) { return model.product_kind === target.kind; });
     if (!visible.length) {
-      var createAction = context === "customer" ? "" : "<button type='button' data-create-3d='" + context + "'>3Dモデルを作成</button>";
+      var createAction = manageable ? "<button type='button' data-create-3d='" + context + "'>3Dモデルを作成</button>" : "";
       host.innerHTML = "<div class='product-3d-empty-card'><span class='product-3d-cube'>3D</span><strong>公開済み3Dモデルはありません</strong>" + createAction + "</div>";
       return;
     }
     function modelCardHtml(model) {
       var size = model.model_bytes ? (model.model_bytes / 1048576).toFixed(1) + " MB" : "";
       var status = modelStatusLabel(model.status);
-      var canOpen = model.published_model_path && (model.status === "published" || model.status === "review");
+      var canOpen = model.published_model_path && (model.status === "published" || model.status === "review" || model.status === "archived");
       var action = canOpen ? "<button type='button' class='product-3d-card-action' data-open-model='" + model.id + "' data-model-context='" + context + "' data-model-product='" + productId(target.product) + "'>確認</button>" : "";
-      if (internal && model.status === "review") action += "<button type='button' class='product-3d-card-action publish' data-publish-model='" + model.id + "' data-publish-context='" + context + "'>公開</button>";
-      if (internal && (model.status === "needs_capture" || model.status === "failed")) action += "<button type='button' class='product-3d-card-action' data-create-3d='" + context + "'>撮影を再開</button>";
+      if (publishable && model.status === "review") action += "<button type='button' class='product-3d-card-action publish' data-publish-model='" + model.id + "' data-publish-context='" + context + "'>公開</button>";
+      if (manageable && (model.status === "needs_capture" || model.status === "failed")) action += "<button type='button' class='product-3d-card-action' data-create-3d='" + context + "'>撮影を再開</button>";
       var note = model.failure_message || (model.additional_capture_instructions && model.additional_capture_instructions.length ? "追加撮影: " + model.additional_capture_instructions.join(" / ") : "");
       return "<div class='product-3d-model-card'><span class='product-3d-cube'>3D</span><span><strong>" + esc(kindLabel(model.product_kind)) + " 3Dモデル <i data-model-status='" + esc(model.status) + "'>" + esc(status) + "</i></strong><small>rev." + model.revision + " " + size + (note ? " / " + esc(note) : "") + "</small></span><span class='product-3d-card-actions'>" + action + "</span></div>";
     }
@@ -729,6 +757,7 @@
     return ({ draft: "撮影中", waiting: "待機", processing: "処理中", needs_capture: "要追加撮影", failed: "失敗", review: "確認待ち", published: "公開済み", archived: "旧版" })[status] || status;
   }
   async function publishModel(modelId, context) {
+    if (!canPublish3D()) { deny3D("publish_product_3d_model"); return; }
     if (!window.confirm("確認中の3Dモデルを得意先にも公開します。公開してよろしいですか？")) return;
     var result = await sb.rpc("publish_product_3d_model", { target_model_id: Number(modelId) });
     if (result.error) { alert("3Dモデルを公開できませんでした: " + friendlyError(result.error)); return; }
@@ -739,7 +768,7 @@
   async function openViewerById(modelId, context, dkdId) {
     var requestId = ++viewerRequestId;
     var target = selectedTarget(context || "sales");
-    var internal = context !== "customer" && typeof canManageAllImages === "function" && canManageAllImages();
+    var internal = context !== "customer" && canReview3D();
     var models = internal ? await fetchInternalModels(dkdId || productId(target.product)) : await fetchPublishedModels(dkdId || productId(target.product));
     if (requestId !== viewerRequestId) return;
     var model = models.find(function (row) { return String(row.id) === String(modelId); });
@@ -753,7 +782,7 @@
     elements["product-3d-viewer-loading"].hidden = false;
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.763");
+      var module = await import("./product-3d-viewer.js?v=1.1.776");
       var createdViewer = await module.createProduct3DViewer({
         host: elements["product-3d-viewer-stage"],
         url: signed.data.signedUrl,

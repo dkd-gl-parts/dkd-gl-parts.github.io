@@ -23,7 +23,7 @@ function requireText(source, fragment, label) {
   "product-3d-video-supplement",
   "product-3d-viewer-overlay",
   "data-product-media=\"model\"",
-  "product-3d.js?v=1.1.779"
+  "product-3d.js?v=1.1.780"
 ].forEach((fragment) => requireText(html, fragment, "3D UI contract"));
 
 [
@@ -37,7 +37,7 @@ function requireText(source, fragment, label) {
   "orphan product 3D source cleanup failed",
   "if (duplicateRemoval.error) throw duplicateRemoval.error",
   "customer: \"customer-product-3d-list\"",
-  "context === \"customer\" ? \"\"",
+  "var createAction = manageable",
   "product-3d-kind-group",
   "[\"rebuilt\", \"aftermarket_new\"]",
   "submit_product_3d_model",
@@ -55,7 +55,19 @@ function requireText(source, fragment, label) {
   "確認待ち",
   "data-publish-model",
   "createSignedUrl(model.published_model_path, 600)",
-  "import(\"./product-3d-viewer.js?v=1.1.763\")",
+  "import(\"./product-3d-viewer.js?v=1.1.776\")",
+  "if (!canManage3D()) { deny3D(\"open_product_3d_capture\"); return; }",
+  "if (!canManage3D()) { deny3D(\"submit_product_3d_model\"); return; }",
+  "if (!canPublish3D()) { deny3D(\"publish_product_3d_model\"); return; }",
+  "var internal = context !== \"customer\" && canReview3D();",
+  "var manageable = context !== \"customer\" && !!target.kind && canManage3D();",
+  "var batch = missing.slice(0, 300);",
+  ".in(\"dkd_shohin_id\", batch)",
+  "batch.forEach(function (id) { modelBadgeCache[String(id)] = false; });",
+  "if (missing.length > batch.length) scheduleBadgeRefresh();",
+  "publishable && model.status === \"review\"",
+  "manageable && (model.status === \"needs_capture\" || model.status === \"failed\")",
+  "3Dモデルを作成できる商品区分は「リビルト」と「新品」です。",
   "if (viewer) { viewer.dispose(); viewer = null; }",
   "if (requestId !== viewerRequestId) { createdViewer.dispose(); return; }"
 ].forEach((fragment) => requireText(client, fragment, "3D capture contract"));
@@ -63,12 +75,24 @@ function requireText(source, fragment, label) {
 if (client.includes("analysisDigest")) throw new Error("Capture dedupe must hash source bytes, not analysis metadata");
 if (client.includes('signProductImageUrl(imageRow.storage_path, { width:')) throw new Error("Existing capture SHA must cover the original stored image bytes");
 if (client.includes('context === "customer" ? "rebuilt"')) throw new Error("Customer 3D models must not collapse both product kinds into rebuilt");
+if (client.includes("canManageAllImages")) throw new Error("Product 3D authorization must not be coupled to image.manage");
+if (client.includes('return kind === "aftermarket_new" ? kind : "rebuilt"')) throw new Error("Unsupported product kinds must not be silently converted to rebuilt");
 
 [
   "customer-product-3d-list",
   "production-product-3d-list",
   "data-product-media='model'",
-  "data-dkd-id='"
+  "data-dkd-id='",
+  "function canManageProduct3D()",
+  "function canPublishProduct3D()",
+  "function canReviewProduct3D()",
+  '"product_3d.manage"',
+  '"product_3d.publish"',
+  "商品3D管理（高権限）",
+  "Windows workerの登録・停止・engine変更",
+  "canManageAllImages() || canManageProduct3D()",
+  "syncProductMediaActionAccess(\"sales\")",
+  "syncProductMediaActionAccess(\"production\")"
 ].forEach((fragment) => requireText(app, fragment, "3D application integration"));
 
 [

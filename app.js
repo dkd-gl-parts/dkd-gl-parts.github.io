@@ -5316,7 +5316,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.779";
+var APP_VERSION       = "v1.1.780";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5853,6 +5853,17 @@ function canIssueGltekPartNumber() {
 function canManageAllImages() {
   if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
   return userPermissionAllowed(userProfile, "image.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]));
+}
+function canManageProduct3D() {
+  if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
+  return userPermissionAllowed(userProfile, "product_3d.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]));
+}
+function canPublishProduct3D() {
+  if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
+  return userPermissionAllowed(userProfile, "product_3d.publish", hasAccessRole(userProfile, ["system_admin", "company_admin"]));
+}
+function canReviewProduct3D() {
+  return canManageProduct3D() || canPublishProduct3D();
 }
 function canUploadCoreImages() {
   return canManageUsedCoreImages();
@@ -15112,7 +15123,7 @@ async function renderProductionDetail(row) {
   html += "<div class='production-actions'>";
   if (canViewFinishedLabelMgmt()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-finished-label'>" + esc(t("mi_finished_label_title")) + "</button>";
   if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-edit-core'>品番修正</button>";
-  if (canManageAllImages()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-image-actions'>" + esc(t("image_actions_title")) + "</button>";
+  if (canManageAllImages() || canManageProduct3D()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-image-actions'>" + esc(t("image_actions_title")) + "</button>";
   html += "</div></div>";
   html += "<div class='production-workspace'>";
   html += "<div class='production-master-column'>";
@@ -15340,9 +15351,19 @@ async function openProductionImageUpload() {
 }
 
 function openProductionImageActionsDialog() {
-  if (!canManageAllImages()) { showPermissionDenied("open_image_actions", "core_product_images"); return; }
+  var canManageImages = canManageAllImages();
+  var canManage3D = canManageProduct3D();
+  if (!canManageImages && !canManage3D) { showPermissionDenied("open_image_actions", "core_product_images"); return; }
   if (!currentProductionRow) return;
-  fillImageKindSelect(document.getElementById("production-image-action-kind"), currentProductionImageKind || "rebuilt");
+  var select = document.getElementById("production-image-action-kind");
+  fillImageKindSelect(select, currentProductionImageKind || "rebuilt");
+  if (select) {
+    select.onchange = function() {
+      setProductKindSelectClass(select);
+      syncProductMediaActionAccess("production");
+    };
+  }
+  syncProductMediaActionAccess("production");
   document.getElementById("production-image-actions-overlay").classList.add("show");
 }
 
@@ -30401,7 +30422,7 @@ function openPanel(id, options) {
   if (!options.autoSelect) logProductDetailOpen("search", currentProduct);
   setCspStyle(document.getElementById("panel-welcome"), "display", "none");
   setCspStyle(document.getElementById("panel-inner"), "display", "grid");
-  setCspStyle(document.getElementById("panel-footer"), "display", canManageUsedCoreImages() ? "block" : "none");
+  setCspStyle(document.getElementById("panel-footer"), "display", (canManageAllImages() || canManageUsedCoreImages() || canManageProduct3D()) ? "block" : "none");
   document.getElementById("panel-topbar-title").textContent = productCategoryLabel(currentProduct) || "-";
   configureSalesProductAddButton();
   if (!isPC() && options.showMobileOverlay !== false) { document.getElementById("overlay").classList.add("show"); document.getElementById("panel").classList.add("show"); }
@@ -40984,16 +41005,58 @@ function selectedImageActionKind(context) {
   return normalizeProductKind((select && select.value) || (context === "production" ? currentProductionImageKind : selectedProductKind()) || "rebuilt");
 }
 
+function product3DSupportedKind(kind) {
+  kind = normalizeProductKind(kind);
+  return kind === "rebuilt" || kind === "aftermarket_new";
+}
+
+function syncProductMediaActionAccess(context) {
+  var production = context === "production";
+  var kind = selectedImageActionKind(production ? "production" : "sales");
+  var canManageImages = canManageAllImages();
+  var canManage3D = canManageProduct3D() && product3DSupportedKind(kind);
+  var imageAllowed = canManageImageKind(kind, production ? "production" : "sales");
+  var ids = production
+    ? {
+        upload: "production-image-action-device",
+        edit: "production-image-action-edit",
+        camera: "production-image-action-camera-ai",
+        copy: "production-image-action-copy-sales",
+        model: "production-image-action-create-3d"
+      }
+    : {
+        upload: "btn-image-action-upload",
+        edit: "btn-image-action-edit",
+        remove: "btn-image-action-delete",
+        model: "btn-image-action-create-3d"
+      };
+  if (ids.upload) setCspStyle(document.getElementById(ids.upload), "display", imageAllowed ? "" : "none");
+  if (ids.edit) setCspStyle(document.getElementById(ids.edit), "display", canManageImages ? "" : "none");
+  if (ids.remove) setCspStyle(document.getElementById(ids.remove), "display", (canManageImages || canManageUsedCoreImages()) ? "" : "none");
+  if (ids.camera) setCspStyle(document.getElementById(ids.camera), "display", canManageImages ? "" : "none");
+  if (ids.copy) setCspStyle(document.getElementById(ids.copy), "display", canManageImages ? "" : "none");
+  if (ids.model) setCspStyle(document.getElementById(ids.model), "display", canManage3D ? "" : "none");
+}
+
 function openImageActionsDialog() {
-  var actionKind = canManageAllImages() ? selectedProductKind() : "used_core";
-  if (!canManageImageKind(actionKind, "sales")) { showPermissionDenied("open_image_actions", "core_product_images"); return; }
+  var canManageImages = canManageAllImages();
+  var canManageUsedCore = canManageUsedCoreImages();
+  var canManage3D = canManageProduct3D();
+  if (!canManageImages && !canManageUsedCore && !canManage3D) { showPermissionDenied("open_image_actions", "core_product_images"); return; }
+  var actionKind = (canManageImages || canManage3D) ? selectedProductKind() : "used_core";
+  if (canManage3D && !product3DSupportedKind(actionKind)) actionKind = "rebuilt";
   var select = document.getElementById("image-action-product-kind");
   fillImageKindSelect(select, actionKind);
-  if (select) select.disabled = !canManageAllImages();
+  if (select) {
+    select.disabled = !(canManageImages || canManage3D);
+    select.onchange = function() {
+      setProductKindSelectClass(select);
+      syncProductMediaActionAccess("sales");
+    };
+  }
   var picker = select ? select.closest(".image-kind-picker") : null;
-  if (picker) setCspStyle(picker, "display", canManageAllImages() ? "" : "none");
-  var editBtn = document.getElementById("btn-image-action-edit");
-  if (editBtn) setCspStyle(editBtn, "display", canManageAllImages() ? "" : "none");
+  if (picker) setCspStyle(picker, "display", (canManageImages || canManage3D) ? "" : "none");
+  syncProductMediaActionAccess("sales");
   document.getElementById("image-actions-overlay").classList.add("show");
 }
 
@@ -41796,6 +41859,9 @@ function permissionOverviewCanOverride(context, permissionKey) {
   }
   if (permissionKey === "gltek_part_number.issue") return context.companyCode === "gltek";
   if (permissionKey === "component_compatibility.manage") return context.companyCode === "daiko";
+  if (permissionKey === "product_3d.manage" || permissionKey === "product_3d.publish") {
+    return permissionOverviewRoleIn(context.roleCode, ["company_admin", "dept_admin", "master_editor", "production_editor", "core_image_editor", "all_viewer", "sales_viewer", "internal_viewer"]);
+  }
   return true;
 }
 
@@ -41852,6 +41918,8 @@ function permissionOverviewScreenGroups(context) {
   var roleCanViewBasePrice = permissionOverviewRoleIn(role, basePriceViewers);
   var roleCanManageComponents = permissionOverviewRoleIn(role, componentEditors);
   var roleCanManageUsers = permissionOverviewRoleIn(role, userManagers);
+  var roleCanManageProduct3D = permissionOverviewRoleIn(role, editors);
+  var roleCanPublishProduct3D = permissionOverviewRoleIn(role, companyAdmins);
   var isCustomer = role === "customer_viewer";
   var isExternal = role === "external_viewer";
 
@@ -41992,6 +42060,16 @@ function permissionOverviewScreenGroups(context) {
             { label: "画面", permissionKey: "product_management.view", state: screenState(roleCanViewManagement) },
             { label: "商品登録・修正", permissionKey: "product.manage", state: yesNo(roleCanEdit, "可", "不可") },
             { label: "商品削除", permissionKey: "product.delete", state: yesNo(roleCanManageCompany, "可", "不可") }
+          ]
+        },
+        {
+          title: "商品3D管理（高権限）",
+          items: [
+            { label: "公開済み3Dモデルの閲覧", state: permissionOverviewLimited("商品画像の公開権限・カテゴリ表示条件に従う") },
+            { label: "撮影・解析・生成・追加撮影・失敗再開・非公開状態確認", permissionKey: "product_3d.manage", state: yesNo(roleCanManageProduct3D, "作成・再開・確認可", "利用不可") },
+            { label: "確認待ち成果物の顧客公開", permissionKey: "product_3d.publish", state: yesNo(roleCanPublishProduct3D, "確認・公開可", "公開不可") },
+            { label: "元画像・孤立ファイルの保持期限清掃", state: yesNo(role === "system_admin", "system adminのみ", "利用不可") },
+            { label: "Windows workerの登録・停止・engine変更", state: yesNo(role === "system_admin", "system adminのみ", "利用不可") }
           ]
         },
         {
