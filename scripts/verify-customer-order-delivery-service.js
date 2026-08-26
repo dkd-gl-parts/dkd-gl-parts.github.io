@@ -24,6 +24,14 @@ const dateLogic = sourceBetween("function customerOrderDeliveryServiceKey", "fun
 const context = {};
 vm.runInNewContext(`${constants}\n${dateLogic}`, context);
 
+const coreReturnServiceLogic = sourceBetween("function customerOrderDeliveryServiceSortValue", "async function loadCustomerOrderDeliveryServices");
+vm.runInNewContext(coreReturnServiceLogic, context);
+const outboundServices = [{ carrier_name: "ヤマト運輸", service_name: "宅急便", display_order: 0 }];
+const coreReturnServices = context.customerOrderCoreReturnDeliveryServices(outboundServices);
+assert(outboundServices.length === 1, "core-return additions must not mutate outbound shipping services");
+assert(coreReturnServices.some((row) => row.carrier_name === "佐川急便" && row.service_name === "飛脚宅配便"), "Sagawa Hikyaku delivery must be available for core returns");
+assert(!outboundServices.some((row) => row.carrier_name === "佐川急便"), "Sagawa core-return service must not appear in outbound shipping");
+
 const mondayMorning = new Date(2026, 7, 3, 10, 0, 0);
 const kansai = context.customerOrderDeliveryEstimate("宅急便", 27, mondayMorning);
 assert(kansai.earliest_date === "2026-08-04", "Kansai takkyubin must default to next-day delivery");
@@ -68,6 +76,12 @@ assert(submitRequest.includes("target_core_return_shipping_method: customerOrder
 
 const returnMethod = sourceBetween("function customerOrderCoreReturnShippingMethodPayload", "function customerOrderSavedShippingMethod");
 assert(returnMethod.includes("customerOrderCartRequiresCoreReturn()") && returnMethod.includes("customer-order-core-return-service"), "core-return shipping must only be sent for orders that require core return");
+
+const customerAccessServices = sourceBetween("function customerAccessShippingServiceOptionsHtml", "function renderCustomerAccessDetail");
+assert(customerAccessServices.includes('purpose === "core_return"') && customerAccessServices.includes("customerOrderCoreReturnDeliveryServices(rows)"), "customer defaults must add Sagawa to core-return services only");
+const customerAccessDetail = sourceBetween("function renderCustomerAccessDetail", "function renderCustomerAccessRuleForm");
+assert(customerAccessDetail.includes('customerAccessShippingServiceOptionsHtml(customerAccessShippingServiceKey(s, "outbound"), "outbound")'), "outbound defaults must keep the rate-master service list");
+assert(customerAccessDetail.includes('customerAccessShippingServiceOptionsHtml(customerAccessShippingServiceKey(s, "core_return"), "core_return")'), "core-return defaults must use the dedicated service list");
 
 const returnLogic = sourceBetween("function customerOrderCartRequiresCoreReturn", "function updateCustomerOrderDeliveryEstimate");
 const returnContext = {

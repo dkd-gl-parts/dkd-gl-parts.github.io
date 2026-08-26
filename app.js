@@ -5316,7 +5316,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.781";
+var APP_VERSION       = "v1.1.782";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5602,6 +5602,9 @@ var CUSTOMER_ORDER_DELIVERY_SERVICE_LEVELS = {
   "クロネコゆうパケット": { earliest_days: 3, latest_days: 7, far_extra_days: 0, requested_date: false, requested_time: false },
   "クロネコゆうメール": { earliest_days: 3, latest_days: 7, far_extra_days: 0, requested_date: false, requested_time: false }
 };
+var CUSTOMER_ORDER_CORE_RETURN_ADDITIONAL_SERVICES = [
+  { carrier_name: "佐川急便", service_name: "飛脚宅配便", display_order: 900 }
+];
 var salesOrderRows = [];
 var salesOrderDashboardRows = [];
 var salesOrderDashboardSeq = 0;
@@ -9050,6 +9053,30 @@ function customerOrderDeliveryServiceSortValue(row) {
   return (index < 0 ? 100 : index) * 1000 + Number(row && row.display_order || 0);
 }
 
+function customerOrderCoreReturnDeliveryServices(services) {
+  var rows = (services || []).slice();
+  var seen = {};
+  rows.forEach(function(row) {
+    var key = customerOrderDeliveryServiceKey(row);
+    if (key) seen[key] = true;
+  });
+  CUSTOMER_ORDER_CORE_RETURN_ADDITIONAL_SERVICES.forEach(function(row) {
+    var key = customerOrderDeliveryServiceKey(row);
+    if (key && !seen[key]) {
+      seen[key] = true;
+      rows.push(Object.assign({}, row));
+    }
+  });
+  return rows;
+}
+
+function customerOrderDeliveryServiceOptionsHtml(services) {
+  return (services || []).map(function(row) {
+    var key = customerOrderDeliveryServiceKey(row);
+    return "<option value='" + esc(key) + "'>" + esc([row.carrier_name, row.service_name].filter(Boolean).join(" / ")) + "</option>";
+  }).join("");
+}
+
 async function loadCustomerOrderDeliveryServices(options) {
   options = options || {};
   var select = document.getElementById("customer-order-delivery-service");
@@ -9103,13 +9130,11 @@ async function loadCustomerOrderDeliveryServices(options) {
       updateCustomerOrderCoreReturnServiceVisibility();
       return;
     }
-    var serviceOptions = services.map(function(row) {
-      var key = customerOrderDeliveryServiceKey(row);
-      return "<option value='" + esc(key) + "'>" + esc([row.carrier_name, row.service_name].filter(Boolean).join(" / ")) + "</option>";
-    }).join("");
-    select.innerHTML = serviceOptions;
-    coreReturnSelect.innerHTML = serviceOptions;
+    var coreReturnServices = customerOrderCoreReturnDeliveryServices(services);
+    select.innerHTML = customerOrderDeliveryServiceOptionsHtml(services);
+    coreReturnSelect.innerHTML = customerOrderDeliveryServiceOptionsHtml(coreReturnServices);
     var availableKeys = services.map(function(row) { return customerOrderDeliveryServiceKey(row); });
+    var availableCoreReturnKeys = coreReturnServices.map(function(row) { return customerOrderDeliveryServiceKey(row); });
     if (availableKeys.indexOf(preferredKey) < 0) {
       var defaultRow = services.find(function(row) { return String(row.service_name || "") === "宅急便"; }) || services[0];
       preferredKey = customerOrderDeliveryServiceKey(defaultRow);
@@ -9118,7 +9143,11 @@ async function loadCustomerOrderDeliveryServices(options) {
     select.value = preferredKey;
     select.disabled = false;
     customerOrderDeliveryServiceKeyValue = select.value;
-    if (availableKeys.indexOf(preferredCoreReturnKey) < 0) preferredCoreReturnKey = preferredKey;
+    if (availableCoreReturnKeys.indexOf(preferredCoreReturnKey) < 0) {
+      preferredCoreReturnKey = availableCoreReturnKeys.indexOf(preferredKey) >= 0
+        ? preferredKey
+        : customerOrderDeliveryServiceKey(coreReturnServices[0]);
+    }
     coreReturnSelect.value = preferredCoreReturnKey;
     customerOrderCoreReturnServiceKeyValue = coreReturnSelect.value;
     updateCustomerOrderDeliveryEstimate(options);
@@ -39704,10 +39733,11 @@ function customerAccessShippingServiceKey(settings, purpose) {
   });
 }
 
-function customerAccessShippingServiceOptionsHtml(selectedKey) {
+function customerAccessShippingServiceOptionsHtml(selectedKey, purpose) {
   var rows = customerAccessShippingServices.length ? customerAccessShippingServices : [
     { carrier_name: "ヤマト運輸", service_name: "宅急便", display_order: 0 }
   ];
+  if (purpose === "core_return") rows = customerOrderCoreReturnDeliveryServices(rows);
   return rows.map(function(row) {
     var key = customerOrderDeliveryServiceKey(row);
     return "<option value='" + esc(key) + "'" + (key === selectedKey ? " selected" : "") + ">" +
@@ -39778,8 +39808,8 @@ function renderCustomerAccessDetail() {
   html += "<div class='component-note'>" + esc(t("customer_access_shipping_rule_help")) + "</div>";
   html += "<div class='component-section-title'>" + esc(t("customer_access_default_shipping")) + "</div>";
   html += "<div class='customer-default-shipping-grid'>";
-  html += "<label><span>" + esc(t("customer_access_default_outbound_shipping")) + "</span><select id='customer-default-outbound-shipping' data-customer-default-shipping='outbound'>" + customerAccessShippingServiceOptionsHtml(customerAccessShippingServiceKey(s, "outbound")) + "</select></label>";
-  html += "<label><span>" + esc(t("customer_access_default_core_return_shipping")) + "</span><select id='customer-default-core-return-shipping' data-customer-default-shipping='core_return'>" + customerAccessShippingServiceOptionsHtml(customerAccessShippingServiceKey(s, "core_return")) + "</select></label>";
+  html += "<label><span>" + esc(t("customer_access_default_outbound_shipping")) + "</span><select id='customer-default-outbound-shipping' data-customer-default-shipping='outbound'>" + customerAccessShippingServiceOptionsHtml(customerAccessShippingServiceKey(s, "outbound"), "outbound") + "</select></label>";
+  html += "<label><span>" + esc(t("customer_access_default_core_return_shipping")) + "</span><select id='customer-default-core-return-shipping' data-customer-default-shipping='core_return'>" + customerAccessShippingServiceOptionsHtml(customerAccessShippingServiceKey(s, "core_return"), "core_return") + "</select></label>";
   html += "</div>";
   html += "<div class='component-note'>" + esc(t("customer_access_default_shipping_help")) + "</div>";
   html += "<div class='component-section-title'>" + esc(t("customer_access_category_visibility")) + "</div>";
