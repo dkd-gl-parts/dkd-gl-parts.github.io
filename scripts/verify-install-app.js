@@ -51,17 +51,41 @@ expect(install.includes("window.DCATS_INSTALL_EVENT_QUEUE"), "Install verificati
 expect(install.includes("function maybeOpenLoginPrompt()"), "Eligible users must receive a post-login install prompt");
 expect(install.includes("function openShareCoachmark()"), "iPhone guidance must open a Share-button coachmark");
 expect(install.includes("function maybeRestoreShareCoachmark()"), "iPhone guidance must survive a page reload during manual installation");
-expect(install.includes('window.addEventListener("dcats:install-access"'), "Install access must follow the authenticated role event");
+expect(install.includes('window.addEventListener("dcats:install-access"'), "Install access must follow the authenticated-user event");
 expect(install.includes("!installAllowed || isStandalone()"), "Install entries must remain hidden without approved access");
 expect(install.includes("if (!installAllowed)"), "Install button must reject unauthorized interaction");
 expect(app.includes("function canUseInstallApp()"), "App must define the install audience");
-expect(app.includes("!!userProfile && !isExternalViewer() && canViewProductSearch()"), "Install access must require an internal sales-management user");
+expect(app.includes("return !!currentUser && !!userProfile;"), "Install access must include every authenticated D-CATS user");
 expect(app.includes("function syncInstallAppAccess()"), "App must synchronize install access after authentication changes");
 expect(app.includes('new CustomEvent("dcats:install-access"'), "App must publish the install access event");
-expect(app.includes("detail: { allowed: allowed }"), "Install access must use the sales-management audience check");
+expect(app.includes("detail: { allowed: allowed }"), "Install access must use the authenticated-user audience check");
 expect(app.includes("function flushInstallVerificationEvents()"), "App must persist verified shortcut events after authentication");
 expect(app.includes('action: standaloneLaunch ? "pwa_launch_verified" : "pwa_install_confirmed"'), "App must distinguish shortcut launches from browser install completion");
 expect(app.includes('target_type: "pwa_shortcut"'), "Verified install logs must use a specific audit target");
+
+function verifyInstallAudience() {
+  const start = app.indexOf("function canUseInstallApp()");
+  const end = app.indexOf("function flushInstallVerificationEvents()", start);
+  expect(start >= 0 && end > start, "Install audience function could not be isolated");
+  const source = app.slice(start, end);
+  const roles = ["system_admin", "sales_editor", "production_editor", "all_viewer", "customer_viewer", "external_viewer"];
+  roles.forEach((role) => {
+    const sandbox = { currentUser: { id: `user-${role}` }, userProfile: { role }, allowed: false };
+    vm.runInNewContext(`${source}\nallowed = canUseInstallApp();`, sandbox);
+    expect(sandbox.allowed === true, `Install access must include authenticated ${role} users`);
+  });
+  for (const unauthenticated of [
+    { currentUser: null, userProfile: null },
+    { currentUser: { id: "missing-profile" }, userProfile: null },
+    { currentUser: null, userProfile: { role: "system_admin" } }
+  ]) {
+    const sandbox = { ...unauthenticated, allowed: true };
+    vm.runInNewContext(`${source}\nallowed = canUseInstallApp();`, sandbox);
+    expect(sandbox.allowed === false, "Install access must remain hidden until authentication and profile loading finish");
+  }
+}
+
+verifyInstallAudience();
 
 function verifyInstallRoleGate() {
   const listeners = {};
@@ -137,9 +161,9 @@ function verifyInstallRoleGate() {
   vm.runInNewContext(install, { window, document, console, Array });
   expect(entries.every((entry) => entry.hidden), "Install entries must be hidden before authentication");
   listeners["dcats:install-access"]({ detail: { allowed: false } });
-  expect(entries.every((entry) => entry.hidden), "Install entries must be hidden for unauthorized users");
+  expect(entries.every((entry) => entry.hidden), "Install entries must be hidden before authenticated-user access is granted");
   listeners["dcats:install-access"]({ detail: { allowed: true } });
-  expect(entries.every((entry) => !entry.hidden), "Install entries must be visible for authorized sales-management users on eligible devices");
+  expect(entries.every((entry) => !entry.hidden), "Install entries must be visible for every authenticated user on eligible devices");
   expect(dialog.hidden === false && introGuide.hidden === false, "Install explanation must open after eligible login");
   expect(sessionStorage.getItem("dcats_install_prompted_dcats-icon-v4-verified_safari-v2") === "1", "Install prompt must be recorded for the corrected guide revision");
   listeners["dcats:install-access"]({ detail: { allowed: false } });

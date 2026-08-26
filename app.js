@@ -5316,7 +5316,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.780";
+var APP_VERSION       = "v1.1.781";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5788,7 +5788,7 @@ function isSystemAdmin() {
   return !!(userProfile && (userProfile.role === "system_admin" || accessRoleCode(userProfile) === "system_admin"));
 }
 function canUseInstallApp() {
-  return !!userProfile && !isExternalViewer() && canViewProductSearch();
+  return !!currentUser && !!userProfile;
 }
 function flushInstallVerificationEvents() {
   if (!currentUser || !canUseInstallApp()) return;
