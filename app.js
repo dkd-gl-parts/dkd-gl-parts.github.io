@@ -5310,7 +5310,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.777";
+var APP_VERSION       = "v1.1.778";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -42242,6 +42242,26 @@ function updateCustomerAccountFaxCache(fax) {
   if (faxInput) faxInput.value = nextFax;
 }
 
+function updateCustomerAccountContactCache(name, email) {
+  var nextName = String(name || "").trim();
+  var nextEmail = String(email || "").trim().toLowerCase();
+  var customerId = currentCustomerAccessCustomer && currentCustomerAccessCustomer.id;
+  if (!customerId) return;
+  currentCustomerAccessCustomer.contact_name = nextName;
+  currentCustomerAccessCustomer.contact_email = nextEmail;
+  [salesCustomerOptions, customerAccessRows, customerAccessFilteredRows].forEach(function(rows) {
+    (rows || []).forEach(function(row) {
+      if (String(row.id) !== String(customerId)) return;
+      row.contact_name = nextName;
+      row.contact_email = nextEmail;
+    });
+  });
+  var nameInput = document.getElementById("customer-account-name");
+  var emailInput = document.getElementById("customer-account-email");
+  if (nameInput) nameInput.value = nextName;
+  if (emailInput) emailInput.value = nextEmail;
+}
+
 async function loadCustomerAccountUsers(customerId) {
   var requestSeq = ++customerAccountRequestSeq;
   customerAccountUsers = [];
@@ -42650,6 +42670,7 @@ async function issueCustomerAccount(channel) {
       return;
     }
   }
+  updateCustomerAccountContactCache(result.data.contact_name || name, result.data.contact_email || email);
   if (currentCustomerAccessCustomer && String(currentCustomerAccessCustomer.id) === String(customer.id)) {
     await loadCustomerAccountUsers(customer.id);
   }

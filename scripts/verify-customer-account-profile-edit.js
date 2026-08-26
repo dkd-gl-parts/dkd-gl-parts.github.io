@@ -22,6 +22,7 @@ const styles = fs.readFileSync(path.join(root, "styles.css"), "utf8");
   "customer-account-edit-button",
   'action: "update_details"',
   "updateCustomerAccountFaxCache(result.data.fax)",
+  "updateCustomerAccountContactCache",
   "openCustomerAccountEmailPreview",
   "saveCustomerAccountEdit",
   "customer_user_edit_forbidden",
@@ -29,6 +30,14 @@ const styles = fs.readFileSync(path.join(root, "styles.css"), "utf8");
 ].forEach((expected) => {
   if (!app.includes(expected)) throw new Error(`customer account behavior is missing: ${expected}`);
 });
+
+const accountIssuance = app.slice(
+  app.indexOf("async function issueCustomerAccount"),
+  app.indexOf("function permissionOverviewTableHtml"),
+);
+if (!accountIssuance.includes("updateCustomerAccountContactCache(result.data.contact_name || name, result.data.contact_email || email)")) {
+  throw new Error("successful customer invitations must retain the recipient name and email in the customer cache");
+}
 
 [
   ".customer-account-preview-button",
