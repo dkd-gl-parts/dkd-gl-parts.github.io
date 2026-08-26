@@ -22,7 +22,7 @@
   var installAllowed = false;
   var publishedVerificationMethods = {};
   var INSTALL_CAMPAIGN_ID = "dcats-icon-v4-verified";
-  var INSTALL_GUIDE_REVISION = "safari-v1";
+  var INSTALL_GUIDE_REVISION = "safari-v2";
   var INSTALL_COMPLETE_KEY = "dcats_install_complete_" + INSTALL_CAMPAIGN_ID;
   var INSTALL_SESSION_PROMPT_KEY = "dcats_install_prompted_" + INSTALL_CAMPAIGN_ID + "_" + INSTALL_GUIDE_REVISION;
   var INSTALL_COACHMARK_KEY = "dcats_install_coachmark_" + INSTALL_CAMPAIGN_ID + "_" + INSTALL_GUIDE_REVISION;
