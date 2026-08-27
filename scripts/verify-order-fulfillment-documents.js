@@ -40,7 +40,14 @@ for (const id of [
   "shipping-document-settings-title",
   "shipping-document-settings-content",
   "shipping-document-settings-close",
-  "shipping-document-settings-cancel"
+  "shipping-document-settings-cancel",
+  "shipping-handwritten-waybill-overlay",
+  "shipping-handwritten-waybill-title",
+  "shipping-handwritten-waybill-description",
+  "shipping-handwritten-waybill-progress",
+  "shipping-handwritten-waybill-content",
+  "shipping-handwritten-waybill-cancel",
+  "shipping-handwritten-waybill-complete"
 ]) requireFragment(html, `id="${id}"`);
 
 for (const fragment of [
@@ -54,6 +61,7 @@ for (const fragment of [
   'sb.rpc("save_sales_order_outbound_waybill"',
   'sb.rpc("queue_sales_order_outbound_waybill_print"',
   'sb.rpc("queue_sales_order_fulfillment_documents"',
+  'sb.rpc("complete_sales_order_handwritten_waybill"',
   '"yamato_prepaid"',
   '"sagawa_prepaid"',
   '"yamato_collect"',
@@ -91,8 +99,8 @@ for (const fragment of [
   "pending_document_count",
   '["dispatch", "warranty"]',
   'requiredTypes.push("core_return")',
-  'outbound_waybill_method === "dot_matrix"',
-  'return_waybill_method === "dot_matrix"'
+  '["dot_matrix", "handwritten"].indexOf(order.outbound_waybill_method)',
+  '["dot_matrix", "handwritten"].indexOf(order.return_waybill_method)'
 ]) requireFragment(pendingCountSource, fragment);
 const pendingCountContext = {};
 vm.runInNewContext(pendingCountSource, pendingCountContext);
@@ -165,7 +173,7 @@ for (const fragment of [
   "B2クラウド / ヤマト宅急便 元払い",
   "A5 / 注文単位 / 端末印刷",
   "A5 / コア返却必要時 / 端末印刷",
-  "手書き / ヤマト宅急便 着払い"
+  "手書き運用 / 佐川急便 着払い"
 ]) requireFragment(defaultDocuments, fragment);
 
 const temporaryOutput = sourceBetween("function shippingDocumentLocalOutputType", "function shippingDocumentDefaultStateHtml");
@@ -251,7 +259,7 @@ for (const fragment of [
   "ヤマト宅急便　元払い",
   "佐川急便　元払い",
   "B2クラウド",
-  "手書き",
+  "手書き運用",
   "ドットプリンタ",
   "商品発送用伝票番号"
 ]) requireFragment(outboundWaybill, fragment);
@@ -267,8 +275,22 @@ const batchQueue = sourceBetween("async function queueSelectedShippingDocuments"
 for (const fragment of [
   "shippingDocumentCheckedIdsState",
   "shippingDocumentSelectedTypes",
-  'sb.rpc("queue_sales_order_fulfillment_documents"'
+  'sb.rpc("queue_sales_order_fulfillment_documents"',
+  "shippingDocumentHandwrittenTasks",
+  "shippingDocumentDotMatrixOrderIds",
+  "openShippingHandwrittenWaybillFlow"
 ]) requireFragment(batchQueue, fragment);
+
+const handwrittenFlow = sourceBetween("function shippingHandwrittenWaybillTask", "function shippingDocumentStatusValue");
+for (const fragment of [
+  "shippingWaybillPreviewData(layout, order)",
+  "shipping-handwritten-waybill-canvas",
+  "黄色の欄を複写伝票へ手書きしてください",
+  "手書き完了・次へ",
+  'sb.rpc("complete_sales_order_handwritten_waybill"',
+  "shippingHandwrittenWaybillIndex += 1",
+  "await prepareShippingHandwrittenWaybill()"
+]) requireFragment(handwrittenFlow, fragment);
 
 const salesOrderDispatchUi = sourceBetween("function salesOrderDispatchHtml", "function renderSalesOrderDetail");
 requireFragment(salesOrderDispatchUi, 'id=\'sales-order-open-shipping-documents\'');
@@ -309,7 +331,11 @@ for (const fragment of [
   ".shipping-document-default-row",
   ".shipping-document-settings-card",
   ".shipping-document-settings-heading",
-  ".shipping-document-lookup-message"
+  ".shipping-document-lookup-message",
+  ".shipping-handwritten-waybill-card",
+  ".shipping-handwritten-waybill-content",
+  ".shipping-handwritten-waybill-canvas-wrap",
+  ".shipping-handwritten-waybill-values"
 ]) requireFragment(css, fragment);
 requireFragment(printCss, ".shipment-document-table-warranty th:nth-child(5)");
 
@@ -322,11 +348,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.788"',
-  'styles.css?v=1.1.788',
-  'app.js?v=1.1.788'
+  'content="v1.1.789"',
+  'styles.css?v=1.1.789',
+  'app.js?v=1.1.789'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.788"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.789"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");

@@ -5316,7 +5316,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.788";
+var APP_VERSION       = "v1.1.789";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5644,6 +5644,11 @@ var shippingWaybillLayoutSelectedField = "recipient_name";
 var shippingWaybillLayoutLoading = false;
 var shippingWaybillLayoutSaving = false;
 var shippingWaybillLayoutDrag = null;
+var shippingHandwrittenWaybillTasks = [];
+var shippingHandwrittenWaybillIndex = -1;
+var shippingHandwrittenWaybillOrder = null;
+var shippingHandwrittenWaybillLoading = false;
+var shippingHandwrittenWaybillSaving = false;
 var customerManagedUsers = [];
 var customerManagedUsersRequestSeq = 0;
 var CUSTOMER_CATALOG_RESULT_LIMIT = 60;
@@ -7740,6 +7745,13 @@ async function doLogout() {
   shippingDocumentTemporaryOutputs = {};
   var shippingSettingsOverlay = document.getElementById("shipping-document-settings-overlay");
   if (shippingSettingsOverlay) shippingSettingsOverlay.classList.remove("show");
+  shippingHandwrittenWaybillTasks = [];
+  shippingHandwrittenWaybillIndex = -1;
+  shippingHandwrittenWaybillOrder = null;
+  shippingHandwrittenWaybillLoading = false;
+  shippingHandwrittenWaybillSaving = false;
+  var shippingHandwrittenOverlay = document.getElementById("shipping-handwritten-waybill-overlay");
+  if (shippingHandwrittenOverlay) shippingHandwrittenOverlay.classList.remove("show");
   customerManagedUsers = [];
   customerManagedUsersRequestSeq += 1;
   shippingRateRows = [];
@@ -10777,15 +10789,18 @@ function shippingWaybillAddressText(address) {
   return [address.prefecture_name, address.address_line_1, address.address_line_2].filter(Boolean).join("") || "大阪府堺市南区片蔵486-1";
 }
 
-function shippingWaybillPreviewData(layout) {
-  var order = shippingDocumentDetail && typeof shippingDocumentDetail === "object" ? shippingDocumentDetail : null;
+function shippingWaybillPreviewData(layout, orderValue) {
+  var order = arguments.length > 1
+    ? (orderValue && typeof orderValue === "object" ? orderValue : null)
+    : (shippingDocumentDetail && typeof shippingDocumentDetail === "object" ? shippingDocumentDetail : null);
+  var usesActualOrder = !!order;
   var address = order && order.shipping_address && typeof order.shipping_address === "object" ? order.shipping_address : {};
   var outbound = layout && layout.document_type === "outbound_waybill";
   var customer = {
-    postal: address.postal_code || "590-0121",
-    phone: address.phone_number || "072-298-9731",
-    address: shippingWaybillAddressText(address),
-    name: shippingWaybillCustomerText(address)
+    postal: address.postal_code || (usesActualOrder ? "-" : "590-0121"),
+    phone: address.phone_number || (usesActualOrder ? "-" : "072-298-9731"),
+    address: Object.keys(address).length ? shippingWaybillAddressText(address) : (usesActualOrder ? "-" : "大阪府堺市南区片蔵486-1"),
+    name: Object.keys(address).length ? shippingWaybillCustomerText(address) : (usesActualOrder ? "-" : "有限会社ストレイン 山田様")
   };
   var daiko = {
     postal: "590-0121",
@@ -10804,8 +10819,8 @@ function shippingWaybillPreviewData(layout) {
   var waybill = order
     ? (outbound ? order.outbound_waybill : order.return_waybill)
     : null;
-  var deliveryDate = order && order.requested_delivery_date
-    ? String(order.requested_delivery_date).replace(/-/g, "/")
+  var deliveryDate = order
+    ? (order.requested_delivery_date ? String(order.requested_delivery_date).replace(/-/g, "/") : "指定なし")
     : "2026/08/30";
   return {
     recipient_postal: (outbound ? customer : daiko).postal,
@@ -10821,7 +10836,7 @@ function shippingWaybillPreviewData(layout) {
     tracking_number: waybill && waybill.tracking_number ? waybill.tracking_number : "1234-5678-9012",
     desired_date: [deliveryDate, order && order.delivery_time_label].filter(Boolean).join(" "),
     package_count: "1",
-    uses_actual_order: !!order
+    uses_actual_order: usesActualOrder
   };
 }
 
@@ -11174,6 +11189,258 @@ async function saveShippingWaybillLayout() {
   setShippingWaybillLayoutMessage("" + (shippingWaybillLayoutDraft ? shippingWaybillLayoutDraft.display_name : "送り状") + "の印刷位置を保存しました。新しい印刷依頼から反映されます。", false);
 }
 
+function shippingHandwrittenWaybillTask() {
+  return shippingHandwrittenWaybillIndex >= 0
+    ? (shippingHandwrittenWaybillTasks[shippingHandwrittenWaybillIndex] || null)
+    : null;
+}
+
+function shippingHandwrittenWaybillLabel(documentType) {
+  return documentType === "return_waybill" ? "コア返却用複写伝票" : "商品発送用複写伝票";
+}
+
+function shippingHandwrittenWaybillLayout(order, documentType) {
+  var waybill = documentType === "return_waybill" ? order && order.return_waybill : order && order.outbound_waybill;
+  var fallback = documentType === "return_waybill" ? "sagawa_collect" : "yamato_prepaid";
+  var carrierCode = waybill && waybill.carrier_code ? waybill.carrier_code : fallback;
+  return shippingWaybillLayouts.find(function(layout) {
+    return layout.layout_code === carrierCode && layout.document_type === documentType;
+  }) || null;
+}
+
+function shippingHandwrittenWaybillFields(layout, data) {
+  return (layout && Array.isArray(layout.fields) ? layout.fields : []).filter(function(field) {
+    return field.key !== "tracking_number" && String(data[field.key] || "").trim() !== "";
+  });
+}
+
+function setShippingHandwrittenWaybillMessage(message, isError) {
+  var host = document.getElementById("shipping-handwritten-waybill-message");
+  if (!host) return;
+  host.textContent = message || "";
+  host.className = "sales-order-detail-message" + (isError ? " error" : "");
+}
+
+function drawShippingHandwrittenWaybillBackground(context, scale, layout) {
+  var yamato = String(layout.carrier_code || "").indexOf("yamato_") === 0;
+  var ink = yamato ? "#d94b3f" : "#ce5f83";
+  var pale = yamato ? "#fff5f1" : "#fff2f6";
+  var paperWidth = Number(layout.paper_width_mm) || 203;
+  var paperHeight = Number(layout.paper_height_mm) || 115;
+  var zones = yamato
+    ? [[8,8,92,52],[8,64,92,43],[105,8,90,24],[105,36,90,42],[105,82,90,25]]
+    : [[8,7,105,52],[8,64,105,54],[119,7,101,25],[119,36,101,42],[119,83,101,35]];
+  context.save();
+  context.fillStyle = pale;
+  context.fillRect(0, 0, paperWidth * scale, paperHeight * scale);
+  context.strokeStyle = ink;
+  context.lineWidth = 2;
+  context.strokeRect(3 * scale, 3 * scale, (paperWidth - 6) * scale, (paperHeight - 6) * scale);
+  zones.forEach(function(zone) {
+    context.strokeRect(zone[0] * scale, zone[1] * scale, zone[2] * scale, zone[3] * scale);
+  });
+  context.fillStyle = ink;
+  context.font = "700 " + Math.max(16, 4.2 * scale) + "px 'Yu Gothic UI', sans-serif";
+  context.textBaseline = "top";
+  context.fillText(yamato ? "ヤマト宅急便 複写送り状" : "佐川急便 複写送り状", 8 * scale, 4 * scale);
+  context.font = "600 " + Math.max(11, 2.4 * scale) + "px 'Yu Gothic UI', sans-serif";
+  context.fillText("お届け先", 10 * scale, 11 * scale);
+  context.fillText("ご依頼主", 10 * scale, 67 * scale);
+  context.fillText("品名・受注情報", 108 * scale, 39 * scale);
+  context.restore();
+}
+
+function drawShippingHandwrittenWaybillCanvas() {
+  var canvas = document.getElementById("shipping-handwritten-waybill-canvas");
+  var order = shippingHandwrittenWaybillOrder;
+  var task = shippingHandwrittenWaybillTask();
+  var layout = task && order ? shippingHandwrittenWaybillLayout(order, task.documentType) : null;
+  if (!canvas || !order || !task || !layout) return;
+  var paperWidth = Number(layout.paper_width_mm) || 203;
+  var paperHeight = Number(layout.paper_height_mm) || 115;
+  canvas.width = 1100;
+  canvas.height = Math.max(420, Math.round(canvas.width * paperHeight / paperWidth));
+  var context = canvas.getContext("2d");
+  var scale = canvas.width / paperWidth;
+  var data = shippingWaybillPreviewData(layout, order);
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  drawShippingHandwrittenWaybillBackground(context, scale, layout);
+  shippingHandwrittenWaybillFields(layout, data).forEach(function(field) {
+    var x = Number(field.x_mm) * scale;
+    var y = Number(field.y_mm) * scale;
+    var width = Number(field.width_mm) * scale;
+    var height = Number(field.height_mm) * scale;
+    var fontPixels = Math.max(13, Number(field.font_size_pt || 8.5) * 1.75);
+    context.save();
+    context.fillStyle = "rgba(255,248,196,.92)";
+    context.strokeStyle = "#9b7410";
+    context.lineWidth = 1.5;
+    context.setLineDash([7, 4]);
+    context.fillRect(x, y, width, height);
+    context.strokeRect(x, y, width, height);
+    context.setLineDash([]);
+    context.beginPath();
+    context.rect(x + 2, y + 2, Math.max(0, width - 4), Math.max(0, height - 4));
+    context.clip();
+    context.font = (field.bold ? "700 " : "600 ") + fontPixels + "px 'Yu Gothic UI', sans-serif";
+    context.fillStyle = "#17130a";
+    context.textBaseline = "top";
+    drawShippingWaybillCanvasText(context, data[field.key], field, x, y, width, height, fontPixels);
+    context.restore();
+  });
+}
+
+function renderShippingHandwrittenWaybill() {
+  var content = document.getElementById("shipping-handwritten-waybill-content");
+  var progress = document.getElementById("shipping-handwritten-waybill-progress");
+  var description = document.getElementById("shipping-handwritten-waybill-description");
+  var completeButton = document.getElementById("shipping-handwritten-waybill-complete");
+  var task = shippingHandwrittenWaybillTask();
+  var order = shippingHandwrittenWaybillOrder;
+  if (!content || !progress || !completeButton) return;
+  var total = shippingHandwrittenWaybillTasks.length;
+  var current = Math.max(0, shippingHandwrittenWaybillIndex + 1);
+  progress.innerHTML = "<strong>" + esc(current + " / " + total) + "</strong><span>手書きが終わると次の伝票へ進みます。</span>";
+  if (shippingHandwrittenWaybillLoading) {
+    content.innerHTML = "<div class='shipping-handwritten-waybill-empty'>受注情報と伝票レイアウトを読み込んでいます。</div>";
+    completeButton.disabled = true;
+    completeButton.textContent = "読込中";
+    return;
+  }
+  if (!task || !order) {
+    content.innerHTML = "<div class='shipping-handwritten-waybill-empty error'>手書きする伝票を読み込めませんでした。</div>";
+    completeButton.disabled = true;
+    completeButton.textContent = "手書き完了";
+    return;
+  }
+  var layout = shippingHandwrittenWaybillLayout(order, task.documentType);
+  if (!layout) {
+    content.innerHTML = "<div class='shipping-handwritten-waybill-empty error'>運送会社の伝票レイアウトが見つかりません。</div>";
+    completeButton.disabled = true;
+    return;
+  }
+  var data = shippingWaybillPreviewData(layout, order);
+  var fields = shippingHandwrittenWaybillFields(layout, data);
+  var label = shippingHandwrittenWaybillLabel(task.documentType);
+  if (description) description.textContent = (order.order_number || ("注文 " + order.id)) + " / " + label + " / " + layout.display_name;
+  content.innerHTML =
+    "<section class='shipping-handwritten-waybill-preview'><div><strong>伝票デザイン</strong><span>黄色の欄を複写伝票へ手書きしてください。</span></div><div class='shipping-handwritten-waybill-canvas-wrap'><canvas id='shipping-handwritten-waybill-canvas' aria-label='手書きする複写送り状の内容'></canvas></div></section>" +
+    "<aside class='shipping-handwritten-waybill-values'><div><span>受注</span><strong>" + esc(order.order_number || order.id) + "</strong><small>" + esc(order.customer_name || "-") + "</small></div><dl>" + fields.map(function(field) {
+      var meta = SHIPPING_WAYBILL_FIELD_META[field.key] || { label: field.key };
+      return "<div><dt>" + esc(meta.label) + "</dt><dd>" + esc(data[field.key] || "-") + "</dd></div>";
+    }).join("") + "</dl><p>伝票番号は複写伝票に印刷されている番号を、帳票設定から登録します。</p></aside>";
+  completeButton.disabled = shippingHandwrittenWaybillSaving;
+  completeButton.textContent = shippingHandwrittenWaybillSaving
+    ? "完了を記録中"
+    : (current < total ? "手書き完了・次へ" : "手書き完了");
+  window.requestAnimationFrame(drawShippingHandwrittenWaybillCanvas);
+}
+
+async function prepareShippingHandwrittenWaybill() {
+  var task = shippingHandwrittenWaybillTask();
+  if (!task) return;
+  shippingHandwrittenWaybillLoading = true;
+  shippingHandwrittenWaybillOrder = null;
+  setShippingHandwrittenWaybillMessage("", false);
+  renderShippingHandwrittenWaybill();
+  if (!shippingWaybillLayouts.length) {
+    var layoutsLoaded = await loadShippingWaybillLayouts();
+    if (!layoutsLoaded) {
+      shippingHandwrittenWaybillLoading = false;
+      renderShippingHandwrittenWaybill();
+      setShippingHandwrittenWaybillMessage("伝票レイアウトを読み込めませんでした。", true);
+      return;
+    }
+  }
+  var result = await sb.rpc("get_sales_order_detail", { target_order_id: task.orderId });
+  shippingHandwrittenWaybillLoading = false;
+  if (result.error) {
+    renderShippingHandwrittenWaybill();
+    setShippingHandwrittenWaybillMessage(result.error.message || "受注情報を読み込めませんでした。", true);
+    return;
+  }
+  shippingHandwrittenWaybillOrder = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
+  var waybill = task.documentType === "return_waybill"
+    ? shippingHandwrittenWaybillOrder && shippingHandwrittenWaybillOrder.return_waybill
+    : shippingHandwrittenWaybillOrder && shippingHandwrittenWaybillOrder.outbound_waybill;
+  var method = waybill && waybill.handling_method
+    ? waybill.handling_method
+    : (task.documentType === "return_waybill" ? "handwritten" : "b2_cloud");
+  if (method !== "handwritten") {
+    shippingHandwrittenWaybillOrder = null;
+    renderShippingHandwrittenWaybill();
+    setShippingHandwrittenWaybillMessage("作成方法が手書き運用ではありません。帳票設定を確認してください。", true);
+    return;
+  }
+  renderShippingHandwrittenWaybill();
+}
+
+async function openShippingHandwrittenWaybillFlow(tasks) {
+  if (shippingHandwrittenWaybillSaving) return;
+  var seen = new Set();
+  shippingHandwrittenWaybillTasks = (Array.isArray(tasks) ? tasks : []).filter(function(task) {
+    var key = String(task && task.orderId) + ":" + String(task && task.documentType);
+    if (!task || !task.orderId || ["outbound_waybill", "return_waybill"].indexOf(task.documentType) < 0 || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  if (!shippingHandwrittenWaybillTasks.length) return;
+  shippingHandwrittenWaybillIndex = 0;
+  shippingHandwrittenWaybillOrder = null;
+  var overlay = document.getElementById("shipping-handwritten-waybill-overlay");
+  if (overlay) overlay.classList.add("show");
+  await prepareShippingHandwrittenWaybill();
+}
+
+function closeShippingHandwrittenWaybillFlow() {
+  if (shippingHandwrittenWaybillSaving) return;
+  var overlay = document.getElementById("shipping-handwritten-waybill-overlay");
+  if (overlay) overlay.classList.remove("show");
+  shippingHandwrittenWaybillTasks = [];
+  shippingHandwrittenWaybillIndex = -1;
+  shippingHandwrittenWaybillOrder = null;
+  shippingHandwrittenWaybillLoading = false;
+  setShippingHandwrittenWaybillMessage("", false);
+}
+
+async function completeShippingHandwrittenWaybill() {
+  var task = shippingHandwrittenWaybillTask();
+  var order = shippingHandwrittenWaybillOrder;
+  if (!task || !order || shippingHandwrittenWaybillSaving) return;
+  shippingHandwrittenWaybillSaving = true;
+  renderShippingHandwrittenWaybill();
+  setShippingHandwrittenWaybillMessage("手書き完了を記録しています。", false);
+  var result = await sb.rpc("complete_sales_order_handwritten_waybill", {
+    target_order_id: order.id,
+    target_document_type: task.documentType,
+    target_expected_version: order.version == null ? null : order.version
+  });
+  shippingHandwrittenWaybillSaving = false;
+  if (result.error) {
+    renderShippingHandwrittenWaybill();
+    setShippingHandwrittenWaybillMessage(result.error.message || "手書き完了を記録できませんでした。", true);
+    return;
+  }
+  if (shippingHandwrittenWaybillIndex + 1 < shippingHandwrittenWaybillTasks.length) {
+    shippingHandwrittenWaybillIndex += 1;
+    await prepareShippingHandwrittenWaybill();
+    return;
+  }
+  var completedCount = shippingHandwrittenWaybillTasks.length;
+  closeShippingHandwrittenWaybillFlow();
+  setShippingDocumentBatchMessage(completedCount + " 件の手書き伝票を完了しました。", false);
+  if (shippingDocumentSelectedId) await loadShippingDocumentDetail(shippingDocumentSelectedId);
+  if (shippingDocumentRows.length) await loadShippingDocumentOrders();
+}
+
+function openCurrentShippingHandwrittenWaybill(documentType) {
+  var order = shippingDocumentDetail;
+  if (!order) return;
+  openShippingHandwrittenWaybillFlow([{ orderId: order.id, documentType: documentType }]);
+}
+
 function shippingDocumentStatusValue() {
   var select = document.getElementById("shipping-document-status");
   return select ? (select.value || "active") : "active";
@@ -11282,8 +11549,8 @@ function shippingDocumentPendingCount(order) {
     : {};
   var requiredTypes = ["dispatch", "warranty"];
   if (order && order.core_return_required) requiredTypes.push("core_return");
-  if (order && order.outbound_waybill_method === "dot_matrix") requiredTypes.push("outbound_waybill");
-  if (order && order.core_return_required && order.return_waybill_method === "dot_matrix") requiredTypes.push("return_waybill");
+  if (order && ["dot_matrix", "handwritten"].indexOf(order.outbound_waybill_method) >= 0) requiredTypes.push("outbound_waybill");
+  if (order && order.core_return_required && ["dot_matrix", "handwritten"].indexOf(order.return_waybill_method) >= 0) requiredTypes.push("return_waybill");
   return requiredTypes.filter(function(type) {
     return !statuses[type] || statuses[type] !== "printed";
   }).length;
@@ -11333,6 +11600,54 @@ function shippingDocumentSelectedTypes() {
   });
 }
 
+function shippingDocumentHandwrittenTaskReady(order, documentType) {
+  if (!order || !order.dispatch_id) return false;
+  if (documentType === "outbound_waybill") return true;
+  return !!(order.core_return_required && order.dispatch_status === "shipped" && order.outbound_registered);
+}
+
+function shippingDocumentHandwrittenTasks(orderIds, documentTypes) {
+  var selectedIds = new Set((orderIds || []).map(function(value) { return parseInt(value, 10); }));
+  var selectedTypes = new Set(documentTypes || []);
+  var tasks = [];
+  shippingDocumentRows.forEach(function(order) {
+    if (!selectedIds.has(parseInt(order.id, 10))) return;
+    var statuses = order.document_statuses && typeof order.document_statuses === "object" ? order.document_statuses : {};
+    if (selectedTypes.has("outbound_waybill") && order.outbound_waybill_method === "handwritten"
+        && statuses.outbound_waybill !== "printed" && shippingDocumentHandwrittenTaskReady(order, "outbound_waybill")) {
+      tasks.push({ orderId: order.id, documentType: "outbound_waybill" });
+    }
+    if (selectedTypes.has("return_waybill") && order.core_return_required && order.return_waybill_method === "handwritten"
+        && statuses.return_waybill !== "printed" && shippingDocumentHandwrittenTaskReady(order, "return_waybill")) {
+      tasks.push({ orderId: order.id, documentType: "return_waybill" });
+    }
+  });
+  return tasks;
+}
+
+function shippingDocumentDeferredHandwrittenCount(orderIds, documentTypes) {
+  var selectedIds = new Set((orderIds || []).map(function(value) { return parseInt(value, 10); }));
+  var selectedTypes = new Set(documentTypes || []);
+  var count = 0;
+  shippingDocumentRows.forEach(function(order) {
+    if (!selectedIds.has(parseInt(order.id, 10))) return;
+    var statuses = order.document_statuses && typeof order.document_statuses === "object" ? order.document_statuses : {};
+    if (selectedTypes.has("outbound_waybill") && order.outbound_waybill_method === "handwritten"
+        && statuses.outbound_waybill !== "printed" && !shippingDocumentHandwrittenTaskReady(order, "outbound_waybill")) count += 1;
+    if (selectedTypes.has("return_waybill") && order.core_return_required && order.return_waybill_method === "handwritten"
+        && statuses.return_waybill !== "printed" && !shippingDocumentHandwrittenTaskReady(order, "return_waybill")) count += 1;
+  });
+  return count;
+}
+
+function shippingDocumentDotMatrixOrderIds(orderIds, documentType) {
+  var selectedIds = new Set((orderIds || []).map(function(value) { return parseInt(value, 10); }));
+  var methodKey = documentType === "return_waybill" ? "return_waybill_method" : "outbound_waybill_method";
+  return shippingDocumentRows.filter(function(order) {
+    return selectedIds.has(parseInt(order.id, 10)) && order[methodKey] === "dot_matrix";
+  }).map(function(order) { return parseInt(order.id, 10); });
+}
+
 function setShippingDocumentBatchMessage(message, isError) {
   var host = document.getElementById("shipping-document-batch-message");
   if (!host) return;
@@ -11352,8 +11667,8 @@ function updateShippingDocumentBatchControls() {
   if (button) {
     button.disabled = shippingDocumentSaving || shippingDocumentCheckedIdsState.size === 0 || shippingDocumentSelectedTypes().length === 0;
     button.textContent = shippingDocumentCheckedIdsState.size
-      ? "選択 " + shippingDocumentCheckedIdsState.size + " 件を印刷待ちへ"
-      : "選択帳票を印刷待ちへ";
+      ? "選択 " + shippingDocumentCheckedIdsState.size + " 件の帳票を発行"
+      : "選択帳票を発行";
   }
   var count = document.getElementById("shipping-document-count");
   if (count) count.textContent = shippingDocumentRows.length + " 件 / 選択 " + shippingDocumentCheckedIdsState.size + " 件";
@@ -11367,26 +11682,61 @@ async function queueSelectedShippingDocuments() {
     setShippingDocumentBatchMessage("受注と印刷する帳票を選択してください。", true);
     return;
   }
-  shippingDocumentSaving = true;
-  updateShippingDocumentBatchControls();
-  setShippingDocumentBatchMessage("印刷待ちへ登録しています。", false);
-  var result = await sb.rpc("queue_sales_order_fulfillment_documents", {
-    target_order_ids: orderIds,
-    target_document_types: documentTypes
+  var handwrittenTasks = shippingDocumentHandwrittenTasks(orderIds, documentTypes);
+  var deferredHandwrittenCount = shippingDocumentDeferredHandwrittenCount(orderIds, documentTypes);
+  var baseTypes = documentTypes.filter(function(type) {
+    return ["outbound_waybill", "return_waybill"].indexOf(type) < 0;
   });
-  shippingDocumentSaving = false;
-  updateShippingDocumentBatchControls();
-  if (result.error) {
-    setShippingDocumentBatchMessage(result.error.message || "印刷待ちへ登録できませんでした。", true);
+  var groups = [];
+  if (baseTypes.length) groups.push({ orderIds: orderIds, documentTypes: baseTypes });
+  if (documentTypes.indexOf("outbound_waybill") >= 0) {
+    var outboundOrderIds = shippingDocumentDotMatrixOrderIds(orderIds, "outbound_waybill");
+    if (outboundOrderIds.length) groups.push({ orderIds: outboundOrderIds, documentTypes: ["outbound_waybill"] });
+  }
+  if (documentTypes.indexOf("return_waybill") >= 0) {
+    var returnOrderIds = shippingDocumentDotMatrixOrderIds(orderIds, "return_waybill");
+    if (returnOrderIds.length) groups.push({ orderIds: returnOrderIds, documentTypes: ["return_waybill"] });
+  }
+  if (!groups.length && !handwrittenTasks.length) {
+    setShippingDocumentBatchMessage(deferredHandwrittenCount
+      ? "手書き伝票は、出荷処理と発送用伝票番号の登録完了後に作成できます。"
+      : "選択した受注に未発行の対象帳票はありません。", true);
     return;
   }
-  var data = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
-  var skipped = Array.isArray(data.skipped) ? data.skipped : [];
+  shippingDocumentSaving = true;
+  updateShippingDocumentBatchControls();
+  setShippingDocumentBatchMessage("帳票の発行処理を開始しています。", false);
+  var queuedCount = 0;
+  var skipped = [];
+  for (var groupIndex = 0; groupIndex < groups.length; groupIndex += 1) {
+    var group = groups[groupIndex];
+    var result = await sb.rpc("queue_sales_order_fulfillment_documents", {
+      target_order_ids: group.orderIds,
+      target_document_types: group.documentTypes
+    });
+    if (result.error) {
+      shippingDocumentSaving = false;
+      updateShippingDocumentBatchControls();
+      setShippingDocumentBatchMessage(result.error.message || "印刷待ちへ登録できませんでした。", true);
+      return;
+    }
+    var data = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
+    queuedCount += parseInt(data.queued_count, 10) || 0;
+    skipped = skipped.concat(Array.isArray(data.skipped) ? data.skipped : []);
+  }
+  shippingDocumentSaving = false;
+  updateShippingDocumentBatchControls();
   setShippingDocumentBatchMessage(
-    (parseInt(data.queued_count, 10) || 0) + " 件の帳票を印刷待ちへ登録しました。" +
+    queuedCount + " 件を印刷待ちへ登録しました。" +
+      (handwrittenTasks.length ? " 手書き " + handwrittenTasks.length + " 件を続けて表示します。" : "") +
+      (deferredHandwrittenCount ? " 手書き待機 " + deferredHandwrittenCount + " 件。" : "") +
       (skipped.length ? " 対象外・重複 " + skipped.length + " 件。" : ""),
     false
   );
+  if (handwrittenTasks.length) {
+    await openShippingHandwrittenWaybillFlow(handwrittenTasks);
+    return;
+  }
   if (shippingDocumentSelectedId) await loadShippingDocumentDetail(shippingDocumentSelectedId);
   if (shippingDocumentRows.length) await loadShippingDocumentOrders();
 }
@@ -11603,7 +11953,7 @@ function shippingDocumentDefaultStateHtml() {
     { name: "商品発送送り状", standard: "B2クラウド / ヤマト宅急便 元払い", condition: "注文ごとに作成方法を変更可" },
     { name: "保証書", standard: "A5 / 注文単位 / 端末印刷", condition: "商品・製造シリアルを掲載" },
     { name: "コア返却シート", standard: "A5 / コア返却必要時 / 端末印刷", condition: "返却不要の注文は対象外" },
-    { name: "コア返却用複写伝票", standard: "手書き / ヤマト宅急便 着払い", condition: "佐川急便・ドットプリンタへ変更可" }
+    { name: "コア返却用複写伝票", standard: "手書き運用 / 佐川急便 着払い", condition: "ヤマト宅急便・ドットプリンタへ変更可" }
   ];
   return "<section class='shipping-document-defaults'><div class='shipping-document-defaults-head'><span>DEFAULT DOCUMENTS</span><h2>帳票の標準設定</h2><p>受注IDまたは出荷指示番号を検索すると、各帳票の現在状態と発行操作を表示します。</p></div>" +
     "<div class='shipping-document-default-head'><span>帳票</span><span>標準設定</span><span>発行条件</span></div>" +
@@ -11620,20 +11970,20 @@ function shippingDocumentOutboundWaybillHtml(order) {
   var printJob = shippingDocumentPrintJob(order, "outbound_waybill");
   var printBusy = !!(printJob && ["queued", "claimed"].indexOf(printJob.status) >= 0);
   var printState = printJob ? salesOrderPrintJobStatusLabel(printJob.status) : "未発行";
-  var modeLabel = method === "dot_matrix" ? "ドットプリンタ" : method === "handwritten" ? "手書き" : "B2クラウド";
+  var modeLabel = method === "dot_matrix" ? "ドットプリンタ" : method === "handwritten" ? "手書き運用" : "B2クラウド";
   var guidance = !dispatch
     ? "出荷指示書を発行してから商品発送送り状を設定してください。"
     : method === "b2_cloud"
     ? "B2 CSVを発行し、B2クラウドで送り状を印刷します。発行済データCSVの取込で送り状番号を登録します。"
     : method === "handwritten"
-      ? "複写伝票へ手書きし、印刷済みの12桁伝票番号を登録します。"
+      ? "伝票デザインに表示された内容を複写伝票へ手書きし、完了を記録します。"
       : !waybill.tracking_number
         ? "複写伝票に印刷されている12桁の伝票番号を登録してください。"
         : printBusy ? "商品発送用複写伝票を印刷端末へ送信済みです。"
           : "ドットプリンターに元払い複写伝票をセットして印刷します。";
   return "<div class='shipping-document-waybill-card' id='shipping-document-outbound-waybill-section'><div class='shipping-document-section-head'><div><h3>商品発送送り状</h3><p>B2または運送会社別の元払い複写伝票を注文単位で選択します。</p></div><span class='shipping-document-ready-state " + (order.outbound_tracking_number ? "ready" : "pending") + "'>" + esc(order.outbound_tracking_number ? "番号登録済み" : modeLabel) + "</span></div>" +
     "<div class='shipping-document-waybill-form'><label><span>運送会社</span><select id='shipping-document-outbound-carrier'><option value='yamato_prepaid'" + (carrier === "yamato_prepaid" ? " selected" : "") + ">ヤマト宅急便　元払い</option><option value='sagawa_prepaid'" + (carrier === "sagawa_prepaid" ? " selected" : "") + ">佐川急便　元払い</option></select></label>" +
-    "<label><span>作成方法</span><select id='shipping-document-outbound-method'><option value='b2_cloud'" + (method === "b2_cloud" ? " selected" : "") + ">B2クラウド</option><option value='handwritten'" + (method === "handwritten" ? " selected" : "") + ">手書き</option><option value='dot_matrix'" + (method === "dot_matrix" ? " selected" : "") + ">ドットプリンタ</option></select></label>" +
+    "<label><span>作成方法</span><select id='shipping-document-outbound-method'><option value='b2_cloud'" + (method === "b2_cloud" ? " selected" : "") + ">B2クラウド</option><option value='handwritten'" + (method === "handwritten" ? " selected" : "") + ">手書き運用</option><option value='dot_matrix'" + (method === "dot_matrix" ? " selected" : "") + ">ドットプリンタ</option></select></label>" +
     "<label><span>商品発送用伝票番号</span><input id='shipping-document-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(waybill.tracking_number || order.outbound_tracking_number || "") + "' placeholder='12桁'" + (method === "b2_cloud" ? " disabled" : "") + "></label>" +
     "<button type='button' id='shipping-document-outbound-save'" + (shippingDocumentSaving || !dispatch ? " disabled" : "") + ">設定を保存</button></div>" +
     "<div class='shipping-document-waybill-print-row'><div><span>複写伝票の印刷状態</span><strong class='" + esc(printJob ? printJob.status : "") + "'>" + esc(method === "b2_cloud" ? "B2で発行" : printState) + "</strong></div>" +
@@ -11651,13 +12001,17 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var outboundWaybill = order.outbound_waybill && typeof order.outbound_waybill === "object" ? order.outbound_waybill : {};
   var waybill = order.return_waybill && typeof order.return_waybill === "object" ? order.return_waybill : {};
   var outboundMethod = outboundWaybill.handling_method || "b2_cloud";
-  var outboundModeLabel = outboundMethod === "dot_matrix" ? "ドットプリンタ" : outboundMethod === "handwritten" ? "手書き" : "B2クラウド";
+  var outboundModeLabel = outboundMethod === "dot_matrix" ? "ドットプリンタ" : outboundMethod === "handwritten" ? "手書き運用" : "B2クラウド";
   var outboundPrintBusy = !!(outboundJob && ["queued", "claimed"].indexOf(outboundJob.status) >= 0);
   var outboundCanPrint = !!(dispatch && outboundMethod === "dot_matrix" && /^\d{12}$/.test(String(outboundWaybill.tracking_number || "")) && !outboundPrintBusy && !shippingDocumentSaving);
+  var outboundHandwrittenComplete = outboundMethod === "handwritten" && (outboundWaybill.status === "printed" || !!outboundWaybill.handwritten_completed_at);
+  var outboundCanHandwrite = !!(dispatch && outboundMethod === "handwritten" && !outboundHandwrittenComplete && !shippingDocumentSaving);
   var returnMethod = waybill.handling_method || "handwritten";
   var returnCarrierLabel = waybill.carrier_code === "sagawa_collect" ? "佐川急便 着払い" : "ヤマト宅急便 着払い";
   var returnPrintBusy = !!(returnJob && ["queued", "claimed"].indexOf(returnJob.status) >= 0);
   var returnCanPrint = !!(ready && returnMethod === "dot_matrix" && waybill.id && waybill.tracking_number && !returnPrintBusy && !shippingDocumentSaving);
+  var returnHandwrittenComplete = returnMethod === "handwritten" && (waybill.status === "printed" || !!waybill.handwritten_completed_at);
+  var returnCanHandwrite = !!(ready && returnMethod === "handwritten" && !returnHandwrittenComplete && !shippingDocumentSaving);
   var b2Issued = Array.isArray(order.b2_exports) && order.b2_exports.length > 0;
   var canCreateB2 = ["accepted", "shipping_ready", "shipped"].indexOf(order.status) >= 0 && outboundMethod === "b2_cloud";
   var dispatchStandard = salesOrderAutoPrintIsEnabled() ? "A4 / 受付時に自動発行" : "A4 / 出荷帳票発行で印刷";
@@ -11673,8 +12027,8 @@ function shippingDocumentShipmentDocumentsHtml(order) {
     },
     {
       key: "outbound_waybill", name: "商品発送送り状", standard: "B2クラウド / ヤマト宅急便 元払い",
-      state: outboundModeLabel + " / " + (outboundMethod === "b2_cloud" ? (b2Issued ? "発行済み" : "未発行") : (outboundJob ? salesOrderPrintJobStatusLabel(outboundJob.status) : (outboundWaybill.tracking_number ? "番号登録済み" : "未設定"))), ready: !!dispatch,
-      actions: (outboundMethod === "b2_cloud" ? "<button type='button' class='primary' id='shipping-document-b2-issue'" + (canCreateB2 && !shippingDocumentSaving ? "" : " disabled") + ">" + (b2Issued ? "B2 CSV再発行" : "B2 CSV発行") + "</button>" : outboundMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-outbound-print" + (outboundCanPrint ? "" : " disabled") + ">端末印刷</button>" : "") + "<button type='button' data-shipping-document-open-settings='outbound'>設定</button>"
+      state: outboundModeLabel + " / " + (outboundMethod === "b2_cloud" ? (b2Issued ? "発行済み" : "未発行") : outboundMethod === "handwritten" ? (outboundHandwrittenComplete ? "手書き完了" : "手書き待ち") : (outboundJob ? salesOrderPrintJobStatusLabel(outboundJob.status) : (outboundWaybill.tracking_number ? "番号登録済み" : "未設定"))), ready: !!dispatch,
+      actions: (outboundMethod === "b2_cloud" ? "<button type='button' class='primary' id='shipping-document-b2-issue'" + (canCreateB2 && !shippingDocumentSaving ? "" : " disabled") + ">" + (b2Issued ? "B2 CSV再発行" : "B2 CSV発行") + "</button>" : outboundMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-outbound-print" + (outboundCanPrint ? "" : " disabled") + ">端末印刷</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='outbound_waybill'" + (outboundCanHandwrite ? "" : " disabled") + ">手書き内容を表示</button>") + "<button type='button' data-shipping-document-open-settings='outbound'>設定</button>"
     },
     {
       key: "warranty", name: "保証書", standard: "A5 / 注文単位 / 端末印刷",
@@ -11689,9 +12043,9 @@ function shippingDocumentShipmentDocumentsHtml(order) {
       actions: order.core_return_required ? shippingDocumentManualOutputActions(order, "core_return", ready) : "<span class='shipping-document-no-action'>発行不要</span>"
     },
     {
-      key: "return_waybill", name: "コア返却用複写伝票", standard: "手書き / ヤマト宅急便 着払い",
-      state: order.core_return_required ? returnCarrierLabel + " / " + (returnJob ? salesOrderPrintJobStatusLabel(returnJob.status) : (waybill.id ? (returnMethod === "dot_matrix" ? "ドットプリンタ設定済み" : "手書き設定済み") : "未設定")) : "対象外", ready: !!order.core_return_required,
-      actions: order.core_return_required ? (returnMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-return-print" + (returnCanPrint ? "" : " disabled") + ">端末印刷</button>" : "") + "<button type='button' data-shipping-document-open-settings='return'>設定</button>" : "<span class='shipping-document-no-action'>発行不要</span>"
+      key: "return_waybill", name: "コア返却用複写伝票", standard: "手書き運用 / 佐川急便 着払い",
+      state: order.core_return_required ? returnCarrierLabel + " / " + (returnMethod === "handwritten" ? (returnHandwrittenComplete ? "手書き完了" : "手書き待ち") : (returnJob ? salesOrderPrintJobStatusLabel(returnJob.status) : (waybill.id ? "ドットプリンタ設定済み" : "未設定"))) : "対象外", ready: !!order.core_return_required,
+      actions: order.core_return_required ? (returnMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-return-print" + (returnCanPrint ? "" : " disabled") + ">端末印刷</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='return_waybill'" + (returnCanHandwrite ? "" : " disabled") + ">手書き内容を表示</button>") + "<button type='button' data-shipping-document-open-settings='return'>設定</button>" : "<span class='shipping-document-no-action'>発行不要</span>"
     }
   ];
   return "<section class='shipping-document-section shipping-document-required-documents'><div class='shipping-document-section-head'><div><h3>帳票の状態と発行</h3><p>標準設定を確認し、必要な帳票をこの一覧から発行します。設定変更は各行の「設定」から行います。</p></div><span class='shipping-document-ready-state " + (ready ? "ready" : "pending") + "'>" + esc(ready ? "同梱帳票を発行可" : "出荷処理中") + "</span></div>" +
@@ -11706,7 +12060,7 @@ function shippingDocumentReturnWaybillHtml(order) {
     return "<div id='shipping-document-return-waybill-section'><p class='shipping-document-section-empty'>この注文はコア返却不要のため、返却用伝票は作成しません。</p></div>";
   }
   var waybill = order.return_waybill && typeof order.return_waybill === "object" ? order.return_waybill : {};
-  var carrier = waybill.carrier_code || "yamato_collect";
+  var carrier = waybill.carrier_code || "sagawa_collect";
   var method = waybill.handling_method || "handwritten";
   var dispatch = salesOrderDispatch(order);
   var printJob = shippingDocumentPrintJob(order, "return_waybill");
@@ -11715,14 +12069,14 @@ function shippingDocumentReturnWaybillHtml(order) {
   var savedForDotPrint = !!(waybill.id && method === "dot_matrix" && waybill.tracking_number);
   var carrierLabel = carrier === "sagawa_collect" ? "佐川急便着払い" : "ヤマト宅急便　着払い";
   var printState = printJob ? salesOrderPrintJobStatusLabel(printJob.status) : "未発行";
-  var printGuidance = method !== "dot_matrix" ? "手書き運用では、使用する複写伝票の番号だけを登録します。"
+  var printGuidance = method !== "dot_matrix" ? "手書き運用では、伝票デザインと記入内容を画面に表示し、完了後に伝票番号を登録できます。"
     : !waybill.id ? "作成方法と返送用伝票番号を入力し、先に設定を保存してください。"
       : !waybill.tracking_number ? "複写伝票に印刷されている返送用伝票番号を登録してください。"
         : !shipmentReady ? "商品・製造シリアル照合とB2発行済データ取込の完了後に印刷できます。"
           : printBusy ? "複写伝票を印刷端末へ送信済みです。" : "ドットプリンターに " + carrierLabel + " の複写伝票をセットして印刷します。";
   return "<div id='shipping-document-return-waybill-section'><div class='shipping-document-section-head'><div><h3>コア返却用複写伝票</h3><p>着払い伝票の種類と伝票番号を登録し、返却状況の照合に使用します。</p></div><span class='shipping-document-ready-state " + (waybill.id ? "ready" : "pending") + "'>" + esc(waybill.id ? "設定済み" : "未設定") + "</span></div>" +
     "<div class='shipping-document-waybill-form'><label><span>運送会社・サービス</span><select id='shipping-document-return-carrier'><option value='yamato_collect'" + (carrier === "yamato_collect" ? " selected" : "") + ">ヤマト宅急便　着払い</option><option value='sagawa_collect'" + (carrier === "sagawa_collect" ? " selected" : "") + ">佐川急便着払い</option></select></label>" +
-    "<label><span>作成方法</span><select id='shipping-document-return-method'><option value='handwritten'" + (method === "handwritten" ? " selected" : "") + ">手書き</option><option value='dot_matrix'" + (method === "dot_matrix" ? " selected" : "") + ">ドットプリンタ</option></select></label>" +
+    "<label><span>作成方法</span><select id='shipping-document-return-method'><option value='handwritten'" + (method === "handwritten" ? " selected" : "") + ">手書き運用</option><option value='dot_matrix'" + (method === "dot_matrix" ? " selected" : "") + ">ドットプリンタ</option></select></label>" +
     "<label><span>返送用伝票番号</span><input id='shipping-document-return-tracking' type='text' inputmode='numeric' maxlength='14' value='" + esc(waybill.tracking_number || "") + "' placeholder='10〜14桁（後から登録も可）'></label>" +
     "<button type='button' id='shipping-document-return-save'" + (shippingDocumentSaving ? " disabled" : "") + ">設定を保存</button></div>" +
     "<div class='shipping-document-waybill-print-row'><div><span>複写伝票の印刷状態</span><strong class='" + esc(printJob ? printJob.status : "") + "'>" + esc(printState) + "</strong></div>" +
@@ -11766,6 +12120,11 @@ function bindShippingDocumentDetailActions() {
   });
   document.querySelectorAll("[data-shipping-document-return-print]").forEach(function(button) {
     button.addEventListener("click", queueShippingDocumentReturnWaybillPrint);
+  });
+  document.querySelectorAll("[data-shipping-document-handwritten]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      openCurrentShippingHandwrittenWaybill(button.dataset.shippingDocumentHandwritten);
+    });
   });
 }
 
@@ -44390,6 +44749,12 @@ document.getElementById("shipping-waybill-layout-cancel").addEventListener("clic
 document.getElementById("shipping-waybill-layout-save").addEventListener("click", saveShippingWaybillLayout);
 document.getElementById("shipping-waybill-layout-overlay").addEventListener("click", function(e) {
   if (e.target === this) closeShippingWaybillLayoutDesigner();
+});
+document.getElementById("shipping-handwritten-waybill-close").addEventListener("click", closeShippingHandwrittenWaybillFlow);
+document.getElementById("shipping-handwritten-waybill-cancel").addEventListener("click", closeShippingHandwrittenWaybillFlow);
+document.getElementById("shipping-handwritten-waybill-complete").addEventListener("click", completeShippingHandwrittenWaybill);
+document.getElementById("shipping-handwritten-waybill-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeShippingHandwrittenWaybillFlow();
 });
 document.getElementById("shipping-document-settings-close").addEventListener("click", closeShippingDocumentSettings);
 document.getElementById("shipping-document-settings-cancel").addEventListener("click", closeShippingDocumentSettings);

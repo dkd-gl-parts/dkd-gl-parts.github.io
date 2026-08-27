@@ -7471,6 +7471,150 @@ body.app-install-dialog-open { overflow: hidden; }
 }
 .shipping-waybill-layout-footer a { margin-right: auto; color: #155a94; font-size: 12px; font-weight: 800; }
 
+/* Guided handwritten multipart waybills */
+.shipping-handwritten-waybill-card {
+  display: flex;
+  flex-direction: column;
+  width: min(1120px, calc(100vw - 24px));
+  max-width: none;
+  max-height: calc(100dvh - 24px);
+  padding: 0;
+  overflow: hidden;
+}
+.shipping-handwritten-waybill-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 17px 20px 14px;
+  border-bottom: 1px solid #d8e0e8;
+  background: #f6f9fc;
+}
+.shipping-handwritten-waybill-heading > div { min-width: 0; }
+.shipping-handwritten-waybill-heading > div > span {
+  color: #287356;
+  font-size: 10px;
+  font-weight: 900;
+}
+.shipping-handwritten-waybill-heading h3 { margin: 3px 0 4px; color: #13243a; font-size: 21px; }
+.shipping-handwritten-waybill-heading p { margin: 0; color: #627188; font-size: 12px; }
+.shipping-handwritten-waybill-heading button {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #c7d2de;
+  border-radius: 6px;
+  background: #fff;
+  color: #53647a;
+  cursor: pointer;
+}
+.shipping-handwritten-waybill-progress {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 9px 20px;
+  border-bottom: 1px solid #dce3ea;
+  background: #fff;
+  color: #68778b;
+  font-size: 11px;
+}
+.shipping-handwritten-waybill-progress strong { color: #18314f; font-size: 15px; }
+.shipping-handwritten-waybill-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  min-height: 0;
+  overflow: auto;
+  background: #edf1f4;
+}
+.shipping-handwritten-waybill-preview { min-width: 0; padding: 16px 18px; }
+.shipping-handwritten-waybill-preview > div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.shipping-handwritten-waybill-preview > div:first-child strong { color: #17283d; font-size: 14px; }
+.shipping-handwritten-waybill-preview > div:first-child span { color: #637187; font-size: 10px; }
+.shipping-handwritten-waybill-canvas-wrap {
+  display: grid;
+  place-items: center;
+  min-height: 440px;
+  padding: 18px;
+  overflow: auto;
+  border: 1px solid #c9d2dc;
+  background: #d9dee3;
+}
+#shipping-handwritten-waybill-canvas {
+  display: block;
+  width: min(100%, 820px);
+  height: auto;
+  border: 1px solid #aeb8c3;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(30, 45, 60, .15);
+}
+.shipping-handwritten-waybill-values {
+  min-width: 0;
+  padding: 16px;
+  border-left: 1px solid #d6dee6;
+  background: #fff;
+}
+.shipping-handwritten-waybill-values > div {
+  display: grid;
+  gap: 2px;
+  padding: 0 0 11px;
+  border-bottom: 2px solid #287356;
+}
+.shipping-handwritten-waybill-values > div span,
+.shipping-handwritten-waybill-values > div small { color: #6d7a8d; font-size: 10px; }
+.shipping-handwritten-waybill-values > div strong { color: #162a41; font-size: 16px; }
+.shipping-handwritten-waybill-values dl { margin: 8px 0 0; }
+.shipping-handwritten-waybill-values dl > div {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 9px;
+  padding: 7px 0;
+  border-bottom: 1px solid #e2e7ec;
+}
+.shipping-handwritten-waybill-values dt { color: #69778a; font-size: 10px; }
+.shipping-handwritten-waybill-values dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #17283d;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.shipping-handwritten-waybill-values > p {
+  margin: 12px 0 0;
+  padding: 9px 10px;
+  border-left: 3px solid #c58a14;
+  background: #fff9e8;
+  color: #6c571f;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.shipping-handwritten-waybill-empty {
+  grid-column: 1 / -1;
+  display: grid;
+  place-items: center;
+  min-height: 380px;
+  padding: 24px;
+  color: #66778c;
+  background: #fff;
+}
+.shipping-handwritten-waybill-empty.error { color: #c62828; }
+.shipping-handwritten-waybill-card > .sales-order-detail-message { min-height: 20px; margin: 0; padding: 4px 20px; }
+.shipping-handwritten-waybill-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  padding: 11px 16px;
+  border-top: 1px solid #d8e0e8;
+  background: #fff;
+}
+
 @media (max-width: 1080px) {
   .shipping-waybill-layout-card { width: calc(100vw - 12px); height: calc(100dvh - 12px); }
   .shipping-waybill-layout-toolbar { grid-template-columns: 1fr 120px; }
@@ -7478,6 +7622,7 @@ body.app-install-dialog-open { overflow: hidden; }
   .shipping-waybill-inspector { grid-column: 1 / -1; border-top: 1px solid #dbe2e9; border-left: 0; }
   .shipping-waybill-inspector-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .shipping-waybill-inspector-grid .wide { grid-column: auto; }
+  .shipping-handwritten-waybill-content { grid-template-columns: minmax(0, 1fr) 260px; }
 }
 
 @media (max-width: 760px) {
@@ -7495,4 +7640,14 @@ body.app-install-dialog-open { overflow: hidden; }
   .shipping-waybill-inspector-grid { grid-template-columns: 1fr 1fr; }
   .shipping-waybill-layout-footer { flex-wrap: wrap; }
   .shipping-waybill-layout-footer a { width: 100%; margin-right: 0; }
+  .shipping-handwritten-waybill-card { width: calc(100vw - 12px); max-height: calc(100dvh - 12px); }
+  .shipping-handwritten-waybill-heading { padding: 13px; }
+  .shipping-handwritten-waybill-heading h3 { font-size: 18px; }
+  .shipping-handwritten-waybill-progress { align-items: flex-start; flex-direction: column; gap: 2px; padding: 8px 13px; }
+  .shipping-handwritten-waybill-content { display: block; }
+  .shipping-handwritten-waybill-preview { padding: 10px; }
+  .shipping-handwritten-waybill-preview > div:first-child { align-items: flex-start; flex-direction: column; gap: 2px; }
+  .shipping-handwritten-waybill-canvas-wrap { min-height: 260px; padding: 8px; }
+  .shipping-handwritten-waybill-values { border-top: 1px solid #d6dee6; border-left: 0; }
+  .shipping-handwritten-waybill-values dl > div { grid-template-columns: 92px minmax(0, 1fr); }
 }
