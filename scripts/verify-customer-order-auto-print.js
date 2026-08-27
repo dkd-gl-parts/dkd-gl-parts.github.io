@@ -24,7 +24,6 @@ for (const id of [
   "sales-order-print-settings-open",
   "sales-order-print-settings-overlay",
   "sales-order-print-settings-current",
-  "sales-order-print-settings-launch",
   "sales-order-print-settings-refresh"
 ]) {
   if (!html.includes(`id="${id}"`)) throw new Error(`Auto-print setting UI is missing: ${id}`);
@@ -108,8 +107,10 @@ for (const fragment of [
 ]) {
   if (!printerSetup.includes(fragment)) throw new Error(`Self-service printer setup is missing: ${fragment}`);
 }
-if (!html.includes('href="dcats-print-settings://open"')) {
-  throw new Error("Order management must open the installed Windows printer settings handler");
+if (setupHtml.includes('href="dcats-print-settings://open"') ||
+    setupHtml.includes("帳票別プリンター") ||
+    setupHtml.includes("複写伝票")) {
+  throw new Error("Order management automatic-print settings must not contain other document settings");
 }
 
 const submitOrder = sourceBetween("async function submitCustomerOrder", "function renderCustomerOrderHistory");
@@ -122,12 +123,11 @@ if (!submitOrder.includes('customerOrderSetStatus(t("customer_order_submit_succe
 if (/window\.print\s*\(/.test(submitOrder)) {
   throw new Error("Order submission must not depend on browser window.print");
 }
-if (!html.includes("受注・出荷帳票の印刷設定") ||
-    !html.includes("受付時はA4出荷指示書だけを印刷します") ||
-    !html.includes("出荷指示書・保証書・コア返却シートは、それぞれ標準プリンターを設定できます") ||
-    !html.includes("PowerShell画面を表示せず") ||
-    !html.includes("各帳票と複写伝票の標準プリンターを個別に設定できます")) {
-  throw new Error("Automatic-print settings must describe the separate acceptance and shipment triggers");
+if (!html.includes("受付時の自動印刷設定") ||
+    !html.includes("注文受付時にA4出荷指示書を自動印刷する端末とプリンターを設定します") ||
+    !html.includes("その他の帳票設定は「出荷帳票発行」で管理します") ||
+    !html.includes("自動印刷プリンター")) {
+  throw new Error("Automatic-print settings must be limited to the acceptance-time dispatch sheet");
 }
 
 const printHistory = sourceBetween("function salesOrderPrintJobsHtml", "function salesOrderDispatchHtml");
@@ -165,10 +165,10 @@ for (const fragment of [
 }
 
 for (const versionFragment of [
-  'content="v1.1.786"',
-  'styles.css?v=1.1.786',
-  'app.js?v=1.1.786',
-  'var APP_VERSION       = "v1.1.786"'
+  'content="v1.1.787"',
+  'styles.css?v=1.1.787',
+  'app.js?v=1.1.787',
+  'var APP_VERSION       = "v1.1.787"'
 ]) {
   const versionSource = versionFragment.startsWith("var ") ? source : html;
   if (!versionSource.includes(versionFragment)) throw new Error(`Release version is inconsistent: ${versionFragment}`);

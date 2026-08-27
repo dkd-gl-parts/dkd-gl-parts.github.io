@@ -32,6 +32,7 @@ on:
       - "scripts/verify-customer-order-delivery-service.js"
       - "scripts/verify-customer-order-b2-import.js"
       - "scripts/verify-customer-order-auto-print.js"
+      - "scripts/verify-print-settings-screen-ownership.js"
       - "scripts/verify-order-fulfillment-documents.js"
       - "scripts/verify-waybill-layout-designer.js"
       - "scripts/verify-customer-order-batch-accept.js"
@@ -127,6 +128,8 @@ jobs:
         run: node scripts/verify-customer-order-b2-import.js
       - name: Verify customer order automatic printing
         run: node scripts/verify-customer-order-auto-print.js
+      - name: Verify print-setting screen ownership
+        run: node scripts/verify-print-settings-screen-ownership.js
       - name: Verify order fulfillment document workflow
         run: node scripts/verify-order-fulfillment-documents.js
       - name: Verify multipart-waybill layout designer
