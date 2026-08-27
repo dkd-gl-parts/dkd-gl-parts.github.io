@@ -65,6 +65,7 @@ for (const fragment of [
   'データ破損など同じ内容が必要な場合',
   'reason.length < 5'
 ]) requireFragment(source, fragment);
+requireFragment(html, 'dcats-print-calibration://open');
 
 const enterSource = sourceBetween("async function enterShippingDocumentMgmt", "function renderShippingDocumentList");
 for (const fragment of [
@@ -321,11 +322,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.787"',
-  'styles.css?v=1.1.787',
-  'app.js?v=1.1.787'
+  'content="v1.1.788"',
+  'styles.css?v=1.1.788',
+  'app.js?v=1.1.788'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.787"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.788"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");

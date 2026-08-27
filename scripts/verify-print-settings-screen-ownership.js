@@ -68,6 +68,13 @@ for (const fragment of [
     throw new Error(`Shipping-document setting entry is missing: ${fragment}`);
   }
 }
+for (const fragment of [
+  'id="shipping-waybill-calibration-open"',
+  'href="dcats-print-calibration://open"',
+  "このPCの用紙・全体補正とテスト印刷"
+]) {
+  if (!html.includes(fragment)) throw new Error(`Print-position calibration entry is missing: ${fragment}`);
+}
 
 if (html.includes('id="sales-order-print-settings-launch"') ||
     app.includes('getElementById("sales-order-print-settings-launch")')) {

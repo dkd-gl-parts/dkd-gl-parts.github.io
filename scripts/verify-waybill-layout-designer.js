@@ -53,7 +53,9 @@ for (const fragment of [
   "event.shiftKey ? 1 : 0.5"
 ]) requireFragment(app, fragment);
 
-requireFragment(html, 'href="dcats-print-settings://open"', "Printer-wide correction must remain separate from field layout");
+requireFragment(html, 'href="dcats-print-calibration://open"', "Terminal-wide correction must open from the print-position workflow");
+requireFragment(html, 'id="shipping-waybill-calibration-open"', "Print-position workflow must expose the local calibration action");
+requireFragment(app, "このPCの用紙・全体補正とテスト印刷を開きます", "Local calibration guidance must be wired");
 if (/on(?:click|change|input|keydown)\s*=/i.test(html.match(/id="shipping-waybill-layout-overlay"[\s\S]*?id="shipping-document-settings-overlay"/)?.[0] || "")) {
   throw new Error("Waybill layout modal must not use inline event handlers");
 }

@@ -5316,7 +5316,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.787";
+var APP_VERSION       = "v1.1.788";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -10959,7 +10959,7 @@ function renderShippingWaybillLayoutDesigner() {
     "</div>" +
     "<div class='shipping-waybill-layout-workspace'>" +
       "<aside class='shipping-waybill-field-list'><div><strong>印字項目</strong><span>" + esc((draft.fields || []).filter(function(item) { return item.visible !== false; }).length) + " / " + esc((draft.fields || []).length) + "</span></div>" + (draft.fields || []).map(shippingWaybillLayoutFieldHtml).join("") + "</aside>" +
-      "<section class='shipping-waybill-preview'><div class='shipping-waybill-preview-head'><div><strong>印刷プレビュー</strong><span>" + esc(draft.paper_width_mm) + " × " + esc(draft.paper_height_mm) + " mm</span></div><em>" + (previewData.uses_actual_order ? "選択中の受注" : "サンプルデータ") + "</em></div><div class='shipping-waybill-canvas-wrap'><canvas id='shipping-waybill-layout-canvas' tabindex='0' aria-label='送り状の印刷位置プレビュー'></canvas></div><p>背景線は位置合わせ用で印刷されません。端末ごとの全体ずれは「このPCのプリンター補正」で調整します。</p></section>" +
+      "<section class='shipping-waybill-preview'><div class='shipping-waybill-preview-head'><div><strong>印刷プレビュー</strong><span>" + esc(draft.paper_width_mm) + " × " + esc(draft.paper_height_mm) + " mm</span></div><em>" + (previewData.uses_actual_order ? "選択中の受注" : "サンプルデータ") + "</em></div><div class='shipping-waybill-canvas-wrap'><canvas id='shipping-waybill-layout-canvas' tabindex='0' aria-label='送り状の印刷位置プレビュー'></canvas></div><p>背景線は位置合わせ用で印刷されません。このPC固有の用紙寸法・全体ずれ・テスト印刷は、画面下の端末補正から調整します。</p></section>" +
       "<aside class='shipping-waybill-inspector'>" +
         (field ? "<div class='shipping-waybill-inspector-head'><span>選択中</span><strong>" + esc((SHIPPING_WAYBILL_FIELD_META[field.key] || {}).label || field.key) + "</strong></div>" +
         "<div class='shipping-waybill-inspector-grid'>" +
@@ -44409,6 +44409,9 @@ document.getElementById("sales-order-print-settings-cancel").addEventListener("c
 document.getElementById("sales-order-print-settings-refresh").addEventListener("click", function() { refreshSalesOrderPrinterSetup(true); });
 document.getElementById("shipping-document-printer-settings-open").addEventListener("click", function() {
   setShippingDocumentLookupMessage("Windowsの帳票・プリンター設定を開きます。変更後は帳票を再表示すると最新設定が反映されます。", false);
+});
+document.getElementById("shipping-waybill-calibration-open").addEventListener("click", function() {
+  setShippingWaybillLayoutMessage("このPCの用紙・全体補正とテスト印刷を開きます。保存後は印刷端末へ自動反映されます。", false);
 });
 document.getElementById("sales-order-print-settings-overlay").addEventListener("click", function(e) {
   if (e.target === this) closeSalesOrderPrinterSetup();
