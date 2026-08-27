@@ -5352,7 +5352,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.793";
+var APP_VERSION       = "v1.1.794";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5363,13 +5363,20 @@ var activityEventThrottleMap = {};
 var installVerificationLoggedIds = {};
 var installVerificationPendingIds = {};
 var APP_UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
+var APP_UPDATE_INITIAL_CHECK_DELAY_MS = 5000;
+var APP_UPDATE_RESUME_CHECK_DELAY_MS = 500;
+var APP_UPDATE_NAVIGATION_RETRY_MS = 5000;
 var APP_RESTORE_STATE_KEY = "dcats_restore_state_v1";
 var appRestoreInProgress = false;
 var appDiscardRestoreStateOnExit = false;
 var appUpdateTimer = null;
+var appUpdateResumeTimer = null;
 var appUpdateReloadTimer = null;
+var appUpdateNavigationRetryTimer = null;
 var appUpdateDetected = false;
+var appUpdateCheckInProgress = false;
 var appManualRefreshInProgress = false;
+var appUpdatePageExitStarted = false;
 var appUpdateLastActivityAt = Date.now();
 var ecResearchScheduleSettings = null;
 var kikanCandidateParts = [];
@@ -7086,6 +7093,37 @@ function setAppRefreshControlsDisabled(disabled) {
   });
 }
 
+function appRefreshUrl() {
+  var url = new URL(window.location.href);
+  url.hash = "";
+  url.searchParams.delete("_dcats_version_check");
+  url.searchParams.set("_dcats_refresh", String(Date.now()));
+  return url;
+}
+
+function navigateToFreshApp() {
+  var target;
+  try {
+    target = appRefreshUrl().toString();
+    window.location.replace(target);
+  } catch(e) {
+    window.location.reload();
+    return;
+  }
+
+  clearTimeout(appUpdateNavigationRetryTimer);
+  appUpdateNavigationRetryTimer = setTimeout(function() {
+    if (appUpdatePageExitStarted) return;
+    try {
+      var retryUrl = new URL(target);
+      retryUrl.searchParams.set("_dcats_refresh", String(Date.now()));
+      window.location.assign(retryUrl.toString());
+    } catch(e) {
+      window.location.reload();
+    }
+  }, APP_UPDATE_NAVIGATION_RETRY_MS);
+}
+
 function manualRefreshApp(event) {
   if (event) {
     event.preventDefault();
@@ -7097,17 +7135,13 @@ function manualRefreshApp(event) {
   clearTimeout(appUpdateReloadTimer);
   setAppRefreshControlsDisabled(true);
   saveAppRestoreState("manual-refresh");
-  try {
-    var url = new URL(window.location.href);
-    url.hash = "";
-    url.searchParams.set("_dcats_refresh", String(Date.now()));
-    window.location.replace(url.toString());
-  } catch(e) {
-    window.location.reload();
-  }
+  appUpdatePageExitStarted = false;
+  navigateToFreshApp();
 }
 
 window.addEventListener("pagehide", function() {
+  appUpdatePageExitStarted = true;
+  clearTimeout(appUpdateNavigationRetryTimer);
   saveAppRestoreState("pagehide");
 });
 
@@ -7173,12 +7207,20 @@ function scheduleAppUpdateReload(latestVersion) {
 }
 
 async function checkForAppUpdate() {
-  if (appUpdateDetected || location.protocol === "file:") return;
+  if (appUpdateDetected || appUpdateCheckInProgress || location.protocol === "file:") return;
+  appUpdateCheckInProgress = true;
   try {
-    var url = new URL(window.location.href);
+    var url = new URL("index.html", document.baseURI || window.location.href);
     url.hash = "";
     url.searchParams.set("_dcats_version_check", String(Date.now()));
-    var r = await fetch(url.toString(), { cache: "no-store" });
+    var r = await fetch(url.toString(), {
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: {
+        "Cache-Control": "no-cache, no-store, max-age=0",
+        "Pragma": "no-cache"
+      }
+    });
     if (!r.ok) return;
     var html = await r.text();
     var versionDocument = new DOMParser().parseFromString(html, "text/html");
@@ -7192,7 +7234,14 @@ async function checkForAppUpdate() {
     }
   } catch(e) {
     console.warn("app update check failed", e);
+  } finally {
+    appUpdateCheckInProgress = false;
   }
+}
+
+function requestAppUpdateCheck(delayMs) {
+  clearTimeout(appUpdateResumeTimer);
+  appUpdateResumeTimer = setTimeout(checkForAppUpdate, Math.max(0, Number(delayMs) || 0));
 }
 
 function startAppUpdateWatcher() {
@@ -7201,9 +7250,21 @@ function startAppUpdateWatcher() {
     document.addEventListener(ev, markAppUpdateActivity, { passive: true });
   });
   appUpdateTimer = setInterval(checkForAppUpdate, APP_UPDATE_CHECK_INTERVAL_MS);
-  setTimeout(checkForAppUpdate, 30000);
+  requestAppUpdateCheck(APP_UPDATE_INITIAL_CHECK_DELAY_MS);
   document.addEventListener("visibilitychange", function() {
-    if (!document.hidden) checkForAppUpdate();
+    if (!document.hidden) requestAppUpdateCheck(APP_UPDATE_RESUME_CHECK_DELAY_MS);
+  });
+  window.addEventListener("focus", function() {
+    requestAppUpdateCheck(APP_UPDATE_RESUME_CHECK_DELAY_MS);
+  });
+  window.addEventListener("pageshow", function() {
+    appManualRefreshInProgress = false;
+    appUpdatePageExitStarted = false;
+    setAppRefreshControlsDisabled(false);
+    requestAppUpdateCheck(APP_UPDATE_RESUME_CHECK_DELAY_MS);
+  });
+  window.addEventListener("online", function() {
+    requestAppUpdateCheck(APP_UPDATE_RESUME_CHECK_DELAY_MS);
   });
 }
 

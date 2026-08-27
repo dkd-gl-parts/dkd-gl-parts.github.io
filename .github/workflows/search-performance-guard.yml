@@ -16,6 +16,7 @@ on:
       - "vendor/three/**"
       - "scripts/verify-product-3d-workflow.js"
       - "scripts/verify-app-version-assets.js"
+      - "scripts/verify-edge-auto-update.js"
       - "scripts/verify-install-app.js"
       - "scripts/verify-shared-ui-components.js"
       - "scripts/verify-search-workload-guard.js"
@@ -99,6 +100,8 @@ jobs:
           node --check install-app.js
       - name: Verify release asset versions
         run: node scripts/verify-app-version-assets.js
+      - name: Verify Edge-compatible automatic updates
+        run: node scripts/verify-edge-auto-update.js
       - name: Verify install experience
         run: node scripts/verify-install-app.js
       - name: Verify shared customer, internal, and manufacturing UI components

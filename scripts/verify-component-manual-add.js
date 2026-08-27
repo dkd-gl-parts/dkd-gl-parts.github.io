@@ -178,16 +178,21 @@ const refreshSandbox = {
   appManualRefreshInProgress: false,
   componentAddSaving: false,
   appUpdateReloadTimer: 1,
+  appUpdateNavigationRetryTimer: null,
+  appUpdatePageExitStarted: false,
+  APP_UPDATE_NAVIGATION_RETRY_MS: 5000,
   document: { querySelectorAll: () => [refreshButton] },
   window: {
     location: {
       href: "https://dcats.example.test/",
       replace: () => { replaceCount += 1; },
+      assign: () => { replaceCount += 1; },
       reload: () => { replaceCount += 1; }
     }
   },
   URL,
   clearTimeout() {},
+  setTimeout() { return 2; },
   saveAppRestoreState() {}
 };
 vm.runInNewContext(`${refreshSource}; refresh = manualRefreshApp;`, refreshSandbox);
