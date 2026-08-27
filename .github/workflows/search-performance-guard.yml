@@ -51,6 +51,7 @@ on:
       - "scripts/verify-manufacturing-cost-snapshot-status.js"
       - "scripts/verify-manufacturing-cost-target-removal.js"
       - "scripts/verify-sales-pricing-manufacturing-cost.js"
+      - "scripts/verify-sales-pricing-layout.js"
       - "scripts/verify-core-return-policy.js"
       - "scripts/verify-sales-detail-workspace.js"
       - "scripts/verify-product-shipping-estimate.js"
@@ -158,6 +159,8 @@ jobs:
         run: node scripts/verify-manufacturing-cost-target-removal.js
       - name: Verify sales pricing manufacturing cost
         run: node scripts/verify-sales-pricing-manufacturing-cost.js
+      - name: Verify sales pricing responsive layout
+        run: node scripts/verify-sales-pricing-layout.js
       - name: Verify core return policy
         run: node scripts/verify-core-return-policy.js
       - name: Verify sales detail workspace

@@ -1412,9 +1412,13 @@ var TRANSLATIONS = {
     sales_rank: "ランク",
     sales_customer_count: "得意先数",
     sales_rate_adjust: "掛率 / 調整 / 丸め",
+    sales_rate_multiplier: "掛率",
     sales_amount_adjustment: "金額調整",
     sales_rounding_unit: "丸め単位",
     sales_rounding_method: "丸め方法",
+    sales_rounding_round: "四捨五入",
+    sales_rounding_ceil: "切り上げ",
+    sales_rounding_floor: "切り捨て",
     sales_result_price: "販売価格",
     sales_no_base_price: "基準価格は未設定です",
     sales_no_ranks: "価格ランクがありません",
@@ -3146,9 +3150,13 @@ var TRANSLATIONS = {
     sales_rank: "Rank",
     sales_customer_count: "Customers",
     sales_rate_adjust: "Rate / Adjustment / Rounding",
+    sales_rate_multiplier: "Rate",
     sales_amount_adjustment: "Amount Adjustment",
     sales_rounding_unit: "Rounding Unit",
     sales_rounding_method: "Rounding Method",
+    sales_rounding_round: "Round",
+    sales_rounding_ceil: "Round up",
+    sales_rounding_floor: "Round down",
     sales_result_price: "Sales Price",
     sales_no_base_price: "Base price is not set",
     sales_no_ranks: "No price ranks",
@@ -4873,9 +4881,13 @@ var TRANSLATIONS = {
     sales_rank: "等级",
     sales_customer_count: "客户数",
     sales_rate_adjust: "倍率 / 调整 / 取整",
+    sales_rate_multiplier: "倍率",
     sales_amount_adjustment: "金额调整",
     sales_rounding_unit: "取整单位",
     sales_rounding_method: "取整方式",
+    sales_rounding_round: "四舍五入",
+    sales_rounding_ceil: "向上取整",
+    sales_rounding_floor: "向下取整",
     sales_result_price: "销售价格",
     sales_no_base_price: "尚未设置基准价格",
     sales_no_ranks: "没有价格等级",
@@ -5316,7 +5328,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.789";
+var APP_VERSION       = "v1.1.790";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -38380,7 +38392,7 @@ function renderSalesRankPreview() {
   var showAdjustment = editable || canViewBasePrice();
   var html = "<div class='sales-rank-table-wrap'><table class='price-table sales-rank-table'><tr><th>" + esc(t("sales_rank")) + "</th><th>" + esc(t("sales_result_price")) + "</th><th>" + esc(t("sales_customer_count")) + "</th>";
   if (editable) {
-    html += "<th>" + esc(t("sales_rate_adjust")) + "</th><th>" + esc(t("sales_amount_adjustment")) + "</th><th>" + esc(t("sales_rounding_unit")) + "</th><th>" + esc(t("sales_rounding_method")) + "</th>";
+    html += "<th>" + esc(t("sales_rate_multiplier")) + "</th><th>" + esc(t("sales_amount_adjustment")) + "</th><th>" + esc(t("sales_rounding_unit")) + "</th><th>" + esc(t("sales_rounding_method")) + "</th>";
   } else if (showAdjustment) {
     html += "<th>" + esc(t("sales_rate_adjust")) + "</th>";
   }
@@ -38390,16 +38402,16 @@ function renderSalesRankPreview() {
     var adjust = "x" + Number(rank.rate_multiplier || 1).toFixed(4) + " / " + formatYen(rank.amount_adjustment_jpy || 0) + " / " + formatYen(rank.rounding_unit_jpy || 10);
     var code = esc(rank.rank_code || "");
     html += "<tr>";
-    html += "<td><div class='price-supplier'>" + esc(salesRankDisplayName(rank)) + "</div><div class='price-country'>" + esc(rank.rank_code || "") + "</div></td>";
-    html += "<td><div class='price-value sales-rank-price' data-dcats-inline-style='s-1024138906a0'>" + (price === null ? "-" : "JPY " + esc(formatYen(price))) + "</div></td>";
-    html += "<td>" + esc(String(salesPricingCustomerCounts[rank.rank_code] || 0)) + "</td>";
+    html += "<td data-label='" + esc(t("sales_rank")) + "'><div class='price-supplier'>" + esc(salesRankDisplayName(rank)) + "</div><div class='price-country'>" + esc(rank.rank_code || "") + "</div></td>";
+    html += "<td data-label='" + esc(t("sales_result_price")) + "'><div class='price-value sales-rank-price' data-dcats-inline-style='s-1024138906a0'>" + (price === null ? "-" : "JPY " + esc(formatYen(price))) + "</div></td>";
+    html += "<td data-label='" + esc(t("sales_customer_count")) + "'>" + esc(String(salesPricingCustomerCounts[rank.rank_code] || 0)) + "</td>";
     if (editable) {
-      html += "<td><input class='form-input sales-rank-rate' data-rank-code='" + code + "' type='number' min='0' step='0.0001' value='" + esc(String(rank.rate_multiplier || 1)) + "'></td>";
-      html += "<td><input class='form-input sales-rank-amount' data-rank-code='" + code + "' type='number' step='1' value='" + esc(String(rank.amount_adjustment_jpy || 0)) + "'></td>";
-      html += "<td><select class='form-input sales-rank-unit' data-rank-code='" + code + "'>" + [1,10,100,1000].map(function(v){ return "<option value='" + v + "'" + (String(rank.rounding_unit_jpy || 10) === String(v) ? " selected" : "") + ">" + v + "</option>"; }).join("") + "</select></td>";
-      html += "<td><select class='form-input sales-rank-method' data-rank-code='" + code + "'>" + ["round","ceil","floor"].map(function(v){ return "<option value='" + v + "'" + (String(rank.rounding_method || "round") === v ? " selected" : "") + ">" + v + "</option>"; }).join("") + "</select></td>";
+      html += "<td data-label='" + esc(t("sales_rate_multiplier")) + "'><input class='form-input sales-rank-rate' data-rank-code='" + code + "' type='number' min='0' step='0.0001' value='" + esc(String(rank.rate_multiplier || 1)) + "'></td>";
+      html += "<td data-label='" + esc(t("sales_amount_adjustment")) + "'><input class='form-input sales-rank-amount' data-rank-code='" + code + "' type='number' step='1' value='" + esc(String(rank.amount_adjustment_jpy || 0)) + "'></td>";
+      html += "<td data-label='" + esc(t("sales_rounding_unit")) + "'><select class='form-input sales-rank-unit' data-rank-code='" + code + "'>" + [1,10,100,1000].map(function(v){ return "<option value='" + v + "'" + (String(rank.rounding_unit_jpy || 10) === String(v) ? " selected" : "") + ">" + v + "</option>"; }).join("") + "</select></td>";
+      html += "<td data-label='" + esc(t("sales_rounding_method")) + "'><select class='form-input sales-rank-method' data-rank-code='" + code + "'>" + ["round","ceil","floor"].map(function(v){ return "<option value='" + v + "'" + (String(rank.rounding_method || "round") === v ? " selected" : "") + ">" + esc(t("sales_rounding_" + v)) + "</option>"; }).join("") + "</select></td>";
     } else if (showAdjustment) {
-      html += "<td>" + esc(adjust) + "</td>";
+      html += "<td data-label='" + esc(t("sales_rate_adjust")) + "'>" + esc(adjust) + "</td>";
     }
     html += "</tr>";
   });
