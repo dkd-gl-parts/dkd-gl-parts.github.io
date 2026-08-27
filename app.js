@@ -1390,9 +1390,16 @@ var TRANSLATIONS = {
     sales_pricing_title: "販売価格設定",
     sales_base_price: "基準価格",
     sales_base_price_help: "売値区分の掛率・金額調整をかける前の元価格です。",
-    sales_dks_reference_loading: "DKS参考価格を確認中...",
-    sales_dks_reference_none: "DKS価格の参考データなし",
-    sales_dks_reference_line: "DKS価格 {dks} - 1,000 = 参考 {ref}",
+    sales_reference_title: "販売価格の参考",
+    sales_daiko_service_price: "大光サービス価格",
+    sales_dks_reference_loading: "大光サービス価格を確認中...",
+    sales_dks_reference_none: "価格データなし",
+    sales_dks_reference_line: "1,000円差引参考 {ref}",
+    sales_ec_market_price: "ECモール相場",
+    sales_ec_market_loading: "ECモール相場を確認中...",
+    sales_ec_market_none: "調査結果なし",
+    sales_ec_total_price: "送料込み総額",
+    sales_ec_item_price: "商品価格",
     sales_manufacturing_cost: "製造原価合計",
     sales_manufacturing_cost_loading: "製造原価を確認中...",
     sales_manufacturing_cost_none: "製造原価未設定",
@@ -3128,9 +3135,16 @@ var TRANSLATIONS = {
     sales_pricing_title: "Sales Pricing",
     sales_base_price: "Base Price",
     sales_base_price_help: "Original price before rate, amount adjustment, and rounding by sales rank.",
-    sales_dks_reference_loading: "Checking DKS reference price...",
-    sales_dks_reference_none: "No DKS reference price data",
-    sales_dks_reference_line: "DKS price {dks} - 1,000 = reference {ref}",
+    sales_reference_title: "Sales Price References",
+    sales_daiko_service_price: "Daiko Service Price",
+    sales_dks_reference_loading: "Checking Daiko Service price...",
+    sales_dks_reference_none: "No price data",
+    sales_dks_reference_line: "Reference after JPY 1,000 deduction: {ref}",
+    sales_ec_market_price: "EC Mall Market",
+    sales_ec_market_loading: "Checking EC mall market...",
+    sales_ec_market_none: "No research results",
+    sales_ec_total_price: "Total incl. shipping",
+    sales_ec_item_price: "Item price",
     sales_manufacturing_cost: "Total Manufacturing Cost",
     sales_manufacturing_cost_loading: "Checking manufacturing cost...",
     sales_manufacturing_cost_none: "Manufacturing cost not set",
@@ -4859,9 +4873,16 @@ var TRANSLATIONS = {
     sales_pricing_title: "销售价格设置",
     sales_base_price: "基准价格",
     sales_base_price_help: "应用销售等级倍率、金额调整和取整前的原始价格。",
-    sales_dks_reference_loading: "正在确认DKS参考价格...",
-    sales_dks_reference_none: "无DKS参考价格数据",
-    sales_dks_reference_line: "DKS价格 {dks} - 1,000 = 参考 {ref}",
+    sales_reference_title: "销售价格参考",
+    sales_daiko_service_price: "大光服务价格",
+    sales_dks_reference_loading: "正在确认大光服务价格...",
+    sales_dks_reference_none: "无价格数据",
+    sales_dks_reference_line: "减去1,000日元后的参考价 {ref}",
+    sales_ec_market_price: "EC商城行情",
+    sales_ec_market_loading: "正在确认EC商城行情...",
+    sales_ec_market_none: "无调查结果",
+    sales_ec_total_price: "含运费总额",
+    sales_ec_item_price: "商品价格",
     sales_manufacturing_cost: "制造成本合计",
     sales_manufacturing_cost_loading: "正在确认制造成本...",
     sales_manufacturing_cost_none: "未设置制造成本",
@@ -5328,7 +5349,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.791";
+var APP_VERSION       = "v1.1.792";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5551,6 +5572,8 @@ var currentSalesPricingProductKind = "rebuilt";
 var currentSalesPricingRow = null;
 var currentSalesPricingDksReference = null;
 var currentSalesPricingManufacturingCost = null;
+var currentSalesPricingEcReference = null;
+var currentSalesPricingEcRows = null;
 var salesPricingRanks = [];
 var salesPricingCustomerCounts = {};
 var salesPricingMgmtRows = [];
@@ -38270,6 +38293,18 @@ function salesPricingManufacturingCostMeta(cost) {
   ].filter(Boolean).join(" / ");
 }
 
+function renderSalesPricingReferenceItem(el, options) {
+  if (!el) return;
+  options = options || {};
+  ["loading", "empty", "ec", "daiko"].forEach(function(className) {
+    el.classList.toggle(className, options.state === className || options.tone === className);
+  });
+  el.innerHTML =
+    "<span class='sales-pricing-reference-label'>" + esc(options.label || "") + "</span>" +
+    "<strong class='sales-pricing-reference-value'>" + esc(options.value || "-") + "</strong>" +
+    (options.meta ? "<small class='sales-pricing-reference-meta'>" + esc(options.meta) + "</small>" : "");
+}
+
 function renderSalesPricingManufacturingCostMini() {
   var el = document.getElementById("sales-pricing-manufacturing-cost");
   if (!el) return;
@@ -38281,13 +38316,19 @@ function renderSalesPricingManufacturingCostMini() {
   setCspStyle(el, "display", "");
   var cost = currentSalesPricingManufacturingCost;
   if (cost && cost.loading) {
-    el.innerHTML = esc(t("sales_manufacturing_cost_loading"));
+    renderSalesPricingReferenceItem(el, {
+      label: t("sales_manufacturing_cost"),
+      value: t("sales_manufacturing_cost_loading"),
+      state: "loading"
+    });
     return;
   }
-  el.innerHTML =
-    "<span>" + esc(t("sales_manufacturing_cost")) + "</span>" +
-    "<strong>" + esc(salesPricingManufacturingCostText(cost)) + "</strong>" +
-    "<small>" + esc(salesPricingManufacturingCostMeta(cost)) + "</small>";
+  renderSalesPricingReferenceItem(el, {
+    label: t("sales_manufacturing_cost"),
+    value: salesPricingManufacturingCostText(cost),
+    meta: salesPricingManufacturingCostMeta(cost),
+    state: cost ? "" : "empty"
+  });
 }
 
 function salesPricingManufacturingCostCellHtml(cost) {
@@ -38315,22 +38356,37 @@ async function loadSalesPricingCurrentManufacturingCost() {
 }
 
 function renderSalesBasePriceGuidance() {
-  var refEl = document.getElementById("sales-base-reference");
+  var refEl = document.getElementById("sales-pricing-daiko-reference");
   if (!refEl) return;
   var ref = currentSalesPricingDksReference;
   if (ref && ref.loading) {
-    refEl.textContent = t("sales_dks_reference_loading");
+    renderSalesPricingReferenceItem(refEl, {
+      label: t("sales_daiko_service_price"),
+      value: t("sales_dks_reference_loading"),
+      state: "loading",
+      tone: "daiko"
+    });
     return;
   }
   if (!ref || !ref.dksPrice) {
-    refEl.textContent = t("sales_dks_reference_none");
+    renderSalesPricingReferenceItem(refEl, {
+      label: t("sales_daiko_service_price"),
+      value: "-",
+      meta: t("sales_dks_reference_none"),
+      state: "empty",
+      tone: "daiko"
+    });
     return;
   }
   var refLine = tf("sales_dks_reference_line", {
-    dks: "JPY " + formatYen(ref.dksPrice),
     ref: "JPY " + formatYen(ref.referencePrice)
   });
-  refEl.innerHTML = esc(refLine);
+  renderSalesPricingReferenceItem(refEl, {
+    label: t("sales_daiko_service_price"),
+    value: "JPY " + formatYen(ref.dksPrice),
+    meta: refLine,
+    tone: "daiko"
+  });
 }
 
 async function fetchSalesPricingDksReference(dkdId) {
@@ -38364,6 +38420,89 @@ async function fetchSalesPricingDksReference(dkdId) {
   result.dksPrice = dksPrice;
   result.referencePrice = Math.max(0, dksPrice - 1000);
   return result;
+}
+
+function salesPricingEcMarketReference(rows, productKind) {
+  var normalizedKind = normalizeProductKind(productKind || "rebuilt");
+  var targetKind = normalizedKind === "aftermarket_new" ? "new" : (normalizedKind === "used_core" ? "used" : normalizedKind);
+  var candidates = (rows || []).filter(function(row) {
+    if (String(row.product_type || "").trim().toLowerCase() !== targetKind) return false;
+    var price = parsePriceNumber(row.total_price_jpy);
+    if (price === null || price <= 0) price = parsePriceNumber(row.price_jpy);
+    return price !== null && price > 0;
+  }).map(function(row) {
+    var price = parsePriceNumber(row.total_price_jpy);
+    var usesTotal = price !== null && price > 0;
+    if (!usesTotal) price = parsePriceNumber(row.price_jpy);
+    return { row: row, price: price, usesTotal: usesTotal };
+  });
+  candidates.sort(function(a, b) {
+    if (a.price !== b.price) return a.price - b.price;
+    return (parseInt(a.row.rank_no || 99, 10) || 99) - (parseInt(b.row.rank_no || 99, 10) || 99);
+  });
+  return candidates.length ? candidates[0] : null;
+}
+
+function salesPricingEcReferenceMeta(reference) {
+  if (!reference || !reference.row) return t("sales_ec_market_none");
+  var row = reference.row;
+  return [
+    ecMallProductTypeLabel(row.product_type),
+    reference.usesTotal ? t("sales_ec_total_price") : t("sales_ec_item_price"),
+    ecMallSellerDisplayName(row),
+    row.provider_key ? ecMallProviderLabel(row.provider_key) : "",
+    row.surveyed_at ? String(row.surveyed_at).slice(0, 10) : ""
+  ].filter(Boolean).join(" / ");
+}
+
+function renderSalesPricingEcReference() {
+  var el = document.getElementById("sales-pricing-ec-reference");
+  if (!el) return;
+  if (!canViewPriceResearchHistory()) {
+    el.innerHTML = "";
+    setCspStyle(el, "display", "none");
+    return;
+  }
+  setCspStyle(el, "display", "");
+  var reference = currentSalesPricingEcReference;
+  if (reference && reference.loading) {
+    renderSalesPricingReferenceItem(el, {
+      label: t("sales_ec_market_price"),
+      value: t("sales_ec_market_loading"),
+      state: "loading",
+      tone: "ec"
+    });
+    return;
+  }
+  renderSalesPricingReferenceItem(el, {
+    label: t("sales_ec_market_price"),
+    value: reference ? "JPY " + formatYen(reference.price) : "-",
+    meta: salesPricingEcReferenceMeta(reference),
+    state: reference ? "" : "empty",
+    tone: "ec"
+  });
+}
+
+async function loadSalesPricingCurrentEcReference() {
+  if (!canViewPriceResearchHistory() || !currentProduct) {
+    currentSalesPricingEcReference = null;
+    renderSalesPricingEcReference();
+    return;
+  }
+  var requestedKind = salesPricingCurrentProductKind();
+  currentSalesPricingEcReference = { loading: true };
+  renderSalesPricingEcReference();
+  try {
+    if (!Array.isArray(currentSalesPricingEcRows)) {
+      currentSalesPricingEcRows = await fetchEcMallLatestBest3ForProduct(currentProduct);
+    }
+  } catch (e) {
+    console.warn("sales pricing EC market lookup failed", e);
+    currentSalesPricingEcRows = [];
+  }
+  if (requestedKind !== salesPricingCurrentProductKind()) return;
+  currentSalesPricingEcReference = salesPricingEcMarketReference(currentSalesPricingEcRows, requestedKind);
+  renderSalesPricingEcReference();
 }
 
 function calculateSalesPriceClient(basePrice, rank) {
@@ -38991,7 +39130,11 @@ function closeSalesPricingOverlay() {
   if (overlay) overlay.classList.remove("show");
   currentSalesPricingDksReference = null;
   currentSalesPricingManufacturingCost = null;
+  currentSalesPricingEcReference = null;
+  currentSalesPricingEcRows = null;
   renderSalesPricingManufacturingCostMini();
+  renderSalesPricingEcReference();
+  renderSalesBasePriceGuidance();
 }
 
 function salesPricingProductKindOptionsForCurrent() {
@@ -39064,9 +39207,12 @@ async function openSalesPricingForCurrent() {
   document.getElementById("sales-pricing-product").textContent = t("loading");
   document.getElementById("sales-rank-preview").innerHTML = "<div class='component-empty'>" + esc(t("loading")) + "</div>";
   currentSalesPricingDksReference = { loading: true };
-  currentSalesPricingManufacturingCost = null;
+  currentSalesPricingManufacturingCost = { loading: true };
+  currentSalesPricingEcReference = { loading: true };
+  currentSalesPricingEcRows = null;
   renderSalesBasePriceGuidance();
   renderSalesPricingManufacturingCostMini();
+  renderSalesPricingEcReference();
   var saveBtn = document.getElementById("btn-sales-pricing-save");
   if (saveBtn) setCspStyle(saveBtn, "display", canEditBasePrice() ? "" : "none");
   var rankSaveBtn = document.getElementById("btn-sales-rank-save");
@@ -39098,7 +39244,14 @@ async function openSalesPricingForCurrent() {
     salesPricingRanks = ranksR.data || [];
     salesPricingCustomerCounts = salesPricingRankCountMap(customersR.data || []);
     await loadSalesPricingCurrentBaseRow();
-    await loadSalesPricingCurrentManufacturingCost();
+    await Promise.all([
+      loadSalesPricingCurrentManufacturingCost(),
+      loadSalesPricingCurrentEcReference(),
+      fetchSalesPricingDksReference(dkdId).then(function(reference) {
+        currentSalesPricingDksReference = reference;
+        renderSalesBasePriceGuidance();
+      })
+    ]);
     var kindSelect = document.getElementById("sales-product-kind");
     if (kindSelect) {
       kindSelect.onchange = async function() {
@@ -39107,22 +39260,25 @@ async function openSalesPricingForCurrent() {
         try {
           currentSalesPricingProductKind = salesPricingCurrentProductKind();
           await loadSalesPricingCurrentBaseRow();
-          await loadSalesPricingCurrentManufacturingCost();
+          await Promise.all([
+            loadSalesPricingCurrentManufacturingCost(),
+            loadSalesPricingCurrentEcReference()
+          ]);
         } catch (e) {
           console.warn("sales pricing kind switch failed", e);
           if (err) err.textContent = (e && e.message) || String(e);
         }
       };
     }
-    currentSalesPricingDksReference = await fetchSalesPricingDksReference(dkdId);
-    renderSalesBasePriceGuidance();
     renderSalesRankPreview();
   } catch (e) {
     console.warn("open sales pricing failed", e);
     currentSalesPricingDksReference = null;
     currentSalesPricingManufacturingCost = null;
+    currentSalesPricingEcReference = null;
     renderSalesBasePriceGuidance();
     renderSalesPricingManufacturingCostMini();
+    renderSalesPricingEcReference();
     if (errEl) errEl.textContent = (e && e.message) || String(e);
   }
 }

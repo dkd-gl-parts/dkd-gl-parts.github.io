@@ -61,11 +61,11 @@ if (totalSandbox.legacyResult !== 2280) {
 }
 
 const openSource = sourceBetween("async function openSalesPricingForCurrent", "async function saveSalesPricing");
-if (!openSource.includes("await loadSalesPricingCurrentManufacturingCost()")) {
+if (!openSource.includes("loadSalesPricingCurrentManufacturingCost()")) {
   throw new Error("sales pricing form must load manufacturing cost");
 }
 if (!openSource.includes("kindSelect.onchange") ||
-    !openSource.includes("await loadSalesPricingCurrentManufacturingCost()")) {
+    !openSource.includes("loadSalesPricingCurrentManufacturingCost()")) {
   throw new Error("sales pricing kind switch must refresh manufacturing cost");
 }
 
