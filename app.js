@@ -5328,7 +5328,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.790";
+var APP_VERSION       = "v1.1.791";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5675,6 +5675,8 @@ var customerUserLinkMap = {};
 var customerAccessRows = [];
 var customerAccessFilteredRows = [];
 var currentCustomerAccessCustomer = null;
+var CUSTOMER_ACCESS_DEVELOPMENT_DEFAULT_CODE = "DEV-ORDER-001";
+var customerAccessInitialSelectionPending = false;
 var customerAccessSettings = null;
 var customerAccessVisibilityRows = [];
 var customerAccessSavedDisplayDraft = null;
@@ -40145,6 +40147,12 @@ async function unlinkPurchaseProduct(linkId) {
 
 async function enterCustomerAccessMgmt() {
   if (!canManageCustomerAccess()) { alert(t("err_perm")); return; }
+  currentCustomerAccessCustomer = null;
+  customerAccessInitialSelectionPending = true;
+  var searchInput = document.getElementById("customer-access-search");
+  var includeInactiveInput = document.getElementById("customer-access-include-inactive");
+  if (searchInput) searchInput.value = "";
+  if (includeInactiveInput) includeInactiveInput.checked = false;
   showScreen("customer-access-mgmt");
   updateAllHeaders();
   await Promise.all([
@@ -40231,6 +40239,8 @@ async function loadCustomerAccessMgmt() {
       return normalizeAsciiWidth(value).toLowerCase().indexOf(q) >= 0;
     });
   });
+  var useDevelopmentDefault = customerAccessInitialSelectionPending;
+  customerAccessInitialSelectionPending = false;
   renderCustomerAccessList();
   if (currentCustomerAccessCustomer) {
     var still = customerAccessFilteredRows.find(function(row) { return String(row.id) === String(currentCustomerAccessCustomer.id); });
@@ -40240,7 +40250,10 @@ async function loadCustomerAccessMgmt() {
     }
   }
   if (customerAccessFilteredRows.length) {
-    await selectCustomerAccessCustomer(customerAccessFilteredRows[0].id);
+    var fallbackCustomer = useDevelopmentDefault
+      ? customerAccessInitialCustomer(customerAccessFilteredRows)
+      : customerAccessFilteredRows[0];
+    await selectCustomerAccessCustomer(fallbackCustomer.id);
   } else {
     currentCustomerAccessCustomer = null;
     customerAccountRequestSeq += 1;
@@ -40251,6 +40264,14 @@ async function loadCustomerAccessMgmt() {
     renderCustomerAccountUsers();
     renderCustomerAccessDetail();
   }
+}
+
+function customerAccessInitialCustomer(rows) {
+  rows = Array.isArray(rows) ? rows : [];
+  return rows.find(function(row) {
+    return row && row.is_active !== false &&
+      String(row.source_customer_code || "").trim().toUpperCase() === CUSTOMER_ACCESS_DEVELOPMENT_DEFAULT_CODE;
+  }) || rows[0] || null;
 }
 
 function renderCustomerAccessList() {

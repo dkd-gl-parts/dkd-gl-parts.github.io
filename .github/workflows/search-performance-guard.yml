@@ -27,6 +27,7 @@ on:
       - "scripts/verify-ec-mall-seller-review.js"
       - "scripts/verify-customer-catalog-detail.js"
       - "scripts/verify-customer-category-visibility.js"
+      - "scripts/verify-customer-access-development-default.js"
       - "scripts/verify-customer-price-list.js"
       - "scripts/verify-customer-order-workflow.js"
       - "scripts/verify-customer-order-delivery-service.js"
@@ -119,6 +120,8 @@ jobs:
         run: node scripts/verify-customer-catalog-detail.js
       - name: Verify customer category visibility
         run: node scripts/verify-customer-category-visibility.js
+      - name: Verify customer management development default
+        run: node scripts/verify-customer-access-development-default.js
       - name: Verify customer price list
         run: node scripts/verify-customer-price-list.js
       - name: Verify customer order and manual B2 workflow
