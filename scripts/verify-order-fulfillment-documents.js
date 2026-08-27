@@ -8,6 +8,16 @@ const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
 const printCss = fs.readFileSync(path.join(root, "shipment-instruction-print.css"), "utf8");
 const contract = fs.readFileSync(path.join(root, "docs", "customer-order-b2-manual-contract.md"), "utf8");
+const carrierAssets = [
+  path.join(root, "assets", "carriers", "yamato-transport.png"),
+  path.join(root, "assets", "carriers", "sagawa-express.png")
+];
+
+for (const asset of carrierAssets) {
+  if (!fs.existsSync(asset) || fs.statSync(asset).size === 0) {
+    throw new Error(`Missing carrier branding asset: ${path.relative(root, asset)}`);
+  }
+}
 
 function requireFragment(text, fragment, message) {
   if (!text.includes(fragment)) throw new Error(message || `Missing fulfillment document contract: ${fragment}`);
@@ -69,6 +79,11 @@ for (const fragment of [
   'ヤマト宅急便　着払い',
   '佐川急便着払い',
   'ドットプリンタ',
+  'SHIPPING_CARRIER_BRANDS',
+  'assets/carriers/yamato-transport.png',
+  'assets/carriers/sagawa-express.png',
+  'shippingCarrierBrandHtml',
+  'syncShippingDocumentCarrierBrand',
   'dcats-print-settings://open',
   'データ破損など同じ内容が必要な場合',
   'reason.length < 5'
@@ -173,7 +188,12 @@ for (const fragment of [
   "B2クラウド / ヤマト宅急便 元払い",
   "A5 / 注文単位 / 端末印刷",
   "A5 / コア返却必要時 / 端末印刷",
-  "手書き運用 / 佐川急便 着払い"
+  "手書き運用 / 佐川急便 着払い",
+  'carrierCode: "yamato_prepaid"',
+  'purpose: "発送用・元払い"',
+  'carrierCode: "sagawa_collect"',
+  'purpose: "コア返却用・着払い"',
+  "shipping-document-name-cell"
 ]) requireFragment(defaultDocuments, fragment);
 
 const temporaryOutput = sourceBetween("function shippingDocumentLocalOutputType", "function shippingDocumentDefaultStateHtml");
@@ -220,7 +240,10 @@ for (const fragment of [
   'shippingDocumentManualOutputActions(order, "core_return"',
   'shippingDocumentPrintStateLabel(warrantyJob, "未発行")',
   'shippingDocumentPrintStateLabel(coreJob, "未発行")',
-  "今回のみ:"
+  "今回のみ:",
+  'carrierCode: outboundWaybill.carrier_code || "yamato_prepaid"',
+  'carrierCode: waybill.carrier_code || "sagawa_collect"',
+  "shippingCarrierBrandHtml(row.carrierCode, row.purpose, true)"
 ]) requireFragment(requiredDocuments, fragment);
 if (requiredDocuments.includes("待機中")) {
   throw new Error("Unissued shipment documents must be labeled as unissued, not as an active print wait state");
@@ -261,7 +284,9 @@ for (const fragment of [
   "B2クラウド",
   "手書き運用",
   "ドットプリンタ",
-  "商品発送用伝票番号"
+  "商品発送用伝票番号",
+  "shipping-document-outbound-carrier-brand",
+  'shippingCarrierBrandHtml(carrier, "商品発送用・元払い", false)'
 ]) requireFragment(outboundWaybill, fragment);
 
 const outboundSave = sourceBetween("async function saveShippingDocumentOutboundWaybill", "async function queueShippingDocumentOutboundWaybillPrint");
@@ -289,7 +314,9 @@ for (const fragment of [
   "手書き完了・次へ",
   'sb.rpc("complete_sales_order_handwritten_waybill"',
   "shippingHandwrittenWaybillIndex += 1",
-  "await prepareShippingHandwrittenWaybill()"
+  "await prepareShippingHandwrittenWaybill()",
+  "shipping-handwritten-waybill-brand",
+  '"コア返却用・着払い" : "商品発送用・元払い"'
 ]) requireFragment(handwrittenFlow, fragment);
 
 const salesOrderDispatchUi = sourceBetween("function salesOrderDispatchHtml", "function renderSalesOrderDetail");
@@ -329,11 +356,16 @@ for (const fragment of [
   ".shipping-document-temporary-setting-actions",
   ".shipping-document-defaults",
   ".shipping-document-default-row",
+  ".shipping-document-name-cell",
+  ".shipping-carrier-brand",
+  ".shipping-carrier-logo",
+  ".shipping-document-carrier-context",
   ".shipping-document-settings-card",
   ".shipping-document-settings-heading",
   ".shipping-document-lookup-message",
   ".shipping-handwritten-waybill-card",
   ".shipping-handwritten-waybill-content",
+  ".shipping-handwritten-waybill-brand",
   ".shipping-handwritten-waybill-canvas-wrap",
   ".shipping-handwritten-waybill-values"
 ]) requireFragment(css, fragment);
@@ -348,11 +380,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.794"',
-  'styles.css?v=1.1.794',
-  'app.js?v=1.1.794'
+  'content="v1.1.795"',
+  'styles.css?v=1.1.795',
+  'app.js?v=1.1.795'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.794"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.795"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");

@@ -6795,6 +6795,49 @@ body.app-install-dialog-open { overflow: hidden; }
 .shipping-document-default-row strong { color: #263543; font-size: 11px; }
 .shipping-document-default-row span { color: #344b5d; font-size: 10px; font-weight: 700; }
 .shipping-document-default-row small { color: #707d88; font-size: 9px; line-height: 1.45; }
+.shipping-document-name-cell { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.shipping-document-name-cell > strong { flex: 0 1 auto; min-width: 0; }
+.shipping-carrier-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid #cbd7e3;
+  border-radius: 5px;
+  padding: 5px 8px 5px 5px;
+  background: #f7fafc;
+  color: #243649;
+}
+.shipping-carrier-brand.yamato { border-color: #d8ba48; background: #fff9da; }
+.shipping-carrier-brand.sagawa { border-color: #9abce1; background: #f1f7fd; }
+.shipping-carrier-logo {
+  display: grid;
+  flex: 0 0 44px;
+  place-items: center;
+  width: 44px;
+  height: 30px;
+  overflow: hidden;
+  border: 1px solid rgba(44, 64, 85, .14);
+  border-radius: 4px;
+  background: #fff;
+}
+.shipping-carrier-logo img { display: block; width: 100%; height: 100%; object-fit: contain; transform: scale(1.22); }
+.shipping-carrier-brand-copy { display: grid; gap: 1px; min-width: 0; line-height: 1.25; }
+.shipping-carrier-brand-copy strong { color: #1e3043; font-size: 10px; white-space: nowrap; }
+.shipping-carrier-brand-copy small { color: #627185; font-size: 8px; font-weight: 700; white-space: nowrap; }
+.shipping-carrier-brand.compact { gap: 5px; padding: 3px 6px 3px 3px; }
+.shipping-carrier-brand.compact .shipping-carrier-logo { flex-basis: 31px; width: 31px; height: 22px; }
+.shipping-carrier-brand.compact .shipping-carrier-brand-copy strong { font-size: 8px; }
+.shipping-carrier-brand.compact .shipping-carrier-brand-copy small { font-size: 7px; }
+.shipping-document-carrier-context {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  margin-bottom: 10px;
+  border-left: 3px solid #2d6eaa;
+  padding: 6px 9px;
+  background: #f5f8fb;
+}
 .shipping-document-required-list { border-top: 1px solid #dbe1e6; }
 .shipping-document-required-head,
 .shipping-document-required-row { display: grid; grid-template-columns: minmax(150px, .75fr) minmax(210px, 1.1fr) minmax(150px, .8fr) minmax(210px, auto); align-items: center; gap: 14px; }
@@ -6803,6 +6846,9 @@ body.app-install-dialog-open { overflow: hidden; }
 .shipping-document-required-row > div { min-width: 0; }
 .shipping-document-required-row strong,
 .shipping-document-required-row span { display: block; }
+.shipping-document-required-row .shipping-carrier-brand { display: inline-flex; }
+.shipping-document-required-row .shipping-carrier-logo,
+.shipping-document-required-row .shipping-carrier-brand-copy { display: grid; }
 .shipping-document-required-row strong { color: #2a3745; font-size: 11px; }
 .shipping-document-required-row span { color: #73808b; font-size: 9px; }
 .shipping-document-required-row .shipping-document-standard { color: #3e5365; font-size: 10px; font-weight: 700; line-height: 1.45; }
@@ -7373,7 +7419,7 @@ body.app-install-dialog-open { overflow: hidden; }
 .shipping-waybill-layout-content { min-height: 0; flex: 1; overflow: auto; }
 .shipping-waybill-layout-toolbar {
   display: grid;
-  grid-template-columns: minmax(250px, 1fr) auto minmax(260px, .8fr) auto;
+  grid-template-columns: minmax(220px, 1fr) minmax(160px, auto) auto minmax(220px, .8fr) auto;
   gap: 12px;
   align-items: end;
   padding: 12px 16px;
@@ -7408,6 +7454,7 @@ body.app-install-dialog-open { overflow: hidden; }
 }
 .shipping-waybill-layout-toolbar button { width: auto; font-weight: 800; cursor: pointer; }
 .shipping-waybill-layout-toolbar button:disabled { opacity: .5; cursor: default; }
+.shipping-waybill-layout-toolbar > .shipping-carrier-brand { align-self: center; }
 .shipping-waybill-layout-version {
   display: grid;
   gap: 1px;
@@ -7596,6 +7643,11 @@ body.app-install-dialog-open { overflow: hidden; }
 }
 .shipping-handwritten-waybill-preview > div:first-child strong { color: #17283d; font-size: 14px; }
 .shipping-handwritten-waybill-preview > div:first-child span { color: #637187; font-size: 10px; }
+.shipping-handwritten-waybill-preview > .shipping-handwritten-waybill-brand { align-items: center; }
+.shipping-handwritten-waybill-brand > .shipping-carrier-brand { flex: 0 0 auto; }
+.shipping-handwritten-waybill-brand > .shipping-carrier-brand .shipping-carrier-brand-copy strong { font-size: 10px; }
+.shipping-handwritten-waybill-brand > .shipping-carrier-brand .shipping-carrier-brand-copy small { font-size: 8px; }
+.shipping-handwritten-waybill-brand > span { line-height: 1.45; text-align: right; }
 .shipping-handwritten-waybill-canvas-wrap {
   display: grid;
   place-items: center;
@@ -7678,6 +7730,7 @@ body.app-install-dialog-open { overflow: hidden; }
 @media (max-width: 1080px) {
   .shipping-waybill-layout-card { width: calc(100vw - 12px); height: calc(100dvh - 12px); }
   .shipping-waybill-layout-toolbar { grid-template-columns: 1fr 120px; }
+  .shipping-waybill-layout-toolbar > .shipping-carrier-brand { justify-self: start; }
   .shipping-waybill-layout-workspace { grid-template-columns: 190px minmax(420px, 1fr); }
   .shipping-waybill-inspector { grid-column: 1 / -1; border-top: 1px solid #dbe2e9; border-left: 0; }
   .shipping-waybill-inspector-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -7707,6 +7760,7 @@ body.app-install-dialog-open { overflow: hidden; }
   .shipping-handwritten-waybill-content { display: block; }
   .shipping-handwritten-waybill-preview { padding: 10px; }
   .shipping-handwritten-waybill-preview > div:first-child { align-items: flex-start; flex-direction: column; gap: 2px; }
+  .shipping-handwritten-waybill-brand > span { text-align: left; }
   .shipping-handwritten-waybill-canvas-wrap { min-height: 260px; padding: 8px; }
   .shipping-handwritten-waybill-values { border-top: 1px solid #d6dee6; border-left: 0; }
   .shipping-handwritten-waybill-values dl > div { grid-template-columns: 92px minmax(0, 1fr); }
