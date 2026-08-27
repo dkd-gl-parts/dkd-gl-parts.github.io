@@ -1391,6 +1391,7 @@ var TRANSLATIONS = {
     sales_base_price: "基準価格",
     sales_base_price_help: "売値区分の掛率・金額調整をかける前の元価格です。",
     sales_reference_title: "販売価格の参考",
+    sales_competitor_reference_title: "他社参考価格",
     sales_daiko_service_price: "大光サービス価格",
     sales_dks_reference_loading: "大光サービス価格を確認中...",
     sales_dks_reference_none: "価格データなし",
@@ -3136,6 +3137,7 @@ var TRANSLATIONS = {
     sales_base_price: "Base Price",
     sales_base_price_help: "Original price before rate, amount adjustment, and rounding by sales rank.",
     sales_reference_title: "Sales Price References",
+    sales_competitor_reference_title: "Competitor Reference Prices",
     sales_daiko_service_price: "Daiko Service Price",
     sales_dks_reference_loading: "Checking Daiko Service price...",
     sales_dks_reference_none: "No price data",
@@ -4874,6 +4876,7 @@ var TRANSLATIONS = {
     sales_base_price: "基准价格",
     sales_base_price_help: "应用销售等级倍率、金额调整和取整前的原始价格。",
     sales_reference_title: "销售价格参考",
+    sales_competitor_reference_title: "其他公司参考价格",
     sales_daiko_service_price: "大光服务价格",
     sales_dks_reference_loading: "正在确认大光服务价格...",
     sales_dks_reference_none: "无价格数据",
@@ -5349,7 +5352,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.792";
+var APP_VERSION       = "v1.1.793";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -38326,7 +38329,6 @@ function renderSalesPricingManufacturingCostMini() {
   renderSalesPricingReferenceItem(el, {
     label: t("sales_manufacturing_cost"),
     value: salesPricingManufacturingCostText(cost),
-    meta: salesPricingManufacturingCostMeta(cost),
     state: cost ? "" : "empty"
   });
 }
@@ -38334,7 +38336,6 @@ function renderSalesPricingManufacturingCostMini() {
 function salesPricingManufacturingCostCellHtml(cost) {
   return "<div class='sales-pricing-manufacturing-cost-cell'>" +
     "<div class='price-value'>" + esc(salesPricingManufacturingCostText(cost)) + "</div>" +
-    "<div class='mgmt-sub'>" + esc(salesPricingManufacturingCostMeta(cost)) + "</div>" +
   "</div>";
 }
 
@@ -38372,19 +38373,14 @@ function renderSalesBasePriceGuidance() {
     renderSalesPricingReferenceItem(refEl, {
       label: t("sales_daiko_service_price"),
       value: "-",
-      meta: t("sales_dks_reference_none"),
       state: "empty",
       tone: "daiko"
     });
     return;
   }
-  var refLine = tf("sales_dks_reference_line", {
-    ref: "JPY " + formatYen(ref.referencePrice)
-  });
   renderSalesPricingReferenceItem(refEl, {
     label: t("sales_daiko_service_price"),
     value: "JPY " + formatYen(ref.dksPrice),
-    meta: refLine,
     tone: "daiko"
   });
 }
@@ -38477,7 +38473,6 @@ function renderSalesPricingEcReference() {
   renderSalesPricingReferenceItem(el, {
     label: t("sales_ec_market_price"),
     value: reference ? "JPY " + formatYen(reference.price) : "-",
-    meta: salesPricingEcReferenceMeta(reference),
     state: reference ? "" : "empty",
     tone: "ec"
   });
@@ -39431,13 +39426,13 @@ function renderSalesPricingMgmt() {
     var manufacturingCost = salesPricingMgmtManufacturingCostMap[String(row.dkd_shohin_id)] || null;
     var priceText = price ? ("JPY " + formatYen(price.base_price_jpy)) : "-";
     html += "<tr>";
-    html += "<td><div class='mgmt-pn'>" + esc(String(row.dkd_shohin_id || "-")) + "</div><div class='mgmt-sub'>" + esc(tCat(row.category_code || row.category) || "") + "</div></td>";
+    html += "<td><div class='sales-pricing-dkd-line'><span class='mgmt-pn'>" + esc(String(row.dkd_shohin_id || "-")) + "</span><span class='sales-pricing-category'>" + esc(tCat(row.category_code || row.category) || "") + "</span></div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(row.genuine_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(row.genuine_part_number_2 || "") + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(row.manufacturer_part_number || "-") + "</div></td>";
     html += "<td><div class='mgmt-sub'>" + esc(row.manufacturer || "-") + "</div></td>";
     html += "<td><div class='price-value' data-dcats-inline-style='s-1024138906a0'>" + esc(priceText) + "</div></td>";
     if (showManufacturingCost) html += "<td>" + salesPricingManufacturingCostCellHtml(manufacturingCost) + "</td>";
-    if (showBasePrice) html += "<td><div class='price-value'>" + esc(priceText) + "</div><div class='mgmt-sub'>" + esc(price ? ([price.price_basis, price.effective_start].filter(Boolean).join(" / ")) : "") + "</div></td>";
+    if (showBasePrice) html += "<td><div class='price-value'>" + esc(priceText) + "</div></td>";
     html += "<td><button class='btn-sm-edit' data-sales-price-dkd='" + esc(String(row.dkd_shohin_id || "")) + "'>" + esc(t("sales_pricing_title")) + "</button></td>";
     html += "</tr>";
   });

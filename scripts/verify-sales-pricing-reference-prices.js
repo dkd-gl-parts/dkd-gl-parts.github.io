@@ -18,6 +18,8 @@ function between(startText, endText) {
   'id="sales-pricing-manufacturing-cost"',
   'id="sales-pricing-ec-reference"',
   'id="sales-pricing-daiko-reference"',
+  'class="sales-pricing-competitor-reference"',
+  'data-i18n="sales_competitor_reference_title"',
   'data-i18n="sales_reference_title"'
 ].forEach((fragment) => {
   if (!html.includes(fragment)) throw new Error(`sales pricing reference panel is missing: ${fragment}`);
@@ -26,19 +28,25 @@ function between(startText, endText) {
 if (html.includes('id="sales-base-reference"')) {
   throw new Error("legacy single DKS guidance must not remain under the base price field");
 }
+if (html.includes('data-i18n="sales_base_price_help"')) {
+  throw new Error("base-price explanatory text must not remain below the field");
+}
 
 [
   ".sales-pricing-references",
   ".sales-pricing-reference-grid",
   ".sales-pricing-reference-item",
   ".sales-pricing-reference-value",
-  ".sales-pricing-reference-meta"
+  ".sales-pricing-reference-meta",
+  ".sales-pricing-competitor-reference",
+  ".sales-pricing-competitor-grid"
 ].forEach((fragment) => {
   if (!styles.includes(fragment)) throw new Error(`sales pricing reference style is missing: ${fragment}`);
 });
 
 [
   "sales_reference_title:",
+  "sales_competitor_reference_title:",
   "sales_daiko_service_price:",
   "sales_ec_market_price:",
   "sales_ec_total_price:"
@@ -65,6 +73,16 @@ if (!ecLoadSource.includes("fetchEcMallLatestBest3ForProduct(currentProduct)")) 
 if (!ecLoadSource.includes("currentSalesPricingEcRows")) {
   throw new Error("sales pricing must cache EC rows while switching product kinds");
 }
+
+[
+  between("function renderSalesPricingManufacturingCostMini", "function salesPricingManufacturingCostCellHtml"),
+  between("function renderSalesBasePriceGuidance", "async function fetchSalesPricingDksReference"),
+  between("function renderSalesPricingEcReference", "async function loadSalesPricingCurrentEcReference")
+].forEach((renderSource) => {
+  if (renderSource.includes("meta:")) {
+    throw new Error("compact pricing references must not render secondary explanatory text");
+  }
+});
 
 const selectorSource = between("function salesPricingEcMarketReference", "function salesPricingEcReferenceMeta");
 const sandbox = {

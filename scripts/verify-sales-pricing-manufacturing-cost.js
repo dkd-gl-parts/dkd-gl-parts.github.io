@@ -87,4 +87,14 @@ if (!styles.includes(".sales-pricing-manufacturing-cost") ||
   throw new Error("sales pricing manufacturing cost display styles are missing");
 }
 
+const renderListSource = sourceBetween("function renderSalesPricingMgmt()", "async function openSalesPricingMgmtRow");
+if (renderListSource.includes("salesPricingManufacturingCostMeta(manufacturingCost)") ||
+    renderListSource.includes("price.price_basis") ||
+    renderListSource.includes("price.effective_start")) {
+  throw new Error("sales pricing list must not show explanatory text below manufacturing cost or base price");
+}
+if (!renderListSource.includes("sales-pricing-dkd-line") || !renderListSource.includes("sales-pricing-category")) {
+  throw new Error("DKD and category must be displayed on one line");
+}
+
 console.log("sales pricing manufacturing cost guard passed");
