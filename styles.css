@@ -6795,8 +6795,8 @@ body.app-install-dialog-open { overflow: hidden; }
 .shipping-document-default-row strong { color: #263543; font-size: 11px; }
 .shipping-document-default-row span { color: #344b5d; font-size: 10px; font-weight: 700; }
 .shipping-document-default-row small { color: #707d88; font-size: 9px; line-height: 1.45; }
-.shipping-document-name-cell { display: flex; align-items: center; gap: 9px; min-width: 0; }
-.shipping-document-name-cell > strong { flex: 0 1 auto; min-width: 0; }
+.shipping-document-name-cell { display: grid; align-items: start; justify-items: start; gap: 5px; min-width: 0; }
+.shipping-document-name-cell > strong { min-width: 0; line-height: 1.35; }
 .shipping-carrier-brand {
   display: inline-flex;
   align-items: center;
@@ -6825,10 +6825,11 @@ body.app-install-dialog-open { overflow: hidden; }
 .shipping-carrier-brand-copy { display: grid; gap: 1px; min-width: 0; line-height: 1.25; }
 .shipping-carrier-brand-copy strong { color: #1e3043; font-size: 10px; white-space: nowrap; }
 .shipping-carrier-brand-copy small { color: #627185; font-size: 8px; font-weight: 700; white-space: nowrap; }
-.shipping-carrier-brand.compact { gap: 5px; padding: 3px 6px 3px 3px; }
+.shipping-carrier-brand.compact { flex: 0 0 auto; width: max-content; max-width: 100%; gap: 5px; padding: 3px 6px 3px 3px; }
 .shipping-carrier-brand.compact .shipping-carrier-logo { flex-basis: 31px; width: 31px; height: 22px; }
+.shipping-carrier-brand.compact .shipping-carrier-brand-copy { max-width: calc(100% - 36px); }
 .shipping-carrier-brand.compact .shipping-carrier-brand-copy strong { font-size: 8px; }
-.shipping-carrier-brand.compact .shipping-carrier-brand-copy small { font-size: 7px; }
+.shipping-carrier-brand.compact .shipping-carrier-brand-copy small { font-size: 7px; white-space: normal; overflow-wrap: anywhere; }
 .shipping-document-carrier-context {
   display: flex;
   align-items: center;

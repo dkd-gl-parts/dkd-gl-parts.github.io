@@ -369,6 +369,12 @@ for (const fragment of [
   ".shipping-handwritten-waybill-canvas-wrap",
   ".shipping-handwritten-waybill-values"
 ]) requireFragment(css, fragment);
+for (const fragment of [
+  ".shipping-document-name-cell { display: grid;",
+  ".shipping-carrier-brand.compact { flex: 0 0 auto; width: max-content; max-width: 100%;",
+  ".shipping-carrier-brand.compact .shipping-carrier-brand-copy { max-width: calc(100% - 36px); }",
+  "white-space: normal; overflow-wrap: anywhere;"
+]) requireFragment(css, fragment, `Carrier label overflow protection is missing: ${fragment}`);
 requireFragment(printCss, ".shipment-document-table-warranty th:nth-child(5)");
 
 for (const fragment of [
@@ -380,11 +386,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.795"',
-  'styles.css?v=1.1.795',
-  'app.js?v=1.1.795'
+  'content="v1.1.796"',
+  'styles.css?v=1.1.796',
+  'app.js?v=1.1.796'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.795"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.796"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
