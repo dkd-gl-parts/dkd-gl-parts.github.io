@@ -6801,7 +6801,10 @@ body.app-install-dialog-open { overflow: hidden; }
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-width: 0;
+  flex: 0 0 132px;
+  width: 132px;
+  height: 42px;
+  box-sizing: border-box;
   border: 1px solid #cbd7e3;
   border-radius: 5px;
   padding: 5px 8px 5px 5px;
@@ -6822,14 +6825,11 @@ body.app-install-dialog-open { overflow: hidden; }
   background: #fff;
 }
 .shipping-carrier-logo img { display: block; width: 100%; height: 100%; object-fit: contain; transform: scale(1.22); }
-.shipping-carrier-brand-copy { display: grid; gap: 1px; min-width: 0; line-height: 1.25; }
+.shipping-carrier-brand-copy { display: grid; flex: 1; min-width: 0; line-height: 1.25; }
 .shipping-carrier-brand-copy strong { color: #1e3043; font-size: 10px; white-space: nowrap; }
-.shipping-carrier-brand-copy small { color: #627185; font-size: 8px; font-weight: 700; white-space: nowrap; }
-.shipping-carrier-brand.compact { flex: 0 0 auto; width: max-content; max-width: 100%; gap: 5px; padding: 3px 6px 3px 3px; }
+.shipping-carrier-brand.compact { flex: 0 0 104px; width: 104px; height: 30px; gap: 5px; padding: 3px 6px 3px 3px; }
 .shipping-carrier-brand.compact .shipping-carrier-logo { flex-basis: 31px; width: 31px; height: 22px; }
-.shipping-carrier-brand.compact .shipping-carrier-brand-copy { max-width: calc(100% - 36px); }
 .shipping-carrier-brand.compact .shipping-carrier-brand-copy strong { font-size: 8px; }
-.shipping-carrier-brand.compact .shipping-carrier-brand-copy small { font-size: 7px; white-space: normal; overflow-wrap: anywhere; }
 .shipping-document-carrier-context {
   display: flex;
   align-items: center;
@@ -7647,7 +7647,6 @@ body.app-install-dialog-open { overflow: hidden; }
 .shipping-handwritten-waybill-preview > .shipping-handwritten-waybill-brand { align-items: center; }
 .shipping-handwritten-waybill-brand > .shipping-carrier-brand { flex: 0 0 auto; }
 .shipping-handwritten-waybill-brand > .shipping-carrier-brand .shipping-carrier-brand-copy strong { font-size: 10px; }
-.shipping-handwritten-waybill-brand > .shipping-carrier-brand .shipping-carrier-brand-copy small { font-size: 8px; }
 .shipping-handwritten-waybill-brand > span { line-height: 1.45; text-align: right; }
 .shipping-handwritten-waybill-canvas-wrap {
   display: grid;

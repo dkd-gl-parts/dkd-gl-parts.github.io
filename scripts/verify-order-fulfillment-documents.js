@@ -190,11 +190,19 @@ for (const fragment of [
   "A5 / コア返却必要時 / 端末印刷",
   "手書き運用 / 佐川急便 着払い",
   'carrierCode: "yamato_prepaid"',
-  'purpose: "発送用・元払い"',
   'carrierCode: "sagawa_collect"',
-  'purpose: "コア返却用・着払い"',
   "shipping-document-name-cell"
 ]) requireFragment(defaultDocuments, fragment);
+
+const carrierBrand = sourceBetween("function shippingCarrierBrandHtml", "function syncShippingDocumentCarrierBrand");
+for (const fragment of [
+  "shipping-carrier-logo",
+  "shipping-carrier-brand-copy",
+  "<strong>"
+]) requireFragment(carrierBrand, fragment);
+if (carrierBrand.includes("<small>") || carrierBrand.includes("purpose")) {
+  throw new Error("Carrier labels must contain only the logo and carrier name");
+}
 
 const temporaryOutput = sourceBetween("function shippingDocumentLocalOutputType", "function shippingDocumentDefaultStateHtml");
 for (const fragment of [
@@ -243,7 +251,7 @@ for (const fragment of [
   "今回のみ:",
   'carrierCode: outboundWaybill.carrier_code || "yamato_prepaid"',
   'carrierCode: waybill.carrier_code || "sagawa_collect"',
-  "shippingCarrierBrandHtml(row.carrierCode, row.purpose, true)"
+  "shippingCarrierBrandHtml(row.carrierCode, true)"
 ]) requireFragment(requiredDocuments, fragment);
 if (requiredDocuments.includes("待機中")) {
   throw new Error("Unissued shipment documents must be labeled as unissued, not as an active print wait state");
@@ -286,7 +294,7 @@ for (const fragment of [
   "ドットプリンタ",
   "商品発送用伝票番号",
   "shipping-document-outbound-carrier-brand",
-  'shippingCarrierBrandHtml(carrier, "商品発送用・元払い", false)'
+  "shippingCarrierBrandHtml(carrier, false)"
 ]) requireFragment(outboundWaybill, fragment);
 
 const outboundSave = sourceBetween("async function saveShippingDocumentOutboundWaybill", "async function queueShippingDocumentOutboundWaybillPrint");
@@ -316,7 +324,7 @@ for (const fragment of [
   "shippingHandwrittenWaybillIndex += 1",
   "await prepareShippingHandwrittenWaybill()",
   "shipping-handwritten-waybill-brand",
-  '"コア返却用・着払い" : "商品発送用・元払い"'
+  "shippingCarrierBrandHtml(layout.carrier_code || layout.layout_code, false)"
 ]) requireFragment(handwrittenFlow, fragment);
 
 const salesOrderDispatchUi = sourceBetween("function salesOrderDispatchHtml", "function renderSalesOrderDetail");
@@ -371,10 +379,14 @@ for (const fragment of [
 ]) requireFragment(css, fragment);
 for (const fragment of [
   ".shipping-document-name-cell { display: grid;",
-  ".shipping-carrier-brand.compact { flex: 0 0 auto; width: max-content; max-width: 100%;",
-  ".shipping-carrier-brand.compact .shipping-carrier-brand-copy { max-width: calc(100% - 36px); }",
-  "white-space: normal; overflow-wrap: anywhere;"
-]) requireFragment(css, fragment, `Carrier label overflow protection is missing: ${fragment}`);
+  "flex: 0 0 132px;",
+  "width: 132px;",
+  "height: 42px;",
+  ".shipping-carrier-brand.compact { flex: 0 0 104px; width: 104px; height: 30px;"
+]) requireFragment(css, fragment, `Carrier label size contract is missing: ${fragment}`);
+if (css.includes(".shipping-carrier-brand-copy small")) {
+  throw new Error("Carrier label purpose styling must be removed");
+}
 requireFragment(printCss, ".shipment-document-table-warranty th:nth-child(5)");
 
 for (const fragment of [
@@ -386,11 +398,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.796"',
-  'styles.css?v=1.1.796',
-  'app.js?v=1.1.796'
+  'content="v1.1.797"',
+  'styles.css?v=1.1.797',
+  'app.js?v=1.1.797'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.796"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.797"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
