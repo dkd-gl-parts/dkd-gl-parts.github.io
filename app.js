@@ -326,6 +326,8 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "注文受付、商品発送用B2 CSV、現場の製造シリアル照合を管理します。",
     shipping_document_mgmt_title: "出荷帳票発行",
     shipping_document_mgmt_desc: "B2 CSVの発行履歴、保証書、コア返却帳票を注文単位で管理します。",
+    core_return_mgmt_title: "コア返却管理",
+    core_return_mgmt_desc: "返却管理番号・送り状番号・受注情報から返却受付と検品履歴を管理します。",
     greeting: "ようこそ、{name} さん",
     mi_search_title: "販売管理",
     mi_search_desc: "販売商品の品番を検索し、画像・構成部品・販売価格・製造予定を確認します。",
@@ -2082,6 +2084,8 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "Manage order acceptance, outbound B2 CSV files, and shop-floor serial verification.",
     shipping_document_mgmt_title: "Shipping Documents",
     shipping_document_mgmt_desc: "Manage B2 CSV history, warranties, and core-return documents by order.",
+    core_return_mgmt_title: "Core Returns",
+    core_return_mgmt_desc: "Receive, inspect, and audit returned cores by return code, waybill, order, or serial.",
     greeting: "Welcome, {name}",
     mi_search_title: "Sales Management",
     mi_search_desc: "Search sales products by part number and review images, components, sales prices, and production instructions.",
@@ -3783,6 +3787,8 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "管理订单受理、商品发送用B2 CSV和现场序列号核对。",
     shipping_document_mgmt_title: "出货单据发行",
     shipping_document_mgmt_desc: "按订单管理B2 CSV历史、保修书和旧件返还单据。",
+    core_return_mgmt_title: "旧件返还管理",
+    core_return_mgmt_desc: "通过返还管理编号、运单号、订单或序列号管理收货、检验及历史。",
     spec_note_ph: "例：内部确认、实物标签",
     part_form_add_title: "添加商品",
     part_form_edit_title: "修改商品",
@@ -5382,7 +5388,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.805";
+var APP_VERSION       = "v1.1.806";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5722,6 +5728,12 @@ var shippingDocumentLookupSeq = 0;
 var shippingDocumentSaving = false;
 var shippingDocumentBatchSelectionDirty = false;
 var shippingDocumentTemporaryOutputs = {};
+var coreReturnManagementRows = [];
+var coreReturnManagementSelectedId = null;
+var coreReturnManagementDetail = null;
+var coreReturnManagementListSeq = 0;
+var coreReturnManagementDetailSeq = 0;
+var coreReturnManagementSaving = false;
 var shippingWaybillLayouts = [];
 var shippingWaybillLayoutCode = "yamato_prepaid";
 var shippingWaybillLayoutDraft = null;
@@ -6793,6 +6805,10 @@ async function applyLanguage(lang) {
     renderSalesOrderList();
     renderSalesOrderDetail();
   }
+  if (isScreenActive("core-return-mgmt")) {
+    renderCoreReturnManagementList();
+    renderCoreReturnManagementDetail();
+  }
   if (dataLoaded) { renderCategoryChips(); render(); }
   renderProductionFilterChips();
   renderProductionCategoryFilterOptions();
@@ -7766,7 +7782,7 @@ function updateAllHeaders() {
   var cls   = roleClass(userProfile.role);
   var greet = tf("greeting", { name: name });
 
-  ["menu","customer-portal","customer-shipping","customer-catalog","customer-orders","sales-order-mgmt","shipping-document-mgmt","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","component-compat-mgmt","product-kind-stock-mgmt","manufacturing-cost-mgmt","finished-label-mgmt","finished-product-shipping","production-ranking-mgmt","manufacturing-ranking-report","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","shipping-rate-mgmt","logs"].forEach(function(sc) {
+  ["menu","customer-portal","customer-shipping","customer-catalog","customer-orders","sales-order-mgmt","shipping-document-mgmt","core-return-mgmt","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","component-compat-mgmt","product-kind-stock-mgmt","manufacturing-cost-mgmt","finished-label-mgmt","finished-product-shipping","production-ranking-mgmt","manufacturing-ranking-report","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","shipping-rate-mgmt","logs"].forEach(function(sc) {
     var nameEl  = document.getElementById(sc + "-username");
     var badgeEl = document.getElementById(sc + "-role-badge");
     if (nameEl)  nameEl.textContent = name;
@@ -7894,6 +7910,12 @@ async function doLogout() {
   shippingDocumentSaving = false;
   shippingDocumentBatchSelectionDirty = false;
   shippingDocumentTemporaryOutputs = {};
+  coreReturnManagementRows = [];
+  coreReturnManagementSelectedId = null;
+  coreReturnManagementDetail = null;
+  coreReturnManagementListSeq += 1;
+  coreReturnManagementDetailSeq += 1;
+  coreReturnManagementSaving = false;
   var shippingSettingsOverlay = document.getElementById("shipping-document-settings-overlay");
   if (shippingSettingsOverlay) shippingSettingsOverlay.classList.remove("show");
   shippingHandwrittenWaybillTasks = [];
@@ -7949,6 +7971,7 @@ function renderMenu() {
     { icon: "&#x1F6CD;", titleKey: "customer_portal_title", descKey: "customer_portal_preview_desc", action: "customer-portal", available: canPreviewCustomerPortal(), tag: null },
     { icon: "&#x1F4E5;", titleKey: "sales_order_mgmt_title", descKey: "sales_order_mgmt_desc", action: "sales-order-mgmt", available: canManageSalesOrders(), tag: null },
     { icon: "&#x1F5A8;", titleKey: "shipping_document_mgmt_title", descKey: "shipping_document_mgmt_desc", action: "shipping-document-mgmt", available: canManageSalesOrders(), tag: null },
+    { icon: "&#x21A9;", titleKey: "core_return_mgmt_title", descKey: "core_return_mgmt_desc", action: "core-return-mgmt", available: canManageSalesOrders(), tag: null },
     { icon: "&#x1F3ED;", titleKey: "mi_production_title", descKey: "mi_production_desc", action: "production-search", available: canViewProductionFeatures(), tag: null },
     { icon: "&#x1F3F7;", titleKey: "mi_finished_label_title", descKey: "mi_finished_label_desc", action: "finished-label-mgmt", available: canViewFinishedLabelMgmt(), tag: null },
     { icon: "&#x1F69A;", titleKey: "mi_finished_shipping_title", descKey: "mi_finished_shipping_desc", action: "finished-product-shipping", available: canManageFinishedProductShipping(), tag: null },
@@ -8020,6 +8043,7 @@ function renderMenu() {
       else if (card.dataset.action === "customer-portal") enterCustomerPortal();
       else if (card.dataset.action === "sales-order-mgmt") enterSalesOrderMgmt();
       else if (card.dataset.action === "shipping-document-mgmt") enterShippingDocumentMgmt();
+      else if (card.dataset.action === "core-return-mgmt") enterCoreReturnManagement();
       else if (card.dataset.action === "production-search") enterProductionSearch();
       else if (card.dataset.action === "finished-label-mgmt") enterFinishedLabelMgmt();
       else if (card.dataset.action === "finished-product-shipping") enterFinishedProductShipping();
@@ -11644,6 +11668,325 @@ function shippingDocumentPrintStateValue() {
 function shippingDocumentDateValue(id) {
   var input = document.getElementById(id);
   return input && /^\d{4}-\d{2}-\d{2}$/.test(input.value) ? input.value : null;
+}
+
+function coreReturnManagementStatusLabel(value) {
+  return ({
+    awaiting_return: "返却待ち",
+    received: "受付済み",
+    inspected: "検品済み",
+    resolved: "完了",
+    waived: "返却免除",
+    cancelled: "取消"
+  })[String(value || "")] || "未確認";
+}
+
+function coreReturnManagementReceiptSourceLabel(value) {
+  return ({
+    return_sheet: "コア返却シート",
+    return_waybill: "返却用送り状",
+    manual_identification: "受注・得意先から照合"
+  })[String(value || "")] || "未受付";
+}
+
+function coreReturnManagementReasonLabel(value) {
+  return ({
+    normal_core: "通常のコア返却",
+    claim_return: "クレーム対象品の返却",
+    replacement_return: "代替品の返却",
+    order_cancellation: "受注取消品の返却",
+    customer_return: "返品"
+  })[String(value || "")] || "未設定";
+}
+
+function coreReturnManagementConditionLabel(value) {
+  return ({
+    pending: "未検品",
+    accepted: "正常",
+    wrong_item: "異なるコア",
+    damaged: "破損",
+    not_our_product: "当社商品ではない",
+    other: "その他"
+  })[String(value || "")] || "未検品";
+}
+
+function coreReturnManagementResolutionLabel(value) {
+  return ({
+    pending: "対応未決定",
+    accepted_as_core: "コアとして受入",
+    customer_contact: "得意先へ確認",
+    claim_case: "クレーム対応へ",
+    refund_review: "返金確認へ",
+    returned_to_customer: "得意先へ返送",
+    scrapped: "廃棄"
+  })[String(value || "")] || "対応未決定";
+}
+
+function coreReturnManagementEventLabel(value) {
+  return ({
+    receipt_registered: "返却受付",
+    receipt_corrected: "受付内容を修正",
+    inspection_recorded: "検品結果を登録",
+    inspection_corrected: "検品結果を修正",
+    status_synchronized: "状態を同期"
+  })[String(value || "")] || String(value || "更新");
+}
+
+function coreReturnManagementPartLabel(row) {
+  row = row || {};
+  return row.genuine_part_number || row.manufacturer_part_number || "品番未登録";
+}
+
+function coreReturnManagementSetMessage(message, isError) {
+  var host = document.getElementById("core-return-mgmt-message");
+  if (!host) return;
+  host.textContent = message || "";
+  host.className = "core-return-mgmt-message" + (isError ? " error" : "");
+}
+
+async function enterCoreReturnManagement() {
+  if (!canManageSalesOrders()) {
+    showPermissionDenied("open_core_return_management", "customer_order_core_return_units");
+    return;
+  }
+  coreReturnManagementRows = [];
+  coreReturnManagementSelectedId = null;
+  coreReturnManagementDetail = null;
+  coreReturnManagementSaving = false;
+  showScreen("core-return-mgmt");
+  updateAllHeaders();
+  renderCoreReturnManagementList();
+  renderCoreReturnManagementDetail();
+  await refreshCoreReturnManagement();
+}
+
+async function refreshCoreReturnManagement(options) {
+  options = options || {};
+  var seq = ++coreReturnManagementListSeq;
+  var status = String((document.getElementById("core-return-mgmt-status") || {}).value || "awaiting_return");
+  var search = String((document.getElementById("core-return-mgmt-search") || {}).value || "").trim();
+  var reload = document.getElementById("core-return-mgmt-reload");
+  if (reload) reload.disabled = true;
+  coreReturnManagementSetMessage("返却対象を読み込んでいます。", false);
+  var result = await sb.rpc("list_core_return_management", {
+    target_status: status,
+    target_search: search || null,
+    target_limit: 200
+  });
+  if (seq !== coreReturnManagementListSeq) return;
+  if (reload) reload.disabled = false;
+  if (result.error) {
+    coreReturnManagementRows = [];
+    renderCoreReturnManagementList();
+    coreReturnManagementSetMessage(result.error.message || "返却対象を読み込めませんでした。", true);
+    return;
+  }
+  coreReturnManagementRows = Array.isArray(result.data && result.data.rows) ? result.data.rows : [];
+  renderCoreReturnManagementList();
+  coreReturnManagementSetMessage(coreReturnManagementRows.length + "件を表示しました。", false);
+  var selectedExists = coreReturnManagementRows.some(function(row) {
+    return String(row.id) === String(coreReturnManagementSelectedId);
+  });
+  if (!selectedExists && options.keepSelection !== true && search && coreReturnManagementRows.length === 1) {
+    await loadCoreReturnManagementDetail(coreReturnManagementRows[0].id);
+  }
+}
+
+function renderCoreReturnManagementList() {
+  var host = document.getElementById("core-return-mgmt-list");
+  var count = document.getElementById("core-return-mgmt-count");
+  if (!host) return;
+  if (count) count.textContent = coreReturnManagementRows.length + "件";
+  if (!coreReturnManagementRows.length) {
+    host.innerHTML = "<div class='core-return-mgmt-list-empty'>条件に一致する返却対象はありません。</div>";
+    return;
+  }
+  host.innerHTML = coreReturnManagementRows.map(function(row) {
+    var selected = String(row.id) === String(coreReturnManagementSelectedId);
+    var stateClass = row.is_overdue ? "overdue" : String(row.status || "");
+    return "<button type='button' class='core-return-mgmt-list-row " + esc(stateClass) + (selected ? " selected" : "") + "' data-core-return-unit='" + esc(row.id) + "'>" +
+      "<span class='core-return-mgmt-list-top'><strong>" + esc(row.return_code_display || row.return_code || "-") + "</strong><em>" + esc(row.is_overdue ? "期限超過" : coreReturnManagementStatusLabel(row.status)) + "</em></span>" +
+      "<span class='core-return-mgmt-list-order'>受注 " + esc(row.order_number || "-") + " / " + esc(row.customer_name || "-") + "</span>" +
+      "<span class='core-return-mgmt-list-part'>" + esc(coreReturnManagementPartLabel(row)) + "<small>" + esc([row.manufacturer, row.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small></span>" +
+      "<span class='core-return-mgmt-list-bottom'><small>返却期限 " + esc(row.return_due_on || "未設定") + "</small><small>" + esc(row.returned_serial || row.return_tracking_number || "") + "</small></span>" +
+      "</button>";
+  }).join("");
+  host.querySelectorAll("[data-core-return-unit]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      loadCoreReturnManagementDetail(button.dataset.coreReturnUnit);
+    });
+  });
+}
+
+async function loadCoreReturnManagementDetail(unitId) {
+  var seq = ++coreReturnManagementDetailSeq;
+  coreReturnManagementSelectedId = Number(unitId);
+  coreReturnManagementDetail = null;
+  renderCoreReturnManagementList();
+  var host = document.getElementById("core-return-mgmt-detail");
+  if (host) host.innerHTML = "<div class='core-return-mgmt-empty'>返却情報を読み込んでいます。</div>";
+  var result = await sb.rpc("get_core_return_management_detail", { target_unit_id: Number(unitId) });
+  if (seq !== coreReturnManagementDetailSeq) return;
+  if (result.error) {
+    if (host) host.innerHTML = "<div class='core-return-mgmt-empty error'>" + esc(result.error.message || "返却情報を読み込めませんでした。") + "</div>";
+    return;
+  }
+  coreReturnManagementDetail = result.data || null;
+  renderCoreReturnManagementDetail();
+}
+
+function coreReturnManagementOption(value, current, label) {
+  return "<option value='" + esc(value) + "'" + (String(value) === String(current || "") ? " selected" : "") + ">" + esc(label) + "</option>";
+}
+
+function renderCoreReturnManagementHistory(detail) {
+  var events = Array.isArray(detail.events) ? detail.events : [];
+  if (!events.length) return "<p class='core-return-mgmt-history-empty'>受付・修正履歴はまだありません。</p>";
+  return "<div class='core-return-mgmt-history-list'>" + events.map(function(event) {
+    var after = event.after_data || {};
+    var summary = [];
+    if (after.condition_status && after.condition_status !== "pending") summary.push(coreReturnManagementConditionLabel(after.condition_status));
+    if (after.resolution_status && after.resolution_status !== "pending") summary.push(coreReturnManagementResolutionLabel(after.resolution_status));
+    return "<div class='core-return-mgmt-history-row'><span></span><div><strong>" + esc(coreReturnManagementEventLabel(event.event_type)) + "</strong><small>" + esc(customerOrderDateTimeText(event.created_at)) + " / " + esc(event.actor_name || "-") + "</small>" +
+      (summary.length ? "<em>" + esc(summary.join(" / ")) + "</em>" : "") +
+      (event.note ? "<p>" + esc(event.note) + "</p>" : "") + "</div></div>";
+  }).join("") + "</div>";
+}
+
+function renderCoreReturnManagementDetail() {
+  var host = document.getElementById("core-return-mgmt-detail");
+  if (!host) return;
+  var detail = coreReturnManagementDetail;
+  if (!detail) {
+    host.innerHTML = "<div class='core-return-mgmt-empty'><strong>返却対象を選択してください</strong><span>コア返却シートの管理番号、返却用送り状番号、受注番号、得意先、品番、製造シリアルで検索できます。</span></div>";
+    return;
+  }
+  var item = detail.order_item || {};
+  var statusClass = detail.is_overdue ? "overdue" : String(detail.status || "");
+  var hasReceipt = ["received", "inspected", "resolved"].indexOf(String(detail.status || "")) >= 0;
+  var receiptSource = detail.receipt_source || "return_sheet";
+  var returnReason = detail.return_reason || "normal_core";
+  var condition = detail.condition_status || "pending";
+  var resolution = detail.resolution_status || "pending";
+  host.innerHTML = "<div class='core-return-mgmt-detail-head'><div><span>CORE RETURN / UNIT " + esc(detail.unit_number || "-") + "</span><h2>" + esc(detail.return_code_display || detail.return_code || "-") + "</h2><p>受注 " + esc(detail.order_number || "-") + " / " + esc(detail.customer_name || "-") + "</p></div><em class='" + esc(statusClass) + "'>" + esc(detail.is_overdue ? "期限超過" : coreReturnManagementStatusLabel(detail.status)) + "</em></div>" +
+    "<div class='core-return-mgmt-facts'>" +
+      "<div><span>対象品番</span><strong>" + esc(item.genuine_part_number || "-") + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small></div>" +
+      "<div><span>返却期限</span><strong>" + esc(detail.return_due_on || "未設定") + "</strong><small>注文区分 " + esc(item.product_kind === "rebuilt" ? "リビルト品" : "新品") + "</small></div>" +
+      "<div><span>返却用送り状番号</span><strong>" + esc(detail.return_waybill_tracking_number || "未登録") + "</strong><small>" + esc(coreReturnManagementReceiptSourceLabel(detail.receipt_source)) + "</small></div>" +
+      "<div><span>D-CATS製造シリアル</span><strong>" + esc(detail.returned_serial || "未照合") + "</strong><small>" + esc(detail.returned_serial_part_number || "通常コアは不要") + "</small></div>" +
+    "</div>" +
+    "<div class='core-return-mgmt-sections'>" +
+      "<section class='core-return-mgmt-section'><div class='core-return-mgmt-section-head'><div><span>01</span><h3>返却受付</h3></div><small>受付後も履歴を残して修正できます。</small></div>" +
+        "<div class='core-return-mgmt-form'>" +
+          "<label><span>照合方法</span><select id='core-return-receipt-source'>" +
+            coreReturnManagementOption("return_sheet", receiptSource, "コア返却シート") +
+            coreReturnManagementOption("return_waybill", receiptSource, "返却用送り状") +
+            coreReturnManagementOption("manual_identification", receiptSource, "受注・得意先から照合") +
+          "</select></label>" +
+          "<label><span>返却区分</span><select id='core-return-reason'>" +
+            coreReturnManagementOption("normal_core", returnReason, "通常のコア返却") +
+            coreReturnManagementOption("claim_return", returnReason, "クレーム対象品の返却") +
+            coreReturnManagementOption("replacement_return", returnReason, "代替品の返却") +
+            coreReturnManagementOption("order_cancellation", returnReason, "受注取消品の返却") +
+            coreReturnManagementOption("customer_return", returnReason, "返品") +
+          "</select></label>" +
+          "<label><span>返却用送り状番号</span><input id='core-return-tracking-number' inputmode='numeric' maxlength='24' value='" + esc(detail.return_tracking_number || detail.return_waybill_tracking_number || "") + "' placeholder='ハイフン有無どちらでも可'></label>" +
+          "<label><span>D-CATS製造シリアル</span><input id='core-return-serial' autocomplete='off' value='" + esc(detail.returned_serial || "") + "' placeholder='返品・クレーム・取消品は必須'></label>" +
+          "<label class='wide'><span>受付・照合メモ</span><textarea id='core-return-receipt-note' rows='3' maxlength='1000' placeholder='シートがない場合は、得意先への確認内容や照合根拠を記録'>" + esc(detail.receipt_note || "") + "</textarea></label>" +
+        "</div><div class='core-return-mgmt-actions'><button type='button' class='primary' id='core-return-receipt-save'" + (coreReturnManagementSaving ? " disabled" : "") + ">" + (hasReceipt ? "受付内容を修正" : "返却受付を保存") + "</button></div>" +
+      "</section>" +
+      "<section class='core-return-mgmt-section inspection" + (hasReceipt ? "" : " disabled") + "'><div class='core-return-mgmt-section-head'><div><span>02</span><h3>検品・対応</h3></div><small>正常、相違、破損を判定し、次の処理を決定します。</small></div>" +
+        (hasReceipt ? "<div class='core-return-mgmt-form inspection-grid'>" +
+          "<label><span>検品結果</span><select id='core-return-condition'><option value=''>選択してください</option>" +
+            coreReturnManagementOption("accepted", condition, "正常") +
+            coreReturnManagementOption("wrong_item", condition, "異なるコア") +
+            coreReturnManagementOption("damaged", condition, "破損") +
+            coreReturnManagementOption("not_our_product", condition, "当社商品ではない") +
+            coreReturnManagementOption("other", condition, "その他") +
+          "</select></label>" +
+          "<label><span>対応</span><select id='core-return-resolution'>" +
+            coreReturnManagementOption("pending", resolution, "対応未決定") +
+            coreReturnManagementOption("accepted_as_core", resolution, "コアとして受入") +
+            coreReturnManagementOption("customer_contact", resolution, "得意先へ確認") +
+            coreReturnManagementOption("claim_case", resolution, "クレーム対応へ") +
+            coreReturnManagementOption("refund_review", resolution, "返金確認へ") +
+            coreReturnManagementOption("returned_to_customer", resolution, "得意先へ返送") +
+            coreReturnManagementOption("scrapped", resolution, "廃棄") +
+          "</select></label>" +
+          "<label class='wide'><span>検品・対応メモ</span><textarea id='core-return-inspection-note' rows='3' maxlength='1000' placeholder='相違点、破損状態、得意先への連絡内容を記録'></textarea></label>" +
+          "</div><div class='core-return-mgmt-actions'><button type='button' class='primary' id='core-return-inspection-save'" + (coreReturnManagementSaving ? " disabled" : "") + ">検品結果を保存</button></div>" : "<p class='core-return-mgmt-section-wait'>返却受付を保存すると検品できます。</p>") +
+      "</section>" +
+    "</div>" +
+    "<section class='core-return-mgmt-history'><div class='core-return-mgmt-section-head'><div><span>03</span><h3>受付・修正履歴</h3></div><small>誰が、いつ、何を変更したかを保持します。</small></div>" + renderCoreReturnManagementHistory(detail) + "</section>";
+
+  var receiptSave = document.getElementById("core-return-receipt-save");
+  if (receiptSave) receiptSave.addEventListener("click", saveCoreReturnManagementReceipt);
+  var inspectionSave = document.getElementById("core-return-inspection-save");
+  if (inspectionSave) inspectionSave.addEventListener("click", saveCoreReturnManagementInspection);
+}
+
+async function saveCoreReturnManagementReceipt() {
+  var detail = coreReturnManagementDetail;
+  if (!detail || coreReturnManagementSaving) return;
+  var receiptSource = String((document.getElementById("core-return-receipt-source") || {}).value || "");
+  var trackingNumber = String((document.getElementById("core-return-tracking-number") || {}).value || "");
+  var returnReason = String((document.getElementById("core-return-reason") || {}).value || "");
+  var returnedSerial = String((document.getElementById("core-return-serial") || {}).value || "");
+  var receiptNote = String((document.getElementById("core-return-receipt-note") || {}).value || "");
+  coreReturnManagementSaving = true;
+  renderCoreReturnManagementDetail();
+  coreReturnManagementSetMessage("返却受付を保存しています。", false);
+  var result = await sb.rpc("register_core_return_receipt", {
+    target_unit_id: Number(detail.id),
+    target_expected_version: Number(detail.version),
+    target_receipt_source: receiptSource,
+    target_return_tracking_number: trackingNumber,
+    target_return_reason: returnReason,
+    target_returned_serial: returnedSerial,
+    target_note: receiptNote
+  });
+  coreReturnManagementSaving = false;
+  if (result.error) {
+    renderCoreReturnManagementDetail();
+    coreReturnManagementSetMessage(result.error.message || "返却受付を保存できませんでした。", true);
+    return;
+  }
+  coreReturnManagementDetail = result.data || detail;
+  renderCoreReturnManagementDetail();
+  coreReturnManagementSetMessage("返却受付を保存しました。", false);
+  await refreshCoreReturnManagement({ keepSelection: true });
+}
+
+async function saveCoreReturnManagementInspection() {
+  var detail = coreReturnManagementDetail;
+  if (!detail || coreReturnManagementSaving) return;
+  var condition = String((document.getElementById("core-return-condition") || {}).value || "");
+  if (!condition) {
+    coreReturnManagementSetMessage("検品結果を選択してください。", true);
+    return;
+  }
+  var resolution = String((document.getElementById("core-return-resolution") || {}).value || "pending");
+  var inspectionNote = String((document.getElementById("core-return-inspection-note") || {}).value || "");
+  coreReturnManagementSaving = true;
+  renderCoreReturnManagementDetail();
+  coreReturnManagementSetMessage("検品結果を保存しています。", false);
+  var result = await sb.rpc("inspect_core_return", {
+    target_unit_id: Number(detail.id),
+    target_expected_version: Number(detail.version),
+    target_condition_status: condition,
+    target_resolution_status: resolution,
+    target_note: inspectionNote
+  });
+  coreReturnManagementSaving = false;
+  if (result.error) {
+    renderCoreReturnManagementDetail();
+    coreReturnManagementSetMessage(result.error.message || "検品結果を保存できませんでした。", true);
+    return;
+  }
+  coreReturnManagementDetail = result.data || detail;
+  renderCoreReturnManagementDetail();
+  coreReturnManagementSetMessage("検品結果を保存しました。", false);
+  await refreshCoreReturnManagement({ keepSelection: true });
 }
 
 function shippingDocumentSearchValue() {
@@ -45439,7 +45782,7 @@ document.getElementById("current-password").addEventListener("keydown", function
   if(e.key==="Enter") doChangePassword();
 });
 document.getElementById("login-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
-["btn-logout-menu","btn-logout-customer-portal","btn-logout-customer-shipping","btn-logout-customer-users","btn-logout-customer-catalog","btn-logout-customer-orders","btn-logout-sales-order-mgmt","btn-logout-shipping-document-mgmt","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-shipping-rate-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-component-compat-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-manufacturing-cost-mgmt","btn-logout-finished-label-mgmt","btn-logout-finished-product-shipping","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
+["btn-logout-menu","btn-logout-customer-portal","btn-logout-customer-shipping","btn-logout-customer-users","btn-logout-customer-catalog","btn-logout-customer-orders","btn-logout-sales-order-mgmt","btn-logout-shipping-document-mgmt","btn-logout-core-return-mgmt","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-shipping-rate-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-component-compat-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-manufacturing-cost-mgmt","btn-logout-finished-label-mgmt","btn-logout-finished-product-shipping","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
 document.getElementById("customer-portal-search-btn").addEventListener("click", function(){ openCustomerPortalSearch(); });
 document.getElementById("customer-portal-q").addEventListener("keydown", function(e){ if (e.key === "Enter") openCustomerPortalSearch(); });
 document.getElementById("customer-portal-customer-select").addEventListener("change", function(){ loadCustomerPortalPreviewContext(this.value); });
@@ -45524,6 +45867,11 @@ document.getElementById("customer-order-submit").addEventListener("click", submi
 document.getElementById("customer-order-history-reload").addEventListener("click", loadCustomerOrderHistory);
 document.getElementById("btn-back-sales-order-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-shipping-document-mgmt").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-core-return-mgmt").addEventListener("click", returnToMenuFresh);
+document.getElementById("core-return-mgmt-reload").addEventListener("click", function() { refreshCoreReturnManagement(); });
+document.getElementById("core-return-mgmt-search").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") refreshCoreReturnManagement();
+});
 document.getElementById("shipping-document-reload").addEventListener("click", lookupShippingDocumentOrder);
 document.getElementById("shipping-document-search").addEventListener("keydown", function(e) {
   if (e.key === "Enter") lookupShippingDocumentOrder();
