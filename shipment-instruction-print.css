@@ -71,7 +71,7 @@ body { margin: 0; color: #162131; background: #eef1f4; font-family: "Yu Gothic",
 .warranty-top-rules i, .warranty-bottom-rules i { display: block; height: 0; border-top: 0.45mm solid #000; }
 .warranty-top-rules i:last-child, .warranty-bottom-rules i:first-child { border-top-width: 0.2mm; }
 .warranty-header { position: relative; display: grid; place-items: center; height: 16mm; border-bottom: 0.35mm solid #000; }
-.warranty-header img { position: absolute; left: 1.5mm; top: 3mm; width: 33mm; height: 11.2mm; object-fit: contain; filter: grayscale(1) contrast(1.45); }
+.warranty-header img { position: absolute; left: 1.5mm; top: 3mm; width: 33mm; height: 11.2mm; object-fit: contain; filter: brightness(0); }
 .warranty-header h1 { margin: 0; font-size: 17pt; line-height: 1; letter-spacing: 2.4mm; text-align: center; }
 .warranty-lead { margin: 1.8mm 1mm 1.6mm; font-size: 6.4pt; line-height: 1.45; text-align: center; }
 .warranty-product-grid { display: grid; grid-template-columns: 18mm 48mm 18mm 1fr; border-top: 0.3mm solid #000; border-left: 0.3mm solid #000; }
@@ -90,12 +90,12 @@ body { margin: 0; color: #162131; background: #eef1f4; font-family: "Yu Gothic",
 .warranty-dealer h2 { margin: 0; padding: 1.2mm 2mm; border-bottom: 0.3mm solid #000; font-size: 7.4pt; line-height: 1; }
 .warranty-dealer p { margin: 1.5mm 2mm; font-size: 5.8pt; }
 .warranty-terms { display: grid; grid-template-columns: 1fr 1fr 1fr; margin-top: 1.5mm; border-top: 0.3mm solid #000; border-left: 0.3mm solid #000; }
-.warranty-terms article { min-height: 45mm; padding: 2mm 2.2mm 1.5mm; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; }
+.warranty-terms article { min-height: 56mm; padding: 2mm 2.2mm 1.5mm; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; }
 .warranty-terms h2, .warranty-legal h2 { margin: 0 0 1.4mm; font-size: 7.2pt; line-height: 1.2; letter-spacing: 0.2mm; }
-.warranty-terms p, .warranty-terms li, .warranty-legal p { margin: 0; font-size: 5.45pt; line-height: 1.52; }
+.warranty-terms p, .warranty-terms li, .warranty-legal p { margin: 0; font-size: 5.7pt; line-height: 1.52; }
 .warranty-terms ol, .warranty-terms ul { margin: 0; padding-left: 3.6mm; }
 .warranty-terms li + li { margin-top: 0.8mm; }
-.warranty-legal { margin-top: 1.5mm; padding: 1.8mm 2.2mm; border: 0.3mm solid #000; }
+.warranty-legal { min-height: 31mm; margin-top: 1.5mm; padding: 1.8mm 2.2mm; border: 0.3mm solid #000; }
 .warranty-legal h2 { margin-bottom: 1mm; }
 .warranty-legal p { line-height: 1.45; }
 .warranty-bottom-rules { position: absolute; left: 5mm; right: 5mm; bottom: 3mm; }

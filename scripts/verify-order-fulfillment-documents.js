@@ -370,8 +370,26 @@ for (const fragment of [
   "製造シリアル",
   'dispatch.status !== "shipped"',
   "!order.outbound_tracking_number",
-  "shipment-document-table-"
+  "shipment-document-table-",
+  "buildSalesOrderWarrantyDocumentHtml",
+  "hydrateSalesOrderWarrantyPrintData",
+  'sb.rpc("get_product_warranty_policies")',
+  "gltek_part_number",
+  "salesOrderWarrantyUnits",
+  "製 品 保 証 書",
+  "保証期間",
+  "販売店・取付店",
+  "店印・取付店印は任意",
+  "assets/brand/gltek-logo-print-transparent.png"
 ]) requireFragment(printSource, fragment);
+const warrantyPageSource = sourceBetween("function buildSalesOrderWarrantyCertificatePage", "function buildSalesOrderWarrantyDocumentHtml");
+for (const forbidden of ["manufacturing_serial", "製造シリアル", "D-CATS", "STARTER / ALTERNATOR", "保証発行者"] ) {
+  if (warrantyPageSource.includes(forbidden)) throw new Error(`Warranty certificate must not print: ${forbidden}`);
+}
+const warrantyLogo = path.join(root, "assets", "brand", "gltek-logo-print-transparent.png");
+if (!fs.existsSync(warrantyLogo) || fs.statSync(warrantyLogo).size < 1000) {
+  throw new Error("The transparent GLTEK warranty logo is missing");
+}
 
 for (const fragment of [
   ".shipping-document-workspace",
@@ -416,7 +434,15 @@ for (const fragment of [
 if (css.includes(".shipping-carrier-brand-copy small")) {
   throw new Error("Carrier label purpose styling must be removed");
 }
-requireFragment(printCss, ".shipment-document-table-warranty th:nth-child(5)");
+for (const fragment of [
+  "@page dcats-warranty-a4 { size: A4 landscape; margin: 0; }",
+  ".warranty-certificate",
+  "width: 148mm; height: 210mm;",
+  ".warranty-header h1",
+  ".warranty-dealer",
+  ".document-warranty { background: transparent; }",
+  ".warranty-certificate { margin: 0 auto; background: transparent; }"
+]) requireFragment(printCss, fragment);
 
 for (const fragment of [
   "API直接連携は、有料・大口契約向けのため導入を見送る",

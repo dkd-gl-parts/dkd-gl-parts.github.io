@@ -153,14 +153,21 @@ for (const fragment of [
   "複写式返送用送り状",
   "document-a5",
   "warranty_document_required === false",
-  "この注文に発行が必要な保証書はありません"
+  "この注文に発行が必要な保証書はありません",
+  "buildSalesOrderWarrantyDocumentHtml",
+  "本書に記載された保証期間",
+  "GLTEK品番",
+  "salesOrderWarrantyUnits"
 ]) {
   if (!printDocument.includes(fragment)) throw new Error(`Manual shipment document rendering is missing: ${fragment}`);
 }
 for (const fragment of [
   "@page dcats-a5 { size: A5 portrait",
   ".document-a5 .shipment-document { page: dcats-a5; }",
-  ".shipment-document-a5"
+  ".shipment-document-a5",
+  "@page dcats-warranty-a4 { size: A4 landscape; margin: 0; }",
+  "width: 148mm; height: 210mm;",
+  ".warranty-certificate"
 ]) {
   if (!printCss.includes(fragment)) throw new Error(`A5 shipment document styling is missing: ${fragment}`);
 }

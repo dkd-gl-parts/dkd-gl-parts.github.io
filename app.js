@@ -13274,9 +13274,15 @@ async function hydrateSalesOrderWarrantyPrintData(order) {
     return !item.replacement && (!snapshot || snapshot.warranty_document_required !== false);
   });
   if (!items.length) throw new Error("保証書へ印刷する商品がありません。");
-  var policies = await ensureSalesOrderWarrantyPolicies();
-  if (!policies.length) throw new Error("カテゴリ別保証期間を読み込めません。保証期間設定を確認してください。");
-  var ids = Array.from(new Set(items.map(function(item) {
+  var needsPolicies = items.some(function(item) {
+    var snapshot = item && item.warranty_snapshot;
+    return !(snapshot && parseInt(snapshot.warranty_months, 10));
+  });
+  var policies = needsPolicies ? await ensureSalesOrderWarrantyPolicies() : [];
+  if (needsPolicies && !policies.length) throw new Error("カテゴリ別保証期間を読み込めません。保証期間設定を確認してください。");
+  var ids = Array.from(new Set(items.filter(function(item) {
+    return !(item && item.order_item && item.order_item.gltek_part_number);
+  }).map(function(item) {
     return parseInt(item && item.order_item && item.order_item.dkd_shohin_id, 10);
   }).filter(Boolean)));
   var productRows = [];
