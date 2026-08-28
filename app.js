@@ -5382,7 +5382,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.803";
+var APP_VERSION       = "v1.1.804";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -13396,10 +13396,11 @@ function buildSalesOrderCoreReturnPage(order, unit) {
     "<div class='core-return-top-rules'><i></i><i></i></div>" +
     "<header><img src='assets/brand/gltek-logo-print-transparent.png?dcats_version=" + encodeURIComponent(APP_VERSION) + "' alt='GLTEK'><h1>コア返却シート</h1></header>" +
     "<p class='core-return-lead'>本紙1枚につき返却コア1点です。交換したコアと本紙を一緒にご返送ください。</p>" +
+    "<div class='core-return-main'><div class='core-return-left'>" +
     "<section class='core-return-due'><span>ご返却期限（出荷日から2週間以内）</span><strong>" + esc(salesOrderCoreReturnDueText(unit.return_due_on)) + "</strong></section>" +
     "<section class='core-return-code'><span>返却管理番号</span><img src='" + esc(barcode) + "' alt='" + esc(returnCode) + "'><strong>" + esc(formatCustomerOrderReference(returnCode)) + "</strong></section>" +
-    "<dl class='core-return-product'><div><dt>受注番号</dt><dd>" + esc(formatCustomerOrderReference(order.order_number)) + "</dd></div><div><dt>GLTEK品番</dt><dd>" + esc(item.gltek_part_number || "-") + "</dd></div><div><dt>純正品番</dt><dd>" + esc(item.genuine_part_number || "-") + "</dd></div><div><dt>メーカー品番</dt><dd>" + esc(item.manufacturer_part_number || "-") + "</dd></div><div><dt>商品名</dt><dd>" + esc(salesOrderCoreReturnProductName(item)) + "</dd></div></dl>" +
-    "<section class='core-return-steps'><h2>ご返却方法</h2><ol><li>交換したコアと、この返却シートを同梱してください。</li><li>同梱の返送用送り状を使用して発送してください。</li><li>複数のコアを同じ荷物で返却する場合も、コア1点につき対応する返却シートを1枚ずつ同梱してください。</li></ol></section>" +
+    "<dl class='core-return-product'><div><dt>受注番号</dt><dd>" + esc(formatCustomerOrderReference(order.order_number)) + "</dd></div><div><dt>GLTEK品番</dt><dd>" + esc(item.gltek_part_number || "-") + "</dd></div><div><dt>純正品番</dt><dd>" + esc(item.genuine_part_number || "-") + "</dd></div><div><dt>メーカー品番</dt><dd>" + esc(item.manufacturer_part_number || "-") + "</dd></div><div><dt>商品名</dt><dd>" + esc(salesOrderCoreReturnProductName(item)) + "</dd></div></dl></div>" +
+    "<section class='core-return-steps'><h2>ご返却方法</h2><ol><li>交換したコアと、この返却シートを同梱してください。</li><li>同梱の返送用送り状を使用して発送してください。</li><li>複数のコアを同じ荷物で返却する場合も、コア1点につき対応する返却シートを1枚ずつ同梱してください。</li></ol></section></div>" +
     "<footer><i></i><i></i><span>GLTEK　返却管理番号をバーコードまたは数字で照合します。</span></footer></main>";
 }
 

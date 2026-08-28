@@ -1,6 +1,6 @@
 @page { size: A4 portrait; margin: 10mm; }
 @page dcats-a5 { size: A5 portrait; margin: 8mm; }
-@page dcats-core-return { size: A5 portrait; margin: 0; }
+@page dcats-core-return { size: A5 landscape; margin: 0; }
 @page dcats-warranty-a4 { size: A4 landscape; margin: 0; }
 * { box-sizing: border-box; }
 body { margin: 0; color: #162131; background: #eef1f4; font-family: "Yu Gothic", "Meiryo", sans-serif; }
@@ -66,31 +66,33 @@ body { margin: 0; color: #162131; background: #eef1f4; font-family: "Yu Gothic",
 .shipment-document-check-cell { text-align: center; font-size: 13pt !important; }
 
 .document-core-return { color: #000; background: #e8ebee; font-family: "Yu Gothic", "Meiryo", sans-serif; }
-.core-return-sheet { page: dcats-core-return; position: relative; width: 148mm; height: 210mm; margin: 16px auto; padding: 3.5mm 4mm 3mm; overflow: hidden; background: #fff; color: #000; break-after: page; page-break-after: always; }
+.core-return-sheet { page: dcats-core-return; position: relative; width: 210mm; height: 148mm; margin: 16px auto; padding: 3.5mm 4mm 3mm; overflow: hidden; background: #fff; color: #000; break-after: page; page-break-after: always; }
 .core-return-sheet:last-child { break-after: auto; page-break-after: auto; }
 .core-return-top-rules { display: grid; gap: 0.8mm; }
 .core-return-top-rules i { display: block; height: 0; border-top: 0.55mm solid #000; }
 .core-return-top-rules i:last-child { border-top-width: 0.2mm; }
-.core-return-sheet header { position: relative; display: grid; place-items: center; height: 17mm; border-bottom: 0.3mm solid #000; }
-.core-return-sheet header img { position: absolute; left: 2.5mm; top: 3.3mm; width: 34mm; height: 11mm; object-fit: contain; filter: brightness(0); }
+.core-return-sheet header { position: relative; display: grid; place-items: center; height: 15mm; border-bottom: 0.3mm solid #000; }
+.core-return-sheet header img { position: absolute; left: 2.5mm; top: 2.2mm; width: 34mm; height: 11mm; object-fit: contain; filter: brightness(0); }
 .core-return-sheet header h1 { margin: 0; font-size: 16pt; line-height: 1; letter-spacing: 1.2mm; text-align: center; }
-.core-return-lead { margin: 1.5mm 1mm; font-size: 7pt; line-height: 1.35; text-align: center; }
-.core-return-due { display: grid; place-items: center; height: 25mm; border: 0.55mm solid #000; }
+.core-return-lead { height: 7mm; margin: 0; display: grid; place-items: center; font-size: 7pt; line-height: 1.35; text-align: center; }
+.core-return-main { display: grid; grid-template-columns: 124mm 1fr; gap: 3mm; height: 103mm; }
+.core-return-left { min-width: 0; }
+.core-return-due { display: grid; place-items: center; height: 21mm; border: 0.55mm solid #000; }
 .core-return-due span { align-self: end; font-size: 7.5pt; font-weight: 800; }
-.core-return-due strong { align-self: start; margin-top: 1.2mm; font-size: 15pt; line-height: 1.2; letter-spacing: 0.5mm; }
-.core-return-code { display: grid; place-items: center; height: 35mm; margin-top: 2mm; border: 0.3mm solid #000; }
+.core-return-due strong { align-self: start; margin-top: 0.8mm; font-size: 14pt; line-height: 1.2; letter-spacing: 0.5mm; }
+.core-return-code { display: grid; place-items: center; height: 28mm; margin-top: 2mm; border: 0.3mm solid #000; }
 .core-return-code span { align-self: end; font-size: 7.2pt; font-weight: 800; }
-.core-return-code img { align-self: center; width: 116mm; height: 16mm; object-fit: fill; image-rendering: crisp-edges; }
-.core-return-code strong { align-self: start; font-family: Consolas, "Courier New", monospace; font-size: 13pt; letter-spacing: 1mm; }
+.core-return-code img { align-self: center; width: 112mm; height: 13mm; object-fit: fill; image-rendering: crisp-edges; }
+.core-return-code strong { align-self: start; font-family: Consolas, "Courier New", monospace; font-size: 12pt; letter-spacing: 1mm; }
 .core-return-product { margin: 2mm 0 0; border-top: 0.3mm solid #000; border-left: 0.3mm solid #000; }
 .core-return-product > div { display: grid; grid-template-columns: 30mm 1fr; min-height: 10mm; }
 .core-return-product dt, .core-return-product dd { display: flex; align-items: center; margin: 0; padding: 1.2mm 2mm; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; line-height: 1.25; }
 .core-return-product dt { justify-content: center; font-size: 7pt; font-weight: 800; }
 .core-return-product dd { font-size: 8.5pt; font-weight: 800; overflow-wrap: anywhere; }
-.core-return-steps { height: 44mm; margin-top: 3mm; padding: 1.8mm 3mm; border: 0.3mm solid #000; }
-.core-return-steps h2 { margin: 0 0 1.2mm; font-size: 8pt; }
-.core-return-steps ol { margin: 0; padding-left: 5mm; }
-.core-return-steps li { font-size: 7.2pt; line-height: 1.55; }
+.core-return-steps { height: 103mm; padding: 3mm 4mm; border: 0.3mm solid #000; }
+.core-return-steps h2 { margin: 0 0 3mm; font-size: 9pt; }
+.core-return-steps ol { margin: 0; padding-left: 5.5mm; }
+.core-return-steps li { margin-bottom: 4mm; font-size: 8pt; line-height: 1.65; }
 .core-return-sheet footer { position: absolute; left: 4mm; right: 4mm; bottom: 2.8mm; display: grid; gap: 0.8mm; text-align: center; }
 .core-return-sheet footer i { display: block; height: 0; border-top: 0.2mm solid #000; }
 .core-return-sheet footer i:nth-child(2) { border-top-width: 0.55mm; }

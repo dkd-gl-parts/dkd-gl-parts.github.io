@@ -38,7 +38,9 @@ for (const forbidden of ["D-CATS", "CORE RETURN", "送り状番号", "数量"]) 
 }
 assert(corePage.includes("gltek-logo-print-transparent.png"), "Core-return layout must use the transparent GLTEK logo");
 
-assert(css.includes("@page dcats-core-return { size: A5 portrait; margin: 0; }"), "Core-return print page must be A5 portrait");
+assert(css.includes("@page dcats-core-return { size: A5 landscape; margin: 0; }"), "Core-return print page must be A5 landscape");
+assert(css.includes("width: 210mm; height: 148mm;"), "Core-return sheet must use A5 landscape dimensions");
+assert(css.includes(".core-return-main"), "Core-return landscape column layout is missing");
 assert(css.includes(".core-return-code img"), "Core-return barcode print sizing is missing");
 assert(css.includes(".document-core-return { background: transparent; }"), "Core-return print background must remain transparent for colored paper");
 
