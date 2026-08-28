@@ -30,7 +30,7 @@ assert(barcode.includes('format: "CODE128"'), "Return references must use Code 1
 assert(barcode.includes('/^[0-9]{9}$/'), "Barcode payload must be the nine-digit return reference");
 
 const corePage = section(app, "function buildSalesOrderCoreReturnPage", "function buildSalesOrderCoreReturnDocumentHtml");
-for (const required of ["コア返却シート", "ご返却期限", "返却管理番号", "GLTEK品番", "純正品番", "メーカー品番", "商品名"]) {
+for (const required of ["使用済みコア返却シート", "返却期限", "返却管理コード", "STEP 1", "STEP 2", "分解せず、そのまま", "対象コア", "注文番号", "GLTEK品番", "純正／メーカー品番", "商品名", "このシートをコアと一緒に箱へお入れください"]) {
   assert(corePage.includes(required), `Core-return layout missing: ${required}`);
 }
 for (const forbidden of ["D-CATS", "CORE RETURN", "送り状番号", "数量"]) {
@@ -40,7 +40,9 @@ assert(corePage.includes("gltek-logo-print-transparent.png"), "Core-return layou
 
 assert(css.includes("@page dcats-core-return { size: A5 landscape; margin: 0; }"), "Core-return print page must be A5 landscape");
 assert(css.includes("width: 210mm; height: 148mm;"), "Core-return sheet must use A5 landscape dimensions");
-assert(css.includes(".core-return-main"), "Core-return landscape column layout is missing");
+assert(css.includes(".core-return-header"), "Adopted core-return header layout is missing");
+assert(css.includes(".core-return-target"), "Adopted core-return target table is missing");
+assert(css.includes(".core-return-bottom-note"), "Adopted core-return packing note is missing");
 assert(css.includes(".core-return-code img"), "Core-return barcode print sizing is missing");
 assert(css.includes(".document-core-return { background: transparent; }"), "Core-return print background must remain transparent for colored paper");
 
