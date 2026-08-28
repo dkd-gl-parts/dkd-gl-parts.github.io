@@ -36,6 +36,7 @@ on:
       - "scripts/verify-customer-order-auto-print.js"
       - "scripts/verify-print-settings-screen-ownership.js"
       - "scripts/verify-order-fulfillment-documents.js"
+      - "scripts/verify-order-reference-codes.js"
       - "scripts/verify-waybill-layout-designer.js"
       - "scripts/verify-customer-order-batch-accept.js"
       - "scripts/verify-sales-order-dashboard.js"
@@ -141,6 +142,8 @@ jobs:
         run: node scripts/verify-print-settings-screen-ownership.js
       - name: Verify order fulfillment document workflow
         run: node scripts/verify-order-fulfillment-documents.js
+      - name: Verify opaque order and core-return references
+        run: node scripts/verify-order-reference-codes.js
       - name: Verify multipart-waybill layout designer
         run: node scripts/verify-waybill-layout-designer.js
       - name: Verify customer order batch acceptance

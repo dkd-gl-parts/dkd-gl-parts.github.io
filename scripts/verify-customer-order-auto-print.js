@@ -150,8 +150,9 @@ const printDocument = sourceBetween("function salesOrderPrintItemRows", "functio
 for (const fragment of [
   'type === "core_return"',
   'type === "warranty"',
-  "複写式返送用送り状",
-  "document-a5",
+  "buildSalesOrderCoreReturnDocumentHtml",
+  "salesOrderReferenceBarcodeDataUrl",
+  "返却管理番号",
   "warranty_document_required === false",
   "この注文に発行が必要な保証書はありません",
   "buildSalesOrderWarrantyDocumentHtml",
@@ -165,6 +166,8 @@ for (const fragment of [
   "@page dcats-a5 { size: A5 portrait",
   ".document-a5 .shipment-document { page: dcats-a5; }",
   ".shipment-document-a5",
+  "@page dcats-core-return { size: A5 portrait; margin: 0; }",
+  ".core-return-sheet",
   "@page dcats-warranty-a4 { size: A4 landscape; margin: 0; }",
   "width: 148mm; height: 210mm;",
   ".warranty-certificate"
@@ -173,10 +176,10 @@ for (const fragment of [
 }
 
 for (const versionFragment of [
-  'content="v1.1.802"',
-  'styles.css?v=1.1.802',
-  'app.js?v=1.1.802',
-  'var APP_VERSION       = "v1.1.802"'
+  'content="v1.1.803"',
+  'styles.css?v=1.1.803',
+  'app.js?v=1.1.803',
+  'var APP_VERSION       = "v1.1.803"'
 ]) {
   const versionSource = versionFragment.startsWith("var ") ? source : html;
   if (!versionSource.includes(versionFragment)) throw new Error(`Release version is inconsistent: ${versionFragment}`);

@@ -5382,7 +5382,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.802";
+var APP_VERSION       = "v1.1.803";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -10264,9 +10264,22 @@ function salesOrderListStatus() {
   return select ? select.value || "all" : "all";
 }
 
+function normalizeCustomerOrderReference(value) {
+  var trimmed = String(value || "").trim();
+  var compact = trimmed.replace(/[\s-]/g, "");
+  return /^[0-9]{9}$/.test(compact) ? compact : trimmed;
+}
+
+function formatCustomerOrderReference(value) {
+  var compact = String(value || "").replace(/[^0-9]/g, "");
+  return /^[0-9]{9}$/.test(compact)
+    ? compact.slice(0, 4) + "-" + compact.slice(4, 8) + "-" + compact.slice(8)
+    : String(value || "");
+}
+
 function salesOrderListSearch() {
   var input = document.getElementById("sales-order-search");
-  return input ? input.value.trim() : "";
+  return input ? normalizeCustomerOrderReference(input.value) : "";
 }
 
 function salesOrderDashboardCounts() {
@@ -10882,7 +10895,7 @@ var SHIPPING_WAYBILL_FIELD_META = {
   sender_address: { label: "ご依頼主 住所", sample: "大阪府堺市南区片蔵486-1" },
   sender_name: { label: "ご依頼主 名称", sample: "大光電機株式会社" },
   contents: { label: "品名・受注内容", sample: "28100-B2150 x1" },
-  order_number: { label: "D-CATS受注番号", sample: "D-CATS DC20260818-000001" },
+  order_number: { label: "受注番号", sample: "7342-9185-9" },
   tracking_number: { label: "送り状番号", sample: "1234-5678-9012" },
   desired_date: { label: "お届け希望", sample: "2026/08/30 午前中" },
   package_count: { label: "個口数", sample: "1" }
@@ -11008,7 +11021,7 @@ function shippingWaybillPreviewData(layout, orderValue) {
     sender_address: (outbound ? daiko : customer).address,
     sender_name: (outbound ? daiko : customer).name,
     contents: partText || (outbound ? "自動車電装品" : "自動車電装品コア"),
-    order_number: "D-CATS " + (order && order.order_number ? order.order_number : "DC20260818-000001"),
+    order_number: formatCustomerOrderReference(order && order.order_number ? order.order_number : "734291859"),
     tracking_number: waybill && waybill.tracking_number ? waybill.tracking_number : "1234-5678-9012",
     desired_date: [deliveryDate, order && order.delivery_time_label].filter(Boolean).join(" "),
     package_count: "1",
@@ -11635,7 +11648,7 @@ function shippingDocumentDateValue(id) {
 
 function shippingDocumentSearchValue() {
   var input = document.getElementById("shipping-document-search");
-  return input ? input.value.trim() : "";
+  return input ? normalizeCustomerOrderReference(input.value) : "";
 }
 
 function setShippingDocumentLookupMessage(message, isError) {
@@ -11954,10 +11967,10 @@ async function loadShippingDocumentOrders() {
 }
 
 function shippingDocumentExactOrder(rows, searchValue) {
-  var key = String(searchValue || "").replace(/\s+/g, "").toUpperCase();
+  var key = normalizeCustomerOrderReference(searchValue).toUpperCase();
   if (!key) return null;
   return (rows || []).find(function(order) {
-    return String(order.id || "") === key || String(order.order_number || "").replace(/\s+/g, "").toUpperCase() === key;
+    return normalizeCustomerOrderReference(order.order_number).toUpperCase() === key;
   }) || ((rows || []).length === 1 ? rows[0] : null);
 }
 
@@ -11967,9 +11980,9 @@ async function lookupShippingDocumentOrder() {
   var searchValue = shippingDocumentSearchValue();
   var input = document.getElementById("shipping-document-search");
   var requestSeq = ++shippingDocumentLookupSeq;
-  var normalized = searchValue.replace(/\s+/g, "").toUpperCase();
+  var normalized = normalizeCustomerOrderReference(searchValue).toUpperCase();
   var status = document.getElementById("shipping-document-status");
-  if (status && (/^D[0-9]{10}$/.test(normalized) || /^DC[0-9]{8}-[0-9]{6}$/.test(normalized) || /^[0-9]+$/.test(normalized))) status.value = "all";
+  if (status && (/^D[0-9]{10}$/.test(normalized) || /^[0-9]{9}$/.test(normalized))) status.value = "all";
   shippingDocumentSelectedId = null;
   shippingDocumentDetail = null;
   renderShippingDocumentDetail();
@@ -11997,19 +12010,6 @@ async function lookupShippingDocumentOrder() {
     shippingDocumentRows = [resolvedOrder];
     renderShippingDocumentList();
     setShippingDocumentLookupMessage("出荷指示書から " + (resolvedOrder.order_number || ("注文 " + resolvedOrder.id)) + " を呼び出しました。", false);
-    return;
-  }
-
-  if (/^[0-9]+$/.test(normalized)) {
-    var directOrder = await loadShippingDocumentDetail(parseInt(normalized, 10));
-    if (requestSeq !== shippingDocumentLookupSeq) return;
-    if (directOrder) {
-      shippingDocumentRows = [directOrder];
-      renderShippingDocumentList();
-      setShippingDocumentLookupMessage((directOrder.order_number || ("注文 " + directOrder.id)) + " を呼び出しました。", false);
-      return;
-    }
-    setShippingDocumentLookupMessage("受注IDに一致する注文はありません。", true);
     return;
   }
 
@@ -13342,6 +13342,76 @@ function salesOrderWarrantyUnits(order) {
   return units;
 }
 
+function salesOrderCoreReturnUnits(order) {
+  return (Array.isArray(order && order.core_return_units) ? order.core_return_units : []).filter(function(unit) {
+    return unit && unit.status !== "cancelled" && unit.order_item;
+  });
+}
+
+function salesOrderCoreReturnProductName(item) {
+  if (item && item.product_name) return item.product_name;
+  var category = ({
+    starter: "スターター",
+    alternator: "オルタネーター",
+    starter_generator: "スタータージェネレーター",
+    generator: "ジェネレーター",
+    distributor: "ディストリビューター",
+    ac_compressor: "A/Cコンプレッサー",
+    throttle_body: "スロットルボディ",
+    turbocharger: "ターボチャージャー",
+    injector: "インジェクター"
+  })[item && item.category_code] || "製品";
+  return category + (item && item.product_kind === "rebuilt" ? "（リビルト）" : "（新品）");
+}
+
+function salesOrderCoreReturnDueText(value) {
+  var matched = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return matched
+    ? parseInt(matched[1], 10) + "年 " + parseInt(matched[2], 10) + "月 " + parseInt(matched[3], 10) + "日まで"
+    : "　　　　年　　　月　　　日まで";
+}
+
+function salesOrderReferenceBarcodeDataUrl(value) {
+  var digits = String(value || "").replace(/[^0-9]/g, "");
+  if (!/^[0-9]{9}$/.test(digits)) throw new Error("返却管理番号を確認できません。");
+  if (typeof JsBarcode !== "function") throw new Error("Code 128バーコードを作成できません。");
+  var canvas = document.createElement("canvas");
+  JsBarcode(canvas, digits, {
+    format: "CODE128",
+    displayValue: false,
+    margin: 0,
+    width: 2,
+    height: 64,
+    lineColor: "#000000",
+    background: "transparent"
+  });
+  return canvas.toDataURL("image/png");
+}
+
+function buildSalesOrderCoreReturnPage(order, unit) {
+  var item = unit.order_item || {};
+  var returnCode = String(unit.return_code || "").replace(/[^0-9]/g, "");
+  var barcode = salesOrderReferenceBarcodeDataUrl(returnCode);
+  return "<main class='core-return-sheet'>" +
+    "<div class='core-return-top-rules'><i></i><i></i></div>" +
+    "<header><img src='assets/brand/gltek-logo-print-transparent.png?dcats_version=" + encodeURIComponent(APP_VERSION) + "' alt='GLTEK'><h1>コア返却シート</h1></header>" +
+    "<p class='core-return-lead'>本紙1枚につき返却コア1点です。交換したコアと本紙を一緒にご返送ください。</p>" +
+    "<section class='core-return-due'><span>ご返却期限（出荷日から2週間以内）</span><strong>" + esc(salesOrderCoreReturnDueText(unit.return_due_on)) + "</strong></section>" +
+    "<section class='core-return-code'><span>返却管理番号</span><img src='" + esc(barcode) + "' alt='" + esc(returnCode) + "'><strong>" + esc(formatCustomerOrderReference(returnCode)) + "</strong></section>" +
+    "<dl class='core-return-product'><div><dt>受注番号</dt><dd>" + esc(formatCustomerOrderReference(order.order_number)) + "</dd></div><div><dt>GLTEK品番</dt><dd>" + esc(item.gltek_part_number || "-") + "</dd></div><div><dt>純正品番</dt><dd>" + esc(item.genuine_part_number || "-") + "</dd></div><div><dt>メーカー品番</dt><dd>" + esc(item.manufacturer_part_number || "-") + "</dd></div><div><dt>商品名</dt><dd>" + esc(salesOrderCoreReturnProductName(item)) + "</dd></div></dl>" +
+    "<section class='core-return-steps'><h2>ご返却方法</h2><ol><li>交換したコアと、この返却シートを同梱してください。</li><li>同梱の返送用送り状を使用して発送してください。</li><li>複数のコアを同じ荷物で返却する場合も、コア1点につき対応する返却シートを1枚ずつ同梱してください。</li></ol></section>" +
+    "<footer><i></i><i></i><span>GLTEK　返却管理番号をバーコードまたは数字で照合します。</span></footer></main>";
+}
+
+function buildSalesOrderCoreReturnDocumentHtml(order) {
+  var units = salesOrderCoreReturnUnits(order);
+  if (!units.length) throw new Error("この注文に発行するコア返却シートはありません。");
+  return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><title>コア返却シート " + esc(formatCustomerOrderReference(order.order_number)) + "</title>" +
+    "<link rel='stylesheet' href='shipment-instruction-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></head><body class='document-core-return'>" +
+    "<div class='print-toolbar'><button id='dcats-print-shipment-document' type='button'>印刷・PDF保存</button></div>" +
+    units.map(function(unit) { return buildSalesOrderCoreReturnPage(order, unit); }).join("") + "</body></html>";
+}
+
 function buildSalesOrderWarrantyCertificatePage(order, unit) {
   var orderItem = unit.item.order_item || {};
   var address = order.shipping_address || {};
@@ -13373,31 +13443,24 @@ function buildSalesOrderWarrantyDocumentHtml(order) {
 
 function buildSalesOrderDocumentHtml(order, type, qrDataUrl) {
   if (type === "warranty") return buildSalesOrderWarrantyDocumentHtml(order);
+  if (type === "core_return") return buildSalesOrderCoreReturnDocumentHtml(order);
   var dispatch = salesOrderDispatch(order) || {};
   var address = order.shipping_address || {};
-  var coreSheet = type === "core_return";
-  var compactDocument = coreSheet;
   var title = salesOrderDocumentTypeLabel(type);
   var outbound = customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "outbound"), "未登録");
   var returned = order.core_return_required ? customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "core_return"), "未登録") : "対象外";
-  var note = coreSheet
-    ? "本紙はコア返却用送り状ではありません。運送会社別の複写式返送用送り状を同梱し、その送り状を使用してご返却ください。返却品の品番・数量をご確認ください。"
-    : "現場では最初に本紙のQRを読み取り、続けて商品の製造シリアルを読み取ってください。スキャナーがない場合は番号入力または候補選択を使用できます。";
-  var headers = coreSheet
-    ? "<tr><th>No.</th><th>返却対象品番</th><th>メーカー品番</th><th>数量</th><th>確認</th></tr>"
-    : "<tr><th>No.</th><th>品番</th><th>区分</th><th>数量</th><th>コア返却</th><th>製造シリアル</th></tr>";
-  var shipmentBlock = coreSheet
-    ? "<section class='shipment-document-shipping single'><div><span>コア返却時の運送便</span><strong>" + esc(returned) + "</strong><small>返送用送り状 " + esc(order.return_tracking_number || "未登録") + "</small></div></section>"
-    : "<section class='shipment-document-shipping'><div><span>商品発送便</span><strong>" + esc(outbound) + "</strong><small>送り状 " + esc(order.outbound_tracking_number || "未登録") + "</small></div><div><span>コア返却便</span><strong>" + esc(returned) + "</strong><small>返送用送り状 " + esc(order.core_return_required ? (order.return_tracking_number || "未登録") : "対象外") + "</small></div></section>";
+  var note = "現場では最初に本紙のQRを読み取り、続けて商品の製造シリアルを読み取ってください。スキャナーがない場合は番号入力または候補選択を使用できます。";
+  var headers = "<tr><th>No.</th><th>品番</th><th>区分</th><th>数量</th><th>コア返却</th><th>製造シリアル</th></tr>";
+  var shipmentBlock = "<section class='shipment-document-shipping'><div><span>商品発送便</span><strong>" + esc(outbound) + "</strong><small>送り状 " + esc(order.outbound_tracking_number || "未登録") + "</small></div><div><span>コア返却便</span><strong>" + esc(returned) + "</strong><small>返送用送り状 " + esc(order.core_return_required ? (order.return_tracking_number || "未登録") : "対象外") + "</small></div></section>";
   return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><title>" + esc(title + " " + (dispatch.dispatch_number || "")) + "</title>" +
-    "<link rel='stylesheet' href='shipment-instruction-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></head><body class='" + (compactDocument ? "document-a5" : "document-a4") + "'>" +
+    "<link rel='stylesheet' href='shipment-instruction-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></head><body class='document-a4'>" +
     "<div class='print-toolbar'><button id='dcats-print-shipment-document' type='button'>印刷・PDF保存</button></div>" +
-    "<main class='shipment-document" + (compactDocument ? " shipment-document-a5" : "") + "'><header><div><span>D-CATS / SHIPPING</span><h1>" + esc(title) + "</h1><strong>" + esc(dispatch.dispatch_number || "-") + "</strong></div>" + (compactDocument ? "" : "<img src='" + esc(qrDataUrl) + "' alt='" + esc(dispatch.dispatch_number || "") + "'>") + "</header>" +
+    "<main class='shipment-document'><header><div><span>GLTEK / SHIPPING</span><h1>" + esc(title) + "</h1><strong>" + esc(dispatch.dispatch_number || "-") + "</strong></div><img src='" + esc(qrDataUrl) + "' alt='" + esc(dispatch.dispatch_number || "") + "'></header>" +
     "<section class='shipment-document-meta'><dl><div><dt>注文番号</dt><dd>" + esc(order.order_number || "-") + "</dd></div><div><dt>得意先</dt><dd>" + esc(order.customer_name || "-") + "</dd></div><div><dt>発行日</dt><dd>" + esc(String(dispatch.issued_at || "").slice(0, 10) || new Date().toISOString().slice(0, 10)) + "</dd></div><div><dt>お届け先</dt><dd>〒" + esc(address.postal_code || "-") + " " + esc(address.prefecture_name || "") + esc(address.address_line_1 || "") + " " + esc(address.address_line_2 || "") + "<br>" + esc(address.company_name || "") + " " + esc(address.recipient_name || "") + " / TEL " + esc(address.phone_number || "-") + "</dd></div></dl></section>" +
     "<table class='shipment-document-table-" + esc(type) + "'><thead>" + headers + "</thead><tbody>" + salesOrderPrintItemRows(order, type) + "</tbody></table>" +
     shipmentBlock +
     "<p class='shipment-document-note'>" + esc(note) + "</p>" +
-    (compactDocument ? "" : "<footer><span>梱包担当</span><i></i><span>照合担当</span><i></i><span>出荷確定</span><i></i></footer>") + "</main></body></html>";
+    "<footer><span>梱包担当</span><i></i><span>照合担当</span><i></i><span>出荷確定</span><i></i></footer></main></body></html>";
 }
 
 async function printSalesOrderDocument(type, targetOrder) {
