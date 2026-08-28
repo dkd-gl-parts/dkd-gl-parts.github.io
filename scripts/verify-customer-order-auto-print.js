@@ -152,7 +152,8 @@ for (const fragment of [
   'type === "warranty"',
   "複写式返送用送り状",
   "document-a5",
-  "商品発送日から"
+  "warranty_document_required === false",
+  "この注文に発行が必要な保証書はありません"
 ]) {
   if (!printDocument.includes(fragment)) throw new Error(`Manual shipment document rendering is missing: ${fragment}`);
 }
@@ -165,10 +166,10 @@ for (const fragment of [
 }
 
 for (const versionFragment of [
-  'content="v1.1.800"',
-  'styles.css?v=1.1.800',
-  'app.js?v=1.1.800',
-  'var APP_VERSION       = "v1.1.800"'
+  'content="v1.1.801"',
+  'styles.css?v=1.1.801',
+  'app.js?v=1.1.801',
+  'var APP_VERSION       = "v1.1.801"'
 ]) {
   const versionSource = versionFragment.startsWith("var ") ? source : html;
   if (!versionSource.includes(versionFragment)) throw new Error(`Release version is inconsistent: ${versionFragment}`);

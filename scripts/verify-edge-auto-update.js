@@ -48,7 +48,7 @@ async function verifyNetworkCheck() {
   let fetchedOptions = null;
   let scheduledVersion = "";
   const sandbox = {
-    APP_VERSION: "v1.1.800",
+    APP_VERSION: "v1.1.801",
     appUpdateDetected: false,
     appUpdateCheckInProgress: false,
     location: { protocol: "https:" },
@@ -59,11 +59,11 @@ async function verifyNetworkCheck() {
     fetch: async (url, options) => {
       fetchedUrl = url;
       fetchedOptions = options;
-      return { ok: true, text: async () => '<meta name="dcats-app-version" content="v1.1.801">' };
+      return { ok: true, text: async () => '<meta name="dcats-app-version" content="v1.1.802">' };
     },
     DOMParser: class {
       parseFromString() {
-        return { querySelector: () => ({ getAttribute: () => "v1.1.801" }) };
+        return { querySelector: () => ({ getAttribute: () => "v1.1.802" }) };
       }
     },
     scheduleAppUpdateReload: (version) => { scheduledVersion = version; }
@@ -78,7 +78,7 @@ async function verifyNetworkCheck() {
   if (!fetchedOptions || fetchedOptions.cache !== "no-store" || fetchedOptions.credentials !== "same-origin") {
     throw new Error("Update checks must request a fresh same-origin response");
   }
-  if (!sandbox.appUpdateDetected || scheduledVersion !== "v1.1.801" || sandbox.appUpdateCheckInProgress) {
+  if (!sandbox.appUpdateDetected || scheduledVersion !== "v1.1.802" || sandbox.appUpdateCheckInProgress) {
     throw new Error("A newer version must schedule one reload and release the in-flight lock");
   }
 }

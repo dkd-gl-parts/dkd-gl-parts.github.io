@@ -57,7 +57,15 @@ assert(html.includes('id="screen-finished-product-shipping"'), "shipment screen 
   'id="finished-shipment-carrier"',
   'id="finished-shipment-tracking"'
 ].forEach((field) => assert(!html.includes(field), `duplicate shipment field remains: ${field}`));
-assert(html.includes('id="finished-shipment-warranty-months" type="number" min="1" max="120"'), "warranty-month guard is missing");
+assert(!html.includes('id="finished-shipment-warranty-months"'), "manual shipment warranty months must be removed");
+for (const id of [
+  "finished-shipment-warranty-summary",
+  "btn-finished-warranty-settings",
+  "finished-warranty-policy-overlay",
+  "finished-warranty-policy-body",
+  "finished-shipment-replacement-overlay",
+  "finished-shipment-replacement-serial"
+]) assert(html.includes(`id="${id}"`), `category warranty or replacement UI is missing: ${id}`);
 assert(css.includes(".finished-shipment-shell"), "shipment layout styles are missing");
 assert(css.includes(".finished-shipment-candidates"), "manual serial candidate styles are missing");
 assert(css.includes(".sales-order-dispatch-summary"), "sales-order dispatch summary styles are missing");
@@ -106,6 +114,8 @@ assert(clearSource.includes('sb.rpc("release_sales_order_dispatch_serial"'), "cl
 const saveSource = functionSource("saveFinishedProductShipment");
 assert(saveSource.includes('sb.rpc("confirm_sales_order_dispatch"'), "atomic dispatch confirmation RPC is not called");
 assert(saveSource.includes("target_expected_version"), "dispatch confirmation lacks optimistic concurrency");
+assert(saveSource.includes("target_warranty_months: 12"), "legacy warranty argument must remain server-compatible while category policy is authoritative");
+assert(!saveSource.includes("finished-shipment-warranty-months"), "shipment confirmation must not read browser-entered warranty months");
 assert(saveSource.includes("finished_shipping_tracking_required"), "outbound tracking must be validated before shipment");
 assert(saveSource.includes("finished_shipping_return_tracking_required"), "core-return tracking must be validated before shipment");
 assert(!saveSource.includes("ship_finished_product_units"), "legacy shipment RPC would double-decrement stock");
@@ -115,6 +125,10 @@ assert(html.includes('data-i18n="finished_shipping_register">照合を完了し�
 assert(functionSource("renderFinishedShipmentCandidates").includes("unit.match_type === \"compatible\""), "compatible candidates need a visible badge");
 assert(functionSource("finishedShipmentFlattenAssignments").includes('match_type: finishedShipmentUnitMatchesItem(serial, orderItem) ? "exact" : "compatible"'), "assigned compatible units must remain identifiable");
 assert(css.includes(".finished-shipment-match-badge"), "compatible serial badge styles are missing");
+assert(css.includes(".finished-warranty-policy-table"), "category warranty settings styles are missing");
+assert(css.includes(".finished-shipment-item-warranty.replacement"), "replacement warranty styles are missing");
+assert(functionSource("saveFinishedWarrantyPolicies").includes('sb.rpc("save_product_warranty_policies"'), "category warranty save RPC is not called");
+assert(functionSource("updateFinishedShipmentReplacement").includes('sb.rpc("set_sales_order_dispatch_item_replacement"'), "replacement warranty RPC is not called");
 
 const cancelSource = functionSource("cancelFinishedProductShipment");
 assert(cancelSource.includes('sb.rpc("cancel_finished_product_shipment"'), "audited standalone cancellation RPC is not called");

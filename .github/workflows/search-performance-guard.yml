@@ -60,6 +60,7 @@ on:
       - "scripts/verify-product-shipping-estimate.js"
       - "scripts/verify-product-management-auto-code.js"
       - "scripts/verify-finished-product-shipments.js"
+      - "scripts/verify-category-warranty-policy.js"
       - "scripts/verify-customer-order-compatible-serial-dispatch.js"
       - "scripts/verify-production-image-thumbnails-by-kind.js"
       - "scripts/verify-production-workspace-layout.js"
@@ -180,6 +181,8 @@ jobs:
         run: node scripts/verify-product-management-auto-code.js
       - name: Verify finished-product shipment layout and workflow
         run: node scripts/verify-finished-product-shipments.js
+      - name: Verify category warranty and replacement inheritance
+        run: node scripts/verify-category-warranty-policy.js
       - name: Verify compatible-product serial dispatch
         run: node scripts/verify-customer-order-compatible-serial-dispatch.js
       - name: Verify production image thumbnails by product kind

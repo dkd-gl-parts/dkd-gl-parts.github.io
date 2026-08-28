@@ -112,12 +112,13 @@ if (enterSource.includes("list_sales_order_b2_exports") || enterSource.includes(
 const pendingCountSource = sourceBetween("function shippingDocumentPendingCount", "function renderShippingDocumentList");
 for (const fragment of [
   "pending_document_count",
-  '["dispatch", "warranty"]',
+  'var requiredTypes = ["dispatch"]',
+  'salesOrderWarrantyDocumentRequired(order)',
   'requiredTypes.push("core_return")',
   '["dot_matrix", "handwritten"].indexOf(order.outbound_waybill_method)',
   '["dot_matrix", "handwritten"].indexOf(order.return_waybill_method)'
 ]) requireFragment(pendingCountSource, fragment);
-const pendingCountContext = {};
+const pendingCountContext = { salesOrderWarrantyDocumentRequired: (order) => order.warranty_document_required !== false };
 vm.runInNewContext(pendingCountSource, pendingCountContext);
 if (pendingCountContext.shippingDocumentPendingCount({ pending_document_count: 1 }) !== 1) {
   throw new Error("The server-calculated pending document count must drive the order list");
@@ -133,6 +134,13 @@ if (pendingCountContext.shippingDocumentPendingCount({
   document_statuses: { dispatch: "printed", warranty: "printed", core_return: "unissued", return_waybill: "unissued" }
 }) !== 0) {
   throw new Error("Core-return documents must not count for an order that does not require a core return");
+}
+if (pendingCountContext.shippingDocumentPendingCount({
+  warranty_document_required: false,
+  core_return_required: false,
+  document_statuses: { dispatch: "printed", warranty: "unissued" }
+}) !== 0) {
+  throw new Error("Replacement-only orders must not count a warranty certificate as pending");
 }
 
 const batchDefaultsSource = sourceBetween("function salesOrderAutoPrintIsEnabled", "async function enterShippingDocumentMgmt");
@@ -186,7 +194,7 @@ for (const fragment of [
   "帳票の標準設定",
   "A4 / 受付時に自動発行",
   "B2クラウド / ヤマト宅急便 元払い",
-  "A5 / 注文単位 / 端末印刷",
+  "A5 / 商品数量分 / 端末印刷",
   "A5 / コア返却必要時 / 端末印刷",
   "手書き運用 / 佐川急便 着払い",
   'carrierCode: "yamato_prepaid"',
@@ -244,9 +252,10 @@ for (const fragment of [
   "data-shipping-document-open-settings='outbound'",
   "data-shipping-document-open-settings='return'",
   'shippingDocumentManualOutputActions(order, "dispatch"',
-  'shippingDocumentManualOutputActions(order, "warranty"',
+  'warrantyRequired ? shippingDocumentManualOutputActions(order, "warranty"',
   'shippingDocumentManualOutputActions(order, "core_return"',
-  'shippingDocumentPrintStateLabel(warrantyJob, "未発行")',
+  'warrantyRequired ? shippingDocumentPrintStateLabel(warrantyJob, "未発行")',
+  '対象外（交換品）',
   'shippingDocumentPrintStateLabel(coreJob, "未発行")',
   "今回のみ:",
   'carrierCode: outboundWaybill.carrier_code || "yamato_prepaid"',
@@ -418,11 +427,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.800"',
-  'styles.css?v=1.1.800',
-  'app.js?v=1.1.800'
+  'content="v1.1.801"',
+  'styles.css?v=1.1.801',
+  'app.js?v=1.1.801'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.800"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.801"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");

@@ -715,6 +715,16 @@ var TRANSLATIONS = {
     finished_shipping_warranty_active: "保証期間内",
     finished_shipping_warranty_expired: "保証期間終了",
     finished_shipping_warranty_until: "保証期限: {date}",
+    finished_shipping_warranty_policy: "カテゴリ保証 {n}か月",
+    finished_shipping_warranty_policy_button: "保証期間設定",
+    finished_shipping_warranty_auto: "カテゴリ設定から自動適用",
+    finished_shipping_replacement: "交換品",
+    finished_shipping_replacement_set: "交換品を設定",
+    finished_shipping_replacement_change: "交換設定を変更",
+    finished_shipping_replacement_clear: "通常出荷へ戻す",
+    finished_shipping_replacement_inherited: "元商品の保証期限を継承",
+    finished_shipping_replacement_no_certificate: "保証書なし",
+    finished_shipping_replacement_quantity_one: "交換品は数量1の明細で設定してください。",
     finished_shipping_customer_required: "出荷先得意先を選択してください。",
     finished_shipping_date_required: "出荷日を入力してください。",
     finished_shipping_serial_required: "必要な製造シリアルの照合を完了してください。",
@@ -2461,6 +2471,16 @@ var TRANSLATIONS = {
     finished_shipping_warranty_active: "Under Warranty",
     finished_shipping_warranty_expired: "Warranty Expired",
     finished_shipping_warranty_until: "Warranty until: {date}",
+    finished_shipping_warranty_policy: "Category warranty: {n} months",
+    finished_shipping_warranty_policy_button: "Warranty Settings",
+    finished_shipping_warranty_auto: "Applied automatically by category",
+    finished_shipping_replacement: "Replacement",
+    finished_shipping_replacement_set: "Set Replacement",
+    finished_shipping_replacement_change: "Change Replacement",
+    finished_shipping_replacement_clear: "Return to Normal Shipment",
+    finished_shipping_replacement_inherited: "Inherits the original remaining warranty",
+    finished_shipping_replacement_no_certificate: "No warranty certificate",
+    finished_shipping_replacement_quantity_one: "Set replacements on an item with quantity 1.",
     finished_shipping_customer_required: "Select a shipment customer.",
     finished_shipping_date_required: "Enter the shipment date.",
     finished_shipping_serial_required: "Verify all required manufacturing serials.",
@@ -4214,6 +4234,16 @@ var TRANSLATIONS = {
     finished_shipping_warranty_active: "保修期内",
     finished_shipping_warranty_expired: "保修期已结束",
     finished_shipping_warranty_until: "保修期限: {date}",
+    finished_shipping_warranty_policy: "分类保修 {n}个月",
+    finished_shipping_warranty_policy_button: "保修期限设置",
+    finished_shipping_warranty_auto: "按分类设置自动应用",
+    finished_shipping_replacement: "更换品",
+    finished_shipping_replacement_set: "设为更换品",
+    finished_shipping_replacement_change: "更改更换设置",
+    finished_shipping_replacement_clear: "恢复普通出货",
+    finished_shipping_replacement_inherited: "继承原商品剩余保修期",
+    finished_shipping_replacement_no_certificate: "不发行保修书",
+    finished_shipping_replacement_quantity_one: "请在数量为1的明细中设置更换品。",
     finished_shipping_customer_required: "请选择出货客户。",
     finished_shipping_date_required: "请输入出货日期。",
     finished_shipping_serial_required: "请完成所有必要制造序列号的核对。",
@@ -5352,7 +5382,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.800";
+var APP_VERSION       = "v1.1.801";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5520,6 +5550,10 @@ var finishedShipmentOrderContext = null;
 var finishedShipmentOrderAssignments = [];
 var finishedShipmentCandidateOrderItemId = null;
 var finishedShipmentCandidateRows = [];
+var finishedWarrantyPolicyRows = [];
+var finishedWarrantyPolicySaving = false;
+var finishedShipmentReplacementTargetId = null;
+var finishedShipmentReplacementSaving = false;
 var productionRankingMgmtRows = [];
 var productionRankingFormMode = "add";
 var productionRankingLinkCandidates = [];
@@ -5678,6 +5712,8 @@ var shippingDocumentRows = [];
 var shippingDocumentSelectedId = null;
 var shippingDocumentCheckedIdsState = new Set();
 var shippingDocumentHasSearched = false;
+var salesOrderWarrantyPolicies = null;
+var salesOrderWarrantyPoliciesLoading = null;
 var shippingDocumentDetail = null;
 var shippingDocumentOverlayMode = "";
 var shippingDocumentListSeq = 0;
@@ -6796,6 +6832,14 @@ async function applyLanguage(lang) {
     updateFinishedLabelSaveButton(finishedLabelSelectedProduct);
     updateFinishedLabelQrPayload();
   }
+  if (isScreenActive("finished-product-shipping")) {
+    renderFinishedShipmentOrderContext();
+    renderFinishedShipmentUnits();
+    renderFinishedShipmentHistory();
+  }
+  if (document.getElementById("finished-warranty-policy-overlay") && document.getElementById("finished-warranty-policy-overlay").classList.contains("show")) {
+    renderFinishedWarrantyPolicyTable();
+  }
   if (isScreenActive("kikan-mgmt")) {
     if (kikanMgmtHasSearched) await loadKikanMgmt();
     else renderKikanMgmtInitialState();
@@ -7840,6 +7884,8 @@ async function doLogout() {
   shippingDocumentSelectedId = null;
   shippingDocumentCheckedIdsState = new Set();
   shippingDocumentHasSearched = false;
+  salesOrderWarrantyPolicies = null;
+  salesOrderWarrantyPoliciesLoading = null;
   shippingDocumentDetail = null;
   shippingDocumentOverlayMode = "";
   shippingDocumentListSeq += 1;
@@ -7880,6 +7926,10 @@ async function doLogout() {
   finishedShipmentOrderAssignments = [];
   finishedShipmentCandidateOrderItemId = null;
   finishedShipmentCandidateRows = [];
+  finishedWarrantyPolicyRows = [];
+  finishedWarrantyPolicySaving = false;
+  finishedShipmentReplacementTargetId = null;
+  finishedShipmentReplacementSaving = false;
   allProducts = []; dataLoaded = false;
   slPartsMap = {}; slPresenceMap = {}; currentSlPartIds = [];
   currentProduct = null; currentProductSpecs = []; currentProductNominalSpec = null; currentImages = [];
@@ -11674,7 +11724,8 @@ function shippingDocumentPendingCount(order) {
   var statuses = order && order.document_statuses && typeof order.document_statuses === "object"
     ? order.document_statuses
     : {};
-  var requiredTypes = ["dispatch", "warranty"];
+  var requiredTypes = ["dispatch"];
+  if (salesOrderWarrantyDocumentRequired(order)) requiredTypes.push("warranty");
   if (order && order.core_return_required) requiredTypes.push("core_return");
   if (order && ["dot_matrix", "handwritten"].indexOf(order.outbound_waybill_method) >= 0) requiredTypes.push("outbound_waybill");
   if (order && order.core_return_required && ["dot_matrix", "handwritten"].indexOf(order.return_waybill_method) >= 0) requiredTypes.push("return_waybill");
@@ -12078,7 +12129,7 @@ function shippingDocumentDefaultStateHtml() {
   var rows = [
     { name: "出荷指示書", standard: dispatchStandard, condition: "受付後に再印刷・PDF保存可" },
     { name: "商品発送送り状", standard: "B2クラウド / ヤマト宅急便 元払い", condition: "注文ごとに作成方法を変更可", carrierCode: "yamato_prepaid" },
-    { name: "保証書", standard: "A5 / 注文単位 / 端末印刷", condition: "商品・製造シリアルを掲載" },
+    { name: "製品保証書", standard: "A5 / 商品数量分 / 端末印刷", condition: "出荷指示発行後・製造シリアル不要" },
     { name: "コア返却シート", standard: "A5 / コア返却必要時 / 端末印刷", condition: "返却不要の注文は対象外" },
     { name: "コア返却用複写伝票", standard: "手書き運用 / 佐川急便 着払い", condition: "ヤマト宅急便・ドットプリンタへ変更可", carrierCode: "sagawa_collect" }
   ];
@@ -12121,6 +12172,8 @@ function shippingDocumentOutboundWaybillHtml(order) {
 function shippingDocumentShipmentDocumentsHtml(order) {
   var dispatch = salesOrderDispatch(order);
   var ready = !!(dispatch && dispatch.status === "shipped" && order.outbound_tracking_number);
+  var warrantyRequired = salesOrderWarrantyDocumentRequired(order);
+  var warrantyReady = !!dispatch && warrantyRequired;
   var dispatchJob = shippingDocumentPrintJob(order, "dispatch");
   var warrantyJob = shippingDocumentPrintJob(order, "warranty");
   var coreJob = shippingDocumentPrintJob(order, "core_return");
@@ -12160,10 +12213,10 @@ function shippingDocumentShipmentDocumentsHtml(order) {
       actions: (outboundMethod === "b2_cloud" ? "<button type='button' class='primary' id='shipping-document-b2-issue'" + (canCreateB2 && !shippingDocumentSaving ? "" : " disabled") + ">" + (b2Issued ? "B2 CSV再発行" : "B2 CSV発行") + "</button>" : outboundMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-outbound-print" + (outboundCanPrint ? "" : " disabled") + ">端末印刷</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='outbound_waybill'" + (outboundCanHandwrite ? "" : " disabled") + ">手書き内容を表示</button>") + "<button type='button' data-shipping-document-open-settings='outbound'>設定</button>"
     },
     {
-      key: "warranty", name: "保証書", standard: "A5 / 注文単位 / 端末印刷",
-      state: shippingDocumentPrintStateLabel(warrantyJob, "未発行"), ready: ready,
+      key: "warranty", name: "製品保証書", standard: "A5 / 商品数量分 / 端末印刷",
+      state: warrantyRequired ? shippingDocumentPrintStateLabel(warrantyJob, "未発行") : "対象外（交換品）", ready: warrantyReady,
       temporary: shippingDocumentHasTemporaryOutput(order, "warranty") ? "今回のみ: " + shippingDocumentOutputModeLabel(shippingDocumentTemporaryOutputMode(order, "warranty")) : "",
-      actions: shippingDocumentManualOutputActions(order, "warranty", ready)
+      actions: warrantyRequired ? shippingDocumentManualOutputActions(order, "warranty", warrantyReady) : "<span class='shipping-document-no-action'>発行不要</span>"
     },
     {
       key: "core_return", name: "コア返却シート", standard: "A5 / コア返却必要時 / 端末印刷",
@@ -12968,6 +13021,12 @@ function salesOrderDispatch(order) {
   return dispatch && typeof dispatch === "object" && dispatch.id ? dispatch : null;
 }
 
+function salesOrderWarrantyDocumentRequired(order) {
+  var dispatch = salesOrderDispatch(order);
+  if (!dispatch) return true;
+  return dispatch.warranty_document_required !== false;
+}
+
 function salesOrderDispatchStatusLabel(status) {
   return ({ preparing: "シリアル照合待ち", ready: "照合完了・出荷確定待ち", shipped: "出荷済み", cancelled: "取消済み" })[status] || "未発行";
 }
@@ -13166,37 +13225,164 @@ function salesOrderPrintItemRows(order, type) {
     if (type === "core_return") {
       return "<tr><td>" + esc(String(index + 1)) + "</td><td><strong>" + esc(partNo) + "</strong><small>" + esc(detail) + "</small></td><td>" + esc(orderItem.manufacturer_part_number || "-") + "</td><td>" + esc(String(item.quantity || 0)) + "</td><td class='shipment-document-check-cell'>□</td></tr>";
     }
-    if (type === "warranty") {
-      return "<tr><td>" + esc(String(index + 1)) + "</td><td><strong>" + esc(partNo) + "</strong><small>" + esc(detail) + "</small></td><td>" + esc(customerProductKindLabel(orderItem.product_kind)) + "</td><td>" + esc(String(item.quantity || 0)) + "</td><td>" + esc(serials || "-") + "</td></tr>";
-    }
     return "<tr><td>" + esc(String(index + 1)) + "</td><td><strong>" + esc(partNo) + "</strong><small>" + esc(detail) + "</small></td><td>" + esc(customerProductKindLabel(orderItem.product_kind)) + "</td><td>" + esc(String(item.quantity || 0)) + "</td><td>" + esc(orderItem.core_return_required ? "必要" : "不要") + "</td><td>" + esc(serials || "読取時に登録") + "</td></tr>";
   }).join("");
 }
 
+async function ensureSalesOrderWarrantyPolicies() {
+  if (Array.isArray(salesOrderWarrantyPolicies)) return salesOrderWarrantyPolicies;
+  if (!salesOrderWarrantyPoliciesLoading) {
+    salesOrderWarrantyPoliciesLoading = sb.rpc("get_product_warranty_policies").then(function(result) {
+      if (result.error) throw result.error;
+      var rows = Array.isArray(result.data) ? result.data : [];
+      salesOrderWarrantyPolicies = rows;
+      return rows;
+    }).finally(function() { salesOrderWarrantyPoliciesLoading = null; });
+  }
+  return salesOrderWarrantyPoliciesLoading;
+}
+
+function salesOrderWarrantyCategoryLabel(orderItem) {
+  var code = String(orderItem && orderItem.category_code || "");
+  var category = (categoryOptions || []).find(function(row) {
+    return String(row.category_code || row.category || "") === code;
+  });
+  if (category && category.label_ja) return category.label_ja;
+  var labels = {
+    alternator: "オルタネータ", starter: "スタータ", starter_generator: "スタータジェネレータ",
+    generator: "ジェネレータ", distributor: "ディストリビュータ", ac_compressor: "ACコンプレッサ",
+    throttle_body: "スロットルボディ", turbocharger: "ターボチャージャ", injector: "インジェクタ"
+  };
+  return labels[code] || tCat(code) || code || "製品";
+}
+
+function salesOrderWarrantyProductName(orderItem) {
+  return salesOrderWarrantyCategoryLabel(orderItem) + "（" + customerProductKindLabel(orderItem && orderItem.product_kind) + "）";
+}
+
+function salesOrderWarrantyPolicy(orderItem, policies) {
+  return (policies || []).find(function(row) {
+    return String(row.category_code || "") === String(orderItem && orderItem.category_code || "")
+      && String(row.product_kind || "") === String(orderItem && orderItem.product_kind || "");
+  }) || null;
+}
+
+async function hydrateSalesOrderWarrantyPrintData(order) {
+  var dispatch = salesOrderDispatch(order);
+  var items = (Array.isArray(dispatch && dispatch.items) ? dispatch.items : []).filter(function(item) {
+    var snapshot = item.warranty_snapshot && typeof item.warranty_snapshot === "object" ? item.warranty_snapshot : null;
+    return !item.replacement && (!snapshot || snapshot.warranty_document_required !== false);
+  });
+  if (!items.length) throw new Error("保証書へ印刷する商品がありません。");
+  var policies = await ensureSalesOrderWarrantyPolicies();
+  if (!policies.length) throw new Error("カテゴリ別保証期間を読み込めません。保証期間設定を確認してください。");
+  var ids = Array.from(new Set(items.map(function(item) {
+    return parseInt(item && item.order_item && item.order_item.dkd_shohin_id, 10);
+  }).filter(Boolean)));
+  var productRows = [];
+  if (ids.length) {
+    var productResult = await sb.from("core_products")
+      .select("dkd_shohin_id,gltek_part_number")
+      .in("dkd_shohin_id", ids);
+    if (productResult.error) throw productResult.error;
+    productRows = productResult.data || [];
+  }
+  var gltekById = {};
+  productRows.forEach(function(row) { gltekById[String(row.dkd_shohin_id)] = row.gltek_part_number || ""; });
+  items.forEach(function(item) {
+    var orderItem = item.order_item || {};
+    var snapshot = item.warranty_snapshot && typeof item.warranty_snapshot === "object" ? item.warranty_snapshot : null;
+    var policy = salesOrderWarrantyPolicy(orderItem, policies);
+    var months = parseInt(snapshot && snapshot.warranty_months || policy && policy.warranty_months, 10);
+    var gltekPartNumber = orderItem.gltek_part_number
+      || gltekById[String(orderItem.dkd_shohin_id)]
+      || (/^G-[0-9A-Z-]+$/i.test(String(orderItem.manufacturer_part_number || "")) ? orderItem.manufacturer_part_number : "");
+    if (!months || months < 1 || months > 120) {
+      throw new Error(salesOrderWarrantyCategoryLabel(orderItem) + "の保証期間が未設定です。");
+    }
+    if (!gltekPartNumber) {
+      throw new Error((orderItem.genuine_part_number || orderItem.manufacturer_part_number || "対象商品") + "のGLTEK品番が未登録です。");
+    }
+    orderItem.warranty_months = months;
+    orderItem.gltek_part_number = gltekPartNumber;
+  });
+  return order;
+}
+
+function salesOrderWarrantyStartDate(order) {
+  var dispatch = salesOrderDispatch(order) || {};
+  var outbound = (Array.isArray(order && order.shipment_history) ? order.shipment_history : []).find(function(row) {
+    return row.direction === "outbound" && row.is_active && row.shipped_on;
+  });
+  return String(order && order.shipped_on || outbound && outbound.shipped_on || dispatch.issued_at || "").slice(0, 10);
+}
+
+function salesOrderWarrantyDateText(value) {
+  var match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return match ? match[1] + "年 " + String(parseInt(match[2], 10)) + "月 " + String(parseInt(match[3], 10)) + "日" : "　　　　年　　　月　　　日";
+}
+
+function salesOrderWarrantyUnits(order) {
+  var dispatch = salesOrderDispatch(order);
+  var units = [];
+  (Array.isArray(dispatch && dispatch.items) ? dispatch.items : []).forEach(function(item) {
+    var snapshot = item.warranty_snapshot && typeof item.warranty_snapshot === "object" ? item.warranty_snapshot : null;
+    if (item.replacement || (snapshot && snapshot.warranty_document_required === false)) return;
+    var quantity = Math.max(1, parseInt(item.quantity, 10) || 1);
+    for (var index = 0; index < quantity; index += 1) {
+      units.push({ item: item, copyNumber: index + 1, copyCount: quantity });
+    }
+  });
+  return units;
+}
+
+function buildSalesOrderWarrantyCertificatePage(order, unit) {
+  var orderItem = unit.item.order_item || {};
+  var address = order.shipping_address || {};
+  var customerName = order.customer_name || address.company_name || "";
+  var contact = address.phone_number || "";
+  return "<main class='warranty-certificate'>" +
+    "<div class='warranty-top-rules'><i></i><i></i></div>" +
+    "<header class='warranty-header'><img src='assets/brand/gltek-logo-print-transparent.png?dcats_version=" + encodeURIComponent(APP_VERSION) + "' alt='GLTEK'><h1>製 品 保 証 書</h1></header>" +
+    "<p class='warranty-lead'>本書は、本書に記載された保証期間内の製品不具合について、下記条件に基づき対応することを証明するものです。大切に保管してください。</p>" +
+    "<section class='warranty-product-grid'><div class='label'>保証開始日</div><div>" + esc(salesOrderWarrantyDateText(salesOrderWarrantyStartDate(order))) + "</div><div class='label'>保証期間</div><div class='value-strong'>" + esc(String(orderItem.warranty_months)) + "か月</div><div class='label'>製品名</div><div>" + esc(salesOrderWarrantyProductName(orderItem)) + "</div><div class='label'>GLTEK品番</div><div class='value-strong'>" + esc(orderItem.gltek_part_number) + "</div></section>" +
+    "<section class='warranty-form-row purchaser'><h2>ご購入者情報</h2><div><span>購入者／会社名</span><strong>" + esc(customerName) + "</strong></div><div><span>連絡先（電話番号・メール等）</span><strong>" + esc(contact) + "</strong></div></section>" +
+    "<section class='warranty-form-row vehicle'><h2>車両情報</h2><div><span>車名</span></div><div><span>車両型式</span></div><div><span>エンジン型式</span></div><div><span>取付時走行距離</span><b>km</b></div></section>" +
+    "<section class='warranty-dealer'><h2>販売店・取付店</h2><p>店名・住所・電話番号・担当者（店印・取付店印は任意）</p></section>" +
+    "<section class='warranty-terms'><article><h2>保証内容</h2><p>本書に記載された保証期間内に、適合車両へ正しく取り付けられ、通常の使用状態で、材料または製造上の原因による不具合が生じた場合、現品確認後に無償修理または同等品交換を行います。保証対象は本製品本体です。</p></article>" +
+    "<article><h2>保証を受ける手順</h2><ol><li>使用を中止し、お買い上げの販売店へご連絡ください。</li><li>本書、対象製品、GLTEK品番、車両・取付情報をご提示ください。</li><li>現品確認後、保証対象の場合は無償修理または同等品交換を行います。事前承認のない修理・代替手配は対象外となる場合があります。</li></ol></article>" +
+    "<article><h2>保証対象外となる主な場合</h2><ul><li>誤装着、誤配線、逆接続、適合外使用、関連部品の不良、異常電圧、水・油・異物混入</li><li>分解・改造・未承認修理、製品ラベルの剥離・改変、競技・オフロード・緊急車両・海外での使用</li><li>事故・落下、火災・地震・水害・落雷・塩害・腐食等の外部要因、通常摩耗・消耗、現品を確認できない場合</li></ul></article></section>" +
+    "<section class='warranty-legal'><h2>費用・法令上の権利・個人情報</h2><p>保証対象は製品本体です。取外し・取付け、診断、搬送、代車、休業等は含みません。ただし、当社の故意・重過失その他法令により責任を負う場合を除きます。本保証は日本国内で有効で、法律上の権利を制限しません。個人情報は保証対応・連絡の範囲で利用します。</p></section>" +
+    "<div class='warranty-bottom-rules'><i></i><i></i></div></main>";
+}
+
+function buildSalesOrderWarrantyDocumentHtml(order) {
+  var pages = salesOrderWarrantyUnits(order);
+  if (!pages.length) throw new Error("この注文に発行が必要な保証書はありません。");
+  return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><title>製品保証書 " + esc(order.order_number || "") + "</title>" +
+    "<link rel='stylesheet' href='shipment-instruction-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></head><body class='document-warranty'>" +
+    "<div class='print-toolbar'><button id='dcats-print-shipment-document' type='button'>印刷・PDF保存</button></div>" +
+    pages.map(function(unit) { return buildSalesOrderWarrantyCertificatePage(order, unit); }).join("") + "</body></html>";
+}
+
 function buildSalesOrderDocumentHtml(order, type, qrDataUrl) {
+  if (type === "warranty") return buildSalesOrderWarrantyDocumentHtml(order);
   var dispatch = salesOrderDispatch(order) || {};
   var address = order.shipping_address || {};
   var coreSheet = type === "core_return";
-  var warranty = type === "warranty";
-  var compactDocument = coreSheet || warranty;
+  var compactDocument = coreSheet;
   var title = salesOrderDocumentTypeLabel(type);
   var outbound = customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "outbound"), "未登録");
   var returned = order.core_return_required ? customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "core_return"), "未登録") : "対象外";
   var note = coreSheet
     ? "本紙はコア返却用送り状ではありません。運送会社別の複写式返送用送り状を同梱し、その送り状を使用してご返却ください。返却品の品番・数量をご確認ください。"
-    : warranty
-      ? "保証開始日は商品発送日です。保証条件の詳細は販売条件に従います。本書は注文番号、送り状番号、製造シリアルとともに保管してください。"
-      : "現場では最初に本紙のQRを読み取り、続けて商品の製造シリアルを読み取ってください。スキャナーがない場合は番号入力または候補選択を使用できます。";
+    : "現場では最初に本紙のQRを読み取り、続けて商品の製造シリアルを読み取ってください。スキャナーがない場合は番号入力または候補選択を使用できます。";
   var headers = coreSheet
     ? "<tr><th>No.</th><th>返却対象品番</th><th>メーカー品番</th><th>数量</th><th>確認</th></tr>"
-    : warranty
-      ? "<tr><th>No.</th><th>品番</th><th>区分</th><th>数量</th><th>製造シリアル</th></tr>"
-      : "<tr><th>No.</th><th>品番</th><th>区分</th><th>数量</th><th>コア返却</th><th>製造シリアル</th></tr>";
+    : "<tr><th>No.</th><th>品番</th><th>区分</th><th>数量</th><th>コア返却</th><th>製造シリアル</th></tr>";
   var shipmentBlock = coreSheet
     ? "<section class='shipment-document-shipping single'><div><span>コア返却時の運送便</span><strong>" + esc(returned) + "</strong><small>返送用送り状 " + esc(order.return_tracking_number || "未登録") + "</small></div></section>"
-    : warranty
-      ? "<section class='shipment-document-shipping'><div><span>商品発送便</span><strong>" + esc(outbound) + "</strong><small>送り状 " + esc(order.outbound_tracking_number || "未登録") + "</small></div><div><span>保証期間</span><strong>商品発送日から " + esc(String(dispatch.warranty_months || 12)) + " か月</strong><small>製造シリアルは上表に記載</small></div></section>"
-      : "<section class='shipment-document-shipping'><div><span>商品発送便</span><strong>" + esc(outbound) + "</strong><small>送り状 " + esc(order.outbound_tracking_number || "未登録") + "</small></div><div><span>コア返却便</span><strong>" + esc(returned) + "</strong><small>返送用送り状 " + esc(order.core_return_required ? (order.return_tracking_number || "未登録") : "対象外") + "</small></div></section>";
+    : "<section class='shipment-document-shipping'><div><span>商品発送便</span><strong>" + esc(outbound) + "</strong><small>送り状 " + esc(order.outbound_tracking_number || "未登録") + "</small></div><div><span>コア返却便</span><strong>" + esc(returned) + "</strong><small>返送用送り状 " + esc(order.core_return_required ? (order.return_tracking_number || "未登録") : "対象外") + "</small></div></section>";
   return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><title>" + esc(title + " " + (dispatch.dispatch_number || "")) + "</title>" +
     "<link rel='stylesheet' href='shipment-instruction-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></head><body class='" + (compactDocument ? "document-a5" : "document-a4") + "'>" +
     "<div class='print-toolbar'><button id='dcats-print-shipment-document' type='button'>印刷・PDF保存</button></div>" +
@@ -13208,12 +13394,16 @@ function buildSalesOrderDocumentHtml(order, type, qrDataUrl) {
     (compactDocument ? "" : "<footer><span>梱包担当</span><i></i><span>照合担当</span><i></i><span>出荷確定</span><i></i></footer>") + "</main></body></html>";
 }
 
-function printSalesOrderDocument(type, targetOrder) {
+async function printSalesOrderDocument(type, targetOrder) {
   var order = targetOrder || salesOrderDetail;
   var dispatch = salesOrderDispatch(order);
   if (!order || !dispatch) return;
-  if (type !== "dispatch" && (dispatch.status !== "shipped" || !order.outbound_tracking_number)) {
-    alert("保証書とコア返却シートは、商品・製造シリアル照合とB2発行済データ取込の両方が完了してから印刷できます。");
+  if (type === "core_return" && (dispatch.status !== "shipped" || !order.outbound_tracking_number)) {
+    alert("コア返却シートは、商品・製造シリアル照合とB2発行済データ取込の両方が完了してから印刷できます。");
+    return;
+  }
+  if (type === "warranty" && !salesOrderWarrantyDocumentRequired(order)) {
+    alert("この注文は交換品のみのため、保証書は発行しません。");
     return;
   }
   var popup = window.open("", "_blank");
@@ -13223,6 +13413,12 @@ function printSalesOrderDocument(type, targetOrder) {
   }
   try {
     popup.opener = null;
+    if (type === "warranty") {
+      popup.document.open();
+      popup.document.write("<!doctype html><html lang='ja'><head><meta charset='utf-8'><title>製品保証書を準備中</title></head><body><p>製品保証書を準備しています。</p></body></html>");
+      popup.document.close();
+      await hydrateSalesOrderWarrantyPrintData(order);
+    }
     var qrDataUrl = finishedProductSerialQrDataUrl(dispatch.dispatch_number);
     popup.document.open();
     popup.document.write(buildSalesOrderDocumentHtml(order, type, qrDataUrl));
@@ -26274,6 +26470,211 @@ function finishedShipmentDispatch() {
   return salesOrderDispatch(finishedShipmentOrderContext);
 }
 
+function finishedWarrantyPolicyFor(categoryCode, productKind) {
+  var kind = normalizeProductKind(productKind || "rebuilt");
+  return finishedWarrantyPolicyRows.find(function(row) {
+    return String(row.category_code || "") === String(categoryCode || "") &&
+      normalizeProductKind(row.product_kind) === kind;
+  }) || null;
+}
+
+function finishedWarrantyCategoryLabel(row) {
+  if (!row) return "-";
+  return currentLang === "en"
+    ? (row.label_en || row.label_ja || row.category_code || "-")
+    : currentLang === "zh"
+      ? (row.label_zh || row.label_ja || row.category_code || "-")
+      : (row.label_ja || row.label_en || row.category_code || "-");
+}
+
+async function loadFinishedWarrantyPolicies(force) {
+  if (finishedWarrantyPolicyRows.length && !force) return true;
+  var result = await sb.rpc("get_product_warranty_policies");
+  if (result.error) {
+    setFinishedShipmentMessage("finished-warranty-policy-message", result.error.message || t("msg_part_err"), true);
+    return false;
+  }
+  finishedWarrantyPolicyRows = Array.isArray(result.data) ? result.data : [];
+  return true;
+}
+
+function renderFinishedWarrantyPolicyTable() {
+  var body = document.getElementById("finished-warranty-policy-body");
+  if (!body) return;
+  var categories = [];
+  finishedWarrantyPolicyRows.forEach(function(row) {
+    var key = String(row.category_code || "");
+    var category = categories.find(function(item) { return item.category_code === key; });
+    if (!category) {
+      category = {
+        category_code: key,
+        label_ja: row.label_ja,
+        label_en: row.label_en,
+        label_zh: row.label_zh,
+        sort_order: row.sort_order,
+        policies: {}
+      };
+      categories.push(category);
+    }
+    category.policies[normalizeProductKind(row.product_kind)] = row;
+  });
+  categories.sort(function(a, b) {
+    return (parseInt(a.sort_order, 10) || 0) - (parseInt(b.sort_order, 10) || 0) || a.category_code.localeCompare(b.category_code);
+  });
+  body.innerHTML = categories.map(function(category) {
+    var rebuilt = category.policies.rebuilt || {};
+    var fresh = category.policies.aftermarket_new || {};
+    function input(row, kind) {
+      return "<label><input type='number' min='1' max='120' step='1' value='" + esc(String(row.warranty_months || 12)) + "' data-finished-warranty-category='" + esc(category.category_code) + "' data-finished-warranty-kind='" + esc(kind) + "'><span>か月</span></label>";
+    }
+    return "<tr><th><strong>" + esc(finishedWarrantyCategoryLabel(category)) + "</strong><small>" + esc(category.category_code) + "</small></th><td>" + input(rebuilt, "rebuilt") + "</td><td>" + input(fresh, "aftermarket_new") + "</td></tr>";
+  }).join("") || "<tr><td colspan='3'>保証期間を読み込めませんでした。</td></tr>";
+}
+
+async function openFinishedWarrantyPolicySettings() {
+  if (!canManageFinishedProductShipping()) return;
+  var overlay = document.getElementById("finished-warranty-policy-overlay");
+  if (!overlay) return;
+  overlay.classList.add("show");
+  setFinishedShipmentMessage("finished-warranty-policy-message", t("loading"), false);
+  if (await loadFinishedWarrantyPolicies(true)) {
+    renderFinishedWarrantyPolicyTable();
+    setFinishedShipmentMessage("finished-warranty-policy-message", "", false);
+  }
+}
+
+function closeFinishedWarrantyPolicySettings() {
+  if (finishedWarrantyPolicySaving) return;
+  var overlay = document.getElementById("finished-warranty-policy-overlay");
+  if (overlay) overlay.classList.remove("show");
+}
+
+async function saveFinishedWarrantyPolicies() {
+  if (finishedWarrantyPolicySaving) return;
+  var inputs = Array.from(document.querySelectorAll("[data-finished-warranty-category][data-finished-warranty-kind]"));
+  var policies = [];
+  for (var index = 0; index < inputs.length; index += 1) {
+    var months = parseInt(inputs[index].value, 10);
+    if (!Number.isFinite(months) || months < 1 || months > 120) {
+      setFinishedShipmentMessage("finished-warranty-policy-message", "保証月数は1〜120で入力してください。", true);
+      inputs[index].focus();
+      return;
+    }
+    policies.push({
+      category_code: inputs[index].dataset.finishedWarrantyCategory,
+      product_kind: inputs[index].dataset.finishedWarrantyKind,
+      warranty_months: months
+    });
+  }
+  finishedWarrantyPolicySaving = true;
+  var saveButton = document.getElementById("finished-warranty-policy-save");
+  if (saveButton) saveButton.disabled = true;
+  setFinishedShipmentMessage("finished-warranty-policy-message", t("loading"), false);
+  var result = await sb.rpc("save_product_warranty_policies", { target_policies: policies });
+  finishedWarrantyPolicySaving = false;
+  if (saveButton) saveButton.disabled = false;
+  if (result.error) {
+    setFinishedShipmentMessage("finished-warranty-policy-message", result.error.message || t("msg_part_err"), true);
+    return;
+  }
+  finishedWarrantyPolicyRows = Array.isArray(result.data) ? result.data : [];
+  salesOrderWarrantyPolicies = finishedWarrantyPolicyRows.slice();
+  renderFinishedWarrantyPolicyTable();
+  renderFinishedShipmentOrderContext();
+  setFinishedShipmentMessage("finished-warranty-policy-message", "保証期間を保存しました。次の出荷から適用します。", false);
+}
+
+function finishedShipmentDispatchItem(dispatchItemId) {
+  return finishedShipmentOrderItems().find(function(item) {
+    return String(item.id) === String(dispatchItemId);
+  }) || null;
+}
+
+function closeFinishedShipmentReplacement() {
+  if (finishedShipmentReplacementSaving) return;
+  finishedShipmentReplacementTargetId = null;
+  var overlay = document.getElementById("finished-shipment-replacement-overlay");
+  if (overlay) overlay.classList.remove("show");
+}
+
+function openFinishedShipmentReplacement(dispatchItemId) {
+  var dispatchItem = finishedShipmentDispatchItem(dispatchItemId);
+  if (!dispatchItem) return;
+  if ((parseInt(dispatchItem.quantity, 10) || 0) !== 1) {
+    alert(t("finished_shipping_replacement_quantity_one"));
+    return;
+  }
+  finishedShipmentReplacementTargetId = parseInt(dispatchItem.id, 10);
+  var item = dispatchItem.order_item || {};
+  var overlay = document.getElementById("finished-shipment-replacement-overlay");
+  var label = document.getElementById("finished-shipment-replacement-item");
+  var input = document.getElementById("finished-shipment-replacement-serial");
+  if (label) label.textContent = [item.genuine_part_number || item.manufacturer_part_number, item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ");
+  if (input) input.value = (dispatchItem.replacement || {}).manufacturing_serial || "";
+  setFinishedShipmentMessage("finished-shipment-replacement-message", "", false);
+  if (overlay) overlay.classList.add("show");
+  if (input) input.focus();
+}
+
+async function updateFinishedShipmentReplacement(serial) {
+  if (!finishedShipmentReplacementTargetId || finishedShipmentReplacementSaving) return;
+  finishedShipmentReplacementSaving = true;
+  var saveButton = document.getElementById("finished-shipment-replacement-save");
+  if (saveButton) saveButton.disabled = true;
+  setFinishedShipmentMessage("finished-shipment-replacement-message", t("loading"), false);
+  var result = await sb.rpc("set_sales_order_dispatch_item_replacement", {
+    target_dispatch_item_id: finishedShipmentReplacementTargetId,
+    target_original_manufacturing_serial: serial || null,
+    target_expected_version: finishedShipmentOrderContext && finishedShipmentOrderContext.version != null ? finishedShipmentOrderContext.version : null
+  });
+  finishedShipmentReplacementSaving = false;
+  if (saveButton) saveButton.disabled = false;
+  if (result.error) {
+    setFinishedShipmentMessage("finished-shipment-replacement-message", result.error.message || t("msg_part_err"), true);
+    return;
+  }
+  var order = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
+  closeFinishedShipmentReplacement();
+  refreshFinishedShipmentContext(order);
+  setFinishedShipmentMessage("finished-shipment-save-message", serial ? "交換元と保証期限を設定しました。" : "通常出荷へ戻しました。", false);
+}
+
+async function saveFinishedShipmentReplacement() {
+  var input = document.getElementById("finished-shipment-replacement-serial");
+  var serial = normalizeFinishedShipmentSerial(input ? input.value : "");
+  if (!/^M[0-9]{4}-[0-9]{7}$/.test(serial)) {
+    setFinishedShipmentMessage("finished-shipment-replacement-message", t("finished_shipping_serial_invalid"), true);
+    if (input) input.select();
+    return;
+  }
+  await updateFinishedShipmentReplacement(serial);
+}
+
+async function clearFinishedShipmentReplacement(dispatchItemId) {
+  if (!window.confirm("交換品設定を解除して通常出荷へ戻しますか？")) return;
+  finishedShipmentReplacementTargetId = parseInt(dispatchItemId, 10);
+  await updateFinishedShipmentReplacement("");
+}
+
+function renderFinishedShipmentWarrantySummary() {
+  var host = document.getElementById("finished-shipment-warranty-summary");
+  var dispatch = finishedShipmentDispatch();
+  if (!host) return;
+  if (!dispatch) { host.textContent = t("finished_shipping_warranty_auto"); return; }
+  var labels = (Array.isArray(dispatch.items) ? dispatch.items : []).map(function(dispatchItem) {
+    var item = dispatchItem.order_item || {};
+    var snapshot = dispatchItem.warranty_snapshot || {};
+    if (dispatchItem.replacement || snapshot.warranty_document_required === false) {
+      var inheritedExpiry = snapshot.warranty_expires_on || (dispatchItem.replacement || {}).warranty_expires_on || "-";
+      return "<span class='replacement'>" + esc(t("finished_shipping_replacement") + " / " + inheritedExpiry + " / " + t("finished_shipping_replacement_no_certificate")) + "</span>";
+    }
+    var policy = finishedWarrantyPolicyFor(item.category_code, item.product_kind);
+    var months = snapshot.warranty_months || (policy && policy.warranty_months);
+    return "<span>" + esc((item.genuine_part_number || item.manufacturer_part_number || "-") + " / " + (months ? t("finished_shipping_warranty_policy").replace("{n}", months) : t("finished_shipping_warranty_auto"))) + "</span>";
+  });
+  host.innerHTML = labels.join("") || esc(t("finished_shipping_warranty_auto"));
+}
+
 function finishedShipmentOrderItems() {
   var dispatch = finishedShipmentDispatch();
   return (Array.isArray(dispatch && dispatch.items) ? dispatch.items : []).filter(function(item) {
@@ -26336,11 +26737,22 @@ function renderFinishedShipmentOrderContext() {
     var required = parseInt(dispatchItem.quantity, 10) || 0;
     var assigned = Array.isArray(dispatchItem.serials) ? dispatchItem.serials.length : 0;
     var partNo = item.genuine_part_number || item.manufacturer_part_number || "-";
+    var replacement = dispatchItem.replacement || null;
+    var snapshot = dispatchItem.warranty_snapshot || null;
+    var policy = finishedWarrantyPolicyFor(item.category_code, item.product_kind);
+    var warrantyMonths = snapshot && snapshot.warranty_months || policy && policy.warranty_months;
+    var warrantyHtml = replacement
+      ? "<div class='finished-shipment-item-warranty replacement'><strong>" + esc(t("finished_shipping_replacement")) + "</strong><span>" + esc(replacement.manufacturing_serial || "-") + " / " + esc((snapshot && snapshot.warranty_expires_on) || replacement.warranty_expires_on || "-") + "</span><em>" + esc(t("finished_shipping_replacement_no_certificate")) + "</em></div>"
+      : "<div class='finished-shipment-item-warranty'><strong>" + esc(warrantyMonths ? t("finished_shipping_warranty_policy").replace("{n}", warrantyMonths) : t("finished_shipping_warranty_auto")) + "</strong></div>";
+    var replacementActions = active && required === 1
+      ? "<div class='finished-shipment-replacement-actions'><button type='button' data-finished-replacement-item='" + esc(String(dispatchItem.id)) + "'>" + esc(replacement ? t("finished_shipping_replacement_change") : t("finished_shipping_replacement_set")) + "</button>" + (replacement ? "<button type='button' class='clear' data-finished-replacement-clear='" + esc(String(dispatchItem.id)) + "'>" + esc(t("finished_shipping_replacement_clear")) + "</button>" : "") + "</div>"
+      : "";
     return "<div class='finished-shipment-order-item" + (assigned >= required ? " complete" : "") + "'>" +
       "<div><strong>" + esc(partNo) + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small></div>" +
       "<span>" + esc(customerProductKindLabel(item.product_kind)) + "</span>" +
       "<b>" + esc(String(assigned)) + " / " + esc(String(required)) + "</b>" +
       (active && assigned < required ? "<button type='button' data-finished-candidate-item='" + esc(String(item.id)) + "'>候補から選択</button>" : "") +
+      warrantyHtml + replacementActions +
     "</div>";
   }).join("");
   host.innerHTML = "<div class='finished-shipment-order-head'><div><strong>" + esc(dispatch.dispatch_number) + "</strong><span>" + esc((order.order_number || ("注文 " + order.id)) + " / " + (order.customer_name || "-")) + "</span></div><em>" + esc(salesOrderDispatchStatusLabel(dispatch.status)) + "</em></div>" +
@@ -26357,6 +26769,17 @@ function renderFinishedShipmentOrderContext() {
       openFinishedShipmentCandidates(parseInt(button.dataset.finishedCandidateItem, 10));
     });
   });
+  host.querySelectorAll("[data-finished-replacement-item]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      openFinishedShipmentReplacement(parseInt(button.dataset.finishedReplacementItem, 10));
+    });
+  });
+  host.querySelectorAll("[data-finished-replacement-clear]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      clearFinishedShipmentReplacement(parseInt(button.dataset.finishedReplacementClear, 10));
+    });
+  });
+  renderFinishedShipmentWarrantySummary();
 }
 
 async function loadFinishedShipmentDispatch() {
@@ -26402,6 +26825,7 @@ async function enterFinishedProductShipping(options) {
   if (dispatchInput) dispatchInput.value = dispatch ? dispatch.dispatch_number : "";
   var shippedOn = document.getElementById("finished-shipment-shipped-on");
   if (shippedOn) shippedOn.value = new Date().toISOString().slice(0, 10);
+  await loadFinishedWarrantyPolicies(false);
   refreshFinishedShipmentContext(finishedShipmentOrderContext);
   closeFinishedShipmentCandidates();
   var back = document.getElementById("btn-back-finished-product-shipping");
@@ -26573,7 +26997,7 @@ async function releaseFinishedShipmentAssignment(assignmentId) {
 
 async function loadFinishedShipmentForUnit(unitId) {
   var itemR = await sb.from("finished_product_shipment_items")
-    .select("shipment_id")
+    .select("shipment_id,warranty_months,warranty_expires_on,warranty_source,warranty_document_required,replacement_for_shipment_item_id")
     .eq("finished_product_unit_id", unitId)
     .order("shipment_id", { ascending: false })
     .limit(20);
@@ -26586,7 +27010,16 @@ async function loadFinishedShipmentForUnit(unitId) {
     .limit(20);
   if (shipmentR.error) return null;
   var rows = shipmentR.data || [];
-  return rows.find(function(row) { return row.status === "shipped"; }) || rows[0] || null;
+  var shipment = rows.find(function(row) { return row.status === "shipped"; }) || rows[0] || null;
+  if (!shipment) return null;
+  var shipmentItem = itemR.data.find(function(row) { return String(row.shipment_id) === String(shipment.id); }) || {};
+  return Object.assign({}, shipment, {
+    warranty_months: shipmentItem.warranty_months || shipment.warranty_months,
+    warranty_expires_on: shipmentItem.warranty_expires_on || shipment.warranty_expires_on,
+    warranty_source: shipmentItem.warranty_source || null,
+    warranty_document_required: shipmentItem.warranty_document_required,
+    replacement_for_shipment_item_id: shipmentItem.replacement_for_shipment_item_id
+  });
 }
 
 async function renderFinishedShipmentLookup(unit) {
@@ -26605,6 +27038,9 @@ async function renderFinishedShipmentLookup(unit) {
       "<div><span>" + esc(t("finished_shipping_tracking")) + "</span><strong>" + esc(shipment.tracking_number || "-") + "</strong></div>" +
       "<div><span>" + esc(warranty.label) + "</span><strong class='" + (warranty.active ? "warranty-active" : "warranty-expired") + "'>" + esc(shipment.warranty_expires_on || "-") + "</strong></div>" +
       "</div>";
+    if (shipment.warranty_source === "replacement_inherited") {
+      html += "<div class='finished-shipment-lookup-replacement'>" + esc(t("finished_shipping_replacement") + " / " + t("finished_shipping_replacement_inherited") + " / " + t("finished_shipping_replacement_no_certificate")) + "</div>";
+    }
   }
   wrap.innerHTML = html;
 }
@@ -26689,13 +27125,11 @@ async function saveFinishedProductShipment() {
   var order = finishedShipmentOrderContext;
   var dispatch = finishedShipmentDispatch();
   var shippedOn = String((document.getElementById("finished-shipment-shipped-on") || {}).value || "").trim();
-  var warrantyMonths = parseInt((document.getElementById("finished-shipment-warranty-months") || {}).value, 10);
   if (!order || !dispatch) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_order_link_wait"), true); return; }
   if (dispatch.status !== "ready") { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_serial_required"), true); return; }
   if (!String(order.outbound_tracking_number || "").trim()) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_tracking_required"), true); return; }
   if (order.core_return_required && !String(order.return_tracking_number || "").trim()) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_return_tracking_required"), true); return; }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(shippedOn)) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_date_required"), true); return; }
-  if (isNaN(warrantyMonths) || warrantyMonths < 1 || warrantyMonths > 120) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_warranty_months"), true); return; }
   if (!window.confirm(t("finished_shipping_confirm"))) return;
 
   finishedShipmentSaving = true;
@@ -26706,7 +27140,7 @@ async function saveFinishedProductShipment() {
     var r = await sb.rpc("confirm_sales_order_dispatch", {
       target_dispatch_id: dispatch.id,
       target_shipped_on: shippedOn,
-      target_warranty_months: warrantyMonths,
+      target_warranty_months: 12,
       target_note: ((document.getElementById("finished-shipment-note") || {}).value || "").trim() || null,
       target_expected_version: order.version == null ? null : order.version
     });
@@ -26745,7 +27179,7 @@ async function loadFinishedShipmentHistory() {
   }
   var ids = shipments.map(function(row) { return row.id; });
   var itemR = await sb.from("finished_product_shipment_items")
-    .select("shipment_id,finished_product_unit_id")
+    .select("shipment_id,finished_product_unit_id,order_item_id,warranty_months,warranty_expires_on,warranty_source,warranty_document_required,replacement_for_shipment_item_id")
     .in("shipment_id", ids);
   if (itemR.error) {
     if (wrap) wrap.innerHTML = "<div class='empty'>" + esc(itemR.error.message || t("msg_part_err")) + "</div>";
@@ -26769,7 +27203,15 @@ async function loadFinishedShipmentHistory() {
   (itemR.data || []).forEach(function(item) {
     var key = String(item.shipment_id);
     if (!itemMap[key]) itemMap[key] = [];
-    if (unitMap[String(item.finished_product_unit_id)]) itemMap[key].push(unitMap[String(item.finished_product_unit_id)]);
+    if (unitMap[String(item.finished_product_unit_id)]) {
+      itemMap[key].push(Object.assign({}, unitMap[String(item.finished_product_unit_id)], {
+        warranty_months: item.warranty_months,
+        warranty_expires_on: item.warranty_expires_on,
+        warranty_source: item.warranty_source,
+        warranty_document_required: item.warranty_document_required,
+        replacement_for_shipment_item_id: item.replacement_for_shipment_item_id
+      }));
+    }
   });
   finishedShipmentHistoryRows = shipments.map(function(row) {
     return Object.assign({}, row, { units: itemMap[String(row.id)] || [] });
@@ -26787,14 +27229,18 @@ function renderFinishedShipmentHistory() {
   wrap.innerHTML = finishedShipmentHistoryRows.map(function(row) {
     var active = row.status === "shipped";
     var warranty = finishedShipmentWarrantyState(row.warranty_expires_on);
-    var serials = (row.units || []).map(function(unit) { return unit.manufacturing_serial; });
+    var serials = (row.units || []).map(function(unit) {
+      var expiry = unit.warranty_expires_on || row.warranty_expires_on || "-";
+      var suffix = unit.warranty_source === "replacement_inherited" ? " / " + t("finished_shipping_replacement") + " / " + t("finished_shipping_replacement_no_certificate") : " / " + expiry;
+      return { serial: unit.manufacturing_serial, suffix: suffix };
+    });
     var meta = [row.shipped_on, row.carrier_name, row.tracking_number, row.external_order_number].filter(Boolean).join(" / ");
     var html = "<article class='finished-shipment-history-row'>";
     html += "<div class='finished-shipment-history-head'><div><strong>" + esc(row.shipment_code || ("S" + row.id)) + "</strong><span>" + esc(row.customer_name_snapshot || "-") + "</span></div>";
     html += "<span class='finished-shipment-status " + esc(row.status || "") + "'>" + esc(t(active ? "finished_shipping_shipped" : "finished_shipping_cancelled_status")) + "</span></div>";
     html += "<div class='finished-shipment-history-meta'>" + esc(meta || "-") + "</div>";
     html += "<div class='finished-shipment-warranty " + (warranty.active && active ? "active" : "expired") + "'>" + esc(warranty.label + " / " + (row.warranty_expires_on || "-")) + "</div>";
-    html += "<div class='finished-label-serial-list'>" + serials.map(function(serial) { return "<span class='finished-label-serial-chip'>" + esc(serial) + "</span>"; }).join("") + "</div>";
+    html += "<div class='finished-label-serial-list'>" + serials.map(function(serial) { return "<span class='finished-label-serial-chip'>" + esc(serial.serial + serial.suffix) + "</span>"; }).join("") + "</div>";
     if (active) html += "<div class='finished-shipment-history-actions'><button type='button' class='btn-sm-edit production-action-secondary' data-finished-shipment-cancel='" + esc(String(row.id)) + "'>" + esc(t("finished_shipping_cancel")) + "</button></div>";
     if (!active && row.cancellation_reason) html += "<div class='finished-shipment-history-meta'>" + esc(row.cancellation_reason) + "</div>";
     html += "</article>";
@@ -45676,6 +46122,24 @@ document.getElementById("finished-shipment-serial-input").addEventListener("keyd
   if (e.key !== "Enter") return;
   e.preventDefault();
   addFinishedShipmentSerial();
+});
+document.getElementById("btn-finished-warranty-settings").addEventListener("click", openFinishedWarrantyPolicySettings);
+document.getElementById("finished-warranty-policy-close").addEventListener("click", closeFinishedWarrantyPolicySettings);
+document.getElementById("finished-warranty-policy-cancel").addEventListener("click", closeFinishedWarrantyPolicySettings);
+document.getElementById("finished-warranty-policy-save").addEventListener("click", saveFinishedWarrantyPolicies);
+document.getElementById("finished-warranty-policy-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeFinishedWarrantyPolicySettings();
+});
+document.getElementById("finished-shipment-replacement-close").addEventListener("click", closeFinishedShipmentReplacement);
+document.getElementById("finished-shipment-replacement-cancel").addEventListener("click", closeFinishedShipmentReplacement);
+document.getElementById("finished-shipment-replacement-save").addEventListener("click", saveFinishedShipmentReplacement);
+document.getElementById("finished-shipment-replacement-serial").addEventListener("keydown", function(e) {
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  saveFinishedShipmentReplacement();
+});
+document.getElementById("finished-shipment-replacement-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeFinishedShipmentReplacement();
 });
 ["finished-label-instruction-id","finished-label-quantity","finished-label-print-count","finished-label-assembly-staff","finished-label-inspection-staff","finished-label-shelf-no","finished-label-memo","finished-label-variant-kind"].forEach(function(id){
   var el = document.getElementById(id);
