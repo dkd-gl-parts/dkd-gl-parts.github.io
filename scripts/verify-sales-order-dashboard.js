@@ -68,7 +68,10 @@ for (const fragment of [
   ".sales-order-dashboard-metric.active {",
   ".sales-order-dashboard-metric:focus-visible {",
   ".sales-order-dashboard-metrics { display: flex; overflow-x: auto;",
-  ".sales-order-dashboard-metric { flex: 0 0 104px;"
+  ".sales-order-dashboard-metric { flex: 0 0 104px;",
+  ".sales-order-status { display: inline-flex; align-items: center; justify-content: center; min-width: 60px; height: 24px;",
+  "line-height: 1; letter-spacing: 0; white-space: nowrap;",
+  ".sales-order-list-identity .sales-order-status { flex: 0 0 auto; }"
 ]) requireFragment(css, fragment, "dashboard responsive style");
 
 requireFragment(source, 'document.querySelectorAll("[data-sales-order-dashboard-status]")', "dashboard event registration");
