@@ -5352,7 +5352,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.798";
+var APP_VERSION       = "v1.1.799";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -11730,7 +11730,7 @@ function shippingDocumentSelectedTypes() {
 function shippingDocumentHandwrittenTaskReady(order, documentType) {
   if (!order || !order.dispatch_id) return false;
   if (documentType === "outbound_waybill") return true;
-  return !!(order.core_return_required && order.dispatch_status === "shipped" && order.outbound_registered);
+  return !!order.core_return_required;
 }
 
 function shippingDocumentHandwrittenTasks(orderIds, documentTypes) {
@@ -12139,7 +12139,7 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var returnPrintBusy = !!(returnJob && ["queued", "claimed"].indexOf(returnJob.status) >= 0);
   var returnCanPrint = !!(ready && returnMethod === "dot_matrix" && waybill.id && waybill.tracking_number && !returnPrintBusy && !shippingDocumentSaving);
   var returnHandwrittenComplete = returnMethod === "handwritten" && (waybill.status === "printed" || !!waybill.handwritten_completed_at);
-  var returnCanHandwrite = !!(ready && returnMethod === "handwritten" && !returnHandwrittenComplete && !shippingDocumentSaving);
+  var returnCanHandwrite = !!(dispatch && order.core_return_required && returnMethod === "handwritten" && !returnHandwrittenComplete && !shippingDocumentSaving);
   var b2Issued = Array.isArray(order.b2_exports) && order.b2_exports.length > 0;
   var canCreateB2 = ["accepted", "shipping_ready", "shipped"].indexOf(order.status) >= 0 && outboundMethod === "b2_cloud";
   var dispatchStandard = salesOrderAutoPrintIsEnabled() ? "A4 / 受付時に自動発行" : "A4 / 出荷帳票発行で印刷";

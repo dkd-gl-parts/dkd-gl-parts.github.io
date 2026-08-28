@@ -251,8 +251,12 @@ for (const fragment of [
   "今回のみ:",
   'carrierCode: outboundWaybill.carrier_code || "yamato_prepaid"',
   'carrierCode: waybill.carrier_code || "sagawa_collect"',
+  'var returnCanHandwrite = !!(dispatch && order.core_return_required && returnMethod === "handwritten"',
   "shippingCarrierBrandHtml(row.carrierCode, true)"
 ]) requireFragment(requiredDocuments, fragment);
+if (requiredDocuments.includes('var returnCanHandwrite = !!(ready &&')) {
+  throw new Error("Core-return handwritten content must be available before shipment completion");
+}
 if (requiredDocuments.includes("待機中")) {
   throw new Error("Unissued shipment documents must be labeled as unissued, not as an active print wait state");
 }
@@ -313,6 +317,18 @@ for (const fragment of [
   "shippingDocumentDotMatrixOrderIds",
   "openShippingHandwrittenWaybillFlow"
 ]) requireFragment(batchQueue, fragment);
+
+const handwrittenReadiness = sourceBetween("function shippingDocumentHandwrittenTaskReady", "function shippingDocumentHandwrittenTasks");
+for (const fragment of [
+  "!order.dispatch_id",
+  'documentType === "outbound_waybill"',
+  "return !!order.core_return_required"
+]) requireFragment(handwrittenReadiness, fragment);
+for (const forbidden of ["dispatch_status", "outbound_registered"]) {
+  if (handwrittenReadiness.includes(forbidden)) {
+    throw new Error(`Handwritten content preview must not wait for shipment completion: ${forbidden}`);
+  }
+}
 
 const handwrittenFlow = sourceBetween("function shippingHandwrittenWaybillTask", "function shippingDocumentStatusValue");
 for (const fragment of [
@@ -402,11 +418,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.798"',
-  'styles.css?v=1.1.798',
-  'app.js?v=1.1.798'
+  'content="v1.1.799"',
+  'styles.css?v=1.1.799',
+  'app.js?v=1.1.799'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.798"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.799"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
