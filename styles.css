@@ -6815,6 +6815,7 @@ body.app-install-dialog-open { overflow: hidden; }
 .shipping-carrier-brand.sagawa { border-color: #9abce1; background: #f1f7fd; }
 .shipping-carrier-logo {
   display: grid;
+  position: relative;
   flex: 0 0 44px;
   place-items: center;
   width: 44px;
@@ -6824,9 +6825,16 @@ body.app-install-dialog-open { overflow: hidden; }
   border-radius: 4px;
   background: #fff;
 }
-.shipping-carrier-logo img { display: block; width: 100%; height: 100%; object-fit: contain; transform: scale(1.22); }
-.shipping-carrier-brand-copy { display: grid; flex: 1; min-width: 0; line-height: 1.25; }
-.shipping-carrier-brand-copy strong { color: #1e3043; font-size: 10px; white-space: nowrap; }
+.shipping-carrier-logo img {
+  position: absolute;
+  display: block;
+  max-width: none;
+  height: auto;
+}
+.shipping-carrier-brand.yamato .shipping-carrier-logo img { top: -36%; left: -24%; width: 147%; }
+.shipping-carrier-brand.sagawa .shipping-carrier-logo img { top: -50%; left: -30%; width: 160%; }
+.shipping-carrier-brand-copy { display: grid; flex: 1; place-items: center; min-width: 0; line-height: 1.25; }
+.shipping-carrier-brand-copy strong { width: 100%; color: #1e3043; font-size: 10px; text-align: center; white-space: nowrap; }
 .shipping-carrier-brand.compact { flex: 0 0 104px; width: 104px; height: 30px; gap: 5px; padding: 3px 6px 3px 3px; }
 .shipping-carrier-brand.compact .shipping-carrier-logo { flex-basis: 31px; width: 31px; height: 22px; }
 .shipping-carrier-brand.compact .shipping-carrier-brand-copy strong { font-size: 8px; }

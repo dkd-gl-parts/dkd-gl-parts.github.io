@@ -382,7 +382,11 @@ for (const fragment of [
   "flex: 0 0 132px;",
   "width: 132px;",
   "height: 42px;",
-  ".shipping-carrier-brand.compact { flex: 0 0 104px; width: 104px; height: 30px;"
+  ".shipping-carrier-brand.compact { flex: 0 0 104px; width: 104px; height: 30px;",
+  ".shipping-carrier-brand.yamato .shipping-carrier-logo img { top: -36%; left: -24%; width: 147%; }",
+  ".shipping-carrier-brand.sagawa .shipping-carrier-logo img { top: -50%; left: -30%; width: 160%; }",
+  "place-items: center; min-width: 0;",
+  "text-align: center; white-space: nowrap;"
 ]) requireFragment(css, fragment, `Carrier label size contract is missing: ${fragment}`);
 if (css.includes(".shipping-carrier-brand-copy small")) {
   throw new Error("Carrier label purpose styling must be removed");
@@ -398,11 +402,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.797"',
-  'styles.css?v=1.1.797',
-  'app.js?v=1.1.797'
+  'content="v1.1.798"',
+  'styles.css?v=1.1.798',
+  'app.js?v=1.1.798'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.797"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.798"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
