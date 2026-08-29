@@ -434,7 +434,7 @@ var TRANSLATIONS = {
     production_component_summary_empty: "{kind}の構成部品は未登録です。",
     production_component_summary_failed: "構成部品を読み込めませんでした。",
     production_component_part_number: "部品品番",
-    production_component_interchange_procurement: "互・調達区分",
+    production_component_interchange_procurement: "調達区分",
     production_detail_title: "詳細",
     production_count_summary: "{shown} 件表示 / 商品 {total} 件",
     production_search_prompt: "商品を検索してください。",
@@ -2208,7 +2208,7 @@ var TRANSLATIONS = {
     production_component_summary_empty: "No {kind} components are registered.",
     production_component_summary_failed: "Could not load components.",
     production_component_part_number: "Part No.",
-    production_component_interchange_procurement: "Int. / Procurement",
+    production_component_interchange_procurement: "Procurement",
     production_detail_title: "Details",
     production_count_summary: "{shown} shown / {total} products",
     production_search_prompt: "Search for a product.",
@@ -3989,7 +3989,7 @@ var TRANSLATIONS = {
     production_component_summary_empty: "尚未登记{kind}构成零件。",
     production_component_summary_failed: "无法读取构成零件。",
     production_component_part_number: "零件品号",
-    production_component_interchange_procurement: "互・采购区分",
+    production_component_interchange_procurement: "采购区分",
     production_detail_title: "详情",
     production_count_summary: "显示 {shown} 件 / 商品 {total} 件",
     production_search_prompt: "请搜索商品。",
@@ -5446,7 +5446,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.815";
+var APP_VERSION       = "v1.1.816";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -16489,7 +16489,7 @@ function renderCatalogVehicleSummaryHtml(offsetClass, options) {
     ? ""
     : "<button class='btn-sm-edit catalog-vehicle-button' type='button'>" + esc(t("vehicle_info_button")) + "</button>";
   return "<div class='detail-vehicle-grid" + (offsetClass || "") + "'>" +
-    "<div class='detail-vehicle-label'>" + esc(t("f_vehicle_mfr")) + "</div>" +
+    "<div class='detail-vehicle-label detail-vehicle-maker-label'>" + esc(t("f_vehicle_mfr")) + "</div>" +
     "<div class='detail-vehicle-value detail-vehicle-maker-row'><span class='catalog-vehicle-maker-value'>" + esc(t("loading")) + "</span>" + buttonHtml + "</div>" +
   "</div>";
 }
@@ -17342,13 +17342,12 @@ function renderProductionComponents(rows, kind) {
     var manufacturerMeta = [row.component_manufacturer, row.component_genuine_part_number ? (t("f_genuine_pn") + " " + row.component_genuine_part_number) : ""].filter(Boolean).join(" / ");
     var partName = row.component_name || row.component_part_name || "-";
     var memo = row.manufacturing_memo || "";
-    var interchange = formatComponentInterchange(row);
     var procurement = componentProcurementCategoryLabel(row.procurement_category);
     html += "<tr>" +
       "<td><strong>" + esc(row.component_manufacturer_part_number || "-") + "</strong><small>" + esc(manufacturerMeta || "-") + "</small></td>" +
       "<td>" + componentLocalizedNameHtml(partName) + "</td>" +
       "<td class='production-component-summary-number'>" + esc(row.quantity || "-") + "</td>" +
-      "<td><strong>" + esc(interchange || "-") + "</strong><small>" + esc(procurement || "-") + "</small></td>" +
+      "<td><strong>" + esc(procurement || "-") + "</strong></td>" +
       "<td class='production-component-summary-number'>" + esc(formatComponentRate(row.replacement_rate)) + "</td>" +
       "<td class='production-component-summary-memo'>" + esc(memo || "-") + "</td>" +
     "</tr>";

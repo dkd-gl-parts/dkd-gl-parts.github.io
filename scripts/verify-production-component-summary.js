@@ -22,9 +22,9 @@ requireFragment(app, 'var currentProductionComponentSummaryKind = "rebuilt";', "
   'production_component_part_number: "部品品番"',
   'production_component_part_number: "Part No."',
   'production_component_part_number: "零件品号"',
-  'production_component_interchange_procurement: "互・調達区分"',
-  'production_component_interchange_procurement: "Int. / Procurement"',
-  'production_component_interchange_procurement: "互・采购区分"'
+  'production_component_interchange_procurement: "調達区分"',
+  'production_component_interchange_procurement: "Procurement"',
+  'production_component_interchange_procurement: "采购区分"'
 ].forEach((fragment) => requireFragment(app, fragment, "production component translations"));
 
 const languageSource = sourceBetween(app, "async function applyLanguage", "function markAppUpdateActivity");
@@ -74,7 +74,6 @@ const summarySource = sourceBetween(app, "function renderProductionComponentSumm
   't("component_manufacturing_memo")',
   "production-component-summary-memo",
   "quantity",
-  "formatComponentInterchange(row)",
   "componentProcurementCategoryLabel(row.procurement_category)",
   "formatComponentRate(row.replacement_rate)",
   'sb.from("assembly_component_usage_details")',
@@ -85,6 +84,10 @@ const summarySource = sourceBetween(app, "function renderProductionComponentSumm
 
 if (summarySource.includes("<th>部品品番</th>") || summarySource.includes("<th>互・調達区分</th>")) {
   throw new Error("production component summary headings must follow the active language");
+}
+
+if (summarySource.includes("formatComponentInterchange(row)") || summarySource.includes("<small>\" + esc(procurement")) {
+  throw new Error("production component summary must show procurement as the primary value without interchange text");
 }
 
 const procurementSource = sourceBetween(app, "function componentProcurementCategoryLabel", "function componentProcurementOptionsHtml");
