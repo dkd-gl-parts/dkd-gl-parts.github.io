@@ -5446,7 +5446,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.818";
+var APP_VERSION       = "v1.1.819";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -17347,7 +17347,7 @@ function renderProductionComponents(rows, kind) {
       "<td><strong>" + esc(row.component_manufacturer_part_number || "-") + "</strong><small>" + esc(manufacturerMeta || "-") + "</small></td>" +
       "<td>" + componentLocalizedNameHtml(partName) + "</td>" +
       "<td class='production-component-summary-number'>" + esc(row.quantity || "-") + "</td>" +
-      "<td><strong>" + esc(procurement || "-") + "</strong></td>" +
+      "<td class='production-component-summary-procurement'><strong>" + esc(procurement || "-") + "</strong></td>" +
       "<td class='production-component-summary-number'>" + esc(formatComponentRate(row.replacement_rate)) + "</td>" +
       "<td class='production-component-summary-memo'>" + esc(memo || "-") + "</td>" +
     "</tr>";

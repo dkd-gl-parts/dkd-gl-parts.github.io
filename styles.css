@@ -4958,7 +4958,7 @@ body.app-install-dialog-open { overflow: hidden; }
 .production-component-summary-table th:nth-child(1) { width: 24%; }
 .production-component-summary-table th:nth-child(2) { width: 20%; }
 .production-component-summary-table th:nth-child(3) { width: 44px; text-align: right; }
-.production-component-summary-table th:nth-child(4) { width: 84px; }
+.production-component-summary-table th:nth-child(4) { width: 96px; }
 .production-component-summary-table th:nth-child(5) { width: 58px; text-align: right; }
 .production-component-summary-table th:nth-child(6) { width: 24%; }
 .production-component-summary-table strong,
@@ -4966,6 +4966,7 @@ body.app-install-dialog-open { overflow: hidden; }
 .production-component-summary-table strong { color: #17243a; font-size: 11px; font-weight: 800; }
 .production-component-summary-table small { margin-top: 2px; color: #7a8492; font-size: 9px; line-height: 1.35; }
 .production-component-summary-number { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.production-component-summary-procurement { overflow-wrap: normal; word-break: normal; }
 .production-component-summary-table td.production-component-summary-memo { line-height: 1.4; white-space: pre-wrap; }
 .production-component-summary-empty,
 .production-component-summary-error { display: flex; min-height: 64px; align-items: center; justify-content: center; color: #8993a2; font-size: 11px; }
