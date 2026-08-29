@@ -5446,7 +5446,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.819";
+var APP_VERSION       = "v1.1.820";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -32930,7 +32930,14 @@ function activateSalesDetailTab(tab) {
 
 function bindSalesDetailTabs() {
   document.querySelectorAll("[data-sales-detail-tab]").forEach(function(button) {
-    button.onclick = function() { activateSalesDetailTab(button.dataset.salesDetailTab); };
+    button.onclick = function() {
+      var tab = button.dataset.salesDetailTab;
+      if (tab === "components") {
+        enterComponentsScreen("search");
+        return;
+      }
+      activateSalesDetailTab(tab);
+    };
   });
 }
 
@@ -33094,8 +33101,6 @@ function renderPanelStatic() {
   var editCurrentBtn = document.getElementById("btn-edit-current-product");
   if (editCurrentBtn) editCurrentBtn.addEventListener("click", openCoreProductEditFromSearch);
   bindProductKindPanelActions();
-  var componentBtn = document.getElementById("btn-open-components");
-  if (componentBtn) componentBtn.addEventListener("click", function(){ enterComponentsScreen("search"); });
   currentVehicleApplicationRows = [];
   var detailLoads = [
     loadCatalogVehicleSummary(document.getElementById("panel-body"), p),

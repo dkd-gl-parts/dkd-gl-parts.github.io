@@ -19,6 +19,7 @@ function sourceBetween(startText, endText) {
   'data-sales-detail-tab="basic"',
   'data-sales-detail-tab="vehicles"',
   'data-sales-detail-tab="components"',
+  'aria-controls="screen-components" data-sales-detail-tab="components"',
   'data-sales-detail-tab="images"',
   'id="sales-basic-compatible-section"',
   'id="sales-basic-compatible-wrap"',
@@ -36,9 +37,20 @@ function sourceBetween(startText, endText) {
   'data-sales-detail-tab="compatible"',
   'id="sales-detail-compatible"',
   'id="sales-compatible-tab-count"',
-  'id="sales-basic-compatible-count"'
+  'id="sales-basic-compatible-count"',
+  'id="sales-detail-components"',
+  'id="btn-open-components"'
 ].forEach((fragment) => {
   if (html.includes(fragment)) throw new Error(`removed compatibility UI must stay absent: ${fragment}`);
+});
+
+const salesTabBindingSource = sourceBetween("function bindSalesDetailTabs", "function configureSalesDetailTabAvailability");
+[
+  'if (tab === "components")',
+  'enterComponentsScreen("search")',
+  "activateSalesDetailTab(tab)"
+].forEach((fragment) => {
+  if (!salesTabBindingSource.includes(fragment)) throw new Error(`direct component-tab navigation is missing: ${fragment}`);
 });
 
 const openPanelSource = sourceBetween("function openPanel", "async function openProductByDkdId");
