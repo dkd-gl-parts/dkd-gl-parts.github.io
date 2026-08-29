@@ -5388,7 +5388,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.806";
+var APP_VERSION       = "v1.1.807";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6819,9 +6819,19 @@ async function applyLanguage(lang) {
   if (document.getElementById("part-form-overlay") && document.getElementById("part-form-overlay").classList.contains("show") && partFormSource === "core_products") {
     renderCoreProductStampPairForm();
   }
-  if (currentProduct) { renderPanelStatic(); }
+  var componentScreenActive = isScreenActive("components");
+  if (currentProduct && !componentScreenActive) { renderPanelStatic(); }
+  if (componentScreenActive) {
+    updateComponentsReturnButton();
+    updateComponentsContextHeader();
+  }
   renderComponentAddPanel();
   renderAssemblyComponentRows();
+  var reverseOverlay = document.getElementById("component-reverse-overlay");
+  if (reverseOverlay && reverseOverlay.classList.contains("show")) {
+    var reverseMakerSelect = document.getElementById("component-reverse-vehicle-maker");
+    renderComponentReverseVehicleMakerOptions(reverseMakerSelect ? (reverseMakerSelect.value || "all") : "all");
+  }
   updateAllHeaders();
   if (isScreenActive("product-kind-stock-mgmt")) {
     configureProductKindStockMode(productKindStockMode);
@@ -16903,7 +16913,7 @@ function renderProductionComponents(rows, kind) {
     var procurement = componentProcurementCategoryLabel(row.procurement_category);
     html += "<tr>" +
       "<td><strong>" + esc(row.component_manufacturer_part_number || "-") + "</strong><small>" + esc(manufacturerMeta || "-") + "</small></td>" +
-      "<td><strong>" + esc(partName) + "</strong></td>" +
+      "<td>" + componentLocalizedNameHtml(partName) + "</td>" +
       "<td class='production-component-summary-number'>" + esc(row.quantity || "-") + "</td>" +
       "<td><strong>" + esc(interchange || "-") + "</strong><small>" + esc(procurement || "-") + "</small></td>" +
       "<td class='production-component-summary-number'>" + esc(formatComponentRate(row.replacement_rate)) + "</td>" +
@@ -36099,18 +36109,30 @@ function componentNameOptionLabel(name) {
   return componentCatalogNameCandidateLabelMap[key] || componentNameTranslationLabel(name) || "";
 }
 
+function componentLocalizedNameText(name) {
+  var text = normalizeComponentNameText(name);
+  if (!text || currentLang === "ja") return text;
+  return componentNameOptionLabel(text) || text;
+}
+
+function componentLocalizedNameHtml(name) {
+  var text = normalizeComponentNameText(name);
+  if (!text) return esc("-");
+  var localized = componentLocalizedNameText(text) || text;
+  var html = "<div class='component-pn'>" + esc(localized) + "</div>";
+  if (currentLang !== "ja" && componentNameDuplicateKey(localized) !== componentNameDuplicateKey(text)) {
+    html += "<div class='component-sub'>" + esc(text) + "</div>";
+  }
+  return html;
+}
+
 function componentRowNameText(row) {
   return String((row && (row.component_name || row.component_part_name)) || "").trim();
 }
 
 function componentRowNameHtml(row) {
   var name = componentRowNameText(row);
-  var html = esc(name || "-");
-  var translated = componentNameOptionLabel(name);
-  if (translated && componentNameDuplicateKey(translated) !== componentNameDuplicateKey(name)) {
-    html += "<div class='component-sub'>" + esc(translated) + "</div>";
-  }
-  return html;
+  return componentLocalizedNameHtml(name);
 }
 
 async function loadComponentCatalogNameCandidatesByCategory(category, selectedName) {
@@ -37998,7 +38020,7 @@ function renderComponentAlternatives(row, colspan) {
     html += "<div class='component-alt-item'>";
     html += "<span>" + esc(part.manufacturer || "-") + "</span>";
     html += "<strong>" + esc(part.part_number || "-") + "</strong>";
-    html += "<span>" + esc(part.part_name || "") + "</span>";
+    html += "<span>" + esc(componentLocalizedNameText(part.part_name || "")) + "</span>";
     if (supplierText) html += "<span class='component-alt-meta'>" + t("component_supplier") + ": " + esc(supplierText) + "</span>";
     if (alt.note || part.note) html += "<span class='component-alt-meta'>" + esc(alt.note || part.note) + "</span>";
     if (canManageComponentsInCurrentContext()) html += "<button class='btn-sm-edit production-action-secondary' data-component-alt-delete='" + esc(String(alt.id)) + "'>" + t("component_disable") + "</button>";
@@ -38959,8 +38981,8 @@ async function loadParallelDiffForCurrent(targetDkdId) {
     html += "<tr>";
     html += "<td><div class='component-pn'>" + esc(row.component_position || "-") + "</div></td>";
     html += "<td><span class='parallel-status " + statusClass + "'>" + esc(statusLabel) + "</span></td>";
-    html += "<td><div class='component-diff-side'><strong>" + esc(row.base_component_name || "-") + "</strong><div class='component-pn'>" + esc(row.base_component_part_numbers || "-") + "</div><div class='component-sub'>" + esc(row.base_component_genuine_numbers || "") + "</div></div></td>";
-    html += "<td><div class='component-diff-side'><strong>" + esc(row.target_component_name || "-") + "</strong><div class='component-pn'>" + esc(row.target_component_part_numbers || "-") + "</div><div class='component-sub'>" + esc(row.target_component_genuine_numbers || "") + "</div></div></td>";
+    html += "<td><div class='component-diff-side'><strong>" + esc(componentLocalizedNameText(row.base_component_name || "-")) + "</strong><div class='component-pn'>" + esc(row.base_component_part_numbers || "-") + "</div><div class='component-sub'>" + esc(row.base_component_genuine_numbers || "") + "</div></div></td>";
+    html += "<td><div class='component-diff-side'><strong>" + esc(componentLocalizedNameText(row.target_component_name || "-")) + "</strong><div class='component-pn'>" + esc(row.target_component_part_numbers || "-") + "</div><div class='component-sub'>" + esc(row.target_component_genuine_numbers || "") + "</div></div></td>";
     html += "</tr>";
   });
   html += "</table></div>";

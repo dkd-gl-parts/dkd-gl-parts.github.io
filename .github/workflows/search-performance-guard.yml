@@ -22,6 +22,7 @@ on:
       - "scripts/verify-search-workload-guard.js"
       - "scripts/verify-component-catalog-recovery.js"
       - "scripts/verify-component-manual-add.js"
+      - "scripts/verify-component-language-switching.js"
       - "scripts/verify-component-reverse-lookup.js"
       - "scripts/verify-kikan-management-search.js"
       - "scripts/verify-ec-mall-result-performance.js"
@@ -114,6 +115,8 @@ jobs:
         run: node scripts/verify-component-catalog-recovery.js
       - name: Verify manual component add
         run: node scripts/verify-component-manual-add.js
+      - name: Verify component language switching
+        run: node scripts/verify-component-language-switching.js
       - name: Verify component reverse lookup
         run: node scripts/verify-component-reverse-lookup.js
       - name: Verify compatibility management search
