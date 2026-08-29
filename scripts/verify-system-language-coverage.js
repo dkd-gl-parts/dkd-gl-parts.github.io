@@ -139,7 +139,10 @@ assert(!componentNameBlock.includes("component-sub"), "Localized component rows 
   "overflow-wrap: anywhere",
   ".production-component-summary-table th",
   "minmax(340px, .85fr)",
-  ".production-core-meta"
+  ".production-core-meta",
+  ".shipping-document-lookup { width: min(820px, 66vw)",
+  "grid-template-columns: minmax(170px, 1fr) 128px 150px 118px 118px auto",
+  ".shipping-carrier-brand.compact .shipping-carrier-brand-copy strong"
 ].forEach((fragment) => assert(css.includes(fragment), `English layout contract is missing: ${fragment}`));
 
 console.log(`OK: ${jaKeys.length} shared keys and ${Object.keys(legacy.en).length} supplemental UI literals verified`);
