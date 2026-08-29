@@ -78,7 +78,7 @@ requireFragment(searchRow, 'id="production-clear-btn"', "production search clear
   "#screen-production-search .ac-part-row { grid-template-columns: 136px minmax(0, 1fr); }",
   "#screen-production-search .ac-part-label { font-size: 12px; white-space: nowrap; }",
   "#screen-production-search .detail-vehicle-grid:not(.detail-spec-grid) { grid-template-columns: 96px minmax(0, 1fr); }",
-  "#screen-production-search .detail-vehicle-maker-grid { grid-template-columns: 88px minmax(0, 1fr); }",
+  "#screen-production-search .detail-vehicle-grid.detail-vehicle-maker-grid { grid-template-columns: 72px minmax(0, 1fr); }",
   "#screen-production-search .detail-vehicle-maker-label { line-height: 1.25; white-space: normal; overflow-wrap: normal; }",
   "#screen-production-search .detail-vehicle-maker-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }",
   "#screen-production-search .detail-spec-grid { grid-template-columns: 86px minmax(0, 1fr) 86px minmax(0, 1fr); }",

@@ -5846,7 +5846,7 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   #screen-production-search .production-section > h3 { margin-bottom: 6px; }
   #screen-production-search .detail-main-grid { gap: 10px; padding-bottom: 6px; margin-bottom: 4px; }
   #screen-production-search .detail-vehicle-grid:not(.detail-spec-grid) { grid-template-columns: 96px minmax(0, 1fr); }
-  #screen-production-search .detail-vehicle-maker-grid { grid-template-columns: 88px minmax(0, 1fr); }
+  #screen-production-search .detail-vehicle-grid.detail-vehicle-maker-grid { grid-template-columns: 72px minmax(0, 1fr); }
   #screen-production-search .ac-part-row { grid-template-columns: 136px minmax(0, 1fr); }
   #screen-production-search .detail-vehicle-label,
   #screen-production-search .detail-vehicle-value,
