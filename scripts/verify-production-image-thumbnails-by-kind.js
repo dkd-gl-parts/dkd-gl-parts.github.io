@@ -51,7 +51,7 @@ if (!source.includes("function coreProductImageIdentity") || !source.includes("f
 
 const rendererSource = sourceBetween("function renderProductionImages", "async function loadImages");
 [
-  'countEl.textContent = images.length + " 枚"',
+  'countEl.textContent = tf("image_count", { n: images.length })',
   't("production_images_empty")',
   'productionImages[selectedKind] || []'
 ].forEach((fragment) => {

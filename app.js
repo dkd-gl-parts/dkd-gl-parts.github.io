@@ -435,6 +435,14 @@ var TRANSLATIONS = {
     production_component_summary_failed: "構成部品を読み込めませんでした。",
     production_component_part_number: "部品品番",
     production_component_interchange_procurement: "互・調達区分",
+    production_detail_title: "詳細",
+    production_count_summary: "{shown} 件表示 / 商品 {total} 件",
+    production_search_prompt: "商品を検索してください。",
+    production_genuine_short: "純正",
+    production_core_part_number: "コア品番",
+    production_pallet: "パレット",
+    production_media_label: "商品メディア",
+    image_count: "{n} 枚",
     product_kind_section: "商品区分",
     product_shipping_section: "配送情報",
     product_shipping_help: "品番ごとの梱包重量と通常の出荷サイズを設定します。",
@@ -2201,6 +2209,14 @@ var TRANSLATIONS = {
     production_component_summary_failed: "Could not load components.",
     production_component_part_number: "Part No.",
     production_component_interchange_procurement: "Int. / Procurement",
+    production_detail_title: "Details",
+    production_count_summary: "{shown} shown / {total} products",
+    production_search_prompt: "Search for a product.",
+    production_genuine_short: "Genuine",
+    production_core_part_number: "Core Part No.",
+    production_pallet: "Pallet",
+    production_media_label: "Product Media",
+    image_count: "{n} images",
     product_kind_section: "Product Kind",
     product_shipping_section: "Shipping Profile",
     product_shipping_help: "Set the packed weight and standard package size for this product.",
@@ -3974,6 +3990,14 @@ var TRANSLATIONS = {
     production_component_summary_failed: "无法读取构成零件。",
     production_component_part_number: "零件品号",
     production_component_interchange_procurement: "互・采购区分",
+    production_detail_title: "详情",
+    production_count_summary: "显示 {shown} 件 / 商品 {total} 件",
+    production_search_prompt: "请搜索商品。",
+    production_genuine_short: "原厂",
+    production_core_part_number: "CORE零件编号",
+    production_pallet: "托盘",
+    production_media_label: "商品媒体",
+    image_count: "{n} 张",
     product_kind_section: "商品区分",
     product_shipping_section: "配送信息",
     product_shipping_help: "设置该商品的包装重量和通常出货尺寸。",
@@ -4673,6 +4697,7 @@ var TRANSLATIONS = {
     btn_create_core_from_ranking: "从排行创建",
     btn_add_production_ranking: "添加生产清单",
     btn_edit: "修改",
+    btn_edit_part: "修改品号",
     btn_delete: "删除",
     btn_save_part: "保存",
     del_part_confirm: "删除此零件？它也将从兼容组中删除。",
@@ -5412,7 +5437,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.808";
+var APP_VERSION       = "v1.1.809";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -15943,11 +15968,11 @@ function renderProductionList() {
       ? tf("stamp_search_count", { n: productionFilteredRows.length })
       : productionSearchTotalCount !== null
       ? tf("search_count_loaded", { loaded: productionFilteredRows.length, total: productionSearchTotalCount })
-      : productionFilteredRows.length + " 件表示 / 商品 " + productionRows.length + " 件";
+      : tf("production_count_summary", { shown: productionFilteredRows.length, total: productionRows.length });
   }
   if (moreWrap) setCspStyle(moreWrap, "display", productionSearchHasMore ? "block" : "none");
   if (!productionRows.length) {
-    list.innerHTML = "<div class='loading'>" + (productionStampSearchActive ? esc(t("no_results")) : "商品を検索してください。") + "</div>";
+    list.innerHTML = "<div class='loading'>" + (productionStampSearchActive ? esc(t("no_results")) : esc(t("production_search_prompt"))) + "</div>";
     return;
   }
   if (!productionFilteredRows.length) {
@@ -15975,7 +16000,7 @@ function renderProductionList() {
     return "<div class='production-card" + selected + "' data-production-index='" + i + "' data-dkd-id='" + esc(productDkdId(row)) + "'>" +
       "<div class='production-card-top'>" + rankHtml + renderProductionComponentCountBadges(row) + "</div>" +
       "<div class='production-number'>" + esc(title) + "</div>" +
-      "<div class='production-sub-number'>純正 " + esc(subGenuinePartNumber) + "</div>" +
+      "<div class='production-sub-number'>" + esc(t("production_genuine_short")) + " " + esc(subGenuinePartNumber) + "</div>" +
       renderProductionStampMatchHtml(row) +
       "<div class='production-label-row'>" +
         renderProductKindPills(kindSummary, { compact: true }) +
@@ -16056,7 +16081,7 @@ function sumProductionCoreEntryQty(rows) {
 function renderProductionCoreSummary(row, detail) {
   var stockQty = productionCoreStockQty(row);
   return "<div class='core-qty-summary'>" +
-    "<div class='core-qty-card'><div class='core-qty-label'>コア在庫数</div><div class='core-qty-value'>" + esc(String(stockQty)) + "</div><div class='core-qty-sub'>" + esc(row && row.core_part_number ? row.core_part_number : "-") + "</div></div>" +
+    "<div class='core-qty-card'><div class='core-qty-label'>" + esc(t("core_stock_qty")) + "</div><div class='core-qty-value'>" + esc(String(stockQty)) + "</div><div class='core-qty-sub'>" + esc(row && row.core_part_number ? row.core_part_number : "-") + "</div></div>" +
     "<div class='core-qty-card rebuilt'><div class='core-qty-label'>" + esc(productKindLabel("rebuilt")) + "</div><div class='core-qty-value'>" + esc(productionProductKindStockQty(row, "rebuilt")) + "</div><div class='core-qty-sub'>" + esc(t("product_kind_stock_qty")) + "</div></div>" +
     "<div class='core-qty-card aftermarket_new'><div class='core-qty-label'>" + esc(productKindLabel("aftermarket_new")) + "</div><div class='core-qty-value'>" + esc(productionProductKindStockQty(row, "aftermarket_new")) + "</div><div class='core-qty-sub'>" + esc(t("product_kind_stock_qty")) + "</div></div>" +
   "</div>";
@@ -16803,7 +16828,7 @@ async function renderProductionDetail(row) {
   html += "</div></div>";
   html += "<div class='production-actions'>";
   if (canViewFinishedLabelMgmt()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-finished-label'>" + esc(t("mi_finished_label_title")) + "</button>";
-  if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-edit-core'>品番修正</button>";
+  if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-edit-core'>" + esc(t("btn_edit_part")) + "</button>";
   if (canManageAllImages() || canManageProduct3D()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-image-actions'>" + esc(t("image_actions_title")) + "</button>";
   html += "</div></div>";
   html += "<div class='production-workspace'>";
@@ -16821,13 +16846,13 @@ async function renderProductionDetail(row) {
   html += "<section class='production-section production-core-section'><div class='production-section-heading'><h3>" + esc(t("production_core_section")) + "</h3><span>" + esc(productionStatusLabel(row)) + "</span></div>";
   html += renderProductionCoreSummary(row, detail);
   html += "<div class='production-core-meta'>";
-  html += productionKv("コア品番", row.core_part_number);
-  html += productionKv("パレット", row.core_pallet_summary);
+  html += productionKv(t("production_core_part_number"), row.core_part_number);
+  html += productionKv(t("production_pallet"), row.core_pallet_summary);
   html += "</div>";
   html += renderProductionCorePolicies(detail.productVariants);
   html += "</section>";
   html += "<section class='production-section production-image-panel'><div class='production-section-heading'><h3 class='production-image-title'>" + esc(t("production_images_section")) + "</h3></div>";
-  html += "<div class='product-media-switch' role='tablist' aria-label='商品メディア'><button class='product-media-switch-btn active' type='button' role='tab' aria-selected='true' data-product-media='photos' data-product-media-context='production'>写真</button><button class='product-media-switch-btn' type='button' role='tab' aria-selected='false' data-product-media='model' data-product-media-context='production'>3Dモデル</button></div>";
+  html += "<div class='product-media-switch' role='tablist' aria-label='" + esc(t("production_media_label")) + "'><button class='product-media-switch-btn active' type='button' role='tab' aria-selected='true' data-product-media='photos' data-product-media-context='production'>" + esc(t("product_3d_photos")) + "</button><button class='product-media-switch-btn' type='button' role='tab' aria-selected='false' data-product-media='model' data-product-media-context='production'>" + esc(t("product_3d_model")) + "</button></div>";
   html += "<div data-product-media-pane='photos' data-product-media-context='production'><div class='production-image-groups' id='production-image-groups'>" + productionImageKinds().map(productionImageGroupShellHtml).join("") + "</div></div>";
   html += "<div class='product-3d-detail-pane' data-product-media-pane='model' data-product-media-context='production' hidden><div class='product-3d-model-list' id='production-product-3d-list'></div></div>";
   html += "</section>";
@@ -43169,7 +43194,7 @@ function renderProductionImages() {
     var countEl = document.getElementById("production-image-count-" + kind);
     if (!strip) return;
     var images = productionImages[kind] || [];
-    if (countEl) countEl.textContent = images.length + " 枚";
+    if (countEl) countEl.textContent = tf("image_count", { n: images.length });
     if (!images.length) {
       strip.classList.add("empty");
       strip.innerHTML = "<span class='production-image-empty'>" + esc(t("production_images_empty")) + "</span>";
@@ -43233,7 +43258,7 @@ function salesImageGroupHtml(kind, images, loading) {
   }
   return "<section class='sales-detail-image-group " + esc(productKindClass(kind)) + "'>" +
     "<div class='sales-detail-image-group-head'><strong>" + esc(salesImageKindLabel(kind)) + "</strong>" +
-    "<span>" + (loading ? esc(t("img_loading")) : esc(String(images.length) + " 枚")) + "</span></div>" +
+    "<span>" + (loading ? esc(t("img_loading")) : esc(tf("image_count", { n: images.length }))) + "</span></div>" +
     "<div class='sales-detail-image-kind-grid" + (!images.length ? " empty" : "") + "'>" + body + "</div>" +
   "</section>";
 }

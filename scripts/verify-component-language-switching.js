@@ -94,7 +94,32 @@ const parallelSource = sourceBetween(app, "async function loadParallelDiffForCur
 requireFragment(parallelSource, 'componentLocalizedNameText(row.base_component_name || "-")', "parallel base localization");
 requireFragment(parallelSource, 'componentLocalizedNameText(row.target_component_name || "-")', "parallel target localization");
 
-requireFragment(html, 'content="v1.1.808"', "release version");
-requireFragment(app, 'var APP_VERSION       = "v1.1.808"', "runtime version");
+[
+  'production_detail_title: "Details"',
+  'production_core_part_number: "Core Part No."',
+  'production_pallet: "Pallet"',
+  'production_media_label: "Product Media"',
+  'image_count: "{n} images"',
+  'production_detail_title: "详情"',
+  'production_core_part_number: "CORE零件编号"',
+  'image_count: "{n} 张"'
+].forEach((fragment) => requireFragment(app, fragment, "production chrome translation"));
+
+const productionDetailSource = sourceBetween(app, "async function renderProductionDetail", "function productionImageKinds");
+[
+  't("btn_edit_part")',
+  'productionKv(t("production_core_part_number")',
+  'productionKv(t("production_pallet")',
+  't("production_media_label")',
+  't("product_3d_photos")',
+  't("product_3d_model")'
+].forEach((fragment) => requireFragment(productionDetailSource, fragment, "localized production detail"));
+
+const productionImagesSource = sourceBetween(app, "function renderProductionImages", "function salesImageKinds");
+requireFragment(productionImagesSource, 'tf("image_count", { n: images.length })', "localized production image count");
+requireFragment(html, 'data-i18n="production_detail_title"', "localized production detail title");
+
+requireFragment(html, 'content="v1.1.809"', "release version");
+requireFragment(app, 'var APP_VERSION       = "v1.1.809"', "runtime version");
 
 console.log("Component language switching verified.");
