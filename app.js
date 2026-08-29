@@ -5446,7 +5446,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.810";
+var APP_VERSION       = "v1.1.811";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6827,7 +6827,92 @@ function legacyI18nDictionary(lang) {
 
 function legacyI18nIsKnownValue(source, value) {
   if (value === source) return true;
-  return legacyI18nDictionary("en")[source] === value || legacyI18nDictionary("zh")[source] === value;
+  return legacyI18nResolve(source, "en", 0) === value || legacyI18nResolve(source, "zh", 0) === value;
+}
+
+function legacyI18nCountLabel(value, lang) {
+  return lang === "zh" ? value + "件" : value + (value === "1" ? " item" : " items");
+}
+
+function legacyI18nResolve(source, lang, depth) {
+  var text = String(source || "").replace(/\s+/g, " ").trim();
+  if (!text) return "";
+  var exact = legacyI18nDictionary(lang)[text];
+  if (exact) return exact;
+  if ((depth || 0) > 2) return "";
+  var match;
+  if ((match = text.match(/^(\d[\d,]*)\s*件$/))) return legacyI18nCountLabel(match[1], lang);
+  if ((match = text.match(/^(\d[\d,]*)\s*\/\s*(\d[\d,]*)\s*件$/))) {
+    return lang === "zh" ? match[1] + " / " + match[2] + "件" : match[1] + " / " + legacyI18nCountLabel(match[2], lang);
+  }
+  if ((match = text.match(/^(\d[\d,]*)\s*件\s*\/\s*選択\s*(\d[\d,]*)\s*件$/))) {
+    return lang === "zh"
+      ? match[1] + "件 / 已选择 " + match[2] + "件"
+      : legacyI18nCountLabel(match[1], lang) + " / " + match[2] + " selected";
+  }
+  if ((match = text.match(/^(\d[\d,]*)件を表示しました。$/))) {
+    return lang === "zh" ? "已显示 " + match[1] + " 件。" : "Displayed " + legacyI18nCountLabel(match[1], lang) + ".";
+  }
+  if ((match = text.match(/^(\d[\d,]*)件を状態別に集計しています。$/))) {
+    return lang === "zh" ? "正在按状态汇总 " + match[1] + " 件。" : "Aggregating " + legacyI18nCountLabel(match[1], lang) + " by status.";
+  }
+  if ((match = text.match(/^(\d[\d,]*)\s*件（最新(\d[\d,]*)件）$/))) {
+    return lang === "zh"
+      ? match[1] + " 件（最新 " + match[2] + " 件）"
+      : match[1] + " records (latest " + match[2] + ")";
+  }
+  if ((match = text.match(/^全(\d[\d,]*)組$/))) return lang === "zh" ? "共 " + match[1] + " 组" : match[1] + " pairs";
+  if ((match = text.match(/^グループ(\d+)(.*)$/))) return (lang === "zh" ? "组 " : "Group ") + match[1] + match[2];
+  if ((match = text.match(/^([\d,]+)件\s*\/\s*(\d+)カテゴリ\s*\/\s*更新\s+(.+)$/))) {
+    return lang === "zh"
+      ? match[1] + "件 / " + match[2] + "个分类 / 更新于 " + match[3]
+      : match[1] + " records / " + match[2] + " categories / Updated " + match[3];
+  }
+  if ((match = text.match(/^製造ランキング\s+(.+)$/))) return (lang === "zh" ? "制造排名 " : "Manufacturing Ranking ") + match[1];
+  if ((match = text.match(/^受注\s+(\S+)\s*\/\s*(.+)$/))) return (lang === "zh" ? "订单 " : "Order ") + match[1] + " / " + match[2];
+  if ((match = text.match(/^返却期限\s+(.+)$/))) {
+    var deadline = legacyI18nResolve(match[1], lang, (depth || 0) + 1) || match[1];
+    return (lang === "zh" ? "返还期限 " : "Return deadline ") + deadline;
+  }
+  if ((match = text.match(/^Origin Region:\s*(.+)$/))) {
+    return "Origin Region: " + (legacyI18nResolve(match[1], lang, (depth || 0) + 1) || match[1]);
+  }
+  if ((match = text.match(/^(\d+)サイズ$/))) return lang === "zh" ? match[1] + "号尺寸" : "Size " + match[1];
+  if ((match = text.match(/^厚さ([\d.]+)cm以内$/))) return lang === "zh" ? "厚度不超过 " + match[1] + " cm" : "Up to " + match[1] + " cm thick";
+  if ((match = text.match(/^売値区分([+-]?\d+)$/))) return (lang === "zh" ? "售价分类 " : "Price Tier ") + match[1];
+  if ((match = text.match(/^([^:：]{1,40})[:：]\s*(.+)$/))) {
+    var label = legacyI18nResolve(match[1], lang, (depth || 0) + 1);
+    if (label) {
+      var value = legacyI18nResolve(match[2], lang, (depth || 0) + 1) || match[2];
+      return label + ": " + value;
+    }
+  }
+  if (text.indexOf(" / ") >= 0) {
+    var changed = false;
+    var parts = text.split(" / ").map(function(part) {
+      var translated = legacyI18nResolve(part, lang, (depth || 0) + 1);
+      if (translated) changed = true;
+      return translated || part;
+    });
+    if (changed) return parts.join(" / ");
+  }
+  var embeddedTerms = [
+    "スタータジェネレータ", "ACコンプレッサ", "ディストリビュータ", "オルタネータ", "ジェネレータ",
+    "他オルタ", "Sジェネ", "スタータ", "インジェ", "スロボ", "センサ", "モータ", "ランプ", "デスビ", "オルタ", "セル"
+  ];
+  var embedded = text;
+  var embeddedChanged = false;
+  embeddedTerms.forEach(function(term) {
+    var translated = legacyI18nDictionary(lang)[term];
+    if (!translated || embedded.indexOf(term) < 0) return;
+    embedded = embedded.split(term).join(translated);
+    embeddedChanged = true;
+  });
+  if (lang !== "ja" && /系/.test(embedded)) {
+    embedded = embedded.replace(/系/g, lang === "zh" ? "系列" : " series");
+    embeddedChanged = true;
+  }
+  return embeddedChanged ? embedded : "";
 }
 
 function legacyI18nTranslateTextNode(node) {
@@ -6853,7 +6938,7 @@ function legacyI18nTranslateTextNode(node) {
     source = compact;
     legacyI18nTextSources.set(node, source);
   }
-  var translated = currentLang === "ja" ? source : legacyI18nDictionary(currentLang)[source];
+  var translated = currentLang === "ja" ? source : legacyI18nResolve(source, currentLang, 0);
   if (!translated) return;
   var leading = (current.match(/^\s*/) || [""])[0];
   var trailing = (current.match(/\s*$/) || [""])[0];
@@ -6864,7 +6949,8 @@ function legacyI18nTranslateTextNode(node) {
 function legacyI18nTranslateAttributes(element) {
   if (!element || element.nodeType !== 1 || !legacyI18nAttributeSources) return;
   var records = legacyI18nAttributeSources.get(element) || {};
-  ["placeholder", "title", "aria-label"].forEach(function(attribute) {
+  ["placeholder", "title", "aria-label", "value"].forEach(function(attribute) {
+    if (attribute === "value" && !(element.readOnly || /^(button|submit|reset)$/i.test(element.type || ""))) return;
     if ((attribute === "placeholder" && element.hasAttribute("data-i18n-ph")) ||
         (attribute === "aria-label" && element.hasAttribute("data-i18n-aria-label"))) return;
     var current = element.getAttribute(attribute);
@@ -6885,7 +6971,7 @@ function legacyI18nTranslateAttributes(element) {
       if (!/[ぁ-んァ-ヶ一-龠]/.test(source)) return;
       records[attribute] = source;
     }
-    var translated = currentLang === "ja" ? source : legacyI18nDictionary(currentLang)[source];
+    var translated = currentLang === "ja" ? source : legacyI18nResolve(source, currentLang, 0);
     if (translated && translated !== current) element.setAttribute(attribute, translated);
   });
   if (Object.keys(records).length) legacyI18nAttributeSources.set(element, records);
@@ -6937,7 +7023,7 @@ function startLegacyUiI18nObserver() {
     childList: true,
     characterData: true,
     attributes: true,
-    attributeFilter: ["placeholder", "title", "aria-label"],
+    attributeFilter: ["placeholder", "title", "aria-label", "value"],
     subtree: true
   });
 }

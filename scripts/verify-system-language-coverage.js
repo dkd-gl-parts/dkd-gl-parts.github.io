@@ -5,6 +5,14 @@ const app = fs.readFileSync("app.js", "utf8");
 const html = fs.readFileSync("index.html", "utf8");
 const css = fs.readFileSync("styles.css", "utf8");
 const legacySource = fs.readFileSync("legacy-i18n.js", "utf8");
+const runtimeScriptPaths = [
+  "app.js",
+  "install-app.js",
+  "label-print-window.js",
+  "manufacturing-ranking-report.js",
+  "product-3d.js",
+  "product-3d-viewer.js"
+];
 
 function assert(condition, message) {
   if (!condition) {
@@ -71,6 +79,14 @@ function extractJsCandidates(source, set) {
   }
 }
 
+function appRuntimeUiSource(source) {
+  let runtime = source.slice(source.indexOf("\nvar currentLang"));
+  const bridgeStart = runtime.indexOf("\nvar legacyI18nTextSources");
+  const bridgeEnd = runtime.indexOf("\n// HTMLのdata-i18n属性", bridgeStart);
+  if (bridgeStart >= 0 && bridgeEnd > bridgeStart) runtime = runtime.slice(0, bridgeStart) + runtime.slice(bridgeEnd);
+  return runtime;
+}
+
 const translations = extractTranslations();
 const legacy = extractLegacyTranslations();
 const jaKeys = Object.keys(translations.ja || {}).sort();
@@ -95,7 +111,12 @@ const uncovered = Array.from(new Set(directLiterals)).filter((value) => {
 assert(!uncovered.length, `Static UI literals are missing supplemental translations: ${uncovered.slice(0, 8).join(" / ")}`);
 
 const dynamicCandidates = new Set();
-extractJsCandidates(app.slice(app.indexOf("\nvar currentLang")), dynamicCandidates);
+runtimeScriptPaths.forEach((relativePath) => {
+  const source = relativePath === "app.js"
+    ? appRuntimeUiSource(app)
+    : fs.readFileSync(relativePath, "utf8");
+  extractJsCandidates(source, dynamicCandidates);
+});
 const uncoveredDynamic = Array.from(dynamicCandidates).filter((value) => {
   return !coveredJa.has(value) && (!legacy.en[value] || !legacy.zh[value]);
 });
@@ -105,7 +126,7 @@ assert(html.indexOf("legacy-i18n.js") >= 0, "Supplemental translation asset is n
 assert(html.indexOf("legacy-i18n.js") < html.indexOf('<script src="app.js?v='), "Supplemental translations must load before app.js");
 assert(app.includes("function applyLegacyUiI18n(root)"), "Legacy UI translation bridge is missing");
 assert(app.includes("new MutationObserver(function(mutations)"), "Dynamic UI translation observer is missing");
-assert(app.includes('attributeFilter: ["placeholder", "title", "aria-label"]'), "Dynamic attribute translation observer is missing");
+assert(app.includes('attributeFilter: ["placeholder", "title", "aria-label", "value"]'), "Dynamic attribute translation observer is missing");
 assert(app.includes('document.documentElement.lang = currentLang === "zh" ? "zh-CN" : currentLang;'), "Document language must follow the selected UI language");
 const componentNameBlockStart = app.indexOf("function componentLocalizedNameHtml(name)");
 const componentNameBlockEnd = app.indexOf("\nasync function ", componentNameBlockStart);

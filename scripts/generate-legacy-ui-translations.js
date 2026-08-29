@@ -8,6 +8,14 @@ const root = path.resolve(__dirname, "..");
 const appPath = path.join(root, "app.js");
 const htmlPath = path.join(root, "index.html");
 const outputPath = path.join(root, "legacy-i18n.js");
+const runtimeScriptPaths = [
+  "app.js",
+  "install-app.js",
+  "label-print-window.js",
+  "manufacturing-ranking-report.js",
+  "product-3d.js",
+  "product-3d-viewer.js"
+];
 const curatedTranslations = {
   en: {
     "dkd商品id": "DKD Product ID",
@@ -22,7 +30,32 @@ const curatedTranslations = {
     "未印刷": "Not printed",
     "印刷済み": "Printed",
     "待機中": "Pending",
-    "出荷処理中": "Preparing Shipment"
+    "出荷処理中": "Preparing Shipment",
+    "専用BOX": "Dedicated Box",
+    "規定サイズ": "Standard Size",
+    "北海道": "Hokkaido",
+    "北東北": "Northern Tohoku",
+    "南東北": "Southern Tohoku",
+    "関東": "Kanto",
+    "信越": "Shinetsu",
+    "北陸": "Hokuriku",
+    "中部": "Chubu",
+    "関西": "Kansai",
+    "中国": "Chugoku",
+    "四国": "Shikoku",
+    "九州": "Kyushu",
+    "沖縄": "Okinawa",
+    "各ランキング内で連番（重複なし）": "Sequential (no duplicates)",
+    "商品別出荷実績集計": "Product-level Shipment Summary",
+    "オルタ": "Alternator",
+    "Sジェネ": "Starter Generator",
+    "他オルタ": "Other Alternators",
+    "セル": "Starter",
+    "デスビ": "Distributor",
+    "インジェ": "Injector",
+    "スロボ": "Throttle Body",
+    "センサ": "Sensor",
+    "ランプ": "Lamp"
   },
   zh: {
     "dkd商品id": "DKD商品ID",
@@ -37,7 +70,32 @@ const curatedTranslations = {
     "未印刷": "未打印",
     "印刷済み": "已打印",
     "待機中": "等待中",
-    "出荷処理中": "出货处理中"
+    "出荷処理中": "出货处理中",
+    "専用BOX": "专用箱",
+    "規定サイズ": "标准尺寸",
+    "北海道": "北海道",
+    "北東北": "北东北",
+    "南東北": "南东北",
+    "関東": "关东",
+    "信越": "信越",
+    "北陸": "北陆",
+    "中部": "中部",
+    "関西": "关西",
+    "中国": "中国地区",
+    "四国": "四国",
+    "九州": "九州",
+    "沖縄": "冲绳",
+    "各ランキング内で連番（重複なし）": "各排名内连续编号（不重复）",
+    "商品別出荷実績集計": "按商品统计出货实绩",
+    "オルタ": "发电机",
+    "Sジェネ": "起动发电机",
+    "他オルタ": "其他发电机",
+    "セル": "起动机",
+    "デスビ": "分电器",
+    "インジェ": "喷油器",
+    "スロボ": "节气门体",
+    "センサ": "传感器",
+    "ランプ": "灯具"
   }
 };
 
@@ -111,6 +169,22 @@ function plainDictionaryValue(value) {
 
 function existingJapaneseValues(translations) {
   return new Set(Object.values(translations.ja || {}).map(plainDictionaryValue).filter(Boolean));
+}
+
+function appRuntimeUiSource(source) {
+  let runtime = source.slice(source.indexOf("\nvar currentLang"));
+  const bridgeStart = runtime.indexOf("\nvar legacyI18nTextSources");
+  const bridgeEnd = runtime.indexOf("\n// HTMLのdata-i18n属性", bridgeStart);
+  if (bridgeStart >= 0 && bridgeEnd > bridgeStart) runtime = runtime.slice(0, bridgeStart) + runtime.slice(bridgeEnd);
+  return runtime;
+}
+
+function readExistingSupplemental() {
+  if (!fs.existsSync(outputPath)) return { en: {}, zh: {} };
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(fs.readFileSync(outputPath, "utf8"), context);
+  return context.DCATS_LEGACY_UI_TRANSLATIONS || { en: {}, zh: {} };
 }
 
 async function bingSession() {
@@ -202,31 +276,37 @@ async function main() {
   const translations = extractTranslations(app);
   const candidates = new Set();
   extractHtmlCandidates(html, candidates);
-  extractJsCandidates(app.slice(app.indexOf("\nvar currentLang")), candidates);
+  runtimeScriptPaths.forEach((relativePath) => {
+    const source = relativePath === "app.js"
+      ? appRuntimeUiSource(app)
+      : fs.readFileSync(path.join(root, relativePath), "utf8");
+    extractJsCandidates(source, candidates);
+  });
   const existing = existingJapaneseValues(translations);
   const values = Array.from(candidates).filter((value) => !existing.has(value)).sort((a, b) => a.localeCompare(b, "ja"));
-  console.log(`Generating supplemental translations for ${values.length} Japanese UI literals`);
-  let en;
-  let zh;
-  if (process.platform === "win32") {
+  const previous = readExistingSupplemental();
+  const missing = values.filter((value) => !previous.en[value] || !previous.zh[value]);
+  console.log(`Supplemental translations: ${values.length} total, ${missing.length} new`);
+  let translated = { en: {}, zh: {} };
+  if (missing.length && process.platform === "win32") {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "dcats-i18n-"));
     const candidatePath = path.join(tempDir, "candidates.json");
     const translatedPath = path.join(tempDir, "translated.json");
-    fs.writeFileSync(candidatePath, JSON.stringify(values), "utf8");
+    fs.writeFileSync(candidatePath, JSON.stringify(missing), "utf8");
     const helper = path.join(__dirname, "generate-legacy-ui-translations.ps1");
     const processResult = childProcess.spawnSync("pwsh.exe", [
       "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", helper,
       "-CandidatePath", candidatePath, "-OutputPath", translatedPath
     ], { stdio: "inherit" });
     if (processResult.status !== 0) throw new Error("PowerShell translation helper failed");
-    const translated = JSON.parse(fs.readFileSync(translatedPath, "utf8"));
-    en = translated.en;
-    zh = translated.zh;
+    translated = JSON.parse(fs.readFileSync(translatedPath, "utf8"));
     fs.rmSync(tempDir, { recursive: true, force: true });
-  } else {
-    en = await translateValues(values, "en");
-    zh = await translateValues(values, "zh-Hans");
+  } else if (missing.length) {
+    translated.en = await translateValues(missing, "en");
+    translated.zh = await translateValues(missing, "zh-Hans");
   }
+  const en = Object.assign({}, previous.en || {}, translated.en || {});
+  const zh = Object.assign({}, previous.zh || {}, translated.zh || {});
   Object.assign(en, curatedTranslations.en);
   Object.assign(zh, curatedTranslations.zh);
   const content = [
