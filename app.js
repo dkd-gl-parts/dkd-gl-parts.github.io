@@ -2609,7 +2609,7 @@ var TRANSLATIONS = {
     f_part_number: "Part No.",
     vehicle_info_title: "Vehicle Info",
     vehicle_info_desc: "Shows vehicle information.",
-    vehicle_info_button: "Vehicle Info",
+    vehicle_info_button: "Vehicles",
     vehicle_info_maker_only: "maker only",
     vehicle_other_count: "+{n} more",
     vehicle_info_note_suffix: "vehicle info",
@@ -5446,7 +5446,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.816";
+var APP_VERSION       = "v1.1.817";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -16488,7 +16488,7 @@ function renderCatalogVehicleSummaryHtml(offsetClass, options) {
   var buttonHtml = options.showButton === false
     ? ""
     : "<button class='btn-sm-edit catalog-vehicle-button' type='button'>" + esc(t("vehicle_info_button")) + "</button>";
-  return "<div class='detail-vehicle-grid" + (offsetClass || "") + "'>" +
+  return "<div class='detail-vehicle-grid detail-vehicle-maker-grid" + (offsetClass || "") + "'>" +
     "<div class='detail-vehicle-label detail-vehicle-maker-label'>" + esc(t("f_vehicle_mfr")) + "</div>" +
     "<div class='detail-vehicle-value detail-vehicle-maker-row'><span class='catalog-vehicle-maker-value'>" + esc(t("loading")) + "</span>" + buttonHtml + "</div>" +
   "</div>";
