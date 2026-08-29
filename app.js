@@ -5446,7 +5446,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.811";
+var APP_VERSION       = "v1.1.812";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -7030,6 +7030,7 @@ function startLegacyUiI18nObserver() {
 
 // HTMLのdata-i18n属性を持つ要素を一括更新する
 function applyI18n() {
+  document.documentElement.lang = currentLang === "zh" ? "zh-CN" : currentLang;
   document.querySelectorAll(".app-version").forEach(function(el) {
     el.textContent = APP_VERSION;
   });
@@ -7068,7 +7069,6 @@ function updateLangSwitchers(lang) {
 async function applyLanguage(lang) {
   // tl は翻訳辞書が null なので en として扱う
   currentLang = (TRANSLATIONS[lang] !== undefined) ? lang : "en";
-  document.documentElement.lang = currentLang === "zh" ? "zh-CN" : currentLang;
   legacyI18nDictionaryCache = {};
 
   // localStorageにも保存（ログイン前のデフォルト設定として使う）

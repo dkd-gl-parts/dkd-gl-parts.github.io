@@ -127,7 +127,8 @@ assert(html.indexOf("legacy-i18n.js") < html.indexOf('<script src="app.js?v='), 
 assert(app.includes("function applyLegacyUiI18n(root)"), "Legacy UI translation bridge is missing");
 assert(app.includes("new MutationObserver(function(mutations)"), "Dynamic UI translation observer is missing");
 assert(app.includes('attributeFilter: ["placeholder", "title", "aria-label", "value"]'), "Dynamic attribute translation observer is missing");
-assert(app.includes('document.documentElement.lang = currentLang === "zh" ? "zh-CN" : currentLang;'), "Document language must follow the selected UI language");
+const applyI18nBlock = app.slice(app.indexOf("function applyI18n()"), app.indexOf("\nfunction updateLangSwitchers", app.indexOf("function applyI18n()")));
+assert(applyI18nBlock.includes('document.documentElement.lang = currentLang === "zh" ? "zh-CN" : currentLang;'), "Initial and profile-loaded UI language must update the document language");
 const componentNameBlockStart = app.indexOf("function componentLocalizedNameHtml(name)");
 const componentNameBlockEnd = app.indexOf("\nasync function ", componentNameBlockStart);
 const componentNameBlock = app.slice(componentNameBlockStart, componentNameBlockEnd);
