@@ -183,6 +183,28 @@ if (!vehicleSource.includes('document.getElementById("detail-vehicle-tab-content
   throw new Error("vehicle applications must render in the detail tab with a count");
 }
 
+const vehicleLanguageSource = sourceBetween("function vehicleApplicationTextLabel", "function vehicleApplicationPartNameLabel");
+const vehicleLanguageSandbox = {
+  currentLang: "en",
+  normalizeAsciiWidth: (value) => String(value || "")
+};
+vm.createContext(vehicleLanguageSandbox);
+vm.runInContext(`${vehicleLanguageSource}; this.vehicleLanguageApi = { vehicleApplicationTextLabel, romanizeVehicleKatakana };`, vehicleLanguageSandbox);
+if (vehicleLanguageSandbox.vehicleLanguageApi.vehicleApplicationTextLabel("ハイゼット / アトレー") !== "Hijet / Atrai") {
+  throw new Error("vehicle application names must use their official English labels");
+}
+if (/[ぁ-んァ-ヶ]/.test(vehicleLanguageSandbox.vehicleLanguageApi.vehicleApplicationTextLabel("テストカー"))) {
+  throw new Error("unregistered Katakana vehicle names need a Roman-letter fallback");
+}
+vehicleLanguageSandbox.currentLang = "zh";
+if (vehicleLanguageSandbox.vehicleLanguageApi.vehicleApplicationTextLabel("ハイゼット / アトレー") !== "Hijet / Atrai") {
+  throw new Error("vehicle product names must not remain Japanese in Chinese mode");
+}
+const vehicleTableSource = sourceBetween("function renderVehicleApplicationsTable", "function openVehicleApplicationsDialog");
+if (!vehicleTableSource.includes("renderVehicleApplicationText(row.model || row.vehicle_model || \"-\")")) {
+  throw new Error("vehicle model values must use the shared language conversion");
+}
+
 const compatibleSource = sourceBetween("function renderKikanPartsList", "async function loadKikan");
 if (compatibleSource.includes('updateSalesDetailTabCount("compatible"')) {
   throw new Error("compatible parts must not show a count badge");

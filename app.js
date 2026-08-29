@@ -5446,7 +5446,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.814";
+var APP_VERSION       = "v1.1.815";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -16710,6 +16710,27 @@ function vehicleApplicationTextLabel(value) {
     "サンバー": "Sambar",
     "レガシィ": "Legacy",
     "インプレッサ": "Impreza",
+    "ハイゼット": "Hijet",
+    "ハイゼットカーゴ": "Hijet Cargo",
+    "ハイゼットトラック": "Hijet Truck",
+    "アトレー": "Atrai",
+    "アトレーワゴン": "Atrai Wagon",
+    "ミラ": "Mira",
+    "タント": "Tanto",
+    "テリオス": "Terios",
+    "ロッキー": "Rocky",
+    "ブーン": "Boon",
+    "コペン": "Copen",
+    "ウェイク": "Wake",
+    "トール": "Thor",
+    "キャスト": "Cast",
+    "エッセ": "Esse",
+    "ソニカ": "Sonica",
+    "ネイキッド": "Naked",
+    "オプティ": "Opti",
+    "マックス": "Max",
+    "シャレード": "Charade",
+    "デルタ": "Delta",
     "他": "others",
     "その他": "Other"
   };
@@ -16790,6 +16811,27 @@ function vehicleApplicationTextLabel(value) {
     "サンバー": "Sambar",
     "レガシィ": "Legacy",
     "インプレッサ": "Impreza",
+    "ハイゼット": "Hijet",
+    "ハイゼットカーゴ": "Hijet Cargo",
+    "ハイゼットトラック": "Hijet Truck",
+    "アトレー": "Atrai",
+    "アトレーワゴン": "Atrai Wagon",
+    "ミラ": "Mira",
+    "タント": "Tanto",
+    "テリオス": "Terios",
+    "ロッキー": "Rocky",
+    "ブーン": "Boon",
+    "コペン": "Copen",
+    "ウェイク": "Wake",
+    "トール": "Thor",
+    "キャスト": "Cast",
+    "エッセ": "Esse",
+    "ソニカ": "Sonica",
+    "ネイキッド": "Naked",
+    "オプティ": "Opti",
+    "マックス": "Max",
+    "シャレード": "Charade",
+    "デルタ": "Delta",
     "他": "其他",
     "その他": "其他"
   };
@@ -16808,7 +16850,9 @@ function vehicleApplicationTextLabel(value) {
       }
       return false;
     });
-    return hit || p;
+    if (hit) return hit;
+    var romanized = romanizeVehicleKatakana(p);
+    return romanized !== p ? romanized : p;
   }
   if (/[、,／\/]/.test(text)) {
     return text.split(/([、,／\/])/).map(function(part) {
@@ -16817,6 +16861,78 @@ function vehicleApplicationTextLabel(value) {
     }).join("").replace(/\s*,\s*/g, ", ").replace(/\s*\/\s*/g, " / ").trim();
   }
   return lookup(text);
+}
+
+function romanizeVehicleKatakana(value) {
+  var source = String(value || "").trim();
+  if (!source || !/[ぁ-んァ-ヶ]/.test(source) || /[一-龠]/.test(source)) return source;
+  var text = source.replace(/[ぁ-ゖ]/g, function(char) {
+    return String.fromCharCode(char.charCodeAt(0) + 0x60);
+  });
+  var pairs = {
+    "キャ": "kya", "キュ": "kyu", "キョ": "kyo", "ギャ": "gya", "ギュ": "gyu", "ギョ": "gyo",
+    "シャ": "sha", "シュ": "shu", "ショ": "sho", "ジャ": "ja", "ジュ": "ju", "ジョ": "jo",
+    "チャ": "cha", "チュ": "chu", "チョ": "cho", "ニャ": "nya", "ニュ": "nyu", "ニョ": "nyo",
+    "ヒャ": "hya", "ヒュ": "hyu", "ヒョ": "hyo", "ビャ": "bya", "ビュ": "byu", "ビョ": "byo",
+    "ピャ": "pya", "ピュ": "pyu", "ピョ": "pyo", "ミャ": "mya", "ミュ": "myu", "ミョ": "myo",
+    "リャ": "rya", "リュ": "ryu", "リョ": "ryo", "シェ": "she", "ジェ": "je", "チェ": "che",
+    "ティ": "ti", "ディ": "di", "トゥ": "tu", "ドゥ": "du", "ファ": "fa", "フィ": "fi",
+    "フェ": "fe", "フォ": "fo", "フュ": "fyu", "ウィ": "wi", "ウェ": "we", "ウォ": "wo",
+    "ヴァ": "va", "ヴィ": "vi", "ヴェ": "ve", "ヴォ": "vo", "ツァ": "tsa", "ツィ": "tsi",
+    "ツェ": "tse", "ツォ": "tso", "イェ": "ye", "クァ": "kwa", "クィ": "kwi", "クェ": "kwe", "クォ": "kwo"
+  };
+  var singles = {
+    "ア": "a", "イ": "i", "ウ": "u", "エ": "e", "オ": "o",
+    "カ": "ka", "キ": "ki", "ク": "ku", "ケ": "ke", "コ": "ko",
+    "ガ": "ga", "ギ": "gi", "グ": "gu", "ゲ": "ge", "ゴ": "go",
+    "サ": "sa", "シ": "shi", "ス": "su", "セ": "se", "ソ": "so",
+    "ザ": "za", "ジ": "ji", "ズ": "zu", "ゼ": "ze", "ゾ": "zo",
+    "タ": "ta", "チ": "chi", "ツ": "tsu", "テ": "te", "ト": "to",
+    "ダ": "da", "ヂ": "ji", "ヅ": "zu", "デ": "de", "ド": "do",
+    "ナ": "na", "ニ": "ni", "ヌ": "nu", "ネ": "ne", "ノ": "no",
+    "ハ": "ha", "ヒ": "hi", "フ": "fu", "ヘ": "he", "ホ": "ho",
+    "バ": "ba", "ビ": "bi", "ブ": "bu", "ベ": "be", "ボ": "bo",
+    "パ": "pa", "ピ": "pi", "プ": "pu", "ペ": "pe", "ポ": "po",
+    "マ": "ma", "ミ": "mi", "ム": "mu", "メ": "me", "モ": "mo",
+    "ヤ": "ya", "ユ": "yu", "ヨ": "yo", "ラ": "ra", "リ": "ri", "ル": "ru", "レ": "re", "ロ": "ro",
+    "ワ": "wa", "ヲ": "o", "ン": "n", "ヴ": "vu", "ァ": "a", "ィ": "i", "ゥ": "u", "ェ": "e", "ォ": "o"
+  };
+  var result = "";
+  var doubled = false;
+  var lastVowel = "";
+  for (var i = 0; i < text.length;) {
+    var char = text.charAt(i);
+    if (char === "ッ") {
+      doubled = true;
+      i += 1;
+      continue;
+    }
+    if (char === "ー") {
+      result += lastVowel;
+      i += 1;
+      continue;
+    }
+    var pair = text.slice(i, i + 2);
+    var roman = pairs[pair] || singles[char] || "";
+    var step = pairs[pair] ? 2 : 1;
+    if (!roman) {
+      result += char === "・" ? " " : char;
+      doubled = false;
+      lastVowel = "";
+      i += 1;
+      continue;
+    }
+    if (doubled && /^[bcdfghjklmnpqrstvwxyz]/.test(roman)) result += roman.charAt(0);
+    doubled = false;
+    result += roman;
+    var vowels = roman.match(/[aeiou]/g);
+    lastVowel = vowels && vowels.length ? vowels[vowels.length - 1] : lastVowel;
+    i += step;
+  }
+  if (/[ぁ-んァ-ヶ一-龠]/.test(result)) return source;
+  return result.replace(/(^|[\s,/\-])([a-z])/g, function(match, separator, letter) {
+    return separator + letter.toUpperCase();
+  });
 }
 
 function renderVehicleApplicationText(value) {
@@ -16878,7 +16994,7 @@ function renderVehicleApplicationsTable(rows) {
     html += "<tr>";
     html += "<td>" + esc(vehicleMakerLabel(row.vehicle_manufacturer || "-")) + "</td>";
     html += "<td>" + renderVehicleApplicationText(row.vehicle_type || row.vehicle_model || "-") + "</td>";
-    html += "<td>" + (row.model ? esc(row.model || "-") : renderVehicleApplicationText(row.vehicle_model || "-")) + "</td>";
+    html += "<td>" + renderVehicleApplicationText(row.model || row.vehicle_model || "-") + "</td>";
     html += "<td>" + esc(row.engine || "-") + "</td>";
     html += "<td>" + esc(row.production_period_text || [row.effective_start, row.effective_end].filter(Boolean).join(" - ") || "-") + "</td>";
     html += "<td><div class='component-pn'>" + esc(row.genuine_part_number || "-") + "</div><div class='component-sub'>" + esc(row.manufacturer_part_number || "") + "</div></td>";
@@ -41239,8 +41355,8 @@ function renderStrongholdCatalogMgmt() {
         : "";
       return "<div class='purchase-product-item'><div class='purchase-product-main'>" + esc(purchaseLinkedProductMain(product)) + "</div><div class='purchase-product-sub'>DKD " + esc(String(product.dkd_shohin_id || "-")) + " / " + esc(purchaseLinkedProductSub(product)) + "</div>" + actions + "</div>";
     }).join("") + "</div>" : "<span class='mgmt-sub'>-</span>";
-    var sourceSub = [tCat(item.category_code || item.category_label), item.manufacturer, item.vehicle_manufacturer].filter(Boolean).join(" / ");
-    var vehicleSub = [item.compatible_car_models, item.model].filter(Boolean).join(" / ");
+    var sourceSub = [tCat(item.category_code || item.category_label), item.manufacturer, vehicleMakerLabel(item.vehicle_manufacturer)].filter(Boolean).join(" / ");
+    var vehicleSub = [item.compatible_car_models, item.model].filter(Boolean).map(vehicleApplicationTextLabel).join(" / ");
     html += "<tr data-purchase-record-kind='catalog' data-purchase-record-id='" + esc(String(item.id || "")) + "'>";
     html += "<td><div class='mgmt-pn'>" + esc(String(item.source_row_number || "-")) + "</div><div class='mgmt-sub'>ID " + esc(String(item.source_item_id || "-")) + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(item.supplier_pn || "-") + "</div><div class='mgmt-sub'>" + esc(purchaseMoneyText(item.unit_price, item.currency)) + " / MOQ " + esc(item.moq == null ? "-" : String(item.moq)) + "</div></td>";
@@ -41594,8 +41710,8 @@ function openPurchaseCatalogMaintenance(itemId) {
     String(item.manufacturer_part_number || item.genuine_part_number || "").split(",")[0].trim();
   document.getElementById("purchase-link-context").innerHTML =
     "<strong>" + esc([item.manufacturer_part_number, item.genuine_part_number].filter(Boolean).join(" / ") || "-") + "</strong>" +
-    "<div>" + esc([tCat(item.category_code || item.category_label), item.manufacturer, item.vehicle_manufacturer].filter(Boolean).join(" / ")) + "</div>" +
-    "<div>" + esc([item.compatible_car_models, item.model].filter(Boolean).join(" / ")) + "</div>" +
+    "<div>" + esc([tCat(item.category_code || item.category_label), item.manufacturer, vehicleMakerLabel(item.vehicle_manufacturer)].filter(Boolean).join(" / ")) + "</div>" +
+    "<div>" + esc([item.compatible_car_models, item.model].filter(Boolean).map(vehicleApplicationTextLabel).join(" / ")) + "</div>" +
     "<div>" + esc(t("purchase_link_current") + ": " + (current.length ? current.join(" | ") : "-")) + "</div>";
   var candidatesEl = document.getElementById("purchase-link-candidates");
   if (candidatesEl) { candidatesEl.innerHTML = ""; setCspStyle(candidatesEl, "display", "none"); }

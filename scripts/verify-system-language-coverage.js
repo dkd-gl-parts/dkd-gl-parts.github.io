@@ -84,6 +84,11 @@ function appRuntimeUiSource(source) {
   const bridgeStart = runtime.indexOf("\nvar legacyI18nTextSources");
   const bridgeEnd = runtime.indexOf("\n// HTMLのdata-i18n属性", bridgeStart);
   if (bridgeStart >= 0 && bridgeEnd > bridgeStart) runtime = runtime.slice(0, bridgeStart) + runtime.slice(bridgeEnd);
+  const vehicleDataStart = runtime.indexOf("\nfunction vehicleApplicationTextLabel");
+  const vehicleDataEnd = runtime.indexOf("\nfunction renderVehicleApplicationText", vehicleDataStart);
+  if (vehicleDataStart >= 0 && vehicleDataEnd > vehicleDataStart) {
+    runtime = runtime.slice(0, vehicleDataStart) + runtime.slice(vehicleDataEnd);
+  }
   return runtime;
 }
 
@@ -125,6 +130,7 @@ assert(!uncoveredDynamic.length, `Dynamic UI literals are missing supplemental t
 assert(html.indexOf("legacy-i18n.js") >= 0, "Supplemental translation asset is not loaded");
 assert(html.indexOf("legacy-i18n.js") < html.indexOf('<script src="app.js?v='), "Supplemental translations must load before app.js");
 assert(app.includes("function applyLegacyUiI18n(root)"), "Legacy UI translation bridge is missing");
+assert(app.includes("function romanizeVehicleKatakana(value)"), "Vehicle-name language fallback is missing");
 assert(app.includes("new MutationObserver(function(mutations)"), "Dynamic UI translation observer is missing");
 assert(app.includes('attributeFilter: ["placeholder", "title", "aria-label", "value"]'), "Dynamic attribute translation observer is missing");
 const applyI18nBlock = app.slice(app.indexOf("function applyI18n()"), app.indexOf("\nfunction updateLangSwitchers", app.indexOf("function applyI18n()")));

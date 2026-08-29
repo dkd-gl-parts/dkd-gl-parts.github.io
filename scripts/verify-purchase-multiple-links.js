@@ -22,6 +22,8 @@ requireSource("data-purchase-record-kind='sl'", "SL rows need a stable record an
 requireSource("applyPurchaseMgmtUnlinkLocally(affectedRow, id, true, anchor)", "Stronghold unlink must update the current row in place");
 requireSource("applyPurchaseMgmtUnlinkLocally(affectedRow, id, false, anchor)", "SL unlink must update the current row in place");
 requireSource("restorePurchaseMgmtRecordAnchor(anchor);", "unlink rendering must restore the edited record position");
+requireSource("vehicleMakerLabel(item.vehicle_manufacturer)", "purchase catalog vehicle makers must follow the selected language");
+requireSource("filter(Boolean).map(vehicleApplicationTextLabel).join(\" / \")", "purchase catalog vehicle names must follow the selected language");
 requireSource("purchase-multiple-link-badge", "multiple-link records need a visible count badge");
 
 function readFunction(name) {
