@@ -1668,7 +1668,15 @@ var TRANSLATIONS = {
     component_name_master_search_ph: "部品名で絞り込み",
     component_name_master_show_more: "さらに表示",
     component_name_request_list_title: "申請一覧",
-    component_name_manual_master_list_title: "手動追加マスター一覧",
+    component_name_manual_master_list_title: "部品名マスター一覧",
+    component_name_untranslated_only: "未翻訳のみ",
+    component_name_translation_edit: "翻訳編集",
+    component_name_translation_title: "部品名の翻訳編集",
+    component_name_translation_help: "日本語の部品名に対応する英語・中国語を登録します。登録後は構成部品一覧へ反映されます。",
+    component_name_japanese: "日本語",
+    component_name_english: "英語",
+    component_name_chinese: "中国語",
+    component_name_translation_saved: "翻訳を保存しました。",
     component_name_request_open: "候補なし: 申請",
     component_name_request_title: "新規部品名候補を申請",
     component_name_requested: "申請する部品名",
@@ -1683,7 +1691,7 @@ var TRANSLATIONS = {
     component_name_request_status_rejected: "却下",
     component_name_request_count: "申請 {n} 件",
     component_name_request_empty: "該当する申請はありません。",
-    component_name_master_empty: "このカテゴリの手動追加部品名はありません。",
+    component_name_master_empty: "この条件に該当する部品名はありません。",
     component_name_approve_new: "マスターに登録",
     component_name_merge_existing: "既存名へ統合",
     component_name_reject: "却下",
@@ -3426,7 +3434,15 @@ var TRANSLATIONS = {
     component_name_master_search_ph: "Filter by part name",
     component_name_master_show_more: "Show More",
     component_name_request_list_title: "Requests",
-    component_name_manual_master_list_title: "Manual Master Names",
+    component_name_manual_master_list_title: "Part Name Master",
+    component_name_untranslated_only: "Missing translations only",
+    component_name_translation_edit: "Edit Translation",
+    component_name_translation_title: "Edit Part Name Translation",
+    component_name_translation_help: "Register English and Chinese names for the Japanese part name. Saved translations are used in component lists.",
+    component_name_japanese: "Japanese",
+    component_name_english: "English",
+    component_name_chinese: "Chinese",
+    component_name_translation_saved: "Translation saved.",
     component_name_request_open: "Missing name: Request",
     component_name_request_title: "Request New Part Name",
     component_name_requested: "Requested Part Name",
@@ -3441,7 +3457,7 @@ var TRANSLATIONS = {
     component_name_request_status_rejected: "Rejected",
     component_name_request_count: "{n} requests",
     component_name_request_empty: "No matching requests.",
-    component_name_master_empty: "No manually added part names for this category.",
+    component_name_master_empty: "No part names match these filters.",
     component_name_approve_new: "Register to Master",
     component_name_merge_existing: "Merge Existing",
     component_name_reject: "Reject",
@@ -5174,7 +5190,15 @@ var TRANSLATIONS = {
     component_name_master_search_ph: "按部件名筛选",
     component_name_master_show_more: "显示更多",
     component_name_request_list_title: "申请列表",
-    component_name_manual_master_list_title: "手动追加主数据列表",
+    component_name_manual_master_list_title: "部件名主数据列表",
+    component_name_untranslated_only: "仅显示未翻译",
+    component_name_translation_edit: "编辑翻译",
+    component_name_translation_title: "编辑部件名翻译",
+    component_name_translation_help: "为日文部件名登记英文和中文。保存后会显示在构成部件列表中。",
+    component_name_japanese: "日文",
+    component_name_english: "英文",
+    component_name_chinese: "中文",
+    component_name_translation_saved: "翻译已保存。",
     component_name_request_open: "无候选: 申请",
     component_name_request_title: "申请新的部件名候选",
     component_name_requested: "申请的部件名",
@@ -5189,7 +5213,7 @@ var TRANSLATIONS = {
     component_name_request_status_rejected: "已驳回",
     component_name_request_count: "申请 {n} 件",
     component_name_request_empty: "没有符合条件的申请。",
-    component_name_master_empty: "此类别没有手动追加的部件名。",
+    component_name_master_empty: "没有符合筛选条件的部件名。",
     component_name_approve_new: "注册到主数据",
     component_name_merge_existing: "合并到既有名称",
     component_name_reject: "驳回",
@@ -5388,7 +5412,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.807";
+var APP_VERSION       = "v1.1.808";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5448,11 +5472,16 @@ var componentCatalogNameCandidateMetaMap = {};
 var componentCatalogNameCandidateMasterMap = {};
 var componentCatalogNameCandidateCache = {};
 var componentCatalogNameCandidateLoadSeq = 0;
+var componentDisplayNameTranslationCache = {};
+var componentDisplayNameTranslationLabelMap = {};
+var componentDisplayNameTranslationLoadSeq = 0;
 var componentNameRequestContext = null;
 var componentNameMasterRequestRows = [];
 var componentNameMasterCandidateRows = [];
 var componentNameMasterLoadSeq = 0;
 var componentNameMasterRenderLimit = 150;
+var componentNameMasterEditingId = null;
+var componentNameMasterSaving = false;
 var componentCompatAllRows = [];
 var componentCompatSearchRows = [];
 var componentCompatSelected = null;
@@ -6774,6 +6803,7 @@ async function applyLanguage(lang) {
   componentCatalogNameCandidateKindMap = {};
   componentCatalogNameCandidateMetaMap = {};
   componentCatalogNameCandidateMasterMap = {};
+  componentDisplayNameTranslationLabelMap = {};
   renderMenu();
   renderCustomerPortal();
   if (isScreenActive("customer-users")) renderCustomerManagedUsers();
@@ -6824,9 +6854,14 @@ async function applyLanguage(lang) {
   if (componentScreenActive) {
     updateComponentsReturnButton();
     updateComponentsContextHeader();
+    await loadComponentDisplayNameTranslations(componentCatalogCategoryCode(currentProduct));
   }
   renderComponentAddPanel();
   renderAssemblyComponentRows();
+  if (isScreenActive("component-name-master-mgmt")) {
+    renderComponentNameRequestList();
+    renderComponentNameMasterList();
+  }
   var reverseOverlay = document.getElementById("component-reverse-overlay");
   if (reverseOverlay && reverseOverlay.classList.contains("show")) {
     var reverseMakerSelect = document.getElementById("component-reverse-vehicle-maker");
@@ -16929,6 +16964,7 @@ async function loadProductionComponentSummaryForRow(row, kind, seq) {
   var dkdId = productDkdId(row);
   kind = normalizeProductKind(kind || "rebuilt");
   if (!wrap || !dkdId) return;
+  var translationPromise = loadComponentDisplayNameTranslations(componentCatalogCategoryCode(row));
   wrap.innerHTML = "<div class='production-help'>" + esc(t("loading")) + "</div>";
   if (count) count.textContent = productionImageKindLabel(kind) + " / " + t("loading");
   var r = await sb.from("assembly_component_usage_details")
@@ -16946,6 +16982,8 @@ async function loadProductionComponentSummaryForRow(row, kind, seq) {
     return;
   }
   var rows = r.data || [];
+  await translationPromise;
+  if (seq !== productionDetailRequestSeq || String(currentProductionComponentSummaryDkdId || "") !== String(dkdId) || currentProductionComponentSummaryKind !== kind) return;
   wrap.innerHTML = renderProductionComponents(rows, kind);
   if (count) count.textContent = tf("production_component_summary_count", { kind: productionImageKindLabel(kind), n: rows.length });
 }
@@ -35545,13 +35583,23 @@ function addComponentNameCandidateLabel(labelMap, candidateName, displayName) {
   labelMap[componentNameCandidateLabelKey(value)] = label;
 }
 
+function componentNameTranslationKey(value) {
+  return normalizeComponentNameText(value)
+    .replace(/[・･]/g, ",")
+    .replace(/[\s　]+/g, "")
+    .replace(/ワッシャー/g, "ワッシャ")
+    .replace(/プーリー/g, "プーリ")
+    .replace(/^リア/g, "リヤ")
+    .toUpperCase();
+}
+
 function lookupComponentNameTranslation(dict, name) {
-  var key = componentNameCandidateLabelKey(name);
+  var key = componentNameTranslationKey(name);
   if (!key) return "";
   var normalizedName = normalizeComponentNameText(name);
   if (dict[normalizedName]) return dict[normalizedName];
   for (var sourceName in dict) {
-    if (componentNameCandidateLabelKey(sourceName) === key) return dict[sourceName];
+    if (componentNameTranslationKey(sourceName) === key) return dict[sourceName];
   }
   return "";
 }
@@ -35731,7 +35779,42 @@ function componentNameTranslationLabel(name) {
     "カラー,センター ケース": "Center Case Collar",
     "クッション": "Cushion",
     "クラッチ&ベアリング,センタ": "Clutch & Center Bearing",
-    "クリップ": "Clip"
+    "クリップ": "Clip",
+    "B接点": "B Contact",
+    "M接点": "M Contact",
+    "フロントメタル": "Front Metal Bearing",
+    "ロックワッシャー": "Lock Washer",
+    "IC レギュレータ": "IC Regulator",
+    "リヤメタル": "Rear Metal Bearing",
+    "メタル": "Metal Bearing",
+    "リヤカバー": "Rear Cover",
+    "レクチファイヤ・リビルト": "Rebuilt Rectifier",
+    "オイルシール": "Oil Seal",
+    "レクチファイヤ アセンブリ": "Rectifier Assembly",
+    "S端子": "S Terminal",
+    "プ-リ": "Pulley",
+    "プーリー": "Pulley",
+    "コイルASSY": "Coil ASSY",
+    "スイッチ・キャップ": "Switch Cap",
+    "フロントカバー": "Front Cover",
+    "フレーム,ドライブ　エンド": "Drive End Frame",
+    "フレーム,リヤ　エンド": "Rear End Frame",
+    "レバーASSY(セット)": "Lever ASSY (Set)",
+    "ロ-タASSY": "Rotor ASSY",
+    "クラッチシャフト": "Clutch Shaft",
+    "センタ ブラケット": "Center Bracket",
+    "センターメタル": "Center Metal Bearing",
+    "ダイオード (-)": "Diode (-)",
+    "ダイオード (+)": "Diode (+)",
+    "ピニオンギヤ": "Pinion Gear",
+    "B+ターミナル": "B+ Terminal",
+    "B+ターミナルキャップ": "B+ Terminal Cap",
+    "オー リング": "O-Ring",
+    "カバー,リヤ　エンド": "Rear End Cover",
+    "クラッチシャフトカバー": "Clutch Shaft Cover",
+    "フロントカバー アッセンブリ": "Front Cover ASSY",
+    "リヤカバー アッセンブリ": "Rear Cover ASSY",
+    "接点セット": "Contact Set"
   };
   var zh = {
     "コンプレッサAY": "压缩机总成",
@@ -35905,7 +35988,42 @@ function componentNameTranslationLabel(name) {
     "カラー,センター ケース": "中心壳衬套",
     "クッション": "缓冲垫",
     "クラッチ&ベアリング,センタ": "离合器及中心轴承",
-    "クリップ": "卡夹"
+    "クリップ": "卡夹",
+    "B接点": "B触点",
+    "M接点": "M触点",
+    "フロントメタル": "前金属轴承",
+    "ロックワッシャー": "锁紧垫圈",
+    "IC レギュレータ": "IC调节器",
+    "リヤメタル": "后金属轴承",
+    "メタル": "金属轴承",
+    "リヤカバー": "后盖",
+    "レクチファイヤ・リビルト": "再制造整流器",
+    "オイルシール": "油封",
+    "レクチファイヤ アセンブリ": "整流器总成",
+    "S端子": "S端子",
+    "プ-リ": "皮带轮",
+    "プーリー": "皮带轮",
+    "コイルASSY": "线圈总成",
+    "スイッチ・キャップ": "开关盖",
+    "フロントカバー": "前盖",
+    "フレーム,ドライブ　エンド": "驱动端框架",
+    "フレーム,リヤ　エンド": "后端框架",
+    "レバーASSY(セット)": "拨叉总成（套件）",
+    "ロ-タASSY": "转子总成",
+    "クラッチシャフト": "离合器轴",
+    "センタ ブラケット": "中央支架",
+    "センターメタル": "中央金属轴承",
+    "ダイオード (-)": "二极管 (-)",
+    "ダイオード (+)": "二极管 (+)",
+    "ピニオンギヤ": "小齿轮",
+    "B+ターミナル": "B+端子",
+    "B+ターミナルキャップ": "B+端子盖",
+    "オー リング": "O形圈",
+    "カバー,リヤ　エンド": "后端盖",
+    "クラッチシャフトカバー": "离合器轴盖",
+    "フロントカバー アッセンブリ": "前盖总成",
+    "リヤカバー アッセンブリ": "后盖总成",
+    "接点セット": "触点套件"
   };
   return lookupComponentNameTranslation(lang === "zh" ? zh : en, name);
 }
@@ -36106,7 +36224,7 @@ function applyComponentNameCandidateCachePayload(payload) {
 
 function componentNameOptionLabel(name) {
   var key = componentNameCandidateLabelKey(name);
-  return componentCatalogNameCandidateLabelMap[key] || componentNameTranslationLabel(name) || "";
+  return componentCatalogNameCandidateLabelMap[key] || componentDisplayNameTranslationLabelMap[key] || componentNameTranslationLabel(name) || "";
 }
 
 function componentLocalizedNameText(name) {
@@ -36124,6 +36242,42 @@ function componentLocalizedNameHtml(name) {
     html += "<div class='component-sub'>" + esc(text) + "</div>";
   }
   return html;
+}
+
+async function loadComponentDisplayNameTranslations(categoryCode) {
+  var loadSeq = ++componentDisplayNameTranslationLoadSeq;
+  var lang = currentLang === "zh" ? "zh" : (currentLang === "en" ? "en" : "");
+  var category = String(categoryCode || "").trim();
+  componentDisplayNameTranslationLabelMap = {};
+  if (!lang || !category) return;
+  var cacheKey = category + "|" + lang;
+  if (componentDisplayNameTranslationCache[cacheKey]) {
+    if (loadSeq === componentDisplayNameTranslationLoadSeq && currentLang === lang) {
+      componentDisplayNameTranslationLabelMap = Object.assign({}, componentDisplayNameTranslationCache[cacheKey]);
+    }
+    return;
+  }
+  var r = await sb.rpc("get_component_name_master_candidates", {
+    target_category_code: category,
+    target_lang: lang,
+    include_inactive: false,
+    max_rows: 1200
+  });
+  if (r.error) {
+    console.warn("component display name translations failed; using built-in translations", r.error);
+    return;
+  }
+  var labels = {};
+  (r.data || []).forEach(function(row) {
+    var canonicalName = normalizeComponentNameText(row.component_name_ja || row.component_name);
+    var translatedName = normalizeComponentNameText(lang === "zh" ? row.component_name_zh : row.component_name_en);
+    if (!translatedName) translatedName = normalizeComponentNameText(row.component_name);
+    addComponentNameCandidateLabel(labels, canonicalName, translatedName);
+  });
+  componentDisplayNameTranslationCache[cacheKey] = labels;
+  if (loadSeq === componentDisplayNameTranslationLoadSeq && currentLang === lang) {
+    componentDisplayNameTranslationLabelMap = Object.assign({}, labels);
+  }
 }
 
 function componentRowNameText(row) {
@@ -36631,7 +36785,7 @@ async function loadComponentNameMasterMgmt() {
   componentNameMasterCandidateRows = [];
   var reqPromise = sb.rpc("list_component_name_requests", {
     target_status: status || "",
-    target_category_code: null,
+    target_category_code: category || null,
     max_rows: 300
   }).then(function(reqR) {
     if (loadSeq !== componentNameMasterLoadSeq) return;
@@ -36644,7 +36798,7 @@ async function loadComponentNameMasterMgmt() {
     if (list) list.innerHTML = "<div class='component-empty'>" + esc((err && err.message) || t("msg_kikan_err")) + "</div>";
   });
   var masterPromise = sb.rpc("get_component_name_master_candidates", {
-    target_category_code: null,
+    target_category_code: category || null,
     target_lang: currentLang || "ja",
     include_inactive: true,
     max_rows: 1200
@@ -36711,13 +36865,16 @@ function componentNameMasterManageRows() {
   var categoryEl = document.getElementById("component-name-master-category");
   var category = categoryEl ? categoryEl.value : "";
   return (componentNameMasterCandidateRows || []).filter(function(row) {
-    return isManualComponentNameMasterRow(row) && (!category || row.category_code === category);
+    return !category || row.category_code === category;
   });
 }
 
 function componentNameMasterFilteredRows() {
   var query = componentNameMasterSearchValue();
+  var untranslatedOnlyEl = document.getElementById("component-name-master-untranslated-only");
+  var untranslatedOnly = !!(untranslatedOnlyEl && untranslatedOnlyEl.checked);
   return componentNameMasterManageRows().filter(function(row) {
+    if (untranslatedOnly && normalizeComponentNameText(row.component_name_en) && normalizeComponentNameText(row.component_name_zh)) return false;
     return componentNameMasterRowMatchesSearch(row, query);
   });
 }
@@ -36800,18 +36957,22 @@ function renderComponentNameMasterList() {
     wrap.innerHTML = "<div class='component-empty'>" + esc(t("component_name_master_empty")) + "</div>";
     return;
   }
-  var html = "<table class='mgmt-table'><tr><th>ID</th><th>" + esc(t("component_name")) + "</th><th>EN / 中文</th><th>" + esc(t("component_request_status")) + "</th><th>" + esc(t("component_actions")) + "</th></tr>";
+  var html = "<div class='component-name-master-table-wrap'><table class='mgmt-table component-name-master-table'><tr><th>ID</th><th>" + esc(t("component_name")) + "</th><th>EN / 中文</th><th>" + esc(t("component_request_status")) + "</th><th>" + esc(t("component_actions")) + "</th></tr>";
   visibleRows.forEach(function(row) {
     var categoryLabel = tCat(row.category_code || "");
     html += "<tr>";
     html += "<td>" + esc(String(row.master_id || "-")) + "</td>";
     html += "<td><strong>" + esc(row.component_name_ja || row.component_name || "-") + "</strong><div class='mgmt-sub'>" + esc(categoryLabel) + "</div></td>";
-    html += "<td>" + esc([row.component_name_en, row.component_name_zh].filter(Boolean).join(" / ") || "-") + "</td>";
+    html += "<td><div class='component-name-master-translations'><span><b>EN</b> " + esc(row.component_name_en || "-") + "</span><span><b>中文</b> " + esc(row.component_name_zh || "-") + "</span></div></td>";
     html += "<td>" + esc([row.source_type, row.is_active ? "active" : "inactive"].filter(Boolean).join(" / ")) + "</td>";
-    html += "<td><button class='btn-sm-edit production-action-secondary' data-component-name-master-toggle='" + esc(String(row.master_id || "")) + "' data-component-name-master-active='" + esc(String(row.is_active !== false)) + "'>" + esc(row.is_active === false ? t("component_name_enable") : t("component_name_disable")) + "</button></td>";
+    html += "<td><div class='component-name-master-actions'><button class='btn-sm-edit' data-component-name-master-edit='" + esc(String(row.master_id || "")) + "'>" + esc(t("component_name_translation_edit")) + "</button>";
+    if (isManualComponentNameMasterRow(row)) {
+      html += "<button class='btn-sm-edit production-action-secondary' data-component-name-master-toggle='" + esc(String(row.master_id || "")) + "' data-component-name-master-active='" + esc(String(row.is_active !== false)) + "'>" + esc(row.is_active === false ? t("component_name_enable") : t("component_name_disable")) + "</button>";
+    }
+    html += "</div></td>";
     html += "</tr>";
   });
-  html += "</table>";
+  html += "</table></div>";
   if (rows.length > visibleRows.length) {
     html += "<div class='mgmt-count'><button class='btn-sm-edit production-action-secondary' id='btn-component-name-master-show-more'>" + esc(t("component_name_master_show_more")) + "</button></div>";
   }
@@ -36819,6 +36980,11 @@ function renderComponentNameMasterList() {
   wrap.querySelectorAll("[data-component-name-master-toggle]").forEach(function(btn) {
     btn.addEventListener("click", function() {
       toggleComponentNameMasterActive(btn.dataset.componentNameMasterToggle, btn.dataset.componentNameMasterActive === "true");
+    });
+  });
+  wrap.querySelectorAll("[data-component-name-master-edit]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      openComponentNameTranslationForm(btn.dataset.componentNameMasterEdit);
     });
   });
   var moreBtn = document.getElementById("btn-component-name-master-show-more");
@@ -36844,6 +37010,7 @@ async function approveComponentNameRequest(requestId) {
   });
   if (r.error) { alert(r.error.message || t("msg_save_err")); return; }
   componentCatalogNameCandidateCache = {};
+  componentDisplayNameTranslationCache = {};
   await loadComponentNameMasterMgmt();
 }
 
@@ -36859,6 +37026,7 @@ async function mergeComponentNameRequest(requestId) {
   });
   if (r.error) { alert(r.error.message || t("msg_save_err")); return; }
   componentCatalogNameCandidateCache = {};
+  componentDisplayNameTranslationCache = {};
   await loadComponentNameMasterMgmt();
 }
 
@@ -36870,6 +37038,78 @@ async function rejectComponentNameRequest(requestId) {
   });
   if (r.error) { alert(r.error.message || t("msg_save_err")); return; }
   await loadComponentNameMasterMgmt();
+}
+
+function closeComponentNameTranslationForm() {
+  componentNameMasterEditingId = null;
+  componentNameMasterSaving = false;
+  var overlay = document.getElementById("component-name-translation-overlay");
+  var error = document.getElementById("component-name-translation-error");
+  var save = document.getElementById("btn-component-name-translation-save");
+  if (overlay) overlay.classList.remove("show");
+  if (error) error.textContent = "";
+  if (save) {
+    save.disabled = false;
+    save.textContent = t("btn_save");
+  }
+}
+
+function openComponentNameTranslationForm(masterId) {
+  var row = (componentNameMasterCandidateRows || []).find(function(item) {
+    return String(item.master_id || "") === String(masterId || "");
+  });
+  if (!row) return;
+  componentNameMasterEditingId = row.master_id;
+  var overlay = document.getElementById("component-name-translation-overlay");
+  var japanese = document.getElementById("component-name-translation-ja");
+  var category = document.getElementById("component-name-translation-category");
+  var english = document.getElementById("component-name-translation-en");
+  var chinese = document.getElementById("component-name-translation-zh");
+  var error = document.getElementById("component-name-translation-error");
+  if (japanese) japanese.textContent = row.component_name_ja || row.component_name || "-";
+  if (category) category.textContent = tCat(row.category_code || "");
+  if (english) english.value = row.component_name_en || "";
+  if (chinese) chinese.value = row.component_name_zh || "";
+  if (error) error.textContent = "";
+  if (overlay) overlay.classList.add("show");
+  if (english) english.focus();
+}
+
+async function saveComponentNameTranslation() {
+  if (componentNameMasterSaving || !componentNameMasterEditingId) return;
+  var english = document.getElementById("component-name-translation-en");
+  var chinese = document.getElementById("component-name-translation-zh");
+  var error = document.getElementById("component-name-translation-error");
+  var save = document.getElementById("btn-component-name-translation-save");
+  componentNameMasterSaving = true;
+  if (error) error.textContent = "";
+  if (save) {
+    save.disabled = true;
+    save.textContent = t("loading");
+  }
+  var payload = {
+    component_name_en: normalizeComponentNameText(english ? english.value : "") || null,
+    component_name_zh: normalizeComponentNameText(chinese ? chinese.value : "") || null,
+    updated_by: currentUser ? currentUser.id : null
+  };
+  var r = await sb.from("component_name_masters")
+    .update(payload)
+    .eq("id", parseInt(componentNameMasterEditingId, 10));
+  componentNameMasterSaving = false;
+  if (save) {
+    save.disabled = false;
+    save.textContent = t("btn_save");
+  }
+  if (r.error) {
+    if (error) error.textContent = r.error.message || t("msg_save_err");
+    return;
+  }
+  componentCatalogNameCandidateCache = {};
+  componentDisplayNameTranslationCache = {};
+  componentDisplayNameTranslationLabelMap = {};
+  closeComponentNameTranslationForm();
+  await loadComponentNameMasterMgmt();
+  alert(t("component_name_translation_saved"));
 }
 
 async function toggleComponentNameMasterActive(masterId, isActive) {
@@ -36887,6 +37127,7 @@ async function toggleComponentNameMasterActive(masterId, isActive) {
     .eq("id", parseInt(masterId, 10));
   if (r.error) { alert(r.error.message || t("msg_save_err")); return; }
   componentCatalogNameCandidateCache = {};
+  componentDisplayNameTranslationCache = {};
   await loadComponentNameMasterMgmt();
 }
 
@@ -38737,6 +38978,7 @@ async function loadAssemblyComponentsForCurrent() {
   componentIllustrationRequestId += 1;
   editingComponentUsageId = null;
   var selectedKind = selectedProductKind();
+  var translationPromise = loadComponentDisplayNameTranslations(componentCatalogCategoryCode(currentProduct));
   wrap.innerHTML = "<div class='component-empty'>" + t("loading") + "</div>";
   renderComponentIllustrationSlot();
 
@@ -38772,6 +39014,7 @@ async function loadAssemblyComponentsForCurrent() {
       if (rpcRows.length || selectedKind === "catalog_spec") {
         assemblyComponentRows = rpcRows;
         updateComponentTargetSummary(rpcRows.length);
+        await translationPromise;
         renderAssemblyComponentRows();
         if (recoveredCatalogRows) {
           await loadComponentAlternativesForRows(rpcRows);
@@ -38802,6 +39045,7 @@ async function loadAssemblyComponentsForCurrent() {
     if (treeFallbackRows.length || selectedKind === "catalog_spec") {
       assemblyComponentRows = treeFallbackRows;
       updateComponentTargetSummary(treeFallbackRows.length);
+      await translationPromise;
       renderAssemblyComponentRows();
       return;
     }
@@ -38862,6 +39106,7 @@ async function loadAssemblyComponentsForCurrent() {
   assemblyComponentRows = rows;
   updateComponentTargetSummary(rows.length);
   await loadComponentAlternativesForRows(rows);
+  await translationPromise;
   renderAssemblyComponentRows();
 }
 
@@ -46128,6 +46373,15 @@ document.getElementById("component-name-master-search").addEventListener("input"
   componentNameMasterRenderLimit = 150;
   renderComponentNameRequestList();
   renderComponentNameMasterList();
+});
+document.getElementById("component-name-master-untranslated-only").addEventListener("change", function(){
+  componentNameMasterRenderLimit = 150;
+  renderComponentNameMasterList();
+});
+document.getElementById("btn-component-name-translation-cancel").addEventListener("click", closeComponentNameTranslationForm);
+document.getElementById("btn-component-name-translation-save").addEventListener("click", saveComponentNameTranslation);
+document.getElementById("component-name-translation-overlay").addEventListener("click", function(e){
+  if (e.target === e.currentTarget) closeComponentNameTranslationForm();
 });
 document.getElementById("btn-back-component-compat-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-component-compat-search").addEventListener("click", searchComponentCompatibility);

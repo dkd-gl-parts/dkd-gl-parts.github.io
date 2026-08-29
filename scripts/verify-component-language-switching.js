@@ -43,11 +43,49 @@ const localizedNameSource = sourceBetween(app, "function componentLocalizedNameT
   "<div class='component-sub'>"
 ].forEach((fragment) => requireFragment(localizedNameSource, fragment, "localized component name"));
 
+[
+  '"B接点": "B Contact"',
+  '"ロックワッシャー": "Lock Washer"',
+  '"リヤカバー": "Rear Cover"',
+  '"メタル": "Metal Bearing"',
+  '"B接点": "B触点"',
+  '"ロックワッシャー": "锁紧垫圈"'
+].forEach((fragment) => requireFragment(app, fragment, "manual component translation fallback"));
+
+const displayTranslationSource = sourceBetween(app, "async function loadComponentDisplayNameTranslations", "function componentRowNameText");
+[
+  'sb.rpc("get_component_name_master_candidates"',
+  'target_lang: lang',
+  'component_name_en',
+  'component_name_zh',
+  'componentDisplayNameTranslationCache[cacheKey] = labels'
+].forEach((fragment) => requireFragment(displayTranslationSource, fragment, "master-backed component translation"));
+
 const productionSource = sourceBetween(app, "function renderProductionComponents", "async function loadProductionComponentSummaryForRow");
 requireFragment(productionSource, 'componentLocalizedNameHtml(partName)', "production component summary localization");
+requireFragment(app, 'loadComponentDisplayNameTranslations(componentCatalogCategoryCode(row))', "production translation preload");
+requireFragment(app, 'await translationPromise;', "translation preload wait");
 
 const componentRowsSource = sourceBetween(app, "function renderAssemblyComponentRows()", "async function loadAssemblyComponentsForCurrent()");
 requireFragment(componentRowsSource, "componentRowNameHtml(row)", "component list localization");
+requireFragment(app, 'loadComponentDisplayNameTranslations(componentCatalogCategoryCode(currentProduct))', "component translation preload");
+
+[
+  'id="component-name-master-untranslated-only"',
+  'id="component-name-translation-overlay"',
+  'id="component-name-translation-en"',
+  'id="component-name-translation-zh"'
+].forEach((fragment) => requireFragment(html, fragment, "translation maintenance UI"));
+
+const managementSource = sourceBetween(app, "function componentNameMasterManageRows", "function componentCompatRelationLabel");
+[
+  'component-name-master-untranslated-only',
+  'data-component-name-master-edit',
+  'function openComponentNameTranslationForm',
+  'async function saveComponentNameTranslation',
+  'component_name_en: normalizeComponentNameText',
+  'component_name_zh: normalizeComponentNameText'
+].forEach((fragment) => requireFragment(managementSource, fragment, "translation maintenance logic"));
 
 const alternativesSource = sourceBetween(app, "function renderComponentAlternatives", "function closeComponentAlternativeForm");
 requireFragment(alternativesSource, 'componentLocalizedNameText(part.part_name || "")', "alternative component localization");
@@ -56,7 +94,7 @@ const parallelSource = sourceBetween(app, "async function loadParallelDiffForCur
 requireFragment(parallelSource, 'componentLocalizedNameText(row.base_component_name || "-")', "parallel base localization");
 requireFragment(parallelSource, 'componentLocalizedNameText(row.target_component_name || "-")', "parallel target localization");
 
-requireFragment(html, 'content="v1.1.807"', "release version");
-requireFragment(app, 'var APP_VERSION       = "v1.1.807"', "runtime version");
+requireFragment(html, 'content="v1.1.808"', "release version");
+requireFragment(app, 'var APP_VERSION       = "v1.1.808"', "runtime version");
 
 console.log("Component language switching verified.");
