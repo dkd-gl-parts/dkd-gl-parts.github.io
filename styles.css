@@ -6804,9 +6804,10 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 
 .shipping-document-mgmt-body { display: flex; flex: 1; flex-direction: column; min-height: 0; background: #eef1f4; color: #23303d; }
 .shipping-document-toolbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; border-bottom: 1px solid #d5dbe1; padding: 18px 24px; background: #fff; }
+.shipping-document-title-block { flex: 1 1 auto; min-width: 0; }
 .shipping-document-toolbar h1 { margin-top: 3px; color: #182230; font-size: 22px; letter-spacing: 0; }
 .shipping-document-toolbar p { max-width: 680px; margin-top: 5px; color: #667085; font-size: 11px; line-height: 1.55; }
-.shipping-document-lookup { width: min(820px, 66vw); min-width: 0; }
+.shipping-document-lookup { flex: 0 0 min(820px, 66vw); width: min(820px, 66vw); min-width: 0; }
 .shipping-document-filter-row { display: grid; grid-template-columns: minmax(170px, 1fr) 128px 150px 118px 118px auto; align-items: end; gap: 6px; }
 .shipping-document-filter-row input,
 .shipping-document-filter-row select { height: 38px; min-width: 0; border: 1px solid #b8c1cc; border-radius: 6px; padding: 0 10px; background: #fff; color: #263241; font-size: 12px; }
@@ -7132,7 +7133,7 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   .sales-order-dashboard { grid-template-columns: 1fr; gap: 6px; }
   .sales-order-workspace { grid-template-columns: 360px minmax(0, 1fr); }
   .shipping-document-toolbar { align-items: stretch; flex-direction: column; }
-  .shipping-document-lookup { width: 100%; }
+  .shipping-document-lookup { flex: 0 0 auto; width: 100%; }
   .shipping-document-filter-row { grid-template-columns: minmax(180px, 1fr) 128px 150px 118px 118px auto; }
   .shipping-document-workspace { grid-template-columns: 330px minmax(0, 1fr); }
   .shipping-document-waybill-form { grid-template-columns: 1fr 1fr; }
