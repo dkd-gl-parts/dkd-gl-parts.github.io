@@ -1148,6 +1148,7 @@ var TRANSLATIONS = {
     part_form_add_title: "商品追加",
     part_form_edit_title: "商品修正",
     required_part_number: "純正品番またはメーカー品番を入力してください",
+    duplicate_part_number: "純正品番とメーカー品番に同じ品番は登録できません",
     required_shohin_cd: "商品コードを入力してください",
     btn_add_core_list: "在庫コアを追加",
     core_list_edit_title: "コア修正",
@@ -2922,6 +2923,7 @@ var TRANSLATIONS = {
     part_form_add_title: "Add Part",
     part_form_edit_title: "Edit Part",
     required_part_number: "Enter a genuine part number or manufacturer part number.",
+    duplicate_part_number: "Genuine and manufacturer part numbers must be different.",
     required_shohin_cd: "Enter the product code.",
     btn_add_core_list: "Add inventory CORE",
     core_list_edit_title: "Edit CORE",
@@ -3825,6 +3827,7 @@ var TRANSLATIONS = {
     part_form_add_title: "添加商品",
     part_form_edit_title: "修改商品",
     required_part_number: "请输入纯正品号或制造商品号。",
+    duplicate_part_number: "纯正品号与制造商品号不能相同。",
     required_shohin_cd: "请输入商品代码。",
     core_list_edit_title: "修改CORE",
     production_ranking_edit_title: "修改生产计划",
@@ -5446,7 +5449,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.820";
+var APP_VERSION       = "v1.1.821";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -21242,8 +21245,10 @@ async function savePartForm() {
   }
   var errEl   = document.getElementById("part-form-error");
   errEl.textContent = "";
-  var gpn     = document.getElementById("pf-genuine-pn").value.trim();
-  if (!gpn) { errEl.textContent = t("required_part_number"); return; }
+  var gpn     = document.getElementById("pf-genuine-pn").value.trim() || null;
+  var mfrPart = document.getElementById("pf-mfr-pn").value.trim() || null;
+  var partNumberError = validateProductPartNumberPair(gpn, mfrPart);
+  if (partNumberError) { errEl.textContent = t(partNumberError); return; }
   var scd = document.getElementById("pf-shohin-cd").value.trim();
   if (!scd) { errEl.textContent = t("required_shohin_cd"); return; }
   var partId = document.getElementById("part-form-id").value;
@@ -21259,7 +21264,7 @@ async function savePartForm() {
   var data = {
     genuine_part_number:      gpn,
     genuine_part_number_2:    document.getElementById("pf-genuine-pn2").value.trim() || null,
-    manufacturer_part_number: document.getElementById("pf-mfr-pn").value.trim() || null,
+    manufacturer_part_number: mfrPart,
     manufacturer:             manufacturerValue,
     category:                 document.getElementById("pf-category").value,
     updated_at:               new Date().toISOString()
@@ -29216,7 +29221,8 @@ async function saveCoreProductForm() {
     errEl.textContent = dksManualManufacturerBlockedMessage();
     return;
   }
-  if (!genuine && !mfrPart) { errEl.textContent = t("lbl_genuine_pn") + "または" + t("lbl_mfr_pn") + "を入力してください"; return; }
+  var partNumberError = validateProductPartNumberPair(genuine, mfrPart);
+  if (partNumberError) { errEl.textContent = t(partNumberError); return; }
   var manufacturerType = addingProduct && formContext === "production"
     ? document.getElementById("pf-part-manufacturer-type").value
     : "external";
@@ -31728,6 +31734,16 @@ function normalizePartQuery(q) {
     .toUpperCase()
     .replace(/[\u2010-\u2015\u2212\u30FC\uFF0D]/g, "-")
     .replace(/[-\s]/g, "");
+}
+
+function validateProductPartNumberPair(genuinePartNumber, manufacturerPartNumber) {
+  var genuine = String(genuinePartNumber || "").trim();
+  var manufacturer = String(manufacturerPartNumber || "").trim();
+  if (!genuine && !manufacturer) return "required_part_number";
+  if (genuine && manufacturer && normalizePartQuery(genuine) === normalizePartQuery(manufacturer)) {
+    return "duplicate_part_number";
+  }
+  return "";
 }
 
 function normalizedPartKey(value) {

@@ -58,8 +58,8 @@ for (const translation of ["いずれか必須", "Either required", "二者选�
     throw new Error(`required-marker translation is missing: ${translation}`);
   }
 }
-if (!coreSave.includes("if (!genuine && !mfrPart)")) {
-  throw new Error("part-number either-required validation must remain enforced");
+if (!coreSave.includes("validateProductPartNumberPair(genuine, mfrPart)")) {
+  throw new Error("shared part-number validation must remain enforced");
 }
 
 console.log("Product management automatic product-code issuance verified.");
