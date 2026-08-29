@@ -1462,11 +1462,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .kikan-table tr.kikan-other { cursor: pointer; }
 .kikan-table tr.kikan-other:hover { background: #f8f8f8; }
 .kikan-table th:nth-child(1),
-.kikan-table td:nth-child(1) { width: 104px; white-space: nowrap; }
+.kikan-table td:nth-child(1) { width: 112px; white-space: nowrap; }
 .kikan-table th:nth-child(2),
 .kikan-table td:nth-child(2) { padding-left: 3px; padding-right: 3px; }
 .kikan-table th:nth-child(3),
-.kikan-table td:nth-child(3) { width: 80px; min-width: 80px; padding-left: 3px; padding-right: 3px; }
+.kikan-table td:nth-child(3) { width: 120px; min-width: 120px; padding-left: 3px; padding-right: 3px; }
 .kikan-table th:nth-child(4),
 .kikan-table td:nth-child(4) { width: 52px; min-width: 52px; padding-left: 3px; padding-right: 3px; }
 .kikan-pn    { font-family: monospace; font-size: 12px; color: #444; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -4894,7 +4894,7 @@ body.app-install-dialog-open { overflow: hidden; }
 .badge-slot-list { display: grid; grid-template-columns: 62px; gap: 4px; justify-items: stretch; align-items: start; flex: 0 0 62px; }
 .badges.badge-slot-list { grid-template-columns: 58px 50px; flex: 0 0 112px; align-items: stretch; }
 .card-badges-inline.badge-slot-list { grid-template-columns: 60px 30px 30px 52px; gap: 3px; width: 181px; flex: none; margin-top: 4px; }
-.production-badges.badge-slot-list { display: grid; grid-template-columns: repeat(2, 58px); flex: 0 0 120px; justify-content: end; }
+.production-badges.badge-slot-list { display: grid; grid-template-columns: repeat(2, 64px); flex: 0 0 132px; justify-content: end; }
 .badge-slot { min-width: 0; min-height: 18px; display: flex; align-items: center; justify-content: flex-end; }
 .badge-slot.slot-empty { visibility: hidden; }
 .badge-slot > span { width: 100%; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; text-align: center; }
@@ -4912,7 +4912,7 @@ body.app-install-dialog-open { overflow: hidden; }
 .production-detail-meta small { color: #8a93a3; font-size: 10px; white-space: nowrap; }
 .production-detail-meta strong { min-width: 0; color: #344054; font-size: 11px; overflow-wrap: anywhere; }
 .production-actions { display: flex; gap: var(--dcats-space-2); flex-wrap: wrap; justify-content: flex-end; }
-.production-workspace { display: grid; flex: 1 1 auto; grid-template-columns: minmax(500px, 1.55fr) minmax(300px, .85fr); gap: 10px; min-height: 0; overflow: hidden; }
+.production-workspace { display: grid; flex: 1 1 auto; grid-template-columns: minmax(0, 1.55fr) minmax(340px, .85fr); gap: 10px; min-height: 0; overflow: hidden; }
 .production-master-column, .production-operations-column { display: grid; gap: 10px; min-width: 0; min-height: 0; overflow: hidden; }
 .production-master-column { grid-template-rows: minmax(250px, 1.05fr) minmax(165px, .75fr) minmax(90px, .4fr); }
 .production-operations-column { grid-template-rows: auto auto; align-content: start; }
@@ -4952,7 +4952,7 @@ body.app-install-dialog-open { overflow: hidden; }
 .production-component-kind-button[data-production-component-summary-kind="aftermarket_new"].active { background: var(--kind-aftermarket-bg); color: var(--kind-aftermarket-fg); }
 .production-component-summary-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; }
 .production-component-summary-table { width: 100%; border-collapse: collapse; table-layout: fixed; color: #263548; font-size: 10px; }
-.production-component-summary-table th { position: sticky; top: 0; z-index: 1; border-bottom: 1px solid #dbe3ec; padding: 5px 6px; background: #f5f7fa; color: #667085; font-size: 9px; font-weight: 800; text-align: left; white-space: nowrap; }
+.production-component-summary-table th { position: sticky; top: 0; z-index: 1; border-bottom: 1px solid #dbe3ec; padding: 5px 6px; background: #f5f7fa; color: #667085; font-size: 9px; font-weight: 800; line-height: 1.25; text-align: left; white-space: normal; overflow-wrap: anywhere; }
 .production-component-summary-table td { min-width: 0; border-bottom: 1px solid #e9edf2; padding: 6px; vertical-align: top; overflow-wrap: anywhere; }
 .production-component-summary-table tr:last-child td { border-bottom: 0; }
 .production-component-summary-table th:nth-child(1) { width: 24%; }
@@ -4986,11 +4986,11 @@ body.app-install-dialog-open { overflow: hidden; }
 .production-kikan-section { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 #production-kikan-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; }
 .production-core-section { min-height: 0; overflow: visible; }
-.production-core-meta { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(110px, .56fr); border-top: 1px solid #edf0f4; }
-.production-core-meta .production-kv { grid-template-columns: 62px minmax(0, 1fr); border-top: 0; }
-.production-core-meta .production-kv + .production-kv { grid-template-columns: 64px minmax(28px, 1fr); }
+.production-core-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid #edf0f4; }
+.production-core-meta .production-kv { grid-template-columns: minmax(88px, auto) minmax(0, 1fr); border-top: 0; }
+.production-core-meta .production-kv + .production-kv { grid-template-columns: minmax(48px, auto) minmax(0, 1fr); }
 .production-core-meta .production-kv + .production-kv { border-left: 1px solid #edf0f4; }
-.production-core-meta .production-kv div { min-width: 0; white-space: nowrap; overflow-wrap: normal; }
+.production-core-meta .production-kv div { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 .production-kv { display: grid; grid-template-columns: 118px minmax(0, 1fr); border-top: 1px solid #f2f2f2; }
 .production-kv:first-of-type { border-top: 0; }
 .production-kv div { padding: 6px 4px; font-size: var(--dcats-type-body); word-break: break-word; }
@@ -5010,6 +5010,34 @@ body.app-install-dialog-open { overflow: hidden; }
 .production-help { color: #8a93a3; font-size: var(--dcats-type-supporting); line-height: 1.5; margin-top: 6px; }
 .production-action-secondary { border-radius: var(--dcats-control-radius); background: #f8fafc; color: #344054; border-color: var(--dcats-border); }
 .production-action-secondary:hover { background: #eef2f7; }
+
+/* English labels are often wider than Japanese labels. Keep shared work surfaces readable. */
+html[lang="en"] .screen :where(h1, h2, h3, h4, h5, h6, label, legend, th, dt, button, summary) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+html[lang="en"] .screen :where(.form-row, .form-grid, .detail-main-grid, .detail-vehicle-grid, .ac-part-row) > * {
+  min-width: 0;
+}
+html[lang="en"] .screen :where(button, .chip, .tab-button, [role="tab"]) {
+  max-width: 100%;
+  line-height: 1.25;
+  white-space: normal;
+}
+html[lang="en"] #screen-production-search :where(.detail-vehicle-label, .ac-part-label, .detail-spec-grid .detail-vehicle-label) {
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+html[lang="en"] #screen-production-search .detail-vehicle-maker-row .catalog-vehicle-maker-value {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[lang="en"] #screen-production-search :where(.production-section-heading > span, .production-image-kind, .production-detail-meta small) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 .production-card:focus-visible,
 #screen-production-search button:focus-visible,
 #screen-production-search textarea:focus-visible { outline: 2px solid var(--dcats-focus); outline-offset: 2px; }

@@ -13,6 +13,7 @@ const files = [
   "customer-price-list-print.css",
   "index.html",
   "label-print-window.js",
+  "legacy-i18n.js",
   "manufacturing-ranking-report.js",
   "product-3d.js",
   "product-3d-viewer.js",

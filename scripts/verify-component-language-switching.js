@@ -39,9 +39,9 @@ const localizedNameSource = sourceBetween(app, "function componentLocalizedNameT
 [
   'if (!text || currentLang === "ja") return text;',
   "componentNameOptionLabel(text) || text",
-  'currentLang !== "ja"',
-  "<div class='component-sub'>"
+  'return "<div class=\'component-pn\'>" + esc(localized) + "</div>";'
 ].forEach((fragment) => requireFragment(localizedNameSource, fragment, "localized component name"));
+if (localizedNameSource.includes("component-sub")) throw new Error("localized component name must not repeat the Japanese source name");
 
 [
   '"B接点": "B Contact"',
@@ -119,7 +119,7 @@ const productionImagesSource = sourceBetween(app, "function renderProductionImag
 requireFragment(productionImagesSource, 'tf("image_count", { n: images.length })', "localized production image count");
 requireFragment(html, 'data-i18n="production_detail_title"', "localized production detail title");
 
-requireFragment(html, 'content="v1.1.809"', "release version");
-requireFragment(app, 'var APP_VERSION       = "v1.1.809"', "runtime version");
+requireFragment(html, 'content="v1.1.810"', "release version");
+requireFragment(app, 'var APP_VERSION       = "v1.1.810"', "runtime version");
 
 console.log("Component language switching verified.");

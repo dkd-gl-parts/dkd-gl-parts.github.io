@@ -4645,6 +4645,10 @@ var TRANSLATIONS = {
     mi_kikan_desc: "注册和编辑兼容组。",
     mi_rakuten_title: "EC商城价格调查",
     mi_rakuten_desc: "按类别管理调查对象，并持续调查乐天、Yahoo购物和雅虎拍卖的最低价格。",
+    mi_rakuten_bulk_title: "EC商城价格调查",
+    mi_rakuten_bulk_desc: "汇总调查乐天、Yahoo购物和雅虎拍卖的市场价格。",
+    mi_api_settings_title: "API设置",
+    mi_api_settings_desc: "管理EC商城价格调查所使用的API设置。",
     mi_logs_title: "操作日志",
     mi_logs_desc: "查看零件和兼容性更改的历史记录。",
     screen_parts_title: "零件管理",
@@ -4652,8 +4656,10 @@ var TRANSLATIONS = {
     screen_production_ranking_title: "生产计划管理",
     screen_kikan_title: "兼容性管理",
     screen_rakuten_title: "EC商城价格调查",
+    screen_rakuten_bulk_title: "EC商城价格调查",
     screen_rakuten_list_title: "EC商城价格调查结果",
     screen_logs_title: "操作日志",
+    screen_api_settings_title: "API设置",
     lbl_shohin_cd: "商品代码",
     lbl_genuine_pn: "纯正零件编号",
     f_genuine_pn2: "纯正零件编号2",
@@ -5366,7 +5372,10 @@ var TRANSLATIONS = {
     spec_ph_current: "例: 80（不要A）",
     spec_ph_power_kw: "例: 5.5（不要kW）",
     spec_ph_power_w: "例: 120（不要W）",
-    spec_ph_diameter: "例: 139（不要φ/D）"
+    spec_ph_diameter: "例: 139（不要φ/D）",
+    ec_provider_rakuten: "乐天",
+    ec_provider_yahoo_shopping: "Yahoo购物",
+    ec_provider_yahoo_auction: "雅虎拍卖"
   },
 
   // タガログ語（Tagalog）— 準備中
@@ -5437,7 +5446,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.809";
+var APP_VERSION       = "v1.1.810";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6776,6 +6785,163 @@ function tf(key, vars) {
   return str;
 }
 
+var legacyI18nTextSources = typeof WeakMap === "function" ? new WeakMap() : null;
+var legacyI18nAttributeSources = typeof WeakMap === "function" ? new WeakMap() : null;
+var legacyI18nDictionaryCache = {};
+var legacyI18nObserver = null;
+var legacyI18nPendingRoots = [];
+var legacyI18nFlushScheduled = false;
+var legacyI18nDecoderElement = null;
+
+function legacyI18nPlainText(value) {
+  var html = String(value == null ? "" : value);
+  if (!html) return "";
+  if (!legacyI18nDecoderElement) legacyI18nDecoderElement = document.createElement("div");
+  legacyI18nDecoderElement.innerHTML = html;
+  return String(legacyI18nDecoderElement.textContent || "").replace(/\s+/g, " ").trim();
+}
+
+function legacyI18nDictionary(lang) {
+  var code = lang === "zh" ? "zh" : (lang === "en" ? "en" : "ja");
+  if (legacyI18nDictionaryCache[code]) return legacyI18nDictionaryCache[code];
+  var map = {};
+  var ja = TRANSLATIONS.ja || {};
+  var target = TRANSLATIONS[code] || TRANSLATIONS.en || {};
+  Object.keys(ja).forEach(function(key) {
+    var source = legacyI18nPlainText(ja[key]);
+    var translated = legacyI18nPlainText(target[key]);
+    if (source && translated && !map[source]) map[source] = translated;
+  });
+  var supplemental = typeof DCATS_LEGACY_UI_TRANSLATIONS === "object" && DCATS_LEGACY_UI_TRANSLATIONS
+    ? DCATS_LEGACY_UI_TRANSLATIONS[code]
+    : null;
+  if (supplemental) {
+    Object.keys(supplemental).forEach(function(source) {
+      var translated = String(supplemental[source] == null ? "" : supplemental[source]).trim();
+      if (source && translated) map[source] = translated;
+    });
+  }
+  legacyI18nDictionaryCache[code] = map;
+  return map;
+}
+
+function legacyI18nIsKnownValue(source, value) {
+  if (value === source) return true;
+  return legacyI18nDictionary("en")[source] === value || legacyI18nDictionary("zh")[source] === value;
+}
+
+function legacyI18nTranslateTextNode(node) {
+  if (!node || node.nodeType !== 3 || !node.parentElement || !legacyI18nTextSources) return;
+  var parent = node.parentElement;
+  if (parent.closest("[data-i18n], script, style, template, noscript, code, pre, [contenteditable='true']")) return;
+  var current = String(node.nodeValue || "");
+  var compact = current.replace(/\s+/g, " ").trim();
+  var source = legacyI18nTextSources.get(node);
+  if (source != null && compact !== source) {
+    if (!legacyI18nIsKnownValue(source, compact)) {
+      if (/[ぁ-んァ-ヶ一-龠]/.test(compact)) {
+        source = compact;
+        legacyI18nTextSources.set(node, source);
+      } else {
+        legacyI18nTextSources.delete(node);
+        return;
+      }
+    }
+  }
+  if (source == null) {
+    if (!compact || !/[ぁ-んァ-ヶ一-龠]/.test(compact)) return;
+    source = compact;
+    legacyI18nTextSources.set(node, source);
+  }
+  var translated = currentLang === "ja" ? source : legacyI18nDictionary(currentLang)[source];
+  if (!translated) return;
+  var leading = (current.match(/^\s*/) || [""])[0];
+  var trailing = (current.match(/\s*$/) || [""])[0];
+  var next = leading + translated + trailing;
+  if (next !== current) node.nodeValue = next;
+}
+
+function legacyI18nTranslateAttributes(element) {
+  if (!element || element.nodeType !== 1 || !legacyI18nAttributeSources) return;
+  var records = legacyI18nAttributeSources.get(element) || {};
+  ["placeholder", "title", "aria-label"].forEach(function(attribute) {
+    if ((attribute === "placeholder" && element.hasAttribute("data-i18n-ph")) ||
+        (attribute === "aria-label" && element.hasAttribute("data-i18n-aria-label"))) return;
+    var current = element.getAttribute(attribute);
+    if (!current) return;
+    var source = records[attribute];
+    var compact = String(current).replace(/\s+/g, " ").trim();
+    if (source && compact !== source) {
+      if (!legacyI18nIsKnownValue(source, compact)) {
+        if (/[ぁ-んァ-ヶ一-龠]/.test(compact)) source = records[attribute] = compact;
+        else {
+          delete records[attribute];
+          return;
+        }
+      }
+    }
+    if (!source) {
+      source = compact;
+      if (!/[ぁ-んァ-ヶ一-龠]/.test(source)) return;
+      records[attribute] = source;
+    }
+    var translated = currentLang === "ja" ? source : legacyI18nDictionary(currentLang)[source];
+    if (translated && translated !== current) element.setAttribute(attribute, translated);
+  });
+  if (Object.keys(records).length) legacyI18nAttributeSources.set(element, records);
+}
+
+function applyLegacyUiI18n(root) {
+  var scope = root && root.nodeType ? root : document.body;
+  if (!scope) return;
+  if (scope.nodeType === 3) {
+    legacyI18nTranslateTextNode(scope);
+    return;
+  }
+  legacyI18nTranslateAttributes(scope);
+  var walker = document.createTreeWalker(scope, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+  var node = walker.currentNode;
+  while (node) {
+    if (node.nodeType === 3) legacyI18nTranslateTextNode(node);
+    else legacyI18nTranslateAttributes(node);
+    node = walker.nextNode();
+  }
+}
+
+function flushLegacyUiI18n() {
+  legacyI18nFlushScheduled = false;
+  var roots = legacyI18nPendingRoots.splice(0);
+  roots.forEach(function(root) { applyLegacyUiI18n(root); });
+}
+
+function queueLegacyUiI18n(root) {
+  if (!root) return;
+  legacyI18nPendingRoots.push(root);
+  if (legacyI18nFlushScheduled) return;
+  legacyI18nFlushScheduled = true;
+  Promise.resolve().then(flushLegacyUiI18n);
+}
+
+function startLegacyUiI18nObserver() {
+  if (legacyI18nObserver || !document.body || typeof MutationObserver !== "function") return;
+  legacyI18nObserver = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.type === "childList") {
+        Array.prototype.forEach.call(mutation.addedNodes || [], queueLegacyUiI18n);
+      } else {
+        queueLegacyUiI18n(mutation.target);
+      }
+    });
+  });
+  legacyI18nObserver.observe(document.body, {
+    childList: true,
+    characterData: true,
+    attributes: true,
+    attributeFilter: ["placeholder", "title", "aria-label"],
+    subtree: true
+  });
+}
+
 // HTMLのdata-i18n属性を持つ要素を一括更新する
 function applyI18n() {
   document.querySelectorAll(".app-version").forEach(function(el) {
@@ -6801,6 +6967,8 @@ function applyI18n() {
   applySpecFormCategory();
   renderComponentReverseVehicleMakerOptions();
   if (finishedLabelPrintDestinations.length) renderFinishedLabelPrintDestinations();
+  applyLegacyUiI18n(document.body);
+  startLegacyUiI18nObserver();
 }
 
 // 全ての言語切り替えボタンのactiveクラスを更新する
@@ -6814,6 +6982,8 @@ function updateLangSwitchers(lang) {
 async function applyLanguage(lang) {
   // tl は翻訳辞書が null なので en として扱う
   currentLang = (TRANSLATIONS[lang] !== undefined) ? lang : "en";
+  document.documentElement.lang = currentLang === "zh" ? "zh-CN" : currentLang;
+  legacyI18nDictionaryCache = {};
 
   // localStorageにも保存（ログイン前のデフォルト設定として使う）
   try { localStorage.setItem("dcats_lang", lang); } catch(e) {}
@@ -6939,6 +7109,7 @@ async function applyLanguage(lang) {
   if (document.getElementById("ec-price-history-overlay") && document.getElementById("ec-price-history-overlay").classList.contains("show") && ecPriceHistoryState) {
     renderEcPriceHistoryContent();
   }
+  applyLegacyUiI18n(document.body);
 
   // ログイン中ならSupabaseのprofileにも保存する
   if (currentUser && userProfile) {
@@ -16566,7 +16737,7 @@ function renderVehicleApplicationText(value) {
   var text = String(value || "").trim() || "-";
   var label = vehicleApplicationTextLabel(text);
   if (currentLang === "ja" || !label || label === text) return esc(text);
-  return "<div class='component-pn'>" + esc(label) + "</div><div class='component-sub'>" + esc(text) + "</div>";
+  return "<div class='component-pn'>" + esc(label) + "</div>";
 }
 
 function vehicleApplicationPartNameLabel(value) {
@@ -36262,11 +36433,7 @@ function componentLocalizedNameHtml(name) {
   var text = normalizeComponentNameText(name);
   if (!text) return esc("-");
   var localized = componentLocalizedNameText(text) || text;
-  var html = "<div class='component-pn'>" + esc(localized) + "</div>";
-  if (currentLang !== "ja" && componentNameDuplicateKey(localized) !== componentNameDuplicateKey(text)) {
-    html += "<div class='component-sub'>" + esc(text) + "</div>";
-  }
-  return html;
+  return "<div class='component-pn'>" + esc(localized) + "</div>";
 }
 
 async function loadComponentDisplayNameTranslations(categoryCode) {

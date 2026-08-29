@@ -18,10 +18,11 @@ const metaVersion = requiredMatch(html, /name="dcats-app-version"\s+content="(v[
 const legacyVersion = requiredMatch(html, /Legacy updater compatibility: var APP_VERSION = "(v[^\"]+)"/, "legacy updater version");
 const scriptVersion = "v" + requiredMatch(html, /<script\s+src="app\.js\?v=([^\"]+)"/, "app.js cache version");
 const installScriptVersion = "v" + requiredMatch(html, /<script\s+src="install-app\.js\?v=([^\"]+)"/, "install-app.js cache version");
+const legacyI18nVersion = "v" + requiredMatch(html, /<script\s+src="legacy-i18n\.js\?v=([^\"]+)"/, "legacy-i18n.js cache version");
 const styleVersion = "v" + requiredMatch(html, /<link\s+rel="stylesheet"\s+href="styles\.css\?v=([^&\"]+)/, "styles.css cache version");
 const manifestVersion = "v" + requiredMatch(html, /<link\s+rel="manifest"\s+href="site\.webmanifest\?v=([^&\"]+)/, "manifest cache version");
 
-const versions = { metaVersion, legacyVersion, scriptVersion, installScriptVersion, styleVersion, manifestVersion };
+const versions = { metaVersion, legacyVersion, scriptVersion, installScriptVersion, legacyI18nVersion, styleVersion, manifestVersion };
 Object.entries(versions).forEach(([label, version]) => {
   if (version !== appVersion) {
     throw new Error(`${label} ${version} must match ${appVersion}`);
