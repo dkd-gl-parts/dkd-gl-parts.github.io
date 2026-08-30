@@ -5,6 +5,7 @@
   var MIN_CAPTURES = 6;
   var RECOMMENDED_CAPTURES = 12;
   var MAX_CAPTURE_EDGE = 2560;
+  var LIVE_ANALYZE_INTERVAL_MS = 250;
   var VIDEO_SAMPLE_INTERVAL_MS = 1250;
   var VIDEO_PROPOSAL_DELAY_MS = 30000;
   var DIRECTIONS = [
@@ -37,6 +38,7 @@
       kind: "rebuilt",
       workspace: null,
       stream: null,
+      lastPreviewAnalyzedAt: 0,
       failures: 0,
       openedAt: 0,
       lastAcceptedAt: 0,
@@ -270,6 +272,7 @@
       elements["product-3d-camera-placeholder"].hidden = true;
       elements["product-3d-snapshot"].disabled = false;
       state.currentDirection = nextDirection();
+      state.lastPreviewAnalyzedAt = 0;
       drawGuide();
       window.requestAnimationFrame(liveAnalyzeLoop);
     } catch (error) {
@@ -285,10 +288,12 @@
     var video = elements["product-3d-camera-video"];
     if (video) video.srcObject = null;
   }
-  function liveAnalyzeLoop() {
+  function liveAnalyzeLoop(timestamp) {
     if (!state.stream) return;
     var video = elements["product-3d-camera-video"];
-    if (video.readyState >= 2) {
+    timestamp = Number(timestamp) || Date.now();
+    if (video.readyState >= 2 && timestamp - state.lastPreviewAnalyzedAt >= LIVE_ANALYZE_INTERVAL_MS) {
+      state.lastPreviewAnalyzedAt = timestamp;
       var sample = analyzeSource(video, "preview", true);
       sample.direction = state.bottomMode ? "bottom" : state.currentDirection;
       applyCaptureContextChecks(sample);
@@ -330,9 +335,10 @@
     }
     var lapMean = lapTotal / Math.max(lapCount, 1);
     var sharpness = lapSquared / Math.max(lapCount, 1) - lapMean * lapMean;
-    var bg = borderColor(pixels, w, h);
-    var silhouette = boundingSilhouette(pixels, w, h, bg);
+    var palette = borderPalette(pixels, w, h);
+    var silhouette = boundingSilhouette(pixels, w, h, palette);
     var fill = silhouette.width * silhouette.height;
+    var neutralBrightRatio = neutralBrightRatioInBox(pixels, w, h, silhouette);
     var issues = [];
     if (sharpness < 95) issues.push("ブレ・ピンぼけ");
     if (mean < 58 || dark / luminance.length > 0.42) issues.push("暗すぎます");
@@ -340,6 +346,8 @@
     if (fill < 0.15) issues.push("商品が遠すぎます");
     if (fill > 0.82) issues.push("商品が近すぎます");
     if (silhouette.clipped) issues.push("商品が画面から切れています");
+    if (fill > 0.35 && neutralBrightRatio > 0.72) issues.push("商品ではない画像の可能性があります");
+    if (Math.min(sw, sh) < 720 || Math.max(sw, sh) < 1000) issues.push("画像解像度が不足しています");
     if (reflection / luminance.length > 0.09) issues.push("金属反射が強すぎます");
     var hash = perceptualHash(luminance, w, h);
     var duplicate = state.hashes.some(function (known) { return hashDistance(known, hash) <= 5; });
@@ -354,45 +362,140 @@
       brightness: Math.round(mean),
       clipped: silhouette.clipped,
       reflectionRatio: Number((reflection / luminance.length).toFixed(4)),
+      neutralBrightRatio: Number(neutralBrightRatio.toFixed(4)),
+      sourceWidth: sw,
+      sourceHeight: sh,
       silhouette: silhouette,
       hash: hash,
       sourceKind: sourceKind
     };
   }
 
-  function borderColor(pixels, w, h) {
-    var r = 0, g = 0, b = 0, count = 0, step = Math.max(1, Math.floor(Math.min(w, h) / 30));
-    for (var x = 0; x < w; x += step) {
-      [[x, 0], [x, h - 1]].forEach(function (point) { var i = (point[1] * w + point[0]) * 4; r += pixels[i]; g += pixels[i + 1]; b += pixels[i + 2]; count += 1; });
-    }
-    for (var y = 0; y < h; y += step) {
-      [[0, y], [w - 1, y]].forEach(function (point) { var i = (point[1] * w + point[0]) * 4; r += pixels[i]; g += pixels[i + 1]; b += pixels[i + 2]; count += 1; });
-    }
-    return [r / count, g / count, b / count];
-  }
-  function boundingSilhouette(pixels, w, h, bg) {
-    var minX = w, minY = h, maxX = 0, maxY = 0, count = 0;
-    var sumX = 0, sumY = 0, sumXX = 0, sumYY = 0, sumXY = 0;
-    for (var y = 0; y < h; y += 2) for (var x = 0; x < w; x += 2) {
+  function borderPalette(pixels, w, h) {
+    var clusters = Object.create(null), total = 0;
+    var step = Math.max(1, Math.floor(Math.min(w, h) / 40));
+    function add(x, y) {
       var i = (y * w + x) * 4;
-      var d = Math.abs(pixels[i] - bg[0]) + Math.abs(pixels[i + 1] - bg[1]) + Math.abs(pixels[i + 2] - bg[2]);
-      if (d > 78) {
-        minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
-        count += 1; sumX += x; sumY += y; sumXX += x * x; sumYY += y * y; sumXY += x * y;
-      }
+      var key = (pixels[i] >> 5) + ":" + (pixels[i + 1] >> 5) + ":" + (pixels[i + 2] >> 5);
+      var entry = clusters[key] || { count: 0, r: 0, g: 0, b: 0 };
+      entry.count += 1; entry.r += pixels[i]; entry.g += pixels[i + 1]; entry.b += pixels[i + 2];
+      clusters[key] = entry; total += 1;
     }
-    if (!count) return { x: 0.25, y: 0.25, width: 0.5, height: 0.5, centerX: 0.5, centerY: 0.5, tilt: 0, clipped: false };
-    var pad = 3;
-    var centerXpx = sumX / count, centerYpx = sumY / count;
-    var covarianceXX = sumXX / count - centerXpx * centerXpx;
-    var covarianceYY = sumYY / count - centerYpx * centerYpx;
-    var covarianceXY = sumXY / count - centerXpx * centerYpx;
+    for (var x = 0; x < w; x += step) { add(x, 0); add(x, h - 1); }
+    for (var y = 0; y < h; y += step) { add(0, y); add(w - 1, y); }
+    var minimum = Math.max(2, Math.round(total * 0.03));
+    var selected = Object.keys(clusters).map(function (key) { return clusters[key]; })
+      .filter(function (entry) { return entry.count >= minimum; })
+      .sort(function (a, b) { return b.count - a.count; }).slice(0, 16);
+    if (!selected.length) selected = Object.keys(clusters).map(function (key) { return clusters[key]; }).sort(function (a, b) { return b.count - a.count; }).slice(0, 1);
+    return selected.map(function (entry) { return [entry.r / entry.count, entry.g / entry.count, entry.b / entry.count]; });
+  }
+  function borderTransitionRatio(pixels, w, h) {
+    var step = Math.max(1, Math.floor(Math.min(w, h) / 40));
+    var changes = 0, comparisons = 0;
+    function compare(x1, y1, x2, y2) {
+      var a = (y1 * w + x1) * 4, b = (y2 * w + x2) * 4;
+      var difference = Math.abs(pixels[a] - pixels[b]) + Math.abs(pixels[a + 1] - pixels[b + 1]) + Math.abs(pixels[a + 2] - pixels[b + 2]);
+      if (difference > 46) changes += 1;
+      comparisons += 1;
+    }
+    for (var x = step; x < w; x += step) { compare(x - step, 0, x, 0); compare(x - step, h - 1, x, h - 1); }
+    for (var y = step; y < h; y += step) { compare(0, y - step, 0, y); compare(w - 1, y - step, w - 1, y); }
+    return changes / Math.max(1, comparisons);
+  }
+  function numericQuantile(values, ratio) {
+    values.sort(function (a, b) { return a - b; });
+    if (!values.length) return 0;
+    var position = (values.length - 1) * ratio;
+    var lower = Math.floor(position), upper = Math.ceil(position), fraction = position - lower;
+    return values[lower] * (1 - fraction) + values[upper] * fraction;
+  }
+  function boundingSilhouette(pixels, w, h, palette) {
+    var gridW = Math.ceil(w / 2), gridH = Math.ceil(h / 2), total = gridW * gridH;
+    var foreground = new Uint8Array(total);
+    for (var gy = 0; gy < gridH; gy += 1) for (var gx = 0; gx < gridW; gx += 1) {
+      var px = Math.min(w - 1, gx * 2), py = Math.min(h - 1, gy * 2), pixelIndex = (py * w + px) * 4;
+      var nearest = Infinity;
+      for (var colorIndex = 0; colorIndex < palette.length; colorIndex += 1) {
+        var color = palette[colorIndex];
+        var distance = Math.abs(pixels[pixelIndex] - color[0]) + Math.abs(pixels[pixelIndex + 1] - color[1]) + Math.abs(pixels[pixelIndex + 2] - color[2]);
+        nearest = Math.min(nearest, distance);
+      }
+      if (nearest > 72) foreground[gy * gridW + gx] = 1;
+    }
+    var merged = foreground.slice();
+    for (var round = 0; round < 2; round += 1) {
+      var expanded = new Uint8Array(total);
+      for (var y = 0; y < gridH; y += 1) for (var x = 0; x < gridW; x += 1) {
+        var found = false;
+        for (var dy = -1; dy <= 1 && !found; dy += 1) for (var dx = -1; dx <= 1; dx += 1) {
+          var nx = x + dx, ny = y + dy;
+          if (nx >= 0 && nx < gridW && ny >= 0 && ny < gridH && merged[ny * gridW + nx]) { found = true; break; }
+        }
+        if (found) expanded[y * gridW + x] = 1;
+      }
+      merged = expanded;
+    }
+    var seen = new Uint8Array(total), queue = new Int32Array(total), best = null;
+    for (var start = 0; start < total; start += 1) {
+      if (!merged[start] || seen[start]) continue;
+      var head = 0, tail = 0; queue[tail++] = start; seen[start] = 1;
+      var minX = gridW, minY = gridH, maxX = 0, maxY = 0, componentCount = 0, componentSumX = 0, componentSumY = 0;
+      var originalX = [], originalY = [], originalCount = 0, edgeCount = 0;
+      var sumX = 0, sumY = 0, sumXX = 0, sumYY = 0, sumXY = 0;
+      while (head < tail) {
+        var cell = queue[head++], cy = Math.floor(cell / gridW), cx = cell - cy * gridW;
+        minX = Math.min(minX, cx); minY = Math.min(minY, cy); maxX = Math.max(maxX, cx); maxY = Math.max(maxY, cy);
+        componentCount += 1; componentSumX += cx; componentSumY += cy;
+        if (foreground[cell]) {
+          originalX.push(cx); originalY.push(cy); originalCount += 1;
+          sumX += cx; sumY += cy; sumXX += cx * cx; sumYY += cy * cy; sumXY += cx * cy;
+          if (cx <= 1 || cx >= gridW - 2 || cy <= 1 || cy >= gridH - 2) edgeCount += 1;
+        }
+        for (var neighborY = Math.max(0, cy - 1); neighborY <= Math.min(gridH - 1, cy + 1); neighborY += 1) {
+          for (var neighborX = Math.max(0, cx - 1); neighborX <= Math.min(gridW - 1, cx + 1); neighborX += 1) {
+            var neighbor = neighborY * gridW + neighborX;
+            if (merged[neighbor] && !seen[neighbor]) { seen[neighbor] = 1; queue[tail++] = neighbor; }
+          }
+        }
+      }
+      if (originalCount < 4) continue;
+      var componentWidth = maxX - minX + 1, componentHeight = maxY - minY + 1;
+      var compactness = originalCount / Math.max(1, componentWidth * componentHeight);
+      var centerDistance = Math.sqrt(Math.pow(componentSumX / componentCount / Math.max(gridW - 1, 1) - 0.5, 2) + Math.pow(componentSumY / componentCount / Math.max(gridH - 1, 1) - 0.5, 2));
+      var score = originalCount * (0.55 + compactness) * Math.max(0.35, 1 - centerDistance);
+      if (!best || score > best.score) best = {
+        score: score, originalX: originalX, originalY: originalY, originalCount: originalCount, edgeCount: edgeCount,
+        sumX: sumX, sumY: sumY, sumXX: sumXX, sumYY: sumYY, sumXY: sumXY
+      };
+    }
+    if (!best) return { x: 0.25, y: 0.25, width: 0.5, height: 0.5, centerX: 0.5, centerY: 0.5, tilt: 0, clipped: borderTransitionRatio(pixels, w, h) > 0.12 };
+    var lowerX = numericQuantile(best.originalX, 0.015), upperX = numericQuantile(best.originalX, 0.985);
+    var lowerY = numericQuantile(best.originalY, 0.015), upperY = numericQuantile(best.originalY, 0.985);
+    var left = Math.max(0, (lowerX * 2 - 5) / w), top = Math.max(0, (lowerY * 2 - 5) / h);
+    var right = Math.min(1, ((upperX + 1) * 2 + 5) / w), bottom = Math.min(1, ((upperY + 1) * 2 + 5) / h);
+    var centerXpx = best.sumX / best.originalCount, centerYpx = best.sumY / best.originalCount;
+    var covarianceXX = best.sumXX / best.originalCount - centerXpx * centerXpx;
+    var covarianceYY = best.sumYY / best.originalCount - centerYpx * centerYpx;
+    var covarianceXY = best.sumXY / best.originalCount - centerXpx * centerYpx;
     var tilt = 0.5 * Math.atan2(2 * covarianceXY, covarianceXX - covarianceYY) * 180 / Math.PI;
+    var edgeRatio = best.edgeCount / best.originalCount;
     return {
-      x: minX / w, y: minY / h, width: (maxX - minX) / w, height: (maxY - minY) / h,
-      centerX: (minX + maxX) / (2 * w), centerY: (minY + maxY) / (2 * h), tilt: Number(tilt.toFixed(1)),
-      clipped: minX <= pad || minY <= pad || maxX >= w - pad || maxY >= h - pad
+      x: left, y: top, width: right - left, height: bottom - top,
+      centerX: (left + right) / 2, centerY: (top + bottom) / 2, tilt: Number(tilt.toFixed(1)),
+      clipped: left <= 0.02 || top <= 0.02 || right >= 0.98 || bottom >= 0.98 || edgeRatio >= 0.025 || borderTransitionRatio(pixels, w, h) > 0.12
     };
+  }
+  function neutralBrightRatioInBox(pixels, w, h, box) {
+    var left = Math.max(0, Math.floor(box.x * w)), top = Math.max(0, Math.floor(box.y * h));
+    var right = Math.min(w, Math.ceil((box.x + box.width) * w)), bottom = Math.min(h, Math.ceil((box.y + box.height) * h));
+    var neutralBright = 0, count = 0;
+    for (var y = top; y < bottom; y += 2) for (var x = left; x < right; x += 2) {
+      var i = (y * w + x) * 4, r = pixels[i], g = pixels[i + 1], b = pixels[i + 2];
+      if (Math.max(r, g, b) - Math.min(r, g, b) < 28 && (r + g + b) / 3 > 145) neutralBright += 1;
+      count += 1;
+    }
+    return neutralBright / Math.max(1, count);
   }
   function perceptualHash(luma, w, h) {
     var cells = [], sum = 0;
@@ -422,7 +525,8 @@
     if (previous && silhouetteOverlap(previous.silhouette, analysis.silhouette) < 0.35) analysis.issues.push("前の画像との重なり不足");
     var sameDirection = accepted.filter(function (row) { return row.direction === analysis.direction; }).length;
     if (sameDirection >= 2) analysis.issues.push("同じ方向を撮りすぎています");
-    var guide = accepted.find(function (row) { return row.direction === analysis.direction; }) || accepted[0];
+    var sameDirectionGuide = accepted.find(function (row) { return row.direction === analysis.direction; });
+    var guide = sameDirectionGuide || (analysis.sourceKind === "existing_image" ? null : accepted[0]);
     if (guide && Math.abs(Number(analysis.silhouette.tilt || 0) - Number(guide.silhouette.tilt || 0)) > 18) analysis.issues.push("商品が枠に対して傾きすぎています");
     analysis.accepted = analysis.issues.length === 0;
     analysis.score = Math.max(0, Math.min(100, Math.round(100 - analysis.issues.length * 19 - (analysis.sharpness < 160 ? 8 : 0))));
@@ -511,8 +615,10 @@
       target_quality_metrics: {
         score: analysis.score, sharpness: analysis.sharpness, brightness: analysis.brightness,
         clipped: analysis.clipped, reflection_ratio: analysis.reflectionRatio,
+        neutral_bright_ratio: analysis.neutralBrightRatio,
+        source_width: analysis.sourceWidth, source_height: analysis.sourceHeight,
         perceptual_hash: analysis.hash,
-        browser_analyzer_version: "pilot-1"
+        browser_analyzer_version: "pilot-2"
       },
       target_silhouette: analysis.silhouette,
       target_content_sha256: contentSha,
