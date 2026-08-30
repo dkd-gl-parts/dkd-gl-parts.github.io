@@ -23,7 +23,7 @@ function requireText(source, fragment, label) {
   "product-3d-video-supplement",
   "product-3d-viewer-overlay",
   "data-product-media=\"model\"",
-  "product-3d.js?v=1.1.794"
+  "product-3d.js?v=1.1.822"
 ].forEach((fragment) => requireText(html, fragment, "3D UI contract"));
 
 [
@@ -33,6 +33,7 @@ function requireText(source, fragment, label) {
   "contentSha256(blob)",
   "metadata: { sha256: blobSha256 }",
   "signProductImageUrl(imageRow.storage_path)",
+  "createImageBitmap(blob)",
   "perceptual_hash: analysis.hash",
   "orphan product 3D source cleanup failed",
   "if (duplicateRemoval.error) throw duplicateRemoval.error",
@@ -73,6 +74,7 @@ function requireText(source, fragment, label) {
 ].forEach((fragment) => requireText(client, fragment, "3D capture contract"));
 
 if (client.includes("analysisDigest")) throw new Error("Capture dedupe must hash source bytes, not analysis metadata");
+if (client.includes("URL.createObjectURL(blob)")) throw new Error("Existing-image analysis must not depend on CSP-blocked blob image URLs");
 if (client.includes('signProductImageUrl(imageRow.storage_path, { width:')) throw new Error("Existing capture SHA must cover the original stored image bytes");
 if (client.includes('context === "customer" ? "rebuilt"')) throw new Error("Customer 3D models must not collapse both product kinds into rebuilt");
 if (client.includes("canManageAllImages")) throw new Error("Product 3D authorization must not be coupled to image.manage");

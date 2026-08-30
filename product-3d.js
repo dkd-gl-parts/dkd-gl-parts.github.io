@@ -218,6 +218,7 @@
       } catch (error) {
         state.analyses.push({ accepted: false, label: "保存済み画像 " + (index + 1), issues: ["画像を解析できません"], direction: "detail", sourceKind: "existing_image" });
       } finally {
+        if (loaded && loaded.image && typeof loaded.image.close === "function") loaded.image.close();
         if (loaded && loaded.objectUrl) URL.revokeObjectURL(loaded.objectUrl);
       }
       elements["product-3d-analysis-progress"].textContent = (index + 1) + " / " + images.length;
@@ -246,13 +247,10 @@
     var response = await fetch(url, { cache: "no-store" });
     if (!response.ok) throw new Error("image fetch failed: " + response.status);
     var blob = await response.blob();
-    var objectUrl = URL.createObjectURL(blob);
-    try {
-      return { image: await loadImage(objectUrl), blob: blob, objectUrl: objectUrl };
-    } catch (error) {
-      URL.revokeObjectURL(objectUrl);
-      throw error;
+    if (typeof createImageBitmap === "function") {
+      return { image: await createImageBitmap(blob), blob: blob, objectUrl: null };
     }
+    return { image: await loadImage(url), blob: blob, objectUrl: null };
   }
 
   async function startCamera() {
