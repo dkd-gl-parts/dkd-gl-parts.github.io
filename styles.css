@@ -6837,6 +6837,7 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .shipping-document-list-meta strong,
 .shipping-document-list-meta small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .shipping-document-list-main strong { color: #17231f; font-size: 12px; }
+.shipping-document-order-id-label { display: block; margin-bottom: 2px; color: #65736d; font-size: 8px; font-weight: 800; line-height: 1.2; }
 .shipping-document-list-main small { margin-top: 4px; color: #65736d; font-size: 10px; }
 .shipping-document-list-progress { display: block; overflow: hidden; margin-top: 4px; color: #287356; font-size: 8px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
 .shipping-document-list-meta { text-align: right; }
@@ -6858,7 +6859,9 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .shipping-document-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding-bottom: 15px; border-bottom: 2px solid #d9dfe4; }
 .shipping-document-detail-head > div:last-child { display: flex; align-items: center; gap: 8px; }
 .shipping-document-detail-head span { color: #78828d; font-size: 9px; }
+.shipping-document-detail-head .shipping-document-order-id-label { color: #52606d; font-size: 9px; font-weight: 800; }
 .shipping-document-detail-head h2 { margin-top: 3px; color: #182230; font-size: 22px; letter-spacing: 0; }
+.shipping-document-detail-target { display: block; margin-top: 3px; color: #78828d; font-size: 9px; }
 .shipping-document-detail-head strong { display: block; margin-top: 4px; color: #344054; font-size: 12px; }
 .shipping-document-detail-head button { min-height: 32px; border: 1px solid #7f8d99; border-radius: 5px; padding: 0 10px; background: #fff; color: #344054; font-size: 9px; font-weight: 800; cursor: pointer; white-space: nowrap; }
 .shipping-document-stages { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-bottom: 1px solid #dbe1e6; }

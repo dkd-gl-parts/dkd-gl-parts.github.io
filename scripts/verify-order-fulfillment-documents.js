@@ -143,6 +143,21 @@ if (pendingCountContext.shippingDocumentPendingCount({
   throw new Error("Replacement-only orders must not count a warranty certificate as pending");
 }
 
+const shippingDocumentListSource = sourceBetween("function renderShippingDocumentList", "function shippingDocumentSelectedTypes");
+for (const fragment of [
+  "shipping-document-order-id-label",
+  't("sales_order_id_label")',
+  "order.order_number"
+]) requireFragment(shippingDocumentListSource, fragment, `Shipping document list order ID label is missing: ${fragment}`);
+
+const shippingDocumentDetailSource = sourceBetween("function renderShippingDocumentDetail", "function bindShippingDocumentDetailActions");
+for (const fragment of [
+  "shipping-document-order-id-label",
+  't("sales_order_id_label")',
+  "shipping-document-detail-target",
+  "order.order_number"
+]) requireFragment(shippingDocumentDetailSource, fragment, `Shipping document detail order ID label is missing: ${fragment}`);
+
 const batchDefaultsSource = sourceBetween("function salesOrderAutoPrintIsEnabled", "async function enterShippingDocumentMgmt");
 for (const fragment of [
   'input.value === "dispatch" ? !autoPrintEnabled : true',
@@ -399,6 +414,8 @@ for (const fragment of [
   ".shipping-document-batch-panel",
   ".shipping-document-batch-default-note",
   ".shipping-document-row-check",
+  ".shipping-document-order-id-label",
+  ".shipping-document-detail-target",
   ".shipping-document-print-actions",
   ".shipping-document-required-list",
   ".shipping-document-required-head",
@@ -453,11 +470,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.823"',
-  'styles.css?v=1.1.823',
-  'app.js?v=1.1.823'
+  'content="v1.1.824"',
+  'styles.css?v=1.1.824',
+  'app.js?v=1.1.824'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.823"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.824"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");

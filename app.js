@@ -321,6 +321,7 @@ var TRANSLATIONS = {
     customer_order_unit_price: "単価",
     customer_order_subtotal: "小計",
     customer_order_total: "合計",
+    sales_order_id_label: "受注ID",
     sales_order_mgmt_title: "受注・出荷管理",
     sales_order_mgmt_desc: "得意先注文の受付、商品発送用B2 CSV、製造シリアル照合を管理します。",
     sales_order_mgmt_note: "注文受付、商品発送用B2 CSV、現場の製造シリアル照合を管理します。",
@@ -2096,6 +2097,7 @@ var TRANSLATIONS = {
     customer_order_unit_price: "Unit Price",
     customer_order_subtotal: "Subtotal",
     customer_order_total: "Total",
+    sales_order_id_label: "Order ID",
     sales_order_mgmt_title: "Orders / Shipping",
     sales_order_mgmt_desc: "Manage customer orders, outbound B2 CSV files, and manufacturing-serial verification.",
     sales_order_mgmt_note: "Manage order acceptance, outbound B2 CSV files, and shop-floor serial verification.",
@@ -3816,6 +3818,7 @@ var TRANSLATIONS = {
     customer_order_unit_price: "单价",
     customer_order_subtotal: "小计",
     customer_order_total: "合计",
+    sales_order_id_label: "订单ID",
     sales_order_mgmt_title: "订单・出货管理",
     sales_order_mgmt_desc: "管理客户订单、商品发送用B2 CSV和制造序列号核对。",
     sales_order_mgmt_note: "管理订单受理、商品发送用B2 CSV和现场序列号核对。",
@@ -5449,7 +5452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.823";
+var APP_VERSION       = "v1.1.824";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -12436,7 +12439,7 @@ function renderShippingDocumentList() {
     var pendingCount = shippingDocumentPendingCount(order);
     return "<div class='shipping-document-list-row" + (selected ? " selected" : "") + "' data-shipping-document-order='" + esc(order.id) + "'>" +
       "<label class='shipping-document-row-check' aria-label='印刷対象'><input type='checkbox' data-shipping-document-check value='" + esc(order.id) + "'" + (checked ? " checked" : "") + "></label>" +
-      "<span class='shipping-document-list-main'><strong>" + esc(order.order_number || ("注文 " + order.id)) + "</strong><small>" + esc(order.customer_name || "-") + "</small><span class='shipping-document-list-progress'>" + esc(order.dispatch_number || "指示書未発行") + (pendingCount ? " / 未印刷 " + pendingCount : " / 印刷済み") + "</span></span>" +
+      "<span class='shipping-document-list-main'><span class='shipping-document-order-id-label'>" + esc(t("sales_order_id_label")) + "</span><strong>" + esc(order.order_number || ("注文 " + order.id)) + "</strong><small>" + esc(order.customer_name || "-") + "</small><span class='shipping-document-list-progress'>" + esc(order.dispatch_number || "指示書未発行") + (pendingCount ? " / 未印刷 " + pendingCount : " / 印刷済み") + "</span></span>" +
       "<span class='shipping-document-list-meta'><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong><small>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small></span>" +
       "<span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span>" +
     "</div>";
@@ -12949,7 +12952,7 @@ function renderShippingDocumentDetail() {
     host.innerHTML = shippingDocumentDefaultStateHtml();
     return;
   }
-  host.innerHTML = "<div class='shipping-document-detail-head'><div><span>帳票発行対象 / " + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div><div><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span><button type='button' id='shipping-document-open-history'>B2発行履歴</button><button type='button' id='shipping-document-open-order'>受注詳細</button></div></div>" +
+  host.innerHTML = "<div class='shipping-document-detail-head'><div><span class='shipping-document-order-id-label'>" + esc(t("sales_order_id_label")) + "</span><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><small class='shipping-document-detail-target'>帳票発行対象 / " + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small><strong>" + esc(order.customer_name || "-") + "</strong></div><div><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span><button type='button' id='shipping-document-open-history'>B2発行履歴</button><button type='button' id='shipping-document-open-order'>受注詳細</button></div></div>" +
     shippingDocumentStageHtml(order) +
     shippingDocumentShipmentDocumentsHtml(order) +
     "<div id='shipping-document-message' class='sales-order-detail-message' aria-live='polite'></div>";
