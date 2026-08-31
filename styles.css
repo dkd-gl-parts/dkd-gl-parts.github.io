@@ -7044,7 +7044,15 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .sales-order-list-main { min-width: 0; }
 .sales-order-list-identity { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .sales-order-list-identity > strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sales-order-list-identity .sales-order-status { flex: 0 0 auto; }
+.sales-order-list-identity .sales-order-status {
+  display: inline-flex;
+  flex: 0 0 64px;
+  width: 64px;
+  min-width: 64px;
+  height: 26px;
+  padding: 0;
+  text-align: center;
+}
 .sales-order-list-customer { margin-top: 4px; }
 .sales-order-list-meta { display: flex; align-items: center; gap: 7px; min-width: 0; margin-top: 5px; }
 .sales-order-list-meta .sales-order-source { flex: 0 0 auto; margin-top: 0; }

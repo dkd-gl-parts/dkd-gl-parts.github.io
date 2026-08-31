@@ -5,7 +5,7 @@ const vm = require("vm");
 const root = path.resolve(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
-const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+const css = fs.readFileSync(path.join(root, "styles.css"), "utf8").replace(/\r\n/g, "\n");
 
 function requireFragment(input, fragment, label) {
   if (!input.includes(fragment)) throw new Error(`${label} is missing: ${fragment}`);
@@ -71,7 +71,13 @@ for (const fragment of [
   ".sales-order-dashboard-metric { flex: 0 0 104px;",
   ".sales-order-status { display: inline-flex; align-items: center; justify-content: center; min-width: 60px; height: 24px;",
   "line-height: 1; letter-spacing: 0; white-space: nowrap;",
-  ".sales-order-list-identity .sales-order-status { flex: 0 0 auto; }"
+  ".sales-order-list-identity .sales-order-status {",
+  "display: inline-flex;",
+  "flex: 0 0 64px;",
+  "width: 64px;",
+  "height: 26px;",
+  "padding: 0;",
+  "text-align: center;"
 ]) requireFragment(css, fragment, "dashboard responsive style");
 
 for (const fragment of [
