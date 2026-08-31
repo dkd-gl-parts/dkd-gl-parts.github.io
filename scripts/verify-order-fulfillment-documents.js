@@ -438,6 +438,22 @@ for (const fragment of [
   ".shipping-handwritten-waybill-values"
 ]) requireFragment(css, fragment);
 for (const fragment of [
+  "@media (min-width: 1081px)",
+  "#screen-shipping-document-mgmt.active {",
+  "height: 100dvh;",
+  "overflow: hidden;",
+  ".shipping-document-toolbar {",
+  "min-height: 86px;",
+  "grid-template-areas:",
+  '"kicker actions"',
+  "#screen-shipping-document-mgmt .shipping-document-title-actions {",
+  ".shipping-document-list { flex: 1; min-height: 120px; overflow-y: auto; }",
+  ".shipping-document-batch-panel { flex: 0 0 auto;",
+  ".shipping-document-detail-pane { overflow-y: auto; padding: 11px 18px 14px; }",
+  ".shipping-document-required-row { min-height: 52px; padding: 4px 8px; }",
+  ".shipping-document-required-documents .shipping-document-section-head p { display: none; }"
+]) requireFragment(css, fragment, `Desktop shipping-document workspace contract is missing: ${fragment}`);
+for (const fragment of [
   ".shipping-document-name-cell { display: grid;",
   "flex: 0 0 132px;",
   "width: 132px;",
@@ -470,11 +486,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.824"',
-  'styles.css?v=1.1.824',
-  'app.js?v=1.1.824'
+  'content="v1.1.825"',
+  'styles.css?v=1.1.825',
+  'app.js?v=1.1.825'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.824"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.825"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
