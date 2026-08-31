@@ -32,13 +32,23 @@ for (const fragment of [
   "sales-order-detail-next-actions",
   "次の操作",
   "sales-order-detail-nav",
+  "role='tablist'",
+  "data-sales-order-detail-view='",
+  "sales-order-detail-panels",
+  "sales-order-detail-overview-grid",
+  "data-sales-order-detail-panel='overview'",
+  "注文・配送",
+  "出荷・帳票",
   "sales-order-detail-products",
   "sales-order-detail-delivery",
-  "sales-order-detail-fulfillment",
   "sales-order-detail-tracking",
   "sales-order-detail-history",
   "処理履歴"
 ]) requireFragment(detail, fragment);
+requireFragment(functionSource("salesOrderDispatchHtml"), "sales-order-detail-fulfillment");
+if (detail.includes("href='#sales-order-detail-")) {
+  throw new Error("Order detail navigation must switch work panels instead of jumping down a long page");
+}
 if (detail.includes("sales-order-detail-actions")) {
   throw new Error("Order actions must be shown once in the decision header, not repeated at the bottom");
 }
@@ -58,6 +68,10 @@ for (const fragment of [
   ".sales-order-list-metrics",
   ".sales-order-detail-next-actions",
   ".sales-order-detail-nav",
+  ".sales-order-detail-nav button[aria-selected=\"true\"]",
+  ".sales-order-detail-panel[hidden]",
+  ".sales-order-detail-overview-grid",
+  ".sales-order-detail-overview { overflow: hidden; }",
   ".sales-order-history-groups",
   ".sales-order-pricing-lower-grid",
   ".sales-order-pricing-item .sales-order-pricing-mobile-label { display: none; }",
