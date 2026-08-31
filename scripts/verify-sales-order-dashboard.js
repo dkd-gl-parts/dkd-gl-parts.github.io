@@ -74,6 +74,17 @@ for (const fragment of [
   ".sales-order-list-identity .sales-order-status { flex: 0 0 auto; }"
 ]) requireFragment(css, fragment, "dashboard responsive style");
 
+for (const fragment of [
+  "#screen-sales-order-mgmt.active {",
+  "height: 100dvh;",
+  "grid-template-rows: 80px 54px minmax(0, 1fr);",
+  ".sales-order-auto-print {\n    grid-column: 1;\n    grid-row: 2;",
+  ".sales-order-dashboard {\n    grid-column: 2;\n    grid-row: 2;",
+  ".sales-order-workspace {\n    grid-column: 1 / -1;\n    grid-row: 3;",
+  ".sales-order-list { flex: 1 1 auto; height: auto; min-height: 0;",
+  ".sales-order-detail-pane {\n    min-height: 0;"
+]) requireFragment(css, fragment, "desktop order workstation style");
+
 requireFragment(source, 'document.querySelectorAll("[data-sales-order-dashboard-status]")', "dashboard event registration");
 if (source.includes('.from("customer_orders")') || source.includes('.from("customer_order_items")')) {
   throw new Error("dashboard must use reviewed order RPCs instead of direct table access");

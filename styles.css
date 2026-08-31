@@ -7129,6 +7129,112 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .sales-order-pricing-message { flex: 0 0 auto; }
 .sales-order-pricing-card .form-footer { flex: 0 0 auto; }
 
+/* Desktop order workstation: keep search, status, list, and detail in one viewport. */
+@media (min-width: 1081px) {
+  #screen-sales-order-mgmt.active {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+  #screen-sales-order-mgmt .page-header { position: relative; }
+  .sales-order-mgmt-body {
+    position: relative;
+    display: grid;
+    grid-template-columns: 255px minmax(0, 1fr);
+    grid-template-rows: 80px 54px minmax(0, 1fr);
+    overflow: hidden;
+  }
+  .sales-order-toolbar {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    align-items: center;
+    gap: 18px;
+    min-height: 0;
+    padding: 8px 16px;
+  }
+  .sales-order-title-block { flex: 0 0 190px; min-width: 0; }
+  .sales-order-toolbar h1 { margin-top: 1px; font-size: 19px; line-height: 1.15; }
+  .sales-order-toolbar p { display: none; }
+  .sales-order-filter-row {
+    position: relative;
+    flex: 1 1 auto;
+    grid-template-columns: minmax(190px, 1fr) 124px auto auto auto auto auto;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .sales-order-filter-row input,
+  .sales-order-filter-row select,
+  .sales-order-filter-row button { height: 34px; min-height: 34px; }
+  .sales-order-filter-row button { padding-right: 8px; padding-left: 8px; font-size: 9px; }
+  .sales-order-batch-message { min-height: 10px; font-size: 8px; line-height: 1.2; }
+  .sales-order-batch-message:empty { display: none; }
+  .sales-order-b2-import:not([hidden]) {
+    position: absolute;
+    z-index: 12;
+    top: 80px;
+    right: 16px;
+    left: 16px;
+    max-height: calc(100% - 96px);
+    overflow: auto;
+    border: 1px solid #bdc9c2;
+    box-shadow: 0 14px 28px rgba(27, 43, 35, .18);
+  }
+  .sales-order-auto-print {
+    grid-column: 1;
+    grid-row: 2;
+    min-height: 54px;
+    border-right: 1px solid #cfd8d3;
+    padding: 6px 12px;
+  }
+  .sales-order-auto-print-heading { align-items: flex-start; flex-direction: column; gap: 3px; }
+  .sales-order-auto-print-heading > strong { font-size: 10px; line-height: 1.25; }
+  .sales-order-auto-print-state { min-height: 18px; padding: 0 5px; font-size: 8px; }
+  .sales-order-print-settings-button { min-height: 28px; padding: 0 8px; font-size: 9px; }
+  .sales-order-dashboard {
+    grid-column: 2;
+    grid-row: 2;
+    gap: 10px;
+    min-width: 0;
+    min-height: 54px;
+    padding: 5px 12px;
+  }
+  .sales-order-dashboard-heading { min-width: 68px; }
+  .sales-order-dashboard-heading strong { font-size: 10px; }
+  .sales-order-dashboard-heading span { display: none; }
+  .sales-order-dashboard-metrics { gap: 5px; }
+  .sales-order-dashboard-metric { min-height: 38px; padding: 4px 7px; }
+  .sales-order-dashboard-metric span { font-size: 8px; }
+  .sales-order-dashboard-metric strong { font-size: 16px; }
+  .sales-order-workspace {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .sales-order-list-pane { display: flex; flex-direction: column; overflow: hidden; }
+  .sales-order-list-head { flex: 0 0 38px; height: 38px; }
+  .sales-order-list { flex: 1 1 auto; height: auto; min-height: 0; overscroll-behavior: contain; }
+  .sales-order-list-row { min-height: 78px; padding: 8px 10px; }
+  .sales-order-detail-pane {
+    min-height: 0;
+    padding: 0 18px 18px;
+    overscroll-behavior: contain;
+  }
+  .sales-order-detail-head { min-height: 72px; padding: 8px 0; }
+  .sales-order-detail-head h2 { margin-top: 1px; font-size: 20px; line-height: 1.15; }
+  .sales-order-detail-head strong { margin-top: 2px; }
+  .sales-order-detail-next-actions { padding-left: 10px; }
+  .sales-order-detail-next-actions .sales-order-action { min-height: 30px; padding: 0 9px; font-size: 9px; }
+  .sales-order-detail-summary > div { padding: 7px 10px; }
+  .sales-order-detail-summary span { font-size: 8px; }
+  .sales-order-detail-summary strong { margin-top: 2px; font-size: 12px; }
+  .sales-order-detail-summary .total strong { font-size: 14px; }
+  .sales-order-detail-nav { min-height: 36px; }
+  .sales-order-detail-nav a { min-height: 36px; font-size: 9px; }
+  .sales-order-detail-section { margin-top: 14px; }
+}
+
 /* Desktop shipping-document workstation: keep the complete issue flow in one viewport. */
 @media (min-width: 1081px) {
   #screen-shipping-document-mgmt.active {
