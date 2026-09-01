@@ -387,27 +387,32 @@ var TRANSLATIONS = {
     production_year_all: "年度すべて",
     production_search_wait: "検索待ち",
     production_search_hint: "検索条件を指定して検索してください。",
-    stamp_search_open: "F/R刻印検索",
-    stamp_search_title: "F/R刻印組合せを検索",
-    stamp_search_help: "FまたはRだけでも検索できます。両方を入力すると組合せが一致する品番だけを表示します。",
+    stamp_search_open: "F/R/プーリNo検索",
+    stamp_search_title: "F/R/プーリNo組合せを検索",
+    stamp_search_help: "F・R・プーリNoのいずれか1つでも検索できます。複数入力すると組合せが一致する品番だけを表示します。",
     stamp_f_number: "Fナンバー",
     stamp_r_number: "Rナンバー",
-    stamp_pair_section: "F/R刻印組合せ",
-    stamp_pair_form_help: "組み立て時に確認するFナンバーとRナンバーを、組合せごとに登録します。",
+    stamp_pulley_number: "プーリNo",
+    stamp_f_placeholder: "例: F123-456",
+    stamp_r_placeholder: "例: R876-543",
+    stamp_pulley_placeholder: "例: HM1-6",
+    stamp_pair_section: "F/R/プーリNo組合せ",
+    stamp_pair_form_help: "組み立て時に確認するFナンバー・Rナンバー・プーリNoを、3つで1組として登録します。",
     stamp_pair_add: "組合せを追加",
     stamp_pair_remove: "この組合せを削除",
-    stamp_pair_empty: "F/R刻印組合せは未登録です",
+    stamp_pair_empty: "F/R/プーリNo組合せは未登録です",
     stamp_pair_confirm_required: "確認必要",
     stamp_pair_total: "全{n}組",
     stamp_pair_match: "一致した刻印",
-    stamp_search_required: "FナンバーまたはRナンバーを入力してください。",
-    stamp_number_invalid: "FナンバーとRナンバーは3～8文字の半角英数字（大文字）で入力してください。",
-    stamp_pair_incomplete: "FナンバーとRナンバーを組み合わせて入力してください。",
-    stamp_pair_duplicate: "同じF/R刻印組合せが重複しています。",
-    stamp_pair_load_failed: "F/R刻印組合せを読み込めませんでした。",
-    stamp_pair_save_failed: "F/R刻印組合せを保存できませんでした。",
-    stamp_search_failed: "F/R刻印検索に失敗しました。",
-    stamp_search_count: "F/R刻印検索 {n}件",
+    stamp_search_required: "Fナンバー、Rナンバー、プーリNoのいずれかを入力してください。",
+    stamp_number_invalid: "Fナンバー、Rナンバー、プーリNoは3～8文字の半角英数字（大文字）またはハイフンで入力してください。",
+    stamp_pair_incomplete: "Fナンバー、Rナンバー、プーリNoを3つで1組として入力してください。",
+    stamp_pair_duplicate: "同じF/R/プーリNo組合せが重複しています。",
+    stamp_pair_limit: "F/R/プーリNo組合せは1品番につき100組までです。",
+    stamp_pair_load_failed: "F/R/プーリNo組合せを読み込めませんでした。",
+    stamp_pair_save_failed: "F/R/プーリNo組合せを保存できませんでした。",
+    stamp_search_failed: "F/R/プーリNo検索に失敗しました。",
+    stamp_search_count: "F/R/プーリNo検索 {n}件",
     btn_edit_selected_row: "選択行修正",
     production_instruction_filter: "製造予定リスト",
     production_category_filter: "カテゴリ",
@@ -2163,27 +2168,32 @@ var TRANSLATIONS = {
     production_year_all: "All years",
     production_search_wait: "Waiting for search",
     production_search_hint: "Set search conditions and run a search.",
-    stamp_search_open: "F/R Stamp Search",
-    stamp_search_title: "Search F/R Stamp Pairs",
-    stamp_search_help: "Search by F or R alone, or enter both to find an exact pair.",
+    stamp_search_open: "F/R/Pulley Search",
+    stamp_search_title: "Search F/R/Pulley Sets",
+    stamp_search_help: "Search by F, R, or pulley number alone, or combine fields to find an exact set.",
     stamp_f_number: "F Number",
     stamp_r_number: "R Number",
-    stamp_pair_section: "F/R Stamp Pairs",
-    stamp_pair_form_help: "Register each F and R stamp-number combination used during assembly.",
+    stamp_pulley_number: "Pulley No.",
+    stamp_f_placeholder: "e.g. F123-456",
+    stamp_r_placeholder: "e.g. R876-543",
+    stamp_pulley_placeholder: "e.g. HM1-6",
+    stamp_pair_section: "F/R/Pulley Sets",
+    stamp_pair_form_help: "Register the F number, R number, and pulley number as one assembly set.",
     stamp_pair_add: "Add Pair",
     stamp_pair_remove: "Remove this pair",
-    stamp_pair_empty: "No F/R stamp pairs registered",
+    stamp_pair_empty: "No F/R/pulley sets registered",
     stamp_pair_confirm_required: "Check required",
     stamp_pair_total: "{n} pairs",
     stamp_pair_match: "Matched stamp",
-    stamp_search_required: "Enter an F number or R number.",
-    stamp_number_invalid: "F and R numbers must contain 3 to 8 uppercase ASCII letters or digits.",
-    stamp_pair_incomplete: "Enter both the F number and R number for each pair.",
-    stamp_pair_duplicate: "The same F/R stamp pair is entered more than once.",
-    stamp_pair_load_failed: "Could not load F/R stamp pairs.",
-    stamp_pair_save_failed: "Could not save F/R stamp pairs.",
-    stamp_search_failed: "F/R stamp search failed.",
-    stamp_search_count: "F/R stamp search: {n}",
+    stamp_search_required: "Enter an F number, R number, or pulley number.",
+    stamp_number_invalid: "F, R, and pulley numbers must contain 3 to 8 uppercase ASCII letters, digits, or hyphens.",
+    stamp_pair_incomplete: "Enter the F number, R number, and pulley number as one set.",
+    stamp_pair_duplicate: "The same F/R/pulley set is entered more than once.",
+    stamp_pair_limit: "Up to 100 F/R/pulley sets can be registered per part number.",
+    stamp_pair_load_failed: "Could not load F/R/pulley sets.",
+    stamp_pair_save_failed: "Could not save F/R/pulley sets.",
+    stamp_search_failed: "F/R/pulley search failed.",
+    stamp_search_count: "F/R/pulley search: {n}",
     btn_edit_selected_row: "Edit Selected Row",
     production_instruction_filter: "Production Plan",
     production_category_filter: "Category",
@@ -3840,27 +3850,32 @@ var TRANSLATIONS = {
     production_year_all: "全部年度",
     production_search_wait: "等待搜索",
     production_search_hint: "请指定搜索条件后搜索。",
-    stamp_search_open: "F/R刻印搜索",
-    stamp_search_title: "搜索F/R刻印组合",
-    stamp_search_help: "可仅输入F或R搜索；同时输入时仅显示组合完全一致的商品。",
+    stamp_search_open: "F/R/皮带轮编号搜索",
+    stamp_search_title: "搜索F/R/皮带轮编号组合",
+    stamp_search_help: "可仅输入F、R或皮带轮编号搜索；输入多个条件时仅显示组合一致的商品。",
     stamp_f_number: "F编号",
     stamp_r_number: "R编号",
-    stamp_pair_section: "F/R刻印组合",
-    stamp_pair_form_help: "按组合登记组装时需要确认的F编号和R编号。",
+    stamp_pulley_number: "皮带轮编号",
+    stamp_f_placeholder: "例: F123-456",
+    stamp_r_placeholder: "例: R876-543",
+    stamp_pulley_placeholder: "例: HM1-6",
+    stamp_pair_section: "F/R/皮带轮编号组合",
+    stamp_pair_form_help: "将组装时确认的F编号、R编号和皮带轮编号作为一组登记。",
     stamp_pair_add: "添加组合",
     stamp_pair_remove: "删除此组合",
-    stamp_pair_empty: "尚未登记F/R刻印组合",
+    stamp_pair_empty: "尚未登记F/R/皮带轮编号组合",
     stamp_pair_confirm_required: "需要确认",
     stamp_pair_total: "共{n}组",
     stamp_pair_match: "匹配刻印",
-    stamp_search_required: "请输入F编号或R编号。",
-    stamp_number_invalid: "F编号和R编号必须为3～8位半角大写英文字母或数字。",
-    stamp_pair_incomplete: "请成对输入F编号和R编号。",
-    stamp_pair_duplicate: "存在重复的F/R刻印组合。",
-    stamp_pair_load_failed: "无法读取F/R刻印组合。",
-    stamp_pair_save_failed: "无法保存F/R刻印组合。",
-    stamp_search_failed: "F/R刻印搜索失败。",
-    stamp_search_count: "F/R刻印搜索 {n}件",
+    stamp_search_required: "请输入F编号、R编号或皮带轮编号。",
+    stamp_number_invalid: "F编号、R编号和皮带轮编号必须为3～8位半角大写英文字母、数字或连字符。",
+    stamp_pair_incomplete: "请将F编号、R编号和皮带轮编号作为一组输入。",
+    stamp_pair_duplicate: "存在重复的F/R/皮带轮编号组合。",
+    stamp_pair_limit: "每个商品编号最多可登记100组F/R/皮带轮编号组合。",
+    stamp_pair_load_failed: "无法读取F/R/皮带轮编号组合。",
+    stamp_pair_save_failed: "无法保存F/R/皮带轮编号组合。",
+    stamp_search_failed: "F/R/皮带轮编号搜索失败。",
+    stamp_search_count: "F/R/皮带轮编号搜索 {n}件",
     btn_edit_selected_row: "修改所选行",
     app_sub: "大光目录与搜索系统",
     login_system_subtitle: "汽车零部件搜索与订购系统",
@@ -5452,7 +5467,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.830";
+var APP_VERSION       = "v1.1.831";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5488,7 +5503,7 @@ var productionFilter = "all";
 var productionCategoryFilter = "all";
 var currentProductionRow = null;
 var productionStampSearchActive = false;
-var productionStampSearchCriteria = { f_number: "", r_number: "" };
+var productionStampSearchCriteria = { f_number: "", r_number: "", pulley_number: "" };
 var productionStampMatchMap = {};
 var productionStampSearchSeq = 0;
 var componentReturnScreen = "search";
@@ -15555,23 +15570,27 @@ function configureSalesProductAddButton() {
 }
 
 function normalizeStampNumberValue(value) {
-  return normalizeAsciiWidth(String(value == null ? "" : value)).trim().toUpperCase();
+  return normalizeAsciiWidth(String(value == null ? "" : value))
+    .trim()
+    .toUpperCase()
+    .replace(/[\u2010-\u2015\u2212\u30FC\uFF0D]/g, "-");
 }
 
 function isValidStampNumberValue(value) {
-  return /^[A-Z0-9]{3,8}$/.test(String(value || ""));
+  var cleanValue = String(value || "");
+  return /^[A-Z0-9-]{3,8}$/.test(cleanValue) && /[A-Z0-9]/.test(cleanValue);
 }
 
 function stampPairSignature(pairs) {
   return (pairs || []).map(function(pair) {
-    return normalizeStampNumberValue(pair.f_number) + ":" + normalizeStampNumberValue(pair.r_number);
+    return normalizeStampNumberValue(pair.f_number) + ":" + normalizeStampNumberValue(pair.r_number) + ":" + normalizeStampNumberValue(pair.pulley_number);
   }).join("|");
 }
 
 function clearProductionStampSearchState() {
   productionStampSearchSeq += 1;
   productionStampSearchActive = false;
-  productionStampSearchCriteria = { f_number: "", r_number: "" };
+  productionStampSearchCriteria = { f_number: "", r_number: "", pulley_number: "" };
   productionStampMatchMap = {};
   var submit = document.getElementById("production-stamp-search-submit");
   if (submit) submit.disabled = false;
@@ -15581,13 +15600,17 @@ function openProductionStampSearch() {
   var overlay = document.getElementById("production-stamp-search-overlay");
   var fInput = document.getElementById("production-stamp-f-number");
   var rInput = document.getElementById("production-stamp-r-number");
+  var pulleyInput = document.getElementById("production-stamp-pulley-number");
   var errorEl = document.getElementById("production-stamp-search-error");
-  if (!overlay || !fInput || !rInput) return;
+  if (!overlay || !fInput || !rInput || !pulleyInput) return;
   fInput.value = productionStampSearchCriteria.f_number || "";
   rInput.value = productionStampSearchCriteria.r_number || "";
+  pulleyInput.value = productionStampSearchCriteria.pulley_number || "";
   if (errorEl) errorEl.textContent = "";
   overlay.classList.add("show");
-  window.setTimeout(function() { (fInput.value ? rInput : fInput).focus(); }, 0);
+  window.setTimeout(function() {
+    (fInput.value ? (rInput.value ? pulleyInput : rInput) : fInput).focus();
+  }, 0);
 }
 
 function closeProductionStampSearch() {
@@ -15595,17 +15618,18 @@ function closeProductionStampSearch() {
   if (overlay) overlay.classList.remove("show");
 }
 
-async function fetchProductionStampPairMatches(fNumber, rNumber) {
+async function fetchProductionStampPairMatches(fNumber, rNumber, pulleyNumber) {
   var rows = [];
   var pageSize = 1000;
   for (var offset = 0; offset < 10000; offset += pageSize) {
     var query = sb.from("core_product_stamp_pairs")
-      .select("dkd_shohin_id,f_number,r_number,sort_order")
+      .select("dkd_shohin_id,f_number,r_number,pulley_number,sort_order")
       .order("dkd_shohin_id", { ascending: true })
       .order("sort_order", { ascending: true })
       .range(offset, offset + pageSize - 1);
     if (fNumber) query = query.eq("f_number", fNumber);
     if (rNumber) query = query.eq("r_number", rNumber);
+    if (pulleyNumber) query = query.eq("pulley_number", pulleyNumber);
     var result = await query;
     if (result.error) return result;
     var pageRows = result.data || [];
@@ -15638,7 +15662,7 @@ function renderProductionStampMatchHtml(row) {
   var matches = productionStampMatchMap[productDkdId(row)] || [];
   if (!matches.length) return "";
   var visible = matches.slice(0, 3).map(function(pair) {
-    return "<span>F " + esc(pair.f_number) + " / R " + esc(pair.r_number) + "</span>";
+    return "<span>F " + esc(pair.f_number) + " / R " + esc(pair.r_number) + " / P " + esc(pair.pulley_number || "-") + "</span>";
   }).join("");
   var remaining = matches.length > 3 ? "<span>+" + esc(String(matches.length - 3)) + "</span>" : "";
   return "<div class='production-stamp-result-pairs' title='" + esc(t("stamp_pair_match")) + "'>" + visible + remaining + "</div>";
@@ -15647,18 +15671,23 @@ function renderProductionStampMatchHtml(row) {
 async function runProductionStampSearch() {
   var fInput = document.getElementById("production-stamp-f-number");
   var rInput = document.getElementById("production-stamp-r-number");
+  var pulleyInput = document.getElementById("production-stamp-pulley-number");
   var errorEl = document.getElementById("production-stamp-search-error");
   var submit = document.getElementById("production-stamp-search-submit");
   var fNumber = normalizeStampNumberValue(fInput && fInput.value);
   var rNumber = normalizeStampNumberValue(rInput && rInput.value);
+  var pulleyNumber = normalizeStampNumberValue(pulleyInput && pulleyInput.value);
   if (fInput) fInput.value = fNumber;
   if (rInput) rInput.value = rNumber;
+  if (pulleyInput) pulleyInput.value = pulleyNumber;
   if (errorEl) errorEl.textContent = "";
-  if (!fNumber && !rNumber) {
+  if (!fNumber && !rNumber && !pulleyNumber) {
     if (errorEl) errorEl.textContent = t("stamp_search_required");
     return;
   }
-  if ((fNumber && !isValidStampNumberValue(fNumber)) || (rNumber && !isValidStampNumberValue(rNumber))) {
+  if ((fNumber && !isValidStampNumberValue(fNumber)) ||
+      (rNumber && !isValidStampNumberValue(rNumber)) ||
+      (pulleyNumber && !isValidStampNumberValue(pulleyNumber))) {
     if (errorEl) errorEl.textContent = t("stamp_number_invalid");
     return;
   }
@@ -15667,7 +15696,7 @@ async function runProductionStampSearch() {
   if (submit) submit.disabled = true;
   var countEl = document.getElementById("production-count");
   if (countEl) countEl.textContent = t("loading");
-  var pairResult = await fetchProductionStampPairMatches(fNumber, rNumber);
+  var pairResult = await fetchProductionStampPairMatches(fNumber, rNumber, pulleyNumber);
   if (seq !== productionStampSearchSeq) return;
   if (pairResult.error) {
     if (submit) submit.disabled = false;
@@ -15694,7 +15723,7 @@ async function runProductionStampSearch() {
   }
 
   productionStampSearchActive = true;
-  productionStampSearchCriteria = { f_number: fNumber, r_number: rNumber };
+  productionStampSearchCriteria = { f_number: fNumber, r_number: rNumber, pulley_number: pulleyNumber };
   productionStampMatchMap = matchMap;
   productionFilter = "all";
   productionCategoryFilter = "all";
@@ -15727,9 +15756,9 @@ async function runProductionStampSearch() {
     screen: "production-search",
     action: "production_stamp_pair_search",
     target_type: "core_product_stamp_pairs",
-    target_desc: [fNumber ? "F " + fNumber : "", rNumber ? "R " + rNumber : ""].filter(Boolean).join(" / "),
-    metadata: { f_number: fNumber || null, r_number: rNumber || null, result_count: productionRows.length },
-    throttleKey: "production-stamp:" + fNumber + ":" + rNumber,
+    target_desc: [fNumber ? "F " + fNumber : "", rNumber ? "R " + rNumber : "", pulleyNumber ? "P " + pulleyNumber : ""].filter(Boolean).join(" / "),
+    metadata: { f_number: fNumber || null, r_number: rNumber || null, pulley_number: pulleyNumber || null, result_count: productionRows.length },
+    throttleKey: "production-stamp:" + fNumber + ":" + rNumber + ":" + pulleyNumber,
     throttleMs: 3000
   });
 }
@@ -17192,6 +17221,7 @@ function renderProductionStampPairsHtml(rows) {
     return "<div class='production-stamp-pair'>" +
       "<span><small>F</small><strong>" + esc(pair.f_number || "-") + "</strong></span>" +
       "<span><small>R</small><strong>" + esc(pair.r_number || "-") + "</strong></span>" +
+      "<span><small>P</small><strong>" + esc(pair.pulley_number || "-") + "</strong></span>" +
     "</div>";
   }).join("");
   return "<div class='production-stamp-detail'>" +
@@ -17336,7 +17366,7 @@ async function loadProductionDetailData(row) {
       .eq("is_active", true)
       .in("product_kind", ["rebuilt", "aftermarket_new"]),
     sb.from("core_product_stamp_pairs")
-      .select("id,dkd_shohin_id,f_number,r_number,sort_order")
+      .select("id,dkd_shohin_id,f_number,r_number,pulley_number,sort_order")
       .eq("dkd_shohin_id", dkdId)
       .order("sort_order", { ascending: true })
       .order("id", { ascending: true })
@@ -29002,7 +29032,7 @@ async function fetchCoreProductStampPairs(dkdId) {
   var numericId = parseInt(dkdId, 10);
   if (isNaN(numericId)) return [];
   var result = await sb.from("core_product_stamp_pairs")
-    .select("id,dkd_shohin_id,f_number,r_number,sort_order")
+    .select("id,dkd_shohin_id,f_number,r_number,pulley_number,sort_order")
     .eq("dkd_shohin_id", numericId)
     .order("sort_order", { ascending: true })
     .order("id", { ascending: true });
@@ -29014,12 +29044,13 @@ function renderCoreProductStampPairForm() {
   var list = document.getElementById("pf-stamp-pair-list");
   if (!list) return;
   if (!coreProductFormStampPairs.length) {
-    coreProductFormStampPairs = [{ f_number: "", r_number: "" }];
+    coreProductFormStampPairs = [{ f_number: "", r_number: "", pulley_number: "" }];
   }
   list.innerHTML = coreProductFormStampPairs.map(function(pair, index) {
     return "<div class='product-form-stamp-pair-row' data-stamp-pair-index='" + index + "'>" +
       "<label><span>" + esc(t("stamp_f_number")) + "</span><input class='form-input' type='text' inputmode='text' maxlength='8' autocomplete='off' autocapitalize='characters' spellcheck='false' data-stamp-pair-field='f_number' value='" + esc(pair.f_number || "") + "'></label>" +
       "<label><span>" + esc(t("stamp_r_number")) + "</span><input class='form-input' type='text' inputmode='text' maxlength='8' autocomplete='off' autocapitalize='characters' spellcheck='false' data-stamp-pair-field='r_number' value='" + esc(pair.r_number || "") + "'></label>" +
+      "<label><span>" + esc(t("stamp_pulley_number")) + "</span><input class='form-input' type='text' inputmode='text' maxlength='8' autocomplete='off' autocapitalize='characters' spellcheck='false' data-stamp-pair-field='pulley_number' value='" + esc(pair.pulley_number || "") + "'></label>" +
       "<button class='product-form-stamp-pair-remove' type='button' data-stamp-pair-remove='" + index + "' aria-label='" + esc(t("stamp_pair_remove")) + "' title='" + esc(t("stamp_pair_remove")) + "'>&#215;</button>" +
     "</div>";
   }).join("");
@@ -29055,12 +29086,13 @@ function initializeCoreProductStampPairForm(rows) {
   var cleanRows = (rows || []).map(function(pair) {
     return {
       f_number: normalizeStampNumberValue(pair.f_number),
-      r_number: normalizeStampNumberValue(pair.r_number)
+      r_number: normalizeStampNumberValue(pair.r_number),
+      pulley_number: normalizeStampNumberValue(pair.pulley_number)
     };
-  }).filter(function(pair) { return pair.f_number || pair.r_number; });
+  }).filter(function(pair) { return pair.f_number || pair.r_number || pair.pulley_number; });
   coreProductFormStampPairsOriginalRows = cleanRows.map(function(pair) { return Object.assign({}, pair); });
   coreProductFormStampPairsOriginalSignature = stampPairSignature(cleanRows);
-  coreProductFormStampPairs = cleanRows.length ? cleanRows : [{ f_number: "", r_number: "" }];
+  coreProductFormStampPairs = cleanRows.length ? cleanRows : [{ f_number: "", r_number: "", pulley_number: "" }];
   renderCoreProductStampPairForm();
 }
 
@@ -29074,28 +29106,36 @@ function coreProductStampPairFormValue() {
     if (error) return;
     var fInput = row.querySelector("[data-stamp-pair-field='f_number']");
     var rInput = row.querySelector("[data-stamp-pair-field='r_number']");
+    var pulleyInput = row.querySelector("[data-stamp-pair-field='pulley_number']");
     var fNumber = normalizeStampNumberValue(fInput && fInput.value);
     var rNumber = normalizeStampNumberValue(rInput && rInput.value);
+    var pulleyNumber = normalizeStampNumberValue(pulleyInput && pulleyInput.value);
     if (fInput) fInput.value = fNumber;
     if (rInput) rInput.value = rNumber;
-    if (!fNumber && !rNumber) return;
-    if (!fNumber || !rNumber) {
+    if (pulleyInput) pulleyInput.value = pulleyNumber;
+    if (!fNumber && !rNumber && !pulleyNumber) return;
+    var isUnchangedLegacyPair = !pulleyNumber && coreProductFormStampPairsOriginalRows.some(function(pair) {
+      return pair.f_number === fNumber && pair.r_number === rNumber && !pair.pulley_number;
+    });
+    if (!fNumber || !rNumber || (!pulleyNumber && !isUnchangedLegacyPair)) {
       error = t("stamp_pair_incomplete");
       return;
     }
-    if (!isValidStampNumberValue(fNumber) || !isValidStampNumberValue(rNumber)) {
+    if (!isValidStampNumberValue(fNumber) ||
+        !isValidStampNumberValue(rNumber) ||
+        (pulleyNumber && !isValidStampNumberValue(pulleyNumber))) {
       error = t("stamp_number_invalid");
       return;
     }
-    var key = fNumber + ":" + rNumber;
+    var key = fNumber + ":" + rNumber + ":" + pulleyNumber;
     if (seen[key]) {
       error = t("stamp_pair_duplicate");
       return;
     }
     seen[key] = true;
-    pairs.push({ f_number: fNumber, r_number: rNumber });
+    pairs.push({ f_number: fNumber, r_number: rNumber, pulley_number: pulleyNumber || null });
   });
-  if (pairs.length > 100) error = "F/R刻印組合せは1品番につき100組までです。";
+  if (pairs.length > 100) error = t("stamp_pair_limit");
   return { pairs: pairs, error: error };
 }
 
@@ -46912,7 +46952,7 @@ document.getElementById("btn-part-form-cancel").addEventListener("click", functi
 document.getElementById("btn-part-form-save").addEventListener("click", savePartForm);
 document.getElementById("pf-stamp-pair-add").addEventListener("click", function() {
   if (coreProductFormStampPairs.length >= 100) return;
-  coreProductFormStampPairs.push({ f_number: "", r_number: "" });
+  coreProductFormStampPairs.push({ f_number: "", r_number: "", pulley_number: "" });
   renderCoreProductStampPairForm();
   var rows = document.querySelectorAll("#pf-stamp-pair-list [data-stamp-pair-index]");
   var lastRow = rows.length ? rows[rows.length - 1] : null;
@@ -47607,7 +47647,7 @@ document.getElementById("production-stamp-search-submit").addEventListener("clic
 document.getElementById("production-stamp-search-overlay").addEventListener("click", function(e) {
   if (e.target === this) closeProductionStampSearch();
 });
-["production-stamp-f-number", "production-stamp-r-number"].forEach(function(id) {
+["production-stamp-f-number", "production-stamp-r-number", "production-stamp-pulley-number"].forEach(function(id) {
   document.getElementById(id).addEventListener("input", function(e) {
     if (e && e.isComposing) return;
     this.value = normalizeStampNumberValue(this.value);

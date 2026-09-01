@@ -23,11 +23,13 @@ const productionScreen = sourceBetween(html, 'id="screen-production-search"', 'i
   'id="production-stamp-search-overlay"',
   'id="production-stamp-f-number"',
   'id="production-stamp-r-number"',
+  'id="production-stamp-pulley-number"',
   'id="production-stamp-search-submit"'
 ].forEach((fragment) => requireFragment(productionScreen, fragment, "manufacturing stamp search UI"));
 [
   'id="production-stamp-f-number" type="text" inputmode="text" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false"',
-  'id="production-stamp-r-number" type="text" inputmode="text" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false"'
+  'id="production-stamp-r-number" type="text" inputmode="text" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false"',
+  'id="production-stamp-pulley-number" type="text" inputmode="text" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false"'
 ].forEach((fragment) => requireFragment(productionScreen, fragment, "alphanumeric manufacturing stamp search input"));
 
 const productForm = sourceBetween(html, 'id="part-form-overlay"', 'id="kikan-form-overlay"');
@@ -49,17 +51,22 @@ const stampSearch = sourceBetween(app, "async function fetchProductionStampPairM
   'sb.from("core_product_stamp_pairs")',
   '.eq("f_number", fNumber)',
   '.eq("r_number", rNumber)',
+  '.eq("pulley_number", pulleyNumber)',
   'fetchProductionProductsForStampMatches(ids)',
   'productionStampSearchActive = true',
   'productionStampMatchMap = matchMap'
-].forEach((fragment) => requireFragment(stampSearch, fragment, "F/R stamp search"));
+].forEach((fragment) => requireFragment(stampSearch, fragment, "F/R/pulley stamp search"));
 
 const detail = sourceBetween(app, "async function renderProductionDetail", "async function loadProductionDetailData");
 requireFragment(detail, "renderProductionStampPairsHtml(detail.stampPairs)", "manufacturing detail stamp display");
 
 const detailStampPairs = sourceBetween(app, "function renderProductionStampPairsHtml", "function renderProductionCorePolicies");
+[
+  'pair.pulley_number || "-"',
+  "<small>P</small>"
+].forEach((fragment) => requireFragment(detailStampPairs, fragment, "manufacturing pulley-number detail"));
 if (detailStampPairs.includes("stamp_pair_total") || detailStampPairs.includes("stamp_pair_confirm_required")) {
-  throw new Error("manufacturing detail must show only the F/R pair cards without count or confirmation labels");
+  throw new Error("manufacturing detail must show only the F/R/pulley set cards without count or confirmation labels");
 }
 
 const specSectionIndex = productForm.indexOf('aria-labelledby="product-form-spec-title"');
@@ -96,14 +103,19 @@ const pairForm = sourceBetween(app, "async function fetchCoreProductStampPairs",
   "stamp_pair_incomplete",
   "stamp_number_invalid",
   "stamp_pair_duplicate",
-  "pairs.length > 100"
+  "pairs.length > 100",
+  "data-stamp-pair-field='pulley_number'",
+  "pulley_number: pulleyNumber || null",
+  "isUnchangedLegacyPair"
 ].forEach((fragment) => requireFragment(pairForm, fragment, "stamp-pair editor validation"));
 [
-  ".trim().toUpperCase()",
-  "return /^[A-Z0-9]{3,8}$/.test",
+  ".trim()",
+  ".toUpperCase()",
+  "return /^[A-Z0-9-]{3,8}$/.test",
+  '.replace(/[\\u2010-\\u2015\\u2212\\u30FC\\uFF0D]/g, "-")',
   "maxlength='8'",
   "autocapitalize='characters'",
-  "半角英数字（大文字）"
+  "半角英数字（大文字）またはハイフン"
 ].forEach((fragment) => requireFragment(app, fragment, "alphanumeric stamp-pair editor"));
 if (app.includes("return /^[0-9]{3,8}$/.test") || /data-stamp-pair-field='[fr]_number'[^>]*inputmode='numeric'/.test(app)) {
   throw new Error("numeric-only stamp-number validation must not remain in the editor");
@@ -111,9 +123,10 @@ if (app.includes("return /^[0-9]{3,8}$/.test") || /data-stamp-pair-field='[fr]_n
 
 [
   ".production-stamp-pair-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; max-height: 157px; overflow-y: auto;",
-  ".production-stamp-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); min-height: 34px; overflow: hidden; border: 1px solid #cfd9e6; border-left: 3px solid #4f8fea;",
+  ".production-stamp-pair { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); min-height: 34px; overflow: hidden; border: 1px solid #cfd9e6; border-left: 3px solid #4f8fea;",
   ".production-stamp-pair-grid { grid-template-columns: 1fr; max-height: 157px; }",
-  ".product-form-stamp-pair-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 32px; gap: 8px; align-items: end; border: 1px solid #d5dfeb;",
+  ".product-form-stamp-pair-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) 32px; gap: 8px; align-items: end; border: 1px solid #d5dfeb;",
+  ".production-stamp-search-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));",
   ".product-form-header p,",
   ".product-form-section-head p { display: none; }"
 ].forEach((fragment) => requireFragment(css, fragment, "stamp-pair responsive layout"));
@@ -122,4 +135,4 @@ if (sourceBetween(app, "function renderPanelStatic", "async function loadImages"
   throw new Error("sales detail must not display manufacturing-only stamp pairs");
 }
 
-console.log("Production F/R stamp-pair management verified.");
+console.log("Production F/R/pulley stamp-set management verified.");
