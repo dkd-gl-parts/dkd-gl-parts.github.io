@@ -5467,7 +5467,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.834";
+var APP_VERSION       = "v1.1.835";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -12883,7 +12883,7 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var returnMethod = waybill.handling_method || "handwritten";
   var returnCarrierLabel = waybill.carrier_code === "sagawa_collect" ? "佐川急便 着払い" : "ヤマト宅急便 着払い";
   var returnPrintBusy = !!(returnJob && ["queued", "claimed"].indexOf(returnJob.status) >= 0);
-  var returnCanPrint = !!(dispatch && order.core_return_required && returnMethod === "dot_matrix" && waybill.id && waybill.tracking_number && !returnPrintBusy && !shippingDocumentSaving);
+  var returnCanPrint = !!(dispatch && order.core_return_required && returnMethod === "dot_matrix" && waybill.id && !returnPrintBusy && !shippingDocumentSaving);
   var returnHandwrittenComplete = returnMethod === "handwritten" && (waybill.status === "printed" || !!waybill.handwritten_completed_at);
   var returnCanHandwrite = !!(dispatch && order.core_return_required && returnMethod === "handwritten" && !returnHandwrittenComplete && !shippingDocumentSaving);
   var b2Issued = Array.isArray(order.b2_exports) && order.b2_exports.length > 0;
@@ -12942,14 +12942,13 @@ function shippingDocumentReturnWaybillHtml(order) {
   var printJob = shippingDocumentPrintJob(order, "return_waybill");
   var printBusy = !!(printJob && ["queued", "claimed"].indexOf(printJob.status) >= 0);
   var dispatchReady = !!dispatch;
-  var savedForDotPrint = !!(waybill.id && method === "dot_matrix" && waybill.tracking_number);
   var carrierLabel = carrier === "sagawa_collect" ? "佐川急便着払い" : "ヤマト宅急便　着払い";
   var printState = printJob ? salesOrderPrintJobStatusLabel(printJob.status) : "未発行";
   var printGuidance = method !== "dot_matrix" ? "手書き運用では、伝票デザインと記入内容を画面に表示し、完了後に伝票番号を登録できます。"
-    : !waybill.id ? "作成方法と返送用伝票番号を入力し、先に設定を保存してください。"
-      : !waybill.tracking_number ? "複写伝票に印刷されている返送用伝票番号を登録してください。"
-        : !dispatchReady ? "出荷指示書を発行してから印刷できます。"
-          : printBusy ? "複写伝票を印刷端末へ送信済みです。" : "ドットプリンターに " + carrierLabel + " の複写伝票をセットして印刷します。";
+    : !waybill.id ? "作成方法を保存してから印刷してください。返送用伝票番号は後から登録できます。"
+      : !dispatchReady ? "出荷指示書を発行してから印刷できます。"
+        : printBusy ? "複写伝票を印刷端末へ送信済みです。"
+          : "ドットプリンターに " + carrierLabel + " の複写伝票をセットして印刷します。" + (waybill.tracking_number ? "" : " 返送用伝票番号は印刷後に登録してください。");
   return "<div id='shipping-document-return-waybill-section'><div class='shipping-document-section-head'><div><h3>コア返却用複写伝票</h3><p>着払い伝票の種類と伝票番号を登録し、返却状況の照合に使用します。</p></div><span class='shipping-document-ready-state " + (waybill.id ? "ready" : "pending") + "'>" + esc(waybill.id ? "設定済み" : "未設定") + "</span></div>" +
     "<div class='shipping-document-carrier-context' id='shipping-document-return-carrier-brand'>" + shippingCarrierBrandHtml(carrier, false) + "</div>" +
     "<div class='shipping-document-waybill-form'><label><span>運送会社・サービス</span><select id='shipping-document-return-carrier'><option value='yamato_collect'" + (carrier === "yamato_collect" ? " selected" : "") + ">ヤマト宅急便　着払い</option><option value='sagawa_collect'" + (carrier === "sagawa_collect" ? " selected" : "") + ">佐川急便着払い</option></select></label>" +
@@ -13263,8 +13262,8 @@ async function queueShippingDocumentReturnWaybillPrint() {
   var order = shippingDocumentDetail;
   if (!order || !order.core_return_required || shippingDocumentSaving) return;
   var waybill = order.return_waybill && typeof order.return_waybill === "object" ? order.return_waybill : {};
-  if (waybill.handling_method !== "dot_matrix" || !waybill.tracking_number) {
-    setShippingDocumentMessage("作成方法をドットプリンタにし、返送用伝票番号を登録してください。", true);
+  if (waybill.handling_method !== "dot_matrix") {
+    setShippingDocumentMessage("作成方法をドットプリンタに変更してください。", true);
     return;
   }
   shippingDocumentSaving = true;

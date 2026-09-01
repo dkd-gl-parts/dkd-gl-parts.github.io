@@ -282,6 +282,9 @@ for (const fragment of [
 if (requiredDocuments.includes('var returnCanPrint = !!(ready &&')) {
   throw new Error("Core-return multipart waybill printing must be available before shipment completion");
 }
+if (/var returnCanPrint = [^;]*waybill\.tracking_number/.test(requiredDocuments)) {
+  throw new Error("Core-return multipart waybill printing must be available before its preprinted number is registered");
+}
 if (requiredDocuments.includes('var returnCanHandwrite = !!(ready &&')) {
   throw new Error("Core-return handwritten content must be available before shipment completion");
 }
@@ -332,7 +335,9 @@ for (const fragment of [
 const returnWaybill = sourceBetween("function shippingDocumentReturnWaybillHtml", "function renderShippingDocumentDetail");
 for (const fragment of [
   "var dispatchReady = !!dispatch",
-  "出荷指示書を発行してから印刷できます。"
+  "出荷指示書を発行してから印刷できます。",
+  "返送用伝票番号は後から登録できます。",
+  "返送用伝票番号は印刷後に登録してください。"
 ]) requireFragment(returnWaybill, fragment);
 for (const forbidden of [
   'dispatch.status === "shipped"',
@@ -342,6 +347,12 @@ for (const forbidden of [
   if (returnWaybill.includes(forbidden)) {
     throw new Error(`Core-return multipart waybill printing must not wait for shipment completion: ${forbidden}`);
   }
+}
+
+const returnWaybillPrint = sourceBetween("async function queueShippingDocumentReturnWaybillPrint", "function renderSalesOrderList");
+requireFragment(returnWaybillPrint, 'waybill.handling_method !== "dot_matrix"');
+if (returnWaybillPrint.includes("!waybill.tracking_number")) {
+  throw new Error("Return-waybill print queue must accept tracking-number registration after printing");
 }
 
 const outboundSave = sourceBetween("async function saveShippingDocumentOutboundWaybill", "async function queueShippingDocumentOutboundWaybillPrint");
@@ -505,11 +516,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.834"',
-  'styles.css?v=1.1.834',
-  'app.js?v=1.1.834'
+  'content="v1.1.835"',
+  'styles.css?v=1.1.835',
+  'app.js?v=1.1.835'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.834"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.835"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
