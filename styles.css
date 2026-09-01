@@ -4975,17 +4975,17 @@ body.app-install-dialog-open { overflow: hidden; }
 .production-stamp-detail { margin-top: 8px; border-top: 1px solid #e6ebf1; padding-top: 7px; }
 .production-stamp-detail-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 24px; margin-bottom: 5px; }
 .production-stamp-detail-head > span { color: #536176; font-size: 11px; font-weight: 800; }
-.production-stamp-pair-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; max-height: 157px; overflow-y: auto; padding: 1px; }
-.production-stamp-pair { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); min-height: 34px; overflow: hidden; border: 1px solid #cfd9e6; border-left: 3px solid #4f8fea; border-radius: 5px; background: #fff; }
-.production-stamp-pair > span { display: grid; grid-template-columns: 22px minmax(0, 1fr); align-items: center; min-width: 0; padding: 5px 7px; }
+.production-stamp-pair-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 7px; max-height: 157px; overflow-y: auto; padding: 1px 1px 5px; }
+.production-stamp-pair { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); min-height: 38px; overflow: hidden; border: 1px solid #cfd9e6; border-left: 3px solid #4f8fea; border-radius: 5px; background: #fff; }
+.production-stamp-pair > span { display: grid; grid-template-columns: 22px minmax(0, 1fr); align-items: center; min-width: 0; min-height: 36px; padding: 6px 8px; line-height: 1.25; }
 .production-stamp-pair > span:first-child { background: #f3f8ff; }
 .production-stamp-pair > span + span { border-left: 1px solid #d8e0ea; background: #fffaf0; }
 .production-stamp-pair > span:nth-child(3) { background: #f4fbf5; }
-.production-stamp-pair small { color: #66778d; font-size: 10px; font-weight: 800; }
+.production-stamp-pair small { color: #66778d; font-size: 10px; font-weight: 800; line-height: 1.25; }
 .production-stamp-pair > span:first-child small { color: #1f6fd6; }
 .production-stamp-pair > span:nth-child(2) small { color: #956500; }
 .production-stamp-pair > span:nth-child(3) small { color: #287542; }
-.production-stamp-pair strong { color: #14213a; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.production-stamp-pair strong { color: #14213a; font-size: 13px; line-height: 1.25; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .production-stamp-empty { min-height: 30px; padding: 6px 4px; color: #8a93a3; font-size: 11px; }
 .production-kikan-section { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 #production-kikan-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; }

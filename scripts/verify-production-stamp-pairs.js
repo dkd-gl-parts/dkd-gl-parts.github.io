@@ -122,8 +122,9 @@ if (app.includes("return /^[0-9]{3,8}$/.test") || /data-stamp-pair-field='[fr]_n
 }
 
 [
-  ".production-stamp-pair-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; max-height: 157px; overflow-y: auto;",
-  ".production-stamp-pair { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); min-height: 34px; overflow: hidden; border: 1px solid #cfd9e6; border-left: 3px solid #4f8fea;",
+  ".production-stamp-pair-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 7px; max-height: 157px; overflow-y: auto; padding: 1px 1px 5px;",
+  ".production-stamp-pair { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); min-height: 38px; overflow: hidden; border: 1px solid #cfd9e6; border-left: 3px solid #4f8fea;",
+  ".production-stamp-pair > span { display: grid; grid-template-columns: 22px minmax(0, 1fr); align-items: center; min-width: 0; min-height: 36px; padding: 6px 8px; line-height: 1.25;",
   ".production-stamp-pair-grid { grid-template-columns: 1fr; max-height: 157px; }",
   ".product-form-stamp-pair-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) 32px; gap: 8px; align-items: end; border: 1px solid #d5dfeb;",
   ".production-stamp-search-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));",
