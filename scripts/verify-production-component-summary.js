@@ -107,11 +107,14 @@ if (summarySource.includes("unit_price_jpy") || summarySource.includes("formatCo
   ".production-component-summary-section { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }",
   ".production-component-kind-switch { display: grid; grid-template-columns: repeat(2, minmax(64px, 1fr));",
   ".production-component-summary-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; }",
-  ".production-component-summary-table { width: 100%; border-collapse: collapse; table-layout: fixed;",
+  ".production-component-summary-table { width: 100%; min-width: 700px; border-collapse: collapse; table-layout: fixed;",
+  ".production-component-summary-table th:nth-child(2) { width: 150px; }",
+  ".production-component-summary-table td:nth-child(2) { overflow-wrap: normal; word-break: normal; }",
+  "html:lang(ja) .production-component-summary-table td:nth-child(2) { white-space: nowrap; }",
   ".production-component-summary-table th { position: sticky; top: 0;",
   ".production-component-summary-procurement { overflow-wrap: normal; word-break: normal; }",
   ".production-component-summary-table td.production-component-summary-memo { line-height: 1.4; white-space: pre-wrap; }",
-  ".production-component-summary-table { min-width: 680px; }"
+  ".production-component-summary-table { min-width: 700px; }"
 ].forEach((fragment) => requireFragment(css, fragment, "production component summary CSS"));
 
 console.log("Production component summary verified.");
