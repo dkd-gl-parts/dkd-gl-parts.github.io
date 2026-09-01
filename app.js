@@ -397,7 +397,7 @@ var TRANSLATIONS = {
     stamp_r_placeholder: "例: R876-543",
     stamp_pulley_placeholder: "例: HM1-6",
     stamp_pair_section: "フレーム/プーリNo組合せ",
-    stamp_pair_form_help: "組み立て時に確認するFナンバー・Rナンバー・プーリNoを、3つで1組として登録します。",
+    stamp_pair_form_help: "Fナンバー・Rナンバー・プーリNoは、どれか1つの入力でも登録できます。",
     stamp_pair_add: "組合せを追加",
     stamp_pair_remove: "この組合せを削除",
     stamp_pair_empty: "フレーム/プーリNo組合せは未登録です",
@@ -406,7 +406,7 @@ var TRANSLATIONS = {
     stamp_pair_match: "一致した刻印",
     stamp_search_required: "Fナンバー、Rナンバー、プーリNoのいずれかを入力してください。",
     stamp_number_invalid: "Fナンバー・Rナンバーは3～8文字、プーリNoは3～12文字の半角英数字（大文字）またはハイフンで入力してください。",
-    stamp_pair_incomplete: "Fナンバー、Rナンバー、プーリNoを3つで1組として入力してください。",
+    stamp_pair_incomplete: "Fナンバー、Rナンバー、プーリNoのいずれかを入力してください。",
     stamp_pair_duplicate: "同じF/R/プーリNo組合せが重複しています。",
     stamp_pair_limit: "F/R/プーリNo組合せは1品番につき100組までです。",
     stamp_pair_load_failed: "F/R/プーリNo組合せを読み込めませんでした。",
@@ -2178,7 +2178,7 @@ var TRANSLATIONS = {
     stamp_r_placeholder: "e.g. R876-543",
     stamp_pulley_placeholder: "e.g. HM1-6",
     stamp_pair_section: "Frame/Pulley No. Sets",
-    stamp_pair_form_help: "Register the F number, R number, and pulley number as one assembly set.",
+    stamp_pair_form_help: "A set can be registered with any one of the F number, R number, or pulley number fields.",
     stamp_pair_add: "Add Pair",
     stamp_pair_remove: "Remove this pair",
     stamp_pair_empty: "No frame/pulley number sets registered",
@@ -2187,7 +2187,7 @@ var TRANSLATIONS = {
     stamp_pair_match: "Matched stamp",
     stamp_search_required: "Enter an F number, R number, or pulley number.",
     stamp_number_invalid: "F and R numbers must contain 3 to 8 characters; pulley numbers must contain 3 to 12 uppercase ASCII letters, digits, or hyphens.",
-    stamp_pair_incomplete: "Enter the F number, R number, and pulley number as one set.",
+    stamp_pair_incomplete: "Enter an F number, R number, or pulley number.",
     stamp_pair_duplicate: "The same F/R/pulley set is entered more than once.",
     stamp_pair_limit: "Up to 100 F/R/pulley sets can be registered per part number.",
     stamp_pair_load_failed: "Could not load F/R/pulley sets.",
@@ -3860,7 +3860,7 @@ var TRANSLATIONS = {
     stamp_r_placeholder: "例: R876-543",
     stamp_pulley_placeholder: "例: HM1-6",
     stamp_pair_section: "前后框架/皮带轮编号组合",
-    stamp_pair_form_help: "将组装时确认的F编号、R编号和皮带轮编号作为一组登记。",
+    stamp_pair_form_help: "F编号、R编号或皮带轮编号任填一项即可登记。",
     stamp_pair_add: "添加组合",
     stamp_pair_remove: "删除此组合",
     stamp_pair_empty: "尚未登记前后框架/皮带轮编号组合",
@@ -3869,7 +3869,7 @@ var TRANSLATIONS = {
     stamp_pair_match: "匹配刻印",
     stamp_search_required: "请输入F编号、R编号或皮带轮编号。",
     stamp_number_invalid: "F编号和R编号须为3～8位，皮带轮编号须为3～12位半角大写英文字母、数字或连字符。",
-    stamp_pair_incomplete: "请将F编号、R编号和皮带轮编号作为一组输入。",
+    stamp_pair_incomplete: "请输入F编号、R编号或皮带轮编号中的任意一项。",
     stamp_pair_duplicate: "存在重复的F/R/皮带轮编号组合。",
     stamp_pair_limit: "每个商品编号最多可登记100组F/R/皮带轮编号组合。",
     stamp_pair_load_failed: "无法读取F/R/皮带轮编号组合。",
@@ -5467,7 +5467,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.838";
+var APP_VERSION       = "v1.1.839";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -29177,26 +29177,19 @@ function coreProductStampPairFormValue() {
     if (rInput) rInput.value = rNumber;
     if (pulleyInput) pulleyInput.value = pulleyNumber;
     if (!fNumber && !rNumber && !pulleyNumber) return;
-    var isUnchangedLegacyPair = !pulleyNumber && coreProductFormStampPairsOriginalRows.some(function(pair) {
-      return pair.f_number === fNumber && pair.r_number === rNumber && !pair.pulley_number;
-    });
-    if (!fNumber || !rNumber || (!pulleyNumber && !isUnchangedLegacyPair)) {
-      error = t("stamp_pair_incomplete");
-      return;
-    }
-    if (!isValidStampNumberValue(fNumber) ||
-        !isValidStampNumberValue(rNumber) ||
+    if ((fNumber && !isValidStampNumberValue(fNumber)) ||
+        (rNumber && !isValidStampNumberValue(rNumber)) ||
         (pulleyNumber && !isValidPulleyNumberValue(pulleyNumber))) {
       error = t("stamp_number_invalid");
       return;
     }
-    var key = fNumber + ":" + rNumber + ":" + pulleyNumber;
+    var key = (fNumber || "<null>") + ":" + (rNumber || "<null>") + ":" + (pulleyNumber || "<null>");
     if (seen[key]) {
       error = t("stamp_pair_duplicate");
       return;
     }
     seen[key] = true;
-    pairs.push({ f_number: fNumber, r_number: rNumber, pulley_number: pulleyNumber || null });
+    pairs.push({ f_number: fNumber || null, r_number: rNumber || null, pulley_number: pulleyNumber || null });
   });
   if (pairs.length > 100) error = t("stamp_pair_limit");
   return { pairs: pairs, error: error };

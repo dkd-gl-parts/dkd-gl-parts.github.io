@@ -102,14 +102,69 @@ const productFieldValues = sourceBetween(app, "function setCoreProductFormFields
 const pairForm = sourceBetween(app, "async function fetchCoreProductStampPairs", "function setProductFormFieldMode");
 [
   'sb.rpc("replace_core_product_stamp_pairs"',
-  "stamp_pair_incomplete",
   "stamp_number_invalid",
   "stamp_pair_duplicate",
   "pairs.length > 100",
   "data-stamp-pair-field='pulley_number'",
+  "f_number: fNumber || null",
+  "r_number: rNumber || null",
   "pulley_number: pulleyNumber || null",
-  "isUnchangedLegacyPair"
+  '(fNumber && !isValidStampNumberValue(fNumber))',
+  '(rNumber && !isValidStampNumberValue(rNumber))'
 ].forEach((fragment) => requireFragment(pairForm, fragment, "stamp-pair editor validation"));
+if (pairForm.includes("isUnchangedLegacyPair") || pairForm.includes('error = t("stamp_pair_incomplete")')) {
+  throw new Error("the editor must allow F-only, R-only, or pulley-only rows");
+}
+requireFragment(app, 'stamp_pair_form_help: "Fナンバー・Rナンバー・プーリNoは、どれか1つの入力でも登録できます。"', "partial-set help text");
+
+const partialSetContext = {
+  normalizeAsciiWidth: (value) => String(value),
+  document: null,
+  t: (key) => key
+};
+vm.createContext(partialSetContext);
+vm.runInContext(sourceBetween(app, "function normalizeStampNumberValue", "function clearProductionStampSearchState"), partialSetContext);
+vm.runInContext(sourceBetween(app, "function coreProductStampPairFormValue", "async function saveCoreProductStampPairsForDkd"), partialSetContext);
+
+function stampRow(values) {
+  const inputs = {
+    f_number: { value: values.f_number || "" },
+    r_number: { value: values.r_number || "" },
+    pulley_number: { value: values.pulley_number || "" }
+  };
+  return {
+    querySelector(selector) {
+      const match = selector.match(/data-stamp-pair-field='([^']+)'/);
+      return match ? inputs[match[1]] : null;
+    }
+  };
+}
+
+function stampFormValue(rows) {
+  partialSetContext.document = {
+    getElementById() {
+      return { querySelectorAll: () => rows.map(stampRow) };
+    }
+  };
+  return partialSetContext.coreProductStampPairFormValue();
+}
+
+[
+  { input: { f_number: "F12" }, expected: { f_number: "F12", r_number: null, pulley_number: null } },
+  { input: { r_number: "R34" }, expected: { f_number: null, r_number: "R34", pulley_number: null } },
+  { input: { pulley_number: "P-123" }, expected: { f_number: null, r_number: null, pulley_number: "P-123" } }
+].forEach(({ input, expected }) => {
+  const result = stampFormValue([input]);
+  if (result.error || result.pairs.length !== 1) throw new Error(`partial stamp set was rejected: ${JSON.stringify(input)}`);
+  Object.entries(expected).forEach(([key, value]) => {
+    if (result.pairs[0][key] !== value) throw new Error(`partial stamp set normalized ${key} incorrectly`);
+  });
+});
+if (stampFormValue([{}]).pairs.length !== 0) throw new Error("a completely empty stamp row must be ignored");
+if (stampFormValue([{ f_number: "F" }]).error !== "stamp_number_invalid") throw new Error("an entered partial value must still be validated");
+if (stampFormValue([{ pulley_number: "P-123" }, { pulley_number: "P-123" }]).error !== "stamp_pair_duplicate") {
+  throw new Error("duplicate partial stamp sets must be rejected");
+}
 [
   ".trim()",
   ".toUpperCase()",
