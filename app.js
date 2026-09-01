@@ -5467,7 +5467,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.837";
+var APP_VERSION       = "v1.1.838";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -12459,7 +12459,11 @@ async function enterShippingDocumentMgmt(options) {
   renderShippingDocumentDetail();
   var printSettingsLoaded = await loadSalesOrderPrintSettings();
   if (!shippingDocumentBatchSelectionDirty) syncShippingDocumentBatchDefaults(printSettingsLoaded ? "loaded" : "error");
-  renderShippingDocumentDetail();
+  if (options.order && options.order.id) {
+    await loadShippingDocumentDetail(options.order.id);
+  } else {
+    renderShippingDocumentDetail();
+  }
   if (input) input.focus();
 }
 
@@ -12931,7 +12935,7 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var outboundCanPrint = !!(dispatch && outboundMethod === "dot_matrix" && /^\d{12}$/.test(String(outboundWaybill.tracking_number || "")) && !outboundPrintBusy && !shippingDocumentSaving);
   var outboundHandwrittenComplete = outboundMethod === "handwritten" && (outboundWaybill.status === "printed" || !!outboundWaybill.handwritten_completed_at);
   var outboundCanHandwrite = !!(dispatch && outboundMethod === "handwritten" && !outboundHandwrittenComplete && !shippingDocumentSaving);
-  var returnMethod = waybill.handling_method || "handwritten";
+  var returnMethod = waybill.handling_method || order.return_waybill_method || "handwritten";
   var returnCarrierLabel = waybill.carrier_code === "sagawa_collect" ? "佐川急便 着払い" : "ヤマト宅急便 着払い";
   var returnWaybillCopyCount = shippingDocumentReturnWaybillCopyCount(order);
   var returnPrintBusy = !!(returnJob && ["queued", "claimed"].indexOf(returnJob.status) >= 0);
@@ -12989,7 +12993,7 @@ function shippingDocumentReturnWaybillHtml(order) {
   }
   var waybill = order.return_waybill && typeof order.return_waybill === "object" ? order.return_waybill : {};
   var carrier = waybill.carrier_code || "sagawa_collect";
-  var method = waybill.handling_method || "handwritten";
+  var method = waybill.handling_method || order.return_waybill_method || "handwritten";
   var dispatch = salesOrderDispatch(order);
   var printJob = shippingDocumentPrintJob(order, "return_waybill");
   var copyCount = shippingDocumentReturnWaybillCopyCount(order);

@@ -95,6 +95,7 @@ for (const fragment of [
   "options = options || {}",
   "options.order",
   "shippingDocumentDetail = options.order",
+  "await loadShippingDocumentDetail(options.order.id)",
   'shippingDocumentOverlayMode = ""'
 ]) requireFragment(enterSource, fragment);
 for (const fragment of [
@@ -275,6 +276,7 @@ for (const fragment of [
   "今回のみ:",
   'carrierCode: outboundWaybill.carrier_code || "yamato_prepaid"',
   'carrierCode: waybill.carrier_code || "sagawa_collect"',
+  'waybill.handling_method || order.return_waybill_method || "handwritten"',
   'shippingDocumentReturnWaybillCopyCount(order)',
   '対象商品1個につき1枚 / " + returnWaybillCopyCount + "枚',
   'var returnCanPrint = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "dot_matrix"',
@@ -548,11 +550,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.837"',
-  'styles.css?v=1.1.837',
-  'app.js?v=1.1.837'
+  'content="v1.1.838"',
+  'styles.css?v=1.1.838',
+  'app.js?v=1.1.838'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.837"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.838"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
