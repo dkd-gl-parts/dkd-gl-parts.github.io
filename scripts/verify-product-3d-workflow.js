@@ -23,7 +23,7 @@ function requireText(source, fragment, label) {
   "product-3d-video-supplement",
   "product-3d-viewer-overlay",
   "data-product-media=\"model\"",
-  "product-3d.js?v=1.1.828"
+  "product-3d.js?v=1.1.829"
 ].forEach((fragment) => requireText(html, fragment, "3D UI contract"));
 
 [
@@ -78,7 +78,8 @@ function requireText(source, fragment, label) {
   "batch.forEach(function (id) { modelBadgeCache[String(id)] = false; });",
   "if (missing.length > batch.length) scheduleBadgeRefresh();",
   "publishable && model.status === \"review\"",
-  "manageable && (model.status === \"needs_capture\" || model.status === \"failed\")",
+  "manageable && [\"draft\", \"needs_capture\", \"failed\"].indexOf(model.status) >= 0",
+  "draft: \"撮影途中\"",
   "3Dモデルを作成できる商品区分は「リビルト」と「新品」です。",
   "if (viewer) { viewer.dispose(); viewer = null; }",
   "if (requestId !== viewerRequestId) { createdViewer.dispose(); return; }"

@@ -841,7 +841,7 @@
       var canOpen = model.published_model_path && (model.status === "published" || model.status === "review" || model.status === "archived");
       var action = canOpen ? "<button type='button' class='product-3d-card-action' data-open-model='" + model.id + "' data-model-context='" + context + "' data-model-product='" + productId(target.product) + "'>確認</button>" : "";
       if (publishable && model.status === "review") action += "<button type='button' class='product-3d-card-action publish' data-publish-model='" + model.id + "' data-publish-context='" + context + "'>公開</button>";
-      if (manageable && (model.status === "needs_capture" || model.status === "failed")) action += "<button type='button' class='product-3d-card-action' data-create-3d='" + context + "'>撮影を再開</button>";
+      if (manageable && ["draft", "needs_capture", "failed"].indexOf(model.status) >= 0) action += "<button type='button' class='product-3d-card-action' data-create-3d='" + context + "'>撮影を再開</button>";
       var note = model.failure_message || (model.additional_capture_instructions && model.additional_capture_instructions.length ? "追加撮影: " + model.additional_capture_instructions.join(" / ") : "");
       return "<div class='product-3d-model-card'><span class='product-3d-cube'>3D</span><span><strong>" + esc(kindLabel(model.product_kind)) + " 3Dモデル <i data-model-status='" + esc(model.status) + "'>" + esc(status) + "</i></strong><small>rev." + model.revision + " " + size + (note ? " / " + esc(note) : "") + "</small></span><span class='product-3d-card-actions'>" + action + "</span></div>";
     }
@@ -858,7 +858,7 @@
     host.innerHTML = visible.map(modelCardHtml).join("");
   }
   function modelStatusLabel(status) {
-    return ({ draft: "撮影中", waiting: "待機", processing: "処理中", needs_capture: "要追加撮影", failed: "失敗", review: "確認待ち", published: "公開済み", archived: "旧版" })[status] || status;
+    return ({ draft: "撮影途中", waiting: "待機", processing: "処理中", needs_capture: "要追加撮影", failed: "失敗", review: "確認待ち", published: "公開済み", archived: "旧版" })[status] || status;
   }
   async function publishModel(modelId, context) {
     if (!canPublish3D()) { deny3D("publish_product_3d_model"); return; }
