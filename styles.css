@@ -6237,6 +6237,12 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   pointer-events: none;
 }
 .dcats-auto-notice[hidden] { display: none; }
+.dcats-auto-notice.warning {
+  border-color: #e0aa3e;
+  background: #fff6dd;
+  box-shadow: 0 8px 24px rgba(91, 63, 16, 0.2);
+  color: #7a4d00;
+}
 
 @media (max-width: 860px) {
   .component-compat-layout { grid-template-columns: 1fr; }

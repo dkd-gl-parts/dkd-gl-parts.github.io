@@ -61,5 +61,14 @@ for (const translation of ["いずれか必須", "Either required", "二者选�
 if (!coreSave.includes("validateProductPartNumberPair(genuine, mfrPart)")) {
   throw new Error("shared part-number validation must remain enforced");
 }
+if (!coreSave.includes('showDcatsAutoNotice(gltekAutoIssueFailureText(gltekAutoIssueContext, gltekAutoIssueOutcome.error), 2400, "warning")')) {
+  throw new Error("a G-number issuance warning must dismiss automatically after the product save succeeds");
+}
+if (coreSave.includes("alert(gltekAutoIssueFailureText(gltekAutoIssueContext")) {
+  throw new Error("a non-blocking G-number issuance warning must not use a browser alert");
+}
+if (!css.includes(".dcats-auto-notice.warning")) {
+  throw new Error("the auto-dismiss G-number issuance warning is not visually distinguished");
+}
 
 console.log("Product management automatic product-code issuance verified.");

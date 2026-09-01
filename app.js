@@ -5467,7 +5467,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.832";
+var APP_VERSION       = "v1.1.833";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -25022,18 +25022,20 @@ function finishedLabelUsesRemotePrintQueue() {
   return isFinishedLabelMobilePrintClient();
 }
 
-function showDcatsAutoNotice(message, durationMs) {
+function showDcatsAutoNotice(message, durationMs, tone) {
   var notice = document.getElementById("dcats-auto-notice");
   if (!notice) return;
   if (dcatsAutoNoticeTimer !== null) {
     window.clearTimeout(dcatsAutoNoticeTimer);
     dcatsAutoNoticeTimer = null;
   }
+  notice.className = "dcats-auto-notice" + (tone === "warning" ? " warning" : "");
   notice.textContent = String(message || "");
   notice.hidden = false;
   dcatsAutoNoticeTimer = window.setTimeout(function() {
     notice.hidden = true;
     notice.textContent = "";
+    notice.className = "dcats-auto-notice";
     dcatsAutoNoticeTimer = null;
   }, Math.max(1200, Number(durationMs) || 2800));
 }
@@ -29433,7 +29435,7 @@ async function saveCoreProductForm() {
   if (gltekResult && gltekResult.gltek_part_number) {
     alert(t("gltek_product_add_done") + ": " + gltekResult.gltek_part_number);
   } else if (gltekAutoIssueOutcome && gltekAutoIssueOutcome.error) {
-    alert(gltekAutoIssueFailureText(gltekAutoIssueContext, gltekAutoIssueOutcome.error));
+    showDcatsAutoNotice(gltekAutoIssueFailureText(gltekAutoIssueContext, gltekAutoIssueOutcome.error), 2400, "warning");
   } else if (
     gltekAutoIssueOutcome &&
     gltekAutoIssueOutcome.result &&
@@ -41069,7 +41071,7 @@ async function saveSalesPricing() {
     }
     closeSalesPricingOverlay();
     if (gltekAutoIssueOutcome && gltekAutoIssueOutcome.error) {
-      alert(gltekAutoIssueFailureText("sales_pricing", gltekAutoIssueOutcome.error));
+      showDcatsAutoNotice(gltekAutoIssueFailureText("sales_pricing", gltekAutoIssueOutcome.error), 2400, "warning");
     }
   } catch (e) {
     console.warn("save sales pricing failed", e);
