@@ -211,7 +211,7 @@ for (const fragment of [
   "B2クラウド / ヤマト宅急便 元払い",
   "A5 / 商品数量分 / 端末印刷",
   "A5 / コア返却必要時 / 端末印刷",
-  "手書き運用 / 佐川急便 着払い",
+  "対象商品1個につき1枚 / 佐川急便 着払い",
   'carrierCode: "yamato_prepaid"',
   'carrierCode: "sagawa_collect"',
   "shipping-document-name-cell"
@@ -275,8 +275,12 @@ for (const fragment of [
   "今回のみ:",
   'carrierCode: outboundWaybill.carrier_code || "yamato_prepaid"',
   'carrierCode: waybill.carrier_code || "sagawa_collect"',
-  'var returnCanPrint = !!(dispatch && order.core_return_required && returnMethod === "dot_matrix"',
-  'var returnCanHandwrite = !!(dispatch && order.core_return_required && returnMethod === "handwritten"',
+  'shippingDocumentReturnWaybillCopyCount(order)',
+  '対象商品1個につき1枚 / " + returnWaybillCopyCount + "枚',
+  'var returnCanPrint = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "dot_matrix"',
+  'var returnCanHandwrite = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "handwritten"',
+  '端末印刷（" + returnWaybillCopyCount + "枚）',
+  '手書き内容を表示（" + returnWaybillCopyCount + "枚）',
   "shippingCarrierBrandHtml(row.carrierCode, true)"
 ]) requireFragment(requiredDocuments, fragment);
 if (requiredDocuments.includes('var returnCanPrint = !!(ready &&')) {
@@ -351,8 +355,32 @@ for (const forbidden of [
 
 const returnWaybillPrint = sourceBetween("async function queueShippingDocumentReturnWaybillPrint", "function renderSalesOrderList");
 requireFragment(returnWaybillPrint, 'waybill.handling_method !== "dot_matrix"');
+requireFragment(returnWaybillPrint, "queued.copy_count");
 if (returnWaybillPrint.includes("!waybill.tracking_number")) {
   throw new Error("Return-waybill print queue must accept tracking-number registration after printing");
+}
+
+const returnWaybillCountSource = sourceBetween(
+  "function shippingDocumentReturnWaybillCopyCount",
+  "function shippingDocumentShipmentDocumentsHtml"
+);
+const returnWaybillCountContext = {};
+vm.createContext(returnWaybillCountContext);
+vm.runInContext(returnWaybillCountSource, returnWaybillCountContext);
+const returnWaybillCopyCount = returnWaybillCountContext.shippingDocumentReturnWaybillCopyCount;
+for (const [order, expected] of [
+  [{ core_return_required: true, core_return_units: [
+    { order_item: { core_return_required: true } },
+    { order_item: { core_return_required: true } }
+  ] }, 2],
+  [{ core_return_required: true, items: [
+    { core_return_required: true, quantity: 3 },
+    { core_return_required: false, quantity: 5 }
+  ] }, 3],
+  [{ core_return_required: false, items: [{ core_return_required: true, quantity: 2 }] }, 0]
+]) {
+  const actual = returnWaybillCopyCount(order);
+  if (actual !== expected) throw new Error(`Return-waybill copy count expected ${expected}, got ${actual}`);
 }
 
 const outboundSave = sourceBetween("async function saveShippingDocumentOutboundWaybill", "async function queueShippingDocumentOutboundWaybillPrint");
@@ -386,7 +414,11 @@ for (const forbidden of ["dispatch_status", "outbound_registered"]) {
 
 const handwrittenFlow = sourceBetween("function shippingHandwrittenWaybillTask", "function shippingDocumentStatusValue");
 for (const fragment of [
-  "shippingWaybillPreviewData(layout, order)",
+  "shippingWaybillPreviewData(layout, order, task.unit)",
+  "shippingHandwrittenWaybillOrder.core_return_units",
+  "returnUnits.map",
+  "copyNumber: index + 1",
+  'task.documentType === "return_waybill" && nextTask',
   "shipping-handwritten-waybill-canvas",
   "黄色の欄を複写伝票へ手書きしてください",
   "手書き完了・次へ",
@@ -516,11 +548,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.835"',
-  'styles.css?v=1.1.835',
-  'app.js?v=1.1.835'
+  'content="v1.1.836"',
+  'styles.css?v=1.1.836',
+  'app.js?v=1.1.836'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.835"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.836"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
