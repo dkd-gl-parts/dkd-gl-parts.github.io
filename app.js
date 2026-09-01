@@ -1798,7 +1798,7 @@ var TRANSLATIONS = {
     component_catalog_locked_save: "パーツカタログ由来の構成部品は修正できません。",
     component_target_id_missing: "対象商品のDKD商品IDを確認できません。",
     component_mfr_pn_required: "構成部品のメーカー品番を入力してください。",
-    component_assy_mfr_pn_required: "対象ASSYのメーカー品番が未登録のため、構成部品を追加できません。品番マスタを確認してください。",
+    component_assy_part_number_required: "対象ASSYの純正品番またはメーカー品番が未登録のため、構成部品を追加できません。品番マスタを確認してください。",
     component_name_required: "構成部品の部品名を入力してください。",
     component_part_number_invalid_chars: "{field}は半角英数字 A-Z 0-9 とハイフン - のみで入力してください。",
     component_mfr_part_number_invalid_chars: "{field}は半角英数字 A-Z 0-9、ハイフン（-）、ピリオド（.）、カンマ（,）、掛ける記号（×）のみで入力してください。",
@@ -3574,7 +3574,7 @@ var TRANSLATIONS = {
     component_catalog_locked_save: "Catalog-derived component parts cannot be edited.",
     component_target_id_missing: "Could not confirm the target product DKD ID.",
     component_mfr_pn_required: "Enter the component manufacturer part number.",
-    component_assy_mfr_pn_required: "A manufacturer part number is not registered for the target ASSY. Check the product master before adding a component.",
+    component_assy_part_number_required: "Neither a genuine nor manufacturer part number is registered for the target ASSY. Check the product master before adding a component.",
     component_name_required: "Enter the component part name.",
     component_part_number_invalid_chars: "{field} may contain only half-width A-Z, 0-9, and hyphen -.",
     component_mfr_part_number_invalid_chars: "{field} may contain only half-width A-Z, 0-9, hyphen (-), period (.), comma (,), and multiplication sign (×).",
@@ -5347,7 +5347,7 @@ var TRANSLATIONS = {
     component_catalog_locked_save: "目录来源的构成部件不能修改。",
     component_target_id_missing: "无法确认目标商品的 DKD 商品ID。",
     component_mfr_pn_required: "请输入构成部件的制造商品号。",
-    component_assy_mfr_pn_required: "目标总成未登记制造商品号，无法添加构成部件。请检查商品主数据。",
+    component_assy_part_number_required: "目标总成未登记纯正品号或制造商品号，无法添加构成部件。请检查商品主数据。",
     component_name_required: "请输入构成部件的部件名。",
     component_part_number_invalid_chars: "{field}只能输入半角 A-Z、0-9 和连字符 -。",
     component_mfr_part_number_invalid_chars: "{field}只能输入半角 A-Z、0-9、连字符（-）、句点（.）、逗号（,）和乘号（×）。",
@@ -5452,7 +5452,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.829";
+var APP_VERSION       = "v1.1.830";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -34745,9 +34745,10 @@ async function addAssemblyComponentForCurrent() {
     var dkdId = await resolveCurrentCoreDkdShohinId();
     var targetManufacturer = normalizeComponentManufacturerInput(currentProduct.manufacturer) || "UNKNOWN";
     var targetManufacturerPartNumber = normalizeComponentPartNumberInput(currentProduct.manufacturer_part_number || "");
-    if (!targetManufacturerPartNumber) {
-      if (err) err.textContent = t("component_assy_mfr_pn_required");
-      else alert(t("component_assy_mfr_pn_required"));
+    var targetGenuinePartNumber = normalizeComponentPartNumberInput(currentProduct.genuine_part_number || "");
+    if (!targetManufacturerPartNumber && !targetGenuinePartNumber) {
+      if (err) err.textContent = t("component_assy_part_number_required");
+      else alert(t("component_assy_part_number_required"));
       return;
     }
     normalizeComponentPartNumberElement(document.getElementById("component-add-mfr-pn"));
@@ -34812,8 +34813,8 @@ async function addAssemblyComponentForCurrent() {
     var payload = {
       target_dkd_shohin_id: dkdId || null,
       target_manufacturer: targetManufacturer,
-      target_manufacturer_part_number: targetManufacturerPartNumber,
-      target_genuine_part_number: currentProduct.genuine_part_number || null,
+      target_manufacturer_part_number: targetManufacturerPartNumber || null,
+      target_genuine_part_number: targetGenuinePartNumber || null,
       target_product_kind: selectedProductKind(),
       target_product_variant_id: selectedComponentVariantId(),
       component_manufacturer: componentMfr,

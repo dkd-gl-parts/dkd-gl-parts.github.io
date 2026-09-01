@@ -122,9 +122,11 @@ if (!source.includes("bindComponentPartNumberInputEvents(el, updateComponentAddP
 
 const addSource = functionSource("addAssemblyComponentForCurrent", "function componentEditInput");
 if (!addSource.includes('normalizeComponentManufacturerInput(currentProduct.manufacturer) || "UNKNOWN"') ||
-    !addSource.includes('t("component_assy_mfr_pn_required")') ||
+    !addSource.includes('t("component_assy_part_number_required")') ||
+    !addSource.includes("var targetGenuinePartNumber = normalizeComponentPartNumberInput(currentProduct.genuine_part_number || \"\")") ||
+    !addSource.includes("if (!targetManufacturerPartNumber && !targetGenuinePartNumber)") ||
     addSource.includes("if (!targetManufacturer || !targetManufacturerPartNumber)")) {
-  throw new Error("manual component add must allow a missing ASSY manufacturer and validate only the ASSY part number");
+  throw new Error("manual component add must allow a missing ASSY manufacturer and accept either target part-number field");
 }
 if (!addSource.includes("if (componentAddSaving) return;") ||
     !addSource.includes("componentAddSaving = true;") ||
@@ -299,7 +301,7 @@ const sandbox = {
     err_perm: "permission",
     component_catalog_locked_save: "catalog locked",
     component_mfr_pn_required: "component part required",
-    component_assy_mfr_pn_required: "target ASSY part required",
+    component_assy_part_number_required: "target ASSY part required",
     component_replacement_rate_digits: "digits",
     component_replacement_rate_range: "range",
     component_add_loading: "adding",
@@ -339,9 +341,22 @@ vm.runInNewContext(`${addSource}; result = addAssemblyComponentForCurrent;`, san
 
   rpcCall = null;
   sandbox.currentProduct.manufacturer_part_number = "";
+  sandbox.currentProduct.genuine_part_number = "A6711540202";
+  await sandbox.result();
+  if (!rpcCall || rpcCall.payload.target_manufacturer_part_number !== null ||
+      rpcCall.payload.target_genuine_part_number !== "A6711540202" ||
+      rpcCall.payload.target_dkd_shohin_id !== 36628) {
+    throw new Error("a genuine-only ASSY must register by durable product id without copying the genuine number into the manufacturer-part field");
+  }
+  if (elements["component-add-error"].textContent || alertMessage) {
+    throw new Error("a genuine-only ASSY must not show the missing target part-number error");
+  }
+
+  rpcCall = null;
+  sandbox.currentProduct.genuine_part_number = "";
   await sandbox.result();
   if (rpcCall || elements["component-add-error"].textContent !== "target ASSY part required") {
-    throw new Error("a genuinely missing ASSY manufacturer part number must show the dedicated master-data error");
+    throw new Error("an ASSY missing both part-number fields must show the dedicated master-data error");
   }
 
   console.log("component manual add guard passed");
