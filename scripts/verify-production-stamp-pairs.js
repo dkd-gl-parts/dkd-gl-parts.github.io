@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const vm = require("vm");
 
 const root = path.resolve(__dirname, "..");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
@@ -29,7 +30,7 @@ const productionScreen = sourceBetween(html, 'id="screen-production-search"', 'i
 [
   'id="production-stamp-f-number" type="text" inputmode="text" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false"',
   'id="production-stamp-r-number" type="text" inputmode="text" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false"',
-  'id="production-stamp-pulley-number" type="text" inputmode="text" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false"'
+  'id="production-stamp-pulley-number" type="text" inputmode="text" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false"'
 ].forEach((fragment) => requireFragment(productionScreen, fragment, "alphanumeric manufacturing stamp search input"));
 
 const productForm = sourceBetween(html, 'id="part-form-overlay"', 'id="kikan-form-overlay"');
@@ -38,6 +39,7 @@ const productForm = sourceBetween(html, 'id="part-form-overlay"', 'id="kikan-for
   'id="pf-stamp-pair-add"',
   'id="pf-stamp-pair-list"'
 ].forEach((fragment) => requireFragment(productForm, fragment, "shared product form stamp editor"));
+requireFragment(productForm, 'data-i18n="stamp_pair_section">フレーム/プーリNo組合せ</div>', "frame/pulley section title");
 [
   'id="pf-core-inventory-fields"',
   'id="pf-core-stock-qty"',
@@ -114,16 +116,28 @@ const pairForm = sourceBetween(app, "async function fetchCoreProductStampPairs",
   "return /^[A-Z0-9-]{3,8}$/.test",
   '.replace(/[\\u2010-\\u2015\\u2212\\u30FC\\uFF0D]/g, "-")',
   "maxlength='8'",
+  "maxlength='12'",
+  "isValidPulleyNumberValue",
   "autocapitalize='characters'",
-  "半角英数字（大文字）またはハイフン"
+  "プーリNoは3～12文字"
 ].forEach((fragment) => requireFragment(app, fragment, "alphanumeric stamp-pair editor"));
 if (app.includes("return /^[0-9]{3,8}$/.test") || /data-stamp-pair-field='[fr]_number'[^>]*inputmode='numeric'/.test(app)) {
   throw new Error("numeric-only stamp-number validation must not remain in the editor");
 }
 
+const validatorContext = {};
+vm.createContext(validatorContext);
+vm.runInContext(sourceBetween(app, "function isValidStampNumberValue", "function stampPairSignature"), validatorContext);
+if (!validatorContext.isValidStampNumberValue("FR12-345") || validatorContext.isValidStampNumberValue("FR12-3456")) {
+  throw new Error("F/R validation must remain limited to 3-8 characters");
+}
+if (!validatorContext.isValidPulleyNumberValue("PULLEY-12345") || validatorContext.isValidPulleyNumberValue("PULLEY-123456")) {
+  throw new Error("pulley validation must allow 3-12 characters only");
+}
+
 [
   ".production-stamp-pair-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 7px; max-height: 157px; overflow-y: auto; padding: 1px 1px 5px;",
-  ".production-stamp-pair { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); min-height: 38px; overflow: hidden; border: 1px solid #cfd9e6; border-left: 3px solid #4f8fea;",
+  ".production-stamp-pair { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, .9fr) minmax(0, 1.35fr); min-height: 38px; overflow: hidden; border: 1px solid #cfd9e6; border-left: 3px solid #4f8fea;",
   ".production-stamp-pair > span { display: grid; grid-template-columns: 22px minmax(0, 1fr); align-items: center; min-width: 0; min-height: 36px; padding: 6px 8px; line-height: 1.25;",
   ".production-stamp-pair-grid { grid-template-columns: 1fr; max-height: 157px; }",
   ".product-form-stamp-pair-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) 32px; gap: 8px; align-items: end; border: 1px solid #d5dfeb;",
