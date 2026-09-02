@@ -107,9 +107,55 @@ assert(cameraLibrarySource.includes("script.integrity = \"sha384-"), "camera sca
 const cameraOpenSource = functionSource("openFinishedShipmentCamera");
 assert(cameraOpenSource.includes("window.isSecureContext"), "camera scanner must require a secure context");
 assert(cameraOpenSource.includes("navigator.mediaDevices.getUserMedia"), "camera scanner must detect camera API availability");
-assert(cameraOpenSource.includes("decodeFromVideoDevice(undefined, video"), "camera scanner must prefer the environment camera");
+assert(cameraOpenSource.includes("navigator.mediaDevices.getUserMedia(constraints)"), "camera scanner must open the camera with explicit constraints");
+assert(cameraOpenSource.includes('facingMode: { ideal: "environment" }'), "camera scanner must prefer the environment camera");
+assert(cameraOpenSource.includes("width: { ideal: 1920 }") && cameraOpenSource.includes("height: { ideal: 1080 }"), "camera scanner must request a high-resolution stream");
 assert(cameraOpenSource.includes('target === "serial"') && cameraOpenSource.includes("new zxing.BrowserQRCodeReader"), "finished-product serial scanning must use the QR-only reader");
-assert(app.includes('finished_shipping_camera_serial_prompt: "完品シリアルのQRコードを枠内に合わせてください。"'), "Japanese serial camera guidance must identify a QR code");
+assert(cameraOpenSource.includes("startFinishedShipmentCameraCropScan(reader, video, target, session)"), "camera scanner must scan only the visible guide area");
+const cameraCropSource = functionSource("finishedShipmentCameraCropRect");
+assert(cameraCropSource.includes(".finished-shipment-camera-guide-box"), "camera crop must follow the visible guide box");
+assert(cameraCropSource.includes("coverScale") && cameraCropSource.includes("video.videoWidth"), "camera crop must map the object-fit preview to source pixels");
+const cropContext = {};
+vm.runInNewContext(`${cameraCropSource}; this.crop = finishedShipmentCameraCropRect({
+  videoWidth: 1920,
+  videoHeight: 1080,
+  parentElement: {
+    getBoundingClientRect: () => ({ left: 0, top: 0, width: 400, height: 300 }),
+    querySelector: () => ({ getBoundingClientRect: () => ({ left: 100, top: 50, width: 200, height: 200 }) })
+  }
+});`, cropContext);
+assert(cropContext.crop.x === 600 && cropContext.crop.y === 180, "camera crop must account for the horizontally clipped object-fit preview");
+assert(cropContext.crop.width === 720 && cropContext.crop.height === 720, "camera crop must map the square guide to square source pixels");
+const cameraCropScanSource = functionSource("startFinishedShipmentCameraCropScan");
+assert(cameraCropScanSource.includes("reader.decodeFromCanvas(canvas)"), "camera scanner must decode the cropped guide canvas");
+const scanContext = {
+  decoded: "",
+  drawArgs: null,
+  finishedShipmentCameraSession: 7,
+  finishedShipmentCameraTarget: "serial",
+  finishedShipmentCameraCropRect: () => ({ x: 12, y: 34, width: 320, height: 320 }),
+  applyFinishedShipmentCameraResult: (value) => { scanContext.decoded = value; return true; },
+  document: {
+    createElement: () => ({
+      width: 0,
+      height: 0,
+      getContext: () => ({ drawImage: (...args) => { scanContext.drawArgs = args; } })
+    })
+  },
+  setTimeout: (callback) => { callback(); return 1; },
+  clearTimeout: () => {},
+  console
+};
+vm.runInNewContext(`${cameraCropScanSource}; this.controls = startFinishedShipmentCameraCropScan({
+  decodeFromCanvas: () => ({ getText: () => "M2026-0000008" })
+}, { readyState: 2 }, "serial", 7);`, scanContext);
+assert(scanContext.decoded === "M2026-0000008", "cropped camera scan must pass the decoded serial to the existing result flow");
+assert(scanContext.drawArgs.slice(1).join(",") === "12,34,320,320,0,0,320,320", "cropped camera scan must draw only the mapped guide area");
+const cameraFocusSource = functionSource("improveFinishedShipmentCameraFocus");
+assert(cameraFocusSource.includes('focusMode.indexOf("continuous")') && cameraFocusSource.includes("track.applyConstraints"), "camera scanner must enable continuous focus when supported");
+assert(app.includes('finished_shipping_camera_serial_prompt: "完品シリアルのQRコード1個だけが正方形の枠内に入るように近づけてください。"'), "Japanese serial camera guidance must identify one QR code and the square guide");
+assert(html.includes('class="finished-shipment-camera-guide-box"'), "camera overlay must expose the decoded guide area");
+assert(css.includes(".serial-qr-mode .finished-shipment-camera-guide-box") && css.includes("aspect-ratio: 1"), "serial QR guide must be square");
 assert(!app.includes("QRコードまたはバーコード") && !app.includes("QR code or barcode") && !app.includes("QR码或条码"), "finished-product serial guidance must not describe a one-dimensional barcode");
 const cameraResultSource = functionSource("applyFinishedShipmentCameraResult");
 assert(cameraResultSource.includes("/^D[0-9]{10}$/"), "camera dispatch results must be format-validated");

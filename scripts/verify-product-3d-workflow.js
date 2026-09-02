@@ -23,7 +23,7 @@ function requireText(source, fragment, label) {
   "product-3d-video-supplement",
   "product-3d-viewer-overlay",
   "data-product-media=\"model\"",
-  "product-3d.js?v=1.1.848"
+  "product-3d.js?v=1.1.849"
 ].forEach((fragment) => requireText(html, fragment, "3D UI contract"));
 
 [

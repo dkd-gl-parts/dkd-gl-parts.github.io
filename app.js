@@ -712,8 +712,8 @@ var TRANSLATIONS = {
     finished_shipping_scan_hint: "出荷指示の読込後に製造シリアルを照合します。指示未読込時は保証情報を照会できます。",
     finished_shipping_camera_button: "カメラ",
     finished_shipping_camera_title: "カメラでコードを読取",
-    finished_shipping_camera_dispatch_prompt: "出荷指示書のQRコードを枠内に合わせてください。",
-    finished_shipping_camera_serial_prompt: "完品シリアルのQRコードを枠内に合わせてください。",
+    finished_shipping_camera_dispatch_prompt: "読み取るQRコードだけが枠内に入るように合わせてください。",
+    finished_shipping_camera_serial_prompt: "完品シリアルのQRコード1個だけが正方形の枠内に入るように近づけてください。",
     finished_shipping_camera_starting: "背面カメラを起動しています...",
     finished_shipping_camera_scanning: "コードを枠内に合わせてください。自動で読み取ります。",
     finished_shipping_camera_cancel: "読取を中止",
@@ -2518,8 +2518,8 @@ var TRANSLATIONS = {
     finished_shipping_scan_hint: "After loading a shipment instruction, verify manufacturing serials. Without one, the field looks up warranty information.",
     finished_shipping_camera_button: "Camera",
     finished_shipping_camera_title: "Scan with Camera",
-    finished_shipping_camera_dispatch_prompt: "Place the shipment instruction QR code inside the frame.",
-    finished_shipping_camera_serial_prompt: "Place the finished-product serial QR code inside the frame.",
+    finished_shipping_camera_dispatch_prompt: "Keep only the shipment instruction QR code inside the frame.",
+    finished_shipping_camera_serial_prompt: "Move closer so only one finished-product serial QR code is inside the square.",
     finished_shipping_camera_starting: "Starting the rear camera...",
     finished_shipping_camera_scanning: "Hold the code inside the frame. It will scan automatically.",
     finished_shipping_camera_cancel: "Cancel Scan",
@@ -4332,8 +4332,8 @@ var TRANSLATIONS = {
     finished_shipping_scan_hint: "读取出货指示后核对制造序列号。未读取指示时用于查询保修信息。",
     finished_shipping_camera_button: "相机",
     finished_shipping_camera_title: "使用相机扫描",
-    finished_shipping_camera_dispatch_prompt: "请将出货指示书的QR码对准框内。",
-    finished_shipping_camera_serial_prompt: "请将完品序列号QR码对准框内。",
+    finished_shipping_camera_dispatch_prompt: "请确保框内只有一个出货指示书QR码。",
+    finished_shipping_camera_serial_prompt: "请靠近并确保正方形框内只有一个完品序列号QR码。",
     finished_shipping_camera_starting: "正在启动后置相机...",
     finished_shipping_camera_scanning: "请将代码对准框内，系统会自动读取。",
     finished_shipping_camera_cancel: "取消扫描",
@@ -5542,7 +5542,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.848";
+var APP_VERSION       = "v1.1.849";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -28164,7 +28164,10 @@ function closeFinishedShipmentCamera() {
   stopFinishedShipmentCameraStream();
   finishedShipmentCameraTarget = null;
   var overlay = document.getElementById("finished-shipment-camera-overlay");
-  if (overlay) overlay.classList.remove("show");
+  if (overlay) {
+    overlay.classList.remove("show");
+    overlay.classList.remove("serial-qr-mode");
+  }
 }
 
 function finishedShipmentCameraErrorKey(error) {
@@ -28203,6 +28206,95 @@ function applyFinishedShipmentCameraResult(rawValue, target, controls) {
   return true;
 }
 
+function finishedShipmentCameraCropRect(video) {
+  if (!video || !video.videoWidth || !video.videoHeight) return null;
+  var stage = video.parentElement;
+  var guide = stage && stage.querySelector(".finished-shipment-camera-guide-box");
+  var stageRect = stage && stage.getBoundingClientRect();
+  var guideRect = guide && guide.getBoundingClientRect();
+  if (!stageRect || !guideRect || !stageRect.width || !stageRect.height || !guideRect.width || !guideRect.height) {
+    var fallbackSide = Math.round(Math.min(video.videoWidth, video.videoHeight) * 0.72);
+    return {
+      x: Math.round((video.videoWidth - fallbackSide) / 2),
+      y: Math.round((video.videoHeight - fallbackSide) / 2),
+      width: fallbackSide,
+      height: fallbackSide
+    };
+  }
+  var coverScale = Math.max(stageRect.width / video.videoWidth, stageRect.height / video.videoHeight);
+  var hiddenX = Math.max(0, (video.videoWidth * coverScale - stageRect.width) / (2 * coverScale));
+  var hiddenY = Math.max(0, (video.videoHeight * coverScale - stageRect.height) / (2 * coverScale));
+  var x = hiddenX + Math.max(0, guideRect.left - stageRect.left) / coverScale;
+  var y = hiddenY + Math.max(0, guideRect.top - stageRect.top) / coverScale;
+  var width = Math.min(video.videoWidth - x, guideRect.width / coverScale);
+  var height = Math.min(video.videoHeight - y, guideRect.height / coverScale);
+  return {
+    x: Math.max(0, Math.round(x)),
+    y: Math.max(0, Math.round(y)),
+    width: Math.max(1, Math.round(width)),
+    height: Math.max(1, Math.round(height))
+  };
+}
+
+function startFinishedShipmentCameraCropScan(reader, video, target, session) {
+  var canvas = document.createElement("canvas");
+  var context;
+  try {
+    context = canvas.getContext("2d", { willReadFrequently: true });
+  } catch (_) {
+    context = canvas.getContext("2d");
+  }
+  if (!context) throw new Error("Camera scan canvas is unavailable");
+  var stopped = false;
+  var timer = null;
+  var controls = {
+    stop: function() {
+      if (stopped) return;
+      stopped = true;
+      if (timer) clearTimeout(timer);
+    }
+  };
+  var scan = function() {
+    if (stopped || session !== finishedShipmentCameraSession || finishedShipmentCameraTarget !== target) return;
+    var delay = 200;
+    try {
+      var crop = finishedShipmentCameraCropRect(video);
+      if (!crop || video.readyState < 2) {
+        timer = setTimeout(scan, delay);
+        return;
+      }
+      if (canvas.width !== crop.width) canvas.width = crop.width;
+      if (canvas.height !== crop.height) canvas.height = crop.height;
+      context.drawImage(video, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
+      var result = reader.decodeFromCanvas(canvas);
+      var resultText = typeof result.getText === "function" ? result.getText() : result.text;
+      if (applyFinishedShipmentCameraResult(resultText, target, controls)) return;
+      delay = 800;
+    } catch (error) {
+      var errorName = error && error.name || "";
+      if (["NotFoundException", "ChecksumException", "FormatException"].indexOf(errorName) < 0) {
+        console.warn("Camera scanner decode error", error);
+      }
+    }
+    if (!stopped) timer = setTimeout(scan, delay);
+  };
+  timer = setTimeout(scan, 50);
+  return controls;
+}
+
+async function improveFinishedShipmentCameraFocus(stream) {
+  var track = stream && typeof stream.getVideoTracks === "function" ? stream.getVideoTracks()[0] : null;
+  if (!track || typeof track.getCapabilities !== "function" || typeof track.applyConstraints !== "function") return;
+  try {
+    var capabilities = track.getCapabilities() || {};
+    if (Array.isArray(capabilities.focusMode) && capabilities.focusMode.indexOf("continuous") >= 0) {
+      await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
+    }
+  } catch (error) {
+    console.warn("Camera continuous focus is unavailable", error);
+  }
+}
+
 async function openFinishedShipmentCamera(target) {
   if (target !== "dispatch" && target !== "serial") return;
   closeFinishedShipmentCamera();
@@ -28217,7 +28309,10 @@ async function openFinishedShipmentCamera(target) {
     prompt.textContent = t(promptKey);
   }
   setFinishedShipmentCameraStatus("finished_shipping_camera_starting");
-  if (overlay) overlay.classList.add("show");
+  if (overlay) {
+    overlay.classList.toggle("serial-qr-mode", target === "serial");
+    overlay.classList.add("show");
+  }
   if (!window.isSecureContext) {
     setFinishedShipmentCameraStatus("finished_shipping_camera_secure_required");
     return;
@@ -28238,22 +28333,27 @@ async function openFinishedShipmentCamera(target) {
       ? new zxing.BrowserQRCodeReader(undefined, readerOptions)
       : new zxing.BrowserMultiFormatReader(undefined, readerOptions);
     finishedShipmentCameraReader = reader;
-    var controls = await reader.decodeFromVideoDevice(undefined, video, function(result, error, activeControls) {
-      if (session !== finishedShipmentCameraSession || finishedShipmentCameraTarget !== target) return;
-      if (result) {
-        var resultText = typeof result.getText === "function" ? result.getText() : result.text;
-        applyFinishedShipmentCameraResult(resultText, target, activeControls);
-        return;
+    var constraints = {
+      audio: false,
+      video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
       }
-      var errorName = error && error.name || "";
-      if (error && ["NotFoundException", "ChecksumException", "FormatException"].indexOf(errorName) < 0) {
-        console.warn("Camera scanner decode error", error);
-      }
-    });
+    };
+    var stream = await navigator.mediaDevices.getUserMedia(constraints);
     if (session !== finishedShipmentCameraSession || finishedShipmentCameraTarget !== target) {
-      try { controls.stop(); } catch (_) {}
+      stream.getTracks().forEach(function(track) { track.stop(); });
       return;
     }
+    video.srcObject = stream;
+    await video.play();
+    if (session !== finishedShipmentCameraSession || finishedShipmentCameraTarget !== target) {
+      stream.getTracks().forEach(function(track) { track.stop(); });
+      return;
+    }
+    await improveFinishedShipmentCameraFocus(stream);
+    var controls = startFinishedShipmentCameraCropScan(reader, video, target, session);
     finishedShipmentCameraControls = controls;
     setFinishedShipmentCameraStatus("finished_shipping_camera_scanning");
   } catch (error) {
