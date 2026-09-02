@@ -9,6 +9,7 @@ on:
       - "index.html"
       - "app.js"
       - "install-app.js"
+      - "legacy-i18n.js"
       - "site.webmanifest"
       - "styles.css"
       - "product-3d.js"
@@ -46,6 +47,7 @@ on:
       - "scripts/verify-customer-order-in-house-cancel.js"
       - "scripts/verify-sales-order-price-adjustment.js"
       - "scripts/verify-sales-accounting-export.js"
+      - "scripts/verify-business-workspace-shortcut.js"
       - "scripts/verify-postal-data.js"
       - "scripts/verify-postal-lookup-fallback.js"
       - "scripts/update-postal-data.js"
@@ -165,6 +167,8 @@ jobs:
         run: node scripts/verify-sales-order-price-adjustment.js
       - name: Verify sales-accounting export
         run: node scripts/verify-sales-accounting-export.js
+      - name: Verify shared business workspace shortcut
+        run: node scripts/verify-business-workspace-shortcut.js
       - name: Verify offline postal data
         run: node scripts/verify-postal-data.js
       - name: Verify postal lookup fallback

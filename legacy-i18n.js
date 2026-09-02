@@ -2529,7 +2529,9 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "取消処理中...": "Cancelling...",
     "取消をやめる": "Keep Order",
     "この受注を取り消す": "Cancel This Order",
-    "その他の操作": "More Actions"
+    "その他の操作": "More Actions",
+    "D-CATS業務連携.url": "D-CATS Business Workspace.url",
+    "Windowsインターネットショートカット": "Windows Internet Shortcut"
   },
   "zh": {
     ": 構成部品の使用レコードIDを確認できませんでした。画面を更新して再度お試しください。": ": 无法确认构成部件的使用记录ID。请刷新页面后再试一次。",
@@ -5059,6 +5061,8 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "取消処理中...": "正在取消...",
     "取消をやめる": "保留订单",
     "この受注を取り消す": "取消此订单",
-    "その他の操作": "更多操作"
+    "その他の操作": "更多操作",
+    "D-CATS業務連携.url": "D-CATS业务协作.url",
+    "Windowsインターネットショートカット": "Windows Internet 快捷方式"
   }
 };

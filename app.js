@@ -325,6 +325,17 @@ var TRANSLATIONS = {
     sales_order_mgmt_title: "受注・出荷管理",
     sales_order_mgmt_desc: "得意先注文の受付、商品発送用B2 CSV、製造シリアル照合を管理します。",
     sales_order_mgmt_note: "注文受付、商品発送用B2 CSV、現場の製造シリアル照合を管理します。",
+    business_workspace_open: "業務連携",
+    business_workspace_title: "D-CATS業務連携",
+    business_workspace_location: "Google Drive 共通保存先",
+    business_workspace_open_folder: "フォルダを開く",
+    business_workspace_create_shortcut: "デスクトップに作成",
+    business_workspace_save_checking: "デスクトップへの保存先を確認しています。",
+    business_workspace_created: "デスクトップ用ショートカットを作成しました。",
+    business_workspace_created_notice: "D-CATS業務連携のショートカットを作成しました。",
+    business_workspace_downloaded: "ショートカットをダウンロードしました。ファイルをデスクトップへ移動してください。",
+    business_workspace_cancelled: "ショートカットの作成をキャンセルしました。",
+    business_workspace_failed: "ショートカットを作成できませんでした。Google Driveは「フォルダを開く」から利用できます。",
     shipping_document_mgmt_title: "出荷帳票発行",
     shipping_document_mgmt_desc: "B2 CSVの発行履歴、保証書、コア返却帳票を注文単位で管理します。",
     core_return_mgmt_title: "コア返却管理",
@@ -2106,6 +2117,17 @@ var TRANSLATIONS = {
     sales_order_mgmt_title: "Orders / Shipping",
     sales_order_mgmt_desc: "Manage customer orders, outbound B2 CSV files, and manufacturing-serial verification.",
     sales_order_mgmt_note: "Manage order acceptance, outbound B2 CSV files, and shop-floor serial verification.",
+    business_workspace_open: "Shared Folder",
+    business_workspace_title: "D-CATS Business Exchange",
+    business_workspace_location: "Shared Google Drive folder",
+    business_workspace_open_folder: "Open Folder",
+    business_workspace_create_shortcut: "Create on Desktop",
+    business_workspace_save_checking: "Checking the desktop save location.",
+    business_workspace_created: "The desktop shortcut was created.",
+    business_workspace_created_notice: "The D-CATS Business Exchange shortcut was created.",
+    business_workspace_downloaded: "The shortcut was downloaded. Move the file to your desktop.",
+    business_workspace_cancelled: "Shortcut creation was cancelled.",
+    business_workspace_failed: "The shortcut could not be created. Use Open Folder to access Google Drive.",
     shipping_document_mgmt_title: "Shipping Documents",
     shipping_document_mgmt_desc: "Manage B2 CSV history, warranties, and core-return documents by order.",
     core_return_mgmt_title: "Core Returns",
@@ -3832,6 +3854,17 @@ var TRANSLATIONS = {
     sales_order_mgmt_title: "订单・出货管理",
     sales_order_mgmt_desc: "管理客户订单、商品发送用B2 CSV和制造序列号核对。",
     sales_order_mgmt_note: "管理订单受理、商品发送用B2 CSV和现场序列号核对。",
+    business_workspace_open: "业务协作",
+    business_workspace_title: "D-CATS业务协作",
+    business_workspace_location: "Google Drive共享保存位置",
+    business_workspace_open_folder: "打开文件夹",
+    business_workspace_create_shortcut: "创建到桌面",
+    business_workspace_save_checking: "正在确认桌面保存位置。",
+    business_workspace_created: "桌面快捷方式已创建。",
+    business_workspace_created_notice: "D-CATS业务协作快捷方式已创建。",
+    business_workspace_downloaded: "快捷方式已下载。请将文件移动到桌面。",
+    business_workspace_cancelled: "已取消创建快捷方式。",
+    business_workspace_failed: "无法创建快捷方式。请使用“打开文件夹”访问Google Drive。",
     shipping_document_mgmt_title: "出货单据发行",
     shipping_document_mgmt_desc: "按订单管理B2 CSV历史、保修书和旧件返还单据。",
     core_return_mgmt_title: "旧件返还管理",
@@ -5467,7 +5500,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.842";
+var APP_VERSION       = "v1.1.843";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -10784,6 +10817,87 @@ function setSalesOrderBatchMessage(message, isError) {
   if (!host) return;
   host.textContent = message || "";
   host.className = "sales-order-batch-message" + (isError ? " error" : "");
+}
+
+var DCATS_BUSINESS_WORKSPACE_URL = "https://drive.google.com/drive/folders/1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ";
+var dcatsBusinessWorkspaceTrigger = null;
+
+function setDcatsBusinessWorkspaceMessage(message, isError) {
+  var host = document.getElementById("dcats-business-workspace-message");
+  if (!host) return;
+  host.textContent = message || "";
+  host.className = "dcats-business-workspace-message" + (isError ? " error" : "");
+}
+
+function openDcatsBusinessWorkspace(event) {
+  var overlay = document.getElementById("dcats-business-workspace-overlay");
+  if (!overlay) return;
+  dcatsBusinessWorkspaceTrigger = event && event.currentTarget ? event.currentTarget : document.activeElement;
+  setDcatsBusinessWorkspaceMessage("", false);
+  overlay.classList.add("show");
+  var shortcutButton = document.getElementById("dcats-business-workspace-shortcut");
+  if (shortcutButton) shortcutButton.focus();
+}
+
+function closeDcatsBusinessWorkspace() {
+  var overlay = document.getElementById("dcats-business-workspace-overlay");
+  if (overlay) overlay.classList.remove("show");
+  if (dcatsBusinessWorkspaceTrigger && typeof dcatsBusinessWorkspaceTrigger.focus === "function") {
+    dcatsBusinessWorkspaceTrigger.focus();
+  }
+  dcatsBusinessWorkspaceTrigger = null;
+}
+
+function downloadDcatsBusinessWorkspaceShortcut(contents) {
+  var blobUrl = URL.createObjectURL(new Blob([contents], { type: "text/plain;charset=utf-8" }));
+  var link = document.createElement("a");
+  link.href = blobUrl;
+  link.download = "D-CATS業務連携.url";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
+}
+
+async function createDcatsBusinessWorkspaceShortcut() {
+  var button = document.getElementById("dcats-business-workspace-shortcut");
+  var contents = "[InternetShortcut]\r\nURL=" + DCATS_BUSINESS_WORKSPACE_URL + "\r\n";
+  if (button) button.disabled = true;
+  setDcatsBusinessWorkspaceMessage(t("business_workspace_save_checking"), false);
+  try {
+    if (typeof window.showSaveFilePicker === "function") {
+      var pickerOptions = {
+        suggestedName: "D-CATS業務連携.url",
+        startIn: "desktop",
+        types: [{ description: "Windowsインターネットショートカット", accept: { "text/plain": [".url"] } }],
+        excludeAcceptAllOption: true
+      };
+      var handle;
+      try {
+        handle = await window.showSaveFilePicker(pickerOptions);
+      } catch (pickerError) {
+        if (pickerError && pickerError.name === "AbortError") throw pickerError;
+        delete pickerOptions.startIn;
+        handle = await window.showSaveFilePicker(pickerOptions);
+      }
+      var writable = await handle.createWritable();
+      await writable.write(contents);
+      await writable.close();
+      setDcatsBusinessWorkspaceMessage(t("business_workspace_created"), false);
+      showDcatsAutoNotice(t("business_workspace_created_notice"));
+      return;
+    }
+    downloadDcatsBusinessWorkspaceShortcut(contents);
+    setDcatsBusinessWorkspaceMessage(t("business_workspace_downloaded"), false);
+  } catch (error) {
+    if (error && error.name === "AbortError") {
+      setDcatsBusinessWorkspaceMessage(t("business_workspace_cancelled"), false);
+      return;
+    }
+    setDcatsBusinessWorkspaceMessage(t("business_workspace_failed"), true);
+  } finally {
+    if (button) button.disabled = false;
+  }
 }
 
 function updateSalesOrderSelectionButtons() {
@@ -46860,6 +46974,13 @@ document.getElementById("sales-order-import-b2").addEventListener("click", funct
   if (input) input.click();
 });
 document.getElementById("sales-order-accounting-export").addEventListener("click", openSalesAccountingExport);
+document.getElementById("sales-order-business-workspace-open").addEventListener("click", openDcatsBusinessWorkspace);
+document.getElementById("dcats-business-workspace-close").addEventListener("click", closeDcatsBusinessWorkspace);
+document.getElementById("dcats-business-workspace-cancel").addEventListener("click", closeDcatsBusinessWorkspace);
+document.getElementById("dcats-business-workspace-shortcut").addEventListener("click", createDcatsBusinessWorkspaceShortcut);
+document.getElementById("dcats-business-workspace-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeDcatsBusinessWorkspace();
+});
 document.getElementById("sales-accounting-export-search").addEventListener("click", loadSalesAccountingExportData);
 document.getElementById("sales-accounting-export-target").addEventListener("change", function() {
   var state = readSalesAccountingExportFilters();
