@@ -5647,7 +5647,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.864";
+var APP_VERSION       = "v1.1.865";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -13555,6 +13555,22 @@ function shippingDocumentDeferredHandwrittenCount(orderIds, documentTypes) {
   return count;
 }
 
+function shippingDocumentWaybillDigits(value) {
+  return String(value == null ? "" : value).replace(/[^0-9]/g, "");
+}
+
+function shippingDocumentWaybillNumberIsValid(value) {
+  var digits = shippingDocumentWaybillDigits(value);
+  return digits.length === 11 || digits.length === 12;
+}
+
+function shippingDocumentWaybillNumberFormat(value) {
+  var digits = shippingDocumentWaybillDigits(value);
+  if (digits.length === 11) return digits.slice(0, 3) + "-" + digits.slice(3, 7) + "-" + digits.slice(7);
+  if (digits.length === 12) return digits.slice(0, 4) + "-" + digits.slice(4, 8) + "-" + digits.slice(8);
+  return digits;
+}
+
 function shippingDocumentDotMatrixOrderIds(orderIds, documentType) {
   var selectedIds = new Set((orderIds || []).map(function(value) { return parseInt(value, 10); }));
   var methodKey = documentType === "return_waybill" ? "return_waybill_method" : "outbound_waybill_method";
@@ -13929,15 +13945,15 @@ function shippingDocumentOutboundWaybillHtml(order) {
     ? "B2 CSVを発行し、B2クラウドで送り状を印刷します。発行済データCSVの取込で送り状番号を登録します。"
     : method === "handwritten"
       ? "伝票デザインに表示された内容を複写伝票へ手書きし、完了を記録します。"
-      : !waybill.tracking_number
-        ? "複写伝票に印刷されている12桁の伝票番号を登録してください。"
+      : !shippingDocumentWaybillNumberIsValid(waybill.tracking_number)
+        ? "複写伝票の送り状番号を3-4-4（11桁）または4-4-4（12桁）で登録してください。"
         : printBusy ? "商品発送用複写伝票を印刷端末へ送信済みです。"
           : "ドットプリンターに元払い複写伝票をセットして印刷します。";
   return "<div class='shipping-document-waybill-card' id='shipping-document-outbound-waybill-section'><div class='shipping-document-section-head'><div><h3>商品発送送り状</h3><p>B2または運送会社別の元払い複写伝票を注文単位で選択します。</p></div><span class='shipping-document-ready-state " + (order.outbound_tracking_number ? "ready" : "pending") + "'>" + esc(order.outbound_tracking_number ? "番号登録済み" : modeLabel) + "</span></div>" +
     "<div class='shipping-document-carrier-context' id='shipping-document-outbound-carrier-brand'>" + shippingCarrierBrandHtml(carrier, false) + "</div>" +
     "<div class='shipping-document-waybill-form'><label><span>運送会社</span><select id='shipping-document-outbound-carrier'><option value='yamato_prepaid'" + (carrier === "yamato_prepaid" ? " selected" : "") + ">ヤマト宅急便　元払い</option><option value='sagawa_prepaid'" + (carrier === "sagawa_prepaid" ? " selected" : "") + ">佐川急便　元払い</option></select></label>" +
     "<label><span>作成方法</span><select id='shipping-document-outbound-method'><option value='b2_cloud'" + (method === "b2_cloud" ? " selected" : "") + ">B2クラウド</option><option value='handwritten'" + (method === "handwritten" ? " selected" : "") + ">手書き運用</option><option value='dot_matrix'" + (method === "dot_matrix" ? " selected" : "") + ">ドットプリンタ</option></select></label>" +
-    "<label><span>商品発送用伝票番号</span><input id='shipping-document-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(waybill.tracking_number || order.outbound_tracking_number || "") + "' placeholder='12桁'" + (method === "b2_cloud" ? " disabled" : "") + "></label>" +
+    "<label><span>商品発送用伝票番号</span><input id='shipping-document-outbound-tracking' type='text' inputmode='numeric' maxlength='14' autocomplete='off' value='" + esc(shippingDocumentWaybillNumberFormat(waybill.tracking_number || order.outbound_tracking_number || "")) + "' placeholder='000-0000-0000 / 0000-0000-0000'" + (method === "b2_cloud" ? " disabled" : "") + "></label>" +
     "<button type='button' id='shipping-document-outbound-save'" + (shippingDocumentSaving || !dispatch ? " disabled" : "") + ">設定を保存</button></div>" +
     "<div class='shipping-document-waybill-print-row'><div><span>複写伝票の印刷状態</span><strong class='" + esc(printJob ? printJob.status : "") + "'>" + esc(method === "b2_cloud" ? "B2で発行" : printState) + "</strong></div>" +
     "<a href='dcats-print-settings://open'>このPCの印刷設定</a></div><p class='shipping-document-form-note'>" + esc(guidance) + "</p></div>";
@@ -13970,14 +13986,14 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var outboundMethod = outboundWaybill.handling_method || "b2_cloud";
   var outboundModeLabel = outboundMethod === "dot_matrix" ? "ドットプリンタ" : outboundMethod === "handwritten" ? "手書き運用" : "B2クラウド";
   var outboundPrintBusy = !!(outboundJob && ["queued", "claimed"].indexOf(outboundJob.status) >= 0);
-  var outboundCanPrint = !!(dispatch && outboundMethod === "dot_matrix" && /^\d{12}$/.test(String(outboundWaybill.tracking_number || "")) && !outboundPrintBusy && !shippingDocumentSaving);
+  var outboundCanPrint = !!(dispatch && outboundMethod === "dot_matrix" && shippingDocumentWaybillNumberIsValid(outboundWaybill.tracking_number) && !outboundPrintBusy && !shippingDocumentSaving);
   var outboundHandwrittenComplete = outboundMethod === "handwritten" && (outboundWaybill.status === "printed" || !!outboundWaybill.handwritten_completed_at);
   var outboundCanHandwrite = !!(dispatch && outboundMethod === "handwritten" && !outboundHandwrittenComplete && !shippingDocumentSaving);
   var returnMethod = waybill.handling_method || order.return_waybill_method || "handwritten";
   var returnCarrierLabel = waybill.carrier_code === "sagawa_collect" ? "佐川急便 着払い" : "ヤマト宅急便 着払い";
   var returnWaybillCopyCount = shippingDocumentReturnWaybillCopyCount(order);
   var returnPrintBusy = !!(returnJob && ["queued", "claimed"].indexOf(returnJob.status) >= 0);
-  var returnCanPrint = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "dot_matrix" && waybill.id && !returnPrintBusy && !shippingDocumentSaving);
+  var returnCanPrint = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "dot_matrix" && waybill.id && shippingDocumentWaybillNumberIsValid(waybill.tracking_number) && !returnPrintBusy && !shippingDocumentSaving);
   var returnPrintActionLabel = returnJob && returnJob.status === "printed" ? "再印刷"
     : returnJob && returnJob.status === "error" ? "再送" : "端末印刷";
   var returnHandwrittenComplete = returnMethod === "handwritten" && (waybill.status === "printed" || !!waybill.handwritten_completed_at);
@@ -14017,7 +14033,7 @@ function shippingDocumentShipmentDocumentsHtml(order) {
     {
       key: "return_waybill", name: "コア返却用複写伝票", standard: "対象商品1個につき1枚 / " + returnWaybillCopyCount + "枚",
       carrierCode: waybill.carrier_code || "sagawa_collect",
-      state: order.core_return_required ? returnCarrierLabel + " / " + returnWaybillCopyCount + "枚 / " + (returnMethod === "handwritten" ? (returnHandwrittenComplete ? "手書き完了" : "手書き待ち") : (returnJob ? salesOrderPrintJobStatusLabel(returnJob.status) : (waybill.id ? "ドットプリンタ設定済み" : "未設定"))) : "対象外", ready: !!order.core_return_required,
+      state: order.core_return_required ? returnCarrierLabel + " / " + returnWaybillCopyCount + "枚 / " + (returnMethod === "handwritten" ? (returnHandwrittenComplete ? "手書き完了" : "手書き待ち") : (returnJob ? salesOrderPrintJobStatusLabel(returnJob.status) : (shippingDocumentWaybillNumberIsValid(waybill.tracking_number) ? "番号登録済み" : "番号未登録"))) : "対象外", ready: !!order.core_return_required,
       actions: order.core_return_required ? (returnMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-return-print" + (returnCanPrint ? "" : " disabled") + ">" + esc(returnPrintActionLabel) + "（" + returnWaybillCopyCount + "枚）</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='return_waybill'" + (returnCanHandwrite ? "" : " disabled") + ">手書き内容を表示（" + returnWaybillCopyCount + "枚）</button>") + "<button type='button' data-shipping-document-open-settings='return'>設定</button>" : "<span class='shipping-document-no-action'>発行不要</span>"
     }
   ];
@@ -14043,15 +14059,15 @@ function shippingDocumentReturnWaybillHtml(order) {
   var carrierLabel = carrier === "sagawa_collect" ? "佐川急便着払い" : "ヤマト宅急便　着払い";
   var printState = printJob ? salesOrderPrintJobStatusLabel(printJob.status) : "未発行";
   var printGuidance = method !== "dot_matrix" ? "手書き運用では、伝票デザインと記入内容を画面に表示し、完了後に伝票番号を登録できます。"
-    : !waybill.id ? "作成方法を保存してから印刷してください。返送用伝票番号は後から登録できます。"
+    : !shippingDocumentWaybillNumberIsValid(waybill.tracking_number) ? "複写伝票の送り状番号を3-4-4（11桁）または4-4-4（12桁）で登録してから印刷してください。"
       : !dispatchReady ? "出荷指示書を発行してから印刷できます。"
         : printBusy ? "複写伝票を印刷端末へ送信済みです。"
-          : "ドットプリンターに " + carrierLabel + " の複写伝票をセットして印刷します。" + (waybill.tracking_number ? "" : " 返送用伝票番号は印刷後に登録してください。");
+          : "ドットプリンターに " + carrierLabel + " の複写伝票をセットして印刷します。";
   return "<div id='shipping-document-return-waybill-section'><div class='shipping-document-section-head'><div><h3>コア返却用複写伝票</h3><p>着払い伝票の種類と伝票番号を登録し、コア返却対象の商品1個につき1枚を発行します。</p></div><span class='shipping-document-ready-state " + (waybill.id ? "ready" : "pending") + "'>" + esc(copyCount + "枚 / " + (waybill.id ? "設定済み" : "未設定")) + "</span></div>" +
     "<div class='shipping-document-carrier-context' id='shipping-document-return-carrier-brand'>" + shippingCarrierBrandHtml(carrier, false) + "</div>" +
     "<div class='shipping-document-waybill-form'><label><span>運送会社・サービス</span><select id='shipping-document-return-carrier'><option value='yamato_collect'" + (carrier === "yamato_collect" ? " selected" : "") + ">ヤマト宅急便　着払い</option><option value='sagawa_collect'" + (carrier === "sagawa_collect" ? " selected" : "") + ">佐川急便着払い</option></select></label>" +
     "<label><span>作成方法</span><select id='shipping-document-return-method'><option value='handwritten'" + (method === "handwritten" ? " selected" : "") + ">手書き運用</option><option value='dot_matrix'" + (method === "dot_matrix" ? " selected" : "") + ">ドットプリンタ</option></select></label>" +
-    "<label><span>返送用伝票番号</span><input id='shipping-document-return-tracking' type='text' inputmode='numeric' maxlength='14' value='" + esc(waybill.tracking_number || "") + "' placeholder='10〜14桁（後から登録も可）'></label>" +
+    "<label><span>返送用伝票番号</span><input id='shipping-document-return-tracking' type='text' inputmode='numeric' maxlength='14' autocomplete='off' value='" + esc(shippingDocumentWaybillNumberFormat(waybill.tracking_number || "")) + "' placeholder='000-0000-0000 / 0000-0000-0000'></label>" +
     "<button type='button' id='shipping-document-return-save'" + (shippingDocumentSaving ? " disabled" : "") + ">設定を保存</button></div>" +
     "<div class='shipping-document-waybill-print-row'><div><span>複写伝票の印刷状態</span><strong class='" + esc(printJob ? printJob.status : "") + "'>" + esc(printState) + "</strong></div>" +
     "<a href='dcats-print-settings://open'>このPCの印刷設定</a></div>" +
@@ -14239,9 +14255,9 @@ async function saveShippingDocumentOutboundWaybill() {
   if (!order || shippingDocumentSaving) return;
   var carrier = (document.getElementById("shipping-document-outbound-carrier") || {}).value || "yamato_prepaid";
   var method = (document.getElementById("shipping-document-outbound-method") || {}).value || "b2_cloud";
-  var tracking = String((document.getElementById("shipping-document-outbound-tracking") || {}).value || "").replace(/[^0-9]/g, "").slice(0, 12);
-  if (method !== "b2_cloud" && tracking.length !== 12) {
-    setShippingDocumentMessage("商品発送用伝票番号は12桁の数字で入力してください。", true);
+  var tracking = shippingDocumentWaybillDigits((document.getElementById("shipping-document-outbound-tracking") || {}).value || "");
+  if (method !== "b2_cloud" && !shippingDocumentWaybillNumberIsValid(tracking)) {
+    setShippingDocumentMessage("商品発送用送り状番号は3-4-4（11桁）または4-4-4（12桁）で入力してください。", true);
     return;
   }
   shippingDocumentSaving = true;
@@ -14271,8 +14287,8 @@ async function queueShippingDocumentOutboundWaybillPrint() {
   var order = shippingDocumentDetail;
   if (!order || shippingDocumentSaving) return;
   var waybill = order.outbound_waybill && typeof order.outbound_waybill === "object" ? order.outbound_waybill : {};
-  if (waybill.handling_method !== "dot_matrix" || !/^\d{12}$/.test(String(waybill.tracking_number || ""))) {
-    setShippingDocumentMessage("作成方法をドットプリンタにし、12桁の商品発送用伝票番号を登録してください。", true);
+  if (waybill.handling_method !== "dot_matrix" || !shippingDocumentWaybillNumberIsValid(waybill.tracking_number)) {
+    setShippingDocumentMessage("作成方法をドットプリンタにし、送り状番号を3-4-4（11桁）または4-4-4（12桁）で登録してください。", true);
     return;
   }
   shippingDocumentSaving = true;
@@ -14364,9 +14380,13 @@ async function saveShippingDocumentReturnWaybill() {
   if (!order || !order.core_return_required || shippingDocumentSaving) return;
   var carrier = (document.getElementById("shipping-document-return-carrier") || {}).value || "yamato_collect";
   var method = (document.getElementById("shipping-document-return-method") || {}).value || "handwritten";
-  var tracking = String((document.getElementById("shipping-document-return-tracking") || {}).value || "").replace(/[^0-9]/g, "").slice(0, 14);
-  if (tracking && (tracking.length < 10 || tracking.length > 14)) {
-    setShippingDocumentMessage("返送用伝票番号は10桁から14桁の数字で入力してください。", true);
+  var tracking = shippingDocumentWaybillDigits((document.getElementById("shipping-document-return-tracking") || {}).value || "");
+  if (method === "dot_matrix" && !shippingDocumentWaybillNumberIsValid(tracking)) {
+    setShippingDocumentMessage("返送用送り状番号は3-4-4（11桁）または4-4-4（12桁）で入力してください。", true);
+    return;
+  }
+  if (tracking && !shippingDocumentWaybillNumberIsValid(tracking)) {
+    setShippingDocumentMessage("返送用送り状番号は3-4-4（11桁）または4-4-4（12桁）で入力してください。", true);
     return;
   }
   shippingDocumentSaving = true;
@@ -14394,8 +14414,8 @@ async function queueShippingDocumentReturnWaybillPrint() {
   var order = shippingDocumentDetail;
   if (!order || !order.core_return_required || shippingDocumentSaving) return;
   var waybill = order.return_waybill && typeof order.return_waybill === "object" ? order.return_waybill : {};
-  if (waybill.handling_method !== "dot_matrix") {
-    setShippingDocumentMessage("作成方法をドットプリンタに変更してください。", true);
+  if (waybill.handling_method !== "dot_matrix" || !shippingDocumentWaybillNumberIsValid(waybill.tracking_number)) {
+    setShippingDocumentMessage("作成方法をドットプリンタにし、送り状番号を3-4-4（11桁）または4-4-4（12桁）で登録してください。", true);
     return;
   }
   shippingDocumentSaving = true;

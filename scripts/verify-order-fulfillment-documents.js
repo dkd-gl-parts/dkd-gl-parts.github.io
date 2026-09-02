@@ -305,6 +305,8 @@ for (const fragment of [
   'carrierCode: waybill.carrier_code || "sagawa_collect"',
   'waybill.handling_method || order.return_waybill_method || "handwritten"',
   'shippingDocumentReturnWaybillCopyCount(order)',
+  'shippingDocumentWaybillNumberIsValid(outboundWaybill.tracking_number)',
+  'shippingDocumentWaybillNumberIsValid(waybill.tracking_number)',
   '対象商品1個につき1枚 / " + returnWaybillCopyCount + "枚',
   'var returnCanPrint = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "dot_matrix"',
   'var returnCanHandwrite = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "handwritten"',
@@ -316,9 +318,6 @@ for (const fragment of [
 ]) requireFragment(requiredDocuments, fragment);
 if (requiredDocuments.includes('var returnCanPrint = !!(ready &&')) {
   throw new Error("Core-return multipart waybill printing must be available before shipment completion");
-}
-if (/var returnCanPrint = [^;]*waybill\.tracking_number/.test(requiredDocuments)) {
-  throw new Error("Core-return multipart waybill printing must be available before its preprinted number is registered");
 }
 if (requiredDocuments.includes('var returnCanHandwrite = !!(ready &&')) {
   throw new Error("Core-return handwritten content must be available before shipment completion");
@@ -373,8 +372,8 @@ const returnWaybill = sourceBetween("function shippingDocumentReturnWaybillHtml"
 for (const fragment of [
   "var dispatchReady = !!dispatch",
   "出荷指示書を発行してから印刷できます。",
-  "返送用伝票番号は後から登録できます。",
-  "返送用伝票番号は印刷後に登録してください。"
+  "3-4-4（11桁）または4-4-4（12桁）",
+  "shippingDocumentWaybillNumberFormat(waybill.tracking_number"
 ]) requireFragment(returnWaybill, fragment);
 for (const forbidden of [
   'dispatch.status === "shipped"',
@@ -388,10 +387,8 @@ for (const forbidden of [
 
 const returnWaybillPrint = sourceBetween("async function queueShippingDocumentReturnWaybillPrint", "function renderSalesOrderList");
 requireFragment(returnWaybillPrint, 'waybill.handling_method !== "dot_matrix"');
+requireFragment(returnWaybillPrint, "shippingDocumentWaybillNumberIsValid(waybill.tracking_number)");
 requireFragment(returnWaybillPrint, "queued.copy_count");
-if (returnWaybillPrint.includes("!waybill.tracking_number")) {
-  throw new Error("Return-waybill print queue must accept tracking-number registration after printing");
-}
 
 const returnWaybillCountSource = sourceBetween(
   "function shippingDocumentReturnWaybillCopyCount",
@@ -418,7 +415,9 @@ for (const [order, expected] of [
 
 const outboundSave = sourceBetween("async function saveShippingDocumentOutboundWaybill", "async function queueShippingDocumentOutboundWaybillPrint");
 for (const fragment of [
-  "tracking.length !== 12",
+  "shippingDocumentWaybillDigits",
+  "shippingDocumentWaybillNumberIsValid(tracking)",
+  "3-4-4（11桁）または4-4-4（12桁）",
   'sb.rpc("save_sales_order_outbound_waybill"',
   "target_expected_version"
 ]) requireFragment(outboundSave, fragment);
@@ -432,6 +431,26 @@ for (const fragment of [
   "shippingDocumentDotMatrixOrderIds",
   "openShippingHandwrittenWaybillFlow"
 ]) requireFragment(batchQueue, fragment);
+
+const waybillNumberHelpers = sourceBetween(
+  "function shippingDocumentWaybillDigits",
+  "function shippingDocumentDotMatrixOrderIds"
+);
+const waybillNumberContext = {};
+vm.createContext(waybillNumberContext);
+vm.runInContext(waybillNumberHelpers, waybillNumberContext);
+for (const [value, valid, formatted] of [
+  ["123-4567-8901", true, "123-4567-8901"],
+  ["1234-5678-9012", true, "1234-5678-9012"],
+  ["1234567890", false, "1234567890"],
+  ["12345-6789-0123", false, "1234567890123"]
+]) {
+  const actualValid = waybillNumberContext.shippingDocumentWaybillNumberIsValid(value);
+  const actualFormatted = waybillNumberContext.shippingDocumentWaybillNumberFormat(value);
+  if (actualValid !== valid || actualFormatted !== formatted) {
+    throw new Error(`Waybill helper mismatch for ${value}: ${actualValid} / ${actualFormatted}`);
+  }
+}
 
 const handwrittenReadiness = sourceBetween("function shippingDocumentHandwrittenTaskReady", "function shippingDocumentHandwrittenTasks");
 for (const fragment of [
@@ -584,11 +603,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.864"',
-  'styles.css?v=1.1.864',
-  'app.js?v=1.1.864'
+  'content="v1.1.865"',
+  'styles.css?v=1.1.865',
+  'app.js?v=1.1.865'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.864"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.865"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
