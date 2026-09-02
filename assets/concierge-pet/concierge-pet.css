@@ -37,11 +37,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.857");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.862");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.857");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.862");
 }
 
 .dcats-concierge-hit-target {
@@ -262,6 +262,7 @@
 
 .dcats-concierge.has-no-safe-target .dcats-concierge-mover {
   opacity: 0;
+  visibility: hidden;
 }
 
 .dcats-concierge.has-no-safe-target .dcats-concierge-hit-target {
@@ -279,8 +280,6 @@
   }
 
   .dcats-concierge-bubble {
-    left: auto;
-    right: calc(100% - 12px);
     max-width: 176px;
     font-size: 11px;
   }

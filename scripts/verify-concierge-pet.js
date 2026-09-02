@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const vm = require("vm");
 
 const root = path.resolve(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
@@ -56,6 +57,9 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
   'prefers-reduced-motion: reduce',
   'showFrame(index < 8 ? 9 : 10',
   'collectExclusionRects()',
+  "[role='button']",
+  "[role='link']",
+  "[data-production-index]",
   'hasBlockingDialog()',
   'has-no-safe-target',
   'return null;',
@@ -69,12 +73,29 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
   'PETS[settings.character].className'
 ].forEach((fragment) => requireFragment(runtime, fragment));
 
+requireFragment(runtime, 'if (!visible || document.hidden || settings.mode === "off")', "Off mode must stop before panel animation handling");
+requireFragment(runtime, 'settings.mode === "off" || root.classList.contains("has-no-safe-target")', "External states must not revive a concierge without a safe target");
+
 assert((runtime.match(/createElement\("div", "dcats-concierge-sprite"\)/g) || []).length === 1, "Runtime must create exactly one visible sprite element");
 assert(!runtime.includes("innerHTML"), "Concierge UI must not use innerHTML");
 assert(!runtime.includes("eval("), "Concierge runtime must not use eval");
 assert(!runtime.includes(".style."), "Strict CSP forbids inline style mutation");
 assert(!runtime.includes('setAttribute("style"'), "Strict CSP forbids style attributes");
 assert(!runtime.includes("fetch("), "Concierge preferences must remain local and must not add network/API work");
+
+const copyStart = runtime.indexOf("\n  var COPY = {");
+const copyEnd = runtime.indexOf("\n  var STATE_MESSAGE_KEYS", copyStart);
+assert(copyStart >= 0 && copyEnd > copyStart, "Concierge local translation dictionary is missing");
+const copyContext = {};
+vm.createContext(copyContext);
+vm.runInContext(runtime.slice(copyStart, copyEnd).replace(/^\s*var COPY\s*=\s*/, "COPY = "), copyContext);
+const copyLanguages = Object.keys(copyContext.COPY || {}).sort();
+assert(JSON.stringify(copyLanguages) === JSON.stringify(["en", "ja", "zh"]), "Concierge must define Japanese, English, and Chinese copy");
+const conciergeCopyKeys = Object.keys(copyContext.COPY.ja || {}).sort();
+["en", "zh"].forEach((language) => {
+  assert(JSON.stringify(Object.keys(copyContext.COPY[language] || {}).sort()) === JSON.stringify(conciergeCopyKeys), `Concierge ${language} copy keys do not match Japanese`);
+  conciergeCopyKeys.forEach((key) => assert(String(copyContext.COPY[language][key] || "").trim(), `Concierge ${language}.${key} is empty`));
+});
 
 [
   "idle: { row: 0",
@@ -96,6 +117,7 @@ requireFragment(css, "@media (prefers-reduced-motion: reduce)");
 requireFragment(css, "@media print");
 requireFragment(css, "z-index: 190");
 requireFragment(css, "max-height: calc(100dvh");
+requireFragment(css, "visibility: hidden", "A concierge without a safe target must leave keyboard and accessibility navigation");
 assert(!css.includes("data:"), "Concierge stylesheet must not embed sprite data URLs");
 
 const expectedPets = [

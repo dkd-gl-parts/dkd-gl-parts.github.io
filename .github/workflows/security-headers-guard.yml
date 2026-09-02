@@ -16,6 +16,7 @@ on:
       - "scripts/build-static-site.js"
       - "scripts/verify-install-app.js"
       - "scripts/verify-concierge-pet.js"
+      - "scripts/verify-concierge-pet-runtime.js"
       - "scripts/verify-security-response-headers.js"
       - ".github/workflows/security-headers-guard.yml"
   pull_request:
@@ -33,6 +34,7 @@ on:
       - "scripts/build-static-site.js"
       - "scripts/verify-install-app.js"
       - "scripts/verify-concierge-pet.js"
+      - "scripts/verify-concierge-pet-runtime.js"
       - "scripts/verify-security-response-headers.js"
       - ".github/workflows/security-headers-guard.yml"
   workflow_dispatch:

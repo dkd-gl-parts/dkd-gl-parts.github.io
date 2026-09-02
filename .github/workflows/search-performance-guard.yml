@@ -16,6 +16,7 @@ on:
       - "product-3d-viewer.js"
       - "assets/concierge-pet/**"
       - "scripts/verify-concierge-pet.js"
+      - "scripts/verify-concierge-pet-runtime.js"
       - "vendor/three/**"
       - "scripts/verify-product-3d-workflow.js"
       - "scripts/verify-app-version-assets.js"

@@ -413,7 +413,7 @@
     panel.hidden = false;
     launcher.setAttribute("aria-expanded", "true");
     stopActivity();
-    playRow("waiting", Infinity);
+    syncRunningState();
     panelClose.focus();
   }
 
@@ -432,9 +432,14 @@
   }
 
   function syncRunningState() {
-    if (!visible || document.hidden || settings.mode === "off" || panelOpen) {
+    if (!visible || document.hidden || settings.mode === "off") {
       stopActivity();
-      if (visible && panelOpen) playRow("waiting", Infinity);
+      return;
+    }
+    if (panelOpen) {
+      stopActivity();
+      if (isReducedMotion()) showFrame(ROWS.waiting.row, 0);
+      else playRow("waiting", Infinity);
       return;
     }
     if (isReducedMotion()) {
@@ -505,8 +510,8 @@
       var target = findSafeTarget();
       if (!target) {
         root.classList.add("has-no-safe-target");
-        playRow("idle", Infinity);
-        if (await delay(900, token)) runActivityLoop(token);
+        showFrame(ROWS.idle.row, 0);
+        if (await delay(3000, token)) runActivityLoop(token);
         return;
       }
       root.classList.remove("has-no-safe-target");
@@ -633,7 +638,7 @@
   function collectExclusionRects() {
     var active = document.querySelector(".screen.active");
     if (!active) return [];
-    var selectors = "button,input,select,textarea,a[href],[role='dialog'],.form-overlay,.overlay.show,.panel.show,.fullscreen,.toast,.loading-overlay";
+    var selectors = "button,input,select,textarea,a[href],summary,[role='button'],[role='link'],[role='dialog'],[tabindex]:not([tabindex='-1']),[data-production-index],.form-overlay,.overlay.show,.panel.show,.fullscreen,.toast,.loading-overlay";
     var elements = active.querySelectorAll(selectors);
     var rects = [];
     for (var i = 0; i < elements.length && rects.length < 260; i += 1) {
@@ -777,7 +782,7 @@
       success: "jumping",
       greeting: "waving"
     }[state];
-    if (!rowName || !visible || settings.mode === "off") return;
+    if (!rowName || !visible || document.hidden || settings.mode === "off" || root.classList.contains("has-no-safe-target")) return;
     root.classList.remove("has-no-safe-target");
     sequenceToken += 1;
     clearActivityTimer();

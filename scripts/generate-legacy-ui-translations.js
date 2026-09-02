@@ -394,6 +394,17 @@ function appRuntimeUiSource(source) {
   return runtime;
 }
 
+function runtimeUiSource(relativePath, source) {
+  if (relativePath !== "assets/concierge-pet/concierge-pet.js") return source;
+  const copyStart = source.indexOf("\n  var COPY = {");
+  const nonJapaneseStart = source.indexOf("\n    en: {", copyStart);
+  const copyEnd = source.indexOf("\n  var STATE_MESSAGE_KEYS", nonJapaneseStart);
+  if (copyStart < 0 || nonJapaneseStart < 0 || copyEnd < 0) {
+    throw new Error("Concierge local translation dictionary markers are missing");
+  }
+  return source.slice(0, copyStart) + source.slice(copyEnd);
+}
+
 function readExistingSupplemental() {
   if (!fs.existsSync(outputPath)) return { en: {}, zh: {} };
   const context = {};
@@ -492,9 +503,10 @@ async function main() {
   const candidates = new Set();
   extractHtmlCandidates(html, candidates);
   runtimeScriptPaths.forEach((relativePath) => {
-    const source = relativePath === "app.js"
+    let source = relativePath === "app.js"
       ? appRuntimeUiSource(app)
       : fs.readFileSync(path.join(root, relativePath), "utf8");
+    source = runtimeUiSource(relativePath, source);
     extractJsCandidates(source, candidates);
   });
   const existing = existingJapaneseValues(translations);

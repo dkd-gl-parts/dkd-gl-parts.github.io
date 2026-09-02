@@ -93,6 +93,15 @@ function appRuntimeUiSource(source) {
   return runtime;
 }
 
+function runtimeUiSource(relativePath, source) {
+  if (relativePath !== "assets/concierge-pet/concierge-pet.js") return source;
+  const copyStart = source.indexOf("\n  var COPY = {");
+  const nonJapaneseStart = source.indexOf("\n    en: {", copyStart);
+  const copyEnd = source.indexOf("\n  var STATE_MESSAGE_KEYS", nonJapaneseStart);
+  assert(copyStart >= 0 && nonJapaneseStart >= 0 && copyEnd >= 0, "Concierge local translation dictionary markers are missing");
+  return source.slice(0, copyStart) + source.slice(copyEnd);
+}
+
 const translations = extractTranslations();
 const legacy = extractLegacyTranslations();
 const jaKeys = Object.keys(translations.ja || {}).sort();
@@ -118,9 +127,10 @@ assert(!uncovered.length, `Static UI literals are missing supplemental translati
 
 const dynamicCandidates = new Set();
 runtimeScriptPaths.forEach((relativePath) => {
-  const source = relativePath === "app.js"
+  let source = relativePath === "app.js"
     ? appRuntimeUiSource(app)
     : fs.readFileSync(relativePath, "utf8");
+  source = runtimeUiSource(relativePath, source);
   extractJsCandidates(source, dynamicCandidates);
 });
 const uncoveredDynamic = Array.from(dynamicCandidates).filter((value) => {
