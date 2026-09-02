@@ -5467,7 +5467,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.840";
+var APP_VERSION       = "v1.1.841";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -13881,9 +13881,12 @@ function renderSalesOrderDetail() {
     ship: "出荷済みにする",
     cancel: "受注取消"
   };
-  var actions = allowed.map(function(action) {
+  var actions = allowed.filter(function(action) { return action !== "cancel"; }).map(function(action) {
     return "<button type='button' class='sales-order-action " + esc(action) + "' data-sales-order-action='" + esc(action) + "'>" + esc(actionLabels[action] || action) + "</button>";
   }).join("");
+  var cancelAction = allowed.indexOf("cancel") >= 0
+    ? "<details class='sales-order-secondary-actions'><summary>その他の操作</summary><div><button type='button' class='sales-order-action cancel' data-sales-order-action='cancel'>受注取消</button></div></details>"
+    : "";
   var outboundService = customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "outbound"), "未登録");
   var coreReturnService = order.core_return_required
     ? customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "core_return"), "未登録")
@@ -13891,8 +13894,8 @@ function renderSalesOrderDetail() {
   var orderDiscount = Math.max(0, parseInt(order.order_discount_jpy, 10) || 0);
   var orderAdjustments = Array.isArray(order.order_adjustments) ? order.order_adjustments : [];
   var pricingButton = order.pricing_editable ? "<button type='button' class='sales-order-pricing-open' id='sales-order-pricing-open'>金額を修正</button>" : "";
-  var nextActions = actions
-    ? "<div class='sales-order-detail-next-actions'><span>次の操作</span><div>" + actions + "</div></div>"
+  var nextActions = actions || cancelAction
+    ? "<div class='sales-order-detail-next-actions'><span>次の操作</span><div>" + actions + cancelAction + "</div></div>"
     : "<div class='sales-order-detail-next-actions complete'><span>次の操作</span><strong>現在必要な操作はありません</strong></div>";
   var tabHtml = [
     { key: "overview", label: "注文・配送" },
@@ -14330,21 +14333,40 @@ function updateSalesOrderInHouseCancelButton() {
   var reason = document.getElementById("sales-order-in-house-cancel-reason");
   var button = document.getElementById("sales-order-in-house-cancel-submit");
   if (!checkbox || !reason || !button) return;
-  button.disabled = salesOrderSaving || !checkbox.checked || !reason.value.trim();
+  button.disabled = salesOrderSaving || !checkbox.checked || reason.value.trim().length < 4;
+  button.textContent = salesOrderSaving ? "取消処理中..." : "この受注を取り消す";
 }
 
 function openSalesOrderInHouseCancelDialog() {
   var order = salesOrderDetail;
-  if (!order || order.status !== "shipped") return;
+  var allowed = Array.isArray(order && order.allowed_actions) ? order.allowed_actions : [];
+  if (!order || allowed.indexOf("cancel") < 0) return;
   var overlay = document.getElementById("sales-order-in-house-cancel-overlay");
   var orderLabel = document.getElementById("sales-order-in-house-cancel-order");
+  var orderNumber = document.getElementById("sales-order-in-house-cancel-number");
+  var customer = document.getElementById("sales-order-in-house-cancel-customer");
+  var status = document.getElementById("sales-order-in-house-cancel-status");
+  var total = document.getElementById("sales-order-in-house-cancel-total");
+  var warning = document.getElementById("sales-order-in-house-cancel-warning");
+  var confirmText = document.getElementById("sales-order-in-house-cancel-confirm-text");
   var checkbox = document.getElementById("sales-order-in-house-cancel-confirm");
   var reason = document.getElementById("sales-order-in-house-cancel-reason");
   var result = document.getElementById("sales-order-in-house-cancel-result");
   if (!overlay || !checkbox || !reason || !result) return;
   overlay.dataset.orderId = String(order.id);
   overlay.dataset.orderVersion = order.version == null ? "" : String(order.version);
-  if (orderLabel) orderLabel.textContent = (order.order_number || ("注文 " + order.id)) + " / " + (order.customer_name || "-");
+  var displayOrderNumber = order.order_number || ("注文 " + order.id);
+  if (orderLabel) orderLabel.textContent = "対象を確認し、取消理由を記録してから実行してください。";
+  if (orderNumber) orderNumber.textContent = displayOrderNumber;
+  if (customer) customer.textContent = order.customer_name || "-";
+  if (status) status.textContent = customerOrderStatusLabel(order.status);
+  if (total) total.textContent = customerOrderCurrency(order.total_jpy);
+  if (warning) warning.textContent = order.status === "shipped"
+    ? "この受注は出荷済みです。商品がまだ社内にあることを確認してください。取消後、在庫とシリアルを戻します。運送会社へ渡した後は、受注取消ではなく返品処理を行ってください。"
+    : "取消後は在庫引当を解除し、処理履歴へ記録します。元に戻す場合は再受注が必要です。";
+  if (confirmText) confirmText.textContent = order.status === "shipped"
+    ? "商品がまだ社内にあることを確認しました"
+    : "表示中の受注を取り消すことを確認しました";
   checkbox.checked = false;
   reason.value = "";
   result.textContent = "";
@@ -14373,14 +14395,14 @@ async function submitSalesOrderInHouseCancellation() {
   var orderId = parseInt(overlay.dataset.orderId, 10);
   var expectedVersion = parseInt(overlay.dataset.orderVersion, 10);
   var cleanReason = reason.value.trim();
-  if (isNaN(orderId) || !checkbox.checked || !cleanReason) {
-    resultHost.textContent = "商品が社内にあることの確認と取消理由を入力してください。";
+  if (isNaN(orderId) || !checkbox.checked || cleanReason.length < 4) {
+    resultHost.textContent = "対象受注を確認し、取消理由を4文字以上で入力してください。";
     resultHost.className = "sales-order-in-house-cancel-result error";
     return;
   }
 
   salesOrderSaving = true;
-  resultHost.textContent = "在庫・シリアル・送り状を確認して取り消しています。";
+  resultHost.textContent = "在庫・シリアル・送り状の状態を確認して取り消しています。";
   resultHost.className = "sales-order-in-house-cancel-result";
   updateSalesOrderInHouseCancelButton();
   var rpcResult = await sb.rpc("update_sales_order_status", {
@@ -14391,7 +14413,7 @@ async function submitSalesOrderInHouseCancellation() {
   });
   salesOrderSaving = false;
   if (rpcResult.error) {
-    resultHost.textContent = rpcResult.error.message || "出荷済み受注を取り消せませんでした。";
+    resultHost.textContent = rpcResult.error.message || "受注を取り消せませんでした。";
     resultHost.className = "sales-order-in-house-cancel-result error";
     updateSalesOrderInHouseCancelButton();
     return;
@@ -14405,12 +14427,11 @@ async function submitSalesOrderInHouseCancellation() {
 
 async function updateSalesOrderStatus(action) {
   if (!canManageSalesOrders() || salesOrderSaving || !salesOrderDetail || !action) return;
-  if (action === "cancel" && salesOrderDetail.status === "shipped") {
+  if (action === "cancel") {
     openSalesOrderInHouseCancelDialog();
     return;
   }
   if (action === "accept" && !confirm("在庫を再確認して受付し、出荷指示書を発行します。よろしいですか？")) return;
-  if (action === "cancel" && !confirm("この受注を取り消します。よろしいですか？")) return;
   salesOrderSaving = true;
   setSalesOrderDetailMessage("更新しています。", false);
   var result = await sb.rpc("update_sales_order_status", {

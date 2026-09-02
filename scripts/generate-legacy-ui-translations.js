@@ -20,6 +20,22 @@ const curatedTranslations = {
   en: {
     "dkd商品id": "DKD Product ID",
     "受注金額の修正": "Edit Order Amounts",
+    "受注を取り消す": "Cancel Order",
+    "受注金額": "Order Total",
+    "対象を確認し、取消理由を記録してから実行してください。": "Confirm the order and record the cancellation reason before continuing.",
+    "取消後は在庫引当を解除し、処理履歴へ記録します。対象受注を確認してから実行してください。": "Cancelling releases the inventory allocation and records the action in the history. Confirm the target order before continuing.",
+    "この受注は出荷済みです。商品がまだ社内にあることを確認してください。取消後、在庫とシリアルを戻します。運送会社へ渡した後は、受注取消ではなく返品処理を行ってください。": "This order is marked shipped. Confirm the product is still in-house. Cancelling restores inventory and serial assignments. After handoff to the carrier, use the return process instead.",
+    "取消後は在庫引当を解除し、処理履歴へ記録します。元に戻す場合は再受注が必要です。": "Cancelling releases the inventory allocation and records the action in the history. A new order is required to restore it.",
+    "商品がまだ社内にあることを確認しました": "I confirmed that the product is still in-house",
+    "表示中の受注を取り消すことを確認しました": "I confirmed that I want to cancel the displayed order",
+    "取消理由を4文字以上で入力してください。": "Enter a cancellation reason of at least 4 characters.",
+    "対象受注を確認し、取消理由を4文字以上で入力してください。": "Confirm the target order and enter a cancellation reason of at least 4 characters.",
+    "在庫・シリアル・送り状の状態を確認して取り消しています。": "Checking inventory, serial, and waybill status and cancelling the order.",
+    "受注を取り消せませんでした。": "Could not cancel the order.",
+    "取消処理中...": "Cancelling...",
+    "取消をやめる": "Keep Order",
+    "この受注を取り消す": "Cancel This Order",
+    "その他の操作": "More Actions",
     "商品発送送り状": "Outbound Shipping Waybill",
     "コア返却用複写伝票": "Multipart Core Return Waybill",
     "コア返却対象の商品を確認できません。受注明細を再読込してください。": "Could not confirm the products requiring core return. Reload the order details.",
@@ -69,6 +85,22 @@ const curatedTranslations = {
   zh: {
     "dkd商品id": "DKD商品ID",
     "受注金額の修正": "修改订单金额",
+    "受注を取り消す": "取消订单",
+    "受注金額": "订单金额",
+    "対象を確認し、取消理由を記録してから実行してください。": "请确认订单并记录取消原因后再继续。",
+    "取消後は在庫引当を解除し、処理履歴へ記録します。対象受注を確認してから実行してください。": "取消后将解除库存预留，并记录到处理历史中。请确认目标订单后再继续。",
+    "この受注は出荷済みです。商品がまだ社内にあることを確認してください。取消後、在庫とシリアルを戻します。運送会社へ渡した後は、受注取消ではなく返品処理を行ってください。": "此订单已标记为已发货。请确认商品仍在公司内。取消后将恢复库存和序列号分配。交给承运商后，请改用退货流程。",
+    "取消後は在庫引当を解除し、処理履歴へ記録します。元に戻す場合は再受注が必要です。": "取消后将解除库存预留，并记录到处理历史中。如需恢复，必须重新下单。",
+    "商品がまだ社内にあることを確認しました": "我已确认商品仍在公司内",
+    "表示中の受注を取り消すことを確認しました": "我已确认要取消当前显示的订单",
+    "取消理由を4文字以上で入力してください。": "请输入至少4个字符的取消原因。",
+    "対象受注を確認し、取消理由を4文字以上で入力してください。": "请确认目标订单，并输入至少4个字符的取消原因。",
+    "在庫・シリアル・送り状の状態を確認して取り消しています。": "正在确认库存、序列号和运单状态并取消订单。",
+    "受注を取り消せませんでした。": "无法取消订单。",
+    "取消処理中...": "正在取消...",
+    "取消をやめる": "保留订单",
+    "この受注を取り消す": "取消此订单",
+    "その他の操作": "更多操作",
     "商品発送送り状": "商品发货运单",
     "コア返却用複写伝票": "旧件返还用复写运单",
     "コア返却対象の商品を確認できません。受注明細を再読込してください。": "无法确认需要返还旧件的商品。请重新加载订单明细。",
@@ -303,7 +335,10 @@ async function main() {
   const existing = existingJapaneseValues(translations);
   const values = Array.from(candidates).filter((value) => !existing.has(value)).sort((a, b) => a.localeCompare(b, "ja"));
   const previous = readExistingSupplemental();
-  const missing = values.filter((value) => !previous.en[value] || !previous.zh[value]);
+  const missing = values.filter((value) =>
+    !(previous.en[value] || curatedTranslations.en[value]) ||
+    !(previous.zh[value] || curatedTranslations.zh[value])
+  );
   console.log(`Supplemental translations: ${values.length} total, ${missing.length} new`);
   let translated = { en: {}, zh: {} };
   if (missing.length && process.platform === "win32") {

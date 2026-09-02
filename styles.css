@@ -6662,6 +6662,15 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .sales-order-action.prepare_shipping,
 .sales-order-action.ship { border-color: #287356; background: #287356; color: #fff; }
 .sales-order-action.cancel { border-color: #d64545; color: #b42318; }
+.sales-order-secondary-actions { position: relative; }
+.sales-order-secondary-actions > summary { min-height: 34px; border: 1px solid #aeb7c0; border-radius: 5px; padding: 9px 28px 0 10px; background: #fff; color: #4e5b68; font-size: 10px; font-weight: 800; list-style: none; cursor: pointer; white-space: nowrap; }
+.sales-order-secondary-actions > summary::-webkit-details-marker { display: none; }
+.sales-order-secondary-actions > summary::after { position: absolute; top: 10px; right: 10px; content: "▼"; color: #7a8590; font-size: 7px; }
+.sales-order-secondary-actions[open] > summary { border-color: #788795; background: #f6f8f9; }
+.sales-order-secondary-actions > div { position: absolute; z-index: 6; top: calc(100% + 5px); right: 0; min-width: 152px; border: 1px solid #cbd2d9; padding: 6px; background: #fff; box-shadow: 0 7px 18px rgba(29, 41, 57, .16); }
+.sales-order-secondary-actions > div .sales-order-action { width: 100%; }
+.sales-order-secondary-actions > summary:focus-visible,
+.sales-order-action.cancel:focus-visible { outline: 3px solid rgba(37, 99, 235, .25); outline-offset: 2px; }
 .sales-order-detail-message { min-height: 18px; margin-top: 9px; color: #22643e; font-size: 10px; font-weight: 700; text-align: right; }
 .sales-order-detail-message.error { color: #b42318; }
 .sales-order-pricing-history { border-top: 1px solid #dbe1e6; padding-top: 18px; }
@@ -6799,10 +6808,17 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .sales-order-in-house-cancel-heading > span { color: #b42318; font-size: 9px; font-weight: 900; }
 .sales-order-in-house-cancel-heading h3 { margin: 4px 0 0; color: #1d2939; font-size: 20px; letter-spacing: 0; }
 .sales-order-in-house-cancel-heading p { margin: 6px 0 0; color: #5e6875; font-size: 11px; font-weight: 700; }
+.sales-order-in-house-cancel-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 16px; border: 1px solid #d8dfe6; }
+.sales-order-in-house-cancel-summary > div { min-width: 0; border-right: 1px solid #d8dfe6; border-bottom: 1px solid #d8dfe6; padding: 9px 10px; background: #f8fafb; }
+.sales-order-in-house-cancel-summary > div:nth-child(2n) { border-right: 0; }
+.sales-order-in-house-cancel-summary > div:nth-last-child(-n + 2) { border-bottom: 0; }
+.sales-order-in-house-cancel-summary dt { color: #717d89; font-size: 9px; font-weight: 700; }
+.sales-order-in-house-cancel-summary dd { overflow-wrap: anywhere; margin-top: 3px; color: #263544; font-size: 11px; font-weight: 800; }
 .sales-order-in-house-cancel-warning { margin: 16px 0 12px; border: 1px solid #e4b4ad; padding: 10px 12px; background: #fff4f2; color: #8f241d; font-size: 11px; font-weight: 700; line-height: 1.6; }
 .sales-order-in-house-cancel-confirm { display: grid; grid-template-columns: 18px minmax(0, 1fr); align-items: start; gap: 8px; margin-bottom: 14px; border: 1px solid #d5dce4; padding: 11px; background: #f8fafc; color: #344054; font-size: 11px; font-weight: 700; line-height: 1.5; cursor: pointer; }
 .sales-order-in-house-cancel-confirm input { width: 16px; height: 16px; margin: 1px 0 0; accent-color: #b42318; }
 .sales-order-in-house-cancel-card textarea { min-height: 86px; resize: vertical; line-height: 1.5; }
+.sales-order-in-house-cancel-card .form-row small { display: block; margin-top: 4px; color: #7a8590; font-size: 9px; }
 .sales-order-in-house-cancel-result { min-height: 18px; color: #22643e; font-size: 10px; font-weight: 700; }
 .sales-order-in-house-cancel-result.error { color: #b42318; }
 .sales-order-in-house-cancel-card .btn-danger:disabled { border-color: #d0d5dd; background: #e4e7ec; color: #98a2b3; cursor: not-allowed; }
@@ -7483,6 +7499,9 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   .sales-order-detail-next-actions { align-items: stretch; flex-direction: column; width: 100%; }
   .sales-order-detail-next-actions > div { justify-content: stretch; }
   .sales-order-detail-next-actions .sales-order-action { flex: 1; }
+  .sales-order-secondary-actions { width: 100%; }
+  .sales-order-secondary-actions > summary { width: 100%; }
+  .sales-order-secondary-actions > div { position: static; width: 100%; margin-top: 5px; }
   .sales-order-detail-summary { grid-template-columns: 1fr 1fr; }
   .sales-order-detail-summary > div:nth-child(even) { border-right: 0; }
   .sales-order-detail-summary .total { grid-column: 1 / -1; }
@@ -7529,6 +7548,11 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   .sales-order-shipment-history-row { grid-template-columns: 74px minmax(0, 1fr); }
   .sales-order-shipment-history-row .state { justify-self: start; }
   .sales-order-detail-actions { align-items: stretch; flex-direction: column; }
+  .sales-order-in-house-cancel-summary { grid-template-columns: 1fr; }
+  .sales-order-in-house-cancel-summary > div,
+  .sales-order-in-house-cancel-summary > div:nth-child(2n),
+  .sales-order-in-house-cancel-summary > div:nth-last-child(-n + 2) { border-right: 0; border-bottom: 1px solid #d8dfe6; }
+  .sales-order-in-house-cancel-summary > div:last-child { border-bottom: 0; }
   .sales-order-in-house-cancel-card .form-footer { align-items: stretch; flex-direction: column; }
   .sales-order-in-house-cancel-card .form-footer button { width: 100%; min-height: 42px; white-space: normal; }
   .shipping-document-toolbar { padding: 16px 12px; }
