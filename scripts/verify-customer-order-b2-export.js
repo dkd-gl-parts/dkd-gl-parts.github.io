@@ -65,6 +65,48 @@ for (const fragment of [
   if (!issueSource.includes(fragment)) throw new Error(`Missing B2 issuance cleanup: ${fragment}`);
 }
 
+const targetSource = between("function salesOrderB2TargetIds", "function setSalesOrderBatchMessage");
+const targetSandbox = {
+  salesOrderCheckedIds: () => [],
+  salesOrderSelectedId: 42,
+  salesOrderRows: [{ id: 42 }],
+  parseInt,
+  isNaN
+};
+vm.createContext(targetSandbox);
+vm.runInContext(targetSource, targetSandbox);
+if (JSON.stringify(targetSandbox.salesOrderB2TargetIds()) !== "[42]") {
+  throw new Error("B2 export must use the currently displayed order when no rows are checked");
+}
+targetSandbox.salesOrderCheckedIds = () => [7, 8];
+if (JSON.stringify(targetSandbox.salesOrderB2TargetIds()) !== "[7,8]") {
+  throw new Error("Checked orders must take precedence for batch B2 export");
+}
+targetSandbox.salesOrderCheckedIds = () => [];
+targetSandbox.salesOrderSelectedId = null;
+if (targetSandbox.salesOrderB2TargetIds().length !== 0) {
+  throw new Error("B2 export must stay disabled when neither a displayed nor checked order exists");
+}
+targetSandbox.salesOrderSelectedId = 42;
+targetSandbox.salesOrderRows = [{ id: 99 }];
+if (targetSandbox.salesOrderB2TargetIds().length !== 0) {
+  throw new Error("B2 export must not use a previously displayed order hidden by the current list filter");
+}
+
+const selectionSource = between("function updateSalesOrderSelectionButtons", "function salesOrderPrintStationStateLabel");
+for (const fragment of [
+  "var b2TargetIds = salesOrderB2TargetIds()",
+  "exportButton.disabled = b2TargetIds.length === 0 || salesOrderSaving",
+  "現在表示中の受注を発行します。"
+]) {
+  if (!selectionSource.includes(fragment)) throw new Error(`Missing selected-order B2 button behavior: ${fragment}`);
+}
+
+const exportWrapper = between("async function exportSalesOrdersB2", "function decodeSalesOrderB2Csv");
+if (!exportWrapper.includes("var orderIds = salesOrderB2TargetIds()") || !exportWrapper.includes("exportSalesOrderIdsB2(orderIds)")) {
+  throw new Error("B2 export button must issue the resolved displayed-or-checked target orders");
+}
+
 function makeSandbox(results) {
   const rpcCalls = [];
   const sandbox = {

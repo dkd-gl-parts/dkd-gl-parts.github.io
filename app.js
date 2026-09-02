@@ -5647,7 +5647,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.858";
+var APP_VERSION       = "v1.1.859";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -11014,6 +11014,16 @@ function salesOrderCheckedIds() {
   return Array.from(salesOrderCheckedIdsState).filter(function(id) { return !isNaN(id); });
 }
 
+function salesOrderB2TargetIds() {
+  var checkedIds = salesOrderCheckedIds();
+  if (checkedIds.length) return checkedIds;
+  var selectedId = parseInt(salesOrderSelectedId, 10);
+  var selectedIsVisible = salesOrderRows.some(function(row) {
+    return parseInt(row && row.id, 10) === selectedId;
+  });
+  return isNaN(selectedId) || !selectedIsVisible ? [] : [selectedId];
+}
+
 function setSalesOrderBatchMessage(message, isError) {
   var host = document.getElementById("sales-order-batch-message");
   if (!host) return;
@@ -11308,6 +11318,7 @@ async function createDcatsBusinessWorkspaceShortcut() {
 
 function updateSalesOrderSelectionButtons() {
   var checkedIds = salesOrderCheckedIds();
+  var b2TargetIds = salesOrderB2TargetIds();
   var selectedRows = salesOrderRows.filter(function(row) {
     return checkedIds.indexOf(parseInt(row.id, 10)) >= 0;
   });
@@ -11315,8 +11326,13 @@ function updateSalesOrderSelectionButtons() {
   var exportButton = document.getElementById("sales-order-export-b2");
   var acceptButton = document.getElementById("sales-order-batch-accept");
   if (exportButton) {
-    exportButton.disabled = checkedIds.length === 0 || salesOrderSaving;
-    exportButton.textContent = salesOrderB2ExportSaving ? "必須項目を確認中..." : "商品発送用B2 CSV発行";
+    exportButton.disabled = b2TargetIds.length === 0 || salesOrderSaving;
+    exportButton.textContent = salesOrderB2ExportSaving
+      ? "必須項目を確認中..."
+      : "商品発送用B2 CSV発行";
+    exportButton.title = b2TargetIds.length
+      ? (checkedIds.length ? "チェックした受注を発行します。" : "現在表示中の受注を発行します。")
+      : "注文を表示するか、一覧の処理対象にチェックを入れてください。";
   }
   if (acceptButton) {
     acceptButton.disabled = acceptIds.length === 0 || salesOrderSaving;
@@ -15688,7 +15704,12 @@ async function exportSalesOrderIdsB2(orderIds) {
 }
 
 async function exportSalesOrdersB2() {
-  return exportSalesOrderIdsB2(salesOrderCheckedIds());
+  var orderIds = salesOrderB2TargetIds();
+  if (!orderIds.length) {
+    setSalesOrderBatchMessage("注文を表示するか、一覧の処理対象にチェックを入れてください。", true);
+    return null;
+  }
+  return exportSalesOrderIdsB2(orderIds);
 }
 
 function decodeSalesOrderB2Csv(buffer) {

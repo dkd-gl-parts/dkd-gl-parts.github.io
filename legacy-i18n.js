@@ -2635,7 +2635,10 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "B2 CSVを再ダウンロードしました。": "The B2 CSV was downloaded again.",
     "コア返却用複写伝票の印刷が完了しました。必要な場合は「再印刷」からもう一度発行できます。": "The multipart core return waybill has finished printing. Use \"Reprint\" to print it again if needed.",
     "コア返却用複写伝票を印刷できませんでした。印刷端末を確認して「再送」してください。": "The multipart core return waybill could not be printed. Check the printing terminal, then select \"Resend\".",
-    "再送": "Resend"
+    "再送": "Resend",
+    "チェックした受注を発行します。": "Issue the checked orders.",
+    "現在表示中の受注を発行します。": "Issue the currently displayed order.",
+    "注文を表示するか、一覧の処理対象にチェックを入れてください。": "Display an order or check the orders to process in the list."
   },
   "zh": {
     ": 構成部品の使用レコードIDを確認できませんでした。画面を更新して再度お試しください。": ": 无法确认构成部件的使用记录ID。请刷新页面后再试一次。",
@@ -5271,6 +5274,9 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "B2 CSVを再ダウンロードしました。": "B2 CSV已重新下载。",
     "コア返却用複写伝票の印刷が完了しました。必要な場合は「再印刷」からもう一度発行できます。": "旧件返还用复写运单已打印完成。如需再次打印，请选择“重新打印”。",
     "コア返却用複写伝票を印刷できませんでした。印刷端末を確認して「再送」してください。": "旧件返还用复写运单打印失败。请检查打印终端后选择“重新发送”。",
-    "再送": "重新发送"
+    "再送": "重新发送",
+    "チェックした受注を発行します。": "发行已勾选的订单。",
+    "現在表示中の受注を発行します。": "发行当前显示的订单。",
+    "注文を表示するか、一覧の処理対象にチェックを入れてください。": "请显示订单，或在列表中勾选要处理的订单。"
   }
 };
