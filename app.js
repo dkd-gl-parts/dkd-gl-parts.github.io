@@ -751,6 +751,11 @@ var TRANSLATIONS = {
     finished_shipping_history: "シリアル・保証履歴",
     finished_shipping_history_empty: "出荷履歴はありません。",
     finished_shipping_available: "出荷可能",
+    finished_shipping_picking_ok: "照合OK",
+    finished_shipping_picking_ng: "照合NG",
+    finished_shipping_picking_exact: "受注品番と一致しました。",
+    finished_shipping_picking_compatible: "登録済み互換品と一致しました。",
+    finished_shipping_picking_ng_reason: "受注品番または登録済み互換品ではありません。",
     finished_shipping_shipped: "出荷済み",
     finished_shipping_cancelled_status: "取消済み",
     finished_shipping_warranty_active: "保証期間内",
@@ -2557,6 +2562,11 @@ var TRANSLATIONS = {
     finished_shipping_history: "Serial / Warranty History",
     finished_shipping_history_empty: "No shipment history.",
     finished_shipping_available: "Available",
+    finished_shipping_picking_ok: "Check OK",
+    finished_shipping_picking_ng: "Check NG",
+    finished_shipping_picking_exact: "Matches the ordered part number.",
+    finished_shipping_picking_compatible: "Matches a registered compatible part.",
+    finished_shipping_picking_ng_reason: "This is neither the ordered part nor a registered compatible part.",
     finished_shipping_shipped: "Shipped",
     finished_shipping_cancelled_status: "Cancelled",
     finished_shipping_warranty_active: "Under Warranty",
@@ -4371,6 +4381,11 @@ var TRANSLATIONS = {
     finished_shipping_history: "序列号・保修履历",
     finished_shipping_history_empty: "没有出货历史。",
     finished_shipping_available: "可出货",
+    finished_shipping_picking_ok: "核对OK",
+    finished_shipping_picking_ng: "核对NG",
+    finished_shipping_picking_exact: "与订单品号一致。",
+    finished_shipping_picking_compatible: "与已登记互换品一致。",
+    finished_shipping_picking_ng_reason: "该产品既不是订单品号，也不是已登记互换品。",
     finished_shipping_shipped: "已出货",
     finished_shipping_cancelled_status: "已取消",
     finished_shipping_warranty_active: "保修期内",
@@ -5542,7 +5557,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.850";
+var APP_VERSION       = "v1.1.851";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -28631,6 +28646,12 @@ async function loadFinishedShipmentDispatch() {
   var order = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
   refreshFinishedShipmentContext(order);
   closeFinishedShipmentCandidates();
+  setFinishedShipmentMessage("finished-shipment-scan-message", "", false);
+  var lookup = document.getElementById("finished-shipment-lookup");
+  if (lookup) {
+    lookup.innerHTML = "";
+    lookup.className = "finished-shipment-lookup";
+  }
   setFinishedShipmentMessage("finished-shipment-dispatch-message", t("finished_shipping_dispatch_loaded"), false);
   var serialInput = document.getElementById("finished-shipment-serial-input");
   if (serialInput) { serialInput.value = ""; serialInput.focus(); }
@@ -28773,12 +28794,14 @@ function renderFinishedShipmentCandidates() {
   }).join("");
   host.querySelectorAll("[data-finished-candidate-serial]").forEach(function(button) {
     button.addEventListener("click", function() {
-      assignFinishedShipmentSerial(finishedShipmentCandidateOrderItemId, button.dataset.finishedCandidateSerial);
+      var serial = button.dataset.finishedCandidateSerial;
+      var unit = finishedShipmentCandidateRows.find(function(row) { return row.manufacturing_serial === serial; }) || null;
+      assignFinishedShipmentSerial(finishedShipmentCandidateOrderItemId, serial, unit);
     });
   });
 }
 
-async function assignFinishedShipmentSerial(orderItemId, serial) {
+async function assignFinishedShipmentSerial(orderItemId, serial, unit) {
   var dispatch = finishedShipmentDispatch();
   if (!dispatch || !serial || finishedShipmentSaving) return;
   finishedShipmentSaving = true;
@@ -28791,7 +28814,8 @@ async function assignFinishedShipmentSerial(orderItemId, serial) {
   finishedShipmentSaving = false;
   if (result.error) {
     setFinishedShipmentMessage("finished-shipment-scan-message", result.error.message || t("msg_part_err"), true);
-    return;
+    if (unit) await renderFinishedShipmentLookup(unit, { status: "ng" });
+    return false;
   }
   var order = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
   refreshFinishedShipmentContext(order);
@@ -28801,6 +28825,12 @@ async function assignFinishedShipmentSerial(orderItemId, serial) {
   var assignedKey = assignedRow && assignedRow.match_type === "compatible"
     ? "finished_shipping_compatible_assigned"
     : "finished_shipping_exact_assigned";
+  if (unit) {
+    await renderFinishedShipmentLookup(unit, {
+      status: "ok",
+      matchType: assignedRow && assignedRow.match_type === "compatible" ? "compatible" : "exact"
+    });
+  }
   var readyMessage = finishedShipmentDispatch() && finishedShipmentDispatch().status === "ready"
     ? " " + t("finished_shipping_all_verified")
     : "";
@@ -28808,6 +28838,7 @@ async function assignFinishedShipmentSerial(orderItemId, serial) {
   if (finishedShipmentCandidateOrderItemId) await loadFinishedShipmentCandidates();
   var input = document.getElementById("finished-shipment-serial-input");
   if (input) { input.value = ""; input.focus(); }
+  return true;
 }
 
 async function releaseFinishedShipmentAssignment(assignmentId) {
@@ -28854,14 +28885,43 @@ async function loadFinishedShipmentForUnit(unitId) {
   });
 }
 
-async function renderFinishedShipmentLookup(unit) {
+function finishedShipmentPickingPresentation(result) {
+  if (!result) return null;
+  if (result.status === "ok") {
+    return {
+      className: "picking-ok",
+      badgeKey: "finished_shipping_picking_ok",
+      detailKey: result.matchType === "compatible"
+        ? "finished_shipping_picking_compatible"
+        : "finished_shipping_picking_exact"
+    };
+  }
+  return {
+    className: "picking-ng",
+    badgeKey: "finished_shipping_picking_ng",
+    detailKey: "finished_shipping_picking_ng_reason"
+  };
+}
+
+async function renderFinishedShipmentLookup(unit, pickingResult) {
   var wrap = document.getElementById("finished-shipment-lookup");
   if (!wrap) return;
-  if (!unit) { wrap.innerHTML = ""; return; }
+  if (!unit) {
+    wrap.innerHTML = "";
+    wrap.className = "finished-shipment-lookup";
+    return;
+  }
   var shipment = await loadFinishedShipmentForUnit(unit.id);
   var productNo = unit.gltek_part_number || unit.product_no || unit.manufacturer_part_number || unit.genuine_part_number || "-";
-  var html = "<div class='finished-shipment-lookup-head'><strong>" + esc(unit.manufacturing_serial) + "</strong><span class='finished-shipment-status " + esc(unit.status || "") + "'>" + esc(t(unit.status === "available" ? "finished_shipping_available" : "finished_shipping_shipped")) + "</span></div>";
+  var picking = finishedShipmentPickingPresentation(pickingResult);
+  var statusClass = picking ? picking.className : (unit.status || "");
+  var statusLabel = picking ? t(picking.badgeKey) : t(unit.status === "available" ? "finished_shipping_available" : "finished_shipping_shipped");
+  wrap.className = "finished-shipment-lookup" + (picking ? " " + picking.className : "");
+  var html = "<div class='finished-shipment-lookup-head'><strong>" + esc(unit.manufacturing_serial) + "</strong><span class='finished-shipment-status " + esc(statusClass) + "'>" + esc(statusLabel) + "</span></div>";
   html += "<div class='finished-shipment-lookup-sub'>" + esc([productNo, unit.manufacturer].filter(Boolean).join(" / ")) + "</div>";
+  if (picking) {
+    html += "<div class='finished-shipment-picking-result " + esc(picking.className) + "'><strong>" + esc(t(picking.badgeKey)) + "</strong><span>" + esc(t(picking.detailKey)) + "</span></div>";
+  }
   if (shipment) {
     var warranty = finishedShipmentWarrantyState(shipment.warranty_expires_on);
     html += "<div class='finished-shipment-lookup-grid'>" +
@@ -28901,19 +28961,20 @@ async function addFinishedShipmentSerial() {
     if (input) input.select();
     return;
   }
-  await renderFinishedShipmentLookup(r.data);
   var dispatch = finishedShipmentDispatch();
   if (!dispatch) {
+    await renderFinishedShipmentLookup(r.data);
     setFinishedShipmentMessage("finished-shipment-scan-message", t(r.data.status === "available" ? "finished_shipping_lookup_available" : "finished_shipping_shipped"), false);
     if (input) { input.value = ""; input.focus(); }
     return;
   }
   if (r.data.status !== "available") {
+    await renderFinishedShipmentLookup(r.data, { status: "ng" });
     setFinishedShipmentMessage("finished-shipment-scan-message", t("finished_shipping_serial_unavailable"), true);
     if (input) input.select();
     return;
   }
-  await assignFinishedShipmentSerial(null, serial);
+  await assignFinishedShipmentSerial(null, serial, r.data);
 }
 
 async function clearFinishedShipmentUnits() {

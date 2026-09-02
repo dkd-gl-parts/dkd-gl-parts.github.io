@@ -174,7 +174,7 @@ assert(!assignmentSource.includes("!orderItemId"), "scanner assignment must not 
 const scanSource = functionSource("addFinishedShipmentSerial");
 assert(scanSource.includes('.from("finished_product_units")'), "serial scan does not look up finished units");
 assert(scanSource.includes('r.data.status !== "available"'), "unavailable units are not blocked");
-assert(scanSource.includes("assignFinishedShipmentSerial(null, serial)"), "scanned serial must use the server-side exact-or-compatible matcher");
+assert(scanSource.includes("assignFinishedShipmentSerial(null, serial, r.data)"), "scanned serial must use the server-side exact-or-compatible matcher and preserve its visual evaluation target");
 assert(!scanSource.includes("finishedShipmentOrderItemForUnit"), "scanner must not reject compatible products through exact client matching");
 assert(scanSource.includes("assignFinishedShipmentSerial"), "scanner input and manual selection do not share assignment logic");
 assert(scanSource.includes("if (!dispatch)"), "standalone serial lookup must remain available without a dispatch");

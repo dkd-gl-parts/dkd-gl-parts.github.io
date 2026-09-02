@@ -5402,9 +5402,15 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .finished-shipment-lookup { margin-top: 9px; }
 .finished-shipment-lookup:empty { display: none; }
 .finished-shipment-lookup:not(:empty) { border: 1px solid #cbd8e8; border-radius: 8px; padding: 10px; background: #f7faff; }
+.finished-shipment-lookup.picking-ok:not(:empty) { border-color: #86c99c; background: #f1faf4; }
+.finished-shipment-lookup.picking-ng:not(:empty) { border-color: #e49393; background: #fff3f3; box-shadow: inset 4px 0 0 #c62828; }
 .finished-shipment-lookup-head, .finished-shipment-history-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .finished-shipment-lookup-head strong, .finished-shipment-serial { font-family: Consolas, "SFMono-Regular", monospace; color: #163d70; letter-spacing: .02em; }
 .finished-shipment-lookup-sub, .finished-shipment-history-meta { margin-top: 5px; color: #687386; font-size: 11px; line-height: 1.45; word-break: break-word; }
+.finished-shipment-picking-result { display: flex; align-items: flex-start; gap: 9px; margin-top: 9px; border-radius: 6px; padding: 8px 9px; font-size: 11px; line-height: 1.45; }
+.finished-shipment-picking-result strong { flex: 0 0 auto; font-size: 12px; }
+.finished-shipment-picking-result.picking-ok { background: #daf2e2; color: #1f6038; }
+.finished-shipment-picking-result.picking-ng { background: #ffdede; color: #971d1d; }
 .finished-shipment-lookup-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 9px; }
 .finished-shipment-lookup-grid > div { border: 1px solid #e1e8f2; border-radius: 7px; padding: 7px 8px; background: #fff; }
 .finished-shipment-lookup-grid span { display: block; color: #7c8492; font-size: 10px; }
@@ -5444,6 +5450,8 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .finished-shipment-table td .finished-shipment-match-badge { margin-top: 4px; }
 .finished-shipment-status { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 8px; font-size: 10px; font-weight: 800; white-space: nowrap; }
 .finished-shipment-status.available { background: #e9f7ee; color: #21643a; }
+.finished-shipment-status.picking-ok { background: #d8f1e0; color: #185f34; }
+.finished-shipment-status.picking-ng { background: #ffd9d9; color: #a11919; }
 .finished-shipment-status.shipped { background: #eaf2ff; color: #174ea6; }
 .finished-shipment-status.cancelled { background: #f2f3f5; color: #666f7d; }
 .finished-shipment-submit-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 12px; }
