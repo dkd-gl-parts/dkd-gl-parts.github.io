@@ -89,6 +89,11 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
 requireFragment(runtime, 'if (!visible || document.hidden || settings.mode === "off")', "Off mode must stop before panel animation handling");
 requireFragment(runtime, 'settings.mode === "off" || root.classList.contains("has-no-safe-target")', "External states must not revive a concierge without a safe target");
 requireFragment(runtime, 'if (!isSystemAdminSession() || panelOpen) return;', "Concierge settings must fail closed outside a system-admin session");
+requireFragment(runtime, 'suzuto: { copyKey: "suzuto", className: "is-suzuto", travelRows: { right: "running-right", left: "running-left" } }', "Suzuto travel rows must match the approved atlas direction");
+requireFragment(runtime, 'rinna: { copyKey: "rinna", className: "is-rinna", travelRows: { right: "running-left", left: "running-right" } }', "Rinna travel rows must compensate for the approved atlas direction");
+requireFragment(runtime, "var TRAVEL_TURN_DELAY = 220;", "Directional travel must pause briefly after turning");
+requireFragment(runtime, "playRow(travelRowFor(dx), Infinity);", "Travel must select a character-aware facing direction");
+requireFragment(runtime, "var turnOffset = TRAVEL_TURN_DELAY / duration;", "Travel must reserve time to face the destination before moving");
 
 assert((runtime.match(/createElement\("div", "dcats-concierge-sprite"\)/g) || []).length === 1, "Runtime must create exactly one visible sprite element");
 assert(!runtime.includes("innerHTML"), "Concierge UI must not use innerHTML");

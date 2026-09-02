@@ -4,9 +4,10 @@
   var STORAGE_KEY_PREFIX = "dcats_concierge_pet_v1:";
   var EXCLUDED_SCREENS = { boot: true, login: true, forgot: true, reset: true };
   var PETS = {
-    suzuto: { copyKey: "suzuto", className: "is-suzuto" },
-    rinna: { copyKey: "rinna", className: "is-rinna" }
+    suzuto: { copyKey: "suzuto", className: "is-suzuto", travelRows: { right: "running-right", left: "running-left" } },
+    rinna: { copyKey: "rinna", className: "is-rinna", travelRows: { right: "running-left", left: "running-right" } }
   };
+  var TRAVEL_TURN_DELAY = 220;
   var MODES = { active: true, horizontal: true, vertical: true, fixed: true, off: true };
   var ROWS = {
     idle: { row: 0, durations: [280, 110, 110, 140, 140, 320] },
@@ -586,13 +587,16 @@
     var dy = target.y - start.y;
     var distance = Math.sqrt(dx * dx + dy * dy);
     if (distance < 28) return Promise.resolve(true);
-    playRow(dx >= 0 ? "running-right" : "running-left", Infinity);
+    playRow(travelRowFor(dx), Infinity);
     var speed = 118;
-    var duration = Math.max(1250, Math.min(5600, distance / speed * 1000));
+    var walkDuration = Math.max(1250, Math.min(5600, distance / speed * 1000));
+    var duration = walkDuration + TRAVEL_TURN_DELAY;
+    var turnOffset = TRAVEL_TURN_DELAY / duration;
     var next = mover.animate([
-      { transform: transformFor(start) },
+      { transform: transformFor(start), offset: 0, easing: "linear" },
+      { transform: transformFor(start), offset: turnOffset, easing: "cubic-bezier(.38,.05,.2,1)" },
       { transform: transformFor(target) }
-    ], { duration: duration, easing: "cubic-bezier(.38,.05,.2,1)", fill: "forwards" });
+    ], { duration: duration, easing: "linear", fill: "forwards" });
     var previous = movementAnimation;
     movementAnimation = next;
     if (previous) previous.cancel();
@@ -601,6 +605,11 @@
       position = target;
       return true;
     }).catch(function () { return false; });
+  }
+
+  function travelRowFor(dx) {
+    var pet = PETS[settings.character] || PETS.suzuto;
+    return dx >= 0 ? pet.travelRows.right : pet.travelRows.left;
   }
 
   function transformFor(point) {

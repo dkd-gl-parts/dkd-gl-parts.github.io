@@ -263,6 +263,12 @@ function animationEndpoints(animation) {
   return { start: points[0], end: points.at(-1) };
 }
 
+function animationRowPercent(animation) {
+  const positions = (animation && animation.keyframes || []).map((frame) => String(frame.backgroundPosition || ""));
+  const match = /\s(\d+(?:\.\d+)?)%$/.exec(positions.find(Boolean) || "");
+  return match ? Number(match[1]) : null;
+}
+
 const api = windowObject.DcatsConcierge;
 assert(api, "Runtime did not expose window.DcatsConcierge");
 assert(byClass("dcats-concierge-sprite").length === 1, "Runtime must create exactly one sprite element");
@@ -285,6 +291,14 @@ windowObject.userProfile = { role: "system_admin" };
 notifyObservers();
 assert(!root.hidden, "System administrator could not enter concierge test operation");
 assert(api.getSettings().character === "suzuto" && api.getSettings().mode === "active", "User A defaults are invalid");
+
+sandboxMath.random = () => 0;
+documentObject.hidden = false;
+dispatch(documentObject.listeners, "visibilitychange");
+assert(animationRowPercent(lastAnimationFor(sprite)) === 20, "Suzuto did not face left for leftward travel using his approved atlas rows");
+documentObject.hidden = true;
+dispatch(documentObject.listeners, "visibilitychange");
+sandboxMath.random = () => Math.random();
 
 api.setCharacter("rinna");
 assert(!liveInfiniteAnimations().length, "Changing character in a hidden tab started an animation");
@@ -342,6 +356,10 @@ api.setMode("horizontal");
 const horizontalMove = animationEndpoints(lastAnimationFor(mover));
 assert(horizontalMove.start && horizontalMove.end && horizontalMove.start.x !== horizontalMove.end.x, "Horizontal-only mode did not move on the x axis");
 assert(horizontalMove.start.y === horizontalMove.end.y, "Horizontal-only mode changed the y axis");
+const horizontalAnimation = lastAnimationFor(mover);
+assert(horizontalAnimation.keyframes.length === 3, "Travel did not include a turn-before-walk hold");
+assert(horizontalAnimation.keyframes[0].transform === horizontalAnimation.keyframes[1].transform, "Travel started moving before the concierge changed direction");
+assert(animationRowPercent(lastAnimationFor(sprite)) === 10, "Rinna did not face left for leftward travel using her approved atlas rows");
 api.setMode("fixed");
 api.setMode("vertical");
 const verticalMove = animationEndpoints(lastAnimationFor(mover));
