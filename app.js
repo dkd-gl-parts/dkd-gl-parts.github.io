@@ -5647,7 +5647,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.857";
+var APP_VERSION       = "v1.1.858";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -12148,6 +12148,12 @@ var SHIPPING_WAYBILL_FIELD_META = {
   package_count: { label: "個口数", sample: "1" }
 };
 
+var SHIPPING_WAYBILL_BACKGROUND_ASSETS = {
+  yamato_collect: "assets/waybills/yamato-takkyubin-collect.webp",
+  sagawa_collect: "assets/waybills/sagawa-hikyaku-collect.webp"
+};
+var shippingWaybillBackgroundImages = {};
+
 var SHIPPING_WAYBILL_SENDER_FIELDS = [
   "sender_postal", "sender_phone", "sender_address", "sender_name"
 ];
@@ -12323,6 +12329,40 @@ function shippingWaybillPreviewZones(context, scale, draft) {
   context.restore();
 }
 
+function shippingWaybillBackgroundAsset(draft) {
+  var carrierCode = String(draft && draft.carrier_code || "").toLowerCase();
+  return SHIPPING_WAYBILL_BACKGROUND_ASSETS[carrierCode] || "";
+}
+
+function drawShippingWaybillBackground(context, canvas, draft) {
+  var asset = shippingWaybillBackgroundAsset(draft);
+  if (!asset) return false;
+  var image = shippingWaybillBackgroundImages[asset];
+  if (!image) {
+    image = new Image();
+    shippingWaybillBackgroundImages[asset] = image;
+    image.addEventListener("load", function() {
+      if (shippingWaybillBackgroundAsset(shippingWaybillLayoutDraft) === asset) {
+        drawShippingWaybillLayoutCanvas();
+      }
+    });
+    image.addEventListener("error", function() {
+      image.dataset.failed = "true";
+      drawShippingWaybillLayoutCanvas();
+    });
+    image.src = asset + "?v=" + encodeURIComponent(APP_VERSION);
+  }
+  if (!image.complete || !image.naturalWidth || image.dataset.failed === "true") return false;
+  context.save();
+  context.globalAlpha = 0.72;
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  context.globalAlpha = 1;
+  context.fillStyle = "rgba(255,255,255,.08)";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.restore();
+  return true;
+}
+
 function drawShippingWaybillCanvasText(context, text, field, x, y, width, height, fontPixels) {
   var maxLines = Math.max(1, Math.min(3, parseInt(field.max_lines, 10) || 1));
   var availableWidth = Math.max(0, width - 8);
@@ -12365,7 +12405,9 @@ function drawShippingWaybillLayoutCanvas() {
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.fillStyle = "#ffffff";
   context.fillRect(0, 0, canvas.width, canvas.height);
-  shippingWaybillPreviewZones(context, scale, draft);
+  if (!drawShippingWaybillBackground(context, canvas, draft)) {
+    shippingWaybillPreviewZones(context, scale, draft);
+  }
   context.strokeStyle = "#d9dee4";
   context.lineWidth = 1;
   context.font = "10px sans-serif";
@@ -12385,7 +12427,7 @@ function drawShippingWaybillLayoutCanvas() {
     var height = Number(field.height_mm) * scale;
     var selected = field.key === shippingWaybillLayoutSelectedField;
     context.save();
-    context.fillStyle = field.visible === false ? "rgba(150,157,165,.10)" : selected ? "rgba(35,111,181,.13)" : "rgba(255,255,255,.82)";
+    context.fillStyle = field.visible === false ? "rgba(150,157,165,.10)" : selected ? "rgba(35,111,181,.18)" : "rgba(255,255,255,.68)";
     context.strokeStyle = selected ? "#236fb5" : field.visible === false ? "#a8b0b8" : "#667788";
     context.lineWidth = selected ? 3 : 1.3;
     if (field.visible === false) context.setLineDash([6, 5]);
@@ -12434,6 +12476,7 @@ function renderShippingWaybillLayoutDesigner() {
   var field = shippingWaybillSelectedField();
   var revisions = Array.isArray(draft.revisions) ? draft.revisions : [];
   var previewData = shippingWaybillPreviewData(draft);
+  var backgroundAsset = shippingWaybillBackgroundAsset(draft);
   var purpose = shippingWaybillPurpose(draft);
   var purposeLayouts = shippingWaybillLayouts.filter(function(layout) { return shippingWaybillPurpose(layout) === purpose; });
   var purposeIsReturn = purpose === "return_waybill";
@@ -12449,7 +12492,7 @@ function renderShippingWaybillLayoutDesigner() {
     "<div class='shipping-waybill-purpose-note " + (purposeIsReturn ? "return" : "outbound") + "'><strong>" + (purposeIsReturn ? "コア返却用" : "商品発送用") + "</strong><span>" + (purposeIsReturn ? "送り先は大光電機です。送り主は印字しません。" : "送り先は得意先、送り主は大光電機を印字します。") + "</span></div>" +
     "<div class='shipping-waybill-layout-workspace'>" +
       "<aside class='shipping-waybill-field-list'><div><strong>印字項目</strong><span>" + esc((draft.fields || []).filter(function(item) { return item.visible !== false && !shippingWaybillIsReturnSenderField(draft, item); }).length) + " / " + esc((draft.fields || []).filter(function(item) { return !shippingWaybillIsReturnSenderField(draft, item); }).length) + "</span></div>" + (draft.fields || []).map(function(item) { return shippingWaybillLayoutFieldHtml(item, draft, previewData); }).join("") + "</aside>" +
-      "<section class='shipping-waybill-preview'><div class='shipping-waybill-preview-head'><div><strong>印刷プレビュー</strong><span>" + esc(draft.paper_width_mm) + " × " + esc(draft.paper_height_mm) + " mm</span></div><em>" + (previewData.uses_actual_order ? "選択中の受注" : "サンプルデータ") + "</em></div><div class='shipping-waybill-canvas-wrap'><canvas id='shipping-waybill-layout-canvas' tabindex='0' aria-label='送り状の印刷位置プレビュー'></canvas></div><p>背景線は位置合わせ用で印刷されません。このPC固有の用紙寸法・全体ずれ・テスト印刷は、画面下の端末補正から調整します。</p></section>" +
+      "<section class='shipping-waybill-preview'><div class='shipping-waybill-preview-head'><div><strong>印刷プレビュー</strong><span>" + esc(draft.paper_width_mm) + " × " + esc(draft.paper_height_mm) + " mm</span></div><em>" + (backgroundAsset ? "実物伝票背景" : "位置合わせガイド") + " / " + (previewData.uses_actual_order ? "選択中の受注" : "サンプルデータ") + "</em></div><div class='shipping-waybill-canvas-wrap'><canvas id='shipping-waybill-layout-canvas' tabindex='0' aria-label='送り状の印刷位置プレビュー'></canvas></div><p>伝票背景とガイド線は位置合わせ用で印刷されません。このPC固有の用紙寸法・全体ずれ・テスト印刷は、画面下の端末補正から調整します。</p></section>" +
       "<aside class='shipping-waybill-inspector'>" +
         (field ? "<div class='shipping-waybill-inspector-head'><span>選択中</span><strong>" + esc((SHIPPING_WAYBILL_FIELD_META[field.key] || {}).label || field.key) + "</strong></div>" +
         "<div class='shipping-waybill-inspector-grid'>" +

@@ -22,6 +22,9 @@ for (const id of [
 for (const fragment of [
   "var SHIPPING_WAYBILL_FIELD_META",
   "function shippingWaybillPreviewData(",
+  "var SHIPPING_WAYBILL_BACKGROUND_ASSETS",
+  "function shippingWaybillBackgroundAsset(",
+  "function drawShippingWaybillBackground(",
   "function shippingWaybillPurpose(",
   "function enforceShippingWaybillPurposeRules(",
   "function drawShippingWaybillLayoutCanvas(",
@@ -32,7 +35,7 @@ for (const fragment of [
   'sb.rpc("save_sales_order_waybill_layout"',
   "target_expected_version: Number(draft.base_version)",
   "選択した版を下書きへ",
-  "背景線は位置合わせ用で印刷されません",
+  "伝票背景とガイド線は位置合わせ用で印刷されません",
   "新しい印刷依頼から反映されます"
 ]) requireFragment(app, fragment);
 
@@ -45,6 +48,22 @@ for (const fragment of [
   'sender_postal: outbound ? daiko.postal : ""',
   "shippingWaybillIsReturnSenderField(draft, field)"
 ]) requireFragment(app, fragment, `Waybill purpose contract is missing: ${fragment}`);
+
+for (const fragment of [
+  'yamato_collect: "assets/waybills/yamato-takkyubin-collect.webp"',
+  'sagawa_collect: "assets/waybills/sagawa-hikyaku-collect.webp"',
+  "実物伝票背景",
+  "伝票背景とガイド線は位置合わせ用で印刷されません"
+]) requireFragment(app, fragment, `Waybill background contract is missing: ${fragment}`);
+
+for (const asset of [
+  "assets/waybills/yamato-takkyubin-collect.webp",
+  "assets/waybills/sagawa-hikyaku-collect.webp"
+]) {
+  const assetPath = path.join(root, asset);
+  if (!fs.existsSync(assetPath)) throw new Error(`Waybill background asset is missing: ${asset}`);
+  if (fs.statSync(assetPath).size < 100000) throw new Error(`Waybill background asset is unexpectedly small: ${asset}`);
+}
 
 for (const field of [
   "recipient_postal", "recipient_phone", "recipient_address", "recipient_name",
