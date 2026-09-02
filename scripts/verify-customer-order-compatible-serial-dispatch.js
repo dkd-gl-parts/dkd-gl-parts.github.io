@@ -44,6 +44,8 @@ assert(scan.indexOf("var dispatch = finishedShipmentDispatch()") < scan.indexOf(
 
 const assign = functionSource("assignFinishedShipmentSerial");
 assert(assign.includes("target_order_item_id: orderItemId || null"), "assignment must permit automatic server-side order-line selection");
+assert(assign.includes("setFinishedShipmentPickingBlocked(true)"), "a rejected assignment must block shipment confirmation");
+assert(assign.includes("setFinishedShipmentPickingBlocked(false)"), "a successful assignment must clear the picking block");
 assert(assign.includes('renderFinishedShipmentLookup(unit, { status: "ng" })'), "server rejection must render a picking NG result");
 assert(assign.includes('status: "ok"') && assign.includes("assignedRow.match_type"), "server acceptance must render exact or compatible picking OK");
 assert(assign.includes("finished_shipping_compatible_assigned"), "compatible assignment feedback is missing");
@@ -55,10 +57,10 @@ assert(functionSource("renderFinishedShipmentUnits").includes("finished-shipment
 assert(functionSource("renderFinishedShipmentCandidates").includes("finished-shipment-match-badge"), "compatible candidate badge is missing");
 
 const context = functionSource("renderFinishedShipmentOrderContext");
-assert(context.includes('saveButton.disabled = !active || dispatch.status !== "ready"'), "shipment completion must remain disabled until all required serials are verified");
+assert(context.includes("updateFinishedShipmentSaveButtonState()"), "shipment completion must include readiness and picking-error validation");
 assert(context.includes("finished_shipping_all_verified"), "ready-state guidance is missing");
 
-assert(html.includes('data-i18n="finished_shipping_register">照合を完了して出荷済みにする</button>'), "shipment completion button wording is unclear");
+assert(/id="btn-finished-shipment-save"[^>]*data-i18n="finished_shipping_register"[^>]*disabled[^>]*aria-disabled="true"/.test(html), "shipment completion must start disabled before context validation");
 assert(css.includes(".finished-shipment-match-badge"), "compatible badge styling is missing");
 assert(css.includes(".finished-shipment-order-note.ready"), "completed-check guidance styling is missing");
 assert(css.includes(".finished-shipment-lookup.picking-ng") && css.includes(".finished-shipment-status.picking-ng"), "picking NG must be visually prominent");
@@ -72,6 +74,21 @@ assert(presentationContext.ng.className === "picking-ng" && presentationContext.
 assert(presentationContext.exact.detailKey === "finished_shipping_picking_exact", "an exact server match must identify the ordered part");
 assert(presentationContext.compatible.detailKey === "finished_shipping_picking_compatible", "a compatible server match must identify a registered compatible part");
 
+const saveDisabled = functionSource("finishedShipmentSaveDisabled");
+const saveDisabledContext = {};
+vm.runInNewContext(`${saveDisabled}; this.notReady = finishedShipmentSaveDisabled(true, "preparing", false, false); this.ng = finishedShipmentSaveDisabled(true, "ready", false, true); this.ready = finishedShipmentSaveDisabled(true, "ready", false, false);`, saveDisabledContext);
+assert(saveDisabledContext.notReady === true, "an incomplete dispatch must block shipment confirmation");
+assert(saveDisabledContext.ng === true, "a picking NG must block an otherwise-ready dispatch");
+assert(saveDisabledContext.ready === false, "only an error-free ready dispatch may enable shipment confirmation");
+
+const save = functionSource("saveFinishedProductShipment");
+assert(save.includes("if (finishedShipmentPickingBlocked)"), "shipment confirmation must fail closed when the latest picking check is NG");
+assert(save.includes("updateFinishedShipmentSaveButtonState()"), "shipment completion must restore the validated button state instead of blindly enabling it");
+
+const loadDispatch = functionSource("loadFinishedShipmentDispatch");
+assert(loadDispatch.includes("setFinishedShipmentPickingBlocked(true)"), "dispatch loading must block progress until validation succeeds");
+assert(loadDispatch.includes("refreshFinishedShipmentContext(null)"), "an invalid dispatch must clear the prior active context");
+
 for (const key of [
   "finished_shipping_compatible_badge",
   "finished_shipping_compatible_assigned",
@@ -80,7 +97,8 @@ for (const key of [
   "finished_shipping_picking_ng",
   "finished_shipping_picking_exact",
   "finished_shipping_picking_compatible",
-  "finished_shipping_picking_ng_reason"
+  "finished_shipping_picking_ng_reason",
+  "finished_shipping_picking_blocked"
 ]) {
   assert((app.match(new RegExp(`\\n    ${key}:`, "g")) || []).length === 3, `${key} must be translated in all supported languages`);
 }

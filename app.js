@@ -756,6 +756,7 @@ var TRANSLATIONS = {
     finished_shipping_picking_exact: "受注品番と一致しました。",
     finished_shipping_picking_compatible: "登録済み互換品と一致しました。",
     finished_shipping_picking_ng_reason: "受注品番または登録済み互換品ではありません。",
+    finished_shipping_picking_blocked: "照合エラーを解消するまで出荷確定できません。正しい製造シリアルを照合するか、出荷指示を再読込してください。",
     finished_shipping_shipped: "出荷済み",
     finished_shipping_cancelled_status: "取消済み",
     finished_shipping_warranty_active: "保証期間内",
@@ -2567,6 +2568,7 @@ var TRANSLATIONS = {
     finished_shipping_picking_exact: "Matches the ordered part number.",
     finished_shipping_picking_compatible: "Matches a registered compatible part.",
     finished_shipping_picking_ng_reason: "This is neither the ordered part nor a registered compatible part.",
+    finished_shipping_picking_blocked: "Shipment confirmation is blocked until the check error is resolved. Scan the correct serial or reload the dispatch.",
     finished_shipping_shipped: "Shipped",
     finished_shipping_cancelled_status: "Cancelled",
     finished_shipping_warranty_active: "Under Warranty",
@@ -4386,6 +4388,7 @@ var TRANSLATIONS = {
     finished_shipping_picking_exact: "与订单品号一致。",
     finished_shipping_picking_compatible: "与已登记互换品一致。",
     finished_shipping_picking_ng_reason: "该产品既不是订单品号，也不是已登记互换品。",
+    finished_shipping_picking_blocked: "核对错误解决前无法确认出货。请扫描正确的制造序列号或重新读取出货指示。",
     finished_shipping_shipped: "已出货",
     finished_shipping_cancelled_status: "已取消",
     finished_shipping_warranty_active: "保修期内",
@@ -5557,7 +5560,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.851";
+var APP_VERSION       = "v1.1.852";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5726,6 +5729,7 @@ var finishedLabelPendingReprint = null;
 var finishedShipmentUnits = [];
 var finishedShipmentHistoryRows = [];
 var finishedShipmentSaving = false;
+var finishedShipmentPickingBlocked = false;
 var finishedShipmentOrderContext = null;
 var finishedShipmentOrderAssignments = [];
 var finishedShipmentCandidateOrderItemId = null;
@@ -28035,6 +28039,35 @@ function setFinishedShipmentMessage(id, message, isError) {
   el.className = "finished-shipment-message" + (message ? " show" : "") + (isError ? " error" : " success");
 }
 
+function finishedShipmentSaveDisabled(active, dispatchStatus, saving, pickingBlocked) {
+  return !active || dispatchStatus !== "ready" || !!saving || !!pickingBlocked;
+}
+
+function updateFinishedShipmentSaveButtonState() {
+  var button = document.getElementById("btn-finished-shipment-save");
+  if (!button) return;
+  var order = finishedShipmentOrderContext;
+  var dispatch = finishedShipmentDispatch();
+  var active = !!(order && dispatch && ["preparing", "ready"].indexOf(dispatch.status) >= 0);
+  button.disabled = finishedShipmentSaveDisabled(active, dispatch && dispatch.status, finishedShipmentSaving, finishedShipmentPickingBlocked);
+  button.setAttribute("aria-disabled", button.disabled ? "true" : "false");
+}
+
+function setFinishedShipmentPickingBlocked(blocked) {
+  finishedShipmentPickingBlocked = !!blocked;
+  var message = document.getElementById("finished-shipment-save-message");
+  if (message) {
+    if (finishedShipmentPickingBlocked) {
+      message.dataset.pickingBlocked = "true";
+      setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_picking_blocked"), true);
+    } else if (message.dataset.pickingBlocked === "true") {
+      delete message.dataset.pickingBlocked;
+      setFinishedShipmentMessage("finished-shipment-save-message", "", false);
+    }
+  }
+  updateFinishedShipmentSaveButtonState();
+}
+
 function finishedShipmentWarrantyState(expiresOn) {
   if (!expiresOn) return { active: false, label: "-" };
   var active = finishedShipmentTodayValue() <= String(expiresOn).slice(0, 10);
@@ -28299,10 +28332,9 @@ function renderFinishedShipmentOrderContext() {
   var order = finishedShipmentOrderContext;
   var dispatch = finishedShipmentDispatch();
   var active = !!(order && dispatch && ["preparing", "ready"].indexOf(dispatch.status) >= 0);
-  var saveButton = document.getElementById("btn-finished-shipment-save");
   if (selectionCard) selectionCard.hidden = !active;
   if (form) form.hidden = !active;
-  if (saveButton && !finishedShipmentSaving) saveButton.disabled = !active || dispatch.status !== "ready";
+  updateFinishedShipmentSaveButtonState();
   if (!host) return;
   if (!order || !dispatch) {
     host.innerHTML = "<p>" + esc(t("finished_shipping_lookup_only")) + "</p>";
@@ -28632,18 +28664,24 @@ async function loadFinishedShipmentDispatch() {
   var input = document.getElementById("finished-shipment-dispatch-input");
   var dispatchNumber = String(input ? input.value : "").trim().toUpperCase();
   setFinishedShipmentMessage("finished-shipment-dispatch-message", "", false);
+  setFinishedShipmentPickingBlocked(true);
   if (!/^D[0-9]{10}$/.test(dispatchNumber)) {
+    refreshFinishedShipmentContext(null);
+    closeFinishedShipmentCandidates();
     setFinishedShipmentMessage("finished-shipment-dispatch-message", t("finished_shipping_dispatch_required"), true);
     if (input) input.select();
     return;
   }
   var result = await sb.rpc("get_sales_order_dispatch", { target_dispatch_number: dispatchNumber });
   if (result.error) {
+    refreshFinishedShipmentContext(null);
+    closeFinishedShipmentCandidates();
     setFinishedShipmentMessage("finished-shipment-dispatch-message", result.error.message || t("msg_part_err"), true);
     if (input) input.select();
     return;
   }
   var order = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
+  setFinishedShipmentPickingBlocked(false);
   refreshFinishedShipmentContext(order);
   closeFinishedShipmentCandidates();
   setFinishedShipmentMessage("finished-shipment-scan-message", "", false);
@@ -28664,12 +28702,14 @@ async function enterFinishedProductShipping(options) {
   finishedShipmentOrderContext = options.order || null;
   finishedShipmentOrderAssignments = [];
   finishedShipmentUnits = [];
+  finishedShipmentPickingBlocked = false;
   finishedShipmentCandidateOrderItemId = null;
   finishedShipmentCandidateRows = [];
   showScreen("finished-product-shipping");
   setFinishedShipmentMessage("finished-shipment-dispatch-message", "", false);
   setFinishedShipmentMessage("finished-shipment-scan-message", "", false);
   setFinishedShipmentMessage("finished-shipment-save-message", "", false);
+  setFinishedShipmentPickingBlocked(false);
   var lookup = document.getElementById("finished-shipment-lookup");
   if (lookup) lookup.innerHTML = "";
   var dispatchInput = document.getElementById("finished-shipment-dispatch-input");
@@ -28695,6 +28735,7 @@ async function returnFromFinishedProductShipping() {
   finishedShipmentOrderContext = null;
   finishedShipmentOrderAssignments = [];
   finishedShipmentUnits = [];
+  finishedShipmentPickingBlocked = false;
   finishedShipmentCandidateOrderItemId = null;
   finishedShipmentCandidateRows = [];
   if (orderId && canManageSalesOrders()) {
@@ -28805,6 +28846,7 @@ async function assignFinishedShipmentSerial(orderItemId, serial, unit) {
   var dispatch = finishedShipmentDispatch();
   if (!dispatch || !serial || finishedShipmentSaving) return;
   finishedShipmentSaving = true;
+  updateFinishedShipmentSaveButtonState();
   setFinishedShipmentMessage("finished-shipment-scan-message", t("loading"), false);
   var result = await sb.rpc("assign_sales_order_dispatch_serial", {
     target_dispatch_id: dispatch.id,
@@ -28813,11 +28855,13 @@ async function assignFinishedShipmentSerial(orderItemId, serial, unit) {
   });
   finishedShipmentSaving = false;
   if (result.error) {
+    setFinishedShipmentPickingBlocked(true);
     setFinishedShipmentMessage("finished-shipment-scan-message", result.error.message || t("msg_part_err"), true);
     if (unit) await renderFinishedShipmentLookup(unit, { status: "ng" });
     return false;
   }
   var order = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
+  setFinishedShipmentPickingBlocked(false);
   refreshFinishedShipmentContext(order);
   var assignedRow = finishedShipmentFlattenAssignments().find(function(row) {
     return row.manufacturing_serial === serial;
@@ -28941,13 +28985,16 @@ async function addFinishedShipmentSerial() {
   if (!canManageFinishedProductShipping()) return;
   var input = document.getElementById("finished-shipment-serial-input");
   var serial = normalizeFinishedShipmentSerial(input ? input.value : "");
+  var dispatch = finishedShipmentDispatch();
   setFinishedShipmentMessage("finished-shipment-scan-message", "", false);
   if (!/^M[0-9]{4}-[0-9]{7}$/.test(serial)) {
+    if (dispatch) setFinishedShipmentPickingBlocked(true);
     setFinishedShipmentMessage("finished-shipment-scan-message", t("finished_shipping_serial_invalid"), true);
     if (input) input.select();
     return;
   }
   if (finishedShipmentFlattenAssignments().some(function(unit) { return unit.manufacturing_serial === serial; })) {
+    if (dispatch) setFinishedShipmentPickingBlocked(true);
     setFinishedShipmentMessage("finished-shipment-scan-message", t("finished_shipping_serial_duplicate"), true);
     if (input) input.select();
     return;
@@ -28957,11 +29004,11 @@ async function addFinishedShipmentSerial() {
     .eq("manufacturing_serial", serial)
     .maybeSingle();
   if (r.error || !r.data) {
+    if (dispatch) setFinishedShipmentPickingBlocked(true);
     setFinishedShipmentMessage("finished-shipment-scan-message", t("finished_shipping_serial_not_found"), true);
     if (input) input.select();
     return;
   }
-  var dispatch = finishedShipmentDispatch();
   if (!dispatch) {
     await renderFinishedShipmentLookup(r.data);
     setFinishedShipmentMessage("finished-shipment-scan-message", t(r.data.status === "available" ? "finished_shipping_lookup_available" : "finished_shipping_shipped"), false);
@@ -28969,6 +29016,7 @@ async function addFinishedShipmentSerial() {
     return;
   }
   if (r.data.status !== "available") {
+    setFinishedShipmentPickingBlocked(true);
     await renderFinishedShipmentLookup(r.data, { status: "ng" });
     setFinishedShipmentMessage("finished-shipment-scan-message", t("finished_shipping_serial_unavailable"), true);
     if (input) input.select();
@@ -28987,6 +29035,7 @@ async function clearFinishedShipmentUnits() {
   }
   if (finishedShipmentSaving || !window.confirm(t("finished_shipping_assignment_clear_confirm"))) return;
   finishedShipmentSaving = true;
+  updateFinishedShipmentSaveButtonState();
   var button = document.getElementById("btn-finished-shipment-clear");
   if (button) button.disabled = true;
   setFinishedShipmentMessage("finished-shipment-scan-message", t("loading"), false);
@@ -29001,13 +29050,16 @@ async function clearFinishedShipmentUnits() {
       order = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
     }
     refreshFinishedShipmentContext(order);
+    setFinishedShipmentPickingBlocked(false);
     closeFinishedShipmentCandidates();
     setFinishedShipmentMessage("finished-shipment-scan-message", t("finished_shipping_assignment_cleared"), false);
   } catch (error) {
+    setFinishedShipmentPickingBlocked(true);
     setFinishedShipmentMessage("finished-shipment-scan-message", (error && error.message) || t("msg_part_err"), true);
   } finally {
     finishedShipmentSaving = false;
     if (button) button.disabled = false;
+    updateFinishedShipmentSaveButtonState();
   }
   var lookup = document.getElementById("finished-shipment-lookup");
   if (lookup) lookup.innerHTML = "";
@@ -29019,6 +29071,7 @@ async function saveFinishedProductShipment() {
   var dispatch = finishedShipmentDispatch();
   var shippedOn = String((document.getElementById("finished-shipment-shipped-on") || {}).value || "").trim();
   if (!order || !dispatch) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_order_link_wait"), true); return; }
+  if (finishedShipmentPickingBlocked) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_picking_blocked"), true); return; }
   if (dispatch.status !== "ready") { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_serial_required"), true); return; }
   if (!String(order.outbound_tracking_number || "").trim()) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_tracking_required"), true); return; }
   if (order.core_return_required && !String(order.return_tracking_number || "").trim()) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_return_tracking_required"), true); return; }
@@ -29026,8 +29079,7 @@ async function saveFinishedProductShipment() {
   if (!window.confirm(t("finished_shipping_confirm"))) return;
 
   finishedShipmentSaving = true;
-  var button = document.getElementById("btn-finished-shipment-save");
-  if (button) button.disabled = true;
+  updateFinishedShipmentSaveButtonState();
   setFinishedShipmentMessage("finished-shipment-save-message", t("loading"), false);
   try {
     var r = await sb.rpc("confirm_sales_order_dispatch", {
@@ -29048,7 +29100,7 @@ async function saveFinishedProductShipment() {
     setFinishedShipmentMessage("finished-shipment-save-message", (e && e.message) || t("msg_part_err"), true);
   } finally {
     finishedShipmentSaving = false;
-    if (button) button.disabled = false;
+    updateFinishedShipmentSaveButtonState();
   }
 }
 
