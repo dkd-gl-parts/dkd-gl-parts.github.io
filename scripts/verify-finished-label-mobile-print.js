@@ -121,12 +121,14 @@ assert(preview.includes('enqueueAndWaitForFinishedLabelPrint(finishedLabelLastIs
 assert(preview.includes('showDcatsAutoNotice(t("finished_label_mobile_print_queue_saved"))'), "registration retry success is not auto-dismissed");
 const reprint = functionSource("executeFinishedLabelHistoryReprint");
 assert(reprint.includes('enqueueAndWaitForFinishedLabelPrint(record, labelType === "box" ? "box" : "finished_product", "reprint", reason)'), "mobile reprints are not tracked through completion with their reason");
-assert(reprint.includes('showDcatsAutoNotice(t("finished_label_mobile_print_queue_saved"))'), "reprint success is not auto-dismissed");
+assert(!reprint.includes("openFinishedLabelPrintPreview") && !reprint.includes("openFinishedBoxLabelPrintPreview"), "desktop reprints can still fall back to browser print preview");
+assert(reprint.includes('showDcatsAutoNotice(t("finished_label_reprint_queue_saved"))'), "reprint success is not auto-dismissed");
 const box = functionSource("executeFinishedBoxLabelIssue");
 assert(box.includes('enqueueAndWaitForFinishedLabelPrint(record, "box", eventType, reason)'), "box-label mobile printing is not tracked through completion");
-assert(box.includes('showDcatsAutoNotice(t("finished_label_mobile_print_queue_saved"))'), "box-label success is not auto-dismissed");
+assert(box.includes('showDcatsAutoNotice(t(eventType === "reprint" ? "finished_label_reprint_queue_saved" : "finished_label_mobile_print_queue_saved"))'), "box-label success is not auto-dismissed or reprint feedback is unclear");
 assert(functionSource("retryFinishedBoxLabelQueue").includes('showDcatsAutoNotice(t("finished_label_mobile_print_queue_saved"))'), "box-label retry success is not auto-dismissed");
-assert(functionSource("confirmFinishedLabelReprint").includes("if (!finishedLabelUsesRemotePrintQueue())"), "mobile reprints can still be blocked by popup rules");
+assert(!functionSource("confirmFinishedLabelReprint").includes("window.open"), "reprints can still open browser print preview");
+assert(functionSource("executeFinishedBoxLabelIssue").includes('eventType === "reprint" || finishedLabelUsesRemotePrintQueue()'), "desktop box-label reprints are not routed through the background print queue");
 
 const autoNotice = functionSource("showDcatsAutoNotice");
 assert(autoNotice.includes("window.clearTimeout") && autoNotice.includes("window.setTimeout"), "repeated print notices do not reset their auto-dismiss timer");

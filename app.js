@@ -591,6 +591,7 @@ var TRANSLATIONS = {
     finished_label_mobile_queue_failed: "製造シリアルと完品在庫は登録しましたが、印刷待ちの送信に失敗しました。印刷待ちへ再送してください。",
     finished_label_mobile_queue_retry: "印刷を再試行",
     finished_label_mobile_print_queue_saved: "TD-4420TNへの印刷指示が完了しました。",
+    finished_label_reprint_queue_saved: "再発行を印刷端末へ送信しました。",
     finished_label_mobile_print_queue_failed: "印刷履歴は登録しましたが、印刷待ちの送信に失敗しました。もう一度送信してください。",
     finished_label_mobile_queued_button: "印刷処理中",
     finished_label_mobile_printed_button: "印刷指示完了",
@@ -2402,6 +2403,7 @@ var TRANSLATIONS = {
     finished_label_mobile_queue_failed: "Manufacturing serials and stock were registered, but the print job could not be queued. Send it to the print queue again.",
     finished_label_mobile_queue_retry: "Retry Print",
     finished_label_mobile_print_queue_saved: "The TD-4420TN print command completed.",
+    finished_label_reprint_queue_saved: "The reprint was sent to the print station.",
     finished_label_mobile_print_queue_failed: "The print history was recorded, but the job could not be queued. Send it again.",
     finished_label_mobile_queued_button: "Printing",
     finished_label_mobile_printed_button: "Print Sent",
@@ -4222,6 +4224,7 @@ var TRANSLATIONS = {
     finished_label_mobile_queue_failed: "制造序列号和完品库存已登记，但发送打印任务失败。请重新发送到打印队列。",
     finished_label_mobile_queue_retry: "重新打印",
     finished_label_mobile_print_queue_saved: "已完成向TD-4420TN发送打印指令。",
+    finished_label_reprint_queue_saved: "重新打印任务已发送到打印终端。",
     finished_label_mobile_print_queue_failed: "打印历史已登记，但发送到打印队列失败。请重新发送。",
     finished_label_mobile_queued_button: "打印处理中",
     finished_label_mobile_printed_button: "打印指令完成",
@@ -5560,7 +5563,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.854";
+var APP_VERSION       = "v1.1.855";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -27997,13 +28000,7 @@ function reprintFinishedLabelIssue(row, labelType) {
   openFinishedLabelReprintDialog(row, labelType, "history");
 }
 
-async function executeFinishedLabelHistoryReprint(row, labelType, reason, printWindow) {
-  var remotePrint = finishedLabelUsesRemotePrintQueue();
-  if (printWindow) {
-    printWindow.document.open();
-    printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_label_reprint_recording")) + "</p>");
-    printWindow.document.close();
-  }
+async function executeFinishedLabelHistoryReprint(row, labelType, reason) {
   try {
     var result = await sb.rpc("record_finished_product_label_print", {
       target_finished_label_issue_id: row.id,
@@ -28021,18 +28018,11 @@ async function executeFinishedLabelHistoryReprint(row, labelType, reason, printW
       quantity: record.units.length,
       copies_per_unit: 1
     });
-    if (remotePrint) {
-      await enqueueAndWaitForFinishedLabelPrint(record, labelType === "box" ? "box" : "finished_product", "reprint", reason);
-      showDcatsAutoNotice(t("finished_label_mobile_print_queue_saved"));
-      await loadFinishedLabelHistory();
-    } else if (labelType === "box") {
-      openFinishedBoxLabelPrintPreview(record, printWindow);
-    } else {
-      openFinishedLabelPrintPreview(record, printWindow);
-    }
+    await enqueueAndWaitForFinishedLabelPrint(record, labelType === "box" ? "box" : "finished_product", "reprint", reason);
+    showDcatsAutoNotice(t("finished_label_reprint_queue_saved"));
+    await loadFinishedLabelHistory();
   } catch (e) {
-    if (printWindow && !printWindow.closed) printWindow.close();
-    alert(remotePrint ? finishedLabelMobilePrintErrorText(e, "finished_label_mobile_print_queue_failed") : t("msg_save_err") + ": " + (e.message || e));
+    alert(finishedLabelMobilePrintErrorText(e, "finished_label_mobile_print_queue_failed"));
   }
 }
 
@@ -28049,19 +28039,11 @@ function confirmFinishedLabelReprint() {
     if (input) input.focus();
     return;
   }
-  var printWindow = null;
-  if (!finishedLabelUsesRemotePrintQueue()) {
-    printWindow = window.open("", "_blank");
-    if (!printWindow) {
-      alert(t("finished_label_popup_blocked"));
-      return;
-    }
-  }
   closeFinishedLabelReprintDialog();
   if (pending.source === "box_main") {
-    executeFinishedBoxLabelIssue(pending.row, "reprint", reason, printWindow);
+    executeFinishedBoxLabelIssue(pending.row, "reprint", reason, null);
   } else {
-    executeFinishedLabelHistoryReprint(pending.row, pending.labelType, reason, printWindow);
+    executeFinishedLabelHistoryReprint(pending.row, pending.labelType, reason);
   }
 }
 
@@ -28076,7 +28058,7 @@ function printFinishedBoxLabelIssue(row) {
 }
 
 async function executeFinishedBoxLabelIssue(row, eventType, reason, existingWindow) {
-  var remotePrint = finishedLabelUsesRemotePrintQueue();
+  var remotePrint = eventType === "reprint" || finishedLabelUsesRemotePrintQueue();
   var printWindow = existingWindow || null;
   if (!remotePrint && !printWindow) {
     printWindow = window.open("", "_blank");
@@ -28119,7 +28101,7 @@ async function executeFinishedBoxLabelIssue(row, eventType, reason, existingWind
         row.boxLabelQueued = true;
         row.boxLabelPrintStatus = "sent";
         row.boxLabelQueueRetry = null;
-        showDcatsAutoNotice(t("finished_label_mobile_print_queue_saved"));
+        showDcatsAutoNotice(t(eventType === "reprint" ? "finished_label_reprint_queue_saved" : "finished_label_mobile_print_queue_saved"));
       } catch (queueError) {
         row.boxLabelQueued = false;
         row.boxLabelPrintStatus = queueError.finishedLabelPrintStatus || "error";

@@ -96,44 +96,41 @@ assert(html.includes('id="finished-label-reprint-overlay"') && html.includes('id
 assert(styles.includes(".finished-label-reprint-card"), "in-page reprint reason dialog layout is missing");
 assert(reprintSource.includes('openFinishedLabelReprintDialog(row, labelType, "history")'), "finished-label history does not open the in-page reprint dialog");
 assert(reprintDialogSource.includes('labelType === "box"') && reprintDialogSource.includes('overlay.classList.add("show")'), "product and box reprints are not prepared in the shared dialog");
-assert(confirmReprintSource.includes('window.open("", "_blank")'), "reprint confirmation does not open a print tab directly from its click");
+assert(!confirmReprintSource.includes("window.open"), "reprint confirmation still opens the browser print preview");
 assert(!confirmReprintSource.includes("prompt("), "reprint confirmation still depends on a browser prompt");
-assert(confirmReprintSource.indexOf('window.open("", "_blank")') < confirmReprintSource.indexOf("executeFinishedLabelHistoryReprint("), "finished-label reprint opens its print tab after asynchronous work starts");
+assert(confirmReprintSource.includes("executeFinishedLabelHistoryReprint(pending.row, pending.labelType, reason)"), "finished-label reprint is not sent directly after confirmation");
 assert(executeReprintSource.includes('sb.rpc("record_finished_product_label_print"'), "generic audited print RPC is not used for reprints");
+assert(!executeReprintSource.includes("openFinishedLabelPrintPreview") && !executeReprintSource.includes("openFinishedBoxLabelPrintPreview"), "desktop reprints can still fall back to browser print preview");
 const boxPrintSource = functionSource("printFinishedBoxLabelIssue");
 const boxExecutionSource = functionSource("executeFinishedBoxLabelIssue");
 assert(boxPrintSource.includes('row.boxLabelPrinted ? "reprint" : "initial"'), "box initial print and reprint are not distinguished");
 assert(boxPrintSource.includes('openFinishedLabelReprintDialog(row, "box", "box_main")'), "box-label reprint does not open the in-page reason dialog");
 assert(boxExecutionSource.includes('target_label_target: "box"'), "box print audit target is missing");
 assert(boxExecutionSource.includes('target_print_event_type: eventType'), "box print event type is not recorded");
+assert(boxExecutionSource.includes('eventType === "reprint" || finishedLabelUsesRemotePrintQueue()'), "desktop box-label reprints can still open browser print preview");
 assert(executeReprintSource.includes('event_type: labelType === "box" ? "box_label_reprint" : "product_label_reprint"'), "reprint audit type is missing");
 assert(executeReprintSource.includes('label_size: labelType === "box" ? "80x60" : "45x20"'), "reprint label size is missing from audit details");
 assert(executeReprintSource.includes("copies_per_unit: 1"), "one-label-per-unit audit rule is missing");
 
 const reprintFlowEvents = [];
-const reprintFlowChild = { closed: false };
 const reprintReasonInput = { value: "ラベル汚損", focus() {} };
 const reprintFlowSandbox = {
   finishedLabelPendingReprint: { source: "history", row: { id: 1 }, labelType: "product" },
   document: {
     getElementById(id) { return id === "finished-label-reprint-reason" ? reprintReasonInput : null; }
   },
-  window: {
-    open() { reprintFlowEvents.push("open"); return reprintFlowChild; }
-  },
-  finishedLabelUsesRemotePrintQueue() { return false; },
   t(key) { return key; },
   alert() {},
   closeFinishedLabelReprintDialog() { reprintFlowEvents.push("close-dialog"); },
-  executeFinishedLabelHistoryReprint(row, labelType, reason, printWindow) {
-    reprintFlowEvents.push(["execute-history", row.id, labelType, reason, printWindow === reprintFlowChild].join(":"));
+  executeFinishedLabelHistoryReprint(row, labelType, reason) {
+    reprintFlowEvents.push(["execute-history", row.id, labelType, reason].join(":"));
   },
   executeFinishedBoxLabelIssue() { reprintFlowEvents.push("execute-box"); }
 };
 vm.createContext(reprintFlowSandbox);
 vm.runInContext(`${confirmReprintSource}; this.confirmReprint = confirmFinishedLabelReprint;`, reprintFlowSandbox);
 reprintFlowSandbox.confirmReprint();
-assert(reprintFlowEvents.join(",") === "open,close-dialog,execute-history:1:product:ラベル汚損:true", "finished-label reprint does not open its print tab directly from the in-page confirmation click");
+assert(reprintFlowEvents.join(",") === "close-dialog,execute-history:1:product:ラベル汚損", "finished-label reprint does not proceed without browser print preview");
 
 const boxSortSandbox = {
   finishedLabelPrintMode: "box",
