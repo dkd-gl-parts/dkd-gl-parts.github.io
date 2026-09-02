@@ -5647,7 +5647,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.859";
+var APP_VERSION       = "v1.1.860";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -12308,6 +12308,8 @@ function shippingWaybillPreviewData(layout, orderValue, orderUnitValue) {
   var deliveryDate = order
     ? (order.requested_delivery_date ? String(order.requested_delivery_date).replace(/-/g, "/") : "指定なし")
     : "2026/08/30";
+  var contentsText = partText || (outbound ? "自動車電装品" : "自動車電装品コア");
+  if (!outbound) contentsText += " コア返却分";
   return {
     recipient_postal: (outbound ? customer : daiko).postal,
     recipient_phone: (outbound ? customer : daiko).phone,
@@ -12317,7 +12319,7 @@ function shippingWaybillPreviewData(layout, orderValue, orderUnitValue) {
     sender_phone: outbound ? daiko.phone : "",
     sender_address: outbound ? daiko.address : "",
     sender_name: outbound ? daiko.name : "",
-    contents: partText || (outbound ? "自動車電装品" : "自動車電装品コア"),
+    contents: contentsText,
     order_number: formatCustomerOrderReference(order && order.order_number ? order.order_number : "734291859") + (orderUnit && orderUnit.return_code ? " / " + String(orderUnit.return_code) : ""),
     tracking_number: waybill && waybill.tracking_number ? waybill.tracking_number : "1234-5678-9012",
     desired_date: [deliveryDate, order && order.delivery_time_label].filter(Boolean).join(" "),

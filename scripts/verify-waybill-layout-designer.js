@@ -22,6 +22,7 @@ for (const id of [
 for (const fragment of [
   "var SHIPPING_WAYBILL_FIELD_META",
   "function shippingWaybillPreviewData(",
+  'if (!outbound) contentsText += " コア返却分";',
   "var SHIPPING_WAYBILL_BACKGROUND_ASSETS",
   "function shippingWaybillBackgroundAsset(",
   "function drawShippingWaybillBackground(",
