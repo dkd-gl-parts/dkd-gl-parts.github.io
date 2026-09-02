@@ -5647,7 +5647,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.862";
+var APP_VERSION       = "v1.1.863";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6181,6 +6181,9 @@ function userPermissionAllowed(profile, permissionKey, roleDefault) {
 function isSystemAdmin() {
   return !!(userProfile && (userProfile.role === "system_admin" || accessRoleCode(userProfile) === "system_admin"));
 }
+window.DcatsAccess = Object.freeze({
+  isSystemAdmin: function() { return isSystemAdmin(); }
+});
 function canUseInstallApp() {
   return !!currentUser && !!userProfile;
 }

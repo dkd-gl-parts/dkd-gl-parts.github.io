@@ -185,6 +185,8 @@ const windowObject = {
   innerHeight: 800,
   location: { search: "" },
   currentUser: { id: "user-a" },
+  userProfile: { role: "price_viewer" },
+  DcatsAccess: { isSystemAdmin: () => Boolean(windowObject.userProfile && windowObject.userProfile.role === "system_admin") },
   matchMedia() { return reduceMotionQuery; },
   addEventListener(type, listener) {
     const list = windowListeners.get(type) || [];
@@ -255,6 +257,24 @@ function lastAnimationFor(element) {
 const api = windowObject.DcatsConcierge;
 assert(api, "Runtime did not expose window.DcatsConcierge");
 assert(byClass("dcats-concierge-sprite").length === 1, "Runtime must create exactly one sprite element");
+const root = byClass("dcats-concierge")[0];
+const mover = byClass("dcats-concierge-mover")[0];
+const sprite = byClass("dcats-concierge-sprite")[0];
+const launcher = byClass("dcats-concierge-launcher")[0];
+const panel = byClass("dcats-concierge-panel")[0];
+const panelClose = byClass("dcats-concierge-panel-close")[0];
+
+assert(root.hidden, "Concierge must be hidden before a system-admin profile is available");
+api.setCharacter("rinna");
+api.setMode("fixed");
+api.openSettings();
+assert(api.getSettings().character === "suzuto" && api.getSettings().mode === "active", "Non-admin API calls changed concierge settings");
+assert(panel.hidden, "Non-admin API calls exposed the concierge settings panel");
+assert(!storage.size, "Non-admin API calls persisted concierge settings");
+
+windowObject.userProfile = { role: "system_admin" };
+notifyObservers();
+assert(!root.hidden, "System administrator could not enter concierge test operation");
 assert(api.getSettings().character === "suzuto" && api.getSettings().mode === "active", "User A defaults are invalid");
 
 api.setCharacter("rinna");
@@ -280,13 +300,6 @@ assert(allElements().some((element) => element.textContent === "Concierge settin
 documentObject.documentElement.lang = "zh-CN";
 notifyObservers();
 assert(allElements().some((element) => element.textContent === "礼宾助手设置"), "Chinese settings copy did not update");
-
-const root = byClass("dcats-concierge")[0];
-const mover = byClass("dcats-concierge-mover")[0];
-const sprite = byClass("dcats-concierge-sprite")[0];
-const launcher = byClass("dcats-concierge-launcher")[0];
-const panel = byClass("dcats-concierge-panel")[0];
-const panelClose = byClass("dcats-concierge-panel-close")[0];
 
 documentObject.hidden = false;
 api.setMode("active");
@@ -344,8 +357,25 @@ assert(!liveInfiniteAnimations().length, "Opening settings while off animated a 
 dispatch(documentObject.listeners, "keydown", { key: "Escape" });
 assert(panel.hidden && documentObject.activeElement === launcher, "Closing settings did not restore launcher focus");
 
+api.setMode("active");
+windowObject.userProfile = { role: "company_admin" };
+notifyObservers();
+assert(root.hidden, "Concierge remained visible after leaving the system-admin role");
+assert(panel.hidden, "Concierge settings remained open after leaving the system-admin role");
+assert(!liveInfiniteAnimations().length, "Role downgrade left concierge animation running");
+const downgradedSettings = api.getSettings();
+api.setCharacter(downgradedSettings.character === "suzuto" ? "rinna" : "suzuto");
+api.setMode("fixed");
+api.openSettings();
+assert(JSON.stringify(api.getSettings()) === JSON.stringify(downgradedSettings), "Role downgrade did not disable concierge controls");
+assert(panel.hidden, "Role downgrade did not keep concierge settings hidden");
+
+windowObject.userProfile = { role: "system_admin" };
+notifyObservers();
+assert(!root.hidden, "Concierge did not return after restoring the system-admin role");
+
 activeScreen.id = "screen-login";
 notifyObservers();
 assert(root.hidden, "Concierge must be hidden on the login screen");
 
-console.log("Concierge runtime behavior verification passed (one sprite, user-scoped preferences, i18n, active motion, gaze, card avoidance, viewport revalidation, reduced motion, focus, and inactive cancellation).");
+console.log("Concierge runtime behavior verification passed (system-admin gate, one sprite, user-scoped preferences, i18n, active motion, gaze, card avoidance, viewport revalidation, reduced motion, focus, and inactive cancellation).");

@@ -160,6 +160,16 @@
     return user && user.id ? String(user.id) : "";
   }
 
+  function isSystemAdminSession() {
+    var access = window.DcatsAccess;
+    if (!window.currentUser || !access || typeof access.isSystemAdmin !== "function") return false;
+    try {
+      return !!access.isSystemAdmin();
+    } catch (error) {
+      return false;
+    }
+  }
+
   function readSettings(owner) {
     var value = { character: "suzuto", mode: "active" };
     if (!owner) return value;
@@ -348,7 +358,14 @@
     syncSettingsOwner();
     var screen = activeScreenName();
     var dedicatedPrintStation = new URLSearchParams(window.location.search).has("dcats_print_station");
-    visible = !!screen && !EXCLUDED_SCREENS[screen] && !dedicatedPrintStation;
+    var systemAdmin = isSystemAdminSession();
+    visible = systemAdmin && !!screen && !EXCLUDED_SCREENS[screen] && !dedicatedPrintStation;
+    if (!systemAdmin && panelOpen) {
+      panelOpen = false;
+      panel.hidden = true;
+      launcher.setAttribute("aria-expanded", "false");
+      panelReturnFocus = null;
+    }
     root.hidden = !visible;
     syncRunningState();
   }
@@ -380,6 +397,7 @@
   }
 
   function selectCharacter(character) {
+    if (!isSystemAdminSession()) return;
     syncSettingsOwner();
     if (!PETS[character] || settings.character === character) return;
     settings.character = character;
@@ -390,6 +408,7 @@
   }
 
   function selectMode(mode) {
+    if (!isSystemAdminSession()) return;
     syncSettingsOwner();
     if (mode !== "active" && mode !== "fixed" && mode !== "off") return;
     settings.mode = mode;
@@ -407,7 +426,7 @@
   }
 
   function openPanel() {
-    if (panelOpen) return;
+    if (!isSystemAdminSession() || panelOpen) return;
     panelReturnFocus = document.activeElement;
     panelOpen = true;
     panel.hidden = false;
@@ -782,7 +801,7 @@
       success: "jumping",
       greeting: "waving"
     }[state];
-    if (!rowName || !visible || document.hidden || settings.mode === "off" || root.classList.contains("has-no-safe-target")) return;
+    if (!rowName || !isSystemAdminSession() || !visible || document.hidden || settings.mode === "off" || root.classList.contains("has-no-safe-target")) return;
     root.classList.remove("has-no-safe-target");
     sequenceToken += 1;
     clearActivityTimer();

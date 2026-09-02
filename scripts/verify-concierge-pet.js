@@ -32,6 +32,9 @@ function readLosslessWebpSize(buffer) {
 }
 
 assert(appVersion, "Unable to resolve APP_VERSION");
+requireFragment(app, "function isSystemAdmin()", "Authenticated app runtime must define the system-admin predicate used by the concierge gate");
+requireFragment(app, "window.DcatsAccess = Object.freeze", "Authenticated app runtime must expose the read-only concierge access bridge");
+requireFragment(app, "isSystemAdmin: function() { return isSystemAdmin(); }", "Concierge access bridge must delegate to the canonical system-admin predicate");
 requireFragment(html, `assets/concierge-pet/concierge-pet.css?${"v=" + appVersion.slice(1)}`, "Concierge stylesheet is not versioned with APP_VERSION");
 requireFragment(html, `assets/concierge-pet/concierge-pet.js?${"v=" + appVersion.slice(1)}`, "Concierge runtime is not versioned with APP_VERSION");
 assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge runtime must load after the authenticated app runtime");
@@ -43,6 +46,9 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
   'STORAGE_KEY_PREFIX = "dcats_concierge_pet_v1:"',
   'var user = window.currentUser',
   'syncSettingsOwner();',
+  'isSystemAdminSession()',
+  'typeof access.isSystemAdmin !== "function"',
+  'var systemAdmin = isSystemAdminSession()',
   'var COPY = {',
   'EXCLUDED_SCREENS = { boot: true, login: true, forgot: true, reset: true }',
   'has("dcats_print_station")',
@@ -75,6 +81,7 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
 
 requireFragment(runtime, 'if (!visible || document.hidden || settings.mode === "off")', "Off mode must stop before panel animation handling");
 requireFragment(runtime, 'settings.mode === "off" || root.classList.contains("has-no-safe-target")', "External states must not revive a concierge without a safe target");
+requireFragment(runtime, 'if (!isSystemAdminSession() || panelOpen) return;', "Concierge settings must fail closed outside a system-admin session");
 
 assert((runtime.match(/createElement\("div", "dcats-concierge-sprite"\)/g) || []).length === 1, "Runtime must create exactly one visible sprite element");
 assert(!runtime.includes("innerHTML"), "Concierge UI must not use innerHTML");
