@@ -5647,7 +5647,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.860";
+var APP_VERSION       = "v1.1.861";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -11228,6 +11228,17 @@ function salesOrderB2PreflightSummary(preflight) {
   return (first.order_number ? first.order_number + ": " : "") + (messages[0] || "内容を確認してください。") + (errors.length > 1 ? " ほか" + (errors.length - 1) + "件" : "");
 }
 
+function salesOrderB2PreflightNeedsContractSettings(preflight) {
+  var errors = preflight && Array.isArray(preflight.errors) ? preflight.errors : [];
+  return errors.some(function(row) {
+    var messages = row && Array.isArray(row.messages) ? row.messages : [];
+    return messages.some(function(message) {
+      var text = String(message || "");
+      return text.indexOf("B2契約情報") >= 0 || text.indexOf("B2請求先") >= 0 || text.indexOf("B2運賃管理番号") >= 0;
+    });
+  });
+}
+
 var DCATS_BUSINESS_WORKSPACE_URL = "https://drive.google.com/drive/folders/1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ";
 var DCATS_BUSINESS_WORKSPACE_SHORTCUT_URL = "assets/integrations/dcats-business-workspace.lnk";
 var DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME = "D-CATS\u696d\u52d9\u9023\u643a.lnk";
@@ -13970,6 +13981,7 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var returnCanHandwrite = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "handwritten" && !returnHandwrittenComplete && !shippingDocumentSaving);
   var b2Issued = Array.isArray(order.b2_exports) && order.b2_exports.length > 0;
   var canCreateB2 = ["accepted", "shipping_ready", "shipped"].indexOf(order.status) >= 0 && outboundMethod === "b2_cloud";
+  var b2SettingsAction = isSystemAdmin() ? "<button type='button' data-shipping-document-b2-settings>B2契約設定</button>" : "";
   var dispatchStandard = salesOrderAutoPrintIsEnabled() ? "A4 / 受付時に自動発行" : "A4 / 出荷帳票発行で印刷";
   var reason = !dispatch ? "出荷指示書が未発行です。"
     : dispatch.status !== "shipped" ? "商品と製造シリアルの照合を完了してください。"
@@ -13985,7 +13997,7 @@ function shippingDocumentShipmentDocumentsHtml(order) {
       key: "outbound_waybill", name: "商品発送送り状", standard: "B2クラウド / ヤマト宅急便 元払い",
       carrierCode: outboundWaybill.carrier_code || "yamato_prepaid",
       state: outboundModeLabel + " / " + (outboundMethod === "b2_cloud" ? (b2Issued ? "発行済み" : "未発行") : outboundMethod === "handwritten" ? (outboundHandwrittenComplete ? "手書き完了" : "手書き待ち") : (outboundJob ? salesOrderPrintJobStatusLabel(outboundJob.status) : (outboundWaybill.tracking_number ? "番号登録済み" : "未設定"))), ready: !!dispatch,
-      actions: (outboundMethod === "b2_cloud" ? "<button type='button' class='primary' id='shipping-document-b2-issue'" + (canCreateB2 && !shippingDocumentSaving ? "" : " disabled") + ">" + (b2Issued ? "B2 CSV再発行" : "B2 CSV発行") + "</button>" : outboundMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-outbound-print" + (outboundCanPrint ? "" : " disabled") + ">端末印刷</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='outbound_waybill'" + (outboundCanHandwrite ? "" : " disabled") + ">手書き内容を表示</button>") + "<button type='button' data-shipping-document-open-settings='outbound'>設定</button>"
+      actions: (outboundMethod === "b2_cloud" ? "<button type='button' class='primary' id='shipping-document-b2-issue'" + (canCreateB2 && !salesOrderSaving && !shippingDocumentSaving ? "" : " disabled") + ">" + (b2Issued ? "B2 CSV再発行" : "B2 CSV発行") + "</button>" + b2SettingsAction : outboundMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-outbound-print" + (outboundCanPrint ? "" : " disabled") + ">端末印刷</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='outbound_waybill'" + (outboundCanHandwrite ? "" : " disabled") + ">手書き内容を表示</button>") + "<button type='button' data-shipping-document-open-settings='outbound'>発送方法設定</button>"
     },
     {
       key: "warranty", name: "製品保証書", standard: "A5 / 商品数量分 / 端末印刷",
@@ -14075,10 +14087,10 @@ function renderShippingDocumentDetail() {
     return;
   }
   host.innerHTML = "<div class='shipping-document-detail-head'><div><span class='shipping-document-order-id-label'>" + esc(t("sales_order_id_label")) + "</span><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><small class='shipping-document-detail-target'>帳票発行対象 / " + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small><strong>" + esc(order.customer_name || "-") + "</strong></div><div><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span><button type='button' id='shipping-document-open-history'>B2発行履歴</button><button type='button' id='shipping-document-open-order'>受注詳細</button></div></div>" +
+    "<div id='shipping-document-message' class='sales-order-detail-message' aria-live='polite'></div>" +
     shippingDocumentStageHtml(order) +
     shippingDocumentOrderContentsHtml(order) +
-    shippingDocumentShipmentDocumentsHtml(order) +
-    "<div id='shipping-document-message' class='sales-order-detail-message' aria-live='polite'></div>";
+    shippingDocumentShipmentDocumentsHtml(order);
   bindShippingDocumentDetailActions();
   scheduleShippingDocumentPrintStatusRefresh();
 }
@@ -14086,6 +14098,8 @@ function renderShippingDocumentDetail() {
 function bindShippingDocumentDetailActions() {
   var issue = document.getElementById("shipping-document-b2-issue");
   if (issue) issue.addEventListener("click", issueShippingDocumentB2);
+  var b2Settings = document.querySelector("[data-shipping-document-b2-settings]");
+  if (b2Settings) b2Settings.addEventListener("click", openSalesOrderB2Settings);
   var openOrder = document.getElementById("shipping-document-open-order");
   if (openOrder) openOrder.addEventListener("click", openShippingDocumentOrderInSalesOrderMgmt);
   var openHistory = document.getElementById("shipping-document-open-history");
@@ -14317,7 +14331,14 @@ async function openShippingDocumentOrderInSalesOrderMgmt() {
 
 async function issueShippingDocumentB2() {
   var order = shippingDocumentDetail;
-  if (!order || shippingDocumentSaving) return;
+  if (!order) {
+    setShippingDocumentMessage("B2 CSVを発行する受注を選択してください。", true);
+    return;
+  }
+  if (shippingDocumentSaving || salesOrderSaving) {
+    setShippingDocumentMessage("B2 CSVを処理中です。完了するまでお待ちください。", false);
+    return;
+  }
   var exports = Array.isArray(order.b2_exports) ? order.b2_exports : [];
   var reason = null;
   if (exports.length) {
@@ -15627,15 +15648,32 @@ function downloadSalesOrderB2Payload(data) {
 }
 
 async function issueSalesOrderB2Export(orderIds, isReissue, reason) {
-  if (!canManageSalesOrders() || salesOrderSaving || shippingDocumentSaving || !Array.isArray(orderIds) || !orderIds.length) return null;
+  if (!canManageSalesOrders()) {
+    setSalesOrderBatchMessage("B2 CSVを発行する権限がありません。", true);
+    setShippingDocumentMessage("B2 CSVを発行する権限がありません。", true);
+    return null;
+  }
+  if (salesOrderSaving || shippingDocumentSaving) {
+    setSalesOrderBatchMessage("B2 CSVを処理中です。完了するまでお待ちください。", false);
+    setShippingDocumentMessage("B2 CSVを処理中です。完了するまでお待ちください。", false);
+    return null;
+  }
+  if (!Array.isArray(orderIds) || !orderIds.length) {
+    setSalesOrderBatchMessage("B2 CSVを発行する受注を選択してください。", true);
+    setShippingDocumentMessage("B2 CSVを発行する受注を選択してください。", true);
+    return null;
+  }
+  var finalMessage = "";
+  var finalMessageIsError = false;
+  var shouldOpenContractSettings = false;
   salesOrderSaving = true;
   salesOrderB2ExportSaving = true;
   shippingDocumentSaving = true;
   renderSalesOrderB2Preflight(null);
-  setSalesOrderBatchMessage("B2 CSVの必須項目を確認しています。", false);
-  setShippingDocumentMessage("B2 CSVの必須項目を確認しています。", false);
   updateSalesOrderSelectionButtons();
   renderShippingDocumentDetail();
+  setSalesOrderBatchMessage("B2 CSVの必須項目を確認しています。", false);
+  setShippingDocumentMessage("B2 CSVの必須項目を確認しています。", false);
   try {
     var preflightResult = await salesOrderB2RpcWithTimeout(sb.rpc("check_sales_order_b2_export", {
       target_order_ids: orderIds,
@@ -15646,8 +15684,9 @@ async function issueSalesOrderB2Export(orderIds, isReissue, reason) {
     if (preflight.ok !== true) {
       renderSalesOrderB2Preflight(preflight);
       var preflightMessage = salesOrderB2PreflightSummary(preflight);
-      setSalesOrderBatchMessage(preflightMessage, true);
-      setShippingDocumentMessage(preflightMessage, true);
+      finalMessage = preflightMessage;
+      finalMessageIsError = true;
+      shouldOpenContractSettings = isSystemAdmin() && salesOrderB2PreflightNeedsContractSettings(preflight);
       return null;
     }
 
@@ -15661,13 +15700,12 @@ async function issueSalesOrderB2Export(orderIds, isReissue, reason) {
     if (result.error) throw result.error;
     var data = result.data || {};
     if (!downloadSalesOrderB2Payload(data)) throw new Error("B2 CSVを保存できませんでした。ブラウザのダウンロード許可を確認してください。");
-    setSalesOrderBatchMessage("B2 CSVを発行しました。ダウンロードフォルダを確認してください。", false);
-    setShippingDocumentMessage("B2 CSVを発行しました。ダウンロードフォルダを確認してください。", false);
+    finalMessage = "B2 CSVを発行しました。ダウンロードフォルダを確認してください。";
     return data;
   } catch (error) {
     var message = (error && error.message) || "B2 CSVを作成できませんでした。";
-    setSalesOrderBatchMessage(message, true);
-    setShippingDocumentMessage(message, true);
+    finalMessage = message;
+    finalMessageIsError = true;
     return null;
   } finally {
     salesOrderSaving = false;
@@ -15675,6 +15713,11 @@ async function issueSalesOrderB2Export(orderIds, isReissue, reason) {
     shippingDocumentSaving = false;
     updateSalesOrderSelectionButtons();
     renderShippingDocumentDetail();
+    if (finalMessage) {
+      setSalesOrderBatchMessage(finalMessage, finalMessageIsError);
+      setShippingDocumentMessage(finalMessage, finalMessageIsError);
+    }
+    if (shouldOpenContractSettings) await openSalesOrderB2Settings();
   }
 }
 

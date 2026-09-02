@@ -46,6 +46,21 @@ for (const fragment of [
   if (!settings.includes(fragment)) throw new Error(`Missing B2 settings contract: ${fragment}`);
 }
 
+const contractPreflightSource = between("function salesOrderB2PreflightNeedsContractSettings", "var DCATS_BUSINESS_WORKSPACE_URL");
+const contractPreflightSandbox = { Array, String };
+vm.createContext(contractPreflightSandbox);
+vm.runInContext(contractPreflightSource, contractPreflightSandbox);
+if (!contractPreflightSandbox.salesOrderB2PreflightNeedsContractSettings({
+  errors: [{ messages: ["B2契約情報の発送元名称が未設定"] }]
+})) {
+  throw new Error("Missing B2 contract fields must route the operator to contract settings");
+}
+if (contractPreflightSandbox.salesOrderB2PreflightNeedsContractSettings({
+  errors: [{ messages: ["お届け先電話番号が未設定"] }]
+})) {
+  throw new Error("Order-specific B2 errors must not open the global contract settings");
+}
+
 const issueSource = between("async function issueSalesOrderB2Export", "async function downloadSalesOrderB2Batch");
 if (issueSource.includes("updateSalesOrderExportButton")) {
   throw new Error("The removed updateSalesOrderExportButton call would leave B2 issuance stuck");
@@ -60,7 +75,11 @@ for (const fragment of [
   "salesOrderSaving = false",
   "salesOrderB2ExportSaving = false",
   "shippingDocumentSaving = false",
-  "updateSalesOrderSelectionButtons()"
+  "updateSalesOrderSelectionButtons()",
+  "finalMessage",
+  "setShippingDocumentMessage(finalMessage, finalMessageIsError)",
+  "shouldOpenContractSettings",
+  "await openSalesOrderB2Settings()"
 ]) {
   if (!issueSource.includes(fragment)) throw new Error(`Missing B2 issuance cleanup: ${fragment}`);
 }
@@ -109,14 +128,19 @@ if (!exportWrapper.includes("var orderIds = salesOrderB2TargetIds()") || !export
 
 function makeSandbox(results) {
   const rpcCalls = [];
+  const shippingMessages = [];
+  let contractSettingsOpened = 0;
   const sandbox = {
     salesOrderSaving: false,
     salesOrderB2ExportSaving: false,
     shippingDocumentSaving: false,
     canManageSalesOrders: () => true,
+    isSystemAdmin: () => true,
+    salesOrderB2PreflightNeedsContractSettings: (preflight) => !!(preflight && preflight.needsContractSettings),
+    openSalesOrderB2Settings: async () => { contractSettingsOpened += 1; },
     renderSalesOrderB2Preflight: () => {},
     setSalesOrderBatchMessage: () => {},
-    setShippingDocumentMessage: () => {},
+    setShippingDocumentMessage: (message, isError) => { shippingMessages.push({ message, isError }); },
     updateSalesOrderSelectionButtons: () => {},
     renderShippingDocumentDetail: () => {},
     salesOrderB2PreflightSummary: () => "事前検査エラー",
@@ -134,17 +158,23 @@ function makeSandbox(results) {
   };
   vm.createContext(sandbox);
   vm.runInContext(issueSource, sandbox);
-  return { sandbox, rpcCalls };
+  return { sandbox, rpcCalls, shippingMessages, contractSettingsOpened: () => contractSettingsOpened };
 }
 
 (async () => {
-  const failed = makeSandbox([{ data: { ok: false, errors: [{ order_number: "DC1", messages: ["必須項目不足"] }] } }]);
+  const failed = makeSandbox([{ data: { ok: false, needsContractSettings: true, errors: [{ order_number: "DC1", messages: ["B2契約情報の発送元名称が未設定"] }] } }]);
   await failed.sandbox.issueSalesOrderB2Export([1], false, null);
   if (failed.rpcCalls.join(",") !== "check_sales_order_b2_export") {
     throw new Error("A failed preflight must not create an export batch");
   }
   if (failed.sandbox.salesOrderSaving || failed.sandbox.salesOrderB2ExportSaving || failed.sandbox.shippingDocumentSaving) {
     throw new Error("A failed preflight must always clear every issuing state");
+  }
+  if (failed.contractSettingsOpened() !== 1) {
+    throw new Error("A failed B2 contract preflight must open the contract settings for a system administrator");
+  }
+  if (!failed.shippingMessages.length || failed.shippingMessages[failed.shippingMessages.length - 1].message !== "事前検査エラー") {
+    throw new Error("The final B2 preflight error must remain visible after the detail screen rerenders");
   }
 
   const succeeded = makeSandbox([
@@ -157,6 +187,18 @@ function makeSandbox(results) {
   }
   if (succeeded.sandbox.salesOrderSaving || succeeded.sandbox.salesOrderB2ExportSaving || succeeded.sandbox.shippingDocumentSaving) {
     throw new Error("A successful export must clear every issuing state");
+  }
+  if (!succeeded.shippingMessages.length || succeeded.shippingMessages[succeeded.shippingMessages.length - 1].message !== "B2 CSVを発行しました。ダウンロードフォルダを確認してください。") {
+    throw new Error("The final B2 success message must remain visible after the detail screen rerenders");
+  }
+
+  const shipmentUi = between("function shippingDocumentShipmentDocumentsHtml", "function shippingDocumentReturnWaybillHtml");
+  for (const fragment of ["data-shipping-document-b2-settings", "B2契約設定", "発送方法設定"]) {
+    if (!shipmentUi.includes(fragment)) throw new Error(`Missing shipping-document B2 recovery action: ${fragment}`);
+  }
+  const detailUi = between("function renderShippingDocumentDetail", "function bindShippingDocumentDetailActions");
+  if (detailUi.indexOf("shipping-document-message") >= detailUi.indexOf("shippingDocumentStageHtml(order)")) {
+    throw new Error("Shipping-document messages must render above the detail workflow without scrolling");
   }
 
   for (const fragment of [".sales-order-b2-preflight", ".sales-order-b2-settings-grid", "@media (max-width: 560px)"]) {
