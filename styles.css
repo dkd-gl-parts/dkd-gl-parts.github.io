@@ -6613,6 +6613,9 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .sales-order-address dl > div { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 8px; }
 .sales-order-address dt { color: #7b858e; font-size: 9px; }
 .sales-order-address dd { overflow-wrap: anywhere; color: #344054; font-size: 10px; font-weight: 700; }
+.sales-order-waybill-detail { display: grid; gap: 2px; min-width: 0; }
+.sales-order-waybill-detail strong { color: #273c31; font-size: 10px; line-height: 1.35; }
+.sales-order-waybill-detail span { color: #667085; font-size: 9px; font-weight: 600; line-height: 1.35; }
 .sales-order-tracking { border-top: 1px solid #dbe1e6; padding-top: 18px; }
 .sales-order-tracking-grid { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(160px, 1fr) 150px auto; align-items: end; gap: 10px; }
 .sales-order-tracking-grid.outbound-only { grid-template-columns: minmax(220px, 1fr) 160px auto; }
@@ -6900,6 +6903,24 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .shipping-document-stages span { color: #6d7884; font-size: 9px; font-weight: 800; }
 .shipping-document-stages strong { margin-top: 4px; color: #4f5d69; font-size: 11px; }
 .shipping-document-stages .ready strong { color: #216342; }
+.shipping-document-order-contents { border-bottom: 1px solid #dbe1e6; padding: 9px 0; }
+.shipping-document-order-contents-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 5px; }
+.shipping-document-order-contents-head h3 { color: #344054; font-size: 11px; letter-spacing: 0; }
+.shipping-document-order-contents-head > span { color: #6d7884; font-size: 9px; font-weight: 800; }
+.shipping-document-order-items { border-top: 1px solid #e1e5e9; }
+.shipping-document-order-item { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(90px, .42fr) 72px 94px; align-items: center; gap: 10px; min-height: 42px; border-bottom: 1px solid #e6eaed; padding: 5px 8px; }
+.shipping-document-order-item > div { min-width: 0; }
+.shipping-document-order-item > div strong,
+.shipping-document-order-item > div span { display: block; overflow-wrap: anywhere; }
+.shipping-document-order-item > div strong { color: #243442; font-size: 11px; }
+.shipping-document-order-item > div span { margin-top: 1px; color: #6f7a85; font-size: 9px; }
+.shipping-document-order-kind,
+.shipping-document-order-quantity { color: #40505f; font-size: 9px; font-weight: 700; }
+.shipping-document-order-quantity strong { color: #182230; font-size: 11px; }
+.shipping-document-order-core { justify-self: start; border: 1px solid #aab5be; border-radius: 4px; padding: 3px 6px; background: #f5f7f8; color: #596875; font-size: 8px; font-weight: 800; white-space: nowrap; }
+.shipping-document-order-core.required { border-color: #e1857d; background: #fff3f1; color: #aa2f25; }
+.shipping-document-order-core.not-required { border-color: #8eb89e; background: #eff8f2; color: #286346; }
+.shipping-document-order-empty { border-left: 3px solid #aab5be; padding: 7px 9px; background: #f6f8f9; color: #6d7884; font-size: 9px; }
 .shipping-document-section { margin-top: 20px; border-top: 1px solid #dbe1e6; padding-top: 16px; }
 .shipping-document-section-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 10px; }
 .shipping-document-section-head h3 { color: #344054; font-size: 13px; letter-spacing: 0; }
@@ -7362,6 +7383,9 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   .shipping-document-detail-head button { min-height: 28px; padding: 0 9px; }
   .shipping-document-stages > div { padding: 6px 10px; }
   .shipping-document-stages strong { margin-top: 2px; }
+  .shipping-document-order-contents { padding: 6px 0; }
+  .shipping-document-order-contents-head { margin-bottom: 3px; }
+  .shipping-document-order-item { min-height: 36px; padding: 3px 7px; }
   .shipping-document-section { margin-top: 9px; padding-top: 7px; }
   .shipping-document-section-head { align-items: center; margin-bottom: 6px; }
   .shipping-document-section-head h3 { font-size: 12px; }
@@ -7576,6 +7600,10 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   .shipping-document-waybill-print-row > div { margin-right: 0; }
   .shipping-document-waybill-print-row button,
   .shipping-document-waybill-print-row a { width: 100%; }
+  .shipping-document-order-item { grid-template-columns: minmax(0, 1fr) auto; gap: 5px 10px; }
+  .shipping-document-order-kind { justify-self: end; }
+  .shipping-document-order-quantity { grid-column: 1; }
+  .shipping-document-order-core { grid-column: 2; justify-self: end; }
   .shipping-document-default-row { grid-template-columns: 1fr; }
   .shipping-document-default-row small { grid-column: 1; }
   .shipping-document-settings-heading { padding: 16px 14px 12px; }

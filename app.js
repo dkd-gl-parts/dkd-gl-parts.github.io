@@ -5467,7 +5467,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.841";
+var APP_VERSION       = "v1.1.842";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -9547,6 +9547,43 @@ function customerOrderShippingMethodLabel(method, fallback) {
   return [method.carrier_name, method.service_name].filter(Boolean).join(" / ") || fallback || "-";
 }
 
+function salesOrderWaybillRecord(order, purpose) {
+  order = order || {};
+  var waybill = purpose === "core_return" ? order.return_waybill : order.outbound_waybill;
+  if (typeof waybill === "string") {
+    try { waybill = JSON.parse(waybill); } catch (error) { waybill = {}; }
+  }
+  return waybill && typeof waybill === "object" ? waybill : {};
+}
+
+function salesOrderWaybillCarrierLabel(order, purpose) {
+  var waybill = salesOrderWaybillRecord(order, purpose);
+  var labels = {
+    yamato_prepaid: "ヤマト運輸 / 宅急便 元払い",
+    sagawa_prepaid: "佐川急便 / 飛脚宅配便 元払い",
+    yamato_collect: "ヤマト運輸 / 宅急便 着払い",
+    sagawa_collect: "佐川急便 / 飛脚宅配便 着払い"
+  };
+  return labels[waybill.carrier_code] || customerOrderShippingMethodLabel(
+    customerOrderSavedShippingMethod(order, purpose === "core_return" ? "core_return" : "outbound"),
+    "未登録"
+  );
+}
+
+function salesOrderWaybillDetailLabel(order, purpose) {
+  order = order || {};
+  if (purpose === "core_return" && !order.core_return_required) return "返却用伝票なし";
+  var waybill = salesOrderWaybillRecord(order, purpose);
+  var method = waybill.handling_method || (purpose === "core_return" ? order.return_waybill_method : order.outbound_waybill_method) || "";
+  var methodLabel = ({ b2_cloud: "B2クラウド", dot_matrix: "ドットプリンタ", handwritten: "手書き運用" })[method] || "発行方法未設定";
+  var trackingNumber = waybill.tracking_number || (purpose === "outbound" ? order.outbound_tracking_number : order.return_tracking_number) || "";
+  var parts = [methodLabel];
+  if (method === "b2_cloud" && Array.isArray(order.b2_exports) && order.b2_exports.length) parts.push("B2 CSV発行済み");
+  if (purpose === "core_return") parts.push(shippingDocumentReturnWaybillCopyCount(order) + "枚");
+  parts.push(trackingNumber ? "伝票番号 " + trackingNumber : "伝票番号未登録");
+  return parts.join(" / ");
+}
+
 function updateCustomerOrderCoreReturnServiceVisibility() {
   var field = document.getElementById("customer-order-core-return-service-field");
   var select = document.getElementById("customer-order-core-return-service");
@@ -13017,6 +13054,28 @@ function shippingDocumentReturnWaybillHtml(order) {
     "<p class='shipping-document-form-note'>" + esc(printGuidance) + "</p></div>";
 }
 
+function shippingDocumentOrderContentsHtml(order) {
+  var items = Array.isArray(order && order.items) ? order.items : [];
+  var totalQuantity = items.reduce(function(total, item) {
+    var orderItem = item && item.order_item && typeof item.order_item === "object" ? item.order_item : (item || {});
+    var quantity = item && item.quantity != null ? item.quantity : orderItem.quantity;
+    return total + Math.max(1, parseInt(quantity, 10) || 1);
+  }, 0);
+  var rows = items.map(function(item) {
+    item = item || {};
+    var orderItem = item.order_item && typeof item.order_item === "object" ? item.order_item : item;
+    var quantity = Math.max(1, parseInt(item.quantity == null ? orderItem.quantity : item.quantity, 10) || 1);
+    var partNumber = orderItem.genuine_part_number || orderItem.manufacturer_part_number || orderItem.gltek_part_number || "-";
+    var detail = [orderItem.manufacturer, orderItem.manufacturer_part_number].filter(Boolean).join(" / ") || "-";
+    return "<div class='shipping-document-order-item'><div><strong>" + esc(partNumber) + "</strong><span>" + esc(detail) + "</span></div>" +
+      "<span class='shipping-document-order-kind'>" + esc(customerProductKindLabel(orderItem.product_kind)) + "</span>" +
+      "<span class='shipping-document-order-quantity'>" + esc(t("customer_order_quantity")) + " <strong>" + esc(String(quantity)) + "</strong></span>" +
+      "<span class='shipping-document-order-core " + (orderItem.core_return_required ? "required" : "not-required") + "'>" + esc(t("core_return_required_label") + ": " + t(orderItem.core_return_required ? "core_return_required" : "core_return_not_required")) + "</span></div>";
+  }).join("");
+  return "<section class='shipping-document-order-contents'><div class='shipping-document-order-contents-head'><h3>受注内容</h3><span>" + esc(tf("customer_catalog_count", { n: items.length }) + " / " + t("customer_order_quantity") + " " + totalQuantity) + "</span></div>" +
+    (rows ? "<div class='shipping-document-order-items'>" + rows + "</div>" : "<p class='shipping-document-order-empty'>受注明細がありません。</p>") + "</section>";
+}
+
 function renderShippingDocumentDetail() {
   var host = document.getElementById("shipping-document-detail");
   var order = shippingDocumentDetail;
@@ -13027,6 +13086,7 @@ function renderShippingDocumentDetail() {
   }
   host.innerHTML = "<div class='shipping-document-detail-head'><div><span class='shipping-document-order-id-label'>" + esc(t("sales_order_id_label")) + "</span><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><small class='shipping-document-detail-target'>帳票発行対象 / " + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small><strong>" + esc(order.customer_name || "-") + "</strong></div><div><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span><button type='button' id='shipping-document-open-history'>B2発行履歴</button><button type='button' id='shipping-document-open-order'>受注詳細</button></div></div>" +
     shippingDocumentStageHtml(order) +
+    shippingDocumentOrderContentsHtml(order) +
     shippingDocumentShipmentDocumentsHtml(order) +
     "<div id='shipping-document-message' class='sales-order-detail-message' aria-live='polite'></div>";
   bindShippingDocumentDetailActions();
@@ -13887,10 +13947,12 @@ function renderSalesOrderDetail() {
   var cancelAction = allowed.indexOf("cancel") >= 0
     ? "<details class='sales-order-secondary-actions'><summary>その他の操作</summary><div><button type='button' class='sales-order-action cancel' data-sales-order-action='cancel'>受注取消</button></div></details>"
     : "";
-  var outboundService = customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "outbound"), "未登録");
+  var outboundService = salesOrderWaybillCarrierLabel(order, "outbound");
+  var outboundWaybillDetail = salesOrderWaybillDetailLabel(order, "outbound");
   var coreReturnService = order.core_return_required
-    ? customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "core_return"), "未登録")
+    ? salesOrderWaybillCarrierLabel(order, "core_return")
     : "対象外";
+  var coreReturnWaybillDetail = salesOrderWaybillDetailLabel(order, "core_return");
   var orderDiscount = Math.max(0, parseInt(order.order_discount_jpy, 10) || 0);
   var orderAdjustments = Array.isArray(order.order_adjustments) ? order.order_adjustments : [];
   var pricingButton = order.pricing_editable ? "<button type='button' class='sales-order-pricing-open' id='sales-order-pricing-open'>金額を修正</button>" : "";
@@ -13913,7 +13975,7 @@ function renderSalesOrderDetail() {
     "<div class='sales-order-detail-panels'>" +
       "<section class='sales-order-detail-panel sales-order-detail-overview' id='sales-order-detail-panel-overview' role='tabpanel' aria-labelledby='sales-order-detail-tab-overview' data-sales-order-detail-panel='overview'><div class='sales-order-detail-overview-grid'>" +
         "<section class='sales-order-detail-section' id='sales-order-detail-products'><div class='sales-order-section-heading'><div><h3>注文商品</h3><p>販売価格、数量、コア返却条件と値引・調整行を確認します。</p></div>" + pricingButton + "</div>" + salesOrderItemRowsHtml(order.items) + salesOrderAdjustmentRowsHtml(orderAdjustments, orderDiscount) + "</section>" +
-        "<section class='sales-order-detail-section sales-order-address' id='sales-order-detail-delivery'><div class='sales-order-section-heading'><div><h3>お届け先・運送便</h3><p>送り状へ反映する配送情報です。</p></div></div><div class='sales-order-address-destination'><strong>" + esc(address.company_name || "-") + "　" + esc(address.recipient_name || "-") + "</strong><span>〒" + esc(address.postal_code || "-") + "　" + esc(address.prefecture_name || "") + esc(address.address_line_1 || "-") + " " + esc(address.address_line_2 || "") + "</span><span>TEL " + esc(address.phone_number || "-") + "</span></div><dl><div><dt>商品発送便</dt><dd>" + esc(outboundService) + "</dd></div><div><dt>コア返却便</dt><dd>" + esc(coreReturnService) + "</dd></div><div><dt>お届け希望</dt><dd>" + esc(order.requested_delivery_date || "指定なし") + " / " + esc(order.delivery_time_label || "指定なし") + "</dd></div><div><dt>注文メモ</dt><dd>" + esc(order.customer_note || "-") + "</dd></div></dl></section>" +
+        "<section class='sales-order-detail-section sales-order-address' id='sales-order-detail-delivery'><div class='sales-order-section-heading'><div><h3>お届け先・運送便</h3><p>送り状へ反映する配送情報です。</p></div></div><div class='sales-order-address-destination'><strong>" + esc(address.company_name || "-") + "　" + esc(address.recipient_name || "-") + "</strong><span>〒" + esc(address.postal_code || "-") + "　" + esc(address.prefecture_name || "") + esc(address.address_line_1 || "-") + " " + esc(address.address_line_2 || "") + "</span><span>TEL " + esc(address.phone_number || "-") + "</span></div><dl><div><dt>商品発送便</dt><dd class='sales-order-waybill-detail'><strong>" + esc(outboundService) + "</strong><span>" + esc(outboundWaybillDetail) + "</span></dd></div><div><dt>コア返却便</dt><dd class='sales-order-waybill-detail'><strong>" + esc(coreReturnService) + "</strong><span>" + esc(coreReturnWaybillDetail) + "</span></dd></div><div><dt>お届け希望</dt><dd>" + esc(order.requested_delivery_date || "指定なし") + " / " + esc(order.delivery_time_label || "指定なし") + "</dd></div><div><dt>注文メモ</dt><dd>" + esc(order.customer_note || "-") + "</dd></div></dl></section>" +
       "</div></section>" +
       "<div class='sales-order-detail-panel' id='sales-order-detail-panel-fulfillment' role='tabpanel' aria-labelledby='sales-order-detail-tab-fulfillment' data-sales-order-detail-panel='fulfillment' hidden>" + salesOrderDispatchHtml(order) + "</div>" +
       "<section class='sales-order-detail-panel sales-order-detail-section sales-order-tracking' id='sales-order-detail-tracking' role='tabpanel' aria-labelledby='sales-order-detail-tab-tracking' data-sales-order-detail-panel='tracking' hidden><div class='sales-order-section-heading'><div><h3>商品発送送り状</h3><p>B2発行済データの取込後に番号を確認・修正できます。</p></div></div><div class='sales-order-tracking-grid outbound-only'><label><span>送り状番号</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>B2出荷予定日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>商品発送番号を登録</button></div><p>コア返却用複写伝票は「出荷帳票発行」で管理します。送り状番号の登録だけでは在庫を減らしません。</p></section>" +

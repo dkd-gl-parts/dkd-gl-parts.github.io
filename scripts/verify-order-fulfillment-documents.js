@@ -156,8 +156,22 @@ for (const fragment of [
   "shipping-document-order-id-label",
   't("sales_order_id_label")',
   "shipping-document-detail-target",
-  "order.order_number"
+  "order.order_number",
+  "shippingDocumentOrderContentsHtml(order)"
 ]) requireFragment(shippingDocumentDetailSource, fragment, `Shipping document detail order ID label is missing: ${fragment}`);
+
+const shippingDocumentOrderContents = sourceBetween("function shippingDocumentOrderContentsHtml", "function renderShippingDocumentDetail");
+for (const fragment of [
+  "受注内容",
+  "shipping-document-order-items",
+  "genuine_part_number",
+  "manufacturer_part_number",
+  "customerProductKindLabel(orderItem.product_kind)",
+  't("customer_order_quantity")',
+  't("core_return_required_label")',
+  '"core_return_required" : "core_return_not_required"',
+  'tf("customer_catalog_count"'
+]) requireFragment(shippingDocumentOrderContents, fragment, `Shipping document order contents contract is missing: ${fragment}`);
 
 const batchDefaultsSource = sourceBetween("function salesOrderAutoPrintIsEnabled", "async function enterShippingDocumentMgmt");
 for (const fragment of [
@@ -302,12 +316,13 @@ const detailSource = sourceBetween("function renderShippingDocumentDetail", "fun
 for (const fragment of [
   "shippingDocumentDefaultStateHtml()",
   "shippingDocumentStageHtml(order)",
+  "shippingDocumentOrderContentsHtml(order)",
   "shippingDocumentShipmentDocumentsHtml(order)",
   "B2発行履歴",
   "受注詳細"
 ]) requireFragment(detailSource, fragment);
-for (const forbidden of ["salesOrderItemRowsHtml(order.items)", "対象商品", "shippingDocumentOutboundWaybillHtml(order)", "shippingDocumentReturnWaybillHtml(order)"]) {
-  if (detailSource.includes(forbidden)) throw new Error(`Shipping document initial detail must not include order contents or inline settings: ${forbidden}`);
+for (const forbidden of ["salesOrderItemRowsHtml(order.items)", "shippingDocumentOutboundWaybillHtml(order)", "shippingDocumentReturnWaybillHtml(order)"]) {
+  if (detailSource.includes(forbidden)) throw new Error(`Shipping document initial detail must not include the sales screen row renderer or inline waybill settings: ${forbidden}`);
 }
 
 const overlaySource = sourceBetween("function openShippingDocumentSettings", "function syncShippingDocumentOutboundWaybillFields");
@@ -480,6 +495,9 @@ for (const fragment of [
   ".shipping-document-row-check",
   ".shipping-document-order-id-label",
   ".shipping-document-detail-target",
+  ".shipping-document-order-contents",
+  ".shipping-document-order-item",
+  ".shipping-document-order-core.required",
   ".shipping-document-print-actions",
   ".shipping-document-required-list",
   ".shipping-document-required-head",
@@ -550,11 +568,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.841"',
-  'styles.css?v=1.1.841',
-  'app.js?v=1.1.841'
+  'content="v1.1.842"',
+  'styles.css?v=1.1.842',
+  'app.js?v=1.1.842'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.841"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.842"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
