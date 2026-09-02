@@ -5560,7 +5560,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.852";
+var APP_VERSION       = "v1.1.853";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5902,6 +5902,7 @@ var salesAccountingExportState = null;
 var salesAccountingExportLoading = false;
 var salesAccountingExportSaving = false;
 var salesAccountingExportCodeSavingKey = "";
+var salesAccountingProductOnboardingSaving = false;
 var shippingDocumentRows = [];
 var shippingDocumentSelectedId = null;
 var shippingDocumentCheckedIdsState = new Set();
@@ -8367,6 +8368,7 @@ async function doLogout() {
   salesAccountingExportLoading = false;
   salesAccountingExportSaving = false;
   salesAccountingExportCodeSavingKey = "";
+  salesAccountingProductOnboardingSaving = false;
   shippingDocumentRows = [];
   shippingDocumentSelectedId = null;
   shippingDocumentCheckedIdsState = new Set();
@@ -11352,6 +11354,7 @@ async function enterSalesOrderMgmt() {
   salesAccountingExportLoading = false;
   salesAccountingExportSaving = false;
   salesAccountingExportCodeSavingKey = "";
+  salesAccountingProductOnboardingSaving = false;
   showScreen("sales-order-mgmt");
   updateAllHeaders();
   renderSalesOrderB2SettingsAccess();
@@ -11379,6 +11382,9 @@ function initialSalesAccountingExportState() {
     orders: [],
     batches: [],
     selectedIds: new Set(),
+    hanbaiouProducts: [],
+    hanbaiouBatches: [],
+    hanbaiouSelectedIds: new Set(),
     hasSearched: false
   };
 }
@@ -11462,6 +11468,135 @@ function salesAccountingExportCodeBlockHtml(kind, sourceId, code, name, mapped, 
     "<em>" + esc(mapped ? "専用コード登録済み" : "D-CATS既定コード") + " / " + esc(maxLength || "-") + "文字以内</em></div>";
 }
 
+function salesAccountingHanbaiouStatusLabel(status) {
+  return ({
+    not_issued: "未発行",
+    issued: "商品コード発行済み",
+    exported: "商品台帳CSV出力済み",
+    registered: "販売王登録済み",
+    inactive: "使用停止"
+  })[status] || "未発行";
+}
+
+function salesAccountingExportProductCodeHtml(item, profile) {
+  var state = ensureSalesAccountingExportState();
+  if (state.targetSystem !== "hanbaiou") {
+    return salesAccountingExportCodeBlockHtml(
+      "product",
+      item.product_variant_id,
+      item.external_product_code,
+      item.product_name,
+      item.product_code_is_mapped,
+      profile.product_code_max_length,
+      "商品コード"
+    );
+  }
+  var status = String(item.product_registration_status || "not_issued");
+  return "<div class='sales-accounting-export-code-block sales-accounting-hanbaiou-code'><span>販売王商品コード</span>" +
+    "<div class='sales-accounting-hanbaiou-code-value'><strong>" + esc(item.external_product_code || "未発行") + "</strong>" +
+    "<em class='sales-accounting-hanbaiou-status " + esc(status) + "'>" + esc(salesAccountingHanbaiouStatusLabel(status)) + "</em></div>" +
+    (status === "registered" ? "" : "<button type='button' data-sales-accounting-open-onboarding>導入手順を確認</button>") + "</div>";
+}
+
+function salesAccountingHanbaiouCandidateVariantIds() {
+  var state = ensureSalesAccountingExportState();
+  var ids = new Set();
+  state.orders.forEach(function(order) {
+    (Array.isArray(order.items) ? order.items : []).forEach(function(item) {
+      var id = parseInt(item.product_variant_id, 10);
+      if (!isNaN(id) && id > 0) ids.add(id);
+    });
+  });
+  return Array.from(ids).slice(0, 500);
+}
+
+function renderSalesAccountingHanbaiouGuide() {
+  var state = ensureSalesAccountingExportState();
+  var guide = document.getElementById("sales-accounting-hanbaiou-guide");
+  var list = document.getElementById("sales-accounting-hanbaiou-product-list");
+  var history = document.getElementById("sales-accounting-hanbaiou-history");
+  if (!guide || !list || !history) return;
+  var isHanbaiou = state.targetSystem === "hanbaiou" && state.hasSearched;
+  guide.hidden = !isHanbaiou;
+  if (!isHanbaiou) return;
+
+  var products = Array.isArray(state.hanbaiouProducts) ? state.hanbaiouProducts : [];
+  var selected = state.hanbaiouSelectedIds instanceof Set ? state.hanbaiouSelectedIds : new Set();
+  var unregisteredCount = products.filter(function(product) { return product.registration_status !== "registered"; }).length;
+  var summary = document.getElementById("sales-accounting-hanbaiou-guide-summary");
+  if (summary) summary.textContent = unregisteredCount ? "未登録 " + unregisteredCount + "件 / 売上CSV停止中" : "対象商品は販売王登録済み";
+  if (unregisteredCount && !guide.open) guide.open = true;
+
+  if (!products.length) {
+    list.innerHTML = "<div class='sales-accounting-hanbaiou-empty'>対象受注の商品はありません。</div>";
+  } else {
+    list.innerHTML = products.map(function(product) {
+      var id = parseInt(product.product_variant_id, 10);
+      var status = String(product.registration_status || "not_issued");
+      var partNumber = product.genuine_part_number || product.manufacturer_part_number || ("商品区分 " + id);
+      return "<label class='sales-accounting-hanbaiou-product'>" +
+        "<input type='checkbox' data-hanbaiou-product-check value='" + esc(id) + "'" + (selected.has(id) ? " checked" : "") + (status === "inactive" ? " disabled" : "") + ">" +
+        "<span><strong>" + esc(partNumber) + "</strong><small>" + esc(product.product_kind_label || product.product_kind || "-") + " / " + esc(product.manufacturer_part_number || "-") + " / " + esc(product.manufacturer || "-") + "</small></span>" +
+        "<code>" + esc(product.external_product_code || "未発行") + "</code>" +
+        "<em class='sales-accounting-hanbaiou-status " + esc(status) + "'>" + esc(salesAccountingHanbaiouStatusLabel(status)) + "</em></label>";
+    }).join("");
+  }
+
+  var batches = Array.isArray(state.hanbaiouBatches) ? state.hanbaiouBatches : [];
+  history.innerHTML = batches.length ? "<span>商品台帳CSV履歴</span>" + batches.slice(0, 3).map(function(batch) {
+    return "<button type='button' data-hanbaiou-master-download='" + esc(batch.batch_id) + "'>" + esc(batch.batch_number || "CSV") + " / " + esc(batch.product_count || 0) + "件を再取得</button>";
+  }).join("") : "";
+
+  list.querySelectorAll("[data-hanbaiou-product-check]").forEach(function(input) {
+    input.addEventListener("change", function() {
+      var id = parseInt(input.value, 10);
+      if (input.checked) state.hanbaiouSelectedIds.add(id);
+      else state.hanbaiouSelectedIds.delete(id);
+      updateSalesAccountingHanbaiouActions();
+    });
+  });
+  history.querySelectorAll("[data-hanbaiou-master-download]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      redownloadHanbaiouProductMaster(parseInt(button.dataset.hanbaiouMasterDownload, 10));
+    });
+  });
+  updateSalesAccountingHanbaiouActions();
+}
+
+function updateSalesAccountingHanbaiouActions() {
+  var state = ensureSalesAccountingExportState();
+  var selectedProducts = state.hanbaiouProducts.filter(function(product) {
+    return state.hanbaiouSelectedIds.has(parseInt(product.product_variant_id, 10));
+  });
+  var summary = document.getElementById("sales-accounting-hanbaiou-selected-summary");
+  var issueButton = document.getElementById("sales-accounting-hanbaiou-issue");
+  var exportButton = document.getElementById("sales-accounting-hanbaiou-export");
+  var confirmButton = document.getElementById("sales-accounting-hanbaiou-confirm");
+  var busy = salesAccountingProductOnboardingSaving || salesAccountingExportLoading || salesAccountingExportSaving;
+  if (summary) summary.textContent = selectedProducts.length + "件選択";
+  if (issueButton) {
+    issueButton.disabled = busy || !selectedProducts.some(function(product) { return product.registration_status === "not_issued"; });
+    issueButton.textContent = salesAccountingProductOnboardingSaving ? "処理中..." : "1 商品コードを発行";
+  }
+  if (exportButton) {
+    exportButton.disabled = busy || !selectedProducts.length || selectedProducts.some(function(product) {
+      return product.registration_status === "not_issued" || product.registration_status === "inactive";
+    });
+  }
+  if (confirmButton) {
+    confirmButton.disabled = busy || !selectedProducts.length || selectedProducts.some(function(product) {
+      return product.registration_status !== "exported" && product.registration_status !== "registered";
+    });
+  }
+}
+
+function scrollToSalesAccountingHanbaiouGuide() {
+  var guide = document.getElementById("sales-accounting-hanbaiou-guide");
+  if (!guide || guide.hidden) return;
+  guide.open = true;
+  guide.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
 function renderSalesAccountingExportCandidates() {
   var state = ensureSalesAccountingExportState();
   var host = document.getElementById("sales-accounting-export-candidate-list");
@@ -11489,7 +11624,7 @@ function renderSalesAccountingExportCandidates() {
     var items = Array.isArray(order.items) ? order.items : [];
     var products = items.map(function(item) {
       return "<div class='sales-accounting-export-product'><strong>" + esc(item.part_number || item.product_name || "-") + " / " + esc(item.product_kind || "-") + "</strong>" +
-        salesAccountingExportCodeBlockHtml("product", item.product_variant_id, item.external_product_code, item.product_name, item.product_code_is_mapped, profile.product_code_max_length, "商品コード") + "</div>";
+        salesAccountingExportProductCodeHtml(item, profile) + "</div>";
     }).join("");
     return "<div class='sales-accounting-export-order" + (issues.length ? " has-issues" : "") + (order.exported_batch_number ? " exported" : "") + "'>" +
       "<input type='checkbox' data-sales-accounting-order-check value='" + esc(orderId) + "'" + (state.selectedIds.has(orderId) ? " checked" : "") + (selectable ? "" : " disabled") + " aria-label='出力対象'>" +
@@ -11514,6 +11649,9 @@ function renderSalesAccountingExportCandidates() {
   });
   host.querySelectorAll("[data-sales-accounting-code-save]").forEach(function(button) {
     button.addEventListener("click", function() { saveSalesAccountingExportCode(button); });
+  });
+  host.querySelectorAll("[data-sales-accounting-open-onboarding]").forEach(function(button) {
+    button.addEventListener("click", scrollToSalesAccountingHanbaiouGuide);
   });
   updateSalesAccountingExportSelection();
 }
@@ -11541,6 +11679,7 @@ function renderSalesAccountingExportHistory() {
 function renderSalesAccountingExport() {
   var state = ensureSalesAccountingExportState();
   syncSalesAccountingExportFilters();
+  renderSalesAccountingHanbaiouGuide();
   renderSalesAccountingExportCandidates();
   renderSalesAccountingExportHistory();
   var search = document.getElementById("sales-accounting-export-search");
@@ -11552,12 +11691,15 @@ function renderSalesAccountingExport() {
     var selectableCount = state.orders.filter(salesAccountingExportCanSelect).length;
     var issueCount = state.orders.filter(function(order) { return salesAccountingExportIssueRows(order).length > 0; }).length;
     var profileName = state.profile && state.profile.display_name ? state.profile.display_name : state.targetSystem;
-    setSalesAccountingExportSummary(profileName + " / 対象 " + state.orders.length + "件 / 出力可能 " + selectableCount + "件" + (issueCount ? " / コード確認 " + issueCount + "件" : ""), false);
+    setSalesAccountingExportSummary(
+      profileName + " / 対象 " + state.orders.length + "件 / 出力可能 " + selectableCount + "件" + (issueCount ? " / 発行停止 " + issueCount + "件（下の導入手順を処理してください）" : ""),
+      state.targetSystem === "hanbaiou" && issueCount > 0
+    );
   }
 }
 
 async function loadSalesAccountingExportData(options) {
-  if (!canManageSalesOrders() || salesAccountingExportLoading || salesAccountingExportSaving) return;
+  if (!canManageSalesOrders() || salesAccountingExportLoading || salesAccountingExportSaving || salesAccountingProductOnboardingSaving) return;
   var state = readSalesAccountingExportFilters();
   if (state.dateFrom && state.dateTo && state.dateFrom > state.dateTo) {
     setSalesAccountingExportSummary("出荷日の開始・終了を確認してください。", true);
@@ -11578,10 +11720,13 @@ async function loadSalesAccountingExportData(options) {
     }),
     sb.rpc("list_sales_accounting_export_batches", { target_system: state.targetSystem, row_limit: 50 })
   ]);
-  salesAccountingExportLoading = false;
   if (results[0].error || results[1].error) {
+    salesAccountingExportLoading = false;
     state.orders = [];
     state.batches = [];
+    state.hanbaiouProducts = [];
+    state.hanbaiouBatches = [];
+    state.hanbaiouSelectedIds = new Set();
     setSalesAccountingExportSummary((results[0].error || results[1].error).message || "売上データを読み込めませんでした。", true);
     renderSalesAccountingExportCandidates();
     renderSalesAccountingExportHistory();
@@ -11592,6 +11737,39 @@ async function loadSalesAccountingExportData(options) {
   state.profile = candidateData.profile || null;
   state.orders = Array.isArray(candidateData.orders) ? candidateData.orders : [];
   state.batches = Array.isArray(batchData) ? batchData : [];
+  if (state.targetSystem === "hanbaiou") {
+    var onboardingResult = await sb.rpc("list_hanbaiou_product_onboarding", {
+      target_product_variant_ids: salesAccountingHanbaiouCandidateVariantIds(),
+      row_limit: 500
+    });
+    if (onboardingResult.error) {
+      salesAccountingExportLoading = false;
+      state.hanbaiouProducts = [];
+      state.hanbaiouBatches = [];
+      state.hanbaiouSelectedIds = new Set();
+      setSalesAccountingExportSummary(onboardingResult.error.message || "販売王の商品台帳状態を確認できませんでした。", true);
+      renderSalesAccountingExport();
+      return;
+    }
+    var onboardingData = Array.isArray(onboardingResult.data) ? (onboardingResult.data[0] || {}) : (onboardingResult.data || {});
+    state.hanbaiouProducts = Array.isArray(onboardingData.products) ? onboardingData.products : [];
+    state.hanbaiouBatches = Array.isArray(onboardingData.batches) ? onboardingData.batches : [];
+    var knownIds = new Set(state.hanbaiouProducts.map(function(product) { return parseInt(product.product_variant_id, 10); }));
+    var retainedSelection = new Set(Array.from(state.hanbaiouSelectedIds).filter(function(id) { return knownIds.has(id); }));
+    if (!retainedSelection.size) {
+      state.hanbaiouProducts.forEach(function(product) {
+        if (product.registration_status !== "registered" && product.registration_status !== "inactive") {
+          retainedSelection.add(parseInt(product.product_variant_id, 10));
+        }
+      });
+    }
+    state.hanbaiouSelectedIds = retainedSelection;
+  } else {
+    state.hanbaiouProducts = [];
+    state.hanbaiouBatches = [];
+    state.hanbaiouSelectedIds = new Set();
+  }
+  salesAccountingExportLoading = false;
   renderSalesAccountingExport();
 }
 
@@ -11606,9 +11784,122 @@ async function openSalesAccountingExport() {
 }
 
 function closeSalesAccountingExport() {
-  if (salesAccountingExportSaving || salesAccountingExportCodeSavingKey) return;
+  if (salesAccountingExportSaving || salesAccountingExportCodeSavingKey || salesAccountingProductOnboardingSaving) return;
   var overlay = document.getElementById("sales-accounting-export-overlay");
   if (overlay) overlay.classList.remove("show");
+}
+
+function salesAccountingHanbaiouSelectedProducts() {
+  var state = ensureSalesAccountingExportState();
+  return state.hanbaiouProducts.filter(function(product) {
+    return state.hanbaiouSelectedIds.has(parseInt(product.product_variant_id, 10));
+  });
+}
+
+async function issueHanbaiouProductCodes() {
+  if (!canManageSalesOrders() || salesAccountingProductOnboardingSaving) return;
+  var state = ensureSalesAccountingExportState();
+  var ids = salesAccountingHanbaiouSelectedProducts().filter(function(product) {
+    return product.registration_status === "not_issued";
+  }).map(function(product) { return parseInt(product.product_variant_id, 10); });
+  if (!ids.length) {
+    setSalesAccountingExportMessage("商品コード未発行の商品を選択してください。", true);
+    return;
+  }
+  salesAccountingProductOnboardingSaving = true;
+  setSalesAccountingExportMessage("D-CATS商品コードを発行しています。", false);
+  updateSalesAccountingHanbaiouActions();
+  var result = await sb.rpc("issue_hanbaiou_product_codes", { target_product_variant_ids: ids });
+  salesAccountingProductOnboardingSaving = false;
+  if (result.error) {
+    setSalesAccountingExportMessage(result.error.message || "販売王商品コードを発行できませんでした。", true);
+    updateSalesAccountingHanbaiouActions();
+    return;
+  }
+  setSalesAccountingExportMessage(ids.length + "件の商品コードを発行しました。次に商品台帳CSVを出力してください。", false);
+  await loadSalesAccountingExportData({ preserveMessage: true });
+}
+
+async function exportHanbaiouProductMaster() {
+  if (!canManageSalesOrders() || salesAccountingProductOnboardingSaving) return;
+  var products = salesAccountingHanbaiouSelectedProducts();
+  if (!products.length) {
+    setSalesAccountingExportMessage("商品台帳へ出力する商品を選択してください。", true);
+    return;
+  }
+  if (products.some(function(product) { return product.registration_status === "not_issued"; })) {
+    setSalesAccountingExportMessage("先に選択商品のD-CATS商品コードを発行してください。", true);
+    scrollToSalesAccountingHanbaiouGuide();
+    return;
+  }
+  var ids = products.map(function(product) { return parseInt(product.product_variant_id, 10); });
+  salesAccountingProductOnboardingSaving = true;
+  setSalesAccountingExportMessage("販売王の商品台帳CSVを作成しています。", false);
+  updateSalesAccountingHanbaiouActions();
+  var result = await sb.rpc("create_hanbaiou_product_master_export", { target_product_variant_ids: ids });
+  salesAccountingProductOnboardingSaving = false;
+  if (result.error) {
+    setSalesAccountingExportMessage(result.error.message || "商品台帳CSVを作成できませんでした。", true);
+    updateSalesAccountingHanbaiouActions();
+    return;
+  }
+  var data = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
+  try {
+    downloadSalesAccountingExportFile(data);
+  } catch (error) {
+    setSalesAccountingExportMessage(error.message || "商品台帳CSVをダウンロードできませんでした。", true);
+    await loadSalesAccountingExportData({ preserveMessage: true });
+    return;
+  }
+  setSalesAccountingExportMessage("商品台帳CSVを" + (data.product_count || ids.length) + "件出力しました。販売王へ取り込み、内容を確認してください。", false);
+  await loadSalesAccountingExportData({ preserveMessage: true });
+}
+
+async function confirmHanbaiouProductRegistration() {
+  if (!canManageSalesOrders() || salesAccountingProductOnboardingSaving) return;
+  var products = salesAccountingHanbaiouSelectedProducts();
+  if (!products.length || products.some(function(product) {
+    return product.registration_status !== "exported" && product.registration_status !== "registered";
+  })) {
+    setSalesAccountingExportMessage("商品台帳CSVを販売王へ取り込んだ商品だけを選択してください。", true);
+    return;
+  }
+  if (!window.confirm("販売王の商品登録画面で、選択商品のコードと商品名を確認しましたか？\n確認済みの場合だけ登録済みにします。")) return;
+  var ids = products.map(function(product) { return parseInt(product.product_variant_id, 10); });
+  salesAccountingProductOnboardingSaving = true;
+  setSalesAccountingExportMessage("販売王登録済みの状態を保存しています。", false);
+  updateSalesAccountingHanbaiouActions();
+  var result = await sb.rpc("confirm_hanbaiou_product_registration", { target_product_variant_ids: ids });
+  salesAccountingProductOnboardingSaving = false;
+  if (result.error) {
+    setSalesAccountingExportMessage(result.error.message || "販売王登録済みに変更できませんでした。", true);
+    updateSalesAccountingHanbaiouActions();
+    return;
+  }
+  setSalesAccountingExportMessage("販売王登録済みにしました。対象受注の売上CSVを発行できます。", false);
+  await loadSalesAccountingExportData({ preserveMessage: true });
+}
+
+async function redownloadHanbaiouProductMaster(batchId) {
+  if (!canManageSalesOrders() || salesAccountingProductOnboardingSaving || !batchId) return;
+  salesAccountingProductOnboardingSaving = true;
+  setSalesAccountingExportMessage("商品台帳CSVの出力履歴を取得しています。", false);
+  updateSalesAccountingHanbaiouActions();
+  var result = await sb.rpc("get_hanbaiou_product_master_export_download", { target_batch_id: batchId });
+  salesAccountingProductOnboardingSaving = false;
+  if (result.error) {
+    setSalesAccountingExportMessage(result.error.message || "商品台帳CSVを再取得できませんでした。", true);
+    updateSalesAccountingHanbaiouActions();
+    return;
+  }
+  var data = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
+  try {
+    downloadSalesAccountingExportFile(data);
+    setSalesAccountingExportMessage("商品台帳CSVを再取得しました。", false);
+  } catch (error) {
+    setSalesAccountingExportMessage(error.message || "商品台帳CSVを再取得できませんでした。", true);
+  }
+  updateSalesAccountingHanbaiouActions();
 }
 
 async function saveSalesAccountingExportCode(button) {
@@ -11673,6 +11964,7 @@ async function createSalesAccountingExport() {
   salesAccountingExportSaving = false;
   if (result.error) {
     setSalesAccountingExportMessage(result.error.message || "売上データを作成できませんでした。", true);
+    if (state.targetSystem === "hanbaiou") scrollToSalesAccountingHanbaiouGuide();
     updateSalesAccountingExportSelection();
     return;
   }
@@ -47735,11 +48027,13 @@ document.getElementById("sales-accounting-export-target").addEventListener("chan
   state.orders = [];
   state.batches = [];
   state.selectedIds = new Set();
+  state.hanbaiouProducts = [];
+  state.hanbaiouBatches = [];
+  state.hanbaiouSelectedIds = new Set();
   state.hasSearched = false;
   setSalesAccountingExportSummary("出力先を変更しました。「対象を検索」を押してください。", false);
   setSalesAccountingExportMessage("", false);
-  renderSalesAccountingExportCandidates();
-  renderSalesAccountingExportHistory();
+  renderSalesAccountingExport();
 });
 document.getElementById("sales-accounting-export-check-all").addEventListener("change", function() {
   var state = ensureSalesAccountingExportState();
@@ -47755,6 +48049,9 @@ document.getElementById("sales-accounting-export-check-all").addEventListener("c
   renderSalesAccountingExportCandidates();
 });
 document.getElementById("sales-accounting-export-create").addEventListener("click", createSalesAccountingExport);
+document.getElementById("sales-accounting-hanbaiou-issue").addEventListener("click", issueHanbaiouProductCodes);
+document.getElementById("sales-accounting-hanbaiou-export").addEventListener("click", exportHanbaiouProductMaster);
+document.getElementById("sales-accounting-hanbaiou-confirm").addEventListener("click", confirmHanbaiouProductRegistration);
 document.getElementById("sales-accounting-export-close").addEventListener("click", closeSalesAccountingExport);
 document.getElementById("sales-accounting-export-cancel").addEventListener("click", closeSalesAccountingExport);
 document.getElementById("sales-accounting-export-overlay").addEventListener("click", function(e) {

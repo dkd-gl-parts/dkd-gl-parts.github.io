@@ -48,6 +48,7 @@ on:
       - "scripts/verify-customer-order-in-house-cancel.js"
       - "scripts/verify-sales-order-price-adjustment.js"
       - "scripts/verify-sales-accounting-export.js"
+      - "scripts/verify-hanbaiou-product-onboarding.js"
       - "scripts/verify-business-workspace-shortcut.js"
       - "scripts/verify-postal-data.js"
       - "scripts/verify-postal-lookup-fallback.js"
@@ -170,6 +171,8 @@ jobs:
         run: node scripts/verify-sales-order-price-adjustment.js
       - name: Verify sales-accounting export
         run: node scripts/verify-sales-accounting-export.js
+      - name: Verify Sales King product onboarding
+        run: node scripts/verify-hanbaiou-product-onboarding.js
       - name: Verify shared business workspace shortcut
         run: node scripts/verify-business-workspace-shortcut.js
       - name: Verify offline postal data
