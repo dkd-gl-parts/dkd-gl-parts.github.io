@@ -5500,7 +5500,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.843";
+var APP_VERSION       = "v1.1.844";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -10820,6 +10820,8 @@ function setSalesOrderBatchMessage(message, isError) {
 }
 
 var DCATS_BUSINESS_WORKSPACE_URL = "https://drive.google.com/drive/folders/1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ";
+var DCATS_BUSINESS_WORKSPACE_SHORTCUT_URL = "assets/integrations/dcats-business-workspace.lnk";
+var DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME = "D-CATS\u696d\u52d9\u9023\u643a.lnk";
 var dcatsBusinessWorkspaceTrigger = null;
 
 function setDcatsBusinessWorkspaceMessage(message, isError) {
@@ -10849,28 +10851,33 @@ function closeDcatsBusinessWorkspace() {
 }
 
 function downloadDcatsBusinessWorkspaceShortcut(contents) {
-  var blobUrl = URL.createObjectURL(new Blob([contents], { type: "text/plain;charset=utf-8" }));
+  var blobUrl = URL.createObjectURL(new Blob([contents], { type: "application/x-ms-shortcut" }));
   var link = document.createElement("a");
   link.href = blobUrl;
-  link.download = "D-CATS業務連携.url";
+  link.download = DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME;
   document.body.appendChild(link);
   link.click();
   link.remove();
   window.setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
 }
 
+async function loadDcatsBusinessWorkspaceShortcut() {
+  var shortcutUrl = DCATS_BUSINESS_WORKSPACE_SHORTCUT_URL + "?dcats_version=" + encodeURIComponent(APP_VERSION);
+  var response = await fetch(shortcutUrl, { cache: "no-store" });
+  if (!response.ok) throw new Error("shortcut_download_failed");
+  return response.arrayBuffer();
+}
+
 async function createDcatsBusinessWorkspaceShortcut() {
   var button = document.getElementById("dcats-business-workspace-shortcut");
-  var contents = "[InternetShortcut]\r\nURL=" + DCATS_BUSINESS_WORKSPACE_URL + "\r\n";
   if (button) button.disabled = true;
   setDcatsBusinessWorkspaceMessage(t("business_workspace_save_checking"), false);
   try {
+    var contents = await loadDcatsBusinessWorkspaceShortcut();
     if (typeof window.showSaveFilePicker === "function") {
       var pickerOptions = {
-        suggestedName: "D-CATS業務連携.url",
-        startIn: "desktop",
-        types: [{ description: "Windowsインターネットショートカット", accept: { "text/plain": [".url"] } }],
-        excludeAcceptAllOption: true
+        suggestedName: DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME,
+        startIn: "desktop"
       };
       var handle;
       try {

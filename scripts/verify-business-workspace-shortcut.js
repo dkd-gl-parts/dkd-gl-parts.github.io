@@ -7,6 +7,8 @@ const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
 const workflow = fs.readFileSync(path.join(root, ".github", "workflows", "search-performance-guard.yml"), "utf8");
+const shortcutPath = path.join(root, "assets", "integrations", "dcats-business-workspace.lnk");
+const shortcutBytes = fs.readFileSync(shortcutPath);
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -34,9 +36,11 @@ for (const id of [
 const driveUrl = "https://drive.google.com/drive/folders/1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ";
 assert(html.includes(`href="${driveUrl}"`), "The shared Google Drive folder link is missing");
 assert(source.includes(`var DCATS_BUSINESS_WORKSPACE_URL = "${driveUrl}"`), "The shortcut target does not match the shared folder");
-assert(source.includes('"[InternetShortcut]\\r\\nURL=" + DCATS_BUSINESS_WORKSPACE_URL'), "The Windows .url shortcut payload is missing");
+assert(source.includes('var DCATS_BUSINESS_WORKSPACE_SHORTCUT_URL = "assets/integrations/dcats-business-workspace.lnk"'), "The Windows .lnk asset is not configured");
+assert(shortcutBytes.length > 100 && shortcutBytes.readUInt32LE(0) === 0x4c, "The Windows .lnk asset is invalid");
 assert(source.includes('startIn: "desktop"'), "The save picker must start on the Windows desktop");
-assert(source.includes('suggestedName: "D-CATS業務連携.url"'), "The shortcut needs a stable Japanese file name");
+assert(source.includes('var DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME = "D-CATS\\u696d\\u52d9\\u9023\\u643a.lnk"'), "The shortcut needs a stable Japanese file name");
+assert(source.includes('suggestedName: DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME'), "The save picker must use the shortcut file name constant");
 assert(source.includes('typeof window.showSaveFilePicker === "function"'), "Chromium desktop save support is missing");
 assert(source.includes("downloadDcatsBusinessWorkspaceShortcut(contents)"), "Unsupported browsers need a download fallback");
 assert(source.includes('pickerError.name === "AbortError"'), "Cancelling the picker must not be reported as an error");
@@ -59,9 +63,17 @@ const elements = {
   "dcats-business-workspace-message": { textContent: "", className: "" }
 };
 let pickerOptions;
-let writtenContents = "";
+let writtenContents = null;
+const testShortcutBytes = Uint8Array.from([0x4c, 0, 0, 0, 1, 2, 3, 4]);
 const context = {
+  APP_VERSION: "v-test",
   Blob,
+  encodeURIComponent,
+  fetch: async (url, options) => {
+    assert(url.includes("assets/integrations/dcats-business-workspace.lnk?dcats_version=v-test"), "The versioned .lnk asset was not requested");
+    assert(options.cache === "no-store", "The .lnk asset must bypass stale browser cache");
+    return { ok: true, arrayBuffer: async () => testShortcutBytes.buffer };
+  },
   t: (key) => ({
     business_workspace_save_checking: "保存先確認中",
     business_workspace_created: "作成しました",
@@ -87,7 +99,7 @@ const context = {
       pickerOptions = options;
       return {
         createWritable: async () => ({
-          write: async (value) => { writtenContents = String(value); },
+          write: async (value) => { writtenContents = new Uint8Array(value); },
           close: async () => {}
         })
       };
@@ -99,8 +111,8 @@ vm.runInNewContext(featureSource, context);
 (async () => {
   await context.createDcatsBusinessWorkspaceShortcut();
   assert(pickerOptions.startIn === "desktop", "The shortcut picker did not start on the desktop");
-  assert(pickerOptions.suggestedName === "D-CATS業務連携.url", "The shortcut file name changed");
-  assert(writtenContents.includes(`[InternetShortcut]\r\nURL=${driveUrl}\r\n`), "The generated shortcut points somewhere else");
+  assert(pickerOptions.suggestedName === "D-CATS業務連携.lnk", "The shortcut file name changed");
+  assert(writtenContents && Buffer.from(writtenContents).equals(Buffer.from(testShortcutBytes)), "The binary Windows shortcut was not written intact");
   assert(elements["dcats-business-workspace-shortcut"].disabled === false, "The shortcut button remained disabled");
   assert(elements["dcats-business-workspace-message"].textContent.includes("作成しました"), "Successful creation is not confirmed");
   console.log("Business workspace shortcut verification passed.");
