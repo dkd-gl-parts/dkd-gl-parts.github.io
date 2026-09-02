@@ -353,6 +353,7 @@ let focusCount = 0;
 let printClickHandler = null;
 let runtimeAfterPrintHandler = null;
 let runtimeCloseCount = 0;
+let runtimeRestoreCount = 0;
 const printRuntimeButton = {
   bound: "",
   getAttribute(name) {
@@ -374,6 +375,10 @@ const printRuntimeSandbox = {
   },
   window: {
     closed: false,
+    opener: {
+      closed: false,
+      restoreFinishedLabelWorkspaceAfterPrint() { runtimeRestoreCount += 1; }
+    },
     focus() { focusCount += 1; },
     print() { printCount += 1; },
     addEventListener(type, handler) {
@@ -394,6 +399,7 @@ assert(printCount === 1 && focusCount === 1, "finished-label print button does n
 assert(typeof runtimeAfterPrintHandler === "function", "finished-label print runtime does not watch for print completion");
 runtimeAfterPrintHandler();
 assert(runtimeCloseCount === 1 && printRuntimeSandbox.window.closed, "finished-label print runtime does not close after printing or cancellation");
+assert(runtimeRestoreCount === 1, "finished-label print runtime does not restore its opener workspace");
 
 let directAfterPrintHandler = null;
 let directCloseCount = 0;
@@ -409,14 +415,26 @@ const directPrintWindow = {
     this.closed = true;
   }
 };
-const directPrintSandbox = { console: { warn() {} } };
+let directRestoreCount = 0;
+const directPrintSandbox = {
+  console: { warn() {} },
+  finishedLabelPrintMode: "product",
+  finishedLabelPrintInProgress: false,
+  restoreFinishedLabelWorkspaceAfterPrint(mode) {
+    directRestoreCount += 1;
+    directPrintSandbox.finishedLabelPrintInProgress = false;
+    directPrintSandbox.restoredMode = mode;
+  }
+};
 vm.createContext(directPrintSandbox);
 vm.runInContext(`${functionSource("closeFinishedLabelPrintWindow")}; ${functionSource("printFinishedLabelWindow")}; ${functionSource("bindFinishedLabelPrintButton")}; this.printWindow = printFinishedLabelWindow; this.bindButton = bindFinishedLabelPrintButton;`, directPrintSandbox);
 assert(directPrintSandbox.printWindow(directPrintWindow), "finished-label window print request is rejected");
 assert(printCount === 2 && focusCount === 2, "finished-label registration does not invoke the print dialog directly");
+assert(directPrintSandbox.finishedLabelPrintInProgress, "finished-label printing does not block app refresh while the print dialog is open");
 assert(typeof directAfterPrintHandler === "function", "finished-label registration does not watch for print completion");
 directAfterPrintHandler();
 assert(directCloseCount === 1 && directPrintWindow.closed, "finished-label registration does not close the print tab after printing or cancellation");
+assert(directRestoreCount === 1 && directPrintSandbox.restoredMode === "product" && !directPrintSandbox.finishedLabelPrintInProgress, "finished-label registration does not keep the original workspace open after printing");
 
 let parentClickHandler = null;
 let parentAfterPrintHandler = null;
@@ -447,10 +465,16 @@ assert(printCount === 3 && focusCount === 3, "parent-bound print button does not
 assert(typeof parentAfterPrintHandler === "function", "parent-bound print button does not watch for print completion");
 parentAfterPrintHandler();
 assert(parentCloseCount === 1 && parentBoundWindow.closed, "parent-bound print button does not close the print tab after printing or cancellation");
+assert(directRestoreCount === 2, "parent-bound print completion does not restore the finished-label workspace");
 assert(functionSource("printFinishedLabelWindow").includes('"afterprint"'), "finished-label printing does not close its tab after the print dialog");
 assert(functionSource("printFinishedLabelWindowWhenReady").includes('win.addEventListener("load"'), "automatic printing does not wait for print assets");
 assert(functionSource("printFinishedLabelWindowWhenReady").includes("win.document.fonts.ready"), "automatic printing does not wait for fonts");
 assert(functionSource("openFinishedLabelPrintPreview").includes("printFinishedLabelWindowWhenReady(win)"), "finished-label printing starts before assets are ready");
+assert(functionSource("isAppSafeForAutoReload").includes("finishedLabelPrintInProgress"), "automatic app updates are not blocked while the print dialog is open");
+assert(functionSource("captureAppRestoreState").includes('screen === "finished-label-mgmt"') && functionSource("captureAppRestoreState").includes("finishedLabelMode"), "finished-label workspace mode is not saved for app refresh");
+assert(functionSource("restoreAppStateAfterRefresh").includes('state.screen === "finished-label-mgmt"') && functionSource("restoreAppStateAfterRefresh").includes("selectFinishedLabelProduct"), "finished-label workspace and selected product are not restored after app refresh");
+assert(functionSource("printFinishedLabelWindow").includes("restoreFinishedLabelWorkspaceAfterPrint(printMode)"), "print completion does not restore the finished-label workspace");
+assert(printRuntime.includes("window.opener.restoreFinishedLabelWorkspaceAfterPrint"), "the print window does not notify its opener before closing");
 
 const saveSource = functionSource("saveFinishedLabelIssue");
 assert(saveSource.indexOf('if (!printWindow)') < saveSource.indexOf('sb.rpc("issue_finished_product_serials"'), "finished-product registration can proceed after a blocked print window");

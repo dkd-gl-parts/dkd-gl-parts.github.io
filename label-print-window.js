@@ -2,6 +2,15 @@
   "use strict";
 
   function closePrintWindow() {
+    try {
+      if (window.opener && !window.opener.closed) {
+        if (typeof window.opener.restoreFinishedLabelWorkspaceAfterPrint === "function") {
+          window.opener.restoreFinishedLabelWorkspaceAfterPrint();
+        } else if (typeof window.opener.focus === "function") {
+          window.opener.focus();
+        }
+      }
+    } catch (e) { /* A cross-origin opener cannot be controlled from the print window. */ }
     try { window.close(); } catch (e) { /* The browser controls whether this window can close. */ }
   }
 

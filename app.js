@@ -5560,7 +5560,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.853";
+var APP_VERSION       = "v1.1.854";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5707,6 +5707,7 @@ var finishedLabelHistoryRows = [];
 var finishedLabelLastIssuedRecord = null;
 var finishedLabelSelectedHistoryId = null;
 var finishedLabelPrintMode = "";
+var finishedLabelPrintInProgress = false;
 var finishedLabelLastQueuedJob = null;
 var dcatsAutoNoticeTimer = null;
 var finishedLabelPrintDestinations = [];
@@ -7430,6 +7431,11 @@ function captureAppRestoreState(reason) {
   } else if (screen === "component-parallel" && currentProduct) {
     if (componentParallelReturnScreen === "components" && componentReturnScreen === "production-search") captureProductionState();
     else captureSearchState();
+  } else if (screen === "finished-label-mgmt") {
+    var finishedLabelSearch = document.getElementById("finished-label-search");
+    state.finishedLabelMode = finishedLabelPrintMode || "product";
+    state.finishedLabelQuery = finishedLabelSearch ? finishedLabelSearch.value : "";
+    state.selectedDkdId = finishedLabelSelectedProduct ? productDkdId(finishedLabelSelectedProduct) : "";
   } else if (screen === "rakuten-price") {
     state.keyword = document.getElementById("rakuten-keyword") ? document.getElementById("rakuten-keyword").value : "";
     state.ngKeyword = document.getElementById("rakuten-ng-keyword") ? document.getElementById("rakuten-ng-keyword").value : "";
@@ -7592,6 +7598,33 @@ async function restoreAppStateAfterRefresh() {
       await runProductSearch({ preserveSelection: true });
       if (state.selectedDkdId) await openProductByDkdId(state.selectedDkdId);
       else syncFirstSearchResultDetail();
+    } else if (state.screen === "finished-label-mgmt") {
+      var restoreFinishedLabelMode = state.finishedLabelMode === "box" || state.finishedLabelMode === "station"
+        ? state.finishedLabelMode
+        : "product";
+      await enterFinishedLabelMgmt({ mode: restoreFinishedLabelMode });
+      var finishedLabelSearch = document.getElementById("finished-label-search");
+      if (finishedLabelSearch) finishedLabelSearch.value = state.finishedLabelQuery || "";
+      if (restoreFinishedLabelMode === "station") {
+        resumeFinishedLabelPrintStationIfEnabled();
+      } else {
+        if (state.finishedLabelQuery || restoreFinishedLabelMode === "box") await searchFinishedLabelProducts();
+        if (state.selectedDkdId) {
+          var restoreFinishedLabelProduct = finishedLabelProducts.find(function(row) {
+            return String(productDkdId(row)) === String(state.selectedDkdId);
+          }) || null;
+          if (!restoreFinishedLabelProduct) {
+            var restoreFinishedLabelResult = await sb.from("core_products")
+              .select(CORE_PRODUCT_FAST_SELECT)
+              .eq("dkd_shohin_id", state.selectedDkdId)
+              .maybeSingle();
+            if (!restoreFinishedLabelResult.error && restoreFinishedLabelResult.data) {
+              restoreFinishedLabelProduct = normalizeCoreProductFastRows([restoreFinishedLabelResult.data])[0] || null;
+            }
+          }
+          if (restoreFinishedLabelProduct) await selectFinishedLabelProduct(restoreFinishedLabelProduct, null);
+        }
+      }
     } else if (state.screen === "rakuten-price") {
       await enterRakutenPrice();
       var keywordEl = document.getElementById("rakuten-keyword");
@@ -7685,6 +7718,7 @@ document.addEventListener("freeze", function() {
 
 function isAppSafeForAutoReload() {
   if (componentAddSaving) return false;
+  if (finishedLabelPrintInProgress) return false;
   if (document.querySelector(".form-overlay.show")) return false;
   var el = document.activeElement;
   if (el) {
@@ -28181,11 +28215,29 @@ function closeFinishedLabelPrintWindow(win) {
   }
 }
 
+function restoreFinishedLabelWorkspaceAfterPrint(mode) {
+  finishedLabelPrintInProgress = false;
+  var restoreMode = mode === "box" ? "box" : (mode === "product" ? "product" : finishedLabelPrintMode);
+  if (isScreenActive("finished-label-mgmt") && (restoreMode === "product" || restoreMode === "box")) {
+    setFinishedLabelPrintMode(restoreMode);
+  }
+  try { window.focus(); } catch (e) {}
+  var focusTarget = document.getElementById(restoreMode === "box" ? "btn-finished-box-label-preview" : "btn-finished-label-preview");
+  if (!focusTarget || focusTarget.disabled) focusTarget = document.getElementById("finished-label-search");
+  if (focusTarget && typeof focusTarget.focus === "function") {
+    try { focusTarget.focus({ preventScroll: true }); }
+    catch (e) { focusTarget.focus(); }
+  }
+}
+
 function printFinishedLabelWindow(win) {
   if (!win || win.closed) return false;
+  var printMode = finishedLabelPrintMode;
   try {
+    finishedLabelPrintInProgress = true;
     if (typeof win.addEventListener === "function") {
       win.addEventListener("afterprint", function() {
+        restoreFinishedLabelWorkspaceAfterPrint(printMode);
         closeFinishedLabelPrintWindow(win);
       }, { once: true });
     }
@@ -28193,6 +28245,7 @@ function printFinishedLabelWindow(win) {
     win.print();
     return true;
   } catch (e) {
+    restoreFinishedLabelWorkspaceAfterPrint(printMode);
     console.warn("label print dialog failed", e);
     return false;
   }
