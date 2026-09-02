@@ -5377,8 +5377,10 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .finished-shipment-camera-stage { position: relative; margin: 14px 20px 0; border-radius: 10px; overflow: hidden; aspect-ratio: 4 / 3; background: #101722; }
 .finished-shipment-camera-stage video { display: block; width: 100%; height: 100%; object-fit: cover; }
 .finished-shipment-camera-guide { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
-.finished-shipment-camera-guide::before { width: min(76%, 420px); height: min(46%, 220px); border: 2px solid rgba(255, 255, 255, .95); border-radius: 12px; box-shadow: 0 0 0 999px rgba(8, 15, 26, .34); content: ""; }
-.finished-shipment-camera-guide span { position: absolute; width: min(58%, 320px); height: 2px; border-radius: 999px; background: #ef3340; box-shadow: 0 0 9px rgba(239, 51, 64, .8); }
+.finished-shipment-camera-guide-box { width: min(76%, 420px); height: min(46%, 220px); border: 2px solid rgba(255, 255, 255, .95); border-radius: 12px; box-shadow: 0 0 0 999px rgba(8, 15, 26, .34); }
+.serial-qr-mode .finished-shipment-camera-guide-box { width: min(62%, 320px); height: auto; aspect-ratio: 1; }
+.finished-shipment-camera-guide-line { position: absolute; width: min(58%, 320px); height: 2px; border-radius: 999px; background: #ef3340; box-shadow: 0 0 9px rgba(239, 51, 64, .8); }
+.serial-qr-mode .finished-shipment-camera-guide-line { width: min(50%, 260px); }
 .finished-shipment-camera-status { min-height: 38px; margin: 10px 20px 0; border-left: 3px solid #2d6fae; padding: 7px 9px; background: #f2f7fc; color: #334d69; font-size: 11px; line-height: 1.5; }
 .finished-shipment-candidate-search { margin-top: 8px; }
 .finished-shipment-candidates { display: flex; flex-direction: column; gap: 6px; max-height: 280px; margin-top: 9px; overflow: auto; }
