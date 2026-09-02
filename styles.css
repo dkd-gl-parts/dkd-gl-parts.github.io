@@ -7842,7 +7842,7 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .shipping-waybill-layout-content { min-height: 0; flex: 1; overflow: auto; }
 .shipping-waybill-layout-toolbar {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(160px, auto) auto minmax(220px, .8fr) auto;
+  grid-template-columns: minmax(190px, .8fr) minmax(220px, 1fr) minmax(160px, auto) auto minmax(220px, .8fr) auto;
   gap: 12px;
   align-items: end;
   padding: 12px 16px;
@@ -7878,6 +7878,20 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .shipping-waybill-layout-toolbar button { width: auto; font-weight: 800; cursor: pointer; }
 .shipping-waybill-layout-toolbar button:disabled { opacity: .5; cursor: default; }
 .shipping-waybill-layout-toolbar > .shipping-carrier-brand { align-self: center; }
+.shipping-waybill-purpose-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 38px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #dbe4ec;
+  background: #eef7f2;
+  color: #264b3a;
+  font-size: 12px;
+}
+.shipping-waybill-purpose-note.return { background: #fff8e8; color: #684d12; }
+.shipping-waybill-purpose-note strong { flex: 0 0 auto; font-size: 12px; }
+.shipping-waybill-purpose-note span { min-width: 0; }
 .shipping-waybill-layout-version {
   display: grid;
   gap: 1px;
@@ -7914,6 +7928,9 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 }
 .shipping-waybill-field-row:last-child { border-bottom: 1px solid #dfe5eb; }
 .shipping-waybill-field-row.selected { box-shadow: inset 3px 0 #236fb5; background: #edf5fc; }
+.shipping-waybill-field-row.suppressed { background: #eef1f4; opacity: .72; }
+.shipping-waybill-field-row.suppressed button { cursor: default; }
+.shipping-waybill-field-row.suppressed button strong { color: #667386; }
 .shipping-waybill-field-row button {
   min-width: 0;
   padding: 8px 9px;
@@ -8152,6 +8169,7 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 @media (max-width: 1080px) {
   .shipping-waybill-layout-card { width: calc(100vw - 12px); height: calc(100dvh - 12px); }
   .shipping-waybill-layout-toolbar { grid-template-columns: 1fr 120px; }
+  .shipping-waybill-purpose-note { align-items: flex-start; flex-direction: column; gap: 2px; }
   .shipping-waybill-layout-toolbar > .shipping-carrier-brand { justify-self: start; }
   .shipping-waybill-layout-workspace { grid-template-columns: 190px minmax(420px, 1fr); }
   .shipping-waybill-inspector { grid-column: 1 / -1; border-top: 1px solid #dbe2e9; border-left: 0; }

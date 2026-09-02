@@ -5500,7 +5500,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.844";
+var APP_VERSION       = "v1.1.845";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -11446,6 +11446,35 @@ var SHIPPING_WAYBILL_FIELD_META = {
   package_count: { label: "個口数", sample: "1" }
 };
 
+var SHIPPING_WAYBILL_SENDER_FIELDS = [
+  "sender_postal", "sender_phone", "sender_address", "sender_name"
+];
+
+function shippingWaybillPurpose(layout) {
+  return layout && layout.document_type === "return_waybill" ? "return_waybill" : "outbound_waybill";
+}
+
+function shippingWaybillIsReturnSenderField(layout, fieldOrKey) {
+  var key = typeof fieldOrKey === "string" ? fieldOrKey : fieldOrKey && fieldOrKey.key;
+  return shippingWaybillPurpose(layout) === "return_waybill" && SHIPPING_WAYBILL_SENDER_FIELDS.indexOf(key) >= 0;
+}
+
+function enforceShippingWaybillPurposeRules(layout) {
+  if (!layout || !Array.isArray(layout.fields)) return layout;
+  if (shippingWaybillPurpose(layout) === "return_waybill") {
+    layout.fields.forEach(function(field) {
+      if (shippingWaybillIsReturnSenderField(layout, field)) field.visible = false;
+    });
+  }
+  return layout;
+}
+
+function shippingWaybillSelectableFields(layout) {
+  return layout && Array.isArray(layout.fields)
+    ? layout.fields.filter(function(field) { return !shippingWaybillIsReturnSenderField(layout, field); })
+    : [];
+}
+
 function shippingCarrierBrandKey(value) {
   var text = String(value || "").toLowerCase();
   if (text.indexOf("sagawa") >= 0 || text.indexOf("佐川") >= 0) return "sagawa";
@@ -11496,22 +11525,18 @@ function shippingWaybillStartDraft(layout, snapshot) {
   source.updated_at = layout.updated_at;
   source.revisions = cloneShippingWaybillLayout(layout.revisions || []);
   source.fields = Array.isArray(source.fields) ? source.fields : [];
-  return source;
+  return enforceShippingWaybillPurposeRules(source);
 }
 
 function shippingWaybillSelectFirstField() {
-  var fields = shippingWaybillLayoutDraft && Array.isArray(shippingWaybillLayoutDraft.fields)
-    ? shippingWaybillLayoutDraft.fields
-    : [];
+  var fields = shippingWaybillSelectableFields(shippingWaybillLayoutDraft);
   if (!fields.some(function(field) { return field.key === shippingWaybillLayoutSelectedField; })) {
     shippingWaybillLayoutSelectedField = fields.length ? fields[0].key : "";
   }
 }
 
 function shippingWaybillSelectedField() {
-  var fields = shippingWaybillLayoutDraft && Array.isArray(shippingWaybillLayoutDraft.fields)
-    ? shippingWaybillLayoutDraft.fields
-    : [];
+  var fields = shippingWaybillSelectableFields(shippingWaybillLayoutDraft);
   return fields.find(function(field) { return field.key === shippingWaybillLayoutSelectedField; }) || null;
 }
 
@@ -11564,10 +11589,10 @@ function shippingWaybillPreviewData(layout, orderValue, orderUnitValue) {
     recipient_phone: (outbound ? customer : daiko).phone,
     recipient_address: (outbound ? customer : daiko).address,
     recipient_name: (outbound ? customer : daiko).name,
-    sender_postal: (outbound ? daiko : customer).postal,
-    sender_phone: (outbound ? daiko : customer).phone,
-    sender_address: (outbound ? daiko : customer).address,
-    sender_name: (outbound ? daiko : customer).name,
+    sender_postal: outbound ? daiko.postal : "",
+    sender_phone: outbound ? daiko.phone : "",
+    sender_address: outbound ? daiko.address : "",
+    sender_name: outbound ? daiko.name : "",
     contents: partText || (outbound ? "自動車電装品" : "自動車電装品コア"),
     order_number: formatCustomerOrderReference(order && order.order_number ? order.order_number : "734291859") + (orderUnit && orderUnit.return_code ? " / " + String(orderUnit.return_code) : ""),
     tracking_number: waybill && waybill.tracking_number ? waybill.tracking_number : "1234-5678-9012",
@@ -11651,6 +11676,7 @@ function drawShippingWaybillLayoutCanvas() {
     context.fillText(String(tick), tick * scale + 2, 12);
   }
   (draft.fields || []).forEach(function(field) {
+    if (shippingWaybillIsReturnSenderField(draft, field)) return;
     var x = Number(field.x_mm) * scale;
     var y = Number(field.y_mm) * scale;
     var width = Number(field.width_mm) * scale;
@@ -11676,11 +11702,12 @@ function drawShippingWaybillLayoutCanvas() {
   });
 }
 
-function shippingWaybillLayoutFieldHtml(field) {
+function shippingWaybillLayoutFieldHtml(field, draft) {
   var meta = SHIPPING_WAYBILL_FIELD_META[field.key] || { label: field.key, sample: "" };
-  return "<div class='shipping-waybill-field-row" + (field.key === shippingWaybillLayoutSelectedField ? " selected" : "") + "'>" +
-    "<button type='button' data-waybill-field-select='" + esc(field.key) + "'><strong>" + esc(meta.label) + "</strong><span>" + esc(meta.sample) + "</span></button>" +
-    "<label title='印字する'><input type='checkbox' data-waybill-field-visible='" + esc(field.key) + "'" + (field.visible === false ? "" : " checked") + "><span>印字</span></label></div>";
+  var suppressed = shippingWaybillIsReturnSenderField(draft, field);
+  return "<div class='shipping-waybill-field-row" + (field.key === shippingWaybillLayoutSelectedField ? " selected" : "") + (suppressed ? " suppressed" : "") + "'>" +
+    "<button type='button' data-waybill-field-select='" + esc(field.key) + "'" + (suppressed ? " disabled" : "") + "><strong>" + esc(meta.label) + "</strong><span>" + esc(suppressed ? "返却用は印字しません" : meta.sample) + "</span></button>" +
+    "<label title='" + esc(suppressed ? "コア返却用では送り主を印字しません" : "印字する") + "'><input type='checkbox' data-waybill-field-visible='" + esc(field.key) + "'" + (field.visible === false ? "" : " checked") + (suppressed ? " disabled" : "") + "><span>" + (suppressed ? "対象外" : "印字") + "</span></label></div>";
 }
 
 function renderShippingWaybillLayoutDesigner() {
@@ -11702,16 +11729,21 @@ function renderShippingWaybillLayoutDesigner() {
   var field = shippingWaybillSelectedField();
   var revisions = Array.isArray(draft.revisions) ? draft.revisions : [];
   var previewData = shippingWaybillPreviewData(draft);
+  var purpose = shippingWaybillPurpose(draft);
+  var purposeLayouts = shippingWaybillLayouts.filter(function(layout) { return shippingWaybillPurpose(layout) === purpose; });
+  var purposeIsReturn = purpose === "return_waybill";
   content.innerHTML =
     "<div class='shipping-waybill-layout-toolbar'>" +
-      "<label><span>送り状</span><select id='shipping-waybill-layout-template'>" + shippingWaybillLayouts.map(function(layout) { return "<option value='" + esc(layout.layout_code) + "'" + (layout.layout_code === draft.layout_code ? " selected" : "") + ">" + esc(layout.display_name) + "</option>"; }).join("") + "</select></label>" +
+      "<label><span>使用用途</span><select id='shipping-waybill-layout-purpose'><option value='outbound_waybill'" + (purpose === "outbound_waybill" ? " selected" : "") + ">商品発送送り状</option><option value='return_waybill'" + (purposeIsReturn ? " selected" : "") + ">コア返却用複写伝票</option></select></label>" +
+      "<label><span>運送会社・支払</span><select id='shipping-waybill-layout-template'>" + purposeLayouts.map(function(layout) { return "<option value='" + esc(layout.layout_code) + "'" + (layout.layout_code === draft.layout_code ? " selected" : "") + ">" + esc(layout.display_name) + "</option>"; }).join("") + "</select></label>" +
       shippingCarrierBrandHtml(draft.carrier_code || draft.layout_code, true) +
       "<div class='shipping-waybill-layout-version'><span>保存済み</span><strong>v" + esc(draft.base_version) + "</strong><small>" + esc(draft.updated_at ? new Date(draft.updated_at).toLocaleString("ja-JP") : "初期設定") + "</small></div>" +
       "<label><span>過去の版</span><select id='shipping-waybill-layout-revision'><option value=''>選択してください</option>" + revisions.map(function(revision) { return "<option value='" + esc(revision.id) + "'>v" + esc(revision.version) + " / " + esc(revision.change_note || "変更") + "</option>"; }).join("") + "</select></label>" +
       "<button type='button' id='shipping-waybill-layout-restore' disabled>選択した版を下書きへ</button>" +
     "</div>" +
+    "<div class='shipping-waybill-purpose-note " + (purposeIsReturn ? "return" : "outbound") + "'><strong>" + (purposeIsReturn ? "コア返却用" : "商品発送用") + "</strong><span>" + (purposeIsReturn ? "送り先は大光電機です。送り主は印字しません。" : "送り先は得意先、送り主は大光電機を印字します。") + "</span></div>" +
     "<div class='shipping-waybill-layout-workspace'>" +
-      "<aside class='shipping-waybill-field-list'><div><strong>印字項目</strong><span>" + esc((draft.fields || []).filter(function(item) { return item.visible !== false; }).length) + " / " + esc((draft.fields || []).length) + "</span></div>" + (draft.fields || []).map(shippingWaybillLayoutFieldHtml).join("") + "</aside>" +
+      "<aside class='shipping-waybill-field-list'><div><strong>印字項目</strong><span>" + esc((draft.fields || []).filter(function(item) { return item.visible !== false && !shippingWaybillIsReturnSenderField(draft, item); }).length) + " / " + esc((draft.fields || []).filter(function(item) { return !shippingWaybillIsReturnSenderField(draft, item); }).length) + "</span></div>" + (draft.fields || []).map(function(item) { return shippingWaybillLayoutFieldHtml(item, draft); }).join("") + "</aside>" +
       "<section class='shipping-waybill-preview'><div class='shipping-waybill-preview-head'><div><strong>印刷プレビュー</strong><span>" + esc(draft.paper_width_mm) + " × " + esc(draft.paper_height_mm) + " mm</span></div><em>" + (previewData.uses_actual_order ? "選択中の受注" : "サンプルデータ") + "</em></div><div class='shipping-waybill-canvas-wrap'><canvas id='shipping-waybill-layout-canvas' tabindex='0' aria-label='送り状の印刷位置プレビュー'></canvas></div><p>背景線は位置合わせ用で印刷されません。このPC固有の用紙寸法・全体ずれ・テスト印刷は、画面下の端末補正から調整します。</p></section>" +
       "<aside class='shipping-waybill-inspector'>" +
         (field ? "<div class='shipping-waybill-inspector-head'><span>選択中</span><strong>" + esc((SHIPPING_WAYBILL_FIELD_META[field.key] || {}).label || field.key) + "</strong></div>" +
@@ -11805,6 +11837,18 @@ function bindShippingWaybillLayoutCanvas(canvas) {
 }
 
 function bindShippingWaybillLayoutDesignerActions() {
+  var purposeSelect = document.getElementById("shipping-waybill-layout-purpose");
+  if (purposeSelect) purposeSelect.addEventListener("change", function() {
+    var currentBrand = shippingCarrierBrandKey(shippingWaybillLayoutDraft && shippingWaybillLayoutDraft.carrier_code);
+    var candidates = shippingWaybillLayouts.filter(function(layout) { return shippingWaybillPurpose(layout) === purposeSelect.value; });
+    var next = candidates.find(function(layout) { return shippingCarrierBrandKey(layout.carrier_code) === currentBrand; }) || candidates[0];
+    if (!next) return;
+    shippingWaybillLayoutCode = next.layout_code;
+    shippingWaybillLayoutDraft = shippingWaybillStartDraft(next);
+    shippingWaybillLayoutSelectedField = "recipient_name";
+    setShippingWaybillLayoutMessage("", false);
+    renderShippingWaybillLayoutDesigner();
+  });
   var template = document.getElementById("shipping-waybill-layout-template");
   if (template) template.addEventListener("change", function() {
     shippingWaybillLayoutCode = template.value;
@@ -11903,6 +11947,7 @@ function closeShippingWaybillLayoutDesigner() {
 async function saveShippingWaybillLayout() {
   var draft = shippingWaybillLayoutDraft;
   if (!draft || shippingWaybillLayoutSaving) return;
+  enforceShippingWaybillPurposeRules(draft);
   var note = (document.getElementById("shipping-waybill-layout-change-note") || {}).value || "";
   shippingWaybillLayoutSaving = true;
   renderShippingWaybillLayoutDesigner();
@@ -11961,6 +12006,7 @@ function setShippingHandwrittenWaybillMessage(message, isError) {
 
 function drawShippingHandwrittenWaybillBackground(context, scale, layout) {
   var yamato = String(layout.carrier_code || "").indexOf("yamato_") === 0;
+  var returnWaybill = shippingWaybillPurpose(layout) === "return_waybill";
   var ink = yamato ? "#d94b3f" : "#ce5f83";
   var pale = yamato ? "#fff5f1" : "#fff2f6";
   var paperWidth = Number(layout.paper_width_mm) || 203;
@@ -11983,7 +12029,9 @@ function drawShippingHandwrittenWaybillBackground(context, scale, layout) {
   context.fillText(yamato ? "ヤマト宅急便 複写送り状" : "佐川急便 複写送り状", 8 * scale, 4 * scale);
   context.font = "600 " + Math.max(11, 2.4 * scale) + "px 'Yu Gothic UI', sans-serif";
   context.fillText("お届け先", 10 * scale, 11 * scale);
-  context.fillText("ご依頼主", 10 * scale, 67 * scale);
+  context.fillStyle = returnWaybill ? "#777f88" : ink;
+  context.fillText(returnWaybill ? "ご依頼主（記入・印字なし）" : "ご依頼主", 10 * scale, 67 * scale);
+  context.fillStyle = ink;
   context.fillText("品名・受注情報", 108 * scale, 39 * scale);
   context.restore();
 }

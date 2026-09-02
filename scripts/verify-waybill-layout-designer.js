@@ -22,6 +22,8 @@ for (const id of [
 for (const fragment of [
   "var SHIPPING_WAYBILL_FIELD_META",
   "function shippingWaybillPreviewData(",
+  "function shippingWaybillPurpose(",
+  "function enforceShippingWaybillPurposeRules(",
   "function drawShippingWaybillLayoutCanvas(",
   "function bindShippingWaybillLayoutCanvas(",
   "function openShippingWaybillLayoutDesigner(",
@@ -33,6 +35,16 @@ for (const fragment of [
   "背景線は位置合わせ用で印刷されません",
   "新しい印刷依頼から反映されます"
 ]) requireFragment(app, fragment);
+
+for (const fragment of [
+  "shipping-waybill-layout-purpose",
+  "商品発送送り状",
+  "コア返却用複写伝票",
+  "送り先は大光電機です。送り主は印字しません。",
+  "ご依頼主（記入・印字なし）",
+  'sender_postal: outbound ? daiko.postal : ""',
+  "shippingWaybillIsReturnSenderField(draft, field)"
+]) requireFragment(app, fragment, `Waybill purpose contract is missing: ${fragment}`);
 
 for (const field of [
   "recipient_postal", "recipient_phone", "recipient_address", "recipient_name",
@@ -63,6 +75,7 @@ if (/on(?:click|change|input|keydown)\s*=/i.test(html.match(/id="shipping-waybil
 for (const fragment of [
   ".shipping-waybill-layout-card",
   ".shipping-waybill-layout-workspace",
+  ".shipping-waybill-purpose-note",
   ".shipping-waybill-field-list",
   ".shipping-waybill-preview",
   "#shipping-waybill-layout-canvas",
