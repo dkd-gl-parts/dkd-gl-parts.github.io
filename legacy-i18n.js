@@ -2630,7 +2630,10 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "B2 CSVを保存できませんでした。ブラウザのダウンロード許可を確認してください。": "Could not save the B2 CSV. Check the browser's download permission.",
     "B2 CSVを発行しました。ダウンロードフォルダを確認してください。": "The B2 CSV was issued. Check the Downloads folder.",
     "B2 CSVの再取得に時間がかかっています。通信状態を確認して、もう一度実行してください。": "Retrieving the B2 CSV is taking too long. Check the connection and try again.",
-    "B2 CSVを再ダウンロードしました。": "The B2 CSV was downloaded again."
+    "B2 CSVを再ダウンロードしました。": "The B2 CSV was downloaded again.",
+    "コア返却用複写伝票の印刷が完了しました。必要な場合は「再印刷」からもう一度発行できます。": "The multipart core return waybill has finished printing. Use \"Reprint\" to print it again if needed.",
+    "コア返却用複写伝票を印刷できませんでした。印刷端末を確認して「再送」してください。": "The multipart core return waybill could not be printed. Check the printing terminal, then select \"Resend\".",
+    "再送": "Resend"
   },
   "zh": {
     ": 構成部品の使用レコードIDを確認できませんでした。画面を更新して再度お試しください。": ": 无法确认构成部件的使用记录ID。请刷新页面后再试一次。",
@@ -5261,6 +5264,9 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "B2 CSVを保存できませんでした。ブラウザのダウンロード許可を確認してください。": "无法保存B2 CSV。请检查浏览器下载权限。",
     "B2 CSVを発行しました。ダウンロードフォルダを確認してください。": "B2 CSV已发行。请检查下载文件夹。",
     "B2 CSVの再取得に時間がかかっています。通信状態を確認して、もう一度実行してください。": "重新获取B2 CSV耗时过长。请检查网络后重试。",
-    "B2 CSVを再ダウンロードしました。": "B2 CSV已重新下载。"
+    "B2 CSVを再ダウンロードしました。": "B2 CSV已重新下载。",
+    "コア返却用複写伝票の印刷が完了しました。必要な場合は「再印刷」からもう一度発行できます。": "旧件返还用复写运单已打印完成。如需再次打印，请选择“重新打印”。",
+    "コア返却用複写伝票を印刷できませんでした。印刷端末を確認して「再送」してください。": "旧件返还用复写运单打印失败。请检查打印终端后选择“重新发送”。",
+    "再送": "重新发送"
   }
 };

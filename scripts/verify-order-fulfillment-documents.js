@@ -266,6 +266,19 @@ for (const fragment of [
   "出荷完了時自動発行",
   "未発行"
 ]) requireFragment(printState, fragment);
+for (const fragment of [
+  "function stopShippingDocumentPrintStatusPolling",
+  "function shippingDocumentHasActivePrintJob",
+  "function scheduleShippingDocumentPrintStatusRefresh",
+  "function refreshShippingDocumentPrintStatus",
+  'activeScreenId() !== "shipping-document-mgmt"',
+  'sb.rpc("get_sales_order_detail"',
+  'renderShippingDocumentList()',
+  'renderShippingDocumentDetail()',
+  "コア返却用複写伝票の印刷が完了しました。",
+  "必要な場合は「再印刷」",
+  "印刷端末を確認して「再送」"
+]) requireFragment(printState, fragment);
 
 const requiredDocuments = sourceBetween("function shippingDocumentShipmentDocumentsHtml", "function shippingDocumentReturnWaybillHtml");
 for (const fragment of [
@@ -295,7 +308,9 @@ for (const fragment of [
   '対象商品1個につき1枚 / " + returnWaybillCopyCount + "枚',
   'var returnCanPrint = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "dot_matrix"',
   'var returnCanHandwrite = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "handwritten"',
-  '端末印刷（" + returnWaybillCopyCount + "枚）',
+  'returnJob.status === "printed" ? "再印刷"',
+  'returnJob.status === "error" ? "再送" : "端末印刷"',
+  'esc(returnPrintActionLabel) + "（" + returnWaybillCopyCount + "枚）',
   '手書き内容を表示（" + returnWaybillCopyCount + "枚）',
   "shippingCarrierBrandHtml(row.carrierCode, true)"
 ]) requireFragment(requiredDocuments, fragment);
@@ -318,6 +333,7 @@ for (const fragment of [
   "shippingDocumentStageHtml(order)",
   "shippingDocumentOrderContentsHtml(order)",
   "shippingDocumentShipmentDocumentsHtml(order)",
+  "scheduleShippingDocumentPrintStatusRefresh()",
   "B2発行履歴",
   "受注詳細"
 ]) requireFragment(detailSource, fragment);
@@ -568,11 +584,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.856"',
-  'styles.css?v=1.1.856',
-  'app.js?v=1.1.856'
+  'content="v1.1.857"',
+  'styles.css?v=1.1.857',
+  'app.js?v=1.1.857'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.856"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.857"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
