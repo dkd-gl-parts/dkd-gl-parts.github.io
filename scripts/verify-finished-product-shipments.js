@@ -178,6 +178,7 @@ assert(scanSource.includes("assignFinishedShipmentSerial(null, serial, r.data)")
 assert(!scanSource.includes("finishedShipmentOrderItemForUnit"), "scanner must not reject compatible products through exact client matching");
 assert(scanSource.includes("assignFinishedShipmentSerial"), "scanner input and manual selection do not share assignment logic");
 assert(scanSource.includes("if (!dispatch)"), "standalone serial lookup must remain available without a dispatch");
+assert(scanSource.includes("setFinishedShipmentPickingBlocked(true)"), "serial validation errors must block shipment confirmation");
 
 const clearSource = functionSource("clearFinishedShipmentUnits");
 assert(clearSource.includes('sb.rpc("release_sales_order_dispatch_serial"'), "clear action must release server-side assignments");
@@ -188,10 +189,12 @@ assert(saveSource.includes("target_warranty_months: 12"), "legacy warranty argum
 assert(!saveSource.includes("finished-shipment-warranty-months"), "shipment confirmation must not read browser-entered warranty months");
 assert(saveSource.includes("finished_shipping_tracking_required"), "outbound tracking must be validated before shipment");
 assert(saveSource.includes("finished_shipping_return_tracking_required"), "core-return tracking must be validated before shipment");
+assert(saveSource.includes("if (finishedShipmentPickingBlocked)"), "picking errors must stop final shipment confirmation");
+assert(!saveSource.includes("button.disabled = false"), "shipment completion must not blindly re-enable after an error");
 assert(!saveSource.includes("ship_finished_product_units"), "legacy shipment RPC would double-decrement stock");
 assert(!saveSource.includes('.from("finished_product_units").update('), "browser mutates unit lifecycle directly");
 assert(!saveSource.includes('.from("core_product_variants").update('), "browser mutates stock directly");
-assert(html.includes('data-i18n="finished_shipping_register">照合を完了して出荷済みにする</button>'), "final shipment action must describe check completion and shipment status");
+assert(/id="btn-finished-shipment-save"[^>]*data-i18n="finished_shipping_register"[^>]*disabled/.test(html), "final shipment action must start blocked until server-backed checks pass");
 assert(functionSource("renderFinishedShipmentCandidates").includes("unit.match_type === \"compatible\""), "compatible candidates need a visible badge");
 assert(functionSource("finishedShipmentFlattenAssignments").includes('match_type: finishedShipmentUnitMatchesItem(serial, orderItem) ? "exact" : "compatible"'), "assigned compatible units must remain identifiable");
 assert(css.includes(".finished-shipment-match-badge"), "compatible serial badge styles are missing");
