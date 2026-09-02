@@ -713,7 +713,7 @@ var TRANSLATIONS = {
     finished_shipping_camera_button: "カメラ",
     finished_shipping_camera_title: "カメラでコードを読取",
     finished_shipping_camera_dispatch_prompt: "出荷指示書のQRコードを枠内に合わせてください。",
-    finished_shipping_camera_serial_prompt: "製品ラベルのQRコードまたはバーコードを枠内に合わせてください。",
+    finished_shipping_camera_serial_prompt: "完品シリアルのQRコードを枠内に合わせてください。",
     finished_shipping_camera_starting: "背面カメラを起動しています...",
     finished_shipping_camera_scanning: "コードを枠内に合わせてください。自動で読み取ります。",
     finished_shipping_camera_cancel: "読取を中止",
@@ -2519,7 +2519,7 @@ var TRANSLATIONS = {
     finished_shipping_camera_button: "Camera",
     finished_shipping_camera_title: "Scan with Camera",
     finished_shipping_camera_dispatch_prompt: "Place the shipment instruction QR code inside the frame.",
-    finished_shipping_camera_serial_prompt: "Place the product label QR code or barcode inside the frame.",
+    finished_shipping_camera_serial_prompt: "Place the finished-product serial QR code inside the frame.",
     finished_shipping_camera_starting: "Starting the rear camera...",
     finished_shipping_camera_scanning: "Hold the code inside the frame. It will scan automatically.",
     finished_shipping_camera_cancel: "Cancel Scan",
@@ -4333,7 +4333,7 @@ var TRANSLATIONS = {
     finished_shipping_camera_button: "相机",
     finished_shipping_camera_title: "使用相机扫描",
     finished_shipping_camera_dispatch_prompt: "请将出货指示书的QR码对准框内。",
-    finished_shipping_camera_serial_prompt: "请将产品标签的QR码或条码对准框内。",
+    finished_shipping_camera_serial_prompt: "请将完品序列号QR码对准框内。",
     finished_shipping_camera_starting: "正在启动后置相机...",
     finished_shipping_camera_scanning: "请将代码对准框内，系统会自动读取。",
     finished_shipping_camera_cancel: "取消扫描",
@@ -5542,7 +5542,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.847";
+var APP_VERSION       = "v1.1.848";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -28229,11 +28229,14 @@ async function openFinishedShipmentCamera(target) {
   try {
     var zxing = await loadFinishedShipmentCameraLibrary();
     if (session !== finishedShipmentCameraSession || finishedShipmentCameraTarget !== target) return;
-    var reader = new zxing.BrowserMultiFormatReader(undefined, {
+    var readerOptions = {
       delayBetweenScanAttempts: 200,
       delayBetweenScanSuccess: 800,
       tryPlayVideoTimeout: 5000
-    });
+    };
+    var reader = target === "serial"
+      ? new zxing.BrowserQRCodeReader(undefined, readerOptions)
+      : new zxing.BrowserMultiFormatReader(undefined, readerOptions);
     finishedShipmentCameraReader = reader;
     var controls = await reader.decodeFromVideoDevice(undefined, video, function(result, error, activeControls) {
       if (session !== finishedShipmentCameraSession || finishedShipmentCameraTarget !== target) return;
