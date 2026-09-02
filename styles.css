@@ -2343,6 +2343,34 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-rule-candidate:hover { background: #f5f8ff; }
 .customer-rule-selected { color: #1a6fd4; font-size: 11px; margin: -4px 0 10px 148px; min-height: 16px; }
 .customer-rule-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.customer-access-add-btn { min-height: 38px; margin-left: 4px; white-space: nowrap; }
+.form-card.customer-register-card { width: min(860px, calc(100vw - 24px)); max-width: 860px; max-height: calc(100dvh - 24px); margin: 12px; padding: 0; overflow: auto; border-radius: 8px; }
+.customer-register-header { position: sticky; top: 0; z-index: 2; display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 18px 20px 14px; border-bottom: 1px solid #dce4ee; background: #fff; }
+.customer-register-header h3 { margin: 2px 0 3px; font-size: 19px; letter-spacing: 0; }
+.customer-register-header p { margin: 0; color: #667085; font-size: 11px; line-height: 1.5; }
+.customer-register-eyebrow { color: #a80b2f; font-size: 9px; font-weight: 900; letter-spacing: 0; }
+.customer-register-close { width: 36px; height: 36px; flex: 0 0 36px; border: 1px solid #d5dce6; border-radius: 6px; background: #fff; color: #526174; font-size: 20px; line-height: 1; cursor: pointer; }
+.customer-register-close:hover { border-color: #a80b2f; color: #a80b2f; }
+.customer-register-flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 14px 20px 0; border-top: 1px solid #dfe5ed; border-bottom: 1px solid #dfe5ed; background: #f8fafc; }
+.customer-register-flow span { min-width: 0; min-height: 48px; padding: 9px 12px; display: flex; align-items: center; gap: 8px; border-right: 1px solid #dfe5ed; }
+.customer-register-flow span:last-child { border-right: 0; }
+.customer-register-flow b { width: 24px; height: 24px; flex: 0 0 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: #1f6fd1; color: #fff; font-size: 11px; }
+.customer-register-flow em { min-width: 0; color: #31445a; font-size: 11px; font-style: normal; font-weight: 800; line-height: 1.4; }
+.customer-register-confirm { margin: 12px 20px 0; min-height: 42px; padding: 9px 12px; display: flex; align-items: center; gap: 9px; border-left: 4px solid #d49a28; background: #fff8e6; color: #6d4c0f; font-size: 12px; font-weight: 800; line-height: 1.4; cursor: pointer; }
+.customer-register-confirm input { flex: 0 0 auto; }
+.customer-register-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; padding: 14px 20px 4px; }
+.customer-register-field { min-width: 0; display: grid; align-content: start; gap: 5px; }
+.customer-register-field > span { color: #475467; font-size: 11px; font-weight: 800; line-height: 1.35; }
+.customer-register-field > span b { margin-left: 4px; color: #c40031; font-size: 9px; }
+.customer-register-field input, .customer-register-field select { width: 100%; min-width: 0; height: 38px; box-sizing: border-box; border: 1px solid #cfd7e2; border-radius: 6px; padding: 0 10px; background: #fff; color: #15263b; font-size: 13px; outline: none; }
+.customer-register-field input:focus, .customer-register-field select:focus { border-color: #1f6fd1; box-shadow: 0 0 0 2px rgba(31,111,209,.12); }
+.customer-register-field small { color: #667085; font-size: 9px; line-height: 1.45; }
+.customer-register-field-code, .customer-register-field-address { grid-column: span 1; }
+.customer-register-field-address2 { grid-column: 2; }
+.customer-register-field-postal { max-width: 220px; }
+.customer-register-message { min-height: 18px; margin: 5px 20px 0; line-height: 1.45; }
+.customer-register-footer { position: sticky; bottom: 0; z-index: 2; margin: 8px 0 0; padding: 12px 20px 16px; background: #fff; }
+.customer-register-footer button { min-width: 130px; }
 @media(max-width:980px){
   .customer-access-layout { grid-template-columns: 1fr; }
   .customer-access-list { max-height: 280px; }
@@ -2357,6 +2385,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .customer-order-publication-control { width: 100%; justify-content: flex-end; }
   .customer-category-toolbar { align-items: flex-start; flex-direction: column; }
   .customer-category-grid { grid-template-columns: 1fr 1fr; }
+  .customer-access-add-btn { width: 100%; margin-left: 0; }
+  .form-card.customer-register-card { width: calc(100vw - 12px); max-height: calc(100dvh - 12px); margin: 6px; }
+  .customer-register-header { padding: 14px; }
+  .customer-register-flow { margin: 10px 14px 0; grid-template-columns: 1fr; }
+  .customer-register-flow span { min-height: 38px; border-right: 0; border-bottom: 1px solid #dfe5ed; }
+  .customer-register-flow span:last-child { border-bottom: 0; }
+  .customer-register-confirm { margin: 10px 14px 0; }
+  .customer-register-grid { grid-template-columns: 1fr; padding: 12px 14px 4px; }
+  .customer-register-field-code, .customer-register-field-address, .customer-register-field-address2 { grid-column: auto; }
+  .customer-register-field-postal { max-width: none; }
+  .customer-register-message { margin-right: 14px; margin-left: 14px; }
+  .customer-register-footer { padding: 10px 14px 14px; }
+  .customer-register-footer button { flex: 1; min-width: 0; }
 }
 
 /* 送料マスタ */
