@@ -5500,7 +5500,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.845";
+var APP_VERSION       = "v1.1.846";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -11702,11 +11702,14 @@ function drawShippingWaybillLayoutCanvas() {
   });
 }
 
-function shippingWaybillLayoutFieldHtml(field, draft) {
+function shippingWaybillLayoutFieldHtml(field, draft, previewData) {
   var meta = SHIPPING_WAYBILL_FIELD_META[field.key] || { label: field.key, sample: "" };
   var suppressed = shippingWaybillIsReturnSenderField(draft, field);
+  var sample = previewData && Object.prototype.hasOwnProperty.call(previewData, field.key)
+    ? previewData[field.key]
+    : meta.sample;
   return "<div class='shipping-waybill-field-row" + (field.key === shippingWaybillLayoutSelectedField ? " selected" : "") + (suppressed ? " suppressed" : "") + "'>" +
-    "<button type='button' data-waybill-field-select='" + esc(field.key) + "'" + (suppressed ? " disabled" : "") + "><strong>" + esc(meta.label) + "</strong><span>" + esc(suppressed ? "返却用は印字しません" : meta.sample) + "</span></button>" +
+    "<button type='button' data-waybill-field-select='" + esc(field.key) + "'" + (suppressed ? " disabled" : "") + "><strong>" + esc(meta.label) + "</strong><span>" + esc(suppressed ? "返却用は印字しません" : sample) + "</span></button>" +
     "<label title='" + esc(suppressed ? "コア返却用では送り主を印字しません" : "印字する") + "'><input type='checkbox' data-waybill-field-visible='" + esc(field.key) + "'" + (field.visible === false ? "" : " checked") + (suppressed ? " disabled" : "") + "><span>" + (suppressed ? "対象外" : "印字") + "</span></label></div>";
 }
 
@@ -11743,7 +11746,7 @@ function renderShippingWaybillLayoutDesigner() {
     "</div>" +
     "<div class='shipping-waybill-purpose-note " + (purposeIsReturn ? "return" : "outbound") + "'><strong>" + (purposeIsReturn ? "コア返却用" : "商品発送用") + "</strong><span>" + (purposeIsReturn ? "送り先は大光電機です。送り主は印字しません。" : "送り先は得意先、送り主は大光電機を印字します。") + "</span></div>" +
     "<div class='shipping-waybill-layout-workspace'>" +
-      "<aside class='shipping-waybill-field-list'><div><strong>印字項目</strong><span>" + esc((draft.fields || []).filter(function(item) { return item.visible !== false && !shippingWaybillIsReturnSenderField(draft, item); }).length) + " / " + esc((draft.fields || []).filter(function(item) { return !shippingWaybillIsReturnSenderField(draft, item); }).length) + "</span></div>" + (draft.fields || []).map(function(item) { return shippingWaybillLayoutFieldHtml(item, draft); }).join("") + "</aside>" +
+      "<aside class='shipping-waybill-field-list'><div><strong>印字項目</strong><span>" + esc((draft.fields || []).filter(function(item) { return item.visible !== false && !shippingWaybillIsReturnSenderField(draft, item); }).length) + " / " + esc((draft.fields || []).filter(function(item) { return !shippingWaybillIsReturnSenderField(draft, item); }).length) + "</span></div>" + (draft.fields || []).map(function(item) { return shippingWaybillLayoutFieldHtml(item, draft, previewData); }).join("") + "</aside>" +
       "<section class='shipping-waybill-preview'><div class='shipping-waybill-preview-head'><div><strong>印刷プレビュー</strong><span>" + esc(draft.paper_width_mm) + " × " + esc(draft.paper_height_mm) + " mm</span></div><em>" + (previewData.uses_actual_order ? "選択中の受注" : "サンプルデータ") + "</em></div><div class='shipping-waybill-canvas-wrap'><canvas id='shipping-waybill-layout-canvas' tabindex='0' aria-label='送り状の印刷位置プレビュー'></canvas></div><p>背景線は位置合わせ用で印刷されません。このPC固有の用紙寸法・全体ずれ・テスト印刷は、画面下の端末補正から調整します。</p></section>" +
       "<aside class='shipping-waybill-inspector'>" +
         (field ? "<div class='shipping-waybill-inspector-head'><span>選択中</span><strong>" + esc((SHIPPING_WAYBILL_FIELD_META[field.key] || {}).label || field.key) + "</strong></div>" +
