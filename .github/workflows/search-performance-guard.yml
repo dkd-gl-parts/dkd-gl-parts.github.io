@@ -14,6 +14,8 @@ on:
       - "styles.css"
       - "product-3d.js"
       - "product-3d-viewer.js"
+      - "assets/concierge-pet/**"
+      - "scripts/verify-concierge-pet.js"
       - "vendor/three/**"
       - "scripts/verify-product-3d-workflow.js"
       - "scripts/verify-app-version-assets.js"
@@ -108,6 +110,11 @@ jobs:
         run: |
           node --check app.js
           node --check install-app.js
+          node --check assets/concierge-pet/concierge-pet.js
+      - name: Verify animated concierge pets
+        run: |
+          node scripts/verify-concierge-pet.js
+          node scripts/verify-concierge-pet-runtime.js
       - name: Verify release asset versions
         run: node scripts/verify-app-version-assets.js
       - name: Verify Edge-compatible automatic updates

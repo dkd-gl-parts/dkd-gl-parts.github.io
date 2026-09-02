@@ -1,0 +1,129 @@
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
+
+const root = path.resolve(__dirname, "..");
+const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+const runtimePath = path.join(root, "assets", "concierge-pet", "concierge-pet.js");
+const cssPath = path.join(root, "assets", "concierge-pet", "concierge-pet.css");
+const runtime = fs.readFileSync(runtimePath, "utf8");
+const css = fs.readFileSync(cssPath, "utf8");
+const appVersion = (app.match(/var\s+APP_VERSION\s*=\s*"(v[^"]+)"/) || [])[1];
+
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+function requireFragment(source, fragment, message) {
+  assert(source.includes(fragment), message || `Missing fragment: ${fragment}`);
+}
+
+function readLosslessWebpSize(buffer) {
+  assert(buffer.subarray(0, 4).toString("ascii") === "RIFF", "Spritesheet is not RIFF WebP");
+  assert(buffer.subarray(8, 12).toString("ascii") === "WEBP", "Spritesheet has no WEBP signature");
+  assert(buffer.subarray(12, 16).toString("ascii") === "VP8L", "Spritesheet must use lossless VP8L encoding");
+  assert(buffer[20] === 0x2f, "Spritesheet has an invalid VP8L signature");
+  return {
+    width: 1 + buffer[21] + ((buffer[22] & 0x3f) << 8),
+    height: 1 + (buffer[22] >> 6) + (buffer[23] << 2) + ((buffer[24] & 0x0f) << 10)
+  };
+}
+
+assert(appVersion, "Unable to resolve APP_VERSION");
+requireFragment(html, `assets/concierge-pet/concierge-pet.css?${"v=" + appVersion.slice(1)}`, "Concierge stylesheet is not versioned with APP_VERSION");
+requireFragment(html, `assets/concierge-pet/concierge-pet.js?${"v=" + appVersion.slice(1)}`, "Concierge runtime is not versioned with APP_VERSION");
+assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge runtime must load after the authenticated app runtime");
+
+[
+  'suzuto: { copyKey: "suzuto"',
+  'rinna: { copyKey: "rinna"',
+  'character: "suzuto", mode: "active"',
+  'STORAGE_KEY_PREFIX = "dcats_concierge_pet_v1:"',
+  'var user = window.currentUser',
+  'syncSettingsOwner();',
+  'var COPY = {',
+  'EXCLUDED_SCREENS = { boot: true, login: true, forgot: true, reset: true }',
+  'has("dcats_print_station")',
+  'saved.mode === "active" || saved.mode === "fixed" || saved.mode === "off"',
+  'createElement("div", "dcats-concierge-sprite")',
+  'localStorage.setItem(STORAGE_KEY_PREFIX + settingsOwner',
+  'window.DcatsConcierge = Object.freeze',
+  'window.addEventListener("dcats:concierge-state"',
+  'document.addEventListener("visibilitychange"',
+  'window.requestAnimationFrame(function ()',
+  'currentVisualKey === visualKey',
+  'prefers-reduced-motion: reduce',
+  'showFrame(index < 8 ? 9 : 10',
+  'collectExclusionRects()',
+  'hasBlockingDialog()',
+  'has-no-safe-target',
+  'return null;',
+  'window.cancelAnimationFrame(pointerFrameRequest)',
+  'window.addEventListener("scroll", scheduleViewportSync',
+  'freezeMovement();',
+  'is-revalidating',
+  'focusTarget.isConnected',
+  'has-left-bubble',
+  '.overlay.show,.panel.show',
+  'PETS[settings.character].className'
+].forEach((fragment) => requireFragment(runtime, fragment));
+
+assert((runtime.match(/createElement\("div", "dcats-concierge-sprite"\)/g) || []).length === 1, "Runtime must create exactly one visible sprite element");
+assert(!runtime.includes("innerHTML"), "Concierge UI must not use innerHTML");
+assert(!runtime.includes("eval("), "Concierge runtime must not use eval");
+assert(!runtime.includes(".style."), "Strict CSP forbids inline style mutation");
+assert(!runtime.includes('setAttribute("style"'), "Strict CSP forbids style attributes");
+assert(!runtime.includes("fetch("), "Concierge preferences must remain local and must not add network/API work");
+
+[
+  "idle: { row: 0",
+  '"running-right": { row: 1',
+  '"running-left": { row: 2',
+  "waving: { row: 3",
+  "jumping: { row: 4",
+  "failed: { row: 5",
+  "waiting: { row: 6",
+  "running: { row: 7",
+  "review: { row: 8"
+].forEach((fragment) => requireFragment(runtime, fragment, `Missing atlas row contract: ${fragment}`));
+
+requireFragment(css, `./suzuto/spritesheet.webp?v=${appVersion.slice(1)}`);
+requireFragment(css, `./rinna/spritesheet.webp?v=${appVersion.slice(1)}`);
+requireFragment(css, ".dcats-concierge-sprite.is-suzuto");
+requireFragment(css, ".dcats-concierge-sprite.is-rinna");
+requireFragment(css, "@media (prefers-reduced-motion: reduce)");
+requireFragment(css, "@media print");
+requireFragment(css, "z-index: 190");
+requireFragment(css, "max-height: calc(100dvh");
+assert(!css.includes("data:"), "Concierge stylesheet must not embed sprite data URLs");
+
+const expectedPets = [
+  { dir: "suzuto", id: "dcats-suzuto", displayName: "スズト", sha256: "DC5978A1C172A0A66D8DFAFF8C0C0F15AABCE474C266FF3F1B63E009661431C7" },
+  { dir: "rinna", id: "dcats-rinna", displayName: "リンナ", sha256: "6095678C6515F73EA870266B6383BDAA22C8DB99E7CA96F2F6E597D82E16850E" }
+];
+
+for (const expected of expectedPets) {
+  const petDir = path.join(root, "assets", "concierge-pet", expected.dir);
+  const manifestPath = path.join(petDir, "pet.json");
+  const spritesheetPath = path.join(petDir, "spritesheet.webp");
+  assert(fs.existsSync(manifestPath), `Missing ${expected.dir}/pet.json`);
+  assert(fs.existsSync(spritesheetPath), `Missing ${expected.dir}/spritesheet.webp`);
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  assert(manifest.id === expected.id, `Unexpected ${expected.dir} pet id`);
+  assert(manifest.displayName === expected.displayName, `Unexpected ${expected.dir} display name`);
+  assert(manifest.spriteVersionNumber === 2, `${expected.dir} must use spriteVersionNumber 2`);
+  assert(manifest.spritesheetPath === "spritesheet.webp", `${expected.dir} manifest must use the local spritesheet`);
+  assert(manifest.spritesheetSha256 === expected.sha256, `${expected.dir} manifest hash is not the approved atlas hash`);
+  assert(manifest.spritesheetWidth === 1536 && manifest.spritesheetHeight === 2288, `${expected.dir} manifest dimensions are invalid`);
+  assert(manifest.columns === 8 && manifest.rows === 11, `${expected.dir} manifest grid is invalid`);
+  const buffer = fs.readFileSync(spritesheetPath);
+  const bytes = buffer.length;
+  assert(bytes > 0 && bytes <= 12 * 1024 * 1024, `${expected.dir} spritesheet exceeds the 12 MiB UI asset budget`);
+  const actualSha = crypto.createHash("sha256").update(buffer).digest("hex").toUpperCase();
+  assert(actualSha === expected.sha256, `${expected.dir} spritesheet hash does not match the approved atlas`);
+  const size = readLosslessWebpSize(buffer);
+  assert(size.width === 1536 && size.height === 2288, `${expected.dir} spritesheet must be 1536x2288`);
+}
+
+console.log(`Concierge pet verification passed (${appVersion}; one selected character, 9 motion states, 16 gaze directions).`);

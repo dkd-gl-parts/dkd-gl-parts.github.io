@@ -19,10 +19,12 @@ const legacyVersion = requiredMatch(html, /Legacy updater compatibility: var APP
 const scriptVersion = "v" + requiredMatch(html, /<script\s+src="app\.js\?v=([^\"]+)"/, "app.js cache version");
 const installScriptVersion = "v" + requiredMatch(html, /<script\s+src="install-app\.js\?v=([^\"]+)"/, "install-app.js cache version");
 const legacyI18nVersion = "v" + requiredMatch(html, /<script\s+src="legacy-i18n\.js\?v=([^\"]+)"/, "legacy-i18n.js cache version");
+const conciergeScriptVersion = "v" + requiredMatch(html, /<script\s+src="assets\/concierge-pet\/concierge-pet\.js\?v=([^\"]+)"/, "concierge-pet.js cache version");
 const styleVersion = "v" + requiredMatch(html, /<link\s+rel="stylesheet"\s+href="styles\.css\?v=([^&\"]+)/, "styles.css cache version");
+const conciergeStyleVersion = "v" + requiredMatch(html, /<link\s+rel="stylesheet"\s+href="assets\/concierge-pet\/concierge-pet\.css\?v=([^\"]+)"/, "concierge-pet.css cache version");
 const manifestVersion = "v" + requiredMatch(html, /<link\s+rel="manifest"\s+href="site\.webmanifest\?v=([^&\"]+)/, "manifest cache version");
 
-const versions = { metaVersion, legacyVersion, scriptVersion, installScriptVersion, legacyI18nVersion, styleVersion, manifestVersion };
+const versions = { metaVersion, legacyVersion, scriptVersion, installScriptVersion, legacyI18nVersion, conciergeScriptVersion, styleVersion, conciergeStyleVersion, manifestVersion };
 Object.entries(versions).forEach(([label, version]) => {
   if (version !== appVersion) {
     throw new Error(`${label} ${version} must match ${appVersion}`);

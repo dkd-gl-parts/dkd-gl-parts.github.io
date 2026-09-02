@@ -11,7 +11,8 @@ const runtimeScriptPaths = [
   "label-print-window.js",
   "manufacturing-ranking-report.js",
   "product-3d.js",
-  "product-3d-viewer.js"
+  "product-3d-viewer.js",
+  "assets/concierge-pet/concierge-pet.js"
 ];
 
 function assert(condition, message) {

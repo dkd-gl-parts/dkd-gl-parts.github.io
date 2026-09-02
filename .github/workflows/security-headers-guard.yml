@@ -6,6 +6,7 @@ on:
       - "_headers"
       - ".gitignore"
       - "assets/icons/**"
+      - "assets/concierge-pet/**"
       - "apple-touch-icon.png"
       - "assets/postal/**"
       - "favicon.ico"
@@ -14,6 +15,7 @@ on:
       - "site.webmanifest"
       - "scripts/build-static-site.js"
       - "scripts/verify-install-app.js"
+      - "scripts/verify-concierge-pet.js"
       - "scripts/verify-security-response-headers.js"
       - ".github/workflows/security-headers-guard.yml"
   pull_request:
@@ -21,6 +23,7 @@ on:
       - "_headers"
       - ".gitignore"
       - "assets/icons/**"
+      - "assets/concierge-pet/**"
       - "apple-touch-icon.png"
       - "assets/postal/**"
       - "favicon.ico"
@@ -29,6 +32,7 @@ on:
       - "site.webmanifest"
       - "scripts/build-static-site.js"
       - "scripts/verify-install-app.js"
+      - "scripts/verify-concierge-pet.js"
       - "scripts/verify-security-response-headers.js"
       - ".github/workflows/security-headers-guard.yml"
   workflow_dispatch:
@@ -46,6 +50,10 @@ jobs:
           node-version: 22
       - name: Verify install experience
         run: node scripts/verify-install-app.js
+      - name: Verify animated concierge pets
+        run: |
+          node scripts/verify-concierge-pet.js
+          node scripts/verify-concierge-pet-runtime.js
       - name: Build static deployment
         run: node scripts/build-static-site.js
       - name: Verify security response headers
