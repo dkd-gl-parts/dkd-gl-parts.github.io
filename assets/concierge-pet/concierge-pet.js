@@ -7,6 +7,7 @@
     suzuto: { copyKey: "suzuto", className: "is-suzuto" },
     rinna: { copyKey: "rinna", className: "is-rinna" }
   };
+  var MODES = { active: true, horizontal: true, vertical: true, fixed: true, off: true };
   var ROWS = {
     idle: { row: 0, durations: [280, 110, 110, 140, 140, 320] },
     "running-right": { row: 1, durations: [120, 120, 120, 120, 120, 120, 120, 220] },
@@ -35,13 +36,17 @@
       rinna: "リンナ",
       motionLegend: "動き方",
       modeActive: "よく動く",
+      modeHorizontal: "横移動だけ",
+      modeVertical: "縦移動だけ",
       modeFixed: "定位置",
       modeOff: "非表示",
-      help: "選択した1体だけを読み込みます。「よく動く」は操作部品を避けて歩き、「定位置」は画面右下で反応だけを表示します。OSの「視差効果を減らす」が有効な場合も静止します。",
+      help: "選択した1体だけを読み込みます。「よく動く」は操作部品を避けて自由に歩き、「横移動だけ」「縦移動だけ」は指定した一方向に歩きます。「定位置」は画面右下で反応だけを表示します。OSの「視差効果を減らす」が有効な場合も静止します。",
       openSettings: "{name}の設定を開く",
       launcherOff: "コンシェルジュを表示",
       switched: "{name}に切り替えました。",
       activeMessage: "元気にご案内します。",
+      horizontalMessage: "横方向に歩いてご案内します。",
+      verticalMessage: "縦方向に歩いてご案内します。",
       fixedMessage: "画面の隅で待機します。"
     },
     en: {
@@ -60,13 +65,17 @@
       rinna: "Rinna",
       motionLegend: "Movement",
       modeActive: "Active",
+      modeHorizontal: "Horizontal only",
+      modeVertical: "Vertical only",
       modeFixed: "Stay put",
       modeOff: "Hide",
-      help: "Only the selected concierge is loaded. Active mode walks around while avoiding controls. Stay put keeps the concierge in the lower-right corner for reactions only. Motion also stops when your OS requests reduced motion.",
+      help: "Only the selected concierge is loaded. Active mode walks freely while avoiding controls. Horizontal only and Vertical only restrict walking to one direction. Stay put keeps the concierge in the lower-right corner for reactions only. Motion also stops when your OS requests reduced motion.",
       openSettings: "Open {name}'s settings",
       launcherOff: "Show concierge",
       switched: "Switched to {name}.",
       activeMessage: "I will guide you actively.",
+      horizontalMessage: "I will move horizontally.",
+      verticalMessage: "I will move vertically.",
       fixedMessage: "I will wait in the corner."
     },
     zh: {
@@ -85,13 +94,17 @@
       rinna: "Rinna",
       motionLegend: "移动方式",
       modeActive: "活跃移动",
+      modeHorizontal: "仅横向移动",
+      modeVertical: "仅纵向移动",
       modeFixed: "固定位置",
       modeOff: "隐藏",
-      help: "仅加载所选的一位礼宾助手。“活跃移动”会避开操作控件在画面中行走；“固定位置”只在右下角作出反应。操作系统启用减少动态效果时也会停止移动。",
+      help: "仅加载所选的一位礼宾助手。“活跃移动”会避开操作控件自由行走；“仅横向移动”和“仅纵向移动”会限制为一个方向。“固定位置”只在右下角作出反应。操作系统启用减少动态效果时也会停止移动。",
       openSettings: "打开{name}的设置",
       launcherOff: "显示礼宾助手",
       switched: "已切换为{name}。",
       activeMessage: "我会积极为您引导。",
+      horizontalMessage: "我会横向移动为您引导。",
+      verticalMessage: "我会纵向移动为您引导。",
       fixedMessage: "我会在画面角落等候。"
     }
   };
@@ -177,7 +190,7 @@
       var saved = JSON.parse(localStorage.getItem(STORAGE_KEY_PREFIX + owner) || "null");
       if (saved && PETS[saved.character]) value.character = saved.character;
       if (saved && saved.mode === "calm") value.mode = "fixed";
-      if (saved && (saved.mode === "active" || saved.mode === "fixed" || saved.mode === "off")) value.mode = saved.mode;
+      if (saved && MODES[saved.mode]) value.mode = saved.mode;
     } catch (error) {
       // A private browsing policy may disable storage; defaults remain usable.
     }
@@ -283,6 +296,8 @@
     var modeGrid = createElement("div", "dcats-concierge-choice-grid dcats-concierge-mode-grid");
     modeButtons = [
       createChoice("modeActive", "active", "mode"),
+      createChoice("modeHorizontal", "horizontal", "mode"),
+      createChoice("modeVertical", "vertical", "mode"),
       createChoice("modeFixed", "fixed", "mode"),
       createChoice("modeOff", "off", "mode")
     ];
@@ -410,7 +425,7 @@
   function selectMode(mode) {
     if (!isSystemAdminSession()) return;
     syncSettingsOwner();
-    if (mode !== "active" && mode !== "fixed" && mode !== "off") return;
+    if (!MODES[mode]) return;
     settings.mode = mode;
     saveSettings();
     if (mode === "off") {
@@ -420,7 +435,13 @@
       return;
     }
     applySettings();
-    showBubble(copy(mode === "active" ? "activeMessage" : "fixedMessage"), 2200);
+    var modeMessageKey = {
+      active: "activeMessage",
+      horizontal: "horizontalMessage",
+      vertical: "verticalMessage",
+      fixed: "fixedMessage"
+    }[mode] || "fixedMessage";
+    showBubble(copy(modeMessageKey), 2200);
     closePanel();
     syncRunningState();
   }
@@ -633,16 +654,26 @@
     var height = Math.max(1, window.innerHeight - size.height - 18);
     var minimumY = window.innerWidth <= 700 ? Math.max(48, height * .42) : 52;
     var rects = collectExclusionRects();
+    var horizontalOnly = settings.mode === "horizontal";
+    var verticalOnly = settings.mode === "vertical";
+    var fixedX = Math.max(10, Math.min(position.x, width - 10));
+    var fixedY = Math.max(minimumY, Math.min(position.y, height - 12));
     for (var attempt = 0; attempt < 32; attempt += 1) {
       var x;
       var y;
-      x = 10 + Math.random() * Math.max(1, width - 20);
-      y = minimumY + Math.random() * Math.max(1, height - minimumY - 12);
+      x = verticalOnly ? fixedX : 10 + Math.random() * Math.max(1, width - 20);
+      y = horizontalOnly ? fixedY : minimumY + Math.random() * Math.max(1, height - minimumY - 12);
       var candidate = { x: x, y: y };
       if (isSafeCandidate(candidate, size, rects)) return candidate;
     }
     var fallbackY = Math.max(minimumY, height - 20);
-    var fallbacks = [
+    var fallbacks = horizontalOnly ? [
+      { x: 14, y: fixedY },
+      { x: Math.max(14, width - 14), y: fixedY }
+    ] : verticalOnly ? [
+      { x: fixedX, y: minimumY },
+      { x: fixedX, y: fallbackY }
+    ] : [
       { x: 14, y: fallbackY },
       { x: Math.max(14, width - 14), y: fallbackY },
       { x: 14, y: minimumY },

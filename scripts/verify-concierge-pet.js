@@ -42,6 +42,7 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
 [
   'suzuto: { copyKey: "suzuto"',
   'rinna: { copyKey: "rinna"',
+  'MODES = { active: true, horizontal: true, vertical: true, fixed: true, off: true }',
   'character: "suzuto", mode: "active"',
   'STORAGE_KEY_PREFIX = "dcats_concierge_pet_v1:"',
   'var user = window.currentUser',
@@ -52,7 +53,13 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
   'var COPY = {',
   'EXCLUDED_SCREENS = { boot: true, login: true, forgot: true, reset: true }',
   'has("dcats_print_station")',
-  'saved.mode === "active" || saved.mode === "fixed" || saved.mode === "off"',
+  'saved && MODES[saved.mode]',
+  'createChoice("modeHorizontal", "horizontal", "mode")',
+  'createChoice("modeVertical", "vertical", "mode")',
+  'var horizontalOnly = settings.mode === "horizontal"',
+  'var verticalOnly = settings.mode === "vertical"',
+  'x = verticalOnly ? fixedX',
+  'y = horizontalOnly ? fixedY',
   'createElement("div", "dcats-concierge-sprite")',
   'localStorage.setItem(STORAGE_KEY_PREFIX + settingsOwner',
   'window.DcatsConcierge = Object.freeze',
@@ -155,4 +162,4 @@ for (const expected of expectedPets) {
   assert(size.width === 1536 && size.height === 2288, `${expected.dir} spritesheet must be 1536x2288`);
 }
 
-console.log(`Concierge pet verification passed (${appVersion}; one selected character, 9 motion states, 16 gaze directions).`);
+console.log(`Concierge pet verification passed (${appVersion}; one selected character, 5 movement modes, 9 motion states, 16 gaze directions).`);

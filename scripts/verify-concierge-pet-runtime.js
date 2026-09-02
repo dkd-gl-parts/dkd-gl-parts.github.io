@@ -180,6 +180,8 @@ const reduceMotionQuery = {
   addEventListener(type, listener) { if (type === "change") reduceMotionListeners.push(listener); },
   addListener(listener) { reduceMotionListeners.push(listener); }
 };
+const sandboxMath = Object.create(Math);
+sandboxMath.random = () => Math.random();
 const windowObject = {
   innerWidth: 1200,
   innerHeight: 800,
@@ -210,7 +212,7 @@ const context = {
   MutationObserver: FakeMutationObserver,
   URLSearchParams,
   Promise,
-  Math,
+  Math: sandboxMath,
   Date,
   Number,
   Object,
@@ -252,6 +254,13 @@ function liveInfiniteAnimations() {
 }
 function lastAnimationFor(element) {
   return animations.filter((animation) => animation.owner === element).at(-1);
+}
+function animationEndpoints(animation) {
+  const points = (animation && animation.keyframes || []).map((frame) => {
+    const match = /translate3d\((-?[\d.]+)px,(-?[\d.]+)px,0\)/.exec(String(frame.transform || ""));
+    return match ? { x: Number(match[1]), y: Number(match[2]) } : null;
+  }).filter(Boolean);
+  return { start: points[0], end: points.at(-1) };
 }
 
 const api = windowObject.DcatsConcierge;
@@ -328,6 +337,19 @@ blockingCard.hidden = true;
 api.setMode("fixed");
 assert(!root.classList.contains("has-no-safe-target"), "Safe-target failure state did not clear after parking");
 
+sandboxMath.random = () => 0;
+api.setMode("horizontal");
+const horizontalMove = animationEndpoints(lastAnimationFor(mover));
+assert(horizontalMove.start && horizontalMove.end && horizontalMove.start.x !== horizontalMove.end.x, "Horizontal-only mode did not move on the x axis");
+assert(horizontalMove.start.y === horizontalMove.end.y, "Horizontal-only mode changed the y axis");
+api.setMode("fixed");
+api.setMode("vertical");
+const verticalMove = animationEndpoints(lastAnimationFor(mover));
+assert(verticalMove.start && verticalMove.end && verticalMove.start.y !== verticalMove.end.y, "Vertical-only mode did not move on the y axis");
+assert(verticalMove.start.x === verticalMove.end.x, "Vertical-only mode changed the x axis");
+sandboxMath.random = () => Math.random();
+api.setMode("fixed");
+
 windowObject.innerWidth = 320;
 windowObject.innerHeight = 420;
 dispatch(windowListeners, "resize");
@@ -378,4 +400,4 @@ activeScreen.id = "screen-login";
 notifyObservers();
 assert(root.hidden, "Concierge must be hidden on the login screen");
 
-console.log("Concierge runtime behavior verification passed (system-admin gate, one sprite, user-scoped preferences, i18n, active motion, gaze, card avoidance, viewport revalidation, reduced motion, focus, and inactive cancellation).");
+console.log("Concierge runtime behavior verification passed (system-admin gate, 5 movement modes, one sprite, user-scoped preferences, i18n, active motion, gaze, card avoidance, viewport revalidation, reduced motion, focus, and inactive cancellation).");
