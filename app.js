@@ -703,13 +703,27 @@ var TRANSLATIONS = {
     finished_shipping_dispatch_scan_title: "出荷指示書を読取",
     finished_shipping_dispatch_scan_ph: "QRを読取、または出荷指示番号を入力",
     finished_shipping_load_dispatch: "読込",
-    finished_shipping_dispatch_scan_hint: "スキャナーがない場合は、出荷指示番号を手入力できます。",
+    finished_shipping_dispatch_scan_hint: "スマホでは「カメラ」を押して読み取れます。出荷指示番号の手入力も可能です。",
     finished_shipping_dispatch_required: "出荷指示書を読み取るか、出荷指示番号を入力してください。",
     finished_shipping_dispatch_loaded: "出荷指示を読み込みました。商品の製造シリアルを照合してください。",
     finished_shipping_scan_title: "製造シリアル照合・保証照会",
     finished_shipping_scan_ph: "QRを読取、または MYYYY-NNNNNNN を入力",
     finished_shipping_add_serial: "追加",
     finished_shipping_scan_hint: "出荷指示の読込後に製造シリアルを照合します。指示未読込時は保証情報を照会できます。",
+    finished_shipping_camera_button: "カメラ",
+    finished_shipping_camera_title: "カメラでコードを読取",
+    finished_shipping_camera_dispatch_prompt: "出荷指示書のQRコードを枠内に合わせてください。",
+    finished_shipping_camera_serial_prompt: "製品ラベルのQRコードまたはバーコードを枠内に合わせてください。",
+    finished_shipping_camera_starting: "背面カメラを起動しています...",
+    finished_shipping_camera_scanning: "コードを枠内に合わせてください。自動で読み取ります。",
+    finished_shipping_camera_cancel: "読取を中止",
+    finished_shipping_camera_invalid_dispatch: "出荷指示番号のコードではありません。Dから始まる番号を読み取ってください。",
+    finished_shipping_camera_invalid_serial: "製造シリアルのコードではありません。Mから始まる番号を読み取ってください。",
+    finished_shipping_camera_permission_denied: "カメラの使用が許可されていません。ブラウザのサイト設定でカメラを許可するか、番号を手入力してください。",
+    finished_shipping_camera_secure_required: "このブラウザでは安全な接続（HTTPS）からのみカメラを使用できます。番号を手入力してください。",
+    finished_shipping_camera_not_found: "利用できるカメラが見つかりません。番号を手入力してください。",
+    finished_shipping_camera_in_use: "カメラを起動できませんでした。他のアプリでカメラを閉じてから再試行してください。",
+    finished_shipping_camera_unavailable: "カメラ読取を開始できませんでした。番号を手入力してください。",
     finished_shipping_manual_candidates: "未出荷シリアルから選択",
     finished_shipping_candidate_ph: "製造シリアルで絞り込み",
     finished_shipping_candidate_empty: "選択できる未出荷シリアルがありません。",
@@ -2495,13 +2509,27 @@ var TRANSLATIONS = {
     finished_shipping_dispatch_scan_title: "Scan Shipment Instruction",
     finished_shipping_dispatch_scan_ph: "Scan QR or enter dispatch number",
     finished_shipping_load_dispatch: "Load",
-    finished_shipping_dispatch_scan_hint: "Without a scanner, enter the dispatch number manually.",
+    finished_shipping_dispatch_scan_hint: "On a phone, select Camera to scan. You can also enter the dispatch number manually.",
     finished_shipping_dispatch_required: "Scan a shipment instruction or enter its dispatch number.",
     finished_shipping_dispatch_loaded: "Shipment instruction loaded. Verify each manufacturing serial.",
     finished_shipping_scan_title: "Serial Check / Warranty Lookup",
     finished_shipping_scan_ph: "Scan QR or enter MYYYY-NNNNNNN",
     finished_shipping_add_serial: "Add",
     finished_shipping_scan_hint: "After loading a shipment instruction, verify manufacturing serials. Without one, the field looks up warranty information.",
+    finished_shipping_camera_button: "Camera",
+    finished_shipping_camera_title: "Scan with Camera",
+    finished_shipping_camera_dispatch_prompt: "Place the shipment instruction QR code inside the frame.",
+    finished_shipping_camera_serial_prompt: "Place the product label QR code or barcode inside the frame.",
+    finished_shipping_camera_starting: "Starting the rear camera...",
+    finished_shipping_camera_scanning: "Hold the code inside the frame. It will scan automatically.",
+    finished_shipping_camera_cancel: "Cancel Scan",
+    finished_shipping_camera_invalid_dispatch: "This is not a shipment instruction number. Scan a number beginning with D.",
+    finished_shipping_camera_invalid_serial: "This is not a manufacturing serial. Scan a number beginning with M.",
+    finished_shipping_camera_permission_denied: "Camera access is not allowed. Enable it in this site's browser settings, or enter the number manually.",
+    finished_shipping_camera_secure_required: "This browser allows camera access only over a secure HTTPS connection. Enter the number manually.",
+    finished_shipping_camera_not_found: "No available camera was found. Enter the number manually.",
+    finished_shipping_camera_in_use: "The camera could not start. Close it in other apps and try again.",
+    finished_shipping_camera_unavailable: "Camera scanning could not start. Enter the number manually.",
     finished_shipping_manual_candidates: "Select an Unshipped Serial",
     finished_shipping_candidate_ph: "Filter by manufacturing serial",
     finished_shipping_candidate_empty: "No unshipped serial is available.",
@@ -4295,13 +4323,27 @@ var TRANSLATIONS = {
     finished_shipping_dispatch_scan_title: "扫描出货指示书",
     finished_shipping_dispatch_scan_ph: "扫描QR或输入出货指示编号",
     finished_shipping_load_dispatch: "读取",
-    finished_shipping_dispatch_scan_hint: "没有扫描器时可手动输入出货指示编号。",
+    finished_shipping_dispatch_scan_hint: "使用手机时可点击“相机”扫描，也可以手动输入出货指示编号。",
     finished_shipping_dispatch_required: "请扫描出货指示书或输入出货指示编号。",
     finished_shipping_dispatch_loaded: "已读取出货指示，请核对商品制造序列号。",
     finished_shipping_scan_title: "制造序列号核对・保修查询",
     finished_shipping_scan_ph: "扫描QR或输入 MYYYY-NNNNNNN",
     finished_shipping_add_serial: "添加",
     finished_shipping_scan_hint: "读取出货指示后核对制造序列号。未读取指示时用于查询保修信息。",
+    finished_shipping_camera_button: "相机",
+    finished_shipping_camera_title: "使用相机扫描",
+    finished_shipping_camera_dispatch_prompt: "请将出货指示书的QR码对准框内。",
+    finished_shipping_camera_serial_prompt: "请将产品标签的QR码或条码对准框内。",
+    finished_shipping_camera_starting: "正在启动后置相机...",
+    finished_shipping_camera_scanning: "请将代码对准框内，系统会自动读取。",
+    finished_shipping_camera_cancel: "取消扫描",
+    finished_shipping_camera_invalid_dispatch: "这不是出货指示编号。请扫描以D开头的编号。",
+    finished_shipping_camera_invalid_serial: "这不是制造序列号。请扫描以M开头的编号。",
+    finished_shipping_camera_permission_denied: "未允许使用相机。请在浏览器的网站设置中允许相机，或手动输入编号。",
+    finished_shipping_camera_secure_required: "此浏览器仅允许通过安全的HTTPS连接使用相机。请手动输入编号。",
+    finished_shipping_camera_not_found: "未找到可用的相机。请手动输入编号。",
+    finished_shipping_camera_in_use: "无法启动相机。请关闭其他应用中的相机后重试。",
+    finished_shipping_camera_unavailable: "无法启动相机扫描。请手动输入编号。",
     finished_shipping_manual_candidates: "从未出货序列号中选择",
     finished_shipping_candidate_ph: "按制造序列号筛选",
     finished_shipping_candidate_empty: "没有可选择的未出货序列号。",
@@ -5500,7 +5542,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.846";
+var APP_VERSION       = "v1.1.847";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5677,6 +5719,11 @@ var finishedWarrantyPolicyRows = [];
 var finishedWarrantyPolicySaving = false;
 var finishedShipmentReplacementTargetId = null;
 var finishedShipmentReplacementSaving = false;
+var finishedShipmentCameraControls = null;
+var finishedShipmentCameraReader = null;
+var finishedShipmentCameraTarget = null;
+var finishedShipmentCameraSession = 0;
+var finishedShipmentCameraLibraryPromise = null;
 var productionRankingMgmtRows = [];
 var productionRankingFormMode = "add";
 var productionRankingLinkCandidates = [];
@@ -28049,6 +28096,170 @@ function renderFinishedShipmentOrderContext() {
   renderFinishedShipmentWarrantySummary();
 }
 
+function setFinishedShipmentCameraStatus(key) {
+  var status = document.getElementById("finished-shipment-camera-status");
+  if (!status) return;
+  status.setAttribute("data-i18n", key);
+  status.textContent = t(key);
+}
+
+function loadFinishedShipmentCameraLibrary() {
+  if (window.ZXingBrowser && window.ZXingBrowser.BrowserMultiFormatReader) return Promise.resolve(window.ZXingBrowser);
+  if (finishedShipmentCameraLibraryPromise) return finishedShipmentCameraLibraryPromise;
+  finishedShipmentCameraLibraryPromise = new Promise(function(resolve, reject) {
+    var script = document.getElementById("dcats-zxing-browser");
+    var handleLoad = function() {
+      if (window.ZXingBrowser && window.ZXingBrowser.BrowserMultiFormatReader) resolve(window.ZXingBrowser);
+      else {
+        if (script && script.parentNode) script.parentNode.removeChild(script);
+        reject(new Error("ZXingBrowser is unavailable"));
+      }
+    };
+    var handleError = function() {
+      if (script && script.parentNode) script.parentNode.removeChild(script);
+      reject(new Error("ZXingBrowser failed to load"));
+    };
+    if (script) {
+      script.addEventListener("load", handleLoad, { once: true });
+      script.addEventListener("error", handleError, { once: true });
+      return;
+    }
+    script = document.createElement("script");
+    script.id = "dcats-zxing-browser";
+    script.src = "https://cdn.jsdelivr.net/npm/@zxing/browser@0.2.0/umd/zxing-browser.min.js";
+    script.integrity = "sha384-HRtzk9lZgkbSgvUyQrnfC/GxiXZgwaNyD7hC9wcXlsBpDhkS80ISl73juef2FRuf";
+    script.crossOrigin = "anonymous";
+    script.addEventListener("load", handleLoad, { once: true });
+    script.addEventListener("error", handleError, { once: true });
+    document.head.appendChild(script);
+  }).catch(function(error) {
+    finishedShipmentCameraLibraryPromise = null;
+    throw error;
+  });
+  return finishedShipmentCameraLibraryPromise;
+}
+
+function stopFinishedShipmentCameraStream() {
+  if (finishedShipmentCameraControls) {
+    try { finishedShipmentCameraControls.stop(); } catch (_) {}
+  }
+  finishedShipmentCameraControls = null;
+  if (finishedShipmentCameraReader && typeof finishedShipmentCameraReader.reset === "function") {
+    try { finishedShipmentCameraReader.reset(); } catch (_) {}
+  }
+  finishedShipmentCameraReader = null;
+  var video = document.getElementById("finished-shipment-camera-video");
+  var stream = video && video.srcObject;
+  if (stream && typeof stream.getTracks === "function") {
+    stream.getTracks().forEach(function(track) { track.stop(); });
+  }
+  if (video) {
+    video.pause();
+    video.srcObject = null;
+  }
+}
+
+function closeFinishedShipmentCamera() {
+  finishedShipmentCameraSession += 1;
+  stopFinishedShipmentCameraStream();
+  finishedShipmentCameraTarget = null;
+  var overlay = document.getElementById("finished-shipment-camera-overlay");
+  if (overlay) overlay.classList.remove("show");
+}
+
+function finishedShipmentCameraErrorKey(error) {
+  var name = error && error.name || "";
+  if (name === "NotAllowedError" || name === "PermissionDeniedError") return "finished_shipping_camera_permission_denied";
+  if (name === "NotFoundError" || name === "DevicesNotFoundError" || name === "OverconstrainedError") return "finished_shipping_camera_not_found";
+  if (name === "NotReadableError" || name === "TrackStartError" || name === "AbortError") return "finished_shipping_camera_in_use";
+  if (name === "SecurityError") return "finished_shipping_camera_secure_required";
+  return "finished_shipping_camera_unavailable";
+}
+
+function applyFinishedShipmentCameraResult(rawValue, target, controls) {
+  var value = String(rawValue || "").trim().toUpperCase();
+  var input;
+  if (target === "dispatch") {
+    if (!/^D[0-9]{10}$/.test(value)) {
+      setFinishedShipmentCameraStatus("finished_shipping_camera_invalid_dispatch");
+      return false;
+    }
+    input = document.getElementById("finished-shipment-dispatch-input");
+  } else {
+    value = normalizeFinishedShipmentSerial(value);
+    if (!/^M[0-9]{4}-[0-9]{7}$/.test(value)) {
+      setFinishedShipmentCameraStatus("finished_shipping_camera_invalid_serial");
+      return false;
+    }
+    input = document.getElementById("finished-shipment-serial-input");
+  }
+  if (controls) {
+    try { controls.stop(); } catch (_) {}
+  }
+  if (input) input.value = value;
+  closeFinishedShipmentCamera();
+  if (target === "dispatch") loadFinishedShipmentDispatch();
+  else addFinishedShipmentSerial();
+  return true;
+}
+
+async function openFinishedShipmentCamera(target) {
+  if (target !== "dispatch" && target !== "serial") return;
+  closeFinishedShipmentCamera();
+  finishedShipmentCameraTarget = target;
+  var session = ++finishedShipmentCameraSession;
+  var overlay = document.getElementById("finished-shipment-camera-overlay");
+  var prompt = document.getElementById("finished-shipment-camera-prompt");
+  var video = document.getElementById("finished-shipment-camera-video");
+  var promptKey = target === "dispatch" ? "finished_shipping_camera_dispatch_prompt" : "finished_shipping_camera_serial_prompt";
+  if (prompt) {
+    prompt.setAttribute("data-i18n", promptKey);
+    prompt.textContent = t(promptKey);
+  }
+  setFinishedShipmentCameraStatus("finished_shipping_camera_starting");
+  if (overlay) overlay.classList.add("show");
+  if (!window.isSecureContext) {
+    setFinishedShipmentCameraStatus("finished_shipping_camera_secure_required");
+    return;
+  }
+  if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== "function") {
+    setFinishedShipmentCameraStatus("finished_shipping_camera_unavailable");
+    return;
+  }
+  try {
+    var zxing = await loadFinishedShipmentCameraLibrary();
+    if (session !== finishedShipmentCameraSession || finishedShipmentCameraTarget !== target) return;
+    var reader = new zxing.BrowserMultiFormatReader(undefined, {
+      delayBetweenScanAttempts: 200,
+      delayBetweenScanSuccess: 800,
+      tryPlayVideoTimeout: 5000
+    });
+    finishedShipmentCameraReader = reader;
+    var controls = await reader.decodeFromVideoDevice(undefined, video, function(result, error, activeControls) {
+      if (session !== finishedShipmentCameraSession || finishedShipmentCameraTarget !== target) return;
+      if (result) {
+        var resultText = typeof result.getText === "function" ? result.getText() : result.text;
+        applyFinishedShipmentCameraResult(resultText, target, activeControls);
+        return;
+      }
+      var errorName = error && error.name || "";
+      if (error && ["NotFoundException", "ChecksumException", "FormatException"].indexOf(errorName) < 0) {
+        console.warn("Camera scanner decode error", error);
+      }
+    });
+    if (session !== finishedShipmentCameraSession || finishedShipmentCameraTarget !== target) {
+      try { controls.stop(); } catch (_) {}
+      return;
+    }
+    finishedShipmentCameraControls = controls;
+    setFinishedShipmentCameraStatus("finished_shipping_camera_scanning");
+  } catch (error) {
+    if (session !== finishedShipmentCameraSession || finishedShipmentCameraTarget !== target) return;
+    stopFinishedShipmentCameraStream();
+    setFinishedShipmentCameraStatus(finishedShipmentCameraErrorKey(error));
+  }
+}
+
 async function loadFinishedShipmentDispatch() {
   if (!canManageFinishedProductShipping() || !canManageSalesOrders()) return;
   var input = document.getElementById("finished-shipment-dispatch-input");
@@ -28076,6 +28287,7 @@ async function loadFinishedShipmentDispatch() {
 async function enterFinishedProductShipping(options) {
   if (!canManageFinishedProductShipping()) { alert(t("err_perm")); return; }
   options = options || {};
+  closeFinishedShipmentCamera();
   finishedShipmentOrderContext = options.order || null;
   finishedShipmentOrderAssignments = [];
   finishedShipmentUnits = [];
@@ -28105,6 +28317,7 @@ async function enterFinishedProductShipping(options) {
 }
 
 async function returnFromFinishedProductShipping() {
+  closeFinishedShipmentCamera();
   var orderId = finishedShipmentOrderContext && finishedShipmentOrderContext.id;
   finishedShipmentOrderContext = null;
   finishedShipmentOrderAssignments = [];
@@ -47629,6 +47842,17 @@ document.getElementById("finished-label-variant-kind").addEventListener("change"
   else el.addEventListener("click", clearFinishedShipmentUnits);
 });
 document.getElementById("btn-finished-shipment-load-dispatch").addEventListener("click", loadFinishedShipmentDispatch);
+document.getElementById("btn-finished-shipment-camera-dispatch").addEventListener("click", function() {
+  openFinishedShipmentCamera("dispatch");
+});
+document.getElementById("btn-finished-shipment-camera-serial").addEventListener("click", function() {
+  openFinishedShipmentCamera("serial");
+});
+document.getElementById("finished-shipment-camera-close").addEventListener("click", closeFinishedShipmentCamera);
+document.getElementById("finished-shipment-camera-cancel").addEventListener("click", closeFinishedShipmentCamera);
+document.getElementById("finished-shipment-camera-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeFinishedShipmentCamera();
+});
 document.getElementById("finished-shipment-dispatch-input").addEventListener("keydown", function(e) {
   if (e.key !== "Enter") return;
   e.preventDefault();

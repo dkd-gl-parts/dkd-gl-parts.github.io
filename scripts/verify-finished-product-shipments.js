@@ -43,7 +43,12 @@ assert(html.includes('id="screen-finished-product-shipping"'), "shipment screen 
 [
   'id="finished-shipment-dispatch-input"',
   'id="btn-finished-shipment-load-dispatch"',
+  'id="btn-finished-shipment-camera-dispatch"',
   'id="finished-shipment-serial-input"',
+  'id="btn-finished-shipment-camera-serial"',
+  'id="finished-shipment-camera-overlay"',
+  'id="finished-shipment-camera-video" autoplay muted playsinline',
+  'id="finished-shipment-camera-status" aria-live="polite"',
   'id="finished-shipment-candidate-card" hidden',
   'id="finished-shipment-candidate-search"',
   'id="finished-shipment-order-context"',
@@ -67,6 +72,8 @@ for (const id of [
   "finished-shipment-replacement-serial"
 ]) assert(html.includes(`id="${id}"`), `category warranty or replacement UI is missing: ${id}`);
 assert(css.includes(".finished-shipment-shell"), "shipment layout styles are missing");
+assert(css.includes(".finished-shipment-camera-stage"), "camera scanner preview styles are missing");
+assert(/@media \(max-width: 767px\)[\s\S]*\.finished-shipment-scan-row\s*\{[^}]*grid-template-columns:\s*1fr 1fr/s.test(css), "camera scan controls must stack for narrow mobile screens");
 assert(css.includes(".finished-shipment-candidates"), "manual serial candidate styles are missing");
 assert(css.includes(".sales-order-dispatch-summary"), "sales-order dispatch summary styles are missing");
 assert(/\.finished-shipment-table\s*\{[^}]*min-width:\s*0[^}]*table-layout:\s*fixed/s.test(css), "shipment table must fit its pane");
@@ -94,6 +101,20 @@ assert(functionSource("buildSalesOrderDocumentHtml").includes("shipment-instruct
 const dispatchLoadSource = functionSource("loadFinishedShipmentDispatch");
 assert(dispatchLoadSource.includes('sb.rpc("get_sales_order_dispatch"'), "shipment instruction load RPC is not called");
 assert(dispatchLoadSource.includes("refreshFinishedShipmentContext(order)"), "loaded dispatch does not refresh the workspace");
+const cameraLibrarySource = functionSource("loadFinishedShipmentCameraLibrary");
+assert(cameraLibrarySource.includes("@zxing/browser@0.2.0/umd/zxing-browser.min.js"), "pinned camera scanner library is missing");
+assert(cameraLibrarySource.includes("script.integrity = \"sha384-"), "camera scanner library must use subresource integrity");
+const cameraOpenSource = functionSource("openFinishedShipmentCamera");
+assert(cameraOpenSource.includes("window.isSecureContext"), "camera scanner must require a secure context");
+assert(cameraOpenSource.includes("navigator.mediaDevices.getUserMedia"), "camera scanner must detect camera API availability");
+assert(cameraOpenSource.includes("decodeFromVideoDevice(undefined, video"), "camera scanner must prefer the environment camera");
+const cameraResultSource = functionSource("applyFinishedShipmentCameraResult");
+assert(cameraResultSource.includes("/^D[0-9]{10}$/"), "camera dispatch results must be format-validated");
+assert(cameraResultSource.includes("/^M[0-9]{4}-[0-9]{7}$/"), "camera serial results must be format-validated");
+assert(cameraResultSource.includes("loadFinishedShipmentDispatch()"), "camera dispatch results must reuse the existing load flow");
+assert(cameraResultSource.includes("addFinishedShipmentSerial()"), "camera serial results must reuse the existing serial flow");
+const cameraCloseSource = functionSource("closeFinishedShipmentCamera");
+assert(cameraCloseSource.includes("stopFinishedShipmentCameraStream()"), "closing the camera scanner must stop its media stream");
 const candidateSource = functionSource("loadFinishedShipmentCandidates");
 assert(candidateSource.includes('sb.rpc("list_sales_order_serial_candidates"'), "manual fallback candidate RPC is not called");
 const assignmentSource = functionSource("assignFinishedShipmentSerial");
@@ -136,6 +157,9 @@ assert(functionSource("renderFinishedShipmentLookup").includes("finishedShipment
 assert(functionSource("loadFinishedShipmentHistory").includes('.from("finished_product_shipments")'), "shipment history is not loaded");
 
 assert(app.includes('document.getElementById("btn-finished-shipment-load-dispatch").addEventListener("click", loadFinishedShipmentDispatch)'), "dispatch load button is not bound");
+assert(app.includes('document.getElementById("btn-finished-shipment-camera-dispatch").addEventListener("click"'), "dispatch camera button is not bound");
+assert(app.includes('document.getElementById("btn-finished-shipment-camera-serial").addEventListener("click"'), "serial camera button is not bound");
+assert(app.includes('document.getElementById("finished-shipment-camera-cancel").addEventListener("click", closeFinishedShipmentCamera)'), "camera cancel button is not bound");
 assert(app.includes('document.getElementById("btn-finished-shipment-candidate-reload").addEventListener("click", loadFinishedShipmentCandidates)'), "manual candidate search is not bound");
 
 const sandbox = { normalizeAsciiWidth(value) { return String(value); } };
