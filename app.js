@@ -5542,7 +5542,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.849";
+var APP_VERSION       = "v1.1.850";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -5870,9 +5870,13 @@ var salesOrderDetail = null;
 var salesOrderListSeq = 0;
 var salesOrderDetailSeq = 0;
 var salesOrderSaving = false;
+var salesOrderB2ExportSaving = false;
 var salesOrderPricingSaving = false;
 var salesOrderB2ImportState = null;
 var salesOrderB2ImportSaving = false;
+var salesOrderB2ContractSettings = null;
+var salesOrderB2ContractSettingsSaving = false;
+var salesOrderB2Preflight = null;
 var salesOrderPrintSettings = null;
 var salesOrderPrintSettingsSaving = false;
 var salesAccountingExportState = null;
@@ -8329,9 +8333,15 @@ async function doLogout() {
   salesOrderListSeq += 1;
   salesOrderDetailSeq += 1;
   salesOrderSaving = false;
+  salesOrderB2ExportSaving = false;
   salesOrderPricingSaving = false;
   salesOrderB2ImportState = null;
   salesOrderB2ImportSaving = false;
+  salesOrderB2Preflight = null;
+  salesOrderB2ContractSettings = null;
+  salesOrderB2ContractSettingsSaving = false;
+  var b2SettingsOverlay = document.getElementById("sales-order-b2-settings-overlay");
+  if (b2SettingsOverlay) b2SettingsOverlay.classList.remove("show");
   salesOrderPrintSettings = null;
   salesOrderPrintSettingsSaving = false;
   salesAccountingExportState = null;
@@ -10866,6 +10876,203 @@ function setSalesOrderBatchMessage(message, isError) {
   host.className = "sales-order-batch-message" + (isError ? " error" : "");
 }
 
+function salesOrderB2RpcWithTimeout(request, timeoutMessage, timeoutMs) {
+  return new Promise(function(resolve, reject) {
+    var settled = false;
+    var timer = window.setTimeout(function() {
+      if (settled) return;
+      settled = true;
+      var error = new Error(timeoutMessage || "B2クラウド連携の応答がありません。通信状態を確認して、もう一度実行してください。");
+      error.code = "DCATS_B2_TIMEOUT";
+      reject(error);
+    }, timeoutMs || 30000);
+    Promise.resolve(request).then(function(value) {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      resolve(value);
+    }, function(error) {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      reject(error);
+    });
+  });
+}
+
+function renderSalesOrderB2SettingsAccess() {
+  ["sales-order-b2-settings-open", "shipping-document-b2-settings-open"].forEach(function(id) {
+    var button = document.getElementById(id);
+    if (button) button.hidden = !isSystemAdmin();
+  });
+}
+
+function setSalesOrderB2SettingsMessage(message, isError) {
+  var host = document.getElementById("sales-order-b2-settings-message");
+  if (!host) return;
+  host.textContent = message || "";
+  host.className = "sales-order-b2-settings-message" + (isError ? " error" : "");
+}
+
+function setSalesOrderB2SettingsBusy(busy) {
+  salesOrderB2ContractSettingsSaving = !!busy;
+  var card = document.querySelector("#sales-order-b2-settings-overlay .sales-order-b2-settings-card");
+  var saveButton = document.getElementById("sales-order-b2-settings-save");
+  if (card) card.classList.toggle("busy", !!busy);
+  if (saveButton) saveButton.disabled = !!busy;
+}
+
+function populateSalesOrderB2Settings(settings) {
+  settings = settings || {};
+  var fields = {
+    "sales-order-b2-sender-phone": "sender_phone",
+    "sales-order-b2-sender-postal-code": "sender_postal_code",
+    "sales-order-b2-sender-address": "sender_address",
+    "sales-order-b2-sender-building": "sender_building",
+    "sales-order-b2-sender-name": "sender_name",
+    "sales-order-b2-billing-customer-code": "billing_customer_code",
+    "sales-order-b2-billing-classification-code": "billing_classification_code",
+    "sales-order-b2-fare-management-number": "fare_management_number"
+  };
+  Object.keys(fields).forEach(function(id) {
+    var input = document.getElementById(id);
+    if (input) input.value = settings[fields[id]] || "";
+  });
+  var status = document.getElementById("sales-order-b2-settings-status");
+  if (!status) return;
+  var missing = Array.isArray(settings.missing_fields) ? settings.missing_fields : [];
+  status.textContent = settings.configured
+    ? "B2 CSV発行に必要な契約情報は設定済みです。"
+    : "未設定または形式確認が必要です: " + (missing.length ? missing.join("、") : "必須項目");
+  status.className = "sales-order-b2-settings-status " + (settings.configured ? "ready" : "missing");
+}
+
+async function loadSalesOrderB2Settings() {
+  var result = await salesOrderB2RpcWithTimeout(
+    sb.rpc("get_customer_order_b2_contract_settings"),
+    "B2契約情報の読み込みに時間がかかっています。画面を閉じて、もう一度開いてください。",
+    20000
+  );
+  if (result.error) throw result.error;
+  salesOrderB2ContractSettings = result.data || {};
+  populateSalesOrderB2Settings(salesOrderB2ContractSettings);
+  return salesOrderB2ContractSettings;
+}
+
+async function openSalesOrderB2Settings() {
+  if (!isSystemAdmin()) {
+    setSalesOrderBatchMessage("B2契約情報はシステム管理者が設定します。", true);
+    return;
+  }
+  var overlay = document.getElementById("sales-order-b2-settings-overlay");
+  if (!overlay) return;
+  overlay.classList.add("show");
+  setSalesOrderB2SettingsMessage("B2契約情報を読み込んでいます。", false);
+  setSalesOrderB2SettingsBusy(true);
+  try {
+    await loadSalesOrderB2Settings();
+    setSalesOrderB2SettingsMessage("内容を変更した場合は「設定を保存」を押してください。", false);
+  } catch (error) {
+    setSalesOrderB2SettingsMessage((error && error.message) || "B2契約情報を読み込めませんでした。", true);
+  } finally {
+    setSalesOrderB2SettingsBusy(false);
+  }
+}
+
+function closeSalesOrderB2Settings() {
+  if (salesOrderB2ContractSettingsSaving) return;
+  var overlay = document.getElementById("sales-order-b2-settings-overlay");
+  if (overlay) overlay.classList.remove("show");
+}
+
+function readSalesOrderB2SettingsForm() {
+  function value(id) {
+    var input = document.getElementById(id);
+    return String(input ? input.value : "").trim();
+  }
+  return {
+    sender_phone: value("sales-order-b2-sender-phone"),
+    sender_postal_code: value("sales-order-b2-sender-postal-code").replace(/[^0-9]/g, ""),
+    sender_address: value("sales-order-b2-sender-address"),
+    sender_building: value("sales-order-b2-sender-building"),
+    sender_name: value("sales-order-b2-sender-name"),
+    billing_customer_code: value("sales-order-b2-billing-customer-code").replace(/[^0-9]/g, ""),
+    billing_classification_code: value("sales-order-b2-billing-classification-code").replace(/[^0-9]/g, ""),
+    fare_management_number: value("sales-order-b2-fare-management-number").replace(/[^0-9]/g, "")
+  };
+}
+
+function validateSalesOrderB2SettingsForm(settings) {
+  var errors = [];
+  var phoneDigits = settings.sender_phone.replace(/[^0-9]/g, "");
+  if (!/^[0-9-]+$/.test(settings.sender_phone) || phoneDigits.length < 10 || phoneDigits.length > 11 || settings.sender_phone.length > 15) errors.push("発送元電話番号を10桁または11桁で入力してください。");
+  if (!/^\d{7}$/.test(settings.sender_postal_code)) errors.push("発送元郵便番号を7桁で入力してください。");
+  if (!settings.sender_address) errors.push("発送元住所を入力してください。");
+  if (!settings.sender_name) errors.push("発送元名称を入力してください。");
+  if (!/^\d{10,12}$/.test(settings.billing_customer_code)) errors.push("請求先顧客コードを10桁から12桁で入力してください。");
+  if (settings.billing_classification_code && !/^\d{3}$/.test(settings.billing_classification_code)) errors.push("請求先分類コードは空欄または3桁で入力してください。");
+  if (!/^\d{2}$/.test(settings.fare_management_number)) errors.push("運賃管理番号を2桁で入力してください。");
+  return errors;
+}
+
+async function saveSalesOrderB2Settings() {
+  if (!isSystemAdmin() || salesOrderB2ContractSettingsSaving) return;
+  var settings = readSalesOrderB2SettingsForm();
+  var errors = validateSalesOrderB2SettingsForm(settings);
+  if (errors.length) {
+    setSalesOrderB2SettingsMessage(errors.join(" "), true);
+    return;
+  }
+  setSalesOrderB2SettingsBusy(true);
+  setSalesOrderB2SettingsMessage("B2契約情報を保存しています。", false);
+  try {
+    var result = await salesOrderB2RpcWithTimeout(sb.rpc("save_customer_order_b2_contract_settings", {
+      target_sender_phone: settings.sender_phone,
+      target_sender_postal_code: settings.sender_postal_code,
+      target_sender_address: settings.sender_address,
+      target_sender_building: settings.sender_building || null,
+      target_sender_name: settings.sender_name,
+      target_billing_customer_code: settings.billing_customer_code,
+      target_billing_classification_code: settings.billing_classification_code || null,
+      target_fare_management_number: settings.fare_management_number
+    }), "B2契約情報の保存に時間がかかっています。通信状態を確認して、もう一度保存してください。", 30000);
+    if (result.error) throw result.error;
+    salesOrderB2ContractSettings = result.data || {};
+    populateSalesOrderB2Settings(salesOrderB2ContractSettings);
+    setSalesOrderB2SettingsMessage("B2契約情報を保存しました。CSV発行前の事前検査に反映されます。", false);
+  } catch (error) {
+    setSalesOrderB2SettingsMessage((error && error.message) || "B2契約情報を保存できませんでした。", true);
+  } finally {
+    setSalesOrderB2SettingsBusy(false);
+  }
+}
+
+function renderSalesOrderB2Preflight(preflight) {
+  salesOrderB2Preflight = preflight && preflight.ok === false ? preflight : null;
+  var panel = document.getElementById("sales-order-b2-preflight");
+  var host = document.getElementById("sales-order-b2-preflight-errors");
+  if (!panel || !host) return;
+  if (!salesOrderB2Preflight) {
+    panel.hidden = true;
+    host.innerHTML = "";
+    return;
+  }
+  var errors = Array.isArray(salesOrderB2Preflight.errors) ? salesOrderB2Preflight.errors : [];
+  host.innerHTML = errors.map(function(row) {
+    var messages = Array.isArray(row.messages) ? row.messages : [];
+    return "<div class='sales-order-b2-preflight-error'><strong>" + esc(row.order_number || "注文") + "</strong>" + esc(messages.join(" / ") || "内容を確認してください。") + "</div>";
+  }).join("");
+  panel.hidden = false;
+}
+
+function salesOrderB2PreflightSummary(preflight) {
+  var errors = preflight && Array.isArray(preflight.errors) ? preflight.errors : [];
+  if (!errors.length) return "B2 CSVの必須項目を確認できませんでした。";
+  var first = errors[0] || {};
+  var messages = Array.isArray(first.messages) ? first.messages : [];
+  return (first.order_number ? first.order_number + ": " : "") + (messages[0] || "内容を確認してください。") + (errors.length > 1 ? " ほか" + (errors.length - 1) + "件" : "");
+}
+
 var DCATS_BUSINESS_WORKSPACE_URL = "https://drive.google.com/drive/folders/1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ";
 var DCATS_BUSINESS_WORKSPACE_SHORTCUT_URL = "assets/integrations/dcats-business-workspace.lnk";
 var DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME = "D-CATS\u696d\u52d9\u9023\u643a.lnk";
@@ -10962,7 +11169,10 @@ function updateSalesOrderSelectionButtons() {
   var acceptIds = selectedRows.filter(function(row) { return row.status === "submitted"; });
   var exportButton = document.getElementById("sales-order-export-b2");
   var acceptButton = document.getElementById("sales-order-batch-accept");
-  if (exportButton) exportButton.disabled = checkedIds.length === 0 || salesOrderSaving;
+  if (exportButton) {
+    exportButton.disabled = checkedIds.length === 0 || salesOrderSaving;
+    exportButton.textContent = salesOrderB2ExportSaving ? "必須項目を確認中..." : "商品発送用B2 CSV発行";
+  }
   if (acceptButton) {
     acceptButton.disabled = acceptIds.length === 0 || salesOrderSaving;
     acceptButton.textContent = acceptIds.length ? "選択を受付（" + acceptIds.length + "件）" : "選択を受付";
@@ -11111,18 +11321,22 @@ async function enterSalesOrderMgmt() {
   salesOrderDetailView = "overview";
   salesOrderCheckedIdsState = new Set();
   salesOrderDetail = null;
+  salesOrderB2ExportSaving = false;
   salesOrderPricingSaving = false;
   salesOrderDashboardRows = [];
   salesOrderDashboardError = "";
   salesOrderDashboardLoading = true;
   salesOrderB2ImportState = null;
   salesOrderB2ImportSaving = false;
+  salesOrderB2Preflight = null;
   salesAccountingExportState = null;
   salesAccountingExportLoading = false;
   salesAccountingExportSaving = false;
   salesAccountingExportCodeSavingKey = "";
   showScreen("sales-order-mgmt");
   updateAllHeaders();
+  renderSalesOrderB2SettingsAccess();
+  renderSalesOrderB2Preflight(null);
   renderSalesOrderDashboard();
   renderSalesOrderPrintSettings();
   await Promise.all([refreshSalesOrderManagement(), loadSalesOrderPrintSettings()]);
@@ -12698,6 +12912,7 @@ async function enterShippingDocumentMgmt(options) {
   if (settingsOverlay) settingsOverlay.classList.remove("show");
   showScreen("shipping-document-mgmt");
   updateAllHeaders();
+  renderSalesOrderB2SettingsAccess();
   var input = document.getElementById("shipping-document-search");
   var statusSelect = document.getElementById("shipping-document-status");
   var stateSelect = document.getElementById("shipping-document-print-state");
@@ -14842,55 +15057,89 @@ function downloadSalesOrderB2Payload(data) {
   data = data || {};
   var rows = Array.isArray(data) ? data : (Array.isArray(data.rows) ? data.rows : []);
   var errors = rows.filter(function(row) { return Array.isArray(row.errors) && row.errors.length; });
-  if (!rows.length || errors.length) {
-    alert(errors.length ? "住所やB2契約情報が不足している注文があります。詳細を確認してください。" : "出力対象がありません。");
+  if (!rows.length || errors.length) return false;
+  try {
+    downloadUtf8Csv(
+      [B2_BASIC_LAYOUT_HEADERS].concat(rows.map(b2ExportValues)),
+      data.file_name || ("D-CATS_B2基本レイアウト_" + new Date().toISOString().slice(0, 10) + ".csv")
+    );
+    return true;
+  } catch (error) {
     return false;
   }
-  downloadUtf8Csv(
-    [B2_BASIC_LAYOUT_HEADERS].concat(rows.map(b2ExportValues)),
-    data.file_name || ("D-CATS_B2基本レイアウト_" + new Date().toISOString().slice(0, 10) + ".csv")
-  );
-  return true;
 }
 
 async function issueSalesOrderB2Export(orderIds, isReissue, reason) {
   if (!canManageSalesOrders() || salesOrderSaving || shippingDocumentSaving || !Array.isArray(orderIds) || !orderIds.length) return null;
   salesOrderSaving = true;
+  salesOrderB2ExportSaving = true;
   shippingDocumentSaving = true;
-  updateSalesOrderExportButton();
+  renderSalesOrderB2Preflight(null);
+  setSalesOrderBatchMessage("B2 CSVの必須項目を確認しています。", false);
+  setShippingDocumentMessage("B2 CSVの必須項目を確認しています。", false);
+  updateSalesOrderSelectionButtons();
   renderShippingDocumentDetail();
-  var result = await sb.rpc("create_sales_order_b2_export", {
-    target_order_ids: orderIds,
-    target_reissue: !!isReissue,
-    target_reason: isReissue ? (reason || null) : null
-  });
-  salesOrderSaving = false;
-  shippingDocumentSaving = false;
-  updateSalesOrderExportButton();
-  renderShippingDocumentDetail();
-  if (result.error) {
-    var message = result.error.message || "B2 CSVを作成できませんでした。";
+  try {
+    var preflightResult = await salesOrderB2RpcWithTimeout(sb.rpc("check_sales_order_b2_export", {
+      target_order_ids: orderIds,
+      target_reissue: !!isReissue
+    }), "B2 CSVの事前検査に時間がかかっています。通信状態を確認して、もう一度発行してください。", 30000);
+    if (preflightResult.error) throw preflightResult.error;
+    var preflight = preflightResult.data || {};
+    if (preflight.ok !== true) {
+      renderSalesOrderB2Preflight(preflight);
+      var preflightMessage = salesOrderB2PreflightSummary(preflight);
+      setSalesOrderBatchMessage(preflightMessage, true);
+      setShippingDocumentMessage(preflightMessage, true);
+      return null;
+    }
+
+    setSalesOrderBatchMessage(isReissue ? "B2 CSVを再発行しています。" : "B2 CSVを発行しています。", false);
+    setShippingDocumentMessage(isReissue ? "B2 CSVを再発行しています。" : "B2 CSVを発行しています。", false);
+    var result = await salesOrderB2RpcWithTimeout(sb.rpc("create_sales_order_b2_export", {
+      target_order_ids: orderIds,
+      target_reissue: !!isReissue,
+      target_reason: isReissue ? (reason || null) : null
+    }), "B2 CSVの発行に時間がかかっています。発行履歴を確認してから、もう一度操作してください。", 45000);
+    if (result.error) throw result.error;
+    var data = result.data || {};
+    if (!downloadSalesOrderB2Payload(data)) throw new Error("B2 CSVを保存できませんでした。ブラウザのダウンロード許可を確認してください。");
+    setSalesOrderBatchMessage("B2 CSVを発行しました。ダウンロードフォルダを確認してください。", false);
+    setShippingDocumentMessage("B2 CSVを発行しました。ダウンロードフォルダを確認してください。", false);
+    return data;
+  } catch (error) {
+    var message = (error && error.message) || "B2 CSVを作成できませんでした。";
+    setSalesOrderBatchMessage(message, true);
     setShippingDocumentMessage(message, true);
-    alert(message);
     return null;
+  } finally {
+    salesOrderSaving = false;
+    salesOrderB2ExportSaving = false;
+    shippingDocumentSaving = false;
+    updateSalesOrderSelectionButtons();
+    renderShippingDocumentDetail();
   }
-  var data = result.data || {};
-  if (!downloadSalesOrderB2Payload(data)) return null;
-  return data;
 }
 
 async function downloadSalesOrderB2Batch(batchId) {
   if (!canManageSalesOrders() || shippingDocumentSaving || !batchId) return;
   shippingDocumentSaving = true;
   renderShippingDocumentDetail();
-  var result = await sb.rpc("get_sales_order_b2_export_batch", { target_batch_id: batchId });
-  shippingDocumentSaving = false;
-  renderShippingDocumentDetail();
-  if (result.error) {
-    setShippingDocumentMessage(result.error.message || "B2 CSVを再ダウンロードできませんでした。", true);
-    return;
+  try {
+    var result = await salesOrderB2RpcWithTimeout(
+      sb.rpc("get_sales_order_b2_export_batch", { target_batch_id: batchId }),
+      "B2 CSVの再取得に時間がかかっています。通信状態を確認して、もう一度実行してください。",
+      30000
+    );
+    if (result.error) throw result.error;
+    if (!downloadSalesOrderB2Payload(result.data || {})) throw new Error("B2 CSVを保存できませんでした。ブラウザのダウンロード許可を確認してください。");
+    setShippingDocumentMessage("B2 CSVを再ダウンロードしました。", false);
+  } catch (error) {
+    setShippingDocumentMessage((error && error.message) || "B2 CSVを再ダウンロードできませんでした。", true);
+  } finally {
+    shippingDocumentSaving = false;
+    renderShippingDocumentDetail();
   }
-  downloadSalesOrderB2Payload(result.data || {});
 }
 
 async function exportSalesOrderIdsB2(orderIds) {
@@ -47343,6 +47592,17 @@ window.addEventListener("focus", function() {
 });
 document.getElementById("sales-order-batch-accept").addEventListener("click", acceptCheckedSalesOrders);
 document.getElementById("sales-order-export-b2").addEventListener("click", exportSalesOrdersB2);
+document.getElementById("sales-order-b2-settings-open").addEventListener("click", openSalesOrderB2Settings);
+document.getElementById("shipping-document-b2-settings-open").addEventListener("click", openSalesOrderB2Settings);
+document.getElementById("sales-order-b2-settings-close").addEventListener("click", closeSalesOrderB2Settings);
+document.getElementById("sales-order-b2-settings-cancel").addEventListener("click", closeSalesOrderB2Settings);
+document.getElementById("sales-order-b2-settings-save").addEventListener("click", saveSalesOrderB2Settings);
+document.getElementById("sales-order-b2-settings-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeSalesOrderB2Settings();
+});
+document.getElementById("sales-order-b2-preflight-close").addEventListener("click", function() {
+  renderSalesOrderB2Preflight(null);
+});
 document.getElementById("sales-order-import-b2").addEventListener("click", function() {
   var input = document.getElementById("sales-order-import-b2-file");
   if (input) input.click();

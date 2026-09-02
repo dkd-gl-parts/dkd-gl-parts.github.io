@@ -36,6 +36,7 @@ on:
       - "scripts/verify-customer-order-workflow.js"
       - "scripts/verify-customer-order-delivery-service.js"
       - "scripts/verify-customer-order-b2-import.js"
+      - "scripts/verify-customer-order-b2-export.js"
       - "scripts/verify-customer-order-auto-print.js"
       - "scripts/verify-print-settings-screen-ownership.js"
       - "scripts/verify-order-fulfillment-documents.js"
@@ -145,6 +146,8 @@ jobs:
         run: node scripts/verify-customer-order-delivery-service.js
       - name: Verify Yamato B2 issued-data import
         run: node scripts/verify-customer-order-b2-import.js
+      - name: Verify Yamato B2 contract settings and export preflight
+        run: node scripts/verify-customer-order-b2-export.js
       - name: Verify customer order automatic printing
         run: node scripts/verify-customer-order-auto-print.js
       - name: Verify print-setting screen ownership
