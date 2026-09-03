@@ -116,6 +116,9 @@ requireFragment(runtime, "Math.max(GAZE_MIN_DISTANCE, Math.max(rect.width, rect.
 requireFragment(runtime, "gazeScale(index)", "Directional gaze must compensate for approved-atlas scale differences");
 requireFragment(runtime, "playRow(travelRowFor(dx), Infinity);", "Travel must select a character-aware facing direction");
 requireFragment(runtime, "var turnOffset = TRAVEL_TURN_DELAY / duration;", "Travel must reserve time to face the destination before moving");
+requireFragment(runtime, 'var mirrorTravel = settings.character === "rinna" && rowName === PETS.rinna.travelRows.right;', "Rinna must identify rightward browser travel before mirroring");
+requireFragment(runtime, 'sprite.classList.toggle("is-travel-mirrored", mirrorTravel);', "Rinna must face right during animated and reduced-motion rightward travel");
+requireFragment(runtime, 'sprite.classList.remove("is-travel-mirrored");', "Static and gaze frames must clear the travel-only mirror");
 requireFragment(runtime, 'if (isFloatingWindowOpen()) return clampToViewport({ x: 8, y: 8 }, size, viewport);', "A cramped floating window must keep the concierge visible");
 
 assert((runtime.match(/createElement\("div", "dcats-concierge-sprite"\)/g) || []).length === 1, "Runtime must create exactly one visible sprite element");
@@ -156,6 +159,8 @@ requireFragment(css, `./suzuto/spritesheet.webp?v=${appVersion.slice(1)}`);
 requireFragment(css, `./rinna/spritesheet.webp?v=${appVersion.slice(1)}`);
 requireFragment(css, ".dcats-concierge-sprite.is-suzuto");
 requireFragment(css, ".dcats-concierge-sprite.is-rinna");
+requireFragment(css, ".dcats-concierge-sprite.is-rinna.is-travel-mirrored");
+requireFragment(css, "transform: scaleX(-1);");
 requireFragment(css, "@media (prefers-reduced-motion: reduce)");
 requireFragment(css, "@media print");
 requireFragment(css, "z-index: 190");

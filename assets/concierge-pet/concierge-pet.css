@@ -44,6 +44,11 @@
   background-image: url("./rinna/spritesheet.webp?v=1.1.872");
 }
 
+.dcats-concierge-sprite.is-rinna.is-travel-mirrored {
+  transform: scaleX(-1);
+  transform-origin: center;
+}
+
 .dcats-concierge-hit-target {
   position: absolute;
   inset: 8px 12px 4px;

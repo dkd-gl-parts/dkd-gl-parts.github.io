@@ -593,7 +593,7 @@
 
   function applySettings() {
     var name = petName(settings.character);
-    sprite.classList.remove("is-suzuto", "is-rinna");
+    sprite.classList.remove("is-suzuto", "is-rinna", "is-travel-mirrored");
     sprite.classList.add(PETS[settings.character].className);
     root.classList.toggle("is-off", settings.mode === "off");
     hitTarget.setAttribute("aria-label", copy("openSettings", { name: name }));
@@ -969,7 +969,13 @@
     var rowName = ROWS[name] ? name : "idle";
     var row = ROWS[rowName];
     if (!sprite || typeof sprite.animate !== "function") return null;
-    if (isReducedMotion()) return showFrame(row.row, 0);
+    var mirrorTravel = settings.character === "rinna" && rowName === PETS.rinna.travelRows.right;
+    sprite.classList.toggle("is-travel-mirrored", mirrorTravel);
+    if (isReducedMotion()) {
+      var reducedAnimation = showFrame(row.row, 0);
+      sprite.classList.toggle("is-travel-mirrored", mirrorTravel);
+      return reducedAnimation;
+    }
     var visualKey = "row:" + rowName + ":" + String(iterations == null ? 1 : iterations);
     if (currentVisualKey === visualKey && spriteAnimation && spriteAnimation.playState === "running") return spriteAnimation;
     if (spriteAnimation) spriteAnimation.cancel();
@@ -988,6 +994,7 @@
 
   function showFrame(row, column, scale) {
     if (!sprite || typeof sprite.animate !== "function") return null;
+    sprite.classList.remove("is-travel-mirrored");
     var resolvedScale = Number(scale) > 0 ? Number(scale) : 1;
     var visualKey = "frame:" + row + ":" + column + ":" + resolvedScale;
     if (currentVisualKey === visualKey && spriteAnimation) return spriteAnimation;
