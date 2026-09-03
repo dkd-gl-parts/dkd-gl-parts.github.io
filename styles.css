@@ -3915,6 +3915,9 @@ body.app-install-dialog-open { overflow: hidden; }
 .customer-catalog-search-form select { padding-right: 30px; }
 .customer-catalog-search-form input:focus,
 .customer-catalog-search-form select:focus { border-color: #287356; box-shadow: 0 0 0 3px rgba(40,115,86,.12); }
+.customer-catalog-search-form select[aria-invalid="true"] { border-color: #c2410c; background: #fff7ed; box-shadow: 0 0 0 3px rgba(194,65,12,.14); }
+.customer-catalog-search-feedback { grid-column: 1 / -1; border-left: 3px solid #c2410c; padding: 7px 10px; background: #fff7ed; color: #9a3412; font-size: 12px; font-weight: 800; line-height: 1.45; }
+.customer-catalog-search-feedback[hidden] { display: none; }
 .customer-catalog-search-form .customer-portal-search-button { height: 42px; min-height: 42px; }
 .customer-catalog-layout { display: grid; grid-template-columns: minmax(320px, 370px) minmax(0, 1fr); min-height: calc(100vh - 146px); background: #fff; }
 .customer-catalog-results { min-width: 0; border-right: 1px solid #d9e1de; background: #f8faf9; }

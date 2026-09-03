@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const source = fs.readFileSync(path.resolve(__dirname, "..", "app.js"), "utf8");
+const html = fs.readFileSync(path.resolve(__dirname, "..", "index.html"), "utf8");
 const styles = fs.readFileSync(path.resolve(__dirname, "..", "styles.css"), "utf8");
 
 if (!source.includes('customer_catalog_price_none: "価格はお問い合わせください"')) {
@@ -44,9 +45,15 @@ if (!source.includes("var CUSTOMER_CATALOG_SHORT_QUERY_MAX = 5;") ||
     shortQueryGuardIndex < 0 || customerMasterSearchIndex < shortQueryGuardIndex ||
     !searchSource.slice(shortQueryGuardIndex, customerMasterSearchIndex).includes("return;") ||
     !searchSource.includes('t("customer_catalog_short_query_category_required")') ||
+    !searchSource.includes('searchFeedback.hidden = false') ||
     !searchSource.includes('categoryEl.setAttribute("aria-invalid", "true")') ||
-    !searchSource.includes("categoryEl.focus()")) {
+    !searchSource.includes("categoryEl.focus()") ||
+    !searchSource.includes("categoryEl.showPicker()")) {
   throw new Error("customer catalog must require a category before searching part numbers of five characters or fewer");
+}
+if (!html.includes('id="customer-catalog-search-feedback"') ||
+    !html.includes('aria-describedby="customer-catalog-search-feedback"')) {
+  throw new Error("short customer catalog searches must show guidance beside the category selector");
 }
 if (!source.includes('document.getElementById("customer-catalog-category").addEventListener("change", function(){ runCustomerCatalogSearch({ logActivity: true }); })')) {
   throw new Error("selecting a customer catalog category must rerun the pending part-number search");

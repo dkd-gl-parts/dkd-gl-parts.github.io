@@ -5650,7 +5650,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.872";
+var APP_VERSION       = "v1.1.873";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -9248,10 +9248,17 @@ async function runCustomerCatalogSearch(options) {
   if (!context.sales_customer_id || !context.customer || (isCustomerViewer() ? !canViewProductSearch() : !canPreviewCustomerPortal())) return;
   var input = document.getElementById("customer-catalog-q");
   var categoryEl = document.getElementById("customer-catalog-category");
+  var searchFeedback = document.getElementById("customer-catalog-search-feedback");
   var query = input ? input.value.trim() : "";
   var category = categoryEl && categoryEl.value !== "all" ? categoryEl.value : null;
   var list = document.getElementById("customer-catalog-list");
   var count = document.getElementById("customer-catalog-count");
+  if (categoryEl) categoryEl.removeAttribute("aria-invalid");
+  if (searchFeedback) {
+    searchFeedback.hidden = true;
+    searchFeedback.textContent = "";
+    searchFeedback.removeAttribute("data-i18n");
+  }
   if (!query && !category) {
     customerCatalogRequestSeq += 1;
     customerCatalogProducts = [];
@@ -9264,7 +9271,6 @@ async function runCustomerCatalogSearch(options) {
     if (input) input.focus();
     return;
   }
-  if (categoryEl) categoryEl.removeAttribute("aria-invalid");
   if (query && normalizePartQuery(query).length <= CUSTOMER_CATALOG_SHORT_QUERY_MAX && !category) {
     customerCatalogRequestSeq += 1;
     customerCatalogProducts = [];
@@ -9274,9 +9280,17 @@ async function runCustomerCatalogSearch(options) {
     if (count) count.textContent = "-";
     var shortQueryDetail = document.getElementById("customer-catalog-detail");
     if (shortQueryDetail) shortQueryDetail.innerHTML = "<div class='customer-catalog-detail-empty'><strong>" + esc(t("customer_catalog_select_product")) + "</strong><span>" + esc(t("customer_catalog_select_product_note")) + "</span></div>";
+    if (searchFeedback) {
+      searchFeedback.setAttribute("data-i18n", "customer_catalog_short_query_category_required");
+      searchFeedback.textContent = t("customer_catalog_short_query_category_required");
+      searchFeedback.hidden = false;
+    }
     if (categoryEl) {
       categoryEl.setAttribute("aria-invalid", "true");
       categoryEl.focus();
+      if (typeof categoryEl.showPicker === "function") {
+        try { categoryEl.showPicker(); } catch (pickerError) { /* Browser focus remains as the fallback. */ }
+      }
     }
     return;
   }
