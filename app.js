@@ -339,6 +339,10 @@ var TRANSLATIONS = {
     business_workspace_failed: "ショートカットを作成できませんでした。Google Driveは「フォルダを開く」から利用できます。",
     shipping_document_mgmt_title: "出荷帳票発行",
     shipping_document_mgmt_desc: "B2 CSVの発行履歴、保証書、コア返却帳票を注文単位で管理します。",
+    shipping_document_batch_not_eligible: "発行対象外です。",
+    shipping_document_batch_more: "ほか {count} 件",
+    shipping_document_batch_skipped: "発行しなかった帳票:",
+    shipping_document_batch_station_warning: "印刷端末が{state}です。帳票は印刷待ちに残るため、印刷端末の接続を確認してください。",
     core_return_mgmt_title: "コア返却管理",
     core_return_mgmt_desc: "返却管理番号・送り状番号・受注情報から返却受付と検品履歴を管理します。",
     greeting: "ようこそ、{name} さん",
@@ -2181,6 +2185,10 @@ var TRANSLATIONS = {
     business_workspace_failed: "The shortcut could not be created. Use Open Folder to access Google Drive.",
     shipping_document_mgmt_title: "Shipping Documents",
     shipping_document_mgmt_desc: "Manage B2 CSV history, warranties, and core-return documents by order.",
+    shipping_document_batch_not_eligible: "This document is not eligible for issue.",
+    shipping_document_batch_more: "{count} more",
+    shipping_document_batch_skipped: "Documents not issued:",
+    shipping_document_batch_station_warning: "The print station is {state}. Documents remain in the print queue; check the print-station connection.",
     core_return_mgmt_title: "Core Returns",
     core_return_mgmt_desc: "Receive, inspect, and audit returned cores by return code, waybill, order, or serial.",
     greeting: "Welcome, {name}",
@@ -3968,6 +3976,10 @@ var TRANSLATIONS = {
     business_workspace_failed: "无法创建快捷方式。请使用“打开文件夹”访问Google Drive。",
     shipping_document_mgmt_title: "出货单据发行",
     shipping_document_mgmt_desc: "按订单管理B2 CSV历史、保修书和旧件返还单据。",
+    shipping_document_batch_not_eligible: "该单据不符合发行条件。",
+    shipping_document_batch_more: "另有 {count} 件",
+    shipping_document_batch_skipped: "未发行的单据：",
+    shipping_document_batch_station_warning: "打印终端当前为{state}。单据将保留在打印队列中，请检查打印终端连接。",
     core_return_mgmt_title: "旧件返还管理",
     core_return_mgmt_desc: "通过返还管理编号、运单号、订单或序列号管理收货、检验及历史。",
     spec_note_ph: "例：内部确认、实物标签",
@@ -5650,7 +5662,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.877";
+var APP_VERSION       = "v1.1.878";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -13658,6 +13670,32 @@ function setShippingDocumentBatchMessage(message, isError) {
   host.className = isError ? "error" : "";
 }
 
+function shippingDocumentSkippedSummary(skipped) {
+  var messages = [];
+  var seen = {};
+  (Array.isArray(skipped) ? skipped : []).forEach(function(row) {
+    row = row || {};
+    var orderLabel = row.order_number ? "受注ID " + row.order_number + " / " : "";
+    var documentLabel = row.document_type ? salesOrderDocumentTypeLabel(row.document_type) + ": " : "";
+    var message = orderLabel + documentLabel + (row.reason || t("shipping_document_batch_not_eligible"));
+    if (!seen[message]) {
+      seen[message] = true;
+      messages.push(message);
+    }
+  });
+  if (!messages.length) return "";
+  var visible = messages.slice(0, 3);
+  return visible.join(" / ") + (messages.length > visible.length ? " / " + tf("shipping_document_batch_more", { count: messages.length - visible.length }) : "");
+}
+
+function shippingDocumentPrintStationWarning(queuedCount) {
+  if (!(queuedCount > 0)) return "";
+  var settings = salesOrderPrintSettings || {};
+  var config = settings.config || {};
+  if (config.station_state === "ready") return "";
+  return tf("shipping_document_batch_station_warning", { state: salesOrderPrintStationStateLabel(config.station_state) });
+}
+
 function updateShippingDocumentBatchControls() {
   var checkAll = document.getElementById("shipping-document-check-all");
   var button = document.getElementById("shipping-document-batch-print");
@@ -13729,12 +13767,16 @@ async function queueSelectedShippingDocuments() {
   }
   shippingDocumentSaving = false;
   updateShippingDocumentBatchControls();
+  await loadSalesOrderPrintSettings();
+  var skippedSummary = shippingDocumentSkippedSummary(skipped);
+  var stationWarning = shippingDocumentPrintStationWarning(queuedCount);
   setShippingDocumentBatchMessage(
     queuedCount + " 件を印刷待ちへ登録しました。" +
       (handwrittenTasks.length ? " 手書き " + handwrittenTasks.length + " 件を続けて表示します。" : "") +
       (deferredHandwrittenCount ? " 手書き待機 " + deferredHandwrittenCount + " 件。" : "") +
-      (skipped.length ? " 対象外・重複 " + skipped.length + " 件。" : ""),
-    false
+      (skippedSummary ? " " + t("shipping_document_batch_skipped") + " " + skippedSummary + "。" : "") +
+      (stationWarning ? " " + stationWarning : ""),
+    !!stationWarning || (queuedCount === 0 && skipped.length > 0)
   );
   if (handwrittenTasks.length) {
     await openShippingHandwrittenWaybillFlow(handwrittenTasks);

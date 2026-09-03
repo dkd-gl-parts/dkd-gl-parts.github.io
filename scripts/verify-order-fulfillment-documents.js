@@ -429,8 +429,20 @@ for (const fragment of [
   'sb.rpc("queue_sales_order_fulfillment_documents"',
   "shippingDocumentHandwrittenTasks",
   "shippingDocumentDotMatrixOrderIds",
+  "shippingDocumentSkippedSummary(skipped)",
+  "shippingDocumentPrintStationWarning(queuedCount)",
+  "await loadSalesOrderPrintSettings()",
+  't("shipping_document_batch_skipped")',
   "openShippingHandwrittenWaybillFlow"
 ]) requireFragment(batchQueue, fragment);
+
+const batchMessageHelpers = sourceBetween("function shippingDocumentSkippedSummary", "function updateShippingDocumentBatchControls");
+for (const fragment of [
+  "salesOrderDocumentTypeLabel(row.document_type)",
+  'row.reason || t("shipping_document_batch_not_eligible")',
+  'config.station_state === "ready"',
+  'tf("shipping_document_batch_station_warning"'
+]) requireFragment(batchMessageHelpers, fragment);
 
 const waybillNumberHelpers = sourceBetween(
   "function shippingDocumentWaybillDigits",
@@ -603,11 +615,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.877"',
-  'styles.css?v=1.1.877',
-  'app.js?v=1.1.877'
+  'content="v1.1.878"',
+  'styles.css?v=1.1.878',
+  'app.js?v=1.1.878'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.877"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.878"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
