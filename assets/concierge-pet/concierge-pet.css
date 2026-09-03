@@ -37,11 +37,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.867");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.868");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.867");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.868");
 }
 
 .dcats-concierge-hit-target {
@@ -324,17 +324,12 @@ body.dcats-concierge-floating-body {
   height: 100%;
   margin: 0;
   overflow: hidden;
-  background: #f6f8fb;
-}
-
-body.dcats-concierge-floating-body {
-  background:
-    radial-gradient(circle at 18% 18%, rgb(145 200 206 / 24%), transparent 36%),
-    radial-gradient(circle at 82% 72%, rgb(233 191 157 / 26%), transparent 38%),
-    #f6f8fb;
+  background: transparent;
 }
 
 body.dcats-concierge-floating-body .dcats-concierge {
+  --dcats-concierge-width: 192px;
+  --dcats-concierge-height: 208px;
   z-index: 1;
 }
 

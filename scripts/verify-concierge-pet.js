@@ -154,6 +154,10 @@ requireFragment(css, "visibility: hidden", "A concierge without a safe target mu
 requireFragment(css, "html.dcats-concierge-floating-document");
 requireFragment(css, "body.dcats-concierge-floating-body");
 requireFragment(css, ".dcats-concierge-floating-cost");
+assert(/html\.dcats-concierge-floating-document,\s*body\.dcats-concierge-floating-body\s*\{[^}]*background:\s*transparent;/s.test(css), "Floating concierge document must not paint the decorative window background");
+requireFragment(css, "--dcats-concierge-width: 192px;", "Floating concierge character width must use the native atlas frame size");
+requireFragment(css, "--dcats-concierge-height: 208px;", "Floating concierge character height must use the native atlas frame size");
+assert(!css.includes("radial-gradient(circle at 18% 18%"), "Floating concierge must not retain the decorative window background");
 assert(!css.includes("data:"), "Concierge stylesheet must not embed sprite data URLs");
 
 const expectedPets = [
