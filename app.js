@@ -5650,7 +5650,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.872";
+var APP_VERSION       = "v1.1.876";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -9242,16 +9242,39 @@ async function fetchCustomerCatalogPriceInfo(product, productKind) {
   return map[productDkdId(product)] == null ? null : map[productDkdId(product)];
 }
 
+async function fetchCustomerCatalogPrefixMatches(q, category, maxRows) {
+  var normalized = normalizePartQuery(q);
+  var customerId = parseInt(customerCatalogContext().sales_customer_id, 10);
+  if (!normalized || !category || isNaN(customerId)) return { data: [] };
+  var result = await sb.rpc("search_customer_catalog_products_by_prefix_fast", {
+    search_prefix: normalized,
+    category_filter: category,
+    target_sales_customer_id: customerId,
+    max_rows: maxRows || CUSTOMER_CATALOG_SCAN_LIMIT
+  });
+  if (!result.error) {
+    result.data = normalizeCoreProductFastRows(result.data || []).slice(0, maxRows || CUSTOMER_CATALOG_SCAN_LIMIT);
+  }
+  return result;
+}
+
 async function runCustomerCatalogSearch(options) {
   options = options || {};
   var context = customerCatalogContext();
   if (!context.sales_customer_id || !context.customer || (isCustomerViewer() ? !canViewProductSearch() : !canPreviewCustomerPortal())) return;
   var input = document.getElementById("customer-catalog-q");
   var categoryEl = document.getElementById("customer-catalog-category");
+  var searchFeedback = document.getElementById("customer-catalog-search-feedback");
   var query = input ? input.value.trim() : "";
   var category = categoryEl && categoryEl.value !== "all" ? categoryEl.value : null;
   var list = document.getElementById("customer-catalog-list");
   var count = document.getElementById("customer-catalog-count");
+  if (categoryEl) categoryEl.removeAttribute("aria-invalid");
+  if (searchFeedback) {
+    searchFeedback.hidden = true;
+    searchFeedback.textContent = "";
+    searchFeedback.removeAttribute("data-i18n");
+  }
   if (!query && !category) {
     customerCatalogRequestSeq += 1;
     customerCatalogProducts = [];
@@ -9264,7 +9287,6 @@ async function runCustomerCatalogSearch(options) {
     if (input) input.focus();
     return;
   }
-  if (categoryEl) categoryEl.removeAttribute("aria-invalid");
   if (query && normalizePartQuery(query).length <= CUSTOMER_CATALOG_SHORT_QUERY_MAX && !category) {
     customerCatalogRequestSeq += 1;
     customerCatalogProducts = [];
@@ -9274,9 +9296,17 @@ async function runCustomerCatalogSearch(options) {
     if (count) count.textContent = "-";
     var shortQueryDetail = document.getElementById("customer-catalog-detail");
     if (shortQueryDetail) shortQueryDetail.innerHTML = "<div class='customer-catalog-detail-empty'><strong>" + esc(t("customer_catalog_select_product")) + "</strong><span>" + esc(t("customer_catalog_select_product_note")) + "</span></div>";
+    if (searchFeedback) {
+      searchFeedback.setAttribute("data-i18n", "customer_catalog_short_query_category_required");
+      searchFeedback.textContent = t("customer_catalog_short_query_category_required");
+      searchFeedback.hidden = false;
+    }
     if (categoryEl) {
       categoryEl.setAttribute("aria-invalid", "true");
       categoryEl.focus();
+      if (typeof categoryEl.showPicker === "function") {
+        try { categoryEl.showPicker(); } catch (pickerError) { /* Browser focus remains as the fallback. */ }
+      }
     }
     return;
   }
@@ -9287,8 +9317,13 @@ async function runCustomerCatalogSearch(options) {
   var detail = document.getElementById("customer-catalog-detail");
   if (detail) detail.innerHTML = "<div class='customer-catalog-detail-empty'><strong>" + esc(t("customer_catalog_select_product")) + "</strong><span>" + esc(t("customer_catalog_select_product_note")) + "</span></div>";
   var result;
-  if (query) {
-    result = await fetchCoreProductMasterMatches(query, category, CUSTOMER_CATALOG_SCAN_LIMIT, {
+  var normalizedQueryLength = normalizePartQuery(query).length;
+  var useCustomerPrefixSearch = !!(query && category && normalizedQueryLength <= CUSTOMER_CATALOG_SHORT_QUERY_MAX);
+  var candidateScanLimit = CUSTOMER_CATALOG_SCAN_LIMIT;
+  if (useCustomerPrefixSearch) {
+    result = await fetchCustomerCatalogPrefixMatches(query, category, candidateScanLimit);
+  } else if (query) {
+    result = await fetchCoreProductMasterMatches(query, category, candidateScanLimit, {
       includeDksProductCode: false,
       preferPrefix: true
     });
@@ -9305,7 +9340,7 @@ async function runCustomerCatalogSearch(options) {
   var products = normalizeCoreProductFastRows(result.data || []);
   await hydrateSalesDaikoVisibility(products);
   if (seq !== customerCatalogRequestSeq) return;
-  products = filterSalesVisibleProducts(products).slice(0, CUSTOMER_CATALOG_SCAN_LIMIT);
+  products = filterSalesVisibleProducts(products).slice(0, candidateScanLimit);
   var stockPriorityResult = await fetchProductAvailableStockMap(products);
   if (seq !== customerCatalogRequestSeq) return;
   if (!stockPriorityResult.error) products = sortProductsByAvailableStock(products, stockPriorityResult.map);
@@ -9340,6 +9375,15 @@ async function runCustomerCatalogSearch(options) {
       throttleMs: 3000
     });
   }
+}
+
+function handleCustomerCatalogCategoryChange() {
+  var input = document.getElementById("customer-catalog-q");
+  if (input && input.value.trim()) {
+    runCustomerCatalogSearch({ logActivity: true });
+    return;
+  }
+  if (input) input.focus();
 }
 
 function customerCatalogFact(label, value) {
@@ -48357,8 +48401,12 @@ document.getElementById("btn-back-customer-catalog").addEventListener("click", r
 document.getElementById("customer-catalog-orders").addEventListener("click", function() { enterCustomerOrders({ view: "cart" }); });
 document.getElementById("btn-exit-customer-mode").addEventListener("click", exitCustomerMode);
 document.getElementById("customer-catalog-search-btn").addEventListener("click", function(){ runCustomerCatalogSearch({ logActivity: true }); });
-document.getElementById("customer-catalog-q").addEventListener("keydown", function(e){ if (e.key === "Enter") runCustomerCatalogSearch({ logActivity: true }); });
-document.getElementById("customer-catalog-category").addEventListener("change", function(){ runCustomerCatalogSearch({ logActivity: true }); });
+document.getElementById("customer-catalog-q").addEventListener("keydown", function(e){
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  runCustomerCatalogSearch({ logActivity: true });
+});
+document.getElementById("customer-catalog-category").addEventListener("change", handleCustomerCatalogCategoryChange);
 document.getElementById("btn-back-customer-orders").addEventListener("click", returnToCustomerPortalFromOrders);
 document.getElementById("customer-order-tab-cart").addEventListener("click", function() { showCustomerOrderView("cart"); });
 document.getElementById("customer-order-tab-history").addEventListener("click", function() { showCustomerOrderView("history"); });

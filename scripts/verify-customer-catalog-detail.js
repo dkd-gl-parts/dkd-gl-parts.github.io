@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const source = fs.readFileSync(path.resolve(__dirname, "..", "app.js"), "utf8");
+const html = fs.readFileSync(path.resolve(__dirname, "..", "index.html"), "utf8");
 const styles = fs.readFileSync(path.resolve(__dirname, "..", "styles.css"), "utf8");
 
 if (!source.includes('customer_catalog_price_none: "価格はお問い合わせください"')) {
@@ -44,12 +45,38 @@ if (!source.includes("var CUSTOMER_CATALOG_SHORT_QUERY_MAX = 5;") ||
     shortQueryGuardIndex < 0 || customerMasterSearchIndex < shortQueryGuardIndex ||
     !searchSource.slice(shortQueryGuardIndex, customerMasterSearchIndex).includes("return;") ||
     !searchSource.includes('t("customer_catalog_short_query_category_required")') ||
+    !searchSource.includes('searchFeedback.hidden = false') ||
     !searchSource.includes('categoryEl.setAttribute("aria-invalid", "true")') ||
-    !searchSource.includes("categoryEl.focus()")) {
+    !searchSource.includes("categoryEl.focus()") ||
+    !searchSource.includes("categoryEl.showPicker()")) {
   throw new Error("customer catalog must require a category before searching part numbers of five characters or fewer");
 }
-if (!source.includes('document.getElementById("customer-catalog-category").addEventListener("change", function(){ runCustomerCatalogSearch({ logActivity: true }); })')) {
-  throw new Error("selecting a customer catalog category must rerun the pending part-number search");
+if (!source.includes('sb.rpc("search_customer_catalog_products_by_prefix_fast"') ||
+    !source.includes("target_sales_customer_id: customerId") ||
+    !searchSource.includes("query && category && normalizedQueryLength <= CUSTOMER_CATALOG_SHORT_QUERY_MAX") ||
+    !searchSource.includes("result = await fetchCustomerCatalogPrefixMatches(query, category, candidateScanLimit)") ||
+    !searchSource.includes("else if (query)") ||
+    !searchSource.includes("fetchCoreProductMasterMatches(query, category, candidateScanLimit") ||
+    !searchSource.includes("filterSalesVisibleProducts(products).slice(0, candidateScanLimit)")) {
+  throw new Error("categorized short customer searches must apply customer eligibility inside the indexed prefix query");
+}
+if (!html.includes('id="customer-catalog-search-feedback"') ||
+    !html.includes('aria-describedby="customer-catalog-search-feedback"')) {
+  throw new Error("short customer catalog searches must show guidance beside the category selector");
+}
+const categoryPosition = html.indexOf('id="customer-catalog-category"');
+const queryPosition = html.indexOf('id="customer-catalog-q"');
+if (categoryPosition < 0 || queryPosition < 0 || categoryPosition > queryPosition ||
+    !source.includes('document.getElementById("customer-catalog-category").addEventListener("change", handleCustomerCatalogCategoryChange)') ||
+    !source.includes('function handleCustomerCatalogCategoryChange()') ||
+    !source.includes('if (input && input.value.trim())') ||
+    !source.includes('if (input) input.focus()')) {
+  throw new Error("customer catalog must guide category-first entry and rerun a pending part-number search");
+}
+if (!source.includes('document.getElementById("customer-catalog-q").addEventListener("keydown"') ||
+    !source.includes('if (e.key !== "Enter") return;') ||
+    !source.includes('e.preventDefault();')) {
+  throw new Error("customer catalog part-number entry must run the search with Enter");
 }
 if ((source.match(/customer_catalog_short_query_category_required:/g) || []).length !== 3) {
   throw new Error("short customer catalog search guidance must be localized in Japanese, English, and Chinese");
