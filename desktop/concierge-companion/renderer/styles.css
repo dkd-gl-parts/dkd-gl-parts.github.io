@@ -53,11 +53,9 @@ body[data-size="large"] {
   height: 100%;
   background-repeat: no-repeat;
   background-size: 800% 1100%;
-  background-position-x: 0;
-  background-position-y: var(--sprite-row, 0%);
+  background-position: 0 0;
   filter: drop-shadow(0 7px 6px rgb(54 34 36 / 22%));
-  animation: sprite-frames 1.35s steps(7) infinite;
-  will-change: background-position-x;
+  will-change: background-position;
 }
 
 .pet-sprite.is-suzuto {
@@ -76,26 +74,8 @@ body[data-mode="active"] .pet-motion {
   transform: translate(-50%, -50%);
 }
 
-body[data-mode="active"] .pet-sprite,
-body[data-mode="horizontal"] .pet-sprite,
-body[data-mode="vertical"] .pet-sprite {
-  --sprite-row: var(--travel-row, 10%);
-  animation-duration: .9s;
-}
-
-body[data-mode="fixed"] .pet-sprite {
-  --sprite-row: 0%;
-  animation-duration: 1.8s;
-}
-
-@keyframes sprite-frames {
-  from { background-position-x: 0%; }
-  to { background-position-x: 100%; }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .pet-motion,
-  .pet-sprite {
-    animation: none !important;
+  .pet-motion {
+    animation: none;
   }
 }

@@ -69,6 +69,10 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
   'currentVisualKey === visualKey',
   'prefers-reduced-motion: reduce',
   'showFrame(index < 8 ? 9 : 10',
+  'var GAZE_MIN_DISTANCE = 112;',
+  'var GAZE_DISTANCE_RATIO = .82;',
+  'var GAZE_FRAME_SCALES = {',
+  'backgroundSize: size',
   'collectExclusionRects()',
   "[role='button']",
   "[role='link']",
@@ -108,6 +112,8 @@ requireFragment(runtime, 'if (!isSystemAdminSession() || floatingRequestPending)
 requireFragment(runtime, 'suzuto: { copyKey: "suzuto", className: "is-suzuto", travelRows: { right: "running-right", left: "running-left" } }', "Suzuto travel rows must match the approved atlas direction");
 requireFragment(runtime, 'rinna: { copyKey: "rinna", className: "is-rinna", travelRows: { right: "running-left", left: "running-right" } }', "Rinna travel rows must compensate for the approved atlas direction");
 requireFragment(runtime, "var TRAVEL_TURN_DELAY = 220;", "Directional travel must pause briefly after turning");
+requireFragment(runtime, "Math.max(GAZE_MIN_DISTANCE, Math.max(rect.width, rect.height) * GAZE_DISTANCE_RATIO)", "Near-pointer gaze must keep the stable front-facing idle row");
+requireFragment(runtime, "gazeScale(index)", "Directional gaze must compensate for approved-atlas scale differences");
 requireFragment(runtime, "playRow(travelRowFor(dx), Infinity);", "Travel must select a character-aware facing direction");
 requireFragment(runtime, "var turnOffset = TRAVEL_TURN_DELAY / duration;", "Travel must reserve time to face the destination before moving");
 requireFragment(runtime, 'if (isFloatingWindowOpen()) return clampToViewport({ x: 8, y: 8 }, size, viewport);', "A cramped floating window must keep the concierge visible");

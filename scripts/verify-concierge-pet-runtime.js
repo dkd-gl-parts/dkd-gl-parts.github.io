@@ -350,6 +350,12 @@ function animationRowPercent(animation) {
   return match ? Number(match[1]) : null;
 }
 
+function animationBackgroundWidthPercent(animation) {
+  const sizes = (animation && animation.keyframes || []).map((frame) => String(frame.backgroundSize || ""));
+  const match = /^(\d+(?:\.\d+)?)%/.exec(sizes.find(Boolean) || "");
+  return match ? Number(match[1]) : null;
+}
+
 (async function run() {
 const api = windowObject.DcatsConcierge;
 assert(api, "Runtime did not expose window.DcatsConcierge");
@@ -451,11 +457,21 @@ dispatch(documentObject.listeners, "visibilitychange");
 assert(animations.some((animation) => animation.owner === mover && Number(animation.options.duration) >= 1250), "Active mode did not start walking");
 assert(liveInfiniteAnimations().some((animation) => animation.owner === sprite), "Active mode did not animate the selected sprite");
 
+const gazeRect = mover.getBoundingClientRect();
+dispatch(documentObject.listeners, "pointermove", {
+  clientX: gazeRect.left + gazeRect.width / 2 + 80,
+  clientY: gazeRect.top + gazeRect.height / 2
+});
+flushAnimationFrames();
+const nearPointerAnimation = lastAnimationFor(sprite);
+assert(nearPointerAnimation.options.iterations === Infinity && animationRowPercent(nearPointerAnimation) === 0, "A slight pointer movement changed the stable front-facing idle scale");
+
 dispatch(documentObject.listeners, "pointermove", { clientX: 0, clientY: 0 });
 flushAnimationFrames();
 const gazeAnimation = lastAnimationFor(sprite);
 assert(gazeAnimation && gazeAnimation.options.duration === 1, "Pointer gaze did not select a static directional frame");
 assert(gazeAnimation.keyframes.some((frame) => String(frame.backgroundPosition || "").endsWith("% 90%") || String(frame.backgroundPosition || "").endsWith("% 100%")), "Pointer gaze did not use one of the 16 gaze directions");
+assert(animationBackgroundWidthPercent(gazeAnimation) > 800, "Directional gaze did not compensate for the approved atlas scale difference");
 
 const blockingCard = new FakeElement("div", documentObject);
 blockingCard.setAttribute("role", "button");

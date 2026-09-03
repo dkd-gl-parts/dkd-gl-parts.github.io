@@ -8,6 +8,13 @@
     rinna: { copyKey: "rinna", className: "is-rinna", travelRows: { right: "running-left", left: "running-right" } }
   };
   var TRAVEL_TURN_DELAY = 220;
+  var GAZE_MIN_DISTANCE = 112;
+  var GAZE_DISTANCE_RATIO = .82;
+  // Visible-height ratios keep the approved gaze art aligned to the idle baseline; cap at 1.15 to avoid cell-edge clipping.
+  var GAZE_FRAME_SCALES = {
+    suzuto: [1.005, 1.005, 1.005, 1, 1, 1.01, 1.015, 1.048, 1.026, 1.021, 1.015, 1.015, 1.015, 1.015, 1.015, 1.01],
+    rinna: [1.005, 1, 1.005, 1.026, 1.053, 1.106, 1.15, 1.15, 1.138, 1.131, 1.131, 1.125, 1.125, 1.138, 1.138, 1.138]
+  };
   var MODES = { active: true, horizontal: true, vertical: true, fixed: true, off: true };
   var ROWS = {
     idle: { row: 0, durations: [280, 110, 110, 140, 140, 320] },
@@ -970,28 +977,41 @@
     var elapsed = 0;
     var frames = [];
     row.durations.forEach(function (duration, column) {
-      frames.push({ offset: elapsed / total, backgroundPosition: backgroundPosition(row.row, column), easing: "steps(1, end)" });
+      frames.push({ offset: elapsed / total, backgroundPosition: backgroundPosition(row.row, column, 1), backgroundSize: "800% 1100%", easing: "steps(1, end)" });
       elapsed += duration;
     });
-    frames.push({ offset: 1, backgroundPosition: backgroundPosition(row.row, row.durations.length - 1), easing: "steps(1, end)" });
+    frames.push({ offset: 1, backgroundPosition: backgroundPosition(row.row, row.durations.length - 1, 1), backgroundSize: "800% 1100%", easing: "steps(1, end)" });
     currentVisualKey = visualKey;
     spriteAnimation = sprite.animate(frames, { duration: total, iterations: iterations == null ? 1 : iterations, fill: "forwards" });
     return spriteAnimation;
   }
 
-  function showFrame(row, column) {
+  function showFrame(row, column, scale) {
     if (!sprite || typeof sprite.animate !== "function") return null;
-    var visualKey = "frame:" + row + ":" + column;
+    var resolvedScale = Number(scale) > 0 ? Number(scale) : 1;
+    var visualKey = "frame:" + row + ":" + column + ":" + resolvedScale;
     if (currentVisualKey === visualKey && spriteAnimation) return spriteAnimation;
     if (spriteAnimation) spriteAnimation.cancel();
-    var value = backgroundPosition(row, column);
+    var value = backgroundPosition(row, column, resolvedScale);
+    var size = (800 * resolvedScale) + "% " + (1100 * resolvedScale) + "%";
     currentVisualKey = visualKey;
-    spriteAnimation = sprite.animate([{ backgroundPosition: value }, { backgroundPosition: value }], { duration: 1, fill: "forwards" });
+    spriteAnimation = sprite.animate([
+      { backgroundPosition: value, backgroundSize: size },
+      { backgroundPosition: value, backgroundSize: size }
+    ], { duration: 1, fill: "forwards" });
     return spriteAnimation;
   }
 
-  function backgroundPosition(row, column) {
-    return (column * 100 / 7) + "% " + (row * 100 / 10) + "%";
+  function backgroundPosition(row, column, scale) {
+    var resolvedScale = Number(scale) > 0 ? Number(scale) : 1;
+    var x = (((1 - resolvedScale) / 2) - column * resolvedScale) / (1 - 8 * resolvedScale) * 100;
+    var y = ((1 - resolvedScale) - row * resolvedScale) / (1 - 11 * resolvedScale) * 100;
+    return x + "% " + y + "%";
+  }
+
+  function gazeScale(index) {
+    var scales = GAZE_FRAME_SCALES[settings.character] || GAZE_FRAME_SCALES.suzuto;
+    return scales[index] || 1;
   }
 
   function onPointerMove(event) {
@@ -1011,13 +1031,14 @@
     var rect = mover.getBoundingClientRect();
     var dx = pointer.x - (rect.left + rect.width / 2);
     var dy = pointer.y - (rect.top + rect.height / 2);
-    if (Math.sqrt(dx * dx + dy * dy) < 72) {
+    var deadzone = Math.max(GAZE_MIN_DISTANCE, Math.max(rect.width, rect.height) * GAZE_DISTANCE_RATIO);
+    if (Math.sqrt(dx * dx + dy * dy) < deadzone) {
       playRow("idle", Infinity);
       return;
     }
     var degrees = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
     var index = Math.round(degrees / 22.5) % 16;
-    showFrame(index < 8 ? 9 : 10, index < 8 ? index : index - 8);
+    showFrame(index < 8 ? 9 : 10, index < 8 ? index : index - 8, gazeScale(index));
   }
 
   function onAppInteraction(event) {

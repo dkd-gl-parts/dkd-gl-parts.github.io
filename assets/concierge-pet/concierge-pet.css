@@ -33,7 +33,7 @@
   background-position: 0 0;
   filter: drop-shadow(0 7px 6px rgb(54 34 36 / 22%));
   image-rendering: auto;
-  will-change: background-position;
+  will-change: background-position, background-size;
 }
 
 .dcats-concierge-sprite.is-suzuto {
