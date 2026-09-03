@@ -300,7 +300,7 @@ const context = {
   JSON,
   String,
   Infinity,
-  setTimeout(callback) { timerId += 1; pendingTimers.set(timerId, callback); return timerId; },
+  setTimeout(callback, delay) { timerId += 1; pendingTimers.set(timerId, { callback, delay: Number(delay) }); return timerId; },
   clearTimeout(id) { pendingTimers.delete(id); }
 };
 windowObject.window = windowObject;
@@ -354,6 +354,19 @@ function animationBackgroundWidthPercent(animation) {
   const sizes = (animation && animation.keyframes || []).map((frame) => String(frame.backgroundSize || ""));
   const match = /^(\d+(?:\.\d+)?)%/.exec(sizes.find(Boolean) || "");
   return match ? Number(match[1]) : null;
+}
+
+function animationColumnPercent(animation) {
+  const position = String((animation && animation.keyframes || [])[0] && animation.keyframes[0].backgroundPosition || "");
+  const match = /^(-?\d+(?:\.\d+)?)%/.exec(position);
+  return match ? Number(match[1]) : null;
+}
+
+function runTimerWithDelay(expectedDelay) {
+  const entry = Array.from(pendingTimers.entries()).find(([, timer]) => timer.delay === expectedDelay);
+  assert(entry, `No pending timer has the expected ${expectedDelay} ms delay`);
+  pendingTimers.delete(entry[0]);
+  entry[1].callback();
 }
 
 (async function run() {
@@ -422,6 +435,30 @@ sandboxMath.random = () => 0;
 documentObject.hidden = false;
 dispatch(documentObject.listeners, "visibilitychange");
 assert(animationRowPercent(lastAnimationFor(sprite)) === 20, "Suzuto did not face left for leftward travel using his approved atlas rows");
+const moveCountBeforeStop = animations.filter((animation) => animation.owner === mover).length;
+await new Promise((resolve) => setImmediate(resolve));
+assert(animationRowPercent(lastAnimationFor(sprite)) === 0, "Concierge did not visibly stop on the idle row after moving");
+assert(animations.filter((animation) => animation.owner === mover).length === moveCountBeforeStop, "Concierge started a second move without a stationary phase");
+const expectedStopGestures = [
+  { firstColumn: 0, duration: 2080, name: "escort" },
+  { firstColumn: 2, duration: 2340, name: "handshake" },
+  { firstColumn: 4, duration: 2440, name: "shy" }
+];
+for (const expected of expectedStopGestures) {
+  runTimerWithDelay(700);
+  await new Promise((resolve) => setImmediate(resolve));
+  const gestureAnimation = lastAnimationFor(sprite);
+  assert(animationRowPercent(gestureAnimation) === 80, `${expected.name} did not use the review gesture row`);
+  assert(gestureAnimation.options.iterations === 2, `${expected.name} did not play as a two-frame stop gesture`);
+  assert(Math.abs(animationColumnPercent(gestureAnimation) - expected.firstColumn * 100 / 7) < .001, `${expected.name} started from the wrong review frame pair`);
+  runTimerWithDelay(expected.duration);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert(animationRowPercent(lastAnimationFor(sprite)) === 0, `${expected.name} did not return to idle before the next move`);
+  if (expected !== expectedStopGestures.at(-1)) {
+    runTimerWithDelay(1600);
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+}
 documentObject.hidden = true;
 dispatch(documentObject.listeners, "visibilitychange");
 sandboxMath.random = () => Math.random();
@@ -563,7 +600,7 @@ activeScreen.id = "screen-login";
 notifyObservers();
 assert(root.hidden, "Concierge must be hidden on the login screen");
 
-console.log("Concierge runtime behavior verification passed (system-admin gate, always-on-top floating display, zero-cost disclosure, 5 movement modes, one sprite, user-scoped preferences, i18n, active motion, gaze, card avoidance, viewport revalidation, reduced motion, focus, and inactive cancellation).");
+console.log("Concierge runtime behavior verification passed (system-admin gate, always-on-top floating display, zero-cost disclosure, 5 movement modes, move-stop cycle, 3 rotating stop gestures, one sprite, user-scoped preferences, i18n, gaze, card avoidance, viewport revalidation, reduced motion, focus, and inactive cancellation).");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

@@ -16,7 +16,9 @@ from the public D-CATS web UI and does not connect to D-CATS data or OpenAI.
 Active mode moves the transparent character window around the current Windows
 desktop. Horizontal only and Vertical only constrain that movement to one axis.
 The walking row changes when horizontal movement reverses, so the character
-faces the direction of travel. Stay put stops automatic window movement.
+faces the direction of travel. Each movement leg is followed by a visible stop,
+then the concierge rotates through an escort invitation, handshake invitation,
+and bashful smile before moving again. Stay put stops automatic window movement.
 
 The transparent portion is visually transparent. Enable **透明部分のクリックを下へ通す**
 when the underlying application must also receive mouse input. Disable it from

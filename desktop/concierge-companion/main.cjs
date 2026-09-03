@@ -30,6 +30,10 @@ const SIZE_PRESETS = Object.freeze({
   large: Object.freeze({ width: 350, height: 400 })
 });
 const HORIZONTAL_STEPS_PER_LEG = 72;
+const MOTION_STEP_MS = 32;
+const REST_MIN_MS = 3000;
+const REST_MAX_MS = 4600;
+const REST_GESTURE_ORDER = Object.freeze(["escort", "handshake", "shy"]);
 const DEFAULT_PREFERENCES = Object.freeze({
   character: "suzuto",
   mode: "active",
@@ -56,6 +60,10 @@ let boundsSaveTimer = null;
 let motionTimer = null;
 let motionVelocity = { x: 0, y: 0 };
 let horizontalStepsUntilTurn = 0;
+let motionStepsRemaining = 0;
+let motionPhase = "idle";
+let restGestureIndex = 0;
+let restGesture = "idle";
 let facing = "right";
 let isQuitting = false;
 
@@ -168,15 +176,20 @@ function sendState() {
     mode: preferences.mode,
     size: preferences.size,
     clickThrough: preferences.clickThrough,
-    facing
+    facing,
+    moving: motionPhase === "moving",
+    restGesture
   });
 }
 
 function stopWindowMotion() {
-  if (motionTimer) clearInterval(motionTimer);
+  if (motionTimer) clearTimeout(motionTimer);
   motionTimer = null;
   motionVelocity = { x: 0, y: 0 };
   horizontalStepsUntilTurn = 0;
+  motionStepsRemaining = 0;
+  motionPhase = "idle";
+  restGesture = "idle";
 }
 
 function updateFacing(horizontalVelocity) {
@@ -195,14 +208,6 @@ function moveWindowOneStep() {
   const maximumX = area.x + Math.max(0, area.width - bounds.width);
   const minimumY = area.y;
   const maximumY = area.y + Math.max(0, area.height - bounds.height);
-  if (motionVelocity.x) {
-    horizontalStepsUntilTurn -= 1;
-    if (horizontalStepsUntilTurn <= 0) {
-      motionVelocity.x *= -1;
-      horizontalStepsUntilTurn = HORIZONTAL_STEPS_PER_LEG;
-      updateFacing(motionVelocity.x);
-    }
-  }
   let x = bounds.x + motionVelocity.x;
   let y = bounds.y + motionVelocity.y;
 
@@ -217,6 +222,60 @@ function moveWindowOneStep() {
     y = Math.max(minimumY, Math.min(maximumY, y));
   }
   petWindow.setPosition(Math.round(x), Math.round(y), false);
+}
+
+function isMovingMode() {
+  return preferences.mode === "active" || preferences.mode === "horizontal" || preferences.mode === "vertical";
+}
+
+function scheduleMotionStep() {
+  motionTimer = setTimeout(runMotionStep, MOTION_STEP_MS);
+}
+
+function beginMovingPhase() {
+  if (!petWindow || petWindow.isDestroyed() || !petWindow.isVisible() || nativeTheme.shouldUseReducedMotion || !isMovingMode()) {
+    stopWindowMotion();
+    sendState();
+    return;
+  }
+  motionPhase = "moving";
+  restGesture = "idle";
+  motionStepsRemaining = HORIZONTAL_STEPS_PER_LEG;
+  horizontalStepsUntilTurn = motionVelocity.x ? HORIZONTAL_STEPS_PER_LEG : 0;
+  sendState();
+  scheduleMotionStep();
+}
+
+function beginRestPhase() {
+  motionPhase = "resting";
+  restGesture = REST_GESTURE_ORDER[restGestureIndex % REST_GESTURE_ORDER.length];
+  restGestureIndex += 1;
+  const previousFacing = facing;
+  if (motionVelocity.x && horizontalStepsUntilTurn <= 0) {
+    motionVelocity.x *= -1;
+    horizontalStepsUntilTurn = HORIZONTAL_STEPS_PER_LEG;
+    updateFacing(motionVelocity.x);
+  }
+  if (facing === previousFacing) sendState();
+  const restDuration = REST_MIN_MS + Math.floor(Math.random() * (REST_MAX_MS - REST_MIN_MS + 1));
+  motionTimer = setTimeout(beginMovingPhase, restDuration);
+}
+
+function runMotionStep() {
+  motionTimer = null;
+  if (!petWindow || petWindow.isDestroyed() || !petWindow.isVisible() || nativeTheme.shouldUseReducedMotion || !isMovingMode()) {
+    stopWindowMotion();
+    sendState();
+    return;
+  }
+  moveWindowOneStep();
+  motionStepsRemaining -= 1;
+  if (horizontalStepsUntilTurn > 0) horizontalStepsUntilTurn -= 1;
+  if (motionStepsRemaining <= 0) {
+    beginRestPhase();
+    return;
+  }
+  scheduleMotionStep();
 }
 
 function configureWindowMotion() {
@@ -234,7 +293,7 @@ function configureWindowMotion() {
   }
   horizontalStepsUntilTurn = motionVelocity.x ? HORIZONTAL_STEPS_PER_LEG : 0;
   updateFacing(motionVelocity.x);
-  motionTimer = setInterval(moveWindowOneStep, 32);
+  beginMovingPhase();
 }
 
 function scheduleBoundsSave() {
@@ -460,6 +519,9 @@ function runQaCaptureIfRequested() {
         character: preferences.character,
         mode: preferences.mode,
         facing,
+        moving: motionPhase === "moving",
+        motionPhase,
+        restGesture,
         spriteBackgroundPositionY,
         initialBounds,
         finalBounds,

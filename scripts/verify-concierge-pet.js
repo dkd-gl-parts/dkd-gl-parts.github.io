@@ -72,6 +72,12 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
   'var GAZE_MIN_DISTANCE = 112;',
   'var GAZE_DISTANCE_RATIO = .82;',
   'var GAZE_FRAME_SCALES = {',
+  'var STOP_GESTURE_ORDER = ["escort", "handshake", "shy"]',
+  'escort: { columns: [0, 1]',
+  'handshake: { columns: [2, 3]',
+  'shy: { columns: [4, 5]',
+  'playRowFrames("review", gesture.columns, gesture.durations, gesture.iterations)',
+  'var rest = 1600 + Math.floor(Math.random() * 1400)',
   'backgroundSize: size',
   'collectExclusionRects()',
   "[role='button']",
@@ -104,6 +110,8 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
   'isFloating: isFloatingWindowOpen',
   '追加料金：0円（ブラウザ標準機能）'
 ].forEach((fragment) => requireFragment(runtime, fragment));
+
+assert(!runtime.includes("var segments ="), "Active concierge must not chain multiple moves before stopping");
 
 requireFragment(runtime, 'if (!visible || isPresentationHidden() || settings.mode === "off")', "Off mode must stop before panel animation handling");
 requireFragment(runtime, 'settings.mode === "off" || root.classList.contains("has-no-safe-target")', "External states must not revive a concierge without a safe target");
@@ -174,8 +182,8 @@ assert(!css.includes("radial-gradient(circle at 18% 18%"), "Floating concierge m
 assert(!css.includes("data:"), "Concierge stylesheet must not embed sprite data URLs");
 
 const expectedPets = [
-  { dir: "suzuto", id: "dcats-suzuto", displayName: "スズト", sha256: "90BAC82F2DAD2901B0EAB6DCC52C317EA3F1091597D6D7D12B3347DA7E59FF2C" },
-  { dir: "rinna", id: "dcats-rinna", displayName: "リンナ", sha256: "9E505981DCB318A421CB213BE35336B4420147A482D0BD478D0463550DC43880" }
+  { dir: "suzuto", id: "dcats-suzuto", displayName: "スズト", sha256: "4C3985F11D4BBF69ED08BECCDC88903CAAC882E01A21120256A59EC66E2F7066" },
+  { dir: "rinna", id: "dcats-rinna", displayName: "リンナ", sha256: "082AAAF835D217FEEFD7BD0C958779325CEC90FAC1FEA1D339F977AB3D0DF439" }
 ];
 
 for (const expected of expectedPets) {
@@ -201,4 +209,4 @@ for (const expected of expectedPets) {
   assert(size.width === 1536 && size.height === 2288, `${expected.dir} spritesheet must be 1536x2288`);
 }
 
-console.log(`Concierge pet verification passed (${appVersion}; one selected character, 5 movement modes, always-on-top floating display, 9 motion states, 16 gaze directions).`);
+console.log(`Concierge pet verification passed (${appVersion}; one selected character, 5 movement modes, move-stop cycle, 3 rotating stop gestures, always-on-top floating display, 9 motion states, 16 gaze directions).`);

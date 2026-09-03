@@ -27,6 +27,12 @@
     running: { row: 7, durations: [120, 120, 120, 120, 120, 220] },
     review: { row: 8, durations: [150, 150, 150, 150, 150, 280] }
   };
+  var STOP_GESTURE_ORDER = ["escort", "handshake", "shy"];
+  var STOP_GESTURES = {
+    escort: { columns: [0, 1], durations: [420, 520], iterations: 2 },
+    handshake: { columns: [2, 3], durations: [420, 650], iterations: 2 },
+    shy: { columns: [4, 5], durations: [500, 620], iterations: 2 }
+  };
   var COPY = {
     ja: {
       rootLabel: "D-CATSコンシェルジュ",
@@ -187,6 +193,7 @@
   var floatingRequestPending = false;
   var externalStateUntil = 0;
   var lastInteractionAt = 0;
+  var stopGestureIndex = 0;
 
   function activeLanguage() {
     var lang = String(document.documentElement.lang || "ja").toLowerCase();
@@ -738,26 +745,26 @@
     }
     root.classList.remove("is-blocked");
 
-    var segments = 1 + Math.floor(Math.random() * 3);
-    for (var i = 0; i < segments; i += 1) {
-      var target = findSafeTarget();
-      if (!target) {
-        root.classList.add("has-no-safe-target");
-        showFrame(ROWS.idle.row, 0);
-        if (await delay(3000, token)) runActivityLoop(token);
-        return;
-      }
-      root.classList.remove("has-no-safe-target");
-      var moved = await moveTo(target, token);
-      if (!moved || token !== sequenceToken) return;
+    var target = findSafeTarget();
+    if (!target) {
+      root.classList.add("has-no-safe-target");
+      showFrame(ROWS.idle.row, 0);
+      if (await delay(3000, token)) runActivityLoop(token);
+      return;
     }
+    root.classList.remove("has-no-safe-target");
+    var moved = await moveTo(target, token);
+    if (!moved || token !== sequenceToken) return;
 
-    var action = chooseAmbientAction();
-    var duration = action === "waving" ? 1700 : action === "jumping" ? 1500 : action === "review" ? 1750 : 1150;
-    playRow(action, 1);
-    if (!(await delay(duration + 200, token))) return;
     playRow("idle", Infinity);
-    var rest = 350 + Math.floor(Math.random() * 1150);
+    var settle = 700 + Math.floor(Math.random() * 500);
+    if (!(await delay(settle, token))) return;
+
+    var gesture = nextStopGesture();
+    playRowFrames("review", gesture.columns, gesture.durations, gesture.iterations);
+    if (!(await delay(stopGestureDuration(gesture) + 200, token))) return;
+    playRow("idle", Infinity);
+    var rest = 1600 + Math.floor(Math.random() * 1400);
     if (await delay(rest, token)) runActivityLoop(token);
   }
 
@@ -765,12 +772,15 @@
     return visible && !isPresentationHidden() && settings.mode !== "off" && !panelOpen && !isReducedMotion();
   }
 
-  function chooseAmbientAction() {
-    var value = Math.random();
-    if (value < .28) return "waving";
-    if (value < .52) return "jumping";
-    if (value < .69) return "review";
-    return "idle";
+  function nextStopGesture() {
+    var name = STOP_GESTURE_ORDER[stopGestureIndex % STOP_GESTURE_ORDER.length];
+    stopGestureIndex += 1;
+    return STOP_GESTURES[name];
+  }
+
+  function stopGestureDuration(gesture) {
+    var total = gesture.durations.reduce(function (sum, duration) { return sum + duration; }, 0);
+    return total * gesture.iterations;
   }
 
   function moveTo(target, token) {
@@ -1001,6 +1011,29 @@
       { backgroundPosition: value, backgroundSize: size },
       { backgroundPosition: value, backgroundSize: size }
     ], { duration: 1, fill: "forwards" });
+    return spriteAnimation;
+  }
+
+  function playRowFrames(name, columns, durations, iterations) {
+    var rowName = ROWS[name] ? name : "idle";
+    var row = ROWS[rowName];
+    if (!sprite || typeof sprite.animate !== "function") return null;
+    if (!columns || !columns.length || columns.length !== durations.length) return playRow(rowName, iterations);
+    if (isReducedMotion()) return showFrame(row.row, columns[0]);
+    var resolvedIterations = iterations == null ? 1 : iterations;
+    var visualKey = "frames:" + rowName + ":" + columns.join(",") + ":" + String(resolvedIterations);
+    if (currentVisualKey === visualKey && spriteAnimation && spriteAnimation.playState === "running") return spriteAnimation;
+    if (spriteAnimation) spriteAnimation.cancel();
+    var total = durations.reduce(function (sum, duration) { return sum + duration; }, 0);
+    var elapsed = 0;
+    var frames = [];
+    durations.forEach(function (duration, index) {
+      frames.push({ offset: elapsed / total, backgroundPosition: backgroundPosition(row.row, columns[index], 1), backgroundSize: "800% 1100%", easing: "steps(1, end)" });
+      elapsed += duration;
+    });
+    frames.push({ offset: 1, backgroundPosition: backgroundPosition(row.row, columns[columns.length - 1], 1), backgroundSize: "800% 1100%", easing: "steps(1, end)" });
+    currentVisualKey = visualKey;
+    spriteAnimation = sprite.animate(frames, { duration: total, iterations: resolvedIterations, fill: "forwards" });
     return spriteAnimation;
   }
 
