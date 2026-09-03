@@ -175,7 +175,7 @@ assert(!css.includes("data:"), "Concierge stylesheet must not embed sprite data 
 
 const expectedPets = [
   { dir: "suzuto", id: "dcats-suzuto", displayName: "スズト", sha256: "DC5978A1C172A0A66D8DFAFF8C0C0F15AABCE474C266FF3F1B63E009661431C7" },
-  { dir: "rinna", id: "dcats-rinna", displayName: "リンナ", sha256: "76EC551DAB04360DE63F36ECEB5927B29BE24D50D3FB0839D7FE19C962E90F0F" }
+  { dir: "rinna", id: "dcats-rinna", displayName: "リンナ", sha256: "97BC521CC21430C8B7DDCC34390EEB0190FCE3AAB7A080CB7AF32826409A0460" }
 ];
 
 for (const expected of expectedPets) {

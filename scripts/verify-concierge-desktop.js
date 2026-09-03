@@ -92,7 +92,7 @@ assert(!staticBuilder.includes("desktop/concierge-companion"), "Static deploymen
 
 const expectedSprites = [
   ["suzuto", "DC5978A1C172A0A66D8DFAFF8C0C0F15AABCE474C266FF3F1B63E009661431C7"],
-  ["rinna", "76EC551DAB04360DE63F36ECEB5927B29BE24D50D3FB0839D7FE19C962E90F0F"]
+  ["rinna", "97BC521CC21430C8B7DDCC34390EEB0190FCE3AAB7A080CB7AF32826409A0460"]
 ];
 for (const [character, expectedHash] of expectedSprites) {
   const spritePath = path.join(root, "assets", "concierge-pet", character, "spritesheet.webp");
