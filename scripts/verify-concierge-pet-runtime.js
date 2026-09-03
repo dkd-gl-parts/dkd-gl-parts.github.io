@@ -119,9 +119,12 @@ class FakeElement {
   getBoundingClientRect() {
     if (!isRendered(this)) return { left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 };
     if (this.customRect) return { ...this.customRect };
-    const mobile = windowObject.innerWidth <= 700;
-    const width = this.classList.contains("dcats-concierge-mover") ? (mobile ? 88 : 118) : 120;
-    const height = this.classList.contains("dcats-concierge-mover") ? (mobile ? 96 : 128) : 44;
+    const ownerWindow = this.ownerDocument && this.ownerDocument.defaultView || windowObject;
+    const mobile = ownerWindow.innerWidth <= 700;
+    const floatingMover = this.classList.contains("dcats-concierge-mover") && ownerWindow !== windowObject;
+    const floatingWidth = Math.max(32, Math.min(192, ownerWindow.innerWidth - 16, (ownerWindow.innerHeight - 16) * 12 / 13));
+    const width = this.classList.contains("dcats-concierge-mover") ? (floatingMover ? floatingWidth : (mobile ? 88 : 118)) : 120;
+    const height = this.classList.contains("dcats-concierge-mover") ? (floatingMover ? floatingWidth * 13 / 12 : (mobile ? 96 : 128)) : 44;
     const left = this.transformPoint ? this.transformPoint.x : 20;
     const top = this.transformPoint ? this.transformPoint.y : 80;
     return { left, top, right: left + width, bottom: top + height, width, height };
@@ -236,6 +239,7 @@ function createFloatingWindow() {
       list.push(listener);
       listeners.set(type, list);
     },
+    dispatchForTest(type, event = {}) { dispatch(listeners, type, event); },
     close() {
       if (this.closed) return;
       this.closed = true;
@@ -384,6 +388,18 @@ assert(root.classList.contains("is-floating"), "Floating concierge state was not
 assert(firstFloatingWindow.document.documentElement.classList.contains("dcats-concierge-floating-document"), "Floating document styling hook is missing");
 assert(firstFloatingWindow.document.head.children.some((element) => element.tagName === "LINK" && element.rel === "stylesheet"), "Floating document did not load the CSP-safe concierge stylesheet");
 assert(floatingButton.getAttribute("aria-pressed") === "true" && floatingButton.textContent === "D-CATS画面に戻す", "Floating display control did not expose its active state");
+firstFloatingWindow.innerWidth = 120;
+firstFloatingWindow.innerHeight = 120;
+firstFloatingWindow.dispatchForTest("resize");
+flushAnimationFrames();
+const compactFloatingRect = mover.getBoundingClientRect();
+assert(compactFloatingRect.width <= 104 && compactFloatingRect.height <= 104, "Floating concierge did not shrink with a cramped window");
+assert(compactFloatingRect.left >= 0 && compactFloatingRect.top >= 0 && compactFloatingRect.right <= firstFloatingWindow.innerWidth && compactFloatingRect.bottom <= firstFloatingWindow.innerHeight, "Floating concierge escaped the cramped window viewport");
+assert(!root.classList.contains("has-no-safe-target"), "Cramped floating window hid the concierge when no movement lane was available");
+firstFloatingWindow.innerWidth = 360;
+firstFloatingWindow.innerHeight = 420;
+firstFloatingWindow.dispatchForTest("resize");
+flushAnimationFrames();
 api.setMode("fixed");
 assert(liveInfiniteAnimations().some((animation) => animation.owner === sprite), "Floating concierge stopped when the originating D-CATS document was hidden");
 api.setMode("active");

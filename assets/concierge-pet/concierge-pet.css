@@ -37,11 +37,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.869");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.870");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.869");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.870");
 }
 
 .dcats-concierge-hit-target {
@@ -328,9 +328,13 @@ body.dcats-concierge-floating-body {
 }
 
 body.dcats-concierge-floating-body .dcats-concierge {
-  --dcats-concierge-width: 192px;
-  --dcats-concierge-height: 208px;
+  --dcats-concierge-width: max(32px, min(192px, calc(100vw - 16px), calc(92.3077dvh - 14.7692px)));
+  --dcats-concierge-height: auto;
   z-index: 1;
+}
+
+body.dcats-concierge-floating-body .dcats-concierge-mover {
+  aspect-ratio: 12 / 13;
 }
 
 .dcats-concierge.is-off .dcats-concierge-mover {

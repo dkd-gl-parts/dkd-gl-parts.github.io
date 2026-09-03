@@ -165,6 +165,7 @@
   var bubbleTimer = null;
   var pointerFrameRequest = null;
   var layoutFrameRequest = null;
+  var layoutFrameWindow = null;
   var currentVisualKey = "";
   var panelReturnFocus = null;
   var position = { x: 18, y: 120 };
@@ -513,11 +514,13 @@
     stylesheet.href = sourceStylesheet && sourceStylesheet.href
       ? sourceStylesheet.href
       : new URL("assets/concierge-pet/concierge-pet.css", document.baseURI).href;
+    stylesheet.addEventListener("load", scheduleViewportSync, { once: true });
     floatingDocument.head.appendChild(stylesheet);
   }
 
   function restoreFromFloatingWindow(targetWindow, closeWindow) {
     if (!targetWindow || floatingWindow !== targetWindow) return;
+    cancelLayoutFrame();
     floatingWindow = null;
     floatingRequestPending = false;
     if (root.ownerDocument !== document) document.body.appendChild(root);
@@ -821,10 +824,10 @@
     root.classList.remove("has-no-safe-target");
     var size = petSize();
     var viewport = viewportWindow();
-    var target = {
+    var target = clampToViewport({
       x: Math.max(10, viewport.innerWidth - size.width - 72),
       y: Math.max(54, viewport.innerHeight - size.height - 74)
-    };
+    }, size, viewport);
     position = target;
     var next = mover.animate([
       { transform: transformFor(target) },
@@ -841,12 +844,23 @@
     return { width: rect.width || (viewport.innerWidth <= 700 ? 88 : 118), height: rect.height || (viewport.innerWidth <= 700 ? 96 : 128) };
   }
 
+  function clampToViewport(target, size, viewport) {
+    var maximumX = Math.max(0, viewport.innerWidth - size.width - 8);
+    var maximumY = Math.max(0, viewport.innerHeight - size.height - 8);
+    var minimumX = Math.min(8, maximumX);
+    var minimumY = Math.min(isFloatingWindowOpen() ? 8 : 46, maximumY);
+    return {
+      x: Math.max(minimumX, Math.min(target.x, maximumX)),
+      y: Math.max(minimumY, Math.min(target.y, maximumY))
+    };
+  }
+
   function findSafeTarget() {
     var size = petSize();
     var viewport = viewportWindow();
     var width = Math.max(1, viewport.innerWidth - size.width - 18);
     var height = Math.max(1, viewport.innerHeight - size.height - 18);
-    var minimumY = viewport.innerWidth <= 700 ? Math.max(48, height * .42) : 52;
+    var minimumY = isFloatingWindowOpen() ? 8 : (viewport.innerWidth <= 700 ? Math.max(48, height * .42) : 52);
     var rects = collectExclusionRects();
     var horizontalOnly = settings.mode === "horizontal";
     var verticalOnly = settings.mode === "vertical";
@@ -876,6 +890,7 @@
     for (var fallbackIndex = 0; fallbackIndex < fallbacks.length; fallbackIndex += 1) {
       if (isSafeCandidate(fallbacks[fallbackIndex], size, rects)) return fallbacks[fallbackIndex];
     }
+    if (isFloatingWindowOpen()) return clampToViewport({ x: 8, y: 8 }, size, viewport);
     return null;
   }
 
@@ -1062,11 +1077,22 @@
   function scheduleViewportSync() {
     if (!root || layoutFrameRequest != null) return;
     root.classList.add("is-revalidating");
-    layoutFrameRequest = window.requestAnimationFrame(syncViewportLayout);
+    layoutFrameWindow = viewportWindow();
+    layoutFrameRequest = layoutFrameWindow.requestAnimationFrame(syncViewportLayout);
+  }
+
+  function cancelLayoutFrame() {
+    if (layoutFrameRequest != null && layoutFrameWindow && typeof layoutFrameWindow.cancelAnimationFrame === "function") {
+      layoutFrameWindow.cancelAnimationFrame(layoutFrameRequest);
+    }
+    layoutFrameRequest = null;
+    layoutFrameWindow = null;
+    if (root) root.classList.remove("is-revalidating");
   }
 
   function syncViewportLayout() {
     layoutFrameRequest = null;
+    layoutFrameWindow = null;
     if (!visible) {
       root.classList.remove("is-revalidating");
       return;
@@ -1074,8 +1100,7 @@
     freezeMovement();
     var size = petSize();
     var viewport = viewportWindow();
-    position.x = Math.max(8, Math.min(position.x, viewport.innerWidth - size.width - 8));
-    position.y = Math.max(46, Math.min(position.y, viewport.innerHeight - size.height - 8));
+    position = clampToViewport(position, size, viewport);
     var next = mover.animate([
       { transform: transformFor(position) },
       { transform: transformFor(position) }

@@ -80,6 +80,8 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
   'window.addEventListener("scroll", scheduleViewportSync',
   'freezeMovement();',
   'is-revalidating',
+  'layoutFrameWindow.requestAnimationFrame(syncViewportLayout)',
+  'layoutFrameWindow.cancelAnimationFrame(layoutFrameRequest)',
   'focusTarget.isConnected',
   'has-left-bubble',
   '.overlay.show,.panel.show',
@@ -90,6 +92,7 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
   'requestedWindow.document.body.appendChild(root)',
   'restoreFromFloatingWindow(requestedWindow, false)',
   'floatingDocument.head.appendChild(stylesheet)',
+  'stylesheet.addEventListener("load", scheduleViewportSync, { once: true })',
   'new URL("assets/concierge-pet/concierge-pet.css", document.baseURI).href',
   'return isFloatingWindowOpen() ? floatingWindow : window;',
   'var activeDocument = presentationDocument();',
@@ -107,6 +110,7 @@ requireFragment(runtime, 'rinna: { copyKey: "rinna", className: "is-rinna", trav
 requireFragment(runtime, "var TRAVEL_TURN_DELAY = 220;", "Directional travel must pause briefly after turning");
 requireFragment(runtime, "playRow(travelRowFor(dx), Infinity);", "Travel must select a character-aware facing direction");
 requireFragment(runtime, "var turnOffset = TRAVEL_TURN_DELAY / duration;", "Travel must reserve time to face the destination before moving");
+requireFragment(runtime, 'if (isFloatingWindowOpen()) return clampToViewport({ x: 8, y: 8 }, size, viewport);', "A cramped floating window must keep the concierge visible");
 
 assert((runtime.match(/createElement\("div", "dcats-concierge-sprite"\)/g) || []).length === 1, "Runtime must create exactly one visible sprite element");
 assert(!runtime.includes("innerHTML"), "Concierge UI must not use innerHTML");
@@ -155,8 +159,9 @@ requireFragment(css, "html.dcats-concierge-floating-document");
 requireFragment(css, "body.dcats-concierge-floating-body");
 requireFragment(css, ".dcats-concierge-floating-cost");
 assert(/html\.dcats-concierge-floating-document,\s*body\.dcats-concierge-floating-body\s*\{[^}]*background:\s*transparent;/s.test(css), "Floating concierge document must not paint the decorative window background");
-requireFragment(css, "--dcats-concierge-width: 192px;", "Floating concierge character width must use the native atlas frame size");
-requireFragment(css, "--dcats-concierge-height: 208px;", "Floating concierge character height must use the native atlas frame size");
+requireFragment(css, "--dcats-concierge-width: max(32px, min(192px, calc(100vw - 16px), calc(92.3077dvh - 14.7692px)));", "Floating concierge character must shrink with both window axes");
+requireFragment(css, "--dcats-concierge-height: auto;", "Floating concierge character height must follow its aspect ratio");
+requireFragment(css, "aspect-ratio: 12 / 13;", "Floating concierge character must preserve the native atlas aspect ratio");
 assert(!css.includes("radial-gradient(circle at 18% 18%"), "Floating concierge must not retain the decorative window background");
 assert(!css.includes("data:"), "Concierge stylesheet must not embed sprite data URLs");
 
