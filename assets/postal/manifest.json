@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "data_version": "2026-07-31",
+  "data_version": "2026-08-31",
   "source_name": "日本郵便 住所の郵便番号（1レコード1行・UTF-8形式）",
   "source_page": "https://www.post.japanpost.jp/service/search/zipcode/download/utf-zip.html",
   "source_archive": "https://www.post.japanpost.jp/service/search/zipcode/download/utf/zip/utf_ken_all.zip",
-  "source_updated_at": "2026-07-31",
-  "source_csv_sha256": "d35fc79fa9c5a0555cd616539b7c27200a71988601d84a75e86a336fe0be1883",
-  "source_row_count": 124513,
-  "postal_code_count": 120682,
+  "source_updated_at": "2026-08-31",
+  "source_csv_sha256": "e3871e8e12da1151bd468f4e6d2efc379efad76054a63682493f1446ad3ec105",
+  "source_row_count": 124523,
+  "postal_code_count": 120717,
   "prefecture_count": 47,
   "shards": [
     {
@@ -17,7 +17,7 @@
       "address_count": 14937,
       "source_row_count": 14937,
       "bytes": 477379,
-      "sha256": "0adcc1bc5045d861fb5ca520e7ceaa059aa44729ae17de1eb23ad97ccca5883c"
+      "sha256": "1dbe76be84bae0516aafec861fa005a9ed91123677b150b6071918ba02a69dde"
     },
     {
       "prefix": "1",
@@ -26,7 +26,7 @@
       "address_count": 4018,
       "source_row_count": 4018,
       "bytes": 224649,
-      "sha256": "01370010f06e44ec7e0840627ff24bc64907cf72a3096f0ce45ff254a61ac9d2"
+      "sha256": "ce74732f9546d7c305d15d69bc12db0d9695b4d7fb4e976b87929cc889b6d812"
     },
     {
       "prefix": "2",
@@ -35,16 +35,16 @@
       "address_count": 6058,
       "source_row_count": 6058,
       "bytes": 186876,
-      "sha256": "f61ed79f2544955c78eb54d101950ef7e4b4249bb3c242ab451eeb2617ece896"
+      "sha256": "b5ccef7c2e400a80022e3b360fab7cc6b7a98ab75237976bff30a6ea8199a9e1"
     },
     {
       "prefix": "3",
       "file": "postal-3.json",
-      "postal_code_count": 10866,
-      "address_count": 10895,
-      "source_row_count": 10895,
-      "bytes": 327231,
-      "sha256": "011eb31235f7365efd20bf7638e3d6a20aa5dc475f116424296ff8e27f00fdd3"
+      "postal_code_count": 10867,
+      "address_count": 10896,
+      "source_row_count": 10896,
+      "bytes": 327261,
+      "sha256": "95d9bbe21de241970e81d1c131afb5f555d1db194718e247c34666f9f34c7cd7"
     },
     {
       "prefix": "4",
@@ -53,7 +53,7 @@
       "address_count": 11656,
       "source_row_count": 11656,
       "bytes": 368971,
-      "sha256": "f0cda9841d968561d770decc76c5e0f83513f3b1295c85b27f7bff7959ed1b0b"
+      "sha256": "49202c63da7292b1c31a0885e6f42b0b261934ed779bcf8e6a33ef25006b1a23"
     },
     {
       "prefix": "5",
@@ -62,7 +62,7 @@
       "address_count": 11521,
       "source_row_count": 11521,
       "bytes": 373326,
-      "sha256": "b0b7ddb52628b8cc146009df9b4e41f88b549e65d740ee6297bafc8744306d5e"
+      "sha256": "208c6b9b3e07f7d6fb51ce45895a7bd03c29b5c19d563b7ed6663375219cf99a"
     },
     {
       "prefix": "6",
@@ -71,34 +71,34 @@
       "address_count": 17814,
       "source_row_count": 17815,
       "bytes": 609546,
-      "sha256": "6e15665ee68aa8305ee164eea299740b341d90501db4eb16c46b8dfae4d64a66"
+      "sha256": "fff1ff2f98622d638a7ab4b5bf384d7d95d474aaaa3ed29282b55b9a4c916d5d"
     },
     {
       "prefix": "7",
       "file": "postal-7.json",
-      "postal_code_count": 11087,
-      "address_count": 11750,
-      "source_row_count": 11750,
-      "bytes": 372413,
-      "sha256": "52d541b2095621886c86f13e3c665a9394a3b50fdbd13fffbc2fff27afa15295"
+      "postal_code_count": 11088,
+      "address_count": 11726,
+      "source_row_count": 11726,
+      "bytes": 371657,
+      "sha256": "5d921fbd62fc9d843cb4f0d383b49b1be23988e2e2d705a9e2fa02711f4c1768"
     },
     {
       "prefix": "8",
       "file": "postal-8.json",
-      "postal_code_count": 12101,
-      "address_count": 12153,
-      "source_row_count": 12153,
-      "bytes": 390419,
-      "sha256": "3b2bdb650d51cf229e74a00710f6702ea6b76861fe01ebfb479ebac1ccfd4cfe"
+      "postal_code_count": 12102,
+      "address_count": 12154,
+      "source_row_count": 12154,
+      "bytes": 390448,
+      "sha256": "719075a99b38da2a19d0e629408dc8ceaf134f03868aafed47d095999291ffec"
     },
     {
       "prefix": "9",
       "file": "postal-9.json",
-      "postal_code_count": 22233,
-      "address_count": 23710,
-      "source_row_count": 23710,
-      "bytes": 722383,
-      "sha256": "bece12c5cebe7cc3e715b9ff366cb6ff18dc14dd12de8a657c2f5ae500c6c588"
+      "postal_code_count": 22265,
+      "address_count": 23742,
+      "source_row_count": 23742,
+      "bytes": 723490,
+      "sha256": "1baf911095df675e60400353912ff987ae755b043f357795a5a82af54d314626"
     }
   ]
 }
