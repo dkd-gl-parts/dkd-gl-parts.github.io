@@ -51,6 +51,13 @@ if (!source.includes("var CUSTOMER_CATALOG_SHORT_QUERY_MAX = 5;") ||
     !searchSource.includes("categoryEl.showPicker()")) {
   throw new Error("customer catalog must require a category before searching part numbers of five characters or fewer");
 }
+if (!source.includes("var CUSTOMER_CATALOG_SHORT_QUERY_SCAN_LIMIT = 1000;") ||
+    !searchSource.includes("query && category && normalizedQueryLength <= CUSTOMER_CATALOG_SHORT_QUERY_MAX") ||
+    !searchSource.includes("? CUSTOMER_CATALOG_SHORT_QUERY_SCAN_LIMIT") ||
+    !searchSource.includes("fetchCoreProductMasterMatches(query, category, candidateScanLimit") ||
+    !searchSource.includes("filterSalesVisibleProducts(products).slice(0, candidateScanLimit)")) {
+  throw new Error("categorized short customer searches must scan enough indexed candidates before price and stock filtering");
+}
 if (!html.includes('id="customer-catalog-search-feedback"') ||
     !html.includes('aria-describedby="customer-catalog-search-feedback"')) {
   throw new Error("short customer catalog searches must show guidance beside the category selector");

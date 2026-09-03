@@ -5650,7 +5650,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.874";
+var APP_VERSION       = "v1.1.875";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6033,6 +6033,7 @@ var customerManagedUsersRequestSeq = 0;
 var CUSTOMER_CATALOG_RESULT_LIMIT = 60;
 var CUSTOMER_CATALOG_SCAN_LIMIT = 180;
 var CUSTOMER_CATALOG_SHORT_QUERY_MAX = 5;
+var CUSTOMER_CATALOG_SHORT_QUERY_SCAN_LIMIT = 1000;
 var salesCustomerOptions = [];
 var detailSalesCustomerOptions = [];
 var detailSelectedSalesCustomerId = "";
@@ -9301,8 +9302,12 @@ async function runCustomerCatalogSearch(options) {
   var detail = document.getElementById("customer-catalog-detail");
   if (detail) detail.innerHTML = "<div class='customer-catalog-detail-empty'><strong>" + esc(t("customer_catalog_select_product")) + "</strong><span>" + esc(t("customer_catalog_select_product_note")) + "</span></div>";
   var result;
+  var normalizedQueryLength = normalizePartQuery(query).length;
+  var candidateScanLimit = query && category && normalizedQueryLength <= CUSTOMER_CATALOG_SHORT_QUERY_MAX
+    ? CUSTOMER_CATALOG_SHORT_QUERY_SCAN_LIMIT
+    : CUSTOMER_CATALOG_SCAN_LIMIT;
   if (query) {
-    result = await fetchCoreProductMasterMatches(query, category, CUSTOMER_CATALOG_SCAN_LIMIT, {
+    result = await fetchCoreProductMasterMatches(query, category, candidateScanLimit, {
       includeDksProductCode: false,
       preferPrefix: true
     });
@@ -9319,7 +9324,7 @@ async function runCustomerCatalogSearch(options) {
   var products = normalizeCoreProductFastRows(result.data || []);
   await hydrateSalesDaikoVisibility(products);
   if (seq !== customerCatalogRequestSeq) return;
-  products = filterSalesVisibleProducts(products).slice(0, CUSTOMER_CATALOG_SCAN_LIMIT);
+  products = filterSalesVisibleProducts(products).slice(0, candidateScanLimit);
   var stockPriorityResult = await fetchProductAvailableStockMap(products);
   if (seq !== customerCatalogRequestSeq) return;
   if (!stockPriorityResult.error) products = sortProductsByAvailableStock(products, stockPriorityResult.map);
