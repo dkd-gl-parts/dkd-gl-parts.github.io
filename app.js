@@ -248,6 +248,15 @@ var TRANSLATIONS = {
     customer_order_continue: "商品を追加",
     customer_order_shipping: "お届け先",
     customer_order_shipping_note: "送り状に印字する内容です。",
+    customer_order_vehicle_title: "車両情報（任意）",
+    customer_order_vehicle_note: "取り付け車両が分かる場合に入力してください。",
+    customer_order_vehicle_name: "車名",
+    customer_order_vehicle_model_code: "車両型式",
+    customer_order_vehicle_first_registration: "初年度登録",
+    customer_order_vehicle_chassis_number: "車台番号",
+    customer_order_vehicle_engine: "エンジン",
+    customer_order_vehicle_model_designation: "型式指定番号",
+    customer_order_vehicle_classification: "類別区分番号",
     customer_order_preview: "価格・在庫を確認",
     customer_order_submit: "注文を確定",
     customer_order_validating: "価格・在庫・送料を確認しています。",
@@ -2112,6 +2121,15 @@ var TRANSLATIONS = {
     customer_order_continue: "Add Products",
     customer_order_shipping: "Ship To",
     customer_order_shipping_note: "This information will be printed on the shipping label.",
+    customer_order_vehicle_title: "Vehicle Information (Optional)",
+    customer_order_vehicle_note: "Enter details when the installation vehicle is known.",
+    customer_order_vehicle_name: "Vehicle Name",
+    customer_order_vehicle_model_code: "Model Code",
+    customer_order_vehicle_first_registration: "First Registration",
+    customer_order_vehicle_chassis_number: "Chassis No.",
+    customer_order_vehicle_engine: "Engine",
+    customer_order_vehicle_model_designation: "Model Designation No.",
+    customer_order_vehicle_classification: "Classification No.",
     customer_order_preview: "Check Price / Stock",
     customer_order_submit: "Place Order",
     customer_order_validating: "Checking price, stock, and shipping.",
@@ -3921,6 +3939,15 @@ var TRANSLATIONS = {
     customer_order_continue: "添加商品",
     customer_order_shipping: "送货地址",
     customer_order_shipping_note: "此内容将打印在运单上。",
+    customer_order_vehicle_title: "车辆信息（选填）",
+    customer_order_vehicle_note: "已知安装车辆时请输入。",
+    customer_order_vehicle_name: "车名",
+    customer_order_vehicle_model_code: "车辆型号",
+    customer_order_vehicle_first_registration: "初次登记",
+    customer_order_vehicle_chassis_number: "车架号",
+    customer_order_vehicle_engine: "发动机",
+    customer_order_vehicle_model_designation: "型式指定编号",
+    customer_order_vehicle_classification: "类别区分编号",
     customer_order_preview: "确认价格・库存",
     customer_order_submit: "提交订单",
     customer_order_validating: "正在确认价格、库存和运费。",
@@ -5716,7 +5743,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.887";
+var APP_VERSION       = "v1.1.888";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -10209,6 +10236,34 @@ function customerOrderPayloadItems() {
   });
 }
 
+function customerOrderVehicleInformationPayload() {
+  function value(id, uppercase) {
+    var el = document.getElementById(id);
+    var normalized = el ? String(el.value || "").normalize("NFKC").trim() : "";
+    return uppercase ? normalized.toUpperCase() : normalized;
+  }
+  return {
+    vehicle_name: value("customer-order-vehicle-name", false),
+    vehicle_model_code: value("customer-order-vehicle-model-code", true),
+    first_registration_month: value("customer-order-first-registration", false),
+    chassis_number: value("customer-order-chassis-number", true),
+    engine_model: value("customer-order-engine-model", true),
+    model_designation_number: value("customer-order-model-designation", true),
+    classification_number: value("customer-order-classification", true)
+  };
+}
+
+function clearCustomerOrderVehicleInformation() {
+  [
+    "customer-order-vehicle-name", "customer-order-vehicle-model-code", "customer-order-first-registration",
+    "customer-order-chassis-number", "customer-order-engine-model", "customer-order-model-designation",
+    "customer-order-classification"
+  ].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+}
+
 function customerOrderAddressPayload() {
   function value(id) {
     var el = document.getElementById(id);
@@ -10221,7 +10276,8 @@ function customerOrderAddressPayload() {
     postal_code: value("customer-order-postal-code"),
     prefecture_code: value("customer-order-prefecture"),
     address_line_1: value("customer-order-address1"),
-    address_line_2: value("customer-order-address2")
+    address_line_2: value("customer-order-address2"),
+    vehicle_information: customerOrderVehicleInformationPayload()
   };
 }
 
@@ -10727,6 +10783,35 @@ function customerOrderDateTimeText(value) {
   return date.toLocaleString(currentLang === "ja" ? "ja-JP" : (currentLang === "zh" ? "zh-CN" : "en-US"), { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
+function customerOrderVehicleInformationRows(vehicleInformation) {
+  var info = vehicleInformation && typeof vehicleInformation === "object" ? vehicleInformation : {};
+  return [
+    [t("customer_order_vehicle_name"), info.vehicle_name],
+    [t("customer_order_vehicle_model_code"), info.vehicle_model_code],
+    [t("customer_order_vehicle_first_registration"), info.first_registration_month],
+    [t("customer_order_vehicle_chassis_number"), info.chassis_number],
+    [t("customer_order_vehicle_engine"), info.engine_model],
+    [t("customer_order_vehicle_model_designation"), info.model_designation_number],
+    [t("customer_order_vehicle_classification"), info.classification_number]
+  ].filter(function(row) { return String(row[1] || "").trim(); });
+}
+
+function customerOrderVehicleInformationHtml(vehicleInformation, className) {
+  var rows = customerOrderVehicleInformationRows(vehicleInformation);
+  if (!rows.length) return "";
+  return "<section class='customer-order-vehicle-summary " + esc(className || "") + "'><h4>" + esc(t("customer_order_vehicle_title")) + "</h4><dl>" + rows.map(function(row) {
+    return "<div><dt>" + esc(row[0]) + "</dt><dd>" + esc(row[1]) + "</dd></div>";
+  }).join("") + "</dl></section>";
+}
+
+function customerOrderVehicleInformationInlineHtml(vehicleInformation) {
+  var rows = customerOrderVehicleInformationRows(vehicleInformation);
+  if (!rows.length) return "";
+  return "<small class='customer-order-history-vehicle'><strong>" + esc(t("customer_order_vehicle_title")) + "</strong> " + rows.map(function(row) {
+    return esc(row[0]) + " " + esc(row[1]);
+  }).join(" / ") + "</small>";
+}
+
 function customerOrderPreviewItemMap() {
   var map = {};
   var rows = customerOrderPreview && Array.isArray(customerOrderPreview.items) ? customerOrderPreview.items : [];
@@ -10961,6 +11046,7 @@ async function submitCustomerOrder() {
   var registeredOrder = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
   customerOrderCart = [];
   customerOrderPreview = null;
+  clearCustomerOrderVehicleInformation();
   clearPersistedCustomerOrderCart();
   customerOrderSetStatus(t("customer_order_submit_success"), false);
   renderCustomerOrderCart();
@@ -10997,7 +11083,7 @@ function renderCustomerOrderHistory() {
       : "対象外";
     return "<article class='customer-order-history-row'>" +
       "<div><span class='customer-order-number'>" + esc(order.order_number || ("注文 " + (order.id || "-"))) + "</span><strong>" + esc(customerOrderStatusLabel(order.status)) + "</strong><small>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small></div>" +
-      "<div class='customer-order-history-items'>" + esc(itemText || "-") + "</div>" +
+      "<div class='customer-order-history-items'>" + esc(itemText || "-") + customerOrderVehicleInformationInlineHtml(order.vehicle_information) + "</div>" +
       "<div class='customer-order-history-total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div>" +
       "<dl><div><dt>商品発送便</dt><dd>" + esc(outboundService) + "</dd></div><div><dt>商品発送送り状</dt><dd>" + esc(order.outbound_tracking_number || "未登録") + "</dd></div><div><dt>コア返却便</dt><dd>" + esc(coreReturnService) + "</dd></div><div><dt>コア返却用送り状</dt><dd>" + esc(order.return_tracking_number || (order.core_return_required ? "未登録" : "対象外")) + "</dd></div><div><dt>コア返却</dt><dd>" + esc(order.core_return_status || (order.core_return_required ? "返却待ち" : "対象外")) + "</dd></div></dl>" +
     "</article>";
@@ -15385,7 +15471,7 @@ function renderSalesOrderDetail() {
     "<div class='sales-order-detail-panels'>" +
       "<section class='sales-order-detail-panel sales-order-detail-overview' id='sales-order-detail-panel-overview' role='tabpanel' aria-labelledby='sales-order-detail-tab-overview' data-sales-order-detail-panel='overview'><div class='sales-order-detail-overview-grid'>" +
         "<section class='sales-order-detail-section' id='sales-order-detail-products'><div class='sales-order-section-heading'><div><h3>注文商品</h3><p>販売価格、数量、コア返却条件と値引・調整行を確認します。</p></div>" + pricingButton + "</div>" + salesOrderItemRowsHtml(order.items) + salesOrderAdjustmentRowsHtml(orderAdjustments, orderDiscount) + "</section>" +
-        "<section class='sales-order-detail-section sales-order-address' id='sales-order-detail-delivery'><div class='sales-order-section-heading'><div><h3>お届け先・運送便</h3><p>送り状へ反映する配送情報です。</p></div></div><div class='sales-order-address-destination'><strong>" + esc(address.company_name || "-") + "　" + esc(address.recipient_name || "-") + "</strong><span>〒" + esc(address.postal_code || "-") + "　" + esc(address.prefecture_name || "") + esc(address.address_line_1 || "-") + " " + esc(address.address_line_2 || "") + "</span><span>TEL " + esc(address.phone_number || "-") + "</span></div><dl><div><dt>商品発送便</dt><dd class='sales-order-waybill-detail'><strong>" + esc(outboundService) + "</strong><span>" + esc(outboundWaybillDetail) + "</span></dd></div><div><dt>コア返却便</dt><dd class='sales-order-waybill-detail'><strong>" + esc(coreReturnService) + "</strong><span>" + esc(coreReturnWaybillDetail) + "</span></dd></div><div><dt>お届け希望</dt><dd>" + esc(order.requested_delivery_date || "指定なし") + " / " + esc(order.delivery_time_label || "指定なし") + "</dd></div><div><dt>注文メモ</dt><dd>" + esc(order.customer_note || "-") + "</dd></div></dl></section>" +
+        "<section class='sales-order-detail-section sales-order-address' id='sales-order-detail-delivery'><div class='sales-order-section-heading'><div><h3>お届け先・運送便</h3><p>送り状へ反映する配送情報です。</p></div></div><div class='sales-order-address-destination'><strong>" + esc(address.company_name || "-") + "　" + esc(address.recipient_name || "-") + "</strong><span>〒" + esc(address.postal_code || "-") + "　" + esc(address.prefecture_name || "") + esc(address.address_line_1 || "-") + " " + esc(address.address_line_2 || "") + "</span><span>TEL " + esc(address.phone_number || "-") + "</span></div>" + customerOrderVehicleInformationHtml(order.vehicle_information, "sales-order-vehicle-information") + "<dl><div><dt>商品発送便</dt><dd class='sales-order-waybill-detail'><strong>" + esc(outboundService) + "</strong><span>" + esc(outboundWaybillDetail) + "</span></dd></div><div><dt>コア返却便</dt><dd class='sales-order-waybill-detail'><strong>" + esc(coreReturnService) + "</strong><span>" + esc(coreReturnWaybillDetail) + "</span></dd></div><div><dt>お届け希望</dt><dd>" + esc(order.requested_delivery_date || "指定なし") + " / " + esc(order.delivery_time_label || "指定なし") + "</dd></div><div><dt>注文メモ</dt><dd>" + esc(order.customer_note || "-") + "</dd></div></dl></section>" +
       "</div></section>" +
       "<div class='sales-order-detail-panel' id='sales-order-detail-panel-fulfillment' role='tabpanel' aria-labelledby='sales-order-detail-tab-fulfillment' data-sales-order-detail-panel='fulfillment' hidden>" + salesOrderDispatchHtml(order) + "</div>" +
       "<section class='sales-order-detail-panel sales-order-detail-section sales-order-tracking' id='sales-order-detail-tracking' role='tabpanel' aria-labelledby='sales-order-detail-tab-tracking' data-sales-order-detail-panel='tracking' hidden><div class='sales-order-section-heading'><div><h3>商品発送送り状</h3><p>B2発行済データの取込後に番号を確認・修正できます。</p></div></div><div class='sales-order-tracking-grid outbound-only'><label><span>送り状番号</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>B2出荷予定日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>商品発送番号を登録</button></div><p>コア返却用複写伝票は「出荷帳票発行」で管理します。送り状番号の登録だけでは在庫を減らしません。</p></section>" +
@@ -48754,7 +48840,9 @@ document.querySelectorAll("[data-order-postal-mode]").forEach(function(button) {
 });
 [
   "customer-order-company", "customer-order-recipient", "customer-order-phone", "customer-order-postal-code",
-  "customer-order-prefecture", "customer-order-address1", "customer-order-address2"
+  "customer-order-prefecture", "customer-order-address1", "customer-order-address2", "customer-order-vehicle-name",
+  "customer-order-vehicle-model-code", "customer-order-first-registration", "customer-order-chassis-number",
+  "customer-order-engine-model", "customer-order-model-designation", "customer-order-classification"
 ].forEach(function(id) {
   document.getElementById(id).addEventListener("input", function() {
     if (!customerOrderPreview) return;

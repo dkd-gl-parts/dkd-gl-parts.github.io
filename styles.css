@@ -6433,6 +6433,11 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .customer-order-preview-summary .grand-total { background: #edf7f1; }
 .customer-order-preview-summary .grand-total strong { color: #17613f; font-size: 17px; }
 .customer-order-preview-summary p { grid-column: 1 / -1; padding: 14px; color: #79857f; font-size: var(--dcats-type-supporting); text-align: center; }
+.customer-order-vehicle-section { margin-top: 18px; border-top: 1px solid #dce3e0; padding-top: 16px; }
+.customer-order-vehicle-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+.customer-order-vehicle-heading h3 { color: #25362e; font-size: var(--dcats-type-heading); letter-spacing: 0; }
+.customer-order-vehicle-heading span { color: #718078; font-size: var(--dcats-type-supporting); line-height: 1.5; text-align: right; }
+.customer-order-vehicle-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .customer-order-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .customer-order-form-grid label { min-width: 0; }
 .customer-order-form-grid label.wide { grid-column: 1 / -1; }
@@ -6494,6 +6499,8 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .customer-order-number { color: #17231f; font-size: var(--dcats-type-body); font-weight: 800; }
 .customer-order-history-row small { display: block; margin-top: 4px; color: #74817b; font-size: var(--dcats-type-supporting); }
 .customer-order-history-items { color: #34443d; font-size: var(--dcats-type-body); line-height: 1.55; }
+.customer-order-history-vehicle { margin-top: 7px; border-left: 2px solid #7ea895; padding-left: 7px; color: #52675e; line-height: 1.5; }
+.customer-order-history-vehicle strong { color: #285e48; }
 .customer-order-history-total { text-align: right; }
 .customer-order-history-total span { display: block; color: #74817b; font-size: 9px; }
 .customer-order-history-total strong { color: #17231f; font-size: 14px; }
@@ -6501,6 +6508,13 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .customer-order-history-row dl > div { display: grid; grid-template-columns: 92px 1fr; gap: 7px; }
 .customer-order-history-row dt { color: #74817b; font-size: var(--dcats-type-supporting); }
 .customer-order-history-row dd { overflow-wrap: anywhere; color: #2d3b35; font-size: var(--dcats-type-body); font-weight: 700; }
+.customer-order-vehicle-summary { margin-top: 3px; border-top: 1px solid #dbe3df; border-bottom: 1px solid #dbe3df; padding: 9px 0; }
+.customer-order-vehicle-summary h4 { margin-bottom: 7px; color: #285e48; font-size: var(--dcats-type-supporting); }
+.customer-order-vehicle-summary dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 10px; }
+.customer-order-vehicle-summary dl > div { display: grid; grid-template-columns: minmax(62px, auto) minmax(0, 1fr); gap: 6px; }
+.customer-order-vehicle-summary dt { color: #74817b; font-size: var(--dcats-type-supporting); }
+.customer-order-vehicle-summary dd { min-width: 0; overflow-wrap: anywhere; color: #26352f; font-size: var(--dcats-type-body); font-weight: 800; }
+.sales-order-vehicle-information { grid-column: 1 / -1; width: 100%; }
 
 .sales-order-mgmt-body { display: flex; flex: 1; flex-direction: column; min-height: 0; background: #eef1f4; }
 .sales-order-toolbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; border-bottom: 1px solid #d5dbe1; padding: 20px 24px; background: #fff; }
@@ -7715,8 +7729,11 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   .customer-order-line-metric strong { font-size: 13px; }
   .customer-order-preview-summary { grid-template-columns: 1fr 1fr; }
   .customer-order-preview-summary > div:nth-child(2) { border-right: 0; }
+  .customer-order-vehicle-heading { align-items: flex-start; flex-direction: column; gap: 3px; }
+  .customer-order-vehicle-heading span { text-align: left; }
   .customer-order-form-grid { grid-template-columns: 1fr; }
   .customer-order-form-grid label.wide { grid-column: 1; }
+  .customer-order-vehicle-summary dl { grid-template-columns: 1fr; }
   .customer-order-shipping-method { grid-template-columns: 1fr; }
   .customer-order-shipping-method > select,
   .customer-order-shipping-method > small { grid-column: 1; grid-row: auto; }
