@@ -29,6 +29,7 @@ const SIZE_PRESETS = Object.freeze({
   normal: Object.freeze({ width: 280, height: 320 }),
   large: Object.freeze({ width: 350, height: 400 })
 });
+const HORIZONTAL_STEPS_PER_LEG = 72;
 const DEFAULT_PREFERENCES = Object.freeze({
   character: "suzuto",
   mode: "active",
@@ -54,6 +55,7 @@ let preferences = { ...DEFAULT_PREFERENCES };
 let boundsSaveTimer = null;
 let motionTimer = null;
 let motionVelocity = { x: 0, y: 0 };
+let horizontalStepsUntilTurn = 0;
 let facing = "right";
 let isQuitting = false;
 
@@ -174,6 +176,7 @@ function stopWindowMotion() {
   if (motionTimer) clearInterval(motionTimer);
   motionTimer = null;
   motionVelocity = { x: 0, y: 0 };
+  horizontalStepsUntilTurn = 0;
 }
 
 function updateFacing(horizontalVelocity) {
@@ -192,12 +195,21 @@ function moveWindowOneStep() {
   const maximumX = area.x + Math.max(0, area.width - bounds.width);
   const minimumY = area.y;
   const maximumY = area.y + Math.max(0, area.height - bounds.height);
+  if (motionVelocity.x) {
+    horizontalStepsUntilTurn -= 1;
+    if (horizontalStepsUntilTurn <= 0) {
+      motionVelocity.x *= -1;
+      horizontalStepsUntilTurn = HORIZONTAL_STEPS_PER_LEG;
+      updateFacing(motionVelocity.x);
+    }
+  }
   let x = bounds.x + motionVelocity.x;
   let y = bounds.y + motionVelocity.y;
 
   if (x < minimumX || x > maximumX) {
     motionVelocity.x *= -1;
     x = Math.max(minimumX, Math.min(maximumX, x));
+    horizontalStepsUntilTurn = HORIZONTAL_STEPS_PER_LEG;
     updateFacing(motionVelocity.x);
   }
   if (y < minimumY || y > maximumY) {
@@ -213,13 +225,14 @@ function configureWindowMotion() {
     sendState();
     return;
   }
-  if (preferences.mode === "active") motionVelocity = { x: 2, y: 1 };
-  else if (preferences.mode === "horizontal") motionVelocity = { x: 2, y: 0 };
-  else if (preferences.mode === "vertical") motionVelocity = { x: 0, y: 2 };
+  if (preferences.mode === "active") motionVelocity = { x: 3, y: 2 };
+  else if (preferences.mode === "horizontal") motionVelocity = { x: 4, y: 0 };
+  else if (preferences.mode === "vertical") motionVelocity = { x: 0, y: 3 };
   else {
     sendState();
     return;
   }
+  horizontalStepsUntilTurn = motionVelocity.x ? HORIZONTAL_STEPS_PER_LEG : 0;
   updateFacing(motionVelocity.x);
   motionTimer = setInterval(moveWindowOneStep, 32);
 }
@@ -420,11 +433,17 @@ function runQaCaptureIfRequested() {
   const outputDirectory = qaOutputDirectory();
   if (!outputDirectory) return;
   const initialBounds = petWindow.getBounds();
+  const configuredDelay = Number(process.env.DCATS_CONCIERGE_QA_DELAY_MS);
+  const captureDelay = Number.isFinite(configuredDelay) ? Math.max(400, Math.min(10000, configuredDelay)) : 800;
   setTimeout(async () => {
     try {
       fs.mkdirSync(outputDirectory, { recursive: true });
       const image = await petWindow.capturePage();
       fs.writeFileSync(path.join(outputDirectory, "transparent-window.png"), image.toPNG());
+      const spriteBackgroundPositionY = await petWindow.webContents.executeJavaScript(
+        "getComputedStyle(document.querySelector('.pet-sprite')).backgroundPositionY",
+        true
+      );
       const bitmap = image.toBitmap();
       const imageSize = image.getSize();
       const alphaSamples = [
@@ -438,7 +457,10 @@ function runQaCaptureIfRequested() {
         transparentRequested: true,
         frameless: true,
         alwaysOnTop: petWindow.isAlwaysOnTop(),
+        character: preferences.character,
         mode: preferences.mode,
+        facing,
+        spriteBackgroundPositionY,
         initialBounds,
         finalBounds,
         movementDelta: {
@@ -455,7 +477,7 @@ function runQaCaptureIfRequested() {
       process.stderr.write(`${error && error.stack || error}\n`);
       app.exit(1);
     }
-  }, 800);
+  }, captureDelay);
 }
 
 ipcMain.on(CHANNEL_SHOW_MENU, (event) => {
@@ -474,7 +496,10 @@ if (!hasSingleInstanceLock) {
       const qaMode = MODE_IDS.has(process.env.DCATS_CONCIERGE_QA_MODE) && process.env.DCATS_CONCIERGE_QA_MODE !== "off"
         ? process.env.DCATS_CONCIERGE_QA_MODE
         : "active";
-      preferences = { ...preferences, mode: qaMode, clickThrough: false };
+      const qaCharacter = CHARACTER_IDS.has(process.env.DCATS_CONCIERGE_QA_CHARACTER)
+        ? process.env.DCATS_CONCIERGE_QA_CHARACTER
+        : preferences.character;
+      preferences = { ...preferences, character: qaCharacter, mode: qaMode, clickThrough: false };
     }
     registerAppProtocol();
     createWindow();

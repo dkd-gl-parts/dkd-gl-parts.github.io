@@ -68,6 +68,10 @@ body[data-size="large"] {
   background-image: url("dcats-concierge://app/assets/concierge-pet/rinna/spritesheet.webp");
 }
 
+body[data-character="rinna"][data-facing="right"] .pet-sprite {
+  transform: scaleX(-1);
+}
+
 body[data-mode="active"] .pet-motion {
   transform: translate(-50%, -50%);
 }
@@ -75,18 +79,8 @@ body[data-mode="active"] .pet-motion {
 body[data-mode="active"] .pet-sprite,
 body[data-mode="horizontal"] .pet-sprite,
 body[data-mode="vertical"] .pet-sprite {
-  --sprite-row: 10%;
+  --sprite-row: var(--travel-row, 10%);
   animation-duration: .9s;
-}
-
-body[data-facing="left"][data-mode="active"] .pet-sprite,
-body[data-facing="left"][data-mode="horizontal"] .pet-sprite {
-  --sprite-row: 20%;
-}
-
-body[data-facing="right"][data-mode="active"] .pet-sprite,
-body[data-facing="right"][data-mode="horizontal"] .pet-sprite {
-  --sprite-row: 10%;
 }
 
 body[data-mode="fixed"] .pet-sprite {

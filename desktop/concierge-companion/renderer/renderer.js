@@ -2,6 +2,10 @@
 
 (function () {
   const CHARACTER_NAMES = Object.freeze({ suzuto: "スズト", rinna: "リンナ" });
+  const TRAVEL_ROWS = Object.freeze({
+    suzuto: Object.freeze({ right: "10%", left: "20%" }),
+    rinna: Object.freeze({ right: "20%", left: "10%" })
+  });
   const MODES = new Set(["active", "horizontal", "vertical", "fixed", "off"]);
   const SIZES = new Set(["small", "normal", "large"]);
   const sprite = document.querySelector(".pet-sprite");
@@ -16,6 +20,7 @@
     document.body.dataset.mode = mode;
     document.body.dataset.size = size;
     document.body.dataset.facing = facing;
+    document.body.style.setProperty("--travel-row", TRAVEL_ROWS[character][facing]);
     sprite.classList.toggle("is-suzuto", character === "suzuto");
     sprite.classList.toggle("is-rinna", character === "rinna");
     sprite.setAttribute("aria-label", CHARACTER_NAMES[character]);

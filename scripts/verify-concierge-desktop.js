@@ -59,6 +59,8 @@ assert(packageJson.build.win.signAndEditExecutable === false, "Unsigned admin pi
   "petWindow.setPosition(Math.round(x), Math.round(y), false)",
   "nativeTheme.shouldUseReducedMotion",
   "movementDelta",
+  "spriteBackgroundPositionY",
+  "HORIZONTAL_STEPS_PER_LEG = 72",
   "TRUSTED_D_CATS_URL"
 ].forEach((fragment) => requireFragment(main, fragment));
 
@@ -73,8 +75,12 @@ requireFragment(css, "-webkit-app-region: drag");
 requireFragment(css, "prefers-reduced-motion: reduce");
 requireFragment(renderer, "window.dcatsCompanion.onState(applyState)");
 requireFragment(renderer, "document.body.dataset.facing = facing");
-requireFragment(css, "body[data-facing=\"left\"][data-mode=\"horizontal\"] .pet-sprite");
-requireFragment(css, "--sprite-row: 20%");
+requireFragment(renderer, 'suzuto: Object.freeze({ right: "10%", left: "20%" })');
+requireFragment(renderer, 'rinna: Object.freeze({ right: "20%", left: "10%" })');
+requireFragment(renderer, 'document.body.style.setProperty("--travel-row", TRAVEL_ROWS[character][facing])');
+requireFragment(css, "--sprite-row: var(--travel-row, 10%)");
+requireFragment(css, 'body[data-character="rinna"][data-facing="right"] .pet-sprite');
+requireFragment(css, "transform: scaleX(-1)");
 requireFragment(readme, "system-administrator-only Windows pilot");
 requireFragment(readme, "JPY 0");
 
