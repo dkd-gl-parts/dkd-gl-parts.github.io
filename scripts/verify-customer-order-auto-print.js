@@ -168,18 +168,18 @@ for (const fragment of [
   ".shipment-document-a5",
   "@page dcats-core-return { size: A5 landscape; margin: 0; }",
   ".core-return-sheet",
-  "@page dcats-warranty-a4 { size: A4 landscape; margin: 0; }",
-  "width: 148mm; height: 210mm;",
+  "@page dcats-warranty-a5 { size: A5 landscape; margin: 0; }",
+  "width: 210mm; height: 148mm;",
   ".warranty-certificate"
 ]) {
   if (!printCss.includes(fragment)) throw new Error(`A5 shipment document styling is missing: ${fragment}`);
 }
 
 for (const versionFragment of [
-  'content="v1.1.880"',
-  'styles.css?v=1.1.880',
-  'app.js?v=1.1.880',
-  'var APP_VERSION       = "v1.1.880"'
+  'content="v1.1.881"',
+  'styles.css?v=1.1.881',
+  'app.js?v=1.1.881',
+  'var APP_VERSION       = "v1.1.881"'
 ]) {
   const versionSource = versionFragment.startsWith("var ") ? source : html;
   if (!versionSource.includes(versionFragment)) throw new Error(`Release version is inconsistent: ${versionFragment}`);

@@ -597,9 +597,9 @@ if (css.includes(".shipping-carrier-brand-copy small")) {
   throw new Error("Carrier label purpose styling must be removed");
 }
 for (const fragment of [
-  "@page dcats-warranty-a4 { size: A4 landscape; margin: 0; }",
+  "@page dcats-warranty-a5 { size: A5 landscape; margin: 0; }",
   ".warranty-certificate",
-  "width: 148mm; height: 210mm;",
+  "width: 210mm; height: 148mm;",
   ".warranty-header h1",
   ".warranty-dealer",
   ".document-warranty { background: transparent; }",
@@ -615,11 +615,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.880"',
-  'styles.css?v=1.1.880',
-  'app.js?v=1.1.880'
+  'content="v1.1.881"',
+  'styles.css?v=1.1.881',
+  'app.js?v=1.1.881'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.880"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.881"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");

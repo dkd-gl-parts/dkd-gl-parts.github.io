@@ -1,7 +1,7 @@
 @page { size: A4 portrait; margin: 10mm; }
 @page dcats-a5 { size: A5 portrait; margin: 8mm; }
 @page dcats-core-return { size: A5 landscape; margin: 0; }
-@page dcats-warranty-a4 { size: A4 landscape; margin: 0; }
+@page dcats-warranty-a5 { size: A5 landscape; margin: 0; }
 * { box-sizing: border-box; }
 body { margin: 0; color: #162131; background: #eef1f4; font-family: "Yu Gothic", "Meiryo", sans-serif; }
 .print-toolbar { position: sticky; top: 0; display: flex; justify-content: flex-end; padding: 10px 14px; background: #173f33; }
@@ -103,7 +103,7 @@ body { margin: 0; color: #162131; background: #eef1f4; font-family: "Yu Gothic",
 .core-return-bottom-note { height: 8.5mm; margin: 2.5mm 0 0; display: grid; place-items: center; border: 0.45mm solid #000; font-size: 9.5pt; font-weight: 800; }
 
 .document-warranty { color: #000; background: #e8ebee; font-family: "Yu Gothic", "Meiryo", sans-serif; }
-.warranty-certificate { page: dcats-warranty-a4; position: relative; width: 148mm; height: 210mm; margin: 16px auto; padding: 4.5mm 5mm 3.8mm; overflow: hidden; background: #fff; color: #000; break-after: page; page-break-after: always; }
+.warranty-certificate { page: dcats-warranty-a5; position: relative; width: 210mm; height: 148mm; margin: 16px auto; padding: 3.5mm 4mm 1mm; overflow: hidden; background: #fff; color: #000; break-after: page; page-break-after: always; }
 .warranty-certificate:last-child { break-after: auto; page-break-after: auto; }
 .warranty-top-rules, .warranty-bottom-rules { display: grid; gap: 0.8mm; }
 .warranty-top-rules i, .warranty-bottom-rules i { display: block; height: 0; border-top: 0.45mm solid #000; }
@@ -111,32 +111,33 @@ body { margin: 0; color: #162131; background: #eef1f4; font-family: "Yu Gothic",
 .warranty-header { position: relative; display: grid; place-items: center; height: 16mm; border-bottom: 0.35mm solid #000; }
 .warranty-header img { position: absolute; left: 1.5mm; top: 3mm; width: 33mm; height: 11.2mm; object-fit: contain; filter: brightness(0); }
 .warranty-header h1 { margin: 0; font-size: 17pt; line-height: 1; letter-spacing: 2.4mm; text-align: center; }
-.warranty-lead { margin: 1.8mm 1mm 1.6mm; font-size: 6.4pt; line-height: 1.45; text-align: center; }
-.warranty-product-grid { display: grid; grid-template-columns: 18mm 48mm 18mm 1fr; border-top: 0.3mm solid #000; border-left: 0.3mm solid #000; }
-.warranty-product-grid > div { min-height: 8.2mm; display: flex; align-items: center; padding: 1.1mm 1.6mm; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; font-size: 7.2pt; line-height: 1.25; }
+.warranty-lead { height: 6.5mm; margin: 0; display: grid; place-items: center; overflow: hidden; font-size: 6.4pt; line-height: 1.35; text-align: center; }
+.warranty-product-grid { display: grid; grid-template-columns: 23mm 53mm 23mm 1fr; border-top: 0.3mm solid #000; border-left: 0.3mm solid #000; }
+.warranty-product-grid > div { height: 8mm; display: flex; align-items: center; padding: 1mm 1.6mm; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; font-size: 7.2pt; line-height: 1.2; }
 .warranty-product-grid .label { justify-content: center; font-weight: 700; font-size: 6.4pt; }
 .warranty-product-grid .value-strong { font-weight: 800; }
 .warranty-form-row { display: grid; margin-top: 1.5mm; border-top: 0.3mm solid #000; border-left: 0.3mm solid #000; }
 .warranty-form-row h2 { grid-row: 1 / -1; display: grid; place-items: center; margin: 0; padding: 1mm; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; font-size: 7pt; line-height: 1.3; text-align: center; }
-.warranty-form-row > div { position: relative; min-height: 9mm; padding: 4mm 2mm 1mm; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; font-size: 7pt; }
+.warranty-form-row > div { position: relative; min-height: 8mm; padding: 3.6mm 2mm 0.8mm; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; font-size: 7pt; }
 .warranty-form-row > div span { position: absolute; left: 1.5mm; top: 1mm; font-size: 5.5pt; font-weight: 700; }
 .warranty-form-row > div strong { font-size: 7.2pt; }
-.warranty-form-row.purchaser { grid-template-columns: 14mm 1fr 1fr; }
-.warranty-form-row.vehicle { grid-template-columns: 14mm 1fr 1fr; }
+.warranty-form-row.purchaser { grid-template-columns: 20mm 88mm 1fr; }
+.warranty-form-row.purchaser > div { min-height: 11.5mm; }
+.warranty-form-row.vehicle { grid-template-columns: 20mm 88mm 1fr; grid-auto-rows: 8mm; }
 .warranty-form-row.vehicle > div:nth-of-type(4) b { position: absolute; right: 2mm; bottom: 1.2mm; font-size: 6.5pt; }
-.warranty-dealer { height: 24mm; margin-top: 1.5mm; border: 0.3mm solid #000; }
+.warranty-dealer { height: 27mm; margin-top: 1.5mm; border: 0.3mm solid #000; }
 .warranty-dealer h2 { margin: 0; padding: 1.2mm 2mm; border-bottom: 0.3mm solid #000; font-size: 7.4pt; line-height: 1; }
 .warranty-dealer p { margin: 1.5mm 2mm; font-size: 5.8pt; }
 .warranty-terms { display: grid; grid-template-columns: 1fr 1fr 1fr; margin-top: 1.5mm; border-top: 0.3mm solid #000; border-left: 0.3mm solid #000; }
-.warranty-terms article { min-height: 56mm; padding: 2mm 2.2mm 1.5mm; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; }
-.warranty-terms h2, .warranty-legal h2 { margin: 0 0 1.4mm; font-size: 7.2pt; line-height: 1.2; letter-spacing: 0.2mm; }
-.warranty-terms p, .warranty-terms li, .warranty-legal p { margin: 0; font-size: 5.7pt; line-height: 1.52; }
+.warranty-terms article { height: 26mm; overflow: hidden; padding: 1.2mm 1.6mm 1mm; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; }
+.warranty-terms h2, .warranty-legal h2 { margin: 0 0 0.8mm; font-size: 6.5pt; line-height: 1.15; letter-spacing: 0.2mm; }
+.warranty-terms p, .warranty-terms li, .warranty-legal p { margin: 0; font-size: 5.1pt; line-height: 1.32; }
 .warranty-terms ol, .warranty-terms ul { margin: 0; padding-left: 3.6mm; }
-.warranty-terms li + li { margin-top: 0.8mm; }
-.warranty-legal { min-height: 31mm; margin-top: 1.5mm; padding: 1.8mm 2.2mm; border: 0.3mm solid #000; }
-.warranty-legal h2 { margin-bottom: 1mm; }
-.warranty-legal p { line-height: 1.45; }
-.warranty-bottom-rules { position: absolute; left: 5mm; right: 5mm; bottom: 3mm; }
+.warranty-terms li + li { margin-top: 0.3mm; }
+.warranty-legal { height: 13mm; overflow: hidden; margin-top: 1.5mm; padding: 1mm 1.6mm; border: 0.3mm solid #000; }
+.warranty-legal h2 { margin-bottom: 0.5mm; }
+.warranty-legal p { line-height: 1.3; }
+.warranty-bottom-rules { position: absolute; left: 4mm; right: 4mm; bottom: 0.8mm; }
 @media print {
   body { background: #fff; }
   .print-toolbar { display: none; }
