@@ -1,0 +1,52 @@
+{
+  "name": "dcats-concierge-admin-pilot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "D-CATS transparent always-on-top concierge for system-administrator pilot testing",
+  "main": "main.cjs",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "verify": "node ../../scripts/verify-concierge-desktop.js",
+    "dist:portable": "electron-builder --win portable --x64"
+  },
+  "devDependencies": {
+    "electron": "44.1.1",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "jp.co.daiko-denki.dcats.concierge.admin-pilot",
+    "productName": "D-CATS Concierge Admin Pilot",
+    "asar": true,
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "renderer/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../../assets/concierge-pet",
+        "to": "assets/concierge-pet",
+        "filter": [
+          "suzuto/spritesheet.webp",
+          "rinna/spritesheet.webp"
+        ]
+      },
+      {
+        "from": "../../favicon.ico",
+        "to": "favicon.ico"
+      }
+    ],
+    "directories": {
+      "output": "../../outputs/concierge-desktop"
+    },
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "icon": "../../favicon.ico",
+      "artifactName": "D-CATS-Concierge-Admin-Pilot-${version}.${ext}",
+      "signAndEditExecutable": false
+    }
+  }
+}
