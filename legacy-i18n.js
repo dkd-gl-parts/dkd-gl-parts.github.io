@@ -2684,7 +2684,20 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "左の注文一覧から、確認または処理する受注を選択してください。": "Select an order from the list on the left to review or process it.",
     "受注処理の進捗": "Order Processing Progress",
     "受注処理は取消で終了": "Order processing ended by cancellation",
-    "処理終了": "Processing Complete"
+    "処理終了": "Processing Complete",
+    "本保証は、本書に記載された保証期間内の製品不具合について、下記条件に基づき対応するものです。大切に保管してください。": "This warranty covers product defects within the warranty period stated in this document under the conditions below. Please keep it in a safe place.",
+    "識別情報": "Identification",
+    "ご購入者": "Purchaser",
+    "情報": "Information",
+    "連絡先": "Contact",
+    "（電話番号・メール等）": "(Phone number, email, etc.)",
+    "販売店名／取付店名・住所・電話番号・担当者": "Seller / installer name, address, phone number, and contact person",
+    "店印がない場合は、納品書・領収書・整備伝票等の購入証明と本書を保管してください。": "If no store stamp is provided, keep this document together with proof of purchase such as a delivery note, receipt, or service record.",
+    "印鑑欄（任意）": "Stamp Area (Optional)",
+    "販売店印": "Seller Stamp",
+    "（任意）": "(Optional)",
+    "取付店印": "Installer Stamp",
+    "本書、対象製品、製造シリアル、車両・取付情報をご提示ください。": "Present this document, the covered product, the manufacturing serial number, and the vehicle and installation information."
   },
   "zh": {
     ": 構成部品の使用レコードIDを確認できませんでした。画面を更新して再度お試しください。": ": 无法确认构成部件的使用记录ID。请刷新页面后再试一次。",
@@ -5369,6 +5382,19 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "左の注文一覧から、確認または処理する受注を選択してください。": "请从左侧订单列表中选择要确认或处理的订单。",
     "受注処理の進捗": "订单处理进度",
     "受注処理は取消で終了": "订单处理已因取消而结束",
-    "処理終了": "处理结束"
+    "処理終了": "处理结束",
+    "本保証は、本書に記載された保証期間内の製品不具合について、下記条件に基づき対応するものです。大切に保管してください。": "本保修按照以下条件处理本文件所载保修期内的产品故障。请妥善保管。",
+    "識別情報": "识别信息",
+    "ご購入者": "购买者",
+    "情報": "信息",
+    "連絡先": "联系方式",
+    "（電話番号・メール等）": "（电话、电子邮箱等）",
+    "販売店名／取付店名・住所・電話番号・担当者": "销售店／安装店名称、地址、电话及负责人",
+    "店印がない場合は、納品書・領収書・整備伝票等の購入証明と本書を保管してください。": "如无店铺盖章，请将本文件与送货单、收据或维修单等购买凭证一并保管。",
+    "印鑑欄（任意）": "印章栏（可选）",
+    "販売店印": "销售店章",
+    "（任意）": "（可选）",
+    "取付店印": "安装店章",
+    "本書、対象製品、製造シリアル、車両・取付情報をご提示ください。": "请出示本文件、相关产品、制造序列号以及车辆和安装信息。"
   }
 };

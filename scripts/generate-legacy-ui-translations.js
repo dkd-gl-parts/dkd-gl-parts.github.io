@@ -172,7 +172,20 @@ const curatedTranslations = {
     "B2 CSVを保存できませんでした。ブラウザのダウンロード許可を確認してください。": "Could not save the B2 CSV. Check the browser's download permission.",
     "B2 CSVを発行しました。ダウンロードフォルダを確認してください。": "The B2 CSV was issued. Check the Downloads folder.",
     "B2 CSVの再取得に時間がかかっています。通信状態を確認して、もう一度実行してください。": "Retrieving the B2 CSV is taking too long. Check the connection and try again.",
-    "B2 CSVを再ダウンロードしました。": "The B2 CSV was downloaded again."
+    "B2 CSVを再ダウンロードしました。": "The B2 CSV was downloaded again.",
+    "本保証は、本書に記載された保証期間内の製品不具合について、下記条件に基づき対応するものです。大切に保管してください。": "This warranty covers product defects within the warranty period stated in this document under the conditions below. Please keep it in a safe place.",
+    "識別情報": "Identification",
+    "ご購入者": "Purchaser",
+    "情報": "Information",
+    "連絡先": "Contact",
+    "（電話番号・メール等）": "(Phone number, email, etc.)",
+    "販売店名／取付店名・住所・電話番号・担当者": "Seller / installer name, address, phone number, and contact person",
+    "店印がない場合は、納品書・領収書・整備伝票等の購入証明と本書を保管してください。": "If no store stamp is provided, keep this document together with proof of purchase such as a delivery note, receipt, or service record.",
+    "印鑑欄（任意）": "Stamp Area (Optional)",
+    "販売店印": "Seller Stamp",
+    "（任意）": "(Optional)",
+    "取付店印": "Installer Stamp",
+    "本書、対象製品、製造シリアル、車両・取付情報をご提示ください。": "Present this document, the covered product, the manufacturing serial number, and the vehicle and installation information."
   },
   zh: {
     "受注を検索": "搜索订单",
@@ -328,7 +341,20 @@ const curatedTranslations = {
     "B2 CSVを保存できませんでした。ブラウザのダウンロード許可を確認してください。": "无法保存B2 CSV。请检查浏览器下载权限。",
     "B2 CSVを発行しました。ダウンロードフォルダを確認してください。": "B2 CSV已发行。请检查下载文件夹。",
     "B2 CSVの再取得に時間がかかっています。通信状態を確認して、もう一度実行してください。": "重新获取B2 CSV耗时过长。请检查网络后重试。",
-    "B2 CSVを再ダウンロードしました。": "B2 CSV已重新下载。"
+    "B2 CSVを再ダウンロードしました。": "B2 CSV已重新下载。",
+    "本保証は、本書に記載された保証期間内の製品不具合について、下記条件に基づき対応するものです。大切に保管してください。": "本保修按照以下条件处理本文件所载保修期内的产品故障。请妥善保管。",
+    "識別情報": "识别信息",
+    "ご購入者": "购买者",
+    "情報": "信息",
+    "連絡先": "联系方式",
+    "（電話番号・メール等）": "（电话、电子邮箱等）",
+    "販売店名／取付店名・住所・電話番号・担当者": "销售店／安装店名称、地址、电话及负责人",
+    "店印がない場合は、納品書・領収書・整備伝票等の購入証明と本書を保管してください。": "如无店铺盖章，请将本文件与送货单、收据或维修单等购买凭证一并保管。",
+    "印鑑欄（任意）": "印章栏（可选）",
+    "販売店印": "销售店章",
+    "（任意）": "（可选）",
+    "取付店印": "安装店章",
+    "本書、対象製品、製造シリアル、車両・取付情報をご提示ください。": "请出示本文件、相关产品、制造序列号以及车辆和安装信息。"
   }
 };
 

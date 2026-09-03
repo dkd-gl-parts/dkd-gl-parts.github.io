@@ -5716,7 +5716,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.884";
+var APP_VERSION       = "v1.1.885";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -15603,8 +15603,14 @@ function salesOrderWarrantyUnits(order) {
     var snapshot = item.warranty_snapshot && typeof item.warranty_snapshot === "object" ? item.warranty_snapshot : null;
     if (item.replacement || (snapshot && snapshot.warranty_document_required === false)) return;
     var quantity = Math.max(1, parseInt(item.quantity, 10) || 1);
+    var serials = Array.isArray(item.serials) ? item.serials : [];
     for (var index = 0; index < quantity; index += 1) {
-      units.push({ item: item, copyNumber: index + 1, copyCount: quantity });
+      units.push({
+        item: item,
+        manufacturingSerial: serials[index] && serials[index].manufacturing_serial || "",
+        copyNumber: index + 1,
+        copyCount: quantity
+      });
     }
   });
   return units;
@@ -15694,14 +15700,20 @@ function buildSalesOrderWarrantyCertificatePage(order, unit) {
   var contact = address.phone_number || "";
   return "<main class='warranty-certificate'>" +
     "<div class='warranty-top-rules'><i></i><i></i></div>" +
-    "<header class='warranty-header'><img src='assets/brand/gltek-logo-print-transparent.png?dcats_version=" + encodeURIComponent(APP_VERSION) + "' alt='GLTEK'><h1>製 品 保 証 書</h1></header>" +
-    "<p class='warranty-lead'>本書は、本書に記載された保証期間内の製品不具合について、下記条件に基づき対応することを証明するものです。大切に保管してください。</p>" +
-    "<section class='warranty-product-grid'><div class='label'>保証開始日</div><div>" + esc(salesOrderWarrantyDateText(salesOrderWarrantyStartDate(order))) + "</div><div class='label'>保証期間</div><div class='value-strong'>" + esc(String(orderItem.warranty_months)) + "か月</div><div class='label'>製品名</div><div>" + esc(salesOrderWarrantyProductName(orderItem)) + "</div><div class='label'>GLTEK品番</div><div class='value-strong'>" + esc(orderItem.gltek_part_number) + "</div></section>" +
-    "<section class='warranty-form-row purchaser'><h2>ご購入者情報</h2><div><span>購入者／会社名</span><strong>" + esc(customerName) + "</strong></div><div><span>連絡先（電話番号・メール等）</span><strong>" + esc(contact) + "</strong></div></section>" +
-    "<section class='warranty-form-row vehicle'><h2>車両情報</h2><div><span>車名</span></div><div><span>車両型式</span></div><div><span>エンジン型式</span></div><div><span>取付時走行距離</span><b>km</b></div></section>" +
-    "<section class='warranty-dealer'><h2>販売店・取付店</h2><p>店名・住所・電話番号・担当者（店印・取付店印は任意）</p></section>" +
+    "<header class='warranty-header'><h1>製 品 保 証 書</h1></header>" +
+    "<p class='warranty-lead'>本保証は、本書に記載された保証期間内の製品不具合について、下記条件に基づき対応するものです。大切に保管してください。</p>" +
+    "<section class='warranty-identification'><h2>製品<br>識別情報</h2>" +
+      "<div class='label warranty-start-label'>保証開始日</div><div class='warranty-start-value'>" + esc(salesOrderWarrantyDateText(salesOrderWarrantyStartDate(order))) + "</div>" +
+      "<div class='label warranty-period-label'>保証期間</div><div class='value-strong warranty-period-value'>" + esc(String(orderItem.warranty_months)) + "か月</div>" +
+      "<div class='label warranty-product-label'>製品名</div><div class='warranty-product-value'>" + esc(salesOrderWarrantyProductName(orderItem)) + "</div>" +
+      "<div class='label warranty-gltek-label'>GLTEK品番</div><div class='value-strong warranty-gltek-value'>" + esc(orderItem.gltek_part_number) + "</div>" +
+      "<div class='label warranty-serial-label'>製造シリアル</div><div class='value-strong warranty-serial-value'>" + esc(unit.manufacturingSerial || "-") + "</div></section>" +
+    "<section class='warranty-form-row purchaser'><h2>ご購入者<br>情報</h2><div class='field-label'>購入者／会社名</div><div class='field-value'><strong>" + esc(customerName) + "</strong></div><div class='field-label'>連絡先<br>（電話番号・メール等）</div><div class='field-value'><strong>" + esc(contact) + "</strong></div></section>" +
+    "<section class='warranty-form-row vehicle'><h2>車両情報</h2><div class='field-label'>車名</div><div class='field-value'></div><div class='field-label'>車両型式</div><div class='field-value'></div><div class='field-label'>エンジン型式</div><div class='field-value'></div><div class='field-label'>取付時走行距離</div><div class='field-value distance'><b>km</b></div></section>" +
+    "<section class='warranty-dealer'><div class='warranty-dealer-details'><h2>販売店・取付店</h2><p>販売店名／取付店名・住所・電話番号・担当者</p><small>店印がない場合は、納品書・領収書・整備伝票等の購入証明と本書を保管してください。</small></div>" +
+      "<h2 class='warranty-stamp-heading'>印鑑欄（任意）</h2><div class='warranty-stamp-box'>販売店印<br>（任意）</div><div class='warranty-stamp-box'>取付店印<br>（任意）</div></section>" +
     "<section class='warranty-terms'><article><h2>保証内容</h2><p>本書に記載された保証期間内に、適合車両へ正しく取り付けられ、通常の使用状態で、材料または製造上の原因による不具合が生じた場合、現品確認後に無償修理または同等品交換を行います。保証対象は本製品本体です。</p></article>" +
-    "<article><h2>保証を受ける手順</h2><ol><li>使用を中止し、お買い上げの販売店へご連絡ください。</li><li>本書、対象製品、GLTEK品番、車両・取付情報をご提示ください。</li><li>現品確認後、保証対象の場合は無償修理または同等品交換を行います。事前承認のない修理・代替手配は対象外となる場合があります。</li></ol></article>" +
+    "<article><h2>保証を受ける手順</h2><ol><li>使用を中止し、お買い上げの販売店へご連絡ください。</li><li>本書、対象製品、製造シリアル、車両・取付情報をご提示ください。</li><li>現品確認後、保証対象の場合は無償修理または同等品交換を行います。事前承認のない修理・代替手配は対象外となる場合があります。</li></ol></article>" +
     "<article><h2>保証対象外となる主な場合</h2><ul><li>誤装着、誤配線、逆接続、適合外使用、関連部品の不良、異常電圧、水・油・異物混入</li><li>分解・改造・未承認修理、製品ラベルの剥離・改変、競技・オフロード・緊急車両・海外での使用</li><li>事故・落下、火災・地震・水害・落雷・塩害・腐食等の外部要因、通常摩耗・消耗、現品を確認できない場合</li></ul></article></section>" +
     "<section class='warranty-legal'><h2>費用・法令上の権利・個人情報</h2><p>保証対象は製品本体です。取外し・取付け、診断、搬送、代車、休業等は含みません。ただし、当社の故意・重過失その他法令により責任を負う場合を除きます。本保証は日本国内で有効で、法律上の権利を制限しません。個人情報は保証対応・連絡の範囲で利用します。</p></section>" +
     "<div class='warranty-bottom-rules'><i></i><i></i></div></main>";
@@ -15713,7 +15725,7 @@ function buildSalesOrderWarrantyDocumentHtml(order) {
   return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><title>製品保証書 " + esc(order.order_number || "") + "</title>" +
     "<link rel='stylesheet' href='shipment-instruction-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></head><body class='document-warranty'>" +
     "<div class='print-toolbar'><button id='dcats-print-shipment-document' type='button'>印刷・PDF保存</button></div>" +
-    pages.map(function(unit) { return buildSalesOrderWarrantyCertificatePage(order, unit); }).join("") + "</body></html>";
+    pages.map(function(unit) { return "<section class='warranty-print-sheet'>" + buildSalesOrderWarrantyCertificatePage(order, unit) + "</section>"; }).join("") + "</body></html>";
 }
 
 function buildSalesOrderDocumentHtml(order, type, qrDataUrl) {

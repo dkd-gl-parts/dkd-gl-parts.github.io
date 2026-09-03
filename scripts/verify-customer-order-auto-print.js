@@ -158,6 +158,7 @@ for (const fragment of [
   "buildSalesOrderWarrantyDocumentHtml",
   "本書に記載された保証期間",
   "GLTEK品番",
+  "製造シリアル",
   "salesOrderWarrantyUnits"
 ]) {
   if (!printDocument.includes(fragment)) throw new Error(`Manual shipment document rendering is missing: ${fragment}`);
@@ -168,7 +169,9 @@ for (const fragment of [
   ".shipment-document-a5",
   "@page dcats-core-return { size: A5 landscape; margin: 0; }",
   ".core-return-sheet",
-  "@page dcats-warranty-a5 { size: A5 landscape; margin: 0; }",
+  "@page dcats-warranty-a4 { size: A4 landscape; margin: 0; }",
+  ".warranty-print-sheet",
+  "width: 297mm; height: 210mm;",
   "width: 210mm; height: 148mm;",
   ".warranty-certificate"
 ]) {
@@ -176,10 +179,10 @@ for (const fragment of [
 }
 
 for (const versionFragment of [
-  'content="v1.1.884"',
-  'styles.css?v=1.1.884',
-  'app.js?v=1.1.884',
-  'var APP_VERSION       = "v1.1.884"'
+  'content="v1.1.885"',
+  'styles.css?v=1.1.885',
+  'app.js?v=1.1.885',
+  'var APP_VERSION       = "v1.1.885"'
 ]) {
   const versionSource = versionFragment.startsWith("var ") ? source : html;
   if (!versionSource.includes(versionFragment)) throw new Error(`Release version is inconsistent: ${versionFragment}`);

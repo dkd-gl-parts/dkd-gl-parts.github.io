@@ -519,17 +519,20 @@ for (const fragment of [
   "salesOrderWarrantyUnits",
   "製 品 保 証 書",
   "保証期間",
+  "製造シリアル",
   "販売店・取付店",
-  "店印・取付店印は任意",
-  "assets/brand/gltek-logo-print-transparent.png"
+  "印鑑欄（任意）"
 ]) requireFragment(printSource, fragment);
 const warrantyPageSource = sourceBetween("function buildSalesOrderWarrantyCertificatePage", "function buildSalesOrderWarrantyDocumentHtml");
-for (const forbidden of ["manufacturing_serial", "製造シリアル", "D-CATS", "STARTER / ALTERNATOR", "保証発行者"] ) {
-  if (warrantyPageSource.includes(forbidden)) throw new Error(`Warranty certificate must not print: ${forbidden}`);
+for (const fragment of ["unit.manufacturingSerial", "識別情報", "購入者／会社名", "車両型式", "販売店印", "取付店印"]) {
+  requireFragment(warrantyPageSource, fragment, `Final warranty certificate field is missing: ${fragment}`);
 }
-const warrantyLogo = path.join(root, "assets", "brand", "gltek-logo-print-transparent.png");
-if (!fs.existsSync(warrantyLogo) || fs.statSync(warrantyLogo).size < 1000) {
-  throw new Error("The transparent GLTEK warranty logo is missing");
+const warrantyUnitsSource = sourceBetween("function salesOrderWarrantyUnits", "function salesOrderCoreReturnUnits");
+for (const fragment of ["item.serials", "serials[index]", "manufacturingSerial"]) {
+  requireFragment(warrantyUnitsSource, fragment, `Warranty serial mapping is missing: ${fragment}`);
+}
+for (const forbidden of ["D-CATS", "STARTER / ALTERNATOR", "保証発行者", "gltek-logo-print-transparent.png"] ) {
+  if (warrantyPageSource.includes(forbidden)) throw new Error(`Warranty certificate must not print: ${forbidden}`);
 }
 
 for (const fragment of [
@@ -597,13 +600,17 @@ if (css.includes(".shipping-carrier-brand-copy small")) {
   throw new Error("Carrier label purpose styling must be removed");
 }
 for (const fragment of [
-  "@page dcats-warranty-a5 { size: A5 landscape; margin: 0; }",
+  "@page dcats-warranty-a4 { size: A4 landscape; margin: 0; }",
+  ".warranty-print-sheet",
+  "width: 297mm; height: 210mm;",
   ".warranty-certificate",
   "width: 210mm; height: 148mm;",
   ".warranty-header h1",
+  ".warranty-identification",
+  ".warranty-stamp-box",
   ".warranty-dealer",
   ".document-warranty { background: transparent; }",
-  ".warranty-certificate { margin: 0 auto; background: transparent; }"
+  ".warranty-print-sheet { margin: 0; background: transparent; }"
 ]) requireFragment(printCss, fragment);
 
 for (const fragment of [
@@ -615,11 +622,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.884"',
-  'styles.css?v=1.1.884',
-  'app.js?v=1.1.884'
+  'content="v1.1.885"',
+  'styles.css?v=1.1.885',
+  'app.js?v=1.1.885'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.884"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.885"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
