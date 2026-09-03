@@ -91,8 +91,8 @@ assert(!publicHtml.includes("D-CATS Concierge Admin Pilot"), "Public D-CATS UI m
 assert(!staticBuilder.includes("desktop/concierge-companion"), "Static deployment must not publish the desktop pilot");
 
 const expectedSprites = [
-  ["suzuto", "DC5978A1C172A0A66D8DFAFF8C0C0F15AABCE474C266FF3F1B63E009661431C7"],
-  ["rinna", "97BC521CC21430C8B7DDCC34390EEB0190FCE3AAB7A080CB7AF32826409A0460"]
+  ["suzuto", "90BAC82F2DAD2901B0EAB6DCC52C317EA3F1091597D6D7D12B3347DA7E59FF2C"],
+  ["rinna", "9E505981DCB318A421CB213BE35336B4420147A482D0BD478D0463550DC43880"]
 ];
 for (const [character, expectedHash] of expectedSprites) {
   const spritePath = path.join(root, "assets", "concierge-pet", character, "spritesheet.webp");

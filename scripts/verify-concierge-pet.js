@@ -174,8 +174,8 @@ assert(!css.includes("radial-gradient(circle at 18% 18%"), "Floating concierge m
 assert(!css.includes("data:"), "Concierge stylesheet must not embed sprite data URLs");
 
 const expectedPets = [
-  { dir: "suzuto", id: "dcats-suzuto", displayName: "スズト", sha256: "DC5978A1C172A0A66D8DFAFF8C0C0F15AABCE474C266FF3F1B63E009661431C7" },
-  { dir: "rinna", id: "dcats-rinna", displayName: "リンナ", sha256: "97BC521CC21430C8B7DDCC34390EEB0190FCE3AAB7A080CB7AF32826409A0460" }
+  { dir: "suzuto", id: "dcats-suzuto", displayName: "スズト", sha256: "90BAC82F2DAD2901B0EAB6DCC52C317EA3F1091597D6D7D12B3347DA7E59FF2C" },
+  { dir: "rinna", id: "dcats-rinna", displayName: "リンナ", sha256: "9E505981DCB318A421CB213BE35336B4420147A482D0BD478D0463550DC43880" }
 ];
 
 for (const expected of expectedPets) {
