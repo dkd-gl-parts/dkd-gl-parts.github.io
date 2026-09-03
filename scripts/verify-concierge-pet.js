@@ -83,12 +83,25 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
   'focusTarget.isConnected',
   'has-left-bubble',
   '.overlay.show,.panel.show',
-  'PETS[settings.character].className'
+  'PETS[settings.character].className',
+  'window.documentPictureInPicture.requestWindow({ width: 360, height: 420 })',
+  'if (!isSystemAdminSession() || floatingRequestPending) return;',
+  'root.classList.add("is-floating")',
+  'requestedWindow.document.body.appendChild(root)',
+  'restoreFromFloatingWindow(requestedWindow, false)',
+  'floatingDocument.head.appendChild(stylesheet)',
+  'new URL("assets/concierge-pet/concierge-pet.css", document.baseURI).href',
+  'return isFloatingWindowOpen() ? floatingWindow : window;',
+  'var activeDocument = presentationDocument();',
+  'toggleFloating: toggleFloatingWindow',
+  'isFloating: isFloatingWindowOpen',
+  '追加料金：0円（ブラウザ標準機能）'
 ].forEach((fragment) => requireFragment(runtime, fragment));
 
-requireFragment(runtime, 'if (!visible || document.hidden || settings.mode === "off")', "Off mode must stop before panel animation handling");
+requireFragment(runtime, 'if (!visible || isPresentationHidden() || settings.mode === "off")', "Off mode must stop before panel animation handling");
 requireFragment(runtime, 'settings.mode === "off" || root.classList.contains("has-no-safe-target")', "External states must not revive a concierge without a safe target");
 requireFragment(runtime, 'if (!isSystemAdminSession() || panelOpen) return;', "Concierge settings must fail closed outside a system-admin session");
+requireFragment(runtime, 'if (!isSystemAdminSession() || floatingRequestPending) return;', "Floating display must fail closed outside a system-admin session");
 requireFragment(runtime, 'suzuto: { copyKey: "suzuto", className: "is-suzuto", travelRows: { right: "running-right", left: "running-left" } }', "Suzuto travel rows must match the approved atlas direction");
 requireFragment(runtime, 'rinna: { copyKey: "rinna", className: "is-rinna", travelRows: { right: "running-left", left: "running-right" } }', "Rinna travel rows must compensate for the approved atlas direction");
 requireFragment(runtime, "var TRAVEL_TURN_DELAY = 220;", "Directional travel must pause briefly after turning");
@@ -101,6 +114,7 @@ assert(!runtime.includes("eval("), "Concierge runtime must not use eval");
 assert(!runtime.includes(".style."), "Strict CSP forbids inline style mutation");
 assert(!runtime.includes('setAttribute("style"'), "Strict CSP forbids style attributes");
 assert(!runtime.includes("fetch("), "Concierge preferences must remain local and must not add network/API work");
+assert(!runtime.includes("window.open("), "A normal popup cannot guarantee always-on-top concierge display");
 
 const copyStart = runtime.indexOf("\n  var COPY = {");
 const copyEnd = runtime.indexOf("\n  var STATE_MESSAGE_KEYS", copyStart);
@@ -137,6 +151,9 @@ requireFragment(css, "@media print");
 requireFragment(css, "z-index: 190");
 requireFragment(css, "max-height: calc(100dvh");
 requireFragment(css, "visibility: hidden", "A concierge without a safe target must leave keyboard and accessibility navigation");
+requireFragment(css, "html.dcats-concierge-floating-document");
+requireFragment(css, "body.dcats-concierge-floating-body");
+requireFragment(css, ".dcats-concierge-floating-cost");
 assert(!css.includes("data:"), "Concierge stylesheet must not embed sprite data URLs");
 
 const expectedPets = [
@@ -167,4 +184,4 @@ for (const expected of expectedPets) {
   assert(size.width === 1536 && size.height === 2288, `${expected.dir} spritesheet must be 1536x2288`);
 }
 
-console.log(`Concierge pet verification passed (${appVersion}; one selected character, 5 movement modes, 9 motion states, 16 gaze directions).`);
+console.log(`Concierge pet verification passed (${appVersion}; one selected character, 5 movement modes, always-on-top floating display, 9 motion states, 16 gaze directions).`);

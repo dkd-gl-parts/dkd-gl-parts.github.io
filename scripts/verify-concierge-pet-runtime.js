@@ -70,10 +70,18 @@ class FakeElement {
   get className() { return this.classList.toString(); }
   set className(value) { this.classList.set(value); }
   appendChild(child) {
+    if (child.parentElement) {
+      child.parentElement.children = child.parentElement.children.filter((candidate) => candidate !== child);
+    }
     child.parentElement = this;
+    child.setOwnerDocument(this.ownerDocument);
     child.setConnected(this.isConnected);
     this.children.push(child);
     return child;
+  }
+  setOwnerDocument(documentRef) {
+    this.ownerDocument = documentRef;
+    this.children.forEach((child) => child.setOwnerDocument(documentRef));
   }
   setConnected(value) {
     this.isConnected = value;
@@ -157,8 +165,11 @@ const documentObject = {
 documentObject.documentElement = new FakeElement("html", documentObject);
 documentObject.documentElement.lang = "ja";
 documentObject.documentElement.setConnected(true);
+documentObject.head = new FakeElement("head", documentObject);
+documentObject.head.setConnected(true);
 documentObject.body = new FakeElement("body", documentObject);
 documentObject.body.setConnected(true);
+documentObject.baseURI = "https://dcats.example.test/";
 const activeScreen = new FakeElement("main", documentObject);
 activeScreen.id = "screen-menu";
 activeScreen.className = "screen active";
@@ -182,10 +193,68 @@ const reduceMotionQuery = {
 };
 const sandboxMath = Object.create(Math);
 sandboxMath.random = () => Math.random();
+const floatingRequests = [];
+const floatingWindows = [];
+
+function createFloatingDocument() {
+  const listeners = new Map();
+  const floatingDocument = {
+    readyState: "complete",
+    hidden: false,
+    activeElement: null,
+    title: "",
+    baseURI: "https://dcats.example.test/",
+    listeners,
+    createElement(tag) { return new FakeElement(tag, this); },
+    addEventListener(type, listener) {
+      const list = listeners.get(type) || [];
+      list.push(listener);
+      listeners.set(type, list);
+    },
+    querySelector() { return null; },
+    querySelectorAll() { return []; }
+  };
+  floatingDocument.documentElement = new FakeElement("html", floatingDocument);
+  floatingDocument.documentElement.setConnected(true);
+  floatingDocument.head = new FakeElement("head", floatingDocument);
+  floatingDocument.head.setConnected(true);
+  floatingDocument.body = new FakeElement("body", floatingDocument);
+  floatingDocument.body.setConnected(true);
+  return floatingDocument;
+}
+
+function createFloatingWindow() {
+  const listeners = new Map();
+  const floatingDocument = createFloatingDocument();
+  const floating = {
+    innerWidth: 360,
+    innerHeight: 420,
+    closed: false,
+    document: floatingDocument,
+    addEventListener(type, listener) {
+      const list = listeners.get(type) || [];
+      list.push(listener);
+      listeners.set(type, list);
+    },
+    close() {
+      if (this.closed) return;
+      this.closed = true;
+      floatingDocument.hidden = true;
+      dispatch(listeners, "pagehide", { target: floatingDocument });
+    },
+    requestAnimationFrame(callback) { return windowObject.requestAnimationFrame(callback); },
+    cancelAnimationFrame(id) { windowObject.cancelAnimationFrame(id); },
+    getComputedStyle(element) { return windowObject.getComputedStyle(element); }
+  };
+  floatingDocument.defaultView = floating;
+  floatingWindows.push(floating);
+  return floating;
+}
+
 const windowObject = {
   innerWidth: 1200,
   innerHeight: 800,
-  location: { search: "" },
+  location: { search: "", href: "https://dcats.example.test/", origin: "https://dcats.example.test" },
   currentUser: { id: "user-a" },
   userProfile: { role: "price_viewer" },
   DcatsAccess: { isSystemAdmin: () => Boolean(windowObject.userProfile && windowObject.userProfile.role === "system_admin") },
@@ -199,8 +268,15 @@ const windowObject = {
   cancelAnimationFrame(id) { pendingFrames.delete(id); },
   getComputedStyle(element) {
     return { display: isRendered(element) ? "block" : "none", visibility: "visible", opacity: "1" };
+  },
+  documentPictureInPicture: {
+    async requestWindow(options) {
+      floatingRequests.push({ ...options });
+      return createFloatingWindow();
+    }
   }
 };
+documentObject.defaultView = windowObject;
 
 const context = {
   window: windowObject,
@@ -211,6 +287,7 @@ const context = {
   },
   MutationObserver: FakeMutationObserver,
   URLSearchParams,
+  URL,
   Promise,
   Math: sandboxMath,
   Date,
@@ -269,6 +346,7 @@ function animationRowPercent(animation) {
   return match ? Number(match[1]) : null;
 }
 
+(async function run() {
 const api = windowObject.DcatsConcierge;
 assert(api, "Runtime did not expose window.DcatsConcierge");
 assert(byClass("dcats-concierge-sprite").length === 1, "Runtime must create exactly one sprite element");
@@ -278,8 +356,13 @@ const sprite = byClass("dcats-concierge-sprite")[0];
 const launcher = byClass("dcats-concierge-launcher")[0];
 const panel = byClass("dcats-concierge-panel")[0];
 const panelClose = byClass("dcats-concierge-panel-close")[0];
+const floatingButton = byClass("dcats-concierge-floating-button")[0];
+const floatingCost = byClass("dcats-concierge-floating-cost")[0];
 
 assert(root.hidden, "Concierge must be hidden before a system-admin profile is available");
+assert(floatingCost.textContent === "追加料金：0円（ブラウザ標準機能）", "Floating display did not disclose its zero additional charge");
+await api.toggleFloating();
+assert(!floatingRequests.length && !api.isFloating(), "Non-admin API calls opened the floating concierge window");
 api.setCharacter("rinna");
 api.setMode("fixed");
 api.openSettings();
@@ -291,6 +374,27 @@ windowObject.userProfile = { role: "system_admin" };
 notifyObservers();
 assert(!root.hidden, "System administrator could not enter concierge test operation");
 assert(api.getSettings().character === "suzuto" && api.getSettings().mode === "active", "User A defaults are invalid");
+
+await api.toggleFloating();
+const firstFloatingWindow = floatingWindows.at(-1);
+assert(floatingRequests.length === 1, "System administrator could not request the floating concierge window");
+assert(floatingRequests[0].width === 360 && floatingRequests[0].height === 420, "Floating concierge requested an unexpected initial window size");
+assert(api.isFloating() && root.ownerDocument === firstFloatingWindow.document, "Concierge was not moved into the always-on-top presentation window");
+assert(root.classList.contains("is-floating"), "Floating concierge state was not applied");
+assert(firstFloatingWindow.document.documentElement.classList.contains("dcats-concierge-floating-document"), "Floating document styling hook is missing");
+assert(firstFloatingWindow.document.head.children.some((element) => element.tagName === "LINK" && element.rel === "stylesheet"), "Floating document did not load the CSP-safe concierge stylesheet");
+assert(floatingButton.getAttribute("aria-pressed") === "true" && floatingButton.textContent === "D-CATS画面に戻す", "Floating display control did not expose its active state");
+api.setMode("fixed");
+assert(liveInfiniteAnimations().some((animation) => animation.owner === sprite), "Floating concierge stopped when the originating D-CATS document was hidden");
+api.setMode("active");
+activeScreen.id = "screen-search";
+notifyObservers();
+assert(api.isFloating() && !root.hidden, "Floating concierge disappeared during a D-CATS feature transition");
+activeScreen.id = "screen-menu";
+notifyObservers();
+await api.toggleFloating();
+assert(!api.isFloating() && root.ownerDocument === documentObject, "Concierge did not return to the D-CATS document");
+assert(firstFloatingWindow.closed && !root.classList.contains("is-floating"), "Floating window did not close cleanly");
 
 sandboxMath.random = () => 0;
 documentObject.hidden = false;
@@ -320,6 +424,7 @@ documentObject.documentElement.lang = "en";
 notifyObservers();
 assert(byClass("dcats-concierge-launcher-label")[0].textContent === "Rinna", "English character label did not update");
 assert(allElements().some((element) => element.textContent === "Concierge settings"), "English settings copy did not update");
+assert(floatingCost.textContent === "Additional charge: JPY 0 (browser feature)", "English floating cost copy did not update");
 documentObject.documentElement.lang = "zh-CN";
 notifyObservers();
 assert(allElements().some((element) => element.textContent === "礼宾助手设置"), "Chinese settings copy did not update");
@@ -398,8 +503,11 @@ dispatch(documentObject.listeners, "keydown", { key: "Escape" });
 assert(panel.hidden && documentObject.activeElement === launcher, "Closing settings did not restore launcher focus");
 
 api.setMode("active");
+await api.toggleFloating();
+assert(api.isFloating(), "System administrator could not reopen floating display before role downgrade");
 windowObject.userProfile = { role: "company_admin" };
 notifyObservers();
+assert(!api.isFloating() && floatingWindows.at(-1).closed, "Role downgrade did not close the floating concierge window");
 assert(root.hidden, "Concierge remained visible after leaving the system-admin role");
 assert(panel.hidden, "Concierge settings remained open after leaving the system-admin role");
 assert(!liveInfiniteAnimations().length, "Role downgrade left concierge animation running");
@@ -418,4 +526,8 @@ activeScreen.id = "screen-login";
 notifyObservers();
 assert(root.hidden, "Concierge must be hidden on the login screen");
 
-console.log("Concierge runtime behavior verification passed (system-admin gate, 5 movement modes, one sprite, user-scoped preferences, i18n, active motion, gaze, card avoidance, viewport revalidation, reduced motion, focus, and inactive cancellation).");
+console.log("Concierge runtime behavior verification passed (system-admin gate, always-on-top floating display, zero-cost disclosure, 5 movement modes, one sprite, user-scoped preferences, i18n, active motion, gaze, card avoidance, viewport revalidation, reduced motion, focus, and inactive cancellation).");
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

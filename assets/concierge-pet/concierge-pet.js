@@ -48,7 +48,16 @@
       activeMessage: "元気にご案内します。",
       horizontalMessage: "横方向に歩いてご案内します。",
       verticalMessage: "縦方向に歩いてご案内します。",
-      fixedMessage: "画面の隅で待機します。"
+      fixedMessage: "画面の隅で待機します。",
+      floatingLegend: "画面外表示",
+      floatingOpen: "常に前面の小窓で表示",
+      floatingReturn: "D-CATS画面に戻す",
+      floatingHelp: "D-CATSを開いている間、常に前面で表示します。小窓は好きな場所へ移動できます。",
+      floatingCost: "追加料金：0円（ブラウザ標準機能）",
+      floatingUnsupported: "このブラウザはフローティング表示に対応していません。",
+      floatingOpening: "フローティングウィンドウを開いています。",
+      floatingActive: "常に前面の小窓で表示中です。",
+      floatingFailed: "フローティングウィンドウを開けませんでした。ブラウザの設定を確認してください。"
     },
     en: {
       rootLabel: "D-CATS Concierge",
@@ -77,7 +86,16 @@
       activeMessage: "I will guide you actively.",
       horizontalMessage: "I will move horizontally.",
       verticalMessage: "I will move vertically.",
-      fixedMessage: "I will wait in the corner."
+      fixedMessage: "I will wait in the corner.",
+      floatingLegend: "Floating display",
+      floatingOpen: "Show in an always-on-top window",
+      floatingReturn: "Return to the D-CATS window",
+      floatingHelp: "The concierge stays on top while D-CATS is open. Move the small window anywhere you like.",
+      floatingCost: "Additional charge: JPY 0 (browser feature)",
+      floatingUnsupported: "This browser does not support floating display.",
+      floatingOpening: "Opening the floating window.",
+      floatingActive: "Showing in an always-on-top window.",
+      floatingFailed: "The floating window could not be opened. Check your browser settings."
     },
     zh: {
       rootLabel: "D-CATS礼宾助手",
@@ -106,7 +124,16 @@
       activeMessage: "我会积极为您引导。",
       horizontalMessage: "我会横向移动为您引导。",
       verticalMessage: "我会纵向移动为您引导。",
-      fixedMessage: "我会在画面角落等候。"
+      fixedMessage: "我会在画面角落等候。",
+      floatingLegend: "屏幕外显示",
+      floatingOpen: "在置顶小窗中显示",
+      floatingReturn: "返回D-CATS画面",
+      floatingHelp: "D-CATS保持打开期间，小窗会始终置顶显示。您可以将小窗移动到喜欢的位置。",
+      floatingCost: "额外费用：0日元（浏览器标准功能）",
+      floatingUnsupported: "当前浏览器不支持悬浮显示。",
+      floatingOpening: "正在打开悬浮窗口。",
+      floatingActive: "正在置顶小窗中显示。",
+      floatingFailed: "无法打开悬浮窗口。请确认浏览器设置。"
     }
   };
   var STATE_MESSAGE_KEYS = {
@@ -127,6 +154,8 @@
   var launcherLabel;
   var panel;
   var panelClose;
+  var floatingButton;
+  var floatingStatus;
   var characterButtons = [];
   var modeButtons = [];
   var movementAnimation = null;
@@ -146,6 +175,8 @@
   var reduceMotionQuery = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
   var visible = false;
   var panelOpen = false;
+  var floatingWindow = null;
+  var floatingRequestPending = false;
   var externalStateUntil = 0;
   var lastInteractionAt = 0;
 
@@ -305,8 +336,30 @@
     modeButtons.forEach(function (button) { modeGrid.appendChild(button); });
     modeField.appendChild(modeGrid);
 
+    var floatingCard = createElement("section", "dcats-concierge-floating-card");
+    floatingCard.setAttribute("aria-labelledby", "dcats-concierge-floating-title");
+    var floatingTitle = createCopyElement("h3", "dcats-concierge-floating-title", "floatingLegend");
+    floatingTitle.id = "dcats-concierge-floating-title";
+    floatingButton = createElement("button", "dcats-concierge-floating-button");
+    floatingButton.type = "button";
+    floatingButton.setAttribute("aria-describedby", "dcats-concierge-floating-help dcats-concierge-floating-cost dcats-concierge-floating-status");
+    var floatingHelp = createCopyElement("p", "dcats-concierge-floating-help", "floatingHelp");
+    floatingHelp.id = "dcats-concierge-floating-help";
+    var floatingCost = createCopyElement("p", "dcats-concierge-floating-cost", "floatingCost");
+    floatingCost.id = "dcats-concierge-floating-cost";
+    floatingStatus = createElement("p", "dcats-concierge-floating-status");
+    floatingStatus.id = "dcats-concierge-floating-status";
+    floatingStatus.setAttribute("role", "status");
+    floatingStatus.setAttribute("aria-live", "polite");
+    floatingCard.appendChild(floatingTitle);
+    floatingCard.appendChild(floatingButton);
+    floatingCard.appendChild(floatingHelp);
+    floatingCard.appendChild(floatingCost);
+    floatingCard.appendChild(floatingStatus);
+
     panelBody.appendChild(characterField);
     panelBody.appendChild(modeField);
+    panelBody.appendChild(floatingCard);
     panelBody.appendChild(createCopyElement("p", "dcats-concierge-help", "help"));
     panel.appendChild(panelHead);
     panel.appendChild(panelBody);
@@ -329,13 +382,9 @@
     modeButtons.forEach(function (button) {
       button.addEventListener("click", function () { selectMode(button.dataset.value); });
     });
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape" && panelOpen) closePanel();
-    });
-    document.addEventListener("pointerdown", function (event) {
-      if (!panelOpen || panel.contains(event.target) || launcher.contains(event.target) || hitTarget.contains(event.target)) return;
-      closePanel();
-    }, { passive: true });
+    floatingButton.addEventListener("click", toggleFloatingWindow);
+    document.addEventListener("keydown", onPresentationKeyDown);
+    document.addEventListener("pointerdown", onPresentationPointerDown, { passive: true });
     document.addEventListener("pointermove", onPointerMove, { passive: true });
     document.addEventListener("click", onAppInteraction, true);
     window.addEventListener("dcats:concierge-state", onConciergeState);
@@ -353,8 +402,132 @@
 
     syncSettingsOwner();
     applySettings();
+    updateFloatingControls();
     observeScreens();
     syncVisibility();
+  }
+
+  function onPresentationKeyDown(event) {
+    if (event.key === "Escape" && panelOpen) closePanel();
+  }
+
+  function onPresentationPointerDown(event) {
+    if (!panelOpen || panel.contains(event.target) || launcher.contains(event.target) || hitTarget.contains(event.target)) return;
+    closePanel();
+  }
+
+  function supportsFloatingWindow() {
+    return !!(window.documentPictureInPicture && typeof window.documentPictureInPicture.requestWindow === "function");
+  }
+
+  function isFloatingWindowOpen() {
+    return !!(floatingWindow && !floatingWindow.closed);
+  }
+
+  function viewportWindow() {
+    return isFloatingWindowOpen() ? floatingWindow : window;
+  }
+
+  function presentationDocument() {
+    return isFloatingWindowOpen() ? floatingWindow.document : document;
+  }
+
+  function isPresentationHidden() {
+    var activeDocument = presentationDocument();
+    return !!(activeDocument && activeDocument.hidden);
+  }
+
+  function updateFloatingControls(statusKey) {
+    if (!floatingButton || !floatingStatus) return;
+    var supported = supportsFloatingWindow();
+    var floating = isFloatingWindowOpen();
+    floatingButton.disabled = floatingRequestPending || !supported;
+    floatingButton.textContent = copy(floating ? "floatingReturn" : "floatingOpen");
+    floatingButton.setAttribute("aria-pressed", String(floating));
+    var resolvedStatusKey = statusKey || (floating ? "floatingActive" : (!supported ? "floatingUnsupported" : ""));
+    floatingStatus.textContent = resolvedStatusKey ? copy(resolvedStatusKey) : "";
+    floatingStatus.hidden = !resolvedStatusKey;
+  }
+
+  async function toggleFloatingWindow() {
+    if (!isSystemAdminSession() || floatingRequestPending) return;
+    if (isFloatingWindowOpen()) {
+      restoreFromFloatingWindow(floatingWindow, true);
+      return;
+    }
+    if (!supportsFloatingWindow()) {
+      updateFloatingControls("floatingUnsupported");
+      return;
+    }
+
+    floatingRequestPending = true;
+    updateFloatingControls("floatingOpening");
+    try {
+      var requestedWindow = await window.documentPictureInPicture.requestWindow({ width: 360, height: 420 });
+      if (!isSystemAdminSession()) {
+        requestedWindow.close();
+        floatingRequestPending = false;
+        updateFloatingControls();
+        return;
+      }
+
+      floatingWindow = requestedWindow;
+      configureFloatingDocument(requestedWindow.document);
+      requestedWindow.addEventListener("pagehide", function () {
+        restoreFromFloatingWindow(requestedWindow, false);
+      }, { once: true });
+      requestedWindow.addEventListener("resize", scheduleViewportSync, { passive: true });
+      requestedWindow.document.addEventListener("keydown", onPresentationKeyDown);
+      requestedWindow.document.addEventListener("pointerdown", onPresentationPointerDown, { passive: true });
+      requestedWindow.document.addEventListener("pointermove", onPointerMove, { passive: true });
+      requestedWindow.document.addEventListener("visibilitychange", syncRunningState);
+
+      if (panelOpen) closePanel(false);
+      root.classList.add("is-floating");
+      requestedWindow.document.body.appendChild(root);
+      floatingRequestPending = false;
+      updateFloatingControls("floatingActive");
+      parkAtSafeCorner();
+      syncRunningState();
+    } catch (error) {
+      floatingWindow = null;
+      floatingRequestPending = false;
+      updateFloatingControls("floatingFailed");
+    }
+  }
+
+  function configureFloatingDocument(floatingDocument) {
+    floatingDocument.title = copy("rootLabel");
+    floatingDocument.documentElement.lang = document.documentElement.lang || "ja";
+    floatingDocument.documentElement.classList.add("dcats-concierge-floating-document");
+    floatingDocument.body.classList.add("dcats-concierge-floating-body");
+
+    var viewport = floatingDocument.createElement("meta");
+    viewport.setAttribute("name", "viewport");
+    viewport.setAttribute("content", "width=device-width, initial-scale=1.0");
+    floatingDocument.head.appendChild(viewport);
+
+    var sourceStylesheet = document.querySelector('link[href*="assets/concierge-pet/concierge-pet.css"]');
+    var stylesheet = floatingDocument.createElement("link");
+    stylesheet.rel = "stylesheet";
+    stylesheet.href = sourceStylesheet && sourceStylesheet.href
+      ? sourceStylesheet.href
+      : new URL("assets/concierge-pet/concierge-pet.css", document.baseURI).href;
+    floatingDocument.head.appendChild(stylesheet);
+  }
+
+  function restoreFromFloatingWindow(targetWindow, closeWindow) {
+    if (!targetWindow || floatingWindow !== targetWindow) return;
+    floatingWindow = null;
+    floatingRequestPending = false;
+    if (root.ownerDocument !== document) document.body.appendChild(root);
+    root.classList.remove("is-floating");
+    updateFloatingControls();
+    if (closeWindow && !targetWindow.closed) targetWindow.close();
+    if (visible) {
+      parkAtSafeCorner();
+      syncRunningState();
+    }
   }
 
   function observeScreens() {
@@ -376,6 +549,9 @@
     var dedicatedPrintStation = new URLSearchParams(window.location.search).has("dcats_print_station");
     var systemAdmin = isSystemAdminSession();
     visible = systemAdmin && !!screen && !EXCLUDED_SCREENS[screen] && !dedicatedPrintStation;
+    if (isFloatingWindowOpen() && (!systemAdmin || EXCLUDED_SCREENS[screen] || dedicatedPrintStation)) {
+      restoreFromFloatingWindow(floatingWindow, true);
+    }
     if (!systemAdmin && panelOpen) {
       panelOpen = false;
       panel.hidden = true;
@@ -394,10 +570,15 @@
     if (!root) return;
     root.setAttribute("aria-label", copy("rootLabel"));
     panelClose.setAttribute("aria-label", copy("closeSettings"));
+    if (isFloatingWindowOpen()) {
+      floatingWindow.document.title = copy("rootLabel");
+      floatingWindow.document.documentElement.lang = document.documentElement.lang || "ja";
+    }
     root.querySelectorAll("[data-concierge-copy]").forEach(function (element) {
       element.textContent = copy(element.dataset.conciergeCopy);
     });
     applySettings();
+    updateFloatingControls();
   }
 
   function applySettings() {
@@ -410,6 +591,7 @@
     launcherLabel.textContent = settings.mode === "off" ? copy("launcherOff") : name;
     characterButtons.forEach(function (button) { button.setAttribute("aria-pressed", String(button.dataset.value === settings.character)); });
     modeButtons.forEach(function (button) { button.setAttribute("aria-pressed", String(button.dataset.value === settings.mode)); });
+    updateFloatingControls();
   }
 
   function selectCharacter(character) {
@@ -449,7 +631,7 @@
 
   function openPanel() {
     if (!isSystemAdminSession() || panelOpen) return;
-    panelReturnFocus = document.activeElement;
+    panelReturnFocus = presentationDocument().activeElement;
     panelOpen = true;
     panel.hidden = false;
     launcher.setAttribute("aria-expanded", "true");
@@ -473,7 +655,7 @@
   }
 
   function syncRunningState() {
-    if (!visible || document.hidden || settings.mode === "off") {
+    if (!visible || isPresentationHidden() || settings.mode === "off") {
       stopActivity();
       return;
     }
@@ -570,7 +752,7 @@
   }
 
   function canAnimate() {
-    return visible && !document.hidden && settings.mode !== "off" && !panelOpen && !isReducedMotion();
+    return visible && !isPresentationHidden() && settings.mode !== "off" && !panelOpen && !isReducedMotion();
   }
 
   function chooseAmbientAction() {
@@ -638,9 +820,10 @@
   function parkAtSafeCorner() {
     root.classList.remove("has-no-safe-target");
     var size = petSize();
+    var viewport = viewportWindow();
     var target = {
-      x: Math.max(10, window.innerWidth - size.width - 72),
-      y: Math.max(54, window.innerHeight - size.height - 74)
+      x: Math.max(10, viewport.innerWidth - size.width - 72),
+      y: Math.max(54, viewport.innerHeight - size.height - 74)
     };
     position = target;
     var next = mover.animate([
@@ -654,14 +837,16 @@
 
   function petSize() {
     var rect = mover.getBoundingClientRect();
-    return { width: rect.width || (window.innerWidth <= 700 ? 88 : 118), height: rect.height || (window.innerWidth <= 700 ? 96 : 128) };
+    var viewport = viewportWindow();
+    return { width: rect.width || (viewport.innerWidth <= 700 ? 88 : 118), height: rect.height || (viewport.innerWidth <= 700 ? 96 : 128) };
   }
 
   function findSafeTarget() {
     var size = petSize();
-    var width = Math.max(1, window.innerWidth - size.width - 18);
-    var height = Math.max(1, window.innerHeight - size.height - 18);
-    var minimumY = window.innerWidth <= 700 ? Math.max(48, height * .42) : 52;
+    var viewport = viewportWindow();
+    var width = Math.max(1, viewport.innerWidth - size.width - 18);
+    var height = Math.max(1, viewport.innerHeight - size.height - 18);
+    var minimumY = viewport.innerWidth <= 700 ? Math.max(48, height * .42) : 52;
     var rects = collectExclusionRects();
     var horizontalOnly = settings.mode === "horizontal";
     var verticalOnly = settings.mode === "vertical";
@@ -695,17 +880,18 @@
   }
 
   function collectExclusionRects() {
-    var active = document.querySelector(".screen.active");
-    if (!active) return [];
     var selectors = "button,input,select,textarea,a[href],summary,[role='button'],[role='link'],[role='dialog'],[tabindex]:not([tabindex='-1']),[data-production-index],.form-overlay,.overlay.show,.panel.show,.fullscreen,.toast,.loading-overlay";
-    var elements = active.querySelectorAll(selectors);
     var rects = [];
-    for (var i = 0; i < elements.length && rects.length < 260; i += 1) {
-      var element = elements[i];
-      if (!isElementVisible(element)) continue;
-      var rect = element.getBoundingClientRect();
-      if (rect.width < 8 || rect.height < 8) continue;
-      rects.push({ left: rect.left - 18, top: rect.top - 18, right: rect.right + 18, bottom: rect.bottom + 18 });
+    if (!isFloatingWindowOpen()) {
+      var active = document.querySelector(".screen.active");
+      var elements = active ? active.querySelectorAll(selectors) : [];
+      for (var i = 0; i < elements.length && rects.length < 260; i += 1) {
+        var element = elements[i];
+        if (!isElementVisible(element)) continue;
+        var rect = element.getBoundingClientRect();
+        if (rect.width < 8 || rect.height < 8) continue;
+        rects.push({ left: rect.left - 18, top: rect.top - 18, right: rect.right + 18, bottom: rect.bottom + 18 });
+      }
     }
     [launcher, panel].forEach(function (element) {
       if (!element || !isElementVisible(element)) return;
@@ -742,7 +928,8 @@
 
   function isElementVisible(element) {
     if (!element || element.hidden) return false;
-    var style = window.getComputedStyle(element);
+    var ownerWindow = element.ownerDocument && element.ownerDocument.defaultView;
+    var style = (ownerWindow || window).getComputedStyle(element);
     var rect = element.getBoundingClientRect();
     return style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity || 1) !== 0 && rect.width > 0 && rect.height > 0;
   }
@@ -793,6 +980,7 @@
   }
 
   function onPointerMove(event) {
+    if (isFloatingWindowOpen() && event.target && event.target.ownerDocument !== floatingWindow.document) return;
     pointer.x = event.clientX;
     pointer.y = event.clientY;
     pointer.at = Date.now();
@@ -841,7 +1029,7 @@
       success: "jumping",
       greeting: "waving"
     }[state];
-    if (!rowName || !isSystemAdminSession() || !visible || document.hidden || settings.mode === "off" || root.classList.contains("has-no-safe-target")) return;
+    if (!rowName || !isSystemAdminSession() || !visible || isPresentationHidden() || settings.mode === "off" || root.classList.contains("has-no-safe-target")) return;
     root.classList.remove("has-no-safe-target");
     sequenceToken += 1;
     clearActivityTimer();
@@ -861,7 +1049,7 @@
   function showBubble(message, duration) {
     if (!bubble || !message) return;
     var moverRect = mover.getBoundingClientRect();
-    mover.classList.toggle("has-left-bubble", moverRect.left + moverRect.width / 2 > window.innerWidth / 2);
+    mover.classList.toggle("has-left-bubble", moverRect.left + moverRect.width / 2 > viewportWindow().innerWidth / 2);
     bubble.textContent = message;
     bubble.classList.add("is-visible");
     if (bubbleTimer) clearTimeout(bubbleTimer);
@@ -885,8 +1073,9 @@
     }
     freezeMovement();
     var size = petSize();
-    position.x = Math.max(8, Math.min(position.x, window.innerWidth - size.width - 8));
-    position.y = Math.max(46, Math.min(position.y, window.innerHeight - size.height - 8));
+    var viewport = viewportWindow();
+    position.x = Math.max(8, Math.min(position.x, viewport.innerWidth - size.width - 8));
+    position.y = Math.max(46, Math.min(position.y, viewport.innerHeight - size.height - 8));
     var next = mover.animate([
       { transform: transformFor(position) },
       { transform: transformFor(position) }
@@ -910,7 +1099,9 @@
       setCharacter: selectCharacter,
       setMode: selectMode,
       openSettings: openPanel,
-      getSettings: function () { return { character: settings.character, mode: settings.mode }; }
+      toggleFloating: toggleFloatingWindow,
+      getSettings: function () { return { character: settings.character, mode: settings.mode }; },
+      isFloating: isFloatingWindowOpen
     });
   }
 
