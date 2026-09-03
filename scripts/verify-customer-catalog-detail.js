@@ -38,6 +38,22 @@ if (!searchSource.includes("includeDksProductCode: false") ||
     !searchSource.includes("preferPrefix: true")) {
   throw new Error("customer catalog search must exclude DKS codes and prefer indexed prefix matches");
 }
+const shortQueryGuardIndex = searchSource.indexOf("normalizePartQuery(query).length <= CUSTOMER_CATALOG_SHORT_QUERY_MAX && !category");
+const customerMasterSearchIndex = searchSource.indexOf("fetchCoreProductMasterMatches(query, category");
+if (!source.includes("var CUSTOMER_CATALOG_SHORT_QUERY_MAX = 5;") ||
+    shortQueryGuardIndex < 0 || customerMasterSearchIndex < shortQueryGuardIndex ||
+    !searchSource.slice(shortQueryGuardIndex, customerMasterSearchIndex).includes("return;") ||
+    !searchSource.includes('t("customer_catalog_short_query_category_required")') ||
+    !searchSource.includes('categoryEl.setAttribute("aria-invalid", "true")') ||
+    !searchSource.includes("categoryEl.focus()")) {
+  throw new Error("customer catalog must require a category before searching part numbers of five characters or fewer");
+}
+if (!source.includes('document.getElementById("customer-catalog-category").addEventListener("change", function(){ runCustomerCatalogSearch({ logActivity: true }); })')) {
+  throw new Error("selecting a customer catalog category must rerun the pending part-number search");
+}
+if ((source.match(/customer_catalog_short_query_category_required:/g) || []).length !== 3) {
+  throw new Error("short customer catalog search guidance must be localized in Japanese, English, and Chinese");
+}
 const customerStockIndex = searchSource.indexOf("await fetchProductAvailableStockMap(products)");
 const customerStockSortIndex = searchSource.indexOf("sortProductsByAvailableStock(products, stockPriorityResult.map)");
 const customerResultLimitIndex = searchSource.indexOf("CUSTOMER_CATALOG_RESULT_LIMIT");

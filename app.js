@@ -224,6 +224,7 @@ var TRANSLATIONS = {
     customer_catalog_for: "お取引先",
     customer_catalog_results: "検索結果",
     customer_catalog_search_hint: "品番を入力するか、カテゴリを選択して検索してください",
+    customer_catalog_short_query_category_required: "5文字以下の品番は、カテゴリを選択して検索してください。",
     customer_catalog_select_product: "商品を選択してください",
     customer_catalog_select_product_note: "公開されている商品情報を確認できます",
     customer_catalog_customer_status: "得意先閲覧",
@@ -2065,6 +2066,7 @@ var TRANSLATIONS = {
     customer_catalog_for: "Customer",
     customer_catalog_results: "Results",
     customer_catalog_search_hint: "Enter a part number or select a category to search",
+    customer_catalog_short_query_category_required: "For part numbers of 5 characters or fewer, select a category before searching.",
     customer_catalog_select_product: "Select a product",
     customer_catalog_select_product_note: "View the product information available to this customer",
     customer_catalog_customer_status: "Customer Access",
@@ -3851,6 +3853,7 @@ var TRANSLATIONS = {
     customer_catalog_for: "客户",
     customer_catalog_results: "搜索结果",
     customer_catalog_search_hint: "请输入品号或选择类别后搜索",
+    customer_catalog_short_query_category_required: "品号为5个字符以内时，请先选择类别再搜索。",
     customer_catalog_select_product: "请选择商品",
     customer_catalog_select_product_note: "可确认向该客户公开的商品信息",
     customer_catalog_customer_status: "客户浏览",
@@ -5647,7 +5650,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.871";
+var APP_VERSION       = "v1.1.872";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6029,6 +6032,7 @@ var customerManagedUsers = [];
 var customerManagedUsersRequestSeq = 0;
 var CUSTOMER_CATALOG_RESULT_LIMIT = 60;
 var CUSTOMER_CATALOG_SCAN_LIMIT = 180;
+var CUSTOMER_CATALOG_SHORT_QUERY_MAX = 5;
 var salesCustomerOptions = [];
 var detailSalesCustomerOptions = [];
 var detailSelectedSalesCustomerId = "";
@@ -9258,6 +9262,22 @@ async function runCustomerCatalogSearch(options) {
     var emptyDetail = document.getElementById("customer-catalog-detail");
     if (emptyDetail) emptyDetail.innerHTML = "<div class='customer-catalog-detail-empty'><strong>" + esc(t("customer_catalog_select_product")) + "</strong><span>" + esc(t("customer_catalog_select_product_note")) + "</span></div>";
     if (input) input.focus();
+    return;
+  }
+  if (categoryEl) categoryEl.removeAttribute("aria-invalid");
+  if (query && normalizePartQuery(query).length <= CUSTOMER_CATALOG_SHORT_QUERY_MAX && !category) {
+    customerCatalogRequestSeq += 1;
+    customerCatalogProducts = [];
+    customerCatalogSelectedProduct = null;
+    customerCatalogImageInfo = { counts: {}, thumbnails: {} };
+    if (list) list.innerHTML = "<div class='customer-catalog-empty'>" + esc(t("customer_catalog_short_query_category_required")) + "</div>";
+    if (count) count.textContent = "-";
+    var shortQueryDetail = document.getElementById("customer-catalog-detail");
+    if (shortQueryDetail) shortQueryDetail.innerHTML = "<div class='customer-catalog-detail-empty'><strong>" + esc(t("customer_catalog_select_product")) + "</strong><span>" + esc(t("customer_catalog_select_product_note")) + "</span></div>";
+    if (categoryEl) {
+      categoryEl.setAttribute("aria-invalid", "true");
+      categoryEl.focus();
+    }
     return;
   }
   var seq = ++customerCatalogRequestSeq;
