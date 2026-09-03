@@ -5647,7 +5647,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.868";
+var APP_VERSION       = "v1.1.869";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -11339,11 +11339,16 @@ function updateSalesOrderSelectionButtons() {
   var acceptIds = selectedRows.filter(function(row) { return row.status === "submitted"; });
   var exportButton = document.getElementById("sales-order-export-b2");
   var acceptButton = document.getElementById("sales-order-batch-accept");
+  var selectionSummary = document.getElementById("sales-order-selection-summary");
+  if (selectionSummary) {
+    selectionSummary.textContent = checkedIds.length + "件選択";
+    selectionSummary.classList.toggle("active", checkedIds.length > 0);
+  }
   if (exportButton) {
     exportButton.disabled = b2TargetIds.length === 0 || salesOrderSaving;
     exportButton.textContent = salesOrderB2ExportSaving
       ? "必須項目を確認中..."
-      : "商品発送用B2 CSV発行";
+      : "B2 CSV発行";
     exportButton.title = b2TargetIds.length
       ? (checkedIds.length ? "チェックした受注を発行します。" : "現在表示中の受注を発行します。")
       : "注文を表示するか、一覧の処理対象にチェックを入れてください。";
@@ -14960,12 +14965,32 @@ function setSalesOrderDetailView(view, focusTab) {
   });
 }
 
+function salesOrderLifecycleHtml(status) {
+  var normalized = String(status || "").toLowerCase();
+  if (normalized === "cancelled") {
+    return "<div class='sales-order-progress cancelled' aria-label='受注処理は取消で終了'><span>処理終了</span><strong>受注取消</strong></div>";
+  }
+  var steps = [
+    { key: "submitted", label: "受付待ち" },
+    { key: "accepted", label: "受付済み" },
+    { key: "shipping_ready", label: "出荷準備" },
+    { key: "shipped", label: "出荷済み" },
+    { key: "completed", label: "完了" }
+  ];
+  var currentIndex = steps.findIndex(function(step) { return step.key === normalized; });
+  if (currentIndex < 0) currentIndex = 0;
+  return "<div class='sales-order-progress' aria-label='受注処理の進捗'>" + steps.map(function(step, index) {
+    var state = index < currentIndex ? " done" : (index === currentIndex ? " current" : " upcoming");
+    return "<div class='sales-order-progress-step" + state + "'" + (index === currentIndex ? " aria-current='step'" : "") + "><span>" + (index + 1) + "</span><strong>" + esc(step.label) + "</strong></div>";
+  }).join("") + "</div>";
+}
+
 function renderSalesOrderDetail() {
   var host = document.getElementById("sales-order-detail");
   var order = salesOrderDetail;
   if (!host) return;
   if (!order) {
-    host.innerHTML = "<div class='sales-order-empty'>左の一覧から注文を選択してください</div>";
+    host.innerHTML = "<div class='sales-order-empty sales-order-empty-guidance'><strong>注文を選択</strong><span>左の注文一覧から、確認または処理する受注を選択してください。</span></div>";
     return;
   }
   var address = order.shipping_address || {};
@@ -14994,6 +15019,7 @@ function renderSalesOrderDetail() {
   var nextActions = actions || cancelAction
     ? "<div class='sales-order-detail-next-actions'><span>次の操作</span><div>" + actions + cancelAction + "</div></div>"
     : "<div class='sales-order-detail-next-actions complete'><span>次の操作</span><strong>現在必要な操作はありません</strong></div>";
+  var lifecycle = salesOrderLifecycleHtml(order.status);
   var tabHtml = [
     { key: "overview", label: "注文・配送" },
     { key: "fulfillment", label: "出荷・帳票" },
@@ -15004,7 +15030,7 @@ function renderSalesOrderDetail() {
     var panelId = tab.key === "tracking" || tab.key === "history" ? "sales-order-detail-" + tab.key : "sales-order-detail-panel-" + tab.key;
     return "<button type='button' role='tab' id='sales-order-detail-tab-" + tab.key + "' aria-controls='" + panelId + "' aria-selected='" + (selected ? "true" : "false") + "' tabindex='" + (selected ? "0" : "-1") + "' data-sales-order-detail-view='" + tab.key + "'>" + tab.label + "</button>";
   }).join("");
-  host.innerHTML = "<div class='sales-order-detail-head'><div class='sales-order-detail-identity'><div class='sales-order-detail-meta'><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "</div><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div><div class='sales-order-detail-state'><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span>" + nextActions + "</div></div>" +
+  host.innerHTML = "<div class='sales-order-detail-head'><div class='sales-order-detail-identity'><div class='sales-order-detail-meta'><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "</div><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div>" + lifecycle + "<div class='sales-order-detail-state'><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span>" + nextActions + "</div></div>" +
     "<div class='sales-order-detail-summary'><div><span>商品計</span><strong>" + esc(customerOrderCurrency(order.subtotal_jpy)) + "</strong></div><div class='discount'><span>値引・調整</span><strong>" + esc(orderDiscount ? ("-" + customerOrderCurrency(orderDiscount)) : customerOrderCurrency(0)) + "</strong></div><div><span>送料</span><strong>" + esc(Number(order.shipping_fee_jpy) === 0 ? "送料無料" : customerOrderCurrency(order.shipping_fee_jpy)) + "</strong></div><div><span>消費税</span><strong>" + esc(customerOrderCurrency(order.tax_jpy)) + "</strong></div><div class='total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div></div>" +
     "<nav class='sales-order-detail-nav' role='tablist' aria-label='注文詳細の作業項目'>" + tabHtml + "</nav>" +
     "<div class='sales-order-detail-panels'>" +
@@ -48458,6 +48484,16 @@ document.getElementById("sales-order-import-b2").addEventListener("click", funct
 });
 document.getElementById("sales-order-accounting-export").addEventListener("click", openSalesAccountingExport);
 document.getElementById("sales-order-business-workspace-open").addEventListener("click", openDcatsBusinessWorkspace);
+document.querySelectorAll("#sales-order-data-actions button").forEach(function(button) {
+  button.addEventListener("click", function() {
+    var menu = document.getElementById("sales-order-data-actions");
+    if (menu) menu.removeAttribute("open");
+  });
+});
+document.addEventListener("click", function(event) {
+  var menu = document.getElementById("sales-order-data-actions");
+  if (menu && menu.hasAttribute("open") && !menu.contains(event.target)) menu.removeAttribute("open");
+});
 document.getElementById("dcats-business-workspace-close").addEventListener("click", closeDcatsBusinessWorkspace);
 document.getElementById("dcats-business-workspace-cancel").addEventListener("click", closeDcatsBusinessWorkspace);
 document.getElementById("dcats-business-workspace-shortcut").addEventListener("click", createDcatsBusinessWorkspaceShortcut);

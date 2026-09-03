@@ -2675,7 +2675,16 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "コンシェルジュを表示": "Show concierge",
     "{name}に切り替えました。": "Switched to {name}.",
     "元気にご案内します。": "I will guide you actively.",
-    "画面の隅で待機します。": "I will wait in the corner."
+    "画面の隅で待機します。": "I will wait in the corner.",
+    "受注を検索": "Search Orders",
+    "注文状態": "Order Status",
+    "選択した受注の処理": "Selected Order Actions",
+    "データ連携": "Data Integration",
+    "注文を選択": "Select an Order",
+    "左の注文一覧から、確認または処理する受注を選択してください。": "Select an order from the list on the left to review or process it.",
+    "受注処理の進捗": "Order Processing Progress",
+    "受注処理は取消で終了": "Order processing ended by cancellation",
+    "処理終了": "Processing Complete"
   },
   "zh": {
     ": 構成部品の使用レコードIDを確認できませんでした。画面を更新して再度お試しください。": ": 无法确认构成部件的使用记录ID。请刷新页面后再试一次。",
@@ -5351,6 +5360,15 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "コンシェルジュを表示": "显示礼宾助手",
     "{name}に切り替えました。": "已切换为{name}。",
     "元気にご案内します。": "我会积极为您引导。",
-    "画面の隅で待機します。": "我会在画面角落等候。"
+    "画面の隅で待機します。": "我会在画面角落等候。",
+    "受注を検索": "搜索订单",
+    "注文状態": "订单状态",
+    "選択した受注の処理": "所选订单操作",
+    "データ連携": "数据联动",
+    "注文を選択": "选择订单",
+    "左の注文一覧から、確認または処理する受注を選択してください。": "请从左侧订单列表中选择要确认或处理的订单。",
+    "受注処理の進捗": "订单处理进度",
+    "受注処理は取消で終了": "订单处理已因取消而结束",
+    "処理終了": "处理结束"
   }
 };

@@ -19,6 +19,15 @@ const runtimeScriptPaths = [
 ];
 const curatedTranslations = {
   en: {
+    "受注を検索": "Search Orders",
+    "注文状態": "Order Status",
+    "選択した受注の処理": "Selected Order Actions",
+    "データ連携": "Data Integration",
+    "注文を選択": "Select an Order",
+    "左の注文一覧から、確認または処理する受注を選択してください。": "Select an order from the list on the left to review or process it.",
+    "受注処理の進捗": "Order Processing Progress",
+    "受注処理は取消で終了": "Order processing ended by cancellation",
+    "処理終了": "Processing Complete",
     "D-CATSコンシェルジュ": "D-CATS Concierge",
     "処理しています。少しお待ちください。": "Processing. Please wait.",
     "確認をお待ちしています。": "Waiting for your confirmation.",
@@ -166,6 +175,15 @@ const curatedTranslations = {
     "B2 CSVを再ダウンロードしました。": "The B2 CSV was downloaded again."
   },
   zh: {
+    "受注を検索": "搜索订单",
+    "注文状態": "订单状态",
+    "選択した受注の処理": "所选订单操作",
+    "データ連携": "数据联动",
+    "注文を選択": "选择订单",
+    "左の注文一覧から、確認または処理する受注を選択してください。": "请从左侧订单列表中选择要确认或处理的订单。",
+    "受注処理の進捗": "订单处理进度",
+    "受注処理は取消で終了": "订单处理已因取消而结束",
+    "処理終了": "处理结束",
     "D-CATSコンシェルジュ": "D-CATS礼宾助手",
     "処理しています。少しお待ちください。": "正在处理，请稍候。",
     "確認をお待ちしています。": "正在等待您的确认。",
