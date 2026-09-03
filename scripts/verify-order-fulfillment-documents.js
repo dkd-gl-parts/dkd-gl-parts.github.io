@@ -297,6 +297,10 @@ for (const fragment of [
   'shippingDocumentManualOutputActions(order, "dispatch"',
   'warrantyRequired ? shippingDocumentManualOutputActions(order, "warranty"',
   'shippingDocumentManualOutputActions(order, "core_return"',
+  'var coreReturnReady = !!dispatch && !!order.core_return_required',
+  'shippingDocumentManualOutputActions(order, "core_return", coreReturnReady)',
+  'ready: coreReturnReady',
+  '保証書・コア返却シートは発行できます。',
   'warrantyRequired ? shippingDocumentPrintStateLabel(warrantyJob, "未発行")',
   '対象外（交換品）',
   'shippingDocumentPrintStateLabel(coreJob, "未発行")',
@@ -325,6 +329,20 @@ if (requiredDocuments.includes('var returnCanHandwrite = !!(ready &&')) {
 if (requiredDocuments.includes("待機中")) {
   throw new Error("Unissued shipment documents must be labeled as unissued, not as an active print wait state");
 }
+if (requiredDocuments.includes('shippingDocumentManualOutputActions(order, "core_return", shipmentReady)')) {
+  throw new Error("Core-return sheet printing must not wait for shipment completion");
+}
+
+const salesOrderDocumentPrint = sourceBetween("async function printSalesOrderDocument", "async function loadSalesOrderDetail");
+for (const forbidden of [
+  'type === "core_return" && (dispatch.status !== "shipped"',
+  "商品・製造シリアル照合とB2発行済データ取込の両方が完了してから"
+]) {
+  if (salesOrderDocumentPrint.includes(forbidden)) {
+    throw new Error(`Core-return sheet browser printing must be available before shipment completion: ${forbidden}`);
+  }
+}
+requireFragment(salesOrderDocumentPrint, 'type === "core_return" && !order.core_return_required');
 
 const detailSource = sourceBetween("function renderShippingDocumentDetail", "function bindShippingDocumentDetailActions");
 for (const fragment of [
@@ -509,8 +527,6 @@ const printSource = sourceBetween("function salesOrderPrintItemRows", "async fun
 for (const fragment of [
   "manufacturing_serial",
   "製造シリアル",
-  'dispatch.status !== "shipped"',
-  "!order.outbound_tracking_number",
   "shipment-document-table-",
   "buildSalesOrderWarrantyDocumentHtml",
   "hydrateSalesOrderWarrantyPrintData",
@@ -622,11 +638,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.886"',
-  'styles.css?v=1.1.886',
-  'app.js?v=1.1.886'
+  'content="v1.1.887"',
+  'styles.css?v=1.1.887',
+  'app.js?v=1.1.887'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.886"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.887"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");

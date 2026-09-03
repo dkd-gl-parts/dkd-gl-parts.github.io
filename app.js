@@ -5716,7 +5716,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.886";
+var APP_VERSION       = "v1.1.887";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -14327,9 +14327,9 @@ function shippingDocumentReturnWaybillCopyCount(order) {
 
 function shippingDocumentShipmentDocumentsHtml(order) {
   var dispatch = salesOrderDispatch(order);
-  var ready = !!(dispatch && dispatch.status === "shipped" && order.outbound_tracking_number);
   var warrantyRequired = salesOrderWarrantyDocumentRequired(order);
   var warrantyReady = !!dispatch && warrantyRequired;
+  var coreReturnReady = !!dispatch && !!order.core_return_required;
   var dispatchJob = shippingDocumentPrintJob(order, "dispatch");
   var warrantyJob = shippingDocumentPrintJob(order, "warranty");
   var coreJob = shippingDocumentPrintJob(order, "core_return");
@@ -14357,8 +14357,8 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var b2SettingsAction = isSystemAdmin() ? "<button type='button' data-shipping-document-b2-settings>B2契約設定</button>" : "";
   var dispatchStandard = salesOrderAutoPrintIsEnabled() ? "A4 / 受付時に自動発行" : "A4 / 出荷帳票発行で印刷";
   var reason = !dispatch ? "出荷指示書が未発行です。"
-    : dispatch.status !== "shipped" ? "商品と製造シリアルの照合を完了してください。"
-      : !order.outbound_tracking_number ? "B2発行済データを取り込んでください。" : "";
+    : dispatch.status !== "shipped" ? "保証書・コア返却シートは発行できます。出荷完了には商品と製造シリアルの照合が必要です。"
+      : !order.outbound_tracking_number ? "保証書・コア返却シートは発行できます。出荷完了にはB2発行済データを取り込んでください。" : "";
   var rows = [
     {
       key: "dispatch", name: "出荷指示書", standard: dispatchStandard,
@@ -14380,9 +14380,9 @@ function shippingDocumentShipmentDocumentsHtml(order) {
     },
     {
       key: "core_return", name: "コア返却シート", standard: "A5 / コア返却必要時 / 端末印刷",
-      state: order.core_return_required ? shippingDocumentPrintStateLabel(coreJob, "未発行") : "対象外", ready: ready && !!order.core_return_required,
+      state: order.core_return_required ? shippingDocumentPrintStateLabel(coreJob, "未発行") : "対象外", ready: coreReturnReady,
       temporary: shippingDocumentHasTemporaryOutput(order, "core_return") ? "今回のみ: " + shippingDocumentOutputModeLabel(shippingDocumentTemporaryOutputMode(order, "core_return")) : "",
-      actions: order.core_return_required ? shippingDocumentManualOutputActions(order, "core_return", ready) : "<span class='shipping-document-no-action'>発行不要</span>"
+      actions: order.core_return_required ? shippingDocumentManualOutputActions(order, "core_return", coreReturnReady) : "<span class='shipping-document-no-action'>発行不要</span>"
     },
     {
       key: "return_waybill", name: "コア返却用複写伝票", standard: "対象商品1個につき1枚 / " + returnWaybillCopyCount + "枚",
@@ -14391,7 +14391,7 @@ function shippingDocumentShipmentDocumentsHtml(order) {
       actions: order.core_return_required ? (returnMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-return-print" + (returnCanPrint ? "" : " disabled") + ">" + esc(returnPrintActionLabel) + "（" + returnWaybillCopyCount + "枚）</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='return_waybill'" + (returnCanHandwrite ? "" : " disabled") + ">手書き内容を表示（" + returnWaybillCopyCount + "枚）</button>") + "<button type='button' data-shipping-document-open-settings='return'>設定</button>" : "<span class='shipping-document-no-action'>発行不要</span>"
     }
   ];
-  return "<section class='shipping-document-section shipping-document-required-documents'><div class='shipping-document-section-head'><div><h3>帳票の状態と発行</h3><p>標準設定を確認し、必要な帳票をこの一覧から発行します。設定変更は各行の「設定」から行います。</p></div><span class='shipping-document-ready-state " + (ready ? "ready" : "pending") + "'>" + esc(ready ? "同梱帳票を発行可" : "出荷処理中") + "</span></div>" +
+  return "<section class='shipping-document-section shipping-document-required-documents'><div class='shipping-document-section-head'><div><h3>帳票の状態と発行</h3><p>標準設定を確認し、必要な帳票をこの一覧から発行します。設定変更は各行の「設定」から行います。</p></div><span class='shipping-document-ready-state " + (dispatch ? "ready" : "pending") + "'>" + esc(dispatch ? "同梱帳票を発行可" : "出荷指示待ち") + "</span></div>" +
     (reason ? "<p class='shipping-document-guidance'>" + esc(reason) + "</p>" : "") +
     "<div class='shipping-document-required-list'><div class='shipping-document-required-head'><span>帳票</span><span>標準設定</span><span>現在の状態</span><span>発行操作</span></div>" + rows.map(function(row) {
       return "<div class='shipping-document-required-row " + (row.ready ? "ready" : "pending") + "'><div class='shipping-document-name-cell'><strong>" + esc(row.name) + "</strong>" + (row.carrierCode ? shippingCarrierBrandHtml(row.carrierCode, true) : "") + "</div><span class='shipping-document-standard'>" + esc(row.standard) + (row.temporary ? "<small>" + esc(row.temporary) + "</small>" : "") + "</span><em>" + esc(row.state) + "</em><div class='shipping-document-row-actions'>" + row.actions + "</div></div>";
@@ -15754,8 +15754,8 @@ async function printSalesOrderDocument(type, targetOrder) {
   var order = targetOrder || salesOrderDetail;
   var dispatch = salesOrderDispatch(order);
   if (!order || !dispatch) return;
-  if (type === "core_return" && (dispatch.status !== "shipped" || !order.outbound_tracking_number)) {
-    alert("コア返却シートは、商品・製造シリアル照合とB2発行済データ取込の両方が完了してから印刷できます。");
+  if (type === "core_return" && !order.core_return_required) {
+    alert("この注文はコア返却不要のため、コア返却シートを発行しません。");
     return;
   }
   if (type === "warranty" && !salesOrderWarrantyDocumentRequired(order)) {
