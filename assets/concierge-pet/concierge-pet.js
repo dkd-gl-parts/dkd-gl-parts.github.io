@@ -27,11 +27,14 @@
     running: { row: 7, durations: [120, 120, 120, 120, 120, 220] },
     review: { row: 8, durations: [150, 150, 150, 150, 150, 280] }
   };
-  var STOP_GESTURE_ORDER = ["escort", "handshake", "shy"];
+  var STOP_GESTURE_ORDER = ["settle", "bow", "escort", "handshake", "shy", "welcome"];
   var STOP_GESTURES = {
-    escort: { columns: [0, 1], durations: [420, 520], iterations: 2 },
-    handshake: { columns: [2, 3], durations: [420, 650], iterations: 2 },
-    shy: { columns: [4, 5], durations: [500, 620], iterations: 2 }
+    settle: { column: 0, enter: 180, hold: 620, exit: 260 },
+    bow: { column: 1, enter: 260, hold: 850, exit: 320 },
+    escort: { column: 2, enter: 260, hold: 1000, exit: 300 },
+    handshake: { column: 3, enter: 260, hold: 1100, exit: 320 },
+    shy: { column: 4, enter: 300, hold: 1000, exit: 350 },
+    welcome: { column: 5, enter: 260, hold: 950, exit: 320 }
   };
   var COPY = {
     ja: {
@@ -761,8 +764,8 @@
     if (!(await delay(settle, token))) return;
 
     var gesture = nextStopGesture();
-    playRowFrames("review", gesture.columns, gesture.durations, gesture.iterations);
-    if (!(await delay(stopGestureDuration(gesture) + 200, token))) return;
+    playStopGesture(gesture);
+    if (!(await delay(stopGestureDuration(gesture) + 100, token))) return;
     playRow("idle", Infinity);
     var rest = 1600 + Math.floor(Math.random() * 1400);
     if (await delay(rest, token)) runActivityLoop(token);
@@ -779,8 +782,7 @@
   }
 
   function stopGestureDuration(gesture) {
-    var total = gesture.durations.reduce(function (sum, duration) { return sum + duration; }, 0);
-    return total * gesture.iterations;
+    return gesture.enter + gesture.hold + gesture.exit;
   }
 
   function moveTo(target, token) {
@@ -1014,26 +1016,26 @@
     return spriteAnimation;
   }
 
-  function playRowFrames(name, columns, durations, iterations) {
-    var rowName = ROWS[name] ? name : "idle";
-    var row = ROWS[rowName];
+  function playStopGesture(gesture) {
     if (!sprite || typeof sprite.animate !== "function") return null;
-    if (!columns || !columns.length || columns.length !== durations.length) return playRow(rowName, iterations);
-    if (isReducedMotion()) return showFrame(row.row, columns[0]);
-    var resolvedIterations = iterations == null ? 1 : iterations;
-    var visualKey = "frames:" + rowName + ":" + columns.join(",") + ":" + String(resolvedIterations);
+    if (!gesture || !Number.isInteger(gesture.column)) return playRow("idle", Infinity);
+    if (isReducedMotion()) return showFrame(ROWS.idle.row, 0);
+    var total = stopGestureDuration(gesture);
+    var targetPosition = backgroundPosition(ROWS.review.row, gesture.column, 1);
+    var idlePosition = backgroundPosition(ROWS.idle.row, 0, 1);
+    var visualKey = "stop:" + gesture.column;
     if (currentVisualKey === visualKey && spriteAnimation && spriteAnimation.playState === "running") return spriteAnimation;
     if (spriteAnimation) spriteAnimation.cancel();
-    var total = durations.reduce(function (sum, duration) { return sum + duration; }, 0);
-    var elapsed = 0;
-    var frames = [];
-    durations.forEach(function (duration, index) {
-      frames.push({ offset: elapsed / total, backgroundPosition: backgroundPosition(row.row, columns[index], 1), backgroundSize: "800% 1100%", easing: "steps(1, end)" });
-      elapsed += duration;
-    });
-    frames.push({ offset: 1, backgroundPosition: backgroundPosition(row.row, columns[columns.length - 1], 1), backgroundSize: "800% 1100%", easing: "steps(1, end)" });
+    var enterOffset = gesture.enter / total;
+    var exitOffset = (gesture.enter + gesture.hold) / total;
+    var frames = [
+      { offset: 0, backgroundPosition: idlePosition, backgroundSize: "800% 1100%", easing: "steps(1, end)" },
+      { offset: enterOffset, backgroundPosition: targetPosition, backgroundSize: "800% 1100%", easing: "steps(1, end)" },
+      { offset: exitOffset, backgroundPosition: targetPosition, backgroundSize: "800% 1100%", easing: "steps(1, end)" },
+      { offset: 1, backgroundPosition: idlePosition, backgroundSize: "800% 1100%", easing: "steps(1, end)" }
+    ];
     currentVisualKey = visualKey;
-    spriteAnimation = sprite.animate(frames, { duration: total, iterations: resolvedIterations, fill: "forwards" });
+    spriteAnimation = sprite.animate(frames, { duration: total, iterations: 1, fill: "forwards" });
     return spriteAnimation;
   }
 

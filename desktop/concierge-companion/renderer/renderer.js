@@ -9,9 +9,12 @@
   const IDLE_DURATIONS = Object.freeze([280, 110, 110, 140, 140, 320]);
   const TRAVEL_DURATIONS = Object.freeze([120, 120, 120, 120, 120, 120, 120, 220]);
   const STOP_GESTURES = Object.freeze({
-    escort: Object.freeze({ columns: Object.freeze([0, 1]), durations: Object.freeze([420, 520]) }),
-    handshake: Object.freeze({ columns: Object.freeze([2, 3]), durations: Object.freeze([420, 650]) }),
-    shy: Object.freeze({ columns: Object.freeze([4, 5]), durations: Object.freeze([500, 620]) })
+    settle: Object.freeze({ column: 0, enter: 180, hold: 620, exit: 260 }),
+    bow: Object.freeze({ column: 1, enter: 260, hold: 850, exit: 320 }),
+    escort: Object.freeze({ column: 2, enter: 260, hold: 1000, exit: 300 }),
+    handshake: Object.freeze({ column: 3, enter: 260, hold: 1100, exit: 320 }),
+    shy: Object.freeze({ column: 4, enter: 300, hold: 1000, exit: 350 }),
+    welcome: Object.freeze({ column: 5, enter: 260, hold: 950, exit: 320 })
   });
   const MODES = new Set(["active", "horizontal", "vertical", "fixed", "off"]);
   const SIZES = new Set(["small", "normal", "large"]);
@@ -59,28 +62,27 @@
     spriteAnimation = sprite.animate(frames, { duration: total, iterations: Infinity, fill: "forwards" });
   }
 
-  function playRowFrames(row, columns, durations) {
-    const visualKey = `frames:${row}:${columns.join(",")}`;
+  function playStopGesture(name, gesture) {
+    const visualKey = `stop:${name}`;
     if (currentVisualKey === visualKey && spriteAnimation && spriteAnimation.playState === "running") return;
     if (spriteAnimation) spriteAnimation.cancel();
-    const total = durations.reduce((sum, duration) => sum + duration, 0);
-    let elapsed = 0;
-    const frames = durations.map((duration, index) => {
-      const frame = {
-        offset: elapsed / total,
-        backgroundPosition: backgroundPosition(row, columns[index]),
-        easing: "steps(1, end)"
-      };
-      elapsed += duration;
-      return frame;
-    });
-    frames.push({
-      offset: 1,
-      backgroundPosition: backgroundPosition(row, columns[columns.length - 1]),
-      easing: "steps(1, end)"
-    });
+    const total = gesture.enter + gesture.hold + gesture.exit;
+    const idlePosition = backgroundPosition(0, 0);
+    const targetPosition = backgroundPosition(8, gesture.column);
+    const frames = [
+      { offset: 0, backgroundPosition: idlePosition, easing: "steps(1, end)" },
+      { offset: gesture.enter / total, backgroundPosition: targetPosition, easing: "steps(1, end)" },
+      { offset: (gesture.enter + gesture.hold) / total, backgroundPosition: targetPosition, easing: "steps(1, end)" },
+      { offset: 1, backgroundPosition: idlePosition, easing: "steps(1, end)" }
+    ];
     currentVisualKey = visualKey;
-    spriteAnimation = sprite.animate(frames, { duration: total, iterations: Infinity, fill: "forwards" });
+    const animation = sprite.animate(frames, { duration: total, iterations: 1, fill: "forwards" });
+    spriteAnimation = animation;
+    animation.finished.then(() => {
+      if (spriteAnimation !== animation || !currentState || currentState.moving || currentState.restGesture !== name) return;
+      currentVisualKey = "";
+      playRow(0, IDLE_DURATIONS);
+    }).catch(() => {});
   }
 
   function syncSpriteMotion(character, mode, facing, moving, restGesture) {
@@ -97,7 +99,7 @@
       return;
     }
     const gesture = STOP_GESTURES[restGesture];
-    if (gesture) playRowFrames(8, gesture.columns, gesture.durations);
+    if (gesture) playStopGesture(restGesture, gesture);
     else playRow(0, IDLE_DURATIONS);
   }
 

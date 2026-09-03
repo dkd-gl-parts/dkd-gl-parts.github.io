@@ -61,7 +61,7 @@ assert(packageJson.build.win.signAndEditExecutable === false, "Unsigned admin pi
   "movementDelta",
   "spriteBackgroundPositionY",
   "HORIZONTAL_STEPS_PER_LEG = 72",
-  "REST_GESTURE_ORDER = Object.freeze([\"escort\", \"handshake\", \"shy\"])",
+  "REST_GESTURE_ORDER = Object.freeze([\"settle\", \"bow\", \"escort\", \"handshake\", \"shy\", \"welcome\"])",
   "motionPhase === \"moving\"",
   "motionPhase = \"resting\"",
   "setTimeout(runMotionStep, MOTION_STEP_MS)",
@@ -87,11 +87,16 @@ requireFragment(renderer, 'suzuto: Object.freeze({ right: 1, left: 2 })');
 requireFragment(renderer, 'rinna: Object.freeze({ right: 1, left: 2 })');
 requireFragment(renderer, "const IDLE_DURATIONS = Object.freeze([280, 110, 110, 140, 140, 320]);");
 requireFragment(renderer, "const TRAVEL_DURATIONS = Object.freeze([120, 120, 120, 120, 120, 120, 120, 220]);");
-requireFragment(renderer, 'escort: Object.freeze({ columns: Object.freeze([0, 1])');
-requireFragment(renderer, 'handshake: Object.freeze({ columns: Object.freeze([2, 3])');
-requireFragment(renderer, 'shy: Object.freeze({ columns: Object.freeze([4, 5])');
+requireFragment(renderer, 'settle: Object.freeze({ column: 0');
+requireFragment(renderer, 'bow: Object.freeze({ column: 1');
+requireFragment(renderer, 'escort: Object.freeze({ column: 2');
+requireFragment(renderer, 'handshake: Object.freeze({ column: 3');
+requireFragment(renderer, 'shy: Object.freeze({ column: 4');
+requireFragment(renderer, 'welcome: Object.freeze({ column: 5');
 requireFragment(renderer, "if (moving)");
-requireFragment(renderer, "playRowFrames(8, gesture.columns, gesture.durations)");
+requireFragment(renderer, "playStopGesture(restGesture, gesture)");
+requireFragment(renderer, "iterations: 1");
+requireFragment(renderer, "animation.finished.then");
 requireFragment(renderer, "playRow(0, IDLE_DURATIONS)");
 requireFragment(renderer, "playRow(TRAVEL_ROWS[character][facing], TRAVEL_DURATIONS)");
 assert(!css.includes("@keyframes sprite-frames"), "Desktop concierge must not use a uniform frame count for unlike atlas rows");
@@ -104,8 +109,8 @@ assert(!publicHtml.includes("D-CATS Concierge Admin Pilot"), "Public D-CATS UI m
 assert(!staticBuilder.includes("desktop/concierge-companion"), "Static deployment must not publish the desktop pilot");
 
 const expectedSprites = [
-  ["suzuto", "4C3985F11D4BBF69ED08BECCDC88903CAAC882E01A21120256A59EC66E2F7066"],
-  ["rinna", "082AAAF835D217FEEFD7BD0C958779325CEC90FAC1FEA1D339F977AB3D0DF439"]
+  ["suzuto", "AE35639B95D409C1BB6093D609BE30898BE4B26512E12E04BD7DB1DD8532B413"],
+  ["rinna", "0701756E952C4B98CAB8606A3C95DC0F04A372E8B31EC6011C809451042E6ACE"]
 ];
 for (const [character, expectedHash] of expectedSprites) {
   const spritePath = path.join(root, "assets", "concierge-pet", character, "spritesheet.webp");
@@ -113,4 +118,4 @@ for (const [character, expectedHash] of expectedSprites) {
   assert(actualHash === expectedHash, `${character} desktop sprite does not match the approved atlas`);
 }
 
-console.log("Transparent Windows concierge admin-pilot verification passed (frameless, always-on-top, move-stop cycle, rotating escort/handshake/shy gestures, click-through option, strict local renderer, approved sprites, no public UI).");
+console.log("Transparent Windows concierge admin-pilot verification passed (frameless, always-on-top, move-stop cycle, six distinct one-shot stop gestures, click-through option, strict local renderer, approved sprites, no public UI).");

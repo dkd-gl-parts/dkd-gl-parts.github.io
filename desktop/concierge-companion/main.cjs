@@ -33,7 +33,7 @@ const HORIZONTAL_STEPS_PER_LEG = 72;
 const MOTION_STEP_MS = 32;
 const REST_MIN_MS = 3000;
 const REST_MAX_MS = 4600;
-const REST_GESTURE_ORDER = Object.freeze(["escort", "handshake", "shy"]);
+const REST_GESTURE_ORDER = Object.freeze(["settle", "bow", "escort", "handshake", "shy", "welcome"]);
 const DEFAULT_PREFERENCES = Object.freeze({
   character: "suzuto",
   mode: "active",

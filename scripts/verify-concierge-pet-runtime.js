@@ -357,7 +357,8 @@ function animationBackgroundWidthPercent(animation) {
 }
 
 function animationColumnPercent(animation) {
-  const position = String((animation && animation.keyframes || [])[0] && animation.keyframes[0].backgroundPosition || "");
+  const frame = (animation && animation.keyframes || []).find((candidate) => String(candidate.backgroundPosition || "").endsWith("% 80%"));
+  const position = String(frame && frame.backgroundPosition || "");
   const match = /^(-?\d+(?:\.\d+)?)%/.exec(position);
   return match ? Number(match[1]) : null;
 }
@@ -440,17 +441,21 @@ await new Promise((resolve) => setImmediate(resolve));
 assert(animationRowPercent(lastAnimationFor(sprite)) === 0, "Concierge did not visibly stop on the idle row after moving");
 assert(animations.filter((animation) => animation.owner === mover).length === moveCountBeforeStop, "Concierge started a second move without a stationary phase");
 const expectedStopGestures = [
-  { firstColumn: 0, duration: 2080, name: "escort" },
-  { firstColumn: 2, duration: 2340, name: "handshake" },
-  { firstColumn: 4, duration: 2440, name: "shy" }
+  { column: 0, duration: 1160, name: "settle" },
+  { column: 1, duration: 1530, name: "bow" },
+  { column: 2, duration: 1660, name: "escort" },
+  { column: 3, duration: 1780, name: "handshake" },
+  { column: 4, duration: 1750, name: "shy" },
+  { column: 5, duration: 1630, name: "welcome" }
 ];
 for (const expected of expectedStopGestures) {
   runTimerWithDelay(700);
   await new Promise((resolve) => setImmediate(resolve));
   const gestureAnimation = lastAnimationFor(sprite);
-  assert(animationRowPercent(gestureAnimation) === 80, `${expected.name} did not use the review gesture row`);
-  assert(gestureAnimation.options.iterations === 2, `${expected.name} did not play as a two-frame stop gesture`);
-  assert(Math.abs(animationColumnPercent(gestureAnimation) - expected.firstColumn * 100 / 7) < .001, `${expected.name} started from the wrong review frame pair`);
+  assert(gestureAnimation.keyframes.some((frame) => String(frame.backgroundPosition || "").endsWith("% 80%")), `${expected.name} did not use the review gesture row`);
+  assert(gestureAnimation.options.iterations === 1, `${expected.name} repeated instead of playing once`);
+  assert(gestureAnimation.keyframes.length === 4, `${expected.name} must enter once, hold, and return to idle`);
+  assert(Math.abs(animationColumnPercent(gestureAnimation) - expected.column * 100 / 7) < .001, `${expected.name} used the wrong unique review frame`);
   runTimerWithDelay(expected.duration);
   await new Promise((resolve) => setImmediate(resolve));
   assert(animationRowPercent(lastAnimationFor(sprite)) === 0, `${expected.name} did not return to idle before the next move`);
@@ -600,7 +605,7 @@ activeScreen.id = "screen-login";
 notifyObservers();
 assert(root.hidden, "Concierge must be hidden on the login screen");
 
-console.log("Concierge runtime behavior verification passed (system-admin gate, always-on-top floating display, zero-cost disclosure, 5 movement modes, move-stop cycle, 3 rotating stop gestures, one sprite, user-scoped preferences, i18n, gaze, card avoidance, viewport revalidation, reduced motion, focus, and inactive cancellation).");
+console.log("Concierge runtime behavior verification passed (system-admin gate, always-on-top floating display, zero-cost disclosure, 5 movement modes, move-stop cycle, 6 distinct one-shot stop gestures, one sprite, user-scoped preferences, i18n, gaze, card avoidance, viewport revalidation, reduced motion, focus, and inactive cancellation).");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;
