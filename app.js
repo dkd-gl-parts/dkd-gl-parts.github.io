@@ -337,6 +337,24 @@ var TRANSLATIONS = {
     business_workspace_downloaded: "ショートカットをダウンロードしました。ファイルをデスクトップへ移動してください。",
     business_workspace_cancelled: "ショートカットの作成をキャンセルしました。",
     business_workspace_failed: "ショートカットを作成できませんでした。Google Driveは「フォルダを開く」から利用できます。",
+    business_workspace_b2_title: "B2 CSV保存先",
+    business_workspace_b2_path: "D-CATS業務連携 / B2 / 01_D-CATS発行",
+    business_workspace_b2_hint: "Google Drive for desktopで同期しているフォルダを選択します。初回発行と再発行は同じ場所へ保存されます。",
+    business_workspace_b2_select: "保存先を設定",
+    business_workspace_b2_change: "保存先を変更",
+    business_workspace_b2_unset: "未設定",
+    business_workspace_b2_ready: "設定済み",
+    business_workspace_b2_permission: "再接続が必要",
+    business_workspace_b2_unsupported: "このブラウザでは設定できません",
+    business_workspace_b2_selecting: "B2 CSVの保存先を確認しています。",
+    business_workspace_b2_selected: "B2 CSVの保存先を設定しました。",
+    business_workspace_b2_selected_notice: "B2 CSVの共有保存先を設定しました。",
+    business_workspace_b2_cancelled: "B2 CSV保存先の設定をキャンセルしました。",
+    business_workspace_b2_wrong_folder: "D-CATS業務連携、B2、または01_D-CATS発行フォルダを選択してください。",
+    business_workspace_b2_missing_folder: "選択した場所にB2 / 01_D-CATS発行フォルダが見つかりません。Google Drive for desktopの同期を確認してください。",
+    business_workspace_b2_failed: "B2 CSVの保存先を設定できませんでした。",
+    business_workspace_b2_required: "B2 CSVを発行する前に、共有保存先を設定してください。",
+    business_workspace_b2_saved: "B2 CSVを D-CATS業務連携 / B2 / 01_D-CATS発行 に保存しました。",
     shipping_document_mgmt_title: "出荷帳票発行",
     shipping_document_mgmt_desc: "B2 CSVの発行履歴、保証書、コア返却帳票を注文単位で管理します。",
     shipping_document_batch_not_eligible: "発行対象外です。",
@@ -2183,6 +2201,24 @@ var TRANSLATIONS = {
     business_workspace_downloaded: "The shortcut was downloaded. Move the file to your desktop.",
     business_workspace_cancelled: "Shortcut creation was cancelled.",
     business_workspace_failed: "The shortcut could not be created. Use Open Folder to access Google Drive.",
+    business_workspace_b2_title: "B2 CSV Save Folder",
+    business_workspace_b2_path: "D-CATS Business Exchange / B2 / 01_D-CATS Issue",
+    business_workspace_b2_hint: "Select the folder synced by Google Drive for desktop. Initial issues and reissues are saved to the same location.",
+    business_workspace_b2_select: "Set Save Folder",
+    business_workspace_b2_change: "Change Save Folder",
+    business_workspace_b2_unset: "Not configured",
+    business_workspace_b2_ready: "Configured",
+    business_workspace_b2_permission: "Reconnect required",
+    business_workspace_b2_unsupported: "Not supported by this browser",
+    business_workspace_b2_selecting: "Checking the B2 CSV save folder.",
+    business_workspace_b2_selected: "The B2 CSV save folder was configured.",
+    business_workspace_b2_selected_notice: "The shared B2 CSV save folder was configured.",
+    business_workspace_b2_cancelled: "B2 CSV save-folder setup was cancelled.",
+    business_workspace_b2_wrong_folder: "Select D-CATS Business Exchange, B2, or the 01_D-CATS issue folder.",
+    business_workspace_b2_missing_folder: "The B2 / 01_D-CATS issue folder was not found. Check Google Drive for desktop synchronization.",
+    business_workspace_b2_failed: "The B2 CSV save folder could not be configured.",
+    business_workspace_b2_required: "Configure the shared save folder before issuing a B2 CSV.",
+    business_workspace_b2_saved: "The B2 CSV was saved to D-CATS Business Exchange / B2 / 01_D-CATS issue.",
     shipping_document_mgmt_title: "Shipping Documents",
     shipping_document_mgmt_desc: "Manage B2 CSV history, warranties, and core-return documents by order.",
     shipping_document_batch_not_eligible: "This document is not eligible for issue.",
@@ -3974,6 +4010,24 @@ var TRANSLATIONS = {
     business_workspace_downloaded: "快捷方式已下载。请将文件移动到桌面。",
     business_workspace_cancelled: "已取消创建快捷方式。",
     business_workspace_failed: "无法创建快捷方式。请使用“打开文件夹”访问Google Drive。",
+    business_workspace_b2_title: "B2 CSV保存位置",
+    business_workspace_b2_path: "D-CATS业务协作 / B2 / 01_D-CATS发行",
+    business_workspace_b2_hint: "请选择Google Drive桌面版同步的文件夹。首次发行和重新发行将保存到同一位置。",
+    business_workspace_b2_select: "设置保存位置",
+    business_workspace_b2_change: "更改保存位置",
+    business_workspace_b2_unset: "未设置",
+    business_workspace_b2_ready: "已设置",
+    business_workspace_b2_permission: "需要重新连接",
+    business_workspace_b2_unsupported: "此浏览器不支持设置",
+    business_workspace_b2_selecting: "正在确认B2 CSV保存位置。",
+    business_workspace_b2_selected: "已设置B2 CSV保存位置。",
+    business_workspace_b2_selected_notice: "已设置B2 CSV共享保存位置。",
+    business_workspace_b2_cancelled: "已取消设置B2 CSV保存位置。",
+    business_workspace_b2_wrong_folder: "请选择D-CATS业务协作、B2或01_D-CATS发行文件夹。",
+    business_workspace_b2_missing_folder: "未找到B2 / 01_D-CATS发行文件夹。请检查Google Drive桌面版同步。",
+    business_workspace_b2_failed: "无法设置B2 CSV保存位置。",
+    business_workspace_b2_required: "发行B2 CSV前，请先设置共享保存位置。",
+    business_workspace_b2_saved: "B2 CSV已保存到D-CATS业务协作 / B2 / 01_D-CATS发行。",
     shipping_document_mgmt_title: "出货单据发行",
     shipping_document_mgmt_desc: "按订单管理B2 CSV历史、保修书和旧件返还单据。",
     shipping_document_batch_not_eligible: "该单据不符合发行条件。",
@@ -5662,7 +5716,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.882";
+var APP_VERSION       = "v1.1.883";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -11324,7 +11378,186 @@ function salesOrderB2PreflightNeedsContractSettings(preflight) {
 var DCATS_BUSINESS_WORKSPACE_URL = "https://drive.google.com/drive/folders/1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ";
 var DCATS_BUSINESS_WORKSPACE_SHORTCUT_URL = "assets/integrations/dcats-business-workspace.lnk";
 var DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME = "D-CATS\u696d\u52d9\u9023\u643a.lnk";
+var DCATS_BUSINESS_WORKSPACE_DIRECTORY_NAME = "D-CATS\u696d\u52d9\u9023\u643a";
+var DCATS_B2_DIRECTORY_NAME = "B2";
+var DCATS_B2_EXPORT_DIRECTORY_NAME = "01_D-CATS\u767a\u884c";
+var DCATS_BUSINESS_WORKSPACE_DB_NAME = "dcats-business-workspace";
+var DCATS_BUSINESS_WORKSPACE_DB_STORE = "directory-handles";
+var DCATS_B2_EXPORT_DIRECTORY_KEY = "b2-issued-directory";
 var dcatsBusinessWorkspaceTrigger = null;
+var dcatsBusinessWorkspaceDbPromise = null;
+var dcatsB2ExportDirectoryHandle = null;
+var dcatsB2ExportDirectoryLoaded = false;
+
+function supportsDcatsB2SharedFolder() {
+  return !!(window.indexedDB && typeof window.showDirectoryPicker === "function");
+}
+
+function openDcatsBusinessWorkspaceDatabase() {
+  if (dcatsBusinessWorkspaceDbPromise) return dcatsBusinessWorkspaceDbPromise;
+  dcatsBusinessWorkspaceDbPromise = new Promise(function(resolve, reject) {
+    var request = window.indexedDB.open(DCATS_BUSINESS_WORKSPACE_DB_NAME, 1);
+    request.onupgradeneeded = function() {
+      var database = request.result;
+      if (!database.objectStoreNames.contains(DCATS_BUSINESS_WORKSPACE_DB_STORE)) {
+        database.createObjectStore(DCATS_BUSINESS_WORKSPACE_DB_STORE);
+      }
+    };
+    request.onsuccess = function() { resolve(request.result); };
+    request.onerror = function() { reject(request.error || new Error("workspace_directory_database_failed")); };
+  }).catch(function(error) {
+    dcatsBusinessWorkspaceDbPromise = null;
+    throw error;
+  });
+  return dcatsBusinessWorkspaceDbPromise;
+}
+
+async function readStoredDcatsB2ExportDirectory() {
+  if (!supportsDcatsB2SharedFolder()) return null;
+  var database = await openDcatsBusinessWorkspaceDatabase();
+  return new Promise(function(resolve, reject) {
+    var transaction = database.transaction(DCATS_BUSINESS_WORKSPACE_DB_STORE, "readonly");
+    var request = transaction.objectStore(DCATS_BUSINESS_WORKSPACE_DB_STORE).get(DCATS_B2_EXPORT_DIRECTORY_KEY);
+    request.onsuccess = function() { resolve(request.result || null); };
+    request.onerror = function() { reject(request.error || new Error("workspace_directory_read_failed")); };
+  });
+}
+
+async function storeDcatsB2ExportDirectory(handle) {
+  var database = await openDcatsBusinessWorkspaceDatabase();
+  return new Promise(function(resolve, reject) {
+    var transaction = database.transaction(DCATS_BUSINESS_WORKSPACE_DB_STORE, "readwrite");
+    transaction.objectStore(DCATS_BUSINESS_WORKSPACE_DB_STORE).put(handle, DCATS_B2_EXPORT_DIRECTORY_KEY);
+    transaction.oncomplete = function() { resolve(); };
+    transaction.onerror = function() { reject(transaction.error || new Error("workspace_directory_write_failed")); };
+    transaction.onabort = function() { reject(transaction.error || new Error("workspace_directory_write_failed")); };
+  });
+}
+
+async function loadDcatsB2ExportDirectory() {
+  if (dcatsB2ExportDirectoryLoaded) return dcatsB2ExportDirectoryHandle;
+  var storedHandle = null;
+  try {
+    storedHandle = await readStoredDcatsB2ExportDirectory();
+  } catch (error) {
+    storedHandle = null;
+  }
+  if (!dcatsB2ExportDirectoryLoaded) {
+    dcatsB2ExportDirectoryHandle = storedHandle;
+    dcatsB2ExportDirectoryLoaded = true;
+  }
+  return dcatsB2ExportDirectoryHandle;
+}
+
+function setDcatsB2ExportDirectoryState(state, directoryName) {
+  var stateHost = document.getElementById("dcats-business-workspace-b2-state");
+  var directoryHost = document.getElementById("dcats-business-workspace-b2-directory");
+  var button = document.getElementById("dcats-business-workspace-b2-select");
+  if (stateHost) {
+    stateHost.className = "dcats-business-workspace-b2-state" + (state === "ready" ? " ready" : (state === "error" ? " error" : ""));
+    stateHost.textContent = t(state === "ready"
+      ? "business_workspace_b2_ready"
+      : (state === "permission"
+        ? "business_workspace_b2_permission"
+        : (state === "unsupported" ? "business_workspace_b2_unsupported" : (state === "error" ? "business_workspace_b2_failed" : "business_workspace_b2_unset"))));
+  }
+  if (directoryHost) directoryHost.textContent = directoryName || "";
+  if (button) {
+    button.textContent = t(state === "ready" ? "business_workspace_b2_change" : "business_workspace_b2_select");
+    button.disabled = state === "unsupported";
+  }
+}
+
+async function refreshDcatsB2ExportDirectoryState() {
+  if (!supportsDcatsB2SharedFolder()) {
+    setDcatsB2ExportDirectoryState("unsupported", "");
+    return;
+  }
+  var handle = await loadDcatsB2ExportDirectory();
+  if (!handle) {
+    setDcatsB2ExportDirectoryState("unset", "");
+    return;
+  }
+  var permission = typeof handle.queryPermission === "function"
+    ? await handle.queryPermission({ mode: "readwrite" })
+    : "granted";
+  setDcatsB2ExportDirectoryState(permission === "granted" ? "ready" : "permission", handle.name || DCATS_B2_EXPORT_DIRECTORY_NAME);
+}
+
+async function resolveDcatsB2ExportDirectory(selectedHandle) {
+  if (!selectedHandle) throw new Error(t("business_workspace_b2_wrong_folder"));
+  if (selectedHandle.name === DCATS_B2_EXPORT_DIRECTORY_NAME) return selectedHandle;
+  try {
+    if (selectedHandle.name === DCATS_B2_DIRECTORY_NAME) {
+      return await selectedHandle.getDirectoryHandle(DCATS_B2_EXPORT_DIRECTORY_NAME, { create: false });
+    }
+    if (selectedHandle.name === DCATS_BUSINESS_WORKSPACE_DIRECTORY_NAME) {
+      var b2Directory = await selectedHandle.getDirectoryHandle(DCATS_B2_DIRECTORY_NAME, { create: false });
+      return await b2Directory.getDirectoryHandle(DCATS_B2_EXPORT_DIRECTORY_NAME, { create: false });
+    }
+  } catch (error) {
+    throw new Error(t("business_workspace_b2_missing_folder"));
+  }
+  throw new Error(t("business_workspace_b2_wrong_folder"));
+}
+
+async function pickDcatsB2ExportDirectory() {
+  if (!supportsDcatsB2SharedFolder()) throw new Error(t("business_workspace_b2_unsupported"));
+  var pickerOptions = {
+    id: "dcats-b2-csv-export",
+    mode: "readwrite",
+    startIn: dcatsB2ExportDirectoryHandle || "documents"
+  };
+  var selectedHandle;
+  try {
+    selectedHandle = await window.showDirectoryPicker(pickerOptions);
+  } catch (pickerError) {
+    if (pickerError && pickerError.name === "AbortError") throw pickerError;
+    delete pickerOptions.startIn;
+    selectedHandle = await window.showDirectoryPicker(pickerOptions);
+  }
+  var targetHandle = await resolveDcatsB2ExportDirectory(selectedHandle);
+  var permission = typeof targetHandle.requestPermission === "function"
+    ? await targetHandle.requestPermission({ mode: "readwrite" })
+    : "granted";
+  if (permission !== "granted") throw new Error(t("business_workspace_b2_required"));
+  await storeDcatsB2ExportDirectory(targetHandle);
+  dcatsB2ExportDirectoryHandle = targetHandle;
+  dcatsB2ExportDirectoryLoaded = true;
+  setDcatsB2ExportDirectoryState("ready", targetHandle.name || DCATS_B2_EXPORT_DIRECTORY_NAME);
+  return targetHandle;
+}
+
+async function configureDcatsB2ExportDirectory() {
+  var button = document.getElementById("dcats-business-workspace-b2-select");
+  if (button) button.disabled = true;
+  setDcatsBusinessWorkspaceMessage(t("business_workspace_b2_selecting"), false);
+  try {
+    await pickDcatsB2ExportDirectory();
+    setDcatsBusinessWorkspaceMessage(t("business_workspace_b2_selected"), false);
+    showDcatsAutoNotice(t("business_workspace_b2_selected_notice"));
+  } catch (error) {
+    if (error && error.name === "AbortError") {
+      setDcatsBusinessWorkspaceMessage(t("business_workspace_b2_cancelled"), false);
+    } else {
+      setDcatsBusinessWorkspaceMessage((error && error.message) || t("business_workspace_b2_failed"), true);
+      await refreshDcatsB2ExportDirectoryState();
+    }
+  } finally {
+    if (button && supportsDcatsB2SharedFolder()) button.disabled = false;
+  }
+}
+
+async function prepareDcatsB2ExportDirectory() {
+  if (!supportsDcatsB2SharedFolder()) throw new Error(t("business_workspace_b2_unsupported"));
+  var handle = dcatsB2ExportDirectoryHandle;
+  if (!handle) return pickDcatsB2ExportDirectory();
+  var permission = typeof handle.requestPermission === "function"
+    ? await handle.requestPermission({ mode: "readwrite" })
+    : "granted";
+  if (permission !== "granted") throw new Error(t("business_workspace_b2_required"));
+  return handle;
+}
 
 function setDcatsBusinessWorkspaceMessage(message, isError) {
   var host = document.getElementById("dcats-business-workspace-message");
@@ -11339,8 +11572,15 @@ function openDcatsBusinessWorkspace(event) {
   dcatsBusinessWorkspaceTrigger = event && event.currentTarget ? event.currentTarget : document.activeElement;
   setDcatsBusinessWorkspaceMessage("", false);
   overlay.classList.add("show");
+  refreshDcatsB2ExportDirectoryState().catch(function() {
+    setDcatsB2ExportDirectoryState("error", "");
+  });
   var shortcutButton = document.getElementById("dcats-business-workspace-shortcut");
   if (shortcutButton) shortcutButton.focus();
+}
+
+if (window.indexedDB) {
+  loadDcatsB2ExportDirectory().catch(function() {});
 }
 
 function closeDcatsBusinessWorkspace() {
@@ -15789,18 +16029,34 @@ function downloadUtf8Csv(rows, fileName) {
   setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
 }
 
-function downloadSalesOrderB2Payload(data) {
+function salesOrderB2PayloadFile(data) {
   data = data || {};
   var rows = Array.isArray(data) ? data : (Array.isArray(data.rows) ? data.rows : []);
   var errors = rows.filter(function(row) { return Array.isArray(row.errors) && row.errors.length; });
-  if (!rows.length || errors.length) return false;
+  if (!rows.length || errors.length) return null;
+  var csvRows = [B2_BASIC_LAYOUT_HEADERS].concat(rows.map(b2ExportValues));
+  var csv = csvRows.map(function(row) { return row.map(ecMallCsvCell).join(","); }).join("\r\n") + "\r\n";
+  var fileName = data.file_name || ("D-CATS_B2基本レイアウト_" + new Date().toISOString().slice(0, 10) + ".csv");
+  return {
+    blob: new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" }),
+    fileName: String(fileName).replace(/[\\/:*?"<>|]/g, "_")
+  };
+}
+
+async function downloadSalesOrderB2Payload(data, directoryHandle) {
+  var payload = salesOrderB2PayloadFile(data);
+  if (!payload || !directoryHandle) return false;
+  var writable = null;
   try {
-    downloadUtf8Csv(
-      [B2_BASIC_LAYOUT_HEADERS].concat(rows.map(b2ExportValues)),
-      data.file_name || ("D-CATS_B2基本レイアウト_" + new Date().toISOString().slice(0, 10) + ".csv")
-    );
+    var fileHandle = await directoryHandle.getFileHandle(payload.fileName, { create: true });
+    writable = await fileHandle.createWritable();
+    await writable.write(payload.blob);
+    await writable.close();
     return true;
   } catch (error) {
+    if (writable && typeof writable.abort === "function") {
+      try { await writable.abort(); } catch (abortError) {}
+    }
     return false;
   }
 }
@@ -15819,6 +16075,19 @@ async function issueSalesOrderB2Export(orderIds, isReissue, reason) {
   if (!Array.isArray(orderIds) || !orderIds.length) {
     setSalesOrderBatchMessage("B2 CSVを発行する受注を選択してください。", true);
     setShippingDocumentMessage("B2 CSVを発行する受注を選択してください。", true);
+    return null;
+  }
+  var b2ExportDirectory;
+  try {
+    setSalesOrderBatchMessage(t("business_workspace_b2_selecting"), false);
+    setShippingDocumentMessage(t("business_workspace_b2_selecting"), false);
+    b2ExportDirectory = await prepareDcatsB2ExportDirectory();
+  } catch (directoryError) {
+    var directoryMessage = directoryError && directoryError.name === "AbortError"
+      ? t("business_workspace_b2_cancelled")
+      : ((directoryError && directoryError.message) || t("business_workspace_b2_required"));
+    setSalesOrderBatchMessage(directoryMessage, directoryError && directoryError.name !== "AbortError");
+    setShippingDocumentMessage(directoryMessage, directoryError && directoryError.name !== "AbortError");
     return null;
   }
   var finalMessage = "";
@@ -15857,8 +16126,8 @@ async function issueSalesOrderB2Export(orderIds, isReissue, reason) {
     }), "B2 CSVの発行に時間がかかっています。発行履歴を確認してから、もう一度操作してください。", 45000);
     if (result.error) throw result.error;
     var data = result.data || {};
-    if (!downloadSalesOrderB2Payload(data)) throw new Error("B2 CSVを保存できませんでした。ブラウザのダウンロード許可を確認してください。");
-    finalMessage = "B2 CSVを発行しました。ダウンロードフォルダを確認してください。";
+    if (!await downloadSalesOrderB2Payload(data, b2ExportDirectory)) throw new Error(t("business_workspace_b2_failed"));
+    finalMessage = t("business_workspace_b2_saved");
     return data;
   } catch (error) {
     var message = (error && error.message) || "B2 CSVを作成できませんでした。";
@@ -15881,6 +16150,16 @@ async function issueSalesOrderB2Export(orderIds, isReissue, reason) {
 
 async function downloadSalesOrderB2Batch(batchId) {
   if (!canManageSalesOrders() || shippingDocumentSaving || !batchId) return;
+  var b2ExportDirectory;
+  try {
+    setShippingDocumentMessage(t("business_workspace_b2_selecting"), false);
+    b2ExportDirectory = await prepareDcatsB2ExportDirectory();
+  } catch (directoryError) {
+    setShippingDocumentMessage(directoryError && directoryError.name === "AbortError"
+      ? t("business_workspace_b2_cancelled")
+      : ((directoryError && directoryError.message) || t("business_workspace_b2_required")), directoryError && directoryError.name !== "AbortError");
+    return;
+  }
   shippingDocumentSaving = true;
   renderShippingDocumentDetail();
   try {
@@ -15890,8 +16169,8 @@ async function downloadSalesOrderB2Batch(batchId) {
       30000
     );
     if (result.error) throw result.error;
-    if (!downloadSalesOrderB2Payload(result.data || {})) throw new Error("B2 CSVを保存できませんでした。ブラウザのダウンロード許可を確認してください。");
-    setShippingDocumentMessage("B2 CSVを再ダウンロードしました。", false);
+    if (!await downloadSalesOrderB2Payload(result.data || {}, b2ExportDirectory)) throw new Error(t("business_workspace_b2_failed"));
+    setShippingDocumentMessage(t("business_workspace_b2_saved"), false);
   } catch (error) {
     setShippingDocumentMessage((error && error.message) || "B2 CSVを再ダウンロードできませんでした。", true);
   } finally {
@@ -48610,6 +48889,7 @@ document.addEventListener("click", function(event) {
 document.getElementById("dcats-business-workspace-close").addEventListener("click", closeDcatsBusinessWorkspace);
 document.getElementById("dcats-business-workspace-cancel").addEventListener("click", closeDcatsBusinessWorkspace);
 document.getElementById("dcats-business-workspace-shortcut").addEventListener("click", createDcatsBusinessWorkspaceShortcut);
+document.getElementById("dcats-business-workspace-b2-select").addEventListener("click", configureDcatsB2ExportDirectory);
 document.getElementById("dcats-business-workspace-overlay").addEventListener("click", function(e) {
   if (e.target === this) closeDcatsBusinessWorkspace();
 });

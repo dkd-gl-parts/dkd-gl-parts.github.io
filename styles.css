@@ -6674,9 +6674,24 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .dcats-business-workspace-actions a { border: 1px solid #287356; background: #fff; color: #1f6248; }
 .dcats-business-workspace-actions a:hover { background: #eef7f2; }
 .dcats-business-workspace-actions button:disabled { cursor: wait; opacity: .65; }
+.dcats-business-workspace-b2 { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px; margin: 0 20px 16px; border: 1px solid #cbd8d1; border-radius: 6px; padding: 13px; background: #fff; }
+.dcats-business-workspace-b2-copy { display: grid; min-width: 0; gap: 3px; }
+.dcats-business-workspace-b2-copy > span { color: #287356; font-size: 10px; font-weight: 900; }
+.dcats-business-workspace-b2-copy strong { color: #1d2c25; font-size: 13px; overflow-wrap: anywhere; }
+.dcats-business-workspace-b2-copy p { margin: 2px 0 0; color: #68766f; font-size: 10px; line-height: 1.5; }
+.dcats-business-workspace-b2-control { display: grid; min-width: 132px; justify-items: stretch; gap: 5px; }
+.dcats-business-workspace-b2-state { color: #8a5b00; font-size: 10px; font-weight: 900; text-align: center; }
+.dcats-business-workspace-b2-state.ready { color: #176b43; }
+.dcats-business-workspace-b2-state.error { color: #b42318; }
+.dcats-business-workspace-b2-directory { min-height: 14px; color: #68766f; font-size: 9px; text-align: center; overflow-wrap: anywhere; }
+.dcats-business-workspace-b2-control button { min-height: 36px; border-radius: 5px; font-size: 11px; font-weight: 800; }
 .dcats-business-workspace-message { min-height: 32px; border-top: 1px solid #e1e6e3; padding: 9px 20px; color: #22643e; font-size: 10px; font-weight: 700; line-height: 1.45; }
 .dcats-business-workspace-message.error { color: #b42318; }
 .dcats-business-workspace-card .form-footer { margin-top: 0; padding: 12px 20px; }
+@media (max-width: 560px) {
+  .dcats-business-workspace-b2 { grid-template-columns: 1fr; }
+  .dcats-business-workspace-b2-control { width: 100%; }
+}
 .sales-order-workspace { display: grid; flex: 1; grid-template-columns: minmax(360px, 430px) minmax(0, 1fr); min-height: 0; overflow: hidden; }
 .sales-order-list-pane { min-width: 0; min-height: 0; border-right: 1px solid #d5dbe1; background: #f8f9fb; }
 .sales-order-list-head { display: flex; align-items: center; justify-content: space-between; height: 44px; border-bottom: 1px solid #d5dbe1; padding: 0 14px; background: #e9edf1; color: #344054; font-size: 11px; }

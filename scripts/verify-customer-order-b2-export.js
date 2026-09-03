@@ -70,6 +70,10 @@ const createIndex = issueSource.indexOf('sb.rpc("create_sales_order_b2_export"')
 if (preflightIndex < 0 || createIndex < 0 || preflightIndex >= createIndex) {
   throw new Error("B2 preflight must run before the atomic export mutation");
 }
+const directoryIndex = issueSource.indexOf("await prepareDcatsB2ExportDirectory()");
+if (directoryIndex < 0 || directoryIndex >= preflightIndex) {
+  throw new Error("The shared B2 save folder must be confirmed before preflight and export creation");
+}
 for (const fragment of [
   "finally",
   "salesOrderSaving = false",
@@ -144,7 +148,15 @@ function makeSandbox(results) {
     updateSalesOrderSelectionButtons: () => {},
     renderShippingDocumentDetail: () => {},
     salesOrderB2PreflightSummary: () => "事前検査エラー",
-    downloadSalesOrderB2Payload: () => true,
+    prepareDcatsB2ExportDirectory: async () => ({ name: "01_D-CATS発行" }),
+    downloadSalesOrderB2Payload: async (data, directory) => !!(data && directory),
+    t: (key) => ({
+      business_workspace_b2_selecting: "保存先確認中",
+      business_workspace_b2_cancelled: "保存先設定をキャンセルしました。",
+      business_workspace_b2_required: "保存先を設定してください。",
+      business_workspace_b2_failed: "保存できませんでした。",
+      business_workspace_b2_saved: "B2 CSVを D-CATS業務連携 / B2 / 01_D-CATS発行 に保存しました。"
+    })[key] || key,
     salesOrderB2RpcWithTimeout: (request) => Promise.resolve(request),
     sb: {
       rpc(name) {
@@ -188,8 +200,43 @@ function makeSandbox(results) {
   if (succeeded.sandbox.salesOrderSaving || succeeded.sandbox.salesOrderB2ExportSaving || succeeded.sandbox.shippingDocumentSaving) {
     throw new Error("A successful export must clear every issuing state");
   }
-  if (!succeeded.shippingMessages.length || succeeded.shippingMessages[succeeded.shippingMessages.length - 1].message !== "B2 CSVを発行しました。ダウンロードフォルダを確認してください。") {
+  if (!succeeded.shippingMessages.length || succeeded.shippingMessages[succeeded.shippingMessages.length - 1].message !== "B2 CSVを D-CATS業務連携 / B2 / 01_D-CATS発行 に保存しました。") {
     throw new Error("The final B2 success message must remain visible after the detail screen rerenders");
+  }
+
+  const payloadSource = between("function salesOrderB2PayloadFile", "async function issueSalesOrderB2Export");
+  let savedName = "";
+  let savedText = "";
+  let savedBytes = Buffer.alloc(0);
+  const payloadSandbox = {
+    B2_BASIC_LAYOUT_HEADERS: ["お客様管理番号", "送り状種類"],
+    b2ExportValues: () => ["DC1", "0"],
+    ecMallCsvCell: (value) => `"${String(value == null ? "" : value).replace(/"/g, '""')}"`,
+    Blob,
+    Date,
+    String
+  };
+  vm.createContext(payloadSandbox);
+  vm.runInContext(payloadSource, payloadSandbox);
+  const directory = {
+    getFileHandle: async (name, options) => {
+      savedName = name;
+      if (!options || options.create !== true) throw new Error("B2 files must be created in the selected directory");
+      return {
+        createWritable: async () => ({
+          write: async (blob) => {
+            savedBytes = Buffer.from(await blob.arrayBuffer());
+            savedText = savedBytes.toString("utf8");
+          },
+          close: async () => {}
+        })
+      };
+    }
+  };
+  const payloadSaved = await payloadSandbox.downloadSalesOrderB2Payload({ rows: [{}], file_name: "D-CATS:B2.csv" }, directory);
+  if (!payloadSaved || savedName !== "D-CATS_B2.csv") throw new Error("B2 CSV was not written to the selected shared directory");
+  if (savedBytes.slice(0, 3).toString("hex") !== "efbbbf" || !savedText.includes("お客様管理番号") || !savedText.includes("DC1")) {
+    throw new Error("The shared-folder B2 CSV content is invalid");
   }
 
   const shipmentUi = between("function shippingDocumentShipmentDocumentsHtml", "function shippingDocumentReturnWaybillHtml");

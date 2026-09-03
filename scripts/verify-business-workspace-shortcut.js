@@ -27,6 +27,10 @@ for (const id of [
   "dcats-business-workspace-title",
   "dcats-business-workspace-close",
   "dcats-business-workspace-shortcut",
+  "dcats-business-workspace-b2-title",
+  "dcats-business-workspace-b2-state",
+  "dcats-business-workspace-b2-directory",
+  "dcats-business-workspace-b2-select",
   "dcats-business-workspace-message",
   "dcats-business-workspace-cancel"
 ]) {
@@ -44,11 +48,20 @@ assert(source.includes('suggestedName: DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAM
 assert(source.includes('typeof window.showSaveFilePicker === "function"'), "Chromium desktop save support is missing");
 assert(source.includes("downloadDcatsBusinessWorkspaceShortcut(contents)"), "Unsupported browsers need a download fallback");
 assert(source.includes('pickerError.name === "AbortError"'), "Cancelling the picker must not be reported as an error");
+assert(source.includes('var DCATS_B2_EXPORT_DIRECTORY_NAME = "01_D-CATS\\u767a\\u884c"'), "The B2 issue-folder name is not fixed");
+assert(source.includes('id: "dcats-b2-csv-export"'), "The B2 folder picker does not have a stable browser identity");
+assert(source.includes('mode: "readwrite"'), "The B2 folder picker must request write access");
+assert(source.includes('selectedHandle.name === DCATS_BUSINESS_WORKSPACE_DIRECTORY_NAME'), "Selecting the D-CATS workspace root is not supported");
+assert(source.includes('selectedHandle.name === DCATS_B2_DIRECTORY_NAME'), "Selecting the B2 parent folder is not supported");
+assert(source.includes('selectedHandle.name === DCATS_B2_EXPORT_DIRECTORY_NAME'), "Selecting the B2 issue folder is not supported");
+assert(source.includes('storeDcatsB2ExportDirectory(targetHandle)'), "The B2 folder handle is not persisted per browser profile");
 
 for (const fragment of [
   ".sales-order-business-workspace-button",
   ".form-card.dcats-business-workspace-card",
   ".dcats-business-workspace-actions",
+  ".dcats-business-workspace-b2",
+  ".dcats-business-workspace-b2-state.ready",
   ".dcats-business-workspace-message.error"
 ]) {
   assert(css.includes(fragment), `Business workspace layout is missing: ${fragment}`);
