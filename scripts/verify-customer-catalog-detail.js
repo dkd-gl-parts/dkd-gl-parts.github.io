@@ -51,12 +51,14 @@ if (!source.includes("var CUSTOMER_CATALOG_SHORT_QUERY_MAX = 5;") ||
     !searchSource.includes("categoryEl.showPicker()")) {
   throw new Error("customer catalog must require a category before searching part numbers of five characters or fewer");
 }
-if (!source.includes("var CUSTOMER_CATALOG_SHORT_QUERY_SCAN_LIMIT = 1000;") ||
+if (!source.includes('sb.rpc("search_customer_catalog_products_by_prefix_fast"') ||
+    !source.includes("target_sales_customer_id: customerId") ||
     !searchSource.includes("query && category && normalizedQueryLength <= CUSTOMER_CATALOG_SHORT_QUERY_MAX") ||
-    !searchSource.includes("? CUSTOMER_CATALOG_SHORT_QUERY_SCAN_LIMIT") ||
+    !searchSource.includes("result = await fetchCustomerCatalogPrefixMatches(query, category, candidateScanLimit)") ||
+    !searchSource.includes("else if (query)") ||
     !searchSource.includes("fetchCoreProductMasterMatches(query, category, candidateScanLimit") ||
     !searchSource.includes("filterSalesVisibleProducts(products).slice(0, candidateScanLimit)")) {
-  throw new Error("categorized short customer searches must scan enough indexed candidates before price and stock filtering");
+  throw new Error("categorized short customer searches must apply customer eligibility inside the indexed prefix query");
 }
 if (!html.includes('id="customer-catalog-search-feedback"') ||
     !html.includes('aria-describedby="customer-catalog-search-feedback"')) {

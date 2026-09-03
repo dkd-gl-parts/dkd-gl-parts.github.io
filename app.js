@@ -5650,7 +5650,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.875";
+var APP_VERSION       = "v1.1.876";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6033,7 +6033,6 @@ var customerManagedUsersRequestSeq = 0;
 var CUSTOMER_CATALOG_RESULT_LIMIT = 60;
 var CUSTOMER_CATALOG_SCAN_LIMIT = 180;
 var CUSTOMER_CATALOG_SHORT_QUERY_MAX = 5;
-var CUSTOMER_CATALOG_SHORT_QUERY_SCAN_LIMIT = 1000;
 var salesCustomerOptions = [];
 var detailSalesCustomerOptions = [];
 var detailSelectedSalesCustomerId = "";
@@ -9243,6 +9242,22 @@ async function fetchCustomerCatalogPriceInfo(product, productKind) {
   return map[productDkdId(product)] == null ? null : map[productDkdId(product)];
 }
 
+async function fetchCustomerCatalogPrefixMatches(q, category, maxRows) {
+  var normalized = normalizePartQuery(q);
+  var customerId = parseInt(customerCatalogContext().sales_customer_id, 10);
+  if (!normalized || !category || isNaN(customerId)) return { data: [] };
+  var result = await sb.rpc("search_customer_catalog_products_by_prefix_fast", {
+    search_prefix: normalized,
+    category_filter: category,
+    target_sales_customer_id: customerId,
+    max_rows: maxRows || CUSTOMER_CATALOG_SCAN_LIMIT
+  });
+  if (!result.error) {
+    result.data = normalizeCoreProductFastRows(result.data || []).slice(0, maxRows || CUSTOMER_CATALOG_SCAN_LIMIT);
+  }
+  return result;
+}
+
 async function runCustomerCatalogSearch(options) {
   options = options || {};
   var context = customerCatalogContext();
@@ -9303,10 +9318,11 @@ async function runCustomerCatalogSearch(options) {
   if (detail) detail.innerHTML = "<div class='customer-catalog-detail-empty'><strong>" + esc(t("customer_catalog_select_product")) + "</strong><span>" + esc(t("customer_catalog_select_product_note")) + "</span></div>";
   var result;
   var normalizedQueryLength = normalizePartQuery(query).length;
-  var candidateScanLimit = query && category && normalizedQueryLength <= CUSTOMER_CATALOG_SHORT_QUERY_MAX
-    ? CUSTOMER_CATALOG_SHORT_QUERY_SCAN_LIMIT
-    : CUSTOMER_CATALOG_SCAN_LIMIT;
-  if (query) {
+  var useCustomerPrefixSearch = !!(query && category && normalizedQueryLength <= CUSTOMER_CATALOG_SHORT_QUERY_MAX);
+  var candidateScanLimit = CUSTOMER_CATALOG_SCAN_LIMIT;
+  if (useCustomerPrefixSearch) {
+    result = await fetchCustomerCatalogPrefixMatches(query, category, candidateScanLimit);
+  } else if (query) {
     result = await fetchCoreProductMasterMatches(query, category, candidateScanLimit, {
       includeDksProductCode: false,
       preferPrefix: true
