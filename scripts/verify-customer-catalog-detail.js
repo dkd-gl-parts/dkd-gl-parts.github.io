@@ -34,11 +34,21 @@ if (!searchSource.includes("await hydrateSalesDaikoVisibility(products)") ||
     !searchSource.includes("products = filterSalesVisibleProducts(products)")) {
   throw new Error("customer catalog search must exclude Daiko products with the sales visibility rules");
 }
+if (!searchSource.includes("includeDksProductCode: false") ||
+    !searchSource.includes("preferPrefix: true")) {
+  throw new Error("customer catalog search must exclude DKS codes and prefer indexed prefix matches");
+}
 const customerStockIndex = searchSource.indexOf("await fetchProductAvailableStockMap(products)");
 const customerStockSortIndex = searchSource.indexOf("sortProductsByAvailableStock(products, stockPriorityResult.map)");
 const customerResultLimitIndex = searchSource.indexOf("CUSTOMER_CATALOG_RESULT_LIMIT");
 if (customerStockIndex < 0 || customerStockSortIndex < customerStockIndex || customerResultLimitIndex < customerStockSortIndex) {
   throw new Error("customer catalog search must place stocked products first before applying its result limit");
+}
+
+const masterSearchSource = functionSource("fetchCoreProductMasterMatches", "async function runProductSearch");
+if (!masterSearchSource.includes('if (options.includeDksProductCode !== false) directExactFields.unshift("dks_shohin_cd")') ||
+    !masterSearchSource.includes("var exactNormalizedFields = options.preferPrefix ? [] : normalizedFields")) {
+  throw new Error("core product search options must preserve internal DKS lookup while allowing customer prefix-first lookup");
 }
 
 const compatibleSource = functionSource("loadCustomerCatalogCompatible", "async function openCustomerCatalogProduct");

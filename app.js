@@ -5647,7 +5647,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.870";
+var APP_VERSION       = "v1.1.871";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -9268,7 +9268,10 @@ async function runCustomerCatalogSearch(options) {
   if (detail) detail.innerHTML = "<div class='customer-catalog-detail-empty'><strong>" + esc(t("customer_catalog_select_product")) + "</strong><span>" + esc(t("customer_catalog_select_product_note")) + "</span></div>";
   var result;
   if (query) {
-    result = await fetchCoreProductMasterMatches(query, category, CUSTOMER_CATALOG_SCAN_LIMIT);
+    result = await fetchCoreProductMasterMatches(query, category, CUSTOMER_CATALOG_SCAN_LIMIT, {
+      includeDksProductCode: false,
+      preferPrefix: true
+    });
   } else {
     result = await fetchCategoryProducts(category, CUSTOMER_CATALOG_SCAN_LIMIT);
   }
@@ -33617,7 +33620,8 @@ async function fetchSlPartProducts(q, categoryFilter, maxRows) {
   return { data: rows, error: null };
 }
 
-async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows) {
+async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows, options) {
+  options = options || {};
   var normalized = normalizePartQuery(q);
   var raw = String(q || "").trim();
   if (!normalized && !raw) return { data: [] };
@@ -33633,10 +33637,8 @@ async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows) {
     "normalized_genuine_clutch_part_number",
     "normalized_manufacturer_clutch_part_number"
   ];
-  var directExactFields = [
-    "dks_shohin_cd",
-    "gltek_part_number"
-  ];
+  var directExactFields = ["gltek_part_number"];
+  if (options.includeDksProductCode !== false) directExactFields.unshift("dks_shohin_cd");
 
   async function runCoreProductQuery(orParts, limitMultiplier) {
     if (!orParts.length) return { data: [] };
@@ -33654,7 +33656,8 @@ async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows) {
   }
 
   // Equality operators remain indexable under the current RLS policies; prefix LIKE does not.
-  var exactParts = normalized ? normalizedFields.map(function(column) {
+  var exactNormalizedFields = options.preferPrefix ? [] : normalizedFields;
+  var exactParts = normalized ? exactNormalizedFields.map(function(column) {
     return column + ".eq." + normalized;
   }).concat(directExactFields.map(function(column) {
     return column + ".eq." + normalized;
