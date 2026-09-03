@@ -5650,7 +5650,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.873";
+var APP_VERSION       = "v1.1.874";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -9354,6 +9354,15 @@ async function runCustomerCatalogSearch(options) {
       throttleMs: 3000
     });
   }
+}
+
+function handleCustomerCatalogCategoryChange() {
+  var input = document.getElementById("customer-catalog-q");
+  if (input && input.value.trim()) {
+    runCustomerCatalogSearch({ logActivity: true });
+    return;
+  }
+  if (input) input.focus();
 }
 
 function customerCatalogFact(label, value) {
@@ -48371,8 +48380,12 @@ document.getElementById("btn-back-customer-catalog").addEventListener("click", r
 document.getElementById("customer-catalog-orders").addEventListener("click", function() { enterCustomerOrders({ view: "cart" }); });
 document.getElementById("btn-exit-customer-mode").addEventListener("click", exitCustomerMode);
 document.getElementById("customer-catalog-search-btn").addEventListener("click", function(){ runCustomerCatalogSearch({ logActivity: true }); });
-document.getElementById("customer-catalog-q").addEventListener("keydown", function(e){ if (e.key === "Enter") runCustomerCatalogSearch({ logActivity: true }); });
-document.getElementById("customer-catalog-category").addEventListener("change", function(){ runCustomerCatalogSearch({ logActivity: true }); });
+document.getElementById("customer-catalog-q").addEventListener("keydown", function(e){
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  runCustomerCatalogSearch({ logActivity: true });
+});
+document.getElementById("customer-catalog-category").addEventListener("change", handleCustomerCatalogCategoryChange);
 document.getElementById("btn-back-customer-orders").addEventListener("click", returnToCustomerPortalFromOrders);
 document.getElementById("customer-order-tab-cart").addEventListener("click", function() { showCustomerOrderView("cart"); });
 document.getElementById("customer-order-tab-history").addEventListener("click", function() { showCustomerOrderView("history"); });

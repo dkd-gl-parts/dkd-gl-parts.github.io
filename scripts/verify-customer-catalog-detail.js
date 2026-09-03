@@ -55,8 +55,19 @@ if (!html.includes('id="customer-catalog-search-feedback"') ||
     !html.includes('aria-describedby="customer-catalog-search-feedback"')) {
   throw new Error("short customer catalog searches must show guidance beside the category selector");
 }
-if (!source.includes('document.getElementById("customer-catalog-category").addEventListener("change", function(){ runCustomerCatalogSearch({ logActivity: true }); })')) {
-  throw new Error("selecting a customer catalog category must rerun the pending part-number search");
+const categoryPosition = html.indexOf('id="customer-catalog-category"');
+const queryPosition = html.indexOf('id="customer-catalog-q"');
+if (categoryPosition < 0 || queryPosition < 0 || categoryPosition > queryPosition ||
+    !source.includes('document.getElementById("customer-catalog-category").addEventListener("change", handleCustomerCatalogCategoryChange)') ||
+    !source.includes('function handleCustomerCatalogCategoryChange()') ||
+    !source.includes('if (input && input.value.trim())') ||
+    !source.includes('if (input) input.focus()')) {
+  throw new Error("customer catalog must guide category-first entry and rerun a pending part-number search");
+}
+if (!source.includes('document.getElementById("customer-catalog-q").addEventListener("keydown"') ||
+    !source.includes('if (e.key !== "Enter") return;') ||
+    !source.includes('e.preventDefault();')) {
+  throw new Error("customer catalog part-number entry must run the search with Enter");
 }
 if ((source.match(/customer_catalog_short_query_category_required:/g) || []).length !== 3) {
   throw new Error("short customer catalog search guidance must be localized in Japanese, English, and Chinese");
