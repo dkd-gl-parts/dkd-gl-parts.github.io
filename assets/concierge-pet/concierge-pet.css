@@ -37,16 +37,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.878");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.879");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.878");
-}
-
-.dcats-concierge-sprite.is-rinna.is-travel-mirrored {
-  transform: scaleX(-1);
-  transform-origin: center;
+  background-image: url("./rinna/spritesheet.webp?v=1.1.879");
 }
 
 .dcats-concierge-hit-target {

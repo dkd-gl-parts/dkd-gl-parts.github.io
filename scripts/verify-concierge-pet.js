@@ -110,15 +110,12 @@ requireFragment(runtime, 'settings.mode === "off" || root.classList.contains("ha
 requireFragment(runtime, 'if (!isSystemAdminSession() || panelOpen) return;', "Concierge settings must fail closed outside a system-admin session");
 requireFragment(runtime, 'if (!isSystemAdminSession() || floatingRequestPending) return;', "Floating display must fail closed outside a system-admin session");
 requireFragment(runtime, 'suzuto: { copyKey: "suzuto", className: "is-suzuto", travelRows: { right: "running-right", left: "running-left" } }', "Suzuto travel rows must match the approved atlas direction");
-requireFragment(runtime, 'rinna: { copyKey: "rinna", className: "is-rinna", travelRows: { right: "running-left", left: "running-right" } }', "Rinna travel rows must compensate for the approved atlas direction");
+requireFragment(runtime, 'rinna: { copyKey: "rinna", className: "is-rinna", travelRows: { right: "running-right", left: "running-left" } }', "Rinna travel rows must match the corrected atlas direction");
 requireFragment(runtime, "var TRAVEL_TURN_DELAY = 220;", "Directional travel must pause briefly after turning");
 requireFragment(runtime, "Math.max(GAZE_MIN_DISTANCE, Math.max(rect.width, rect.height) * GAZE_DISTANCE_RATIO)", "Near-pointer gaze must keep the stable front-facing idle row");
 requireFragment(runtime, "gazeScale(index)", "Directional gaze must compensate for approved-atlas scale differences");
 requireFragment(runtime, "playRow(travelRowFor(dx), Infinity);", "Travel must select a character-aware facing direction");
 requireFragment(runtime, "var turnOffset = TRAVEL_TURN_DELAY / duration;", "Travel must reserve time to face the destination before moving");
-requireFragment(runtime, 'var mirrorTravel = settings.character === "rinna" && rowName === PETS.rinna.travelRows.right;', "Rinna must identify rightward browser travel before mirroring");
-requireFragment(runtime, 'sprite.classList.toggle("is-travel-mirrored", mirrorTravel);', "Rinna must face right during animated and reduced-motion rightward travel");
-requireFragment(runtime, 'sprite.classList.remove("is-travel-mirrored");', "Static and gaze frames must clear the travel-only mirror");
 requireFragment(runtime, 'if (isFloatingWindowOpen()) return clampToViewport({ x: 8, y: 8 }, size, viewport);', "A cramped floating window must keep the concierge visible");
 
 assert((runtime.match(/createElement\("div", "dcats-concierge-sprite"\)/g) || []).length === 1, "Runtime must create exactly one visible sprite element");
@@ -128,6 +125,7 @@ assert(!runtime.includes(".style."), "Strict CSP forbids inline style mutation")
 assert(!runtime.includes('setAttribute("style"'), "Strict CSP forbids style attributes");
 assert(!runtime.includes("fetch("), "Concierge preferences must remain local and must not add network/API work");
 assert(!runtime.includes("window.open("), "A normal popup cannot guarantee always-on-top concierge display");
+assert(!runtime.includes("is-travel-mirrored"), "Corrected directional rows must not depend on CSS mirroring");
 
 const copyStart = runtime.indexOf("\n  var COPY = {");
 const copyEnd = runtime.indexOf("\n  var STATE_MESSAGE_KEYS", copyStart);
@@ -159,8 +157,7 @@ requireFragment(css, `./suzuto/spritesheet.webp?v=${appVersion.slice(1)}`);
 requireFragment(css, `./rinna/spritesheet.webp?v=${appVersion.slice(1)}`);
 requireFragment(css, ".dcats-concierge-sprite.is-suzuto");
 requireFragment(css, ".dcats-concierge-sprite.is-rinna");
-requireFragment(css, ".dcats-concierge-sprite.is-rinna.is-travel-mirrored");
-requireFragment(css, "transform: scaleX(-1);");
+assert(!css.includes("is-travel-mirrored"), "Corrected Rinna rows must not be mirrored in browser CSS");
 requireFragment(css, "@media (prefers-reduced-motion: reduce)");
 requireFragment(css, "@media print");
 requireFragment(css, "z-index: 190");
@@ -178,7 +175,7 @@ assert(!css.includes("data:"), "Concierge stylesheet must not embed sprite data 
 
 const expectedPets = [
   { dir: "suzuto", id: "dcats-suzuto", displayName: "スズト", sha256: "DC5978A1C172A0A66D8DFAFF8C0C0F15AABCE474C266FF3F1B63E009661431C7" },
-  { dir: "rinna", id: "dcats-rinna", displayName: "リンナ", sha256: "6095678C6515F73EA870266B6383BDAA22C8DB99E7CA96F2F6E597D82E16850E" }
+  { dir: "rinna", id: "dcats-rinna", displayName: "リンナ", sha256: "76EC551DAB04360DE63F36ECEB5927B29BE24D50D3FB0839D7FE19C962E90F0F" }
 ];
 
 for (const expected of expectedPets) {

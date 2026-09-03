@@ -4,7 +4,7 @@
   const CHARACTER_NAMES = Object.freeze({ suzuto: "スズト", rinna: "リンナ" });
   const TRAVEL_ROWS = Object.freeze({
     suzuto: Object.freeze({ right: 1, left: 2 }),
-    rinna: Object.freeze({ right: 2, left: 1 })
+    rinna: Object.freeze({ right: 1, left: 2 })
   });
   const IDLE_DURATIONS = Object.freeze([280, 110, 110, 140, 140, 320]);
   const TRAVEL_DURATIONS = Object.freeze([120, 120, 120, 120, 120, 120, 120, 220]);

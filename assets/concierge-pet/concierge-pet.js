@@ -5,7 +5,7 @@
   var EXCLUDED_SCREENS = { boot: true, login: true, forgot: true, reset: true };
   var PETS = {
     suzuto: { copyKey: "suzuto", className: "is-suzuto", travelRows: { right: "running-right", left: "running-left" } },
-    rinna: { copyKey: "rinna", className: "is-rinna", travelRows: { right: "running-left", left: "running-right" } }
+    rinna: { copyKey: "rinna", className: "is-rinna", travelRows: { right: "running-right", left: "running-left" } }
   };
   var TRAVEL_TURN_DELAY = 220;
   var GAZE_MIN_DISTANCE = 112;
@@ -593,7 +593,7 @@
 
   function applySettings() {
     var name = petName(settings.character);
-    sprite.classList.remove("is-suzuto", "is-rinna", "is-travel-mirrored");
+    sprite.classList.remove("is-suzuto", "is-rinna");
     sprite.classList.add(PETS[settings.character].className);
     root.classList.toggle("is-off", settings.mode === "off");
     hitTarget.setAttribute("aria-label", copy("openSettings", { name: name }));
@@ -969,12 +969,8 @@
     var rowName = ROWS[name] ? name : "idle";
     var row = ROWS[rowName];
     if (!sprite || typeof sprite.animate !== "function") return null;
-    var mirrorTravel = settings.character === "rinna" && rowName === PETS.rinna.travelRows.right;
-    sprite.classList.toggle("is-travel-mirrored", mirrorTravel);
     if (isReducedMotion()) {
-      var reducedAnimation = showFrame(row.row, 0);
-      sprite.classList.toggle("is-travel-mirrored", mirrorTravel);
-      return reducedAnimation;
+      return showFrame(row.row, 0);
     }
     var visualKey = "row:" + rowName + ":" + String(iterations == null ? 1 : iterations);
     if (currentVisualKey === visualKey && spriteAnimation && spriteAnimation.playState === "running") return spriteAnimation;
@@ -994,7 +990,6 @@
 
   function showFrame(row, column, scale) {
     if (!sprite || typeof sprite.animate !== "function") return null;
-    sprite.classList.remove("is-travel-mirrored");
     var resolvedScale = Number(scale) > 0 ? Number(scale) : 1;
     var visualKey = "frame:" + row + ":" + column + ":" + resolvedScale;
     if (currentVisualKey === visualKey && spriteAnimation) return spriteAnimation;

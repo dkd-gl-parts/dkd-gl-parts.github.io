@@ -66,10 +66,6 @@ body[data-size="large"] {
   background-image: url("dcats-concierge://app/assets/concierge-pet/rinna/spritesheet.webp");
 }
 
-body[data-character="rinna"][data-facing="right"] .pet-sprite {
-  transform: scaleX(-1);
-}
-
 body[data-mode="active"] .pet-motion {
   transform: translate(-50%, -50%);
 }

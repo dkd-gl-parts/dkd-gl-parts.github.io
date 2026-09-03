@@ -76,14 +76,14 @@ requireFragment(css, "prefers-reduced-motion: reduce");
 requireFragment(renderer, "window.dcatsCompanion.onState(applyState)");
 requireFragment(renderer, "document.body.dataset.facing = facing");
 requireFragment(renderer, 'suzuto: Object.freeze({ right: 1, left: 2 })');
-requireFragment(renderer, 'rinna: Object.freeze({ right: 2, left: 1 })');
+requireFragment(renderer, 'rinna: Object.freeze({ right: 1, left: 2 })');
 requireFragment(renderer, "const IDLE_DURATIONS = Object.freeze([280, 110, 110, 140, 140, 320]);");
 requireFragment(renderer, "const TRAVEL_DURATIONS = Object.freeze([120, 120, 120, 120, 120, 120, 120, 220]);");
 requireFragment(renderer, "playRow(0, IDLE_DURATIONS)");
 requireFragment(renderer, "playRow(TRAVEL_ROWS[character][facing], TRAVEL_DURATIONS)");
 assert(!css.includes("@keyframes sprite-frames"), "Desktop concierge must not use a uniform frame count for unlike atlas rows");
-requireFragment(css, 'body[data-character="rinna"][data-facing="right"] .pet-sprite');
-requireFragment(css, "transform: scaleX(-1)");
+assert(!css.includes('body[data-character="rinna"][data-facing="right"] .pet-sprite'), "Corrected Rinna rows must not be mirrored in desktop CSS");
+assert(!css.includes("transform: scaleX(-1)"), "Desktop concierge must preserve the corrected directional artwork");
 requireFragment(readme, "system-administrator-only Windows pilot");
 requireFragment(readme, "JPY 0");
 
@@ -92,7 +92,7 @@ assert(!staticBuilder.includes("desktop/concierge-companion"), "Static deploymen
 
 const expectedSprites = [
   ["suzuto", "DC5978A1C172A0A66D8DFAFF8C0C0F15AABCE474C266FF3F1B63E009661431C7"],
-  ["rinna", "6095678C6515F73EA870266B6383BDAA22C8DB99E7CA96F2F6E597D82E16850E"]
+  ["rinna", "76EC551DAB04360DE63F36ECEB5927B29BE24D50D3FB0839D7FE19C962E90F0F"]
 ];
 for (const [character, expectedHash] of expectedSprites) {
   const spritePath = path.join(root, "assets", "concierge-pet", character, "spritesheet.webp");

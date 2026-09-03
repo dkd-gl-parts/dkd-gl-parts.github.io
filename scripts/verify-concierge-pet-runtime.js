@@ -496,15 +496,13 @@ assert(horizontalMove.start.y === horizontalMove.end.y, "Horizontal-only mode ch
 const horizontalAnimation = lastAnimationFor(mover);
 assert(horizontalAnimation.keyframes.length === 3, "Travel did not include a turn-before-walk hold");
 assert(horizontalAnimation.keyframes[0].transform === horizontalAnimation.keyframes[1].transform, "Travel started moving before the concierge changed direction");
-assert(animationRowPercent(lastAnimationFor(sprite)) === 10, "Rinna did not face left for leftward travel using her approved atlas rows");
-assert(!sprite.classList.contains("is-travel-mirrored"), "Rinna's leftward travel was incorrectly mirrored");
+assert(animationRowPercent(lastAnimationFor(sprite)) === 20, "Rinna did not use the corrected left-facing row for leftward travel");
 api.setMode("fixed");
 sandboxMath.random = () => .999;
 api.setMode("horizontal");
-assert(animationRowPercent(lastAnimationFor(sprite)) === 20, "Rinna did not select the approved mirrored row for rightward travel");
-assert(sprite.classList.contains("is-travel-mirrored"), "Rinna moved right without turning to face right");
+assert(animationRowPercent(lastAnimationFor(sprite)) === 10, "Rinna did not use the corrected right-facing row for rightward travel");
 api.setMode("fixed");
-assert(!sprite.classList.contains("is-travel-mirrored"), "Rinna stayed mirrored after rightward travel ended");
+assert(!sprite.classList.contains("is-travel-mirrored"), "Corrected Rinna travel must not use CSS mirroring");
 api.setMode("vertical");
 const verticalMove = animationEndpoints(lastAnimationFor(mover));
 assert(verticalMove.start && verticalMove.end && verticalMove.start.y !== verticalMove.end.y, "Vertical-only mode did not move on the y axis");
