@@ -615,6 +615,14 @@ for (const fragment of [
   'grid-template-areas: "name state" "standard standard" "actions actions";'
 ]) requireFragment(css, fragment, `Shipping-document readability contract is missing: ${fragment}`);
 for (const fragment of [
+  '@media screen and (min-width: 1121px)',
+  'grid-template-areas: "label number customer" "target target target";',
+  '#screen-shipping-document-mgmt #shipping-document-message:empty { display: none; }',
+  '#screen-shipping-document-mgmt .shipping-document-order-items { max-height: 100px; overflow-y: auto; }',
+  '#screen-shipping-document-mgmt .shipping-document-required-row { min-height: 56px; padding: 6px 8px; }',
+  'minmax(248px, 1.4fr);'
+]) requireFragment(css, fragment, `Shipping-document compact desktop contract is missing: ${fragment}`);
+for (const fragment of [
   ".shipping-document-name-cell { display: grid;",
   "flex: 0 0 132px;",
   "width: 132px;",
