@@ -35,8 +35,8 @@ for (const id of [
 
 const detail = functionSource("renderSalesOrderDetail");
 for (const fragment of [
-  "order.pricing_editable",
-  "金額を修正",
+  "salesOrderCanRevise(order)",
+  "受注修正",
   "値引・調整",
   "送料無料",
   "salesOrderAdjustmentRowsHtml(orderAdjustments, orderDiscount)",

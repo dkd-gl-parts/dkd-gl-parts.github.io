@@ -5743,7 +5743,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.892";
+var APP_VERSION       = "v1.1.893";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -15452,8 +15452,8 @@ function renderSalesOrderDetail() {
   var coreReturnWaybillDetail = salesOrderWaybillDetailLabel(order, "core_return");
   var orderDiscount = Math.max(0, parseInt(order.order_discount_jpy, 10) || 0);
   var orderAdjustments = Array.isArray(order.order_adjustments) ? order.order_adjustments : [];
-  var pricingButton = order.pricing_editable ? "<button type='button' class='sales-order-pricing-open' id='sales-order-pricing-open'>金額を修正</button>" : "";
-  if (typeof salesOrderCanRevise === "function" && salesOrderCanRevise(order)) pricingButton = "<div class='sales-order-edit-actions'><button type='button' class='sales-order-pricing-open' id='sales-order-revision-open'>受注全体を修正</button>" + pricingButton + "</div>";
+  var pricingButton = typeof salesOrderCanRevise === "function" && salesOrderCanRevise(order)
+    ? "<button type='button' class='sales-order-pricing-open' id='sales-order-revision-open'>受注修正</button>" : "";
   var nextActions = actions || cancelAction
     ? "<div class='sales-order-detail-next-actions'><span>次の操作</span><div>" + actions + cancelAction + "</div></div>"
     : "<div class='sales-order-detail-next-actions complete'><span>次の操作</span><strong>現在必要な操作はありません</strong></div>";
@@ -15518,8 +15518,6 @@ function renderSalesOrderDetail() {
   if (serialButton) serialButton.addEventListener("click", openSalesOrderSerialWarranty);
   var requeuePrintButton = document.getElementById("sales-order-requeue-print");
   if (requeuePrintButton) requeuePrintButton.addEventListener("click", requeueSalesOrderPrintJobs);
-  var pricingOpenButton = document.getElementById("sales-order-pricing-open");
-  if (pricingOpenButton) pricingOpenButton.addEventListener("click", openSalesOrderPricingEditor);
 }
 
 async function openSalesOrderSerialWarranty() {

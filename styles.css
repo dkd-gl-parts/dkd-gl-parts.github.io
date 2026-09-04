@@ -8838,43 +8838,67 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .sales-order-edit-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .sales-order-revision-overlay { display: none; position: fixed; inset: 0; z-index: 11000; padding: 20px; background: rgba(0,0,0,.45); }
 .sales-order-revision-overlay.show { display: flex; align-items: center; justify-content: center; }
-.sales-order-revision-dialog { display: flex; flex-direction: column; width: min(1080px,100%); max-height: calc(100dvh - 40px); background: #fff; color: #172432; border-radius: 6px; overflow: hidden; }
+.sales-order-revision-dialog { display: flex; flex-direction: column; width: min(1240px,100%); max-height: calc(100dvh - 40px); background: #fff; color: #172432; border-radius: 6px; overflow: hidden; font-size: 13px; }
 .sales-order-revision-dialog header, .sales-order-revision-dialog footer { display: flex; align-items: center; gap: 12px; padding: 14px 20px; flex: 0 0 auto; }
 .sales-order-revision-dialog header { justify-content: space-between; border-bottom: 1px solid #ccd5dc; }
 .sales-order-revision-dialog h2 { margin: 0; font-size: 19px; letter-spacing: 0; }
 .sales-order-revision-dialog h3 { margin: 0 0 12px; font-size: 15px; letter-spacing: 0; }
 .sales-order-revision-body { overflow: auto; padding: 0 20px; }
 .sales-order-revision-body section { padding: 18px 0; border-bottom: 1px solid #dce2e7; }
-.sales-order-revision-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px 18px; }
-.sales-order-revision-dialog label { display: flex; flex-direction: column; gap: 5px; min-width: 0; font-size: 13px; }
+.sales-order-revision-workspace { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(360px,1fr); gap: 24px; }
+.sales-order-revision-order-pane { min-width: 0; }
+.sales-order-revision-body .sales-order-revision-delivery-pane { padding-left: 24px; border-left: 1px solid #dce2e7; }
+.sales-order-revision-dialog .customer-order-form-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.sales-order-revision-dialog .customer-order-shipping-methods { grid-template-columns: minmax(0,1fr); }
+.sales-order-revision-dialog .customer-order-form-grid label > span { margin-bottom: 0; font-size: 13px; font-weight: 500; }
+.sales-order-revision-dialog .customer-order-shipping-method small { font-size: 11px; }
+.sales-order-revision-dialog .customer-order-line { grid-template-columns: minmax(0,1fr) 66px 108px 94px 34px; gap: 8px; }
+.sales-order-revision-dialog .customer-order-product { min-width: 0; }
+.sales-order-revision-dialog .customer-order-product strong, .sales-order-revision-dialog .customer-order-product small { overflow-wrap: anywhere; }
+.sales-order-revision-dialog .customer-order-product em { font-size: 11px; color: #b3261e; font-style: normal; }
+.sales-order-revision-dialog .customer-order-line-metric { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.sales-order-revision-dialog .customer-order-line-metric.total { grid-column: auto; text-align: right; }
+.sales-order-revision-dialog .customer-order-line-metric strong { overflow-wrap: anywhere; }
+.sales-order-revision-dialog .customer-order-remove { grid-column: auto; grid-row: auto; }
+.sales-order-revision-dialog .sales-order-pricing-adjustment-row { grid-template-columns: minmax(100px,1fr) 100px minmax(100px,1fr) 34px; }
+.sales-order-revision-dialog .sales-order-pricing-adjustment-row label > span { font-size: 12px; }
+.sales-order-revision-dialog .sales-order-pricing-adjustment-row button { width: 34px; padding: 0; font-size: 20px; }
+.sales-order-revision-shipping-fee { margin-top: 14px; max-width: 180px; }
+.sales-order-revision-dialog label { display: flex; flex-direction: column; align-items: stretch; gap: 5px; min-width: 0; font-size: 13px; }
 .sales-order-revision-dialog input:not([type=checkbox]), .sales-order-revision-dialog select, .sales-order-revision-dialog textarea { box-sizing: border-box; width: 100%; min-width: 0; padding: 8px; border: 1px solid #aebdc8; border-radius: 4px; font: inherit; color: inherit; background: #fff; }
 .sales-order-revision-dialog textarea { min-height: 65px; resize: vertical; }
 .sales-order-revision-dialog button { border: 1px solid #aebdc8; border-radius: 4px; padding: 8px 12px; background: #fff; color: inherit; font: inherit; cursor: pointer; }
 .sales-order-revision-dialog button:disabled { opacity: .5; cursor: wait; }
 .sales-order-revision-dialog [data-revision-close][aria-label], .sales-order-revision-dialog [data-revision-remove] { width: 34px; height: 34px; padding: 0; font-size: 22px; }
-.sales-order-revision-search { display: grid; grid-template-columns: 150px 1fr 140px auto; gap: 8px; align-items: end; margin-bottom: 10px; }
+.sales-order-revision-search { display: grid; grid-template-columns: minmax(110px,.9fr) minmax(100px,1.2fr) minmax(105px,.8fr) auto; gap: 8px; align-items: end; margin-bottom: 10px; }
 #sales-order-revision-results { max-height: 160px; overflow: auto; font-size: 13px; }
 #sales-order-revision-results > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid #e0e6e9; }
-.sales-order-revision-table { overflow-x: auto; margin-top: 12px; }
-.sales-order-revision-table table { width: 100%; min-width: 660px; border-collapse: collapse; table-layout: fixed; font-size: 13px; }
-.sales-order-revision-table th, .sales-order-revision-table td { text-align: left; border-bottom: 1px solid #d9e1e7; padding: 8px 5px; }
-.sales-order-revision-table th:first-child { width: 32%; }
-.sales-order-revision-table th:nth-child(3) { width: 75px; }
-.sales-order-revision-table th:last-child { width: 40px; }
-.sales-order-revision-table strong, .sales-order-revision-table small { display: block; overflow-wrap: anywhere; }
 .sales-order-revision-dialog .sales-order-revision-confirm { flex-direction: row; align-items: flex-start; gap: 8px; margin-top: 12px; line-height: 1.5; }
 .sales-order-revision-confirm input { margin-top: 4px; flex: 0 0 auto; }
 .sales-order-revision-dialog footer { border-top: 1px solid #ccd5dc; }
 #sales-order-revision-message { flex: 1; min-width: 0; font-size: 13px; overflow-wrap: anywhere; }
 #sales-order-revision-message.error { color: #b3261e; }
 #sales-order-revision-save { background: #276a53; color: #fff; border-color: #276a53; white-space: nowrap; }
+@media (max-width: 1000px) {
+  .sales-order-revision-workspace { grid-template-columns: minmax(0,1fr); gap: 0; }
+  .sales-order-revision-body .sales-order-revision-delivery-pane { border-left: 0; padding-left: 0; }
+}
 @media (max-width: 700px) {
   .sales-order-revision-overlay { padding: 8px; }
   .sales-order-revision-dialog { max-height: calc(100dvh - 16px); }
   .sales-order-revision-dialog header, .sales-order-revision-dialog footer { padding: 12px; }
   .sales-order-revision-body { padding: 0 12px; }
-  .sales-order-revision-grid { grid-template-columns: minmax(0,1fr); }
+  .sales-order-revision-dialog .customer-order-form-grid { grid-template-columns: minmax(0,1fr); }
   .sales-order-revision-search { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+  .sales-order-revision-dialog .customer-order-line { grid-template-columns: 65px minmax(0,1fr) minmax(0,1fr) 34px; }
+  .sales-order-revision-dialog .customer-order-product { grid-column: 1 / 4; }
+  .sales-order-revision-dialog .customer-order-remove { grid-column: 4; grid-row: 1; }
+  .sales-order-revision-dialog .customer-order-qty { grid-column: 1; grid-row: 2; }
+  .sales-order-revision-dialog .customer-order-line-metric { grid-column: 2; grid-row: 2; }
+  .sales-order-revision-dialog .customer-order-line-metric.total { grid-column: 3 / 5; }
+  .sales-order-revision-dialog .sales-order-pricing-adjustment-row { grid-template-columns: minmax(0,1fr) minmax(0,1fr) 34px; }
+  .sales-order-revision-dialog .sales-order-pricing-adjustment-row label:nth-child(3) { grid-column: 1 / 3; }
+  .sales-order-revision-dialog .sales-order-pricing-adjustment-row button { grid-column: 3; }
   .sales-order-revision-dialog footer { flex-wrap: wrap; justify-content: flex-end; }
   #sales-order-revision-message { flex: 1 0 100%; }
 }

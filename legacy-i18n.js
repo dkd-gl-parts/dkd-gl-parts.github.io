@@ -4,6 +4,7 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
     "再発行が必要": "Reissue required",
     "受注全体を修正": "Edit Entire Order",
+    "受注修正": "Edit Order",
     "受注修正履歴": "Order Revision History",
     "この商品を削除": "Remove this item",
     "調整を追加": "Add adjustment",
@@ -2739,6 +2740,7 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
   "zh": {
     "再発行が必要": "需要重新签发",
     "受注全体を修正": "修改整张订单",
+    "受注修正": "修改订单",
     "受注修正履歴": "订单修改记录",
     "この商品を削除": "删除此商品",
     "調整を追加": "添加调整",
