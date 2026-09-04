@@ -5743,7 +5743,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.891";
+var APP_VERSION       = "v1.1.892";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -14295,11 +14295,12 @@ async function refreshShippingDocumentPrintStatus() {
 function shippingDocumentStageHtml(order) {
   var dispatch = salesOrderDispatch(order);
   var b2Issued = Array.isArray(order && order.b2_exports) && order.b2_exports.length > 0;
+  var b2NeedsReissue = b2Issued && (order.revision_history || []).some(function(revision) { return revision.waybills_need_reissue && !order.b2_exports.some(function(entry) { return new Date(entry.created_at) >= new Date(revision.created_at); }); });
   var serialConfirmed = !!(dispatch && dispatch.status === "shipped");
   var trackingRegistered = !!(order && order.outbound_tracking_number);
   var documentsReady = serialConfirmed && trackingRegistered;
   var stages = [
-    { label: "B2 CSV", ready: b2Issued, value: b2Issued ? "発行済み" : "未発行" },
+    { label: "B2 CSV", ready: b2Issued && !b2NeedsReissue, value: b2NeedsReissue ? "再発行が必要" : b2Issued ? "発行済み" : "未発行" },
     { label: "商品・シリアル照合", ready: serialConfirmed, value: serialConfirmed ? "完了" : "未完了" },
     { label: "商品発送送り状", ready: trackingRegistered, value: trackingRegistered ? order.outbound_tracking_number : "未取込" },
     { label: "同梱帳票", ready: documentsReady, value: documentsReady ? "発行可" : "待機" }
@@ -14439,6 +14440,7 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var returnHandwrittenComplete = returnMethod === "handwritten" && (waybill.status === "printed" || !!waybill.handwritten_completed_at);
   var returnCanHandwrite = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "handwritten" && !returnHandwrittenComplete && !shippingDocumentSaving);
   var b2Issued = Array.isArray(order.b2_exports) && order.b2_exports.length > 0;
+  var b2NeedsReissue = b2Issued && (order.revision_history || []).some(function(revision) { return revision.waybills_need_reissue && !order.b2_exports.some(function(entry) { return new Date(entry.created_at) >= new Date(revision.created_at); }); });
   var canCreateB2 = ["accepted", "shipping_ready", "shipped"].indexOf(order.status) >= 0 && outboundMethod === "b2_cloud";
   var b2SettingsAction = isSystemAdmin() ? "<button type='button' data-shipping-document-b2-settings>B2契約設定</button>" : "";
   var dispatchStandard = salesOrderAutoPrintIsEnabled() ? "A4 / 受付時に自動発行" : "A4 / 出荷帳票発行で印刷";
@@ -14455,7 +14457,7 @@ function shippingDocumentShipmentDocumentsHtml(order) {
     {
       key: "outbound_waybill", name: "商品発送送り状", standard: "B2クラウド / ヤマト宅急便 元払い",
       carrierCode: outboundWaybill.carrier_code || "yamato_prepaid",
-      state: outboundModeLabel + " / " + (outboundMethod === "b2_cloud" ? (b2Issued ? "発行済み" : "未発行") : outboundMethod === "handwritten" ? (outboundHandwrittenComplete ? "手書き完了" : "手書き待ち") : (outboundJob ? salesOrderPrintJobStatusLabel(outboundJob.status) : (outboundWaybill.tracking_number ? "番号登録済み" : "未設定"))), ready: !!dispatch,
+      state: outboundModeLabel + " / " + (outboundMethod === "b2_cloud" ? (b2NeedsReissue ? "再発行が必要" : b2Issued ? "発行済み" : "未発行") : outboundMethod === "handwritten" ? (outboundHandwrittenComplete ? "手書き完了" : "手書き待ち") : (outboundJob ? salesOrderPrintJobStatusLabel(outboundJob.status) : (outboundWaybill.tracking_number ? "番号登録済み" : "未設定"))), ready: !!dispatch,
       actions: (outboundMethod === "b2_cloud" ? "<button type='button' class='primary' id='shipping-document-b2-issue'" + (canCreateB2 && !salesOrderSaving && !shippingDocumentSaving ? "" : " disabled") + ">" + (b2Issued ? "B2 CSV再発行" : "B2 CSV発行") + "</button>" + b2SettingsAction : outboundMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-outbound-print" + (outboundCanPrint ? "" : " disabled") + ">端末印刷</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='outbound_waybill'" + (outboundCanHandwrite ? "" : " disabled") + ">手書き内容を表示</button>") + "<button type='button' data-shipping-document-open-settings='outbound'>発送方法設定</button>"
     },
     {
@@ -15451,6 +15453,7 @@ function renderSalesOrderDetail() {
   var orderDiscount = Math.max(0, parseInt(order.order_discount_jpy, 10) || 0);
   var orderAdjustments = Array.isArray(order.order_adjustments) ? order.order_adjustments : [];
   var pricingButton = order.pricing_editable ? "<button type='button' class='sales-order-pricing-open' id='sales-order-pricing-open'>金額を修正</button>" : "";
+  if (typeof salesOrderCanRevise === "function" && salesOrderCanRevise(order)) pricingButton = "<div class='sales-order-edit-actions'><button type='button' class='sales-order-pricing-open' id='sales-order-revision-open'>受注全体を修正</button>" + pricingButton + "</div>";
   var nextActions = actions || cancelAction
     ? "<div class='sales-order-detail-next-actions'><span>次の操作</span><div>" + actions + cancelAction + "</div></div>"
     : "<div class='sales-order-detail-next-actions complete'><span>次の操作</span><strong>現在必要な操作はありません</strong></div>";
@@ -15475,7 +15478,7 @@ function renderSalesOrderDetail() {
       "</div></section>" +
       "<div class='sales-order-detail-panel' id='sales-order-detail-panel-fulfillment' role='tabpanel' aria-labelledby='sales-order-detail-tab-fulfillment' data-sales-order-detail-panel='fulfillment' hidden>" + salesOrderDispatchHtml(order) + "</div>" +
       "<section class='sales-order-detail-panel sales-order-detail-section sales-order-tracking' id='sales-order-detail-tracking' role='tabpanel' aria-labelledby='sales-order-detail-tab-tracking' data-sales-order-detail-panel='tracking' hidden><div class='sales-order-section-heading'><div><h3>商品発送送り状</h3><p>B2発行済データの取込後に番号を確認・修正できます。</p></div></div><div class='sales-order-tracking-grid outbound-only'><label><span>送り状番号</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>B2出荷予定日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>商品発送番号を登録</button></div><p>コア返却用複写伝票は「出荷帳票発行」で管理します。送り状番号の登録だけでは在庫を減らしません。</p></section>" +
-      "<section class='sales-order-detail-panel sales-order-detail-section sales-order-history' id='sales-order-detail-history' role='tabpanel' aria-labelledby='sales-order-detail-tab-history' data-sales-order-detail-panel='history' hidden><div class='sales-order-section-heading'><div><h3>処理履歴</h3><p>発送と金額修正の記録を確認できます。</p></div></div><div class='sales-order-history-groups'><div><h4>発送履歴</h4>" + salesOrderShipmentHistoryHtml(order.shipment_history) + "</div><div>" + (salesOrderPricingHistoryHtml(order.pricing_adjustments) || "<div class='sales-order-history-empty'><h4>金額修正履歴</h4><span>履歴はありません。</span></div>") + "</div></div></section>" +
+"<section class='sales-order-detail-panel sales-order-detail-section sales-order-history' id='sales-order-detail-history' role='tabpanel' aria-labelledby='sales-order-detail-tab-history' data-sales-order-detail-panel='history' hidden><div class='sales-order-section-heading'><div><h3>処理履歴</h3><p>発送と金額修正の記録を確認できます。</p></div></div><div class='sales-order-history-groups'><div><h4>発送履歴</h4>" + salesOrderShipmentHistoryHtml(order.shipment_history) + "</div><div>" + (salesOrderPricingHistoryHtml(order.pricing_adjustments) || "<div class='sales-order-history-empty'><h4>金額修正履歴</h4><span>履歴はありません。</span></div>") + "</div>" + salesOrderRevisionHistoryHtml(order.revision_history) + "</div></section>" +
     "</div>" +
     "<div id='sales-order-detail-message' class='sales-order-detail-message' aria-live='polite'></div>";
   host.querySelectorAll("[data-sales-order-detail-view]").forEach(function(button) {
@@ -15496,6 +15499,8 @@ function renderSalesOrderDetail() {
     button.addEventListener("click", function() { updateSalesOrderStatus(button.dataset.salesOrderAction); });
   });
   var trackingButton = document.getElementById("sales-order-save-tracking");
+  var revisionButton = document.getElementById("sales-order-revision-open");
+  if (revisionButton) revisionButton.addEventListener("click", openSalesOrderRevisionEditor);
   if (trackingButton) trackingButton.addEventListener("click", registerSalesOrderTracking);
   var issueDispatchButton = document.getElementById("sales-order-issue-dispatch");
   if (issueDispatchButton) issueDispatchButton.addEventListener("click", issueSalesOrderDispatch);
@@ -15781,12 +15786,10 @@ function buildSalesOrderCoreReturnDocumentHtml(order) {
 
 function buildSalesOrderWarrantyCertificatePage(order, unit) {
   var orderItem = unit.item.order_item || {};
-  var address = order.shipping_address || {};
-  var customerName = order.customer_name || address.company_name || "";
-  var contact = address.phone_number || "";
+  var vehicle = order.vehicle_information || {};
   return "<main class='warranty-certificate'>" +
     "<div class='warranty-top-rules'><i></i><i></i></div>" +
-    "<header class='warranty-header'><h1>製 品 保 証 書</h1></header>" +
+    "<header class='warranty-header'><img src='assets/brand/gltek-logo-print-transparent.png?dcats_version=" + encodeURIComponent(APP_VERSION) + "' alt='GLTEK'><h1>製 品 保 証 書</h1></header>" +
     "<p class='warranty-lead'>本保証は、本書に記載された保証期間内の製品不具合について、下記条件に基づき対応するものです。大切に保管してください。</p>" +
     "<section class='warranty-identification'><h2>製品<br>識別情報</h2>" +
       "<div class='label warranty-start-label'>保証開始日</div><div class='warranty-start-value'>" + esc(salesOrderWarrantyDateText(salesOrderWarrantyStartDate(order))) + "</div>" +
@@ -15794,8 +15797,8 @@ function buildSalesOrderWarrantyCertificatePage(order, unit) {
       "<div class='label warranty-product-label'>製品名</div><div class='warranty-product-value'>" + esc(salesOrderWarrantyProductName(orderItem)) + "</div>" +
       "<div class='label warranty-gltek-label'>GLTEK品番</div><div class='value-strong warranty-gltek-value'>" + esc(orderItem.gltek_part_number) + "</div>" +
       "<div class='label warranty-serial-label'>製造シリアル</div><div class='value-strong warranty-serial-value'>" + esc(unit.manufacturingSerial || "-") + "</div></section>" +
-    "<section class='warranty-form-row purchaser'><h2>ご購入者<br>情報</h2><div class='field-label'>購入者／会社名</div><div class='field-value'><strong>" + esc(customerName) + "</strong></div><div class='field-label'>連絡先<br>（電話番号・<br>メール等）</div><div class='field-value'><strong>" + esc(contact) + "</strong></div></section>" +
-    "<section class='warranty-form-row vehicle'><h2>車両情報</h2><div class='field-label'>車名</div><div class='field-value'></div><div class='field-label'>車両型式</div><div class='field-value'></div><div class='field-label'>エンジン型式</div><div class='field-value'></div><div class='field-label'>取付時走行距離</div><div class='field-value distance'><b>km</b></div></section>" +
+    "<section class='warranty-form-row purchaser'><h2>ご購入者<br>情報</h2><div class='field-label'>購入者／会社名</div><div class='field-value'></div><div class='field-label'>連絡先<br>（電話番号・<br>メール等）</div><div class='field-value'></div></section>" +
+    "<section class='warranty-form-row vehicle'><h2>車両情報</h2><div class='field-label'>車名</div><div class='field-value'><strong>" + esc(vehicle.vehicle_name || "") + "</strong></div><div class='field-label'>車両型式</div><div class='field-value'><strong>" + esc(vehicle.vehicle_model_code || "") + "</strong></div><div class='field-label'>エンジン型式</div><div class='field-value'><strong>" + esc(vehicle.engine_model || "") + "</strong></div><div class='field-label'>取付時走行距離</div><div class='field-value distance'><b>km</b></div></section>" +
     "<section class='warranty-dealer'><div class='warranty-dealer-details'><h2>販売店・取付店</h2><p>販売店名／取付店名・住所・電話番号・担当者</p><small>店印がない場合は、納品書・領収書・整備伝票等の購入証明と本書を保管してください。</small></div>" +
       "<h2 class='warranty-stamp-heading'>印鑑欄（任意）</h2><div class='warranty-stamp-box'>販売店印<br>（任意）</div><div class='warranty-stamp-box'>取付店印<br>（任意）</div></section>" +
     "<section class='warranty-terms'><article><h2>保証内容</h2><p>本書に記載された保証期間内に、適合車両へ正しく取り付けられ、通常の使用状態で、材料または製造上の原因による不具合が生じた場合、現品確認後に無償修理または同等品交換を行います。保証対象は本製品本体です。</p></article>" +

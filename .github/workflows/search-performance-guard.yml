@@ -8,6 +8,7 @@ on:
     paths:
       - "index.html"
       - "app.js"
+      - "sales-order-revision.js"
       - "install-app.js"
       - "legacy-i18n.js"
       - "site.webmanifest"
@@ -112,6 +113,8 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check app.js
+          node --check sales-order-revision.js
+          node scripts/verify-sales-order-revision.js
           node --check install-app.js
           node --check assets/concierge-pet/concierge-pet.js
       - name: Verify animated concierge pets

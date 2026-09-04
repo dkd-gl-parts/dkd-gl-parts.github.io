@@ -547,7 +547,8 @@ const warrantyUnitsSource = sourceBetween("function salesOrderWarrantyUnits", "f
 for (const fragment of ["item.serials", "serials[index]", "manufacturingSerial"]) {
   requireFragment(warrantyUnitsSource, fragment, `Warranty serial mapping is missing: ${fragment}`);
 }
-for (const forbidden of ["D-CATS", "STARTER / ALTERNATOR", "保証発行者", "gltek-logo-print-transparent.png"] ) {
+for (const fragment of ["gltek-logo-print-transparent.png", "order.vehicle_information", "vehicle.vehicle_name", "vehicle.vehicle_model_code", "vehicle.engine_model"]) requireFragment(warrantyPageSource, fragment);
+for (const forbidden of ["D-CATS", "STARTER / ALTERNATOR", "保証発行者", "order.customer_name", "order.shipping_address"] ) {
   if (warrantyPageSource.includes(forbidden)) throw new Error(`Warranty certificate must not print: ${forbidden}`);
 }
 
@@ -638,11 +639,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.891"',
-  'styles.css?v=1.1.891',
-  'app.js?v=1.1.891'
+  'content="v1.1.892"',
+  'styles.css?v=1.1.892',
+  'app.js?v=1.1.892'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.891"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.892"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");

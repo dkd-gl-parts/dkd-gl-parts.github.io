@@ -7,6 +7,7 @@ const css = fs.readFileSync("styles.css", "utf8");
 const legacySource = fs.readFileSync("legacy-i18n.js", "utf8");
 const runtimeScriptPaths = [
   "app.js",
+  "sales-order-revision.js",
   "install-app.js",
   "label-print-window.js",
   "manufacturing-ranking-report.js",
