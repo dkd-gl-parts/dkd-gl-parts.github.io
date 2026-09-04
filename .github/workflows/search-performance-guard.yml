@@ -235,6 +235,8 @@ jobs:
         run: node scripts/verify-production-workspace-layout.js
       - name: Verify production component summary
         run: node scripts/verify-production-component-summary.js
+      - name: Verify compatible core stock in production
+        run: node scripts/verify-production-compatible-core-stock.js
       - name: Verify production F/R stamp-pair management
         run: node scripts/verify-production-stamp-pairs.js
       - name: Verify shared image icon consistency

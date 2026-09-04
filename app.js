@@ -18210,6 +18210,7 @@ function renderProductionKikanPartsList(partsList, wrap) {
     wrap.innerHTML = "<div class='production-help'>" + esc(t("kikan_none")) + "</div>";
     return;
   }
+  var showCoreStock = canSeeCoreStockInfo();
   var html = "<table class='kikan-table'>";
   html += "<tr><th>" + esc(t("f_genuine_pn")) + "</th><th>" + esc(t("f_mfr_pn")) + "</th><th>" + esc(t("product_kind_stock")) + "</th><th></th></tr>";
   partsList.forEach(function(p) {
@@ -18217,7 +18218,8 @@ function renderProductionKikanPartsList(partsList, wrap) {
     html += "<tr class='kikan-other' data-production-kikan-dkd='" + esc(dkdId) + "'>";
     html += "<td><div class='kikan-pn'>" + esc(p.genuine_part_number || "-") + "</div></td>";
     html += "<td><div class='kikan-pn'>" + esc(p.manufacturer_part_number || "-") + "</div><div class='kikan-mfr'>" + esc(p.manufacturer || "") + "</div></td>";
-    html += "<td>" + renderKikanStockHtml(p) + "</td>";
+    var coreStockHtml = showCoreStock ? "<div class='kikan-stock-list'><span class='kikan-stock-pill'><span>" + esc(t("core_stock_qty")) + "</span><b>" + esc(typeof p.productionCoreStockQty === "number" ? p.productionCoreStockQty : "-") + "</b></span></div>" : "";
+    html += "<td>" + coreStockHtml + renderKikanStockHtml(p) + "</td>";
     html += "<td class='kikan-action'><button type='button' class='btn-sm-edit kikan-search-btn' data-production-kikan-search='" + esc(dkdId) + "'>" + esc(t("btn_search")) + "</button></td>";
     html += "</tr>";
   });
@@ -18275,8 +18277,19 @@ async function loadProductionKikanForRow(row, seq) {
     if (String(p.dkd_shohin_id) === String(dkdShohinIdNum)) return false;
     return true;
   });
-  await loadKikanVariantSummaryCache(partsList);
+  var compatibleCoreStock = null;
+  await Promise.all([
+    loadKikanVariantSummaryCache(partsList),
+    canSeeCoreStockInfo() ? fetchCoreStockQtyMap(partsList, { throwOnError: true }).then(function(map) {
+      compatibleCoreStock = map;
+    }).catch(function(err) {
+      console.warn("production compatible core stock lookup failed", err);
+    }) : Promise.resolve()
+  ]);
   if (seq !== productionDetailRequestSeq) return;
+  partsList.forEach(function(p) {
+    p.productionCoreStockQty = compatibleCoreStock ? (compatibleCoreStock[productDkdId(p)] || 0) : null;
+  });
   renderProductionKikanPartsList(partsList, wrap);
 }
 
@@ -34498,7 +34511,7 @@ async function fetchMitsubishiComponentUsageCountFallback(products, baseMap) {
   return map;
 }
 
-async function fetchCoreStockQtyMap(products) {
+async function fetchCoreStockQtyMap(products, options) {
   var map = {};
   var ids = (products || []).map(function(p) {
     return productDkdId(p);
@@ -34516,6 +34529,7 @@ async function fetchCoreStockQtyMap(products) {
       .in("dkd_shohin_id", chunk);
     if (r.error) {
       console.warn("core stock count lookup failed", r.error);
+      if (options && options.throwOnError) throw r.error;
       return map;
     }
     (r.data || []).forEach(function(row) {
