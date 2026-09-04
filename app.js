@@ -5743,7 +5743,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.897";
+var APP_VERSION       = "v1.1.898";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -18289,6 +18289,7 @@ async function loadProductionKikanForRow(row, seq) {
   if (seq !== productionDetailRequestSeq) return;
   partsList.forEach(function(p) {
     p.productionCoreStockQty = compatibleCoreStock ? (compatibleCoreStock[productDkdId(p)] || 0) : null;
+    if (compatibleCoreStock) coreStockQtyMap[productDkdId(p)] = p.productionCoreStockQty;
   });
   renderProductionKikanPartsList(partsList, wrap);
 }

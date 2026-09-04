@@ -10,6 +10,7 @@ function section(start, end) {
   return app.slice(from, to);
 }
 const source = [
+  section('function enrichProductionProduct(', 'function sortProductionRows('),
   section('function renderProductionKikanPartsList(', 'function scrollProductionDetailIntoViewOnMobile('),
   section('async function fetchCoreStockQtyMap(', 'async function fetchKikanCompatibleMap(')
 ].join('\n');
@@ -18,7 +19,7 @@ async function run({ failStock = false, allowed = true, stale = false } = {}) {
   let stockReads = 0;
   const context = {
     console: { warn() {} }, document: { getElementById: () => wrap },
-    productionDetailRequestSeq: 1,
+    productionDetailRequestSeq: 1, coreStockQtyMap: {}, componentUsageCountMap: {}, productionInstructionFor: () => null,
     canSeeCoreStockInfo: () => allowed, customerCanShowCompatibleParts: () => true,
     filterVisibleProducts: p => p, loadKikanVariantSummaryCache: async () => ({}),
     productDkdId: p => String(p.dkd_shohin_id), esc: v => String(v), t: k => k,
@@ -41,19 +42,23 @@ async function run({ failStock = false, allowed = true, stale = false } = {}) {
   };
   vm.createContext(context); vm.runInContext(source, context);
   await context.loadProductionKikanForRow({ dkd_shohin_id: 1, category_code: 'alternator' }, 1);
-  return { html: wrap.innerHTML, stockReads };
+  return { html: wrap.innerHTML, stockReads, cachedCore: context.coreStockQtyMap, detailCore: context.enrichProductionProduct({ dkd_shohin_id: 2 }).core_stock_qty };
 }
 (async () => {
   const success = await run();
   assert(success.html.includes('37300-3C510'));
   assert(success.html.includes('<b>23</b>'));
   assert(success.html.includes('<b>0</b>'));
+  assert.equal(success.detailCore, 23, 'opening the compatible product must keep its actual core stock');
+  assert.equal(success.cachedCore['3'], 0);
   const failed = await run({ failStock: true });
   assert(failed.html.includes('<b>-</b>'));
   assert(!failed.html.includes('<b>0</b>'));
   const denied = await run({ allowed: false });
   assert.equal(denied.stockReads, 0);
   assert(!denied.html.includes('core_stock_qty'));
-  assert.equal((await run({ stale: true })).html, '');
+  const staleResult = await run({ stale: true });
+  assert.equal(staleResult.html, '');
+  assert.equal(Object.keys(staleResult.cachedCore).length, 0);
   console.log('Production compatible core stock: sums receipts once; distinguishes failure from zero; respects permissions and stale searches.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

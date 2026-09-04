@@ -6,4 +6,6 @@ The read uses existing stock.view presentation permission and database RLS. A fa
 
 Validation: all 74 commands in search-performance-guard.yml passed, including stock receipt aggregation (10 + 13 = 23), unknown vs zero, denied access, and stale search regression checks. The actual renderer with the existing stylesheet was inspected in Chrome at desktop and 390 × 844 mobile widths; core 23 and other stock values remain visible without overflow. No stock mutations were made through the browser. Build and security response header checks passed.
 
-Release: v1.1.897. Previous production commit fe32a76e39e312ab37832ad3d26ac39b43c2e514. A future frontend reversal requires a new versioned release; reverting the renderer does not remove stock or compatibility data. The separate private database import has its own guarded recovery procedure.
+Release: v1.1.898. The live 3C520 lookup exposed a second existing issue: opening 3C510 used an unpopulated core cache and displayed 0. The verified compatibility quantity is now also stored in the existing product core cache, so the subsequent detail uses 23. The regression check covers both the compatibility list and detail enrichment; stale responses cannot update the cache. All 74 checks passed again.
+
+Previous production commit fe32a76e39e312ab37832ad3d26ac39b43c2e514. A future frontend reversal requires a new versioned release; reverting the renderer does not remove stock or compatibility data. The separate private database import has its own guarded recovery procedure.
