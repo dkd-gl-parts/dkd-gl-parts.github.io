@@ -248,7 +248,7 @@ var TRANSLATIONS = {
     customer_order_continue: "商品を追加",
     customer_order_shipping: "お届け先",
     customer_order_shipping_note: "送り状に印字する内容です。",
-    customer_order_vehicle_title: "車両情報（任意）",
+    customer_order_vehicle_title: "車両情報",
     customer_order_vehicle_note: "取り付け車両が分かる場合に入力してください。",
     customer_order_vehicle_name: "車名",
     customer_order_vehicle_model_code: "車両型式",
@@ -2121,7 +2121,7 @@ var TRANSLATIONS = {
     customer_order_continue: "Add Products",
     customer_order_shipping: "Ship To",
     customer_order_shipping_note: "This information will be printed on the shipping label.",
-    customer_order_vehicle_title: "Vehicle Information (Optional)",
+    customer_order_vehicle_title: "Vehicle Information",
     customer_order_vehicle_note: "Enter details when the installation vehicle is known.",
     customer_order_vehicle_name: "Vehicle Name",
     customer_order_vehicle_model_code: "Model Code",
@@ -3939,7 +3939,7 @@ var TRANSLATIONS = {
     customer_order_continue: "添加商品",
     customer_order_shipping: "送货地址",
     customer_order_shipping_note: "此内容将打印在运单上。",
-    customer_order_vehicle_title: "车辆信息（选填）",
+    customer_order_vehicle_title: "车辆信息",
     customer_order_vehicle_note: "已知安装车辆时请输入。",
     customer_order_vehicle_name: "车名",
     customer_order_vehicle_model_code: "车辆型号",
@@ -5743,7 +5743,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.894";
+var APP_VERSION       = "v1.1.895";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;

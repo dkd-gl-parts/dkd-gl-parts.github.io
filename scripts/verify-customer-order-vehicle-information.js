@@ -23,6 +23,8 @@ function sourceBetween(startText, endText) {
   "customer-order-classification"
 ].forEach((id) => {
   if (!html.includes(`id="${id}"`)) throw new Error(`vehicle input is missing: ${id}`);
+  const input = html.match(new RegExp(`<input\\b[^>]*id="${id}"[^>]*>`));
+  if (!input || /\brequired\b/.test(input[0])) throw new Error(`vehicle input must remain optional: ${id}`);
 });
 
 [
@@ -76,6 +78,12 @@ if (!internalDetail.includes('customerOrderVehicleInformationHtml(order.vehicle_
 if ((source.match(/customer_order_vehicle_title:/g) || []).length !== 3) {
   throw new Error("vehicle labels must be defined in Japanese, English, and Chinese");
 }
+for (const title of ["車両情報", "Vehicle Information", "车辆信息"]) {
+  if (!source.includes(`customer_order_vehicle_title: "${title}"`)) throw new Error(`vehicle heading must omit optional suffix: ${title}`);
+}
+if (!html.includes('data-i18n="customer_order_vehicle_title">車両情報</h3>')) {
+  throw new Error("entry vehicle heading must omit optional suffix");
+}
 [
   ".customer-order-vehicle-section",
   ".customer-order-vehicle-grid",
@@ -87,8 +95,8 @@ if ((source.match(/customer_order_vehicle_title:/g) || []).length !== 3) {
   if (!css.includes(fragment)) throw new Error(`responsive vehicle layout is missing: ${fragment}`);
 });
 
-if (!html.includes('content="v1.1.894"') || !source.includes('var APP_VERSION       = "v1.1.894"')) {
-  throw new Error("vehicle information release version must be v1.1.894");
+if (!html.includes('content="v1.1.895"') || !source.includes('var APP_VERSION       = "v1.1.895"')) {
+  throw new Error("vehicle information release version must be v1.1.895");
 }
 
 console.log("Customer order vehicle information UI verified.");
