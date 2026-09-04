@@ -615,6 +615,14 @@ for (const fragment of [
   'grid-template-areas: "name state" "standard standard" "actions actions";'
 ]) requireFragment(css, fragment, `Shipping-document readability contract is missing: ${fragment}`);
 for (const fragment of [
+  '@media screen and (min-width: 1121px)',
+  'grid-template-areas: "label number customer" "target target target";',
+  '#screen-shipping-document-mgmt #shipping-document-message:empty { display: none; }',
+  '#screen-shipping-document-mgmt .shipping-document-order-items { max-height: 100px; overflow-y: auto; }',
+  '#screen-shipping-document-mgmt .shipping-document-required-row { min-height: 56px; padding: 6px 8px; }',
+  'minmax(248px, 1.4fr);'
+]) requireFragment(css, fragment, `Shipping-document compact desktop contract is missing: ${fragment}`);
+for (const fragment of [
   ".shipping-document-name-cell { display: grid;",
   "flex: 0 0 132px;",
   "width: 132px;",
@@ -651,11 +659,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.896"',
-  'styles.css?v=1.1.896',
-  'app.js?v=1.1.896'
+  'content="v1.1.897"',
+  'styles.css?v=1.1.897',
+  'app.js?v=1.1.897'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.896"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.897"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
