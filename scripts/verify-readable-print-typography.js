@@ -15,6 +15,7 @@ for (const selector of ['.warranty-identification .label', '.warranty-form-row .
   assert.ok(rule.includes('white-space: nowrap'), `${selector} must not break mid-label`);
 }
 assert.ok(!documents.includes('text-overflow: ellipsis'), 'Customer names must not be silently truncated');
+assert.ok(app.includes("<h2><span>STEP 1</span>交換したコアを準備</h2><p>分解せずにそのまま袋に入れる</p>"), 'Core preparation must use the approved bagging instruction');
 const start = app.indexOf("<section class='warranty-terms'>");
 const end = app.indexOf("<div class='warranty-bottom-rules'>", start);
 assert.ok(start > 0 && end > start, 'Warranty terms are missing');
