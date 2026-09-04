@@ -603,6 +603,18 @@ for (const fragment of [
   ".shipping-document-required-documents .shipping-document-section-head p { display: none; }"
 ]) requireFragment(css, fragment, `Desktop shipping-document workspace contract is missing: ${fragment}`);
 for (const fragment of [
+  '@media screen {',
+  '#screen-shipping-document-mgmt { font-size: 14px; line-height: 1.5; }',
+  '#screen-shipping-document-mgmt .shipping-document-filter-row :is(input, select, button) { height: 40px; font-size: 14px; }',
+  '#screen-shipping-document-mgmt .shipping-document-date-filter > span { font-size: 12px; }',
+  '#screen-shipping-document-mgmt .shipping-document-name-cell > strong { font-size: 15px; word-break: keep-all; overflow-wrap: anywhere; }',
+  '#screen-shipping-document-mgmt .shipping-document-standard { font-size: 14px; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; }',
+  '#screen-shipping-document-mgmt .shipping-document-row-actions { flex-wrap: wrap; gap: 8px; }',
+  '@media screen and (max-width: 1120px)',
+  '@media screen and (max-width: 820px)',
+  'grid-template-areas: "name state" "standard standard" "actions actions";'
+]) requireFragment(css, fragment, `Shipping-document readability contract is missing: ${fragment}`);
+for (const fragment of [
   ".shipping-document-name-cell { display: grid;",
   "flex: 0 0 132px;",
   "width: 132px;",
@@ -639,11 +651,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.895"',
-  'styles.css?v=1.1.895',
-  'app.js?v=1.1.895'
+  'content="v1.1.896"',
+  'styles.css?v=1.1.896',
+  'app.js?v=1.1.896'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.895"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.896"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");

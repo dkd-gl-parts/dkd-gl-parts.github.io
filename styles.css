@@ -8900,3 +8900,128 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   .sales-order-revision-dialog footer { flex-wrap: wrap; justify-content: flex-end; }
   #sales-order-revision-message { flex: 1 0 100%; }
 }
+
+/* Readable screen typography; printed documents use separate templates. */
+@media screen {
+  #screen-shipping-document-mgmt { font-size: 14px; line-height: 1.5; }
+  #screen-shipping-document-mgmt .shipping-document-mgmt-body :where(div, span, strong, small, p, em, label, a, button, input, select) { font-size: inherit; }
+  #screen-shipping-document-mgmt .page-header-left { flex-wrap: wrap; }
+  #screen-shipping-document-mgmt .page-header :is(button, .header-username, .role-badge, .app-version) { font-size: 12px; }
+  #screen-shipping-document-mgmt .page-header .logo-text { font-size: 18px; }
+  #screen-shipping-document-mgmt .shipping-document-toolbar { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: 14px 16px; }
+  #screen-shipping-document-mgmt .shipping-document-title-block { display: grid; flex: none; min-width: 0; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "kicker actions" "title actions" "copy actions"; column-gap: 24px; }
+  #screen-shipping-document-mgmt .sales-order-kicker { grid-area: kicker; font-size: 12px; letter-spacing: 0; }
+  #screen-shipping-document-mgmt .shipping-document-title-block h1 { grid-area: title; font-size: 24px; line-height: 1.3; margin-top: 0; }
+  #screen-shipping-document-mgmt .shipping-document-title-block p { grid-area: copy; max-width: 680px; font-size: 12px; line-height: 1.5; margin-top: 3px; }
+  #screen-shipping-document-mgmt .shipping-document-title-actions { grid-area: actions; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; margin: 0; }
+  #screen-shipping-document-mgmt .shipping-document-title-actions :is(a, button) { width: auto; min-height: 40px; padding: 8px 12px; font-size: 14px; white-space: nowrap; }
+  #screen-shipping-document-mgmt .shipping-document-lookup { flex: none; width: 100%; }
+  #screen-shipping-document-mgmt .shipping-document-filter-row { grid-template-columns: minmax(310px, 1fr) 150px 190px 160px 160px auto; gap: 8px; }
+  #screen-shipping-document-mgmt .shipping-document-filter-row :is(input, select, button) { height: 40px; font-size: 14px; }
+  #screen-shipping-document-mgmt .shipping-document-date-filter > span { font-size: 12px; }
+  #screen-shipping-document-mgmt .shipping-document-date-filter input { width: 100%; }
+  #screen-shipping-document-mgmt .shipping-document-lookup-message { min-height: 18px; margin-top: 4px; font-size: 12px; line-height: 1.5; }
+  #screen-shipping-document-mgmt .shipping-document-workspace { grid-template-columns: 340px minmax(0, 1fr); }
+  #screen-shipping-document-mgmt .shipping-document-list-head { min-height: 46px; height: auto; padding: 10px 12px; gap: 8px; flex-wrap: wrap; }
+  #screen-shipping-document-mgmt .shipping-document-list-head > span { font-size: 12px; }
+  #screen-shipping-document-mgmt .shipping-document-list-row { grid-template-columns: 20px minmax(0, 1fr) auto; grid-template-areas: "check main state" "check meta meta"; gap: 8px; padding: 12px; min-height: 112px; }
+  #screen-shipping-document-mgmt .shipping-document-row-check { grid-area: check; }
+  #screen-shipping-document-mgmt .shipping-document-row-check input { width: 18px; height: 18px; }
+  #screen-shipping-document-mgmt .shipping-document-list-main { grid-area: main; }
+  #screen-shipping-document-mgmt .shipping-document-list-main strong { font-size: 16px; }
+  #screen-shipping-document-mgmt .shipping-document-list-main small { white-space: normal; overflow: visible; font-size: 12px; line-height: 1.5; }
+  #screen-shipping-document-mgmt .shipping-document-list-progress { font-size: 12px; overflow: visible; white-space: normal; overflow-wrap: anywhere; }
+  #screen-shipping-document-mgmt .shipping-document-order-id-label { font-size: 12px; line-height: 1.4; }
+  #screen-shipping-document-mgmt .shipping-document-list-meta { grid-area: meta; display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; text-align: left; }
+  #screen-shipping-document-mgmt .shipping-document-list-meta strong { font-size: 14px; }
+  #screen-shipping-document-mgmt .shipping-document-list-meta small { font-size: 12px; margin: 0; }
+  #screen-shipping-document-mgmt .shipping-document-list-row .sales-order-status { grid-area: state; font-size: 12px; justify-self: end; }
+  #screen-shipping-document-mgmt .shipping-document-batch-panel { padding: 12px; }
+  #screen-shipping-document-mgmt .shipping-document-batch-default-note,
+  #screen-shipping-document-mgmt .shipping-document-batch-panel > p { font-size: 12px; line-height: 1.5; }
+  #screen-shipping-document-mgmt .shipping-document-batch-types { gap: 8px; margin: 10px 0; }
+  #screen-shipping-document-mgmt .shipping-document-batch-types label { font-size: 13px; line-height: 1.5; white-space: nowrap; }
+  #screen-shipping-document-mgmt .shipping-document-batch-types input { width: 16px; height: 16px; }
+  #screen-shipping-document-mgmt .shipping-document-batch-panel > button { min-height: 40px; font-size: 14px; }
+  #screen-shipping-document-mgmt .shipping-document-detail-pane { padding: 16px 18px 24px; }
+  #screen-shipping-document-mgmt .shipping-document-detail-head { align-items: center; gap: 12px; padding-bottom: 12px; }
+  #screen-shipping-document-mgmt .shipping-document-detail-head > div { min-width: 0; }
+  #screen-shipping-document-mgmt .shipping-document-detail-head > div:last-child { flex-wrap: wrap; justify-content: flex-end; }
+  #screen-shipping-document-mgmt .shipping-document-detail-head h2 { font-size: 24px; line-height: 1.3; }
+  #screen-shipping-document-mgmt .shipping-document-detail-head strong { font-size: 16px; overflow-wrap: anywhere; }
+  #screen-shipping-document-mgmt .shipping-document-detail-target,
+  #screen-shipping-document-mgmt .shipping-document-detail-head .sales-order-status { font-size: 12px; }
+  #screen-shipping-document-mgmt .shipping-document-detail-head button { min-height: 36px; font-size: 14px; padding: 6px 10px; }
+  #screen-shipping-document-mgmt .sales-order-detail-message { min-height: 20px; margin: 6px 0; font-size: 12px; }
+  #screen-shipping-document-mgmt .shipping-document-stages > div { padding: 10px; }
+  #screen-shipping-document-mgmt .shipping-document-stages span { font-size: 12px; }
+  #screen-shipping-document-mgmt .shipping-document-stages strong { font-size: 14px; line-height: 1.5; margin-top: 3px; }
+  #screen-shipping-document-mgmt .shipping-document-order-contents { padding: 12px 0; }
+  #screen-shipping-document-mgmt :is(.shipping-document-order-contents-head, .shipping-document-section-head) h3 { font-size: 16px; }
+  #screen-shipping-document-mgmt .shipping-document-order-contents-head > span { font-size: 12px; }
+  #screen-shipping-document-mgmt .shipping-document-order-item { grid-template-columns: minmax(170px, 1fr) minmax(100px, .45fr) 76px 138px; min-height: 62px; padding: 8px; gap: 12px; }
+  #screen-shipping-document-mgmt .shipping-document-order-item > div strong { font-size: 15px; }
+  #screen-shipping-document-mgmt .shipping-document-order-item > div span { font-size: 12px; }
+  #screen-shipping-document-mgmt .shipping-document-order-core { font-size: 12px; }
+  #screen-shipping-document-mgmt .shipping-document-section { margin-top: 16px; padding-top: 12px; }
+  #screen-shipping-document-mgmt .shipping-document-section-head { gap: 12px; margin-bottom: 10px; }
+  #screen-shipping-document-mgmt .shipping-document-ready-state { font-size: 12px; }
+  #screen-shipping-document-mgmt .shipping-document-guidance { padding: 8px 10px; font-size: 12px; line-height: 1.6; }
+  #screen-shipping-document-mgmt :is(.shipping-document-required-head, .shipping-document-required-row) { grid-template-columns: minmax(160px, .9fr) minmax(175px, 1.15fr) minmax(165px, 1fr) minmax(180px, 1.15fr); gap: 12px; }
+  #screen-shipping-document-mgmt .shipping-document-required-head { min-height: 40px; padding: 8px; font-size: 12px; }
+  #screen-shipping-document-mgmt .shipping-document-required-row { min-height: 78px; padding: 12px 8px; }
+  #screen-shipping-document-mgmt .shipping-document-name-cell { gap: 6px; }
+  #screen-shipping-document-mgmt .shipping-document-name-cell > strong { font-size: 15px; word-break: keep-all; overflow-wrap: anywhere; }
+  #screen-shipping-document-mgmt .shipping-document-standard { font-size: 14px; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; }
+  #screen-shipping-document-mgmt .shipping-document-standard small { font-size: 12px; }
+  #screen-shipping-document-mgmt .shipping-document-required-row em { max-width: 100%; min-width: 0; font-size: 12px; line-height: 1.6; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
+  #screen-shipping-document-mgmt .shipping-document-row-actions { flex-wrap: wrap; gap: 8px; }
+  #screen-shipping-document-mgmt .shipping-document-required-row button { min-height: 36px; padding: 7px 10px; font-size: 14px; line-height: 1.4; }
+  #screen-shipping-document-mgmt .shipping-carrier-brand.compact { width: 130px; height: 34px; flex-basis: 130px; }
+  #screen-shipping-document-mgmt .shipping-carrier-brand.compact .shipping-carrier-logo { width: 34px; height: 24px; flex-basis: 34px; }
+  #screen-shipping-document-mgmt .shipping-carrier-brand-copy strong { font-size: 12px; white-space: nowrap; }
+  #screen-shipping-document-mgmt .shipping-document-defaults { max-width: none; }
+  #screen-shipping-document-mgmt .shipping-document-defaults-head h2 { font-size: 24px; }
+  #screen-shipping-document-mgmt .shipping-document-defaults-head :is(span, p) { font-size: 12px; }
+  #screen-shipping-document-mgmt :is(.shipping-document-default-head, .shipping-document-default-row) { grid-template-columns: minmax(160px, .8fr) minmax(210px, 1.25fr) minmax(190px, 1fr); gap: 14px; padding: 12px 8px; }
+  #screen-shipping-document-mgmt .shipping-document-default-head,
+  #screen-shipping-document-mgmt .shipping-document-default-row small { font-size: 12px; }
+}
+@media screen and (max-width: 1199px) {
+  #screen-shipping-document-mgmt .shipping-document-filter-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  #screen-shipping-document-mgmt .shipping-document-filter-row > input { grid-column: 1 / 3; }
+  #screen-shipping-document-mgmt .shipping-document-filter-row > button { grid-column: 3 / 5; }
+}
+@media screen and (max-width: 1120px) {
+  #screen-shipping-document-mgmt.active { height: auto; min-height: 100dvh; overflow: visible; }
+  #screen-shipping-document-mgmt .shipping-document-mgmt-body { overflow: visible; }
+  #screen-shipping-document-mgmt .shipping-document-workspace { grid-template-columns: minmax(0, 1fr); overflow: visible; }
+  #screen-shipping-document-mgmt .shipping-document-list { max-height: 330px; }
+  #screen-shipping-document-mgmt .shipping-document-list-pane { border-right: 0; border-bottom: 6px solid #e4e8ec; }
+  #screen-shipping-document-mgmt .shipping-document-detail-pane { overflow: visible; }
+  #screen-shipping-document-mgmt .shipping-document-title-block { grid-template-columns: minmax(0, 1fr); grid-template-areas: "kicker" "title" "copy" "actions"; }
+  #screen-shipping-document-mgmt .shipping-document-title-actions { margin-top: 12px; justify-content: flex-start; }
+}
+@media screen and (max-width: 820px) {
+  #screen-shipping-document-mgmt .shipping-document-toolbar { padding: 14px 12px; }
+  #screen-shipping-document-mgmt .shipping-document-filter-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #screen-shipping-document-mgmt .shipping-document-filter-row > input,
+  #screen-shipping-document-mgmt .shipping-document-filter-row > button { grid-column: 1 / -1; }
+  #screen-shipping-document-mgmt .shipping-document-title-actions :is(a, button) { flex: 1 0 auto; }
+  #screen-shipping-document-mgmt .shipping-document-detail-pane { padding: 16px 12px 24px; }
+  #screen-shipping-document-mgmt .shipping-document-detail-head { align-items: stretch; flex-direction: column; }
+  #screen-shipping-document-mgmt .shipping-document-detail-head > div:last-child { flex-direction: row; align-items: center; justify-content: flex-start; }
+  #screen-shipping-document-mgmt .shipping-document-detail-head button { width: auto; flex: 1; }
+  #screen-shipping-document-mgmt .shipping-document-order-item { grid-template-columns: minmax(0, 1fr) auto; }
+  #screen-shipping-document-mgmt .shipping-document-order-quantity { grid-column: 1; }
+  #screen-shipping-document-mgmt .shipping-document-order-core { grid-column: 2; justify-self: end; }
+  #screen-shipping-document-mgmt .shipping-document-required-head { display: none; }
+  #screen-shipping-document-mgmt .shipping-document-required-row { grid-template-columns: minmax(0, 1fr) minmax(140px, 1fr); grid-template-areas: "name state" "standard standard" "actions actions"; gap: 10px 12px; padding: 14px 0; }
+  #screen-shipping-document-mgmt .shipping-document-required-row .shipping-document-name-cell { grid-area: name; }
+  #screen-shipping-document-mgmt .shipping-document-required-row .shipping-document-standard { grid-area: standard; }
+  #screen-shipping-document-mgmt .shipping-document-required-row > em { grid-area: state; justify-self: end; }
+  #screen-shipping-document-mgmt .shipping-document-required-row .shipping-document-row-actions { grid-area: actions; }
+  #screen-shipping-document-mgmt .shipping-document-row-actions button { flex: 1 0 auto; }
+  #screen-shipping-document-mgmt .shipping-document-default-head { display: none; }
+  #screen-shipping-document-mgmt .shipping-document-default-row { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+}
