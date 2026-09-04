@@ -10,7 +10,11 @@ for(const status of ['shipped','completed','cancelled']) assert(!context.salesOr
 assert(!context.salesOrderCanRevise({status:'accepted',completed_at:'2026-09-01'}));
 context.canManageSalesOrders=()=>false;
 assert(!context.salesOrderCanRevise({status:'accepted'}));
-for(const text of ['target_expected_version:state.order.version','target_order_id:state.order.id','salesOrderRevisionSaving','revise_sales_order','data-revision-quantity','data-revision-price','vehicle_name','vehicle_model_code','first_registration_month','chassis_number','engine_model','model_designation_number','classification_number','sales_customer_id','shipping_address','outbound_shipping_method','core_return_shipping_method','requested_delivery_date','delivery_time_code','customer_note','adjustments','shipping_fee_jpy','sales-order-revision-confirm','state !== salesOrderRevision']) assert(source.includes(text),text);
+for(const text of ['target_expected_version:state.order.version','target_order_id:state.order.id','salesOrderRevisionSaving','revise_sales_order','data-revision-quantity','data-revision-price','vehicle_name','vehicle_model_code','first_registration_month','chassis_number','engine_model','model_designation_number','classification_number','sales_customer_id','shipping_address','outbound_shipping_method','core_return_shipping_method','requested_delivery_date','delivery_time_code','customer_note','adjustments','shipping_fee_jpy','state !== salesOrderRevision']) assert(source.includes(text),text);
+assert(!source.includes('sales-order-revision-confirm'));
+assert(!source.includes('sales-order-revision-review'));
+assert(!source.includes('salesOrderRevisionValue("reason")'));
+assert(source.includes('target_reason:"受注修正画面から変更"'));
 assert(app.includes('salesOrderRevisionHistoryHtml(order.revision_history)'));
 assert(app.includes('revisionButton.addEventListener("click", openSalesOrderRevisionEditor)'));
 assert(app.includes("id='sales-order-revision-open'>受注修正</button>"));

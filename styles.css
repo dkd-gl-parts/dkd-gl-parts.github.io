@@ -8873,8 +8873,6 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .sales-order-revision-search { display: grid; grid-template-columns: minmax(110px,.9fr) minmax(100px,1.2fr) minmax(105px,.8fr) auto; gap: 8px; align-items: end; margin-bottom: 10px; }
 #sales-order-revision-results { max-height: 160px; overflow: auto; font-size: 13px; }
 #sales-order-revision-results > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid #e0e6e9; }
-.sales-order-revision-dialog .sales-order-revision-confirm { flex-direction: row; align-items: flex-start; gap: 8px; margin-top: 12px; line-height: 1.5; }
-.sales-order-revision-confirm input { margin-top: 4px; flex: 0 0 auto; }
 .sales-order-revision-dialog footer { border-top: 1px solid #ccd5dc; }
 #sales-order-revision-message { flex: 1; min-width: 0; font-size: 13px; overflow-wrap: anywhere; }
 #sales-order-revision-message.error { color: #b3261e; }

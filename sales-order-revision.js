@@ -233,7 +233,7 @@ async function openSalesOrderRevisionEditor() {
       "<section><h3>" + esc(t("customer_order_vehicle_title")) + "</h3>" + salesOrderRevisionEntryFields(".customer-order-vehicle-grid", values) + "</section></div>" +
       "<section class='sales-order-revision-delivery-pane'><div class='sales-order-section-heading'><h3>お届け先</h3><button type='button' id='sales-order-revision-new-address'>" + esc(t("customer_order_address_new")) + "</button></div>" +
       salesOrderRevisionEntryFields(".customer-order-shipping-pane > .customer-order-form-grid", values) + "</section></div>" +
-      "<section class='sales-order-revision-review'><h3>変更の確認</h3>" + salesOrderRevisionField("reason", "変更理由", "", "text", 240) + "<label class='sales-order-revision-confirm'><input type='checkbox' id='sales-order-revision-confirm'>変更内容を確認しました。変更前の帳票は使わず、必要な帳票・送り状を再発行します。</label></section></div>" +
+      "</div>" +
       "<footer><div id='sales-order-revision-message' role='status' aria-live='polite'></div><button type='button' data-revision-close>取消</button><button type='submit' id='sales-order-revision-save'>変更を保存</button></footer></form>";
     overlay.querySelectorAll("[data-revision-close]").forEach(function(button) { button.addEventListener("click", closeSalesOrderRevisionEditor); });
     Object.keys(SALES_ORDER_REVISION_ENTRY_FIELDS).forEach(function(sourceId) {
@@ -368,14 +368,11 @@ async function saveSalesOrderRevision(event) {
   var responseTimer;
   try {
     var revision = readSalesOrderRevision();
-    var reason = salesOrderRevisionValue("reason");
-    if (reason.length < 2) throw new Error("変更理由を2文字以上で入力してください。");
-    if (!document.getElementById("sales-order-revision-confirm").checked) throw new Error("変更内容と帳票の再発行を確認してください。");
     salesOrderRevisionSaving = true;
     form.querySelectorAll("input,select,textarea,button").forEach(function(element) { element.disabled = true; });
     salesOrderRevisionMessage("受注内容・在庫・金額を確認して保存しています。", false);
     var result = await Promise.race([
-      sb.rpc("revise_sales_order", {target_order_id:state.order.id,target_revision:revision,target_reason:reason,target_expected_version:state.order.version}),
+      sb.rpc("revise_sales_order", {target_order_id:state.order.id,target_revision:revision,target_reason:"受注修正画面から変更",target_expected_version:state.order.version}),
       new Promise(function(resolve, reject) { responseTimer = window.setTimeout(function() { reject(new Error("保存結果を確認できません。最新の受注内容を確認してください。")); }, 45000); })
     ]);
     if (result.error) throw result.error;
