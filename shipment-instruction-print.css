@@ -70,52 +70,55 @@ body { margin: 0; color: #162131; background: #eef1f4; font-family: "Yu Gothic",
 .core-return-sheet:last-child { break-after: auto; page-break-after: auto; }
 .core-return-header { position: relative; display: grid; place-items: center; height: 10.5mm; border-top: 0.45mm solid #000; border-bottom: 0.45mm solid #000; }
 .core-return-header img { position: absolute; left: 1mm; width: 24mm; height: 8mm; object-fit: contain; object-position: left center; }
-.core-return-header h1 { margin: 0; font-size: 16pt; line-height: 1; letter-spacing: 0; text-align: center; }
-.core-return-lead { height: 8.5mm; margin: 0; display: grid; place-items: center; font-size: 7.5pt; line-height: 1.35; text-align: center; }
+.core-return-header h1 { margin: 0; font-size: 16pt; line-height: 1.35; letter-spacing: 0; text-align: center; }
+.core-return-lead { height: 8.5mm; margin: 0; display: grid; place-items: center; font-size: 8.5pt; line-height: 1.35; text-align: center; }
 .core-return-due { display: grid; grid-template-columns: 34mm 1fr; height: 18mm; border: 0.45mm solid #000; }
 .core-return-due h2 { display: grid; place-items: center; margin: 0; border-right: 0.45mm solid #000; font-size: 10pt; }
 .core-return-due div { display: grid; place-items: center; align-content: center; gap: 1.4mm; }
-.core-return-due strong { font-size: 17pt; line-height: 1; letter-spacing: 0; }
-.core-return-due span { font-size: 6.8pt; font-weight: 800; line-height: 1; }
-.core-return-steps { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; height: 15.5mm; margin-top: 2.8mm; }
-.core-return-steps section { padding: 3mm 3mm 2.4mm; border: 0.35mm solid #000; border-radius: 1.2mm; }
-.core-return-steps h2 { margin: 0; font-size: 8.2pt; line-height: 1; }
-.core-return-steps h2 span { display: inline-block; min-width: 15.5mm; font-size: 7.4pt; }
-.core-return-steps p { margin: 2.3mm 0 0; font-size: 6.8pt; line-height: 1.2; }
+.core-return-due strong { font-size: 17pt; line-height: 1.35; letter-spacing: 0; }
+.core-return-due span { font-size: 8pt; font-weight: 800; line-height: 1.2; }
+.core-return-steps { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; height: 19mm; margin-top: 2.5mm; }
+.core-return-steps section { padding: 2.5mm 3mm 2mm; border: 0.35mm solid #000; border-radius: 1.2mm; }
+.core-return-steps h2 { margin: 0; font-size: 9pt; line-height: 1.2; white-space: nowrap; }
+.core-return-steps h2 span { display: inline-block; min-width: 15.5mm; font-size: 8pt; }
+.core-return-steps p { margin: 1.8mm 0 0; font-size: 8.5pt; line-height: 1.35; line-break: strict; }
 .core-return-warning { height: 7mm; margin: 2.5mm 0 0; display: flex; align-items: center; justify-content: center; border: 0.45mm solid #000; outline: 0.2mm solid #000; outline-offset: -1.2mm; font-size: 8.5pt; font-weight: 800; white-space: nowrap; }
 .core-return-warning span { margin-right: 1.2mm; }
 .core-return-target { margin-top: 2.5mm; border: 0.45mm solid #000; }
-.core-return-target > h2 { height: 6.5mm; margin: 0; display: flex; align-items: center; padding: 0 2mm; border-bottom: 0.3mm solid #000; font-size: 7.6pt; }
+.core-return-target > h2 { height: 6.5mm; margin: 0; display: flex; align-items: center; padding: 0 2mm; border-bottom: 0.3mm solid #000; font-size: 8.5pt; }
 .core-return-target > h2 span { margin-left: 4mm; }
 .core-return-code { display: grid; grid-template-columns: 1fr 1fr; height: 13mm; border-bottom: 0.3mm solid #000; }
 .core-return-code > div { display: grid; align-content: center; gap: 1.5mm; padding: 1.5mm 2mm; border-right: 0.3mm solid #000; }
-.core-return-code span { font-size: 6.4pt; font-weight: 800; line-height: 1; }
-.core-return-code strong { font-family: Arial, "Yu Gothic", "Meiryo", sans-serif; font-size: 9pt; letter-spacing: 0; }
+.core-return-code span { font-size: 8pt; font-weight: 800; line-height: 1.2; }
+.core-return-code strong { font-family: Arial, "Yu Gothic", "Meiryo", sans-serif; font-size: 10pt; letter-spacing: 0; white-space: nowrap; }
 .core-return-code img { align-self: center; justify-self: center; width: 53mm; height: 9mm; object-fit: fill; image-rendering: crisp-edges; }
 .core-return-product { margin: 0; }
-.core-return-product > div { display: grid; grid-template-columns: 29mm 1fr; min-height: 10mm; }
+.core-return-product > div { display: grid; grid-template-columns: 37mm 1fr; min-height: 10mm; }
 .core-return-product > div:not(:last-child) { border-bottom: 0.3mm solid #000; }
 .core-return-product .core-return-product-split { grid-template-columns: 20mm 1fr 22mm 1fr; }
 .core-return-product dt, .core-return-product dd { display: flex; align-items: center; margin: 0; padding: 1.2mm 2mm; line-height: 1.2; }
-.core-return-product dt { font-size: 6.8pt; font-weight: 800; }
-.core-return-product dd { font-size: 9pt; font-weight: 800; overflow-wrap: anywhere; }
+.core-return-product dt { font-size: 8pt; font-weight: 800; white-space: nowrap; }
+.core-return-product dd { min-width: 0; font-size: 10pt; font-weight: 800; line-break: strict; }
+.core-return-product-split dd { white-space: nowrap; }
+.core-return-part-numbers { flex-wrap: wrap; gap: 1mm 4mm; }
+.core-return-part-numbers span { white-space: nowrap; }
 .core-return-product-split dt:nth-of-type(2) { border-left: 0.3mm solid #000; }
 .core-return-bottom-note { height: 8.5mm; margin: 2.5mm 0 0; display: grid; place-items: center; border: 0.45mm solid #000; font-size: 9.5pt; font-weight: 800; }
 
 .document-warranty { color: #000; background: #e8ebee; font-family: "Yu Gothic", "Meiryo", sans-serif; }
 .warranty-print-sheet { page: dcats-warranty-a4; width: 297mm; height: 210mm; margin: 16px auto; display: grid; place-items: center; overflow: hidden; background: #fff; break-after: page; page-break-after: always; }
 .warranty-print-sheet:last-child { break-after: auto; page-break-after: auto; }
-.warranty-certificate { position: relative; width: 210mm; height: 148mm; padding: 3.5mm 4mm 1mm; overflow: hidden; background: #fff; color: #000; }
+.warranty-certificate { position: relative; width: 210mm; height: 148mm; padding: 3mm 4mm 2mm; overflow: hidden; background: #fff; color: #000; font-size: 8pt; line-break: strict; }
 .warranty-top-rules, .warranty-bottom-rules { display: grid; gap: 0.8mm; }
 .warranty-top-rules i, .warranty-bottom-rules i { display: block; height: 0; border-top: 0.45mm solid #000; }
 .warranty-top-rules i:last-child, .warranty-bottom-rules i:first-child { border-top-width: 0.2mm; }
-.warranty-header { display: grid; place-items: center; height: 16mm; border-bottom: 0.35mm solid #000; }
-.warranty-header h1 { max-width: 100%; margin: 0; padding-left: 2.4mm; overflow: hidden; font-size: 17pt; line-height: 1; letter-spacing: 2.4mm; text-align: center; white-space: nowrap; }
-.warranty-lead { height: 6.5mm; margin: 0; display: grid; place-items: center; overflow: hidden; font-size: 6.4pt; line-height: 1.35; text-align: center; }
-.warranty-identification { display: grid; grid-template-columns: 20mm 24mm 44mm 24mm 23mm 22mm 45mm; grid-template-rows: 8mm 8mm; border-top: 0.3mm solid #000; border-left: 0.3mm solid #000; }
-.warranty-identification > * { display: flex; align-items: center; min-width: 0; margin: 0; padding: 1mm 1.6mm; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; font-size: 7.2pt; line-height: 1.2; overflow: hidden; }
-.warranty-identification h2 { grid-row: 1 / 3; justify-content: center; padding: 1mm; font-size: 7pt; line-height: 1.25; text-align: center; }
-.warranty-identification .label { justify-content: center; font-weight: 700; font-size: 6.4pt; text-align: center; }
+.warranty-header { display: grid; place-items: center; height: 10mm; border-bottom: 0.35mm solid #000; }
+.warranty-header h1 { max-width: 100%; margin: 0; padding-left: 2.4mm; font-size: 17pt; line-height: 1.35; letter-spacing: 2.4mm; text-align: center; white-space: nowrap; }
+.warranty-lead { height: 8mm; margin: 0; display: grid; place-items: center; font-size: 8pt; line-height: 1.3; text-align: center; text-wrap: balance; }
+.warranty-identification { display: grid; grid-template-columns: 18mm 24mm 37mm 20mm 24mm 18mm 61mm; grid-template-rows: 7mm 7mm; border-top: 0.3mm solid #000; border-left: 0.3mm solid #000; }
+.warranty-identification > * { display: flex; align-items: center; min-width: 0; margin: 0; padding: 0.8mm 1.4mm; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; font-size: 8.5pt; line-height: 1.2; }
+.warranty-identification h2 { grid-row: 1 / 3; justify-content: center; padding: 1mm; font-size: 8pt; line-height: 1.3; text-align: center; }
+.warranty-identification .label { justify-content: center; font-weight: 700; font-size: 8pt; text-align: center; white-space: nowrap; }
 .warranty-identification .value-strong { font-weight: 800; }
 .warranty-start-label { grid-column: 2; grid-row: 1; }
 .warranty-start-value { grid-column: 3; grid-row: 1; justify-content: center; }
@@ -127,32 +130,32 @@ body { margin: 0; color: #162131; background: #eef1f4; font-family: "Yu Gothic",
 .warranty-gltek-value { grid-column: 3 / 5; grid-row: 2; }
 .warranty-serial-label { grid-column: 5; grid-row: 2; }
 .warranty-serial-value { grid-column: 6 / 8; grid-row: 2; }
-.warranty-form-row { display: grid; margin-top: 1.2mm; border-top: 0.3mm solid #000; border-left: 0.3mm solid #000; }
-.warranty-form-row h2 { grid-row: 1 / -1; display: grid; place-items: center; margin: 0; padding: 1mm; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; font-size: 7pt; line-height: 1.25; text-align: center; }
-.warranty-form-row > div { min-width: 0; display: flex; align-items: center; padding: 1mm 1.6mm; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; overflow: hidden; }
-.warranty-form-row .field-label { justify-content: center; font-size: 6.2pt; font-weight: 700; line-height: 1.1; text-align: center; }
-.warranty-form-row .field-value { font-size: 7.2pt; }
-.warranty-form-row .field-value strong { display: block; max-width: 100%; overflow: hidden; font-size: 7.2pt; white-space: nowrap; text-overflow: ellipsis; }
-.warranty-form-row.purchaser { grid-template-columns: 20mm 24mm 68mm 23mm 67mm; grid-template-rows: 11.5mm; }
-.warranty-form-row.vehicle { grid-template-columns: 20mm 24mm 68mm 23mm 67mm; grid-template-rows: 8mm 8mm; }
+.warranty-form-row { display: grid; margin-top: 1mm; border-top: 0.3mm solid #000; border-left: 0.3mm solid #000; }
+.warranty-form-row h2 { grid-row: 1 / -1; display: grid; place-items: center; margin: 0; padding: 1mm; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; font-size: 8pt; line-height: 1.3; text-align: center; }
+.warranty-form-row > div { min-width: 0; display: flex; align-items: center; padding: 0.8mm 1.4mm; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; }
+.warranty-form-row .field-label { justify-content: center; font-size: 8pt; font-weight: 700; line-height: 1.15; text-align: center; white-space: nowrap; }
+.warranty-form-row .field-value { font-size: 8.5pt; }
+.warranty-form-row .field-value strong { display: block; max-width: 100%; font-size: 8.5pt; line-height: 1.25; overflow-wrap: break-word; }
+.warranty-form-row.purchaser { grid-template-columns: 18mm 28mm 62mm 28mm 66mm; grid-template-rows: 12mm; }
+.warranty-form-row.vehicle { grid-template-columns: 18mm 28mm 62mm 28mm 66mm; grid-template-rows: 7mm 7mm; }
 .warranty-form-row.vehicle h2 { grid-row: 1 / 3; }
 .warranty-form-row.vehicle .distance { position: relative; }
-.warranty-form-row.vehicle .distance b { position: absolute; right: 2mm; bottom: 1.2mm; font-size: 6.5pt; }
-.warranty-dealer { display: grid; grid-template-columns: 1fr 41mm 41mm; grid-template-rows: 6mm 21mm; height: 27mm; margin-top: 1.2mm; border-top: 0.3mm solid #000; border-left: 0.3mm solid #000; }
+.warranty-form-row.vehicle .distance b { position: absolute; right: 2mm; bottom: 1.2mm; font-size: 8pt; }
+.warranty-dealer { display: grid; grid-template-columns: 1fr 32mm 32mm; grid-template-rows: 5mm 17mm; height: 22mm; margin-top: 1mm; border-top: 0.3mm solid #000; border-left: 0.3mm solid #000; }
 .warranty-dealer-details { position: relative; grid-row: 1 / 3; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; }
-.warranty-dealer h2 { margin: 0; padding: 1.2mm 2mm; font-size: 7.4pt; line-height: 1; }
-.warranty-dealer-details p { margin: 0 2mm; font-size: 5.8pt; }
-.warranty-dealer-details small { position: absolute; left: 2mm; right: 2mm; bottom: 1.2mm; font-size: 5.4pt; line-height: 1.2; }
+.warranty-dealer h2 { margin: 0; padding: 1mm 2mm; font-size: 8.5pt; line-height: 1.1; }
+.warranty-dealer-details p { margin: 0 2mm; font-size: 8pt; line-height: 1.25; }
+.warranty-dealer-details small { position: absolute; left: 2mm; right: 2mm; bottom: 1mm; font-size: 8pt; line-height: 1.25; }
 .warranty-stamp-heading { grid-column: 2 / 4; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; }
-.warranty-stamp-box { display: grid; place-items: center; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; font-size: 7pt; line-height: 1.4; text-align: center; }
+.warranty-stamp-box { display: grid; place-items: center; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; font-size: 8pt; line-height: 1.4; text-align: center; }
 .warranty-stamp-box:last-child { border-left: 0.25mm dashed #000; }
-.warranty-terms { display: grid; grid-template-columns: 1.08fr 1.12fr 1fr; margin-top: 1.2mm; border-top: 0.3mm solid #000; border-left: 0.3mm solid #000; }
-.warranty-terms article { height: 26mm; overflow: hidden; padding: 1.2mm 1.6mm 1mm; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; }
-.warranty-terms h2, .warranty-legal h2 { margin: 0 0 0.8mm; font-size: 6.5pt; line-height: 1.15; letter-spacing: 0.2mm; }
-.warranty-terms p, .warranty-terms li, .warranty-legal p { margin: 0; font-size: 5.1pt; line-height: 1.32; }
+.warranty-terms { display: grid; grid-template-columns: 1fr 1.05fr 1.15fr; margin-top: 1mm; border-top: 0.3mm solid #000; border-left: 0.3mm solid #000; }
+.warranty-terms article { height: 38mm; padding: 1.2mm 1.6mm 1mm; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; }
+.warranty-terms h2, .warranty-legal h2 { margin: 0 0 0.8mm; font-size: 8.5pt; line-height: 1.15; letter-spacing: 0; white-space: nowrap; }
+.warranty-terms p, .warranty-terms li, .warranty-legal p { margin: 0; font-size: 8pt; line-height: 1.25; }
 .warranty-terms ol, .warranty-terms ul { margin: 0; padding-left: 3.6mm; }
 .warranty-terms li + li { margin-top: 0.3mm; }
-.warranty-legal { height: 13mm; overflow: hidden; margin-top: 1.2mm; padding: 1mm 1.6mm; border: 0.3mm solid #000; }
+.warranty-legal { height: 16mm; margin-top: 1mm; padding: 1mm 1.6mm; border: 0.3mm solid #000; }
 .warranty-legal h2 { margin-bottom: 0.5mm; }
 .warranty-legal p { line-height: 1.3; }
 .warranty-bottom-rules { position: absolute; left: 4mm; right: 4mm; bottom: 0.8mm; }

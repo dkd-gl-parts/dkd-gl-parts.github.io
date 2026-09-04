@@ -5743,7 +5743,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.888";
+var APP_VERSION       = "v1.1.889";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -15762,11 +15762,11 @@ function buildSalesOrderCoreReturnPage(order, unit) {
     "<header class='core-return-header'><img src='assets/brand/gltek-logo-print-transparent.png?dcats_version=" + encodeURIComponent(APP_VERSION) + "' alt='GLTEK'><h1>使用済みコア返却シート</h1></header>" +
     "<p class='core-return-lead'>返却されたコアを再生し、次の製品へつなぎます。ご返却にご協力ください。</p>" +
     "<section class='core-return-due'><h2>返却期限</h2><div><strong>" + esc(salesOrderCoreReturnDueText(unit.return_due_on)) + "</strong><span>商品発送日から14日以内にご返送ください</span></div></section>" +
-    "<div class='core-return-steps'><section><h2><span>STEP 1</span>交換したコアを準備</h2><p>分解せず、そのまま。液漏れしないよう袋や吸収材で包みます。</p></section><section><h2><span>STEP 2</span>箱に入れて返送</h2><p>このシートをコアと一緒に箱へ入れ、同梱の着払い送り状でご返送ください。</p></section></div>" +
+    "<div class='core-return-steps'><section><h2><span>STEP 1</span>交換したコアを準備</h2><p>分解せず、そのまま。液漏れしないよう袋や吸収材で包みます。</p></section><section><h2><span>STEP 2</span>箱に入れて返送</h2><p>このシートをコアと一緒に箱へ入れ、<br>同梱の着払い送り状でご返送ください。</p></section></div>" +
     "<p class='core-return-warning'><span>お願い</span>｜コアは分解せず、そのままの状態でご返却ください。</p>" +
     "<section class='core-return-target'><h2>対象コア <span>（このシートは1点につき1枚です）</span></h2>" +
     "<div class='core-return-code'><div><span>返却管理コード</span><strong>" + esc(formatCustomerOrderReference(returnCode)) + "</strong></div><img src='" + esc(barcode) + "' alt='" + esc(returnCode) + "'></div>" +
-    "<dl class='core-return-product'><div class='core-return-product-split'><dt>注文番号</dt><dd>" + esc(formatCustomerOrderReference(order.order_number)) + "</dd><dt>GLTEK品番</dt><dd>" + esc(item.gltek_part_number || "-") + "</dd></div><div><dt>商品名</dt><dd>" + esc(salesOrderCoreReturnProductName(item)) + "</dd></div><div><dt>純正／メーカー品番</dt><dd>純正：" + esc(item.genuine_part_number || "-") + "　／　メーカー：" + esc(item.manufacturer_part_number || "-") + "</dd></div></dl></section>" +
+    "<dl class='core-return-product'><div class='core-return-product-split'><dt>注文番号</dt><dd>" + esc(formatCustomerOrderReference(order.order_number)) + "</dd><dt>GLTEK品番</dt><dd>" + esc(item.gltek_part_number || "-") + "</dd></div><div><dt>商品名</dt><dd>" + esc(salesOrderCoreReturnProductName(item)) + "</dd></div><div><dt>純正／メーカー品番</dt><dd class='core-return-part-numbers'><span>純正：" + esc(item.genuine_part_number || "-") + "</span><span>メーカー：" + esc(item.manufacturer_part_number || "-") + "</span></dd></div></dl></section>" +
     "<p class='core-return-bottom-note'>このシートをコアと一緒に箱へお入れください</p></main>";
 }
 
@@ -15794,7 +15794,7 @@ function buildSalesOrderWarrantyCertificatePage(order, unit) {
       "<div class='label warranty-product-label'>製品名</div><div class='warranty-product-value'>" + esc(salesOrderWarrantyProductName(orderItem)) + "</div>" +
       "<div class='label warranty-gltek-label'>GLTEK品番</div><div class='value-strong warranty-gltek-value'>" + esc(orderItem.gltek_part_number) + "</div>" +
       "<div class='label warranty-serial-label'>製造シリアル</div><div class='value-strong warranty-serial-value'>" + esc(unit.manufacturingSerial || "-") + "</div></section>" +
-    "<section class='warranty-form-row purchaser'><h2>ご購入者<br>情報</h2><div class='field-label'>購入者／会社名</div><div class='field-value'><strong>" + esc(customerName) + "</strong></div><div class='field-label'>連絡先<br>（電話番号・メール等）</div><div class='field-value'><strong>" + esc(contact) + "</strong></div></section>" +
+    "<section class='warranty-form-row purchaser'><h2>ご購入者<br>情報</h2><div class='field-label'>購入者／会社名</div><div class='field-value'><strong>" + esc(customerName) + "</strong></div><div class='field-label'>連絡先<br>（電話番号・<br>メール等）</div><div class='field-value'><strong>" + esc(contact) + "</strong></div></section>" +
     "<section class='warranty-form-row vehicle'><h2>車両情報</h2><div class='field-label'>車名</div><div class='field-value'></div><div class='field-label'>車両型式</div><div class='field-value'></div><div class='field-label'>エンジン型式</div><div class='field-value'></div><div class='field-label'>取付時走行距離</div><div class='field-value distance'><b>km</b></div></section>" +
     "<section class='warranty-dealer'><div class='warranty-dealer-details'><h2>販売店・取付店</h2><p>販売店名／取付店名・住所・電話番号・担当者</p><small>店印がない場合は、納品書・領収書・整備伝票等の購入証明と本書を保管してください。</small></div>" +
       "<h2 class='warranty-stamp-heading'>印鑑欄（任意）</h2><div class='warranty-stamp-box'>販売店印<br>（任意）</div><div class='warranty-stamp-box'>取付店印<br>（任意）</div></section>" +
