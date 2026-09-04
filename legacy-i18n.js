@@ -2736,7 +2736,19 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "販売店印": "Seller Stamp",
     "（任意）": "(Optional)",
     "取付店印": "Installer Stamp",
-    "本書、対象製品、製造シリアル、車両・取付情報をご提示ください。": "Present this document, the covered product, the manufacturing serial number, and the vehicle and installation information."
+    "本書、対象製品、製造シリアル、車両・取付情報をご提示ください。": "Present this document, the covered product, the manufacturing serial number, and the vehicle and installation information.",
+    "受付時自動発行": "Auto-issued on acceptance",
+    "出荷完了時自動発行": "Auto-issued on shipment",
+    "受付時に自動発行": "Auto-issue on acceptance",
+    "出荷帳票発行で印刷": "Print from Shipping Documents",
+    "CSV発行済み": "CSV issued",
+    "CSV未発行": "CSV not issued",
+    "受注変更あり": "Order changed",
+    "A5 / 端末印刷": "A5 / Terminal print",
+    "商品数量分": "One per product unit",
+    "コア返却必要時": "When core return is required",
+    "/ 1商品1枚": "/ 1 sheet per item",
+    "用紙・発行方法": "Paper / Output method"
   },
   "zh": {
     "再発行が必要": "需要重新签发",
@@ -5473,6 +5485,18 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "販売店印": "销售店章",
     "（任意）": "（可选）",
     "取付店印": "安装店章",
-    "本書、対象製品、製造シリアル、車両・取付情報をご提示ください。": "请出示本文件、相关产品、制造序列号以及车辆和安装信息。"
+    "本書、対象製品、製造シリアル、車両・取付情報をご提示ください。": "请出示本文件、相关产品、制造序列号以及车辆和安装信息。",
+    "受付時自動発行": "接单时自动发行",
+    "出荷完了時自動発行": "出货完成时自动发行",
+    "受付時に自動発行": "接单时自动发行",
+    "出荷帳票発行で印刷": "在出货单据页面打印",
+    "CSV発行済み": "CSV已发行",
+    "CSV未発行": "CSV未发行",
+    "受注変更あり": "订单已变更",
+    "A5 / 端末印刷": "A5 / 终端打印",
+    "商品数量分": "每件商品一份",
+    "コア返却必要時": "需要返还旧件时",
+    "/ 1商品1枚": "/ 每件商品一张",
+    "用紙・発行方法": "纸张・发行方式"
   }
 };

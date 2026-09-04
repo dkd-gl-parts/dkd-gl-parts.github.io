@@ -5743,7 +5743,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.899";
+var APP_VERSION       = "v1.1.900";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -14242,6 +14242,15 @@ function shippingDocumentPrintStateLabel(job, fallback) {
   return label;
 }
 
+function shippingDocumentPrintStateView(job, fallback, fallbackTone) {
+  if (!job) return { label: fallback || "未発行", tone: fallbackTone || "warning", note: "" };
+  return {
+    label: salesOrderPrintJobStatusLabel(job.status),
+    tone: ({ printed: "success", queued: "processing", claimed: "processing", error: "danger", cancelled: "warning" })[job.status] || "neutral",
+    note: job.source === "accept_auto" ? "受付時自動発行" : job.source === "shipment_auto" ? "出荷完了時自動発行" : ""
+  };
+}
+
 function stopShippingDocumentPrintStatusPolling() {
   if (shippingDocumentPrintStatusTimer) clearTimeout(shippingDocumentPrintStatusTimer);
   shippingDocumentPrintStatusTimer = null;
@@ -14431,7 +14440,7 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var outboundHandwrittenComplete = outboundMethod === "handwritten" && (outboundWaybill.status === "printed" || !!outboundWaybill.handwritten_completed_at);
   var outboundCanHandwrite = !!(dispatch && outboundMethod === "handwritten" && !outboundHandwrittenComplete && !shippingDocumentSaving);
   var returnMethod = waybill.handling_method || order.return_waybill_method || "handwritten";
-  var returnCarrierLabel = waybill.carrier_code === "sagawa_collect" ? "佐川急便 着払い" : "ヤマト宅急便 着払い";
+  var returnCarrierLabel = shippingCarrierBrandKey(waybill.carrier_code || "sagawa_collect") === "sagawa" ? "佐川急便 着払い" : "ヤマト宅急便 着払い";
   var returnWaybillCopyCount = shippingDocumentReturnWaybillCopyCount(order);
   var returnPrintBusy = !!(returnJob && ["queued", "claimed"].indexOf(returnJob.status) >= 0);
   var returnCanPrint = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "dot_matrix" && waybill.id && shippingDocumentWaybillNumberIsValid(waybill.tracking_number) && !returnPrintBusy && !shippingDocumentSaving);
@@ -14443,46 +14452,56 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var b2NeedsReissue = b2Issued && (order.revision_history || []).some(function(revision) { return revision.waybills_need_reissue && !order.b2_exports.some(function(entry) { return new Date(entry.created_at) >= new Date(revision.created_at); }); });
   var canCreateB2 = ["accepted", "shipping_ready", "shipped"].indexOf(order.status) >= 0 && outboundMethod === "b2_cloud";
   var b2SettingsAction = isSystemAdmin() ? "<button type='button' data-shipping-document-b2-settings>B2契約設定</button>" : "";
-  var dispatchStandard = salesOrderAutoPrintIsEnabled() ? "A4 / 受付時に自動発行" : "A4 / 出荷帳票発行で印刷";
+  var dispatchStandard = salesOrderAutoPrintIsEnabled() ? "受付時に自動発行" : "出荷帳票発行で印刷";
+  var outboundCarrierLabel = shippingCarrierBrandKey(outboundWaybill.carrier_code || "yamato_prepaid") === "sagawa" ? "佐川急便 元払い" : "ヤマト宅急便 元払い";
+  var outboundState = outboundMethod === "b2_cloud"
+    ? { label: b2NeedsReissue ? "再発行が必要" : b2Issued ? "CSV発行済み" : "CSV未発行", tone: b2Issued && !b2NeedsReissue ? "success" : "warning", note: b2NeedsReissue ? "受注変更あり" : "" }
+    : outboundMethod === "handwritten"
+      ? { label: outboundHandwrittenComplete ? "手書き完了" : "手書き待ち", tone: outboundHandwrittenComplete ? "success" : "warning", note: "" }
+      : shippingDocumentPrintStateView(outboundJob, shippingDocumentWaybillNumberIsValid(outboundWaybill.tracking_number) ? "未印刷" : "番号未登録");
+  var returnState = !order.core_return_required ? { label: "対象外", tone: "neutral", note: "" }
+    : returnMethod === "handwritten"
+      ? { label: returnHandwrittenComplete ? "手書き完了" : "手書き待ち", tone: returnHandwrittenComplete ? "success" : "warning", note: "" }
+      : shippingDocumentPrintStateView(returnJob, shippingDocumentWaybillNumberIsValid(waybill.tracking_number) ? "未印刷" : "番号未登録");
   var reason = !dispatch ? "出荷指示書が未発行です。"
     : dispatch.status !== "shipped" ? "保証書・コア返却シートは発行できます。出荷完了には商品と製造シリアルの照合が必要です。"
       : !order.outbound_tracking_number ? "保証書・コア返却シートは発行できます。出荷完了にはB2発行済データを取り込んでください。" : "";
   var rows = [
     {
-      key: "dispatch", name: "出荷指示書", standard: dispatchStandard,
-      state: shippingDocumentPrintStateLabel(dispatchJob, dispatch ? "発行済み" : "未発行"), ready: !!dispatch,
+      key: "dispatch", name: "出荷指示書", standard: "A4", detail: dispatchStandard,
+      state: shippingDocumentPrintStateView(dispatchJob, dispatch ? "発行済み" : "未発行", dispatch ? "processing" : "warning"), ready: !!dispatch,
       temporary: shippingDocumentHasTemporaryOutput(order, "dispatch") ? "今回のみ: " + shippingDocumentOutputModeLabel(shippingDocumentTemporaryOutputMode(order, "dispatch")) : "",
       actions: shippingDocumentManualOutputActions(order, "dispatch", !!dispatch)
     },
     {
-      key: "outbound_waybill", name: "商品発送送り状", standard: "B2クラウド / ヤマト宅急便 元払い",
+      key: "outbound_waybill", name: "商品発送送り状", standard: outboundModeLabel, detail: outboundCarrierLabel,
       carrierCode: outboundWaybill.carrier_code || "yamato_prepaid",
-      state: outboundModeLabel + " / " + (outboundMethod === "b2_cloud" ? (b2NeedsReissue ? "再発行が必要" : b2Issued ? "発行済み" : "未発行") : outboundMethod === "handwritten" ? (outboundHandwrittenComplete ? "手書き完了" : "手書き待ち") : (outboundJob ? salesOrderPrintJobStatusLabel(outboundJob.status) : (outboundWaybill.tracking_number ? "番号登録済み" : "未設定"))), ready: !!dispatch,
+      state: outboundState, ready: !!dispatch,
       actions: (outboundMethod === "b2_cloud" ? "<button type='button' class='primary' id='shipping-document-b2-issue'" + (canCreateB2 && !salesOrderSaving && !shippingDocumentSaving ? "" : " disabled") + ">" + (b2Issued ? "B2 CSV再発行" : "B2 CSV発行") + "</button>" + b2SettingsAction : outboundMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-outbound-print" + (outboundCanPrint ? "" : " disabled") + ">端末印刷</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='outbound_waybill'" + (outboundCanHandwrite ? "" : " disabled") + ">手書き内容を表示</button>") + "<button type='button' data-shipping-document-open-settings='outbound'>発送方法設定</button>"
     },
     {
-      key: "warranty", name: "製品保証書", standard: "A5 / 商品数量分 / 端末印刷",
-      state: warrantyRequired ? shippingDocumentPrintStateLabel(warrantyJob, "未発行") : "対象外（交換品）", ready: warrantyReady,
+      key: "warranty", name: "製品保証書", standard: "A5 / 端末印刷", detail: "商品数量分",
+      state: warrantyRequired ? shippingDocumentPrintStateView(warrantyJob, "未発行") : { label: "対象外", tone: "neutral", note: "交換品" }, ready: warrantyReady,
       temporary: shippingDocumentHasTemporaryOutput(order, "warranty") ? "今回のみ: " + shippingDocumentOutputModeLabel(shippingDocumentTemporaryOutputMode(order, "warranty")) : "",
       actions: warrantyRequired ? shippingDocumentManualOutputActions(order, "warranty", warrantyReady) : "<span class='shipping-document-no-action'>発行不要</span>"
     },
     {
-      key: "core_return", name: "コア返却シート", standard: "A5 / コア返却必要時 / 端末印刷",
-      state: order.core_return_required ? shippingDocumentPrintStateLabel(coreJob, "未発行") : "対象外", ready: coreReturnReady,
+      key: "core_return", name: "コア返却シート", standard: "A5 / 端末印刷", detail: "コア返却必要時",
+      state: order.core_return_required ? shippingDocumentPrintStateView(coreJob, "未発行") : { label: "対象外", tone: "neutral", note: "" }, ready: coreReturnReady,
       temporary: shippingDocumentHasTemporaryOutput(order, "core_return") ? "今回のみ: " + shippingDocumentOutputModeLabel(shippingDocumentTemporaryOutputMode(order, "core_return")) : "",
       actions: order.core_return_required ? shippingDocumentManualOutputActions(order, "core_return", coreReturnReady) : "<span class='shipping-document-no-action'>発行不要</span>"
     },
     {
-      key: "return_waybill", name: "コア返却用複写伝票", standard: "対象商品1個につき1枚 / " + returnWaybillCopyCount + "枚",
+      key: "return_waybill", name: "コア返却用複写伝票", standard: (returnMethod === "dot_matrix" ? "ドットプリンタ" : "手書き運用") + " / " + returnWaybillCopyCount + "枚", detail: returnCarrierLabel + " / 1商品1枚",
       carrierCode: waybill.carrier_code || "sagawa_collect",
-      state: order.core_return_required ? returnCarrierLabel + " / " + returnWaybillCopyCount + "枚 / " + (returnMethod === "handwritten" ? (returnHandwrittenComplete ? "手書き完了" : "手書き待ち") : (returnJob ? salesOrderPrintJobStatusLabel(returnJob.status) : (shippingDocumentWaybillNumberIsValid(waybill.tracking_number) ? "番号登録済み" : "番号未登録"))) : "対象外", ready: !!order.core_return_required,
+      state: returnState, ready: !!order.core_return_required,
       actions: order.core_return_required ? (returnMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-return-print" + (returnCanPrint ? "" : " disabled") + ">" + esc(returnPrintActionLabel) + "（" + returnWaybillCopyCount + "枚）</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='return_waybill'" + (returnCanHandwrite ? "" : " disabled") + ">手書き内容を表示（" + returnWaybillCopyCount + "枚）</button>") + "<button type='button' data-shipping-document-open-settings='return'>設定</button>" : "<span class='shipping-document-no-action'>発行不要</span>"
     }
   ];
   return "<section class='shipping-document-section shipping-document-required-documents'><div class='shipping-document-section-head'><div><h3>帳票の状態と発行</h3><p>標準設定を確認し、必要な帳票をこの一覧から発行します。設定変更は各行の「設定」から行います。</p></div><span class='shipping-document-ready-state " + (dispatch ? "ready" : "pending") + "'>" + esc(dispatch ? "同梱帳票を発行可" : "出荷指示待ち") + "</span></div>" +
     (reason ? "<p class='shipping-document-guidance'>" + esc(reason) + "</p>" : "") +
-    "<div class='shipping-document-required-list'><div class='shipping-document-required-head'><span>帳票</span><span>標準設定</span><span>現在の状態</span><span>発行操作</span></div>" + rows.map(function(row) {
-      return "<div class='shipping-document-required-row " + (row.ready ? "ready" : "pending") + "'><div class='shipping-document-name-cell'><strong>" + esc(row.name) + "</strong>" + (row.carrierCode ? shippingCarrierBrandHtml(row.carrierCode, true) : "") + "</div><span class='shipping-document-standard'>" + esc(row.standard) + (row.temporary ? "<small>" + esc(row.temporary) + "</small>" : "") + "</span><em>" + esc(row.state) + "</em><div class='shipping-document-row-actions'>" + row.actions + "</div></div>";
+    "<div class='shipping-document-required-list' role='table' aria-label='帳票の状態と発行'><div class='shipping-document-required-head' role='row'><span role='columnheader'>帳票</span><span role='columnheader'>用紙・発行方法</span><span role='columnheader'>現在の状態</span><span role='columnheader'>発行操作</span></div>" + rows.map(function(row) {
+      return "<div class='shipping-document-required-row " + (row.ready ? "ready" : "pending") + "' role='row' data-document-type='" + esc(row.key) + "' data-state='" + esc(row.state.tone) + "'><div class='shipping-document-name-cell' role='cell'><strong>" + esc(row.name) + "</strong>" + (row.carrierCode ? shippingCarrierBrandHtml(row.carrierCode, true) : "") + "</div><div class='shipping-document-standard' role='cell'><strong>" + esc(row.standard) + "</strong><small class='shipping-document-standard-detail'>" + esc(row.detail) + "</small>" + (row.temporary ? "<small class='shipping-document-temporary-note'>" + esc(row.temporary) + "</small>" : "") + "</div><div class='shipping-document-state-cell' role='cell'><em class='shipping-document-state-badge'>" + esc(row.state.label) + "</em>" + (row.state.note ? "<small>" + esc(row.state.note) + "</small>" : "") + "</div><div class='shipping-document-row-actions' role='cell'>" + row.actions + "</div></div>";
     }).join("") + "</div></section>";
 }
 

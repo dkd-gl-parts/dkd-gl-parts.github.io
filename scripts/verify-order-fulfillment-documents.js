@@ -259,6 +259,24 @@ if (temporaryOutput.includes("sb.rpc(")) {
 }
 
 const printState = sourceBetween("function shippingDocumentPrintStateLabel", "function shippingDocumentStageHtml");
+const stateViewContext = {};
+vm.runInNewContext(sourceBetween("function salesOrderPrintJobStatusLabel", "function salesOrderDocumentTypeLabel"), stateViewContext);
+vm.runInNewContext(sourceBetween("function shippingDocumentPrintStateView", "function stopShippingDocumentPrintStatusPolling"), stateViewContext);
+for (const [status, label, tone] of [
+  ["printed", "印刷済み", "success"], ["queued", "印刷待ち", "processing"],
+  ["claimed", "印刷中", "processing"], ["error", "印刷エラー", "danger"],
+  ["cancelled", "取消", "warning"], ["unknown", "未登録", "neutral"]
+]) {
+  const view = stateViewContext.shippingDocumentPrintStateView({ status, source: "accept_auto" });
+  if (view.label !== label || view.tone !== tone || view.note !== "受付時自動発行") {
+    throw new Error(`Print state presentation/source must remain distinct: ${status}`);
+  }
+}
+if (stateViewContext.shippingDocumentPrintStateView(null).tone !== "warning"
+  || stateViewContext.shippingDocumentPrintStateView(null).label !== "未発行"
+  || stateViewContext.shippingDocumentPrintStateView({ status: "printed", source: "shipment_auto" }).note !== "出荷完了時自動発行") {
+  throw new Error("Unissued documents must not look completed and automatic print sources must remain visible");
+}
 for (const fragment of [
   'job.source === "accept_auto"',
   'job.source === "shipment_auto"',
@@ -289,6 +307,17 @@ for (const fragment of [
   'key: "return_waybill"',
   "shipping-document-required-list",
   "shipping-document-required-head",
+  "用紙・発行方法",
+  "shipping-document-standard-detail",
+  "shipping-document-state-cell",
+  "shipping-document-state-badge",
+  "data-document-type=",
+  "data-state=",
+  "role='table'",
+  'esc(row.state.label)',
+  'esc(row.state.note)',
+  'standard: outboundModeLabel, detail: outboundCarrierLabel',
+  'shippingCarrierBrandKey(waybill.carrier_code || "sagawa_collect")',
   "標準設定",
   "現在の状態",
   "発行操作",
@@ -301,9 +330,9 @@ for (const fragment of [
   'shippingDocumentManualOutputActions(order, "core_return", coreReturnReady)',
   'ready: coreReturnReady',
   '保証書・コア返却シートは発行できます。',
-  'warrantyRequired ? shippingDocumentPrintStateLabel(warrantyJob, "未発行")',
-  '対象外（交換品）',
-  'shippingDocumentPrintStateLabel(coreJob, "未発行")',
+  'warrantyRequired ? shippingDocumentPrintStateView(warrantyJob, "未発行")',
+  'label: "対象外", tone: "neutral", note: "交換品"',
+  'shippingDocumentPrintStateView(coreJob, "未発行")',
   "今回のみ:",
   'carrierCode: outboundWaybill.carrier_code || "yamato_prepaid"',
   'carrierCode: waybill.carrier_code || "sagawa_collect"',
@@ -311,7 +340,7 @@ for (const fragment of [
   'shippingDocumentReturnWaybillCopyCount(order)',
   'shippingDocumentWaybillNumberIsValid(outboundWaybill.tracking_number)',
   'shippingDocumentWaybillNumberIsValid(waybill.tracking_number)',
-  '対象商品1個につき1枚 / " + returnWaybillCopyCount + "枚',
+  'returnWaybillCopyCount + "枚", detail: returnCarrierLabel + " / 1商品1枚"',
   'var returnCanPrint = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "dot_matrix"',
   'var returnCanHandwrite = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "handwritten"',
   'returnJob.status === "printed" ? "再印刷"',
@@ -659,11 +688,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.899"',
-  'styles.css?v=1.1.899',
-  'app.js?v=1.1.899'
+  'content="v1.1.900"',
+  'styles.css?v=1.1.900',
+  'app.js?v=1.1.900'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.899"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.900"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");

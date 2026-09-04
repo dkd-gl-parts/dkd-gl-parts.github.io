@@ -51,7 +51,7 @@ assert(functionSource("updateFinishedShipmentReplacement").includes('sb.rpc("set
 assert(functionSource("saveFinishedProductShipment").includes("target_warranty_months: 12"), "Legacy confirmation signature compatibility is missing");
 assert(!functionSource("saveFinishedProductShipment").includes("finished-shipment-warranty-months"), "Browser still controls warranty months");
 assert(functionSource("salesOrderWarrantyUnits").includes("item.replacement"), "Replacement items are not excluded from warranty certificates");
-assert(functionSource("shippingDocumentShipmentDocumentsHtml").includes("対象外（交換品）"), "Replacement-only warranty state is not visible");
+assert(functionSource("shippingDocumentShipmentDocumentsHtml").includes('label: "対象外", tone: "neutral", note: "交換品"'), "Replacement-only warranty state and reason are not visible");
 assert(functionSource("printSalesOrderDocument").includes("!salesOrderWarrantyDocumentRequired(order)"), "Replacement-only warranty printing is not blocked");
 
 for (const fragment of [
@@ -62,7 +62,7 @@ for (const fragment of [
   ".finished-shipment-replacement-card"
 ]) assert(css.includes(fragment), `Missing category warranty styling: ${fragment}`);
 
-assert(html.includes('content="v1.1.899"'), "Release version is not v1.1.899");
-assert(app.includes('var APP_VERSION       = "v1.1.899"'), "Runtime version is not v1.1.899");
+assert(html.includes('content="v1.1.900"'), "Release version is not v1.1.900");
+assert(app.includes('var APP_VERSION       = "v1.1.900"'), "Runtime version is not v1.1.900");
 
 console.log("Category warranty and replacement shipment UI contract: OK");
