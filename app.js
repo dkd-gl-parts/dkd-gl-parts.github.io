@@ -5743,7 +5743,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.900";
+var APP_VERSION       = "v1.1.901";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -48415,7 +48415,7 @@ function renderUsers(users) {
   users.forEach(function(u) {
     var initials = (u.name||u.email||"?").charAt(0).toUpperCase();
     var status   = u.status || "active";
-    var sbadge   = "<span class='status-badge status-"+status+"'>"+t("users_"+status+"_badge")+"</span>";
+    var sbadge   = "<span class='status-badge status-"+esc(status)+"'>"+esc(t("users_"+status+"_badge"))+"</span>";
     var companyCode = userCompanyCode(u);
     var departmentCode = userDepartmentCode(u);
     var companyLabel = optionLabel(USER_COMPANY_OPTIONS, companyCode);
