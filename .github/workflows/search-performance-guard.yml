@@ -104,6 +104,7 @@ on:
       - "manufacturing-ranking-report.js"
       - "scripts/verify-manufacturing-ranking-performance.js"
       - "scripts/verify-manufacturing-ranking-suppliers.js"
+      - "package*.json"
       - ".github/workflows/**"
   workflow_dispatch:
 
@@ -125,16 +126,18 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
+      - name: Install workflow guard dependencies
+        run: npm ci --ignore-scripts
       - name: Check JavaScript syntax
         run: |
           node --check app.js
           node --check sales-order-revision.js
-          node scripts/verify-sales-order-revision.js
           node --check install-app.js
           node --check assets/concierge-pet/concierge-pet.js
-          node --check scripts/verify-workflow-coverage.js
       - name: Verify workflow coverage and immutable action pins
         run: node scripts/verify-workflow-coverage.js
+      - name: Verify sales order revision workflow
+        run: node scripts/verify-sales-order-revision.js
       - name: Verify animated concierge pets
         run: |
           node scripts/verify-concierge-pet.js
@@ -283,7 +286,7 @@ jobs:
       - name: Verify static deployment assets
         run: node scripts/build-static-site.js
       - name: Verify security response headers
-        run: node scripts/verify-security-response-headers.js dist
+        run: node scripts/verify-security-response-headers.js
       - name: Verify purchase multiple-link management
         run: node scripts/verify-purchase-multiple-links.js
       - name: Verify manufacturing ranking performance

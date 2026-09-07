@@ -1,0 +1,8 @@
+{
+  "name": "dcats-frontend-ci-guards",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "yaml": "2.9.0"
+  }
+}
