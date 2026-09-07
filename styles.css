@@ -5831,6 +5831,10 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .user-auth-history-modal { max-width: 980px; }
 .user-auth-history-summary { font-size: 12px; color: #667085; margin: -6px 0 12px; }
 .user-auth-history-list { max-height: 56vh; overflow: auto; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; }
+.customer-activity-overview { display: grid; grid-template-columns: repeat(3, minmax(150px, 1fr)); gap: 8px; padding: 12px; border-bottom: 1px solid #dfe5ec; background: #f7faf8; }
+.customer-activity-stat { min-width: 0; padding: 9px 10px; border: 1px solid #dbe6df; border-radius: 6px; background: #fff; }
+.customer-activity-stat span { display: block; margin-bottom: 3px; color: #667085; font-size: 11px; font-weight: 700; }
+.customer-activity-stat strong { display: block; color: #163d31; font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
 .user-auth-history-list .log-table th { position: sticky; top: 0; z-index: 1; }
 .user-history-section { padding: 10px 12px 14px; border-bottom: 1px solid #edf0f4; }
 .user-history-section:last-child { border-bottom: 0; }
@@ -5840,6 +5844,8 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .auth-event-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 58px; border-radius: 999px; padding: 3px 8px; font-size: 11px; font-weight: 700; }
 .auth-event-login { background: #e8f7ee; color: #16723a; }
 .auth-event-logout { background: #f3f4f6; color: #475467; }
+.customer-search-history-query { color: #1d2939; font-size: 13px; }
+.customer-search-history-result { display: inline-flex; min-width: 54px; justify-content: center; padding: 2px 7px; border: 1px solid #b9dac9; border-radius: 6px; background: #edf8f2; color: #17633f; font-weight: 800; white-space: nowrap; }
 .save-msg { font-size: 12px; }
 .save-ok  { color: #1a8c3e; }
 .save-err { color: #e24b4a; }
@@ -5871,6 +5877,9 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   .customer-account-user-row { grid-template-columns: 1fr; align-items: stretch; }
   .customer-account-user-actions { justify-content: flex-start; }
   .customer-account-user-status { white-space: normal; }
+  .user-auth-history-modal { width: calc(100vw - 12px); margin: 6px; padding: 14px; }
+  .customer-activity-overview { grid-template-columns: 1fr; }
+  .user-auth-history-list .log-table { min-width: 620px; }
   .user-permission-overview-head { align-items: flex-start; flex-direction: column; }
   .user-permission-toolbar { align-items: stretch; flex-direction: column; }
   .user-permission-toolbar .mgmt-search { width: 100%; }
