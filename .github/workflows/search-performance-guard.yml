@@ -24,7 +24,7 @@ on:
       - "scripts/verify-concierge-pet.js"
       - "scripts/verify-concierge-pet-runtime.js"
       - "scripts/verify-concierge-desktop.js"
-      - "vendor/three/**"
+      - "vendor/**"
       - "scripts/verify-product-3d-workflow.js"
       - "scripts/verify-app-version-assets.js"
       - "scripts/verify-edge-auto-update.js"

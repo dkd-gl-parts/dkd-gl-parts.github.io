@@ -92,6 +92,7 @@ const securityHeaderPaths = [
   "index.html",
   "install-app.js",
   "site.webmanifest",
+  "vendor/**",
   "scripts/build-static-site.js",
   "scripts/verify-install-app.js",
   "scripts/verify-concierge-pet.js",

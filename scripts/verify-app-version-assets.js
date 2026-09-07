@@ -1,10 +1,12 @@
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const acorn = require("acorn");
 
 const root = path.resolve(__dirname, "..");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const headers = fs.readFileSync(path.join(root, "_headers"), "utf8");
 const styles = fs.readFileSync(path.join(root, "styles.css"), "utf8");
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "site.webmanifest"), "utf8"));
 
@@ -26,30 +28,65 @@ const conciergeStyleVersion = "v" + requiredMatch(html, /<link\s+rel="stylesheet
 const manifestVersion = "v" + requiredMatch(html, /<link\s+rel="manifest"\s+href="site\.webmanifest\?v=([^&\"]+)/, "manifest cache version");
 
 const reviewedStaticScripts = new Map([
-  ["https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/dist/umd/supabase.js", {
+  ["vendor/supabase-js-2.115.0.js", {
     integrity: "sha384-CLZeq1dk8+Uzrs7TVvBUdlFoV5F0DMqgRoeHa8g5wJcuPe5SkVfEvdxB0ZuzlnBQ",
     crossorigin: "anonymous",
   }],
-  ["https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js", {
+  ["vendor/jsbarcode-3.12.3.all.min.js", {
     integrity: "sha384-vmcSy8TM1KhZWBIKMKTR8AxbrJQCuConAolGY+42odu9ZGIzw8L8xAT/u7ul4X2U",
     crossorigin: "anonymous",
   }],
 ]);
 const reviewedDynamicScript = Object.freeze({
-  src: "https://cdn.jsdelivr.net/npm/@zxing/browser@0.2.0/umd/zxing-browser.min.js",
+  src: "vendor/zxing-browser-0.2.0.min.js",
   integrity: "sha384-HRtzk9lZgkbSgvUyQrnfC/GxiXZgwaNyD7hC9wcXlsBpDhkS80ISl73juef2FRuf",
 });
 
+const reviewedBrowserAssets = new Map([
+  ...reviewedStaticScripts,
+  [reviewedDynamicScript.src, reviewedDynamicScript],
+]);
+
+for (const [asset, contract] of reviewedBrowserAssets) {
+  const assetPath = path.join(root, asset);
+  if (!fs.existsSync(assetPath)) throw new Error("Self-hosted browser asset is missing: " + asset);
+  const digest = "sha384-" + crypto.createHash("sha384").update(fs.readFileSync(assetPath)).digest("base64");
+  if (digest !== contract.integrity) {
+    throw new Error("Self-hosted browser asset digest mismatch: " + asset + " (" + digest + ")");
+  }
+}
+
+function requireSelfOnlyScriptCsp(source, pattern, label) {
+  const csp = requiredMatch(source, pattern, label);
+  const directive = csp.match(/(?:^|;)\s*script-src\s+([^;]+)/i);
+  if (!directive) throw new Error(label + " is missing script-src");
+  const tokens = directive[1].trim().split(/\s+/);
+  if (tokens.length !== 1 || tokens[0] !== "'self'") {
+    throw new Error(label + " script-src must allow only 'self'");
+  }
+}
+
+requireSelfOnlyScriptCsp(
+  html,
+  /<meta\b[^>]*http-equiv="Content-Security-Policy"[^>]*content="([^"]+)"/i,
+  "fallback CSP",
+);
+requireSelfOnlyScriptCsp(
+  headers,
+  /Content-Security-Policy:\s*([^\r\n]+)/i,
+  "response CSP",
+);
+
 function decodeHtmlAttribute(value, violations) {
   const decoded = value
-    .replace(/&#(\d+);/g, (_, digits) => String.fromCodePoint(Number(digits)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, digits) => String.fromCodePoint(parseInt(digits, 16)))
-    .replace(/&amp;/gi, "&")
-    .replace(/&quot;/gi, '"')
-    .replace(/&apos;/gi, "'")
-    .replace(/&colon;/gi, ":")
-    .replace(/&sol;/gi, "/");
-  if (/&(?:#(?:x[0-9a-f]+|\d+)|[a-z][a-z0-9]+);/i.test(decoded)) {
+    .replace(/&#x([0-9a-f]+);?/gi, (_, digits) => String.fromCodePoint(parseInt(digits, 16)))
+    .replace(/&#(\d+);?/g, (_, digits) => String.fromCodePoint(Number(digits)))
+    .replace(/&amp;?/gi, "&")
+    .replace(/&quot;?/gi, '"')
+    .replace(/&apos;?/gi, "'")
+    .replace(/&colon;?/gi, ":")
+    .replace(/&sol;?/gi, "/");
+  if (/&(?:#(?:x[0-9a-f]+|\d+);?|[a-z][a-z0-9]+;)/i.test(decoded)) {
     violations.push(`script src contains an unsupported HTML entity: ${value}`);
   }
   return decoded;
@@ -60,7 +97,12 @@ function parseScriptAttributes(rawAttributes, violations) {
   let cursor = 0;
   while (cursor < rawAttributes.length) {
     while (/\s/.test(rawAttributes[cursor] || "")) cursor += 1;
-    if (cursor >= rawAttributes.length || rawAttributes[cursor] === "/") break;
+    if (cursor >= rawAttributes.length) break;
+    if (rawAttributes[cursor] === "/") {
+      if (/^\s*$/.test(rawAttributes.slice(cursor + 1))) break;
+      cursor += 1;
+      continue;
+    }
     const nameMatch = rawAttributes.slice(cursor).match(/^[^\s"'<>\/=]+/);
     if (!nameMatch) {
       violations.push(`unable to parse script attribute near: ${rawAttributes.slice(cursor, cursor + 30)}`);
@@ -177,6 +219,30 @@ function staticString(node, bindings, depth = 0) {
     const right = staticString(node.right, bindings, depth + 1);
     return left === null || right === null ? null : left + right;
   }
+  if (node.type === "CallExpression" && memberPropertyName(node.callee, bindings) === "concat") {
+    const initial = staticString(node.callee.object, bindings, depth + 1);
+    if (initial === null) return null;
+    let value = initial;
+    for (const argument of node.arguments) {
+      const addition = staticString(argument, bindings, depth + 1);
+      if (addition === null) return null;
+      value += addition;
+    }
+    return value;
+  }
+  if (node.type === "NewExpression" && node.callee.type === "Identifier" && node.callee.name === "URL") {
+    const value = staticString(node.arguments[0], bindings, depth + 1);
+    const base = staticString(node.arguments[1], bindings, depth + 1);
+    if (value === null) return null;
+    try {
+      return base === null ? new URL(value).href : new URL(value, base).href;
+    } catch {
+      return value;
+    }
+  }
+  if (node.type === "MemberExpression" && memberPropertyName(node, bindings) === "href") {
+    return staticString(node.object, bindings, depth + 1);
+  }
   if (node.type === "Identifier" && bindings.has(node.name)) {
     return staticString(bindings.get(node.name), bindings, depth + 1);
   }
@@ -185,31 +251,27 @@ function staticString(node, bindings, depth = 0) {
 
 function validateScriptSupplyChain(htmlSource, appSource) {
   const violations = [];
-  const externalTags = parseScriptTags(htmlSource, violations).filter((attributes) => {
-    return attributes.has("src") && isExternalScriptSource(attributes.get("src"), violations);
-  });
-  if (externalTags.length !== reviewedStaticScripts.size) {
-    violations.push(`expected ${reviewedStaticScripts.size} reviewed static external scripts, found ${externalTags.length}`);
-  }
   const seenStaticSources = new Set();
-  for (const attributes of externalTags) {
+  for (const attributes of parseScriptTags(htmlSource, violations)) {
+    if (!attributes.has("src")) continue;
     const src = decodeHtmlAttribute(attributes.get("src"), violations);
-    const reviewed = reviewedStaticScripts.get(src);
-    if (!reviewed) {
-      violations.push(`unreviewed static external script: ${src}`);
+    if (isExternalScriptSource(src, violations)) {
+      violations.push(`external static scripts are forbidden by the self-only CSP: ${src}`);
       continue;
     }
-    if (seenStaticSources.has(src)) violations.push(`duplicate static external script: ${src}`);
+    const reviewed = reviewedStaticScripts.get(src);
+    if (!reviewed) continue;
+    if (seenStaticSources.has(src)) violations.push(`duplicate reviewed static script: ${src}`);
     seenStaticSources.add(src);
     const attributeNames = [...attributes.keys()].sort().join(",");
     if (attributeNames !== "crossorigin,integrity,src" ||
         attributes.get("integrity") !== reviewed.integrity ||
         attributes.get("crossorigin").toLowerCase() !== reviewed.crossorigin) {
-      violations.push(`static external script attributes do not match the reviewed SRI contract: ${src}`);
+      violations.push(`self-hosted script attributes do not match the reviewed SRI contract: ${src}`);
     }
   }
   for (const src of reviewedStaticScripts.keys()) {
-    if (!seenStaticSources.has(src)) violations.push(`reviewed static external script is missing: ${src}`);
+    if (!seenStaticSources.has(src)) violations.push(`reviewed self-hosted script is missing: ${src}`);
   }
 
   let syntaxTree;
@@ -230,41 +292,64 @@ function validateScriptSupplyChain(htmlSource, appSource) {
   duplicateBindings.forEach((name) => bindings.delete(name));
 
   const scriptCreations = [];
-  const dynamicExternalAssignments = [];
-  const srcAttributeCalls = [];
+  const forbiddenSourceMutations = [];
+  const remoteJavaScriptValues = new Set();
   for (const node of nodes) {
-    if (node.type === "CallExpression" && memberPropertyName(node.callee, bindings) === "createElement" &&
-        (staticString(node.arguments[0], bindings) || "").toLowerCase() === "script") {
-      scriptCreations.push(node);
+    const staticValue = staticString(node, bindings);
+    if (staticValue) {
+      try {
+        const parsed = new URL(staticValue, "https://dcats.invalid/");
+        if (parsed.origin !== "https://dcats.invalid" &&
+            (parsed.hostname === "cdn.jsdelivr.net" || /\.m?js$/i.test(parsed.pathname))) {
+          remoteJavaScriptValues.add(parsed.href);
+        }
+      } catch {
+        // Non-URL strings are not script sources.
+      }
     }
+    if (node.type === "ImportExpression") forbiddenSourceMutations.push("dynamic import");
     if (node.type === "CallExpression") {
       const method = memberPropertyName(node.callee, bindings);
+      const elementNameIndex = method === "createElementNS" ? 1 : 0;
+      if ((method === "createElement" || method === "createElementNS") &&
+          (staticString(node.arguments[elementNameIndex], bindings) || "").toLowerCase() === "script") {
+        scriptCreations.push(node);
+      }
       const attributeIndex = method === "setAttributeNS" ? 1 : 0;
       if ((method === "setAttribute" || method === "setAttributeNS") &&
           (staticString(node.arguments[attributeIndex], bindings) || "").toLowerCase() === "src") {
-        srcAttributeCalls.push(node);
+        forbiddenSourceMutations.push(method);
       }
       if (node.callee.type === "MemberExpression" && node.callee.object.type === "Identifier" &&
           node.callee.object.name === "Reflect" && method === "set" &&
           (staticString(node.arguments[1], bindings) || "").toLowerCase() === "src") {
-        const url = staticString(node.arguments[2], bindings);
-        if (url && isExternalScriptSource(url, violations)) dynamicExternalAssignments.push(url);
+        forbiddenSourceMutations.push("Reflect.set(src)");
+      }
+      if (node.callee.type === "MemberExpression" && node.callee.object.type === "Identifier" &&
+          node.callee.object.name === "Object" && method === "assign") {
+        const setsSource = node.arguments.slice(1).some((argument) =>
+          argument?.type === "ObjectExpression" && argument.properties.some((property) =>
+            property.type === "Property" &&
+            (staticString(property.key, bindings) || property.key?.name || "").toLowerCase() === "src"));
+        if (setsSource) forbiddenSourceMutations.push("Object.assign(src)");
       }
     }
     if (node.type === "AssignmentExpression" && node.operator === "=" &&
         memberPropertyName(node.left, bindings) === "src") {
       const url = staticString(node.right, bindings);
-      if (url && isExternalScriptSource(url, violations)) dynamicExternalAssignments.push(url);
+      if (url && isExternalScriptSource(url, violations)) {
+        forbiddenSourceMutations.push("external .src assignment: " + url);
+      }
     }
   }
   if (scriptCreations.length !== 1) {
     violations.push(`expected one reviewed dynamic script element creation, found ${scriptCreations.length}`);
   }
-  if (srcAttributeCalls.length !== 0) {
-    violations.push("dynamic script sources must not use setAttribute/setAttributeNS");
+  if (forbiddenSourceMutations.length) {
+    violations.push(`unreviewed script source mechanism: ${forbiddenSourceMutations.join(", ")}`);
   }
-  if (dynamicExternalAssignments.length !== 1 || dynamicExternalAssignments[0] !== reviewedDynamicScript.src) {
-    violations.push(`dynamic external scripts must be exactly the reviewed ZXing source (found ${dynamicExternalAssignments.join(", ") || "none"})`);
+  if (remoteJavaScriptValues.size) {
+    violations.push(`remote JavaScript URL is forbidden: ${[...remoteJavaScriptValues].join(", ")}`);
   }
   const reviewedDynamicBlock = [
     '    script = document.createElement("script");',
@@ -274,7 +359,7 @@ function validateScriptSupplyChain(htmlSource, appSource) {
     '    script.crossOrigin = "anonymous";',
   ].join("\n");
   if (!appSource.replace(/\r\n/g, "\n").includes(reviewedDynamicBlock)) {
-    violations.push("reviewed ZXing creation, exact-version URL, SRI, and anonymous CORS block is missing");
+    violations.push("reviewed self-hosted ZXing creation, SRI, and anonymous CORS block is missing");
   }
   return violations;
 }
@@ -292,6 +377,16 @@ if (supplyChainViolations.length) {
 expectSupplyChainMutationRejected(
   "a single-quoted static script",
   `${html}\n<script src='https://cdn.jsdelivr.net/npm/unreviewed@1/index.js'></script>`,
+  app,
+);
+expectSupplyChainMutationRejected(
+  "a slash-separated static script",
+  `${html}\n<script/src=https://cdn.jsdelivr.net/npm/unreviewed@1/index.js></script>`,
+  app,
+);
+expectSupplyChainMutationRejected(
+  "a semicolonless numeric HTML entity",
+  `${html}\n<script src='https&#58//cdn.jsdelivr.net/npm/unreviewed@1/index.js'></script>`,
   app,
 );
 expectSupplyChainMutationRejected(
@@ -313,6 +408,36 @@ expectSupplyChainMutationRejected(
   "an assembled external script URL",
   html,
   `${app}\nconst dcatsUnreviewedUrl = "https://cdn." + "jsdelivr.net/npm/unreviewed@1/index.js"; var extraLoader = document.createElement('script'); extraLoader.src = dcatsUnreviewedUrl;`,
+);
+expectSupplyChainMutationRejected(
+  "a computed concat source property",
+  html,
+  `${app}\nscript["s".concat("rc")] = "https://cdn.jsdelivr.net/npm/unreviewed@1/index.js";`,
+);
+expectSupplyChainMutationRejected(
+  "a URL object source",
+  html,
+  `${app}\nscript.src = new URL("https://cdn.jsdelivr.net/npm/unreviewed@1/index.js").href;`,
+);
+expectSupplyChainMutationRejected(
+  "a Reflect.set URL source",
+  html,
+  `${app}\nReflect.set(script, "src", new URL("https://cdn.jsdelivr.net/npm/unreviewed@1/index.js").href);`,
+);
+expectSupplyChainMutationRejected(
+  "an Object.assign source",
+  html,
+  `${app}\nObject.assign(script, { src: "https://cdn.jsdelivr.net/npm/unreviewed@1/index.js" });`,
+);
+expectSupplyChainMutationRejected(
+  "a remote dynamic import",
+  html,
+  `${app}\nimport("https://cdn.jsdelivr.net/npm/unreviewed@1/index.js");`,
+);
+expectSupplyChainMutationRejected(
+  "a namespaced script element",
+  html,
+  `${app}\nvar extraLoader = document.createElementNS("http://www.w3.org/1999/xhtml", "script"); extraLoader.src = new URL("https://cdn.jsdelivr.net/npm/unreviewed@1/index.js").href;`,
 );
 
 const versions = { metaVersion, legacyVersion, scriptVersion, installScriptVersion, legacyI18nVersion, conciergeScriptVersion, styleVersion, conciergeStyleVersion, manifestVersion };

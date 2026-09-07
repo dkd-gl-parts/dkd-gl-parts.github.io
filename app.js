@@ -29575,7 +29575,7 @@ function loadFinishedShipmentCameraLibrary() {
     }
     script = document.createElement("script");
     script.id = "dcats-zxing-browser";
-    script.src = "https://cdn.jsdelivr.net/npm/@zxing/browser@0.2.0/umd/zxing-browser.min.js";
+    script.src = "vendor/zxing-browser-0.2.0.min.js";
     script.integrity = "sha384-HRtzk9lZgkbSgvUyQrnfC/GxiXZgwaNyD7hC9wcXlsBpDhkS80ISl73juef2FRuf";
     script.crossOrigin = "anonymous";
     script.addEventListener("load", handleLoad, { once: true });

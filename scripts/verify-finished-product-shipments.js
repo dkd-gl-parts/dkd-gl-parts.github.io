@@ -102,7 +102,7 @@ const dispatchLoadSource = functionSource("loadFinishedShipmentDispatch");
 assert(dispatchLoadSource.includes('sb.rpc("get_sales_order_dispatch"'), "shipment instruction load RPC is not called");
 assert(dispatchLoadSource.includes("refreshFinishedShipmentContext(order)"), "loaded dispatch does not refresh the workspace");
 const cameraLibrarySource = functionSource("loadFinishedShipmentCameraLibrary");
-assert(cameraLibrarySource.includes("@zxing/browser@0.2.0/umd/zxing-browser.min.js"), "pinned camera scanner library is missing");
+assert(cameraLibrarySource.includes("vendor/zxing-browser-0.2.0.min.js"), "self-hosted pinned camera scanner library is missing");
 assert(cameraLibrarySource.includes('script.integrity = "sha384-HRtzk9lZgkbSgvUyQrnfC/GxiXZgwaNyD7hC9wcXlsBpDhkS80ISl73juef2FRuf"'), "camera scanner library must use the reviewed subresource integrity hash");
 assert(cameraLibrarySource.includes('script.crossOrigin = "anonymous"'), "camera scanner library must use anonymous CORS for SRI");
 const cameraOpenSource = functionSource("openFinishedShipmentCamera");
