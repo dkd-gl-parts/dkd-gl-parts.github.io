@@ -549,6 +549,11 @@ api.setMode("vertical");
 const verticalMove = animationEndpoints(lastAnimationFor(mover));
 assert(verticalMove.start && verticalMove.end && verticalMove.start.y !== verticalMove.end.y, "Vertical-only mode did not move on the y axis");
 assert(verticalMove.start.x === verticalMove.end.x, "Vertical-only mode changed the x axis");
+const movementBeforeScroll = lastAnimationFor(mover);
+dispatch(windowListeners, "scroll");
+assert(lastAnimationFor(mover) === movementBeforeScroll, "Mouse-wheel scrolling restarted the fixed-position concierge movement");
+assert(!root.classList.contains("is-revalidating"), "Mouse-wheel scrolling entered viewport revalidation");
+assert(!pendingFrames.size, "Mouse-wheel scrolling queued viewport layout work");
 sandboxMath.random = () => Math.random();
 api.setMode("fixed");
 
@@ -605,7 +610,7 @@ activeScreen.id = "screen-login";
 notifyObservers();
 assert(root.hidden, "Concierge must be hidden on the login screen");
 
-console.log("Concierge runtime behavior verification passed (system-admin gate, always-on-top floating display, zero-cost disclosure, 5 movement modes, move-stop cycle, 6 distinct one-shot stop gestures, one sprite, user-scoped preferences, i18n, gaze, card avoidance, viewport revalidation, reduced motion, focus, and inactive cancellation).");
+console.log("Concierge runtime behavior verification passed (system-admin gate, always-on-top floating display, zero-cost disclosure, 5 movement modes, move-stop cycle, 6 distinct one-shot stop gestures, one sprite, user-scoped preferences, i18n, gaze, card avoidance, scroll-stable viewport revalidation, reduced motion, focus, and inactive cancellation).");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

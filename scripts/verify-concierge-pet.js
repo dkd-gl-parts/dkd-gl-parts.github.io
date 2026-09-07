@@ -90,7 +90,7 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
   'has-no-safe-target',
   'return null;',
   'window.cancelAnimationFrame(pointerFrameRequest)',
-  'window.addEventListener("scroll", scheduleViewportSync',
+  'window.addEventListener("resize", scheduleViewportSync',
   'freezeMovement();',
   'is-revalidating',
   'layoutFrameWindow.requestAnimationFrame(syncViewportLayout)',
@@ -116,6 +116,7 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
 
 assert(!runtime.includes("var segments ="), "Active concierge must not chain multiple moves before stopping");
 assert(!runtime.includes("iterations: 2"), "Stop gestures must not repeat the same pose pair");
+assert(!runtime.includes('window.addEventListener("scroll", scheduleViewportSync'), "Document scrolling must not restart fixed-position concierge movement");
 
 requireFragment(runtime, 'if (!visible || isPresentationHidden() || settings.mode === "off")', "Off mode must stop before panel animation handling");
 requireFragment(runtime, 'settings.mode === "off" || root.classList.contains("has-no-safe-target")', "External states must not revive a concierge without a safe target");

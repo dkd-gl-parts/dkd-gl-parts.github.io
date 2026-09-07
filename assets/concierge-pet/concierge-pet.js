@@ -408,7 +408,6 @@
     window.addEventListener("dcats:concierge-state", onConciergeState);
     document.addEventListener("visibilitychange", syncRunningState);
     window.addEventListener("resize", scheduleViewportSync, { passive: true });
-    window.addEventListener("scroll", scheduleViewportSync, { passive: true, capture: true });
     if (reduceMotionQuery) {
       if (reduceMotionQuery.addEventListener) reduceMotionQuery.addEventListener("change", syncRunningState);
       else if (reduceMotionQuery.addListener) reduceMotionQuery.addListener(syncRunningState);
