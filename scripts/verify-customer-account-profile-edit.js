@@ -158,6 +158,19 @@ if (!customerManagedRemoval.includes('action: "remove_member"') ||
   throw new Error("customer administrators must be able to remove members through the protected server action");
 }
 
+const internalCustomerRemoval = app.slice(
+  app.indexOf("async function removeCustomerAccountMember"),
+  app.indexOf("async function transferCustomerAccountAdmin"),
+);
+if (!app.includes("customer-account-remove-button") ||
+    !app.includes('!isAdmin && status === "suspended"') ||
+    !internalCustomerRemoval.includes('action: "remove_member"') ||
+    !internalCustomerRemoval.includes('user.customer_role !== "member"') ||
+    !internalCustomerRemoval.includes('user.status !== "suspended"') ||
+    !internalCustomerRemoval.includes("await loadCustomerAccountUsers(customerId)")) {
+  throw new Error("internal customer managers must be able to remove suspended members through the protected server action");
+}
+
 [
   'id="customer-portal-all-btn"',
   'id="customer-catalog-reset-btn"',
