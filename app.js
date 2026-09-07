@@ -283,7 +283,7 @@ var TRANSLATIONS = {
     customer_order_address_search_preview: "社内登録画面では保存済みお届け先を検索しません。新しいお届け先を入力してください。",
     customer_order_address_selected: "お届け先を入力しました。",
     customer_order_postal_lookup: "住所検索",
-    customer_order_postal_lookup_hint: "郵便番号7桁から住所を入力します。",
+    customer_order_postal_lookup_hint: "端末内住所データを優先し、利用できない場合または該当がない場合のみ外部APIを使用します。",
     customer_order_postal_lookup_loading: "住所を検索しています。",
     customer_order_postal_lookup_invalid: "郵便番号を7桁で入力してください。",
     customer_order_postal_lookup_empty: "住所が見つかりませんでした。手入力してください。",
@@ -2166,7 +2166,7 @@ var TRANSLATIONS = {
     customer_order_address_search_preview: "Saved delivery addresses are not searched during internal entry. Enter a new address.",
     customer_order_address_selected: "The delivery address has been filled in.",
     customer_order_postal_lookup: "Find Address",
-    customer_order_postal_lookup_hint: "Fill the address from a 7-digit postal code.",
+    customer_order_postal_lookup_hint: "Local address data is checked first. The external API is used only when local data is unavailable or has no match.",
     customer_order_postal_lookup_loading: "Searching for the address.",
     customer_order_postal_lookup_invalid: "Enter a 7-digit postal code.",
     customer_order_postal_lookup_empty: "No address was found. Enter it manually.",
@@ -3994,7 +3994,7 @@ var TRANSLATIONS = {
     customer_order_address_search_preview: "内部登记时不会搜索已保存的收货地址。请输入新的收货地址。",
     customer_order_address_selected: "已填写收货地址。",
     customer_order_postal_lookup: "搜索地址",
-    customer_order_postal_lookup_hint: "根据7位邮政编码填写地址。",
+    customer_order_postal_lookup_hint: "优先查询本地地址数据，仅在本地数据不可用或无匹配结果时使用外部API。",
     customer_order_postal_lookup_loading: "正在搜索地址。",
     customer_order_postal_lookup_invalid: "请输入7位邮政编码。",
     customer_order_postal_lookup_empty: "未找到地址。请手动输入。",
@@ -5773,7 +5773,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.905";
+var APP_VERSION       = "v1.1.906";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -10663,17 +10663,17 @@ async function lookupCustomerOrderPostalCode() {
   try {
     var mode = canPreviewCustomerOrdering() ? customerOrderPostalLookupMode : "auto";
     customerOrderPostalRows = [];
-    if (mode !== "local") {
-      try {
-        customerOrderPostalRows = await lookupCustomerOrderPostalApi(postalCode);
-        completedLookup = true;
-      } catch (error) {
-        if (mode === "api") throw error;
-      }
-    }
-    if (!customerOrderPostalRows.length && mode !== "api") {
+    if (mode !== "api") {
       try {
         customerOrderPostalRows = await lookupCustomerOrderPostalLocal(postalCode);
+        completedLookup = true;
+      } catch (error) {
+        if (mode === "local") throw error;
+      }
+    }
+    if (!customerOrderPostalRows.length && mode !== "local") {
+      try {
+        customerOrderPostalRows = await lookupCustomerOrderPostalApi(postalCode);
         completedLookup = true;
       } catch (error) {
         if (!completedLookup) throw error;

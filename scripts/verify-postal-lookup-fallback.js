@@ -54,28 +54,45 @@ async function runLookup(options) {
 }
 
 (async () => {
-  const apiSuccess = await runLookup({ preview: true, mode: "auto" });
-  assert(apiSuccess.events.some((event) => event.type === "api"), "automatic lookup must try the API first");
-  assert(!apiSuccess.events.some((event) => event.type === "local"), "automatic lookup must not load local data after an API result");
-  assert(apiSuccess.events.some((event) => event.type === "applied" && event.row.lookup_source === "api"), "API result must be applied with its source");
+  assert(
+    source.includes("端末内住所データを優先し、利用できない場合または該当がない場合のみ外部APIを使用します。"),
+    "the postal lookup hint must disclose the local-first external fallback",
+  );
 
-  const fallback = await runLookup({ preview: true, mode: "auto", apiError: true });
-  assert(fallback.events.findIndex((event) => event.type === "api") < fallback.events.findIndex((event) => event.type === "local"), "automatic lookup must fall back from API to local data");
-  assert(fallback.events.some((event) => event.type === "applied" && event.row.lookup_source === "local"), "local fallback result must be applied");
+  const localSuccess = await runLookup({ preview: true, mode: "auto" });
+  assert(localSuccess.events.some((event) => event.type === "local"), "automatic lookup must try local data first");
+  assert(!localSuccess.events.some((event) => event.type === "api"), "automatic lookup must not disclose the postal code to the API after a local match");
+  assert(localSuccess.events.some((event) => event.type === "applied" && event.row.lookup_source === "local"), "local result must be applied with its source");
+
+  const fallback = await runLookup({ preview: true, mode: "auto", localEmpty: true });
+  assert(fallback.events.findIndex((event) => event.type === "local") < fallback.events.findIndex((event) => event.type === "api"), "automatic lookup must fall back from local data to the API");
+  assert(fallback.events.some((event) => event.type === "applied" && event.row.lookup_source === "api"), "API fallback result must be applied");
+
+  const unavailableFallback = await runLookup({ preview: true, mode: "auto", localError: true });
+  assert(unavailableFallback.events.findIndex((event) => event.type === "local") < unavailableFallback.events.findIndex((event) => event.type === "api"), "automatic lookup must retain API fallback when local data is unavailable");
+  assert(unavailableFallback.events.some((event) => event.type === "applied" && event.row.lookup_source === "api"), "API result must remain available when local data fails");
+
+  const noMatch = await runLookup({ preview: true, mode: "auto", localEmpty: true, apiEmpty: true });
+  assert(noMatch.events.findIndex((event) => event.type === "local") < noMatch.events.findIndex((event) => event.type === "api"), "an empty local result must still use the external fallback");
+  assert(!noMatch.events.some((event) => event.type === "applied"), "dual empty results must not apply an address");
+  assert(noMatch.events.some((event) => event.type === "status" && event.message === "customer_order_postal_lookup_empty" && event.isError), "dual empty results must keep manual entry available with a no-match status");
 
   const localOnly = await runLookup({ preview: true, mode: "local" });
   assert(!localOnly.events.some((event) => event.type === "api") && localOnly.events.some((event) => event.type === "local"), "local-only preview must bypass the API");
 
-  const production = await runLookup({ preview: false, mode: "local" });
-  assert(production.events.some((event) => event.type === "api") && !production.events.some((event) => event.type === "local"), "customer mode must force automatic API-first lookup");
+  const apiOnly = await runLookup({ preview: true, mode: "api" });
+  assert(apiOnly.events.some((event) => event.type === "api") && !apiOnly.events.some((event) => event.type === "local"), "API-only preview must bypass local data");
 
-  const failure = await runLookup({ preview: true, mode: "auto", apiError: true, localError: true });
+  const production = await runLookup({ preview: false, mode: "api" });
+  assert(production.events.some((event) => event.type === "local") && !production.events.some((event) => event.type === "api"), "customer mode must force automatic local-first lookup");
+
+  const failure = await runLookup({ preview: true, mode: "auto", localError: true, apiError: true });
   assert(failure.events.some((event) => event.type === "status" && event.message === "customer_order_postal_lookup_error" && event.isError), "dual lookup failure must keep manual entry available with an error status");
 
   const invalid = await runLookup({ preview: true, mode: "local", postalCode: "123" });
   assert(!invalid.events.some((event) => event.type === "api" || event.type === "local"), "invalid postal code must not perform a lookup");
 
-  console.log("postal lookup fallback guard passed");
+  console.log("postal local-first lookup and fallback guard passed");
 })().catch((error) => {
   console.error(error && error.stack ? error.stack : error);
   process.exit(1);
