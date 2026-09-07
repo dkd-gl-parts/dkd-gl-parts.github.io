@@ -192,6 +192,7 @@ const expectedAuxiliaryWorkflows = new Map([
             uses: setupNodeActionReference,
             with: { "node-version": 22 },
           },
+          { name: "Install workflow guard dependencies", run: targetInstallCommand },
           { name: "Download current Japan Post data", shell: "bash", run: postalDownloadCommand },
           {
             name: "Generate compact browser data",
@@ -1297,6 +1298,21 @@ function runSelfTests() {
     "postal checkout ref override",
     "postal-data-update.yml",
     (workflow) => { workflow.jobs.update.steps[0].with.ref = "main"; },
+  );
+  assertAuxiliaryWorkflowRejected(
+    "postal missing dependency install",
+    "postal-data-update.yml",
+    (workflow) => { workflow.jobs.update.steps.splice(2, 1); },
+  );
+  assertAuxiliaryWorkflowRejected(
+    "postal lifecycle scripts enabled",
+    "postal-data-update.yml",
+    (workflow) => { workflow.jobs.update.steps[2].run = "npm ci"; },
+  );
+  assertAuxiliaryWorkflowRejected(
+    "postal fail-soft dependency install",
+    "postal-data-update.yml",
+    (workflow) => { workflow.jobs.update.steps[2]["continue-on-error"] = true; },
   );
   assertAuxiliaryWorkflowRejected(
     "postal persisted checkout credentials",
