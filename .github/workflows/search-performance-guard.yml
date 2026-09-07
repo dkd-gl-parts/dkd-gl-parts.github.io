@@ -128,14 +128,14 @@ jobs:
           node-version: 22
       - name: Install workflow guard dependencies
         run: npm ci --ignore-scripts
+      - name: Verify workflow coverage and immutable action pins
+        run: node scripts/verify-workflow-coverage.js
       - name: Check JavaScript syntax
         run: |
           node --check app.js
           node --check sales-order-revision.js
           node --check install-app.js
           node --check assets/concierge-pet/concierge-pet.js
-      - name: Verify workflow coverage and immutable action pins
-        run: node scripts/verify-workflow-coverage.js
       - name: Verify sales order revision workflow
         run: node scripts/verify-sales-order-revision.js
       - name: Verify animated concierge pets
