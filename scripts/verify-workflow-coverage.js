@@ -71,6 +71,7 @@ const searchWorkflow = workflowSources.get("search-performance-guard.yml") || ""
   '"box-label-print.css"',
   '"label-print-window.js"',
   '"print.css"',
+  '".github/workflows/**"',
 ].forEach((requiredFilter) => {
   if (!searchWorkflow.includes(requiredFilter)) {
     violations.push(`search-performance-guard.yml pull_request paths must include ${requiredFilter}`);
