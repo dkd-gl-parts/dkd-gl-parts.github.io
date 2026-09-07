@@ -13,11 +13,17 @@ on:
       - "legacy-i18n.js"
       - "site.webmanifest"
       - "styles.css"
+      - "box-label-print.css"
+      - "label-print-window.js"
+      - "print.css"
       - "product-3d.js"
       - "product-3d-viewer.js"
       - "assets/concierge-pet/**"
+      - "desktop/concierge-companion/**"
+      - "scripts/verify-*.js"
       - "scripts/verify-concierge-pet.js"
       - "scripts/verify-concierge-pet-runtime.js"
+      - "scripts/verify-concierge-desktop.js"
       - "vendor/three/**"
       - "scripts/verify-product-3d-workflow.js"
       - "scripts/verify-app-version-assets.js"
@@ -27,6 +33,7 @@ on:
       - "scripts/verify-search-workload-guard.js"
       - "scripts/verify-component-catalog-recovery.js"
       - "scripts/verify-component-manual-add.js"
+      - "scripts/verify-component-screen-transition.js"
       - "scripts/verify-component-language-switching.js"
       - "scripts/verify-system-language-coverage.js"
       - "scripts/verify-component-reverse-lookup.js"
@@ -36,6 +43,9 @@ on:
       - "scripts/verify-customer-catalog-detail.js"
       - "scripts/verify-customer-category-visibility.js"
       - "scripts/verify-customer-access-development-default.js"
+      - "scripts/verify-customer-account-profile-edit.js"
+      - "scripts/verify-internal-account-issuance.js"
+      - "scripts/verify-password-reset-permission-overview.js"
       - "scripts/verify-customer-price-list.js"
       - "scripts/verify-customer-order-workflow.js"
       - "scripts/verify-customer-order-vehicle-information.js"
@@ -50,6 +60,7 @@ on:
       - "scripts/verify-customer-order-batch-accept.js"
       - "scripts/verify-sales-order-dashboard.js"
       - "scripts/verify-sales-order-detail-usability.js"
+      - "scripts/verify-sales-management-permissions.js"
       - "scripts/verify-customer-order-in-house-cancel.js"
       - "scripts/verify-sales-order-price-adjustment.js"
       - "scripts/verify-sales-accounting-export.js"
@@ -69,16 +80,20 @@ on:
       - "scripts/verify-sales-pricing-reference-prices.js"
       - "scripts/verify-sales-pricing-layout.js"
       - "scripts/verify-core-return-policy.js"
+      - "scripts/verify-core-return-management.js"
       - "scripts/verify-sales-detail-workspace.js"
       - "scripts/verify-product-shipping-estimate.js"
       - "scripts/verify-product-management-auto-code.js"
       - "scripts/verify-product-part-number-validation.js"
       - "scripts/verify-finished-product-shipments.js"
+      - "scripts/verify-finished-product-serials.js"
+      - "scripts/verify-finished-box-labels.js"
       - "scripts/verify-category-warranty-policy.js"
       - "scripts/verify-customer-order-compatible-serial-dispatch.js"
       - "scripts/verify-production-image-thumbnails-by-kind.js"
       - "scripts/verify-production-workspace-layout.js"
       - "scripts/verify-production-component-summary.js"
+      - "scripts/verify-shipping-rate-management.js"
       - "scripts/verify-production-stamp-pairs.js"
       - "scripts/verify-image-icon-consistency.js"
       - "assets/icons/image.svg"
@@ -105,9 +120,9 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
       - name: Check JavaScript syntax
@@ -117,10 +132,14 @@ jobs:
           node scripts/verify-sales-order-revision.js
           node --check install-app.js
           node --check assets/concierge-pet/concierge-pet.js
+          node --check scripts/verify-workflow-coverage.js
+      - name: Verify workflow coverage and immutable action pins
+        run: node scripts/verify-workflow-coverage.js
       - name: Verify animated concierge pets
         run: |
           node scripts/verify-concierge-pet.js
           node scripts/verify-concierge-pet-runtime.js
+          node scripts/verify-concierge-desktop.js
       - name: Verify release asset versions
         run: node scripts/verify-app-version-assets.js
       - name: Verify Edge-compatible automatic updates
@@ -135,6 +154,8 @@ jobs:
         run: node scripts/verify-component-catalog-recovery.js
       - name: Verify manual component add
         run: node scripts/verify-component-manual-add.js
+      - name: Verify component screen transition
+        run: node scripts/verify-component-screen-transition.js
       - name: Verify component language switching
         run: node scripts/verify-component-language-switching.js
       - name: Verify system-wide language coverage
@@ -153,6 +174,12 @@ jobs:
         run: node scripts/verify-customer-category-visibility.js
       - name: Verify customer management development default
         run: node scripts/verify-customer-access-development-default.js
+      - name: Verify customer account profile editing
+        run: node scripts/verify-customer-account-profile-edit.js
+      - name: Verify internal account issuance
+        run: node scripts/verify-internal-account-issuance.js
+      - name: Verify password-reset permission overview
+        run: node scripts/verify-password-reset-permission-overview.js
       - name: Verify customer price list
         run: node scripts/verify-customer-price-list.js
       - name: Verify customer order and manual B2 workflow
@@ -183,6 +210,8 @@ jobs:
         run: node scripts/verify-sales-order-dashboard.js
       - name: Verify sales order detail usability
         run: node scripts/verify-sales-order-detail-usability.js
+      - name: Verify sales management permissions
+        run: node scripts/verify-sales-management-permissions.js
       - name: Verify sales order operations redesign
         run: node scripts/verify-sales-order-operations-redesign.js
       - name: Verify customer order in-house shipment cancellation
@@ -215,6 +244,8 @@ jobs:
         run: node scripts/verify-sales-pricing-layout.js
       - name: Verify core return policy
         run: node scripts/verify-core-return-policy.js
+      - name: Verify core return management
+        run: node scripts/verify-core-return-management.js
       - name: Verify sales detail workspace
         run: node scripts/verify-sales-detail-workspace.js
       - name: Verify product shipping estimate
@@ -225,6 +256,10 @@ jobs:
         run: node scripts/verify-product-part-number-validation.js
       - name: Verify finished-product shipment layout and workflow
         run: node scripts/verify-finished-product-shipments.js
+      - name: Verify finished-product serial issuance
+        run: node scripts/verify-finished-product-serials.js
+      - name: Verify finished-box labels
+        run: node scripts/verify-finished-box-labels.js
       - name: Verify category warranty and replacement inheritance
         run: node scripts/verify-category-warranty-policy.js
       - name: Verify compatible-product serial dispatch
@@ -235,6 +270,8 @@ jobs:
         run: node scripts/verify-production-workspace-layout.js
       - name: Verify production component summary
         run: node scripts/verify-production-component-summary.js
+      - name: Verify shipping-rate management
+        run: node scripts/verify-shipping-rate-management.js
       - name: Verify compatible core stock in production
         run: node scripts/verify-production-compatible-core-stock.js
       - name: Verify production F/R stamp-pair management
@@ -270,9 +307,9 @@ jobs:
       url: https://dcats.daiko-denki.co.jp
     steps:
       - name: Check out verified commit
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
       - name: Confirm Cloudflare credentials
@@ -289,7 +326,7 @@ jobs:
       - name: Verify security response headers
         run: node scripts/verify-security-response-headers.js dist
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3.15.0
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
