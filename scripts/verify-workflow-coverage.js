@@ -170,6 +170,15 @@ function validateFailHard(container, scope, violations) {
   }
 }
 
+function validateTargetRuntime(job, scope, violations) {
+  if (job["runs-on"] !== "ubuntu-latest") {
+    violations.push(`${scope}.runs-on must be exactly ubuntu-latest`);
+  }
+  if (hasOwn(job, "container")) {
+    violations.push(`${scope}.container must be absent`);
+  }
+}
+
 function collectTargetVerifierCoverage(workflow, workflowFile, violations) {
   validatePullRequestTrigger(workflow, workflowFile, violations);
   validateRunDefaults(workflow, workflowFile, violations);
@@ -187,6 +196,7 @@ function collectTargetVerifierCoverage(workflow, workflowFile, violations) {
 
   const jobScope = `${workflowFile}.jobs.${targetJobName}`;
   validateFailHard(targetJob, jobScope, violations);
+  validateTargetRuntime(targetJob, jobScope, violations);
   validateRunDefaults(targetJob, jobScope, violations);
   validateEnvironment(targetJob, jobScope, violations);
 
@@ -285,9 +295,12 @@ function validateExternalActionReference(actionReference, location, violations) 
     violations.push(`${location} must be a string`);
     return null;
   }
-  if (actionReference.startsWith("./")) return null;
   if (actionReference !== actionReference.trim()) {
     violations.push(`${location} must not contain surrounding whitespace`);
+    return null;
+  }
+  if (actionReference.startsWith("./")) {
+    violations.push(`${location} must not use a repository-local action or reusable workflow: ${actionReference}`);
     return null;
   }
   const match = actionReference.match(/^([^@\s]+)@([0-9a-f]{40})$/);
@@ -313,7 +326,6 @@ function validateActionInventory(workflows, violations) {
   const counts = new Map([...approvedActionReferences.keys()].map((reference) => [reference, 0]));
   let externalActionUses = 0;
   collectWorkflowActionReferences(workflows, violations).forEach(({ actionReference, location }) => {
-    if (typeof actionReference === "string" && actionReference.startsWith("./")) return;
     externalActionUses += 1;
     const normalizedReference = validateExternalActionReference(actionReference, location, violations);
     if (!normalizedReference) return;
@@ -345,6 +357,7 @@ function makeTargetFixture(options = {}) {
   const pullRequestProperties = options.pullRequestProperties || [];
   const workflowProperties = options.workflowProperties || [];
   const jobProperties = options.jobProperties || [];
+  const runsOn = options.runsOn || "ubuntu-latest";
   const steps = options.steps || ["      - run: node scripts/verify-real.js"];
   const otherJobs = options.otherJobs || [];
   return [
@@ -357,7 +370,7 @@ function makeTargetFixture(options = {}) {
     ...workflowProperties,
     "jobs:",
     `  "${targetJobName}":`,
-    "    runs-on: ubuntu-latest",
+    `    runs-on: ${runsOn}`,
     ...jobProperties,
     "    steps:",
     ...steps,
@@ -460,6 +473,12 @@ function runSelfTests() {
   assertTargetRejected("job continue-on-error expression", makeTargetFixture({
     jobProperties: ["    continue-on-error: \"${{ true }}\""],
   }), ".continue-on-error must be absent or boolean false");
+  assertTargetRejected("self-hosted target runner", makeTargetFixture({
+    runsOn: "self-hosted",
+  }), ".runs-on must be exactly ubuntu-latest");
+  assertTargetRejected("target job container", makeTargetFixture({
+    jobProperties: ["    container: { image: node:22, env: { PATH: /tmp/bin } }"],
+  }), ".container must be absent");
   assertTargetRejected("workflow default shell", makeTargetFixture({
     workflowProperties: ["defaults:", "  run: { shell: bash }"],
   }), ".defaults.run.shell must be absent");
@@ -539,6 +558,22 @@ function runSelfTests() {
     );
   });
 
+  [
+    "./.github/actions/proxy",
+    ".//.github/actions/proxy",
+    "./.github/actions/../actions/proxy",
+    " ./.github/actions/proxy",
+    ".\\.github\\actions\\proxy",
+    "../.github/actions/proxy",
+    "\uff0e\uff0f.github/actions/proxy",
+  ].forEach((reference) => {
+    const problems = [];
+    assertSelfTest(
+      validateExternalActionReference(reference, "self-test", problems) === null && problems.length > 0,
+      `repository-local path variant ${reference} must be rejected`,
+    );
+  });
+
   const unknownReference = `unknown/action@${"a".repeat(40)}`;
   const structuralSource = [
     `x-action: &unknown-action ${unknownReference}`,
@@ -569,6 +604,30 @@ function runSelfTests() {
       unknownProblems.length > 0,
     "anchored unknown job-level action was not rejected",
   );
+
+  const localStructuralSource = [
+    "x-local-action: &local-action ./.github/actions/proxy",
+    "jobs:",
+    "  reusable:",
+    "    uses: *local-action",
+    "  flow-step: { steps: [ { \"uses\" : *local-action } ] }",
+  ].join("\n");
+  const localStructuralWorkflow = parseWorkflowSource(localStructuralSource, "local-structural.yml");
+  const localStructureProblems = [];
+  const localReferences = collectWorkflowActionReferences(
+    new Map([["local-structural.yml", localStructuralWorkflow]]),
+    localStructureProblems,
+  );
+  assertSelfTest(localStructureProblems.length === 0, "local-action structural fixture was invalid");
+  assertSelfTest(localReferences.length === 2, "aliased local uses were not structurally extracted");
+  localReferences.forEach(({ actionReference, location }) => {
+    const problems = [];
+    assertSelfTest(
+      validateExternalActionReference(actionReference, location, problems) === null &&
+        problems.some((problem) => problem.includes("must not use a repository-local action")),
+      `structural local uses escaped rejection at ${location}`,
+    );
+  });
 
   const aliasBomb = `value: &value [scalar]\nexpanded: [${Array(25).fill("*value").join(", ")}]`;
   let aliasLimitApplied = false;
