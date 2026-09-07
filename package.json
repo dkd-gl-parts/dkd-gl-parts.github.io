@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "devDependencies": {
+    "acorn": "8.18.0",
     "yaml": "2.9.0"
   }
 }
