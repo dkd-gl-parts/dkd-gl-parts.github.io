@@ -60,12 +60,14 @@ const approvedActionReferences = new Map([
 ]);
 
 const requiredPullRequestPaths = [
+  ".gitattributes",
   "scripts/verify-*.js",
   "desktop/concierge-companion/**",
   "box-label-print.css",
   "label-print-window.js",
   "print.css",
   "package*.json",
+  "vendor/**",
   ".github/workflows/**",
 ];
 const reviewedWorkflowFiles = [
@@ -83,6 +85,7 @@ const forbiddenPullRequestKeys = [
 
 const securityHeaderPaths = [
   "_headers",
+  ".gitattributes",
   ".gitignore",
   "assets/icons/**",
   "assets/concierge-pet/**",
@@ -92,6 +95,7 @@ const securityHeaderPaths = [
   "index.html",
   "install-app.js",
   "site.webmanifest",
+  "vendor/**",
   "scripts/build-static-site.js",
   "scripts/verify-install-app.js",
   "scripts/verify-concierge-pet.js",
@@ -1345,6 +1349,9 @@ function runSelfTests() {
   assertTargetRejected("missing package path", makeTargetFixture({
     pathEntries: requiredPullRequestPaths.filter((entry) => entry !== "package*.json"),
   }), ".on.pull_request.paths must include package*.json");
+  assertTargetRejected("missing vendor path", makeTargetFixture({
+    pathEntries: requiredPullRequestPaths.filter((entry) => entry !== "vendor/**"),
+  }), ".on.pull_request.paths must include vendor/**");
 
   const additionallyIndentedSource = [
     "name: Search performance guard",
