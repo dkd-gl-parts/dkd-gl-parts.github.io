@@ -44,31 +44,62 @@ function extractJobLines(source, jobName) {
   return lines.slice(jobIndex + 1, jobEnd);
 }
 
-function extractRunCommands(jobLines) {
+function extractSteps(jobLines) {
   const stepsIndex = jobLines.findIndex((line) => /^    steps:\s*(?:#.*)?$/.test(line));
   if (stepsIndex < 0) throw new Error(`${targetJobName} is missing its steps sequence`);
 
-  const commands = [];
+  const steps = [];
+  let currentStep = null;
   for (let index = stepsIndex + 1; index < jobLines.length; index += 1) {
     const line = jobLines[index];
-    if (line.trimStart().startsWith("#")) continue;
-
-    const runMatch = line.match(/^(\s*)(?:-\s+)?run:\s*(.*?)\s*$/);
-    if (!runMatch || runMatch[1].length < 6) continue;
-
-    const runIndent = runMatch[1].length;
-    const runValue = runMatch[2];
-    if (!/^\|[+-]?$/.test(runValue)) {
-      if (runValue && !/^[>|][+-]?$/.test(runValue)) commands.push(runValue);
+    if (/^ {6}-\s+/.test(line)) {
+      if (currentStep) steps.push(currentStep);
+      currentStep = [line];
       continue;
     }
+    if (!currentStep) continue;
+    if (line.trim() && indentation(line) <= 4) break;
+    currentStep.push(line);
+  }
+  if (currentStep) steps.push(currentStep);
+  return steps;
+}
 
-    for (let blockIndex = index + 1; blockIndex < jobLines.length; blockIndex += 1) {
-      const blockLine = jobLines[blockIndex];
-      if (blockLine.trim() && indentation(blockLine) <= runIndent) break;
-      if (blockLine.trim()) commands.push(blockLine.slice(runIndent + 2));
-      index = blockIndex;
-    }
+function stepProperty(stepLines, propertyName) {
+  const escapedPropertyName = propertyName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const firstLinePattern = new RegExp(`^ {6}-\\s+${escapedPropertyName}\\s*:\\s*(.*?)\\s*$`);
+  const propertyPattern = new RegExp(`^ {8}${escapedPropertyName}\\s*:\\s*(.*?)\\s*$`);
+  for (let index = 0; index < stepLines.length; index += 1) {
+    const match = stepLines[index].match(index === 0 ? firstLinePattern : propertyPattern);
+    if (match) return { present: true, value: match[1] };
+  }
+  return { present: false, value: "" };
+}
+
+function extractRunCommands(stepLines) {
+  let runIndex = -1;
+  let runIndent = -1;
+  let runValue = "";
+  for (let index = 0; index < stepLines.length; index += 1) {
+    const runMatch = stepLines[index].match(index === 0
+      ? /^ {6}-\s+run\s*:\s*(.*?)\s*$/
+      : /^ {8}run\s*:\s*(.*?)\s*$/);
+    if (!runMatch) continue;
+    runIndex = index;
+    runIndent = index === 0 ? 6 : 8;
+    runValue = runMatch[1];
+    break;
+  }
+  if (runIndex < 0) return [];
+  if (!/^\|[+-]?$/.test(runValue)) {
+    return runValue && !/^[>|][+-]?$/.test(runValue) ? [runValue] : [];
+  }
+
+  const commands = [];
+  for (let index = runIndex + 1; index < stepLines.length; index += 1) {
+    const blockLine = stepLines[index];
+    if (blockLine.trim() && indentation(blockLine) <= runIndent) break;
+    if (blockLine.trim()) commands.push(blockLine.slice(runIndent + 2));
   }
   return commands;
 }
@@ -80,11 +111,35 @@ function standaloneVerifierPath(command) {
   return match ? match[2] : null;
 }
 
-function collectExecutedVerifiers(workflowSources) {
+function collectVerifierCoverage(workflowSources) {
   const targetSource = workflowSources.get(targetWorkflowName);
   if (!targetSource) throw new Error(`${targetWorkflowName} is missing`);
-  const commands = extractRunCommands(extractJobLines(targetSource, targetJobName));
-  return new Set(commands.map(standaloneVerifierPath).filter(Boolean));
+  const jobLines = extractJobLines(targetSource, targetJobName);
+  const invokedVerifiers = new Set();
+  const violations = [];
+
+  if (jobLines.some((line) => /^    if\s*:/.test(line))) {
+    violations.push(`${targetJobName} must not declare a job-level if condition`);
+  }
+
+  extractSteps(jobLines).forEach((stepLines, index) => {
+    const verifierPaths = extractRunCommands(stepLines).map(standaloneVerifierPath).filter(Boolean);
+    if (!verifierPaths.length) return;
+
+    const ifProperty = stepProperty(stepLines, "if");
+    const continueOnError = stepProperty(stepLines, "continue-on-error");
+    if (ifProperty.present) {
+      violations.push(`${targetJobName} verifier step ${index + 1} must not declare if: ${ifProperty.value}`);
+    }
+    if (continueOnError.present && continueOnError.value.toLowerCase() !== "false") {
+      violations.push(
+        `${targetJobName} verifier step ${index + 1} must fail hard, not continue-on-error: ${continueOnError.value}`,
+      );
+    }
+    if (ifProperty.present || (continueOnError.present && continueOnError.value.toLowerCase() !== "false")) return;
+    verifierPaths.forEach((verifierPath) => invokedVerifiers.add(verifierPath));
+  });
+  return { invokedVerifiers, violations };
 }
 
 function missingVerifierPaths(verifierPaths, invokedVerifiers) {
@@ -134,6 +189,58 @@ function validateExternalActionReference(actionReference, location, violations) 
   return normalizedReference;
 }
 
+function extractWorkflowActionReferences(source, workflowFile) {
+  const lines = source.split(/\r?\n/);
+  const jobsIndex = lines.findIndex((line) => /^jobs\s*:\s*(?:#.*)?$/.test(line));
+  if (jobsIndex < 0) throw new Error(`${workflowFile} is missing the jobs mapping`);
+
+  const references = [];
+  let insideJob = false;
+  let insideSteps = false;
+  for (let index = jobsIndex + 1; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (!line.trim() || line.trimStart().startsWith("#")) continue;
+    const lineIndent = indentation(line);
+    if (lineIndent === 0) break;
+
+    if (/^ {2}[A-Za-z0-9_-]+\s*:\s*(?:#.*)?$/.test(line)) {
+      insideJob = true;
+      insideSteps = false;
+      continue;
+    }
+    if (!insideJob) continue;
+
+    const jobUsesMatch = line.match(
+      /^ {4}uses\s*:\s*(?:"([^"]+)"|'([^']+)'|([^\s#]+))\s*(?:#.*)?$/,
+    );
+    if (jobUsesMatch) {
+      references.push({
+        actionReference: jobUsesMatch[1] || jobUsesMatch[2] || jobUsesMatch[3],
+        location: `${workflowFile}:${index + 1}`,
+      });
+      insideSteps = false;
+      continue;
+    }
+
+    if (lineIndent === 4) {
+      insideSteps = /^ {4}steps\s*:\s*(?:#.*)?$/.test(line);
+      continue;
+    }
+    if (!insideSteps) continue;
+
+    const stepUsesMatch = line.match(
+      /^(?: {6}-\s*| {8})uses\s*:\s*(?:"([^"]+)"|'([^']+)'|([^\s#]+))\s*(?:#.*)?$/,
+    );
+    if (stepUsesMatch) {
+      references.push({
+        actionReference: stepUsesMatch[1] || stepUsesMatch[2] || stepUsesMatch[3],
+        location: `${workflowFile}:${index + 1}`,
+      });
+    }
+  }
+  return references;
+}
+
 function runSelfTests() {
   const fixtureSources = new Map([
     [targetWorkflowName, [
@@ -145,6 +252,12 @@ function runSelfTests() {
       "          echo node scripts/verify-echo-decoy.js",
       "          node scripts/verify-real.js",
       "      - run: node scripts/verify-inline.js --fixture",
+      "      - name: conditional verifier decoy",
+      "        if: ${{ false }}",
+      "        run: node scripts/verify-if-decoy.js",
+      "      - name: fail-soft verifier decoy",
+      "        continue-on-error: true",
+      "        run: node scripts/verify-continue-decoy.js",
       "  unrelated-job:",
       "    steps:",
       "      - run: node scripts/verify-other-job-decoy.js",
@@ -156,13 +269,17 @@ function runSelfTests() {
       "      - run: node scripts/verify-other-workflow-decoy.js",
     ].join("\n")],
   ]);
-  const invoked = collectExecutedVerifiers(fixtureSources);
+  const coverage = collectVerifierCoverage(fixtureSources);
+  const invoked = coverage.invokedVerifiers;
   assertSelfTest(invoked.size === 2, "only two real target-job commands must be counted");
+  assertSelfTest(coverage.violations.length === 2, "conditional and fail-soft verifier steps must fail");
   assertSelfTest(invoked.has("scripts/verify-real.js"), "literal-block node command was not counted");
   assertSelfTest(invoked.has("scripts/verify-inline.js"), "inline node command was not counted");
   [
     "scripts/verify-name-decoy.js",
     "scripts/verify-echo-decoy.js",
+    "scripts/verify-if-decoy.js",
+    "scripts/verify-continue-decoy.js",
     "scripts/verify-other-job-decoy.js",
     "scripts/verify-other-workflow-decoy.js",
   ].forEach((decoy) => assertSelfTest(!invoked.has(decoy), `${decoy} was incorrectly counted`));
@@ -190,6 +307,32 @@ function runSelfTests() {
       `${reference} must be rejected`,
     );
   });
+
+  const structuralActionFixture = [
+    "jobs:",
+    "  reusable:",
+    `    uses : unknown/action@${"a".repeat(40)}`,
+    "  steps-job:",
+    "    steps:",
+    "      - name: run-block action decoy",
+    "        run: |",
+    "          uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+    "      - uses : actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+  ].join("\n");
+  const actionReferences = extractWorkflowActionReferences(structuralActionFixture, "self-test.yml");
+  assertSelfTest(actionReferences.length === 2, "only structural job and step uses keys must be extracted");
+  assertSelfTest(
+    !actionReferences.some((record) => record.actionReference.startsWith("actions/setup-node@")),
+    "a run-block uses decoy must not be extracted",
+  );
+  const unknownUses = actionReferences.find((record) => record.actionReference.startsWith("unknown/action@"));
+  const unknownUsesProblems = [];
+  assertSelfTest(
+    unknownUses &&
+      validateExternalActionReference(unknownUses.actionReference, unknownUses.location, unknownUsesProblems) === null &&
+      unknownUsesProblems.length > 0,
+    "an unknown action with whitespace before the colon must be rejected",
+  );
 }
 
 runSelfTests();
@@ -209,7 +352,9 @@ const workflowSources = new Map(
 );
 
 const violations = [];
-const invokedVerifiers = collectExecutedVerifiers(workflowSources);
+const coverage = collectVerifierCoverage(workflowSources);
+const invokedVerifiers = coverage.invokedVerifiers;
+violations.push(...coverage.violations);
 const missingVerifiers = missingVerifierPaths(verifierPaths, invokedVerifiers);
 const unknownVerifiers = [...invokedVerifiers].filter((verifierPath) => !verifierPaths.includes(verifierPath));
 if (missingVerifiers.length) {
@@ -237,14 +382,10 @@ const pullRequestPaths = extractPullRequestPaths(targetWorkflow);
 const actionUseCounts = new Map([...approvedActionReferences.keys()].map((reference) => [reference, 0]));
 let externalActionUses = 0;
 for (const [workflowFile, source] of workflowSources) {
-  source.split(/\r?\n/).forEach((line, index) => {
-    if (line.trimStart().startsWith("#")) return;
-    const usesMatch = line.match(/^\s*(?:-\s*)?uses:\s*([^\s#]+)/);
-    if (!usesMatch) return;
-
+  extractWorkflowActionReferences(source, workflowFile).forEach(({ actionReference, location }) => {
     const normalizedReference = validateExternalActionReference(
-      usesMatch[1],
-      `${workflowFile}:${index + 1}`,
+      actionReference,
+      location,
       violations,
     );
     if (!normalizedReference) return;
