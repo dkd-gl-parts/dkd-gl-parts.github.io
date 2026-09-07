@@ -60,6 +60,7 @@ const approvedActionReferences = new Map([
 ]);
 
 const requiredPullRequestPaths = [
+  ".gitattributes",
   "scripts/verify-*.js",
   "desktop/concierge-companion/**",
   "box-label-print.css",
@@ -83,6 +84,7 @@ const forbiddenPullRequestKeys = [
 
 const securityHeaderPaths = [
   "_headers",
+  ".gitattributes",
   ".gitignore",
   "assets/icons/**",
   "assets/concierge-pet/**",

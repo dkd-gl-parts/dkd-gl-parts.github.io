@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "_headers"
+      - ".gitattributes"
       - ".gitignore"
       - "assets/icons/**"
       - "assets/concierge-pet/**"
@@ -23,6 +24,7 @@ on:
   pull_request:
     paths:
       - "_headers"
+      - ".gitattributes"
       - ".gitignore"
       - "assets/icons/**"
       - "assets/concierge-pet/**"

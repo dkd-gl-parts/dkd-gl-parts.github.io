@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - "index.html"
+      - ".gitattributes"
       - "app.js"
       - "sales-order-revision.js"
       - "install-app.js"

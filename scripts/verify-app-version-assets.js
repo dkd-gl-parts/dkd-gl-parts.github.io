@@ -7,6 +7,7 @@ const root = path.resolve(__dirname, "..");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const headers = fs.readFileSync(path.join(root, "_headers"), "utf8");
+const gitAttributes = fs.readFileSync(path.join(root, ".gitattributes"), "utf8");
 const styles = fs.readFileSync(path.join(root, "styles.css"), "utf8");
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "site.webmanifest"), "utf8"));
 
@@ -50,6 +51,10 @@ const reviewedBrowserAssets = new Map([
 for (const [asset, contract] of reviewedBrowserAssets) {
   const assetPath = path.join(root, asset);
   if (!fs.existsSync(assetPath)) throw new Error("Self-hosted browser asset is missing: " + asset);
+  const attributeContract = "/" + asset + " -text -diff";
+  if (!gitAttributes.split(/\r?\n/).includes(attributeContract)) {
+    throw new Error("Self-hosted browser asset must preserve exact bytes in Git: " + asset);
+  }
   const digest = "sha384-" + crypto.createHash("sha384").update(fs.readFileSync(assetPath)).digest("base64");
   if (digest !== contract.integrity) {
     throw new Error("Self-hosted browser asset digest mismatch: " + asset + " (" + digest + ")");
