@@ -66,6 +66,7 @@ class FakeElement {
     this.isConnected = false;
     this.transformPoint = null;
     this.customRect = null;
+    this.capturedPointerId = null;
   }
   get className() { return this.classList.toString(); }
   set className(value) { this.classList.set(value); }
@@ -131,6 +132,9 @@ class FakeElement {
   }
   getClientRects() { return isRendered(this) ? [this.getBoundingClientRect()] : []; }
   animate(keyframes, options) { return new FakeAnimation(this, keyframes, options); }
+  setPointerCapture(pointerId) { this.capturedPointerId = pointerId; }
+  hasPointerCapture(pointerId) { return this.capturedPointerId === pointerId; }
+  releasePointerCapture(pointerId) { if (this.capturedPointerId === pointerId) this.capturedPointerId = null; }
   focus() { this.ownerDocument.activeElement = this; }
   closest() { return null; }
 }
@@ -377,6 +381,7 @@ assert(byClass("dcats-concierge-sprite").length === 1, "Runtime must create exac
 const root = byClass("dcats-concierge")[0];
 const mover = byClass("dcats-concierge-mover")[0];
 const sprite = byClass("dcats-concierge-sprite")[0];
+const hitTarget = byClass("dcats-concierge-hit-target")[0];
 const launcher = byClass("dcats-concierge-launcher")[0];
 const panel = byClass("dcats-concierge-panel")[0];
 const panelClose = byClass("dcats-concierge-panel-close")[0];
@@ -432,7 +437,48 @@ await api.toggleFloating();
 assert(!api.isFloating() && root.ownerDocument === documentObject, "Concierge did not return to the D-CATS document");
 assert(firstFloatingWindow.closed && !root.classList.contains("is-floating"), "Floating window did not close cleanly");
 
+api.setMode("fixed");
+const dragStart = mover.getBoundingClientRect();
+const pointerId = 17;
+dispatch(hitTarget.listeners, "pointerdown", {
+  target: hitTarget,
+  pointerId,
+  button: 0,
+  isPrimary: true,
+  clientX: dragStart.left + dragStart.width / 2,
+  clientY: dragStart.top + dragStart.height / 2,
+  preventDefault() {},
+  stopPropagation() {}
+});
+assert(root.classList.contains("is-dragging") && hitTarget.hasPointerCapture(pointerId), "Concierge did not capture the primary pointer for dragging");
+dispatch(documentObject.listeners, "pointermove", {
+  target: hitTarget,
+  pointerId,
+  clientX: 5000,
+  clientY: -500,
+  preventDefault() {},
+  stopPropagation() {}
+});
+const draggedRect = mover.getBoundingClientRect();
+assert(draggedRect.left >= 8 && draggedRect.top >= 46, "Dragging allowed the concierge to disappear outside the viewport");
+assert(draggedRect.left !== dragStart.left || draggedRect.top !== dragStart.top, "Concierge did not follow the drag pointer");
+dispatch(documentObject.listeners, "pointerup", {
+  target: hitTarget,
+  pointerId,
+  clientX: 5000,
+  clientY: -500,
+  preventDefault() {},
+  stopPropagation() {}
+});
+assert(!root.hidden && !root.classList.contains("is-dragging") && !hitTarget.hasPointerCapture(pointerId), "Concierge disappeared or retained pointer capture after dragging");
+assert(api.getSettings().mode === "fixed", "Dragging changed the selected movement mode");
+const droppedRect = mover.getBoundingClientRect();
+assert(droppedRect.left === draggedRect.left && droppedRect.top === draggedRect.top, "Fixed mode did not keep the concierge at the dropped position");
+dispatch(hitTarget.listeners, "click", { target: hitTarget });
+assert(panel.hidden, "A completed drag was mistaken for a click and opened settings");
 sandboxMath.random = () => 0;
+api.setMode("active");
+
 documentObject.hidden = false;
 dispatch(documentObject.listeners, "visibilitychange");
 assert(animationRowPercent(lastAnimationFor(sprite)) === 20, "Suzuto did not face left for leftward travel using his approved atlas rows");
@@ -498,6 +544,39 @@ api.setMode("active");
 dispatch(documentObject.listeners, "visibilitychange");
 assert(animations.some((animation) => animation.owner === mover && Number(animation.options.duration) >= 1250), "Active mode did not start walking");
 assert(liveInfiniteAnimations().some((animation) => animation.owner === sprite), "Active mode did not animate the selected sprite");
+
+const activeDragStart = mover.getBoundingClientRect();
+const activePointerId = 23;
+dispatch(hitTarget.listeners, "pointerdown", {
+  target: hitTarget,
+  pointerId: activePointerId,
+  button: 0,
+  isPrimary: true,
+  clientX: activeDragStart.left + activeDragStart.width / 2,
+  clientY: activeDragStart.top + activeDragStart.height / 2,
+  preventDefault() {},
+  stopPropagation() {}
+});
+dispatch(documentObject.listeners, "pointermove", {
+  target: activeScreen,
+  pointerId: activePointerId,
+  clientX: activeDragStart.left + activeDragStart.width / 2 + 48,
+  clientY: activeDragStart.top + activeDragStart.height / 2 + 36,
+  preventDefault() {},
+  stopPropagation() {}
+});
+dispatch(documentObject.listeners, "pointerup", {
+  target: activeScreen,
+  pointerId: activePointerId,
+  clientX: activeDragStart.left + activeDragStart.width / 2 + 48,
+  clientY: activeDragStart.top + activeDragStart.height / 2 + 36,
+  preventDefault() {},
+  stopPropagation() {}
+});
+assert(!root.hidden && !root.classList.contains("is-dragging") && api.getSettings().mode === "active", "Active-mode drag hid the concierge or changed its mode");
+runTimerWithDelay(900);
+await new Promise((resolve) => setImmediate(resolve));
+assert(animations.some((animation) => animation.owner === mover && Number(animation.options.duration) >= 1250 && !animation.canceled), "Active mode did not resume walking after the drag pause");
 
 const gazeRect = mover.getBoundingClientRect();
 dispatch(documentObject.listeners, "pointermove", {
@@ -610,7 +689,7 @@ activeScreen.id = "screen-login";
 notifyObservers();
 assert(root.hidden, "Concierge must be hidden on the login screen");
 
-console.log("Concierge runtime behavior verification passed (system-admin gate, always-on-top floating display, zero-cost disclosure, 5 movement modes, move-stop cycle, 6 distinct one-shot stop gestures, one sprite, user-scoped preferences, i18n, gaze, card avoidance, scroll-stable viewport revalidation, reduced motion, focus, and inactive cancellation).");
+console.log("Concierge runtime behavior verification passed (system-admin gate, always-on-top floating display, zero-cost disclosure, pointer-captured drag and viewport clamping, 5 movement modes, move-stop cycle, 6 distinct one-shot stop gestures, one sprite, user-scoped preferences, i18n, gaze, card avoidance, scroll-stable viewport revalidation, reduced motion, focus, and inactive cancellation).");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

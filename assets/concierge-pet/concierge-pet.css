@@ -37,11 +37,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.903");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.904");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.903");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.904");
 }
 
 .dcats-concierge-hit-target {
@@ -50,9 +50,15 @@
   border: 0;
   border-radius: 48% 48% 42% 42%;
   background: transparent;
-  cursor: pointer;
+  cursor: grab;
   pointer-events: auto;
-  touch-action: manipulation;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.dcats-concierge.is-dragging .dcats-concierge-hit-target {
+  cursor: grabbing;
 }
 
 .dcats-concierge-hit-target:focus-visible {

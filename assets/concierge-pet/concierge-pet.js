@@ -197,6 +197,8 @@
   var externalStateUntil = 0;
   var lastInteractionAt = 0;
   var stopGestureIndex = 0;
+  var dragState = null;
+  var suppressHitTargetClickUntil = 0;
 
   function activeLanguage() {
     var lang = String(document.documentElement.lang || "ja").toLowerCase();
@@ -388,10 +390,14 @@
     document.body.appendChild(root);
 
     hitTarget.addEventListener("click", function () {
+      if (Date.now() < suppressHitTargetClickUntil) return;
       showBubble(copy(STATE_MESSAGE_KEYS.greeting), 2400);
       playExternalState("greeting", 1200);
       openPanel();
     });
+    hitTarget.addEventListener("pointerdown", onDragPointerDown);
+    hitTarget.addEventListener("lostpointercapture", onDragPointerEnd);
+    bindDragSurface(document);
     launcher.addEventListener("click", function () { panelOpen ? closePanel() : openPanel(); });
     panelClose.addEventListener("click", closePanel);
     characterButtons.forEach(function (button) {
@@ -498,6 +504,7 @@
       requestedWindow.document.addEventListener("pointerdown", onPresentationPointerDown, { passive: true });
       requestedWindow.document.addEventListener("pointermove", onPointerMove, { passive: true });
       requestedWindow.document.addEventListener("visibilitychange", syncRunningState);
+      bindDragSurface(requestedWindow.document);
 
       if (panelOpen) closePanel(false);
       root.classList.add("is-floating");
@@ -675,7 +682,12 @@
 
   function syncRunningState() {
     if (!visible || isPresentationHidden() || settings.mode === "off") {
+      clearDragState();
       stopActivity();
+      return;
+    }
+    if (dragState) {
+      playRow("idle", Infinity);
       return;
     }
     if (panelOpen) {
@@ -771,7 +783,7 @@
   }
 
   function canAnimate() {
-    return visible && !isPresentationHidden() && settings.mode !== "off" && !panelOpen && !isReducedMotion();
+    return visible && !isPresentationHidden() && settings.mode !== "off" && !panelOpen && !dragState && !isReducedMotion();
   }
 
   function nextStopGesture() {
@@ -1050,7 +1062,101 @@
     return scales[index] || 1;
   }
 
+  function bindDragSurface(surface) {
+    surface.addEventListener("pointermove", onDragPointerMove, { passive: false });
+    surface.addEventListener("pointerup", onDragPointerEnd);
+    surface.addEventListener("pointercancel", onDragPointerEnd);
+  }
+
+  function onDragPointerDown(event) {
+    if (!isSystemAdminSession() || !visible || panelOpen || settings.mode === "off") return;
+    if (event.isPrimary === false || Number.isFinite(event.button) && event.button !== 0) return;
+    if (event.preventDefault) event.preventDefault();
+    if (event.stopPropagation) event.stopPropagation();
+    stopActivity();
+    root.classList.remove("has-no-safe-target");
+    var rect = mover.getBoundingClientRect();
+    dragState = {
+      pointerId: event.pointerId,
+      startX: Number(event.clientX) || 0,
+      startY: Number(event.clientY) || 0,
+      originX: rect.left,
+      originY: rect.top,
+      moved: false
+    };
+    root.classList.add("is-dragging");
+    if (hitTarget.setPointerCapture && event.pointerId != null) {
+      try { hitTarget.setPointerCapture(event.pointerId); } catch (error) { /* Pointer capture can be unavailable during synthetic events. */ }
+    }
+    playRow("idle", Infinity);
+  }
+
+  function onDragPointerMove(event) {
+    if (!dragState || event.pointerId !== dragState.pointerId) return;
+    var clientX = Number(event.clientX);
+    var clientY = Number(event.clientY);
+    if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
+    var dx = clientX - dragState.startX;
+    var dy = clientY - dragState.startY;
+    if (!dragState.moved && Math.sqrt(dx * dx + dy * dy) < 5) return;
+    dragState.moved = true;
+    if (event.preventDefault) event.preventDefault();
+    if (event.stopPropagation) event.stopPropagation();
+    var size = petSize();
+    var viewport = viewportWindow();
+    holdMoverAt(clampToViewport({
+      x: dragState.originX + dx,
+      y: dragState.originY + dy
+    }, size, viewport));
+  }
+
+  function onDragPointerEnd(event) {
+    if (!dragState || event.pointerId !== dragState.pointerId) return;
+    if (Number.isFinite(Number(event.clientX)) && Number.isFinite(Number(event.clientY))) onDragPointerMove(event);
+    var moved = dragState.moved;
+    clearDragState();
+    if (moved) suppressHitTargetClickUntil = Date.now() + 500;
+    if (!visible || isPresentationHidden() || settings.mode === "off" || panelOpen) return;
+    if (isReducedMotion()) {
+      showFrame(ROWS.idle.row, 0);
+      return;
+    }
+    playRow("idle", Infinity);
+    if (settings.mode === "fixed") return;
+    sequenceToken += 1;
+    var token = sequenceToken;
+    clearActivityTimer();
+    activityTimer = setTimeout(function () {
+      activityTimer = null;
+      if (token === sequenceToken) runActivityLoop(token);
+    }, moved ? 900 : 300);
+  }
+
+  function clearDragState() {
+    if (!dragState) return;
+    var pointerId = dragState.pointerId;
+    dragState = null;
+    root.classList.remove("is-dragging");
+    if (hitTarget.releasePointerCapture && pointerId != null) {
+      try {
+        if (!hitTarget.hasPointerCapture || hitTarget.hasPointerCapture(pointerId)) hitTarget.releasePointerCapture(pointerId);
+      } catch (error) { /* The browser may release capture before pointercancel. */ }
+    }
+  }
+
+  function holdMoverAt(target) {
+    position = target;
+    var next = mover.animate([
+      { transform: transformFor(target) },
+      { transform: transformFor(target) }
+    ], { duration: 1, fill: "forwards" });
+    var previous = movementAnimation;
+    movementAnimation = next;
+    if (previous) previous.cancel();
+  }
+
   function onPointerMove(event) {
+    if (dragState) return;
     if (isFloatingWindowOpen() && event.target && event.target.ownerDocument !== floatingWindow.document) return;
     pointer.x = event.clientX;
     pointer.y = event.clientY;
@@ -1101,7 +1207,7 @@
       success: "jumping",
       greeting: "waving"
     }[state];
-    if (!rowName || !isSystemAdminSession() || !visible || isPresentationHidden() || settings.mode === "off" || root.classList.contains("has-no-safe-target")) return;
+    if (!rowName || !isSystemAdminSession() || !visible || isPresentationHidden() || settings.mode === "off" || dragState || root.classList.contains("has-no-safe-target")) return;
     root.classList.remove("has-no-safe-target");
     sequenceToken += 1;
     clearActivityTimer();

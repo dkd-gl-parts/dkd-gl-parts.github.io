@@ -91,6 +91,12 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
   'return null;',
   'window.cancelAnimationFrame(pointerFrameRequest)',
   'window.addEventListener("resize", scheduleViewportSync',
+  'hitTarget.addEventListener("pointerdown", onDragPointerDown)',
+  'bindDragSurface(document)',
+  'surface.addEventListener("pointerup", onDragPointerEnd)',
+  'hitTarget.setPointerCapture(event.pointerId)',
+  'holdMoverAt(clampToViewport({',
+  'suppressHitTargetClickUntil = Date.now() + 500',
   'freezeMovement();',
   'is-revalidating',
   'layoutFrameWindow.requestAnimationFrame(syncViewportLayout)',
@@ -119,7 +125,7 @@ assert(!runtime.includes("iterations: 2"), "Stop gestures must not repeat the sa
 assert(!runtime.includes('window.addEventListener("scroll", scheduleViewportSync'), "Document scrolling must not restart fixed-position concierge movement");
 
 requireFragment(runtime, 'if (!visible || isPresentationHidden() || settings.mode === "off")', "Off mode must stop before panel animation handling");
-requireFragment(runtime, 'settings.mode === "off" || root.classList.contains("has-no-safe-target")', "External states must not revive a concierge without a safe target");
+requireFragment(runtime, 'settings.mode === "off" || dragState || root.classList.contains("has-no-safe-target")', "External states must not interrupt dragging or revive a concierge without a safe target");
 requireFragment(runtime, 'if (!isSystemAdminSession() || panelOpen) return;', "Concierge settings must fail closed outside a system-admin session");
 requireFragment(runtime, 'if (!isSystemAdminSession() || floatingRequestPending) return;', "Floating display must fail closed outside a system-admin session");
 requireFragment(runtime, 'suzuto: { copyKey: "suzuto", className: "is-suzuto", travelRows: { right: "running-right", left: "running-left" } }', "Suzuto travel rows must match the approved atlas direction");
@@ -176,6 +182,8 @@ requireFragment(css, "@media print");
 requireFragment(css, "z-index: 190");
 requireFragment(css, "max-height: calc(100dvh");
 requireFragment(css, "visibility: hidden", "A concierge without a safe target must leave keyboard and accessibility navigation");
+requireFragment(css, "touch-action: none;", "The concierge drag target must own touch and pointer movement");
+requireFragment(css, ".dcats-concierge.is-dragging .dcats-concierge-hit-target", "Dragging must expose a stable grabbed-pointer state");
 requireFragment(css, "html.dcats-concierge-floating-document");
 requireFragment(css, "body.dcats-concierge-floating-body");
 requireFragment(css, ".dcats-concierge-floating-cost");
