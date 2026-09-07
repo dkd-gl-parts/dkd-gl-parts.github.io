@@ -49,7 +49,7 @@ assert(html.includes('id="finished-box-label-qr-value"'), "serial QR payload pre
 assert(html.includes('data-finished-label-box-only'), "box label does not have a dedicated print workspace");
 assert(html.includes('id="finished-label-search-hint"'), "box-label search cannot expose a mode-specific hint");
 assert(html.includes('data-i18n="finished_box_label_layout_sample"'), "box-label preview guidance still describes pre-issue sample serials");
-assert(html.includes("jsbarcode@3.12.3/dist/JsBarcode.all.min.js"), "fixed JsBarcode dependency is missing");
+assert(html.includes('<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js" integrity="sha384-vmcSy8TM1KhZWBIKMKTR8AxbrJQCuConAolGY+42odu9ZGIzw8L8xAT/u7ul4X2U" crossorigin="anonymous"></script>'), "fixed JsBarcode dependency must use the reviewed exact version and SRI");
 assert(html.indexOf("jsbarcode@3.12.3") < html.indexOf('src="app.js'), "JsBarcode must load before app.js");
 assert(!app.includes("quickchart.io") && !app.includes("bwip-js.metafloor.com"), "label generation depends on an external barcode image service");
 assert(/@page\s*{[^}]*size:\s*80mm\s+60mm/i.test(printCss), "print page is not fixed at 80x60mm");

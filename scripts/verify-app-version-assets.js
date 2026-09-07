@@ -24,6 +24,20 @@ const styleVersion = "v" + requiredMatch(html, /<link\s+rel="stylesheet"\s+href=
 const conciergeStyleVersion = "v" + requiredMatch(html, /<link\s+rel="stylesheet"\s+href="assets\/concierge-pet\/concierge-pet\.css\?v=([^\"]+)"/, "concierge-pet.css cache version");
 const manifestVersion = "v" + requiredMatch(html, /<link\s+rel="manifest"\s+href="site\.webmanifest\?v=([^&\"]+)/, "manifest cache version");
 
+const supabaseScript = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/dist/umd/supabase.js" integrity="sha384-CLZeq1dk8+Uzrs7TVvBUdlFoV5F0DMqgRoeHa8g5wJcuPe5SkVfEvdxB0ZuzlnBQ" crossorigin="anonymous"></script>';
+const jsBarcodeScript = '<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js" integrity="sha384-vmcSy8TM1KhZWBIKMKTR8AxbrJQCuConAolGY+42odu9ZGIzw8L8xAT/u7ul4X2U" crossorigin="anonymous"></script>';
+if (!html.includes(supabaseScript) || html.includes("@supabase/supabase-js@2/dist/")) {
+  throw new Error("Supabase browser SDK must use the reviewed exact version and SRI");
+}
+const externalScriptTags = html.match(/<script\b[^>]*\bsrc="https:\/\/[^\"]+"[^>]*><\/script>/g) || [];
+if (externalScriptTags.length !== 2 || !externalScriptTags.includes(supabaseScript) || !externalScriptTags.includes(jsBarcodeScript)) {
+  throw new Error("Static external scripts must match the reviewed exact-version SRI allowlist");
+}
+const dynamicExternalScripts = [...app.matchAll(/\bscript\.src\s*=\s*"(https:\/\/[^\"]+)"/g)].map((match) => match[1]);
+if (dynamicExternalScripts.length !== 1 || dynamicExternalScripts[0] !== "https://cdn.jsdelivr.net/npm/@zxing/browser@0.2.0/umd/zxing-browser.min.js") {
+  throw new Error("Dynamic external scripts must match the reviewed ZXing allowlist");
+}
+
 const versions = { metaVersion, legacyVersion, scriptVersion, installScriptVersion, legacyI18nVersion, conciergeScriptVersion, styleVersion, conciergeStyleVersion, manifestVersion };
 Object.entries(versions).forEach(([label, version]) => {
   if (version !== appVersion) {
