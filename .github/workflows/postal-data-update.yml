@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: postal-data-update
@@ -21,6 +21,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.ref_name }}
+          persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -60,12 +61,33 @@ jobs:
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
-      - name: Commit updated postal data
+      - name: Upload postal data candidate
+        if: steps.changes.outputs.changed == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: postal-data-candidate-${{ github.run_id }}
+          path: assets/postal/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 9
+      - name: Record postal data candidate
         if: steps.changes.outputs.changed == 'true'
         shell: bash
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/postal
-          git commit -m "Update Japan Post postal data"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          {
+            echo "## Postal data candidate created"
+            echo
+            echo "- Artifact: \`postal-data-candidate-${GITHUB_RUN_ID}\`"
+            echo "- Retention: 14 days from this run"
+            echo "- Trust: treat the authenticated artifact as an untrusted candidate"
+            echo "- Next: independently regenerate and verify the data, then use the normal reviewed PR path described in \`docs/customer-order-b2-manual-contract.md\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Record unchanged postal data
+        if: steps.changes.outputs.changed == 'false'
+        shell: bash
+        run: |
+          {
+            echo "## Postal data"
+            echo
+            echo "No generated postal data changes were found; no candidate artifact was created."
+          } >> "$GITHUB_STEP_SUMMARY"

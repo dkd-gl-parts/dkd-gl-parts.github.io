@@ -13,6 +13,7 @@ const deploymentJobName = "deploy-cloudflare-pages";
 const deploymentCondition = "github.event_name != 'pull_request' && github.ref == 'refs/heads/main'";
 const checkoutActionReference = "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1";
 const setupNodeActionReference = "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020";
+const uploadArtifactActionReference = "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02";
 const deploymentActionReference = "cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd";
 const targetInstallCommand = "npm ci --ignore-scripts";
 const targetGuardCommand = "node scripts/verify-workflow-coverage.js";
@@ -56,6 +57,7 @@ const yamlParseOptions = Object.freeze({
 const approvedActionReferences = new Map([
   [checkoutActionReference, 4],
   [setupNodeActionReference, 4],
+  [uploadArtifactActionReference, 1],
   [deploymentActionReference, 1],
 ]);
 
@@ -122,15 +124,25 @@ const postalDetectCommand = [
   "fi",
   "",
 ].join("\n");
-const postalCommitCommand = [
-  "git config user.name \"github-actions[bot]\"",
-  "git config user.email \"41898282+github-actions[bot]@users.noreply.github.com\"",
-  "git add assets/postal",
-  "git commit -m \"Update Japan Post postal data\"",
-  "git push origin \"HEAD:${GITHUB_REF_NAME}\"",
+const postalCandidateSummaryCommand = [
+  "{",
+  "  echo \"## Postal data candidate created\"",
+  "  echo",
+  "  echo \"- Artifact: \\`postal-data-candidate-${GITHUB_RUN_ID}\\`\"",
+  "  echo \"- Retention: 14 days from this run\"",
+  "  echo \"- Trust: treat the authenticated artifact as an untrusted candidate\"",
+  "  echo \"- Next: independently regenerate and verify the data, then use the normal reviewed PR path described in \\`docs/customer-order-b2-manual-contract.md\\`\"",
+  "} >> \"$GITHUB_STEP_SUMMARY\"",
   "",
 ].join("\n");
-
+const postalUnchangedSummaryCommand = [
+  "{",
+  "  echo \"## Postal data\"",
+  "  echo",
+  "  echo \"No generated postal data changes were found; no candidate artifact was created.\"",
+  "} >> \"$GITHUB_STEP_SUMMARY\"",
+  "",
+].join("\n");
 const expectedAuxiliaryWorkflows = new Map([
   ["security-headers-guard.yml", {
     name: "Security response headers guard",
@@ -163,7 +175,7 @@ const expectedAuxiliaryWorkflows = new Map([
       schedule: [{ cron: "17 3 3 * *" }],
       workflow_dispatch: null,
     },
-    permissions: { contents: "write" },
+    permissions: { contents: "read" },
     concurrency: { group: "postal-data-update", "cancel-in-progress": false },
     jobs: {
       update: {
@@ -173,7 +185,7 @@ const expectedAuxiliaryWorkflows = new Map([
           {
             name: "Check out repository",
             uses: checkoutActionReference,
-            with: { ref: "${{ github.ref_name }}" },
+            with: { ref: "${{ github.ref_name }}", "persist-credentials": false },
           },
           {
             name: "Set up Node.js",
@@ -199,10 +211,28 @@ const expectedAuxiliaryWorkflows = new Map([
             run: postalDetectCommand,
           },
           {
-            name: "Commit updated postal data",
+            name: "Upload postal data candidate",
+            if: "steps.changes.outputs.changed == 'true'",
+            uses: uploadArtifactActionReference,
+            with: {
+              name: "postal-data-candidate-${{ github.run_id }}",
+              path: "assets/postal/",
+              "if-no-files-found": "error",
+              "retention-days": 14,
+              "compression-level": 9,
+            },
+          },
+          {
+            name: "Record postal data candidate",
             if: "steps.changes.outputs.changed == 'true'",
             shell: "bash",
-            run: postalCommitCommand,
+            run: postalCandidateSummaryCommand,
+          },
+          {
+            name: "Record unchanged postal data",
+            if: "steps.changes.outputs.changed == 'false'",
+            shell: "bash",
+            run: postalUnchangedSummaryCommand,
           },
         ],
       },
@@ -1267,6 +1297,33 @@ function runSelfTests() {
     "postal checkout ref override",
     "postal-data-update.yml",
     (workflow) => { workflow.jobs.update.steps[0].with.ref = "main"; },
+  );
+  assertAuxiliaryWorkflowRejected(
+    "postal persisted checkout credentials",
+    "postal-data-update.yml",
+    (workflow) => { workflow.jobs.update.steps[0].with["persist-credentials"] = true; },
+  );
+  assertAuxiliaryWorkflowRejected(
+    "postal repository write permission",
+    "postal-data-update.yml",
+    (workflow) => { workflow.permissions.contents = "write"; },
+  );
+  assertAuxiliaryWorkflowRejected(
+    "postal direct push",
+    "postal-data-update.yml",
+    (workflow) => {
+      workflow.jobs.update.steps[workflow.jobs.update.steps.length - 1] = {
+        name: "Commit updated postal data",
+        run: "git push origin HEAD:main",
+      };
+    },
+  );
+  assertAuxiliaryWorkflowRejected(
+    "postal unreviewed artifact action",
+    "postal-data-update.yml",
+    (workflow) => {
+      workflow.jobs.update.steps[workflow.jobs.update.steps.length - 1].uses = "actions/upload-artifact@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    },
   );
   assertAuxiliaryWorkflowRejected(
     "postal setup mirror override",
