@@ -5773,7 +5773,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.904";
+var APP_VERSION       = "v1.1.905";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -47451,6 +47451,9 @@ function renderCustomerAccountUsers(errorMessage) {
     var transferButton = !isAdmin && status === "active"
       ? "<button class='btn-sm-edit customer-account-transfer-button' type='button' data-uid='" + esc(user.id) + "'>" + esc(t("customer_users_transfer")) + "</button>"
       : "";
+    var removeButton = !isAdmin && status === "suspended"
+      ? "<button class='btn-suspend customer-account-remove-button' type='button' data-uid='" + esc(user.id) + "'>" + esc(t("customer_users_remove")) + "</button>"
+      : "";
     return "<div class='customer-account-user-row'>" +
       "<div class='customer-account-user-identity'><strong>" + esc(user.name || "-") + "</strong><span>ログインID: " + esc(user.email || "-") + "</span></div>" +
       "<div class='customer-account-user-status'>" + roleBadge + statusBadge + "</div>" +
@@ -47460,6 +47463,7 @@ function renderCustomerAccountUsers(errorMessage) {
         transferButton +
         actionButton +
         "<button class='btn-pw-reset customer-account-reset-button' type='button' data-uid='" + esc(user.id) + "'>" + esc(t("btn_send_pw_reset")) + "</button>" +
+        removeButton +
       "</div>" +
       "<span class='save-msg customer-account-user-message' id='customer-account-user-message-" + esc(user.id) + "'></span>" +
     "</div>";
@@ -47581,6 +47585,9 @@ function bindCustomerAccountUserEvents() {
   host.querySelectorAll(".customer-account-transfer-button").forEach(function(button) {
     button.addEventListener("click", function() { transferCustomerAccountAdmin(button.dataset.uid, button); });
   });
+  host.querySelectorAll(".customer-account-remove-button").forEach(function(button) {
+    button.addEventListener("click", function() { removeCustomerAccountMember(button.dataset.uid, button); });
+  });
 }
 
 async function updateCustomerAccountUserStatus(userId, status) {
@@ -47628,6 +47635,26 @@ async function sendCustomerAccountPasswordReset(userId, button) {
     message.textContent = t("msg_pw_reset_sent");
     setTimeout(function() { message.textContent = ""; }, 3000);
   }
+}
+
+async function removeCustomerAccountMember(userId, button) {
+  var user = customerAccountUserById(userId);
+  var customerId = currentCustomerAccessCustomer && currentCustomerAccessCustomer.id;
+  if (!canManageCustomerAccounts() || !customerId || !user || user.customer_role !== "member" || user.status !== "suspended") {
+    showPermissionDenied("remove_customer_member", "customer_user_links", userId);
+    return;
+  }
+  if (!confirm(tf("customer_users_remove_confirm_detail", { name: user.name || "-", email: user.email || "-" }))) return;
+  if (button) button.disabled = true;
+  var result = await invokeCustomerUserManagement({ action: "remove_member", sales_customer_id: customerId, target_user_id: user.id });
+  if (button) button.disabled = false;
+  if (result.error || !result.data || !result.data.ok) {
+    var message = document.getElementById("customer-account-user-message-" + user.id);
+    if (message) { message.className = "save-msg save-err customer-account-user-message"; message.textContent = customerUserEdgeErrorMessage(await customerUserEdgeErrorCode(result)); }
+    return;
+  }
+  await loadCustomerAccountUsers(customerId);
+  alert(t("customer_users_remove_done"));
 }
 
 async function transferCustomerAccountAdmin(userId, button) {
