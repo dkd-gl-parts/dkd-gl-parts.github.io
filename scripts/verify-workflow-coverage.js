@@ -67,6 +67,7 @@ const requiredPullRequestPaths = [
   "label-print-window.js",
   "print.css",
   "package*.json",
+  "vendor/**",
   ".github/workflows/**",
 ];
 const reviewedWorkflowFiles = [
@@ -1348,6 +1349,9 @@ function runSelfTests() {
   assertTargetRejected("missing package path", makeTargetFixture({
     pathEntries: requiredPullRequestPaths.filter((entry) => entry !== "package*.json"),
   }), ".on.pull_request.paths must include package*.json");
+  assertTargetRejected("missing vendor path", makeTargetFixture({
+    pathEntries: requiredPullRequestPaths.filter((entry) => entry !== "vendor/**"),
+  }), ".on.pull_request.paths must include vendor/**");
 
   const additionallyIndentedSource = [
     "name: Search performance guard",
