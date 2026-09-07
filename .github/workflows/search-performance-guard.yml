@@ -180,6 +180,8 @@ jobs:
         run: node scripts/verify-customer-access-development-default.js
       - name: Verify customer account profile editing
         run: node scripts/verify-customer-account-profile-edit.js
+      - name: Verify customer login and search history
+        run: node scripts/verify-customer-activity-history.js
       - name: Verify internal account issuance
         run: node scripts/verify-internal-account-issuance.js
       - name: Verify password-reset permission overview
