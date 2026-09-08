@@ -6466,7 +6466,18 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .customer-order-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .customer-order-form-grid label { min-width: 0; }
 .customer-order-form-grid label.wide { grid-column: 1 / -1; }
-.customer-order-destination-type { padding-bottom: 2px; }
+.customer-order-destination-type { position: relative; grid-column: 1 / -1; min-width: 0; margin: 0; padding: 0 0 2px; border: 0; }
+.customer-order-destination-type legend { margin-bottom: 5px; color: #53635b; font-size: var(--dcats-type-supporting); font-weight: 800; }
+.customer-order-destination-type-select { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+.customer-order-destination-choice { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); min-width: 0; border: 1px solid #aebdb6; border-radius: var(--dcats-control-radius); overflow: hidden; background: #fff; }
+.customer-order-destination-choice label { position: relative; min-width: 0; cursor: pointer; }
+.customer-order-destination-choice label + label { border-left: 1px solid #c8d4ce; }
+.customer-order-destination-choice input { position: absolute; opacity: 0; pointer-events: none; }
+.customer-order-destination-choice span { display: flex; align-items: center; justify-content: center; min-height: var(--dcats-control-height); padding: 7px 10px; color: #526159; font-size: var(--dcats-type-body); font-weight: 800; line-height: 1.35; text-align: center; }
+.customer-order-destination-choice input:checked + span { background: var(--dcats-customer-green); color: #fff; }
+.customer-order-destination-choice label:hover span { background: #edf5f1; }
+.customer-order-destination-choice input:checked + span:hover { background: var(--dcats-customer-green); }
+.customer-order-destination-choice input:focus-visible + span { position: relative; z-index: 1; outline: 2px solid var(--dcats-focus); outline-offset: -2px; }
 .customer-order-yamato-office-panel { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(220px, .8fr) minmax(0, 1.2fr); min-width: 0; gap: 10px 14px; border-left: 3px solid #e2b82e; padding: 10px 12px; background: #fff9e8; }
 .customer-order-yamato-office-panel[hidden] { display: none; }
 .customer-order-yamato-office-summary { display: grid; align-content: center; gap: 3px; min-width: 0; }

@@ -80,6 +80,8 @@ function applySalesOrderRevisionYamatoOffice(includeRecipientDefaults) {
 function configureSalesOrderRevisionDestination(options) {
   options = options || {};
   var officePickup = salesOrderRevisionDestinationType() === "yamato_office";
+  var overlay = document.getElementById("sales-order-revision-overlay");
+  if (overlay) syncCustomerOrderDestinationChoices(overlay, officePickup ? "yamato_office" : "address");
   var panel = document.getElementById("revision-entry-yamato-office-panel");
   var officeSelect = salesOrderRevisionInput("yamato_office_code");
   if (panel) panel.hidden = !officePickup;
@@ -315,6 +317,15 @@ async function openSalesOrderRevisionEditor() {
     salesOrderRevisionInput("destination_type").addEventListener("change", function() {
       configureSalesOrderRevisionDestination({ includeRecipientDefaults: true });
       configureSalesOrderRevisionDelivery(true);
+    });
+    overlay.querySelectorAll("[data-customer-order-destination-choice]").forEach(function(input) {
+      input.addEventListener("change", function() {
+        if (!input.checked) return;
+        var destinationInput = salesOrderRevisionInput("destination_type");
+        if (!destinationInput) return;
+        destinationInput.value = input.value;
+        destinationInput.dispatchEvent(new Event("change", { bubbles: true }));
+      });
     });
     salesOrderRevisionInput("yamato_office_code").addEventListener("change", function() {
       applySalesOrderRevisionYamatoOffice(true);

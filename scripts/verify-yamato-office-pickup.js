@@ -13,7 +13,9 @@ function requireFragment(text, fragment, label) {
 
 [
   'id="customer-order-destination-type"',
-  '<option value="yamato_office">ヤマト運輸 営業所止め</option>',
+  '<option value="yamato_office">営業所で受け取る</option>',
+  'data-customer-order-destination-choice checked><span>通常住所</span>',
+  'data-customer-order-destination-choice><span>営業所で受け取る</span>',
   'id="customer-order-yamato-office-code"',
   'value="068721"',
   '〒562-0035 大阪府箕面市船場東',
@@ -35,6 +37,11 @@ function requireFragment(text, fragment, label) {
 ].forEach((fragment) => requireFragment(source, fragment, "office-pickup behavior"));
 
 [
+  'function syncCustomerOrderDestinationChoices(root, destinationType)',
+  'destinationSelect.dispatchEvent(new Event("change", { bubbles: true }))'
+].forEach((fragment) => requireFragment(source, fragment, "destination choice behavior"));
+
+[
   '"customer-order-destination-type":"destination_type"',
   '"customer-order-yamato-office-code":"yamato_office_code"',
   'address.destination_type = salesOrderRevisionDestinationType()',
@@ -43,15 +50,22 @@ function requireFragment(text, fragment, label) {
 ].forEach((fragment) => requireFragment(revision, fragment, "office-pickup revision behavior"));
 
 [
+  'syncCustomerOrderDestinationChoices(overlay, officePickup ? "yamato_office" : "address")',
+  'overlay.querySelectorAll("[data-customer-order-destination-choice]")'
+].forEach((fragment) => requireFragment(revision, fragment, "revision destination choice behavior"));
+
+[
   ".customer-order-yamato-office-panel",
+  ".customer-order-destination-choice",
+  ".customer-order-destination-choice input:checked + span",
   "min-width: 0",
   ".customer-order-yamato-office-panel[hidden] { display: none; }",
   ".sales-order-office-pickup-badge",
   "grid-template-columns: 1fr;"
 ].forEach((fragment) => requireFragment(css, fragment, "responsive office-pickup layout"));
 
-if (!source.includes('var APP_VERSION       = "v1.1.919"') || !html.includes('content="v1.1.919"')) {
-  throw new Error("Yamato office-pickup release version must be v1.1.919");
+if (!source.includes('var APP_VERSION       = "v1.1.920"') || !html.includes('content="v1.1.920"')) {
+  throw new Error("Yamato office-pickup release version must be v1.1.920");
 }
 
 console.log("Yamato office-pickup frontend verified.");

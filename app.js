@@ -5866,7 +5866,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.919";
+var APP_VERSION       = "v1.1.920";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -10091,6 +10091,14 @@ function customerOrderDestinationType() {
   return select && select.value === "yamato_office" ? "yamato_office" : "address";
 }
 
+function syncCustomerOrderDestinationChoices(root, destinationType) {
+  var scope = root || document;
+  var value = destinationType === "yamato_office" ? "yamato_office" : "address";
+  scope.querySelectorAll("[data-customer-order-destination-choice]").forEach(function(input) {
+    input.checked = input.value === value;
+  });
+}
+
 function customerOrderYamatoOffice(code) {
   return CUSTOMER_ORDER_YAMATO_OFFICES.find(function(office) { return office.code === String(code || ""); }) || null;
 }
@@ -10117,6 +10125,7 @@ function applyCustomerOrderYamatoOffice(office, includeRecipientDefaults) {
 function configureCustomerOrderDestination(options) {
   options = options || {};
   var officePickup = customerOrderDestinationType() === "yamato_office";
+  syncCustomerOrderDestinationChoices(document.getElementById("screen-customer-orders"), officePickup ? "yamato_office" : "address");
   var panel = document.getElementById("customer-order-yamato-office-panel");
   var officeSelect = document.getElementById("customer-order-yamato-office-code");
   if (panel) panel.hidden = !officePickup;
@@ -49438,6 +49447,15 @@ document.getElementById("customer-order-destination-type").addEventListener("cha
   configureCustomerOrderDestination({ includeRecipientDefaults: true });
   loadCustomerOrderDeliveryServices({ forceDate: true });
   renderCustomerOrderCart();
+});
+document.querySelectorAll("#screen-customer-orders [data-customer-order-destination-choice]").forEach(function(input) {
+  input.addEventListener("change", function() {
+    if (!input.checked) return;
+    var destinationSelect = document.getElementById("customer-order-destination-type");
+    if (!destinationSelect) return;
+    destinationSelect.value = input.value;
+    destinationSelect.dispatchEvent(new Event("change", { bubbles: true }));
+  });
 });
 document.getElementById("customer-order-yamato-office-code").addEventListener("change", function() {
   customerOrderPreview = null;
