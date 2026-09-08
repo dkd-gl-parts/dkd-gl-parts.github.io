@@ -61,17 +61,6 @@ const approvedActionReferences = new Map([
   [deploymentActionReference, 1],
 ]);
 
-const requiredPullRequestPaths = [
-  ".gitattributes",
-  "scripts/verify-*.js",
-  "desktop/concierge-companion/**",
-  "box-label-print.css",
-  "label-print-window.js",
-  "print.css",
-  "package*.json",
-  "vendor/**",
-  ".github/workflows/**",
-];
 const reviewedWorkflowFiles = [
   "postal-data-update.yml",
   "search-performance-guard.yml",
@@ -79,6 +68,7 @@ const reviewedWorkflowFiles = [
 ];
 
 const forbiddenPullRequestKeys = [
+  "paths",
   "types",
   "branches",
   "branches-ignore",
@@ -364,37 +354,21 @@ function validatePullRequestTrigger(workflow, workflowFile, violations) {
     return;
   }
   const pullRequest = workflow.on.pull_request;
+  // Required checks must be reported regardless of changed paths or PR base branch.
+  // Empty YAML and an empty mapping both enable the default pull_request events.
+  if (pullRequest === null) return;
   if (!isMapping(pullRequest)) {
-    violations.push(`${workflowFile}.on.pull_request must be a mapping with required paths`);
+    violations.push(`${workflowFile}.on.pull_request must be null or an empty mapping; filters are forbidden`);
     return;
   }
-
   forbiddenPullRequestKeys.forEach((key) => {
     if (hasOwn(pullRequest, key)) {
       violations.push(`${workflowFile}.on.pull_request.${key} must be absent`);
     }
   });
-
-  if (!Array.isArray(pullRequest.paths)) {
-    violations.push(`${workflowFile}.on.pull_request.paths must be a sequence`);
-    return;
+  if (Object.keys(pullRequest).length !== 0) {
+    violations.push(`${workflowFile}.on.pull_request must be null or an empty mapping; filters are forbidden`);
   }
-  const pathFilters = [];
-  pullRequest.paths.forEach((pathFilter, index) => {
-    if (typeof pathFilter !== "string") {
-      violations.push(`${workflowFile}.on.pull_request.paths[${index}] must be a string`);
-      return;
-    }
-    pathFilters.push(pathFilter);
-    if (pathFilter.trimStart().startsWith("!")) {
-      violations.push(`${workflowFile}.on.pull_request.paths must not contain negative filter ${pathFilter}`);
-    }
-  });
-  requiredPullRequestPaths.forEach((requiredPath) => {
-    if (!pathFilters.includes(requiredPath)) {
-      violations.push(`${workflowFile}.on.pull_request.paths must include ${requiredPath}`);
-    }
-  });
 }
 
 function validateFailHard(container, scope, violations) {
@@ -875,7 +849,6 @@ function assertAuxiliaryWorkflowRejected(name, workflowFile, mutate) {
 }
 
 function makeTargetFixture(options = {}) {
-  const pathEntries = options.pathEntries || requiredPullRequestPaths;
   const pullRequestProperties = options.pullRequestProperties || [];
   const workflowProperties = options.workflowProperties || [];
   const jobProperties = options.jobProperties || [];
@@ -894,8 +867,6 @@ function makeTargetFixture(options = {}) {
     "  push:",
     "    branches: [main]",
     "  pull_request:",
-    "    paths:",
-    ...pathEntries.map((entry) => `      - ${JSON.stringify(entry)}`),
     ...pullRequestProperties,
     "  workflow_dispatch:",
     ...workflowProperties,
@@ -1411,20 +1382,32 @@ function runSelfTests() {
     ],
   }), ".continue-on-error must be absent or boolean false");
 
-  assertTargetRejected("negative path filter", makeTargetFixture({
-    pathEntries: [...requiredPullRequestPaths, "!scripts/verify-*.js"],
-  }), "must not contain negative filter");
-  ["types", "branches", "branches-ignore", "paths-ignore"].forEach((key) => {
+  ["paths", "types", "branches", "branches-ignore", "paths-ignore"].forEach((key) => {
     assertTargetRejected(`pull_request ${key}`, makeTargetFixture({
-      pullRequestProperties: [`    \"${key}\": [main]`],
+      pullRequestProperties: [`    "${key}": [main]`],
     }), `.on.pull_request.${key} must be absent`);
   });
-  assertTargetRejected("missing package path", makeTargetFixture({
-    pathEntries: requiredPullRequestPaths.filter((entry) => entry !== "package*.json"),
-  }), ".on.pull_request.paths must include package*.json");
-  assertTargetRejected("missing vendor path", makeTargetFixture({
-    pathEntries: requiredPullRequestPaths.filter((entry) => entry !== "vendor/**"),
-  }), ".on.pull_request.paths must include vendor/**");
+  for (const pathFilter of ["[]", '["**"]', '["!scripts/verify-*.js"]']) {
+    assertTargetRejected(`pull_request paths ${pathFilter}`, makeTargetFixture({
+      pullRequestProperties: [`    paths: ${pathFilter}`],
+    }), ".on.pull_request.paths must be absent");
+  }
+  assertTargetRejected("unknown pull_request property", makeTargetFixture({
+    pullRequestProperties: ["    unreviewed: true"],
+  }), ".on.pull_request must be null or an empty mapping");
+  for (const value of ["false", "true", "[]", '"pull_request"']) {
+    assertTargetRejected(`invalid pull_request value ${value}`,
+      makeTargetFixture().replace("  pull_request:", `  pull_request: ${value}`),
+      ".on.pull_request must be null or an empty mapping");
+  }
+  assertTargetRejected("missing pull_request event",
+    makeTargetFixture().replace("  pull_request:\n", ""),
+    ".on must include pull_request");
+  const emptyMappingPullRequest = evaluateTargetFixture(
+    makeTargetFixture().replace("  pull_request:", "  pull_request: {}"),
+  );
+  assertSelfTest(emptyMappingPullRequest.violations.length === 0,
+    `unfiltered empty mapping was rejected: ${emptyMappingPullRequest.violations.join("; ")}`);
 
   const additionallyIndentedSource = [
     "name: Search performance guard",
@@ -1432,8 +1415,6 @@ function runSelfTests() {
     "    push:",
     "        branches: [main]",
     "    pull_request:",
-    "        paths:",
-    ...requiredPullRequestPaths.map((entry) => `          - ${JSON.stringify(entry)}`),
     "    workflow_dispatch:",
     "permissions: { contents: read }",
     "concurrency:",

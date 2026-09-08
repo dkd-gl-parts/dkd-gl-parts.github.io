@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const YAML = require("yaml");
 
 const root = path.resolve(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
@@ -67,7 +68,11 @@ for (const fragment of [
   assert(css.includes(fragment), `Business workspace layout is missing: ${fragment}`);
 }
 
-assert(workflow.includes('"scripts/verify-business-workspace-shortcut.js"'), "The shortcut verifier is not in the workflow path filter");
+const pullRequestTrigger = YAML.parse(workflow).on?.pull_request;
+assert(pullRequestTrigger === null || (
+  typeof pullRequestTrigger === "object" && !Array.isArray(pullRequestTrigger) &&
+  Object.keys(pullRequestTrigger).length === 0
+), "The shortcut verifier must run on all pull requests without path filters");
 assert(workflow.includes("node scripts/verify-business-workspace-shortcut.js"), "The shortcut verifier is not executed by CI");
 
 const featureSource = sourceBetween("var DCATS_BUSINESS_WORKSPACE_URL", "function updateSalesOrderSelectionButtons");
