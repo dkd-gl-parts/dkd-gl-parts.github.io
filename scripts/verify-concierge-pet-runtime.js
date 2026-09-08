@@ -534,7 +534,7 @@ documentObject.documentElement.lang = "en";
 notifyObservers();
 assert(byClass("dcats-concierge-launcher-label")[0].textContent === "Rinna", "English character label did not update");
 assert(allElements().some((element) => element.textContent === "Concierge settings"), "English settings copy did not update");
-assert(floatingCost.textContent === "Additional charge: JPY 0 (browser feature)", "English floating cost copy did not update");
+assert(floatingCost.textContent === "Additional charge: \u00a50 (browser feature)", "English floating cost copy did not update");
 documentObject.documentElement.lang = "zh-CN";
 notifyObservers();
 assert(allElements().some((element) => element.textContent === "礼宾助手设置"), "Chinese settings copy did not update");

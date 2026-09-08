@@ -27,7 +27,7 @@ the notification-area icon before dragging the character again.
 
 ## Release boundary and cost
 
-- Additional runtime/API fee for this transparent shell: JPY 0.
+- Additional runtime/API fee for this transparent shell: ¥0.
 - Electron is MIT licensed.
 - This pilot is unsigned and may show a Windows SmartScreen warning.
 - Do not distribute it to non-administrators or add a public download/launch UI.

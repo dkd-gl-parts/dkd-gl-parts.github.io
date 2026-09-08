@@ -147,6 +147,8 @@ jobs:
           node scripts/verify-concierge-desktop.js
       - name: Verify release asset versions
         run: node scripts/verify-app-version-assets.js
+      - name: Verify yen currency display
+        run: node scripts/verify-yen-currency-display.js
       - name: Verify Edge-compatible automatic updates
         run: node scripts/verify-edge-auto-update.js
       - name: Verify install experience

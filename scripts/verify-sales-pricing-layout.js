@@ -76,6 +76,7 @@ const sandbox = {
   calculateSalesPriceClient: () => 6500,
   salesRankDisplayName: (rank) => rank.rank_name,
   formatYen: (value) => String(value),
+  formatYenCurrency: (value) => "\u00a5" + String(value),
   esc: (value) => String(value),
   t: (key) => ({
     sales_rank: "ランク",

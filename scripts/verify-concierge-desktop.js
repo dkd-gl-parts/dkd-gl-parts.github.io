@@ -103,7 +103,7 @@ assert(!css.includes("@keyframes sprite-frames"), "Desktop concierge must not us
 assert(!css.includes('body[data-character="rinna"][data-facing="right"] .pet-sprite'), "Corrected Rinna rows must not be mirrored in desktop CSS");
 assert(!css.includes("transform: scaleX(-1)"), "Desktop concierge must preserve the corrected directional artwork");
 requireFragment(readme, "system-administrator-only Windows pilot");
-requireFragment(readme, "JPY 0");
+requireFragment(readme, "\u00a50");
 
 assert(!publicHtml.includes("D-CATS Concierge Admin Pilot"), "Public D-CATS UI must not expose the desktop pilot");
 assert(!staticBuilder.includes("desktop/concierge-companion"), "Static deployment must not publish the desktop pilot");

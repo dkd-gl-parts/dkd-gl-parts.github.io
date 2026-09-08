@@ -107,7 +107,7 @@
       floatingOpen: "Show in an always-on-top window",
       floatingReturn: "Return to the D-CATS window",
       floatingHelp: "The concierge stays on top while D-CATS is open. Move the small window anywhere you like.",
-      floatingCost: "Additional charge: JPY 0 (browser feature)",
+      floatingCost: "Additional charge: \u00a50 (browser feature)",
       floatingUnsupported: "This browser does not support floating display.",
       floatingOpening: "Opening the floating window.",
       floatingActive: "Showing in an always-on-top window.",
