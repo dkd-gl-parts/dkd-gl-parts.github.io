@@ -2514,6 +2514,18 @@
           <label class="form-label" data-i18n="sales_effective_start">適用開始日</label>
           <input class="form-input" id="sales-effective-start" type="date">
         </div>
+        <fieldset class="form-row core-return-choice-group sales-pricing-core-return">
+          <legend class="form-label" data-i18n="core_return_required_label">コア返却</legend>
+          <div class="core-return-choice" role="radiogroup">
+            <label class="required"><input type="radio" name="sales-core-return-required" value="required"><span data-i18n="core_return_required">返却必要</span></label>
+            <label class="not-required"><input type="radio" name="sales-core-return-required" value="not_required"><span data-i18n="core_return_not_required">返却不要</span></label>
+          </div>
+        </fieldset>
+        <div class="form-row sales-pricing-core-charge" id="sales-core-charge-row">
+          <label class="form-label" for="sales-core-charge" data-i18n="core_charge">未返却時コア代金</label>
+          <div class="core-charge-input"><span>¥</span><input class="form-input" id="sales-core-charge" type="number" min="0" step="1" inputmode="numeric" aria-describedby="sales-core-policy-help"></div>
+          <div class="sales-pricing-field-help" id="sales-core-policy-help" data-i18n="sales_core_policy_help">コア返却不要の場合、コア代金は入力できず、販売・原価・受注計算には反映されません。</div>
+        </div>
         <div class="form-row sales-pricing-note">
           <label class="form-label" data-i18n="sales_basis_note">価格メモ</label>
           <input class="form-input" id="sales-basis-note" type="text" data-i18n-ph="sales_basis_note_ph">

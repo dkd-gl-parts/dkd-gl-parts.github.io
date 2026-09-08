@@ -535,6 +535,7 @@ var TRANSLATIONS = {
     core_charge_product_source: "品番設定",
     core_policy_form_note: "商品区分ごとに、返却条件と未返却時の代金を設定します。",
     core_policy_selected_kind_note: "選択中の商品区分の設定を保存します。",
+    sales_core_policy_help: "コア返却不要の場合、コア代金は入力できず、販売・原価・受注計算には反映されません。",
     core_charge_invalid: "コア代金は0以上の整数で入力してください",
     product_kind_stock: "在庫",
     product_kind_sl: "SL",
@@ -2435,6 +2436,7 @@ var TRANSLATIONS = {
     core_charge_product_source: "Product setting",
     core_policy_form_note: "Set return terms and the non-return charge for each product kind.",
     core_policy_selected_kind_note: "The setting for the selected product kind will be saved.",
+    sales_core_policy_help: "When no return is required, the core charge cannot be entered and is excluded from sales, cost, and order calculations.",
     core_charge_invalid: "Enter a core charge as an integer of 0 or more",
     product_kind_stock: "Stock",
     product_kind_sl: "SL",
@@ -4343,6 +4345,7 @@ var TRANSLATIONS = {
     core_charge_product_source: "品号设置",
     core_policy_form_note: "按商品区分设置返还条件和未返还时的费用。",
     core_policy_selected_kind_note: "保存当前所选商品区分的设置。",
+    sales_core_policy_help: "无需返还旧芯时，不能输入旧芯费用，且不会计入销售、成本或订单计算。",
     core_charge_invalid: "旧芯费用请输入0以上的整数",
     product_kind_stock: "库存",
     product_kind_sl: "SL",
@@ -6071,6 +6074,7 @@ var currentSalesPricingDksReference = null;
 var currentSalesPricingManufacturingCost = null;
 var currentSalesPricingEcReference = null;
 var currentSalesPricingEcRows = null;
+var salesPricingSavePending = false;
 var salesPricingRanks = [];
 var salesPricingCustomerCounts = {};
 var salesPricingMgmtRows = [];
@@ -43262,6 +43266,67 @@ function salesPricingCurrentProductKind() {
   return normalizeProductKind((select && select.value) || currentSalesPricingProductKind || "rebuilt");
 }
 
+function salesPricingCanEditCorePolicy() {
+  return canEditBasePrice() && canEdit();
+}
+
+function setSalesPricingCoreFieldsEditable(required) {
+  var editable = salesPricingCanEditCorePolicy();
+  document.querySelectorAll("input[name='sales-core-return-required']").forEach(function(input) {
+    input.disabled = !editable;
+  });
+  var charge = document.getElementById("sales-core-charge");
+  var chargeRow = document.getElementById("sales-core-charge-row");
+  if (charge) charge.disabled = !editable || !required;
+  if (chargeRow) chargeRow.classList.toggle("disabled", !editable || !required);
+}
+
+function setSalesPricingCoreReturnState(required) {
+  var value = required ? "required" : "not_required";
+  document.querySelectorAll("input[name='sales-core-return-required']").forEach(function(input) {
+    input.checked = input.value === value;
+  });
+  var charge = document.getElementById("sales-core-charge");
+  if (charge && !required) charge.value = "";
+  setSalesPricingCoreFieldsEditable(required);
+}
+
+function applySalesPricingCorePolicyToForm() {
+  var policy = coreReturnPolicyForKind(salesPricingCurrentProductKind(), currentProductVariants);
+  var charge = document.getElementById("sales-core-charge");
+  if (charge) charge.value = policy.required && policy.hasProductCharge ? String(policy.charge) : "";
+  setSalesPricingCoreReturnState(policy.required);
+}
+
+function salesPricingCorePolicyFormValue() {
+  var checked = document.querySelector("input[name='sales-core-return-required']:checked");
+  var required = !checked || checked.value === "required";
+  if (!required) return { required: false, charge: null };
+  var rawCharge = (document.getElementById("sales-core-charge") || {}).value;
+  var charge = rawCharge === "" || rawCharge === null || rawCharge === undefined ? null : Number(rawCharge);
+  if (charge !== null && (!Number.isInteger(charge) || charge < 0)) {
+    return { error: t("core_charge_invalid") };
+  }
+  return { required: true, charge: charge };
+}
+
+function applySavedSalesPricingCorePolicy(rows) {
+  if (!Array.isArray(rows) || !rows.length) return;
+  var savedById = {};
+  rows.forEach(function(row) { savedById[String(row.product_variant_id || "")] = row; });
+  currentProductVariants = (currentProductVariants || []).map(function(row) {
+    return savedById[String(row.product_variant_id || "")]
+      ? Object.assign({}, row, savedById[String(row.product_variant_id || "")])
+      : row;
+  });
+  rows.forEach(function(row) {
+    var exists = currentProductVariants.some(function(current) {
+      return String(current.product_variant_id || "") === String(row.product_variant_id || "");
+    });
+    if (!exists) currentProductVariants.push(row);
+  });
+}
+
 function salesPricingProductVariantIdForKind(kind) {
   var targetKind = normalizeProductKind(kind || "rebuilt");
   var rows = productKindRowsForCurrent().filter(function(row) {
@@ -43322,12 +43387,14 @@ async function openSalesPricingForCurrent() {
     var el = document.getElementById(id);
     if (el) el.disabled = !canEditBasePrice();
   });
+  setSalesPricingCoreFieldsEditable(false);
   try {
     var dkdId = await resolveCurrentCoreDkdShohinId();
     currentSalesPricingDkdId = dkdId;
     await ensureProductVariantsForCurrentDkd(dkdId);
     currentSalesPricingProductKind = ensureSelectedProductKind(productKindSummaryForProduct(currentProduct));
     fillSalesPricingProductKindSelect(currentSalesPricingProductKind);
+    applySalesPricingCorePolicyToForm();
     document.getElementById("sales-pricing-product").textContent = salesPricingProductText(currentProduct, dkdId);
     if (!dkdId) throw new Error(t("sales_no_product_id"));
     var ranksR = await sb.from("sales_price_ranks")
@@ -43359,6 +43426,7 @@ async function openSalesPricingForCurrent() {
         if (err) err.textContent = "";
         try {
           currentSalesPricingProductKind = salesPricingCurrentProductKind();
+          applySalesPricingCorePolicyToForm();
           await loadSalesPricingCurrentBaseRow();
           await Promise.all([
             loadSalesPricingCurrentManufacturingCost(),
@@ -43386,6 +43454,7 @@ async function openSalesPricingForCurrent() {
 async function saveSalesPricing() {
   var errEl = document.getElementById("sales-pricing-error");
   if (errEl) errEl.textContent = "";
+  if (salesPricingSavePending) return;
   if (!canEditBasePrice()) { if (errEl) errEl.textContent = t("err_perm"); return; }
   var dkdId = currentSalesPricingDkdId;
   if (!dkdId) { if (errEl) errEl.textContent = t("sales_no_product_id"); return; }
@@ -43393,50 +43462,37 @@ async function saveSalesPricing() {
   var productVariantId = salesPricingProductVariantIdForKind(productKind);
   var base = parseInt(document.getElementById("sales-base-price").value, 10);
   if (isNaN(base) || base < 0) { if (errEl) errEl.textContent = t("sales_base_price_required"); return; }
-  var payload = {
-    dkd_shohin_id: dkdId,
-    product_kind: productKind,
-    product_variant_id: productVariantId,
-    base_price_jpy: base,
-    tax_included: false,
-    price_basis: document.getElementById("sales-price-basis").value || "manual",
-    basis_note: document.getElementById("sales-basis-note").value.trim() || null,
-    effective_start: document.getElementById("sales-effective-start").value || salesPricingTodayIso(),
-    is_current: true,
-    created_by: currentUser ? currentUser.id : null,
-    updated_by: currentUser ? currentUser.id : null
-  };
+  var updateCorePolicy = salesPricingCanEditCorePolicy();
+  var corePolicy = updateCorePolicy ? salesPricingCorePolicyFormValue() : { required: null, charge: null };
+  if (corePolicy.error) { if (errEl) errEl.textContent = corePolicy.error; return; }
+  var saveBtn = document.getElementById("btn-sales-pricing-save");
+  salesPricingSavePending = true;
+  if (saveBtn) saveBtn.disabled = true;
   try {
-    var oldRow = currentSalesPricingRow ? JSON.parse(JSON.stringify(currentSalesPricingRow)) : null;
-    var closePayload = { is_current: false, updated_by: currentUser ? currentUser.id : null, updated_at: new Date().toISOString() };
-    if (!oldRow || !oldRow.effective_start || payload.effective_start >= oldRow.effective_start) closePayload.effective_end = payload.effective_start;
-    var upd = await sb.from("product_base_prices")
-      .update(closePayload)
-      .eq("dkd_shohin_id", dkdId)
-      .eq("product_kind", productKind)
-      .eq("is_current", true);
-    if (upd.error) throw upd.error;
-    var ins = await sb.from("product_base_prices").insert(payload).select("*").single();
-    if (ins.error) throw ins.error;
-    currentSalesPricingRow = ins.data;
-    await sb.from("product_base_price_history").insert({
-      base_price_id: ins.data.id,
-      dkd_shohin_id: dkdId,
-      product_kind: productKind,
-      product_variant_id: productVariantId,
-      old_base_price_jpy: oldRow ? oldRow.base_price_jpy : null,
-      new_base_price_jpy: ins.data.base_price_jpy,
-      old_payload: oldRow || null,
-      new_payload: ins.data,
-      changed_by: currentUser ? currentUser.id : null,
-      change_note: payload.basis_note
+    var saved = await sb.rpc("save_product_sales_pricing_with_core_policy", {
+      target_dkd_shohin_id: dkdId,
+      target_product_kind: productKind,
+      target_product_variant_id: productVariantId,
+      target_base_price_jpy: base,
+      target_price_basis: document.getElementById("sales-price-basis").value || "manual",
+      target_basis_note: document.getElementById("sales-basis-note").value.trim() || null,
+      target_effective_start: document.getElementById("sales-effective-start").value || salesPricingTodayIso(),
+      target_update_core_policy: updateCorePolicy,
+      target_core_return_required: corePolicy.required,
+      target_core_charge_jpy: corePolicy.charge
     });
+    if (saved.error) throw saved.error;
+    var result = saved.data || {};
+    var savedPrice = result.base_price || null;
+    if (!savedPrice || !savedPrice.id) throw new Error(t("msg_save_err"));
+    currentSalesPricingRow = savedPrice;
+    if (result.core_policy_updated) applySavedSalesPricingCorePolicy(result.core_policy || []);
     var gltekAutoIssueOutcome = await ensureGltekPartNumberIssuedForDkdId(dkdId, { context: "sales_pricing", product: currentProduct });
-    if (productKind === "rebuilt") salesPricingMgmtPriceMap[String(dkdId)] = ins.data;
+    if (productKind === "rebuilt") salesPricingMgmtPriceMap[String(dkdId)] = savedPrice;
     renderSalesPricingMgmt();
     if (productKindStockRows.length) {
-      if (ins.data.product_variant_id) productKindStockPriceMap[productKindStockVariantMetaKey(ins.data.product_variant_id)] = ins.data;
-      if (!ins.data.product_variant_id) productKindStockPriceMap[productKindStockPriceKey(dkdId, productKind)] = ins.data;
+      if (savedPrice.product_variant_id) productKindStockPriceMap[productKindStockVariantMetaKey(savedPrice.product_variant_id)] = savedPrice;
+      if (!savedPrice.product_variant_id) productKindStockPriceMap[productKindStockPriceKey(dkdId, productKind)] = savedPrice;
       renderProductKindStockMgmt();
     }
     closeSalesPricingOverlay();
@@ -43446,6 +43502,9 @@ async function saveSalesPricing() {
   } catch (e) {
     console.warn("save sales pricing failed", e);
     if (errEl) errEl.textContent = t("msg_save_err") + ": " + ((e && e.message) || String(e));
+  } finally {
+    salesPricingSavePending = false;
+    if (saveBtn) saveBtn.disabled = false;
   }
 }
 
@@ -49641,6 +49700,11 @@ document.getElementById("btn-user-auth-history-close").addEventListener("click",
 document.getElementById("btn-sales-pricing-cancel").addEventListener("click", closeSalesPricingOverlay);
 document.getElementById("btn-sales-pricing-save").addEventListener("click", saveSalesPricing);
 document.getElementById("btn-sales-rank-save").addEventListener("click", saveSalesPriceRanks);
+document.querySelectorAll("input[name='sales-core-return-required']").forEach(function(input) {
+  input.addEventListener("change", function() {
+    setSalesPricingCoreReturnState(input.value === "required");
+  });
+});
 ["sales-base-price","sales-price-basis","sales-effective-start"].forEach(function(id) {
   var el = document.getElementById(id);
   if (el) {
