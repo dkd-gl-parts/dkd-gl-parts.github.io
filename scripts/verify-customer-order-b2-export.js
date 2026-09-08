@@ -15,8 +15,7 @@ function between(start, end) {
 }
 
 for (const id of [
-  "sales-order-b2-settings-open",
-  "shipping-document-b2-settings-open",
+  "shipping-rate-b2-settings-open",
   "sales-order-b2-preflight",
   "sales-order-b2-preflight-errors",
   "sales-order-b2-settings-overlay",
@@ -29,13 +28,16 @@ for (const id of [
 ]) {
   if (!html.includes(`id="${id}"`)) throw new Error(`Missing B2 settings/preflight UI: ${id}`);
 }
+for (const id of ["sales-order-b2-settings-open", "shipping-document-b2-settings-open"]) {
+  if (html.includes(`id="${id}"`)) throw new Error(`B2 settings must not remain in operational screen toolbars: ${id}`);
+}
 
-const timeout = between("function salesOrderB2RpcWithTimeout", "function renderSalesOrderB2SettingsAccess");
+const timeout = between("function salesOrderB2RpcWithTimeout", "function setSalesOrderB2SettingsMessage");
 if (!timeout.includes("window.setTimeout") || !timeout.includes("DCATS_B2_TIMEOUT") || !timeout.includes("window.clearTimeout")) {
   throw new Error("B2 RPC calls must have a bounded timeout and clear their timer");
 }
 
-const settings = between("function renderSalesOrderB2SettingsAccess", "var DCATS_BUSINESS_WORKSPACE_URL");
+const settings = between("function setSalesOrderB2SettingsMessage", "var DCATS_BUSINESS_WORKSPACE_URL");
 for (const fragment of [
   "isSystemAdmin()",
   'sb.rpc("get_customer_order_b2_contract_settings")',
@@ -240,8 +242,11 @@ function makeSandbox(results) {
   }
 
   const shipmentUi = between("function shippingDocumentShipmentDocumentsHtml", "function shippingDocumentReturnWaybillHtml");
-  for (const fragment of ["data-shipping-document-b2-settings", "B2契約設定", "発送方法設定"]) {
+  for (const fragment of ["shipping-document-b2-issue", "発送方法設定"]) {
     if (!shipmentUi.includes(fragment)) throw new Error(`Missing shipping-document B2 recovery action: ${fragment}`);
+  }
+  for (const fragment of ["data-shipping-document-b2-settings", "B2契約設定"]) {
+    if (shipmentUi.includes(fragment)) throw new Error(`B2 contract settings must not appear in document issuance rows: ${fragment}`);
   }
   const detailUi = between("function renderShippingDocumentDetail", "function bindShippingDocumentDetailActions");
   if (detailUi.indexOf("shipping-document-message") >= detailUi.indexOf("shippingDocumentStageHtml(order)")) {

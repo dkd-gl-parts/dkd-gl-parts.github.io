@@ -169,6 +169,7 @@ var TRANSLATIONS = {
     shipping_inactive: "非表示",
     shipping_mgmt_title: "送料マスタ",
     shipping_mgmt_help: "運送業者と都道府県ごとに、得意先へ表示する通常送料・離島送料・条件を管理します。",
+    shipping_b2_contract_settings: "B2契約設定",
     shipping_add: "送料を登録",
     shipping_edit: "送料を編集",
     shipping_carrier_required: "運送業者 *",
@@ -383,8 +384,8 @@ var TRANSLATIONS = {
     mi_user_permissions_desc: "自分の操作権限と製造原価の許可を確認します。",
     mi_customer_access_title: "得意先管理",
     mi_customer_access_desc: "得意先ログインIDと、商品範囲・価格表示ルールを管理します。",
-    mi_shipping_title: "送料マスタ",
-    mi_shipping_desc: "運送業者・都道府県別の通常送料と離島条件を管理します。",
+    mi_shipping_title: "運送・送料管理",
+    mi_shipping_desc: "運送業者・都道府県別の送料とB2契約情報を管理します。",
     mi_core_list_title: "コア管理",
     mi_core_list_desc: "買い集めるコアの目標数と現在庫を管理します。",
     mi_product_kind_stock_title: "在庫管理",
@@ -2052,6 +2053,7 @@ var TRANSLATIONS = {
     shipping_inactive: "Hidden",
     shipping_mgmt_title: "Shipping Master",
     shipping_mgmt_help: "Manage customer-visible standard rates, remote-island rates, and conditions by carrier and prefecture.",
+    shipping_b2_contract_settings: "B2 Contract Settings",
     shipping_add: "Add Shipping Rate",
     shipping_edit: "Edit Shipping Rate",
     shipping_carrier_required: "Carrier *",
@@ -2266,8 +2268,8 @@ var TRANSLATIONS = {
     mi_user_permissions_desc: "Review your allowed operations and manufacturing cost permission.",
     mi_customer_access_title: "Customer Management",
     mi_customer_access_desc: "Manage customer login IDs, product visibility, and sales price display rules.",
-    mi_shipping_title: "Shipping Master",
-    mi_shipping_desc: "Manage standard rates and remote-island conditions by carrier and prefecture.",
+    mi_shipping_title: "Shipping & Rates",
+    mi_shipping_desc: "Manage carrier rates, remote-island conditions, and B2 contract details.",
     mi_core_list_title: "CORE Management",
     mi_core_list_desc: "Manage core collection targets and current inventory.",
     mi_product_kind_stock_title: "Stock Management",
@@ -3880,6 +3882,7 @@ var TRANSLATIONS = {
     shipping_inactive: "隐藏",
     shipping_mgmt_title: "运费主数据",
     shipping_mgmt_help: "按承运公司和都道府县管理向客户显示的普通运费、离岛运费及条件。",
+    shipping_b2_contract_settings: "B2合同设置",
     shipping_add: "登记运费",
     shipping_edit: "编辑运费",
     shipping_carrier_required: "承运公司 *",
@@ -4190,8 +4193,8 @@ var TRANSLATIONS = {
     mi_user_permissions_desc: "确认自己的操作权限和制造成本许可。",
     mi_customer_access_title: "客户管理",
     mi_customer_access_desc: "管理客户登录ID、商品显示范围和销售价格显示规则。",
-    mi_shipping_title: "运费主数据",
-    mi_shipping_desc: "按承运公司和都道府县管理普通运费及离岛条件。",
+    mi_shipping_title: "配送与运费管理",
+    mi_shipping_desc: "管理承运公司运费、离岛条件及B2合同信息。",
     mi_core_list_title: "CORE管理",
     mi_core_list_desc: "管理CORE收集目标和当前库存。",
     mi_product_kind_stock_title: "库存管理",
@@ -5773,7 +5776,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.907";
+var APP_VERSION       = "v1.1.908";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -11244,13 +11247,6 @@ function salesOrderB2RpcWithTimeout(request, timeoutMessage, timeoutMs) {
   });
 }
 
-function renderSalesOrderB2SettingsAccess() {
-  ["sales-order-b2-settings-open", "shipping-document-b2-settings-open"].forEach(function(id) {
-    var button = document.getElementById(id);
-    if (button) button.hidden = !isSystemAdmin();
-  });
-}
-
 function setSalesOrderB2SettingsMessage(message, isError) {
   var host = document.getElementById("sales-order-b2-settings-message");
   if (!host) return;
@@ -11888,7 +11884,6 @@ async function enterSalesOrderMgmt() {
   salesAccountingProductOnboardingSaving = false;
   showScreen("sales-order-mgmt");
   updateAllHeaders();
-  renderSalesOrderB2SettingsAccess();
   renderSalesOrderB2Preflight(null);
   renderSalesOrderDashboard();
   renderSalesOrderPrintSettings();
@@ -13806,7 +13801,6 @@ async function enterShippingDocumentMgmt(options) {
   if (settingsOverlay) settingsOverlay.classList.remove("show");
   showScreen("shipping-document-mgmt");
   updateAllHeaders();
-  renderSalesOrderB2SettingsAccess();
   var input = document.getElementById("shipping-document-search");
   var statusSelect = document.getElementById("shipping-document-status");
   var stateSelect = document.getElementById("shipping-document-print-state");
@@ -14418,7 +14412,6 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var b2Issued = Array.isArray(order.b2_exports) && order.b2_exports.length > 0;
   var b2NeedsReissue = b2Issued && (order.revision_history || []).some(function(revision) { return revision.waybills_need_reissue && !order.b2_exports.some(function(entry) { return new Date(entry.created_at) >= new Date(revision.created_at); }); });
   var canCreateB2 = ["accepted", "shipping_ready", "shipped"].indexOf(order.status) >= 0 && outboundMethod === "b2_cloud";
-  var b2SettingsAction = isSystemAdmin() ? "<button type='button' data-shipping-document-b2-settings>B2契約設定</button>" : "";
   var dispatchStandard = salesOrderAutoPrintIsEnabled() ? "受付時に自動発行" : "出荷帳票発行で印刷";
   var outboundCarrierLabel = shippingCarrierBrandKey(outboundWaybill.carrier_code || "yamato_prepaid") === "sagawa" ? "佐川急便 元払い" : "ヤマト宅急便 元払い";
   var outboundState = outboundMethod === "b2_cloud"
@@ -14444,7 +14437,7 @@ function shippingDocumentShipmentDocumentsHtml(order) {
       key: "outbound_waybill", name: "商品発送送り状", standard: outboundModeLabel, detail: outboundCarrierLabel,
       carrierCode: outboundWaybill.carrier_code || "yamato_prepaid",
       state: outboundState, ready: !!dispatch,
-      actions: (outboundMethod === "b2_cloud" ? "<button type='button' class='primary' id='shipping-document-b2-issue'" + (canCreateB2 && !salesOrderSaving && !shippingDocumentSaving ? "" : " disabled") + ">" + (b2Issued ? "B2 CSV再発行" : "B2 CSV発行") + "</button>" + b2SettingsAction : outboundMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-outbound-print" + (outboundCanPrint ? "" : " disabled") + ">端末印刷</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='outbound_waybill'" + (outboundCanHandwrite ? "" : " disabled") + ">手書き内容を表示</button>") + "<button type='button' data-shipping-document-open-settings='outbound'>発送方法設定</button>"
+      actions: (outboundMethod === "b2_cloud" ? "<button type='button' class='primary' id='shipping-document-b2-issue'" + (canCreateB2 && !salesOrderSaving && !shippingDocumentSaving ? "" : " disabled") + ">" + (b2Issued ? "B2 CSV再発行" : "B2 CSV発行") + "</button>" : outboundMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-outbound-print" + (outboundCanPrint ? "" : " disabled") + ">端末印刷</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='outbound_waybill'" + (outboundCanHandwrite ? "" : " disabled") + ">手書き内容を表示</button>") + "<button type='button' data-shipping-document-open-settings='outbound'>発送方法設定</button>"
     },
     {
       key: "warranty", name: "製品保証書", standard: "A5 / 端末印刷", detail: "商品数量分",
@@ -14545,8 +14538,6 @@ function renderShippingDocumentDetail() {
 function bindShippingDocumentDetailActions() {
   var issue = document.getElementById("shipping-document-b2-issue");
   if (issue) issue.addEventListener("click", issueShippingDocumentB2);
-  var b2Settings = document.querySelector("[data-shipping-document-b2-settings]");
-  if (b2Settings) b2Settings.addEventListener("click", openSalesOrderB2Settings);
   var openOrder = document.getElementById("shipping-document-open-order");
   if (openOrder) openOrder.addEventListener("click", openShippingDocumentOrderInSalesOrderMgmt);
   var openHistory = document.getElementById("shipping-document-open-history");
@@ -17073,6 +17064,8 @@ async function enterShippingRateMgmt() {
     return;
   }
   showScreen("shipping-rate-mgmt");
+  var b2SettingsButton = document.getElementById("shipping-rate-b2-settings-open");
+  if (b2SettingsButton) b2SettingsButton.hidden = !isSystemAdmin();
   populateShippingPrefectureSelects();
   var prefecture = document.getElementById("shipping-rate-prefecture-filter");
   var carrier = document.getElementById("shipping-rate-carrier-filter");
@@ -49035,8 +49028,6 @@ window.addEventListener("focus", function() {
 });
 document.getElementById("sales-order-batch-accept").addEventListener("click", acceptCheckedSalesOrders);
 document.getElementById("sales-order-export-b2").addEventListener("click", exportSalesOrdersB2);
-document.getElementById("sales-order-b2-settings-open").addEventListener("click", openSalesOrderB2Settings);
-document.getElementById("shipping-document-b2-settings-open").addEventListener("click", openSalesOrderB2Settings);
 document.getElementById("sales-order-b2-settings-close").addEventListener("click", closeSalesOrderB2Settings);
 document.getElementById("sales-order-b2-settings-cancel").addEventListener("click", closeSalesOrderB2Settings);
 document.getElementById("sales-order-b2-settings-save").addEventListener("click", saveSalesOrderB2Settings);
@@ -49781,6 +49772,7 @@ document.getElementById("shipping-rate-carrier-filter").addEventListener("change
 document.getElementById("shipping-rate-service-filter").addEventListener("change", renderShippingRateMgmt);
 document.getElementById("shipping-rate-size-filter").addEventListener("change", renderShippingRateMgmt);
 document.getElementById("shipping-rate-status-filter").addEventListener("change", renderShippingRateMgmt);
+document.getElementById("shipping-rate-b2-settings-open").addEventListener("click", openSalesOrderB2Settings);
 document.getElementById("btn-new-shipping-rate").addEventListener("click", function() { openShippingRateForm(null); });
 document.getElementById("btn-shipping-rate-cancel").addEventListener("click", closeShippingRateForm);
 document.getElementById("btn-shipping-rate-save").addEventListener("click", saveShippingRate);
