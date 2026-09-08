@@ -328,12 +328,23 @@ var TRANSLATIONS = {
     customer_order_submit_success: "注文を受け付けました。",
     customer_order_submit_print_queued: "注文を受け付け、出荷指示書を印刷待ちに登録しました。",
     customer_order_core_required_note: "コア返却が必要な商品を含みます。返送用送り状を商品に同梱します。",
+    customer_order_core_handling: "コア処理",
+    customer_order_core_return_standard: "コアを返却する",
+    customer_order_core_charge_no_return_option: "返却不要（コア代金 {amount}を請求）",
+    customer_order_core_charge_no_return_label: "返却不要・コア代金 {amount}",
+    customer_order_core_charge_no_return_status: "返却不要（コア代金請求済み）",
+    customer_order_core_charge_unset: "コア代金未設定（選択不可）",
+    customer_order_core_charge_setup: "商品マスタでコア代金を設定してください。",
+    customer_order_core_charge_included: "コア代金込み",
+    customer_order_core_charge_note: "コア代金を請求するため、コア返却と返送用送り状は不要です。",
+    customer_order_core_charge_total: "商品計に含むコア代金",
     customer_order_quantity: "数量",
     customer_order_unit_price: "単価",
     customer_order_subtotal: "小計",
     customer_order_total: "合計",
     sales_order_id_label: "受注ID",
     sales_order_mgmt_title: "受注・出荷管理",
+    sales_order_internal_entry: "FAX・メール注文入力",
     sales_order_mgmt_desc: "得意先注文の受付、商品発送用B2 CSV、製造シリアル照合を管理します。",
     sales_order_mgmt_note: "注文受付、商品発送用B2 CSV、現場の製造シリアル照合を管理します。",
     business_workspace_open: "業務連携",
@@ -2212,12 +2223,23 @@ var TRANSLATIONS = {
     customer_order_submit_success: "Your order has been received.",
     customer_order_submit_print_queued: "Your order was received and its shipment documents were queued for printing.",
     customer_order_core_required_note: "This order includes products that require core return. A return label will be enclosed.",
+    customer_order_core_handling: "Core Handling",
+    customer_order_core_return_standard: "Return the core",
+    customer_order_core_charge_no_return_option: "Charge {amount}; no core return",
+    customer_order_core_charge_no_return_label: "Core charge {amount}; no return",
+    customer_order_core_charge_no_return_status: "Core charged; no return",
+    customer_order_core_charge_unset: "Core charge not set (unavailable)",
+    customer_order_core_charge_setup: "Set the core charge in Product Master first.",
+    customer_order_core_charge_included: "Includes core charge",
+    customer_order_core_charge_note: "The core charge will be billed, so no core return or return label is required.",
+    customer_order_core_charge_total: "Core charge included in products",
     customer_order_quantity: "Qty",
     customer_order_unit_price: "Unit Price",
     customer_order_subtotal: "Subtotal",
     customer_order_total: "Total",
     sales_order_id_label: "Order ID",
     sales_order_mgmt_title: "Orders / Shipping",
+    sales_order_internal_entry: "FAX / Email Order Entry",
     sales_order_mgmt_desc: "Manage customer orders, outbound B2 CSV files, and manufacturing-serial verification.",
     sales_order_mgmt_note: "Manage order acceptance, outbound B2 CSV files, and shop-floor serial verification.",
     business_workspace_open: "Shared Folder",
@@ -4041,12 +4063,23 @@ var TRANSLATIONS = {
     customer_order_submit_success: "订单已受理。",
     customer_order_submit_print_queued: "订单已受理，出货指示文件已加入打印队列。",
     customer_order_core_required_note: "订单中包含需要返还旧件的商品。商品中将附上返送运单。",
+    customer_order_core_handling: "旧件处理",
+    customer_order_core_return_standard: "返还旧件",
+    customer_order_core_charge_no_return_option: "收取旧件费 {amount}・无需返还",
+    customer_order_core_charge_no_return_label: "旧件费 {amount}・无需返还",
+    customer_order_core_charge_no_return_status: "已收旧件费・无需返还",
+    customer_order_core_charge_unset: "未设置旧件费（无法选择）",
+    customer_order_core_charge_setup: "请先在商品主数据中设置旧件费。",
+    customer_order_core_charge_included: "含旧件费",
+    customer_order_core_charge_note: "因收取旧件费，无需返还旧件或附带返送运单。",
+    customer_order_core_charge_total: "商品小计中包含的旧件费",
     customer_order_quantity: "数量",
     customer_order_unit_price: "单价",
     customer_order_subtotal: "小计",
     customer_order_total: "合计",
     sales_order_id_label: "订单ID",
     sales_order_mgmt_title: "订单・出货管理",
+    sales_order_internal_entry: "传真・邮件订单录入",
     sales_order_mgmt_desc: "管理客户订单、商品发送用B2 CSV和制造序列号核对。",
     sales_order_mgmt_note: "管理订单受理、商品发送用B2 CSV和现场序列号核对。",
     business_workspace_open: "业务协作",
@@ -5776,7 +5809,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.908";
+var APP_VERSION       = "v1.1.909";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -9872,7 +9905,9 @@ function customerOrderCartRequiresCoreReturn() {
   var previewMap = customerOrderPreviewItemMap();
   return customerOrderCart.some(function(item) {
     var confirmed = previewMap[item.key];
-    return confirmed ? confirmed.core_return_required === true : item.core_return_required === true;
+    return confirmed
+      ? confirmed.core_return_required === true
+      : item.core_return_required === true && item.core_return_handling !== "charge_no_return";
   });
 }
 
@@ -10153,6 +10188,10 @@ function restoreCustomerOrderCart() {
     var rows = raw ? JSON.parse(raw) : [];
     customerOrderCart = Array.isArray(rows) ? rows.filter(function(item) {
       return item && item.dkd_shohin_id && item.product && item.key === customerOrderCartKey(item.dkd_shohin_id, item.product_kind);
+    }).map(function(item) {
+      var handling = item.core_return_handling === "charge_no_return" ? "charge_no_return" : "standard";
+      if (handling === "charge_no_return" && !(item.core_return_required && Number(item.core_charge_jpy) > 0)) handling = "standard";
+      return Object.assign({}, item, { core_return_handling: handling });
     }).slice(0, 100) : [];
   } catch (e) {
     customerOrderCart = [];
@@ -10187,7 +10226,8 @@ function addCustomerCatalogProductToOrder(product, productKind, stockQty, price,
       display_stock_qty: stockQty == null ? null : Number(stockQty),
       display_unit_price: price == null ? null : Number(price),
       core_return_required: !!(policy && policy.required),
-      core_charge_jpy: policy && policy.charge != null ? Number(policy.charge) : null
+      core_charge_jpy: policy && policy.charge != null ? Number(policy.charge) : null,
+      core_return_handling: "standard"
     });
   }
   customerOrderPreview = null;
@@ -10201,7 +10241,8 @@ function customerOrderPayloadItems() {
     return {
       dkd_shohin_id: parseInt(item.dkd_shohin_id, 10),
       product_kind: normalizeProductKind(item.product_kind),
-      quantity: Math.max(1, Math.min(99, parseInt(item.quantity, 10) || 1))
+      quantity: Math.max(1, Math.min(99, parseInt(item.quantity, 10) || 1)),
+      core_return_handling: item.core_return_handling === "charge_no_return" ? "charge_no_return" : "standard"
     };
   });
 }
@@ -10791,6 +10832,29 @@ function customerOrderPreviewItemMap() {
   return map;
 }
 
+function customerOrderCoreHandlingValue(item) {
+  item = item || {};
+  if (item.core_return_handling === "charge_no_return") return "charge_no_return";
+  if (item.core_return_handling === "return_required" || item.core_return_required === true) return "return_required";
+  return "not_required";
+}
+
+function customerOrderCoreHandlingLabel(item) {
+  var handling = customerOrderCoreHandlingValue(item);
+  if (handling === "charge_no_return") {
+    return tf("customer_order_core_charge_no_return_label", { amount: customerOrderCurrency(item.core_charge_jpy) });
+  }
+  return t(handling === "return_required" ? "core_return_required" : "core_return_not_required");
+}
+
+function customerOrderHasCoreChargeNoReturn(order) {
+  var items = Array.isArray(order && order.items) ? order.items : [];
+  return items.some(function(item) {
+    var orderItem = item && item.order_item && typeof item.order_item === "object" ? item.order_item : item;
+    return customerOrderCoreHandlingValue(orderItem) === "charge_no_return";
+  });
+}
+
 function configureCustomerOrderDevelopmentPreview() {
   var previewMode = canPreviewCustomerOrdering();
   var internalRegistration = canRegisterInternalCustomerOrder();
@@ -10826,14 +10890,36 @@ function renderCustomerOrderCart() {
   host.innerHTML = customerOrderCart.map(function(item) {
     var product = item.product || {};
     var confirmed = previewMap[item.key] || null;
-    var unitPrice = confirmed ? confirmed.unit_price_jpy : item.display_unit_price;
+    var selectedCoreHandling = item.core_return_handling === "charge_no_return" ? "charge_no_return" : "standard";
+    var configuredCoreCharge = Math.max(0, parseInt(item.core_charge_jpy, 10) || 0);
+    var displayedCoreCharge = selectedCoreHandling === "charge_no_return" ? configuredCoreCharge : 0;
+    var unitPrice = confirmed
+      ? confirmed.unit_price_jpy
+      : (item.display_unit_price == null ? null : Number(item.display_unit_price) + displayedCoreCharge);
     var stockQty = confirmed ? confirmed.available_stock_qty : item.display_stock_qty;
     var lineTotal = confirmed ? confirmed.line_total_jpy : (unitPrice == null ? null : Number(unitPrice) * Number(item.quantity || 1));
-    var coreRequired = confirmed ? confirmed.core_return_required === true : item.core_return_required === true;
+    var coreRequired = confirmed
+      ? confirmed.core_return_required === true
+      : item.core_return_required === true && selectedCoreHandling !== "charge_no_return";
+    var coreState = confirmed || {
+      core_return_required: coreRequired,
+      core_return_handling: coreRequired ? "return_required" : (displayedCoreCharge > 0 ? "charge_no_return" : "not_required"),
+      core_charge_jpy: displayedCoreCharge || null
+    };
+    var coreBadge = item.core_return_required
+      ? "<em class='" + (customerOrderCoreHandlingValue(coreState) === "charge_no_return" ? "charge-no-return" : "") + "'>" + esc(customerOrderCoreHandlingLabel(coreState)) + "</em>"
+      : "";
+    var coreChoice = canRegisterInternalCustomerOrder() && item.core_return_required
+      ? "<label class='customer-order-core-choice'><span>" + esc(t("customer_order_core_handling")) + "</span><select data-order-core-handling='" + esc(item.key) + "'>" +
+          "<option value='standard'" + (selectedCoreHandling === "standard" ? " selected" : "") + ">" + esc(t("customer_order_core_return_standard")) + "</option>" +
+          "<option value='charge_no_return'" + (selectedCoreHandling === "charge_no_return" ? " selected" : "") + (configuredCoreCharge > 0 ? "" : " disabled") + ">" +
+            esc(configuredCoreCharge > 0 ? tf("customer_order_core_charge_no_return_option", { amount: customerOrderCurrency(configuredCoreCharge) }) : t("customer_order_core_charge_unset")) +
+          "</option></select>" + (configuredCoreCharge > 0 ? "" : "<small>" + esc(t("customer_order_core_charge_setup")) + "</small>") + "</label>"
+      : "";
     return "<div class='customer-order-line' data-order-key='" + esc(item.key) + "'>" +
-      "<div class='customer-order-product'><span>" + esc(productCategoryLabel(product) || product.category || "-") + "</span><strong>" + esc(product.genuine_part_number || product.manufacturer_part_number || "-") + "</strong><small>" + esc([product.manufacturer, product.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small>" + (coreRequired ? "<em>コア返却必要</em>" : "") + "</div>" +
+      "<div class='customer-order-product'><span>" + esc(productCategoryLabel(product) || product.category || "-") + "</span><strong>" + esc(product.genuine_part_number || product.manufacturer_part_number || "-") + "</strong><small>" + esc([product.manufacturer, product.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small>" + coreBadge + coreChoice + "</div>" +
       "<label class='customer-order-qty'><span>" + esc(t("customer_order_quantity")) + "</span><input type='number' min='1' max='99' step='1' value='" + esc(item.quantity) + "' data-order-quantity='" + esc(item.key) + "'></label>" +
-      "<div class='customer-order-line-metric'><span>" + esc(t("customer_order_unit_price")) + "</span><strong>" + esc(customerOrderCurrency(unitPrice)) + "</strong><small>在庫 " + esc(stockQty == null ? "-" : stockQty) + "</small></div>" +
+      "<div class='customer-order-line-metric'><span>" + esc(t("customer_order_unit_price")) + "</span><strong>" + esc(customerOrderCurrency(unitPrice)) + "</strong><small>" + (displayedCoreCharge > 0 ? esc(t("customer_order_core_charge_included")) + " / " : "") + "在庫 " + esc(stockQty == null ? "-" : stockQty) + "</small></div>" +
       "<div class='customer-order-line-metric total'><span>" + esc(t("customer_order_subtotal")) + "</span><strong>" + esc(customerOrderCurrency(lineTotal)) + "</strong></div>" +
       "<button class='customer-order-remove' type='button' data-order-remove='" + esc(item.key) + "' aria-label='削除'>×</button>" +
     "</div>";
@@ -10848,6 +10934,16 @@ function renderCustomerOrderCart() {
       renderCustomerOrderCart();
     });
   });
+  host.querySelectorAll("[data-order-core-handling]").forEach(function(select) {
+    select.addEventListener("change", function() {
+      var item = customerOrderCart.find(function(row) { return row.key === select.dataset.orderCoreHandling; });
+      if (!item) return;
+      item.core_return_handling = select.value === "charge_no_return" ? "charge_no_return" : "standard";
+      customerOrderPreview = null;
+      persistCustomerOrderCart();
+      renderCustomerOrderCart();
+    });
+  });
   host.querySelectorAll("[data-order-remove]").forEach(function(button) {
     button.addEventListener("click", function() {
       customerOrderCart = customerOrderCart.filter(function(row) { return row.key !== button.dataset.orderRemove; });
@@ -10857,14 +10953,18 @@ function renderCustomerOrderCart() {
     });
   });
   var requiresCore = customerOrderCartRequiresCoreReturn();
+  var chargesCoreInstead = customerOrderCart.some(function(item) { return item.core_return_handling === "charge_no_return"; });
   if (coreNotice) {
-    coreNotice.hidden = !requiresCore;
-    coreNotice.textContent = requiresCore ? t("customer_order_core_required_note") : "";
+    coreNotice.hidden = !requiresCore && !chargesCoreInstead;
+    coreNotice.textContent = requiresCore
+      ? t("customer_order_core_required_note")
+      : (chargesCoreInstead ? t("customer_order_core_charge_note") : "");
   }
   updateCustomerOrderCoreReturnServiceVisibility();
   if (summary) {
     if (customerOrderPreview && customerOrderPreview.valid === true) {
       summary.innerHTML = "<div><span>商品計</span><strong>" + esc(customerOrderCurrency(customerOrderPreview.subtotal_jpy)) + "</strong></div>" +
+        (Number(customerOrderPreview.core_charge_total_jpy) > 0 ? "<div class='core-charge'><span>" + esc(t("customer_order_core_charge_total")) + "</span><strong>" + esc(customerOrderCurrency(customerOrderPreview.core_charge_total_jpy)) + "</strong></div>" : "") +
         "<div><span>送料</span><strong>" + esc(customerOrderCurrency(customerOrderPreview.shipping_fee_jpy)) + "</strong></div>" +
         "<div><span>消費税</span><strong>" + esc(customerOrderCurrency(customerOrderPreview.tax_jpy)) + "</strong></div>" +
         "<div class='grand-total'><span>" + esc(t("customer_order_total")) + "</span><strong>" + esc(customerOrderCurrency(customerOrderPreview.total_jpy)) + "</strong></div>";
@@ -11045,12 +11145,13 @@ function renderCustomerOrderHistory() {
   host.innerHTML = customerOrderHistoryRows.map(function(order) {
     var items = Array.isArray(order.items) ? order.items : [];
     var itemText = items.map(function(item) {
-      return (item.genuine_part_number || item.manufacturer_part_number || "-") + " × " + (item.quantity || 1);
+      return (item.genuine_part_number || item.manufacturer_part_number || "-") + " × " + (item.quantity || 1) +
+        (customerOrderCoreHandlingValue(item) === "charge_no_return" ? "（" + t("customer_order_core_charge_no_return_status") + "）" : "");
     }).join("、");
     var outboundService = customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "outbound"), "未登録");
     var coreReturnService = order.core_return_required
       ? customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "core_return"), "未登録")
-      : "対象外";
+      : (customerOrderHasCoreChargeNoReturn(order) ? t("customer_order_core_charge_no_return_status") : "対象外");
     return "<article class='customer-order-history-row'>" +
       "<div><span class='customer-order-number'>" + esc(order.order_number || ("注文 " + (order.id || "-"))) + "</span><strong>" + esc(customerOrderStatusLabel(order.status)) + "</strong><small>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small></div>" +
       "<div class='customer-order-history-items'>" + esc(itemText || "-") + customerOrderVehicleInformationInlineHtml(order.vehicle_information) + "</div>" +
@@ -11883,11 +11984,27 @@ async function enterSalesOrderMgmt() {
   salesAccountingExportCodeSavingKey = "";
   salesAccountingProductOnboardingSaving = false;
   showScreen("sales-order-mgmt");
+  var newOrderButton = document.getElementById("sales-order-new-internal-order");
+  if (newOrderButton) newOrderButton.hidden = !canRegisterInternalCustomerOrder();
   updateAllHeaders();
   renderSalesOrderB2Preflight(null);
   renderSalesOrderDashboard();
   renderSalesOrderPrintSettings();
   await Promise.all([refreshSalesOrderManagement(), loadSalesOrderPrintSettings()]);
+}
+
+async function enterInternalCustomerOrderEntry() {
+  if (!canRegisterInternalCustomerOrder()) {
+    showPermissionDenied("open_internal_customer_order_entry", "customer_orders");
+    return;
+  }
+  customerOrderActiveView = "cart";
+  await enterCustomerPortal();
+  var customerSelect = document.getElementById("customer-portal-customer-select");
+  if (customerSelect) {
+    customerSelect.focus();
+    customerSelect.scrollIntoView({ block: "center" });
+  }
 }
 
 function salesAccountingExportLocalDate(value) {
@@ -14511,7 +14628,7 @@ function shippingDocumentOrderContentsHtml(order) {
     return "<div class='shipping-document-order-item'><div><strong>" + esc(partNumber) + "</strong><span>" + esc(detail) + "</span></div>" +
       "<span class='shipping-document-order-kind'>" + esc(customerProductKindLabel(orderItem.product_kind)) + "</span>" +
       "<span class='shipping-document-order-quantity'>" + esc(t("customer_order_quantity")) + " <strong>" + esc(String(quantity)) + "</strong></span>" +
-      "<span class='shipping-document-order-core " + (orderItem.core_return_required ? "required" : "not-required") + "'>" + esc(t("core_return_required_label") + ": " + t(orderItem.core_return_required ? "core_return_required" : "core_return_not_required")) + "</span></div>";
+      "<span class='shipping-document-order-core " + (customerOrderCoreHandlingValue(orderItem) === "return_required" ? "required" : "not-required") + "'>" + esc(t("core_return_required_label") + ": " + customerOrderCoreHandlingLabel(orderItem)) + "</span></div>";
   }).join("");
   return "<section class='shipping-document-order-contents'><div class='shipping-document-order-contents-head'><h3>受注内容</h3><span>" + esc(tf("customer_catalog_count", { n: items.length }) + " / " + t("customer_order_quantity") + " " + totalQuantity) + "</span></div>" +
     (rows ? "<div class='shipping-document-order-items'>" + rows + "</div>" : "<p class='shipping-document-order-empty'>受注明細がありません。</p>") + "</section>";
@@ -14957,7 +15074,8 @@ function salesOrderItemRowsHtml(items) {
   items = Array.isArray(items) ? items : [];
   if (!items.length) return "<div class='sales-order-empty'>明細がありません。</div>";
   return "<div class='sales-order-item-table'><div class='sales-order-item-head'><span>品番</span><span>区分</span><span>数量</span><span>単価</span><span>小計</span><span>コア返却</span></div>" + items.map(function(item) {
-    return "<div class='sales-order-item-row'><div><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || "-") + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small></div><span>" + esc(customerProductKindLabel(item.product_kind)) + "</span><strong>" + esc(item.quantity || 1) + "</strong><span>" + esc(customerOrderCurrency(item.unit_price_jpy)) + "</span><strong>" + esc(customerOrderCurrency(item.line_total_jpy)) + "</strong><span class='sales-order-core " + (item.core_return_required ? "required" : "none") + "'>" + esc(item.core_return_required ? "必要" : "不要") + "</span></div>";
+    var coreHandling = customerOrderCoreHandlingValue(item);
+    return "<div class='sales-order-item-row'><div><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || "-") + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small></div><span>" + esc(customerProductKindLabel(item.product_kind)) + "</span><strong>" + esc(item.quantity || 1) + "</strong><span>" + esc(customerOrderCurrency(item.unit_price_jpy)) + (coreHandling === "charge_no_return" ? "<small>" + esc(t("customer_order_core_charge_included")) + "</small>" : "") + "</span><strong>" + esc(customerOrderCurrency(item.line_total_jpy)) + "</strong><span class='sales-order-core " + (coreHandling === "return_required" ? "required" : (coreHandling === "charge_no_return" ? "charged" : "none")) + "'>" + esc(customerOrderCoreHandlingLabel(item)) + "</span></div>";
   }).join("") + "</div>";
 }
 
@@ -15425,7 +15543,7 @@ function renderSalesOrderDetail() {
   var outboundWaybillDetail = salesOrderWaybillDetailLabel(order, "outbound");
   var coreReturnService = order.core_return_required
     ? salesOrderWaybillCarrierLabel(order, "core_return")
-    : "対象外";
+    : (customerOrderHasCoreChargeNoReturn(order) ? t("customer_order_core_charge_no_return_status") : "対象外");
   var coreReturnWaybillDetail = salesOrderWaybillDetailLabel(order, "core_return");
   var orderDiscount = Math.max(0, parseInt(order.order_discount_jpy, 10) || 0);
   var orderAdjustments = Array.isArray(order.order_adjustments) ? order.order_adjustments : [];
@@ -15559,7 +15677,7 @@ function salesOrderPrintItemRows(order, type) {
     if (type === "core_return") {
       return "<tr><td>" + esc(String(index + 1)) + "</td><td><strong>" + esc(partNo) + "</strong><small>" + esc(detail) + "</small></td><td>" + esc(orderItem.manufacturer_part_number || "-") + "</td><td>" + esc(String(item.quantity || 0)) + "</td><td class='shipment-document-check-cell'>□</td></tr>";
     }
-    return "<tr><td>" + esc(String(index + 1)) + "</td><td><strong>" + esc(partNo) + "</strong><small>" + esc(detail) + "</small></td><td>" + esc(customerProductKindLabel(orderItem.product_kind)) + "</td><td>" + esc(String(item.quantity || 0)) + "</td><td>" + esc(orderItem.core_return_required ? "必要" : "不要") + "</td><td>" + esc(serials || "読取時に登録") + "</td></tr>";
+    return "<tr><td>" + esc(String(index + 1)) + "</td><td><strong>" + esc(partNo) + "</strong><small>" + esc(detail) + "</small></td><td>" + esc(customerProductKindLabel(orderItem.product_kind)) + "</td><td>" + esc(String(item.quantity || 0)) + "</td><td>" + esc(customerOrderCoreHandlingLabel(orderItem)) + "</td><td>" + esc(serials || "読取時に登録") + "</td></tr>";
   }).join("");
 }
 
@@ -48950,6 +49068,7 @@ document.getElementById("customer-order-delivery-time").addEventListener("change
 document.getElementById("customer-order-submit").addEventListener("click", submitCustomerOrder);
 document.getElementById("customer-order-history-reload").addEventListener("click", loadCustomerOrderHistory);
 document.getElementById("btn-back-sales-order-mgmt").addEventListener("click", returnToMenuFresh);
+document.getElementById("sales-order-new-internal-order").addEventListener("click", enterInternalCustomerOrderEntry);
 document.getElementById("btn-back-shipping-document-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-core-return-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("core-return-mgmt-reload").addEventListener("click", function() { refreshCoreReturnManagement(); });
