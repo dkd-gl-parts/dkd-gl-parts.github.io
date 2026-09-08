@@ -341,17 +341,18 @@ var TRANSLATIONS = {
     customer_order_preview_error: "価格・在庫を確認できませんでした。内容を確認して再試行してください。",
     customer_order_submit_success: "注文を受け付けました。",
     customer_order_submit_print_queued: "注文を受け付け、出荷指示書を印刷待ちに登録しました。",
-    customer_order_core_required_note: "コア返却が必要な商品を含みます。返送用送り状を商品に同梱します。",
-    customer_order_core_handling: "コア処理",
-    customer_order_core_return_standard: "コアを返却する",
-    customer_order_core_charge_no_return_option: "返却不要（コア代金 {amount}を請求）",
-    customer_order_core_charge_no_return_label: "返却不要・コア代金 {amount}",
-    customer_order_core_charge_no_return_status: "返却不要（コア代金請求済み）",
-    customer_order_core_charge_unset: "コア代金未設定（選択不可）",
-    customer_order_core_charge_setup: "商品マスタでコア代金を設定してください。",
-    customer_order_core_charge_included: "コア代金込み",
-    customer_order_core_charge_note: "コア代金を請求するため、コア返却と返送用送り状は不要です。",
-    customer_order_core_charge_total: "商品計に含むコア代金",
+    customer_order_core_required_note: "後日、交換したコアを返却する商品を含みます。返送用送り状を商品に同梱します。",
+    customer_order_core_handling: "交換コアの対応",
+    customer_order_core_handling_note: "受注時には返却しません。後日返却するか、返却できない場合はコア代金を支払います。",
+    customer_order_core_return_standard: "後日、交換したコアを返却する",
+    customer_order_core_charge_no_return_option: "コアを返却できない（{amount}を支払う）",
+    customer_order_core_charge_no_return_label: "コア代金 {amount} 計上",
+    customer_order_core_charge_no_return_status: "コア代金請求済み",
+    customer_order_core_charge_unset: "返却不可時コア代金が未設定（選択不可）",
+    customer_order_core_charge_setup: "商品マスタに返却不可時コア代金を設定してください。",
+    customer_order_core_charge_included: "コア代金を計上",
+    customer_order_core_charge_note: "コアを返却できない受注として、商品マスタのコア代金を商品金額に計上します。返送用送り状は発行しません。",
+    customer_order_core_charge_total: "受注時に計上したコア代金",
     customer_order_quantity: "数量",
     customer_order_unit_price: "単価",
     customer_order_subtotal: "小計",
@@ -538,13 +539,13 @@ var TRANSLATIONS = {
     core_return_required_label: "コア返却",
     core_return_required: "返却必要",
     core_return_not_required: "返却不要",
-    core_charge: "未返却時コア代金",
+    core_charge: "返却不可時コア代金",
     core_charge_short: "コア代金",
     core_charge_unset: "未設定",
     core_charge_product_source: "品番設定",
-    core_policy_form_note: "商品区分ごとに、返却条件と未返却時の代金を設定します。",
+    core_policy_form_note: "商品区分ごとに、返却条件と、返却必要商品の返却不可時コア代金を設定します。",
     core_policy_selected_kind_note: "選択中の商品区分の設定を保存します。",
-    sales_core_policy_help: "コア返却不要の場合、コア代金は入力できず、販売・原価・受注計算には反映されません。",
+    sales_core_policy_help: "商品マスタで返却不要の商品にはコア代金は発生せず、受注時にも計上しません。返却必要の商品だけ、返却できない場合の請求額を設定できます。",
     core_charge_invalid: "コア代金は0以上の整数で入力してください",
     product_kind_stock: "在庫",
     product_kind_sl: "SL",
@@ -2251,17 +2252,18 @@ var TRANSLATIONS = {
     customer_order_preview_error: "Price and inventory could not be verified. Review the order and try again.",
     customer_order_submit_success: "Your order has been received.",
     customer_order_submit_print_queued: "Your order was received and its shipment documents were queued for printing.",
-    customer_order_core_required_note: "This order includes products that require core return. A return label will be enclosed.",
-    customer_order_core_handling: "Core Handling",
-    customer_order_core_return_standard: "Return the core",
-    customer_order_core_charge_no_return_option: "Charge {amount}; no core return",
-    customer_order_core_charge_no_return_label: "Core charge {amount}; no return",
-    customer_order_core_charge_no_return_status: "Core charged; no return",
-    customer_order_core_charge_unset: "Core charge not set (unavailable)",
-    customer_order_core_charge_setup: "Set the core charge in Product Master first.",
-    customer_order_core_charge_included: "Includes core charge",
-    customer_order_core_charge_note: "The core charge will be billed, so no core return or return label is required.",
-    customer_order_core_charge_total: "Core charge included in products",
+    customer_order_core_required_note: "This order includes an exchange core to be returned later. A return label will be enclosed.",
+    customer_order_core_handling: "Exchange Core Handling",
+    customer_order_core_handling_note: "The core is not returned when ordering. Return it later, or pay the core charge if it cannot be returned.",
+    customer_order_core_return_standard: "Return the exchange core later",
+    customer_order_core_charge_no_return_option: "Cannot return core (pay {amount})",
+    customer_order_core_charge_no_return_label: "Core charge {amount} billed",
+    customer_order_core_charge_no_return_status: "Core charge billed",
+    customer_order_core_charge_unset: "Core charge for unavailable return is not set",
+    customer_order_core_charge_setup: "Set the unavailable-return core charge in Product Master.",
+    customer_order_core_charge_included: "Core charge billed",
+    customer_order_core_charge_note: "The exchange core cannot be returned, so the server adds the Product Master core charge to this order. No return label is issued.",
+    customer_order_core_charge_total: "Core charge billed with order",
     customer_order_quantity: "Qty",
     customer_order_unit_price: "Unit Price",
     customer_order_subtotal: "Subtotal",
@@ -2448,13 +2450,13 @@ var TRANSLATIONS = {
     core_return_required_label: "Core Return",
     core_return_required: "Return Required",
     core_return_not_required: "No Return Required",
-    core_charge: "Core Charge if Not Returned",
+    core_charge: "Core Charge if Return Is Unavailable",
     core_charge_short: "Core Charge",
     core_charge_unset: "Not set",
     core_charge_product_source: "Product setting",
-    core_policy_form_note: "Set return terms and the non-return charge for each product kind.",
+    core_policy_form_note: "Set return terms and the unavailable-return core charge for each product kind.",
     core_policy_selected_kind_note: "The setting for the selected product kind will be saved.",
-    sales_core_policy_help: "When no return is required, the core charge cannot be entered and is excluded from sales, cost, and order calculations.",
+    sales_core_policy_help: "Products marked no-return never incur a core charge. Only return-required products can define the amount billed when the exchange core cannot be returned.",
     core_charge_invalid: "Enter a core charge as an integer of 0 or more",
     product_kind_stock: "Stock",
     product_kind_sl: "SL",
@@ -4106,17 +4108,18 @@ var TRANSLATIONS = {
     customer_order_preview_error: "无法确认价格和库存。请检查订单后重试。",
     customer_order_submit_success: "订单已受理。",
     customer_order_submit_print_queued: "订单已受理，出货指示文件已加入打印队列。",
-    customer_order_core_required_note: "订单中包含需要返还旧件的商品。商品中将附上返送运单。",
-    customer_order_core_handling: "旧件处理",
-    customer_order_core_return_standard: "返还旧件",
-    customer_order_core_charge_no_return_option: "收取旧件费 {amount}・无需返还",
-    customer_order_core_charge_no_return_label: "旧件费 {amount}・无需返还",
-    customer_order_core_charge_no_return_status: "已收旧件费・无需返还",
-    customer_order_core_charge_unset: "未设置旧件费（无法选择）",
-    customer_order_core_charge_setup: "请先在商品主数据中设置旧件费。",
-    customer_order_core_charge_included: "含旧件费",
-    customer_order_core_charge_note: "因收取旧件费，无需返还旧件或附带返送运单。",
-    customer_order_core_charge_total: "商品小计中包含的旧件费",
+    customer_order_core_required_note: "订单中包含日后需要返还的交换旧件，并将随货附上返送运单。",
+    customer_order_core_handling: "交换旧件处理",
+    customer_order_core_handling_note: "下单时不返还旧件。请选择日后返还，或在无法返还时支付旧件费。",
+    customer_order_core_return_standard: "日后返还交换旧件",
+    customer_order_core_charge_no_return_option: "无法返还旧件（支付 {amount}）",
+    customer_order_core_charge_no_return_label: "已计入旧件费 {amount}",
+    customer_order_core_charge_no_return_status: "旧件费已计费",
+    customer_order_core_charge_unset: "未设置无法返还时的旧件费",
+    customer_order_core_charge_setup: "请在商品主数据中设置无法返还时的旧件费。",
+    customer_order_core_charge_included: "已计入旧件费",
+    customer_order_core_charge_note: "因交换旧件无法返还，系统将商品主数据中的旧件费计入订单，不发行返送运单。",
+    customer_order_core_charge_total: "下单时计入的旧件费",
     customer_order_quantity: "数量",
     customer_order_unit_price: "单价",
     customer_order_subtotal: "小计",
@@ -4366,13 +4369,13 @@ var TRANSLATIONS = {
     core_return_required_label: "旧芯返还",
     core_return_required: "需要返还",
     core_return_not_required: "无需返还",
-    core_charge: "未返还时旧芯费用",
+    core_charge: "无法返还时的旧芯费用",
     core_charge_short: "旧芯费用",
     core_charge_unset: "未设置",
     core_charge_product_source: "品号设置",
-    core_policy_form_note: "按商品区分设置返还条件和未返还时的费用。",
+    core_policy_form_note: "按商品区分设置返还条件，以及需要返还商品无法返还时的旧芯费用。",
     core_policy_selected_kind_note: "保存当前所选商品区分的设置。",
-    sales_core_policy_help: "无需返还旧芯时，不能输入旧芯费用，且不会计入销售、成本或订单计算。",
+    sales_core_policy_help: "商品主数据标记为无需返还的商品不会产生旧芯费用。只有需要返还的商品才能设置无法返还时的计费金额。",
     core_charge_invalid: "旧芯费用请输入0以上的整数",
     product_kind_stock: "库存",
     product_kind_sl: "SL",
@@ -5854,7 +5857,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.915";
+var APP_VERSION       = "v1.1.916";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -11022,7 +11025,7 @@ function customerOrderCoreHandlingLabel(item) {
   return t(handling === "return_required" ? "core_return_required" : "core_return_not_required");
 }
 
-function customerOrderHasCoreChargeNoReturn(order) {
+function customerOrderHasBilledCoreCharge(order) {
   var items = Array.isArray(order && order.items) ? order.items : [];
   return items.some(function(item) {
     var orderItem = item && item.order_item && typeof item.order_item === "object" ? item.order_item : item;
@@ -11089,7 +11092,7 @@ function renderCustomerOrderCart() {
           "<option value='standard'" + (selectedCoreHandling === "standard" ? " selected" : "") + ">" + esc(t("customer_order_core_return_standard")) + "</option>" +
           "<option value='charge_no_return'" + (selectedCoreHandling === "charge_no_return" ? " selected" : "") + (configuredCoreCharge > 0 ? "" : " disabled") + ">" +
             esc(configuredCoreCharge > 0 ? tf("customer_order_core_charge_no_return_option", { amount: customerOrderCurrency(configuredCoreCharge) }) : t("customer_order_core_charge_unset")) +
-          "</option></select>" + (configuredCoreCharge > 0 ? "" : "<small>" + esc(t("customer_order_core_charge_setup")) + "</small>") + "</label>"
+          "</option></select><small>" + esc(t("customer_order_core_handling_note")) + "</small>" + (configuredCoreCharge > 0 ? "" : "<small class='setup-required'>" + esc(t("customer_order_core_charge_setup")) + "</small>") + "</label>"
       : "";
     return "<div class='customer-order-line' data-order-key='" + esc(item.key) + "'>" +
       "<div class='customer-order-product'><span>" + esc(productCategoryLabel(product) || product.category || "-") + "</span><strong>" + esc(product.genuine_part_number || product.manufacturer_part_number || "-") + "</strong><small>" + esc([product.manufacturer, product.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small>" + coreBadge + coreChoice + "</div>" +
@@ -11334,14 +11337,15 @@ function renderCustomerOrderHistory() {
         (customerOrderCoreHandlingValue(item) === "charge_no_return" ? "（" + t("customer_order_core_charge_no_return_status") + "）" : "");
     }).join("、");
     var outboundService = customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "outbound"), "未登録");
+    var billedCoreChargeStatus = customerOrderHasBilledCoreCharge(order) ? t("customer_order_core_charge_no_return_status") : "対象外";
     var coreReturnService = order.core_return_required
       ? customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "core_return"), "未登録")
-      : (customerOrderHasCoreChargeNoReturn(order) ? t("customer_order_core_charge_no_return_status") : "対象外");
+      : billedCoreChargeStatus;
     return "<article class='customer-order-history-row'>" +
       "<div><span class='customer-order-number'>" + esc(order.order_number || ("注文 " + (order.id || "-"))) + "</span><strong>" + esc(customerOrderStatusLabel(order.status)) + "</strong><small>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small></div>" +
       "<div class='customer-order-history-items'>" + esc(itemText || "-") + customerOrderVehicleInformationInlineHtml(order.vehicle_information) + "</div>" +
       "<div class='customer-order-history-total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div>" +
-      "<dl><div><dt>商品発送便</dt><dd>" + esc(outboundService) + "</dd></div><div><dt>商品発送送り状</dt><dd>" + esc(order.outbound_tracking_number || "未登録") + "</dd></div><div><dt>コア返却便</dt><dd>" + esc(coreReturnService) + "</dd></div><div><dt>コア返却用送り状</dt><dd>" + esc(order.return_tracking_number || (order.core_return_required ? "未登録" : "対象外")) + "</dd></div><div><dt>コア返却</dt><dd>" + esc(order.core_return_status || (order.core_return_required ? "返却待ち" : "対象外")) + "</dd></div></dl>" +
+      "<dl><div><dt>商品発送便</dt><dd>" + esc(outboundService) + "</dd></div><div><dt>商品発送送り状</dt><dd>" + esc(order.outbound_tracking_number || "未登録") + "</dd></div><div><dt>コア返却便</dt><dd>" + esc(coreReturnService) + "</dd></div><div><dt>コア返却用送り状</dt><dd>" + esc(order.return_tracking_number || (order.core_return_required ? "未登録" : billedCoreChargeStatus)) + "</dd></div><div><dt>コア返却</dt><dd>" + esc(order.core_return_status || (order.core_return_required ? "返却待ち" : billedCoreChargeStatus)) + "</dd></div></dl>" +
     "</article>";
   }).join("");
 }
@@ -15789,10 +15793,13 @@ function renderSalesOrderDetail() {
     : "";
   var outboundService = salesOrderWaybillCarrierLabel(order, "outbound");
   var outboundWaybillDetail = salesOrderWaybillDetailLabel(order, "outbound");
+  var billedCoreChargeStatus = customerOrderHasBilledCoreCharge(order) ? t("customer_order_core_charge_no_return_status") : "対象外";
   var coreReturnService = order.core_return_required
     ? salesOrderWaybillCarrierLabel(order, "core_return")
-    : (customerOrderHasCoreChargeNoReturn(order) ? t("customer_order_core_charge_no_return_status") : "対象外");
-  var coreReturnWaybillDetail = salesOrderWaybillDetailLabel(order, "core_return");
+    : billedCoreChargeStatus;
+  var coreReturnWaybillDetail = order.core_return_required
+    ? salesOrderWaybillDetailLabel(order, "core_return")
+    : billedCoreChargeStatus;
   var orderDiscount = Math.max(0, parseInt(order.order_discount_jpy, 10) || 0);
   var orderAdjustments = Array.isArray(order.order_adjustments) ? order.order_adjustments : [];
   var pricingButton = typeof salesOrderCanRevise === "function" && salesOrderCanRevise(order)

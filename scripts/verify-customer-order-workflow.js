@@ -288,9 +288,36 @@ if (!coreRequirement.includes('item.core_return_handling !== "charge_no_return"'
 const orderCartRenderer = sourceBetween("function renderCustomerOrderCart", "function customerOrderSetStatus");
 if (!orderCartRenderer.includes("canRegisterInternalCustomerOrder() && item.core_return_required") ||
     !orderCartRenderer.includes('t("customer_order_core_charge_unset")') ||
-    !orderCartRenderer.includes('t("customer_order_core_charge_total")')) {
+    !orderCartRenderer.includes('t("customer_order_core_charge_total")') ||
+    !orderCartRenderer.includes('t("customer_order_core_handling_note")') ||
+    !orderCartRenderer.includes("class='setup-required'")) {
   throw new Error("internal order entry must clearly show the core handling choice, missing setup, and charged amount");
 }
+[
+  'customer_order_core_return_standard: "後日、交換したコアを返却する"',
+  'customer_order_core_charge_no_return_option: "コアを返却できない（{amount}を支払う）"',
+  'customer_order_core_charge_no_return_status: "コア代金請求済み"',
+  'customer_order_core_charge_note: "コアを返却できない受注として、商品マスタのコア代金を商品金額に計上します。返送用送り状は発行しません。"',
+  'sales_core_policy_help: "商品マスタで返却不要の商品にはコア代金は発生せず、受注時にも計上しません。返却必要の商品だけ、返却できない場合の請求額を設定できます。"'
+].forEach((fragment) => {
+  if (!source.includes(fragment)) throw new Error(`core charge billing semantics are missing: ${fragment}`);
+});
+if ((source.match(/customer_order_core_handling_note:/g) || []).length !== 3 ||
+    source.includes('customer_order_core_charge_no_return_option: "返却不要（')) {
+  throw new Error("core handling must distinguish later return, billed core charge, and no-return products in every language");
+}
+if (!source.includes("function customerOrderHasBilledCoreCharge") || source.includes("function customerOrderHasCoreChargeNoReturn")) {
+  throw new Error("order status helpers must describe a billed core charge without classifying the product as no-return");
+}
+[
+  "受注時に交換コアを返却する運用ではない",
+  "コア代金を計上しても商品マスタの「コア返却必要」は変更しない",
+  "商品マスタでコア返却不要の商品には選択欄を表示しない",
+  '"product_core_return_required": true',
+  '"core_charge_billed": false'
+].forEach((fragment) => {
+  if (!contract.includes(fragment)) throw new Error(`core charge contract clarification is missing: ${fragment}`);
+});
 const directInternalEntry = sourceBetween("async function enterInternalCustomerOrderEntry", "function salesAccountingExportLocalDate");
 if (!directInternalEntry.includes("canStartInternalCustomerOrderEntry()") ||
     !directInternalEntry.includes("await enterCustomerPortal()") ||
