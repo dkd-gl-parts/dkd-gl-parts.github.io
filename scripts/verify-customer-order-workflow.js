@@ -285,7 +285,10 @@ if (!orderPayloadItems.includes('core_return_handling: item.core_return_handling
   throw new Error("the selected core-return handling must be included in server preview and submission requests");
 }
 const orderCurrency = sourceBetween("function customerOrderCurrency", "function customerOrderStatusLabel");
-if (!orderCurrency.includes('"\\u00a5" + formatYen(Number(value))') || orderCurrency.includes('"JPY "')) {
+const sharedYenCurrency = sourceBetween("function formatYenCurrency", "function formatComponentYen");
+if (!orderCurrency.includes("return formatYenCurrency(value)") ||
+    !sharedYenCurrency.includes('"\\u00a5" + text') ||
+    orderCurrency.includes('"JPY "')) {
   throw new Error("order-screen amounts must use the yen symbol instead of the JPY currency code");
 }
 const coreRequirement = sourceBetween("function customerOrderCartRequiresCoreReturn", "function customerOrderCoreReturnShippingMethodPayload");

@@ -944,7 +944,7 @@ var TRANSLATIONS = {
     vehicle_info_no_detail: "車メーカーは {maker} と確認できますが、この品番に紐づく車種・型式・エンジンの詳細行はパーツカタログ側に見つかりません。",
     f_moq: "MOQ",
     f_price_usd: "価格(USD)",
-    f_price_jpy: "販売価格(JP)",
+    f_price_jpy: "販売価格(円)",
     f_stock: "在庫",
     f_core_return: "コア返却",
     f_accessories: "付属品",
@@ -2858,7 +2858,7 @@ var TRANSLATIONS = {
     vehicle_info_no_detail: "Vehicle maker is confirmed as {maker}, but no detailed vehicle/model/engine rows linked to this part were found in the parts catalog.",
     f_moq: "MOQ",
     f_price_usd: "Price (USD)",
-    f_price_jpy: "Price (JPY)",
+    f_price_jpy: "Price (\u00a5)",
     f_stock: "Stock",
     f_core_return: "Core Return",
     f_accessories: "Accessories",
@@ -3455,7 +3455,7 @@ var TRANSLATIONS = {
     reset_success: "Password updated. Please log in.",
     reset_error: "Failed to update password. Please try again.",
     supplier_prices: "Suppliers",
-    sales_price_jpy: "Sales Price (JPY)",
+    sales_price_jpy: "Sales Price (\u00a5)",
     f_supplier: "Supplier",
     f_unit_price: "Unit Price",
     f_currency: "Currency",
@@ -3469,7 +3469,7 @@ var TRANSLATIONS = {
     sales_daiko_service_price: "Daiko Service Price",
     sales_dks_reference_loading: "Checking Daiko Service price...",
     sales_dks_reference_none: "No price data",
-    sales_dks_reference_line: "Reference after JPY 1,000 deduction: {ref}",
+    sales_dks_reference_line: "Reference after \u00a51,000 deduction: {ref}",
     sales_ec_market_price: "EC Mall Market",
     sales_ec_market_loading: "Checking EC mall market...",
     sales_ec_market_none: "No research results",
@@ -4780,7 +4780,7 @@ var TRANSLATIONS = {
     vehicle_info_no_detail: "已确认汽车制造商为 {maker}，但在零件目录中没有找到与此品番关联的车型、型号、发动机详细行。",
     f_moq: "最小订量",
     f_price_usd: "价格(USD)",
-    f_price_jpy: "日本售价(JPY)",
+    f_price_jpy: "日本售价（日元）",
     f_stock: "库存",
     f_core_return: "核心归还",
     f_accessories: "附件",
@@ -5866,7 +5866,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.918";
+var APP_VERSION       = "v1.1.919";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -11012,7 +11012,7 @@ function configureCustomerOrderAddressTools() {
 }
 
 function customerOrderCurrency(value) {
-  return value == null || value === "" || isNaN(Number(value)) ? "-" : "\u00a5" + formatYen(Number(value));
+  return formatYenCurrency(value);
 }
 
 function customerOrderStatusLabel(status) {
@@ -18753,9 +18753,13 @@ function formatYen(value) {
   return n.toLocaleString("ja-JP");
 }
 
-function formatComponentYen(value) {
+function formatYenCurrency(value) {
   var text = formatYen(value);
   return text === "-" ? "-" : "\u00a5" + text;
+}
+
+function formatComponentYen(value) {
+  return formatYenCurrency(value);
 }
 
 function formatComponentRate(value) {
@@ -21585,8 +21589,7 @@ async function fetchRakutenApiData(keyword, ngKeyword, sort, hits, opts) {
 }
 
 function yen(n) {
-  if (n == null || isNaN(Number(n))) return "-";
-  return "\u00a5" + Number(n).toLocaleString();
+  return formatYenCurrency(n);
 }
 
 function getRakutenImage(item) {
@@ -42587,7 +42590,7 @@ async function fetchSalesPricingManufacturingCost(dkdId, productKind) {
 
 function salesPricingManufacturingCostText(cost) {
   return cost && cost.totalCost !== null && cost.totalCost !== undefined
-    ? "JPY " + formatYen(cost.totalCost)
+    ? formatYenCurrency(cost.totalCost)
     : "-";
 }
 
@@ -42683,7 +42686,7 @@ function renderSalesBasePriceGuidance() {
   }
   renderSalesPricingReferenceItem(refEl, {
     label: t("sales_daiko_service_price"),
-    value: "JPY " + formatYen(ref.dksPrice),
+    value: formatYenCurrency(ref.dksPrice),
     tone: "daiko"
   });
 }
@@ -42775,7 +42778,7 @@ function renderSalesPricingEcReference() {
   }
   renderSalesPricingReferenceItem(el, {
     label: t("sales_ec_market_price"),
-    value: reference ? "JPY " + formatYen(reference.price) : "-",
+    value: reference ? formatYenCurrency(reference.price) : "-",
     state: reference ? "" : "empty",
     tone: "ec"
   });
@@ -42842,7 +42845,7 @@ function renderSalesRankPreview() {
     var code = esc(rank.rank_code || "");
     html += "<tr>";
     html += "<td data-label='" + esc(t("sales_rank")) + "'><div class='price-supplier'>" + esc(salesRankDisplayName(rank)) + "</div><div class='price-country'>" + esc(rank.rank_code || "") + "</div></td>";
-    html += "<td data-label='" + esc(t("sales_result_price")) + "'><div class='price-value sales-rank-price' data-dcats-inline-style='s-1024138906a0'>" + (price === null ? "-" : "JPY " + esc(formatYen(price))) + "</div></td>";
+    html += "<td data-label='" + esc(t("sales_result_price")) + "'><div class='price-value sales-rank-price' data-dcats-inline-style='s-1024138906a0'>" + (price === null ? "-" : esc(formatYenCurrency(price))) + "</div></td>";
     html += "<td data-label='" + esc(t("sales_customer_count")) + "'>" + esc(String(salesPricingCustomerCounts[rank.rank_code] || 0)) + "</td>";
     if (editable) {
       html += "<td data-label='" + esc(t("sales_rate_multiplier")) + "'><input class='form-input sales-rank-rate' data-rank-code='" + code + "' type='number' min='0' step='0.0001' value='" + esc(String(rank.rate_multiplier || 1)) + "'></td>";
@@ -43165,7 +43168,7 @@ async function loadSalesPriceSummaryForCurrent() {
     wrap.innerHTML = "<div class='sales-price-summary'><div class='sales-price-summary-main primary'><span class='sales-price-summary-value'>-</span></div></div>";
     return;
   }
-  var priceText = "JPY " + esc(formatYen(row.base_price_jpy));
+  var priceText = esc(formatYenCurrency(row.base_price_jpy));
   wrap.innerHTML = "<div class='sales-price-summary'>" +
     "<div class='sales-price-summary-main primary'><span class='sales-price-summary-value'>" + priceText + "</span></div>" +
   "</div>";
@@ -43190,7 +43193,7 @@ async function loadCustomerSalesPriceSummary(wrap, dkdId) {
       wrap.innerHTML = "<div class='sales-price-summary'><div class='sales-price-summary-main primary'><span class='sales-price-summary-value'>-</span></div></div>";
       return;
     }
-    var priceText = price == null ? "-" : "JPY " + esc(formatYen(price));
+    var priceText = price == null ? "-" : esc(formatYenCurrency(price));
     wrap.innerHTML = "<div class='sales-price-summary'>" +
       "<div class='sales-price-summary-main primary'><span class='sales-price-summary-value'>" + priceText + "</span></div>" +
       (customerName ? "<div class='sales-price-summary-sub'>" + esc(customerName) + "</div>" : "") +
@@ -43210,7 +43213,7 @@ async function loadCustomerPortalPreviewSalesPriceSummary(wrap, dkdId) {
   }
   try {
     var info = await fetchDetailCustomerPriceInfo(customer, dkdId);
-    var priceText = info.salesPrice == null ? "-" : "JPY " + esc(formatYen(info.salesPrice));
+    var priceText = info.salesPrice == null ? "-" : esc(formatYenCurrency(info.salesPrice));
     wrap.innerHTML = "<div class='sales-price-summary'>" +
       "<div class='sales-price-summary-main primary'><span class='sales-price-summary-value'>" + priceText + "</span></div>" +
       "<div class='sales-price-summary-sub'>" + esc(customer.customer_name || "") + "</div>" +
@@ -43782,7 +43785,7 @@ function renderSalesPricingMgmt() {
   salesPricingMgmtRows.forEach(function(row) {
     var price = salesPricingMgmtPriceMap[String(row.dkd_shohin_id)] || null;
     var manufacturingCost = salesPricingMgmtManufacturingCostMap[String(row.dkd_shohin_id)] || null;
-    var priceText = price ? ("JPY " + formatYen(price.base_price_jpy)) : "-";
+    var priceText = price ? formatYenCurrency(price.base_price_jpy) : "-";
     html += "<tr>";
     html += "<td><div class='sales-pricing-dkd-line'><span class='mgmt-pn'>" + esc(String(row.dkd_shohin_id || "-")) + "</span><span class='sales-pricing-category'>" + esc(tCat(row.category_code || row.category) || "") + "</span></div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(row.genuine_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(row.genuine_part_number_2 || "") + "</div></td>";
@@ -43860,7 +43863,7 @@ function purchaseMoneyText(value, currency) {
   var n = Number(value);
   if (isNaN(n)) return "-";
   currency = currency || "USD";
-  if (String(currency).toUpperCase() === "JPY") return "JPY " + formatYen(n);
+  if (String(currency).toUpperCase() === "JPY") return formatYenCurrency(n);
   return String(currency).toUpperCase() + " " + n.toLocaleString("ja-JP", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
@@ -44263,7 +44266,7 @@ function renderPurchaseMgmt() {
     html += "<td><div class='price-supplier'>" + esc(purchaseSupplierLabel(sl)) + "</div><div class='price-country'>" + esc(purchaseSupplierSub(sl)) + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(sl.supplier_pn || "-") + "</div></td>";
     html += "<td><div class='purchase-price-cell'>" + esc(purchaseMoneyText(sl.unit_price, sl.currency)) + "</div></td>";
-    html += "<td><div class='purchase-price-cell sales'>" + esc(sl.price_jpy ? ("JPY " + formatYen(sl.price_jpy)) : "-") + "</div></td>";
+    html += "<td><div class='purchase-price-cell sales'>" + esc(sl.price_jpy ? formatYenCurrency(sl.price_jpy) : "-") + "</div></td>";
     html += "<td><div class='price-moq'>" + esc(sl.moq === null || sl.moq === undefined || sl.moq === "" ? "-" : String(sl.moq)) + "</div></td>";
     html += "<td>" + productHtml + "</td>";
     var actionLabel = products.length ? t("purchase_link_add") : t("purchase_link_action");
@@ -44393,7 +44396,7 @@ function renderPurchaseLinkCurrent(row) {
   }).filter(Boolean);
   el.innerHTML =
     "<strong>" + esc([purchaseSupplierLabel(sl), sl.supplier_pn || "-"].filter(Boolean).join(" / ")) + "</strong>" +
-    "<div>" + esc([t("purchase_price") + " " + purchaseMoneyText(sl.unit_price, sl.currency), t("purchase_sales_price") + " " + (sl.price_jpy ? ("JPY " + formatYen(sl.price_jpy)) : "-"), t("f_moq") + " " + (sl.moq == null || sl.moq === "" ? "-" : sl.moq)].join(" / ")) + "</div>" +
+    "<div>" + esc([t("purchase_price") + " " + purchaseMoneyText(sl.unit_price, sl.currency), t("purchase_sales_price") + " " + (sl.price_jpy ? formatYenCurrency(sl.price_jpy) : "-"), t("f_moq") + " " + (sl.moq == null || sl.moq === "" ? "-" : sl.moq)].join(" / ")) + "</div>" +
     "<div>" + esc(t("purchase_link_current") + ": " + (current.length ? current.join(" | ") : "-")) + "</div>";
 }
 
