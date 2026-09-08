@@ -34,7 +34,8 @@ function sourceBetween(startText, endText) {
   "screen-sales-order-mgmt",
   "sales-order-list",
   "sales-order-detail",
-  "sales-order-export-b2"
+  "sales-order-export-b2",
+  "sales-order-new-internal-order"
 ].forEach((id) => {
   if (!html.includes(`id="${id}"`)) throw new Error(`order workflow UI is missing: ${id}`);
 });
@@ -259,6 +260,29 @@ if (!catalogOrderEntry.includes("addCustomerCatalogProductToOrder") ||
 const addOrderItem = sourceBetween("function addCustomerCatalogProductToOrder", "function customerOrderPayloadItems");
 if (!addOrderItem.includes("if (!existing)") || addOrderItem.includes("existing.quantity")) {
   throw new Error("an already selected product must open the order screen without silently increasing quantity");
+}
+if (!addOrderItem.includes('core_return_handling: "standard"')) {
+  throw new Error("new order lines must default to the catalog core-return policy");
+}
+const orderPayloadItems = sourceBetween("function customerOrderPayloadItems", "function customerOrderVehicleInformationPayload");
+if (!orderPayloadItems.includes('core_return_handling: item.core_return_handling === "charge_no_return"')) {
+  throw new Error("the selected core-return handling must be included in server preview and submission requests");
+}
+const coreRequirement = sourceBetween("function customerOrderCartRequiresCoreReturn", "function customerOrderCoreReturnShippingMethodPayload");
+if (!coreRequirement.includes('item.core_return_handling !== "charge_no_return"')) {
+  throw new Error("core-charge/no-return lines must not require a return shipping method");
+}
+const orderCartRenderer = sourceBetween("function renderCustomerOrderCart", "function customerOrderSetStatus");
+if (!orderCartRenderer.includes("canRegisterInternalCustomerOrder() && item.core_return_required") ||
+    !orderCartRenderer.includes('t("customer_order_core_charge_unset")') ||
+    !orderCartRenderer.includes('t("customer_order_core_charge_total")')) {
+  throw new Error("internal order entry must clearly show the core handling choice, missing setup, and charged amount");
+}
+const directInternalEntry = sourceBetween("async function enterInternalCustomerOrderEntry", "function salesAccountingExportLocalDate");
+if (!directInternalEntry.includes("canRegisterInternalCustomerOrder()") ||
+    !directInternalEntry.includes("await enterCustomerPortal()") ||
+    !directInternalEntry.includes('document.getElementById("customer-portal-customer-select")')) {
+  throw new Error("FAX/email order entry must remain permission-gated and reuse the customer order flow");
 }
 const orderPreviewRequest = sourceBetween("async function previewCustomerOrder", "function customerOrderIdempotencyKey");
 const orderSubmitRequest = sourceBetween("async function submitCustomerOrder", "function renderCustomerOrderHistory");

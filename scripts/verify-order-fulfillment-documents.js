@@ -169,7 +169,7 @@ for (const fragment of [
   "customerProductKindLabel(orderItem.product_kind)",
   't("customer_order_quantity")',
   't("core_return_required_label")',
-  '"core_return_required" : "core_return_not_required"',
+  "customerOrderCoreHandlingLabel(orderItem)",
   'tf("customer_catalog_count"'
 ]) requireFragment(shippingDocumentOrderContents, fragment, `Shipping document order contents contract is missing: ${fragment}`);
 
@@ -688,11 +688,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.908"',
-  'styles.css?v=1.1.908',
-  'app.js?v=1.1.908'
+  'content="v1.1.909"',
+  'styles.css?v=1.1.909',
+  'app.js?v=1.1.909'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.908"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.909"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
