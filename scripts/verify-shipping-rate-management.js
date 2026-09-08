@@ -48,6 +48,11 @@ if (adminItemsSource.includes("shippingRateRows = [];") || adminItemsSource.incl
 if (!renderMenuSource.includes('else if (card.dataset.action === "shipping-rate-mgmt") enterShippingRateMgmt();')) {
   throw new Error("shipping master click routing must be inside renderMenu");
 }
+if (!adminItemsSource.includes('titleKey: "mi_shipping_title"') ||
+    !source.includes('mi_shipping_title: "運送・送料管理"') ||
+    !source.includes('mi_shipping_desc: "運送業者・都道府県別の送料とB2契約情報を管理します。"')) {
+  throw new Error("the shipping management menu must identify its B2 contract settings responsibility");
+}
 
 const shippingFunctionsStart = source.indexOf("function shippingPrefectureLabel");
 const productionSearchStart = source.indexOf("async function enterProductionSearch");
@@ -99,6 +104,7 @@ if (customerShippingRedraw < 0 || shippingMgmtRedraw < 0 || historyOverlayRedraw
   "shipping-rate-service-filter",
   "shipping-rate-size-filter",
   "shipping-rate-status-filter",
+  "shipping-rate-b2-settings-open",
   "shipping-rate-form-overlay",
   "shipping-rate-service",
   "shipping-rate-package-size",
@@ -112,6 +118,15 @@ if (customerShippingRedraw < 0 || shippingMgmtRedraw < 0 || historyOverlayRedraw
 ].forEach((id) => {
   if (!html.includes(`id="${id}"`)) throw new Error(`shipping UI control is missing: ${id}`);
 });
+
+const shippingMgmtEntry = sourceBetween("async function enterShippingRateMgmt", "async function loadShippingRateMgmt");
+if (!shippingMgmtEntry.includes('getElementById("shipping-rate-b2-settings-open")') ||
+    !shippingMgmtEntry.includes("b2SettingsButton.hidden = !isSystemAdmin()")) {
+  throw new Error("B2 contract settings entry must be visible only to system administrators");
+}
+if (!source.includes('document.getElementById("shipping-rate-b2-settings-open").addEventListener("click", openSalesOrderB2Settings);')) {
+  throw new Error("shipping management must open the existing B2 contract settings dialog");
+}
 
 const customerLoad = sourceBetween("async function loadCustomerShippingRates", "function renderCustomerShippingRates");
 if (!customerLoad.includes("fetchAllShippingRateRows(") || !customerLoad.includes("true")) {

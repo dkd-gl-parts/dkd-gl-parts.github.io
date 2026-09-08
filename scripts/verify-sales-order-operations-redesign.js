@@ -36,13 +36,15 @@ for (const id of [
   "sales-order-reload",
   "sales-order-batch-accept",
   "sales-order-export-b2",
-  "sales-order-b2-settings-open",
   "sales-order-import-b2",
   "sales-order-accounting-export",
   "sales-order-business-workspace-open"
 ]) {
   const count = (html.match(new RegExp(`id=["']${id}["']`, "g")) || []).length;
   if (count !== 1) throw new Error(`${id} must remain unique after toolbar regrouping; found ${count}`);
+}
+if (html.includes('id="sales-order-b2-settings-open"')) {
+  throw new Error("B2 contract settings must not remain in the sales-order data actions");
 }
 
 const selection = functionSource("updateSalesOrderSelectionButtons");

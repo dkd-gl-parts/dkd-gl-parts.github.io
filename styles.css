@@ -2407,6 +2407,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .shipping-rate-mgmt-intro { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
 .shipping-rate-mgmt-intro h1 { color: #1a1a2e; font-size: 20px; letter-spacing: 0; }
 .shipping-rate-mgmt-intro p { margin-top: 5px; color: #667085; font-size: 12px; line-height: 1.6; }
+.shipping-rate-mgmt-intro-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.shipping-rate-b2-settings-button { min-height: 36px; border: 1px solid #287356; border-radius: 8px; padding: 8px 16px; background: #fff; color: #1f6248; font-size: 14px; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.shipping-rate-b2-settings-button:hover { background: #eef8f3; }
 .shipping-rate-mgmt-toolbar { display: grid; grid-template-columns: repeat(5, minmax(140px, 1fr)) auto; gap: 10px; align-items: end; margin-bottom: 12px; }
 .shipping-rate-mgmt-toolbar label { display: grid; gap: 5px; color: #667085; font-size: 11px; font-weight: 700; }
 .shipping-rate-mgmt-toolbar select { width: 100%; height: 38px; border: 1px solid #d0d5dd; border-radius: 6px; padding: 0 32px 0 10px; background: #fff; color: #1d2939; font-size: 12px; }
@@ -2461,7 +2464,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 @media(max-width:720px){
   .shipping-rate-mgmt-body { width: min(100% - 20px, 1240px); padding-top: 16px; }
   .shipping-rate-mgmt-intro { align-items: stretch; flex-direction: column; }
-  .shipping-rate-mgmt-intro .btn-primary { width: 100%; }
+  .shipping-rate-mgmt-intro-actions { display: grid; grid-template-columns: 1fr; }
+  .shipping-rate-mgmt-intro-actions button { width: 100%; }
   .shipping-rate-mgmt-toolbar { grid-template-columns: 1fr 1fr; }
   .shipping-rate-mgmt-toolbar .mgmt-count { justify-self: start; padding: 0; }
   .shipping-rate-mgmt-row { grid-template-columns: 1fr 1fr; }
@@ -8049,8 +8053,7 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .shipping-document-title-block { min-width: 320px; }
 .shipping-document-title-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .shipping-document-title-actions a,
-.shipping-waybill-layout-open,
-.shipping-document-b2-settings-open {
+.shipping-waybill-layout-open {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -8066,8 +8069,7 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 }
 .shipping-document-title-actions a { border-color: #287356; background: #287356; color: #fff; }
 .shipping-document-title-actions a:hover { border-color: #1f6248; background: #1f6248; }
-.shipping-waybill-layout-open:hover,
-.shipping-document-b2-settings-open:hover { border-color: #236fb5; color: #155a94; }
+.shipping-waybill-layout-open:hover { border-color: #236fb5; color: #155a94; }
 .shipping-waybill-layout-card {
   display: flex;
   flex-direction: column;
@@ -8446,8 +8448,7 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   .shipping-document-title-block { min-width: 0; }
   .shipping-document-title-actions { align-items: stretch; flex-direction: column; }
   .shipping-document-title-actions a,
-  .shipping-waybill-layout-open,
-  .shipping-document-b2-settings-open { width: 100%; }
+  .shipping-waybill-layout-open { width: 100%; }
   .shipping-waybill-layout-heading { padding: 13px; }
   .shipping-waybill-layout-heading h3 { font-size: 18px; }
   .shipping-waybill-layout-toolbar { grid-template-columns: 1fr; padding: 10px; }
