@@ -2747,7 +2747,23 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "商品数量分": "One per product unit",
     "コア返却必要時": "When core return is required",
     "/ 1商品1枚": "/ 1 sheet per item",
-    "用紙・発行方法": "Paper / Output method"
+    "用紙・発行方法": "Paper / Output method",
+    "受取方法": "Delivery destination",
+    "通常のお届け先": "Standard delivery address",
+    "ヤマト運輸 営業所止め": "Yamato sales office pickup",
+    "ヤマト営業所": "Yamato sales office",
+    "箕面船場（箕面船場西）営業所（068721）": "Minoh Senba (Minoh Senba Nishi) Sales Office (068721)",
+    "〒562-0035 大阪府箕面市船場東": "562-0035 Semba-higashi, Minoh, Osaka",
+    "B2 CSV：止置き「1」・営業所コード「068721」": "B2 CSV: Hold at office 1 / Office code 068721",
+    "複写伝票：「ヤマト運輸 箕面船場（箕面船場西）営業所止め」と印字": "Multipart waybill: Print Yamato Minoh Senba (Minoh Senba Nishi) Sales Office pickup",
+    "箕面船場（箕面船場西）営業所": "Minoh Senba (Minoh Senba Nishi) Sales Office",
+    "箕面市船場東": "Semba-higashi, Minoh",
+    "有限会社ストレイン": "Strain Co., Ltd.",
+    "ヤマト営業所を選択してください。": "Select a Yamato sales office.",
+    "営業所止めの商品発送便はヤマト運輸を選択してください。": "Select Yamato Transport for sales-office-pickup shipments.",
+    "営業所": "Sales office",
+    "止め": "pickup",
+    "箕面船場西営業所（068721）": "Minoh Senba Nishi Sales Office (068721)"
   },
   "zh": {
     "再発行が必要": "需要重新签发",
@@ -5495,6 +5511,22 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "商品数量分": "每件商品一份",
     "コア返却必要時": "需要返还旧件时",
     "/ 1商品1枚": "/ 每件商品一张",
-    "用紙・発行方法": "纸张・发行方式"
+    "用紙・発行方法": "纸张・发行方式",
+    "受取方法": "收货方式",
+    "通常のお届け先": "普通收货地址",
+    "ヤマト運輸 営業所止め": "雅玛多营业所自取",
+    "ヤマト営業所": "雅玛多营业所",
+    "箕面船場（箕面船場西）営業所（068721）": "箕面船场（箕面船场西）营业所（068721）",
+    "〒562-0035 大阪府箕面市船場東": "邮编562-0035 大阪府箕面市船场东",
+    "B2 CSV：止置き「1」・営業所コード「068721」": "B2 CSV：营业所留置“1”・营业所代码“068721”",
+    "複写伝票：「ヤマト運輸 箕面船場（箕面船場西）営業所止め」と印字": "复写运单：打印“雅玛多运输 箕面船场（箕面船场西）营业所自取”",
+    "箕面船場（箕面船場西）営業所": "箕面船场（箕面船场西）营业所",
+    "箕面市船場東": "箕面市船场东",
+    "有限会社ストレイン": "有限会社Strain",
+    "ヤマト営業所を選択してください。": "请选择雅玛多营业所。",
+    "営業所止めの商品発送便はヤマト運輸を選択してください。": "营业所自取的商品发货请选择雅玛多运输。",
+    "営業所": "营业所",
+    "止め": "自取",
+    "箕面船場西営業所（068721）": "箕面船场西营业所（068721）"
   }
 };
