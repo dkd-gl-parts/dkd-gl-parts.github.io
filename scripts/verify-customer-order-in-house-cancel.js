@@ -8,9 +8,9 @@ for (const fragment of [
   'cancel: "受注取消"',
   'if (action === "cancel")',
   'allowed.indexOf("cancel") < 0',
-  'reason.value.trim().length < 4',
-  'cleanReason.length < 4',
+  'button.disabled = salesOrderSaving || !checkbox.checked',
   'target_action: "cancel"',
+  'target_note: "受注取消"',
   "submitSalesOrderInHouseCancellation",
   "updateSalesOrderInHouseCancelButton"
 ]) {
@@ -24,7 +24,6 @@ for (const id of [
   "sales-order-in-house-cancel-status",
   "sales-order-in-house-cancel-total",
   "sales-order-in-house-cancel-confirm",
-  "sales-order-in-house-cancel-reason",
   "sales-order-in-house-cancel-submit"
 ]) {
   if (!html.includes(`id="${id}"`)) throw new Error(`In-house cancellation dialog field is missing: ${id}`);
@@ -41,8 +40,13 @@ if (!app.includes("sales-order-secondary-actions") || !app.includes("その他�
 if (app.includes('action === "cancel" && !confirm(')) {
   throw new Error("Cancellation must not use the one-click browser confirmation flow");
 }
-if (!html.includes('minlength="4"') || !html.includes("この受注を取り消す")) {
-  throw new Error("The cancellation dialog must require a deliberate reason and explicit action");
+if (!html.includes("この受注を取り消す")) {
+  throw new Error("The cancellation dialog must require an explicit action");
+}
+if (html.includes("sales-order-in-house-cancel-reason")
+    || app.includes("取消理由を4文字以上")
+    || app.includes("対象を確認し、取消理由を記録")) {
+  throw new Error("The cancellation dialog must not ask for a cancellation reason");
 }
 for (const forbidden of [
   "cancel_shipped_in_house",
