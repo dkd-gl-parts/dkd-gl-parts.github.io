@@ -3985,6 +3985,7 @@ body.app-install-dialog-open { overflow: hidden; }
 .customer-catalog-availability-metric strong { display: inline-block; margin-top: 3px; overflow-wrap: anywhere; color: #17231f; font-size: 20px; line-height: 1.25; letter-spacing: 0; }
 .customer-catalog-availability-metric.stock strong { font-size: 28px; font-variant-numeric: tabular-nums; }
 .customer-catalog-availability-metric small { margin-left: 4px; color: #68756f; font-size: 10px; font-weight: 700; }
+.customer-catalog-availability-metric .customer-catalog-stock-breakdown { display: block; margin: 5px 0 0; line-height: 1.4; white-space: normal; }
 .customer-catalog-detail-section { margin-top: 28px; }
 .customer-catalog-detail-section h3 { margin-bottom: 10px; color: #34433d; font-size: 14px; letter-spacing: 0; }
 .customer-catalog-detail-section .vehicle-table { min-width: 720px; }
@@ -6445,7 +6446,8 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .customer-order-line-metric { min-width: 0; text-align: right; }
 .customer-order-line-metric strong { display: block; overflow-wrap: anywhere; color: #26352f; font-size: var(--dcats-type-body); font-variant-numeric: tabular-nums; }
 .customer-order-line-metric.total strong { color: #15231d; font-size: 14px; }
-.customer-order-line-metric small { color: #69766f; font-size: var(--dcats-type-supporting); }
+.customer-order-line-metric small { display: block; color: #69766f; font-size: var(--dcats-type-supporting); line-height: 1.45; }
+.customer-order-line-metric small.compatible-stock { margin-top: 3px; color: #236344; font-weight: 800; }
 .customer-order-remove { width: 28px; height: 28px; border: 1px solid #d6ddda; border-radius: 50%; background: #fff; color: #8a9590; font-size: 17px; line-height: 1; cursor: pointer; }
 .customer-order-remove:hover { border-color: #e39ca5; color: var(--dcats-brand-red); }
 .customer-order-preview-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); margin-top: 16px; border-top: 2px solid #ccd7d2; background: #f6f9f7; }

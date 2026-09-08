@@ -191,6 +191,8 @@ jobs:
         run: node scripts/verify-customer-price-list.js
       - name: Verify customer order and manual B2 workflow
         run: node scripts/verify-customer-order-workflow.js
+      - name: Verify compatible stock ordering and remaining inventory
+        run: node scripts/verify-customer-compatible-order-stock.js
       - name: Verify customer order vehicle information
         run: node scripts/verify-customer-order-vehicle-information.js
       - name: Verify customer order delivery service
