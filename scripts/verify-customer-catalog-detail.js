@@ -8,6 +8,9 @@ const styles = fs.readFileSync(path.resolve(__dirname, "..", "styles.css"), "utf
 if (!source.includes('customer_catalog_price_none: "価格はお問い合わせください"')) {
   throw new Error("customer catalog must present missing prices as a customer inquiry");
 }
+if (!source.includes('price == null ? t("customer_catalog_price_none") : customerOrderCurrency(price)')) {
+  throw new Error("customer catalog order prices must use the shared yen display format");
+}
 
 function functionSource(name, nextName) {
   const start = source.indexOf(`function ${name}`);

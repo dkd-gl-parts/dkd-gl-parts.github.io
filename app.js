@@ -5809,7 +5809,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.909";
+var APP_VERSION       = "v1.1.910";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -9500,7 +9500,7 @@ function customerCatalogSpecText(product) {
 
 function customerCatalogAvailabilityKindHtml(product, kind, stockQty, price, showPrice, variantRows) {
   var stockText = stockQty == null ? "-" : String(stockQty);
-  var priceText = price == null ? t("customer_catalog_price_none") : "JPY " + formatYen(price);
+  var priceText = price == null ? t("customer_catalog_price_none") : customerOrderCurrency(price);
   var orderKey = customerOrderCartKey(productDkdId(product), kind);
   var orderAdded = customerOrderCart.some(function(item) { return item.key === orderKey; });
   var hasStock = stockQty != null && Number(stockQty) > 0;
@@ -10766,7 +10766,7 @@ function configureCustomerOrderAddressTools() {
 }
 
 function customerOrderCurrency(value) {
-  return value == null || value === "" || isNaN(Number(value)) ? "-" : "JPY " + formatYen(Number(value));
+  return value == null || value === "" || isNaN(Number(value)) ? "-" : "\u00a5" + formatYen(Number(value));
 }
 
 function customerOrderStatusLabel(status) {
