@@ -6467,6 +6467,9 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .customer-order-shipping-method.core-return > span { color: #8b3b2e; }
 .customer-order-shipping-method > select { grid-column: 2; grid-row: 1 / span 2; }
 .customer-order-shipping-method > small { grid-column: 1; color: #718078; font-size: 8px; font-weight: 700; line-height: 1.45; }
+.customer-order-shipping-date-field { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(112px, .42fr) minmax(0, 1fr); align-items: center; gap: 9px; border-left: 3px solid #287356; padding: 8px 9px; background: #edf7f1; }
+.customer-order-shipping-date-field > span { margin-bottom: 0 !important; color: #205a42 !important; }
+.customer-order-shipping-date-field > input:disabled { opacity: 1; background: #fff; color: #173d2e; font-weight: 800; cursor: default; }
 .customer-order-delivery-estimate { grid-column: 1 / -1; min-height: var(--dcats-control-height); border-left: 3px solid #8da49a; padding: 8px 10px; background: #f1f5f3; color: #526159; font-size: var(--dcats-type-supporting); font-weight: 700; line-height: 1.55; }
 .customer-order-delivery-estimate.ready { border-left-color: #287356; background: #edf7f1; color: #205a42; }
 .customer-order-delivery-estimate.restricted { border-left-color: #b87818; background: #fff7e8; color: #795216; }
