@@ -20,7 +20,9 @@ assert(app.includes('revisionButton.addEventListener("click", openSalesOrderRevi
 assert(app.includes("id='sales-order-revision-open'>受注修正</button>"));
 assert(!app.includes("id='sales-order-pricing-open'"));
 assert(!app.includes('pricingOpenButton.addEventListener'));
-assert.equal(Object.keys(context.SALES_ORDER_REVISION_ENTRY_FIELDS).length,19);
+assert.equal(Object.keys(context.SALES_ORDER_REVISION_ENTRY_FIELDS).length,21);
+assert.equal(context.SALES_ORDER_REVISION_ENTRY_FIELDS["customer-order-destination-type"],"destination_type");
+assert.equal(context.SALES_ORDER_REVISION_ENTRY_FIELDS["customer-order-yamato-office-code"],"yamato_office_code");
 for(const id of Object.keys(context.SALES_ORDER_REVISION_ENTRY_FIELDS)) assert(fs.readFileSync('index.html','utf8').includes('id="'+id+'"'),id);
 assert(source.includes('document.querySelector(selector).cloneNode(true)'));
 assert(source.includes('customerOrderDeliveryServiceFromKey(salesOrderRevisionValue(key))'));

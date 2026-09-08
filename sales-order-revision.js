@@ -5,6 +5,7 @@ var salesOrderRevisionSaving = false;
 var salesOrderRevisionSearch = 0;
 
 var SALES_ORDER_REVISION_ENTRY_FIELDS = {
+  "customer-order-destination-type":"destination_type", "customer-order-yamato-office-code":"yamato_office_code",
   "customer-order-company":"company_name", "customer-order-recipient":"recipient_name",
   "customer-order-phone":"phone_number", "customer-order-postal-code":"postal_code",
   "customer-order-prefecture":"prefecture_code", "customer-order-address1":"address_line_1",
@@ -51,22 +52,72 @@ function salesOrderRevisionInput(key) {
   return document.querySelector("#sales-order-revision-overlay [data-revision-field='" + key + "']");
 }
 
+function salesOrderRevisionDestinationType() {
+  return salesOrderRevisionValue("destination_type") === "yamato_office" ? "yamato_office" : "address";
+}
+
+function applySalesOrderRevisionYamatoOffice(includeRecipientDefaults) {
+  var office = customerOrderYamatoOffice(salesOrderRevisionValue("yamato_office_code"));
+  if (!office) return;
+  var values = {
+    postal_code: office.postal_code,
+    prefecture_code: office.prefecture_code,
+    address_line_1: office.address_line_1,
+    address_line_2: ""
+  };
+  if (includeRecipientDefaults) {
+    values.company_name = office.company_name;
+    values.phone_number = office.phone_number;
+  }
+  Object.keys(values).forEach(function(key) {
+    var input = salesOrderRevisionInput(key);
+    if (!input) return;
+    var recipientDefault = key === "company_name" || key === "phone_number";
+    if (!recipientDefault || !String(input.value || "").trim()) input.value = values[key] || "";
+  });
+}
+
+function configureSalesOrderRevisionDestination(options) {
+  options = options || {};
+  var officePickup = salesOrderRevisionDestinationType() === "yamato_office";
+  var panel = document.getElementById("revision-entry-yamato-office-panel");
+  var officeSelect = salesOrderRevisionInput("yamato_office_code");
+  if (panel) panel.hidden = !officePickup;
+  if (officePickup && officeSelect && !customerOrderYamatoOffice(officeSelect.value) && CUSTOMER_ORDER_YAMATO_OFFICES.length) {
+    officeSelect.value = CUSTOMER_ORDER_YAMATO_OFFICES[0].code;
+  }
+  if (officeSelect) officeSelect.disabled = !officePickup || salesOrderRevisionSaving;
+  ["postal_code", "address_line_1", "address_line_2"].forEach(function(key) {
+    var input = salesOrderRevisionInput(key);
+    if (input) input.readOnly = officePickup;
+  });
+  var prefecture = salesOrderRevisionInput("prefecture_code");
+  if (prefecture) prefecture.disabled = officePickup || salesOrderRevisionSaving;
+  var postalButton = document.getElementById("revision-entry-postal-lookup");
+  if (postalButton) postalButton.disabled = officePickup || salesOrderRevisionSaving;
+  if (officePickup) applySalesOrderRevisionYamatoOffice(options.includeRecipientDefaults !== false);
+}
+
 function configureSalesOrderRevisionDelivery(changed) {
   if (!salesOrderRevision) return;
   var state = salesOrderRevision, order = state.order;
   var code = salesOrderRevisionValue("prefecture_code");
-  var services = [], seen = {};
+  var allServices = [], seen = {};
   (state.rates || []).filter(function(row) { return String(row.prefecture_code || "27") === (code || "27"); }).forEach(function(row) {
     var key = customerOrderDeliveryServiceKey(row);
-    if (!seen[key]) { seen[key] = true; services.push(row); }
+    if (!seen[key]) { seen[key] = true; allServices.push(row); }
   });
-  services.sort(function(a,b) { return customerOrderDeliveryServiceSortValue(a) - customerOrderDeliveryServiceSortValue(b) || a.service_name.localeCompare(b.service_name,"ja"); });
-  [["outbound_shipping_method",services],["core_return_shipping_method",customerOrderCoreReturnDeliveryServices(services)]].forEach(function(pair) {
+  allServices.sort(function(a,b) { return customerOrderDeliveryServiceSortValue(a) - customerOrderDeliveryServiceSortValue(b) || a.service_name.localeCompare(b.service_name,"ja"); });
+  var outboundServices = salesOrderRevisionDestinationType() === "yamato_office"
+    ? allServices.filter(function(row) { return row.carrier_name === "ヤマト運輸"; })
+    : allServices;
+  [["outbound_shipping_method",outboundServices],["core_return_shipping_method",customerOrderCoreReturnDeliveryServices(allServices)]].forEach(function(pair) {
     var input = salesOrderRevisionInput(pair[0]);
     var key = input.value || customerOrderDeliveryServiceKey(order[pair[0]]);
     var rows = pair[1].slice();
     var saved = customerOrderDeliveryServiceFromKey(key);
-    if (saved && !rows.some(function(row) { return customerOrderDeliveryServiceKey(row) === key; })) rows.push(saved);
+    var officeOutbound = pair[0] === "outbound_shipping_method" && salesOrderRevisionDestinationType() === "yamato_office";
+    if (saved && !officeOutbound && !rows.some(function(row) { return customerOrderDeliveryServiceKey(row) === key; })) rows.push(saved);
     input.innerHTML = customerOrderDeliveryServiceOptionsHtml(rows);
     input.value = key;
     if (!input.value && rows.length) input.value = customerOrderDeliveryServiceKey(rows[0]);
@@ -246,6 +297,7 @@ async function openSalesOrderRevisionEditor() {
       }
       input.value = values[key] || "";
     });
+    if (!salesOrderRevisionValue("destination_type")) salesOrderRevisionInput("destination_type").value = "address";
     overlay.querySelector("form").addEventListener("submit", saveSalesOrderRevision);
     overlay.querySelector("#sales-order-revision-search").addEventListener("click", searchSalesOrderRevisionProducts);
     salesOrderRevisionInput("search").addEventListener("keydown", function(event) { if (event.key === "Enter") { event.preventDefault(); searchSalesOrderRevisionProducts(); } });
@@ -260,6 +312,14 @@ async function openSalesOrderRevisionEditor() {
     document.getElementById("revision-entry-postal-status").removeAttribute("data-i18n");
     document.getElementById("revision-entry-postal-status").textContent = t("customer_order_postal_lookup_hint");
     salesOrderRevisionInput("postal_code").addEventListener("keydown",function(event) { if (event.key === "Enter") { event.preventDefault(); lookupSalesOrderRevisionPostal(); } });
+    salesOrderRevisionInput("destination_type").addEventListener("change", function() {
+      configureSalesOrderRevisionDestination({ includeRecipientDefaults: true });
+      configureSalesOrderRevisionDelivery(true);
+    });
+    salesOrderRevisionInput("yamato_office_code").addEventListener("change", function() {
+      applySalesOrderRevisionYamatoOffice(true);
+      configureSalesOrderRevisionDelivery(true);
+    });
     ["postal_code","address_line_1"].forEach(function(key) { salesOrderRevisionInput(key).addEventListener("input",function() {
       state.postalSeq = (state.postalSeq || 0) + 1;
       document.getElementById("revision-entry-postal-results").hidden = true;
@@ -272,7 +332,9 @@ async function openSalesOrderRevisionEditor() {
       configureSalesOrderRevisionDelivery(true);
     }); });
     document.getElementById("sales-order-revision-new-address").addEventListener("click",function() {
-      ["company_name","recipient_name","phone_number","postal_code","prefecture_code","address_line_1","address_line_2"].forEach(function(key) { salesOrderRevisionInput(key).value = ""; });
+      salesOrderRevisionInput("destination_type").value = "address";
+      ["company_name","recipient_name","phone_number","postal_code","prefecture_code","address_line_1","address_line_2","yamato_office_code"].forEach(function(key) { salesOrderRevisionInput(key).value = ""; });
+      configureSalesOrderRevisionDestination({ includeRecipientDefaults: false });
       state.postalSeq = (state.postalSeq || 0) + 1;
       document.getElementById("revision-entry-postal-results").hidden = true;
       document.getElementById("revision-entry-postal-status").textContent = t("customer_order_postal_lookup_hint");
@@ -281,6 +343,7 @@ async function openSalesOrderRevisionEditor() {
     });
     renderSalesOrderRevisionItems();
     prepareSalesOrderRevisionAdjustmentButtons();
+    configureSalesOrderRevisionDestination({ includeRecipientDefaults: false });
     configureSalesOrderRevisionDelivery(false);
     overlay.querySelector("select").focus();
   } catch(error) {
@@ -346,18 +409,29 @@ function readSalesOrderRevision() {
   if (!Number.isInteger(shipping) || shipping < 0 || shipping > 100000000) throw new Error("送料は0円以上の整数で入力してください。");
   var address = {}, vehicle = {};
   ["company_name","recipient_name","postal_code","phone_number","prefecture_code","address_line_1","address_line_2"].forEach(function(key) { address[key] = salesOrderRevisionValue(key); });
+  address.destination_type = salesOrderRevisionDestinationType();
+  var prefecture = salesOrderRevisionInput("prefecture_code");
+  address.prefecture_name = prefecture && prefecture.selectedIndex >= 0 && prefecture.value ? String(prefecture.options[prefecture.selectedIndex].textContent || "").trim() : "";
+  if (address.destination_type === "yamato_office") {
+    var office = customerOrderYamatoOffice(salesOrderRevisionValue("yamato_office_code"));
+    address.yamato_office_code = office ? office.code : "";
+    address.yamato_office_name = office ? office.name : "";
+  }
   ["vehicle_name","vehicle_model_code","first_registration_month","chassis_number","engine_model","model_designation_number","classification_number"].forEach(function(key) {
     var value = salesOrderRevisionValue(key).normalize("NFKC");
     vehicle[key] = ["vehicle_name","first_registration_month"].includes(key) ? value : value.toUpperCase();
   });
   function method(key) { return customerOrderDeliveryServiceFromKey(salesOrderRevisionValue(key)); }
+  var outboundMethod = method("outbound_shipping_method");
+  var destinationError = customerOrderDestinationError(address, outboundMethod);
+  if (destinationError) throw new Error(destinationError);
   var adjustments = Array.from(document.querySelectorAll("#sales-order-revision-adjustments [data-pricing-adjustment]")).map(function(row) {
     var amount = Number(row.querySelector("[data-pricing-adjustment-amount]").value);
     if (!Number.isInteger(amount) || amount < 1 || amount > 100000000) throw new Error("値引・調整額を確認してください。");
     return {adjustment_code:row.querySelector("[data-pricing-adjustment-code]").value,amount_jpy:amount,note:row.querySelector("[data-pricing-adjustment-note]").value.trim()};
   });
   return {sales_customer_id:Number(salesOrderRevisionValue("sales_customer_id")),items:items,adjustments:adjustments,shipping_fee_jpy:shipping,shipping_address:address,vehicle_information:vehicle,
-    outbound_shipping_method:method("outbound_shipping_method"),core_return_shipping_method:method("core_return_shipping_method"),requested_delivery_date:salesOrderRevisionValue("requested_delivery_date"),delivery_time_code:salesOrderRevisionValue("delivery_time_code"),customer_note:salesOrderRevisionValue("customer_note")};
+    outbound_shipping_method:outboundMethod,core_return_shipping_method:method("core_return_shipping_method"),requested_delivery_date:salesOrderRevisionValue("requested_delivery_date"),delivery_time_code:salesOrderRevisionValue("delivery_time_code"),customer_note:salesOrderRevisionValue("customer_note")};
 }
 
 async function saveSalesOrderRevision(event) {
@@ -389,6 +463,7 @@ async function saveSalesOrderRevision(event) {
     salesOrderRevisionSaving = false;
     if (form.isConnected) {
       form.querySelectorAll("input,select,textarea,button").forEach(function(element) { element.disabled = false; });
+      configureSalesOrderRevisionDestination({ includeRecipientDefaults: false });
       configureSalesOrderRevisionDelivery(false);
     }
   }

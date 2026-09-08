@@ -2,6 +2,9 @@
   "name": "dcats-frontend-ci-guards",
   "version": "1.0.0",
   "private": true,
+  "scripts": {
+    "check:yamato-office-pickup": "node --check app.js && node --check sales-order-revision.js && node scripts/verify-yamato-office-pickup.js"
+  },
   "devDependencies": {
     "acorn": "8.18.0",
     "yaml": "2.9.0"

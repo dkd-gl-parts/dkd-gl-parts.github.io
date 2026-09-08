@@ -544,6 +544,7 @@ var TRANSLATIONS = {
     core_charge_product_source: "品番設定",
     core_policy_form_note: "商品区分ごとに、返却条件と未返却時の代金を設定します。",
     core_policy_selected_kind_note: "選択中の商品区分の設定を保存します。",
+    sales_core_policy_help: "コア返却不要の場合、コア代金は入力できず、販売・原価・受注計算には反映されません。",
     core_charge_invalid: "コア代金は0以上の整数で入力してください",
     product_kind_stock: "在庫",
     product_kind_sl: "SL",
@@ -2453,6 +2454,7 @@ var TRANSLATIONS = {
     core_charge_product_source: "Product setting",
     core_policy_form_note: "Set return terms and the non-return charge for each product kind.",
     core_policy_selected_kind_note: "The setting for the selected product kind will be saved.",
+    sales_core_policy_help: "When no return is required, the core charge cannot be entered and is excluded from sales, cost, and order calculations.",
     core_charge_invalid: "Enter a core charge as an integer of 0 or more",
     product_kind_stock: "Stock",
     product_kind_sl: "SL",
@@ -4370,6 +4372,7 @@ var TRANSLATIONS = {
     core_charge_product_source: "品号设置",
     core_policy_form_note: "按商品区分设置返还条件和未返还时的费用。",
     core_policy_selected_kind_note: "保存当前所选商品区分的设置。",
+    sales_core_policy_help: "无需返还旧芯时，不能输入旧芯费用，且不会计入销售、成本或订单计算。",
     core_charge_invalid: "旧芯费用请输入0以上的整数",
     product_kind_stock: "库存",
     product_kind_sl: "SL",
@@ -5851,7 +5854,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.914";
+var APP_VERSION       = "v1.1.915";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6098,6 +6101,7 @@ var currentSalesPricingDksReference = null;
 var currentSalesPricingManufacturingCost = null;
 var currentSalesPricingEcReference = null;
 var currentSalesPricingEcRows = null;
+var salesPricingSavePending = false;
 var salesPricingRanks = [];
 var salesPricingCustomerCounts = {};
 var salesPricingMgmtRows = [];
@@ -6155,6 +6159,18 @@ var customerOrderDeliveryQuoteSeq = 0;
 var customerOrderDeliveryQuote = null;
 var CUSTOMER_ORDER_CORE_RETURN_ADDITIONAL_SERVICES = [
   { carrier_name: "佐川急便", service_name: "飛脚宅配便", display_order: 900 }
+];
+var CUSTOMER_ORDER_YAMATO_OFFICES = [
+  {
+    code: "068721",
+    name: "箕面船場（箕面船場西）営業所",
+    postal_code: "562-0035",
+    prefecture_code: "27",
+    prefecture_name: "大阪府",
+    address_line_1: "箕面市船場東",
+    company_name: "有限会社ストレイン",
+    phone_number: "072-734-8077"
+  }
 ];
 var SHIPPING_CARRIER_BRANDS = {
   yamato: { name: "ヤマト運輸", image: "assets/carriers/yamato-transport.png" },
@@ -10001,6 +10017,63 @@ function customerOrderDeliveryAddressText() {
   return prefectureName + String(address && address.value || "").trim();
 }
 
+function customerOrderDestinationType() {
+  var select = document.getElementById("customer-order-destination-type");
+  return select && select.value === "yamato_office" ? "yamato_office" : "address";
+}
+
+function customerOrderYamatoOffice(code) {
+  return CUSTOMER_ORDER_YAMATO_OFFICES.find(function(office) { return office.code === String(code || ""); }) || null;
+}
+
+function applyCustomerOrderYamatoOffice(office, includeRecipientDefaults) {
+  if (!office) return;
+  var values = {
+    "customer-order-postal-code": office.postal_code,
+    "customer-order-prefecture": office.prefecture_code,
+    "customer-order-address1": office.address_line_1,
+    "customer-order-address2": ""
+  };
+  if (includeRecipientDefaults) {
+    values["customer-order-company"] = office.company_name;
+    values["customer-order-phone"] = office.phone_number;
+  }
+  Object.keys(values).forEach(function(id) {
+    var input = document.getElementById(id);
+    if (!input) return;
+    if (!includeRecipientDefaults || !String(input.value || "").trim() || id.indexOf("company") < 0 && id.indexOf("phone") < 0) input.value = values[id] || "";
+  });
+}
+
+function configureCustomerOrderDestination(options) {
+  options = options || {};
+  var officePickup = customerOrderDestinationType() === "yamato_office";
+  var panel = document.getElementById("customer-order-yamato-office-panel");
+  var officeSelect = document.getElementById("customer-order-yamato-office-code");
+  if (panel) panel.hidden = !officePickup;
+  if (officeSelect) officeSelect.disabled = !officePickup;
+  if (officePickup && officeSelect && !customerOrderYamatoOffice(officeSelect.value) && CUSTOMER_ORDER_YAMATO_OFFICES.length) {
+    officeSelect.value = CUSTOMER_ORDER_YAMATO_OFFICES[0].code;
+  }
+  ["customer-order-postal-code", "customer-order-address1", "customer-order-address2"].forEach(function(id) {
+    var input = document.getElementById(id);
+    if (input) input.readOnly = officePickup;
+  });
+  var prefecture = document.getElementById("customer-order-prefecture");
+  if (prefecture) prefecture.disabled = officePickup;
+  if (officePickup) applyCustomerOrderYamatoOffice(customerOrderYamatoOffice(officeSelect && officeSelect.value), options.includeRecipientDefaults !== false);
+  configureCustomerOrderAddressTools();
+}
+
+function customerOrderDestinationError(address, method) {
+  address = address || {};
+  method = method || {};
+  if (address.destination_type !== "yamato_office") return "";
+  if (!/^\d{6}$/.test(String(address.yamato_office_code || ""))) return "ヤマト営業所を選択してください。";
+  if (String(method.carrier_name || "") !== "ヤマト運輸") return "営業所止めの商品発送便はヤマト運輸を選択してください。";
+  return "";
+}
+
 function applyCustomerOrderDeliveryQuote(options) {
   options = options || {};
   var shippingDateInput = document.getElementById("customer-order-shipping-date");
@@ -10185,7 +10258,7 @@ async function loadCustomerOrderDeliveryServices(options) {
     }
     if (requestSeq !== customerOrderDeliveryServiceLoadSeq) return;
     var seen = {};
-    var services = (rows || []).filter(function(row) {
+    var allServices = (rows || []).filter(function(row) {
       var key = customerOrderDeliveryServiceKey(row);
       if (!key || seen[key]) return false;
       seen[key] = true;
@@ -10195,6 +10268,9 @@ async function loadCustomerOrderDeliveryServices(options) {
       if (orderDiff) return orderDiff;
       return String(a.service_name || "").localeCompare(String(b.service_name || ""), "ja");
     });
+    var services = customerOrderDestinationType() === "yamato_office"
+      ? allServices.filter(function(row) { return row.carrier_name === "ヤマト運輸"; })
+      : allServices;
     if (!services.length) {
       customerOrderDeliveryServiceKeyValue = "";
       customerOrderCoreReturnServiceKeyValue = "";
@@ -10206,7 +10282,7 @@ async function loadCustomerOrderDeliveryServices(options) {
       updateCustomerOrderCoreReturnServiceVisibility();
       return;
     }
-    var coreReturnServices = customerOrderCoreReturnDeliveryServices(services);
+    var coreReturnServices = customerOrderCoreReturnDeliveryServices(allServices);
     select.innerHTML = customerOrderDeliveryServiceOptionsHtml(services);
     coreReturnSelect.innerHTML = customerOrderDeliveryServiceOptionsHtml(coreReturnServices);
     var availableKeys = services.map(function(row) { return customerOrderDeliveryServiceKey(row); });
@@ -10358,14 +10434,25 @@ function customerOrderAddressPayload() {
     var el = document.getElementById(id);
     return el ? String(el.value || "").trim() : "";
   }
+  var destinationType = customerOrderDestinationType();
+  var prefecture = document.getElementById("customer-order-prefecture");
+  var prefectureName = prefecture && prefecture.selectedIndex >= 0 && prefecture.value
+    ? String((prefecture.options[prefecture.selectedIndex] || {}).textContent || "").trim()
+    : "";
+  var officeSelect = document.getElementById("customer-order-yamato-office-code");
+  var office = destinationType === "yamato_office" ? customerOrderYamatoOffice(officeSelect && officeSelect.value) : null;
   return {
+    destination_type: destinationType,
     company_name: value("customer-order-company"),
     recipient_name: value("customer-order-recipient"),
     phone_number: value("customer-order-phone"),
     postal_code: value("customer-order-postal-code"),
     prefecture_code: value("customer-order-prefecture"),
+    prefecture_name: prefectureName,
     address_line_1: value("customer-order-address1"),
     address_line_2: value("customer-order-address2"),
+    yamato_office_code: office ? office.code : "",
+    yamato_office_name: office ? office.name : "",
     vehicle_information: customerOrderVehicleInformationPayload()
   };
 }
@@ -10384,6 +10471,11 @@ function populateCustomerOrderPrefectures() {
 
 function applyCustomerOrderAddress(address, overwrite) {
   address = address || {};
+  var destinationType = address.destination_type === "yamato_office" ? "yamato_office" : "address";
+  var destinationSelect = document.getElementById("customer-order-destination-type");
+  var officeSelect = document.getElementById("customer-order-yamato-office-code");
+  if (destinationSelect && (overwrite || !destinationSelect.value)) destinationSelect.value = destinationType;
+  if (officeSelect && destinationType === "yamato_office" && address.yamato_office_code) officeSelect.value = address.yamato_office_code;
   var map = {
     "customer-order-company": address.company_name || address.recipient_company || "",
     "customer-order-recipient": address.recipient_name || address.name || "",
@@ -10397,6 +10489,7 @@ function applyCustomerOrderAddress(address, overwrite) {
     var el = document.getElementById(id);
     if (el && (overwrite || !String(el.value || "").trim())) el.value = map[id];
   });
+  configureCustomerOrderDestination({ includeRecipientDefaults: false });
   customerOrderDeliveryDateManual = false;
   loadCustomerOrderDeliveryServices({ forceDate: true });
 }
@@ -10416,7 +10509,8 @@ function customerOrderAddressResultRows(data) {
 }
 
 function customerOrderAddressLine(row) {
-  return [row.postal_code ? "〒" + row.postal_code : "", row.prefecture_name || "", row.address_line_1 || row.address || "", row.address_line_2 || row.building || ""].filter(Boolean).join(" ");
+  var officeLabel = row.destination_type === "yamato_office" ? "ヤマト運輸 " + (row.yamato_office_name || "営業所") + "止め" : "";
+  return [row.postal_code ? "〒" + row.postal_code : "", row.prefecture_name || "", row.address_line_1 || row.address || "", row.address_line_2 || row.building || "", officeLabel].filter(Boolean).join(" ");
 }
 
 function renderCustomerOrderAddressResults() {
@@ -10491,6 +10585,8 @@ async function searchCustomerOrderAddresses() {
 }
 
 function clearCustomerOrderAddress() {
+  var destinationSelect = document.getElementById("customer-order-destination-type");
+  if (destinationSelect) destinationSelect.value = "address";
   [
     "customer-order-company", "customer-order-recipient", "customer-order-phone", "customer-order-postal-code",
     "customer-order-prefecture", "customer-order-address1", "customer-order-address2"
@@ -10508,6 +10604,7 @@ function clearCustomerOrderAddress() {
   customerOrderPostalSetStatus(t("customer_order_postal_lookup_hint"), false);
   customerOrderPreview = null;
   customerOrderDeliveryDateManual = false;
+  configureCustomerOrderDestination({ includeRecipientDefaults: false });
   loadCustomerOrderDeliveryServices({ forceDate: true });
   renderCustomerOrderCart();
   var recipient = document.getElementById("customer-order-recipient");
@@ -10835,7 +10932,7 @@ function configureCustomerOrderAddressTools() {
   var postalButton = document.getElementById("customer-order-postal-lookup");
   if (searchInput) searchInput.disabled = previewMode || customerOrderAddressSearching;
   if (searchButton) searchButton.disabled = previewMode || customerOrderAddressSearching;
-  if (postalButton) postalButton.disabled = customerOrderPostalLookingUp;
+  if (postalButton) postalButton.disabled = customerOrderPostalLookingUp || customerOrderDestinationType() === "yamato_office";
   configureCustomerOrderPostalTest();
   var status = document.getElementById("customer-order-address-status");
   if (status && !String(status.textContent || "").trim()) {
@@ -11086,6 +11183,7 @@ async function enterCustomerOrders(options) {
   showScreen("customer-orders");
   renderCustomerExperienceHeaders();
   populateCustomerOrderPrefectures();
+  configureCustomerOrderDestination({ includeRecipientDefaults: false });
   await loadCustomerOrderDeliveryServices({ forceDate: false });
   configureCustomerOrderAddressTools();
   var context = activeCustomerPortalContext() || {};
@@ -11109,13 +11207,22 @@ async function previewCustomerOrder(options) {
     renderCustomerOrderCart();
     return;
   }
+  var shippingAddress = customerOrderAddressPayload();
+  var shippingMethod = customerOrderShippingMethodPayload();
+  var destinationError = customerOrderDestinationError(shippingAddress, shippingMethod);
+  if (destinationError) {
+    customerOrderPreview = null;
+    customerOrderSetStatus(destinationError, true);
+    renderCustomerOrderCart();
+    return;
+  }
   var requestSeq = ++customerOrderPreviewSeq;
   if (!options.silent) customerOrderSetStatus("最新の価格と在庫を確認しています。", false);
   var previewRpc = internalRegistration ? "preview_internal_customer_order" : "preview_customer_order";
   var previewParams = {
     target_items: customerOrderPayloadItems(),
-    target_shipping_address: customerOrderAddressPayload(),
-    target_shipping_method: customerOrderShippingMethodPayload(),
+    target_shipping_address: shippingAddress,
+    target_shipping_method: shippingMethod,
     target_core_return_shipping_method: customerOrderCoreReturnShippingMethodPayload()
   };
   if (internalRegistration) previewParams.target_sales_customer_id = customerPortalPreviewContext.sales_customer_id;
@@ -12850,7 +12957,9 @@ function shippingWaybillCustomerText(address) {
 }
 
 function shippingWaybillAddressText(address) {
-  return [address.prefecture_name, address.address_line_1, address.address_line_2].filter(Boolean).join("") || "大阪府堺市南区片蔵486-1";
+  var location = [address.prefecture_name, address.address_line_1, address.address_line_2].filter(Boolean).join("") || "大阪府堺市南区片蔵486-1";
+  if (address.destination_type !== "yamato_office") return location;
+  return [location, "ヤマト運輸 " + (address.yamato_office_name || "営業所") + "止め"].filter(Boolean).join(" ");
 }
 
 function shippingWaybillPreviewData(layout, orderValue, orderUnitValue) {
@@ -15708,7 +15817,7 @@ function renderSalesOrderDetail() {
     "<div class='sales-order-detail-panels'>" +
       "<section class='sales-order-detail-panel sales-order-detail-overview' id='sales-order-detail-panel-overview' role='tabpanel' aria-labelledby='sales-order-detail-tab-overview' data-sales-order-detail-panel='overview'><div class='sales-order-detail-overview-grid'>" +
         "<section class='sales-order-detail-section' id='sales-order-detail-products'><div class='sales-order-section-heading'><div><h3>注文商品</h3><p>販売価格、数量、コア返却条件と値引・調整行を確認します。</p></div>" + pricingButton + "</div>" + salesOrderItemRowsHtml(order.items) + salesOrderAdjustmentRowsHtml(orderAdjustments, orderDiscount) + "</section>" +
-        "<section class='sales-order-detail-section sales-order-address' id='sales-order-detail-delivery'><div class='sales-order-section-heading'><div><h3>お届け先・運送便</h3><p>送り状へ反映する配送情報です。</p></div></div><div class='sales-order-address-destination'><strong>" + esc(address.company_name || "-") + "　" + esc(address.recipient_name || "-") + "</strong><span>〒" + esc(address.postal_code || "-") + "　" + esc(address.prefecture_name || "") + esc(address.address_line_1 || "-") + " " + esc(address.address_line_2 || "") + "</span><span>TEL " + esc(address.phone_number || "-") + "</span></div>" + customerOrderVehicleInformationHtml(order.vehicle_information, "sales-order-vehicle-information") + salesOrderShippingScheduleHtml(order) + "<dl><div><dt>商品発送便</dt><dd class='sales-order-waybill-detail'><strong>" + esc(outboundService) + "</strong><span>" + esc(outboundWaybillDetail) + "</span></dd></div><div><dt>コア返却便</dt><dd class='sales-order-waybill-detail'><strong>" + esc(coreReturnService) + "</strong><span>" + esc(coreReturnWaybillDetail) + "</span></dd></div><div><dt>お届け希望</dt><dd>" + esc(order.requested_delivery_date || "指定なし") + " / " + esc(order.delivery_time_label || "指定なし") + "</dd></div><div><dt>注文メモ</dt><dd>" + esc(order.customer_note || "-") + "</dd></div></dl></section>" +
+        "<section class='sales-order-detail-section sales-order-address' id='sales-order-detail-delivery'><div class='sales-order-section-heading'><div><h3>お届け先・運送便</h3><p>送り状へ反映する配送情報です。</p></div></div><div class='sales-order-address-destination'>" + (address.destination_type === "yamato_office" ? "<em class='sales-order-office-pickup-badge'>ヤマト運輸 営業所止め / コード " + esc(address.yamato_office_code || "-") + "</em>" : "") + "<strong>" + esc(address.company_name || "-") + "　" + esc(address.recipient_name || "-") + "</strong><span>〒" + esc(address.postal_code || "-") + "　" + esc(address.prefecture_name || "") + esc(address.address_line_1 || "-") + " " + esc(address.address_line_2 || "") + "</span>" + (address.destination_type === "yamato_office" ? "<span>ヤマト運輸 " + esc(address.yamato_office_name || "営業所") + "止め</span>" : "") + "<span>TEL " + esc(address.phone_number || "-") + "</span></div>" + customerOrderVehicleInformationHtml(order.vehicle_information, "sales-order-vehicle-information") + salesOrderShippingScheduleHtml(order) + "<dl><div><dt>商品発送便</dt><dd class='sales-order-waybill-detail'><strong>" + esc(outboundService) + "</strong><span>" + esc(outboundWaybillDetail) + "</span></dd></div><div><dt>コア返却便</dt><dd class='sales-order-waybill-detail'><strong>" + esc(coreReturnService) + "</strong><span>" + esc(coreReturnWaybillDetail) + "</span></dd></div><div><dt>お届け希望</dt><dd>" + esc(order.requested_delivery_date || "指定なし") + " / " + esc(order.delivery_time_label || "指定なし") + "</dd></div><div><dt>注文メモ</dt><dd>" + esc(order.customer_note || "-") + "</dd></div></dl></section>" +
       "</div></section>" +
       "<div class='sales-order-detail-panel' id='sales-order-detail-panel-fulfillment' role='tabpanel' aria-labelledby='sales-order-detail-tab-fulfillment' data-sales-order-detail-panel='fulfillment' hidden>" + salesOrderDispatchHtml(order) + "</div>" +
       "<section class='sales-order-detail-panel sales-order-detail-section sales-order-tracking' id='sales-order-detail-tracking' role='tabpanel' aria-labelledby='sales-order-detail-tab-tracking' data-sales-order-detail-panel='tracking' hidden><div class='sales-order-section-heading'><div><h3>商品発送送り状</h3><p>B2発行済データの取込後に番号を確認・修正できます。</p></div></div><div class='sales-order-tracking-grid outbound-only'><label><span>送り状番号</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>B2出荷予定日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>商品発送番号を登録</button></div><p>コア返却用複写伝票は「出荷帳票発行」で管理します。送り状番号の登録だけでは在庫を減らしません。</p></section>" +
@@ -43247,6 +43356,67 @@ function salesPricingCurrentProductKind() {
   return normalizeProductKind((select && select.value) || currentSalesPricingProductKind || "rebuilt");
 }
 
+function salesPricingCanEditCorePolicy() {
+  return canEditBasePrice() && canEdit();
+}
+
+function setSalesPricingCoreFieldsEditable(required) {
+  var editable = salesPricingCanEditCorePolicy();
+  document.querySelectorAll("input[name='sales-core-return-required']").forEach(function(input) {
+    input.disabled = !editable;
+  });
+  var charge = document.getElementById("sales-core-charge");
+  var chargeRow = document.getElementById("sales-core-charge-row");
+  if (charge) charge.disabled = !editable || !required;
+  if (chargeRow) chargeRow.classList.toggle("disabled", !editable || !required);
+}
+
+function setSalesPricingCoreReturnState(required) {
+  var value = required ? "required" : "not_required";
+  document.querySelectorAll("input[name='sales-core-return-required']").forEach(function(input) {
+    input.checked = input.value === value;
+  });
+  var charge = document.getElementById("sales-core-charge");
+  if (charge && !required) charge.value = "";
+  setSalesPricingCoreFieldsEditable(required);
+}
+
+function applySalesPricingCorePolicyToForm() {
+  var policy = coreReturnPolicyForKind(salesPricingCurrentProductKind(), currentProductVariants);
+  var charge = document.getElementById("sales-core-charge");
+  if (charge) charge.value = policy.required && policy.hasProductCharge ? String(policy.charge) : "";
+  setSalesPricingCoreReturnState(policy.required);
+}
+
+function salesPricingCorePolicyFormValue() {
+  var checked = document.querySelector("input[name='sales-core-return-required']:checked");
+  var required = !checked || checked.value === "required";
+  if (!required) return { required: false, charge: null };
+  var rawCharge = (document.getElementById("sales-core-charge") || {}).value;
+  var charge = rawCharge === "" || rawCharge === null || rawCharge === undefined ? null : Number(rawCharge);
+  if (charge !== null && (!Number.isInteger(charge) || charge < 0)) {
+    return { error: t("core_charge_invalid") };
+  }
+  return { required: true, charge: charge };
+}
+
+function applySavedSalesPricingCorePolicy(rows) {
+  if (!Array.isArray(rows) || !rows.length) return;
+  var savedById = {};
+  rows.forEach(function(row) { savedById[String(row.product_variant_id || "")] = row; });
+  currentProductVariants = (currentProductVariants || []).map(function(row) {
+    return savedById[String(row.product_variant_id || "")]
+      ? Object.assign({}, row, savedById[String(row.product_variant_id || "")])
+      : row;
+  });
+  rows.forEach(function(row) {
+    var exists = currentProductVariants.some(function(current) {
+      return String(current.product_variant_id || "") === String(row.product_variant_id || "");
+    });
+    if (!exists) currentProductVariants.push(row);
+  });
+}
+
 function salesPricingProductVariantIdForKind(kind) {
   var targetKind = normalizeProductKind(kind || "rebuilt");
   var rows = productKindRowsForCurrent().filter(function(row) {
@@ -43307,12 +43477,14 @@ async function openSalesPricingForCurrent() {
     var el = document.getElementById(id);
     if (el) el.disabled = !canEditBasePrice();
   });
+  setSalesPricingCoreFieldsEditable(false);
   try {
     var dkdId = await resolveCurrentCoreDkdShohinId();
     currentSalesPricingDkdId = dkdId;
     await ensureProductVariantsForCurrentDkd(dkdId);
     currentSalesPricingProductKind = ensureSelectedProductKind(productKindSummaryForProduct(currentProduct));
     fillSalesPricingProductKindSelect(currentSalesPricingProductKind);
+    applySalesPricingCorePolicyToForm();
     document.getElementById("sales-pricing-product").textContent = salesPricingProductText(currentProduct, dkdId);
     if (!dkdId) throw new Error(t("sales_no_product_id"));
     var ranksR = await sb.from("sales_price_ranks")
@@ -43344,6 +43516,7 @@ async function openSalesPricingForCurrent() {
         if (err) err.textContent = "";
         try {
           currentSalesPricingProductKind = salesPricingCurrentProductKind();
+          applySalesPricingCorePolicyToForm();
           await loadSalesPricingCurrentBaseRow();
           await Promise.all([
             loadSalesPricingCurrentManufacturingCost(),
@@ -43371,6 +43544,7 @@ async function openSalesPricingForCurrent() {
 async function saveSalesPricing() {
   var errEl = document.getElementById("sales-pricing-error");
   if (errEl) errEl.textContent = "";
+  if (salesPricingSavePending) return;
   if (!canEditBasePrice()) { if (errEl) errEl.textContent = t("err_perm"); return; }
   var dkdId = currentSalesPricingDkdId;
   if (!dkdId) { if (errEl) errEl.textContent = t("sales_no_product_id"); return; }
@@ -43378,50 +43552,37 @@ async function saveSalesPricing() {
   var productVariantId = salesPricingProductVariantIdForKind(productKind);
   var base = parseInt(document.getElementById("sales-base-price").value, 10);
   if (isNaN(base) || base < 0) { if (errEl) errEl.textContent = t("sales_base_price_required"); return; }
-  var payload = {
-    dkd_shohin_id: dkdId,
-    product_kind: productKind,
-    product_variant_id: productVariantId,
-    base_price_jpy: base,
-    tax_included: false,
-    price_basis: document.getElementById("sales-price-basis").value || "manual",
-    basis_note: document.getElementById("sales-basis-note").value.trim() || null,
-    effective_start: document.getElementById("sales-effective-start").value || salesPricingTodayIso(),
-    is_current: true,
-    created_by: currentUser ? currentUser.id : null,
-    updated_by: currentUser ? currentUser.id : null
-  };
+  var updateCorePolicy = salesPricingCanEditCorePolicy();
+  var corePolicy = updateCorePolicy ? salesPricingCorePolicyFormValue() : { required: null, charge: null };
+  if (corePolicy.error) { if (errEl) errEl.textContent = corePolicy.error; return; }
+  var saveBtn = document.getElementById("btn-sales-pricing-save");
+  salesPricingSavePending = true;
+  if (saveBtn) saveBtn.disabled = true;
   try {
-    var oldRow = currentSalesPricingRow ? JSON.parse(JSON.stringify(currentSalesPricingRow)) : null;
-    var closePayload = { is_current: false, updated_by: currentUser ? currentUser.id : null, updated_at: new Date().toISOString() };
-    if (!oldRow || !oldRow.effective_start || payload.effective_start >= oldRow.effective_start) closePayload.effective_end = payload.effective_start;
-    var upd = await sb.from("product_base_prices")
-      .update(closePayload)
-      .eq("dkd_shohin_id", dkdId)
-      .eq("product_kind", productKind)
-      .eq("is_current", true);
-    if (upd.error) throw upd.error;
-    var ins = await sb.from("product_base_prices").insert(payload).select("*").single();
-    if (ins.error) throw ins.error;
-    currentSalesPricingRow = ins.data;
-    await sb.from("product_base_price_history").insert({
-      base_price_id: ins.data.id,
-      dkd_shohin_id: dkdId,
-      product_kind: productKind,
-      product_variant_id: productVariantId,
-      old_base_price_jpy: oldRow ? oldRow.base_price_jpy : null,
-      new_base_price_jpy: ins.data.base_price_jpy,
-      old_payload: oldRow || null,
-      new_payload: ins.data,
-      changed_by: currentUser ? currentUser.id : null,
-      change_note: payload.basis_note
+    var saved = await sb.rpc("save_product_sales_pricing_with_core_policy", {
+      target_dkd_shohin_id: dkdId,
+      target_product_kind: productKind,
+      target_product_variant_id: productVariantId,
+      target_base_price_jpy: base,
+      target_price_basis: document.getElementById("sales-price-basis").value || "manual",
+      target_basis_note: document.getElementById("sales-basis-note").value.trim() || null,
+      target_effective_start: document.getElementById("sales-effective-start").value || salesPricingTodayIso(),
+      target_update_core_policy: updateCorePolicy,
+      target_core_return_required: corePolicy.required,
+      target_core_charge_jpy: corePolicy.charge
     });
+    if (saved.error) throw saved.error;
+    var result = saved.data || {};
+    var savedPrice = result.base_price || null;
+    if (!savedPrice || !savedPrice.id) throw new Error(t("msg_save_err"));
+    currentSalesPricingRow = savedPrice;
+    if (result.core_policy_updated) applySavedSalesPricingCorePolicy(result.core_policy || []);
     var gltekAutoIssueOutcome = await ensureGltekPartNumberIssuedForDkdId(dkdId, { context: "sales_pricing", product: currentProduct });
-    if (productKind === "rebuilt") salesPricingMgmtPriceMap[String(dkdId)] = ins.data;
+    if (productKind === "rebuilt") salesPricingMgmtPriceMap[String(dkdId)] = savedPrice;
     renderSalesPricingMgmt();
     if (productKindStockRows.length) {
-      if (ins.data.product_variant_id) productKindStockPriceMap[productKindStockVariantMetaKey(ins.data.product_variant_id)] = ins.data;
-      if (!ins.data.product_variant_id) productKindStockPriceMap[productKindStockPriceKey(dkdId, productKind)] = ins.data;
+      if (savedPrice.product_variant_id) productKindStockPriceMap[productKindStockVariantMetaKey(savedPrice.product_variant_id)] = savedPrice;
+      if (!savedPrice.product_variant_id) productKindStockPriceMap[productKindStockPriceKey(dkdId, productKind)] = savedPrice;
       renderProductKindStockMgmt();
     }
     closeSalesPricingOverlay();
@@ -43431,6 +43592,9 @@ async function saveSalesPricing() {
   } catch (e) {
     console.warn("save sales pricing failed", e);
     if (errEl) errEl.textContent = t("msg_save_err") + ": " + ((e && e.message) || String(e));
+  } finally {
+    salesPricingSavePending = false;
+    if (saveBtn) saveBtn.disabled = false;
   }
 }
 
@@ -49161,6 +49325,20 @@ document.getElementById("customer-order-continue-shopping").addEventListener("cl
 document.getElementById("customer-order-address-search-button").addEventListener("click", searchCustomerOrderAddresses);
 document.getElementById("customer-order-address-search").addEventListener("keydown", function(e) { if (e.key === "Enter") searchCustomerOrderAddresses(); });
 document.getElementById("customer-order-address-new").addEventListener("click", clearCustomerOrderAddress);
+document.getElementById("customer-order-destination-type").addEventListener("change", function() {
+  customerOrderPreview = null;
+  customerOrderDeliveryDateManual = false;
+  configureCustomerOrderDestination({ includeRecipientDefaults: true });
+  loadCustomerOrderDeliveryServices({ forceDate: true });
+  renderCustomerOrderCart();
+});
+document.getElementById("customer-order-yamato-office-code").addEventListener("change", function() {
+  customerOrderPreview = null;
+  customerOrderDeliveryDateManual = false;
+  applyCustomerOrderYamatoOffice(customerOrderYamatoOffice(this.value), true);
+  loadCustomerOrderDeliveryServices({ forceDate: true });
+  renderCustomerOrderCart();
+});
 document.getElementById("customer-order-postal-lookup").addEventListener("click", lookupCustomerOrderPostalCode);
 document.getElementById("customer-order-postal-code").addEventListener("keydown", function(e) { if (e.key === "Enter") lookupCustomerOrderPostalCode(); });
 document.querySelectorAll("[data-order-postal-mode]").forEach(function(button) {
@@ -49612,6 +49790,11 @@ document.getElementById("btn-user-auth-history-close").addEventListener("click",
 document.getElementById("btn-sales-pricing-cancel").addEventListener("click", closeSalesPricingOverlay);
 document.getElementById("btn-sales-pricing-save").addEventListener("click", saveSalesPricing);
 document.getElementById("btn-sales-rank-save").addEventListener("click", saveSalesPriceRanks);
+document.querySelectorAll("input[name='sales-core-return-required']").forEach(function(input) {
+  input.addEventListener("change", function() {
+    setSalesPricingCoreReturnState(input.value === "required");
+  });
+});
 ["sales-base-price","sales-price-basis","sales-effective-start"].forEach(function(id) {
   var el = document.getElementById(id);
   if (el) {

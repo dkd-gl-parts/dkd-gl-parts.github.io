@@ -51,6 +51,7 @@ on:
       - "scripts/verify-customer-order-workflow.js"
       - "scripts/verify-customer-order-vehicle-information.js"
       - "scripts/verify-customer-order-delivery-service.js"
+      - "scripts/verify-yamato-office-pickup.js"
       - "scripts/verify-customer-order-b2-import.js"
       - "scripts/verify-customer-order-b2-export.js"
       - "scripts/verify-customer-order-auto-print.js"
@@ -194,6 +195,8 @@ jobs:
         run: node scripts/verify-customer-order-vehicle-information.js
       - name: Verify customer order delivery service
         run: node scripts/verify-customer-order-delivery-service.js
+      - name: Verify Yamato sales office pickup
+        run: node scripts/verify-yamato-office-pickup.js
       - name: Verify Yamato B2 issued-data import
         run: node scripts/verify-customer-order-b2-import.js
       - name: Verify Yamato B2 contract settings and export preflight

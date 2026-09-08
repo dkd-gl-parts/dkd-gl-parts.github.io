@@ -66,7 +66,7 @@ assert(html.includes('id="customer-order-shipping-date" type="date" disabled ari
 
 const previewRequest = sourceBetween("async function previewCustomerOrder", "function customerOrderIdempotencyKey");
 const submitRequest = sourceBetween("async function submitCustomerOrder", "function renderCustomerOrderHistory");
-assert(previewRequest.includes("target_shipping_method: customerOrderShippingMethodPayload()"), "order preview must send the selected shipping method");
+assert(previewRequest.includes("var shippingMethod = customerOrderShippingMethodPayload();") && previewRequest.includes("target_shipping_method: shippingMethod"), "order preview must validate and send the selected shipping method");
 assert(submitRequest.includes("target_shipping_method: customerOrderShippingMethodPayload()"), "order submission must send the selected shipping method");
 assert(previewRequest.includes("target_core_return_shipping_method: customerOrderCoreReturnShippingMethodPayload()"), "order preview must send the core-return shipping method separately");
 assert(submitRequest.includes("target_core_return_shipping_method: customerOrderCoreReturnShippingMethodPayload()"), "order submission must send the core-return shipping method separately");

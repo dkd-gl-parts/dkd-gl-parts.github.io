@@ -68,7 +68,10 @@ if (cost.amount !== 0 || cost.source !== "kind_default") throw new Error("afterm
 [
   "pf-core-policy-kind",
   "pf-core-return-required",
-  "pf-core-charge"
+  "pf-core-charge",
+  "sales-core-return-required",
+  "sales-core-charge",
+  "sales_core_policy_help"
 ].forEach((fragment) => {
   if (!html.includes(fragment)) throw new Error(`core return form control is missing: ${fragment}`);
 });
@@ -147,6 +150,64 @@ if (!productKindPanelSource.includes("selectedMeta.stockQty") || !productKindPan
 
 if ((source.match(/core_return_policy:/g) || []).length !== 3) {
   throw new Error("core return labels must be translated for all supported languages");
+}
+
+if ((source.match(/sales_core_policy_help:/g) || []).length !== 3) {
+  throw new Error("sales pricing core-policy help must be translated for all supported languages");
+}
+
+const salesCoreFormSource = sourceBetween("function salesPricingCanEditCorePolicy", "function salesPricingProductVariantIdForKind");
+const salesCoreControls = {
+  required: { value: "required", checked: false, disabled: false },
+  notRequired: { value: "not_required", checked: false, disabled: false },
+  charge: { value: "4800", disabled: false },
+  chargeRow: { classList: { toggle() {} } }
+};
+const salesCoreSandbox = {
+  document: {
+    querySelectorAll() { return [salesCoreControls.required, salesCoreControls.notRequired]; },
+    querySelector() { return [salesCoreControls.required, salesCoreControls.notRequired].find((input) => input.checked) || null; },
+    getElementById(id) {
+      if (id === "sales-core-charge") return salesCoreControls.charge;
+      if (id === "sales-core-charge-row") return salesCoreControls.chargeRow;
+      return null;
+    }
+  },
+  canEditBasePrice: () => true,
+  canEdit: () => true,
+  coreReturnPolicyForKind: policySandbox.result.policy,
+  salesPricingCurrentProductKind: () => "rebuilt",
+  currentProductVariants: [],
+  t: (key) => key
+};
+vm.runInNewContext(`${salesCoreFormSource}; result = { setState: setSalesPricingCoreReturnState, formValue: salesPricingCorePolicyFormValue };`, salesCoreSandbox);
+salesCoreSandbox.result.setState(false);
+if (!salesCoreControls.notRequired.checked || !salesCoreControls.charge.disabled || salesCoreControls.charge.value !== "") {
+  throw new Error("no-return selection must clear and disable the sales-pricing core charge");
+}
+const noReturnValue = salesCoreSandbox.result.formValue();
+if (noReturnValue.required !== false || noReturnValue.charge !== null) {
+  throw new Error("no-return sales pricing must save a null core charge");
+}
+salesCoreSandbox.result.setState(true);
+salesCoreControls.charge.value = "4800";
+const requiredValue = salesCoreSandbox.result.formValue();
+if (requiredValue.required !== true || requiredValue.charge !== 4800 || salesCoreControls.charge.disabled) {
+  throw new Error("return-required sales pricing must accept a non-negative integer core charge");
+}
+
+const salesPricingSaveSource = sourceBetween("async function saveSalesPricing", "async function enterSalesPricingMgmt");
+[
+  '.rpc("save_product_sales_pricing_with_core_policy"',
+  "target_update_core_policy: updateCorePolicy",
+  "target_core_return_required: corePolicy.required",
+  "target_core_charge_jpy: corePolicy.charge",
+  "salesPricingSavePending"
+].forEach((fragment) => {
+  if (!salesPricingSaveSource.includes(fragment)) throw new Error(`atomic sales/core pricing save is missing: ${fragment}`);
+});
+if (salesPricingSaveSource.includes('.from("product_base_prices")') || salesPricingSaveSource.includes('.from("product_base_price_history")')) {
+  throw new Error("sales pricing must not use browser-controlled multi-step price writes");
 }
 
 console.log("core return policy guard passed");
