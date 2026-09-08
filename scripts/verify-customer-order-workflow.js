@@ -231,6 +231,7 @@ function renderAvailability(stockQty, price) {
     stockQty,
     price,
     formatYen: (value) => String(value),
+    customerOrderCurrency: (value) => `\u00a5${value}`,
     t: (key) => key,
     customerOrderCartKey: () => "1:rebuilt",
     productDkdId: () => 1,
@@ -247,6 +248,7 @@ const outOfStockAvailability = renderAvailability(0, 1000);
 const unknownStockAvailability = renderAvailability(null, 1000);
 const missingPriceAvailability = renderAvailability(2, null);
 if (inStockAvailability.includes(" disabled") || !inStockAvailability.includes("customer_order_add") ||
+    !inStockAvailability.includes("\u00a51000") || inStockAvailability.includes("JPY") ||
     !outOfStockAvailability.includes(" disabled") || !outOfStockAvailability.includes("customer_order_out_of_stock") ||
     !unknownStockAvailability.includes(" disabled") || !unknownStockAvailability.includes("customer_order_stock_unavailable") ||
     !missingPriceAvailability.includes(" disabled") || !missingPriceAvailability.includes("customer_order_price_unavailable")) {
@@ -267,6 +269,10 @@ if (!addOrderItem.includes('core_return_handling: "standard"')) {
 const orderPayloadItems = sourceBetween("function customerOrderPayloadItems", "function customerOrderVehicleInformationPayload");
 if (!orderPayloadItems.includes('core_return_handling: item.core_return_handling === "charge_no_return"')) {
   throw new Error("the selected core-return handling must be included in server preview and submission requests");
+}
+const orderCurrency = sourceBetween("function customerOrderCurrency", "function customerOrderStatusLabel");
+if (!orderCurrency.includes('"\\u00a5" + formatYen(Number(value))') || orderCurrency.includes('"JPY "')) {
+  throw new Error("order-screen amounts must use the yen symbol instead of the JPY currency code");
 }
 const coreRequirement = sourceBetween("function customerOrderCartRequiresCoreReturn", "function customerOrderCoreReturnShippingMethodPayload");
 if (!coreRequirement.includes('item.core_return_handling !== "charge_no_return"')) {
