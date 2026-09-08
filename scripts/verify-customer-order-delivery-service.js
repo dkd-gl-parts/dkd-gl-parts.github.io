@@ -56,10 +56,13 @@ assert(decodedService.carrier_name === "ヤマト運輸" && decodedService.servi
   'id="customer-order-delivery-service"',
   'id="customer-order-core-return-service-field"',
   'id="customer-order-core-return-service"',
+  'id="customer-order-shipping-date"',
   'id="customer-order-delivery-date"',
   'id="customer-order-delivery-time"',
   'id="customer-order-delivery-estimate"'
 ].forEach((fragment) => assert(html.includes(fragment), `order delivery UI is missing: ${fragment}`));
+assert(html.indexOf('id="customer-order-shipping-date"') < html.indexOf('id="customer-order-delivery-date"'), "the shipping date must appear above the requested delivery date");
+assert(html.includes('id="customer-order-shipping-date" type="date" disabled aria-readonly="true"'), "the calculated shipping date must be read-only");
 
 const previewRequest = sourceBetween("async function previewCustomerOrder", "function customerOrderIdempotencyKey");
 const submitRequest = sourceBetween("async function submitCustomerOrder", "function renderCustomerOrderHistory");
@@ -97,16 +100,21 @@ const returnServiceEvent = sourceBetween('document.getElementById("customer-orde
 assert(returnServiceEvent.includes("customerOrderPreview = null") && !returnServiceEvent.includes("updateCustomerOrderDeliveryEstimate"), "changing the return service must invalidate preview without changing the outbound delivery date");
 
 const estimateUi = sourceBetween("function applyCustomerOrderDeliveryQuote", "function customerOrderDeliveryServiceSortValue");
+assert(estimateUi.includes('shippingDateInput.value = quote && quote.available === true ? (quote.shipping_date || "") : ""'), "the dedicated shipping-date field must use the server quote");
+assert(estimateUi.includes('shippingDateInput.value = ""') && estimateUi.includes('customer_order_delivery_checking'), "stale shipping dates must be cleared while recalculating");
 assert(estimateUi.includes('dateInput.min = quote.earliest_delivery_date') && estimateUi.includes('dateInput.max = quote.max_requested_delivery_date'), "requested dates must be bounded by the server quote");
 assert(estimateUi.includes('quote.allowed_time_codes') && estimateUi.includes('option.disabled = !allowed'), "postal time-window rules must control the selectable options");
 assert(estimateUi.includes('dateInput.disabled = true') && estimateUi.includes('timeInput.disabled = true'), "unresolved and non-requestable routes must disable both controls");
 assert(estimateUi.includes('sb.rpc("get_customer_order_delivery_quote"') && estimateUi.includes('target_shipping_date: null'), "delivery constraints must come from the server RPC");
 assert(estimateUi.includes('target_postal_code:') && estimateUi.includes('target_address:'), "delivery lookup must support postal code and address resolution");
+assert(estimateUi.includes('ship: customerOrderDeliveryDateLabel(quote.shipping_date)'), "the server-calculated shipping date must be shown in delivery guidance");
+assert(source.includes('customer_order_delivery_auto: "発送予定日は {ship} です。'), "Japanese guidance must identify the effective shipping date");
 assert(!source.includes("CUSTOMER_ORDER_DELIVERY_SERVICE_LEVELS") && !source.includes("CUSTOMER_ORDER_DELIVERY_FAR_PREFECTURE_CODES"), "the browser must not retain a heuristic delivery calendar");
 
 [
   ".customer-order-shipping-methods",
   ".customer-order-shipping-method.core-return",
+  ".customer-order-shipping-date-field",
   ".customer-order-delivery-estimate.ready",
   ".customer-order-delivery-estimate.restricted"
 ].forEach((fragment) => assert(css.includes(fragment), `order delivery style is missing: ${fragment}`));
@@ -120,6 +128,8 @@ assert(!source.includes("CUSTOMER_ORDER_DELIVERY_SERVICE_LEVELS") && !source.inc
   "日時指定不可サービス",
   "最短日より前を指定できず",
   "発送日から13日後",
+  "日本時間17:00以降",
+  "16:59:59までは当日発送",
   "get_customer_order_delivery_quote"
 ].forEach((fragment) => assert(contract.includes(fragment), `server handoff contract is missing: ${fragment}`));
 

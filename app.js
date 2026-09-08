@@ -310,12 +310,13 @@ var TRANSLATIONS = {
     customer_order_delivery_service_loading: "配送サービスを読み込み中...",
     customer_order_delivery_service_error: "配送サービスを読み込めませんでした。希望日は設定できません。",
     customer_order_delivery_service_empty: "利用できる配送サービスがありません",
+    customer_order_shipping_date: "発送予定日",
     customer_order_delivery_date: "お届け希望日",
     customer_order_delivery_time: "時間帯",
     customer_order_delivery_wait: "郵便番号または住所と配送サービスから、最短のお届け希望日を自動設定します。",
     customer_order_delivery_checking: "郵便番号と運送会社の配送条件を確認しています...",
-    customer_order_delivery_auto: "最短 {date}（{service}）を自動設定しました。指定できるのは {max} までです。",
-    customer_order_delivery_manual: "指定可能日は {date}～{max}（{service}）です。",
+    customer_order_delivery_auto: "発送予定日は {ship} です。最短 {date}（{service}）を自動設定しました。指定できるのは {max} までです。",
+    customer_order_delivery_manual: "発送予定日は {ship} です。指定可能日は {date}～{max}（{service}）です。",
     customer_order_delivery_not_specifiable: "{service}は日時指定できません。到着目安は {start}～{end} です。",
     customer_order_delivery_unknown: "郵便番号または住所から配送条件を確認できません。希望日は設定できません。",
     customer_order_delivery_address_conservative: "{city}の最も遅い条件で判定しています。正確な郵便番号を入力すると確定します。",
@@ -2209,12 +2210,13 @@ var TRANSLATIONS = {
     customer_order_delivery_service_loading: "Loading delivery services...",
     customer_order_delivery_service_error: "Delivery services could not be loaded. A requested date cannot be set.",
     customer_order_delivery_service_empty: "No delivery service is available",
+    customer_order_shipping_date: "Scheduled Shipping Date",
     customer_order_delivery_date: "Requested Delivery Date",
     customer_order_delivery_time: "Time Window",
     customer_order_delivery_wait: "Enter a postal code or address and select a delivery service to set the earliest delivery date.",
     customer_order_delivery_checking: "Checking the postal delivery rules for this carrier...",
-    customer_order_delivery_auto: "The earliest date, {date} ({service}), was set automatically. The latest selectable date is {max}.",
-    customer_order_delivery_manual: "Selectable dates are {date} through {max} ({service}).",
+    customer_order_delivery_auto: "The scheduled shipping date is {ship}. The earliest date, {date} ({service}), was set automatically. The latest selectable date is {max}.",
+    customer_order_delivery_manual: "The scheduled shipping date is {ship}. Selectable dates are {date} through {max} ({service}).",
     customer_order_delivery_not_specifiable: "{service} does not accept date or time requests. Estimated arrival is {start} to {end}.",
     customer_order_delivery_unknown: "Delivery rules could not be resolved from the postal code or address. A requested date cannot be set.",
     customer_order_delivery_address_conservative: "Using the most conservative rule for {city}; enter the exact postal code to confirm.",
@@ -4053,12 +4055,13 @@ var TRANSLATIONS = {
     customer_order_delivery_service_loading: "正在读取配送服务...",
     customer_order_delivery_service_error: "无法读取配送服务，因此不能设置希望送达日期。",
     customer_order_delivery_service_empty: "没有可用的配送服务",
+    customer_order_shipping_date: "预计发货日期",
     customer_order_delivery_date: "希望送达日期",
     customer_order_delivery_time: "时间段",
     customer_order_delivery_wait: "输入邮政编码或地址并选择配送服务后，将自动设置最早希望送达日期。",
     customer_order_delivery_checking: "正在确认邮政编码和承运商的配送规则...",
-    customer_order_delivery_auto: "已自动设置最早日期 {date}（{service}）。最晚可选择 {max}。",
-    customer_order_delivery_manual: "可选择日期为 {date} 至 {max}（{service}）。",
+    customer_order_delivery_auto: "预计发货日期为 {ship}。已自动设置最早日期 {date}（{service}）。最晚可选择 {max}。",
+    customer_order_delivery_manual: "预计发货日期为 {ship}。可选择日期为 {date} 至 {max}（{service}）。",
     customer_order_delivery_not_specifiable: "{service} 不支持指定日期或时间。预计 {start}～{end} 送达。",
     customer_order_delivery_unknown: "无法根据邮政编码或地址确认配送规则，因此不能设置希望日期。",
     customer_order_delivery_address_conservative: "当前按 {city} 最慢的规则判断；输入准确邮政编码后即可确认。",
@@ -5821,7 +5824,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.912";
+var APP_VERSION       = "v1.1.914";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -10042,13 +10045,15 @@ function customerOrderDestinationError(address, method) {
 
 function applyCustomerOrderDeliveryQuote(options) {
   options = options || {};
+  var shippingDateInput = document.getElementById("customer-order-shipping-date");
   var dateInput = document.getElementById("customer-order-delivery-date");
   var timeInput = document.getElementById("customer-order-delivery-time");
   var method = customerOrderShippingMethodPayload();
-  if (!dateInput || !timeInput) return;
+  if (!shippingDateInput || !dateInput || !timeInput) return;
   dateInput.removeAttribute("min");
   dateInput.removeAttribute("max");
   var quote = customerOrderDeliveryQuote;
+  shippingDateInput.value = quote && quote.available === true ? (quote.shipping_date || "") : "";
   if (!method || !quote || quote.available !== true) {
     dateInput.value = "";
     timeInput.value = "";
@@ -10096,6 +10101,7 @@ function applyCustomerOrderDeliveryQuote(options) {
     customerOrderDeliveryDateManual = false;
   }
   var message = tf(customerOrderDeliveryDateManual ? "customer_order_delivery_manual" : "customer_order_delivery_auto", {
+    ship: customerOrderDeliveryDateLabel(quote.shipping_date),
     date: customerOrderDeliveryDateLabel(quote.earliest_delivery_date),
     max: customerOrderDeliveryDateLabel(quote.max_requested_delivery_date),
     service: method.service_name
@@ -10112,17 +10118,19 @@ function applyCustomerOrderDeliveryQuote(options) {
 
 async function updateCustomerOrderDeliveryEstimate(options) {
   options = options || {};
+  var shippingDateInput = document.getElementById("customer-order-shipping-date");
   var dateInput = document.getElementById("customer-order-delivery-date");
   var timeInput = document.getElementById("customer-order-delivery-time");
   var postalInput = document.getElementById("customer-order-postal-code");
   var method = customerOrderShippingMethodPayload();
-  if (!dateInput || !timeInput) return;
+  if (!shippingDateInput || !dateInput || !timeInput) return;
 
   var postalCode = normalizeCustomerOrderPostalCode(postalInput ? postalInput.value : "");
   var addressText = customerOrderDeliveryAddressText();
   if (!method || (postalCode.length !== 7 && !addressText)) {
     customerOrderDeliveryQuoteSeq += 1;
     customerOrderDeliveryQuote = null;
+    shippingDateInput.value = "";
     dateInput.value = "";
     timeInput.value = "";
     dateInput.disabled = true;
@@ -10132,6 +10140,7 @@ async function updateCustomerOrderDeliveryEstimate(options) {
   }
 
   var requestSeq = ++customerOrderDeliveryQuoteSeq;
+  shippingDateInput.value = "";
   dateInput.disabled = true;
   timeInput.disabled = true;
   customerOrderDeliverySetMessage(t("customer_order_delivery_checking"), "pending");
