@@ -6459,6 +6459,13 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .customer-order-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .customer-order-form-grid label { min-width: 0; }
 .customer-order-form-grid label.wide { grid-column: 1 / -1; }
+.customer-order-destination-type { padding-bottom: 2px; }
+.customer-order-yamato-office-panel { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(220px, .8fr) minmax(0, 1.2fr); min-width: 0; gap: 10px 14px; border-left: 3px solid #e2b82e; padding: 10px 12px; background: #fff9e8; }
+.customer-order-yamato-office-panel[hidden] { display: none; }
+.customer-order-yamato-office-summary { display: grid; align-content: center; gap: 3px; min-width: 0; }
+.customer-order-yamato-office-summary strong { color: #3c3320; font-size: var(--dcats-type-body); overflow-wrap: anywhere; }
+.customer-order-yamato-office-summary span { color: #6c6041; font-size: var(--dcats-type-supporting); font-weight: 700; line-height: 1.45; overflow-wrap: anywhere; }
+.sales-order-office-pickup-badge { align-self: flex-start; border: 1px solid #d1aa28; border-radius: 4px; padding: 3px 6px; background: #fff7d9; color: #6c5310; font-size: var(--dcats-type-supporting); font-style: normal; font-weight: 900; }
 .customer-order-shipping-methods { grid-column: 1 / -1; display: grid; gap: 8px; margin-top: 2px; padding-top: 10px; border-top: 1px solid #dce3e0; }
 .customer-order-shipping-method { display: grid; grid-template-columns: minmax(112px, .42fr) minmax(0, 1fr); align-items: center; gap: 3px 9px; border-left: 3px solid #287356; padding: 8px 9px; background: #f1f7f4; }
 .customer-order-shipping-method[hidden] { display: none !important; }
@@ -7755,6 +7762,7 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   .customer-order-vehicle-heading span { text-align: left; }
   .customer-order-form-grid { grid-template-columns: 1fr; }
   .customer-order-form-grid label.wide { grid-column: 1; }
+  .customer-order-yamato-office-panel { grid-template-columns: 1fr; }
   .customer-order-vehicle-summary dl { grid-template-columns: 1fr; }
   .customer-order-shipping-method { grid-template-columns: 1fr; }
   .customer-order-shipping-method > select,
