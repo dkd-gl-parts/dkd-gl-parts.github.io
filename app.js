@@ -311,6 +311,15 @@ var TRANSLATIONS = {
     customer_order_delivery_service_error: "配送サービスを読み込めませんでした。希望日は設定できません。",
     customer_order_delivery_service_empty: "利用できる配送サービスがありません",
     customer_order_shipping_date: "発送予定日",
+    sales_order_shipping_date_change: "日付を変更",
+    sales_order_shipping_date_locked: "変更不可",
+    sales_order_shipping_date_help: "通常は受注当日、17時以降の受注は翌日です。即日出荷する場合は本日へ変更してください。過去日は指定できません。",
+    sales_order_shipping_date_past_error: "発送予定日は本日以降を指定してください。",
+    sales_order_shipping_date_unchanged: "発送予定日は変更されていません。",
+    sales_order_shipping_date_changing: "変更中...",
+    sales_order_shipping_date_checking: "配送条件を確認して発送予定日を変更しています。",
+    sales_order_shipping_date_failed: "発送予定日を変更できませんでした。",
+    sales_order_shipping_date_updated: "発送予定日を変更しました。B2 CSVと帳票は変更後の日付で再発行してください。",
     customer_order_delivery_date: "お届け希望日",
     customer_order_delivery_time: "時間帯",
     customer_order_delivery_wait: "郵便番号または住所と配送サービスから、最短のお届け希望日を自動設定します。",
@@ -2211,6 +2220,15 @@ var TRANSLATIONS = {
     customer_order_delivery_service_error: "Delivery services could not be loaded. A requested date cannot be set.",
     customer_order_delivery_service_empty: "No delivery service is available",
     customer_order_shipping_date: "Scheduled Shipping Date",
+    sales_order_shipping_date_change: "Change date",
+    sales_order_shipping_date_locked: "Locked",
+    sales_order_shipping_date_help: "Orders normally ship on the order date. Orders received at or after 17:00 are scheduled for the next day. Select today for same-day dispatch. Past dates are unavailable.",
+    sales_order_shipping_date_past_error: "Select today or a future shipping date.",
+    sales_order_shipping_date_unchanged: "The shipping date has not changed.",
+    sales_order_shipping_date_changing: "Updating...",
+    sales_order_shipping_date_checking: "Validating delivery rules and updating the shipping date.",
+    sales_order_shipping_date_failed: "Unable to update the shipping date.",
+    sales_order_shipping_date_updated: "The shipping date was updated. Reissue the B2 CSV and documents with the new date.",
     customer_order_delivery_date: "Requested Delivery Date",
     customer_order_delivery_time: "Time Window",
     customer_order_delivery_wait: "Enter a postal code or address and select a delivery service to set the earliest delivery date.",
@@ -4056,6 +4074,15 @@ var TRANSLATIONS = {
     customer_order_delivery_service_error: "无法读取配送服务，因此不能设置希望送达日期。",
     customer_order_delivery_service_empty: "没有可用的配送服务",
     customer_order_shipping_date: "预计发货日期",
+    sales_order_shipping_date_change: "更改日期",
+    sales_order_shipping_date_locked: "不可更改",
+    sales_order_shipping_date_help: "通常按下单当天发货，17:00后收到的订单预定次日发货。如需当天发货，请改为今天。不能选择过去的日期。",
+    sales_order_shipping_date_past_error: "发货日期必须为今天或以后。",
+    sales_order_shipping_date_unchanged: "发货日期没有变化。",
+    sales_order_shipping_date_changing: "更新中...",
+    sales_order_shipping_date_checking: "正在检查配送条件并更新发货日期。",
+    sales_order_shipping_date_failed: "无法更新发货日期。",
+    sales_order_shipping_date_updated: "发货日期已更新。请使用更新后的日期重新生成B2 CSV和单据。",
     customer_order_delivery_date: "希望送达日期",
     customer_order_delivery_time: "时间段",
     customer_order_delivery_wait: "输入邮政编码或地址并选择配送服务后，将自动设置最早希望送达日期。",
@@ -5824,7 +5851,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.913";
+var APP_VERSION       = "v1.1.914";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -15568,6 +15595,67 @@ function salesOrderLifecycleHtml(status) {
   }).join("") + "</div>";
 }
 
+function salesOrderTokyoTodayValue() {
+  var parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date());
+  var values = {};
+  parts.forEach(function(part) { values[part.type] = part.value; });
+  return [values.year, values.month, values.day].join("-");
+}
+
+function salesOrderShippingScheduleHtml(order) {
+  var shippingDate = String(order && order.scheduled_shipping_date || "");
+  var editable = typeof salesOrderCanRevise === "function" && salesOrderCanRevise(order);
+  var input = "<input id='sales-order-scheduled-shipping-date' type='date' value='" + esc(shippingDate) + "' min='" + esc(salesOrderTokyoTodayValue()) + "'" + (editable ? "" : " disabled aria-readonly='true'") + ">";
+  return "<div class='sales-order-shipping-schedule'><label><span>" + esc(t("customer_order_shipping_date")) + "</span>" + input + "</label>" +
+    (editable ? "<button type='button' id='sales-order-save-shipping-date'>" + esc(t("sales_order_shipping_date_change")) + "</button>" : "<span class='sales-order-shipping-schedule-locked'>" + esc(t("sales_order_shipping_date_locked")) + "</span>") +
+    "<small>" + esc(t("sales_order_shipping_date_help")) + "</small></div>";
+}
+
+async function saveSalesOrderScheduledShippingDate() {
+  var order = salesOrderDetail;
+  var input = document.getElementById("sales-order-scheduled-shipping-date");
+  var button = document.getElementById("sales-order-save-shipping-date");
+  if (salesOrderSaving || !order || !input || !button || typeof salesOrderCanRevise !== "function" || !salesOrderCanRevise(order)) return;
+  var shippingDate = String(input.value || "");
+  var today = salesOrderTokyoTodayValue();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(shippingDate) || shippingDate < today) {
+    setSalesOrderDetailMessage(t("sales_order_shipping_date_past_error"), true);
+    input.focus();
+    return;
+  }
+  if (shippingDate === String(order.scheduled_shipping_date || "")) {
+    setSalesOrderDetailMessage(t("sales_order_shipping_date_unchanged"), false);
+    return;
+  }
+  salesOrderSaving = true;
+  input.disabled = true;
+  button.disabled = true;
+  button.textContent = t("sales_order_shipping_date_changing");
+  setSalesOrderDetailMessage(t("sales_order_shipping_date_checking"), false);
+  var result = await sb.rpc("update_sales_order_scheduled_shipping_date", {
+    target_order_id: order.id,
+    target_scheduled_shipping_date: shippingDate,
+    target_expected_version: order.version == null ? null : order.version
+  });
+  salesOrderSaving = false;
+  if (result.error) {
+    input.disabled = false;
+    button.disabled = false;
+    button.textContent = t("sales_order_shipping_date_change");
+    setSalesOrderDetailMessage(result.error.message || t("sales_order_shipping_date_failed"), true);
+    return;
+  }
+  salesOrderDetail = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
+  renderSalesOrderDetail();
+  await refreshSalesOrderManagement();
+  setSalesOrderDetailMessage(t("sales_order_shipping_date_updated"), false);
+}
+
 function renderSalesOrderDetail() {
   var host = document.getElementById("sales-order-detail");
   var order = salesOrderDetail;
@@ -15620,7 +15708,7 @@ function renderSalesOrderDetail() {
     "<div class='sales-order-detail-panels'>" +
       "<section class='sales-order-detail-panel sales-order-detail-overview' id='sales-order-detail-panel-overview' role='tabpanel' aria-labelledby='sales-order-detail-tab-overview' data-sales-order-detail-panel='overview'><div class='sales-order-detail-overview-grid'>" +
         "<section class='sales-order-detail-section' id='sales-order-detail-products'><div class='sales-order-section-heading'><div><h3>注文商品</h3><p>販売価格、数量、コア返却条件と値引・調整行を確認します。</p></div>" + pricingButton + "</div>" + salesOrderItemRowsHtml(order.items) + salesOrderAdjustmentRowsHtml(orderAdjustments, orderDiscount) + "</section>" +
-        "<section class='sales-order-detail-section sales-order-address' id='sales-order-detail-delivery'><div class='sales-order-section-heading'><div><h3>お届け先・運送便</h3><p>送り状へ反映する配送情報です。</p></div></div><div class='sales-order-address-destination'><strong>" + esc(address.company_name || "-") + "　" + esc(address.recipient_name || "-") + "</strong><span>〒" + esc(address.postal_code || "-") + "　" + esc(address.prefecture_name || "") + esc(address.address_line_1 || "-") + " " + esc(address.address_line_2 || "") + "</span><span>TEL " + esc(address.phone_number || "-") + "</span></div>" + customerOrderVehicleInformationHtml(order.vehicle_information, "sales-order-vehicle-information") + "<dl><div><dt>商品発送便</dt><dd class='sales-order-waybill-detail'><strong>" + esc(outboundService) + "</strong><span>" + esc(outboundWaybillDetail) + "</span></dd></div><div><dt>コア返却便</dt><dd class='sales-order-waybill-detail'><strong>" + esc(coreReturnService) + "</strong><span>" + esc(coreReturnWaybillDetail) + "</span></dd></div><div><dt>お届け希望</dt><dd>" + esc(order.requested_delivery_date || "指定なし") + " / " + esc(order.delivery_time_label || "指定なし") + "</dd></div><div><dt>注文メモ</dt><dd>" + esc(order.customer_note || "-") + "</dd></div></dl></section>" +
+        "<section class='sales-order-detail-section sales-order-address' id='sales-order-detail-delivery'><div class='sales-order-section-heading'><div><h3>お届け先・運送便</h3><p>送り状へ反映する配送情報です。</p></div></div><div class='sales-order-address-destination'><strong>" + esc(address.company_name || "-") + "　" + esc(address.recipient_name || "-") + "</strong><span>〒" + esc(address.postal_code || "-") + "　" + esc(address.prefecture_name || "") + esc(address.address_line_1 || "-") + " " + esc(address.address_line_2 || "") + "</span><span>TEL " + esc(address.phone_number || "-") + "</span></div>" + customerOrderVehicleInformationHtml(order.vehicle_information, "sales-order-vehicle-information") + salesOrderShippingScheduleHtml(order) + "<dl><div><dt>商品発送便</dt><dd class='sales-order-waybill-detail'><strong>" + esc(outboundService) + "</strong><span>" + esc(outboundWaybillDetail) + "</span></dd></div><div><dt>コア返却便</dt><dd class='sales-order-waybill-detail'><strong>" + esc(coreReturnService) + "</strong><span>" + esc(coreReturnWaybillDetail) + "</span></dd></div><div><dt>お届け希望</dt><dd>" + esc(order.requested_delivery_date || "指定なし") + " / " + esc(order.delivery_time_label || "指定なし") + "</dd></div><div><dt>注文メモ</dt><dd>" + esc(order.customer_note || "-") + "</dd></div></dl></section>" +
       "</div></section>" +
       "<div class='sales-order-detail-panel' id='sales-order-detail-panel-fulfillment' role='tabpanel' aria-labelledby='sales-order-detail-tab-fulfillment' data-sales-order-detail-panel='fulfillment' hidden>" + salesOrderDispatchHtml(order) + "</div>" +
       "<section class='sales-order-detail-panel sales-order-detail-section sales-order-tracking' id='sales-order-detail-tracking' role='tabpanel' aria-labelledby='sales-order-detail-tab-tracking' data-sales-order-detail-panel='tracking' hidden><div class='sales-order-section-heading'><div><h3>商品発送送り状</h3><p>B2発行済データの取込後に番号を確認・修正できます。</p></div></div><div class='sales-order-tracking-grid outbound-only'><label><span>送り状番号</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>B2出荷予定日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>商品発送番号を登録</button></div><p>コア返却用複写伝票は「出荷帳票発行」で管理します。送り状番号の登録だけでは在庫を減らしません。</p></section>" +
@@ -15646,7 +15734,9 @@ function renderSalesOrderDetail() {
   });
   var trackingButton = document.getElementById("sales-order-save-tracking");
   var revisionButton = document.getElementById("sales-order-revision-open");
+  var shippingDateButton = document.getElementById("sales-order-save-shipping-date");
   if (revisionButton) revisionButton.addEventListener("click", openSalesOrderRevisionEditor);
+  if (shippingDateButton) shippingDateButton.addEventListener("click", saveSalesOrderScheduledShippingDate);
   if (trackingButton) trackingButton.addEventListener("click", registerSalesOrderTracking);
   var issueDispatchButton = document.getElementById("sales-order-issue-dispatch");
   if (issueDispatchButton) issueDispatchButton.addEventListener("click", issueSalesOrderDispatch);
