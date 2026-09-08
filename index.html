@@ -2424,7 +2424,7 @@
           <div class="product-form-core-policy-head">
             <div>
               <div class="spec-title" data-i18n="core_return_policy">コア返却条件</div>
-              <div class="spec-form-help" data-i18n="core_policy_form_note">商品区分ごとに、返却条件と未返却時の代金を設定します。</div>
+              <div class="spec-form-help" data-i18n="core_policy_form_note">商品区分ごとに、返却条件と、返却必要商品の返却不可時コア代金を設定します。</div>
             </div>
             <label class="form-label" for="pf-core-policy-kind" data-i18n="product_kind_section">商品区分</label>
             <select class="form-input product-kind-select rebuilt" id="pf-core-policy-kind"></select>
@@ -2438,7 +2438,7 @@
               </div>
             </fieldset>
             <div class="form-row">
-              <label class="form-label" for="pf-core-charge" data-i18n="core_charge">未返却時コア代金</label>
+              <label class="form-label" for="pf-core-charge" data-i18n="core_charge">返却不可時コア代金</label>
               <div class="core-charge-input"><span>¥</span><input class="form-input" id="pf-core-charge" type="number" min="0" step="1" inputmode="numeric"></div>
               <div class="spec-form-help" data-i18n="core_policy_selected_kind_note">選択中の商品区分の設定を保存します。</div>
             </div>
@@ -2522,9 +2522,9 @@
           </div>
         </fieldset>
         <div class="form-row sales-pricing-core-charge" id="sales-core-charge-row">
-          <label class="form-label" for="sales-core-charge" data-i18n="core_charge">未返却時コア代金</label>
+          <label class="form-label" for="sales-core-charge" data-i18n="core_charge">返却不可時コア代金</label>
           <div class="core-charge-input"><span>¥</span><input class="form-input" id="sales-core-charge" type="number" min="0" step="1" inputmode="numeric" aria-describedby="sales-core-policy-help"></div>
-          <div class="sales-pricing-field-help" id="sales-core-policy-help" data-i18n="sales_core_policy_help">コア返却不要の場合、コア代金は入力できず、販売・原価・受注計算には反映されません。</div>
+          <div class="sales-pricing-field-help" id="sales-core-policy-help" data-i18n="sales_core_policy_help">商品マスタで返却不要の商品にはコア代金は発生せず、受注時にも計上しません。返却必要の商品だけ、返却できない場合の請求額を設定できます。</div>
         </div>
         <div class="form-row sales-pricing-note">
           <label class="form-label" data-i18n="sales_basis_note">価格メモ</label>

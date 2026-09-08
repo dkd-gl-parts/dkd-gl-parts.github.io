@@ -6437,7 +6437,8 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .customer-order-core-choice { display: grid; gap: 4px; width: min(100%, 300px); margin-top: 8px; }
 .customer-order-core-choice > span { color: #4d5d55; font-size: var(--dcats-type-supporting); font-weight: 800; }
 .customer-order-core-choice select { width: 100%; min-width: 0; height: 34px; border: 1px solid var(--dcats-border-strong); border-radius: var(--dcats-control-radius); padding: 0 8px; background: #fff; color: #26352f; font-size: var(--dcats-type-supporting); font-weight: 700; }
-.customer-order-core-choice small { color: #a23a31; font-size: var(--dcats-type-supporting); font-weight: 700; line-height: 1.45; }
+.customer-order-core-choice small { color: #65736d; font-size: var(--dcats-type-supporting); font-weight: 700; line-height: 1.45; }
+.customer-order-core-choice small.setup-required { color: #a23a31; }
 .customer-order-qty span,
 .customer-order-line-metric span { display: block; margin-bottom: 4px; color: #74817b; font-size: var(--dcats-type-supporting); font-weight: 800; }
 .customer-order-qty input { width: 68px; height: var(--dcats-control-height); border: 1px solid var(--dcats-border); border-radius: var(--dcats-control-radius); padding: 0 7px; color: #17231f; font-size: var(--dcats-type-body); text-align: right; }
