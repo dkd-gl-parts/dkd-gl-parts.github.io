@@ -29,8 +29,9 @@ if (!imageSource.includes('fetchAllCoreProductImagesForContext(parseInt(productD
 const availabilitySource = functionSource("loadCustomerCatalogAvailability", "async function loadCustomerCatalogVehicles");
 if (!availabilitySource.includes('var kinds = ["rebuilt", "aftermarket_new"]') ||
     !availabilitySource.includes('from("core_product_variants")') ||
+    !availabilitySource.includes("fetchCustomerOrderStockAvailabilityMap([product], kinds)") ||
     !availabilitySource.includes("fetchCustomerCatalogPriceInfo(product, kind)")) {
-  throw new Error("customer catalog detail must show rebuilt and aftermarket-new stock with kind-specific prices");
+  throw new Error("customer catalog detail must show reservation-aware rebuilt and aftermarket-new availability with kind-specific prices");
 }
 
 const searchSource = functionSource("runCustomerCatalogSearch", "function customerCatalogFact");
@@ -84,7 +85,7 @@ if (!source.includes('document.getElementById("customer-catalog-q").addEventList
 if ((source.match(/customer_catalog_short_query_category_required:/g) || []).length !== 3) {
   throw new Error("short customer catalog search guidance must be localized in Japanese, English, and Chinese");
 }
-const customerStockIndex = searchSource.indexOf("await fetchProductAvailableStockMap(products)");
+const customerStockIndex = searchSource.indexOf("await fetchCustomerOrderAvailableStockMap(products)");
 const customerStockSortIndex = searchSource.indexOf("sortProductsByAvailableStock(products, stockPriorityResult.map)");
 const customerResultLimitIndex = searchSource.indexOf("CUSTOMER_CATALOG_RESULT_LIMIT");
 if (customerStockIndex < 0 || customerStockSortIndex < customerStockIndex || customerResultLimitIndex < customerStockSortIndex) {
@@ -120,10 +121,9 @@ if (!source.includes('customer_product_kind_rebuilt: "リビルト品"') ||
 }
 
 const compatibleStockSource = functionSource("fetchCustomerCatalogCompatibleStockMap", "async function loadCustomerCatalogCompatible");
-if (!compatibleStockSource.includes('from("core_product_variants")') ||
-    !compatibleStockSource.includes('.in("dkd_shohin_id", ids)') ||
-    !compatibleStockSource.includes('.in("product_kind", ["rebuilt", "aftermarket_new"])')) {
-  throw new Error("customer catalog compatible stock must be loaded in one batched query");
+if (!compatibleStockSource.includes('fetchCustomerOrderStockAvailabilityMap(rows, ["rebuilt", "aftermarket_new"])') ||
+    !compatibleStockSource.includes("stock.exact_available_qty")) {
+  throw new Error("customer catalog compatible stock must use each part's reservation-aware exact availability");
 }
 if (!styles.includes(".customer-catalog-compatible-stock-item.rebuilt") &&
     !styles.includes(".customer-catalog-compatible-stock-item {")) {
@@ -131,8 +131,10 @@ if (!styles.includes(".customer-catalog-compatible-stock-item.rebuilt") &&
 }
 
 const availabilityHtmlSource = functionSource("customerCatalogAvailabilityKindHtml", "function renderCustomerCatalogDetailBase");
-if (!availabilityHtmlSource.includes("customerProductKindLabel(kind)")) {
-  throw new Error("customer catalog must use the customer-facing product-kind label");
+if (!availabilityHtmlSource.includes("customerProductKindLabel(kind)") ||
+    !availabilityHtmlSource.includes("availability.total_available_qty") ||
+    !availabilityHtmlSource.includes('tf("customer_catalog_stock_breakdown"')) {
+  throw new Error("customer catalog must show the customer-facing kind and exact/compatible available-stock breakdown");
 }
 
 const customerKindLabelSource = functionSource("customerProductKindLabel", "function productKindClass");

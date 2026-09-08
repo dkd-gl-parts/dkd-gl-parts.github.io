@@ -236,8 +236,9 @@ var TRANSLATIONS = {
     customer_catalog_price_note: "この得意先に設定された販売価格です",
     customer_catalog_price_none: "価格はお問い合わせください",
     customer_catalog_stock_price_title: "在庫・販売価格",
-    customer_catalog_stock_qty: "在庫数",
+    customer_catalog_stock_qty: "受注可能数",
     customer_catalog_stock_unit: "個",
+    customer_catalog_stock_breakdown: "自品番 {exact} / 互換 {compatible}",
     customer_catalog_vehicle_list: "車両情報一覧",
     customer_order_title: "ご注文",
     customer_order_portal_note: "注文内容の確認と、受付後の出荷状況を確認できます。",
@@ -355,6 +356,8 @@ var TRANSLATIONS = {
     customer_order_core_charge_total: "受注時に計上したコア代金",
     customer_order_quantity: "数量",
     customer_order_unit_price: "単価",
+    customer_order_stock_summary: "受注可能 {total}（自品番 {exact} / 互換 {compatible}）",
+    customer_order_compatible_stock_allocated: "互換在庫を引き当てます",
     customer_order_subtotal: "小計",
     customer_order_total: "合計",
     sales_order_id_label: "受注ID",
@@ -2147,8 +2150,9 @@ var TRANSLATIONS = {
     customer_catalog_price_note: "Sales price configured for this customer",
     customer_catalog_price_none: "Please contact us for pricing",
     customer_catalog_stock_price_title: "Stock and Sales Price",
-    customer_catalog_stock_qty: "Stock",
+    customer_catalog_stock_qty: "Available to Order",
     customer_catalog_stock_unit: "units",
+    customer_catalog_stock_breakdown: "Exact {exact} / Compatible {compatible}",
     customer_catalog_vehicle_list: "Vehicle Applications",
     customer_order_title: "Orders",
     customer_order_portal_note: "Review your order and track its fulfillment status.",
@@ -2266,6 +2270,8 @@ var TRANSLATIONS = {
     customer_order_core_charge_total: "Core charge billed with order",
     customer_order_quantity: "Qty",
     customer_order_unit_price: "Unit Price",
+    customer_order_stock_summary: "Available {total} (Exact {exact} / Compatible {compatible})",
+    customer_order_compatible_stock_allocated: "Compatible stock will be allocated",
     customer_order_subtotal: "Subtotal",
     customer_order_total: "Total",
     sales_order_id_label: "Order ID",
@@ -4003,8 +4009,9 @@ var TRANSLATIONS = {
     customer_catalog_price_note: "这是为该客户设置的销售价格",
     customer_catalog_price_none: "价格请联系我们",
     customer_catalog_stock_price_title: "库存与销售价格",
-    customer_catalog_stock_qty: "库存数",
+    customer_catalog_stock_qty: "可订购数量",
     customer_catalog_stock_unit: "件",
+    customer_catalog_stock_breakdown: "本品号 {exact} / 兼容品 {compatible}",
     customer_catalog_vehicle_list: "车辆信息一览",
     customer_order_title: "订单",
     customer_order_portal_note: "确认订单内容并查看受理后的出货状态。",
@@ -4122,6 +4129,8 @@ var TRANSLATIONS = {
     customer_order_core_charge_total: "下单时计入的旧件费",
     customer_order_quantity: "数量",
     customer_order_unit_price: "单价",
+    customer_order_stock_summary: "可订购 {total}（本品号 {exact} / 兼容品 {compatible}）",
+    customer_order_compatible_stock_allocated: "将分配兼容品库存",
     customer_order_subtotal: "小计",
     customer_order_total: "合计",
     sales_order_id_label: "订单ID",
@@ -5857,7 +5866,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.916";
+var APP_VERSION       = "v1.1.917";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -9495,7 +9504,7 @@ async function runCustomerCatalogSearch(options) {
   await hydrateSalesDaikoVisibility(products);
   if (seq !== customerCatalogRequestSeq) return;
   products = filterSalesVisibleProducts(products).slice(0, candidateScanLimit);
-  var stockPriorityResult = await fetchProductAvailableStockMap(products);
+  var stockPriorityResult = await fetchCustomerOrderAvailableStockMap(products);
   if (seq !== customerCatalogRequestSeq) return;
   if (!stockPriorityResult.error) products = sortProductsByAvailableStock(products, stockPriorityResult.map);
   if (customerCatalogRequiresRegisteredPrice() && products.length) {
@@ -9556,8 +9565,75 @@ function customerCatalogSpecText(product) {
   return values.join(" / ");
 }
 
-function customerCatalogAvailabilityKindHtml(product, kind, stockQty, price, showPrice, variantRows) {
+function emptyCustomerOrderStockAvailability() {
+  return {
+    exact_available_qty: 0,
+    compatible_available_qty: 0,
+    total_available_qty: 0
+  };
+}
+
+function normalizedCustomerOrderStockAvailability(row) {
+  if (!row) return null;
+  function quantity(value) {
+    var parsed = parseInt(value, 10);
+    return isNaN(parsed) ? 0 : Math.max(0, parsed);
+  }
+  return {
+    exact_available_qty: quantity(row.exact_available_qty),
+    compatible_available_qty: quantity(row.compatible_available_qty),
+    total_available_qty: quantity(row.total_available_qty)
+  };
+}
+
+async function fetchCustomerOrderStockAvailabilityMap(products, kinds) {
+  var ids = productSearchCardDkdIds(products || []);
+  var requestedKinds = (kinds || ["rebuilt", "aftermarket_new"]).map(normalizeProductKind).filter(function(kind, index, rows) {
+    return ["rebuilt", "aftermarket_new"].includes(kind) && rows.indexOf(kind) === index;
+  });
+  var map = {};
+  ids.forEach(function(id) {
+    map[String(id)] = {};
+    requestedKinds.forEach(function(kind) {
+      map[String(id)][kind] = emptyCustomerOrderStockAvailability();
+    });
+  });
+  if (!ids.length || !requestedKinds.length) return { map: map, error: null };
+
+  var productChunkSize = Math.max(1, Math.floor(100 / requestedKinds.length));
+  for (var i = 0; i < ids.length; i += productChunkSize) {
+    var payload = [];
+    ids.slice(i, i + productChunkSize).forEach(function(id) {
+      requestedKinds.forEach(function(kind) {
+        payload.push({ dkd_shohin_id: id, product_kind: kind });
+      });
+    });
+    var result = await sb.rpc("get_customer_order_stock_availability", {
+      target_products: payload
+    });
+    if (result.error) {
+      console.warn("customer order stock availability lookup failed", result.error);
+      return { map: {}, error: result.error };
+    }
+    (result.data || []).forEach(function(row) {
+      var key = String(row.dkd_shohin_id || "");
+      var kind = normalizeProductKind(row.product_kind);
+      if (!map[key] || !Object.prototype.hasOwnProperty.call(map[key], kind)) return;
+      map[key][kind] = normalizedCustomerOrderStockAvailability(row);
+    });
+  }
+  return { map: map, error: null };
+}
+
+function customerCatalogAvailabilityKindHtml(product, kind, availability, price, showPrice, variantRows) {
+  var stockQty = availability ? availability.total_available_qty : null;
   var stockText = stockQty == null ? "-" : String(stockQty);
+  var stockBreakdown = availability
+    ? tf("customer_catalog_stock_breakdown", {
+        exact: availability.exact_available_qty,
+        compatible: availability.compatible_available_qty
+      })
+    : t("customer_order_stock_unavailable");
   var priceText = price == null ? t("customer_catalog_price_none") : customerOrderCurrency(price);
   var orderKey = customerOrderCartKey(productDkdId(product), kind);
   var orderAdded = customerOrderCart.some(function(item) { return item.key === orderKey; });
@@ -9575,7 +9651,7 @@ function customerCatalogAvailabilityKindHtml(product, kind, stockQty, price, sho
   return "<div class='customer-catalog-availability-kind " + esc(productKindClass(kind)) + "'>" +
     "<div class='customer-catalog-availability-kind-title'>" + esc(customerProductKindLabel(kind)) + "</div>" +
     "<div class='customer-catalog-availability-metrics" + (showPrice ? "" : " stock-only") + "'>" +
-      "<div class='customer-catalog-availability-metric stock'><span>" + esc(t("customer_catalog_stock_qty")) + "</span><strong>" + esc(stockText) + "</strong><small>" + esc(t("customer_catalog_stock_unit")) + "</small></div>" +
+      "<div class='customer-catalog-availability-metric stock'><span>" + esc(t("customer_catalog_stock_qty")) + "</span><strong>" + esc(stockText) + "</strong><small>" + esc(t("customer_catalog_stock_unit")) + "</small><small class='customer-catalog-stock-breakdown'>" + esc(stockBreakdown) + "</small></div>" +
       (showPrice ? "<div class='customer-catalog-availability-metric price'><span>" + esc(t("customer_portal_price_display")) + "</span><strong>" + esc(priceText) + "</strong></div>" : "") +
     "</div>" +
     renderCoreReturnPolicyHtml(kind, variantRows, { compact: true, showTitle: false }) +
@@ -9668,23 +9744,17 @@ async function loadCustomerCatalogAvailability(product, seq) {
   var priceRequest = showPrice
     ? Promise.all(kinds.map(function(kind) { return fetchCustomerCatalogPriceInfo(product, kind); }))
     : Promise.resolve([null, null]);
-  var results = await Promise.all([stockRequest, priceRequest]);
+  var availabilityRequest = fetchCustomerOrderStockAvailabilityMap([product], kinds);
+  var results = await Promise.all([stockRequest, priceRequest, availabilityRequest]);
   if (seq !== customerCatalogDetailSeq || !wrap.isConnected) return;
   var stockResult = results[0];
   var prices = results[1] || [];
+  var availabilityResult = results[2] || { map: {}, error: new Error("stock unavailable") };
   var variantRows = stockResult && !stockResult.error ? (stockResult.data || []) : [];
-  var stockMap = { rebuilt: 0, aftermarket_new: 0 };
-  if (stockResult.error) {
-    console.warn("customer catalog stock lookup failed", stockResult.error);
-    stockMap = { rebuilt: null, aftermarket_new: null };
-  } else {
-    (stockResult.data || []).forEach(function(row) {
-      var kind = normalizeProductKind(row.product_kind);
-      if (!Object.prototype.hasOwnProperty.call(stockMap, kind)) return;
-      var qty = parseFloat(row.stock_qty);
-      if (!isNaN(qty)) stockMap[kind] += qty;
-    });
-  }
+  if (stockResult.error) console.warn("customer catalog variant policy lookup failed", stockResult.error);
+  var stockMap = availabilityResult.error
+    ? { rebuilt: null, aftermarket_new: null }
+    : (availabilityResult.map[String(dkdId)] || {});
   wrap.innerHTML = kinds.map(function(kind, index) {
     return customerCatalogAvailabilityKindHtml(product, kind, stockMap[kind], prices[index], showPrice, variantRows);
   }).join("");
@@ -9727,21 +9797,17 @@ async function fetchCustomerCatalogCompatibleStockMap(rows) {
     map[String(id)] = { rebuilt: 0, aftermarket_new: 0 };
   });
   if (!ids.length) return { map: map, error: null };
-  var result = await sb.from("core_product_variants")
-    .select("dkd_shohin_id,product_kind,stock_qty")
-    .eq("is_active", true)
-    .in("product_kind", ["rebuilt", "aftermarket_new"])
-    .in("dkd_shohin_id", ids);
+  var result = await fetchCustomerOrderStockAvailabilityMap(rows, ["rebuilt", "aftermarket_new"]);
   if (result.error) {
     console.warn("customer compatible stock lookup failed", result.error);
     return { map: map, error: result.error };
   }
-  (result.data || []).forEach(function(row) {
-    var key = String(row.dkd_shohin_id || "");
-    var kind = normalizeProductKind(row.product_kind);
-    if (!map[key] || !Object.prototype.hasOwnProperty.call(map[key], kind)) return;
-    var qty = parseFloat(row.stock_qty);
-    if (!isNaN(qty)) map[key][kind] += qty;
+  ids.forEach(function(id) {
+    var availability = result.map[String(id)] || {};
+    ["rebuilt", "aftermarket_new"].forEach(function(kind) {
+      var stock = availability[kind];
+      map[String(id)][kind] = stock ? stock.exact_available_qty : 0;
+    });
   });
   return { map: map, error: null };
 }
@@ -10359,7 +10425,7 @@ function clearPersistedCustomerOrderCart() {
   try { sessionStorage.removeItem(customerOrderCartStorageKey()); } catch (e) {}
 }
 
-function addCustomerCatalogProductToOrder(product, productKind, stockQty, price, variantRows) {
+function addCustomerCatalogProductToOrder(product, productKind, availability, price, variantRows) {
   if (!canOpenCustomerOrdering() || !product || !productDkdId(product)) return false;
   var kind = normalizeProductKind(productKind || "rebuilt");
   var key = customerOrderCartKey(productDkdId(product), kind);
@@ -10380,7 +10446,9 @@ function addCustomerCatalogProductToOrder(product, productKind, stockQty, price,
         manufacturer: product.manufacturer || "",
         gltek_part_number: product.gltek_part_number || ""
       },
-      display_stock_qty: stockQty == null ? null : Number(stockQty),
+      display_stock_qty: availability == null ? null : Number(availability.total_available_qty),
+      display_exact_stock_qty: availability == null ? null : Number(availability.exact_available_qty),
+      display_compatible_stock_qty: availability == null ? null : Number(availability.compatible_available_qty),
       display_unit_price: price == null ? null : Number(price),
       core_return_required: !!(policy && policy.required),
       core_charge_jpy: policy && policy.charge != null ? Number(policy.charge) : null,
@@ -11075,6 +11143,22 @@ function renderCustomerOrderCart() {
       ? confirmed.unit_price_jpy
       : (item.display_unit_price == null ? null : Number(item.display_unit_price) + displayedCoreCharge);
     var stockQty = confirmed ? confirmed.available_stock_qty : item.display_stock_qty;
+    var exactStockQty = confirmed ? confirmed.exact_available_stock_qty : item.display_exact_stock_qty;
+    var compatibleStockQty = confirmed ? confirmed.compatible_available_stock_qty : item.display_compatible_stock_qty;
+    var hasStockBreakdown = exactStockQty != null && compatibleStockQty != null;
+    var stockSummary = stockQty == null
+      ? t("customer_order_stock_unavailable")
+      : (hasStockBreakdown
+        ? tf("customer_order_stock_summary", {
+            total: stockQty,
+            exact: exactStockQty,
+            compatible: compatibleStockQty
+          })
+        : t("customer_catalog_stock_qty") + " " + stockQty);
+    var usesCompatibleStock = confirmed
+      ? confirmed.uses_compatible_stock === true
+      : (hasStockBreakdown && Number(item.quantity || 1) > Number(exactStockQty) && Number(compatibleStockQty) > 0);
+    var stockMeta = [displayedCoreCharge > 0 ? t("customer_order_core_charge_included") : "", stockSummary].filter(Boolean).join(" / ");
     var lineTotal = confirmed ? confirmed.line_total_jpy : (unitPrice == null ? null : Number(unitPrice) * Number(item.quantity || 1));
     var coreRequired = confirmed
       ? confirmed.core_return_required === true
@@ -11097,7 +11181,7 @@ function renderCustomerOrderCart() {
     return "<div class='customer-order-line' data-order-key='" + esc(item.key) + "'>" +
       "<div class='customer-order-product'><span>" + esc(productCategoryLabel(product) || product.category || "-") + "</span><strong>" + esc(product.genuine_part_number || product.manufacturer_part_number || "-") + "</strong><small>" + esc([product.manufacturer, product.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small>" + coreBadge + coreChoice + "</div>" +
       "<label class='customer-order-qty'><span>" + esc(t("customer_order_quantity")) + "</span><input type='number' min='1' max='99' step='1' value='" + esc(item.quantity) + "' data-order-quantity='" + esc(item.key) + "'></label>" +
-      "<div class='customer-order-line-metric'><span>" + esc(t("customer_order_unit_price")) + "</span><strong>" + esc(customerOrderCurrency(unitPrice)) + "</strong><small>" + (displayedCoreCharge > 0 ? esc(t("customer_order_core_charge_included")) + " / " : "") + "在庫 " + esc(stockQty == null ? "-" : stockQty) + "</small></div>" +
+      "<div class='customer-order-line-metric'><span>" + esc(t("customer_order_unit_price")) + "</span><strong>" + esc(customerOrderCurrency(unitPrice)) + "</strong><small>" + esc(stockMeta) + "</small>" + (usesCompatibleStock ? "<small class='compatible-stock'>" + esc(t("customer_order_compatible_stock_allocated")) + "</small>" : "") + "</div>" +
       "<div class='customer-order-line-metric total'><span>" + esc(t("customer_order_subtotal")) + "</span><strong>" + esc(customerOrderCurrency(lineTotal)) + "</strong></div>" +
       "<button class='customer-order-remove' type='button' data-order-remove='" + esc(item.key) + "' aria-label='削除'>×</button>" +
     "</div>";
@@ -33122,6 +33206,19 @@ async function fetchProductAvailableStockMap(products) {
       if (key) map[key] = true;
     });
   }
+  return { map: map, error: null };
+}
+
+async function fetchCustomerOrderAvailableStockMap(products) {
+  var result = await fetchCustomerOrderStockAvailabilityMap(products, ["rebuilt", "aftermarket_new"]);
+  if (result.error) return { map: {}, error: result.error };
+  var map = {};
+  Object.keys(result.map || {}).forEach(function(key) {
+    var availability = result.map[key] || {};
+    map[key] = ["rebuilt", "aftermarket_new"].some(function(kind) {
+      return availability[kind] && Number(availability[kind].total_available_qty) > 0;
+    });
+  });
   return { map: map, error: null };
 }
 

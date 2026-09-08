@@ -234,12 +234,19 @@ if (!catalogShell.includes('orderPreviewGuide.hidden = !canPreviewCustomerOrderi
 }
 const availabilityRenderer = sourceBetween("function customerCatalogAvailabilityKindHtml", "function renderCustomerCatalogDetailBase");
 function renderAvailability(stockQty, price) {
-  return vm.runInNewContext(`${availabilityRenderer}\ncustomerCatalogAvailabilityKindHtml({ dkd_shohin_id: 1 }, "rebuilt", stockQty, price, true, []);`, {
+  const availability = stockQty == null ? null : {
+    exact_available_qty: stockQty,
+    compatible_available_qty: 0,
+    total_available_qty: stockQty
+  };
+  return vm.runInNewContext(`${availabilityRenderer}\ncustomerCatalogAvailabilityKindHtml({ dkd_shohin_id: 1 }, "rebuilt", availability, price, true, []);`, {
+    availability,
     stockQty,
     price,
     formatYen: (value) => String(value),
     customerOrderCurrency: (value) => `\u00a5${value}`,
     t: (key) => key,
+    tf: (key) => key,
     customerOrderCartKey: () => "1:rebuilt",
     productDkdId: () => 1,
     customerOrderCart: [],
