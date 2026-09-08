@@ -310,6 +310,7 @@ var TRANSLATIONS = {
     customer_order_delivery_service_loading: "配送サービスを読み込み中...",
     customer_order_delivery_service_error: "配送サービスを読み込めませんでした。希望日は設定できません。",
     customer_order_delivery_service_empty: "利用できる配送サービスがありません",
+    customer_order_shipping_date: "発送予定日",
     customer_order_delivery_date: "お届け希望日",
     customer_order_delivery_time: "時間帯",
     customer_order_delivery_wait: "郵便番号または住所と配送サービスから、最短のお届け希望日を自動設定します。",
@@ -2209,6 +2210,7 @@ var TRANSLATIONS = {
     customer_order_delivery_service_loading: "Loading delivery services...",
     customer_order_delivery_service_error: "Delivery services could not be loaded. A requested date cannot be set.",
     customer_order_delivery_service_empty: "No delivery service is available",
+    customer_order_shipping_date: "Scheduled Shipping Date",
     customer_order_delivery_date: "Requested Delivery Date",
     customer_order_delivery_time: "Time Window",
     customer_order_delivery_wait: "Enter a postal code or address and select a delivery service to set the earliest delivery date.",
@@ -4053,6 +4055,7 @@ var TRANSLATIONS = {
     customer_order_delivery_service_loading: "正在读取配送服务...",
     customer_order_delivery_service_error: "无法读取配送服务，因此不能设置希望送达日期。",
     customer_order_delivery_service_empty: "没有可用的配送服务",
+    customer_order_shipping_date: "预计发货日期",
     customer_order_delivery_date: "希望送达日期",
     customer_order_delivery_time: "时间段",
     customer_order_delivery_wait: "输入邮政编码或地址并选择配送服务后，将自动设置最早希望送达日期。",
@@ -5821,7 +5824,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.912";
+var APP_VERSION       = "v1.1.913";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -9973,13 +9976,15 @@ function customerOrderDeliveryAddressText() {
 
 function applyCustomerOrderDeliveryQuote(options) {
   options = options || {};
+  var shippingDateInput = document.getElementById("customer-order-shipping-date");
   var dateInput = document.getElementById("customer-order-delivery-date");
   var timeInput = document.getElementById("customer-order-delivery-time");
   var method = customerOrderShippingMethodPayload();
-  if (!dateInput || !timeInput) return;
+  if (!shippingDateInput || !dateInput || !timeInput) return;
   dateInput.removeAttribute("min");
   dateInput.removeAttribute("max");
   var quote = customerOrderDeliveryQuote;
+  shippingDateInput.value = quote && quote.available === true ? (quote.shipping_date || "") : "";
   if (!method || !quote || quote.available !== true) {
     dateInput.value = "";
     timeInput.value = "";
@@ -10044,17 +10049,19 @@ function applyCustomerOrderDeliveryQuote(options) {
 
 async function updateCustomerOrderDeliveryEstimate(options) {
   options = options || {};
+  var shippingDateInput = document.getElementById("customer-order-shipping-date");
   var dateInput = document.getElementById("customer-order-delivery-date");
   var timeInput = document.getElementById("customer-order-delivery-time");
   var postalInput = document.getElementById("customer-order-postal-code");
   var method = customerOrderShippingMethodPayload();
-  if (!dateInput || !timeInput) return;
+  if (!shippingDateInput || !dateInput || !timeInput) return;
 
   var postalCode = normalizeCustomerOrderPostalCode(postalInput ? postalInput.value : "");
   var addressText = customerOrderDeliveryAddressText();
   if (!method || (postalCode.length !== 7 && !addressText)) {
     customerOrderDeliveryQuoteSeq += 1;
     customerOrderDeliveryQuote = null;
+    shippingDateInput.value = "";
     dateInput.value = "";
     timeInput.value = "";
     dateInput.disabled = true;
@@ -10064,6 +10071,7 @@ async function updateCustomerOrderDeliveryEstimate(options) {
   }
 
   var requestSeq = ++customerOrderDeliveryQuoteSeq;
+  shippingDateInput.value = "";
   dateInput.disabled = true;
   timeInput.disabled = true;
   customerOrderDeliverySetMessage(t("customer_order_delivery_checking"), "pending");
