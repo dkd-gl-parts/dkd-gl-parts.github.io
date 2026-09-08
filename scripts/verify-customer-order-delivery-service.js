@@ -19,10 +19,10 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-const constants = sourceBetween("var CUSTOMER_ORDER_DISPATCH_CUTOFF_HOUR", "var salesOrderRows");
 const dateLogic = sourceBetween("function customerOrderDeliveryServiceKey", "function customerOrderDeliverySetMessage");
 const context = {};
-vm.runInNewContext(`${constants}\n${dateLogic}`, context);
+const coreReturnConstant = sourceBetween("var CUSTOMER_ORDER_CORE_RETURN_ADDITIONAL_SERVICES", "var SHIPPING_CARRIER_BRANDS");
+vm.runInNewContext(`${coreReturnConstant}\n${dateLogic}`, context);
 
 const coreReturnServiceLogic = sourceBetween("function customerOrderDeliveryServiceSortValue", "async function loadCustomerOrderDeliveryServices");
 vm.runInNewContext(coreReturnServiceLogic, context);
@@ -47,28 +47,6 @@ const defaultOutbound = context.customerOrderDeliveryServiceFromKey(defaultServi
 const defaultCoreReturn = context.customerOrderDeliveryServiceFromKey(defaultServiceContext.customerOrderDefaultShippingKey("core_return"));
 assert(defaultOutbound.carrier_name === "ヤマト運輸" && defaultOutbound.service_name === "宅急便", "outbound fallback must remain Yamato Takkyubin");
 assert(defaultCoreReturn.carrier_name === "佐川急便" && defaultCoreReturn.service_name === "飛脚宅配便", "core-return fallback must default to Sagawa Hikyaku delivery");
-
-const mondayMorning = new Date(2026, 7, 3, 10, 0, 0);
-const kansai = context.customerOrderDeliveryEstimate("宅急便", 27, mondayMorning);
-assert(kansai.earliest_date === "2026-08-04", "Kansai takkyubin must default to next-day delivery");
-assert(kansai.max_requested_date === "2026-08-10", "requested delivery date must stay within the B2 six-day window");
-assert(kansai.requested_date && kansai.requested_time, "takkyubin must allow requested date and time");
-
-const hokkaido = context.customerOrderDeliveryEstimate("宅急便", 1, mondayMorning);
-assert(hokkaido.earliest_date === "2026-08-05", "far prefectures must add a transit day for takkyubin");
-
-const timeService = context.customerOrderDeliveryEstimate("宅急便タイムサービス", 1, mondayMorning);
-assert(timeService.earliest_date === "2026-08-04", "time service must keep next-day delivery for far prefectures");
-
-const fridayAfterCutoff = context.customerOrderDeliveryEstimate("宅急便", 27, new Date(2026, 7, 7, 16, 0, 0));
-assert(fridayAfterCutoff.dispatch_date === "2026-08-10" && fridayAfterCutoff.earliest_date === "2026-08-11", "orders after cutoff must move dispatch to the next weekday");
-
-const yuPacket = context.customerOrderDeliveryEstimate("クロネコゆうパケット", 27, mondayMorning);
-assert(yuPacket.earliest_date === "2026-08-06" && yuPacket.latest_date === "2026-08-10", "yu-packet must show a three-to-seven-day estimate");
-assert(!yuPacket.requested_date && !yuPacket.requested_time, "yu-packet must not accept requested date or time");
-
-const nekopos = context.customerOrderDeliveryEstimate("ネコポス", 27, mondayMorning);
-assert(!nekopos.requested_date && !nekopos.requested_time, "Nekopos must be treated as date/time unavailable");
 
 const serviceKey = context.customerOrderDeliveryServiceKey("ヤマト運輸", "宅急便");
 const decodedService = context.customerOrderDeliveryServiceFromKey(serviceKey);
@@ -102,7 +80,7 @@ const customerAccessSave = sourceBetween("function collectCustomerDisplaySetting
 assert(customerAccessSave.includes('default_core_return_carrier_name = (returnMethod && returnMethod.carrier_name) || "佐川急便"'), "customer registration must save Sagawa as the fallback core-return carrier");
 assert(customerAccessSave.includes('default_core_return_service_name = (returnMethod && returnMethod.service_name) || "飛脚宅配便"'), "customer registration must save Hikyaku delivery as the fallback core-return service");
 
-const returnLogic = sourceBetween("function customerOrderCartRequiresCoreReturn", "function updateCustomerOrderDeliveryEstimate");
+const returnLogic = sourceBetween("function customerOrderCartRequiresCoreReturn", "function applyCustomerOrderDeliveryQuote");
 const returnContext = {
   customerOrderCart: [{ key: "12011:rebuilt", core_return_required: true }],
   customerOrderPreviewItemMap: () => ({}),
@@ -118,9 +96,13 @@ assert(returnContext.customerOrderCoreReturnShippingMethodPayload() === null, "o
 const returnServiceEvent = sourceBetween('document.getElementById("customer-order-core-return-service").addEventListener', 'document.getElementById("customer-order-delivery-date").addEventListener');
 assert(returnServiceEvent.includes("customerOrderPreview = null") && !returnServiceEvent.includes("updateCustomerOrderDeliveryEstimate"), "changing the return service must invalidate preview without changing the outbound delivery date");
 
-const estimateUi = sourceBetween("function updateCustomerOrderDeliveryEstimate", "function customerOrderDeliveryServiceSortValue");
-assert(estimateUi.includes('dateInput.min = estimate.earliest_date') && estimateUi.includes('dateInput.max = estimate.max_requested_date'), "requested dates must be bounded by the service level");
-assert(estimateUi.includes('dateInput.disabled = true') && estimateUi.includes('timeInput.disabled = true'), "services without date/time requests must disable both controls");
+const estimateUi = sourceBetween("function applyCustomerOrderDeliveryQuote", "function customerOrderDeliveryServiceSortValue");
+assert(estimateUi.includes('dateInput.min = quote.earliest_delivery_date') && estimateUi.includes('dateInput.max = quote.max_requested_delivery_date'), "requested dates must be bounded by the server quote");
+assert(estimateUi.includes('quote.allowed_time_codes') && estimateUi.includes('option.disabled = !allowed'), "postal time-window rules must control the selectable options");
+assert(estimateUi.includes('dateInput.disabled = true') && estimateUi.includes('timeInput.disabled = true'), "unresolved and non-requestable routes must disable both controls");
+assert(estimateUi.includes('sb.rpc("get_customer_order_delivery_quote"') && estimateUi.includes('target_shipping_date: null'), "delivery constraints must come from the server RPC");
+assert(estimateUi.includes('target_postal_code:') && estimateUi.includes('target_address:'), "delivery lookup must support postal code and address resolution");
+assert(!source.includes("CUSTOMER_ORDER_DELIVERY_SERVICE_LEVELS") && !source.includes("CUSTOMER_ORDER_DELIVERY_FAR_PREFECTURE_CODES"), "the browser must not retain a heuristic delivery calendar");
 
 [
   ".customer-order-shipping-methods",
@@ -136,13 +118,16 @@ assert(estimateUi.includes('dateInput.disabled = true') && estimateUi.includes('
   "core_return_shipping_method",
   "ブラウザ計算を信用しない",
   "日時指定不可サービス",
-  "最短日より前を指定できず"
+  "最短日より前を指定できず",
+  "発送日から13日後",
+  "get_customer_order_delivery_quote"
 ].forEach((fragment) => assert(contract.includes(fragment), `server handoff contract is missing: ${fragment}`));
 
 if ((source.match(/customer_order_delivery_service:/g) || []).length !== 3 ||
     (source.match(/customer_order_outbound_service:/g) || []).length !== 3 ||
     (source.match(/customer_order_core_return_service:/g) || []).length !== 3 ||
-    (source.match(/customer_order_delivery_not_specifiable:/g) || []).length !== 3) {
+    (source.match(/customer_order_delivery_not_specifiable:/g) || []).length !== 3 ||
+    (source.match(/customer_order_delivery_checking:/g) || []).length !== 3) {
   throw new Error("delivery service guidance must be translated for all supported languages");
 }
 

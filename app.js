@@ -308,15 +308,19 @@ var TRANSLATIONS = {
     customer_order_core_return_service: "コア返却時の運送便",
     customer_order_core_return_service_note: "商品に同梱する返送用送り状に使用する便です。",
     customer_order_delivery_service_loading: "配送サービスを読み込み中...",
-    customer_order_delivery_service_error: "配送サービスを読み込めませんでした。希望日は手入力してください。",
+    customer_order_delivery_service_error: "配送サービスを読み込めませんでした。希望日は設定できません。",
     customer_order_delivery_service_empty: "利用できる配送サービスがありません",
     customer_order_delivery_date: "お届け希望日",
     customer_order_delivery_time: "時間帯",
-    customer_order_delivery_wait: "都道府県と配送サービスを選ぶと、最短のお届け希望日を自動設定します。",
-    customer_order_delivery_auto: "最短 {date}（{service}）を自動設定しました。交通事情などにより遅れる場合があります。",
-    customer_order_delivery_manual: "最短 {date}（{service}）です。希望日は手入力で変更できます。",
+    customer_order_delivery_wait: "郵便番号または住所と配送サービスから、最短のお届け希望日を自動設定します。",
+    customer_order_delivery_checking: "郵便番号と運送会社の配送条件を確認しています...",
+    customer_order_delivery_auto: "最短 {date}（{service}）を自動設定しました。指定できるのは {max} までです。",
+    customer_order_delivery_manual: "指定可能日は {date}～{max}（{service}）です。",
     customer_order_delivery_not_specifiable: "{service}は日時指定できません。到着目安は {start}～{end} です。",
-    customer_order_delivery_unknown: "この配送サービスは到着日数が未設定です。希望日を手入力してください。",
+    customer_order_delivery_unknown: "郵便番号または住所から配送条件を確認できません。希望日は設定できません。",
+    customer_order_delivery_address_conservative: "{city}の最も遅い条件で判定しています。正確な郵便番号を入力すると確定します。",
+    customer_order_delivery_estimated_precision: "佐川の郵便番号網との差により推定値（{precision}）です。",
+    customer_order_delivery_warning_prefix: "注意: ",
     customer_order_history_note: "受付、出荷、コア返却の状況を確認できます。",
     customer_order_add: "この商品を注文",
     customer_order_added: "注文内容を確認",
@@ -2203,15 +2207,19 @@ var TRANSLATIONS = {
     customer_order_core_return_service: "Core Return Shipping Service",
     customer_order_core_return_service_note: "This service is printed on the return label enclosed with the products.",
     customer_order_delivery_service_loading: "Loading delivery services...",
-    customer_order_delivery_service_error: "Delivery services could not be loaded. Enter the requested date manually.",
+    customer_order_delivery_service_error: "Delivery services could not be loaded. A requested date cannot be set.",
     customer_order_delivery_service_empty: "No delivery service is available",
     customer_order_delivery_date: "Requested Delivery Date",
     customer_order_delivery_time: "Time Window",
-    customer_order_delivery_wait: "Select a prefecture and delivery service to set the earliest requested delivery date.",
-    customer_order_delivery_auto: "The earliest date, {date} ({service}), was set automatically. Delivery may be delayed.",
-    customer_order_delivery_manual: "The earliest date is {date} ({service}). You may change it manually.",
+    customer_order_delivery_wait: "Enter a postal code or address and select a delivery service to set the earliest delivery date.",
+    customer_order_delivery_checking: "Checking the postal delivery rules for this carrier...",
+    customer_order_delivery_auto: "The earliest date, {date} ({service}), was set automatically. The latest selectable date is {max}.",
+    customer_order_delivery_manual: "Selectable dates are {date} through {max} ({service}).",
     customer_order_delivery_not_specifiable: "{service} does not accept date or time requests. Estimated arrival is {start} to {end}.",
-    customer_order_delivery_unknown: "Transit time is not configured for this service. Enter the requested date manually.",
+    customer_order_delivery_unknown: "Delivery rules could not be resolved from the postal code or address. A requested date cannot be set.",
+    customer_order_delivery_address_conservative: "Using the most conservative rule for {city}; enter the exact postal code to confirm.",
+    customer_order_delivery_estimated_precision: "This is an estimated Sagawa result ({precision}) because its postal coverage differs.",
+    customer_order_delivery_warning_prefix: "Warning: ",
     customer_order_history_note: "Review acceptance, shipping, and core-return status.",
     customer_order_add: "Order This Product",
     customer_order_added: "Review Order",
@@ -4043,15 +4051,19 @@ var TRANSLATIONS = {
     customer_order_core_return_service: "旧件返还运输方式",
     customer_order_core_return_service_note: "用于随商品附带的返还运单。",
     customer_order_delivery_service_loading: "正在读取配送服务...",
-    customer_order_delivery_service_error: "无法读取配送服务。请手动输入希望送达日期。",
+    customer_order_delivery_service_error: "无法读取配送服务，因此不能设置希望送达日期。",
     customer_order_delivery_service_empty: "没有可用的配送服务",
     customer_order_delivery_date: "希望送达日期",
     customer_order_delivery_time: "时间段",
-    customer_order_delivery_wait: "选择都道府县和配送服务后，将自动设置最早希望送达日期。",
-    customer_order_delivery_auto: "已自动设置最早日期 {date}（{service}）。可能因交通情况延迟。",
-    customer_order_delivery_manual: "最早日期为 {date}（{service}）。可手动更改。",
+    customer_order_delivery_wait: "输入邮政编码或地址并选择配送服务后，将自动设置最早希望送达日期。",
+    customer_order_delivery_checking: "正在确认邮政编码和承运商的配送规则...",
+    customer_order_delivery_auto: "已自动设置最早日期 {date}（{service}）。最晚可选择 {max}。",
+    customer_order_delivery_manual: "可选择日期为 {date} 至 {max}（{service}）。",
     customer_order_delivery_not_specifiable: "{service} 不支持指定日期或时间。预计 {start}～{end} 送达。",
-    customer_order_delivery_unknown: "此配送服务尚未设置运输天数。请手动输入希望日期。",
+    customer_order_delivery_unknown: "无法根据邮政编码或地址确认配送规则，因此不能设置希望日期。",
+    customer_order_delivery_address_conservative: "当前按 {city} 最慢的规则判断；输入准确邮政编码后即可确认。",
+    customer_order_delivery_estimated_precision: "因佐川邮编覆盖范围不同，此结果为估算值（{precision}）。",
+    customer_order_delivery_warning_prefix: "注意：",
     customer_order_history_note: "可确认受理、出货和旧件返还状态。",
     customer_order_add: "订购此商品",
     customer_order_added: "确认订单",
@@ -6109,16 +6121,8 @@ var customerOrderDeliveryServiceKeyValue = "";
 var customerOrderCoreReturnServiceKeyValue = "";
 var customerOrderDeliveryDateManual = false;
 var customerOrderDeliveryServiceCache = {};
-var CUSTOMER_ORDER_DISPATCH_CUTOFF_HOUR = 15;
-var CUSTOMER_ORDER_DELIVERY_FAR_PREFECTURE_CODES = [1, 2, 3, 4, 5, 6, 7, 47];
-var CUSTOMER_ORDER_DELIVERY_SERVICE_LEVELS = {
-  "宅急便": { earliest_days: 1, latest_days: 1, far_extra_days: 1, requested_date: true, requested_time: true },
-  "宅急便コンパクト": { earliest_days: 1, latest_days: 1, far_extra_days: 1, requested_date: true, requested_time: true },
-  "宅急便タイムサービス": { earliest_days: 1, latest_days: 1, far_extra_days: 0, requested_date: true, requested_time: true },
-  "ネコポス": { earliest_days: 1, latest_days: 2, far_extra_days: 1, requested_date: false, requested_time: false },
-  "クロネコゆうパケット": { earliest_days: 3, latest_days: 7, far_extra_days: 0, requested_date: false, requested_time: false },
-  "クロネコゆうメール": { earliest_days: 3, latest_days: 7, far_extra_days: 0, requested_date: false, requested_time: false }
-};
+var customerOrderDeliveryQuoteSeq = 0;
+var customerOrderDeliveryQuote = null;
 var CUSTOMER_ORDER_CORE_RETURN_ADDITIONAL_SERVICES = [
   { carrier_name: "佐川急便", service_name: "飛脚宅配便", display_order: 900 }
 ];
@@ -7822,7 +7826,7 @@ async function restoreAppStateAfterRefresh() {
         if (restoreDeliveryDate) restoreDeliveryDate.value = state.customerOrderDeliveryDate || "";
         if (restoreDeliveryTime) restoreDeliveryTime.value = state.customerOrderDeliveryTime || "";
         if (restoreOrderNote) restoreOrderNote.value = state.customerOrderNote || "";
-        updateCustomerOrderDeliveryEstimate({ forceDate: false });
+        await updateCustomerOrderDeliveryEstimate({ forceDate: false });
       }
     } else if (state.screen === "customer-catalog") {
       if (!isCustomerViewer() && state.customerPortalCustomerId) {
@@ -8569,6 +8573,8 @@ async function doLogout() {
   customerOrderCoreReturnServiceKeyValue = "";
   customerOrderDeliveryDateManual = false;
   customerOrderDeliveryServiceCache = {};
+  customerOrderDeliveryQuoteSeq += 1;
+  customerOrderDeliveryQuote = null;
   salesOrderRows = [];
   salesOrderDashboardRows = [];
   salesOrderDashboardSeq += 1;
@@ -9829,55 +9835,6 @@ function customerOrderDeliveryServiceFromKey(value) {
   }
 }
 
-function customerOrderDeliveryServiceLevel(serviceName) {
-  return CUSTOMER_ORDER_DELIVERY_SERVICE_LEVELS[String(serviceName || "").trim()] || null;
-}
-
-function customerOrderAddCalendarDays(value, days) {
-  var date = value instanceof Date ? value : new Date(value);
-  var result = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  result.setDate(result.getDate() + Number(days || 0));
-  return result;
-}
-
-function customerOrderDeliveryDateValue(value) {
-  var date = value instanceof Date ? value : new Date(value);
-  if (isNaN(date.getTime())) return "";
-  return [
-    String(date.getFullYear()).padStart(4, "0"),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0")
-  ].join("-");
-}
-
-function customerOrderNextDispatchDate(now) {
-  now = now instanceof Date ? now : (now ? new Date(now) : new Date());
-  var dispatch = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  if (dispatch.getDay() === 0 || dispatch.getDay() === 6 || now.getHours() >= CUSTOMER_ORDER_DISPATCH_CUTOFF_HOUR) {
-    dispatch.setDate(dispatch.getDate() + 1);
-  }
-  while (dispatch.getDay() === 0 || dispatch.getDay() === 6) dispatch.setDate(dispatch.getDate() + 1);
-  return dispatch;
-}
-
-function customerOrderDeliveryEstimate(serviceName, prefectureCode, now) {
-  var level = customerOrderDeliveryServiceLevel(serviceName);
-  var code = parseInt(prefectureCode, 10);
-  if (!level || isNaN(code) || code < 1 || code > 47) return null;
-  var dispatch = customerOrderNextDispatchDate(now);
-  var farExtra = CUSTOMER_ORDER_DELIVERY_FAR_PREFECTURE_CODES.indexOf(code) >= 0 ? Number(level.far_extra_days || 0) : 0;
-  var earliest = customerOrderAddCalendarDays(dispatch, Number(level.earliest_days || 0) + farExtra);
-  var latest = customerOrderAddCalendarDays(dispatch, Number(level.latest_days || level.earliest_days || 0) + farExtra);
-  return {
-    dispatch_date: customerOrderDeliveryDateValue(dispatch),
-    earliest_date: customerOrderDeliveryDateValue(earliest),
-    latest_date: customerOrderDeliveryDateValue(latest),
-    max_requested_date: level.requested_date ? customerOrderDeliveryDateValue(customerOrderAddCalendarDays(earliest, 6)) : "",
-    requested_date: level.requested_date === true,
-    requested_time: level.requested_time === true
-  };
-}
-
 function customerOrderDeliveryDateLabel(value) {
   if (!value) return "-";
   var date = new Date(String(value) + "T00:00:00");
@@ -10001,27 +9958,47 @@ function updateCustomerOrderCoreReturnServiceVisibility() {
   select.disabled = !requiresCore || !select.value;
 }
 
-function updateCustomerOrderDeliveryEstimate(options) {
+function customerOrderDeliveryAddressText() {
+  var prefecture = document.getElementById("customer-order-prefecture");
+  var address = document.getElementById("customer-order-address1");
+  var prefectureName = prefecture && prefecture.selectedIndex >= 0
+    ? String((prefecture.options[prefecture.selectedIndex] || {}).textContent || "").trim()
+    : "";
+  if (!prefecture || !prefecture.value) prefectureName = "";
+  return prefectureName + String(address && address.value || "").trim();
+}
+
+function applyCustomerOrderDeliveryQuote(options) {
   options = options || {};
   var dateInput = document.getElementById("customer-order-delivery-date");
   var timeInput = document.getElementById("customer-order-delivery-time");
-  var prefecture = document.getElementById("customer-order-prefecture");
   var method = customerOrderShippingMethodPayload();
   if (!dateInput || !timeInput) return;
-  dateInput.disabled = false;
-  timeInput.disabled = false;
   dateInput.removeAttribute("min");
   dateInput.removeAttribute("max");
-  if (!method || !prefecture || !prefecture.value) {
-    customerOrderDeliverySetMessage(t("customer_order_delivery_wait"), "pending");
-    return;
-  }
-  var estimate = customerOrderDeliveryEstimate(method.service_name, prefecture.value, options.now);
-  if (!estimate) {
+  var quote = customerOrderDeliveryQuote;
+  if (!method || !quote || quote.available !== true) {
+    dateInput.value = "";
+    timeInput.value = "";
+    dateInput.disabled = true;
+    timeInput.disabled = true;
+    Array.prototype.forEach.call(timeInput.options || [], function(option) {
+      option.disabled = false;
+      option.hidden = false;
+    });
     customerOrderDeliverySetMessage(t("customer_order_delivery_unknown"), "warning");
     return;
   }
-  if (!estimate.requested_date) {
+
+  var allowedTimeCodes = Array.isArray(quote.allowed_time_codes) ? quote.allowed_time_codes.map(String) : [];
+  Array.prototype.forEach.call(timeInput.options || [], function(option) {
+    var allowed = !option.value || allowedTimeCodes.indexOf(String(option.value)) >= 0;
+    option.disabled = !allowed;
+    option.hidden = !allowed;
+  });
+  if (timeInput.value && allowedTimeCodes.indexOf(String(timeInput.value)) < 0) timeInput.value = "";
+
+  if (quote.requested_date_supported !== true) {
     dateInput.value = "";
     timeInput.value = "";
     dateInput.disabled = true;
@@ -10029,23 +10006,82 @@ function updateCustomerOrderDeliveryEstimate(options) {
     customerOrderDeliveryDateManual = false;
     customerOrderDeliverySetMessage(tf("customer_order_delivery_not_specifiable", {
       service: method.service_name,
-      start: customerOrderDeliveryDateLabel(estimate.earliest_date),
-      end: customerOrderDeliveryDateLabel(estimate.latest_date)
+      start: customerOrderDeliveryDateLabel(quote.earliest_delivery_date),
+      end: customerOrderDeliveryDateLabel(quote.earliest_delivery_date)
     }), "restricted");
     return;
   }
-  dateInput.min = estimate.earliest_date;
-  dateInput.max = estimate.max_requested_date;
-  timeInput.disabled = !estimate.requested_time;
-  var valueOutsideRange = dateInput.value && (dateInput.value < estimate.earliest_date || dateInput.value > estimate.max_requested_date);
+
+  dateInput.disabled = false;
+  dateInput.min = quote.earliest_delivery_date;
+  dateInput.max = quote.max_requested_delivery_date;
+  timeInput.disabled = allowedTimeCodes.length === 0;
+  var valueOutsideRange = dateInput.value && (
+    dateInput.value < quote.earliest_delivery_date || dateInput.value > quote.max_requested_delivery_date
+  );
   if (options.forceDate || !dateInput.value || !customerOrderDeliveryDateManual || valueOutsideRange) {
-    dateInput.value = estimate.earliest_date;
+    dateInput.value = quote.automatic_requested_delivery_date || quote.earliest_delivery_date;
     customerOrderDeliveryDateManual = false;
   }
-  customerOrderDeliverySetMessage(tf(customerOrderDeliveryDateManual ? "customer_order_delivery_manual" : "customer_order_delivery_auto", {
-    date: customerOrderDeliveryDateLabel(estimate.earliest_date),
+  var message = tf(customerOrderDeliveryDateManual ? "customer_order_delivery_manual" : "customer_order_delivery_auto", {
+    date: customerOrderDeliveryDateLabel(quote.earliest_delivery_date),
+    max: customerOrderDeliveryDateLabel(quote.max_requested_delivery_date),
     service: method.service_name
-  }), "ready");
+  });
+  if (quote.resolution === "address_city_conservative") {
+    message += " " + tf("customer_order_delivery_address_conservative", { city: quote.city_name || "" });
+  }
+  if (quote.precision && quote.precision !== "exact") {
+    message += " " + tf("customer_order_delivery_estimated_precision", { precision: quote.precision });
+  }
+  if (quote.warning) message += " " + t("customer_order_delivery_warning_prefix") + String(quote.warning);
+  customerOrderDeliverySetMessage(message, quote.warning ? "warning" : "ready");
+}
+
+async function updateCustomerOrderDeliveryEstimate(options) {
+  options = options || {};
+  var dateInput = document.getElementById("customer-order-delivery-date");
+  var timeInput = document.getElementById("customer-order-delivery-time");
+  var postalInput = document.getElementById("customer-order-postal-code");
+  var method = customerOrderShippingMethodPayload();
+  if (!dateInput || !timeInput) return;
+
+  var postalCode = normalizeCustomerOrderPostalCode(postalInput ? postalInput.value : "");
+  var addressText = customerOrderDeliveryAddressText();
+  if (!method || (postalCode.length !== 7 && !addressText)) {
+    customerOrderDeliveryQuoteSeq += 1;
+    customerOrderDeliveryQuote = null;
+    dateInput.value = "";
+    timeInput.value = "";
+    dateInput.disabled = true;
+    timeInput.disabled = true;
+    customerOrderDeliverySetMessage(t("customer_order_delivery_wait"), "pending");
+    return;
+  }
+
+  var requestSeq = ++customerOrderDeliveryQuoteSeq;
+  dateInput.disabled = true;
+  timeInput.disabled = true;
+  customerOrderDeliverySetMessage(t("customer_order_delivery_checking"), "pending");
+  try {
+    var result = await sb.rpc("get_customer_order_delivery_quote", {
+      target_postal_code: postalCode.length === 7 ? postalCode : null,
+      target_address: addressText || null,
+      target_carrier_name: method.carrier_name,
+      target_service_name: method.service_name,
+      target_shipping_date: null
+    });
+    if (requestSeq !== customerOrderDeliveryQuoteSeq) return;
+    if (result.error) throw result.error;
+    var quote = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
+    customerOrderDeliveryQuote = quote && typeof quote === "object" ? quote : null;
+    applyCustomerOrderDeliveryQuote(options);
+  } catch (error) {
+    if (requestSeq !== customerOrderDeliveryQuoteSeq) return;
+    console.warn("customer order delivery quote failed", error);
+    customerOrderDeliveryQuote = null;
+    applyCustomerOrderDeliveryQuote(options);
+  }
 }
 
 function customerOrderDeliveryServiceSortValue(row) {
@@ -10127,7 +10163,7 @@ async function loadCustomerOrderDeliveryServices(options) {
       coreReturnSelect.innerHTML = select.innerHTML;
       select.disabled = true;
       coreReturnSelect.disabled = true;
-      updateCustomerOrderDeliveryEstimate(options);
+      await updateCustomerOrderDeliveryEstimate(options);
       updateCustomerOrderCoreReturnServiceVisibility();
       return;
     }
@@ -10151,7 +10187,7 @@ async function loadCustomerOrderDeliveryServices(options) {
     }
     coreReturnSelect.value = preferredCoreReturnKey;
     customerOrderCoreReturnServiceKeyValue = coreReturnSelect.value;
-    updateCustomerOrderDeliveryEstimate(options);
+    await updateCustomerOrderDeliveryEstimate(options);
     updateCustomerOrderCoreReturnServiceVisibility();
   } catch (error) {
     if (requestSeq !== customerOrderDeliveryServiceLoadSeq) return;
@@ -10162,6 +10198,9 @@ async function loadCustomerOrderDeliveryServices(options) {
     coreReturnSelect.innerHTML = select.innerHTML;
     select.disabled = true;
     coreReturnSelect.disabled = true;
+    customerOrderDeliveryQuoteSeq += 1;
+    customerOrderDeliveryQuote = null;
+    applyCustomerOrderDeliveryQuote({ forceDate: true });
     customerOrderDeliverySetMessage(t("customer_order_delivery_service_error"), "error");
     updateCustomerOrderCoreReturnServiceVisibility();
   }
@@ -49058,8 +49097,17 @@ document.getElementById("customer-order-core-return-service").addEventListener("
 document.getElementById("customer-order-delivery-date").addEventListener("input", function() {
   customerOrderDeliveryDateManual = !!this.value;
   customerOrderPreview = null;
-  updateCustomerOrderDeliveryEstimate({ forceDate: false });
+  applyCustomerOrderDeliveryQuote({ forceDate: false });
   renderCustomerOrderCart();
+});
+[
+  "customer-order-postal-code", "customer-order-address1"
+].forEach(function(id) {
+  document.getElementById(id).addEventListener("change", function() {
+    customerOrderDeliveryDateManual = false;
+    customerOrderDeliveryQuote = null;
+    updateCustomerOrderDeliveryEstimate({ forceDate: true });
+  });
 });
 document.getElementById("customer-order-delivery-time").addEventListener("change", function() {
   customerOrderPreview = null;
