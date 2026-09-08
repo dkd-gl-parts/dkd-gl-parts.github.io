@@ -102,6 +102,8 @@ assert(estimateUi.includes('quote.allowed_time_codes') && estimateUi.includes('o
 assert(estimateUi.includes('dateInput.disabled = true') && estimateUi.includes('timeInput.disabled = true'), "unresolved and non-requestable routes must disable both controls");
 assert(estimateUi.includes('sb.rpc("get_customer_order_delivery_quote"') && estimateUi.includes('target_shipping_date: null'), "delivery constraints must come from the server RPC");
 assert(estimateUi.includes('target_postal_code:') && estimateUi.includes('target_address:'), "delivery lookup must support postal code and address resolution");
+assert(estimateUi.includes('ship: customerOrderDeliveryDateLabel(quote.shipping_date)'), "the server-calculated shipping date must be shown in delivery guidance");
+assert(source.includes('customer_order_delivery_auto: "発送予定日は {ship} です。'), "Japanese guidance must identify the effective shipping date");
 assert(!source.includes("CUSTOMER_ORDER_DELIVERY_SERVICE_LEVELS") && !source.includes("CUSTOMER_ORDER_DELIVERY_FAR_PREFECTURE_CODES"), "the browser must not retain a heuristic delivery calendar");
 
 [
@@ -120,6 +122,8 @@ assert(!source.includes("CUSTOMER_ORDER_DELIVERY_SERVICE_LEVELS") && !source.inc
   "日時指定不可サービス",
   "最短日より前を指定できず",
   "発送日から13日後",
+  "日本時間17:00以降",
+  "16:59:59までは当日発送",
   "get_customer_order_delivery_quote"
 ].forEach((fragment) => assert(contract.includes(fragment), `server handoff contract is missing: ${fragment}`));
 

@@ -314,8 +314,8 @@ var TRANSLATIONS = {
     customer_order_delivery_time: "時間帯",
     customer_order_delivery_wait: "郵便番号または住所と配送サービスから、最短のお届け希望日を自動設定します。",
     customer_order_delivery_checking: "郵便番号と運送会社の配送条件を確認しています...",
-    customer_order_delivery_auto: "最短 {date}（{service}）を自動設定しました。指定できるのは {max} までです。",
-    customer_order_delivery_manual: "指定可能日は {date}～{max}（{service}）です。",
+    customer_order_delivery_auto: "発送予定日は {ship} です。最短 {date}（{service}）を自動設定しました。指定できるのは {max} までです。",
+    customer_order_delivery_manual: "発送予定日は {ship} です。指定可能日は {date}～{max}（{service}）です。",
     customer_order_delivery_not_specifiable: "{service}は日時指定できません。到着目安は {start}～{end} です。",
     customer_order_delivery_unknown: "郵便番号または住所から配送条件を確認できません。希望日は設定できません。",
     customer_order_delivery_address_conservative: "{city}の最も遅い条件で判定しています。正確な郵便番号を入力すると確定します。",
@@ -2213,8 +2213,8 @@ var TRANSLATIONS = {
     customer_order_delivery_time: "Time Window",
     customer_order_delivery_wait: "Enter a postal code or address and select a delivery service to set the earliest delivery date.",
     customer_order_delivery_checking: "Checking the postal delivery rules for this carrier...",
-    customer_order_delivery_auto: "The earliest date, {date} ({service}), was set automatically. The latest selectable date is {max}.",
-    customer_order_delivery_manual: "Selectable dates are {date} through {max} ({service}).",
+    customer_order_delivery_auto: "The scheduled shipping date is {ship}. The earliest date, {date} ({service}), was set automatically. The latest selectable date is {max}.",
+    customer_order_delivery_manual: "The scheduled shipping date is {ship}. Selectable dates are {date} through {max} ({service}).",
     customer_order_delivery_not_specifiable: "{service} does not accept date or time requests. Estimated arrival is {start} to {end}.",
     customer_order_delivery_unknown: "Delivery rules could not be resolved from the postal code or address. A requested date cannot be set.",
     customer_order_delivery_address_conservative: "Using the most conservative rule for {city}; enter the exact postal code to confirm.",
@@ -4057,8 +4057,8 @@ var TRANSLATIONS = {
     customer_order_delivery_time: "时间段",
     customer_order_delivery_wait: "输入邮政编码或地址并选择配送服务后，将自动设置最早希望送达日期。",
     customer_order_delivery_checking: "正在确认邮政编码和承运商的配送规则...",
-    customer_order_delivery_auto: "已自动设置最早日期 {date}（{service}）。最晚可选择 {max}。",
-    customer_order_delivery_manual: "可选择日期为 {date} 至 {max}（{service}）。",
+    customer_order_delivery_auto: "预计发货日期为 {ship}。已自动设置最早日期 {date}（{service}）。最晚可选择 {max}。",
+    customer_order_delivery_manual: "预计发货日期为 {ship}。可选择日期为 {date} 至 {max}（{service}）。",
     customer_order_delivery_not_specifiable: "{service} 不支持指定日期或时间。预计 {start}～{end} 送达。",
     customer_order_delivery_unknown: "无法根据邮政编码或地址确认配送规则，因此不能设置希望日期。",
     customer_order_delivery_address_conservative: "当前按 {city} 最慢的规则判断；输入准确邮政编码后即可确认。",
@@ -5821,7 +5821,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.911";
+var APP_VERSION       = "v1.1.912";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -10027,6 +10027,7 @@ function applyCustomerOrderDeliveryQuote(options) {
     customerOrderDeliveryDateManual = false;
   }
   var message = tf(customerOrderDeliveryDateManual ? "customer_order_delivery_manual" : "customer_order_delivery_auto", {
+    ship: customerOrderDeliveryDateLabel(quote.shipping_date),
     date: customerOrderDeliveryDateLabel(quote.earliest_delivery_date),
     max: customerOrderDeliveryDateLabel(quote.max_requested_delivery_date),
     service: method.service_name
