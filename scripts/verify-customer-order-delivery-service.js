@@ -111,12 +111,29 @@ assert(estimateUi.includes('ship: customerOrderDeliveryDateLabel(quote.shipping_
 assert(source.includes('customer_order_delivery_auto: "発送予定日は {ship} です。'), "Japanese guidance must identify the effective shipping date");
 assert(!source.includes("CUSTOMER_ORDER_DELIVERY_SERVICE_LEVELS") && !source.includes("CUSTOMER_ORDER_DELIVERY_FAR_PREFECTURE_CODES"), "the browser must not retain a heuristic delivery calendar");
 
+const salesOrderScheduleUi = sourceBetween("function salesOrderTokyoTodayValue", "function renderSalesOrderDetail");
+assert(salesOrderScheduleUi.includes('timeZone: "Asia/Tokyo"'), "sales-order shipping-date minimum must use the Japan calendar date");
+assert(salesOrderScheduleUi.includes("order.scheduled_shipping_date"), "sales-order shipping date must come from the persisted order schedule");
+assert(salesOrderScheduleUi.includes("id='sales-order-scheduled-shipping-date'"), "sales-order detail must provide a dedicated shipping-date control");
+assert(salesOrderScheduleUi.includes("min='\" + esc(salesOrderTokyoTodayValue())"), "sales-order shipping-date control must prevent past dates");
+assert(salesOrderScheduleUi.includes("salesOrderCanRevise(order)"), "only revisable orders may enable the shipping-date control");
+assert(salesOrderScheduleUi.includes('typeof salesOrderCanRevise !== "function" || !salesOrderCanRevise(order)'), "the shipping-date save action must repeat the revisable-order gate");
+assert(salesOrderScheduleUi.includes('sb.rpc("update_sales_order_scheduled_shipping_date"'), "shipping-date changes must use the guarded server RPC");
+assert(salesOrderScheduleUi.includes("target_scheduled_shipping_date: shippingDate") && salesOrderScheduleUi.includes("target_expected_version: order.version"), "shipping-date updates must send the date and optimistic-lock version");
+assert(salesOrderScheduleUi.includes("shippingDate < today"), "the frontend must reject past shipping dates before calling the server");
+assert(salesOrderScheduleUi.includes('t("sales_order_shipping_date_updated")'), "shipping-date changes must show the translated reissue warning");
+assert(source.includes('sales_order_shipping_date_updated: "発送予定日を変更しました。B2 CSVと帳票は変更後の日付で再発行してください。"'), "Japanese shipping-date confirmation must require outbound artifact reissue");
+assert(source.includes("salesOrderShippingScheduleHtml(order)"), "sales-order detail must render the shipping-date editor above delivery details");
+assert(source.includes('shippingDateButton.addEventListener("click", saveSalesOrderScheduledShippingDate)'), "sales-order shipping-date save action must be wired");
+
 [
   ".customer-order-shipping-methods",
   ".customer-order-shipping-method.core-return",
   ".customer-order-shipping-date-field",
   ".customer-order-delivery-estimate.ready",
-  ".customer-order-delivery-estimate.restricted"
+  ".customer-order-delivery-estimate.restricted",
+  ".sales-order-shipping-schedule",
+  ".sales-order-shipping-schedule input"
 ].forEach((fragment) => assert(css.includes(fragment), `order delivery style is missing: ${fragment}`));
 
 [
@@ -128,8 +145,12 @@ assert(!source.includes("CUSTOMER_ORDER_DELIVERY_SERVICE_LEVELS") && !source.inc
   "日時指定不可サービス",
   "最短日より前を指定できず",
   "発送日から13日後",
-  "日本時間17:00以降",
-  "16:59:59までは当日発送",
+  "17:00:00以降",
+  "16:59:59までは受注日の暦日",
+  "scheduled_shipping_date",
+  "update_sales_order_scheduled_shipping_date",
+  "当日または未来日",
+  "B2 CSV",
   "get_customer_order_delivery_quote"
 ].forEach((fragment) => assert(contract.includes(fragment), `server handoff contract is missing: ${fragment}`));
 
