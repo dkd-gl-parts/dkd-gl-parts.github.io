@@ -5809,7 +5809,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.910";
+var APP_VERSION       = "v1.1.911";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -7094,13 +7094,16 @@ function canPreviewCustomerOrdering() {
     context.customer.is_active !== false
   );
 }
-function canRegisterInternalCustomerOrder() {
-  if (!canPreviewCustomerOrdering() || !customerOrderFeatureEnabled("internal_management") || isExternalViewer()) return false;
+function canStartInternalCustomerOrderEntry() {
+  if (!canPreviewCustomerPortal() || !customerOrderFeatureEnabled("internal_management") || isExternalViewer()) return false;
   return userPermissionAllowed(
     userProfile,
     "sales_order.manage",
     hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor", "sales_editor"])
   );
+}
+function canRegisterInternalCustomerOrder() {
+  return canStartInternalCustomerOrderEntry() && canPreviewCustomerOrdering();
 }
 function canOpenCustomerOrdering() {
   return canUseCustomerOrdering() || canPreviewCustomerOrdering();
@@ -11985,7 +11988,7 @@ async function enterSalesOrderMgmt() {
   salesAccountingProductOnboardingSaving = false;
   showScreen("sales-order-mgmt");
   var newOrderButton = document.getElementById("sales-order-new-internal-order");
-  if (newOrderButton) newOrderButton.hidden = !canRegisterInternalCustomerOrder();
+  if (newOrderButton) newOrderButton.hidden = !canStartInternalCustomerOrderEntry();
   updateAllHeaders();
   renderSalesOrderB2Preflight(null);
   renderSalesOrderDashboard();
@@ -11994,7 +11997,7 @@ async function enterSalesOrderMgmt() {
 }
 
 async function enterInternalCustomerOrderEntry() {
-  if (!canRegisterInternalCustomerOrder()) {
+  if (!canStartInternalCustomerOrderEntry()) {
     showPermissionDenied("open_internal_customer_order_entry", "customer_orders");
     return;
   }

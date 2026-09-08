@@ -115,14 +115,16 @@ const internalOrderAccess = sourceBetween("function canManageSalesOrders", "func
 if (!internalOrderAccess.includes('customerOrderFeatureEnabled("internal_management")') || !internalOrderAccess.includes('"sales_order.manage"')) {
   throw new Error("internal order management must require backend readiness and a dedicated permission");
 }
-const internalRegistrationAccess = sourceBetween("function canRegisterInternalCustomerOrder", "function canOpenCustomerOrdering");
-if (!internalRegistrationAccess.includes("canPreviewCustomerOrdering()") ||
+const internalRegistrationAccess = sourceBetween("function canStartInternalCustomerOrderEntry", "function canOpenCustomerOrdering");
+if (!internalRegistrationAccess.includes("canPreviewCustomerPortal()") ||
     !internalRegistrationAccess.includes('customerOrderFeatureEnabled("internal_management")') ||
-    !internalRegistrationAccess.includes('"sales_order.manage"')) {
-  throw new Error("internal customer-order registration must require preview context, backend readiness, and sales-order permission");
+    !internalRegistrationAccess.includes('"sales_order.manage"') ||
+    !internalRegistrationAccess.includes("canStartInternalCustomerOrderEntry() && canPreviewCustomerOrdering()")) {
+  throw new Error("internal order entry must allow authorized staff to start before selecting a customer and require an active customer for registration");
 }
 function evaluateInternalRegistrationAccess(options) {
-  return vm.runInNewContext(`${internalRegistrationAccess}\ncanRegisterInternalCustomerOrder();`, {
+  return vm.runInNewContext(`${internalRegistrationAccess}\n({ start: canStartInternalCustomerOrderEntry(), register: canRegisterInternalCustomerOrder() });`, {
+    canPreviewCustomerPortal: () => options.internalPreviewRole,
     canPreviewCustomerOrdering: () => options.preview,
     customerOrderFeatureEnabled: () => options.featureEnabled,
     isExternalViewer: () => options.externalViewer,
@@ -131,11 +133,16 @@ function evaluateInternalRegistrationAccess(options) {
     userProfile: {}
   });
 }
-if (!evaluateInternalRegistrationAccess({ preview: true, featureEnabled: true, externalViewer: false, permission: true }) ||
-    evaluateInternalRegistrationAccess({ preview: false, featureEnabled: true, externalViewer: false, permission: true }) ||
-    evaluateInternalRegistrationAccess({ preview: true, featureEnabled: false, externalViewer: false, permission: true }) ||
-    evaluateInternalRegistrationAccess({ preview: true, featureEnabled: true, externalViewer: true, permission: true }) ||
-    evaluateInternalRegistrationAccess({ preview: true, featureEnabled: true, externalViewer: false, permission: false })) {
+const internalStartBeforeCustomer = evaluateInternalRegistrationAccess({ internalPreviewRole: true, preview: false, featureEnabled: true, externalViewer: false, permission: true });
+const internalReadyToRegister = evaluateInternalRegistrationAccess({ internalPreviewRole: true, preview: true, featureEnabled: true, externalViewer: false, permission: true });
+const internalFeatureDisabled = evaluateInternalRegistrationAccess({ internalPreviewRole: true, preview: true, featureEnabled: false, externalViewer: false, permission: true });
+const externalInternalEntry = evaluateInternalRegistrationAccess({ internalPreviewRole: false, preview: true, featureEnabled: true, externalViewer: true, permission: true });
+const deniedInternalEntry = evaluateInternalRegistrationAccess({ internalPreviewRole: true, preview: true, featureEnabled: true, externalViewer: false, permission: false });
+if (!internalStartBeforeCustomer.start || internalStartBeforeCustomer.register ||
+    !internalReadyToRegister.start || !internalReadyToRegister.register ||
+    internalFeatureDisabled.start || internalFeatureDisabled.register ||
+    externalInternalEntry.start || externalInternalEntry.register ||
+    deniedInternalEntry.start || deniedInternalEntry.register) {
   throw new Error("internal customer-order registration access must fail closed");
 }
 
@@ -285,10 +292,14 @@ if (!orderCartRenderer.includes("canRegisterInternalCustomerOrder() && item.core
   throw new Error("internal order entry must clearly show the core handling choice, missing setup, and charged amount");
 }
 const directInternalEntry = sourceBetween("async function enterInternalCustomerOrderEntry", "function salesAccountingExportLocalDate");
-if (!directInternalEntry.includes("canRegisterInternalCustomerOrder()") ||
+if (!directInternalEntry.includes("canStartInternalCustomerOrderEntry()") ||
     !directInternalEntry.includes("await enterCustomerPortal()") ||
     !directInternalEntry.includes('document.getElementById("customer-portal-customer-select")')) {
   throw new Error("FAX/email order entry must remain permission-gated and reuse the customer order flow");
+}
+const salesOrderEntry = sourceBetween("async function enterSalesOrderMgmt", "async function enterInternalCustomerOrderEntry");
+if (!salesOrderEntry.includes("newOrderButton.hidden = !canStartInternalCustomerOrderEntry()")) {
+  throw new Error("FAX/email order entry must be visible to authorized staff before a customer is selected");
 }
 const orderPreviewRequest = sourceBetween("async function previewCustomerOrder", "function customerOrderIdempotencyKey");
 const orderSubmitRequest = sourceBetween("async function submitCustomerOrder", "function renderCustomerOrderHistory");
