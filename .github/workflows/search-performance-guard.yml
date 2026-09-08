@@ -221,6 +221,8 @@ jobs:
         run: node scripts/verify-sales-order-dashboard.js
       - name: Verify sales order detail usability
         run: node scripts/verify-sales-order-detail-usability.js
+      - name: Verify readable sales order layout
+        run: node scripts/verify-sales-order-readable-layout.js
       - name: Verify sales management permissions
         run: node scripts/verify-sales-management-permissions.js
       - name: Verify sales order operations redesign
