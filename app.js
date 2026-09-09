@@ -667,6 +667,16 @@ var TRANSLATIONS = {
     finished_label_mobile_queue_retry: "印刷を再試行",
     finished_label_mobile_print_queue_saved: "TD-4420TNへの印刷指示が完了しました。",
     finished_label_reprint_queue_saved: "再発行を印刷端末へ送信しました。",
+    finished_label_reprint_sending: "送信中",
+    finished_label_reprint_waiting: "印刷待機中",
+    finished_label_reprint_printing: "印刷中",
+    finished_label_reprint_sent: "再印刷完了",
+    finished_label_reprint_error: "再印刷エラー",
+    finished_label_reprint_waiting_desc: "印刷端末の処理を待っています。",
+    finished_label_reprint_station_stopped_desc: "印刷端末が停止中です。印刷端末画面を起動すると自動で印刷します。",
+    finished_label_reprint_printing_desc: "印刷端末で再印刷しています。",
+    finished_label_reprint_sent_desc: "再印刷が完了しました。",
+    finished_label_reprint_open_station: "印刷端末画面へ",
     finished_label_mobile_print_queue_failed: "印刷履歴は登録しましたが、印刷待ちの送信に失敗しました。もう一度送信してください。",
     finished_label_mobile_queued_button: "印刷処理中",
     finished_label_mobile_printed_button: "印刷指示完了",
@@ -2616,6 +2626,16 @@ var TRANSLATIONS = {
     finished_label_mobile_queue_retry: "Retry Print",
     finished_label_mobile_print_queue_saved: "The TD-4420TN print command completed.",
     finished_label_reprint_queue_saved: "The reprint was sent to the print station.",
+    finished_label_reprint_sending: "Sending",
+    finished_label_reprint_waiting: "Waiting to Print",
+    finished_label_reprint_printing: "Printing",
+    finished_label_reprint_sent: "Reprint Complete",
+    finished_label_reprint_error: "Reprint Error",
+    finished_label_reprint_waiting_desc: "Waiting for the print station to process this job.",
+    finished_label_reprint_station_stopped_desc: "The print station is stopped. The label will print automatically after the station is started.",
+    finished_label_reprint_printing_desc: "The print station is reprinting the label.",
+    finished_label_reprint_sent_desc: "The label reprint is complete.",
+    finished_label_reprint_open_station: "Open Print Station",
     finished_label_mobile_print_queue_failed: "The print history was recorded, but the job could not be queued. Send it again.",
     finished_label_mobile_queued_button: "Printing",
     finished_label_mobile_printed_button: "Print Sent",
@@ -4574,6 +4594,16 @@ var TRANSLATIONS = {
     finished_label_mobile_queue_retry: "重新打印",
     finished_label_mobile_print_queue_saved: "已完成向TD-4420TN发送打印指令。",
     finished_label_reprint_queue_saved: "重新打印任务已发送到打印终端。",
+    finished_label_reprint_sending: "发送中",
+    finished_label_reprint_waiting: "等待打印",
+    finished_label_reprint_printing: "打印中",
+    finished_label_reprint_sent: "重新打印完成",
+    finished_label_reprint_error: "重新打印错误",
+    finished_label_reprint_waiting_desc: "正在等待打印终端处理。",
+    finished_label_reprint_station_stopped_desc: "打印终端已停止。启动打印终端画面后将自动打印。",
+    finished_label_reprint_printing_desc: "打印终端正在重新打印。",
+    finished_label_reprint_sent_desc: "重新打印已完成。",
+    finished_label_reprint_open_station: "打开打印终端",
     finished_label_mobile_print_queue_failed: "打印历史已登记，但发送到打印队列失败。请重新发送。",
     finished_label_mobile_queued_button: "打印处理中",
     finished_label_mobile_printed_button: "打印指令完成",
@@ -5974,7 +6004,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.939";
+var APP_VERSION       = "v1.1.940";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -6118,6 +6148,7 @@ var finishedLabelSelectedProduct = null;
 var finishedLabelSelectedInstruction = null;
 var finishedLabelVariants = [];
 var finishedLabelHistoryRows = [];
+var finishedLabelHistoryPrintJobs = {};
 var finishedLabelLastIssuedRecord = null;
 var finishedLabelSelectedHistoryId = null;
 var finishedLabelPrintMode = "";
@@ -27778,6 +27809,7 @@ async function enqueueFinishedLabelPrintJob(record, labelTarget, eventType, reas
   });
   if (result.error) throw result.error;
   finishedLabelLastQueuedJob = result.data || null;
+  if (rememberFinishedLabelHistoryPrintJob(finishedLabelLastQueuedJob)) renderFinishedLabelHistory();
   renderFinishedLabelMobilePrintRule();
   return result.data || {};
 }
@@ -27823,6 +27855,7 @@ async function waitForFinishedLabelPrintJob(job) {
       continue;
     }
     finishedLabelLastQueuedJob = Object.assign({}, finishedLabelLastQueuedJob || job, current, { status: current.status || "queued" });
+    if (rememberFinishedLabelHistoryPrintJob(finishedLabelLastQueuedJob)) renderFinishedLabelHistory();
     renderFinishedLabelMobilePrintRule();
     var status = String(current.status || "queued");
     if (status === "sent") {
@@ -27842,6 +27875,7 @@ async function waitForFinishedLabelPrintJob(job) {
     await finishedLabelPrintDelay(FINISHED_LABEL_MOBILE_PRINT_POLL_MS);
   }
   finishedLabelLastQueuedJob = Object.assign({}, finishedLabelLastQueuedJob || job, { status: "timeout" });
+  if (rememberFinishedLabelHistoryPrintJob(finishedLabelLastQueuedJob)) renderFinishedLabelHistory();
   renderFinishedLabelMobilePrintRule();
   setFinishedLabelMobilePrintStatus("error", t("finished_label_mobile_timeout"));
   throw finishedLabelPrintStatusError(
@@ -28207,6 +28241,7 @@ function renderFinishedLabelEmpty() {
   finishedLabelSelectedInstruction = null;
   finishedLabelVariants = [];
   finishedLabelHistoryRows = [];
+  finishedLabelHistoryPrintJobs = {};
   finishedLabelLastIssuedRecord = null;
   finishedLabelSelectedHistoryId = null;
   finishedLabelComponentCandidates = [];
@@ -29348,6 +29383,88 @@ function selectFinishedBoxLabelHistory(row, options) {
   if (!options.skipHistoryRender) renderFinishedLabelHistory();
 }
 
+function finishedLabelHistoryPrintJobKey(issueId, labelTarget) {
+  return String(issueId || "") + ":" + (labelTarget === "box" ? "box" : "finished_product");
+}
+
+function rememberFinishedLabelHistoryPrintJob(job) {
+  if (!job || !job.issue_id || job.print_event_type !== "reprint") return false;
+  var key = finishedLabelHistoryPrintJobKey(job.issue_id, job.label_target);
+  var previous = finishedLabelHistoryPrintJobs[key];
+  finishedLabelHistoryPrintJobs[key] = Object.assign({}, previous || {}, job);
+  return !previous
+    || String(previous.status || "") !== String(job.status || "")
+    || String(previous.last_error || "") !== String(job.last_error || "");
+}
+
+function finishedLabelHistoryPrintJob(row, labelTarget) {
+  if (!row) return null;
+  return finishedLabelHistoryPrintJobs[finishedLabelHistoryPrintJobKey(row.id, labelTarget)] || null;
+}
+
+function finishedLabelHistoryPrintJobActive(job) {
+  return !!job && ["submitting", "queued", "claimed", "timeout"].includes(String(job.status || ""));
+}
+
+function finishedLabelHistoryPrintStation(job) {
+  if (!job) return null;
+  return finishedLabelPrintDestinations.find(function(row) {
+    return String(row.printer_code || "") === String(job.printer_code || "");
+  }) || null;
+}
+
+function finishedLabelHistoryPrintStatus(job) {
+  if (!job) return null;
+  var status = String(job.status || "");
+  if (status === "submitting") {
+    return { state: "waiting", label: t("finished_label_reprint_sending"), message: t("finished_label_reprint_waiting_desc") };
+  }
+  if (status === "queued" || status === "timeout") {
+    var station = finishedLabelHistoryPrintStation(job);
+    var stopped = station && String(station.state || "stopped") !== "ready";
+    return {
+      state: stopped ? "stopped" : "waiting",
+      label: t("finished_label_reprint_waiting"),
+      message: t(stopped ? "finished_label_reprint_station_stopped_desc" : "finished_label_reprint_waiting_desc"),
+      showStationAction: stopped && !isFinishedLabelMobilePrintClient()
+    };
+  }
+  if (status === "claimed") {
+    return { state: "printing", label: t("finished_label_reprint_printing"), message: t("finished_label_reprint_printing_desc") };
+  }
+  if (status === "sent") {
+    return { state: "sent", label: t("finished_label_reprint_sent"), message: t("finished_label_reprint_sent_desc") };
+  }
+  if (status === "error" || status === "cancelled") {
+    return { state: "error", label: t("finished_label_reprint_error"), message: String(job.last_error || t("finished_label_mobile_print_queue_failed")) };
+  }
+  return null;
+}
+
+async function loadFinishedLabelHistoryPrintJobs(issueIds) {
+  finishedLabelHistoryPrintJobs = {};
+  if (!Array.isArray(issueIds) || !issueIds.length) return;
+  var issueMap = {};
+  issueIds.forEach(function(id) { issueMap[String(id)] = true; });
+  var result = await sb.rpc("list_finished_label_print_jobs", {
+    target_printer_code: null,
+    target_limit: 100
+  });
+  if (result.error) {
+    console.warn("finished label history print jobs failed", result.error);
+    return;
+  }
+  (Array.isArray(result.data) ? result.data : []).forEach(function(job) {
+    if (!issueMap[String(job.finished_label_issue_id)] || job.print_event_type !== "reprint") return;
+    var normalized = Object.assign({}, job, {
+      job_id: job.id,
+      issue_id: job.finished_label_issue_id
+    });
+    var key = finishedLabelHistoryPrintJobKey(normalized.issue_id, normalized.label_target);
+    if (!finishedLabelHistoryPrintJobs[key]) rememberFinishedLabelHistoryPrintJob(normalized);
+  });
+}
+
 async function loadFinishedLabelHistory() {
   var list = document.getElementById("finished-label-history-list");
   if (!list) return;
@@ -29418,6 +29535,12 @@ async function loadFinishedLabelHistory() {
       }
     }
   }
+  await Promise.all([
+    loadFinishedLabelHistoryPrintJobs(issueIds),
+    loadFinishedLabelPrintDestinations(finishedLabelPrintMode === "box" ? "box" : "finished_product", false).catch(function(error) {
+      console.warn("finished label history print destination lookup failed", error);
+    })
+  ]);
   if (finishedLabelPrintMode === "box") {
     var selectedRow = finishedLabelHistoryRows.find(function(row) {
       return String(row.id) === String(finishedLabelSelectedHistoryId || "") && Array.isArray(row.finishedUnits) && row.finishedUnits.length;
@@ -29444,6 +29567,7 @@ function renderFinishedLabelHistory() {
     var serialText = units.length ? units[0].manufacturing_serial : "-";
     if (units.length > 1) serialText += " ～ " + units[units.length - 1].manufacturing_serial;
     var actionHtml = "";
+    var statusHtml = "";
     if (finishedLabelPrintMode === "box") {
       var selected = String(row.id) === String(finishedLabelSelectedHistoryId || "");
       var boxActionLabel = t(selected ? "finished_box_label_history_selected" : "finished_box_label_history_select");
@@ -29452,12 +29576,21 @@ function renderFinishedLabelHistory() {
       actionHtml = "<span class='finished-box-label-print-status " + (row.boxLabelPrinted ? "reprint" : "initial") + "'>" + esc(t(statusKey)) + "</span>" +
         "<button class='btn-sm-edit production-action-secondary' data-finished-box-label-history-select='" + esc(String(row.id)) + "'" + (units.length ? "" : " disabled") + (boxActionTitle ? " title='" + esc(boxActionTitle) + "'" : "") + ">" + esc(boxActionLabel) + "</button>";
     } else {
-      actionHtml = "<button class='btn-sm-edit production-action-secondary' data-finished-label-history-preview='" + esc(String(row.id)) + "'" + (units.length ? "" : " disabled") + ">" + esc(t("finished_product_label_reprint")) + "</button>";
+      var printJob = finishedLabelHistoryPrintJob(row, "finished_product");
+      var printStatus = finishedLabelHistoryPrintStatus(printJob);
+      var printActive = finishedLabelHistoryPrintJobActive(printJob);
+      var actionLabel = printActive && printStatus ? printStatus.label : t("finished_product_label_reprint");
+      actionHtml = "<button type='button' class='btn-sm-edit production-action-secondary' data-finished-label-history-preview='" + esc(String(row.id)) + "'" + (units.length && !printActive ? "" : " disabled") + ">" + esc(actionLabel) + "</button>";
+      if (printStatus) {
+        statusHtml = "<div class='finished-label-history-print-state " + esc(printStatus.state) + "' role='status' aria-live='polite'><div><strong>" + esc(printStatus.label) + "</strong><span>" + esc(printStatus.message) + "</span></div>" +
+          (printStatus.showStationAction ? "<button type='button' class='btn-sm-edit production-action-secondary' data-finished-label-open-station>" + esc(t("finished_label_reprint_open_station")) + "</button>" : "") + "</div>";
+      }
     }
     html += "<div class='finished-label-history-row" + (finishedLabelPrintMode === "box" && String(row.id) === String(finishedLabelSelectedHistoryId || "") ? " active" : "") + "'>";
     html += "<div class='finished-label-history-main'><span>" + esc(row.issue_code || "-") + "</span><div class='finished-label-history-actions'>" + actionHtml + "</div></div>";
     html += "<div class='finished-label-history-serial'>" + esc(serialText) + "</div>";
     html += "<div class='finished-label-history-sub'>" + esc([formatDateTime(row.issued_at), row.product_category ? tCat(row.product_category) : "", productKindLabel(row.product_kind), tf("finished_label_history_units", { n: row.quantity }), tf("finished_label_history_parts", { n: comps })].filter(Boolean).join(" / ")) + "</div>";
+    html += statusHtml;
     html += "</div>";
   });
   list.innerHTML = html;
@@ -29471,6 +29604,12 @@ function renderFinishedLabelHistory() {
     btn.addEventListener("click", function() {
       var row = finishedLabelHistoryRows.find(function(x) { return String(x.id) === String(btn.dataset.finishedBoxLabelHistorySelect); });
       if (row) selectFinishedBoxLabelHistory(row);
+    });
+  });
+  list.querySelectorAll("[data-finished-label-open-station]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      setFinishedLabelPrintMode("station");
+      resumeFinishedLabelPrintStationIfEnabled();
     });
   });
 }
@@ -29537,27 +29676,67 @@ function reprintFinishedLabelIssue(row, labelType) {
 }
 
 async function executeFinishedLabelHistoryReprint(row, labelType, reason) {
+  var labelTarget = labelType === "box" ? "box" : "finished_product";
+  var activeJob = finishedLabelHistoryPrintJob(row, labelTarget);
+  if (!finishedLabelHistoryPrintJobActive(activeJob)
+      && finishedLabelLastQueuedJob
+      && String(finishedLabelLastQueuedJob.issue_id) === String(row.id)
+      && finishedLabelLastQueuedJob.label_target === labelTarget
+      && finishedLabelLastQueuedJob.print_event_type === "reprint"
+      && finishedLabelHistoryPrintJobActive(finishedLabelLastQueuedJob)) {
+    activeJob = finishedLabelLastQueuedJob;
+  }
+  var recordPrintAudit = !finishedLabelHistoryPrintJobActive(activeJob);
+  if (activeJob) finishedLabelLastQueuedJob = Object.assign({}, activeJob);
+  if (recordPrintAudit) {
+    rememberFinishedLabelHistoryPrintJob({
+      issue_id: row.id,
+      label_target: labelTarget,
+      print_event_type: "reprint",
+      status: "submitting"
+    });
+    renderFinishedLabelHistory();
+  }
   try {
-    var result = await sb.rpc("record_finished_product_label_print", {
-      target_finished_label_issue_id: row.id,
-      target_label_target: labelType === "box" ? "box" : "finished_product",
-      target_print_event_type: "reprint",
-      target_reason: reason
-    });
-    if (result.error) throw result.error;
-    var record = finishedLabelRecordFromHistory(row, result.data || {});
+    var result = null;
+    var record = finishedLabelRecordFromHistory(row);
     record.sourceHistoryRow = row;
-    await writeLog("insert", "finished_product_label_prints", row.id, row.issue_code, null, {
-      event_type: labelType === "box" ? "box_label_reprint" : "product_label_reprint",
-      label_size: labelType === "box" ? "80x60" : "45x20",
-      reason: reason,
-      quantity: record.units.length,
-      copies_per_unit: 1
-    });
-    await enqueueAndWaitForFinishedLabelPrint(record, labelType === "box" ? "box" : "finished_product", "reprint", reason);
+    if (recordPrintAudit) {
+      result = await sb.rpc("record_finished_product_label_print", {
+        target_finished_label_issue_id: row.id,
+        target_label_target: labelTarget,
+        target_print_event_type: "reprint",
+        target_reason: reason
+      });
+      if (result.error) throw result.error;
+      record = finishedLabelRecordFromHistory(row, result.data || {});
+      record.sourceHistoryRow = row;
+      await writeLog("insert", "finished_product_label_prints", row.id, row.issue_code, null, {
+        event_type: labelType === "box" ? "box_label_reprint" : "product_label_reprint",
+        label_size: labelType === "box" ? "80x60" : "45x20",
+        reason: reason,
+        quantity: record.units.length,
+        copies_per_unit: 1
+      });
+    }
+    await enqueueAndWaitForFinishedLabelPrint(record, labelTarget, "reprint", reason);
     showDcatsAutoNotice(t("finished_label_reprint_queue_saved"));
     await loadFinishedLabelHistory();
   } catch (e) {
+    var matchingLastJob = finishedLabelLastQueuedJob
+      && String(finishedLabelLastQueuedJob.issue_id) === String(row.id)
+      && finishedLabelLastQueuedJob.label_target === labelTarget
+      && (["error", "cancelled"].includes(String(finishedLabelLastQueuedJob.status || ""))
+        || finishedLabelHistoryPrintJobActive(finishedLabelLastQueuedJob));
+    var failedJob = matchingLastJob ? finishedLabelLastQueuedJob : {
+          issue_id: row.id,
+          label_target: labelTarget,
+          print_event_type: "reprint",
+          status: "error",
+          last_error: e.message || String(e)
+        };
+    rememberFinishedLabelHistoryPrintJob(failedJob);
+    renderFinishedLabelHistory();
     alert(finishedLabelMobilePrintErrorText(e, "finished_label_mobile_print_queue_failed"));
   }
 }

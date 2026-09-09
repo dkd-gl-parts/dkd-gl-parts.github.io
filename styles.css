@@ -5197,6 +5197,16 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .finished-label-history-main { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 12px; font-weight: 700; }
 .finished-label-history-main > span:first-child { font-family: Consolas, "SFMono-Regular", monospace; white-space: nowrap; }
 .finished-label-history-sub { font-size: 11px; color: #7c8492; margin-top: 4px; line-height: 1.45; word-break: break-word; }
+.finished-label-history-print-state { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; border-left: 3px solid #4876a8; padding: 7px 8px; background: #f3f7fb; color: #344054; font-size: 11px; line-height: 1.45; }
+.finished-label-history-print-state > div { min-width: 0; }
+.finished-label-history-print-state strong, .finished-label-history-print-state span { display: block; }
+.finished-label-history-print-state strong { font-size: 11px; }
+.finished-label-history-print-state span { margin-top: 2px; color: #5c6878; overflow-wrap: anywhere; }
+.finished-label-history-print-state.stopped { border-left-color: #b7791f; background: #fff8e8; color: #744c0b; }
+.finished-label-history-print-state.printing { border-left-color: #2b6cb0; background: #edf6ff; color: #184f82; }
+.finished-label-history-print-state.sent { border-left-color: #27825a; background: #edf8f2; color: #1f6849; }
+.finished-label-history-print-state.error { border-left-color: #c2413a; background: #fff1f0; color: #9c2f2a; }
+.finished-label-history-print-state .btn-sm-edit { flex: 0 0 auto; }
 .finished-label-help { font-size: 11px; color: #7c8492; line-height: 1.55; margin-top: 8px; }
 .finished-label-serial-notice { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; border: 1px solid #b9d8c5; border-radius: 8px; padding: 9px 11px; background: #f1f8f4; color: #315d43; font-size: 11px; line-height: 1.5; }
 .finished-label-serial-notice strong { flex: 0 0 auto; color: #18492e; font-size: 12px; }
