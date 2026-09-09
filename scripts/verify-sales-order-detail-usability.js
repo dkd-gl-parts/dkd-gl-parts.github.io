@@ -47,6 +47,9 @@ for (const fragment of [
   "salesOrderWaybillCarrierLabel(order, \"core_return\")",
   "salesOrderWaybillDetailLabel(order, \"core_return\")",
   "sales-order-waybill-detail",
+  "customerOrderProductSubtotal(order)",
+  "customerOrderCoreChargeTotal(order)",
+  "<span>コア代金</span>",
   "sales-order-detail-tracking",
   "sales-order-detail-history",
   "処理履歴"

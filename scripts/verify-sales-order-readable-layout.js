@@ -39,7 +39,7 @@ for (const fragment of [
   ".sales-order-title-block { display: none; }",
   ".sales-order-detail-overview-grid { grid-template-columns: minmax(485px, 1.03fr) minmax(410px, .97fr);",
   ".sales-order-detail-overview-grid .sales-order-item-head,",
-  "grid-template-columns: minmax(105px, 1fr) 74px 30px 56px 64px 72px; min-width: 0;",
+  "grid-template-columns: minmax(95px, 1fr) 54px 28px 56px 60px 58px 72px; min-width: 0;",
   ".sales-order-detail-overview-grid .sales-order-address .sales-order-section-heading { grid-column: 1 / -1; grid-row: 1; }",
   ".sales-order-detail-overview-grid .sales-order-address-destination { grid-column: 1; grid-row: 2; }",
   ".sales-order-detail-overview-grid .sales-order-address dl { grid-column: 2; grid-row: 2;",
