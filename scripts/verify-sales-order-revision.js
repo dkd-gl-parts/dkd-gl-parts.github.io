@@ -29,6 +29,14 @@ assert(source.includes('customerOrderDeliveryServiceFromKey(salesOrderRevisionVa
 assert(source.includes('lookupCustomerOrderPostalApi(code)'));
 assert(source.includes('lookupCustomerOrderPostalLocal(code)'));
 assert(source.includes('seq !== state.postalSeq'));
+assert(!source.includes('customerOrderDeliveryEstimate('));
+assert(source.includes('async function configureSalesOrderRevisionDelivery(changed)'));
+assert(source.includes('sb.rpc("get_customer_order_delivery_quote"'));
+assert(source.includes('target_shipping_date: order.scheduled_shipping_date || null'));
+assert(source.includes('requestSeq !== state.deliveryQuoteSeq'));
+assert(source.includes('quote.requested_date_supported !== true'));
+assert(source.includes('quote.allowed_time_codes'));
+assert(source.includes('document.getElementById("revision-entry-shipping-date")'));
 assert(fs.readFileSync('scripts/build-static-site.js','utf8').includes('"sales-order-revision.js"'));
 assert(fs.readFileSync('index.html','utf8').includes('src="sales-order-revision.js?v='));
 context.esc=String;
@@ -38,4 +46,63 @@ const changed={b2_exports:[{created_at:'2026-09-01T00:00:00Z'}],revision_history
 assert(context.shippingDocumentStageHtml(changed).includes('再発行が必要'));
 changed.b2_exports.push({created_at:'2026-09-03T00:00:00Z'});
 assert(!context.shippingDocumentStageHtml(changed).includes('再発行が必要'));
-console.log('Order revision status, payload, optimistic-lock, UI wiring and deployment contracts passed.');
+
+(async function verifyRevisionDeliveryQuoteRuntime() {
+  const fields = {
+    prefecture_code:{value:'27',selectedIndex:0,options:[{textContent:'大阪府'}],disabled:false},
+    outbound_shipping_method:{value:'ヤマト運輸|宅急便',innerHTML:'',disabled:false},
+    core_return_shipping_method:{value:'',innerHTML:'',disabled:false},
+    requested_delivery_date:{value:'2026-09-11',disabled:false,min:'',max:'',removeAttribute(name){this[name]='';}},
+    delivery_time_code:{value:'',disabled:false,options:[{value:'',disabled:false,hidden:false},{value:'0812',disabled:false,hidden:false}]},
+    postal_code:{value:'5620035'},
+    address_line_1:{value:'箕面市船場東'}
+  };
+  const elements = {
+    'revision-entry-core-return-service-field':{hidden:false},
+    'revision-entry-delivery-estimate':{textContent:'',className:'',removeAttribute(){}},
+    'revision-entry-shipping-date':{value:''}
+  };
+  let rpcArgs;
+  context.document = {
+    addEventListener(){},
+    querySelector(selector){
+      const match = selector.match(/data-revision-field='([^']+)'/);
+      return match ? fields[match[1]] || null : null;
+    },
+    getElementById(id){return elements[id] || null;}
+  };
+  context.customerOrderDeliveryServiceKey = (row) => row ? `${row.carrier_name}|${row.service_name}` : '';
+  context.customerOrderDeliveryServiceFromKey = (value) => {
+    const parts = String(value || '').split('|');
+    return parts.length === 2 ? {carrier_name:parts[0],service_name:parts[1]} : null;
+  };
+  context.customerOrderDeliveryServiceSortValue = () => 0;
+  context.customerOrderDeliveryServiceOptionsHtml = () => '<option></option>';
+  context.customerOrderCoreReturnDeliveryServices = (rows) => rows;
+  context.normalizeCustomerOrderPostalCode = (value) => String(value || '').replace(/\D/g,'');
+  context.customerOrderDeliveryDateLabel = String;
+  context.t = String;
+  context.tf = (key) => key;
+  context.console = {warn(){}};
+  context.sb = {rpc:async (name,args) => {
+    rpcArgs = {name,args};
+    return {data:{available:true,shipping_date:'2026-09-09',earliest_delivery_date:'2026-09-10',max_requested_delivery_date:'2026-09-22',automatic_requested_delivery_date:'2026-09-10',requested_date_supported:true,allowed_time_codes:['','0812'],precision:'exact'}};
+  }};
+  context.salesOrderRevision = {
+    order:{scheduled_shipping_date:'2026-09-09',outbound_shipping_method:{carrier_name:'ヤマト運輸',service_name:'宅急便'}},
+    items:[{core_return_required:false}],
+    rates:[{prefecture_code:'27',carrier_name:'ヤマト運輸',service_name:'宅急便',display_order:1}]
+  };
+  await context.configureSalesOrderRevisionDelivery(false);
+  assert.equal(rpcArgs.name,'get_customer_order_delivery_quote');
+  assert.equal(rpcArgs.args.target_postal_code,'5620035');
+  assert.equal(rpcArgs.args.target_shipping_date,'2026-09-09');
+  assert.equal(elements['revision-entry-shipping-date'].value,'2026-09-09');
+  assert.equal(fields.requested_delivery_date.min,'2026-09-10');
+  assert.equal(fields.requested_delivery_date.max,'2026-09-22');
+  assert.equal(elements['revision-entry-delivery-estimate'].className,'customer-order-delivery-estimate ready');
+  console.log('Order revision status, payload, optimistic-lock, UI wiring and deployment contracts passed.');
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
