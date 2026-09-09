@@ -8928,6 +8928,11 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .sales-order-revision-dialog .customer-order-product { min-width: 0; }
 .sales-order-revision-dialog .customer-order-product strong, .sales-order-revision-dialog .customer-order-product small { overflow-wrap: anywhere; }
 .sales-order-revision-dialog .customer-order-product em { font-size: 11px; color: #b3261e; font-style: normal; }
+.sales-order-revision-dialog .customer-order-product em.charge-no-return { color: #76520d; }
+.sales-order-revision-dialog .sales-order-revision-core-choice { display: grid; width: min(100%, 320px); gap: 4px; }
+.sales-order-revision-dialog .sales-order-revision-core-choice > span,
+.sales-order-revision-dialog .sales-order-revision-core-choice small { line-height: 1.45; }
+.sales-order-revision-dialog .sales-order-revision-core-choice select { min-height: 36px; }
 .sales-order-revision-dialog .customer-order-line-metric { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .sales-order-revision-dialog .customer-order-line-metric.total { grid-column: auto; text-align: right; }
 .sales-order-revision-dialog .customer-order-line-metric strong { overflow-wrap: anywhere; }
@@ -8962,6 +8967,7 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   .sales-order-revision-search { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
   .sales-order-revision-dialog .customer-order-line { grid-template-columns: 65px minmax(0,1fr) minmax(0,1fr) 34px; }
   .sales-order-revision-dialog .customer-order-product { grid-column: 1 / 4; }
+  .sales-order-revision-dialog .sales-order-revision-core-choice { width: 100%; max-width: none; }
   .sales-order-revision-dialog .customer-order-remove { grid-column: 4; grid-row: 1; }
   .sales-order-revision-dialog .customer-order-qty { grid-column: 1; grid-row: 2; }
   .sales-order-revision-dialog .customer-order-line-metric { grid-column: 2; grid-row: 2; }
