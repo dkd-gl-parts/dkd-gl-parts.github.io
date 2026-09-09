@@ -100,7 +100,85 @@ function configureSalesOrderRevisionDestination(options) {
   if (officePickup) applySalesOrderRevisionYamatoOffice(options.includeRecipientDefaults !== false);
 }
 
-function configureSalesOrderRevisionDelivery(changed) {
+function salesOrderRevisionDeliveryAddressText() {
+  var prefecture = salesOrderRevisionInput("prefecture_code");
+  var address = salesOrderRevisionValue("address_line_1");
+  var prefectureName = prefecture && prefecture.selectedIndex >= 0 && prefecture.value
+    ? String((prefecture.options[prefecture.selectedIndex] || {}).textContent || "").trim()
+    : "";
+  return prefectureName + address;
+}
+
+function applySalesOrderRevisionDeliveryQuote(quote, method, changed) {
+  var state = salesOrderRevision;
+  if (!state) return;
+  var shippingDate = document.getElementById("revision-entry-shipping-date");
+  var date = salesOrderRevisionInput("requested_delivery_date");
+  var time = salesOrderRevisionInput("delivery_time_code");
+  var message = document.getElementById("revision-entry-delivery-estimate");
+  if (!date || !time || !message) return;
+  if (shippingDate) shippingDate.value = quote && quote.available === true ? (quote.shipping_date || "") : (state.order.scheduled_shipping_date || "");
+  date.removeAttribute("min");
+  date.removeAttribute("max");
+  message.removeAttribute("data-i18n");
+  Array.prototype.forEach.call(time.options || [], function(option) {
+    option.disabled = false;
+    option.hidden = false;
+  });
+  if (!method || !quote || quote.available !== true) {
+    date.disabled = true;
+    time.disabled = true;
+    message.textContent = t("customer_order_delivery_unknown");
+    message.className = "customer-order-delivery-estimate warning";
+    return;
+  }
+
+  var allowedTimeCodes = Array.isArray(quote.allowed_time_codes) ? quote.allowed_time_codes.map(String) : [];
+  Array.prototype.forEach.call(time.options || [], function(option) {
+    var allowed = !option.value || allowedTimeCodes.indexOf(String(option.value)) >= 0;
+    option.disabled = !allowed;
+    option.hidden = !allowed;
+  });
+  if (time.value && allowedTimeCodes.indexOf(String(time.value)) < 0) time.value = "";
+  if (quote.requested_date_supported !== true) {
+    date.value = "";
+    time.value = "";
+    date.disabled = true;
+    time.disabled = true;
+    message.textContent = tf("customer_order_delivery_not_specifiable", {
+      service: method.service_name,
+      start: customerOrderDeliveryDateLabel(quote.earliest_delivery_date),
+      end: customerOrderDeliveryDateLabel(quote.earliest_delivery_date)
+    });
+    message.className = "customer-order-delivery-estimate restricted";
+    return;
+  }
+
+  date.disabled = false;
+  date.min = quote.earliest_delivery_date;
+  date.max = quote.max_requested_delivery_date;
+  time.disabled = allowedTimeCodes.length === 0;
+  if (changed || (date.value && (date.value < date.min || date.value > date.max))) {
+    date.value = quote.automatic_requested_delivery_date || quote.earliest_delivery_date;
+  }
+  var guidance = tf("customer_order_delivery_manual", {
+    ship: customerOrderDeliveryDateLabel(quote.shipping_date),
+    date: customerOrderDeliveryDateLabel(quote.earliest_delivery_date),
+    max: customerOrderDeliveryDateLabel(quote.max_requested_delivery_date),
+    service: method.service_name
+  });
+  if (quote.resolution === "address_city_conservative") {
+    guidance += " " + tf("customer_order_delivery_address_conservative", { city: quote.city_name || "" });
+  }
+  if (quote.precision && quote.precision !== "exact") {
+    guidance += " " + tf("customer_order_delivery_estimated_precision", { precision: quote.precision });
+  }
+  if (quote.warning) guidance += " " + t("customer_order_delivery_warning_prefix") + String(quote.warning);
+  message.textContent = guidance;
+  message.className = "customer-order-delivery-estimate" + (quote.warning ? " warning" : " ready");
+}
+
+async function configureSalesOrderRevisionDelivery(changed) {
   if (!salesOrderRevision) return;
   var state = salesOrderRevision, order = state.order;
   var code = salesOrderRevisionValue("prefecture_code");
@@ -128,22 +206,41 @@ function configureSalesOrderRevisionDelivery(changed) {
   document.getElementById("revision-entry-core-return-service-field").hidden = !coreRequired;
   salesOrderRevisionInput("core_return_shipping_method").disabled = !coreRequired;
   var method = customerOrderDeliveryServiceFromKey(salesOrderRevisionValue("outbound_shipping_method"));
-  var estimate = method && code && customerOrderDeliveryEstimate(method.service_name, code);
   var date = salesOrderRevisionInput("requested_delivery_date"), time = salesOrderRevisionInput("delivery_time_code");
   var message = document.getElementById("revision-entry-delivery-estimate");
+  var postalCode = normalizeCustomerOrderPostalCode(salesOrderRevisionValue("postal_code"));
+  var addressText = salesOrderRevisionDeliveryAddressText();
   message.removeAttribute("data-i18n");
-  message.textContent = !method || !code ? t("customer_order_delivery_wait") : !estimate ? t("customer_order_delivery_unknown") : !estimate.requested_date ? tf("customer_order_delivery_not_specifiable", {service:method.service_name,start:customerOrderDeliveryDateLabel(estimate.earliest_date),end:customerOrderDeliveryDateLabel(estimate.latest_date)}) : tf("customer_order_delivery_manual", {date:customerOrderDeliveryDateLabel(estimate.earliest_date),service:method.service_name});
-  date.disabled = !!estimate && !estimate.requested_date;
-  time.disabled = !!estimate && !estimate.requested_time;
-  if (!estimate) { date.removeAttribute("min"); date.removeAttribute("max"); }
-  if (changed && estimate) {
-    if (!estimate.requested_date) date.value = "";
-    else {
-      date.min = estimate.earliest_date;
-      date.max = estimate.max_requested_date;
-      if (!date.value || date.value < date.min || date.value > date.max) date.value = date.min;
-    }
-    if (!estimate.requested_time) time.value = "";
+  if (!method || (postalCode.length !== 7 && !addressText)) {
+    state.deliveryQuoteSeq = (state.deliveryQuoteSeq || 0) + 1;
+    date.disabled = true;
+    time.disabled = true;
+    message.textContent = t("customer_order_delivery_wait");
+    message.className = "customer-order-delivery-estimate pending";
+    return;
+  }
+
+  var requestSeq = state.deliveryQuoteSeq = (state.deliveryQuoteSeq || 0) + 1;
+  date.disabled = true;
+  time.disabled = true;
+  message.textContent = t("customer_order_delivery_checking");
+  message.className = "customer-order-delivery-estimate pending";
+  try {
+    var result = await sb.rpc("get_customer_order_delivery_quote", {
+      target_postal_code: postalCode.length === 7 ? postalCode : null,
+      target_address: addressText || null,
+      target_carrier_name: method.carrier_name,
+      target_service_name: method.service_name,
+      target_shipping_date: order.scheduled_shipping_date || null
+    });
+    if (state !== salesOrderRevision || requestSeq !== state.deliveryQuoteSeq) return;
+    if (result.error) throw result.error;
+    var quote = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
+    applySalesOrderRevisionDeliveryQuote(quote && typeof quote === "object" ? quote : null, method, changed);
+  } catch(error) {
+    if (state !== salesOrderRevision || requestSeq !== state.deliveryQuoteSeq) return;
+    console.warn("sales order revision delivery quote failed", error);
+    applySalesOrderRevisionDeliveryQuote(null, method, false);
   }
 }
 
@@ -313,6 +410,8 @@ async function openSalesOrderRevisionEditor() {
     document.getElementById("revision-entry-postal-results").hidden = true;
     document.getElementById("revision-entry-postal-status").removeAttribute("data-i18n");
     document.getElementById("revision-entry-postal-status").textContent = t("customer_order_postal_lookup_hint");
+    var shippingDateInput = document.getElementById("revision-entry-shipping-date");
+    if (shippingDateInput) shippingDateInput.value = original.scheduled_shipping_date || "";
     salesOrderRevisionInput("postal_code").addEventListener("keydown",function(event) { if (event.key === "Enter") { event.preventDefault(); lookupSalesOrderRevisionPostal(); } });
     salesOrderRevisionInput("destination_type").addEventListener("change", function() {
       configureSalesOrderRevisionDestination({ includeRecipientDefaults: true });
