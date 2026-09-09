@@ -6842,16 +6842,20 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .sales-order-pricing-open { min-height: 32px; border: 1px solid #287356; border-radius: 5px; padding: 0 11px; background: #fff; color: #1f684d; font-size: 10px; font-weight: 800; cursor: pointer; white-space: nowrap; }
 .sales-order-item-table { overflow-x: auto; border-top: 1px solid #dbe1e6; }
 .sales-order-item-head,
-.sales-order-item-row { display: grid; grid-template-columns: minmax(180px, 1.5fr) 82px 44px 92px 100px 96px 148px; min-width: 860px; align-items: center; gap: 9px; border-bottom: 1px solid #e1e5e9; padding: 9px 10px; }
+.sales-order-item-row { display: grid; grid-template-columns: minmax(180px, 1.5fr) 90px 48px 104px 112px 132px; min-width: 780px; align-items: center; gap: 9px; border-bottom: 1px solid #e1e5e9; padding: 9px 10px; }
 .sales-order-item-head { background: #f2f4f6; color: #667085; font-size: 9px; font-weight: 800; }
 .sales-order-item-row { color: #344054; font-size: 11px; }
 .sales-order-item-row > div strong,
 .sales-order-item-row > div small { display: block; overflow-wrap: anywhere; }
 .sales-order-item-row > div small { margin-top: 2px; color: #7a858e; font-size: 9px; }
-.sales-order-item-row > strong,
+.sales-order-item-row > :nth-child(3),
 .sales-order-item-row > span:nth-child(4),
-.sales-order-item-row > strong:nth-child(5),
-.sales-order-item-row > strong:nth-child(6) { text-align: right; white-space: nowrap; }
+.sales-order-item-row > strong:nth-child(5) { text-align: right; white-space: nowrap; }
+.sales-order-product-row.has-core-charge { border-bottom-color: #eadcb8; }
+.sales-order-core-charge-row { border-left: 3px solid #d2a543; padding-left: 7px; background: #fffaf0; }
+.sales-order-core-charge-row > div strong,
+.sales-order-core-charge-row > .sales-order-core-charge { color: #865b0a; }
+.sales-order-core-charge-row > span:nth-child(2) { color: #76520d; font-weight: 800; }
 .sales-order-core { justify-self: end; border: 1px solid #c8d1cc; border-radius: 4px; padding: 2px 5px; color: #65716b; font-size: 9px; font-weight: 800; }
 .sales-order-core.required { border-color: #ef9a91; background: #fff3f1; color: #b42318; }
 .sales-order-core.charged { border-color: #d2a543; background: #fff8df; color: #76520d; white-space: nowrap; }
@@ -7622,7 +7626,7 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   .sales-order-detail-overview-grid > .sales-order-detail-section:first-child { border-right: 1px solid #dbe1e6; padding-right: 14px; }
   .sales-order-detail-overview-grid .sales-order-section-heading p { display: none; }
   .sales-order-detail-overview-grid .sales-order-item-head,
-  .sales-order-detail-overview-grid .sales-order-item-row { grid-template-columns: minmax(135px, 1.5fr) 66px 36px 66px 72px 72px 126px; min-width: 0; gap: 6px; padding: 8px 7px; }
+  .sales-order-detail-overview-grid .sales-order-item-row { grid-template-columns: minmax(135px, 1.5fr) 72px 36px 72px 78px 112px; min-width: 0; gap: 6px; padding: 8px 7px; }
   .sales-order-detail-overview-grid .sales-order-address { grid-template-columns: minmax(0, 1fr); align-content: start; gap: 10px; padding-top: 12px; }
   .sales-order-detail-overview-grid .sales-order-address .sales-order-section-heading { grid-column: 1; }
   .sales-order-detail-overview-grid .sales-order-address dl { gap: 7px; }
@@ -7765,7 +7769,7 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   .sales-order-list { max-height: 42vh; }
   .sales-order-item-table { overflow-x: auto; }
   .sales-order-item-head,
-  .sales-order-item-row { min-width: 880px; }
+  .sales-order-item-row { min-width: 780px; }
   .sales-order-detail-nav { overflow-x: auto; }
   .sales-order-detail-nav button { flex: 1 0 auto; justify-content: center; }
   .sales-order-detail-panel { padding-top: 12px; }
@@ -9277,11 +9281,12 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   #screen-sales-order-mgmt .sales-order-pricing-open { min-height: 38px; padding: 7px 11px; font-size: 14px; }
 
   #screen-sales-order-mgmt .sales-order-item-head,
-  #screen-sales-order-mgmt .sales-order-item-row { grid-template-columns: minmax(180px, 1.5fr) 90px 54px 104px 112px 104px 154px; min-width: 920px; gap: 10px; padding: 10px; }
+  #screen-sales-order-mgmt .sales-order-item-row { grid-template-columns: minmax(180px, 1.5fr) 96px 54px 110px 118px 142px; min-width: 820px; gap: 10px; padding: 10px; }
   #screen-sales-order-mgmt .sales-order-item-head { font-size: 12px; line-height: 1.4; }
   #screen-sales-order-mgmt .sales-order-item-row { min-height: 64px; font-size: 15px; line-height: 1.45; }
   #screen-sales-order-mgmt .sales-order-item-row > div small { margin-top: 2px; font-size: 12px; line-height: 1.4; }
   #screen-sales-order-mgmt .sales-order-core { padding: 3px 6px; font-size: 12px; line-height: 1.35; word-break: keep-all; overflow-wrap: anywhere; }
+  #screen-sales-order-mgmt .sales-order-core-charge-row { min-height: 52px; border-left: 3px solid #d2a543; background: #fffaf0; }
   #screen-sales-order-mgmt .sales-order-adjustment-head { font-size: 12px; }
   #screen-sales-order-mgmt .sales-order-adjustment-row { min-height: 42px; font-size: 14px; line-height: 1.45; }
 
@@ -9362,7 +9367,7 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-section-heading { margin-bottom: 8px; }
   #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-section-heading p { display: none; }
   #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-item-head,
-  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-item-row { grid-template-columns: minmax(95px, 1fr) 54px 28px 56px 60px 58px 72px; min-width: 0; gap: 5px; padding: 8px 7px; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-item-row { grid-template-columns: minmax(120px, 1fr) 72px 32px 64px 70px 78px; min-width: 0; gap: 5px; padding: 8px 7px; }
   #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-item-row { min-height: 60px; font-size: 14px; }
 
   #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-address { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-content: start; gap: 9px 12px; padding-top: 10px; }
