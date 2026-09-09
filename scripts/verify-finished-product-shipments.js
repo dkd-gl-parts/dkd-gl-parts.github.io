@@ -54,7 +54,8 @@ assert(html.includes('id="screen-finished-product-shipping"'), "shipment screen 
   'id="finished-shipment-order-context"',
   'id="finished-shipment-selection-card" hidden',
   'id="finished-shipment-order-form" hidden',
-  'id="finished-shipment-shipped-on" type="date"'
+  'id="finished-shipment-shipped-on" type="date"',
+  'id="finished-shipment-readiness" aria-live="polite"'
 ].forEach((field) => assert(html.includes(field), `shipment workflow element is missing: ${field}`));
 [
   'id="finished-shipment-customer"',
@@ -203,6 +204,12 @@ assert(!saveSource.includes("button.disabled = false"), "shipment completion mus
 assert(!saveSource.includes("ship_finished_product_units"), "legacy shipment RPC would double-decrement stock");
 assert(!saveSource.includes('.from("finished_product_units").update('), "browser mutates unit lifecycle directly");
 assert(!saveSource.includes('.from("core_product_variants").update('), "browser mutates stock directly");
+const saveButtonSource = functionSource("updateFinishedShipmentSaveButtonState");
+assert(saveButtonSource.includes("finishedShipmentTrackingState(order)"), "shipment confirmation button must include waybill readiness");
+assert(saveButtonSource.includes("!tracking.outboundReady") && saveButtonSource.includes("!tracking.returnReady"), "missing waybill numbers must disable final shipment confirmation");
+const readinessSource = functionSource("renderFinishedShipmentReadiness");
+assert(readinessSource.includes("finished_shipping_final_needs_tracking"), "outbound tracking blocker must remain visible after picking");
+assert(readinessSource.includes("finished_shipping_final_ready"), "ready-to-ship state must explain stock deduction");
 assert(/id="btn-finished-shipment-save"[^>]*data-i18n="finished_shipping_register"[^>]*disabled/.test(html), "final shipment action must start blocked until server-backed checks pass");
 assert(functionSource("renderFinishedShipmentCandidates").includes("unit.match_type === \"compatible\""), "compatible candidates need a visible badge");
 assert(functionSource("finishedShipmentFlattenAssignments").includes('match_type: finishedShipmentUnitMatchesItem(serial, orderItem) ? "exact" : "compatible"'), "assigned compatible units must remain identifiable");
@@ -215,7 +222,15 @@ assert(functionSource("updateFinishedShipmentReplacement").includes('sb.rpc("set
 const cancelSource = functionSource("cancelFinishedProductShipment");
 assert(cancelSource.includes('sb.rpc("cancel_finished_product_shipment"'), "audited standalone cancellation RPC is not called");
 assert(functionSource("renderFinishedShipmentLookup").includes("finishedShipmentWarrantyState"), "serial lookup does not show warranty state");
-assert(functionSource("loadFinishedShipmentHistory").includes('.from("finished_product_shipments")'), "shipment history is not loaded");
+const historySource = functionSource("loadFinishedShipmentHistory");
+assert(historySource.includes('sb.rpc("list_sales_order_picking_history"'), "picking audit history is not loaded");
+assert(historySource.includes('.from("finished_product_shipments")'), "shipment history is not loaded");
+const historyRenderSource = functionSource("renderFinishedShipmentHistory");
+assert(historyRenderSource.includes("physical_stock_qty") && historyRenderSource.includes("active_reserved_qty") && historyRenderSource.includes("available_stock_qty"), "picking history must distinguish physical, reserved, and available stock");
+assert(historyRenderSource.includes("data-finished-shipment-resume"), "active picking history must provide a resume action");
+assert(functionSource("resumeFinishedShipmentHistory").includes("loadFinishedShipmentDispatch()"), "picking resume must reload the authoritative dispatch context");
+assert(app.includes('finished_shipping_register: "出荷を確定して在庫を減らす"'), "final shipment action must clearly state that stock is deducted");
+assert(css.includes(".finished-shipment-picking-stock"), "picking stock breakdown styles are missing");
 
 assert(app.includes('document.getElementById("btn-finished-shipment-load-dispatch").addEventListener("click", loadFinishedShipmentDispatch)'), "dispatch load button is not bound");
 assert(app.includes('document.getElementById("btn-finished-shipment-camera-dispatch").addEventListener("click"'), "dispatch camera button is not bound");

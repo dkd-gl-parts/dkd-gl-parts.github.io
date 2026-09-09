@@ -805,27 +805,42 @@ var TRANSLATIONS = {
     finished_shipping_candidate_empty: "選択できる未出荷シリアルがありません。",
     finished_shipping_candidate_select: "選択",
     finished_shipping_compatible_badge: "互換品",
+    finished_shipping_ordered_part: "受注品番 {part}",
     finished_shipping_exact_assigned: " を割り当てました。",
     finished_shipping_compatible_assigned: " を互換品として割り当てました。",
-    finished_shipping_all_verified: "必要数の照合が完了しました。送り状番号を確認して出荷済みにしてください。",
+    finished_shipping_all_verified: "ピッキングが完了しました。送り状番号を登録して、最終の出荷確定へ進んでください。",
     finished_shipping_unit_list: "割当済み製造シリアル",
     finished_shipping_no_units: "割り当て済みの製造シリアルはありません。",
-    finished_shipping_form: "照合完了・出荷確定",
+    finished_shipping_form: "最終出荷確定（在庫減算）",
     finished_shipping_customer: "出荷先得意先 *",
     finished_shipping_shipped_on: "出荷日 *",
     finished_shipping_order_number: "受注・伝票番号",
     finished_shipping_carrier: "運送会社",
     finished_shipping_tracking: "送り状番号",
     finished_shipping_warranty_months: "保証月数 *",
-    finished_shipping_register: "照合を完了して出荷済みにする",
+    finished_shipping_register: "出荷を確定して在庫を減らす",
     finished_shipping_saved: "出荷を確定しました。在庫・製造シリアル・保証情報を更新しました。",
     finished_shipping_confirm: "この出荷指示を確定します。在庫・製造シリアル・保証情報を更新してよろしいですか？",
     finished_shipping_tracking_required: "B2発行済CSVまたは手入力で、商品発送用の送り状番号を先に登録してください。",
     finished_shipping_return_tracking_required: "コア返却用の送り状番号を先に登録してください。",
     finished_shipping_assignment_cleared: "割り当て済みの製造シリアルをすべて解除しました。",
     finished_shipping_assignment_clear_confirm: "割り当て済みの製造シリアルをすべて解除してよろしいですか？",
-    finished_shipping_history: "シリアル・保証履歴",
-    finished_shipping_history_empty: "出荷履歴はありません。",
+    finished_shipping_history: "ピッキング・出荷履歴",
+    finished_shipping_history_empty: "ピッキング・出荷履歴はありません。",
+    finished_shipping_picking_history_title: "ピッキング履歴",
+    finished_shipping_shipment_history_title: "出荷確定・保証履歴",
+    finished_shipping_picking_waiting: "ピッキング完了・出荷確定待ち",
+    finished_shipping_picking_released: "割当解除",
+    finished_shipping_picking_shipped: "出荷確定済み",
+    finished_shipping_resume: "作業を再開",
+    finished_shipping_inventory_physical: "実在庫",
+    finished_shipping_inventory_reserved: "全受注引当",
+    finished_shipping_inventory_available: "販売可能",
+    finished_shipping_inventory_unit: "台",
+    finished_shipping_final_needs_picking: "必要数のピッキングを完了してください。",
+    finished_shipping_final_needs_tracking: "ピッキングは完了しています。商品発送の送り状番号が未登録のため、出荷履歴の作成と実在庫の減算はまだ行われていません。",
+    finished_shipping_final_needs_return_tracking: "ピッキングは完了しています。コア返却用の送り状番号が未登録のため、出荷履歴の作成と実在庫の減算はまだ行われていません。",
+    finished_shipping_final_ready: "送り状番号を確認しました。出荷確定すると、出荷履歴を作成して実在庫を減算します。",
     finished_shipping_available: "出荷可能",
     finished_shipping_picking_ok: "照合OK",
     finished_shipping_picking_ng: "照合NG",
@@ -2731,27 +2746,42 @@ var TRANSLATIONS = {
     finished_shipping_candidate_empty: "No unshipped serial is available.",
     finished_shipping_candidate_select: "Select",
     finished_shipping_compatible_badge: "Compatible",
+    finished_shipping_ordered_part: "Ordered part {part}",
     finished_shipping_exact_assigned: " assigned.",
     finished_shipping_compatible_assigned: " assigned as a compatible product.",
-    finished_shipping_all_verified: "All required units are verified. Confirm the waybill numbers, then mark the order shipped.",
+    finished_shipping_all_verified: "Picking is complete. Register the waybill numbers, then continue to final shipment confirmation.",
     finished_shipping_unit_list: "Assigned Manufacturing Serials",
     finished_shipping_no_units: "No manufacturing serial has been assigned.",
-    finished_shipping_form: "Complete Check / Confirm Shipment",
+    finished_shipping_form: "Final Shipment Confirmation (Deduct Stock)",
     finished_shipping_customer: "Customer *",
     finished_shipping_shipped_on: "Shipment Date *",
     finished_shipping_order_number: "Order / Slip No.",
     finished_shipping_carrier: "Carrier",
     finished_shipping_tracking: "Tracking No.",
     finished_shipping_warranty_months: "Warranty Months *",
-    finished_shipping_register: "Complete Check and Mark Shipped",
+    finished_shipping_register: "Confirm Shipment and Deduct Stock",
     finished_shipping_saved: "Shipment confirmed. Stock, serial lifecycle, and warranty information were updated.",
     finished_shipping_confirm: "Confirm this dispatch and update stock, serial lifecycle, and warranty information?",
     finished_shipping_tracking_required: "Register the outbound tracking number from a B2 issued CSV or by manual entry first.",
     finished_shipping_return_tracking_required: "Register the core-return tracking number first.",
     finished_shipping_assignment_cleared: "All assigned manufacturing serials were released.",
     finished_shipping_assignment_clear_confirm: "Release all assigned manufacturing serials?",
-    finished_shipping_history: "Serial / Warranty History",
-    finished_shipping_history_empty: "No shipment history.",
+    finished_shipping_history: "Picking / Shipment History",
+    finished_shipping_history_empty: "No picking or shipment history.",
+    finished_shipping_picking_history_title: "Picking History",
+    finished_shipping_shipment_history_title: "Confirmed Shipment / Warranty History",
+    finished_shipping_picking_waiting: "Picking Complete / Awaiting Shipment",
+    finished_shipping_picking_released: "Assignment Released",
+    finished_shipping_picking_shipped: "Shipment Confirmed",
+    finished_shipping_resume: "Resume Work",
+    finished_shipping_inventory_physical: "Physical Stock",
+    finished_shipping_inventory_reserved: "Reserved (All Orders)",
+    finished_shipping_inventory_available: "Available",
+    finished_shipping_inventory_unit: "unit(s)",
+    finished_shipping_final_needs_picking: "Complete the required picking first.",
+    finished_shipping_final_needs_tracking: "Picking is complete. The outbound tracking number is missing, so shipment history has not been created and physical stock has not been deducted.",
+    finished_shipping_final_needs_return_tracking: "Picking is complete. The core-return tracking number is missing, so shipment history has not been created and physical stock has not been deducted.",
+    finished_shipping_final_ready: "Waybill numbers are ready. Confirming shipment creates the shipment history and deducts physical stock.",
     finished_shipping_available: "Available",
     finished_shipping_picking_ok: "Check OK",
     finished_shipping_picking_ng: "Check NG",
@@ -4665,27 +4695,42 @@ var TRANSLATIONS = {
     finished_shipping_candidate_empty: "没有可选择的未出货序列号。",
     finished_shipping_candidate_select: "选择",
     finished_shipping_compatible_badge: "互换品",
+    finished_shipping_ordered_part: "订单品号 {part}",
     finished_shipping_exact_assigned: " 已分配。",
     finished_shipping_compatible_assigned: " 已作为互换品分配。",
-    finished_shipping_all_verified: "所需数量已核对完成。请确认运单编号后设为已出货。",
+    finished_shipping_all_verified: "拣货已完成。请登记运单编号后进行最终出货确认。",
     finished_shipping_unit_list: "已分配制造序列号",
     finished_shipping_no_units: "尚未分配制造序列号。",
-    finished_shipping_form: "完成核对・确认出货",
+    finished_shipping_form: "最终出货确认（扣减库存）",
     finished_shipping_customer: "出货客户 *",
     finished_shipping_shipped_on: "出货日期 *",
     finished_shipping_order_number: "订单・单据编号",
     finished_shipping_carrier: "运输公司",
     finished_shipping_tracking: "运单编号",
     finished_shipping_warranty_months: "保修月数 *",
-    finished_shipping_register: "完成核对并设为已出货",
+    finished_shipping_register: "确认出货并扣减库存",
     finished_shipping_saved: "已确认出货，并更新库存、制造序列号和保修信息。",
     finished_shipping_confirm: "确认该出货指示并更新库存、制造序列号和保修信息吗？",
     finished_shipping_tracking_required: "请先通过B2已发行CSV或手动输入登记商品发货运单编号。",
     finished_shipping_return_tracking_required: "请先登记核心返还用运单编号。",
     finished_shipping_assignment_cleared: "已解除全部制造序列号分配。",
     finished_shipping_assignment_clear_confirm: "要解除全部已分配的制造序列号吗？",
-    finished_shipping_history: "序列号・保修履历",
-    finished_shipping_history_empty: "没有出货历史。",
+    finished_shipping_history: "拣货・出货履历",
+    finished_shipping_history_empty: "没有拣货或出货履历。",
+    finished_shipping_picking_history_title: "拣货履历",
+    finished_shipping_shipment_history_title: "出货确认・保修履历",
+    finished_shipping_picking_waiting: "拣货完成・等待出货确认",
+    finished_shipping_picking_released: "已解除分配",
+    finished_shipping_picking_shipped: "已确认出货",
+    finished_shipping_resume: "继续作业",
+    finished_shipping_inventory_physical: "实物库存",
+    finished_shipping_inventory_reserved: "全部订单预留",
+    finished_shipping_inventory_available: "可销售",
+    finished_shipping_inventory_unit: "台",
+    finished_shipping_final_needs_picking: "请先完成所需数量的拣货。",
+    finished_shipping_final_needs_tracking: "拣货已完成。商品发货运单编号尚未登记，因此尚未创建出货履历，也未扣减实物库存。",
+    finished_shipping_final_needs_return_tracking: "拣货已完成。核心返还运单编号尚未登记，因此尚未创建出货履历，也未扣减实物库存。",
+    finished_shipping_final_ready: "运单编号已确认。确认出货后将创建出货履历并扣减实物库存。",
     finished_shipping_available: "可出货",
     finished_shipping_picking_ok: "核对OK",
     finished_shipping_picking_ng: "核对NG",
@@ -5902,7 +5947,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.933";
+var APP_VERSION       = "v1.1.934";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -6071,6 +6116,8 @@ var finishedLabelComponentLoadSeq = 0;
 var finishedLabelPendingReprint = null;
 var finishedShipmentUnits = [];
 var finishedShipmentHistoryRows = [];
+var finishedShipmentPickingHistoryRows = [];
+var finishedShipmentHistoryError = "";
 var finishedShipmentSaving = false;
 var finishedShipmentPickingBlocked = false;
 var finishedShipmentOrderContext = null;
@@ -8752,6 +8799,8 @@ async function doLogout() {
   detailCustomerShippingChargeRule = "separate";
   finishedShipmentUnits = [];
   finishedShipmentHistoryRows = [];
+  finishedShipmentPickingHistoryRows = [];
+  finishedShipmentHistoryError = "";
   finishedShipmentSaving = false;
   finishedShipmentOrderContext = null;
   finishedShipmentOrderAssignments = [];
@@ -29777,14 +29826,48 @@ function finishedShipmentSaveDisabled(active, dispatchStatus, saving, pickingBlo
   return !active || dispatchStatus !== "ready" || !!saving || !!pickingBlocked;
 }
 
+function finishedShipmentTrackingState(order) {
+  order = order || {};
+  return {
+    outboundReady: !!String(order.outbound_tracking_number || "").trim(),
+    returnReady: !order.core_return_required || !!String(order.return_tracking_number || "").trim()
+  };
+}
+
+function renderFinishedShipmentReadiness() {
+  var host = document.getElementById("finished-shipment-readiness");
+  var order = finishedShipmentOrderContext;
+  var dispatch = finishedShipmentDispatch();
+  if (!host) return;
+  if (!order || !dispatch || ["preparing", "ready"].indexOf(dispatch.status) < 0) {
+    host.textContent = "";
+    host.className = "finished-shipment-readiness";
+    return;
+  }
+  var tracking = finishedShipmentTrackingState(order);
+  var key = dispatch.status !== "ready"
+    ? "finished_shipping_final_needs_picking"
+    : !tracking.outboundReady
+      ? "finished_shipping_final_needs_tracking"
+      : !tracking.returnReady
+        ? "finished_shipping_final_needs_return_tracking"
+        : "finished_shipping_final_ready";
+  host.textContent = t(key);
+  host.className = "finished-shipment-readiness " + (key === "finished_shipping_final_ready" ? "ready" : "pending");
+}
+
 function updateFinishedShipmentSaveButtonState() {
   var button = document.getElementById("btn-finished-shipment-save");
   if (!button) return;
   var order = finishedShipmentOrderContext;
   var dispatch = finishedShipmentDispatch();
   var active = !!(order && dispatch && ["preparing", "ready"].indexOf(dispatch.status) >= 0);
-  button.disabled = finishedShipmentSaveDisabled(active, dispatch && dispatch.status, finishedShipmentSaving, finishedShipmentPickingBlocked);
+  var tracking = finishedShipmentTrackingState(order);
+  button.disabled = finishedShipmentSaveDisabled(active, dispatch && dispatch.status, finishedShipmentSaving, finishedShipmentPickingBlocked)
+    || !tracking.outboundReady
+    || !tracking.returnReady;
   button.setAttribute("aria-disabled", button.disabled ? "true" : "false");
+  renderFinishedShipmentReadiness();
 }
 
 function setFinishedShipmentPickingBlocked(blocked) {
@@ -30857,13 +30940,22 @@ async function saveFinishedProductShipment() {
 async function loadFinishedShipmentHistory() {
   var wrap = document.getElementById("finished-shipment-history");
   if (wrap) wrap.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
+  finishedShipmentHistoryError = "";
+  var pickingR = await sb.rpc("list_sales_order_picking_history", { target_limit: 50 });
+  if (pickingR.error) {
+    finishedShipmentPickingHistoryRows = [];
+    finishedShipmentHistoryError = pickingR.error.message || t("msg_part_err");
+  } else {
+    finishedShipmentPickingHistoryRows = Array.isArray(pickingR.data) ? pickingR.data : [];
+  }
   var shipmentR = await sb.from("finished_product_shipments")
     .select("id,shipment_code,sales_customer_id,customer_code_snapshot,customer_name_snapshot,shipped_on,external_order_number,carrier_name,tracking_number,warranty_months,warranty_expires_on,note,status,created_at,cancelled_at,cancellation_reason")
     .order("created_at", { ascending: false })
     .limit(50);
   if (shipmentR.error) {
     finishedShipmentHistoryRows = [];
-    if (wrap) wrap.innerHTML = "<div class='empty'>" + esc(shipmentR.error.message || t("msg_part_err")) + "</div>";
+    finishedShipmentHistoryError = [finishedShipmentHistoryError, shipmentR.error.message || t("msg_part_err")].filter(Boolean).join(" / ");
+    renderFinishedShipmentHistory();
     return;
   }
   var shipments = shipmentR.data || [];
@@ -30877,7 +30969,9 @@ async function loadFinishedShipmentHistory() {
     .select("shipment_id,finished_product_unit_id,order_item_id,warranty_months,warranty_expires_on,warranty_source,warranty_document_required,replacement_for_shipment_item_id")
     .in("shipment_id", ids);
   if (itemR.error) {
-    if (wrap) wrap.innerHTML = "<div class='empty'>" + esc(itemR.error.message || t("msg_part_err")) + "</div>";
+    finishedShipmentHistoryRows = [];
+    finishedShipmentHistoryError = [finishedShipmentHistoryError, itemR.error.message || t("msg_part_err")].filter(Boolean).join(" / ");
+    renderFinishedShipmentHistory();
     return;
   }
   var unitIds = Array.from(new Set((itemR.data || []).map(function(row) { return row.finished_product_unit_id; })));
@@ -30887,7 +30981,9 @@ async function loadFinishedShipmentHistory() {
       .select("id,manufacturing_serial,product_no,gltek_part_number,genuine_part_number,manufacturer_part_number,manufacturer,status")
       .in("id", unitIds);
     if (unitR.error) {
-      if (wrap) wrap.innerHTML = "<div class='empty'>" + esc(unitR.error.message || t("msg_part_err")) + "</div>";
+      finishedShipmentHistoryRows = [];
+      finishedShipmentHistoryError = [finishedShipmentHistoryError, unitR.error.message || t("msg_part_err")].filter(Boolean).join(" / ");
+      renderFinishedShipmentHistory();
       return;
     }
     units = unitR.data || [];
@@ -30914,14 +31010,51 @@ async function loadFinishedShipmentHistory() {
   renderFinishedShipmentHistory();
 }
 
+function finishedShipmentPickingHistoryStatus(row) {
+  if (row.assignment_status === "shipped") return { key: "finished_shipping_picking_shipped", className: "shipped" };
+  if (row.assignment_status === "released") return { key: "finished_shipping_picking_released", className: "released" };
+  return { key: "finished_shipping_picking_waiting", className: "assigned" };
+}
+
+async function resumeFinishedShipmentHistory(dispatchNumber) {
+  var input = document.getElementById("finished-shipment-dispatch-input");
+  if (!input || !dispatchNumber) return;
+  input.value = dispatchNumber;
+  await loadFinishedShipmentDispatch();
+}
+
 function renderFinishedShipmentHistory() {
   var wrap = document.getElementById("finished-shipment-history");
   if (!wrap) return;
-  if (!finishedShipmentHistoryRows.length) {
+  if (!finishedShipmentPickingHistoryRows.length && !finishedShipmentHistoryRows.length && !finishedShipmentHistoryError) {
     wrap.innerHTML = "<div class='empty'>" + esc(t("finished_shipping_history_empty")) + "</div>";
     return;
   }
-  wrap.innerHTML = finishedShipmentHistoryRows.map(function(row) {
+  var pickingHtml = finishedShipmentPickingHistoryRows.map(function(row) {
+    var status = finishedShipmentPickingHistoryStatus(row);
+    var assignedAt = row.assigned_at ? customerOrderDateTimeText(row.assigned_at) : "-";
+    var meta = [row.dispatch_number, row.order_number, row.customer_name, assignedAt].filter(Boolean).join(" / ");
+    var actualPart = row.actual_part_number || row.ordered_part_number || "-";
+    var partMeta = row.match_type === "compatible" && row.ordered_part_number
+      ? actualPart + " / " + t("finished_shipping_compatible_badge") + " (" + tf("finished_shipping_ordered_part", { part: row.ordered_part_number }) + ")"
+      : actualPart;
+    var stockHtml = row.assignment_status === "assigned"
+      ? "<div class='finished-shipment-picking-stock'>" +
+          "<div><span>" + esc(t("finished_shipping_inventory_physical")) + "</span><strong>" + esc(String(row.physical_stock_qty == null ? "-" : row.physical_stock_qty)) + "</strong><small>" + esc(t("finished_shipping_inventory_unit")) + "</small></div>" +
+          "<div><span>" + esc(t("finished_shipping_inventory_reserved")) + "</span><strong>" + esc(String(row.active_reserved_qty == null ? "-" : row.active_reserved_qty)) + "</strong><small>" + esc(t("finished_shipping_inventory_unit")) + "</small></div>" +
+          "<div><span>" + esc(t("finished_shipping_inventory_available")) + "</span><strong>" + esc(String(row.available_stock_qty == null ? "-" : row.available_stock_qty)) + "</strong><small>" + esc(t("finished_shipping_inventory_unit")) + "</small></div>" +
+        "</div>"
+      : "";
+    var canResume = row.assignment_status === "assigned" && ["preparing", "ready"].indexOf(row.dispatch_status) >= 0;
+    return "<article class='finished-shipment-history-row finished-shipment-picking-row'>" +
+      "<div class='finished-shipment-history-head'><div><strong>" + esc(row.manufacturing_serial || "-") + "</strong><span>" + esc(partMeta) + "</span></div>" +
+      "<span class='finished-shipment-status " + esc(status.className) + "'>" + esc(t(status.key)) + "</span></div>" +
+      "<div class='finished-shipment-history-meta'>" + esc(meta || "-") + "</div>" +
+      stockHtml +
+      (canResume ? "<div class='finished-shipment-history-actions'><button type='button' class='btn-sm-edit production-action-secondary' data-finished-shipment-resume='" + esc(row.dispatch_number) + "'>" + esc(t("finished_shipping_resume")) + "</button></div>" : "") +
+    "</article>";
+  }).join("");
+  var shipmentHtml = finishedShipmentHistoryRows.map(function(row) {
     var active = row.status === "shipped";
     var warranty = finishedShipmentWarrantyState(row.warranty_expires_on);
     var serials = (row.units || []).map(function(unit) {
@@ -30941,6 +31074,13 @@ function renderFinishedShipmentHistory() {
     html += "</article>";
     return html;
   }).join("");
+  wrap.innerHTML =
+    (finishedShipmentHistoryError ? "<div class='finished-shipment-history-error'>" + esc(finishedShipmentHistoryError) + "</div>" : "") +
+    (pickingHtml ? "<section class='finished-shipment-history-section'><h4>" + esc(t("finished_shipping_picking_history_title")) + "</h4>" + pickingHtml + "</section>" : "") +
+    (shipmentHtml ? "<section class='finished-shipment-history-section'><h4>" + esc(t("finished_shipping_shipment_history_title")) + "</h4>" + shipmentHtml + "</section>" : "");
+  wrap.querySelectorAll("[data-finished-shipment-resume]").forEach(function(btn) {
+    btn.addEventListener("click", function() { resumeFinishedShipmentHistory(btn.dataset.finishedShipmentResume); });
+  });
   wrap.querySelectorAll("[data-finished-shipment-cancel]").forEach(function(btn) {
     btn.addEventListener("click", function() { cancelFinishedProductShipment(parseInt(btn.dataset.finishedShipmentCancel, 10)); });
   });
