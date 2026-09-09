@@ -20,6 +20,11 @@ const runtimeScriptPaths = [
 ];
 const curatedTranslations = {
   en: {
+    "出荷管理": "Shipping Operations",
+    "受注・出荷管理、ピッキング、出荷帳票、完品出荷、在庫更新。商品マスタ・販売価格設定・ユーザー管理は不可": "Manage orders, picking, shipping documents, finished-product shipping, and stock updates. Product master, sales pricing, and user management are unavailable.",
+    "受注・出荷": "Orders / Shipping",
+    "注文受付・ピッキング・B2 CSV・出荷処理": "Order acceptance, picking, B2 CSV, and shipping",
+    "出荷指示書・保証書・コア返却帳票": "Dispatch instructions, warranties, and core-return documents",
     "受取方法": "Delivery destination",
     "通常のお届け先": "Standard delivery address",
     "ヤマト運輸 営業所止め": "Yamato sales office pickup",
@@ -251,6 +256,11 @@ const curatedTranslations = {
     "本書、対象製品、製造シリアル、車両・取付情報をご提示ください。": "Present this document, the covered product, the manufacturing serial number, and the vehicle and installation information."
   },
   zh: {
+    "出荷管理": "出货管理",
+    "受注・出荷管理、ピッキング、出荷帳票、完品出荷、在庫更新。商品マスタ・販売価格設定・ユーザー管理は不可": "可管理订单、拣货、出货单据、成品出货和库存更新。不可管理商品主数据、销售价格和用户。",
+    "受注・出荷": "订单・出货",
+    "注文受付・ピッキング・B2 CSV・出荷処理": "订单受理、拣货、B2 CSV和出货处理",
+    "出荷指示書・保証書・コア返却帳票": "出货指示书、保修书和旧件返还单据",
     "受取方法": "收货方式",
     "通常のお届け先": "普通收货地址",
     "ヤマト運輸 営業所止め": "雅玛多营业所自取",

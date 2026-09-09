@@ -5866,7 +5866,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.922";
+var APP_VERSION       = "v1.1.923";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6644,7 +6644,7 @@ function canViewProductKindStockMgmt() {
   return canSeeCoreStockInfo();
 }
 function canEditProductKindStockMgmt() {
-  return userPermissionAllowed(userProfile, "stock.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]));
+  return userPermissionAllowed(userProfile, "stock.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor", "sales_editor"]));
 }
 function hasBaseManufacturingCostRole(profile) {
   return hasAccessRole(profile || userProfile, ["system_admin", "company_admin", "dept_admin"]);
@@ -6983,6 +6983,7 @@ var USER_ACCESS_ROLE_OPTIONS = [
   ["company_admin", "会社管理者"],
   ["dept_admin", "製造管理"],
   ["master_editor", "販売管理"],
+  ["sales_editor", "出荷管理"],
   ["production_editor", "製造担当"],
   ["sales_viewer", "営業閲覧"],
   ["internal_viewer", "社内閲覧"],
@@ -6996,6 +6997,7 @@ var USER_ACCESS_LEGACY_ROLE = {
   company_admin: "admin",
   dept_admin: "editor",
   master_editor: "editor",
+  sales_editor: "price_viewer",
   production_editor: "editor",
   sales_viewer: "price_viewer",
   all_viewer: "price_viewer",
@@ -7129,7 +7131,7 @@ function canManageFinishedProductShipping() {
   return userPermissionAllowed(
     userProfile,
     "finished_product_shipping.manage",
-    hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"])
+    hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor", "sales_editor"])
   );
 }
 function customerOrderFeatureEnabled(key) {
@@ -47344,6 +47346,7 @@ function accessRoleScopeText(roleCode) {
     case "company_admin": return "自社ユーザー管理・商品/価格/構成部品管理";
     case "dept_admin": return "製造/構成部品管理・製造原価基本許可・自部署ユーザー";
     case "master_editor": return "商品/画像・販売/基準価格・得意先・仕入/価格調査管理。在庫は閲覧のみ、製造原価は個別許可";
+    case "sales_editor": return "受注・出荷管理、ピッキング、出荷帳票、完品出荷、在庫更新。商品マスタ・販売価格設定・ユーザー管理は不可";
     case "production_editor": return "製造/構成部品管理。製造原価は個別許可";
     case "core_image_editor": return "商品/販売価格閲覧・使用済みコア画像の登録/削除。製造原価は個別許可";
     case "sales_viewer": return "商品・販売価格・価格調査履歴の閲覧。製造原価は個別許可";
@@ -47473,13 +47476,15 @@ function permissionOverviewScreenGroups(context) {
   var companyAdmins = ["system_admin", "company_admin"];
   var managementViewers = editors.concat(["all_viewer"]);
   var componentEditors = ["system_admin", "company_admin", "dept_admin", "production_editor"];
-  var internalRoles = ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "core_image_editor", "all_viewer", "sales_viewer", "internal_viewer"];
+  var internalRoles = ["system_admin", "company_admin", "dept_admin", "master_editor", "sales_editor", "production_editor", "core_image_editor", "all_viewer", "sales_viewer", "internal_viewer"];
+  var shippingEditors = ["system_admin", "company_admin", "master_editor", "sales_editor"];
   var basePriceViewers = ["system_admin", "company_admin", "dept_admin", "master_editor", "all_viewer"];
   var priceResearchViewers = ["system_admin", "company_admin", "master_editor", "all_viewer", "sales_viewer"];
   var priceResearchers = ["system_admin", "company_admin", "master_editor"];
   var userManagers = ["system_admin", "company_admin", "dept_admin"];
   var roleCanEdit = permissionOverviewRoleIn(role, editors);
   var roleCanEditProduction = permissionOverviewRoleIn(role, productionEditors);
+  var roleCanManageStock = permissionOverviewRoleIn(role, productionEditors.concat(["sales_editor"]));
   var roleCanViewProduction = permissionOverviewRoleIn(role, productionViewers);
   var roleCanManageCompany = permissionOverviewRoleIn(role, companyAdmins);
   var roleCanViewManagement = permissionOverviewRoleIn(role, managementViewers);
@@ -47563,7 +47568,8 @@ function permissionOverviewScreenGroups(context) {
   var researchManageable = permissionOverviewRoleIn(role, priceResearchers);
   var customerAccessManageable = permissionOverviewRoleIn(role, ["system_admin", "company_admin", "master_editor"]);
   var customerAccountManageable = customerAccessManageable;
-  var finishedShippingManageable = permissionOverviewRoleIn(role, ["system_admin", "company_admin", "master_editor"]);
+  var salesOrderManageable = permissionOverviewRoleIn(role, shippingEditors);
+  var finishedShippingManageable = permissionOverviewRoleIn(role, shippingEditors);
   var gltekPartNumberIssueAllowed = role === "system_admin" || (
     context.companyCode === "gltek" && permissionOverviewRoleIn(role, ["company_admin", "dept_admin"])
   );
@@ -47601,6 +47607,23 @@ function permissionOverviewScreenGroups(context) {
               ? permissionOverviewDenied("表示なし")
               : (roleIsInternal ? permissionOverviewLimited("得意先として表示中は表示なし") : permissionOverviewDenied("対象外")) },
             { label: "発注", state: permissionOverviewDenied("注文基盤未設定") }
+          ]
+        }
+      ]
+    },
+    {
+      title: "受注・出荷",
+      screens: [
+        {
+          title: "受注・出荷管理",
+          items: [
+            { label: "注文受付・ピッキング・B2 CSV・出荷処理", permissionKey: "sales_order.manage", state: screenState(salesOrderManageable) }
+          ]
+        },
+        {
+          title: "出荷帳票発行",
+          items: [
+            { label: "出荷指示書・保証書・コア返却帳票", permissionKey: "sales_order.manage", state: screenState(salesOrderManageable) }
           ]
         }
       ]
@@ -47699,7 +47722,7 @@ function permissionOverviewScreenGroups(context) {
           title: "商品区分別在庫",
           items: [
             { label: "画面・在庫情報", permissionKey: "stock.view", state: screenState(roleIsInternal) },
-            { label: "在庫数・保管情報の更新", permissionKey: "stock.manage", state: yesNo(roleCanEditProduction, "可", "不可") }
+            { label: "在庫数・保管情報の更新", permissionKey: "stock.manage", state: yesNo(roleCanManageStock, "可", "不可") }
           ]
         },
         {
