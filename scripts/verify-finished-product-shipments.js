@@ -101,6 +101,12 @@ assert(functionSource("buildSalesOrderDocumentHtml").includes("shipment-instruct
 const dispatchLoadSource = functionSource("loadFinishedShipmentDispatch");
 assert(dispatchLoadSource.includes('sb.rpc("get_sales_order_dispatch"'), "shipment instruction load RPC is not called");
 assert(dispatchLoadSource.includes("refreshFinishedShipmentContext(order)"), "loaded dispatch does not refresh the workspace");
+assert(dispatchLoadSource.includes("finished_shipping_dispatch_resumed"), "dispatch reload must report restored serial assignments");
+const enterShipmentSource = functionSource("enterFinishedProductShipping");
+assert(enterShipmentSource.includes("if (dispatch) await loadFinishedShipmentDispatch()"), "opening shipment checking must refresh stale dispatch state");
+const reloadWorkspaceSource = functionSource("reloadFinishedShipmentWorkspace");
+assert(reloadWorkspaceSource.includes("await loadFinishedShipmentDispatch()"), "screen reload must refresh the current dispatch");
+assert(reloadWorkspaceSource.includes("await loadFinishedShipmentHistory()"), "screen reload must also refresh shipment history");
 const cameraLibrarySource = functionSource("loadFinishedShipmentCameraLibrary");
 assert(cameraLibrarySource.includes("vendor/zxing-browser-0.2.0.min.js"), "self-hosted pinned camera scanner library is missing");
 assert(cameraLibrarySource.includes('script.integrity = "sha384-HRtzk9lZgkbSgvUyQrnfC/GxiXZgwaNyD7hC9wcXlsBpDhkS80ISl73juef2FRuf"'), "camera scanner library must use the reviewed subresource integrity hash");
@@ -174,7 +180,9 @@ assert(!assignmentSource.includes("!orderItemId"), "scanner assignment must not 
 
 const scanSource = functionSource("addFinishedShipmentSerial");
 assert(scanSource.includes('.from("finished_product_units")'), "serial scan does not look up finished units");
-assert(scanSource.includes('r.data.status !== "available"'), "unavailable units are not blocked");
+assert(scanSource.includes("var existingAssignment = finishedShipmentFlattenAssignments().find"), "already verified serials must be recognized after resume");
+assert(scanSource.includes("setFinishedShipmentPickingBlocked(false)"), "rescanning an assigned serial must clear transient picking errors");
+assert(!scanSource.includes('r.data.status !== "available"'), "client status must not block the idempotent server assignment check");
 assert(scanSource.includes("assignFinishedShipmentSerial(null, serial, r.data)"), "scanned serial must use the server-side exact-or-compatible matcher and preserve its visual evaluation target");
 assert(!scanSource.includes("finishedShipmentOrderItemForUnit"), "scanner must not reject compatible products through exact client matching");
 assert(scanSource.includes("assignFinishedShipmentSerial"), "scanner input and manual selection do not share assignment logic");
@@ -214,6 +222,7 @@ assert(app.includes('document.getElementById("btn-finished-shipment-camera-dispa
 assert(app.includes('document.getElementById("btn-finished-shipment-camera-serial").addEventListener("click"'), "serial camera button is not bound");
 assert(app.includes('document.getElementById("finished-shipment-camera-cancel").addEventListener("click", closeFinishedShipmentCamera)'), "camera cancel button is not bound");
 assert(app.includes('document.getElementById("btn-finished-shipment-candidate-reload").addEventListener("click", loadFinishedShipmentCandidates)'), "manual candidate search is not bound");
+assert(app.includes('el.addEventListener("click", reloadFinishedShipmentWorkspace)'), "screen reload button must refresh dispatch state and history");
 
 const sandbox = { normalizeAsciiWidth(value) { return String(value); } };
 vm.createContext(sandbox);
