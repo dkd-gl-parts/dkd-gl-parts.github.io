@@ -39,6 +39,7 @@ for (const fragment of [
   ".sales-order-toolbar { display: block; padding: 10px 16px; }",
   ".sales-order-title-block { display: none; }",
   ".sales-order-detail-overview-grid { grid-template-columns: minmax(485px, 1.03fr) minmax(410px, .97fr);",
+  ".sales-order-detail-overview-grid .sales-order-item-table { overflow-x: clip; }",
   ".sales-order-detail-overview-grid .sales-order-item-head,",
   "grid-template-columns: minmax(120px, 1fr) 72px 32px 64px 70px 78px; min-width: 0;",
   ".sales-order-detail-overview-grid .sales-order-address .sales-order-section-heading { grid-column: 1 / -1; grid-row: 1; }",

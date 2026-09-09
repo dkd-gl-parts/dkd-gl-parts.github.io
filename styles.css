@@ -9366,6 +9366,7 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   #screen-sales-order-mgmt .sales-order-detail-overview-grid > .sales-order-detail-section:first-child { border-right: 1px solid #dbe1e6; padding-right: 14px; }
   #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-section-heading { margin-bottom: 8px; }
   #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-section-heading p { display: none; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-item-table { overflow-x: clip; }
   #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-item-head,
   #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-item-row { grid-template-columns: minmax(120px, 1fr) 72px 32px 64px 70px 78px; min-width: 0; gap: 5px; padding: 8px 7px; }
   #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-item-row { min-height: 60px; font-size: 14px; }
