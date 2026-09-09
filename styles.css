@@ -3332,7 +3332,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 }
 .app-install-toolbar-demo {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: center;
   gap: 5px;
   margin-top: 13px;
@@ -3350,6 +3350,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   font-weight: 300;
 }
 .app-install-toolbar-address {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -3381,13 +3382,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   box-shadow: 0 0 0 4px rgba(221,0,38,.08);
   animation: app-install-target-pulse 1.4s ease-in-out infinite;
 }
-.app-install-more-glyph,
-.app-install-more-icon {
-  font-family: Arial, sans-serif;
-  font-weight: 900;
-  letter-spacing: 1px;
+.app-install-toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  min-height: 38px;
+  margin: 0 auto;
+  color: #3268bd;
 }
-.app-install-more-glyph { font-size: 24px; padding-bottom: 10px; }
+.app-install-toolbar-forward { font-size: 34px; font-weight: 300; opacity: .38; }
+.app-install-toolbar-bookmark { font-size: 23px; }
+.app-install-toolbar-tabs { font-size: 25px; }
 .app-install-share-glyph {
   display: inline-flex;
   align-items: flex-start;
@@ -3596,16 +3602,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   color: #17395f;
   animation: app-install-target-pulse 1.4s ease-in-out infinite;
 }
-.app-install-more-icon {
-  padding-bottom: 9px;
-  font-size: 29px;
-}
 .app-install-coachmark-main strong { display: block; font-size: 15px; line-height: 1.45; }
 .app-install-coachmark-main p { margin: 4px 0 0; color: #5f6f84; font-size: 12px; font-weight: 600; line-height: 1.55; }
 .app-install-coachmark-pointer {
   position: absolute;
-  right: 7%;
+  left: 50%;
   bottom: -8px;
+  margin-left: -15px;
   color: var(--dcats-brand-red);
   font-size: 30px;
   font-weight: 900;

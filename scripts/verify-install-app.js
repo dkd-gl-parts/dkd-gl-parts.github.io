@@ -28,7 +28,10 @@ expect(html.includes('class="app-install-verification-note"'), "Verified shortcu
 expect(html.includes('id="btn-install-ios-coachmark"'), "iPhone Share-button navigation action is missing");
 expect(html.includes('id="app-install-share-coachmark"'), "iPhone Share-button coachmark is missing");
 expect(html.includes('class="app-install-toolbar-demo app-install-toolbar-compact"'), "iPhone compact Safari toolbar preview is missing");
-expect(html.includes('class="app-install-toolbar-target app-install-more-glyph"'), "iPhone More-button target is missing");
+expect(html.includes('class="app-install-toolbar-button app-install-toolbar-target"'), "iPhone Share-button target is missing");
+expect(html.includes('data-i18n="app_install_ios_step_share">Safari画面下部の共有ボタン'), "iPhone guidance must start with the visible Safari Share button");
+expect(!html.includes('app-install-more-glyph'), "The obsolete bottom-right More-button target must not return");
+expect(html.includes('data-i18n="app_install_ios_step_web_app"'), "Current Safari Web App toggle step is missing");
 expect(html.includes('id="app-install-ios-browser-guide"'), "Non-Safari iPhone guidance is missing");
 expect(html.includes('id="btn-install-copy-url"'), "Non-Safari URL-copy action is missing");
 expect(html.includes('data-i18n="app_install_ios_missing_note"'), "Safari Edit Actions fallback is missing");
@@ -43,7 +46,7 @@ expect((html.match(/data-install-entry/g) || []).length === 4, "Install action s
 expect((html.match(/data-i18n="app_install_short_action"/g) || []).length === 3, "Authenticated header install actions must have a readable compact label");
 expect(install.includes("var installAllowed = false;"), "Install access must default to denied");
 expect(install.includes('var INSTALL_CAMPAIGN_ID = "dcats-icon-v4-verified";'), "Install prompting must be tied to the verified icon campaign");
-expect(install.includes('var INSTALL_GUIDE_REVISION = "safari-v2";'), "The corrected compact Safari guidance must prompt incomplete users again");
+expect(install.includes('var INSTALL_GUIDE_REVISION = "safari-v3-share";'), "The corrected Safari Share-button guidance must prompt incomplete users again");
 expect(install.includes("window.localStorage"), "Install completion must persist on the device");
 expect(install.includes("window.sessionStorage"), "Install prompting must be limited to once per login session");
 expect(install.includes("function publishInstallVerification(method)"), "Verified browser installation and shortcut launch must be queued for logging");
@@ -165,11 +168,11 @@ function verifyInstallRoleGate() {
   listeners["dcats:install-access"]({ detail: { allowed: true } });
   expect(entries.every((entry) => !entry.hidden), "Install entries must be visible for every authenticated user on eligible devices");
   expect(dialog.hidden === false && introGuide.hidden === false, "Install explanation must open after eligible login");
-  expect(sessionStorage.getItem("dcats_install_prompted_dcats-icon-v4-verified_safari-v2") === "1", "Install prompt must be recorded for the corrected guide revision");
+  expect(sessionStorage.getItem("dcats_install_prompted_dcats-icon-v4-verified_safari-v3-share") === "1", "Install prompt must be recorded for the corrected guide revision");
   listeners["dcats:install-access"]({ detail: { allowed: false } });
   expect(entries.every((entry) => entry.hidden), "Install entries must be hidden immediately after access is revoked");
   expect(dialog.hidden, "Install explanation must close on logout");
-  expect(sessionStorage.getItem("dcats_install_prompted_dcats-icon-v4-verified_safari-v2") === null, "Logout must allow the prompt on the next login");
+  expect(sessionStorage.getItem("dcats_install_prompted_dcats-icon-v4-verified_safari-v3-share") === null, "Logout must allow the prompt on the next login");
   listeners["dcats:install-access"]({ detail: { allowed: true } });
   expect(dialog.hidden === false, "Install explanation must return on the next login when incomplete");
   startButton.listeners.click();
@@ -184,7 +187,7 @@ function verifyInstallRoleGate() {
   expect(iosGuide.hidden === false && coachmarkButton.hidden === false, "iPhone install flow must reveal the visual Share-button navigation action");
   coachmarkButton.listeners.click();
   expect(dialog.hidden && shareCoachmark.hidden === false, "Share-button navigation must replace the dialog with a bottom-screen coachmark");
-  expect(sessionStorage.getItem("dcats_install_coachmark_dcats-icon-v4-verified_safari-v2") === "1", "More-menu navigation must survive a page reload while installation is in progress");
+  expect(sessionStorage.getItem("dcats_install_coachmark_dcats-icon-v4-verified_safari-v3-share") === "1", "Share-button navigation must survive a page reload while installation is in progress");
   listeners.appinstalled();
   expect(dialog.hidden && shareCoachmark.hidden, "Browser-confirmed installation must close install guidance");
   expect(localStorage.getItem("dcats_install_complete_dcats-icon-v4-verified") === "1", "Browser-confirmed installation must persist for the verified icon campaign");
@@ -282,6 +285,7 @@ for (const key of [
   "app_install_copy_failed",
   "app_install_ios_step_share",
   "app_install_ios_step_add_home",
+  "app_install_ios_step_web_app",
   "app_install_ios_step_confirm",
   "app_install_ios_missing_title",
   "app_install_ios_missing_note",
@@ -304,13 +308,13 @@ expect(styles.includes(".app-install-dialog-card"), "Install dialog styling is m
 expect(styles.includes(".app-install-verification-note"), "Verified shortcut-launch guidance styling is missing");
 expect(styles.includes(".app-install-toolbar-demo"), "iPhone browser toolbar preview styling is missing");
 expect(styles.includes(".app-install-toolbar-address"), "iPhone compact Safari address-bar styling is missing");
-expect(styles.includes(".app-install-more-glyph"), "iPhone More-button styling is missing");
+expect(styles.includes(".app-install-share-glyph"), "iPhone Share-button styling is missing");
 expect(styles.includes(".app-install-browser-warning"), "Non-Safari warning styling is missing");
 expect(styles.includes(".app-install-copy-row"), "Non-Safari URL-copy styling is missing");
 expect(styles.includes(".app-install-missing-action-note"), "Safari Edit Actions fallback styling is missing");
 expect(styles.includes(".app-install-share-coachmark"), "iPhone Share-button coachmark styling is missing");
 expect(styles.includes(".app-install-coachmark-pointer"), "iPhone Share-button pointer styling is missing");
-expect(styles.includes("right: 7%;"), "iPhone coachmark pointer must target the bottom-right More button");
+expect(styles.includes("left: 50%;"), "iPhone coachmark pointer must target the centered bottom-toolbar Share button");
 expect(styles.includes(".app-install-header-button span { display: inline;"), "Mobile install action must not collapse to an unexplained icon");
 expect(styles.includes("body.app-install-dialog-open"), "Install dialog scroll lock is missing");
 expect(/\/site\.webmanifest\r?\n\s+Cache-Control: no-cache/.test(headers), "Manifest must be revalidated after releases");
