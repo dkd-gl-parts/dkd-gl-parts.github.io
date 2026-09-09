@@ -380,9 +380,13 @@ async function hydrateSalesOrderRevisionCorePolicies(state) {
 }
 
 function salesOrderRevisionItemHtml(item, index) {
+  var coreChargeTotal = item.core_return_handling === "charge_no_return"
+    ? Number(item.quantity || 1) * salesOrderRevisionConfiguredCoreCharge(item)
+    : 0;
   return "<div class='customer-order-line' data-revision-item='" + index + "'><div class='customer-order-product'><span>" + esc(productCategoryLabel(item) || "") + " / " + esc(customerProductKindLabel(item.product_kind)) + "</span><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || item.dkd_shohin_id) + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ")) + "</small>" + salesOrderRevisionCoreChoiceHtml(item, index) + "</div>" +
     "<label class='customer-order-qty'><span>" + esc(t("customer_order_quantity")) + "</span><input aria-label='" + esc(t("customer_order_quantity")) + "' data-revision-quantity type='number' min='1' max='99' step='1' value='" + esc(item.quantity) + "'></label><label class='customer-order-line-metric'><span>" + esc(t("customer_order_unit_price")) + "</span><input aria-label='" + esc(t("customer_order_unit_price")) + "' data-revision-price type='number' min='0' max='100000000' step='1' value='" + esc(item.revision_unit_price_jpy == null ? "" : item.revision_unit_price_jpy) + "'></label>" +
-    "<div class='customer-order-line-metric total'><span>" + esc(t("customer_order_subtotal")) + "</span><strong data-revision-total>" + esc(customerOrderCurrency(Number(item.quantity) * salesOrderRevisionEffectiveUnitPrice(item))) + "</strong></div><button type='button' class='customer-order-remove' data-revision-remove='" + index + "' aria-label='この商品を削除' title='この商品を削除'>×</button></div>";
+    "<div class='customer-order-line-metric core-charge'><span>" + esc(t("customer_order_core_charge_total")) + "</span><strong data-revision-core-charge>" + esc(coreChargeTotal > 0 ? customerOrderCurrency(coreChargeTotal) : "-") + "</strong></div>" +
+    "<div class='customer-order-line-metric total'><span>" + esc(t("customer_order_line_total")) + "</span><strong data-revision-total>" + esc(customerOrderCurrency(Number(item.quantity) * salesOrderRevisionEffectiveUnitPrice(item))) + "</strong></div><button type='button' class='customer-order-remove' data-revision-remove='" + index + "' aria-label='この商品を削除' title='この商品を削除'>×</button></div>";
 }
 
 function salesOrderRevisionCaptureItems() {
@@ -411,6 +415,10 @@ function renderSalesOrderRevisionItems() {
       salesOrderRevisionCaptureItems();
       body.querySelectorAll("[data-revision-item]").forEach(function(row) {
         var item = salesOrderRevision.items[Number(row.dataset.revisionItem)];
+        var coreChargeTotal = item.core_return_handling === "charge_no_return"
+          ? Number(item.quantity || 1) * salesOrderRevisionConfiguredCoreCharge(item)
+          : 0;
+        row.querySelector("[data-revision-core-charge]").textContent = coreChargeTotal > 0 ? customerOrderCurrency(coreChargeTotal) : "-";
         row.querySelector("[data-revision-total]").textContent = customerOrderCurrency(Number(item.quantity) * salesOrderRevisionEffectiveUnitPrice(item));
       });
     });

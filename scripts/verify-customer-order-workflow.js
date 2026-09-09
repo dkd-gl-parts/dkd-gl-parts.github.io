@@ -301,15 +301,17 @@ const orderCartRenderer = sourceBetween("function renderCustomerOrderCart", "fun
 if (!orderCartRenderer.includes("canRegisterInternalCustomerOrder() && item.core_return_required") ||
     !orderCartRenderer.includes('t("customer_order_core_charge_unset")') ||
     !orderCartRenderer.includes('t("customer_order_core_charge_total")') ||
+    !orderCartRenderer.includes("customerOrderProductSubtotal(customerOrderPreview)") ||
+    !orderCartRenderer.includes("customer-order-line-metric core-charge") ||
     !orderCartRenderer.includes('t("customer_order_core_handling_note")') ||
     !orderCartRenderer.includes("class='setup-required'")) {
-  throw new Error("internal order entry must clearly show the core handling choice, missing setup, and charged amount");
+  throw new Error("internal order entry must show product amounts and billed core charges as separate items");
 }
 [
   'customer_order_core_return_standard: "後日、交換したコアを返却する"',
   'customer_order_core_charge_no_return_option: "コアを返却できない（{amount}を支払う）"',
   'customer_order_core_charge_no_return_status: "コア代金請求済み"',
-  'customer_order_core_charge_note: "コアを返却できない受注として、商品マスタのコア代金を商品金額に計上します。返送用送り状は発行しません。"',
+  'customer_order_core_charge_note: "コアを返却できない受注として、商品マスタのコア代金を商品代とは別項目で計上します。返送用送り状は発行しません。"',
   'sales_core_policy_help: "商品マスタで返却不要の商品にはコア代金は発生せず、受注時にも計上しません。返却必要の商品だけ、返却できない場合の請求額を設定できます。"'
 ].forEach((fragment) => {
   if (!source.includes(fragment)) throw new Error(`core charge billing semantics are missing: ${fragment}`);
@@ -318,8 +320,31 @@ if ((source.match(/customer_order_core_handling_note:/g) || []).length !== 3 ||
     source.includes('customer_order_core_charge_no_return_option: "返却不要（')) {
   throw new Error("core handling must distinguish later return, billed core charge, and no-return products in every language");
 }
-if (!source.includes("function customerOrderHasBilledCoreCharge") || source.includes("function customerOrderHasCoreChargeNoReturn")) {
+if (!source.includes("function customerOrderHasBilledCoreCharge") ||
+    !source.includes("function customerOrderProductSubtotal") ||
+    !source.includes("function customerOrderCoreChargeTotal") ||
+    source.includes("function customerOrderHasCoreChargeNoReturn")) {
   throw new Error("order status helpers must describe a billed core charge without classifying the product as no-return");
+}
+const accountingContext = {};
+vm.runInNewContext(sourceBetween("function customerOrderCoreHandlingValue", "function configureCustomerOrderDevelopmentPreview"), accountingContext);
+const chargedItem = {core_return_handling:"charge_no_return",quantity:2,unit_price_jpy:10500,line_total_jpy:21000,core_charge_jpy:3000,discount_jpy:500};
+if (accountingContext.customerOrderProductUnitPrice(chargedItem) !== 7500 ||
+    accountingContext.customerOrderProductLineTotal(chargedItem) !== 15000 ||
+    accountingContext.customerOrderCoreChargeTotal({items:[chargedItem]}) !== 6000 ||
+    accountingContext.customerOrderProductSubtotal({items:[chargedItem],subtotal_jpy:21000}) !== 15000) {
+  throw new Error("product amount and billed core charge must be calculated as separate accounting items");
+}
+const serverSeparatedItem = Object.assign({}, chargedItem, {product_unit_price_jpy:7400,product_line_total_jpy:14800,core_charge_line_total_jpy:6200});
+if (accountingContext.customerOrderProductUnitPrice(serverSeparatedItem) !== 7400 ||
+    accountingContext.customerOrderProductLineTotal(serverSeparatedItem) !== 14800 ||
+    accountingContext.customerOrderCoreChargeTotal({items:[serverSeparatedItem]}) !== 6200) {
+  throw new Error("server-derived separate accounting fields must take precedence");
+}
+const previewSeparatedItem = Object.assign({}, chargedItem, {base_unit_price_jpy:7600});
+if (accountingContext.customerOrderProductUnitPrice(previewSeparatedItem) !== 7600 ||
+    accountingContext.customerOrderProductLineTotal(previewSeparatedItem) !== 15200) {
+  throw new Error("server-calculated preview product prices must take precedence");
 }
 [
   "受注時に交換コアを返却する運用ではない",

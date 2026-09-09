@@ -354,11 +354,14 @@ var TRANSLATIONS = {
     customer_order_core_charge_no_return_status: "コア代金請求済み",
     customer_order_core_charge_unset: "返却不可時コア代金が未設定（選択不可）",
     customer_order_core_charge_setup: "商品マスタに返却不可時コア代金を設定してください。",
-    customer_order_core_charge_included: "コア代金を計上",
-    customer_order_core_charge_note: "コアを返却できない受注として、商品マスタのコア代金を商品金額に計上します。返送用送り状は発行しません。",
-    customer_order_core_charge_total: "受注時に計上したコア代金",
+    customer_order_core_charge_included: "コア代金を別項目で計上",
+    customer_order_core_charge_note: "コアを返却できない受注として、商品マスタのコア代金を商品代とは別項目で計上します。返送用送り状は発行しません。",
+    customer_order_core_charge_total: "コア代金",
     customer_order_quantity: "数量",
     customer_order_unit_price: "単価",
+    customer_order_product_unit_price: "商品単価",
+    customer_order_product_subtotal: "商品小計",
+    customer_order_line_total: "明細計",
     customer_order_stock_summary: "受注可能 {total}（自品番 {exact} / 互換 {compatible}）",
     customer_order_compatible_stock_allocated: "互換在庫を引き当てます",
     customer_order_subtotal: "小計",
@@ -2271,11 +2274,14 @@ var TRANSLATIONS = {
     customer_order_core_charge_no_return_status: "Core charge billed",
     customer_order_core_charge_unset: "Core charge for unavailable return is not set",
     customer_order_core_charge_setup: "Set the unavailable-return core charge in Product Master.",
-    customer_order_core_charge_included: "Core charge billed",
-    customer_order_core_charge_note: "The exchange core cannot be returned, so the server adds the Product Master core charge to this order. No return label is issued.",
-    customer_order_core_charge_total: "Core charge billed with order",
+    customer_order_core_charge_included: "Core charge billed separately",
+    customer_order_core_charge_note: "The exchange core cannot be returned, so the Product Master core charge is billed as a separate line from the product. No return label is issued.",
+    customer_order_core_charge_total: "Core charge",
     customer_order_quantity: "Qty",
     customer_order_unit_price: "Unit Price",
+    customer_order_product_unit_price: "Product unit price",
+    customer_order_product_subtotal: "Product subtotal",
+    customer_order_line_total: "Line total",
     customer_order_stock_summary: "Available {total} (Exact {exact} / Compatible {compatible})",
     customer_order_compatible_stock_allocated: "Compatible stock will be allocated",
     customer_order_subtotal: "Subtotal",
@@ -4133,11 +4139,14 @@ var TRANSLATIONS = {
     customer_order_core_charge_no_return_status: "旧件费已计费",
     customer_order_core_charge_unset: "未设置无法返还时的旧件费",
     customer_order_core_charge_setup: "请在商品主数据中设置无法返还时的旧件费。",
-    customer_order_core_charge_included: "已计入旧件费",
-    customer_order_core_charge_note: "因交换旧件无法返还，系统将商品主数据中的旧件费计入订单，不发行返送运单。",
-    customer_order_core_charge_total: "下单时计入的旧件费",
+    customer_order_core_charge_included: "旧件费另行计费",
+    customer_order_core_charge_note: "因交换旧件无法返还，商品主数据中的旧件费将与商品金额分开计费，不发行返送运单。",
+    customer_order_core_charge_total: "旧件费",
     customer_order_quantity: "数量",
     customer_order_unit_price: "单价",
+    customer_order_product_unit_price: "商品单价",
+    customer_order_product_subtotal: "商品小计",
+    customer_order_line_total: "明细合计",
     customer_order_stock_summary: "可订购 {total}（本品号 {exact} / 兼容品 {compatible}）",
     customer_order_compatible_stock_allocated: "将分配兼容品库存",
     customer_order_subtotal: "小计",
@@ -5875,7 +5884,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.927";
+var APP_VERSION       = "v1.1.928";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -11175,6 +11184,47 @@ function customerOrderHasBilledCoreCharge(order) {
   });
 }
 
+function customerOrderBilledCoreChargePerUnit(item) {
+  return customerOrderCoreHandlingValue(item) === "charge_no_return"
+    ? Math.max(0, Number(item && item.core_charge_jpy) || 0)
+    : 0;
+}
+
+function customerOrderProductUnitPrice(item) {
+  if (item && item.product_unit_price_jpy !== null && item.product_unit_price_jpy !== undefined) {
+    return Math.max(0, Number(item.product_unit_price_jpy) || 0);
+  }
+  if (item && item.base_unit_price_jpy !== null && item.base_unit_price_jpy !== undefined) {
+    return Math.max(0, Number(item.base_unit_price_jpy) || 0);
+  }
+  return Math.max(0, (Number(item && item.unit_price_jpy) || 0) - customerOrderBilledCoreChargePerUnit(item));
+}
+
+function customerOrderProductLineTotal(item) {
+  if (item && item.product_line_total_jpy !== null && item.product_line_total_jpy !== undefined) {
+    return Math.max(0, Number(item.product_line_total_jpy) || 0);
+  }
+  var quantity = Math.max(1, Number(item && item.quantity) || 1);
+  return Math.max(0, customerOrderProductUnitPrice(item) * quantity);
+}
+
+function customerOrderCoreChargeTotal(order) {
+  var items = Array.isArray(order && order.items) ? order.items : [];
+  return items.reduce(function(total, item) {
+    var orderItem = item && item.order_item && typeof item.order_item === "object" ? item.order_item : item;
+    var lineTotal = orderItem && orderItem.core_charge_line_total_jpy;
+    return total + (lineTotal !== null && lineTotal !== undefined
+      ? Math.max(0, Number(lineTotal) || 0)
+      : customerOrderBilledCoreChargePerUnit(orderItem) * Math.max(1, Number(orderItem.quantity) || 1));
+  }, 0);
+}
+
+function customerOrderProductSubtotal(order) {
+  var subtotal = Math.max(0, Number(order && order.subtotal_jpy) || 0);
+  var reportedCoreCharge = Math.max(0, Number(order && order.core_charge_total_jpy) || 0);
+  return Math.max(0, subtotal - (reportedCoreCharge || customerOrderCoreChargeTotal(order)));
+}
+
 function configureCustomerOrderDevelopmentPreview() {
   var previewMode = canPreviewCustomerOrdering();
   var internalRegistration = canRegisterInternalCustomerOrder();
@@ -11213,9 +11263,14 @@ function renderCustomerOrderCart() {
     var selectedCoreHandling = item.core_return_handling === "charge_no_return" ? "charge_no_return" : "standard";
     var configuredCoreCharge = Math.max(0, parseInt(item.core_charge_jpy, 10) || 0);
     var displayedCoreCharge = selectedCoreHandling === "charge_no_return" ? configuredCoreCharge : 0;
-    var unitPrice = confirmed
+    var billedCoreCharge = confirmed
+      ? customerOrderBilledCoreChargePerUnit(confirmed)
+      : displayedCoreCharge;
+    var billedCoreChargeTotal = billedCoreCharge * Number(item.quantity || 1);
+    var effectiveUnitPrice = confirmed
       ? confirmed.unit_price_jpy
       : (item.display_unit_price == null ? null : Number(item.display_unit_price) + displayedCoreCharge);
+    var productUnitPrice = effectiveUnitPrice == null ? null : Math.max(0, Number(effectiveUnitPrice) - billedCoreCharge);
     var stockQty = confirmed ? confirmed.available_stock_qty : item.display_stock_qty;
     var exactStockQty = confirmed ? confirmed.exact_available_stock_qty : item.display_exact_stock_qty;
     var compatibleStockQty = confirmed ? confirmed.compatible_available_stock_qty : item.display_compatible_stock_qty;
@@ -11232,8 +11287,8 @@ function renderCustomerOrderCart() {
     var usesCompatibleStock = confirmed
       ? confirmed.uses_compatible_stock === true
       : (hasStockBreakdown && Number(item.quantity || 1) > Number(exactStockQty) && Number(compatibleStockQty) > 0);
-    var stockMeta = [displayedCoreCharge > 0 ? t("customer_order_core_charge_included") : "", stockSummary].filter(Boolean).join(" / ");
-    var lineTotal = confirmed ? confirmed.line_total_jpy : (unitPrice == null ? null : Number(unitPrice) * Number(item.quantity || 1));
+    var stockMeta = [billedCoreCharge > 0 ? t("customer_order_core_charge_included") : "", stockSummary].filter(Boolean).join(" / ");
+    var lineTotal = confirmed ? confirmed.line_total_jpy : (effectiveUnitPrice == null ? null : Number(effectiveUnitPrice) * Number(item.quantity || 1));
     var coreRequired = confirmed
       ? confirmed.core_return_required === true
       : item.core_return_required === true && selectedCoreHandling !== "charge_no_return";
@@ -11255,8 +11310,9 @@ function renderCustomerOrderCart() {
     return "<div class='customer-order-line' data-order-key='" + esc(item.key) + "'>" +
       "<div class='customer-order-product'><span>" + esc(productCategoryLabel(product) || product.category || "-") + "</span><strong>" + esc(product.genuine_part_number || product.manufacturer_part_number || "-") + "</strong><small>" + esc([product.manufacturer, product.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small>" + coreBadge + coreChoice + "</div>" +
       "<label class='customer-order-qty'><span>" + esc(t("customer_order_quantity")) + "</span><input type='number' min='1' max='99' step='1' value='" + esc(item.quantity) + "' data-order-quantity='" + esc(item.key) + "'></label>" +
-      "<div class='customer-order-line-metric'><span>" + esc(t("customer_order_unit_price")) + "</span><strong>" + esc(customerOrderCurrency(unitPrice)) + "</strong><small>" + esc(stockMeta) + "</small>" + (usesCompatibleStock ? "<small class='compatible-stock'>" + esc(t("customer_order_compatible_stock_allocated")) + "</small>" : "") + "</div>" +
-      "<div class='customer-order-line-metric total'><span>" + esc(t("customer_order_subtotal")) + "</span><strong>" + esc(customerOrderCurrency(lineTotal)) + "</strong></div>" +
+      "<div class='customer-order-line-metric'><span>" + esc(t("customer_order_unit_price")) + "</span><strong>" + esc(customerOrderCurrency(productUnitPrice)) + "</strong><small>" + esc(stockMeta) + "</small>" + (usesCompatibleStock ? "<small class='compatible-stock'>" + esc(t("customer_order_compatible_stock_allocated")) + "</small>" : "") + "</div>" +
+      "<div class='customer-order-line-metric core-charge'><span>" + esc(t("customer_order_core_charge_total")) + "</span><strong>" + esc(billedCoreChargeTotal > 0 ? customerOrderCurrency(billedCoreChargeTotal) : "-") + "</strong></div>" +
+      "<div class='customer-order-line-metric total'><span>" + esc(t("customer_order_line_total")) + "</span><strong>" + esc(customerOrderCurrency(lineTotal)) + "</strong></div>" +
       "<button class='customer-order-remove' type='button' data-order-remove='" + esc(item.key) + "' aria-label='削除'>×</button>" +
     "</div>";
   }).join("");
@@ -11299,7 +11355,7 @@ function renderCustomerOrderCart() {
   updateCustomerOrderCoreReturnServiceVisibility();
   if (summary) {
     if (customerOrderPreview && customerOrderPreview.valid === true) {
-      summary.innerHTML = "<div><span>商品計</span><strong>" + esc(customerOrderCurrency(customerOrderPreview.subtotal_jpy)) + "</strong></div>" +
+      summary.innerHTML = "<div><span>商品計</span><strong>" + esc(customerOrderCurrency(customerOrderProductSubtotal(customerOrderPreview))) + "</strong></div>" +
         (Number(customerOrderPreview.core_charge_total_jpy) > 0 ? "<div class='core-charge'><span>" + esc(t("customer_order_core_charge_total")) + "</span><strong>" + esc(customerOrderCurrency(customerOrderPreview.core_charge_total_jpy)) + "</strong></div>" : "") +
         "<div><span>送料</span><strong>" + esc(customerOrderCurrency(customerOrderPreview.shipping_fee_jpy)) + "</strong></div>" +
         "<div><span>消費税</span><strong>" + esc(customerOrderCurrency(customerOrderPreview.tax_jpy)) + "</strong></div>" +
@@ -15423,9 +15479,10 @@ async function acceptCheckedSalesOrders() {
 function salesOrderItemRowsHtml(items) {
   items = Array.isArray(items) ? items : [];
   if (!items.length) return "<div class='sales-order-empty'>明細がありません。</div>";
-  return "<div class='sales-order-item-table'><div class='sales-order-item-head'><span>品番</span><span>区分</span><span>数量</span><span>単価</span><span>小計</span><span>コア返却</span></div>" + items.map(function(item) {
+  return "<div class='sales-order-item-table'><div class='sales-order-item-head'><span>品番</span><span>区分</span><span>数量</span><span>" + esc(t("customer_order_product_unit_price")) + "</span><span>" + esc(t("customer_order_product_subtotal")) + "</span><span>" + esc(t("customer_order_core_charge_total")) + "</span><span>コア返却</span></div>" + items.map(function(item) {
     var coreHandling = customerOrderCoreHandlingValue(item);
-    return "<div class='sales-order-item-row'><div><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || "-") + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small></div><span>" + esc(customerProductKindLabel(item.product_kind)) + "</span><strong>" + esc(item.quantity || 1) + "</strong><span>" + esc(customerOrderCurrency(item.unit_price_jpy)) + (coreHandling === "charge_no_return" ? "<small>" + esc(t("customer_order_core_charge_included")) + "</small>" : "") + "</span><strong>" + esc(customerOrderCurrency(item.line_total_jpy)) + "</strong><span class='sales-order-core " + (coreHandling === "return_required" ? "required" : (coreHandling === "charge_no_return" ? "charged" : "none")) + "'>" + esc(customerOrderCoreHandlingLabel(item)) + "</span></div>";
+    var coreChargeTotal = customerOrderBilledCoreChargePerUnit(item) * Math.max(1, Number(item.quantity) || 1);
+    return "<div class='sales-order-item-row'><div><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || "-") + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small></div><span>" + esc(customerProductKindLabel(item.product_kind)) + "</span><strong>" + esc(item.quantity || 1) + "</strong><span>" + esc(customerOrderCurrency(customerOrderProductUnitPrice(item))) + "</span><strong>" + esc(customerOrderCurrency(customerOrderProductLineTotal(item))) + "</strong><strong class='sales-order-core-charge'>" + esc(coreChargeTotal > 0 ? customerOrderCurrency(coreChargeTotal) : "-") + "</strong><span class='sales-order-core " + (coreHandling === "return_required" ? "required" : (coreHandling === "charge_no_return" ? "charged" : "none")) + "'>" + esc(customerOrderCoreHandlingLabel(item)) + "</span></div>";
   }).join("") + "</div>";
 }
 
@@ -15960,6 +16017,8 @@ function renderSalesOrderDetail() {
     ? salesOrderWaybillDetailLabel(order, "core_return")
     : billedCoreChargeStatus;
   var orderDiscount = Math.max(0, parseInt(order.order_discount_jpy, 10) || 0);
+  var coreChargeTotal = Math.max(0, Number(order.core_charge_total_jpy) || customerOrderCoreChargeTotal(order));
+  var productSubtotal = customerOrderProductSubtotal(order);
   var orderAdjustments = Array.isArray(order.order_adjustments) ? order.order_adjustments : [];
   var pricingButton = typeof salesOrderCanRevise === "function" && salesOrderCanRevise(order)
     ? "<button type='button' class='sales-order-pricing-open' id='sales-order-revision-open'>受注修正</button>" : "";
@@ -15978,7 +16037,7 @@ function renderSalesOrderDetail() {
     return "<button type='button' role='tab' id='sales-order-detail-tab-" + tab.key + "' aria-controls='" + panelId + "' aria-selected='" + (selected ? "true" : "false") + "' tabindex='" + (selected ? "0" : "-1") + "' data-sales-order-detail-view='" + tab.key + "'>" + tab.label + "</button>";
   }).join("");
   host.innerHTML = "<div class='sales-order-detail-head'><div class='sales-order-detail-identity'><div class='sales-order-detail-meta'><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "</div><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div>" + lifecycle + "<div class='sales-order-detail-state'><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span>" + nextActions + "</div></div>" +
-    "<div class='sales-order-detail-summary'><div><span>商品計</span><strong>" + esc(customerOrderCurrency(order.subtotal_jpy)) + "</strong></div><div class='discount'><span>値引・調整</span><strong>" + esc(orderDiscount ? ("-" + customerOrderCurrency(orderDiscount)) : customerOrderCurrency(0)) + "</strong></div><div><span>送料</span><strong>" + esc(Number(order.shipping_fee_jpy) === 0 ? "送料無料" : customerOrderCurrency(order.shipping_fee_jpy)) + "</strong></div><div><span>消費税</span><strong>" + esc(customerOrderCurrency(order.tax_jpy)) + "</strong></div><div class='total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div></div>" +
+    "<div class='sales-order-detail-summary'><div><span>商品計</span><strong>" + esc(customerOrderCurrency(productSubtotal)) + "</strong></div><div class='core-charge'><span>コア代金</span><strong>" + esc(customerOrderCurrency(coreChargeTotal)) + "</strong></div><div class='discount'><span>値引・調整</span><strong>" + esc(orderDiscount ? ("-" + customerOrderCurrency(orderDiscount)) : customerOrderCurrency(0)) + "</strong></div><div><span>送料</span><strong>" + esc(Number(order.shipping_fee_jpy) === 0 ? "送料無料" : customerOrderCurrency(order.shipping_fee_jpy)) + "</strong></div><div><span>消費税</span><strong>" + esc(customerOrderCurrency(order.tax_jpy)) + "</strong></div><div class='total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div></div>" +
     "<nav class='sales-order-detail-nav' role='tablist' aria-label='注文詳細の作業項目'>" + tabHtml + "</nav>" +
     "<div class='sales-order-detail-panels'>" +
       "<section class='sales-order-detail-panel sales-order-detail-overview' id='sales-order-detail-panel-overview' role='tabpanel' aria-labelledby='sales-order-detail-tab-overview' data-sales-order-detail-panel='overview'><div class='sales-order-detail-overview-grid'>" +
