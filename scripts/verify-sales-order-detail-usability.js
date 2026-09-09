@@ -54,6 +54,69 @@ for (const fragment of [
   "sales-order-detail-history",
   "処理履歴"
 ]) requireFragment(detail, fragment);
+const itemRows = functionSource("salesOrderItemRowsHtml");
+for (const fragment of [
+  "sales-order-product-row",
+  "sales-order-core-charge-row",
+  "customer_order_core_not_returned_short",
+  "customer_order_core_charge_billed_short",
+  "customer_order_separate_line",
+  "customer_order_part_charge_reference",
+  "coreChargeTotal <= 0",
+  "sales-order-core-charge-row"
+]) requireFragment(itemRows, fragment);
+if (itemRows.includes('<span>" + esc(t("customer_order_core_charge_total")) + "</span>')) {
+  throw new Error("Core charge must be rendered as its own detail row, not as a product-row column");
+}
+const itemRowsContext = {
+  t: (key) => ({
+    customer_order_core_not_returned_short: "返却なし",
+    customer_order_core_charge_total: "コア代金",
+    customer_order_core_charge_no_return_status: "コア代金請求済み",
+    customer_order_core_charge_billed_short: "請求済み",
+    customer_order_separate_line: "別明細"
+  })[key] || key,
+  tf: (key, values) => key === "customer_order_part_charge_reference" ? `${values.part} 分` : key,
+  esc: (value) => String(value),
+  customerOrderCoreHandlingValue: (item) => item.core_return_handling,
+  customerOrderBilledCoreChargePerUnit: (item) => item.core_return_handling === "charge_no_return" ? (Number(item.core_charge_jpy) || 0) : 0,
+  customerOrderCoreHandlingLabel: (item) => item.core_return_handling === "charge_no_return" ? "コア代金 ¥2,000 計上" : "返却必要",
+  customerProductKindLabel: () => "リビルト品",
+  customerOrderCurrency: (value) => `¥${Number(value).toLocaleString("ja-JP")}`,
+  customerOrderProductUnitPrice: (item) => Number(item.product_unit_price_jpy) || 0,
+  customerOrderProductLineTotal: (item) => Number(item.product_line_total_jpy) || 0
+};
+vm.createContext(itemRowsContext);
+vm.runInContext(itemRows, itemRowsContext);
+const separatedRows = itemRowsContext.salesOrderItemRowsHtml([{
+  genuine_part_number: "27060-B2021",
+  manufacturer: "DENSO",
+  manufacturer_part_number: "102211-7140",
+  product_kind: "rebuilt",
+  quantity: 1,
+  product_unit_price_jpy: 7500,
+  product_line_total_jpy: 7500,
+  core_return_handling: "charge_no_return",
+  core_charge_jpy: 0,
+  core_charge_line_total_jpy: 2000
+}]);
+if ((separatedRows.match(/sales-order-item-row/g) || []).length !== 2) {
+  throw new Error("A billed core charge must add exactly one detail row below the product row");
+}
+for (const fragment of ["27060-B2021", "¥7,500", "コア代金", "別明細", "¥2,000", "請求済み"]) {
+  requireFragment(separatedRows, fragment, `Separated core-charge row is missing: ${fragment}`);
+}
+const standardRows = itemRowsContext.salesOrderItemRowsHtml([{
+  genuine_part_number: "27060-B2021",
+  quantity: 1,
+  product_unit_price_jpy: 7500,
+  product_line_total_jpy: 7500,
+  core_return_handling: "return_required",
+  core_charge_jpy: 2000
+}]);
+if (standardRows.includes("sales-order-core-charge-row")) {
+  throw new Error("A standard core-return order must not show a billed core-charge detail row");
+}
 requireFragment(functionSource("salesOrderDispatchHtml"), "sales-order-detail-fulfillment");
 const carrierLabel = functionSource("salesOrderWaybillCarrierLabel");
 for (const fragment of [
@@ -126,6 +189,7 @@ for (const fragment of [
   ".sales-order-detail-nav button[aria-selected=\"true\"]",
   ".sales-order-detail-panel[hidden]",
   ".sales-order-detail-overview-grid",
+  ".sales-order-core-charge-row",
   ".sales-order-waybill-detail",
   ".sales-order-detail-overview { overflow: hidden; }",
   ".sales-order-history-groups",
