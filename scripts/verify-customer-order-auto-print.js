@@ -17,6 +17,7 @@ function sourceBetween(startText, endText) {
 for (const id of [
   "sales-order-auto-print",
   "sales-order-auto-print-state",
+  "sales-order-auto-print-scope",
   "sales-order-auto-print-station",
   "sales-order-auto-print-enabled",
   "sales-order-auto-print-save",
@@ -108,9 +109,8 @@ for (const fragment of [
   if (!printerSetup.includes(fragment)) throw new Error(`Self-service printer setup is missing: ${fragment}`);
 }
 if (setupHtml.includes('href="dcats-print-settings://open"') ||
-    setupHtml.includes("帳票別プリンター") ||
-    setupHtml.includes("複写伝票")) {
-  throw new Error("Order management automatic-print settings must not contain other document settings");
+    setupHtml.includes("帳票別プリンター")) {
+  throw new Error("Order management automatic-print settings must not expose unrelated printer controls");
 }
 
 const submitOrder = sourceBetween("async function submitCustomerOrder", "function renderCustomerOrderHistory");
@@ -123,11 +123,20 @@ if (!submitOrder.includes('customerOrderSetStatus(t("customer_order_submit_succe
 if (/window\.print\s*\(/.test(submitOrder)) {
   throw new Error("Order submission must not depend on browser window.print");
 }
-if (!html.includes("受付時の自動印刷設定") ||
-    !html.includes("注文受付時にA4出荷指示書を自動印刷する端末とプリンターを設定します") ||
-    !html.includes("その他の帳票設定は「出荷帳票発行」で管理します") ||
+if (!html.includes("受注帳票の自動印刷設定") ||
+    !html.includes("受付時に出荷指示書と必要な製品保証書") ||
+    !html.includes("出荷完了時に必要なコア返却シート") ||
+    !html.includes("B2 CSVと複写伝票は対象外です") ||
     !html.includes("自動印刷プリンター")) {
-  throw new Error("Automatic-print settings must be limited to the acceptance-time dispatch sheet");
+  throw new Error("Automatic-print settings must explain the actual document scope and timing");
+}
+const renderSettings = sourceBetween("function renderSalesOrderPrintSettings", "async function loadSalesOrderPrintSettings");
+for (const fragment of [
+  'document.getElementById("sales-order-auto-print-scope")',
+  "受付: 出荷指示書・保証書 / 出荷完了: コア返却シート",
+  "対象帳票の自動印刷は停止中"
+]) {
+  if (!renderSettings.includes(fragment)) throw new Error(`Auto-print scope summary is missing: ${fragment}`);
 }
 
 const printHistory = sourceBetween("function salesOrderPrintJobsHtml", "function salesOrderDispatchHtml");
@@ -179,10 +188,10 @@ for (const fragment of [
 }
 
 for (const versionFragment of [
-  'content="v1.1.940"',
-  'styles.css?v=1.1.940',
-  'app.js?v=1.1.940',
-  'var APP_VERSION       = "v1.1.940"'
+  'content="v1.1.941"',
+  'styles.css?v=1.1.941',
+  'app.js?v=1.1.941',
+  'var APP_VERSION       = "v1.1.941"'
 ]) {
   const versionSource = versionFragment.startsWith("var ") ? source : html;
   if (!versionSource.includes(versionFragment)) throw new Error(`Release version is inconsistent: ${versionFragment}`);
