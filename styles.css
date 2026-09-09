@@ -6532,6 +6532,14 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .customer-order-postal-mode button:hover { background: #edf5f1; }
 .customer-order-postal-mode button.active { background: var(--dcats-customer-green); color: #fff; }
 .customer-order-postal-mode button:focus-visible { position: relative; z-index: 1; outline: 2px solid var(--dcats-focus); outline-offset: -2px; }
+.form-card.sales-order-postal-settings-card { width: min(520px, calc(100vw - 24px)); max-width: 520px; border-radius: 8px; padding: 0; overflow: hidden; }
+.sales-order-postal-settings-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; border-bottom: 1px solid #d8dfdb; padding: 18px 20px 14px; }
+.sales-order-postal-settings-heading span { color: #287356; font-size: 9px; font-weight: 900; }
+.sales-order-postal-settings-heading h3 { margin: 2px 0 0; color: #1d2c25; font-size: 19px; letter-spacing: 0; }
+.sales-order-postal-settings-heading p { margin-top: 5px; color: #68766f; font-size: 10px; line-height: 1.5; }
+.sales-order-postal-settings-heading button { flex: 0 0 auto; width: 30px; height: 30px; border: 1px solid #c8d1cc; border-radius: 5px; background: #fff; color: #617068; cursor: pointer; }
+.sales-order-postal-settings-card .customer-order-postal-test { grid-column: auto; margin: 18px 20px; }
+.sales-order-postal-settings-card .form-footer { margin-top: 0; padding: 14px 20px; }
 .customer-order-core-notice { margin-top: 12px; border-left: 3px solid #d64545; padding: 9px 10px; background: var(--dcats-danger-bg); color: #8f2f2f; font-size: var(--dcats-type-supporting); font-weight: 700; line-height: 1.55; }
 .customer-order-submit-actions { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #dce3e0; }
 .customer-order-submit-button { min-height: var(--dcats-control-height); border: 1px solid var(--dcats-customer-green); border-radius: var(--dcats-control-radius); background: var(--dcats-customer-green); color: #fff; font-size: var(--dcats-type-body); font-weight: 800; cursor: pointer; }
@@ -7821,7 +7829,10 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   .sales-order-b2-settings-grid { grid-template-columns: 1fr; padding: 14px 14px 10px; }
   .sales-order-b2-settings-grid label.wide { grid-column: 1; }
   .sales-order-b2-settings-heading,
+  .sales-order-postal-settings-heading,
+  .sales-order-postal-settings-card .form-footer,
   .sales-order-b2-settings-card .form-footer { padding-right: 14px; padding-left: 14px; }
+  .sales-order-postal-settings-card .customer-order-postal-test { margin-right: 14px; margin-left: 14px; }
   .sales-order-b2-settings-help { margin-right: 14px; margin-left: 14px; }
   .sales-accounting-export-filter { grid-template-columns: 1fr 1fr; padding: 12px 14px; }
   .sales-accounting-export-filter > label:first-child,
