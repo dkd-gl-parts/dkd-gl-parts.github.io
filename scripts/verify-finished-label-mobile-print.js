@@ -73,6 +73,10 @@ assert(html.includes('id="dcats-auto-notice"') && html.includes('aria-live="poli
   "finished_label_mobile_status_retrying",
   "finished_label_mobile_timeout",
   "finished_label_mobile_station_error",
+  "finished_label_reprint_sending",
+  "finished_label_reprint_waiting",
+  "finished_label_reprint_station_stopped_desc",
+  "finished_label_reprint_open_station",
   "finished_label_print_destination",
   "finished_label_print_destination_ready",
   "finished_label_print_destination_stopped"
@@ -120,9 +124,18 @@ const preview = functionSource("previewCurrentFinishedLabel");
 assert(preview.includes('enqueueAndWaitForFinishedLabelPrint(finishedLabelLastIssuedRecord, "finished_product", "initial", null)'), "failed mobile printing cannot be retried without issuing a new serial");
 assert(preview.includes('showDcatsAutoNotice(t("finished_label_mobile_print_queue_saved"))'), "registration retry success is not auto-dismissed");
 const reprint = functionSource("executeFinishedLabelHistoryReprint");
-assert(reprint.includes('enqueueAndWaitForFinishedLabelPrint(record, labelType === "box" ? "box" : "finished_product", "reprint", reason)'), "mobile reprints are not tracked through completion with their reason");
+assert(reprint.includes('enqueueAndWaitForFinishedLabelPrint(record, labelTarget, "reprint", reason)'), "mobile reprints are not tracked through completion with their reason");
 assert(!reprint.includes("openFinishedLabelPrintPreview") && !reprint.includes("openFinishedBoxLabelPrintPreview"), "desktop reprints can still fall back to browser print preview");
 assert(reprint.includes('showDcatsAutoNotice(t("finished_label_reprint_queue_saved"))'), "reprint success is not auto-dismissed");
+assert(reprint.includes("recordPrintAudit = !finishedLabelHistoryPrintJobActive(activeJob)"), "an active reprint job can create another print audit");
+assert(reprint.includes("if (recordPrintAudit)"), "reprint audit creation is not guarded against an existing job");
+const historyJobs = functionSource("loadFinishedLabelHistoryPrintJobs");
+assert(historyJobs.includes('sb.rpc("list_finished_label_print_jobs"'), "finished-label history does not load print job status");
+assert(historyJobs.includes("job_id: job.id") && historyJobs.includes("issue_id: job.finished_label_issue_id"), "history print jobs are not normalized for resume tracking");
+const historyStatus = functionSource("finishedLabelHistoryPrintStatus");
+assert(historyStatus.includes("finished_label_reprint_station_stopped_desc"), "a stopped print station is not explained beside the reprint action");
+assert(app.includes("finishedLabelHistoryPrintJobActive(printJob)") && app.includes("data-finished-label-open-station"), "active reprint jobs are not disabled with a recovery action");
+assert(styles.includes(".finished-label-history-print-state.stopped"), "stopped reprint status has no visible layout");
 const box = functionSource("executeFinishedBoxLabelIssue");
 assert(box.includes('enqueueAndWaitForFinishedLabelPrint(record, "box", eventType, reason)'), "box-label mobile printing is not tracked through completion");
 assert(box.includes('showDcatsAutoNotice(t(eventType === "reprint" ? "finished_label_reprint_queue_saved" : "finished_label_mobile_print_queue_saved"))'), "box-label success is not auto-dismissed or reprint feedback is unclear");
@@ -301,6 +314,8 @@ async function verifyRuntimeStatusTracking() {
     finishedLabelLastQueuedJob: null,
     FINISHED_LABEL_MOBILE_PRINT_TIMEOUT_MS: 120000,
     FINISHED_LABEL_MOBILE_PRINT_POLL_MS: 1,
+    rememberFinishedLabelHistoryPrintJob() { return false; },
+    renderFinishedLabelHistory() {},
     renderFinishedLabelMobilePrintRule() {},
     setFinishedLabelMobilePrintStatus(state, message) { statusMessages.push({ state, message }); },
     t(key) { return key; },
@@ -327,7 +342,44 @@ async function verifyRuntimeStatusTracking() {
   assert(statusMessages.some((row) => row.message === "finished_label_mobile_status_retrying") && statusMessages.some((row) => row.state === "success"), "mobile status UI does not recover from a transient failure and reach success");
 }
 
-verifyRuntimeStatusTracking().then(() => {
+async function verifyActiveReprintDoesNotDuplicateAudit() {
+  const events = [];
+  const activeJob = {
+    job_id: 18,
+    issue_id: 12,
+    label_target: "finished_product",
+    print_event_type: "reprint",
+    status: "queued"
+  };
+  const sandbox = {
+    finishedLabelLastQueuedJob: null,
+    finishedLabelHistoryPrintJob() { return activeJob; },
+    finishedLabelHistoryPrintJobActive(job) { return !!job && ["submitting", "queued", "claimed", "timeout"].includes(job.status); },
+    finishedLabelRecordFromHistory(row) { return { issueId: row.id, units: [{ id: 1 }] }; },
+    rememberFinishedLabelHistoryPrintJob() { return false; },
+    renderFinishedLabelHistory() {},
+    sb: { async rpc(name) { events.push(`rpc:${name}`); return { data: {}, error: null }; } },
+    async writeLog() { events.push("write-log"); },
+    async enqueueAndWaitForFinishedLabelPrint(record, target, eventType) { events.push(`wait:${record.issueId}:${target}:${eventType}`); },
+    showDcatsAutoNotice() { events.push("notice"); },
+    async loadFinishedLabelHistory() { events.push("reload"); },
+    finishedLabelMobilePrintErrorText(error) { return error.message; },
+    alert(message) { throw new Error(message); },
+    t(key) { return key; },
+    Object,
+    String,
+    Array,
+    Error,
+    Promise
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(`async ${reprint}; this.runReprint = executeFinishedLabelHistoryReprint;`, sandbox);
+  await sandbox.runReprint({ id: 12, issue_code: "FB2026-0000011", finishedUnits: [{ id: 1 }] }, "product", "ラベル汚損");
+  assert(!events.some((event) => event.startsWith("rpc:record_finished_product_label_print")), "resuming a queued reprint creates a duplicate print audit");
+  assert(events.includes("wait:12:finished_product:reprint") && events.includes("reload"), "queued reprint does not resume status tracking");
+}
+
+Promise.all([verifyRuntimeStatusTracking(), verifyActiveReprintDoesNotDuplicateAudit()]).then(() => {
   console.log("Finished-label smartphone-complete print checks passed.");
 }).catch((error) => {
   console.error(error);
