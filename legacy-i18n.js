@@ -2765,7 +2765,12 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "営業所止めの商品発送便はヤマト運輸を選択してください。": "Select Yamato Transport for sales-office-pickup shipments.",
     "営業所": "Sales office",
     "止め": "pickup",
-    "箕面船場西営業所（068721）": "Minoh Senba Nishi Sales Office (068721)"
+    "箕面船場西営業所（068721）": "Minoh Senba Nishi Sales Office (068721)",
+    "出荷管理": "Shipping Operations",
+    "受注・出荷管理、ピッキング、出荷帳票、完品出荷、在庫更新。商品マスタ・販売価格設定・ユーザー管理は不可": "Manage orders, picking, shipping documents, finished-product shipping, and stock updates. Product master, sales pricing, and user management are unavailable.",
+    "受注・出荷": "Orders / Shipping",
+    "注文受付・ピッキング・B2 CSV・出荷処理": "Order acceptance, picking, B2 CSV, and shipping",
+    "出荷指示書・保証書・コア返却帳票": "Dispatch instructions, warranties, and core-return documents"
   },
   "zh": {
     "再発行が必要": "需要重新签发",
@@ -5531,6 +5536,11 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "営業所止めの商品発送便はヤマト運輸を選択してください。": "营业所自取的商品发货请选择雅玛多运输。",
     "営業所": "营业所",
     "止め": "自取",
-    "箕面船場西営業所（068721）": "箕面船场西营业所（068721）"
+    "箕面船場西営業所（068721）": "箕面船场西营业所（068721）",
+    "出荷管理": "出货管理",
+    "受注・出荷管理、ピッキング、出荷帳票、完品出荷、在庫更新。商品マスタ・販売価格設定・ユーザー管理は不可": "可管理订单、拣货、出货单据、成品出货和库存更新。不可管理商品主数据、销售价格和用户。",
+    "受注・出荷": "订单・出货",
+    "注文受付・ピッキング・B2 CSV・出荷処理": "订单受理、拣货、B2 CSV和出货处理",
+    "出荷指示書・保証書・コア返却帳票": "出货指示书、保修书和旧件返还单据"
   }
 };
