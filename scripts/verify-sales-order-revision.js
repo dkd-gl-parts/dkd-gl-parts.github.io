@@ -10,7 +10,7 @@ for(const status of ['shipped','completed','cancelled']) assert(!context.salesOr
 assert(!context.salesOrderCanRevise({status:'accepted',completed_at:'2026-09-01'}));
 context.canManageSalesOrders=()=>false;
 assert(!context.salesOrderCanRevise({status:'accepted'}));
-for(const text of ['target_expected_version:state.order.version','target_order_id:state.order.id','salesOrderRevisionSaving','revise_sales_order','data-revision-quantity','data-revision-price','vehicle_name','vehicle_model_code','first_registration_month','chassis_number','engine_model','model_designation_number','classification_number','sales_customer_id','shipping_address','outbound_shipping_method','core_return_shipping_method','requested_delivery_date','delivery_time_code','customer_note','adjustments','shipping_fee_jpy','state !== salesOrderRevision']) assert(source.includes(text),text);
+for(const text of ['target_expected_version:state.order.version','target_order_id:state.order.id','salesOrderRevisionSaving','revise_sales_order','data-revision-quantity','data-revision-price','data-revision-core-handling','core_return_handling','fetchProductVariantsByDkdId','coreReturnPolicyForKind','customer_order_core_handling','customer_order_core_return_standard','customer_order_core_charge_no_return_label','customer_order_core_charge_no_return_status','customer_order_core_charge_unset','customer_order_core_charge_setup','customer_order_core_charge_note','customer_order_unit_price','customer_order_subtotal','vehicle_name','vehicle_model_code','first_registration_month','chassis_number','engine_model','model_designation_number','classification_number','sales_customer_id','shipping_address','outbound_shipping_method','core_return_shipping_method','requested_delivery_date','delivery_time_code','customer_note','adjustments','shipping_fee_jpy','state !== salesOrderRevision']) assert(source.includes(text),text);
 assert(!source.includes('sales-order-revision-confirm'));
 assert(!source.includes('sales-order-revision-review'));
 assert(!source.includes('salesOrderRevisionValue("reason")'));
@@ -40,6 +40,32 @@ assert(source.includes('document.getElementById("revision-entry-shipping-date")'
 assert(fs.readFileSync('scripts/build-static-site.js','utf8').includes('"sales-order-revision.js"'));
 assert(fs.readFileSync('index.html','utf8').includes('src="sales-order-revision.js?v='));
 context.esc=String;
+context.customerOrderCurrency=(value)=>'¥'+Number(value).toLocaleString('ja-JP');
+const revisionLabels={core_return_required:'コア返却必要',customer_order_core_handling:'交換コアの対応',customer_order_core_return_standard:'後日、交換したコアを返却する',customer_order_core_charge_no_return_label:'コア代金 {amount} 計上',customer_order_core_charge_no_return_status:'コア代金請求済み',customer_order_core_charge_unset:'返却不可時コア代金が未設定（選択不可）',customer_order_core_charge_setup:'商品マスタに返却不可時コア代金を設定してください。',customer_order_core_charge_note:'コアを返却できない受注として、商品マスタのコア代金を商品金額に計上します。返送用送り状は発行しません。'};
+context.t=(key)=>revisionLabels[key] || key;
+context.tf=(key,values)=>context.t(key).replace('{amount}',values.amount);
+context.normalizeProductKind=String;
+context.coreReturnPolicyForKind=(kind,rows)=>({kind,row:rows[0] || null,required:!!(rows[0] && rows[0].core_return_required),charge:rows[0] && rows[0].core_charge_jpy});
+const exactPolicy=context.salesOrderRevisionCorePolicy({product_kind:'rebuilt',product_variant_id:22},[
+  {product_variant_id:11,product_kind:'rebuilt',stock_qty:99,core_return_required:true,core_charge_jpy:3000},
+  {product_variant_id:22,product_kind:'rebuilt',stock_qty:1,core_return_required:true,core_charge_jpy:5000}
+]);
+assert.equal(exactPolicy.row.product_variant_id,22);
+const newLinePolicy=context.salesOrderRevisionCorePolicy({product_kind:'rebuilt'},[
+  {product_variant_id:11,product_kind:'rebuilt',stock_qty:2,core_return_required:true,core_charge_jpy:3000},
+  {product_variant_id:22,product_kind:'rebuilt',stock_qty:7,core_return_required:true,core_charge_jpy:5000}
+]);
+assert.equal(newLinePolicy.row.product_variant_id,22);
+const coreRequired={product_core_return_required:true,core_return_required:true,core_return_handling:'standard',configured_core_charge_jpy:5000,revision_unit_price_jpy:7500};
+assert.equal(context.salesOrderRevisionItemNeedsCoreReturn(coreRequired),true);
+assert.equal(context.salesOrderRevisionEffectiveUnitPrice(coreRequired),7500);
+assert(context.salesOrderRevisionCoreChoiceHtml(coreRequired,0).includes('コア代金 ¥5,000 計上'));
+coreRequired.core_return_handling='charge_no_return';
+assert.equal(context.salesOrderRevisionItemNeedsCoreReturn(coreRequired),false);
+assert.equal(context.salesOrderRevisionEffectiveUnitPrice(coreRequired),12500);
+assert(context.salesOrderRevisionCoreChoiceHtml(coreRequired,0).includes('コア代金請求済み'));
+const noCharge={product_core_return_required:true,core_return_required:true,core_return_handling:'standard',configured_core_charge_jpy:null,revision_unit_price_jpy:7500};
+assert(context.salesOrderRevisionCoreChoiceHtml(noCharge,1).includes('返却不可時コア代金が未設定（選択不可）'));
 context.salesOrderDispatch=()=>null;
 vm.runInNewContext(app.slice(app.indexOf('function shippingDocumentStageHtml('),app.indexOf('function shippingDocumentOrderB2HistoryHtml(')),context);
 const changed={b2_exports:[{created_at:'2026-09-01T00:00:00Z'}],revision_history:[{created_at:'2026-09-02T00:00:00Z',waybills_need_reissue:true}]};
