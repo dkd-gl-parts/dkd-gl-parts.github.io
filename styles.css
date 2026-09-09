@@ -5521,6 +5521,7 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .finished-shipment-readiness.ready { border-left-color: #2b7a4b; background: #edf8f1; color: #205e39; }
 .finished-shipment-submit-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 12px; }
 .finished-shipment-submit-row .finished-shipment-message { flex: 1; margin-top: 0; }
+.finished-shipment-submit-row .btn-primary:disabled { border-color: #c6cdd5; background: #e6e9ed; color: #7f8995; cursor: not-allowed; opacity: 1; }
 .finished-shipment-history { display: flex; flex-direction: column; gap: 9px; }
 .finished-shipment-history-section { display: flex; flex-direction: column; gap: 8px; }
 .finished-shipment-history-section + .finished-shipment-history-section { margin-top: 5px; border-top: 2px solid #dce4ec; padding-top: 12px; }
