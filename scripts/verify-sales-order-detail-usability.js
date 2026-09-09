@@ -44,9 +44,11 @@ for (const fragment of [
   "sales-order-detail-delivery",
   "salesOrderWaybillCarrierLabel(order, \"outbound\")",
   "salesOrderWaybillDetailLabel(order, \"outbound\")",
-  "salesOrderWaybillCarrierLabel(order, \"core_return\")",
-  "salesOrderWaybillDetailLabel(order, \"core_return\")",
-  "sales-order-waybill-detail",
+  "salesOrderCoreReturnSummary(order)",
+  "salesOrderDeliveryPreferenceLabel(order)",
+  "salesOrderDestinationHtml(address)",
+  "salesOrderWaybillSummaryHtml(\"商品発送便\"",
+  "customerNote ?",
   "customerOrderProductSubtotal(order)",
   "customerOrderCoreChargeTotal(order)",
   "<span>コア代金</span>",
@@ -54,6 +56,10 @@ for (const fragment of [
   "sales-order-detail-history",
   "処理履歴"
 ]) requireFragment(detail, fragment);
+requireFragment(functionSource("salesOrderWaybillSummaryHtml"), "sales-order-waybill-detail");
+if (detail.includes('order.customer_note || "-"')) {
+  throw new Error("An empty order note must not occupy a delivery-summary row");
+}
 const itemRows = functionSource("salesOrderItemRowsHtml");
 for (const fragment of [
   "sales-order-product-row",
@@ -163,6 +169,52 @@ if (waybillContext.salesOrderWaybillCarrierLabel(returnOrder, "core_return") !==
 }
 if (waybillContext.salesOrderWaybillDetailLabel(returnOrder, "core_return") !== "ドットプリンタ / 2枚 / 伝票番号 123456789012") {
   throw new Error("The accepted-order view must show return-waybill output method, copy count, and tracking number together");
+}
+
+const compactContext = {
+  esc: (value) => String(value),
+  t: (key) => ({
+    customer_order_core_charge_no_return_status: "コア代金請求済み",
+    customer_order_yamato_office_pickup_short: "ヤマト営業所受取"
+  })[key] || key,
+  customerOrderHasBilledCoreCharge: (order) => !!order.billed,
+  salesOrderWaybillCarrierLabel: waybillContext.salesOrderWaybillCarrierLabel,
+  salesOrderWaybillDetailLabel: waybillContext.salesOrderWaybillDetailLabel
+};
+vm.createContext(compactContext);
+vm.runInContext([
+  functionSource("salesOrderWaybillSummaryHtml"),
+  functionSource("salesOrderCoreReturnSummary"),
+  functionSource("salesOrderDeliveryPreferenceLabel"),
+  functionSource("salesOrderDestinationHtml")
+].join("\n"), compactContext);
+const billedSummary = compactContext.salesOrderCoreReturnSummary({ billed: true, core_return_required: false });
+const billedHtml = compactContext.salesOrderWaybillSummaryHtml(billedSummary.label, billedSummary.primary, billedSummary.secondary);
+if (billedSummary.primary !== "返却不要" || (billedHtml.match(/コア代金請求済み/g) || []).length !== 1) {
+  throw new Error("A billed core charge must be explained once as a no-return condition");
+}
+if (compactContext.salesOrderDeliveryPreferenceLabel({ requested_delivery_date: "2026-09-10" }) !== "2026-09-10") {
+  throw new Error("A missing delivery time must not add a redundant unspecified value");
+}
+if (compactContext.salesOrderDeliveryPreferenceLabel({}) !== "指定なし") {
+  throw new Error("An entirely unspecified delivery preference must remain understandable");
+}
+const officeHtml = compactContext.salesOrderDestinationHtml({
+  destination_type: "yamato_office",
+  yamato_office_name: "箕面船場（箕面船場西）営業所",
+  yamato_office_code: "068721",
+  company_name: "有限会社ストレイン",
+  recipient_name: "坂口",
+  postal_code: "562-0035",
+  prefecture_name: "大阪府",
+  address_line_1: "箕面市船場東",
+  phone_number: "072-734-8077"
+});
+for (const fragment of ["ヤマト営業所受取　068721", "箕面船場（箕面船場西）営業所", "受取人　有限会社ストレイン 坂口"]) {
+  requireFragment(officeHtml, fragment, `Compact office-pickup summary is missing: ${fragment}`);
+}
+if ((officeHtml.match(/068721/g) || []).length !== 1 || officeHtml.includes("営業所止め / コード")) {
+  throw new Error("Office-pickup name and code must not be repeated");
 }
 if (detail.includes("href='#sales-order-detail-")) {
   throw new Error("Order detail navigation must switch work panels instead of jumping down a long page");

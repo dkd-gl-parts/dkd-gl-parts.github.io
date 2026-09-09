@@ -353,6 +353,7 @@ var TRANSLATIONS = {
     customer_order_core_charge_no_return_option: "コアを返却できない（{amount}を支払う）",
     customer_order_core_charge_no_return_label: "コア代金 {amount} 計上",
     customer_order_core_charge_no_return_status: "コア代金請求済み",
+    customer_order_yamato_office_pickup_short: "ヤマト営業所受取",
     customer_order_core_charge_billed_short: "請求済み",
     customer_order_core_not_returned_short: "返却なし",
     customer_order_core_charge_unset: "返却不可時コア代金が未設定（選択不可）",
@@ -2295,6 +2296,7 @@ var TRANSLATIONS = {
     customer_order_core_charge_no_return_option: "Cannot return core (pay {amount})",
     customer_order_core_charge_no_return_label: "Core charge {amount} billed",
     customer_order_core_charge_no_return_status: "Core charge billed",
+    customer_order_yamato_office_pickup_short: "Yamato office pickup",
     customer_order_core_charge_billed_short: "Billed",
     customer_order_core_not_returned_short: "No return",
     customer_order_core_charge_unset: "Core charge for unavailable return is not set",
@@ -4181,6 +4183,7 @@ var TRANSLATIONS = {
     customer_order_core_charge_no_return_option: "无法返还旧件（支付 {amount}）",
     customer_order_core_charge_no_return_label: "已计入旧件费 {amount}",
     customer_order_core_charge_no_return_status: "旧件费已计费",
+    customer_order_yamato_office_pickup_short: "雅玛多营业所自取",
     customer_order_core_charge_billed_short: "已计费",
     customer_order_core_not_returned_short: "无需返还",
     customer_order_core_charge_unset: "未设置无法返还时的旧件费",
@@ -5950,7 +5953,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.937";
+var APP_VERSION       = "v1.1.938";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -10155,6 +10158,58 @@ function salesOrderWaybillDetailLabel(order, purpose) {
   if (purpose === "core_return") parts.push(shippingDocumentReturnWaybillCopyCount(order) + "枚");
   parts.push(trackingNumber ? "伝票番号 " + trackingNumber : "伝票番号未登録");
   return parts.join(" / ");
+}
+
+function salesOrderWaybillSummaryHtml(label, primary, secondary) {
+  primary = String(primary || "-").trim() || "-";
+  secondary = String(secondary || "").trim();
+  return "<div><dt>" + esc(label) + "</dt><dd class='sales-order-waybill-detail'><strong>" + esc(primary) + "</strong>" +
+    (secondary && secondary !== primary ? "<span>" + esc(secondary) + "</span>" : "") + "</dd></div>";
+}
+
+function salesOrderCoreReturnSummary(order) {
+  if (order && order.core_return_required) {
+    return {
+      label: "コア返却便",
+      primary: salesOrderWaybillCarrierLabel(order, "core_return"),
+      secondary: salesOrderWaybillDetailLabel(order, "core_return")
+    };
+  }
+  if (customerOrderHasBilledCoreCharge(order)) {
+    return {
+      label: "コア返却",
+      primary: "返却不要",
+      secondary: t("customer_order_core_charge_no_return_status")
+    };
+  }
+  return { label: "コア返却", primary: "対象外", secondary: "" };
+}
+
+function salesOrderDeliveryPreferenceLabel(order) {
+  order = order || {};
+  var date = String(order.requested_delivery_date || "").trim();
+  var time = String(order.delivery_time_label || "").trim();
+  if (date === "指定なし") date = "";
+  if (time === "指定なし") time = "";
+  return [date, time].filter(Boolean).join(" / ") || "指定なし";
+}
+
+function salesOrderDestinationHtml(address) {
+  address = address || {};
+  var recipient = [address.company_name, address.recipient_name].filter(Boolean).join(" ") || "-";
+  var street = [
+    String(address.prefecture_name || "") + String(address.address_line_1 || ""),
+    address.address_line_2
+  ].filter(Boolean).join(" ");
+  var postalAddress = "〒" + String(address.postal_code || "-") + (street ? "　" + street : "");
+  var phone = "TEL " + String(address.phone_number || "-");
+  if (address.destination_type !== "yamato_office") {
+    return "<div class='sales-order-address-destination'><strong>" + esc(recipient) + "</strong><span>" + esc(postalAddress) + "</span><span>" + esc(phone) + "</span></div>";
+  }
+  var officeName = String(address.yamato_office_name || "営業所").trim() || "営業所";
+  var officeCode = String(address.yamato_office_code || "").trim();
+  var pickupLabel = t("customer_order_yamato_office_pickup_short") + (officeCode ? "　" + officeCode : "");
+  return "<div class='sales-order-address-destination is-office-pickup'><em class='sales-order-office-pickup-badge'>" + esc(pickupLabel) + "</em><strong class='sales-order-office-pickup-name'>" + esc(officeName) + "</strong><span class='sales-order-office-pickup-recipient'>受取人　" + esc(recipient) + "</span><span>" + esc(postalAddress) + "</span><span>" + esc(phone) + "</span></div>";
 }
 
 function updateCustomerOrderCoreReturnServiceVisibility() {
@@ -16092,13 +16147,13 @@ function renderSalesOrderDetail() {
     : "";
   var outboundService = salesOrderWaybillCarrierLabel(order, "outbound");
   var outboundWaybillDetail = salesOrderWaybillDetailLabel(order, "outbound");
-  var billedCoreChargeStatus = customerOrderHasBilledCoreCharge(order) ? t("customer_order_core_charge_no_return_status") : "対象外";
-  var coreReturnService = order.core_return_required
-    ? salesOrderWaybillCarrierLabel(order, "core_return")
-    : billedCoreChargeStatus;
-  var coreReturnWaybillDetail = order.core_return_required
-    ? salesOrderWaybillDetailLabel(order, "core_return")
-    : billedCoreChargeStatus;
+  var coreReturnSummary = salesOrderCoreReturnSummary(order);
+  var deliveryPreference = salesOrderDeliveryPreferenceLabel(order);
+  var customerNote = String(order.customer_note || "").trim();
+  var deliveryFacts = salesOrderWaybillSummaryHtml("商品発送便", outboundService, outboundWaybillDetail) +
+    salesOrderWaybillSummaryHtml(coreReturnSummary.label, coreReturnSummary.primary, coreReturnSummary.secondary) +
+    "<div><dt>お届け希望</dt><dd>" + esc(deliveryPreference) + "</dd></div>" +
+    (customerNote ? "<div><dt>注文メモ</dt><dd>" + esc(customerNote) + "</dd></div>" : "");
   var orderDiscount = Math.max(0, parseInt(order.order_discount_jpy, 10) || 0);
   var coreChargeTotal = Math.max(0, Number(order.core_charge_total_jpy) || customerOrderCoreChargeTotal(order));
   var productSubtotal = customerOrderProductSubtotal(order);
@@ -16125,7 +16180,7 @@ function renderSalesOrderDetail() {
     "<div class='sales-order-detail-panels'>" +
       "<section class='sales-order-detail-panel sales-order-detail-overview' id='sales-order-detail-panel-overview' role='tabpanel' aria-labelledby='sales-order-detail-tab-overview' data-sales-order-detail-panel='overview'><div class='sales-order-detail-overview-grid'>" +
         "<section class='sales-order-detail-section' id='sales-order-detail-products'><div class='sales-order-section-heading'><div><h3>注文商品</h3><p>販売価格、数量、コア返却条件と値引・調整行を確認します。</p></div>" + pricingButton + "</div>" + salesOrderItemRowsHtml(order.items) + salesOrderAdjustmentRowsHtml(orderAdjustments, orderDiscount) + "</section>" +
-        "<section class='sales-order-detail-section sales-order-address' id='sales-order-detail-delivery'><div class='sales-order-section-heading'><div><h3>お届け先・運送便</h3><p>送り状へ反映する配送情報です。</p></div></div><div class='sales-order-address-destination'>" + (address.destination_type === "yamato_office" ? "<em class='sales-order-office-pickup-badge'>ヤマト運輸 営業所止め / コード " + esc(address.yamato_office_code || "-") + "</em>" : "") + "<strong>" + esc(address.company_name || "-") + " " + esc(address.recipient_name || "-") + "</strong><span>〒" + esc(address.postal_code || "-") + "　" + esc(address.prefecture_name || "") + esc(address.address_line_1 || "-") + " " + esc(address.address_line_2 || "") + "</span>" + (address.destination_type === "yamato_office" ? "<span>ヤマト運輸 " + esc(address.yamato_office_name || "営業所") + "止め</span>" : "") + "<span>TEL " + esc(address.phone_number || "-") + "</span></div>" + customerOrderVehicleInformationHtml(order.vehicle_information, "sales-order-vehicle-information") + salesOrderShippingScheduleHtml(order) + "<dl><div><dt>商品発送便</dt><dd class='sales-order-waybill-detail'><strong>" + esc(outboundService) + "</strong><span>" + esc(outboundWaybillDetail) + "</span></dd></div><div><dt>コア返却便</dt><dd class='sales-order-waybill-detail'><strong>" + esc(coreReturnService) + "</strong><span>" + esc(coreReturnWaybillDetail) + "</span></dd></div><div><dt>お届け希望</dt><dd>" + esc(order.requested_delivery_date || "指定なし") + " / " + esc(order.delivery_time_label || "指定なし") + "</dd></div><div><dt>注文メモ</dt><dd>" + esc(order.customer_note || "-") + "</dd></div></dl></section>" +
+        "<section class='sales-order-detail-section sales-order-address' id='sales-order-detail-delivery'><div class='sales-order-section-heading'><div><h3>お届け先・運送便</h3><p>送り状へ反映する配送情報です。</p></div></div>" + salesOrderDestinationHtml(address) + customerOrderVehicleInformationHtml(order.vehicle_information, "sales-order-vehicle-information") + salesOrderShippingScheduleHtml(order) + "<dl>" + deliveryFacts + "</dl></section>" +
       "</div></section>" +
       "<div class='sales-order-detail-panel' id='sales-order-detail-panel-fulfillment' role='tabpanel' aria-labelledby='sales-order-detail-tab-fulfillment' data-sales-order-detail-panel='fulfillment' hidden>" + salesOrderDispatchHtml(order) + "</div>" +
       "<section class='sales-order-detail-panel sales-order-detail-section sales-order-tracking' id='sales-order-detail-tracking' role='tabpanel' aria-labelledby='sales-order-detail-tab-tracking' data-sales-order-detail-panel='tracking' hidden><div class='sales-order-section-heading'><div><h3>商品発送送り状</h3><p>B2発行済データの取込後に番号を確認・修正できます。</p></div></div><div class='sales-order-tracking-grid outbound-only'><label><span>送り状番号</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>B2出荷予定日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>商品発送番号を登録</button></div><p>コア返却用複写伝票は「出荷帳票発行」で管理します。送り状番号の登録だけでは在庫を減らしません。</p></section>" +
