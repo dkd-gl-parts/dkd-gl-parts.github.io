@@ -5875,7 +5875,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.926";
+var APP_VERSION       = "v1.1.927";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -6193,6 +6193,7 @@ var CUSTOMER_ORDER_YAMATO_OFFICES = [
     phone_number: "072-734-8077"
   }
 ];
+var CUSTOMER_ORDER_CUSTOM_YAMATO_OFFICE = "__custom__";
 var SHIPPING_CARRIER_BRANDS = {
   yamato: { name: "ヤマト運輸", image: "assets/carriers/yamato-transport.png" },
   sagawa: { name: "佐川急便", image: "assets/carriers/sagawa-express.png" }
@@ -10116,6 +10117,11 @@ function customerOrderYamatoOffice(code) {
   return CUSTOMER_ORDER_YAMATO_OFFICES.find(function(office) { return office.code === String(code || ""); }) || null;
 }
 
+function customerOrderUsesCustomYamatoOffice() {
+  var select = document.getElementById("customer-order-yamato-office-code");
+  return !!select && select.value === CUSTOMER_ORDER_CUSTOM_YAMATO_OFFICE;
+}
+
 function applyCustomerOrderYamatoOffice(office, includeRecipientDefaults) {
   if (!office) return;
   var values = {
@@ -10141,18 +10147,29 @@ function configureCustomerOrderDestination(options) {
   syncCustomerOrderDestinationChoices(document.getElementById("screen-customer-orders"), officePickup ? "yamato_office" : "address");
   var panel = document.getElementById("customer-order-yamato-office-panel");
   var officeSelect = document.getElementById("customer-order-yamato-office-code");
+  var customFields = document.getElementById("customer-order-yamato-office-custom-fields");
+  var savedSummary = document.getElementById("customer-order-yamato-office-summary");
+  var customButton = document.getElementById("customer-order-yamato-office-custom");
   if (panel) panel.hidden = !officePickup;
   if (officeSelect) officeSelect.disabled = !officePickup;
-  if (officePickup && officeSelect && !customerOrderYamatoOffice(officeSelect.value) && CUSTOMER_ORDER_YAMATO_OFFICES.length) {
+  if (officePickup && officeSelect && officeSelect.value !== CUSTOMER_ORDER_CUSTOM_YAMATO_OFFICE && !customerOrderYamatoOffice(officeSelect.value) && CUSTOMER_ORDER_YAMATO_OFFICES.length) {
     officeSelect.value = CUSTOMER_ORDER_YAMATO_OFFICES[0].code;
   }
+  var customOffice = officePickup && customerOrderUsesCustomYamatoOffice();
+  if (customFields) customFields.hidden = !customOffice;
+  if (savedSummary) savedSummary.hidden = customOffice;
+  if (customButton) customButton.hidden = !officePickup || customOffice;
+  ["customer-order-yamato-office-custom-code", "customer-order-yamato-office-custom-name"].forEach(function(id) {
+    var input = document.getElementById(id);
+    if (input) input.disabled = !customOffice;
+  });
   ["customer-order-postal-code", "customer-order-address1", "customer-order-address2"].forEach(function(id) {
     var input = document.getElementById(id);
-    if (input) input.readOnly = officePickup;
+    if (input) input.readOnly = officePickup && !customOffice;
   });
   var prefecture = document.getElementById("customer-order-prefecture");
-  if (prefecture) prefecture.disabled = officePickup;
-  if (officePickup) applyCustomerOrderYamatoOffice(customerOrderYamatoOffice(officeSelect && officeSelect.value), options.includeRecipientDefaults !== false);
+  if (prefecture) prefecture.disabled = officePickup && !customOffice;
+  if (officePickup && !customOffice) applyCustomerOrderYamatoOffice(customerOrderYamatoOffice(officeSelect && officeSelect.value), options.includeRecipientDefaults !== false);
   configureCustomerOrderAddressTools();
 }
 
@@ -10160,7 +10177,8 @@ function customerOrderDestinationError(address, method) {
   address = address || {};
   method = method || {};
   if (address.destination_type !== "yamato_office") return "";
-  if (!/^\d{6}$/.test(String(address.yamato_office_code || ""))) return "ヤマト営業所を選択してください。";
+  if (!/^\d{6}$/.test(String(address.yamato_office_code || ""))) return "ヤマト営業所コードを6桁の数字で入力してください。";
+  if (!String(address.yamato_office_name || "").trim()) return "ヤマト営業所名を入力してください。";
   if (String(method.carrier_name || "") !== "ヤマト運輸") return "営業所止めの商品発送便はヤマト運輸を選択してください。";
   return "";
 }
@@ -10534,6 +10552,7 @@ function customerOrderAddressPayload() {
     : "";
   var officeSelect = document.getElementById("customer-order-yamato-office-code");
   var office = destinationType === "yamato_office" ? customerOrderYamatoOffice(officeSelect && officeSelect.value) : null;
+  var customOffice = destinationType === "yamato_office" && customerOrderUsesCustomYamatoOffice();
   return {
     destination_type: destinationType,
     company_name: value("customer-order-company"),
@@ -10544,8 +10563,8 @@ function customerOrderAddressPayload() {
     prefecture_name: prefectureName,
     address_line_1: value("customer-order-address1"),
     address_line_2: value("customer-order-address2"),
-    yamato_office_code: office ? office.code : "",
-    yamato_office_name: office ? office.name : "",
+    yamato_office_code: office ? office.code : (customOffice ? value("customer-order-yamato-office-custom-code") : ""),
+    yamato_office_name: office ? office.name : (customOffice ? value("customer-order-yamato-office-custom-name") : ""),
     vehicle_information: customerOrderVehicleInformationPayload()
   };
 }
@@ -10567,8 +10586,15 @@ function applyCustomerOrderAddress(address, overwrite) {
   var destinationType = address.destination_type === "yamato_office" ? "yamato_office" : "address";
   var destinationSelect = document.getElementById("customer-order-destination-type");
   var officeSelect = document.getElementById("customer-order-yamato-office-code");
+  var customOfficeCode = document.getElementById("customer-order-yamato-office-custom-code");
+  var customOfficeName = document.getElementById("customer-order-yamato-office-custom-name");
   if (destinationSelect && (overwrite || !destinationSelect.value)) destinationSelect.value = destinationType;
-  if (officeSelect && destinationType === "yamato_office" && address.yamato_office_code) officeSelect.value = address.yamato_office_code;
+  if (officeSelect && destinationType === "yamato_office") {
+    var savedOffice = customerOrderYamatoOffice(address.yamato_office_code);
+    officeSelect.value = savedOffice ? savedOffice.code : CUSTOMER_ORDER_CUSTOM_YAMATO_OFFICE;
+    if (customOfficeCode) customOfficeCode.value = savedOffice ? "" : (address.yamato_office_code || "");
+    if (customOfficeName) customOfficeName.value = savedOffice ? "" : (address.yamato_office_name || "");
+  }
   var map = {
     "customer-order-company": address.company_name || address.recipient_company || "",
     "customer-order-recipient": address.recipient_name || address.name || "",
@@ -10680,9 +10706,12 @@ async function searchCustomerOrderAddresses() {
 function clearCustomerOrderAddress() {
   var destinationSelect = document.getElementById("customer-order-destination-type");
   if (destinationSelect) destinationSelect.value = "address";
+  var officeSelect = document.getElementById("customer-order-yamato-office-code");
+  if (officeSelect && CUSTOMER_ORDER_YAMATO_OFFICES.length) officeSelect.value = CUSTOMER_ORDER_YAMATO_OFFICES[0].code;
   [
     "customer-order-company", "customer-order-recipient", "customer-order-phone", "customer-order-postal-code",
-    "customer-order-prefecture", "customer-order-address1", "customer-order-address2"
+    "customer-order-prefecture", "customer-order-address1", "customer-order-address2",
+    "customer-order-yamato-office-custom-code", "customer-order-yamato-office-custom-name"
   ].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.value = "";
@@ -11048,7 +11077,7 @@ function configureCustomerOrderAddressTools() {
   var postalButton = document.getElementById("customer-order-postal-lookup");
   if (searchInput) searchInput.disabled = previewMode || customerOrderAddressSearching;
   if (searchButton) searchButton.disabled = previewMode || customerOrderAddressSearching;
-  if (postalButton) postalButton.disabled = customerOrderPostalLookingUp || customerOrderDestinationType() === "yamato_office";
+  if (postalButton) postalButton.disabled = customerOrderPostalLookingUp || (customerOrderDestinationType() === "yamato_office" && !customerOrderUsesCustomYamatoOffice());
   configureCustomerOrderPostalTest();
   var status = document.getElementById("customer-order-address-status");
   if (status && !String(status.textContent || "").trim()) {
@@ -49518,9 +49547,23 @@ document.querySelectorAll("#screen-customer-orders [data-customer-order-destinat
 document.getElementById("customer-order-yamato-office-code").addEventListener("change", function() {
   customerOrderPreview = null;
   customerOrderDeliveryDateManual = false;
-  applyCustomerOrderYamatoOffice(customerOrderYamatoOffice(this.value), true);
+  configureCustomerOrderDestination({ includeRecipientDefaults: true });
   loadCustomerOrderDeliveryServices({ forceDate: true });
   renderCustomerOrderCart();
+});
+document.getElementById("customer-order-yamato-office-custom").addEventListener("click", function() {
+  var officeSelect = document.getElementById("customer-order-yamato-office-code");
+  if (!officeSelect) return;
+  officeSelect.value = CUSTOMER_ORDER_CUSTOM_YAMATO_OFFICE;
+  officeSelect.dispatchEvent(new Event("change", { bubbles: true }));
+  document.getElementById("customer-order-yamato-office-custom-code").focus();
+});
+["customer-order-yamato-office-custom-code", "customer-order-yamato-office-custom-name"].forEach(function(id) {
+  document.getElementById(id).addEventListener("input", function() {
+    if (id === "customer-order-yamato-office-custom-code") this.value = String(this.value || "").normalize("NFKC").replace(/[^0-9]/g, "").slice(0, 6);
+    customerOrderPreview = null;
+    renderCustomerOrderCart();
+  });
 });
 document.getElementById("customer-order-postal-lookup").addEventListener("click", lookupCustomerOrderPostalCode);
 document.getElementById("customer-order-postal-code").addEventListener("keydown", function(e) { if (e.key === "Enter") lookupCustomerOrderPostalCode(); });
