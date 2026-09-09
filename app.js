@@ -843,6 +843,13 @@ var TRANSLATIONS = {
     finished_shipping_final_needs_tracking: "ピッキングは完了しています。商品発送の送り状番号が未登録のため、出荷履歴の作成と実在庫の減算はまだ行われていません。",
     finished_shipping_final_needs_return_tracking: "ピッキングは完了しています。コア返却用の送り状番号が未登録のため、出荷履歴の作成と実在庫の減算はまだ行われていません。",
     finished_shipping_final_ready: "送り状番号を確認しました。出荷確定すると、出荷履歴を作成して実在庫を減算します。",
+    finished_shipping_mobile_judgement: "判定",
+    finished_shipping_mobile_status_waiting: "未完了",
+    finished_shipping_mobile_status_tracking: "送り状未登録",
+    finished_shipping_mobile_status_return_tracking: "返送番号未登録",
+    finished_shipping_mobile_status_ready: "出荷可能",
+    finished_shipping_mobile_status_error: "照合エラー",
+    finished_shipping_mobile_register: "出荷済みにする",
     finished_shipping_available: "出荷可能",
     finished_shipping_picking_ok: "照合OK",
     finished_shipping_picking_ng: "照合NG",
@@ -2786,6 +2793,13 @@ var TRANSLATIONS = {
     finished_shipping_final_needs_tracking: "Picking is complete. The outbound tracking number is missing, so shipment history has not been created and physical stock has not been deducted.",
     finished_shipping_final_needs_return_tracking: "Picking is complete. The core-return tracking number is missing, so shipment history has not been created and physical stock has not been deducted.",
     finished_shipping_final_ready: "Waybill numbers are ready. Confirming shipment creates the shipment history and deducts physical stock.",
+    finished_shipping_mobile_judgement: "Status",
+    finished_shipping_mobile_status_waiting: "Incomplete",
+    finished_shipping_mobile_status_tracking: "Waybill missing",
+    finished_shipping_mobile_status_return_tracking: "Return waybill missing",
+    finished_shipping_mobile_status_ready: "Ready to ship",
+    finished_shipping_mobile_status_error: "Check error",
+    finished_shipping_mobile_register: "Mark as shipped",
     finished_shipping_available: "Available",
     finished_shipping_picking_ok: "Check OK",
     finished_shipping_picking_ng: "Check NG",
@@ -4737,6 +4751,13 @@ var TRANSLATIONS = {
     finished_shipping_final_needs_tracking: "拣货已完成。商品发货运单编号尚未登记，因此尚未创建出货履历，也未扣减实物库存。",
     finished_shipping_final_needs_return_tracking: "拣货已完成。核心返还运单编号尚未登记，因此尚未创建出货履历，也未扣减实物库存。",
     finished_shipping_final_ready: "运单编号已确认。确认出货后将创建出货履历并扣减实物库存。",
+    finished_shipping_mobile_judgement: "判定",
+    finished_shipping_mobile_status_waiting: "未完成",
+    finished_shipping_mobile_status_tracking: "未登记运单",
+    finished_shipping_mobile_status_return_tracking: "未登记返还运单",
+    finished_shipping_mobile_status_ready: "可以出货",
+    finished_shipping_mobile_status_error: "核对错误",
+    finished_shipping_mobile_register: "设为已出货",
     finished_shipping_available: "可出货",
     finished_shipping_picking_ok: "核对OK",
     finished_shipping_picking_ng: "核对NG",
@@ -5953,7 +5974,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.938";
+var APP_VERSION       = "v1.1.939";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -29893,53 +29914,107 @@ function finishedShipmentTrackingState(order) {
   };
 }
 
-function renderFinishedShipmentReadiness() {
-  var host = document.getElementById("finished-shipment-readiness");
-  var order = finishedShipmentOrderContext;
-  var dispatch = finishedShipmentDispatch();
-  if (!host) return;
-  if (!order || !dispatch || ["preparing", "ready"].indexOf(dispatch.status) < 0) {
-    host.textContent = "";
-    host.className = "finished-shipment-readiness";
-    return;
+function finishedShipmentReadinessState(order, dispatch) {
+  if (!order || !dispatch || ["preparing", "ready"].indexOf(dispatch.status) < 0) return null;
+  if (finishedShipmentPickingBlocked) {
+    return {
+      desktopKey: "finished_shipping_picking_blocked",
+      mobileKey: "finished_shipping_mobile_status_error",
+      state: "error"
+    };
   }
   var tracking = finishedShipmentTrackingState(order);
-  var key = dispatch.status !== "ready"
-    ? "finished_shipping_final_needs_picking"
-    : !tracking.outboundReady
-      ? "finished_shipping_final_needs_tracking"
-      : !tracking.returnReady
-        ? "finished_shipping_final_needs_return_tracking"
-        : "finished_shipping_final_ready";
-  host.textContent = t(key);
-  host.className = "finished-shipment-readiness " + (key === "finished_shipping_final_ready" ? "ready" : "pending");
+  if (dispatch.status !== "ready") {
+    return {
+      desktopKey: "finished_shipping_final_needs_picking",
+      mobileKey: "finished_shipping_mobile_status_waiting",
+      state: "pending"
+    };
+  }
+  if (!tracking.outboundReady) {
+    return {
+      desktopKey: "finished_shipping_final_needs_tracking",
+      mobileKey: "finished_shipping_mobile_status_tracking",
+      state: "pending"
+    };
+  }
+  if (!tracking.returnReady) {
+    return {
+      desktopKey: "finished_shipping_final_needs_return_tracking",
+      mobileKey: "finished_shipping_mobile_status_return_tracking",
+      state: "pending"
+    };
+  }
+  return {
+    desktopKey: "finished_shipping_final_ready",
+    mobileKey: "finished_shipping_mobile_status_ready",
+    state: "ready"
+  };
+}
+
+function renderFinishedShipmentReadiness() {
+  var host = document.getElementById("finished-shipment-readiness");
+  var mobileHost = document.getElementById("finished-shipment-mobile-readiness");
+  var order = finishedShipmentOrderContext;
+  var dispatch = finishedShipmentDispatch();
+  var readiness = finishedShipmentReadinessState(order, dispatch);
+  if (!readiness) {
+    if (host) {
+      host.textContent = "";
+      host.className = "finished-shipment-readiness";
+    }
+    if (mobileHost) {
+      mobileHost.textContent = "";
+      mobileHost.className = "finished-shipment-mobile-readiness";
+    }
+    return;
+  }
+  if (host) {
+    host.textContent = t(readiness.desktopKey);
+    host.className = "finished-shipment-readiness " + readiness.state;
+  }
+  if (mobileHost) {
+    mobileHost.innerHTML = "<span>" + esc(t("finished_shipping_mobile_judgement")) + "</span><strong>" + esc(t(readiness.mobileKey)) + "</strong>";
+    mobileHost.className = "finished-shipment-mobile-readiness " + readiness.state;
+  }
 }
 
 function updateFinishedShipmentSaveButtonState() {
-  var button = document.getElementById("btn-finished-shipment-save");
-  if (!button) return;
+  var buttons = ["btn-finished-shipment-save", "btn-finished-shipment-mobile-save"].map(function(id) {
+    return document.getElementById(id);
+  }).filter(Boolean);
+  if (!buttons.length) return;
   var order = finishedShipmentOrderContext;
   var dispatch = finishedShipmentDispatch();
   var active = !!(order && dispatch && ["preparing", "ready"].indexOf(dispatch.status) >= 0);
   var tracking = finishedShipmentTrackingState(order);
-  button.disabled = finishedShipmentSaveDisabled(active, dispatch && dispatch.status, finishedShipmentSaving, finishedShipmentPickingBlocked)
+  var disabled = finishedShipmentSaveDisabled(active, dispatch && dispatch.status, finishedShipmentSaving, finishedShipmentPickingBlocked)
     || !tracking.outboundReady
     || !tracking.returnReady;
-  button.setAttribute("aria-disabled", button.disabled ? "true" : "false");
+  buttons.forEach(function(button) {
+    button.disabled = disabled;
+    button.setAttribute("aria-disabled", disabled ? "true" : "false");
+  });
   renderFinishedShipmentReadiness();
+}
+
+function setFinishedShipmentSaveMessage(message, isError) {
+  setFinishedShipmentMessage("finished-shipment-save-message", message, isError);
+  setFinishedShipmentMessage("finished-shipment-mobile-save-message", message, isError);
 }
 
 function setFinishedShipmentPickingBlocked(blocked) {
   finishedShipmentPickingBlocked = !!blocked;
-  var message = document.getElementById("finished-shipment-save-message");
-  if (message) {
-    if (finishedShipmentPickingBlocked) {
-      message.dataset.pickingBlocked = "true";
-      setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_picking_blocked"), true);
-    } else if (message.dataset.pickingBlocked === "true") {
-      delete message.dataset.pickingBlocked;
-      setFinishedShipmentMessage("finished-shipment-save-message", "", false);
-    }
+  var messages = ["finished-shipment-save-message", "finished-shipment-mobile-save-message"].map(function(id) {
+    return document.getElementById(id);
+  }).filter(Boolean);
+  var wasPickingBlocked = messages.some(function(message) { return message.dataset.pickingBlocked === "true"; });
+  if (finishedShipmentPickingBlocked) {
+    messages.forEach(function(message) { message.dataset.pickingBlocked = "true"; });
+    setFinishedShipmentSaveMessage(t("finished_shipping_picking_blocked"), true);
+  } else if (wasPickingBlocked) {
+    messages.forEach(function(message) { delete message.dataset.pickingBlocked; });
+    setFinishedShipmentSaveMessage("", false);
   }
   updateFinishedShipmentSaveButtonState();
 }
@@ -30123,7 +30198,7 @@ async function updateFinishedShipmentReplacement(serial) {
   var order = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
   closeFinishedShipmentReplacement();
   refreshFinishedShipmentContext(order);
-  setFinishedShipmentMessage("finished-shipment-save-message", serial ? "交換元と保証期限を設定しました。" : "通常出荷へ戻しました。", false);
+  setFinishedShipmentSaveMessage(serial ? "交換元と保証期限を設定しました。" : "通常出荷へ戻しました。", false);
 }
 
 async function saveFinishedShipmentReplacement() {
@@ -30205,11 +30280,15 @@ function renderFinishedShipmentOrderContext() {
   var host = document.getElementById("finished-shipment-order-context");
   var selectionCard = document.getElementById("finished-shipment-selection-card");
   var form = document.getElementById("finished-shipment-order-form");
+  var mobileAction = document.getElementById("finished-shipment-mobile-final-action");
+  var screen = document.getElementById("screen-finished-product-shipping");
   var order = finishedShipmentOrderContext;
   var dispatch = finishedShipmentDispatch();
   var active = !!(order && dispatch && ["preparing", "ready"].indexOf(dispatch.status) >= 0);
   if (selectionCard) selectionCard.hidden = !active;
   if (form) form.hidden = !active;
+  if (mobileAction) mobileAction.hidden = !active;
+  if (screen) screen.classList.toggle("mobile-shipment-action-active", active);
   updateFinishedShipmentSaveButtonState();
   if (!host) return;
   if (!order || !dispatch) {
@@ -30601,7 +30680,7 @@ async function enterFinishedProductShipping(options) {
   showScreen("finished-product-shipping");
   setFinishedShipmentMessage("finished-shipment-dispatch-message", "", false);
   setFinishedShipmentMessage("finished-shipment-scan-message", "", false);
-  setFinishedShipmentMessage("finished-shipment-save-message", "", false);
+  setFinishedShipmentSaveMessage("", false);
   setFinishedShipmentPickingBlocked(false);
   var lookup = document.getElementById("finished-shipment-lookup");
   if (lookup) lookup.innerHTML = "";
@@ -30962,17 +31041,17 @@ async function saveFinishedProductShipment() {
   var order = finishedShipmentOrderContext;
   var dispatch = finishedShipmentDispatch();
   var shippedOn = String((document.getElementById("finished-shipment-shipped-on") || {}).value || "").trim();
-  if (!order || !dispatch) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_order_link_wait"), true); return; }
-  if (finishedShipmentPickingBlocked) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_picking_blocked"), true); return; }
-  if (dispatch.status !== "ready") { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_serial_required"), true); return; }
-  if (!String(order.outbound_tracking_number || "").trim()) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_tracking_required"), true); return; }
-  if (order.core_return_required && !String(order.return_tracking_number || "").trim()) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_return_tracking_required"), true); return; }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(shippedOn)) { setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_date_required"), true); return; }
+  if (!order || !dispatch) { setFinishedShipmentSaveMessage(t("finished_shipping_order_link_wait"), true); return; }
+  if (finishedShipmentPickingBlocked) { setFinishedShipmentSaveMessage(t("finished_shipping_picking_blocked"), true); return; }
+  if (dispatch.status !== "ready") { setFinishedShipmentSaveMessage(t("finished_shipping_serial_required"), true); return; }
+  if (!String(order.outbound_tracking_number || "").trim()) { setFinishedShipmentSaveMessage(t("finished_shipping_tracking_required"), true); return; }
+  if (order.core_return_required && !String(order.return_tracking_number || "").trim()) { setFinishedShipmentSaveMessage(t("finished_shipping_return_tracking_required"), true); return; }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(shippedOn)) { setFinishedShipmentSaveMessage(t("finished_shipping_date_required"), true); return; }
   if (!window.confirm(t("finished_shipping_confirm"))) return;
 
   finishedShipmentSaving = true;
   updateFinishedShipmentSaveButtonState();
-  setFinishedShipmentMessage("finished-shipment-save-message", t("loading"), false);
+  setFinishedShipmentSaveMessage(t("loading"), false);
   try {
     var r = await sb.rpc("confirm_sales_order_dispatch", {
       target_dispatch_id: dispatch.id,
@@ -30985,11 +31064,11 @@ async function saveFinishedProductShipment() {
     var result = Array.isArray(r.data) ? (r.data[0] || null) : r.data;
     refreshFinishedShipmentContext(result);
     closeFinishedShipmentCandidates();
-    setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_saved"), false);
+    setFinishedShipmentSaveMessage(t("finished_shipping_saved"), false);
     await loadFinishedShipmentHistory();
   } catch (e) {
     console.warn("finished-product shipment save failed", e);
-    setFinishedShipmentMessage("finished-shipment-save-message", (e && e.message) || t("msg_part_err"), true);
+    setFinishedShipmentSaveMessage((e && e.message) || t("msg_part_err"), true);
   } finally {
     finishedShipmentSaving = false;
     updateFinishedShipmentSaveButtonState();
@@ -31156,7 +31235,7 @@ async function cancelFinishedProductShipment(shipmentId) {
     target_reason: reason
   });
   if (r.error) { alert(r.error.message || t("msg_part_err")); return; }
-  setFinishedShipmentMessage("finished-shipment-save-message", t("finished_shipping_cancelled"), false);
+  setFinishedShipmentSaveMessage(t("finished_shipping_cancelled"), false);
   await loadFinishedShipmentHistory();
 }
 
@@ -50706,11 +50785,11 @@ document.getElementById("finished-label-product-category").addEventListener("cha
 document.getElementById("finished-label-variant-kind").addEventListener("change", function() {
   if (finishedLabelPrintMode === "product") loadFinishedLabelComponentCandidates({ resetDefaults: true });
 });
-["btn-finished-shipment-add-serial","btn-finished-shipment-save","btn-finished-shipment-reload","btn-finished-shipment-clear"].forEach(function(id) {
+["btn-finished-shipment-add-serial","btn-finished-shipment-save","btn-finished-shipment-mobile-save","btn-finished-shipment-reload","btn-finished-shipment-clear"].forEach(function(id) {
   var el = document.getElementById(id);
   if (!el) return;
   if (id === "btn-finished-shipment-add-serial") el.addEventListener("click", addFinishedShipmentSerial);
-  else if (id === "btn-finished-shipment-save") el.addEventListener("click", saveFinishedProductShipment);
+  else if (id === "btn-finished-shipment-save" || id === "btn-finished-shipment-mobile-save") el.addEventListener("click", saveFinishedProductShipment);
   else if (id === "btn-finished-shipment-reload") el.addEventListener("click", reloadFinishedShipmentWorkspace);
   else el.addEventListener("click", clearFinishedShipmentUnits);
 });

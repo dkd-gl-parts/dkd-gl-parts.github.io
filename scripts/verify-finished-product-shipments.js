@@ -55,7 +55,11 @@ assert(html.includes('id="screen-finished-product-shipping"'), "shipment screen 
   'id="finished-shipment-selection-card" hidden',
   'id="finished-shipment-order-form" hidden',
   'id="finished-shipment-shipped-on" type="date"',
-  'id="finished-shipment-readiness" aria-live="polite"'
+  'id="finished-shipment-readiness" aria-live="polite"',
+  'id="finished-shipment-mobile-final-action" hidden',
+  'id="finished-shipment-mobile-readiness" aria-live="polite"',
+  'id="btn-finished-shipment-mobile-save"',
+  'id="finished-shipment-mobile-save-message" aria-live="polite"'
 ].forEach((field) => assert(html.includes(field), `shipment workflow element is missing: ${field}`));
 [
   'id="finished-shipment-customer"',
@@ -75,6 +79,8 @@ for (const id of [
 assert(css.includes(".finished-shipment-shell"), "shipment layout styles are missing");
 assert(css.includes(".finished-shipment-camera-stage"), "camera scanner preview styles are missing");
 assert(/@media \(max-width: 767px\)[\s\S]*\.finished-shipment-scan-row\s*\{[^}]*grid-template-columns:\s*1fr 1fr/s.test(css), "camera scan controls must stack for narrow mobile screens");
+assert(/@media \(max-width: 767px\)[\s\S]*\.finished-shipment-mobile-final-action:not\(\[hidden\]\)\s*\{[^}]*position:\s*fixed[^}]*bottom:/s.test(css), "mobile picking status and shipment action must remain in one viewport");
+assert(/\.finished-shipment-mobile-final-action \.btn-primary\s*\{[^}]*min-height:\s*48px/s.test(css), "mobile shipment action must remain touch friendly");
 assert(css.includes(".finished-shipment-candidates"), "manual serial candidate styles are missing");
 assert(css.includes(".sales-order-dispatch-summary"), "sales-order dispatch summary styles are missing");
 assert(/\.finished-shipment-table\s*\{[^}]*min-width:\s*0[^}]*table-layout:\s*fixed/s.test(css), "shipment table must fit its pane");
@@ -207,9 +213,31 @@ assert(!saveSource.includes('.from("core_product_variants").update('), "browser 
 const saveButtonSource = functionSource("updateFinishedShipmentSaveButtonState");
 assert(saveButtonSource.includes("finishedShipmentTrackingState(order)"), "shipment confirmation button must include waybill readiness");
 assert(saveButtonSource.includes("!tracking.outboundReady") && saveButtonSource.includes("!tracking.returnReady"), "missing waybill numbers must disable final shipment confirmation");
+assert(saveButtonSource.includes('"btn-finished-shipment-mobile-save"'), "mobile and desktop shipment buttons must share the same readiness state");
+const readinessStateSource = functionSource("finishedShipmentReadinessState");
+assert(readinessStateSource.includes("finished_shipping_final_needs_tracking"), "outbound tracking blocker must remain visible after picking");
+assert(readinessStateSource.includes("finished_shipping_final_ready"), "ready-to-ship state must explain stock deduction");
+assert(readinessStateSource.includes("finished_shipping_mobile_status_error"), "mobile picking errors must have an explicit judgement");
+const readinessContext = {
+  finishedShipmentPickingBlocked: false,
+  finishedShipmentTrackingState(order) {
+    return {
+      outboundReady: !!order.outbound_tracking_number,
+      returnReady: !order.core_return_required || !!order.return_tracking_number
+    };
+  }
+};
+vm.createContext(readinessContext);
+vm.runInContext(`${readinessStateSource}; this.readinessState = finishedShipmentReadinessState;`, readinessContext);
+assert(readinessContext.readinessState({ outbound_tracking_number: "123" }, { status: "preparing" }).mobileKey === "finished_shipping_mobile_status_waiting", "mobile judgement must show incomplete before serial verification");
+assert(readinessContext.readinessState({}, { status: "ready" }).mobileKey === "finished_shipping_mobile_status_tracking", "mobile judgement must identify a missing outbound waybill");
+assert(readinessContext.readinessState({ outbound_tracking_number: "123" }, { status: "ready" }).state === "ready", "mobile judgement must become ready after all shipment checks pass");
+readinessContext.finishedShipmentPickingBlocked = true;
+assert(readinessContext.readinessState({ outbound_tracking_number: "123" }, { status: "ready" }).state === "error", "a picking error must override the ready state");
 const readinessSource = functionSource("renderFinishedShipmentReadiness");
-assert(readinessSource.includes("finished_shipping_final_needs_tracking"), "outbound tracking blocker must remain visible after picking");
-assert(readinessSource.includes("finished_shipping_final_ready"), "ready-to-ship state must explain stock deduction");
+assert(readinessSource.includes("finished-shipment-mobile-readiness"), "mobile picking judgement must be synchronized with shipment readiness");
+const orderContextSource = functionSource("renderFinishedShipmentOrderContext");
+assert(orderContextSource.includes("mobileAction.hidden = !active"), "mobile shipment action must only appear for an active dispatch");
 assert(/id="btn-finished-shipment-save"[^>]*data-i18n="finished_shipping_register"[^>]*disabled/.test(html), "final shipment action must start blocked until server-backed checks pass");
 assert(functionSource("renderFinishedShipmentCandidates").includes("unit.match_type === \"compatible\""), "compatible candidates need a visible badge");
 assert(functionSource("finishedShipmentFlattenAssignments").includes('match_type: finishedShipmentUnitMatchesItem(serial, orderItem) ? "exact" : "compatible"'), "assigned compatible units must remain identifiable");
@@ -235,6 +263,7 @@ assert(css.includes(".finished-shipment-picking-stock"), "picking stock breakdow
 assert(app.includes('document.getElementById("btn-finished-shipment-load-dispatch").addEventListener("click", loadFinishedShipmentDispatch)'), "dispatch load button is not bound");
 assert(app.includes('document.getElementById("btn-finished-shipment-camera-dispatch").addEventListener("click"'), "dispatch camera button is not bound");
 assert(app.includes('document.getElementById("btn-finished-shipment-camera-serial").addEventListener("click"'), "serial camera button is not bound");
+assert(app.includes('id === "btn-finished-shipment-save" || id === "btn-finished-shipment-mobile-save"'), "mobile shipment confirmation button is not bound");
 assert(app.includes('document.getElementById("finished-shipment-camera-cancel").addEventListener("click", closeFinishedShipmentCamera)'), "camera cancel button is not bound");
 assert(app.includes('document.getElementById("btn-finished-shipment-candidate-reload").addEventListener("click", loadFinishedShipmentCandidates)'), "manual candidate search is not bound");
 assert(app.includes('el.addEventListener("click", reloadFinishedShipmentWorkspace)'), "screen reload button must refresh dispatch state and history");
