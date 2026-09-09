@@ -780,6 +780,8 @@ var TRANSLATIONS = {
     finished_shipping_dispatch_scan_hint: "スマホでは「カメラ」を押して読み取れます。出荷指示番号の手入力も可能です。",
     finished_shipping_dispatch_required: "出荷指示書を読み取るか、出荷指示番号を入力してください。",
     finished_shipping_dispatch_loaded: "出荷指示を読み込みました。商品の製造シリアルを照合してください。",
+    finished_shipping_dispatch_resumed: "出荷指示を再読込し、照合済みの製造シリアルを復元しました。",
+    finished_shipping_reload_workspace: "画面を再読込",
     finished_shipping_scan_title: "製造シリアル照合・保証照会",
     finished_shipping_scan_ph: "QRを読取、または MYYYY-NNNNNNN を入力",
     finished_shipping_add_serial: "追加",
@@ -850,7 +852,7 @@ var TRANSLATIONS = {
     finished_shipping_date_required: "出荷日を入力してください。",
     finished_shipping_serial_required: "必要な製造シリアルの照合を完了してください。",
     finished_shipping_serial_invalid: "製造シリアルは MYYYY-NNNNNNN 形式で入力してください。",
-    finished_shipping_serial_duplicate: "この製造シリアルは追加済みです。",
+    finished_shipping_serial_duplicate: "この製造シリアルは、この出荷指示で照合済みです。",
     finished_shipping_serial_not_found: "製造シリアルが見つかりません。",
     finished_shipping_serial_unavailable: "この製造シリアルは出荷可能な状態ではありません。",
     finished_shipping_lookup_only: "出荷指示書のQRを読み取るか、出荷指示番号を手入力してください。製造シリアルだけを入力した場合は保証情報を照会します。",
@@ -2704,6 +2706,8 @@ var TRANSLATIONS = {
     finished_shipping_dispatch_scan_hint: "On a phone, select Camera to scan. You can also enter the dispatch number manually.",
     finished_shipping_dispatch_required: "Scan a shipment instruction or enter its dispatch number.",
     finished_shipping_dispatch_loaded: "Shipment instruction loaded. Verify each manufacturing serial.",
+    finished_shipping_dispatch_resumed: "Shipment instruction reloaded and verified manufacturing serials restored.",
+    finished_shipping_reload_workspace: "Reload Screen",
     finished_shipping_scan_title: "Serial Check / Warranty Lookup",
     finished_shipping_scan_ph: "Scan QR or enter MYYYY-NNNNNNN",
     finished_shipping_add_serial: "Add",
@@ -2774,7 +2778,7 @@ var TRANSLATIONS = {
     finished_shipping_date_required: "Enter the shipment date.",
     finished_shipping_serial_required: "Verify all required manufacturing serials.",
     finished_shipping_serial_invalid: "Enter a serial in MYYYY-NNNNNNN format.",
-    finished_shipping_serial_duplicate: "This manufacturing serial is already added.",
+    finished_shipping_serial_duplicate: "This manufacturing serial is already verified for this dispatch.",
     finished_shipping_serial_not_found: "Manufacturing serial not found.",
     finished_shipping_serial_unavailable: "This manufacturing serial is not available for shipment.",
     finished_shipping_lookup_only: "Scan the instruction QR or enter its dispatch number. Entering only a serial looks up warranty information.",
@@ -4636,6 +4640,8 @@ var TRANSLATIONS = {
     finished_shipping_dispatch_scan_hint: "使用手机时可点击“相机”扫描，也可以手动输入出货指示编号。",
     finished_shipping_dispatch_required: "请扫描出货指示书或输入出货指示编号。",
     finished_shipping_dispatch_loaded: "已读取出货指示，请核对商品制造序列号。",
+    finished_shipping_dispatch_resumed: "已重新读取出货指示，并恢复已核对的制造序列号。",
+    finished_shipping_reload_workspace: "重新读取画面",
     finished_shipping_scan_title: "制造序列号核对・保修查询",
     finished_shipping_scan_ph: "扫描QR或输入 MYYYY-NNNNNNN",
     finished_shipping_add_serial: "添加",
@@ -4706,7 +4712,7 @@ var TRANSLATIONS = {
     finished_shipping_date_required: "请输入出货日期。",
     finished_shipping_serial_required: "请完成所有必要制造序列号的核对。",
     finished_shipping_serial_invalid: "请输入 MYYYY-NNNNNNN 格式的序列号。",
-    finished_shipping_serial_duplicate: "该制造序列号已添加。",
+    finished_shipping_serial_duplicate: "该制造序列号已在此出货指示中核对。",
     finished_shipping_serial_not_found: "找不到制造序列号。",
     finished_shipping_serial_unavailable: "该制造序列号当前不可出货。",
     finished_shipping_lookup_only: "请扫描出货指示书QR或手动输入出货指示编号。只输入制造序列号时查询保修信息。",
@@ -5896,7 +5902,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.932";
+var APP_VERSION       = "v1.1.933";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -30418,9 +30424,26 @@ async function loadFinishedShipmentDispatch() {
     lookup.innerHTML = "";
     lookup.className = "finished-shipment-lookup";
   }
-  setFinishedShipmentMessage("finished-shipment-dispatch-message", t("finished_shipping_dispatch_loaded"), false);
+  setFinishedShipmentMessage(
+    "finished-shipment-dispatch-message",
+    finishedShipmentFlattenAssignments().length
+      ? t("finished_shipping_dispatch_resumed")
+      : t("finished_shipping_dispatch_loaded"),
+    false
+  );
   var serialInput = document.getElementById("finished-shipment-serial-input");
   if (serialInput) { serialInput.value = ""; serialInput.focus(); }
+  return true;
+}
+
+async function reloadFinishedShipmentWorkspace() {
+  var dispatch = finishedShipmentDispatch();
+  var input = document.getElementById("finished-shipment-dispatch-input");
+  if (input && dispatch && dispatch.dispatch_number) input.value = dispatch.dispatch_number;
+  if (input && /^D[0-9]{10}$/.test(String(input.value || "").trim().toUpperCase())) {
+    await loadFinishedShipmentDispatch();
+  }
+  await loadFinishedShipmentHistory();
 }
 
 async function enterFinishedProductShipping(options) {
@@ -30446,7 +30469,8 @@ async function enterFinishedProductShipping(options) {
   var shippedOn = document.getElementById("finished-shipment-shipped-on");
   if (shippedOn) shippedOn.value = new Date().toISOString().slice(0, 10);
   await loadFinishedWarrantyPolicies(false);
-  refreshFinishedShipmentContext(finishedShipmentOrderContext);
+  if (dispatch) await loadFinishedShipmentDispatch();
+  else refreshFinishedShipmentContext(finishedShipmentOrderContext);
   closeFinishedShipmentCandidates();
   var back = document.getElementById("btn-back-finished-product-shipping");
   if (back) back.textContent = finishedShipmentOrderContext ? "← " + t("sales_order_mgmt_title") : t("btn_back");
@@ -30721,10 +30745,13 @@ async function addFinishedShipmentSerial() {
     if (input) input.select();
     return;
   }
-  if (finishedShipmentFlattenAssignments().some(function(unit) { return unit.manufacturing_serial === serial; })) {
-    if (dispatch) setFinishedShipmentPickingBlocked(true);
-    setFinishedShipmentMessage("finished-shipment-scan-message", t("finished_shipping_serial_duplicate"), true);
-    if (input) input.select();
+  var existingAssignment = finishedShipmentFlattenAssignments().find(function(unit) {
+    return unit.manufacturing_serial === serial;
+  });
+  if (existingAssignment) {
+    setFinishedShipmentPickingBlocked(false);
+    setFinishedShipmentMessage("finished-shipment-scan-message", t("finished_shipping_serial_duplicate"), false);
+    if (input) { input.value = ""; input.focus(); }
     return;
   }
   var r = await sb.from("finished_product_units")
@@ -30743,13 +30770,8 @@ async function addFinishedShipmentSerial() {
     if (input) { input.value = ""; input.focus(); }
     return;
   }
-  if (r.data.status !== "available") {
-    setFinishedShipmentPickingBlocked(true);
-    await renderFinishedShipmentLookup(r.data, { status: "ng" });
-    setFinishedShipmentMessage("finished-shipment-scan-message", t("finished_shipping_serial_unavailable"), true);
-    if (input) input.select();
-    return;
-  }
+  // The assignment RPC is idempotent for a serial already assigned to this
+  // dispatch and remains authoritative for reserved or unavailable units.
   await assignFinishedShipmentSerial(null, serial, r.data);
 }
 
@@ -50490,7 +50512,7 @@ document.getElementById("finished-label-variant-kind").addEventListener("change"
   if (!el) return;
   if (id === "btn-finished-shipment-add-serial") el.addEventListener("click", addFinishedShipmentSerial);
   else if (id === "btn-finished-shipment-save") el.addEventListener("click", saveFinishedProductShipment);
-  else if (id === "btn-finished-shipment-reload") el.addEventListener("click", loadFinishedShipmentHistory);
+  else if (id === "btn-finished-shipment-reload") el.addEventListener("click", reloadFinishedShipmentWorkspace);
   else el.addEventListener("click", clearFinishedShipmentUnits);
 });
 document.getElementById("btn-finished-shipment-load-dispatch").addEventListener("click", loadFinishedShipmentDispatch);
