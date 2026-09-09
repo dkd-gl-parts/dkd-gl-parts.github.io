@@ -9293,8 +9293,50 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 }
 
 @media screen and (min-width: 1200px) {
-  #screen-sales-order-mgmt .sales-order-title-block { flex: none; }
+  #screen-sales-order-mgmt .sales-order-mgmt-body { grid-template-columns: 330px minmax(0, 1fr); }
+  #screen-sales-order-mgmt .sales-order-workspace { grid-template-columns: 330px minmax(0, 1fr); }
+  #screen-sales-order-mgmt .sales-order-toolbar { display: block; padding: 10px 16px; }
+  #screen-sales-order-mgmt .sales-order-title-block { display: none; }
   #screen-sales-order-mgmt .sales-order-filter-row { grid-template-columns: auto minmax(360px, 1fr) auto auto; }
+  #screen-sales-order-mgmt .sales-order-auto-print,
+  #screen-sales-order-mgmt .sales-order-dashboard { min-height: 56px; }
+  #screen-sales-order-mgmt .sales-order-auto-print { gap: 8px; padding: 5px 10px; }
+  #screen-sales-order-mgmt .sales-order-auto-print-heading { gap: 2px; }
+  #screen-sales-order-mgmt .sales-order-auto-print-heading > strong { white-space: nowrap; }
+  #screen-sales-order-mgmt .sales-order-auto-print-state { min-height: 22px; }
+  #screen-sales-order-mgmt .sales-order-print-settings-button { min-height: 36px; padding: 6px 8px; font-size: 13px; }
+  #screen-sales-order-mgmt .sales-order-dashboard { padding-top: 5px; padding-bottom: 5px; }
+  #screen-sales-order-mgmt .sales-order-dashboard-metric { min-height: 44px; padding-top: 4px; padding-bottom: 4px; }
+
+  #screen-sales-order-mgmt .sales-order-detail-head { min-height: 0; row-gap: 6px; padding: 8px 0; }
+  #screen-sales-order-mgmt .sales-order-detail-meta { min-height: 0; line-height: 1.3; }
+  #screen-sales-order-mgmt .sales-order-detail-head h2 { line-height: 1.15; }
+  #screen-sales-order-mgmt .sales-order-detail-head .sales-order-detail-identity > strong { line-height: 1.3; }
+  #screen-sales-order-mgmt .sales-order-detail-summary > div { padding-top: 6px; padding-bottom: 6px; }
+
+  #screen-sales-order-mgmt .sales-order-detail-overview { overflow-y: auto; padding-bottom: 12px; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid { grid-template-columns: minmax(485px, 1.03fr) minmax(410px, .97fr); align-items: start; height: auto; gap: 14px; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid > .sales-order-detail-section { padding-top: 10px; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid > .sales-order-detail-section:first-child { border-right: 1px solid #dbe1e6; padding-right: 14px; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-section-heading { margin-bottom: 8px; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-section-heading p { display: none; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-item-head,
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-item-row { grid-template-columns: minmax(105px, 1fr) 74px 30px 56px 64px 72px; min-width: 0; gap: 5px; padding: 8px 7px; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-item-row { min-height: 60px; font-size: 14px; }
+
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-address { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-content: start; gap: 9px 12px; padding-top: 10px; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-address .sales-order-section-heading { grid-column: 1 / -1; grid-row: 1; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-address-destination { grid-column: 1; grid-row: 2; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-address-destination strong { line-height: 1.35; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-address-destination span { line-height: 1.45; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-address dl { grid-column: 2; grid-row: 2; gap: 5px; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-address dl > div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-waybill-detail strong { line-height: 1.35; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-waybill-detail span { line-height: 1.4; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-vehicle-information { grid-column: 1 / -1; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-shipping-schedule { grid-column: 1 / -1; grid-template-columns: minmax(250px, 1fr) auto; gap: 6px 10px; padding: 8px 10px; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-shipping-schedule label { grid-template-columns: auto minmax(150px, 1fr); align-items: center; gap: 6px; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-shipping-schedule small { display: none; }
 }
 
 @media screen and (max-width: 1199px) {
