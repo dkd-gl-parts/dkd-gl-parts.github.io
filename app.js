@@ -5896,8 +5896,9 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.931";
+var APP_VERSION       = "v1.1.932";
 var userManagementRows = [];
+var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
 var userManagementLoadError = null;
 var currentPermissionEditUserId = null;
@@ -47334,6 +47335,59 @@ function closeInternalUserInvite() {
   if (overlay) overlay.classList.remove("show");
 }
 
+function internalUserAuthStatus(user) {
+  var account = internalUserAuthStatusMap[(user && user.id) || ""];
+  return account && account.state ? account : { state: "unknown" };
+}
+
+function internalUserAuthStatusBadge(user) {
+  var state = internalUserAuthStatus(user).state;
+  var labels = {
+    invitation_pending: "初回設定待ち",
+    confirmed: "メール確認済み",
+    active: "利用可能",
+    unavailable: "認証状態不明",
+    unknown: "認証状態確認不可"
+  };
+  if (!labels[state]) state = "unknown";
+  return "<span class='status-badge status-auth-" + esc(state.replace(/_/g, "-")) + "'>" + esc(labels[state]) + "</span>";
+}
+
+function internalUserAuthStatusNote(user) {
+  var account = internalUserAuthStatus(user);
+  var value = "";
+  var label = "";
+  if (account.state === "invitation_pending" && account.invited_at) {
+    label = "初回設定メール受付";
+    value = account.invited_at;
+  } else if (account.state === "active" && account.last_sign_in_at) {
+    label = "最終ログイン";
+    value = account.last_sign_in_at;
+  } else if (account.state === "confirmed" && account.email_confirmed_at) {
+    label = "メール確認";
+    value = account.email_confirmed_at;
+  }
+  if (!value) return account.state === "unavailable" ? "認証ユーザーを確認できません" : "";
+  var date = new Date(value);
+  return label + ": " + (isNaN(date.getTime()) ? value : date.toLocaleString("ja-JP"));
+}
+
+async function loadInternalUserAuthStatuses(users) {
+  internalUserAuthStatusMap = {};
+  var userIds = (users || []).map(function(user) { return user && user.id; }).filter(Boolean);
+  if (!userIds.length) return;
+  var response = await sb.functions.invoke("invite-internal-user", {
+    body: { action: "status", user_ids: userIds }
+  });
+  if (response.error || !response.data || !response.data.ok) {
+    console.warn("internal user auth status lookup failed", response.error || response.data);
+    return;
+  }
+  (response.data.accounts || []).forEach(function(account) {
+    if (account && account.user_id) internalUserAuthStatusMap[account.user_id] = account;
+  });
+}
+
 function internalUserInviteErrorMessage(code) {
   var messages = {
     name_required: "表示名を入力してください",
@@ -47344,6 +47398,15 @@ function internalUserInviteErrorMessage(code) {
     scope_forbidden: "選択した所属または基準権限を発行する権限がありません",
     forbidden: "社内ユーザーを発行する権限がありません",
     email_already_registered: "このメールアドレスは登録済みです。ユーザー一覧からPW再設定を送信してください",
+    email_rate_limit: "メール送信上限に達しました。時間をおいて再試行してください。上限撤廃にはカスタムSMTP設定が必要です",
+    email_address_invalid: "メールサービスがこの宛先を受け付けませんでした。メールアドレスと受信可能な状態を確認してください",
+    email_delivery_failed: "メール配信サービスへの送信に失敗しました。時間をおいて再試行してください",
+    target_user_not_found: "対象の社内ユーザーを確認できませんでした",
+    auth_user_not_found: "対象の認証ユーザーを確認できませんでした",
+    invitation_pending: "初回設定が未完了です。「初回設定を再送」を使用してください",
+    invitation_already_accepted: "初回設定メールは確認済みです。画面を更新してPW再設定を使用してください",
+    resend_failed: "初回設定メールの再送に失敗しました",
+    password_reset_failed: "PW再設定メールの送信に失敗しました",
     profile_setup_failed: "ユーザーの所属・権限設定を保存できませんでした",
     invite_failed: "社内ユーザーIDの発行に失敗しました"
   };
@@ -47375,6 +47438,7 @@ async function inviteInternalUser() {
     return;
   }
   var payload = {
+    action: "invite",
     name: nameInput ? nameInput.value.trim() : "",
     email: emailInput ? emailInput.value.trim().toLowerCase() : "",
     company_code: company ? company.value : "",
@@ -47407,7 +47471,7 @@ async function inviteInternalUser() {
   }
   if (resultMessage) {
     resultMessage.className = "internal-user-invite-result save-ok";
-    resultMessage.textContent = "社内ユーザーIDを発行し、初回設定メールを送信しました。";
+    resultMessage.textContent = "社内ユーザーIDを発行し、初回設定メールの送信を受け付けました。受信と設定完了まで「初回設定待ち」と表示されます。";
   }
   if (nameInput) nameInput.value = "";
   if (emailInput) emailInput.value = "";
@@ -47440,6 +47504,7 @@ async function loadUsers() {
   }
   salesCustomerOptions = [];
   customerUserLinkMap = {};
+  await loadInternalUserAuthStatuses(users);
   renderUserPermissionOverview();
   renderUsers(users);
 }
@@ -49145,19 +49210,30 @@ function renderUsers(users) {
   if (!users.length) { list.innerHTML = "<div class='empty'>"+t("no_users")+"</div>"; return; }
 
   var order = {pending:0,active:1,suspended:2};
-  users.sort(function(a,b){return (order[a.status||"active"]||1)-(order[b.status||"active"]||1);});
-  var pendingCount = users.filter(function(u){return u.status==="pending";}).length;
+  users.sort(function(a,b){
+    var aPending = a.status === "pending" || (a.status === "active" && internalUserAuthStatus(a).state === "invitation_pending");
+    var bPending = b.status === "pending" || (b.status === "active" && internalUserAuthStatus(b).state === "invitation_pending");
+    if (aPending !== bPending) return aPending ? -1 : 1;
+    return (order[a.status||"active"]||1)-(order[b.status||"active"]||1);
+  });
+  var pendingCount = users.filter(function(u){return u.status === "pending" || (u.status === "active" && internalUserAuthStatus(u).state === "invitation_pending");}).length;
   var userById = {};
   users.forEach(function(u) { userById[u.id] = u; });
 
   var html = "";
   if (pendingCount > 0) {
-    html += "<div class='pending-banner'>&#x23F3; "+pendingCount+" 件の承認待ち / "+pendingCount+" pending approval</div>";
+    html += "<div class='pending-banner'>&#x23F3; "+pendingCount+" 件の初回設定・承認待ち</div>";
   }
   users.forEach(function(u) {
     var initials = (u.name||u.email||"?").charAt(0).toUpperCase();
     var status   = u.status || "active";
     var sbadge   = "<span class='status-badge status-"+esc(status)+"'>"+esc(t("users_"+status+"_badge"))+"</span>";
+    if (status === "active") sbadge = internalUserAuthStatusBadge(u);
+    var authStatus = internalUserAuthStatus(u);
+    var authStatusNote = internalUserAuthStatusNote(u);
+    var accountAction = authStatus.state === "invitation_pending" ? "resend_invitation" : "send_password_reset";
+    var accountActionLabel = accountAction === "resend_invitation" ? "初回設定を再送" : t("btn_send_pw_reset");
+    var accountActionDisabled = authStatus.state === "unavailable" ? " disabled" : "";
     var companyCode = userCompanyCode(u);
     var departmentCode = userDepartmentCode(u);
     var companyLabel = optionLabel(USER_COMPANY_OPTIONS, companyCode);
@@ -49176,6 +49252,7 @@ function renderUsers(users) {
     html += "</div>";
     if (u.company) html += "<div class='user-created'>申請会社名: "+esc(u.company)+"</div>";
     html += "<div class='user-created'>"+t("lbl_registered")+" "+(u.created_at?u.created_at.slice(0,10):"-")+"</div>";
+    if (authStatusNote) html += "<div class='user-auth-state-note'>"+esc(authStatusNote)+"</div>";
     html += "</div></div>";
     if (canManageThis) {
       html += "<div class='user-actions'>";
@@ -49184,7 +49261,7 @@ function renderUsers(users) {
       html += "<button class='btn-save-user' data-uid='"+esc(u.id)+"'>"+t("btn_save")+"</button>";
       if (status==="pending"||status==="suspended") html += "<button class='btn-approve' data-uid='"+esc(u.id)+"'>"+t("btn_approve")+"</button>";
       if (status==="active") html += "<button class='btn-suspend' data-uid='"+esc(u.id)+"'>"+t("btn_suspend")+"</button>";
-      html += "<button class='btn-pw-reset' data-uid='"+esc(u.id)+"' data-email='"+esc(u.email)+"'>"+t("btn_send_pw_reset")+"</button>";
+      html += "<button class='btn-pw-reset' data-uid='"+esc(u.id)+"' data-account-action='"+esc(accountAction)+"'"+accountActionDisabled+">"+esc(accountActionLabel)+"</button>";
       html += "<span class='save-msg' id='save-msg-"+esc(u.id)+"'></span>";
       html += "</div>";
     }
@@ -49325,31 +49402,28 @@ function renderUsers(users) {
     btn.addEventListener("click",function(){if(confirm("このユーザーを停止しますか？"))updateStatus(btn.dataset.uid,"suspended");});
   });
 
-  // パスワードリセットメール送信
+  // 初回設定メール再送 / パスワードリセットメール送信
   list.querySelectorAll(".btn-pw-reset").forEach(function(btn){
     btn.addEventListener("click", async function(){
-      var email = btn.dataset.email;
       var uid   = btn.dataset.uid;
+      var target = userById[uid];
+      var action = btn.dataset.accountAction || "send_password_reset";
       var msg   = document.getElementById("save-msg-"+uid);
+      if (!canUseUserManagement() || !target || !canManageUser(target)) { showPermissionDenied(action, "profiles", uid); return; }
       btn.disabled = true;
-      var r = await sb.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + window.location.pathname
+      var r = await sb.functions.invoke("invite-internal-user", {
+        body: { action: action, target_user_id: uid }
       });
       btn.disabled = false;
-      if (r.error) {
+      if (r.error || !r.data || !r.data.ok) {
         msg.className = "save-msg save-err";
-        msg.textContent = t("msg_pw_reset_err");
+        msg.textContent = internalUserInviteErrorMessage(await internalUserInviteErrorCode(r));
       } else {
-        await logUserActivity("password_reset_sent", {
-          screen: "users",
-          action: "send_password_reset",
-          target_type: "profiles",
-          target_id: uid,
-          target_desc: email || uid
-        });
         msg.className = "save-msg save-ok";
-        msg.textContent = t("msg_pw_reset_sent");
-        setTimeout(function(){ msg.textContent = ""; }, 3000);
+        msg.textContent = action === "resend_invitation"
+          ? "初回設定メールの再送を受け付けました。最新のメールを使用してください。"
+          : "PW再設定メールの送信を受け付けました。";
+        setTimeout(function(){ msg.textContent = ""; }, 6000);
       }
     });
   });

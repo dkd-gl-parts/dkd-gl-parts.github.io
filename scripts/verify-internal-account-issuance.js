@@ -37,7 +37,15 @@ function forbidText(source, text, label) {
 [
   "function openInternalUserInvite()",
   "async function inviteInternalUser()",
+  "async function loadInternalUserAuthStatuses(users)",
   'sb.functions.invoke("invite-internal-user"',
+  'body: { action: "status", user_ids: userIds }',
+  'action: "invite"',
+  'data-account-action=',
+  '"resend_invitation"',
+  '"send_password_reset"',
+  '初回設定メールの再送を受け付けました',
+  'PW再設定メールの送信を受け付けました',
   'option[0] !== "customer_viewer"',
   'option[0] !== "external_viewer"',
   'document.getElementById("btn-open-internal-user-invite").addEventListener',
@@ -63,6 +71,7 @@ const statusBadgeExpressions = renderUsersSource
 if (!escapeFunction || !renderUsersSource || statusBadgeExpressions.length !== 1) {
   throw new Error("user status badge security contract could not be isolated");
 }
+forbidText(renderUsersSource, "sb.auth.resetPasswordForEmail", "internal user password-reset browser call");
 const statusBadgeExpression = statusBadgeExpressions[0];
 
 const maliciousStatus = "active'><img src=x onerror=alert(1)><span class='";
@@ -84,6 +93,9 @@ if ((sandbox.statusBadge.match(/&lt;img/g) || []).length !== 2 || !sandbox.statu
   ".internal-user-invite-modal",
   ".internal-user-invite-grid",
   ".internal-user-invite-footer",
+  ".status-auth-invitation-pending",
+  ".status-auth-active",
+  ".user-auth-state-note",
 ].forEach((text) => requireText(css, text, "internal account issuance styling"));
 
 console.log("internal account issuance guard passed");
