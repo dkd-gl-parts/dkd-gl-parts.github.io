@@ -38,7 +38,7 @@ for (const fragment of [
   "sales-order-detail-panels",
   "sales-order-detail-overview-grid",
   "data-sales-order-detail-panel='overview'",
-  "注文・配送",
+  "請求・配送",
   "出荷・帳票",
   "sales-order-detail-products",
   "sales-order-detail-delivery",
@@ -49,13 +49,16 @@ for (const fragment of [
   "salesOrderDestinationHtml(address)",
   "salesOrderWaybillSummaryHtml(\"商品発送便\"",
   "customerNote ?",
-  "customerOrderProductSubtotal(order)",
-  "customerOrderCoreChargeTotal(order)",
-  "<span>コア代金</span>",
+  "salesOrderBillingSummaryHtml(order)",
+  "sales-order-detail-total",
+  "請求明細",
   "sales-order-detail-tracking",
   "sales-order-detail-history",
   "処理履歴"
 ]) requireFragment(detail, fragment);
+if (detail.includes("sales-order-detail-summary")) {
+  throw new Error("Order-level charges must be attached to the billing detail instead of a detached header strip");
+}
 requireFragment(functionSource("salesOrderWaybillSummaryHtml"), "sales-order-waybill-detail");
 if (detail.includes('order.customer_note || "-"')) {
   throw new Error("An empty order note must not occupy a delivery-summary row");
@@ -122,6 +125,38 @@ const standardRows = itemRowsContext.salesOrderItemRowsHtml([{
 }]);
 if (standardRows.includes("sales-order-core-charge-row")) {
   throw new Error("A standard core-return order must not show a billed core-charge detail row");
+}
+const billingSummary = functionSource("salesOrderBillingSummaryHtml");
+for (const fragment of [
+  "受注単位の請求内訳",
+  "customerOrderProductSubtotal(order)",
+  "customerOrderCoreChargeTotal(order)",
+  "salesOrderWaybillCarrierLabel(order, \"outbound\")",
+  "商品計",
+  "コア代金",
+  "値引・調整",
+  "送料",
+  "消費税",
+  "請求合計"
+]) requireFragment(billingSummary, fragment);
+const billingContext = {
+  esc: (value) => String(value),
+  customerOrderProductSubtotal: () => 7500,
+  customerOrderCoreChargeTotal: () => 2000,
+  customerOrderCurrency: (value) => `¥${Number(value).toLocaleString("ja-JP")}`,
+  salesOrderWaybillCarrierLabel: () => "ヤマト運輸 / 宅急便 元払い"
+};
+vm.createContext(billingContext);
+vm.runInContext(billingSummary, billingContext);
+const billingHtml = billingContext.salesOrderBillingSummaryHtml({
+  core_charge_total_jpy: 2000,
+  order_discount_jpy: 0,
+  shipping_fee_jpy: 700,
+  tax_jpy: 1020,
+  total_jpy: 11220
+});
+for (const fragment of ["商品計", "¥7,500", "コア代金", "¥2,000", "送料", "ヤマト運輸 / 宅急便 元払い", "¥700", "消費税", "¥1,020", "請求合計", "¥11,220"]) {
+  requireFragment(billingHtml, fragment, `Order billing summary is missing: ${fragment}`);
 }
 requireFragment(functionSource("salesOrderDispatchHtml"), "sales-order-detail-fulfillment");
 const carrierLabel = functionSource("salesOrderWaybillCarrierLabel");
@@ -242,6 +277,8 @@ for (const fragment of [
   ".sales-order-detail-panel[hidden]",
   ".sales-order-detail-overview-grid",
   ".sales-order-core-charge-row",
+  ".sales-order-billing-summary",
+  ".sales-order-detail-total",
   ".sales-order-waybill-detail",
   ".sales-order-detail-overview { overflow: hidden; }",
   ".sales-order-history-groups",

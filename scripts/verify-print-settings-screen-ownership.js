@@ -33,7 +33,10 @@ const shippingScreen = sectionBetween(
 );
 
 for (const fragment of [
-  "受付時の出荷指示書自動印刷",
+  "受注帳票の自動印刷",
+  "受付時に出荷指示書と必要な製品保証書",
+  "出荷完了時に必要なコア返却シート",
+  "B2 CSVと複写伝票は対象外です",
   "自動印刷設定",
   'id="sales-order-auto-print-station"',
   'id="sales-order-auto-print-enabled"',

@@ -6004,7 +6004,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.940";
+var APP_VERSION       = "v1.1.941";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -12424,10 +12424,11 @@ function setSalesOrderPrintSettingsMessage(message, isError) {
 function renderSalesOrderPrintSettings() {
   var panel = document.getElementById("sales-order-auto-print");
   var stateHost = document.getElementById("sales-order-auto-print-state");
+  var scopeHost = document.getElementById("sales-order-auto-print-scope");
   var stationSelect = document.getElementById("sales-order-auto-print-station");
   var enabledInput = document.getElementById("sales-order-auto-print-enabled");
   var saveButton = document.getElementById("sales-order-auto-print-save");
-  if (!panel || !stateHost || !stationSelect || !enabledInput || !saveButton) return;
+  if (!panel || !stateHost || !scopeHost || !stationSelect || !enabledInput || !saveButton) return;
   panel.hidden = !canManageSalesOrders();
   var settings = salesOrderPrintSettings || {};
   var config = settings.config || {};
@@ -12441,6 +12442,9 @@ function renderSalesOrderPrintSettings() {
   stateHost.textContent = config.auto_print_enabled
     ? "有効 / " + salesOrderPrintStationStateLabel(config.station_state)
     : "無効 / " + salesOrderPrintStationStateLabel(config.station_state);
+  scopeHost.textContent = config.auto_print_enabled
+    ? "受付: 出荷指示書・保証書 / 出荷完了: コア返却シート"
+    : "対象帳票の自動印刷は停止中";
   var stationState = ["ready", "stopped", "error", "inactive", "unconfigured"].indexOf(config.station_state) >= 0
     ? config.station_state
     : "unconfigured";
@@ -15687,6 +15691,25 @@ function salesOrderAdjustmentRowsHtml(rows, fallbackAmount) {
   }).join("") + "</div>";
 }
 
+function salesOrderBillingSummaryHtml(order) {
+  order = order || {};
+  var productSubtotal = customerOrderProductSubtotal(order);
+  var coreChargeTotal = Math.max(0, Number(order.core_charge_total_jpy) || customerOrderCoreChargeTotal(order));
+  var orderDiscount = Math.max(0, parseInt(order.order_discount_jpy, 10) || 0);
+  var shippingFee = Math.max(0, Number(order.shipping_fee_jpy) || 0);
+  var outboundService = salesOrderWaybillCarrierLabel(order, "outbound");
+  return "<section class='sales-order-billing-summary' aria-label='受注単位の請求内訳'>" +
+    "<div class='sales-order-billing-summary-head'><strong>受注単位の請求内訳</strong><span>商品以外の金額も、この受注の明細としてまとめて表示しています。</span></div>" +
+    "<dl>" +
+      "<div><dt>商品計</dt><dd>" + esc(customerOrderCurrency(productSubtotal)) + "</dd></div>" +
+      "<div class='core-charge'><dt>コア代金</dt><dd>" + esc(customerOrderCurrency(coreChargeTotal)) + "</dd></div>" +
+      "<div class='discount'><dt>値引・調整</dt><dd>" + esc(orderDiscount ? ("-" + customerOrderCurrency(orderDiscount)) : customerOrderCurrency(0)) + "</dd></div>" +
+      "<div class='shipping'><dt>送料<small>" + esc(outboundService || "配送方法未設定") + "</small></dt><dd>" + esc(shippingFee === 0 ? "送料無料" : customerOrderCurrency(shippingFee)) + "</dd></div>" +
+      "<div><dt>消費税</dt><dd>" + esc(customerOrderCurrency(order.tax_jpy)) + "</dd></div>" +
+      "<div class='total'><dt>請求合計</dt><dd>" + esc(customerOrderCurrency(order.total_jpy)) + "</dd></div>" +
+    "</dl></section>";
+}
+
 function salesOrderPricingHistoryHtml(rows) {
   rows = Array.isArray(rows) ? rows : [];
   if (!rows.length) return "";
@@ -16207,8 +16230,6 @@ function renderSalesOrderDetail() {
     "<div><dt>お届け希望</dt><dd>" + esc(deliveryPreference) + "</dd></div>" +
     (customerNote ? "<div><dt>注文メモ</dt><dd>" + esc(customerNote) + "</dd></div>" : "");
   var orderDiscount = Math.max(0, parseInt(order.order_discount_jpy, 10) || 0);
-  var coreChargeTotal = Math.max(0, Number(order.core_charge_total_jpy) || customerOrderCoreChargeTotal(order));
-  var productSubtotal = customerOrderProductSubtotal(order);
   var orderAdjustments = Array.isArray(order.order_adjustments) ? order.order_adjustments : [];
   var pricingButton = typeof salesOrderCanRevise === "function" && salesOrderCanRevise(order)
     ? "<button type='button' class='sales-order-pricing-open' id='sales-order-revision-open'>受注修正</button>" : "";
@@ -16216,8 +16237,9 @@ function renderSalesOrderDetail() {
     ? "<div class='sales-order-detail-next-actions'><span>次の操作</span><div>" + actions + cancelAction + "</div></div>"
     : "<div class='sales-order-detail-next-actions complete'><span>次の操作</span><strong>現在必要な操作はありません</strong></div>";
   var lifecycle = salesOrderLifecycleHtml(order.status);
+  var compactTotal = "<div class='sales-order-detail-total'><span>請求合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div>";
   var tabHtml = [
-    { key: "overview", label: "注文・配送" },
+    { key: "overview", label: "請求・配送" },
     { key: "fulfillment", label: "出荷・帳票" },
     { key: "tracking", label: "送り状" },
     { key: "history", label: "履歴" }
@@ -16226,12 +16248,11 @@ function renderSalesOrderDetail() {
     var panelId = tab.key === "tracking" || tab.key === "history" ? "sales-order-detail-" + tab.key : "sales-order-detail-panel-" + tab.key;
     return "<button type='button' role='tab' id='sales-order-detail-tab-" + tab.key + "' aria-controls='" + panelId + "' aria-selected='" + (selected ? "true" : "false") + "' tabindex='" + (selected ? "0" : "-1") + "' data-sales-order-detail-view='" + tab.key + "'>" + tab.label + "</button>";
   }).join("");
-  host.innerHTML = "<div class='sales-order-detail-head'><div class='sales-order-detail-identity'><div class='sales-order-detail-meta'><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "</div><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div>" + lifecycle + "<div class='sales-order-detail-state'><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span>" + nextActions + "</div></div>" +
-    "<div class='sales-order-detail-summary'><div><span>商品計</span><strong>" + esc(customerOrderCurrency(productSubtotal)) + "</strong></div><div class='core-charge'><span>コア代金</span><strong>" + esc(customerOrderCurrency(coreChargeTotal)) + "</strong></div><div class='discount'><span>値引・調整</span><strong>" + esc(orderDiscount ? ("-" + customerOrderCurrency(orderDiscount)) : customerOrderCurrency(0)) + "</strong></div><div><span>送料</span><strong>" + esc(Number(order.shipping_fee_jpy) === 0 ? "送料無料" : customerOrderCurrency(order.shipping_fee_jpy)) + "</strong></div><div><span>消費税</span><strong>" + esc(customerOrderCurrency(order.tax_jpy)) + "</strong></div><div class='total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div></div>" +
+  host.innerHTML = "<div class='sales-order-detail-head'><div class='sales-order-detail-identity'><div class='sales-order-detail-meta'><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "</div><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div>" + lifecycle + "<div class='sales-order-detail-state'><div class='sales-order-detail-state-summary'><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span>" + compactTotal + "</div>" + nextActions + "</div></div>" +
     "<nav class='sales-order-detail-nav' role='tablist' aria-label='注文詳細の作業項目'>" + tabHtml + "</nav>" +
     "<div class='sales-order-detail-panels'>" +
       "<section class='sales-order-detail-panel sales-order-detail-overview' id='sales-order-detail-panel-overview' role='tabpanel' aria-labelledby='sales-order-detail-tab-overview' data-sales-order-detail-panel='overview'><div class='sales-order-detail-overview-grid'>" +
-        "<section class='sales-order-detail-section' id='sales-order-detail-products'><div class='sales-order-section-heading'><div><h3>注文商品</h3><p>販売価格、数量、コア返却条件と値引・調整行を確認します。</p></div>" + pricingButton + "</div>" + salesOrderItemRowsHtml(order.items) + salesOrderAdjustmentRowsHtml(orderAdjustments, orderDiscount) + "</section>" +
+        "<section class='sales-order-detail-section sales-order-billing' id='sales-order-detail-products'><div class='sales-order-section-heading'><div><h3>請求明細</h3><p>商品、コア代金、値引・調整、送料、税を受注単位で確認します。</p></div>" + pricingButton + "</div>" + salesOrderItemRowsHtml(order.items) + salesOrderAdjustmentRowsHtml(orderAdjustments, orderDiscount) + salesOrderBillingSummaryHtml(order) + "</section>" +
         "<section class='sales-order-detail-section sales-order-address' id='sales-order-detail-delivery'><div class='sales-order-section-heading'><div><h3>お届け先・運送便</h3><p>送り状へ反映する配送情報です。</p></div></div>" + salesOrderDestinationHtml(address) + customerOrderVehicleInformationHtml(order.vehicle_information, "sales-order-vehicle-information") + salesOrderShippingScheduleHtml(order) + "<dl>" + deliveryFacts + "</dl></section>" +
       "</div></section>" +
       "<div class='sales-order-detail-panel' id='sales-order-detail-panel-fulfillment' role='tabpanel' aria-labelledby='sales-order-detail-tab-fulfillment' data-sales-order-detail-panel='fulfillment' hidden>" + salesOrderDispatchHtml(order) + "</div>" +
