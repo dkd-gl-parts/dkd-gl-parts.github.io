@@ -2770,7 +2770,17 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "受注・出荷管理、ピッキング、出荷帳票、完品出荷、在庫更新。商品マスタ・販売価格設定・ユーザー管理は不可": "Manage orders, picking, shipping documents, finished-product shipping, and stock updates. Product master, sales pricing, and user management are unavailable.",
     "受注・出荷": "Orders / Shipping",
     "注文受付・ピッキング・B2 CSV・出荷処理": "Order acceptance, picking, B2 CSV, and shipping",
-    "出荷指示書・保証書・コア返却帳票": "Dispatch instructions, warranties, and core-return documents"
+    "出荷指示書・保証書・コア返却帳票": "Dispatch instructions, warranties, and core-return documents",
+    "登録済みのヤマト営業所": "Saved Yamato sales office",
+    "別の営業所を指定": "Choose a different sales office",
+    "別のヤマト営業所": "Different Yamato sales office",
+    "ヤマト公式で営業所を検索": "Search Yamato sales offices",
+    "営業所コード（6桁）": "Sales office code (6 digits)",
+    "営業所名": "Sales office name",
+    "例：〇〇営業所": "Example: XX Sales Office",
+    "営業所の郵便番号・都道府県・所在地は、下の住所欄に入力してください。": "Enter the sales office postal code, prefecture, and address in the address fields below.",
+    "ヤマト営業所コードを6桁の数字で入力してください。": "Enter the 6-digit Yamato sales office code.",
+    "ヤマト営業所名を入力してください。": "Enter the Yamato sales office name."
   },
   "zh": {
     "再発行が必要": "需要重新签发",
@@ -5541,6 +5551,16 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "受注・出荷管理、ピッキング、出荷帳票、完品出荷、在庫更新。商品マスタ・販売価格設定・ユーザー管理は不可": "可管理订单、拣货、出货单据、成品出货和库存更新。不可管理商品主数据、销售价格和用户。",
     "受注・出荷": "订单・出货",
     "注文受付・ピッキング・B2 CSV・出荷処理": "订单受理、拣货、B2 CSV和出货处理",
-    "出荷指示書・保証書・コア返却帳票": "出货指示书、保修书和旧件返还单据"
+    "出荷指示書・保証書・コア返却帳票": "出货指示书、保修书和旧件返还单据",
+    "登録済みのヤマト営業所": "已保存的雅玛多营业所",
+    "別の営業所を指定": "指定其他营业所",
+    "別のヤマト営業所": "其他雅玛多营业所",
+    "ヤマト公式で営業所を検索": "在雅玛多官网搜索营业所",
+    "営業所コード（6桁）": "营业所代码（6位）",
+    "営業所名": "营业所名称",
+    "例：〇〇営業所": "例：〇〇营业所",
+    "営業所の郵便番号・都道府県・所在地は、下の住所欄に入力してください。": "请在下方地址栏输入营业所的邮政编码、都道府县和地址。",
+    "ヤマト営業所コードを6桁の数字で入力してください。": "请输入6位雅玛多营业所代码。",
+    "ヤマト営業所名を入力してください。": "请输入雅玛多营业所名称。"
   }
 };

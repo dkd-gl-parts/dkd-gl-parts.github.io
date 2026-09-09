@@ -18,6 +18,11 @@ function requireFragment(text, fragment, label) {
   'data-customer-order-destination-choice><span>営業所で受け取る</span>',
   'id="customer-order-yamato-office-code"',
   'value="068721"',
+  'value="__custom__">別の営業所を指定',
+  'id="customer-order-yamato-office-custom"',
+  'id="customer-order-yamato-office-custom-code"',
+  'id="customer-order-yamato-office-custom-name"',
+  'https://locations.kuronekoyamato.co.jp/p/yamato01/index.htm',
   '〒562-0035 大阪府箕面市船場東',
   'B2 CSV：止置き「1」・営業所コード「068721」',
   '複写伝票：「ヤマト運輸 箕面船場（箕面船場西）営業所止め」と印字'
@@ -28,9 +33,12 @@ function requireFragment(text, fragment, label) {
   'name: "箕面船場（箕面船場西）営業所"',
   'postal_code: "562-0035"',
   'address_line_1: "箕面市船場東"',
+  'var CUSTOMER_ORDER_CUSTOM_YAMATO_OFFICE = "__custom__"',
   'destination_type: destinationType',
-  'yamato_office_code: office ? office.code : ""',
-  'yamato_office_name: office ? office.name : ""',
+  'customOffice ? value("customer-order-yamato-office-custom-code") : ""',
+  'customOffice ? value("customer-order-yamato-office-custom-name") : ""',
+  'ヤマト営業所コードを6桁の数字で入力してください。',
+  'ヤマト営業所名を入力してください。',
   'row.carrier_name === "ヤマト運輸"',
   'address.destination_type !== "yamato_office"',
   '"ヤマト運輸 " + (address.yamato_office_name || "営業所") + "止め"'
@@ -43,9 +51,12 @@ function requireFragment(text, fragment, label) {
 
 [
   '"customer-order-destination-type":"destination_type"',
-  '"customer-order-yamato-office-code":"yamato_office_code"',
+  '"customer-order-yamato-office-code":"yamato_office_selection"',
+  '"customer-order-yamato-office-custom-code":"yamato_office_custom_code"',
+  '"customer-order-yamato-office-custom-name":"yamato_office_custom_name"',
   'address.destination_type = salesOrderRevisionDestinationType()',
-  'address.yamato_office_code = office ? office.code : ""',
+  'address.yamato_office_code = office ? office.code : salesOrderRevisionValue("yamato_office_custom_code")',
+  'address.yamato_office_name = office ? office.name : salesOrderRevisionValue("yamato_office_custom_name")',
   'customerOrderDestinationError(address, outboundMethod)'
 ].forEach((fragment) => requireFragment(revision, fragment, "office-pickup revision behavior"));
 
@@ -60,12 +71,15 @@ function requireFragment(text, fragment, label) {
   ".customer-order-destination-choice input:checked + span",
   "min-width: 0",
   ".customer-order-yamato-office-panel[hidden] { display: none; }",
+  ".customer-order-yamato-office-custom-fields[hidden] { display: none; }",
+  ".customer-order-yamato-office-summary[hidden] { display: none; }",
+  ".customer-order-yamato-office-custom-grid",
   ".sales-order-office-pickup-badge",
   "grid-template-columns: 1fr;"
 ].forEach((fragment) => requireFragment(css, fragment, "responsive office-pickup layout"));
 
-if (!source.includes('var APP_VERSION       = "v1.1.926"') || !html.includes('content="v1.1.926"')) {
-  throw new Error("Yamato office-pickup release version must be v1.1.926");
+if (!source.includes('var APP_VERSION       = "v1.1.927"') || !html.includes('content="v1.1.927"')) {
+  throw new Error("Yamato office-pickup release version must be v1.1.927");
 }
 
 console.log("Yamato office-pickup frontend verified.");
