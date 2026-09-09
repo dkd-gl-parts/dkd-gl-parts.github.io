@@ -55,8 +55,8 @@ async function runLookup(options) {
 
 (async () => {
   assert(
-    source.includes("端末内住所データを優先し、利用できない場合または該当がない場合のみ外部APIを使用します。"),
-    "the postal lookup hint must disclose the local-first external fallback",
+    source.includes('customer_order_postal_lookup_hint: "郵便番号を入力して「住所検索」を押してください。"'),
+    "the customer postal lookup hint must explain the action without exposing internal data sources",
   );
 
   const localSuccess = await runLookup({ preview: true, mode: "auto" });

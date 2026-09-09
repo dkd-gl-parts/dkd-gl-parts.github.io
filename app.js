@@ -285,7 +285,7 @@ var TRANSLATIONS = {
     customer_order_address_search_preview: "社内登録画面では保存済みお届け先を検索しません。新しいお届け先を入力してください。",
     customer_order_address_selected: "お届け先を入力しました。",
     customer_order_postal_lookup: "住所検索",
-    customer_order_postal_lookup_hint: "端末内住所データを優先し、利用できない場合または該当がない場合のみ外部APIを使用します。",
+    customer_order_postal_lookup_hint: "郵便番号を入力して「住所検索」を押してください。",
     customer_order_postal_lookup_loading: "住所を検索しています。",
     customer_order_postal_lookup_invalid: "郵便番号を7桁で入力してください。",
     customer_order_postal_lookup_empty: "住所が見つかりませんでした。手入力してください。",
@@ -296,6 +296,9 @@ var TRANSLATIONS = {
     customer_order_postal_lookup_applied_local: "端末内住所データ（{version}）から入力しました。番地以降を確認してください。",
     customer_order_postal_lookup_multiple_api: "APIの検索結果から該当する住所を選択してください。",
     customer_order_postal_lookup_multiple_local: "端末内住所データ（{version}）から該当する住所を選択してください。",
+    sales_order_postal_settings_action: "住所検索設定",
+    sales_order_postal_settings_title: "住所検索設定",
+    sales_order_postal_settings_note: "社内で住所検索の動作確認を行う場合だけ切り替えます。得意先画面には表示されません。",
     customer_order_postal_test_title: "住所検索方式",
     customer_order_postal_mode_auto: "自動",
     customer_order_postal_mode_api: "APIのみ",
@@ -2199,7 +2202,7 @@ var TRANSLATIONS = {
     customer_order_address_search_preview: "Saved delivery addresses are not searched during internal entry. Enter a new address.",
     customer_order_address_selected: "The delivery address has been filled in.",
     customer_order_postal_lookup: "Find Address",
-    customer_order_postal_lookup_hint: "Local address data is checked first. The external API is used only when local data is unavailable or has no match.",
+    customer_order_postal_lookup_hint: "Enter a postal code and select Address Lookup.",
     customer_order_postal_lookup_loading: "Searching for the address.",
     customer_order_postal_lookup_invalid: "Enter a 7-digit postal code.",
     customer_order_postal_lookup_empty: "No address was found. Enter it manually.",
@@ -2210,6 +2213,9 @@ var TRANSLATIONS = {
     customer_order_postal_lookup_applied_local: "The address was filled from local data ({version}). Confirm the street number.",
     customer_order_postal_lookup_multiple_api: "Select an address returned by the API.",
     customer_order_postal_lookup_multiple_local: "Select an address from local data ({version}).",
+    sales_order_postal_settings_action: "Address Lookup Settings",
+    sales_order_postal_settings_title: "Address Lookup Settings",
+    sales_order_postal_settings_note: "Change this only when staff need to test address lookup behavior. It is not shown on customer screens.",
     customer_order_postal_test_title: "Address Lookup Source",
     customer_order_postal_mode_auto: "Automatic",
     customer_order_postal_mode_api: "API Only",
@@ -4058,7 +4064,7 @@ var TRANSLATIONS = {
     customer_order_address_search_preview: "内部登记时不会搜索已保存的收货地址。请输入新的收货地址。",
     customer_order_address_selected: "已填写收货地址。",
     customer_order_postal_lookup: "搜索地址",
-    customer_order_postal_lookup_hint: "优先查询本地地址数据，仅在本地数据不可用或无匹配结果时使用外部API。",
+    customer_order_postal_lookup_hint: "请输入邮政编码，然后选择地址搜索。",
     customer_order_postal_lookup_loading: "正在搜索地址。",
     customer_order_postal_lookup_invalid: "请输入7位邮政编码。",
     customer_order_postal_lookup_empty: "未找到地址。请手动输入。",
@@ -4069,6 +4075,9 @@ var TRANSLATIONS = {
     customer_order_postal_lookup_applied_local: "已通过本地地址数据（{version}）填写。请确认门牌号。",
     customer_order_postal_lookup_multiple_api: "请从API搜索结果中选择地址。",
     customer_order_postal_lookup_multiple_local: "请从本地地址数据（{version}）中选择地址。",
+    sales_order_postal_settings_action: "地址搜索设置",
+    sales_order_postal_settings_title: "地址搜索设置",
+    sales_order_postal_settings_note: "仅供内部人员测试地址搜索时切换。客户页面不会显示。",
     customer_order_postal_test_title: "地址搜索方式",
     customer_order_postal_mode_auto: "自动",
     customer_order_postal_mode_api: "仅API",
@@ -5866,7 +5875,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.924";
+var APP_VERSION       = "v1.1.925";
 var userManagementRows = [];
 var userManagementLoaded = false;
 var userManagementLoadError = null;
@@ -8658,6 +8667,8 @@ async function doLogout() {
   salesOrderB2ContractSettingsSaving = false;
   var b2SettingsOverlay = document.getElementById("sales-order-b2-settings-overlay");
   if (b2SettingsOverlay) b2SettingsOverlay.classList.remove("show");
+  var postalSettingsOverlay = document.getElementById("sales-order-postal-settings-overlay");
+  if (postalSettingsOverlay) postalSettingsOverlay.classList.remove("show");
   salesOrderPrintSettings = null;
   salesOrderPrintSettingsSaving = false;
   salesAccountingExportState = null;
@@ -10818,10 +10829,12 @@ async function lookupCustomerOrderPostalApi(postalCode) {
 }
 
 function configureCustomerOrderPostalTest() {
-  var previewMode = canPreviewCustomerOrdering();
+  var staffMode = canManageSalesOrders();
   var host = document.getElementById("customer-order-postal-test");
+  var openButton = document.getElementById("sales-order-postal-settings-open");
   var status = document.getElementById("customer-order-postal-local-status");
-  if (host) host.hidden = !previewMode;
+  if (host) host.hidden = !staffMode;
+  if (openButton) openButton.hidden = !staffMode;
   document.querySelectorAll("[data-order-postal-mode]").forEach(function(button) {
     var active = button.dataset.orderPostalMode === customerOrderPostalLookupMode;
     button.classList.toggle("active", active);
@@ -10837,6 +10850,23 @@ function configureCustomerOrderPostalTest() {
   } else {
     status.textContent = "";
   }
+}
+
+function openCustomerOrderPostalSettings() {
+  if (!canManageSalesOrders()) {
+    showPermissionDenied("configure_customer_order_postal_lookup", "customer_orders");
+    return;
+  }
+  var overlay = document.getElementById("sales-order-postal-settings-overlay");
+  if (!overlay) return;
+  configureCustomerOrderPostalTest();
+  overlay.classList.add("show");
+  scheduleCustomerOrderPostalLocalData();
+}
+
+function closeCustomerOrderPostalSettings() {
+  var overlay = document.getElementById("sales-order-postal-settings-overlay");
+  if (overlay) overlay.classList.remove("show");
 }
 
 async function prepareCustomerOrderPostalLocalData() {
@@ -10875,7 +10905,7 @@ function scheduleCustomerOrderPostalLocalData() {
 }
 
 function setCustomerOrderPostalLookupMode(mode) {
-  if (!["auto", "api", "local"].includes(mode) || !canPreviewCustomerOrdering()) return;
+  if (!["auto", "api", "local"].includes(mode) || !canManageSalesOrders()) return;
   customerOrderPostalLookupMode = mode;
   customerOrderPostalRows = [];
   renderCustomerOrderPostalResults();
@@ -10921,9 +10951,11 @@ function applyCustomerOrderPostalAddress(row) {
   customerOrderPostalRows = [];
   renderCustomerOrderPostalResults();
   customerOrderPostalResultSource = row.lookup_source || "";
-  customerOrderPostalSetStatus(customerOrderPostalResultSource === "local"
-    ? tf("customer_order_postal_lookup_applied_local", { version: row.data_version || "-" })
-    : t("customer_order_postal_lookup_applied_api"), false);
+  customerOrderPostalSetStatus(canPreviewCustomerOrdering()
+    ? (customerOrderPostalResultSource === "local"
+      ? tf("customer_order_postal_lookup_applied_local", { version: row.data_version || "-" })
+      : t("customer_order_postal_lookup_applied_api"))
+    : t("customer_order_postal_lookup_applied"), false);
   customerOrderPreview = null;
   customerOrderDeliveryDateManual = false;
   loadCustomerOrderDeliveryServices({ forceDate: true });
@@ -10990,9 +11022,11 @@ async function lookupCustomerOrderPostalCode() {
       renderCustomerOrderPostalResults();
       var firstRow = customerOrderPostalRows[0] || {};
       customerOrderPostalResultSource = firstRow.lookup_source || "";
-      customerOrderPostalSetStatus(customerOrderPostalResultSource === "local"
-        ? tf("customer_order_postal_lookup_multiple_local", { version: firstRow.data_version || "-" })
-        : t("customer_order_postal_lookup_multiple_api"), false);
+      customerOrderPostalSetStatus(canPreviewCustomerOrdering()
+        ? (customerOrderPostalResultSource === "local"
+          ? tf("customer_order_postal_lookup_multiple_local", { version: firstRow.data_version || "-" })
+          : t("customer_order_postal_lookup_multiple_api"))
+        : t("customer_order_postal_lookup_multiple"), false);
     }
   } catch (error) {
     if (requestSeq !== customerOrderPostalLookupSeq) return;
@@ -12271,6 +12305,7 @@ async function enterSalesOrderMgmt() {
   var newOrderButton = document.getElementById("sales-order-new-internal-order");
   if (newOrderButton) newOrderButton.hidden = !canStartInternalCustomerOrderEntry();
   updateAllHeaders();
+  configureCustomerOrderPostalTest();
   renderSalesOrderB2Preflight(null);
   renderSalesOrderDashboard();
   renderSalesOrderPrintSettings();
@@ -49638,6 +49673,7 @@ document.getElementById("sales-order-import-b2").addEventListener("click", funct
 });
 document.getElementById("sales-order-accounting-export").addEventListener("click", openSalesAccountingExport);
 document.getElementById("sales-order-business-workspace-open").addEventListener("click", openDcatsBusinessWorkspace);
+document.getElementById("sales-order-postal-settings-open").addEventListener("click", openCustomerOrderPostalSettings);
 document.querySelectorAll("#sales-order-data-actions button").forEach(function(button) {
   button.addEventListener("click", function() {
     var menu = document.getElementById("sales-order-data-actions");
@@ -49654,6 +49690,11 @@ document.getElementById("dcats-business-workspace-shortcut").addEventListener("c
 document.getElementById("dcats-business-workspace-b2-select").addEventListener("click", configureDcatsB2ExportDirectory);
 document.getElementById("dcats-business-workspace-overlay").addEventListener("click", function(e) {
   if (e.target === this) closeDcatsBusinessWorkspace();
+});
+document.getElementById("sales-order-postal-settings-close").addEventListener("click", closeCustomerOrderPostalSettings);
+document.getElementById("sales-order-postal-settings-cancel").addEventListener("click", closeCustomerOrderPostalSettings);
+document.getElementById("sales-order-postal-settings-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeCustomerOrderPostalSettings();
 });
 document.getElementById("sales-accounting-export-search").addEventListener("click", loadSalesAccountingExportData);
 document.getElementById("sales-accounting-export-target").addEventListener("change", function() {

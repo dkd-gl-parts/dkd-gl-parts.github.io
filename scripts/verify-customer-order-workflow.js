@@ -30,6 +30,8 @@ function sourceBetween(startText, endText) {
   "customer-order-postal-results",
   "customer-order-postal-test",
   "customer-order-postal-local-status",
+  "sales-order-postal-settings-open",
+  "sales-order-postal-settings-overlay",
   "customer-catalog-order-preview-guide",
   "screen-sales-order-mgmt",
   "sales-order-list",
@@ -383,6 +385,16 @@ if (!postalApiLookup.includes("https://zipcloud.ibsnet.co.jp/api/search?zipcode=
     !postalApiLookup.includes("customerOrderPostalFetch")) {
   throw new Error("postal API lookup must send only the postal code without credentials and use a bounded request");
 }
+const postalSettingsControl = sourceBetween("function configureCustomerOrderPostalTest", "async function prepareCustomerOrderPostalLocalData");
+if (!postalSettingsControl.includes("canManageSalesOrders()") ||
+    !postalSettingsControl.includes("openButton.hidden = !staffMode") ||
+    !postalSettingsControl.includes('showPermissionDenied("configure_customer_order_postal_lookup", "customer_orders")')) {
+  throw new Error("postal lookup source settings must be restricted to internal sales-order staff");
+}
+const postalModeSetter = sourceBetween("function setCustomerOrderPostalLookupMode", "function customerOrderPostalSetStatus");
+if (!postalModeSetter.includes("!canManageSalesOrders()")) {
+  throw new Error("postal lookup source changes must reject customer and external roles");
+}
 const postalLocalLookup = sourceBetween("async function loadCustomerOrderPostalManifest", "async function lookupCustomerOrderPostalApi");
 if (!postalLocalLookup.includes("CUSTOMER_ORDER_POSTAL_MANIFEST_CACHE") ||
     !postalLocalLookup.includes("CUSTOMER_ORDER_POSTAL_DATA_CACHE_PREFIX") ||
@@ -425,21 +437,32 @@ if (!html.includes("https://zipcloud.ibsnet.co.jp") || !headersFile.includes("ht
   ".customer-order-postal-row",
   ".customer-order-postal-test",
   ".customer-order-postal-mode",
+  ".sales-order-postal-settings-card",
   "@media (max-width: 820px)"
 ].forEach((fragment) => {
   if (!css.includes(fragment)) throw new Error(`responsive order style is missing: ${fragment}`);
 });
 
-const postalFieldStart = html.indexOf('class="customer-order-form-field customer-order-postal-field"');
-const postalFieldEnd = html.indexOf("</div>", postalFieldStart);
-const postalTestStart = html.indexOf('class="customer-order-postal-test"');
-const prefectureStart = html.indexOf('id="customer-order-prefecture"');
-if (postalFieldStart < 0 || postalFieldEnd < postalFieldStart || prefectureStart < postalFieldEnd || postalTestStart < prefectureStart) {
-  throw new Error("postal search-mode controls must occupy a full form-grid row after the postal and prefecture fields");
+const customerOrderScreenStart = html.indexOf('id="screen-customer-orders"');
+const customerOrderScreenEnd = html.indexOf('id="screen-sales-order-mgmt"', customerOrderScreenStart);
+const customerOrderScreen = html.slice(customerOrderScreenStart, customerOrderScreenEnd);
+if (customerOrderScreen.includes('id="customer-order-postal-test"') ||
+    customerOrderScreen.includes("data-order-postal-mode")) {
+  throw new Error("customer order screens must not contain internal postal lookup source controls");
 }
-if (!/\.customer-order-postal-test\s*\{[^}]*grid-column:\s*1\s*\/\s*-1/s.test(css) ||
-    !/\.customer-order-postal-mode\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/s.test(css)) {
-  throw new Error("postal search-mode controls must distribute all three labels across the available row width");
+const salesOrderScreen = html.slice(customerOrderScreenEnd, html.indexOf("</main>", customerOrderScreenEnd));
+if (!salesOrderScreen.includes('id="sales-order-postal-settings-open" hidden') ||
+    !salesOrderScreen.includes("住所検索設定")) {
+  throw new Error("internal postal lookup source settings must be launched from sales-order data integration");
+}
+const postalSettingsOverlay = html.slice(html.indexOf('id="sales-order-postal-settings-overlay"'), html.indexOf('id="dcats-business-workspace-overlay"'));
+if (!postalSettingsOverlay.includes('id="customer-order-postal-test"') ||
+    !postalSettingsOverlay.includes("data-order-postal-mode=\"auto\"") ||
+    !postalSettingsOverlay.includes("得意先画面には表示されません")) {
+  throw new Error("internal postal lookup source controls must live in the staff-only settings dialog");
+}
+if (!/\.customer-order-postal-mode\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/s.test(css)) {
+  throw new Error("postal search-mode controls must distribute all three labels across the available width");
 }
 
 if ((source.match(/customer_order_title:/g) || []).length !== 3 || (source.match(/sales_order_mgmt_title:/g) || []).length !== 3) {
