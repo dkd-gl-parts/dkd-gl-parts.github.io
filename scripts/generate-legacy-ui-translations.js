@@ -20,6 +20,7 @@ const runtimeScriptPaths = [
 ];
 const curatedTranslations = {
   en: {
+    "出荷": "Shipping",
     "出荷管理": "Shipping Operations",
     "受注・出荷管理、ピッキング、出荷帳票、完品出荷、在庫更新。商品マスタ・販売価格設定・ユーザー管理は不可": "Manage orders, picking, shipping documents, finished-product shipping, and stock updates. Product master, sales pricing, and user management are unavailable.",
     "受注・出荷": "Orders / Shipping",
@@ -265,6 +266,7 @@ const curatedTranslations = {
     "本書、対象製品、製造シリアル、車両・取付情報をご提示ください。": "Present this document, the covered product, the manufacturing serial number, and the vehicle and installation information."
   },
   zh: {
+    "出荷": "出货",
     "出荷管理": "出货管理",
     "受注・出荷管理、ピッキング、出荷帳票、完品出荷、在庫更新。商品マスタ・販売価格設定・ユーザー管理は不可": "可管理订单、拣货、出货单据、成品出货和库存更新。不可管理商品主数据、销售价格和用户。",
     "受注・出荷": "订单・出货",

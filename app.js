@@ -5947,7 +5947,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.935";
+var APP_VERSION       = "v1.1.936";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -7060,6 +7060,7 @@ var USER_DEPARTMENT_OPTIONS = [
   ["product", "商品管理"],
   ["production", "製造"],
   ["sales", "販売"],
+  ["shipping", "出荷"],
   ["business", "営業"],
   ["viewer", "閲覧"]
 ];
@@ -7120,7 +7121,7 @@ function userDepartmentCode(profile) {
   if (roleCode === "dept_admin") return "production";
   if (roleCode === "master_editor") return "product";
   if (roleCode === "production_editor") return "production";
-  if (roleCode === "sales_editor") return "sales";
+  if (roleCode === "sales_editor") return "shipping";
   if (roleCode === "sales_viewer") return "business";
   if (roleCode === "core_image_editor") return "production";
   if (roleCode === "all_viewer") return "viewer";

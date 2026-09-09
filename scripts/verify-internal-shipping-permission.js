@@ -16,6 +16,9 @@ function functionSource(name, nextName) {
 }
 
 assert(app.includes('["sales_editor", "出荷管理"]'), "Shipping role option is missing");
+assert(app.includes('["shipping", "出荷"]'), "Shipping department option is missing");
+assert(app.includes('if (roleCode === "sales_editor") return "shipping";'), "Shipping role department fallback is missing");
+assert(!app.includes('if (roleCode === "sales_editor") return "sales";'), "Legacy sales department fallback remains active");
 assert(app.includes('sales_editor: "price_viewer"'), "Shipping role legacy mapping must remain least-privilege");
 assert(app.includes('case "sales_editor": return "受注・出荷管理、ピッキング、出荷帳票、完品出荷、在庫更新。商品マスタ・販売価格設定・ユーザー管理は不可";'), "Shipping role scope is missing");
 
