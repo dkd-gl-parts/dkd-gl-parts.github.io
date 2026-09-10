@@ -98,7 +98,7 @@ assert(salesDetailSource.includes("salesOrderDispatchHtml(order)"), "sales-order
 assert(salesDetailSource.includes("issueSalesOrderDispatch"), "sales-order detail must bind dispatch issue");
 assert(salesDetailSource.includes('printSalesOrderDocument("dispatch")'), "sales-order detail must print shipment instructions");
 assert(salesDetailSource.includes('printSalesOrderDocument("core_return")'), "sales-order detail must print core-return sheets");
-assert(salesDetailSource.includes("exportSalesOrderIdsB2([order.id])"), "sales-order detail must export the selected order to B2");
+assert(!salesDetailSource.includes("sales-order-export-single-b2") && !salesDetailSource.includes("exportSalesOrderIdsB2"), "sales-order detail must route B2 issuance to shipping documents");
 assert(salesDetailSource.includes("openSalesOrderSerialWarranty"), "sales-order detail must open dispatch checking");
 assert(functionSource("salesOrderWaybillProgressHtml").includes("送り状番号の登録だけでは在庫を減らしません"), "B2 label registration must explain that stock is unchanged");
 assert(functionSource("issueSalesOrderDispatch").includes('sb.rpc("issue_sales_order_dispatch"'), "dispatch issue RPC is not called");

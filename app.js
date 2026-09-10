@@ -375,8 +375,8 @@ var TRANSLATIONS = {
     sales_order_id_label: "受注ID",
     sales_order_mgmt_title: "受注・出荷管理",
     sales_order_internal_entry: "FAX・メール注文入力",
-    sales_order_mgmt_desc: "得意先注文の受付、商品発送用B2 CSV、製造シリアル照合を管理します。",
-    sales_order_mgmt_note: "注文受付、商品発送用B2 CSV、現場の製造シリアル照合を管理します。",
+    sales_order_mgmt_desc: "得意先注文の受付、B2発送データ取込、製造シリアル照合を管理します。",
+    sales_order_mgmt_note: "注文受付、B2発送データ取込、現場の製造シリアル照合を管理します。",
     business_workspace_open: "業務連携",
     business_workspace_title: "D-CATS業務連携",
     business_workspace_location: "Google Drive 共通保存先",
@@ -2394,8 +2394,8 @@ var TRANSLATIONS = {
     sales_order_id_label: "Order ID",
     sales_order_mgmt_title: "Orders / Shipping",
     sales_order_internal_entry: "FAX / Email Order Entry",
-    sales_order_mgmt_desc: "Manage customer orders, outbound B2 CSV files, and manufacturing-serial verification.",
-    sales_order_mgmt_note: "Manage order acceptance, outbound B2 CSV files, and shop-floor serial verification.",
+    sales_order_mgmt_desc: "Manage customer orders, B2 shipping-data imports, and manufacturing-serial verification.",
+    sales_order_mgmt_note: "Manage order acceptance, B2 shipping-data imports, and shop-floor serial verification.",
     business_workspace_open: "Shared Folder",
     business_workspace_title: "D-CATS Business Exchange",
     business_workspace_location: "Shared Google Drive folder",
@@ -4357,8 +4357,8 @@ var TRANSLATIONS = {
     sales_order_id_label: "订单ID",
     sales_order_mgmt_title: "订单・出货管理",
     sales_order_internal_entry: "传真・邮件订单录入",
-    sales_order_mgmt_desc: "管理客户订单、商品发送用B2 CSV和制造序列号核对。",
-    sales_order_mgmt_note: "管理订单受理、商品发送用B2 CSV和现场序列号核对。",
+    sales_order_mgmt_desc: "管理客户订单、B2发货数据导入和制造序列号核对。",
+    sales_order_mgmt_note: "管理订单受理、B2发货数据导入和现场序列号核对。",
     business_workspace_open: "业务协作",
     business_workspace_title: "D-CATS业务协作",
     business_workspace_location: "Google Drive共享保存位置",
@@ -6181,7 +6181,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.946";
+var APP_VERSION       = "v1.1.947";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -12077,16 +12077,6 @@ function salesOrderCheckedIds() {
   return Array.from(salesOrderCheckedIdsState).filter(function(id) { return !isNaN(id); });
 }
 
-function salesOrderB2TargetIds() {
-  var checkedIds = salesOrderCheckedIds();
-  if (checkedIds.length) return checkedIds;
-  var selectedId = parseInt(salesOrderSelectedId, 10);
-  var selectedIsVisible = salesOrderRows.some(function(row) {
-    return parseInt(row && row.id, 10) === selectedId;
-  });
-  return isNaN(selectedId) || !selectedIsVisible ? [] : [selectedId];
-}
-
 function setSalesOrderBatchMessage(message, isError) {
   var host = document.getElementById("sales-order-batch-message");
   if (!host) return;
@@ -12571,26 +12561,15 @@ async function createDcatsBusinessWorkspaceShortcut() {
 
 function updateSalesOrderSelectionButtons() {
   var checkedIds = salesOrderCheckedIds();
-  var b2TargetIds = salesOrderB2TargetIds();
   var selectedRows = salesOrderRows.filter(function(row) {
     return checkedIds.indexOf(parseInt(row.id, 10)) >= 0;
   });
   var acceptIds = selectedRows.filter(function(row) { return row.status === "submitted"; });
-  var exportButton = document.getElementById("sales-order-export-b2");
   var acceptButton = document.getElementById("sales-order-batch-accept");
   var selectionSummary = document.getElementById("sales-order-selection-summary");
   if (selectionSummary) {
     selectionSummary.textContent = checkedIds.length + "件選択";
     selectionSummary.classList.toggle("active", checkedIds.length > 0);
-  }
-  if (exportButton) {
-    exportButton.disabled = b2TargetIds.length === 0 || salesOrderSaving;
-    exportButton.textContent = salesOrderB2ExportSaving
-      ? "必須項目を確認中..."
-      : "B2 CSV発行";
-    exportButton.title = b2TargetIds.length
-      ? (checkedIds.length ? "チェックした受注を発行します。" : "現在表示中の受注を発行します。")
-      : "注文を表示するか、一覧の処理対象にチェックを入れてください。";
   }
   if (acceptButton) {
     acceptButton.disabled = acceptIds.length === 0 || salesOrderSaving;
@@ -16400,14 +16379,12 @@ function salesOrderDispatchHtml(order) {
   }, 0);
   var assignedQuantity = dispatch ? salesOrderDispatchAssignedQuantity(dispatch) : 0;
   var shipmentDocumentsReady = !!(dispatch && dispatch.status === "shipped" && order && order.outbound_tracking_number);
-  var b2Issued = Array.isArray(order && order.b2_exports) && order.b2_exports.length > 0;
   var controls = "";
   if (canIssue) controls += "<button type='button' class='sales-order-dispatch-primary' id='sales-order-issue-dispatch'>出荷指示書を発行</button>";
   if (dispatch) {
     controls += "<button type='button' id='sales-order-print-dispatch'>出荷指示書</button>";
     if (shipmentDocumentsReady && order.core_return_required) controls += "<button type='button' id='sales-order-print-core-return'>コア返却シート</button>";
     if (shipmentDocumentsReady) controls += "<button type='button' id='sales-order-print-warranty'>保証書</button>";
-    if (["preparing", "ready"].indexOf(dispatch.status) >= 0 && !b2Issued) controls += "<button type='button' id='sales-order-export-single-b2'>商品発送用B2 CSV発行</button>";
     if (canWork) controls += "<button type='button' class='sales-order-dispatch-primary' id='sales-order-open-serial-warranty'>出荷照合を開く</button>";
   }
   return "<section class='sales-order-detail-section sales-order-dispatch' id='sales-order-detail-fulfillment'>" +
@@ -16612,8 +16589,6 @@ function renderSalesOrderDetail() {
   if (printCoreReturnButton) printCoreReturnButton.addEventListener("click", function() { printSalesOrderDocument("core_return"); });
   var printWarrantyButton = document.getElementById("sales-order-print-warranty");
   if (printWarrantyButton) printWarrantyButton.addEventListener("click", function() { printSalesOrderDocument("warranty"); });
-  var exportSingleB2Button = document.getElementById("sales-order-export-single-b2");
-  if (exportSingleB2Button) exportSingleB2Button.addEventListener("click", function() { exportSalesOrderIdsB2([order.id]); });
   var serialButton = document.getElementById("sales-order-open-serial-warranty");
   if (serialButton) serialButton.addEventListener("click", openSalesOrderSerialWarranty);
   var requeuePrintButton = document.getElementById("sales-order-requeue-print");
@@ -17371,21 +17346,6 @@ async function downloadSalesOrderB2Batch(batchId) {
     shippingDocumentSaving = false;
     renderShippingDocumentDetail();
   }
-}
-
-async function exportSalesOrderIdsB2(orderIds) {
-  var result = await issueSalesOrderB2Export(orderIds, false, null);
-  if (!result) return;
-  if (salesOrderSelectedId) await loadSalesOrderDetail(salesOrderSelectedId);
-}
-
-async function exportSalesOrdersB2() {
-  var orderIds = salesOrderB2TargetIds();
-  if (!orderIds.length) {
-    setSalesOrderBatchMessage("注文を表示するか、一覧の処理対象にチェックを入れてください。", true);
-    return null;
-  }
-  return exportSalesOrderIdsB2(orderIds);
 }
 
 function decodeSalesOrderB2Csv(buffer) {
@@ -50833,7 +50793,6 @@ window.addEventListener("focus", function() {
   window.setTimeout(function() { refreshSalesOrderPrinterSetup(false); }, 600);
 });
 document.getElementById("sales-order-batch-accept").addEventListener("click", acceptCheckedSalesOrders);
-document.getElementById("sales-order-export-b2").addEventListener("click", exportSalesOrdersB2);
 document.getElementById("sales-order-b2-settings-close").addEventListener("click", closeSalesOrderB2Settings);
 document.getElementById("sales-order-b2-settings-cancel").addEventListener("click", closeSalesOrderB2Settings);
 document.getElementById("sales-order-b2-settings-save").addEventListener("click", saveSalesOrderB2Settings);

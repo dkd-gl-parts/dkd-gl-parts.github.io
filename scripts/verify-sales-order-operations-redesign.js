@@ -35,13 +35,15 @@ for (const id of [
   "sales-order-status",
   "sales-order-reload",
   "sales-order-batch-accept",
-  "sales-order-export-b2",
   "sales-order-import-b2",
   "sales-order-accounting-export",
   "sales-order-business-workspace-open"
 ]) {
   const count = (html.match(new RegExp(`id=["']${id}["']`, "g")) || []).length;
   if (count !== 1) throw new Error(`${id} must remain unique after toolbar regrouping; found ${count}`);
+}
+if (html.includes('id="sales-order-export-b2"')) {
+  throw new Error("B2 CSV issuance must not remain in the order-management toolbar");
 }
 if (html.includes('id="sales-order-b2-settings-open"')) {
   throw new Error("B2 contract settings must not remain in the sales-order data actions");
@@ -51,9 +53,11 @@ const selection = functionSource("updateSalesOrderSelectionButtons");
 for (const fragment of [
   'getElementById("sales-order-selection-summary")',
   'checkedIds.length + "件選択"',
-  'classList.toggle("active", checkedIds.length > 0)',
-  '"B2 CSV発行"'
+  'classList.toggle("active", checkedIds.length > 0)'
 ]) requireFragment(selection, fragment);
+if (selection.includes("B2 CSV発行") || selection.includes("sales-order-export-b2")) {
+  throw new Error("Selected-order controls must not issue B2 CSV files");
+}
 
 const lifecycleSource = functionSource("salesOrderLifecycleHtml");
 for (const fragment of [
@@ -127,6 +131,9 @@ const waybillProgressHtmlSource = functionSource("salesOrderWaybillProgressHtml"
 const dispatchSource = functionSource("salesOrderDispatchHtml");
 if (dispatchSource.includes("<span>商品発送送り状</span>") || dispatchSource.includes("<span>返送用送り状</span>")) {
   throw new Error("Waybill numbers must be consolidated in the waybill progress cards");
+}
+if (dispatchSource.includes("sales-order-export-single-b2") || dispatchSource.includes("B2 CSV発行")) {
+  throw new Error("Order fulfillment must open Shipping Documents instead of issuing B2 CSV directly");
 }
 const waybillContext = {
   salesOrderWaybillRecord: (order, purpose) => purpose === "core_return" ? (order.return_waybill || {}) : (order.outbound_waybill || {}),
@@ -210,5 +217,6 @@ for (const fragment of [
   ".sales-order-empty-guidance {",
   ".sales-order-search-controls { grid-template-columns: 1fr 1fr;"
 ]) requireFragment(css, fragment);
+requireFragment(css, "#screen-sales-order-mgmt .sales-order-selection-controls { display: grid; grid-template-columns: 1fr;", "Mobile order selection must not reserve a removed B2 action column");
 
 console.log("Sales order operations information architecture and responsive layout verification passed.");
