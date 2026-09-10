@@ -6133,7 +6133,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.943";
+var APP_VERSION       = "v1.1.944";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -16246,7 +16246,7 @@ function salesOrderWaybillProgress(order, purpose) {
   order = order || {};
   var coreReturn = purpose === "core_return";
   if (coreReturn && !order.core_return_required) {
-    return { label: "コア返却", carrier: "-", method: "-", trackingNumber: "", status: "対象外", tone: "neutral" };
+    return { purpose: "core_return", label: "返却用送り状", carrier: "-", method: "-", trackingNumber: "", status: "対象外", tone: "neutral" };
   }
   var waybill = salesOrderWaybillRecord(order, purpose);
   var method = waybill.handling_method || (coreReturn ? order.return_waybill_method : order.outbound_waybill_method) || "";
@@ -16278,7 +16278,8 @@ function salesOrderWaybillProgress(order, purpose) {
     tone = "success";
   }
   return {
-    label: coreReturn ? "コア返却" : "商品発送",
+    purpose: coreReturn ? "core_return" : "outbound",
+    label: coreReturn ? "返却用送り状" : "発送用送り状",
     carrier: salesOrderWaybillCarrierLabel(order, purpose),
     method: methodLabel,
     trackingNumber: trackingNumber,
@@ -16292,20 +16293,22 @@ function salesOrderWaybillProgressHtml(order) {
   return "<section class='sales-order-waybill-progress' aria-labelledby='sales-order-waybill-progress-title'>" +
     "<div class='sales-order-waybill-progress-heading'><div><h4 id='sales-order-waybill-progress-title'>発送・返却の送り状進捗</h4><p>B2送り状と複写送り状を、運送会社・発行方法ごとに表示します。</p></div></div>" +
     "<div class='sales-order-waybill-progress-grid'>" + rows.map(function(row) {
-      return "<article class='sales-order-waybill-progress-card' data-waybill-purpose='" + (row.label === "商品発送" ? "outbound" : "core_return") + "'>" +
+      var outbound = row.purpose === "outbound";
+      var numberLabel = row.method === "B2クラウド" ? "B2送り状番号" : "複写送り状番号";
+      var scheduleLabel = row.method === "B2クラウド" ? "B2出荷予定日" : "出荷予定日";
+      var description = row.method === "B2クラウド"
+        ? "B2発行済データの取込後に、送り状番号を確認・修正できます。"
+        : "複写送り状に記載された番号を確認・登録できます。";
+      var trackingNumberText = row.status === "対象外" ? "対象外" : row.trackingNumber ? shippingDocumentWaybillNumberFormat(row.trackingNumber) : "未登録";
+      var trackingDetail = outbound ? "" : "<div><dt>送り状番号</dt><dd>" + esc(trackingNumberText) + "</dd></div>";
+      var editor = outbound
+        ? "<div class='sales-order-waybill-progress-editor'><p>" + esc(description) + "</p><div class='sales-order-tracking-grid outbound-only'><label><span>" + esc(numberLabel) + "</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(row.trackingNumber) + "'></label><label><span>" + esc(scheduleLabel) + "</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>送り状番号を登録</button></div><small>送り状番号の登録だけでは在庫を減らしません。</small></div>"
+        : row.status === "対象外" ? "" : "<p class='sales-order-waybill-progress-note'>番号の登録・変更は「出荷帳票発行」で行います。</p>";
+      return "<article class='sales-order-waybill-progress-card" + (outbound ? " has-editor" : "") + "' data-waybill-purpose='" + esc(row.purpose) + "'>" +
         "<div class='sales-order-waybill-progress-card-head'><strong>" + esc(row.label) + "</strong><span class='sales-order-waybill-progress-status " + esc(row.tone) + "'>" + esc(row.status) + "</span></div>" +
-        "<dl><div><dt>運送会社</dt><dd>" + esc(row.carrier) + "</dd></div><div><dt>発行方法</dt><dd>" + esc(row.method) + "</dd></div><div><dt>送り状番号</dt><dd>" + esc(row.trackingNumber ? shippingDocumentWaybillNumberFormat(row.trackingNumber) : "未登録") + "</dd></div></dl>" +
+        "<dl><div><dt>運送会社</dt><dd>" + esc(row.carrier) + "</dd></div><div><dt>発行方法</dt><dd>" + esc(row.method) + "</dd></div>" + trackingDetail + "</dl>" + editor +
       "</article>";
     }).join("") + "</div></section>";
-}
-
-function salesOrderTrackingEditorHtml(order) {
-  var outboundProgress = salesOrderWaybillProgress(order, "outbound");
-  var numberLabel = outboundProgress.method === "B2クラウド" ? "B2送り状番号" : "複写送り状番号";
-  var description = outboundProgress.method === "B2クラウド"
-    ? "B2発行済データの取込後に、送り状番号を確認・修正できます。"
-    : "複写送り状に記載された番号を確認・登録できます。";
-  return "<section class='sales-order-detail-section sales-order-tracking sales-order-fulfillment-tracking' aria-labelledby='sales-order-tracking-title'><div class='sales-order-section-heading'><div><h3 id='sales-order-tracking-title'>商品発送送り状番号</h3><p>" + esc(description) + "</p></div></div><div class='sales-order-tracking-grid outbound-only'><label><span>" + esc(numberLabel) + "</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(order.outbound_tracking_number || "") + "'></label><label><span>B2出荷予定日</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>商品発送番号を登録</button></div><p>コア返却用複写伝票は「出荷帳票発行」で管理します。送り状番号の登録だけでは在庫を減らしません。</p></section>";
 }
 
 function salesOrderDispatchHtml(order) {
@@ -16331,7 +16334,7 @@ function salesOrderDispatchHtml(order) {
   return "<section class='sales-order-detail-section sales-order-dispatch' id='sales-order-detail-fulfillment'>" +
     "<div class='sales-order-dispatch-head'><div><h3>出荷指示・現場照合</h3><p>出荷指示書、送り状、製造シリアルを一つの出荷処理として管理します。</p></div>" +
     "<span class='sales-order-dispatch-status " + esc(dispatch ? dispatch.status : "unissued") + "'>" + esc(salesOrderDispatchStatusLabel(dispatch && dispatch.status)) + "</span></div>" +
-    (dispatch ? "<div class='sales-order-dispatch-summary'><div><span>出荷指示番号</span><strong>" + esc(dispatch.dispatch_number) + "</strong></div><div><span>リビルト品の照合</span><strong>" + esc(String(assignedQuantity)) + " / " + esc(String(rebuiltQuantity)) + "</strong></div><div><span>商品発送送り状</span><strong>" + esc(order.outbound_tracking_number || "未登録") + "</strong></div><div><span>返送用送り状</span><strong>" + esc(order.core_return_required ? (order.return_tracking_number || "未登録") : "対象外") + "</strong></div></div>" : "<p class='sales-order-dispatch-empty'>受注受付後に出荷指示書を発行してください。スキャナーがない場合も番号入力と候補選択で作業できます。</p>") +
+    (dispatch ? "<div class='sales-order-dispatch-summary'><div><span>出荷指示番号</span><strong>" + esc(dispatch.dispatch_number) + "</strong></div><div><span>リビルト品の照合</span><strong>" + esc(String(assignedQuantity)) + " / " + esc(String(rebuiltQuantity)) + "</strong></div></div>" : "<p class='sales-order-dispatch-empty'>受注受付後に出荷指示書を発行してください。スキャナーがない場合も番号入力と候補選択で作業できます。</p>") +
     salesOrderWaybillProgressHtml(order) +
     (dispatch ? salesOrderPrintJobsHtml(order) : "") +
     "<div class='sales-order-dispatch-actions'>" + controls + "</div>" +
@@ -16492,7 +16495,7 @@ function renderSalesOrderDetail() {
         "<section class='sales-order-detail-section sales-order-billing' id='sales-order-detail-products'><div class='sales-order-section-heading'><div><h3>請求明細</h3><p>商品、コア代金、値引・調整、送料、税を受注単位で確認します。</p></div>" + pricingButton + "</div>" + salesOrderItemRowsHtml(order.items) + salesOrderAdjustmentRowsHtml(orderAdjustments, orderDiscount) + salesOrderBillingSummaryHtml(order) + "</section>" +
         "<section class='sales-order-detail-section sales-order-address' id='sales-order-detail-delivery'><div class='sales-order-section-heading'><div><h3>お届け先・運送便</h3><p>送り状へ反映する配送情報です。</p></div></div>" + salesOrderDestinationHtml(address) + customerOrderVehicleInformationHtml(order.vehicle_information, "sales-order-vehicle-information") + salesOrderShippingScheduleHtml(order) + "<dl>" + deliveryFacts + "</dl></section>" +
       "</div></section>" +
-      "<div class='sales-order-detail-panel' id='sales-order-detail-panel-fulfillment' role='tabpanel' aria-labelledby='sales-order-detail-tab-fulfillment' data-sales-order-detail-panel='fulfillment' hidden>" + salesOrderDispatchHtml(order) + salesOrderTrackingEditorHtml(order) + "</div>" +
+      "<div class='sales-order-detail-panel' id='sales-order-detail-panel-fulfillment' role='tabpanel' aria-labelledby='sales-order-detail-tab-fulfillment' data-sales-order-detail-panel='fulfillment' hidden>" + salesOrderDispatchHtml(order) + "</div>" +
 "<section class='sales-order-detail-panel sales-order-detail-section sales-order-history' id='sales-order-detail-history' role='tabpanel' aria-labelledby='sales-order-detail-tab-history' data-sales-order-detail-panel='history' hidden><div class='sales-order-section-heading'><div><h3>処理履歴</h3><p>発送と金額修正の記録を確認できます。</p></div></div><div class='sales-order-history-groups'><div><h4>発送履歴</h4>" + salesOrderShipmentHistoryHtml(order.shipment_history) + "</div><div>" + (salesOrderPricingHistoryHtml(order.pricing_adjustments) || "<div class='sales-order-history-empty'><h4>金額修正履歴</h4><span>履歴はありません。</span></div>") + "</div>" + salesOrderRevisionHistoryHtml(order.revision_history) + "</div></section>" +
     "</div>" +
     "<div id='sales-order-detail-message' class='sales-order-detail-message' aria-live='polite'></div>";
@@ -17042,7 +17045,7 @@ async function registerSalesOrderTracking() {
   var shippedOn = (document.getElementById("sales-order-shipped-on") || {}).value || null;
   var outboundShippingMethod = customerOrderSavedShippingMethod(salesOrderDetail, "outbound") || {};
   if (outbound.length !== 12) {
-    setSalesOrderDetailMessage("商品発送送り状番号は12桁で入力してください。", true);
+    setSalesOrderDetailMessage("発送用送り状の番号は12桁で入力してください。", true);
     return;
   }
   salesOrderSaving = true;

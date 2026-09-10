@@ -52,7 +52,6 @@ for (const fragment of [
   "salesOrderBillingSummaryHtml(order)",
   "sales-order-detail-total",
   "請求明細",
-  "salesOrderTrackingEditorHtml(order)",
   "sales-order-detail-history",
   "処理履歴"
 ]) requireFragment(detail, fragment);
@@ -161,7 +160,14 @@ for (const fragment of ["商品計", "¥7,500", "コア代金", "¥2,000", "送�
 const fulfillment = functionSource("salesOrderDispatchHtml");
 requireFragment(fulfillment, "sales-order-detail-fulfillment");
 requireFragment(fulfillment, "salesOrderWaybillProgressHtml(order)");
-requireFragment(functionSource("salesOrderTrackingEditorHtml"), "sales-order-fulfillment-tracking");
+const waybillProgress = functionSource("salesOrderWaybillProgressHtml");
+for (const fragment of [
+  "sales-order-waybill-progress-editor",
+  "id='sales-order-outbound-tracking'",
+  "id='sales-order-shipped-on'",
+  "id='sales-order-save-tracking'",
+  "送り状番号の登録だけでは在庫を減らしません"
+]) requireFragment(waybillProgress, fragment);
 const carrierLabel = functionSource("salesOrderWaybillCarrierLabel");
 for (const fragment of [
   "yamato_prepaid",

@@ -81,11 +81,14 @@ const detail = functionSource("renderSalesOrderDetail");
 for (const fragment of [
   "salesOrderLifecycleHtml(order.status)",
   "salesOrderStatusSummaryHtml(order)",
-  "salesOrderDispatchHtml(order) + salesOrderTrackingEditorHtml(order)",
+  "salesOrderDispatchHtml(order)",
   'class=\'sales-order-detail-head\'',
   'class=\'sales-order-detail-state\'',
   "sales-order-empty-guidance"
 ]) requireFragment(detail, fragment);
+if (detail.includes("salesOrderTrackingEditorHtml(order)")) {
+  throw new Error("The outbound tracking editor must stay inside the waybill progress card");
+}
 if (detail.includes('{ key: "tracking"') || detail.includes("data-sales-order-detail-panel='tracking'")) {
   throw new Error("Waybill progress must be integrated into the fulfillment tab instead of using a separate tracking tab");
 }
@@ -121,6 +124,10 @@ if (statusContext.salesOrderStatusSummaryHtml({ status: "shipped" }).includes("<
 
 const waybillProgressSource = functionSource("salesOrderWaybillProgress");
 const waybillProgressHtmlSource = functionSource("salesOrderWaybillProgressHtml");
+const dispatchSource = functionSource("salesOrderDispatchHtml");
+if (dispatchSource.includes("<span>商品発送送り状</span>") || dispatchSource.includes("<span>返送用送り状</span>")) {
+  throw new Error("Waybill numbers must be consolidated in the waybill progress cards");
+}
 const waybillContext = {
   salesOrderWaybillRecord: (order, purpose) => purpose === "core_return" ? (order.return_waybill || {}) : (order.outbound_waybill || {}),
   shippingDocumentPrintJob: (order, type) => (order.print_jobs || []).find((job) => job.document_type === type) || null,
@@ -138,12 +145,18 @@ const b2Pending = waybillContext.salesOrderWaybillProgress({
 if (b2Pending.status !== "B2取込待ち") {
   throw new Error("Issued B2 data without a tracking number must be labeled B2 import pending");
 }
+if (b2Pending.purpose !== "outbound" || b2Pending.label !== "発送用送り状") {
+  throw new Error("Outbound waybill progress must use a stable purpose key and the requested label");
+}
 const multipartMissing = waybillContext.salesOrderWaybillProgress({
   core_return_required: true,
   return_waybill: { handling_method: "dot_matrix" }
 }, "core_return");
 if (multipartMissing.status !== "複写送り状番号未登録") {
   throw new Error("A multipart waybill without a number must not be labeled as B2 import pending");
+}
+if (multipartMissing.purpose !== "core_return" || multipartMissing.label !== "返却用送り状") {
+  throw new Error("Return waybill progress must use a stable purpose key and the requested label");
 }
 const progressHtml = waybillContext.salesOrderWaybillProgressHtml({
   core_return_required: true,
@@ -157,8 +170,29 @@ for (const fragment of [
   "ヤマト運輸 / 宅急便 元払い",
   "佐川急便 / 飛脚宅配便 着払い",
   "B2取込待ち",
-  "複写送り状番号未登録"
+  "複写送り状番号未登録",
+  "発送用送り状",
+  "返却用送り状",
+  "sales-order-waybill-progress-editor",
+  "id='sales-order-outbound-tracking'",
+  "id='sales-order-shipped-on'",
+  "id='sales-order-save-tracking'"
 ]) requireFragment(progressHtml, fragment);
+const notApplicableHtml = waybillContext.salesOrderWaybillProgressHtml({
+  core_return_required: false,
+  outbound_waybill: { handling_method: "b2_cloud" }
+});
+const returnCard = notApplicableHtml.split("data-waybill-purpose='core_return'")[1] || "";
+if (!returnCard.includes("返却用送り状") || !returnCard.includes("<dd>対象外</dd>") || returnCard.includes("番号の登録・変更")) {
+  throw new Error("A return waybill that is not required must show an applicable-free number state without registration guidance");
+}
+const savedNumberHtml = waybillContext.salesOrderWaybillProgressHtml({
+  core_return_required: false,
+  outbound_waybill: { handling_method: "b2_cloud", tracking_number: "123456789012" }
+});
+if (!savedNumberHtml.includes("value='123456789012'")) {
+  throw new Error("The consolidated outbound editor must show the authoritative waybill number");
+}
 
 for (const fragment of [
   ".sales-order-search-controls {",
