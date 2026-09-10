@@ -124,6 +124,9 @@ assert(salesOrderScheduleUi.includes("shippingDate < today"), "the frontend must
 assert(salesOrderScheduleUi.includes('t("sales_order_shipping_date_updated")'), "shipping-date changes must show the translated reissue warning");
 assert(source.includes('sales_order_shipping_date_updated: "発送予定日を変更しました。B2 CSVと帳票は変更後の日付で再発行してください。"'), "Japanese shipping-date confirmation must require outbound artifact reissue");
 assert(source.includes("salesOrderShippingScheduleHtml(order)"), "sales-order detail must render the shipping-date editor above delivery details");
+const salesOrderDetail = sourceBetween("function renderSalesOrderDetail", "async function openSalesOrderSerialWarranty");
+assert(salesOrderDetail.indexOf("salesOrderDestinationHtml(address)") < salesOrderDetail.indexOf("salesOrderShippingScheduleHtml(order)"), "the destination must precede the shipping-date editor");
+assert(salesOrderDetail.indexOf("salesOrderShippingScheduleHtml(order)") < salesOrderDetail.indexOf('"<dl>" + deliveryFacts'), "the shipping-date editor must appear immediately left of the outbound shipping facts on desktop");
 assert(source.includes('shippingDateButton.addEventListener("click", saveSalesOrderScheduledShippingDate)'), "sales-order shipping-date save action must be wired");
 
 [
