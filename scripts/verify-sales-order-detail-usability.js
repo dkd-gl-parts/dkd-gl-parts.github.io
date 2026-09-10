@@ -201,6 +201,16 @@ for (const fragment of ["sales-order-shipping-row", "送料", "ヤマト運輸 /
 const fulfillment = functionSource("salesOrderDispatchHtml");
 requireFragment(fulfillment, "sales-order-detail-fulfillment");
 requireFragment(fulfillment, "salesOrderWaybillProgressHtml(order)");
+const printJobs = functionSource("salesOrderPrintJobsHtml");
+for (const fragment of [
+  "<details class='sales-order-print-jobs'>",
+  "<summary><strong>印刷端末への送信</strong></summary>",
+  "sales-order-print-jobs-content",
+  "sales-order-print-jobs-actions"
+]) requireFragment(printJobs, fragment, "Print terminal history must stay available in a compact disclosure");
+if (printJobs.includes("sales-order-print-jobs-head")) {
+  throw new Error("Print terminal history must not remain permanently expanded");
+}
 const waybillProgress = functionSource("salesOrderWaybillProgressHtml");
 for (const fragment of [
   "sales-order-waybill-progress-editor",
@@ -329,6 +339,7 @@ for (const fragment of [
   ".sales-order-list-identity",
   ".sales-order-list-metrics",
   ".sales-order-detail-next-actions",
+  ".sales-order-detail-navigation",
   ".sales-order-detail-nav",
   ".sales-order-detail-nav button[aria-selected=\"true\"]",
   ".sales-order-detail-panel[hidden]",

@@ -51,8 +51,18 @@ for (const fragment of [
   ".sales-order-detail-overview-grid .sales-order-shipping-schedule small { display: none; }",
   "@media screen and (max-width: 1199px)",
   "@media screen and (max-width: 820px)",
-  ".sales-order-dashboard-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));",
+  ".sales-order-dashboard-metrics { display: flex; overflow-x: auto;",
   ".sales-order-address { grid-template-columns: 1fr; }"
+]) requireFragment(fragment);
+
+for (const fragment of [
+  "/* Product Design audit: clarify hierarchy in the order operations workspace. */",
+  ".sales-order-dashboard-metrics { gap: 0; overflow: hidden; border: 1px solid #cfd7dd;",
+  ".sales-order-dashboard-metric.active { border-color: #dde3e7; box-shadow: inset 0 -3px 0 #287356;",
+  ".sales-order-detail-navigation { display: flex;",
+  ".sales-order-waybill-progress-grid.outbound-only { grid-template-columns: minmax(0, 1fr); }",
+  ".sales-order-print-jobs > summary { display: flex;",
+  ".sales-order-dashboard-metric { flex: 0 0 118px; min-width: 118px;"
 ]) requireFragment(fragment);
 
 for (const fragment of [
