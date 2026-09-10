@@ -6998,6 +6998,23 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .sales-order-dispatch-summary strong { display: block; }
 .sales-order-dispatch-summary span { color: #74808d; font-size: 9px; }
 .sales-order-dispatch-summary strong { overflow-wrap: anywhere; margin-top: 3px; color: #263548; font-size: 11px; }
+.sales-order-waybill-progress { margin-top: 12px; border-top: 1px solid #dce2e8; padding-top: 12px; }
+.sales-order-waybill-progress-heading h4 { margin: 0; color: #2c3947; font-size: 11px; }
+.sales-order-waybill-progress-heading p { margin: 3px 0 0; color: #74808d; font-size: 9px; line-height: 1.45; }
+.sales-order-waybill-progress-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
+.sales-order-waybill-progress-card { min-width: 0; overflow: hidden; border: 1px solid #d7dfe5; border-radius: 7px; background: #fff; }
+.sales-order-waybill-progress-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid #e1e6ea; padding: 8px 10px; background: #f7faf8; }
+.sales-order-waybill-progress-card-head > strong { color: #263548; font-size: 11px; }
+.sales-order-waybill-progress-status { flex: 0 0 auto; border: 1px solid #c3cdd5; border-radius: 999px; padding: 3px 7px; background: #f3f5f7; color: #566371; font-size: 9px; font-weight: 900; white-space: nowrap; }
+.sales-order-waybill-progress-status.success { border-color: #8fc2a4; background: #edf8f1; color: #22643e; }
+.sales-order-waybill-progress-status.processing { border-color: #8da9c7; background: #edf4fb; color: #2a5682; }
+.sales-order-waybill-progress-status.warning { border-color: #d9b35c; background: #fff8e7; color: #76570d; }
+.sales-order-waybill-progress-status.danger { border-color: #dc918b; background: #fff2f0; color: #a42d25; }
+.sales-order-waybill-progress-card dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; }
+.sales-order-waybill-progress-card dl > div { min-width: 0; border-right: 1px solid #e4e8eb; padding: 8px 9px; }
+.sales-order-waybill-progress-card dl > div:last-child { border-right: 0; }
+.sales-order-waybill-progress-card dt { color: #7a8590; font-size: 8px; font-weight: 700; }
+.sales-order-waybill-progress-card dd { overflow-wrap: anywhere; margin: 3px 0 0; color: #344054; font-size: 10px; font-weight: 800; line-height: 1.35; }
 .sales-order-dispatch-empty { margin-top: 9px; border-left: 3px solid #8ba7c4; padding: 7px 9px; background: #f4f8fb; color: #586777; font-size: 10px; line-height: 1.55; }
 .sales-order-dispatch-actions { display: flex; justify-content: flex-end; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
 .sales-order-dispatch-actions button { min-height: 34px; border: 1px solid #8795a3; border-radius: 5px; padding: 0 11px; background: #fff; color: #344054; font-size: 10px; font-weight: 800; cursor: pointer; white-space: nowrap; }
@@ -8032,6 +8049,7 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   .sales-order-dispatch-summary { grid-template-columns: 1fr 1fr; }
   .sales-order-dispatch-summary > div:nth-child(2) { border-right: 0; }
   .sales-order-dispatch-summary > div:nth-child(-n+2) { border-bottom: 1px solid #dce2e8; }
+  .sales-order-waybill-progress-grid { grid-template-columns: 1fr; }
   .sales-order-dispatch-actions { align-items: stretch; flex-direction: column; }
   .sales-order-dispatch-actions button { width: 100%; }
   .sales-order-print-jobs-head { align-items: stretch; flex-direction: column; }
@@ -9415,8 +9433,13 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
   #screen-sales-order-mgmt .sales-order-dispatch-head p,
   #screen-sales-order-mgmt .sales-order-dispatch-status,
   #screen-sales-order-mgmt .sales-order-dispatch-summary span,
+  #screen-sales-order-mgmt .sales-order-waybill-progress-heading p,
+  #screen-sales-order-mgmt .sales-order-waybill-progress-card dt,
+  #screen-sales-order-mgmt .sales-order-waybill-progress-status,
   #screen-sales-order-mgmt .sales-order-dispatch-empty { font-size: 12px; line-height: 1.5; }
-  #screen-sales-order-mgmt .sales-order-dispatch-summary strong { font-size: 14px; line-height: 1.45; }
+  #screen-sales-order-mgmt .sales-order-dispatch-summary strong,
+  #screen-sales-order-mgmt .sales-order-waybill-progress-card-head > strong,
+  #screen-sales-order-mgmt .sales-order-waybill-progress-card dd { font-size: 14px; line-height: 1.45; }
   #screen-sales-order-mgmt .sales-order-dispatch-actions button { min-height: 40px; padding: 7px 11px; font-size: 14px; }
   #screen-sales-order-mgmt .sales-order-print-jobs-head > strong,
   #screen-sales-order-mgmt .sales-order-print-job strong { font-size: 14px; }
