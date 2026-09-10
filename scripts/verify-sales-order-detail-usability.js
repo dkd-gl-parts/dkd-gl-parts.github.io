@@ -20,6 +20,38 @@ function functionSource(name) {
   return source.slice(start, stops.length ? Math.min(...stops) : source.length);
 }
 
+const clearSelection = functionSource("clearSalesOrderDetailSelection");
+for (const fragment of [
+  "salesOrderSelectedId = null",
+  "salesOrderDetail = null",
+  'salesOrderDetailView = "overview"',
+  "salesOrderDetailSeq += 1",
+  "renderSalesOrderDetail()"
+]) requireFragment(clearSelection, fragment, "Clearing a filtered-out order must reset its stale detail state");
+
+let clearRenderCount = 0;
+const clearContext = {
+  salesOrderSelectedId: 427285820,
+  salesOrderDetail: { id: 427285820 },
+  salesOrderDetailView: "fulfillment",
+  salesOrderDetailSeq: 4,
+  renderSalesOrderDetail() { clearRenderCount += 1; }
+};
+vm.createContext(clearContext);
+vm.runInContext(clearSelection, clearContext);
+clearContext.clearSalesOrderDetailSelection();
+if (clearContext.salesOrderSelectedId !== null || clearContext.salesOrderDetail !== null || clearContext.salesOrderDetailView !== "overview" || clearContext.salesOrderDetailSeq !== 5 || clearRenderCount !== 1) {
+  throw new Error("Filtered-out order selection did not clear the detail state and pending detail request");
+}
+
+const listLoader = functionSource("loadSalesOrders");
+for (const fragment of [
+  "salesOrderRows.some(function(order)",
+  "String(order.id) === String(salesOrderSelectedId)",
+  "(salesOrderSelectedId != null || salesOrderDetail) && !selectedOrderVisible",
+  "clearSalesOrderDetailSelection()"
+]) requireFragment(listLoader, fragment, "Search results must clear details that are no longer in the list");
+
 const list = functionSource("renderSalesOrderList");
 for (const fragment of [
   "sales-order-list-identity",
