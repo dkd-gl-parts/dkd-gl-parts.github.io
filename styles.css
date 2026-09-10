@@ -6756,9 +6756,6 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-data-actions > div > button { width: 100%; min-height: 34px; text-align: left; }
 .sales-order-filter-row input,
 .sales-order-filter-row select { height: 38px; min-width: 0; border: 1px solid #b8c1cc; border-radius: 6px; padding: 0 10px; background: #fff; color: #263241; font-size: 12px; }
-.sales-order-b2-button { min-height: 38px; border: 1px solid #1f65a8; border-radius: 6px; padding: 0 13px; background: #fff; color: #1f65a8; font-size: 11px; font-weight: 800; cursor: pointer; white-space: nowrap; }
-.sales-order-b2-button:hover { background: #eff6fc; }
-.sales-order-b2-button:disabled { border-color: #c8cfd7; color: #929ba5; cursor: not-allowed; }
 .sales-order-accept-button { min-height: 38px; border: 1px solid #b42318; border-radius: 6px; padding: 0 13px; background: #b42318; color: #fff; font-size: 11px; font-weight: 800; cursor: pointer; white-space: nowrap; }
 .sales-order-accept-button:hover { background: #941c13; }
 .sales-order-accept-button:disabled { border-color: #c8cfd7; background: #e4e7ea; color: #929ba5; cursor: not-allowed; }
@@ -9623,7 +9620,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt :is(.sales-order-new-order-button, .sales-order-search-controls, .sales-order-selection-controls, .sales-order-data-actions, .sales-order-batch-message) { grid-column: 1; grid-row: auto; }
   #screen-sales-order-mgmt .sales-order-search-controls { grid-template-columns: 1fr; }
   #screen-sales-order-mgmt .sales-order-search-controls :is(input, select, button) { grid-column: 1; width: 100%; }
-  #screen-sales-order-mgmt .sales-order-selection-controls { display: grid; grid-template-columns: 1fr 1fr; width: 100%; border-left: 0; padding-left: 0; }
+  #screen-sales-order-mgmt .sales-order-selection-controls { display: grid; grid-template-columns: 1fr; width: 100%; border-left: 0; padding-left: 0; }
   #screen-sales-order-mgmt .sales-order-selection-summary { grid-column: 1 / -1; justify-self: start; }
   #screen-sales-order-mgmt .sales-order-selection-controls button { width: 100%; white-space: normal; }
   #screen-sales-order-mgmt .sales-order-data-actions { justify-self: stretch; }

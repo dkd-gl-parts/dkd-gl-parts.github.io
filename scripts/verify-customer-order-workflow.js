@@ -36,11 +36,13 @@ function sourceBetween(startText, endText) {
   "screen-sales-order-mgmt",
   "sales-order-list",
   "sales-order-detail",
-  "sales-order-export-b2",
   "sales-order-new-internal-order"
 ].forEach((id) => {
   if (!html.includes(`id="${id}"`)) throw new Error(`order workflow UI is missing: ${id}`);
 });
+if (html.includes('id="sales-order-export-b2"') || source.includes("sales-order-export-single-b2")) {
+  throw new Error("B2 CSV issuance must not be available from order and shipping management");
+}
 if (html.includes('id="customer-order-preview-button"')) {
   throw new Error("price and stock confirmation must be included in the order action");
 }
