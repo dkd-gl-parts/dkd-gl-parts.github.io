@@ -622,9 +622,23 @@ var TRANSLATIONS = {
     finished_label_box_mode_desc: "発行済みの完品登録から製造シリアルを選択して印刷",
     finished_label_box_mode_open: "箱シール印刷画面へ →",
     finished_label_station_mode_name: "Windows印刷端末",
-    finished_label_station_mode_desc: "スマホから送信された印刷待ちをBrotherドライバーへ出力",
+    finished_label_station_mode_desc: "スマホから送信された印刷待ちをTD-4420TNへ直接出力",
     finished_label_station_mode_open: "印刷端末画面へ →",
+    finished_label_setup_first_pc: "初回PC",
+    finished_label_setup_title: "このPCにTD-4420TNを設定",
+    finished_label_setup_desc: "45×20mmと80×60mmの用紙設定、プリンター割当、校正、テスト印刷をまとめて行います。",
+    finished_label_setup_download: "初回設定パッケージ",
+    finished_label_setup_open: "設定ツールを開く",
+    finished_label_setup_reconfigure: "再設定",
+    finished_label_setup_status: "状態確認",
+    finished_label_setup_calibrate: "校正",
+    finished_label_setup_test: "テスト印刷",
+    finished_label_setup_first_run: "初めて設定するPCではパッケージを展開し、D-CATS-Printer-Setup.cmdを開いてください。設定済みPCでは再設定・校正・テスト印刷を画面から起動できます。",
     finished_label_station_badge: "Windows / TD-4420TN 印刷端末",
+    finished_label_station_recommended: "推奨",
+    finished_label_device_title: "バックグラウンド印刷端末",
+    finished_label_device_desc: "ブラウザーを開いたままにせず、スマホの印刷待ちを用紙別のTD-4420TNへ直接送信します。",
+    finished_label_station_compatibility_title: "Brotherドライバーを使う互換印刷",
     finished_label_station_title: "スマホ印刷待ち",
     finished_label_station_desc: "この画面をTD-4420TNのBrotherドライバーが設定されたWindows PCで使用します。",
     finished_label_station_stopped: "停止中",
@@ -2585,9 +2599,23 @@ var TRANSLATIONS = {
     finished_label_box_mode_desc: "Select a manufacturing serial from an existing finished-unit registration and print",
     finished_label_box_mode_open: "Open Box Label Screen →",
     finished_label_station_mode_name: "Windows Print Station",
-    finished_label_station_mode_desc: "Send mobile print jobs to the Brother driver",
+    finished_label_station_mode_desc: "Send mobile print jobs directly to the TD-4420TN",
     finished_label_station_mode_open: "Open Print Station →",
+    finished_label_setup_first_pc: "First PC Setup",
+    finished_label_setup_title: "Set Up TD-4420TN on This PC",
+    finished_label_setup_desc: "Configure 45×20 mm and 80×60 mm media, printer routing, calibration, and test printing together.",
+    finished_label_setup_download: "Download Setup Package",
+    finished_label_setup_open: "Open Setup Tool",
+    finished_label_setup_reconfigure: "Reconfigure",
+    finished_label_setup_status: "Check Status",
+    finished_label_setup_calibrate: "Calibrate",
+    finished_label_setup_test: "Test Print",
+    finished_label_setup_first_run: "On a new PC, extract the package and open D-CATS-Printer-Setup.cmd. On a configured PC, reconfiguration, calibration, and test printing can be launched here.",
     finished_label_station_badge: "Windows / TD-4420TN Print Station",
+    finished_label_station_recommended: "Recommended",
+    finished_label_device_title: "Background Print Station",
+    finished_label_device_desc: "Send mobile print jobs directly to the TD-4420TN assigned to each media size without leaving a browser open.",
+    finished_label_station_compatibility_title: "Compatibility Printing Through the Brother Driver",
     finished_label_station_title: "Mobile Print Queue",
     finished_label_station_desc: "Use this screen on the Windows PC configured with the TD-4420TN Brother driver.",
     finished_label_station_stopped: "Stopped",
@@ -4557,9 +4585,23 @@ var TRANSLATIONS = {
     finished_label_box_mode_desc: "从已发行的完品登记中选择制造序列号并打印",
     finished_label_box_mode_open: "进入箱标签打印画面 →",
     finished_label_station_mode_name: "Windows打印终端",
-    finished_label_station_mode_desc: "将手机发送的打印任务输出到Brother驱动程序",
+    finished_label_station_mode_desc: "将手机发送的打印任务直接输出到TD-4420TN",
     finished_label_station_mode_open: "进入打印终端 →",
+    finished_label_setup_first_pc: "首次设置电脑",
+    finished_label_setup_title: "在此电脑设置TD-4420TN",
+    finished_label_setup_desc: "统一设置45×20mm与80×60mm纸张、打印机分配、校准和测试打印。",
+    finished_label_setup_download: "下载首次设置包",
+    finished_label_setup_open: "打开设置工具",
+    finished_label_setup_reconfigure: "重新设置",
+    finished_label_setup_status: "查看状态",
+    finished_label_setup_calibrate: "校准",
+    finished_label_setup_test: "测试打印",
+    finished_label_setup_first_run: "首次设置的电脑请解压设置包并打开D-CATS-Printer-Setup.cmd。已设置的电脑可从此处重新设置、校准或测试打印。",
     finished_label_station_badge: "Windows / TD-4420TN 打印终端",
+    finished_label_station_recommended: "推荐",
+    finished_label_device_title: "后台打印终端",
+    finished_label_device_desc: "无需保持浏览器开启，即可将手机打印任务直接发送到各纸张尺寸对应的TD-4420TN。",
+    finished_label_station_compatibility_title: "通过Brother驱动程序兼容打印",
     finished_label_station_title: "手机打印队列",
     finished_label_station_desc: "请在已设置TD-4420TN Brother驱动程序的Windows电脑上使用此画面。",
     finished_label_station_stopped: "已停止",
@@ -6169,6 +6211,7 @@ var finishedLabelLastQueuedJob = null;
 var dcatsAutoNoticeTimer = null;
 var finishedLabelPrintDestinations = [];
 var finishedLabelPrintDestinationsTarget = "";
+var finishedLabelAgentOverviewRows = [];
 var finishedLabelSelectedSiteCode = "";
 var finishedLabelPrintDestinationRequestSeq = 0;
 var finishedLabelPrintStationRunning = false;
@@ -27641,6 +27684,39 @@ function finishedLabelPrintDestinationStateLabel(state) {
     : (state === "error" ? "finished_label_print_destination_error" : "finished_label_print_destination_stopped"));
 }
 
+function renderFinishedLabelAgentOverview(messageKey) {
+  var siteCode = finishedLabelSelectedSiteCode || savedFinishedLabelPrintSiteCode() || "JP";
+  document.querySelectorAll("[data-finished-label-device-state]").forEach(function(statusEl) {
+    var labelTarget = statusEl.dataset.finishedLabelDeviceState === "box" ? "box" : "finished_product";
+    var row = finishedLabelAgentOverviewRows.find(function(candidate) {
+      return candidate.label_target === labelTarget && candidate.site_code === siteCode;
+    }) || finishedLabelAgentOverviewRows.find(function(candidate) {
+      return candidate.label_target === labelTarget && candidate.is_default;
+    }) || finishedLabelAgentOverviewRows.find(function(candidate) {
+      return candidate.label_target === labelTarget;
+    });
+    var state = row && ["ready", "error", "stopped"].includes(String(row.state)) ? String(row.state) : "stopped";
+    statusEl.className = "finished-label-device-profile-state " + state;
+    statusEl.textContent = row
+      ? String(row.site_code || siteCode) + " / " + finishedLabelPrintDestinationStateLabel(state)
+      : t(messageKey || "finished_label_print_destination_unavailable");
+    if (row && row.last_heartbeat_at) statusEl.title = formatDateTime(row.last_heartbeat_at);
+    else statusEl.removeAttribute("title");
+  });
+}
+
+async function loadFinishedLabelAgentOverview() {
+  renderFinishedLabelAgentOverview("finished_label_print_destination_loading");
+  var result = await sb.rpc("list_finished_label_print_stations", { target_label_target: null });
+  if (result.error) {
+    finishedLabelAgentOverviewRows = [];
+    renderFinishedLabelAgentOverview("finished_label_print_destination_unavailable");
+    return;
+  }
+  finishedLabelAgentOverviewRows = Array.isArray(result.data) ? result.data : [];
+  renderFinishedLabelAgentOverview();
+}
+
 function selectedFinishedLabelPrintDestination(labelTarget) {
   labelTarget = labelTarget === "box" ? "box" : "finished_product";
   var siteCode = finishedLabelSelectedSiteCode || savedFinishedLabelPrintSiteCode();
@@ -27776,6 +27852,15 @@ function resumeFinishedLabelPrintStationIfEnabled() {
   return true;
 }
 
+async function prepareFinishedLabelCompatibilityStation() {
+  var target = document.getElementById("finished-label-station-target");
+  var labelTarget = target && target.value === "box" ? "box" : "finished_product";
+  await loadFinishedLabelPrintDestinations(labelTarget, true);
+  updateFinishedLabelPrintStationTarget();
+  await loadFinishedLabelPrintStationHistory();
+  resumeFinishedLabelPrintStationIfEnabled();
+}
+
 function isFinishedLabelDedicatedPrintStationActive() {
   return !!automaticFinishedLabelPrintStationTarget()
     && finishedLabelPrintMode === "station"
@@ -27788,9 +27873,7 @@ async function openRequestedFinishedLabelPrintStation() {
   await enterFinishedLabelMgmt({ mode: "station" });
   var target = document.getElementById("finished-label-station-target");
   if (target) target.value = targetValue;
-  updateFinishedLabelPrintStationTarget();
-  await loadFinishedLabelPrintStationHistory();
-  resumeFinishedLabelPrintStationIfEnabled();
+  await prepareFinishedLabelCompatibilityStation();
 }
 
 function finishedLabelPrintRequestKey() {
@@ -28248,6 +28331,7 @@ function setFinishedLabelPrintMode(mode) {
     if (title) title.textContent = t("finished_label_station_mode_name");
     updateFinishedLabelPrintStationTarget();
     loadFinishedLabelPrintStationHistory();
+    loadFinishedLabelAgentOverview();
     renderFinishedLabelMobilePrintRule();
     return;
   }
@@ -50931,7 +51015,10 @@ document.querySelectorAll("[data-finished-label-mode]").forEach(function(btn) {
   btn.addEventListener("click", function() {
     setFinishedLabelPrintMode(btn.dataset.finishedLabelMode);
     if (finishedLabelPrintMode === "station") {
-      resumeFinishedLabelPrintStationIfEnabled();
+      prepareFinishedLabelCompatibilityStation().catch(function(error) {
+        console.warn("finished label compatibility station setup failed", error);
+        setFinishedLabelPrintStationState("error", error.message || String(error), "error");
+      });
       return;
     }
     renderFinishedLabelEmpty();

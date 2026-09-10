@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "check:yamato-office-pickup": "node --check app.js && node --check sales-order-revision.js && node scripts/verify-yamato-office-pickup.js",
-    "check:customer-compatible-stock": "node --check app.js && node scripts/verify-customer-compatible-order-stock.js"
+    "check:customer-compatible-stock": "node --check app.js && node scripts/verify-customer-compatible-order-stock.js",
+    "check:label-printer-onboarding": "node --check app.js && node scripts/verify-label-printer-onboarding.js"
   },
   "devDependencies": {
     "acorn": "8.18.0",

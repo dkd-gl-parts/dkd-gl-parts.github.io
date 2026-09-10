@@ -3210,9 +3210,22 @@
         <button class="finished-label-mode-card station" type="button" data-finished-label-mode="station">
           <span class="finished-label-mode-size">TD-4420TN</span>
           <strong data-i18n="finished_label_station_mode_name">Windows印刷端末</strong>
-          <span data-i18n="finished_label_station_mode_desc">スマホから送信された印刷待ちをBrotherドライバーへ出力</span>
+          <span data-i18n="finished_label_station_mode_desc">スマホから送信された印刷待ちをTD-4420TNへ直接出力</span>
           <em data-i18n="finished_label_station_mode_open">印刷端末画面へ →</em>
         </button>
+      </div>
+      <div class="finished-label-setup-strip">
+        <div class="finished-label-setup-copy">
+          <span class="finished-label-setup-kicker" data-i18n="finished_label_setup_first_pc">初回PC</span>
+          <div>
+            <strong data-i18n="finished_label_setup_title">このPCにTD-4420TNを設定</strong>
+            <span data-i18n="finished_label_setup_desc">45×20mmと80×60mmの用紙設定、プリンター割当、校正、テスト印刷をまとめて行います。</span>
+          </div>
+        </div>
+        <div class="finished-label-setup-actions">
+          <a class="btn-primary" href="assets/downloads/D-CATS-TD4420TN-Setup.zip" download data-i18n="finished_label_setup_download">初回設定パッケージ</a>
+          <a class="btn-sm-edit production-action-secondary" href="dcats-label-printer://setup" data-i18n="finished_label_setup_open">設定ツールを開く</a>
+        </div>
       </div>
     </section>
     <div class="finished-label-workspace" id="finished-label-workspace" hidden>
@@ -3411,8 +3424,43 @@
       <button class="back-btn" id="btn-finished-label-station-back" type="button" data-i18n="finished_label_mode_back">← 印刷画面を選び直す</button>
       <span data-i18n="finished_label_station_badge">Windows / TD-4420TN 印刷端末</span>
     </div>
+    <section class="finished-label-device-setup" aria-labelledby="finished-label-device-setup-title">
+      <div class="finished-label-device-setup-head">
+        <div>
+          <span class="finished-label-setup-kicker" data-i18n="finished_label_station_recommended">推奨</span>
+          <h2 id="finished-label-device-setup-title" data-i18n="finished_label_device_title">バックグラウンド印刷端末</h2>
+          <p data-i18n="finished_label_device_desc">ブラウザーを開いたままにせず、スマホの印刷待ちを用紙別のTD-4420TNへ直接送信します。</p>
+        </div>
+        <div class="finished-label-device-actions">
+          <a class="btn-primary" href="assets/downloads/D-CATS-TD4420TN-Setup.zip" download data-i18n="finished_label_setup_download">初回設定パッケージ</a>
+          <a class="btn-sm-edit production-action-secondary" href="dcats-label-printer://setup" data-i18n="finished_label_setup_reconfigure">再設定</a>
+          <a class="btn-sm-edit production-action-secondary" href="dcats-label-printer://status" data-i18n="finished_label_setup_status">状態確認</a>
+        </div>
+      </div>
+      <div class="finished-label-device-profile-list" id="finished-label-device-profile-list" aria-live="polite">
+        <div class="finished-label-device-profile" data-label-target="finished_product">
+          <div><span class="finished-label-mode-size">45 × 20 mm</span><strong data-i18n="finished_label_product_mode_name">完品シール</strong></div>
+          <span class="finished-label-device-profile-state stopped" data-finished-label-device-state="finished_product" data-i18n="finished_label_print_destination_loading">印刷先を確認中...</span>
+          <div class="finished-label-device-profile-actions">
+            <a href="dcats-label-printer://calibrate/finished_product" data-i18n="finished_label_setup_calibrate">校正</a>
+            <a href="dcats-label-printer://test/finished_product" data-i18n="finished_label_setup_test">テスト印刷</a>
+          </div>
+        </div>
+        <div class="finished-label-device-profile" data-label-target="box">
+          <div><span class="finished-label-mode-size">80 × 60 mm</span><strong data-i18n="finished_label_box_mode_name">箱シール</strong></div>
+          <span class="finished-label-device-profile-state stopped" data-finished-label-device-state="box" data-i18n="finished_label_print_destination_loading">印刷先を確認中...</span>
+          <div class="finished-label-device-profile-actions">
+            <a href="dcats-label-printer://calibrate/box" data-i18n="finished_label_setup_calibrate">校正</a>
+            <a href="dcats-label-printer://test/box" data-i18n="finished_label_setup_test">テスト印刷</a>
+          </div>
+        </div>
+      </div>
+      <p class="finished-label-device-first-run" data-i18n="finished_label_setup_first_run">初めて設定するPCではパッケージを展開し、D-CATS-Printer-Setup.cmdを開いてください。設定済みPCでは再設定・校正・テスト印刷を画面から起動できます。</p>
+    </section>
     <div class="finished-label-station-shell">
-      <section class="finished-label-card finished-label-station-control">
+      <details class="finished-label-station-compatibility">
+        <summary data-i18n="finished_label_station_compatibility_title">Brotherドライバーを使う互換印刷</summary>
+        <section class="finished-label-card finished-label-station-control">
         <div class="finished-label-toolbar">
           <div>
             <h3 data-i18n="finished_label_station_title">スマホ印刷待ち</h3>
@@ -3441,7 +3489,8 @@
         <div class="finished-label-station-message" id="finished-label-station-message" aria-live="polite"></div>
         <div class="finished-label-station-note" data-i18n="finished_label_station_kiosk_note">自動印刷する場合は、EdgeまたはChromeをキオスク印刷モードで起動してください。通常起動では印刷確認画面が表示されます。</div>
         <iframe class="finished-label-station-frame" id="finished-label-station-frame" title="D-CATS label print station" hidden></iframe>
-      </section>
+        </section>
+      </details>
       <section class="finished-label-card finished-label-station-history-card">
         <div class="finished-label-toolbar">
           <h3 data-i18n="finished_label_station_history">印刷ジョブ履歴</h3>
