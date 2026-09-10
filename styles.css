@@ -6763,6 +6763,32 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-batch-message.error { color: #b42318; }
 .sales-order-b2-import-button { min-height: 38px; border: 1px solid #287356; border-radius: 6px; padding: 0 13px; background: #287356; color: #fff; font-size: 11px; font-weight: 800; cursor: pointer; white-space: nowrap; }
 .sales-order-b2-import-button:hover { background: #1f6248; }
+.sales-order-b2-import-guide-overlay { z-index: 1200; padding: 16px; }
+.form-card.sales-order-b2-import-guide-card { width: min(720px, calc(100vw - 24px)); max-width: 720px; border-radius: 8px; padding: 0; overflow: hidden; }
+.sales-order-b2-import-guide-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; border-bottom: 1px solid #d7dfda; padding: 18px 20px 15px; background: #f7faf8; }
+.sales-order-b2-import-guide-heading > div > span { color: #287356; font-size: 9px; font-weight: 900; }
+.sales-order-b2-import-guide-heading h3 { margin: 3px 0 0; color: #1d2c25; font-size: 20px; letter-spacing: 0; }
+.sales-order-b2-import-guide-heading p { max-width: 560px; margin: 5px 0 0; color: #637169; font-size: 10px; line-height: 1.55; }
+.sales-order-b2-import-guide-heading > button { flex: 0 0 auto; width: 34px; height: 34px; border: 1px solid #c8d1cc; border-radius: 5px; background: #fff; color: #617068; cursor: pointer; }
+.sales-order-b2-import-guide-steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 16px 20px 12px; list-style: none; }
+.sales-order-b2-import-guide-steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: start; gap: 9px; min-width: 0; border: 1px solid #d9e1dc; border-radius: 6px; padding: 11px; background: #fff; }
+.sales-order-b2-import-guide-steps li > span { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #287356; color: #fff; font-size: 11px; font-weight: 900; }
+.sales-order-b2-import-guide-steps strong,
+.sales-order-b2-import-guide-steps small { display: block; min-width: 0; }
+.sales-order-b2-import-guide-steps strong { color: #26362f; font-size: 11px; line-height: 1.4; }
+.sales-order-b2-import-guide-steps small { margin-top: 4px; color: #68766f; font-size: 9px; line-height: 1.55; }
+.sales-order-b2-import-guide-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 2px 20px 12px; }
+.sales-order-b2-import-guide-actions > a,
+.sales-order-b2-import-guide-actions > button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; border-radius: 6px; padding: 8px 12px; font-size: 11px; font-weight: 900; line-height: 1.35; text-align: center; text-decoration: none; cursor: pointer; }
+.sales-order-b2-import-guide-actions > a { border: 1px solid #287356; background: #fff; color: #1f6248; }
+.sales-order-b2-import-guide-actions > a::after { content: "\2197"; margin-left: 7px; font-size: 12px; }
+.sales-order-b2-import-guide-actions > button { border: 1px solid #287356; background: #287356; color: #fff; }
+.sales-order-b2-import-guide-actions > a:hover { background: #eef7f2; }
+.sales-order-b2-import-guide-actions > button:hover { background: #1f6248; }
+.sales-order-b2-import-guide-actions > :focus-visible,
+.sales-order-b2-import-guide-heading > button:focus-visible { outline: 3px solid rgba(40,115,86,.25); outline-offset: 2px; }
+.sales-order-b2-import-guide-security { margin: 0 20px; border-left: 3px solid #7a93aa; padding: 7px 9px; background: #f4f7fa; color: #526473; font-size: 9px; line-height: 1.5; }
+.sales-order-b2-import-guide-card .form-footer { margin: 12px 0 0; padding: 12px 20px; }
 .sales-order-accounting-button { min-height: 38px; border: 1px solid #6b4f1d; border-radius: 6px; padding: 0 13px; background: #fffaf0; color: #694b12; font-size: 11px; font-weight: 800; cursor: pointer; white-space: nowrap; }
 .sales-order-accounting-button:hover { background: #fff3d6; }
 .sales-order-business-workspace-button { min-height: 38px; border: 1px solid #287356; border-radius: 6px; padding: 0 13px; background: #fff; color: #1f6248; font-size: 11px; font-weight: 800; cursor: pointer; white-space: nowrap; }
@@ -6809,6 +6835,20 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-b2-import-cancel { border: 1px solid #a8b3ad; background: #fff; color: #44554d; }
 .sales-order-b2-import-confirm { border: 1px solid #287356; background: #287356; color: #fff; }
 .sales-order-b2-import-confirm:disabled { border-color: #cbd3cf; background: #dfe4e2; color: #87918c; cursor: not-allowed; }
+@media (max-width: 560px) {
+  .sales-order-b2-import-guide-overlay { align-items: flex-start; padding: 8px; }
+  .form-card.sales-order-b2-import-guide-card { width: calc(100vw - 16px); max-height: calc(100vh - 16px); margin: 0; }
+  .sales-order-b2-import-guide-heading { gap: 10px; padding: 14px 14px 12px; }
+  .sales-order-b2-import-guide-heading h3 { font-size: 17px; }
+  .sales-order-b2-import-guide-steps { grid-template-columns: 1fr; gap: 6px; padding: 12px 14px 10px; }
+  .sales-order-b2-import-guide-steps li { padding: 9px; }
+  .sales-order-b2-import-guide-actions { grid-template-columns: 1fr; padding: 0 14px 10px; }
+  .sales-order-b2-import-guide-actions > a,
+  .sales-order-b2-import-guide-actions > button { width: 100%; min-height: 44px; }
+  .sales-order-b2-import-guide-security { margin: 0 14px; }
+  .sales-order-b2-import-guide-card .form-footer { margin-top: 10px; padding: 10px 14px; }
+  .sales-order-b2-import-guide-card .form-footer button { width: 100%; }
+}
 .sales-order-auto-print { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 3px 12px; min-height: 48px; border-bottom: 1px solid #cfd8d3; padding: 7px 24px; background: #f7faf8; }
 .sales-order-auto-print-heading { display: flex; align-items: center; gap: 9px; }
 .sales-order-auto-print-heading > strong { color: #25352e; font-size: 13px; letter-spacing: 0; }

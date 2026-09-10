@@ -6181,7 +6181,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.950";
+var APP_VERSION       = "v1.1.951";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -17433,6 +17433,30 @@ async function salesOrderB2FileSha256(buffer) {
 
 function salesOrderB2DirectionLabel(direction) {
   return direction === "core_return" ? "コア返却" : (direction === "outbound" ? "商品発送" : "-");
+}
+
+function openSalesOrderB2ImportGuide() {
+  if (!canManageSalesOrders()) return;
+  var overlay = document.getElementById("sales-order-b2-import-guide-overlay");
+  if (!overlay) return;
+  overlay.classList.add("show");
+  window.requestAnimationFrame(function() {
+    var yamatoLink = document.getElementById("sales-order-b2-import-guide-yamato");
+    if (yamatoLink) yamatoLink.focus();
+  });
+}
+
+function closeSalesOrderB2ImportGuide(restoreFocus) {
+  var overlay = document.getElementById("sales-order-b2-import-guide-overlay");
+  if (overlay) overlay.classList.remove("show");
+  if (restoreFocus === false) return;
+  var trigger = document.getElementById("sales-order-import-b2");
+  if (trigger) trigger.focus();
+}
+
+function selectSalesOrderB2ImportFile() {
+  var input = document.getElementById("sales-order-import-b2-file");
+  if (input) input.click();
 }
 
 function renderSalesOrderB2Import() {
@@ -50803,9 +50827,15 @@ document.getElementById("sales-order-b2-settings-overlay").addEventListener("cli
 document.getElementById("sales-order-b2-preflight-close").addEventListener("click", function() {
   renderSalesOrderB2Preflight(null);
 });
-document.getElementById("sales-order-import-b2").addEventListener("click", function() {
-  var input = document.getElementById("sales-order-import-b2-file");
-  if (input) input.click();
+document.getElementById("sales-order-import-b2").addEventListener("click", openSalesOrderB2ImportGuide);
+document.getElementById("sales-order-b2-import-guide-close").addEventListener("click", closeSalesOrderB2ImportGuide);
+document.getElementById("sales-order-b2-import-guide-cancel").addEventListener("click", closeSalesOrderB2ImportGuide);
+document.getElementById("sales-order-b2-import-guide-select-file").addEventListener("click", selectSalesOrderB2ImportFile);
+document.getElementById("sales-order-b2-import-guide-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeSalesOrderB2ImportGuide();
+});
+document.getElementById("sales-order-b2-import-guide-overlay").addEventListener("keydown", function(e) {
+  if (e.key === "Escape") closeSalesOrderB2ImportGuide();
 });
 document.getElementById("sales-order-accounting-export").addEventListener("click", openSalesAccountingExport);
 document.getElementById("sales-order-business-workspace-open").addEventListener("click", openDcatsBusinessWorkspace);
@@ -50871,7 +50901,10 @@ document.getElementById("sales-accounting-export-overlay").addEventListener("cli
 });
 document.getElementById("sales-order-import-b2-file").addEventListener("change", function() {
   var file = this.files && this.files[0];
-  if (file) previewSalesOrderB2ImportFile(file);
+  if (file) {
+    closeSalesOrderB2ImportGuide(false);
+    previewSalesOrderB2ImportFile(file);
+  }
 });
 document.getElementById("sales-order-import-b2-close").addEventListener("click", closeSalesOrderB2Import);
 document.getElementById("sales-order-import-b2-cancel").addEventListener("click", closeSalesOrderB2Import);
