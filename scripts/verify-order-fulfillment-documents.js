@@ -443,7 +443,7 @@ for (const fragment of [
   "shippingDocumentShipmentDocumentsHtml(order)",
   "scheduleShippingDocumentPrintStatusRefresh()",
   "B2発行履歴",
-  "受注詳細",
+  'salesOrderWorkspaceNavigationHtml("shipping-document")',
   "salesOrderStatusSummaryHtml(order)"
 ]) requireFragment(detailSource, fragment);
 for (const forbidden of ["salesOrderItemRowsHtml(order.items)", "shippingDocumentOutboundWaybillHtml(order)", "shippingDocumentReturnWaybillHtml(order)"]) {
@@ -603,9 +603,54 @@ for (const fragment of [
   "shippingCarrierBrandHtml(layout.carrier_code || layout.layout_code, false)"
 ]) requireFragment(handwrittenFlow, fragment);
 
-const salesOrderDispatchUi = sourceBetween("function salesOrderDispatchHtml", "function renderSalesOrderDetail");
-requireFragment(salesOrderDispatchUi, 'id=\'sales-order-open-shipping-documents\'');
+const workspaceNavigation = sourceBetween("function salesOrderWorkspaceNavigationHtml", "function renderShippingDocumentDetail");
+for (const fragment of [
+  "sales-order-workspace-switch",
+  'activeWorkspace === "sales-order"',
+  'id=\'shipping-document-open-order\'',
+  'id=\'sales-order-open-shipping-documents\'',
+  "sales_order_mgmt_title",
+  "shipping_document_mgmt_title",
+  "aria-current='page'"
+]) requireFragment(workspaceNavigation, fragment);
+const workspaceNavigationContext = {
+  t: (key) => ({
+    sales_order_mgmt_title: "受注・出荷管理",
+    shipping_document_mgmt_title: "出荷帳票発行"
+  })[key] || key,
+  esc: String
+};
+vm.runInNewContext(workspaceNavigation, workspaceNavigationContext);
+const salesWorkspaceNavigation = workspaceNavigationContext.salesOrderWorkspaceNavigationHtml("sales-order");
+const documentWorkspaceNavigation = workspaceNavigationContext.salesOrderWorkspaceNavigationHtml("shipping-document");
+for (const fragment of ["受注・出荷管理", "出荷帳票発行", "sales-order-open-shipping-documents", "aria-current='page'"]) {
+  requireFragment(salesWorkspaceNavigation, fragment, `Sales-order navigation is incomplete: ${fragment}`);
+}
+for (const fragment of ["受注・出荷管理", "出荷帳票発行", "shipping-document-open-order", "aria-current='page'"]) {
+  requireFragment(documentWorkspaceNavigation, fragment, `Shipping-document navigation is incomplete: ${fragment}`);
+}
+const enterSalesOrderSource = sourceBetween("async function enterSalesOrderMgmt", "async function enterInternalCustomerOrderEntry");
+for (const fragment of [
+  "options = options || {}",
+  "options.orderId",
+  "options.detailView",
+  "salesOrderSelectedId = isNaN(requestedOrderId) ? null : requestedOrderId",
+  'document.getElementById("sales-order-search")',
+  'document.getElementById("sales-order-status")',
+  'orderStatus.value = "all"',
+  "if (salesOrderSelectedId) await loadSalesOrderDetail(salesOrderSelectedId)"
+]) requireFragment(enterSalesOrderSource, fragment);
+const shippingDocumentDetailUi = sourceBetween("function renderShippingDocumentDetail", "function bindShippingDocumentDetailActions");
+requireFragment(shippingDocumentDetailUi, 'salesOrderWorkspaceNavigationHtml("shipping-document")');
+const salesOrderDetailUi = sourceBetween("function renderSalesOrderDetail", "async function openSalesOrderSerialWarranty");
+requireFragment(salesOrderDetailUi, 'salesOrderWorkspaceNavigationHtml("sales-order")');
 requireFragment(source, "enterShippingDocumentMgmt({ order: salesOrderDetail })");
+requireFragment(source, 'enterSalesOrderMgmt({ order: order, detailView: "fulfillment" })');
+for (const fragment of [
+  ".sales-order-workspace-switch",
+  "white-space: nowrap",
+  "flex: 1 1 50%"
+]) requireFragment(css, fragment);
 
 const issueSource = sourceBetween("async function issueSalesOrderB2Export", "async function downloadSalesOrderB2Batch");
 if (issueSource.includes('sb.rpc("get_sales_order_b2_export"')) {
@@ -751,11 +796,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.945"',
-  'styles.css?v=1.1.945',
-  'app.js?v=1.1.945'
+  'content="v1.1.946"',
+  'styles.css?v=1.1.946',
+  'app.js?v=1.1.946'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.945"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.946"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
