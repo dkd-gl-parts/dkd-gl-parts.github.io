@@ -206,6 +206,8 @@ jobs:
         run: node scripts/verify-manufacturing-ranking-suppliers.js
       - name: Verify mobile label printer routing
         run: node scripts/verify-finished-label-mobile-print.js
+      - name: Verify first-PC label printer setup
+        run: node scripts/verify-label-printer-onboarding.js
 
   deploy-cloudflare-pages:
     name: Deploy verified frontend to Cloudflare Pages
