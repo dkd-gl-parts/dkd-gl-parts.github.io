@@ -22,7 +22,6 @@ function forbidText(source, text, label) {
   'id="internal-user-invite-name"',
   'id="internal-user-invite-email"',
   'id="internal-user-invite-company"',
-  'id="internal-user-invite-department"',
   'id="internal-user-invite-role"',
   'id="btn-internal-user-invite-submit"',
 ].forEach((text) => requireText(html, text, "internal account issuance UI"));
@@ -46,11 +45,13 @@ function forbidText(source, text, label) {
   '"send_password_reset"',
   '初回設定メールの再送を受け付けました',
   'PW再設定メールの送信を受け付けました',
-  'option[0] !== "customer_viewer"',
-  'option[0] !== "external_viewer"',
+  'department_code: departmentCodeForAccessRole(role ? role.value : "")',
   'document.getElementById("btn-open-internal-user-invite").addEventListener',
   'document.getElementById("btn-internal-user-invite-submit").addEventListener',
 ].forEach((text) => requireText(app, text, "internal account issuance behavior"));
+
+forbidText(html, 'id="internal-user-invite-department"', "department selector");
+forbidText(app, 'document.getElementById("internal-user-invite-department")', "department selector behavior");
 
 [
   "sb.auth.signUp(",
