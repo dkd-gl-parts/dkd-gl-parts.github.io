@@ -16,9 +16,10 @@ function functionSource(name) {
   return app.slice(start, next >= 0 ? next : app.length);
 }
 
-expect(app.includes('access_role_master_editor: "販売管理"'), "Japanese role label is not Sales Management");
-expect(app.includes('access_role_master_editor: "Sales Management"'), "English role label is not Sales Management");
-expect(app.includes('["master_editor", "販売管理"]'), "Role option is not Sales Management");
+expect(app.includes('access_role_master_editor: "販売管理者"'), "Japanese manager label is not Sales Management Manager");
+expect(app.includes('access_role_master_editor: "Sales Administration Manager"'), "English manager label is not Sales Administration Manager");
+expect(app.includes('["master_editor", "販売管理者"]'), "Sales Management Manager option is missing");
+expect(app.includes('["sales_staff", "販売スタッフ"]'), "Sales Management Staff option is missing");
 
 expect(functionSource("canEditBasePrice").includes('"master_editor"'), "Sales Management must manage base prices");
 expect(functionSource("canManageCustomerAccess").includes('"master_editor"'), "Sales Management must manage customers");
@@ -36,10 +37,10 @@ expect(functionSource("canUseRakutenResearch").includes('"master_editor"'), "Sal
   "canManageComponentNameMaster",
   "canManageComponentCompatibility",
   "canEditProductKindStockMgmt",
-  "canUseUserManagement",
 ].forEach((name) => {
   expect(!functionSource(name).includes('"master_editor"'), `${name} still grants the Sales Management base role`);
 });
+expect(functionSource("canUseUserManagement").includes('"master_editor"'), "Sales Management Manager must manage Sales Management Staff accounts");
 
 expect(functionSource("canManageCustomerAccounts").includes("canManageCustomerAccess()"), "Customer account management is not tied to customer access permission");
 [
@@ -56,7 +57,8 @@ expect(functionSource("canManageCustomerAccounts").includes("canManageCustomerAc
   expect(!source.includes("isSystemAdmin()"), `${name} is still limited to system administrators`);
 });
 
-expect(app.includes('case "master_editor": return "商品/画像・販売/基準価格・得意先・仕入/価格調査管理。'), "Permission summary was not updated");
+expect(app.includes('case "master_editor": return "商品・画像、販売/基準価格、得意先、仕入/価格調査、販売スタッフ管理";'), "Manager permission summary was not updated");
+expect(app.includes('case "sales_staff": return "商品・画像の日常操作と販売/基準/仕入価格の閲覧";'), "Staff permission summary was not added");
 expect(html.includes(">得意先管理権限</span>"), "Customer account section badge was not updated");
 
 console.log("Sales Management permission contract: OK");

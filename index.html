@@ -1702,7 +1702,7 @@
   </div>
   <div class="users-body">
     <h2 id="users-heading" data-i18n="screen_users_title">社内ユーザー管理</h2>
-    <p class="users-desc">社内ユーザーの操作権限・製造原価の許可・所属・アカウント状態を管理します。得意先閲覧アカウントは得意先管理で管理します。</p>
+    <p class="users-desc">社内ユーザーの会社・基準権限・製造原価の許可・アカウント状態を管理します。得意先閲覧アカウントは得意先管理で管理します。</p>
     <section class="internal-user-issuance" id="internal-user-issuance">
       <div>
         <h3>社内ユーザーID発行</h3>
@@ -1718,7 +1718,7 @@
         </div>
       </div>
       <div class="user-permission-toolbar">
-        <input class="mgmt-search" id="user-permission-search" type="search" placeholder="名前・メール・会社・部署・権限で検索">
+        <input class="mgmt-search" id="user-permission-search" type="search" placeholder="名前・メール・会社・基準権限で検索">
         <span class="mgmt-count" id="user-permission-count"></span>
       </div>
       <div class="permission-table-wrap" id="user-permission-overview">
@@ -1737,7 +1737,7 @@
 <div class="form-overlay" id="internal-user-invite-overlay">
   <div class="form-card internal-user-invite-modal">
     <h3>社内ユーザーID発行</h3>
-    <p class="internal-user-invite-summary">所属と基準権限を指定します。メール送信受付後も、受信と初回設定の完了までは「初回設定待ち」です。</p>
+    <p class="internal-user-invite-summary">会社と基準権限を指定します。業務範囲は基準権限から自動設定されます。</p>
     <div class="internal-user-invite-grid">
       <div class="user-field">
         <label class="user-field-label" for="internal-user-invite-name">表示名</label>
@@ -1751,11 +1751,6 @@
         <label class="user-field-label" for="internal-user-invite-company">会社名</label>
         <select class="group-select" id="internal-user-invite-company"></select>
         <div class="user-field-note" id="internal-user-invite-company-note"></div>
-      </div>
-      <div class="user-field">
-        <label class="user-field-label" for="internal-user-invite-department">部署</label>
-        <select class="group-select" id="internal-user-invite-department"></select>
-        <div class="user-field-note" id="internal-user-invite-department-note"></div>
       </div>
       <div class="user-field internal-user-invite-role-field">
         <label class="user-field-label" for="internal-user-invite-role">基準権限</label>

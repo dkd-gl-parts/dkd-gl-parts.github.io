@@ -84,6 +84,8 @@ jobs:
         run: node scripts/verify-customer-activity-history.js
       - name: Verify internal account issuance
         run: node scripts/verify-internal-account-issuance.js
+      - name: Verify internal base role organization
+        run: node scripts/verify-internal-base-role-organization.js
       - name: Verify internal shipping permission
         run: node scripts/verify-internal-shipping-permission.js
       - name: Verify password-reset permission overview

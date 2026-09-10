@@ -15,26 +15,31 @@ function functionSource(name, nextName) {
   return app.slice(start, end);
 }
 
-assert(app.includes('["sales_editor", "出荷管理"]'), "Shipping role option is missing");
+assert(app.includes('["sales_editor", "出荷管理者"]'), "Shipping manager role option is missing");
+assert(app.includes('["shipping_staff", "出荷スタッフ"]'), "Shipping staff role option is missing");
 assert(app.includes('["shipping", "出荷"]'), "Shipping department option is missing");
-assert(app.includes('if (roleCode === "sales_editor") return "shipping";'), "Shipping role department fallback is missing");
+assert(app.includes('if (roleCode === "sales_editor" || roleCode === "shipping_staff") return "shipping";'), "Shipping role scope mapping is missing");
 assert(!app.includes('if (roleCode === "sales_editor") return "sales";'), "Legacy sales department fallback remains active");
 assert(app.includes('sales_editor: "price_viewer"'), "Shipping role legacy mapping must remain least-privilege");
-assert(app.includes('case "sales_editor": return "受注・出荷管理、ピッキング、出荷帳票、完品出荷、在庫更新。商品マスタ・販売価格設定・ユーザー管理は不可";'), "Shipping role scope is missing");
+assert(app.includes('shipping_staff: "price_viewer"'), "Shipping staff legacy mapping must remain least-privilege");
+assert(app.includes('case "sales_editor": return "受注・出荷、ピッキング、帳票、完品出荷、在庫、出荷スタッフ管理";'), "Shipping manager scope is missing");
 
 const stock = functionSource("canEditProductKindStockMgmt", "hasBaseManufacturingCostRole");
 assert(stock.includes('"sales_editor"'), "Shipping role cannot update stock");
+assert(stock.includes('"shipping_staff"'), "Shipping staff cannot update stock");
 
 const finishedShipping = functionSource("canManageFinishedProductShipping", "customerOrderFeatureEnabled");
 assert(finishedShipping.includes('"sales_editor"'), "Shipping role cannot register finished-product shipments");
+assert(finishedShipping.includes('"shipping_staff"'), "Shipping staff cannot register finished-product shipments");
 
 const salesOrders = functionSource("canManageSalesOrders", "canViewManagementScreen");
 assert(salesOrders.includes('"sales_order.manage"') && salesOrders.includes('"sales_editor"'), "Shipping role cannot open order fulfillment");
+assert(salesOrders.includes('"shipping_staff"'), "Shipping staff cannot open order fulfillment");
 
 assert(app.includes('title: "受注・出荷"'), "Order and shipping permission group is missing");
 assert(app.includes('permissionKey: "sales_order.manage"'), "Sales-order permission control is missing");
 assert(app.includes('permissionKey: "finished_product_shipping.manage"'), "Finished-product shipment permission control is missing");
-assert(app.includes('var roleCanManageStock = permissionOverviewRoleIn(role, productionEditors.concat(["sales_editor"]));'), "Stock permission overview does not include shipping role");
+assert(app.includes('var roleCanManageStock = permissionOverviewRoleIn(role, productionEditors.concat(["sales_editor", "shipping_staff"]));'), "Stock permission overview does not include both shipping roles");
 
 const editorDefaults = app.match(/var editors = \[([^\]]+)\]/);
 assert(editorDefaults && !editorDefaults[1].includes("sales_editor"), "Shipping role must not inherit product editing");

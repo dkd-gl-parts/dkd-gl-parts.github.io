@@ -420,7 +420,7 @@ var TRANSLATIONS = {
     mi_production_title: "製造管理",
     mi_production_desc: "製造予定リスト・互換品・在庫を確認します。",
     mi_users_title: "社内ユーザー管理",
-    mi_users_desc: "社内ユーザーの表示名・所属・操作権限・アカウント状態を管理します。",
+    mi_users_desc: "社内ユーザーの表示名・会社・基準権限・アカウント状態を管理します。",
     mi_user_permissions_title: "ユーザー権限",
     mi_user_permissions_desc: "自分の操作権限と製造原価の許可を確認します。",
     mi_customer_access_title: "得意先管理",
@@ -1185,10 +1185,14 @@ var TRANSLATIONS = {
     role_viewer: "価格閲覧者",
     access_role_system_admin: "システム管理者",
     access_role_company_admin: "会社管理者",
-    access_role_dept_admin: "製造管理",
-    access_role_master_editor: "販売管理",
-    access_role_production_editor: "製造担当",
-    access_role_sales_viewer: "営業閲覧",
+    access_role_dept_admin: "製造管理者",
+    access_role_master_editor: "販売管理者",
+    access_role_sales_editor: "出荷管理者",
+    access_role_business_admin: "営業管理者",
+    access_role_production_editor: "製造スタッフ",
+    access_role_sales_staff: "販売スタッフ",
+    access_role_shipping_staff: "出荷スタッフ",
+    access_role_sales_viewer: "営業スタッフ",
     access_role_all_viewer: "全機能閲覧",
     access_role_internal_viewer: "社内閲覧",
     access_role_customer_viewer: "得意先閲覧",
@@ -1196,7 +1200,7 @@ var TRANSLATIONS = {
     screen_users_title: "社内ユーザー管理",
     users_heading: "社内ユーザー一覧",
     user_permissions_heading: "ユーザー権限",
-    users_desc: "会社・部署は所属、ユーザー権限は操作できる範囲です。製造原価は基本権限または個別許可で管理します。",
+    users_desc: "会社と基準権限で操作範囲を管理します。",
     perm_group: "グループ",
     perm_role: "ロール",
     perm_products: "商品閲覧",
@@ -2394,7 +2398,7 @@ var TRANSLATIONS = {
     mi_production_title: "Production Management",
     mi_production_desc: "Review production plans, compatible parts, and stock.",
     mi_users_title: "Internal User Management",
-    mi_users_desc: "Manage internal user names, affiliations, permissions, and account status.",
+    mi_users_desc: "Manage internal user names, companies, base roles, and account status.",
     mi_user_permissions_title: "User Permissions",
     mi_user_permissions_desc: "Review your allowed operations and manufacturing cost permission.",
     mi_customer_access_title: "Customer Management",
@@ -3159,10 +3163,14 @@ var TRANSLATIONS = {
     role_viewer: "Price Viewer",
     access_role_system_admin: "System Admin",
     access_role_company_admin: "Company Admin",
-    access_role_dept_admin: "Manufacturing Admin",
-    access_role_master_editor: "Sales Management",
-    access_role_production_editor: "Production Staff",
-    access_role_sales_viewer: "Sales Viewer",
+    access_role_dept_admin: "Manufacturing Manager",
+    access_role_master_editor: "Sales Administration Manager",
+    access_role_sales_editor: "Shipping Manager",
+    access_role_business_admin: "Sales Manager",
+    access_role_production_editor: "Manufacturing Staff",
+    access_role_sales_staff: "Sales Administration Staff",
+    access_role_shipping_staff: "Shipping Staff",
+    access_role_sales_viewer: "Sales Staff",
     access_role_all_viewer: "Full Viewer",
     access_role_internal_viewer: "Internal Viewer",
     access_role_customer_viewer: "Customer Viewer",
@@ -3170,7 +3178,7 @@ var TRANSLATIONS = {
     screen_users_title: "Internal User Management",
     users_heading: "Internal User List",
     user_permissions_heading: "User Permissions",
-    users_desc: "Company and department define affiliation. User role defines allowed operations. Manufacturing cost is controlled by base role or per-user permission.",
+    users_desc: "Company and base role define access.",
     perm_group: "Group",
     perm_role: "Role",
     perm_products: "Product View",
@@ -4409,7 +4417,7 @@ var TRANSLATIONS = {
     mi_production_title: "生产管理",
     mi_production_desc: "查看生产计划、兼容零件和库存。",
     mi_users_title: "内部用户管理",
-    mi_users_desc: "管理内部用户的显示名称、所属、操作权限和账户状态。",
+    mi_users_desc: "管理内部用户的显示名称、公司、基础权限和账户状态。",
     mi_user_permissions_title: "用户权限",
     mi_user_permissions_desc: "确认自己的操作权限和制造成本许可。",
     mi_customer_access_title: "客户管理",
@@ -5140,10 +5148,14 @@ var TRANSLATIONS = {
     role_viewer: "价格查看者",
     access_role_system_admin: "系统管理员",
     access_role_company_admin: "公司管理员",
-    access_role_dept_admin: "制造管理",
-    access_role_master_editor: "销售管理",
-    access_role_production_editor: "制造担当",
-    access_role_sales_viewer: "营业查看",
+    access_role_dept_admin: "制造管理员",
+    access_role_master_editor: "销售业务管理员",
+    access_role_sales_editor: "出货管理员",
+    access_role_business_admin: "营业管理员",
+    access_role_production_editor: "制造员工",
+    access_role_sales_staff: "销售业务员工",
+    access_role_shipping_staff: "出货员工",
+    access_role_sales_viewer: "营业员工",
     access_role_all_viewer: "全功能查看",
     access_role_internal_viewer: "内部查看",
     access_role_customer_viewer: "客户查看",
@@ -5151,7 +5163,7 @@ var TRANSLATIONS = {
     screen_users_title: "内部用户管理",
     users_heading: "内部用户列表",
     user_permissions_heading: "用户权限",
-    users_desc: "公司和部门表示所属，用户权限表示可操作范围。制造成本由基础权限或单独许可控制。",
+    users_desc: "通过公司和基础权限管理操作范围。",
     perm_group: "组",
     perm_role: "角色",
     perm_products: "商品查看",
@@ -6644,12 +6656,21 @@ function isCompanyAdminRole(profile) {
 function isDeptAdminRole(profile) {
   return hasAccessRole(profile || userProfile, ["dept_admin"]);
 }
+var ROLE_MANAGED_STAFF = {
+  dept_admin: ["production_editor"],
+  master_editor: ["sales_staff"],
+  sales_editor: ["shipping_staff"],
+  business_admin: ["sales_viewer"]
+};
+function managedStaffRoles(profile) {
+  return ROLE_MANAGED_STAFF[userAccessRoleCode(profile || userProfile)] || [];
+}
 function hasOwnDepartmentUserScope(profile) {
-  return hasAccessRole(profile || userProfile, ["dept_admin", "master_editor"]);
+  return hasAccessRole(profile || userProfile, ["dept_admin", "master_editor", "sales_editor", "business_admin"]);
 }
 function canEdit() {
   if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
-  return userPermissionAllowed(userProfile, "product.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]));
+  return userPermissionAllowed(userProfile, "product.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "sales_staff", "production_editor"]));
 }
 function canIssueGltekPartNumber() {
   if (!userProfile || isCustomerPortalSearchMode()) return false;
@@ -6659,7 +6680,7 @@ function canIssueGltekPartNumber() {
 }
 function canManageAllImages() {
   if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
-  return userPermissionAllowed(userProfile, "image.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]));
+  return userPermissionAllowed(userProfile, "image.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "sales_staff", "production_editor"]));
 }
 function canManageProduct3D() {
   if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
@@ -6675,12 +6696,9 @@ function canReviewProduct3D() {
 function canUploadCoreImages() {
   return canManageUsedCoreImages();
 }
-function isCoreImageEditorRole(profile) {
-  return hasAccessRole(profile || userProfile, ["core_image_editor"]);
-}
 function canManageUsedCoreImages() {
   if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
-  return userPermissionAllowed(userProfile, "used_core_image.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor", "core_image_editor"]));
+  return userPermissionAllowed(userProfile, "used_core_image.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]));
 }
 function canManageImageKind(kind, context) {
   if (canManageAllImages()) return true;
@@ -6711,35 +6729,33 @@ function isAdmin() {
   return isCompanyAdminRole(userProfile);
 }
 function canUseUserManagement() {
-  return userPermissionAllowed(userProfile, "users.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin"]));
+  return userPermissionAllowed(userProfile, "users.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "sales_editor", "business_admin"]));
 }
 function canAssignUserRole(roleCode) {
   if (isSystemAdmin()) return true;
   var currentRole = accessRoleCode(userProfile);
   if (currentRole === "company_admin") return roleCode !== "system_admin";
-  if (currentRole === "dept_admin") return ["system_admin", "company_admin", "dept_admin", "master_editor", "customer_viewer", "external_viewer"].indexOf(roleCode) < 0;
-  if (currentRole === "master_editor") return ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "sales_editor", "customer_viewer", "external_viewer"].indexOf(roleCode) < 0;
-  return false;
+  return managedStaffRoles(userProfile).indexOf(roleCode) >= 0;
 }
 
-// ユーザー管理：system_adminは全体、会社管理者は自社、製造管理は自部署のみ。販売管理は個別許可時のみ自部署を管理する。
+// 業務管理者は、自社かつ同じ業務のスタッフだけを管理する。
 function canManageUser(targetProfile) {
   if (!userProfile || !targetProfile) return false;
   if (isSystemAdmin()) return true;
   if (!canUseUserManagement()) return false;
   if (userCompanyCode(targetProfile) !== userCompanyCode(userProfile)) return false;
   var currentRole = accessRoleCode(userProfile);
+  if (currentRole === "company_admin") return userAccessRoleCode(targetProfile) !== "system_admin";
   if (hasOwnDepartmentUserScope(userProfile)) {
     if (userDepartmentCode(targetProfile) !== userDepartmentCode(userProfile)) return false;
-    if (currentRole === "dept_admin" && hasAccessRole(targetProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "customer_viewer", "external_viewer"])) return false;
-    if (currentRole === "master_editor" && hasAccessRole(targetProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "customer_viewer", "external_viewer"])) return false;
+    return managedStaffRoles(userProfile).indexOf(userAccessRoleCode(targetProfile)) >= 0;
   }
-  return true;
+  return false;
 }
 
 function canSeePurchasePrice() {
   if (isCustomerPortalSearchMode()) return false;
-  return userPermissionAllowed(userProfile, "purchase_price.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "all_viewer"]));
+  return userPermissionAllowed(userProfile, "purchase_price.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "sales_staff", "business_admin"]));
 }
 function canViewPurchaseMgmt() {
   return userPermissionAllowed(userProfile, "purchase_management.view", canSeePurchasePrice());
@@ -6753,7 +6769,7 @@ function canSeeSalesPrice() {
 }
 function canViewBasePrice() {
   if (isCustomerPortalSearchMode()) return false;
-  return userPermissionAllowed(userProfile, "base_price.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "all_viewer"]));
+  return userPermissionAllowed(userProfile, "base_price.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "sales_staff", "business_admin"]));
 }
 function canEditBasePrice() {
   if (isCustomerPortalSearchMode()) return false;
@@ -6765,13 +6781,13 @@ function canEditSalesPricing() {
 }
 function canUseRakutenResearch() {
   if (isCustomerPortalSearchMode()) return false;
-  return userPermissionAllowed(userProfile, "price_research.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"]));
+  return userPermissionAllowed(userProfile, "price_research.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor", "business_admin"]));
 }
 function canManageEcResearchSchedule() {
   return userPermissionAllowed(userProfile, "price_research.schedule", hasAccessRole(userProfile, ["system_admin", "company_admin"]));
 }
 function canViewInternalComponents() {
-  return userPermissionAllowed(userProfile, "component.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor", "all_viewer"]));
+  return userPermissionAllowed(userProfile, "component.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]));
 }
 function canEditInternalComponents() {
   return userPermissionAllowed(userProfile, "component.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]));
@@ -6804,18 +6820,15 @@ function canManageCustomerPortalUsers() {
 function isExternalViewerProfile(profile) {
   if (!profile) return false;
   var company = userCompanyCode(profile);
-  var role = userAccessRoleCode(profile);
+  var role = normalizeAccessRoleForCompany(userAccessRoleCode(profile), company);
   var legacyGroup = profile.group_name || legacyGroupFromCompany(company);
-  return company === "external" || role === "customer_viewer" || role === "external_viewer" || legacyGroup === "public";
+  return company === "external" || role === "customer_viewer" || legacyGroup === "public";
 }
 function isExternalViewer() {
   return isExternalViewerProfile(userProfile);
 }
 function canSeeInternalBusinessInfo() {
   return !!userProfile && !isExternalViewer() && !isCustomerPortalSearchMode();
-}
-function canViewAllReadOnly() {
-  return !!(userProfile && userAccessRoleCode(userProfile) === "all_viewer");
 }
 function canSeeComponentInfo() {
   return userPermissionAllowed(userProfile, "component.view", canViewInternalComponents());
@@ -6824,13 +6837,16 @@ function canSeeCatalogSpec() {
   return canSeeComponentInfo();
 }
 function canSeeCoreStockInfo() {
-  return userPermissionAllowed(userProfile, "stock.view", canSeeInternalBusinessInfo());
+  return userPermissionAllowed(userProfile, "stock.view", hasAccessRole(userProfile, [
+    "system_admin", "company_admin", "dept_admin", "master_editor", "sales_staff",
+    "sales_editor", "shipping_staff", "production_editor"
+  ]));
 }
 function canViewProductKindStockMgmt() {
   return canSeeCoreStockInfo();
 }
 function canEditProductKindStockMgmt() {
-  return userPermissionAllowed(userProfile, "stock.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor", "sales_editor"]));
+  return userPermissionAllowed(userProfile, "stock.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor", "sales_editor", "shipping_staff"]));
 }
 function hasBaseManufacturingCostRole(profile) {
   return hasAccessRole(profile || userProfile, ["system_admin", "company_admin", "dept_admin"]);
@@ -7153,8 +7169,7 @@ function normalizeRoleForGroup(role, group) {
 }
 var USER_COMPANY_OPTIONS = [
   ["daiko", "大光電機"],
-  ["gltek", "GLTEK"],
-  ["external", "社外"]
+  ["gltek", "GLTEK"]
 ];
 var USER_DEPARTMENT_OPTIONS = [
   ["system", "システム管理"],
@@ -7168,24 +7183,26 @@ var USER_DEPARTMENT_OPTIONS = [
 var USER_ACCESS_ROLE_OPTIONS = [
   ["system_admin", "システム管理者"],
   ["company_admin", "会社管理者"],
-  ["dept_admin", "製造管理"],
-  ["master_editor", "販売管理"],
-  ["sales_editor", "出荷管理"],
-  ["production_editor", "製造担当"],
-  ["sales_viewer", "営業閲覧"],
-  ["internal_viewer", "社内閲覧"],
-  ["customer_viewer", "得意先閲覧"],
-  ["external_viewer", "社外閲覧"]
+  ["dept_admin", "製造管理者"],
+  ["production_editor", "製造スタッフ"],
+  ["master_editor", "販売管理者"],
+  ["sales_staff", "販売スタッフ"],
+  ["sales_editor", "出荷管理者"],
+  ["shipping_staff", "出荷スタッフ"],
+  ["business_admin", "営業管理者"],
+  ["sales_viewer", "営業スタッフ"]
 ];
-USER_ACCESS_ROLE_OPTIONS.splice(Math.max(0, USER_ACCESS_ROLE_OPTIONS.findIndex(function(opt){ return opt[0] === "internal_viewer"; })), 0, ["all_viewer", "全機能閲覧"]);
-USER_ACCESS_ROLE_OPTIONS.splice(Math.max(0, USER_ACCESS_ROLE_OPTIONS.findIndex(function(opt){ return opt[0] === "internal_viewer"; })), 0, ["core_image_editor", "コア画像登録"]);
+var RETIRED_INTERNAL_ACCESS_ROLES = ["all_viewer", "core_image_editor", "internal_viewer", "external_viewer"];
 var USER_ACCESS_LEGACY_ROLE = {
   system_admin: "system_admin",
   company_admin: "admin",
   dept_admin: "editor",
   master_editor: "editor",
   sales_editor: "price_viewer",
+  business_admin: "price_viewer",
   production_editor: "editor",
+  sales_staff: "editor",
+  shipping_staff: "price_viewer",
   sales_viewer: "price_viewer",
   all_viewer: "price_viewer",
   core_image_editor: "price_viewer",
@@ -7216,25 +7233,26 @@ function userAccessRoleCode(profile) {
   return "external_viewer";
 }
 function userDepartmentCode(profile) {
-  if (profile && profile.department_code) return profile.department_code;
   var roleCode = userAccessRoleCode(profile);
-  if (roleCode === "system_admin" || roleCode === "company_admin") return "system";
-  if (roleCode === "dept_admin") return "production";
-  if (roleCode === "master_editor") return "product";
-  if (roleCode === "production_editor") return "production";
-  if (roleCode === "sales_editor") return "shipping";
-  if (roleCode === "sales_viewer") return "business";
-  if (roleCode === "core_image_editor") return "production";
-  if (roleCode === "all_viewer") return "viewer";
-  if (roleCode === "customer_viewer") return "viewer";
+  var roleDepartment = departmentCodeForAccessRole(roleCode);
+  if (roleDepartment) return roleDepartment;
+  if (profile && profile.department_code) return profile.department_code;
   return "viewer";
+}
+function departmentCodeForAccessRole(roleCode) {
+  if (roleCode === "system_admin" || roleCode === "company_admin") return "system";
+  if (roleCode === "dept_admin" || roleCode === "production_editor") return "production";
+  if (roleCode === "master_editor" || roleCode === "sales_staff") return "product";
+  if (roleCode === "sales_editor" || roleCode === "shipping_staff") return "shipping";
+  if (roleCode === "business_admin" || roleCode === "sales_viewer") return "business";
+  if (RETIRED_INTERNAL_ACCESS_ROLES.indexOf(roleCode) >= 0) return "business";
+  if (roleCode === "customer_viewer") return "viewer";
+  return "";
 }
 function normalizeAccessRoleForCompany(roleCode, companyCode) {
   var role = roleCode || "customer_viewer";
-  if (companyCode === "external") {
-    return role === "external_viewer" ? "external_viewer" : "customer_viewer";
-  }
-  if (role === "customer_viewer") return "internal_viewer";
+  if (companyCode === "external") return "customer_viewer";
+  if (role === "customer_viewer" || RETIRED_INTERNAL_ACCESS_ROLES.indexOf(role) >= 0) return "sales_viewer";
   if (role === "system_admin" && !isSystemAdmin()) return "company_admin";
   return role;
 }
@@ -7250,17 +7268,16 @@ function optionHtml(options, selected, skipFn, labelFn) {
   }).join("");
 }
 function skipAccessRoleForCompany(companyCode, opt) {
-  if (companyCode === "external") return ["customer_viewer", "external_viewer"].indexOf(opt[0]) < 0;
-  if (opt[0] === "customer_viewer") return true;
+  if (companyCode === "external") return true;
   return !canAssignUserRole(opt[0]);
 }
 function defaultAccessRoleForCompany(companyCode, selected) {
-  if (companyCode === "external") {
-    return selected === "external_viewer" ? "external_viewer" : "customer_viewer";
-  }
-  selected = selected || "internal_viewer";
+  if (companyCode === "external") return "customer_viewer";
+  selected = normalizeAccessRoleForCompany(selected || "sales_viewer", companyCode);
   var blocked = skipAccessRoleForCompany(companyCode, [selected, selected]);
-  return blocked ? "internal_viewer" : selected;
+  if (!blocked) return selected;
+  var options = USER_ACCESS_ROLE_OPTIONS.filter(function(option) { return !skipAccessRoleForCompany(companyCode, option); });
+  return options.length ? options[0][0] : "";
 }
 function accessRoleOptionHtmlForCompany(companyCode, selected) {
   var value = normalizeAccessRoleForCompany(selected, companyCode) || defaultAccessRoleForCompany(companyCode, selected);
@@ -7272,7 +7289,7 @@ function accessRoleOptionHtmlForCompany(companyCode, selected) {
 function internalAccessRoleOptionHtmlForCompany(companyCode, selected) {
   var value = normalizeAccessRoleForCompany(selected, companyCode) || defaultAccessRoleForCompany(companyCode, selected);
   return optionHtml(USER_ACCESS_ROLE_OPTIONS, value, function(opt) {
-    return opt[0] === "customer_viewer" || (opt[0] !== value && skipAccessRoleForCompany(companyCode, opt));
+    return opt[0] !== value && skipAccessRoleForCompany(companyCode, opt);
   }, function(opt) { return accessRoleLabel(opt[0]); });
 }
 function canManageSharedSettings() {
@@ -7291,7 +7308,7 @@ function canManageSalesPricing() {
   return canEditSalesPricing();
 }
 function canManageCustomerAccess() {
-  return userPermissionAllowed(userProfile, "customer_access.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor"]));
+  return userPermissionAllowed(userProfile, "customer_access.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor", "business_admin"]));
 }
 function canManageCustomerAccounts() {
   return canManageCustomerAccess();
@@ -7306,7 +7323,7 @@ function canViewSalesPricing() {
   return canSeeSalesPrice() && !isCustomerViewer() && !isCustomerPortalSearchMode() && userPermissionAllowed(userProfile, "sales_pricing.view", true);
 }
 function canViewProductionFeatures() {
-  return userPermissionAllowed(userProfile, "production.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor", "all_viewer"]));
+  return userPermissionAllowed(userProfile, "production.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]));
 }
 function canViewFinishedLabelMgmt() {
   return userPermissionAllowed(userProfile, "finished_label.manage", isSystemAdmin());
@@ -7318,7 +7335,7 @@ function canManageFinishedProductShipping() {
   return userPermissionAllowed(
     userProfile,
     "finished_product_shipping.manage",
-    hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor", "sales_editor"])
+    hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor", "sales_editor", "shipping_staff"])
   );
 }
 function customerOrderFeatureEnabled(key) {
@@ -7350,7 +7367,7 @@ function canStartInternalCustomerOrderEntry() {
   return userPermissionAllowed(
     userProfile,
     "sales_order.manage",
-    hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor", "sales_editor"])
+    hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor", "sales_editor", "shipping_staff"])
   );
 }
 function canRegisterInternalCustomerOrder() {
@@ -7364,30 +7381,30 @@ function canManageSalesOrders() {
   return userPermissionAllowed(
     userProfile,
     "sales_order.manage",
-    hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor", "sales_editor"])
+    hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor", "sales_editor", "shipping_staff"])
   );
 }
 function canViewManagementScreen() {
-  return userPermissionAllowed(userProfile, "product_management.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor", "all_viewer"]));
+  return userPermissionAllowed(userProfile, "product_management.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "sales_staff", "production_editor"]));
 }
 function canViewCoreManagement() {
-  return userPermissionAllowed(userProfile, "core_list.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor", "core_image_editor", "all_viewer"]));
+  return userPermissionAllowed(userProfile, "core_list.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]));
 }
 function canManageProductionRecords() {
   return userPermissionAllowed(userProfile, "production_records.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]));
 }
 function canViewPriceResearchHistory() {
   if (isCustomerPortalSearchMode()) return false;
-  return userPermissionAllowed(userProfile, "price_research.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor", "sales_viewer", "all_viewer"]));
+  return userPermissionAllowed(userProfile, "price_research.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "master_editor", "sales_staff", "business_admin", "sales_viewer"]));
 }
 function canViewOperationLogs() {
-  return userPermissionAllowed(userProfile, "operation_logs.view", isAdmin() || canViewAllReadOnly());
+  return userPermissionAllowed(userProfile, "operation_logs.view", isAdmin());
 }
 function canViewManufacturingReport() {
-  return userPermissionAllowed(userProfile, "manufacturing_report.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor", "all_viewer"]));
+  return userPermissionAllowed(userProfile, "manufacturing_report.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]));
 }
 function canManageCompatibility() {
-  return userPermissionAllowed(userProfile, "compatibility.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor", "all_viewer"]));
+  return userPermissionAllowed(userProfile, "compatibility.view", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]));
 }
 function canEditCompatibility() {
   return userPermissionAllowed(userProfile, "compatibility.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "production_editor"]));
@@ -47839,18 +47856,9 @@ function internalInviteCompanyOptions() {
   return internalCompanies.filter(function(option) { return option[0] === actorCompany; });
 }
 
-function internalInviteDepartmentOptions() {
-  if (!hasOwnDepartmentUserScope(userProfile)) return USER_DEPARTMENT_OPTIONS;
-  var actorDepartment = userDepartmentCode(userProfile);
-  return USER_DEPARTMENT_OPTIONS.filter(function(option) { return option[0] === actorDepartment; });
-}
-
 function internalInviteRoleOptions(companyCode) {
   return USER_ACCESS_ROLE_OPTIONS.filter(function(option) {
-    return option[0] !== "customer_viewer"
-      && option[0] !== "external_viewer"
-      && companyCode !== "external"
-      && canAssignUserRole(option[0]);
+    return companyCode !== "external" && canAssignUserRole(option[0]);
   });
 }
 
@@ -47861,13 +47869,10 @@ function internalInviteDefaultOption(options, preferred) {
 
 function syncInternalUserInviteNotes() {
   var company = document.getElementById("internal-user-invite-company");
-  var department = document.getElementById("internal-user-invite-department");
   var role = document.getElementById("internal-user-invite-role");
   var companyNote = document.getElementById("internal-user-invite-company-note");
-  var departmentNote = document.getElementById("internal-user-invite-department-note");
   var roleNote = document.getElementById("internal-user-invite-role-note");
   if (companyNote && company) companyNote.textContent = optionLabel(USER_COMPANY_OPTIONS, company.value);
-  if (departmentNote && department) departmentNote.textContent = optionLabel(USER_DEPARTMENT_OPTIONS, department.value);
   if (roleNote && role) roleNote.textContent = accessRoleScopeText(role.value);
 }
 
@@ -47875,7 +47880,7 @@ function refreshInternalUserInviteRoles() {
   var company = document.getElementById("internal-user-invite-company");
   var role = document.getElementById("internal-user-invite-role");
   if (!company || !role) return;
-  var previous = role.value || "internal_viewer";
+  var previous = role.value || "sales_viewer";
   var options = internalInviteRoleOptions(company.value);
   var selected = internalInviteDefaultOption(options, previous);
   role.innerHTML = optionHtml(options, selected, null, function(option) { return accessRoleLabel(option[0]); });
@@ -47892,20 +47897,14 @@ function openInternalUserInvite() {
   var nameInput = document.getElementById("internal-user-invite-name");
   var emailInput = document.getElementById("internal-user-invite-email");
   var company = document.getElementById("internal-user-invite-company");
-  var department = document.getElementById("internal-user-invite-department");
   var result = document.getElementById("internal-user-invite-result");
-  if (!overlay || !nameInput || !emailInput || !company || !department) return;
+  if (!overlay || !nameInput || !emailInput || !company) return;
 
   var companyOptions = internalInviteCompanyOptions();
-  var departmentOptions = internalInviteDepartmentOptions();
   var defaultCompany = internalInviteDefaultOption(companyOptions, userCompanyCode(userProfile));
-  var defaultDepartment = internalInviteDefaultOption(departmentOptions, userDepartmentCode(userProfile));
   company.innerHTML = optionHtml(companyOptions, defaultCompany);
   company.value = defaultCompany;
   company.disabled = !isSystemAdmin();
-  department.innerHTML = optionHtml(departmentOptions, defaultDepartment);
-  department.value = defaultDepartment;
-  department.disabled = hasOwnDepartmentUserScope(userProfile);
   nameInput.value = "";
   emailInput.value = "";
   if (result) { result.className = "internal-user-invite-result"; result.textContent = ""; }
@@ -47977,9 +47976,9 @@ function internalUserInviteErrorMessage(code) {
     name_required: "表示名を入力してください",
     invalid_email: "正しいメールアドレスを入力してください",
     invalid_company: "社内の会社を選択してください",
-    invalid_department: "部署を選択してください",
+    invalid_department: "基準権限の業務範囲を確認してください",
     invalid_role: "基準権限を選択してください",
-    scope_forbidden: "選択した所属または基準権限を発行する権限がありません",
+    scope_forbidden: "選択した会社または基準権限を発行する権限がありません",
     forbidden: "社内ユーザーを発行する権限がありません",
     email_already_registered: "このメールアドレスは登録済みです。ユーザー一覧からPW再設定を送信してください",
     email_rate_limit: "メール送信上限に達しました。時間をおいて再試行してください。上限撤廃にはカスタムSMTP設定が必要です",
@@ -47991,7 +47990,7 @@ function internalUserInviteErrorMessage(code) {
     invitation_already_accepted: "初回設定メールは確認済みです。画面を更新してPW再設定を使用してください",
     resend_failed: "初回設定メールの再送に失敗しました",
     password_reset_failed: "PW再設定メールの送信に失敗しました",
-    profile_setup_failed: "ユーザーの所属・権限設定を保存できませんでした",
+    profile_setup_failed: "ユーザーの会社・基準権限を保存できませんでした",
     invite_failed: "社内ユーザーIDの発行に失敗しました"
   };
   return messages[code] || messages.invite_failed;
@@ -48013,7 +48012,6 @@ async function inviteInternalUser() {
   var nameInput = document.getElementById("internal-user-invite-name");
   var emailInput = document.getElementById("internal-user-invite-email");
   var company = document.getElementById("internal-user-invite-company");
-  var department = document.getElementById("internal-user-invite-department");
   var role = document.getElementById("internal-user-invite-role");
   var button = document.getElementById("btn-internal-user-invite-submit");
   var resultMessage = document.getElementById("internal-user-invite-result");
@@ -48026,7 +48024,7 @@ async function inviteInternalUser() {
     name: nameInput ? nameInput.value.trim() : "",
     email: emailInput ? emailInput.value.trim().toLowerCase() : "",
     company_code: company ? company.value : "",
-    department_code: department ? department.value : "",
+    department_code: departmentCodeForAccessRole(role ? role.value : ""),
     role_code: role ? role.value : ""
   };
   var localError = !payload.name
@@ -48068,16 +48066,13 @@ async function loadUsers() {
   var query = sb.from("profiles").select("*").order("created_at");
   if (!isSystemAdmin()) {
     query = query.eq("company_code", userCompanyCode(userProfile));
-    if (hasOwnDepartmentUserScope(userProfile)) {
-      query = query.eq("department_code", userDepartmentCode(userProfile));
-    }
   }
   var r = await query;
   userManagementLoaded = true;
   userManagementLoadError = r.error || null;
   var users = (r.data || []).filter(function(user) {
     var roleCode = normalizeAccessRoleForCompany(userAccessRoleCode(user), userCompanyCode(user));
-    return roleCode !== "customer_viewer";
+    return roleCode !== "customer_viewer" && roleCode !== "service_account";
   });
   userManagementRows = users;
   if (r.error) {
@@ -48139,16 +48134,15 @@ function accessRoleScopeText(roleCode) {
   switch (roleCode) {
     case "system_admin": return "全機能・全ユーザー管理";
     case "company_admin": return "自社ユーザー管理・商品/価格/構成部品管理";
-    case "dept_admin": return "製造/構成部品管理・製造原価基本許可・自部署ユーザー";
-    case "master_editor": return "商品/画像・販売/基準価格・得意先・仕入/価格調査管理。在庫は閲覧のみ、製造原価は個別許可";
-    case "sales_editor": return "受注・出荷管理、ピッキング、出荷帳票、完品出荷、在庫更新。商品マスタ・販売価格設定・ユーザー管理は不可";
-    case "production_editor": return "製造/構成部品管理。製造原価は個別許可";
-    case "core_image_editor": return "商品/販売価格閲覧・使用済みコア画像の登録/削除。製造原価は個別許可";
-    case "sales_viewer": return "商品・販売価格・価格調査履歴の閲覧。製造原価は個別許可";
-    case "all_viewer": return "社内全体の閲覧のみ。製造原価は個別許可";
-    case "internal_viewer": return "社内一般閲覧。製造原価は個別許可";
+    case "dept_admin": return "製造・構成部品管理、製造原価、製造スタッフ管理";
+    case "production_editor": return "製造・構成部品・在庫の日常操作。製造原価は個別許可";
+    case "master_editor": return "商品・画像、販売/基準価格、得意先、仕入/価格調査、販売スタッフ管理";
+    case "sales_staff": return "商品・画像の日常操作と販売/基準/仕入価格の閲覧";
+    case "sales_editor": return "受注・出荷、ピッキング、帳票、完品出荷、在庫、出荷スタッフ管理";
+    case "shipping_staff": return "受注・出荷、ピッキング、帳票、完品出荷、在庫の日常操作";
+    case "business_admin": return "商品・価格・価格調査の閲覧、得意先管理、営業スタッフ管理";
+    case "sales_viewer": return "商品・販売価格・価格調査履歴の閲覧";
     case "customer_viewer": return "得意先専用ホーム・紐づいた得意先の商品/価格閲覧。得意先管理者のみ担当者管理";
-    case "external_viewer": return "公開範囲のみ閲覧";
     default: return "-";
   }
 }
@@ -48158,12 +48152,11 @@ function optionLabel(options, code) {
   return found ? found[1] : code;
 }
 
-function accessScopeLabel(roleCode, companyLabel, departmentLabel) {
+function accessScopeLabel(roleCode, companyLabel) {
   if (roleCode === "system_admin") return "全体";
   if (roleCode === "company_admin") return companyLabel + " 全体";
   if (roleCode === "customer_viewer") return "紐づいた得意先";
-  if (roleCode === "external_viewer") return "公開範囲";
-  return companyLabel + " / " + departmentLabel;
+  return companyLabel + " / " + accessRoleLabel(roleCode);
 }
 
 function manufacturingCostBaseRoleByCode(roleCode) {
@@ -48204,12 +48197,11 @@ function permissionOverviewUserContext(user, roleCode, manufacturingCostAllowed)
   var companyCode = userCompanyCode(user);
   roleCode = normalizeAccessRoleForCompany(roleCode || userAccessRoleCode(user), companyCode);
   var companyLabel = optionLabel(USER_COMPANY_OPTIONS, companyCode);
-  var departmentLabel = optionLabel(USER_DEPARTMENT_OPTIONS, userDepartmentCode(user));
   return {
     roleCode: roleCode,
     companyCode: companyCode,
     ownRole: true,
-    scope: accessScopeLabel(roleCode, companyLabel, departmentLabel),
+    scope: accessScopeLabel(roleCode, companyLabel),
     manufacturingCostAllowed: !!manufacturingCostAllowed,
     permissionOverrides: userPermissionOverrides(user),
     canEditStates: false
@@ -48222,12 +48214,12 @@ function permissionOverviewCanOverride(context, permissionKey) {
     return ["product_search.view", "product_info.view", "sales_price.view"].indexOf(permissionKey) >= 0;
   }
   if (permissionKey === "users.manage") {
-    return permissionOverviewRoleIn(context.roleCode, ["company_admin", "dept_admin", "master_editor"]);
+    return permissionOverviewRoleIn(context.roleCode, ["company_admin", "dept_admin", "master_editor", "sales_editor", "business_admin"]);
   }
   if (permissionKey === "gltek_part_number.issue") return context.companyCode === "gltek";
   if (permissionKey === "component_compatibility.manage") return context.companyCode === "daiko";
   if (permissionKey === "product_3d.manage" || permissionKey === "product_3d.publish") {
-    return permissionOverviewRoleIn(context.roleCode, ["company_admin", "dept_admin", "master_editor", "production_editor", "core_image_editor", "all_viewer", "sales_viewer", "internal_viewer"]);
+    return permissionOverviewRoleIn(context.roleCode, ["company_admin", "dept_admin", "master_editor", "sales_staff", "sales_editor", "shipping_staff", "business_admin", "production_editor", "sales_viewer"]);
   }
   return true;
 }
@@ -48265,21 +48257,23 @@ function applyPermissionOverviewOverride(item, context) {
 
 function permissionOverviewScreenGroups(context) {
   var role = context.roleCode;
-  var editors = ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"];
+  var editors = ["system_admin", "company_admin", "dept_admin", "master_editor", "sales_staff", "production_editor"];
   var productionEditors = ["system_admin", "company_admin", "dept_admin", "production_editor"];
-  var productionViewers = productionEditors.concat(["all_viewer"]);
+  var productionViewers = productionEditors.slice();
   var companyAdmins = ["system_admin", "company_admin"];
-  var managementViewers = editors.concat(["all_viewer"]);
+  var managementViewers = editors.slice();
   var componentEditors = ["system_admin", "company_admin", "dept_admin", "production_editor"];
-  var internalRoles = ["system_admin", "company_admin", "dept_admin", "master_editor", "sales_editor", "production_editor", "core_image_editor", "all_viewer", "sales_viewer", "internal_viewer"];
-  var shippingEditors = ["system_admin", "company_admin", "master_editor", "sales_editor"];
-  var basePriceViewers = ["system_admin", "company_admin", "dept_admin", "master_editor", "all_viewer"];
-  var priceResearchViewers = ["system_admin", "company_admin", "master_editor", "all_viewer", "sales_viewer"];
-  var priceResearchers = ["system_admin", "company_admin", "master_editor"];
-  var userManagers = ["system_admin", "company_admin", "dept_admin"];
+  var internalRoles = ["system_admin", "company_admin", "dept_admin", "master_editor", "sales_staff", "sales_editor", "shipping_staff", "business_admin", "production_editor", "sales_viewer"];
+  var shippingEditors = ["system_admin", "company_admin", "master_editor", "sales_editor", "shipping_staff"];
+  var basePriceViewers = ["system_admin", "company_admin", "dept_admin", "master_editor", "sales_staff", "business_admin"];
+  var priceResearchViewers = ["system_admin", "company_admin", "master_editor", "sales_staff", "business_admin", "sales_viewer"];
+  var priceResearchers = ["system_admin", "company_admin", "master_editor", "business_admin"];
+  var userManagers = ["system_admin", "company_admin", "dept_admin", "master_editor", "sales_editor", "business_admin"];
+  var stockViewers = ["system_admin", "company_admin", "dept_admin", "master_editor", "sales_staff", "sales_editor", "shipping_staff", "production_editor"];
+  var product3DEditors = ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"];
   var roleCanEdit = permissionOverviewRoleIn(role, editors);
   var roleCanEditProduction = permissionOverviewRoleIn(role, productionEditors);
-  var roleCanManageStock = permissionOverviewRoleIn(role, productionEditors.concat(["sales_editor"]));
+  var roleCanManageStock = permissionOverviewRoleIn(role, productionEditors.concat(["sales_editor", "shipping_staff"]));
   var roleCanViewProduction = permissionOverviewRoleIn(role, productionViewers);
   var roleCanManageCompany = permissionOverviewRoleIn(role, companyAdmins);
   var roleCanViewManagement = permissionOverviewRoleIn(role, managementViewers);
@@ -48287,10 +48281,9 @@ function permissionOverviewScreenGroups(context) {
   var roleCanViewBasePrice = permissionOverviewRoleIn(role, basePriceViewers);
   var roleCanManageComponents = permissionOverviewRoleIn(role, componentEditors);
   var roleCanManageUsers = permissionOverviewRoleIn(role, userManagers);
-  var roleCanManageProduct3D = permissionOverviewRoleIn(role, editors);
+  var roleCanManageProduct3D = permissionOverviewRoleIn(role, product3DEditors);
   var roleCanPublishProduct3D = permissionOverviewRoleIn(role, companyAdmins);
   var isCustomer = role === "customer_viewer";
-  var isExternal = role === "external_viewer";
 
   function yesNo(condition, allowedText, deniedText) {
     return condition ? permissionOverviewAllowed(allowedText) : permissionOverviewDenied(deniedText);
@@ -48302,19 +48295,16 @@ function permissionOverviewScreenGroups(context) {
 
   function productInformationState() {
     if (isCustomer) return permissionOverviewLimited("得意先設定範囲を閲覧");
-    if (isExternal) return permissionOverviewLimited("公開範囲を閲覧");
     return permissionOverviewAllowed("閲覧可");
   }
 
   function salesPriceState() {
     if (isCustomer) return permissionOverviewLimited("得意先価格のみ閲覧");
-    if (isExternal) return permissionOverviewDenied("閲覧不可");
     return permissionOverviewAllowed("閲覧可");
   }
 
   function imageManagementState() {
     if (roleCanEditProduction) return permissionOverviewAllowed("使用済みコア画像の登録・修正・削除可");
-    if (role === "core_image_editor") return permissionOverviewLimited("使用済みコア画像の登録・削除のみ可");
     return permissionOverviewDenied("登録・削除不可");
   }
 
@@ -48339,7 +48329,10 @@ function permissionOverviewScreenGroups(context) {
     switch (role) {
       case "system_admin": return permissionOverviewAllowed("全ユーザーを管理可");
       case "company_admin": return permissionOverviewAllowed("自社ユーザーを管理可");
-      case "dept_admin": return permissionOverviewLimited("自部署ユーザーを管理可");
+      case "dept_admin": return permissionOverviewLimited("製造スタッフを管理可");
+      case "master_editor": return permissionOverviewLimited("販売スタッフを管理可");
+      case "sales_editor": return permissionOverviewLimited("出荷スタッフを管理可");
+      case "business_admin": return permissionOverviewLimited("営業スタッフを管理可");
       default: return permissionOverviewDenied("利用不可");
     }
   }
@@ -48356,12 +48349,12 @@ function permissionOverviewScreenGroups(context) {
   }
 
   var manufacturingCostUse = manufacturingCostUseState();
-  var coreListVisible = permissionOverviewRoleIn(role, productionViewers.concat(["core_image_editor"]));
+  var coreListVisible = permissionOverviewRoleIn(role, productionViewers);
   var salesPricingVisible = roleIsInternal;
   var purchaseVisible = permissionOverviewRoleIn(role, basePriceViewers);
   var researchHistoryVisible = permissionOverviewRoleIn(role, priceResearchViewers);
   var researchManageable = permissionOverviewRoleIn(role, priceResearchers);
-  var customerAccessManageable = permissionOverviewRoleIn(role, ["system_admin", "company_admin", "master_editor"]);
+  var customerAccessManageable = permissionOverviewRoleIn(role, ["system_admin", "company_admin", "master_editor", "business_admin"]);
   var customerAccountManageable = customerAccessManageable;
   var salesOrderManageable = permissionOverviewRoleIn(role, shippingEditors);
   var finishedShippingManageable = permissionOverviewRoleIn(role, shippingEditors);
@@ -48516,7 +48509,7 @@ function permissionOverviewScreenGroups(context) {
         {
           title: "商品区分別在庫",
           items: [
-            { label: "画面・在庫情報", permissionKey: "stock.view", state: screenState(roleIsInternal) },
+            { label: "画面・在庫情報", permissionKey: "stock.view", state: screenState(permissionOverviewRoleIn(role, stockViewers)) },
             { label: "在庫数・保管情報の更新", permissionKey: "stock.manage", state: yesNo(roleCanManageStock, "可", "不可") }
           ]
         },
@@ -48587,7 +48580,7 @@ function permissionOverviewScreenGroups(context) {
           title: "ユーザー権限",
           items: [
             { label: "社内ユーザー別の権限一覧・変更", permissionKey: "users.manage", state: userManagement },
-            { label: "社内ユーザー一覧・所属設定", permissionKey: "users.manage", state: userManagement },
+            { label: "社内ユーザー一覧・会社設定", permissionKey: "users.manage", state: userManagement },
             { label: "社内ユーザーの履歴・停止・PW再設定", permissionKey: "users.manage", state: roleCanManageUsers ? userManagement : permissionOverviewDenied("利用不可") }
           ]
         },
@@ -48601,7 +48594,7 @@ function permissionOverviewScreenGroups(context) {
         {
           title: "操作ログ",
           items: [
-            { label: "画面・ログ閲覧", permissionKey: "operation_logs.view", state: screenState(permissionOverviewRoleIn(role, ["system_admin", "company_admin", "all_viewer"])) }
+            { label: "画面・ログ閲覧", permissionKey: "operation_logs.view", state: screenState(permissionOverviewRoleIn(role, ["system_admin", "company_admin"])) }
           ]
         },
         {
@@ -49296,7 +49289,6 @@ function renderUserPermissionOverview() {
       user.name,
       user.email,
       optionLabel(USER_COMPANY_OPTIONS, userCompanyCode(user)),
-      optionLabel(USER_DEPARTMENT_OPTIONS, userDepartmentCode(user)),
       accessRoleLabel(roleCode),
       accessRoleScopeText(roleCode)
     ].filter(Boolean).join(" ")).indexOf(query) >= 0;
@@ -49309,7 +49301,7 @@ function renderUserPermissionOverview() {
   }
 
   var html = "<div class='user-permission-management-table-wrap'><table class='user-permission-management-table'>";
-  html += "<thead><tr><th>ユーザー</th><th>所属</th><th>基準権限</th><th>製造原価</th><th></th></tr></thead><tbody>";
+  html += "<thead><tr><th>ユーザー</th><th>会社</th><th>基準権限</th><th>製造原価</th><th></th></tr></thead><tbody>";
   rows.forEach(function(user) {
     var companyCode = userCompanyCode(user);
     var roleCode = normalizeAccessRoleForCompany(userAccessRoleCode(user), companyCode);
@@ -49330,9 +49322,9 @@ function renderUserPermissionOverview() {
     var customerText = roleCode === "customer_viewer" ? permissionManagementCustomerLabel(user) : "";
     html += "<tr>";
     html += "<td><div class='user-permission-person'><strong>" + esc(user.name || "-") + "</strong>" + statusBadge + "</div><div class='mgmt-sub'>ログインID: " + esc(user.email || "-") + "</div></td>";
-    html += "<td><div class='mgmt-pn'>" + esc(optionLabel(USER_COMPANY_OPTIONS, companyCode)) + "</div><div class='mgmt-sub'>" + esc(optionLabel(USER_DEPARTMENT_OPTIONS, userDepartmentCode(user))) + "</div></td>";
+    html += "<td><div class='mgmt-pn'>" + esc(optionLabel(USER_COMPANY_OPTIONS, companyCode)) + "</div></td>";
     var overrideCount = Object.keys(userPermissionOverrides(user)).filter(function(key) { return typeof userPermissionOverrides(user)[key] === "boolean"; }).length;
-    html += "<td><div class='mgmt-pn'>" + esc(accessRoleLabel(roleCode)) + "</div><div class='mgmt-sub'>" + esc(accessScopeLabel(roleCode, optionLabel(USER_COMPANY_OPTIONS, companyCode), optionLabel(USER_DEPARTMENT_OPTIONS, userDepartmentCode(user)))) + "</div>" + (overrideCount ? "<div class='mgmt-sub permission-override-count'>個別設定: " + overrideCount + "件</div>" : "") + (customerText ? "<div class='mgmt-sub'>得意先: " + esc(customerText) + "</div>" : "") + "</td>";
+    html += "<td><div class='mgmt-pn'>" + esc(accessRoleLabel(roleCode)) + "</div><div class='mgmt-sub'>" + esc(accessRoleScopeText(roleCode)) + "</div>" + (overrideCount ? "<div class='mgmt-sub permission-override-count'>個別設定: " + overrideCount + "件</div>" : "") + (customerText ? "<div class='mgmt-sub'>得意先: " + esc(customerText) + "</div>" : "") + "</td>";
     html += "<td>" + permissionOverviewStatusHtml(costState) + "</td>";
     html += "<td><button class='btn-user-permission-open' type='button' data-uid='" + esc(user.id) + "'>" + (canEditUserPermission(user) ? "確認・変更" : "確認") + "</button></td>";
     html += "</tr>";
@@ -49383,7 +49375,7 @@ function openUserPermissionEditor(user) {
   customerSelect.innerHTML = customerOptionHtml(customerUserLinkMap[user.id] || "");
   customerSelect.disabled = !canManage;
   if (summary) {
-    summary.innerHTML = "<strong>" + esc(user.name || user.email || "-") + "</strong><span>" + esc(user.email || "-") + "</span><span>所属: " + esc(optionLabel(USER_COMPANY_OPTIONS, companyCode)) + " / " + esc(optionLabel(USER_DEPARTMENT_OPTIONS, userDepartmentCode(user))) + "</span>";
+    summary.innerHTML = "<strong>" + esc(user.name || user.email || "-") + "</strong><span>" + esc(user.email || "-") + "</span><span>会社: " + esc(optionLabel(USER_COMPANY_OPTIONS, companyCode)) + " / 基準権限: " + esc(accessRoleLabel(roleCode)) + "</span>";
   }
   if (message) { message.className = "save-msg"; message.textContent = ""; }
   overlay.classList.add("show");
@@ -49477,6 +49469,7 @@ async function saveUserPermissionEditor() {
     role_code: roleCode,
     role: legacyRoleFromAccessRole(roleCode, companyCode),
     group_name: legacyGroupFromCompany(companyCode),
+    department_code: departmentCodeForAccessRole(roleCode),
     manufacturing_cost_allowed: manufacturingCostAllowed,
     permission_overrides: cleanOverrides,
     updated_at: new Date().toISOString()
@@ -49542,12 +49535,16 @@ function configureUsersScreenMode() {
 function refreshUserCardSummary(card) {
   if (!card) return;
   var companySelect = card.querySelector(".user-company-select");
-  var departmentSelect = card.querySelector(".user-department-select");
-  if (!companySelect || !departmentSelect) return;
+  if (!companySelect) return;
   var companyLabel = optionLabel(USER_COMPANY_OPTIONS, companySelect.value);
-  var departmentLabel = optionLabel(USER_DEPARTMENT_OPTIONS, departmentSelect.value);
+  var roleSelect = card.querySelector(".user-role-select");
+  var roleCode = roleSelect && roleSelect.value ? roleSelect.value : (card.dataset.roleCode || "");
+  var roleLabel = accessRoleLabel(roleCode);
+  card.dataset.roleCode = roleCode;
   var affiliationSummary = card.querySelector(".user-affiliation-summary");
-  if (affiliationSummary) affiliationSummary.textContent = "所属: " + companyLabel + " / " + departmentLabel;
+  if (affiliationSummary) affiliationSummary.textContent = "会社: " + companyLabel + " / 基準権限: " + roleLabel;
+  var roleNote = card.querySelector(".user-role-note");
+  if (roleNote) roleNote.textContent = accessRoleScopeText(roleCode);
 }
 
 async function saveCustomerUserLink(uid, salesCustomerId) {
@@ -49819,20 +49816,19 @@ function renderUsers(users) {
     var accountActionLabel = accountAction === "resend_invitation" ? "初回設定を再送" : t("btn_send_pw_reset");
     var accountActionDisabled = authStatus.state === "unavailable" ? " disabled" : "";
     var companyCode = userCompanyCode(u);
-    var departmentCode = userDepartmentCode(u);
+    var roleCode = normalizeAccessRoleForCompany(userAccessRoleCode(u), companyCode);
     var companyLabel = optionLabel(USER_COMPANY_OPTIONS, companyCode);
-    var departmentLabel = optionLabel(USER_DEPARTMENT_OPTIONS, departmentCode);
     var canManageThis = canManageUser(u);
     var disabledAttr = canManageThis ? "" : " disabled";
     var companyDisabledAttr = (canManageThis && isSystemAdmin()) ? "" : " disabled";
-    var departmentDisabledAttr = (canManageThis && !hasOwnDepartmentUserScope(userProfile)) ? "" : " disabled";
-    html += "<div class='user-card' data-uid='"+esc(u.id)+"'>";
+    var roleDisabledAttr = canEditUserPermission(u) ? "" : " disabled";
+    html += "<div class='user-card' data-uid='"+esc(u.id)+"' data-role-code='"+esc(roleCode)+"'>";
     html += "<div class='user-card-top'>";
     html += "<div class='user-card-identity'><div class='user-avatar'>"+esc(initials)+"</div>";
     html += "<div data-dcats-inline-style='s-286372957b99'>";
     html += "<div class='user-email'>ログインID: "+esc(u.email)+" "+sbadge+"</div>";
     html += "<div class='user-summary-line'>";
-    html += "<span class='user-summary-chip user-affiliation-summary'>所属: "+esc(companyLabel)+" / "+esc(departmentLabel)+"</span>";
+    html += "<span class='user-summary-chip user-affiliation-summary'>会社: "+esc(companyLabel)+" / 基準権限: "+esc(accessRoleLabel(roleCode))+"</span>";
     html += "</div>";
     if (u.company) html += "<div class='user-created'>申請会社名: "+esc(u.company)+"</div>";
     html += "<div class='user-created'>"+t("lbl_registered")+" "+(u.created_at?u.created_at.slice(0,10):"-")+"</div>";
@@ -49855,15 +49851,17 @@ function renderUsers(users) {
     html += "<div class='user-field'><label class='user-field-label'>"+t("lbl_display_name")+"</label>";
     html += "<input class='user-name-input' data-uid='"+esc(u.id)+"' value='"+esc(u.name||"")+"' placeholder='"+t("ph_display_name")+"'"+disabledAttr+"><div class='user-field-note'>ユーザー一覧の表示名</div></div>";
     html += "</div></div>";
-    html += "<div class='user-settings-section'><div class='user-settings-section-title'>所属</div><div class='user-settings-section-fields two-col'>";
+    html += "<div class='user-settings-section'><div class='user-settings-section-title'>会社</div><div class='user-settings-section-fields'>";
     html += "<div class='user-field'><label class='user-field-label'>会社名</label>";
     html += "<select class='group-select user-company-select' data-uid='"+esc(u.id)+"'" + companyDisabledAttr + ">";
     html += optionHtml(USER_COMPANY_OPTIONS, companyCode);
     html += "</select><div class='user-field-note user-company-note'>"+esc(companyLabel)+"</div></div>";
-    html += "<div class='user-field'><label class='user-field-label'>部署</label>";
-    html += "<select class='group-select user-department-select' data-uid='"+esc(u.id)+"'" + departmentDisabledAttr + ">";
-    html += optionHtml(USER_DEPARTMENT_OPTIONS, departmentCode);
-    html += "</select><div class='user-field-note user-department-note'>"+esc(departmentLabel)+"</div></div>";
+    html += "</div></div>";
+    html += "<div class='user-settings-section'><div class='user-settings-section-title'>基準権限</div><div class='user-settings-section-fields'>";
+    html += "<div class='user-field'><label class='user-field-label'>基準権限</label>";
+    html += "<select class='group-select user-role-select' data-uid='"+esc(u.id)+"'" + roleDisabledAttr + ">";
+    html += internalAccessRoleOptionHtmlForCompany(companyCode, roleCode);
+    html += "</select><div class='user-field-note user-role-note'>"+esc(accessRoleScopeText(roleCode))+"</div></div>";
     html += "</div></div>";
     html += "</div></div>";
   });
@@ -49880,25 +49878,17 @@ function renderUsers(users) {
       var uid = sel.dataset.uid;
       var card = list.querySelector(".user-card[data-uid='"+uid+"']");
       if (!card) return;
-      var departmentSelect = card.querySelector(".user-department-select");
       var companyNote = card.querySelector(".user-company-note");
-      var departmentNote = card.querySelector(".user-department-note");
       var nextCompany = sel.value;
-      if (departmentSelect && nextCompany === "external") departmentSelect.value = "viewer";
       if (companyNote) companyNote.textContent = optionLabel(USER_COMPANY_OPTIONS, nextCompany);
-      if (departmentNote && departmentSelect) departmentNote.textContent = optionLabel(USER_DEPARTMENT_OPTIONS, departmentSelect.value);
       refreshUserCardSummary(card);
     });
   });
 
-  list.querySelectorAll(".user-department-select").forEach(function(sel) {
+  list.querySelectorAll(".user-role-select").forEach(function(sel) {
     sel.addEventListener("change", function() {
-      var uid = sel.dataset.uid;
-      var card = list.querySelector(".user-card[data-uid='"+uid+"']");
-      if (!card) return;
-      var departmentNote = card.querySelector(".user-department-note");
-      if (departmentNote) departmentNote.textContent = optionLabel(USER_DEPARTMENT_OPTIONS, sel.value);
-      refreshUserCardSummary(card);
+      var card = list.querySelector(".user-card[data-uid='"+sel.dataset.uid+"']");
+      if (card) refreshUserCardSummary(card);
     });
   });
 
@@ -49912,12 +49902,11 @@ function renderUsers(users) {
       var companyCode = isSystemAdmin()
         ? card.querySelector(".user-company-select").value
         : userCompanyCode(userProfile);
-      var departmentCode = hasOwnDepartmentUserScope(userProfile)
-        ? userDepartmentCode(userProfile)
-        : (card.querySelector(".user-department-select").value || "viewer");
-      var roleCode = normalizeAccessRoleForCompany(defaultAccessRoleForCompany(companyCode, userAccessRoleCode(target)), companyCode);
+      var roleSelect = card.querySelector(".user-role-select");
+      var requestedRoleCode = canEditUserPermission(target) && roleSelect ? roleSelect.value : userAccessRoleCode(target);
+      var roleCode = normalizeAccessRoleForCompany(defaultAccessRoleForCompany(companyCode, requestedRoleCode), companyCode);
       if (!canAssignUserRole(roleCode)) { showPermissionDenied("assign_user_role", "profiles", uid, roleCode); return; }
-      if (roleCode === "customer_viewer" || roleCode === "external_viewer") departmentCode = "viewer";
+      var departmentCode = departmentCodeForAccessRole(roleCode);
       var manufacturingCostAllowed = (!manufacturingCostBaseRoleByCode(roleCode) && manufacturingCostOptionalAllowedFor(roleCode, companyCode))
         ? target.manufacturing_cost_allowed === true
         : false;
@@ -50736,7 +50725,6 @@ document.getElementById("btn-open-internal-user-invite").addEventListener("click
 document.getElementById("btn-internal-user-invite-close").addEventListener("click", closeInternalUserInvite);
 document.getElementById("btn-internal-user-invite-submit").addEventListener("click", inviteInternalUser);
 document.getElementById("internal-user-invite-company").addEventListener("change", refreshInternalUserInviteRoles);
-document.getElementById("internal-user-invite-department").addEventListener("change", syncInternalUserInviteNotes);
 document.getElementById("internal-user-invite-role").addEventListener("change", syncInternalUserInviteNotes);
 document.getElementById("internal-user-invite-email").addEventListener("keydown", function(e) {
   if (e.key === "Enter") inviteInternalUser();
