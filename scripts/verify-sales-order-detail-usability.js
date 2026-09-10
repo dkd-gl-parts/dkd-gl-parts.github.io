@@ -49,7 +49,7 @@ for (const fragment of [
   "salesOrderDestinationHtml(address)",
   "salesOrderWaybillSummaryHtml(\"商品発送便\"",
   "customerNote ?",
-  "salesOrderBillingSummaryHtml(order)",
+  "salesOrderBillingDetailsHtml(order, orderAdjustments, orderDiscount)",
   "sales-order-detail-total",
   "請求明細",
   "sales-order-detail-history",
@@ -125,37 +125,46 @@ const standardRows = itemRowsContext.salesOrderItemRowsHtml([{
 if (standardRows.includes("sales-order-core-charge-row")) {
   throw new Error("A standard core-return order must not show a billed core-charge detail row");
 }
-const billingSummary = functionSource("salesOrderBillingSummaryHtml");
+const adjustmentRows = functionSource("salesOrderAdjustmentRowsHtml");
 for (const fragment of [
-  "受注単位の請求内訳",
-  "customerOrderProductSubtotal(order)",
-  "customerOrderCoreChargeTotal(order)",
-  "salesOrderWaybillCarrierLabel(order, \"outbound\")",
-  "商品計",
-  "コア代金",
+  "sales-order-item-row sales-order-charge-row sales-order-adjustment-row",
   "値引・調整",
+  "customerOrderCurrency(row.amount_jpy)"
+]) requireFragment(adjustmentRows, fragment);
+const billingDetailRows = functionSource("salesOrderBillingDetailRowsHtml");
+for (const fragment of [
+  "salesOrderWaybillCarrierLabel(order, \"outbound\")",
+  "sales-order-shipping-row",
+  "sales-order-tax-row",
+  "sales-order-total-row",
   "送料",
   "消費税",
   "請求合計"
-]) requireFragment(billingSummary, fragment);
+]) requireFragment(billingDetailRows, fragment);
+const billingDetails = functionSource("salesOrderBillingDetailsHtml");
+for (const fragment of [
+  "sales-order-billing-detail-table",
+  "salesOrderItemRowsHtml(order.items)",
+  "salesOrderAdjustmentRowsHtml(adjustments, fallbackDiscount)",
+  "salesOrderBillingDetailRowsHtml(order)"
+]) requireFragment(billingDetails, fragment);
+for (const obsolete of ["受注単位の請求内訳", "sales-order-billing-summary", "商品以外の金額も、この受注の明細としてまとめて表示しています。"]){
+  if (source.includes(obsolete)) throw new Error(`Obsolete detached billing summary remains: ${obsolete}`);
+}
 const billingContext = {
   esc: (value) => String(value),
-  customerOrderProductSubtotal: () => 7500,
-  customerOrderCoreChargeTotal: () => 2000,
   customerOrderCurrency: (value) => `¥${Number(value).toLocaleString("ja-JP")}`,
   salesOrderWaybillCarrierLabel: () => "ヤマト運輸 / 宅急便 元払い"
 };
 vm.createContext(billingContext);
-vm.runInContext(billingSummary, billingContext);
-const billingHtml = billingContext.salesOrderBillingSummaryHtml({
-  core_charge_total_jpy: 2000,
-  order_discount_jpy: 0,
+vm.runInContext(billingDetailRows, billingContext);
+const billingHtml = billingContext.salesOrderBillingDetailRowsHtml({
   shipping_fee_jpy: 700,
   tax_jpy: 1020,
   total_jpy: 11220
 });
-for (const fragment of ["商品計", "¥7,500", "コア代金", "¥2,000", "送料", "ヤマト運輸 / 宅急便 元払い", "¥700", "消費税", "¥1,020", "請求合計", "¥11,220"]) {
-  requireFragment(billingHtml, fragment, `Order billing summary is missing: ${fragment}`);
+for (const fragment of ["sales-order-shipping-row", "送料", "ヤマト運輸 / 宅急便 元払い", "¥700", "sales-order-tax-row", "消費税", "¥1,020", "sales-order-total-row", "請求合計", "¥11,220"]) {
+  requireFragment(billingHtml, fragment, `Billing detail row is missing: ${fragment}`);
 }
 const fulfillment = functionSource("salesOrderDispatchHtml");
 requireFragment(fulfillment, "sales-order-detail-fulfillment");
@@ -293,7 +302,11 @@ for (const fragment of [
   ".sales-order-detail-panel[hidden]",
   ".sales-order-detail-overview-grid",
   ".sales-order-core-charge-row",
-  ".sales-order-billing-summary",
+  ".sales-order-charge-row",
+  ".sales-order-adjustment-row",
+  ".sales-order-shipping-row",
+  ".sales-order-tax-row",
+  ".sales-order-total-row",
   ".sales-order-detail-total",
   ".sales-order-waybill-detail",
   ".sales-order-waybill-progress-editor .sales-order-tracking-grid { grid-template-columns: minmax(0, 1fr) minmax(125px, 145px) minmax(136px, max-content); gap: 7px; margin-top: 0;",
