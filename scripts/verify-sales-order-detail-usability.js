@@ -166,8 +166,11 @@ for (const fragment of [
   "id='sales-order-outbound-tracking'",
   "id='sales-order-shipped-on'",
   "id='sales-order-save-tracking'",
-  "送り状番号の登録だけでは在庫を減らしません"
+  "送り状番号を登録"
 ]) requireFragment(waybillProgress, fragment);
+if (source.includes("送り状番号の登録だけでは在庫を減らしません")) {
+  throw new Error("The obsolete stock notice must not be shown beside waybill registration");
+}
 const carrierLabel = functionSource("salesOrderWaybillCarrierLabel");
 for (const fragment of [
   "yamato_prepaid",
@@ -289,6 +292,9 @@ for (const fragment of [
   ".sales-order-billing-summary",
   ".sales-order-detail-total",
   ".sales-order-waybill-detail",
+  ".sales-order-waybill-progress-editor .sales-order-tracking-grid { grid-template-columns: minmax(0, 1fr) minmax(125px, 145px) minmax(136px, max-content);",
+  ".sales-order-waybill-progress-editor .sales-order-tracking-grid > * { min-width: 0; }",
+  ".sales-order-waybill-progress-editor .sales-order-tracking-grid button { width: 100%;",
   ".sales-order-detail-overview { overflow: hidden; }",
   ".sales-order-history-groups",
   ".sales-order-pricing-lower-grid",
