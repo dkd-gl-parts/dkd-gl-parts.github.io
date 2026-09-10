@@ -3167,6 +3167,82 @@
   </div>
 </div>
 
+<div class="finished-label-setup-guide" id="finished-label-setup-guide" hidden>
+  <div class="finished-label-setup-guide-backdrop" data-label-printer-setup-guide-close></div>
+  <section class="finished-label-setup-guide-card" role="dialog" aria-modal="true" aria-labelledby="finished-label-setup-guide-title" aria-describedby="finished-label-setup-guide-lead">
+    <button class="finished-label-setup-guide-close" id="btn-finished-label-setup-guide-close" type="button" data-label-printer-setup-guide-close data-i18n-aria-label="btn_close" aria-label="閉じる">&#10005;</button>
+    <span class="finished-label-setup-kicker" data-i18n="finished_label_setup_first_pc">初回PC</span>
+    <h2 id="finished-label-setup-guide-title" data-i18n="finished_label_setup_guide_title">TD-4420TN設定ナビ</h2>
+    <p id="finished-label-setup-guide-lead" data-i18n="finished_label_setup_guide_lead">このPCの状態を選ぶと、必要な手順だけを表示します。</p>
+
+    <div class="finished-label-setup-guide-tabs" role="tablist" data-i18n-aria-label="finished_label_setup_guide_path_label" aria-label="設定方法">
+      <button id="finished-label-setup-guide-first-tab" type="button" role="tab" aria-selected="true" aria-controls="finished-label-setup-guide-first" data-label-printer-setup-view="first" data-i18n="finished_label_setup_guide_first_path">初めて設定する</button>
+      <button id="finished-label-setup-guide-installed-tab" type="button" role="tab" aria-selected="false" aria-controls="finished-label-setup-guide-installed" data-label-printer-setup-view="installed" data-i18n="finished_label_setup_guide_installed_path">設定済み</button>
+    </div>
+
+    <div class="finished-label-setup-guide-panel" id="finished-label-setup-guide-first" role="tabpanel" aria-labelledby="finished-label-setup-guide-first-tab">
+      <ol class="finished-label-setup-guide-steps">
+        <li>
+          <span class="finished-label-setup-guide-step-number" aria-hidden="true">1</span>
+          <div>
+            <strong data-i18n="finished_label_setup_guide_download_title">設定パッケージをダウンロード</strong>
+            <p data-i18n="finished_label_setup_guide_download_desc">このPCのダウンロードフォルダーへZIPファイルを保存します。</p>
+            <a class="btn-primary" href="assets/downloads/D-CATS-TD4420TN-Setup.zip" download data-label-printer-setup-download data-i18n="finished_label_setup_guide_download_action">パッケージをダウンロード</a>
+            <span class="finished-label-setup-guide-downloaded" id="finished-label-setup-guide-downloaded" role="status" data-i18n="finished_label_setup_guide_downloaded" hidden>ダウンロードを開始しました。次の手順へ進んでください。</span>
+          </div>
+        </li>
+        <li>
+          <span class="finished-label-setup-guide-step-number" aria-hidden="true">2</span>
+          <div>
+            <strong data-i18n="finished_label_setup_guide_extract_title">ZIPを展開</strong>
+            <p data-i18n="finished_label_setup_guide_extract_desc">ダウンロードしたZIPを右クリックし、「すべて展開」を選びます。</p>
+          </div>
+        </li>
+        <li>
+          <span class="finished-label-setup-guide-step-number" aria-hidden="true">3</span>
+          <div>
+            <strong data-i18n="finished_label_setup_guide_run_title">設定ファイルを実行</strong>
+            <p data-i18n="finished_label_setup_guide_run_desc">展開したフォルダーのD-CATS-Printer-Setup.cmdを開き、表示言語を選びます。</p>
+            <code>D-CATS-Printer-Setup.cmd</code>
+          </div>
+        </li>
+        <li>
+          <span class="finished-label-setup-guide-step-number" aria-hidden="true">4</span>
+          <div>
+            <strong data-i18n="finished_label_setup_guide_configure_title">プリンターを登録してテスト</strong>
+            <p data-i18n="finished_label_setup_guide_configure_desc">拠点と各用紙のプリンターを選び、接続確認後に登録します。用紙とリボンをセット済みなら校正とテスト印刷も続けて実行できます。</p>
+          </div>
+        </li>
+      </ol>
+      <div class="finished-label-setup-guide-language-note" role="note">
+        <strong data-i18n="finished_label_setup_guide_language_title">表示言語</strong>
+        <span data-i18n="finished_label_setup_guide_language_desc">設定ツールは日本語・英語・中国語に対応しています。</span>
+      </div>
+    </div>
+
+    <div class="finished-label-setup-guide-panel" id="finished-label-setup-guide-installed" role="tabpanel" aria-labelledby="finished-label-setup-guide-installed-tab" hidden>
+      <div class="finished-label-setup-guide-installed-copy">
+        <strong data-i18n="finished_label_setup_guide_installed_title">設定済みPCの再設定</strong>
+        <p data-i18n="finished_label_setup_guide_installed_desc">プリンターの変更、IPアドレスの変更、用紙の再校正を行う場合に設定ツールを開きます。</p>
+      </div>
+      <a class="btn-primary" href="dcats-label-printer://setup" data-label-printer-setup-launch data-i18n="finished_label_setup_guide_launch">設定ツールを開く</a>
+      <div class="finished-label-setup-guide-launch-note" id="finished-label-setup-guide-launch-note" role="status" hidden>
+        <strong data-i18n="finished_label_setup_guide_launching_title">設定ツールを起動しています</strong>
+        <span data-i18n="finished_label_setup_guide_launching_desc">確認画面が表示された場合は「開く」を選択してください。</span>
+      </div>
+      <div class="finished-label-setup-guide-fallback" role="note">
+        <strong data-i18n="finished_label_setup_guide_not_open_title">設定ツールが開かない場合</strong>
+        <span data-i18n="finished_label_setup_guide_not_open_desc">設定パッケージが未導入、またはブラウザーで起動が止められています。「初めて設定する」に戻って手順1から進めてください。</span>
+        <button class="btn-sm-edit production-action-secondary" type="button" data-label-printer-setup-view="first" data-i18n="finished_label_setup_guide_back_first">初回設定へ戻る</button>
+      </div>
+    </div>
+
+    <div class="finished-label-setup-guide-footer">
+      <button class="btn-sm-edit production-action-secondary" type="button" data-label-printer-setup-guide-close data-i18n="btn_close">閉じる</button>
+    </div>
+  </section>
+</div>
+
 <!-- =============================================
    完品登録・製造シリアル発行画面
 ============================================= -->
@@ -3223,8 +3299,8 @@
           </div>
         </div>
         <div class="finished-label-setup-actions">
-          <a class="btn-primary" href="assets/downloads/D-CATS-TD4420TN-Setup.zip" download data-i18n="finished_label_setup_download">初回設定パッケージ</a>
-          <a class="btn-sm-edit production-action-secondary" href="dcats-label-printer://setup" data-i18n="finished_label_setup_open">設定ツールを開く</a>
+          <a class="btn-primary" href="assets/downloads/D-CATS-TD4420TN-Setup.zip" download data-label-printer-setup-download data-i18n="finished_label_setup_download">初回設定パッケージ</a>
+          <button class="btn-sm-edit production-action-secondary" type="button" data-label-printer-setup-guide-open data-label-printer-setup-default-view="first" data-i18n="finished_label_setup_open">設定ツールを開く</button>
         </div>
       </div>
     </section>
@@ -3432,8 +3508,8 @@
           <p data-i18n="finished_label_device_desc">ブラウザーを開いたままにせず、スマホの印刷待ちを用紙別のTD-4420TNへ直接送信します。</p>
         </div>
         <div class="finished-label-device-actions">
-          <a class="btn-primary" href="assets/downloads/D-CATS-TD4420TN-Setup.zip" download data-i18n="finished_label_setup_download">初回設定パッケージ</a>
-          <a class="btn-sm-edit production-action-secondary" href="dcats-label-printer://setup" data-i18n="finished_label_setup_reconfigure">再設定</a>
+          <a class="btn-primary" href="assets/downloads/D-CATS-TD4420TN-Setup.zip" download data-label-printer-setup-download data-i18n="finished_label_setup_download">初回設定パッケージ</a>
+          <button class="btn-sm-edit production-action-secondary" type="button" data-label-printer-setup-guide-open data-label-printer-setup-default-view="installed" data-i18n="finished_label_setup_reconfigure">再設定</button>
           <a class="btn-sm-edit production-action-secondary" href="dcats-label-printer://status" data-i18n="finished_label_setup_status">状態確認</a>
         </div>
       </div>
