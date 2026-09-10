@@ -796,11 +796,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.952"',
-  'styles.css?v=1.1.952',
-  'app.js?v=1.1.952'
+  'content="v1.1.953"',
+  'styles.css?v=1.1.953',
+  'app.js?v=1.1.953'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.952"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.953"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");

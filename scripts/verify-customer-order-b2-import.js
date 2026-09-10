@@ -23,6 +23,7 @@ function between(start, end) {
   "sales-order-b2-import-guide-overlay",
   "sales-order-b2-import-guide-title",
   "sales-order-b2-import-guide-yamato",
+  "sales-order-b2-import-guide-issued-search",
   "sales-order-b2-import-guide-select-file",
   "sales-order-b2-import-guide-cancel"
 ].forEach((id) => {
@@ -40,6 +41,10 @@ function between(start, end) {
 if (!html.includes('href="https://bmypage.kuronekoyamato.co.jp/bmypage/"') ||
     !html.includes('target="_blank" rel="noopener noreferrer"')) {
   throw new Error("B2 download guidance must open the official Yamato page safely in a new tab");
+}
+if (!html.includes('id="sales-order-b2-import-guide-issued-search" href="https://newb2web.kuronekoyamato.co.jp/issue_search.html" target="_blank" rel="noopener noreferrer"') ||
+    !html.includes("ログイン後、下のボタンから「発行済データの検索」を直接開きます。")) {
+  throw new Error("B2 download guidance must link directly to Yamato's issued-data search after login");
 }
 
 const openGuide = between("function openSalesOrderB2ImportGuide", "function closeSalesOrderB2ImportGuide");
