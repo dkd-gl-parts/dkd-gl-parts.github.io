@@ -59,7 +59,7 @@ const lifecycleSource = functionSource("salesOrderLifecycleHtml");
 for (const fragment of [
   "受付待ち",
   "受付済み",
-  "出荷準備",
+  "出荷処理中",
   "出荷済み",
   "完了",
   "受注取消",
@@ -80,10 +80,29 @@ if (!lifecycleContext.salesOrderLifecycleHtml("cancelled").includes("受注取�
 const detail = functionSource("renderSalesOrderDetail");
 for (const fragment of [
   "salesOrderLifecycleHtml(order.status)",
+  "salesOrderStatusSummaryHtml(order)",
   'class=\'sales-order-detail-head\'',
   'class=\'sales-order-detail-state\'',
   "sales-order-empty-guidance"
 ]) requireFragment(detail, fragment);
+
+const statusDetailSource = functionSource("salesOrderStatusDetailLabel");
+const statusSummarySource = functionSource("salesOrderStatusSummaryHtml");
+const statusContext = {
+  salesOrderDispatch: (order) => order && order.dispatch || null,
+  salesOrderDispatchStatusLabel: (status) => ({ preparing: "シリアル照合待ち", ready: "照合完了・出荷確定待ち" })[status] || "未発行",
+  customerOrderStatusLabel: (status) => status === "shipping_ready" ? "出荷処理中" : status,
+  esc: (value) => String(value == null ? "" : value)
+};
+vm.createContext(statusContext);
+vm.runInContext(statusDetailSource + "\n" + statusSummarySource, statusContext);
+const activeSummary = statusContext.salesOrderStatusSummaryHtml({ status: "shipping_ready", dispatch: { status: "preparing" } });
+if (!activeSummary.includes("出荷処理中") || !activeSummary.includes("シリアル照合待ち")) {
+  throw new Error("Shipping progress must show both the broad order state and the current operational step");
+}
+if (statusContext.salesOrderStatusSummaryHtml({ status: "shipped" }).includes("<small>")) {
+  throw new Error("Terminal order states must not show a stale shipping sub-state");
+}
 
 for (const fragment of [
   ".sales-order-search-controls {",
@@ -92,6 +111,8 @@ for (const fragment of [
   ".sales-order-data-actions > summary {",
   ".sales-order-data-actions > div {",
   ".sales-order-detail-head { display: grid;",
+  ".sales-order-status-summary {",
+  ".sales-order-status-summary > small {",
   ".sales-order-progress {",
   ".sales-order-progress-step.current {",
   ".sales-order-empty-guidance {",

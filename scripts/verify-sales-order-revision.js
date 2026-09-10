@@ -73,6 +73,7 @@ assert(context.salesOrderRevisionCoreChoiceHtml(coreRequired,0).includes('コア
 const noCharge={product_core_return_required:true,core_return_required:true,core_return_handling:'standard',configured_core_charge_jpy:null,revision_unit_price_jpy:7500};
 assert(context.salesOrderRevisionCoreChoiceHtml(noCharge,1).includes('返却不可時コア代金が未設定（選択不可）'));
 context.salesOrderDispatch=()=>null;
+context.shippingDocumentPendingCount=()=>0;
 vm.runInNewContext(app.slice(app.indexOf('function shippingDocumentStageHtml('),app.indexOf('function shippingDocumentOrderB2HistoryHtml(')),context);
 const changed={b2_exports:[{created_at:'2026-09-01T00:00:00Z'}],revision_history:[{created_at:'2026-09-02T00:00:00Z',waybills_need_reissue:true}]};
 assert(context.shippingDocumentStageHtml(changed).includes('再発行が必要'));

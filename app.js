@@ -11341,7 +11341,7 @@ function customerOrderStatusLabel(status) {
   var labels = {
     submitted: "受付待ち",
     accepted: "受付済み",
-    shipping_ready: "出荷準備",
+    shipping_ready: "出荷処理中",
     shipped: "出荷済み",
     completed: "完了",
     cancelled: "取消"
@@ -14593,18 +14593,29 @@ async function enterShippingDocumentMgmt(options) {
 }
 
 function shippingDocumentPendingCount(order) {
-  var serverCount = Number(order && order.pending_document_count);
+  var serverCount = order && order.pending_document_count != null ? Number(order.pending_document_count) : NaN;
   if (Number.isFinite(serverCount) && serverCount >= 0) return Math.floor(serverCount);
   var statuses = order && order.document_statuses && typeof order.document_statuses === "object"
     ? order.document_statuses
     : {};
+  var outboundWaybill = order && order.outbound_waybill && typeof order.outbound_waybill === "object" ? order.outbound_waybill : {};
+  var returnWaybill = order && order.return_waybill && typeof order.return_waybill === "object" ? order.return_waybill : {};
+  var outboundMethod = order && (order.outbound_waybill_method || outboundWaybill.handling_method);
+  var returnMethod = order && (order.return_waybill_method || returnWaybill.handling_method);
   var requiredTypes = ["dispatch"];
   if (salesOrderWarrantyDocumentRequired(order)) requiredTypes.push("warranty");
   if (order && order.core_return_required) requiredTypes.push("core_return");
-  if (order && ["dot_matrix", "handwritten"].indexOf(order.outbound_waybill_method) >= 0) requiredTypes.push("outbound_waybill");
-  if (order && order.core_return_required && ["dot_matrix", "handwritten"].indexOf(order.return_waybill_method) >= 0) requiredTypes.push("return_waybill");
+  if (["dot_matrix", "handwritten"].indexOf(outboundMethod) >= 0) requiredTypes.push("outbound_waybill");
+  if (order && order.core_return_required && ["dot_matrix", "handwritten"].indexOf(returnMethod) >= 0) requiredTypes.push("return_waybill");
   return requiredTypes.filter(function(type) {
-    return !statuses[type] || statuses[type] !== "printed";
+    if (statuses[type] === "printed") return false;
+    var job = shippingDocumentPrintJob(order, type);
+    if (job && job.status === "printed") return false;
+    if (type === "outbound_waybill" && outboundMethod === "handwritten"
+        && (outboundWaybill.status === "printed" || outboundWaybill.handwritten_completed_at)) return false;
+    if (type === "return_waybill" && returnMethod === "handwritten"
+        && (returnWaybill.status === "printed" || returnWaybill.handwritten_completed_at)) return false;
+    return true;
   }).length;
 }
 
@@ -15034,12 +15045,13 @@ function shippingDocumentStageHtml(order) {
   var b2NeedsReissue = b2Issued && (order.revision_history || []).some(function(revision) { return revision.waybills_need_reissue && !order.b2_exports.some(function(entry) { return new Date(entry.created_at) >= new Date(revision.created_at); }); });
   var serialConfirmed = !!(dispatch && dispatch.status === "shipped");
   var trackingRegistered = !!(order && order.outbound_tracking_number);
-  var documentsReady = serialConfirmed && trackingRegistered;
+  var pendingDocumentCount = shippingDocumentPendingCount(order);
+  var documentsPrinted = pendingDocumentCount === 0;
   var stages = [
+    { label: "帳票", ready: documentsPrinted, value: documentsPrinted ? "印刷済み" : "未印刷 " + pendingDocumentCount + "件" },
     { label: "B2 CSV", ready: b2Issued && !b2NeedsReissue, value: b2NeedsReissue ? "再発行が必要" : b2Issued ? "発行済み" : "未発行" },
     { label: "商品・シリアル照合", ready: serialConfirmed, value: serialConfirmed ? "完了" : "未完了" },
-    { label: "商品発送送り状", ready: trackingRegistered, value: trackingRegistered ? order.outbound_tracking_number : "未取込" },
-    { label: "同梱帳票", ready: documentsReady, value: documentsReady ? "発行可" : "待機" }
+    { label: "商品発送送り状", ready: trackingRegistered, value: trackingRegistered ? order.outbound_tracking_number : "未取込" }
   ];
   return "<div class='shipping-document-stages'>" + stages.map(function(stage) {
     return "<div class='" + (stage.ready ? "ready" : "pending") + "'><span>" + esc(stage.label) + "</span><strong>" + esc(stage.value) + "</strong></div>";
@@ -15177,6 +15189,8 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var returnCanHandwrite = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "handwritten" && !returnHandwrittenComplete && !shippingDocumentSaving);
   var b2Issued = Array.isArray(order.b2_exports) && order.b2_exports.length > 0;
   var b2NeedsReissue = b2Issued && (order.revision_history || []).some(function(revision) { return revision.waybills_need_reissue && !order.b2_exports.some(function(entry) { return new Date(entry.created_at) >= new Date(revision.created_at); }); });
+  var pendingDocumentCount = shippingDocumentPendingCount(order);
+  var documentsPrinted = pendingDocumentCount === 0;
   var canCreateB2 = ["accepted", "shipping_ready", "shipped"].indexOf(order.status) >= 0 && outboundMethod === "b2_cloud";
   var dispatchStandard = salesOrderAutoPrintIsEnabled() ? "受付時に自動発行" : "出荷帳票発行で印刷";
   var outboundCarrierLabel = shippingCarrierBrandKey(outboundWaybill.carrier_code || "yamato_prepaid") === "sagawa" ? "佐川急便 元払い" : "ヤマト宅急便 元払い";
@@ -15190,8 +15204,12 @@ function shippingDocumentShipmentDocumentsHtml(order) {
       ? { label: returnHandwrittenComplete ? "手書き完了" : "手書き待ち", tone: returnHandwrittenComplete ? "success" : "warning", note: "" }
       : shippingDocumentPrintStateView(returnJob, shippingDocumentWaybillNumberIsValid(waybill.tracking_number) ? "未印刷" : "番号未登録");
   var reason = !dispatch ? "出荷指示書が未発行です。"
-    : dispatch.status !== "shipped" ? "保証書・コア返却シートは発行できます。出荷完了には商品と製造シリアルの照合が必要です。"
-      : !order.outbound_tracking_number ? "保証書・コア返却シートは発行できます。出荷完了にはB2発行済データを取り込んでください。" : "";
+    : dispatch.status !== "shipped" ? (documentsPrinted
+      ? "帳票の印刷は完了しています。次は商品と製造シリアルを照合してください。"
+      : "保証書・コア返却シートは発行できます。出荷完了には商品と製造シリアルの照合が必要です。")
+      : !order.outbound_tracking_number ? (documentsPrinted
+        ? "帳票の印刷は完了しています。次はB2発行済データを取り込んでください。"
+        : "保証書・コア返却シートは発行できます。出荷完了にはB2発行済データを取り込んでください。") : "";
   var rows = [
     {
       key: "dispatch", name: "出荷指示書", standard: "A4", detail: dispatchStandard,
@@ -15224,7 +15242,7 @@ function shippingDocumentShipmentDocumentsHtml(order) {
       actions: order.core_return_required ? (returnMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-return-print" + (returnCanPrint ? "" : " disabled") + ">" + esc(returnPrintActionLabel) + "（" + returnWaybillCopyCount + "枚）</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='return_waybill'" + (returnCanHandwrite ? "" : " disabled") + ">手書き内容を表示（" + returnWaybillCopyCount + "枚）</button>") + "<button type='button' data-shipping-document-open-settings='return'>設定</button>" : "<span class='shipping-document-no-action'>発行不要</span>"
     }
   ];
-  return "<section class='shipping-document-section shipping-document-required-documents'><div class='shipping-document-section-head'><div><h3>帳票の状態と発行</h3><p>標準設定を確認し、必要な帳票をこの一覧から発行します。設定変更は各行の「設定」から行います。</p></div><span class='shipping-document-ready-state " + (dispatch ? "ready" : "pending") + "'>" + esc(dispatch ? "同梱帳票を発行可" : "出荷指示待ち") + "</span></div>" +
+  return "<section class='shipping-document-section shipping-document-required-documents'><div class='shipping-document-section-head'><div><h3>帳票の状態と発行</h3><p>標準設定を確認し、必要な帳票をこの一覧から発行します。設定変更は各行の「設定」から行います。</p></div><span class='shipping-document-ready-state " + (documentsPrinted ? "ready" : "pending") + "'>" + esc(documentsPrinted ? "印刷済み" : "未印刷 " + pendingDocumentCount + "件") + "</span></div>" +
     (reason ? "<p class='shipping-document-guidance'>" + esc(reason) + "</p>" : "") +
     "<div class='shipping-document-required-list' role='table' aria-label='帳票の状態と発行'><div class='shipping-document-required-head' role='row'><span role='columnheader'>帳票</span><span role='columnheader'>用紙・発行方法</span><span role='columnheader'>現在の状態</span><span role='columnheader'>発行操作</span></div>" + rows.map(function(row) {
       return "<div class='shipping-document-required-row " + (row.ready ? "ready" : "pending") + "' role='row' data-document-type='" + esc(row.key) + "' data-state='" + esc(row.state.tone) + "'><div class='shipping-document-name-cell' role='cell'><strong>" + esc(row.name) + "</strong>" + (row.carrierCode ? shippingCarrierBrandHtml(row.carrierCode, true) : "") + "</div><div class='shipping-document-standard' role='cell'><strong>" + esc(row.standard) + "</strong><small class='shipping-document-standard-detail'>" + esc(row.detail) + "</small>" + (row.temporary ? "<small class='shipping-document-temporary-note'>" + esc(row.temporary) + "</small>" : "") + "</div><div class='shipping-document-state-cell' role='cell'><em class='shipping-document-state-badge'>" + esc(row.state.label) + "</em>" + (row.state.note ? "<small>" + esc(row.state.note) + "</small>" : "") + "</div><div class='shipping-document-row-actions' role='cell'>" + row.actions + "</div></div>";
@@ -15292,7 +15310,7 @@ function renderShippingDocumentDetail() {
     host.innerHTML = shippingDocumentDefaultStateHtml();
     return;
   }
-  host.innerHTML = "<div class='shipping-document-detail-head'><div><span class='shipping-document-order-id-label'>" + esc(t("sales_order_id_label")) + "</span><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><small class='shipping-document-detail-target'>帳票発行対象 / " + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small><strong>" + esc(order.customer_name || "-") + "</strong></div><div><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span><button type='button' id='shipping-document-open-history'>B2発行履歴</button><button type='button' id='shipping-document-open-order'>受注詳細</button></div></div>" +
+  host.innerHTML = "<div class='shipping-document-detail-head'><div><span class='shipping-document-order-id-label'>" + esc(t("sales_order_id_label")) + "</span><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><small class='shipping-document-detail-target'>帳票発行対象 / " + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small><strong>" + esc(order.customer_name || "-") + "</strong></div><div>" + salesOrderStatusSummaryHtml(order) + "<button type='button' id='shipping-document-open-history'>B2発行履歴</button><button type='button' id='shipping-document-open-order'>受注詳細</button></div></div>" +
     "<div id='shipping-document-message' class='sales-order-detail-message' aria-live='polite'></div>" +
     shippingDocumentStageHtml(order) +
     shippingDocumentOrderContentsHtml(order) +
@@ -16092,6 +16110,18 @@ function salesOrderDispatchStatusLabel(status) {
   return ({ preparing: "シリアル照合待ち", ready: "照合完了・出荷確定待ち", shipped: "出荷済み", cancelled: "取消済み" })[status] || "未発行";
 }
 
+function salesOrderStatusDetailLabel(order) {
+  if (!order || String(order.status || "").toLowerCase() !== "shipping_ready") return "";
+  var dispatch = salesOrderDispatch(order);
+  return dispatch ? salesOrderDispatchStatusLabel(dispatch.status) : "出荷指示待ち";
+}
+
+function salesOrderStatusSummaryHtml(order) {
+  var detail = salesOrderStatusDetailLabel(order);
+  return "<span class='sales-order-status-summary'><span class='sales-order-status " + esc(order && order.status || "") + "'>" + esc(customerOrderStatusLabel(order && order.status)) + "</span>" +
+    (detail ? "<small>" + esc(detail) + "</small>" : "") + "</span>";
+}
+
 function salesOrderDispatchRebuiltQuantity(dispatch) {
   return (Array.isArray(dispatch && dispatch.items) ? dispatch.items : []).reduce(function(total, item) {
     var orderItem = item.order_item || {};
@@ -16185,7 +16215,7 @@ function salesOrderLifecycleHtml(status) {
   var steps = [
     { key: "submitted", label: "受付待ち" },
     { key: "accepted", label: "受付済み" },
-    { key: "shipping_ready", label: "出荷準備" },
+    { key: "shipping_ready", label: "出荷処理中" },
     { key: "shipped", label: "出荷済み" },
     { key: "completed", label: "完了" }
   ];
@@ -16308,7 +16338,7 @@ function renderSalesOrderDetail() {
     var panelId = tab.key === "tracking" || tab.key === "history" ? "sales-order-detail-" + tab.key : "sales-order-detail-panel-" + tab.key;
     return "<button type='button' role='tab' id='sales-order-detail-tab-" + tab.key + "' aria-controls='" + panelId + "' aria-selected='" + (selected ? "true" : "false") + "' tabindex='" + (selected ? "0" : "-1") + "' data-sales-order-detail-view='" + tab.key + "'>" + tab.label + "</button>";
   }).join("");
-  host.innerHTML = "<div class='sales-order-detail-head'><div class='sales-order-detail-identity'><div class='sales-order-detail-meta'><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "</div><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div>" + lifecycle + "<div class='sales-order-detail-state'><div class='sales-order-detail-state-summary'><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span>" + compactTotal + "</div>" + nextActions + "</div></div>" +
+  host.innerHTML = "<div class='sales-order-detail-head'><div class='sales-order-detail-identity'><div class='sales-order-detail-meta'><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "</div><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div>" + lifecycle + "<div class='sales-order-detail-state'><div class='sales-order-detail-state-summary'>" + salesOrderStatusSummaryHtml(order) + compactTotal + "</div>" + nextActions + "</div></div>" +
     "<nav class='sales-order-detail-nav' role='tablist' aria-label='注文詳細の作業項目'>" + tabHtml + "</nav>" +
     "<div class='sales-order-detail-panels'>" +
       "<section class='sales-order-detail-panel sales-order-detail-overview' id='sales-order-detail-panel-overview' role='tabpanel' aria-labelledby='sales-order-detail-tab-overview' data-sales-order-detail-panel='overview'><div class='sales-order-detail-overview-grid'>" +

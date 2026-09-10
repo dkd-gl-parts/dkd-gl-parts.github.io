@@ -696,7 +696,7 @@
         <button type="button" class="sales-order-new-order-button" id="sales-order-new-internal-order" hidden data-i18n="sales_order_internal_entry">FAX・メール注文入力</button>
         <div class="sales-order-search-controls" role="search" aria-label="受注を検索">
           <input id="sales-order-search" type="search" autocomplete="off" placeholder="注文番号・得意先・品番で検索">
-          <select id="sales-order-status" aria-label="注文状態"><option value="all">すべての状態</option><option value="submitted">受付待ち</option><option value="accepted">受付済み</option><option value="shipping_ready">出荷準備</option><option value="shipped">出荷済み</option><option value="completed">完了</option><option value="cancelled">取消</option></select>
+          <select id="sales-order-status" aria-label="注文状態"><option value="all">すべての状態</option><option value="submitted">受付待ち</option><option value="accepted">受付済み</option><option value="shipping_ready">出荷処理中</option><option value="shipped">出荷済み</option><option value="completed">完了</option><option value="cancelled">取消</option></select>
           <button type="button" class="btn-primary" id="sales-order-reload">検索</button>
         </div>
         <div class="sales-order-selection-controls" aria-label="選択した受注の処理">
@@ -755,7 +755,7 @@
         <button type="button" class="sales-order-dashboard-metric all" data-sales-order-dashboard-status="all" aria-pressed="true"><span>すべて</span><strong data-sales-order-dashboard-count="all">-</strong></button>
         <button type="button" class="sales-order-dashboard-metric submitted" data-sales-order-dashboard-status="submitted" aria-pressed="false"><span>受付待ち</span><strong data-sales-order-dashboard-count="submitted">-</strong></button>
         <button type="button" class="sales-order-dashboard-metric accepted" data-sales-order-dashboard-status="accepted" aria-pressed="false"><span>受付済み</span><strong data-sales-order-dashboard-count="accepted">-</strong></button>
-        <button type="button" class="sales-order-dashboard-metric shipping-ready" data-sales-order-dashboard-status="shipping_ready" aria-pressed="false"><span>出荷準備</span><strong data-sales-order-dashboard-count="shipping_ready">-</strong></button>
+        <button type="button" class="sales-order-dashboard-metric shipping-ready" data-sales-order-dashboard-status="shipping_ready" aria-pressed="false"><span>出荷処理中</span><strong data-sales-order-dashboard-count="shipping_ready">-</strong></button>
         <button type="button" class="sales-order-dashboard-metric shipped" data-sales-order-dashboard-status="shipped" aria-pressed="false"><span>出荷済み</span><strong data-sales-order-dashboard-count="shipped">-</strong></button>
         <button type="button" class="sales-order-dashboard-metric completed" data-sales-order-dashboard-status="completed" aria-pressed="false"><span>完了</span><strong data-sales-order-dashboard-count="completed">-</strong></button>
         <button type="button" class="sales-order-dashboard-metric cancelled" data-sales-order-dashboard-status="cancelled" aria-pressed="false"><span>取消</span><strong data-sales-order-dashboard-count="cancelled">-</strong></button>
