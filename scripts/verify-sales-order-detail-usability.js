@@ -52,7 +52,7 @@ for (const fragment of [
   "salesOrderBillingSummaryHtml(order)",
   "sales-order-detail-total",
   "請求明細",
-  "sales-order-detail-tracking",
+  "salesOrderTrackingEditorHtml(order)",
   "sales-order-detail-history",
   "処理履歴"
 ]) requireFragment(detail, fragment);
@@ -158,7 +158,10 @@ const billingHtml = billingContext.salesOrderBillingSummaryHtml({
 for (const fragment of ["商品計", "¥7,500", "コア代金", "¥2,000", "送料", "ヤマト運輸 / 宅急便 元払い", "¥700", "消費税", "¥1,020", "請求合計", "¥11,220"]) {
   requireFragment(billingHtml, fragment, `Order billing summary is missing: ${fragment}`);
 }
-requireFragment(functionSource("salesOrderDispatchHtml"), "sales-order-detail-fulfillment");
+const fulfillment = functionSource("salesOrderDispatchHtml");
+requireFragment(fulfillment, "sales-order-detail-fulfillment");
+requireFragment(fulfillment, "salesOrderWaybillProgressHtml(order)");
+requireFragment(functionSource("salesOrderTrackingEditorHtml"), "sales-order-fulfillment-tracking");
 const carrierLabel = functionSource("salesOrderWaybillCarrierLabel");
 for (const fragment of [
   "yamato_prepaid",

@@ -116,10 +116,16 @@ for (const fragment of [
   'var requiredTypes = ["dispatch"]',
   'salesOrderWarrantyDocumentRequired(order)',
   'requiredTypes.push("core_return")',
-  '["dot_matrix", "handwritten"].indexOf(order.outbound_waybill_method)',
-  '["dot_matrix", "handwritten"].indexOf(order.return_waybill_method)'
+  'order.outbound_waybill_method || outboundWaybill.handling_method',
+  'order.return_waybill_method || returnWaybill.handling_method',
+  'shippingDocumentPrintJob(order, type)',
+  'outboundWaybill.handwritten_completed_at',
+  'returnWaybill.handwritten_completed_at'
 ]) requireFragment(pendingCountSource, fragment);
-const pendingCountContext = { salesOrderWarrantyDocumentRequired: (order) => order.warranty_document_required !== false };
+const pendingCountContext = {
+  salesOrderWarrantyDocumentRequired: (order) => order.warranty_document_required !== false,
+  shippingDocumentPrintJob: (order, type) => (order.print_jobs || []).find((job) => job.document_type === type) || null
+};
 vm.runInNewContext(pendingCountSource, pendingCountContext);
 if (pendingCountContext.shippingDocumentPendingCount({ pending_document_count: 1 }) !== 1) {
   throw new Error("The server-calculated pending document count must drive the order list");
@@ -142,6 +148,29 @@ if (pendingCountContext.shippingDocumentPendingCount({
   document_statuses: { dispatch: "printed", warranty: "unissued" }
 }) !== 0) {
   throw new Error("Replacement-only orders must not count a warranty certificate as pending");
+}
+if (pendingCountContext.shippingDocumentPendingCount({
+  pending_document_count: null,
+  warranty_document_required: true,
+  core_return_required: false,
+  print_jobs: [
+    { document_type: "dispatch", status: "printed" },
+    { document_type: "warranty", status: "printed" }
+  ]
+}) !== 0) {
+  throw new Error("Detailed orders must derive completed document printing from their print jobs");
+}
+if (pendingCountContext.shippingDocumentPendingCount({
+  warranty_document_required: false,
+  core_return_required: true,
+  print_jobs: [
+    { document_type: "dispatch", status: "printed" },
+    { document_type: "core_return", status: "printed" }
+  ],
+  outbound_waybill: { handling_method: "handwritten", handwritten_completed_at: "2026-09-10T00:00:00Z" },
+  return_waybill: { handling_method: "handwritten", status: "printed" }
+}) !== 0) {
+  throw new Error("Detailed handwritten waybills must count as printed without list-only summary fields");
 }
 
 const shippingDocumentListSource = sourceBetween("function renderShippingDocumentList", "function shippingDocumentSelectedTypes");
@@ -298,6 +327,33 @@ for (const fragment of [
   "印刷端末を確認して「再送」"
 ]) requireFragment(printState, fragment);
 
+const stageSource = sourceBetween("function shippingDocumentStageHtml", "function shippingDocumentOrderB2HistoryHtml");
+for (const fragment of [
+  "shippingDocumentPendingCount(order)",
+  'label: "帳票"',
+  'documentsPrinted ? "印刷済み" : "未印刷 " + pendingDocumentCount + "件"'
+]) requireFragment(stageSource, fragment);
+if (stageSource.includes('label: "同梱帳票"')) {
+  throw new Error("Document printing progress must not depend on serial matching or waybill import");
+}
+const stageContext = {
+  salesOrderDispatch: (order) => order.dispatch || null,
+  shippingDocumentPendingCount: () => 0,
+  esc: String
+};
+vm.runInNewContext(stageSource, stageContext);
+const printedButUnshippedStage = stageContext.shippingDocumentStageHtml({
+  dispatch: { status: "preparing" },
+  b2_exports: [{ created_at: "2026-09-10T00:00:00Z" }],
+  revision_history: [],
+  outbound_tracking_number: null
+});
+for (const expected of ["帳票</span><strong>印刷済み", "商品・シリアル照合</span><strong>未完了", "商品発送送り状</span><strong>未取込"]) {
+  if (!printedButUnshippedStage.includes(expected)) {
+    throw new Error(`Printed documents must remain distinct from unfinished shipment work: ${expected}`);
+  }
+}
+
 const requiredDocuments = sourceBetween("function shippingDocumentShipmentDocumentsHtml", "function shippingDocumentReturnWaybillHtml");
 for (const fragment of [
   'key: "dispatch"',
@@ -361,6 +417,12 @@ if (requiredDocuments.includes("待機中")) {
 if (requiredDocuments.includes('shippingDocumentManualOutputActions(order, "core_return", shipmentReady)')) {
   throw new Error("Core-return sheet printing must not wait for shipment completion");
 }
+for (const fragment of [
+  "var documentsPrinted = pendingDocumentCount === 0",
+  'documentsPrinted ? "印刷済み" : "未印刷 " + pendingDocumentCount + "件"',
+  "帳票の印刷は完了しています。次は商品と製造シリアルを照合してください。",
+  "帳票の印刷は完了しています。次はB2発行済データを取り込んでください。"
+]) requireFragment(requiredDocuments, fragment);
 
 const salesOrderDocumentPrint = sourceBetween("async function printSalesOrderDocument", "async function loadSalesOrderDetail");
 for (const forbidden of [
@@ -381,7 +443,8 @@ for (const fragment of [
   "shippingDocumentShipmentDocumentsHtml(order)",
   "scheduleShippingDocumentPrintStatusRefresh()",
   "B2発行履歴",
-  "受注詳細"
+  "受注詳細",
+  "salesOrderStatusSummaryHtml(order)"
 ]) requireFragment(detailSource, fragment);
 for (const forbidden of ["salesOrderItemRowsHtml(order.items)", "shippingDocumentOutboundWaybillHtml(order)", "shippingDocumentReturnWaybillHtml(order)"]) {
   if (detailSource.includes(forbidden)) throw new Error(`Shipping document initial detail must not include the sales screen row renderer or inline waybill settings: ${forbidden}`);
@@ -688,11 +751,11 @@ for (const fragment of [
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.942"',
-  'styles.css?v=1.1.942',
-  'app.js?v=1.1.942'
+  'content="v1.1.943"',
+  'styles.css?v=1.1.943',
+  'app.js?v=1.1.943'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.942"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.943"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
