@@ -6181,7 +6181,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.945";
+var APP_VERSION       = "v1.1.946";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -12735,13 +12735,18 @@ async function refreshSalesOrderPrinterSetup(showMessage) {
     : "";
 }
 
-async function enterSalesOrderMgmt() {
+async function enterSalesOrderMgmt(options) {
   if (!canManageSalesOrders()) {
     showPermissionDenied("open_sales_order_management", "customer_orders");
     return;
   }
-  salesOrderSelectedId = null;
-  salesOrderDetailView = "overview";
+  options = options || {};
+  var requestedOrderId = parseInt(options.orderId || (options.order && options.order.id), 10);
+  var requestedDetailView = ["overview", "fulfillment", "history"].indexOf(options.detailView) >= 0
+    ? options.detailView
+    : "overview";
+  salesOrderSelectedId = isNaN(requestedOrderId) ? null : requestedOrderId;
+  salesOrderDetailView = requestedDetailView;
   salesOrderCheckedIdsState = new Set();
   salesOrderDetail = null;
   salesOrderB2ExportSaving = false;
@@ -12758,6 +12763,14 @@ async function enterSalesOrderMgmt() {
   salesAccountingExportCodeSavingKey = "";
   salesAccountingProductOnboardingSaving = false;
   showScreen("sales-order-mgmt");
+  var orderSearch = document.getElementById("sales-order-search");
+  var orderStatus = document.getElementById("sales-order-status");
+  if (salesOrderSelectedId) {
+    if (orderSearch) orderSearch.value = options.order && options.order.order_number
+      ? options.order.order_number
+      : String(salesOrderSelectedId);
+    if (orderStatus) orderStatus.value = "all";
+  }
   var newOrderButton = document.getElementById("sales-order-new-internal-order");
   if (newOrderButton) newOrderButton.hidden = !canStartInternalCustomerOrderEntry();
   updateAllHeaders();
@@ -12766,6 +12779,7 @@ async function enterSalesOrderMgmt() {
   renderSalesOrderDashboard();
   renderSalesOrderPrintSettings();
   await Promise.all([refreshSalesOrderManagement(), loadSalesOrderPrintSettings()]);
+  if (salesOrderSelectedId) await loadSalesOrderDetail(salesOrderSelectedId);
 }
 
 async function enterInternalCustomerOrderEntry() {
@@ -15429,6 +15443,20 @@ function shippingDocumentOrderContentsHtml(order) {
     (rows ? "<div class='shipping-document-order-items'>" + rows + "</div>" : "<p class='shipping-document-order-empty'>受注明細がありません。</p>") + "</section>";
 }
 
+function salesOrderWorkspaceNavigationHtml(activeWorkspace) {
+  var salesOrderActive = activeWorkspace === "sales-order";
+  var salesOrderLabel = t("sales_order_mgmt_title");
+  var shippingDocumentLabel = t("shipping_document_mgmt_title");
+  return "<nav class='sales-order-workspace-switch' aria-label='" + esc(salesOrderLabel + " / " + shippingDocumentLabel) + "'>" +
+    (salesOrderActive
+      ? "<span aria-current='page'>" + esc(salesOrderLabel) + "</span>"
+      : "<button type='button' id='shipping-document-open-order'>" + esc(salesOrderLabel) + "</button>") +
+    (salesOrderActive
+      ? "<button type='button' id='sales-order-open-shipping-documents'>" + esc(shippingDocumentLabel) + "</button>"
+      : "<span aria-current='page'>" + esc(shippingDocumentLabel) + "</span>") +
+  "</nav>";
+}
+
 function renderShippingDocumentDetail() {
   var host = document.getElementById("shipping-document-detail");
   var order = shippingDocumentDetail;
@@ -15438,7 +15466,8 @@ function renderShippingDocumentDetail() {
     host.innerHTML = shippingDocumentDefaultStateHtml();
     return;
   }
-  host.innerHTML = "<div class='shipping-document-detail-head'><div><span class='shipping-document-order-id-label'>" + esc(t("sales_order_id_label")) + "</span><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><small class='shipping-document-detail-target'>帳票発行対象 / " + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small><strong>" + esc(order.customer_name || "-") + "</strong></div><div>" + salesOrderStatusSummaryHtml(order) + "<button type='button' id='shipping-document-open-history'>B2発行履歴</button><button type='button' id='shipping-document-open-order'>受注詳細</button></div></div>" +
+  host.innerHTML = "<div class='shipping-document-detail-head'><div><span class='shipping-document-order-id-label'>" + esc(t("sales_order_id_label")) + "</span><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><small class='shipping-document-detail-target'>帳票発行対象 / " + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small><strong>" + esc(order.customer_name || "-") + "</strong></div><div>" + salesOrderStatusSummaryHtml(order) + "<button type='button' id='shipping-document-open-history'>B2発行履歴</button></div></div>" +
+    salesOrderWorkspaceNavigationHtml("shipping-document") +
     "<div id='shipping-document-message' class='sales-order-detail-message' aria-live='polite'></div>" +
     shippingDocumentStageHtml(order) +
     shippingDocumentOrderContentsHtml(order) +
@@ -15673,10 +15702,9 @@ function setShippingDocumentMessage(message, isError) {
 }
 
 async function openShippingDocumentOrderInSalesOrderMgmt() {
-  var orderId = shippingDocumentDetail && shippingDocumentDetail.id;
-  if (!orderId) return;
-  await enterSalesOrderMgmt();
-  await loadSalesOrderDetail(orderId);
+  var order = shippingDocumentDetail;
+  if (!order || !order.id) return;
+  await enterSalesOrderMgmt({ order: order, detailView: "fulfillment" });
 }
 
 async function issueShippingDocumentB2() {
@@ -16377,7 +16405,6 @@ function salesOrderDispatchHtml(order) {
   if (canIssue) controls += "<button type='button' class='sales-order-dispatch-primary' id='sales-order-issue-dispatch'>出荷指示書を発行</button>";
   if (dispatch) {
     controls += "<button type='button' id='sales-order-print-dispatch'>出荷指示書</button>";
-    controls += "<button type='button' id='sales-order-open-shipping-documents'>出荷帳票発行</button>";
     if (shipmentDocumentsReady && order.core_return_required) controls += "<button type='button' id='sales-order-print-core-return'>コア返却シート</button>";
     if (shipmentDocumentsReady) controls += "<button type='button' id='sales-order-print-warranty'>保証書</button>";
     if (["preparing", "ready"].indexOf(dispatch.status) >= 0 && !b2Issued) controls += "<button type='button' id='sales-order-export-single-b2'>商品発送用B2 CSV発行</button>";
@@ -16541,6 +16568,7 @@ function renderSalesOrderDetail() {
     return "<button type='button' role='tab' id='sales-order-detail-tab-" + tab.key + "' aria-controls='" + panelId + "' aria-selected='" + (selected ? "true" : "false") + "' tabindex='" + (selected ? "0" : "-1") + "' data-sales-order-detail-view='" + tab.key + "'>" + tab.label + "</button>";
   }).join("");
   host.innerHTML = "<div class='sales-order-detail-head'><div class='sales-order-detail-identity'><div class='sales-order-detail-meta'><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "</div><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div>" + lifecycle + "<div class='sales-order-detail-state'><div class='sales-order-detail-state-summary'>" + salesOrderStatusSummaryHtml(order) + compactTotal + "</div>" + nextActions + "</div></div>" +
+    salesOrderWorkspaceNavigationHtml("sales-order") +
     "<nav class='sales-order-detail-nav' role='tablist' aria-label='注文詳細の作業項目'>" + tabHtml + "</nav>" +
     "<div class='sales-order-detail-panels'>" +
       "<section class='sales-order-detail-panel sales-order-detail-overview' id='sales-order-detail-panel-overview' role='tabpanel' aria-labelledby='sales-order-detail-tab-overview' data-sales-order-detail-panel='overview'><div class='sales-order-detail-overview-grid'>" +
