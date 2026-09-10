@@ -19,9 +19,51 @@ function between(start, end) {
   "sales-order-import-b2-file",
   "sales-order-b2-import",
   "sales-order-b2-import-table",
-  "sales-order-import-b2-confirm"
+  "sales-order-import-b2-confirm",
+  "sales-order-b2-import-guide-overlay",
+  "sales-order-b2-import-guide-title",
+  "sales-order-b2-import-guide-yamato",
+  "sales-order-b2-import-guide-select-file",
+  "sales-order-b2-import-guide-cancel"
 ].forEach((id) => {
   if (!html.includes(`id="${id}"`)) throw new Error(`B2 issued-data import UI is missing: ${id}`);
+});
+
+[
+  "発行済データの検索",
+  "外部ファイル出力",
+  "ダウンロードした発行済データCSVを選択",
+  "認証情報を、D-CATSへ入力・送信・保存することはありません。"
+].forEach((fragment) => {
+  if (!html.includes(fragment)) throw new Error(`B2 download guidance is missing: ${fragment}`);
+});
+if (!html.includes('href="https://bmypage.kuronekoyamato.co.jp/bmypage/"') ||
+    !html.includes('target="_blank" rel="noopener noreferrer"')) {
+  throw new Error("B2 download guidance must open the official Yamato page safely in a new tab");
+}
+
+const openGuide = between("function openSalesOrderB2ImportGuide", "function closeSalesOrderB2ImportGuide");
+if (!openGuide.includes("canManageSalesOrders()") ||
+    !openGuide.includes('classList.add("show")') ||
+    !openGuide.includes('getElementById("sales-order-b2-import-guide-yamato")') ||
+    !openGuide.includes("yamatoLink.focus()")) {
+  throw new Error("B2 import action must open and focus the download guide");
+}
+const closeGuide = between("function closeSalesOrderB2ImportGuide", "function selectSalesOrderB2ImportFile");
+if (!closeGuide.includes('classList.remove("show")') || !closeGuide.includes('getElementById("sales-order-import-b2")')) {
+  throw new Error("B2 download guide must close and restore focus to its trigger");
+}
+const selectFile = between("function selectSalesOrderB2ImportFile", "function renderSalesOrderB2Import");
+if (!selectFile.includes('getElementById("sales-order-import-b2-file")') || !selectFile.includes("input.click()")) {
+  throw new Error("B2 download guide must continue to the existing CSV file picker");
+}
+[
+  'document.getElementById("sales-order-import-b2").addEventListener("click", openSalesOrderB2ImportGuide)',
+  'document.getElementById("sales-order-b2-import-guide-select-file").addEventListener("click", selectSalesOrderB2ImportFile)',
+  'if (e.key === "Escape") closeSalesOrderB2ImportGuide()',
+  "closeSalesOrderB2ImportGuide(false);"
+].forEach((fragment) => {
+  if (!source.includes(fragment)) throw new Error(`B2 download guide behavior is missing: ${fragment}`);
 });
 
 const csvFunctions = between("function parseSalesOrderB2Csv", "async function salesOrderB2FileSha256");
@@ -100,6 +142,9 @@ if (!detailRender.includes("salesOrderShipmentHistoryHtml(order.shipment_history
 [
   ".sales-order-b2-import",
   ".sales-order-b2-import-row",
+  ".sales-order-b2-import-guide-card",
+  ".sales-order-b2-import-guide-steps",
+  ".sales-order-b2-import-guide-actions",
   ".sales-order-shipment-history-row",
   ".customer-default-shipping-grid",
   "@media (max-width: 560px)"
