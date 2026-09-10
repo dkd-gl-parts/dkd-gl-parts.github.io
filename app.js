@@ -6181,7 +6181,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.955";
+var APP_VERSION       = "v1.1.956";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -15775,6 +15775,14 @@ async function queueShippingDocumentReturnWaybillPrint() {
     : "同じ複写伝票はすでに印刷待ちまたは印刷中です。", false);
 }
 
+function clearSalesOrderDetailSelection() {
+  salesOrderSelectedId = null;
+  salesOrderDetail = null;
+  salesOrderDetailView = "overview";
+  salesOrderDetailSeq += 1;
+  renderSalesOrderDetail();
+}
+
 function renderSalesOrderList() {
   var host = document.getElementById("sales-order-list");
   var count = document.getElementById("sales-order-count");
@@ -15832,6 +15840,12 @@ async function loadSalesOrders() {
   }
   var data = result.data || [];
   salesOrderRows = Array.isArray(data) ? data : (Array.isArray(data.orders) ? data.orders : []);
+  var selectedOrderVisible = salesOrderRows.some(function(order) {
+    return String(order.id) === String(salesOrderSelectedId);
+  });
+  if ((salesOrderSelectedId != null || salesOrderDetail) && !selectedOrderVisible) {
+    clearSalesOrderDetailSelection();
+  }
   renderSalesOrderList();
 }
 
