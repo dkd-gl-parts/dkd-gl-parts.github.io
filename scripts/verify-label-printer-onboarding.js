@@ -6,6 +6,7 @@ const root = path.resolve(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const styles = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+const headers = fs.readFileSync(path.join(root, "_headers"), "utf8");
 const packagePath = path.join(root, "assets", "downloads", "D-CATS-TD4420TN-Setup.zip");
 const hashPath = path.join(root, "assets", "downloads", "D-CATS-TD4420TN-Setup.sha256.txt");
 
@@ -32,11 +33,20 @@ for (const phrase of ["TD-4420TN設定ナビ", "TD-4420TN Setup Guide", "TD-4420
   assert(app.includes(phrase), `setup guide language is missing: ${phrase}`);
 }
 assert(app.includes("openFinishedLabelSetupGuide") && app.includes("closeFinishedLabelSetupGuide") && app.includes("setFinishedLabelSetupGuideView"), "setup guide interactions are incomplete");
+assert(app.includes('FINISHED_LABEL_SETUP_STATUS_URL = "http://127.0.0.1:37643/status"'), "setup guide does not probe the local Windows print station");
+assert(app.includes('targetAddressSpace: "loopback"'), "setup probe does not declare its loopback destination to Chromium");
+assert(headers.includes("connect-src 'self' http://127.0.0.1:37643") && headers.includes("loopback-network=(self)"), "deployment policy does not permit the scoped loopback setup probe");
+assert(app.includes("probeFinishedLabelSetup") && app.includes("selectFinishedLabelSetupGuideFromDetection"), "automatic setup-state detection is incomplete");
+for (const state of ["configured", "attention", "unavailable", "pc_only"]) {
+  assert(app.includes(`finished_label_setup_detection_${state}_title`), `setup detection is missing the ${state} state`);
+}
+assert(html.includes('id="btn-finished-label-setup-detection-retry"') && html.includes("data-label-printer-setup-state-badge"), "setup detection status or retry control is missing");
 assert(app.includes('sessionStorage.setItem("dcats_label_printer_setup_downloaded", "1")'), "setup package download progress is not retained for the current session");
 assert(app.includes('sb.rpc("list_finished_label_print_stations", { target_label_target: null })'), "station overview does not load both media destinations");
 assert(app.includes("renderFinishedLabelAgentOverview") && app.includes("finished-label-device-profile-state"), "station readiness is not rendered by media profile");
 assert(app.includes("prepareFinishedLabelCompatibilityStation") && app.includes("loadFinishedLabelPrintDestinations(labelTarget, true)"), "compatibility receiver can start without a resolved printer code");
 assert(styles.includes(".finished-label-setup-strip") && styles.includes(".finished-label-device-profile-list") && styles.includes(".finished-label-setup-guide-steps"), "first-PC setup layout or guide is missing");
+assert(styles.includes(".finished-label-setup-detection.configured") && styles.includes(".finished-label-setup-detection.attention") && styles.includes(".finished-label-setup-detection.unavailable"), "setup detection states are not visually distinct");
 assert(/\.finished-label-mode-card\s*\{[^}]*border-radius:\s*8px/s.test(styles), "mode cards exceed the 8px radius rule");
 assert(fs.existsSync(packagePath) && fs.statSync(packagePath).size > 10000, "first-PC setup package is missing or empty");
 assert(fs.existsSync(hashPath) && /^[A-F0-9]{64}\s+D-CATS-TD4420TN-Setup\.zip\s*$/i.test(fs.readFileSync(hashPath, "utf8")), "setup package checksum is missing or invalid");

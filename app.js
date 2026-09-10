@@ -635,7 +635,23 @@ var TRANSLATIONS = {
     finished_label_setup_test: "テスト印刷",
     finished_label_setup_first_run: "初めて設定するPCではパッケージを展開し、D-CATS-Printer-Setup.cmdを開いてください。設定済みPCでは再設定・校正・テスト印刷を画面から起動できます。",
     finished_label_setup_guide_title: "TD-4420TN設定ナビ",
-    finished_label_setup_guide_lead: "このPCの状態を選ぶと、必要な手順だけを表示します。",
+    finished_label_setup_guide_lead: "このPCの設定状態を自動確認し、必要な手順を表示します。判定後も手動で切り替えられます。",
+    finished_label_setup_detection_checking_badge: "確認中",
+    finished_label_setup_detection_configured_badge: "設定済み",
+    finished_label_setup_detection_attention_badge: "設定確認",
+    finished_label_setup_detection_unavailable_badge: "未確認",
+    finished_label_setup_detection_pc_only_badge: "PCで確認",
+    finished_label_setup_detection_checking_title: "このPCの設定を確認中",
+    finished_label_setup_detection_checking_desc: "Windows印刷端末へ接続しています。ブラウザーにローカルネットワークの確認が表示された場合は許可してください。",
+    finished_label_setup_detection_configured_title: "設定済みの印刷端末を確認しました",
+    finished_label_setup_detection_configured_desc: "バックグラウンド印刷が稼働しています。再設定、校正、テスト印刷を利用できます。",
+    finished_label_setup_detection_attention_title: "設定の確認が必要です",
+    finished_label_setup_detection_attention_desc: "設定情報はありますが、登録が未完了かバックグラウンド印刷が停止しています。設定ツールを開いて確認してください。",
+    finished_label_setup_detection_unavailable_title: "印刷端末を確認できませんでした",
+    finished_label_setup_detection_unavailable_desc: "初回設定前、旧パッケージ、状態確認サービスの停止、またはブラウザーの接続制限が考えられます。最新パッケージで初回設定を実行してください。",
+    finished_label_setup_detection_pc_only_title: "Windows PCで確認してください",
+    finished_label_setup_detection_pc_only_desc: "スマホでは印刷端末の設定状態を確認できません。TD-4420TNを使用するWindows PCでこの画面を開いてください。",
+    finished_label_setup_detection_retry: "再確認",
     finished_label_setup_guide_path_label: "設定方法",
     finished_label_setup_guide_first_path: "初めて設定する",
     finished_label_setup_guide_installed_path: "設定済み",
@@ -2637,7 +2653,23 @@ var TRANSLATIONS = {
     finished_label_setup_test: "Test Print",
     finished_label_setup_first_run: "On a new PC, extract the package and open D-CATS-Printer-Setup.cmd. On a configured PC, reconfiguration, calibration, and test printing can be launched here.",
     finished_label_setup_guide_title: "TD-4420TN Setup Guide",
-    finished_label_setup_guide_lead: "Choose the state of this PC to see only the steps you need.",
+    finished_label_setup_guide_lead: "D-CATS checks this PC automatically and shows the steps it needs. You can still switch paths manually after detection.",
+    finished_label_setup_detection_checking_badge: "Checking",
+    finished_label_setup_detection_configured_badge: "Configured",
+    finished_label_setup_detection_attention_badge: "Check Setup",
+    finished_label_setup_detection_unavailable_badge: "Not Detected",
+    finished_label_setup_detection_pc_only_badge: "Check on PC",
+    finished_label_setup_detection_checking_title: "Checking this PC",
+    finished_label_setup_detection_checking_desc: "Connecting to the Windows print station. Allow local network access if the browser asks.",
+    finished_label_setup_detection_configured_title: "A configured print station was detected",
+    finished_label_setup_detection_configured_desc: "Background printing is running. Reconfiguration, calibration, and test printing are available.",
+    finished_label_setup_detection_attention_title: "The setup needs attention",
+    finished_label_setup_detection_attention_desc: "Setup information exists, but registration is incomplete or background printing is stopped. Open the setup tool to review it.",
+    finished_label_setup_detection_unavailable_title: "No print station was detected",
+    finished_label_setup_detection_unavailable_desc: "This may be a new PC, an older package, a stopped status service, or a browser connection restriction. Run first-time setup with the latest package.",
+    finished_label_setup_detection_pc_only_title: "Check from a Windows PC",
+    finished_label_setup_detection_pc_only_desc: "A phone cannot inspect the print-station setup. Open this screen on the Windows PC connected to the TD-4420TN.",
+    finished_label_setup_detection_retry: "Check Again",
     finished_label_setup_guide_path_label: "Setup path",
     finished_label_setup_guide_first_path: "Set Up for the First Time",
     finished_label_setup_guide_installed_path: "Already Set Up",
@@ -4648,7 +4680,23 @@ var TRANSLATIONS = {
     finished_label_setup_test: "测试打印",
     finished_label_setup_first_run: "首次设置的电脑请解压设置包并打开D-CATS-Printer-Setup.cmd。已设置的电脑可从此处重新设置、校准或测试打印。",
     finished_label_setup_guide_title: "TD-4420TN设置导航",
-    finished_label_setup_guide_lead: "请选择此电脑的状态，画面将只显示所需步骤。",
+    finished_label_setup_guide_lead: "D-CATS会自动检查此电脑并显示所需步骤。检测后仍可手动切换设置方式。",
+    finished_label_setup_detection_checking_badge: "检查中",
+    finished_label_setup_detection_configured_badge: "已设置",
+    finished_label_setup_detection_attention_badge: "检查设置",
+    finished_label_setup_detection_unavailable_badge: "未检测到",
+    finished_label_setup_detection_pc_only_badge: "请在电脑检查",
+    finished_label_setup_detection_checking_title: "正在检查此电脑",
+    finished_label_setup_detection_checking_desc: "正在连接Windows打印终端。如果浏览器询问本地网络访问权限，请选择允许。",
+    finished_label_setup_detection_configured_title: "已检测到设置完成的打印终端",
+    finished_label_setup_detection_configured_desc: "后台打印正在运行，可以重新设置、校准或进行测试打印。",
+    finished_label_setup_detection_attention_title: "需要检查设置",
+    finished_label_setup_detection_attention_desc: "已找到设置信息，但注册尚未完成或后台打印已停止。请打开设置工具进行检查。",
+    finished_label_setup_detection_unavailable_title: "未检测到打印终端",
+    finished_label_setup_detection_unavailable_desc: "可能是首次设置、旧版设置包、状态服务已停止，或浏览器限制了连接。请使用最新设置包进行首次设置。",
+    finished_label_setup_detection_pc_only_title: "请在Windows电脑上检查",
+    finished_label_setup_detection_pc_only_desc: "手机无法检查打印终端的设置状态。请在连接TD-4420TN的Windows电脑上打开此画面。",
+    finished_label_setup_detection_retry: "重新检查",
     finished_label_setup_guide_path_label: "设置方法",
     finished_label_setup_guide_first_path: "首次设置",
     finished_label_setup_guide_installed_path: "已完成设置",
@@ -6133,7 +6181,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.944";
+var APP_VERSION       = "v1.1.945";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -6288,6 +6336,10 @@ var finishedLabelPrintDestinations = [];
 var finishedLabelPrintDestinationsTarget = "";
 var finishedLabelAgentOverviewRows = [];
 var finishedLabelSetupGuideTrigger = null;
+var finishedLabelSetupDetection = { state: "idle", checkedAt: 0 };
+var finishedLabelSetupDetectionRequestSeq = 0;
+var FINISHED_LABEL_SETUP_STATUS_URL = "http://127.0.0.1:37643/status";
+var FINISHED_LABEL_SETUP_STATUS_TIMEOUT_MS = 8000;
 var finishedLabelSelectedSiteCode = "";
 var finishedLabelPrintDestinationRequestSeq = 0;
 var finishedLabelPrintStationRunning = false;
@@ -27786,6 +27838,7 @@ async function deleteManufacturingCostList() {
 async function enterFinishedLabelMgmt(options) {
   if (!canViewFinishedLabelMgmt()) { alert(t("err_perm")); return; }
   showScreen("finished-label-mgmt");
+  probeFinishedLabelSetup({ selectGuide: false }).catch(function() {});
   renderFinishedLabelCategoryOptions();
   renderFinishedLabelEmpty();
   await loadFinishedLabelTemplates();
@@ -27814,6 +27867,88 @@ function setFinishedLabelSetupGuideView(view, focusTab) {
   if (launchNote && view !== "installed") launchNote.hidden = true;
 }
 
+function finishedLabelSetupDetectionKeys(state) {
+  if (state === "configured") return { badge: "finished_label_setup_detection_configured_badge", title: "finished_label_setup_detection_configured_title", desc: "finished_label_setup_detection_configured_desc" };
+  if (state === "attention") return { badge: "finished_label_setup_detection_attention_badge", title: "finished_label_setup_detection_attention_title", desc: "finished_label_setup_detection_attention_desc" };
+  if (state === "pc_only") return { badge: "finished_label_setup_detection_pc_only_badge", title: "finished_label_setup_detection_pc_only_title", desc: "finished_label_setup_detection_pc_only_desc" };
+  if (state === "unavailable") return { badge: "finished_label_setup_detection_unavailable_badge", title: "finished_label_setup_detection_unavailable_title", desc: "finished_label_setup_detection_unavailable_desc" };
+  return { badge: "finished_label_setup_detection_checking_badge", title: "finished_label_setup_detection_checking_title", desc: "finished_label_setup_detection_checking_desc" };
+}
+
+function renderFinishedLabelSetupDetection() {
+  var state = finishedLabelSetupDetection.state === "idle" ? "checking" : finishedLabelSetupDetection.state;
+  var keys = finishedLabelSetupDetectionKeys(state);
+  var detection = document.getElementById("finished-label-setup-detection");
+  if (detection) {
+    detection.className = "finished-label-setup-detection " + state;
+  }
+  var title = document.getElementById("finished-label-setup-detection-title");
+  var desc = document.getElementById("finished-label-setup-detection-desc");
+  if (title) { title.dataset.i18n = keys.title; title.textContent = t(keys.title); }
+  if (desc) { desc.dataset.i18n = keys.desc; desc.textContent = t(keys.desc); }
+  document.querySelectorAll("[data-label-printer-setup-state-badge]").forEach(function(badge) {
+    badge.className = "finished-label-setup-kicker " + state;
+    badge.dataset.i18n = keys.badge;
+    badge.textContent = t(keys.badge);
+  });
+  var retry = document.getElementById("btn-finished-label-setup-detection-retry");
+  if (retry) retry.disabled = state === "checking";
+}
+
+function selectFinishedLabelSetupGuideFromDetection(focusTab) {
+  var state = finishedLabelSetupDetection.state;
+  setFinishedLabelSetupGuideView(state === "configured" || state === "attention" ? "installed" : "first", focusTab);
+}
+
+async function probeFinishedLabelSetup(options) {
+  options = options || {};
+  var requestSeq = ++finishedLabelSetupDetectionRequestSeq;
+  if (isFinishedLabelMobilePrintClient()) {
+    finishedLabelSetupDetection = { state: "pc_only", checkedAt: Date.now() };
+    renderFinishedLabelSetupDetection();
+    if (options.selectGuide) selectFinishedLabelSetupGuideFromDetection(false);
+    return finishedLabelSetupDetection;
+  }
+
+  finishedLabelSetupDetection = { state: "checking", checkedAt: 0 };
+  renderFinishedLabelSetupDetection();
+  var controller = typeof AbortController === "function" ? new AbortController() : null;
+  var timeoutId = window.setTimeout(function() {
+    if (controller) controller.abort();
+  }, FINISHED_LABEL_SETUP_STATUS_TIMEOUT_MS);
+  try {
+    var response = await fetch(FINISHED_LABEL_SETUP_STATUS_URL, {
+      method: "GET",
+      mode: "cors",
+      cache: "no-store",
+      credentials: "omit",
+      referrerPolicy: "no-referrer",
+      targetAddressSpace: "loopback",
+      signal: controller ? controller.signal : undefined
+    });
+    if (!response.ok) throw new Error("Local print-station status returned HTTP " + response.status + ".");
+    var payload = await response.json();
+    if (!payload || payload.schemaVersion !== 1 || payload.product !== "dcats-finished-label-agent") {
+      throw new Error("Local print-station status is invalid.");
+    }
+    if (requestSeq !== finishedLabelSetupDetectionRequestSeq) return finishedLabelSetupDetection;
+    var configured = payload.state === "configured" && payload.setupComplete === true && payload.agentRunning === true;
+    finishedLabelSetupDetection = {
+      state: configured ? "configured" : "attention",
+      checkedAt: Date.now(),
+      configuredTargets: Array.isArray(payload.configuredTargets) ? payload.configuredTargets.slice(0, 2) : []
+    };
+  } catch (error) {
+    if (requestSeq !== finishedLabelSetupDetectionRequestSeq) return finishedLabelSetupDetection;
+    finishedLabelSetupDetection = { state: "unavailable", checkedAt: Date.now() };
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+  renderFinishedLabelSetupDetection();
+  if (options.selectGuide) selectFinishedLabelSetupGuideFromDetection(false);
+  return finishedLabelSetupDetection;
+}
+
 function showFinishedLabelSetupDownloadStatus() {
   try { sessionStorage.setItem("dcats_label_printer_setup_downloaded", "1"); } catch (error) {}
   var status = document.getElementById("finished-label-setup-guide-downloaded");
@@ -27824,7 +27959,11 @@ function openFinishedLabelSetupGuide(view, trigger) {
   var guide = document.getElementById("finished-label-setup-guide");
   if (!guide) return;
   finishedLabelSetupGuideTrigger = trigger || document.activeElement;
-  setFinishedLabelSetupGuideView(view, false);
+  if (finishedLabelSetupDetection.checkedAt && Date.now() - finishedLabelSetupDetection.checkedAt < 10000) {
+    selectFinishedLabelSetupGuideFromDetection(false);
+  } else {
+    setFinishedLabelSetupGuideView(view, false);
+  }
   var downloaded = false;
   try { downloaded = sessionStorage.getItem("dcats_label_printer_setup_downloaded") === "1"; } catch (error) {}
   var downloadStatus = document.getElementById("finished-label-setup-guide-downloaded");
@@ -27835,6 +27974,7 @@ function openFinishedLabelSetupGuide(view, trigger) {
     var activeTab = guide.querySelector('[role="tab"][aria-selected="true"]');
     if (activeTab) activeTab.focus();
   });
+  probeFinishedLabelSetup({ selectGuide: true }).catch(function() {});
 }
 
 function closeFinishedLabelSetupGuide() {
@@ -51272,6 +51412,9 @@ document.querySelectorAll("[data-label-printer-setup-download]").forEach(functio
 });
 document.querySelectorAll("[data-label-printer-setup-launch]").forEach(function(link) {
   link.addEventListener("click", markFinishedLabelSetupToolLaunch);
+});
+document.getElementById("btn-finished-label-setup-detection-retry").addEventListener("click", function() {
+  probeFinishedLabelSetup({ selectGuide: true }).catch(function() {});
 });
 document.getElementById("finished-label-setup-guide").addEventListener("keydown", function(event) {
   if (event.key === "Escape") closeFinishedLabelSetupGuide();

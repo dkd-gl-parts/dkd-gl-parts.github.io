@@ -5144,6 +5144,9 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .finished-label-setup-copy strong { color: #183e2f; font-size: 14px; }
 .finished-label-setup-copy div > span { color: #5b6d64; font-size: 11px; line-height: 1.5; }
 .finished-label-setup-kicker { display: inline-flex; flex: 0 0 auto; align-items: center; min-height: 24px; border-radius: 4px; padding: 3px 7px; background: #1c5c43; color: #fff; font-size: 10px; font-weight: 900; }
+.finished-label-setup-kicker.checking { background: #5c6b7a; }
+.finished-label-setup-kicker.attention { background: #9b690d; }
+.finished-label-setup-kicker.unavailable, .finished-label-setup-kicker.pc_only { background: #6b7280; }
 .finished-label-setup-actions, .finished-label-device-actions { display: flex; align-items: center; justify-content: flex-end; gap: 7px; flex-wrap: wrap; }
 .finished-label-setup-actions a, .finished-label-setup-actions button, .finished-label-device-actions a, .finished-label-device-actions button { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; text-decoration: none; white-space: nowrap; }
 .finished-label-setup-guide[hidden], .finished-label-setup-guide-panel[hidden], .finished-label-setup-guide-downloaded[hidden], .finished-label-setup-guide-launch-note[hidden] { display: none !important; }
@@ -5152,6 +5155,21 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .finished-label-setup-guide-card { position: relative; z-index: 1; width: min(100%, 760px); max-height: calc(100vh - 36px); max-height: calc(100dvh - 36px); overflow-y: auto; border: 1px solid #d6e0e8; border-radius: 8px; padding: 24px; background: #fff; color: #17233a; box-shadow: 0 24px 70px rgba(12, 24, 43, .28); }
 .finished-label-setup-guide-card > h2 { margin: 9px 42px 4px 0; color: #14213a; font-size: 22px; line-height: 1.35; }
 .finished-label-setup-guide-card > p { margin: 0; color: #637083; font-size: 13px; line-height: 1.6; }
+.finished-label-setup-detection { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; align-items: center; gap: 10px; margin-top: 14px; border: 1px solid #d7e0e8; border-left: 4px solid #64748b; border-radius: 6px; padding: 11px 12px; background: #f6f8fa; }
+.finished-label-setup-detection-indicator { width: 10px; height: 10px; border-radius: 50%; background: #64748b; }
+.finished-label-setup-detection > div { display: grid; gap: 2px; min-width: 0; }
+.finished-label-setup-detection strong { color: #253448; font-size: 13px; }
+.finished-label-setup-detection div > span { color: #5e6c7e; font-size: 11px; line-height: 1.5; }
+.finished-label-setup-detection.configured { border-left-color: #237b4b; background: #eff8f3; }
+.finished-label-setup-detection.configured .finished-label-setup-detection-indicator { background: #237b4b; }
+.finished-label-setup-detection.attention { border-left-color: #c58a17; background: #fff8e8; }
+.finished-label-setup-detection.attention .finished-label-setup-detection-indicator { background: #c58a17; }
+.finished-label-setup-detection.unavailable { border-left-color: #b54b4b; background: #fff3f3; }
+.finished-label-setup-detection.unavailable .finished-label-setup-detection-indicator { background: #b54b4b; }
+.finished-label-setup-detection.pc_only { border-left-color: #3677b7; background: #f1f6fb; }
+.finished-label-setup-detection.pc_only .finished-label-setup-detection-indicator { background: #3677b7; }
+.finished-label-setup-detection.checking .finished-label-setup-detection-indicator { animation: finished-label-setup-pulse 1s ease-in-out infinite alternate; }
+@keyframes finished-label-setup-pulse { from { opacity: .35; } to { opacity: 1; } }
 .finished-label-setup-guide-close { position: absolute; top: 14px; right: 14px; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 1px solid #cbd5df; border-radius: 50%; background: #fff; color: #526074; font-size: 15px; cursor: pointer; }
 .finished-label-setup-guide-close:hover { border-color: #8da0b3; background: #f3f6f8; }
 .finished-label-setup-guide-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 18px; border: 1px solid #aebdc9; border-radius: 6px; overflow: hidden; }
@@ -5435,6 +5453,8 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .finished-label-setup-guide-steps li { grid-template-columns: 30px minmax(0, 1fr); gap: 9px; padding: 11px 0; }
   .finished-label-setup-guide-step-number { width: 28px; height: 28px; }
   .finished-label-setup-guide-steps a, .finished-label-setup-guide-panel > .btn-primary { width: 100%; }
+  .finished-label-setup-detection { grid-template-columns: 12px minmax(0, 1fr); }
+  .finished-label-setup-detection > button { grid-column: 2; justify-self: start; }
 }
 @media (min-width: 1180px) and (min-height: 680px) {
   #screen-finished-label-mgmt.active { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
