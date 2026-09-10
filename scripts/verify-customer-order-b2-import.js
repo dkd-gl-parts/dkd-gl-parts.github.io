@@ -23,7 +23,6 @@ function between(start, end) {
   "sales-order-b2-import-guide-overlay",
   "sales-order-b2-import-guide-title",
   "sales-order-b2-import-guide-yamato",
-  "sales-order-b2-import-guide-issued-search",
   "sales-order-b2-import-guide-select-file",
   "sales-order-b2-import-guide-cancel"
 ].forEach((id) => {
@@ -42,10 +41,17 @@ if (!html.includes('href="https://bmypage.kuronekoyamato.co.jp/bmypage/"') ||
     !html.includes('target="_blank" rel="noopener noreferrer"')) {
   throw new Error("B2 download guidance must open the official Yamato page safely in a new tab");
 }
-if (!html.includes('id="sales-order-b2-import-guide-issued-search" href="https://newb2web.kuronekoyamato.co.jp/issue_search.html" target="_blank" rel="noopener noreferrer"') ||
-    !html.includes("ログイン後、下のボタンから「発行済データの検索」を直接開きます。")) {
-  throw new Error("B2 download guidance must link directly to Yamato's issued-data search after login");
+if (html.includes("newb2web.kuronekoyamato.co.jp/issue_search.html") ||
+    html.includes('id="sales-order-b2-import-guide-issued-search"')) {
+  throw new Error("B2 download guidance must not deep-link into Yamato's session-bound screens");
 }
+[
+  "ログイン後のマイページで「送り状発行システム B2クラウド」を押します。",
+  "B2クラウドのメインメニューで「発行済データの検索」を押し、対象を検索して「外部ファイル出力」でCSVをダウンロードします。",
+  "直接URLでは開けません。ヤマト画面は手順1で開いた同じタブのまま操作してください。"
+].forEach((fragment) => {
+  if (!html.includes(fragment)) throw new Error(`B2 session-safe navigation guidance is missing: ${fragment}`);
+});
 
 const openGuide = between("function openSalesOrderB2ImportGuide", "function closeSalesOrderB2ImportGuide");
 if (!openGuide.includes("canManageSalesOrders()") ||
@@ -150,6 +156,7 @@ if (!detailRender.includes("salesOrderShipmentHistoryHtml(order.shipment_history
   ".sales-order-b2-import-guide-card",
   ".sales-order-b2-import-guide-steps",
   ".sales-order-b2-import-guide-actions",
+  ".sales-order-b2-import-guide-warning",
   ".sales-order-shipment-history-row",
   ".customer-default-shipping-grid",
   "@media (max-width: 560px)"
