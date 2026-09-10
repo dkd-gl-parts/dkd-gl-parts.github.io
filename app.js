@@ -6181,7 +6181,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.957";
+var APP_VERSION       = "v1.1.958";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -16312,9 +16312,9 @@ function salesOrderPrintJobsHtml(order) {
       "<span class='sales-order-print-job-status " + esc(job.status || "") + "'>" + esc(salesOrderPrintJobStatusLabel(job.status)) + "</span>" +
       "<time>" + esc(dateText ? customerOrderDateTimeText(dateText) : "-") + (job.last_error ? " / " + esc(job.last_error) : "") + "</time></div>";
   }).join("") : "<p class='sales-order-dispatch-empty'>印刷端末への送信履歴はありません。画面からの印刷は上のボタンを使用できます。</p>";
-  return "<div class='sales-order-print-jobs'><div class='sales-order-print-jobs-head'><strong>印刷端末への送信</strong>" +
-    (salesOrderDispatch(order) ? "<button type='button' id='sales-order-requeue-print'>印刷端末へ再送</button>" : "") +
-    "</div>" + rows + "</div>";
+  return "<details class='sales-order-print-jobs'><summary><strong>印刷端末への送信</strong></summary><div class='sales-order-print-jobs-content'>" +
+    (salesOrderDispatch(order) ? "<div class='sales-order-print-jobs-actions'><button type='button' id='sales-order-requeue-print'>印刷端末へ再送</button></div>" : "") +
+    rows + "</div></details>";
 }
 
 function salesOrderWaybillProgress(order, purpose) {
@@ -16364,10 +16364,15 @@ function salesOrderWaybillProgress(order, purpose) {
 }
 
 function salesOrderWaybillProgressHtml(order) {
-  var rows = [salesOrderWaybillProgress(order, "outbound"), salesOrderWaybillProgress(order, "core_return")];
+  var outboundRow = salesOrderWaybillProgress(order, "outbound");
+  var returnRow = salesOrderWaybillProgress(order, "core_return");
+  var returnNotApplicable = returnRow.status === "対象外";
+  var rows = returnNotApplicable ? [outboundRow] : [outboundRow, returnRow];
   return "<section class='sales-order-waybill-progress' aria-labelledby='sales-order-waybill-progress-title'>" +
-    "<div class='sales-order-waybill-progress-heading'><div><h4 id='sales-order-waybill-progress-title'>発送・返却の送り状進捗</h4><p>B2送り状と複写送り状を、運送会社・発行方法ごとに表示します。</p></div></div>" +
-    "<div class='sales-order-waybill-progress-grid'>" + rows.map(function(row) {
+    "<div class='sales-order-waybill-progress-heading'><h4 id='sales-order-waybill-progress-title'>発送・返却の送り状進捗</h4>" +
+      (returnNotApplicable ? "<div class='sales-order-waybill-not-applicable'><span>返却用送り状</span><strong>対象外</strong></div>" : "") +
+    "</div>" +
+    "<div class='sales-order-waybill-progress-grid" + (returnNotApplicable ? " outbound-only" : "") + "'>" + rows.map(function(row) {
       var outbound = row.purpose === "outbound";
       var numberLabel = row.method === "B2クラウド" ? "B2送り状番号" : "複写送り状番号";
       var scheduleLabel = row.method === "B2クラウド" ? "B2出荷予定日" : "出荷予定日";
@@ -16404,7 +16409,7 @@ function salesOrderDispatchHtml(order) {
     if (canWork) controls += "<button type='button' class='sales-order-dispatch-primary' id='sales-order-open-serial-warranty'>出荷照合を開く</button>";
   }
   return "<section class='sales-order-detail-section sales-order-dispatch' id='sales-order-detail-fulfillment'>" +
-    "<div class='sales-order-dispatch-head'><div><h3>出荷指示・現場照合</h3><p>出荷指示書、送り状、製造シリアルを一つの出荷処理として管理します。</p></div>" +
+    "<div class='sales-order-dispatch-head'><h3>出荷指示・現場照合</h3>" +
     "<span class='sales-order-dispatch-status " + esc(dispatch ? dispatch.status : "unissued") + "'>" + esc(salesOrderDispatchStatusLabel(dispatch && dispatch.status)) + "</span></div>" +
     (dispatch ? "<div class='sales-order-dispatch-summary'><div><span>出荷指示番号</span><strong>" + esc(dispatch.dispatch_number) + "</strong></div><div><span>リビルト品の照合</span><strong>" + esc(String(assignedQuantity)) + " / " + esc(String(rebuiltQuantity)) + "</strong></div></div>" : "<p class='sales-order-dispatch-empty'>受注受付後に出荷指示書を発行してください。スキャナーがない場合も番号入力と候補選択で作業できます。</p>") +
     salesOrderWaybillProgressHtml(order) +
@@ -16548,7 +16553,7 @@ function renderSalesOrderDetail() {
     ? "<button type='button' class='sales-order-pricing-open' id='sales-order-revision-open'>受注修正</button>" : "";
   var nextActions = actions || cancelAction
     ? "<div class='sales-order-detail-next-actions'><span>次の操作</span><div>" + actions + cancelAction + "</div></div>"
-    : "<div class='sales-order-detail-next-actions complete'><span>次の操作</span><strong>現在必要な操作はありません</strong></div>";
+    : "";
   var lifecycle = salesOrderLifecycleHtml(order.status);
   var compactTotal = "<div class='sales-order-detail-total'><span>請求合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div>";
   var tabHtml = [
@@ -16561,8 +16566,7 @@ function renderSalesOrderDetail() {
     return "<button type='button' role='tab' id='sales-order-detail-tab-" + tab.key + "' aria-controls='" + panelId + "' aria-selected='" + (selected ? "true" : "false") + "' tabindex='" + (selected ? "0" : "-1") + "' data-sales-order-detail-view='" + tab.key + "'>" + tab.label + "</button>";
   }).join("");
   host.innerHTML = "<div class='sales-order-detail-head'><div class='sales-order-detail-identity'><div class='sales-order-detail-meta'><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "</div><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div>" + lifecycle + "<div class='sales-order-detail-state'><div class='sales-order-detail-state-summary'>" + salesOrderStatusSummaryHtml(order) + compactTotal + "</div>" + nextActions + "</div></div>" +
-    salesOrderWorkspaceNavigationHtml("sales-order") +
-    "<nav class='sales-order-detail-nav' role='tablist' aria-label='注文詳細の作業項目'>" + tabHtml + "</nav>" +
+    "<div class='sales-order-detail-navigation'><nav class='sales-order-detail-nav' role='tablist' aria-label='注文詳細の作業項目'>" + tabHtml + "</nav>" + salesOrderWorkspaceNavigationHtml("sales-order") + "</div>" +
     "<div class='sales-order-detail-panels'>" +
       "<section class='sales-order-detail-panel sales-order-detail-overview' id='sales-order-detail-panel-overview' role='tabpanel' aria-labelledby='sales-order-detail-tab-overview' data-sales-order-detail-panel='overview'><div class='sales-order-detail-overview-grid'>" +
         "<section class='sales-order-detail-section sales-order-billing' id='sales-order-detail-products'><div class='sales-order-section-heading'><div><h3>請求明細</h3><p>商品、コア代金、値引・調整、送料、税を明細行で確認します。</p></div>" + pricingButton + "</div>" + salesOrderBillingDetailsHtml(order, orderAdjustments, orderDiscount) + "</section>" +

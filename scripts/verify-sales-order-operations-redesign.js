@@ -189,9 +189,14 @@ const notApplicableHtml = waybillContext.salesOrderWaybillProgressHtml({
   core_return_required: false,
   outbound_waybill: { handling_method: "b2_cloud" }
 });
-const returnCard = notApplicableHtml.split("data-waybill-purpose='core_return'")[1] || "";
-if (!returnCard.includes("返却用送り状") || !returnCard.includes("<dd>対象外</dd>") || returnCard.includes("番号の登録・変更")) {
-  throw new Error("A return waybill that is not required must show an applicable-free number state without registration guidance");
+if (notApplicableHtml.includes("data-waybill-purpose='core_return'")) {
+  throw new Error("A return waybill that is not required must not consume a full work card");
+}
+for (const fragment of ["sales-order-waybill-progress-grid outbound-only", "sales-order-waybill-not-applicable", "返却用送り状", "対象外"]) {
+  requireFragment(notApplicableHtml, fragment, `Compact non-applicable return state is missing: ${fragment}`);
+}
+if (notApplicableHtml.includes("番号の登録・変更")) {
+  throw new Error("A non-applicable return waybill must not show registration guidance");
 }
 const savedNumberHtml = waybillContext.salesOrderWaybillProgressHtml({
   core_return_required: false,

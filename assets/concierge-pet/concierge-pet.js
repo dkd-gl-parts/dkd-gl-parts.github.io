@@ -925,7 +925,7 @@
   }
 
   function collectExclusionRects() {
-    var selectors = "button,input,select,textarea,a[href],summary,[role='button'],[role='link'],[role='dialog'],[tabindex]:not([tabindex='-1']),[data-production-index],.form-overlay,.overlay.show,.panel.show,.fullscreen,.toast,.loading-overlay";
+    var selectors = "button,input,select,textarea,a[href],summary,[role='button'],[role='link'],[role='dialog'],[tabindex]:not([tabindex='-1']),[data-production-index],.sales-order-detail-head,.sales-order-dispatch-summary,.sales-order-waybill-progress,.form-overlay,.overlay.show,.panel.show,.fullscreen,.toast,.loading-overlay";
     var rects = [];
     if (!isFloatingWindowOpen()) {
       var active = document.querySelector(".screen.active");
