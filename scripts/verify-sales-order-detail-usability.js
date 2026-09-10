@@ -171,6 +171,10 @@ for (const fragment of [
 if (source.includes("送り状番号の登録だけでは在庫を減らしません")) {
   throw new Error("The obsolete stock notice must not be shown beside waybill registration");
 }
+if (source.includes("複写送り状に記載された番号を確認・登録できます。")) {
+  throw new Error("The redundant manual-waybill description must not be shown");
+}
+requireFragment(waybillProgress, '(description ? "<p>" + esc(description) + "</p>" : "")');
 const carrierLabel = functionSource("salesOrderWaybillCarrierLabel");
 for (const fragment of [
   "yamato_prepaid",
@@ -292,7 +296,8 @@ for (const fragment of [
   ".sales-order-billing-summary",
   ".sales-order-detail-total",
   ".sales-order-waybill-detail",
-  ".sales-order-waybill-progress-editor .sales-order-tracking-grid { grid-template-columns: minmax(0, 1fr) minmax(125px, 145px) minmax(136px, max-content);",
+  ".sales-order-waybill-progress-editor .sales-order-tracking-grid { grid-template-columns: minmax(0, 1fr) minmax(125px, 145px) minmax(136px, max-content); gap: 7px; margin-top: 0;",
+  ".sales-order-waybill-progress-editor > p + .sales-order-tracking-grid { margin-top: 7px; }",
   ".sales-order-waybill-progress-editor .sales-order-tracking-grid > * { min-width: 0; }",
   ".sales-order-waybill-progress-editor .sales-order-tracking-grid button { width: 100%;",
   ".sales-order-detail-overview { overflow: hidden; }",
