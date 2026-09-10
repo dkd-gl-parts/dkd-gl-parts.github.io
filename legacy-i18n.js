@@ -2216,7 +2216,7 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "返却待ち": "Waiting for return",
     "返却不要の注文は対象外": "Orders that do not require return are excluded",
     "返却免除": "Return exemption",
-    "返却用送り状": "Return shipping label",
+    "返却用送り状": "Return Waybill",
     "返却用送り状番号": "Return shipping label number",
     "返却用複写伝票": "Return duplicate slip",
     "返金確認へ": "Proceed to refund confirmation",
@@ -2857,7 +2857,12 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "例：〇〇営業所": "Example: XX Sales Office",
     "営業所の郵便番号・都道府県・所在地は、下の住所欄に入力してください。": "Enter the sales office postal code, prefecture, and address in the address fields below.",
     "ヤマト営業所コードを6桁の数字で入力してください。": "Enter the 6-digit Yamato sales office code.",
-    "ヤマト営業所名を入力してください。": "Enter the Yamato sales office name."
+    "ヤマト営業所名を入力してください。": "Enter the Yamato sales office name.",
+    "発送用送り状": "Outbound Waybill",
+    "送り状番号を登録": "Register Waybill Number",
+    "送り状番号の登録だけでは在庫を減らしません。": "Registering a waybill number does not reduce inventory.",
+    "番号の登録・変更は「出荷帳票発行」で行います。": "Register or change the number in Shipping Documents.",
+    "発送用送り状の番号は12桁で入力してください。": "Enter the 12-digit outbound waybill number."
   },
   "zh": {
     "再発行が必要": "需要重新签发",
@@ -5715,6 +5720,11 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "例：〇〇営業所": "例：〇〇营业所",
     "営業所の郵便番号・都道府県・所在地は、下の住所欄に入力してください。": "请在下方地址栏输入营业所的邮政编码、都道府县和地址。",
     "ヤマト営業所コードを6桁の数字で入力してください。": "请输入6位雅玛多营业所代码。",
-    "ヤマト営業所名を入力してください。": "请输入雅玛多营业所名称。"
+    "ヤマト営業所名を入力してください。": "请输入雅玛多营业所名称。",
+    "発送用送り状": "发货用运单",
+    "送り状番号を登録": "登记运单号码",
+    "送り状番号の登録だけでは在庫を減らしません。": "仅登记运单号码不会减少库存。",
+    "番号の登録・変更は「出荷帳票発行」で行います。": "请在“出货单据发行”中登记或修改号码。",
+    "発送用送り状の番号は12桁で入力してください。": "请输入12位发货用运单号码。"
   }
 };
