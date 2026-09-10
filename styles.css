@@ -6777,7 +6777,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-b2-import-guide-steps small { display: block; min-width: 0; }
 .sales-order-b2-import-guide-steps strong { color: #26362f; font-size: 11px; line-height: 1.4; }
 .sales-order-b2-import-guide-steps small { margin-top: 4px; color: #68766f; font-size: 9px; line-height: 1.55; }
-.sales-order-b2-import-guide-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 2px 20px 12px; }
+.sales-order-b2-import-guide-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 2px 20px 12px; }
 .sales-order-b2-import-guide-actions > a,
 .sales-order-b2-import-guide-actions > button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; border-radius: 6px; padding: 8px 12px; font-size: 11px; font-weight: 900; line-height: 1.35; text-align: center; text-decoration: none; cursor: pointer; }
 .sales-order-b2-import-guide-actions > a { border: 1px solid #287356; background: #fff; color: #1f6248; }
@@ -6787,6 +6787,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-b2-import-guide-actions > button:hover { background: #1f6248; }
 .sales-order-b2-import-guide-actions > :focus-visible,
 .sales-order-b2-import-guide-heading > button:focus-visible { outline: 3px solid rgba(40,115,86,.25); outline-offset: 2px; }
+.sales-order-b2-import-guide-warning { margin: 0 20px 8px; border-left: 3px solid #c98518; padding: 7px 9px; background: #fff8e8; color: #77520f; font-size: 9px; font-weight: 700; line-height: 1.5; }
 .sales-order-b2-import-guide-security { margin: 0 20px; border-left: 3px solid #7a93aa; padding: 7px 9px; background: #f4f7fa; color: #526473; font-size: 9px; line-height: 1.5; }
 .sales-order-b2-import-guide-card .form-footer { margin: 12px 0 0; padding: 12px 20px; }
 .sales-order-accounting-button { min-height: 38px; border: 1px solid #6b4f1d; border-radius: 6px; padding: 0 13px; background: #fffaf0; color: #694b12; font-size: 11px; font-weight: 800; cursor: pointer; white-space: nowrap; }
@@ -6845,6 +6846,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .sales-order-b2-import-guide-actions { grid-template-columns: 1fr; padding: 0 14px 10px; }
   .sales-order-b2-import-guide-actions > a,
   .sales-order-b2-import-guide-actions > button { width: 100%; min-height: 44px; }
+  .sales-order-b2-import-guide-warning,
   .sales-order-b2-import-guide-security { margin: 0 14px; }
   .sales-order-b2-import-guide-card .form-footer { margin-top: 10px; padding: 10px 14px; }
   .sales-order-b2-import-guide-card .form-footer button { width: 100%; }
