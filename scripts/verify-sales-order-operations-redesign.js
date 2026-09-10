@@ -108,7 +108,7 @@ const statusSummarySource = functionSource("salesOrderStatusSummaryHtml");
 const statusContext = {
   salesOrderDispatch: (order) => order && order.dispatch || null,
   salesOrderDispatchStatusLabel: (status) => ({ preparing: "シリアル照合待ち", ready: "照合完了・出荷確定待ち" })[status] || "未発行",
-  salesOrderWaybillProgress: () => ({ trackingNumber: "", status: "B2取込待ち" }),
+  salesOrderWaybillProgress: () => ({ trackingNumber: "", status: "発送データ未取込" }),
   customerOrderStatusLabel: (status) => status === "shipping_ready" ? "出荷処理中" : status,
   esc: (value) => String(value == null ? "" : value)
 };
@@ -119,7 +119,7 @@ if (!activeSummary.includes("出荷処理中") || !activeSummary.includes("シ�
   throw new Error("Shipping progress must show both the broad order state and the current operational step");
 }
 const b2PendingSummary = statusContext.salesOrderStatusSummaryHtml({ status: "shipping_ready", dispatch: { status: "shipped" } });
-if (!b2PendingSummary.includes("B2取込待ち")) {
+if (!b2PendingSummary.includes("発送データ未取込")) {
   throw new Error("A shipping-ready order that completed serial matching must surface the remaining waybill step");
 }
 if (statusContext.salesOrderStatusSummaryHtml({ status: "shipped" }).includes("<small>")) {
@@ -146,11 +146,11 @@ const waybillContext = {
 vm.createContext(waybillContext);
 vm.runInContext(waybillProgressSource + "\n" + waybillProgressHtmlSource, waybillContext);
 const b2Pending = waybillContext.salesOrderWaybillProgress({
-  outbound_waybill: { handling_method: "b2_cloud" },
+  outbound_waybill: {},
   b2_exports: [{ created_at: "2026-09-10T00:00:00Z" }]
 }, "outbound");
-if (b2Pending.status !== "B2取込待ち") {
-  throw new Error("Issued B2 data without a tracking number must be labeled B2 import pending");
+if (b2Pending.method !== "B2クラウド" || b2Pending.status !== "発送データ未取込") {
+  throw new Error("Issued B2 data must infer B2 Cloud and show that shipment data has not been imported");
 }
 if (b2Pending.purpose !== "outbound" || b2Pending.label !== "発送用送り状") {
   throw new Error("Outbound waybill progress must use a stable purpose key and the requested label");
@@ -167,7 +167,7 @@ if (multipartMissing.purpose !== "core_return" || multipartMissing.label !== "�
 }
 const progressHtml = waybillContext.salesOrderWaybillProgressHtml({
   core_return_required: true,
-  outbound_waybill: { handling_method: "b2_cloud" },
+  outbound_waybill: {},
   return_waybill: { handling_method: "dot_matrix" },
   b2_exports: [{ created_at: "2026-09-10T00:00:00Z" }]
 });
@@ -176,7 +176,7 @@ for (const fragment of [
   "data-waybill-purpose='core_return'",
   "ヤマト運輸 / 宅急便 元払い",
   "佐川急便 / 飛脚宅配便 着払い",
-  "B2取込待ち",
+  "発送データ未取込",
   "複写送り状番号未登録",
   "発送用送り状",
   "返却用送り状",

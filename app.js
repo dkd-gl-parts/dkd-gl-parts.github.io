@@ -6181,7 +6181,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.956";
+var APP_VERSION       = "v1.1.957";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -10390,11 +10390,12 @@ function salesOrderWaybillDetailLabel(order, purpose) {
   order = order || {};
   if (purpose === "core_return" && !order.core_return_required) return "返却用伝票なし";
   var waybill = salesOrderWaybillRecord(order, purpose);
-  var method = waybill.handling_method || (purpose === "core_return" ? order.return_waybill_method : order.outbound_waybill_method) || "";
+  var b2Issued = purpose === "outbound" && Array.isArray(order.b2_exports) && order.b2_exports.length > 0;
+  var method = waybill.handling_method || (purpose === "core_return" ? order.return_waybill_method : order.outbound_waybill_method) || (b2Issued ? "b2_cloud" : "");
   var methodLabel = ({ b2_cloud: "B2クラウド", dot_matrix: "ドットプリンタ", handwritten: "手書き運用" })[method] || "発行方法未設定";
   var trackingNumber = waybill.tracking_number || (purpose === "outbound" ? order.outbound_tracking_number : order.return_tracking_number) || "";
   var parts = [methodLabel];
-  if (method === "b2_cloud" && Array.isArray(order.b2_exports) && order.b2_exports.length) parts.push("B2 CSV発行済み");
+  if (method === "b2_cloud" && b2Issued) parts.push("B2 CSV発行済み");
   if (purpose === "core_return") parts.push(shippingDocumentReturnWaybillCopyCount(order) + "枚");
   parts.push(trackingNumber ? "伝票番号 " + trackingNumber : "伝票番号未登録");
   return parts.join(" / ");
@@ -16323,15 +16324,15 @@ function salesOrderWaybillProgress(order, purpose) {
     return { purpose: "core_return", label: "返却用送り状", carrier: "-", method: "-", trackingNumber: "", status: "対象外", tone: "neutral" };
   }
   var waybill = salesOrderWaybillRecord(order, purpose);
-  var method = waybill.handling_method || (coreReturn ? order.return_waybill_method : order.outbound_waybill_method) || "";
+  var b2Issued = !coreReturn && Array.isArray(order.b2_exports) && order.b2_exports.length > 0;
+  var method = waybill.handling_method || (coreReturn ? order.return_waybill_method : order.outbound_waybill_method) || (b2Issued ? "b2_cloud" : "");
   var methodLabel = ({ b2_cloud: "B2クラウド", dot_matrix: "ドットプリンタ", handwritten: "手書き運用" })[method] || "発行方法未設定";
   var trackingNumber = String(waybill.tracking_number || (coreReturn ? order.return_tracking_number : order.outbound_tracking_number) || "").trim();
   var printJob = shippingDocumentPrintJob(order, coreReturn ? "return_waybill" : "outbound_waybill");
   var status = "発行方法未設定";
   var tone = "warning";
   if (method === "b2_cloud") {
-    var b2Issued = Array.isArray(order.b2_exports) && order.b2_exports.length > 0;
-    status = trackingNumber ? "B2取込済み" : b2Issued ? "B2取込待ち" : "B2 CSV未発行";
+    status = trackingNumber ? "発送データ取込済み" : b2Issued ? "発送データ未取込" : "B2 CSV未発行";
     tone = trackingNumber ? "success" : "warning";
   } else if (method === "dot_matrix") {
     if (!trackingNumber) {

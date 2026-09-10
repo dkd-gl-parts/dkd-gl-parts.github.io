@@ -2877,7 +2877,9 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "送り状番号の登録だけでは在庫を減らしません。": "Registering a waybill number does not reduce inventory.",
     "番号の登録・変更は「出荷帳票発行」で行います。": "Register or change the number in Shipping Documents.",
     "発送用送り状の番号は12桁で入力してください。": "Enter the 12-digit outbound waybill number.",
-    "商品、コア代金、値引・調整、送料、税を明細行で確認します。": "Review products, core charges, adjustments, shipping, and tax as itemized rows."
+    "商品、コア代金、値引・調整、送料、税を明細行で確認します。": "Review products, core charges, adjustments, shipping, and tax as itemized rows.",
+    "発送データ取込済み": "Shipping Data Imported",
+    "発送データ未取込": "Shipping Data Not Imported"
   },
   "zh": {
     "再発行が必要": "需要重新签发",
@@ -5755,6 +5757,8 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "送り状番号の登録だけでは在庫を減らしません。": "仅登记运单号码不会减少库存。",
     "番号の登録・変更は「出荷帳票発行」で行います。": "请在“出货单据发行”中登记或修改号码。",
     "発送用送り状の番号は12桁で入力してください。": "请输入12位发货用运单号码。",
-    "商品、コア代金、値引・調整、送料、税を明細行で確認します。": "以明细行查看商品、旧件费用、折扣调整、运费和税额。"
+    "商品、コア代金、値引・調整、送料、税を明細行で確認します。": "以明细行查看商品、旧件费用、折扣调整、运费和税额。",
+    "発送データ取込済み": "发货数据已导入",
+    "発送データ未取込": "发货数据未导入"
   }
 };
