@@ -7003,30 +7003,19 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-core { justify-self: end; border: 1px solid #c8d1cc; border-radius: 4px; padding: 2px 5px; color: #65716b; font-size: 9px; font-weight: 800; }
 .sales-order-core.required { border-color: #ef9a91; background: #fff3f1; color: #b42318; }
 .sales-order-core.charged { border-color: #d2a543; background: #fff8df; color: #76520d; white-space: nowrap; }
-.sales-order-adjustment-table { margin-top: 10px; border: 1px solid #e0c5c1; background: #fffafa; }
-.sales-order-adjustment-head,
-.sales-order-adjustment-row { display: grid; grid-template-columns: minmax(130px, .6fr) minmax(180px, 1fr) 120px; align-items: center; gap: 10px; min-height: 34px; padding: 7px 10px; }
-.sales-order-adjustment-head { background: #fff1ef; color: #865049; font-size: 9px; font-weight: 800; }
-.sales-order-adjustment-row { border-top: 1px solid #ecd8d5; color: #4f3a37; font-size: 10px; }
-.sales-order-adjustment-row > span { overflow-wrap: anywhere; color: #7a625e; }
-.sales-order-adjustment-row > strong:last-child { color: #a13b30; text-align: right; white-space: nowrap; }
-.sales-order-billing-summary { margin-top: 12px; border: 1px solid #ccd8d1; background: #fff; }
-.sales-order-billing-summary-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid #dce5e0; padding: 8px 10px; background: #f5f9f7; }
-.sales-order-billing-summary-head strong { color: #28483a; font-size: 11px; }
-.sales-order-billing-summary-head span { color: #6c7872; font-size: 9px; line-height: 1.4; text-align: right; }
-.sales-order-billing-summary dl { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 0; }
-.sales-order-billing-summary dl > div { display: grid; align-content: space-between; min-width: 0; min-height: 62px; border-right: 1px solid #e0e6e2; padding: 8px 10px; text-align: right; }
-.sales-order-billing-summary dl > div:last-child { border-right: 0; }
-.sales-order-billing-summary dt { color: #65726c; font-size: 9px; font-weight: 800; }
-.sales-order-billing-summary dt small { display: block; margin-top: 2px; overflow-wrap: anywhere; color: #77827d; font-size: 8px; font-weight: 600; line-height: 1.35; }
-.sales-order-billing-summary dd { margin: 4px 0 0; color: #26352e; font-size: 13px; font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.sales-order-billing-summary .core-charge dd { color: #865b0a; }
-.sales-order-billing-summary .discount dd { color: #a13b30; }
-.sales-order-billing-summary .shipping { background: #fbfcfb; }
-.sales-order-billing-summary .total { background: #eaf5ef; }
-.sales-order-billing-summary .total dt,
-.sales-order-billing-summary .total dd { color: #175d3d; }
-.sales-order-billing-summary .total dd { font-size: 16px; }
+.sales-order-charge-row { background: #fbfcfc; }
+.sales-order-charge-row > div strong { color: #3c4a43; }
+.sales-order-charge-row > span:last-child { color: #7a858e; text-align: center; }
+.sales-order-adjustment-row { border-left: 3px solid #c96a61; padding-left: 7px; background: #fff8f7; }
+.sales-order-adjustment-row > div strong,
+.sales-order-adjustment-row > span:nth-child(4),
+.sales-order-adjustment-row > strong:nth-child(5) { color: #a13b30; }
+.sales-order-shipping-row { border-top: 2px solid #cdd8d2; }
+.sales-order-shipping-row > div strong { color: #285b45; }
+.sales-order-tax-row > div strong { color: #425066; }
+.sales-order-total-row { border-top: 2px solid #8bb19e; background: #eaf5ef; }
+.sales-order-total-row > div strong,
+.sales-order-total-row > strong:nth-child(5) { color: #175d3d; font-weight: 900; }
 .sales-order-address { display: grid; grid-template-columns: minmax(250px, 1fr) minmax(220px, .8fr); gap: 8px 28px; border-top: 1px solid #dbe1e6; padding-top: 18px; }
 .sales-order-address h3 { grid-column: 1 / -1; }
 .sales-order-address p { color: #344054; font-size: 11px; line-height: 1.7; }
@@ -8108,9 +8097,6 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .sales-order-pricing-adjustment-row { grid-template-columns: 1fr 1fr; }
   .sales-order-pricing-adjustment-row label:nth-child(3) { grid-column: 1 / -1; }
   .sales-order-pricing-adjustment-row button { grid-column: 1 / -1; width: 100%; }
-  .sales-order-adjustment-table { overflow-x: auto; }
-  .sales-order-adjustment-head,
-  .sales-order-adjustment-row { min-width: 520px; }
   .sales-order-pricing-order-fields { grid-template-columns: 1fr; }
   .sales-order-pricing-preview { grid-template-columns: 1fr 1fr; }
   .sales-order-pricing-preview > div:nth-child(even) { border-right: 0; }
@@ -9480,14 +9466,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-item-row > div small { margin-top: 2px; font-size: 12px; line-height: 1.4; }
   #screen-sales-order-mgmt .sales-order-core { padding: 3px 6px; font-size: 12px; line-height: 1.35; word-break: keep-all; overflow-wrap: anywhere; }
   #screen-sales-order-mgmt .sales-order-core-charge-row { min-height: 52px; border-left: 3px solid #d2a543; background: #fffaf0; }
-  #screen-sales-order-mgmt .sales-order-adjustment-head { font-size: 12px; }
-  #screen-sales-order-mgmt .sales-order-adjustment-row { min-height: 42px; font-size: 14px; line-height: 1.45; }
-  #screen-sales-order-mgmt .sales-order-billing-summary-head strong { font-size: 14px; line-height: 1.4; }
-  #screen-sales-order-mgmt .sales-order-billing-summary-head span { font-size: 12px; line-height: 1.45; }
-  #screen-sales-order-mgmt .sales-order-billing-summary dt { font-size: 12px; line-height: 1.4; }
-  #screen-sales-order-mgmt .sales-order-billing-summary dt small { font-size: 12px; line-height: 1.35; }
-  #screen-sales-order-mgmt .sales-order-billing-summary dd { font-size: 15px; line-height: 1.4; }
-  #screen-sales-order-mgmt .sales-order-billing-summary .total dd { font-size: 18px; }
+  #screen-sales-order-mgmt .sales-order-total-row > strong:nth-child(5) { font-size: 18px; }
 
   #screen-sales-order-mgmt .sales-order-address { grid-template-columns: minmax(280px, 1.1fr) minmax(280px, 1fr); gap: 14px 28px; }
   #screen-sales-order-mgmt .sales-order-address-destination { gap: 5px; padding: 11px 12px; }
@@ -9597,9 +9576,6 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-selection-controls { grid-column: 1 / 3; grid-row: 2; justify-self: start; }
   #screen-sales-order-mgmt .sales-order-data-actions { grid-column: 3; grid-row: 1; }
   #screen-sales-order-mgmt .sales-order-batch-message { grid-row: 3; }
-  #screen-sales-order-mgmt .sales-order-billing-summary dl { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  #screen-sales-order-mgmt .sales-order-billing-summary dl > div { border-bottom: 1px solid #e0e6e2; }
-  #screen-sales-order-mgmt .sales-order-billing-summary dl > div:nth-child(3n) { border-right: 0; }
 }
 
 @media screen and (max-width: 1359px) and (min-width: 821px) {
@@ -9645,12 +9621,6 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-detail-next-actions { align-items: stretch; flex-direction: column; border-left: 0; padding-left: 0; }
   #screen-sales-order-mgmt .sales-order-detail-next-actions > div { justify-content: stretch; }
   #screen-sales-order-mgmt .sales-order-detail-next-actions .sales-order-action { flex: 1 1 auto; white-space: normal; }
-  #screen-sales-order-mgmt .sales-order-billing-summary-head { align-items: flex-start; flex-direction: column; }
-  #screen-sales-order-mgmt .sales-order-billing-summary-head span { text-align: left; }
-  #screen-sales-order-mgmt .sales-order-billing-summary dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  #screen-sales-order-mgmt .sales-order-billing-summary dl > div,
-  #screen-sales-order-mgmt .sales-order-billing-summary dl > div:nth-child(3n) { border-right: 1px solid #e0e6e2; }
-  #screen-sales-order-mgmt .sales-order-billing-summary dl > div:nth-child(even) { border-right: 0; }
   #screen-sales-order-mgmt .sales-order-detail-nav { overflow-x: auto; }
   #screen-sales-order-mgmt .sales-order-detail-nav button { flex: 1 0 auto; justify-content: center; }
   #screen-sales-order-mgmt .sales-order-address { grid-template-columns: 1fr; }

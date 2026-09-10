@@ -38,12 +38,11 @@ for (const fragment of [
   "salesOrderCanRevise(order)",
   "受注修正",
   "値引・調整",
-  "salesOrderAdjustmentRowsHtml(orderAdjustments, orderDiscount)",
-  "salesOrderBillingSummaryHtml(order)",
+  "salesOrderBillingDetailsHtml(order, orderAdjustments, orderDiscount)",
   "salesOrderPricingHistoryHtml(order.pricing_adjustments)"
 ]) requireFragment(detail, fragment);
 for (const fragment of ["送料無料", "送料", "請求合計"]) {
-  requireFragment(functionSource("salesOrderBillingSummaryHtml"), fragment);
+  requireFragment(functionSource("salesOrderBillingDetailRowsHtml"), fragment);
 }
 
 const editor = functionSource("salesOrderPricingEditorHtml");
@@ -102,7 +101,8 @@ for (const fragment of [
   ".sales-order-pricing-item",
   ".sales-order-pricing-adjustment-row",
   ".sales-order-pricing-adjustment-add",
-  ".sales-order-adjustment-table",
+  ".sales-order-charge-row",
+  ".sales-order-adjustment-row",
   ".sales-order-pricing-preview",
   ".sales-order-pricing-history-row",
   ".sales-order-pricing-shipping-input"

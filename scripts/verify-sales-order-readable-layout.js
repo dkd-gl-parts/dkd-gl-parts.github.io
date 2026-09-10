@@ -31,9 +31,7 @@ for (const fragment of [
   ".sales-order-item-row { min-height: 64px; font-size: 15px;",
   ".sales-order-item-row > div small { margin-top: 2px; font-size: 12px;",
   ".sales-order-core-charge-row { min-height: 52px; border-left: 3px solid #d2a543;",
-  ".sales-order-billing-summary-head strong { font-size: 14px;",
-  ".sales-order-billing-summary dt { font-size: 12px;",
-  ".sales-order-billing-summary dd { font-size: 15px;",
+  ".sales-order-total-row > strong:nth-child(5) { font-size: 18px; }",
   "word-break: keep-all; overflow-wrap: anywhere;",
   "@media screen and (min-width: 1081px)",
   "@media screen and (min-width: 1200px)",
@@ -52,9 +50,20 @@ for (const fragment of [
   "@media screen and (max-width: 1199px)",
   "@media screen and (max-width: 820px)",
   ".sales-order-dashboard-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));",
-  ".sales-order-billing-summary dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }",
   ".sales-order-address { grid-template-columns: 1fr; }"
 ]) requireFragment(fragment);
+
+for (const fragment of [
+  ".sales-order-charge-row { background: #fbfcfc; }",
+  ".sales-order-shipping-row { border-top: 2px solid #cdd8d2; }",
+  ".sales-order-total-row { border-top: 2px solid #8bb19e;"
+]) {
+  if (!css.includes(fragment)) throw new Error(`Missing billing-detail row style: ${fragment}`);
+}
+
+if (css.includes(".sales-order-billing-summary")) {
+  throw new Error("Detached billing summary styles must be removed");
+}
 
 const undersized = readableCss.match(/font-size:\s*(?:[0-9]|1[01])px/g);
 if (undersized) {

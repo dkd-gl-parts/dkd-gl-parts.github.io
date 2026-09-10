@@ -1384,11 +1384,9 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "受注詳細": "Order Details",
     "受注情報と伝票レイアウトを読み込んでいます。": "Loading order information and slip layout.",
     "受注情報を読み込めませんでした。": "Could not load order information.",
-    "受注単位の請求内訳": "Order billing breakdown",
     "請求・配送": "Billing and delivery",
     "請求合計": "Total billed",
     "請求明細": "Billing details",
-    "商品以外の金額も、この受注の明細としてまとめて表示しています。": "Product and order-level charges are shown together for this order.",
     "商品、コア代金、値引・調整、送料、税を受注単位で確認します。": "Review products, core charges, adjustments, shipping, and tax for this order.",
     "受注帳票": "Order Form",
     "受注帳票の自動印刷": "Automatic order document printing",
@@ -2862,7 +2860,8 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "送り状番号を登録": "Register Waybill Number",
     "送り状番号の登録だけでは在庫を減らしません。": "Registering a waybill number does not reduce inventory.",
     "番号の登録・変更は「出荷帳票発行」で行います。": "Register or change the number in Shipping Documents.",
-    "発送用送り状の番号は12桁で入力してください。": "Enter the 12-digit outbound waybill number."
+    "発送用送り状の番号は12桁で入力してください。": "Enter the 12-digit outbound waybill number.",
+    "商品、コア代金、値引・調整、送料、税を明細行で確認します。": "Review products, core charges, adjustments, shipping, and tax as itemized rows."
   },
   "zh": {
     "再発行が必要": "需要重新签发",
@@ -4247,11 +4246,9 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "受注詳細": "订单详情",
     "受注情報と伝票レイアウトを読み込んでいます。": "正在读取订单信息和单据布局。",
     "受注情報を読み込めませんでした。": "无法读取订单信息。",
-    "受注単位の請求内訳": "订单账单明细",
     "請求・配送": "账单・配送",
     "請求合計": "账单合计",
     "請求明細": "账单明细",
-    "商品以外の金額も、この受注の明細としてまとめて表示しています。": "商品与订单级费用在此订单中汇总显示。",
     "商品、コア代金、値引・調整、送料、税を受注単位で確認します。": "按订单确认商品、旧件费用、折扣调整、运费和税额。",
     "受注帳票": "受注报表",
     "受注帳票の自動印刷": "订单报表自动打印",
@@ -5725,6 +5722,7 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "送り状番号を登録": "登记运单号码",
     "送り状番号の登録だけでは在庫を減らしません。": "仅登记运单号码不会减少库存。",
     "番号の登録・変更は「出荷帳票発行」で行います。": "请在“出货单据发行”中登记或修改号码。",
-    "発送用送り状の番号は12桁で入力してください。": "请输入12位发货用运单号码。"
+    "発送用送り状の番号は12桁で入力してください。": "请输入12位发货用运单号码。",
+    "商品、コア代金、値引・調整、送料、税を明細行で確認します。": "以明细行查看商品、旧件费用、折扣调整、运费和税额。"
   }
 };
