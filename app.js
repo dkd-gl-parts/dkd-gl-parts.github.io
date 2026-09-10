@@ -634,6 +634,31 @@ var TRANSLATIONS = {
     finished_label_setup_calibrate: "校正",
     finished_label_setup_test: "テスト印刷",
     finished_label_setup_first_run: "初めて設定するPCではパッケージを展開し、D-CATS-Printer-Setup.cmdを開いてください。設定済みPCでは再設定・校正・テスト印刷を画面から起動できます。",
+    finished_label_setup_guide_title: "TD-4420TN設定ナビ",
+    finished_label_setup_guide_lead: "このPCの状態を選ぶと、必要な手順だけを表示します。",
+    finished_label_setup_guide_path_label: "設定方法",
+    finished_label_setup_guide_first_path: "初めて設定する",
+    finished_label_setup_guide_installed_path: "設定済み",
+    finished_label_setup_guide_download_title: "設定パッケージをダウンロード",
+    finished_label_setup_guide_download_desc: "このPCのダウンロードフォルダーへZIPファイルを保存します。",
+    finished_label_setup_guide_download_action: "パッケージをダウンロード",
+    finished_label_setup_guide_downloaded: "ダウンロードを開始しました。次の手順へ進んでください。",
+    finished_label_setup_guide_extract_title: "ZIPを展開",
+    finished_label_setup_guide_extract_desc: "ダウンロードしたZIPを右クリックし、「すべて展開」を選びます。",
+    finished_label_setup_guide_run_title: "設定ファイルを実行",
+    finished_label_setup_guide_run_desc: "展開したフォルダーのD-CATS-Printer-Setup.cmdを開き、表示言語を選びます。",
+    finished_label_setup_guide_configure_title: "プリンターを登録してテスト",
+    finished_label_setup_guide_configure_desc: "拠点と各用紙のプリンターを選び、接続確認後に登録します。用紙とリボンをセット済みなら校正とテスト印刷も続けて実行できます。",
+    finished_label_setup_guide_language_title: "表示言語",
+    finished_label_setup_guide_language_desc: "設定ツールは日本語・英語・中国語に対応しています。",
+    finished_label_setup_guide_installed_title: "設定済みPCの再設定",
+    finished_label_setup_guide_installed_desc: "プリンターの変更、IPアドレスの変更、用紙の再校正を行う場合に設定ツールを開きます。",
+    finished_label_setup_guide_launch: "設定ツールを開く",
+    finished_label_setup_guide_launching_title: "設定ツールを起動しています",
+    finished_label_setup_guide_launching_desc: "確認画面が表示された場合は「開く」を選択してください。",
+    finished_label_setup_guide_not_open_title: "設定ツールが開かない場合",
+    finished_label_setup_guide_not_open_desc: "設定パッケージが未導入、またはブラウザーで起動が止められています。「初めて設定する」に戻って手順1から進めてください。",
+    finished_label_setup_guide_back_first: "初回設定へ戻る",
     finished_label_station_badge: "Windows / TD-4420TN 印刷端末",
     finished_label_station_recommended: "推奨",
     finished_label_device_title: "バックグラウンド印刷端末",
@@ -2611,6 +2636,31 @@ var TRANSLATIONS = {
     finished_label_setup_calibrate: "Calibrate",
     finished_label_setup_test: "Test Print",
     finished_label_setup_first_run: "On a new PC, extract the package and open D-CATS-Printer-Setup.cmd. On a configured PC, reconfiguration, calibration, and test printing can be launched here.",
+    finished_label_setup_guide_title: "TD-4420TN Setup Guide",
+    finished_label_setup_guide_lead: "Choose the state of this PC to see only the steps you need.",
+    finished_label_setup_guide_path_label: "Setup path",
+    finished_label_setup_guide_first_path: "Set Up for the First Time",
+    finished_label_setup_guide_installed_path: "Already Set Up",
+    finished_label_setup_guide_download_title: "Download the Setup Package",
+    finished_label_setup_guide_download_desc: "Save the ZIP file in the Downloads folder on this PC.",
+    finished_label_setup_guide_download_action: "Download Setup Package",
+    finished_label_setup_guide_downloaded: "The download has started. Continue to the next step.",
+    finished_label_setup_guide_extract_title: "Extract the ZIP File",
+    finished_label_setup_guide_extract_desc: "Right-click the downloaded ZIP file and select Extract All.",
+    finished_label_setup_guide_run_title: "Run the Setup File",
+    finished_label_setup_guide_run_desc: "Open D-CATS-Printer-Setup.cmd in the extracted folder and choose a display language.",
+    finished_label_setup_guide_configure_title: "Register and Test the Printers",
+    finished_label_setup_guide_configure_desc: "Choose the site and printer for each media size, check the connection, and register this PC. If media and ribbon are loaded, calibration and a test print can run immediately.",
+    finished_label_setup_guide_language_title: "Display Languages",
+    finished_label_setup_guide_language_desc: "The setup tool supports Japanese, English, and Chinese.",
+    finished_label_setup_guide_installed_title: "Reconfigure a Set-Up PC",
+    finished_label_setup_guide_installed_desc: "Open the setup tool to change a printer or IP address, or to recalibrate media.",
+    finished_label_setup_guide_launch: "Open Setup Tool",
+    finished_label_setup_guide_launching_title: "Opening the Setup Tool",
+    finished_label_setup_guide_launching_desc: "If a confirmation prompt appears, select Open.",
+    finished_label_setup_guide_not_open_title: "If the Setup Tool Does Not Open",
+    finished_label_setup_guide_not_open_desc: "The setup package may not be installed, or the browser may have blocked the launch. Return to Set Up for the First Time and begin with step 1.",
+    finished_label_setup_guide_back_first: "Return to First-Time Setup",
     finished_label_station_badge: "Windows / TD-4420TN Print Station",
     finished_label_station_recommended: "Recommended",
     finished_label_device_title: "Background Print Station",
@@ -4597,6 +4647,31 @@ var TRANSLATIONS = {
     finished_label_setup_calibrate: "校准",
     finished_label_setup_test: "测试打印",
     finished_label_setup_first_run: "首次设置的电脑请解压设置包并打开D-CATS-Printer-Setup.cmd。已设置的电脑可从此处重新设置、校准或测试打印。",
+    finished_label_setup_guide_title: "TD-4420TN设置导航",
+    finished_label_setup_guide_lead: "请选择此电脑的状态，画面将只显示所需步骤。",
+    finished_label_setup_guide_path_label: "设置方法",
+    finished_label_setup_guide_first_path: "首次设置",
+    finished_label_setup_guide_installed_path: "已完成设置",
+    finished_label_setup_guide_download_title: "下载设置包",
+    finished_label_setup_guide_download_desc: "将ZIP文件保存到此电脑的下载文件夹。",
+    finished_label_setup_guide_download_action: "下载设置包",
+    finished_label_setup_guide_downloaded: "已开始下载，请继续下一步。",
+    finished_label_setup_guide_extract_title: "解压ZIP文件",
+    finished_label_setup_guide_extract_desc: "右键单击下载的ZIP文件，然后选择“全部解压缩”。",
+    finished_label_setup_guide_run_title: "运行设置文件",
+    finished_label_setup_guide_run_desc: "打开解压文件夹中的D-CATS-Printer-Setup.cmd，然后选择显示语言。",
+    finished_label_setup_guide_configure_title: "注册并测试打印机",
+    finished_label_setup_guide_configure_desc: "选择站点及各纸张尺寸对应的打印机，检查连接后注册此电脑。已装入纸张和色带时，可继续执行校准和测试打印。",
+    finished_label_setup_guide_language_title: "显示语言",
+    finished_label_setup_guide_language_desc: "设置工具支持日语、英语和中文。",
+    finished_label_setup_guide_installed_title: "重新设置已配置的电脑",
+    finished_label_setup_guide_installed_desc: "需要更换打印机、修改IP地址或重新校准纸张时，请打开设置工具。",
+    finished_label_setup_guide_launch: "打开设置工具",
+    finished_label_setup_guide_launching_title: "正在打开设置工具",
+    finished_label_setup_guide_launching_desc: "如果显示确认提示，请选择“打开”。",
+    finished_label_setup_guide_not_open_title: "设置工具无法打开时",
+    finished_label_setup_guide_not_open_desc: "可能尚未安装设置包，或浏览器阻止了启动。请返回“首次设置”，从步骤1开始操作。",
+    finished_label_setup_guide_back_first: "返回首次设置",
     finished_label_station_badge: "Windows / TD-4420TN 打印终端",
     finished_label_station_recommended: "推荐",
     finished_label_device_title: "后台打印终端",
@@ -6212,6 +6287,7 @@ var dcatsAutoNoticeTimer = null;
 var finishedLabelPrintDestinations = [];
 var finishedLabelPrintDestinationsTarget = "";
 var finishedLabelAgentOverviewRows = [];
+var finishedLabelSetupGuideTrigger = null;
 var finishedLabelSelectedSiteCode = "";
 var finishedLabelPrintDestinationRequestSeq = 0;
 var finishedLabelPrintStationRunning = false;
@@ -27715,6 +27791,63 @@ async function enterFinishedLabelMgmt(options) {
     if (!finishedLabelPrintMode) setFinishedLabelPrintMode("product");
     await selectFinishedLabelProduct(options.product, options.instruction || null);
   }
+}
+
+function setFinishedLabelSetupGuideView(view, focusTab) {
+  view = view === "installed" ? "installed" : "first";
+  var launchNote = document.getElementById("finished-label-setup-guide-launch-note");
+  document.querySelectorAll("[data-label-printer-setup-view]").forEach(function(button) {
+    var isActive = button.dataset.labelPrinterSetupView === view;
+    if (button.getAttribute("role") === "tab") {
+      button.setAttribute("aria-selected", isActive ? "true" : "false");
+      button.tabIndex = isActive ? 0 : -1;
+      if (focusTab && isActive) button.focus();
+    }
+  });
+  var firstPanel = document.getElementById("finished-label-setup-guide-first");
+  var installedPanel = document.getElementById("finished-label-setup-guide-installed");
+  if (firstPanel) firstPanel.hidden = view !== "first";
+  if (installedPanel) installedPanel.hidden = view !== "installed";
+  if (launchNote && view !== "installed") launchNote.hidden = true;
+}
+
+function showFinishedLabelSetupDownloadStatus() {
+  try { sessionStorage.setItem("dcats_label_printer_setup_downloaded", "1"); } catch (error) {}
+  var status = document.getElementById("finished-label-setup-guide-downloaded");
+  if (status) status.hidden = false;
+}
+
+function openFinishedLabelSetupGuide(view, trigger) {
+  var guide = document.getElementById("finished-label-setup-guide");
+  if (!guide) return;
+  finishedLabelSetupGuideTrigger = trigger || document.activeElement;
+  setFinishedLabelSetupGuideView(view, false);
+  var downloaded = false;
+  try { downloaded = sessionStorage.getItem("dcats_label_printer_setup_downloaded") === "1"; } catch (error) {}
+  var downloadStatus = document.getElementById("finished-label-setup-guide-downloaded");
+  if (downloadStatus) downloadStatus.hidden = !downloaded;
+  guide.hidden = false;
+  document.body.classList.add("finished-label-setup-guide-open");
+  window.requestAnimationFrame(function() {
+    var activeTab = guide.querySelector('[role="tab"][aria-selected="true"]');
+    if (activeTab) activeTab.focus();
+  });
+}
+
+function closeFinishedLabelSetupGuide() {
+  var guide = document.getElementById("finished-label-setup-guide");
+  if (!guide || guide.hidden) return;
+  guide.hidden = true;
+  document.body.classList.remove("finished-label-setup-guide-open");
+  if (finishedLabelSetupGuideTrigger && typeof finishedLabelSetupGuideTrigger.focus === "function") {
+    finishedLabelSetupGuideTrigger.focus();
+  }
+  finishedLabelSetupGuideTrigger = null;
+}
+
+function markFinishedLabelSetupToolLaunch() {
+  var launchNote = document.getElementById("finished-label-setup-guide-launch-note");
+  if (launchNote) launchNote.hidden = false;
 }
 
 function isFinishedLabelMobilePrintClient() {
@@ -51111,6 +51244,35 @@ finishedLabelSearchInput.addEventListener("keyup", function(e) {
   }
 });
 document.getElementById("btn-finished-label-load-more").addEventListener("click", showMoreFinishedLabelProducts);
+document.querySelectorAll("[data-label-printer-setup-guide-open]").forEach(function(button) {
+  button.addEventListener("click", function() {
+    openFinishedLabelSetupGuide(button.dataset.labelPrinterSetupDefaultView || "first", button);
+  });
+});
+document.querySelectorAll("[data-label-printer-setup-guide-close]").forEach(function(button) {
+  button.addEventListener("click", closeFinishedLabelSetupGuide);
+});
+document.querySelectorAll("[data-label-printer-setup-view]").forEach(function(button) {
+  button.addEventListener("click", function() {
+    setFinishedLabelSetupGuideView(button.dataset.labelPrinterSetupView, true);
+  });
+  if (button.getAttribute("role") === "tab") {
+    button.addEventListener("keydown", function(event) {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      setFinishedLabelSetupGuideView(button.dataset.labelPrinterSetupView === "first" ? "installed" : "first", true);
+    });
+  }
+});
+document.querySelectorAll("[data-label-printer-setup-download]").forEach(function(link) {
+  link.addEventListener("click", showFinishedLabelSetupDownloadStatus);
+});
+document.querySelectorAll("[data-label-printer-setup-launch]").forEach(function(link) {
+  link.addEventListener("click", markFinishedLabelSetupToolLaunch);
+});
+document.getElementById("finished-label-setup-guide").addEventListener("keydown", function(event) {
+  if (event.key === "Escape") closeFinishedLabelSetupGuide();
+});
 document.querySelectorAll("[data-finished-label-mode]").forEach(function(btn) {
   btn.addEventListener("click", function() {
     setFinishedLabelPrintMode(btn.dataset.finishedLabelMode);
