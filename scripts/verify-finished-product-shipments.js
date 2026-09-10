@@ -100,7 +100,7 @@ assert(salesDetailSource.includes('printSalesOrderDocument("dispatch")'), "sales
 assert(salesDetailSource.includes('printSalesOrderDocument("core_return")'), "sales-order detail must print core-return sheets");
 assert(!salesDetailSource.includes("sales-order-export-single-b2") && !salesDetailSource.includes("exportSalesOrderIdsB2"), "sales-order detail must route B2 issuance to shipping documents");
 assert(salesDetailSource.includes("openSalesOrderSerialWarranty"), "sales-order detail must open dispatch checking");
-assert(functionSource("salesOrderWaybillProgressHtml").includes("送り状番号の登録だけでは在庫を減らしません"), "B2 label registration must explain that stock is unchanged");
+assert(!app.includes("送り状番号の登録だけでは在庫を減らしません"), "Obsolete stock notice must not be shown beside waybill registration");
 assert(functionSource("issueSalesOrderDispatch").includes('sb.rpc("issue_sales_order_dispatch"'), "dispatch issue RPC is not called");
 assert(functionSource("openSalesOrderSerialWarranty").includes("salesOrderDispatch(salesOrderDetail)"), "dispatch checking must require an issued instruction");
 assert(functionSource("buildSalesOrderDocumentHtml").includes("shipment-instruction-print.css?dcats_version="), "shipment document stylesheet is not versioned");

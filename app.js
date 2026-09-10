@@ -6181,7 +6181,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.947";
+var APP_VERSION       = "v1.1.948";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -16361,7 +16361,7 @@ function salesOrderWaybillProgressHtml(order) {
       var trackingNumberText = row.status === "対象外" ? "対象外" : row.trackingNumber ? shippingDocumentWaybillNumberFormat(row.trackingNumber) : "未登録";
       var trackingDetail = outbound ? "" : "<div><dt>送り状番号</dt><dd>" + esc(trackingNumberText) + "</dd></div>";
       var editor = outbound
-        ? "<div class='sales-order-waybill-progress-editor'><p>" + esc(description) + "</p><div class='sales-order-tracking-grid outbound-only'><label><span>" + esc(numberLabel) + "</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(row.trackingNumber) + "'></label><label><span>" + esc(scheduleLabel) + "</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>送り状番号を登録</button></div><small>送り状番号の登録だけでは在庫を減らしません。</small></div>"
+        ? "<div class='sales-order-waybill-progress-editor'><p>" + esc(description) + "</p><div class='sales-order-tracking-grid outbound-only'><label><span>" + esc(numberLabel) + "</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(row.trackingNumber) + "'></label><label><span>" + esc(scheduleLabel) + "</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>送り状番号を登録</button></div></div>"
         : row.status === "対象外" ? "" : "<p class='sales-order-waybill-progress-note'>番号の登録・変更は「出荷帳票発行」で行います。</p>";
       return "<article class='sales-order-waybill-progress-card" + (outbound ? " has-editor" : "") + "' data-waybill-purpose='" + esc(row.purpose) + "'>" +
         "<div class='sales-order-waybill-progress-card-head'><strong>" + esc(row.label) + "</strong><span class='sales-order-waybill-progress-status " + esc(row.tone) + "'>" + esc(row.status) + "</span></div>" +
