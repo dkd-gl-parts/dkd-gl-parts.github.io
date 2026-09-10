@@ -9512,7 +9512,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 
   #screen-sales-order-mgmt .sales-order-address { grid-template-columns: minmax(280px, 1.1fr) minmax(220px, .72fr) minmax(280px, 1fr); gap: 14px 16px; }
   #screen-sales-order-mgmt .sales-order-address-destination { grid-column: 1; grid-row: 2; }
-  #screen-sales-order-mgmt .sales-order-address dl { grid-column: 3; grid-row: 2; }
+  #screen-sales-order-mgmt .sales-order-address dl { grid-column: 2; grid-row: 2; }
   #screen-sales-order-mgmt .sales-order-vehicle-information { grid-column: 1 / -1; grid-row: 3; }
   #screen-sales-order-mgmt .sales-order-address-destination { gap: 5px; padding: 11px 12px; }
   #screen-sales-order-mgmt .sales-order-address-destination strong { font-size: 15px; line-height: 1.45; word-break: keep-all; overflow-wrap: anywhere; }
@@ -9528,7 +9528,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-shipping-schedule label,
   #screen-sales-order-mgmt .sales-order-shipping-schedule small,
   #screen-sales-order-mgmt .sales-order-shipping-schedule-locked { font-size: 12px; line-height: 1.5; }
-  #screen-sales-order-mgmt .sales-order-shipping-schedule { grid-column: 2; grid-row: 2; grid-template-columns: minmax(0, 1fr); align-content: start; align-items: stretch; min-width: 0; gap: 8px; }
+  #screen-sales-order-mgmt .sales-order-shipping-schedule { grid-column: 3; grid-row: 2; grid-template-columns: minmax(0, 1fr); align-content: start; align-items: stretch; min-width: 0; gap: 8px; }
   #screen-sales-order-mgmt .sales-order-shipping-schedule :is(input, button) { width: 100%; }
   #screen-sales-order-mgmt .sales-order-shipping-schedule small { grid-column: 1; }
   #screen-sales-order-mgmt .sales-order-shipping-schedule :is(input, button) { min-height: 40px; font-size: 14px; }
@@ -9606,12 +9606,12 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-address-destination { grid-column: 1; grid-row: 2; }
   #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-address-destination strong { line-height: 1.35; }
   #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-address-destination span { line-height: 1.45; }
-  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-address dl { grid-column: 3; grid-row: 2; gap: 5px; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-address dl { grid-column: 2; grid-row: 2; gap: 5px; }
   #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-address dl > div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
   #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-waybill-detail strong { line-height: 1.35; }
   #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-waybill-detail span { line-height: 1.4; }
   #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-vehicle-information { grid-column: 1 / -1; grid-row: 3; }
-  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-shipping-schedule { grid-column: 2; grid-row: 2; grid-template-columns: minmax(0, 1fr); gap: 6px; padding: 8px 10px; }
+  #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-shipping-schedule { grid-column: 3; grid-row: 2; grid-template-columns: minmax(0, 1fr); gap: 6px; padding: 8px 10px; }
   #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-shipping-schedule label { grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: 5px; }
   #screen-sales-order-mgmt .sales-order-detail-overview-grid .sales-order-shipping-schedule small { display: none; }
 }
