@@ -219,6 +219,17 @@ if (!source.includes('window.crypto.subtle.digest("SHA-256", buffer)')) {
   throw new Error("B2 import must calculate a file hash for idempotent imports");
 }
 
+const renderImport = between("function renderSalesOrderB2Import", "function closeSalesOrderB2Import");
+[
+  "row.replaces_existing === true",
+  "row.superseded_by_later_row === true",
+  "更新可能",
+  "旧データ",
+  "後発データを採用"
+].forEach((fragment) => {
+  if (!renderImport.includes(fragment)) throw new Error(`B2 reissue preview state is missing: ${fragment}`);
+});
+
 const previewImport = between("async function previewSalesOrderB2ImportFile", "async function importSalesOrderB2Shipments");
 if (!previewImport.includes('sb.rpc("preview_sales_order_b2_shipments"') ||
     !previewImport.includes("target_rows: parsedRows")) {
@@ -230,6 +241,10 @@ const commitImport = between("async function importSalesOrderB2Shipments", "func
   "target_file_name",
   "target_file_sha256",
   "target_rows",
+  "replacement_count",
+  "superseded_by_later_row",
+  "再発行後の更新",
+  "後発データを反映しました",
   "print_job_count",
   "print_warning_count",
   "コア返却シート・保証書",

@@ -6181,7 +6181,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.963";
+var APP_VERSION       = "v1.1.964";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -17765,9 +17765,15 @@ function renderSalesOrderB2Import() {
   var preview = salesOrderB2ImportState.preview || {};
   var rows = Array.isArray(preview.rows) ? preview.rows : [];
   var readyCount = rows.filter(function(row) { return row.status === "ready"; }).length;
-  var duplicateCount = rows.filter(function(row) { return row.status === "duplicate"; }).length;
-  var errorCount = rows.length - readyCount - duplicateCount;
-  summary.textContent = salesOrderB2ImportState.fileName + " / 取込可能 " + readyCount + " 件 / 登録済み " + duplicateCount + " 件 / 要確認 " + errorCount + " 件";
+  var replacementCount = rows.filter(function(row) { return row.status === "ready" && row.replaces_existing === true; }).length;
+  var supersededCount = rows.filter(function(row) { return row.status === "duplicate" && row.superseded_by_later_row === true; }).length;
+  var duplicateCount = rows.filter(function(row) { return row.status === "duplicate" && row.superseded_by_later_row !== true; }).length;
+  var errorCount = rows.length - readyCount - supersededCount - duplicateCount;
+  summary.textContent = salesOrderB2ImportState.fileName + " / 取込可能 " + readyCount + " 件" +
+    (replacementCount ? "（更新 " + replacementCount + " 件）" : "") +
+    " / 登録済み " + duplicateCount + " 件" +
+    (supersededCount ? " / 後発データを採用 " + supersededCount + " 件" : "") +
+    " / 要確認 " + errorCount + " 件";
   table.innerHTML = rows.length ? "<div class='sales-order-b2-import-row head'><span>行</span><span>注文・得意先</span><span>区分</span><span>送り状番号</span><span>出荷日・便</span><span>判定</span></div>" + rows.map(function(row) {
     return "<div class='sales-order-b2-import-row " + esc(row.status || "invalid") + "'>" +
       "<span>" + esc(row.source_row_number || "-") + "</span>" +
@@ -17775,7 +17781,7 @@ function renderSalesOrderB2Import() {
       "<span>" + esc(salesOrderB2DirectionLabel(row.direction)) + "</span>" +
       "<span class='tracking'>" + esc(row.tracking_number || "-") + "</span>" +
       "<span><strong>" + esc(row.planned_ship_date || "-") + "</strong><small>" + esc(row.service_name || "-") + "</small></span>" +
-      "<span><em>" + esc(row.status === "ready" ? "取込可能" : (row.status === "duplicate" ? "登録済み" : "要確認")) + "</em><small>" + esc(row.message || "-") + "</small></span>" +
+      "<span><em>" + esc(row.status === "ready" ? (row.replaces_existing === true ? "更新可能" : "取込可能") : (row.status === "duplicate" ? (row.superseded_by_later_row === true ? "旧データ" : "登録済み") : "要確認")) + "</em><small>" + esc(row.message || "-") + "</small></span>" +
     "</div>";
   }).join("") : "<div class='sales-order-empty error'>確認できる発送データがありません。</div>";
   message.textContent = salesOrderB2ImportState.resultMessage || "D-CATS注文番号と発送区分を確認してから反映します。";
@@ -17854,10 +17860,18 @@ async function importSalesOrderB2Shipments() {
   var data = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
   var printJobCount = Number(data.print_job_count || 0);
   var printWarningCount = Number(data.print_warning_count || 0);
+  var replacementCount = Number(data.replacement_count || 0);
+  var resultRows = Array.isArray(data.rows) ? data.rows : [];
+  var supersededCount = resultRows.filter(function(row) { return row.superseded_by_later_row === true; }).length;
+  var registeredDuplicateCount = Math.max(0, Number(data.duplicate_count || 0) - supersededCount);
+  if (resultRows.length) salesOrderB2ImportState.preview = Object.assign({}, salesOrderB2ImportState.preview || {}, data, { rows: resultRows });
   salesOrderB2ImportState.imported = true;
   salesOrderB2ImportState.resultMessage = data.duplicate_file
     ? "同じCSVはすでに取り込み済みです。"
-    : "発送 " + Number(data.imported_count || 0) + " 件を反映しました。登録済み " + Number(data.duplicate_count || 0) + " 件、要確認 " + Number(data.error_count || 0) + " 件です。" +
+    : "発送 " + Number(data.imported_count || 0) + " 件を反映しました。" +
+      (replacementCount ? "再発行後の更新 " + replacementCount + " 件を含みます。" : "") +
+      (supersededCount ? "旧データ " + supersededCount + " 件は使用せず、後発データを反映しました。" : "") +
+      "登録済み " + registeredDuplicateCount + " 件、要確認 " + Number(data.error_count || 0) + " 件です。" +
       (printJobCount ? " コア返却シート・保証書など " + printJobCount + " 件を印刷待ちに登録しました。" : "") +
       (printWarningCount ? " 同梱帳票を印刷待ちにできなかった発送が " + printWarningCount + " 件あります。注文詳細から再送してください。" : "");
   salesOrderB2ImportState.resultError = Number(data.error_count || 0) > 0 || printWarningCount > 0;
