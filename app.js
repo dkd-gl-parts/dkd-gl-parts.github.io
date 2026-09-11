@@ -6181,7 +6181,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.958";
+var APP_VERSION       = "v1.1.959";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -6530,6 +6530,9 @@ var salesOrderB2ExportSaving = false;
 var salesOrderPricingSaving = false;
 var salesOrderB2ImportState = null;
 var salesOrderB2ImportSaving = false;
+var salesOrderB2GuideWindow = null;
+var salesOrderB2GuideActiveStep = 1;
+var SALES_ORDER_B2_PORTAL_URL = "https://bmypage.kuronekoyamato.co.jp/bmypage/";
 var salesOrderB2ContractSettings = null;
 var salesOrderB2ContractSettingsSaving = false;
 var salesOrderB2Preflight = null;
@@ -17454,14 +17457,85 @@ function salesOrderB2DirectionLabel(direction) {
   return direction === "core_return" ? "コア返却" : (direction === "outbound" ? "商品発送" : "-");
 }
 
+function salesOrderB2GuideWindowAvailable() {
+  try {
+    return !!salesOrderB2GuideWindow && !salesOrderB2GuideWindow.closed;
+  } catch (error) {
+    return false;
+  }
+}
+
+function setSalesOrderB2GuideStep(step) {
+  salesOrderB2GuideActiveStep = Math.max(1, Math.min(4, Number(step) || 1));
+  document.querySelectorAll("#sales-order-b2-import-guide-overlay [data-b2-guide-step]").forEach(function(row) {
+    var rowStep = Number(row.getAttribute("data-b2-guide-step"));
+    row.classList.toggle("current", rowStep === salesOrderB2GuideActiveStep);
+    row.classList.toggle("complete", rowStep < salesOrderB2GuideActiveStep);
+  });
+}
+
+function setSalesOrderB2GuideStatus(message, isError) {
+  var status = document.getElementById("sales-order-b2-import-guide-status");
+  if (!status) return;
+  status.textContent = message || "";
+  status.classList.toggle("error", !!isError);
+}
+
+function openSalesOrderB2Portal() {
+  if (!canManageSalesOrders()) return;
+  var popup = null;
+  try {
+    popup = window.open(SALES_ORDER_B2_PORTAL_URL, "dcats-yamato-b2");
+  } catch (error) {
+    popup = null;
+  }
+  if (!popup) {
+    salesOrderB2GuideWindow = null;
+    setSalesOrderB2GuideStep(1);
+    setSalesOrderB2GuideStatus("ヤマト画面を開けませんでした。ブラウザでポップアップを許可し、もう一度お試しください。", true);
+    return;
+  }
+  salesOrderB2GuideWindow = popup;
+  try { popup.opener = null; } catch (error) { /* Cross-origin windows may reject this assignment. */ }
+  try { popup.focus(); } catch (error) { /* The browser may keep the new tab in the background. */ }
+  setSalesOrderB2GuideStep(2);
+  setSalesOrderB2GuideStatus("ヤマト画面を開きました。ログイン後、D-CATSへ戻って手順2を押してください。", false);
+}
+
+function focusSalesOrderB2Portal(step) {
+  if (!salesOrderB2GuideWindowAvailable()) {
+    openSalesOrderB2Portal();
+    if (salesOrderB2GuideWindowAvailable()) {
+      setSalesOrderB2GuideStatus("ヤマト画面を開き直しました。ログイン状態を確認してから続けてください。", true);
+    }
+    return;
+  }
+  try { salesOrderB2GuideWindow.focus(); } catch (error) {
+    setSalesOrderB2GuideStatus("ヤマト画面へ戻れませんでした。手順1から開き直してください。", true);
+    return;
+  }
+  setSalesOrderB2GuideStep(step);
+  setSalesOrderB2GuideStatus(step === 2
+    ? "マイページで「送り状発行システム B2クラウド」を押してください。ログイン画面が表示された場合は再ログインしてください。"
+    : "B2クラウドで「発行済データの検索」を押し、対象を検索して「外部ファイル出力」を実行してください。", false);
+}
+
 function openSalesOrderB2ImportGuide() {
   if (!canManageSalesOrders()) return;
   var overlay = document.getElementById("sales-order-b2-import-guide-overlay");
   if (!overlay) return;
+  var hasYamatoWindow = salesOrderB2GuideWindowAvailable();
+  setSalesOrderB2GuideStep(hasYamatoWindow ? Math.max(2, salesOrderB2GuideActiveStep) : 1);
+  setSalesOrderB2GuideStatus(hasYamatoWindow
+    ? "ヤマト画面は別タブで開いています。続ける手順のボタンを押してください。"
+    : "手順1のボタンからログインを開始してください。", false);
   overlay.classList.add("show");
   window.requestAnimationFrame(function() {
-    var yamatoLink = document.getElementById("sales-order-b2-import-guide-yamato");
-    if (yamatoLink) yamatoLink.focus();
+    var focusId = hasYamatoWindow && salesOrderB2GuideActiveStep >= 3
+      ? "sales-order-b2-import-guide-issued-search"
+      : (hasYamatoWindow ? "sales-order-b2-import-guide-b2-menu" : "sales-order-b2-import-guide-yamato");
+    var action = document.getElementById(focusId);
+    if (action) action.focus();
   });
 }
 
@@ -17475,7 +17549,35 @@ function closeSalesOrderB2ImportGuide(restoreFocus) {
 
 function selectSalesOrderB2ImportFile() {
   var input = document.getElementById("sales-order-import-b2-file");
-  if (input) input.click();
+  if (!input) return;
+  setSalesOrderB2GuideStep(4);
+  setSalesOrderB2GuideStatus("ダウンロードしたB2発行済データCSVを選択してください。", false);
+  input.value = "";
+  input.click();
+}
+
+function salesOrderB2ImportFileValidationMessage(file) {
+  if (!file) return "CSVが選択されませんでした。";
+  var fileName = String(file.name || "").trim();
+  if (!/\.csv$/i.test(fileName)) return "CSVファイルを選択してください。";
+  var fileSize = Number(file.size);
+  if (Number.isFinite(fileSize) && fileSize === 0) return "選択したCSVは空です。B2クラウドからもう一度出力してください。";
+  if (Number.isFinite(fileSize) && fileSize > 5 * 1024 * 1024) return "CSVのサイズが大きすぎます。B2クラウドで対象期間を短くして再出力してください。";
+  return "";
+}
+
+function salesOrderB2ImportFriendlyError(error) {
+  var message = String(error && error.message || error || "").trim();
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    return "ネットワークに接続できません。接続を確認して、同じCSVをもう一度選択してください。";
+  }
+  if (/jwt|session|not authenticated|unauthorized|forbidden|\b401\b|\b403\b/i.test(message)) {
+    return "D-CATSのログイン有効期限が切れました。再ログイン後、同じCSVをもう一度選択してください。";
+  }
+  if (/failed to fetch|network|timeout|timed out/i.test(message)) {
+    return "発送データを確認できませんでした。通信状態を確認して、同じCSVをもう一度選択してください。";
+  }
+  return message || "B2発送データを確認できませんでした。";
 }
 
 function renderSalesOrderB2Import() {
@@ -17519,6 +17621,17 @@ function closeSalesOrderB2Import() {
 
 async function previewSalesOrderB2ImportFile(file) {
   if (!canManageSalesOrders() || salesOrderB2ImportSaving || !file) return;
+  var validationMessage = salesOrderB2ImportFileValidationMessage(file);
+  if (validationMessage) {
+    salesOrderB2ImportState = {
+      fileName: file.name || "B2発行済データ.csv",
+      preview: { rows: [] },
+      resultMessage: validationMessage,
+      resultError: true
+    };
+    renderSalesOrderB2Import();
+    return;
+  }
   salesOrderB2ImportState = { fileName: file.name || "B2発行済データ.csv", preview: { rows: [] }, resultMessage: "CSVを確認しています。" };
   renderSalesOrderB2Import();
   try {
@@ -17540,7 +17653,7 @@ async function previewSalesOrderB2ImportFile(file) {
     salesOrderB2ImportState = {
       fileName: file.name || "B2発行済データ.csv",
       preview: { rows: [] },
-      resultMessage: (error && error.message) || "B2発送データを確認できませんでした。",
+      resultMessage: salesOrderB2ImportFriendlyError(error),
       resultError: true
     };
   }
@@ -17560,7 +17673,7 @@ async function importSalesOrderB2Shipments() {
   });
   salesOrderB2ImportSaving = false;
   if (result.error) {
-    salesOrderB2ImportState.resultMessage = result.error.message || "発送データを反映できませんでした。";
+    salesOrderB2ImportState.resultMessage = salesOrderB2ImportFriendlyError(result.error);
     salesOrderB2ImportState.resultError = true;
     renderSalesOrderB2Import();
     return;
@@ -50849,6 +50962,9 @@ document.getElementById("sales-order-b2-preflight-close").addEventListener("clic
 document.getElementById("sales-order-import-b2").addEventListener("click", openSalesOrderB2ImportGuide);
 document.getElementById("sales-order-b2-import-guide-close").addEventListener("click", closeSalesOrderB2ImportGuide);
 document.getElementById("sales-order-b2-import-guide-cancel").addEventListener("click", closeSalesOrderB2ImportGuide);
+document.getElementById("sales-order-b2-import-guide-yamato").addEventListener("click", openSalesOrderB2Portal);
+document.getElementById("sales-order-b2-import-guide-b2-menu").addEventListener("click", function() { focusSalesOrderB2Portal(2); });
+document.getElementById("sales-order-b2-import-guide-issued-search").addEventListener("click", function() { focusSalesOrderB2Portal(3); });
 document.getElementById("sales-order-b2-import-guide-select-file").addEventListener("click", selectSalesOrderB2ImportFile);
 document.getElementById("sales-order-b2-import-guide-overlay").addEventListener("click", function(e) {
   if (e.target === this) closeSalesOrderB2ImportGuide();
@@ -50920,10 +51036,15 @@ document.getElementById("sales-accounting-export-overlay").addEventListener("cli
 });
 document.getElementById("sales-order-import-b2-file").addEventListener("change", function() {
   var file = this.files && this.files[0];
-  if (file) {
-    closeSalesOrderB2ImportGuide(false);
-    previewSalesOrderB2ImportFile(file);
+  if (!file) return;
+  var validationMessage = salesOrderB2ImportFileValidationMessage(file);
+  if (validationMessage) {
+    setSalesOrderB2GuideStatus(validationMessage, true);
+    this.value = "";
+    return;
   }
+  closeSalesOrderB2ImportGuide(false);
+  previewSalesOrderB2ImportFile(file);
 });
 document.getElementById("sales-order-import-b2-close").addEventListener("click", closeSalesOrderB2Import);
 document.getElementById("sales-order-import-b2-cancel").addEventListener("click", closeSalesOrderB2Import);
