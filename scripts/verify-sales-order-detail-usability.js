@@ -201,6 +201,56 @@ for (const fragment of ["sales-order-shipping-row", "送料", "ヤマト運輸 /
 const fulfillment = functionSource("salesOrderDispatchHtml");
 requireFragment(fulfillment, "sales-order-detail-fulfillment");
 requireFragment(fulfillment, "salesOrderWaybillProgressHtml(order)");
+requireFragment(fulfillment, "salesOrderDispatchSerialsHtml(dispatch)", "The rebuilt picking summary must show its verified serial numbers");
+const rebuiltSerials = functionSource("salesOrderDispatchRebuiltSerials");
+for (const fragment of ["orderItem.product_kind", '!== "rebuilt"', "row.manufacturing_serial"]) {
+  requireFragment(rebuiltSerials, fragment, `Rebuilt serial extraction is missing: ${fragment}`);
+}
+const rebuiltSerialContext = {
+  normalizeProductKind: (value) => String(value || "").toLowerCase()
+};
+vm.createContext(rebuiltSerialContext);
+vm.runInContext(rebuiltSerials, rebuiltSerialContext);
+const verifiedSerials = rebuiltSerialContext.salesOrderDispatchRebuiltSerials({
+  items: [
+    { order_item: { product_kind: "rebuilt" }, serials: [{ manufacturing_serial: "M2026-0000042" }, { manufacturing_serial: "M2026-0000043" }] },
+    { order_item: { product_kind: "new" }, serials: [{ manufacturing_serial: "M2026-9999999" }] }
+  ]
+});
+if (verifiedSerials.join("|") !== "M2026-0000042|M2026-0000043") {
+  throw new Error("The picking result did not preserve only the verified rebuilt-product serial numbers");
+}
+const dispatchSerials = functionSource("salesOrderDispatchSerialsHtml");
+for (const fragment of ["sales-order-dispatch-serials", "sales-order-dispatch-serial-list", "sales_order_dispatch_serials", "sales_order_dispatch_serials_empty"]) {
+  requireFragment(dispatchSerials, fragment, `Picking serial summary is missing: ${fragment}`);
+}
+Object.assign(rebuiltSerialContext, {
+  esc: (value) => String(value),
+  t: (key) => ({
+    sales_order_dispatch_serials: "照合済みシリアル番号",
+    sales_order_dispatch_serials_empty: "未照合"
+  })[key] || key
+});
+vm.runInContext(dispatchSerials, rebuiltSerialContext);
+const serialSummaryHtml = rebuiltSerialContext.salesOrderDispatchSerialsHtml({
+  items: [{
+    order_item: { product_kind: "rebuilt" },
+    serials: [{ manufacturing_serial: "M2026-0000042" }, { manufacturing_serial: "M2026-0000043" }]
+  }]
+});
+for (const fragment of ["照合済みシリアル番号", "M2026-0000042", "M2026-0000043"]) {
+  requireFragment(serialSummaryHtml, fragment, `Rendered picking serial summary is missing: ${fragment}`);
+}
+const emptySerialSummaryHtml = rebuiltSerialContext.salesOrderDispatchSerialsHtml({
+  items: [{ order_item: { product_kind: "rebuilt" }, serials: [] }]
+});
+requireFragment(emptySerialSummaryHtml, "未照合", "Empty picking result must be explicit");
+for (const fragment of [
+  ".sales-order-dispatch-serials",
+  ".sales-order-dispatch-serial-list",
+  ".sales-order-dispatch-serial-list code",
+  ".sales-order-dispatch-serial-empty"
+]) requireFragment(css, fragment, `Picking serial summary style is missing: ${fragment}`);
 const printJobs = functionSource("salesOrderPrintJobsHtml");
 for (const fragment of [
   "<details class='sales-order-print-jobs'>",
