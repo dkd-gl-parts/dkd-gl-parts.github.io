@@ -287,6 +287,8 @@ for (const fragment of [
   "id='sales-order-edit-tracking'",
   "id='sales-order-save-tracking'",
   "id='sales-order-cancel-tracking'",
+  "salesOrderCarrierTrackingLinkHtml",
+  "sales-order-carrier-tracking-row",
   "trackingLockAttributes",
   "shippingDateLockAttributes",
   "送り状番号を登録"
@@ -298,6 +300,7 @@ for (const fragment of [
   "editButton.hidden = editing",
   "saveButton.hidden = !editing",
   "cancelButton.hidden = !editing",
+  "trackingLink.hidden = editing",
   "input.focus()",
   "input.select()"
 ]) requireFragment(trackingEditMode, fragment, "Registered waybill numbers must require an explicit edit action");
@@ -332,12 +335,21 @@ for (const fragment of [
 const waybillContext = {
   customerOrderSavedShippingMethod: (order, purpose) => purpose === "core_return" ? order.core_return_shipping_method : order.outbound_shipping_method,
   customerOrderShippingMethodLabel: (method, fallback) => method ? [method.carrier_name, method.service_name].filter(Boolean).join(" / ") : fallback,
-  shippingDocumentReturnWaybillCopyCount: (order) => order.copy_count || 0
+  shippingDocumentReturnWaybillCopyCount: (order) => order.copy_count || 0,
+  SALES_ORDER_CARRIER_TRACKING_URLS: {
+    yamato: "https://member.kms.kuronekoyamato.co.jp/parcel/detail?pno=",
+    sagawa: "https://k2k.sagawa-exp.co.jp/p/web/okurijosearch.do?okurijoNo="
+  },
+  esc: (value) => String(value),
+  t: (key) => key === "sales_order_tracking_check" ? "配送状況を確認" : key
 };
 vm.createContext(waybillContext);
 vm.runInContext([
   functionSource("salesOrderWaybillRecord"),
   carrierLabel,
+  functionSource("salesOrderCarrierTrackingProvider"),
+  functionSource("salesOrderCarrierTrackingUrl"),
+  functionSource("salesOrderCarrierTrackingLinkHtml"),
   waybillDetail
 ].join("\n"), waybillContext);
 if (waybillContext.salesOrderWaybillCarrierLabel({ outbound_waybill: { carrier_code: "sagawa_prepaid" } }, "outbound") !== "佐川急便 / 飛脚宅配便 元払い") {
@@ -353,6 +365,36 @@ if (waybillContext.salesOrderWaybillCarrierLabel(returnOrder, "core_return") !==
 }
 if (waybillContext.salesOrderWaybillDetailLabel(returnOrder, "core_return") !== "ドットプリンタ / 2枚 / 伝票番号 123456789012") {
   throw new Error("The accepted-order view must show return-waybill output method, copy count, and tracking number together");
+}
+const yamatoTrackingUrl = waybillContext.salesOrderCarrierTrackingUrl({
+  outbound_waybill: { carrier_code: "yamato_prepaid" }
+}, "outbound", "3910-3908-4402");
+if (yamatoTrackingUrl !== "https://member.kms.kuronekoyamato.co.jp/parcel/detail?pno=391039084402") {
+  throw new Error("Yamato waybill numbers must open the official prefilled tracking result");
+}
+const sagawaTrackingUrl = waybillContext.salesOrderCarrierTrackingUrl({
+  return_waybill: { carrier_code: "sagawa_collect" }
+}, "core_return", "1234-5678-9012");
+if (sagawaTrackingUrl !== "https://k2k.sagawa-exp.co.jp/p/web/okurijosearch.do?okurijoNo=123456789012") {
+  throw new Error("Sagawa waybill numbers must open the official prefilled tracking result");
+}
+if (!waybillContext.salesOrderCarrierTrackingUrl({ return_waybill: { carrier_code: "sagawa_collect" } }, "core_return", "1234567890")) {
+  throw new Error("A 10-digit Sagawa waybill number must remain trackable");
+}
+if (waybillContext.salesOrderCarrierTrackingUrl({ return_waybill: { carrier_code: "sagawa_collect" } }, "core_return", "12345678901")) {
+  throw new Error("An invalid 11-digit Sagawa number must not show a tracking link");
+}
+if (waybillContext.salesOrderCarrierTrackingUrl({ outbound_shipping_method: { carrier_name: "日本郵便" } }, "outbound", "123456789012")) {
+  throw new Error("An unknown carrier must not be routed to the wrong tracking service");
+}
+if (waybillContext.salesOrderCarrierTrackingUrl({ outbound_waybill: { carrier_code: "yamato_prepaid" } }, "outbound", "12345")) {
+  throw new Error("A malformed waybill number must not show a tracking link");
+}
+const trackingLinkHtml = waybillContext.salesOrderCarrierTrackingLinkHtml({
+  outbound_waybill: { carrier_code: "yamato_prepaid" }
+}, "outbound", "391039084402");
+for (const fragment of ["sales-order-carrier-tracking", "配送状況を確認", "target='_blank'", "rel='noopener noreferrer'"]) {
+  requireFragment(trackingLinkHtml, fragment, `Carrier tracking link is missing: ${fragment}`);
 }
 
 const compactContext = {
@@ -439,6 +481,9 @@ for (const fragment of [
   ".sales-order-waybill-progress-editor .sales-order-tracking-grid > * { min-width: 0; }",
   ".sales-order-waybill-progress-editor .sales-order-tracking-grid button { width: 100%;",
   ".sales-order-tracking-actions { display: flex;",
+  ".sales-order-carrier-tracking-row { display: flex;",
+  ".sales-order-carrier-tracking { display: inline-flex;",
+  ".sales-order-carrier-tracking:focus-visible",
   ".sales-order-tracking-grid input[readonly]",
   ".sales-order-detail-overview { overflow: hidden; }",
   ".sales-order-history-groups",
