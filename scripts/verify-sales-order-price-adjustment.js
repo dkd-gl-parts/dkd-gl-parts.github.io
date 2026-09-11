@@ -37,10 +37,10 @@ const detail = functionSource("renderSalesOrderDetail");
 for (const fragment of [
   "salesOrderCanRevise(order)",
   "受注修正",
-  "値引・調整",
   "salesOrderBillingDetailsHtml(order, orderAdjustments, orderDiscount)",
   "salesOrderPricingHistoryHtml(order.pricing_adjustments)"
 ]) requireFragment(detail, fragment);
+requireFragment(functionSource("salesOrderAdjustmentRowsHtml"), "値引・調整");
 for (const fragment of ["送料無料", "送料", "請求合計"]) {
   requireFragment(functionSource("salesOrderBillingDetailRowsHtml"), fragment);
 }
