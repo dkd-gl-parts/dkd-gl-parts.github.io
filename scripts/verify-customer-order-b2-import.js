@@ -30,6 +30,8 @@ function between(start, end) {
   "sales-order-b2-import-guide-date-from",
   "sales-order-b2-import-guide-date-to",
   "sales-order-b2-import-guide-select-file",
+  "sales-order-b2-import-guide-settings-reference",
+  "sales-order-b2-import-guide-settings-reference-title",
   "sales-order-b2-import-guide-status",
   "sales-order-b2-import-guide-cancel"
 ].forEach((id) => {
@@ -54,6 +56,14 @@ function between(start, end) {
   "削除済のデータのみ表示する",
   "1行目に見出しを出力する",
   "CSVを選択",
+  "「各種設定の変更」で確認できる内容",
+  "プリンタ・送り状レイアウト",
+  "A5マルチ用紙（レーザー専用）",
+  "マルチ用紙設定・印刷位置調整",
+  "各種初期値",
+  "電話番号・枝番・名称",
+  "品名コード1・品名1",
+  "用紙サイズ「A5」・印刷の向き「横」",
   "うまく進まない場合",
   "認証情報を、D-CATSへ入力・送信・保存することはありません。"
 ].forEach((fragment) => {
@@ -62,6 +72,13 @@ function between(start, end) {
 if (html.includes('id="sales-order-b2-import-guide-b2-menu"') ||
     html.includes('id="sales-order-b2-import-guide-issued-search"')) {
   throw new Error("B2 guide must not show buttons that only return to an already-open Yamato tab");
+}
+const settingsReference = html.slice(
+  html.indexOf('id="sales-order-b2-import-guide-settings-reference"'),
+  html.indexOf('id="sales-order-b2-import-guide-status"')
+);
+if (!settingsReference || settingsReference.includes("<button")) {
+  throw new Error("B2 settings reference must present information without a non-assisting button");
 }
 if (!source.includes('var SALES_ORDER_B2_PORTAL_URL = "https://bmypage.kuronekoyamato.co.jp/bmypage/";')) {
   throw new Error("B2 download guidance must open the official Yamato portal");
@@ -176,17 +193,24 @@ if (!selectFile.includes('getElementById("sales-order-import-b2-file")') ||
   ".sales-order-b2-import-guide-steps > li.conditions-open",
   ".sales-order-b2-import-guide-date-range",
   ".sales-order-b2-import-guide-date-fields",
-  ".sales-order-b2-import-guide-no-filter"
+  ".sales-order-b2-import-guide-no-filter",
+  ".sales-order-b2-import-guide-settings-reference",
+  ".sales-order-b2-import-guide-settings-groups",
+  ".sales-order-b2-import-guide-printer-note"
 ].forEach((fragment) => {
   if (!css.includes(fragment)) throw new Error(`B2 search-condition layout is missing: ${fragment}`);
 });
 [
   "Recommended: Filter by planned shipping date",
   "You can import without search conditions",
+  "What you can review under Change Settings",
+  "Printer and waybill layout",
   "建议：按预计发货日期筛选",
-  "也可以不指定搜索条件直接导入"
+  "也可以不指定搜索条件直接导入",
+  "可在“更改各项设置”中确认的内容",
+  "打印机和运单布局"
 ].forEach((fragment) => {
-  if (!i18n.includes(fragment)) throw new Error(`B2 search-condition translation is missing: ${fragment}`);
+  if (!i18n.includes(fragment)) throw new Error(`B2 guide translation is missing: ${fragment}`);
 });
 
 const validationFunction = between("function salesOrderB2ImportFileValidationMessage", "function salesOrderB2ImportFriendlyError");

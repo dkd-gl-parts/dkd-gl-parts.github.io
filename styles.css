@@ -6818,6 +6818,24 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-b2-import-guide-export-steps li b,
 .sales-order-b2-import-guide-export-steps li span { display: block; }
 .sales-order-b2-import-guide-export-steps li b { color: #1d2c25; font-size: 9px; }
+.sales-order-b2-import-guide-settings-reference { margin: 0 20px 12px; border-top: 1px solid #cfdad4; border-bottom: 1px solid #cfdad4; padding: 12px 0; background: #f7faf8; }
+.sales-order-b2-import-guide-settings-reference-heading { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; align-items: start; padding: 0 12px 10px; }
+.sales-order-b2-import-guide-settings-reference-heading > span { color: #287356; font-size: 8px; font-weight: 900; line-height: 1.4; }
+.sales-order-b2-import-guide-settings-reference-heading h4 { margin: 0; color: #1d2c25; font-size: 13px; letter-spacing: 0; }
+.sales-order-b2-import-guide-settings-reference-heading p { margin: 3px 0 0; color: #637169; font-size: 9px; line-height: 1.5; }
+.sales-order-b2-import-guide-settings-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid #d7dfda; border-bottom: 1px solid #d7dfda; background: #fff; }
+.sales-order-b2-import-guide-settings-group { min-width: 0; }
+.sales-order-b2-import-guide-settings-group + .sales-order-b2-import-guide-settings-group { border-left: 1px solid #d7dfda; }
+.sales-order-b2-import-guide-settings-group h5 { margin: 0; border-bottom: 1px solid #d7dfda; padding: 7px 10px; background: #edf3f0; color: #234f3d; font-size: 10px; letter-spacing: 0; }
+.sales-order-b2-import-guide-settings-group dl { margin: 0; }
+.sales-order-b2-import-guide-settings-group dl > div { display: grid; grid-template-columns: minmax(92px, .8fr) minmax(0, 1.2fr); min-height: 31px; border-bottom: 1px solid #e5eae7; }
+.sales-order-b2-import-guide-settings-group dl > div:last-child { border-bottom: 0; }
+.sales-order-b2-import-guide-settings-group dt,
+.sales-order-b2-import-guide-settings-group dd { display: flex; align-items: center; min-width: 0; margin: 0; padding: 6px 8px; font-size: 9px; line-height: 1.4; overflow-wrap: anywhere; }
+.sales-order-b2-import-guide-settings-group dt { background: #f8faf9; color: #526159; font-weight: 800; }
+.sales-order-b2-import-guide-settings-group dd { color: #1d2c25; font-weight: 800; }
+.sales-order-b2-import-guide-printer-note { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; margin: 9px 12px 0; border-left: 3px solid #c24736; padding: 7px 9px; background: #fff4f1; color: #7f2f25; font-size: 9px; line-height: 1.45; }
+.sales-order-b2-import-guide-printer-note strong { color: #6f281f; }
 .sales-order-b2-import-guide-status { min-height: 34px; margin: 0 20px 10px; border-left: 3px solid #287356; padding: 8px 10px; background: #f2f8f5; color: #234f3d; font-size: 10px; font-weight: 800; line-height: 1.5; }
 .sales-order-b2-import-guide-status.error { border-left-color: #b42318; background: #fff3f1; color: #8f2119; }
 .sales-order-b2-import-guide-help { margin: 0 20px 10px; border: 1px solid #d9e1dc; background: #fff; }
@@ -6891,6 +6909,12 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .sales-order-b2-import-guide-search-conditions dl > div { border-right: 0; border-bottom: 1px solid #d7dfda; }
   .sales-order-b2-import-guide-search-conditions dl > div:last-child { border-bottom: 0; }
   .sales-order-b2-import-guide-export-steps ol { grid-template-columns: 1fr; }
+  .sales-order-b2-import-guide-settings-reference { margin: 0 14px 10px; }
+  .sales-order-b2-import-guide-settings-reference-heading { grid-template-columns: 1fr; gap: 3px; padding: 0 9px 9px; }
+  .sales-order-b2-import-guide-settings-groups { grid-template-columns: 1fr; }
+  .sales-order-b2-import-guide-settings-group + .sales-order-b2-import-guide-settings-group { border-top: 1px solid #cfdad4; border-left: 0; }
+  .sales-order-b2-import-guide-settings-group dl > div { grid-template-columns: minmax(105px, .85fr) minmax(0, 1.15fr); }
+  .sales-order-b2-import-guide-printer-note { grid-template-columns: 1fr; gap: 2px; margin: 8px 9px 0; }
   .sales-order-b2-import-guide-status,
   .sales-order-b2-import-guide-help,
   .sales-order-b2-import-guide-warning,
