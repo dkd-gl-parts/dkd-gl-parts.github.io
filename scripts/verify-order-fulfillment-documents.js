@@ -6,6 +6,7 @@ const root = path.resolve(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+const i18n = fs.readFileSync(path.join(root, "legacy-i18n.js"), "utf8");
 const printCss = fs.readFileSync(path.join(root, "shipment-instruction-print.css"), "utf8");
 const contract = fs.readFileSync(path.join(root, "docs", "customer-order-b2-manual-contract.md"), "utf8");
 const carrierAssets = [
@@ -51,6 +52,21 @@ for (const id of [
   "shipping-document-settings-content",
   "shipping-document-settings-close",
   "shipping-document-settings-cancel",
+  "shipping-document-b2-reissue-overlay",
+  "shipping-document-b2-reissue-title",
+  "shipping-document-b2-reissue-description",
+  "shipping-document-b2-reissue-order-number",
+  "shipping-document-b2-reissue-customer",
+  "shipping-document-b2-reissue-current-export",
+  "shipping-document-b2-reissue-current-date",
+  "shipping-document-b2-reissue-history-count",
+  "shipping-document-b2-reissue-note",
+  "shipping-document-b2-reissue-note-count",
+  "shipping-document-b2-reissue-message",
+  "shipping-document-b2-reissue-history",
+  "shipping-document-b2-reissue-close",
+  "shipping-document-b2-reissue-cancel",
+  "shipping-document-b2-reissue-confirm",
   "shipping-handwritten-waybill-overlay",
   "shipping-handwritten-waybill-title",
   "shipping-handwritten-waybill-description",
@@ -84,11 +100,20 @@ for (const fragment of [
   'assets/carriers/sagawa-express.png',
   'shippingCarrierBrandHtml',
   'syncShippingDocumentCarrierBrand',
-  'dcats-print-settings://open',
-  'データ破損など同じ内容が必要な場合',
-  'reason.length < 5'
+  'dcats-print-settings://open'
 ]) requireFragment(source, fragment);
 requireFragment(html, 'dcats-print-calibration://open');
+for (const fragment of [
+  'data-shipping-document-b2-reissue-reason="damage"',
+  'data-shipping-document-b2-reissue-reason="lost"',
+  'data-shipping-document-b2-reissue-reason="correction"',
+  'data-shipping-document-b2-reissue-reason="other"',
+  '送り状が破損した',
+  '送り状を紛失した',
+  '受注修正後に作り直す',
+  '同じ内容のCSVが必要な場合',
+  '発行履歴を確認'
+]) requireFragment(html, fragment, `B2 reissue modal is incomplete: ${fragment}`);
 
 const enterSource = sourceBetween("async function enterShippingDocumentMgmt", "function renderShippingDocumentList");
 for (const fragment of [
@@ -660,6 +685,54 @@ for (const fragment of ["target_reissue", "target_reason", "downloadSalesOrderB2
   requireFragment(issueSource, fragment);
 }
 
+const b2ReissueSource = sourceBetween("function shippingDocumentLatestB2Export", "async function issueShippingDocumentB2");
+for (const fragment of [
+  "SHIPPING_DOCUMENT_B2_REISSUE_REASONS",
+  'key === "other" && note.length < 5',
+  'issueSalesOrderB2Export([order.id], true, reasonResult.reason)',
+  'openShippingDocumentSettings("history")',
+  '発行履歴に理由を保存しました'
+]) requireFragment(b2ReissueSource, fragment, `B2 reissue behavior is incomplete: ${fragment}`);
+const b2IssueAction = sourceBetween("async function issueShippingDocumentB2", "async function saveShippingDocumentReturnWaybill");
+requireFragment(b2IssueAction, "openShippingDocumentB2Reissue()");
+requireFragment(b2IssueAction, "issueSalesOrderB2Export([order.id], false, null)");
+if (b2IssueAction.includes("window.prompt")) {
+  throw new Error("B2 reissue must use the in-app reason modal instead of a browser prompt");
+}
+for (const fragment of [
+  'document.querySelectorAll("[data-shipping-document-b2-reissue-reason]")',
+  'document.getElementById("shipping-document-b2-reissue-confirm")',
+  'document.getElementById("shipping-document-b2-reissue-history")',
+  'if (e.key === "Escape") closeShippingDocumentB2Reissue()'
+]) requireFragment(source, fragment, `B2 reissue interaction is not bound: ${fragment}`);
+
+const b2ReasonContext = {
+  shippingDocumentB2ReissueReasonKey: "",
+  SHIPPING_DOCUMENT_B2_REISSUE_REASONS: {
+    damage: "送り状破損による再発行",
+    lost: "送り状紛失による再発行",
+    correction: "受注内容修正後の再印刷",
+    other: "その他"
+  },
+  noteValue: "",
+  document: { getElementById: () => ({ value: b2ReasonContext.noteValue }) }
+};
+vm.createContext(b2ReasonContext);
+vm.runInContext(sourceBetween("function shippingDocumentB2ReissueReason", "function updateShippingDocumentB2ReissueControls"), b2ReasonContext);
+b2ReasonContext.shippingDocumentB2ReissueReasonKey = "damage";
+if (b2ReasonContext.shippingDocumentB2ReissueReason().reason !== "送り状破損による再発行") {
+  throw new Error("The damaged-waybill preset must produce an auditable reason without free text");
+}
+b2ReasonContext.shippingDocumentB2ReissueReasonKey = "other";
+b2ReasonContext.noteValue = "短い";
+if (!b2ReasonContext.shippingDocumentB2ReissueReason().error) {
+  throw new Error("Other B2 reissue reasons must require at least 5 characters");
+}
+b2ReasonContext.noteValue = "プリンター設定変更";
+if (!b2ReasonContext.shippingDocumentB2ReissueReason().reason.includes("プリンター設定変更")) {
+  throw new Error("A valid Other reason must be included in the audited reissue reason");
+}
+
 const printSource = sourceBetween("function salesOrderPrintItemRows", "async function loadSalesOrderDetail");
 for (const fragment of [
   "manufacturing_serial",
@@ -716,6 +789,14 @@ for (const fragment of [
   ".shipping-document-carrier-context",
   ".shipping-document-settings-card",
   ".shipping-document-settings-heading",
+  ".shipping-document-b2-reissue-card",
+  ".shipping-document-b2-reissue-summary",
+  ".shipping-document-b2-reissue-reasons",
+  ".shipping-document-b2-reissue-reasons button.selected",
+  ".shipping-document-b2-reissue-note",
+  ".shipping-document-b2-reissue-message.error",
+  ".shipping-document-b2-reissue-redownload",
+  ".shipping-document-b2-reissue-footer",
   ".shipping-document-lookup-message",
   ".shipping-handwritten-waybill-card",
   ".shipping-handwritten-waybill-content",
@@ -723,6 +804,11 @@ for (const fragment of [
   ".shipping-handwritten-waybill-canvas-wrap",
   ".shipping-handwritten-waybill-values"
 ]) requireFragment(css, fragment);
+for (const fragment of [
+  "grid-template-columns: repeat(4, minmax(0, 1fr));",
+  "grid-template-columns: repeat(2, minmax(0, 1fr));",
+  "max-height: calc(100dvh - 16px);"
+]) requireFragment(css, fragment, `B2 reissue responsive design is missing: ${fragment}`);
 for (const fragment of [
   "@media (min-width: 1081px)",
   "#screen-shipping-document-mgmt.active {",
@@ -792,15 +878,27 @@ for (const fragment of [
   "ヤマト宅急便　着払い",
   "佐川急便着払い",
   "発行済み注文の重複出力は防止",
-  "同一データを再ダウンロード"
+  "発行時のデータを再ダウンロード",
+  "定型理由と補足を記録して再発行"
 ]) requireFragment(contract, fragment);
 
 for (const fragment of [
-  'content="v1.1.962"',
-  'styles.css?v=1.1.962',
-  'app.js?v=1.1.962'
+  '"B2 CSVを再発行": "Reissue B2 CSV"',
+  '"破損": "Damaged"',
+  '"紛失": "Lost"',
+  '"修正印刷": "Corrected Print"',
+  '"B2 CSVを再発行": "重新发行B2 CSV"',
+  '"破損": "破损"',
+  '"紛失": "丢失"',
+  '"修正印刷": "修正打印"'
+]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
+
+for (const fragment of [
+  'content="v1.1.963"',
+  'styles.css?v=1.1.963',
+  'app.js?v=1.1.963'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.962"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.963"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
