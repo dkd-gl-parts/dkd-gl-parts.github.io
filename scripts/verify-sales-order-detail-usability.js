@@ -180,7 +180,7 @@ for (const fragment of [
   "salesOrderAdjustmentRowsHtml(adjustments, fallbackDiscount)",
   "salesOrderBillingDetailRowsHtml(order)"
 ]) requireFragment(billingDetails, fragment);
-for (const obsolete of ["受注単位の請求内訳", "sales-order-billing-summary", "商品以外の金額も、この受注の明細としてまとめて表示しています。", "商品、コア代金、値引・調整、送料、税を明細行で確認します。"]){
+for (const obsolete of ["受注単位の請求内訳", "sales-order-billing-summary", "商品以外の金額も、この受注の明細としてまとめて表示しています。", "商品、コア代金、値引・調整、送料、税を明細行で確認します。", "送り状へ反映する配送情報です。", "発送と金額修正の記録を確認できます。"]){
   if (source.includes(obsolete)) throw new Error(`Obsolete detached billing summary remains: ${obsolete}`);
 }
 const billingContext = {
