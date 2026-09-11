@@ -7188,6 +7188,11 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-waybill-progress-editor > p + .sales-order-tracking-grid { margin-top: 7px; }
 .sales-order-waybill-progress-editor .sales-order-tracking-grid > * { min-width: 0; }
 .sales-order-waybill-progress-editor .sales-order-tracking-grid button { width: 100%; padding-right: 10px; padding-left: 10px; }
+.sales-order-tracking-actions { display: flex; align-items: stretch; gap: 7px; }
+.sales-order-tracking-actions button { flex: 1 1 auto; width: auto; }
+.sales-order-tracking-actions button.secondary { border-color: #aeb9c2; background: #fff; color: #344054; }
+.sales-order-tracking-grid input[readonly],
+.sales-order-tracking-grid input:disabled { border-color: #d5dce2; background: #f2f4f5; color: #344054; cursor: default; }
 .sales-order-waybill-progress-note { border-top: 1px solid #e4e8eb; padding: 8px 9px; background: #fbfcfc; }
 .sales-order-dispatch-empty { margin-top: 9px; border-left: 3px solid #8ba7c4; padding: 7px 9px; background: #f4f8fb; color: #586777; font-size: 10px; line-height: 1.55; }
 .sales-order-dispatch-actions { display: flex; justify-content: flex-end; gap: 7px; flex-wrap: wrap; margin-top: 10px; }

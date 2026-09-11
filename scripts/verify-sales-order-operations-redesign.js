@@ -141,6 +141,7 @@ const waybillContext = {
   salesOrderPrintJobStatusLabel: (status) => ({ queued: "印刷待ち", claimed: "印刷中", printed: "印刷済み", error: "印刷エラー" })[status] || "未登録",
   salesOrderWaybillCarrierLabel: (order, purpose) => purpose === "core_return" ? "佐川急便 / 飛脚宅配便 着払い" : "ヤマト運輸 / 宅急便 元払い",
   shippingDocumentWaybillNumberFormat: (value) => String(value),
+  t: (key) => ({ purchase_link_change: "変更", product_kind_stock_save_all: "変更を保存", component_cancel: "取消" })[key] || key,
   esc: (value) => String(value == null ? "" : value)
 };
 vm.createContext(waybillContext);
@@ -204,6 +205,18 @@ const savedNumberHtml = waybillContext.salesOrderWaybillProgressHtml({
 });
 if (!savedNumberHtml.includes("value='123456789012'")) {
   throw new Error("The consolidated outbound editor must show the authoritative waybill number");
+}
+for (const fragment of [
+  "id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='123456789012' readonly aria-readonly='true'",
+  "id='sales-order-shipped-on' type='date'",
+  "disabled aria-readonly='true'",
+  "id='sales-order-edit-tracking'",
+  ">変更</button>",
+  "id='sales-order-save-tracking' hidden>変更を保存</button>",
+  "id='sales-order-cancel-tracking' hidden>取消</button>"
+]) requireFragment(savedNumberHtml, fragment, `Registered waybill edit guard is missing: ${fragment}`);
+if (progressHtml.includes("id='sales-order-edit-tracking'") || progressHtml.includes("readonly aria-readonly='true'")) {
+  throw new Error("An unregistered waybill must remain directly editable for its first registration");
 }
 
 for (const fragment of [
