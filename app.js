@@ -6181,7 +6181,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.962";
+var APP_VERSION       = "v1.1.963";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -6557,8 +6557,16 @@ var shippingDocumentLookupSeq = 0;
 var shippingDocumentSaving = false;
 var shippingDocumentBatchSelectionDirty = false;
 var shippingDocumentTemporaryOutputs = {};
+var shippingDocumentB2ReissueReasonKey = "";
+var shippingDocumentB2ReissueBusy = false;
 var shippingDocumentPrintStatusTimer = null;
 var SHIPPING_DOCUMENT_PRINT_STATUS_POLL_MS = 1000;
+var SHIPPING_DOCUMENT_B2_REISSUE_REASONS = {
+  damage: "送り状破損による再発行",
+  lost: "送り状紛失による再発行",
+  correction: "受注内容修正後の再印刷",
+  other: "その他"
+};
 var coreReturnManagementRows = [];
 var coreReturnManagementSelectedId = null;
 var coreReturnManagementDetail = null;
@@ -9016,6 +9024,8 @@ async function doLogout() {
   shippingDocumentSaving = false;
   shippingDocumentBatchSelectionDirty = false;
   shippingDocumentTemporaryOutputs = {};
+  shippingDocumentB2ReissueReasonKey = "";
+  shippingDocumentB2ReissueBusy = false;
   coreReturnManagementRows = [];
   coreReturnManagementSelectedId = null;
   coreReturnManagementDetail = null;
@@ -9024,6 +9034,8 @@ async function doLogout() {
   coreReturnManagementSaving = false;
   var shippingSettingsOverlay = document.getElementById("shipping-document-settings-overlay");
   if (shippingSettingsOverlay) shippingSettingsOverlay.classList.remove("show");
+  var shippingB2ReissueOverlay = document.getElementById("shipping-document-b2-reissue-overlay");
+  if (shippingB2ReissueOverlay) shippingB2ReissueOverlay.classList.remove("show");
   shippingHandwrittenWaybillTasks = [];
   shippingHandwrittenWaybillIndex = -1;
   shippingHandwrittenWaybillOrder = null;
@@ -14687,9 +14699,13 @@ async function enterShippingDocumentMgmt(options) {
   shippingDocumentSaving = false;
   shippingDocumentBatchSelectionDirty = false;
   shippingDocumentTemporaryOutputs = {};
+  shippingDocumentB2ReissueReasonKey = "";
+  shippingDocumentB2ReissueBusy = false;
   stopShippingDocumentPrintStatusPolling();
   var settingsOverlay = document.getElementById("shipping-document-settings-overlay");
   if (settingsOverlay) settingsOverlay.classList.remove("show");
+  var reissueOverlay = document.getElementById("shipping-document-b2-reissue-overlay");
+  if (reissueOverlay) reissueOverlay.classList.remove("show");
   showScreen("shipping-document-mgmt");
   updateAllHeaders();
   var input = document.getElementById("shipping-document-search");
@@ -15690,6 +15706,151 @@ async function openShippingDocumentOrderInSalesOrderMgmt() {
   await enterSalesOrderMgmt({ order: order, detailView: "fulfillment" });
 }
 
+function shippingDocumentLatestB2Export(order) {
+  var exports = Array.isArray(order && order.b2_exports) ? order.b2_exports.slice() : [];
+  exports.sort(function(left, right) {
+    return new Date(right && right.created_at || 0).getTime() - new Date(left && left.created_at || 0).getTime();
+  });
+  return exports[0] || null;
+}
+
+function setShippingDocumentB2ReissueMessage(message, isError) {
+  var host = document.getElementById("shipping-document-b2-reissue-message");
+  if (!host) return;
+  host.textContent = message || "";
+  host.className = "shipping-document-b2-reissue-message" + (isError ? " error" : "");
+}
+
+function shippingDocumentB2ReissueReason() {
+  var key = shippingDocumentB2ReissueReasonKey;
+  var note = String((document.getElementById("shipping-document-b2-reissue-note") || {}).value || "").trim();
+  if (!Object.prototype.hasOwnProperty.call(SHIPPING_DOCUMENT_B2_REISSUE_REASONS, key)) {
+    return { reason: "", error: "再発行理由を選択してください。" };
+  }
+  if (key === "other" && note.length < 5) {
+    return { reason: "", error: "「その他」の内容を5文字以上で入力してください。" };
+  }
+  var reason = key === "other"
+    ? SHIPPING_DOCUMENT_B2_REISSUE_REASONS.other + " / " + note
+    : SHIPPING_DOCUMENT_B2_REISSUE_REASONS[key] + (note ? " / " + note : "");
+  return { reason: reason, error: "" };
+}
+
+function updateShippingDocumentB2ReissueControls() {
+  var note = document.getElementById("shipping-document-b2-reissue-note");
+  var confirm = document.getElementById("shipping-document-b2-reissue-confirm");
+  var cancel = document.getElementById("shipping-document-b2-reissue-cancel");
+  var close = document.getElementById("shipping-document-b2-reissue-close");
+  var history = document.getElementById("shipping-document-b2-reissue-history");
+  var count = document.getElementById("shipping-document-b2-reissue-note-count");
+  var noteValue = String(note && note.value || "");
+  document.querySelectorAll("[data-shipping-document-b2-reissue-reason]").forEach(function(button) {
+    var selected = button.dataset.shippingDocumentB2ReissueReason === shippingDocumentB2ReissueReasonKey;
+    button.classList.toggle("selected", selected);
+    button.setAttribute("aria-pressed", selected ? "true" : "false");
+    button.disabled = shippingDocumentB2ReissueBusy;
+  });
+  if (note) {
+    note.disabled = shippingDocumentB2ReissueBusy;
+    note.setAttribute("aria-invalid", shippingDocumentB2ReissueReasonKey === "other" && noteValue.trim().length > 0 && noteValue.trim().length < 5 ? "true" : "false");
+  }
+  if (count) count.textContent = noteValue.length + " / 160";
+  if (cancel) cancel.disabled = shippingDocumentB2ReissueBusy;
+  if (close) close.disabled = shippingDocumentB2ReissueBusy;
+  if (history) history.disabled = shippingDocumentB2ReissueBusy;
+  if (confirm) {
+    var otherIncomplete = shippingDocumentB2ReissueReasonKey === "other" && noteValue.trim().length < 5;
+    confirm.disabled = shippingDocumentB2ReissueBusy || !shippingDocumentB2ReissueReasonKey || otherIncomplete;
+    confirm.textContent = shippingDocumentB2ReissueBusy ? "再発行しています..." : "再発行してダウンロード";
+  }
+}
+
+function selectShippingDocumentB2ReissueReason(key) {
+  if (shippingDocumentB2ReissueBusy || !Object.prototype.hasOwnProperty.call(SHIPPING_DOCUMENT_B2_REISSUE_REASONS, key)) return;
+  shippingDocumentB2ReissueReasonKey = key;
+  setShippingDocumentB2ReissueMessage("", false);
+  updateShippingDocumentB2ReissueControls();
+  if (key === "other") {
+    var note = document.getElementById("shipping-document-b2-reissue-note");
+    if (note) note.focus();
+  }
+}
+
+function openShippingDocumentB2Reissue() {
+  var order = shippingDocumentDetail;
+  var exports = Array.isArray(order && order.b2_exports) ? order.b2_exports : [];
+  var overlay = document.getElementById("shipping-document-b2-reissue-overlay");
+  if (!order || !exports.length || !overlay) return;
+  var latest = shippingDocumentLatestB2Export(order) || {};
+  shippingDocumentB2ReissueReasonKey = "";
+  shippingDocumentB2ReissueBusy = false;
+  var values = {
+    "shipping-document-b2-reissue-order-number": order.order_number || ("注文 " + order.id),
+    "shipping-document-b2-reissue-customer": order.customer_name || "-",
+    "shipping-document-b2-reissue-current-export": latest.export_number || latest.file_name || "-",
+    "shipping-document-b2-reissue-current-date": customerOrderDateTimeText(latest.created_at) || "-",
+    "shipping-document-b2-reissue-history-count": exports.length + "件"
+  };
+  Object.keys(values).forEach(function(id) {
+    var element = document.getElementById(id);
+    if (element) element.textContent = values[id];
+  });
+  var note = document.getElementById("shipping-document-b2-reissue-note");
+  if (note) note.value = "";
+  setShippingDocumentB2ReissueMessage("", false);
+  updateShippingDocumentB2ReissueControls();
+  overlay.classList.add("show");
+  window.requestAnimationFrame(function() {
+    var firstReason = document.querySelector("[data-shipping-document-b2-reissue-reason]");
+    if (firstReason) firstReason.focus();
+  });
+}
+
+function closeShippingDocumentB2Reissue(restoreFocus) {
+  if (shippingDocumentB2ReissueBusy) return;
+  var overlay = document.getElementById("shipping-document-b2-reissue-overlay");
+  if (overlay) overlay.classList.remove("show");
+  shippingDocumentB2ReissueReasonKey = "";
+  setShippingDocumentB2ReissueMessage("", false);
+  if (restoreFocus === false) return;
+  var trigger = document.getElementById("shipping-document-b2-issue");
+  if (trigger) trigger.focus();
+}
+
+function openShippingDocumentB2ReissueHistory() {
+  if (shippingDocumentB2ReissueBusy) return;
+  closeShippingDocumentB2Reissue(false);
+  openShippingDocumentSettings("history");
+}
+
+async function confirmShippingDocumentB2Reissue() {
+  var order = shippingDocumentDetail;
+  if (!order || shippingDocumentB2ReissueBusy || shippingDocumentSaving || salesOrderSaving) return;
+  var reasonResult = shippingDocumentB2ReissueReason();
+  if (reasonResult.error) {
+    setShippingDocumentB2ReissueMessage(reasonResult.error, true);
+    return;
+  }
+  shippingDocumentB2ReissueBusy = true;
+  updateShippingDocumentB2ReissueControls();
+  setShippingDocumentB2ReissueMessage("保存先を確認し、B2 CSVを再発行しています。", false);
+  var result = await issueSalesOrderB2Export([order.id], true, reasonResult.reason);
+  shippingDocumentB2ReissueBusy = false;
+  if (!result) {
+    var settingsOverlay = document.getElementById("sales-order-b2-settings-overlay");
+    if (settingsOverlay && settingsOverlay.classList.contains("show")) {
+      closeShippingDocumentB2Reissue(false);
+    } else {
+      updateShippingDocumentB2ReissueControls();
+      setShippingDocumentB2ReissueMessage("再発行を完了できませんでした。保存先と画面上部の案内を確認してください。", true);
+    }
+    return;
+  }
+  closeShippingDocumentB2Reissue(false);
+  await loadShippingDocumentDetail(order.id);
+  setShippingDocumentMessage("B2 CSVを再発行しました。発行履歴に理由を保存しました。", false);
+}
+
 async function issueShippingDocumentB2() {
   var order = shippingDocumentDetail;
   if (!order) {
@@ -15701,18 +15862,12 @@ async function issueShippingDocumentB2() {
     return;
   }
   var exports = Array.isArray(order.b2_exports) ? order.b2_exports : [];
-  var reason = null;
   if (exports.length) {
-    reason = window.prompt("再発行理由を5文字以上で入力してください。\nデータ破損など同じ内容が必要な場合は、履歴の「再ダウンロード」を使用します。", "");
-    if (reason === null) return;
-    reason = reason.trim();
-    if (reason.length < 5) {
-      setShippingDocumentMessage("再発行理由を5文字以上で入力してください。", true);
-      return;
-    }
+    openShippingDocumentB2Reissue();
+    return;
   }
-  setShippingDocumentMessage(exports.length ? "B2 CSVを再発行しています。" : "B2 CSVを発行しています。", false);
-  var result = await issueSalesOrderB2Export([order.id], exports.length > 0, reason);
+  setShippingDocumentMessage("B2 CSVを発行しています。", false);
+  var result = await issueSalesOrderB2Export([order.id], false, null);
   if (!result) return;
   await loadShippingDocumentDetail(order.id);
 }
@@ -50935,6 +51090,23 @@ document.getElementById("shipping-document-settings-close").addEventListener("cl
 document.getElementById("shipping-document-settings-cancel").addEventListener("click", closeShippingDocumentSettings);
 document.getElementById("shipping-document-settings-overlay").addEventListener("click", function(e) {
   if (e.target === this) closeShippingDocumentSettings();
+});
+document.querySelectorAll("[data-shipping-document-b2-reissue-reason]").forEach(function(button) {
+  button.addEventListener("click", function() { selectShippingDocumentB2ReissueReason(button.dataset.shippingDocumentB2ReissueReason); });
+});
+document.getElementById("shipping-document-b2-reissue-note").addEventListener("input", function() {
+  setShippingDocumentB2ReissueMessage("", false);
+  updateShippingDocumentB2ReissueControls();
+});
+document.getElementById("shipping-document-b2-reissue-confirm").addEventListener("click", confirmShippingDocumentB2Reissue);
+document.getElementById("shipping-document-b2-reissue-history").addEventListener("click", openShippingDocumentB2ReissueHistory);
+document.getElementById("shipping-document-b2-reissue-close").addEventListener("click", closeShippingDocumentB2Reissue);
+document.getElementById("shipping-document-b2-reissue-cancel").addEventListener("click", closeShippingDocumentB2Reissue);
+document.getElementById("shipping-document-b2-reissue-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeShippingDocumentB2Reissue();
+});
+document.getElementById("shipping-document-b2-reissue-overlay").addEventListener("keydown", function(e) {
+  if (e.key === "Escape") closeShippingDocumentB2Reissue();
 });
 document.getElementById("sales-order-reload").addEventListener("click", refreshSalesOrderManagement);
 document.getElementById("sales-order-search").addEventListener("keydown", function(e) { if (e.key === "Enter") refreshSalesOrderManagement(); });
