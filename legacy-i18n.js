@@ -3010,7 +3010,9 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "件を反映しました。": " shipment(s) applied. ",
     "再発行後の更新": "Post-reissue update: ",
     "件を含みます。": " included. ",
-    "件は使用せず、後発データを反映しました。": " older row(s) were skipped and later data was applied. "
+    "件は使用せず、後発データを反映しました。": " older row(s) were skipped and later data was applied. ",
+    "販売王の「導入 → 他社製品データ取り込み」で、台帳は「商品」、ファイルは「区切り文字形式ファイル（*.csv, *.txt）」を選択し、D-CATSのCSVを取り込んでください。取込結果を確認後、「最新CSVを登録済みにする」を押します。": "In Sales King, open Setup > Import Other Product Data. Select Product for the ledger and Delimited Text File (*.csv, *.txt) for the file type, then import the D-CATS CSV. Verify the result and click Confirm Latest CSV Registration.",
+    "CSV対象 0件": "CSV target: 0"
   },
   "zh": {
     "再発行が必要": "需要重新签发",
@@ -6021,6 +6023,8 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "件を反映しました。": "条发货数据已应用。",
     "再発行後の更新": "重新发行后更新",
     "件を含みます。": "条。",
-    "件は使用せず、後発データを反映しました。": "条旧数据未使用，已应用后续数据。"
+    "件は使用せず、後発データを反映しました。": "条旧数据未使用，已应用后续数据。",
+    "販売王の「導入 → 他社製品データ取り込み」で、台帳は「商品」、ファイルは「区切り文字形式ファイル（*.csv, *.txt）」を選択し、D-CATSのCSVを取り込んでください。取込結果を確認後、「最新CSVを登録済みにする」を押します。": "在销售王中打开“导入 → 导入其他公司产品数据”。台账选择“商品”，文件类型选择“分隔符文本文件（*.csv, *.txt）”，然后导入D-CATS CSV。确认导入结果后，点击“将最新CSV标记为已登记”。",
+    "CSV対象 0件": "CSV目标 0 件"
   }
 };
