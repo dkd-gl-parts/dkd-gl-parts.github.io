@@ -7197,6 +7197,10 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-tracking-actions { display: flex; align-items: stretch; gap: 7px; }
 .sales-order-tracking-actions button { flex: 1 1 auto; width: auto; }
 .sales-order-tracking-actions button.secondary { border-color: #aeb9c2; background: #fff; color: #344054; }
+.sales-order-carrier-tracking-row { display: flex; justify-content: flex-end; border-top: 1px solid #e4e8eb; padding: 8px 9px; background: #f7faf8; }
+.sales-order-carrier-tracking { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; border: 1px solid #287356; border-radius: 5px; padding: 0 11px; background: #fff; color: #1f684d; font-size: 10px; font-weight: 800; text-decoration: none; white-space: nowrap; }
+.sales-order-carrier-tracking:hover { background: #edf7f2; }
+.sales-order-carrier-tracking:focus-visible { outline: 3px solid rgba(40, 115, 86, .22); outline-offset: 2px; }
 .sales-order-tracking-grid input[readonly],
 .sales-order-tracking-grid input:disabled { border-color: #d5dce2; background: #f2f4f5; color: #344054; cursor: default; }
 .sales-order-waybill-progress-note { border-top: 1px solid #e4e8eb; padding: 8px 9px; background: #fbfcfc; }
@@ -8445,6 +8449,8 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .sales-order-dispatch-summary > div:nth-child(2) { border-right: 0; }
   .sales-order-waybill-progress-grid { grid-template-columns: 1fr; }
   .sales-order-waybill-progress-editor .sales-order-tracking-grid { grid-template-columns: 1fr; }
+  .sales-order-carrier-tracking-row { justify-content: stretch; }
+  .sales-order-carrier-tracking { width: 100%; min-height: 40px; }
   .sales-order-dispatch-actions { align-items: stretch; flex-direction: column; }
   .sales-order-dispatch-actions button { width: 100%; }
   .sales-order-print-jobs-head { align-items: stretch; flex-direction: column; }

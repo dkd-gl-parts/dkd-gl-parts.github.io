@@ -325,6 +325,7 @@ var TRANSLATIONS = {
     sales_order_shipping_date_checking: "配送条件を確認して発送予定日を変更しています。",
     sales_order_shipping_date_failed: "発送予定日を変更できませんでした。",
     sales_order_shipping_date_updated: "発送予定日を変更しました。B2 CSVと帳票は変更後の日付で再発行してください。",
+    sales_order_tracking_check: "配送状況を確認",
     customer_order_delivery_date: "お届け希望日",
     customer_order_delivery_time: "時間帯",
     customer_order_delivery_wait: "郵便番号または住所と配送サービスから、最短のお届け希望日を自動設定します。",
@@ -2415,6 +2416,7 @@ var TRANSLATIONS = {
     sales_order_shipping_date_checking: "Validating delivery rules and updating the shipping date.",
     sales_order_shipping_date_failed: "Unable to update the shipping date.",
     sales_order_shipping_date_updated: "The shipping date was updated. Reissue the B2 CSV and documents with the new date.",
+    sales_order_tracking_check: "Track shipment",
     customer_order_delivery_date: "Requested Delivery Date",
     customer_order_delivery_time: "Time Window",
     customer_order_delivery_wait: "Enter a postal code or address and select a delivery service to set the earliest delivery date.",
@@ -4449,6 +4451,7 @@ var TRANSLATIONS = {
     sales_order_shipping_date_checking: "正在检查配送条件并更新发货日期。",
     sales_order_shipping_date_failed: "无法更新发货日期。",
     sales_order_shipping_date_updated: "发货日期已更新。请使用更新后的日期重新生成B2 CSV和单据。",
+    sales_order_tracking_check: "查看配送状态",
     customer_order_delivery_date: "希望送达日期",
     customer_order_delivery_time: "时间段",
     customer_order_delivery_wait: "输入邮政编码或地址并选择配送服务后，将自动设置最早希望送达日期。",
@@ -6394,7 +6397,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.975";
+var APP_VERSION       = "v1.1.976";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -6746,6 +6749,10 @@ var salesOrderB2ImportSaving = false;
 var salesOrderB2GuideWindow = null;
 var salesOrderB2GuideActiveStep = 1;
 var SALES_ORDER_B2_PORTAL_URL = "https://bmypage.kuronekoyamato.co.jp/bmypage/";
+var SALES_ORDER_CARRIER_TRACKING_URLS = {
+  yamato: "https://member.kms.kuronekoyamato.co.jp/parcel/detail?pno=",
+  sagawa: "https://k2k.sagawa-exp.co.jp/p/web/okurijosearch.do?okurijoNo="
+};
 var salesOrderB2ContractSettings = null;
 var salesOrderB2ContractSettingsSaving = false;
 var salesOrderB2Preflight = null;
@@ -10612,6 +10619,42 @@ function salesOrderWaybillCarrierLabel(order, purpose) {
     customerOrderSavedShippingMethod(order, purpose === "core_return" ? "core_return" : "outbound"),
     "未登録"
   );
+}
+
+function salesOrderCarrierTrackingProvider(order, purpose) {
+  var waybill = salesOrderWaybillRecord(order, purpose);
+  var method = customerOrderSavedShippingMethod(order, purpose === "core_return" ? "core_return" : "outbound");
+  if (typeof method === "string") {
+    try { method = JSON.parse(method); } catch (error) { method = { carrier_name: method }; }
+  }
+  method = method || {};
+  var carrierText = [
+    waybill.carrier_code,
+    waybill.carrier_name,
+    method.carrier_code,
+    method.carrier_name
+  ].filter(Boolean).join(" ").toLowerCase();
+  if (carrierText.indexOf("sagawa") >= 0 || carrierText.indexOf("佐川急便") >= 0) return "sagawa";
+  if (carrierText.indexOf("yamato") >= 0 || carrierText.indexOf("kuroneko") >= 0 || carrierText.indexOf("ヤマト運輸") >= 0) return "yamato";
+  return "";
+}
+
+function salesOrderCarrierTrackingUrl(order, purpose, trackingNumber) {
+  var normalized = String(trackingNumber || "");
+  if (typeof normalized.normalize === "function") normalized = normalized.normalize("NFKC");
+  normalized = normalized.replace(/[^0-9]/g, "");
+  var provider = salesOrderCarrierTrackingProvider(order, purpose);
+  if (provider === "yamato" && [11, 12].indexOf(normalized.length) < 0) return "";
+  if (provider === "sagawa" && [10, 12].indexOf(normalized.length) < 0) return "";
+  return provider && SALES_ORDER_CARRIER_TRACKING_URLS[provider]
+    ? SALES_ORDER_CARRIER_TRACKING_URLS[provider] + encodeURIComponent(normalized)
+    : "";
+}
+
+function salesOrderCarrierTrackingLinkHtml(order, purpose, trackingNumber) {
+  var url = salesOrderCarrierTrackingUrl(order, purpose, trackingNumber);
+  if (!url) return "";
+  return "<a class='sales-order-carrier-tracking' data-sales-order-tracking-link data-waybill-purpose='" + esc(purpose) + "' href='" + esc(url) + "' target='_blank' rel='noopener noreferrer'>" + esc(t("sales_order_tracking_check")) + "</a>";
 }
 
 function salesOrderWaybillDetailLabel(order, purpose) {
@@ -17057,6 +17100,7 @@ function salesOrderWaybillProgressHtml(order) {
         : "";
       var trackingNumberText = row.status === "対象外" ? "対象外" : row.trackingNumber ? shippingDocumentWaybillNumberFormat(row.trackingNumber) : "未登録";
       var trackingDetail = outbound ? "" : "<div><dt>送り状番号</dt><dd>" + esc(trackingNumberText) + "</dd></div>";
+      var trackingLink = salesOrderCarrierTrackingLinkHtml(order, row.purpose, row.trackingNumber);
       var hasTrackingNumber = outbound && !!row.trackingNumber;
       var trackingLockAttributes = hasTrackingNumber ? " readonly aria-readonly='true'" : "";
       var shippingDateLockAttributes = hasTrackingNumber ? " disabled aria-readonly='true'" : "";
@@ -17069,6 +17113,7 @@ function salesOrderWaybillProgressHtml(order) {
       return "<article class='sales-order-waybill-progress-card" + (outbound ? " has-editor" : "") + "' data-waybill-purpose='" + esc(row.purpose) + "'>" +
         "<div class='sales-order-waybill-progress-card-head'><strong>" + esc(row.label) + "</strong><span class='sales-order-waybill-progress-status " + esc(row.tone) + "'>" + esc(row.status) + "</span></div>" +
         "<dl><div><dt>運送会社</dt><dd>" + esc(row.carrier) + "</dd></div><div><dt>発行方法</dt><dd>" + esc(row.method) + "</dd></div>" + trackingDetail + "</dl>" + editor +
+        (trackingLink ? "<div class='sales-order-carrier-tracking-row'>" + trackingLink + "</div>" : "") +
       "</article>";
     }).join("") + "</div></section>";
 }
@@ -17079,6 +17124,7 @@ function setSalesOrderTrackingEditMode(editing) {
   var editButton = document.getElementById("sales-order-edit-tracking");
   var saveButton = document.getElementById("sales-order-save-tracking");
   var cancelButton = document.getElementById("sales-order-cancel-tracking");
+  var trackingLink = document.querySelector("[data-sales-order-tracking-link][data-waybill-purpose='outbound']");
   if (!input || !editButton || !saveButton || !cancelButton) return;
   input.readOnly = !editing;
   input.setAttribute("aria-readonly", editing ? "false" : "true");
@@ -17089,6 +17135,7 @@ function setSalesOrderTrackingEditMode(editing) {
   editButton.hidden = editing;
   saveButton.hidden = !editing;
   cancelButton.hidden = !editing;
+  if (trackingLink) trackingLink.hidden = editing;
   if (editing) {
     input.focus();
     input.select();
