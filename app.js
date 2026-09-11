@@ -6181,7 +6181,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.960";
+var APP_VERSION       = "v1.1.961";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -17499,25 +17499,18 @@ function openSalesOrderB2Portal() {
   try { popup.opener = null; } catch (error) { /* Cross-origin windows may reject this assignment. */ }
   try { popup.focus(); } catch (error) { /* The browser may keep the new tab in the background. */ }
   setSalesOrderB2GuideStep(2);
-  setSalesOrderB2GuideStatus("ヤマト画面を開きました。ログイン後、D-CATSへ戻って手順2を押してください。", false);
+  setSalesOrderB2GuideStatus("ヤマト画面を開きました。ログイン後、マイページで「送り状発行システム B2クラウド」を押してください。", false);
 }
 
-function focusSalesOrderB2Portal(step) {
-  if (!salesOrderB2GuideWindowAvailable()) {
-    openSalesOrderB2Portal();
-    if (salesOrderB2GuideWindowAvailable()) {
-      setSalesOrderB2GuideStatus("ヤマト画面を開き直しました。ログイン状態を確認してから続けてください。", true);
-    }
-    return;
-  }
-  try { salesOrderB2GuideWindow.focus(); } catch (error) {
-    setSalesOrderB2GuideStatus("ヤマト画面へ戻れませんでした。手順1から開き直してください。", true);
-    return;
-  }
-  setSalesOrderB2GuideStep(step);
-  setSalesOrderB2GuideStatus(step === 2
-    ? "マイページで「送り状発行システム B2クラウド」を押してください。ログイン画面が表示された場合は再ログインしてください。"
-    : "B2クラウドで「発行済データの検索」を押し、対象を検索して「外部ファイル出力」を実行してください。", false);
+function showSalesOrderB2SearchConditions() {
+  var panel = document.getElementById("sales-order-b2-import-guide-search-conditions");
+  var button = document.getElementById("sales-order-b2-import-guide-search-conditions-toggle");
+  if (!panel || !button) return;
+  panel.hidden = false;
+  button.setAttribute("aria-expanded", "true");
+  setSalesOrderB2GuideStep(3);
+  setSalesOrderB2GuideStatus("検索条件を表示しました。ヤマトB2の画面に同じ条件を入力してください。", false);
+  window.requestAnimationFrame(function() { panel.focus(); });
 }
 
 function openSalesOrderB2ImportGuide() {
@@ -17525,15 +17518,19 @@ function openSalesOrderB2ImportGuide() {
   var overlay = document.getElementById("sales-order-b2-import-guide-overlay");
   if (!overlay) return;
   var hasYamatoWindow = salesOrderB2GuideWindowAvailable();
+  var conditions = document.getElementById("sales-order-b2-import-guide-search-conditions");
+  var conditionsButton = document.getElementById("sales-order-b2-import-guide-search-conditions-toggle");
+  if (conditions) conditions.hidden = true;
+  if (conditionsButton) conditionsButton.setAttribute("aria-expanded", "false");
   setSalesOrderB2GuideStep(hasYamatoWindow ? Math.max(2, salesOrderB2GuideActiveStep) : 1);
   setSalesOrderB2GuideStatus(hasYamatoWindow
-    ? "ヤマト画面は別タブで開いています。続ける手順のボタンを押してください。"
+    ? "ヤマト画面は別タブで開いています。強調表示された項目名に沿って操作してください。"
     : "手順1のボタンからログインを開始してください。", false);
   overlay.classList.add("show");
   window.requestAnimationFrame(function() {
-    var focusId = hasYamatoWindow && salesOrderB2GuideActiveStep >= 3
-      ? "sales-order-b2-import-guide-issued-search"
-      : (hasYamatoWindow ? "sales-order-b2-import-guide-b2-menu" : "sales-order-b2-import-guide-yamato");
+    var focusId = hasYamatoWindow
+      ? "sales-order-b2-import-guide-search-conditions-toggle"
+      : "sales-order-b2-import-guide-yamato";
     var action = document.getElementById(focusId);
     if (action) action.focus();
   });
@@ -50963,8 +50960,7 @@ document.getElementById("sales-order-import-b2").addEventListener("click", openS
 document.getElementById("sales-order-b2-import-guide-close").addEventListener("click", closeSalesOrderB2ImportGuide);
 document.getElementById("sales-order-b2-import-guide-cancel").addEventListener("click", closeSalesOrderB2ImportGuide);
 document.getElementById("sales-order-b2-import-guide-yamato").addEventListener("click", openSalesOrderB2Portal);
-document.getElementById("sales-order-b2-import-guide-b2-menu").addEventListener("click", function() { focusSalesOrderB2Portal(2); });
-document.getElementById("sales-order-b2-import-guide-issued-search").addEventListener("click", function() { focusSalesOrderB2Portal(3); });
+document.getElementById("sales-order-b2-import-guide-search-conditions-toggle").addEventListener("click", showSalesOrderB2SearchConditions);
 document.getElementById("sales-order-b2-import-guide-select-file").addEventListener("click", selectSalesOrderB2ImportFile);
 document.getElementById("sales-order-b2-import-guide-overlay").addEventListener("click", function(e) {
   if (e.target === this) closeSalesOrderB2ImportGuide();
