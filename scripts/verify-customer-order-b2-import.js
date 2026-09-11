@@ -23,8 +23,8 @@ function between(start, end) {
   "sales-order-b2-import-guide-overlay",
   "sales-order-b2-import-guide-title",
   "sales-order-b2-import-guide-yamato",
-  "sales-order-b2-import-guide-b2-menu",
-  "sales-order-b2-import-guide-issued-search",
+  "sales-order-b2-import-guide-search-conditions-toggle",
+  "sales-order-b2-import-guide-search-conditions",
   "sales-order-b2-import-guide-select-file",
   "sales-order-b2-import-guide-status",
   "sales-order-b2-import-guide-cancel"
@@ -36,14 +36,21 @@ function between(start, end) {
   "発行済データの検索",
   "外部ファイル出力",
   "ログインページを開く",
-  "ヤマト画面に戻る",
-  "発行済データの検索を開く",
+  "送り状発行システム B2クラウド",
+  "検索条件を表示",
+  "ヤマトB2に入力する検索条件",
+  "削除済のデータのみ表示する",
+  "1行目に見出しを出力する",
   "CSVを選択",
   "うまく進まない場合",
   "認証情報を、D-CATSへ入力・送信・保存することはありません。"
 ].forEach((fragment) => {
   if (!html.includes(fragment)) throw new Error(`B2 download guidance is missing: ${fragment}`);
 });
+if (html.includes('id="sales-order-b2-import-guide-b2-menu"') ||
+    html.includes('id="sales-order-b2-import-guide-issued-search"')) {
+  throw new Error("B2 guide must not show buttons that only return to an already-open Yamato tab");
+}
 if (!source.includes('var SALES_ORDER_B2_PORTAL_URL = "https://bmypage.kuronekoyamato.co.jp/bmypage/";')) {
   throw new Error("B2 download guidance must open the official Yamato portal");
 }
@@ -52,11 +59,11 @@ if (html.includes("newb2web.kuronekoyamato.co.jp/issue_search.html") ||
   throw new Error("B2 download guidance must not deep-link into Yamato's session-bound screens");
 }
 [
-  "ログイン後のマイページで「送り状発行システム B2クラウド」を押します。",
-  "「発行済データの検索」で対象を検索し、「外部ファイル出力」でCSVをダウンロードします。",
-  "B2の内部画面は直接URLで開けません。手順2と3のボタンは、手順1で開いたヤマト画面へ戻ります。",
+  "ログイン後のマイページで、次の項目を押します。",
+  "B2クラウドのメインメニューで、次の項目を押します。",
+  "B2の内部画面は直接URLで開けません。強調表示された項目名を、手順1で開いたヤマト画面から順に選択してください。",
   "ブラウザでポップアップを許可し、手順1をもう一度押してください。",
-  "セッション切れです。再ログインして手順2から続けてください。"
+  "セッション切れです。再ログインし、「送り状発行システム B2クラウド」から続けてください。"
 ].forEach((fragment) => {
   if (!html.includes(fragment)) throw new Error(`B2 session-safe navigation guidance is missing: ${fragment}`);
 });
@@ -68,18 +75,39 @@ if (!openGuide.includes("canManageSalesOrders()") ||
     !openGuide.includes("action.focus()")) {
   throw new Error("B2 import action must open and focus the download guide");
 }
-const openPortal = between("function openSalesOrderB2Portal", "function focusSalesOrderB2Portal");
+const openPortal = between("function openSalesOrderB2Portal", "function showSalesOrderB2SearchConditions");
 if (!openPortal.includes('window.open(SALES_ORDER_B2_PORTAL_URL, "dcats-yamato-b2")') ||
     !openPortal.includes("popup.opener = null") ||
     !openPortal.includes("ポップアップを許可")) {
   throw new Error("B2 guide must open the official portal in a reusable tab and explain popup failures");
 }
-const focusPortal = between("function focusSalesOrderB2Portal", "function openSalesOrderB2ImportGuide");
-if (!focusPortal.includes("salesOrderB2GuideWindowAvailable()") ||
-    !focusPortal.includes("openSalesOrderB2Portal()") ||
-    !focusPortal.includes("salesOrderB2GuideWindow.focus()") ||
-    !focusPortal.includes("ログイン画面が表示された場合は再ログイン")) {
-  throw new Error("Each B2 step must recover a closed tab and return to the active Yamato tab");
+const showConditions = between("function showSalesOrderB2SearchConditions", "function openSalesOrderB2ImportGuide");
+if (!showConditions.includes('panel.hidden = false') ||
+    !showConditions.includes('button.setAttribute("aria-expanded", "true")') ||
+    !showConditions.includes("setSalesOrderB2GuideStep(3)") ||
+    !showConditions.includes("ヤマトB2の画面に同じ条件を入力してください")) {
+  throw new Error("Issued Data Search guidance must reveal the recommended search conditions");
+}
+const conditionsPanel = { hidden: true, focused: false, focus() { this.focused = true; } };
+const conditionsButton = { expanded: "false", setAttribute(name, value) { if (name === "aria-expanded") this.expanded = value; } };
+const conditionsObserved = {};
+const conditionsSandbox = {
+  document: {
+    getElementById(id) {
+      if (id === "sales-order-b2-import-guide-search-conditions") return conditionsPanel;
+      if (id === "sales-order-b2-import-guide-search-conditions-toggle") return conditionsButton;
+      return null;
+    }
+  },
+  window: { requestAnimationFrame(callback) { callback(); } },
+  setSalesOrderB2GuideStep(step) { conditionsObserved.step = step; },
+  setSalesOrderB2GuideStatus(message, isError) { conditionsObserved.status = { message, isError }; }
+};
+vm.runInNewContext(`${showConditions}; showSalesOrderB2SearchConditions();`, conditionsSandbox);
+if (conditionsPanel.hidden || !conditionsPanel.focused || conditionsButton.expanded !== "true" ||
+    conditionsObserved.step !== 3 || conditionsObserved.status?.isError ||
+    !conditionsObserved.status?.message.includes("同じ条件を入力")) {
+  throw new Error("Issued Data Search condition panel must expand, receive focus, and announce the next action");
 }
 const closeGuide = between("function closeSalesOrderB2ImportGuide", "function selectSalesOrderB2ImportFile");
 if (!closeGuide.includes('classList.remove("show")') || !closeGuide.includes('getElementById("sales-order-import-b2")')) {
@@ -93,8 +121,7 @@ if (!selectFile.includes('getElementById("sales-order-import-b2-file")') ||
 [
   'document.getElementById("sales-order-import-b2").addEventListener("click", openSalesOrderB2ImportGuide)',
   'document.getElementById("sales-order-b2-import-guide-yamato").addEventListener("click", openSalesOrderB2Portal)',
-  'document.getElementById("sales-order-b2-import-guide-b2-menu").addEventListener("click", function() { focusSalesOrderB2Portal(2); })',
-  'document.getElementById("sales-order-b2-import-guide-issued-search").addEventListener("click", function() { focusSalesOrderB2Portal(3); })',
+  'document.getElementById("sales-order-b2-import-guide-search-conditions-toggle").addEventListener("click", showSalesOrderB2SearchConditions)',
   'document.getElementById("sales-order-b2-import-guide-select-file").addEventListener("click", selectSalesOrderB2ImportFile)',
   'if (e.key === "Escape") closeSalesOrderB2ImportGuide()',
   "closeSalesOrderB2ImportGuide(false);"
@@ -190,6 +217,9 @@ if (!detailRender.includes("salesOrderShipmentHistoryHtml(order.shipment_history
   ".sales-order-b2-import-row",
   ".sales-order-b2-import-guide-card",
   ".sales-order-b2-import-guide-steps",
+  ".sales-order-b2-import-guide-field",
+  ".sales-order-b2-import-guide-search-conditions",
+  ".sales-order-b2-import-guide-export-steps",
   ".sales-order-b2-import-guide-status",
   ".sales-order-b2-import-guide-help",
   ".sales-order-b2-import-guide-warning",
