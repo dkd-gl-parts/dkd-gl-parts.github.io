@@ -41,6 +41,7 @@ function functionSource(name) {
 
 assert(html.includes('id="screen-finished-product-shipping"'), "shipment screen is missing");
 [
+  'id="finished-shipment-dispatch-load"',
   'id="finished-shipment-dispatch-input"',
   'id="btn-finished-shipment-load-dispatch"',
   'id="btn-finished-shipment-camera-dispatch"',
@@ -77,6 +78,7 @@ for (const id of [
   "finished-shipment-replacement-serial"
 ]) assert(html.includes(`id="${id}"`), `category warranty or replacement UI is missing: ${id}`);
 assert(css.includes(".finished-shipment-shell"), "shipment layout styles are missing");
+assert(/\.finished-shipment-dispatch-load\[hidden\]\s*\{[^}]*display:\s*none\s*!important/s.test(css), "order-focused shipment checking must fully hide dispatch loading controls");
 assert(css.includes(".finished-shipment-camera-stage"), "camera scanner preview styles are missing");
 assert(/@media \(max-width: 767px\)[\s\S]*\.finished-shipment-scan-row\s*\{[^}]*grid-template-columns:\s*1fr 1fr/s.test(css), "camera scan controls must stack for narrow mobile screens");
 assert(/@media \(max-width: 767px\)[\s\S]*\.finished-shipment-mobile-final-action:not\(\[hidden\]\)\s*\{[^}]*position:\s*fixed[^}]*bottom:/s.test(css), "mobile picking status and shipment action must remain in one viewport");
@@ -111,6 +113,14 @@ assert(dispatchLoadSource.includes("refreshFinishedShipmentContext(order)"), "lo
 assert(dispatchLoadSource.includes("finished_shipping_dispatch_resumed"), "dispatch reload must report restored serial assignments");
 const enterShipmentSource = functionSource("enterFinishedProductShipping");
 assert(enterShipmentSource.includes("if (dispatch) await loadFinishedShipmentDispatch()"), "opening shipment checking must refresh stale dispatch state");
+assert(enterShipmentSource.includes("setFinishedShipmentDispatchLoadVisible(!finishedShipmentOrderContext)"), "order-focused shipment checking must hide redundant dispatch loading controls");
+const dispatchLoadVisibilitySource = functionSource("setFinishedShipmentDispatchLoadVisible");
+assert(dispatchLoadVisibilitySource.includes("panel.hidden = !visible"), "dispatch loading controls must be visually hidden in order-focused mode");
+assert(dispatchLoadVisibilitySource.includes('panel.setAttribute("inert", "")'), "hidden dispatch loading controls must not accept interaction or focus");
+assert(dispatchLoadVisibilitySource.includes('panel.setAttribute("aria-hidden", "true")'), "hidden dispatch loading controls must be removed from assistive navigation");
+assert(dispatchLoadVisibilitySource.includes('panel.removeAttribute("inert")'), "menu entry must restore dispatch loading interaction");
+const returnShipmentSource = functionSource("returnFromFinishedProductShipping");
+assert(returnShipmentSource.includes("setFinishedShipmentDispatchLoadVisible(true)"), "leaving order-focused shipment checking must restore the normal loading controls");
 const reloadWorkspaceSource = functionSource("reloadFinishedShipmentWorkspace");
 assert(reloadWorkspaceSource.includes("await loadFinishedShipmentDispatch()"), "screen reload must refresh the current dispatch");
 assert(reloadWorkspaceSource.includes("await loadFinishedShipmentHistory()"), "screen reload must also refresh shipment history");

@@ -5536,6 +5536,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 #screen-finished-product-shipping .finished-label-table-wrap { width: 100%; max-width: 100%; }
 #screen-finished-product-shipping .finished-label-search-row button { flex: 0 0 auto; }
 .finished-shipment-dispatch-load { border-left: 3px solid #2d6fae; }
+#screen-finished-product-shipping .finished-shipment-dispatch-load[hidden] { display: none !important; }
 .finished-shipment-scan-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: stretch; }
 .finished-shipment-scan-row input { min-width: 0; }
 .finished-shipment-camera-button { min-height: 38px; border: 1px solid #2d6fae; border-radius: 6px; padding: 7px 12px; background: #eef6ff; color: #1f5e9c; font-size: 11px; font-weight: 900; cursor: pointer; white-space: nowrap; }
