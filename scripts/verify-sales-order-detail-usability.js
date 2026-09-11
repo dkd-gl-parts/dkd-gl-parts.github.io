@@ -100,7 +100,7 @@ for (const fragment of [
   "sales-order-core-charge-row",
   "customer_order_core_not_returned_short",
   "customer_order_core_charge_billed_short",
-  "customer_order_separate_line",
+  "customer_order_core_charge_kind",
   "customer_order_part_charge_reference",
   "coreChargeTotal <= 0",
   "sales-order-core-charge-row"
@@ -114,7 +114,7 @@ const itemRowsContext = {
     customer_order_core_charge_total: "コア代金",
     customer_order_core_charge_no_return_status: "コア代金請求済み",
     customer_order_core_charge_billed_short: "請求済み",
-    customer_order_separate_line: "別明細"
+    customer_order_core_charge_kind: "コア代"
   })[key] || key,
   tf: (key, values) => key === "customer_order_part_charge_reference" ? `${values.part} 分` : key,
   esc: (value) => String(value),
@@ -143,8 +143,26 @@ const separatedRows = itemRowsContext.salesOrderItemRowsHtml([{
 if ((separatedRows.match(/sales-order-item-row/g) || []).length !== 2) {
   throw new Error("A billed core charge must add exactly one detail row below the product row");
 }
-for (const fragment of ["27060-B2021", "¥7,500", "コア代金", "別明細", "¥2,000", "請求済み"]) {
+for (const fragment of ["27060-B2021", "¥7,500", "コア代金", "コア代", "¥2,000", "請求済み"]) {
   requireFragment(separatedRows, fragment, `Separated core-charge row is missing: ${fragment}`);
+}
+if ((separatedRows.match(/>請求済み<\/span>/g) || []).length !== 2 || separatedRows.includes("返却なし")) {
+  throw new Error("A billed core charge must mark both the rebuilt product and its core-charge line as billed");
+}
+if (separatedRows.includes("別明細")) {
+  throw new Error("The billed core-charge line must use the concise core-charge kind label");
+}
+const unbilledNoReturnRows = itemRowsContext.salesOrderItemRowsHtml([{
+  genuine_part_number: "27060-B2021",
+  quantity: 1,
+  product_unit_price_jpy: 7500,
+  product_line_total_jpy: 7500,
+  core_return_handling: "charge_no_return",
+  core_charge_jpy: 0,
+  core_charge_line_total_jpy: 0
+}]);
+if (!unbilledNoReturnRows.includes("返却なし") || unbilledNoReturnRows.includes("請求済み")) {
+  throw new Error("A zero-value no-return selection must not be shown as billed");
 }
 const standardRows = itemRowsContext.salesOrderItemRowsHtml([{
   genuine_part_number: "27060-B2021",

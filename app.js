@@ -359,7 +359,7 @@ var TRANSLATIONS = {
     customer_order_core_charge_unset: "返却不可時コア代金が未設定（選択不可）",
     customer_order_core_charge_setup: "商品マスタに返却不可時コア代金を設定してください。",
     customer_order_core_charge_included: "コア代金を別項目で計上",
-    customer_order_separate_line: "別明細",
+    customer_order_core_charge_kind: "コア代",
     customer_order_part_charge_reference: "{part} 分",
     customer_order_core_charge_note: "コアを返却できない受注として、商品マスタのコア代金を商品代とは別項目で計上します。返送用送り状は発行しません。",
     customer_order_core_charge_total: "コア代金",
@@ -2449,7 +2449,7 @@ var TRANSLATIONS = {
     customer_order_core_charge_unset: "Core charge for unavailable return is not set",
     customer_order_core_charge_setup: "Set the unavailable-return core charge in Product Master.",
     customer_order_core_charge_included: "Core charge billed separately",
-    customer_order_separate_line: "Separate line",
+    customer_order_core_charge_kind: "Core charge",
     customer_order_part_charge_reference: "For {part}",
     customer_order_core_charge_note: "The exchange core cannot be returned, so the Product Master core charge is billed as a separate line from the product. No return label is issued.",
     customer_order_core_charge_total: "Core charge",
@@ -4483,7 +4483,7 @@ var TRANSLATIONS = {
     customer_order_core_charge_unset: "未设置无法返还时的旧件费",
     customer_order_core_charge_setup: "请在商品主数据中设置无法返还时的旧件费。",
     customer_order_core_charge_included: "旧件费另行计费",
-    customer_order_separate_line: "单独明细",
+    customer_order_core_charge_kind: "旧件费",
     customer_order_part_charge_reference: "{part} 对应费用",
     customer_order_core_charge_note: "因交换旧件无法返还，商品主数据中的旧件费将与商品金额分开计费，不发行返送运单。",
     customer_order_core_charge_total: "旧件费",
@@ -6394,7 +6394,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.974";
+var APP_VERSION       = "v1.1.975";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -16554,12 +16554,14 @@ function salesOrderItemRowsHtml(items) {
       ? Math.max(0, Number(storedCoreChargeTotal) || 0)
       : coreChargePerUnit * quantity;
     if (coreChargePerUnit <= 0 && coreChargeTotal > 0) coreChargePerUnit = coreChargeTotal / quantity;
-    var coreStatusLabel = coreHandling === "charge_no_return"
-      ? t("customer_order_core_not_returned_short")
-      : customerOrderCoreHandlingLabel(item);
+    var coreStatusLabel = coreChargeTotal > 0
+      ? t("customer_order_core_charge_billed_short")
+      : coreHandling === "charge_no_return"
+        ? t("customer_order_core_not_returned_short")
+        : customerOrderCoreHandlingLabel(item);
     var productRow = "<div class='sales-order-item-row sales-order-product-row" + (coreChargeTotal > 0 ? " has-core-charge" : "") + "'><div><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || "-") + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small></div><span>" + esc(customerProductKindLabel(item.product_kind)) + "</span><strong>" + esc(quantity) + "</strong><span>" + esc(customerOrderCurrency(customerOrderProductUnitPrice(item))) + "</span><strong>" + esc(customerOrderCurrency(customerOrderProductLineTotal(item))) + "</strong><span class='sales-order-core " + (coreHandling === "return_required" ? "required" : (coreHandling === "charge_no_return" ? "charged" : "none")) + "' title='" + esc(customerOrderCoreHandlingLabel(item)) + "'>" + esc(coreStatusLabel) + "</span></div>";
     if (coreChargeTotal <= 0) return productRow;
-    return productRow + "<div class='sales-order-item-row sales-order-core-charge-row'><div><strong>" + esc(t("customer_order_core_charge_total")) + "</strong><small>" + esc(tf("customer_order_part_charge_reference", { part: item.genuine_part_number || item.manufacturer_part_number || "-" })) + "</small></div><span>" + esc(t("customer_order_separate_line")) + "</span><strong>" + esc(quantity) + "</strong><span>" + esc(customerOrderCurrency(coreChargePerUnit)) + "</span><strong class='sales-order-core-charge'>" + esc(customerOrderCurrency(coreChargeTotal)) + "</strong><span class='sales-order-core charged' title='" + esc(t("customer_order_core_charge_no_return_status")) + "'>" + esc(t("customer_order_core_charge_billed_short")) + "</span></div>";
+    return productRow + "<div class='sales-order-item-row sales-order-core-charge-row'><div><strong>" + esc(t("customer_order_core_charge_total")) + "</strong><small>" + esc(tf("customer_order_part_charge_reference", { part: item.genuine_part_number || item.manufacturer_part_number || "-" })) + "</small></div><span>" + esc(t("customer_order_core_charge_kind")) + "</span><strong>" + esc(quantity) + "</strong><span>" + esc(customerOrderCurrency(coreChargePerUnit)) + "</span><strong class='sales-order-core-charge'>" + esc(customerOrderCurrency(coreChargeTotal)) + "</strong><span class='sales-order-core charged' title='" + esc(t("customer_order_core_charge_no_return_status")) + "'>" + esc(t("customer_order_core_charge_billed_short")) + "</span></div>";
   }).join("");
 }
 
