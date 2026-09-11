@@ -190,11 +190,14 @@ const notApplicableHtml = waybillContext.salesOrderWaybillProgressHtml({
   core_return_required: false,
   outbound_waybill: { handling_method: "b2_cloud" }
 });
-if (notApplicableHtml.includes("data-waybill-purpose='core_return'")) {
-  throw new Error("A return waybill that is not required must not consume a full work card");
+for (const fragment of ["sales-order-waybill-progress-grid", "data-waybill-purpose='outbound'", "data-waybill-purpose='core_return'", "返却用送り状", "対象外", "<dt>送り状番号</dt><dd>対象外</dd>"]) {
+  requireFragment(notApplicableHtml, fragment, `Framed non-applicable return state is missing: ${fragment}`);
 }
-for (const fragment of ["sales-order-waybill-progress-grid outbound-only", "sales-order-waybill-not-applicable", "返却用送り状", "対象外"]) {
-  requireFragment(notApplicableHtml, fragment, `Compact non-applicable return state is missing: ${fragment}`);
+if (notApplicableHtml.indexOf("data-waybill-purpose='outbound'") > notApplicableHtml.indexOf("data-waybill-purpose='core_return'")) {
+  throw new Error("The return waybill card must be shown below the outbound waybill card");
+}
+if (notApplicableHtml.includes("sales-order-waybill-not-applicable") || notApplicableHtml.includes("sales-order-waybill-progress-grid outbound-only")) {
+  throw new Error("The non-applicable return state must not remain outside the framed card list");
 }
 if (notApplicableHtml.includes("番号の登録・変更")) {
   throw new Error("A non-applicable return waybill must not show registration guidance");
