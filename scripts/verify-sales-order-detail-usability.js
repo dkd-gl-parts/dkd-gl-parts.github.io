@@ -216,9 +216,23 @@ for (const fragment of [
   "sales-order-waybill-progress-editor",
   "id='sales-order-outbound-tracking'",
   "id='sales-order-shipped-on'",
+  "id='sales-order-edit-tracking'",
   "id='sales-order-save-tracking'",
+  "id='sales-order-cancel-tracking'",
+  "trackingLockAttributes",
+  "shippingDateLockAttributes",
   "送り状番号を登録"
 ]) requireFragment(waybillProgress, fragment);
+const trackingEditMode = functionSource("setSalesOrderTrackingEditMode");
+for (const fragment of [
+  "input.readOnly = !editing",
+  "shippedOn.disabled = !editing",
+  "editButton.hidden = editing",
+  "saveButton.hidden = !editing",
+  "cancelButton.hidden = !editing",
+  "input.focus()",
+  "input.select()"
+]) requireFragment(trackingEditMode, fragment, "Registered waybill numbers must require an explicit edit action");
 if (source.includes("送り状番号の登録だけでは在庫を減らしません")) {
   throw new Error("The obsolete stock notice must not be shown beside waybill registration");
 }
@@ -356,6 +370,8 @@ for (const fragment of [
   ".sales-order-waybill-progress-editor > p + .sales-order-tracking-grid { margin-top: 7px; }",
   ".sales-order-waybill-progress-editor .sales-order-tracking-grid > * { min-width: 0; }",
   ".sales-order-waybill-progress-editor .sales-order-tracking-grid button { width: 100%;",
+  ".sales-order-tracking-actions { display: flex;",
+  ".sales-order-tracking-grid input[readonly]",
   ".sales-order-detail-overview { overflow: hidden; }",
   ".sales-order-history-groups",
   ".sales-order-pricing-lower-grid",

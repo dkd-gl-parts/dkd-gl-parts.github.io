@@ -6181,7 +6181,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.967";
+var APP_VERSION       = "v1.1.968";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -16539,14 +16539,48 @@ function salesOrderWaybillProgressHtml(order) {
         : "";
       var trackingNumberText = row.status === "対象外" ? "対象外" : row.trackingNumber ? shippingDocumentWaybillNumberFormat(row.trackingNumber) : "未登録";
       var trackingDetail = outbound ? "" : "<div><dt>送り状番号</dt><dd>" + esc(trackingNumberText) + "</dd></div>";
+      var hasTrackingNumber = outbound && !!row.trackingNumber;
+      var trackingLockAttributes = hasTrackingNumber ? " readonly aria-readonly='true'" : "";
+      var shippingDateLockAttributes = hasTrackingNumber ? " disabled aria-readonly='true'" : "";
+      var trackingActions = hasTrackingNumber
+        ? "<button type='button' id='sales-order-edit-tracking' aria-controls='sales-order-outbound-tracking sales-order-shipped-on'>" + esc(t("purchase_link_change")) + "</button><button type='button' id='sales-order-save-tracking' hidden>" + esc(t("product_kind_stock_save_all")) + "</button><button type='button' class='secondary' id='sales-order-cancel-tracking' hidden>" + esc(t("component_cancel")) + "</button>"
+        : "<button type='button' id='sales-order-save-tracking'>送り状番号を登録</button>";
       var editor = outbound
-        ? "<div class='sales-order-waybill-progress-editor'>" + (description ? "<p>" + esc(description) + "</p>" : "") + "<div class='sales-order-tracking-grid outbound-only'><label><span>" + esc(numberLabel) + "</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(row.trackingNumber) + "'></label><label><span>" + esc(scheduleLabel) + "</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'></label><button type='button' id='sales-order-save-tracking'>送り状番号を登録</button></div></div>"
+        ? "<div class='sales-order-waybill-progress-editor'>" + (description ? "<p>" + esc(description) + "</p>" : "") + "<div class='sales-order-tracking-grid outbound-only'><label><span>" + esc(numberLabel) + "</span><input id='sales-order-outbound-tracking' type='text' inputmode='numeric' maxlength='12' value='" + esc(row.trackingNumber) + "'" + trackingLockAttributes + "></label><label><span>" + esc(scheduleLabel) + "</span><input id='sales-order-shipped-on' type='date' value='" + esc(order.shipped_on || new Date().toISOString().slice(0, 10)) + "'" + shippingDateLockAttributes + "></label><div class='sales-order-tracking-actions'>" + trackingActions + "</div></div></div>"
         : row.status === "対象外" ? "" : "<p class='sales-order-waybill-progress-note'>番号の登録・変更は「出荷帳票発行」で行います。</p>";
       return "<article class='sales-order-waybill-progress-card" + (outbound ? " has-editor" : "") + "' data-waybill-purpose='" + esc(row.purpose) + "'>" +
         "<div class='sales-order-waybill-progress-card-head'><strong>" + esc(row.label) + "</strong><span class='sales-order-waybill-progress-status " + esc(row.tone) + "'>" + esc(row.status) + "</span></div>" +
         "<dl><div><dt>運送会社</dt><dd>" + esc(row.carrier) + "</dd></div><div><dt>発行方法</dt><dd>" + esc(row.method) + "</dd></div>" + trackingDetail + "</dl>" + editor +
       "</article>";
     }).join("") + "</div></section>";
+}
+
+function setSalesOrderTrackingEditMode(editing) {
+  var input = document.getElementById("sales-order-outbound-tracking");
+  var shippedOn = document.getElementById("sales-order-shipped-on");
+  var editButton = document.getElementById("sales-order-edit-tracking");
+  var saveButton = document.getElementById("sales-order-save-tracking");
+  var cancelButton = document.getElementById("sales-order-cancel-tracking");
+  if (!input || !editButton || !saveButton || !cancelButton) return;
+  input.readOnly = !editing;
+  input.setAttribute("aria-readonly", editing ? "false" : "true");
+  if (shippedOn) {
+    shippedOn.disabled = !editing;
+    shippedOn.setAttribute("aria-readonly", editing ? "false" : "true");
+  }
+  editButton.hidden = editing;
+  saveButton.hidden = !editing;
+  cancelButton.hidden = !editing;
+  if (editing) {
+    input.focus();
+    input.select();
+  }
+}
+
+function cancelSalesOrderTrackingEdit() {
+  renderSalesOrderDetail();
+  var editButton = document.getElementById("sales-order-edit-tracking");
+  if (editButton) editButton.focus();
 }
 
 function salesOrderDispatchHtml(order) {
@@ -16752,10 +16786,14 @@ function renderSalesOrderDetail() {
     button.addEventListener("click", function() { updateSalesOrderStatus(button.dataset.salesOrderAction); });
   });
   var trackingButton = document.getElementById("sales-order-save-tracking");
+  var trackingEditButton = document.getElementById("sales-order-edit-tracking");
+  var trackingCancelButton = document.getElementById("sales-order-cancel-tracking");
   var revisionButton = document.getElementById("sales-order-revision-open");
   var shippingDateButton = document.getElementById("sales-order-save-shipping-date");
   if (revisionButton) revisionButton.addEventListener("click", openSalesOrderRevisionEditor);
   if (shippingDateButton) shippingDateButton.addEventListener("click", saveSalesOrderScheduledShippingDate);
+  if (trackingEditButton) trackingEditButton.addEventListener("click", function() { setSalesOrderTrackingEditMode(true); });
+  if (trackingCancelButton) trackingCancelButton.addEventListener("click", cancelSalesOrderTrackingEdit);
   if (trackingButton) trackingButton.addEventListener("click", registerSalesOrderTracking);
   var issueDispatchButton = document.getElementById("sales-order-issue-dispatch");
   if (issueDispatchButton) issueDispatchButton.addEventListener("click", issueSalesOrderDispatch);
