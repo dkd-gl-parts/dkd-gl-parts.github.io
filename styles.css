@@ -7164,6 +7164,11 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-dispatch-summary strong { display: block; }
 .sales-order-dispatch-summary span { color: #74808d; font-size: 9px; }
 .sales-order-dispatch-summary strong { overflow-wrap: anywhere; margin-top: 3px; color: #263548; font-size: 11px; }
+.sales-order-dispatch-serials { margin-top: 7px; border-top: 1px solid #dce2e8; padding-top: 7px; }
+.sales-order-dispatch-serials > span { color: #596876; font-weight: 800; }
+.sales-order-dispatch-serial-list { display: grid; gap: 4px; margin-top: 5px; }
+.sales-order-dispatch-serial-list code { display: block; overflow-wrap: anywhere; border-left: 3px solid #287356; padding: 3px 0 3px 7px; color: #172d23; font-family: Consolas, "Courier New", monospace; font-size: 11px; font-weight: 800; }
+.sales-order-dispatch-serial-empty { display: block; margin-top: 5px; color: #7b858e; font-size: 10px; font-style: normal; font-weight: 700; }
 .sales-order-waybill-progress { margin-top: 12px; border-top: 1px solid #dce2e8; padding-top: 12px; }
 .sales-order-waybill-progress-heading h4 { margin: 0; color: #2c3947; font-size: 11px; }
 .sales-order-waybill-progress-heading p { margin: 3px 0 0; color: #74808d; font-size: 9px; line-height: 1.45; }
@@ -9816,6 +9821,8 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-dispatch-summary strong,
   #screen-sales-order-mgmt .sales-order-waybill-progress-card-head > strong,
   #screen-sales-order-mgmt .sales-order-waybill-progress-card dd { font-size: 14px; line-height: 1.45; }
+  #screen-sales-order-mgmt .sales-order-dispatch-serial-list code { font-size: 13px; line-height: 1.4; }
+  #screen-sales-order-mgmt .sales-order-dispatch-serial-empty { font-size: 12px; line-height: 1.5; }
   #screen-sales-order-mgmt .sales-order-dispatch-actions button { min-height: 40px; padding: 7px 11px; font-size: 14px; }
   #screen-sales-order-mgmt .sales-order-print-jobs-head > strong,
   #screen-sales-order-mgmt .sales-order-print-job strong { font-size: 14px; }

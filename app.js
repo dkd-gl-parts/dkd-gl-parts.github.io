@@ -906,6 +906,8 @@ var TRANSLATIONS = {
     finished_shipping_all_verified: "ピッキングが完了しました。送り状番号を登録して、最終の出荷確定へ進んでください。",
     finished_shipping_unit_list: "割当済み製造シリアル",
     finished_shipping_no_units: "割り当て済みの製造シリアルはありません。",
+    sales_order_dispatch_serials: "照合済みシリアル番号",
+    sales_order_dispatch_serials_empty: "未照合",
     finished_shipping_form: "最終出荷確定（在庫減算）",
     finished_shipping_customer: "出荷先得意先 *",
     finished_shipping_shipped_on: "出荷日 *",
@@ -2953,6 +2955,8 @@ var TRANSLATIONS = {
     finished_shipping_all_verified: "Picking is complete. Register the waybill numbers, then continue to final shipment confirmation.",
     finished_shipping_unit_list: "Assigned Manufacturing Serials",
     finished_shipping_no_units: "No manufacturing serial has been assigned.",
+    sales_order_dispatch_serials: "Verified Serial Numbers",
+    sales_order_dispatch_serials_empty: "Not verified",
     finished_shipping_form: "Final Shipment Confirmation (Deduct Stock)",
     finished_shipping_customer: "Customer *",
     finished_shipping_shipped_on: "Shipment Date *",
@@ -5008,6 +5012,8 @@ var TRANSLATIONS = {
     finished_shipping_all_verified: "拣货已完成。请登记运单编号后进行最终出货确认。",
     finished_shipping_unit_list: "已分配制造序列号",
     finished_shipping_no_units: "尚未分配制造序列号。",
+    sales_order_dispatch_serials: "已核对序列号",
+    sales_order_dispatch_serials_empty: "未核对",
     finished_shipping_form: "最终出货确认（扣减库存）",
     finished_shipping_customer: "出货客户 *",
     finished_shipping_shipped_on: "出货日期 *",
@@ -6265,7 +6271,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.971";
+var APP_VERSION       = "v1.1.972";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -16761,6 +16767,28 @@ function salesOrderDispatchAssignedQuantity(dispatch) {
   }, 0);
 }
 
+function salesOrderDispatchRebuiltSerials(dispatch) {
+  return (Array.isArray(dispatch && dispatch.items) ? dispatch.items : []).reduce(function(serials, item) {
+    var orderItem = item.order_item || {};
+    if (normalizeProductKind(orderItem.product_kind) !== "rebuilt") return serials;
+    (Array.isArray(item.serials) ? item.serials : []).forEach(function(row) {
+      var serial = String(row && row.manufacturing_serial || "").trim();
+      if (serial && serials.indexOf(serial) < 0) serials.push(serial);
+    });
+    return serials;
+  }, []);
+}
+
+function salesOrderDispatchSerialsHtml(dispatch) {
+  var serials = salesOrderDispatchRebuiltSerials(dispatch);
+  var values = serials.length
+    ? "<div class='sales-order-dispatch-serial-list'>" + serials.map(function(serial) {
+      return "<code>" + esc(serial) + "</code>";
+    }).join("") + "</div>"
+    : "<em class='sales-order-dispatch-serial-empty'>" + esc(t("sales_order_dispatch_serials_empty")) + "</em>";
+  return "<div class='sales-order-dispatch-serials'><span>" + esc(t("sales_order_dispatch_serials")) + "</span>" + values + "</div>";
+}
+
 function salesOrderPrintJobStatusLabel(status) {
   return ({ queued: "印刷待ち", claimed: "印刷中", printed: "印刷済み", error: "印刷エラー", cancelled: "取消" })[status] || "未登録";
 }
@@ -16913,7 +16941,7 @@ function salesOrderDispatchHtml(order) {
   return "<section class='sales-order-detail-section sales-order-dispatch' id='sales-order-detail-fulfillment'>" +
     "<div class='sales-order-dispatch-head'><h3>出荷指示・現場照合</h3>" +
     "<span class='sales-order-dispatch-status " + esc(dispatch ? dispatch.status : "unissued") + "'>" + esc(salesOrderDispatchStatusLabel(dispatch && dispatch.status)) + "</span></div>" +
-    (dispatch ? "<div class='sales-order-dispatch-summary'><div><span>出荷指示番号</span><strong>" + esc(dispatch.dispatch_number) + "</strong></div><div><span>リビルト品の照合</span><strong>" + esc(String(assignedQuantity)) + " / " + esc(String(rebuiltQuantity)) + "</strong></div></div>" : "<p class='sales-order-dispatch-empty'>受注受付後に出荷指示書を発行してください。スキャナーがない場合も番号入力と候補選択で作業できます。</p>") +
+    (dispatch ? "<div class='sales-order-dispatch-summary'><div><span>出荷指示番号</span><strong>" + esc(dispatch.dispatch_number) + "</strong></div><div><span>リビルト品の照合</span><strong>" + esc(String(assignedQuantity)) + " / " + esc(String(rebuiltQuantity)) + "</strong>" + salesOrderDispatchSerialsHtml(dispatch) + "</div></div>" : "<p class='sales-order-dispatch-empty'>受注受付後に出荷指示書を発行してください。スキャナーがない場合も番号入力と候補選択で作業できます。</p>") +
     salesOrderWaybillProgressHtml(order) +
     (dispatch ? salesOrderPrintJobsHtml(order) : "") +
     "<div class='sales-order-dispatch-actions'>" + controls + "</div>" +
