@@ -60,7 +60,7 @@ for (const fragment of [
   ".sales-order-dashboard-metrics { gap: 0; overflow: hidden; border: 1px solid #cfd7dd;",
   ".sales-order-dashboard-metric.active { border-color: #dde3e7; box-shadow: inset 0 -3px 0 #287356;",
   ".sales-order-detail-navigation { display: flex;",
-  ".sales-order-waybill-progress-grid.outbound-only { grid-template-columns: minmax(0, 1fr); }",
+  ".sales-order-waybill-progress-grid { display: grid; grid-template-columns: minmax(0, 1fr); }",
   ".sales-order-print-jobs > summary { display: flex;",
   ".sales-order-dashboard-metric { flex: 0 0 118px; min-width: 118px;"
 ]) requireFragment(fragment);

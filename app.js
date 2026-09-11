@@ -6265,7 +6265,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.970";
+var APP_VERSION       = "v1.1.971";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -16837,13 +16837,10 @@ function salesOrderWaybillProgress(order, purpose) {
 function salesOrderWaybillProgressHtml(order) {
   var outboundRow = salesOrderWaybillProgress(order, "outbound");
   var returnRow = salesOrderWaybillProgress(order, "core_return");
-  var returnNotApplicable = returnRow.status === "対象外";
-  var rows = returnNotApplicable ? [outboundRow] : [outboundRow, returnRow];
+  var rows = [outboundRow, returnRow];
   return "<section class='sales-order-waybill-progress' aria-labelledby='sales-order-waybill-progress-title'>" +
-    "<div class='sales-order-waybill-progress-heading'><h4 id='sales-order-waybill-progress-title'>発送・返却の送り状進捗</h4>" +
-      (returnNotApplicable ? "<div class='sales-order-waybill-not-applicable'><span>返却用送り状</span><strong>対象外</strong></div>" : "") +
-    "</div>" +
-    "<div class='sales-order-waybill-progress-grid" + (returnNotApplicable ? " outbound-only" : "") + "'>" + rows.map(function(row) {
+    "<div class='sales-order-waybill-progress-heading'><h4 id='sales-order-waybill-progress-title'>発送・返却の送り状進捗</h4></div>" +
+    "<div class='sales-order-waybill-progress-grid'>" + rows.map(function(row) {
       var outbound = row.purpose === "outbound";
       var numberLabel = row.method === "B2クラウド" ? "B2送り状番号" : "複写送り状番号";
       var scheduleLabel = row.method === "B2クラウド" ? "B2出荷予定日" : "出荷予定日";

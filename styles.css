@@ -7167,7 +7167,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-waybill-progress { margin-top: 12px; border-top: 1px solid #dce2e8; padding-top: 12px; }
 .sales-order-waybill-progress-heading h4 { margin: 0; color: #2c3947; font-size: 11px; }
 .sales-order-waybill-progress-heading p { margin: 3px 0 0; color: #74808d; font-size: 9px; line-height: 1.45; }
-.sales-order-waybill-progress-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
+.sales-order-waybill-progress-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 8px; }
 .sales-order-waybill-progress-card { min-width: 0; overflow: hidden; border: 1px solid #d7dfe5; border-radius: 7px; background: #fff; }
 .sales-order-waybill-progress-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid #e1e6ea; padding: 8px 10px; background: #f7faf8; }
 .sales-order-waybill-progress-card-head > strong { color: #263548; font-size: 11px; }
@@ -10001,10 +10001,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-waybill-progress { margin-top: 10px; padding-top: 10px; }
   #screen-sales-order-mgmt .sales-order-waybill-progress-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   #screen-sales-order-mgmt .sales-order-waybill-progress-heading h4 { margin: 0; }
-  #screen-sales-order-mgmt .sales-order-waybill-not-applicable { display: inline-flex; align-items: center; gap: 7px; color: #66727d; }
-  #screen-sales-order-mgmt .sales-order-waybill-not-applicable span { font-size: 12px; }
-  #screen-sales-order-mgmt .sales-order-waybill-not-applicable strong { border: 1px solid #cbd3da; border-radius: 4px; padding: 2px 7px; background: #f4f6f7; color: #56626e; font-size: 12px; }
-  #screen-sales-order-mgmt .sales-order-waybill-progress-grid.outbound-only { grid-template-columns: minmax(0, 1fr); }
+  #screen-sales-order-mgmt .sales-order-waybill-progress-grid { display: grid; grid-template-columns: minmax(0, 1fr); }
   #screen-sales-order-mgmt .sales-order-waybill-progress-card { border-radius: 5px; }
   #screen-sales-order-mgmt .sales-order-waybill-progress-card-head { padding: 8px 12px; }
   #screen-sales-order-mgmt .sales-order-waybill-progress-card dl > div { padding: 8px 12px; }
