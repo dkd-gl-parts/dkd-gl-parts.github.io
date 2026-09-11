@@ -6265,7 +6265,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.969";
+var APP_VERSION       = "v1.1.970";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -32027,6 +32027,19 @@ async function reloadFinishedShipmentWorkspace() {
   await loadFinishedShipmentHistory();
 }
 
+function setFinishedShipmentDispatchLoadVisible(visible) {
+  var panel = document.getElementById("finished-shipment-dispatch-load");
+  if (!panel) return;
+  panel.hidden = !visible;
+  if (visible) {
+    panel.removeAttribute("inert");
+    panel.removeAttribute("aria-hidden");
+    return;
+  }
+  panel.setAttribute("inert", "");
+  panel.setAttribute("aria-hidden", "true");
+}
+
 async function enterFinishedProductShipping(options) {
   if (!canManageFinishedProductShipping()) { alert(t("err_perm")); return; }
   options = options || {};
@@ -32038,6 +32051,7 @@ async function enterFinishedProductShipping(options) {
   finishedShipmentCandidateOrderItemId = null;
   finishedShipmentCandidateRows = [];
   showScreen("finished-product-shipping");
+  setFinishedShipmentDispatchLoadVisible(!finishedShipmentOrderContext);
   setFinishedShipmentMessage("finished-shipment-dispatch-message", "", false);
   setFinishedShipmentMessage("finished-shipment-scan-message", "", false);
   setFinishedShipmentSaveMessage("", false);
@@ -32066,6 +32080,7 @@ async function returnFromFinishedProductShipping() {
   closeFinishedShipmentCamera();
   var orderId = finishedShipmentOrderContext && finishedShipmentOrderContext.id;
   finishedShipmentOrderContext = null;
+  setFinishedShipmentDispatchLoadVisible(true);
   finishedShipmentOrderAssignments = [];
   finishedShipmentUnits = [];
   finishedShipmentPickingBlocked = false;
