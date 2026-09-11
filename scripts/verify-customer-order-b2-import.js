@@ -6,6 +6,7 @@ const root = path.resolve(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+const i18n = fs.readFileSync(path.join(root, "legacy-i18n.js"), "utf8");
 
 function between(start, end) {
   const startIndex = source.indexOf(start);
@@ -23,8 +24,11 @@ function between(start, end) {
   "sales-order-b2-import-guide-overlay",
   "sales-order-b2-import-guide-title",
   "sales-order-b2-import-guide-yamato",
+  "sales-order-b2-import-guide-search-step",
   "sales-order-b2-import-guide-search-conditions-toggle",
   "sales-order-b2-import-guide-search-conditions",
+  "sales-order-b2-import-guide-date-from",
+  "sales-order-b2-import-guide-date-to",
   "sales-order-b2-import-guide-select-file",
   "sales-order-b2-import-guide-status",
   "sales-order-b2-import-guide-cancel"
@@ -39,6 +43,14 @@ function between(start, end) {
   "送り状発行システム B2クラウド",
   "検索条件を表示",
   "ヤマトB2に入力する検索条件",
+  "おすすめ：出荷予定日で絞る",
+  "初期値は本日です。別日の送り状を出力する場合は、発送する日付へ変更してください。",
+  "開始日",
+  "終了日",
+  "条件なしでも取込できます",
+  "同じ送り状番号は再登録せず",
+  "別の有効なD-CATS受注に一致する行は同時に反映され",
+  "CSVが1,000行を超えると取り込めない",
   "削除済のデータのみ表示する",
   "1行目に見出しを出力する",
   "CSVを選択",
@@ -72,41 +84,70 @@ const openGuide = between("function openSalesOrderB2ImportGuide", "function clos
 if (!openGuide.includes("canManageSalesOrders()") ||
     !openGuide.includes('classList.add("show")') ||
     !openGuide.includes("salesOrderB2GuideWindowAvailable()") ||
+    !openGuide.includes('conditionsStep.classList.remove("conditions-open")') ||
+    !openGuide.includes('dateFrom.value = ""') ||
+    !openGuide.includes('dateTo.value = ""') ||
     !openGuide.includes("action.focus()")) {
   throw new Error("B2 import action must open and focus the download guide");
 }
-const openPortal = between("function openSalesOrderB2Portal", "function showSalesOrderB2SearchConditions");
+const openPortal = between("function openSalesOrderB2Portal", "function syncSalesOrderB2GuideDateRange");
 if (!openPortal.includes('window.open(SALES_ORDER_B2_PORTAL_URL, "dcats-yamato-b2")') ||
     !openPortal.includes("popup.opener = null") ||
     !openPortal.includes("ポップアップを許可")) {
   throw new Error("B2 guide must open the official portal in a reusable tab and explain popup failures");
 }
+const syncDateRange = between("function syncSalesOrderB2GuideDateRange", "function showSalesOrderB2SearchConditions");
+const syncDateFrom = { value: "2026-09-12" };
+const syncDateTo = { value: "2026-09-11" };
+const syncDateSandbox = {
+  document: {
+    getElementById(id) {
+      if (id === "sales-order-b2-import-guide-date-from") return syncDateFrom;
+      if (id === "sales-order-b2-import-guide-date-to") return syncDateTo;
+      return null;
+    }
+  }
+};
+vm.runInNewContext(`${syncDateRange}; syncSalesOrderB2GuideDateRange(document.getElementById("sales-order-b2-import-guide-date-from"));`, syncDateSandbox);
+if (syncDateTo.value !== "2026-09-12") {
+  throw new Error("Changing the B2 guide start date must keep the end date in a valid range");
+}
 const showConditions = between("function showSalesOrderB2SearchConditions", "function openSalesOrderB2ImportGuide");
 if (!showConditions.includes('panel.hidden = false') ||
     !showConditions.includes('button.setAttribute("aria-expanded", "true")') ||
+    !showConditions.includes("salesOrderTokyoTodayValue()") ||
+    !showConditions.includes('step.classList.add("conditions-open")') ||
     !showConditions.includes("setSalesOrderB2GuideStep(3)") ||
-    !showConditions.includes("ヤマトB2の画面に同じ条件を入力してください")) {
+    !showConditions.includes("ヤマトB2へ同じ内容を入力してください")) {
   throw new Error("Issued Data Search guidance must reveal the recommended search conditions");
 }
 const conditionsPanel = { hidden: true, focused: false, focus() { this.focused = true; } };
 const conditionsButton = { expanded: "false", setAttribute(name, value) { if (name === "aria-expanded") this.expanded = value; } };
+const conditionsStep = { expanded: false, classList: { add(name) { if (name === "conditions-open") conditionsStep.expanded = true; } } };
+const conditionsDateFrom = { value: "" };
+const conditionsDateTo = { value: "" };
 const conditionsObserved = {};
 const conditionsSandbox = {
   document: {
     getElementById(id) {
       if (id === "sales-order-b2-import-guide-search-conditions") return conditionsPanel;
       if (id === "sales-order-b2-import-guide-search-conditions-toggle") return conditionsButton;
+      if (id === "sales-order-b2-import-guide-search-step") return conditionsStep;
+      if (id === "sales-order-b2-import-guide-date-from") return conditionsDateFrom;
+      if (id === "sales-order-b2-import-guide-date-to") return conditionsDateTo;
       return null;
     }
   },
   window: { requestAnimationFrame(callback) { callback(); } },
+  salesOrderTokyoTodayValue() { return "2026-09-11"; },
   setSalesOrderB2GuideStep(step) { conditionsObserved.step = step; },
   setSalesOrderB2GuideStatus(message, isError) { conditionsObserved.status = { message, isError }; }
 };
 vm.runInNewContext(`${showConditions}; showSalesOrderB2SearchConditions();`, conditionsSandbox);
-if (conditionsPanel.hidden || !conditionsPanel.focused || conditionsButton.expanded !== "true" ||
+if (conditionsPanel.hidden || !conditionsPanel.focused || conditionsButton.expanded !== "true" || !conditionsStep.expanded ||
+    conditionsDateFrom.value !== "2026-09-11" || conditionsDateTo.value !== "2026-09-11" ||
     conditionsObserved.step !== 3 || conditionsObserved.status?.isError ||
-    !conditionsObserved.status?.message.includes("同じ条件を入力")) {
+    !conditionsObserved.status?.message.includes("同じ内容を入力")) {
   throw new Error("Issued Data Search condition panel must expand, receive focus, and announce the next action");
 }
 const closeGuide = between("function closeSalesOrderB2ImportGuide", "function selectSalesOrderB2ImportFile");
@@ -122,11 +163,30 @@ if (!selectFile.includes('getElementById("sales-order-import-b2-file")') ||
   'document.getElementById("sales-order-import-b2").addEventListener("click", openSalesOrderB2ImportGuide)',
   'document.getElementById("sales-order-b2-import-guide-yamato").addEventListener("click", openSalesOrderB2Portal)',
   'document.getElementById("sales-order-b2-import-guide-search-conditions-toggle").addEventListener("click", showSalesOrderB2SearchConditions)',
+  'document.getElementById("sales-order-b2-import-guide-date-from").addEventListener("change"',
+  'document.getElementById("sales-order-b2-import-guide-date-to").addEventListener("change"',
   'document.getElementById("sales-order-b2-import-guide-select-file").addEventListener("click", selectSalesOrderB2ImportFile)',
   'if (e.key === "Escape") closeSalesOrderB2ImportGuide()',
   "closeSalesOrderB2ImportGuide(false);"
 ].forEach((fragment) => {
   if (!source.includes(fragment)) throw new Error(`B2 download guide behavior is missing: ${fragment}`);
+});
+
+[
+  ".sales-order-b2-import-guide-steps > li.conditions-open",
+  ".sales-order-b2-import-guide-date-range",
+  ".sales-order-b2-import-guide-date-fields",
+  ".sales-order-b2-import-guide-no-filter"
+].forEach((fragment) => {
+  if (!css.includes(fragment)) throw new Error(`B2 search-condition layout is missing: ${fragment}`);
+});
+[
+  "Recommended: Filter by planned shipping date",
+  "You can import without search conditions",
+  "建议：按预计发货日期筛选",
+  "也可以不指定搜索条件直接导入"
+].forEach((fragment) => {
+  if (!i18n.includes(fragment)) throw new Error(`B2 search-condition translation is missing: ${fragment}`);
 });
 
 const validationFunction = between("function salesOrderB2ImportFileValidationMessage", "function salesOrderB2ImportFriendlyError");

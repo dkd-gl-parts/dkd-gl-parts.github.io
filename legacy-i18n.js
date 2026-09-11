@@ -924,7 +924,7 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "会社:": "Company:",
     "解体屋、中古市場など": "Dismantlers, Used Market, etc.",
     "開始順位": "Starting Rank",
-    "開始日": "Start Date",
+    "開始日": "Start date",
     "外部コードを入力してください。": "Please enter the external code.",
     "外部コードを保存しています。": "Saving external code.",
     "外部コードを保存しました。対象を再確認します。": "External code saved. Rechecking the target.",
@@ -1464,7 +1464,7 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "秋田県": "Akita Prefecture",
     "秋田县": "Akita Prefecture",
     "終了順位": "Final Ranking",
-    "終了日": "End Date",
+    "終了日": "End date",
     "住所": "Address",
     "住所やB2契約情報が不足している注文があります。詳細を確認してください。": "There are orders with missing address or B2 contract information. Please check the details.",
     "従来の個別許可": "Conventional Individual Permission",
@@ -2942,7 +2942,13 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "B2の内部画面は直接URLで開けません。強調表示された項目名を、手順1で開いたヤマト画面から順に選択してください。": "B2 internal pages cannot be opened by direct URL. In the Yamato page opened in step 1, select the highlighted item names in order.",
     "ヤマト画面を開きました。ログイン後、マイページで「送り状発行システム B2クラウド」を押してください。": "The Yamato page is open. After signing in, select Waybill Issuance System B2 Cloud on My Page.",
     "ヤマト画面は別タブで開いています。強調表示された項目名に沿って操作してください。": "The Yamato page is open in another tab. Follow the highlighted item names.",
-    "検索条件を表示しました。ヤマトB2の画面に同じ条件を入力してください。": "The search conditions are displayed. Enter the same conditions in Yamato B2."
+    "検索条件を表示しました。ヤマトB2の画面に同じ条件を入力してください。": "The search conditions are displayed. Enter the same conditions in Yamato B2.",
+    "おすすめ：出荷予定日で絞る": "Recommended: Filter by planned shipping date",
+    "初期値は本日です。別日の送り状を出力する場合は、発送する日付へ変更してください。": "The default is today. To export waybills for another day, change both fields to the shipping date.",
+    "ヤマトB2の「出荷予定日」に、上の開始日・終了日をそのまま入力します。": "Enter the start and end dates shown above in Yamato B2 Planned Shipping Date.",
+    "条件なしでも取込できます": "You can import without search conditions",
+    "同じ送り状番号は再登録せず、D-CATS受注に一致しない行も反映しません。ただし、別の有効なD-CATS受注に一致する行は同時に反映され、CSVが1,000行を超えると取り込めないため、通常は出荷予定日で絞ってください。": "Duplicate tracking numbers are not registered again, and rows that do not match a D-CATS order are ignored. However, rows matching other valid D-CATS orders are also applied, and CSV files over 1,000 rows cannot be imported, so normally filter by planned shipping date.",
+    "検索条件を表示しました。出荷予定日は本日を入力しています。必要に応じて日付を変更し、ヤマトB2へ同じ内容を入力してください。": "Search conditions are displayed with today's planned shipping date. Change the dates if needed, then enter the same values in Yamato B2."
   },
   "zh": {
     "再発行が必要": "需要重新签发",
@@ -3867,7 +3873,7 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "会社:": "公司:",
     "解体屋、中古市場など": "拆车厂、中古市场等",
     "開始順位": "开始顺序",
-    "開始日": "开始日",
+    "開始日": "开始日期",
     "外部コードを入力してください。": "请输入外部代码。",
     "外部コードを保存しています。": "正在保存外部代码。",
     "外部コードを保存しました。対象を再確認します。": "已保存外部代码。请重新确认对象。",
@@ -5885,6 +5891,12 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "B2の内部画面は直接URLで開けません。強調表示された項目名を、手順1で開いたヤマト画面から順に選択してください。": "B2内部页面无法通过直接URL打开。请在步骤1打开的雅玛多页面中依次选择突出显示的项目名称。",
     "ヤマト画面を開きました。ログイン後、マイページで「送り状発行システム B2クラウド」を押してください。": "雅玛多页面已打开。登录后请在会员首页点击“运单发行系统 B2 Cloud”。",
     "ヤマト画面は別タブで開いています。強調表示された項目名に沿って操作してください。": "雅玛多页面已在另一个标签页中打开。请按照突出显示的项目名称操作。",
-    "検索条件を表示しました。ヤマトB2の画面に同じ条件を入力してください。": "搜索条件已显示。请在雅玛多B2页面中输入相同条件。"
+    "検索条件を表示しました。ヤマトB2の画面に同じ条件を入力してください。": "搜索条件已显示。请在雅玛多B2页面中输入相同条件。",
+    "おすすめ：出荷予定日で絞る": "建议：按预计发货日期筛选",
+    "初期値は本日です。別日の送り状を出力する場合は、発送する日付へ変更してください。": "初始值为今天。如需导出其他日期的运单，请将两个日期改为实际发货日期。",
+    "ヤマトB2の「出荷予定日」に、上の開始日・終了日をそのまま入力します。": "请将上方的开始日期和结束日期原样输入雅玛多B2的“预计发货日期”。",
+    "条件なしでも取込できます": "也可以不指定搜索条件直接导入",
+    "同じ送り状番号は再登録せず、D-CATS受注に一致しない行も反映しません。ただし、別の有効なD-CATS受注に一致する行は同時に反映され、CSVが1,000行を超えると取り込めないため、通常は出荷予定日で絞ってください。": "相同运单号不会重复登记，与D-CATS订单不匹配的行也不会反映。但与其他有效D-CATS订单匹配的行会同时反映，且超过1,000行的CSV无法导入，因此通常请按预计发货日期筛选。",
+    "検索条件を表示しました。出荷予定日は本日を入力しています。必要に応じて日付を変更し、ヤマトB2へ同じ内容を入力してください。": "已显示搜索条件，预计发货日期已设为今天。请根据需要修改日期，并在雅玛多B2中输入相同内容。"
   }
 };
