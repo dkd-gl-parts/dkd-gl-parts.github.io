@@ -453,6 +453,25 @@ var TRANSLATIONS = {
     hanbaiou_catalog_confirm_prompt: "販売王への取込結果を確認しましたか？\n最新の商品台帳CSVに含まれる商品を登録済みにします。",
     hanbaiou_catalog_confirm_progress: "最新CSVの商品を販売王登録済みにしています。",
     hanbaiou_catalog_confirm_done: "{count}件を販売王登録済みにしました。対象受注の売上CSVを発行できます。",
+    hanbaiou_catalog_ready: "3品番確認済み",
+    hanbaiou_catalog_incomplete: "3品番不足",
+    hanbaiou_catalog_validation_title: "3品番の不足明細",
+    hanbaiou_catalog_validation_summary: "{count}件は3品番が揃っていないためCSV出力できません。GLTEK {gltek}件 / 純正 {genuine}件 / メーカー {manufacturer}件不足",
+    hanbaiou_catalog_validation_more: "先頭{shown}件を表示しています。残り{remaining}件はデータ修正後に再検索してください。",
+    hanbaiou_catalog_category: "カテゴリ",
+    hanbaiou_catalog_dcats_code: "D-CATSコード",
+    hanbaiou_catalog_gltek_part: "GLTEK品番",
+    hanbaiou_catalog_genuine_part: "純正品番",
+    hanbaiou_catalog_manufacturer_part: "メーカー品番",
+    hanbaiou_catalog_missing_fields: "不足項目",
+    hanbaiou_catalog_not_set: "未設定",
+    hanbaiou_catalog_incomplete_block: "3品番が揃っていない商品があります。不足明細を確認してください。",
+    hanbaiou_catalog_reset_button: "販売王未取込へリセット",
+    hanbaiou_catalog_reset_prompt: "販売王には未取込として{count}件の状態をリセットします。D-CATS商品コードとCSV出力履歴は残ります。実行しますか？",
+    hanbaiou_catalog_reset_progress: "販売王の商品取込状態をリセットしています。",
+    hanbaiou_catalog_reset_done: "{count}件を販売王未取込へ戻しました。3品番の不足を解消するとCSV出力できます。",
+    hanbaiou_catalog_reset_none: "リセットできる販売王登録状態はありません。",
+    hanbaiou_catalog_reset_failed: "販売王の商品取込状態をリセットできませんでした。",
     sales_accounting_sales_saved: "{name} {count}件をD-CATS業務連携 / 販売王 / 01_D-CATS発行 に保存しました。",
     sales_accounting_csv_save_failed_history: "CSVを保存できませんでした。履歴から再取得できます。",
     sales_accounting_csv_save_failed: "CSVを保存できませんでした。",
@@ -2524,6 +2543,25 @@ var TRANSLATIONS = {
     hanbaiou_catalog_confirm_prompt: "Did you verify the Sales King import result?\nProducts in the latest product master CSV will be marked as registered.",
     hanbaiou_catalog_confirm_progress: "Marking products in the latest CSV as registered in Sales King.",
     hanbaiou_catalog_confirm_done: "Marked {count} products as registered in Sales King. Sales CSVs can now be issued for the applicable orders.",
+    hanbaiou_catalog_ready: "3 keys ready",
+    hanbaiou_catalog_incomplete: "3 keys incomplete",
+    hanbaiou_catalog_validation_title: "Missing product search keys",
+    hanbaiou_catalog_validation_summary: "{count} products cannot be exported because all three keys are not present. Missing: GLTEK {gltek} / genuine {genuine} / manufacturer {manufacturer}",
+    hanbaiou_catalog_validation_more: "Showing the first {shown}. Correct the data and search again to review the remaining {remaining} products.",
+    hanbaiou_catalog_category: "Category",
+    hanbaiou_catalog_dcats_code: "D-CATS code",
+    hanbaiou_catalog_gltek_part: "GLTEK number",
+    hanbaiou_catalog_genuine_part: "Genuine number",
+    hanbaiou_catalog_manufacturer_part: "Manufacturer number",
+    hanbaiou_catalog_missing_fields: "Missing fields",
+    hanbaiou_catalog_not_set: "Not set",
+    hanbaiou_catalog_incomplete_block: "Some products do not have all three search keys. Review the missing-item details.",
+    hanbaiou_catalog_reset_button: "Reset as Not Imported",
+    hanbaiou_catalog_reset_prompt: "Reset the Sales King import state for {count} products? D-CATS product codes and CSV export history will be preserved.",
+    hanbaiou_catalog_reset_progress: "Resetting the Sales King product import state.",
+    hanbaiou_catalog_reset_done: "Reset {count} products as not imported. CSV export will be available after all three keys are complete.",
+    hanbaiou_catalog_reset_none: "There is no Sales King registration state to reset.",
+    hanbaiou_catalog_reset_failed: "The Sales King product import state could not be reset.",
     sales_accounting_sales_saved: "Saved {count} {name} orders to D-CATS Business Exchange / Sales King / 01_D-CATS issue.",
     sales_accounting_csv_save_failed_history: "Could not save the CSV. You can retrieve it again from the export history.",
     sales_accounting_csv_save_failed: "Could not save the CSV.",
@@ -4539,6 +4577,25 @@ var TRANSLATIONS = {
     hanbaiou_catalog_confirm_prompt: "是否已确认销售王的导入结果？\n将把最新商品台账CSV中的商品标记为已登记。",
     hanbaiou_catalog_confirm_progress: "正在将最新CSV中的商品标记为销售王已登记。",
     hanbaiou_catalog_confirm_done: "已将{count}件商品标记为销售王已登记。现在可为相关订单发行销售CSV。",
+    hanbaiou_catalog_ready: "3个编号齐全",
+    hanbaiou_catalog_incomplete: "缺少3个编号",
+    hanbaiou_catalog_validation_title: "商品编号缺失明细",
+    hanbaiou_catalog_validation_summary: "{count}件商品因3个编号不齐全而无法导出CSV。缺少：GLTEK {gltek}件 / 原厂 {genuine}件 / 制造商 {manufacturer}件",
+    hanbaiou_catalog_validation_more: "当前显示前{shown}件。修正数据并重新搜索后，可确认其余{remaining}件。",
+    hanbaiou_catalog_category: "类别",
+    hanbaiou_catalog_dcats_code: "D-CATS代码",
+    hanbaiou_catalog_gltek_part: "GLTEK编号",
+    hanbaiou_catalog_genuine_part: "原厂编号",
+    hanbaiou_catalog_manufacturer_part: "制造商编号",
+    hanbaiou_catalog_missing_fields: "缺少项目",
+    hanbaiou_catalog_not_set: "未设置",
+    hanbaiou_catalog_incomplete_block: "存在3个商品编号不齐全的商品。请确认缺失明细。",
+    hanbaiou_catalog_reset_button: "重置为销售王未导入",
+    hanbaiou_catalog_reset_prompt: "将{count}件商品重置为销售王未导入状态。D-CATS商品代码和CSV导出历史会保留。是否执行？",
+    hanbaiou_catalog_reset_progress: "正在重置销售王商品导入状态。",
+    hanbaiou_catalog_reset_done: "已将{count}件商品恢复为销售王未导入。补齐3个编号后即可导出CSV。",
+    hanbaiou_catalog_reset_none: "没有可重置的销售王登记状态。",
+    hanbaiou_catalog_reset_failed: "无法重置销售王商品导入状态。",
     sales_accounting_sales_saved: "已将{name}的{count}笔订单保存到D-CATS业务协作 / 销售王 / 01_D-CATS发行。",
     sales_accounting_csv_save_failed_history: "无法保存CSV。可从导出历史中重新获取。",
     sales_accounting_csv_save_failed: "无法保存CSV。",
@@ -6337,7 +6394,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.973";
+var APP_VERSION       = "v1.1.974";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -13231,7 +13288,11 @@ function renderSalesAccountingHanbaiouGuide() {
   var guide = document.getElementById("sales-accounting-hanbaiou-guide");
   var list = document.getElementById("sales-accounting-hanbaiou-product-list");
   var history = document.getElementById("sales-accounting-hanbaiou-history");
-  if (!guide || !list || !history) return;
+  var validation = document.getElementById("sales-accounting-hanbaiou-validation");
+  var validationSummary = document.getElementById("sales-accounting-hanbaiou-validation-summary");
+  var validationRows = document.getElementById("sales-accounting-hanbaiou-validation-rows");
+  var validationMore = document.getElementById("sales-accounting-hanbaiou-validation-more");
+  if (!guide || !list || !history || !validation || !validationSummary || !validationRows || !validationMore) return;
   var isHanbaiou = state.targetSystem === "hanbaiou" && state.hasSearched;
   guide.hidden = !isHanbaiou;
   if (!isHanbaiou) return;
@@ -13242,6 +13303,8 @@ function renderSalesAccountingHanbaiouGuide() {
       ? t("hanbaiou_catalog_loading")
       : t("hanbaiou_catalog_unavailable");
     list.innerHTML = "<div class='sales-accounting-hanbaiou-empty'>" + esc(pendingSummary ? pendingSummary.textContent : t("hanbaiou_catalog_loading")) + "</div>";
+    validation.hidden = true;
+    validationRows.innerHTML = "";
     history.innerHTML = "";
     updateSalesAccountingHanbaiouActions();
     return;
@@ -13253,6 +13316,8 @@ function renderSalesAccountingHanbaiouGuide() {
   var notIssuedCount = Number(catalog.not_issued_count || 0);
   var exportedCount = Number(catalog.exported_count || 0);
   var registeredCount = Number(catalog.registered_count || 0);
+  var readyCount = Number(catalog.ready_count || 0);
+  var incompleteCount = Number(catalog.incomplete_count || 0);
   var summary = document.getElementById("sales-accounting-hanbaiou-guide-summary");
   if (summary) summary.textContent = pendingCount
     ? tf("hanbaiou_catalog_pending_summary", { count: pendingCount.toLocaleString() })
@@ -13261,12 +13326,49 @@ function renderSalesAccountingHanbaiouGuide() {
 
   list.innerHTML = [
     ["hanbaiou_catalog_eligible", eligibleCount, "eligible"],
+    ["hanbaiou_catalog_ready", readyCount, "ready"],
+    ["hanbaiou_catalog_incomplete", incompleteCount, "incomplete"],
     ["hanbaiou_catalog_not_issued", notIssuedCount, "not-issued"],
     ["hanbaiou_catalog_exported", exportedCount, "exported"],
     ["hanbaiou_catalog_registered", registeredCount, "registered"]
   ].map(function(metric) {
     return "<div class='sales-accounting-hanbaiou-metric " + esc(metric[2]) + "'><span>" + esc(t(metric[0])) + "</span><strong>" + esc(Number(metric[1]).toLocaleString()) + "</strong><small>" + esc(t("hanbaiou_catalog_count_unit")) + "</small></div>";
   }).join("");
+
+  var incompleteProducts = Array.isArray(catalog.incomplete_products) ? catalog.incomplete_products : [];
+  validation.hidden = incompleteCount === 0;
+  validationSummary.textContent = incompleteCount ? tf("hanbaiou_catalog_validation_summary", {
+    count: incompleteCount.toLocaleString(),
+    gltek: Number(catalog.missing_gltek_count || 0).toLocaleString(),
+    genuine: Number(catalog.missing_genuine_count || 0).toLocaleString(),
+    manufacturer: Number(catalog.missing_manufacturer_count || 0).toLocaleString()
+  }) : "";
+  validationRows.innerHTML = incompleteProducts.map(function(product) {
+    var missingFields = Array.isArray(product.missing_fields) ? product.missing_fields : [];
+    var gltekMissing = missingFields.indexOf("GLTEK品番") >= 0;
+    var genuineMissing = missingFields.indexOf("純正品番") >= 0;
+    var manufacturerMissing = missingFields.indexOf("メーカー品番") >= 0;
+    var missingLabels = missingFields.map(function(field) {
+      if (field === "GLTEK品番") return t("hanbaiou_catalog_gltek_part");
+      if (field === "純正品番") return t("hanbaiou_catalog_genuine_part");
+      if (field === "メーカー品番") return t("hanbaiou_catalog_manufacturer_part");
+      return field;
+    });
+    return "<tr>" +
+      "<td><strong>" + esc(product.category_label || t("hanbaiou_catalog_not_set")) + "</strong><small>" + esc(product.category_code || "-") + "</small></td>" +
+      "<td><strong>" + esc(product.external_product_code || t("hanbaiou_catalog_not_set")) + "</strong><small>DKD " + esc(product.dkd_shohin_id || "-") + " / " + esc(product.product_kind_label || "-") + "</small></td>" +
+      "<td class='" + (gltekMissing ? "missing" : "") + "'>" + esc(product.gltek_part_number || t("hanbaiou_catalog_not_set")) + "</td>" +
+      "<td class='" + (genuineMissing ? "missing" : "") + "'>" + esc(product.genuine_part_number || t("hanbaiou_catalog_not_set")) + "</td>" +
+      "<td class='" + (manufacturerMissing ? "missing" : "") + "'>" + esc(product.manufacturer_part_number || t("hanbaiou_catalog_not_set")) + "</td>" +
+      "<td><div class='sales-accounting-hanbaiou-missing-tags'>" + missingLabels.map(function(label) { return "<span>" + esc(label) + "</span>"; }).join("") + "</div></td>" +
+      "</tr>";
+  }).join("");
+  var hiddenIssueCount = Math.max(0, incompleteCount - incompleteProducts.length);
+  validationMore.hidden = hiddenIssueCount === 0;
+  validationMore.textContent = hiddenIssueCount ? tf("hanbaiou_catalog_validation_more", {
+    shown: incompleteProducts.length.toLocaleString(),
+    remaining: hiddenIssueCount.toLocaleString()
+  }) : "";
 
   var batches = Array.isArray(state.hanbaiouBatches) ? state.hanbaiouBatches : [];
   history.innerHTML = batches.length ? "<span>商品台帳CSV履歴</span>" + batches.slice(0, 3).map(function(batch) {
@@ -13287,11 +13389,13 @@ function updateSalesAccountingHanbaiouActions() {
   var pendingCount = Number(catalog.pending_count || 0);
   var notIssuedCount = Number(catalog.not_issued_count || 0);
   var exportedCount = Number(catalog.exported_count || 0);
+  var resettableCount = Number(catalog.resettable_count || 0);
   var latestBatchId = parseInt(catalog.latest_confirmable_batch_id, 10);
   var summary = document.getElementById("sales-accounting-hanbaiou-selected-summary");
   var issueButton = document.getElementById("sales-accounting-hanbaiou-issue");
   var exportButton = document.getElementById("sales-accounting-hanbaiou-export");
   var confirmButton = document.getElementById("sales-accounting-hanbaiou-confirm");
+  var resetButton = document.getElementById("sales-accounting-hanbaiou-reset");
   var busy = salesAccountingProductOnboardingSaving || salesAccountingExportLoading || salesAccountingExportSaving;
   if (summary) summary.textContent = tf("hanbaiou_catalog_csv_target", { count: pendingCount.toLocaleString() });
   if (issueButton) {
@@ -13306,6 +13410,10 @@ function updateSalesAccountingHanbaiouActions() {
     confirmButton.disabled = busy || exportedCount === 0 || isNaN(latestBatchId);
     confirmButton.textContent = t("hanbaiou_catalog_confirm_button");
   }
+  if (resetButton) {
+    resetButton.disabled = busy || resettableCount === 0;
+    resetButton.textContent = t("hanbaiou_catalog_reset_button");
+  }
 }
 
 function scrollToSalesAccountingHanbaiouGuide() {
@@ -13313,6 +13421,15 @@ function scrollToSalesAccountingHanbaiouGuide() {
   if (!guide || guide.hidden) return;
   guide.open = true;
   guide.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+function scrollToSalesAccountingHanbaiouValidation() {
+  var guide = document.getElementById("sales-accounting-hanbaiou-guide");
+  var validation = document.getElementById("sales-accounting-hanbaiou-validation");
+  if (!guide || !validation || validation.hidden) return;
+  guide.open = true;
+  validation.scrollIntoView({ block: "center", behavior: "smooth" });
+  validation.focus({ preventScroll: true });
 }
 
 function renderSalesAccountingExportCandidates() {
@@ -13541,6 +13658,11 @@ async function exportHanbaiouProductMaster() {
     scrollToSalesAccountingHanbaiouGuide();
     return;
   }
+  if (Number(catalog.incomplete_count || 0) > 0) {
+    setSalesAccountingExportMessage(t("hanbaiou_catalog_incomplete_block"), true);
+    scrollToSalesAccountingHanbaiouValidation();
+    return;
+  }
   salesAccountingProductOnboardingSaving = true;
   setSalesAccountingExportMessage(t("business_workspace_hanbaiou_selecting"), false);
   updateSalesAccountingHanbaiouActions();
@@ -13574,6 +13696,34 @@ async function exportHanbaiouProductMaster() {
   }
   salesAccountingProductOnboardingSaving = false;
   setSalesAccountingExportMessage(tf("sales_accounting_product_master_saved", { count: Number(data.product_count || pendingCount).toLocaleString() }), false);
+  await loadSalesAccountingExportData({ preserveMessage: true });
+}
+
+async function resetHanbaiouProductMasterState() {
+  if (!canManageSalesOrders() || salesAccountingProductOnboardingSaving) return;
+  var state = ensureSalesAccountingExportState();
+  var resettableCount = Number((state.hanbaiouCatalog || {}).resettable_count || 0);
+  if (!resettableCount) {
+    setSalesAccountingExportMessage(t("hanbaiou_catalog_reset_none"), true);
+    return;
+  }
+  if (!window.confirm(tf("hanbaiou_catalog_reset_prompt", { count: resettableCount.toLocaleString() }))) return;
+  salesAccountingProductOnboardingSaving = true;
+  setSalesAccountingExportMessage(t("hanbaiou_catalog_reset_progress"), false);
+  updateSalesAccountingHanbaiouActions();
+  var result = await sb.rpc("reset_hanbaiou_product_master_state", {
+    expected_resettable_count: resettableCount
+  });
+  salesAccountingProductOnboardingSaving = false;
+  if (result.error) {
+    setSalesAccountingExportMessage(result.error.message || t("hanbaiou_catalog_reset_failed"), true);
+    updateSalesAccountingHanbaiouActions();
+    return;
+  }
+  var resetData = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
+  setSalesAccountingExportMessage(tf("hanbaiou_catalog_reset_done", {
+    count: Number(resetData.reset_count || 0).toLocaleString()
+  }), false);
   await loadSalesAccountingExportData({ preserveMessage: true });
 }
 
@@ -51640,6 +51790,7 @@ document.getElementById("sales-accounting-export-create").addEventListener("clic
 document.getElementById("sales-accounting-hanbaiou-issue").addEventListener("click", issueHanbaiouProductCodes);
 document.getElementById("sales-accounting-hanbaiou-export").addEventListener("click", exportHanbaiouProductMaster);
 document.getElementById("sales-accounting-hanbaiou-confirm").addEventListener("click", confirmHanbaiouProductRegistration);
+document.getElementById("sales-accounting-hanbaiou-reset").addEventListener("click", resetHanbaiouProductMasterState);
 document.getElementById("sales-accounting-export-close").addEventListener("click", closeSalesAccountingExport);
 document.getElementById("sales-accounting-export-cancel").addEventListener("click", closeSalesAccountingExport);
 document.getElementById("sales-accounting-export-overlay").addEventListener("click", function(e) {
