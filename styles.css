@@ -6772,6 +6772,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-b2-import-guide-heading > button { flex: 0 0 auto; width: 34px; height: 34px; border: 1px solid #c8d1cc; border-radius: 5px; background: #fff; color: #617068; cursor: pointer; }
 .sales-order-b2-import-guide-steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 16px 20px 12px; list-style: none; }
 .sales-order-b2-import-guide-steps > li { display: grid; grid-template-columns: 28px minmax(0, 1fr); align-content: start; align-items: start; gap: 8px 9px; min-width: 0; border: 1px solid #d9e1dc; padding: 11px; background: #fff; }
+.sales-order-b2-import-guide-steps > li.conditions-open { grid-column: 1 / -1; }
 .sales-order-b2-import-guide-steps > li.current { border-color: #287356; background: #f2f8f5; box-shadow: inset 3px 0 0 #287356; }
 .sales-order-b2-import-guide-steps > li.complete > span { background: #dcece3; color: #1f6248; }
 .sales-order-b2-import-guide-steps > li > span { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #287356; color: #fff; font-size: 11px; font-weight: 900; }
@@ -6792,11 +6793,24 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-b2-import-guide-search-conditions { grid-column: 1 / -1; border-top: 1px solid #cfdad4; padding-top: 9px; }
 .sales-order-b2-import-guide-search-conditions[hidden] { display: none; }
 .sales-order-b2-import-guide-search-conditions > strong { color: #1f6248; font-size: 10px; }
-.sales-order-b2-import-guide-search-conditions dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 7px 0 0; border: 1px solid #d7dfda; background: #fff; }
+.sales-order-b2-import-guide-date-range { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px 18px; align-items: end; margin-top: 8px; border-left: 3px solid #287356; padding: 10px 11px; background: #eef6f2; }
+.sales-order-b2-import-guide-date-range > div:first-child > strong { color: #164d38; font-size: 11px; }
+.sales-order-b2-import-guide-date-range > div:first-child > small { margin-top: 2px; color: #52675e; font-size: 9px; }
+.sales-order-b2-import-guide-date-fields { display: grid; grid-template-columns: minmax(135px, 1fr) auto minmax(135px, 1fr); align-items: end; gap: 7px; }
+.sales-order-b2-import-guide-date-fields > span { padding-bottom: 10px; color: #5c6d65; font-size: 11px; }
+.sales-order-b2-import-guide-date-fields label { min-width: 0; }
+.sales-order-b2-import-guide-date-fields label > span { display: block; margin-bottom: 3px; color: #405049; font-size: 8px; font-weight: 900; }
+.sales-order-b2-import-guide-date-fields input { width: 100%; min-width: 0; height: 36px; border: 1px solid #8da99b; border-radius: 4px; padding: 0 8px; background: #fff; color: #1d2c25; font-size: 11px; font-weight: 800; }
+.sales-order-b2-import-guide-date-fields input:focus { border-color: #287356; outline: 3px solid rgba(40,115,86,.18); }
+.sales-order-b2-import-guide-date-range > p { grid-column: 1 / -1; margin: 0; color: #40584d; font-size: 9px; line-height: 1.5; }
+.sales-order-b2-import-guide-search-conditions dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 7px 0 0; border: 1px solid #d7dfda; background: #fff; }
 .sales-order-b2-import-guide-search-conditions dl > div { min-width: 0; border-right: 1px solid #d7dfda; padding: 7px 8px; }
 .sales-order-b2-import-guide-search-conditions dl > div:last-child { border-right: 0; }
 .sales-order-b2-import-guide-search-conditions dt { color: #405049; font-size: 8px; font-weight: 900; line-height: 1.4; }
 .sales-order-b2-import-guide-search-conditions dd { margin: 3px 0 0; color: #23342c; font-size: 9px; font-weight: 800; line-height: 1.45; }
+.sales-order-b2-import-guide-no-filter { display: grid; gap: 2px; margin: 7px 0 0; border-left: 3px solid #7a93aa; padding: 7px 9px; background: #f4f7fa; }
+.sales-order-b2-import-guide-no-filter strong { color: #334d62; font-size: 9px; }
+.sales-order-b2-import-guide-no-filter span { color: #526473; font-size: 9px; line-height: 1.5; }
 .sales-order-b2-import-guide-export-steps { margin-top: 8px; }
 .sales-order-b2-import-guide-export-steps > strong { color: #405049; font-size: 9px; }
 .sales-order-b2-import-guide-export-steps ol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 18px; margin: 5px 0 0; padding-left: 18px; }
@@ -6870,6 +6884,9 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .sales-order-b2-import-guide-steps { grid-template-columns: 1fr; gap: 6px; padding: 12px 14px 10px; }
   .sales-order-b2-import-guide-steps > li { padding: 9px; }
   .sales-order-b2-import-guide-steps > li > button { width: 100%; min-height: 42px; }
+  .sales-order-b2-import-guide-date-range { grid-template-columns: 1fr; }
+  .sales-order-b2-import-guide-date-fields { grid-template-columns: 1fr; }
+  .sales-order-b2-import-guide-date-fields > span { display: none; }
   .sales-order-b2-import-guide-search-conditions dl { grid-template-columns: 1fr; }
   .sales-order-b2-import-guide-search-conditions dl > div { border-right: 0; border-bottom: 1px solid #d7dfda; }
   .sales-order-b2-import-guide-search-conditions dl > div:last-child { border-bottom: 0; }

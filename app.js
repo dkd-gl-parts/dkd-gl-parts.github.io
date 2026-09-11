@@ -6181,7 +6181,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.961";
+var APP_VERSION       = "v1.1.962";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -17502,14 +17502,29 @@ function openSalesOrderB2Portal() {
   setSalesOrderB2GuideStatus("ヤマト画面を開きました。ログイン後、マイページで「送り状発行システム B2クラウド」を押してください。", false);
 }
 
+function syncSalesOrderB2GuideDateRange(changedInput) {
+  var dateFrom = document.getElementById("sales-order-b2-import-guide-date-from");
+  var dateTo = document.getElementById("sales-order-b2-import-guide-date-to");
+  if (!dateFrom || !dateTo) return;
+  if (changedInput === dateFrom && (!dateTo.value || dateTo.value < dateFrom.value)) dateTo.value = dateFrom.value;
+  if (changedInput === dateTo && (!dateFrom.value || dateFrom.value > dateTo.value)) dateFrom.value = dateTo.value;
+}
+
 function showSalesOrderB2SearchConditions() {
   var panel = document.getElementById("sales-order-b2-import-guide-search-conditions");
   var button = document.getElementById("sales-order-b2-import-guide-search-conditions-toggle");
+  var step = document.getElementById("sales-order-b2-import-guide-search-step");
+  var dateFrom = document.getElementById("sales-order-b2-import-guide-date-from");
+  var dateTo = document.getElementById("sales-order-b2-import-guide-date-to");
   if (!panel || !button) return;
+  var today = salesOrderTokyoTodayValue();
+  if (dateFrom && !dateFrom.value) dateFrom.value = today;
+  if (dateTo && !dateTo.value) dateTo.value = today;
   panel.hidden = false;
   button.setAttribute("aria-expanded", "true");
+  if (step) step.classList.add("conditions-open");
   setSalesOrderB2GuideStep(3);
-  setSalesOrderB2GuideStatus("検索条件を表示しました。ヤマトB2の画面に同じ条件を入力してください。", false);
+  setSalesOrderB2GuideStatus("検索条件を表示しました。出荷予定日は本日を入力しています。必要に応じて日付を変更し、ヤマトB2へ同じ内容を入力してください。", false);
   window.requestAnimationFrame(function() { panel.focus(); });
 }
 
@@ -17520,8 +17535,14 @@ function openSalesOrderB2ImportGuide() {
   var hasYamatoWindow = salesOrderB2GuideWindowAvailable();
   var conditions = document.getElementById("sales-order-b2-import-guide-search-conditions");
   var conditionsButton = document.getElementById("sales-order-b2-import-guide-search-conditions-toggle");
+  var conditionsStep = document.getElementById("sales-order-b2-import-guide-search-step");
+  var dateFrom = document.getElementById("sales-order-b2-import-guide-date-from");
+  var dateTo = document.getElementById("sales-order-b2-import-guide-date-to");
   if (conditions) conditions.hidden = true;
   if (conditionsButton) conditionsButton.setAttribute("aria-expanded", "false");
+  if (conditionsStep) conditionsStep.classList.remove("conditions-open");
+  if (dateFrom) dateFrom.value = "";
+  if (dateTo) dateTo.value = "";
   setSalesOrderB2GuideStep(hasYamatoWindow ? Math.max(2, salesOrderB2GuideActiveStep) : 1);
   setSalesOrderB2GuideStatus(hasYamatoWindow
     ? "ヤマト画面は別タブで開いています。強調表示された項目名に沿って操作してください。"
@@ -50961,6 +50982,8 @@ document.getElementById("sales-order-b2-import-guide-close").addEventListener("c
 document.getElementById("sales-order-b2-import-guide-cancel").addEventListener("click", closeSalesOrderB2ImportGuide);
 document.getElementById("sales-order-b2-import-guide-yamato").addEventListener("click", openSalesOrderB2Portal);
 document.getElementById("sales-order-b2-import-guide-search-conditions-toggle").addEventListener("click", showSalesOrderB2SearchConditions);
+document.getElementById("sales-order-b2-import-guide-date-from").addEventListener("change", function() { syncSalesOrderB2GuideDateRange(this); });
+document.getElementById("sales-order-b2-import-guide-date-to").addEventListener("change", function() { syncSalesOrderB2GuideDateRange(this); });
 document.getElementById("sales-order-b2-import-guide-select-file").addEventListener("click", selectSalesOrderB2ImportFile);
 document.getElementById("sales-order-b2-import-guide-overlay").addEventListener("click", function(e) {
   if (e.target === this) closeSalesOrderB2ImportGuide();
