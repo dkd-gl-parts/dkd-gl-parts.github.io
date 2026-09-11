@@ -20,6 +20,8 @@ const runtimeScriptPaths = [
 ];
 const curatedTranslations = {
   en: {
+    "CSV対象 0件": "CSV target: 0",
+    "販売王の「導入 → 他社製品データ取り込み」で、台帳は「商品」、ファイルは「区切り文字形式ファイル（*.csv, *.txt）」を選択し、D-CATSのCSVを取り込んでください。取込結果を確認後、「最新CSVを登録済みにする」を押します。": "In Sales King, open Setup > Import Other Product Data. Select Product for the ledger and Delimited Text File (*.csv, *.txt) for the file type, then import the D-CATS CSV. Verify the result and click Confirm Latest CSV Registration.",
     "出荷": "Shipping",
     "出荷管理": "Shipping Operations",
     "受注・出荷管理、ピッキング、出荷帳票、完品出荷、在庫更新。商品マスタ・販売価格設定・ユーザー管理は不可": "Manage orders, picking, shipping documents, finished-product shipping, and stock updates. Product master, sales pricing, and user management are unavailable.",
@@ -442,6 +444,8 @@ const curatedTranslations = {
     "本書、対象製品、製造シリアル、車両・取付情報をご提示ください。": "Present this document, the covered product, the manufacturing serial number, and the vehicle and installation information."
   },
   zh: {
+    "CSV対象 0件": "CSV目标 0 件",
+    "販売王の「導入 → 他社製品データ取り込み」で、台帳は「商品」、ファイルは「区切り文字形式ファイル（*.csv, *.txt）」を選択し、D-CATSのCSVを取り込んでください。取込結果を確認後、「最新CSVを登録済みにする」を押します。": "在销售王中打开“导入 → 导入其他公司产品数据”。台账选择“商品”，文件类型选择“分隔符文本文件（*.csv, *.txt）”，然后导入D-CATS CSV。确认导入结果后，点击“将最新CSV标记为已登记”。",
     "出荷": "出货",
     "出荷管理": "出货管理",
     "受注・出荷管理、ピッキング、出荷帳票、完品出荷、在庫更新。商品マスタ・販売価格設定・ユーザー管理は不可": "可管理订单、拣货、出货单据、成品出货和库存更新。不可管理商品主数据、销售价格和用户。",

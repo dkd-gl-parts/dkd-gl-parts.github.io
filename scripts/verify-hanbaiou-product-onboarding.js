@@ -32,24 +32,33 @@ for (const id of [
 ]) requireFragment(html, `id="${id}"`);
 
 const load = functionSource("loadSalesAccountingExportData");
-requireFragment(load, 'sb.rpc("list_hanbaiou_product_onboarding"');
-requireFragment(load, "salesAccountingHanbaiouCandidateVariantIds()");
+requireFragment(load, 'sb.rpc("get_hanbaiou_product_catalog_status")');
+requireFragment(load, "catalogRequest");
+if (/salesAccountingHanbaiouCandidateVariantIds|target_product_variant_ids/.test(load)) {
+  throw new Error("Product-master candidates must not be derived from sales-order items");
+}
 
 const issue = functionSource("issueHanbaiouProductCodes");
-requireFragment(issue, 'sb.rpc("issue_hanbaiou_product_codes"');
-requireFragment(issue, "商品コードを発行しました");
+requireFragment(issue, 'sb.rpc("issue_hanbaiou_catalog_product_codes")');
+requireFragment(issue, 't("hanbaiou_catalog_issue_progress")');
 
 const master = functionSource("exportHanbaiouProductMaster");
-requireFragment(master, 'sb.rpc("create_hanbaiou_product_master_export"');
+requireFragment(master, 'sb.rpc("create_hanbaiou_catalog_product_master_export")');
 requireFragment(master, "prepareDcatsHanbaiouExportDirectory()");
 requireFragment(master, "await downloadSalesAccountingExportFile(data, exportDirectory)");
-if (master.indexOf("prepareDcatsHanbaiouExportDirectory()") > master.indexOf('sb.rpc("create_hanbaiou_product_master_export"')) {
+if (master.indexOf("prepareDcatsHanbaiouExportDirectory()") > master.indexOf('sb.rpc("create_hanbaiou_catalog_product_master_export"')) {
   throw new Error("The Sales King folder must be ready before creating a product ledger export");
 }
 
 const confirm = functionSource("confirmHanbaiouProductRegistration");
-requireFragment(confirm, 'sb.rpc("confirm_hanbaiou_product_registration"');
-requireFragment(confirm, "販売王登録済みにしました");
+requireFragment(confirm, 'sb.rpc("confirm_hanbaiou_catalog_product_registration"');
+requireFragment(confirm, "target_batch_id: batchId");
+requireFragment(confirm, 't("hanbaiou_catalog_confirm_prompt")');
+
+requireFragment(html, "台帳は「商品」、ファイルは「区切り文字形式ファイル（*.csv, *.txt）」");
+if (html.includes("商品台帳（販売王20～形式）")) {
+  throw new Error("The Sales King import guide must match the actual import wizard");
+}
 
 const candidates = functionSource("renderSalesAccountingExportCandidates");
 requireFragment(candidates, "salesAccountingExportProductCodeHtml(item, profile)");
@@ -66,7 +75,18 @@ for (const fragment of [
   ".sales-accounting-hanbaiou-guide",
   ".sales-accounting-hanbaiou-steps",
   ".sales-accounting-hanbaiou-product-list",
+  ".sales-accounting-hanbaiou-metric",
   ".sales-accounting-hanbaiou-status.registered",
 ]) requireFragment(css, fragment);
+
+for (const key of [
+  "hanbaiou_catalog_pending_summary",
+  "hanbaiou_catalog_issue_button",
+  "hanbaiou_catalog_export_button",
+  "hanbaiou_catalog_confirm_button",
+]) {
+  const matches = source.match(new RegExp(`${key}:`, "g")) || [];
+  if (matches.length !== 3) throw new Error(`${key} must be translated in Japanese, English, and Chinese`);
+}
 
 console.log("Sales King product onboarding UI verification passed.");
