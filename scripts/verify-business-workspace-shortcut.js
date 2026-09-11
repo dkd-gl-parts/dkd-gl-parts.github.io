@@ -56,6 +56,10 @@ assert(source.includes('selectedHandle.name === DCATS_BUSINESS_WORKSPACE_DIRECTO
 assert(source.includes('selectedHandle.name === DCATS_B2_DIRECTORY_NAME'), "Selecting the B2 parent folder is not supported");
 assert(source.includes('selectedHandle.name === DCATS_B2_EXPORT_DIRECTORY_NAME'), "Selecting the B2 issue folder is not supported");
 assert(source.includes('storeDcatsB2ExportDirectory(targetHandle)'), "The B2 folder handle is not persisted per browser profile");
+assert(source.includes('var DCATS_HANBAIOU_DIRECTORY_NAME = "\\u8ca9\\u58f2\\u738b"'), "The Sales King workspace folder name is not fixed");
+assert(source.includes('id: "dcats-hanbaiou-csv-export"'), "The Sales King folder picker does not have a stable browser identity");
+assert(source.includes('storeDcatsHanbaiouExportDirectory(targetHandle)'), "The Sales King folder handle is not persisted per browser profile");
+assert(html.includes('business_workspace_hanbaiou_path'), "The Sales King shared save path is not shown in the export screen");
 
 for (const fragment of [
   ".sales-order-business-workspace-button",

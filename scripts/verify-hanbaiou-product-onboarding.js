@@ -41,7 +41,11 @@ requireFragment(issue, "商品コードを発行しました");
 
 const master = functionSource("exportHanbaiouProductMaster");
 requireFragment(master, 'sb.rpc("create_hanbaiou_product_master_export"');
-requireFragment(master, "downloadSalesAccountingExportFile(data)");
+requireFragment(master, "prepareDcatsHanbaiouExportDirectory()");
+requireFragment(master, "await downloadSalesAccountingExportFile(data, exportDirectory)");
+if (master.indexOf("prepareDcatsHanbaiouExportDirectory()") > master.indexOf('sb.rpc("create_hanbaiou_product_master_export"')) {
+  throw new Error("The Sales King folder must be ready before creating a product ledger export");
+}
 
 const confirm = functionSource("confirmHanbaiouProductRegistration");
 requireFragment(confirm, 'sb.rpc("confirm_hanbaiou_product_registration"');
@@ -50,6 +54,7 @@ requireFragment(confirm, "販売王登録済みにしました");
 const candidates = functionSource("renderSalesAccountingExportCandidates");
 requireFragment(candidates, "salesAccountingExportProductCodeHtml(item, profile)");
 requireFragment(candidates, "data-sales-accounting-open-onboarding");
+requireFragment(candidates, "sales-accounting-export-order-simple");
 
 for (const fragment of [
   'document.getElementById("sales-accounting-hanbaiou-issue").addEventListener("click", issueHanbaiouProductCodes)',
