@@ -6397,7 +6397,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.976";
+var APP_VERSION       = "v1.1.977";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -18483,15 +18483,49 @@ async function importSalesOrderB2Shipments() {
   if (salesOrderSelectedId) await loadSalesOrderDetail(salesOrderSelectedId);
 }
 
-function returnFromProductSearch() {
+function resetProductSearchForMenu() {
+  searchRequestSeq += 1;
+  productAuxSeq += 1;
+  detailSecondaryRequestSeq += 1;
+  productSearchDetailReadyPromise = Promise.resolve();
+  currentFilter = "all";
+  searchSlOnly = false;
+  productSearchLimit = SEARCH_INITIAL_LIMIT;
+  productSearchFetchedCount = 0;
+  productSearchTotalCount = null;
+  productSearchHasMore = false;
+  productSearchPageKey = "";
+  allProducts = [];
+  imageCountMap = {};
+  imageThumbnailMap = {};
+  productionImageCountMap = {};
+  slPartsMap = {};
+  slPresenceMap = {};
+  componentUsageCountMap = {};
+  productionComponentKindCountMap = {};
+  coreStockQtyMap = {};
+  kikanCompatibleMap = {};
+  productAvailableStockMap = {};
+  productVariantSummaryMap = {};
+  var query = document.getElementById("q");
+  if (query) query.value = "";
   closePanel();
+  syncSearchFilterControls();
+  renderCategoryChips();
+  render();
+}
+
+function returnFromProductSearch() {
   if (customerPortalSearchActive || isCustomerViewer()) {
+    closePanel();
     customerPortalSearchActive = false;
     showScreen("customer-portal");
     renderCustomerPortal();
     return;
   }
-  returnToMenuFresh();
+  resetProductSearchForMenu();
+  clearAppRestoreState();
+  showAuthenticatedHome();
 }
 
 // =============================================
