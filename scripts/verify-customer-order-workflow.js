@@ -360,6 +360,9 @@ if (!historyRenderer.includes('var orderCancelled = String(order.status || "").t
   throw new Error("unused shipping fields must show a hyphen and shipping fees must be detail rows");
 }
 [
+  ".customer-order-history-list { display: grid; gap: 14px; border: 0;",
+  ".customer-order-history-row { display: grid;",
+  "border: 1px solid var(--dcats-border); border-radius: var(--dcats-card-radius);",
   ".customer-order-history-detail { grid-column: 1 / -1;",
   ".customer-order-history-detail-table { overflow-x: auto;",
   ".customer-order-history-detail-row.shipping { background:",
@@ -367,6 +370,9 @@ if (!historyRenderer.includes('var orderCancelled = String(order.status || "").t
 ].forEach((fragment) => {
   if (!css.includes(fragment)) throw new Error(`customer order history detail styling is missing: ${fragment}`);
 });
+if (/\.customer-order-history-detail-totals\s+\.(?:core-charge|grand-total)\s*\{[^}]*background\s*:/s.test(css)) {
+  throw new Error("only detail rows may use colored backgrounds in customer order history");
+}
 const coreRequirement = sourceBetween("function customerOrderCartRequiresCoreReturn", "function customerOrderCoreReturnShippingMethodPayload");
 if (!coreRequirement.includes('item.core_return_handling !== "charge_no_return"')) {
   throw new Error("core-charge/no-return lines must not require a return shipping method");
