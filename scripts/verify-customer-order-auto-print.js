@@ -39,6 +39,13 @@ for (const fragment of [
 ]) {
   if (!css.includes(fragment)) throw new Error(`Auto-print styling is missing: ${fragment}`);
 }
+for (const [label, pattern] of [
+  ["bounded summary columns", /#screen-sales-order-mgmt \.sales-order-auto-print\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) max-content;/s],
+  ["wrapping heading", /#screen-sales-order-mgmt \.sales-order-auto-print-heading\s*\{[^}]*flex-wrap:\s*wrap;[^}]*min-width:\s*0;/s],
+  ["wrapping state label", /#screen-sales-order-mgmt \.sales-order-auto-print-state\s*\{[^}]*flex:\s*0 1 auto;[^}]*max-width:\s*100%;[^}]*white-space:\s*normal;/s]
+]) {
+  if (!pattern.test(css)) throw new Error(`Auto-print overlap guard is missing: ${label}`);
+}
 
 const summaryStart = html.indexOf('<section class="sales-order-auto-print" id="sales-order-auto-print">');
 const summaryEnd = html.indexOf('<section class="sales-order-workspace">', summaryStart);
@@ -188,10 +195,10 @@ for (const fragment of [
 }
 
 for (const versionFragment of [
-  'content="v1.1.990"',
-  'styles.css?v=1.1.990',
-  'app.js?v=1.1.990',
-  'var APP_VERSION       = "v1.1.990"'
+  'content="v1.1.991"',
+  'styles.css?v=1.1.991',
+  'app.js?v=1.1.991',
+  'var APP_VERSION       = "v1.1.991"'
 ]) {
   const versionSource = versionFragment.startsWith("var ") ? source : html;
   if (!versionSource.includes(versionFragment)) throw new Error(`Release version is inconsistent: ${versionFragment}`);
