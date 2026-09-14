@@ -100,7 +100,7 @@ if (detail.includes('{ key: "tracking"') || detail.includes("data-sales-order-de
 const setDetailView = functionSource("setSalesOrderDetailView");
 for (const fragment of [
   'if (view === "tracking") view = "fulfillment"',
-  'var allowedViews = ["overview", "fulfillment", "history"]'
+  'var allowedViews = ["overview", "fulfillment", "accounting", "history"]'
 ]) requireFragment(setDetailView, fragment);
 
 const statusDetailSource = functionSource("salesOrderStatusDetailLabel");
