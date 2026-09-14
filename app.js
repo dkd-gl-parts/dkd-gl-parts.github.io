@@ -6424,7 +6424,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.978";
+var APP_VERSION       = "v1.1.979";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -13362,11 +13362,7 @@ function renderSalesAccountingHanbaiouGuide() {
   var guide = document.getElementById("sales-accounting-hanbaiou-guide");
   var list = document.getElementById("sales-accounting-hanbaiou-product-list");
   var history = document.getElementById("sales-accounting-hanbaiou-history");
-  var validation = document.getElementById("sales-accounting-hanbaiou-validation");
-  var validationSummary = document.getElementById("sales-accounting-hanbaiou-validation-summary");
-  var validationRows = document.getElementById("sales-accounting-hanbaiou-validation-rows");
-  var validationMore = document.getElementById("sales-accounting-hanbaiou-validation-more");
-  if (!guide || !list || !history || !validation || !validationSummary || !validationRows || !validationMore) return;
+  if (!guide || !list || !history) return;
   var isHanbaiou = state.targetSystem === "hanbaiou" && state.hasSearched;
   guide.hidden = !isHanbaiou;
   if (!isHanbaiou) return;
@@ -13377,8 +13373,6 @@ function renderSalesAccountingHanbaiouGuide() {
       ? t("hanbaiou_catalog_loading")
       : t("hanbaiou_catalog_unavailable");
     list.innerHTML = "<div class='sales-accounting-hanbaiou-empty'>" + esc(pendingSummary ? pendingSummary.textContent : t("hanbaiou_catalog_loading")) + "</div>";
-    validation.hidden = true;
-    validationRows.innerHTML = "";
     history.innerHTML = "";
     updateSalesAccountingHanbaiouActions();
     return;
@@ -13408,41 +13402,6 @@ function renderSalesAccountingHanbaiouGuide() {
   ].map(function(metric) {
     return "<div class='sales-accounting-hanbaiou-metric " + esc(metric[2]) + "'><span>" + esc(t(metric[0])) + "</span><strong>" + esc(Number(metric[1]).toLocaleString()) + "</strong><small>" + esc(t("hanbaiou_catalog_count_unit")) + "</small></div>";
   }).join("");
-
-  var incompleteProducts = Array.isArray(catalog.incomplete_products) ? catalog.incomplete_products : [];
-  validation.hidden = incompleteCount === 0;
-  validationSummary.textContent = incompleteCount ? tf("hanbaiou_catalog_validation_summary", {
-    count: incompleteCount.toLocaleString(),
-    gltek: Number(catalog.missing_gltek_count || 0).toLocaleString(),
-    genuine: Number(catalog.missing_genuine_count || 0).toLocaleString(),
-    manufacturer: Number(catalog.missing_manufacturer_count || 0).toLocaleString()
-  }) : "";
-  validationRows.innerHTML = incompleteProducts.map(function(product) {
-    var missingFields = Array.isArray(product.missing_fields) ? product.missing_fields : [];
-    var gltekMissing = missingFields.indexOf("GLTEK品番") >= 0;
-    var genuineMissing = missingFields.indexOf("純正品番") >= 0;
-    var manufacturerMissing = missingFields.indexOf("メーカー品番") >= 0;
-    var missingLabels = missingFields.map(function(field) {
-      if (field === "GLTEK品番") return t("hanbaiou_catalog_gltek_part");
-      if (field === "純正品番") return t("hanbaiou_catalog_genuine_part");
-      if (field === "メーカー品番") return t("hanbaiou_catalog_manufacturer_part");
-      return field;
-    });
-    return "<tr>" +
-      "<td><strong>" + esc(product.category_label || t("hanbaiou_catalog_not_set")) + "</strong><small>" + esc(product.category_code || "-") + "</small></td>" +
-      "<td><strong>" + esc(product.external_product_code || t("hanbaiou_catalog_not_set")) + "</strong><small>DKD " + esc(product.dkd_shohin_id || "-") + " / " + esc(product.product_kind_label || "-") + "</small></td>" +
-      "<td class='" + (gltekMissing ? "missing" : "") + "'>" + esc(product.gltek_part_number || t("hanbaiou_catalog_not_set")) + "</td>" +
-      "<td class='" + (genuineMissing ? "missing" : "") + "'>" + esc(product.genuine_part_number || t("hanbaiou_catalog_not_set")) + "</td>" +
-      "<td class='" + (manufacturerMissing ? "missing" : "") + "'>" + esc(product.manufacturer_part_number || t("hanbaiou_catalog_not_set")) + "</td>" +
-      "<td><div class='sales-accounting-hanbaiou-missing-tags'>" + missingLabels.map(function(label) { return "<span>" + esc(label) + "</span>"; }).join("") + "</div></td>" +
-      "</tr>";
-  }).join("");
-  var hiddenIssueCount = Math.max(0, incompleteCount - incompleteProducts.length);
-  validationMore.hidden = hiddenIssueCount === 0;
-  validationMore.textContent = hiddenIssueCount ? tf("hanbaiou_catalog_validation_more", {
-    shown: incompleteProducts.length.toLocaleString(),
-    remaining: hiddenIssueCount.toLocaleString()
-  }) : "";
 
   var batches = Array.isArray(state.hanbaiouBatches) ? state.hanbaiouBatches : [];
   history.innerHTML = batches.length ? "<span>商品台帳CSV履歴</span>" + batches.slice(0, 3).map(function(batch) {
@@ -13495,15 +13454,6 @@ function scrollToSalesAccountingHanbaiouGuide() {
   if (!guide || guide.hidden) return;
   guide.open = true;
   guide.scrollIntoView({ block: "nearest", behavior: "smooth" });
-}
-
-function scrollToSalesAccountingHanbaiouValidation() {
-  var guide = document.getElementById("sales-accounting-hanbaiou-guide");
-  var validation = document.getElementById("sales-accounting-hanbaiou-validation");
-  if (!guide || !validation || validation.hidden) return;
-  guide.open = true;
-  validation.scrollIntoView({ block: "center", behavior: "smooth" });
-  validation.focus({ preventScroll: true });
 }
 
 function renderSalesAccountingExportCandidates() {
@@ -13727,7 +13677,7 @@ async function exportHanbaiouProductMaster() {
   }
   if (Number(catalog.incomplete_count || 0) > 0) {
     setSalesAccountingExportMessage(t("hanbaiou_catalog_incomplete_block"), true);
-    scrollToSalesAccountingHanbaiouValidation();
+    scrollToSalesAccountingHanbaiouGuide();
     return;
   }
   salesAccountingProductOnboardingSaving = true;
