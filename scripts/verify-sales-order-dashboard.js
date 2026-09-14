@@ -18,7 +18,7 @@ function sourceBetween(startText, endText) {
   return source.slice(start, end);
 }
 
-const statuses = ["all", "submitted", "accepted", "shipping_ready", "shipped", "completed", "cancelled"];
+const statuses = ["work_queue", "submitted", "accepted", "shipping_ready", "shipped", "sales_pending", "sales_registered", "cancelled"];
 for (const status of statuses) {
   requireFragment(html, `data-sales-order-dashboard-status="${status}"`, "dashboard status action");
   requireFragment(html, `data-sales-order-dashboard-count="${status}"`, "dashboard status count");
@@ -34,10 +34,17 @@ const countsSource = sourceBetween("function salesOrderDashboardCounts", "functi
 const counts = vm.runInNewContext(
   `var salesOrderDashboardRows = [
     { status: "submitted" }, { status: "submitted" }, { status: "accepted" },
-    { status: "shipping_ready" }, { status: "shipped" }, { status: "completed" }, { status: "cancelled" }
-  ];\n${countsSource}\nsalesOrderDashboardCounts();`
+    { status: "shipping_ready" }, { status: "shipped", sales_management_status: "not_exported" },
+    { status: "completed", sales_management_status: "registered" }, { status: "cancelled" }
+  ];
+  function salesOrderAccountingApplies(order) { return ["shipped", "completed"].includes(order.status); }
+  function salesOrderAccountingStatus(order) { return order.sales_management_status || "not_exported"; }
+  ${countsSource}
+  salesOrderDashboardCounts();`
 );
-if (counts.all !== 7 || counts.submitted !== 2 || statuses.slice(2).some((status) => counts[status] !== 1)) {
+if (counts.all !== 7 || counts.work_queue !== 5 || counts.submitted !== 2 || counts.accepted !== 1 ||
+    counts.shipping_ready !== 1 || counts.shipped !== 1 || counts.completed !== 1 || counts.cancelled !== 1 ||
+    counts.sales_pending !== 1 || counts.sales_registered !== 1) {
   throw new Error(`dashboard status counts are incorrect: ${JSON.stringify(counts)}`);
 }
 

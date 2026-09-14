@@ -109,6 +109,7 @@ const statusContext = {
   salesOrderDispatch: (order) => order && order.dispatch || null,
   salesOrderDispatchStatusLabel: (status) => ({ preparing: "シリアル照合待ち", ready: "照合完了・出荷確定待ち" })[status] || "未発行",
   salesOrderWaybillProgress: () => ({ trackingNumber: "", status: "発送データ未取込" }),
+  salesOrderAccountingStatusHtml: () => "",
   customerOrderStatusLabel: (status) => status === "shipping_ready" ? "出荷処理中" : status,
   esc: (value) => String(value == null ? "" : value)
 };
