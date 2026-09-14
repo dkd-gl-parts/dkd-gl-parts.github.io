@@ -29,8 +29,6 @@ for (const id of [
   "sales-accounting-hanbaiou-confirm",
   "sales-accounting-hanbaiou-reset",
   "sales-accounting-hanbaiou-product-list",
-  "sales-accounting-hanbaiou-validation",
-  "sales-accounting-hanbaiou-validation-rows",
   "sales-accounting-hanbaiou-history",
 ]) requireFragment(html, `id="${id}"`);
 
@@ -51,7 +49,10 @@ requireFragment(master, "prepareDcatsHanbaiouExportDirectory()");
 requireFragment(master, "await downloadSalesAccountingExportFile(data, exportDirectory)");
 requireFragment(master, "catalog.incomplete_count");
 requireFragment(master, 't("hanbaiou_catalog_incomplete_block")');
-requireFragment(master, "scrollToSalesAccountingHanbaiouValidation()");
+requireFragment(master, "scrollToSalesAccountingHanbaiouGuide()");
+if (master.includes("scrollToSalesAccountingHanbaiouValidation")) {
+  throw new Error("Product-master export errors must return to the compact guide, not a detail table");
+}
 if (master.indexOf("prepareDcatsHanbaiouExportDirectory()") > master.indexOf('sb.rpc("create_hanbaiou_catalog_product_master_export"')) {
   throw new Error("The Sales King folder must be ready before creating a product ledger export");
 }
@@ -71,17 +72,9 @@ requireFragment(reset, 'tf("hanbaiou_catalog_reset_prompt"');
 requireFragment(reset, 't("hanbaiou_catalog_reset_progress")');
 
 const renderGuide = functionSource("renderSalesAccountingHanbaiouGuide");
-for (const fragment of [
-  "catalog.incomplete_products",
-  "catalog.missing_gltek_count",
-  "catalog.missing_genuine_count",
-  "catalog.missing_manufacturer_count",
-  "product.category_label",
-  "product.gltek_part_number",
-  "product.genuine_part_number",
-  "product.manufacturer_part_number",
-  "product.missing_fields",
-]) requireFragment(renderGuide, fragment);
+if (/incomplete_products|sales-accounting-hanbaiou-validation|sales-accounting-hanbaiou-missing-tags|3品番の不足明細/.test(renderGuide + html + css)) {
+  throw new Error("The product-master detail list must not be displayed in the sales-data export screen");
+}
 
 requireFragment(html, "台帳は「商品」、ファイルは「区切り文字形式ファイル（*.csv, *.txt）」");
 if (html.includes("商品台帳（販売王20～形式）")) {
@@ -105,8 +98,6 @@ for (const fragment of [
   ".sales-accounting-hanbaiou-steps",
   ".sales-accounting-hanbaiou-product-list",
   ".sales-accounting-hanbaiou-metric",
-  ".sales-accounting-hanbaiou-validation",
-  ".sales-accounting-hanbaiou-missing-tags",
   ".sales-accounting-hanbaiou-status.registered",
 ]) requireFragment(css, fragment);
 
