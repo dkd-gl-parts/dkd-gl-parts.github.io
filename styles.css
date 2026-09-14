@@ -7412,12 +7412,12 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-accounting-export-section-head input { width: 15px; height: 15px; accent-color: #287356; }
 .sales-accounting-export-candidate-list,
 .sales-accounting-export-history-list { flex: 1 1 auto; min-height: 0; overflow: auto; }
-.sales-accounting-export-candidate-empty { display: grid; place-items: center; min-height: 220px; padding: 24px; color: #7c8791; font-size: 11px; text-align: center; }
-.sales-accounting-export-order { display: grid; grid-template-columns: 24px minmax(150px, .78fr) minmax(230px, 1fr) minmax(260px, 1.2fr) 105px; align-items: start; gap: 10px; min-width: 830px; border-bottom: 1px solid #dfe5ea; padding: 11px 12px; background: #fff; }
-.sales-accounting-export-order-simple { grid-template-columns: 24px minmax(180px, .85fr) minmax(250px, 1.35fr) 105px; min-width: 620px; align-items: center; }
+.sales-accounting-export-candidate-empty { display: grid; place-items: center; min-height: 220px; padding: 24px; color: #7c8791; font-size: 11px; line-height: 1.6; text-align: center; }
+.sales-accounting-export-candidate-empty.is-clear { color: #246541; font-weight: 800; }
+.sales-accounting-export-order { display: grid; grid-template-columns: minmax(150px, .78fr) minmax(230px, 1fr) minmax(260px, 1.2fr) 105px; align-items: start; gap: 10px; min-width: 800px; border-bottom: 1px solid #dfe5ea; padding: 11px 12px; background: #fff; }
+.sales-accounting-export-order-simple { grid-template-columns: minmax(180px, .85fr) minmax(250px, 1.35fr) 105px; min-width: 590px; align-items: center; }
 .sales-accounting-export-order.exported { background: #f6f7f8; }
 .sales-accounting-export-order.has-issues { box-shadow: inset 3px 0 0 #c44c43; }
-.sales-accounting-export-order > input { width: 16px; height: 16px; margin-top: 4px; accent-color: #287356; }
 .sales-accounting-export-order-meta strong,
 .sales-accounting-export-order-meta span,
 .sales-accounting-export-order-meta small { display: block; overflow-wrap: anywhere; }
@@ -7444,7 +7444,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-accounting-export-total span { display: block; white-space: nowrap; }
 .sales-accounting-export-total strong { color: #1f5e42; font-size: 12px; font-variant-numeric: tabular-nums; }
 .sales-accounting-export-total span { margin-top: 4px; color: #78838e; font-size: 8px; }
-.sales-accounting-export-issues { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 4px; }
+.sales-accounting-export-issues { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px; }
 .sales-accounting-export-issues span { border: 1px solid #e0a19a; border-radius: 4px; padding: 2px 5px; background: #fff4f2; color: #a6342b; font-size: 8px; font-weight: 700; }
 .sales-accounting-export-issues button { min-height: 24px; border: 1px solid #b2701a; border-radius: 4px; padding: 0 7px; background: #fff; color: #87510d; font-size: 8px; font-weight: 800; cursor: pointer; }
 .sales-accounting-export-history-row { border-bottom: 1px solid #dde3df; padding: 11px 12px; background: #fff; }
@@ -8280,15 +8280,15 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .sales-order-history-groups { grid-template-columns: 1fr; }
   .sales-order-pricing-lower-grid { grid-template-columns: 1fr; }
   .sales-accounting-export-workspace { grid-template-columns: 1fr; overflow: auto; }
-  .sales-accounting-export-candidates { min-height: 430px; border-right: 0; border-bottom: 6px solid #e4e8ec; }
+  .sales-accounting-export-candidates { min-height: 280px; border-right: 0; border-bottom: 6px solid #e4e8ec; }
   .sales-accounting-export-history { min-height: 240px; }
-  .sales-accounting-export-order { grid-template-columns: 24px minmax(0, 1fr) auto; min-width: 0; }
-  .sales-accounting-export-order-simple { grid-template-columns: 24px minmax(0, 1fr) auto; }
+  .sales-accounting-export-order { grid-template-columns: minmax(0, 1fr) auto; min-width: 0; }
+  .sales-accounting-export-order-simple { grid-template-columns: minmax(0, 1fr) auto; }
   .sales-accounting-export-order > .sales-accounting-export-code-block,
   .sales-accounting-export-product-list,
-  .sales-accounting-export-issues { grid-column: 2 / -1; }
-  .sales-accounting-export-order-simple .sales-accounting-export-order-products { grid-column: 2 / -1; }
-  .sales-accounting-export-total { grid-column: 3; grid-row: 1; }
+  .sales-accounting-export-issues { grid-column: 1 / -1; }
+  .sales-accounting-export-order-simple .sales-accounting-export-order-products { grid-column: 1 / -1; }
+  .sales-accounting-export-total { grid-column: 2; grid-row: 1; }
   .sales-accounting-hanbaiou-product-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .sales-accounting-hanbaiou-metric:nth-child(3n) { border-right: 0; }
   .sales-accounting-hanbaiou-metric:nth-child(-n + 3) { border-bottom: 1px solid #e5ded1; }

@@ -40,6 +40,10 @@ for (const id of [
 if (html.includes('id="sales-accounting-export-check-all"') || html.includes("出力可能な受注をすべて選択")) {
   throw new Error("The redundant select-all option must not be displayed");
 }
+requireFragment(html, 'data-i18n="sales_accounting_issue_list_title">情報不足の売上データ</h4>', "Only sales data with missing information should be listed");
+if (html.includes('id="sales-accounting-export-candidates-title">出力対象</h4>') || html.includes("選択した受注をCSV出力")) {
+  throw new Error("The export-candidate selection UI must not be displayed");
+}
 requireFragment(html, '<option value="hanbaiou">販売王</option><option value="yayoi_sales">弥生販売</option>', "Sales King must be the initial destination");
 
 const initialState = functionSource("initialSalesAccountingExportState");
@@ -56,11 +60,37 @@ for (const fragment of [
 
 const candidates = functionSource("renderSalesAccountingExportCandidates");
 for (const fragment of [
+  "var issueOrders = state.orders.filter",
+  "salesAccountingExportIssueRows(order).length > 0",
+  "host.innerHTML = issueOrders.map",
+  'hasReadyOrders ? "sales_accounting_issue_none" : "sales_accounting_issue_no_ready"',
   'state.targetSystem === "hanbaiou"',
   "sales-accounting-export-order-simple",
   "sales-accounting-export-order-products",
   't("sales_accounting_product_ledger_check")',
 ]) requireFragment(candidates, fragment);
+if (candidates.includes("data-sales-accounting-order-check") || candidates.includes("state.orders.map")) {
+  throw new Error("Normal CSV candidates and order-selection checkboxes must not be rendered");
+}
+
+const selection = functionSource("updateSalesAccountingExportSelection");
+requireFragment(selection, 'tf("sales_accounting_issue_count", { count: issueCount })');
+requireFragment(selection, 'tf("sales_accounting_create_count", { count: selectedOrders.length })');
+
+for (const key of [
+  "sales_accounting_issue_list_title",
+  "sales_accounting_issue_count",
+  "sales_accounting_issue_count_initial",
+  "sales_accounting_create_default",
+  "sales_accounting_issue_loading",
+  "sales_accounting_issue_search_prompt",
+  "sales_accounting_issue_none",
+  "sales_accounting_issue_no_ready",
+  "sales_accounting_issue_no_orders",
+]) {
+  const matches = source.match(new RegExp(`${key}:`, "g")) || [];
+  if (matches.length !== 3) throw new Error(`${key} must be translated in Japanese, English, and Chinese`);
+}
 
 const saveCode = functionSource("saveSalesAccountingExportCode");
 for (const fragment of [
@@ -123,6 +153,7 @@ for (const fragment of [
   ".sales-accounting-export-workspace",
   ".sales-accounting-export-order",
   ".sales-accounting-export-order-simple",
+  ".sales-accounting-export-candidate-empty.is-clear",
   ".sales-accounting-export-directory",
   ".sales-accounting-export-history-row",
 ]) requireFragment(css, fragment);
