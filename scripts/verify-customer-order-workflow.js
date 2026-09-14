@@ -333,12 +333,13 @@ if (formattedTracking !== "3910-3908-4402") {
   throw new Error("12-digit customer order tracking numbers must display in 4-4-4 groups");
 }
 [
-  'customer_order_shipping_unused: "未使用"',
   'customer_order_tracking_unissued: "未発行"',
+  'customer_order_waybill_number: "送り状番号"',
   'customer_order_core_return_needed: "要コア返却"',
   'function customerOrderCoreReturnStatusLabel',
   'customer-order-history-detail',
   'customerOrderHistoryItemRowsHtml(order)',
+  'customerOrderHistoryShippingRowHtml(order)',
   't("customer_order_core_charge_kind")'
 ].forEach((fragment) => {
   if (!source.includes(fragment)) throw new Error(`customer order history display is missing: ${fragment}`);
@@ -346,12 +347,22 @@ if (formattedTracking !== "3910-3908-4402") {
 if (historyDisplay.includes('"（" + t("customer_order_core_charge_no_return_status")') ||
     !historyDisplay.includes('customerOrderTrackingNumberText(order.outbound_tracking_number)') ||
     !historyDisplay.includes('customerOrderTrackingNumberText(order.return_tracking_number)') ||
-    !historyDisplay.includes('customerOrderCoreReturnStatusLabel(order)')) {
+    !historyDisplay.includes('customerOrderCoreReturnStatusLabel(order)') ||
+    historyDisplay.includes("<dt>商品発送送り状</dt>") ||
+    historyDisplay.includes("<dt>コア返却用送り状</dt>")) {
   throw new Error("order history must separate part numbers, waybill state, and core-return state");
+}
+const historyRenderer = sourceBetween("function renderCustomerOrderHistory", "async function loadCustomerOrderHistory");
+if (!historyRenderer.includes('var orderCancelled = String(order.status || "").toLowerCase() === "cancelled"') ||
+    !historyRenderer.includes('customerOrderHistoryItemRowsHtml(order) + customerOrderHistoryShippingRowHtml(order)') ||
+    !historyRenderer.includes('order.core_return_required') ||
+    (historyRenderer.split("customer-order-history-detail-totals")[1] || "").includes('customer_order_shipping_fee')) {
+  throw new Error("unused shipping fields must show a hyphen and shipping fees must be detail rows");
 }
 [
   ".customer-order-history-detail { grid-column: 1 / -1;",
   ".customer-order-history-detail-table { overflow-x: auto;",
+  ".customer-order-history-detail-row.shipping { background:",
   ".customer-order-history-detail-totals { display: flex;"
 ].forEach((fragment) => {
   if (!css.includes(fragment)) throw new Error(`customer order history detail styling is missing: ${fragment}`);
@@ -413,8 +424,9 @@ if (accountingContext.customerOrderProductUnitPrice(previewSeparatedItem) !== 76
   "受注時に交換コアを返却する運用ではない",
   "コア代金を計上しても商品マスタの「コア返却必要」は変更しない",
   "商品マスタでコア返却不要の商品には選択欄を表示しない",
-  "12桁の商品発送送り状番号を4桁ずつ区切って表示する",
-  "コア返却便を「未使用」、コア返却用送り状を「未発行」、コア返却を「請求済み」",
+  "12桁の送り状番号を4桁ずつ区切って表示する",
+  "使用しない運送便と送り状番号は「-」",
+  "送料は商品・コア代金と同じ明細表へ独立行として表示する",
   "`awaiting_return`は「要コア返却」と表示し、内部状態値を画面へ直接表示しない",
   '"product_core_return_required": true',
   '"core_charge_billed": false'

@@ -6743,6 +6743,9 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .customer-order-history-detail-row.core-charge { background: #fff9ed; }
 .customer-order-history-detail-row.core-charge > span:nth-child(2),
 .customer-order-history-detail-row.core-charge > strong:last-child { color: #80570d; font-weight: 800; }
+.customer-order-history-detail-row.shipping { background: #f5f8fa; }
+.customer-order-history-detail-row.shipping > span:nth-child(2),
+.customer-order-history-detail-row.shipping > strong:last-child { color: #315c79; font-weight: 800; }
 .customer-order-history-detail-totals { display: flex; justify-content: flex-end; border-top: 1px solid #dfe6e2; margin-top: 10px; }
 .customer-order-history-detail-totals > div { min-width: 108px; border-left: 1px solid #dfe6e2; padding: 8px 10px; text-align: right; }
 .customer-order-history-detail-totals span,
