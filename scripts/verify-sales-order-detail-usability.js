@@ -53,12 +53,14 @@ for (const fragment of [
 ]) requireFragment(listLoader, fragment, "Search results must clear details that are no longer in the list");
 
 const list = functionSource("renderSalesOrderList");
+const listRow = functionSource("salesOrderListRowHtml");
 for (const fragment of [
   "sales-order-list-identity",
   "sales-order-list-customer",
   "sales-order-list-meta",
   "sales-order-list-metrics"
-]) requireFragment(list, fragment);
+]) requireFragment(listRow, fragment);
+requireFragment(list, "salesOrderListRowHtml");
 
 const detail = functionSource("renderSalesOrderDetail");
 for (const fragment of [

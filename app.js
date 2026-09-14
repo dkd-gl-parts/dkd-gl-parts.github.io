@@ -441,6 +441,30 @@ var TRANSLATIONS = {
     sales_management_registration_pending: "販売管理登録待ち",
     sales_management_registered: "販売管理登録済み",
     sales_management_unknown: "売上状態確認不可",
+    sales_order_queue_sales: "売上処理が必要",
+    sales_order_queue_shipping: "出荷処理が必要",
+    sales_order_next_export: "売上CSV出力",
+    sales_order_next_registration: "販売王登録確認",
+    sales_order_next_sales_complete: "売上処理完了",
+    sales_order_next_sales_review: "売上状態を確認",
+    sales_order_next_accept: "受注受付",
+    sales_order_next_shipping: "出荷指示・準備",
+    sales_order_next_picking: "ピッキング・照合",
+    sales_order_next_none: "処理不要",
+    sales_order_operation_status: "出荷と売上の処理状況",
+    sales_order_operation_shipping: "出荷進捗",
+    sales_order_operation_shipping_done: "ピッキング完了・出荷済み",
+    sales_order_operation_sales: "売上処理",
+    sales_order_accounting_after_shipping: "出荷完了後に開始",
+    sales_order_accounting_not_applicable: "対象外",
+    sales_order_accounting_order_scope: "注文単位で出力",
+    sales_order_accounting_target: "出力先",
+    sales_order_accounting_order_number: "注文番号",
+    sales_order_accounting_shipped_on: "出荷日",
+    sales_order_accounting_item_quantity: "明細数量",
+    sales_order_accounting_total: "売上金額",
+    sales_order_accounting_open_pending: "出力履歴・登録確認を開く",
+    sales_order_accounting_open_history: "出力履歴を確認",
     sales_accounting_create_count: "{count}件をCSV出力",
     sales_accounting_more_count: " / ほか{count}件",
     sales_accounting_exported_short: " / 出力済み",
@@ -2559,6 +2583,30 @@ var TRANSLATIONS = {
     sales_management_registration_pending: "Registration Pending",
     sales_management_registered: "Registered in Sales System",
     sales_management_unknown: "Sales Status Unavailable",
+    sales_order_queue_sales: "Sales Processing Required",
+    sales_order_queue_shipping: "Shipping Processing Required",
+    sales_order_next_export: "Export Sales CSV",
+    sales_order_next_registration: "Confirm Sales King Registration",
+    sales_order_next_sales_complete: "Sales Processing Complete",
+    sales_order_next_sales_review: "Review Sales Status",
+    sales_order_next_accept: "Accept Order",
+    sales_order_next_shipping: "Issue and Prepare Shipment",
+    sales_order_next_picking: "Pick and Verify",
+    sales_order_next_none: "No Action Required",
+    sales_order_operation_status: "Shipping and Sales Status",
+    sales_order_operation_shipping: "Shipping Progress",
+    sales_order_operation_shipping_done: "Picking Complete / Shipped",
+    sales_order_operation_sales: "Sales Processing",
+    sales_order_accounting_after_shipping: "Starts After Shipment",
+    sales_order_accounting_not_applicable: "Not Applicable",
+    sales_order_accounting_order_scope: "Export This Order",
+    sales_order_accounting_target: "Export Destination",
+    sales_order_accounting_order_number: "Order Number",
+    sales_order_accounting_shipped_on: "Shipment Date",
+    sales_order_accounting_item_quantity: "Item Quantity",
+    sales_order_accounting_total: "Sales Total",
+    sales_order_accounting_open_pending: "Open Export History and Registration",
+    sales_order_accounting_open_history: "Review Export History",
     sales_accounting_create_count: "Export {count} Orders to CSV",
     sales_accounting_more_count: " / {count} more",
     sales_accounting_exported_short: " / Exported",
@@ -4621,6 +4669,30 @@ var TRANSLATIONS = {
     sales_management_registration_pending: "等待销售系统登记",
     sales_management_registered: "销售系统已登记",
     sales_management_unknown: "无法确认销售状态",
+    sales_order_queue_sales: "需要处理销售数据",
+    sales_order_queue_shipping: "需要处理发货",
+    sales_order_next_export: "导出销售CSV",
+    sales_order_next_registration: "确认销售王登记",
+    sales_order_next_sales_complete: "销售处理完成",
+    sales_order_next_sales_review: "确认销售状态",
+    sales_order_next_accept: "受理订单",
+    sales_order_next_shipping: "发行并准备发货",
+    sales_order_next_picking: "拣货与核对",
+    sales_order_next_none: "无需处理",
+    sales_order_operation_status: "发货与销售处理状态",
+    sales_order_operation_shipping: "发货进度",
+    sales_order_operation_shipping_done: "拣货完成 / 已发货",
+    sales_order_operation_sales: "销售处理",
+    sales_order_accounting_after_shipping: "发货完成后开始",
+    sales_order_accounting_not_applicable: "不适用",
+    sales_order_accounting_order_scope: "按订单导出",
+    sales_order_accounting_target: "导出位置",
+    sales_order_accounting_order_number: "订单编号",
+    sales_order_accounting_shipped_on: "发货日期",
+    sales_order_accounting_item_quantity: "明细数量",
+    sales_order_accounting_total: "销售金额",
+    sales_order_accounting_open_pending: "打开导出记录与登记确认",
+    sales_order_accounting_open_history: "确认导出记录",
     sales_accounting_create_count: "导出{count}笔订单CSV",
     sales_accounting_more_count: " / 另有{count}件",
     sales_accounting_exported_short: " / 已导出",
@@ -6478,7 +6550,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.989";
+var APP_VERSION       = "v1.1.990";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -12433,6 +12505,28 @@ function salesOrderAccountingStatusHtml(order) {
   return "<span class='sales-order-accounting-status " + esc(status.replace(/_/g, "-")) + "'>" + esc(salesOrderAccountingStatusLabel(status)) + "</span>";
 }
 
+function salesOrderQueueGroup(order) {
+  return salesOrderAccountingApplies(order) && salesOrderAccountingStatus(order) !== "registered"
+    ? "sales"
+    : "shipping";
+}
+
+function salesOrderNextOperationLabel(order) {
+  var status = String(order && order.status || "").toLowerCase();
+  if (salesOrderAccountingApplies(order)) {
+    var accountingStatus = salesOrderAccountingStatus(order);
+    if (accountingStatus === "not_exported") return t("sales_order_next_export");
+    if (accountingStatus === "registration_pending") return t("sales_order_next_registration");
+    if (accountingStatus === "registered") return t("sales_order_next_sales_complete");
+    return t("sales_order_next_sales_review");
+  }
+  if (status === "submitted") return t("sales_order_next_accept");
+  if (status === "accepted") return t("sales_order_next_shipping");
+  if (status === "shipping_ready") return salesOrderStatusDetailLabel(order) || t("sales_order_next_picking");
+  if (status === "cancelled") return t("sales_order_next_none");
+  return customerOrderStatusLabel(status);
+}
+
 function normalizeCustomerOrderReference(value) {
   var trimmed = String(value || "").trim();
   var compact = trimmed.replace(/[\s-]/g, "");
@@ -13321,7 +13415,7 @@ async function enterSalesOrderMgmt(options) {
   }
   options = options || {};
   var requestedOrderId = parseInt(options.orderId || (options.order && options.order.id), 10);
-  var requestedDetailView = ["overview", "fulfillment", "history"].indexOf(options.detailView) >= 0
+  var requestedDetailView = ["overview", "fulfillment", "accounting", "history"].indexOf(options.detailView) >= 0
     ? options.detailView
     : "overview";
   salesOrderSelectedId = isNaN(requestedOrderId) ? null : requestedOrderId;
@@ -13396,7 +13490,9 @@ function initialSalesAccountingExportState() {
     registrationConfirmBatchId: null,
     hanbaiouCatalog: null,
     hanbaiouBatches: [],
-    hasSearched: false
+    hasSearched: false,
+    requestedOrderId: null,
+    requestedOrderNumber: ""
   };
 }
 
@@ -13694,6 +13790,13 @@ function renderSalesAccountingExportHistory() {
 function renderSalesAccountingExport() {
   var state = ensureSalesAccountingExportState();
   syncSalesAccountingExportFilters();
+  var orderContext = document.getElementById("sales-accounting-export-order-context");
+  if (orderContext) {
+    orderContext.hidden = !state.requestedOrderId;
+    orderContext.innerHTML = state.requestedOrderId
+      ? "<span>" + esc(t("sales_order_accounting_order_scope")) + "</span><strong>" + esc(state.requestedOrderNumber || ("注文 " + state.requestedOrderId)) + "</strong>"
+      : "";
+  }
   renderSalesAccountingHanbaiouGuide();
   renderSalesAccountingExportCandidates();
   renderSalesAccountingExportHistory();
@@ -13758,6 +13861,11 @@ async function loadSalesAccountingExportData(options) {
   var batchData = Array.isArray(results[1].data) ? results[1].data : (results[1].data || []);
   state.profile = candidateData.profile || null;
   state.orders = Array.isArray(candidateData.orders) ? candidateData.orders : [];
+  if (state.requestedOrderId) {
+    state.orders = state.orders.filter(function(order) {
+      return parseInt(order.order_id, 10) === parseInt(state.requestedOrderId, 10);
+    });
+  }
   state.batches = Array.isArray(batchData) ? batchData : [];
   state.selectedIds = new Set(state.orders.filter(salesAccountingExportCanSelect).slice(0, 100).map(function(order) {
     return parseInt(order.order_id, 10);
@@ -13774,11 +13882,25 @@ async function loadSalesAccountingExportData(options) {
   renderSalesAccountingExport();
 }
 
-async function openSalesAccountingExport() {
+async function openSalesAccountingExport(options) {
   if (!canManageSalesOrders()) return;
   var overlay = document.getElementById("sales-accounting-export-overlay");
   if (!overlay) return;
-  ensureSalesAccountingExportState();
+  var requestedOrder = options && options.order ? options.order : null;
+  if (requestedOrder) {
+    salesAccountingExportState = initialSalesAccountingExportState();
+    salesAccountingExportState.requestedOrderId = parseInt(requestedOrder.id, 10);
+    salesAccountingExportState.requestedOrderNumber = requestedOrder.order_number || "";
+    var shippedOn = salesOrderWarrantyStartDate(requestedOrder);
+    if (shippedOn) {
+      salesAccountingExportState.dateFrom = shippedOn;
+      salesAccountingExportState.dateTo = shippedOn;
+    }
+  } else if (salesAccountingExportState && salesAccountingExportState.requestedOrderId) {
+    salesAccountingExportState = initialSalesAccountingExportState();
+  } else {
+    ensureSalesAccountingExportState();
+  }
   overlay.classList.add("show");
   renderSalesAccountingExport();
   await loadSalesAccountingExportData();
@@ -16633,6 +16755,16 @@ function clearSalesOrderDetailSelection() {
   renderSalesOrderDetail();
 }
 
+function salesOrderListRowHtml(order) {
+  var selected = String(order.id) === String(salesOrderSelectedId);
+  var checked = salesOrderCheckedIdsState.has(parseInt(order.id, 10));
+  return "<div class='sales-order-list-row" + (selected ? " selected" : "") + "' data-sales-order-open='" + esc(order.id) + "'>" +
+    "<label class='sales-order-check' aria-label='処理対象'><input type='checkbox' data-sales-order-check value='" + esc(order.id) + "'" + (checked ? " checked" : "") + "></label>" +
+    "<div class='sales-order-list-main'><div class='sales-order-list-identity'><strong>" + esc(order.order_number || ("注文 " + order.id)) + "</strong><span class='sales-order-list-statuses'><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span>" + salesOrderAccountingStatusHtml(order) + "</span></div><span class='sales-order-list-customer'>" + esc(order.customer_name || "-") + "</span><div class='sales-order-list-meta'>" + customerOrderSourceBadgeHtml(order.order_source) + "<time>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</time></div><div class='sales-order-list-next'><span>次の操作</span><strong>" + esc(salesOrderNextOperationLabel(order)) + "</strong></div></div>" +
+    "<div class='sales-order-list-metrics'><div><span>明細</span><strong>" + esc(order.item_count == null ? "-" : order.item_count) + "</strong></div><div class='sales-order-list-total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div></div>" +
+  "</div>";
+}
+
 function renderSalesOrderList() {
   var host = document.getElementById("sales-order-list");
   var count = document.getElementById("sales-order-count");
@@ -16643,15 +16775,19 @@ function renderSalesOrderList() {
     updateSalesOrderSelectionButtons();
     return;
   }
-  host.innerHTML = salesOrderRows.map(function(order) {
-    var selected = String(order.id) === String(salesOrderSelectedId);
-    var checked = salesOrderCheckedIdsState.has(parseInt(order.id, 10));
-    return "<div class='sales-order-list-row" + (selected ? " selected" : "") + "' data-sales-order-open='" + esc(order.id) + "'>" +
-      "<label class='sales-order-check' aria-label='処理対象'><input type='checkbox' data-sales-order-check value='" + esc(order.id) + "'" + (checked ? " checked" : "") + "></label>" +
-      "<div class='sales-order-list-main'><div class='sales-order-list-identity'><strong>" + esc(order.order_number || ("注文 " + order.id)) + "</strong><span class='sales-order-list-statuses'><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span>" + salesOrderAccountingStatusHtml(order) + "</span></div><span class='sales-order-list-customer'>" + esc(order.customer_name || "-") + "</span><div class='sales-order-list-meta'>" + customerOrderSourceBadgeHtml(order.order_source) + "<time>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</time></div></div>" +
-      "<div class='sales-order-list-metrics'><div><span>明細</span><strong>" + esc(order.item_count == null ? "-" : order.item_count) + "</strong></div><div class='sales-order-list-total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div></div>" +
-    "</div>";
-  }).join("");
+  if (salesOrderListStatus() === "work_queue") {
+    var salesQueue = salesOrderRows.filter(function(order) { return salesOrderQueueGroup(order) === "sales"; });
+    var shippingQueue = salesOrderRows.filter(function(order) { return salesOrderQueueGroup(order) === "shipping"; });
+    host.innerHTML = [
+      { key: "sales", label: t("sales_order_queue_sales"), rows: salesQueue },
+      { key: "shipping", label: t("sales_order_queue_shipping"), rows: shippingQueue }
+    ].filter(function(group) { return group.rows.length > 0; }).map(function(group) {
+      return "<div class='sales-order-queue-heading " + group.key + "'><strong>" + group.label + "</strong><span>" + group.rows.length + "件</span></div>" +
+        group.rows.map(salesOrderListRowHtml).join("");
+    }).join("");
+  } else {
+    host.innerHTML = salesOrderRows.map(salesOrderListRowHtml).join("");
+  }
   host.querySelectorAll("[data-sales-order-open]").forEach(function(row) {
     row.addEventListener("click", function(event) {
       if (event.target && event.target.matches("input[type='checkbox']")) return;
@@ -17326,11 +17462,61 @@ function salesOrderDispatchHtml(order) {
   "</section>";
 }
 
+function salesOrderOperationTracksHtml(order) {
+  var orderStatus = String(order && order.status || "").toLowerCase();
+  var shipmentComplete = salesOrderAccountingApplies(order);
+  var shipmentLabel = shipmentComplete
+    ? t("sales_order_operation_shipping_done")
+    : (salesOrderStatusDetailLabel(order) || customerOrderStatusLabel(orderStatus));
+  var accountingStatus = salesOrderAccountingStatus(order);
+  var accountingStarted = salesOrderAccountingApplies(order);
+  var accountingComplete = accountingStarted && accountingStatus === "registered";
+  var accountingLabel = accountingStarted
+    ? salesOrderAccountingStatusLabel(accountingStatus)
+    : (orderStatus === "cancelled" ? t("sales_order_accounting_not_applicable") : t("sales_order_accounting_after_shipping"));
+  return "<div class='sales-order-operation-tracks' aria-label='" + esc(t("sales_order_operation_status")) + "'>" +
+    "<div class='sales-order-operation-track " + (shipmentComplete ? "complete" : (orderStatus === "cancelled" ? "inactive" : "active")) + "'><span>" + esc(t("sales_order_operation_shipping")) + "</span><strong>" + esc(shipmentLabel) + "</strong></div>" +
+    "<div class='sales-order-operation-track " + (accountingComplete ? "complete" : (accountingStarted ? "active" : "waiting")) + "'><span>" + esc(t("sales_order_operation_sales")) + "</span><strong>" + esc(accountingLabel) + "</strong></div>" +
+  "</div>";
+}
+
+function salesOrderAccountingPanelHtml(order) {
+  var accountingStarted = salesOrderAccountingApplies(order);
+  var status = accountingStarted ? salesOrderAccountingStatus(order) : "waiting";
+  var statusLabel = accountingStarted
+    ? salesOrderAccountingStatusLabel(status)
+    : (String(order && order.status || "").toLowerCase() === "cancelled" ? t("sales_order_accounting_not_applicable") : t("sales_order_accounting_after_shipping"));
+  var itemCount = order && order.item_count;
+  if (itemCount == null) {
+    itemCount = (Array.isArray(order && order.items) ? order.items : []).reduce(function(total, item) {
+      return total + (parseInt(item.quantity, 10) || 0);
+    }, 0);
+  }
+  var buttonLabel = status === "not_exported"
+    ? t("sales_accounting_create_default")
+    : (status === "registration_pending" ? t("sales_order_accounting_open_pending") : (status === "registered" ? t("sales_order_accounting_open_history") : t("sales_order_next_sales_review")));
+  var action = accountingStarted
+    ? "<button type='button' class='sales-order-accounting-open' data-sales-order-accounting-open>" + esc(buttonLabel) + "</button>"
+    : "";
+  return "<section class='sales-order-detail-section sales-order-accounting-panel'>" +
+    "<div class='sales-order-section-heading'><div><h3>" + esc(t("sales_order_operation_sales")) + "</h3></div><span class='sales-order-accounting-panel-status " + esc(status.replace(/_/g, "-")) + "'>" + esc(statusLabel) + "</span></div>" +
+    "<dl class='sales-order-accounting-facts'>" +
+      "<div><dt>" + esc(t("sales_order_accounting_target")) + "</dt><dd>販売王</dd></div>" +
+      "<div><dt>" + esc(t("business_workspace_hanbaiou_title")) + "</dt><dd>" + esc(t("business_workspace_hanbaiou_path")) + "</dd></div>" +
+      "<div><dt>" + esc(t("sales_order_accounting_order_number")) + "</dt><dd>" + esc(order.order_number || ("注文 " + order.id)) + "</dd></div>" +
+      "<div><dt>" + esc(t("sales_order_accounting_shipped_on")) + "</dt><dd>" + esc(salesOrderWarrantyStartDate(order) || "-") + "</dd></div>" +
+      "<div><dt>" + esc(t("sales_order_accounting_item_quantity")) + "</dt><dd>" + esc(itemCount) + "</dd></div>" +
+      "<div><dt>" + esc(t("sales_order_accounting_total")) + "</dt><dd>" + esc(customerOrderCurrency(order.total_jpy)) + "</dd></div>" +
+    "</dl>" +
+    "<div class='sales-order-accounting-actions'>" + action + "</div>" +
+  "</section>";
+}
+
 function setSalesOrderDetailView(view, focusTab) {
   var host = document.getElementById("sales-order-detail");
   if (!host) return;
   if (view === "tracking") view = "fulfillment";
-  var allowedViews = ["overview", "fulfillment", "history"];
+  var allowedViews = ["overview", "fulfillment", "accounting", "history"];
   salesOrderDetailView = allowedViews.indexOf(view) >= 0 ? view : "overview";
   host.querySelectorAll("[data-sales-order-detail-view]").forEach(function(button) {
     var selected = button.dataset.salesOrderDetailView === salesOrderDetailView;
@@ -17467,6 +17653,7 @@ function renderSalesOrderDetail() {
   var tabHtml = [
     { key: "overview", label: "請求・配送" },
     { key: "fulfillment", label: "出荷・帳票" },
+    { key: "accounting", label: "売上処理" },
     { key: "history", label: "履歴" }
   ].map(function(tab) {
     var selected = salesOrderDetailView === tab.key;
@@ -17474,6 +17661,7 @@ function renderSalesOrderDetail() {
     return "<button type='button' role='tab' id='sales-order-detail-tab-" + tab.key + "' aria-controls='" + panelId + "' aria-selected='" + (selected ? "true" : "false") + "' tabindex='" + (selected ? "0" : "-1") + "' data-sales-order-detail-view='" + tab.key + "'>" + tab.label + "</button>";
   }).join("");
   host.innerHTML = "<div class='sales-order-detail-head'><div class='sales-order-detail-identity'><div class='sales-order-detail-meta'><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "</div><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div>" + lifecycle + "<div class='sales-order-detail-state'><div class='sales-order-detail-state-summary'>" + salesOrderStatusSummaryHtml(order) + compactTotal + "</div>" + nextActions + "</div></div>" +
+    salesOrderOperationTracksHtml(order) +
     "<div class='sales-order-detail-navigation'><nav class='sales-order-detail-nav' role='tablist' aria-label='注文詳細の作業項目'>" + tabHtml + "</nav>" + salesOrderWorkspaceNavigationHtml("sales-order") + "</div>" +
     "<div class='sales-order-detail-panels'>" +
       "<section class='sales-order-detail-panel sales-order-detail-overview' id='sales-order-detail-panel-overview' role='tabpanel' aria-labelledby='sales-order-detail-tab-overview' data-sales-order-detail-panel='overview'><div class='sales-order-detail-overview-grid'>" +
@@ -17481,6 +17669,7 @@ function renderSalesOrderDetail() {
         "<section class='sales-order-detail-section sales-order-address' id='sales-order-detail-delivery'><div class='sales-order-section-heading'><div><h3>お届け先・運送便</h3></div></div>" + salesOrderDestinationHtml(address) + "<dl>" + deliveryFacts + "</dl>" + salesOrderShippingScheduleHtml(order) + customerOrderVehicleInformationHtml(order.vehicle_information, "sales-order-vehicle-information") + "</section>" +
       "</div></section>" +
       "<div class='sales-order-detail-panel' id='sales-order-detail-panel-fulfillment' role='tabpanel' aria-labelledby='sales-order-detail-tab-fulfillment' data-sales-order-detail-panel='fulfillment' hidden>" + salesOrderDispatchHtml(order) + "</div>" +
+      "<div class='sales-order-detail-panel' id='sales-order-detail-panel-accounting' role='tabpanel' aria-labelledby='sales-order-detail-tab-accounting' data-sales-order-detail-panel='accounting' hidden>" + salesOrderAccountingPanelHtml(order) + "</div>" +
 "<section class='sales-order-detail-panel sales-order-detail-section sales-order-history' id='sales-order-detail-history' role='tabpanel' aria-labelledby='sales-order-detail-tab-history' data-sales-order-detail-panel='history' hidden><div class='sales-order-section-heading'><div><h3>処理履歴</h3></div></div><div class='sales-order-history-groups'><div><h4>発送履歴</h4>" + salesOrderShipmentHistoryHtml(order.shipment_history) + "</div><div>" + (salesOrderPricingHistoryHtml(order.pricing_adjustments) || "<div class='sales-order-history-empty'><h4>金額修正履歴</h4><span>履歴はありません。</span></div>") + "</div>" + salesOrderRevisionHistoryHtml(order.revision_history) + "</div></section>" +
     "</div>" +
     "<div id='sales-order-detail-message' class='sales-order-detail-message' aria-live='polite'></div>";
@@ -17506,7 +17695,9 @@ function renderSalesOrderDetail() {
   var trackingCancelButton = document.getElementById("sales-order-cancel-tracking");
   var revisionButton = document.getElementById("sales-order-revision-open");
   var shippingDateButton = document.getElementById("sales-order-save-shipping-date");
+  var accountingButton = host.querySelector("[data-sales-order-accounting-open]");
   if (revisionButton) revisionButton.addEventListener("click", openSalesOrderRevisionEditor);
+  if (accountingButton) accountingButton.addEventListener("click", function() { openSalesAccountingExport({ order: order }); });
   if (shippingDateButton) shippingDateButton.addEventListener("click", saveSalesOrderScheduledShippingDate);
   if (trackingEditButton) trackingEditButton.addEventListener("click", function() { setSalesOrderTrackingEditMode(true); });
   if (trackingCancelButton) trackingCancelButton.addEventListener("click", cancelSalesOrderTrackingEdit);
@@ -17883,7 +18074,8 @@ async function printSalesOrderDocument(type, targetOrder) {
 
 async function loadSalesOrderDetail(orderId) {
   if (!canManageSalesOrders() || !orderId) return;
-  if (String(salesOrderSelectedId || "") !== String(orderId)) salesOrderDetailView = "overview";
+  var selectionChanged = String(salesOrderSelectedId || "") !== String(orderId);
+  if (selectionChanged) salesOrderDetailView = "overview";
   salesOrderSelectedId = orderId;
   renderSalesOrderList();
   var requestSeq = ++salesOrderDetailSeq;
@@ -17909,6 +18101,9 @@ async function loadSalesOrderDetail(orderId) {
     salesOrderDetail.sales_management_batch_number = accountingData.batch_number || null;
     salesOrderDetail.sales_management_exported_at = accountingData.exported_at || null;
     salesOrderDetail.sales_management_registered_at = accountingData.registered_at || null;
+    if (salesOrderDetailView === "overview" && salesOrderAccountingApplies(salesOrderDetail) && salesOrderAccountingStatus(salesOrderDetail) !== "registered") {
+      salesOrderDetailView = "accounting";
+    }
   }
   renderSalesOrderDetail();
 }

@@ -7384,6 +7384,10 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-accounting-export-included { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; border: 1px solid #ccd3da; border-radius: 5px; padding: 0 10px; background: #fff; color: #485563; font-size: 10px; font-weight: 800; white-space: nowrap; }
 .sales-accounting-export-included input { width: 15px; height: 15px; accent-color: #287356; }
 .sales-accounting-export-filter .btn-primary { min-height: 36px; border-radius: 5px; padding: 0 14px; white-space: nowrap; }
+.sales-accounting-export-order-context { flex: 0 0 auto; display: flex; align-items: center; gap: 9px; border-bottom: 1px solid #c9d9d1; border-left: 4px solid #287356; padding: 8px 20px; background: #eaf5ef; color: #245c45; }
+.sales-accounting-export-order-context[hidden] { display: none; }
+.sales-accounting-export-order-context span { font-size: 9px; font-weight: 700; }
+.sales-accounting-export-order-context strong { font-size: 11px; }
 .sales-accounting-export-directory { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 14px; border-bottom: 1px solid #d8dfe5; padding: 9px 20px; background: #f2f8f5; }
 .sales-accounting-export-directory[hidden] { display: none; }
 .sales-accounting-export-directory > div { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -7960,6 +7964,13 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-list-metrics span { color: #7a8580; font-size: 8px; }
 .sales-order-list-metrics strong { margin-top: 2px; color: #26352f; font-size: 11px; font-variant-numeric: tabular-nums; }
 .sales-order-list-metrics .sales-order-list-total { text-align: right; }
+.sales-order-queue-heading { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 34px; border-bottom: 1px solid #d8dfe4; border-left: 4px solid #56758f; padding: 7px 12px 7px 10px; background: #eef4f8; color: #304c62; }
+.sales-order-queue-heading.sales { border-left-color: #c28a22; background: #fff8e8; color: #735415; }
+.sales-order-queue-heading strong { font-size: 10px; }
+.sales-order-queue-heading span { font-size: 9px; font-weight: 800; }
+.sales-order-list-next { display: flex; align-items: baseline; gap: 7px; min-width: 0; margin-top: 6px; }
+.sales-order-list-next span { flex: 0 0 auto; margin: 0; color: #77837d; font-size: 8px; font-weight: 700; }
+.sales-order-list-next strong { min-width: 0; overflow: hidden; color: #245e48; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 
 .sales-order-detail-head { align-items: center; min-height: 92px; }
 .sales-order-detail-identity { min-width: 0; }
@@ -7971,6 +7982,12 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-detail-next-actions > div { display: flex; align-items: center; justify-content: flex-end; gap: 7px; flex-wrap: wrap; }
 .sales-order-detail-next-actions > strong { color: #687481; font-size: 10px; font-weight: 700; white-space: nowrap; }
 .sales-order-detail-next-actions .sales-order-action { min-height: 34px; padding: 0 11px; font-size: 10px; }
+.sales-order-operation-tracks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0 4px; }
+.sales-order-operation-track { display: grid; grid-template-columns: minmax(84px, auto) minmax(0, 1fr); align-items: center; gap: 10px; min-height: 42px; border: 1px solid #d8dfe5; border-left: 4px solid #aeb8c1; border-radius: 4px; padding: 7px 11px; background: #f8fafb; }
+.sales-order-operation-track.active { border-left-color: #c28a22; background: #fff9ed; }
+.sales-order-operation-track.complete { border-left-color: #287356; background: #eef7f2; }
+.sales-order-operation-track > span { color: #6c7781; font-size: 9px; font-weight: 800; }
+.sales-order-operation-track > strong { min-width: 0; color: #26352f; font-size: 11px; line-height: 1.35; }
 .sales-order-detail-nav { position: sticky; top: 0; z-index: 2; display: flex; align-items: stretch; gap: 3px; min-height: 42px; border-bottom: 1px solid #dbe1e6; background: rgba(255,255,255,.97); }
 .sales-order-detail-nav button { display: inline-flex; align-items: center; min-height: 42px; border: 0; border-bottom: 2px solid transparent; padding: 0 13px; background: transparent; color: #5f6c79; font-size: 10px; font-weight: 800; white-space: nowrap; cursor: pointer; }
 .sales-order-detail-nav button:hover { color: #1f684d; }
@@ -7985,6 +8002,20 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-section-heading > div { min-width: 0; }
 .sales-order-section-heading h3 { margin: 0; }
 .sales-order-section-heading p { margin-top: 3px; color: #75808b; font-size: 9px; line-height: 1.45; }
+.sales-order-accounting-panel { display: grid; gap: 14px; }
+.sales-order-accounting-panel-status { display: inline-flex; align-items: center; min-height: 28px; border: 1px solid #cbd3da; border-radius: 4px; padding: 4px 9px; background: #f3f5f7; color: #55616c; font-size: 9px; font-weight: 900; }
+.sales-order-accounting-panel-status.not-exported,
+.sales-order-accounting-panel-status.registration-pending,
+.sales-order-accounting-panel-status.unknown { border-color: #d5a647; background: #fff8e8; color: #805d13; }
+.sales-order-accounting-panel-status.registered { border-color: #75ad91; background: #edf8f2; color: #226447; }
+.sales-order-accounting-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid #d8dfe5; border-left: 1px solid #d8dfe5; margin: 0; }
+.sales-order-accounting-facts > div { min-width: 0; border-right: 1px solid #d8dfe5; border-bottom: 1px solid #d8dfe5; padding: 11px 12px; background: #fff; }
+.sales-order-accounting-facts dt { color: #77828c; font-size: 9px; font-weight: 700; }
+.sales-order-accounting-facts dd { margin: 4px 0 0; overflow-wrap: anywhere; color: #23332c; font-size: 11px; font-weight: 800; line-height: 1.45; }
+.sales-order-accounting-actions { display: flex; justify-content: flex-end; min-height: 38px; }
+.sales-order-accounting-open { min-height: 38px; border: 1px solid #287356; border-radius: 4px; padding: 0 16px; background: #287356; color: #fff; font-size: 10px; font-weight: 900; cursor: pointer; }
+.sales-order-accounting-open:hover { border-color: #1f6248; background: #1f6248; }
+.sales-order-accounting-open:focus-visible { outline: 2px solid #287356; outline-offset: 2px; }
 .sales-order-address { grid-template-columns: minmax(250px, 1.15fr) minmax(260px, 1fr); gap: 12px 28px; }
 .sales-order-address .sales-order-section-heading { grid-column: 1 / -1; }
 .sales-order-address-destination { display: grid; align-content: start; gap: 4px; min-width: 0; border-left: 3px solid #8aa99a; padding: 9px 11px; background: #f7faf8; }
@@ -8406,6 +8437,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .sales-accounting-export-filter { grid-template-columns: 1fr 1fr; padding: 12px 14px; }
   .sales-accounting-export-filter > label:first-child,
   .sales-accounting-export-filter > button { grid-column: 1 / -1; }
+  .sales-accounting-export-order-context { align-items: flex-start; flex-direction: column; gap: 2px; padding: 9px 14px; }
   .sales-accounting-export-included { grid-column: 1 / -1; }
   .sales-accounting-export-directory { align-items: stretch; flex-direction: column; padding: 10px 14px; }
   .sales-accounting-export-directory > div { justify-content: space-between; }
@@ -9797,6 +9829,12 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-list-metrics { grid-template-columns: 90px minmax(0, 1fr); gap: 12px; padding-top: 8px; }
   #screen-sales-order-mgmt .sales-order-list-metrics span { font-size: 12px; }
   #screen-sales-order-mgmt .sales-order-list-metrics strong { margin-top: 2px; font-size: 14px; line-height: 1.4; }
+  #screen-sales-order-mgmt .sales-order-queue-heading { min-height: 42px; padding: 8px 12px 8px 10px; }
+  #screen-sales-order-mgmt .sales-order-queue-heading strong { font-size: 14px; line-height: 1.35; }
+  #screen-sales-order-mgmt .sales-order-queue-heading span { font-size: 12px; }
+  #screen-sales-order-mgmt .sales-order-list-next { gap: 8px; margin-top: 7px; }
+  #screen-sales-order-mgmt .sales-order-list-next span { font-size: 12px; }
+  #screen-sales-order-mgmt .sales-order-list-next strong { font-size: 13px; line-height: 1.4; }
   #screen-sales-order-mgmt .sales-order-status { min-width: 72px; height: auto; min-height: 30px; padding: 4px 9px; font-size: 12px; line-height: 1.25; }
   #screen-sales-order-mgmt .sales-order-accounting-status { min-height: 30px; padding: 4px 8px; font-size: 12px; line-height: 1.25; }
 
@@ -9821,6 +9859,10 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-detail-next-actions .sales-order-action,
   #screen-sales-order-mgmt .sales-order-secondary-actions > summary { min-height: 38px; padding: 7px 11px; font-size: 14px; line-height: 1.4; }
   #screen-sales-order-mgmt .sales-order-secondary-actions > div button { min-height: 38px; font-size: 14px; }
+  #screen-sales-order-mgmt .sales-order-operation-tracks { gap: 10px; margin: 10px 0 6px; }
+  #screen-sales-order-mgmt .sales-order-operation-track { grid-template-columns: minmax(104px, auto) minmax(0, 1fr); min-height: 48px; padding: 8px 12px; }
+  #screen-sales-order-mgmt .sales-order-operation-track > span { font-size: 12px; }
+  #screen-sales-order-mgmt .sales-order-operation-track > strong { font-size: 14px; }
 
   #screen-sales-order-mgmt .sales-order-detail-state-summary { gap: 12px; }
   #screen-sales-order-mgmt .sales-order-detail-total span { font-size: 12px; line-height: 1.35; }
@@ -9837,6 +9879,11 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-detail-section h3 { font-size: 16px; line-height: 1.4; }
   #screen-sales-order-mgmt .sales-order-section-heading p { display: block; margin-top: 3px; font-size: 12px; line-height: 1.5; }
   #screen-sales-order-mgmt .sales-order-pricing-open { min-height: 38px; padding: 7px 11px; font-size: 14px; }
+  #screen-sales-order-mgmt .sales-order-accounting-panel { gap: 16px; }
+  #screen-sales-order-mgmt .sales-order-accounting-panel-status { min-height: 32px; padding: 5px 10px; font-size: 12px; }
+  #screen-sales-order-mgmt .sales-order-accounting-facts dt { font-size: 12px; }
+  #screen-sales-order-mgmt .sales-order-accounting-facts dd { margin-top: 5px; font-size: 14px; }
+  #screen-sales-order-mgmt .sales-order-accounting-open { min-height: 40px; padding: 8px 16px; font-size: 14px; }
 
   #screen-sales-order-mgmt .sales-order-item-head,
   #screen-sales-order-mgmt .sales-order-item-row { grid-template-columns: minmax(180px, 1.5fr) 96px 54px 110px 118px 142px; min-width: 820px; gap: 10px; padding: 10px; }
@@ -10004,12 +10051,17 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .sales-order-workspace-switch > span { flex: 1 1 50%; min-width: 0; min-height: 38px; padding-right: 7px; padding-left: 7px; font-size: 13px; }
   #screen-sales-order-mgmt .sales-order-progress { grid-template-columns: repeat(5, minmax(92px, 1fr)); overflow-x: auto; padding-bottom: 4px; }
   #screen-sales-order-mgmt .sales-order-detail-state { align-items: stretch; justify-content: flex-start; flex-direction: column; }
+  #screen-sales-order-mgmt .sales-order-operation-tracks { grid-template-columns: 1fr; }
+  #screen-sales-order-mgmt .sales-order-operation-track { grid-template-columns: minmax(94px, auto) minmax(0, 1fr); }
   #screen-sales-order-mgmt .sales-order-detail-state-summary { justify-content: space-between; }
   #screen-sales-order-mgmt .sales-order-detail-next-actions { align-items: stretch; flex-direction: column; border-left: 0; padding-left: 0; }
   #screen-sales-order-mgmt .sales-order-detail-next-actions > div { justify-content: stretch; }
   #screen-sales-order-mgmt .sales-order-detail-next-actions .sales-order-action { flex: 1 1 auto; white-space: normal; }
   #screen-sales-order-mgmt .sales-order-detail-nav { overflow-x: auto; }
   #screen-sales-order-mgmt .sales-order-detail-nav button { flex: 1 0 auto; justify-content: center; }
+  #screen-sales-order-mgmt .sales-order-accounting-facts { grid-template-columns: 1fr; }
+  #screen-sales-order-mgmt .sales-order-accounting-actions { align-items: stretch; }
+  #screen-sales-order-mgmt .sales-order-accounting-open { width: 100%; }
   #screen-sales-order-mgmt .sales-order-address { grid-template-columns: 1fr; }
   #screen-sales-order-mgmt .sales-order-address .sales-order-section-heading,
   #screen-sales-order-mgmt .sales-order-address-destination,
