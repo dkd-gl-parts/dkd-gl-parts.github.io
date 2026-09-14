@@ -423,6 +423,10 @@ var TRANSLATIONS = {
     business_workspace_hanbaiou_failed: "販売王CSVの保存先を設定できませんでした。",
     business_workspace_hanbaiou_required: "販売王CSVを出力する前に、保存先を設定してください。",
     business_workspace_hanbaiou_saved: "D-CATS業務連携 / 販売王 / 01_D-CATS発行 に保存しました。",
+    sales_management_not_exported: "売上未出力",
+    sales_management_registration_pending: "販売管理登録待ち",
+    sales_management_registered: "販売管理登録済み",
+    sales_management_unknown: "売上状態確認不可",
     sales_accounting_create_count: "{count}件をCSV出力",
     sales_accounting_more_count: " / ほか{count}件",
     sales_accounting_exported_short: " / 出力済み",
@@ -2523,6 +2527,10 @@ var TRANSLATIONS = {
     business_workspace_hanbaiou_failed: "The Sales King CSV save folder could not be configured.",
     business_workspace_hanbaiou_required: "Configure the save folder before exporting a Sales King CSV.",
     business_workspace_hanbaiou_saved: "Saved to D-CATS Business Exchange / Sales King / 01_D-CATS issue.",
+    sales_management_not_exported: "Sales Not Exported",
+    sales_management_registration_pending: "Registration Pending",
+    sales_management_registered: "Registered in Sales System",
+    sales_management_unknown: "Sales Status Unavailable",
     sales_accounting_create_count: "Export {count} Orders to CSV",
     sales_accounting_more_count: " / {count} more",
     sales_accounting_exported_short: " / Exported",
@@ -4567,6 +4575,10 @@ var TRANSLATIONS = {
     business_workspace_hanbaiou_failed: "无法设置销售王CSV保存位置。",
     business_workspace_hanbaiou_required: "导出销售王CSV前，请先设置保存位置。",
     business_workspace_hanbaiou_saved: "已保存到D-CATS业务协作 / 销售王 / 01_D-CATS发行。",
+    sales_management_not_exported: "销售数据未导出",
+    sales_management_registration_pending: "等待销售系统登记",
+    sales_management_registered: "销售系统已登记",
+    sales_management_unknown: "无法确认销售状态",
     sales_accounting_create_count: "导出{count}笔订单CSV",
     sales_accounting_more_count: " / 另有{count}件",
     sales_accounting_exported_short: " / 已导出",
@@ -6424,7 +6436,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.980";
+var APP_VERSION       = "v1.1.981";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -12281,7 +12293,28 @@ var B2_BASIC_LAYOUT_HEADERS = [
 
 function salesOrderListStatus() {
   var select = document.getElementById("sales-order-status");
-  return select ? select.value || "all" : "all";
+  return select ? select.value || "work_queue" : "work_queue";
+}
+
+function salesOrderAccountingApplies(order) {
+  return ["shipped", "completed"].indexOf(String(order && order.status || "").toLowerCase()) >= 0;
+}
+
+function salesOrderAccountingStatus(order) {
+  var status = String(order && order.sales_management_status || "").toLowerCase();
+  return ["not_exported", "registration_pending", "registered", "unknown"].indexOf(status) >= 0
+    ? status
+    : "unknown";
+}
+
+function salesOrderAccountingStatusLabel(status) {
+  return t("sales_management_" + (["not_exported", "registration_pending", "registered", "unknown"].indexOf(status) >= 0 ? status : "unknown"));
+}
+
+function salesOrderAccountingStatusHtml(order) {
+  if (!salesOrderAccountingApplies(order)) return "";
+  var status = salesOrderAccountingStatus(order);
+  return "<span class='sales-order-accounting-status " + esc(status.replace(/_/g, "-")) + "'>" + esc(salesOrderAccountingStatusLabel(status)) + "</span>";
 }
 
 function normalizeCustomerOrderReference(value) {
@@ -12303,10 +12336,15 @@ function salesOrderListSearch() {
 }
 
 function salesOrderDashboardCounts() {
-  var counts = { all: salesOrderDashboardRows.length, submitted: 0, accepted: 0, shipping_ready: 0, shipped: 0, completed: 0, cancelled: 0 };
+  var counts = { all: salesOrderDashboardRows.length, work_queue: 0, submitted: 0, accepted: 0, shipping_ready: 0, shipped: 0, completed: 0, sales_pending: 0, sales_registered: 0, cancelled: 0 };
   salesOrderDashboardRows.forEach(function(order) {
     var status = String(order && order.status || "").toLowerCase();
     if (Object.prototype.hasOwnProperty.call(counts, status)) counts[status] += 1;
+    var accountingStatus = salesOrderAccountingStatus(order);
+    var salesApplicable = salesOrderAccountingApplies(order);
+    if (salesApplicable && accountingStatus === "registered") counts.sales_registered += 1;
+    if (salesApplicable && accountingStatus !== "registered") counts.sales_pending += 1;
+    if (["submitted", "accepted", "shipping_ready"].indexOf(status) >= 0 || (salesApplicable && accountingStatus !== "registered")) counts.work_queue += 1;
   });
   return counts;
 }
@@ -12319,10 +12357,9 @@ function renderSalesOrderDashboard() {
   var activeStatus = salesOrderListStatus();
   dashboard.classList.toggle("loading", salesOrderDashboardLoading);
   dashboard.classList.toggle("error", !!salesOrderDashboardError);
-  if (salesOrderDashboardLoading) summary.textContent = "受注データを集計しています。";
-  else if (salesOrderDashboardError) summary.textContent = "処理状況を読み込めませんでした。検索はそのまま使用できます。";
-  else if (salesOrderDashboardRows.length >= 300) summary.textContent = "直近300件を集計しています。";
-  else summary.textContent = salesOrderDashboardRows.length + "件を状態別に集計しています。";
+  if (salesOrderDashboardLoading) summary.textContent = "集計中";
+  else if (salesOrderDashboardError) summary.textContent = "集計できませんでした";
+  else summary.textContent = "当日業務 " + counts.work_queue + "件 / 売上未処理 " + counts.sales_pending + "件";
   dashboard.querySelectorAll("[data-sales-order-dashboard-status]").forEach(function(button) {
     var status = button.dataset.salesOrderDashboardStatus || "all";
     var count = button.querySelector("[data-sales-order-dashboard-count]");
@@ -13196,7 +13233,7 @@ async function enterSalesOrderMgmt(options) {
       ? options.order.order_number
       : String(salesOrderSelectedId);
     if (orderStatus) orderStatus.value = "all";
-  }
+  } else if (orderStatus) orderStatus.value = "work_queue";
   var newOrderButton = document.getElementById("sales-order-new-internal-order");
   if (newOrderButton) newOrderButton.hidden = !canStartInternalCustomerOrderEntry();
   updateAllHeaders();
@@ -13240,6 +13277,7 @@ function initialSalesAccountingExportState() {
     orders: [],
     batches: [],
     selectedIds: new Set(),
+    registrationConfirmBatchId: null,
     hanbaiouCatalog: null,
     hanbaiouBatches: [],
     hasSearched: false
@@ -13503,10 +13541,37 @@ function renderSalesAccountingExportHistory() {
     return;
   }
   host.innerHTML = state.batches.map(function(batch) {
-    return "<div class='sales-accounting-export-history-row'><strong>" + esc(batch.batch_number || "-") + "</strong><span>" + esc(batch.display_name || batch.target_system || "-") + " / " + esc(batch.order_count || 0) + "件 / " + esc(customerOrderCurrency(batch.total_jpy)) + "</span><small>" + esc(customerOrderDateTimeText(batch.created_at)) + "<br>" + esc(batch.file_name || "-") + "</small><button type='button' data-sales-accounting-download='" + esc(batch.batch_id) + "'>同じCSVを再取得</button></div>";
+    var registered = batch.registration_status === "registered";
+    var confirming = String(state.registrationConfirmBatchId || "") === String(batch.batch_id || "");
+    var registrationStatus = registered ? "registered" : "registration-pending";
+    var registrationLabel = salesOrderAccountingStatusLabel(registered ? "registered" : "registration_pending");
+    var registeredAt = registered && batch.registered_at
+      ? "<small class='sales-accounting-export-history-registered-at'>登録確認 " + esc(customerOrderDateTimeText(batch.registered_at)) + "</small>"
+      : "";
+    var confirmation = confirming
+      ? "<div class='sales-accounting-export-registration-confirm'><p>販売管理ソフトへの取込が完了したことを確認してください。</p><div><button type='button' data-sales-accounting-registration-cancel>戻る</button><button type='button' class='primary' data-sales-accounting-registration-confirm='" + esc(batch.batch_id) + "'>登録済みにする</button></div></div>"
+      : "";
+    return "<div class='sales-accounting-export-history-row'><div class='sales-accounting-export-history-title'><strong>" + esc(batch.batch_number || "-") + "</strong><em class='sales-order-accounting-status " + registrationStatus + "'>" + esc(registrationLabel) + "</em></div><span>" + esc(batch.display_name || batch.target_system || "-") + " / " + esc(batch.order_count || 0) + "件 / " + esc(customerOrderCurrency(batch.total_jpy)) + "</span><small>" + esc(customerOrderDateTimeText(batch.created_at)) + "<br>" + esc(batch.file_name || "-") + "</small>" + registeredAt + "<div class='sales-accounting-export-history-actions'><button type='button' data-sales-accounting-download='" + esc(batch.batch_id) + "'" + (salesAccountingExportSaving ? " disabled" : "") + ">同じCSVを再取得</button>" + (registered ? "" : "<button type='button' class='primary' data-sales-accounting-registration-open='" + esc(batch.batch_id) + "'" + (salesAccountingExportSaving ? " disabled" : "") + ">販売管理登録を確認</button>") + "</div>" + confirmation + "</div>";
   }).join("");
   host.querySelectorAll("[data-sales-accounting-download]").forEach(function(button) {
     button.addEventListener("click", function() { redownloadSalesAccountingExport(parseInt(button.dataset.salesAccountingDownload, 10)); });
+  });
+  host.querySelectorAll("[data-sales-accounting-registration-open]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      state.registrationConfirmBatchId = parseInt(button.dataset.salesAccountingRegistrationOpen, 10);
+      renderSalesAccountingExportHistory();
+    });
+  });
+  host.querySelectorAll("[data-sales-accounting-registration-cancel]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      state.registrationConfirmBatchId = null;
+      renderSalesAccountingExportHistory();
+    });
+  });
+  host.querySelectorAll("[data-sales-accounting-registration-confirm]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      confirmSalesAccountingExportRegistration(parseInt(button.dataset.salesAccountingRegistrationConfirm, 10));
+    });
   });
 }
 
@@ -13880,6 +13945,8 @@ async function createSalesAccountingExport() {
     ? tf("sales_accounting_sales_saved", { name: data.display_name || "売上データ", count: data.order_count || orderIds.length })
     : (data.display_name || "売上データ") + "を" + (data.order_count || orderIds.length) + "件出力しました。", false);
   await loadSalesAccountingExportData({ preserveMessage: true });
+  await refreshSalesOrderManagement();
+  if (salesOrderSelectedId) await loadSalesOrderDetail(salesOrderSelectedId);
 }
 
 async function redownloadSalesAccountingExport(batchId) {
@@ -13918,6 +13985,29 @@ async function redownloadSalesAccountingExport(batchId) {
   }
   salesAccountingExportSaving = false;
   updateSalesAccountingExportSelection();
+}
+
+async function confirmSalesAccountingExportRegistration(batchId) {
+  if (!canManageSalesOrders() || salesAccountingExportSaving || !batchId) return;
+  var state = ensureSalesAccountingExportState();
+  state.registrationConfirmBatchId = null;
+  salesAccountingExportSaving = true;
+  setSalesAccountingExportMessage("販売管理ソフトへの登録完了を記録しています。", false);
+  renderSalesAccountingExportHistory();
+  var result = await sb.rpc("confirm_sales_accounting_export_registration", { target_batch_id: batchId });
+  salesAccountingExportSaving = false;
+  if (result.error) {
+    setSalesAccountingExportMessage(result.error.message || "販売管理登録済みに変更できませんでした。", true);
+    renderSalesAccountingExportHistory();
+    return;
+  }
+  var data = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
+  setSalesAccountingExportMessage(
+    (data.batch_number || "売上CSV") + " の " + (data.order_count || 0) + "件を販売管理登録済みにしました。",
+    false
+  );
+  await loadSalesAccountingExportData({ preserveMessage: true });
+  await refreshSalesOrderManagement();
 }
 
 var SHIPPING_WAYBILL_FIELD_META = {
@@ -16442,7 +16532,7 @@ function renderSalesOrderList() {
     var checked = salesOrderCheckedIdsState.has(parseInt(order.id, 10));
     return "<div class='sales-order-list-row" + (selected ? " selected" : "") + "' data-sales-order-open='" + esc(order.id) + "'>" +
       "<label class='sales-order-check' aria-label='処理対象'><input type='checkbox' data-sales-order-check value='" + esc(order.id) + "'" + (checked ? " checked" : "") + "></label>" +
-      "<div class='sales-order-list-main'><div class='sales-order-list-identity'><strong>" + esc(order.order_number || ("注文 " + order.id)) + "</strong><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span></div><span class='sales-order-list-customer'>" + esc(order.customer_name || "-") + "</span><div class='sales-order-list-meta'>" + customerOrderSourceBadgeHtml(order.order_source) + "<time>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</time></div></div>" +
+      "<div class='sales-order-list-main'><div class='sales-order-list-identity'><strong>" + esc(order.order_number || ("注文 " + order.id)) + "</strong><span class='sales-order-list-statuses'><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span>" + salesOrderAccountingStatusHtml(order) + "</span></div><span class='sales-order-list-customer'>" + esc(order.customer_name || "-") + "</span><div class='sales-order-list-meta'>" + customerOrderSourceBadgeHtml(order.order_source) + "<time>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</time></div></div>" +
       "<div class='sales-order-list-metrics'><div><span>明細</span><strong>" + esc(order.item_count == null ? "-" : order.item_count) + "</strong></div><div class='sales-order-list-total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div></div>" +
     "</div>";
   }).join("");
@@ -16919,7 +17009,7 @@ function salesOrderStatusDetailLabel(order) {
 function salesOrderStatusSummaryHtml(order) {
   var detail = salesOrderStatusDetailLabel(order);
   return "<span class='sales-order-status-summary'><span class='sales-order-status " + esc(order && order.status || "") + "'>" + esc(customerOrderStatusLabel(order && order.status)) + "</span>" +
-    (detail ? "<small>" + esc(detail) + "</small>" : "") + "</span>";
+    salesOrderAccountingStatusHtml(order) + (detail ? "<small>" + esc(detail) + "</small>" : "") + "</span>";
 }
 
 function salesOrderDispatchRebuiltQuantity(dispatch) {
@@ -17683,13 +17773,27 @@ async function loadSalesOrderDetail(orderId) {
   var requestSeq = ++salesOrderDetailSeq;
   var host = document.getElementById("sales-order-detail");
   if (host) host.innerHTML = "<div class='sales-order-empty'>" + esc(t("loading")) + "</div>";
-  var result = await sb.rpc("get_sales_order_detail", { target_order_id: orderId });
+  var results = await Promise.all([
+    sb.rpc("get_sales_order_detail", { target_order_id: orderId }),
+    sb.rpc("get_sales_order_accounting_status", { target_order_id: orderId })
+  ]);
+  var result = results[0];
   if (requestSeq !== salesOrderDetailSeq) return;
   if (result.error) {
     if (host) host.innerHTML = "<div class='sales-order-empty error'>注文詳細を読み込めませんでした。</div>";
     return;
   }
   salesOrderDetail = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
+  if (salesOrderDetail) {
+    var accountingResult = results[1];
+    var accountingData = accountingResult && !accountingResult.error
+      ? (Array.isArray(accountingResult.data) ? (accountingResult.data[0] || {}) : (accountingResult.data || {}))
+      : {};
+    salesOrderDetail.sales_management_status = accountingData.sales_management_status || "unknown";
+    salesOrderDetail.sales_management_batch_number = accountingData.batch_number || null;
+    salesOrderDetail.sales_management_exported_at = accountingData.exported_at || null;
+    salesOrderDetail.sales_management_registered_at = accountingData.registered_at || null;
+  }
   renderSalesOrderDetail();
 }
 
@@ -51806,6 +51910,7 @@ document.getElementById("sales-accounting-export-target").addEventListener("chan
   state.orders = [];
   state.batches = [];
   state.selectedIds = new Set();
+  state.registrationConfirmBatchId = null;
   state.hanbaiouCatalog = null;
   state.hanbaiouBatches = [];
   state.hasSearched = false;

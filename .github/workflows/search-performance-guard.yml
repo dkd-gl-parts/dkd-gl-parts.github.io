@@ -136,6 +136,8 @@ jobs:
         run: node scripts/verify-sales-order-price-adjustment.js
       - name: Verify sales-accounting export
         run: node scripts/verify-sales-accounting-export.js
+      - name: Verify sales-management completion tracking
+        run: node scripts/verify-sales-management-completion.js
       - name: Verify Sales King product onboarding
         run: node scripts/verify-hanbaiou-product-onboarding.js
       - name: Verify Sales King customer onboarding
