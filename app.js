@@ -429,6 +429,15 @@ var TRANSLATIONS = {
     sales_accounting_product_ledger_check: "商品台帳を確認",
     sales_accounting_summary: "{name} / 出力 {count}件",
     sales_accounting_summary_review: "{name} / 出力 {count}件 / 要確認 {review}件",
+    sales_accounting_issue_list_title: "情報不足の売上データ",
+    sales_accounting_issue_count: "情報不足 {count}件",
+    sales_accounting_issue_count_initial: "情報不足 0件",
+    sales_accounting_create_default: "売上データをCSV出力",
+    sales_accounting_issue_loading: "情報不足を確認しています。",
+    sales_accounting_issue_search_prompt: "出力先と期間を指定して検索してください。",
+    sales_accounting_issue_none: "情報不足はありません。出力可能な売上データをCSV作成できます。",
+    sales_accounting_issue_no_ready: "情報不足はありません。未出力の売上データはありません。",
+    sales_accounting_issue_no_orders: "対象期間に出力できる出荷済み受注はありません。",
     sales_accounting_product_master_save_failed: "商品台帳CSVを保存できませんでした。",
     sales_accounting_product_master_saved: "商品台帳CSV {count}件をD-CATS業務連携 / 販売王 / 01_D-CATS発行 に保存しました。",
     sales_accounting_product_master_resaved: "商品台帳CSVをD-CATS業務連携 / 販売王 / 01_D-CATS発行 に保存しました。",
@@ -2520,6 +2529,15 @@ var TRANSLATIONS = {
     sales_accounting_product_ledger_check: "Review Product Ledger",
     sales_accounting_summary: "{name} / Ready {count}",
     sales_accounting_summary_review: "{name} / Ready {count} / Review {review}",
+    sales_accounting_issue_list_title: "Sales Data Missing Information",
+    sales_accounting_issue_count: "Missing information: {count}",
+    sales_accounting_issue_count_initial: "Missing information: 0",
+    sales_accounting_create_default: "Export Sales Data to CSV",
+    sales_accounting_issue_loading: "Checking for missing information.",
+    sales_accounting_issue_search_prompt: "Select a destination and date range, then search.",
+    sales_accounting_issue_none: "No information is missing. The available sales data is ready for CSV export.",
+    sales_accounting_issue_no_ready: "No information is missing, and there is no unexported sales data.",
+    sales_accounting_issue_no_orders: "No shipped orders are available for export in this period.",
     sales_accounting_product_master_save_failed: "Could not save the product ledger CSV.",
     sales_accounting_product_master_saved: "Saved {count} product ledger entries to D-CATS Business Exchange / Sales King / 01_D-CATS issue.",
     sales_accounting_product_master_resaved: "Saved the product ledger CSV to D-CATS Business Exchange / Sales King / 01_D-CATS issue.",
@@ -4555,6 +4573,15 @@ var TRANSLATIONS = {
     sales_accounting_product_ledger_check: "确认商品台账",
     sales_accounting_summary: "{name} / 可导出 {count}件",
     sales_accounting_summary_review: "{name} / 可导出 {count}件 / 待确认 {review}件",
+    sales_accounting_issue_list_title: "信息不完整的销售数据",
+    sales_accounting_issue_count: "信息不完整 {count}件",
+    sales_accounting_issue_count_initial: "信息不完整 0件",
+    sales_accounting_create_default: "导出销售数据CSV",
+    sales_accounting_issue_loading: "正在确认信息是否完整。",
+    sales_accounting_issue_search_prompt: "请选择导出位置和日期范围后进行搜索。",
+    sales_accounting_issue_none: "没有信息不完整的数据。可将符合条件的销售数据导出为CSV。",
+    sales_accounting_issue_no_ready: "没有信息不完整的数据，也没有未导出的销售数据。",
+    sales_accounting_issue_no_orders: "指定期间内没有可导出的已发货订单。",
     sales_accounting_product_master_save_failed: "无法保存商品台账CSV。",
     sales_accounting_product_master_saved: "已将{count}件商品台账保存到D-CATS业务协作 / 销售王 / 01_D-CATS发行。",
     sales_accounting_product_master_resaved: "已将商品台账CSV保存到D-CATS业务协作 / 销售王 / 01_D-CATS发行。",
@@ -6397,7 +6424,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.977";
+var APP_VERSION       = "v1.1.978";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -13272,10 +13299,14 @@ function updateSalesAccountingExportSelection() {
   var selectedOrders = state.orders.filter(function(order) {
     return state.selectedIds.has(parseInt(order.order_id, 10));
   });
-  var selectedTotal = selectedOrders.reduce(function(total, order) { return total + Number(order.total_jpy || 0); }, 0);
+  var issueCount = state.orders.filter(function(order) {
+    return salesAccountingExportIssueRows(order).length > 0;
+  }).length;
   var summary = document.getElementById("sales-accounting-export-selected-summary");
   var createButton = document.getElementById("sales-accounting-export-create");
-  if (summary) summary.textContent = selectedOrders.length + "件 / " + customerOrderCurrency(selectedTotal);
+  if (summary) summary.textContent = salesAccountingExportLoading
+    ? t("sales_accounting_issue_loading")
+    : tf("sales_accounting_issue_count", { count: issueCount });
   if (createButton) {
     createButton.disabled = salesAccountingExportLoading || salesAccountingExportSaving || selectedOrders.length === 0 || selectedOrders.length > 100;
     createButton.textContent = salesAccountingExportSaving ? "CSV作成中..." : tf("sales_accounting_create_count", { count: selectedOrders.length });
@@ -13480,32 +13511,39 @@ function renderSalesAccountingExportCandidates() {
   var host = document.getElementById("sales-accounting-export-candidate-list");
   if (!host) return;
   if (salesAccountingExportLoading) {
-    host.innerHTML = "<div class='sales-accounting-export-candidate-empty'>出力対象を読み込んでいます。</div>";
+    host.innerHTML = "<div class='sales-accounting-export-candidate-empty'>" + esc(t("sales_accounting_issue_loading")) + "</div>";
     updateSalesAccountingExportSelection();
     return;
   }
   if (!state.hasSearched) {
-    host.innerHTML = "<div class='sales-accounting-export-candidate-empty'>出力先と期間を指定して検索してください。</div>";
+    host.innerHTML = "<div class='sales-accounting-export-candidate-empty'>" + esc(t("sales_accounting_issue_search_prompt")) + "</div>";
     updateSalesAccountingExportSelection();
     return;
   }
   if (!state.orders.length) {
-    host.innerHTML = "<div class='sales-accounting-export-candidate-empty'>対象期間に出力できる出荷済み受注はありません。</div>";
+    host.innerHTML = "<div class='sales-accounting-export-candidate-empty'>" + esc(t("sales_accounting_issue_no_orders")) + "</div>";
+    updateSalesAccountingExportSelection();
+    return;
+  }
+  var issueOrders = state.orders.filter(function(order) {
+    return salesAccountingExportIssueRows(order).length > 0;
+  });
+  if (!issueOrders.length) {
+    var hasReadyOrders = state.orders.some(salesAccountingExportCanSelect);
+    host.innerHTML = "<div class='sales-accounting-export-candidate-empty is-clear'>" + esc(t(hasReadyOrders ? "sales_accounting_issue_none" : "sales_accounting_issue_no_ready")) + "</div>";
     updateSalesAccountingExportSelection();
     return;
   }
   var profile = state.profile || {};
-  host.innerHTML = state.orders.map(function(order) {
+  host.innerHTML = issueOrders.map(function(order) {
     var orderId = parseInt(order.order_id, 10);
     var issues = salesAccountingExportIssueRows(order);
-    var selectable = salesAccountingExportCanSelect(order);
     var items = Array.isArray(order.items) ? order.items : [];
     if (state.targetSystem === "hanbaiou") {
       var partNumbers = items.map(function(item) { return item.part_number || item.product_name || "-"; });
       var productKinds = Array.from(new Set(items.map(function(item) { return item.product_kind || ""; }).filter(Boolean)));
       var productSummary = partNumbers.slice(0, 3).join(" / ") + (partNumbers.length > 3 ? tf("sales_accounting_more_count", { count: partNumbers.length - 3 }) : "");
       return "<div class='sales-accounting-export-order sales-accounting-export-order-simple" + (issues.length ? " has-issues" : "") + (order.exported_batch_number ? " exported" : "") + "'>" +
-        "<input type='checkbox' data-sales-accounting-order-check value='" + esc(orderId) + "'" + (state.selectedIds.has(orderId) ? " checked" : "") + (selectable ? "" : " disabled") + " aria-label='出力対象'>" +
         "<div class='sales-accounting-export-order-meta'><strong>" + esc(order.order_number || ("注文 " + orderId)) + "</strong><span>" + esc(order.customer_name || "-") + "</span><small>出荷日 " + esc(order.shipped_on || "-") + (order.exported_batch_number ? esc(t("sales_accounting_exported_short")) : "") + "</small></div>" +
         "<div class='sales-accounting-export-order-products'><strong>" + esc(productSummary || "-") + "</strong><span>" + esc(productKinds.join(" / ") || (items.length + "商品")) + "</span></div>" +
         "<div class='sales-accounting-export-total'><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong><span>明細 " + esc(items.length) + "件</span></div>" +
@@ -13516,26 +13554,12 @@ function renderSalesAccountingExportCandidates() {
         salesAccountingExportProductCodeHtml(item, profile) + "</div>";
     }).join("");
     return "<div class='sales-accounting-export-order" + (issues.length ? " has-issues" : "") + (order.exported_batch_number ? " exported" : "") + "'>" +
-      "<input type='checkbox' data-sales-accounting-order-check value='" + esc(orderId) + "'" + (state.selectedIds.has(orderId) ? " checked" : "") + (selectable ? "" : " disabled") + " aria-label='出力対象'>" +
       "<div class='sales-accounting-export-order-meta'><strong>" + esc(order.order_number || ("注文 " + orderId)) + "</strong><span>出荷日 " + esc(order.shipped_on || "-") + "</span><small>" + esc(order.status === "completed" ? "完了" : "出荷済み") + (order.exported_batch_number ? " / " + order.exported_batch_number + "で出力済み" : "") + "</small></div>" +
       salesAccountingExportCodeBlockHtml("customer", order.customer_id, order.external_customer_code, order.customer_name, order.customer_code_is_mapped, profile.customer_code_max_length, order.customer_name || "得意先コード") +
       "<div class='sales-accounting-export-product-list'>" + products + "</div>" +
       "<div class='sales-accounting-export-total'><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong><span>明細 " + esc(items.length) + "件</span></div>" +
       (issues.length ? "<div class='sales-accounting-export-issues'>" + issues.map(function(issue) { return "<span>" + esc(issue) + "</span>"; }).join("") + "</div>" : "") + "</div>";
   }).join("");
-  host.querySelectorAll("[data-sales-accounting-order-check]").forEach(function(input) {
-    input.addEventListener("change", function() {
-      var orderId = parseInt(input.value, 10);
-      if (input.checked && state.selectedIds.size >= 100) {
-        input.checked = false;
-        setSalesAccountingExportMessage("1回に出力できる受注は100件までです。", true);
-        return;
-      }
-      if (input.checked) state.selectedIds.add(orderId);
-      else state.selectedIds.delete(orderId);
-      updateSalesAccountingExportSelection();
-    });
-  });
   host.querySelectorAll("[data-sales-accounting-code-save]").forEach(function(button) {
     button.addEventListener("click", function() { saveSalesAccountingExportCode(button); });
   });
