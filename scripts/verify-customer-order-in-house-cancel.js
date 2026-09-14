@@ -37,6 +37,9 @@ if (!app.includes("この受注は出荷済みです。商品がまだ社内に�
 if (!app.includes("sales-order-secondary-actions") || !app.includes("その他の操作")) {
   throw new Error("Cancellation must be separated from routine order actions");
 }
+if (!app.includes("<summary><span>その他の操作</span></summary>")) {
+  throw new Error("The secondary-action label must be independently measurable from its disclosure marker");
+}
 if (app.includes('action === "cancel" && !confirm(')) {
   throw new Error("Cancellation must not use the one-click browser confirmation flow");
 }
@@ -68,6 +71,10 @@ if (!css.includes(".sales-order-in-house-cancel-card")) {
 }
 if (!css.includes(".sales-order-secondary-actions") || !css.includes(".sales-order-in-house-cancel-summary")) {
   throw new Error("The safer cancellation action and order summary styling are missing");
+}
+if (!/#screen-sales-order-mgmt \.sales-order-secondary-actions > summary\s*\{[^}]*position:\s*relative;[^}]*padding:\s*7px 32px 7px 11px;/s.test(css)
+    || !/#screen-sales-order-mgmt \.sales-order-secondary-actions > summary::after\s*\{[^}]*top:\s*50%;[^}]*right:\s*11px;[^}]*translateY\(-50%\);/s.test(css)) {
+  throw new Error("The secondary-action label and disclosure marker must have separate layout space");
 }
 
 console.log("Customer order in-house shipment cancellation UI verification passed.");
