@@ -152,6 +152,7 @@ if (!internalStartBeforeCustomer.start || internalStartBeforeCustomer.register |
 
 [
   "list_customer_orders",
+  "list_internal_customer_orders",
   "search_customer_delivery_addresses",
   "list_sales_orders",
   "get_sales_order_detail",
@@ -418,10 +419,11 @@ if (orderSubmitRequest.includes("customerOrderPreview.valid !== true || !custome
 if (!orderSubmitRequest.includes('internalRegistration ? "place_internal_customer_order" : "place_customer_order"')) {
   throw new Error("internal submission must use the server-side proxy-registration RPC");
 }
-const historyGuardIndex = orderHistoryRequest.indexOf("if (canPreviewCustomerOrdering())");
-const historyRpcIndex = orderHistoryRequest.indexOf('sb.rpc("list_customer_orders"');
-if (historyGuardIndex < 0 || historyRpcIndex < 0 || historyGuardIndex > historyRpcIndex) {
-  throw new Error("development preview must not read customer-owned order history");
+if (!orderHistoryRequest.includes("if (previewMode && !canRegisterInternalCustomerOrder())") ||
+    !orderHistoryRequest.includes('sb.rpc("list_internal_customer_orders"') ||
+    !orderHistoryRequest.includes('sb.rpc("list_customer_orders"') ||
+    !orderHistoryRequest.includes("target_sales_customer_id: customerPortalPreviewContext.sales_customer_id")) {
+  throw new Error("authorized internal preview must read only the selected customer's order history");
 }
 
 const addressSearchRequest = sourceBetween("async function searchCustomerOrderAddresses", "function clearCustomerOrderAddress");
@@ -552,7 +554,7 @@ if ((source.match(/customer_order_address_saved_title:/g) || []).length !== 3 ||
   "target_idempotency_key",
   "customer_ordering_enabled boolean not null default false",
   "注文RPCも拒否",
-  "注文履歴RPCを呼び出さない",
+  "専用RPCで選択中の得意先履歴だけを取得",
   "受注導線をプレビュー",
   "search_customer_delivery_addresses(target_query text, target_limit int)",
   "氏名で検索",

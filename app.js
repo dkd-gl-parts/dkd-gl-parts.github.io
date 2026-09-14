@@ -272,7 +272,7 @@ var TRANSLATIONS = {
     customer_order_internal_confirm: "この得意先の注文として登録します。価格と在庫を確定し、在庫を予約します。よろしいですか？",
     customer_order_internal_registering: "得意先注文を登録しています。",
     customer_order_internal_source: "社内登録",
-    customer_order_preview_history_disabled: "社内登録画面では注文履歴を取得しません。登録後は受注管理で確認してください。",
+    customer_order_preview_history_disabled: "社内登録画面の注文履歴は、受注管理権限がある場合だけ表示します。",
     customer_order_address_saved_title: "以前のお届け先",
     customer_order_address_search_placeholder: "電話番号またはお名前で検索",
     customer_order_address_search: "検索",
@@ -2374,7 +2374,7 @@ var TRANSLATIONS = {
     customer_order_internal_confirm: "Register this order for the selected customer? Price and stock will be finalized and inventory will be reserved.",
     customer_order_internal_registering: "Registering the customer order.",
     customer_order_internal_source: "Internal Entry",
-    customer_order_preview_history_disabled: "Order history is not loaded here. Review the registered order in order management.",
+    customer_order_preview_history_disabled: "Order history is shown here only to staff with sales-order management access.",
     customer_order_address_saved_title: "Previous Delivery Addresses",
     customer_order_address_search_placeholder: "Search by phone number or name",
     customer_order_address_search: "Search",
@@ -4420,7 +4420,7 @@ var TRANSLATIONS = {
     customer_order_internal_confirm: "要为所选客户登记此订单吗？价格和库存将被确认并预留库存。",
     customer_order_internal_registering: "正在登记客户订单。",
     customer_order_internal_source: "内部登记",
-    customer_order_preview_history_disabled: "此处不会读取订单记录。登记后请在订单管理中确认。",
+    customer_order_preview_history_disabled: "此处仅向具有订单管理权限的员工显示订单记录。",
     customer_order_address_saved_title: "以前的收货地址",
     customer_order_address_search_placeholder: "按电话号码或姓名搜索",
     customer_order_address_search: "搜索",
@@ -6430,7 +6430,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.983";
+var APP_VERSION       = "v1.1.984";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -11912,7 +11912,7 @@ function configureCustomerOrderDevelopmentPreview() {
       : t("customer_order_submit");
     if (previewMode && !internalRegistration) submitButton.disabled = true;
   }
-  if (historyReload) historyReload.disabled = previewMode;
+  if (historyReload) historyReload.disabled = previewMode && !internalRegistration;
 }
 
 function renderCustomerOrderCart() {
@@ -12214,10 +12214,6 @@ async function submitCustomerOrder() {
 function renderCustomerOrderHistory() {
   var host = document.getElementById("customer-order-history-list");
   if (!host) return;
-  if (canPreviewCustomerOrdering()) {
-    host.innerHTML = "<div class='customer-order-empty'>" + esc(t("customer_order_preview_history_disabled")) + "</div>";
-    return;
-  }
   if (!customerOrderHistoryRows.length) {
     host.innerHTML = "<div class='customer-order-empty'>注文履歴はありません。</div>";
     return;
@@ -12243,18 +12239,24 @@ function renderCustomerOrderHistory() {
 }
 
 async function loadCustomerOrderHistory() {
-  if (canPreviewCustomerOrdering()) {
+  var previewMode = canPreviewCustomerOrdering();
+  if (previewMode && !canRegisterInternalCustomerOrder()) {
     customerOrderHistoryRows = [];
     var previewHost = document.getElementById("customer-order-history-list");
     if (previewHost) previewHost.innerHTML = "<div class='customer-order-empty'>" + esc(t("customer_order_preview_history_disabled")) + "</div>";
     configureCustomerOrderDevelopmentPreview();
     return;
   }
-  if (!canUseCustomerOrdering()) return;
+  if (!previewMode && !canUseCustomerOrdering()) return;
   var requestSeq = ++customerOrderHistorySeq;
   var host = document.getElementById("customer-order-history-list");
   if (host) host.innerHTML = "<div class='customer-order-empty'>" + esc(t("loading")) + "</div>";
-  var result = await sb.rpc("list_customer_orders", { target_limit: 100 });
+  var result = previewMode
+    ? await sb.rpc("list_internal_customer_orders", {
+        target_sales_customer_id: customerPortalPreviewContext.sales_customer_id,
+        target_limit: 100
+      })
+    : await sb.rpc("list_customer_orders", { target_limit: 100 });
   if (requestSeq !== customerOrderHistorySeq) return;
   if (result.error) {
     if (host) host.innerHTML = "<div class='customer-order-empty error'>注文履歴を読み込めませんでした。</div>";
