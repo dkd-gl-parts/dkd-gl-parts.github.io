@@ -238,6 +238,10 @@ if (!customerOrderEntry.includes('var requestedView = options.view === "cart" &&
     !customerOrderEntry.includes('if (requestedView === "history") return;')) {
   throw new Error("the order form must require a product selected through part-number search");
 }
+if (!css.includes(".customer-order-workspace[hidden],") ||
+    !css.includes(".customer-order-history[hidden] { display: none !important; }")) {
+  throw new Error("inactive order and history views must remain visually hidden");
+}
 const customerOrderRestore = sourceBetween("async function restoreAppStateAfterRefresh", "async function checkForAppUpdate");
 if (!customerOrderRestore.includes('await enterCustomerOrders({ view: state.customerOrderView || "history", preview: false });') ||
     !customerOrderRestore.includes('if (customerOrderActiveView === "cart") {')) {
