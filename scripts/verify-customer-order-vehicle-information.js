@@ -95,8 +95,8 @@ if (!html.includes('data-i18n="customer_order_vehicle_title">車両情報</h3>')
   if (!css.includes(fragment)) throw new Error(`responsive vehicle layout is missing: ${fragment}`);
 });
 
-if (!html.includes('content="v1.1.981"') || !source.includes('var APP_VERSION       = "v1.1.981"')) {
-  throw new Error("vehicle information release version must be v1.1.981");
+if (!html.includes('content="v1.1.982"') || !source.includes('var APP_VERSION       = "v1.1.982"')) {
+  throw new Error("vehicle information release version must be v1.1.982");
 }
 
 console.log("Customer order vehicle information UI verified.");

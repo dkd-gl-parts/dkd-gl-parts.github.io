@@ -45,7 +45,7 @@ function requireFragment(source, fragment, label) {
   ["height: var(--dcats-control-height-compact); border: 1px solid var(--dcats-border)", "compact internal search input"],
   [".btn-search { min-height: var(--dcats-control-height-compact)", "compact internal primary action"],
   ["background: var(--dcats-brand-red); color: #fff", "internal primary color"],
-  [".customer-order-tabs button { min-width: 112px; min-height: var(--dcats-control-height)", "regular customer tabs"],
+  [".customer-portal-order-button { min-height: 42px", "regular customer history action"],
   [".customer-order-form-grid select { height: var(--dcats-control-height); }", "regular customer form controls"],
   [".customer-order-submit-button { min-height: var(--dcats-control-height); border: 1px solid var(--dcats-customer-green)", "customer primary action"],
   ["#screen-search .card { margin-bottom: 6px; border-color: var(--dcats-border); border-radius: var(--dcats-card-radius)", "internal card geometry"],

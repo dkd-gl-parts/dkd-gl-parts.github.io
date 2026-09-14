@@ -241,9 +241,7 @@ var TRANSLATIONS = {
     customer_catalog_stock_unit: "個",
     customer_catalog_stock_breakdown: "自品番 {exact} / 互換 {compatible}",
     customer_catalog_vehicle_list: "車両情報一覧",
-    customer_order_title: "ご注文",
-    customer_order_portal_note: "注文内容の確認と、受付後の出荷状況を確認できます。",
-    customer_order_open: "注文内容・履歴",
+    customer_order_title: "注文手続き",
     customer_order_eyebrow: "ORDER",
     customer_order_cart: "注文内容",
     customer_order_history: "注文履歴",
@@ -2345,9 +2343,7 @@ var TRANSLATIONS = {
     customer_catalog_stock_unit: "units",
     customer_catalog_stock_breakdown: "Exact {exact} / Compatible {compatible}",
     customer_catalog_vehicle_list: "Vehicle Applications",
-    customer_order_title: "Orders",
-    customer_order_portal_note: "Review your order and track its fulfillment status.",
-    customer_order_open: "Order / History",
+    customer_order_title: "Order Checkout",
     customer_order_eyebrow: "ORDER",
     customer_order_cart: "Current Order",
     customer_order_history: "Order History",
@@ -4393,9 +4389,7 @@ var TRANSLATIONS = {
     customer_catalog_stock_unit: "件",
     customer_catalog_stock_breakdown: "本品号 {exact} / 兼容品 {compatible}",
     customer_catalog_vehicle_list: "车辆信息一览",
-    customer_order_title: "订单",
-    customer_order_portal_note: "确认订单内容并查看受理后的出货状态。",
-    customer_order_open: "订单内容・记录",
+    customer_order_title: "订单办理",
     customer_order_eyebrow: "ORDER",
     customer_order_cart: "订单内容",
     customer_order_history: "订单记录",
@@ -6436,7 +6430,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.981";
+var APP_VERSION       = "v1.1.982";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -6741,7 +6735,7 @@ var customerOrderPostalReadyShards = 0;
 var customerOrderPostalPrepareState = "idle";
 var customerOrderPostalBackgroundScheduled = false;
 var customerOrderSaving = false;
-var customerOrderActiveView = "cart";
+var customerOrderActiveView = "history";
 var customerOrderDeliveryServiceLoadSeq = 0;
 var customerOrderDeliveryServiceKeyValue = "";
 var customerOrderCoreReturnServiceKeyValue = "";
@@ -8475,23 +8469,25 @@ async function restoreAppStateAfterRefresh() {
         await loadCustomerPortalPreviewContext(state.customerPortalCustomerId);
       }
       if (canOpenCustomerOrdering()) {
-        await enterCustomerOrders({ view: state.customerOrderView || "cart", preview: false });
-        applyCustomerOrderAddress(state.customerOrderAddress || {}, true);
-        customerOrderDeliveryServiceKeyValue = state.customerOrderDeliveryServiceKey || "";
-        customerOrderCoreReturnServiceKeyValue = state.customerOrderCoreReturnServiceKey || "";
-        customerOrderDeliveryDateManual = state.customerOrderDeliveryDateManual === true;
-        await loadCustomerOrderDeliveryServices({
-          preferredKey: customerOrderDeliveryServiceKeyValue,
-          preferredCoreReturnKey: customerOrderCoreReturnServiceKeyValue,
-          forceDate: false
-        });
-        var restoreDeliveryDate = document.getElementById("customer-order-delivery-date");
-        var restoreDeliveryTime = document.getElementById("customer-order-delivery-time");
-        var restoreOrderNote = document.getElementById("customer-order-note");
-        if (restoreDeliveryDate) restoreDeliveryDate.value = state.customerOrderDeliveryDate || "";
-        if (restoreDeliveryTime) restoreDeliveryTime.value = state.customerOrderDeliveryTime || "";
-        if (restoreOrderNote) restoreOrderNote.value = state.customerOrderNote || "";
-        await updateCustomerOrderDeliveryEstimate({ forceDate: false });
+        await enterCustomerOrders({ view: state.customerOrderView || "history", preview: false });
+        if (customerOrderActiveView === "cart") {
+          applyCustomerOrderAddress(state.customerOrderAddress || {}, true);
+          customerOrderDeliveryServiceKeyValue = state.customerOrderDeliveryServiceKey || "";
+          customerOrderCoreReturnServiceKeyValue = state.customerOrderCoreReturnServiceKey || "";
+          customerOrderDeliveryDateManual = state.customerOrderDeliveryDateManual === true;
+          await loadCustomerOrderDeliveryServices({
+            preferredKey: customerOrderDeliveryServiceKeyValue,
+            preferredCoreReturnKey: customerOrderCoreReturnServiceKeyValue,
+            forceDate: false
+          });
+          var restoreDeliveryDate = document.getElementById("customer-order-delivery-date");
+          var restoreDeliveryTime = document.getElementById("customer-order-delivery-time");
+          var restoreOrderNote = document.getElementById("customer-order-note");
+          if (restoreDeliveryDate) restoreDeliveryDate.value = state.customerOrderDeliveryDate || "";
+          if (restoreDeliveryTime) restoreDeliveryTime.value = state.customerOrderDeliveryTime || "";
+          if (restoreOrderNote) restoreOrderNote.value = state.customerOrderNote || "";
+          await updateCustomerOrderDeliveryEstimate({ forceDate: false });
+        }
       }
     } else if (state.screen === "customer-catalog") {
       if (!isCustomerViewer() && state.customerPortalCustomerId) {
@@ -9232,7 +9228,7 @@ async function doLogout() {
   customerOrderPostalLookupSeq += 1;
   customerOrderPostalLookingUp = false;
   customerOrderSaving = false;
-  customerOrderActiveView = "cart";
+  customerOrderActiveView = "history";
   customerOrderDeliveryServiceLoadSeq += 1;
   customerOrderDeliveryServiceKeyValue = "";
   customerOrderCoreReturnServiceKeyValue = "";
@@ -12059,13 +12055,15 @@ function showCustomerOrderView(view) {
   customerOrderActiveView = view === "history" ? "history" : "cart";
   var cart = document.getElementById("customer-order-cart-view");
   var history = document.getElementById("customer-order-history-view");
+  var titleKey = customerOrderActiveView === "history" ? "customer_order_history" : "customer_order_title";
+  ["customer-orders-screen-title", "customer-orders-heading-title"].forEach(function(id) {
+    var title = document.getElementById(id);
+    if (!title) return;
+    title.dataset.i18n = titleKey;
+    title.textContent = t(titleKey);
+  });
   if (cart) cart.hidden = customerOrderActiveView !== "cart";
   if (history) history.hidden = customerOrderActiveView !== "history";
-  document.querySelectorAll("[data-order-view]").forEach(function(button) {
-    var active = button.dataset.orderView === customerOrderActiveView;
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-selected", active ? "true" : "false");
-  });
   if (customerOrderActiveView === "history") loadCustomerOrderHistory();
 }
 
@@ -12075,16 +12073,18 @@ async function enterCustomerOrders(options) {
     showPermissionDenied("open_customer_orders", "customer_orders");
     return;
   }
+  var requestedView = options.view === "cart" && customerOrderCart.length ? "cart" : "history";
   showScreen("customer-orders");
   renderCustomerExperienceHeaders();
+  var context = activeCustomerPortalContext() || {};
+  customerPortalValue("customer-orders-customer-name", context.customer && context.customer.customer_name);
+  showCustomerOrderView(requestedView);
+  if (requestedView === "history") return;
   populateCustomerOrderPrefectures();
   configureCustomerOrderDestination({ includeRecipientDefaults: false });
   await loadCustomerOrderDeliveryServices({ forceDate: false });
   configureCustomerOrderAddressTools();
-  var context = activeCustomerPortalContext() || {};
-  customerPortalValue("customer-orders-customer-name", context.customer && context.customer.customer_name);
   renderCustomerOrderCart();
-  showCustomerOrderView(options.view || customerOrderActiveView);
   scheduleCustomerOrderPostalLocalData();
   if (canPreviewCustomerOrdering()) customerOrderSetStatus(t("customer_order_development_preview_note"), false);
 }
@@ -12266,7 +12266,7 @@ async function loadCustomerOrderHistory() {
 }
 
 function returnToCustomerPortalFromOrders() {
-  customerOrderActiveView = "cart";
+  customerOrderActiveView = "history";
   customerOrderPreview = null;
   showScreen("customer-portal");
   renderCustomerPortal();
@@ -51632,7 +51632,7 @@ document.getElementById("btn-back-customer-portal").addEventListener("click", ex
 document.getElementById("customer-portal-change-password").addEventListener("click", enterChangePw);
 document.getElementById("customer-portal-manage-users").addEventListener("click", enterCustomerUsers);
 document.getElementById("customer-portal-shipping").addEventListener("click", enterCustomerShipping);
-document.getElementById("customer-portal-orders").addEventListener("click", function() { enterCustomerOrders({ view: "cart" }); });
+document.getElementById("customer-portal-orders").addEventListener("click", function() { enterCustomerOrders({ view: "history" }); });
 document.getElementById("btn-back-customer-shipping").addEventListener("click", returnToCustomerPortalFromShipping);
 document.getElementById("customer-shipping-prefecture").addEventListener("change", renderCustomerShippingRates);
 document.getElementById("customer-shipping-carrier").addEventListener("change", renderCustomerShippingRates);
@@ -51650,7 +51650,7 @@ document.getElementById("customer-users-open-invite").addEventListener("click", 
 document.getElementById("btn-customer-users-invite").addEventListener("click", inviteCustomerManagedUser);
 document.getElementById("customer-users-invite-email").addEventListener("keydown", function(e) { if (e.key === "Enter") inviteCustomerManagedUser(); });
 document.getElementById("btn-back-customer-catalog").addEventListener("click", returnToCustomerPortal);
-document.getElementById("customer-catalog-orders").addEventListener("click", function() { enterCustomerOrders({ view: "cart" }); });
+document.getElementById("customer-catalog-orders").addEventListener("click", function() { enterCustomerOrders({ view: "history" }); });
 document.getElementById("btn-exit-customer-mode").addEventListener("click", exitCustomerMode);
 document.getElementById("customer-catalog-search-btn").addEventListener("click", function(){ runCustomerCatalogSearch({ logActivity: true }); });
 document.getElementById("customer-catalog-q").addEventListener("keydown", function(e){
@@ -51660,8 +51660,6 @@ document.getElementById("customer-catalog-q").addEventListener("keydown", functi
 });
 document.getElementById("customer-catalog-category").addEventListener("change", handleCustomerCatalogCategoryChange);
 document.getElementById("btn-back-customer-orders").addEventListener("click", returnToCustomerPortalFromOrders);
-document.getElementById("customer-order-tab-cart").addEventListener("click", function() { showCustomerOrderView("cart"); });
-document.getElementById("customer-order-tab-history").addEventListener("click", function() { showCustomerOrderView("history"); });
 document.getElementById("customer-order-continue-shopping").addEventListener("click", function() { enterCustomerCatalog({}); });
 document.getElementById("customer-order-address-search-button").addEventListener("click", searchCustomerOrderAddresses);
 document.getElementById("customer-order-address-search").addEventListener("keydown", function(e) { if (e.key === "Enter") searchCustomerOrderAddresses(); });

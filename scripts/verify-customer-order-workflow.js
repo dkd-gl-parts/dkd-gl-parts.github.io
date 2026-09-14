@@ -216,6 +216,33 @@ const portalRender = sourceBetween("function renderCustomerPortal", "async funct
 if (!portalRender.includes('orderGuide.hidden = !canOpenCustomerOrdering()')) {
   throw new Error("customer order entry must allow only live customer ordering or internal development preview");
 }
+const portalOrderGuide = html.slice(html.indexOf('id="customer-portal-order-guide"'), html.indexOf('class="customer-portal-account-band"'));
+if (!portalOrderGuide.includes('data-i18n="customer_order_history"') ||
+    portalOrderGuide.includes("customer_order_title") ||
+    portalOrderGuide.includes("customer_order_portal_note") ||
+    portalOrderGuide.includes("注文内容・履歴") ||
+    portalOrderGuide.includes("ご注文")) {
+  throw new Error("the customer home must expose order history only");
+}
+if (!html.includes('id="customer-catalog-orders" type="button" data-i18n="customer_order_history"') ||
+    html.includes('id="customer-order-tab-cart"') ||
+    html.includes('id="customer-order-tab-history"')) {
+  throw new Error("history entry points must not expose a direct switch to the order form");
+}
+if (!source.includes('document.getElementById("customer-portal-orders").addEventListener("click", function() { enterCustomerOrders({ view: "history" }); });') ||
+    !source.includes('document.getElementById("customer-catalog-orders").addEventListener("click", function() { enterCustomerOrders({ view: "history" }); });')) {
+  throw new Error("customer home and catalog history buttons must open order history");
+}
+const customerOrderEntry = sourceBetween("async function enterCustomerOrders", "async function previewCustomerOrder");
+if (!customerOrderEntry.includes('var requestedView = options.view === "cart" && customerOrderCart.length ? "cart" : "history";') ||
+    !customerOrderEntry.includes('if (requestedView === "history") return;')) {
+  throw new Error("the order form must require a product selected through part-number search");
+}
+const customerOrderRestore = sourceBetween("async function restoreAppStateAfterRefresh", "async function checkForAppUpdate");
+if (!customerOrderRestore.includes('await enterCustomerOrders({ view: state.customerOrderView || "history", preview: false });') ||
+    !customerOrderRestore.includes('if (customerOrderActiveView === "cart") {')) {
+  throw new Error("refresh restoration must not initialize the order form from a history-only entry");
+}
 const customerAccessRender = sourceBetween("function renderCustomerAccessDetail", "function renderCustomerAccessRuleForm");
 if (!customerAccessRender.includes("data-customer-setting='customer_ordering_enabled'") ||
     !customerAccessRender.includes("role='switch'") ||
