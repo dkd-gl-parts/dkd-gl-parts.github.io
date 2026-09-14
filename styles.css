@@ -6515,8 +6515,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
    得意先注文・受注出荷管理
 ============================================= */
 .customer-portal-order-band { padding: 22px 0; border-bottom: 1px solid #ead5d8; background: #fff8f9; }
-.customer-portal-order-band h2 { margin-bottom: 6px; color: #431d23; font-size: 14px; letter-spacing: 0; }
-.customer-portal-order-band p { color: #76575c; font-size: 12px; line-height: 1.6; }
+.customer-portal-order-band h2 { color: #431d23; font-size: 14px; letter-spacing: 0; }
 .customer-portal-order-button,
 .customer-catalog-order-link { min-height: 36px; border: 1px solid var(--dcats-customer-green); border-radius: var(--dcats-control-radius); padding: 0 14px; background: var(--dcats-customer-green); color: #fff; font-size: var(--dcats-type-supporting); font-weight: 800; cursor: pointer; white-space: nowrap; }
 .customer-portal-order-button { min-height: 42px; flex: 0 0 auto; padding: 0 18px; font-size: 13px; }
@@ -6536,9 +6535,6 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .customer-order-development-preview-copy { min-height: 48px; display: flex; align-items: center; gap: 12px; padding-top: 8px; padding-bottom: 8px; }
 .customer-order-development-preview-copy strong { flex: 0 0 auto; border: 1px solid #bd7c00; border-radius: var(--dcats-control-radius); padding: 3px 7px; background: #fff; color: #8a5700; font-size: var(--dcats-type-supporting); }
 .customer-order-development-preview-copy span { color: #6b4a0a; font-size: var(--dcats-type-supporting); font-weight: 700; line-height: 1.5; }
-.customer-order-tabs { display: inline-flex; align-items: center; border: 1px solid var(--dcats-border); border-radius: var(--dcats-card-radius); padding: 3px; background: #f2f5f4; }
-.customer-order-tabs button { min-width: 112px; min-height: var(--dcats-control-height); border: 0; border-radius: var(--dcats-control-radius); padding: 0 var(--dcats-space-3); background: transparent; color: #53635c; font-size: var(--dcats-type-body); font-weight: 800; cursor: pointer; }
-.customer-order-tabs button.active { background: #fff; box-shadow: 0 1px 3px rgba(21, 45, 35, .13); color: #1e5e43; }
 .customer-order-workspace { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(350px, .55fr); align-items: start; gap: 0; padding-top: 22px; padding-bottom: 42px; }
 .customer-order-cart-pane { min-width: 0; border: 1px solid var(--dcats-border); border-right: 0; border-radius: var(--dcats-card-radius) 0 0 var(--dcats-card-radius); padding: 20px; background: #fff; }
 .customer-order-shipping-pane { position: sticky; top: 70px; min-width: 0; border: 1px solid var(--dcats-border); border-radius: 0 var(--dcats-card-radius) var(--dcats-card-radius) 0; padding: 20px; background: #f9fbfa; }
@@ -6709,6 +6705,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .customer-order-submit-button:hover { background: var(--dcats-customer-green-hover); }
 .customer-order-submit-button:disabled { border-color: #cfd6d3; background: #dfe4e2; color: #89938f; cursor: not-allowed; }
 .customer-order-history { padding-top: 22px; padding-bottom: 42px; }
+.customer-order-history > .customer-order-section-head { justify-content: flex-end; }
 .customer-order-history-list { border: 1px solid var(--dcats-border); border-radius: var(--dcats-card-radius); background: #fff; overflow: hidden; }
 .customer-order-history-row { display: grid; grid-template-columns: minmax(160px, .8fr) minmax(220px, 1.5fr) 130px minmax(260px, 1fr); align-items: center; gap: 18px; border-bottom: 1px solid #e0e6e3; padding: 15px 16px; }
 .customer-order-history-row:last-child { border-bottom: 0; }
@@ -8292,8 +8289,6 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .customer-order-development-preview-copy { align-items: flex-start; flex-direction: column; gap: 5px; }
   .customer-order-postal-test-head { align-items: flex-start; flex-direction: column; gap: 2px; }
   .customer-order-postal-test-head span { text-align: left; }
-  .customer-order-tabs { width: 100%; }
-  .customer-order-tabs button { flex: 1; min-width: 0; }
   .customer-order-cart-pane,
   .customer-order-shipping-pane { padding: 15px; }
   .customer-order-line { grid-template-columns: minmax(0, 1fr) 68px 28px; gap: 9px; }
