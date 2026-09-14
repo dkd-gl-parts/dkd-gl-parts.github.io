@@ -8,7 +8,7 @@
 - APIアクセス認証キー、請求先コードなどの秘密・契約情報をpublic frontendへ保存しない。
 - 最終価格、税、送料、在庫確保、注文状態の変更はすべてDB関数またはEdge Function内で確定する。
 - frontend `v1.1.699`は、`get_customer_order_feature_status`と得意先別公開設定の両方が有効になるまで実得意先の注文機能を表示しない。
-- 社内管理者向け開発プレビューは実注文権限と分離し、価格・在庫確認、注文送信、注文履歴RPCを呼び出さない。
+- 社内管理者向けプレビューは実注文権限と分離する。受注管理権限がある場合だけ、専用RPCで選択中の得意先履歴だけを取得し、通常の得意先向け注文履歴RPCは呼び出さない。
 - 得意先管理の「受注導線をプレビュー」は得意先向け品番検索を開く。在庫が1以上で、表示対象の価格が取得できる商品区分だけ注文ボタンを有効にし、商品を設定してから受注画面へ移動する。
 - 商品詳細の注文ボタンは、選択した商品区分を注文内容へ設定してから受注画面を開く。同じ商品が設定済みの場合は数量を自動加算せず、受注画面で数量を変更する。
 - 過去のお届け先検索は、ログイン中の得意先に属する注文住所スナップショットだけを対象とし、社内開発プレビューでは検索RPCを呼び出さない。
@@ -172,6 +172,15 @@
 - `outbound_shipping_method`, `core_return_shipping_method`
 - `outbound_tracking_number`, `return_tracking_number`
 - `items[]`
+
+### `list_internal_customer_orders(target_sales_customer_id bigint, target_limit int)`
+
+社内の`customer_order.manage`権限を持つユーザーだけが、受注登録プレビューで選択中の得意先履歴を取得する。
+
+- 有効な得意先IDを必須とし、他の得意先の注文を混在させない。
+- 得意先本人向けの`list_customer_orders`と同じ履歴項目を返す。
+- `internal_entry`を含むすべての注文経路を対象とし、社内で代理登録した注文も得意先履歴へ表示する。
+- 注文データは更新せず、読み取り専用とする。
 
 ### `search_customer_delivery_addresses(target_query text, target_limit int)`
 
