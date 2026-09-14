@@ -104,6 +104,9 @@ if (customerShippingRedraw < 0 || shippingMgmtRedraw < 0 || historyOverlayRedraw
   "shipping-rate-service-filter",
   "shipping-rate-size-filter",
   "shipping-rate-status-filter",
+  "shipping-service-visibility-title",
+  "shipping-service-visibility-count",
+  "shipping-service-visibility-list",
   "shipping-rate-b2-settings-open",
   "shipping-rate-form-overlay",
   "shipping-rate-service",
@@ -146,6 +149,32 @@ if (!customerShippingRender.includes('id=\'customer-shipping-retry\'') ||
 const managementLoad = sourceBetween("async function loadShippingRateMgmt", "function renderShippingRateMgmt");
 if (!managementLoad.includes("fetchAllShippingRateRows(") || !managementLoad.includes("false")) {
   throw new Error("shipping management must load active and inactive master rows");
+}
+
+const managementRender = sourceBetween("function renderShippingRateMgmt", "function shippingServiceVisibilityKey");
+if (!managementRender.includes("renderShippingServiceVisibilityControls(loadError)")) {
+  throw new Error("shipping management must render carrier delivery-service visibility controls");
+}
+
+const serviceVisibilitySource = sourceBetween("function shippingServiceVisibilityKey", "function shippingRateById");
+[
+  "function shippingServiceVisibilityGroups()",
+  "function renderShippingServiceVisibilityControls(loadError)",
+  "role='switch'",
+  "input.indeterminate = true",
+  "async function setShippingServiceVisibility(group, nextActive)",
+  '.from("customer_shipping_rates").update({',
+  '.eq("carrier_name", group.carrier_name).eq("service_name", group.service_name)',
+  "invalidateSalesShippingRateCache();"
+].forEach((fragment) => {
+  if (!serviceVisibilitySource.includes(fragment)) throw new Error(`shipping service visibility behavior is missing: ${fragment}`);
+});
+if (!source.includes('document.getElementById("shipping-service-visibility-list").addEventListener("change"')) {
+  throw new Error("shipping service visibility controls must have a change listener");
+}
+if ((source.match(/shipping_service_visibility_title:/g) || []).length !== 3 ||
+    (source.match(/shipping_service_visibility_updated:/g) || []).length !== 3) {
+  throw new Error("shipping service visibility labels must be translated for all supported languages");
 }
 
 const pagedLoad = sourceBetween("async function fetchAllShippingRateRows", "async function ensureSalesShippingRateRows");
@@ -214,5 +243,21 @@ if ((source.match(/\[47,"沖縄県"/g) || []).length !== 1 || !source.includes('
 const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
 const duplicateIds = ids.filter((id, index) => ids.indexOf(id) !== index);
 if (duplicateIds.length) throw new Error(`duplicate HTML ids: ${[...new Set(duplicateIds)].join(", ")}`);
+
+const backButtonIds = [...html.matchAll(/<button\s+class="[^"]*\bback-btn\b[^"]*"\s+id="([^"]+)"/g)].map((match) => match[1]);
+backButtonIds.forEach((id) => {
+  if (!source.includes(`document.getElementById("${id}").addEventListener("click"`)) {
+    throw new Error(`back button has no click handler: ${id}`);
+  }
+});
+const menuReturnSource = sourceBetween("function returnToMenuFresh()", "async function refreshCustomerOrderFeatureStatus");
+if (!menuReturnSource.includes("clearAppRestoreState();") ||
+    !menuReturnSource.includes("showAuthenticatedHome();") ||
+    menuReturnSource.includes("window.location.reload()")) {
+  throw new Error("standard management screens must return directly to the authenticated menu without a page reload");
+}
+if (!source.includes('document.getElementById("btn-back-manufacturing-ranking-report").addEventListener("click", returnToMenuFresh);')) {
+  throw new Error("manufacturing ranking report must return to the menu");
+}
 
 console.log("shipping rate management guard passed");

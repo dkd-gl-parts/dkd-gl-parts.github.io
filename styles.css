@@ -2414,6 +2414,31 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .shipping-rate-mgmt-intro-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .shipping-rate-b2-settings-button { min-height: 36px; border: 1px solid #287356; border-radius: 8px; padding: 8px 16px; background: #fff; color: #1f6248; font-size: 14px; font-weight: 700; white-space: nowrap; cursor: pointer; }
 .shipping-rate-b2-settings-button:hover { background: #eef8f3; }
+.shipping-service-visibility { margin-bottom: 18px; border-top: 1px solid #dfe4eb; border-bottom: 1px solid #dfe4eb; background: #fff; }
+.shipping-service-visibility-header { min-height: 42px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; border-bottom: 1px solid #e7ebf0; }
+.shipping-service-visibility-header h2 { color: #1d2939; font-size: 14px; letter-spacing: 0; }
+.shipping-service-visibility-header > span { color: #667085; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.shipping-service-visibility-list { min-height: 48px; }
+.shipping-service-carrier-group { display: grid; grid-template-columns: minmax(150px, 210px) 1fr; border-bottom: 1px solid #edf0f4; }
+.shipping-service-carrier-group:last-child { border-bottom: 0; }
+.shipping-service-carrier-group h3 { display: flex; align-items: center; margin: 0; padding: 12px; background: #f7f9fb; color: #273246; font-size: 12px; letter-spacing: 0; }
+.shipping-service-carrier-services { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+.shipping-service-visibility-item { min-width: 0; min-height: 54px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 8px 12px; border-left: 1px solid #edf0f4; color: #344054; cursor: pointer; }
+.shipping-service-visibility-item + .shipping-service-visibility-item { border-top: 1px solid #f1f3f6; }
+.shipping-service-visibility-item.saving { background: #f7fbf9; }
+.shipping-service-visibility-name { min-width: 0; overflow-wrap: anywhere; font-size: 13px; font-weight: 800; }
+.shipping-service-visibility-state { color: #667085; font-size: 10px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.shipping-service-switch { position: relative; width: 38px; height: 22px; flex: 0 0 auto; }
+.shipping-service-switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.shipping-service-switch > span { display: block; width: 100%; height: 100%; border: 1px solid #aeb7c4; border-radius: 999px; background: #cfd5dd; transition: background .15s ease, border-color .15s ease; }
+.shipping-service-switch > span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(16,24,40,.25); transition: transform .15s ease; }
+.shipping-service-switch input:checked + span { border-color: #1f7655; background: #287f5d; }
+.shipping-service-switch input:checked + span::after { transform: translateX(16px); }
+.shipping-service-switch input:indeterminate + span { border-color: #b08228; background: #d7a641; }
+.shipping-service-switch input:indeterminate + span::after { transform: translateX(8px); }
+.shipping-service-switch input:focus-visible + span { outline: 2px solid #4f8ef7; outline-offset: 2px; }
+.shipping-service-switch input:disabled { cursor: wait; }
+.shipping-service-switch input:disabled + span { opacity: .55; }
 .shipping-rate-mgmt-toolbar { display: grid; grid-template-columns: repeat(5, minmax(140px, 1fr)) auto; gap: 10px; align-items: end; margin-bottom: 12px; }
 .shipping-rate-mgmt-toolbar label { display: grid; gap: 5px; color: #667085; font-size: 11px; font-weight: 700; }
 .shipping-rate-mgmt-toolbar select { width: 100%; height: 38px; border: 1px solid #d0d5dd; border-radius: 6px; padding: 0 32px 0 10px; background: #fff; color: #1d2939; font-size: 12px; }
@@ -2470,6 +2495,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .shipping-rate-mgmt-intro { align-items: stretch; flex-direction: column; }
   .shipping-rate-mgmt-intro-actions { display: grid; grid-template-columns: 1fr; }
   .shipping-rate-mgmt-intro-actions button { width: 100%; }
+  .shipping-service-carrier-group { grid-template-columns: 1fr; }
+  .shipping-service-carrier-group h3 { border-bottom: 1px solid #edf0f4; }
+  .shipping-service-visibility-item { border-left: 0; }
+  .shipping-service-carrier-services { grid-template-columns: 1fr; }
   .shipping-rate-mgmt-toolbar { grid-template-columns: 1fr 1fr; }
   .shipping-rate-mgmt-toolbar .mgmt-count { justify-self: start; padding: 0; }
   .shipping-rate-mgmt-row { grid-template-columns: 1fr 1fr; }

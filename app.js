@@ -170,6 +170,11 @@ var TRANSLATIONS = {
     shipping_inactive: "非表示",
     shipping_mgmt_title: "送料マスタ",
     shipping_mgmt_help: "運送業者と都道府県ごとに、得意先へ表示する通常送料・離島送料・条件を管理します。",
+    shipping_service_visibility_title: "配送サービスの表示",
+    shipping_service_visibility_empty: "配送サービスが登録されていません。",
+    shipping_service_visibility_status: "{active}/{total}件を表示",
+    shipping_service_visibility_switch: "{carrier}の{service}を表示",
+    shipping_service_visibility_updated: "配送サービスの表示を更新しました。",
     shipping_b2_contract_settings: "B2契約設定",
     shipping_add: "送料を登録",
     shipping_edit: "送料を編集",
@@ -2283,6 +2288,11 @@ var TRANSLATIONS = {
     shipping_inactive: "Hidden",
     shipping_mgmt_title: "Shipping Master",
     shipping_mgmt_help: "Manage customer-visible standard rates, remote-island rates, and conditions by carrier and prefecture.",
+    shipping_service_visibility_title: "Delivery Service Visibility",
+    shipping_service_visibility_empty: "No delivery services are registered.",
+    shipping_service_visibility_status: "{active} of {total} rates visible",
+    shipping_service_visibility_switch: "Show {service} for {carrier}",
+    shipping_service_visibility_updated: "Delivery service visibility was updated.",
     shipping_b2_contract_settings: "B2 Contract Settings",
     shipping_add: "Add Shipping Rate",
     shipping_edit: "Edit Shipping Rate",
@@ -4340,6 +4350,11 @@ var TRANSLATIONS = {
     shipping_inactive: "隐藏",
     shipping_mgmt_title: "运费主数据",
     shipping_mgmt_help: "按承运公司和都道府县管理向客户显示的普通运费、离岛运费及条件。",
+    shipping_service_visibility_title: "配送服务显示",
+    shipping_service_visibility_empty: "尚未登记配送服务。",
+    shipping_service_visibility_status: "显示 {active}/{total} 项",
+    shipping_service_visibility_switch: "显示{carrier}的{service}",
+    shipping_service_visibility_updated: "配送服务显示设置已更新。",
     shipping_b2_contract_settings: "B2合同设置",
     shipping_add: "登记运费",
     shipping_edit: "编辑运费",
@@ -6463,7 +6478,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.987";
+var APP_VERSION       = "v1.1.988";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -6980,6 +6995,7 @@ var SHIPPING_PREFECTURES = [
 var shippingRateRows = [];
 var shippingRateLoadSeq = 0;
 var shippingRateFormSaving = false;
+var shippingServiceVisibilitySavingKey = "";
 var SHIPPING_RATE_PAGE_SIZE = 1000;
 var salesShippingRateRows = [];
 var salesShippingRatesLoaded = false;
@@ -8412,9 +8428,11 @@ function clearAppRestoreState() {
 }
 
 function returnToMenuFresh() {
-  appDiscardRestoreStateOnExit = true;
   clearAppRestoreState();
-  window.location.reload();
+  document.querySelectorAll(".form-overlay.show").forEach(function(overlay) {
+    overlay.classList.remove("show");
+  });
+  showAuthenticatedHome();
 }
 
 async function refreshCustomerOrderFeatureStatus() {
@@ -9335,6 +9353,7 @@ async function doLogout() {
   customerManagedUsersRequestSeq += 1;
   shippingRateRows = [];
   shippingRateLoadSeq += 1;
+  shippingServiceVisibilitySavingKey = "";
   salesShippingRateRows = [];
   salesShippingRatesLoaded = false;
   salesShippingRatesPromise = null;
@@ -19316,6 +19335,7 @@ function renderShippingRateMgmt(loadError) {
   var host = document.getElementById("shipping-rate-list");
   var count = document.getElementById("shipping-rate-count");
   if (!host) return;
+  renderShippingServiceVisibilityControls(loadError);
   if (loadError) {
     if (count) count.textContent = "-";
     host.innerHTML = "<div class='empty save-err'>" + esc(t("shipping_load_error")) + "</div>";
@@ -19344,6 +19364,120 @@ function renderShippingRateMgmt(loadError) {
     html += "</div>";
   });
   host.innerHTML = html;
+}
+
+function shippingServiceVisibilityKey(carrierName, serviceName) {
+  return [carrierName || "", serviceName || ""].map(function(value) {
+    return encodeURIComponent(String(value));
+  }).join("|");
+}
+
+function shippingServiceVisibilityGroups() {
+  var groupsByKey = {};
+  var groups = [];
+  sortedShippingRows(shippingRateRows).forEach(function(row) {
+    var carrierName = String(row.carrier_name || "").trim();
+    var serviceName = String(row.service_name || "").trim();
+    if (!carrierName || !serviceName) return;
+    var key = shippingServiceVisibilityKey(carrierName, serviceName);
+    if (!groupsByKey[key]) {
+      groupsByKey[key] = {
+        key: key,
+        carrier_name: carrierName,
+        service_name: serviceName,
+        total_count: 0,
+        active_count: 0
+      };
+      groups.push(groupsByKey[key]);
+    }
+    groupsByKey[key].total_count += 1;
+    if (row.is_active !== false) groupsByKey[key].active_count += 1;
+  });
+  return groups;
+}
+
+function shippingServiceVisibilityGroupByKey(key) {
+  return shippingServiceVisibilityGroups().find(function(group) {
+    return group.key === key;
+  }) || null;
+}
+
+function renderShippingServiceVisibilityControls(loadError) {
+  var host = document.getElementById("shipping-service-visibility-list");
+  var count = document.getElementById("shipping-service-visibility-count");
+  if (!host) return;
+  if (loadError) {
+    if (count) count.textContent = "-";
+    host.innerHTML = "<div class='empty save-err'>" + esc(t("shipping_load_error")) + "</div>";
+    return;
+  }
+  var groups = shippingServiceVisibilityGroups();
+  var visibleCount = groups.filter(function(group) { return group.active_count > 0; }).length;
+  if (count) count.textContent = String(visibleCount) + " / " + String(groups.length);
+  if (!groups.length) {
+    host.innerHTML = "<div class='empty'>" + esc(t("shipping_service_visibility_empty")) + "</div>";
+    return;
+  }
+  var carrierGroups = [];
+  var carriersByName = {};
+  groups.forEach(function(group) {
+    if (!carriersByName[group.carrier_name]) {
+      carriersByName[group.carrier_name] = { carrier_name: group.carrier_name, services: [] };
+      carrierGroups.push(carriersByName[group.carrier_name]);
+    }
+    carriersByName[group.carrier_name].services.push(group);
+  });
+  host.innerHTML = carrierGroups.map(function(carrierGroup) {
+    var services = carrierGroup.services.map(function(group) {
+      var allActive = group.active_count === group.total_count;
+      var busy = shippingServiceVisibilitySavingKey === group.key;
+      return "<label class='shipping-service-visibility-item" + (busy ? " saving" : "") + "'>" +
+        "<span class='shipping-service-visibility-name'>" + esc(group.service_name) + "</span>" +
+        "<span class='shipping-service-visibility-state'>" + esc(tf("shipping_service_visibility_status", { active: group.active_count, total: group.total_count })) + "</span>" +
+        "<span class='shipping-service-switch'><input type='checkbox' role='switch' data-shipping-service-key='" + esc(group.key) + "' aria-label='" + esc(tf("shipping_service_visibility_switch", { carrier: group.carrier_name, service: group.service_name })) + "'" + (allActive ? " checked" : "") + (shippingServiceVisibilitySavingKey ? " disabled" : "") + "><span aria-hidden='true'></span></span>" +
+        "</label>";
+    }).join("");
+    return "<section class='shipping-service-carrier-group'><h3>" + esc(carrierGroup.carrier_name) + "</h3><div class='shipping-service-carrier-services'>" + services + "</div></section>";
+  }).join("");
+  host.querySelectorAll("[data-shipping-service-key]").forEach(function(input) {
+    var group = groups.find(function(candidate) { return candidate.key === input.dataset.shippingServiceKey; });
+    if (group && group.active_count > 0 && group.active_count < group.total_count) {
+      input.indeterminate = true;
+      input.setAttribute("aria-checked", "mixed");
+    }
+  });
+}
+
+function invalidateSalesShippingRateCache() {
+  salesShippingRateRows = [];
+  salesShippingRatesLoaded = false;
+  salesShippingRatesPromise = null;
+}
+
+async function setShippingServiceVisibility(group, nextActive) {
+  if (!canManageShippingRates() || !group || shippingServiceVisibilitySavingKey) return;
+  shippingServiceVisibilitySavingKey = group.key;
+  renderShippingServiceVisibilityControls(false);
+  var result;
+  try {
+    result = await sb.from("customer_shipping_rates").update({
+      is_active: nextActive,
+      updated_at: new Date().toISOString(),
+      updated_by: currentUser ? currentUser.id : null
+    }).eq("carrier_name", group.carrier_name).eq("service_name", group.service_name).select("shipping_rate_id");
+  } catch (error) {
+    result = { error: error };
+  }
+  shippingServiceVisibilitySavingKey = "";
+  if (result.error) {
+    console.warn("shipping service visibility update failed", result.error);
+    setShippingRateMgmtMessage(t("shipping_update_failed"), true);
+    renderShippingServiceVisibilityControls(false);
+    return;
+  }
+  invalidateSalesShippingRateCache();
+  setShippingRateMgmtMessage(t("shipping_service_visibility_updated"), false);
+  await loadShippingRateMgmt();
 }
 
 function shippingRateById(id) {
@@ -19469,6 +19603,7 @@ async function saveShippingRate() {
     return;
   }
   document.getElementById("shipping-rate-form-overlay").classList.remove("show");
+  invalidateSalesShippingRateCache();
   setShippingRateMgmtMessage(t("shipping_save_success"), false);
   await loadShippingRateMgmt();
 }
@@ -19486,6 +19621,7 @@ async function toggleShippingRateVisibility(row) {
     setShippingRateMgmtMessage(t("shipping_update_failed"), true);
     return;
   }
+  invalidateSalesShippingRateCache();
   setShippingRateMgmtMessage(t("shipping_save_success"), false);
   await loadShippingRateMgmt();
 }
@@ -52218,6 +52354,7 @@ document.getElementById("btn-back-product-kind-stock-mgmt").addEventListener("cl
 document.getElementById("btn-back-manufacturing-cost-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-finished-label-mgmt").addEventListener("click", returnFromFinishedLabelMgmtToMenu);
 document.getElementById("btn-back-finished-product-shipping").addEventListener("click", returnFromFinishedProductShipping);
+document.getElementById("btn-back-manufacturing-ranking-report").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-production-ranking-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-kikan-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-rakuten-price").addEventListener("click", returnToMenuFresh);
@@ -52746,6 +52883,12 @@ document.getElementById("shipping-rate-carrier-filter").addEventListener("change
 document.getElementById("shipping-rate-service-filter").addEventListener("change", renderShippingRateMgmt);
 document.getElementById("shipping-rate-size-filter").addEventListener("change", renderShippingRateMgmt);
 document.getElementById("shipping-rate-status-filter").addEventListener("change", renderShippingRateMgmt);
+document.getElementById("shipping-service-visibility-list").addEventListener("change", function(e) {
+  var input = e.target.closest("[data-shipping-service-key]");
+  if (!input) return;
+  var group = shippingServiceVisibilityGroupByKey(input.dataset.shippingServiceKey);
+  if (group) setShippingServiceVisibility(group, input.checked);
+});
 document.getElementById("shipping-rate-b2-settings-open").addEventListener("click", openSalesOrderB2Settings);
 document.getElementById("btn-new-shipping-rate").addEventListener("click", function() { openShippingRateForm(null); });
 document.getElementById("btn-shipping-rate-cancel").addEventListener("click", closeShippingRateForm);
