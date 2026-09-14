@@ -245,6 +245,17 @@ var TRANSLATIONS = {
     customer_order_eyebrow: "ORDER",
     customer_order_cart: "注文内容",
     customer_order_history: "注文履歴",
+    customer_order_detail: "注文詳細",
+    customer_order_detail_line: "明細",
+    customer_order_detail_kind: "区分",
+    customer_order_shipping_unused: "未使用",
+    customer_order_tracking_unissued: "未発行",
+    customer_order_core_return_needed: "要コア返却",
+    customer_order_core_return_label_issued: "返却送り状発行済み",
+    customer_order_core_return_returned: "返却済み",
+    customer_order_core_return_closed: "完了",
+    customer_order_shipping_fee: "送料",
+    customer_order_tax: "消費税",
     customer_order_revalidate_note: "注文確定時に価格と在庫を再確認します。",
     customer_order_continue: "商品を追加",
     customer_order_shipping: "お届け先",
@@ -2347,6 +2358,17 @@ var TRANSLATIONS = {
     customer_order_eyebrow: "ORDER",
     customer_order_cart: "Current Order",
     customer_order_history: "Order History",
+    customer_order_detail: "Order Details",
+    customer_order_detail_line: "Item",
+    customer_order_detail_kind: "Type",
+    customer_order_shipping_unused: "Not used",
+    customer_order_tracking_unissued: "Not issued",
+    customer_order_core_return_needed: "Core return required",
+    customer_order_core_return_label_issued: "Return label issued",
+    customer_order_core_return_returned: "Returned",
+    customer_order_core_return_closed: "Completed",
+    customer_order_shipping_fee: "Shipping",
+    customer_order_tax: "Tax",
     customer_order_revalidate_note: "Prices and inventory are revalidated when the order is placed.",
     customer_order_continue: "Add Products",
     customer_order_shipping: "Ship To",
@@ -4393,6 +4415,17 @@ var TRANSLATIONS = {
     customer_order_eyebrow: "ORDER",
     customer_order_cart: "订单内容",
     customer_order_history: "订单记录",
+    customer_order_detail: "订单详情",
+    customer_order_detail_line: "明细",
+    customer_order_detail_kind: "类别",
+    customer_order_shipping_unused: "未使用",
+    customer_order_tracking_unissued: "未发行",
+    customer_order_core_return_needed: "需要返还旧件",
+    customer_order_core_return_label_issued: "返还运单已发行",
+    customer_order_core_return_returned: "已返还",
+    customer_order_core_return_closed: "已完成",
+    customer_order_shipping_fee: "运费",
+    customer_order_tax: "消费税",
     customer_order_revalidate_note: "提交订单时会重新确认价格和库存。",
     customer_order_continue: "添加商品",
     customer_order_shipping: "送货地址",
@@ -6430,7 +6463,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.984";
+var APP_VERSION       = "v1.1.985";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -11797,6 +11830,48 @@ function customerOrderDateTimeText(value) {
   return date.toLocaleString(currentLang === "ja" ? "ja-JP" : (currentLang === "zh" ? "zh-CN" : "en-US"), { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
+function customerOrderTrackingNumberText(value) {
+  var raw = String(value || "").trim();
+  if (!raw) return "";
+  var digits = raw.replace(/[^0-9]/g, "");
+  return digits.length === 12
+    ? digits.slice(0, 4) + "-" + digits.slice(4, 8) + "-" + digits.slice(8, 12)
+    : raw;
+}
+
+function customerOrderCoreReturnStatusLabel(order) {
+  if (customerOrderHasBilledCoreCharge(order)) return t("customer_order_core_charge_billed_short");
+  var labels = {
+    label_issued: "customer_order_core_return_label_issued",
+    awaiting_return: "customer_order_core_return_needed",
+    returned: "customer_order_core_return_returned",
+    closed: "customer_order_core_return_closed",
+    not_required: "core_return_not_required"
+  };
+  var key = labels[String(order && order.core_return_status || "").toLowerCase()];
+  return key ? t(key) : (order && order.core_return_required ? t("customer_order_core_return_needed") : t("core_return_not_required"));
+}
+
+function customerOrderHistoryItemRowsHtml(order) {
+  var items = Array.isArray(order && order.items) ? order.items : [];
+  return items.map(function(item) {
+    var quantity = Math.max(1, Number(item && item.quantity) || 1);
+    var partNumber = item.genuine_part_number || item.manufacturer_part_number || "-";
+    var productMeta = [item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ");
+    var productRow = "<div class='customer-order-history-detail-row'><div><strong>" + esc(partNumber) + "</strong>" +
+      (productMeta ? "<small>" + esc(productMeta) + "</small>" : "") + "</div><span>" + esc(customerProductKindLabel(item.product_kind)) + "</span><strong>" +
+      esc(quantity) + "</strong><span>" + esc(customerOrderCurrency(customerOrderProductUnitPrice(item))) + "</span><strong>" + esc(customerOrderCurrency(customerOrderProductLineTotal(item))) + "</strong></div>";
+    var coreChargePerUnit = customerOrderBilledCoreChargePerUnit(item);
+    var coreChargeTotal = item.core_charge_line_total_jpy !== null && item.core_charge_line_total_jpy !== undefined
+      ? Math.max(0, Number(item.core_charge_line_total_jpy) || 0)
+      : coreChargePerUnit * quantity;
+    if (!coreChargeTotal) return productRow;
+    return productRow + "<div class='customer-order-history-detail-row core-charge'><div><strong>" + esc(t("customer_order_core_charge_total")) + "</strong><small>" +
+      esc(tf("customer_order_part_charge_reference", { part: partNumber })) + "</small></div><span>" + esc(t("customer_order_core_charge_kind")) + "</span><strong>" +
+      esc(quantity) + "</strong><span>" + esc(customerOrderCurrency(coreChargePerUnit)) + "</span><strong>" + esc(customerOrderCurrency(coreChargeTotal)) + "</strong></div>";
+  }).join("");
+}
+
 function customerOrderVehicleInformationRows(vehicleInformation) {
   var info = vehicleInformation && typeof vehicleInformation === "object" ? vehicleInformation : {};
   return [
@@ -12221,19 +12296,25 @@ function renderCustomerOrderHistory() {
   host.innerHTML = customerOrderHistoryRows.map(function(order) {
     var items = Array.isArray(order.items) ? order.items : [];
     var itemText = items.map(function(item) {
-      return (item.genuine_part_number || item.manufacturer_part_number || "-") + " × " + (item.quantity || 1) +
-        (customerOrderCoreHandlingValue(item) === "charge_no_return" ? "（" + t("customer_order_core_charge_no_return_status") + "）" : "");
+      return (item.genuine_part_number || item.manufacturer_part_number || "-") + " × " + (item.quantity || 1);
     }).join("、");
     var outboundService = customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "outbound"), "未登録");
-    var billedCoreChargeStatus = customerOrderHasBilledCoreCharge(order) ? t("customer_order_core_charge_no_return_status") : "対象外";
     var coreReturnService = order.core_return_required
       ? customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "core_return"), "未登録")
-      : billedCoreChargeStatus;
+      : t("customer_order_shipping_unused");
+    var outboundTracking = customerOrderTrackingNumberText(order.outbound_tracking_number) || t("customer_order_tracking_unissued");
+    var returnTracking = customerOrderTrackingNumberText(order.return_tracking_number) || t("customer_order_tracking_unissued");
+    var coreReturnStatus = customerOrderCoreReturnStatusLabel(order);
+    var coreChargeTotal = customerOrderCoreChargeTotal(order);
     return "<article class='customer-order-history-row'>" +
       "<div><span class='customer-order-number'>" + esc(order.order_number || ("注文 " + (order.id || "-"))) + "</span><strong>" + esc(customerOrderStatusLabel(order.status)) + "</strong><small>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small></div>" +
       "<div class='customer-order-history-items'>" + esc(itemText || "-") + customerOrderVehicleInformationInlineHtml(order.vehicle_information) + "</div>" +
       "<div class='customer-order-history-total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div>" +
-      "<dl><div><dt>商品発送便</dt><dd>" + esc(outboundService) + "</dd></div><div><dt>商品発送送り状</dt><dd>" + esc(order.outbound_tracking_number || "未登録") + "</dd></div><div><dt>コア返却便</dt><dd>" + esc(coreReturnService) + "</dd></div><div><dt>コア返却用送り状</dt><dd>" + esc(order.return_tracking_number || (order.core_return_required ? "未登録" : billedCoreChargeStatus)) + "</dd></div><div><dt>コア返却</dt><dd>" + esc(order.core_return_status || (order.core_return_required ? "返却待ち" : billedCoreChargeStatus)) + "</dd></div></dl>" +
+      "<dl><div><dt>商品発送便</dt><dd>" + esc(outboundService) + "</dd></div><div><dt>商品発送送り状</dt><dd>" + esc(outboundTracking) + "</dd></div><div><dt>コア返却便</dt><dd>" + esc(coreReturnService) + "</dd></div><div><dt>コア返却用送り状</dt><dd>" + esc(returnTracking) + "</dd></div><div><dt>コア返却</dt><dd>" + esc(coreReturnStatus) + "</dd></div></dl>" +
+      "<section class='customer-order-history-detail'><h3>" + esc(t("customer_order_detail")) + "</h3><div class='customer-order-history-detail-table'><div class='customer-order-history-detail-head'><span>" + esc(t("customer_order_detail_line")) + "</span><span>" + esc(t("customer_order_detail_kind")) + "</span><span>" + esc(t("customer_order_quantity")) + "</span><span>" + esc(t("customer_order_unit_price")) + "</span><span>" + esc(t("customer_order_line_total")) + "</span></div>" +
+        customerOrderHistoryItemRowsHtml(order) + "</div><div class='customer-order-history-detail-totals'><div><span>" + esc(t("customer_order_product_subtotal")) + "</span><strong>" + esc(customerOrderCurrency(customerOrderProductSubtotal(order))) + "</strong></div>" +
+        (coreChargeTotal > 0 ? "<div class='core-charge'><span>" + esc(t("customer_order_core_charge_total")) + "</span><strong>" + esc(customerOrderCurrency(coreChargeTotal)) + "</strong></div>" : "") +
+        "<div><span>" + esc(t("customer_order_shipping_fee")) + "</span><strong>" + esc(customerOrderCurrency(order.shipping_fee_jpy)) + "</strong></div><div><span>" + esc(t("customer_order_tax")) + "</span><strong>" + esc(customerOrderCurrency(order.tax_jpy)) + "</strong></div><div class='grand-total'><span>" + esc(t("customer_order_total")) + "</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div></div></section>" +
     "</article>";
   }).join("");
 }

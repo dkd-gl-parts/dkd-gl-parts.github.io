@@ -327,6 +327,35 @@ if (!orderCurrency.includes("return formatYenCurrency(value)") ||
     orderCurrency.includes('"JPY "')) {
   throw new Error("order-screen amounts must use the yen symbol instead of the JPY currency code");
 }
+const historyDisplay = sourceBetween("function customerOrderTrackingNumberText", "async function loadCustomerOrderHistory");
+const formattedTracking = vm.runInNewContext(`${sourceBetween("function customerOrderTrackingNumberText", "function customerOrderCoreReturnStatusLabel")}\ncustomerOrderTrackingNumberText("391039084402");`);
+if (formattedTracking !== "3910-3908-4402") {
+  throw new Error("12-digit customer order tracking numbers must display in 4-4-4 groups");
+}
+[
+  'customer_order_shipping_unused: "未使用"',
+  'customer_order_tracking_unissued: "未発行"',
+  'customer_order_core_return_needed: "要コア返却"',
+  'function customerOrderCoreReturnStatusLabel',
+  'customer-order-history-detail',
+  'customerOrderHistoryItemRowsHtml(order)',
+  't("customer_order_core_charge_kind")'
+].forEach((fragment) => {
+  if (!source.includes(fragment)) throw new Error(`customer order history display is missing: ${fragment}`);
+});
+if (historyDisplay.includes('"（" + t("customer_order_core_charge_no_return_status")') ||
+    !historyDisplay.includes('customerOrderTrackingNumberText(order.outbound_tracking_number)') ||
+    !historyDisplay.includes('customerOrderTrackingNumberText(order.return_tracking_number)') ||
+    !historyDisplay.includes('customerOrderCoreReturnStatusLabel(order)')) {
+  throw new Error("order history must separate part numbers, waybill state, and core-return state");
+}
+[
+  ".customer-order-history-detail { grid-column: 1 / -1;",
+  ".customer-order-history-detail-table { overflow-x: auto;",
+  ".customer-order-history-detail-totals { display: flex;"
+].forEach((fragment) => {
+  if (!css.includes(fragment)) throw new Error(`customer order history detail styling is missing: ${fragment}`);
+});
 const coreRequirement = sourceBetween("function customerOrderCartRequiresCoreReturn", "function customerOrderCoreReturnShippingMethodPayload");
 if (!coreRequirement.includes('item.core_return_handling !== "charge_no_return"')) {
   throw new Error("core-charge/no-return lines must not require a return shipping method");
@@ -384,6 +413,9 @@ if (accountingContext.customerOrderProductUnitPrice(previewSeparatedItem) !== 76
   "受注時に交換コアを返却する運用ではない",
   "コア代金を計上しても商品マスタの「コア返却必要」は変更しない",
   "商品マスタでコア返却不要の商品には選択欄を表示しない",
+  "12桁の商品発送送り状番号を4桁ずつ区切って表示する",
+  "コア返却便を「未使用」、コア返却用送り状を「未発行」、コア返却を「請求済み」",
+  "`awaiting_return`は「要コア返却」と表示し、内部状態値を画面へ直接表示しない",
   '"product_core_return_required": true',
   '"core_charge_billed": false'
 ].forEach((fragment) => {
