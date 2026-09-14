@@ -7338,13 +7338,11 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-accounting-hanbaiou-guide > summary::before { content: "\25B6"; flex: 0 0 auto; color: #9b6b13; font-size: 9px; }
 .sales-accounting-hanbaiou-guide[open] > summary::before { content: "\25BC"; }
 .sales-accounting-hanbaiou-guide > summary > span { flex: 1; }
-.sales-accounting-hanbaiou-guide > summary > strong { border: 1px solid #d7aa53; border-radius: 4px; padding: 3px 7px; background: #fff; color: #8a5100; font-size: 9px; white-space: nowrap; }
 .sales-accounting-hanbaiou-guide-body { border-top: 1px solid #ead8b6; padding: 12px 20px 14px; }
 .sales-accounting-hanbaiou-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; margin: 0 0 10px; padding: 0; counter-reset: hanbaiou-step; list-style: none; }
 .sales-accounting-hanbaiou-steps li { min-width: 0; border: 1px solid #dfd2b8; padding: 8px 9px; background: #fff; color: #544b3d; font-size: 9px; font-weight: 800; line-height: 1.4; }
 .sales-accounting-hanbaiou-steps li::before { counter-increment: hanbaiou-step; content: counter(hanbaiou-step); display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: 6px; border-radius: 50%; background: #9b6b13; color: #fff; font-size: 9px; }
-.sales-accounting-hanbaiou-toolbar { display: flex; align-items: center; gap: 7px; }
-.sales-accounting-hanbaiou-toolbar > span { margin-right: auto; color: #5f5545; font-size: 9px; font-weight: 800; }
+.sales-accounting-hanbaiou-toolbar { display: flex; align-items: center; justify-content: flex-end; gap: 7px; }
 .sales-accounting-hanbaiou-toolbar button,
 .sales-accounting-hanbaiou-history button,
 .sales-accounting-hanbaiou-code > button { min-height: 30px; border: 1px solid #8a692d; border-radius: 4px; padding: 0 9px; background: #fff; color: #70511e; font-size: 9px; font-weight: 800; cursor: pointer; }
@@ -7352,24 +7350,11 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-accounting-hanbaiou-toolbar button.reset { border-color: #b9c1c8; color: #4d5964; }
 .sales-accounting-hanbaiou-toolbar button:disabled,
 .sales-accounting-hanbaiou-history button:disabled { border-color: #ccd1d6; background: #edf0f2; color: #939aa2; cursor: not-allowed; }
-.sales-accounting-hanbaiou-note { margin: 9px 0 8px; border-left: 3px solid #d19b39; padding: 6px 8px; background: #fff; color: #655b4b; font-size: 9px; line-height: 1.55; }
-.sales-accounting-hanbaiou-product-list { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border: 1px solid #ded5c4; background: #fff; }
-.sales-accounting-hanbaiou-metric { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: baseline; gap: 4px; min-width: 0; min-height: 48px; border-right: 1px solid #e5ded1; padding: 8px 10px; }
-.sales-accounting-hanbaiou-metric:last-child { border-right: 0; }
-.sales-accounting-hanbaiou-metric span { align-self: start; grid-column: 1 / -1; color: #6d665b; font-size: 8px; font-weight: 800; }
-.sales-accounting-hanbaiou-metric strong { color: #263544; font-size: 16px; line-height: 1; }
-.sales-accounting-hanbaiou-metric small { color: #72808c; font-size: 8px; font-weight: 700; }
-.sales-accounting-hanbaiou-metric.not-issued strong { color: #9a5d0a; }
-.sales-accounting-hanbaiou-metric.ready strong { color: #246541; }
-.sales-accounting-hanbaiou-metric.incomplete strong { color: #b42318; }
-.sales-accounting-hanbaiou-metric.exported strong { color: #285d91; }
-.sales-accounting-hanbaiou-metric.registered strong { color: #246541; }
 .sales-accounting-hanbaiou-status { display: inline-flex; align-items: center; min-height: 21px; border: 1px solid #c0c8cf; border-radius: 4px; padding: 1px 5px; background: #f4f6f7; color: #596673; font-size: 8px; font-style: normal; font-weight: 800; white-space: nowrap; }
 .sales-accounting-hanbaiou-status.issued { border-color: #87a8c9; background: #eef6ff; color: #285d91; }
 .sales-accounting-hanbaiou-status.exported { border-color: #d7ad5d; background: #fff8e8; color: #80570d; }
 .sales-accounting-hanbaiou-status.registered { border-color: #82b797; background: #eff8f2; color: #246541; }
 .sales-accounting-hanbaiou-status.inactive { border-color: #db9c98; background: #fff2f1; color: #9d312a; }
-.sales-accounting-hanbaiou-empty { grid-column: 1 / -1; padding: 16px; color: #7c7569; font-size: 10px; text-align: center; }
 .sales-accounting-hanbaiou-history { display: flex; align-items: center; gap: 6px; overflow-x: auto; margin-top: 8px; }
 .sales-accounting-hanbaiou-history > span { flex: 0 0 auto; color: #655b4b; font-size: 9px; font-weight: 800; }
 .sales-accounting-hanbaiou-history button { flex: 0 0 auto; min-height: 26px; }
@@ -8266,9 +8251,6 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .sales-accounting-export-issues { grid-column: 1 / -1; }
   .sales-accounting-export-order-simple .sales-accounting-export-order-products { grid-column: 1 / -1; }
   .sales-accounting-export-total { grid-column: 2; grid-row: 1; }
-  .sales-accounting-hanbaiou-product-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .sales-accounting-hanbaiou-metric:nth-child(3n) { border-right: 0; }
-  .sales-accounting-hanbaiou-metric:nth-child(-n + 3) { border-bottom: 1px solid #e5ded1; }
   .shipping-document-workspace { grid-template-columns: 1fr; overflow: visible; }
   .shipping-document-filter-row { grid-template-columns: minmax(0, 1fr) 1fr 1fr; }
   .shipping-document-filter-row > input:first-child { grid-column: 1 / -1; }
@@ -8359,15 +8341,10 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .sales-accounting-export-heading { padding: 14px; }
   .sales-accounting-export-summary { padding: 9px 14px; }
   .sales-accounting-hanbaiou-guide > summary { align-items: flex-start; flex-wrap: wrap; padding: 10px 14px; }
-  .sales-accounting-hanbaiou-guide > summary > strong { margin-left: 17px; white-space: normal; }
   .sales-accounting-hanbaiou-guide-body { padding: 10px 14px 12px; }
   .sales-accounting-hanbaiou-steps { grid-template-columns: 1fr 1fr; }
   .sales-accounting-hanbaiou-toolbar { align-items: stretch; flex-direction: column; }
-  .sales-accounting-hanbaiou-toolbar > span { margin-right: 0; }
   .sales-accounting-hanbaiou-toolbar button { width: 100%; }
-  .sales-accounting-hanbaiou-product-list { grid-template-columns: 1fr; }
-  .sales-accounting-hanbaiou-metric { border-right: 0; border-bottom: 1px solid #e5ded1; }
-  .sales-accounting-hanbaiou-metric:last-child { border-bottom: 0; }
   .sales-accounting-export-section-head { align-items: flex-start; flex-direction: column; }
   .sales-accounting-export-footer { align-items: stretch; flex-direction: column; padding: 12px 14px; }
   .sales-accounting-export-footer button { width: 100%; }

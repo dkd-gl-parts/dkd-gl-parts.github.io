@@ -6424,7 +6424,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.979";
+var APP_VERSION       = "v1.1.980";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -13360,48 +13360,21 @@ function salesAccountingExportProductCodeHtml(item, profile) {
 function renderSalesAccountingHanbaiouGuide() {
   var state = ensureSalesAccountingExportState();
   var guide = document.getElementById("sales-accounting-hanbaiou-guide");
-  var list = document.getElementById("sales-accounting-hanbaiou-product-list");
   var history = document.getElementById("sales-accounting-hanbaiou-history");
-  if (!guide || !list || !history) return;
+  if (!guide || !history) return;
   var isHanbaiou = state.targetSystem === "hanbaiou" && state.hasSearched;
   guide.hidden = !isHanbaiou;
   if (!isHanbaiou) return;
 
   if (!state.hanbaiouCatalog) {
-    var pendingSummary = document.getElementById("sales-accounting-hanbaiou-guide-summary");
-    if (pendingSummary) pendingSummary.textContent = salesAccountingExportLoading
-      ? t("hanbaiou_catalog_loading")
-      : t("hanbaiou_catalog_unavailable");
-    list.innerHTML = "<div class='sales-accounting-hanbaiou-empty'>" + esc(pendingSummary ? pendingSummary.textContent : t("hanbaiou_catalog_loading")) + "</div>";
     history.innerHTML = "";
     updateSalesAccountingHanbaiouActions();
     return;
   }
 
   var catalog = state.hanbaiouCatalog || {};
-  var eligibleCount = Number(catalog.eligible_count || 0);
   var pendingCount = Number(catalog.pending_count || 0);
-  var notIssuedCount = Number(catalog.not_issued_count || 0);
-  var exportedCount = Number(catalog.exported_count || 0);
-  var registeredCount = Number(catalog.registered_count || 0);
-  var readyCount = Number(catalog.ready_count || 0);
-  var incompleteCount = Number(catalog.incomplete_count || 0);
-  var summary = document.getElementById("sales-accounting-hanbaiou-guide-summary");
-  if (summary) summary.textContent = pendingCount
-    ? tf("hanbaiou_catalog_pending_summary", { count: pendingCount.toLocaleString() })
-    : t("hanbaiou_catalog_complete_summary");
   if (pendingCount && !guide.open) guide.open = true;
-
-  list.innerHTML = [
-    ["hanbaiou_catalog_eligible", eligibleCount, "eligible"],
-    ["hanbaiou_catalog_ready", readyCount, "ready"],
-    ["hanbaiou_catalog_incomplete", incompleteCount, "incomplete"],
-    ["hanbaiou_catalog_not_issued", notIssuedCount, "not-issued"],
-    ["hanbaiou_catalog_exported", exportedCount, "exported"],
-    ["hanbaiou_catalog_registered", registeredCount, "registered"]
-  ].map(function(metric) {
-    return "<div class='sales-accounting-hanbaiou-metric " + esc(metric[2]) + "'><span>" + esc(t(metric[0])) + "</span><strong>" + esc(Number(metric[1]).toLocaleString()) + "</strong><small>" + esc(t("hanbaiou_catalog_count_unit")) + "</small></div>";
-  }).join("");
 
   var batches = Array.isArray(state.hanbaiouBatches) ? state.hanbaiouBatches : [];
   history.innerHTML = batches.length ? "<span>商品台帳CSV履歴</span>" + batches.slice(0, 3).map(function(batch) {
@@ -13424,13 +13397,11 @@ function updateSalesAccountingHanbaiouActions() {
   var exportedCount = Number(catalog.exported_count || 0);
   var resettableCount = Number(catalog.resettable_count || 0);
   var latestBatchId = parseInt(catalog.latest_confirmable_batch_id, 10);
-  var summary = document.getElementById("sales-accounting-hanbaiou-selected-summary");
   var issueButton = document.getElementById("sales-accounting-hanbaiou-issue");
   var exportButton = document.getElementById("sales-accounting-hanbaiou-export");
   var confirmButton = document.getElementById("sales-accounting-hanbaiou-confirm");
   var resetButton = document.getElementById("sales-accounting-hanbaiou-reset");
   var busy = salesAccountingProductOnboardingSaving || salesAccountingExportLoading || salesAccountingExportSaving;
-  if (summary) summary.textContent = tf("hanbaiou_catalog_csv_target", { count: pendingCount.toLocaleString() });
   if (issueButton) {
     issueButton.disabled = busy || notIssuedCount === 0;
     issueButton.textContent = salesAccountingProductOnboardingSaving ? "処理中..." : t("hanbaiou_catalog_issue_button");

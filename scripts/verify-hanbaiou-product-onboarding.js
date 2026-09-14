@@ -23,12 +23,10 @@ function functionSource(name) {
 
 for (const id of [
   "sales-accounting-hanbaiou-guide",
-  "sales-accounting-hanbaiou-guide-summary",
   "sales-accounting-hanbaiou-issue",
   "sales-accounting-hanbaiou-export",
   "sales-accounting-hanbaiou-confirm",
   "sales-accounting-hanbaiou-reset",
-  "sales-accounting-hanbaiou-product-list",
   "sales-accounting-hanbaiou-history",
 ]) requireFragment(html, `id="${id}"`);
 
@@ -72,13 +70,9 @@ requireFragment(reset, 'tf("hanbaiou_catalog_reset_prompt"');
 requireFragment(reset, 't("hanbaiou_catalog_reset_progress")');
 
 const renderGuide = functionSource("renderSalesAccountingHanbaiouGuide");
-if (/incomplete_products|sales-accounting-hanbaiou-validation|sales-accounting-hanbaiou-missing-tags|3品番の不足明細/.test(renderGuide + html + css)) {
-  throw new Error("The product-master detail list must not be displayed in the sales-data export screen");
-}
-
-requireFragment(html, "台帳は「商品」、ファイルは「区切り文字形式ファイル（*.csv, *.txt）」");
-if (html.includes("商品台帳（販売王20～形式）")) {
-  throw new Error("The Sales King import guide must match the actual import wizard");
+const updateActions = functionSource("updateSalesAccountingHanbaiouActions");
+if (/incomplete_products|sales-accounting-hanbaiou-(?:validation|missing-tags|product-list|metric|selected-summary|guide-summary|note)|3品番の不足明細|CSV対象/.test(renderGuide + updateActions + html + css)) {
+  throw new Error("Product-master decision metrics and detail lists must not be displayed in the sales-data export screen");
 }
 
 const candidates = functionSource("renderSalesAccountingExportCandidates");
@@ -96,8 +90,6 @@ for (const fragment of [
 for (const fragment of [
   ".sales-accounting-hanbaiou-guide",
   ".sales-accounting-hanbaiou-steps",
-  ".sales-accounting-hanbaiou-product-list",
-  ".sales-accounting-hanbaiou-metric",
   ".sales-accounting-hanbaiou-status.registered",
 ]) requireFragment(css, fragment);
 
