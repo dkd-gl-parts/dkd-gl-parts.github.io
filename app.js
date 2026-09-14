@@ -6550,7 +6550,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.991";
+var APP_VERSION       = "v1.1.992";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -17630,7 +17630,7 @@ function renderSalesOrderDetail() {
     return "<button type='button' class='sales-order-action " + esc(action) + "' data-sales-order-action='" + esc(action) + "'>" + esc(actionLabels[action] || action) + "</button>";
   }).join("");
   var cancelAction = allowed.indexOf("cancel") >= 0
-    ? "<details class='sales-order-secondary-actions'><summary>その他の操作</summary><div><button type='button' class='sales-order-action cancel' data-sales-order-action='cancel'>受注取消</button></div></details>"
+    ? "<details class='sales-order-secondary-actions'><summary><span>その他の操作</span></summary><div><button type='button' class='sales-order-action cancel' data-sales-order-action='cancel'>受注取消</button></div></details>"
     : "";
   var outboundService = salesOrderWaybillCarrierLabel(order, "outbound");
   var outboundWaybillDetail = salesOrderWaybillDetailLabel(order, "outbound");

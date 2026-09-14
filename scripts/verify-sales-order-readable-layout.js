@@ -65,6 +65,14 @@ for (const fragment of [
   ".sales-order-dashboard-metric { flex: 0 0 118px; min-width: 118px;"
 ]) requireFragment(fragment);
 
+for (const [label, pattern] of [
+  ["stacked dashboard label and count", /#screen-sales-order-mgmt \.sales-order-dashboard-metric\s*\{[^}]*flex-direction:\s*column;[^}]*gap:\s*2px;/s],
+  ["wrapping dashboard label", /#screen-sales-order-mgmt \.sales-order-dashboard-metric span\s*\{[^}]*overflow-wrap:\s*anywhere;[^}]*white-space:\s*normal;/s],
+  ["separated dashboard count", /#screen-sales-order-mgmt \.sales-order-dashboard-metric strong\s*\{[^}]*align-self:\s*flex-end;[^}]*margin-left:\s*0;/s]
+]) {
+  if (!pattern.test(readableCss)) throw new Error(`Missing overlap guard: ${label}`);
+}
+
 for (const fragment of [
   ".sales-order-charge-row { background: #fbfcfc; }",
   ".sales-order-shipping-row { border-top: 2px solid #cdd8d2; }",

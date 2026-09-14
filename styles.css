@@ -9857,7 +9857,22 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-detail-next-actions > span,
   #screen-sales-order-mgmt .sales-order-detail-next-actions > strong { font-size: 12px; line-height: 1.4; }
   #screen-sales-order-mgmt .sales-order-detail-next-actions .sales-order-action,
-  #screen-sales-order-mgmt .sales-order-secondary-actions > summary { min-height: 38px; padding: 7px 11px; font-size: 14px; line-height: 1.4; }
+  #screen-sales-order-mgmt .sales-order-secondary-actions > summary {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 38px;
+    padding: 7px 32px 7px 11px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  #screen-sales-order-mgmt .sales-order-secondary-actions > summary::after {
+    top: 50%;
+    right: 11px;
+    transform: translateY(-50%);
+  }
+  #screen-sales-order-mgmt .sales-order-secondary-actions > summary > span { min-width: 0; }
   #screen-sales-order-mgmt .sales-order-secondary-actions > div button { min-height: 38px; font-size: 14px; }
   #screen-sales-order-mgmt .sales-order-operation-tracks { gap: 10px; margin: 10px 0 6px; }
   #screen-sales-order-mgmt .sales-order-operation-track { grid-template-columns: minmax(104px, auto) minmax(0, 1fr); min-height: 48px; padding: 8px 12px; }
@@ -10110,10 +10125,32 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-dashboard { gap: 12px; border-bottom-color: #cdd6dd; background: #f8faf9; }
   #screen-sales-order-mgmt .sales-order-dashboard-heading { min-width: 88px; }
   #screen-sales-order-mgmt .sales-order-dashboard-metrics { gap: 0; overflow: hidden; border: 1px solid #cfd7dd; border-radius: 6px; background: #fff; }
-  #screen-sales-order-mgmt .sales-order-dashboard-metric { min-height: 44px; border: 0; border-left: 1px solid #dde3e7; border-radius: 0; padding: 6px 10px; background: #fff; }
+  #screen-sales-order-mgmt .sales-order-dashboard-metric {
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    min-height: 44px;
+    border: 0;
+    border-left: 1px solid #dde3e7;
+    border-radius: 0;
+    padding: 4px 6px;
+    background: #fff;
+  }
   #screen-sales-order-mgmt .sales-order-dashboard-metric:first-child { border-left: 0; }
   #screen-sales-order-mgmt .sales-order-dashboard-metric:hover { border-color: #dde3e7; background: #f6f8f9; }
-  #screen-sales-order-mgmt .sales-order-dashboard-metric span { display: inline-flex; align-items: center; gap: 6px; color: #596672; }
+  #screen-sales-order-mgmt .sales-order-dashboard-metric span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    overflow: visible;
+    color: #596672;
+    font-size: 12px;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
   #screen-sales-order-mgmt .sales-order-dashboard-metric span::before { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: #7b8793; content: ""; }
   #screen-sales-order-mgmt .sales-order-dashboard-metric.submitted span::before { background: #c88a22; }
   #screen-sales-order-mgmt .sales-order-dashboard-metric.accepted span::before { background: #3d7fae; }
@@ -10121,7 +10158,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-dashboard-metric.shipped span::before { background: #2f8252; }
   #screen-sales-order-mgmt .sales-order-dashboard-metric.completed span::before { background: #5c7769; }
   #screen-sales-order-mgmt .sales-order-dashboard-metric.cancelled span::before { background: #b55353; }
-  #screen-sales-order-mgmt .sales-order-dashboard-metric strong { color: #26323d; font-size: 18px; }
+  #screen-sales-order-mgmt .sales-order-dashboard-metric strong { align-self: flex-end; margin-left: 0; color: #26323d; font-size: 18px; }
   #screen-sales-order-mgmt .sales-order-dashboard-metric.active { border-color: #dde3e7; box-shadow: inset 0 -3px 0 #287356; background: #eef7f2; }
 
   #screen-sales-order-mgmt .sales-order-detail-head { border-bottom: 1px solid #cfd7dd; }
