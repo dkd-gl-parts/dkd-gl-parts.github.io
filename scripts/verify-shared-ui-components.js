@@ -65,7 +65,9 @@ function requireFragment(source, fragment, label) {
   ["#screen-production-search .production-kv div { padding: 4px; }", "manufacturing compact metadata rows"],
   ["#screen-production-search .production-core-policy-row { grid-template-columns: 70px minmax(0, 1fr); padding: 3px 0; }", "manufacturing compact core policy rows"],
   ["#screen-production-search textarea:focus-visible", "manufacturing focus treatment"],
-  [".customer-order-history-list { border: 1px solid var(--dcats-border); border-radius: var(--dcats-card-radius)", "customer card geometry"],
+  [".customer-order-history-list { display: grid; gap: 14px; border: 0;", "customer order list spacing"],
+  [".customer-order-history-row { display: grid;", "customer order card layout"],
+  ["border: 1px solid var(--dcats-border); border-radius: var(--dcats-card-radius);", "customer order card geometry"],
   ["#screen-customer-orders textarea:focus-visible", "shared customer focus treatment"],
   ["outline: 2px solid var(--dcats-focus)", "shared focus width"]
 ].forEach(([fragment, label]) => requireFragment(css, fragment, label));

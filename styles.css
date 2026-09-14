@@ -6708,9 +6708,8 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .customer-order-submit-button:disabled { border-color: #cfd6d3; background: #dfe4e2; color: #89938f; cursor: not-allowed; }
 .customer-order-history { padding-top: 22px; padding-bottom: 42px; }
 .customer-order-history > .customer-order-section-head { justify-content: flex-end; }
-.customer-order-history-list { border: 1px solid var(--dcats-border); border-radius: var(--dcats-card-radius); background: #fff; overflow: hidden; }
-.customer-order-history-row { display: grid; grid-template-columns: minmax(160px, .8fr) minmax(220px, 1.5fr) 130px minmax(260px, 1fr); align-items: center; gap: 18px; border-bottom: 1px solid #e0e6e3; padding: 15px 16px; }
-.customer-order-history-row:last-child { border-bottom: 0; }
+.customer-order-history-list { display: grid; gap: 14px; border: 0; border-radius: 0; background: transparent; overflow: visible; }
+.customer-order-history-row { display: grid; grid-template-columns: minmax(160px, .8fr) minmax(220px, 1.5fr) 130px minmax(260px, 1fr); align-items: center; gap: 18px; border: 1px solid var(--dcats-border); border-radius: var(--dcats-card-radius); padding: 15px 16px; background: #fff; overflow: hidden; }
 .customer-order-history-row > div:first-child strong { display: inline-block; margin-left: 8px; color: #245f49; font-size: var(--dcats-type-supporting); }
 .customer-order-number { color: #17231f; font-size: var(--dcats-type-body); font-weight: 800; }
 .customer-order-history-row small { display: block; margin-top: 4px; color: #74817b; font-size: var(--dcats-type-supporting); }
@@ -6752,9 +6751,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .customer-order-history-detail-totals strong { display: block; }
 .customer-order-history-detail-totals span { color: #74817b; font-size: var(--dcats-type-supporting); }
 .customer-order-history-detail-totals strong { margin-top: 2px; color: #26352f; font-size: var(--dcats-type-body); }
-.customer-order-history-detail-totals .core-charge { background: #fff9ed; }
 .customer-order-history-detail-totals .core-charge strong { color: #80570d; }
-.customer-order-history-detail-totals .grand-total { background: #eef7f2; }
 .customer-order-history-detail-totals .grand-total strong { color: #1b6641; font-size: 14px; }
 .customer-order-vehicle-summary { margin-top: 3px; border-top: 1px solid #dbe3df; border-bottom: 1px solid #dbe3df; padding: 9px 0; }
 .customer-order-vehicle-summary h4 { margin-bottom: 7px; color: #285e48; font-size: var(--dcats-type-supporting); }
