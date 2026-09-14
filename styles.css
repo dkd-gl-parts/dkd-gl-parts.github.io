@@ -10086,8 +10086,25 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-filter-row { align-items: center; }
   #screen-sales-order-mgmt .sales-order-selection-controls:has(.sales-order-selection-summary:not(.active)) { opacity: .78; }
 
-  #screen-sales-order-mgmt .sales-order-auto-print { border-bottom-color: #cfd8d3; background: #f5f8f6; }
-  #screen-sales-order-mgmt .sales-order-auto-print-heading { align-items: center; flex-direction: row; }
+  #screen-sales-order-mgmt .sales-order-auto-print {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    border-bottom-color: #cfd8d3;
+    background: #f5f8f6;
+  }
+  #screen-sales-order-mgmt .sales-order-auto-print-heading {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  #screen-sales-order-mgmt .sales-order-auto-print-heading > strong { min-width: 0; }
+  #screen-sales-order-mgmt .sales-order-auto-print-state {
+    flex: 0 1 auto;
+    max-width: 100%;
+    text-align: center;
+    white-space: normal;
+  }
+  #screen-sales-order-mgmt .sales-order-print-settings-button { max-width: 100%; }
   #screen-sales-order-mgmt .sales-order-auto-print-scope { color: #66736d; }
 
   #screen-sales-order-mgmt .sales-order-dashboard { gap: 12px; border-bottom-color: #cdd6dd; background: #f8faf9; }
