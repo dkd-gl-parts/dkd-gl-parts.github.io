@@ -156,6 +156,22 @@ if (!managementRender.includes("renderShippingServiceVisibilityControls(loadErro
   throw new Error("shipping management must render carrier delivery-service visibility controls");
 }
 
+const shippingDetailSource = sourceBetween("var SHIPPING_RATE_HIDDEN_NOTES", "function shippingRateCell");
+[
+  'var SHIPPING_RATE_HIDDEN_NOTES = ["\\u95a2\\u897f\\u767a\\u30fb\\u304a\\u5ba2\\u69d8\\u5411\\u3051\\u904b\\u8cc3\\uff08\\u7a0e\\u629c\\uff09"]',
+  "function shippingRateVisibleNote(note)",
+  "SHIPPING_RATE_HIDDEN_NOTES.indexOf(value.trim()) === -1",
+  "var note = shippingRateVisibleNote(row.note);",
+  "if (note)"
+].forEach((fragment) => {
+  if (!shippingDetailSource.includes(fragment)) throw new Error(`shipping note display rule is missing: ${fragment}`);
+});
+const salesShippingRender = sourceBetween("function renderSalesShippingEstimate", "async function loadSalesShippingEstimateForCurrent");
+if (!salesShippingRender.includes("var note = shippingRateVisibleNote(selectedRate.note);") ||
+    !salesShippingRender.includes('if (note) html += "<span><b>" + esc(t("shipping_note"))')) {
+  throw new Error("sales shipping estimates must use the same shipping note display rule");
+}
+
 const serviceVisibilitySource = sourceBetween("function shippingServiceVisibilityKey", "function shippingRateById");
 [
   "function shippingServiceVisibilityGroups()",

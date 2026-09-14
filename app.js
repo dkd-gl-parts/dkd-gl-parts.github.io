@@ -6478,7 +6478,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.988";
+var APP_VERSION       = "v1.1.989";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -18804,11 +18804,19 @@ function shippingPackageHtml(row) {
     (limits.length ? "<span class='shipping-rate-package-limits'>" + limits.join(" / ") + "</span>" : "");
 }
 
+var SHIPPING_RATE_HIDDEN_NOTES = ["\u95a2\u897f\u767a\u30fb\u304a\u5ba2\u69d8\u5411\u3051\u904b\u8cc3\uff08\u7a0e\u629c\uff09"];
+
+function shippingRateVisibleNote(note) {
+  var value = note == null ? "" : String(note);
+  return SHIPPING_RATE_HIDDEN_NOTES.indexOf(value.trim()) === -1 ? value : "";
+}
+
 function shippingRateDetailHtml(row) {
   var html = "";
+  var note = shippingRateVisibleNote(row.note);
   if (row.origin_region) html += "<span class='shipping-rate-origin'>" + esc(t("shipping_origin_region")) + ": " + esc(row.origin_region) + "</span>";
   if (row.remote_island_condition) html += "<span><b>" + esc(t("shipping_island_condition")) + ":</b> " + esc(row.remote_island_condition) + "</span>";
-  if (row.note) html += "<span><b>" + esc(t("shipping_note")) + ":</b> " + esc(row.note) + "</span>";
+  if (note) html += "<span><b>" + esc(t("shipping_note")) + ":</b> " + esc(note) + "</span>";
   return html || "-";
 }
 
@@ -19124,10 +19132,11 @@ function renderSalesShippingEstimate(loadError) {
   } else if (!selectedRate) {
     html += "<div class='sales-shipping-message warning'>" + esc(t("sales_shipping_no_rate")) + "</div>";
   } else {
+    var note = shippingRateVisibleNote(selectedRate.note);
     html += "<div class='sales-shipping-result'><span>" + esc(t("sales_shipping_rate")) + "</span><div>" + shippingFeeHtml(selectedRate.standard_fee_jpy, selectedRate.tax_type) + "</div></div>";
     html += "<div class='sales-shipping-island'><span><b>" + esc(t("shipping_island_fee")) + ":</b> " + shippingFeeHtml(selectedRate.remote_island_fee_jpy, selectedRate.tax_type) + "</span>";
     if (selectedRate.remote_island_condition) html += "<span><b>" + esc(t("shipping_island_condition")) + ":</b> " + esc(selectedRate.remote_island_condition) + "</span>";
-    if (selectedRate.note) html += "<span><b>" + esc(t("shipping_note")) + ":</b> " + esc(selectedRate.note) + "</span>";
+    if (note) html += "<span><b>" + esc(t("shipping_note")) + ":</b> " + esc(note) + "</span>";
     html += "</div>";
   }
   host.innerHTML = html;
