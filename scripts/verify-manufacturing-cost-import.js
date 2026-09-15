@@ -9,6 +9,13 @@ const styles = fs.readFileSync(path.join(root, "styles.css"), "utf8");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const build = fs.readFileSync(path.join(root, "scripts", "build-static-site.js"), "utf8");
 
+function sourceBetween(startText, endText) {
+  const start = app.indexOf(startText);
+  const end = app.indexOf(endText, start + startText.length);
+  if (start < 0 || end < start) throw new Error(`${startText} could not be isolated`);
+  return app.slice(start, end);
+}
+
 const sandbox = { window: {} };
 vm.runInNewContext(source, sandbox, { filename: "manufacturing-cost-import.js" });
 const api = sandbox.window.DcatsManufacturingCostImport;
@@ -103,11 +110,100 @@ if (!styles.includes(".form-card.manufacturing-cost-import-card") || !styles.inc
 }
 if ((app.match(/manufacturing_cost_import_open:/g) || []).length !== 3 ||
     (app.match(/manufacturing_cost_import_pdf_no_text:/g) || []).length !== 3 ||
-    (app.match(/manufacturing_cost_import_search_selected_n:/g) || []).length !== 3) {
+    (app.match(/manufacturing_cost_import_search_selected_n:/g) || []).length !== 3 ||
+    (app.match(/manufacturing_cost_import_unregistered_title:/g) || []).length !== 3 ||
+    (app.match(/manufacturing_cost_import_result_summary:/g) || []).length !== 3) {
   throw new Error("manufacturing cost import translations must cover all supported languages");
 }
 if (!source.includes("file.arrayBuffer()") || source.includes("fetch(file") || source.includes("FormData")) {
   throw new Error("pallet files must be parsed locally without uploading the file");
 }
+if (!source.includes('dcats:manufacturing-cost-import-search') || !source.includes("parts: values.slice()")) {
+  throw new Error("imported part numbers must be handed to the candidate search with their source context");
+}
+if (!styles.includes(".manufacturing-cost-import-result-group") ||
+    !styles.includes(".manufacturing-cost-import-unregistered")) {
+  throw new Error("grouped candidates and unregistered imported parts must have dedicated layouts");
+}
 
-console.log("manufacturing cost variable-layout import guard passed");
+const masterSearchSource = sourceBetween("async function fetchCoreProductMasterMatches", "async function runProductSearch");
+if (!masterSearchSource.includes("options.exactOnly") ||
+    masterSearchSource.indexOf("options.exactOnly") > masterSearchSource.indexOf("search_core_products_by_prefix_fast")) {
+  throw new Error("imported part matching must stop after exact product-master lookup before prefix search");
+}
+
+const groupedFetchSource = sourceBetween("async function fetchManufacturingCostProducts", "async function fetchManufacturingCostProductsByIds");
+const fetchCalls = [];
+const fetchSandbox = {
+  fetchCoreProductMasterMatches: async (token, category, limit, options) => {
+    fetchCalls.push({ token, category, limit, options });
+    if (token === "MISSING") return { data: [], error: null };
+    return { data: [
+      { dkd_shohin_id: 101, genuine_part_number: token },
+      { dkd_shohin_id: 102, genuine_part_number: token }
+    ], error: null };
+  },
+  fetchCategoryProducts: async () => ({ data: [], error: null }),
+  normalizeCoreProductFastRows: (rows) => rows,
+  filterVisibleProducts: (rows) => rows,
+  productDkdId: (row) => row.dkd_shohin_id
+};
+vm.runInNewContext(`${groupedFetchSource}; result = fetchManufacturingCostProducts;`, fetchSandbox);
+
+const groupedRenderSource = sourceBetween("function renderManufacturingCostCandidateRow", "function selectedManufacturingCostCandidateProducts");
+const candidateWrap = { innerHTML: "" };
+const renderSandbox = {
+  manufacturingCostCandidateRows: [],
+  manufacturingCostCandidateMode: "",
+  manufacturingCostCandidateGroups: [],
+  document: { getElementById: (id) => id === "manufacturing-cost-candidates" ? candidateWrap : null },
+  productDkdId: (row) => row.dkd_shohin_id,
+  renderManufacturingCostCandidateStatusLabels: () => "",
+  manufacturingCostProductTitle: (row) => row.genuine_part_number,
+  manufacturingCostCurrentProductIdMap: () => ({}),
+  renderManufacturingCostCandidateEmpty: () => { throw new Error("grouped zero-match imports must not collapse to the generic empty state"); },
+  esc: (value) => String(value),
+  tCat: (value) => value,
+  t: (key) => ({
+    manufacturing_cost_candidate_badge: "候補",
+    manufacturing_cost_candidate_title: "候補品番",
+    manufacturing_cost_import_exact_note: "完全一致",
+    manufacturing_cost_select_all: "全選択",
+    manufacturing_cost_clear_selection: "全解除",
+    manufacturing_cost_calc_selected: "計算",
+    manufacturing_cost_import_unregistered_note: "完全一致なし",
+    manufacturing_cost_import_result_limit: "一部省略"
+  })[key] || key,
+  tf: (key, values) => `${key}:${Object.values(values).join("/")}`
+};
+vm.runInNewContext(`${groupedRenderSource}; result = renderManufacturingCostCandidates;`, renderSandbox);
+
+(async () => {
+  const result = await fetchSandbox.result(["31100-76G10", "MISSING"], "starter", {
+    groupByToken: true,
+    exactOnly: true
+  });
+  if (result.data.length !== 2 || result.groups.length !== 2 ||
+      result.groups[0].token !== "31100-76G10" || result.groups[0].matchCount !== 2 ||
+      result.groups[1].token !== "MISSING" || result.groups[1].matchCount !== 0) {
+    throw new Error("import candidates must retain exact per-input grouping, including zero-match parts");
+  }
+  if (fetchCalls.length !== 2 || fetchCalls.some((call) => !call.options || call.options.exactOnly !== true)) {
+    throw new Error("every imported part must use exact-only product-master matching");
+  }
+  renderSandbox.result([], "import", [{ token: "NOT-IN-MASTER", candidates: [], matchCount: 0, truncated: false }]);
+  if (!candidateWrap.innerHTML.includes("manufacturing-cost-import-unregistered") ||
+      !candidateWrap.innerHTML.includes("NOT-IN-MASTER")) {
+    throw new Error("zero-match imported parts must remain visible as product-master registrations missing");
+  }
+  renderSandbox.result(result.data, "import", result.groups);
+  if (!candidateWrap.innerHTML.includes("manufacturing-cost-import-result-group") ||
+      !candidateWrap.innerHTML.includes("31100-76G10") ||
+      !candidateWrap.innerHTML.includes("MISSING")) {
+    throw new Error("matched and unregistered imported part numbers must render in separate grouped sections");
+  }
+  console.log("manufacturing cost variable-layout import guard passed");
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

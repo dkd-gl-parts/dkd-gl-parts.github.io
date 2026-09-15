@@ -49,8 +49,8 @@ if (missing !== "") {
   throw new Error("missing statuses must be omitted like sales result badges");
 }
 
-const candidatesSource = functionSource("renderManufacturingCostCandidates", "function selectedManufacturingCostCandidateProducts");
-if (!candidatesSource.includes("renderManufacturingCostCandidateStatusLabels(product)")) {
+const candidateRowSource = functionSource("renderManufacturingCostCandidateRow", "function renderManufacturingCostImportCandidateGroups");
+if (!candidateRowSource.includes("renderManufacturingCostCandidateStatusLabels(product)")) {
   throw new Error("candidate rows must include catalog and rebuilt-component status labels");
 }
 
