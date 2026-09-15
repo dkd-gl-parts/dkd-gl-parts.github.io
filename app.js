@@ -546,6 +546,8 @@ var TRANSLATIONS = {
     sales_accounting_csv_save_failed: "CSVを保存できませんでした。",
     shipping_document_mgmt_title: "出荷帳票発行",
     shipping_document_mgmt_desc: "B2 CSVの発行履歴、保証書、コア返却帳票を注文単位で管理します。",
+    shipping_document_open_order_missing: "対象の受注を確認できませんでした。受注を選び直してください。",
+    shipping_document_open_failed: "出荷帳票発行画面を開けませんでした。もう一度お試しください。",
     shipping_document_batch_not_eligible: "発行対象外です。",
     shipping_document_batch_more: "ほか {count} 件",
     shipping_document_batch_skipped: "発行しなかった帳票:",
@@ -2777,6 +2779,8 @@ var TRANSLATIONS = {
     sales_accounting_csv_save_failed: "Could not save the CSV.",
     shipping_document_mgmt_title: "Shipping Documents",
     shipping_document_mgmt_desc: "Manage B2 CSV history, warranties, and core-return documents by order.",
+    shipping_document_open_order_missing: "The selected order could not be confirmed. Select the order again.",
+    shipping_document_open_failed: "The Shipping Documents screen could not be opened. Try again.",
     shipping_document_batch_not_eligible: "This document is not eligible for issue.",
     shipping_document_batch_more: "{count} more",
     shipping_document_batch_skipped: "Documents not issued:",
@@ -4952,6 +4956,8 @@ var TRANSLATIONS = {
     sales_accounting_csv_save_failed: "无法保存CSV。",
     shipping_document_mgmt_title: "出货单据发行",
     shipping_document_mgmt_desc: "按订单管理B2 CSV历史、保修书和旧件返还单据。",
+    shipping_document_open_order_missing: "无法确认所选订单。请重新选择订单。",
+    shipping_document_open_failed: "无法打开出货单据发行画面。请重试。",
     shipping_document_batch_not_eligible: "该单据不符合发行条件。",
     shipping_document_batch_more: "另有 {count} 件",
     shipping_document_batch_skipped: "未发行的单据：",
@@ -6817,7 +6823,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.996";
+var APP_VERSION       = "v1.1.997";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -18002,7 +18008,9 @@ function renderSalesOrderDetail() {
   var printDispatchButton = document.getElementById("sales-order-print-dispatch");
   if (printDispatchButton) printDispatchButton.addEventListener("click", function() { printSalesOrderDocument("dispatch"); });
   var shippingDocumentsButton = document.getElementById("sales-order-open-shipping-documents");
-  if (shippingDocumentsButton) shippingDocumentsButton.addEventListener("click", openSalesOrderShippingDocuments);
+  if (shippingDocumentsButton) shippingDocumentsButton.addEventListener("click", function() {
+    openSalesOrderShippingDocuments(order, shippingDocumentsButton);
+  });
   var printCoreReturnButton = document.getElementById("sales-order-print-core-return");
   if (printCoreReturnButton) printCoreReturnButton.addEventListener("click", function() { printSalesOrderDocument("core_return"); });
   var printWarrantyButton = document.getElementById("sales-order-print-warranty");
@@ -18018,9 +18026,28 @@ async function openSalesOrderSerialWarranty() {
   await enterFinishedProductShipping({ order: salesOrderDetail });
 }
 
-async function openSalesOrderShippingDocuments() {
-  if (!canManageSalesOrders() || !salesOrderDetail) return;
-  await enterShippingDocumentMgmt({ order: salesOrderDetail });
+async function openSalesOrderShippingDocuments(order, trigger) {
+  var selectedOrder = order && order.id ? order : salesOrderDetail;
+  if (!selectedOrder || !selectedOrder.id) {
+    setSalesOrderDetailMessage(t("shipping_document_open_order_missing"), true);
+    return;
+  }
+  if (trigger) {
+    trigger.disabled = true;
+    trigger.setAttribute("aria-busy", "true");
+  }
+  try {
+    await enterShippingDocumentMgmt({ order: selectedOrder });
+  } catch (error) {
+    var message = error && error.message ? error.message : t("shipping_document_open_failed");
+    if (activeScreenId() === "shipping-document-mgmt") setShippingDocumentMessage(message, true);
+    else setSalesOrderDetailMessage(message, true);
+  } finally {
+    if (trigger && trigger.isConnected) {
+      trigger.disabled = false;
+      trigger.removeAttribute("aria-busy");
+    }
+  }
 }
 
 async function issueSalesOrderDispatch() {
