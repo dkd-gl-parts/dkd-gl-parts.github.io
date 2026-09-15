@@ -318,7 +318,7 @@ function salesOrderRevisionItemProductNeedsCore(item) {
 }
 
 function salesOrderRevisionItemNeedsCoreReturn(item) {
-  return salesOrderRevisionItemProductNeedsCore(item) && item.core_return_handling !== "charge_no_return";
+  return salesOrderRevisionItemProductNeedsCore(item);
 }
 
 function salesOrderRevisionConfiguredCoreCharge(item) {

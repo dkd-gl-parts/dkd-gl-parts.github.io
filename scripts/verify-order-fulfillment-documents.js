@@ -286,8 +286,9 @@ for (const fragment of [
   "salesOrderWarrantyCategoryLabel(orderItem)",
   "customerProductKindLabel(orderItem.product_kind)",
   't("customer_order_quantity")',
-  't("customer_order_core_return_needed")',
-  't("shipping_document_core_return_not_required")',
+  "customerOrderItemCoreStatusLabel(order, orderItem)",
+  't("customer_order_core_return_returned")',
+  '"charged"',
   'tf("customer_catalog_count"'
 ]) requireFragment(shippingDocumentOrderContents, fragment, `Shipping document order contents contract is missing: ${fragment}`);
 for (const forbidden of ["受注内容", "customerOrderCoreHandlingLabel(orderItem)", "コア代金", "core_charge_jpy"]) {
@@ -1017,11 +1018,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1002"',
-  'styles.css?v=1.1.1002',
-  'app.js?v=1.1.1002'
+  'content="v1.1.1003"',
+  'styles.css?v=1.1.1003',
+  'app.js?v=1.1.1003'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1002"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1003"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
