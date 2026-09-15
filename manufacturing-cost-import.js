@@ -636,6 +636,14 @@
       values.push(part);
     });
     query.value = values.join(" ");
+    var searchEvent;
+    if (typeof root.CustomEvent === "function") {
+      searchEvent = new root.CustomEvent("dcats:manufacturing-cost-import-search", { detail: { parts: values.slice() } });
+    } else {
+      searchEvent = document.createEvent("CustomEvent");
+      searchEvent.initCustomEvent("dcats:manufacturing-cost-import-search", false, false, { parts: values.slice() });
+    }
+    document.dispatchEvent(searchEvent);
     closeDialog();
     searchButton.click();
   }

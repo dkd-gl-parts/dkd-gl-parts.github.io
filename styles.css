@@ -1989,6 +1989,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .manufacturing-cost-candidate-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
 .manufacturing-cost-candidate-actions .btn-secondary, .manufacturing-cost-candidate-actions .btn-primary { min-height: 30px; padding: 0 10px; font-size: 12px; }
 .manufacturing-cost-candidate-list { display: grid; gap: 6px; max-height: 300px; overflow: auto; padding-right: 2px; }
+.manufacturing-cost-import-result-summary { margin: 0 0 8px; border: 1px solid #c7dcff; border-radius: 8px; background: #edf5ff; padding: 8px 10px; color: #175cd3; font-size: 12px; font-weight: 900; line-height: 1.45; }
+.manufacturing-cost-import-unregistered { display: grid; grid-template-columns: minmax(220px, .8fr) minmax(0, 1.2fr); align-items: center; gap: 10px; margin-bottom: 8px; border: 1px solid #f4c7c7; border-radius: 8px; background: #fff7f7; padding: 9px 10px; }
+.manufacturing-cost-import-unregistered > div:first-child { display: grid; gap: 2px; }
+.manufacturing-cost-import-unregistered strong { color: #b42318; font-size: 12px; font-weight: 900; }
+.manufacturing-cost-import-unregistered > div:first-child span { color: #7a271a; font-size: 11px; line-height: 1.4; }
+.manufacturing-cost-import-unregistered-list { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.manufacturing-cost-import-unregistered-list span { display: inline-flex; align-items: center; min-height: 24px; border: 1px solid #f0b9b9; border-radius: 999px; background: #fff; padding: 2px 8px; color: #912018; font-size: 11px; font-weight: 900; overflow-wrap: anywhere; }
+.manufacturing-cost-import-group-list { gap: 8px; max-height: 420px; }
+.manufacturing-cost-import-result-group { display: grid; gap: 6px; border: 1px solid #cfe0f8; border-radius: 9px; background: #f4f8ff; padding: 8px; }
+.manufacturing-cost-import-result-group-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; padding: 0 2px; }
+.manufacturing-cost-import-result-group-head strong { color: #123b73; font-size: 13px; font-weight: 900; overflow-wrap: anywhere; }
+.manufacturing-cost-import-result-group-head span { flex: 0 0 auto; color: #175cd3; font-size: 11px; font-weight: 900; }
+.manufacturing-cost-import-result-group-rows { display: grid; gap: 6px; }
+.manufacturing-cost-import-result-limit { border-radius: 6px; background: #fff7e6; padding: 7px 8px; color: #8a5a00; font-size: 11px; font-weight: 800; line-height: 1.4; }
 .manufacturing-cost-candidate-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 8px; border: 1px solid #edf2fb; border-radius: 8px; background: #fff; padding: 8px 10px; }
 .manufacturing-cost-candidate-row.added { background: #f4fbf6; border-color: #cdebd4; }
 .manufacturing-cost-candidate-row input { width: 16px; height: 16px; }
@@ -2105,6 +2119,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .manufacturing-cost-listbar .manufacturing-cost-field { grid-column: auto; }
   .manufacturing-cost-candidate-head { align-items: stretch; flex-direction: column; }
   .manufacturing-cost-candidate-actions { justify-content: flex-start; }
+  .manufacturing-cost-import-unregistered { grid-template-columns: 1fr; }
   .manufacturing-cost-candidate-row { grid-template-columns: 26px minmax(0, 1fr); }
   .manufacturing-cost-candidate-side { grid-column: 2; justify-content: flex-start; }
   .manufacturing-cost-section-head { align-items: stretch; flex-direction: column; }
