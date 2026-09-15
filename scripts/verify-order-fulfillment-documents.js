@@ -340,6 +340,19 @@ if (lookupSource.includes("loadShippingDocumentB2History")) {
   throw new Error("Order lookup must not issue a second B2-history search");
 }
 
+const detailLoadSource = sourceBetween("async function loadShippingDocumentDetail", "function shippingDocumentPrintJob");
+for (const fragment of [
+  "shippingDocumentDetail = Array.isArray(result.data)",
+  "shippingDocumentRows = shippingDocumentRows.map",
+  "String(row.id) === String(shippingDocumentDetail.id)",
+  "Object.assign({}, row, shippingDocumentDetail)",
+  "renderShippingDocumentList()",
+  "renderShippingDocumentDetail()"
+]) requireFragment(detailLoadSource, fragment, `Loaded shipment details must synchronize the order list: ${fragment}`);
+if (detailLoadSource.indexOf("renderShippingDocumentList()") > detailLoadSource.indexOf("renderShippingDocumentDetail()")) {
+  throw new Error("The enriched shipping-document list must render before the order detail");
+}
+
 const defaultDocuments = sourceBetween("function shippingDocumentDefaultStateHtml", "function shippingDocumentOutboundWaybillHtml");
 for (const fragment of [
   "帳票の標準設定",
@@ -1004,11 +1017,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1001"',
-  'styles.css?v=1.1.1001',
-  'app.js?v=1.1.1001'
+  'content="v1.1.1002"',
+  'styles.css?v=1.1.1002',
+  'app.js?v=1.1.1002'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1001"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1002"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");

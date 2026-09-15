@@ -6889,7 +6889,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1001";
+var APP_VERSION       = "v1.1.1002";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -16443,6 +16443,12 @@ async function loadShippingDocumentDetail(orderId) {
     return null;
   }
   shippingDocumentDetail = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
+  if (shippingDocumentDetail) {
+    shippingDocumentRows = shippingDocumentRows.map(function(row) {
+      return String(row.id) === String(shippingDocumentDetail.id) ? Object.assign({}, row, shippingDocumentDetail) : row;
+    });
+    renderShippingDocumentList();
+  }
   renderShippingDocumentDetail();
   return shippingDocumentDetail;
 }
