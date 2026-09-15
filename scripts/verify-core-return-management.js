@@ -24,11 +24,16 @@ function requireText(source, fragment, message) {
   'coreReturnManagementEventLabel',
   'customer_order_core_charge_refund_pending',
   'customer_order_core_charge_refunded',
+  't("core_return_serial_not_required")',
   '返金済みにする',
   'コア代金返金',
   'btn-logout-core-return-mgmt',
   'btn-back-core-return-mgmt'
 ].forEach((fragment) => requireText(app, fragment));
+
+if (app.includes("通常コアは不要")) {
+  throw new Error("Core-return management must not imply that a billed return is unnecessary");
+}
 
 [
   'id="screen-core-return-mgmt"',
