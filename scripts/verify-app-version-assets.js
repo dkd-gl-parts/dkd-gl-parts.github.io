@@ -5,6 +5,7 @@ const acorn = require("acorn");
 
 const root = path.resolve(__dirname, "..");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+const manufacturingCostImport = fs.readFileSync(path.join(root, "manufacturing-cost-import.js"), "utf8");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const headers = fs.readFileSync(path.join(root, "_headers"), "utf8");
 const gitAttributes = fs.readFileSync(path.join(root, ".gitattributes"), "utf8");
@@ -42,10 +43,22 @@ const reviewedDynamicScript = Object.freeze({
   src: "vendor/zxing-browser-0.2.0.min.js",
   integrity: "sha384-HRtzk9lZgkbSgvUyQrnfC/GxiXZgwaNyD7hC9wcXlsBpDhkS80ISl73juef2FRuf",
 });
+const reviewedManufacturingImportAssets = new Map([
+  ["vendor/xlsx-0.18.5.full.min.js", {
+    integrity: "sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw",
+  }],
+  ["vendor/pdfjs-3.11.174.min.js", {
+    integrity: "sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e",
+  }],
+  ["vendor/pdfjs-3.11.174.worker.min.js", {
+    integrity: "sha384-SnzOobpRMLXZ52iJvZm/C0fYw0OQemTXzTjIsdsfMcrCtCEe9qgzxTd3RSklO5x2",
+  }],
+]);
 
 const reviewedBrowserAssets = new Map([
   ...reviewedStaticScripts,
   [reviewedDynamicScript.src, reviewedDynamicScript],
+  ...reviewedManufacturingImportAssets,
 ]);
 
 for (const [asset, contract] of reviewedBrowserAssets) {
@@ -384,6 +397,27 @@ expectSupplyChainMutationRejected(
   `${html}\n<script src='https://cdn.jsdelivr.net/npm/unreviewed@1/index.js'></script>`,
   app,
 );
+
+for (const [src, contract] of reviewedManufacturingImportAssets) {
+  if (!manufacturingCostImport.includes(`src: "${src}"`) &&
+      !manufacturingCostImport.includes(`var PDF_WORKER = "${src}"`)) {
+    throw new Error(`Manufacturing-cost importer is missing reviewed asset: ${src}`);
+  }
+  if (src.endsWith(".worker.min.js")) continue;
+  if (!manufacturingCostImport.includes(`integrity: "${contract.integrity}"`)) {
+    throw new Error(`Manufacturing-cost importer is missing reviewed SRI: ${src}`);
+  }
+}
+if (/https?:\/\//i.test(manufacturingCostImport) ||
+    !manufacturingCostImport.includes('script.integrity = asset.integrity;') ||
+    !manufacturingCostImport.includes('script.crossOrigin = "anonymous";')) {
+  throw new Error("Manufacturing-cost importer must lazy-load only reviewed self-hosted scripts with SRI");
+}
+for (const directory of ["vendor/pdfjs-3.11.174-cmaps", "vendor/pdfjs-3.11.174-standard-fonts"]) {
+  if (!fs.existsSync(path.join(root, directory))) {
+    throw new Error(`PDF.js support directory is missing: ${directory}`);
+  }
+}
 expectSupplyChainMutationRejected(
   "a slash-separated static script",
   `${html}\n<script/src=https://cdn.jsdelivr.net/npm/unreviewed@1/index.js></script>`,
