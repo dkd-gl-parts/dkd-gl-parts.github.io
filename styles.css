@@ -7532,6 +7532,9 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-accounting-hanbaiou-output > div { min-width: 0; }
 .sales-accounting-hanbaiou-output dt { color: #786b55; font-size: 8px; font-weight: 800; }
 .sales-accounting-hanbaiou-output dd { margin: 2px 0 0; overflow-wrap: anywhere; color: #3f3525; font: 700 9px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.sales-accounting-hanbaiou-export-message { margin: -2px 0 9px; border-left: 3px solid #287356; padding: 7px 8px; background: #eef7f2; color: #225f45; font-size: 9px; font-weight: 800; line-height: 1.5; }
+.sales-accounting-hanbaiou-export-message[hidden] { display: none; }
+.sales-accounting-hanbaiou-export-message.error { border-left-color: #b42318; background: #fff1f0; color: #b42318; }
 .sales-accounting-hanbaiou-manual { align-self: end; display: grid; place-items: center; min-height: 30px; border: 1px solid #c5bca9; padding: 5px 8px; background: #f7f3ea; color: #6f624c; font-size: 9px; font-weight: 800; text-align: center; }
 .sales-accounting-hanbaiou-utility { display: flex; align-items: center; justify-content: flex-end; gap: 9px; margin-top: 10px; }
 .sales-accounting-hanbaiou-utility span { color: #6a604f; font-size: 9px; line-height: 1.5; }
