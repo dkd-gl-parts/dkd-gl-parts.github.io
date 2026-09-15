@@ -104,6 +104,7 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
   'focusTarget.isConnected',
   'has-left-bubble',
   '.overlay.show,.panel.show',
+  '.core-return-mgmt-detail-head,.core-return-mgmt-facts,.core-return-mgmt-section,.core-return-mgmt-history',
   'PETS[settings.character].className',
   'window.documentPictureInPicture.requestWindow({ width: 360, height: 420 })',
   'if (!isSystemAdminSession() || floatingRequestPending) return;',
