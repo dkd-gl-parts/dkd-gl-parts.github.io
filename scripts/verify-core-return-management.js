@@ -15,12 +15,17 @@ function requireText(source, fragment, message) {
   'sb.rpc("get_core_return_management_detail"',
   'sb.rpc("register_core_return_receipt"',
   'sb.rpc("inspect_core_return"',
+  'sb.rpc("complete_core_charge_refund"',
   'return_sheet: "コア返却シート"',
   'manual_identification: "受注・得意先から照合"',
   'replacement_return: "代替品の返却"',
   'wrong_item: "異なるコア"',
   'refund_review: "返金確認へ"',
   'coreReturnManagementEventLabel',
+  'customer_order_core_charge_refund_pending',
+  'customer_order_core_charge_refunded',
+  '返金済みにする',
+  'コア代金返金',
   'btn-logout-core-return-mgmt',
   'btn-back-core-return-mgmt'
 ].forEach((fragment) => requireText(app, fragment));
@@ -40,6 +45,7 @@ function requireText(source, fragment, message) {
   ".core-return-mgmt-workspace",
   ".core-return-mgmt-list-row.overdue",
   ".core-return-mgmt-sections",
+  ".core-return-mgmt-refund-complete",
   ".core-return-mgmt-history-row"
 ].forEach((fragment) => requireText(css, fragment));
 

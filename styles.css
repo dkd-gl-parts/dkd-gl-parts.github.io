@@ -7768,6 +7768,8 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .shipping-document-order-quantity strong { color: #182230; font-size: 11px; }
 .shipping-document-order-core { justify-self: start; border: 1px solid #aab5be; border-radius: 4px; padding: 3px 6px; background: #f5f7f8; color: #596875; font-size: 8px; font-weight: 800; white-space: nowrap; }
 .shipping-document-order-core.required { border-color: #e1857d; background: #fff3f1; color: #aa2f25; }
+.shipping-document-order-core.charged { border-color: #cf9a45; background: #fff8e8; color: #8a5a12; }
+.shipping-document-order-core.returned { border-color: #67a783; background: #edf8f1; color: #236945; }
 .shipping-document-order-core.not-required { border-color: #8eb89e; background: #eff8f2; color: #286346; }
 .shipping-document-order-empty { border-left: 3px solid #aab5be; padding: 7px 9px; background: #f6f8f9; color: #6d7884; font-size: 9px; }
 .shipping-document-section { margin-top: 20px; border-top: 1px solid #dbe1e6; padding-top: 16px; }
@@ -9523,7 +9525,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 }
 .core-return-mgmt-facts {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   border-bottom: 1px solid #d4dbe0;
   background: #f7f9fa;
 }
@@ -9541,7 +9543,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .core-return-mgmt-facts small { margin-top: 2px; color: #83909a; font-size: 8px; }
 .core-return-mgmt-sections {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   border-bottom: 1px solid #d6dde2;
 }
 .core-return-mgmt-section {
@@ -9622,6 +9624,17 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   color: #86919a;
   font-size: 10px;
 }
+.core-return-mgmt-refund-complete {
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  color: #256344;
+}
+.core-return-mgmt-refund-complete strong { font-size: 15px; }
+.core-return-mgmt-refund-complete small { color: #728079; font-size: 9px; }
+.core-return-mgmt-refund-complete p { margin: 4px 0 0; color: #52625a; font-size: 10px; white-space: pre-wrap; }
 .core-return-mgmt-history { padding: 16px; }
 .core-return-mgmt-history-list { border-top: 1px solid #d9e0e4; }
 .core-return-mgmt-history-row {
@@ -9655,7 +9668,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .core-return-mgmt-list-pane { max-height: 320px; border-right: 0; border-bottom: 1px solid #cbd3d9; }
   .core-return-mgmt-detail-pane { overflow: visible; padding: 16px; }
   .core-return-mgmt-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .core-return-mgmt-facts > div:nth-child(2) { border-right: 0; }
+  .core-return-mgmt-facts > div:nth-child(even) { border-right: 0; }
   .core-return-mgmt-sections { grid-template-columns: 1fr; }
   .core-return-mgmt-section + .core-return-mgmt-section { border-top: 1px solid #d6dde2; border-left: 0; }
 }

@@ -374,8 +374,10 @@ if (/\.customer-order-history-detail-totals\s+\.(?:core-charge|grand-total)\s*\{
   throw new Error("only detail rows may use colored backgrounds in customer order history");
 }
 const coreRequirement = sourceBetween("function customerOrderCartRequiresCoreReturn", "function customerOrderCoreReturnShippingMethodPayload");
-if (!coreRequirement.includes('item.core_return_handling !== "charge_no_return"')) {
-  throw new Error("core-charge/no-return lines must not require a return shipping method");
+if (!coreRequirement.includes("confirmed.core_return_required === true") ||
+    !coreRequirement.includes("item.core_return_required === true") ||
+    coreRequirement.includes('item.core_return_handling !== "charge_no_return"')) {
+  throw new Error("billed core-charge lines must continue to require a return shipping method");
 }
 const orderCartRenderer = sourceBetween("function renderCustomerOrderCart", "function customerOrderSetStatus");
 if (!orderCartRenderer.includes("canRegisterInternalCustomerOrder() && item.core_return_required") ||
@@ -389,10 +391,12 @@ if (!orderCartRenderer.includes("canRegisterInternalCustomerOrder() && item.core
 }
 [
   'customer_order_core_return_standard: "後日、交換したコアを返却する"',
-  'customer_order_core_charge_no_return_option: "コアを返却できない（{amount}を支払う）"',
+  'customer_order_core_charge_no_return_option: "コア代金を請求（返却後に{amount}を返金）"',
   'customer_order_core_charge_no_return_status: "コア代金請求済み"',
-  'customer_order_core_charge_note: "コアを返却できない受注として、商品マスタのコア代金を商品代とは別項目で計上します。返送用送り状は発行しません。"',
-  'sales_core_policy_help: "商品マスタで返却不要の商品にはコア代金は発生せず、受注時にも計上しません。返却必要の商品だけ、返却できない場合の請求額を設定できます。"'
+  'customer_order_core_charge_note: "商品マスタのコア代金を商品代とは別項目で請求します。返送用送り状を発行し、コア返却受付後に返金します。"',
+  'customer_order_core_charge_refund_pending: "返却済み・返金確認"',
+  'customer_order_core_charge_refunded: "返金済み"',
+  'sales_core_policy_help: "商品マスタで返却不要の商品にはコア代金は発生しません。返却必要商品ではコア代金を請求でき、返却受付後に同額を返金します。"'
 ].forEach((fragment) => {
   if (!source.includes(fragment)) throw new Error(`core charge billing semantics are missing: ${fragment}`);
 });
@@ -427,8 +431,9 @@ if (accountingContext.customerOrderProductUnitPrice(previewSeparatedItem) !== 76
   throw new Error("server-calculated preview product prices must take precedence");
 }
 [
-  "受注時に交換コアを返却する運用ではない",
-  "コア代金を計上しても商品マスタの「コア返却必要」は変更しない",
+  "コア代金を請求した受注も、コア返却便、返送用送り状、コア返却管理の対象にする",
+  "後日の返却義務は、コア返却受付まで継続する",
+  "交換コアを受け付けた後は「返却済み・返金確認」",
   "商品マスタでコア返却不要の商品には選択欄を表示しない",
   "12桁の送り状番号を4桁ずつ区切って表示する",
   "使用しない運送便と送り状番号は「-」",

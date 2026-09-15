@@ -122,6 +122,11 @@ const itemRowsContext = {
   esc: (value) => String(value),
   customerOrderCoreHandlingValue: (item) => item.core_return_handling,
   customerOrderBilledCoreChargePerUnit: (item) => item.core_return_handling === "charge_no_return" ? (Number(item.core_charge_jpy) || 0) : 0,
+  customerOrderItemCoreStatusLabel: (order, item) => {
+    const billed = (Number(item.core_charge_line_total_jpy) || 0) > 0;
+    const returned = ["returned", "closed"].includes(String(order && order.core_return_status || ""));
+    return billed ? (returned ? "返却済み" : "請求済み") : "返却必要";
+  },
   customerOrderCoreHandlingLabel: (item) => item.core_return_handling === "charge_no_return" ? "コア代金 ¥2,000 計上" : "返却必要",
   customerProductKindLabel: () => "リビルト品",
   customerOrderCurrency: (value) => `¥${Number(value).toLocaleString("ja-JP")}`,
@@ -141,7 +146,7 @@ const separatedRows = itemRowsContext.salesOrderItemRowsHtml([{
   core_return_handling: "charge_no_return",
   core_charge_jpy: 0,
   core_charge_line_total_jpy: 2000
-}]);
+}], { core_return_status: "awaiting_return" });
 if ((separatedRows.match(/sales-order-item-row/g) || []).length !== 2) {
   throw new Error("A billed core charge must add exactly one detail row below the product row");
 }
@@ -162,7 +167,7 @@ const unbilledNoReturnRows = itemRowsContext.salesOrderItemRowsHtml([{
   core_return_handling: "charge_no_return",
   core_charge_jpy: 0,
   core_charge_line_total_jpy: 0
-}]);
+}], { core_return_status: "not_required" });
 if (!unbilledNoReturnRows.includes("返却なし") || unbilledNoReturnRows.includes("請求済み")) {
   throw new Error("A zero-value no-return selection must not be shown as billed");
 }
@@ -173,7 +178,7 @@ const standardRows = itemRowsContext.salesOrderItemRowsHtml([{
   product_line_total_jpy: 7500,
   core_return_handling: "return_required",
   core_charge_jpy: 2000
-}]);
+}], { core_return_status: "awaiting_return" });
 if (standardRows.includes("sales-order-core-charge-row")) {
   throw new Error("A standard core-return order must not show a billed core-charge detail row");
 }
@@ -196,7 +201,7 @@ for (const fragment of [
 const billingDetails = functionSource("salesOrderBillingDetailsHtml");
 for (const fragment of [
   "sales-order-billing-detail-table",
-  "salesOrderItemRowsHtml(order.items)",
+  "salesOrderItemRowsHtml(order.items, order)",
   "salesOrderAdjustmentRowsHtml(adjustments, fallbackDiscount)",
   "salesOrderBillingDetailRowsHtml(order)"
 ]) requireFragment(billingDetails, fragment);
@@ -403,9 +408,15 @@ const compactContext = {
   esc: (value) => String(value),
   t: (key) => ({
     customer_order_core_charge_no_return_status: "コア代金請求済み",
+    customer_order_core_charge_billed_short: "請求済み",
+    customer_order_core_charge_refund_pending: "返却済み・返金確認",
+    customer_order_core_charge_refunded: "返金済み",
+    customer_order_core_return_needed: "要コア返却",
+    customer_order_core_return_returned: "返却済み",
     customer_order_yamato_office_pickup_short: "ヤマト営業所受取"
   })[key] || key,
   customerOrderHasBilledCoreCharge: (order) => !!order.billed,
+  customerOrderCoreChargeRefundStatus: (order) => order.refund_status || "billed",
   salesOrderWaybillCarrierLabel: waybillContext.salesOrderWaybillCarrierLabel,
   salesOrderWaybillDetailLabel: waybillContext.salesOrderWaybillDetailLabel
 };
@@ -416,10 +427,14 @@ vm.runInContext([
   functionSource("salesOrderDeliveryPreferenceLabel"),
   functionSource("salesOrderDestinationHtml")
 ].join("\n"), compactContext);
-const billedSummary = compactContext.salesOrderCoreReturnSummary({ billed: true, core_return_required: false });
+const billedSummary = compactContext.salesOrderCoreReturnSummary({ billed: true, core_return_required: true, core_return_status: "awaiting_return" });
 const billedHtml = compactContext.salesOrderWaybillSummaryHtml(billedSummary.label, billedSummary.primary, billedSummary.secondary);
-if (billedSummary.primary !== "返却不要" || (billedHtml.match(/コア代金請求済み/g) || []).length !== 1) {
-  throw new Error("A billed core charge must be explained once as a no-return condition");
+if (billedSummary.primary !== "請求済み" || !billedSummary.secondary.includes("要コア返却") || billedHtml.includes("返却不要")) {
+  throw new Error("A billed core charge must remain an understandable return-required condition");
+}
+const returnedSummary = compactContext.salesOrderCoreReturnSummary({ billed: true, core_return_required: true, core_return_status: "returned", refund_status: "pending" });
+if (returnedSummary.primary !== "返却済み" || returnedSummary.secondary !== "返却済み・返金確認") {
+  throw new Error("A returned billed core must show that its refund still needs confirmation");
 }
 if (compactContext.salesOrderDeliveryPreferenceLabel({ requested_delivery_date: "2026-09-10" }) !== "2026-09-10") {
   throw new Error("A missing delivery time must not add a redundant unspecified value");

@@ -3029,7 +3029,19 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "件を含みます。": " included. ",
     "件は使用せず、後発データを反映しました。": " older row(s) were skipped and later data was applied. ",
     "販売王の「導入 → 他社製品データ取り込み」で、台帳は「商品」、ファイルは「区切り文字形式ファイル（*.csv, *.txt）」を選択し、D-CATSのCSVを取り込んでください。取込結果を確認後、「最新CSVを登録済みにする」を押します。": "In Sales King, open Setup > Import Other Product Data. Select Product for the ledger and Delimited Text File (*.csv, *.txt) for the file type, then import the D-CATS CSV. Verify the result and click Confirm Latest CSV Registration.",
-    "CSV対象 0件": "CSV target: 0"
+    "CSV対象 0件": "CSV target: 0",
+    "コア代金の返金完了を記録しています。": "Recording completion of the core charge refund.",
+    "コア代金を返金済みに更新しました。": "The core charge was marked as refunded.",
+    "の返金完了を記録します。よろしいですか？": " will be recorded as refunded. Continue?",
+    "返金完了を記録できませんでした。": "Could not record the completed refund.",
+    "コア代金を返金済みに更新": "Core charge marked as refunded",
+    "コア代金返金": "Core charge refund",
+    "返却受付後、実際の返金が完了した時点で記録します。": "Record this after the core is received and the refund is completed.",
+    "この返却対象に請求済みのコア代金はありません。": "No billed core charge applies to this return.",
+    "返金メモ": "Refund note",
+    "返金方法、処理番号など必要な情報を記録": "Record the refund method, transaction number, and other necessary details",
+    "返金済みにする": "Mark as refunded",
+    "先にコア返却受付を行ってください。": "Register receipt of the returned core first."
   },
   "zh": {
     "集計中": "统计中",
@@ -6059,6 +6071,18 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "件を含みます。": "条。",
     "件は使用せず、後発データを反映しました。": "条旧数据未使用，已应用后续数据。",
     "販売王の「導入 → 他社製品データ取り込み」で、台帳は「商品」、ファイルは「区切り文字形式ファイル（*.csv, *.txt）」を選択し、D-CATSのCSVを取り込んでください。取込結果を確認後、「最新CSVを登録済みにする」を押します。": "在销售王中打开“导入 → 导入其他公司产品数据”。台账选择“商品”，文件类型选择“分隔符文本文件（*.csv, *.txt）”，然后导入D-CATS CSV。确认导入结果后，点击“将最新CSV标记为已登记”。",
-    "CSV対象 0件": "CSV目标 0 件"
+    "CSV対象 0件": "CSV目标 0 件",
+    "コア代金の返金完了を記録しています。": "正在记录旧件费退款完成。",
+    "コア代金を返金済みに更新しました。": "旧件费已标记为已退款。",
+    "の返金完了を記録します。よろしいですか？": "将记录退款完成。是否继续？",
+    "返金完了を記録できませんでした。": "无法记录退款完成。",
+    "コア代金を返金済みに更新": "旧件费已更新为已退款",
+    "コア代金返金": "旧件费退款",
+    "返却受付後、実際の返金が完了した時点で記録します。": "收到旧件并实际完成退款后进行记录。",
+    "この返却対象に請求済みのコア代金はありません。": "此返还项目没有已收取的旧件费。",
+    "返金メモ": "退款备注",
+    "返金方法、処理番号など必要な情報を記録": "记录退款方式、处理编号等必要信息",
+    "返金済みにする": "标记为已退款",
+    "先にコア返却受付を行ってください。": "请先登记收到返还旧件。"
   }
 };
