@@ -29,6 +29,7 @@ for (const id of [
   "sales-accounting-hanbaiou-reset",
   "sales-accounting-hanbaiou-history",
   "sales-accounting-hanbaiou-latest-file",
+  "sales-accounting-hanbaiou-export-message",
 ]) requireFragment(html, `id="${id}"`);
 
 for (const key of [
@@ -58,17 +59,25 @@ requireFragment(master, "prepareDcatsHanbaiouExportDirectory()");
 requireFragment(master, "await downloadSalesAccountingExportFile(data, exportDirectory)");
 requireFragment(master, "state.hanbaiouLatestFileName = savedFileName");
 requireFragment(master, 'tf("sales_accounting_product_master_saved_file"');
-requireFragment(master, "catalog.incomplete_count");
-requireFragment(master, 't("hanbaiou_catalog_incomplete_block")');
+requireFragment(master, "catalog.ready_count");
+requireFragment(master, 't("hanbaiou_catalog_no_ready")');
 requireFragment(master, "scrollToSalesAccountingHanbaiouGuide()");
+requireFragment(master, "setSalesAccountingHanbaiouExportMessage");
 if (master.includes("scrollToSalesAccountingHanbaiouValidation")) {
   throw new Error("Product-master export errors must return to the compact guide, not a detail table");
 }
 if (master.indexOf("prepareDcatsHanbaiouExportDirectory()") > master.indexOf('sb.rpc("create_hanbaiou_catalog_product_master_export"')) {
   throw new Error("The Sales King folder must be ready before creating a product ledger export");
 }
-if (master.indexOf("prepareDcatsHanbaiouExportDirectory()") < master.indexOf("catalog.incomplete_count")) {
-  throw new Error("Product-key completeness must be checked before opening the export folder picker");
+if (/if\s*\(Number\(catalog\.incomplete_count/.test(master)) {
+  throw new Error("Incomplete products must not block export of products that have all three numbers");
+}
+
+const prepareDirectory = functionSource("prepareDcatsHanbaiouExportDirectory");
+requireFragment(prepareDirectory, "var handle = dcatsHanbaiouExportDirectoryHandle;");
+requireFragment(prepareDirectory, "if (!handle) return pickDcatsHanbaiouExportDirectory();");
+if (/await loadDcatsHanbaiouExportDirectory/.test(prepareDirectory)) {
+  throw new Error("The native folder picker must not lose click activation while loading IndexedDB");
 }
 
 const confirm = functionSource("confirmHanbaiouProductRegistration");
@@ -77,10 +86,16 @@ requireFragment(confirm, "target_batch_id: batchId");
 requireFragment(confirm, 't("hanbaiou_catalog_confirm_prompt")');
 
 const reset = functionSource("resetHanbaiouProductMasterState");
-requireFragment(reset, 'sb.rpc("reset_hanbaiou_product_master_state"');
+requireFragment(reset, 'sb.rpc("reset_hanbaiou_sales_target_product_master_state"');
+requireFragment(reset, "target_order_ids: resetTarget.orderIds");
 requireFragment(reset, "expected_resettable_count: resettableCount");
 requireFragment(reset, 'tf("hanbaiou_catalog_reset_prompt"');
 requireFragment(reset, 't("hanbaiou_catalog_reset_progress")');
+
+const resetTarget = functionSource("salesAccountingHanbaiouResetTarget");
+requireFragment(resetTarget, "state && state.orders");
+requireFragment(resetTarget, 'status === "exported" || status === "registered"');
+requireFragment(resetTarget, "productVariantIds.add(productVariantId)");
 
 const renderGuide = functionSource("renderSalesAccountingHanbaiouGuide");
 const updateActions = functionSource("updateSalesAccountingHanbaiouActions");
@@ -109,6 +124,7 @@ for (const fragment of [
   ".sales-accounting-hanbaiou-guide",
   ".sales-accounting-hanbaiou-steps",
   ".sales-accounting-hanbaiou-status.registered",
+  ".sales-accounting-hanbaiou-export-message.error",
 ]) requireFragment(css, fragment);
 
 for (const key of [
@@ -125,6 +141,7 @@ for (const key of [
   "hanbaiou_catalog_reset_button",
   "hanbaiou_catalog_reset_prompt",
   "hanbaiou_catalog_reset_done",
+  "hanbaiou_catalog_no_ready",
   "hanbaiou_catalog_step_1_description",
   "hanbaiou_catalog_step_2_description",
   "hanbaiou_catalog_step_3_description",

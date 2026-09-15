@@ -515,8 +515,9 @@ var TRANSLATIONS = {
     hanbaiou_catalog_output_folder: "保存先",
     hanbaiou_catalog_output_file: "指定先へ保存したファイル",
     hanbaiou_catalog_output_file_empty: "この画面ではまだ保存していません",
-    hanbaiou_catalog_reset_description: "販売王へまだ取り込んでいない商品を、もう一度CSV出力する場合に使用します。",
+    hanbaiou_catalog_reset_description: "現在検索している売上データ対象の品番だけを、販売王未取込へ戻します。",
     hanbaiou_catalog_no_pending: "販売王へ未登録の商品はありません。",
+    hanbaiou_catalog_no_ready: "3品番が揃った販売王未登録商品はありません。",
     hanbaiou_catalog_issue_required: "商品コード未発行の商品があります。先に商品コードを一括発行してください。",
     hanbaiou_catalog_issue_progress: "対象商品のD-CATS商品コードを一括発行しています。",
     hanbaiou_catalog_issue_done: "{count}件の商品コードを発行しました。次に商品台帳CSVを出力してください。",
@@ -538,8 +539,8 @@ var TRANSLATIONS = {
     hanbaiou_catalog_missing_fields: "不足項目",
     hanbaiou_catalog_not_set: "未設定",
     hanbaiou_catalog_incomplete_block: "3品番が揃っていない商品があります。不足明細を確認してください。",
-    hanbaiou_catalog_reset_button: "販売王未取込へリセット",
-    hanbaiou_catalog_reset_prompt: "販売王には未取込として{count}件の状態をリセットします。D-CATS商品コードとCSV出力履歴は残ります。実行しますか？",
+    hanbaiou_catalog_reset_button: "売上対象品番を未取込へリセット",
+    hanbaiou_catalog_reset_prompt: "現在の売上データ対象に含まれる{count}品番を、販売王未取込へ戻します。ほかの品番、D-CATS商品コード、CSV出力履歴は変更しません。実行しますか？",
     hanbaiou_catalog_reset_progress: "販売王の商品取込状態をリセットしています。",
     hanbaiou_catalog_reset_done: "{count}件を販売王未取込へ戻しました。3品番の不足を解消するとCSV出力できます。",
     hanbaiou_catalog_reset_none: "リセットできる販売王登録状態はありません。",
@@ -2751,8 +2752,9 @@ var TRANSLATIONS = {
     hanbaiou_catalog_output_folder: "Save folder",
     hanbaiou_catalog_output_file: "File saved to the selected folder",
     hanbaiou_catalog_output_file_empty: "No file has been saved on this screen yet",
-    hanbaiou_catalog_reset_description: "Use this when products have not yet been imported into Sales King and must be exported again.",
+    hanbaiou_catalog_reset_description: "Reset only product numbers in the current sales-data results to Not Imported in Sales King.",
     hanbaiou_catalog_no_pending: "There are no products awaiting Sales King registration.",
+    hanbaiou_catalog_no_ready: "There are no unregistered Sales King products with all three product numbers.",
     hanbaiou_catalog_issue_required: "Some product codes have not been issued. Issue all product codes first.",
     hanbaiou_catalog_issue_progress: "Issuing D-CATS product codes for all eligible products.",
     hanbaiou_catalog_issue_done: "Issued {count} product codes. Next, export the product master CSV.",
@@ -2774,8 +2776,8 @@ var TRANSLATIONS = {
     hanbaiou_catalog_missing_fields: "Missing fields",
     hanbaiou_catalog_not_set: "Not set",
     hanbaiou_catalog_incomplete_block: "Some products do not have all three search keys. Review the missing-item details.",
-    hanbaiou_catalog_reset_button: "Reset as Not Imported",
-    hanbaiou_catalog_reset_prompt: "Reset the Sales King import state for {count} products? D-CATS product codes and CSV export history will be preserved.",
+    hanbaiou_catalog_reset_button: "Reset Sales Targets",
+    hanbaiou_catalog_reset_prompt: "Reset {count} product numbers in the current sales-data results to Not Imported? Other products, D-CATS codes, and CSV history will not change.",
     hanbaiou_catalog_reset_progress: "Resetting the Sales King product import state.",
     hanbaiou_catalog_reset_done: "Reset {count} products as not imported. CSV export will be available after all three keys are complete.",
     hanbaiou_catalog_reset_none: "There is no Sales King registration state to reset.",
@@ -4931,8 +4933,9 @@ var TRANSLATIONS = {
     hanbaiou_catalog_output_folder: "保存位置",
     hanbaiou_catalog_output_file: "已保存到指定位置的文件",
     hanbaiou_catalog_output_file_empty: "此画面尚未保存文件",
-    hanbaiou_catalog_reset_description: "当商品尚未导入销售王并需要再次导出CSV时使用。",
+    hanbaiou_catalog_reset_description: "仅将当前销售数据结果中的商品编号重置为销售王未导入。",
     hanbaiou_catalog_no_pending: "没有等待在销售王登记的商品。",
+    hanbaiou_catalog_no_ready: "没有三个商品编号齐全的销售王未登记商品。",
     hanbaiou_catalog_issue_required: "存在尚未发行商品代码的商品。请先批量发行商品代码。",
     hanbaiou_catalog_issue_progress: "正在为所有目标商品批量发行D-CATS商品代码。",
     hanbaiou_catalog_issue_done: "已发行{count}件商品代码。接下来请导出商品台账CSV。",
@@ -4954,8 +4957,8 @@ var TRANSLATIONS = {
     hanbaiou_catalog_missing_fields: "缺少项目",
     hanbaiou_catalog_not_set: "未设置",
     hanbaiou_catalog_incomplete_block: "存在3个商品编号不齐全的商品。请确认缺失明细。",
-    hanbaiou_catalog_reset_button: "重置为销售王未导入",
-    hanbaiou_catalog_reset_prompt: "将{count}件商品重置为销售王未导入状态。D-CATS商品代码和CSV导出历史会保留。是否执行？",
+    hanbaiou_catalog_reset_button: "重置销售对象商品",
+    hanbaiou_catalog_reset_prompt: "将当前销售数据结果中的{count}个商品编号重置为销售王未导入。其他商品、D-CATS商品代码和CSV导出历史不会更改。是否执行？",
     hanbaiou_catalog_reset_progress: "正在重置销售王商品导入状态。",
     hanbaiou_catalog_reset_done: "已将{count}件商品恢复为销售王未导入。补齐3个编号后即可导出CSV。",
     hanbaiou_catalog_reset_none: "没有可重置的销售王登记状态。",
@@ -6832,7 +6835,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.998";
+var APP_VERSION       = "v1.1.999";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -13479,12 +13482,13 @@ async function configureDcatsHanbaiouExportDirectory() {
 
 async function prepareDcatsHanbaiouExportDirectory() {
   if (!supportsDcatsB2SharedFolder()) throw new Error(t("business_workspace_hanbaiou_unsupported"));
-  var handle = dcatsHanbaiouExportDirectoryHandle || await loadDcatsHanbaiouExportDirectory();
-  if (handle && handle.name !== DCATS_HANBAIOU_EXPORT_DIRECTORY_NAME) {
-    try { await forgetDcatsHanbaiouExportDirectory(); } catch (error) {}
-    handle = null;
-  }
+  var handle = dcatsHanbaiouExportDirectoryHandle;
+  // Keep the native picker inside the originating click's user activation.
   if (!handle) return pickDcatsHanbaiouExportDirectory();
+  if (handle && handle.name !== DCATS_HANBAIOU_EXPORT_DIRECTORY_NAME) {
+    forgetDcatsHanbaiouExportDirectory().catch(function() {});
+    return pickDcatsHanbaiouExportDirectory();
+  }
   var permission;
   try {
     permission = typeof handle.requestPermission === "function"
@@ -13853,6 +13857,14 @@ function setSalesAccountingExportMessage(message, isError) {
   host.className = "sales-accounting-export-message" + (isError ? " error" : "");
 }
 
+function setSalesAccountingHanbaiouExportMessage(message, isError) {
+  var host = document.getElementById("sales-accounting-hanbaiou-export-message");
+  if (!host) return;
+  host.textContent = message || "";
+  host.hidden = !message;
+  host.className = "sales-accounting-hanbaiou-export-message" + (isError ? " error" : "");
+}
+
 function setSalesAccountingExportSummary(message, isError) {
   var host = document.getElementById("sales-accounting-export-summary");
   if (!host) return;
@@ -13996,13 +14008,33 @@ function renderSalesAccountingHanbaiouGuide() {
   updateSalesAccountingHanbaiouActions();
 }
 
+function salesAccountingHanbaiouResetTarget(state) {
+  var orderIds = new Set();
+  var productVariantIds = new Set();
+  (Array.isArray(state && state.orders) ? state.orders : []).forEach(function(order) {
+    var orderId = parseInt(order.order_id, 10);
+    if (!isNaN(orderId) && orderId > 0) orderIds.add(orderId);
+    (Array.isArray(order.items) ? order.items : []).forEach(function(item) {
+      var status = String(item.product_registration_status || "not_issued");
+      var productVariantId = parseInt(item.product_variant_id, 10);
+      if ((status === "exported" || status === "registered") && !isNaN(productVariantId) && productVariantId > 0) {
+        productVariantIds.add(productVariantId);
+      }
+    });
+  });
+  return {
+    orderIds: Array.from(orderIds),
+    productVariantIds: Array.from(productVariantIds)
+  };
+}
+
 function updateSalesAccountingHanbaiouActions() {
   var state = ensureSalesAccountingExportState();
   var catalog = state.hanbaiouCatalog || {};
-  var pendingCount = Number(catalog.pending_count || 0);
+  var readyCount = Number(catalog.ready_count || 0);
   var notIssuedCount = Number(catalog.not_issued_count || 0);
   var exportedCount = Number(catalog.exported_count || 0);
-  var resettableCount = Number(catalog.resettable_count || 0);
+  var resettableCount = salesAccountingHanbaiouResetTarget(state).productVariantIds.length;
   var latestBatchId = parseInt(catalog.latest_confirmable_batch_id, 10);
   var issueButton = document.getElementById("sales-accounting-hanbaiou-issue");
   var exportButton = document.getElementById("sales-accounting-hanbaiou-export");
@@ -14014,7 +14046,7 @@ function updateSalesAccountingHanbaiouActions() {
     issueButton.textContent = salesAccountingProductOnboardingSaving ? "処理中..." : t("hanbaiou_catalog_issue_button");
   }
   if (exportButton) {
-    exportButton.disabled = busy || pendingCount === 0 || notIssuedCount > 0;
+    exportButton.disabled = busy || readyCount === 0 || notIssuedCount > 0;
     exportButton.textContent = t("hanbaiou_catalog_export_button");
   }
   if (confirmButton) {
@@ -14258,6 +14290,7 @@ async function openSalesAccountingExport(options) {
   } else {
     ensureSalesAccountingExportState();
   }
+  setSalesAccountingHanbaiouExportMessage("", false);
   overlay.classList.add("show");
   renderSalesAccountingExport();
   await loadSalesAccountingExportData();
@@ -14296,40 +14329,44 @@ async function exportHanbaiouProductMaster() {
   if (!canManageSalesOrders() || salesAccountingProductOnboardingSaving) return;
   var state = ensureSalesAccountingExportState();
   var catalog = state.hanbaiouCatalog || {};
-  var pendingCount = Number(catalog.pending_count || 0);
-  if (!pendingCount) {
-    setSalesAccountingExportMessage(t("hanbaiou_catalog_no_pending"), true);
+  var readyCount = Number(catalog.ready_count || 0);
+  if (!readyCount) {
+    setSalesAccountingExportMessage(t("hanbaiou_catalog_no_ready"), true);
+    setSalesAccountingHanbaiouExportMessage(t("hanbaiou_catalog_no_ready"), true);
     return;
   }
   if (Number(catalog.not_issued_count || 0) > 0) {
     setSalesAccountingExportMessage(t("hanbaiou_catalog_issue_required"), true);
-    scrollToSalesAccountingHanbaiouGuide();
-    return;
-  }
-  if (Number(catalog.incomplete_count || 0) > 0) {
-    setSalesAccountingExportMessage(t("hanbaiou_catalog_incomplete_block"), true);
+    setSalesAccountingHanbaiouExportMessage(t("hanbaiou_catalog_issue_required"), true);
     scrollToSalesAccountingHanbaiouGuide();
     return;
   }
   salesAccountingProductOnboardingSaving = true;
   setSalesAccountingExportMessage(t("business_workspace_hanbaiou_selecting"), false);
+  setSalesAccountingHanbaiouExportMessage(t("business_workspace_hanbaiou_selecting"), false);
   updateSalesAccountingHanbaiouActions();
   var exportDirectory;
   try {
     exportDirectory = await prepareDcatsHanbaiouExportDirectory();
   } catch (directoryError) {
     salesAccountingProductOnboardingSaving = false;
-    setSalesAccountingExportMessage(directoryError && directoryError.name === "AbortError"
+    var directoryMessage = directoryError && directoryError.name === "AbortError"
       ? t("business_workspace_hanbaiou_cancelled")
-      : ((directoryError && directoryError.message) || t("business_workspace_hanbaiou_required")), directoryError && directoryError.name !== "AbortError");
+      : ((directoryError && directoryError.message) || t("business_workspace_hanbaiou_required"));
+    var directoryIsError = directoryError && directoryError.name !== "AbortError";
+    setSalesAccountingExportMessage(directoryMessage, directoryIsError);
+    setSalesAccountingHanbaiouExportMessage(directoryMessage, directoryIsError);
     updateSalesAccountingHanbaiouActions();
     return;
   }
   setSalesAccountingExportMessage(t("hanbaiou_catalog_export_progress"), false);
+  setSalesAccountingHanbaiouExportMessage(t("hanbaiou_catalog_export_progress"), false);
   var result = await sb.rpc("create_hanbaiou_catalog_product_master_export");
   if (result.error) {
     salesAccountingProductOnboardingSaving = false;
-    setSalesAccountingExportMessage(result.error.message || "商品台帳CSVを作成できませんでした。", true);
+    var exportErrorMessage = result.error.message || "商品台帳CSVを作成できませんでした。";
+    setSalesAccountingExportMessage(exportErrorMessage, true);
+    setSalesAccountingHanbaiouExportMessage(exportErrorMessage, true);
     updateSalesAccountingHanbaiouActions();
     return;
   }
@@ -14342,21 +14379,25 @@ async function exportHanbaiouProductMaster() {
     salesAccountingProductOnboardingSaving = false;
     await resetDcatsHanbaiouExportDirectoryAfterWriteFailure();
     setSalesAccountingExportMessage(t("business_workspace_hanbaiou_write_failed"), true);
+    setSalesAccountingHanbaiouExportMessage(t("business_workspace_hanbaiou_write_failed"), true);
     await loadSalesAccountingExportData({ preserveMessage: true });
     return;
   }
   salesAccountingProductOnboardingSaving = false;
-  setSalesAccountingExportMessage(tf("sales_accounting_product_master_saved_file", {
-    count: Number(data.product_count || pendingCount).toLocaleString(),
+  var savedMessage = tf("sales_accounting_product_master_saved_file", {
+    count: Number(data.product_count || readyCount).toLocaleString(),
     file: savedFileName
-  }), false);
+  });
+  setSalesAccountingExportMessage(savedMessage, false);
+  setSalesAccountingHanbaiouExportMessage(savedMessage, false);
   await loadSalesAccountingExportData({ preserveMessage: true });
 }
 
 async function resetHanbaiouProductMasterState() {
   if (!canManageSalesOrders() || salesAccountingProductOnboardingSaving) return;
   var state = ensureSalesAccountingExportState();
-  var resettableCount = Number((state.hanbaiouCatalog || {}).resettable_count || 0);
+  var resetTarget = salesAccountingHanbaiouResetTarget(state);
+  var resettableCount = resetTarget.productVariantIds.length;
   if (!resettableCount) {
     setSalesAccountingExportMessage(t("hanbaiou_catalog_reset_none"), true);
     return;
@@ -14365,7 +14406,8 @@ async function resetHanbaiouProductMasterState() {
   salesAccountingProductOnboardingSaving = true;
   setSalesAccountingExportMessage(t("hanbaiou_catalog_reset_progress"), false);
   updateSalesAccountingHanbaiouActions();
-  var result = await sb.rpc("reset_hanbaiou_product_master_state", {
+  var result = await sb.rpc("reset_hanbaiou_sales_target_product_master_state", {
+    target_order_ids: resetTarget.orderIds,
     expected_resettable_count: resettableCount
   });
   salesAccountingProductOnboardingSaving = false;
