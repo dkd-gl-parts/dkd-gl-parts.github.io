@@ -256,6 +256,24 @@ var TRANSLATIONS = {
     customer_order_tracking_unissued: "未発行",
     customer_order_waybill_number: "送り状番号",
     customer_order_core_return_needed: "要コア返却",
+    shipping_document_delivery_confirmation: "配送先確認",
+    shipping_document_direct_badge: "直送先へ発送",
+    shipping_document_office_badge: "営業所止め",
+    shipping_document_standard_badge: "通常発送",
+    shipping_document_office_destination: "営業所受取先",
+    shipping_document_direct_destination: "直送先",
+    shipping_document_destination: "配送先",
+    shipping_document_recipient: "受取人",
+    shipping_document_office_code: "営業所コード",
+    shipping_document_destination_unregistered: "配送先未登録",
+    shipping_document_outbound_service: "商品発送便",
+    shipping_document_delivery_preference: "お届け希望",
+    shipping_document_shipment_items: "出荷商品",
+    shipping_document_no_shipment_items: "出荷商品がありません。",
+    shipping_document_maker_part_unregistered: "メーカー品番未登録",
+    shipping_document_genuine_part_number: "純正品番",
+    shipping_document_core_return_not_required: "コア返却不要",
+    shipping_document_return_not_required: "返却不要",
     customer_order_core_return_label_issued: "返却送り状発行済み",
     customer_order_core_return_returned: "返却済み",
     customer_order_core_return_closed: "完了",
@@ -2493,6 +2511,24 @@ var TRANSLATIONS = {
     customer_order_tracking_unissued: "Not issued",
     customer_order_waybill_number: "Tracking Number",
     customer_order_core_return_needed: "Core return required",
+    shipping_document_delivery_confirmation: "Confirm Destination",
+    shipping_document_direct_badge: "Ship to Direct Destination",
+    shipping_document_office_badge: "Carrier Office Pickup",
+    shipping_document_standard_badge: "Standard Shipping",
+    shipping_document_office_destination: "Carrier Office Pickup",
+    shipping_document_direct_destination: "Direct Destination",
+    shipping_document_destination: "Delivery Destination",
+    shipping_document_recipient: "Recipient",
+    shipping_document_office_code: "Office Code",
+    shipping_document_destination_unregistered: "Destination not registered",
+    shipping_document_outbound_service: "Outbound Shipping",
+    shipping_document_delivery_preference: "Delivery Request",
+    shipping_document_shipment_items: "Shipment Items",
+    shipping_document_no_shipment_items: "No shipment items are registered.",
+    shipping_document_maker_part_unregistered: "Manufacturer part number not registered",
+    shipping_document_genuine_part_number: "Genuine Part Number",
+    shipping_document_core_return_not_required: "Core return not required",
+    shipping_document_return_not_required: "Return not required",
     customer_order_core_return_label_issued: "Return label issued",
     customer_order_core_return_returned: "Returned",
     customer_order_core_return_closed: "Completed",
@@ -4674,6 +4710,24 @@ var TRANSLATIONS = {
     customer_order_tracking_unissued: "未发行",
     customer_order_waybill_number: "运单号码",
     customer_order_core_return_needed: "需要返还旧件",
+    shipping_document_delivery_confirmation: "确认配送地址",
+    shipping_document_direct_badge: "发往直送地址",
+    shipping_document_office_badge: "营业所自取",
+    shipping_document_standard_badge: "普通配送",
+    shipping_document_office_destination: "营业所取货地址",
+    shipping_document_direct_destination: "直送地址",
+    shipping_document_destination: "配送地址",
+    shipping_document_recipient: "收件人",
+    shipping_document_office_code: "营业所代码",
+    shipping_document_destination_unregistered: "未登记配送地址",
+    shipping_document_outbound_service: "商品发货方式",
+    shipping_document_delivery_preference: "送货要求",
+    shipping_document_shipment_items: "发货商品",
+    shipping_document_no_shipment_items: "没有已登记的发货商品。",
+    shipping_document_maker_part_unregistered: "未登记制造商品号",
+    shipping_document_genuine_part_number: "原厂品号",
+    shipping_document_core_return_not_required: "无需返还旧件",
+    shipping_document_return_not_required: "无需返还",
     customer_order_core_return_label_issued: "返还运单已发行",
     customer_order_core_return_returned: "已返还",
     customer_order_core_return_closed: "已完成",
@@ -6835,7 +6889,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1000";
+var APP_VERSION       = "v1.1.1001";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -11172,6 +11226,54 @@ function salesOrderDestinationHtml(address) {
   var officeCode = String(address.yamato_office_code || "").trim();
   var pickupLabel = t("customer_order_yamato_office_pickup_short") + (officeCode ? "　" + officeCode : "");
   return "<div class='sales-order-address-destination is-office-pickup'><em class='sales-order-office-pickup-badge'>" + esc(pickupLabel) + "</em><strong class='sales-order-office-pickup-name'>" + esc(officeName) + "</strong><span class='sales-order-office-pickup-recipient'>受取人　" + esc(recipient) + "</span><span>" + esc(postalAddress) + "</span><span>" + esc(phone) + "</span></div>";
+}
+
+function shippingDocumentComparableName(value) {
+  value = String(value || "");
+  if (typeof value.normalize === "function") value = value.normalize("NFKC");
+  return value.toLowerCase()
+    .replace(/\(\u682a\)/g, "\u682a\u5f0f\u4f1a\u793e")
+    .replace(/\(\u6709\)/g, "\u6709\u9650\u4f1a\u793e")
+    .replace(/[\s\u3000・.,，．()（）\-]/g, "");
+}
+
+function shippingDocumentDestinationContext(order) {
+  order = order || {};
+  var address = order.shipping_address && typeof order.shipping_address === "object" ? order.shipping_address : {};
+  var officePickup = address.destination_type === "yamato_office";
+  var customerName = shippingDocumentComparableName(order.customer_name);
+  var destinationCompany = shippingDocumentComparableName(address.company_name);
+  var direct = !officePickup && !!customerName && !!destinationCompany && customerName !== destinationCompany;
+  var street = [
+    String(address.prefecture_name || "") + String(address.address_line_1 || ""),
+    address.address_line_2
+  ].filter(Boolean).join(" ");
+  var recipient = [address.company_name, address.recipient_name].filter(Boolean).join(" ") || "-";
+  var officeName = String(address.yamato_office_name || "営業所").trim() || "営業所";
+  var officeCode = String(address.yamato_office_code || "").trim();
+  return {
+    type: officePickup ? "office" : direct ? "direct" : "standard",
+    badge: officePickup ? t("shipping_document_office_badge") : direct ? t("shipping_document_direct_badge") : t("shipping_document_standard_badge"),
+    label: officePickup ? t("shipping_document_office_destination") : direct ? t("shipping_document_direct_destination") : t("shipping_document_destination"),
+    recipient: officePickup ? officeName : recipient,
+    recipientDetail: officePickup ? t("shipping_document_recipient") + "　" + recipient + (officeCode ? " / " + t("shipping_document_office_code") + " " + officeCode : "") : "",
+    postalAddress: "〒" + String(address.postal_code || "-") + (street ? "　" + street : ""),
+    phone: "TEL " + String(address.phone_number || "-"),
+    summary: officePickup ? officeName : (address.company_name || address.recipient_name || t("shipping_document_destination_unregistered"))
+  };
+}
+
+function shippingDocumentDeliveryHtml(order) {
+  var destination = shippingDocumentDestinationContext(order);
+  var waybill = salesOrderWaybillRecord(order, "outbound");
+  var trackingNumber = waybill.tracking_number || order.outbound_tracking_number || "";
+  return "<section class='shipping-document-delivery " + esc(destination.type) + "'><div class='shipping-document-delivery-head'><h3>" + esc(t("shipping_document_delivery_confirmation")) + "</h3><span class='shipping-document-destination-badge " + esc(destination.type) + "'>" + esc(destination.badge) + "</span></div>" +
+    "<div class='shipping-document-delivery-grid'><div class='shipping-document-destination-card'><span class='shipping-document-destination-label'>" + esc(destination.label) + "</span><strong>" + esc(destination.recipient) + "</strong>" +
+    (destination.recipientDetail ? "<span>" + esc(destination.recipientDetail) + "</span>" : "") +
+    "<span>" + esc(destination.postalAddress) + "</span><span>" + esc(destination.phone) + "</span></div>" +
+    "<dl class='shipping-document-delivery-facts'><div><dt>" + esc(t("shipping_document_outbound_service")) + "</dt><dd>" + esc(salesOrderWaybillCarrierLabel(order, "outbound")) + "</dd></div>" +
+    "<div><dt>" + esc(t("shipping_document_delivery_preference")) + "</dt><dd>" + esc(salesOrderDeliveryPreferenceLabel(order)) + "</dd></div>" +
+    "<div><dt>" + esc(t("customer_order_waybill_number")) + "</dt><dd>" + esc(trackingNumber ? shippingDocumentWaybillNumberFormat(trackingNumber) : "未登録") + "</dd></div></dl></div></section>";
 }
 
 function updateCustomerOrderCoreReturnServiceVisibility() {
@@ -16011,10 +16113,11 @@ function renderShippingDocumentList() {
     var selected = String(order.id) === String(shippingDocumentSelectedId);
     var checked = shippingDocumentCheckedIdsState.has(parseInt(order.id, 10));
     var pendingCount = shippingDocumentPendingCount(order);
+    var destination = shippingDocumentDestinationContext(order);
     return "<div class='shipping-document-list-row" + (selected ? " selected" : "") + "' data-shipping-document-order='" + esc(order.id) + "'>" +
       "<label class='shipping-document-row-check' aria-label='印刷対象'><input type='checkbox' data-shipping-document-check value='" + esc(order.id) + "'" + (checked ? " checked" : "") + "></label>" +
       "<span class='shipping-document-list-main'><span class='shipping-document-order-id-label'>" + esc(t("sales_order_id_label")) + "</span><strong>" + esc(order.order_number || ("注文 " + order.id)) + "</strong><small>" + esc(order.customer_name || "-") + "</small><span class='shipping-document-list-progress'>" + esc(order.dispatch_number || "指示書未発行") + (pendingCount ? " / 未印刷 " + pendingCount : " / 印刷済み") + "</span></span>" +
-      "<span class='shipping-document-list-meta'><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong><small>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small></span>" +
+      "<span class='shipping-document-list-meta'><strong class='" + esc(destination.type) + "'>" + esc(destination.badge) + "</strong><small>" + esc(destination.summary) + "</small><small>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small></span>" +
       "<span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span>" +
     "</div>";
   }).join("");
@@ -16668,15 +16771,18 @@ function shippingDocumentOrderContentsHtml(order) {
     item = item || {};
     var orderItem = item.order_item && typeof item.order_item === "object" ? item.order_item : item;
     var quantity = Math.max(1, parseInt(item.quantity == null ? orderItem.quantity : item.quantity, 10) || 1);
-    var partNumber = orderItem.genuine_part_number || orderItem.manufacturer_part_number || orderItem.gltek_part_number || "-";
-    var detail = [orderItem.manufacturer, orderItem.manufacturer_part_number].filter(Boolean).join(" / ") || "-";
-    return "<div class='shipping-document-order-item'><div><strong>" + esc(partNumber) + "</strong><span>" + esc(detail) + "</span></div>" +
-      "<span class='shipping-document-order-kind'>" + esc(customerProductKindLabel(orderItem.product_kind)) + "</span>" +
+    var partNumber = orderItem.gltek_part_number || orderItem.genuine_part_number || orderItem.manufacturer_part_number || "-";
+    var makerDetail = [orderItem.manufacturer, orderItem.manufacturer_part_number].filter(Boolean).join(" / ") || t("shipping_document_maker_part_unregistered");
+    var genuineDetail = orderItem.genuine_part_number && orderItem.genuine_part_number !== partNumber ? t("shipping_document_genuine_part_number") + " " + orderItem.genuine_part_number : "";
+    var category = salesOrderWarrantyCategoryLabel(orderItem);
+    var coreReturnRequired = customerOrderCoreHandlingValue(orderItem) === "return_required";
+    return "<div class='shipping-document-order-item'><div class='shipping-document-order-product'><strong>" + esc(partNumber) + "</strong><span>" + esc(makerDetail) + "</span>" + (genuineDetail ? "<span>" + esc(genuineDetail) + "</span>" : "") + "</div>" +
+      "<span class='shipping-document-order-kind'><strong>" + esc(category) + "</strong><small>" + esc(customerProductKindLabel(orderItem.product_kind)) + "</small></span>" +
       "<span class='shipping-document-order-quantity'>" + esc(t("customer_order_quantity")) + " <strong>" + esc(String(quantity)) + "</strong></span>" +
-      "<span class='shipping-document-order-core " + (customerOrderCoreHandlingValue(orderItem) === "return_required" ? "required" : "not-required") + "'>" + esc(t("core_return_required_label") + ": " + customerOrderCoreHandlingLabel(orderItem)) + "</span></div>";
+      "<span class='shipping-document-order-core " + (coreReturnRequired ? "required" : "not-required") + "'>" + esc(coreReturnRequired ? t("customer_order_core_return_needed") : t("shipping_document_core_return_not_required")) + "</span></div>";
   }).join("");
-  return "<section class='shipping-document-order-contents'><div class='shipping-document-order-contents-head'><h3>受注内容</h3><span>" + esc(tf("customer_catalog_count", { n: items.length }) + " / " + t("customer_order_quantity") + " " + totalQuantity) + "</span></div>" +
-    (rows ? "<div class='shipping-document-order-items'>" + rows + "</div>" : "<p class='shipping-document-order-empty'>受注明細がありません。</p>") + "</section>";
+  return "<section class='shipping-document-order-contents'><div class='shipping-document-order-contents-head'><h3>" + esc(t("shipping_document_shipment_items")) + "</h3><span>" + esc(tf("customer_catalog_count", { n: items.length }) + " / " + t("customer_order_quantity") + " " + totalQuantity) + "</span></div>" +
+    (rows ? "<div class='shipping-document-order-items'>" + rows + "</div>" : "<p class='shipping-document-order-empty'>" + esc(t("shipping_document_no_shipment_items")) + "</p>") + "</section>";
 }
 
 function salesOrderWorkspaceNavigationHtml(activeWorkspace) {
@@ -16706,6 +16812,7 @@ function renderShippingDocumentDetail() {
     salesOrderWorkspaceNavigationHtml("shipping-document") +
     "<div id='shipping-document-message' class='sales-order-detail-message' aria-live='polite'></div>" +
     shippingDocumentStageHtml(order) +
+    shippingDocumentDeliveryHtml(order) +
     shippingDocumentOrderContentsHtml(order) +
     shippingDocumentShipmentDocumentsHtml(order);
   bindShippingDocumentDetailActions();
@@ -18225,7 +18332,7 @@ function salesOrderPrintItemRows(order, type) {
     if (type === "core_return") {
       return "<tr><td>" + esc(String(index + 1)) + "</td><td><strong>" + esc(partNo) + "</strong><small>" + esc(detail) + "</small></td><td>" + esc(orderItem.manufacturer_part_number || "-") + "</td><td>" + esc(String(item.quantity || 0)) + "</td><td class='shipment-document-check-cell'>□</td></tr>";
     }
-    return "<tr><td>" + esc(String(index + 1)) + "</td><td><strong>" + esc(partNo) + "</strong><small>" + esc(detail) + "</small></td><td>" + esc(customerProductKindLabel(orderItem.product_kind)) + "</td><td>" + esc(String(item.quantity || 0)) + "</td><td>" + esc(customerOrderCoreHandlingLabel(orderItem)) + "</td><td>" + esc(serials || "読取時に登録") + "</td></tr>";
+    return "<tr><td>" + esc(String(index + 1)) + "</td><td><strong>" + esc(partNo) + "</strong><small>" + esc(detail) + "</small></td><td>" + esc(customerProductKindLabel(orderItem.product_kind)) + "</td><td>" + esc(String(item.quantity || 0)) + "</td><td>" + esc(customerOrderCoreHandlingValue(orderItem) === "return_required" ? t("customer_order_core_return_needed") : t("shipping_document_return_not_required")) + "</td><td>" + esc(serials || "読取時に登録") + "</td></tr>";
   }).join("");
 }
 
@@ -18462,7 +18569,7 @@ function buildSalesOrderDocumentHtml(order, type, qrDataUrl) {
   if (type === "warranty") return buildSalesOrderWarrantyDocumentHtml(order);
   if (type === "core_return") return buildSalesOrderCoreReturnDocumentHtml(order);
   var dispatch = salesOrderDispatch(order) || {};
-  var address = order.shipping_address || {};
+  var destination = shippingDocumentDestinationContext(order);
   var title = salesOrderDocumentTypeLabel(type);
   var outbound = customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "outbound"), "未登録");
   var returned = order.core_return_required ? customerOrderShippingMethodLabel(customerOrderSavedShippingMethod(order, "core_return"), "未登録") : "対象外";
@@ -18473,7 +18580,7 @@ function buildSalesOrderDocumentHtml(order, type, qrDataUrl) {
     "<link rel='stylesheet' href='shipment-instruction-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></head><body class='document-a4'>" +
     "<div class='print-toolbar'><button id='dcats-print-shipment-document' type='button'>印刷・PDF保存</button></div>" +
     "<main class='shipment-document'><header><div><span>GLTEK / SHIPPING</span><h1>" + esc(title) + "</h1><strong>" + esc(dispatch.dispatch_number || "-") + "</strong></div><img src='" + esc(qrDataUrl) + "' alt='" + esc(dispatch.dispatch_number || "") + "'></header>" +
-    "<section class='shipment-document-meta'><dl><div><dt>注文番号</dt><dd>" + esc(order.order_number || "-") + "</dd></div><div><dt>得意先</dt><dd>" + esc(order.customer_name || "-") + "</dd></div><div><dt>発行日</dt><dd>" + esc(String(dispatch.issued_at || "").slice(0, 10) || new Date().toISOString().slice(0, 10)) + "</dd></div><div><dt>お届け先</dt><dd>〒" + esc(address.postal_code || "-") + " " + esc(address.prefecture_name || "") + esc(address.address_line_1 || "") + " " + esc(address.address_line_2 || "") + "<br>" + esc(address.company_name || "") + " " + esc(address.recipient_name || "") + " / TEL " + esc(address.phone_number || "-") + "</dd></div></dl></section>" +
+    "<section class='shipment-document-meta'><dl><div><dt>注文番号</dt><dd>" + esc(order.order_number || "-") + "</dd></div><div><dt>得意先</dt><dd>" + esc(order.customer_name || "-") + "</dd></div><div><dt>発行日</dt><dd>" + esc(String(dispatch.issued_at || "").slice(0, 10) || new Date().toISOString().slice(0, 10)) + "</dd></div><div class='shipment-document-destination " + esc(destination.type) + "'><dt>" + esc(destination.label) + " <span>" + esc(destination.badge) + "</span></dt><dd><strong>" + esc(destination.recipient) + "</strong>" + (destination.recipientDetail ? "<small>" + esc(destination.recipientDetail) + "</small>" : "") + "<small>" + esc(destination.postalAddress) + " / " + esc(destination.phone) + "</small></dd></div></dl></section>" +
     "<table class='shipment-document-table-" + esc(type) + "'><thead>" + headers + "</thead><tbody>" + salesOrderPrintItemRows(order, type) + "</tbody></table>" +
     shipmentBlock +
     "<p class='shipment-document-note'>" + esc(note) + "</p>" +
