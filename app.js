@@ -423,10 +423,12 @@ var TRANSLATIONS = {
     business_workspace_b2_saved: "B2 CSVを D-CATS業務連携 / B2 / 01_D-CATS発行 に保存しました。",
     business_workspace_hanbaiou_title: "保存先",
     business_workspace_hanbaiou_path: "D-CATS業務連携 / 販売王 / 01_D-CATS発行",
+    business_workspace_hanbaiou_picker_hint: "フォルダー選択画面では「D-CATS業務連携」「販売王」「01_D-CATS発行」のいずれかを選択します。",
     business_workspace_hanbaiou_select: "保存先を設定",
     business_workspace_hanbaiou_change: "保存先を変更",
     business_workspace_hanbaiou_unset: "初回のみ設定が必要です",
     business_workspace_hanbaiou_ready: "設定済み",
+    business_workspace_hanbaiou_ready_named: "設定済み: {name}",
     business_workspace_hanbaiou_permission: "再接続が必要",
     business_workspace_hanbaiou_unsupported: "このブラウザでは設定できません",
     business_workspace_hanbaiou_selecting: "販売王CSVの保存先を確認しています。",
@@ -482,7 +484,9 @@ var TRANSLATIONS = {
     sales_accounting_issue_no_orders: "対象期間に出力できる出荷済み受注はありません。",
     sales_accounting_product_master_save_failed: "商品台帳CSVを保存できませんでした。",
     sales_accounting_product_master_saved: "商品台帳CSV {count}件をD-CATS業務連携 / 販売王 / 01_D-CATS発行 に保存しました。",
+    sales_accounting_product_master_saved_file: "商品台帳CSV {count}件をD-CATS業務連携 / 販売王 / 01_D-CATS発行 / {file} に保存しました。",
     sales_accounting_product_master_resaved: "商品台帳CSVをD-CATS業務連携 / 販売王 / 01_D-CATS発行 に保存しました。",
+    sales_accounting_product_master_resaved_file: "商品台帳CSVをD-CATS業務連携 / 販売王 / 01_D-CATS発行 / {file} に保存しました。",
     hanbaiou_catalog_loading: "商品台帳の状態を確認しています",
     hanbaiou_catalog_unavailable: "商品台帳の状態を確認できませんでした",
     hanbaiou_catalog_pending_summary: "販売王未登録 {count}件 / 売上CSV停止中",
@@ -496,6 +500,19 @@ var TRANSLATIONS = {
     hanbaiou_catalog_issue_button: "1 商品コードを一括発行",
     hanbaiou_catalog_export_button: "2 未登録商品をCSV出力",
     hanbaiou_catalog_confirm_button: "4 最新CSVを登録済みにする",
+    hanbaiou_catalog_step_1_title: "商品コードを発行",
+    hanbaiou_catalog_step_1_description: "販売王の商品コードとして使うD-CATS商品コードを、未登録商品へ一括発行します。",
+    hanbaiou_catalog_step_2_title: "未登録商品CSVを保存",
+    hanbaiou_catalog_step_2_description: "未登録の商品を販売王の商品台帳CSVにして、業務連携フォルダーへ保存します。",
+    hanbaiou_catalog_step_3_title: "販売王へ取り込む",
+    hanbaiou_catalog_step_3_description: "販売王の「導入 → 他社製品データ取り込み」で、台帳は「商品」、ファイルは「区切り文字形式（*.csv, *.txt）」を選び、手順2のCSVを取り込みます。",
+    hanbaiou_catalog_step_3_manual: "販売王で行う操作",
+    hanbaiou_catalog_step_4_title: "D-CATSで登録済みにする",
+    hanbaiou_catalog_step_4_description: "販売王への取込結果を確認した後、最新CSVの商品を登録済みにします。完了すると対象の売上CSVを出力できます。",
+    hanbaiou_catalog_output_folder: "保存先",
+    hanbaiou_catalog_output_file: "最新の出力ファイル",
+    hanbaiou_catalog_output_file_empty: "まだ出力されていません",
+    hanbaiou_catalog_reset_description: "販売王へまだ取り込んでいない商品を、もう一度CSV出力する場合に使用します。",
     hanbaiou_catalog_no_pending: "販売王へ未登録の商品はありません。",
     hanbaiou_catalog_issue_required: "商品コード未発行の商品があります。先に商品コードを一括発行してください。",
     hanbaiou_catalog_issue_progress: "対象商品のD-CATS商品コードを一括発行しています。",
@@ -2631,10 +2648,12 @@ var TRANSLATIONS = {
     business_workspace_b2_saved: "The B2 CSV was saved to D-CATS Business Exchange / B2 / 01_D-CATS issue.",
     business_workspace_hanbaiou_title: "Save Folder",
     business_workspace_hanbaiou_path: "D-CATS Business Exchange / Sales King / 01_D-CATS Issue",
+    business_workspace_hanbaiou_picker_hint: "In the folder picker, select D-CATS Business Exchange, Sales King, or 01_D-CATS Issue.",
     business_workspace_hanbaiou_select: "Set Save Folder",
     business_workspace_hanbaiou_change: "Change Save Folder",
     business_workspace_hanbaiou_unset: "One-time setup required",
     business_workspace_hanbaiou_ready: "Configured",
+    business_workspace_hanbaiou_ready_named: "Configured: {name}",
     business_workspace_hanbaiou_permission: "Reconnect required",
     business_workspace_hanbaiou_unsupported: "Not supported by this browser",
     business_workspace_hanbaiou_selecting: "Checking the Sales King CSV save folder.",
@@ -2690,7 +2709,9 @@ var TRANSLATIONS = {
     sales_accounting_issue_no_orders: "No shipped orders are available for export in this period.",
     sales_accounting_product_master_save_failed: "Could not save the product ledger CSV.",
     sales_accounting_product_master_saved: "Saved {count} product ledger entries to D-CATS Business Exchange / Sales King / 01_D-CATS issue.",
+    sales_accounting_product_master_saved_file: "Saved {count} product ledger entries to D-CATS Business Exchange / Sales King / 01_D-CATS Issue / {file}.",
     sales_accounting_product_master_resaved: "Saved the product ledger CSV to D-CATS Business Exchange / Sales King / 01_D-CATS issue.",
+    sales_accounting_product_master_resaved_file: "Saved the product ledger CSV to D-CATS Business Exchange / Sales King / 01_D-CATS Issue / {file}.",
     hanbaiou_catalog_loading: "Checking the product master status",
     hanbaiou_catalog_unavailable: "The product master status could not be loaded",
     hanbaiou_catalog_pending_summary: "{count} products not registered in Sales King / Sales CSV blocked",
@@ -2704,6 +2725,19 @@ var TRANSLATIONS = {
     hanbaiou_catalog_issue_button: "1 Issue All Product Codes",
     hanbaiou_catalog_export_button: "2 Export Unregistered Products",
     hanbaiou_catalog_confirm_button: "4 Confirm Latest CSV Registration",
+    hanbaiou_catalog_step_1_title: "Issue Product Codes",
+    hanbaiou_catalog_step_1_description: "Issue D-CATS product codes for unregistered products to use as Sales King product codes.",
+    hanbaiou_catalog_step_2_title: "Save the Unregistered Product CSV",
+    hanbaiou_catalog_step_2_description: "Create a Sales King product ledger CSV for unregistered products and save it in the business exchange folder.",
+    hanbaiou_catalog_step_3_title: "Import into Sales King",
+    hanbaiou_catalog_step_3_description: "In Sales King, open Import > Import Other-Product Data, select Product as the ledger and Delimited Text (*.csv, *.txt) as the file type, then import the CSV from step 2.",
+    hanbaiou_catalog_step_3_manual: "Action in Sales King",
+    hanbaiou_catalog_step_4_title: "Mark as Registered in D-CATS",
+    hanbaiou_catalog_step_4_description: "After verifying the Sales King import, mark the products in the latest CSV as registered. Their sales CSVs can then be exported.",
+    hanbaiou_catalog_output_folder: "Save folder",
+    hanbaiou_catalog_output_file: "Latest output file",
+    hanbaiou_catalog_output_file_empty: "No file has been exported yet",
+    hanbaiou_catalog_reset_description: "Use this when products have not yet been imported into Sales King and must be exported again.",
     hanbaiou_catalog_no_pending: "There are no products awaiting Sales King registration.",
     hanbaiou_catalog_issue_required: "Some product codes have not been issued. Issue all product codes first.",
     hanbaiou_catalog_issue_progress: "Issuing D-CATS product codes for all eligible products.",
@@ -4783,10 +4817,12 @@ var TRANSLATIONS = {
     business_workspace_b2_saved: "B2 CSV已保存到D-CATS业务协作 / B2 / 01_D-CATS发行。",
     business_workspace_hanbaiou_title: "保存位置",
     business_workspace_hanbaiou_path: "D-CATS业务协作 / 销售王 / 01_D-CATS发行",
+    business_workspace_hanbaiou_picker_hint: "在文件夹选择画面中，请选择D-CATS业务协作、销售王或01_D-CATS发行。",
     business_workspace_hanbaiou_select: "设置保存位置",
     business_workspace_hanbaiou_change: "更改保存位置",
     business_workspace_hanbaiou_unset: "仅首次需要设置",
     business_workspace_hanbaiou_ready: "已设置",
+    business_workspace_hanbaiou_ready_named: "已设置: {name}",
     business_workspace_hanbaiou_permission: "需要重新连接",
     business_workspace_hanbaiou_unsupported: "此浏览器不支持设置",
     business_workspace_hanbaiou_selecting: "正在确认销售王CSV保存位置。",
@@ -4842,7 +4878,9 @@ var TRANSLATIONS = {
     sales_accounting_issue_no_orders: "指定期间内没有可导出的已发货订单。",
     sales_accounting_product_master_save_failed: "无法保存商品台账CSV。",
     sales_accounting_product_master_saved: "已将{count}件商品台账保存到D-CATS业务协作 / 销售王 / 01_D-CATS发行。",
+    sales_accounting_product_master_saved_file: "已将{count}件商品台账保存到D-CATS业务协作 / 销售王 / 01_D-CATS发行 / {file}。",
     sales_accounting_product_master_resaved: "已将商品台账CSV保存到D-CATS业务协作 / 销售王 / 01_D-CATS发行。",
+    sales_accounting_product_master_resaved_file: "已将商品台账CSV保存到D-CATS业务协作 / 销售王 / 01_D-CATS发行 / {file}。",
     hanbaiou_catalog_loading: "正在确认商品台账状态",
     hanbaiou_catalog_unavailable: "无法确认商品台账状态",
     hanbaiou_catalog_pending_summary: "销售王未登记 {count} 件 / 销售CSV已停止",
@@ -4856,6 +4894,19 @@ var TRANSLATIONS = {
     hanbaiou_catalog_issue_button: "1 批量发行商品代码",
     hanbaiou_catalog_export_button: "2 导出未登记商品CSV",
     hanbaiou_catalog_confirm_button: "4 将最新CSV标记为已登记",
+    hanbaiou_catalog_step_1_title: "发行商品代码",
+    hanbaiou_catalog_step_1_description: "为未登记商品批量发行D-CATS商品代码，作为销售王商品代码使用。",
+    hanbaiou_catalog_step_2_title: "保存未登记商品CSV",
+    hanbaiou_catalog_step_2_description: "将未登记商品制作成销售王商品台账CSV，并保存到业务协作文件夹。",
+    hanbaiou_catalog_step_3_title: "导入销售王",
+    hanbaiou_catalog_step_3_description: "在销售王中打开“导入 → 导入其他产品数据”，台账选择“商品”，文件选择“分隔文本（*.csv, *.txt）”，然后导入步骤2的CSV。",
+    hanbaiou_catalog_step_3_manual: "在销售王中操作",
+    hanbaiou_catalog_step_4_title: "在D-CATS中标记为已登记",
+    hanbaiou_catalog_step_4_description: "确认销售王导入结果后，将最新CSV中的商品标记为已登记。完成后即可导出相关销售CSV。",
+    hanbaiou_catalog_output_folder: "保存位置",
+    hanbaiou_catalog_output_file: "最新导出文件",
+    hanbaiou_catalog_output_file_empty: "尚未导出文件",
+    hanbaiou_catalog_reset_description: "当商品尚未导入销售王并需要再次导出CSV时使用。",
     hanbaiou_catalog_no_pending: "没有等待在销售王登记的商品。",
     hanbaiou_catalog_issue_required: "存在尚未发行商品代码的商品。请先批量发行商品代码。",
     hanbaiou_catalog_issue_progress: "正在为所有目标商品批量发行D-CATS商品代码。",
@@ -6748,7 +6799,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.994";
+var APP_VERSION       = "v1.1.995";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -8492,6 +8543,10 @@ async function applyLanguage(lang) {
   if (isScreenActive("sales-order-mgmt")) {
     renderSalesOrderList();
     renderSalesOrderDetail();
+  }
+  var salesAccountingOverlay = document.getElementById("sales-accounting-export-overlay");
+  if (salesAccountingOverlay && salesAccountingOverlay.classList.contains("show")) {
+    renderSalesAccountingHanbaiouGuide();
   }
   if (isScreenActive("core-return-mgmt")) {
     renderCoreReturnManagementList();
@@ -13257,7 +13312,9 @@ function setDcatsHanbaiouExportDirectoryState(state, directoryName) {
   if (row) row.hidden = salesState.targetSystem !== "hanbaiou";
   if (stateHost) {
     stateHost.className = "sales-accounting-export-directory-state" + (state === "ready" ? " ready" : (state === "error" ? " error" : ""));
-    stateHost.textContent = t(state === "ready"
+    stateHost.textContent = state === "ready" && directoryName
+      ? tf("business_workspace_hanbaiou_ready_named", { name: directoryName })
+      : t(state === "ready"
       ? "business_workspace_hanbaiou_ready"
       : (state === "permission"
         ? "business_workspace_hanbaiou_permission"
@@ -13688,6 +13745,7 @@ function initialSalesAccountingExportState() {
     registrationConfirmBatchId: null,
     hanbaiouCatalog: null,
     hanbaiouBatches: [],
+    hanbaiouLatestFileName: "",
     hasSearched: false,
     requestedOrderId: null,
     requestedOrderNumber: ""
@@ -13785,6 +13843,13 @@ function salesAccountingHanbaiouStatusLabel(status) {
   })[status] || "未発行";
 }
 
+function salesAccountingHanbaiouBatchFileName(batch) {
+  var fileName = String(batch && batch.file_name || "").trim();
+  if (fileName) return fileName;
+  var batchNumber = String(batch && batch.batch_number || "").trim();
+  return batchNumber ? "HanbaiouProductMaster_" + batchNumber + ".csv" : "";
+}
+
 function salesAccountingExportProductCodeHtml(item, profile) {
   var state = ensureSalesAccountingExportState();
   if (state.targetSystem !== "hanbaiou") {
@@ -13814,6 +13879,11 @@ function renderSalesAccountingHanbaiouGuide() {
   guide.hidden = !isHanbaiou;
   if (!isHanbaiou) return;
 
+  var latestFileHost = document.getElementById("sales-accounting-hanbaiou-latest-file");
+  var knownBatches = Array.isArray(state.hanbaiouBatches) ? state.hanbaiouBatches : [];
+  var latestFileName = state.hanbaiouLatestFileName || salesAccountingHanbaiouBatchFileName(knownBatches[0]);
+  if (latestFileHost) latestFileHost.textContent = latestFileName || t("hanbaiou_catalog_output_file_empty");
+
   if (!state.hanbaiouCatalog) {
     history.innerHTML = "";
     updateSalesAccountingHanbaiouActions();
@@ -13824,7 +13894,7 @@ function renderSalesAccountingHanbaiouGuide() {
   var pendingCount = Number(catalog.pending_count || 0);
   if (pendingCount && !guide.open) guide.open = true;
 
-  var batches = Array.isArray(state.hanbaiouBatches) ? state.hanbaiouBatches : [];
+  var batches = knownBatches;
   history.innerHTML = batches.length ? "<span>商品台帳CSV履歴</span>" + batches.slice(0, 3).map(function(batch) {
     return "<button type='button' data-hanbaiou-master-download='" + esc(batch.batch_id) + "'>" + esc(batch.batch_number || "CSV") + " / " + esc(batch.product_count || 0) + "件を再取得</button>";
   }).join("") : "";
@@ -14175,8 +14245,10 @@ async function exportHanbaiouProductMaster() {
     return;
   }
   var data = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
+  var savedFileName = "";
   try {
-    await downloadSalesAccountingExportFile(data, exportDirectory);
+    savedFileName = await downloadSalesAccountingExportFile(data, exportDirectory);
+    state.hanbaiouLatestFileName = savedFileName;
   } catch (error) {
     salesAccountingProductOnboardingSaving = false;
     setSalesAccountingExportMessage(error.message || t("sales_accounting_product_master_save_failed"), true);
@@ -14184,7 +14256,10 @@ async function exportHanbaiouProductMaster() {
     return;
   }
   salesAccountingProductOnboardingSaving = false;
-  setSalesAccountingExportMessage(tf("sales_accounting_product_master_saved", { count: Number(data.product_count || pendingCount).toLocaleString() }), false);
+  setSalesAccountingExportMessage(tf("sales_accounting_product_master_saved_file", {
+    count: Number(data.product_count || pendingCount).toLocaleString(),
+    file: savedFileName
+  }), false);
   await loadSalesAccountingExportData({ preserveMessage: true });
 }
 
@@ -14267,8 +14342,10 @@ async function redownloadHanbaiouProductMaster(batchId) {
   }
   var data = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
   try {
-    await downloadSalesAccountingExportFile(data, exportDirectory);
-    setSalesAccountingExportMessage(t("sales_accounting_product_master_resaved"), false);
+    var savedFileName = await downloadSalesAccountingExportFile(data, exportDirectory);
+    ensureSalesAccountingExportState().hanbaiouLatestFileName = savedFileName;
+    setSalesAccountingExportMessage(tf("sales_accounting_product_master_resaved_file", { file: savedFileName }), false);
+    renderSalesAccountingHanbaiouGuide();
   } catch (error) {
     setSalesAccountingExportMessage(error.message || t("sales_accounting_product_master_save_failed"), true);
   }

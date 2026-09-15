@@ -28,7 +28,18 @@ for (const id of [
   "sales-accounting-hanbaiou-confirm",
   "sales-accounting-hanbaiou-reset",
   "sales-accounting-hanbaiou-history",
+  "sales-accounting-hanbaiou-latest-file",
 ]) requireFragment(html, `id="${id}"`);
+
+for (const key of [
+  "hanbaiou_catalog_step_1_description",
+  "hanbaiou_catalog_step_2_description",
+  "hanbaiou_catalog_step_3_description",
+  "hanbaiou_catalog_step_4_description",
+  "hanbaiou_catalog_output_folder",
+  "hanbaiou_catalog_output_file",
+  "business_workspace_hanbaiou_picker_hint",
+]) requireFragment(html, `data-i18n="${key}"`);
 
 const load = functionSource("loadSalesAccountingExportData");
 requireFragment(load, 'sb.rpc("get_hanbaiou_product_catalog_status")');
@@ -45,6 +56,8 @@ const master = functionSource("exportHanbaiouProductMaster");
 requireFragment(master, 'sb.rpc("create_hanbaiou_catalog_product_master_export")');
 requireFragment(master, "prepareDcatsHanbaiouExportDirectory()");
 requireFragment(master, "await downloadSalesAccountingExportFile(data, exportDirectory)");
+requireFragment(master, "state.hanbaiouLatestFileName = savedFileName");
+requireFragment(master, 'tf("sales_accounting_product_master_saved_file"');
 requireFragment(master, "catalog.incomplete_count");
 requireFragment(master, 't("hanbaiou_catalog_incomplete_block")');
 requireFragment(master, "scrollToSalesAccountingHanbaiouGuide()");
@@ -71,6 +84,8 @@ requireFragment(reset, 't("hanbaiou_catalog_reset_progress")');
 
 const renderGuide = functionSource("renderSalesAccountingHanbaiouGuide");
 const updateActions = functionSource("updateSalesAccountingHanbaiouActions");
+requireFragment(renderGuide, 'document.getElementById("sales-accounting-hanbaiou-latest-file")');
+requireFragment(renderGuide, "salesAccountingHanbaiouBatchFileName(knownBatches[0])");
 if (/incomplete_products|sales-accounting-hanbaiou-(?:validation|missing-tags|product-list|metric|selected-summary|guide-summary|note)|3品番の不足明細|CSV対象/.test(renderGuide + updateActions + html + css)) {
   throw new Error("Product-master decision metrics and detail lists must not be displayed in the sales-data export screen");
 }
@@ -107,6 +122,18 @@ for (const key of [
   "hanbaiou_catalog_reset_button",
   "hanbaiou_catalog_reset_prompt",
   "hanbaiou_catalog_reset_done",
+  "hanbaiou_catalog_step_1_description",
+  "hanbaiou_catalog_step_2_description",
+  "hanbaiou_catalog_step_3_description",
+  "hanbaiou_catalog_step_4_description",
+  "hanbaiou_catalog_output_folder",
+  "hanbaiou_catalog_output_file",
+  "hanbaiou_catalog_output_file_empty",
+  "hanbaiou_catalog_reset_description",
+  "business_workspace_hanbaiou_picker_hint",
+  "business_workspace_hanbaiou_ready_named",
+  "sales_accounting_product_master_saved_file",
+  "sales_accounting_product_master_resaved_file",
 ]) {
   const matches = source.match(new RegExp(`${key}:`, "g")) || [];
   if (matches.length !== 3) throw new Error(`${key} must be translated in Japanese, English, and Chinese`);
