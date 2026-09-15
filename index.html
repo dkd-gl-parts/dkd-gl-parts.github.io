@@ -1000,6 +1000,7 @@
       <div>
         <span data-i18n="business_workspace_hanbaiou_title">保存先</span>
         <strong data-i18n="business_workspace_hanbaiou_path">D-CATS業務連携 / 販売王 / 01_D-CATS発行</strong>
+        <small data-i18n="business_workspace_hanbaiou_picker_hint">フォルダー選択画面では「D-CATS業務連携」「販売王」「01_D-CATS発行」のいずれかを選択します。</small>
       </div>
       <div>
         <span class="sales-accounting-export-directory-state" id="sales-accounting-export-directory-state" data-i18n="business_workspace_hanbaiou_unset">初回のみ設定が必要です</span>
@@ -1011,15 +1012,41 @@
       <summary><span>販売王 商品台帳の導入</span></summary>
       <div class="sales-accounting-hanbaiou-guide-body">
         <ol class="sales-accounting-hanbaiou-steps" aria-label="販売王商品台帳の導入手順">
-          <li><span>商品コード発行</span></li>
-          <li><span>商品台帳CSV出力</span></li>
-          <li><span>販売王へ取込</span></li>
-          <li><span>登録済みに確定</span></li>
+          <li>
+            <div class="sales-accounting-hanbaiou-step-copy">
+              <strong data-i18n="hanbaiou_catalog_step_1_title">商品コードを発行</strong>
+              <p data-i18n="hanbaiou_catalog_step_1_description">販売王の商品コードとして使うD-CATS商品コードを、未登録商品へ一括発行します。</p>
+            </div>
+            <button type="button" id="sales-accounting-hanbaiou-issue" data-i18n="hanbaiou_catalog_issue_button">1 商品コードを一括発行</button>
+          </li>
+          <li>
+            <div class="sales-accounting-hanbaiou-step-copy">
+              <strong data-i18n="hanbaiou_catalog_step_2_title">未登録商品CSVを保存</strong>
+              <p data-i18n="hanbaiou_catalog_step_2_description">未登録の商品を販売王の商品台帳CSVにして、業務連携フォルダーへ保存します。</p>
+            </div>
+            <dl class="sales-accounting-hanbaiou-output">
+              <div><dt data-i18n="hanbaiou_catalog_output_folder">保存先</dt><dd data-i18n="business_workspace_hanbaiou_path">D-CATS業務連携 / 販売王 / 01_D-CATS発行</dd></div>
+              <div><dt data-i18n="hanbaiou_catalog_output_file">最新の出力ファイル</dt><dd id="sales-accounting-hanbaiou-latest-file" data-i18n="hanbaiou_catalog_output_file_empty">まだ出力されていません</dd></div>
+            </dl>
+            <button type="button" id="sales-accounting-hanbaiou-export" data-i18n="hanbaiou_catalog_export_button">2 未登録商品をCSV出力</button>
+          </li>
+          <li>
+            <div class="sales-accounting-hanbaiou-step-copy">
+              <strong data-i18n="hanbaiou_catalog_step_3_title">販売王へ取り込む</strong>
+              <p data-i18n="hanbaiou_catalog_step_3_description">販売王の「導入 → 他社製品データ取り込み」で、台帳は「商品」、ファイルは「区切り文字形式（*.csv, *.txt）」を選び、手順2のCSVを取り込みます。</p>
+            </div>
+            <span class="sales-accounting-hanbaiou-manual" data-i18n="hanbaiou_catalog_step_3_manual">販売王で行う操作</span>
+          </li>
+          <li>
+            <div class="sales-accounting-hanbaiou-step-copy">
+              <strong data-i18n="hanbaiou_catalog_step_4_title">D-CATSで登録済みにする</strong>
+              <p data-i18n="hanbaiou_catalog_step_4_description">販売王への取込結果を確認した後、最新CSVの商品を登録済みにします。完了すると対象の売上CSVを出力できます。</p>
+            </div>
+            <button type="button" class="primary" id="sales-accounting-hanbaiou-confirm" data-i18n="hanbaiou_catalog_confirm_button">4 最新CSVを登録済みにする</button>
+          </li>
         </ol>
-        <div class="sales-accounting-hanbaiou-toolbar">
-          <button type="button" id="sales-accounting-hanbaiou-issue">1 商品コードを一括発行</button>
-          <button type="button" id="sales-accounting-hanbaiou-export">2 未登録商品をCSV出力</button>
-          <button type="button" class="primary" id="sales-accounting-hanbaiou-confirm">4 最新CSVを登録済みにする</button>
+        <div class="sales-accounting-hanbaiou-utility">
+          <span data-i18n="hanbaiou_catalog_reset_description">販売王へまだ取り込んでいない商品を、もう一度CSV出力する場合に使用します。</span>
           <button type="button" class="reset" id="sales-accounting-hanbaiou-reset">販売王未取込へリセット</button>
         </div>
         <div id="sales-accounting-hanbaiou-history" class="sales-accounting-hanbaiou-history"></div>
