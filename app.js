@@ -507,8 +507,8 @@ var TRANSLATIONS = {
     hanbaiou_catalog_step_1_description: "販売王の商品コードとして使うD-CATS商品コードを、未登録商品へ一括発行します。",
     hanbaiou_catalog_step_2_title: "未登録商品CSVを保存",
     hanbaiou_catalog_step_2_description: "未登録の商品を販売王の商品台帳CSVにして、業務連携フォルダーへ保存します。",
-    hanbaiou_catalog_step_3_title: "販売王へ取り込む",
-    hanbaiou_catalog_step_3_description: "販売王の「導入 → 他社製品データ取り込み」で、台帳は「商品」、ファイルは「区切り文字形式（*.csv, *.txt）」を選び、手順2のCSVを取り込みます。",
+    hanbaiou_catalog_step_3_title: "販売王のテキストデータ入力",
+    hanbaiou_catalog_step_3_description: "販売王の「ツール → テキストデータ入力」を開き、入力形式名称「商品台帳（販売王20～形式）」を選んで、手順2のCSVを取り込みます。「導入 → 他社製品データ取り込み」は使用しません。",
     hanbaiou_catalog_step_3_manual: "販売王で行う操作",
     hanbaiou_catalog_step_4_title: "D-CATSで登録済みにする",
     hanbaiou_catalog_step_4_description: "販売王への取込結果を確認した後、最新CSVの商品を登録済みにします。完了すると対象の売上CSVを出力できます。",
@@ -2744,8 +2744,8 @@ var TRANSLATIONS = {
     hanbaiou_catalog_step_1_description: "Issue D-CATS product codes for unregistered products to use as Sales King product codes.",
     hanbaiou_catalog_step_2_title: "Save the Unregistered Product CSV",
     hanbaiou_catalog_step_2_description: "Create a Sales King product ledger CSV for unregistered products and save it in the business exchange folder.",
-    hanbaiou_catalog_step_3_title: "Import into Sales King",
-    hanbaiou_catalog_step_3_description: "In Sales King, open Import > Import Other-Product Data, select Product as the ledger and Delimited Text (*.csv, *.txt) as the file type, then import the CSV from step 2.",
+    hanbaiou_catalog_step_3_title: "Sales King Text Data Input",
+    hanbaiou_catalog_step_3_description: "In Sales King, open Tools > Text Data Input, select Product Master (Sales King 20+ format), and import the CSV from step 2. Do not use Import > Import Other-Product Data.",
     hanbaiou_catalog_step_3_manual: "Action in Sales King",
     hanbaiou_catalog_step_4_title: "Mark as Registered in D-CATS",
     hanbaiou_catalog_step_4_description: "After verifying the Sales King import, mark the products in the latest CSV as registered. Their sales CSVs can then be exported.",
@@ -4925,8 +4925,8 @@ var TRANSLATIONS = {
     hanbaiou_catalog_step_1_description: "为未登记商品批量发行D-CATS商品代码，作为销售王商品代码使用。",
     hanbaiou_catalog_step_2_title: "保存未登记商品CSV",
     hanbaiou_catalog_step_2_description: "将未登记商品制作成销售王商品台账CSV，并保存到业务协作文件夹。",
-    hanbaiou_catalog_step_3_title: "导入销售王",
-    hanbaiou_catalog_step_3_description: "在销售王中打开“导入 → 导入其他产品数据”，台账选择“商品”，文件选择“分隔文本（*.csv, *.txt）”，然后导入步骤2的CSV。",
+    hanbaiou_catalog_step_3_title: "销售王文本数据输入",
+    hanbaiou_catalog_step_3_description: "在销售王中打开“工具 → 文本数据输入”，选择“商品台账（销售王20～格式）”，然后导入步骤2的CSV。请勿使用“导入 → 导入其他产品数据”。",
     hanbaiou_catalog_step_3_manual: "在销售王中操作",
     hanbaiou_catalog_step_4_title: "在D-CATS中标记为已登记",
     hanbaiou_catalog_step_4_description: "确认销售王导入结果后，将最新CSV中的商品标记为已登记。完成后即可导出相关销售CSV。",
@@ -6835,7 +6835,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.999";
+var APP_VERSION       = "v1.1.1000";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;

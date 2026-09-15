@@ -42,6 +42,14 @@ for (const key of [
   "business_workspace_hanbaiou_picker_hint",
 ]) requireFragment(html, `data-i18n="${key}"`);
 
+requireFragment(html, "ツール → テキストデータ入力");
+requireFragment(html, "商品台帳（販売王20～形式）");
+requireFragment(html, "「導入 → 他社製品データ取り込み」は使用しません。");
+requireFragment(css, ".form-card.sales-accounting-export-card { display: flex; flex-direction: column; width: min(1220px, calc(100vw - 24px)); max-width: 1220px; max-height: calc(100vh - 24px); margin: 12px;");
+if (html.includes("台帳は「商品」、ファイルは「区切り文字形式")) {
+  throw new Error("The 67-column product-master CSV must not be routed through Other Product Data Import");
+}
+
 const load = functionSource("loadSalesAccountingExportData");
 requireFragment(load, 'sb.rpc("get_hanbaiou_product_catalog_status")');
 requireFragment(load, "catalogRequest");

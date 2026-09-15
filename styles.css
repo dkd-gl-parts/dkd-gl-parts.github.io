@@ -7477,7 +7477,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-pricing-validation.error,
 .sales-order-pricing-message.error { color: #b42318; }
 .sales-order-pricing-card .form-footer { position: sticky; bottom: 0; margin: 0; border-top: 1px solid #d8dfe5; padding: 14px 20px; background: #fff; }
-.form-card.sales-accounting-export-card { display: flex; flex-direction: column; width: min(1220px, calc(100vw - 24px)); max-width: 1220px; max-height: calc(100vh - 24px); border-radius: 8px; padding: 0; overflow: hidden; }
+.form-card.sales-accounting-export-card { display: flex; flex-direction: column; width: min(1220px, calc(100vw - 24px)); max-width: 1220px; max-height: calc(100vh - 24px); margin: 12px; border-radius: 8px; padding: 0; overflow: hidden; }
 .sales-accounting-export-heading { flex: 0 0 auto; display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; border-bottom: 1px solid #d8dfe5; padding: 16px 20px 14px; background: #fff; }
 .sales-accounting-export-heading > div > span { color: #8a5d12; font-size: 9px; font-weight: 900; }
 .sales-accounting-export-heading h3 { margin: 3px 0 0; color: #1d2939; font-size: 20px; letter-spacing: 0; }
