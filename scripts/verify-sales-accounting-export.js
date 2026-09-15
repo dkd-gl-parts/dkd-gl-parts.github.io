@@ -87,6 +87,9 @@ for (const key of [
   "sales_accounting_issue_none",
   "sales_accounting_issue_no_ready",
   "sales_accounting_issue_no_orders",
+  "business_workspace_hanbaiou_mismatch",
+  "business_workspace_hanbaiou_write_error_state",
+  "business_workspace_hanbaiou_write_failed",
 ]) {
   const matches = source.match(new RegExp(`${key}:`, "g")) || [];
   if (matches.length !== 3) throw new Error(`${key} must be translated in Japanese, English, and Chinese`);
@@ -122,14 +125,25 @@ for (const fragment of [
   "fileHandle.createWritable",
   "await writable.write(bytes)",
   "await writable.close()",
+  "await fileHandle.getFile()",
+  "Number(savedFile.size) !== bytes.byteLength",
   "URL.createObjectURL",
 ]) requireFragment(download, fragment);
+
+const refreshDirectoryState = functionSource("refreshDcatsHanbaiouExportDirectoryState");
+for (const fragment of [
+  "handle.name !== DCATS_HANBAIOU_EXPORT_DIRECTORY_NAME",
+  "await forgetDcatsHanbaiouExportDirectory()",
+  'setDcatsHanbaiouExportDirectoryState("mismatch", oldDirectoryName)',
+]) requireFragment(refreshDirectoryState, fragment);
 
 for (const functionName of [
   "resolveDcatsHanbaiouExportDirectory",
   "pickDcatsHanbaiouExportDirectory",
   "prepareDcatsHanbaiouExportDirectory",
   "configureDcatsHanbaiouExportDirectory",
+  "forgetDcatsHanbaiouExportDirectory",
+  "resetDcatsHanbaiouExportDirectoryAfterWriteFailure",
 ]) functionSource(functionName);
 for (const fragment of [
   'var DCATS_HANBAIOU_DIRECTORY_NAME = "\\u8ca9\\u58f2\\u738b"',
@@ -138,6 +152,8 @@ for (const fragment of [
   'selectedHandle.name === DCATS_BUSINESS_WORKSPACE_DIRECTORY_NAME',
   'selectedHandle.name === DCATS_HANBAIOU_DIRECTORY_NAME',
   'selectedHandle.name === DCATS_HANBAIOU_EXPORT_DIRECTORY_NAME',
+  'handle.name !== DCATS_HANBAIOU_EXPORT_DIRECTORY_NAME',
+  "removeStoredDcatsBusinessWorkspaceDirectory(DCATS_HANBAIOU_EXPORT_DIRECTORY_KEY)",
   'document.getElementById("sales-accounting-export-directory-select").addEventListener("click", configureDcatsHanbaiouExportDirectory)',
 ]) requireFragment(source, fragment);
 
@@ -171,6 +187,7 @@ for (const fragment of [
           write: async (value) => { writtenBytes = new Uint8Array(value); },
           close: async () => { closed = true; },
         }),
+        getFile: async () => ({ size: writtenBytes ? writtenBytes.byteLength : 0 }),
       };
     },
   };
@@ -188,6 +205,42 @@ for (const fragment of [
   }
   if (!Buffer.from(writtenBytes).equals(Buffer.from([0x82, 0xa0, 0x2c, 0x31]))) {
     throw new Error("The Shift-JIS CSV bytes changed while writing to the shared folder");
+  }
+
+  const incompleteDirectoryHandle = {
+    getFileHandle: async () => ({
+      createWritable: async () => ({ write: async () => {}, close: async () => {} }),
+      getFile: async () => ({ size: 0 }),
+    }),
+  };
+  let rejectedIncompleteWrite = false;
+  try {
+    await context.runDownload({
+      content_base64: Buffer.from([0x31]).toString("base64"),
+      file_name: "incomplete.csv",
+    }, incompleteDirectoryHandle);
+  } catch (error) {
+    rejectedIncompleteWrite = error && error.name === "DcatsCsvWriteVerificationError";
+  }
+  if (!rejectedIncompleteWrite) throw new Error("An incomplete CSV write must not be reported as saved");
+
+  let forgotOldDirectory = false;
+  let reopenedPicker = false;
+  const selectedDirectory = { name: "01_D-CATS発行" };
+  const prepareContext = {
+    DCATS_HANBAIOU_EXPORT_DIRECTORY_NAME: "01_D-CATS発行",
+    dcatsHanbaiouExportDirectoryHandle: { name: "商品台帳CSV" },
+    loadDcatsHanbaiouExportDirectory: async () => null,
+    supportsDcatsB2SharedFolder: () => true,
+    forgetDcatsHanbaiouExportDirectory: async () => { forgotOldDirectory = true; },
+    pickDcatsHanbaiouExportDirectory: async () => { reopenedPicker = true; return selectedDirectory; },
+    t: (key) => key,
+  };
+  const prepare = functionSource("prepareDcatsHanbaiouExportDirectory");
+  vm.runInNewContext(`${prepare}; runPrepare = prepareDcatsHanbaiouExportDirectory;`, prepareContext);
+  const preparedDirectory = await prepareContext.runPrepare();
+  if (!forgotOldDirectory || !reopenedPicker || preparedDirectory !== selectedDirectory) {
+    throw new Error("An old product-ledger folder must be discarded before selecting 01_D-CATS発行");
   }
   console.log("Sales-accounting export UI verification passed.");
 })().catch((error) => {

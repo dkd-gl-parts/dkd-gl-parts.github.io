@@ -430,6 +430,8 @@ var TRANSLATIONS = {
     business_workspace_hanbaiou_ready: "設定済み",
     business_workspace_hanbaiou_ready_named: "設定済み: {name}",
     business_workspace_hanbaiou_permission: "再接続が必要",
+    business_workspace_hanbaiou_mismatch: "旧保存先「{name}」を解除しました",
+    business_workspace_hanbaiou_write_error_state: "書込みできません。保存先を再設定してください",
     business_workspace_hanbaiou_unsupported: "このブラウザでは設定できません",
     business_workspace_hanbaiou_selecting: "販売王CSVの保存先を確認しています。",
     business_workspace_hanbaiou_selected: "販売王CSVの保存先を設定しました。",
@@ -438,6 +440,7 @@ var TRANSLATIONS = {
     business_workspace_hanbaiou_missing_folder: "選択した場所に販売王 / 01_D-CATS発行フォルダが見つかりません。Google Drive for desktopの同期を確認してください。",
     business_workspace_hanbaiou_failed: "販売王CSVの保存先を設定できませんでした。",
     business_workspace_hanbaiou_required: "販売王CSVを出力する前に、保存先を設定してください。",
+    business_workspace_hanbaiou_write_failed: "指定先へCSVを書き込めませんでした。保存先を設定し直し、出力履歴からCSVを再取得してください。",
     business_workspace_hanbaiou_saved: "D-CATS業務連携 / 販売王 / 01_D-CATS発行 に保存しました。",
     sales_management_not_exported: "売上未出力",
     sales_management_registration_pending: "販売管理登録待ち",
@@ -510,8 +513,8 @@ var TRANSLATIONS = {
     hanbaiou_catalog_step_4_title: "D-CATSで登録済みにする",
     hanbaiou_catalog_step_4_description: "販売王への取込結果を確認した後、最新CSVの商品を登録済みにします。完了すると対象の売上CSVを出力できます。",
     hanbaiou_catalog_output_folder: "保存先",
-    hanbaiou_catalog_output_file: "最新の出力ファイル",
-    hanbaiou_catalog_output_file_empty: "まだ出力されていません",
+    hanbaiou_catalog_output_file: "指定先へ保存したファイル",
+    hanbaiou_catalog_output_file_empty: "この画面ではまだ保存していません",
     hanbaiou_catalog_reset_description: "販売王へまだ取り込んでいない商品を、もう一度CSV出力する場合に使用します。",
     hanbaiou_catalog_no_pending: "販売王へ未登録の商品はありません。",
     hanbaiou_catalog_issue_required: "商品コード未発行の商品があります。先に商品コードを一括発行してください。",
@@ -2663,6 +2666,8 @@ var TRANSLATIONS = {
     business_workspace_hanbaiou_ready: "Configured",
     business_workspace_hanbaiou_ready_named: "Configured: {name}",
     business_workspace_hanbaiou_permission: "Reconnect required",
+    business_workspace_hanbaiou_mismatch: "Disconnected old save folder: {name}",
+    business_workspace_hanbaiou_write_error_state: "Cannot write. Configure the save folder again",
     business_workspace_hanbaiou_unsupported: "Not supported by this browser",
     business_workspace_hanbaiou_selecting: "Checking the Sales King CSV save folder.",
     business_workspace_hanbaiou_selected: "The Sales King CSV save folder was configured.",
@@ -2671,6 +2676,7 @@ var TRANSLATIONS = {
     business_workspace_hanbaiou_missing_folder: "The Sales King / 01_D-CATS issue folder was not found. Check Google Drive for desktop synchronization.",
     business_workspace_hanbaiou_failed: "The Sales King CSV save folder could not be configured.",
     business_workspace_hanbaiou_required: "Configure the save folder before exporting a Sales King CSV.",
+    business_workspace_hanbaiou_write_failed: "The CSV could not be written to the selected folder. Configure the save folder again, then retrieve the CSV from export history.",
     business_workspace_hanbaiou_saved: "Saved to D-CATS Business Exchange / Sales King / 01_D-CATS issue.",
     sales_management_not_exported: "Sales Not Exported",
     sales_management_registration_pending: "Registration Pending",
@@ -2743,8 +2749,8 @@ var TRANSLATIONS = {
     hanbaiou_catalog_step_4_title: "Mark as Registered in D-CATS",
     hanbaiou_catalog_step_4_description: "After verifying the Sales King import, mark the products in the latest CSV as registered. Their sales CSVs can then be exported.",
     hanbaiou_catalog_output_folder: "Save folder",
-    hanbaiou_catalog_output_file: "Latest output file",
-    hanbaiou_catalog_output_file_empty: "No file has been exported yet",
+    hanbaiou_catalog_output_file: "File saved to the selected folder",
+    hanbaiou_catalog_output_file_empty: "No file has been saved on this screen yet",
     hanbaiou_catalog_reset_description: "Use this when products have not yet been imported into Sales King and must be exported again.",
     hanbaiou_catalog_no_pending: "There are no products awaiting Sales King registration.",
     hanbaiou_catalog_issue_required: "Some product codes have not been issued. Issue all product codes first.",
@@ -4840,6 +4846,8 @@ var TRANSLATIONS = {
     business_workspace_hanbaiou_ready: "已设置",
     business_workspace_hanbaiou_ready_named: "已设置: {name}",
     business_workspace_hanbaiou_permission: "需要重新连接",
+    business_workspace_hanbaiou_mismatch: "已断开旧保存位置：{name}",
+    business_workspace_hanbaiou_write_error_state: "无法写入，请重新设置保存位置",
     business_workspace_hanbaiou_unsupported: "此浏览器不支持设置",
     business_workspace_hanbaiou_selecting: "正在确认销售王CSV保存位置。",
     business_workspace_hanbaiou_selected: "已设置销售王CSV保存位置。",
@@ -4848,6 +4856,7 @@ var TRANSLATIONS = {
     business_workspace_hanbaiou_missing_folder: "未找到销售王 / 01_D-CATS发行文件夹。请检查Google Drive桌面版同步。",
     business_workspace_hanbaiou_failed: "无法设置销售王CSV保存位置。",
     business_workspace_hanbaiou_required: "导出销售王CSV前，请先设置保存位置。",
+    business_workspace_hanbaiou_write_failed: "无法将CSV写入指定位置。请重新设置保存位置，然后从导出历史中重新获取CSV。",
     business_workspace_hanbaiou_saved: "已保存到D-CATS业务协作 / 销售王 / 01_D-CATS发行。",
     sales_management_not_exported: "销售数据未导出",
     sales_management_registration_pending: "等待销售系统登记",
@@ -4920,8 +4929,8 @@ var TRANSLATIONS = {
     hanbaiou_catalog_step_4_title: "在D-CATS中标记为已登记",
     hanbaiou_catalog_step_4_description: "确认销售王导入结果后，将最新CSV中的商品标记为已登记。完成后即可导出相关销售CSV。",
     hanbaiou_catalog_output_folder: "保存位置",
-    hanbaiou_catalog_output_file: "最新导出文件",
-    hanbaiou_catalog_output_file_empty: "尚未导出文件",
+    hanbaiou_catalog_output_file: "已保存到指定位置的文件",
+    hanbaiou_catalog_output_file_empty: "此画面尚未保存文件",
     hanbaiou_catalog_reset_description: "当商品尚未导入销售王并需要再次导出CSV时使用。",
     hanbaiou_catalog_no_pending: "没有等待在销售王登记的商品。",
     hanbaiou_catalog_issue_required: "存在尚未发行商品代码的商品。请先批量发行商品代码。",
@@ -6823,7 +6832,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.997";
+var APP_VERSION       = "v1.1.998";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -13174,6 +13183,17 @@ async function storeDcatsBusinessWorkspaceDirectory(key, handle) {
   });
 }
 
+async function removeStoredDcatsBusinessWorkspaceDirectory(key) {
+  var database = await openDcatsBusinessWorkspaceDatabase();
+  return new Promise(function(resolve, reject) {
+    var transaction = database.transaction(DCATS_BUSINESS_WORKSPACE_DB_STORE, "readwrite");
+    transaction.objectStore(DCATS_BUSINESS_WORKSPACE_DB_STORE).delete(key);
+    transaction.oncomplete = function() { resolve(); };
+    transaction.onerror = function() { reject(transaction.error || new Error("workspace_directory_delete_failed")); };
+    transaction.onabort = function() { reject(transaction.error || new Error("workspace_directory_delete_failed")); };
+  });
+}
+
 async function readStoredDcatsB2ExportDirectory() {
   return readStoredDcatsBusinessWorkspaceDirectory(DCATS_B2_EXPORT_DIRECTORY_KEY);
 }
@@ -13188,6 +13208,13 @@ async function readStoredDcatsHanbaiouExportDirectory() {
 
 async function storeDcatsHanbaiouExportDirectory(handle) {
   return storeDcatsBusinessWorkspaceDirectory(DCATS_HANBAIOU_EXPORT_DIRECTORY_KEY, handle);
+}
+
+async function forgetDcatsHanbaiouExportDirectory() {
+  dcatsHanbaiouExportDirectoryHandle = null;
+  dcatsHanbaiouExportDirectoryLoaded = true;
+  if (salesAccountingExportState) salesAccountingExportState.hanbaiouLatestFileName = "";
+  await removeStoredDcatsBusinessWorkspaceDirectory(DCATS_HANBAIOU_EXPORT_DIRECTORY_KEY);
 }
 
 async function loadDcatsB2ExportDirectory() {
@@ -13337,14 +13364,18 @@ function setDcatsHanbaiouExportDirectoryState(state, directoryName) {
   var salesState = ensureSalesAccountingExportState();
   if (row) row.hidden = salesState.targetSystem !== "hanbaiou";
   if (stateHost) {
-    stateHost.className = "sales-accounting-export-directory-state" + (state === "ready" ? " ready" : (state === "error" ? " error" : ""));
+    var stateKey = {
+      ready: "business_workspace_hanbaiou_ready",
+      permission: "business_workspace_hanbaiou_permission",
+      unsupported: "business_workspace_hanbaiou_unsupported",
+      error: "business_workspace_hanbaiou_failed",
+      mismatch: "business_workspace_hanbaiou_mismatch",
+      writeError: "business_workspace_hanbaiou_write_error_state"
+    }[state] || "business_workspace_hanbaiou_unset";
+    stateHost.className = "sales-accounting-export-directory-state" + (state === "ready" ? " ready" : (["error", "mismatch", "writeError"].indexOf(state) >= 0 ? " error" : ""));
     stateHost.textContent = state === "ready" && directoryName
       ? tf("business_workspace_hanbaiou_ready_named", { name: directoryName })
-      : t(state === "ready"
-      ? "business_workspace_hanbaiou_ready"
-      : (state === "permission"
-        ? "business_workspace_hanbaiou_permission"
-        : (state === "unsupported" ? "business_workspace_hanbaiou_unsupported" : (state === "error" ? "business_workspace_hanbaiou_failed" : "business_workspace_hanbaiou_unset"))));
+      : (state === "mismatch" && directoryName ? tf(stateKey, { name: directoryName }) : t(stateKey));
     stateHost.title = directoryName || "";
   }
   if (button) {
@@ -13363,9 +13394,22 @@ async function refreshDcatsHanbaiouExportDirectoryState() {
     setDcatsHanbaiouExportDirectoryState("unset", "");
     return;
   }
-  var permission = typeof handle.queryPermission === "function"
-    ? await handle.queryPermission({ mode: "readwrite" })
-    : "granted";
+  if (handle.name !== DCATS_HANBAIOU_EXPORT_DIRECTORY_NAME) {
+    var oldDirectoryName = handle.name || "-";
+    try { await forgetDcatsHanbaiouExportDirectory(); } catch (error) {}
+    setDcatsHanbaiouExportDirectoryState("mismatch", oldDirectoryName);
+    return;
+  }
+  var permission;
+  try {
+    permission = typeof handle.queryPermission === "function"
+      ? await handle.queryPermission({ mode: "readwrite" })
+      : "granted";
+  } catch (error) {
+    try { await forgetDcatsHanbaiouExportDirectory(); } catch (forgetError) {}
+    setDcatsHanbaiouExportDirectoryState("writeError", "");
+    return;
+  }
   setDcatsHanbaiouExportDirectoryState(permission === "granted" ? "ready" : "permission", handle.name || DCATS_HANBAIOU_EXPORT_DIRECTORY_NAME);
 }
 
@@ -13409,6 +13453,7 @@ async function pickDcatsHanbaiouExportDirectory() {
   await storeDcatsHanbaiouExportDirectory(targetHandle);
   dcatsHanbaiouExportDirectoryHandle = targetHandle;
   dcatsHanbaiouExportDirectoryLoaded = true;
+  if (salesAccountingExportState) salesAccountingExportState.hanbaiouLatestFileName = "";
   setDcatsHanbaiouExportDirectoryState("ready", targetHandle.name || DCATS_HANBAIOU_EXPORT_DIRECTORY_NAME);
   return targetHandle;
 }
@@ -13435,12 +13480,30 @@ async function configureDcatsHanbaiouExportDirectory() {
 async function prepareDcatsHanbaiouExportDirectory() {
   if (!supportsDcatsB2SharedFolder()) throw new Error(t("business_workspace_hanbaiou_unsupported"));
   var handle = dcatsHanbaiouExportDirectoryHandle || await loadDcatsHanbaiouExportDirectory();
+  if (handle && handle.name !== DCATS_HANBAIOU_EXPORT_DIRECTORY_NAME) {
+    try { await forgetDcatsHanbaiouExportDirectory(); } catch (error) {}
+    handle = null;
+  }
   if (!handle) return pickDcatsHanbaiouExportDirectory();
-  var permission = typeof handle.requestPermission === "function"
-    ? await handle.requestPermission({ mode: "readwrite" })
-    : "granted";
-  if (permission !== "granted") throw new Error(t("business_workspace_hanbaiou_required"));
+  var permission;
+  try {
+    permission = typeof handle.requestPermission === "function"
+      ? await handle.requestPermission({ mode: "readwrite" })
+      : "granted";
+  } catch (error) {
+    try { await forgetDcatsHanbaiouExportDirectory(); } catch (forgetError) {}
+    throw new Error(t("business_workspace_hanbaiou_required"));
+  }
+  if (permission !== "granted") {
+    try { await forgetDcatsHanbaiouExportDirectory(); } catch (error) {}
+    throw new Error(t("business_workspace_hanbaiou_required"));
+  }
   return handle;
+}
+
+async function resetDcatsHanbaiouExportDirectoryAfterWriteFailure() {
+  try { await forgetDcatsHanbaiouExportDirectory(); } catch (error) {}
+  setDcatsHanbaiouExportDirectoryState("writeError", "");
 }
 
 function setDcatsBusinessWorkspaceMessage(message, isError) {
@@ -13907,7 +13970,7 @@ function renderSalesAccountingHanbaiouGuide() {
 
   var latestFileHost = document.getElementById("sales-accounting-hanbaiou-latest-file");
   var knownBatches = Array.isArray(state.hanbaiouBatches) ? state.hanbaiouBatches : [];
-  var latestFileName = state.hanbaiouLatestFileName || salesAccountingHanbaiouBatchFileName(knownBatches[0]);
+  var latestFileName = state.hanbaiouLatestFileName;
   if (latestFileHost) latestFileHost.textContent = latestFileName || t("hanbaiou_catalog_output_file_empty");
 
   if (!state.hanbaiouCatalog) {
@@ -14277,7 +14340,8 @@ async function exportHanbaiouProductMaster() {
     state.hanbaiouLatestFileName = savedFileName;
   } catch (error) {
     salesAccountingProductOnboardingSaving = false;
-    setSalesAccountingExportMessage(error.message || t("sales_accounting_product_master_save_failed"), true);
+    await resetDcatsHanbaiouExportDirectoryAfterWriteFailure();
+    setSalesAccountingExportMessage(t("business_workspace_hanbaiou_write_failed"), true);
     await loadSalesAccountingExportData({ preserveMessage: true });
     return;
   }
@@ -14373,7 +14437,8 @@ async function redownloadHanbaiouProductMaster(batchId) {
     setSalesAccountingExportMessage(tf("sales_accounting_product_master_resaved_file", { file: savedFileName }), false);
     renderSalesAccountingHanbaiouGuide();
   } catch (error) {
-    setSalesAccountingExportMessage(error.message || t("sales_accounting_product_master_save_failed"), true);
+    await resetDcatsHanbaiouExportDirectoryAfterWriteFailure();
+    setSalesAccountingExportMessage(t("business_workspace_hanbaiou_write_failed"), true);
   }
   salesAccountingProductOnboardingSaving = false;
   updateSalesAccountingHanbaiouActions();
@@ -14423,6 +14488,12 @@ async function downloadSalesAccountingExportFile(data, directoryHandle) {
     var writable = await fileHandle.createWritable();
     await writable.write(bytes);
     await writable.close();
+    var savedFile = typeof fileHandle.getFile === "function" ? await fileHandle.getFile() : null;
+    if (!savedFile || Number(savedFile.size) !== bytes.byteLength) {
+      var verificationError = new Error("workspace_file_verification_failed");
+      verificationError.name = "DcatsCsvWriteVerificationError";
+      throw verificationError;
+    }
     return fileName;
   }
   var blob = new Blob([bytes], { type: "text/csv;charset=shift_jis" });
@@ -14475,7 +14546,12 @@ async function createSalesAccountingExport() {
     await downloadSalesAccountingExportFile(data, exportDirectory);
   } catch (error) {
     salesAccountingExportSaving = false;
-    setSalesAccountingExportMessage(error.message || t("sales_accounting_csv_save_failed_history"), true);
+    if (exportDirectory) {
+      await resetDcatsHanbaiouExportDirectoryAfterWriteFailure();
+      setSalesAccountingExportMessage(t("business_workspace_hanbaiou_write_failed"), true);
+    } else {
+      setSalesAccountingExportMessage(error.message || t("sales_accounting_csv_save_failed_history"), true);
+    }
     await loadSalesAccountingExportData({ preserveMessage: true });
     return;
   }
@@ -14520,7 +14596,12 @@ async function redownloadSalesAccountingExport(batchId) {
     await downloadSalesAccountingExportFile(data, exportDirectory);
     setSalesAccountingExportMessage(exportDirectory ? t("business_workspace_hanbaiou_saved") : "作成時と同一のCSVを再取得しました。", false);
   } catch (error) {
-    setSalesAccountingExportMessage(error.message || t("sales_accounting_csv_save_failed"), true);
+    if (exportDirectory) {
+      await resetDcatsHanbaiouExportDirectoryAfterWriteFailure();
+      setSalesAccountingExportMessage(t("business_workspace_hanbaiou_write_failed"), true);
+    } else {
+      setSalesAccountingExportMessage(error.message || t("sales_accounting_csv_save_failed"), true);
+    }
   }
   salesAccountingExportSaving = false;
   updateSalesAccountingExportSelection();

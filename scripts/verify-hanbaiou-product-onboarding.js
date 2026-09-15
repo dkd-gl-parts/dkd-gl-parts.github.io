@@ -85,7 +85,10 @@ requireFragment(reset, 't("hanbaiou_catalog_reset_progress")');
 const renderGuide = functionSource("renderSalesAccountingHanbaiouGuide");
 const updateActions = functionSource("updateSalesAccountingHanbaiouActions");
 requireFragment(renderGuide, 'document.getElementById("sales-accounting-hanbaiou-latest-file")');
-requireFragment(renderGuide, "salesAccountingHanbaiouBatchFileName(knownBatches[0])");
+requireFragment(renderGuide, "var latestFileName = state.hanbaiouLatestFileName;");
+if (renderGuide.includes("salesAccountingHanbaiouBatchFileName(knownBatches[0])")) {
+  throw new Error("Server export history must not be shown as a file saved to this PC");
+}
 if (/incomplete_products|sales-accounting-hanbaiou-(?:validation|missing-tags|product-list|metric|selected-summary|guide-summary|note)|3品番の不足明細|CSV対象/.test(renderGuide + updateActions + html + css)) {
   throw new Error("Product-master decision metrics and detail lists must not be displayed in the sales-data export screen");
 }
