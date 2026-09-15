@@ -18,6 +18,15 @@ body { margin: 0; color: #162131; background: #eef1f4; font-family: "Yu Gothic",
 .shipment-document-meta dl > div:last-child { grid-column: 1 / -1; }
 .shipment-document dt { color: #65717d; font-size: 8pt; }
 .shipment-document dd { margin: 1mm 0 0; font-size: 10pt; font-weight: 700; line-height: 1.55; }
+.shipment-document-destination dt { display: flex; align-items: center; gap: 2mm; }
+.shipment-document-destination dt span { display: inline-block; border: 0.3mm solid #668377; border-radius: 1mm; padding: 0.5mm 1.5mm; background: #eef7f2; color: #1f6248; font-size: 8pt; font-weight: 800; }
+.shipment-document-destination.direct { border-left: 1.5mm solid #bd7912; background: #fff8e7; }
+.shipment-document-destination.direct dt span { border-color: #bd7912; background: #fff0c7; color: #754700; }
+.shipment-document-destination.office { border-left: 1.5mm solid #477aa9; background: #f1f7fd; }
+.shipment-document-destination.office dt span { border-color: #477aa9; background: #e7f2fc; color: #295a88; }
+.shipment-document-destination dd strong,
+.shipment-document-destination dd small { display: block; }
+.shipment-document-destination dd small { margin-top: 0.5mm; color: #56636e; font-size: 8.5pt; font-weight: 600; }
 .shipment-document table { width: 100%; margin-top: 7mm; border-collapse: collapse; table-layout: fixed; }
 .shipment-document th, .shipment-document td { border: 1px solid #8e9aa3; padding: 2.5mm 2mm; vertical-align: top; font-size: 8.5pt; overflow-wrap: anywhere; }
 .shipment-document th { background: #edf3f0; text-align: left; }

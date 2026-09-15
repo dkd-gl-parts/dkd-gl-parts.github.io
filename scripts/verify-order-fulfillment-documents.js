@@ -202,8 +202,53 @@ const shippingDocumentListSource = sourceBetween("function renderShippingDocumen
 for (const fragment of [
   "shipping-document-order-id-label",
   't("sales_order_id_label")',
-  "order.order_number"
+  "order.order_number",
+  "shippingDocumentDestinationContext(order)",
+  "destination.badge",
+  "destination.summary"
 ]) requireFragment(shippingDocumentListSource, fragment, `Shipping document list order ID label is missing: ${fragment}`);
+if (shippingDocumentListSource.includes("customerOrderCurrency(order.total_jpy)")) {
+  throw new Error("Shipping document order selection must prioritize the destination instead of the order total");
+}
+
+const shippingDocumentDestinationSource = sourceBetween("function shippingDocumentComparableName", "function shippingDocumentDeliveryHtml");
+for (const fragment of [
+  'address.destination_type === "yamato_office"',
+  'customerName !== destinationCompany',
+  't("shipping_document_direct_badge")',
+  't("shipping_document_office_badge")',
+  't("shipping_document_standard_badge")',
+  't("shipping_document_office_destination")',
+  't("shipping_document_direct_destination")',
+  't("shipping_document_destination")',
+  "address.company_name",
+  "address.recipient_name",
+  "address.phone_number",
+  "address.yamato_office_name"
+]) requireFragment(shippingDocumentDestinationSource, fragment, `Shipping destination classification is incomplete: ${fragment}`);
+const destinationContext = { t: (key) => key };
+vm.runInNewContext(shippingDocumentDestinationSource, destinationContext);
+if (destinationContext.shippingDocumentComparableName("（株）ABC物流") !== destinationContext.shippingDocumentComparableName("株式会社 ABC物流")) {
+  throw new Error("Common Japanese company-name abbreviations must compare as the same destination");
+}
+if (destinationContext.shippingDocumentDestinationContext({
+  customer_name: "有限会社ストレイン",
+  shipping_address: { company_name: "株式会社ABC物流", recipient_name: "山田太郎", destination_type: "address" }
+}).type !== "direct") {
+  throw new Error("A delivery address for another company must be marked as direct shipping");
+}
+if (destinationContext.shippingDocumentDestinationContext({
+  customer_name: "有限会社ストレイン",
+  shipping_address: { company_name: "有限会社ストレイン", destination_type: "address" }
+}).type !== "standard") {
+  throw new Error("A delivery address matching the customer must remain standard shipping");
+}
+if (destinationContext.shippingDocumentDestinationContext({
+  customer_name: "有限会社ストレイン",
+  shipping_address: { destination_type: "yamato_office", yamato_office_name: "箕面船場営業所" }
+}).type !== "office") {
+  throw new Error("A Yamato office destination must be marked as office pickup");
+}
 
 const shippingDocumentDetailSource = sourceBetween("function renderShippingDocumentDetail", "function bindShippingDocumentDetailActions");
 for (const fragment of [
@@ -211,21 +256,43 @@ for (const fragment of [
   't("sales_order_id_label")',
   "shipping-document-detail-target",
   "order.order_number",
+  "shippingDocumentDeliveryHtml(order)",
   "shippingDocumentOrderContentsHtml(order)"
 ]) requireFragment(shippingDocumentDetailSource, fragment, `Shipping document detail order ID label is missing: ${fragment}`);
+if (shippingDocumentDetailSource.indexOf("shippingDocumentDeliveryHtml(order)") > shippingDocumentDetailSource.indexOf("shippingDocumentOrderContentsHtml(order)")) {
+  throw new Error("The shipping destination must appear before shipment items");
+}
+
+const shippingDocumentDelivery = sourceBetween("function shippingDocumentDeliveryHtml", "function updateCustomerOrderCoreReturnServiceVisibility");
+for (const fragment of [
+  't("shipping_document_delivery_confirmation")',
+  "shipping-document-destination-badge",
+  "shipping-document-destination-card",
+  't("shipping_document_outbound_service")',
+  't("shipping_document_delivery_preference")',
+  't("customer_order_waybill_number")',
+  'salesOrderWaybillCarrierLabel(order, "outbound")',
+  "salesOrderDeliveryPreferenceLabel(order)",
+  "shippingDocumentWaybillNumberFormat(trackingNumber)"
+]) requireFragment(shippingDocumentDelivery, fragment, `Shipping destination display is incomplete: ${fragment}`);
 
 const shippingDocumentOrderContents = sourceBetween("function shippingDocumentOrderContentsHtml", "function renderShippingDocumentDetail");
 for (const fragment of [
-  "受注内容",
+  't("shipping_document_shipment_items")',
   "shipping-document-order-items",
+  "gltek_part_number",
   "genuine_part_number",
   "manufacturer_part_number",
+  "salesOrderWarrantyCategoryLabel(orderItem)",
   "customerProductKindLabel(orderItem.product_kind)",
   't("customer_order_quantity")',
-  't("core_return_required_label")',
-  "customerOrderCoreHandlingLabel(orderItem)",
+  't("customer_order_core_return_needed")',
+  't("shipping_document_core_return_not_required")',
   'tf("customer_catalog_count"'
 ]) requireFragment(shippingDocumentOrderContents, fragment, `Shipping document order contents contract is missing: ${fragment}`);
+for (const forbidden of ["受注内容", "customerOrderCoreHandlingLabel(orderItem)", "コア代金", "core_charge_jpy"]) {
+  if (shippingDocumentOrderContents.includes(forbidden)) throw new Error(`Shipment items must not expose billing details: ${forbidden}`);
+}
 
 const batchDefaultsSource = sourceBetween("function salesOrderAutoPrintIsEnabled", "async function enterShippingDocumentMgmt");
 for (const fragment of [
@@ -768,6 +835,20 @@ for (const fragment of [
   "販売店・取付店",
   "印鑑欄（任意）"
 ]) requireFragment(printSource, fragment);
+for (const fragment of [
+  "shippingDocumentDestinationContext(order)",
+  "shipment-document-destination",
+  "destination.label",
+  "destination.badge",
+  "destination.recipient",
+  "destination.postalAddress",
+  "destination.phone",
+  't("customer_order_core_return_needed")',
+  't("shipping_document_return_not_required")'
+]) requireFragment(printSource, fragment, `Printed dispatch destination contract is missing: ${fragment}`);
+if (printSource.includes("customerOrderCoreHandlingLabel(orderItem)")) {
+  throw new Error("The printed dispatch document must not include a billed core-charge amount");
+}
 const warrantyPageSource = sourceBetween("function buildSalesOrderWarrantyCertificatePage", "function buildSalesOrderWarrantyDocumentHtml");
 for (const fragment of ["unit.manufacturingSerial", "識別情報", "購入者／会社名", "車両型式", "販売店印", "取付店印"]) {
   requireFragment(warrantyPageSource, fragment, `Final warranty certificate field is missing: ${fragment}`);
@@ -791,6 +872,11 @@ for (const fragment of [
   ".shipping-document-row-check",
   ".shipping-document-order-id-label",
   ".shipping-document-detail-target",
+  ".shipping-document-delivery",
+  ".shipping-document-delivery-grid",
+  ".shipping-document-destination-badge.direct",
+  ".shipping-document-destination-badge.office",
+  ".shipping-document-delivery-facts",
   ".shipping-document-order-contents",
   ".shipping-document-order-item",
   ".shipping-document-order-core.required",
@@ -823,6 +909,11 @@ for (const fragment of [
   ".shipping-handwritten-waybill-canvas-wrap",
   ".shipping-handwritten-waybill-values"
 ]) requireFragment(css, fragment);
+for (const fragment of [
+  ".shipment-document-destination.direct",
+  ".shipment-document-destination.office",
+  ".shipment-document-destination dd strong"
+]) requireFragment(printCss, fragment, `Printed destination styling is missing: ${fragment}`);
 for (const fragment of [
   "grid-template-columns: repeat(4, minmax(0, 1fr));",
   "grid-template-columns: repeat(2, minmax(0, 1fr));",
@@ -913,11 +1004,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1000"',
-  'styles.css?v=1.1.1000',
-  'app.js?v=1.1.1000'
+  'content="v1.1.1001"',
+  'styles.css?v=1.1.1001',
+  'app.js?v=1.1.1001'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1000"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1001"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
