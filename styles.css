@@ -1891,9 +1891,53 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .manufacturing-cost-toolbar .mgmt-search { min-width: 0; }
 .manufacturing-cost-query-field { display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; min-width: 0; }
 .manufacturing-cost-query-field label { color: #64748b; font-size: 11px; font-weight: 700; line-height: 1.1; }
-.manufacturing-cost-query-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px; align-items: center; }
+.manufacturing-cost-query-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 6px; align-items: center; }
 .manufacturing-cost-query-row .mgmt-search { width: 100%; }
 .manufacturing-cost-query-row .btn-secondary, .manufacturing-cost-query-row .btn-primary { min-height: 36px; padding: 0 12px; white-space: nowrap; }
+.manufacturing-cost-import-open { border-color: #9fc0ef; color: #175cd3; background: #f5f9ff; }
+.form-card.manufacturing-cost-import-card { display: flex; flex-direction: column; width: min(1120px, calc(100vw - 24px)); max-width: 1120px; max-height: calc(100dvh - 24px); margin: 12px; padding: 0; overflow: hidden; border-radius: 10px; }
+.manufacturing-cost-import-header { flex: 0 0 auto; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 18px 20px 14px; border-bottom: 1px solid #e4e9f1; }
+.manufacturing-cost-import-header h3 { margin: 0 0 4px; }
+.manufacturing-cost-import-header p { margin: 0; color: #667085; font-size: 12px; line-height: 1.5; }
+.manufacturing-cost-import-header .btn-cancel { min-height: 34px; flex: 0 0 auto; }
+.manufacturing-cost-import-source { flex: 0 0 auto; display: grid; grid-template-columns: auto minmax(160px, 1fr) auto; align-items: center; gap: 10px; padding: 14px 20px 8px; }
+.manufacturing-cost-import-source .btn-primary { min-height: 36px; }
+.manufacturing-cost-import-source small { color: #667085; font-size: 11px; text-align: right; }
+.manufacturing-cost-import-file-name { min-width: 0; color: #344054; font-size: 12px; font-weight: 800; overflow-wrap: anywhere; }
+.manufacturing-cost-import-status { flex: 0 0 auto; min-height: 20px; margin: 0 20px 8px; color: #667085; font-size: 12px; line-height: 1.45; }
+.manufacturing-cost-import-status.is-loading { color: #175cd3; }
+.manufacturing-cost-import-status.is-success { color: #16803a; font-weight: 800; }
+.manufacturing-cost-import-status.is-error { color: #c62828; font-weight: 800; }
+.manufacturing-cost-import-config { flex: 1 1 auto; min-height: 0; overflow: hidden; padding: 0 20px; }
+.manufacturing-cost-import-controls { display: grid; grid-template-columns: minmax(190px, 1.4fr) 140px minmax(180px, 1fr) minmax(180px, 1fr); gap: 8px; align-items: end; border: 1px solid #d9e7fa; border-radius: 9px; background: #f8fbff; padding: 10px; }
+.manufacturing-cost-import-controls input, .manufacturing-cost-import-controls select { min-height: 34px; }
+.manufacturing-cost-import-controls :disabled { color: #98a2b3; background: #f2f4f7; }
+.manufacturing-cost-import-mapping-note { min-height: 18px; margin: 5px 2px 7px; color: #667085; font-size: 11px; line-height: 1.4; }
+.manufacturing-cost-import-preview-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; margin-bottom: 6px; }
+.manufacturing-cost-import-preview-head > strong { color: #111827; font-size: 13px; }
+.manufacturing-cost-import-preview-head > span { color: #475467; font-size: 11px; }
+.manufacturing-cost-import-preview-head > div { display: flex; gap: 6px; }
+.manufacturing-cost-import-preview { max-height: min(42vh, 420px); overflow: auto; border: 1px solid #dfe6ee; border-radius: 8px; background: #fff; }
+.manufacturing-cost-import-table { width: 100%; min-width: 760px; border-collapse: collapse; table-layout: fixed; }
+.manufacturing-cost-import-table th, .manufacturing-cost-import-table td { padding: 7px 9px; border-bottom: 1px solid #edf0f5; text-align: left; vertical-align: middle; }
+.manufacturing-cost-import-table th { position: sticky; top: 0; z-index: 1; background: #eef4ff; color: #344054; font-size: 11px; font-weight: 900; }
+.manufacturing-cost-import-table td { color: #344054; font-size: 12px; }
+.manufacturing-cost-import-table th:nth-child(1), .manufacturing-cost-import-table td:nth-child(1) { width: 42px; text-align: center; }
+.manufacturing-cost-import-table th:nth-child(2), .manufacturing-cost-import-table td:nth-child(2) { width: 24%; }
+.manufacturing-cost-import-table th:nth-child(3), .manufacturing-cost-import-table td:nth-child(3) { width: 90px; text-align: right; }
+.manufacturing-cost-import-table th:nth-child(5), .manufacturing-cost-import-table td:nth-child(5) { width: 100px; text-align: center; }
+.manufacturing-cost-import-table td strong { color: #1a1a2e; font-size: 12px; overflow-wrap: anywhere; }
+.manufacturing-cost-import-table td small { color: #667085; line-height: 1.35; overflow-wrap: anywhere; }
+.manufacturing-cost-import-confidence { display: inline-flex; align-items: center; justify-content: center; min-width: 62px; min-height: 22px; border-radius: 999px; padding: 2px 8px; font-size: 10px; font-weight: 900; }
+.manufacturing-cost-import-confidence.high { color: #16803a; background: #e9f8ed; border: 1px solid #bdebc8; }
+.manufacturing-cost-import-confidence.medium { color: #b54708; background: #fff7e6; border: 1px solid #fedf89; }
+.manufacturing-cost-import-confidence.low { color: #c62828; background: #fff2f2; border: 1px solid #f4c7c7; }
+.manufacturing-cost-import-preview-note, .manufacturing-cost-import-pdf-note { color: #667085; font-size: 11px; line-height: 1.4; }
+.manufacturing-cost-import-preview-note { padding: 8px 10px; }
+.manufacturing-cost-import-pdf-note { margin: 6px 2px 0; }
+.manufacturing-cost-import-footer { flex: 0 0 auto; margin: 0; padding: 12px 20px 16px; border-top: 1px solid #e4e9f1; }
+.manufacturing-cost-import-footer .btn-primary { min-height: 40px; }
+.manufacturing-cost-import-card .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .manufacturing-cost-config-panel { display: grid; grid-template-columns: minmax(220px, .75fr) minmax(420px, 1.25fr); gap: 8px; min-width: 0; }
 .manufacturing-cost-flow-card { min-width: 0; border: 1px solid #dfe7f3; border-radius: 10px; background: #fff; padding: 9px 10px; box-shadow: 0 1px 5px rgba(15,23,42,0.05); }
 .manufacturing-cost-flow-card.target { background: #f8fbff; border-color: #d8e7ff; }
@@ -2035,10 +2079,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .manufacturing-cost-listbar { grid-template-columns: 1fr 1fr; }
   .manufacturing-cost-listbar .manufacturing-cost-field { grid-column: span 2; }
   .manufacturing-cost-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .manufacturing-cost-import-controls { grid-template-columns: 1fr 1fr; }
 }
 @media(max-width:560px){
   .manufacturing-cost-toolbar, .manufacturing-cost-listbar, .manufacturing-cost-summary { grid-template-columns: 1fr; }
-  .manufacturing-cost-query-row { grid-template-columns: minmax(0, 1fr) auto auto; }
+  .manufacturing-cost-query-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .manufacturing-cost-query-row .mgmt-search { grid-column: 1 / -1; }
+  .manufacturing-cost-query-row .btn-secondary, .manufacturing-cost-query-row .btn-primary { width: 100%; padding: 0 6px; font-size: 11px; }
+  .form-card.manufacturing-cost-import-card { width: calc(100vw - 12px); max-height: calc(100dvh - 12px); margin: 6px; }
+  .manufacturing-cost-import-header { padding: 14px 12px 10px; }
+  .manufacturing-cost-import-header p { font-size: 11px; }
+  .manufacturing-cost-import-source { grid-template-columns: 1fr; padding: 10px 12px 6px; }
+  .manufacturing-cost-import-source small { text-align: left; }
+  .manufacturing-cost-import-status { margin: 0 12px 6px; }
+  .manufacturing-cost-import-config { padding: 0 12px; overflow-y: auto; }
+  .manufacturing-cost-import-controls { grid-template-columns: 1fr; }
+  .manufacturing-cost-import-preview-head { grid-template-columns: 1fr; }
+  .manufacturing-cost-import-preview-head > div { justify-content: flex-start; }
+  .manufacturing-cost-import-preview { max-height: 38vh; }
+  .manufacturing-cost-import-footer { padding: 10px 12px 12px; }
   .manufacturing-cost-target-grid, .manufacturing-cost-addition-grid { grid-template-columns: 1fr; }
   .manufacturing-cost-category-core-list { grid-template-columns: 1fr; }
   .manufacturing-cost-flow-head { align-items: flex-start; flex-wrap: wrap; }
