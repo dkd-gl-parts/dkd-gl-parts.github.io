@@ -669,7 +669,26 @@ const shippingDocumentDetailUi = sourceBetween("function renderShippingDocumentD
 requireFragment(shippingDocumentDetailUi, 'salesOrderWorkspaceNavigationHtml("shipping-document")');
 const salesOrderDetailUi = sourceBetween("function renderSalesOrderDetail", "async function openSalesOrderSerialWarranty");
 requireFragment(salesOrderDetailUi, 'salesOrderWorkspaceNavigationHtml("sales-order")');
-requireFragment(source, "enterShippingDocumentMgmt({ order: salesOrderDetail })");
+requireFragment(
+  salesOrderDetailUi,
+  "openSalesOrderShippingDocuments(order, shippingDocumentsButton)",
+  "Shipping-document navigation must pass the rendered order to the click handler"
+);
+const openShippingDocumentsSource = sourceBetween("async function openSalesOrderShippingDocuments", "async function issueSalesOrderDispatch");
+for (const fragment of [
+  "var selectedOrder = order && order.id ? order : salesOrderDetail",
+  't("shipping_document_open_order_missing")',
+  't("shipping_document_open_failed")',
+  "enterShippingDocumentMgmt({ order: selectedOrder })",
+  "trigger.disabled = true",
+  'trigger.setAttribute("aria-busy", "true")',
+  'activeScreenId() === "shipping-document-mgmt"',
+  "setShippingDocumentMessage(message, true)",
+  'trigger.removeAttribute("aria-busy")'
+]) requireFragment(openShippingDocumentsSource, fragment, `Shipping-document navigation behavior is incomplete: ${fragment}`);
+if (openShippingDocumentsSource.includes("if (!canManageSalesOrders()")) {
+  throw new Error("Shipping-document navigation must delegate permission feedback to enterShippingDocumentMgmt instead of failing silently");
+}
 requireFragment(source, 'enterSalesOrderMgmt({ order: order, detailView: "fulfillment" })');
 for (const fragment of [
   ".sales-order-workspace-switch",
@@ -894,11 +913,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.996"',
-  'styles.css?v=1.1.996',
-  'app.js?v=1.1.996'
+  'content="v1.1.997"',
+  'styles.css?v=1.1.997',
+  'app.js?v=1.1.997'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.996"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.997"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
