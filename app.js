@@ -2011,6 +2011,27 @@ var TRANSLATIONS = {
     ec_research_running_note: "裏側で価格調査を実行中です。完了まで再実行できません。",
     ec_research_no_runs: "実行履歴なし",
     ec_research_status_failed: "運用状況を読み込めません",
+    ec_research_failure_button: "失敗理由 {n}件",
+    ec_research_failure_title: "直近実行の失敗理由",
+    ec_research_failure_meta: "{date} / 失敗 {n}件",
+    ec_research_failure_target: "対象品番",
+    ec_research_failure_keyword: "検索キーワード",
+    ec_research_failure_provider: "調査先",
+    ec_research_failure_reason: "失敗理由",
+    ec_research_failure_time: "発生日時",
+    ec_research_failure_raw: "エラー詳細",
+    ec_research_failure_loading: "失敗理由を読み込み中...",
+    ec_research_failure_none: "直近実行に失敗はありません",
+    ec_research_failure_missing_rows: "失敗件数は記録されていますが、対象別の詳細を取得できませんでした。",
+    ec_research_failure_load_failed: "失敗理由を読み込めません: {error}",
+    ec_research_failure_run_error: "実行全体のエラー",
+    ec_research_failure_reason_rate_limit: "調査先のアクセス制限に達しました。時間を置いて再実行してください。",
+    ec_research_failure_reason_auth: "調査先APIの認証設定を確認してください。",
+    ec_research_failure_reason_service: "調査先サービスで一時的なエラーが発生しました。",
+    ec_research_failure_reason_timeout: "調査先から時間内に応答がありませんでした。",
+    ec_research_failure_reason_network: "調査先との通信に失敗しました。",
+    ec_research_failure_reason_config: "サーバー側のECモールAPI設定が不足しています。",
+    ec_research_failure_reason_unknown: "調査処理でエラーが発生しました。エラー詳細を確認してください。",
     ec_research_detail_title: "ECモール相場",
     ec_research_no_product_results: "この品番の調査結果はまだありません",
     ec_research_detail_failed: "ECモール相場を読み込めません",
@@ -4153,6 +4174,27 @@ var TRANSLATIONS = {
     ec_research_running_note: "Price research is running in the background. It cannot be started again until it finishes.",
     ec_research_no_runs: "No run history",
     ec_research_status_failed: "Could not load research status",
+    ec_research_failure_button: "Failure reasons ({n})",
+    ec_research_failure_title: "Latest Run Failure Reasons",
+    ec_research_failure_meta: "{date} / {n} failed",
+    ec_research_failure_target: "Target Part",
+    ec_research_failure_keyword: "Search Keyword",
+    ec_research_failure_provider: "Provider",
+    ec_research_failure_reason: "Failure Reason",
+    ec_research_failure_time: "Occurred At",
+    ec_research_failure_raw: "Error Details",
+    ec_research_failure_loading: "Loading failure reasons...",
+    ec_research_failure_none: "The latest run has no failures",
+    ec_research_failure_missing_rows: "Failures were recorded, but target-level details could not be retrieved.",
+    ec_research_failure_load_failed: "Could not load failure reasons: {error}",
+    ec_research_failure_run_error: "Run-level error",
+    ec_research_failure_reason_rate_limit: "The provider rate limit was reached. Wait before running the research again.",
+    ec_research_failure_reason_auth: "Check the provider API authentication settings.",
+    ec_research_failure_reason_service: "The provider service returned a temporary error.",
+    ec_research_failure_reason_timeout: "The provider did not respond in time.",
+    ec_research_failure_reason_network: "Could not communicate with the provider.",
+    ec_research_failure_reason_config: "The server-side EC mall API configuration is incomplete.",
+    ec_research_failure_reason_unknown: "The research failed. Check the error details.",
     ec_research_detail_title: "EC Mall Market",
     ec_research_no_product_results: "No research result for this part yet",
     ec_research_detail_failed: "Could not load EC mall market data",
@@ -6295,6 +6337,27 @@ var TRANSLATIONS = {
     ec_research_running_note: "后台正在执行价格调查。完成前不能再次开始。",
     ec_research_no_runs: "没有执行记录",
     ec_research_status_failed: "无法读取运行状态",
+    ec_research_failure_button: "失败原因 {n}件",
+    ec_research_failure_title: "最近执行的失败原因",
+    ec_research_failure_meta: "{date} / 失败 {n}件",
+    ec_research_failure_target: "目标零件号",
+    ec_research_failure_keyword: "搜索关键词",
+    ec_research_failure_provider: "调查平台",
+    ec_research_failure_reason: "失败原因",
+    ec_research_failure_time: "发生时间",
+    ec_research_failure_raw: "错误详情",
+    ec_research_failure_loading: "正在读取失败原因...",
+    ec_research_failure_none: "最近执行没有失败",
+    ec_research_failure_missing_rows: "已记录失败件数，但无法取得各目标的详情。",
+    ec_research_failure_load_failed: "无法读取失败原因: {error}",
+    ec_research_failure_run_error: "执行整体错误",
+    ec_research_failure_reason_rate_limit: "已达到调查平台的访问限制，请稍后重新执行。",
+    ec_research_failure_reason_auth: "请检查调查平台API的认证设置。",
+    ec_research_failure_reason_service: "调查平台服务发生临时错误。",
+    ec_research_failure_reason_timeout: "调查平台未在规定时间内响应。",
+    ec_research_failure_reason_network: "与调查平台通信失败。",
+    ec_research_failure_reason_config: "服务器端EC商城API设置不完整。",
+    ec_research_failure_reason_unknown: "调查处理发生错误，请查看错误详情。",
     ec_research_detail_title: "EC商城行情",
     ec_research_no_product_results: "此品号还没有调查结果",
     ec_research_detail_failed: "无法读取EC商城行情",
@@ -6550,7 +6613,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.992";
+var APP_VERSION       = "v1.1.993";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -22924,6 +22987,17 @@ function syncEcResearchRunningControls(status) {
   if (bulkBtn) bulkBtn.disabled = running;
 }
 
+function syncEcResearchFailureButton(status) {
+  var button = document.getElementById("btn-ec-research-failures");
+  if (!button) return;
+  var latest = status && status.latestRun ? status.latestRun : null;
+  var failedCount = latest ? Number(latest.failed_count || 0) : 0;
+  button.hidden = failedCount < 1;
+  button.disabled = failedCount < 1;
+  button.textContent = tf("ec_research_failure_button", { n: failedCount });
+  button.setAttribute("aria-label", tf("ec_research_failure_button", { n: failedCount }));
+}
+
 function scheduleEcResearchStatusPolling(status) {
   clearTimeout(ecResearchStatusPollTimer);
   ecResearchStatusPollTimer = null;
@@ -22963,6 +23037,129 @@ function renderEcMallResearchStatus(status) {
     "<div class='ec-research-stat'><div class='ec-research-stat-label'>" + esc(t("ec_research_latest_run")) + "</div><div class='ec-research-stat-value'>" + esc(runText) + "</div><div class='ec-research-stat-sub'>" + esc(runSub) + "</div></div>" +
   "</div>";
   syncEcResearchRunningControls(status);
+  syncEcResearchFailureButton(status);
+}
+
+function ecResearchFailureReasonText(error) {
+  var text = String(error || "").trim();
+  if (/missing_env:|invalid_env:/i.test(text)) return t("ec_research_failure_reason_config");
+  if (/HTTP\s*429|rate.?limit|too many requests/i.test(text)) return t("ec_research_failure_reason_rate_limit");
+  if (/HTTP\s*(401|403)|unauthori[sz]ed|forbidden|invalid.?key/i.test(text)) return t("ec_research_failure_reason_auth");
+  if (/timeout|timed out|AbortError/i.test(text)) return t("ec_research_failure_reason_timeout");
+  if (/failed to fetch|network|connection|dns|socket/i.test(text)) return t("ec_research_failure_reason_network");
+  if (/HTTP\s*5\d\d|service unavailable|bad gateway|gateway timeout/i.test(text)) return t("ec_research_failure_reason_service");
+  return t("ec_research_failure_reason_unknown");
+}
+
+function ecResearchFailureKeywords(row) {
+  var keywords = Array.isArray(row && row.search_keywords) ? row.search_keywords.filter(Boolean) : [];
+  return keywords.length ? keywords.join(" / ") : (row && row.search_number ? row.search_number : "-");
+}
+
+function ecResearchFailureTargetHtml(row) {
+  row = row || {};
+  var primary = row.search_number || row.daiko_part_number || row.manufacturer_part_number || row.genuine_part_number || "-";
+  var refs = [row.daiko_part_number, row.manufacturer_part_number, row.genuine_part_number]
+    .filter(function(value, index, values) { return value && value !== primary && values.indexOf(value) === index; });
+  var category = row.category ? tCat(ecMallNormalizeTargetCategory(row.category) || row.category) : "";
+  return "<strong>" + esc(primary) + "</strong>" +
+    (category ? "<span>" + esc(category) + "</span>" : "") +
+    (refs.length ? "<span>" + esc(refs.join(" / ")) + "</span>" : "");
+}
+
+function renderEcResearchFailures(latest, rows) {
+  var body = document.getElementById("ec-research-failure-body");
+  var meta = document.getElementById("ec-research-failure-meta");
+  if (!body || !meta) return;
+  rows = rows || [];
+  var failedCount = latest ? Number(latest.failed_count || 0) : 0;
+  meta.textContent = latest
+    ? tf("ec_research_failure_meta", {
+        date: formatDateTime(latest.finished_at || latest.started_at),
+        n: failedCount
+      })
+    : t("ec_research_no_runs");
+  if (!latest || failedCount < 1) {
+    body.innerHTML = "<div class='empty'>" + esc(t("ec_research_failure_none")) + "</div>";
+    return;
+  }
+  var html = "";
+  if (latest.error) {
+    html += "<div class='ec-research-failure-run-error'><strong>" + esc(t("ec_research_failure_run_error")) + "</strong>" +
+      "<span>" + esc(ecResearchFailureReasonText(latest.error)) + "</span>" +
+      "<details><summary>" + esc(t("ec_research_failure_raw")) + "</summary><code>" + esc(latest.error) + "</code></details></div>";
+  }
+  if (!rows.length) {
+    body.innerHTML = html + "<div class='empty'>" + esc(t("ec_research_failure_missing_rows")) + "</div>";
+    return;
+  }
+  html += "<div class='ec-research-failure-table-wrap'><table class='ec-research-failure-table'><thead><tr>" +
+    "<th>" + esc(t("ec_research_failure_target")) + "</th>" +
+    "<th>" + esc(t("ec_research_failure_keyword")) + "</th>" +
+    "<th>" + esc(t("ec_research_failure_provider")) + "</th>" +
+    "<th>" + esc(t("ec_research_failure_reason")) + "</th>" +
+    "<th>" + esc(t("ec_research_failure_time")) + "</th></tr></thead><tbody>";
+  rows.forEach(function(row) {
+    var providers = (Array.isArray(row.provider_keys) ? row.provider_keys : []).map(ecMallProviderLabel).join(" / ") || "-";
+    var rawError = String(row.last_error || "").trim();
+    html += "<tr>" +
+      "<td data-label='" + esc(t("ec_research_failure_target")) + "' class='ec-research-failure-target'>" + ecResearchFailureTargetHtml(row) + "</td>" +
+      "<td data-label='" + esc(t("ec_research_failure_keyword")) + "'>" + esc(ecResearchFailureKeywords(row)) + "</td>" +
+      "<td data-label='" + esc(t("ec_research_failure_provider")) + "'>" + esc(providers) + "</td>" +
+      "<td data-label='" + esc(t("ec_research_failure_reason")) + "' class='ec-research-failure-reason'><strong>" + esc(ecResearchFailureReasonText(rawError)) + "</strong>" +
+        (rawError ? "<details><summary>" + esc(t("ec_research_failure_raw")) + "</summary><code>" + esc(rawError) + "</code></details>" : "") + "</td>" +
+      "<td data-label='" + esc(t("ec_research_failure_time")) + "'>" + esc(formatDateTime(row.last_run_at)) + "</td>" +
+    "</tr>";
+  });
+  html += "</tbody></table></div>";
+  if (rows.length < failedCount) html += "<div class='ec-research-failure-note'>" + esc(t("ec_research_failure_missing_rows")) + "</div>";
+  body.innerHTML = html;
+}
+
+async function loadEcResearchFailures() {
+  var body = document.getElementById("ec-research-failure-body");
+  var meta = document.getElementById("ec-research-failure-meta");
+  if (body) body.innerHTML = "<div class='loading'>" + esc(t("ec_research_failure_loading")) + "</div>";
+  if (meta) meta.textContent = "-";
+  try {
+    var status = await loadEcMallResearchStatus({ silent: true }) || ecResearchLatestStatus || {};
+    var latest = status.latestRun || null;
+    if (!latest || Number(latest.failed_count || 0) < 1) {
+      renderEcResearchFailures(latest, []);
+      return;
+    }
+    var query = sb.from("ec_price_research_targets")
+      .select("id,category,daiko_part_number,genuine_part_number,manufacturer_part_number,search_number,search_keywords,provider_keys,last_run_at,last_status,last_error")
+      .eq("last_status", "failed")
+      .order("last_run_at", { ascending: false })
+      .limit(1000);
+    if (latest.started_at) query = query.gte("last_run_at", latest.started_at);
+    if (latest.finished_at) query = query.lte("last_run_at", latest.finished_at);
+    var result = await query;
+    if (result.error) throw result.error;
+    renderEcResearchFailures(latest, result.data || []);
+  } catch (error) {
+    console.warn("ec price research failures failed", error);
+    if (body) body.innerHTML = "<div class='empty error'>" + esc(tf("ec_research_failure_load_failed", { error: error.message || error })) + "</div>";
+  }
+}
+
+function openEcResearchFailureOverlay() {
+  var overlay = document.getElementById("ec-research-failure-overlay");
+  if (!overlay) return;
+  overlay.classList.add("show");
+  loadEcResearchFailures();
+  window.requestAnimationFrame(function() {
+    var closeButton = document.getElementById("btn-ec-research-failure-close");
+    if (closeButton) closeButton.focus();
+  });
+}
+
+function closeEcResearchFailureOverlay() {
+  var overlay = document.getElementById("ec-research-failure-overlay");
+  if (overlay) overlay.classList.remove("show");
+  var button = document.getElementById("btn-ec-research-failures");
+  if (button && !button.hidden) button.focus();
 }
 
 async function loadEcMallResearchStatus(options) {
@@ -23018,6 +23215,7 @@ async function loadEcMallResearchStatus(options) {
     console.warn("ec price research status failed", e);
     if (wrap) wrap.innerHTML = "<div class='empty'>" + esc(t("ec_research_status_failed")) + "</div>";
     syncEcResearchRunningControls(ecResearchLatestStatus);
+    syncEcResearchFailureButton(null);
     return null;
   }
 }
@@ -53125,6 +53323,14 @@ document.getElementById("btn-rakuten-test-keys").addEventListener("click", testR
 document.getElementById("btn-rakuten-open-diagnostic").addEventListener("click", openRakutenDiagnosticUrl);
 document.getElementById("btn-rakuten-use-current").addEventListener("click", function(){ if (currentProduct) { rakutenActiveTarget = rakutenTargetFromPart(currentProduct, "detail"); document.getElementById("rakuten-keyword").value = buildRakutenProductQuery(currentProduct); } });
 document.getElementById("btn-rakuten-open-list").addEventListener("click", enterRakutenPriceList);
+document.getElementById("btn-ec-research-failures").addEventListener("click", openEcResearchFailureOverlay);
+document.getElementById("btn-ec-research-failure-close").addEventListener("click", closeEcResearchFailureOverlay);
+document.getElementById("btn-ec-research-failure-footer-close").addEventListener("click", closeEcResearchFailureOverlay);
+document.getElementById("btn-ec-research-failure-reload").addEventListener("click", loadEcResearchFailures);
+document.getElementById("ec-research-failure-overlay").addEventListener("click", function(e){ if(e.target===this) closeEcResearchFailureOverlay(); });
+document.getElementById("ec-research-failure-overlay").addEventListener("keydown", function(e){
+  if (e.key === "Escape") closeEcResearchFailureOverlay();
+});
 document.getElementById("btn-ec-mall-clear-sellers").addEventListener("click", function(){
   setEcMallSellerIds([]);
   renderEcMallSellerPicker(rakutenLastItems);
