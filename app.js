@@ -578,6 +578,7 @@ var TRANSLATIONS = {
     shipping_document_batch_station_warning: "印刷端末が{state}です。帳票は印刷待ちに残るため、印刷端末の接続を確認してください。",
     core_return_mgmt_title: "コア返却管理",
     core_return_mgmt_desc: "返却管理番号・送り状番号・受注情報から返却受付と検品履歴を管理します。",
+    core_return_serial_not_required: "通常返却はシリアル照合不要",
     greeting: "ようこそ、{name} さん",
     mi_search_title: "販売管理",
     mi_search_desc: "販売商品の品番を検索し、画像・構成部品・販売価格・製造予定を確認します。",
@@ -2835,6 +2836,7 @@ var TRANSLATIONS = {
     shipping_document_batch_station_warning: "The print station is {state}. Documents remain in the print queue; check the print-station connection.",
     core_return_mgmt_title: "Core Returns",
     core_return_mgmt_desc: "Receive, inspect, and audit returned cores by return code, waybill, order, or serial.",
+    core_return_serial_not_required: "Serial matching is not required for a standard return",
     greeting: "Welcome, {name}",
     mi_search_title: "Sales Management",
     mi_search_desc: "Search sales products by part number and review images, components, sales prices, and production instructions.",
@@ -5036,6 +5038,7 @@ var TRANSLATIONS = {
     shipping_document_batch_station_warning: "打印终端当前为{state}。单据将保留在打印队列中，请检查打印终端连接。",
     core_return_mgmt_title: "旧件返还管理",
     core_return_mgmt_desc: "通过返还管理编号、运单号、订单或序列号管理收货、检验及历史。",
+    core_return_serial_not_required: "普通返还无需核对序列号",
     spec_note_ph: "例：内部确认、实物标签",
     part_form_add_title: "添加商品",
     part_form_edit_title: "修改商品",
@@ -6895,7 +6898,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1003";
+var APP_VERSION       = "v1.1.1004";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -15925,7 +15928,7 @@ function renderCoreReturnManagementDetail() {
       "<div><span>対象品番</span><strong>" + esc(item.genuine_part_number || "-") + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small></div>" +
       "<div><span>返却期限</span><strong>" + esc(detail.return_due_on || "未設定") + "</strong><small>注文区分 " + esc(item.product_kind === "rebuilt" ? "リビルト品" : "新品") + "</small></div>" +
       "<div><span>返却用送り状番号</span><strong>" + esc(detail.return_waybill_tracking_number || "未登録") + "</strong><small>" + esc(coreReturnManagementReceiptSourceLabel(detail.receipt_source)) + "</small></div>" +
-      "<div><span>D-CATS製造シリアル</span><strong>" + esc(detail.returned_serial || "未照合") + "</strong><small>" + esc(detail.returned_serial_part_number || "通常コアは不要") + "</small></div>" +
+      "<div><span>D-CATS製造シリアル</span><strong>" + esc(detail.returned_serial || "未照合") + "</strong><small>" + esc(detail.returned_serial_part_number || t("core_return_serial_not_required")) + "</small></div>" +
       "<div><span>コア代金</span><strong>" + esc(refundApplicable ? customerOrderCurrency(refundAmount) : "-") + "</strong><small>" + esc(refundLabel) + "</small></div>" +
     "</div>" +
     "<div class='core-return-mgmt-sections'>" +
