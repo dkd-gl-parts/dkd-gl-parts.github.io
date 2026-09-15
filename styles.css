@@ -1412,10 +1412,42 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .rakuten-actions button:disabled { opacity: .45; cursor: not-allowed; }
 .ec-research-operation-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; }
 .ec-research-operation-left { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
+.ec-research-operation-right { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 .ec-research-run-now-button { min-height: 34px; padding: 7px 16px; }
+.btn-sm-edit.ec-research-failures-button { min-height: 34px; padding: 7px 16px; border-color: #d92d20; background: #fff5f4; color: #b42318; font-weight: 800; }
+.btn-sm-edit.ec-research-failures-button:hover { border-color: #b42318; background: #fee4e2; color: #912018; }
 .btn-sm-edit.ec-research-results-button { min-height: 34px; padding: 7px 16px; border-color: #3f9b71; background: #eaf7f0; color: #176b49; font-weight: 700; }
 .btn-sm-edit.ec-research-results-button:hover { border-color: #2f815c; background: #d9f0e4; color: #11583c; }
-@media(max-width:640px){ .ec-research-operation-actions { grid-template-columns: minmax(0, 1fr) auto; align-items: start; } .ec-research-operation-left .rakuten-note { flex-basis: 100%; } }
+@media(max-width:640px){ .ec-research-operation-actions { grid-template-columns: 1fr; align-items: start; } .ec-research-operation-left .rakuten-note { flex-basis: 100%; } .ec-research-operation-right { justify-content: stretch; } .ec-research-operation-right button { flex: 1 1 0; } }
+.form-card.ec-research-failure-card { width: min(1120px, calc(100vw - 24px)); max-width: 1120px; max-height: calc(100dvh - 24px); margin: 12px; padding: 0; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
+.ec-research-failure-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 18px 20px 14px; border-bottom: 1px solid #e4e7ec; }
+.ec-research-failure-head h3 { margin: 0 0 5px; font-size: 18px; }
+.ec-research-failure-meta { color: #667085; font-size: 12px; font-weight: 700; }
+.ec-research-failure-close { width: 32px; height: 32px; flex: 0 0 32px; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; color: #475467; font-size: 22px; line-height: 1; cursor: pointer; }
+.ec-research-failure-close:hover { background: #f2f4f7; color: #1d2939; }
+#ec-research-failure-body { min-height: 160px; padding: 16px 20px; overflow: auto; }
+.ec-research-failure-run-error { display: grid; gap: 5px; margin-bottom: 12px; padding: 11px 12px; border-left: 4px solid #d92d20; background: #fff5f4; color: #7a271a; font-size: 12px; line-height: 1.55; }
+.ec-research-failure-run-error > strong { font-size: 13px; }
+.ec-research-failure-table-wrap { overflow: auto; border: 1px solid #e4e7ec; border-radius: 6px; }
+.ec-research-failure-table { width: 100%; min-width: 900px; border-collapse: collapse; table-layout: fixed; font-size: 12px; }
+.ec-research-failure-table th { padding: 9px 10px; background: #f2f4f7; color: #475467; text-align: left; font-weight: 800; border-bottom: 1px solid #d0d5dd; }
+.ec-research-failure-table td { padding: 11px 10px; color: #344054; vertical-align: top; border-bottom: 1px solid #eaecf0; overflow-wrap: anywhere; line-height: 1.5; }
+.ec-research-failure-table tr:last-child td { border-bottom: 0; }
+.ec-research-failure-table th:nth-child(1) { width: 18%; }
+.ec-research-failure-table th:nth-child(2) { width: 20%; }
+.ec-research-failure-table th:nth-child(3) { width: 15%; }
+.ec-research-failure-table th:nth-child(4) { width: 32%; }
+.ec-research-failure-table th:nth-child(5) { width: 15%; }
+.ec-research-failure-target strong, .ec-research-failure-target span { display: block; }
+.ec-research-failure-target strong { color: #101828; font-family: monospace; font-size: 13px; }
+.ec-research-failure-target span { margin-top: 2px; color: #667085; font-size: 11px; }
+.ec-research-failure-reason > strong { display: block; color: #b42318; }
+.ec-research-failure-card details { margin-top: 5px; }
+.ec-research-failure-card summary { width: fit-content; color: #475467; font-weight: 700; cursor: pointer; }
+.ec-research-failure-card code { display: block; margin-top: 5px; padding: 7px 8px; border: 1px solid #eaecf0; border-radius: 4px; background: #f9fafb; color: #344054; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ec-research-failure-note { margin-top: 10px; padding: 9px 10px; border-left: 3px solid #f79009; background: #fffaeb; color: #7a2e0e; font-size: 12px; }
+.ec-research-failure-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid #e4e7ec; background: #f9fafb; }
+@media(max-width:700px){ .form-card.ec-research-failure-card { width: calc(100vw - 12px); max-height: calc(100dvh - 12px); margin: 6px; } .ec-research-failure-head { padding: 14px 14px 12px; } #ec-research-failure-body { padding: 12px 14px; } .ec-research-failure-table-wrap { border: 0; overflow: visible; } .ec-research-failure-table { display: block; min-width: 0; } .ec-research-failure-table thead { display: none; } .ec-research-failure-table tbody, .ec-research-failure-table tr, .ec-research-failure-table td { display: block; width: 100%; box-sizing: border-box; } .ec-research-failure-table tr { margin-bottom: 10px; border: 1px solid #e4e7ec; border-left: 4px solid #d92d20; border-radius: 6px; overflow: hidden; } .ec-research-failure-table td { display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 8px; padding: 8px 10px; border-bottom: 1px solid #eaecf0; } .ec-research-failure-table td::before { content: attr(data-label); color: #667085; font-weight: 800; } .ec-research-failure-table td:last-child { border-bottom: 0; } .ec-research-failure-footer { padding: 10px 14px; } }
 .rakuten-target-list { max-height: 220px; overflow: auto; border: 1px solid #eee; border-radius: 8px; margin-top: 10px; }
 .rakuten-target-row { display: grid; grid-template-columns: 32px minmax(140px, 1.35fr) minmax(105px, 1fr) minmax(105px, 1fr) 90px 130px 95px 64px; gap: 8px; padding: 8px 10px; border-bottom: 1px solid #f0f0f0; font-size: 12px; align-items: center; }
 .rakuten-target-row:last-child { border-bottom: none; }

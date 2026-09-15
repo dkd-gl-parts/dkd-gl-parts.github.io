@@ -133,16 +133,62 @@ const operationStart = markup.indexOf("class=\"rakuten-actions ec-research-opera
 const operationEnd = markup.indexOf("class=\"ec-schedule-panel\"", operationStart);
 const operationMarkup = markup.slice(operationStart, operationEnd);
 const runNowAt = operationMarkup.indexOf("id=\"btn-ec-run-now\"");
+const failuresAt = operationMarkup.indexOf("id=\"btn-ec-research-failures\"");
 const resultsAt = operationMarkup.indexOf("id=\"btn-rakuten-open-list\"");
-if (operationStart < 0 || operationEnd < operationStart || runNowAt < 0 || resultsAt < runNowAt) {
-  throw new Error("the EC research operation row must keep Run now on the left and Results on the right");
+if (operationStart < 0 || operationEnd < operationStart || runNowAt < 0 || failuresAt < runNowAt || resultsAt < failuresAt) {
+  throw new Error("the EC research operation row must keep Run now on the left and failure/results actions on the right");
 }
-if (!operationMarkup.includes("ec-research-run-now-button") || !operationMarkup.includes("ec-research-results-button")) {
+if (!operationMarkup.includes("ec-research-run-now-button") ||
+    !operationMarkup.includes("ec-research-failures-button") ||
+    !operationMarkup.includes("ec-research-results-button")) {
   throw new Error("the EC research operation buttons must keep distinct action styles");
 }
 if (!styles.includes(".ec-research-operation-actions") || !styles.includes(".btn-sm-edit.ec-research-results-button") ||
+    !styles.includes(".btn-sm-edit.ec-research-failures-button") ||
     !styles.includes("grid-template-columns: minmax(0, 1fr) auto")) {
   throw new Error("the EC research result action must remain right-aligned and visually distinct");
+}
+
+if (!markup.includes("id=\"ec-research-failure-overlay\" role=\"dialog\"") ||
+    !markup.includes("id=\"ec-research-failure-body\"") ||
+    !markup.includes("id=\"btn-ec-research-failure-reload\"")) {
+  throw new Error("the latest-run failure details must be available in an accessible reloadable dialog");
+}
+
+const failureLoadSource = functionSource("loadEcResearchFailures", "function openEcResearchFailureOverlay", true);
+if (!failureLoadSource.includes("last_error") ||
+    !failureLoadSource.includes('.eq("last_status", "failed")') ||
+    !failureLoadSource.includes('.gte("last_run_at", latest.started_at)') ||
+    !failureLoadSource.includes('.lte("last_run_at", latest.finished_at)')) {
+  throw new Error("failure details must load failed targets from the latest execution window");
+}
+if (failureLoadSource.includes("raw_payload")) {
+  throw new Error("failure details must not request unused raw provider payloads");
+}
+
+const failureRenderSource = functionSource("renderEcResearchFailures", "async function loadEcResearchFailures");
+if (!failureRenderSource.includes("ecResearchFailureTargetHtml(row)") ||
+    !failureRenderSource.includes("ecMallProviderLabel") ||
+    !failureRenderSource.includes("ecResearchFailureReasonText(rawError)") ||
+    !failureRenderSource.includes("esc(rawError)") ||
+    !failureRenderSource.includes("esc(latest.error)")) {
+  throw new Error("failure details must show escaped target, provider, summary, and raw reason data");
+}
+
+if (!source.includes('document.getElementById("btn-ec-research-failures").addEventListener("click", openEcResearchFailureOverlay)') ||
+    !source.includes('document.getElementById("btn-ec-research-failure-reload").addEventListener("click", loadEcResearchFailures)') ||
+    !source.includes('document.getElementById("btn-ec-research-failure-footer-close").addEventListener("click", closeEcResearchFailureOverlay)')) {
+  throw new Error("failure detail controls must be wired to open, reload, and close actions");
+}
+if (!styles.includes(".form-card.ec-research-failure-card") ||
+    !styles.includes(".ec-research-failure-table td::before") ||
+    !styles.includes("content: attr(data-label)")) {
+  throw new Error("failure details must have bounded desktop and labeled mobile layouts");
+}
+
+const failureTitleTranslations = source.match(/ec_research_failure_title:/g) || [];
+if (failureTitleTranslations.length !== 3) {
+  throw new Error("failure detail labels must remain available in Japanese, English, and Chinese");
 }
 
 console.log("EC mall result performance guard passed");
