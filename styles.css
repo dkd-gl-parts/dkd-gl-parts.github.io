@@ -9820,8 +9820,10 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-shipping-document-mgmt .shipping-document-destination-label { font-size: 12px; }
   #screen-shipping-document-mgmt .shipping-document-destination-card > strong { font-size: 17px; }
   #screen-shipping-document-mgmt .shipping-document-destination-card > strong ~ span { font-size: 13px; }
+  #screen-shipping-document-mgmt .shipping-document-delivery-facts { grid-template-columns: minmax(150px, 1.35fr) minmax(105px, .9fr) minmax(125px, 1.05fr); }
   #screen-shipping-document-mgmt .shipping-document-delivery-facts dt { font-size: 11px; }
   #screen-shipping-document-mgmt .shipping-document-delivery-facts dd { font-size: 13px; }
+  #screen-shipping-document-mgmt .shipping-document-outbound-service dd { overflow-wrap: normal; word-break: keep-all; white-space: nowrap; }
   #screen-shipping-document-mgmt .shipping-document-order-contents { padding: 12px 0; }
   #screen-shipping-document-mgmt :is(.shipping-document-order-contents-head, .shipping-document-section-head) h3 { font-size: 16px; }
   #screen-shipping-document-mgmt .shipping-document-order-contents-head > span { font-size: 12px; }

@@ -899,6 +899,7 @@ for (const fragment of [
   ".shipping-document-detail-target",
   ".shipping-document-delivery",
   ".shipping-document-delivery-grid",
+  ".shipping-document-outbound-service",
   ".shipping-document-destination-badge.direct",
   ".shipping-document-destination-badge.office",
   ".shipping-document-delivery-facts",
@@ -934,6 +935,14 @@ for (const fragment of [
   ".shipping-handwritten-waybill-canvas-wrap",
   ".shipping-handwritten-waybill-values"
 ]) requireFragment(css, fragment);
+
+for (const fragment of [
+  "grid-template-columns: minmax(150px, 1.35fr) minmax(105px, .9fr) minmax(125px, 1.05fr)",
+  ".shipping-document-outbound-service dd",
+  "word-break: keep-all",
+  "white-space: nowrap"
+]) requireFragment(css, fragment, `Shipping service no-wrap layout is missing: ${fragment}`);
+requireFragment(source, "class='shipping-document-outbound-service'", "Outbound shipping service needs its dedicated no-wrap cell");
 for (const fragment of [
   ".shipment-document-destination.direct",
   ".shipment-document-destination.office",
@@ -1029,11 +1038,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1008"',
-  'styles.css?v=1.1.1008',
-  'app.js?v=1.1.1008'
+  'content="v1.1.1009"',
+  'styles.css?v=1.1.1009',
+  'app.js?v=1.1.1009'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1008"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1009"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");

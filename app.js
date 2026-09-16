@@ -6913,7 +6913,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1008";
+var APP_VERSION       = "v1.1.1009";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -11308,7 +11308,7 @@ function shippingDocumentDeliveryHtml(order) {
     "<div class='shipping-document-delivery-grid'><div class='shipping-document-destination-card'><span class='shipping-document-destination-label'>" + esc(destination.label) + "</span><strong>" + esc(destination.recipient) + "</strong>" +
     (destination.recipientDetail ? "<span>" + esc(destination.recipientDetail) + "</span>" : "") +
     "<span>" + esc(destination.postalAddress) + "</span><span>" + esc(destination.phone) + "</span></div>" +
-    "<dl class='shipping-document-delivery-facts'><div><dt>" + esc(t("shipping_document_outbound_service")) + "</dt><dd>" + esc(salesOrderWaybillCarrierLabel(order, "outbound")) + "</dd></div>" +
+    "<dl class='shipping-document-delivery-facts'><div class='shipping-document-outbound-service'><dt>" + esc(t("shipping_document_outbound_service")) + "</dt><dd>" + esc(salesOrderWaybillCarrierLabel(order, "outbound")) + "</dd></div>" +
     "<div><dt>" + esc(t("shipping_document_delivery_preference")) + "</dt><dd>" + esc(salesOrderDeliveryPreferenceLabel(order)) + "</dd></div>" +
     "<div><dt>" + esc(t("customer_order_waybill_number")) + "</dt><dd>" + esc(trackingNumber ? shippingDocumentWaybillNumberFormat(trackingNumber) : "未登録") + "</dd></div></dl></div></section>";
 }
