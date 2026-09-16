@@ -715,6 +715,7 @@ var TRANSLATIONS = {
     product_shipping_loading: "商品重量と出荷サイズを読み込んでいます。",
     product_shipping_unlinked: "この商品コードに対応する商品データがないため、配送情報を編集できません。",
     product_shipping_load_failed: "商品重量と出荷サイズを読み込めませんでした。",
+    product_weight_list_load_failed: "商品重量を取得できませんでした。再検索してください。",
     product_shipping_save_failed: "商品情報は保存しましたが、商品重量と出荷サイズを保存できませんでした。もう一度保存してください。",
     inventory_kind_section: "在庫区分",
     product_kind_rebuilt: "リビルト",
@@ -2982,6 +2983,7 @@ var TRANSLATIONS = {
     product_shipping_loading: "Loading the product weight and package size.",
     product_shipping_unlinked: "Shipping information cannot be edited because no product record matches this product code.",
     product_shipping_load_failed: "The product weight and package size could not be loaded.",
+    product_weight_list_load_failed: "The product weight could not be loaded. Search again to retry.",
     product_shipping_save_failed: "The product details were saved, but the product weight and package size could not be saved. Save again to retry.",
     inventory_kind_section: "Inventory Type",
     product_kind_rebuilt: "Rebuilt",
@@ -5257,6 +5259,7 @@ var TRANSLATIONS = {
     product_shipping_loading: "正在读取商品重量和出货尺寸。",
     product_shipping_unlinked: "没有与该商品代码对应的商品数据，因此无法编辑配送信息。",
     product_shipping_load_failed: "无法读取商品重量和出货尺寸。",
+    product_weight_list_load_failed: "无法读取商品重量。请重新搜索。",
     product_shipping_save_failed: "商品信息已保存，但商品重量和出货尺寸未能保存。请再次保存。",
     inventory_kind_section: "库存区分",
     product_kind_rebuilt: "再制造",
@@ -6925,7 +6928,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1015";
+var APP_VERSION       = "v1.1.1016";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -26346,6 +26349,7 @@ async function writeLog(operation, tableName, targetId, targetDesc, beforeData, 
 // 商品管理画面
 // =============================================
 var partsMgmtData = [];
+var partsMgmtWeightLoadFailed = false;
 var partFormMode  = "add"; // "add" or "edit"
 var partFormSource = "parts"; // "parts" or "core_products"
 var coreProductFormContext = "sales"; // "sales", "production", or "management"
@@ -26363,6 +26367,41 @@ async function enterPartsMgmt() {
   var addBtn = document.getElementById("btn-add-part");
   if (addBtn) setCspStyle(addBtn, "display", canEdit() ? "" : "none");
   await loadPartsMgmt();
+}
+
+async function loadPartsMgmtShippingWeights(rows) {
+  partsMgmtWeightLoadFailed = false;
+  var dkdIds = Array.from(new Set((rows || []).map(function(row) {
+    return parseInt(row.dkd_shohin_id || row.shohin_cd, 10);
+  }).filter(function(id) { return !isNaN(id); })));
+  if (!dkdIds.length) return;
+
+  var result = await sb.from("core_products")
+    .select("dkd_shohin_id,shipping_weight_kg")
+    .in("dkd_shohin_id", dkdIds);
+  if (result.error) {
+    partsMgmtWeightLoadFailed = true;
+    console.warn("product management weight lookup failed", result.error);
+    return;
+  }
+
+  var weightByDkd = {};
+  (result.data || []).forEach(function(profile) {
+    weightByDkd[String(profile.dkd_shohin_id)] = profile.shipping_weight_kg;
+  });
+  (rows || []).forEach(function(row) {
+    var dkdId = parseInt(row.dkd_shohin_id || row.shohin_cd, 10);
+    row.shipping_weight_kg = Object.prototype.hasOwnProperty.call(weightByDkd, String(dkdId))
+      ? weightByDkd[String(dkdId)]
+      : null;
+  });
+}
+
+function partsMgmtWeightText(value) {
+  if (value === null || value === undefined || value === "") return "-";
+  var weight = Number(value);
+  if (!Number.isFinite(weight) || weight < 0) return "-";
+  return String(weight);
 }
 
 async function loadPartsMgmt() {
@@ -26402,6 +26441,7 @@ async function loadPartsMgmt() {
       });
     }
     partsMgmtData = mappedParts.slice(0, 200);
+    await loadPartsMgmtShippingWeights(partsMgmtData);
     renderPartsMgmt();
     return;
   }
@@ -26431,6 +26471,7 @@ async function loadPartsMgmt() {
       }));
     }
   }
+  await loadPartsMgmtShippingWeights(partsMgmtData);
   renderPartsMgmt();
 }
 
@@ -26439,7 +26480,7 @@ function renderPartsMgmt() {
   var countEl  = document.getElementById("parts-mgmt-count");
   if (countEl) countEl.textContent = partsMgmtData.length + " 件";
   if (!partsMgmtData.length) { list.innerHTML = "<div class='empty'>該当する商品がありません</div>"; return; }
-  var html = "<table class='mgmt-table'><tr><th>商品コード</th><th>純正品番</th><th>メーカー品番</th><th>GLTEK品番</th><th>メーカー</th><th>カテゴリ</th><th></th></tr>";
+  var html = "<table class='mgmt-table parts-mgmt-table'><tr><th>商品コード</th><th>純正品番</th><th>メーカー品番</th><th>GLTEK品番</th><th>メーカー</th><th>カテゴリ</th><th class='parts-mgmt-weight'>" + esc(t("product_shipping_weight")) + "</th><th></th></tr>";
   partsMgmtData.forEach(function(p) {
     html += "<tr>";
     html += "<td><div class='mgmt-pn'>" + esc(String(p.dkd_shohin_id || p.shohin_cd || "-")) + "</div></td>";
@@ -26448,6 +26489,7 @@ function renderPartsMgmt() {
     html += "<td><div class='mgmt-pn'>" + esc(p.gltek_part_number || "-") + "</div></td>";
     html += "<td><div class='mgmt-sub'>" + esc(p.manufacturer || "-") + "</div></td>";
     html += "<td><div class='mgmt-sub'>" + tCat(p.category) + "</div></td>";
+    html += "<td class='parts-mgmt-weight'><div class='mgmt-pn'>" + esc(partsMgmtWeightText(p.shipping_weight_kg)) + "</div></td>";
     html += "<td><div class='mgmt-actions'>";
     if (p._coreManaged) {
       html += "<button class='btn-sm-edit' data-core-pid='" + p.dkd_shohin_id + "'>" + t("btn_edit") + "</button>";
@@ -26459,6 +26501,9 @@ function renderPartsMgmt() {
     html += "</tr>";
   });
   html += "</table>";
+  if (partsMgmtWeightLoadFailed) {
+    html = "<div class='parts-mgmt-weight-error' role='status'>" + esc(t("product_weight_list_load_failed")) + "</div>" + html;
+  }
   list.innerHTML = html;
   if (!canEdit()) {
     list.querySelectorAll("[data-core-pid], [data-pid], [data-pdel]").forEach(function(btn) { btn.remove(); });

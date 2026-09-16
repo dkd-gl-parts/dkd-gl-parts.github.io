@@ -29,6 +29,40 @@ if (!profileLoad.includes('from("core_products")') ||
   throw new Error("product shipping profile must load all persisted fields from core_products");
 }
 
+const managementWeightLoad = sourceBetween("async function loadPartsMgmtShippingWeights", "function partsMgmtWeightText");
+[
+  'from("core_products")',
+  '.select("dkd_shohin_id,shipping_weight_kg")',
+  '.in("dkd_shohin_id", dkdIds)',
+  "partsMgmtWeightLoadFailed = true",
+  "row.shipping_weight_kg ="
+].forEach((fragment) => {
+  if (!managementWeightLoad.includes(fragment)) throw new Error(`product management weight lookup is incomplete: ${fragment}`);
+});
+
+const managementLoad = sourceBetween("async function loadPartsMgmt", "function renderPartsMgmt");
+if ((managementLoad.match(/await loadPartsMgmtShippingWeights\(partsMgmtData\)/g) || []).length !== 2) {
+  throw new Error("both product-management result paths must load product weights before rendering");
+}
+
+const managementRender = sourceBetween("function renderPartsMgmt", "async function openPartForm");
+[
+  't("product_shipping_weight")',
+  "partsMgmtWeightText(p.shipping_weight_kg)",
+  "parts-mgmt-weight",
+  "partsMgmtWeightLoadFailed",
+  't("product_weight_list_load_failed")',
+  "role='status'"
+].forEach((fragment) => {
+  if (!managementRender.includes(fragment)) throw new Error(`product management weight display is incomplete: ${fragment}`);
+});
+
+const managementWeightTextSource = sourceBetween("function partsMgmtWeightText", "async function loadPartsMgmt");
+const managementWeightText = new Function(`${managementWeightTextSource}\nreturn partsMgmtWeightText;`)();
+if (managementWeightText(null) !== "-" || managementWeightText("4.80") !== "4.8" || managementWeightText(-1) !== "-") {
+  throw new Error("product management weight formatting must distinguish missing, valid, and invalid values");
+}
+
 const formMode = sourceBetween("function setProductFormFieldMode", "function setCoreProductFormFields");
 [
   'document.getElementById("pf-shipping-fields")',
@@ -157,7 +191,7 @@ if (!source.includes("productShippingSizeRows.push(selected)")) {
   throw new Error("saved package sizes must be retained when the current master no longer contains them");
 }
 
-["product_shipping_section", "product_shipping_weight", "product_shipping_loading", "product_shipping_unlinked", "product_shipping_load_failed", "product_shipping_save_failed", "sales_shipping_estimate_title", "sales_shipping_manual_size_note", "sales_shipping_weight_size_note"].forEach((key) => {
+["product_shipping_section", "product_shipping_weight", "product_shipping_loading", "product_shipping_unlinked", "product_shipping_load_failed", "product_weight_list_load_failed", "product_shipping_save_failed", "sales_shipping_estimate_title", "sales_shipping_manual_size_note", "sales_shipping_weight_size_note"].forEach((key) => {
   const count = (source.match(new RegExp(`${key}:`, "g")) || []).length;
   if (count !== 3) throw new Error(`${key} must be translated for all supported languages`);
 });
@@ -188,6 +222,17 @@ if (customerSectionIndex < 0 || shippingSectionIndex < customerSectionIndex || p
   "@media (max-width: 430px)"
 ].forEach((fragment) => {
   if (!css.includes(fragment)) throw new Error(`shipping estimate styling is missing: ${fragment}`);
+});
+
+[
+  "#screen-parts-mgmt .mgmt-body { max-width: 1160px; }",
+  "#parts-mgmt-list { overflow-x: auto;",
+  "#parts-mgmt-list .parts-mgmt-table { min-width: 1000px; }",
+  ".parts-mgmt-table .parts-mgmt-weight",
+  ".parts-mgmt-weight-error",
+  "@media (max-width: 760px)"
+].forEach((fragment) => {
+  if (!css.includes(fragment)) throw new Error(`product management weight layout is missing: ${fragment}`);
 });
 
 const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
