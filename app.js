@@ -6913,7 +6913,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1011";
+var APP_VERSION       = "v1.1.1012";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -17701,11 +17701,16 @@ function salesOrderBillingDetailsHtml(order, adjustments, fallbackDiscount) {
 function salesOrderPricingHistoryHtml(rows) {
   rows = Array.isArray(rows) ? rows : [];
   if (!rows.length) return "";
-  return "<div class='sales-order-pricing-history'><h4>金額修正履歴</h4><div>" + rows.map(function(row) {
+  return "<section class='sales-order-history-group sales-order-pricing-history'><h4>金額修正履歴</h4><div class='sales-order-history-list'>" + rows.map(function(row) {
     var beforeData = row.before_data && typeof row.before_data === "object" ? row.before_data : {};
     var afterData = row.after_data && typeof row.after_data === "object" ? row.after_data : {};
-    return "<div class='sales-order-pricing-history-row'><time>" + esc(customerOrderDateTimeText(row.created_at)) + "</time><strong>" + esc(row.reason || "変更理由なし") + "</strong><span>" + esc(customerOrderCurrency(beforeData.total_jpy)) + " → " + esc(customerOrderCurrency(afterData.total_jpy)) + "</span></div>";
-  }).join("") + "</div></div>";
+    return "<article class='sales-order-history-row sales-order-pricing-history-row'>" +
+      "<time datetime='" + esc(row.created_at || "") + "'>" + esc(customerOrderDateTimeText(row.created_at)) + "</time>" +
+      "<span class='sales-order-history-kind pricing'>金額変更</span>" +
+      "<div class='sales-order-history-content'><strong>" + esc(row.reason || "変更理由なし") + "</strong></div>" +
+      "<div class='sales-order-history-result'><small>受注金額</small><strong>" + esc(customerOrderCurrency(beforeData.total_jpy)) + " → " + esc(customerOrderCurrency(afterData.total_jpy)) + "</strong></div>" +
+    "</article>";
+  }).join("") + "</div></section>";
 }
 
 function salesOrderPricingInputValue(value) {
@@ -17982,14 +17987,14 @@ async function saveSalesOrderPricing() {
 function salesOrderShipmentHistoryHtml(rows) {
   rows = Array.isArray(rows) ? rows : [];
   if (!rows.length) return "<div class='sales-order-empty'>発送履歴はありません。</div>";
-  return "<div class='sales-order-shipment-history'>" + rows.map(function(row) {
+  return "<div class='sales-order-history-list sales-order-shipment-history'>" + rows.map(function(row) {
     var sourceLabel = row.source === "b2_issued_csv" ? "B2発送データ" : "手入力";
-    return "<div class='sales-order-shipment-history-row" + (row.is_active === false ? " superseded" : "") + "'>" +
-      "<span class='direction " + esc(row.direction || "") + "'>" + esc(salesOrderB2DirectionLabel(row.direction)) + "</span>" +
-      "<div><strong>" + esc(row.tracking_number || "-") + "</strong><small>" + esc([row.carrier_name, row.service_name].filter(Boolean).join(" / ") || "-") + "</small></div>" +
-      "<div><strong>" + esc(row.shipped_on || "日付未登録") + "</strong><small>" + esc(sourceLabel + (row.source_file_name ? " / " + row.source_file_name : "")) + "</small></div>" +
-      "<span class='state'>" + esc(row.is_active === false ? "変更前" : "現在") + "</span>" +
-    "</div>";
+    return "<article class='sales-order-history-row sales-order-shipment-history-row" + (row.is_active === false ? " superseded" : "") + "'>" +
+      "<time datetime='" + esc(row.shipped_on || "") + "'>" + esc(row.shipped_on || "日付未登録") + "</time>" +
+      "<div class='sales-order-history-kind-cell'><span class='sales-order-history-kind direction " + esc(row.direction || "") + "'>" + esc(salesOrderB2DirectionLabel(row.direction)) + "</span><small class='state'>" + esc(row.is_active === false ? "変更前" : "現在") + "</small></div>" +
+      "<div class='sales-order-history-content'><strong>" + esc(row.tracking_number || "-") + "</strong><small>" + esc([row.carrier_name, row.service_name].filter(Boolean).join(" / ") || "-") + "</small></div>" +
+      "<div class='sales-order-history-result'><strong>" + esc(sourceLabel) + "</strong>" + (row.source_file_name ? "<small class='sales-order-history-file'>" + esc(row.source_file_name) + "</small>" : "") + "</div>" +
+    "</article>";
   }).join("") + "</div>";
 }
 
@@ -18442,7 +18447,7 @@ function renderSalesOrderDetail() {
       "</div></section>" +
       "<div class='sales-order-detail-panel' id='sales-order-detail-panel-fulfillment' role='tabpanel' aria-labelledby='sales-order-detail-tab-fulfillment' data-sales-order-detail-panel='fulfillment' hidden>" + salesOrderDispatchHtml(order) + "</div>" +
       "<div class='sales-order-detail-panel' id='sales-order-detail-panel-accounting' role='tabpanel' aria-labelledby='sales-order-detail-tab-accounting' data-sales-order-detail-panel='accounting' hidden>" + salesOrderAccountingPanelHtml(order) + "</div>" +
-"<section class='sales-order-detail-panel sales-order-detail-section sales-order-history' id='sales-order-detail-history' role='tabpanel' aria-labelledby='sales-order-detail-tab-history' data-sales-order-detail-panel='history' hidden><div class='sales-order-section-heading'><div><h3>処理履歴</h3></div></div><div class='sales-order-history-groups'><div><h4>発送履歴</h4>" + salesOrderShipmentHistoryHtml(order.shipment_history) + "</div><div>" + (salesOrderPricingHistoryHtml(order.pricing_adjustments) || "<div class='sales-order-history-empty'><h4>金額修正履歴</h4><span>履歴はありません。</span></div>") + "</div>" + salesOrderRevisionHistoryHtml(order.revision_history) + "</div></section>" +
+"<section class='sales-order-detail-panel sales-order-detail-section sales-order-history' id='sales-order-detail-history' role='tabpanel' aria-labelledby='sales-order-detail-tab-history' data-sales-order-detail-panel='history' hidden><div class='sales-order-section-heading'><div><h3>処理履歴</h3></div></div><div class='sales-order-history-groups'><section class='sales-order-history-group'><h4>発送履歴</h4>" + salesOrderShipmentHistoryHtml(order.shipment_history) + "</section>" + (salesOrderPricingHistoryHtml(order.pricing_adjustments) || "<section class='sales-order-history-group sales-order-history-empty'><h4>金額修正履歴</h4><span>履歴はありません。</span></section>") + salesOrderRevisionHistoryHtml(order.revision_history) + "</div></section>" +
     "</div>" +
     "<div id='sales-order-detail-message' class='sales-order-detail-message' aria-live='polite'></div>";
   host.querySelectorAll("[data-sales-order-detail-view]").forEach(function(button) {

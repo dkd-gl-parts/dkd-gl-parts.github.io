@@ -3041,7 +3041,10 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "返金メモ": "Refund note",
     "返金方法、処理番号など必要な情報を記録": "Record the refund method, transaction number, and other necessary details",
     "返金済みにする": "Mark as refunded",
-    "先にコア返却受付を行ってください。": "Register receipt of the returned core first."
+    "先にコア返却受付を行ってください。": "Register receipt of the returned core first.",
+    "金額変更": "Amount Change",
+    "帳票・送り状 再発行要": "Documents / waybill reissue required",
+    "反映済み": "Applied"
   },
   "zh": {
     "集計中": "统计中",
@@ -6083,6 +6086,9 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "返金メモ": "退款备注",
     "返金方法、処理番号など必要な情報を記録": "记录退款方式、处理编号等必要信息",
     "返金済みにする": "标记为已退款",
-    "先にコア返却受付を行ってください。": "请先登记收到返还旧件。"
+    "先にコア返却受付を行ってください。": "请先登记收到返还旧件。",
+    "金額変更": "金额变更",
+    "帳票・送り状 再発行要": "单据・运单需要重新签发",
+    "反映済み": "已应用"
   }
 };

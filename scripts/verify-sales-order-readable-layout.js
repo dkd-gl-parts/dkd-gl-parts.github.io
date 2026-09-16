@@ -3,6 +3,8 @@ const path = require("path");
 
 const root = path.resolve(__dirname, "..");
 const css = fs.readFileSync(path.join(root, "styles.css"), "utf8").replace(/\r\n/g, "\n");
+const app = fs.readFileSync(path.join(root, "app.js"), "utf8").replace(/\r\n/g, "\n");
+const revision = fs.readFileSync(path.join(root, "sales-order-revision.js"), "utf8").replace(/\r\n/g, "\n");
 const marker = "/* Match order operations to the readable type scale used by shipping documents. */";
 const markerIndex = css.indexOf(marker);
 
@@ -53,6 +55,37 @@ for (const fragment of [
   "@media screen and (max-width: 820px)",
   ".sales-order-dashboard-metrics { display: flex; overflow-x: auto;",
   ".sales-order-address { grid-template-columns: 1fr; }"
+]) requireFragment(fragment);
+
+for (const fragment of [
+  "sales-order-history-group sales-order-pricing-history",
+  "sales-order-history-row sales-order-pricing-history-row",
+  "sales-order-history-kind pricing'>金額変更",
+  "sales-order-history-list sales-order-shipment-history",
+  "sales-order-history-kind-cell",
+  "sales-order-history-file",
+  "sales-order-history-group'><h4>発送履歴"
+]) {
+  if (!app.includes(fragment)) throw new Error(`Missing aligned sales-order history markup: ${fragment}`);
+}
+
+for (const fragment of [
+  "sales-order-history-group sales-order-revision-history",
+  "sales-order-history-row sales-order-revision-history-row",
+  "sales-order-history-kind revision'>受注修正",
+  "帳票・送り状 再発行要",
+  "反映済み"
+]) {
+  if (!revision.includes(fragment)) throw new Error(`Missing aligned revision history markup: ${fragment}`);
+}
+
+for (const fragment of [
+  ".sales-order-history-row { grid-template-columns: 142px 112px minmax(220px, 1fr) minmax(190px, .82fr);",
+  ".sales-order-history-file { word-break: normal; overflow-wrap: anywhere; }",
+  "grid-template-areas:",
+  '"time kind"',
+  '"content content"',
+  '"result result"'
 ]) requireFragment(fragment);
 
 for (const fragment of [
