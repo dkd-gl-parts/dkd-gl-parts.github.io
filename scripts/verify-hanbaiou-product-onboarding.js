@@ -45,7 +45,8 @@ for (const key of [
 requireFragment(html, "ツール → テキストデータ入力");
 requireFragment(html, "商品台帳（販売王20～形式）");
 requireFragment(html, "「導入 → 他社製品データ取り込み」は使用しません。");
-requireFragment(css, ".form-card.sales-accounting-export-card { display: flex; flex-direction: column; width: min(1220px, calc(100vw - 24px)); max-width: 1220px; max-height: calc(100vh - 24px); margin: 12px;");
+requireFragment(css, ".form-card.sales-accounting-export-card { display: flex; flex-direction: column; width: min(1220px, calc(100vw - 24px)); max-width: 1220px; height: calc(100dvh - 24px);");
+requireFragment(css, ".sales-accounting-export-body { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; overflow-y: auto;");
 if (html.includes("台帳は「商品」、ファイルは「区切り文字形式")) {
   throw new Error("The 67-column product-master CSV must not be routed through Other Product Data Import");
 }
