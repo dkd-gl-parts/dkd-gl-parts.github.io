@@ -110,6 +110,7 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
   'if (!isSystemAdminSession() || floatingRequestPending) return;',
   'root.classList.add("is-floating")',
   'requestedWindow.document.body.appendChild(root)',
+  'undockLauncher();',
   'restoreFromFloatingWindow(requestedWindow, false)',
   'floatingDocument.head.appendChild(stylesheet)',
   'stylesheet.addEventListener("load", scheduleViewportSync, { once: true })',
@@ -118,6 +119,11 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
   'var activeDocument = presentationDocument();',
   'toggleFloating: toggleFloatingWindow',
   'isFloating: isFloatingWindowOpen',
+  'function dockLauncher()',
+  'typeof activeScreen.querySelector === "function"',
+  'activeScreen.querySelector(".page-header-right")',
+  'dock.insertBefore(launcher, dock.firstChild)',
+  'launcher.hidden = !visible;',
   '追加料金：0円（ブラウザ標準機能）'
 ].forEach((fragment) => requireFragment(runtime, fragment));
 
@@ -182,6 +188,9 @@ requireFragment(css, "@media (prefers-reduced-motion: reduce)");
 requireFragment(css, "@media print");
 requireFragment(css, "z-index: 190");
 requireFragment(css, "max-height: calc(100dvh");
+requireFragment(css, ".page-header .dcats-concierge-launcher.is-header-docked", "The launcher must live in the shared header instead of covering page content");
+requireFragment(css, "position: static;", "The header-docked launcher must participate in header layout");
+requireFragment(css, ".dcats-concierge-launcher[hidden]", "A launcher moved outside the root must preserve visibility gating");
 requireFragment(css, "visibility: hidden", "A concierge without a safe target must leave keyboard and accessibility navigation");
 requireFragment(css, "touch-action: none;", "The concierge drag target must own touch and pointer movement");
 requireFragment(css, ".dcats-concierge.is-dragging .dcats-concierge-hit-target", "Dragging must expose a stable grabbed-pointer state");

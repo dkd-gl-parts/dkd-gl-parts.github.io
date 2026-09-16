@@ -310,6 +310,7 @@
     launcher.type = "button";
     launcher.setAttribute("aria-haspopup", "dialog");
     launcher.setAttribute("aria-expanded", "false");
+    launcher.setAttribute("aria-controls", "dcats-concierge-panel");
     var launcherIcon = createElement("span", "dcats-concierge-launcher-icon", "♢");
     launcherIcon.setAttribute("aria-hidden", "true");
     launcherLabel = createCopyElement("span", "dcats-concierge-launcher-label", "launcher");
@@ -507,6 +508,7 @@
       bindDragSurface(requestedWindow.document);
 
       if (panelOpen) closePanel(false);
+      undockLauncher();
       root.classList.add("is-floating");
       requestedWindow.document.body.appendChild(root);
       floatingRequestPending = false;
@@ -548,6 +550,7 @@
     floatingRequestPending = false;
     if (root.ownerDocument !== document) document.body.appendChild(root);
     root.classList.remove("is-floating");
+    dockLauncher();
     updateFloatingControls();
     if (closeWindow && !targetWindow.closed) targetWindow.close();
     if (visible) {
@@ -569,6 +572,26 @@
     return active.id.slice(7);
   }
 
+  function undockLauncher() {
+    if (!launcher || !root) return;
+    launcher.classList.remove("is-header-docked");
+    if (launcher.parentNode !== root) root.appendChild(launcher);
+  }
+
+  function dockLauncher() {
+    if (!launcher || isFloatingWindowOpen()) return;
+    var activeScreen = document.querySelector(".screen.active");
+    var dock = activeScreen && typeof activeScreen.querySelector === "function"
+      ? activeScreen.querySelector(".page-header-right")
+      : null;
+    if (!dock) {
+      undockLauncher();
+      return;
+    }
+    launcher.classList.add("is-header-docked");
+    if (launcher.parentNode !== dock) dock.insertBefore(launcher, dock.firstChild);
+  }
+
   function syncVisibility() {
     syncSettingsOwner();
     var screen = activeScreenName();
@@ -584,7 +607,9 @@
       launcher.setAttribute("aria-expanded", "false");
       panelReturnFocus = null;
     }
+    if (!isFloatingWindowOpen()) dockLauncher();
     root.hidden = !visible;
+    launcher.hidden = !visible;
     syncRunningState();
   }
 
