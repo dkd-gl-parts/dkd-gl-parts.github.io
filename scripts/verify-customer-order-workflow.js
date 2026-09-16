@@ -317,7 +317,7 @@ if (!addOrderItem.includes('core_return_handling: "standard"')) {
   throw new Error("new order lines must default to the catalog core-return policy");
 }
 const orderPayloadItems = sourceBetween("function customerOrderPayloadItems", "function customerOrderVehicleInformationPayload");
-if (!orderPayloadItems.includes('core_return_handling: item.core_return_handling === "charge_no_return"')) {
+if (!orderPayloadItems.includes('["charge_no_return", "charge_with_return"].indexOf(item.core_return_handling) >= 0')) {
   throw new Error("the selected core-return handling must be included in server preview and submission requests");
 }
 const orderCurrency = sourceBetween("function customerOrderCurrency", "function customerOrderStatusLabel");
@@ -376,8 +376,9 @@ if (/\.customer-order-history-detail-totals\s+\.(?:core-charge|grand-total)\s*\{
 const coreRequirement = sourceBetween("function customerOrderCartRequiresCoreReturn", "function customerOrderCoreReturnShippingMethodPayload");
 if (!coreRequirement.includes("confirmed.core_return_required === true") ||
     !coreRequirement.includes("item.core_return_required === true") ||
-    coreRequirement.includes('item.core_return_handling !== "charge_no_return"')) {
-  throw new Error("billed core-charge lines must continue to require a return shipping method");
+    !coreRequirement.includes('item.core_return_handling === "charge_no_return"') ||
+    !coreRequirement.includes("return false")) {
+  throw new Error("only explicitly return-required core-charge lines may request a return shipping method");
 }
 const orderCartRenderer = sourceBetween("function renderCustomerOrderCart", "function customerOrderSetStatus");
 if (!orderCartRenderer.includes("canRegisterInternalCustomerOrder() && item.core_return_required") ||
@@ -391,7 +392,9 @@ if (!orderCartRenderer.includes("canRegisterInternalCustomerOrder() && item.core
 }
 [
   'customer_order_core_return_standard: "後日、交換したコアを返却する"',
-  'customer_order_core_charge_no_return_option: "コア代金を請求（返却後に{amount}を返金）"',
+  'customer_order_core_charge_with_return_option: "コア代金を請求（要返却・返却後に{amount}を返金）"',
+  'customer_order_core_charge_no_return_option: "コア代金を請求（返却不要・{amount}）"',
+  'customer_order_core_charge_no_return_label: "コア代金 {amount} 請求済み・返却不要"',
   'customer_order_core_charge_no_return_status: "コア代金請求済み"',
   'customer_order_core_charge_note: "商品マスタのコア代金を商品代とは別項目で請求します。返送用送り状を発行し、コア返却受付後に返金します。"',
   'customer_order_core_charge_refund_pending: "返却済み・返金確認"',
@@ -401,8 +404,9 @@ if (!orderCartRenderer.includes("canRegisterInternalCustomerOrder() && item.core
   if (!source.includes(fragment)) throw new Error(`core charge billing semantics are missing: ${fragment}`);
 });
 if ((source.match(/customer_order_core_handling_note:/g) || []).length !== 3 ||
-    source.includes('customer_order_core_charge_no_return_option: "返却不要（')) {
-  throw new Error("core handling must distinguish later return, billed core charge, and no-return products in every language");
+    (source.match(/customer_order_core_charge_with_return_option:/g) || []).length !== 3 ||
+    (source.match(/customer_order_core_charge_no_return_option:/g) || []).length !== 3) {
+  throw new Error("core handling must distinguish unbilled return, billed return, and billed no-return in every language");
 }
 if (!source.includes("function customerOrderHasBilledCoreCharge") ||
     !source.includes("function customerOrderProductSubtotal") ||
@@ -413,6 +417,10 @@ if (!source.includes("function customerOrderHasBilledCoreCharge") ||
 const accountingContext = {};
 vm.runInNewContext(sourceBetween("function customerOrderCoreHandlingValue", "function configureCustomerOrderDevelopmentPreview"), accountingContext);
 const chargedItem = {core_return_handling:"charge_no_return",quantity:2,unit_price_jpy:10500,line_total_jpy:21000,core_charge_jpy:3000,discount_jpy:500};
+if (accountingContext.customerOrderCoreHandlingValue(chargedItem) !== "charge_no_return" ||
+    accountingContext.customerOrderCoreHandlingValue(Object.assign({}, chargedItem, {core_return_required:true})) !== "charge_with_return") {
+  throw new Error("billed core charges must retain their explicit return requirement");
+}
 if (accountingContext.customerOrderProductUnitPrice(chargedItem) !== 7500 ||
     accountingContext.customerOrderProductLineTotal(chargedItem) !== 15000 ||
     accountingContext.customerOrderCoreChargeTotal({items:[chargedItem]}) !== 6000 ||
