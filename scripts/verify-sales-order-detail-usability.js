@@ -409,8 +409,10 @@ const compactContext = {
   t: (key) => ({
     customer_order_core_charge_no_return_status: "コア代金請求済み",
     customer_order_core_charge_billed_short: "請求済み",
+    customer_order_core_charge_refundable_status: "請求済み（返却後返金）",
     customer_order_core_charge_refund_pending: "返却済み・返金確認",
     customer_order_core_charge_refunded: "返金済み",
+    customer_order_core_return_standard: "返却要",
     customer_order_core_return_needed: "要コア返却",
     customer_order_core_return_returned: "返却済み",
     customer_order_yamato_office_pickup_short: "ヤマト営業所受取"
@@ -429,8 +431,12 @@ vm.runInContext([
 ].join("\n"), compactContext);
 const billedSummary = compactContext.salesOrderCoreReturnSummary({ billed: true, core_return_required: true, core_return_status: "awaiting_return" });
 const billedHtml = compactContext.salesOrderWaybillSummaryHtml(billedSummary.label, billedSummary.primary, billedSummary.secondary);
-if (billedSummary.primary !== "請求済み" || !billedSummary.secondary.includes("要コア返却") || billedHtml.includes("返却不要")) {
+if (billedSummary.primary !== "請求済み（返却後返金）" || !billedSummary.secondary.includes("要コア返却") || billedHtml.includes("返却不要")) {
   throw new Error("A billed core charge must remain an understandable return-required condition");
+}
+const unbilledSummary = compactContext.salesOrderCoreReturnSummary({ billed: false, core_return_required: true, core_return_status: "awaiting_return" });
+if (unbilledSummary.primary !== "返却要" || unbilledSummary.secondary.includes("返金")) {
+  throw new Error("An unbilled core return must not imply a refund");
 }
 const returnedSummary = compactContext.salesOrderCoreReturnSummary({ billed: true, core_return_required: true, core_return_status: "returned", refund_status: "pending" });
 if (returnedSummary.primary !== "返却済み" || returnedSummary.secondary !== "返却済み・返金確認") {

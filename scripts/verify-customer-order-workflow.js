@@ -391,15 +391,16 @@ if (!orderCartRenderer.includes("canRegisterInternalCustomerOrder() && item.core
   throw new Error("internal order entry must show product amounts and billed core charges as separate items");
 }
 [
-  'customer_order_core_return_standard: "後日、交換したコアを返却する"',
-  'customer_order_core_charge_with_return_option: "コア代金を請求（要返却・返却後に{amount}を返金）"',
+  'customer_order_core_return_standard: "返却要"',
+  'customer_order_core_charge_with_return_option: "請求済み（返却後返金・{amount}）"',
   'customer_order_core_charge_no_return_option: "コア代金を請求（返却不要・{amount}）"',
   'customer_order_core_charge_no_return_label: "コア代金 {amount} 請求済み・返却不要"',
   'customer_order_core_charge_no_return_status: "コア代金請求済み"',
-  'customer_order_core_charge_note: "商品マスタのコア代金を商品代とは別項目で請求します。返送用送り状を発行し、コア返却受付後に返金します。"',
+  'customer_order_core_charge_note: "コア代金を商品代とは別項目で請求し、返却受付後に同額を返金します。"',
+  'customer_order_core_charge_refundable_status: "請求済み（返却後返金）"',
   'customer_order_core_charge_refund_pending: "返却済み・返金確認"',
   'customer_order_core_charge_refunded: "返金済み"',
-  'sales_core_policy_help: "商品マスタで返却不要の商品にはコア代金は発生しません。返却必要商品ではコア代金を請求でき、返却受付後に同額を返金します。"'
+  'sales_core_policy_help: "「返却要」は返却のみでコア代金・返金なし。「請求済み（返却後返金）」だけ返却受付後に同額を返金します。"'
 ].forEach((fragment) => {
   if (!source.includes(fragment)) throw new Error(`core charge billing semantics are missing: ${fragment}`);
 });

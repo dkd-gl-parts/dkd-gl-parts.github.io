@@ -47,7 +47,7 @@ assert(fs.readFileSync('scripts/build-static-site.js','utf8').includes('"sales-o
 assert(fs.readFileSync('index.html','utf8').includes('src="sales-order-revision.js?v='));
 context.esc=String;
 context.customerOrderCurrency=(value)=>'¥'+Number(value).toLocaleString('ja-JP');
-const revisionLabels={core_return_required:'コア返却必要',customer_order_core_handling:'交換コアの対応',customer_order_core_return_standard:'後日、交換したコアを返却する',customer_order_core_charge_with_return_label:'コア代金 {amount} 請求済み・要返却',customer_order_core_charge_no_return_label:'コア代金 {amount} 請求済み・返却不要',customer_order_core_charge_no_return_status:'コア代金請求済み',customer_order_core_charge_unset:'コア代金が未設定（選択不可）',customer_order_core_charge_setup:'商品マスタにコア代金を設定してください。',customer_order_core_charge_note:'商品マスタのコア代金を商品代とは別項目で請求します。返送用送り状を発行し、コア返却受付後に返金します。',customer_order_core_charge_total:'コア代金',customer_order_unit_price:'商品単価',customer_order_line_total:'明細計'};
+const revisionLabels={core_return_required:'返却要',customer_order_core_handling:'交換コアの対応',customer_order_core_return_standard:'返却要',customer_order_core_charge_with_return_label:'請求済み（返却後返金） {amount}',customer_order_core_charge_no_return_label:'コア代金 {amount} 請求済み・返却不要',customer_order_core_charge_no_return_status:'コア代金請求済み',customer_order_core_charge_unset:'コア代金が未設定（選択不可）',customer_order_core_charge_setup:'商品マスタにコア代金を設定してください。',customer_order_core_charge_note:'コア代金を商品代とは別項目で請求し、返却受付後に同額を返金します。',customer_order_core_charge_total:'コア代金',customer_order_unit_price:'商品単価',customer_order_line_total:'明細計'};
 context.t=(key)=>revisionLabels[key] || key;
 context.tf=(key,values)=>context.t(key).replace('{amount}',values.amount);
 context.normalizeProductKind=String;
@@ -65,7 +65,7 @@ assert.equal(newLinePolicy.row.product_variant_id,22);
 const coreRequired={product_core_return_required:true,core_return_required:true,core_return_handling:'standard',configured_core_charge_jpy:5000,revision_unit_price_jpy:7500};
 assert.equal(context.salesOrderRevisionItemNeedsCoreReturn(coreRequired),true);
 assert.equal(context.salesOrderRevisionEffectiveUnitPrice(coreRequired),7500);
-assert(context.salesOrderRevisionCoreChoiceHtml(coreRequired,0).includes('コア代金 ¥5,000 請求済み・要返却'));
+assert(context.salesOrderRevisionCoreChoiceHtml(coreRequired,0).includes('請求済み（返却後返金） ¥5,000'));
 coreRequired.core_return_handling='charge_with_return';
 assert.equal(context.salesOrderRevisionItemNeedsCoreReturn(coreRequired),true);
 assert.equal(context.salesOrderRevisionEffectiveUnitPrice(coreRequired),12500);
