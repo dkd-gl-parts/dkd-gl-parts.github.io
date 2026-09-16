@@ -289,6 +289,11 @@ if (!compatibleLoadSource.includes('document.getElementById("sales-basic-compati
   "align-items: stretch",
   "height: 43px",
   ".sales-detail-tab:focus-visible { outline: none; background: #eef4ff; color: #174ea6; }",
+  "#screen-search.active { height: 100vh; height: 100dvh; min-height: 100vh; min-height: 100dvh; overflow: hidden; }",
+  "#screen-search .app-body { display: flex; flex-direction: row; flex: 1; min-height: 0; overflow: hidden; }",
+  "#screen-search .left-col { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; height: 100%; min-height: 0;",
+  "#screen-search .right-col { flex: 1; display: flex; flex-direction: column; height: 100%; min-width: 0; min-height: 0;",
+  "#screen-search .panel { position: static; height: 100%; min-height: 0; max-height: none;",
   "@media (max-width: 767px)"
 ].forEach((fragment) => {
   if (!css.includes(fragment)) throw new Error(`sales workspace styling is missing: ${fragment}`);
