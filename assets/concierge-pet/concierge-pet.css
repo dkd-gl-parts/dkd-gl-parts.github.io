@@ -37,11 +37,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.1007");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.1008");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.1007");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.1008");
 }
 
 .dcats-concierge-hit-target {
@@ -116,6 +116,37 @@
   cursor: pointer;
   pointer-events: auto;
   touch-action: manipulation;
+}
+
+.dcats-concierge-launcher[hidden] {
+  display: none !important;
+}
+
+.page-header .dcats-concierge-launcher.is-header-docked {
+  position: static;
+  right: auto;
+  bottom: auto;
+  min-height: 30px;
+  flex: 0 0 auto;
+  gap: 5px;
+  padding: 4px 8px;
+  border-color: rgb(255 255 255 / 24%);
+  border-radius: 6px;
+  background: rgb(255 255 255 / 12%);
+  box-shadow: none;
+  color: #fff;
+}
+
+.page-header .dcats-concierge-launcher.is-header-docked:hover {
+  background: rgb(255 255 255 / 20%);
+}
+
+.page-header .dcats-concierge-launcher.is-header-docked .dcats-concierge-launcher-icon {
+  width: 20px;
+  height: 20px;
+  background: rgb(255 255 255 / 14%);
+  color: #fff;
+  font-size: 13px;
 }
 
 .dcats-concierge-launcher:hover {
@@ -383,6 +414,12 @@ body.dcats-concierge-floating-body .dcats-concierge-mover {
     width: 42px;
     justify-content: center;
     padding: 8px;
+  }
+
+  .page-header .dcats-concierge-launcher.is-header-docked {
+    width: 32px;
+    min-height: 32px;
+    padding: 5px;
   }
 
   .dcats-concierge-panel {
