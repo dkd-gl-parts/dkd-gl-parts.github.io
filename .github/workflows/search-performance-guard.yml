@@ -60,6 +60,8 @@ jobs:
         run: node scripts/verify-component-catalog-recovery.js
       - name: Verify manual component add
         run: node scripts/verify-component-manual-add.js
+      - name: Verify shared component unit prices
+        run: node scripts/verify-component-shared-unit-price.js
       - name: Verify component screen transition
         run: node scripts/verify-component-screen-transition.js
       - name: Verify component language switching
