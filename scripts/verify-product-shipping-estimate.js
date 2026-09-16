@@ -34,9 +34,40 @@ const formMode = sourceBetween("function setProductFormFieldMode", "function set
   'document.getElementById("pf-shipping-fields")',
   'document.getElementById("pf-shipping-weight")',
   'document.getElementById("pf-shipping-package-size")',
-  't(isAdd ? "product_shipping_add_help" : "product_shipping_help")'
+  'source === "parts" && !isAdd',
+  'partFormShippingProfileState === "available"',
+  'setCspStyle(shippingFields, "display", showShippingFields ? "" : "none")',
+  'input.disabled = !enableShippingFields',
+  '"product_shipping_loading"',
+  '"product_shipping_unlinked"',
+  '"product_shipping_load_failed"'
 ].forEach((fragment) => {
   if (!formMode.includes(fragment)) throw new Error(`product shipping form mode is incomplete: ${fragment}`);
+});
+
+const partFormOpen = sourceBetween("async function openPartForm", "async function savePartForm");
+[
+  "fetchCoreProductShippingProfile(dkdId)",
+  "populateProductShippingSizeSelect(shippingProfile)",
+  'if (!shippingSizesLoaded)',
+  'partFormShippingProfileState = "available"',
+  'setProductFormFieldMode("parts", mode)'
+].forEach((fragment) => {
+  if (!partFormOpen.includes(fragment)) throw new Error(`parts product edit must load shipping information: ${fragment}`);
+});
+
+const partFormSave = sourceBetween("async function savePartForm", "async function enterCoreListMgmt");
+[
+  'partFormShippingProfileState === "available"',
+  'partFormShippingProfileState === "loading"',
+  "shipping_weight_kg: shippingFormValue.shipping_weight_kg",
+  "shipping_size_cm: shippingFormValue.shipping_size_cm",
+  "shipping_package_size_label: shippingFormValue.shipping_package_size_label",
+  'from("core_products")',
+  '.eq("dkd_shohin_id", dkdId)',
+  't("product_shipping_save_failed")'
+].forEach((fragment) => {
+  if (!partFormSave.includes(fragment)) throw new Error(`parts product edit must save shipping information: ${fragment}`);
 });
 
 const formOpen = sourceBetween("async function openCoreProductForm", "async function openCoreProductAddFromSearch");
@@ -126,10 +157,16 @@ if (!source.includes("productShippingSizeRows.push(selected)")) {
   throw new Error("saved package sizes must be retained when the current master no longer contains them");
 }
 
-["product_shipping_section", "sales_shipping_estimate_title", "sales_shipping_manual_size_note", "sales_shipping_weight_size_note"].forEach((key) => {
+["product_shipping_section", "product_shipping_weight", "product_shipping_loading", "product_shipping_unlinked", "product_shipping_load_failed", "product_shipping_save_failed", "sales_shipping_estimate_title", "sales_shipping_manual_size_note", "sales_shipping_weight_size_note"].forEach((key) => {
   const count = (source.match(new RegExp(`${key}:`, "g")) || []).length;
   if (count !== 3) throw new Error(`${key} must be translated for all supported languages`);
 });
+if (!source.includes('product_shipping_weight: "商品重量 (kg)"') ||
+    !html.includes('data-i18n="product_shipping_weight">商品重量 (kg)</label>') ||
+    source.includes('product_shipping_weight: "梱包重量 (kg)"') ||
+    html.includes('data-i18n="product_shipping_weight">梱包重量 (kg)</label>')) {
+  throw new Error("shipping profile must identify the saved value as product-only weight");
+}
 if (!source.includes('sales_shipping_estimate_title: "登録済み品番の送料試算"') ||
     !html.includes('data-i18n="sales_shipping_estimate_title">登録済み品番の送料試算</div>')) {
   throw new Error("registered-product shipping estimate must use one clear section title");

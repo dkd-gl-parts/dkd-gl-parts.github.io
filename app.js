@@ -706,12 +706,16 @@ var TRANSLATIONS = {
     image_count: "{n} 枚",
     product_kind_section: "商品区分",
     product_shipping_section: "配送情報",
-    product_shipping_help: "品番ごとの梱包重量と通常の出荷サイズを設定します。",
+    product_shipping_help: "品番ごとの商品単体重量と通常の出荷サイズを設定します。",
     product_shipping_add_help: "商品を保存した後、品番修正画面で配送情報を設定できます。",
-    product_shipping_weight: "梱包重量 (kg)",
+    product_shipping_weight: "商品重量 (kg)",
     product_shipping_size: "出荷サイズ",
     product_shipping_unset: "未設定",
-    product_shipping_invalid: "梱包重量と出荷サイズを確認してください。",
+    product_shipping_invalid: "商品重量と出荷サイズを確認してください。",
+    product_shipping_loading: "商品重量と出荷サイズを読み込んでいます。",
+    product_shipping_unlinked: "この商品コードに対応する商品データがないため、配送情報を編集できません。",
+    product_shipping_load_failed: "商品重量と出荷サイズを読み込めませんでした。",
+    product_shipping_save_failed: "商品情報は保存しましたが、商品重量と出荷サイズを保存できませんでした。もう一度保存してください。",
     inventory_kind_section: "在庫区分",
     product_kind_rebuilt: "リビルト",
     product_kind_aftermarket_new: "社外新品",
@@ -1634,7 +1638,7 @@ var TRANSLATIONS = {
     sales_shipping_select_prefecture: "都道府県を選択",
     sales_shipping_select_size: "サイズを選択",
     sales_shipping_rate: "送料",
-    sales_shipping_weight_over: "選択したサイズの重量上限を超えています。出荷サイズを変更してください。",
+    sales_shipping_weight_over: "商品重量が選択したサイズの重量上限を超えています。出荷サイズを変更してください。",
     sales_shipping_no_rate: "この条件の送料は送料マスタにありません。",
     sales_shipping_island_note: "離島・条件付き地域は下記条件を確認してください。",
     sales_shipping_profile_load_error: "品番の配送情報を読み込めませんでした。",
@@ -2969,12 +2973,16 @@ var TRANSLATIONS = {
     image_count: "{n} images",
     product_kind_section: "Product Kind",
     product_shipping_section: "Shipping Profile",
-    product_shipping_help: "Set the packed weight and standard package size for this product.",
+    product_shipping_help: "Set the product-only weight and standard shipping size for this product.",
     product_shipping_add_help: "Save the product first, then set shipping information from Edit Product.",
-    product_shipping_weight: "Packed Weight (kg)",
+    product_shipping_weight: "Product Weight (kg)",
     product_shipping_size: "Package Size",
     product_shipping_unset: "Not set",
-    product_shipping_invalid: "Review the packed weight and package size.",
+    product_shipping_invalid: "Review the product weight and package size.",
+    product_shipping_loading: "Loading the product weight and package size.",
+    product_shipping_unlinked: "Shipping information cannot be edited because no product record matches this product code.",
+    product_shipping_load_failed: "The product weight and package size could not be loaded.",
+    product_shipping_save_failed: "The product details were saved, but the product weight and package size could not be saved. Save again to retry.",
     inventory_kind_section: "Inventory Type",
     product_kind_rebuilt: "Rebuilt",
     customer_product_kind_rebuilt: "Rebuilt",
@@ -3897,7 +3905,7 @@ var TRANSLATIONS = {
     sales_shipping_select_prefecture: "Select Prefecture",
     sales_shipping_select_size: "Select Size",
     sales_shipping_rate: "Shipping Rate",
-    sales_shipping_weight_over: "The package exceeds the selected size's weight limit. Select another size.",
+    sales_shipping_weight_over: "The product weight exceeds the selected size's weight limit. Select another size.",
     sales_shipping_no_rate: "No shipping-master rate matches these conditions.",
     sales_shipping_island_note: "Check the conditions below for remote islands and special areas.",
     sales_shipping_profile_load_error: "The product shipping profile could not be loaded.",
@@ -5240,12 +5248,16 @@ var TRANSLATIONS = {
     image_count: "{n} 张",
     product_kind_section: "商品区分",
     product_shipping_section: "配送信息",
-    product_shipping_help: "设置该商品的包装重量和通常出货尺寸。",
+    product_shipping_help: "设置该商品的单品重量和通常出货尺寸。",
     product_shipping_add_help: "保存商品后，可在商品编辑画面设置配送信息。",
-    product_shipping_weight: "包装重量 (kg)",
+    product_shipping_weight: "商品重量 (kg)",
     product_shipping_size: "出货尺寸",
     product_shipping_unset: "未设置",
-    product_shipping_invalid: "请确认包装重量和出货尺寸。",
+    product_shipping_invalid: "请确认商品重量和出货尺寸。",
+    product_shipping_loading: "正在读取商品重量和出货尺寸。",
+    product_shipping_unlinked: "没有与该商品代码对应的商品数据，因此无法编辑配送信息。",
+    product_shipping_load_failed: "无法读取商品重量和出货尺寸。",
+    product_shipping_save_failed: "商品信息已保存，但商品重量和出货尺寸未能保存。请再次保存。",
     inventory_kind_section: "库存区分",
     product_kind_rebuilt: "再制造",
     product_kind_aftermarket_new: "副厂新品",
@@ -6160,7 +6172,7 @@ var TRANSLATIONS = {
     sales_shipping_select_prefecture: "选择都道府县",
     sales_shipping_select_size: "选择尺寸",
     sales_shipping_rate: "运费",
-    sales_shipping_weight_over: "包裹重量超过所选尺寸的重量上限。请选择其他尺寸。",
+    sales_shipping_weight_over: "商品重量超过所选尺寸的重量上限。请选择其他尺寸。",
     sales_shipping_no_rate: "运费主数据中没有符合此条件的运费。",
     sales_shipping_island_note: "离岛及特殊地区请确认以下条件。",
     sales_shipping_profile_load_error: "无法读取商品配送信息。",
@@ -6913,7 +6925,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1014";
+var APP_VERSION       = "v1.1.1015";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -19881,12 +19893,7 @@ async function fetchCoreProductShippingProfile(dkdId) {
     .eq("dkd_shohin_id", id)
     .maybeSingle();
   if (result.error) throw result.error;
-  return result.data || {
-    dkd_shohin_id: id,
-    shipping_weight_kg: null,
-    shipping_size_cm: null,
-    shipping_package_size_label: null
-  };
+  return result.data || null;
 }
 
 function shippingProfileText(profile) {
@@ -19900,7 +19907,7 @@ function shippingProfileText(profile) {
 
 async function populateProductShippingSizeSelect(product) {
   var select = document.getElementById("pf-shipping-package-size");
-  if (!select) return;
+  if (!select) return false;
   select.innerHTML = "<option value=''>" + esc(t("product_shipping_unset")) + "</option>";
   try {
     await ensureSalesShippingRateRows();
@@ -19930,9 +19937,11 @@ async function populateProductShippingSizeSelect(product) {
       select.appendChild(retainedOption);
     }
     select.value = selected ? shippingPackageDefinitionKey(selected) : "";
+    return true;
   } catch (error) {
     console.warn("product shipping sizes lookup failed", error);
     productShippingSizeRows = [];
+    return false;
   }
 }
 
@@ -26340,6 +26349,9 @@ var partsMgmtData = [];
 var partFormMode  = "add"; // "add" or "edit"
 var partFormSource = "parts"; // "parts" or "core_products"
 var coreProductFormContext = "sales"; // "sales", "production", or "management"
+var partFormShippingProfile = null;
+var partFormShippingProfileState = "unavailable"; // "loading", "available", "unavailable", or "error"
+var partFormShippingLoadSequence = 0;
 
 async function enterPartsMgmt() {
   if (!canViewManagementScreen()) { alert(t("err_perm")); return; }
@@ -26469,16 +26481,25 @@ function renderPartsMgmt() {
   });
 }
 
-function openPartForm(mode, partId) {
+async function openPartForm(mode, partId) {
+  var shippingLoadSequence = ++partFormShippingLoadSequence;
   partFormSource = "parts";
   partFormMode = mode;
   coreProductFormContext = "sales";
+  partFormShippingProfile = null;
+  partFormShippingProfileState = mode === "edit" ? "loading" : "unavailable";
   var overlay  = document.getElementById("part-form-overlay");
   var title    = document.getElementById("part-form-title");
   var errEl    = document.getElementById("part-form-error");
+  var shippingWeightInput = document.getElementById("pf-shipping-weight");
+  var shippingSizeSelect = document.getElementById("pf-shipping-package-size");
   errEl.textContent = "";
+  if (shippingWeightInput) shippingWeightInput.value = "";
+  if (shippingSizeSelect) shippingSizeSelect.innerHTML = "<option value=''>" + esc(t("product_shipping_unset")) + "</option>";
+  productShippingSizeRows = [];
   setProductFormFieldMode("parts", mode);
 
+  var p = null;
   if (mode === "add") {
     title.textContent = t("part_form_add_title");
     document.getElementById("part-form-id").value        = "";
@@ -26493,7 +26514,7 @@ function openPartForm(mode, partId) {
     document.getElementById("pf-model").value            = "";
     document.getElementById("pf-category").value         = "Alternator";
   } else {
-    var p = partsMgmtData.find(function(x){ return x.id === partId; });
+    p = partsMgmtData.find(function(x){ return x.id === partId; });
     if (!p) return;
     title.textContent = t("part_form_edit_title");
     document.getElementById("part-form-id").value        = p.id;
@@ -26511,6 +26532,41 @@ function openPartForm(mode, partId) {
   applySpecFormCategory();
   setGltekProductAddPanel();
   overlay.classList.add("show");
+
+  if (mode !== "edit" || !p) return;
+  var dkdId = parseInt(p.dkd_shohin_id || p.shohin_cd, 10);
+  if (isNaN(dkdId)) {
+    partFormShippingProfileState = "unavailable";
+    setProductFormFieldMode("parts", mode);
+    return;
+  }
+  try {
+    var shippingProfile = await fetchCoreProductShippingProfile(dkdId);
+    if (shippingLoadSequence !== partFormShippingLoadSequence || partFormSource !== "parts") return;
+    if (!shippingProfile) {
+      partFormShippingProfileState = "unavailable";
+      setProductFormFieldMode("parts", mode);
+      return;
+    }
+    partFormShippingProfile = shippingProfile;
+    partFormShippingProfileState = "available";
+    if (shippingWeightInput) shippingWeightInput.value = shippingProfile.shipping_weight_kg != null ? Number(shippingProfile.shipping_weight_kg) : "";
+    var shippingSizesLoaded = await populateProductShippingSizeSelect(shippingProfile);
+    if (shippingLoadSequence !== partFormShippingLoadSequence || partFormSource !== "parts") return;
+    if (!shippingSizesLoaded) {
+      partFormShippingProfileState = "error";
+      errEl.textContent = t("product_shipping_load_failed");
+      setProductFormFieldMode("parts", mode);
+      return;
+    }
+    setProductFormFieldMode("parts", mode);
+  } catch (error) {
+    console.warn("part form shipping profile lookup failed", error);
+    if (shippingLoadSequence !== partFormShippingLoadSequence || partFormSource !== "parts") return;
+    partFormShippingProfileState = "error";
+    errEl.textContent = t("product_shipping_load_failed");
+    setProductFormFieldMode("parts", mode);
+  }
 }
 
 async function savePartForm() {
@@ -26520,6 +26576,10 @@ async function savePartForm() {
   }
   var errEl   = document.getElementById("part-form-error");
   errEl.textContent = "";
+  if (partFormMode === "edit" && partFormShippingProfileState === "loading") {
+    errEl.textContent = t("product_shipping_loading");
+    return;
+  }
   var gpn     = document.getElementById("pf-genuine-pn").value.trim() || null;
   var mfrPart = document.getElementById("pf-mfr-pn").value.trim() || null;
   var partNumberError = validateProductPartNumberPair(gpn, mfrPart);
@@ -26534,6 +26594,12 @@ async function savePartForm() {
   if (manualDksManufacturerSelectionBlocked(manufacturerValue, before && before.manufacturer, partFormMode === "add")) {
     errEl.textContent = dksManualManufacturerBlockedMessage();
     return;
+  }
+
+  var shippingFormValue = null;
+  if (partFormMode === "edit" && partFormShippingProfileState === "available") {
+    shippingFormValue = productShippingFormValue();
+    if (shippingFormValue.error) { errEl.textContent = t("product_shipping_invalid"); return; }
   }
 
   var data = {
@@ -26556,6 +26622,32 @@ async function savePartForm() {
     r = await sb.from("parts").update(data).eq("id", partId);
     if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
     await writeLog("update", "parts", parseInt(partId,10), gpn, before, data);
+  }
+  if (partFormMode === "edit" && shippingFormValue) {
+    var dkdId = parseInt(scd, 10);
+    var profileDkdId = partFormShippingProfile ? parseInt(partFormShippingProfile.dkd_shohin_id, 10) : NaN;
+    if (isNaN(dkdId) || dkdId !== profileDkdId) {
+      errEl.textContent = t("product_shipping_save_failed");
+      return;
+    }
+    var shippingPayload = {
+      shipping_weight_kg: shippingFormValue.shipping_weight_kg,
+      shipping_size_cm: shippingFormValue.shipping_size_cm,
+      shipping_package_size_label: shippingFormValue.shipping_package_size_label,
+      updated_by: currentUser ? currentUser.id : null,
+      updated_at: new Date().toISOString()
+    };
+    var shippingResult = await sb.from("core_products")
+      .update(shippingPayload)
+      .eq("dkd_shohin_id", dkdId)
+      .select("dkd_shohin_id")
+      .maybeSingle();
+    if (shippingResult.error || !shippingResult.data) {
+      errEl.textContent = t("product_shipping_save_failed") + (shippingResult.error ? ": " + shippingResult.error.message : "");
+      return;
+    }
+    await writeLog("update", "core_products", dkdId, gpn || mfrPart || String(dkdId), partFormShippingProfile, shippingPayload);
+    partFormShippingProfile = Object.assign({}, partFormShippingProfile, shippingPayload);
   }
   document.getElementById("part-form-overlay").classList.remove("show");
   await loadPartsMgmt();
@@ -35343,10 +35435,13 @@ function setProductFormFieldMode(source, mode) {
   var shippingHelp = document.getElementById("pf-shipping-help");
   var isCoreProduct = source === "core_products";
   var isAdd = mode === "add";
+  var isPartsEdit = source === "parts" && !isAdd;
+  var showShippingFields = isCoreProduct || isPartsEdit;
+  var enableShippingFields = (isCoreProduct && !isAdd) || (isPartsEdit && partFormShippingProfileState === "available");
 
   setCspStyle(productCodeRow, "display", isCoreProduct && isAdd ? "none" : "");
   setCspStyle(corePolicyFields, "display", isCoreProduct ? "" : "none");
-  setCspStyle(shippingFields, "display", isCoreProduct ? "" : "none");
+  setCspStyle(shippingFields, "display", showShippingFields ? "" : "none");
   setCspStyle(stampPairFields, "display", isCoreProduct ? "" : "none");
 
   if (productCodeInput) {
@@ -35358,10 +35453,21 @@ function setProductFormFieldMode(source, mode) {
 
   [shippingWeightInput, shippingSizeSelect].forEach(function(input) {
     if (!input) return;
-    input.disabled = !isCoreProduct || isAdd;
+    input.disabled = !enableShippingFields;
     if (isAdd) input.value = "";
   });
-  if (shippingHelp) shippingHelp.textContent = t(isAdd ? "product_shipping_add_help" : "product_shipping_help");
+  if (shippingHelp) {
+    var shippingHelpKey = isAdd
+      ? "product_shipping_add_help"
+      : (isPartsEdit && partFormShippingProfileState === "loading"
+        ? "product_shipping_loading"
+        : (isPartsEdit && partFormShippingProfileState === "unavailable"
+          ? "product_shipping_unlinked"
+          : (isPartsEdit && partFormShippingProfileState === "error"
+            ? "product_shipping_load_failed"
+            : "product_shipping_help")));
+    shippingHelp.textContent = t(shippingHelpKey);
+  }
 }
 
 function setCoreProductFormFields(p) {
