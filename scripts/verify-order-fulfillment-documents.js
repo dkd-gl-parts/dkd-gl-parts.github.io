@@ -163,9 +163,10 @@ if (pendingCountContext.shippingDocumentPendingCount({
 }
 if (pendingCountContext.shippingDocumentPendingCount({
   core_return_required: false,
+  items: [{ core_return_required: false, core_charge_jpy: 2000 }],
   document_statuses: { dispatch: "printed", warranty: "printed", core_return: "unissued", return_waybill: "unissued" }
 }) !== 0) {
-  throw new Error("Core-return documents must not count for an order that does not require a core return");
+  throw new Error("Billed no-return orders must not count core-return documents");
 }
 if (pendingCountContext.shippingDocumentPendingCount({
   warranty_document_required: false,
@@ -523,6 +524,10 @@ if (requiredDocuments.includes("待機中")) {
 if (requiredDocuments.includes('shippingDocumentManualOutputActions(order, "core_return", shipmentReady)')) {
   throw new Error("Core-return sheet printing must not wait for shipment completion");
 }
+const orderContentsSource = sourceBetween("function shippingDocumentOrderContentsHtml", "function salesOrderWorkspaceNavigationHtml");
+if (orderContentsSource.includes("orderItem.core_return_required === true || coreBilled")) {
+  throw new Error("A billed charge must not force an item into the core-return-required state");
+}
 for (const fragment of [
   "var documentsPrinted = pendingDocumentCount === 0",
   'documentsPrinted ? "印刷済み" : "未印刷 " + pendingDocumentCount + "件"',
@@ -623,10 +628,16 @@ for (const [order, expected] of [
     { core_return_required: true, quantity: 3 },
     { core_return_required: false, quantity: 5 }
   ] }, 3],
-  [{ core_return_required: false, items: [{ core_return_required: true, quantity: 2 }] }, 0]
+  [{ core_return_required: false, items: [{ core_return_required: true, quantity: 2 }] }, 0],
+  [{ core_return_required: false, items: [{ core_return_required: false, core_charge_jpy: 2000, quantity: 2 }] }, 0]
 ]) {
   const actual = returnWaybillCopyCount(order);
   if (actual !== expected) throw new Error(`Return-waybill copy count expected ${expected}, got ${actual}`);
+}
+
+const printItemRowsSource = sourceBetween("function salesOrderPrintItemRows", "async function ensureSalesOrderWarrantyPolicies");
+if (printItemRowsSource.includes("orderItem.core_return_required === true || customerOrderBilledCoreChargePerUnit")) {
+  throw new Error("Printed shipment instructions must show billed no-return items as return not required");
 }
 
 const outboundSave = sourceBetween("async function saveShippingDocumentOutboundWaybill", "async function queueShippingDocumentOutboundWaybillPrint");
@@ -1018,11 +1029,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1005"',
-  'styles.css?v=1.1.1005',
-  'app.js?v=1.1.1005'
+  'content="v1.1.1006"',
+  'styles.css?v=1.1.1006',
+  'app.js?v=1.1.1006'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1005"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1006"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");

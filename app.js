@@ -381,22 +381,25 @@ var TRANSLATIONS = {
     customer_order_submit_print_queued: "注文を受け付け、出荷指示書を印刷待ちに登録しました。",
     customer_order_core_required_note: "後日、交換したコアを返却する商品を含みます。返送用送り状を商品に同梱します。",
     customer_order_core_handling: "交換コアの対応",
-    customer_order_core_handling_note: "コア代金を請求した場合も、交換したコアは後日返却します。返却受付後にコア代金を返金します。",
+    customer_order_core_handling_note: "コア代金を請求する場合は、返却要・返却不要を選択してください。返却要は受付後に返金します。",
     customer_order_core_return_standard: "後日、交換したコアを返却する",
-    customer_order_core_charge_no_return_option: "コア代金を請求（返却後に{amount}を返金）",
-    customer_order_core_charge_no_return_label: "コア代金 {amount} 請求済み・要返却",
+    customer_order_core_charge_with_return_option: "コア代金を請求（要返却・返却後に{amount}を返金）",
+    customer_order_core_charge_with_return_label: "コア代金 {amount} 請求済み・要返却",
+    customer_order_core_charge_no_return_option: "コア代金を請求（返却不要・{amount}）",
+    customer_order_core_charge_no_return_label: "コア代金 {amount} 請求済み・返却不要",
     customer_order_core_charge_no_return_status: "コア代金請求済み",
     customer_order_yamato_office_pickup_short: "ヤマト営業所受取",
     customer_order_core_charge_billed_short: "請求済み",
     customer_order_core_charge_refund_pending: "返却済み・返金確認",
     customer_order_core_charge_refunded: "返金済み",
-    customer_order_core_not_returned_short: "返却なし",
+    customer_order_core_not_returned_short: "返却不要",
     customer_order_core_charge_unset: "コア代金が未設定（選択不可）",
     customer_order_core_charge_setup: "商品マスタにコア代金を設定してください。",
     customer_order_core_charge_included: "コア代金を別項目で計上",
     customer_order_core_charge_kind: "コア代",
     customer_order_part_charge_reference: "{part} 分",
     customer_order_core_charge_note: "商品マスタのコア代金を商品代とは別項目で請求します。返送用送り状を発行し、コア返却受付後に返金します。",
+    customer_order_core_charge_no_return_note: "商品マスタのコア代金を商品代とは別項目で請求します。コア返却と返却用帳票は不要です。",
     customer_order_core_charge_total: "コア代金",
     customer_order_quantity: "数量",
     customer_order_unit_price: "単価",
@@ -2639,22 +2642,25 @@ var TRANSLATIONS = {
     customer_order_submit_print_queued: "Your order was received and its shipment documents were queued for printing.",
     customer_order_core_required_note: "This order includes an exchange core to be returned later. A return label will be enclosed.",
     customer_order_core_handling: "Exchange Core Handling",
-    customer_order_core_handling_note: "A billed core charge does not waive the return. Refund it after the exchange core is received.",
+    customer_order_core_handling_note: "When billing a core charge, choose whether the exchange core must be returned. Refund return-required charges after receipt.",
     customer_order_core_return_standard: "Return the exchange core later",
-    customer_order_core_charge_no_return_option: "Bill core charge (refund {amount} after return)",
-    customer_order_core_charge_no_return_label: "Core charge {amount} billed; return required",
+    customer_order_core_charge_with_return_option: "Bill core charge (return required; refund {amount} after receipt)",
+    customer_order_core_charge_with_return_label: "Core charge {amount} billed; return required",
+    customer_order_core_charge_no_return_option: "Bill core charge (no return; {amount})",
+    customer_order_core_charge_no_return_label: "Core charge {amount} billed; no return",
     customer_order_core_charge_no_return_status: "Core charge billed",
     customer_order_yamato_office_pickup_short: "Yamato office pickup",
     customer_order_core_charge_billed_short: "Billed",
     customer_order_core_charge_refund_pending: "Returned; refund pending",
     customer_order_core_charge_refunded: "Refunded",
-    customer_order_core_not_returned_short: "No return",
+    customer_order_core_not_returned_short: "Return not required",
     customer_order_core_charge_unset: "Core charge is not set",
     customer_order_core_charge_setup: "Set the core charge in Product Master.",
     customer_order_core_charge_included: "Core charge billed separately",
     customer_order_core_charge_kind: "Core charge",
     customer_order_part_charge_reference: "For {part}",
     customer_order_core_charge_note: "The Product Master core charge is billed separately. A return label is issued and the charge is refunded after receipt.",
+    customer_order_core_charge_no_return_note: "The Product Master core charge is billed separately. No core return or return documents are required.",
     customer_order_core_charge_total: "Core charge",
     customer_order_quantity: "Qty",
     customer_order_unit_price: "Unit Price",
@@ -4841,10 +4847,12 @@ var TRANSLATIONS = {
     customer_order_submit_print_queued: "订单已受理，出货指示文件已加入打印队列。",
     customer_order_core_required_note: "订单中包含日后需要返还的交换旧件，并将随货附上返送运单。",
     customer_order_core_handling: "交换旧件处理",
-    customer_order_core_handling_note: "收取旧件费时仍需返还交换旧件，收件后退还旧件费。",
+    customer_order_core_handling_note: "收取旧件费时请选择是否需要返还交换旧件；需要返还时在收件后退款。",
     customer_order_core_return_standard: "日后返还交换旧件",
-    customer_order_core_charge_no_return_option: "收取旧件费（返还后退还 {amount}）",
-    customer_order_core_charge_no_return_label: "旧件费 {amount} 已计费・需返还",
+    customer_order_core_charge_with_return_option: "收取旧件费（需返还・收件后退还 {amount}）",
+    customer_order_core_charge_with_return_label: "旧件费 {amount} 已计费・需返还",
+    customer_order_core_charge_no_return_option: "收取旧件费（无需返还・{amount}）",
+    customer_order_core_charge_no_return_label: "旧件费 {amount} 已计费・无需返还",
     customer_order_core_charge_no_return_status: "旧件费已计费",
     customer_order_yamato_office_pickup_short: "雅玛多营业所自取",
     customer_order_core_charge_billed_short: "已计费",
@@ -4857,6 +4865,7 @@ var TRANSLATIONS = {
     customer_order_core_charge_kind: "旧件费",
     customer_order_part_charge_reference: "{part} 对应费用",
     customer_order_core_charge_note: "商品主数据中的旧件费与商品金额分开计费，并发行返送运单；收到旧件后退款。",
+    customer_order_core_charge_no_return_note: "商品主数据中的旧件费与商品金额分开计费，无需返还旧件或发行返送单据。",
     customer_order_core_charge_total: "旧件费",
     customer_order_quantity: "数量",
     customer_order_unit_price: "单价",
@@ -6898,7 +6907,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1005";
+var APP_VERSION       = "v1.1.1006";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -11066,9 +11075,9 @@ function customerOrderCartRequiresCoreReturn() {
   var previewMap = customerOrderPreviewItemMap();
   return customerOrderCart.some(function(item) {
     var confirmed = previewMap[item.key];
-    return confirmed
-      ? confirmed.core_return_required === true
-      : item.core_return_required === true;
+    if (confirmed) return confirmed.core_return_required === true;
+    if (item.core_return_handling === "charge_no_return") return false;
+    return item.core_return_required === true;
   });
 }
 
@@ -11197,7 +11206,7 @@ function salesOrderCoreReturnSummary(order) {
   var coreStatus = String(order && order.core_return_status || "").toLowerCase();
   var returned = coreStatus === "returned" || coreStatus === "closed";
   var refundStatus = customerOrderCoreChargeRefundStatus(order);
-  if (order && (order.core_return_required || billed)) {
+  if (order && order.core_return_required) {
     if (billed) {
       return {
         label: "コア返却",
@@ -11211,6 +11220,13 @@ function salesOrderCoreReturnSummary(order) {
       label: "コア返却便",
       primary: salesOrderWaybillCarrierLabel(order, "core_return"),
       secondary: salesOrderWaybillDetailLabel(order, "core_return")
+    };
+  }
+  if (billed) {
+    return {
+      label: "コア返却",
+      primary: t("customer_order_core_charge_billed_short"),
+      secondary: t("customer_order_core_not_returned_short")
     };
   }
   return { label: "コア返却", primary: "対象外", secondary: "" };
@@ -11667,8 +11683,10 @@ function restoreCustomerOrderCart() {
     customerOrderCart = Array.isArray(rows) ? rows.filter(function(item) {
       return item && item.dkd_shohin_id && item.product && item.key === customerOrderCartKey(item.dkd_shohin_id, item.product_kind);
     }).map(function(item) {
-      var handling = item.core_return_handling === "charge_no_return" ? "charge_no_return" : "standard";
-      if (handling === "charge_no_return" && !(item.core_return_required && Number(item.core_charge_jpy) > 0)) handling = "standard";
+      var handling = ["charge_no_return", "charge_with_return"].indexOf(item.core_return_handling) >= 0
+        ? item.core_return_handling
+        : "standard";
+      if (handling !== "standard" && !(item.core_return_required && Number(item.core_charge_jpy) > 0)) handling = "standard";
       return Object.assign({}, item, { core_return_handling: handling });
     }).slice(0, 100) : [];
   } catch (e) {
@@ -11722,7 +11740,9 @@ function customerOrderPayloadItems() {
       dkd_shohin_id: parseInt(item.dkd_shohin_id, 10),
       product_kind: normalizeProductKind(item.product_kind),
       quantity: Math.max(1, Math.min(99, parseInt(item.quantity, 10) || 1)),
-      core_return_handling: item.core_return_handling === "charge_no_return" ? "charge_no_return" : "standard"
+      core_return_handling: ["charge_no_return", "charge_with_return"].indexOf(item.core_return_handling) >= 0
+        ? item.core_return_handling
+        : "standard"
     };
   });
 }
@@ -12422,13 +12442,17 @@ function customerOrderPreviewItemMap() {
 
 function customerOrderCoreHandlingValue(item) {
   item = item || {};
-  if (Math.max(0, Number(item.core_charge_jpy) || 0) > 0 || Math.max(0, Number(item.core_charge_line_total_jpy) || 0) > 0 || item.core_return_handling === "charge_no_return") return "charge_no_return";
-  if (item.core_return_handling === "return_required" || item.core_return_required === true) return "return_required";
+  var billed = Math.max(0, Number(item.core_charge_jpy) || 0) > 0 || Math.max(0, Number(item.core_charge_line_total_jpy) || 0) > 0;
+  if (item.core_return_required === true) return billed ? "charge_with_return" : "return_required";
+  if (billed || item.core_return_handling === "charge_no_return") return "charge_no_return";
   return "not_required";
 }
 
 function customerOrderCoreHandlingLabel(item) {
   var handling = customerOrderCoreHandlingValue(item);
+  if (handling === "charge_with_return") {
+    return tf("customer_order_core_charge_with_return_label", { amount: customerOrderCurrency(item.core_charge_jpy) });
+  }
   if (handling === "charge_no_return") {
     return tf("customer_order_core_charge_no_return_label", { amount: customerOrderCurrency(item.core_charge_jpy) });
   }
@@ -12551,9 +12575,11 @@ function renderCustomerOrderCart() {
   host.innerHTML = customerOrderCart.map(function(item) {
     var product = item.product || {};
     var confirmed = previewMap[item.key] || null;
-    var selectedCoreHandling = item.core_return_handling === "charge_no_return" ? "charge_no_return" : "standard";
+    var selectedCoreHandling = ["charge_no_return", "charge_with_return"].indexOf(item.core_return_handling) >= 0
+      ? item.core_return_handling
+      : "standard";
     var configuredCoreCharge = Math.max(0, parseInt(item.core_charge_jpy, 10) || 0);
-    var displayedCoreCharge = selectedCoreHandling === "charge_no_return" ? configuredCoreCharge : 0;
+    var displayedCoreCharge = selectedCoreHandling === "standard" ? 0 : configuredCoreCharge;
     var billedCoreCharge = confirmed
       ? customerOrderBilledCoreChargePerUnit(confirmed)
       : displayedCoreCharge;
@@ -12582,10 +12608,10 @@ function renderCustomerOrderCart() {
     var lineTotal = confirmed ? confirmed.line_total_jpy : (effectiveUnitPrice == null ? null : Number(effectiveUnitPrice) * Number(item.quantity || 1));
     var coreRequired = confirmed
       ? confirmed.core_return_required === true
-      : item.core_return_required === true;
+      : item.core_return_required === true && selectedCoreHandling !== "charge_no_return";
     var coreState = confirmed || {
       core_return_required: coreRequired,
-      core_return_handling: displayedCoreCharge > 0 ? "charge_no_return" : (coreRequired ? "return_required" : "not_required"),
+      core_return_handling: displayedCoreCharge > 0 ? selectedCoreHandling : (coreRequired ? "return_required" : "not_required"),
       core_charge_jpy: displayedCoreCharge || null
     };
     var coreBadge = item.core_return_required
@@ -12594,6 +12620,9 @@ function renderCustomerOrderCart() {
     var coreChoice = canRegisterInternalCustomerOrder() && item.core_return_required
       ? "<label class='customer-order-core-choice'><span>" + esc(t("customer_order_core_handling")) + "</span><select data-order-core-handling='" + esc(item.key) + "'>" +
           "<option value='standard'" + (selectedCoreHandling === "standard" ? " selected" : "") + ">" + esc(t("customer_order_core_return_standard")) + "</option>" +
+          "<option value='charge_with_return'" + (selectedCoreHandling === "charge_with_return" ? " selected" : "") + (configuredCoreCharge > 0 ? "" : " disabled") + ">" +
+            esc(configuredCoreCharge > 0 ? tf("customer_order_core_charge_with_return_option", { amount: customerOrderCurrency(configuredCoreCharge) }) : t("customer_order_core_charge_unset")) +
+          "</option>" +
           "<option value='charge_no_return'" + (selectedCoreHandling === "charge_no_return" ? " selected" : "") + (configuredCoreCharge > 0 ? "" : " disabled") + ">" +
             esc(configuredCoreCharge > 0 ? tf("customer_order_core_charge_no_return_option", { amount: customerOrderCurrency(configuredCoreCharge) }) : t("customer_order_core_charge_unset")) +
           "</option></select><small>" + esc(t("customer_order_core_handling_note")) + "</small>" + (configuredCoreCharge > 0 ? "" : "<small class='setup-required'>" + esc(t("customer_order_core_charge_setup")) + "</small>") + "</label>"
@@ -12621,7 +12650,9 @@ function renderCustomerOrderCart() {
     select.addEventListener("change", function() {
       var item = customerOrderCart.find(function(row) { return row.key === select.dataset.orderCoreHandling; });
       if (!item) return;
-      item.core_return_handling = select.value === "charge_no_return" ? "charge_no_return" : "standard";
+      item.core_return_handling = ["charge_no_return", "charge_with_return"].indexOf(select.value) >= 0
+        ? select.value
+        : "standard";
       customerOrderPreview = null;
       persistCustomerOrderCart();
       renderCustomerOrderCart();
@@ -12636,11 +12667,12 @@ function renderCustomerOrderCart() {
     });
   });
   var requiresCore = customerOrderCartRequiresCoreReturn();
-  var billsCoreCharge = customerOrderCart.some(function(item) { return item.core_return_handling === "charge_no_return"; });
+  var billsCoreCharge = customerOrderCart.some(function(item) { return ["charge_no_return", "charge_with_return"].indexOf(item.core_return_handling) >= 0; });
+  var billsNoReturnCoreCharge = customerOrderCart.some(function(item) { return item.core_return_handling === "charge_no_return"; });
   if (coreNotice) {
     coreNotice.hidden = !requiresCore && !billsCoreCharge;
     coreNotice.textContent = billsCoreCharge
-      ? t("customer_order_core_charge_note")
+      ? t(billsNoReturnCoreCharge && !requiresCore ? "customer_order_core_charge_no_return_note" : "customer_order_core_charge_note")
       : (requiresCore ? t("customer_order_core_required_note") : "");
   }
   updateCustomerOrderCoreReturnServiceVisibility();
@@ -16891,7 +16923,7 @@ function shippingDocumentOrderContentsHtml(order) {
     var genuineDetail = orderItem.genuine_part_number && orderItem.genuine_part_number !== partNumber ? t("shipping_document_genuine_part_number") + " " + orderItem.genuine_part_number : "";
     var category = salesOrderWarrantyCategoryLabel(orderItem);
     var coreBilled = customerOrderBilledCoreChargePerUnit(orderItem) > 0 || Math.max(0, Number(orderItem.core_charge_line_total_jpy) || 0) > 0;
-    var coreReturnRequired = orderItem.core_return_required === true || coreBilled;
+    var coreReturnRequired = orderItem.core_return_required === true;
     var coreStatusLabel = customerOrderItemCoreStatusLabel(order, orderItem);
     var coreStatusClass = coreStatusLabel === t("customer_order_core_return_returned") ? "returned" : (coreBilled ? "charged" : (coreReturnRequired ? "required" : "not-required"));
     return "<div class='shipping-document-order-item'><div class='shipping-document-order-product'><strong>" + esc(partNumber) + "</strong><span>" + esc(makerDetail) + "</span>" + (genuineDetail ? "<span>" + esc(genuineDetail) + "</span>" : "") + "</div>" +
@@ -17529,16 +17561,16 @@ function salesOrderItemRowsHtml(items, order) {
     var quantity = Math.max(1, Number(item.quantity) || 1);
     var coreChargePerUnit = customerOrderBilledCoreChargePerUnit(item);
     var storedCoreChargeTotal = item && item.core_charge_line_total_jpy;
-    var coreChargeTotal = coreHandling === "charge_no_return" && storedCoreChargeTotal !== null && storedCoreChargeTotal !== undefined
+    var coreChargeTotal = ["charge_no_return", "charge_with_return"].indexOf(coreHandling) >= 0 && storedCoreChargeTotal !== null && storedCoreChargeTotal !== undefined
       ? Math.max(0, Number(storedCoreChargeTotal) || 0)
       : coreChargePerUnit * quantity;
     if (coreChargePerUnit <= 0 && coreChargeTotal > 0) coreChargePerUnit = coreChargeTotal / quantity;
     var coreStatusLabel = coreChargeTotal > 0
       ? customerOrderItemCoreStatusLabel(order, item)
-      : coreHandling === "charge_no_return"
+      : coreHandling === "charge_no_return" || coreHandling === "charge_with_return"
         ? t("customer_order_core_not_returned_short")
         : customerOrderCoreHandlingLabel(item);
-    var productRow = "<div class='sales-order-item-row sales-order-product-row" + (coreChargeTotal > 0 ? " has-core-charge" : "") + "'><div><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || "-") + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small></div><span>" + esc(customerProductKindLabel(item.product_kind)) + "</span><strong>" + esc(quantity) + "</strong><span>" + esc(customerOrderCurrency(customerOrderProductUnitPrice(item))) + "</span><strong>" + esc(customerOrderCurrency(customerOrderProductLineTotal(item))) + "</strong><span class='sales-order-core " + (coreHandling === "return_required" ? "required" : (coreHandling === "charge_no_return" ? "charged" : "none")) + "' title='" + esc(customerOrderCoreHandlingLabel(item)) + "'>" + esc(coreStatusLabel) + "</span></div>";
+    var productRow = "<div class='sales-order-item-row sales-order-product-row" + (coreChargeTotal > 0 ? " has-core-charge" : "") + "'><div><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || "-") + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small></div><span>" + esc(customerProductKindLabel(item.product_kind)) + "</span><strong>" + esc(quantity) + "</strong><span>" + esc(customerOrderCurrency(customerOrderProductUnitPrice(item))) + "</span><strong>" + esc(customerOrderCurrency(customerOrderProductLineTotal(item))) + "</strong><span class='sales-order-core " + (["return_required", "charge_with_return"].indexOf(coreHandling) >= 0 ? "required" : (coreHandling === "charge_no_return" ? "charged" : "none")) + "' title='" + esc(customerOrderCoreHandlingLabel(item)) + "'>" + esc(coreStatusLabel) + "</span></div>";
     if (coreChargeTotal <= 0) return productRow;
     return productRow + "<div class='sales-order-item-row sales-order-core-charge-row'><div><strong>" + esc(t("customer_order_core_charge_total")) + "</strong><small>" + esc(tf("customer_order_part_charge_reference", { part: item.genuine_part_number || item.manufacturer_part_number || "-" })) + "</small></div><span>" + esc(t("customer_order_core_charge_kind")) + "</span><strong>" + esc(quantity) + "</strong><span>" + esc(customerOrderCurrency(coreChargePerUnit)) + "</span><strong class='sales-order-core-charge'>" + esc(customerOrderCurrency(coreChargeTotal)) + "</strong><span class='sales-order-core charged' title='" + esc(t("customer_order_core_charge_no_return_status")) + "'>" + esc(t("customer_order_core_charge_billed_short")) + "</span></div>";
   }).join("");
@@ -18450,7 +18482,7 @@ function salesOrderPrintItemRows(order, type) {
     if (type === "core_return") {
       return "<tr><td>" + esc(String(index + 1)) + "</td><td><strong>" + esc(partNo) + "</strong><small>" + esc(detail) + "</small></td><td>" + esc(orderItem.manufacturer_part_number || "-") + "</td><td>" + esc(String(item.quantity || 0)) + "</td><td class='shipment-document-check-cell'>□</td></tr>";
     }
-    var requiresCoreReturn = orderItem.core_return_required === true || customerOrderBilledCoreChargePerUnit(orderItem) > 0;
+    var requiresCoreReturn = orderItem.core_return_required === true;
     return "<tr><td>" + esc(String(index + 1)) + "</td><td><strong>" + esc(partNo) + "</strong><small>" + esc(detail) + "</small></td><td>" + esc(customerProductKindLabel(orderItem.product_kind)) + "</td><td>" + esc(String(item.quantity || 0)) + "</td><td>" + esc(requiresCoreReturn ? t("customer_order_core_return_needed") : t("shipping_document_return_not_required")) + "</td><td>" + esc(serials || "読取時に登録") + "</td></tr>";
   }).join("");
 }

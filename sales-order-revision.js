@@ -314,11 +314,15 @@ function salesOrderRevisionSelect(key, label, options, value) {
 }
 
 function salesOrderRevisionItemProductNeedsCore(item) {
-  return !!item && (item.product_core_return_required === true || item.core_return_required === true || item.core_return_handling === "charge_no_return");
+  return !!item && (item.product_core_return_required === true || item.core_return_required === true || ["charge_no_return", "charge_with_return"].indexOf(item.core_return_handling) >= 0);
 }
 
 function salesOrderRevisionItemNeedsCoreReturn(item) {
-  return salesOrderRevisionItemProductNeedsCore(item);
+  return salesOrderRevisionItemProductNeedsCore(item) && item.core_return_handling !== "charge_no_return";
+}
+
+function salesOrderRevisionHandlingBillsCore(item) {
+  return !!item && ["charge_no_return", "charge_with_return"].indexOf(item.core_return_handling) >= 0;
 }
 
 function salesOrderRevisionConfiguredCoreCharge(item) {
@@ -344,19 +348,23 @@ function salesOrderRevisionCorePolicy(item, rows) {
 function salesOrderRevisionEffectiveUnitPrice(item) {
   var base = Number(item && item.revision_unit_price_jpy);
   if (!Number.isFinite(base)) return 0;
-  return base + (item.core_return_handling === "charge_no_return" ? salesOrderRevisionConfiguredCoreCharge(item) : 0);
+  return base + (salesOrderRevisionHandlingBillsCore(item) ? salesOrderRevisionConfiguredCoreCharge(item) : 0);
 }
 
 function salesOrderRevisionCoreChoiceHtml(item, index) {
   if (!salesOrderRevisionItemProductNeedsCore(item)) return "";
-  var charged = item.core_return_handling === "charge_no_return";
+  var charged = salesOrderRevisionHandlingBillsCore(item);
+  var selectedHandling = charged ? item.core_return_handling : "standard";
   var charge = salesOrderRevisionConfiguredCoreCharge(item);
   var badge = charged
     ? "<em class='charge-no-return'>" + esc(t("customer_order_core_charge_no_return_status")) + "</em>"
     : "<em>" + esc(t("core_return_required")) + "</em>";
   return badge + "<label class='customer-order-core-choice sales-order-revision-core-choice'><span>" + esc(t("customer_order_core_handling")) + "</span><select aria-label='" + esc(t("customer_order_core_handling")) + "' data-revision-core-handling='" + index + "'>" +
-    "<option value='standard'" + (charged ? "" : " selected") + ">" + esc(t("customer_order_core_return_standard")) + "</option>" +
-    "<option value='charge_no_return'" + (charged ? " selected" : "") + (charge > 0 ? "" : " disabled") + ">" +
+    "<option value='standard'" + (selectedHandling === "standard" ? " selected" : "") + ">" + esc(t("customer_order_core_return_standard")) + "</option>" +
+    "<option value='charge_with_return'" + (selectedHandling === "charge_with_return" ? " selected" : "") + (charge > 0 ? "" : " disabled") + ">" +
+      esc(charge > 0 ? tf("customer_order_core_charge_with_return_label", { amount: customerOrderCurrency(charge) }) : t("customer_order_core_charge_unset")) +
+    "</option>" +
+    "<option value='charge_no_return'" + (selectedHandling === "charge_no_return" ? " selected" : "") + (charge > 0 ? "" : " disabled") + ">" +
       esc(charge > 0 ? tf("customer_order_core_charge_no_return_label", { amount: customerOrderCurrency(charge) }) : t("customer_order_core_charge_unset")) +
     "</option></select><small>" + esc(t("customer_order_core_charge_note")) + "</small>" +
     (charge > 0 ? "" : "<small class='setup-required'>" + esc(t("customer_order_core_charge_setup")) + "</small>") + "</label>";
@@ -371,7 +379,7 @@ async function hydrateSalesOrderRevisionCorePolicies(state) {
   if (state !== salesOrderRevision) return;
   state.items.forEach(function(item) {
     var policy = salesOrderRevisionCorePolicy(item, rowsByProduct[String(item.dkd_shohin_id)] || []);
-    if (item.core_return_handling === "charge_no_return" && Number(item.core_charge_jpy) > 0) {
+    if (salesOrderRevisionHandlingBillsCore(item) && Number(item.core_charge_jpy) > 0) {
       item.configured_core_charge_jpy = Number(item.core_charge_jpy);
     } else {
       item.configured_core_charge_jpy = policy && policy.charge != null ? Number(policy.charge) : null;
@@ -380,7 +388,7 @@ async function hydrateSalesOrderRevisionCorePolicies(state) {
 }
 
 function salesOrderRevisionItemHtml(item, index) {
-  var coreChargeTotal = item.core_return_handling === "charge_no_return"
+  var coreChargeTotal = salesOrderRevisionHandlingBillsCore(item)
     ? Number(item.quantity || 1) * salesOrderRevisionConfiguredCoreCharge(item)
     : 0;
   return "<div class='customer-order-line' data-revision-item='" + index + "'><div class='customer-order-product'><span>" + esc(productCategoryLabel(item) || "") + " / " + esc(customerProductKindLabel(item.product_kind)) + "</span><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || item.dkd_shohin_id) + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ")) + "</small>" + salesOrderRevisionCoreChoiceHtml(item, index) + "</div>" +
@@ -395,7 +403,7 @@ function salesOrderRevisionCaptureItems() {
     item.quantity = row.querySelector("[data-revision-quantity]").value;
     item.revision_unit_price_jpy = row.querySelector("[data-revision-price]").value;
     var coreChoice = row.querySelector("[data-revision-core-handling]");
-    if (coreChoice) item.core_return_handling = coreChoice.value === "charge_no_return" ? "charge_no_return" : "standard";
+    if (coreChoice) item.core_return_handling = ["charge_no_return", "charge_with_return"].indexOf(coreChoice.value) >= 0 ? coreChoice.value : "standard";
   });
 }
 
@@ -415,7 +423,7 @@ function renderSalesOrderRevisionItems() {
       salesOrderRevisionCaptureItems();
       body.querySelectorAll("[data-revision-item]").forEach(function(row) {
         var item = salesOrderRevision.items[Number(row.dataset.revisionItem)];
-        var coreChargeTotal = item.core_return_handling === "charge_no_return"
+        var coreChargeTotal = salesOrderRevisionHandlingBillsCore(item)
           ? Number(item.quantity || 1) * salesOrderRevisionConfiguredCoreCharge(item)
           : 0;
         row.querySelector("[data-revision-core-charge]").textContent = coreChargeTotal > 0 ? customerOrderCurrency(coreChargeTotal) : "-";
@@ -459,13 +467,14 @@ async function openSalesOrderRevisionEditor() {
   overlay.setAttribute("aria-labelledby", "sales-order-revision-title");
   document.body.appendChild(overlay);
   salesOrderRevision = { order: original, items: original.items.map(function(item) {
-    var charged = customerOrderCoreHandlingValue(item) === "charge_no_return";
+    var handling = customerOrderCoreHandlingValue(item);
+    var charged = ["charge_no_return", "charge_with_return"].indexOf(handling) >= 0;
     var billedCharge = charged ? Math.max(0, Number(item.core_charge_jpy) || 0) : 0;
     return Object.assign({}, item, {
       item_id: item.id,
       product_core_return_required: item.core_return_required === true || charged,
       configured_core_charge_jpy: billedCharge || null,
-      core_return_handling: charged ? "charge_no_return" : "standard",
+      core_return_handling: charged ? handling : "standard",
       revision_unit_price_jpy: Math.max(0, Number(item.unit_price_jpy) - billedCharge)
     });
   }) };
@@ -644,10 +653,10 @@ function readSalesOrderRevision() {
   if (!salesOrderRevision.items.length) throw new Error("商品を1件以上指定してください。");
   var items = salesOrderRevision.items.map(function(item) {
     var quantity = Number(item.quantity), price = Number(item.revision_unit_price_jpy);
-    var charge = item.core_return_handling === "charge_no_return" ? salesOrderRevisionConfiguredCoreCharge(item) : 0;
+    var charge = salesOrderRevisionHandlingBillsCore(item) ? salesOrderRevisionConfiguredCoreCharge(item) : 0;
     if (String(item.revision_unit_price_jpy).trim() === "" || !Number.isInteger(quantity) || quantity < 1 || quantity > 99 || !Number.isInteger(price) || price < 0 || price > 100000000 || (price + charge) * quantity > 2000000000) throw new Error("商品の数量・単価を確認してください。");
-    if (item.core_return_handling === "charge_no_return" && charge <= 0) throw new Error(t("customer_order_core_charge_setup"));
-    return {item_id:item.item_id || null,dkd_shohin_id:item.dkd_shohin_id,product_kind:item.product_kind,quantity:quantity,unit_price_jpy:price,core_return_handling:item.core_return_handling === "charge_no_return" ? "charge_no_return" : "standard"};
+    if (salesOrderRevisionHandlingBillsCore(item) && charge <= 0) throw new Error(t("customer_order_core_charge_setup"));
+    return {item_id:item.item_id || null,dkd_shohin_id:item.dkd_shohin_id,product_kind:item.product_kind,quantity:quantity,unit_price_jpy:price,core_return_handling:["charge_no_return", "charge_with_return"].indexOf(item.core_return_handling) >= 0 ? item.core_return_handling : "standard"};
   });
   var shipping = Number(salesOrderRevisionValue("shipping_fee_jpy"));
   if (!Number.isInteger(shipping) || shipping < 0 || shipping > 100000000) throw new Error("送料は0円以上の整数で入力してください。");
