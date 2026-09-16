@@ -6913,7 +6913,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1009";
+var APP_VERSION       = "v1.1.1010";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -9273,7 +9273,83 @@ function resetAutoLogoutTimer() {
 // =============================================
 // スクリーン管理
 // =============================================
+var screenInitialControlState = typeof WeakMap === "function" ? new WeakMap() : null;
+
+function captureInitialScreenControlState() {
+  if (!screenInitialControlState) return;
+  document.querySelectorAll(".screen input, .screen select, .screen textarea").forEach(function(control) {
+    if (screenInitialControlState.has(control)) return;
+    screenInitialControlState.set(control, {
+      value: control.value,
+      checked: !!control.checked,
+      selectedValues: control.tagName === "SELECT"
+        ? Array.from(control.options).filter(function(option) { return option.selected; }).map(function(option) { return option.value; })
+        : []
+    });
+  });
+}
+
+function resetScreenControlState(control) {
+  var initial = screenInitialControlState && screenInitialControlState.get(control);
+  if (control.tagName === "SELECT") {
+    var selectedValues = initial ? initial.selectedValues : [];
+    Array.from(control.options).forEach(function(option) {
+      option.selected = selectedValues.indexOf(option.value) >= 0;
+    });
+    if (!selectedValues.length || control.selectedIndex < 0) {
+      var initialValue = initial ? initial.value : "";
+      control.value = initialValue;
+      if (control.selectedIndex < 0 && control.options.length) control.selectedIndex = 0;
+    }
+    return;
+  }
+  if (control.type === "checkbox" || control.type === "radio") {
+    control.checked = initial ? initial.checked : control.defaultChecked;
+    return;
+  }
+  if (control.type === "file") {
+    control.value = "";
+    return;
+  }
+  control.value = initial ? initial.value : control.defaultValue;
+}
+
+function resetScreenRuntimeStateForMenu(screenId) {
+  if (screenId === "sales-pricing-mgmt") {
+    salesPricingMgmtRows = [];
+    salesPricingMgmtPriceMap = {};
+    salesPricingMgmtManufacturingCostMap = {};
+  }
+  if (screenId === "rakuten-price" || screenId === "rakuten-bulk" || screenId === "api-settings") {
+    rakutenActiveTarget = null;
+    var summary = document.getElementById("rakuten-summary");
+    var results = document.getElementById("rakuten-results");
+    var status = document.getElementById("rakuten-status");
+    if (summary) summary.innerHTML = "";
+    if (results) results.innerHTML = "<div class='empty'>" + esc(t("rakuten_empty")) + "</div>";
+    if (status) status.textContent = "";
+  }
+}
+
+function resetScreenStateForMenu(screenId) {
+  var screen = document.getElementById("screen-" + screenId);
+  if (!screen) return;
+  screen.querySelectorAll("input, select, textarea").forEach(resetScreenControlState);
+  screen.querySelectorAll("details[open]").forEach(function(details) { details.removeAttribute("open"); });
+  screen.scrollTop = 0;
+  screen.scrollLeft = 0;
+  screen.querySelectorAll("*").forEach(function(element) {
+    if (element.scrollTop) element.scrollTop = 0;
+    if (element.scrollLeft) element.scrollLeft = 0;
+  });
+  resetScreenRuntimeStateForMenu(screenId);
+}
+
 function showScreen(id) {
+  var previousScreenId = activeAppScreenName();
+  if (id === "menu" && previousScreenId && previousScreenId !== "search") {
+    resetScreenStateForMenu(previousScreenId);
+  }
   syncInstallAppAccess();
   document.querySelectorAll(".screen").forEach(function(s) { s.classList.remove("active"); });
   var el = document.getElementById("screen-" + id);
@@ -9281,6 +9357,7 @@ function showScreen(id) {
   window.scrollTo(0, 0);
   logScreenOpen(id);
 }
+captureInitialScreenControlState();
 function isScreenActive(id) {
   var el = document.getElementById("screen-" + id);
   return !!(el && el.classList.contains("active"));
@@ -19560,38 +19637,6 @@ async function importSalesOrderB2Shipments() {
   if (salesOrderSelectedId) await loadSalesOrderDetail(salesOrderSelectedId);
 }
 
-function resetProductSearchForMenu() {
-  searchRequestSeq += 1;
-  productAuxSeq += 1;
-  detailSecondaryRequestSeq += 1;
-  productSearchDetailReadyPromise = Promise.resolve();
-  currentFilter = "all";
-  searchSlOnly = false;
-  productSearchLimit = SEARCH_INITIAL_LIMIT;
-  productSearchFetchedCount = 0;
-  productSearchTotalCount = null;
-  productSearchHasMore = false;
-  productSearchPageKey = "";
-  allProducts = [];
-  imageCountMap = {};
-  imageThumbnailMap = {};
-  productionImageCountMap = {};
-  slPartsMap = {};
-  slPresenceMap = {};
-  componentUsageCountMap = {};
-  productionComponentKindCountMap = {};
-  coreStockQtyMap = {};
-  kikanCompatibleMap = {};
-  productAvailableStockMap = {};
-  productVariantSummaryMap = {};
-  var query = document.getElementById("q");
-  if (query) query.value = "";
-  closePanel();
-  syncSearchFilterControls();
-  renderCategoryChips();
-  render();
-}
-
 function returnFromProductSearch() {
   if (customerPortalSearchActive || isCustomerViewer()) {
     closePanel();
@@ -19600,7 +19645,6 @@ function returnFromProductSearch() {
     renderCustomerPortal();
     return;
   }
-  resetProductSearchForMenu();
   clearAppRestoreState();
   showAuthenticatedHome();
 }
