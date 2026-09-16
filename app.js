@@ -6925,7 +6925,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1015";
+var APP_VERSION       = "v1.1.1016";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -41025,12 +41025,21 @@ async function lookupComponentPartNumberPair(mfrValue, genuineValue) {
   return best;
 }
 
-async function lookupSharedComponentUnitPrice(manufacturer, manufacturerPartNumber) {
+function normalizeComponentPriceNameInput(value) {
+  return String(value || "").trim().toUpperCase().replace(/[\s\u3000]+/g, "");
+}
+
+function isCoreSourceComponentPartNumber(value) {
+  return /^CORED[0-9A-Z]+$/.test(normalizedComponentPartKey(value));
+}
+
+async function lookupSharedComponentUnitPrice(manufacturer, manufacturerPartNumber, componentPartName) {
   var partNumber = normalizeComponentPartNumberInput(manufacturerPartNumber);
   if (!partNumber) return null;
-  var r = await sb.rpc("get_component_shared_unit_price", {
+  var r = await sb.rpc("get_component_shared_unit_price_by_name", {
     component_manufacturer: normalizeComponentManufacturerInput(manufacturer) || "UNKNOWN",
-    component_manufacturer_part_number: partNumber
+    component_manufacturer_part_number: partNumber,
+    component_part_name: String(componentPartName || "").trim() || null
   });
   if (r.error) {
     console.warn("shared component unit price lookup failed", r.error);
@@ -41066,7 +41075,8 @@ async function reconcileComponentAddPartNumbers() {
   }
   var sharedPrice = await lookupSharedComponentUnitPrice(
     componentAddValue("component-add-mfr") || "UNKNOWN",
-    componentAddValue("component-add-mfr-pn")
+    componentAddValue("component-add-mfr-pn"),
+    componentAddValue("component-add-name")
   );
   if (seq !== componentAddPartNumberLookupSeq) return row;
   var unitPriceInput = document.getElementById("component-add-unit-price");
@@ -41388,14 +41398,22 @@ async function reconcileComponentEditPartNumbers(usageId) {
     }
   }
   payload = componentEditPayloadFromRow(tr);
+  var nextPartKey = normalizedComponentPartKey(payload.component_manufacturer_part_number);
+  var originalPartKey = originalRow ? normalizedComponentPartKey(originalRow.component_manufacturer_part_number) : "";
+  var coreSourceIdentity = isCoreSourceComponentPartNumber(nextPartKey) || isCoreSourceComponentPartNumber(originalPartKey);
   var identityChanged = !!originalRow && (
     normalizeComponentManufacturerInput(payload.component_manufacturer || "UNKNOWN") !== normalizeComponentManufacturerInput(originalRow.component_manufacturer || "UNKNOWN") ||
-    normalizedComponentPartKey(payload.component_manufacturer_part_number) !== normalizedComponentPartKey(originalRow.component_manufacturer_part_number)
+    nextPartKey !== originalPartKey ||
+    (coreSourceIdentity && normalizeComponentPriceNameInput(payload.component_part_name) !== normalizeComponentPriceNameInput(originalRow.component_name || originalRow.component_part_name))
   );
   if (identityChanged) {
     var unitPriceInput = tr.querySelector("[data-component-edit-field='unit_price_jpy']");
     var unitPriceBeforeLookup = unitPriceInput ? String(unitPriceInput.value || "") : "";
-    var sharedPrice = await lookupSharedComponentUnitPrice(payload.component_manufacturer || "UNKNOWN", payload.component_manufacturer_part_number);
+    var sharedPrice = await lookupSharedComponentUnitPrice(
+      payload.component_manufacturer || "UNKNOWN",
+      payload.component_manufacturer_part_number,
+      payload.component_part_name
+    );
     if (seq !== componentEditPartNumberLookupSeq) return row;
     if (unitPriceInput && String(unitPriceInput.value || "") === unitPriceBeforeLookup) {
       unitPriceInput.value = sharedPrice && sharedPrice.unitPrice != null ? String(sharedPrice.unitPrice) : "";
@@ -41415,6 +41433,12 @@ function bindComponentEditManufacturerLookup(wrap) {
     };
     input.addEventListener("change", handler);
     input.addEventListener("blur", handler);
+  });
+  wrap.querySelectorAll("[data-component-edit-field='component_part_name']").forEach(function(input) {
+    input.addEventListener("change", function() {
+      var tr = input.closest("[data-component-edit-row]");
+      if (tr) reconcileComponentEditPartNumbers(tr.dataset.componentEditRow);
+    });
   });
 }
 
@@ -53606,6 +53630,10 @@ if (componentAddManufacturerEl) {
   };
   componentAddManufacturerEl.addEventListener("change", reconcileComponentAddManufacturer);
   componentAddManufacturerEl.addEventListener("blur", reconcileComponentAddManufacturer);
+}
+var componentAddNameEl = document.getElementById("component-add-name");
+if (componentAddNameEl) {
+  componentAddNameEl.addEventListener("change", reconcileComponentAddPartNumbers);
 }
 var componentAddReplacementRateEl = document.getElementById("component-add-replacement-rate");
 if (componentAddReplacementRateEl) {
