@@ -166,6 +166,7 @@ for (const fragment of [
 
 for (const fragment of [
   ".sales-accounting-export-card",
+  ".sales-accounting-export-body",
   ".sales-accounting-export-workspace",
   ".sales-accounting-export-order",
   ".sales-accounting-export-order-simple",
@@ -173,6 +174,14 @@ for (const fragment of [
   ".sales-accounting-export-directory",
   ".sales-accounting-export-history-row",
 ]) requireFragment(css, fragment);
+
+for (const fragment of [
+  '<div class="sales-accounting-export-body">',
+  '<div class="form-footer sales-accounting-export-footer">',
+]) requireFragment(html, fragment);
+
+requireFragment(css, ".sales-accounting-export-body { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; overflow-y: auto;", "Sales export content must scroll independently so the CSV action remains visible");
+requireFragment(css, ".sales-accounting-export-footer { position: relative; z-index: 1; flex: 0 0 auto;", "Sales export footer must remain outside the scrollable content");
 
 (async () => {
   let writtenName = "";

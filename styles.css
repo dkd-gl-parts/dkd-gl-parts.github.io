@@ -7477,12 +7477,13 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-pricing-validation.error,
 .sales-order-pricing-message.error { color: #b42318; }
 .sales-order-pricing-card .form-footer { position: sticky; bottom: 0; margin: 0; border-top: 1px solid #d8dfe5; padding: 14px 20px; background: #fff; }
-.form-card.sales-accounting-export-card { display: flex; flex-direction: column; width: min(1220px, calc(100vw - 24px)); max-width: 1220px; max-height: calc(100vh - 24px); margin: 12px; border-radius: 8px; padding: 0; overflow: hidden; }
+.form-card.sales-accounting-export-card { display: flex; flex-direction: column; width: min(1220px, calc(100vw - 24px)); max-width: 1220px; height: calc(100dvh - 24px); max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); margin: 12px; border-radius: 8px; padding: 0; overflow: hidden; }
 .sales-accounting-export-heading { flex: 0 0 auto; display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; border-bottom: 1px solid #d8dfe5; padding: 16px 20px 14px; background: #fff; }
 .sales-accounting-export-heading > div > span { color: #8a5d12; font-size: 9px; font-weight: 900; }
 .sales-accounting-export-heading h3 { margin: 3px 0 0; color: #1d2939; font-size: 20px; letter-spacing: 0; }
 .sales-accounting-export-heading p { margin: 5px 0 0; color: #667085; font-size: 10px; line-height: 1.5; }
 .sales-accounting-export-heading button { flex: 0 0 auto; width: 34px; height: 34px; border: 1px solid #c8d0d8; border-radius: 5px; background: #fff; color: #53606e; cursor: pointer; }
+.sales-accounting-export-body { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .sales-accounting-export-filter { flex: 0 0 auto; display: grid; grid-template-columns: minmax(170px, .9fr) minmax(140px, .7fr) minmax(140px, .7fr) auto auto; align-items: end; gap: 10px; border-bottom: 1px solid #d8dfe5; padding: 12px 20px; background: #f7f9fa; }
 .sales-accounting-export-filter label > span { display: block; margin-bottom: 4px; color: #667085; font-size: 9px; font-weight: 800; }
 .sales-accounting-export-filter select,
@@ -7618,7 +7619,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-accounting-export-registration-confirm > div { display: grid; grid-template-columns: .7fr 1.3fr; gap: 6px; margin-top: 7px; }
 .sales-accounting-export-message { flex: 0 0 auto; min-height: 20px; border-top: 1px solid #d8dfe5; padding: 8px 20px; color: #22643e; font-size: 10px; font-weight: 700; text-align: right; }
 .sales-accounting-export-message.error { color: #b42318; }
-.sales-accounting-export-footer { flex: 0 0 auto; margin-top: 0; border-top: 1px solid #d8dfe5; padding: 12px 20px; background: #fff; }
+.sales-accounting-export-footer { position: relative; z-index: 1; flex: 0 0 auto; margin-top: 0; border-top: 1px solid #d8dfe5; padding: 12px 20px; background: #fff; }
 .sales-accounting-export-footer button { min-height: 38px; }
 .sales-order-in-house-cancel-card { width: min(520px, calc(100vw - 28px)); padding: 24px; }
 .sales-order-in-house-cancel-heading > span { color: #b42318; font-size: 9px; font-weight: 900; }
