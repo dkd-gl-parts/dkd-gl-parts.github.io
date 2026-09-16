@@ -54,6 +54,8 @@ jobs:
         run: node scripts/verify-shared-ui-components.js
       - name: Verify search workload ordering
         run: node scripts/verify-search-workload-guard.js
+      - name: Verify screen state retention policy
+        run: node scripts/verify-screen-state-policy.js
       - name: Verify component catalog recovery
         run: node scripts/verify-component-catalog-recovery.js
       - name: Verify manual component add

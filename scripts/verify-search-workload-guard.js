@@ -103,18 +103,16 @@ if (!source.includes("productSearchDetailReadyPromise = Promise.allSettled(detai
   throw new Error("detail requests must be tracked before deferred enrichment starts");
 }
 
-const productReturnStart = source.indexOf("function resetProductSearchForMenu()");
+const productReturnStart = source.indexOf("function returnFromProductSearch()");
 const productReturnEnd = source.indexOf("function shippingPrefectureLabel", productReturnStart);
 const productReturnSource = source.slice(productReturnStart, productReturnEnd);
 if (productReturnStart < 0 || productReturnEnd < productReturnStart ||
-    !productReturnSource.includes("searchRequestSeq += 1") ||
-    !productReturnSource.includes("productAuxSeq += 1") ||
-    !productReturnSource.includes("resetProductSearchForMenu();") ||
     !productReturnSource.includes("clearAppRestoreState();") ||
     !productReturnSource.includes("showAuthenticatedHome();") ||
     productReturnSource.includes("returnToMenuFresh();") ||
+    productReturnSource.includes("resetProductSearchForMenu();") ||
     productReturnSource.includes("window.location.reload()")) {
-  throw new Error("product search must cancel stale work, clear its view, and return directly to the authenticated menu");
+  throw new Error("sales management must preserve its in-memory search view and return directly to the authenticated menu");
 }
 
 const stockFetchStart = source.indexOf("async function fetchProductAvailableStockMap");
