@@ -6913,7 +6913,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1013";
+var APP_VERSION       = "v1.1.1014";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -37242,6 +37242,37 @@ function componentTargetStockText() {
   return row.stock_qty === null || row.stock_qty === undefined || row.stock_qty === "" ? "0" : String(row.stock_qty);
 }
 
+function componentTargetNominalOutputText() {
+  var product = currentProduct || {};
+  var spec = {
+    raw_spec: product.nominal_raw_spec,
+    voltage_v: product.nominal_voltage_v,
+    current_a: product.nominal_current_a,
+    power_kw: product.nominal_power_kw,
+    power_w: product.nominal_power_w,
+    diameter_d: product.nominal_diameter_d,
+    type_text: product.nominal_type_text,
+    gas_type: product.nominal_gas_type
+  };
+  var voltage = specNumberText(spec.voltage_v, "V");
+  var current = specNumberText(spec.current_a, "A");
+  var power = specNumberText(spec.power_kw, "kW") || specNumberText(spec.power_w, "W");
+  var diameter = specNumberText(spec.diameter_d, "");
+  var key = productCategoryKey(product);
+  var values;
+  if (isAcCategoryKey(key)) {
+    values = [specGasText(spec), spec.type_text, voltage];
+  } else if (isAlternatorCategoryKey(key) && !isStarterCategoryKey(key)) {
+    values = [voltage, current, diameter ? "D" + diameter : "", spec.type_text];
+  } else if (isStarterCategoryKey(key)) {
+    values = [voltage, power, spec.type_text];
+  } else {
+    values = [voltage, current, diameter ? "D" + diameter : "", power, spec.type_text];
+  }
+  var text = values.filter(Boolean).join(" / ");
+  return text || String(spec.raw_spec || product.spec || "").trim() || "-";
+}
+
 function componentTargetSummaryHtml(componentCount) {
   var kind = selectedProductKind();
   var countText = componentCount === null || componentCount === undefined ? "-" : String(componentCount);
@@ -37249,6 +37280,7 @@ function componentTargetSummaryHtml(componentCount) {
     "<div class='component-target-stat'><span>" + esc(t("component_target_kind_label")) + "</span><b>" + esc(productKindLabel(kind)) + "</b></div>" +
     "<div class='component-target-stat'><span>" + esc(t("component_target_variant_label")) + "</span><b>" + esc(componentTargetVariantText()) + "</b></div>" +
     "<div class='component-target-stat'><span>" + esc(t("product_kind_stock_qty")) + "</span><b>" + esc(componentTargetStockText()) + "</b></div>" +
+    "<div class='component-target-stat'><span>" + esc(t("spec_section")) + "</span><b>" + esc(componentTargetNominalOutputText()) + "</b></div>" +
     "<div class='component-target-stat'><span>" + esc(t("component_section")) + "</span><b>" + esc(countText) + "</b></div>" +
   "</div>";
 }

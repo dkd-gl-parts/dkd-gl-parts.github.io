@@ -45,6 +45,30 @@ if (!loadingSource.includes('document.getElementById("component-wrap")') || !loa
   throw new Error("the component screen must show a loading state immediately");
 }
 
+const nominalOutputSource = sourceBetween("function componentTargetNominalOutputText", "function componentTargetSummaryHtml");
+[
+  'specNumberText(spec.voltage_v, "V")',
+  'specNumberText(spec.current_a, "A")',
+  'specNumberText(spec.power_kw, "kW")',
+  'specNumberText(spec.power_w, "W")',
+  'diameter ? "D" + diameter : ""',
+  "isAcCategoryKey(key)",
+  "isAlternatorCategoryKey(key)",
+  "isStarterCategoryKey(key)",
+  'String(spec.raw_spec || product.spec || "").trim() || "-"'
+].forEach((fragment) => {
+  if (!nominalOutputSource.includes(fragment)) throw new Error(`component nominal-output summary is missing: ${fragment}`);
+});
+const targetSummarySource = sourceBetween("function componentTargetSummaryHtml", "function updateComponentTargetSummary");
+if (!targetSummarySource.includes('t("spec_section")') || !targetSummarySource.includes("componentTargetNominalOutputText()")) {
+  throw new Error("component target summary must display nominal output");
+}
+if (!styles.includes(".component-target-summary { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));") ||
+    !styles.includes(".component-target-summary, .component-catalog-target .component-target-summary { grid-template-columns: repeat(3, minmax(0, 1fr));") ||
+    !styles.includes(".component-target-controls, .component-target-summary")) {
+  throw new Error("component nominal-output summary must remain responsive");
+}
+
 const quantityHeader = '<th class=\'component-cell-qty\'>" + t("component_quantity")';
 const moneyHeader = '<th class=\'component-cell-money\'>" + t("component_unit_price")';
 const rateHeader = '<th class=\'component-cell-rate\'>" + t("component_replacement_rate")';
