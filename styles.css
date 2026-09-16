@@ -8184,13 +8184,33 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-shipping-schedule button:disabled { opacity: .55; cursor: wait; }
 .sales-order-shipping-schedule small { align-self: center; color: #4d685d; font-size: 9px; line-height: 1.55; }
 .sales-order-shipping-schedule-locked { align-self: center; color: #66756e; font-size: 10px; font-weight: 800; }
-.sales-order-history-groups { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; }
-.sales-order-history-groups h4 { margin: 0 0 7px; color: #4a5663; font-size: 10px; }
-.sales-order-history-empty { border-top: 1px solid #e1e5e9; padding-top: 8px; }
-.sales-order-history-empty span { color: #7c8791; font-size: 10px; }
+.sales-order-history-groups { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+.sales-order-history-group { min-width: 0; }
+.sales-order-history-groups h4 { margin: 0; border-bottom: 2px solid #cfd8df; padding: 0 4px 7px; color: #3f4d5b; font-size: 10px; }
+.sales-order-history-empty span { display: block; border-bottom: 1px solid #e1e5e9; padding: 10px 4px; color: #7c8791; font-size: 10px; }
 .sales-order-pricing-history { border-top: 0; padding-top: 0; }
-.sales-order-pricing-history-row { grid-template-columns: 105px minmax(0, 1fr); gap: 5px 10px; }
-.sales-order-pricing-history-row > span { grid-column: 2; }
+.sales-order-history-list { border-bottom: 1px solid #dbe1e6; }
+.sales-order-history-row,
+.sales-order-pricing-history-row,
+.sales-order-shipment-history-row { display: grid; grid-template-columns: 142px 112px minmax(220px, 1fr) minmax(190px, .82fr); align-items: start; gap: 14px; min-width: 0; border-top: 1px solid #e1e5e9; border-bottom: 0; padding: 12px 10px; }
+.sales-order-history-row:first-child { border-top: 0; }
+.sales-order-history-row time { color: #66727f; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sales-order-history-kind-cell,
+.sales-order-history-content,
+.sales-order-history-result { display: grid; min-width: 0; gap: 3px; }
+.sales-order-history-kind { justify-self: start; border: 1px solid #97b8a7; border-radius: 4px; padding: 3px 7px; background: #edf7f1; color: #205f43; font-weight: 800; line-height: 1.35; white-space: nowrap; }
+.sales-order-history-kind.pricing { border-color: #b8a370; background: #fff8e8; color: #77560d; }
+.sales-order-history-kind.revision { border-color: #9cacc0; background: #f1f5f8; color: #3f5368; }
+.sales-order-history-kind.core_return { border-color: #d9a091; background: #fff4f1; color: #934536; }
+.sales-order-history-kind-cell .state { justify-self: start; color: #6b7783; font-weight: 700; }
+.sales-order-history-content strong,
+.sales-order-history-result strong { color: #26352f; line-height: 1.45; overflow-wrap: anywhere; }
+.sales-order-history-content small,
+.sales-order-history-result small { color: #6f7b86; line-height: 1.45; overflow-wrap: anywhere; }
+.sales-order-history-file { word-break: normal; }
+.sales-order-pricing-history-row .sales-order-history-result strong { color: #334155; white-space: nowrap; }
+.sales-order-shipment-history { border-top: 0; }
+.sales-order-shipment-history-row.superseded { opacity: .58; background: #f7f8f9; }
 
 .form-card.sales-order-pricing-card { display: flex; flex-direction: column; overflow: hidden; }
 .sales-order-pricing-heading { position: static; flex: 0 0 auto; padding: 15px 20px 13px; }
@@ -10138,8 +10158,18 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-print-job > div span,
   #screen-sales-order-mgmt .sales-order-print-job > time,
   #screen-sales-order-mgmt .sales-order-print-job-status { font-size: 12px; line-height: 1.4; }
-  #screen-sales-order-mgmt .sales-order-history-groups h4,
+  #screen-sales-order-mgmt .sales-order-history-groups { gap: 20px; }
+  #screen-sales-order-mgmt .sales-order-history-groups h4 { padding-bottom: 8px; font-size: 14px; line-height: 1.4; }
   #screen-sales-order-mgmt .sales-order-history-empty span { font-size: 12px; line-height: 1.5; }
+  #screen-sales-order-mgmt .sales-order-history-row { grid-template-columns: 142px 112px minmax(220px, 1fr) minmax(190px, .82fr); gap: 14px; min-height: 66px; padding: 12px 10px; }
+  #screen-sales-order-mgmt .sales-order-history-row time,
+  #screen-sales-order-mgmt .sales-order-history-kind,
+  #screen-sales-order-mgmt .sales-order-history-kind-cell .state,
+  #screen-sales-order-mgmt .sales-order-history-content small,
+  #screen-sales-order-mgmt .sales-order-history-result small { font-size: 12px; line-height: 1.45; }
+  #screen-sales-order-mgmt .sales-order-history-content strong,
+  #screen-sales-order-mgmt .sales-order-history-result strong { font-size: 14px; line-height: 1.45; }
+  #screen-sales-order-mgmt .sales-order-history-file { word-break: normal; overflow-wrap: anywhere; }
   #screen-sales-order-mgmt .sales-order-detail-message { min-height: 20px; margin-top: 8px; font-size: 12px; line-height: 1.5; }
 }
 
@@ -10276,6 +10306,20 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-tracking-grid.outbound-only { grid-template-columns: 1fr; align-items: stretch; }
   #screen-sales-order-mgmt .sales-order-dispatch-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #screen-sales-order-mgmt .sales-order-history-groups { grid-template-columns: 1fr; }
+  #screen-sales-order-mgmt .sales-order-history-row {
+    grid-template-columns: 132px minmax(0, 1fr);
+    grid-template-areas:
+      "time kind"
+      "content content"
+      "result result";
+    gap: 8px 12px;
+  }
+  #screen-sales-order-mgmt .sales-order-history-row > time { grid-area: time; }
+  #screen-sales-order-mgmt .sales-order-history-row > .sales-order-history-kind,
+  #screen-sales-order-mgmt .sales-order-history-row > .sales-order-history-kind-cell { grid-area: kind; }
+  #screen-sales-order-mgmt .sales-order-history-row > .sales-order-history-content { grid-area: content; }
+  #screen-sales-order-mgmt .sales-order-history-row > .sales-order-history-result { grid-area: result; }
+  #screen-sales-order-mgmt .sales-order-pricing-history-row .sales-order-history-kind { white-space: nowrap; }
 }
 
 /* Product Design audit: clarify hierarchy in the order operations workspace. */

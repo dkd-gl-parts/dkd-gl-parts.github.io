@@ -298,9 +298,17 @@ function salesOrderCanRevise(order) {
 }
 
 function salesOrderRevisionHistoryHtml(history) {
-  return "<div><h4>受注修正履歴</h4>" + ((history || []).map(function(entry) {
-    return "<p><time>" + esc(new Date(entry.created_at).toLocaleString()) + "</time><br>" + esc(entry.reason) + "</p>";
-  }).join("") || "<span>履歴はありません。</span>") + "</div>";
+  var rows = Array.isArray(history) ? history : [];
+  return "<section class='sales-order-history-group sales-order-revision-history'><h4>受注修正履歴</h4>" + (rows.length
+    ? "<div class='sales-order-history-list'>" + rows.map(function(entry) {
+      return "<article class='sales-order-history-row sales-order-revision-history-row'>" +
+        "<time datetime='" + esc(entry.created_at || "") + "'>" + esc(customerOrderDateTimeText(entry.created_at)) + "</time>" +
+        "<span class='sales-order-history-kind revision'>受注修正</span>" +
+        "<div class='sales-order-history-content'><strong>" + esc(entry.reason || "変更理由なし") + "</strong></div>" +
+        "<div class='sales-order-history-result'><strong>" + esc(entry.waybills_need_reissue ? "帳票・送り状 再発行要" : "反映済み") + "</strong></div>" +
+      "</article>";
+    }).join("") + "</div>"
+    : "<span>履歴はありません。</span>") + "</section>";
 }
 
 function salesOrderRevisionField(key, label, value, type, max) {
