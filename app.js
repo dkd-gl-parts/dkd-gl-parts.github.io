@@ -391,6 +391,7 @@ var TRANSLATIONS = {
     customer_order_yamato_office_pickup_short: "ヤマト営業所受取",
     customer_order_core_charge_billed_short: "請求済み",
     customer_order_core_charge_refundable_status: "請求済み（返却後返金）",
+    customer_order_core_charge_no_refund: "返金処理なし",
     customer_order_core_charge_refund_pending: "返却済み・返金確認",
     customer_order_core_charge_refunded: "返金済み",
     customer_order_core_not_returned_short: "返却不要",
@@ -2653,6 +2654,7 @@ var TRANSLATIONS = {
     customer_order_yamato_office_pickup_short: "Yamato office pickup",
     customer_order_core_charge_billed_short: "Billed",
     customer_order_core_charge_refundable_status: "Billed (refund after return)",
+    customer_order_core_charge_no_refund: "No refund processing",
     customer_order_core_charge_refund_pending: "Returned; refund pending",
     customer_order_core_charge_refunded: "Refunded",
     customer_order_core_not_returned_short: "Return not required",
@@ -4859,6 +4861,7 @@ var TRANSLATIONS = {
     customer_order_yamato_office_pickup_short: "雅玛多营业所自取",
     customer_order_core_charge_billed_short: "已计费",
     customer_order_core_charge_refundable_status: "已计费（返还后退款）",
+    customer_order_core_charge_no_refund: "无需退款处理",
     customer_order_core_charge_refund_pending: "已返还・待退款确认",
     customer_order_core_charge_refunded: "已退款",
     customer_order_core_not_returned_short: "无需返还",
@@ -15980,7 +15983,7 @@ function renderCoreReturnManagementDetail() {
       "<div><span>返却期限</span><strong>" + esc(detail.return_due_on || "未設定") + "</strong><small>注文区分 " + esc(item.product_kind === "rebuilt" ? "リビルト品" : "新品") + "</small></div>" +
       "<div><span>返却用送り状番号</span><strong>" + esc(detail.return_waybill_tracking_number || "未登録") + "</strong><small>" + esc(coreReturnManagementReceiptSourceLabel(detail.receipt_source)) + "</small></div>" +
       "<div><span>D-CATS製造シリアル</span><strong>" + esc(detail.returned_serial || "未照合") + "</strong><small>" + esc(detail.returned_serial_part_number || t("core_return_serial_not_required")) + "</small></div>" +
-      "<div><span>コア代金</span><strong>" + esc(refundApplicable ? customerOrderCurrency(refundAmount) : "なし") + "</strong><small>" + esc(refundApplicable ? refundLabel : "返金処理なし") + "</small></div>" +
+      "<div><span>コア代金</span><strong>" + esc(refundApplicable ? customerOrderCurrency(refundAmount) : "なし") + "</strong><small>" + esc(refundApplicable ? refundLabel : t("customer_order_core_charge_no_refund")) + "</small></div>" +
     "</div>" +
     "<div class='core-return-mgmt-sections'>" +
       "<section class='core-return-mgmt-section'><div class='core-return-mgmt-section-head'><div><span>01</span><h3>返却受付</h3></div><small>受付後も履歴を残して修正できます。</small></div>" +
