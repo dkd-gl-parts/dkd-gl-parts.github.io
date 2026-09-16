@@ -168,6 +168,8 @@ jobs:
         run: node scripts/verify-core-return-policy.js
       - name: Verify core return management
         run: node scripts/verify-core-return-management.js
+      - name: Verify core refund eligibility
+        run: node scripts/verify-core-refund-eligibility.js
       - name: Verify sales detail workspace
         run: node scripts/verify-sales-detail-workspace.js
       - name: Verify product shipping estimate
