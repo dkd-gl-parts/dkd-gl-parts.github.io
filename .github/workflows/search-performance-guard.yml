@@ -180,6 +180,8 @@ jobs:
         run: node scripts/verify-product-shipping-estimate.js
       - name: Verify product management automatic product code
         run: node scripts/verify-product-management-auto-code.js
+      - name: Verify product management search action
+        run: node scripts/verify-product-management-search.js
       - name: Verify product part-number validation
         run: node scripts/verify-product-part-number-validation.js
       - name: Verify finished-product shipment layout and workflow
