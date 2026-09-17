@@ -1670,6 +1670,10 @@ var TRANSLATIONS = {
     customer_register_hanbaiou_code: "販売王 得意先コード",
     customer_register_code_ph: "販売王で発行したコード",
     customer_register_code_help: "この値をD-CATS得意先コードと売上CSV連携コードに共通使用します。",
+    customer_register_billing_code: "販売王 請求得意先コード",
+    customer_register_billing_code_help: "通常は販売王 得意先コードと同じ値です。",
+    customer_register_closing_code: "販売王 得意先締めコード",
+    customer_register_closing_code_help: "台帳の値を選択します。0は随時、31は末日です。",
     customer_register_name: "得意先名",
     customer_register_kana: "得意先名カナ",
     customer_register_contact: "ご担当者名",
@@ -1684,6 +1688,8 @@ var TRANSLATIONS = {
     customer_register_confirm_error: "先に販売王で得意先を登録し、コード発行済みの確認にチェックしてください。",
     customer_register_code_error: "販売王の得意先コードを入力してください。",
     customer_register_code_format_error: "販売王の得意先コードは、カンマと引用符を除く半角13文字以内で入力してください。",
+    customer_register_billing_error: "販売王 請求得意先コードを、カンマと引用符を除く半角13文字以内で入力してください。",
+    customer_register_closing_error: "販売王 得意先締めコードを選択してください。",
     customer_register_name_error: "得意先名を入力してください。",
     customer_register_saving: "販売王コードを確認して得意先を登録しています。",
     customer_register_saved: "得意先を登録しました。",
@@ -1713,6 +1719,14 @@ var TRANSLATIONS = {
     customer_access_restore_confirm: "この得意先を再表示しますか？",
     customer_access_delete_confirm: "この得意先を削除しますか？表示設定・表示範囲・ユーザー紐づけも削除されます。",
     customer_access_display_settings: "得意先向け表示ルール",
+    customer_access_hanbaiou_billing: "販売王 請求設定",
+    customer_access_hanbaiou_billing_help: "得意先台帳の請求得意先コードと締めコードを設定します。売上CSVの請求相手（17・18列目）と請求予定日（20列目）は、この設定からサーバーで作成します。",
+    customer_access_hanbaiou_billing_code: "請求得意先コード",
+    customer_access_hanbaiou_closing_code: "得意先締めコード",
+    hanbaiou_closing_select: "選択してください",
+    hanbaiou_closing_on_demand: "0（随時／売上日）",
+    hanbaiou_closing_month_end: "31（末日）",
+    hanbaiou_closing_day: "{day}日締め",
     customer_access_order_publication: "受注機能の公開",
     customer_access_order_publication_help: "公開にすると、受注機能全体が有効な場合に、この得意先の商品画面へ注文ボタンを表示します。初期値は非公開です。",
     customer_access_order_hidden: "非公開",
@@ -3944,6 +3958,10 @@ var TRANSLATIONS = {
     customer_register_hanbaiou_code: "Sales King Customer Code",
     customer_register_code_ph: "Code issued by Sales King",
     customer_register_code_help: "The same value is used for the D-CATS customer code and sales CSV integration.",
+    customer_register_billing_code: "Sales King Billing Customer Code",
+    customer_register_billing_code_help: "This is usually the same as the Sales King customer code.",
+    customer_register_closing_code: "Sales King Closing Code",
+    customer_register_closing_code_help: "Select the ledger value. 0 means on demand and 31 means month end.",
     customer_register_name: "Customer Name",
     customer_register_kana: "Customer Name Kana",
     customer_register_contact: "Contact Name",
@@ -3958,6 +3976,8 @@ var TRANSLATIONS = {
     customer_register_confirm_error: "Confirm that the customer is registered in Sales King and its code has been issued.",
     customer_register_code_error: "Enter the Sales King customer code.",
     customer_register_code_format_error: "Use up to 13 half-width characters, excluding commas and quotation marks.",
+    customer_register_billing_error: "Enter a billing customer code using up to 13 half-width characters, excluding commas and quotation marks.",
+    customer_register_closing_error: "Select the Sales King closing code.",
     customer_register_name_error: "Enter the customer name.",
     customer_register_saving: "Registering the customer with the confirmed Sales King code.",
     customer_register_saved: "Customer registered.",
@@ -3987,6 +4007,14 @@ var TRANSLATIONS = {
     customer_access_restore_confirm: "Restore this customer?",
     customer_access_delete_confirm: "Delete this customer? Display settings, visibility rules, and user links will also be deleted.",
     customer_access_display_settings: "Customer display rules",
+    customer_access_hanbaiou_billing: "Sales King billing settings",
+    customer_access_hanbaiou_billing_help: "Set the billing customer and closing codes from the customer ledger. The server uses them for sales CSV fields 17, 18, and 20.",
+    customer_access_hanbaiou_billing_code: "Billing customer code",
+    customer_access_hanbaiou_closing_code: "Closing code",
+    hanbaiou_closing_select: "Select",
+    hanbaiou_closing_on_demand: "0 (on demand / sale date)",
+    hanbaiou_closing_month_end: "31 (month end)",
+    hanbaiou_closing_day: "Day {day}",
     customer_access_order_publication: "Publish ordering",
     customer_access_order_publication_help: "When enabled, order actions appear for this customer only while the overall ordering feature is available. The default is hidden.",
     customer_access_order_hidden: "Hidden",
@@ -6218,6 +6246,10 @@ var TRANSLATIONS = {
     customer_register_hanbaiou_code: "销售王 客户代码",
     customer_register_code_ph: "销售王签发的代码",
     customer_register_code_help: "D-CATS客户代码与销售CSV联动代码共用此值。",
+    customer_register_billing_code: "销售王 请款客户代码",
+    customer_register_billing_code_help: "通常与销售王客户代码相同。",
+    customer_register_closing_code: "销售王 客户结算代码",
+    customer_register_closing_code_help: "请选择台账值。0表示随时，31表示月末。",
     customer_register_name: "客户名称",
     customer_register_kana: "客户名称假名",
     customer_register_contact: "联系人",
@@ -6232,6 +6264,8 @@ var TRANSLATIONS = {
     customer_register_confirm_error: "请先在销售王登记客户，并勾选已签发客户代码。",
     customer_register_code_error: "请输入销售王客户代码。",
     customer_register_code_format_error: "销售王客户代码请使用不含逗号及引号的13位以内半角字符。",
+    customer_register_billing_error: "销售王请款客户代码请使用不含逗号及引号的13位以内半角字符。",
+    customer_register_closing_error: "请选择销售王客户结算代码。",
     customer_register_name_error: "请输入客户名称。",
     customer_register_saving: "正在使用已确认的销售王代码登记客户。",
     customer_register_saved: "客户登记完成。",
@@ -6261,6 +6295,14 @@ var TRANSLATIONS = {
     customer_access_restore_confirm: "要恢复显示此客户吗？",
     customer_access_delete_confirm: "要删除此客户吗？显示设置、显示范围和用户关联也会被删除。",
     customer_access_display_settings: "客户显示规则",
+    customer_access_hanbaiou_billing: "销售王请款设置",
+    customer_access_hanbaiou_billing_help: "设置客户台账中的请款客户代码和结算代码。服务器据此生成销售CSV第17、18和20列。",
+    customer_access_hanbaiou_billing_code: "请款客户代码",
+    customer_access_hanbaiou_closing_code: "客户结算代码",
+    hanbaiou_closing_select: "请选择",
+    hanbaiou_closing_on_demand: "0（随时／销售日）",
+    hanbaiou_closing_month_end: "31（月末）",
+    hanbaiou_closing_day: "{day}日结算",
     customer_access_order_publication: "公开订购功能",
     customer_access_order_publication_help: "开启后，仅在整体订购功能可用时向该客户显示订购操作。默认不公开。",
     customer_access_order_hidden: "不公开",
@@ -6946,7 +6988,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1027";
+var APP_VERSION       = "v1.1.1028";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -48692,6 +48734,19 @@ function normalizeHanbaiouCustomerCode(value) {
   return normalizeAsciiWidth(String(value || "")).trim();
 }
 
+function hanbaiouClosingCodeOptionsHtml(selected, includePlaceholder) {
+  selected = String(selected == null ? "" : selected);
+  var rows = includePlaceholder ? [{ value: "", label: t("hanbaiou_closing_select") }] : [];
+  rows.push({ value: "0", label: t("hanbaiou_closing_on_demand") });
+  for (var day = 1; day <= 30; day += 1) {
+    rows.push({ value: String(day), label: tf("hanbaiou_closing_day", { day: day }) });
+  }
+  rows.push({ value: "31", label: t("hanbaiou_closing_month_end") });
+  return rows.map(function(row) {
+    return "<option value='" + esc(row.value) + "'" + (row.value === selected ? " selected" : "") + ">" + esc(row.label) + "</option>";
+  }).join("");
+}
+
 function setCustomerRegistrationSaving(saving) {
   customerAccessRegistrationSaving = !!saving;
   var saveButton = document.getElementById("btn-customer-register-save");
@@ -48709,6 +48764,7 @@ async function openCustomerRegistration() {
   await ensureCustomerAccessPriceRanks();
   [
     "customer-register-code", "customer-register-name", "customer-register-kana",
+    "customer-register-billing-code",
     "customer-register-contact", "customer-register-email", "customer-register-phone",
     "customer-register-fax", "customer-register-postal", "customer-register-address1",
     "customer-register-address2"
@@ -48720,6 +48776,8 @@ async function openCustomerRegistration() {
   if (confirmed) confirmed.checked = false;
   var rank = document.getElementById("customer-register-rank");
   if (rank) rank.innerHTML = customerAccessRankOptionsHtml("HANBAIOU_URI_1");
+  var closingCode = document.getElementById("customer-register-closing-code");
+  if (closingCode) closingCode.innerHTML = hanbaiouClosingCodeOptionsHtml("", true);
   setCustomerRegistrationMessage("", false);
   setCustomerRegistrationSaving(false);
   var overlay = document.getElementById("customer-register-overlay");
@@ -48741,8 +48799,13 @@ async function registerHanbaiouCustomer() {
   var codeInput = document.getElementById("customer-register-code");
   var nameInput = document.getElementById("customer-register-name");
   var code = normalizeHanbaiouCustomerCode(codeInput && codeInput.value);
+  var billingCodeInput = document.getElementById("customer-register-billing-code");
+  var billingCode = normalizeHanbaiouCustomerCode(billingCodeInput && billingCodeInput.value);
+  var closingCodeInput = document.getElementById("customer-register-closing-code");
+  var closingCode = String(closingCodeInput && closingCodeInput.value || "").trim();
   var name = customerRegistrationFieldValue("customer-register-name");
   if (codeInput) codeInput.value = code;
+  if (billingCodeInput) billingCodeInput.value = billingCode;
   if (!confirmed) {
     setCustomerRegistrationMessage(t("customer_register_confirm_error"), true);
     var confirmInput = document.getElementById("customer-register-confirmed");
@@ -48759,6 +48822,16 @@ async function registerHanbaiouCustomer() {
     if (codeInput) codeInput.focus();
     return;
   }
+  if (!billingCode || billingCode.length > 13 || !/^[!-~]+$/.test(billingCode) || /[,\"]/.test(billingCode)) {
+    setCustomerRegistrationMessage(t("customer_register_billing_error"), true);
+    if (billingCodeInput) billingCodeInput.focus();
+    return;
+  }
+  if (!/^(0|[1-9]|[12][0-9]|3[01])$/.test(closingCode)) {
+    setCustomerRegistrationMessage(t("customer_register_closing_error"), true);
+    if (closingCodeInput) closingCodeInput.focus();
+    return;
+  }
   if (!name) {
     setCustomerRegistrationMessage(t("customer_register_name_error"), true);
     if (nameInput) nameInput.focus();
@@ -48773,9 +48846,11 @@ async function registerHanbaiouCustomer() {
 
   setCustomerRegistrationSaving(true);
   setCustomerRegistrationMessage(t("customer_register_saving"), false);
-  var result = await sb.rpc("register_hanbaiou_customer", {
+  var result = await sb.rpc("register_hanbaiou_customer_with_billing", {
     p_hanbaiou_customer_code: code,
     p_customer_name: name,
+    p_billing_customer_code: billingCode,
+    p_closing_code: closingCode,
     p_customer_kana: customerRegistrationFieldValue("customer-register-kana") || null,
     p_phone: customerRegistrationFieldValue("customer-register-phone") || null,
     p_fax: customerRegistrationFieldValue("customer-register-fax") || null,
@@ -48857,7 +48932,7 @@ async function loadCustomerAccessMgmt() {
   if (list) list.innerHTML = "<div class='empty'>" + esc(t("loading")) + "</div>";
   var includeInactive = !!(document.getElementById("customer-access-include-inactive") || {}).checked;
   var customerQuery = sb.from("sales_customers")
-    .select("id,source_customer_code,customer_name,customer_kana,price_rank_code,fax,email,contact_name,contact_email,is_active")
+    .select("id,source_code,source_customer_code,customer_name,customer_kana,price_rank_code,billing_customer_code,closing_code,fax,email,contact_name,contact_email,is_active")
     .order("source_customer_code", { ascending: true })
     .limit(2000);
   if (!includeInactive) customerQuery = customerQuery.eq("is_active", true);
@@ -49305,6 +49380,16 @@ function renderCustomerAccessDetail() {
   }
   html += "<button class='btn-sm-del' id='btn-customer-access-delete' type='button'>" + esc(t("customer_access_delete_customer")) + "</button>";
   html += "</div>";
+  if (String(customer.source_code || "").trim().toLowerCase() === "hanbaiou") {
+    html += "<div class='component-section-title'>" + esc(t("customer_access_hanbaiou_billing")) + "</div>";
+    html += "<div class='customer-hanbaiou-billing'>";
+    html += "<div class='customer-hanbaiou-billing-grid'>";
+    html += "<label class='customer-hanbaiou-billing-field'><span>" + esc(t("customer_access_hanbaiou_billing_code")) + "</span><input id='customer-hanbaiou-billing-code' type='text' maxlength='13' inputmode='text' autocomplete='off' value='" + esc(customer.billing_customer_code || "") + "'></label>";
+    html += "<label class='customer-hanbaiou-billing-field'><span>" + esc(t("customer_access_hanbaiou_closing_code")) + "</span><select id='customer-hanbaiou-closing-code'>" + hanbaiouClosingCodeOptionsHtml(customer.closing_code, true) + "</select></label>";
+    html += "</div>";
+    html += "<div class='customer-hanbaiou-billing-help'>" + esc(t("customer_access_hanbaiou_billing_help")) + "</div>";
+    html += "</div>";
+  }
   var orderingEnabled = s.customer_ordering_enabled === true;
   html += "<div class='component-section-title'>" + esc(t("customer_access_order_publication")) + "</div>";
   html += "<label class='customer-order-publication" + (orderingEnabled ? " enabled" : "") + "' data-customer-order-publication for='customer-ordering-enabled'>";
@@ -49413,6 +49498,9 @@ function bindCustomerAccessDetailEvents() {
   });
   detail.querySelectorAll("[data-customer-default-shipping]").forEach(function(el) {
     el.addEventListener("change", updateCustomerAccessSaveState);
+  });
+  detail.querySelectorAll("#customer-hanbaiou-billing-code, #customer-hanbaiou-closing-code").forEach(function(el) {
+    el.addEventListener(el.tagName === "INPUT" ? "input" : "change", updateCustomerAccessSaveState);
   });
   detail.querySelectorAll("[data-customer-category]").forEach(function(el) {
     el.addEventListener("change", function() {
@@ -49533,12 +49621,35 @@ function collectCustomerAccessCategoryVisibility() {
   return visibility;
 }
 
+function collectHanbaiouCustomerBillingSettings() {
+  var billingCodeInput = document.getElementById("customer-hanbaiou-billing-code");
+  var closingCodeInput = document.getElementById("customer-hanbaiou-closing-code");
+  if (!billingCodeInput && !closingCodeInput) return null;
+  return {
+    billing_customer_code: normalizeHanbaiouCustomerCode(billingCodeInput && billingCodeInput.value),
+    closing_code: String(closingCodeInput && closingCodeInput.value || "").trim()
+  };
+}
+
+function validateHanbaiouCustomerBillingSettings(settings) {
+  if (!settings) return null;
+  if (!settings.billing_customer_code || settings.billing_customer_code.length > 13 ||
+      !/^[!-~]+$/.test(settings.billing_customer_code) || /[,\"]/.test(settings.billing_customer_code)) {
+    return { message: t("customer_register_billing_error"), fieldId: "customer-hanbaiou-billing-code" };
+  }
+  if (!/^(0|[1-9]|[12][0-9]|3[01])$/.test(settings.closing_code)) {
+    return { message: t("customer_register_closing_error"), fieldId: "customer-hanbaiou-closing-code" };
+  }
+  return null;
+}
+
 function customerAccessDisplayDraftSignature() {
   if (!currentCustomerAccessCustomer) return null;
   var rankSelect = document.getElementById("customer-access-rank-select");
   return JSON.stringify({
     customerId: String(currentCustomerAccessCustomer.id || ""),
     priceRankCode: rankSelect ? (rankSelect.value || "") : (currentCustomerAccessCustomer.price_rank_code || ""),
+    hanbaiouBilling: collectHanbaiouCustomerBillingSettings(),
     settings: collectCustomerDisplaySettings(),
     categories: collectCustomerAccessCategoryVisibility()
   });
@@ -49689,6 +49800,14 @@ async function saveCustomerAccessSettings() {
   if (!canManageCustomerAccess() || !currentCustomerAccessCustomer) { alert(t("err_perm")); return; }
   if (customerAccessSettingsSaving) return;
   syncCustomerDisplayRuleControls();
+  var hanbaiouBilling = collectHanbaiouCustomerBillingSettings();
+  var hanbaiouBillingError = validateHanbaiouCustomerBillingSettings(hanbaiouBilling);
+  if (hanbaiouBillingError) {
+    alert(hanbaiouBillingError.message);
+    var invalidField = document.getElementById(hanbaiouBillingError.fieldId);
+    if (invalidField) invalidField.focus();
+    return;
+  }
   customerAccessSettingsSaving = true;
   updateCustomerAccessSaveState();
   var customerId = currentCustomerAccessCustomer.id;
@@ -49702,10 +49821,20 @@ async function saveCustomerAccessSettings() {
     var customerR = await sb.from("sales_customers")
       .update({ price_rank_code: nextRankCode || null, updated_at: new Date().toISOString() })
       .eq("id", customerId)
-      .select("id,source_customer_code,customer_name,customer_kana,price_rank_code,is_active")
+      .select("id,source_code,source_customer_code,customer_name,customer_kana,price_rank_code,billing_customer_code,closing_code,is_active")
       .maybeSingle();
     if (customerR.error) throw customerR.error;
-    var updatedCustomer = Object.assign({}, currentCustomerAccessCustomer, customerR.data || {}, { price_rank_code: nextRankCode || null });
+    var billingResult = null;
+    if (hanbaiouBilling) {
+      var billingR = await sb.rpc("save_hanbaiou_customer_billing_settings", {
+        target_sales_customer_id: customerId,
+        target_billing_customer_code: hanbaiouBilling.billing_customer_code,
+        target_closing_code: hanbaiouBilling.closing_code
+      });
+      if (billingR.error) throw billingR.error;
+      billingResult = Array.isArray(billingR.data) ? (billingR.data[0] || {}) : (billingR.data || {});
+    }
+    var updatedCustomer = Object.assign({}, currentCustomerAccessCustomer, customerR.data || {}, billingResult || {}, { price_rank_code: nextRankCode || null });
     var r = await sb.from("customer_display_settings").upsert(data, { onConflict: "sales_customer_id" });
     if (r.error) throw r.error;
     await saveCustomerAccessCategoryVisibility(customerId, categoryVisibility);

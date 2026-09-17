@@ -106,6 +106,7 @@ const saveSandbox = {
   customerAccessSavedDisplayDraft: null,
   customerAccessSettingsSaving: false,
   draftSetting: false,
+  collectHanbaiouCustomerBillingSettings: () => null,
   collectCustomerDisplaySettings: () => ({ show_product_images: saveSandbox.draftSetting }),
   collectCustomerAccessCategoryVisibility: () => ({ starter: true }),
   document: { getElementById: (id) => saveElements[id] || null },

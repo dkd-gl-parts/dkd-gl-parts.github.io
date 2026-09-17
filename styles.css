@@ -2448,6 +2448,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .detail-lower-panel .price-section-title { margin-top: 0; flex: 0 0 auto; }
 .detail-lower-panel #detail-customer-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; }
 .customer-setting-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0 12px; }
+.customer-hanbaiou-billing { margin: 10px 0 14px; padding: 11px 12px; border: 1px solid #d8e3f0; border-left: 4px solid #1f6fd1; border-radius: 8px; background: #f7faff; }
+.customer-hanbaiou-billing-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.customer-hanbaiou-billing-field { min-width: 0; display: grid; gap: 5px; }
+.customer-hanbaiou-billing-field span { color: #405268; font-size: 11px; font-weight: 800; }
+.customer-hanbaiou-billing-field input, .customer-hanbaiou-billing-field select { width: 100%; min-width: 0; height: 36px; box-sizing: border-box; border: 1px solid #bdcbe0; border-radius: 6px; padding: 0 9px; background: #fff; color: #15263b; font-size: 12px; outline: none; }
+.customer-hanbaiou-billing-field input:focus, .customer-hanbaiou-billing-field select:focus { border-color: #1f6fd1; box-shadow: 0 0 0 2px rgba(31,111,209,.12); }
+.customer-hanbaiou-billing-help { margin-top: 7px; color: #667085; font-size: 10px; line-height: 1.5; }
 .customer-check { border: 1px solid #e6ebf3; border-radius: 8px; padding: 9px 10px; display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #334155; background: #fff; line-height: 1.45; }
 .customer-check input { margin-top: 2px; flex: 0 0 auto; }
 .customer-check.disabled { color: #9aa3b2; background: #f7f8fa; }
@@ -2518,7 +2525,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .customer-rule-candidates, .customer-rule-selected { margin-left: 0; }
 }
 @media(max-width:640px){
-  .customer-access-summary, .customer-setting-grid, .customer-default-shipping-grid, .customer-rule-form { grid-template-columns: 1fr; }
+  .customer-access-summary, .customer-setting-grid, .customer-hanbaiou-billing-grid, .customer-default-shipping-grid, .customer-rule-form { grid-template-columns: 1fr; }
   .customer-access-save-bar { position: static; align-items: stretch; flex-direction: column; gap: 10px; }
   .customer-access-save-btn { width: 100%; white-space: normal; }
   .customer-order-publication { align-items: flex-start; flex-direction: column; gap: 10px; }

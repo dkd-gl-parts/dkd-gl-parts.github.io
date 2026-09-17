@@ -148,6 +148,8 @@ jobs:
         run: node scripts/verify-hanbaiou-product-onboarding.js
       - name: Verify Sales King customer onboarding
         run: node scripts/verify-hanbaiou-customer-onboarding.js
+      - name: Verify Sales King customer billing settings
+        run: node scripts/verify-hanbaiou-billing-settings.js
       - name: Verify shared business workspace shortcut
         run: node scripts/verify-business-workspace-shortcut.js
       - name: Verify offline postal data
