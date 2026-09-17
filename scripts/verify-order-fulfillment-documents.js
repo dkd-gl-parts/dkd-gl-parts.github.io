@@ -1038,11 +1038,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1023"',
-  'styles.css?v=1.1.1023',
-  'app.js?v=1.1.1023'
+  'content="v1.1.1024"',
+  'styles.css?v=1.1.1024',
+  'app.js?v=1.1.1024'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1023"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1024"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");

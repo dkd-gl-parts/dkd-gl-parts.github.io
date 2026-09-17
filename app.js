@@ -6946,7 +6946,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1023";
+var APP_VERSION       = "v1.1.1024";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -17700,14 +17700,9 @@ function salesOrderItemRowsHtml(items, order) {
       ? Math.max(0, Number(storedCoreChargeTotal) || 0)
       : coreChargePerUnit * quantity;
     if (coreChargePerUnit <= 0 && coreChargeTotal > 0) coreChargePerUnit = coreChargeTotal / quantity;
-    var coreStatusLabel = coreChargeTotal > 0
-      ? customerOrderItemCoreStatusLabel(order, item)
-      : coreHandling === "charge_no_return" || coreHandling === "charge_with_return"
-        ? t("customer_order_core_not_returned_short")
-        : customerOrderCoreHandlingLabel(item);
-    var productRow = "<div class='sales-order-item-row sales-order-product-row" + (coreChargeTotal > 0 ? " has-core-charge" : "") + "'><div><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || "-") + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small></div><span>" + esc(customerProductKindLabel(item.product_kind)) + "</span><strong>" + esc(quantity) + "</strong><span>" + esc(customerOrderCurrency(customerOrderProductUnitPrice(item))) + "</span><strong>" + esc(customerOrderCurrency(customerOrderProductLineTotal(item))) + "</strong><span class='sales-order-core " + (["return_required", "charge_with_return"].indexOf(coreHandling) >= 0 ? "required" : (coreHandling === "charge_no_return" ? "charged" : "none")) + "' title='" + esc(customerOrderCoreHandlingLabel(item)) + "'>" + esc(coreStatusLabel) + "</span></div>";
+    var productRow = "<div class='sales-order-item-row sales-order-product-row'><div><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || "-") + "</strong><small>" + esc([item.manufacturer, item.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small></div><span>" + esc(customerProductKindLabel(item.product_kind)) + "</span><strong>" + esc(quantity) + "</strong><span>" + esc(customerOrderCurrency(customerOrderProductUnitPrice(item))) + "</span><strong>" + esc(customerOrderCurrency(customerOrderProductLineTotal(item))) + "</strong></div>";
     if (coreChargeTotal <= 0) return productRow;
-    return productRow + "<div class='sales-order-item-row sales-order-core-charge-row'><div><strong>" + esc(t("customer_order_core_charge_total")) + "</strong><small>" + esc(tf("customer_order_part_charge_reference", { part: item.genuine_part_number || item.manufacturer_part_number || "-" })) + "</small></div><span>" + esc(t("customer_order_core_charge_kind")) + "</span><strong>" + esc(quantity) + "</strong><span>" + esc(customerOrderCurrency(coreChargePerUnit)) + "</span><strong class='sales-order-core-charge'>" + esc(customerOrderCurrency(coreChargeTotal)) + "</strong><span class='sales-order-core charged' title='" + esc(t("customer_order_core_charge_no_return_status")) + "'>" + esc(t("customer_order_core_charge_billed_short")) + "</span></div>";
+    return productRow + "<div class='sales-order-item-row sales-order-core-charge-row'><div><strong>" + esc(t("customer_order_core_charge_total")) + "</strong><small>" + esc(tf("customer_order_part_charge_reference", { part: item.genuine_part_number || item.manufacturer_part_number || "-" })) + "</small></div><span>" + esc(t("customer_order_core_charge_kind")) + "</span><strong>" + esc(quantity) + "</strong><span>" + esc(customerOrderCurrency(coreChargePerUnit)) + "</span><strong class='sales-order-core-charge'>" + esc(customerOrderCurrency(coreChargeTotal)) + "</strong></div>";
   }).join("");
 }
 
@@ -17719,7 +17714,7 @@ function salesOrderAdjustmentRowsHtml(rows, fallbackAmount) {
   if (!rows.length) return "";
   return rows.map(function(row) {
     var amount = "-" + customerOrderCurrency(row.amount_jpy);
-    return "<div class='sales-order-item-row sales-order-charge-row sales-order-adjustment-row'><div><strong>" + esc(row.adjustment_name || "値引") + "</strong><small>" + esc(row.note || "-") + "</small></div><span>値引・調整</span><strong>1</strong><span>" + esc(amount) + "</span><strong>" + esc(amount) + "</strong><span>-</span></div>";
+    return "<div class='sales-order-item-row sales-order-charge-row sales-order-adjustment-row'><div><strong>" + esc(row.adjustment_name || "値引") + "</strong><small>" + esc(row.note || "-") + "</small></div><span>値引・調整</span><strong>1</strong><span>" + esc(amount) + "</span><strong>" + esc(amount) + "</strong></div>";
   }).join("");
 }
 
@@ -17728,14 +17723,14 @@ function salesOrderBillingDetailRowsHtml(order) {
   var shippingFee = Math.max(0, Number(order.shipping_fee_jpy) || 0);
   var outboundService = salesOrderWaybillCarrierLabel(order, "outbound");
   var shippingAmount = shippingFee === 0 ? "送料無料" : customerOrderCurrency(shippingFee);
-  return "<div class='sales-order-item-row sales-order-charge-row sales-order-shipping-row'><div><strong>送料</strong><small>" + esc(outboundService || "配送方法未設定") + "</small></div><span>送料</span><strong>1</strong><span>" + esc(shippingAmount) + "</span><strong>" + esc(shippingAmount) + "</strong><span>-</span></div>" +
-    "<div class='sales-order-item-row sales-order-charge-row sales-order-tax-row'><div><strong>消費税</strong></div><span>消費税</span><strong>-</strong><span>-</span><strong>" + esc(customerOrderCurrency(order.tax_jpy)) + "</strong><span>-</span></div>" +
-    "<div class='sales-order-item-row sales-order-charge-row sales-order-total-row'><div><strong>請求合計</strong><small>税込</small></div><span>合計</span><strong>-</strong><span>-</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong><span>-</span></div>";
+  return "<div class='sales-order-item-row sales-order-charge-row sales-order-shipping-row'><div><strong>送料</strong><small>" + esc(outboundService || "配送方法未設定") + "</small></div><span>送料</span><strong>1</strong><span>" + esc(shippingAmount) + "</span><strong>" + esc(shippingAmount) + "</strong></div>" +
+    "<div class='sales-order-item-row sales-order-charge-row sales-order-tax-row'><div><strong>消費税</strong></div><span>消費税</span><strong>-</strong><span>-</span><strong>" + esc(customerOrderCurrency(order.tax_jpy)) + "</strong></div>" +
+    "<div class='sales-order-item-row sales-order-charge-row sales-order-total-row'><div><strong>請求合計</strong><small>税込</small></div><span>合計</span><strong>-</strong><span>-</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div>";
 }
 
 function salesOrderBillingDetailsHtml(order, adjustments, fallbackDiscount) {
   order = order || {};
-  return "<div class='sales-order-item-table sales-order-billing-detail-table'><div class='sales-order-item-head'><span>明細</span><span>区分</span><span>数量</span><span>単価</span><span>小計</span><span>状態</span></div>" +
+  return "<div class='sales-order-item-table sales-order-billing-detail-table'><div class='sales-order-item-head'><span>明細</span><span>区分</span><span>数量</span><span>単価</span><span>小計</span></div>" +
     salesOrderItemRowsHtml(order.items, order) +
     salesOrderAdjustmentRowsHtml(adjustments, fallbackDiscount) +
     salesOrderBillingDetailRowsHtml(order) +

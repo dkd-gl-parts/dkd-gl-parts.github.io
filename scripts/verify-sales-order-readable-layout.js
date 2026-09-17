@@ -32,7 +32,7 @@ for (const fragment of [
   ".sales-order-detail-overview-grid { grid-template-columns: minmax(0, 1fr);",
   ".sales-order-item-row { min-height: 64px; font-size: 15px;",
   ".sales-order-item-row > div small { margin-top: 2px; font-size: 12px;",
-  ".sales-order-core-charge-row { min-height: 52px; border-left: 3px solid #d2a543;",
+  ".sales-order-core-charge-row { min-height: 52px; }",
   ".sales-order-total-row > strong:nth-child(5) { font-size: 18px; }",
   "word-break: keep-all; overflow-wrap: anywhere;",
   "@media screen and (min-width: 1081px)",
@@ -44,7 +44,7 @@ for (const fragment of [
   ".sales-order-detail-overview-grid { grid-template-columns: minmax(0, 1fr); align-items: start;",
   ".sales-order-detail-overview-grid .sales-order-item-table { overflow-x: auto; }",
   ".sales-order-detail-overview-grid .sales-order-item-head,",
-  "grid-template-columns: minmax(180px, 1.5fr) 96px 54px 110px 118px 142px; min-width: 820px;",
+  "grid-template-columns: minmax(240px, 1.75fr) minmax(120px, .75fr) 72px 120px 128px; min-width: 740px;",
   ".sales-order-detail-overview-grid .sales-order-address .sales-order-section-heading { grid-column: 1 / -1; grid-row: 1; }",
   ".sales-order-detail-overview-grid .sales-order-address-destination { grid-column: 1; grid-row: 2; }",
   ".sales-order-detail-overview-grid .sales-order-address dl { grid-column: 2; grid-row: 2;",
@@ -107,11 +107,23 @@ for (const [label, pattern] of [
 }
 
 for (const fragment of [
+  ".sales-order-item-head > :nth-child(n + 3),",
+  ".sales-order-item-row > :nth-child(n + 3) { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }",
+  ".sales-order-core-charge-row { background: transparent; }",
   ".sales-order-charge-row { background: #fbfcfc; }",
   ".sales-order-shipping-row { border-top: 2px solid #cdd8d2; }",
   ".sales-order-total-row { border-top: 2px solid #8bb19e;"
 ]) {
   if (!css.includes(fragment)) throw new Error(`Missing billing-detail row style: ${fragment}`);
+}
+
+for (const obsolete of [
+  ".sales-order-product-row.has-core-charge",
+  ".sales-order-core-charge-row { border-left: 3px solid #d2a543;",
+  ".sales-order-core.required",
+  ".sales-order-core.charged"
+]) {
+  if (css.includes(obsolete)) throw new Error(`Obsolete billing-detail emphasis remains: ${obsolete}`);
 }
 
 if (css.includes(".sales-order-billing-summary")) {
