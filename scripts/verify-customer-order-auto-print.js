@@ -180,25 +180,26 @@ for (const fragment of [
   if (!printDocument.includes(fragment)) throw new Error(`Manual shipment document rendering is missing: ${fragment}`);
 }
 for (const fragment of [
-  "@page dcats-a5 { size: A5 portrait",
-  ".document-a5 .shipment-document { page: dcats-a5; }",
-  ".shipment-document-a5",
+  "@page dcats-dispatch { size: A4 portrait; margin: 0; }",
+  ".dispatch-sheet { page: dcats-dispatch;",
+  "width: 210mm; height: 297mm;",
   "@page dcats-core-return { size: A5 landscape; margin: 0; }",
   ".core-return-sheet",
-  "@page dcats-warranty-a4 { size: A4 landscape; margin: 0; }",
+  "@page dcats-warranty-a5 { size: A5 landscape; margin: 0; }",
   ".warranty-print-sheet",
-  "width: 297mm; height: 210mm;",
   "width: 210mm; height: 148mm;",
-  ".warranty-certificate"
+  ".warranty-certificate",
+  "filter: grayscale(1);",
+  "print-color-adjust: economy;"
 ]) {
   if (!printCss.includes(fragment)) throw new Error(`A5 shipment document styling is missing: ${fragment}`);
 }
 
 for (const versionFragment of [
-  'content="v1.1.1026"',
-  'styles.css?v=1.1.1026',
-  'app.js?v=1.1.1026',
-  'var APP_VERSION       = "v1.1.1026"'
+  'content="v1.1.1027"',
+  'styles.css?v=1.1.1027',
+  'app.js?v=1.1.1027',
+  'var APP_VERSION       = "v1.1.1027"'
 ]) {
   const versionSource = versionFragment.startsWith("var ") ? source : html;
   if (!versionSource.includes(versionFragment)) throw new Error(`Release version is inconsistent: ${versionFragment}`);
