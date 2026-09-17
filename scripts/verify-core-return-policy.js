@@ -38,32 +38,22 @@ if (!standardPolicyHtml.includes("core_charge_short")) {
 
 const costSource = sourceBetween("function manufacturingCostCoreCostForProduct", "function manufacturingCostCoreCostForCategory");
 const costSandbox = {
-  manufacturingCostCorePolicyMap: {},
   manufacturingCostSettings() { return {}; },
-  normalizeProductKind: policySandbox.normalizeProductKind,
-  productDkdId(product) { return product.dkd_shohin_id; },
-  manufacturingCostProductCategory(product) { return product.category_code || ""; },
-  coreReturnPolicyForKind: policySandbox.result.policy
+  manufacturingCostProductCategory(product) { return product.category_code || ""; }
 };
 vm.runInNewContext(`${costSource}; result = manufacturingCostCoreCostForProduct;`, costSandbox);
 const product = { dkd_shohin_id: 100, category_code: "starter" };
 const settings = { productKind: "rebuilt", coreCost: 1500, categoryCoreCosts: { starter: 2000 } };
 
-costSandbox.manufacturingCostCorePolicyMap["100"] = { product_kind: "rebuilt", core_return_required: true, core_charge_jpy: 4800 };
 let cost = costSandbox.result(product, settings);
-if (cost.amount !== 4800 || cost.source !== "product") throw new Error("product core charge must take priority");
-
-costSandbox.manufacturingCostCorePolicyMap["100"] = { product_kind: "rebuilt", core_return_required: true, core_charge_jpy: null };
-cost = costSandbox.result(product, settings);
-if (cost.amount !== 2000 || cost.source !== "category") throw new Error("an unset product charge must fall back to the category charge");
-
-costSandbox.manufacturingCostCorePolicyMap["100"] = { product_kind: "rebuilt", core_return_required: false, core_charge_jpy: 4800 };
-cost = costSandbox.result(product, settings);
-if (cost.amount !== 0 || cost.returnRequired !== false) throw new Error("a no-return product must have zero core cost");
-
-delete costSandbox.manufacturingCostCorePolicyMap["100"];
+if (cost.amount !== 2000 || cost.source !== "category") throw new Error("manufacturing core cost must use the category acquisition cost");
 cost = costSandbox.result(product, { productKind: "aftermarket_new", coreCost: 1500, categoryCoreCosts: { starter: 2000 } });
-if (cost.amount !== 0 || cost.source !== "kind_default") throw new Error("aftermarket new must default to no return and zero core cost");
+if (cost.amount !== 2000 || cost.source !== "category") throw new Error("manufacturing core cost must not depend on the customer return policy");
+cost = costSandbox.result({ dkd_shohin_id: 101, category_code: "alternator" }, { coreCost: 1500, categoryCoreCosts: {} });
+if (cost.amount !== 1500 || cost.source !== "default") throw new Error("manufacturing core cost must fall back to the GLTEK default");
+if (/core_charge_jpy|coreReturnPolicyForKind|manufacturingCostCorePolicyMap/.test(costSource)) {
+  throw new Error("manufacturing core acquisition cost must remain separate from customer core billing");
+}
 
 [
   "pf-core-policy-kind",

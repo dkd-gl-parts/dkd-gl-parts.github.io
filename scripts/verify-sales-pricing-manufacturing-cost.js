@@ -46,15 +46,17 @@ const totalSource = sourceBetween("function parsePriceNumber", "async function f
 const totalSandbox = {};
 vm.runInNewContext(`${totalSource}
 result = salesPricingManufacturingCostTotal({
-  total_cost_jpy_snapshot: 2280,
+  total_cost_jpy_snapshot: 3290,
   parts_cost_jpy_snapshot: 780,
   core_cost_jpy_snapshot: 1500,
   labor_cost_jpy_snapshot: 0,
-  selling_expense_jpy_snapshot: 510
+  transport_cost_jpy_snapshot: 200,
+  selling_expense_jpy_snapshot: 510,
+  core_return_shipping_cost_jpy_snapshot: 300
 });
 legacyResult = salesPricingManufacturingCostTotal({ total_cost_jpy_snapshot: 2280 });`, totalSandbox);
-if (totalSandbox.result !== 2790) {
-  throw new Error("sales pricing must display the sum of parts, core, labor, and selling expense");
+if (totalSandbox.result !== 3290) {
+  throw new Error("sales pricing must display the GLTEK and DKD cost total");
 }
 if (totalSandbox.legacyResult !== 2280) {
   throw new Error("sales pricing must retain the saved total when legacy breakdown data is incomplete");

@@ -162,6 +162,8 @@ jobs:
         run: node scripts/verify-manufacturing-cost-import.js
       - name: Verify manufacturing cost snapshot status
         run: node scripts/verify-manufacturing-cost-snapshot-status.js
+      - name: Verify manufacturing cost company breakdown
+        run: node scripts/verify-manufacturing-cost-company-breakdown.js
       - name: Verify manufacturing cost target removal
         run: node scripts/verify-manufacturing-cost-target-removal.js
       - name: Verify sales pricing manufacturing cost
