@@ -68,21 +68,17 @@ for (const fragment of ["sales-order-list-next", "次の操作", "salesOrderNext
 
 const detail = functionSource("renderSalesOrderDetail");
 for (const fragment of [
-  "salesOrderOperationTracksHtml(order)",
   '{ key: "accounting", label: "売上処理" }',
   "sales-order-detail-panel-accounting",
   "salesOrderAccountingPanelHtml(order)",
   'openSalesAccountingExport({ order: order })',
 ]) requireFragment(detail, fragment);
-
-const tracks = functionSource("salesOrderOperationTracksHtml");
-for (const fragment of [
-  "sales-order-operation-tracks",
-  't("sales_order_operation_shipping")',
-  't("sales_order_operation_shipping_done")',
-  't("sales_order_operation_sales")',
-  't("sales_order_accounting_after_shipping")',
-]) requireFragment(tracks, fragment);
+for (const obsolete of ["salesOrderStatusSummaryHtml(order)", "salesOrderOperationTracksHtml(order)"]) {
+  if (detail.includes(obsolete)) throw new Error(`Selected-order detail repeats progress outside its owning section: ${obsolete}`);
+}
+if (source.includes("function salesOrderOperationTracksHtml(") || css.includes(".sales-order-operation-track")) {
+  throw new Error("The duplicate shipping and sales progress strip must stay removed");
+}
 
 const accountingPanel = functionSource("salesOrderAccountingPanelHtml");
 for (const fragment of [
@@ -122,11 +118,9 @@ requireFragment(html, 'id="sales-accounting-export-order-context"');
 for (const fragment of [
   ".sales-order-queue-heading",
   ".sales-order-list-next",
-  ".sales-order-operation-tracks",
   ".sales-order-accounting-panel",
   ".sales-order-accounting-facts",
   ".sales-accounting-export-order-context",
-  "#screen-sales-order-mgmt .sales-order-operation-tracks { grid-template-columns: 1fr; }",
   "#screen-sales-order-mgmt .sales-order-accounting-facts { grid-template-columns: 1fr; }",
 ]) requireFragment(css, fragment);
 

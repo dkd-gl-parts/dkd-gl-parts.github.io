@@ -84,12 +84,14 @@ if (!lifecycleContext.salesOrderLifecycleHtml("cancelled").includes("受注取�
 const detail = functionSource("renderSalesOrderDetail");
 for (const fragment of [
   "salesOrderLifecycleHtml(order.status)",
-  "salesOrderStatusSummaryHtml(order)",
   "salesOrderDispatchHtml(order)",
   'class=\'sales-order-detail-head\'',
   'class=\'sales-order-detail-state\'',
   "sales-order-empty-guidance"
 ]) requireFragment(detail, fragment);
+if (detail.includes("salesOrderStatusSummaryHtml(order)")) {
+  throw new Error("The selected-order header must not repeat lifecycle and sales-management status badges");
+}
 if (detail.includes("salesOrderTrackingEditorHtml(order)")) {
   throw new Error("The outbound tracking editor must stay inside the waybill progress card");
 }
