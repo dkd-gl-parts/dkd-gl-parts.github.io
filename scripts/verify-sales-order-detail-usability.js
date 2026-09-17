@@ -61,14 +61,18 @@ for (const fragment of [
   "sales-order-list-context",
   "sales-order-list-customer",
   "sales-order-list-meta",
-  "sales-order-list-next"
+  "sales-order-list-next",
+  "customerOrderSourceBadgeHtml(order.order_source)",
+  "salesOrderNextOperationLabel(order)"
 ]) requireFragment(listRow, fragment);
 for (const obsolete of [
   "sales-order-list-statuses",
   "sales-order-list-metrics",
-  "salesOrderAccountingStatusHtml(order)"
+  "salesOrderAccountingStatusHtml(order)",
+  "customerOrderDateTimeText(order.ordered_at || order.created_at)",
+  "<time>"
 ]) {
-  if (listRow.includes(obsolete)) throw new Error(`Redundant order-list progress remains: ${obsolete}`);
+  if (listRow.includes(obsolete)) throw new Error(`Redundant order-list content remains: ${obsolete}`);
 }
 requireFragment(list, "salesOrderListRowHtml");
 
