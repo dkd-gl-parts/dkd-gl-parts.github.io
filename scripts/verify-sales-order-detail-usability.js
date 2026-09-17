@@ -56,10 +56,20 @@ const list = functionSource("renderSalesOrderList");
 const listRow = functionSource("salesOrderListRowHtml");
 for (const fragment of [
   "sales-order-list-identity",
+  "sales-order-list-number",
+  "sales-order-list-total",
+  "sales-order-list-context",
   "sales-order-list-customer",
   "sales-order-list-meta",
-  "sales-order-list-metrics"
+  "sales-order-list-next"
 ]) requireFragment(listRow, fragment);
+for (const obsolete of [
+  "sales-order-list-statuses",
+  "sales-order-list-metrics",
+  "salesOrderAccountingStatusHtml(order)"
+]) {
+  if (listRow.includes(obsolete)) throw new Error(`Redundant order-list progress remains: ${obsolete}`);
+}
 requireFragment(list, "salesOrderListRowHtml");
 
 const detail = functionSource("renderSalesOrderDetail");
@@ -489,7 +499,9 @@ for (const fragment of [
 
 for (const fragment of [
   ".sales-order-list-identity",
-  ".sales-order-list-metrics",
+  ".sales-order-list-number",
+  ".sales-order-list-total",
+  ".sales-order-list-context",
   ".sales-order-detail-next-actions",
   ".sales-order-detail-navigation",
   ".sales-order-detail-nav",

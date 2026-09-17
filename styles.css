@@ -8147,37 +8147,25 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 
 /* Order operations: dense list, action-led detail, and compact price editor. */
 .sales-order-workspace { grid-template-columns: minmax(330px, 380px) minmax(0, 1fr); }
-.sales-order-list-row { grid-template-columns: 22px minmax(0, 1fr); align-items: start; gap: 8px 10px; min-height: 94px; padding: 11px 12px; }
+.sales-order-list-row { grid-template-columns: 22px minmax(0, 1fr); align-items: start; gap: 8px 10px; min-height: 78px; padding: 8px 10px; }
 .sales-order-list-main { min-width: 0; }
 .sales-order-list-identity { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.sales-order-list-identity > strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sales-order-list-statuses { display: flex !important; flex: 0 1 auto; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 5px; margin-top: 0 !important; }
-.sales-order-list-statuses .sales-order-accounting-status { display: inline-flex; margin-top: 0; }
-.sales-order-list-identity .sales-order-status {
-  display: inline-flex;
-  flex: 0 0 64px;
-  width: 64px;
-  min-width: 64px;
-  height: 26px;
-  padding: 0;
-  text-align: center;
-}
-.sales-order-list-customer { margin-top: 4px; }
-.sales-order-list-meta { display: flex; align-items: center; gap: 7px; min-width: 0; margin-top: 5px; }
+.sales-order-list-number { flex: 0 0 auto; min-width: 0; overflow: visible !important; font-variant-numeric: tabular-nums; text-overflow: clip !important; white-space: nowrap; }
+.sales-order-list-total { display: inline-flex !important; flex: 0 0 auto; align-items: baseline; gap: 4px; margin: 0 !important; text-align: right; white-space: nowrap; }
+.sales-order-list-total small,
+.sales-order-list-total strong { display: inline; margin: 0; }
+.sales-order-list-total small { color: #7a8580; font-weight: 700; }
+.sales-order-list-total strong { color: #26352f; font-variant-numeric: tabular-nums; }
+.sales-order-list-customer { min-width: 0; margin: 2px 0 0 !important; }
+.sales-order-list-context { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 7px; min-width: 0; margin-top: 1px; }
+.sales-order-list-meta { display: flex; align-items: center; gap: 6px; min-width: 0; margin: 0; }
 .sales-order-list-meta .sales-order-source { flex: 0 0 auto; margin-top: 0; }
 .sales-order-list-meta time { min-width: 0; overflow: hidden; color: #78837e; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
-.sales-order-list-metrics { grid-column: 2; display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: end; gap: 10px; border-top: 1px solid #e3e7ea; padding-top: 7px; }
-.sales-order-list-metrics > div { min-width: 0; }
-.sales-order-list-metrics span,
-.sales-order-list-metrics strong { display: block; }
-.sales-order-list-metrics span { color: #7a8580; font-size: 8px; }
-.sales-order-list-metrics strong { margin-top: 2px; color: #26352f; font-size: 11px; font-variant-numeric: tabular-nums; }
-.sales-order-list-metrics .sales-order-list-total { text-align: right; }
 .sales-order-queue-heading { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 34px; border-bottom: 1px solid #d8dfe4; border-left: 4px solid #56758f; padding: 7px 12px 7px 10px; background: #eef4f8; color: #304c62; }
 .sales-order-queue-heading.sales { border-left-color: #c28a22; background: #fff8e8; color: #735415; }
 .sales-order-queue-heading strong { font-size: 10px; }
 .sales-order-queue-heading span { font-size: 9px; font-weight: 800; }
-.sales-order-list-next { display: flex; align-items: baseline; gap: 7px; min-width: 0; margin-top: 6px; }
+.sales-order-list-next { display: flex; align-items: baseline; justify-content: flex-end; gap: 4px; min-width: 0; margin: 0; }
 .sales-order-list-next span { flex: 0 0 auto; margin: 0; color: #77837d; font-size: 8px; font-weight: 700; }
 .sales-order-list-next strong { min-width: 0; overflow: hidden; color: #245e48; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -10095,24 +10083,23 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 
   #screen-sales-order-mgmt .sales-order-workspace { grid-template-columns: minmax(360px, 390px) minmax(0, 1fr); }
   #screen-sales-order-mgmt .sales-order-list-head { min-height: 46px; height: auto; padding: 10px 12px; gap: 8px; font-size: 13px; }
-  #screen-sales-order-mgmt .sales-order-list-row { grid-template-columns: 22px minmax(0, 1fr); align-items: start; gap: 9px 11px; min-height: 112px; padding: 12px; }
+  #screen-sales-order-mgmt .sales-order-list-row { grid-template-columns: 22px minmax(0, 1fr); align-items: start; gap: 7px 10px; min-height: 82px; padding: 8px 10px; }
   #screen-sales-order-mgmt .sales-order-check input { width: 18px; height: 18px; }
-  #screen-sales-order-mgmt .sales-order-list-identity > strong { font-size: 16px; line-height: 1.4; }
-  #screen-sales-order-mgmt .sales-order-list-customer { margin-top: 4px; font-size: 14px; line-height: 1.45; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
-  #screen-sales-order-mgmt .sales-order-list-meta { align-items: baseline; flex-wrap: wrap; gap: 5px 8px; margin-top: 5px; }
+  #screen-sales-order-mgmt .sales-order-list-number { overflow: visible; font-size: 16px; line-height: 1.35; text-overflow: clip; white-space: nowrap; }
+  #screen-sales-order-mgmt .sales-order-list-total { gap: 5px; }
+  #screen-sales-order-mgmt .sales-order-list-total small { font-size: 12px; line-height: 1.35; }
+  #screen-sales-order-mgmt .sales-order-list-total strong { font-size: 14px; line-height: 1.35; }
+  #screen-sales-order-mgmt .sales-order-list-customer { overflow: hidden; margin-top: 1px; font-size: 14px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+  #screen-sales-order-mgmt .sales-order-list-context { gap: 6px; margin-top: 1px; }
+  #screen-sales-order-mgmt .sales-order-list-meta { align-items: baseline; flex-wrap: nowrap; gap: 5px; margin-top: 0; }
   #screen-sales-order-mgmt .sales-order-list-meta time,
   #screen-sales-order-mgmt .sales-order-source { font-size: 12px; line-height: 1.4; }
-  #screen-sales-order-mgmt .sales-order-list-metrics { grid-template-columns: 90px minmax(0, 1fr); gap: 12px; padding-top: 8px; }
-  #screen-sales-order-mgmt .sales-order-list-metrics span { font-size: 12px; }
-  #screen-sales-order-mgmt .sales-order-list-metrics strong { margin-top: 2px; font-size: 14px; line-height: 1.4; }
-  #screen-sales-order-mgmt .sales-order-queue-heading { min-height: 42px; padding: 8px 12px 8px 10px; }
+  #screen-sales-order-mgmt .sales-order-queue-heading { min-height: 38px; padding: 6px 12px 6px 10px; }
   #screen-sales-order-mgmt .sales-order-queue-heading strong { font-size: 14px; line-height: 1.35; }
   #screen-sales-order-mgmt .sales-order-queue-heading span { font-size: 12px; }
-  #screen-sales-order-mgmt .sales-order-list-next { gap: 8px; margin-top: 7px; }
+  #screen-sales-order-mgmt .sales-order-list-next { gap: 4px; margin-top: 0; }
   #screen-sales-order-mgmt .sales-order-list-next span { font-size: 12px; }
   #screen-sales-order-mgmt .sales-order-list-next strong { font-size: 13px; line-height: 1.4; }
-  #screen-sales-order-mgmt .sales-order-status { min-width: 72px; height: auto; min-height: 30px; padding: 4px 9px; font-size: 12px; line-height: 1.25; }
-  #screen-sales-order-mgmt .sales-order-accounting-status { min-height: 30px; padding: 4px 8px; font-size: 12px; line-height: 1.25; }
 
   #screen-sales-order-mgmt .sales-order-detail-pane { padding: 0 18px 28px; }
   #screen-sales-order-mgmt .sales-order-empty { font-size: 14px; }
