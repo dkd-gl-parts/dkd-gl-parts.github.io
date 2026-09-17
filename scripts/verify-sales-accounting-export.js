@@ -224,6 +224,11 @@ for (const fragment of [
 requireFragment(css, ".sales-accounting-export-body { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; overflow-y: auto;", "Sales export content must scroll independently so the CSV action remains visible");
 requireFragment(css, ".sales-accounting-export-footer { position: relative; z-index: 1; flex: 0 0 auto;", "Sales export footer must remain outside the scrollable content");
 requireFragment(css, ".sales-accounting-export-footer { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);", "Both footer actions must remain visible on narrow screens");
+requireFragment(css, "@media (min-width: 821px) and (min-height: 800px) {", "Tall desktop layouts need a dedicated no-outer-scroll contract");
+requireFragment(css, ".sales-accounting-export-body { overflow-y: hidden; }", "The tall desktop sales export body must not show a redundant outer scrollbar");
+requireFragment(css, ".sales-accounting-export-workspace { min-height: 0; }", "The sales export workspace must absorb the remaining desktop height");
+requireFragment(css, ".sales-accounting-export-body:has(.sales-accounting-troubleshooting-guide[open])", "Expanded troubleshooting must restore safe body scrolling");
+requireFragment(css, ".sales-accounting-export-body:has(.sales-accounting-hanbaiou-guide[open])", "Expanded product onboarding must restore safe body scrolling");
 
 (async () => {
   let writtenName = "";
