@@ -44,6 +44,10 @@ const managementLoad = sourceBetween("async function loadPartsMgmt", "function r
 if ((managementLoad.match(/await loadPartsMgmtShippingWeights\(partsMgmtData\)/g) || []).length !== 2) {
   throw new Error("both product-management result paths must load product weights before rendering");
 }
+const managementEnter = sourceBetween("async function enterPartsMgmt", "async function loadPartsMgmtShippingWeights");
+if (!managementEnter.includes('partsMgmtWeightSortDirection = ""')) {
+  throw new Error("product management must begin with the existing unsorted result order");
+}
 
 const managementRender = sourceBetween("function renderPartsMgmt", "async function openPartForm");
 [
@@ -61,6 +65,49 @@ const managementWeightTextSource = sourceBetween("function partsMgmtWeightText",
 const managementWeightText = new Function(`${managementWeightTextSource}\nreturn partsMgmtWeightText;`)();
 if (managementWeightText(null) !== "-" || managementWeightText("4.80") !== "4.8" || managementWeightText(-1) !== "-") {
   throw new Error("product management weight formatting must distinguish missing, valid, and invalid values");
+}
+
+const managementWeightSortSource = sourceBetween("function partsMgmtWeightNumber", "function partsMgmtWeightSortOrderLabel");
+const managementWeightSort = new Function(`
+  var partsMgmtData = [];
+  var partsMgmtWeightSortDirection = "";
+  ${managementWeightSortSource}
+  return function(rows, direction) {
+    partsMgmtData = rows;
+    partsMgmtWeightSortDirection = direction;
+    return partsMgmtRowsForDisplay();
+  };
+`)();
+const managementWeightFixtures = [
+  { code: "A", shipping_weight_kg: "4.8" },
+  { code: "B", shipping_weight_kg: null },
+  { code: "C", shipping_weight_kg: "3" },
+  { code: "D", shipping_weight_kg: "4.80" },
+  { code: "E", shipping_weight_kg: "invalid" }
+];
+if (managementWeightSort(managementWeightFixtures, "").map((row) => row.code).join("") !== "ABCDE" ||
+    managementWeightSort(managementWeightFixtures, "ascending").map((row) => row.code).join("") !== "CADBE" ||
+    managementWeightSort(managementWeightFixtures, "descending").map((row) => row.code).join("") !== "ADCBE") {
+  throw new Error("product management weight sorting must preserve the default order, remain stable, and keep missing values last");
+}
+if (managementWeightFixtures.map((row) => row.code).join("") !== "ABCDE") {
+  throw new Error("product management weight sorting must not mutate the source rows");
+}
+
+[
+  "partsMgmtRowsForDisplay().forEach",
+  "data-parts-weight-sort",
+  "aria-sort='",
+  "partsMgmtWeightSortActionLabel()",
+  "partsMgmtWeightSortOrderLabel()",
+  'weightSortButton.addEventListener("click", togglePartsMgmtWeightSort)'
+].forEach((fragment) => {
+  if (!managementRender.includes(fragment)) throw new Error(`product management weight sorting is incomplete: ${fragment}`);
+});
+const managementWeightSortActions = sourceBetween("function partsMgmtWeightSortOrderLabel", "async function loadPartsMgmt");
+if (!managementWeightSortActions.includes('partsMgmtWeightSortDirection === "ascending" ? "descending" : "ascending"') ||
+    !managementWeightSortActions.includes("renderPartsMgmt();")) {
+  throw new Error("product management weight sort toggle is incomplete");
 }
 
 const formMode = sourceBetween("function setProductFormFieldMode", "function setCoreProductFormFields");
@@ -191,7 +238,7 @@ if (!source.includes("productShippingSizeRows.push(selected)")) {
   throw new Error("saved package sizes must be retained when the current master no longer contains them");
 }
 
-["product_shipping_section", "product_shipping_weight", "product_shipping_loading", "product_shipping_unlinked", "product_shipping_load_failed", "product_weight_list_load_failed", "product_shipping_save_failed", "sales_shipping_estimate_title", "sales_shipping_manual_size_note", "sales_shipping_weight_size_note"].forEach((key) => {
+["product_shipping_section", "product_shipping_weight", "product_shipping_loading", "product_shipping_unlinked", "product_shipping_load_failed", "product_weight_list_load_failed", "product_weight_sort_ascending", "product_weight_sort_descending", "product_weight_sort_ascending_action", "product_weight_sort_descending_action", "product_shipping_save_failed", "sales_shipping_estimate_title", "sales_shipping_manual_size_note", "sales_shipping_weight_size_note"].forEach((key) => {
   const count = (source.match(new RegExp(`${key}:`, "g")) || []).length;
   if (count !== 3) throw new Error(`${key} must be translated for all supported languages`);
 });
@@ -227,8 +274,11 @@ if (customerSectionIndex < 0 || shippingSectionIndex < customerSectionIndex || p
 [
   "#screen-parts-mgmt .mgmt-body { max-width: 1160px; }",
   "#parts-mgmt-list { overflow-x: auto;",
-  "#parts-mgmt-list .parts-mgmt-table { min-width: 1000px; }",
+  "#parts-mgmt-list .parts-mgmt-table { min-width: 1040px; }",
   ".parts-mgmt-table .parts-mgmt-weight",
+  ".parts-mgmt-weight-sort",
+  ".parts-mgmt-weight-sort:focus-visible",
+  ".parts-mgmt-weight-sort-order",
   ".parts-mgmt-weight-error",
   "@media (max-width: 760px)"
 ].forEach((fragment) => {
