@@ -1583,6 +1583,8 @@ var TRANSLATIONS = {
     lbl_model: "型式",
     lbl_category: "カテゴリ",
     btn_add_part: "商品を追加",
+    parts_mgmt_search_label: "商品を検索",
+    parts_mgmt_create_label: "新規登録",
     part_form_add_title: "商品追加",
     part_form_edit_title: "商品修正",
     required_part_number: "純正品番またはメーカー品番を入力してください",
@@ -3855,6 +3857,8 @@ var TRANSLATIONS = {
     lbl_model: "Model Code",
     lbl_category: "Category",
     btn_add_part: "Add Part",
+    parts_mgmt_search_label: "Search products",
+    parts_mgmt_create_label: "New product",
     part_form_add_title: "Add Part",
     part_form_edit_title: "Edit Part",
     required_part_number: "Enter a genuine part number or manufacturer part number.",
@@ -6134,6 +6138,8 @@ var TRANSLATIONS = {
     lbl_model: "型号代码",
     lbl_category: "类别",
     btn_add_part: "添加零件",
+    parts_mgmt_search_label: "搜索商品",
+    parts_mgmt_create_label: "新建商品",
     btn_add_core_list: "添加库存CORE",
     btn_create_core_from_ranking: "从排行创建",
     btn_add_production_ranking: "添加生产清单",
@@ -6940,7 +6946,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1019";
+var APP_VERSION       = "v1.1.1020";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -26363,6 +26369,7 @@ async function writeLog(operation, tableName, targetId, targetDesc, beforeData, 
 var partsMgmtData = [];
 var partsMgmtWeightLoadFailed = false;
 var partsMgmtWeightSortDirection = ""; // "", "ascending", or "descending"
+var partsMgmtSearchInFlight = false;
 var partFormMode  = "add"; // "add" or "edit"
 var partFormSource = "parts"; // "parts" or "core_products"
 var coreProductFormContext = "sales"; // "sales", "production", or "management"
@@ -26378,9 +26385,30 @@ async function enterPartsMgmt() {
   if (nameEl)  nameEl.textContent  = userProfile.name || userProfile.email.split("@")[0];
   if (badgeEl) { badgeEl.textContent = currentRoleDisplayLabel(); badgeEl.className = "role-badge " + roleClass(userProfile.role); }
   var addBtn = document.getElementById("btn-add-part");
-  if (addBtn) setCspStyle(addBtn, "display", canEdit() ? "" : "none");
+  var addPanel = document.getElementById("parts-mgmt-create-panel");
+  if (addBtn) addBtn.disabled = !canEdit();
+  if (addPanel) setCspStyle(addPanel, "display", canEdit() ? "" : "none");
   partsMgmtWeightSortDirection = "";
   await loadPartsMgmt();
+}
+
+function setPartsMgmtSearchPending(isPending) {
+  var form = document.getElementById("parts-mgmt-search-form");
+  var button = document.getElementById("btn-parts-mgmt-search");
+  if (form) form.setAttribute("aria-busy", isPending ? "true" : "false");
+  if (button) button.disabled = isPending;
+}
+
+async function searchPartsMgmt() {
+  if (partsMgmtSearchInFlight) return;
+  partsMgmtSearchInFlight = true;
+  setPartsMgmtSearchPending(true);
+  try {
+    await loadPartsMgmt();
+  } finally {
+    partsMgmtSearchInFlight = false;
+    setPartsMgmtSearchPending(false);
+  }
 }
 
 async function loadPartsMgmtShippingWeights(rows) {
@@ -54364,7 +54392,10 @@ document.getElementById("btn-kikan-part-search").addEventListener("click", funct
   });
 });
 document.getElementById("btn-kikan-add-all-candidates").addEventListener("click", addAllKikanCandidates);
-document.getElementById("parts-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadPartsMgmt(); });
+document.getElementById("parts-mgmt-search-form").addEventListener("submit", function(e) {
+  e.preventDefault();
+  searchPartsMgmt();
+});
 document.getElementById("btn-sales-pricing-mgmt-search").addEventListener("click", loadSalesPricingMgmt);
 document.getElementById("sales-pricing-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadSalesPricingMgmt(); });
 document.getElementById("btn-purchase-mgmt-search").addEventListener("click", loadPurchaseMgmt);
