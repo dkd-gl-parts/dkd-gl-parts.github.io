@@ -100,8 +100,6 @@ const itemRows = functionSource("salesOrderItemRowsHtml");
 for (const fragment of [
   "sales-order-product-row",
   "sales-order-core-charge-row",
-  "customer_order_core_not_returned_short",
-  "customer_order_core_charge_billed_short",
   "customer_order_core_charge_kind",
   "customer_order_part_charge_reference",
   "coreChargeTotal <= 0",
@@ -150,11 +148,11 @@ const separatedRows = itemRowsContext.salesOrderItemRowsHtml([{
 if ((separatedRows.match(/sales-order-item-row/g) || []).length !== 2) {
   throw new Error("A billed core charge must add exactly one detail row below the product row");
 }
-for (const fragment of ["27060-B2021", "¥7,500", "コア代金", "コア代", "¥2,000", "請求済み"]) {
+for (const fragment of ["27060-B2021", "¥7,500", "コア代金", "コア代", "¥2,000"]) {
   requireFragment(separatedRows, fragment, `Separated core-charge row is missing: ${fragment}`);
 }
-if ((separatedRows.match(/>請求済み<\/span>/g) || []).length !== 2 || separatedRows.includes("返却なし")) {
-  throw new Error("A billed core charge must mark both the rebuilt product and its core-charge line as billed");
+if (separatedRows.includes("請求済み") || separatedRows.includes("返却なし") || separatedRows.includes("sales-order-core ")) {
+  throw new Error("Billing detail rows must not repeat non-progress core-status labels");
 }
 if (separatedRows.includes("別明細")) {
   throw new Error("The billed core-charge line must use the concise core-charge kind label");
@@ -168,8 +166,8 @@ const unbilledNoReturnRows = itemRowsContext.salesOrderItemRowsHtml([{
   core_charge_jpy: 0,
   core_charge_line_total_jpy: 0
 }], { core_return_status: "not_required" });
-if (!unbilledNoReturnRows.includes("返却なし") || unbilledNoReturnRows.includes("請求済み")) {
-  throw new Error("A zero-value no-return selection must not be shown as billed");
+if ((unbilledNoReturnRows.match(/sales-order-item-row/g) || []).length !== 1 || unbilledNoReturnRows.includes("請求済み") || unbilledNoReturnRows.includes("返却なし")) {
+  throw new Error("A zero-value no-return selection must stay as one product row without a status label");
 }
 const standardRows = itemRowsContext.salesOrderItemRowsHtml([{
   genuine_part_number: "27060-B2021",
@@ -181,6 +179,9 @@ const standardRows = itemRowsContext.salesOrderItemRowsHtml([{
 }], { core_return_status: "awaiting_return" });
 if (standardRows.includes("sales-order-core-charge-row")) {
   throw new Error("A standard core-return order must not show a billed core-charge detail row");
+}
+if (standardRows.includes("返却要") || standardRows.includes("返却必要")) {
+  throw new Error("Core-return workflow labels must not be repeated in the billing detail");
 }
 const adjustmentRows = functionSource("salesOrderAdjustmentRowsHtml");
 for (const fragment of [
@@ -201,10 +202,14 @@ for (const fragment of [
 const billingDetails = functionSource("salesOrderBillingDetailsHtml");
 for (const fragment of [
   "sales-order-billing-detail-table",
+  "<span>明細</span><span>区分</span><span>数量</span><span>単価</span><span>小計</span>",
   "salesOrderItemRowsHtml(order.items, order)",
   "salesOrderAdjustmentRowsHtml(adjustments, fallbackDiscount)",
   "salesOrderBillingDetailRowsHtml(order)"
 ]) requireFragment(billingDetails, fragment);
+if (billingDetails.includes("<span>状態</span>")) {
+  throw new Error("Billing detail must not show a status column without a line-level progress rule");
+}
 for (const obsolete of ["受注単位の請求内訳", "sales-order-billing-summary", "商品以外の金額も、この受注の明細としてまとめて表示しています。", "商品、コア代金、値引・調整、送料、税を明細行で確認します。", "送り状へ反映する配送情報です。", "発送と金額修正の記録を確認できます。"]){
   if (source.includes(obsolete)) throw new Error(`Obsolete detached billing summary remains: ${obsolete}`);
 }
