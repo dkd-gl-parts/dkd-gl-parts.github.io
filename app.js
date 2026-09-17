@@ -7030,7 +7030,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1031";
+var APP_VERSION       = "v1.1.1032";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -18362,24 +18362,6 @@ function salesOrderDispatchHtml(order) {
   "</section>";
 }
 
-function salesOrderOperationTracksHtml(order) {
-  var orderStatus = String(order && order.status || "").toLowerCase();
-  var shipmentComplete = salesOrderAccountingApplies(order);
-  var shipmentLabel = shipmentComplete
-    ? t("sales_order_operation_shipping_done")
-    : (salesOrderStatusDetailLabel(order) || customerOrderStatusLabel(orderStatus));
-  var accountingStatus = salesOrderAccountingStatus(order);
-  var accountingStarted = salesOrderAccountingApplies(order);
-  var accountingComplete = accountingStarted && accountingStatus === "registered";
-  var accountingLabel = accountingStarted
-    ? salesOrderAccountingStatusLabel(accountingStatus)
-    : (orderStatus === "cancelled" ? t("sales_order_accounting_not_applicable") : t("sales_order_accounting_after_shipping"));
-  return "<div class='sales-order-operation-tracks' aria-label='" + esc(t("sales_order_operation_status")) + "'>" +
-    "<div class='sales-order-operation-track " + (shipmentComplete ? "complete" : (orderStatus === "cancelled" ? "inactive" : "active")) + "'><span>" + esc(t("sales_order_operation_shipping")) + "</span><strong>" + esc(shipmentLabel) + "</strong></div>" +
-    "<div class='sales-order-operation-track " + (accountingComplete ? "complete" : (accountingStarted ? "active" : "waiting")) + "'><span>" + esc(t("sales_order_operation_sales")) + "</span><strong>" + esc(accountingLabel) + "</strong></div>" +
-  "</div>";
-}
-
 function salesOrderAccountingPanelHtml(order) {
   var accountingStarted = salesOrderAccountingApplies(order);
   var status = accountingStarted ? salesOrderAccountingStatus(order) : "waiting";
@@ -18560,8 +18542,7 @@ function renderSalesOrderDetail() {
     var panelId = tab.key === "history" ? "sales-order-detail-" + tab.key : "sales-order-detail-panel-" + tab.key;
     return "<button type='button' role='tab' id='sales-order-detail-tab-" + tab.key + "' aria-controls='" + panelId + "' aria-selected='" + (selected ? "true" : "false") + "' tabindex='" + (selected ? "0" : "-1") + "' data-sales-order-detail-view='" + tab.key + "'>" + tab.label + "</button>";
   }).join("");
-  host.innerHTML = "<div class='sales-order-detail-head'><div class='sales-order-detail-identity'><div class='sales-order-detail-meta'><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "</div><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div>" + lifecycle + "<div class='sales-order-detail-state'><div class='sales-order-detail-state-summary'>" + salesOrderStatusSummaryHtml(order) + compactTotal + "</div>" + nextActions + "</div></div>" +
-    salesOrderOperationTracksHtml(order) +
+  host.innerHTML = "<div class='sales-order-detail-head'><div class='sales-order-detail-identity'><div class='sales-order-detail-meta'><span>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</span>" + customerOrderSourceBadgeHtml(order.order_source) + "</div><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><strong>" + esc(order.customer_name || "-") + "</strong></div>" + lifecycle + "<div class='sales-order-detail-state'><div class='sales-order-detail-state-summary'>" + compactTotal + "</div>" + nextActions + "</div></div>" +
     "<div class='sales-order-detail-navigation'><nav class='sales-order-detail-nav' role='tablist' aria-label='注文詳細の作業項目'>" + tabHtml + "</nav>" + salesOrderWorkspaceNavigationHtml("sales-order") + "</div>" +
     "<div class='sales-order-detail-panels'>" +
       "<section class='sales-order-detail-panel sales-order-detail-overview' id='sales-order-detail-panel-overview' role='tabpanel' aria-labelledby='sales-order-detail-tab-overview' data-sales-order-detail-panel='overview'><div class='sales-order-detail-overview-grid'>" +
