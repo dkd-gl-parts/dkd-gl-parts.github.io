@@ -8200,7 +8200,6 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-list-context { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 7px; min-width: 0; margin-top: 1px; }
 .sales-order-list-meta { display: flex; align-items: center; gap: 6px; min-width: 0; margin: 0; }
 .sales-order-list-meta .sales-order-source { flex: 0 0 auto; margin-top: 0; }
-.sales-order-list-meta time { min-width: 0; overflow: hidden; color: #78837e; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 .sales-order-queue-heading { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 34px; border-bottom: 1px solid #d8dfe4; border-left: 4px solid #56758f; padding: 7px 12px 7px 10px; background: #eef4f8; color: #304c62; }
 .sales-order-queue-heading.sales { border-left-color: #c28a22; background: #fff8e8; color: #735415; }
 .sales-order-queue-heading strong { font-size: 10px; }
@@ -10132,7 +10131,6 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-list-customer { overflow: hidden; margin-top: 1px; font-size: 14px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
   #screen-sales-order-mgmt .sales-order-list-context { gap: 6px; margin-top: 1px; }
   #screen-sales-order-mgmt .sales-order-list-meta { align-items: baseline; flex-wrap: nowrap; gap: 5px; margin-top: 0; }
-  #screen-sales-order-mgmt .sales-order-list-meta time,
   #screen-sales-order-mgmt .sales-order-source { font-size: 12px; line-height: 1.4; }
   #screen-sales-order-mgmt .sales-order-queue-heading { min-height: 38px; padding: 6px 12px 6px 10px; }
   #screen-sales-order-mgmt .sales-order-queue-heading strong { font-size: 14px; line-height: 1.35; }
