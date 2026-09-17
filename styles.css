@@ -7711,6 +7711,14 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-accounting-export-message.error { color: #b42318; }
 .sales-accounting-export-footer { position: relative; z-index: 1; flex: 0 0 auto; margin-top: 0; border-top: 1px solid #d8dfe5; padding: 12px 20px; background: #fff; }
 .sales-accounting-export-footer button { min-height: 38px; }
+@media (min-width: 821px) and (min-height: 800px) {
+  .sales-accounting-export-body { overflow-y: hidden; }
+  .sales-accounting-export-workspace { min-height: 0; }
+  .sales-accounting-export-body:has(.sales-accounting-troubleshooting-guide[open]),
+  .sales-accounting-export-body:has(.sales-accounting-hanbaiou-guide[open]) { overflow-y: auto; }
+  .sales-accounting-export-body:has(.sales-accounting-troubleshooting-guide[open]) .sales-accounting-export-workspace,
+  .sales-accounting-export-body:has(.sales-accounting-hanbaiou-guide[open]) .sales-accounting-export-workspace { min-height: 180px; }
+}
 .sales-order-in-house-cancel-card { width: min(520px, calc(100vw - 28px)); padding: 24px; }
 .sales-order-in-house-cancel-heading > span { color: #b42318; font-size: 9px; font-weight: 900; }
 .sales-order-in-house-cancel-heading h3 { margin: 4px 0 0; color: #1d2939; font-size: 20px; letter-spacing: 0; }
