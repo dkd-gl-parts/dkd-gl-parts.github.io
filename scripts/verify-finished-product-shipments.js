@@ -105,7 +105,7 @@ assert(salesDetailSource.includes("openSalesOrderSerialWarranty"), "sales-order 
 assert(!app.includes("送り状番号の登録だけでは在庫を減らしません"), "Obsolete stock notice must not be shown beside waybill registration");
 assert(functionSource("issueSalesOrderDispatch").includes('sb.rpc("issue_sales_order_dispatch"'), "dispatch issue RPC is not called");
 assert(functionSource("openSalesOrderSerialWarranty").includes("salesOrderDispatch(salesOrderDetail)"), "dispatch checking must require an issued instruction");
-assert(functionSource("buildSalesOrderDocumentHtml").includes("shipment-instruction-print.css?dcats_version="), "shipment document stylesheet is not versioned");
+assert((app.match(/shipment-instruction-print\.css\?dcats_version=/g) || []).length >= 3, "shipment document stylesheets are not versioned");
 
 const dispatchLoadSource = functionSource("loadFinishedShipmentDispatch");
 assert(dispatchLoadSource.includes('sb.rpc("get_sales_order_dispatch"'), "shipment instruction load RPC is not called");

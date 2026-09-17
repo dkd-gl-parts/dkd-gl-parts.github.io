@@ -358,10 +358,10 @@ if (detailLoadSource.indexOf("renderShippingDocumentList()") > detailLoadSource.
 const defaultDocuments = sourceBetween("function shippingDocumentDefaultStateHtml", "function shippingDocumentOutboundWaybillHtml");
 for (const fragment of [
   "帳票の標準設定",
-  "A4 / 受付時に自動発行",
+  "A4縦 / モノクロ / 受付時に自動発行",
   "B2クラウド / ヤマト宅急便 元払い",
-  "A5 / 商品数量分 / 端末印刷",
-  "A5 / コア返却必要時 / 端末印刷",
+  "A5横 / モノクロ / 商品数量分 / 端末印刷",
+  "A5横 / モノクロ / コア返却必要時 / 端末印刷",
   "対象商品1個につき1枚 / 佐川急便 着払い",
   'carrierCode: "yamato_prepaid"',
   'carrierCode: "sagawa_collect"',
@@ -848,7 +848,13 @@ const printSource = sourceBetween("function salesOrderPrintItemRows", "async fun
 for (const fragment of [
   "manufacturing_serial",
   "製造シリアル",
-  "shipment-document-table-",
+  "salesOrderDispatchBarcodeDataUrl",
+  'format: "CODE39"',
+  "buildSalesOrderDispatchDocumentHtml",
+  "buildSalesOrderDispatchPage",
+  "items.slice(index * 5, index * 5 + 5)",
+  "dispatch-sheet",
+  "帳票セット明細（商品別）",
   "buildSalesOrderWarrantyDocumentHtml",
   "hydrateSalesOrderWarrantyPrintData",
   'sb.rpc("get_product_warranty_policies")',
@@ -944,8 +950,8 @@ for (const fragment of [
 ]) requireFragment(css, fragment, `Shipping service no-wrap layout is missing: ${fragment}`);
 requireFragment(source, "class='shipping-document-outbound-service'", "Outbound shipping service needs its dedicated no-wrap cell");
 for (const fragment of [
-  ".shipment-document-destination.direct",
-  ".shipment-document-destination.office",
+  ".shipment-document-destination dt span",
+  ".shipment-document-destination dd",
   ".shipment-document-destination dd strong"
 ]) requireFragment(printCss, fragment, `Printed destination styling is missing: ${fragment}`);
 for (const fragment of [
@@ -1004,9 +1010,11 @@ if (css.includes(".shipping-carrier-brand-copy small")) {
   throw new Error("Carrier label purpose styling must be removed");
 }
 for (const fragment of [
-  "@page dcats-warranty-a4 { size: A4 landscape; margin: 0; }",
+  "@page dcats-dispatch { size: A4 portrait; margin: 0; }",
+  ".dispatch-sheet { page: dcats-dispatch;",
+  "width: 210mm; height: 297mm;",
+  "@page dcats-warranty-a5 { size: A5 landscape; margin: 0; }",
   ".warranty-print-sheet",
-  "width: 297mm; height: 210mm;",
   ".warranty-certificate",
   "width: 210mm; height: 148mm;",
   ".warranty-header h1",
@@ -1014,7 +1022,9 @@ for (const fragment of [
   ".warranty-stamp-box",
   ".warranty-dealer",
   ".document-warranty { background: transparent; }",
-  ".warranty-print-sheet { margin: 0; background: transparent; }"
+  ".warranty-print-sheet { margin: 0; background: transparent; }",
+  "filter: grayscale(1);",
+  "print-color-adjust: economy;"
 ]) requireFragment(printCss, fragment);
 
 for (const fragment of [
@@ -1038,11 +1048,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1026"',
-  'styles.css?v=1.1.1026',
-  'app.js?v=1.1.1026'
+  'content="v1.1.1027"',
+  'styles.css?v=1.1.1027',
+  'app.js?v=1.1.1027'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1026"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1027"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
