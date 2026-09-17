@@ -35566,13 +35566,14 @@ function setProductFormFieldMode(source, mode) {
   var isCoreProduct = source === "core_products";
   var isAdd = mode === "add";
   var isPartsEdit = source === "parts" && !isAdd;
+  var isManufacturingContext = isCoreProduct && coreProductFormContext === "production";
   var showShippingFields = isCoreProduct || isPartsEdit;
   var enableShippingFields = (isCoreProduct && !isAdd) || (isPartsEdit && partFormShippingProfileState === "available");
 
   setCspStyle(productCodeRow, "display", isCoreProduct && isAdd ? "none" : "");
   setCspStyle(corePolicyFields, "display", isCoreProduct ? "" : "none");
   setCspStyle(shippingFields, "display", showShippingFields ? "" : "none");
-  setCspStyle(stampPairFields, "display", isCoreProduct ? "" : "none");
+  setCspStyle(stampPairFields, "display", isManufacturingContext ? "" : "none");
 
   if (productCodeInput) {
     productCodeInput.readOnly = isCoreProduct || mode === "edit";
@@ -35647,19 +35648,20 @@ async function openCoreProductForm(mode, product, context) {
   coreProductFormVariants = [];
   var stampPairRows = [];
   if (mode === "edit" && productDkdId(formProduct)) {
-    var formData = await Promise.all([
-      fetchProductVariantsByDkdId(productDkdId(formProduct)),
-      fetchCoreProductStampPairs(productDkdId(formProduct))
-    ]).catch(function(error) {
+    var formRequests = [fetchProductVariantsByDkdId(productDkdId(formProduct))];
+    if (coreProductFormContext === "production") {
+      formRequests.push(fetchCoreProductStampPairs(productDkdId(formProduct)));
+    }
+    var formData = await Promise.all(formRequests).catch(function(error) {
       console.warn("product form supplemental lookup failed", error);
       return null;
     });
     if (!formData) {
-      document.getElementById("part-form-error").textContent = t("stamp_pair_load_failed");
+      document.getElementById("part-form-error").textContent = t(coreProductFormContext === "production" ? "stamp_pair_load_failed" : "msg_part_err");
       return;
     }
     coreProductFormVariants = formData[0] || [];
-    stampPairRows = formData[1] || [];
+    stampPairRows = coreProductFormContext === "production" ? (formData[1] || []) : [];
   }
   initializeCoreProductStampPairForm(stampPairRows);
   populateCoreProductPolicyForm(formProduct, currentSelectedProductKind);
@@ -35697,11 +35699,13 @@ async function saveCoreProductForm() {
   var errEl = document.getElementById("part-form-error");
   errEl.textContent = "";
   if (!canEdit()) { errEl.textContent = t("err_perm"); return; }
-  var stampPairFormValue = coreProductStampPairFormValue();
+  var formContext = coreProductFormContext;
+  var stampPairFormValue = formContext === "production"
+    ? coreProductStampPairFormValue()
+    : { pairs: [], error: "" };
   if (stampPairFormValue.error) { errEl.textContent = stampPairFormValue.error; return; }
   var addingProduct = partFormMode === "add";
   var gltekAutoIssueContext = addingProduct ? "product_add" : "product_edit";
-  var formContext = coreProductFormContext;
   var dkdInput = document.getElementById("pf-shohin-cd").value.trim();
   var dkd = dkdInput ? parseInt(dkdInput, 10) : null;
   if (dkdInput && isNaN(dkd)) { errEl.textContent = t("lbl_shohin_cd") + "を入力してください"; return; }
@@ -35810,8 +35814,10 @@ async function saveCoreProductForm() {
   }
   if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
   if (!dkd) { errEl.textContent = "商品コードを自動採番できませんでした"; return; }
-  var stampPairsOk = await saveCoreProductStampPairsForDkd(dkd, stampPairFormValue.pairs, errEl);
-  if (!stampPairsOk) return;
+  if (formContext === "production") {
+    var stampPairsOk = await saveCoreProductStampPairsForDkd(dkd, stampPairFormValue.pairs, errEl);
+    if (!stampPairsOk) return;
+  }
   var corePolicyOk = await saveCoreProductPolicyForDkd(dkd, errEl);
   if (!corePolicyOk) return;
   var specOk = await saveUnifiedSpecForDkd(dkd, errEl);
