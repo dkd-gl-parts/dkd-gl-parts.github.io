@@ -6946,7 +6946,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1021";
+var APP_VERSION       = "v1.1.1022";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -14279,11 +14279,16 @@ function salesAccountingExportProductCodeHtml(item, profile) {
 function renderSalesAccountingHanbaiouGuide() {
   var state = ensureSalesAccountingExportState();
   var guide = document.getElementById("sales-accounting-hanbaiou-guide");
+  var salesGuide = document.getElementById("sales-accounting-sales-guide");
+  var troubleshootingGuide = document.getElementById("sales-accounting-troubleshooting-guide");
   var history = document.getElementById("sales-accounting-hanbaiou-history");
   if (!guide || !history) return;
-  var isHanbaiou = state.targetSystem === "hanbaiou" && state.hasSearched;
-  guide.hidden = !isHanbaiou;
-  if (!isHanbaiou) return;
+  var isHanbaiouTarget = state.targetSystem === "hanbaiou";
+  if (salesGuide) salesGuide.hidden = !isHanbaiouTarget;
+  if (troubleshootingGuide) troubleshootingGuide.hidden = !isHanbaiouTarget;
+  var showProductGuide = isHanbaiouTarget && state.hasSearched;
+  guide.hidden = !showProductGuide;
+  if (!showProductGuide) return;
 
   var latestFileHost = document.getElementById("sales-accounting-hanbaiou-latest-file");
   var knownBatches = Array.isArray(state.hanbaiouBatches) ? state.hanbaiouBatches : [];
@@ -14296,10 +14301,6 @@ function renderSalesAccountingHanbaiouGuide() {
     return;
   }
 
-  var catalog = state.hanbaiouCatalog || {};
-  var pendingCount = Number(catalog.pending_count || 0);
-  if (pendingCount && !guide.open) guide.open = true;
-
   var batches = knownBatches;
   history.innerHTML = batches.length ? "<span>商品台帳CSV履歴</span>" + batches.slice(0, 3).map(function(batch) {
     return "<button type='button' data-hanbaiou-master-download='" + esc(batch.batch_id) + "'>" + esc(batch.batch_number || "CSV") + " / " + esc(batch.product_count || 0) + "件を再取得</button>";
@@ -14311,6 +14312,15 @@ function renderSalesAccountingHanbaiouGuide() {
     });
   });
   updateSalesAccountingHanbaiouActions();
+}
+
+function resetSalesAccountingGuideDisclosureState() {
+  var salesGuide = document.getElementById("sales-accounting-sales-guide");
+  var troubleshootingGuide = document.getElementById("sales-accounting-troubleshooting-guide");
+  var productGuide = document.getElementById("sales-accounting-hanbaiou-guide");
+  if (salesGuide) salesGuide.open = true;
+  if (troubleshootingGuide) troubleshootingGuide.open = false;
+  if (productGuide) productGuide.open = false;
 }
 
 function salesAccountingHanbaiouResetTarget(state) {
@@ -14580,6 +14590,7 @@ async function openSalesAccountingExport(options) {
   if (!canManageSalesOrders()) return;
   var overlay = document.getElementById("sales-accounting-export-overlay");
   if (!overlay) return;
+  resetSalesAccountingGuideDisclosureState();
   var requestedOrder = options && options.order ? options.order : null;
   if (requestedOrder) {
     salesAccountingExportState = initialSalesAccountingExportState();

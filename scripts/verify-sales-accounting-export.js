@@ -33,6 +33,8 @@ for (const id of [
   "sales-accounting-export-directory",
   "sales-accounting-export-directory-state",
   "sales-accounting-export-directory-select",
+  "sales-accounting-sales-guide",
+  "sales-accounting-troubleshooting-guide",
   "sales-accounting-export-candidate-list",
   "sales-accounting-export-history-list",
   "sales-accounting-export-create",
@@ -45,6 +47,17 @@ if (html.includes('id="sales-accounting-export-candidates-title">出力対象</h
   throw new Error("The export-candidate selection UI must not be displayed");
 }
 requireFragment(html, '<option value="hanbaiou">販売王</option><option value="yayoi_sales">弥生販売</option>', "Sales King must be the initial destination");
+requireFragment(html, '<details class="sales-accounting-sales-guide" id="sales-accounting-sales-guide" open>', "The Sales King sales CSV guide must be open by default");
+requireFragment(html, '<details class="sales-accounting-troubleshooting-guide" id="sales-accounting-troubleshooting-guide">', "The troubleshooting guide must be closed by default");
+requireFragment(html, '<details class="sales-accounting-hanbaiou-guide" id="sales-accounting-hanbaiou-guide" hidden>', "The product-master guide must be closed by default");
+for (const fragment of [
+  "売上伝票（消費税特例対応形式）",
+  "1行目はタイトル行なので無視する",
+  "項目数が入出力形式と不一致",
+  "同じCSVを再取得",
+  "Shift_JIS",
+  "販売管理登録を確認",
+]) requireFragment(html, fragment);
 
 const initialState = functionSource("initialSalesAccountingExportState");
 requireFragment(initialState, 'targetSystem: "hanbaiou"', "Sales King must be the initial state");
@@ -72,6 +85,26 @@ for (const fragment of [
 if (candidates.includes("data-sales-accounting-order-check") || candidates.includes("state.orders.map")) {
   throw new Error("Normal CSV candidates and order-selection checkboxes must not be rendered");
 }
+
+const guideRender = functionSource("renderSalesAccountingHanbaiouGuide");
+for (const fragment of [
+  'document.getElementById("sales-accounting-sales-guide")',
+  'document.getElementById("sales-accounting-troubleshooting-guide")',
+  "salesGuide.hidden = !isHanbaiouTarget",
+  "troubleshootingGuide.hidden = !isHanbaiouTarget",
+]) requireFragment(guideRender, fragment);
+if (guideRender.includes("pendingCount && !guide.open")) {
+  throw new Error("Pending product-master work must not open the product guide automatically");
+}
+
+const guideDefaults = functionSource("resetSalesAccountingGuideDisclosureState");
+for (const fragment of [
+  "salesGuide.open = true",
+  "troubleshootingGuide.open = false",
+  "productGuide.open = false",
+]) requireFragment(guideDefaults, fragment);
+const openExport = functionSource("openSalesAccountingExport");
+requireFragment(openExport, "resetSalesAccountingGuideDisclosureState()");
 
 const selection = functionSource("updateSalesAccountingExportSelection");
 requireFragment(selection, 'tf("sales_accounting_issue_count", { count: issueCount })');
@@ -172,6 +205,10 @@ for (const fragment of [
   ".sales-accounting-export-order-simple",
   ".sales-accounting-export-candidate-empty.is-clear",
   ".sales-accounting-export-directory",
+  ".sales-accounting-sales-guide",
+  ".sales-accounting-troubleshooting-guide",
+  ".sales-accounting-sales-steps",
+  ".sales-accounting-troubleshooting-list",
   ".sales-accounting-export-history-row",
 ]) requireFragment(css, fragment);
 
@@ -182,6 +219,7 @@ for (const fragment of [
 
 requireFragment(css, ".sales-accounting-export-body { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; overflow-y: auto;", "Sales export content must scroll independently so the CSV action remains visible");
 requireFragment(css, ".sales-accounting-export-footer { position: relative; z-index: 1; flex: 0 0 auto;", "Sales export footer must remain outside the scrollable content");
+requireFragment(css, ".sales-accounting-export-footer { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);", "Both footer actions must remain visible on narrow screens");
 
 (async () => {
   let writtenName = "";

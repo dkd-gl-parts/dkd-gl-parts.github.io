@@ -7539,6 +7539,43 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-accounting-export-directory button:disabled { border-color: #cbd2d8; color: #939ca5; cursor: not-allowed; }
 .sales-accounting-export-summary { flex: 0 0 auto; min-height: 34px; border-bottom: 1px solid #d8dfe5; padding: 9px 20px; background: #fff; color: #4d5d6c; font-size: 10px; font-weight: 700; line-height: 1.5; }
 .sales-accounting-export-summary.error { color: #b42318; }
+.sales-accounting-sales-guide,
+.sales-accounting-troubleshooting-guide { flex: 0 0 auto; border-bottom: 1px solid #d8dfe5; }
+.sales-accounting-sales-guide[hidden],
+.sales-accounting-troubleshooting-guide[hidden] { display: none; }
+.sales-accounting-sales-guide { background: #f1f8f4; }
+.sales-accounting-troubleshooting-guide { background: #fff8f6; }
+.sales-accounting-sales-guide > summary,
+.sales-accounting-troubleshooting-guide > summary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 42px; padding: 9px 20px; font-size: 11px; font-weight: 900; cursor: pointer; list-style: none; }
+.sales-accounting-sales-guide > summary { color: #245b43; }
+.sales-accounting-troubleshooting-guide > summary { color: #85362e; }
+.sales-accounting-sales-guide > summary::-webkit-details-marker,
+.sales-accounting-troubleshooting-guide > summary::-webkit-details-marker { display: none; }
+.sales-accounting-sales-guide > summary::before,
+.sales-accounting-troubleshooting-guide > summary::before { content: "\25B6"; font-size: 9px; }
+.sales-accounting-sales-guide > summary::before { color: #287356; }
+.sales-accounting-troubleshooting-guide > summary::before { color: #b5473e; }
+.sales-accounting-sales-guide[open] > summary::before,
+.sales-accounting-troubleshooting-guide[open] > summary::before { content: "\25BC"; }
+.sales-accounting-sales-guide > summary > small,
+.sales-accounting-troubleshooting-guide > summary > small { color: #6f7a75; font-size: 9px; font-weight: 700; text-align: right; }
+.sales-accounting-sales-guide-body { border-top: 1px solid #cfe1d7; padding: 12px 20px 14px; }
+.sales-accounting-sales-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 0; border: 1px solid #cddbd3; padding: 0; counter-reset: sales-csv-step; list-style: none; }
+.sales-accounting-sales-steps li { display: grid; grid-template-columns: 24px minmax(0, 1fr); align-content: start; gap: 8px; min-width: 0; border-right: 1px solid #d9e3dd; padding: 11px; background: #fff; }
+.sales-accounting-sales-steps li:last-child { border-right: 0; }
+.sales-accounting-sales-steps li::before { counter-increment: sales-csv-step; content: counter(sales-csv-step); display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #287356; color: #fff; font-size: 10px; font-weight: 900; }
+.sales-accounting-sales-steps strong { display: block; color: #263c32; font-size: 11px; }
+.sales-accounting-sales-steps p { margin: 5px 0 0; color: #53645b; font-size: 10px; line-height: 1.6; }
+.sales-accounting-sales-note { margin: 10px 0 0; border-left: 3px solid #49896b; padding: 7px 9px; background: #fff; color: #405b4e; font-size: 9px; font-weight: 700; line-height: 1.5; }
+.sales-accounting-troubleshooting-body { border-top: 1px solid #edcbc7; padding: 12px 20px 14px; }
+.sales-accounting-troubleshooting-intro { margin: 0 0 8px; color: #684943; font-size: 10px; line-height: 1.5; }
+.sales-accounting-troubleshooting-list { margin: 0; border-top: 1px solid #e3d3d0; }
+.sales-accounting-troubleshooting-list > div { display: grid; grid-template-columns: minmax(230px, .8fr) minmax(0, 1.7fr); border-bottom: 1px solid #e3d3d0; background: #fff; }
+.sales-accounting-troubleshooting-list dt,
+.sales-accounting-troubleshooting-list dd { min-width: 0; padding: 9px 10px; overflow-wrap: anywhere; font-size: 9px; line-height: 1.55; }
+.sales-accounting-troubleshooting-list dt { color: #8b352e; font-weight: 900; }
+.sales-accounting-troubleshooting-list dd { margin: 0; border-left: 1px solid #e3d3d0; color: #5e514e; }
+.sales-accounting-troubleshooting-caution { margin: 9px 0 0; color: #9a342d; font-size: 9px; font-weight: 800; line-height: 1.5; }
 .sales-accounting-hanbaiou-guide { flex: 0 0 auto; border-bottom: 1px solid #d8dfe5; background: #fffaf0; }
 .sales-accounting-hanbaiou-guide[hidden] { display: none; }
 .sales-accounting-hanbaiou-guide > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 42px; padding: 9px 20px; color: #503b13; font-size: 11px; font-weight: 900; cursor: pointer; list-style: none; }
@@ -8549,6 +8586,9 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .sales-order-detail-panel { padding-top: 12px; }
   .sales-order-history-groups { grid-template-columns: 1fr; }
   .sales-order-pricing-lower-grid { grid-template-columns: 1fr; }
+  .sales-accounting-sales-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sales-accounting-sales-steps li:nth-child(2n) { border-right: 0; }
+  .sales-accounting-sales-steps li:nth-child(-n+2) { border-bottom: 1px solid #d9e3dd; }
   .sales-accounting-export-workspace { grid-template-columns: 1fr; overflow: auto; }
   .sales-accounting-export-candidates { min-height: 280px; border-right: 0; border-bottom: 6px solid #e4e8ec; }
   .sales-accounting-export-history { min-height: 240px; }
@@ -8649,14 +8689,26 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .sales-accounting-export-history { min-height: 180px; }
   .sales-accounting-export-heading { padding: 14px; }
   .sales-accounting-export-summary { padding: 9px 14px; }
+  .sales-accounting-sales-guide > summary,
+  .sales-accounting-troubleshooting-guide > summary { grid-template-columns: auto minmax(0, 1fr); align-items: start; padding: 10px 14px; }
+  .sales-accounting-sales-guide > summary > small,
+  .sales-accounting-troubleshooting-guide > summary > small { grid-column: 2; text-align: left; }
+  .sales-accounting-sales-guide-body,
+  .sales-accounting-troubleshooting-body { padding: 10px 14px 12px; }
+  .sales-accounting-sales-steps { grid-template-columns: 1fr; }
+  .sales-accounting-sales-steps li,
+  .sales-accounting-sales-steps li:nth-child(-n+2) { border-right: 0; border-bottom: 1px solid #d9e3dd; }
+  .sales-accounting-sales-steps li:last-child { border-bottom: 0; }
+  .sales-accounting-troubleshooting-list > div { grid-template-columns: 1fr; }
+  .sales-accounting-troubleshooting-list dd { border-top: 1px solid #eee3e1; border-left: 0; }
   .sales-accounting-hanbaiou-guide > summary { align-items: flex-start; flex-wrap: wrap; padding: 10px 14px; }
   .sales-accounting-hanbaiou-guide-body { max-height: 58vh; overflow-y: auto; padding: 10px 14px 12px; }
   .sales-accounting-hanbaiou-steps { grid-template-columns: 1fr; }
   .sales-accounting-hanbaiou-utility { align-items: stretch; flex-direction: column; }
   .sales-accounting-hanbaiou-utility button { width: 100%; }
   .sales-accounting-export-section-head { align-items: flex-start; flex-direction: column; }
-  .sales-accounting-export-footer { align-items: stretch; flex-direction: column; padding: 12px 14px; }
-  .sales-accounting-export-footer button { width: 100%; }
+  .sales-accounting-export-footer { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); align-items: center; padding: 12px 14px; }
+  .sales-accounting-export-footer button { width: 100%; min-width: 0; }
   .sales-order-auto-print { padding: 12px; }
   .sales-order-auto-print-heading { align-items: flex-start; flex-direction: column; gap: 5px; }
   .sales-order-auto-print-controls { grid-template-columns: 1fr; }
