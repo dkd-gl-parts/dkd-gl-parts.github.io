@@ -78,13 +78,11 @@ for (const fragment of [
   ".sales-order-dashboard-metric { flex: 0 0 104px;",
   ".sales-order-status { display: inline-flex; align-items: center; justify-content: center; min-width: 60px; height: 24px;",
   "line-height: 1; letter-spacing: 0; white-space: nowrap;",
-  ".sales-order-list-identity .sales-order-status {",
-  "display: inline-flex;",
-  "flex: 0 0 64px;",
-  "width: 64px;",
-  "height: 26px;",
-  "padding: 0;",
-  "text-align: center;"
+  ".sales-order-list-number { flex: 0 0 auto;",
+  "overflow: visible !important;",
+  "text-overflow: clip !important; white-space: nowrap;",
+  ".sales-order-list-total { display: inline-flex !important;",
+  ".sales-order-list-context { display: grid; grid-template-columns: auto minmax(0, 1fr);"
 ]) requireFragment(css, fragment, "dashboard responsive style");
 
 for (const fragment of [

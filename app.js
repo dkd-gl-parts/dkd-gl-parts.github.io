@@ -6946,7 +6946,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1025";
+var APP_VERSION       = "v1.1.1026";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -17574,10 +17574,10 @@ function clearSalesOrderDetailSelection() {
 function salesOrderListRowHtml(order) {
   var selected = String(order.id) === String(salesOrderSelectedId);
   var checked = salesOrderCheckedIdsState.has(parseInt(order.id, 10));
+  var orderNumber = order.order_number || ("注文 " + order.id);
   return "<div class='sales-order-list-row" + (selected ? " selected" : "") + "' data-sales-order-open='" + esc(order.id) + "'>" +
     "<label class='sales-order-check' aria-label='処理対象'><input type='checkbox' data-sales-order-check value='" + esc(order.id) + "'" + (checked ? " checked" : "") + "></label>" +
-    "<div class='sales-order-list-main'><div class='sales-order-list-identity'><strong>" + esc(order.order_number || ("注文 " + order.id)) + "</strong><span class='sales-order-list-statuses'><span class='sales-order-status " + esc(order.status || "") + "'>" + esc(customerOrderStatusLabel(order.status)) + "</span>" + salesOrderAccountingStatusHtml(order) + "</span></div><span class='sales-order-list-customer'>" + esc(order.customer_name || "-") + "</span><div class='sales-order-list-meta'>" + customerOrderSourceBadgeHtml(order.order_source) + "<time>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</time></div><div class='sales-order-list-next'><span>次の操作</span><strong>" + esc(salesOrderNextOperationLabel(order)) + "</strong></div></div>" +
-    "<div class='sales-order-list-metrics'><div><span>明細</span><strong>" + esc(order.item_count == null ? "-" : order.item_count) + "</strong></div><div class='sales-order-list-total'><span>合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div></div>" +
+    "<div class='sales-order-list-main'><div class='sales-order-list-identity'><strong class='sales-order-list-number'>" + esc(orderNumber) + "</strong><span class='sales-order-list-total'><small>合計</small><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></span></div><span class='sales-order-list-customer' title='" + esc(order.customer_name || "-") + "'>" + esc(order.customer_name || "-") + "</span><div class='sales-order-list-context'><div class='sales-order-list-meta'>" + customerOrderSourceBadgeHtml(order.order_source) + "<time>" + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</time></div><div class='sales-order-list-next'><span aria-label='次の操作'>次</span><strong>" + esc(salesOrderNextOperationLabel(order)) + "</strong></div></div></div>" +
   "</div>";
 }
 
