@@ -83,10 +83,12 @@ requireFragment(detailLoad, 'sb.from("core_product_stamp_pairs")', "manufacturin
 
 const productSave = sourceBetween(app, "async function saveCoreProductForm", "async function deletePart");
 [
-  "coreProductStampPairFormValue()",
+  'var formContext = coreProductFormContext;',
+  'var stampPairFormValue = formContext === "production"',
+  'if (formContext === "production") {',
   "saveCoreProductStampPairsForDkd(dkd, stampPairFormValue.pairs, errEl)",
   'if (dkdInput && isNaN(dkd))'
-].forEach((fragment) => requireFragment(productSave, fragment, "product stamp-pair save flow"));
+].forEach((fragment) => requireFragment(productSave, fragment, "manufacturing-only stamp-pair save flow"));
 if (productSave.includes("payload.core_stock_qty") || productSave.includes("payload.core_pallet_no")) {
   throw new Error("product edits must preserve core inventory and pallet values managed outside this form");
 }
@@ -98,6 +100,18 @@ const productFieldValues = sourceBetween(app, "function setCoreProductFormFields
     throw new Error("removed core inventory controls must not be referenced by the product form");
   }
 });
+[
+  'var isManufacturingContext = isCoreProduct && coreProductFormContext === "production";',
+  'setCspStyle(stampPairFields, "display", isManufacturingContext ? "" : "none");'
+].forEach((fragment) => requireFragment(productFieldMode, fragment, "manufacturing-only stamp-pair visibility"));
+
+const openCoreProductForm = sourceBetween(app, "async function openCoreProductForm", "async function openCoreProductAddFromSearch");
+[
+  'var formRequests = [fetchProductVariantsByDkdId(productDkdId(formProduct))];',
+  'if (coreProductFormContext === "production") {',
+  'formRequests.push(fetchCoreProductStampPairs(productDkdId(formProduct)));',
+  'stampPairRows = coreProductFormContext === "production" ? (formData[1] || []) : [];'
+].forEach((fragment) => requireFragment(openCoreProductForm, fragment, "manufacturing-only stamp-pair loading"));
 
 const pairForm = sourceBetween(app, "async function fetchCoreProductStampPairs", "function setProductFormFieldMode");
 [
