@@ -13,7 +13,7 @@ function sourceBetween(startText, endText) {
   return source.slice(start, end);
 }
 
-const helperSource = sourceBetween("function manufacturingCostComponentCalc", "function manufacturingCostSnapshotNumber");
+const helperSource = sourceBetween("function manufacturingCostTotals", "function manufacturingCostSnapshotNumber");
 const sandbox = {
   manufacturingCostParseQty(value) {
     const n = Number(value);
@@ -27,8 +27,7 @@ const sandbox = {
   manufacturingCostComponentMap: {},
   manufacturingCostCoreCostForProduct() {
     return { amount: 1500, category: "starter", isCategorySpecific: true };
-  },
-  MANUFACTURING_COST_DEFAULT_SELLING_EXPENSE_JPY: 510
+  }
 };
 vm.runInNewContext(`${helperSource}; result = { inputState: manufacturingCostComponentInputState, priceDiffers: manufacturingCostSnapshotUnitPriceDiffers, syncRow: manufacturingCostRowWithCurrentUnitPrices };`, sandbox);
 
@@ -51,12 +50,14 @@ const refreshed = sandbox.result.syncRow({
   product: { dkd_shohin_id: 500, category: "starter" },
   components: [Object.assign({ is_cost_snapshot: true }, saved[0])],
   savedSnapshotUnitPriceDiffers: true
-}, { laborRate: 10, laborAmount: 100 });
+}, { laborAmount: 100, transportCost: 200, packagingCost: 500, documentsCost: 10, coreReturnShippingCost: 300 });
 if (refreshed.updatedCount !== 1 || refreshed.row.components[0].unit_price_jpy !== 950) {
   throw new Error("saving must replace a differing saved unit price with the current unit price");
 }
-if (refreshed.row.partsCost !== 950 || refreshed.row.laborCost !== 345 || refreshed.row.sellingExpense !== 510 ||
-    refreshed.row.totalCost !== 3305 || refreshed.row.savedSnapshotUnitPriceDiffers) {
+if (refreshed.row.partsCost !== 950 || refreshed.row.laborCost !== 100 || refreshed.row.transportCost !== 200 ||
+    refreshed.row.sellingExpense !== 510 || refreshed.row.coreReturnShippingCost !== 300 ||
+    refreshed.row.gltekSubtotal !== 2750 || refreshed.row.dkdSubtotal !== 810 ||
+    refreshed.row.totalCost !== 3560 || refreshed.row.savedSnapshotUnitPriceDiffers) {
   throw new Error("saving a current unit price must recalculate costs and clear the difference warning");
 }
 
@@ -92,6 +93,10 @@ const settingsSource = sourceBetween("function manufacturingCostSettings", "func
 if (!source.includes("MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY = 1000")) {
   throw new Error("manufacturing labor must default to 1000 yen");
 }
+if (!source.includes("MANUFACTURING_COST_DEFAULT_PACKAGING_COST_JPY = 500") ||
+    !source.includes("MANUFACTURING_COST_DEFAULT_DOCUMENTS_COST_JPY = 10")) {
+  throw new Error("DKD sales cost must default to packaging 500 yen and documents 10 yen");
+}
 if (!settingsSource.includes('manufacturingCostNumberFromInput("manufacturing-cost-labor-amount", MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY)')) {
   throw new Error("manufacturing cost settings must use the 1000 yen labor default");
 }
@@ -104,7 +109,6 @@ const syncSource = sourceBetween("async function syncManufacturingCostListItems"
 const loadSource = sourceBetween("async function loadManufacturingCostList", "async function deleteManufacturingCostList");
 [
   "loadManufacturingCostComponents",
-  "loadManufacturingCostCorePolicies",
   "manufacturingCostRowWithCurrentUnitPrices",
   "var rowsToSave =",
   "syncManufacturingCostListItems",
@@ -132,6 +136,9 @@ if (saveSource.includes('.delete().eq("list_id", listId)')) {
 }
 if (!saveSource.includes("labor_amount_jpy: settings.laborAmount")) {
   throw new Error("the entered manufacturing labor amount must be saved on the list");
+}
+if (saveSource.includes("loadManufacturingCostCorePolicies") || saveSource.includes("settings.laborRate")) {
+  throw new Error("saving manufacturing cost must not use customer core billing or the retired labor rate");
 }
 if (!loadSource.includes("selected.labor_amount_jpy == null ? MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY : selected.labor_amount_jpy")) {
   throw new Error("loading a list must restore its saved manufacturing labor amount");

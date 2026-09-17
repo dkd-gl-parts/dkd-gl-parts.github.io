@@ -1353,20 +1353,28 @@ var TRANSLATIONS = {
     manufacturing_cost_import_selection_limit: "一度に候補検索できるのは {n} 品番までです。対象を絞ってください。",
     manufacturing_cost_import_preview_limit: "プレビューは先頭 {n} 品番を表示しています。全選択の状態は全件に適用されます。",
     manufacturing_cost_target_block: "計算対象",
-    manufacturing_cost_addition_block: "原価に加算",
-    manufacturing_cost_addition_note: "構成部品費に足して製造原価を作ります",
+    manufacturing_cost_addition_block: "会社別原価設定",
+    manufacturing_cost_addition_note: "すべて完成品1台当たりの金額です",
     manufacturing_cost_formula_parts: "構成部品費",
-    manufacturing_cost_formula_total: "製造原価",
+    manufacturing_cost_formula_gltek: "コア代 + 部品原価 + 製造工賃 + 輸送コスト",
+    manufacturing_cost_formula_dkd: "販売コスト + コア返送費",
+    manufacturing_cost_formula_total: "総原価",
+    manufacturing_cost_gltek_title: "製造会社 GLTEK",
+    manufacturing_cost_dkd_title: "販売会社 大光電機（DKD）",
     manufacturing_cost_core_cost: "コア代",
     manufacturing_cost_default_core_cost: "共通コア代",
-    manufacturing_cost_category_core_open: "カテゴリ別設定",
+    manufacturing_cost_category_core_open: "コア代のカテゴリ別設定",
     manufacturing_cost_category_core_title: "カテゴリ別コア代",
     manufacturing_cost_category_core_note: "空欄は共通コア代を使用します",
     manufacturing_cost_core_category_note: "{category} 設定",
     manufacturing_cost_core_default_note: "共通設定",
     manufacturing_cost_labor_rate: "工賃率%",
     manufacturing_cost_labor_amount: "製造工賃",
-    manufacturing_cost_selling_expense: "販売費用",
+    manufacturing_cost_transport_cost: "輸送コスト（GLTEK→DKD）",
+    manufacturing_cost_packaging_cost: "化粧箱",
+    manufacturing_cost_documents_cost: "同梱帳票類",
+    manufacturing_cost_selling_expense: "販売コスト合計",
+    manufacturing_cost_core_return_shipping_cost: "コア返送費",
     manufacturing_cost_calc: "原価計算",
     manufacturing_cost_find_candidates: "候補検索",
     manufacturing_cost_calc_selected: "選択品番を追加して原価計算",
@@ -1425,15 +1433,21 @@ var TRANSLATIONS = {
     manufacturing_cost_summary_products: "対象品番",
     manufacturing_cost_summary_parts: "部品原価合計",
     manufacturing_cost_summary_labor: "製造工賃合計",
-    manufacturing_cost_summary_selling_expense: "販売費用合計",
-    manufacturing_cost_summary_total: "製造原価合計",
+    manufacturing_cost_summary_selling_expense: "販売コスト合計",
+    manufacturing_cost_summary_gltek: "GLTEK製造原価",
+    manufacturing_cost_summary_dkd: "DKD販売原価",
+    manufacturing_cost_summary_total: "総原価",
     manufacturing_cost_product: "品番",
     manufacturing_cost_components: "構成部品",
     manufacturing_cost_parts_cost: "部品原価",
     manufacturing_cost_core_cost_short: "コア代",
     manufacturing_cost_labor_cost: "製造工賃",
-    manufacturing_cost_selling_expense_cost: "販売費用",
-    manufacturing_cost_total: "製造原価",
+    manufacturing_cost_gltek_costs: "GLTEK内訳",
+    manufacturing_cost_dkd_costs: "DKD内訳",
+    manufacturing_cost_gltek_subtotal: "GLTEK小計",
+    manufacturing_cost_dkd_subtotal: "DKD小計",
+    manufacturing_cost_selling_expense_cost: "販売コスト",
+    manufacturing_cost_total: "総原価",
     manufacturing_cost_notes: "確認",
     manufacturing_cost_no_components: "リビルト構成部品なし",
     manufacturing_cost_missing_unit: "単価未設定 {n} 件",
@@ -1450,7 +1464,7 @@ var TRANSLATIONS = {
     manufacturing_cost_calculated: "小計",
     manufacturing_cost_formula: "計算式",
     manufacturing_cost_unit_price_missing: "単価未設定",
-    manufacturing_cost_formula_note: "部品原価 + コア代 + 工賃率 + 製造工賃 + 販売費用",
+    manufacturing_cost_formula_note: "GLTEK製造原価 + DKD販売原価",
     role_admin: "管理者",
     role_system_admin: "システム管理者",
     role_editor: "編集者",
@@ -3641,20 +3655,28 @@ var TRANSLATIONS = {
     manufacturing_cost_import_selection_limit: "You can search up to {n} part numbers at once. Narrow the selection.",
     manufacturing_cost_import_preview_limit: "The first {n} part numbers are shown. Select All still applies to every detected part.",
     manufacturing_cost_target_block: "Calculation Target",
-    manufacturing_cost_addition_block: "Added to Cost",
-    manufacturing_cost_addition_note: "Added to component cost to build manufacturing cost",
+    manufacturing_cost_addition_block: "Cost by Company",
+    manufacturing_cost_addition_note: "All amounts are per finished product unit",
     manufacturing_cost_formula_parts: "Component Cost",
-    manufacturing_cost_formula_total: "Manufacturing Cost",
+    manufacturing_cost_formula_gltek: "Core + parts + labor + GLTEK-to-DKD transport",
+    manufacturing_cost_formula_dkd: "Sales cost + core return shipping",
+    manufacturing_cost_formula_total: "Total Cost",
+    manufacturing_cost_gltek_title: "Manufacturer GLTEK",
+    manufacturing_cost_dkd_title: "Sales Company Daiko Denki (DKD)",
     manufacturing_cost_core_cost: "Core cost",
     manufacturing_cost_default_core_cost: "Default core cost",
-    manufacturing_cost_category_core_open: "Category Settings",
+    manufacturing_cost_category_core_open: "Core Cost by Category",
     manufacturing_cost_category_core_title: "Category core costs",
     manufacturing_cost_category_core_note: "Blank categories use the default core cost",
     manufacturing_cost_core_category_note: "{category} setting",
     manufacturing_cost_core_default_note: "Default setting",
     manufacturing_cost_labor_rate: "Labor %",
     manufacturing_cost_labor_amount: "Manufacturing labor",
-    manufacturing_cost_selling_expense: "Selling expense",
+    manufacturing_cost_transport_cost: "Transport (GLTEK to DKD)",
+    manufacturing_cost_packaging_cost: "Product box",
+    manufacturing_cost_documents_cost: "Included documents",
+    manufacturing_cost_selling_expense: "Sales cost total",
+    manufacturing_cost_core_return_shipping_cost: "Core return shipping",
     manufacturing_cost_calc: "Calculate",
     manufacturing_cost_find_candidates: "Find Candidates",
     manufacturing_cost_calc_selected: "Add Selected and Calculate",
@@ -3713,15 +3735,21 @@ var TRANSLATIONS = {
     manufacturing_cost_summary_products: "Products",
     manufacturing_cost_summary_parts: "Parts Cost Total",
     manufacturing_cost_summary_labor: "Manufacturing Labor Total",
-    manufacturing_cost_summary_selling_expense: "Selling Expense Total",
-    manufacturing_cost_summary_total: "Manufacturing Cost Total",
+    manufacturing_cost_summary_selling_expense: "Sales Cost Total",
+    manufacturing_cost_summary_gltek: "GLTEK Manufacturing Cost",
+    manufacturing_cost_summary_dkd: "DKD Sales Cost",
+    manufacturing_cost_summary_total: "Total Cost",
     manufacturing_cost_product: "Product",
     manufacturing_cost_components: "Components",
     manufacturing_cost_parts_cost: "Parts Cost",
     manufacturing_cost_core_cost_short: "Core",
     manufacturing_cost_labor_cost: "Mfg. Labor",
-    manufacturing_cost_selling_expense_cost: "Selling Expense",
-    manufacturing_cost_total: "Mfg. Cost",
+    manufacturing_cost_gltek_costs: "GLTEK Breakdown",
+    manufacturing_cost_dkd_costs: "DKD Breakdown",
+    manufacturing_cost_gltek_subtotal: "GLTEK Subtotal",
+    manufacturing_cost_dkd_subtotal: "DKD Subtotal",
+    manufacturing_cost_selling_expense_cost: "Sales Cost",
+    manufacturing_cost_total: "Total Cost",
     manufacturing_cost_notes: "Check",
     manufacturing_cost_no_components: "No rebuilt components",
     manufacturing_cost_missing_unit: "{n} unit prices missing",
@@ -3738,7 +3766,7 @@ var TRANSLATIONS = {
     manufacturing_cost_calculated: "Subtotal",
     manufacturing_cost_formula: "Formula",
     manufacturing_cost_unit_price_missing: "No unit price",
-    manufacturing_cost_formula_note: "Parts cost + core cost + labor rate + manufacturing labor + selling expense",
+    manufacturing_cost_formula_note: "GLTEK manufacturing cost + DKD sales cost",
     role_admin: "Admin",
     role_system_admin: "System Admin",
     role_editor: "Editor",
@@ -5936,20 +5964,28 @@ var TRANSLATIONS = {
     manufacturing_cost_import_selection_limit: "一次最多搜索 {n} 个品番。请缩小范围。",
     manufacturing_cost_import_preview_limit: "预览显示前 {n} 个品番。全选仍会应用于全部检测结果。",
     manufacturing_cost_target_block: "计算对象",
-    manufacturing_cost_addition_block: "加入成本",
-    manufacturing_cost_addition_note: "加入构成部件成本后生成制造成本",
+    manufacturing_cost_addition_block: "按公司设置成本",
+    manufacturing_cost_addition_note: "所有金额均按每台成品计算",
     manufacturing_cost_formula_parts: "构成部件成本",
-    manufacturing_cost_formula_total: "制造成本",
+    manufacturing_cost_formula_gltek: "旧芯 + 零件 + 制造工费 + GLTEK至DKD运输",
+    manufacturing_cost_formula_dkd: "销售成本 + 旧芯返送费",
+    manufacturing_cost_formula_total: "总成本",
+    manufacturing_cost_gltek_title: "制造公司 GLTEK",
+    manufacturing_cost_dkd_title: "销售公司 大光电机（DKD）",
     manufacturing_cost_core_cost: "旧芯成本",
     manufacturing_cost_default_core_cost: "通用旧芯成本",
-    manufacturing_cost_category_core_open: "类别设置",
+    manufacturing_cost_category_core_open: "按类别设置旧芯成本",
     manufacturing_cost_category_core_title: "类别旧芯成本",
     manufacturing_cost_category_core_note: "空白类别使用通用旧芯成本",
     manufacturing_cost_core_category_note: "{category} 设置",
     manufacturing_cost_core_default_note: "通用设置",
     manufacturing_cost_labor_rate: "工费率%",
     manufacturing_cost_labor_amount: "制造工费",
-    manufacturing_cost_selling_expense: "销售费用",
+    manufacturing_cost_transport_cost: "运输成本（GLTEK至DKD）",
+    manufacturing_cost_packaging_cost: "包装箱",
+    manufacturing_cost_documents_cost: "随附帐票",
+    manufacturing_cost_selling_expense: "销售成本合计",
+    manufacturing_cost_core_return_shipping_cost: "旧芯返送费",
     manufacturing_cost_calc: "成本计算",
     manufacturing_cost_find_candidates: "候选搜索",
     manufacturing_cost_calc_selected: "添加所选品番并计算",
@@ -6008,15 +6044,21 @@ var TRANSLATIONS = {
     manufacturing_cost_summary_products: "对象品番",
     manufacturing_cost_summary_parts: "零件成本合计",
     manufacturing_cost_summary_labor: "制造工费合计",
-    manufacturing_cost_summary_selling_expense: "销售费用合计",
-    manufacturing_cost_summary_total: "制造成本合计",
+    manufacturing_cost_summary_selling_expense: "销售成本合计",
+    manufacturing_cost_summary_gltek: "GLTEK制造成本",
+    manufacturing_cost_summary_dkd: "DKD销售成本",
+    manufacturing_cost_summary_total: "总成本",
     manufacturing_cost_product: "品番",
     manufacturing_cost_components: "构成零件",
     manufacturing_cost_parts_cost: "零件成本",
     manufacturing_cost_core_cost_short: "旧芯",
     manufacturing_cost_labor_cost: "制造工费",
-    manufacturing_cost_selling_expense_cost: "销售费用",
-    manufacturing_cost_total: "制造成本",
+    manufacturing_cost_gltek_costs: "GLTEK明细",
+    manufacturing_cost_dkd_costs: "DKD明细",
+    manufacturing_cost_gltek_subtotal: "GLTEK小计",
+    manufacturing_cost_dkd_subtotal: "DKD小计",
+    manufacturing_cost_selling_expense_cost: "销售成本",
+    manufacturing_cost_total: "总成本",
     manufacturing_cost_notes: "确认",
     manufacturing_cost_no_components: "无再制造构成零件",
     manufacturing_cost_missing_unit: "{n} 件未设置单价",
@@ -6033,7 +6075,7 @@ var TRANSLATIONS = {
     manufacturing_cost_calculated: "小计",
     manufacturing_cost_formula: "计算式",
     manufacturing_cost_unit_price_missing: "未设置单价",
-    manufacturing_cost_formula_note: "零件成本 + 旧芯成本 + 工费率 + 制造工费 + 销售费用",
+    manufacturing_cost_formula_note: "GLTEK制造成本 + DKD销售成本",
     role_admin: "管理员",
     role_system_admin: "系统管理员",
     role_editor: "编辑者",
@@ -6988,7 +7030,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1028";
+var APP_VERSION       = "v1.1.1029";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -7108,7 +7150,6 @@ var productKindStockMode = "product";
 var manufacturingCostRows = [];
 var manufacturingCostProductMap = {};
 var manufacturingCostComponentMap = {};
-var manufacturingCostCorePolicyMap = {};
 var manufacturingCostCandidateRows = [];
 var manufacturingCostCandidateMode = "";
 var manufacturingCostCandidateGroups = [];
@@ -7121,7 +7162,8 @@ var manufacturingCostCategoryCoreCosts = {};
 var manufacturingCostListItemSnapshotMap = null;
 var MANUFACTURING_COST_CATEGORY_CORE_STORAGE_KEY = "dcats_manufacturing_cost_category_core_costs";
 var MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY = 1000;
-var MANUFACTURING_COST_DEFAULT_SELLING_EXPENSE_JPY = 510;
+var MANUFACTURING_COST_DEFAULT_PACKAGING_COST_JPY = 500;
+var MANUFACTURING_COST_DEFAULT_DOCUMENTS_COST_JPY = 10;
 var finishedLabelTemplates = [];
 var finishedLabelProducts = [];
 var finishedLabelProductReadinessMap = {};
@@ -29067,7 +29109,6 @@ function renderManufacturingCostEmpty() {
   manufacturingCostRows = [];
   manufacturingCostProductMap = {};
   manufacturingCostComponentMap = {};
-  manufacturingCostCorePolicyMap = {};
   manufacturingCostListItemSnapshotMap = null;
   var countEl = document.getElementById("manufacturing-cost-count");
   var summaryEl = document.getElementById("manufacturing-cost-summary");
@@ -29167,39 +29208,15 @@ function manufacturingCostProductCategory(product) {
 
 function manufacturingCostCoreCostForProduct(product, settings) {
   settings = settings || manufacturingCostSettings();
-  var kind = normalizeProductKind(settings.productKind || "rebuilt");
-  var productId = String(productDkdId(product) || "");
-  var policyRow = manufacturingCostCorePolicyMap[productId] || null;
-  var policy = coreReturnPolicyForKind(kind, policyRow ? [policyRow] : []);
-  if (!policy.required) {
-    return {
-      amount: 0,
-      category: manufacturingCostProductCategory(product),
-      isCategorySpecific: false,
-      isProductSpecific: !!policyRow,
-      returnRequired: false,
-      source: policyRow ? "product" : "kind_default"
-    };
-  }
-  if (policyRow && policy.hasProductCharge) {
-    return {
-      amount: policy.charge,
-      category: manufacturingCostProductCategory(product),
-      isCategorySpecific: false,
-      isProductSpecific: true,
-      returnRequired: true,
-      source: "product"
-    };
-  }
   var category = manufacturingCostProductCategory(product);
   var categoryCosts = settings.categoryCoreCosts || {};
   if (category && Object.prototype.hasOwnProperty.call(categoryCosts, category)) {
     var categoryCost = parseInt(categoryCosts[category], 10);
     if (!isNaN(categoryCost) && categoryCost >= 0) {
-      return { amount: categoryCost, category: category, isCategorySpecific: true, isProductSpecific: false, returnRequired: true, source: "category" };
+      return { amount: categoryCost, category: category, isCategorySpecific: true, source: "category" };
     }
   }
-  return { amount: settings.coreCost || 0, category: category, isCategorySpecific: false, isProductSpecific: false, returnRequired: true, source: "default" };
+  return { amount: settings.coreCost || 0, category: category, isCategorySpecific: false, source: "default" };
 }
 
 function manufacturingCostCoreCostForCategory(category, settings) {
@@ -29413,13 +29430,45 @@ function manufacturingCostSettings() {
   var defaultCoreCost = Object.prototype.hasOwnProperty.call(manufacturingCostCategoryCoreCosts || {}, "__default")
     ? manufacturingCostCategoryCoreCosts.__default
     : 1500;
+  var packagingCost = Math.round(manufacturingCostNumberFromInput("manufacturing-cost-packaging-cost", MANUFACTURING_COST_DEFAULT_PACKAGING_COST_JPY));
+  var documentsCost = Math.round(manufacturingCostNumberFromInput("manufacturing-cost-documents-cost", MANUFACTURING_COST_DEFAULT_DOCUMENTS_COST_JPY));
+  var sellingExpense = packagingCost + documentsCost;
+  var sellingExpenseEl = document.getElementById("manufacturing-cost-selling-expense");
+  if (sellingExpenseEl) sellingExpenseEl.value = sellingExpense;
   return {
     productKind: normalizeProductKind((document.getElementById("manufacturing-cost-kind") || {}).value || "rebuilt"),
     coreCost: Math.round(manufacturingCostNumberFromInput("manufacturing-cost-core-cost", defaultCoreCost)),
     categoryCoreCosts: Object.assign({}, manufacturingCostCategoryCoreCosts || {}),
-    laborRate: manufacturingCostNumberFromInput("manufacturing-cost-labor-rate", 0),
     laborAmount: Math.round(manufacturingCostNumberFromInput("manufacturing-cost-labor-amount", MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY)),
-    sellingExpense: Math.round(manufacturingCostNumberFromInput("manufacturing-cost-selling-expense", MANUFACTURING_COST_DEFAULT_SELLING_EXPENSE_JPY))
+    transportCost: Math.round(manufacturingCostNumberFromInput("manufacturing-cost-transport-cost", 0)),
+    packagingCost: packagingCost,
+    documentsCost: documentsCost,
+    sellingExpense: sellingExpense,
+    coreReturnShippingCost: Math.round(manufacturingCostNumberFromInput("manufacturing-cost-core-return-shipping-cost", 0))
+  };
+}
+
+function manufacturingCostTotals(partsCost, coreCost, settings) {
+  settings = settings || manufacturingCostSettings();
+  var laborCost = Math.round(settings.laborAmount || 0);
+  var transportCost = Math.round(settings.transportCost || 0);
+  var packagingCost = Math.round(settings.packagingCost || 0);
+  var documentsCost = Math.round(settings.documentsCost || 0);
+  var sellingExpense = packagingCost + documentsCost;
+  var coreReturnShippingCost = Math.round(settings.coreReturnShippingCost || 0);
+  var gltekSubtotal = Math.round(partsCost || 0) + Math.round(coreCost || 0) + laborCost + transportCost;
+  var dkdSubtotal = sellingExpense + coreReturnShippingCost;
+  return {
+    laborAmount: laborCost,
+    laborCost: laborCost,
+    transportCost: transportCost,
+    packagingCost: packagingCost,
+    documentsCost: documentsCost,
+    sellingExpense: sellingExpense,
+    coreReturnShippingCost: coreReturnShippingCost,
+    gltekSubtotal: gltekSubtotal,
+    dkdSubtotal: dkdSubtotal,
+    totalCost: gltekSubtotal + dkdSubtotal
   };
 }
 
@@ -29567,9 +29616,7 @@ function manufacturingCostRowWithCurrentUnitPrices(row, settings) {
     if (!inputState.hasReplacementRate) missingReplacementRateCount += 1;
   });
   var coreInfo = manufacturingCostCoreCostForProduct(row.product, settings);
-  var laborRateCost = Math.round((partsCost + coreInfo.amount) * settings.laborRate / 100);
-  var laborCost = laborRateCost + settings.laborAmount;
-  var sellingExpense = Math.round(settings.sellingExpense == null ? MANUFACTURING_COST_DEFAULT_SELLING_EXPENSE_JPY : settings.sellingExpense);
+  var totals = manufacturingCostTotals(partsCost, coreInfo.amount, settings);
   return {
     row: Object.assign({}, row, {
       components: nextComponents,
@@ -29577,14 +29624,17 @@ function manufacturingCostRowWithCurrentUnitPrices(row, settings) {
       coreCost: coreInfo.amount,
       coreCostCategory: coreInfo.category,
       coreCostCategorySpecific: coreInfo.isCategorySpecific,
-      coreCostProductSpecific: coreInfo.isProductSpecific,
       coreCostSource: coreInfo.source,
-      coreReturnRequired: coreInfo.returnRequired,
-      laborRateCost: laborRateCost,
-      laborAmount: settings.laborAmount,
-      laborCost: laborCost,
-      sellingExpense: sellingExpense,
-      totalCost: partsCost + coreInfo.amount + laborCost + sellingExpense,
+      laborAmount: totals.laborAmount,
+      laborCost: totals.laborCost,
+      transportCost: totals.transportCost,
+      packagingCost: totals.packagingCost,
+      documentsCost: totals.documentsCost,
+      sellingExpense: totals.sellingExpense,
+      coreReturnShippingCost: totals.coreReturnShippingCost,
+      gltekSubtotal: totals.gltekSubtotal,
+      dkdSubtotal: totals.dkdSubtotal,
+      totalCost: totals.totalCost,
       missingUnitCount: missingUnitCount,
       missingQuantityCount: missingQuantityCount,
       missingReplacementRateCount: missingReplacementRateCount,
@@ -29936,31 +29986,6 @@ async function loadManufacturingCostComponents(products, productKind) {
   return { data: manufacturingCostComponentMap, error: null };
 }
 
-async function loadManufacturingCostCorePolicies(products, productKind) {
-  manufacturingCostCorePolicyMap = {};
-  var ids = (products || []).map(function(product) { return productDkdId(product); }).filter(Boolean);
-  ids = Array.from(new Set(ids.map(function(id) { return parseInt(id, 10); }))).filter(function(id) { return !isNaN(id); });
-  productKind = normalizeProductKind(productKind || "rebuilt");
-  for (var i = 0; i < ids.length; i += 200) {
-    var chunk = ids.slice(i, i + 200);
-    var r = await sb.from("core_product_variants")
-      .select("dkd_shohin_id,product_kind,core_return_required,core_charge_jpy,is_active")
-      .in("dkd_shohin_id", chunk)
-      .eq("product_kind", productKind)
-      .eq("is_active", true);
-    if (r.error) return r;
-    (r.data || []).forEach(function(row) {
-      var key = String(row.dkd_shohin_id || "");
-      if (!key) return;
-      var current = manufacturingCostCorePolicyMap[key];
-      if (!current || (current.core_charge_jpy == null && row.core_charge_jpy != null)) {
-        manufacturingCostCorePolicyMap[key] = row;
-      }
-    });
-  }
-  return { data: manufacturingCostCorePolicyMap, error: null };
-}
-
 function manufacturingCostBuildRows(products, settings, options) {
   options = options || {};
   var snapshotMap = options.snapshotMap || null;
@@ -29996,10 +30021,7 @@ function manufacturingCostBuildRows(products, settings, options) {
     if (snapshotComponents.length) componentCount = snapshotComponents.length;
     var coreInfo = manufacturingCostCoreCostForProduct(product, settings);
     var coreCost = coreInfo.amount;
-    var laborBase = partsCost + coreCost;
-    var laborRateCost = Math.round(laborBase * settings.laborRate / 100);
-    var laborCost = laborRateCost + settings.laborAmount;
-    var sellingExpense = Math.round(settings.sellingExpense == null ? MANUFACTURING_COST_DEFAULT_SELLING_EXPENSE_JPY : settings.sellingExpense);
+    var totals = manufacturingCostTotals(partsCost, coreCost, settings);
     return {
       product: product,
       productId: id,
@@ -30010,14 +30032,17 @@ function manufacturingCostBuildRows(products, settings, options) {
       coreCost: coreCost,
       coreCostCategory: coreInfo.category,
       coreCostCategorySpecific: coreInfo.isCategorySpecific,
-      coreCostProductSpecific: coreInfo.isProductSpecific,
       coreCostSource: coreInfo.source,
-      coreReturnRequired: coreInfo.returnRequired,
-      laborRateCost: laborRateCost,
-      laborAmount: settings.laborAmount,
-      laborCost: laborCost,
-      sellingExpense: sellingExpense,
-      totalCost: partsCost + coreCost + laborCost + sellingExpense,
+      laborAmount: totals.laborAmount,
+      laborCost: totals.laborCost,
+      transportCost: totals.transportCost,
+      packagingCost: totals.packagingCost,
+      documentsCost: totals.documentsCost,
+      sellingExpense: totals.sellingExpense,
+      coreReturnShippingCost: totals.coreReturnShippingCost,
+      gltekSubtotal: totals.gltekSubtotal,
+      dkdSubtotal: totals.dkdSubtotal,
+      totalCost: totals.totalCost,
       savedSnapshotUnitPriceDiffers: snapshotUnitPriceDiffers,
       missingQuantityCount: missingQuantityCount,
       missingReplacementRateCount: missingReplacementRateCount
@@ -30030,13 +30055,8 @@ async function buildAndRenderManufacturingCostProducts(products, settings, optio
   if (Object.prototype.hasOwnProperty.call(options, "snapshotMap")) {
     manufacturingCostListItemSnapshotMap = options.snapshotMap || null;
   }
-  var loads = await Promise.all([
-    loadManufacturingCostComponents(products, settings.productKind),
-    loadManufacturingCostCorePolicies(products, settings.productKind)
-  ]);
-  loads.forEach(function(result) {
-    if (result.error) throw result.error;
-  });
+  var componentLoad = await loadManufacturingCostComponents(products, settings.productKind);
+  if (componentLoad.error) throw componentLoad.error;
   manufacturingCostRows = manufacturingCostBuildRows(products, settings, { snapshotMap: manufacturingCostListItemSnapshotMap });
   renderManufacturingCostRows();
 }
@@ -30048,19 +30068,17 @@ function renderManufacturingCostSummary(rows) {
     wrap.innerHTML = "";
     return;
   }
-  var parts = 0, labor = 0, selling = 0, total = 0;
+  var gltek = 0, dkd = 0, total = 0;
   rows.forEach(function(row) {
-    parts += row.partsCost || 0;
-    labor += row.laborCost || 0;
-    selling += row.sellingExpense || 0;
+    gltek += row.gltekSubtotal || 0;
+    dkd += row.dkdSubtotal || 0;
     total += row.totalCost || 0;
   });
   wrap.innerHTML =
     "<div class='manufacturing-cost-summary'>" +
       "<div class='manufacturing-cost-stat'><span>" + esc(t("manufacturing_cost_summary_products")) + "</span><b>" + esc(String(rows.length)) + "</b></div>" +
-      "<div class='manufacturing-cost-stat'><span>" + esc(t("manufacturing_cost_summary_parts")) + "</span><b>" + esc(manufacturingCostYen(parts)) + "</b></div>" +
-      "<div class='manufacturing-cost-stat'><span>" + esc(t("manufacturing_cost_summary_labor")) + "</span><b>" + esc(manufacturingCostYen(labor)) + "</b></div>" +
-      "<div class='manufacturing-cost-stat'><span>" + esc(t("manufacturing_cost_summary_selling_expense")) + "</span><b>" + esc(manufacturingCostYen(selling)) + "</b></div>" +
+      "<div class='manufacturing-cost-stat gltek'><span>" + esc(t("manufacturing_cost_summary_gltek")) + "</span><b>" + esc(manufacturingCostYen(gltek)) + "</b></div>" +
+      "<div class='manufacturing-cost-stat dkd'><span>" + esc(t("manufacturing_cost_summary_dkd")) + "</span><b>" + esc(manufacturingCostYen(dkd)) + "</b></div>" +
       "<div class='manufacturing-cost-stat'><span>" + esc(t("manufacturing_cost_summary_total")) + "</span><b>" + esc(manufacturingCostYen(total)) + "</b></div>" +
     "</div>";
 }
@@ -30241,7 +30259,7 @@ function renderManufacturingCostRows() {
     return;
   }
   var html = "<div class='manufacturing-cost-table-wrap'><table class='mgmt-table manufacturing-cost-table'>";
-  html += "<tr><th>" + esc(t("manufacturing_cost_product")) + "</th><th>" + esc(t("manufacturing_cost_components")) + "</th><th>" + esc(t("manufacturing_cost_parts_cost")) + "</th><th>" + esc(t("manufacturing_cost_core_cost_short")) + "</th><th>" + esc(t("manufacturing_cost_labor_cost")) + "</th><th>" + esc(t("manufacturing_cost_selling_expense_cost")) + "</th><th>" + esc(t("manufacturing_cost_total")) + "</th><th>" + esc(t("manufacturing_cost_notes")) + "</th></tr>";
+  html += "<tr><th>" + esc(t("manufacturing_cost_product")) + "</th><th>" + esc(t("manufacturing_cost_components")) + "</th><th>" + esc(t("manufacturing_cost_gltek_costs")) + "</th><th>" + esc(t("manufacturing_cost_gltek_subtotal")) + "</th><th>" + esc(t("manufacturing_cost_dkd_costs")) + "</th><th>" + esc(t("manufacturing_cost_dkd_subtotal")) + "</th><th>" + esc(t("manufacturing_cost_total")) + "</th><th>" + esc(t("manufacturing_cost_notes")) + "</th></tr>";
   manufacturingCostRows.forEach(function(row, rowIndex) {
     var p = row.product || {};
     var notes = [];
@@ -30250,13 +30268,9 @@ function renderManufacturingCostRows() {
     if (row.missingQuantityCount) notes.push(tf("manufacturing_cost_missing_quantity", { n: row.missingQuantityCount }));
     if (row.missingReplacementRateCount) notes.push(tf("manufacturing_cost_missing_replacement_rate", { n: row.missingReplacementRateCount }));
     if (row.savedSnapshotUnitPriceDiffers) notes.push(t("manufacturing_cost_snapshot_unit_price_changed"));
-    var coreNote = row.coreCostSource === "product"
-      ? t("core_charge_product_source") + (row.coreReturnRequired === false ? " / " + t("core_return_not_required") : "")
-      : row.coreCostSource === "kind_default"
-        ? t("core_return_not_required")
-        : row.coreCostCategorySpecific
-          ? tf("manufacturing_cost_core_category_note", { category: manufacturingCostCategoryLabel(row.coreCostCategory) })
-          : t("manufacturing_cost_core_default_note");
+    var coreNote = row.coreCostCategorySpecific
+      ? tf("manufacturing_cost_core_category_note", { category: manufacturingCostCategoryLabel(row.coreCostCategory) })
+      : t("manufacturing_cost_core_default_note");
     var detailHtml = renderManufacturingCostComponentDetails(row, rowIndex);
     var productFacts = [
       [t("f_mfr_pn"), p.manufacturer_part_number],
@@ -30270,10 +30284,21 @@ function renderManufacturingCostRows() {
     html += "<tr class='manufacturing-cost-main-row'>";
     html += "<td><div class='manufacturing-cost-product-main'>" + esc(manufacturingCostProductTitle(p)) + "</div>" + (productFacts ? "<div class='manufacturing-cost-product-facts'>" + productFacts + "</div>" : "") + "<div class='manufacturing-cost-product-sub'>" + esc(productSub) + "</div></td>";
     html += "<td><div class='manufacturing-cost-money'>" + esc(String(row.componentCount || 0)) + "</div></td>";
-    html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.partsCost)) + "</div></td>";
-    html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.coreCost)) + "</div><div class='manufacturing-cost-note'>" + esc(coreNote) + "</div></td>";
-    html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.laborCost)) + "</div></td>";
-    html += "<td><div class='manufacturing-cost-money'>" + esc(manufacturingCostYen(row.sellingExpense)) + "</div></td>";
+    html += "<td><div class='manufacturing-cost-breakdown'>" +
+      "<span><i>" + esc(t("manufacturing_cost_parts_cost")) + "</i><b>" + esc(manufacturingCostYen(row.partsCost)) + "</b></span>" +
+      "<span><i>" + esc(t("manufacturing_cost_core_cost_short")) + "</i><b>" + esc(manufacturingCostYen(row.coreCost)) + "</b></span>" +
+      "<small>" + esc(coreNote) + "</small>" +
+      "<span><i>" + esc(t("manufacturing_cost_labor_cost")) + "</i><b>" + esc(manufacturingCostYen(row.laborCost)) + "</b></span>" +
+      "<span><i>" + esc(t("manufacturing_cost_transport_cost")) + "</i><b>" + esc(manufacturingCostYen(row.transportCost)) + "</b></span>" +
+    "</div></td>";
+    html += "<td><div class='manufacturing-cost-money manufacturing-cost-company-subtotal gltek'>" + esc(manufacturingCostYen(row.gltekSubtotal)) + "</div></td>";
+    html += "<td><div class='manufacturing-cost-breakdown'>" +
+      "<span><i>" + esc(t("manufacturing_cost_packaging_cost")) + "</i><b>" + esc(manufacturingCostYen(row.packagingCost)) + "</b></span>" +
+      "<span><i>" + esc(t("manufacturing_cost_documents_cost")) + "</i><b>" + esc(manufacturingCostYen(row.documentsCost)) + "</b></span>" +
+      "<span class='subtotal'><i>" + esc(t("manufacturing_cost_selling_expense_cost")) + "</i><b>" + esc(manufacturingCostYen(row.sellingExpense)) + "</b></span>" +
+      "<span><i>" + esc(t("manufacturing_cost_core_return_shipping_cost")) + "</i><b>" + esc(manufacturingCostYen(row.coreReturnShippingCost)) + "</b></span>" +
+    "</div></td>";
+    html += "<td><div class='manufacturing-cost-money manufacturing-cost-company-subtotal dkd'>" + esc(manufacturingCostYen(row.dkdSubtotal)) + "</div></td>";
     html += "<td><div class='manufacturing-cost-money manufacturing-cost-total'>" + esc(manufacturingCostYen(row.totalCost)) + "</div><div class='manufacturing-cost-note'>" + esc(t("manufacturing_cost_formula_note")) + "</div></td>";
     html += "<td>" + (notes.length ? "<div class='manufacturing-cost-missing'>" + esc(notes.join(" / ")) + "</div>" : "") + "</td>";
     html += "</tr>";
@@ -30306,11 +30331,17 @@ function exportManufacturingCostRows() {
     "カテゴリ名",
     "純正品番",
     "メーカー品番",
-    "部品原価",
-    "コア代",
-    "製造工賃",
-    "販売費用",
-    "製造原価計"
+    "GLTEK_コア代",
+    "GLTEK_部品原価",
+    "GLTEK_製造工賃",
+    "GLTEK_DKD間輸送コスト",
+    "GLTEK_製造原価小計",
+    "DKD_化粧箱",
+    "DKD_同梱帳票類",
+    "DKD_販売コスト合計",
+    "DKD_コア返送費",
+    "DKD_販売原価小計",
+    "総原価"
   ]];
   manufacturingCostRows.forEach(function(row) {
     var p = row.product || {};
@@ -30319,10 +30350,16 @@ function exportManufacturingCostRows() {
       category,
       p.genuine_part_number || p.genuine_part_number_2 || "",
       p.manufacturer_part_number || "",
-      Math.round(row.partsCost || 0),
       Math.round(row.coreCost || 0),
+      Math.round(row.partsCost || 0),
       Math.round(row.laborCost || 0),
+      Math.round(row.transportCost || 0),
+      Math.round(row.gltekSubtotal || 0),
+      Math.round(row.packagingCost || 0),
+      Math.round(row.documentsCost || 0),
       Math.round(row.sellingExpense || 0),
+      Math.round(row.coreReturnShippingCost || 0),
+      Math.round(row.dkdSubtotal || 0),
       Math.round(row.totalCost || 0)
     ]);
   });
@@ -30416,7 +30453,6 @@ async function calculateSelectedManufacturingCost() {
     console.warn("manufacturing cost calculation failed", e);
     manufacturingCostRows = [];
     manufacturingCostComponentMap = {};
-    manufacturingCostCorePolicyMap = {};
     if (countEl) countEl.textContent = "";
     if (list) list.innerHTML = "<div class='empty'>" + esc(t("msg_part_err") + ": " + ((e && e.message) || String(e))) + "</div>";
   }
@@ -30468,12 +30504,8 @@ async function saveManufacturingCostList() {
   if (!manufacturingCostRows.length) { setManufacturingCostListStatus(t("manufacturing_cost_list_rows_required"), true); return; }
   var settings = manufacturingCostSettings();
   var currentProducts = manufacturingCostRows.map(function(row) { return row.product; }).filter(Boolean);
-  var currentLoads = await Promise.all([
-    loadManufacturingCostComponents(currentProducts, settings.productKind),
-    loadManufacturingCostCorePolicies(currentProducts, settings.productKind)
-  ]);
-  var currentLoadError = currentLoads.find(function(result) { return result.error; });
-  if (currentLoadError) { setManufacturingCostListStatus(currentLoadError.error.message || t("msg_part_err"), true); return; }
+  var currentLoad = await loadManufacturingCostComponents(currentProducts, settings.productKind);
+  if (currentLoad.error) { setManufacturingCostListStatus(currentLoad.error.message || t("msg_part_err"), true); return; }
   var updatedUnitPriceCount = 0;
   var rowsToSave = manufacturingCostRows.map(function(row) {
     var refreshed = manufacturingCostRowWithCurrentUnitPrices(row, settings);
@@ -30497,9 +30529,13 @@ async function saveManufacturingCostList() {
     category_code: category || null,
     product_kind: settings.productKind,
     core_cost_jpy: manufacturingCostCoreCostForCategory(category, settings),
-    labor_rate_percent: settings.laborRate,
+    labor_rate_percent: 0,
     labor_amount_jpy: settings.laborAmount,
+    transport_cost_jpy: settings.transportCost,
+    packaging_cost_jpy: settings.packagingCost,
+    included_documents_cost_jpy: settings.documentsCost,
     selling_expense_jpy: settings.sellingExpense,
+    core_return_shipping_cost_jpy: settings.coreReturnShippingCost,
     updated_by: currentUser ? currentUser.id : null,
     updated_at: new Date().toISOString()
   };
@@ -30527,7 +30563,11 @@ async function saveManufacturingCostList() {
       parts_cost_jpy_snapshot: Math.round(row.partsCost || 0),
       core_cost_jpy_snapshot: Math.round(row.coreCost || 0),
       labor_cost_jpy_snapshot: Math.round(row.laborCost || 0),
+      transport_cost_jpy_snapshot: Math.round(row.transportCost || 0),
+      packaging_cost_jpy_snapshot: Math.round(row.packagingCost || 0),
+      included_documents_cost_jpy_snapshot: Math.round(row.documentsCost || 0),
       selling_expense_jpy_snapshot: Math.round(row.sellingExpense || 0),
+      core_return_shipping_cost_jpy_snapshot: Math.round(row.coreReturnShippingCost || 0),
       total_cost_jpy_snapshot: Math.round(row.totalCost || 0),
       components_snapshot: manufacturingCostRowComponentSnapshots(row)
     };
@@ -30559,18 +30599,24 @@ async function loadManufacturingCostList() {
   if (nameEl) nameEl.value = selected.list_name || "";
   if (queryEl) queryEl.value = "";
   var coreEl = document.getElementById("manufacturing-cost-core-cost");
-  var rateEl = document.getElementById("manufacturing-cost-labor-rate");
   var amountEl = document.getElementById("manufacturing-cost-labor-amount");
+  var transportEl = document.getElementById("manufacturing-cost-transport-cost");
+  var packagingEl = document.getElementById("manufacturing-cost-packaging-cost");
+  var documentsEl = document.getElementById("manufacturing-cost-documents-cost");
   var sellingEl = document.getElementById("manufacturing-cost-selling-expense");
+  var coreReturnShippingEl = document.getElementById("manufacturing-cost-core-return-shipping-cost");
   if (coreEl) coreEl.value = selected.core_cost_jpy == null ? 1500 : selected.core_cost_jpy;
   if (selected.category_code && selected.core_cost_jpy != null) {
     manufacturingCostCategoryCoreCosts[selected.category_code] = parseInt(selected.core_cost_jpy, 10) || 0;
     saveManufacturingCostCategoryCoreCosts();
     renderManufacturingCostCategoryCoreCosts();
   }
-  if (rateEl) rateEl.value = selected.labor_rate_percent == null ? 0 : selected.labor_rate_percent;
   if (amountEl) amountEl.value = selected.labor_amount_jpy == null ? MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY : selected.labor_amount_jpy;
-  if (sellingEl) sellingEl.value = selected.selling_expense_jpy == null ? MANUFACTURING_COST_DEFAULT_SELLING_EXPENSE_JPY : selected.selling_expense_jpy;
+  if (transportEl) transportEl.value = selected.transport_cost_jpy == null ? 0 : selected.transport_cost_jpy;
+  if (packagingEl) packagingEl.value = selected.packaging_cost_jpy == null ? MANUFACTURING_COST_DEFAULT_PACKAGING_COST_JPY : selected.packaging_cost_jpy;
+  if (documentsEl) documentsEl.value = selected.included_documents_cost_jpy == null ? MANUFACTURING_COST_DEFAULT_DOCUMENTS_COST_JPY : selected.included_documents_cost_jpy;
+  if (sellingEl) sellingEl.value = Math.round(manufacturingCostNumberFromInput("manufacturing-cost-packaging-cost", MANUFACTURING_COST_DEFAULT_PACKAGING_COST_JPY)) + Math.round(manufacturingCostNumberFromInput("manufacturing-cost-documents-cost", MANUFACTURING_COST_DEFAULT_DOCUMENTS_COST_JPY));
+  if (coreReturnShippingEl) coreReturnShippingEl.value = selected.core_return_shipping_cost_jpy == null ? 0 : selected.core_return_shipping_cost_jpy;
   await refreshManufacturingCostSavedLists();
   renderManufacturingCostCandidateEmpty("");
   var list = document.getElementById("manufacturing-cost-list");
@@ -30597,7 +30643,6 @@ async function loadManufacturingCostList() {
     console.warn("manufacturing cost list load failed", e);
     manufacturingCostRows = [];
     manufacturingCostComponentMap = {};
-    manufacturingCostCorePolicyMap = {};
     if (countEl) countEl.textContent = "";
     if (list) list.innerHTML = "<div class='empty'>" + esc(t("msg_part_err") + ": " + ((e && e.message) || String(e))) + "</div>";
     setManufacturingCostListStatus((e && e.message) || String(e), true);
@@ -46560,7 +46605,9 @@ function salesPricingManufacturingCostTotal(item) {
     item.parts_cost_jpy_snapshot,
     item.core_cost_jpy_snapshot,
     item.labor_cost_jpy_snapshot,
-    item.selling_expense_jpy_snapshot
+    item.transport_cost_jpy_snapshot,
+    item.selling_expense_jpy_snapshot,
+    item.core_return_shipping_cost_jpy_snapshot
   ].map(parsePriceNumber);
   if (breakdown.every(function(value) { return value !== null; })) {
     return breakdown.reduce(function(total, value) { return total + value; }, 0);
@@ -46578,7 +46625,7 @@ async function fetchSalesPricingManufacturingCostMap(ids, productKind) {
   }).filter(function(id) { return id !== null; })));
   if (!dkdIds.length) return out;
   var itemR = await sb.from("manufacturing_cost_list_items")
-    .select("id,list_id,dkd_shohin_id,total_cost_jpy_snapshot,parts_cost_jpy_snapshot,core_cost_jpy_snapshot,labor_cost_jpy_snapshot,selling_expense_jpy_snapshot,component_count_snapshot,created_at")
+    .select("id,list_id,dkd_shohin_id,total_cost_jpy_snapshot,parts_cost_jpy_snapshot,core_cost_jpy_snapshot,labor_cost_jpy_snapshot,transport_cost_jpy_snapshot,packaging_cost_jpy_snapshot,included_documents_cost_jpy_snapshot,selling_expense_jpy_snapshot,core_return_shipping_cost_jpy_snapshot,component_count_snapshot,created_at")
     .in("dkd_shohin_id", dkdIds)
     .limit(5000);
   if (itemR.error) {
@@ -46612,7 +46659,11 @@ async function fetchSalesPricingManufacturingCostMap(ids, productKind) {
       partsCost: parsePriceNumber(item.parts_cost_jpy_snapshot),
       coreCost: parsePriceNumber(item.core_cost_jpy_snapshot),
       laborCost: parsePriceNumber(item.labor_cost_jpy_snapshot),
+      transportCost: parsePriceNumber(item.transport_cost_jpy_snapshot),
+      packagingCost: parsePriceNumber(item.packaging_cost_jpy_snapshot),
+      documentsCost: parsePriceNumber(item.included_documents_cost_jpy_snapshot),
       sellingExpense: parsePriceNumber(item.selling_expense_jpy_snapshot),
+      coreReturnShippingCost: parsePriceNumber(item.core_return_shipping_cost_jpy_snapshot),
       componentCount: parseInt(item.component_count_snapshot || 0, 10) || 0,
       listName: list.list_name || "",
       productKind: list.product_kind || targetKind,
@@ -54284,7 +54335,7 @@ document.getElementById("manufacturing-cost-target-delete-list").addEventListene
 document.getElementById("manufacturing-cost-target-delete-overlay").addEventListener("click", function(e) {
   if (e.target === this) closeManufacturingCostTargetDelete();
 });
-["manufacturing-cost-core-cost","manufacturing-cost-labor-rate","manufacturing-cost-labor-amount","manufacturing-cost-selling-expense"].forEach(function(id) {
+["manufacturing-cost-core-cost","manufacturing-cost-labor-amount","manufacturing-cost-transport-cost","manufacturing-cost-packaging-cost","manufacturing-cost-documents-cost","manufacturing-cost-core-return-shipping-cost"].forEach(function(id) {
   var el = document.getElementById(id);
   if (!el) return;
   el.addEventListener("input", function() {
