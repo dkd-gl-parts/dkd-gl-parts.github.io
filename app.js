@@ -7030,7 +7030,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1032";
+var APP_VERSION       = "v1.1.1033";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -9464,6 +9464,9 @@ function resetScreenStateForMenu(screenId) {
 
 function showScreen(id) {
   var previousScreenId = activeAppScreenName();
+  if (previousScreenId === "sales-order-mgmt" && id !== previousScreenId) {
+    setSalesOrderDetailView("overview", false);
+  }
   if (id === "menu" && previousScreenId && previousScreenId !== "search") {
     resetScreenStateForMenu(previousScreenId);
   }
@@ -14152,11 +14155,8 @@ async function enterSalesOrderMgmt(options) {
   }
   options = options || {};
   var requestedOrderId = parseInt(options.orderId || (options.order && options.order.id), 10);
-  var requestedDetailView = ["overview", "fulfillment", "accounting", "history"].indexOf(options.detailView) >= 0
-    ? options.detailView
-    : "overview";
   salesOrderSelectedId = isNaN(requestedOrderId) ? null : requestedOrderId;
-  salesOrderDetailView = requestedDetailView;
+  salesOrderDetailView = "overview";
   salesOrderCheckedIdsState = new Set();
   salesOrderDetail = null;
   salesOrderB2ExportSaving = false;
@@ -17416,7 +17416,7 @@ function setShippingDocumentMessage(message, isError) {
 async function openShippingDocumentOrderInSalesOrderMgmt() {
   var order = shippingDocumentDetail;
   if (!order || !order.id) return;
-  await enterSalesOrderMgmt({ order: order, detailView: "fulfillment" });
+  await enterSalesOrderMgmt({ order: order });
 }
 
 function shippingDocumentLatestB2Export(order) {
@@ -19061,9 +19061,6 @@ async function loadSalesOrderDetail(orderId) {
     salesOrderDetail.sales_management_batch_number = accountingData.batch_number || null;
     salesOrderDetail.sales_management_exported_at = accountingData.exported_at || null;
     salesOrderDetail.sales_management_registered_at = accountingData.registered_at || null;
-    if (salesOrderDetailView === "overview" && salesOrderAccountingApplies(salesOrderDetail) && salesOrderAccountingStatus(salesOrderDetail) !== "registered") {
-      salesOrderDetailView = "accounting";
-    }
   }
   renderSalesOrderDetail();
 }

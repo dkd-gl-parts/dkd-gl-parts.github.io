@@ -24,6 +24,8 @@ for (const fragment of [
   "function resetScreenControlState",
   "function resetScreenRuntimeStateForMenu",
   "function resetScreenStateForMenu",
+  'previousScreenId === "sales-order-mgmt" && id !== previousScreenId',
+  'setSalesOrderDetailView("overview", false)',
   'id === "menu" && previousScreenId && previousScreenId !== "search"',
   "resetScreenStateForMenu(previousScreenId)",
   'screen.querySelectorAll("input, select, textarea")',
@@ -37,10 +39,12 @@ const showScreenSource = sourceBetween("function showScreen(id)", "captureInitia
 const calls = [];
 let active = "production-search";
 const screens = [{ classList: { remove() {} } }];
-const target = { classList: { add() {} } };
+const target = { classList: { add() {} }, querySelectorAll: () => [] };
 const context = {
+  salesOrderDetailView: "history",
   activeAppScreenName: () => active,
   resetScreenStateForMenu: (id) => calls.push(id),
+  setSalesOrderDetailView(view) { context.salesOrderDetailView = view; },
   syncInstallAppAccess() {},
   document: {
     querySelectorAll: () => screens,
@@ -64,6 +68,9 @@ context.showScreen("shipping-document-mgmt");
 if (calls.length !== 1) {
   throw new Error("The order and shipping-document handoff must not be treated as a menu reset");
 }
+if (context.salesOrderDetailView !== "overview") {
+  throw new Error("Leaving order management must reset its detail tab to the default billing and delivery view");
+}
 
 const productReturn = sourceBetween("function returnFromProductSearch()", "function shippingPrefectureLabel");
 for (const fragment of ["clearAppRestoreState();", "showAuthenticatedHome();"]) requireFragment(productReturn, fragment);
@@ -74,6 +81,9 @@ if (productReturn.includes("resetProductSearchForMenu();") || productReturn.incl
 const openShippingDocuments = sourceBetween("async function openSalesOrderShippingDocuments", "async function issueSalesOrderDispatch");
 requireFragment(openShippingDocuments, "enterShippingDocumentMgmt({ order: selectedOrder })");
 const openSalesOrder = sourceBetween("async function openShippingDocumentOrderInSalesOrderMgmt", "function shippingDocumentLatestB2Export");
-requireFragment(openSalesOrder, "enterSalesOrderMgmt({ order: order, detailView: \"fulfillment\" })");
+requireFragment(openSalesOrder, "enterSalesOrderMgmt({ order: order })");
+if (openSalesOrder.includes("detailView")) {
+  throw new Error("Returning from shipping documents must use the default order-detail tab");
+}
 
 console.log("screen state policy verification passed");

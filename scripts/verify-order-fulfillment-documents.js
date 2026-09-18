@@ -750,8 +750,8 @@ const enterSalesOrderSource = sourceBetween("async function enterSalesOrderMgmt"
 for (const fragment of [
   "options = options || {}",
   "options.orderId",
-  "options.detailView",
   "salesOrderSelectedId = isNaN(requestedOrderId) ? null : requestedOrderId",
+  'salesOrderDetailView = "overview"',
   'document.getElementById("sales-order-search")',
   'document.getElementById("sales-order-status")',
   'orderStatus.value = "all"',
@@ -781,7 +781,10 @@ for (const fragment of [
 if (openShippingDocumentsSource.includes("if (!canManageSalesOrders()")) {
   throw new Error("Shipping-document navigation must delegate permission feedback to enterShippingDocumentMgmt instead of failing silently");
 }
-requireFragment(source, 'enterSalesOrderMgmt({ order: order, detailView: "fulfillment" })');
+requireFragment(source, 'enterSalesOrderMgmt({ order: order })');
+if (source.includes('enterSalesOrderMgmt({ order: order, detailView:')) {
+  throw new Error("Returning from shipping documents must not retain a non-default order-detail tab");
+}
 for (const fragment of [
   ".sales-order-workspace-switch",
   "white-space: nowrap",
@@ -1048,11 +1051,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1032"',
-  'styles.css?v=1.1.1032',
-  'app.js?v=1.1.1032'
+  'content="v1.1.1033"',
+  'styles.css?v=1.1.1033',
+  'app.js?v=1.1.1033'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1032"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1033"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
