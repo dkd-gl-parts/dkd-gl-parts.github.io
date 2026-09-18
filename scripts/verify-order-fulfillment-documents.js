@@ -344,7 +344,13 @@ if (lookupSource.includes("loadShippingDocumentB2History")) {
 
 const detailLoadSource = sourceBetween("async function loadShippingDocumentDetail", "function shippingDocumentPrintJob");
 for (const fragment of [
+  "Promise.all([",
+  'sb.rpc("get_sales_order_accounting_status"',
+  'Promise.resolve(sb.rpc("get_sales_order_accounting_status"',
+  "return { data: null, error: error }",
   "shippingDocumentDetail = Array.isArray(result.data)",
+  'shippingDocumentDetail.sales_management_status = accountingData.sales_management_status || "unknown"',
+  "shippingDocumentDetail.sales_management_registered_at = accountingData.registered_at || null",
   "shippingDocumentRows = shippingDocumentRows.map",
   "String(row.id) === String(shippingDocumentDetail.id)",
   "Object.assign({}, row, shippingDocumentDetail)",
@@ -354,6 +360,13 @@ for (const fragment of [
 if (detailLoadSource.indexOf("renderShippingDocumentList()") > detailLoadSource.indexOf("renderShippingDocumentDetail()")) {
   throw new Error("The enriched shipping-document list must render before the order detail");
 }
+
+const printStatusRefreshSource = sourceBetween("async function refreshShippingDocumentPrintStatus", "function shippingDocumentStageHtml");
+for (const fragment of [
+  'refreshedOrder.sales_management_status = currentOrder.sales_management_status || "unknown"',
+  "refreshedOrder.sales_management_batch_number = currentOrder.sales_management_batch_number || null",
+  "refreshedOrder.sales_management_registered_at = currentOrder.sales_management_registered_at || null"
+]) requireFragment(printStatusRefreshSource, fragment, `Print-status polling must preserve refreshed sales-management state: ${fragment}`);
 
 const defaultDocuments = sourceBetween("function shippingDocumentDefaultStateHtml", "function shippingDocumentOutboundWaybillHtml");
 for (const fragment of [
@@ -1051,11 +1064,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1033"',
-  'styles.css?v=1.1.1033',
-  'app.js?v=1.1.1033'
+  'content="v1.1.1034"',
+  'styles.css?v=1.1.1034',
+  'app.js?v=1.1.1034'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1033"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1034"');
 
 if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
