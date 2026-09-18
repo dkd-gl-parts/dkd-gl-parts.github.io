@@ -7030,7 +7030,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1035";
+var APP_VERSION       = "v1.1.1036";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -13228,16 +13228,25 @@ function salesOrderListSearch() {
   return input ? normalizeCustomerOrderReference(input.value) : "";
 }
 
+function salesOrderDashboardStage(order) {
+  var status = String(order && order.status || "").toLowerCase();
+  if (status === "cancelled") return "cancelled";
+  if (["submitted", "accepted", "shipping_ready"].indexOf(status) >= 0) return status;
+  if (salesOrderAccountingApplies(order)) {
+    var accountingStatus = salesOrderAccountingStatus(order);
+    if (accountingStatus === "registered") return "sales_registered";
+    if (accountingStatus === "not_exported") return "shipped";
+    return "sales_pending";
+  }
+  return status;
+}
+
 function salesOrderDashboardCounts() {
   var counts = { all: salesOrderDashboardRows.length, work_queue: 0, submitted: 0, accepted: 0, shipping_ready: 0, shipped: 0, completed: 0, sales_pending: 0, sales_registered: 0, cancelled: 0 };
   salesOrderDashboardRows.forEach(function(order) {
-    var status = String(order && order.status || "").toLowerCase();
-    if (Object.prototype.hasOwnProperty.call(counts, status)) counts[status] += 1;
-    var accountingStatus = salesOrderAccountingStatus(order);
-    var salesApplicable = salesOrderAccountingApplies(order);
-    if (salesApplicable && accountingStatus === "registered") counts.sales_registered += 1;
-    if (salesApplicable && accountingStatus !== "registered") counts.sales_pending += 1;
-    if (["submitted", "accepted", "shipping_ready"].indexOf(status) >= 0 || (salesApplicable && accountingStatus !== "registered")) counts.work_queue += 1;
+    var stage = salesOrderDashboardStage(order);
+    if (Object.prototype.hasOwnProperty.call(counts, stage)) counts[stage] += 1;
+    if (["submitted", "accepted", "shipping_ready", "shipped", "sales_pending"].indexOf(stage) >= 0) counts.work_queue += 1;
   });
   return counts;
 }

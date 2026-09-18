@@ -15,7 +15,8 @@ function requireText(target, value, message) {
   '<option value="work_queue" selected>当日業務</option>',
   '<option value="sales_pending">売上未処理</option>',
   '<option value="sales_registered">売上登録済み</option>',
-  'data-sales-order-dashboard-status="work_queue"',
+  'data-sales-order-dashboard-status="all"',
+  '<span>合計</span><strong data-sales-order-dashboard-count="all">-</strong>',
   'data-sales-order-dashboard-status="sales_pending"',
   'data-sales-order-dashboard-status="sales_registered"'
 ].forEach((value) => requireText(html, value));
