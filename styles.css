@@ -7462,6 +7462,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-secondary-actions[open] > summary { border-color: #788795; background: #f6f8f9; }
 .sales-order-secondary-actions > div { position: absolute; z-index: 6; top: calc(100% + 5px); right: 0; min-width: 152px; border: 1px solid #cbd2d9; padding: 6px; background: #fff; box-shadow: 0 7px 18px rgba(29, 41, 57, .16); }
 .sales-order-secondary-actions > div .sales-order-action { width: 100%; }
+.sales-order-secondary-actions > div .sales-order-action + .sales-order-action { margin-top: 5px; }
 .sales-order-secondary-actions > summary:focus-visible,
 .sales-order-action.cancel:focus-visible { outline: 3px solid rgba(37, 99, 235, .25); outline-offset: 2px; }
 .sales-order-detail-message { min-height: 18px; margin-top: 9px; color: #22643e; font-size: 10px; font-weight: 700; text-align: right; }
@@ -7737,6 +7738,11 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-in-house-cancel-result { min-height: 18px; color: #22643e; font-size: 10px; font-weight: 700; }
 .sales-order-in-house-cancel-result.error { color: #b42318; }
 .sales-order-in-house-cancel-card .btn-danger:disabled { border-color: #d0d5dd; background: #e4e7ec; color: #98a2b3; cursor: not-allowed; }
+.development-test-order-purge-card .form-row { margin: 14px 0; }
+.development-test-order-purge-card .form-row label { color: #344054; font-size: 11px; font-weight: 800; }
+.development-test-order-purge-card .form-row input { width: 100%; min-height: 40px; margin-top: 6px; border: 1px solid #9aa6b2; border-radius: 5px; padding: 8px 10px; background: #fff; color: #172b3f; font-size: 14px; font-weight: 800; letter-spacing: 0; }
+.development-test-order-purge-card .form-row input:focus { border-color: #b42318; outline: 3px solid rgba(180,35,24,.14); }
+.development-test-order-purge-card .form-row small { display: block; margin-top: 5px; color: #667085; font-size: 9px; line-height: 1.5; }
 .sales-order-shipment-history { border-top: 1px solid #dbe1e6; }
 .sales-order-shipment-history-row { display: grid; grid-template-columns: 86px minmax(180px, 1fr) minmax(170px, .8fr) 54px; align-items: center; gap: 12px; border-bottom: 1px solid #e1e5e9; padding: 10px; }
 .sales-order-shipment-history-row.superseded { opacity: .58; background: #f7f8f9; }
