@@ -469,8 +469,8 @@ var TRANSLATIONS = {
     business_workspace_hanbaiou_saved: "D-CATS業務連携 / 販売王 / 01_D-CATS発行 に保存しました。",
     sales_management_not_exported: "売上未出力",
     sales_management_registration_pending: "販売管理登録待ち",
-    sales_management_registered: "販売管理登録済み",
-    sales_management_unknown: "売上状態確認不可",
+    sales_management_registered: "売上登録済",
+    sales_management_unknown: "売上確認不可",
     sales_order_queue_sales: "売上処理が必要",
     sales_order_queue_shipping: "出荷処理が必要",
     sales_order_next_export: "売上CSV出力",
@@ -7030,7 +7030,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1034";
+var APP_VERSION       = "v1.1.1035";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
