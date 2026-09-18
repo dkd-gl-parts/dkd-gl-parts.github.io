@@ -18,7 +18,7 @@ function sourceBetween(startText, endText) {
   return source.slice(start, end);
 }
 
-const statuses = ["work_queue", "submitted", "accepted", "shipping_ready", "shipped", "sales_pending", "sales_registered", "cancelled"];
+const statuses = ["all", "submitted", "accepted", "shipping_ready", "shipped", "sales_pending", "sales_registered", "cancelled"];
 for (const status of statuses) {
   requireFragment(html, `data-sales-order-dashboard-status="${status}"`, "dashboard status action");
   requireFragment(html, `data-sales-order-dashboard-count="${status}"`, "dashboard status count");
@@ -30,11 +30,12 @@ if (dashboardStart < 0 || workspaceStart < 0 || dashboardStart > workspaceStart)
   throw new Error("dashboard must appear before the order workspace");
 }
 
-const countsSource = sourceBetween("function salesOrderDashboardCounts", "function renderSalesOrderDashboard");
+const countsSource = sourceBetween("function salesOrderDashboardStage", "function renderSalesOrderDashboard");
 const counts = vm.runInNewContext(
   `var salesOrderDashboardRows = [
     { status: "submitted" }, { status: "submitted" }, { status: "accepted" },
     { status: "shipping_ready" }, { status: "shipped", sales_management_status: "not_exported" },
+    { status: "shipped", sales_management_status: "registration_pending" },
     { status: "completed", sales_management_status: "registered" }, { status: "cancelled" }
   ];
   function salesOrderAccountingApplies(order) { return ["shipped", "completed"].includes(order.status); }
@@ -42,9 +43,11 @@ const counts = vm.runInNewContext(
   ${countsSource}
   salesOrderDashboardCounts();`
 );
-if (counts.all !== 7 || counts.work_queue !== 5 || counts.submitted !== 2 || counts.accepted !== 1 ||
-    counts.shipping_ready !== 1 || counts.shipped !== 1 || counts.completed !== 1 || counts.cancelled !== 1 ||
-    counts.sales_pending !== 1 || counts.sales_registered !== 1) {
+const stageTotal = counts.submitted + counts.accepted + counts.shipping_ready + counts.shipped +
+  counts.sales_pending + counts.sales_registered + counts.cancelled;
+if (counts.all !== 8 || counts.work_queue !== 6 || counts.submitted !== 2 || counts.accepted !== 1 ||
+    counts.shipping_ready !== 1 || counts.shipped !== 1 || counts.completed !== 0 || counts.cancelled !== 1 ||
+    counts.sales_pending !== 1 || counts.sales_registered !== 1 || stageTotal !== counts.all) {
   throw new Error(`dashboard status counts are incorrect: ${JSON.stringify(counts)}`);
 }
 
