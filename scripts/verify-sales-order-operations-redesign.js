@@ -59,6 +59,7 @@ if (selection.includes("B2 CSV発行") || selection.includes("sales-order-export
   throw new Error("Selected-order controls must not issue B2 CSV files");
 }
 
+const lifecycleStatusSource = functionSource("salesOrderLifecycleStatus");
 const lifecycleSource = functionSource("salesOrderLifecycleHtml");
 for (const fragment of [
   "受付待ち",
@@ -70,12 +71,29 @@ for (const fragment of [
   "aria-current='step'"
 ]) requireFragment(lifecycleSource, fragment);
 
-const lifecycleContext = { esc: (value) => String(value) };
+const lifecycleContext = {
+  esc: (value) => String(value),
+  salesOrderAccountingApplies: (order) => ["shipped", "completed"].includes(String(order && order.status || "")),
+  salesOrderAccountingStatus: (order) => String(order && order.sales_management_status || "unknown")
+};
 vm.createContext(lifecycleContext);
-vm.runInContext(lifecycleSource, lifecycleContext);
+vm.runInContext(lifecycleStatusSource + "\n" + lifecycleSource, lifecycleContext);
 const readyProgress = lifecycleContext.salesOrderLifecycleHtml("shipping_ready");
 if (!readyProgress.includes("sales-order-progress-step done") || !readyProgress.includes("sales-order-progress-step current")) {
   throw new Error("Shipping-ready lifecycle must distinguish completed and current steps");
+}
+const salesRegisteredProgress = lifecycleContext.salesOrderLifecycleHtml({ status: "shipped", sales_management_status: "registered" });
+if (!salesRegisteredProgress.includes("aria-current='step'><span>5</span><strong>完了</strong>")) {
+  throw new Error("A sales-registered order must advance the lifecycle to completed");
+}
+for (const pendingOrder of [
+  { status: "shipped", sales_management_status: "not_exported" },
+  { status: "completed", sales_management_status: "registration_pending" }
+]) {
+  const pendingProgress = lifecycleContext.salesOrderLifecycleHtml(pendingOrder);
+  if (!pendingProgress.includes("aria-current='step'><span>4</span><strong>出荷済み</strong>")) {
+    throw new Error("A sales-pending order must remain at the shipped lifecycle step");
+  }
 }
 if (!lifecycleContext.salesOrderLifecycleHtml("cancelled").includes("受注取消")) {
   throw new Error("Cancelled orders must have an explicit terminal lifecycle state");
@@ -83,7 +101,7 @@ if (!lifecycleContext.salesOrderLifecycleHtml("cancelled").includes("受注取�
 
 const detail = functionSource("renderSalesOrderDetail");
 for (const fragment of [
-  "salesOrderLifecycleHtml(order.status)",
+  "salesOrderLifecycleHtml(order)",
   "salesOrderDispatchHtml(order)",
   'class=\'sales-order-detail-head\'',
   'class=\'sales-order-detail-state\'',

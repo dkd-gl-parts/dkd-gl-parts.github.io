@@ -7030,7 +7030,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1036";
+var APP_VERSION       = "v1.1.1037";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -18438,8 +18438,16 @@ function setSalesOrderDetailView(view, focusTab) {
   });
 }
 
-function salesOrderLifecycleHtml(status) {
-  var normalized = String(status || "").toLowerCase();
+function salesOrderLifecycleStatus(order) {
+  var normalized = String(order && typeof order === "object" ? order.status : order || "").toLowerCase();
+  if (order && typeof order === "object" && salesOrderAccountingApplies(order)) {
+    return salesOrderAccountingStatus(order) === "registered" ? "completed" : "shipped";
+  }
+  return normalized;
+}
+
+function salesOrderLifecycleHtml(order) {
+  var normalized = salesOrderLifecycleStatus(order);
   if (normalized === "cancelled") {
     return "<div class='sales-order-progress cancelled' aria-label='受注処理は取消で終了'><span>処理終了</span><strong>受注取消</strong></div>";
   }
@@ -18557,7 +18565,7 @@ function renderSalesOrderDetail() {
   var nextActions = actions || cancelAction
     ? "<div class='sales-order-detail-next-actions'><span>次の操作</span><div>" + actions + cancelAction + "</div></div>"
     : "";
-  var lifecycle = salesOrderLifecycleHtml(order.status);
+  var lifecycle = salesOrderLifecycleHtml(order);
   var compactTotal = "<div class='sales-order-detail-total'><span>請求合計</span><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></div>";
   var tabHtml = [
     { key: "overview", label: "請求・配送" },
