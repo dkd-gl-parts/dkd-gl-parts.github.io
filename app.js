@@ -7030,7 +7030,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1033";
+var APP_VERSION       = "v1.1.1034";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -16795,7 +16795,13 @@ async function loadShippingDocumentDetail(orderId) {
   var requestSeq = ++shippingDocumentDetailSeq;
   var host = document.getElementById("shipping-document-detail");
   if (host) host.innerHTML = "<div class='sales-order-empty'>" + esc(t("loading")) + "</div>";
-  var result = await sb.rpc("get_sales_order_detail", { target_order_id: orderId });
+  var results = await Promise.all([
+    sb.rpc("get_sales_order_detail", { target_order_id: orderId }),
+    Promise.resolve(sb.rpc("get_sales_order_accounting_status", { target_order_id: orderId })).catch(function(error) {
+      return { data: null, error: error };
+    })
+  ]);
+  var result = results[0];
   if (requestSeq !== shippingDocumentDetailSeq) return;
   if (result.error) {
     shippingDocumentDetail = null;
@@ -16804,6 +16810,14 @@ async function loadShippingDocumentDetail(orderId) {
   }
   shippingDocumentDetail = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
   if (shippingDocumentDetail) {
+    var accountingResult = results[1];
+    var accountingData = accountingResult && !accountingResult.error
+      ? (Array.isArray(accountingResult.data) ? (accountingResult.data[0] || {}) : (accountingResult.data || {}))
+      : {};
+    shippingDocumentDetail.sales_management_status = accountingData.sales_management_status || "unknown";
+    shippingDocumentDetail.sales_management_batch_number = accountingData.batch_number || null;
+    shippingDocumentDetail.sales_management_exported_at = accountingData.exported_at || null;
+    shippingDocumentDetail.sales_management_registered_at = accountingData.registered_at || null;
     shippingDocumentRows = shippingDocumentRows.map(function(row) {
       return String(row.id) === String(shippingDocumentDetail.id) ? Object.assign({}, row, shippingDocumentDetail) : row;
     });
@@ -16870,6 +16884,10 @@ async function refreshShippingDocumentPrintStatus() {
   }
   var refreshedOrder = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
   if (!refreshedOrder) return;
+  refreshedOrder.sales_management_status = currentOrder.sales_management_status || "unknown";
+  refreshedOrder.sales_management_batch_number = currentOrder.sales_management_batch_number || null;
+  refreshedOrder.sales_management_exported_at = currentOrder.sales_management_exported_at || null;
+  refreshedOrder.sales_management_registered_at = currentOrder.sales_management_registered_at || null;
   shippingDocumentDetail = refreshedOrder;
   shippingDocumentRows = shippingDocumentRows.map(function(row) {
     return String(row.id) === String(refreshedOrder.id) ? Object.assign({}, row, refreshedOrder) : row;
