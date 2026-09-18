@@ -357,6 +357,7 @@ var TRANSLATIONS = {
     sales_order_shipping_date_checking: "配送条件を確認して発送予定日を変更しています。",
     sales_order_shipping_date_failed: "発送予定日を変更できませんでした。",
     sales_order_shipping_date_updated: "発送予定日を変更しました。B2 CSVと帳票は変更後の日付で再発行してください。",
+    sales_order_test_purge_complete: "テスト受注 {order} を完全削除しました。",
     sales_order_tracking_check: "配送状況を確認",
     customer_order_delivery_date: "お届け希望日",
     customer_order_delivery_time: "時間帯",
@@ -2659,6 +2660,7 @@ var TRANSLATIONS = {
     sales_order_shipping_date_checking: "Validating delivery rules and updating the shipping date.",
     sales_order_shipping_date_failed: "Unable to update the shipping date.",
     sales_order_shipping_date_updated: "The shipping date was updated. Reissue the B2 CSV and documents with the new date.",
+    sales_order_test_purge_complete: "Test order {order} was permanently deleted.",
     sales_order_tracking_check: "Track shipment",
     customer_order_delivery_date: "Requested Delivery Date",
     customer_order_delivery_time: "Time Window",
@@ -4905,6 +4907,7 @@ var TRANSLATIONS = {
     sales_order_shipping_date_checking: "正在检查配送条件并更新发货日期。",
     sales_order_shipping_date_failed: "无法更新发货日期。",
     sales_order_shipping_date_updated: "发货日期已更新。请使用更新后的日期重新生成B2 CSV和单据。",
+    sales_order_test_purge_complete: "测试订单 {order} 已永久删除。",
     sales_order_tracking_check: "查看配送状态",
     customer_order_delivery_date: "希望送达日期",
     customer_order_delivery_time: "时间段",
@@ -7030,7 +7033,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1037";
+var APP_VERSION       = "v1.1.1038";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -18546,8 +18549,18 @@ function renderSalesOrderDetail() {
   var actions = allowed.filter(function(action) { return action !== "cancel"; }).map(function(action) {
     return "<button type='button' class='sales-order-action " + esc(action) + "' data-sales-order-action='" + esc(action) + "'>" + esc(actionLabels[action] || action) + "</button>";
   }).join("");
-  var cancelAction = allowed.indexOf("cancel") >= 0
-    ? "<details class='sales-order-secondary-actions'><summary><span>その他の操作</span></summary><div><button type='button' class='sales-order-action cancel' data-sales-order-action='cancel'>受注取消</button></div></details>"
+  var purgeStatus = order.development_test_order_purge || {};
+  var secondaryButtons = allowed.indexOf("cancel") >= 0
+    ? "<button type='button' class='sales-order-action cancel' data-sales-order-action='cancel'>受注取消</button>"
+    : "";
+  if (isSystemAdmin() && purgeStatus.is_development_test_order) {
+    var purgeUnavailableTitle = "取消済み・未出荷・販売管理未登録のテスト受注だけ削除できます。";
+    secondaryButtons += "<button type='button' class='sales-order-action cancel development-test-order-purge-open' data-development-test-order-purge-open" +
+      (purgeStatus.eligible ? "" : " disabled title='" + esc(purgeUnavailableTitle) + "'") +
+      ">テスト受注を完全削除</button>";
+  }
+  var cancelAction = secondaryButtons
+    ? "<details class='sales-order-secondary-actions'><summary><span>その他の操作</span></summary><div>" + secondaryButtons + "</div></details>"
     : "";
   var outboundService = salesOrderWaybillCarrierLabel(order, "outbound");
   var outboundWaybillDetail = salesOrderWaybillDetailLabel(order, "outbound");
@@ -18606,6 +18619,8 @@ function renderSalesOrderDetail() {
   host.querySelectorAll("[data-sales-order-action]").forEach(function(button) {
     button.addEventListener("click", function() { updateSalesOrderStatus(button.dataset.salesOrderAction); });
   });
+  var purgeButton = host.querySelector("[data-development-test-order-purge-open]");
+  if (purgeButton) purgeButton.addEventListener("click", openDevelopmentTestOrderPurgeDialog);
   var trackingButton = document.getElementById("sales-order-save-tracking");
   var trackingEditButton = document.getElementById("sales-order-edit-tracking");
   var trackingCancelButton = document.getElementById("sales-order-cancel-tracking");
@@ -19076,10 +19091,14 @@ async function loadSalesOrderDetail(orderId) {
   var requestSeq = ++salesOrderDetailSeq;
   var host = document.getElementById("sales-order-detail");
   if (host) host.innerHTML = "<div class='sales-order-empty'>" + esc(t("loading")) + "</div>";
-  var results = await Promise.all([
+  var requests = [
     sb.rpc("get_sales_order_detail", { target_order_id: orderId }),
     sb.rpc("get_sales_order_accounting_status", { target_order_id: orderId })
-  ]);
+  ];
+  if (isSystemAdmin()) {
+    requests.push(sb.rpc("get_development_test_order_purge_status", { target_order_id: orderId }));
+  }
+  var results = await Promise.all(requests);
   var result = results[0];
   if (requestSeq !== salesOrderDetailSeq) return;
   if (result.error) {
@@ -19096,6 +19115,10 @@ async function loadSalesOrderDetail(orderId) {
     salesOrderDetail.sales_management_batch_number = accountingData.batch_number || null;
     salesOrderDetail.sales_management_exported_at = accountingData.exported_at || null;
     salesOrderDetail.sales_management_registered_at = accountingData.registered_at || null;
+    var purgeResult = results[2];
+    salesOrderDetail.development_test_order_purge = purgeResult && !purgeResult.error
+      ? (Array.isArray(purgeResult.data) ? (purgeResult.data[0] || {}) : (purgeResult.data || {}))
+      : {};
   }
   renderSalesOrderDetail();
 }
@@ -19197,6 +19220,90 @@ async function submitSalesOrderInHouseCancellation() {
   await refreshSalesOrderManagement();
   salesOrderSelectedId = orderId;
   await loadSalesOrderDetail(orderId);
+}
+
+function updateDevelopmentTestOrderPurgeButton() {
+  var overlay = document.getElementById("development-test-order-purge-overlay");
+  var input = document.getElementById("development-test-order-purge-confirmation");
+  var button = document.getElementById("development-test-order-purge-submit");
+  if (!overlay || !input || !button) return;
+  button.disabled = salesOrderSaving || input.value !== String(overlay.dataset.orderNumber || "");
+  button.textContent = salesOrderSaving ? "完全削除しています..." : "完全削除する";
+}
+
+function openDevelopmentTestOrderPurgeDialog() {
+  var order = salesOrderDetail;
+  var purgeStatus = order && order.development_test_order_purge || {};
+  if (!isSystemAdmin() || !order || !purgeStatus.is_development_test_order || !purgeStatus.eligible) return;
+  var overlay = document.getElementById("development-test-order-purge-overlay");
+  var input = document.getElementById("development-test-order-purge-confirmation");
+  var result = document.getElementById("development-test-order-purge-result");
+  if (!overlay || !input || !result) return;
+  var displayOrderNumber = String(order.order_number || "");
+  overlay.dataset.orderId = String(order.id);
+  overlay.dataset.orderVersion = order.version == null ? "" : String(order.version);
+  overlay.dataset.orderNumber = displayOrderNumber;
+  document.getElementById("development-test-order-purge-number").textContent = displayOrderNumber || "-";
+  document.getElementById("development-test-order-purge-customer").textContent = order.customer_name || "-";
+  document.getElementById("development-test-order-purge-status").textContent = customerOrderStatusLabel(order.status);
+  document.getElementById("development-test-order-purge-total").textContent = customerOrderCurrency(order.total_jpy);
+  input.value = "";
+  input.placeholder = displayOrderNumber;
+  result.textContent = "";
+  result.className = "sales-order-in-house-cancel-result";
+  overlay.classList.add("show");
+  updateDevelopmentTestOrderPurgeButton();
+  input.focus();
+}
+
+function closeDevelopmentTestOrderPurgeDialog(force) {
+  if (salesOrderSaving && !force) return;
+  var overlay = document.getElementById("development-test-order-purge-overlay");
+  if (!overlay) return;
+  overlay.classList.remove("show");
+  delete overlay.dataset.orderId;
+  delete overlay.dataset.orderVersion;
+  delete overlay.dataset.orderNumber;
+}
+
+async function submitDevelopmentTestOrderPurge() {
+  if (!isSystemAdmin() || salesOrderSaving) return;
+  var overlay = document.getElementById("development-test-order-purge-overlay");
+  var input = document.getElementById("development-test-order-purge-confirmation");
+  var resultHost = document.getElementById("development-test-order-purge-result");
+  if (!overlay || !input || !resultHost) return;
+  var orderId = parseInt(overlay.dataset.orderId, 10);
+  var expectedVersion = parseInt(overlay.dataset.orderVersion, 10);
+  var orderNumber = String(overlay.dataset.orderNumber || "");
+  if (isNaN(orderId) || isNaN(expectedVersion) || input.value !== orderNumber) {
+    resultHost.textContent = "受注番号が一致しません。";
+    resultHost.className = "sales-order-in-house-cancel-result error";
+    updateDevelopmentTestOrderPurgeButton();
+    return;
+  }
+
+  salesOrderSaving = true;
+  resultHost.textContent = "削除条件を再確認し、関連するテストデータを削除しています。";
+  resultHost.className = "sales-order-in-house-cancel-result";
+  updateDevelopmentTestOrderPurgeButton();
+  var rpcResult = await sb.rpc("purge_development_test_order", {
+    target_order_id: orderId,
+    target_confirmation_order_number: input.value,
+    target_expected_version: expectedVersion
+  });
+  salesOrderSaving = false;
+  if (rpcResult.error) {
+    resultHost.textContent = rpcResult.error.message || "テスト受注を完全削除できませんでした。";
+    resultHost.className = "sales-order-in-house-cancel-result error";
+    updateDevelopmentTestOrderPurgeButton();
+    return;
+  }
+
+  closeDevelopmentTestOrderPurgeDialog(true);
+  salesOrderCheckedIdsState.delete(orderId);
+  clearSalesOrderDetailSelection();
+  await refreshSalesOrderManagement();
+  setSalesOrderBatchMessage(tf("sales_order_test_purge_complete", { order: orderNumber }), false);
 }
 
 async function updateSalesOrderStatus(action) {
@@ -53973,6 +54080,12 @@ document.getElementById("sales-order-in-house-cancel-close").addEventListener("c
 document.getElementById("sales-order-in-house-cancel-submit").addEventListener("click", submitSalesOrderInHouseCancellation);
 document.getElementById("sales-order-in-house-cancel-overlay").addEventListener("click", function(e) {
   if (e.target === this) closeSalesOrderInHouseCancelDialog(false);
+});
+document.getElementById("development-test-order-purge-confirmation").addEventListener("input", updateDevelopmentTestOrderPurgeButton);
+document.getElementById("development-test-order-purge-close").addEventListener("click", function() { closeDevelopmentTestOrderPurgeDialog(false); });
+document.getElementById("development-test-order-purge-submit").addEventListener("click", submitDevelopmentTestOrderPurge);
+document.getElementById("development-test-order-purge-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeDevelopmentTestOrderPurgeDialog(false);
 });
 document.getElementById("btn-back-search").addEventListener("click", returnFromProductSearch);
 document.getElementById("btn-back-production-search").addEventListener("click", returnToMenuFresh);
