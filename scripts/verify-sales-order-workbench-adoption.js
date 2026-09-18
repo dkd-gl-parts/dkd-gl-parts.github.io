@@ -107,12 +107,11 @@ for (const fragment of [
   "parseInt(order.order_id, 10) === parseInt(state.requestedOrderId, 10)",
 ]) requireFragment(loadExport, fragment);
 const loadDetail = functionSource("loadSalesOrderDetail");
-for (const fragment of [
-  "var selectionChanged",
-  'salesOrderDetailView = "accounting"',
-  'salesOrderDetailView === "overview"',
-  'salesOrderAccountingStatus(salesOrderDetail) !== "registered"',
-]) requireFragment(loadDetail, fragment);
+requireFragment(loadDetail, "var selectionChanged");
+requireFragment(loadDetail, 'if (selectionChanged) salesOrderDetailView = "overview"');
+if (loadDetail.includes('salesOrderDetailView = "accounting"') || loadDetail.includes('salesOrderDetailView === "overview"')) {
+  throw new Error("Order status must not automatically replace the default billing and delivery detail tab");
+}
 
 requireFragment(html, 'id="sales-accounting-export-order-context"');
 for (const fragment of [
