@@ -37,11 +37,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.1039");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.1040");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.1039");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.1040");
 }
 
 .dcats-concierge-hit-target {
@@ -342,6 +342,7 @@
 .dcats-concierge-floating-cost,
 .dcats-concierge-floating-status,
 .dcats-concierge-bridge-help,
+.dcats-concierge-bridge-inbox-help,
 .dcats-concierge-bridge-cost,
 .dcats-concierge-bridge-status {
   margin: 0;
@@ -352,6 +353,53 @@
 .dcats-concierge-floating-help,
 .dcats-concierge-bridge-help {
   color: #667085;
+}
+
+.dcats-concierge-bridge-inbox-help {
+  color: #596579;
+  overflow-wrap: anywhere;
+}
+
+.dcats-concierge-bridge-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.dcats-concierge-bridge-action {
+  display: grid;
+  gap: 6px;
+}
+
+.dcats-concierge-bridge-label {
+  color: #263349;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dcats-concierge-bridge-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid rgb(119 58 45 / 30%);
+  border-radius: 9px;
+  background: #fff;
+  color: #2c3442;
+  font: inherit;
+  padding: 7px 9px;
+}
+
+.dcats-concierge-bridge-input:focus-visible {
+  outline: 3px solid rgb(154 55 43 / 20%);
+  outline-offset: 1px;
+}
+
+.dcats-concierge-bridge-button.is-secondary {
+  background: #fff7f4;
+  color: #7d2d27;
+}
+
+.dcats-concierge-bridge-button.is-secondary:hover:not(:disabled) {
+  background: #fbe9e4;
 }
 
 .dcats-concierge-floating-cost,

@@ -452,8 +452,14 @@ notifyObservers();
 assert(!root.hidden, "System administrator could not enter concierge test operation");
 const bridgeCard = byClass("dcats-concierge-bridge-card")[0];
 const bridgeButton = byClass("dcats-concierge-bridge-button")[0];
+const bridgeButtons = byClass("dcats-concierge-bridge-button");
+const bridgeSalesButton = bridgeButtons.find((element) => element.textContent === "売上CSVを検査して待機");
+const bridgeCustomerButton = bridgeButtons.find((element) => element.textContent === "得意先CSVを検査して確認待ち");
+const bridgeInputs = byClass("dcats-concierge-bridge-input");
+const bridgeSalesFileInput = bridgeInputs.find((element) => element.id === "dcats-concierge-bridge-sales-file");
+const bridgeCustomerFileInput = bridgeInputs.find((element) => element.id === "dcats-concierge-bridge-customer-file");
 const bridgeStatus = byClass("dcats-concierge-bridge-status")[0];
-assert(bridgeCard && bridgeButton && bridgeStatus, "System administrator did not receive the Windows integration controls");
+assert(bridgeCard && bridgeButton && bridgeSalesButton && bridgeCustomerButton && bridgeSalesFileInput && bridgeCustomerFileInput && bridgeStatus, "System administrator did not receive the Windows integration controls");
 dispatch(bridgeButton.listeners, "click", { target: bridgeButton });
 dispatch(bridgeButton.listeners, "click", { target: bridgeButton });
 await new Promise((resolve) => setImmediate(resolve));
@@ -461,6 +467,39 @@ await new Promise((resolve) => setImmediate(resolve));
 assert(capabilityRequests.length === 1 && capabilityRequests[0].command === "get_hanbaioh_queue_status", "Concierge requested a command outside the read-only pilot");
 assert(bridgeRequests.length === 1 && bridgeRequests[0].capability === "signed-capability", "Signed capability was not forwarded to the extension bridge");
 assert(bridgeStatus.textContent === "接続できました。連携キューは0件です。" && bridgeStatus.classList.contains("is-success"), "Successful Windows integration status was not presented safely");
+bridgeResponseFactory = (request) => ({
+  id: request.id,
+  ok: true,
+  command: request.command,
+  data: { reused: false, validation: { summary: { rowCount: 2, slipCount: 1 }, warnings: [] } }
+});
+dispatch(bridgeSalesButton.listeners, "click", { target: bridgeSalesButton });
+dispatch(bridgeSalesButton.listeners, "click", { target: bridgeSalesButton });
+await new Promise((resolve) => setImmediate(resolve));
+await new Promise((resolve) => setImmediate(resolve));
+assert(capabilityRequests.length === 2 && capabilityRequests[1].command === "prepare_sales_import" && capabilityRequests[1].args.fileName === "sales.csv", "Sales CSV preparation was not bound to the reviewed file name");
+assert(bridgeRequests.length === 2 && bridgeRequests[1].args.fileName === "sales.csv" && bridgeRequests[1].capability === "signed-capability", "Sales CSV preparation was not forwarded safely");
+assert(bridgeStatus.textContent === "売上CSVを2行・1伝票・警告0件で待機キューへ準備しました。" && bridgeStatus.classList.contains("is-success"), "Sales CSV preparation summary was not presented");
+bridgeSalesFileInput.value = "..\\sales.csv";
+dispatch(bridgeSalesButton.listeners, "click", { target: bridgeSalesButton });
+assert(capabilityRequests.length === 2 && bridgeStatus.textContent === "受信フォルダー内のCSVファイル名だけを入力してください。", "Unsafe sales CSV file name was not rejected before capability issuance");
+bridgeSalesFileInput.value = "sales.csv";
+bridgeResponseFactory = (request) => ({
+  id: request.id,
+  ok: true,
+  command: request.command,
+  data: { reused: false, validation: { summary: { rowCount: 3, uniqueCustomerCount: 2 }, warnings: [{ code: "DUPLICATE_CUSTOMER" }] } }
+});
+dispatch(bridgeCustomerButton.listeners, "click", { target: bridgeCustomerButton });
+await new Promise((resolve) => setImmediate(resolve));
+await new Promise((resolve) => setImmediate(resolve));
+assert(capabilityRequests.length === 3 && capabilityRequests[2].command === "prepare_customer_import" && capabilityRequests[2].args.fileName === "customers.csv", "Customer CSV preparation was not bound to the reviewed file name");
+assert(bridgeStatus.textContent === "得意先CSVを3行・2得意先・警告1件で確認待ちに準備しました。" && bridgeStatus.classList.contains("is-success"), "Customer CSV preparation summary was not presented");
+bridgeResponseFactory = (request) => ({ id: request.id, ok: false, error: { code: "CSV_VALIDATION_FAILED", message: "販売王25形式の検査に失敗しました。", validation: { errors: [{ message: "項目数は56ですが、55項目です。" }] } } });
+dispatch(bridgeSalesButton.listeners, "click", { target: bridgeSalesButton });
+await new Promise((resolve) => setImmediate(resolve));
+await new Promise((resolve) => setImmediate(resolve));
+assert(bridgeStatus.textContent === "CSVの事前検査で修正箇所が見つかりました：項目数は56ですが、55項目です。" && bridgeStatus.classList.contains("is-error"), "CSV validation failure was not presented safely");
 bridgeResponseFactory = (request) => ({ id: request.id, ok: false, error: { code: "NATIVE_HOST_UNAVAILABLE" } });
 dispatch(bridgeButton.listeners, "click", { target: bridgeButton });
 await new Promise((resolve) => setImmediate(resolve));
