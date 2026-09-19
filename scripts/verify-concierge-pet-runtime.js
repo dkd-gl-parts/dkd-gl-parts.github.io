@@ -80,6 +80,25 @@ class FakeElement {
     this.children.push(child);
     return child;
   }
+  insertBefore(child, reference) {
+    if (child.parentElement) {
+      child.parentElement.children = child.parentElement.children.filter((candidate) => candidate !== child);
+    }
+    const index = this.children.indexOf(reference);
+    child.parentElement = this;
+    child.setOwnerDocument(this.ownerDocument);
+    child.setConnected(this.isConnected);
+    if (index < 0) this.children.push(child); else this.children.splice(index, 0, child);
+    return child;
+  }
+  removeChild(child) {
+    const index = this.children.indexOf(child);
+    if (index < 0) throw new Error("child not found");
+    this.children.splice(index, 1);
+    child.parentElement = null;
+    child.setConnected(false);
+    return child;
+  }
   setOwnerDocument(documentRef) {
     this.ownerDocument = documentRef;
     this.children.forEach((child) => child.setOwnerDocument(documentRef));
@@ -202,6 +221,9 @@ const sandboxMath = Object.create(Math);
 sandboxMath.random = () => Math.random();
 const floatingRequests = [];
 const floatingWindows = [];
+const capabilityRequests = [];
+const bridgeRequests = [];
+let bridgeResponseFactory = (request) => ({ id: request.id, ok: true, command: request.command, data: { counts: {}, jobs: [] } });
 
 function createFloatingDocument() {
   const listeners = new Map();
@@ -271,6 +293,31 @@ const windowObject = {
     const list = windowListeners.get(type) || [];
     list.push(listener);
     windowListeners.set(type, list);
+  },
+  removeEventListener(type, listener) {
+    const list = windowListeners.get(type) || [];
+    windowListeners.set(type, list.filter((candidate) => candidate !== listener));
+  },
+  postMessage(message, targetOrigin) {
+    assert(targetOrigin === this.location.origin, "Bridge request used an unexpected target origin");
+    if (!message || message.channel !== "dcats-hanbaioh25-bridge-v1" || message.type !== "request") return;
+    bridgeRequests.push(message.request);
+    const response = bridgeResponseFactory(message.request);
+    if (!response) return;
+    dispatch(windowListeners, "message", {
+      source: this,
+      origin: this.location.origin,
+      data: { channel: "dcats-hanbaioh25-bridge-v1", type: "response", response }
+    });
+  },
+  crypto: {
+    randomUUID() { return `00000000-0000-4000-8000-${String(capabilityRequests.length + 1).padStart(12, "0")}`; }
+  },
+  DcatsBridgeApi: {
+    async issueCapability(request) {
+      capabilityRequests.push({ ...request });
+      return { data: { ok: true, request_id: request.id, command: request.command, capability: "signed-capability" }, error: null };
+    }
   },
   requestAnimationFrame(callback) { frameId += 1; pendingFrames.set(frameId, callback); return frameId; },
   cancelAnimationFrame(id) { pendingFrames.delete(id); },
@@ -389,6 +436,7 @@ const floatingButton = byClass("dcats-concierge-floating-button")[0];
 const floatingCost = byClass("dcats-concierge-floating-cost")[0];
 
 assert(root.hidden, "Concierge must be hidden before a system-admin profile is available");
+assert(byClass("dcats-concierge-bridge-card").length === 0, "Non-admin DOM exposed the Windows integration controls");
 assert(floatingCost.textContent === "追加料金：0円（ブラウザ標準機能）", "Floating display did not disclose its zero additional charge");
 await api.toggleFloating();
 assert(!floatingRequests.length && !api.isFloating(), "Non-admin API calls opened the floating concierge window");
@@ -402,6 +450,32 @@ assert(!storage.size, "Non-admin API calls persisted concierge settings");
 windowObject.userProfile = { role: "system_admin" };
 notifyObservers();
 assert(!root.hidden, "System administrator could not enter concierge test operation");
+const bridgeCard = byClass("dcats-concierge-bridge-card")[0];
+const bridgeButton = byClass("dcats-concierge-bridge-button")[0];
+const bridgeStatus = byClass("dcats-concierge-bridge-status")[0];
+assert(bridgeCard && bridgeButton && bridgeStatus, "System administrator did not receive the Windows integration controls");
+dispatch(bridgeButton.listeners, "click", { target: bridgeButton });
+dispatch(bridgeButton.listeners, "click", { target: bridgeButton });
+await new Promise((resolve) => setImmediate(resolve));
+await new Promise((resolve) => setImmediate(resolve));
+assert(capabilityRequests.length === 1 && capabilityRequests[0].command === "get_hanbaioh_queue_status", "Concierge requested a command outside the read-only pilot");
+assert(bridgeRequests.length === 1 && bridgeRequests[0].capability === "signed-capability", "Signed capability was not forwarded to the extension bridge");
+assert(bridgeStatus.textContent === "接続できました。連携キューは0件です。" && bridgeStatus.classList.contains("is-success"), "Successful Windows integration status was not presented safely");
+bridgeResponseFactory = (request) => ({ id: request.id, ok: false, error: { code: "NATIVE_HOST_UNAVAILABLE" } });
+dispatch(bridgeButton.listeners, "click", { target: bridgeButton });
+await new Promise((resolve) => setImmediate(resolve));
+await new Promise((resolve) => setImmediate(resolve));
+assert(bridgeStatus.textContent === "Windows連携を起動できません。拡張機能と連携アプリを確認してください。" && bridgeStatus.classList.contains("is-error"), "Unavailable Windows host did not fail safely");
+bridgeResponseFactory = () => null;
+dispatch(bridgeButton.listeners, "click", { target: bridgeButton });
+await new Promise((resolve) => setImmediate(resolve));
+for (const [id, timer] of Array.from(pendingTimers.entries()).filter(([, timer]) => timer.delay === 10000)) {
+  pendingTimers.delete(id);
+  timer.callback();
+}
+await new Promise((resolve) => setImmediate(resolve));
+assert(bridgeStatus.textContent === "Windows連携から応答がありませんでした。もう一度確認してください。" && bridgeStatus.classList.contains("is-error"), "Windows integration timeout did not fail safely");
+bridgeResponseFactory = (request) => ({ id: request.id, ok: true, command: request.command, data: { counts: {}, jobs: [] } });
 assert(api.getSettings().character === "suzuto" && api.getSettings().mode === "active", "User A defaults are invalid");
 
 await api.toggleFloating();
@@ -673,6 +747,7 @@ notifyObservers();
 assert(!api.isFloating() && floatingWindows.at(-1).closed, "Role downgrade did not close the floating concierge window");
 assert(root.hidden, "Concierge remained visible after leaving the system-admin role");
 assert(panel.hidden, "Concierge settings remained open after leaving the system-admin role");
+assert(byClass("dcats-concierge-bridge-card").length === 0, "Role downgrade left Windows integration controls in the DOM");
 assert(!liveInfiniteAnimations().length, "Role downgrade left concierge animation running");
 const downgradedSettings = api.getSettings();
 api.setCharacter(downgradedSettings.character === "suzuto" ? "rinna" : "suzuto");

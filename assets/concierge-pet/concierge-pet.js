@@ -73,7 +73,18 @@
       floatingUnsupported: "このブラウザはフローティング表示に対応していません。",
       floatingOpening: "フローティングウィンドウを開いています。",
       floatingActive: "常に前面の小窓で表示中です。",
-      floatingFailed: "フローティングウィンドウを開けませんでした。ブラウザの設定を確認してください。"
+      floatingFailed: "フローティングウィンドウを開けませんでした。ブラウザの設定を確認してください。",
+      bridgeLegend: "Windows業務連携（管理者テスト）",
+      bridgeCheck: "Windows連携を確認",
+      bridgeHelp: "販売王連携キューの状態だけを読み取ります。データの入力・削除や販売王の操作は行いません。",
+      bridgeCost: "追加料金：0円（D-CATS・Windows連携機能）",
+      bridgeIdle: "未確認です。",
+      bridgeWorking: "Windows連携を確認しています。",
+      bridgeSuccess: "接続できました。連携キューは{count}件です。",
+      bridgeUnavailable: "Windows連携を起動できません。拡張機能と連携アプリを確認してください。",
+      bridgeTimeout: "Windows連携から応答がありませんでした。もう一度確認してください。",
+      bridgeForbidden: "システム管理者として再ログインしてから確認してください。",
+      bridgeFailed: "Windows連携を確認できませんでした。時間をおいてもう一度お試しください。"
     },
     en: {
       rootLabel: "D-CATS Concierge",
@@ -111,7 +122,18 @@
       floatingUnsupported: "This browser does not support floating display.",
       floatingOpening: "Opening the floating window.",
       floatingActive: "Showing in an always-on-top window.",
-      floatingFailed: "The floating window could not be opened. Check your browser settings."
+      floatingFailed: "The floating window could not be opened. Check your browser settings.",
+      bridgeLegend: "Windows integration (admin pilot)",
+      bridgeCheck: "Check Windows integration",
+      bridgeHelp: "Reads only the Sales King integration queue status. It does not enter or delete data or operate Sales King.",
+      bridgeCost: "Additional charge: \u00a50 (D-CATS Windows integration)",
+      bridgeIdle: "Not checked yet.",
+      bridgeWorking: "Checking Windows integration.",
+      bridgeSuccess: "Connected. The integration queue contains {count} items.",
+      bridgeUnavailable: "Windows integration could not start. Check the extension and integration app.",
+      bridgeTimeout: "Windows integration did not respond. Please try again.",
+      bridgeForbidden: "Sign in again as a system administrator and retry.",
+      bridgeFailed: "Windows integration could not be checked. Please try again later."
     },
     zh: {
       rootLabel: "D-CATS礼宾助手",
@@ -149,7 +171,18 @@
       floatingUnsupported: "当前浏览器不支持悬浮显示。",
       floatingOpening: "正在打开悬浮窗口。",
       floatingActive: "正在置顶小窗中显示。",
-      floatingFailed: "无法打开悬浮窗口。请确认浏览器设置。"
+      floatingFailed: "无法打开悬浮窗口。请确认浏览器设置。",
+      bridgeLegend: "Windows业务联动（管理员测试）",
+      bridgeCheck: "检查Windows联动",
+      bridgeHelp: "仅读取销售王联动队列状态，不会录入或删除数据，也不会操作销售王。",
+      bridgeCost: "额外费用：0日元（D-CATS Windows联动功能）",
+      bridgeIdle: "尚未检查。",
+      bridgeWorking: "正在检查Windows联动。",
+      bridgeSuccess: "连接成功。联动队列中有{count}项。",
+      bridgeUnavailable: "无法启动Windows联动。请检查扩展程序和联动应用。",
+      bridgeTimeout: "Windows联动没有响应，请重试。",
+      bridgeForbidden: "请以系统管理员身份重新登录后再试。",
+      bridgeFailed: "无法检查Windows联动，请稍后重试。"
     }
   };
   var STATE_MESSAGE_KEYS = {
@@ -169,9 +202,14 @@
   var launcher;
   var launcherLabel;
   var panel;
+  var panelBody;
   var panelClose;
   var floatingButton;
   var floatingStatus;
+  var bridgeCard;
+  var bridgeButton;
+  var bridgeStatus;
+  var conciergeHelp;
   var characterButtons = [];
   var modeButtons = [];
   var movementAnimation = null;
@@ -194,6 +232,9 @@
   var panelOpen = false;
   var floatingWindow = null;
   var floatingRequestPending = false;
+  var bridgeRequestPending = false;
+  var bridgeRequestToken = 0;
+  var bridgeStatusState = { key: "bridgeIdle", values: null };
   var externalStateUntil = 0;
   var lastInteractionAt = 0;
   var stopGestureIndex = 0;
@@ -336,7 +377,7 @@
     panelHead.appendChild(headingWrap);
     panelHead.appendChild(panelClose);
 
-    var panelBody = createElement("div", "dcats-concierge-panel-body");
+    panelBody = createElement("div", "dcats-concierge-panel-body");
     var characterField = createElement("fieldset", "dcats-concierge-fieldset");
     characterField.appendChild(createCopyElement("legend", "", "chooseCharacter"));
     var characterGrid = createElement("div", "dcats-concierge-choice-grid");
@@ -378,10 +419,32 @@
     floatingCard.appendChild(floatingCost);
     floatingCard.appendChild(floatingStatus);
 
+    bridgeCard = createElement("section", "dcats-concierge-bridge-card");
+    bridgeCard.setAttribute("aria-labelledby", "dcats-concierge-bridge-title");
+    var bridgeTitle = createCopyElement("h3", "dcats-concierge-bridge-title", "bridgeLegend");
+    bridgeTitle.id = "dcats-concierge-bridge-title";
+    bridgeButton = createCopyElement("button", "dcats-concierge-bridge-button", "bridgeCheck");
+    bridgeButton.type = "button";
+    bridgeButton.setAttribute("aria-describedby", "dcats-concierge-bridge-help dcats-concierge-bridge-cost dcats-concierge-bridge-status");
+    var bridgeHelp = createCopyElement("p", "dcats-concierge-bridge-help", "bridgeHelp");
+    bridgeHelp.id = "dcats-concierge-bridge-help";
+    var bridgeCost = createCopyElement("p", "dcats-concierge-bridge-cost", "bridgeCost");
+    bridgeCost.id = "dcats-concierge-bridge-cost";
+    bridgeStatus = createElement("p", "dcats-concierge-bridge-status");
+    bridgeStatus.id = "dcats-concierge-bridge-status";
+    bridgeStatus.setAttribute("role", "status");
+    bridgeStatus.setAttribute("aria-live", "polite");
+    bridgeCard.appendChild(bridgeTitle);
+    bridgeCard.appendChild(bridgeButton);
+    bridgeCard.appendChild(bridgeHelp);
+    bridgeCard.appendChild(bridgeCost);
+    bridgeCard.appendChild(bridgeStatus);
+
     panelBody.appendChild(characterField);
     panelBody.appendChild(modeField);
     panelBody.appendChild(floatingCard);
-    panelBody.appendChild(createCopyElement("p", "dcats-concierge-help", "help"));
+    conciergeHelp = createCopyElement("p", "dcats-concierge-help", "help");
+    panelBody.appendChild(conciergeHelp);
     panel.appendChild(panelHead);
     panel.appendChild(panelBody);
 
@@ -408,6 +471,7 @@
       button.addEventListener("click", function () { selectMode(button.dataset.value); });
     });
     floatingButton.addEventListener("click", toggleFloatingWindow);
+    bridgeButton.addEventListener("click", checkWindowsBridge);
     document.addEventListener("keydown", onPresentationKeyDown);
     document.addEventListener("pointerdown", onPresentationPointerDown, { passive: true });
     document.addEventListener("pointermove", onPointerMove, { passive: true });
@@ -427,6 +491,7 @@
     syncSettingsOwner();
     applySettings();
     updateFloatingControls();
+    updateBridgeStatus();
     observeScreens();
     syncVisibility();
   }
@@ -471,6 +536,127 @@
     var resolvedStatusKey = statusKey || (floating ? "floatingActive" : (!supported ? "floatingUnsupported" : ""));
     floatingStatus.textContent = resolvedStatusKey ? copy(resolvedStatusKey) : "";
     floatingStatus.hidden = !resolvedStatusKey;
+  }
+
+  function updateBridgeStatus() {
+    if (!bridgeButton || !bridgeStatus) return;
+    bridgeButton.disabled = bridgeRequestPending;
+    bridgeStatus.textContent = copy(bridgeStatusState.key, bridgeStatusState.values || {});
+    bridgeStatus.classList.toggle("is-success", bridgeStatusState.key === "bridgeSuccess");
+    bridgeStatus.classList.toggle("is-error", ["bridgeUnavailable", "bridgeTimeout", "bridgeForbidden", "bridgeFailed"].indexOf(bridgeStatusState.key) >= 0);
+  }
+
+  function setBridgeStatus(key, values) {
+    bridgeStatusState = { key: key, values: values || null };
+    updateBridgeStatus();
+  }
+
+  function syncBridgeControls(systemAdmin) {
+    if (!bridgeCard || !panelBody || !conciergeHelp) return;
+    if (systemAdmin) {
+      if (!bridgeCard.parentElement) panelBody.insertBefore(bridgeCard, conciergeHelp);
+      updateBridgeStatus();
+      return;
+    }
+    bridgeRequestToken += 1;
+    bridgeRequestPending = false;
+    bridgeStatusState = { key: "bridgeIdle", values: null };
+    if (bridgeCard.parentElement) bridgeCard.parentElement.removeChild(bridgeCard);
+  }
+
+  function bridgeRequestId() {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
+    if (!window.crypto || typeof window.crypto.getRandomValues !== "function") throw new Error("secure_random_unavailable");
+    var values = new Uint32Array(4);
+    window.crypto.getRandomValues(values);
+    return Array.prototype.map.call(values, function (value) { return value.toString(16).padStart(8, "0"); }).join("-");
+  }
+
+  function bridgeResponse(request) {
+    return new Promise(function (resolve, reject) {
+      var settled = false;
+      var timeout = window.setTimeout(function () {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener("message", onMessage);
+        var error = new Error("bridge_timeout");
+        error.code = "BRIDGE_TIMEOUT";
+        reject(error);
+      }, 10000);
+      function onMessage(event) {
+        if (event.source !== window || event.origin !== window.location.origin) return;
+        var message = event.data;
+        if (!message || message.channel !== "dcats-hanbaioh25-bridge-v1" || message.type !== "response") return;
+        if (!message.response || message.response.id !== request.id) return;
+        settled = true;
+        window.clearTimeout(timeout);
+        window.removeEventListener("message", onMessage);
+        resolve(message.response);
+      }
+      window.addEventListener("message", onMessage);
+      window.postMessage({ channel: "dcats-hanbaioh25-bridge-v1", type: "request", request: request }, window.location.origin);
+    });
+  }
+
+  function bridgeFailureStatus(error) {
+    var code = String(error && error.code || "");
+    var message = String(error && error.message || "");
+    var status = Number(error && error.context && error.context.status || error && error.status || 0);
+    if (status === 401 || status === 403 || /system_admin|required|forbidden/i.test(message)) return "bridgeForbidden";
+    if (code === "BRIDGE_TIMEOUT") return "bridgeTimeout";
+    if (["EXTENSION_UNAVAILABLE", "NATIVE_HOST_UNAVAILABLE"].indexOf(code) >= 0) return "bridgeUnavailable";
+    return "bridgeFailed";
+  }
+
+  async function checkWindowsBridge() {
+    if (!isSystemAdminSession() || bridgeRequestPending) return;
+    var bridgeApi = window.DcatsBridgeApi;
+    if (!bridgeApi || typeof bridgeApi.issueCapability !== "function") {
+      setBridgeStatus("bridgeFailed");
+      playExternalState("failed", 2600);
+      return;
+    }
+
+    var token = ++bridgeRequestToken;
+    bridgeRequestPending = true;
+    setBridgeStatus("bridgeWorking");
+    playExternalState("working", 10000);
+    try {
+      var request = { id: bridgeRequestId(), command: "get_hanbaioh_queue_status" };
+      var issued = await bridgeApi.issueCapability(request);
+      if (issued && issued.error) throw issued.error;
+      if (!issued || !issued.data || issued.data.ok !== true || typeof issued.data.capability !== "string") {
+        throw new Error("invalid_capability_response");
+      }
+      request.capability = issued.data.capability;
+      var response = await bridgeResponse(request);
+      if (!response || response.ok !== true) {
+        var responseError = new Error("bridge_request_failed");
+        responseError.code = response && response.error && response.error.code || "BRIDGE_REQUEST_FAILED";
+        throw responseError;
+      }
+      if (token !== bridgeRequestToken || !isSystemAdminSession()) return;
+      var jobs = response.data && Array.isArray(response.data.jobs) ? response.data.jobs : [];
+      var counts = response.data && response.data.counts && typeof response.data.counts === "object" ? response.data.counts : null;
+      var jobCount = counts ? Object.keys(counts).reduce(function (total, key) {
+        var value = Number(counts[key]);
+        return total + (Number.isFinite(value) && value > 0 ? Math.floor(value) : 0);
+      }, 0) : jobs.length;
+      setBridgeStatus("bridgeSuccess", { count: jobCount });
+      showBubble(copy("bridgeSuccess", { count: jobCount }), 3600);
+      playExternalState("success", 2200);
+    } catch (error) {
+      if (token !== bridgeRequestToken || !isSystemAdminSession()) return;
+      var statusKey = bridgeFailureStatus(error);
+      setBridgeStatus(statusKey);
+      showBubble(copy(statusKey), 3600);
+      playExternalState("failed", 2600);
+    } finally {
+      if (token === bridgeRequestToken) {
+        bridgeRequestPending = false;
+        updateBridgeStatus();
+      }
+    }
   }
 
   async function toggleFloatingWindow() {
@@ -598,6 +784,7 @@
     var dedicatedPrintStation = new URLSearchParams(window.location.search).has("dcats_print_station");
     var systemAdmin = isSystemAdminSession();
     visible = systemAdmin && !!screen && !EXCLUDED_SCREENS[screen] && !dedicatedPrintStation;
+    syncBridgeControls(systemAdmin && visible);
     if (isFloatingWindowOpen() && (!systemAdmin || EXCLUDED_SCREENS[screen] || dedicatedPrintStation)) {
       restoreFromFloatingWindow(floatingWindow, true);
     }
@@ -630,6 +817,7 @@
     });
     applySettings();
     updateFloatingControls();
+    updateBridgeStatus();
   }
 
   function applySettings() {
