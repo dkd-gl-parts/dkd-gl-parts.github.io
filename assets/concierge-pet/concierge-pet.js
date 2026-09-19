@@ -76,11 +76,24 @@
       floatingFailed: "フローティングウィンドウを開けませんでした。ブラウザの設定を確認してください。",
       bridgeLegend: "Windows業務連携（管理者テスト）",
       bridgeCheck: "Windows連携を確認",
-      bridgeHelp: "販売王連携キューの状態だけを読み取ります。データの入力・削除や販売王の操作は行いません。",
+      bridgeHelp: "連携キューの確認と、受信フォルダー内CSVの事前検査・待機準備だけを行います。販売王やD-CATS本番データは変更しません。",
+      bridgeInboxHelp: "CSVをWindows受信フォルダーへ置き、ファイル名だけを入力してください。フォルダー：%LOCALAPPDATA%\\D-CATS\\HanbaiOhBridge\\inbox",
+      bridgeSalesFile: "売上CSVファイル名",
+      bridgeCustomerFile: "得意先CSVファイル名",
+      bridgePrepareSales: "売上CSVを検査して待機",
+      bridgePrepareCustomer: "得意先CSVを検査して確認待ち",
       bridgeCost: "追加料金：0円（D-CATS・Windows連携機能）",
       bridgeIdle: "未確認です。",
       bridgeWorking: "Windows連携を確認しています。",
+      bridgeSalesWorking: "売上CSVを検査しています。元ファイルは変更しません。",
+      bridgeCustomerWorking: "得意先CSVを検査しています。元ファイルは変更しません。",
       bridgeSuccess: "接続できました。連携キューは{count}件です。",
+      bridgeSalesPrepared: "売上CSVを{rows}行・{slips}伝票・警告{warnings}件で待機キューへ準備しました。",
+      bridgeCustomerPrepared: "得意先CSVを{rows}行・{customers}得意先・警告{warnings}件で確認待ちに準備しました。",
+      bridgePreparedExisting: "同じCSVは準備済みです。既存の待機データを使用します。",
+      bridgeInvalidFileName: "受信フォルダー内のCSVファイル名だけを入力してください。",
+      bridgeFileMissing: "受信フォルダーにCSVが見つかりません。ファイル名と保存場所を確認してください。",
+      bridgeValidationFailed: "CSVの事前検査で修正箇所が見つかりました：{detail}",
       bridgeUnavailable: "Windows連携を起動できません。拡張機能と連携アプリを確認してください。",
       bridgeTimeout: "Windows連携から応答がありませんでした。もう一度確認してください。",
       bridgeForbidden: "システム管理者として再ログインしてから確認してください。",
@@ -125,11 +138,24 @@
       floatingFailed: "The floating window could not be opened. Check your browser settings.",
       bridgeLegend: "Windows integration (admin pilot)",
       bridgeCheck: "Check Windows integration",
-      bridgeHelp: "Reads only the Sales King integration queue status. It does not enter or delete data or operate Sales King.",
+      bridgeHelp: "Checks the queue and only validates CSV files in the Windows inbox for local staging. It does not change Sales King or D-CATS production data.",
+      bridgeInboxHelp: "Place the CSV in the Windows inbox and enter only its file name. Folder: %LOCALAPPDATA%\\D-CATS\\HanbaiOhBridge\\inbox",
+      bridgeSalesFile: "Sales CSV file name",
+      bridgeCustomerFile: "Customer CSV file name",
+      bridgePrepareSales: "Validate and stage sales CSV",
+      bridgePrepareCustomer: "Validate customer CSV for review",
       bridgeCost: "Additional charge: \u00a50 (D-CATS Windows integration)",
       bridgeIdle: "Not checked yet.",
       bridgeWorking: "Checking Windows integration.",
+      bridgeSalesWorking: "Validating the sales CSV without changing the source file.",
+      bridgeCustomerWorking: "Validating the customer CSV without changing the source file.",
       bridgeSuccess: "Connected. The integration queue contains {count} items.",
+      bridgeSalesPrepared: "Staged {rows} sales rows across {slips} slips with {warnings} warnings.",
+      bridgeCustomerPrepared: "Staged {rows} rows for {customers} customers with {warnings} warnings for review.",
+      bridgePreparedExisting: "This CSV is already staged. The existing queued item will be used.",
+      bridgeInvalidFileName: "Enter only a CSV file name from the Windows inbox.",
+      bridgeFileMissing: "The CSV was not found in the Windows inbox. Check its file name and location.",
+      bridgeValidationFailed: "The CSV preflight found an item to fix: {detail}",
       bridgeUnavailable: "Windows integration could not start. Check the extension and integration app.",
       bridgeTimeout: "Windows integration did not respond. Please try again.",
       bridgeForbidden: "Sign in again as a system administrator and retry.",
@@ -174,11 +200,24 @@
       floatingFailed: "无法打开悬浮窗口。请确认浏览器设置。",
       bridgeLegend: "Windows业务联动（管理员测试）",
       bridgeCheck: "检查Windows联动",
-      bridgeHelp: "仅读取销售王联动队列状态，不会录入或删除数据，也不会操作销售王。",
+      bridgeHelp: "仅检查联动队列，并预检Windows收件文件夹中的CSV后在本机暂存。不会更改销售王或D-CATS生产数据。",
+      bridgeInboxHelp: "请将CSV放入Windows收件文件夹，并只输入文件名。文件夹：%LOCALAPPDATA%\\D-CATS\\HanbaiOhBridge\\inbox",
+      bridgeSalesFile: "销售CSV文件名",
+      bridgeCustomerFile: "客户CSV文件名",
+      bridgePrepareSales: "检查销售CSV并等待",
+      bridgePrepareCustomer: "检查客户CSV并等待确认",
       bridgeCost: "额外费用：0日元（D-CATS Windows联动功能）",
       bridgeIdle: "尚未检查。",
       bridgeWorking: "正在检查Windows联动。",
+      bridgeSalesWorking: "正在检查销售CSV，不会更改原文件。",
+      bridgeCustomerWorking: "正在检查客户CSV，不会更改原文件。",
       bridgeSuccess: "连接成功。联动队列中有{count}项。",
+      bridgeSalesPrepared: "已将{rows}行、{slips}张单据的销售CSV加入等待队列，警告{warnings}项。",
+      bridgeCustomerPrepared: "已将{rows}行、{customers}个客户的CSV加入确认等待，警告{warnings}项。",
+      bridgePreparedExisting: "相同CSV已准备完成，将使用现有等待数据。",
+      bridgeInvalidFileName: "请只输入Windows收件文件夹中的CSV文件名。",
+      bridgeFileMissing: "Windows收件文件夹中未找到CSV，请检查文件名和保存位置。",
+      bridgeValidationFailed: "CSV预检发现需要修正的项目：{detail}",
       bridgeUnavailable: "无法启动Windows联动。请检查扩展程序和联动应用。",
       bridgeTimeout: "Windows联动没有响应，请重试。",
       bridgeForbidden: "请以系统管理员身份重新登录后再试。",
@@ -208,6 +247,10 @@
   var floatingStatus;
   var bridgeCard;
   var bridgeButton;
+  var bridgeSalesFileInput;
+  var bridgeCustomerFileInput;
+  var bridgeSalesButton;
+  var bridgeCustomerButton;
   var bridgeStatus;
   var conciergeHelp;
   var characterButtons = [];
@@ -428,6 +471,39 @@
     bridgeButton.setAttribute("aria-describedby", "dcats-concierge-bridge-help dcats-concierge-bridge-cost dcats-concierge-bridge-status");
     var bridgeHelp = createCopyElement("p", "dcats-concierge-bridge-help", "bridgeHelp");
     bridgeHelp.id = "dcats-concierge-bridge-help";
+    var bridgeInboxHelp = createCopyElement("p", "dcats-concierge-bridge-inbox-help", "bridgeInboxHelp");
+    bridgeInboxHelp.id = "dcats-concierge-bridge-inbox-help";
+    var bridgeActions = createElement("div", "dcats-concierge-bridge-actions");
+    var bridgeSalesAction = createElement("div", "dcats-concierge-bridge-action");
+    var bridgeSalesLabel = createCopyElement("label", "dcats-concierge-bridge-label", "bridgeSalesFile");
+    bridgeSalesLabel.setAttribute("for", "dcats-concierge-bridge-sales-file");
+    bridgeSalesFileInput = createElement("input", "dcats-concierge-bridge-input");
+    bridgeSalesFileInput.id = "dcats-concierge-bridge-sales-file";
+    bridgeSalesFileInput.type = "text";
+    bridgeSalesFileInput.value = "sales.csv";
+    bridgeSalesFileInput.setAttribute("autocomplete", "off");
+    bridgeSalesFileInput.setAttribute("spellcheck", "false");
+    bridgeSalesButton = createCopyElement("button", "dcats-concierge-bridge-button is-secondary", "bridgePrepareSales");
+    bridgeSalesButton.type = "button";
+    bridgeSalesAction.appendChild(bridgeSalesLabel);
+    bridgeSalesAction.appendChild(bridgeSalesFileInput);
+    bridgeSalesAction.appendChild(bridgeSalesButton);
+    var bridgeCustomerAction = createElement("div", "dcats-concierge-bridge-action");
+    var bridgeCustomerLabel = createCopyElement("label", "dcats-concierge-bridge-label", "bridgeCustomerFile");
+    bridgeCustomerLabel.setAttribute("for", "dcats-concierge-bridge-customer-file");
+    bridgeCustomerFileInput = createElement("input", "dcats-concierge-bridge-input");
+    bridgeCustomerFileInput.id = "dcats-concierge-bridge-customer-file";
+    bridgeCustomerFileInput.type = "text";
+    bridgeCustomerFileInput.value = "customers.csv";
+    bridgeCustomerFileInput.setAttribute("autocomplete", "off");
+    bridgeCustomerFileInput.setAttribute("spellcheck", "false");
+    bridgeCustomerButton = createCopyElement("button", "dcats-concierge-bridge-button is-secondary", "bridgePrepareCustomer");
+    bridgeCustomerButton.type = "button";
+    bridgeCustomerAction.appendChild(bridgeCustomerLabel);
+    bridgeCustomerAction.appendChild(bridgeCustomerFileInput);
+    bridgeCustomerAction.appendChild(bridgeCustomerButton);
+    bridgeActions.appendChild(bridgeSalesAction);
+    bridgeActions.appendChild(bridgeCustomerAction);
     var bridgeCost = createCopyElement("p", "dcats-concierge-bridge-cost", "bridgeCost");
     bridgeCost.id = "dcats-concierge-bridge-cost";
     bridgeStatus = createElement("p", "dcats-concierge-bridge-status");
@@ -437,6 +513,8 @@
     bridgeCard.appendChild(bridgeTitle);
     bridgeCard.appendChild(bridgeButton);
     bridgeCard.appendChild(bridgeHelp);
+    bridgeCard.appendChild(bridgeInboxHelp);
+    bridgeCard.appendChild(bridgeActions);
     bridgeCard.appendChild(bridgeCost);
     bridgeCard.appendChild(bridgeStatus);
 
@@ -472,6 +550,12 @@
     });
     floatingButton.addEventListener("click", toggleFloatingWindow);
     bridgeButton.addEventListener("click", checkWindowsBridge);
+    bridgeSalesButton.addEventListener("click", function () {
+      prepareWindowsBridgeCsv("prepare_sales_import", bridgeSalesFileInput && bridgeSalesFileInput.value);
+    });
+    bridgeCustomerButton.addEventListener("click", function () {
+      prepareWindowsBridgeCsv("prepare_customer_import", bridgeCustomerFileInput && bridgeCustomerFileInput.value);
+    });
     document.addEventListener("keydown", onPresentationKeyDown);
     document.addEventListener("pointerdown", onPresentationPointerDown, { passive: true });
     document.addEventListener("pointermove", onPointerMove, { passive: true });
@@ -541,9 +625,13 @@
   function updateBridgeStatus() {
     if (!bridgeButton || !bridgeStatus) return;
     bridgeButton.disabled = bridgeRequestPending;
+    if (bridgeSalesButton) bridgeSalesButton.disabled = bridgeRequestPending;
+    if (bridgeCustomerButton) bridgeCustomerButton.disabled = bridgeRequestPending;
+    if (bridgeSalesFileInput) bridgeSalesFileInput.disabled = bridgeRequestPending;
+    if (bridgeCustomerFileInput) bridgeCustomerFileInput.disabled = bridgeRequestPending;
     bridgeStatus.textContent = copy(bridgeStatusState.key, bridgeStatusState.values || {});
-    bridgeStatus.classList.toggle("is-success", bridgeStatusState.key === "bridgeSuccess");
-    bridgeStatus.classList.toggle("is-error", ["bridgeUnavailable", "bridgeTimeout", "bridgeForbidden", "bridgeFailed"].indexOf(bridgeStatusState.key) >= 0);
+    bridgeStatus.classList.toggle("is-success", ["bridgeSuccess", "bridgeSalesPrepared", "bridgeCustomerPrepared", "bridgePreparedExisting"].indexOf(bridgeStatusState.key) >= 0);
+    bridgeStatus.classList.toggle("is-error", ["bridgeInvalidFileName", "bridgeFileMissing", "bridgeValidationFailed", "bridgeUnavailable", "bridgeTimeout", "bridgeForbidden", "bridgeFailed"].indexOf(bridgeStatusState.key) >= 0);
   }
 
   function setBridgeStatus(key, values) {
@@ -561,6 +649,8 @@
     bridgeRequestToken += 1;
     bridgeRequestPending = false;
     bridgeStatusState = { key: "bridgeIdle", values: null };
+    if (bridgeSalesFileInput) bridgeSalesFileInput.value = "sales.csv";
+    if (bridgeCustomerFileInput) bridgeCustomerFileInput.value = "customers.csv";
     if (bridgeCard.parentElement) bridgeCard.parentElement.removeChild(bridgeCard);
   }
 
@@ -602,13 +692,19 @@
     var code = String(error && error.code || "");
     var message = String(error && error.message || "");
     var status = Number(error && error.context && error.context.status || error && error.status || 0);
-    if (status === 401 || status === 403 || /system_admin|required|forbidden/i.test(message)) return "bridgeForbidden";
-    if (code === "BRIDGE_TIMEOUT") return "bridgeTimeout";
-    if (["EXTENSION_UNAVAILABLE", "NATIVE_HOST_UNAVAILABLE"].indexOf(code) >= 0) return "bridgeUnavailable";
-    return "bridgeFailed";
+    if (status === 401 || status === 403 || /system_admin|required|forbidden/i.test(message)) return { key: "bridgeForbidden" };
+    if (code === "BRIDGE_TIMEOUT") return { key: "bridgeTimeout" };
+    if (["EXTENSION_UNAVAILABLE", "NATIVE_HOST_UNAVAILABLE"].indexOf(code) >= 0) return { key: "bridgeUnavailable" };
+    if (code === "CSV_VALIDATION_FAILED") {
+      var errors = error && error.validation && Array.isArray(error.validation.errors) ? error.validation.errors : [];
+      var detail = errors[0] && errors[0].message ? String(errors[0].message) : copy("bridgeFailed");
+      return { key: "bridgeValidationFailed", values: { detail: detail } };
+    }
+    if (/ENOENT|no such file|cannot find|見つかりません/i.test(message)) return { key: "bridgeFileMissing" };
+    return { key: "bridgeFailed" };
   }
 
-  async function checkWindowsBridge() {
+  async function runWindowsBridgeRequest(command, args, workingKey) {
     if (!isSystemAdminSession() || bridgeRequestPending) return;
     var bridgeApi = window.DcatsBridgeApi;
     if (!bridgeApi || typeof bridgeApi.issueCapability !== "function") {
@@ -619,10 +715,11 @@
 
     var token = ++bridgeRequestToken;
     bridgeRequestPending = true;
-    setBridgeStatus("bridgeWorking");
+    setBridgeStatus(workingKey);
     playExternalState("working", 10000);
     try {
-      var request = { id: bridgeRequestId(), command: "get_hanbaioh_queue_status" };
+      var request = { id: bridgeRequestId(), command: command };
+      if (args) request.args = args;
       var issued = await bridgeApi.issueCapability(request);
       if (issued && issued.error) throw issued.error;
       if (!issued || !issued.data || issued.data.ok !== true || typeof issued.data.capability !== "string") {
@@ -631,25 +728,42 @@
       request.capability = issued.data.capability;
       var response = await bridgeResponse(request);
       if (!response || response.ok !== true) {
-        var responseError = new Error("bridge_request_failed");
+        var responseError = new Error(response && response.error && response.error.message || "bridge_request_failed");
         responseError.code = response && response.error && response.error.code || "BRIDGE_REQUEST_FAILED";
+        responseError.validation = response && response.error && response.error.validation;
         throw responseError;
       }
       if (token !== bridgeRequestToken || !isSystemAdminSession()) return;
-      var jobs = response.data && Array.isArray(response.data.jobs) ? response.data.jobs : [];
-      var counts = response.data && response.data.counts && typeof response.data.counts === "object" ? response.data.counts : null;
-      var jobCount = counts ? Object.keys(counts).reduce(function (total, key) {
-        var value = Number(counts[key]);
-        return total + (Number.isFinite(value) && value > 0 ? Math.floor(value) : 0);
-      }, 0) : jobs.length;
-      setBridgeStatus("bridgeSuccess", { count: jobCount });
-      showBubble(copy("bridgeSuccess", { count: jobCount }), 3600);
+      var statusKey;
+      var statusValues;
+      if (command === "get_hanbaioh_queue_status") {
+        var jobs = response.data && Array.isArray(response.data.jobs) ? response.data.jobs : [];
+        var counts = response.data && response.data.counts && typeof response.data.counts === "object" ? response.data.counts : null;
+        var jobCount = counts ? Object.keys(counts).reduce(function (total, key) {
+          var value = Number(counts[key]);
+          return total + (Number.isFinite(value) && value > 0 ? Math.floor(value) : 0);
+        }, 0) : jobs.length;
+        statusKey = "bridgeSuccess";
+        statusValues = { count: jobCount };
+      } else if (response.data && response.data.reused === true) {
+        statusKey = "bridgePreparedExisting";
+        statusValues = {};
+      } else {
+        var validation = response.data && response.data.validation || {};
+        var summary = validation.summary || {};
+        statusKey = command === "prepare_sales_import" ? "bridgeSalesPrepared" : "bridgeCustomerPrepared";
+        statusValues = command === "prepare_sales_import"
+          ? { rows: Number(summary.rowCount || 0), slips: Number(summary.slipCount || 0), warnings: Array.isArray(validation.warnings) ? validation.warnings.length : 0 }
+          : { rows: Number(summary.rowCount || 0), customers: Number(summary.uniqueCustomerCount || 0), warnings: Array.isArray(validation.warnings) ? validation.warnings.length : 0 };
+      }
+      setBridgeStatus(statusKey, statusValues);
+      showBubble(copy(statusKey, statusValues), 4200);
       playExternalState("success", 2200);
     } catch (error) {
       if (token !== bridgeRequestToken || !isSystemAdminSession()) return;
-      var statusKey = bridgeFailureStatus(error);
-      setBridgeStatus(statusKey);
-      showBubble(copy(statusKey), 3600);
+      var failure = bridgeFailureStatus(error);
+      setBridgeStatus(failure.key, failure.values);
+      showBubble(copy(failure.key, failure.values || {}), 4200);
       playExternalState("failed", 2600);
     } finally {
       if (token === bridgeRequestToken) {
@@ -657,6 +771,21 @@
         updateBridgeStatus();
       }
     }
+  }
+
+  function checkWindowsBridge() {
+    return runWindowsBridgeRequest("get_hanbaioh_queue_status", null, "bridgeWorking");
+  }
+
+  function prepareWindowsBridgeCsv(command, value) {
+    var fileName = String(value || "").trim();
+    if (!fileName || fileName.length > 200 || /[\\/:]/.test(fileName) || !/\.csv$/i.test(fileName)) {
+      setBridgeStatus("bridgeInvalidFileName");
+      showBubble(copy("bridgeInvalidFileName"), 3600);
+      playExternalState("failed", 2200);
+      return;
+    }
+    return runWindowsBridgeRequest(command, { fileName: fileName }, command === "prepare_sales_import" ? "bridgeSalesWorking" : "bridgeCustomerWorking");
   }
 
   async function toggleFloatingWindow() {

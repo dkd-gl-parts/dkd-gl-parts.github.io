@@ -36,7 +36,9 @@ requireFragment(app, "function isSystemAdmin()", "Authenticated app runtime must
 requireFragment(app, "window.DcatsAccess = Object.freeze", "Authenticated app runtime must expose the read-only concierge access bridge");
 requireFragment(app, "isSystemAdmin: function() { return isSystemAdmin(); }", "Concierge access bridge must delegate to the canonical system-admin predicate");
 requireFragment(app, "window.DcatsBridgeApi = Object.freeze", "Authenticated app runtime must expose the restricted Windows bridge capability API");
-requireFragment(app, 'request.command !== "get_hanbaioh_queue_status"', "Browser capability requests must be limited to the read-only queue status command");
+requireFragment(app, 'prepare_sales_import: true', "Browser capability API must allow only the reviewed sales CSV preparation command");
+requireFragment(app, 'prepare_customer_import: true', "Browser capability API must allow only the reviewed customer CSV preparation command");
+requireFragment(app, 'body.args = { fileName: fileName }', "Browser capability requests must bind the reviewed CSV file name");
 requireFragment(app, 'sb.functions.invoke("issue-concierge-bridge-capability"', "Windows bridge capabilities must be issued by the authenticated Edge Function");
 requireFragment(html, `assets/concierge-pet/concierge-pet.css?${"v=" + appVersion.slice(1)}`, "Concierge stylesheet is not versioned with APP_VERSION");
 requireFragment(html, `assets/concierge-pet/concierge-pet.js?${"v=" + appVersion.slice(1)}`, "Concierge runtime is not versioned with APP_VERSION");
@@ -131,7 +133,12 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
   'createElement("section", "dcats-concierge-bridge-card")',
   'if (!bridgeCard.parentElement) panelBody.insertBefore(bridgeCard, conciergeHelp);',
   'if (bridgeCard.parentElement) bridgeCard.parentElement.removeChild(bridgeCard);',
-  'command: "get_hanbaioh_queue_status"',
+  'runWindowsBridgeRequest("get_hanbaioh_queue_status"',
+  'prepareWindowsBridgeCsv("prepare_sales_import"',
+  'prepareWindowsBridgeCsv("prepare_customer_import"',
+  'request.args = args',
+  'bridgeSalesFileInput.value = "sales.csv"',
+  'bridgeCustomerFileInput.value = "customers.csv"',
   'bridgeApi.issueCapability(request)',
   'channel: "dcats-hanbaioh25-bridge-v1"',
   'window.postMessage({ channel: "dcats-hanbaioh25-bridge-v1", type: "request", request: request }, window.location.origin)',
