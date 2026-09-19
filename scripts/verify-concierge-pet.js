@@ -35,6 +35,9 @@ assert(appVersion, "Unable to resolve APP_VERSION");
 requireFragment(app, "function isSystemAdmin()", "Authenticated app runtime must define the system-admin predicate used by the concierge gate");
 requireFragment(app, "window.DcatsAccess = Object.freeze", "Authenticated app runtime must expose the read-only concierge access bridge");
 requireFragment(app, "isSystemAdmin: function() { return isSystemAdmin(); }", "Concierge access bridge must delegate to the canonical system-admin predicate");
+requireFragment(app, "window.DcatsBridgeApi = Object.freeze", "Authenticated app runtime must expose the restricted Windows bridge capability API");
+requireFragment(app, 'request.command !== "get_hanbaioh_queue_status"', "Browser capability requests must be limited to the read-only queue status command");
+requireFragment(app, 'sb.functions.invoke("issue-concierge-bridge-capability"', "Windows bridge capabilities must be issued by the authenticated Edge Function");
 requireFragment(html, `assets/concierge-pet/concierge-pet.css?${"v=" + appVersion.slice(1)}`, "Concierge stylesheet is not versioned with APP_VERSION");
 requireFragment(html, `assets/concierge-pet/concierge-pet.js?${"v=" + appVersion.slice(1)}`, "Concierge runtime is not versioned with APP_VERSION");
 assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge runtime must load after the authenticated app runtime");
@@ -124,7 +127,16 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
   'activeScreen.querySelector(".page-header-right")',
   'dock.insertBefore(launcher, dock.firstChild)',
   'launcher.hidden = !visible;',
-  '追加料金：0円（ブラウザ標準機能）'
+  '追加料金：0円（ブラウザ標準機能）',
+  'createElement("section", "dcats-concierge-bridge-card")',
+  'if (!bridgeCard.parentElement) panelBody.insertBefore(bridgeCard, conciergeHelp);',
+  'if (bridgeCard.parentElement) bridgeCard.parentElement.removeChild(bridgeCard);',
+  'command: "get_hanbaioh_queue_status"',
+  'bridgeApi.issueCapability(request)',
+  'channel: "dcats-hanbaioh25-bridge-v1"',
+  'window.postMessage({ channel: "dcats-hanbaioh25-bridge-v1", type: "request", request: request }, window.location.origin)',
+  'bridgeButton.addEventListener("click", checkWindowsBridge)',
+  '追加料金：0円（D-CATS・Windows連携機能）'
 ].forEach((fragment) => requireFragment(runtime, fragment));
 
 assert(!runtime.includes("var segments ="), "Active concierge must not chain multiple moves before stopping");
@@ -135,6 +147,7 @@ requireFragment(runtime, 'if (!visible || isPresentationHidden() || settings.mod
 requireFragment(runtime, 'settings.mode === "off" || dragState || root.classList.contains("has-no-safe-target")', "External states must not interrupt dragging or revive a concierge without a safe target");
 requireFragment(runtime, 'if (!isSystemAdminSession() || panelOpen) return;', "Concierge settings must fail closed outside a system-admin session");
 requireFragment(runtime, 'if (!isSystemAdminSession() || floatingRequestPending) return;', "Floating display must fail closed outside a system-admin session");
+requireFragment(runtime, 'if (!isSystemAdminSession() || bridgeRequestPending) return;', "Windows integration must fail closed outside a system-admin session");
 requireFragment(runtime, 'suzuto: { copyKey: "suzuto", className: "is-suzuto", travelRows: { right: "running-right", left: "running-left" } }', "Suzuto travel rows must match the approved atlas direction");
 requireFragment(runtime, 'rinna: { copyKey: "rinna", className: "is-rinna", travelRows: { right: "running-right", left: "running-left" } }', "Rinna travel rows must match the corrected atlas direction");
 requireFragment(runtime, "var TRAVEL_TURN_DELAY = 220;", "Directional travel must pause briefly after turning");
@@ -197,6 +210,9 @@ requireFragment(css, ".dcats-concierge.is-dragging .dcats-concierge-hit-target",
 requireFragment(css, "html.dcats-concierge-floating-document");
 requireFragment(css, "body.dcats-concierge-floating-body");
 requireFragment(css, ".dcats-concierge-floating-cost");
+requireFragment(css, ".dcats-concierge-bridge-card");
+requireFragment(css, ".dcats-concierge-bridge-status.is-success");
+requireFragment(css, ".dcats-concierge-bridge-status.is-error");
 assert(/html\.dcats-concierge-floating-document,\s*body\.dcats-concierge-floating-body\s*\{[^}]*background:\s*transparent;/s.test(css), "Floating concierge document must not paint the decorative window background");
 requireFragment(css, "--dcats-concierge-width: max(32px, min(192px, calc(100vw - 16px), calc(92.3077dvh - 14.7692px)));", "Floating concierge character must shrink with both window axes");
 requireFragment(css, "--dcats-concierge-height: auto;", "Floating concierge character height must follow its aspect ratio");

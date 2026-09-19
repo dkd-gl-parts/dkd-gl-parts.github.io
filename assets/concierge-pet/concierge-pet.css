@@ -37,11 +37,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.1038");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.1039");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.1038");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.1039");
 }
 
 .dcats-concierge-hit-target {
@@ -290,7 +290,8 @@
   line-height: 1.55;
 }
 
-.dcats-concierge-floating-card {
+.dcats-concierge-floating-card,
+.dcats-concierge-bridge-card {
   display: grid;
   gap: 8px;
   border: 1px solid rgb(145 200 206 / 48%);
@@ -299,7 +300,8 @@
   background: linear-gradient(145deg, #f7fdfe, #fffaf6);
 }
 
-.dcats-concierge-floating-title {
+.dcats-concierge-floating-title,
+.dcats-concierge-bridge-title {
   margin: 0;
   color: #42506b;
   font-size: 12px;
@@ -307,7 +309,8 @@
   line-height: 1.35;
 }
 
-.dcats-concierge-floating-button {
+.dcats-concierge-floating-button,
+.dcats-concierge-bridge-button {
   min-height: 42px;
   border: 1px solid #8e2e2b;
   border-radius: 10px;
@@ -318,7 +321,8 @@
   cursor: pointer;
 }
 
-.dcats-concierge-floating-button:hover:not(:disabled) {
+.dcats-concierge-floating-button:hover:not(:disabled),
+.dcats-concierge-bridge-button:hover:not(:disabled) {
   background: #762522;
 }
 
@@ -327,7 +331,8 @@
   background: #42506b;
 }
 
-.dcats-concierge-floating-button:disabled {
+.dcats-concierge-floating-button:disabled,
+.dcats-concierge-bridge-button:disabled {
   border-color: #b8bec9;
   background: #b8bec9;
   cursor: not-allowed;
@@ -335,17 +340,22 @@
 
 .dcats-concierge-floating-help,
 .dcats-concierge-floating-cost,
-.dcats-concierge-floating-status {
+.dcats-concierge-floating-status,
+.dcats-concierge-bridge-help,
+.dcats-concierge-bridge-cost,
+.dcats-concierge-bridge-status {
   margin: 0;
   font-size: 11px;
   line-height: 1.5;
 }
 
-.dcats-concierge-floating-help {
+.dcats-concierge-floating-help,
+.dcats-concierge-bridge-help {
   color: #667085;
 }
 
-.dcats-concierge-floating-cost {
+.dcats-concierge-floating-cost,
+.dcats-concierge-bridge-cost {
   color: #34717a;
   font-weight: 800;
 }
@@ -353,6 +363,19 @@
 .dcats-concierge-floating-status {
   color: #8e2e2b;
   font-weight: 700;
+}
+
+.dcats-concierge-bridge-status {
+  color: #42506b;
+  font-weight: 700;
+}
+
+.dcats-concierge-bridge-status.is-success {
+  color: #1e725f;
+}
+
+.dcats-concierge-bridge-status.is-error {
+  color: #8e2e2b;
 }
 
 html.dcats-concierge-floating-document,

@@ -7033,7 +7033,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1038";
+var APP_VERSION       = "v1.1.1039";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -7603,6 +7603,20 @@ function isSystemAdmin() {
 }
 window.DcatsAccess = Object.freeze({
   isSystemAdmin: function() { return isSystemAdmin(); }
+});
+async function issueConciergeBridgeCapability(request) {
+  if (!currentUser || !isSystemAdmin()) {
+    return { data: null, error: new Error("system_admin_required") };
+  }
+  if (!request || typeof request.id !== "string" || !request.id || request.id.length > 100 || request.command !== "get_hanbaioh_queue_status") {
+    return { data: null, error: new Error("invalid_concierge_bridge_request") };
+  }
+  return sb.functions.invoke("issue-concierge-bridge-capability", {
+    body: { id: request.id, command: request.command }
+  });
+}
+window.DcatsBridgeApi = Object.freeze({
+  issueCapability: issueConciergeBridgeCapability
 });
 function canUseInstallApp() {
   return !!currentUser && !!userProfile;
