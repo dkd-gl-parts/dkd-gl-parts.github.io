@@ -7033,7 +7033,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1042";
+var APP_VERSION       = "v1.1.1043";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -7640,6 +7640,76 @@ async function issueConciergeBridgeCapability(request) {
 }
 window.DcatsBridgeApi = Object.freeze({
   issueCapability: issueConciergeBridgeCapability
+});
+var CONCIERGE_AI_SCREEN_IDS = Object.freeze({
+  menu: true,
+  search: true,
+  "customer-portal": true,
+  "sales-order-mgmt": true,
+  "shipping-document-mgmt": true,
+  "core-return-mgmt": true,
+  "production-search": true,
+  "finished-label-mgmt": true,
+  "finished-product-shipping": true,
+  "core-list-mgmt": true,
+  "product-kind-stock-mgmt": true,
+  "manufacturing-cost-mgmt": true,
+  "rakuten-price": true,
+  users: true,
+  "customer-access-mgmt": true,
+  "shipping-rate-mgmt": true,
+  "parts-mgmt": true,
+  "component-name-master-mgmt": true,
+  "component-compat-mgmt": true,
+  "component-parallel": true,
+  components: true,
+  "sales-pricing-mgmt": true,
+  "purchase-mgmt": true,
+  "customer-catalog": true,
+  "customer-orders": true,
+  "customer-shipping": true,
+  "customer-users": true,
+  "kikan-mgmt": true,
+  "manufacturing-ranking-report": true,
+  "production-ranking-mgmt": true,
+  "rakuten-bulk": true,
+  "rakuten-price-list": true,
+  logs: true,
+  "api-settings": true,
+  "change-pw": true
+});
+async function askConciergeAi(request) {
+  if (!currentUser || !isSystemAdmin()) {
+    return { data: null, error: new Error("system_admin_required") };
+  }
+  var question = request && typeof request.question === "string" ? request.question.trim() : "";
+  var language = request && ["ja", "en", "zh"].indexOf(request.language) >= 0 ? request.language : "";
+  var screenId = request && typeof request.screenId === "string" ? request.screenId : "";
+  if (!question || question.length > 800 || !language || !CONCIERGE_AI_SCREEN_IDS[screenId]) {
+    return { data: null, error: new Error("invalid_concierge_ai_request") };
+  }
+  var result = await sb.functions.invoke("concierge-ai-assist", {
+    body: { question: question, language: language, screen_id: screenId }
+  });
+  if (result && result.error) {
+    var code = String(result.error.message || "ai_request_failed");
+    try {
+      var context = result.error.context;
+      if (context && typeof context.clone === "function") context = context.clone();
+      if (context && typeof context.json === "function") {
+        var details = await context.json();
+        if (details && typeof details.error === "string") code = details.error;
+      }
+    } catch (error) {}
+    var wrapped = new Error(code);
+    wrapped.status = Number(result.error.context && result.error.context.status || 0);
+    return { data: null, error: wrapped };
+  }
+  return result;
+}
+window.DcatsConciergeAiApi = Object.freeze({
+  ask: askConciergeAi,
+  allowedScreens: CONCIERGE_AI_SCREEN_IDS
 });
 function canUseInstallApp() {
   return !!currentUser && !!userProfile;

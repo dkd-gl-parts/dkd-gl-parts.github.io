@@ -37,11 +37,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.1042");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.1043");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.1042");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.1043");
 }
 
 .dcats-concierge-hit-target {
@@ -291,6 +291,7 @@
 }
 
 .dcats-concierge-floating-card,
+.dcats-concierge-ai-card,
 .dcats-concierge-bridge-card {
   display: grid;
   gap: 8px;
@@ -301,6 +302,7 @@
 }
 
 .dcats-concierge-floating-title,
+.dcats-concierge-ai-title,
 .dcats-concierge-bridge-title {
   margin: 0;
   color: #42506b;
@@ -310,6 +312,7 @@
 }
 
 .dcats-concierge-floating-button,
+.dcats-concierge-ai-button,
 .dcats-concierge-bridge-button {
   min-height: 42px;
   border: 1px solid #8e2e2b;
@@ -322,6 +325,7 @@
 }
 
 .dcats-concierge-floating-button:hover:not(:disabled),
+.dcats-concierge-ai-button:hover:not(:disabled),
 .dcats-concierge-bridge-button:hover:not(:disabled) {
   background: #762522;
 }
@@ -332,6 +336,7 @@
 }
 
 .dcats-concierge-floating-button:disabled,
+.dcats-concierge-ai-button:disabled,
 .dcats-concierge-bridge-button:disabled {
   border-color: #b8bec9;
   background: #b8bec9;
@@ -341,6 +346,13 @@
 .dcats-concierge-floating-help,
 .dcats-concierge-floating-cost,
 .dcats-concierge-floating-status,
+.dcats-concierge-ai-help,
+.dcats-concierge-ai-privacy,
+.dcats-concierge-ai-cost,
+.dcats-concierge-ai-status,
+.dcats-concierge-ai-answer,
+.dcats-concierge-ai-guide,
+.dcats-concierge-ai-usage,
 .dcats-concierge-bridge-help,
 .dcats-concierge-bridge-inbox-help,
 .dcats-concierge-bridge-cost,
@@ -351,8 +363,76 @@
 }
 
 .dcats-concierge-floating-help,
+.dcats-concierge-ai-help,
 .dcats-concierge-bridge-help {
   color: #667085;
+}
+
+.dcats-concierge-ai-label {
+  color: #263349;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dcats-concierge-ai-question {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 84px;
+  resize: vertical;
+  border: 1px solid rgb(119 58 45 / 30%);
+  border-radius: 10px;
+  background: #fff;
+  color: #2c3442;
+  font: 12px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  padding: 9px 10px;
+}
+
+.dcats-concierge-ai-question:focus-visible {
+  outline: 3px solid rgb(154 55 43 / 20%);
+  outline-offset: 1px;
+}
+
+.dcats-concierge-ai-question:disabled {
+  background: #f3f4f7;
+  color: #7b8494;
+}
+
+.dcats-concierge-ai-privacy {
+  color: #8e2e2b;
+  font-weight: 700;
+}
+
+.dcats-concierge-ai-cost,
+.dcats-concierge-ai-usage {
+  color: #34717a;
+  font-weight: 800;
+}
+
+.dcats-concierge-ai-status {
+  color: #42506b;
+  font-weight: 700;
+}
+
+.dcats-concierge-ai-status.is-success {
+  color: #1e725f;
+}
+
+.dcats-concierge-ai-status.is-error {
+  color: #8e2e2b;
+}
+
+.dcats-concierge-ai-answer,
+.dcats-concierge-ai-guide {
+  padding: 9px 10px;
+  border-radius: 9px;
+  background: rgb(255 255 255 / 84%);
+  color: #263349;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.dcats-concierge-ai-guide {
+  border-left: 3px solid #8e2e2b;
 }
 
 .dcats-concierge-bridge-inbox-help {

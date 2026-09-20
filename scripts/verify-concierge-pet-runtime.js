@@ -223,7 +223,21 @@ const floatingRequests = [];
 const floatingWindows = [];
 const capabilityRequests = [];
 const bridgeRequests = [];
+const aiRequests = [];
 let bridgeResponseFactory = (request) => ({ id: request.id, ok: true, command: request.command, data: { counts: {}, jobs: [] } });
+let aiResponseFactory = () => ({
+  data: {
+    ok: true,
+    answer: "受注・出荷管理画面で確認できます。",
+    guide: { screen_id: "sales-order-mgmt", screen_label: "受注・出荷管理", reason: "受注状況を確認できるため" },
+    model: "gpt-5.6-luna",
+    pricing: { currency: "USD", unit_tokens: 1000000, input_usd: 0.20, output_usd: 1.20 },
+    usage: { input_tokens: 100, output_tokens: 50, total_tokens: 150 },
+    estimated_cost_usd: 0.00008,
+    performed_action: false
+  },
+  error: null
+});
 
 function createFloatingDocument() {
   const listeners = new Map();
@@ -317,6 +331,13 @@ const windowObject = {
     async issueCapability(request) {
       capabilityRequests.push({ ...request });
       return { data: { ok: true, request_id: request.id, command: request.command, capability: "signed-capability" }, error: null };
+    }
+  },
+  DcatsConciergeAiApi: {
+    allowedScreens: { menu: true, search: true, "sales-order-mgmt": true },
+    async ask(request) {
+      aiRequests.push({ ...request });
+      return aiResponseFactory(request);
     }
   },
   requestAnimationFrame(callback) { frameId += 1; pendingFrames.set(frameId, callback); return frameId; },
@@ -436,6 +457,7 @@ const floatingButton = byClass("dcats-concierge-floating-button")[0];
 const floatingCost = byClass("dcats-concierge-floating-cost")[0];
 
 assert(root.hidden, "Concierge must be hidden before a system-admin profile is available");
+assert(byClass("dcats-concierge-ai-card").length === 0, "Non-admin DOM exposed the AI question controls");
 assert(byClass("dcats-concierge-bridge-card").length === 0, "Non-admin DOM exposed the Windows integration controls");
 assert(floatingCost.textContent === "追加料金：0円（ブラウザ標準機能）", "Floating display did not disclose its zero additional charge");
 await api.toggleFloating();
@@ -450,6 +472,26 @@ assert(!storage.size, "Non-admin API calls persisted concierge settings");
 windowObject.userProfile = { role: "system_admin" };
 notifyObservers();
 assert(!root.hidden, "System administrator could not enter concierge test operation");
+const aiCard = byClass("dcats-concierge-ai-card")[0];
+const aiQuestionInput = byClass("dcats-concierge-ai-question")[0];
+const aiAskButton = byClass("dcats-concierge-ai-button")[0];
+const aiStatus = byClass("dcats-concierge-ai-status")[0];
+const aiAnswer = byClass("dcats-concierge-ai-answer")[0];
+const aiGuide = byClass("dcats-concierge-ai-guide")[0];
+const aiUsage = byClass("dcats-concierge-ai-usage")[0];
+assert(aiCard && aiQuestionInput && aiAskButton && aiStatus && aiAnswer && aiGuide && aiUsage, "System administrator did not receive the AI question controls");
+assert(aiQuestionInput.maxLength === 800, "AI question input did not enforce the reviewed length limit");
+aiQuestionInput.value = "受注データはどの画面で確認しますか？";
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+await new Promise((resolve) => setImmediate(resolve));
+await new Promise((resolve) => setImmediate(resolve));
+assert(aiRequests.length === 1, "A pending AI question was submitted more than once");
+assert(JSON.stringify(aiRequests[0]) === JSON.stringify({ question: "受注データはどの画面で確認しますか？", language: "ja", screenId: "menu" }), "AI received data outside the reviewed minimal context");
+assert(aiStatus.textContent === "回答しました。操作は実行していません。" && aiStatus.classList.contains("is-success"), "AI success status did not state that no action was performed");
+assert(aiAnswer.textContent === "受注・出荷管理画面で確認できます。" && !aiAnswer.hidden, "AI answer was not presented as text");
+assert(aiGuide.textContent.includes("案内先：受注・出荷管理") && !aiGuide.hidden, "Fixed-screen guidance was not presented");
+assert(aiUsage.textContent.includes("入力100／出力50トークン") && aiUsage.textContent.includes("US$0.00008000"), "Per-request usage and estimated API cost were not presented");
 const bridgeCard = byClass("dcats-concierge-bridge-card")[0];
 const bridgeButton = byClass("dcats-concierge-bridge-button")[0];
 const bridgeButtons = byClass("dcats-concierge-bridge-button");
@@ -826,6 +868,7 @@ notifyObservers();
 assert(!api.isFloating() && floatingWindows.at(-1).closed, "Role downgrade did not close the floating concierge window");
 assert(root.hidden, "Concierge remained visible after leaving the system-admin role");
 assert(panel.hidden, "Concierge settings remained open after leaving the system-admin role");
+assert(byClass("dcats-concierge-ai-card").length === 0, "Role downgrade left AI question controls in the DOM");
 assert(byClass("dcats-concierge-bridge-card").length === 0, "Role downgrade left Windows integration controls in the DOM");
 assert(!liveInfiniteAnimations().length, "Role downgrade left concierge animation running");
 const downgradedSettings = api.getSettings();
@@ -843,7 +886,7 @@ activeScreen.id = "screen-login";
 notifyObservers();
 assert(root.hidden, "Concierge must be hidden on the login screen");
 
-console.log("Concierge runtime behavior verification passed (system-admin gate, always-on-top floating display, zero-cost disclosure, pointer-captured drag and viewport clamping, 5 movement modes, move-stop cycle, 6 distinct one-shot stop gestures, one sprite, user-scoped preferences, i18n, gaze, card avoidance, scroll-stable viewport revalidation, reduced motion, focus, and inactive cancellation).");
+console.log("Concierge runtime behavior verification passed (system-admin AI guidance and cost disclosure, system-admin gate, always-on-top floating display, zero-cost disclosure, pointer-captured drag and viewport clamping, 5 movement modes, move-stop cycle, 6 distinct one-shot stop gestures, one sprite, user-scoped preferences, i18n, gaze, card avoidance, scroll-stable viewport revalidation, reduced motion, focus, and inactive cancellation).");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;
