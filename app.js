@@ -7033,7 +7033,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1040";
+var APP_VERSION       = "v1.1.1041";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -7611,7 +7611,8 @@ async function issueConciergeBridgeCapability(request) {
   var allowedCommands = {
     get_hanbaioh_queue_status: true,
     prepare_sales_import: true,
-    prepare_customer_import: true
+    prepare_customer_import: true,
+    stage_test_company_sales_import: true
   };
   if (!request || typeof request.id !== "string" || !request.id || request.id.length > 100 || !/^[A-Za-z0-9._:-]+$/.test(request.id) || !allowedCommands[request.command]) {
     return { data: null, error: new Error("invalid_concierge_bridge_request") };
