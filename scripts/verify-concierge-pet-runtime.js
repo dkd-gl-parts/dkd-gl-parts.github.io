@@ -456,11 +456,13 @@ const bridgeButtons = byClass("dcats-concierge-bridge-button");
 const bridgeSalesButton = bridgeButtons.find((element) => element.textContent === "売上CSVを検査して待機");
 const bridgeTestSalesButton = bridgeButtons.find((element) => element.textContent === "テスト会社用CSVを準備");
 const bridgeCustomerButton = bridgeButtons.find((element) => element.textContent === "得意先CSVを検査して確認待ち");
+const bridgeFolderButton = bridgeButtons.find((element) => element.textContent === "取込待ちフォルダーを開く");
+const bridgeLaunchButton = bridgeButtons.find((element) => element.textContent === "販売王25を起動");
 const bridgeInputs = byClass("dcats-concierge-bridge-input");
 const bridgeSalesFileInput = bridgeInputs.find((element) => element.id === "dcats-concierge-bridge-sales-file");
 const bridgeCustomerFileInput = bridgeInputs.find((element) => element.id === "dcats-concierge-bridge-customer-file");
 const bridgeStatus = byClass("dcats-concierge-bridge-status")[0];
-assert(bridgeCard && bridgeButton && bridgeSalesButton && bridgeTestSalesButton && bridgeCustomerButton && bridgeSalesFileInput && bridgeCustomerFileInput && bridgeStatus, "System administrator did not receive the Windows integration controls");
+assert(bridgeCard && bridgeButton && bridgeSalesButton && bridgeTestSalesButton && bridgeCustomerButton && bridgeFolderButton && bridgeLaunchButton && bridgeSalesFileInput && bridgeCustomerFileInput && bridgeStatus, "System administrator did not receive the Windows integration controls");
 dispatch(bridgeButton.listeners, "click", { target: bridgeButton });
 dispatch(bridgeButton.listeners, "click", { target: bridgeButton });
 await new Promise((resolve) => setImmediate(resolve));
@@ -494,9 +496,33 @@ await new Promise((resolve) => setImmediate(resolve));
 assert(capabilityRequests.length === 3 && capabilityRequests[2].command === "stage_test_company_sales_import" && capabilityRequests[2].args.fileName === "hanbaioh-sales-test-20260920.csv", "Test-company staging was not bound to the reviewed file name");
 assert(bridgeRequests.length === 3 && bridgeRequests[2].capability === "signed-capability", "Test-company staging was not forwarded safely");
 assert(bridgeStatus.textContent.includes("D-CATS連携テスト（実データ禁止）") && bridgeStatus.textContent.includes("手動で行ってください") && bridgeStatus.classList.contains("is-success"), "Test-company staging did not preserve the manual-import safety message");
+bridgeResponseFactory = (request) => ({
+  id: request.id,
+  ok: true,
+  command: request.command,
+  data: { target: "test_company_import_folder", opened: true }
+});
+dispatch(bridgeFolderButton.listeners, "click", { target: bridgeFolderButton });
+await new Promise((resolve) => setImmediate(resolve));
+await new Promise((resolve) => setImmediate(resolve));
+assert(capabilityRequests.length === 4 && capabilityRequests[3].command === "open_test_company_import_folder" && capabilityRequests[3].args === undefined, "Fixed folder launch accepted browser-supplied arguments");
+assert(bridgeRequests.length === 4 && bridgeRequests[3].args === undefined && bridgeRequests[3].capability === "signed-capability", "Fixed folder launch was not forwarded safely");
+assert(bridgeStatus.textContent.includes("取込待ちフォルダーを開きました") && bridgeStatus.textContent.includes("手動で行ってください") && bridgeStatus.classList.contains("is-success"), "Fixed folder launch did not preserve the manual-import safety message");
+bridgeResponseFactory = (request) => ({
+  id: request.id,
+  ok: true,
+  command: request.command,
+  data: { target: "hanbaioh25", launched: false, alreadyRunning: true }
+});
+dispatch(bridgeLaunchButton.listeners, "click", { target: bridgeLaunchButton });
+await new Promise((resolve) => setImmediate(resolve));
+await new Promise((resolve) => setImmediate(resolve));
+assert(capabilityRequests.length === 5 && capabilityRequests[4].command === "launch_hanbaioh25" && capabilityRequests[4].args === undefined, "Sales King launch accepted browser-supplied arguments");
+assert(bridgeRequests.length === 5 && bridgeRequests[4].args === undefined && bridgeRequests[4].capability === "signed-capability", "Sales King launch was not forwarded safely");
+assert(bridgeStatus.textContent.includes("販売王25は既に起動しています") && bridgeStatus.textContent.includes("D-CATS連携テスト（実データ禁止）") && bridgeStatus.classList.contains("is-success"), "Duplicate Sales King launch was not prevented or explained safely");
 bridgeSalesFileInput.value = "..\\sales.csv";
 dispatch(bridgeSalesButton.listeners, "click", { target: bridgeSalesButton });
-assert(capabilityRequests.length === 3 && bridgeStatus.textContent === "受信フォルダー内のCSVファイル名だけを入力してください。", "Unsafe sales CSV file name was not rejected before capability issuance");
+assert(capabilityRequests.length === 5 && bridgeStatus.textContent === "受信フォルダー内のCSVファイル名だけを入力してください。", "Unsafe sales CSV file name was not rejected before capability issuance");
 bridgeSalesFileInput.value = "sales.csv";
 bridgeResponseFactory = (request) => ({
   id: request.id,
@@ -507,7 +533,7 @@ bridgeResponseFactory = (request) => ({
 dispatch(bridgeCustomerButton.listeners, "click", { target: bridgeCustomerButton });
 await new Promise((resolve) => setImmediate(resolve));
 await new Promise((resolve) => setImmediate(resolve));
-assert(capabilityRequests.length === 4 && capabilityRequests[3].command === "prepare_customer_import" && capabilityRequests[3].args.fileName === "customers.csv", "Customer CSV preparation was not bound to the reviewed file name");
+assert(capabilityRequests.length === 6 && capabilityRequests[5].command === "prepare_customer_import" && capabilityRequests[5].args.fileName === "customers.csv", "Customer CSV preparation was not bound to the reviewed file name");
 assert(bridgeStatus.textContent === "得意先CSVを3行・2得意先・警告1件で確認待ちに準備しました。" && bridgeStatus.classList.contains("is-success"), "Customer CSV preparation summary was not presented");
 bridgeResponseFactory = (request) => ({ id: request.id, ok: false, error: { code: "CSV_VALIDATION_FAILED", message: "販売王25形式の検査に失敗しました。", validation: { errors: [{ message: "項目数は56ですが、55項目です。" }] } } });
 dispatch(bridgeSalesButton.listeners, "click", { target: bridgeSalesButton });

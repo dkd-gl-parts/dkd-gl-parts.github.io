@@ -76,8 +76,11 @@
       floatingFailed: "フローティングウィンドウを開けませんでした。ブラウザの設定を確認してください。",
       bridgeLegend: "Windows業務連携（管理者テスト）",
       bridgeCheck: "Windows連携を確認",
-      bridgeHelp: "連携キューの確認と、受信フォルダー内CSVの事前検査・待機準備だけを行います。販売王やD-CATS本番データは変更しません。",
+      bridgeHelp: "連携キューの確認、受信フォルダー内CSVの事前検査、固定の取込待ちフォルダー表示、販売王25の起動だけを行います。CSV取込やD-CATS本番データの変更は行いません。",
       bridgeInboxHelp: "CSVをWindows受信フォルダーへ置き、ファイル名だけを入力してください。フォルダー：%LOCALAPPDATA%\\D-CATS\\HanbaiOhBridge\\inbox",
+      bridgeDesktopHelp: "販売王への取込は自動実行しません。販売王で「D-CATS連携テスト（実データ禁止）」を確認してから手動で行ってください。",
+      bridgeOpenTestFolder: "取込待ちフォルダーを開く",
+      bridgeLaunchHanbaioh: "販売王25を起動",
       bridgeSalesFile: "売上CSVファイル名",
       bridgeCustomerFile: "得意先CSVファイル名",
       bridgePrepareSales: "売上CSVを検査して待機",
@@ -89,11 +92,16 @@
       bridgeSalesWorking: "売上CSVを検査しています。元ファイルは変更しません。",
       bridgeTestSalesWorking: "テスト会社専用データを確認し、販売王用CSVを準備しています。",
       bridgeCustomerWorking: "得意先CSVを検査しています。元ファイルは変更しません。",
+      bridgeFolderWorking: "固定の取込待ちフォルダーを開いています。",
+      bridgeLaunchWorking: "販売王25の起動状態を確認しています。",
       bridgeSuccess: "接続できました。連携キューは{count}件です。",
       bridgeSalesPrepared: "売上CSVを{rows}行・{slips}伝票・警告{warnings}件で待機キューへ準備しました。",
       bridgeTestSalesStaged: "{company}専用CSV「{file}」を取込待ちへ準備しました。販売王への取込は会社名を確認して手動で行ってください。",
       bridgeTestSalesExisting: "同じテスト会社用CSVは準備済みです。「{file}」を使用してください。販売王への取込は会社名を確認して手動で行ってください。",
       bridgeCustomerPrepared: "得意先CSVを{rows}行・{customers}得意先・警告{warnings}件で確認待ちに準備しました。",
+      bridgeFolderOpened: "取込待ちフォルダーを開きました。販売王への取込は会社名を確認して手動で行ってください。",
+      bridgeHanbaiohLaunched: "販売王25を起動しました。「D-CATS連携テスト（実データ禁止）」を確認してから手動で取り込んでください。",
+      bridgeHanbaiohAlreadyRunning: "販売王25は既に起動しています。「D-CATS連携テスト（実データ禁止）」を確認してから手動で取り込んでください。",
       bridgePreparedExisting: "同じCSVは準備済みです。既存の待機データを使用します。",
       bridgeInvalidFileName: "受信フォルダー内のCSVファイル名だけを入力してください。",
       bridgeFileMissing: "受信フォルダーにCSVが見つかりません。ファイル名と保存場所を確認してください。",
@@ -142,8 +150,11 @@
       floatingFailed: "The floating window could not be opened. Check your browser settings.",
       bridgeLegend: "Windows integration (admin pilot)",
       bridgeCheck: "Check Windows integration",
-      bridgeHelp: "Checks the queue and only validates CSV files in the Windows inbox for local staging. It does not change Sales King or D-CATS production data.",
+      bridgeHelp: "Checks the queue, validates CSV files in the Windows inbox, opens the fixed import folder, and launches Sales King 25. It does not import CSV files or change D-CATS production data.",
       bridgeInboxHelp: "Place the CSV in the Windows inbox and enter only its file name. Folder: %LOCALAPPDATA%\\D-CATS\\HanbaiOhBridge\\inbox",
+      bridgeDesktopHelp: "Import is never automatic. In Sales King, confirm “D-CATS Integration Test (No Production Data)” before importing manually.",
+      bridgeOpenTestFolder: "Open import-ready folder",
+      bridgeLaunchHanbaioh: "Launch Sales King 25",
       bridgeSalesFile: "Sales CSV file name",
       bridgeCustomerFile: "Customer CSV file name",
       bridgePrepareSales: "Validate and stage sales CSV",
@@ -155,11 +166,16 @@
       bridgeSalesWorking: "Validating the sales CSV without changing the source file.",
       bridgeTestSalesWorking: "Checking test-only data and preparing a Sales King CSV.",
       bridgeCustomerWorking: "Validating the customer CSV without changing the source file.",
+      bridgeFolderWorking: "Opening the fixed import-ready folder.",
+      bridgeLaunchWorking: "Checking the Sales King 25 launch state.",
       bridgeSuccess: "Connected. The integration queue contains {count} items.",
       bridgeSalesPrepared: "Staged {rows} sales rows across {slips} slips with {warnings} warnings.",
       bridgeTestSalesStaged: "Prepared test-company CSV “{file}” for {company}. Confirm the company name and import it into Sales King manually.",
       bridgeTestSalesExisting: "The same test-company CSV is already ready. Use “{file}” and confirm the company name before manually importing it into Sales King.",
       bridgeCustomerPrepared: "Staged {rows} rows for {customers} customers with {warnings} warnings for review.",
+      bridgeFolderOpened: "Opened the import-ready folder. Confirm the company name before importing into Sales King manually.",
+      bridgeHanbaiohLaunched: "Launched Sales King 25. Confirm “D-CATS Integration Test (No Production Data)” before importing manually.",
+      bridgeHanbaiohAlreadyRunning: "Sales King 25 is already running. Confirm “D-CATS Integration Test (No Production Data)” before importing manually.",
       bridgePreparedExisting: "This CSV is already staged. The existing queued item will be used.",
       bridgeInvalidFileName: "Enter only a CSV file name from the Windows inbox.",
       bridgeFileMissing: "The CSV was not found in the Windows inbox. Check its file name and location.",
@@ -208,8 +224,11 @@
       floatingFailed: "无法打开悬浮窗口。请确认浏览器设置。",
       bridgeLegend: "Windows业务联动（管理员测试）",
       bridgeCheck: "检查Windows联动",
-      bridgeHelp: "仅检查联动队列，并预检Windows收件文件夹中的CSV后在本机暂存。不会更改销售王或D-CATS生产数据。",
+      bridgeHelp: "仅检查联动队列、预检Windows收件文件夹中的CSV、打开固定导入文件夹并启动销售王25。不会自动导入CSV或更改D-CATS生产数据。",
       bridgeInboxHelp: "请将CSV放入Windows收件文件夹，并只输入文件名。文件夹：%LOCALAPPDATA%\\D-CATS\\HanbaiOhBridge\\inbox",
+      bridgeDesktopHelp: "不会自动导入。请在销售王中确认“D-CATS联动测试（禁止使用实际数据）”后再手动导入。",
+      bridgeOpenTestFolder: "打开待导入文件夹",
+      bridgeLaunchHanbaioh: "启动销售王25",
       bridgeSalesFile: "销售CSV文件名",
       bridgeCustomerFile: "客户CSV文件名",
       bridgePrepareSales: "检查销售CSV并等待",
@@ -221,11 +240,16 @@
       bridgeSalesWorking: "正在检查销售CSV，不会更改原文件。",
       bridgeTestSalesWorking: "正在确认测试专用数据并准备销售王CSV。",
       bridgeCustomerWorking: "正在检查客户CSV，不会更改原文件。",
+      bridgeFolderWorking: "正在打开固定的待导入文件夹。",
+      bridgeLaunchWorking: "正在确认销售王25的启动状态。",
       bridgeSuccess: "连接成功。联动队列中有{count}项。",
       bridgeSalesPrepared: "已将{rows}行、{slips}张单据的销售CSV加入等待队列，警告{warnings}项。",
       bridgeTestSalesStaged: "已为{company}准备测试公司专用CSV“{file}”。请确认公司名称后手动导入销售王。",
       bridgeTestSalesExisting: "相同的测试公司专用CSV已准备完成，请使用“{file}”。确认公司名称后再手动导入销售王。",
       bridgeCustomerPrepared: "已将{rows}行、{customers}个客户的CSV加入确认等待，警告{warnings}项。",
+      bridgeFolderOpened: "已打开待导入文件夹。请确认公司名称后再手动导入销售王。",
+      bridgeHanbaiohLaunched: "已启动销售王25。请确认“D-CATS联动测试（禁止使用实际数据）”后再手动导入。",
+      bridgeHanbaiohAlreadyRunning: "销售王25已在运行。请确认“D-CATS联动测试（禁止使用实际数据）”后再手动导入。",
       bridgePreparedExisting: "相同CSV已准备完成，将使用现有等待数据。",
       bridgeInvalidFileName: "请只输入Windows收件文件夹中的CSV文件名。",
       bridgeFileMissing: "Windows收件文件夹中未找到CSV，请检查文件名和保存位置。",
@@ -264,6 +288,8 @@
   var bridgeSalesButton;
   var bridgeTestSalesButton;
   var bridgeCustomerButton;
+  var bridgeFolderButton;
+  var bridgeLaunchButton;
   var bridgeStatus;
   var conciergeHelp;
   var characterButtons = [];
@@ -520,6 +546,17 @@
     bridgeCustomerAction.appendChild(bridgeCustomerButton);
     bridgeActions.appendChild(bridgeSalesAction);
     bridgeActions.appendChild(bridgeCustomerAction);
+    var bridgeDesktopHelp = createCopyElement("p", "dcats-concierge-bridge-help", "bridgeDesktopHelp");
+    bridgeDesktopHelp.id = "dcats-concierge-bridge-desktop-help";
+    var bridgeDesktopActions = createElement("div", "dcats-concierge-bridge-actions");
+    bridgeFolderButton = createCopyElement("button", "dcats-concierge-bridge-button is-secondary", "bridgeOpenTestFolder");
+    bridgeFolderButton.type = "button";
+    bridgeFolderButton.setAttribute("aria-describedby", "dcats-concierge-bridge-desktop-help dcats-concierge-bridge-cost dcats-concierge-bridge-status");
+    bridgeLaunchButton = createCopyElement("button", "dcats-concierge-bridge-button is-secondary", "bridgeLaunchHanbaioh");
+    bridgeLaunchButton.type = "button";
+    bridgeLaunchButton.setAttribute("aria-describedby", "dcats-concierge-bridge-desktop-help dcats-concierge-bridge-cost dcats-concierge-bridge-status");
+    bridgeDesktopActions.appendChild(bridgeFolderButton);
+    bridgeDesktopActions.appendChild(bridgeLaunchButton);
     var bridgeCost = createCopyElement("p", "dcats-concierge-bridge-cost", "bridgeCost");
     bridgeCost.id = "dcats-concierge-bridge-cost";
     bridgeStatus = createElement("p", "dcats-concierge-bridge-status");
@@ -531,6 +568,8 @@
     bridgeCard.appendChild(bridgeHelp);
     bridgeCard.appendChild(bridgeInboxHelp);
     bridgeCard.appendChild(bridgeActions);
+    bridgeCard.appendChild(bridgeDesktopHelp);
+    bridgeCard.appendChild(bridgeDesktopActions);
     bridgeCard.appendChild(bridgeCost);
     bridgeCard.appendChild(bridgeStatus);
 
@@ -574,6 +613,12 @@
     });
     bridgeCustomerButton.addEventListener("click", function () {
       prepareWindowsBridgeCsv("prepare_customer_import", bridgeCustomerFileInput && bridgeCustomerFileInput.value);
+    });
+    bridgeFolderButton.addEventListener("click", function () {
+      runWindowsBridgeRequest("open_test_company_import_folder", null, "bridgeFolderWorking");
+    });
+    bridgeLaunchButton.addEventListener("click", function () {
+      runWindowsBridgeRequest("launch_hanbaioh25", null, "bridgeLaunchWorking");
     });
     document.addEventListener("keydown", onPresentationKeyDown);
     document.addEventListener("pointerdown", onPresentationPointerDown, { passive: true });
@@ -647,10 +692,12 @@
     if (bridgeSalesButton) bridgeSalesButton.disabled = bridgeRequestPending;
     if (bridgeTestSalesButton) bridgeTestSalesButton.disabled = bridgeRequestPending;
     if (bridgeCustomerButton) bridgeCustomerButton.disabled = bridgeRequestPending;
+    if (bridgeFolderButton) bridgeFolderButton.disabled = bridgeRequestPending;
+    if (bridgeLaunchButton) bridgeLaunchButton.disabled = bridgeRequestPending;
     if (bridgeSalesFileInput) bridgeSalesFileInput.disabled = bridgeRequestPending;
     if (bridgeCustomerFileInput) bridgeCustomerFileInput.disabled = bridgeRequestPending;
     bridgeStatus.textContent = copy(bridgeStatusState.key, bridgeStatusState.values || {});
-    bridgeStatus.classList.toggle("is-success", ["bridgeSuccess", "bridgeSalesPrepared", "bridgeTestSalesStaged", "bridgeTestSalesExisting", "bridgeCustomerPrepared", "bridgePreparedExisting"].indexOf(bridgeStatusState.key) >= 0);
+    bridgeStatus.classList.toggle("is-success", ["bridgeSuccess", "bridgeSalesPrepared", "bridgeTestSalesStaged", "bridgeTestSalesExisting", "bridgeCustomerPrepared", "bridgePreparedExisting", "bridgeFolderOpened", "bridgeHanbaiohLaunched", "bridgeHanbaiohAlreadyRunning"].indexOf(bridgeStatusState.key) >= 0);
     bridgeStatus.classList.toggle("is-error", ["bridgeInvalidFileName", "bridgeFileMissing", "bridgeValidationFailed", "bridgeUnavailable", "bridgeTimeout", "bridgeForbidden", "bridgeFailed"].indexOf(bridgeStatusState.key) >= 0);
   }
 
@@ -760,6 +807,12 @@
         var stage = response.data && response.data.stage || {};
         statusKey = response.data && response.data.reused === true ? "bridgeTestSalesExisting" : "bridgeTestSalesStaged";
         statusValues = { file: String(stage.fileName || ""), company: String(stage.testCompanyName || "") };
+      } else if (command === "open_test_company_import_folder") {
+        statusKey = "bridgeFolderOpened";
+        statusValues = {};
+      } else if (command === "launch_hanbaioh25") {
+        statusKey = response.data && response.data.alreadyRunning === true ? "bridgeHanbaiohAlreadyRunning" : "bridgeHanbaiohLaunched";
+        statusValues = {};
       } else if (command === "get_hanbaioh_queue_status") {
         var jobs = response.data && Array.isArray(response.data.jobs) ? response.data.jobs : [];
         var counts = response.data && response.data.counts && typeof response.data.counts === "object" ? response.data.counts : null;
