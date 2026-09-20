@@ -40,6 +40,7 @@ jobs:
       - name: Verify animated concierge pets
         run: |
           node scripts/verify-concierge-pet.js
+          node scripts/verify-concierge-ai.js
           node scripts/verify-concierge-pet-runtime.js
           node scripts/verify-concierge-desktop.js
       - name: Verify release asset versions

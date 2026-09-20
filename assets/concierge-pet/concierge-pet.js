@@ -74,6 +74,25 @@
       floatingOpening: "フローティングウィンドウを開いています。",
       floatingActive: "常に前面の小窓で表示中です。",
       floatingFailed: "フローティングウィンドウを開けませんでした。ブラウザの設定を確認してください。",
+      aiLegend: "AIに質問・画面案内（管理者テスト）",
+      aiHelp: "D-CATSの使い方を質問すると、回答と開く画面の候補を表示します。画面移動やデータの入力・更新・削除は自動実行しません。",
+      aiQuestionLabel: "質問",
+      aiPlaceholder: "例：受注データはどの画面で確認しますか？",
+      aiAsk: "AIに質問する",
+      aiCost: "API料金：GPT-5.6 Luna 入力 US$0.20／100万トークン、出力 US$1.20／100万トークン（ChatGPTサブスクリプションとは別料金）。D-CATS追加料金：0円。",
+      aiPrivacy: "顧客名・受注内容・価格・個人情報・パスワード・APIキーは入力しないでください。送信するのは質問文・表示言語・現在の画面名だけです。",
+      aiIdle: "まだ質問していません。",
+      aiWorking: "回答を確認しています。",
+      aiDone: "回答しました。操作は実行していません。",
+      aiInvalidQuestion: "1～800文字で質問を入力してください。",
+      aiNotConfigured: "AIの管理者設定が未完了です。システム管理者へ連絡してください。",
+      aiConfigurationInvalid: "AIの管理者設定を確認してください。",
+      aiForbidden: "システム管理者として再ログインしてからお試しください。",
+      aiRateLimited: "AIが混み合っています。少し待ってからもう一度お試しください。",
+      aiProviderFailed: "AIから回答を取得できませんでした。時間をおいてもう一度お試しください。",
+      aiFailed: "AIに接続できませんでした。時間をおいてもう一度お試しください。",
+      aiGuide: "案内先：{screen} — {reason}",
+      aiUsage: "今回の使用量：入力{input}／出力{output}トークン、推定API料金 US${cost}",
       bridgeLegend: "Windows業務連携（管理者テスト）",
       bridgeCheck: "Windows連携を確認",
       bridgeHelp: "連携キューの確認、受信フォルダー内CSVの事前検査、固定の取込待ちフォルダー表示、販売王25の起動だけを行います。CSV取込やD-CATS本番データの変更は行いません。",
@@ -148,6 +167,25 @@
       floatingOpening: "Opening the floating window.",
       floatingActive: "Showing in an always-on-top window.",
       floatingFailed: "The floating window could not be opened. Check your browser settings.",
+      aiLegend: "Ask AI and get screen guidance (admin pilot)",
+      aiHelp: "Ask how to use D-CATS to receive an answer and a suggested screen. It never navigates or creates, updates, or deletes data automatically.",
+      aiQuestionLabel: "Question",
+      aiPlaceholder: "Example: Which screen shows sales orders?",
+      aiAsk: "Ask AI",
+      aiCost: "API pricing: GPT-5.6 Luna US$0.20/1M input tokens and US$1.20/1M output tokens (separate from ChatGPT subscriptions). Additional D-CATS charge: \u00a50.",
+      aiPrivacy: "Do not enter customer names, order details, prices, personal data, passwords, or API keys. Only the question, display language, and current screen name are sent.",
+      aiIdle: "No question has been asked yet.",
+      aiWorking: "Checking the answer.",
+      aiDone: "Answered. No action was performed.",
+      aiInvalidQuestion: "Enter a question between 1 and 800 characters.",
+      aiNotConfigured: "AI administrator setup is incomplete. Contact the system administrator.",
+      aiConfigurationInvalid: "Check the AI administrator settings.",
+      aiForbidden: "Sign in again as a system administrator and retry.",
+      aiRateLimited: "AI is busy. Wait a moment and try again.",
+      aiProviderFailed: "AI could not return an answer. Please try again later.",
+      aiFailed: "AI could not be reached. Please try again later.",
+      aiGuide: "Suggested screen: {screen} — {reason}",
+      aiUsage: "This request: {input} input / {output} output tokens; estimated API cost US${cost}",
       bridgeLegend: "Windows integration (admin pilot)",
       bridgeCheck: "Check Windows integration",
       bridgeHelp: "Checks the queue, validates CSV files in the Windows inbox, opens the fixed import folder, and launches Sales King 25. It does not import CSV files or change D-CATS production data.",
@@ -222,6 +260,25 @@
       floatingOpening: "正在打开悬浮窗口。",
       floatingActive: "正在置顶小窗中显示。",
       floatingFailed: "无法打开悬浮窗口。请确认浏览器设置。",
+      aiLegend: "AI问答与画面引导（管理员测试）",
+      aiHelp: "可以询问D-CATS的使用方法，AI会回答并建议应打开的画面。不会自动跳转，也不会自动输入、更新或删除数据。",
+      aiQuestionLabel: "问题",
+      aiPlaceholder: "示例：在哪个画面确认订单数据？",
+      aiAsk: "向AI提问",
+      aiCost: "API费用：GPT-5.6 Luna输入每100万tokens为US$0.20，输出为US$1.20（与ChatGPT订阅分开计费）。D-CATS额外费用：0日元。",
+      aiPrivacy: "请勿输入客户姓名、订单内容、价格、个人信息、密码或API密钥。仅发送问题、显示语言和当前画面名称。",
+      aiIdle: "尚未提问。",
+      aiWorking: "正在确认回答。",
+      aiDone: "回答完成。未执行任何操作。",
+      aiInvalidQuestion: "请输入1至800个字符的问题。",
+      aiNotConfigured: "AI管理员设置尚未完成。请联系系统管理员。",
+      aiConfigurationInvalid: "请检查AI管理员设置。",
+      aiForbidden: "请以系统管理员身份重新登录后再试。",
+      aiRateLimited: "AI当前繁忙，请稍后重试。",
+      aiProviderFailed: "无法从AI取得回答，请稍后重试。",
+      aiFailed: "无法连接AI，请稍后重试。",
+      aiGuide: "建议画面：{screen} — {reason}",
+      aiUsage: "本次用量：输入{input}／输出{output} tokens，预估API费用 US${cost}",
       bridgeLegend: "Windows业务联动（管理员测试）",
       bridgeCheck: "检查Windows联动",
       bridgeHelp: "仅检查联动队列、预检Windows收件文件夹中的CSV、打开固定导入文件夹并启动销售王25。不会自动导入CSV或更改D-CATS生产数据。",
@@ -281,6 +338,13 @@
   var panelClose;
   var floatingButton;
   var floatingStatus;
+  var aiCard;
+  var aiQuestionInput;
+  var aiAskButton;
+  var aiStatus;
+  var aiAnswer;
+  var aiGuide;
+  var aiUsage;
   var bridgeCard;
   var bridgeButton;
   var bridgeSalesFileInput;
@@ -314,6 +378,9 @@
   var panelOpen = false;
   var floatingWindow = null;
   var floatingRequestPending = false;
+  var aiRequestPending = false;
+  var aiRequestToken = 0;
+  var aiStatusState = "aiIdle";
   var bridgeRequestPending = false;
   var bridgeRequestToken = 0;
   var bridgeStatusState = { key: "bridgeIdle", values: null };
@@ -501,6 +568,49 @@
     floatingCard.appendChild(floatingCost);
     floatingCard.appendChild(floatingStatus);
 
+    aiCard = createElement("section", "dcats-concierge-ai-card");
+    aiCard.setAttribute("aria-labelledby", "dcats-concierge-ai-title");
+    var aiTitle = createCopyElement("h3", "dcats-concierge-ai-title", "aiLegend");
+    aiTitle.id = "dcats-concierge-ai-title";
+    var aiHelp = createCopyElement("p", "dcats-concierge-ai-help", "aiHelp");
+    aiHelp.id = "dcats-concierge-ai-help";
+    var aiQuestionLabel = createCopyElement("label", "dcats-concierge-ai-label", "aiQuestionLabel");
+    aiQuestionLabel.setAttribute("for", "dcats-concierge-ai-question");
+    aiQuestionInput = createElement("textarea", "dcats-concierge-ai-question");
+    aiQuestionInput.id = "dcats-concierge-ai-question";
+    aiQuestionInput.maxLength = 800;
+    aiQuestionInput.rows = 4;
+    aiQuestionInput.setAttribute("autocomplete", "off");
+    aiQuestionInput.setAttribute("aria-describedby", "dcats-concierge-ai-help dcats-concierge-ai-privacy dcats-concierge-ai-cost");
+    aiAskButton = createCopyElement("button", "dcats-concierge-ai-button", "aiAsk");
+    aiAskButton.type = "button";
+    aiAskButton.setAttribute("aria-describedby", "dcats-concierge-ai-help dcats-concierge-ai-privacy dcats-concierge-ai-cost dcats-concierge-ai-status");
+    var aiPrivacy = createCopyElement("p", "dcats-concierge-ai-privacy", "aiPrivacy");
+    aiPrivacy.id = "dcats-concierge-ai-privacy";
+    var aiCost = createCopyElement("p", "dcats-concierge-ai-cost", "aiCost");
+    aiCost.id = "dcats-concierge-ai-cost";
+    aiStatus = createElement("p", "dcats-concierge-ai-status");
+    aiStatus.id = "dcats-concierge-ai-status";
+    aiStatus.setAttribute("role", "status");
+    aiStatus.setAttribute("aria-live", "polite");
+    aiAnswer = createElement("p", "dcats-concierge-ai-answer");
+    aiAnswer.hidden = true;
+    aiGuide = createElement("p", "dcats-concierge-ai-guide");
+    aiGuide.hidden = true;
+    aiUsage = createElement("p", "dcats-concierge-ai-usage");
+    aiUsage.hidden = true;
+    aiCard.appendChild(aiTitle);
+    aiCard.appendChild(aiHelp);
+    aiCard.appendChild(aiQuestionLabel);
+    aiCard.appendChild(aiQuestionInput);
+    aiCard.appendChild(aiAskButton);
+    aiCard.appendChild(aiPrivacy);
+    aiCard.appendChild(aiCost);
+    aiCard.appendChild(aiStatus);
+    aiCard.appendChild(aiAnswer);
+    aiCard.appendChild(aiGuide);
+    aiCard.appendChild(aiUsage);
+
     bridgeCard = createElement("section", "dcats-concierge-bridge-card");
     bridgeCard.setAttribute("aria-labelledby", "dcats-concierge-bridge-title");
     var bridgeTitle = createCopyElement("h3", "dcats-concierge-bridge-title", "bridgeLegend");
@@ -604,6 +714,13 @@
       button.addEventListener("click", function () { selectMode(button.dataset.value); });
     });
     floatingButton.addEventListener("click", toggleFloatingWindow);
+    aiAskButton.addEventListener("click", runAiRequest);
+    aiQuestionInput.addEventListener("keydown", function (event) {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        runAiRequest();
+      }
+    });
     bridgeButton.addEventListener("click", checkWindowsBridge);
     bridgeSalesButton.addEventListener("click", function () {
       prepareWindowsBridgeCsv("prepare_sales_import", bridgeSalesFileInput && bridgeSalesFileInput.value);
@@ -684,6 +801,121 @@
     var resolvedStatusKey = statusKey || (floating ? "floatingActive" : (!supported ? "floatingUnsupported" : ""));
     floatingStatus.textContent = resolvedStatusKey ? copy(resolvedStatusKey) : "";
     floatingStatus.hidden = !resolvedStatusKey;
+  }
+
+  function clearAiResult() {
+    if (aiAnswer) {
+      aiAnswer.textContent = "";
+      aiAnswer.hidden = true;
+    }
+    if (aiGuide) {
+      aiGuide.textContent = "";
+      aiGuide.hidden = true;
+    }
+    if (aiUsage) {
+      aiUsage.textContent = "";
+      aiUsage.hidden = true;
+    }
+  }
+
+  function updateAiStatus() {
+    if (!aiAskButton || !aiQuestionInput || !aiStatus) return;
+    aiAskButton.disabled = aiRequestPending;
+    aiQuestionInput.disabled = aiRequestPending;
+    aiQuestionInput.placeholder = copy("aiPlaceholder");
+    aiStatus.textContent = copy(aiStatusState);
+    aiStatus.classList.toggle("is-success", aiStatusState === "aiDone");
+    aiStatus.classList.toggle("is-error", ["aiInvalidQuestion", "aiNotConfigured", "aiConfigurationInvalid", "aiForbidden", "aiRateLimited", "aiProviderFailed", "aiFailed"].indexOf(aiStatusState) >= 0);
+  }
+
+  function syncAiControls(systemAdmin) {
+    if (!aiCard || !panelBody || !conciergeHelp) return;
+    if (systemAdmin) {
+      if (!aiCard.parentElement) panelBody.insertBefore(aiCard, bridgeCard && bridgeCard.parentElement ? bridgeCard : conciergeHelp);
+      updateAiStatus();
+      return;
+    }
+    aiRequestToken += 1;
+    aiRequestPending = false;
+    aiStatusState = "aiIdle";
+    if (aiQuestionInput) aiQuestionInput.value = "";
+    clearAiResult();
+    if (aiCard.parentElement) aiCard.parentElement.removeChild(aiCard);
+  }
+
+  function aiFailureStatus(error) {
+    var code = String(error && error.message || "");
+    if (code.indexOf("invalid_") >= 0) return "aiInvalidQuestion";
+    if (code.indexOf("ai_not_configured") >= 0 || code.indexOf("missing_env") >= 0) return "aiNotConfigured";
+    if (code.indexOf("configuration_invalid") >= 0 || code.indexOf("service_not_configured") >= 0) return "aiConfigurationInvalid";
+    if (code.indexOf("forbidden") >= 0 || code.indexOf("authorization") >= 0 || code.indexOf("system_admin_required") >= 0) return "aiForbidden";
+    if (code.indexOf("rate_limited") >= 0) return "aiRateLimited";
+    if (code.indexOf("provider_failed") >= 0) return "aiProviderFailed";
+    return "aiFailed";
+  }
+
+  function currentAiScreenId(api) {
+    var screen = activeScreenName();
+    var allowed = api && api.allowedScreens;
+    return allowed && allowed[screen] ? screen : "menu";
+  }
+
+  async function runAiRequest() {
+    if (aiRequestPending || !isSystemAdminSession()) return;
+    var question = String(aiQuestionInput && aiQuestionInput.value || "").trim();
+    if (!question || question.length > 800) {
+      aiStatusState = "aiInvalidQuestion";
+      clearAiResult();
+      updateAiStatus();
+      return;
+    }
+    var api = window.DcatsConciergeAiApi;
+    if (!api || typeof api.ask !== "function") {
+      aiStatusState = "aiNotConfigured";
+      clearAiResult();
+      updateAiStatus();
+      return;
+    }
+    aiRequestPending = true;
+    aiStatusState = "aiWorking";
+    clearAiResult();
+    updateAiStatus();
+    var requestToken = ++aiRequestToken;
+    try {
+      var result = await api.ask({
+        question: question,
+        language: activeLanguage(),
+        screenId: currentAiScreenId(api)
+      });
+      if (requestToken !== aiRequestToken || !isSystemAdminSession()) return;
+      if (!result || result.error) throw result && result.error || new Error("ai_request_failed");
+      var data = result.data;
+      if (!data || data.ok !== true || data.performed_action !== false || typeof data.answer !== "string" || !data.answer.trim()) {
+        throw new Error("ai_provider_failed");
+      }
+      aiAnswer.textContent = data.answer.trim();
+      aiAnswer.hidden = false;
+      if (data.guide && typeof data.guide.screen_label === "string" && typeof data.guide.reason === "string") {
+        aiGuide.textContent = copy("aiGuide", { screen: data.guide.screen_label, reason: data.guide.reason });
+        aiGuide.hidden = false;
+      }
+      var usage = data.usage || {};
+      var inputTokens = Math.max(0, Number(usage.input_tokens) || 0);
+      var outputTokens = Math.max(0, Number(usage.output_tokens) || 0);
+      var estimatedCost = Math.max(0, Number(data.estimated_cost_usd) || 0).toFixed(8);
+      aiUsage.textContent = copy("aiUsage", { input: inputTokens, output: outputTokens, cost: estimatedCost });
+      aiUsage.hidden = false;
+      aiStatusState = "aiDone";
+    } catch (error) {
+      if (requestToken !== aiRequestToken) return;
+      aiStatusState = aiFailureStatus(error);
+      clearAiResult();
+    } finally {
+      if (requestToken === aiRequestToken) {
+        aiRequestPending = false;
+        updateAiStatus();
+      }
+    }
   }
 
   function updateBridgeStatus() {
@@ -991,6 +1223,7 @@
     var dedicatedPrintStation = new URLSearchParams(window.location.search).has("dcats_print_station");
     var systemAdmin = isSystemAdminSession();
     visible = systemAdmin && !!screen && !EXCLUDED_SCREENS[screen] && !dedicatedPrintStation;
+    syncAiControls(systemAdmin && visible);
     syncBridgeControls(systemAdmin && visible);
     if (isFloatingWindowOpen() && (!systemAdmin || EXCLUDED_SCREENS[screen] || dedicatedPrintStation)) {
       restoreFromFloatingWindow(floatingWindow, true);
@@ -1024,6 +1257,7 @@
     });
     applySettings();
     updateFloatingControls();
+    updateAiStatus();
     updateBridgeStatus();
   }
 
