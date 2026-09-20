@@ -7033,7 +7033,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1041";
+var APP_VERSION       = "v1.1.1042";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 var userManagementLoaded = false;
@@ -7612,13 +7612,20 @@ async function issueConciergeBridgeCapability(request) {
     get_hanbaioh_queue_status: true,
     prepare_sales_import: true,
     prepare_customer_import: true,
-    stage_test_company_sales_import: true
+    stage_test_company_sales_import: true,
+    open_test_company_import_folder: true,
+    launch_hanbaioh25: true
+  };
+  var noArgumentCommands = {
+    get_hanbaioh_queue_status: true,
+    open_test_company_import_folder: true,
+    launch_hanbaioh25: true
   };
   if (!request || typeof request.id !== "string" || !request.id || request.id.length > 100 || !/^[A-Za-z0-9._:-]+$/.test(request.id) || !allowedCommands[request.command]) {
     return { data: null, error: new Error("invalid_concierge_bridge_request") };
   }
   var body = { id: request.id, command: request.command };
-  if (request.command !== "get_hanbaioh_queue_status") {
+  if (!noArgumentCommands[request.command]) {
     var fileName = request.args && typeof request.args.fileName === "string" ? request.args.fileName.trim() : "";
     if (!fileName || fileName.length > 200 || /[\\/:]/.test(fileName) || !/\.csv$/i.test(fileName)) {
       return { data: null, error: new Error("invalid_concierge_bridge_request") };

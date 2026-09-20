@@ -39,6 +39,9 @@ requireFragment(app, "window.DcatsBridgeApi = Object.freeze", "Authenticated app
 requireFragment(app, 'prepare_sales_import: true', "Browser capability API must allow only the reviewed sales CSV preparation command");
 requireFragment(app, 'prepare_customer_import: true', "Browser capability API must allow only the reviewed customer CSV preparation command");
 requireFragment(app, 'stage_test_company_sales_import: true', "Browser capability API must allow the reviewed test-company staging command");
+requireFragment(app, 'open_test_company_import_folder: true', "Browser capability API must allow only the fixed test import folder command");
+requireFragment(app, 'launch_hanbaioh25: true', "Browser capability API must allow only the fixed Sales King launch command");
+requireFragment(app, 'var noArgumentCommands = {', "Browser capability API must separate fixed no-argument commands");
 requireFragment(app, 'body.args = { fileName: fileName }', "Browser capability requests must bind the reviewed CSV file name");
 requireFragment(app, 'sb.functions.invoke("issue-concierge-bridge-capability"', "Windows bridge capabilities must be issued by the authenticated Edge Function");
 requireFragment(html, `assets/concierge-pet/concierge-pet.css?${"v=" + appVersion.slice(1)}`, "Concierge stylesheet is not versioned with APP_VERSION");
@@ -137,6 +140,10 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
   'runWindowsBridgeRequest("get_hanbaioh_queue_status"',
   'prepareWindowsBridgeCsv("prepare_sales_import"',
   'prepareWindowsBridgeCsv("prepare_customer_import"',
+  'runWindowsBridgeRequest("open_test_company_import_folder", null, "bridgeFolderWorking")',
+  'runWindowsBridgeRequest("launch_hanbaioh25", null, "bridgeLaunchWorking")',
+  '販売王への取込は自動実行しません。',
+  '「D-CATS連携テスト（実データ禁止）」を確認してから手動で行ってください。',
   'request.args = args',
   'bridgeSalesFileInput.value = "sales.csv"',
   'bridgeCustomerFileInput.value = "customers.csv"',
