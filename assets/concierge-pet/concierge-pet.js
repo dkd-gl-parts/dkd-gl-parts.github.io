@@ -81,14 +81,18 @@
       bridgeSalesFile: "売上CSVファイル名",
       bridgeCustomerFile: "得意先CSVファイル名",
       bridgePrepareSales: "売上CSVを検査して待機",
+      bridgeStageTestSales: "テスト会社用CSVを準備",
       bridgePrepareCustomer: "得意先CSVを検査して確認待ち",
       bridgeCost: "追加料金：0円（D-CATS・Windows連携機能）",
       bridgeIdle: "未確認です。",
       bridgeWorking: "Windows連携を確認しています。",
       bridgeSalesWorking: "売上CSVを検査しています。元ファイルは変更しません。",
+      bridgeTestSalesWorking: "テスト会社専用データを確認し、販売王用CSVを準備しています。",
       bridgeCustomerWorking: "得意先CSVを検査しています。元ファイルは変更しません。",
       bridgeSuccess: "接続できました。連携キューは{count}件です。",
       bridgeSalesPrepared: "売上CSVを{rows}行・{slips}伝票・警告{warnings}件で待機キューへ準備しました。",
+      bridgeTestSalesStaged: "{company}専用CSV「{file}」を取込待ちへ準備しました。販売王への取込は会社名を確認して手動で行ってください。",
+      bridgeTestSalesExisting: "同じテスト会社用CSVは準備済みです。「{file}」を使用してください。販売王への取込は会社名を確認して手動で行ってください。",
       bridgeCustomerPrepared: "得意先CSVを{rows}行・{customers}得意先・警告{warnings}件で確認待ちに準備しました。",
       bridgePreparedExisting: "同じCSVは準備済みです。既存の待機データを使用します。",
       bridgeInvalidFileName: "受信フォルダー内のCSVファイル名だけを入力してください。",
@@ -143,14 +147,18 @@
       bridgeSalesFile: "Sales CSV file name",
       bridgeCustomerFile: "Customer CSV file name",
       bridgePrepareSales: "Validate and stage sales CSV",
+      bridgeStageTestSales: "Prepare test-company CSV",
       bridgePrepareCustomer: "Validate customer CSV for review",
       bridgeCost: "Additional charge: \u00a50 (D-CATS Windows integration)",
       bridgeIdle: "Not checked yet.",
       bridgeWorking: "Checking Windows integration.",
       bridgeSalesWorking: "Validating the sales CSV without changing the source file.",
+      bridgeTestSalesWorking: "Checking test-only data and preparing a Sales King CSV.",
       bridgeCustomerWorking: "Validating the customer CSV without changing the source file.",
       bridgeSuccess: "Connected. The integration queue contains {count} items.",
       bridgeSalesPrepared: "Staged {rows} sales rows across {slips} slips with {warnings} warnings.",
+      bridgeTestSalesStaged: "Prepared test-company CSV “{file}” for {company}. Confirm the company name and import it into Sales King manually.",
+      bridgeTestSalesExisting: "The same test-company CSV is already ready. Use “{file}” and confirm the company name before manually importing it into Sales King.",
       bridgeCustomerPrepared: "Staged {rows} rows for {customers} customers with {warnings} warnings for review.",
       bridgePreparedExisting: "This CSV is already staged. The existing queued item will be used.",
       bridgeInvalidFileName: "Enter only a CSV file name from the Windows inbox.",
@@ -205,14 +213,18 @@
       bridgeSalesFile: "销售CSV文件名",
       bridgeCustomerFile: "客户CSV文件名",
       bridgePrepareSales: "检查销售CSV并等待",
+      bridgeStageTestSales: "准备测试公司专用CSV",
       bridgePrepareCustomer: "检查客户CSV并等待确认",
       bridgeCost: "额外费用：0日元（D-CATS Windows联动功能）",
       bridgeIdle: "尚未检查。",
       bridgeWorking: "正在检查Windows联动。",
       bridgeSalesWorking: "正在检查销售CSV，不会更改原文件。",
+      bridgeTestSalesWorking: "正在确认测试专用数据并准备销售王CSV。",
       bridgeCustomerWorking: "正在检查客户CSV，不会更改原文件。",
       bridgeSuccess: "连接成功。联动队列中有{count}项。",
       bridgeSalesPrepared: "已将{rows}行、{slips}张单据的销售CSV加入等待队列，警告{warnings}项。",
+      bridgeTestSalesStaged: "已为{company}准备测试公司专用CSV“{file}”。请确认公司名称后手动导入销售王。",
+      bridgeTestSalesExisting: "相同的测试公司专用CSV已准备完成，请使用“{file}”。确认公司名称后再手动导入销售王。",
       bridgeCustomerPrepared: "已将{rows}行、{customers}个客户的CSV加入确认等待，警告{warnings}项。",
       bridgePreparedExisting: "相同CSV已准备完成，将使用现有等待数据。",
       bridgeInvalidFileName: "请只输入Windows收件文件夹中的CSV文件名。",
@@ -250,6 +262,7 @@
   var bridgeSalesFileInput;
   var bridgeCustomerFileInput;
   var bridgeSalesButton;
+  var bridgeTestSalesButton;
   var bridgeCustomerButton;
   var bridgeStatus;
   var conciergeHelp;
@@ -485,9 +498,12 @@
     bridgeSalesFileInput.setAttribute("spellcheck", "false");
     bridgeSalesButton = createCopyElement("button", "dcats-concierge-bridge-button is-secondary", "bridgePrepareSales");
     bridgeSalesButton.type = "button";
+    bridgeTestSalesButton = createCopyElement("button", "dcats-concierge-bridge-button is-secondary", "bridgeStageTestSales");
+    bridgeTestSalesButton.type = "button";
     bridgeSalesAction.appendChild(bridgeSalesLabel);
     bridgeSalesAction.appendChild(bridgeSalesFileInput);
     bridgeSalesAction.appendChild(bridgeSalesButton);
+    bridgeSalesAction.appendChild(bridgeTestSalesButton);
     var bridgeCustomerAction = createElement("div", "dcats-concierge-bridge-action");
     var bridgeCustomerLabel = createCopyElement("label", "dcats-concierge-bridge-label", "bridgeCustomerFile");
     bridgeCustomerLabel.setAttribute("for", "dcats-concierge-bridge-customer-file");
@@ -552,6 +568,9 @@
     bridgeButton.addEventListener("click", checkWindowsBridge);
     bridgeSalesButton.addEventListener("click", function () {
       prepareWindowsBridgeCsv("prepare_sales_import", bridgeSalesFileInput && bridgeSalesFileInput.value);
+    });
+    bridgeTestSalesButton.addEventListener("click", function () {
+      prepareWindowsBridgeCsv("stage_test_company_sales_import", bridgeSalesFileInput && bridgeSalesFileInput.value);
     });
     bridgeCustomerButton.addEventListener("click", function () {
       prepareWindowsBridgeCsv("prepare_customer_import", bridgeCustomerFileInput && bridgeCustomerFileInput.value);
@@ -626,11 +645,12 @@
     if (!bridgeButton || !bridgeStatus) return;
     bridgeButton.disabled = bridgeRequestPending;
     if (bridgeSalesButton) bridgeSalesButton.disabled = bridgeRequestPending;
+    if (bridgeTestSalesButton) bridgeTestSalesButton.disabled = bridgeRequestPending;
     if (bridgeCustomerButton) bridgeCustomerButton.disabled = bridgeRequestPending;
     if (bridgeSalesFileInput) bridgeSalesFileInput.disabled = bridgeRequestPending;
     if (bridgeCustomerFileInput) bridgeCustomerFileInput.disabled = bridgeRequestPending;
     bridgeStatus.textContent = copy(bridgeStatusState.key, bridgeStatusState.values || {});
-    bridgeStatus.classList.toggle("is-success", ["bridgeSuccess", "bridgeSalesPrepared", "bridgeCustomerPrepared", "bridgePreparedExisting"].indexOf(bridgeStatusState.key) >= 0);
+    bridgeStatus.classList.toggle("is-success", ["bridgeSuccess", "bridgeSalesPrepared", "bridgeTestSalesStaged", "bridgeTestSalesExisting", "bridgeCustomerPrepared", "bridgePreparedExisting"].indexOf(bridgeStatusState.key) >= 0);
     bridgeStatus.classList.toggle("is-error", ["bridgeInvalidFileName", "bridgeFileMissing", "bridgeValidationFailed", "bridgeUnavailable", "bridgeTimeout", "bridgeForbidden", "bridgeFailed"].indexOf(bridgeStatusState.key) >= 0);
   }
 
@@ -736,7 +756,11 @@
       if (token !== bridgeRequestToken || !isSystemAdminSession()) return;
       var statusKey;
       var statusValues;
-      if (command === "get_hanbaioh_queue_status") {
+      if (command === "stage_test_company_sales_import") {
+        var stage = response.data && response.data.stage || {};
+        statusKey = response.data && response.data.reused === true ? "bridgeTestSalesExisting" : "bridgeTestSalesStaged";
+        statusValues = { file: String(stage.fileName || ""), company: String(stage.testCompanyName || "") };
+      } else if (command === "get_hanbaioh_queue_status") {
         var jobs = response.data && Array.isArray(response.data.jobs) ? response.data.jobs : [];
         var counts = response.data && response.data.counts && typeof response.data.counts === "object" ? response.data.counts : null;
         var jobCount = counts ? Object.keys(counts).reduce(function (total, key) {
@@ -785,7 +809,8 @@
       playExternalState("failed", 2200);
       return;
     }
-    return runWindowsBridgeRequest(command, { fileName: fileName }, command === "prepare_sales_import" ? "bridgeSalesWorking" : "bridgeCustomerWorking");
+    var workingKey = command === "prepare_sales_import" ? "bridgeSalesWorking" : command === "stage_test_company_sales_import" ? "bridgeTestSalesWorking" : "bridgeCustomerWorking";
+    return runWindowsBridgeRequest(command, { fileName: fileName }, workingKey);
   }
 
   async function toggleFloatingWindow() {

@@ -38,6 +38,7 @@ requireFragment(app, "isSystemAdmin: function() { return isSystemAdmin(); }", "C
 requireFragment(app, "window.DcatsBridgeApi = Object.freeze", "Authenticated app runtime must expose the restricted Windows bridge capability API");
 requireFragment(app, 'prepare_sales_import: true', "Browser capability API must allow only the reviewed sales CSV preparation command");
 requireFragment(app, 'prepare_customer_import: true', "Browser capability API must allow only the reviewed customer CSV preparation command");
+requireFragment(app, 'stage_test_company_sales_import: true', "Browser capability API must allow the reviewed test-company staging command");
 requireFragment(app, 'body.args = { fileName: fileName }', "Browser capability requests must bind the reviewed CSV file name");
 requireFragment(app, 'sb.functions.invoke("issue-concierge-bridge-capability"', "Windows bridge capabilities must be issued by the authenticated Edge Function");
 requireFragment(html, `assets/concierge-pet/concierge-pet.css?${"v=" + appVersion.slice(1)}`, "Concierge stylesheet is not versioned with APP_VERSION");
