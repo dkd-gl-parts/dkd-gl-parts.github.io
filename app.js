@@ -7033,9 +7033,13 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1044";
+var APP_VERSION       = "v1.1.1045";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
+// Tab-local UX containment only; account status is still loaded from Auth.
+// A durable cross-session dispatch ledger is a separate server-side control.
+var internalUserReviewRequiredTargets = Object.create(null);
+var internalUserInviteInFlight = false;
 var userManagementLoaded = false;
 var userManagementLoadError = null;
 var currentPermissionEditUserId = null;
@@ -51557,6 +51561,7 @@ function openInternalUserInvite() {
   nameInput.value = "";
   emailInput.value = "";
   if (result) { result.className = "internal-user-invite-result"; result.textContent = ""; }
+  syncInternalUserInviteReviewState();
   refreshInternalUserInviteRoles();
   overlay.classList.add("show");
   nameInput.focus();
@@ -51620,6 +51625,32 @@ async function loadInternalUserAuthStatuses(users) {
   });
 }
 
+function internalUserNeedsReview(user) {
+  var prefix = String(userProfile && userProfile.id || "") + ":";
+  var email = String(user && user.email || "").trim().toLowerCase();
+  return !!((user && user.id && internalUserReviewRequiredTargets[prefix + "id:" + user.id]) ||
+    (email && internalUserReviewRequiredTargets[prefix + "email:" + email]));
+}
+
+function rememberInternalUserReviewRequired(user) {
+  var prefix = String(userProfile && userProfile.id || "") + ":";
+  var email = String(user && user.email || "").trim().toLowerCase();
+  if (user && user.id) internalUserReviewRequiredTargets[prefix + "id:" + user.id] = true;
+  if (email) internalUserReviewRequiredTargets[prefix + "email:" + email] = true;
+}
+
+function syncInternalUserInviteReviewState() {
+  var input = document.getElementById("internal-user-invite-email");
+  var button = document.getElementById("btn-internal-user-invite-submit");
+  var result = document.getElementById("internal-user-invite-result");
+  var needsReview = internalUserNeedsReview({ email: input ? input.value : "" });
+  if (button) button.disabled = needsReview || internalUserInviteInFlight;
+  if (needsReview && result) {
+    result.className = "internal-user-invite-result save-err";
+    result.textContent = internalUserInviteErrorMessage("reconciliation_required");
+  }
+}
+
 function internalUserInviteErrorMessage(code) {
   var messages = {
     name_required: "表示名を入力してください",
@@ -51640,24 +51671,42 @@ function internalUserInviteErrorMessage(code) {
     resend_failed: "初回設定メールの再送に失敗しました",
     password_reset_failed: "PW再設定メールの送信に失敗しました",
     profile_setup_failed: "ユーザーの会社・基準権限を保存できませんでした",
-    invite_failed: "社内ユーザーIDの発行に失敗しました"
+    invite_failed: "社内ユーザーIDの発行に失敗しました",
+    reconciliation_required: "処理結果の確認が必要です。再送せず管理担当者に確認してください"
   };
   return messages[code] || messages.invite_failed;
 }
 
 async function internalUserInviteErrorCode(result) {
-  if (result && result.data && result.data.error) return result.data.error;
-  var context = result && result.error && result.error.context;
-  if (context && typeof context.json === "function") {
-    try {
+  // invoke resolves transport/relay failures as { data: null, error }; those
+  // results do not establish whether the function already performed the send.
+  var code = "";
+  try {
+    var error = result && result.error;
+    if (error && (error.name === "FunctionsFetchError" || error.name === "FunctionsRelayError")) {
+      return "reconciliation_required";
+    }
+    code = result && result.data && result.data.error;
+    var context = error && error.context;
+    if (!code && context && typeof context.json === "function") {
       var body = await context.json();
-      if (body && body.error) return body.error;
-    } catch (ignore) {}
+      code = body && body.error;
+    }
+  } catch (ignore) {
+    return "reconciliation_required";
   }
-  return "invite_failed";
+  var confirmedRejections = [
+    "name_required", "invalid_email", "invalid_company", "invalid_department", "invalid_role",
+    "missing_authorization", "invalid_authorization", "forbidden", "scope_forbidden",
+    "invalid_action", "invalid_user_id", "too_many_user_ids", "method_not_allowed",
+    "target_user_not_found", "auth_user_not_found", "email_already_registered",
+    "email_rate_limit", "email_address_invalid", "invitation_pending", "invitation_already_accepted"
+  ];
+  return confirmedRejections.indexOf(code) >= 0 ? code : "reconciliation_required";
 }
 
 async function inviteInternalUser() {
+  if (internalUserInviteInFlight) return;
   var nameInput = document.getElementById("internal-user-invite-name");
   var emailInput = document.getElementById("internal-user-invite-email");
   var company = document.getElementById("internal-user-invite-company");
@@ -51666,6 +51715,10 @@ async function inviteInternalUser() {
   var resultMessage = document.getElementById("internal-user-invite-result");
   if (!canUseUserManagement()) {
     showPermissionDenied("invite_internal_user", "profiles");
+    return;
+  }
+  if (internalUserNeedsReview({ email: emailInput ? emailInput.value : "" })) {
+    syncInternalUserInviteReviewState();
     return;
   }
   var payload = {
@@ -51691,15 +51744,30 @@ async function inviteInternalUser() {
     resultMessage.className = "internal-user-invite-result";
     resultMessage.textContent = t("loading");
   }
-  var response = await sb.functions.invoke("invite-internal-user", { body: payload });
-  if (button) button.disabled = false;
-  if (response.error || !response.data || !response.data.ok) {
+  internalUserInviteInFlight = true;
+  var response;
+  try {
+    response = await sb.functions.invoke("invite-internal-user", { body: payload });
+  } catch (ignore) {
+    response = { data: { error: "reconciliation_required" } };
+  }
+  if (!response || response.error || !response.data || response.data.ok !== true || response.data.delivery_status !== "accepted") {
+    var code = await internalUserInviteErrorCode(response);
+    if (code === "reconciliation_required") {
+      rememberInternalUserReviewRequired(payload);
+    }
+    // Keep the lock through context.json(), and hold the original payload even
+    // if the user edited the email field while the response was being decoded.
+    internalUserInviteInFlight = false;
+    syncInternalUserInviteReviewState();
     if (resultMessage) {
       resultMessage.className = "internal-user-invite-result save-err";
-      resultMessage.textContent = internalUserInviteErrorMessage(await internalUserInviteErrorCode(response));
+      resultMessage.textContent = internalUserInviteErrorMessage(code);
     }
     return;
   }
+  internalUserInviteInFlight = false;
+  if (button) button.disabled = false;
   if (resultMessage) {
     resultMessage.className = "internal-user-invite-result save-ok";
     resultMessage.textContent = "社内ユーザーIDを発行し、初回設定メールの送信を受け付けました。受信と設定完了まで「初回設定待ち」と表示されます。";
@@ -53463,7 +53531,7 @@ function renderUsers(users) {
     var authStatusNote = internalUserAuthStatusNote(u);
     var accountAction = authStatus.state === "invitation_pending" ? "resend_invitation" : "send_password_reset";
     var accountActionLabel = accountAction === "resend_invitation" ? "初回設定を再送" : t("btn_send_pw_reset");
-    var accountActionDisabled = authStatus.state === "unavailable" ? " disabled" : "";
+    var accountActionDisabled = authStatus.state === "unavailable" || internalUserNeedsReview(u) ? " disabled" : "";
     var companyCode = userCompanyCode(u);
     var roleCode = normalizeAccessRoleForCompany(userAccessRoleCode(u), companyCode);
     var companyLabel = optionLabel(USER_COMPANY_OPTIONS, companyCode);
@@ -53482,6 +53550,7 @@ function renderUsers(users) {
     if (u.company) html += "<div class='user-created'>申請会社名: "+esc(u.company)+"</div>";
     html += "<div class='user-created'>"+t("lbl_registered")+" "+(u.created_at?u.created_at.slice(0,10):"-")+"</div>";
     if (authStatusNote) html += "<div class='user-auth-state-note'>"+esc(authStatusNote)+"</div>";
+    if (internalUserNeedsReview(u)) html += "<div class='user-auth-state-note'>"+esc(internalUserInviteErrorMessage("reconciliation_required"))+"</div>";
     html += "</div></div>";
     if (canManageThis) {
       html += "<div class='user-actions'>";
@@ -53631,24 +53700,46 @@ function renderUsers(users) {
       var target = userById[uid];
       var action = btn.dataset.accountAction || "send_password_reset";
       var msg   = document.getElementById("save-msg-"+uid);
-      if (!canUseUserManagement() || !target || !canManageUser(target)) { showPermissionDenied(action, "profiles", uid); return; }
-      btn.disabled = true;
-      var r = await sb.functions.invoke("invite-internal-user", {
-        body: { action: action, target_user_id: uid }
-      });
-      btn.disabled = false;
-      if (r.error || !r.data || !r.data.ok) {
-        msg.className = "save-msg save-err";
-        msg.textContent = internalUserInviteErrorMessage(await internalUserInviteErrorCode(r));
-      } else {
-        msg.className = "save-msg save-ok";
-        msg.textContent = action === "resend_invitation"
-          ? "初回設定メールの再送を受け付けました。最新のメールを使用してください。"
-          : "PW再設定メールの送信を受け付けました。";
-        setTimeout(function(){ msg.textContent = ""; }, 6000);
-      }
+      await sendInternalUserAccountEmail(btn, target, uid, msg, action);
     });
   });
+}
+
+async function sendInternalUserAccountEmail(btn, target, uid, msg, action) {
+  if (!canUseUserManagement() || !target || !canManageUser(target)) { showPermissionDenied(action, "profiles", uid); return; }
+  if (internalUserNeedsReview(target)) {
+    btn.disabled = true;
+    msg.className = "save-msg save-err";
+    msg.textContent = internalUserInviteErrorMessage("reconciliation_required");
+    return;
+  }
+  if (btn.disabled) return;
+  var requestTarget = { id: uid, email: String(target.email || "") };
+  btn.disabled = true;
+  var r;
+  try {
+    r = await sb.functions.invoke("invite-internal-user", {
+      body: { action: action, target_user_id: uid }
+    });
+  } catch (ignore) {
+    r = { data: { error: "reconciliation_required" } };
+  }
+  if (!r || r.error || !r.data || r.data.ok !== true || r.data.delivery_status !== "accepted") {
+    var code = await internalUserInviteErrorCode(r);
+    if (code === "reconciliation_required") {
+      rememberInternalUserReviewRequired(requestTarget);
+    }
+    btn.disabled = internalUserNeedsReview(requestTarget);
+    msg.className = "save-msg save-err";
+    msg.textContent = internalUserInviteErrorMessage(code);
+  } else {
+    btn.disabled = false;
+    msg.className = "save-msg save-ok";
+    msg.textContent = action === "resend_invitation"
+      ? "初回設定メールの再送を受け付けました。最新のメールを使用してください。"
+      : "PW再設定メールの送信を受け付けました。";
+    setTimeout(function(){ msg.textContent = ""; }, 6000);
+  }
 }
 
 // =============================================
@@ -54416,6 +54507,7 @@ document.getElementById("btn-internal-user-invite-close").addEventListener("clic
 document.getElementById("btn-internal-user-invite-submit").addEventListener("click", inviteInternalUser);
 document.getElementById("internal-user-invite-company").addEventListener("change", refreshInternalUserInviteRoles);
 document.getElementById("internal-user-invite-role").addEventListener("change", syncInternalUserInviteNotes);
+document.getElementById("internal-user-invite-email").addEventListener("input", syncInternalUserInviteReviewState);
 document.getElementById("internal-user-invite-email").addEventListener("keydown", function(e) {
   if (e.key === "Enter") inviteInternalUser();
 });
