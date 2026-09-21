@@ -1,8 +1,10 @@
 /vendor/supabase-js-2.115.0.js -text -diff
 /vendor/jsbarcode-3.12.3.all.min.js -text -diff
 /vendor/zxing-browser-0.2.0.min.js -text -diff
-/vendor/xlsx-0.18.5.full.min.js -text -diff
-/vendor/pdfjs-3.11.174.min.js -text -diff
-/vendor/pdfjs-3.11.174.worker.min.js -text -diff
-/vendor/pdfjs-3.11.174-cmaps/** -text -diff
-/vendor/pdfjs-3.11.174-standard-fonts/** -text -diff
+/vendor/xlsx-0.20.3.full.min.js -text -diff
+/vendor/xlsx-0.20.3-LICENSE -text -diff
+/vendor/pdfjs-6.3.289-legacy.min.mjs -text -diff
+/vendor/pdfjs-6.3.289-legacy.worker.min.mjs -text -diff
+/vendor/pdfjs-6.3.289-LICENSE -text -diff
+/vendor/pdfjs-6.3.289-cmaps/** -text -diff
+/vendor/pdfjs-6.3.289-standard-fonts/** -text -diff

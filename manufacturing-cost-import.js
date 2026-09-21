@@ -6,16 +6,19 @@
   var MAX_IMPORT_PARTS = 200;
   var PREVIEW_LIMIT = 200;
   var XLSX_SCRIPT = Object.freeze({
-    src: "vendor/xlsx-0.18.5.full.min.js",
-    integrity: "sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw"
+    src: "vendor/xlsx-0.20.3.full.min.js",
+    version: "0.20.3",
+    integrity: "sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT"
   });
   var PDF_SCRIPT = Object.freeze({
-    src: "vendor/pdfjs-3.11.174.min.js",
-    integrity: "sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e"
+    src: "vendor/pdfjs-6.3.289-legacy.min.mjs",
+    version: "6.3.289",
+    type: "module",
+    integrity: "sha384-5NjcDwbJzXhI7QGdIeL4gC2aaEUnzbpPCN461DegG6G/1ym8f1MBJQpAjcXNOi5s"
   });
-  var PDF_WORKER = "vendor/pdfjs-3.11.174.worker.min.js";
-  var PDF_CMAPS = "vendor/pdfjs-3.11.174-cmaps/";
-  var PDF_STANDARD_FONTS = "vendor/pdfjs-3.11.174-standard-fonts/";
+  var PDF_WORKER = "vendor/pdfjs-6.3.289-legacy.worker.min.mjs";
+  var PDF_CMAPS = "vendor/pdfjs-6.3.289-cmaps/";
+  var PDF_STANDARD_FONTS = "vendor/pdfjs-6.3.289-standard-fonts/";
   var scriptPromises = {};
   var state = {
     fileName: "",
@@ -326,20 +329,24 @@
   }
 
   function loadScript(asset, globalName) {
-    if (root[globalName]) return Promise.resolve(root[globalName]);
+    if (root[globalName] && root[globalName].version === asset.version) return Promise.resolve(root[globalName]);
     if (scriptPromises[asset.src]) return scriptPromises[asset.src];
     scriptPromises[asset.src] = new Promise(function(resolve, reject) {
       var script = document.createElement("script");
       script.src = asset.src;
+      if (asset.type) script.type = asset.type;
       script.integrity = asset.integrity;
       script.async = true;
       script.crossOrigin = "anonymous";
       script.onload = function() {
-        if (root[globalName]) resolve(root[globalName]);
+        if (root[globalName] && root[globalName].version === asset.version) resolve(root[globalName]);
         else reject(new Error(tr("manufacturing_cost_import_library_error")));
       };
       script.onerror = function() { reject(new Error(tr("manufacturing_cost_import_library_error"))); };
       document.head.appendChild(script);
+    }).catch(function(error) {
+      delete scriptPromises[asset.src];
+      throw error;
     });
     return scriptPromises[asset.src];
   }
@@ -408,9 +415,13 @@
     });
   }
 
+  function loadSpreadsheetLibrary() {
+    return loadScript(XLSX_SCRIPT, "XLSX");
+  }
+
   async function readSpreadsheet(file) {
     setStatus(tr("manufacturing_cost_import_loading_library"), "loading");
-    var XLSX = await loadScript(XLSX_SCRIPT, "XLSX");
+    var XLSX = await loadSpreadsheetLibrary();
     setStatus(tr("manufacturing_cost_import_reading"), "loading");
     var buffer = await file.arrayBuffer();
     var workbook = XLSX.read(buffer, { type: "array", cellDates: false });
@@ -425,23 +436,29 @@
     var buffer = await file.arrayBuffer();
     var loadingTask = pdfjsLib.getDocument({
       data: new Uint8Array(buffer),
+      isEvalSupported: false,
+      useWasm: false,
       cMapUrl: PDF_CMAPS,
       cMapPacked: true,
       standardFontDataUrl: PDF_STANDARD_FONTS
     });
-    var pdf = await loadingTask.promise;
-    var sheets = [];
-    var totalItems = 0;
-    for (var pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-      var page = await pdf.getPage(pageNumber);
-      var content = await page.getTextContent({ normalizeWhitespace: true });
-      totalItems += content.items.length;
-      if (totalItems > MAX_SOURCE_ROWS * 20) throw new Error(tr("manufacturing_cost_import_too_many_rows"));
-      var matrix = matrixFromPdfItems(content.items);
-      if (matrix.length) sheets.push({ key: "pdf-" + pageNumber, name: trf("manufacturing_cost_import_pdf_page", { n: pageNumber }), matrix: matrix });
+    try {
+      var pdf = await loadingTask.promise;
+      var sheets = [];
+      var totalItems = 0;
+      for (var pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+        var page = await pdf.getPage(pageNumber);
+        var content = await page.getTextContent({ normalizeWhitespace: true });
+        totalItems += content.items.length;
+        if (totalItems > MAX_SOURCE_ROWS * 20) throw new Error(tr("manufacturing_cost_import_too_many_rows"));
+        var matrix = matrixFromPdfItems(content.items);
+        if (matrix.length) sheets.push({ key: "pdf-" + pageNumber, name: trf("manufacturing_cost_import_pdf_page", { n: pageNumber }), matrix: matrix });
+      }
+      if (!sheets.length) throw new Error(tr("manufacturing_cost_import_pdf_no_text"));
+      return sheets;
+    } finally {
+      await loadingTask.destroy();
     }
-    if (!sheets.length) throw new Error(tr("manufacturing_cost_import_pdf_no_text"));
-    return sheets;
   }
 
   async function readFile(file) {
@@ -700,6 +717,7 @@
   }
 
   var api = {
+    loadSpreadsheetLibrary: loadSpreadsheetLibrary,
     normalizePart: normalizePart,
     extractPart: extractPart,
     inferMapping: inferMapping,

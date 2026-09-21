@@ -23,6 +23,8 @@ const metaVersion = requiredMatch(html, /name="dcats-app-version"\s+content="(v[
 const legacyVersion = requiredMatch(html, /Legacy updater compatibility: var APP_VERSION = "(v[^\"]+)"/, "legacy updater version");
 const scriptVersion = "v" + requiredMatch(html, /<script\s+src="app\.js\?v=([^\"]+)"/, "app.js cache version");
 const installScriptVersion = "v" + requiredMatch(html, /<script\s+src="install-app\.js\?v=([^\"]+)"/, "install-app.js cache version");
+const manufacturingImportScriptVersion = "v" + requiredMatch(html, /<script\s+src="manufacturing-cost-import\.js\?v=([^&\"]+)/, "manufacturing-cost-import.js cache version");
+const manufacturingRankingScriptVersion = "v" + requiredMatch(html, /<script\s+src="manufacturing-ranking-report\.js\?v=([^&\"]+)/, "manufacturing-ranking-report.js cache version");
 const legacyI18nVersion = "v" + requiredMatch(html, /<script\s+src="legacy-i18n\.js\?v=([^\"]+)"/, "legacy-i18n.js cache version");
 const conciergeScriptVersion = "v" + requiredMatch(html, /<script\s+src="assets\/concierge-pet\/concierge-pet\.js\?v=([^\"]+)"/, "concierge-pet.js cache version");
 const styleVersion = "v" + requiredMatch(html, /<link\s+rel="stylesheet"\s+href="styles\.css\?v=([^&\"]+)/, "styles.css cache version");
@@ -44,14 +46,14 @@ const reviewedDynamicScript = Object.freeze({
   integrity: "sha384-HRtzk9lZgkbSgvUyQrnfC/GxiXZgwaNyD7hC9wcXlsBpDhkS80ISl73juef2FRuf",
 });
 const reviewedManufacturingImportAssets = new Map([
-  ["vendor/xlsx-0.18.5.full.min.js", {
-    integrity: "sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw",
+  ["vendor/xlsx-0.20.3.full.min.js", {
+    integrity: "sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT",
   }],
-  ["vendor/pdfjs-3.11.174.min.js", {
-    integrity: "sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e",
+  ["vendor/pdfjs-6.3.289-legacy.min.mjs", {
+    integrity: "sha384-5NjcDwbJzXhI7QGdIeL4gC2aaEUnzbpPCN461DegG6G/1ym8f1MBJQpAjcXNOi5s",
   }],
-  ["vendor/pdfjs-3.11.174.worker.min.js", {
-    integrity: "sha384-SnzOobpRMLXZ52iJvZm/C0fYw0OQemTXzTjIsdsfMcrCtCEe9qgzxTd3RSklO5x2",
+  ["vendor/pdfjs-6.3.289-legacy.worker.min.mjs", {
+    integrity: "sha384-2elss7Fc57S3C8hPKJxxGbtpWJRNsg0VWJqPR6PSSaIetveaFPnpIRIGVSml+d5+",
   }],
 ]);
 
@@ -403,7 +405,7 @@ for (const [src, contract] of reviewedManufacturingImportAssets) {
       !manufacturingCostImport.includes(`var PDF_WORKER = "${src}"`)) {
     throw new Error(`Manufacturing-cost importer is missing reviewed asset: ${src}`);
   }
-  if (src.endsWith(".worker.min.js")) continue;
+  if (src.endsWith(".worker.min.mjs")) continue;
   if (!manufacturingCostImport.includes(`integrity: "${contract.integrity}"`)) {
     throw new Error(`Manufacturing-cost importer is missing reviewed SRI: ${src}`);
   }
@@ -413,7 +415,7 @@ if (/https?:\/\//i.test(manufacturingCostImport) ||
     !manufacturingCostImport.includes('script.crossOrigin = "anonymous";')) {
   throw new Error("Manufacturing-cost importer must lazy-load only reviewed self-hosted scripts with SRI");
 }
-for (const directory of ["vendor/pdfjs-3.11.174-cmaps", "vendor/pdfjs-3.11.174-standard-fonts"]) {
+for (const directory of ["vendor/pdfjs-6.3.289-cmaps", "vendor/pdfjs-6.3.289-standard-fonts"]) {
   if (!fs.existsSync(path.join(root, directory))) {
     throw new Error(`PDF.js support directory is missing: ${directory}`);
   }
@@ -479,7 +481,7 @@ expectSupplyChainMutationRejected(
   `${app}\nvar extraLoader = document.createElementNS("http://www.w3.org/1999/xhtml", "script"); extraLoader.src = new URL("https://cdn.jsdelivr.net/npm/unreviewed@1/index.js").href;`,
 );
 
-const versions = { metaVersion, legacyVersion, scriptVersion, installScriptVersion, legacyI18nVersion, conciergeScriptVersion, styleVersion, conciergeStyleVersion, manifestVersion };
+const versions = { metaVersion, legacyVersion, scriptVersion, installScriptVersion, manufacturingImportScriptVersion, manufacturingRankingScriptVersion, legacyI18nVersion, conciergeScriptVersion, styleVersion, conciergeStyleVersion, manifestVersion };
 Object.entries(versions).forEach(([label, version]) => {
   if (version !== appVersion) {
     throw new Error(`${label} ${version} must match ${appVersion}`);
