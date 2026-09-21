@@ -162,7 +162,9 @@ jobs:
       - name: Verify manufacturing cost candidate status
         run: node scripts/verify-manufacturing-cost-candidate-status.js
       - name: Verify variable-layout manufacturing cost import
-        run: node scripts/verify-manufacturing-cost-import.js
+        run: |
+          node scripts/verify-manufacturing-cost-import.js
+          node scripts/verify-document-import-parsers.js
       - name: Verify manufacturing cost snapshot status
         run: node scripts/verify-manufacturing-cost-snapshot-status.js
       - name: Verify manufacturing cost company breakdown
@@ -230,7 +232,7 @@ jobs:
       - name: Verify mobile label printer routing
         run: node scripts/verify-finished-label-mobile-print.js
       - name: Verify legacy HTTPS redirect
-        run: node scripts/verify-legacy-https-redirect.mjs
+        run: node scripts/verify-legacy-https-redirect.js
       - name: Verify first-PC label printer setup
         run: node scripts/verify-label-printer-onboarding.js
 

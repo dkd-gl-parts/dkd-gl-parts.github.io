@@ -1,12 +1,12 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import vm from 'node:vm';
-import crypto from 'node:crypto';
-import assert from 'node:assert/strict';
-import { fileURLToPath } from 'node:url';
-import { spawnSync } from 'node:child_process';
+const fs=require('node:fs');
+const path=require('node:path');
+const vm=require('node:vm');
 
-const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const assert=require('node:assert/strict');
+
+
+
+const root=path.resolve(__dirname, '..');
 const candidate=path.join(root,'docs');
 const script=fs.readFileSync(path.join(candidate,'legacy-redirect.js'),'utf8');
 const legacy='https://dkd-gl-parts.github.io';

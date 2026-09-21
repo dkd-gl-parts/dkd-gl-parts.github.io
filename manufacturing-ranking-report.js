@@ -182,7 +182,7 @@
   }
 
   function parseWorkbook(arrayBuffer, fileName) {
-    if (!window.XLSX) throw new Error("Excel読込ライブラリを読み込めませんでした。通信状態を確認してください。");
+    if (!window.XLSX || window.XLSX.version !== "0.20.3") throw new Error("Excel読込ライブラリを読み込めませんでした。通信状態を確認してください。");
     var workbook = XLSX.read(arrayBuffer, { type: "array", cellDates: false });
     var rows = [];
     var sheets = [];
@@ -270,6 +270,7 @@
     setLoading(true);
     setSourceStatus(file.name + " を読み込んでいます...", "loading");
     try {
+      await window.DcatsManufacturingCostImport.loadSpreadsheetLibrary();
       var parsed = parseWorkbook(await file.arrayBuffer(), file.name);
       applyParsedSource(parsed);
     } catch (error) {
