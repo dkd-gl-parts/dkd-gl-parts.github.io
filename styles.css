@@ -6009,6 +6009,12 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .internal-user-invite-grid select { width: 100%; min-height: 36px; box-sizing: border-box; }
 .internal-user-invite-role-field { grid-column: 1 / -1; }
 .internal-user-invite-result { min-height: 20px; margin-top: 10px; font-size: 12px; line-height: 1.5; }
+.internal-account-requests { margin: 16px 0; padding: 16px; background: #f8fafc; border: 1px solid #dfe5ec; border-radius: 8px; }
+.internal-account-requests h3 { margin: 0 0 8px; }
+.internal-account-requests p { font-size: 13px; line-height: 1.5; }
+.internal-request-lookup, .internal-request-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.internal-request-lookup input { flex: 1; min-width: 170px; min-height: 36px; padding: 6px 8px; }
+.internal-request-reference { overflow-wrap: anywhere; color: #667085; }
 .internal-user-invite-footer { align-items: center; justify-content: flex-end; }
 .internal-user-invite-footer .btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 190px; }
 .internal-user-invite-footer .btn-primary:disabled { opacity: .55; cursor: not-allowed; }

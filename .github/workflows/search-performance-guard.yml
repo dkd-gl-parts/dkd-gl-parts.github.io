@@ -32,6 +32,7 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check app.js
+          node --check internal-account-requests.js
           node --check sales-order-revision.js
           node --check install-app.js
           node --check assets/concierge-pet/concierge-pet.js
@@ -89,6 +90,8 @@ jobs:
         run: node scripts/verify-customer-activity-history.js
       - name: Verify internal account issuance
         run: node scripts/verify-internal-account-issuance.js
+      - name: Verify persistent internal account requests
+        run: node scripts/verify-internal-account-requests.js
       - name: Verify internal base role organization
         run: node scripts/verify-internal-base-role-organization.js
       - name: Verify internal shipping permission

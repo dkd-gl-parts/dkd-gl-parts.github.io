@@ -117,11 +117,17 @@ function context(response, permitted = true) {
   nodes["internal-user-invite-role"].value = "sales_staff";
   nodes["btn-internal-user-invite-submit"] = { disabled: false };
   const calls = [];
+  const translated = {
+    internal_request_error_reconciliation: "処理結果の確認が必要です。再送せずメール処理を確認してください",
+  };
   const box = { nodes, calls, userProfile: { id: "actor" }, internalUserReviewRequiredTargets: Object.create(null), internalUserInviteInFlight: false, internalUserAuthStatusMap: {},
     document: { getElementById: id => nodes[id] }, canUseUserManagement: () => permitted, canManageUser: () => permitted,
-    showPermissionDenied: () => {}, departmentCodeForAccessRole: () => "product", t: x => x, setTimeout: () => {}, loadUsers: async () => {},
+    showPermissionDenied: () => {}, departmentCodeForAccessRole: () => "product", t: x => translated[x] || x, setTimeout: () => {}, loadUsers: async () => {},
     sb: { functions: { invoke: async (name, args) => { calls.push(args.body); return typeof response === "function" ? response(args) : response; } } },
   };
+  // Isolate existing UI response handling. The persistent controller, SDK and
+  // cross-session contract run in verify-internal-account-requests.js.
+  box.invokeInternalUserRequest = async (payload) => box.sb.functions.invoke("invite-internal-user", { body: payload });
   vm.createContext(box); vm.runInContext(functions, box); return box;
 }
 (async () => {
@@ -134,7 +140,7 @@ function context(response, permitted = true) {
     assert.equal(box.calls.length, 1, action + " must not repeat an uncertain request");
     assert(box.internalUserNeedsReview(target));
     assert.equal(action === "invite" ? box.nodes["btn-internal-user-invite-submit"].disabled : button.disabled, true);
-    assert.match(action === "invite" ? box.nodes["internal-user-invite-result"].textContent : message.textContent, /再送せず管理担当者/);
+    assert.match(action === "invite" ? box.nodes["internal-user-invite-result"].textContent : message.textContent, /再送せず/);
     assert.equal(Object.keys(box.internalUserAuthStatusMap).length, 0, "request review must not invent account status");
     cases++;
   }
