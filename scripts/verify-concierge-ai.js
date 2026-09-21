@@ -27,6 +27,8 @@ function requireFragment(source, fragment, message) {
 
 [
   'createElement("section", "dcats-concierge-ai-card")',
+  'openPanel("question")',
+  'aiQuestionInput.focus()',
   'aiQuestionInput.maxLength = 800',
   'aiAskButton.addEventListener("click", runAiRequest)',
   'if (aiRequestPending || !isSystemAdminSession()) return;',
@@ -44,6 +46,8 @@ function requireFragment(source, fragment, message) {
 [
   ".dcats-concierge-ai-card",
   ".dcats-concierge-ai-question",
+  ".dcats-concierge-panel.is-question-view",
+  ".dcats-concierge-panel.is-question-view .dcats-concierge-ai-button",
   ".dcats-concierge-ai-status.is-success",
   ".dcats-concierge-ai-status.is-error"
 ].forEach((fragment) => requireFragment(css, fragment));
