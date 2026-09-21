@@ -19,6 +19,7 @@ const targetInstallCommand = "npm ci --ignore-scripts";
 const targetGuardCommand = "node scripts/verify-workflow-coverage.js";
 const targetSyntaxCommand = [
   "node --check app.js",
+  "node --check internal-account-requests.js",
   "node --check sales-order-revision.js",
   "node --check install-app.js",
   "node --check assets/concierge-pet/concierge-pet.js",
@@ -890,6 +891,7 @@ function makeTargetFixture(options = {}) {
     `      - run: ${targetGuardCommand}`,
     "      - run: |",
     "          node --check app.js",
+    "          node --check internal-account-requests.js",
     "          node --check sales-order-revision.js",
     "          node --check install-app.js",
     "          node --check assets/concierge-pet/concierge-pet.js",
@@ -1432,6 +1434,7 @@ function runSelfTests() {
     `          - run: ${targetGuardCommand}`,
     "          - run: |",
     "              node --check app.js",
+    "              node --check internal-account-requests.js",
     "              node --check sales-order-revision.js",
     "              node --check install-app.js",
     "              node --check assets/concierge-pet/concierge-pet.js",

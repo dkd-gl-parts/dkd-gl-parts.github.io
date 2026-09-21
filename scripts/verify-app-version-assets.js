@@ -23,6 +23,7 @@ const metaVersion = requiredMatch(html, /name="dcats-app-version"\s+content="(v[
 const legacyVersion = requiredMatch(html, /Legacy updater compatibility: var APP_VERSION = "(v[^\"]+)"/, "legacy updater version");
 const scriptVersion = "v" + requiredMatch(html, /<script\s+src="app\.js\?v=([^\"]+)"/, "app.js cache version");
 const installScriptVersion = "v" + requiredMatch(html, /<script\s+src="install-app\.js\?v=([^\"]+)"/, "install-app.js cache version");
+const internalRequestScriptVersion = "v" + requiredMatch(html, /<script\s+src="internal-account-requests\.js\?v=([^\"]+)"/, "internal-account-requests.js cache version");
 const manufacturingImportScriptVersion = "v" + requiredMatch(html, /<script\s+src="manufacturing-cost-import\.js\?v=([^&\"]+)/, "manufacturing-cost-import.js cache version");
 const manufacturingRankingScriptVersion = "v" + requiredMatch(html, /<script\s+src="manufacturing-ranking-report\.js\?v=([^&\"]+)/, "manufacturing-ranking-report.js cache version");
 const legacyI18nVersion = "v" + requiredMatch(html, /<script\s+src="legacy-i18n\.js\?v=([^\"]+)"/, "legacy-i18n.js cache version");
@@ -481,7 +482,7 @@ expectSupplyChainMutationRejected(
   `${app}\nvar extraLoader = document.createElementNS("http://www.w3.org/1999/xhtml", "script"); extraLoader.src = new URL("https://cdn.jsdelivr.net/npm/unreviewed@1/index.js").href;`,
 );
 
-const versions = { metaVersion, legacyVersion, scriptVersion, installScriptVersion, manufacturingImportScriptVersion, manufacturingRankingScriptVersion, legacyI18nVersion, conciergeScriptVersion, styleVersion, conciergeStyleVersion, manifestVersion };
+const versions = { metaVersion, legacyVersion, scriptVersion, installScriptVersion, internalRequestScriptVersion, manufacturingImportScriptVersion, manufacturingRankingScriptVersion, legacyI18nVersion, conciergeScriptVersion, styleVersion, conciergeStyleVersion, manifestVersion };
 Object.entries(versions).forEach(([label, version]) => {
   if (version !== appVersion) {
     throw new Error(`${label} ${version} must match ${appVersion}`);

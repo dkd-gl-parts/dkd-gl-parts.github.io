@@ -1489,6 +1489,38 @@ var TRANSLATIONS = {
     users_heading: "社内ユーザー一覧",
     user_permissions_heading: "ユーザー権限",
     users_desc: "会社と基準権限で操作範囲を管理します。",
+    internal_request_heading: "メール処理の確認",
+    internal_request_desc: "宛先の処理状況を確認します。確認が必要な処理は、再送せず照合してください。",
+    internal_request_email: "宛先メールアドレス",
+    internal_request_lookup: "処理状況を確認",
+    internal_request_prompt: "宛先を入力してください。",
+    internal_request_refresh: "最新の状況を確認",
+    internal_request_cancel: "未送信の要求を取り消す",
+    internal_request_reconcile: "記録を照合する",
+    internal_request_short_completed: "完了",
+    internal_request_short_cancelled: "取消済み",
+    internal_request_short_failed: "受付拒否",
+    internal_request_short_resolved: "解決済み",
+    internal_request_confirm_new: "前のメール処理は「{state}」です。新しいメール送信を開始しますか？",
+    internal_request_state_pending: "未送信です。同じ入力内容で続けるか、要求を取り消してください。",
+    internal_request_state_needs_review: "処理結果の確認が必要です。再送せず、管理担当者が記録を確認してください。",
+    internal_request_state_accepted: "メールサービスが受け付けました。未完了のユーザー設定と記録を照合してください。",
+    internal_request_state_failed: "メールサービスが受付を拒否しました。新しい送信は宛先を確認して操作してください。",
+    internal_request_state_cancelled: "未送信の要求を取り消しました。",
+    internal_request_state_completed: "メール処理は完了しています。メールの受信やアカウント設定完了を示すものではありません。",
+    internal_request_none: "確認できるメール処理はありません。",
+    internal_request_reference: "処理番号: ",
+    internal_request_confirm_cancel: "メールを送信する前の要求を取り消しますか？",
+    internal_request_confirm_reconcile: "メールを再送せず、保存済みの受付記録を照合します。未完了のユーザー設定がある場合は元の指定内容で修復します。続行しますか？",
+    internal_request_error_rate_limit: "メール送信上限に達しました。処理状況を確認してから、時間をおいて操作してください",
+    internal_request_error_reconciliation: "処理結果の確認が必要です。再送せず「メール処理の確認」で状況を確認してください",
+    internal_request_error_storage: "処理情報を安全に保存できません。送信せず、ブラウザーの保存設定を確認してください",
+    internal_request_error_paused: "メール送信は運用確認のため停止中です。未送信の要求は取り消せます",
+    internal_request_error_not_found: "確認できる処理がありません。宛先と現在の管理権限を確認してください",
+    internal_request_error_version: "処理状況が更新されています。最新の状況を確認してください",
+    internal_request_error_key_conflict: "前の要求と入力内容が異なります。元の内容で確認するか、未送信の要求を取り消してください",
+    internal_request_error_previous: "前の処理状況を確認してから、新しい送信を操作してください",
+    internal_request_error_invalid: "要求を確認できません。入力内容と処理状況を確認してください",
     perm_group: "グループ",
     perm_role: "ロール",
     perm_products: "商品閲覧",
@@ -3792,6 +3824,38 @@ var TRANSLATIONS = {
     users_heading: "Internal User List",
     user_permissions_heading: "User Permissions",
     users_desc: "Company and base role define access.",
+    internal_request_heading: "Email Request Status",
+    internal_request_desc: "Check the request status for a recipient. Review uncertain requests without resending.",
+    internal_request_email: "Recipient email address",
+    internal_request_lookup: "Check request status",
+    internal_request_prompt: "Enter a recipient address.",
+    internal_request_refresh: "Refresh status",
+    internal_request_cancel: "Cancel unsent request",
+    internal_request_reconcile: "Reconcile record",
+    internal_request_short_completed: "Completed",
+    internal_request_short_cancelled: "Cancelled",
+    internal_request_short_failed: "Rejected",
+    internal_request_short_resolved: "Resolved",
+    internal_request_confirm_new: "The previous email request is “{state}”. Start a new email request?",
+    internal_request_state_pending: "This request has not been sent. Continue with the same input or cancel it.",
+    internal_request_state_needs_review: "The result needs review. Do not resend; ask an administrator to check the record.",
+    internal_request_state_accepted: "The email service accepted the request. Reconcile any unfinished user setup and records.",
+    internal_request_state_failed: "The email service rejected the request. Check the recipient before starting a new request.",
+    internal_request_state_cancelled: "The unsent request was cancelled.",
+    internal_request_state_completed: "The email request is complete. This does not confirm delivery or completed account setup.",
+    internal_request_none: "No visible email request was found.",
+    internal_request_reference: "Request ID: ",
+    internal_request_confirm_cancel: "Cancel this request before the email is sent?",
+    internal_request_confirm_reconcile: "Reconcile the saved acceptance record without resending. Any unfinished user setup may be repaired with the original assignment. Continue?",
+    internal_request_error_rate_limit: "The email limit was reached. Check the request status and try again later.",
+    internal_request_error_reconciliation: "The result needs review. Do not resend; check it under Email Request Status.",
+    internal_request_error_storage: "Request information cannot be stored safely. Nothing was sent; check browser storage settings.",
+    internal_request_error_paused: "Email sending is paused for operational review. You can cancel an unsent request.",
+    internal_request_error_not_found: "No visible request was found. Check the recipient and your current management scope.",
+    internal_request_error_version: "The request status changed. Refresh it before continuing.",
+    internal_request_error_key_conflict: "The saved request has different input. Review the original input or cancel the unsent request.",
+    internal_request_error_previous: "Review the previous request before starting a new email request.",
+    internal_request_error_invalid: "The request could not be validated. Check the input and request status.",
     perm_group: "Group",
     perm_role: "Role",
     perm_products: "Product View",
@@ -6102,6 +6166,38 @@ var TRANSLATIONS = {
     users_heading: "内部用户列表",
     user_permissions_heading: "用户权限",
     users_desc: "通过公司和基础权限管理操作范围。",
+    internal_request_heading: "邮件处理确认",
+    internal_request_desc: "确认收件人的处理状态。需要确认的处理请勿重发，请进行核对。",
+    internal_request_email: "收件人电子邮箱",
+    internal_request_lookup: "确认处理状态",
+    internal_request_prompt: "请输入收件人地址。",
+    internal_request_refresh: "刷新状态",
+    internal_request_cancel: "取消未发送请求",
+    internal_request_reconcile: "核对记录",
+    internal_request_short_completed: "已完成",
+    internal_request_short_cancelled: "已取消",
+    internal_request_short_failed: "已拒绝",
+    internal_request_short_resolved: "已解决",
+    internal_request_confirm_new: "上一项邮件处理为“{state}”。是否开始新的邮件发送？",
+    internal_request_state_pending: "尚未发送。请使用相同输入继续，或取消该请求。",
+    internal_request_state_needs_review: "需要确认处理结果。请勿重发，由管理负责人核对记录。",
+    internal_request_state_accepted: "邮件服务已受理。请核对未完成的用户设置和记录。",
+    internal_request_state_failed: "邮件服务拒绝了请求。请确认收件地址后再开始新的请求。",
+    internal_request_state_cancelled: "已取消未发送请求。",
+    internal_request_state_completed: "邮件处理已完成。这不表示邮件已送达或账户设置已完成。",
+    internal_request_none: "没有可确认的邮件处理。",
+    internal_request_reference: "处理编号: ",
+    internal_request_confirm_cancel: "是否取消尚未发送的请求？",
+    internal_request_confirm_reconcile: "不重发邮件，核对已保存的受理记录。如有未完成的用户设置，将按原指定进行修复。是否继续？",
+    internal_request_error_rate_limit: "已达到邮件发送上限。请确认处理状态后稍候再试。",
+    internal_request_error_reconciliation: "需要确认处理结果。请勿重发，请在“邮件处理确认”中核对状态。",
+    internal_request_error_storage: "无法安全保存处理信息。邮件未发送，请确认浏览器存储设置。",
+    internal_request_error_paused: "邮件发送因运营确认而暂停。可取消未发送请求。",
+    internal_request_error_not_found: "没有可确认的处理。请确认收件人和当前管理权限。",
+    internal_request_error_version: "处理状态已更新。请刷新状态后继续。",
+    internal_request_error_key_conflict: "保存的请求与当前输入不同。请核对原输入或取消未发送请求。",
+    internal_request_error_previous: "请先确认上一项处理状态，再开始新的邮件发送。",
+    internal_request_error_invalid: "无法确认请求。请检查输入内容和处理状态。",
     perm_group: "组",
     perm_role: "角色",
     perm_products: "商品查看",
@@ -7033,7 +7129,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1046";
+var APP_VERSION       = "v1.1.1047";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -51651,6 +51747,101 @@ function syncInternalUserInviteReviewState() {
   }
 }
 
+var internalUserRequestSelection = null;
+var internalUserRequestBusy = false;
+
+function internalAccountRequestClient() {
+  var actorId = String(userProfile && userProfile.id || "");
+  return DcatsInternalAccountRequests.create({
+    actorId: actorId,
+    stillAuthorized: function() { return canUseUserManagement() && String(userProfile && userProfile.id || "") === actorId; },
+    storage: window.localStorage, crypto: window.crypto, locks: navigator.locks,
+    invoke: function(body) { return sb.functions.invoke("invite-internal-user", { body: body }); },
+    confirmNew: function(state) {
+      var label = { completed: t("internal_request_short_completed"), cancelled: t("internal_request_short_cancelled"), failed: t("internal_request_short_failed") }[state.request_state] || t("internal_request_short_resolved");
+      return confirm(t("internal_request_confirm_new").replace("{state}", label));
+    }
+  });
+}
+
+function showInternalAccountRequest(result, target) {
+  var data = result && result.data || {};
+  var state = DcatsInternalAccountRequests.receipt(data.request);
+  internalUserRequestSelection = state ? { actorId: String(userProfile && userProfile.id || ""), target: target, state: state } : null;
+  var status = document.getElementById("internal-request-state");
+  var reference = document.getElementById("internal-request-reference");
+  var labels = {
+    pending: t("internal_request_state_pending"),
+    needs_review: t("internal_request_state_needs_review"),
+    accepted: t("internal_request_state_accepted"),
+    failed: t("internal_request_state_failed"),
+    cancelled: t("internal_request_state_cancelled"),
+    completed: t("internal_request_state_completed")
+  };
+  if (status) status.textContent = state ? labels[state.request_state] + (data.error && data.error !== "reconciliation_required" ? " " + internalUserInviteErrorMessage(data.error) : "") :
+    (data.error ? internalUserInviteErrorMessage(data.error) : t("internal_request_none"));
+  if (reference) reference.textContent = state ? t("internal_request_reference") + state.request_id : "";
+  [["refresh", !!state], ["cancel", state && state.can_cancel], ["reconcile", state && state.can_reconcile]].forEach(function(item) {
+    var button = document.getElementById("btn-internal-request-" + item[0]);
+    if (button) { button.hidden = !item[1]; button.disabled = internalUserRequestBusy; }
+  });
+  if (state && target) {
+    var prefix = String(userProfile && userProfile.id || "") + ":";
+    if (target.id) internalUserReviewRequiredTargets[prefix + "id:" + target.id] = !state.can_request_new;
+    if (target.email) internalUserReviewRequiredTargets[prefix + "email:" + String(target.email).trim().toLowerCase()] = !state.can_request_new;
+    if (state.can_request_new) {
+      if (target.id) delete internalUserReviewRequiredTargets[prefix + "id:" + target.id];
+      if (target.email) delete internalUserReviewRequiredTargets[prefix + "email:" + String(target.email).trim().toLowerCase()];
+    }
+    syncInternalUserInviteReviewState();
+  }
+}
+
+async function invokeInternalUserRequest(payload, target) {
+  var actorId = String(userProfile && userProfile.id || "");
+  var response;
+  try { response = await internalAccountRequestClient().send(payload, target); }
+  catch (ignore) { response = { data: { error: "request_storage_unavailable" } }; }
+  if (String(userProfile && userProfile.id || "") !== actorId) return { data: { cancelled: true } };
+  if (!(response.data && response.data.cancelled)) {
+    var input = document.getElementById("internal-request-email");
+    if (input) input.value = target.email || "";
+    showInternalAccountRequest(response, target);
+  }
+  return response;
+}
+
+async function lookupInternalAccountRequest() {
+  if (internalUserRequestBusy || !canUseUserManagement()) return;
+  var input = document.getElementById("internal-request-email");
+  var target = { email: String(input && input.value || "").trim().toLowerCase() };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target.email)) { showInternalAccountRequest({ data: { error: "invalid_email" } }, target); return; }
+  var actorId = String(userProfile && userProfile.id || "");
+  internalUserRequestBusy = true;
+  var result;
+  try { result = await internalAccountRequestClient().lookup(target); }
+  catch (ignore) { result = { data: { error: "request_storage_unavailable" } }; }
+  internalUserRequestBusy = false;
+  if (String(userProfile && userProfile.id || "") === actorId) showInternalAccountRequest(result, target);
+}
+
+async function controlInternalAccountRequest(action) {
+  var selection = internalUserRequestSelection;
+  if (!selection || internalUserRequestBusy || !canUseUserManagement() || selection.actorId !== String(userProfile && userProfile.id || "")) return;
+  if (action === "cancel_request" && (!selection.state.can_cancel || !confirm(t("internal_request_confirm_cancel")))) return;
+  if (action === "reconcile_request" && (!selection.state.can_reconcile || !confirm(t("internal_request_confirm_reconcile")))) return;
+  internalUserRequestBusy = true;
+  showInternalAccountRequest({ data: { request: selection.state } }, selection.target);
+  var result;
+  try { result = await internalAccountRequestClient().control(selection.state, action); }
+  catch (ignore) { result = { data: { error: "reconciliation_required", request: selection.state } }; }
+  internalUserRequestBusy = false;
+  if (selection.actorId !== String(userProfile && userProfile.id || "")) return;
+  showInternalAccountRequest(result, selection.target);
+  if (result.data && result.data.ok && result.data.request &&
+    ["completed", "cancelled"].indexOf(result.data.request.request_state) >= 0) await loadUsers();
+}
+
 function internalUserInviteErrorMessage(code) {
   var messages = {
     name_required: "表示名を入力してください",
@@ -51661,7 +51852,7 @@ function internalUserInviteErrorMessage(code) {
     scope_forbidden: "選択した会社または基準権限を発行する権限がありません",
     forbidden: "社内ユーザーを発行する権限がありません",
     email_already_registered: "このメールアドレスは登録済みです。ユーザー一覧からPW再設定を送信してください",
-    email_rate_limit: "メール送信上限に達しました。時間をおいて再試行してください。上限撤廃にはカスタムSMTP設定が必要です",
+    email_rate_limit: t("internal_request_error_rate_limit"),
     email_address_invalid: "メールサービスがこの宛先を受け付けませんでした。メールアドレスと受信可能な状態を確認してください",
     email_delivery_failed: "メール配信サービスへの送信に失敗しました。時間をおいて再試行してください",
     target_user_not_found: "対象の社内ユーザーを確認できませんでした",
@@ -51672,7 +51863,14 @@ function internalUserInviteErrorMessage(code) {
     password_reset_failed: "PW再設定メールの送信に失敗しました",
     profile_setup_failed: "ユーザーの会社・基準権限を保存できませんでした",
     invite_failed: "社内ユーザーIDの発行に失敗しました",
-    reconciliation_required: "処理結果の確認が必要です。再送せず管理担当者に確認してください"
+    reconciliation_required: t("internal_request_error_reconciliation"),
+    request_storage_unavailable: t("internal_request_error_storage"),
+    dispatch_controls_not_configured: t("internal_request_error_paused"),
+    request_not_found: t("internal_request_error_not_found"),
+    request_version_conflict: t("internal_request_error_version"),
+    idempotency_conflict: t("internal_request_error_key_conflict"),
+    explicit_previous_request_required: t("internal_request_error_previous"),
+    request_invalid: t("internal_request_error_invalid")
   };
   return messages[code] || messages.invite_failed;
 }
@@ -51696,6 +51894,7 @@ async function internalUserInviteErrorCode(result) {
     return "reconciliation_required";
   }
   var confirmedRejections = [
+    "request_storage_unavailable", "dispatch_controls_not_configured", "request_not_found", "request_version_conflict", "idempotency_conflict", "explicit_previous_request_required", "request_invalid",
     "name_required", "invalid_email", "invalid_company", "invalid_department", "invalid_role",
     "missing_authorization", "invalid_authorization", "forbidden", "scope_forbidden",
     "invalid_action", "invalid_user_id", "too_many_user_ids", "method_not_allowed",
@@ -51747,10 +51946,11 @@ async function inviteInternalUser() {
   internalUserInviteInFlight = true;
   var response;
   try {
-    response = await sb.functions.invoke("invite-internal-user", { body: payload });
+      response = await invokeInternalUserRequest(payload, { email: payload.email });
   } catch (ignore) {
     response = { data: { error: "reconciliation_required" } };
   }
+  if (response && response.data && response.data.cancelled) { internalUserInviteInFlight = false; syncInternalUserInviteReviewState(); return; }
   if (!response || response.error || !response.data || response.data.ok !== true || response.data.delivery_status !== "accepted") {
     var code = await internalUserInviteErrorCode(response);
     if (code === "reconciliation_required") {
@@ -53718,12 +53918,11 @@ async function sendInternalUserAccountEmail(btn, target, uid, msg, action) {
   btn.disabled = true;
   var r;
   try {
-    r = await sb.functions.invoke("invite-internal-user", {
-      body: { action: action, target_user_id: uid }
-    });
+    r = await invokeInternalUserRequest({ action: action, target_user_id: uid }, requestTarget);
   } catch (ignore) {
     r = { data: { error: "reconciliation_required" } };
   }
+  if (r && r.data && r.data.cancelled) { btn.disabled = false; return; }
   if (!r || r.error || !r.data || r.data.ok !== true || r.data.delivery_status !== "accepted") {
     var code = await internalUserInviteErrorCode(r);
     if (code === "reconciliation_required") {
@@ -54503,6 +54702,10 @@ document.getElementById("pf-part-manufacturer-type").addEventListener("change", 
 document.getElementById("btn-gltek-product-mode-open").addEventListener("click", openGltekProductAddMode);
 document.getElementById("btn-gltek-product-mode-close").addEventListener("click", closeGltekProductAddMode);
 document.getElementById("btn-open-internal-user-invite").addEventListener("click", openInternalUserInvite);
+document.getElementById("btn-internal-request-lookup").addEventListener("click", lookupInternalAccountRequest);
+document.getElementById("btn-internal-request-refresh").addEventListener("click", function() { controlInternalAccountRequest("request_status"); });
+document.getElementById("btn-internal-request-cancel").addEventListener("click", function() { controlInternalAccountRequest("cancel_request"); });
+document.getElementById("btn-internal-request-reconcile").addEventListener("click", function() { controlInternalAccountRequest("reconcile_request"); });
 document.getElementById("btn-internal-user-invite-close").addEventListener("click", closeInternalUserInvite);
 document.getElementById("btn-internal-user-invite-submit").addEventListener("click", inviteInternalUser);
 document.getElementById("internal-user-invite-company").addEventListener("change", refreshInternalUserInviteRoles);
