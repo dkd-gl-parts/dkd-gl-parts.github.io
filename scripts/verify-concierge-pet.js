@@ -160,7 +160,10 @@ assert(!runtime.includes('window.addEventListener("scroll", scheduleViewportSync
 
 requireFragment(runtime, 'if (!visible || isPresentationHidden() || settings.mode === "off")', "Off mode must stop before panel animation handling");
 requireFragment(runtime, 'settings.mode === "off" || dragState || root.classList.contains("has-no-safe-target")', "External states must not interrupt dragging or revive a concierge without a safe target");
-requireFragment(runtime, 'if (!isSystemAdminSession() || panelOpen) return;', "Concierge settings must fail closed outside a system-admin session");
+requireFragment(runtime, 'function openPanel(view)', "Concierge must separate question and settings panel entry points");
+requireFragment(runtime, 'if (!isSystemAdminSession()) return;', "Concierge panels must fail closed outside a system-admin session");
+requireFragment(runtime, 'openPanel("question")', "A short character click must open the dedicated question view");
+requireFragment(runtime, 'else openPanel("settings")', "The header launcher must continue to open settings");
 requireFragment(runtime, 'if (!isSystemAdminSession() || floatingRequestPending) return;', "Floating display must fail closed outside a system-admin session");
 requireFragment(runtime, 'if (!isSystemAdminSession() || bridgeRequestPending) return;', "Windows integration must fail closed outside a system-admin session");
 requireFragment(runtime, 'suzuto: { copyKey: "suzuto", className: "is-suzuto", travelRows: { right: "running-right", left: "running-left" } }', "Suzuto travel rows must match the approved atlas direction");
@@ -222,6 +225,8 @@ requireFragment(css, ".dcats-concierge-launcher[hidden]", "A launcher moved outs
 requireFragment(css, "visibility: hidden", "A concierge without a safe target must leave keyboard and accessibility navigation");
 requireFragment(css, "touch-action: none;", "The concierge drag target must own touch and pointer movement");
 requireFragment(css, ".dcats-concierge.is-dragging .dcats-concierge-hit-target", "Dragging must expose a stable grabbed-pointer state");
+requireFragment(css, ".dcats-concierge-panel.is-question-view", "The character question view must have dedicated layout rules");
+requireFragment(css, ".dcats-concierge-panel.is-question-view .dcats-concierge-ai-button", "The question submit button must remain actionable in the dedicated view");
 requireFragment(css, "html.dcats-concierge-floating-document");
 requireFragment(css, "body.dcats-concierge-floating-body");
 requireFragment(css, ".dcats-concierge-floating-cost");

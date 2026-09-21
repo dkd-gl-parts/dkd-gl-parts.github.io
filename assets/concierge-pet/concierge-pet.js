@@ -48,6 +48,8 @@
       launcher: "コンシェルジュ",
       settingsTitle: "コンシェルジュ設定",
       closeSettings: "設定を閉じる",
+      questionTitle: "{name}に質問",
+      closeQuestion: "質問画面を閉じる",
       chooseCharacter: "コンシェルジュを選ぶ（1体のみ表示）",
       suzuto: "スズト",
       rinna: "リンナ",
@@ -59,6 +61,7 @@
       modeOff: "非表示",
       help: "選択した1体だけを読み込みます。「よく動く」は操作部品を避けて自由に歩き、「横移動だけ」「縦移動だけ」は指定した一方向に歩きます。「定位置」は画面右下で反応だけを表示します。OSの「視差効果を減らす」が有効な場合も静止します。",
       openSettings: "{name}の設定を開く",
+      openQuestion: "{name}に質問する",
       launcherOff: "コンシェルジュを表示",
       switched: "{name}に切り替えました。",
       activeMessage: "元気にご案内します。",
@@ -141,6 +144,8 @@
       launcher: "Concierge",
       settingsTitle: "Concierge settings",
       closeSettings: "Close settings",
+      questionTitle: "Ask {name}",
+      closeQuestion: "Close question window",
       chooseCharacter: "Choose a concierge (only one appears)",
       suzuto: "Suzuto",
       rinna: "Rinna",
@@ -152,6 +157,7 @@
       modeOff: "Hide",
       help: "Only the selected concierge is loaded. Active mode walks freely while avoiding controls. Horizontal only and Vertical only restrict walking to one direction. Stay put keeps the concierge in the lower-right corner for reactions only. Motion also stops when your OS requests reduced motion.",
       openSettings: "Open {name}'s settings",
+      openQuestion: "Ask {name}",
       launcherOff: "Show concierge",
       switched: "Switched to {name}.",
       activeMessage: "I will guide you actively.",
@@ -234,6 +240,8 @@
       launcher: "礼宾助手",
       settingsTitle: "礼宾助手设置",
       closeSettings: "关闭设置",
+      questionTitle: "向{name}提问",
+      closeQuestion: "关闭提问窗口",
       chooseCharacter: "选择礼宾助手（仅显示一位）",
       suzuto: "Suzuto",
       rinna: "Rinna",
@@ -245,6 +253,7 @@
       modeOff: "隐藏",
       help: "仅加载所选的一位礼宾助手。“活跃移动”会避开操作控件自由行走；“仅横向移动”和“仅纵向移动”会限制为一个方向。“固定位置”只在右下角作出反应。操作系统启用减少动态效果时也会停止移动。",
       openSettings: "打开{name}的设置",
+      openQuestion: "向{name}提问",
       launcherOff: "显示礼宾助手",
       switched: "已切换为{name}。",
       activeMessage: "我会积极为您引导。",
@@ -334,6 +343,7 @@
   var launcher;
   var launcherLabel;
   var panel;
+  var panelTitle;
   var panelBody;
   var panelClose;
   var floatingButton;
@@ -376,6 +386,7 @@
   var reduceMotionQuery = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
   var visible = false;
   var panelOpen = false;
+  var panelView = "settings";
   var floatingWindow = null;
   var floatingRequestPending = false;
   var aiRequestPending = false;
@@ -489,6 +500,9 @@
     sprite.setAttribute("aria-hidden", "true");
     hitTarget = createElement("button", "dcats-concierge-hit-target");
     hitTarget.type = "button";
+    hitTarget.setAttribute("aria-haspopup", "dialog");
+    hitTarget.setAttribute("aria-expanded", "false");
+    hitTarget.setAttribute("aria-controls", "dcats-concierge-panel");
     bubble = createElement("div", "dcats-concierge-bubble");
     bubble.setAttribute("role", "status");
     bubble.setAttribute("aria-live", "polite");
@@ -517,9 +531,9 @@
     var panelHead = createElement("div", "dcats-concierge-panel-head");
     var headingWrap = createElement("div");
     headingWrap.appendChild(createElement("span", "dcats-concierge-panel-kicker", "D-CATS OFFICIAL CONCIERGE"));
-    var title = createCopyElement("h2", "", "settingsTitle");
-    title.id = "dcats-concierge-title";
-    headingWrap.appendChild(title);
+    panelTitle = createCopyElement("h2", "", "settingsTitle");
+    panelTitle.id = "dcats-concierge-title";
+    headingWrap.appendChild(panelTitle);
     panelClose = createElement("button", "dcats-concierge-panel-close", "×");
     panelClose.type = "button";
     panelClose.setAttribute("aria-label", copy("closeSettings"));
@@ -700,12 +714,15 @@
       if (Date.now() < suppressHitTargetClickUntil) return;
       showBubble(copy(STATE_MESSAGE_KEYS.greeting), 2400);
       playExternalState("greeting", 1200);
-      openPanel();
+      openPanel("question");
     });
     hitTarget.addEventListener("pointerdown", onDragPointerDown);
     hitTarget.addEventListener("lostpointercapture", onDragPointerEnd);
     bindDragSurface(document);
-    launcher.addEventListener("click", function () { panelOpen ? closePanel() : openPanel(); });
+    launcher.addEventListener("click", function () {
+      if (panelOpen && panelView === "settings") closePanel();
+      else openPanel("settings");
+    });
     panelClose.addEventListener("click", closePanel);
     characterButtons.forEach(function (button) {
       button.addEventListener("click", function () { selectCharacter(button.dataset.value); });
@@ -1230,9 +1247,10 @@
     }
     if (!systemAdmin && panelOpen) {
       panelOpen = false;
+      panelView = "settings";
       panel.hidden = true;
-      launcher.setAttribute("aria-expanded", "false");
       panelReturnFocus = null;
+      syncPanelPresentation();
     }
     if (!isFloatingWindowOpen()) dockLauncher();
     root.hidden = !visible;
@@ -1247,7 +1265,6 @@
   function refreshCopy() {
     if (!root) return;
     root.setAttribute("aria-label", copy("rootLabel"));
-    panelClose.setAttribute("aria-label", copy("closeSettings"));
     if (isFloatingWindowOpen()) {
       floatingWindow.document.title = copy("rootLabel");
       floatingWindow.document.documentElement.lang = document.documentElement.lang || "ja";
@@ -1256,6 +1273,7 @@
       element.textContent = copy(element.dataset.conciergeCopy);
     });
     applySettings();
+    syncPanelPresentation();
     updateFloatingControls();
     updateAiStatus();
     updateBridgeStatus();
@@ -1266,12 +1284,25 @@
     sprite.classList.remove("is-suzuto", "is-rinna");
     sprite.classList.add(PETS[settings.character].className);
     root.classList.toggle("is-off", settings.mode === "off");
-    hitTarget.setAttribute("aria-label", copy("openSettings", { name: name }));
+    hitTarget.setAttribute("aria-label", copy("openQuestion", { name: name }));
     launcher.setAttribute("aria-label", copy("openSettings", { name: name }));
     launcherLabel.textContent = settings.mode === "off" ? copy("launcherOff") : name;
     characterButtons.forEach(function (button) { button.setAttribute("aria-pressed", String(button.dataset.value === settings.character)); });
     modeButtons.forEach(function (button) { button.setAttribute("aria-pressed", String(button.dataset.value === settings.mode)); });
+    syncPanelPresentation();
     updateFloatingControls();
+  }
+
+  function syncPanelPresentation() {
+    if (!panel || !panelTitle || !panelClose || !hitTarget || !launcher) return;
+    var questionView = panelOpen && panelView === "question";
+    panel.classList.toggle("is-question-view", questionView);
+    panelTitle.textContent = questionView
+      ? copy("questionTitle", { name: petName(settings.character) })
+      : copy("settingsTitle");
+    panelClose.setAttribute("aria-label", copy(questionView ? "closeQuestion" : "closeSettings"));
+    hitTarget.setAttribute("aria-expanded", String(questionView));
+    launcher.setAttribute("aria-expanded", String(panelOpen && panelView === "settings"));
   }
 
   function selectCharacter(character) {
@@ -1309,15 +1340,28 @@
     syncRunningState();
   }
 
-  function openPanel() {
-    if (!isSystemAdminSession() || panelOpen) return;
-    panelReturnFocus = presentationDocument().activeElement;
+  function parkBesideQuestionPanel() {
+    var size = petSize();
+    var viewport = viewportWindow();
+    holdMoverAt(clampToViewport({
+      x: 10,
+      y: Math.max(54, viewport.innerHeight - size.height - 16)
+    }, size, viewport));
+  }
+
+  function openPanel(view) {
+    if (!isSystemAdminSession()) return;
+    var nextView = view === "question" ? "question" : "settings";
+    if (!panelOpen) panelReturnFocus = presentationDocument().activeElement;
     panelOpen = true;
+    panelView = nextView;
     panel.hidden = false;
-    launcher.setAttribute("aria-expanded", "true");
+    syncPanelPresentation();
     stopActivity();
+    if (panelView === "question") parkBesideQuestionPanel();
     syncRunningState();
-    panelClose.focus();
+    if (panelView === "question" && aiQuestionInput) aiQuestionInput.focus();
+    else panelClose.focus();
   }
 
   function closePanel(restoreFocus) {
@@ -1325,8 +1369,9 @@
     var focusTarget = panelReturnFocus;
     panelReturnFocus = null;
     panelOpen = false;
+    panelView = "settings";
     panel.hidden = true;
-    launcher.setAttribute("aria-expanded", "false");
+    syncPanelPresentation();
     if (restoreFocus !== false) {
       if (!focusTarget || !focusTarget.isConnected || !isElementVisible(focusTarget)) focusTarget = launcher;
       focusTarget.focus();
