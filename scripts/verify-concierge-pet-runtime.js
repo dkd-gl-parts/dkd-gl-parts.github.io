@@ -782,12 +782,30 @@ flushAnimationFrames();
 const nearPointerAnimation = lastAnimationFor(sprite);
 assert(nearPointerAnimation.options.iterations === Infinity && animationRowPercent(nearPointerAnimation) === 0, "A slight pointer movement changed the stable front-facing idle scale");
 
-dispatch(documentObject.listeners, "pointermove", { clientX: 0, clientY: 0 });
-flushAnimationFrames();
-const gazeAnimation = lastAnimationFor(sprite);
-assert(gazeAnimation && gazeAnimation.options.duration === 1, "Pointer gaze did not select a static directional frame");
-assert(gazeAnimation.keyframes.some((frame) => String(frame.backgroundPosition || "").endsWith("% 90%") || String(frame.backgroundPosition || "").endsWith("% 100%")), "Pointer gaze did not use one of the 16 gaze directions");
-assert(animationBackgroundWidthPercent(gazeAnimation) > 800, "Directional gaze did not compensate for the approved atlas scale difference");
+// Decode the atlas cell from CSS percentage positioning. A scaled row 9 does
+// not have exactly 90% background-position; random placement used to hide this
+// incorrect expectation whenever the pointer selected row 10 instead.
+for (let direction = 0; direction < 16; direction += 1) {
+  const angle = direction * Math.PI / 8;
+  dispatch(documentObject.listeners, "pointermove", {
+    clientX: gazeRect.left + gazeRect.width / 2 + Math.sin(angle) * 1000,
+    clientY: gazeRect.top + gazeRect.height / 2 - Math.cos(angle) * 1000
+  });
+  flushAnimationFrames();
+  const gazeAnimation = lastAnimationFor(sprite);
+  assert(gazeAnimation && gazeAnimation.options.duration === 1, `Gaze ${direction} did not select a static frame`);
+  const frame = gazeAnimation.keyframes[0];
+  const position = String(frame.backgroundPosition).match(/^([\d.]+)% ([\d.]+)%$/);
+  const size = String(frame.backgroundSize).match(/^([\d.]+)% ([\d.]+)%$/);
+  assert(position && size, `Gaze ${direction} did not use explicit atlas positioning`);
+  const scale = Number(size[1]) / 800;
+  const column = (Number(position[1]) / 100 * (8 * scale - 1) + (1 - scale) / 2) / scale;
+  const row = (Number(position[2]) / 100 * (11 * scale - 1) + 1 - scale) / scale;
+  assert(Math.abs(column - direction % 8) < 1e-6 && Math.abs(row - (direction < 8 ? 9 : 10)) < 1e-6,
+    `Pointer gaze ${direction} selected the wrong atlas cell`);
+  assert(Math.abs(Number(size[2]) - 1100 * scale) < 1e-6, `Gaze ${direction} distorted the atlas aspect ratio`);
+  if (direction === 6) assert(scale > 1, "Directional gaze did not compensate for the approved atlas scale difference");
+}
 
 const blockingCard = new FakeElement("div", documentObject);
 blockingCard.setAttribute("role", "button");
