@@ -1945,6 +1945,13 @@ var TRANSLATIONS = {
     sales_basis_note_ph: "例: DKS仕切、EC相場、社内判断",
     sales_rank_preview: "売値区分別の販売価格",
     sales_rank_save: "ランク設定を保存",
+    sales_rank1_only_title: "販売価格区分1だけの価格（税抜）",
+    sales_rank1_only_help: "ここで保存した価格は区分1のみに適用します。共通基準価格と他の区分は変わりません。",
+    sales_rank1_only_save: "区分1だけ保存",
+    sales_rank1_only_unset: "未設定：共通基準価格から計算します",
+    sales_rank1_only_saved: "区分1の専用価格を保存しました",
+    sales_rank1_only_price_required: "区分1価格は1円以上で入力してください",
+    sales_rank1_only_badge: "専用価格",
     sales_rank: "ランク",
     sales_customer_count: "得意先数",
     sales_rate_adjust: "掛率 / 調整 / 丸め",
@@ -4248,6 +4255,13 @@ var TRANSLATIONS = {
     sales_basis_note_ph: "Example: DKS cost, EC market price, internal decision",
     sales_rank_preview: "Sales Price by Rank",
     sales_rank_save: "Save Rank Settings",
+    sales_rank1_only_title: "Class 1 price only (excl. tax)",
+    sales_rank1_only_help: "This price applies only to class 1. The shared base price and other classes stay unchanged.",
+    sales_rank1_only_save: "Save class 1 only",
+    sales_rank1_only_unset: "Not set: calculated from the shared base price",
+    sales_rank1_only_saved: "Class 1 price saved",
+    sales_rank1_only_price_required: "Enter a class 1 price of at least ¥1",
+    sales_rank1_only_badge: "Dedicated price",
     sales_rank: "Rank",
     sales_customer_count: "Customers",
     sales_rate_adjust: "Rate / Adjustment / Rounding",
@@ -6551,6 +6565,13 @@ var TRANSLATIONS = {
     sales_basis_note_ph: "例如: DKS成本、EC行情、内部判断",
     sales_rank_preview: "按销售等级的销售价格",
     sales_rank_save: "保存等级设置",
+    sales_rank1_only_title: "仅价格等级1（未税）",
+    sales_rank1_only_help: "此价格只适用于等级1。共同基准价格及其他等级不变。",
+    sales_rank1_only_save: "仅保存等级1",
+    sales_rank1_only_unset: "未设置：按共同基准价格计算",
+    sales_rank1_only_saved: "已保存等级1专用价格",
+    sales_rank1_only_price_required: "请输入至少1日元的等级1价格",
+    sales_rank1_only_badge: "专用价格",
     sales_rank: "等级",
     sales_customer_count: "客户数",
     sales_rate_adjust: "倍率 / 调整 / 取整",
@@ -7033,7 +7054,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1046";
+var APP_VERSION       = "v1.1.1047";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -7292,15 +7313,18 @@ var ecPriceHistoryState = null;
 var currentSalesPricingDkdId = null;
 var currentSalesPricingProductKind = "rebuilt";
 var currentSalesPricingRow = null;
+var currentSalesRank1Row = null;
 var currentSalesPricingDksReference = null;
 var currentSalesPricingManufacturingCost = null;
 var currentSalesPricingEcReference = null;
 var currentSalesPricingEcRows = null;
 var salesPricingSavePending = false;
+var salesRank1SavePending = false;
 var salesPricingRanks = [];
 var salesPricingCustomerCounts = {};
 var salesPricingMgmtRows = [];
 var salesPricingMgmtPriceMap = {};
+var salesPricingMgmtRank1Map = {};
 var salesPricingMgmtManufacturingCostMap = {};
 var purchaseMgmtRows = [];
 var purchaseMgmtSummary = { total: 0, linked: 0, unlinked: 0, multiple: 0 };
@@ -9549,6 +9573,7 @@ function resetScreenRuntimeStateForMenu(screenId) {
   if (screenId === "sales-pricing-mgmt") {
     salesPricingMgmtRows = [];
     salesPricingMgmtPriceMap = {};
+    salesPricingMgmtRank1Map = {};
     salesPricingMgmtManufacturingCostMap = {};
   }
   if (screenId === "rakuten-price" || screenId === "rakuten-bulk" || screenId === "api-settings") {
@@ -10758,6 +10783,22 @@ function renderCustomerCatalogList() {
   });
 }
 
+async function fetchInternalRank1PriceMap(ids) {
+  var map = {};
+  if (!ids || !ids.length) return map;
+  var uniqueIds = Array.from(new Set(ids.map(function(id) { return parseInt(id, 10); }).filter(Number.isInteger)));
+  for (var offset = 0; offset < uniqueIds.length; offset += 500) {
+    var result = await sb.rpc("get_product_rank1_prices", {
+      target_ids: uniqueIds.slice(offset, offset + 500)
+    });
+    if (result.error) throw result.error;
+    (result.data || []).forEach(function(row) {
+      map[String(row.dkd_shohin_id) + "|" + normalizeProductKind(row.product_kind)] = parseInt(row.price_jpy, 10);
+    });
+  }
+  return map;
+}
+
 async function fetchCustomerCatalogPriceMap(products) {
   var map = {};
   var rows = products || [];
@@ -10795,6 +10836,8 @@ async function fetchCustomerCatalogPriceMap(products) {
     .eq("is_active", true)
     .maybeSingle() : { data: null, error: null };
   var rank = rankResult.error ? null : (rankResult.data || {});
+  var rank1Map = customer.price_rank_code === "HANBAIOU_URI_1"
+    ? await fetchInternalRank1PriceMap(ids) : {};
   var baseMap = {};
   (baseResult.data || []).forEach(function(row) {
     baseMap[String(row.dkd_shohin_id) + "|" + normalizeProductKind(row.product_kind)] = row.base_price_jpy;
@@ -10802,7 +10845,9 @@ async function fetchCustomerCatalogPriceMap(products) {
   rows.forEach(function(product) {
     var id = productDkdId(product);
     var base = baseMap[id + "|" + customerCatalogProductKind(product)];
-    var value = base == null ? null : calculateSalesPriceClient(parseInt(base, 10), rank || {});
+    var rank1Price = rank1Map[id + "|" + customerCatalogProductKind(product)];
+    var value = rank1Price != null ? rank1Price
+      : (base == null ? null : calculateSalesPriceClient(parseInt(base, 10), rank || {}));
     if (value === 0 && !customerViewerSetting("show_zero_price", false)) value = null;
     map[id] = value;
   });
@@ -47175,11 +47220,17 @@ function renderSalesRankPreview() {
   html += "</tr>";
   salesPricingRanks.forEach(function(rank) {
     var price = calculateSalesPriceClient(base, rank);
+    var rank1Input = document.getElementById("sales-rank1-price");
+    var rank1Draft = rank1Input ? parseInt(rank1Input.value, 10) : NaN;
+    var hasRank1Override = rank.rank_code === "HANBAIOU_URI_1" &&
+      ((rank1Input && rank1Input.value !== "" && Number.isInteger(rank1Draft) && rank1Draft > 0) || currentSalesRank1Row);
+    if (hasRank1Override) price = Number.isInteger(rank1Draft) && rank1Draft > 0
+      ? rank1Draft : currentSalesRank1Row.price_jpy;
     var adjust = "x" + Number(rank.rate_multiplier || 1).toFixed(4) + " / " + formatYen(rank.amount_adjustment_jpy || 0) + " / " + formatYen(rank.rounding_unit_jpy || 10);
     var code = esc(rank.rank_code || "");
     html += "<tr>";
     html += "<td data-label='" + esc(t("sales_rank")) + "'><div class='price-supplier'>" + esc(salesRankDisplayName(rank)) + "</div><div class='price-country'>" + esc(rank.rank_code || "") + "</div></td>";
-    html += "<td data-label='" + esc(t("sales_result_price")) + "'><div class='price-value sales-rank-price' data-dcats-inline-style='s-1024138906a0'>" + (price === null ? "-" : esc(formatYenCurrency(price))) + "</div></td>";
+    html += "<td data-label='" + esc(t("sales_result_price")) + "'><div class='price-value sales-rank-price' data-dcats-inline-style='s-1024138906a0'>" + (price === null ? "-" : esc(formatYenCurrency(price))) + (hasRank1Override ? " <small>" + esc(t("sales_rank1_only_badge")) + "</small>" : "") + "</div></td>";
     html += "<td data-label='" + esc(t("sales_customer_count")) + "'>" + esc(String(salesPricingCustomerCounts[rank.rank_code] || 0)) + "</td>";
     if (editable) {
       html += "<td data-label='" + esc(t("sales_rate_multiplier")) + "'><input class='form-input sales-rank-rate' data-rank-code='" + code + "' type='number' min='0' step='0.0001' value='" + esc(String(rank.rate_multiplier || 1)) + "'></td>";
@@ -47679,8 +47730,17 @@ async function fetchDetailCustomerPriceInfo(customer, dkdId) {
   var base = baseR.data && baseR.data.base_price_jpy != null ? parseInt(baseR.data.base_price_jpy, 10) : null;
   if (baseR.data && typeof baseR.data.tax_included === "boolean") info.taxIncluded = baseR.data.tax_included;
   info.basePrice = isNaN(base) ? null : base;
-  if (info.basePrice == null) return info;
   var rankCode = customer.price_rank_code || "";
+  if (rankCode === "HANBAIOU_URI_1") {
+    var rank1Map = await fetchInternalRank1PriceMap([id]);
+    var rank1Price = rank1Map[String(id) + "|" + selectedProductKind()];
+    if (rank1Price != null) {
+      info.salesPrice = rank1Price;
+      info.taxIncluded = false;
+      return info;
+    }
+  }
+  if (info.basePrice == null) return info;
   var rankR = rankCode ? await sb.from("sales_price_ranks")
     .select("rank_code,rank_name,rate_multiplier,amount_adjustment_jpy,rounding_unit_jpy,rounding_method,is_active,display_order")
     .eq("rank_code", rankCode)
@@ -47879,6 +47939,71 @@ function applySalesPricingRowToForm(row) {
   renderSalesRankPreview();
 }
 
+async function loadSalesPricingRank1Row() {
+  var input = document.getElementById("sales-rank1-price");
+  var status = document.getElementById("sales-rank1-status");
+  currentSalesRank1Row = null;
+  if (input) input.value = "";
+  if (status) { status.textContent = ""; status.classList.remove("error"); }
+  if (!currentSalesPricingDkdId || !canViewBasePrice()) return;
+  var targetId = currentSalesPricingDkdId;
+  var targetKind = salesPricingCurrentProductKind();
+  var result = await sb.rpc("get_product_rank1_price", {
+    target_dkd_shohin_id: targetId,
+    target_product_kind: targetKind
+  });
+  if (result.error) throw result.error;
+  if (targetId !== currentSalesPricingDkdId || targetKind !== salesPricingCurrentProductKind()) return;
+  currentSalesRank1Row = (result.data || [])[0] || null;
+  if (input) input.value = currentSalesRank1Row ? String(currentSalesRank1Row.price_jpy) : "";
+  if (status && !currentSalesRank1Row) status.textContent = t("sales_rank1_only_unset");
+  renderSalesRankPreview();
+}
+
+async function saveSalesRank1Price() {
+  var status = document.getElementById("sales-rank1-status");
+  var input = document.getElementById("sales-rank1-price");
+  var button = document.getElementById("btn-sales-rank1-save");
+  if (!status || !input || salesRank1SavePending) return;
+  status.textContent = "";
+  status.classList.remove("error");
+  if (!canEditBasePrice()) { status.textContent = t("err_perm"); status.classList.add("error"); return; }
+  var price = Number(input.value);
+  if (!Number.isSafeInteger(price) || price < 1) {
+    status.textContent = t("sales_rank1_only_price_required");
+    status.classList.add("error");
+    return;
+  }
+  var targetId = currentSalesPricingDkdId;
+  var targetKind = salesPricingCurrentProductKind();
+  salesRank1SavePending = true;
+  if (button) button.disabled = true;
+  try {
+    var saved = await sb.rpc("save_product_rank1_price", {
+      target_dkd_shohin_id: targetId,
+      target_product_kind: targetKind,
+      target_price_jpy: price,
+      target_expected_updated_at: currentSalesRank1Row ? currentSalesRank1Row.updated_at : null,
+      target_note: null
+    });
+    if (saved.error) throw saved.error;
+    if (targetId !== currentSalesPricingDkdId || targetKind !== salesPricingCurrentProductKind()) return;
+    currentSalesRank1Row = saved.data || null;
+    if (input && currentSalesRank1Row) input.value = String(currentSalesRank1Row.price_jpy);
+    status.textContent = t("sales_rank1_only_saved");
+    renderSalesRankPreview();
+    if (targetKind === "rebuilt") salesPricingMgmtRank1Map[String(targetId)] = price;
+    renderSalesPricingMgmt();
+  } catch (error) {
+    console.warn("save class 1 price failed", error);
+    status.textContent = t("msg_save_err") + ": " + ((error && error.message) || String(error));
+    status.classList.add("error");
+  } finally {
+    salesRank1SavePending = false;
+    if (button) button.disabled = false;
+  }
+}
+
 async function loadSalesPricingCurrentBaseRow() {
   if (!currentSalesPricingDkdId) return;
   var kind = salesPricingCurrentProductKind();
@@ -47891,6 +48016,7 @@ async function loadSalesPricingCurrentBaseRow() {
     .maybeSingle();
   if (currentR.error) throw currentR.error;
   applySalesPricingRowToForm(currentR.data || null);
+  await loadSalesPricingRank1Row();
 }
 
 async function openSalesPricingForCurrent() {
@@ -47906,6 +48032,9 @@ async function openSalesPricingForCurrent() {
   currentSalesPricingManufacturingCost = { loading: true };
   currentSalesPricingEcReference = { loading: true };
   currentSalesPricingEcRows = null;
+  currentSalesRank1Row = null;
+  var rank1Input = document.getElementById("sales-rank1-price");
+  if (rank1Input) rank1Input.value = "";
   renderSalesBasePriceGuidance();
   renderSalesPricingManufacturingCostMini();
   renderSalesPricingEcReference();
@@ -47913,6 +48042,11 @@ async function openSalesPricingForCurrent() {
   if (saveBtn) setCspStyle(saveBtn, "display", canEditBasePrice() ? "" : "none");
   var rankSaveBtn = document.getElementById("btn-sales-rank-save");
   if (rankSaveBtn) setCspStyle(rankSaveBtn, "display", canManageSalesPricing() ? "" : "none");
+  var rank1Section = document.querySelector(".sales-rank1-override");
+  if (rank1Section) setCspStyle(rank1Section, "display", canViewBasePrice() ? "" : "none");
+  var rank1SaveBtn = document.getElementById("btn-sales-rank1-save");
+  if (rank1SaveBtn) setCspStyle(rank1SaveBtn, "display", canEditBasePrice() ? "" : "none");
+  if (rank1Input) rank1Input.disabled = !canEditBasePrice();
   setSalesPricingBaseFieldsVisible(canViewBasePrice());
   ["sales-base-price","sales-price-basis","sales-effective-start","sales-basis-note"].forEach(function(id) {
     var el = document.getElementById(id);
@@ -48057,6 +48191,7 @@ async function loadSalesPricingMgmt() {
   if (!q) {
     salesPricingMgmtRows = [];
     salesPricingMgmtPriceMap = {};
+    salesPricingMgmtRank1Map = {};
     salesPricingMgmtManufacturingCostMap = {};
     if (countEl) countEl.textContent = "";
     if (list) list.innerHTML = "<div class='empty'>" + esc(t("sales_pricing_mgmt_hint")) + "</div>";
@@ -48086,6 +48221,7 @@ async function loadSalesPricingMgmt() {
   salesPricingMgmtRows = filterVisibleProducts(normalizeCoreProductFastRows(rows)).slice(0, 100);
   var ids = salesPricingMgmtRows.map(function(row){ return row.dkd_shohin_id; }).filter(Boolean);
   salesPricingMgmtPriceMap = {};
+  salesPricingMgmtRank1Map = {};
   salesPricingMgmtManufacturingCostMap = {};
   if (ids.length) {
     var pr = await sb.from("product_base_prices")
@@ -48095,6 +48231,11 @@ async function loadSalesPricingMgmt() {
       .eq("is_current", true);
     (pr.data || []).forEach(function(row) {
       salesPricingMgmtPriceMap[String(row.dkd_shohin_id)] = row;
+    });
+    var rank1Map = await fetchInternalRank1PriceMap(ids);
+    ids.forEach(function(id) {
+      var price = rank1Map[String(id) + "|rebuilt"];
+      if (price != null) salesPricingMgmtRank1Map[String(id)] = price;
     });
     salesPricingMgmtManufacturingCostMap = await fetchSalesPricingManufacturingCostMap(ids, "rebuilt");
   }
@@ -48118,16 +48259,18 @@ function renderSalesPricingMgmt() {
   html += "<th></th></tr>";
   salesPricingMgmtRows.forEach(function(row) {
     var price = salesPricingMgmtPriceMap[String(row.dkd_shohin_id)] || null;
+    var rank1Price = salesPricingMgmtRank1Map[String(row.dkd_shohin_id)];
     var manufacturingCost = salesPricingMgmtManufacturingCostMap[String(row.dkd_shohin_id)] || null;
-    var priceText = price ? formatYenCurrency(price.base_price_jpy) : "-";
+    var priceText = rank1Price != null ? formatYenCurrency(rank1Price) :
+      (price ? formatYenCurrency(price.base_price_jpy) : "-");
     html += "<tr>";
     html += "<td><div class='sales-pricing-dkd-line'><span class='mgmt-pn'>" + esc(String(row.dkd_shohin_id || "-")) + "</span><span class='sales-pricing-category'>" + esc(tCat(row.category_code || row.category) || "") + "</span></div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(row.genuine_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(row.genuine_part_number_2 || "") + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(row.manufacturer_part_number || "-") + "</div></td>";
     html += "<td><div class='mgmt-sub'>" + esc(row.manufacturer || "-") + "</div></td>";
-    html += "<td><div class='price-value' data-dcats-inline-style='s-1024138906a0'>" + esc(priceText) + "</div></td>";
+    html += "<td><div class='price-value' data-dcats-inline-style='s-1024138906a0'>" + esc(priceText) + (rank1Price != null ? " <small>" + esc(t("sales_rank1_only_badge")) + "</small>" : "") + "</div></td>";
     if (showManufacturingCost) html += "<td>" + salesPricingManufacturingCostCellHtml(manufacturingCost) + "</td>";
-    if (showBasePrice) html += "<td><div class='price-value'>" + esc(priceText) + "</div></td>";
+    if (showBasePrice) html += "<td><div class='price-value'>" + esc(price ? formatYenCurrency(price.base_price_jpy) : "-") + "</div></td>";
     html += "<td><button class='btn-sm-edit' data-sales-price-dkd='" + esc(String(row.dkd_shohin_id || "")) + "'>" + esc(t("sales_pricing_title")) + "</button></td>";
     html += "</tr>";
   });
@@ -49482,6 +49625,27 @@ async function loadCustomerPriceListRows(customer, context) {
   context = context || {};
   await ensureCustomerAccessPriceRanks();
   var priceRows = await loadCustomerPriceListBaseRows();
+  var rank1Rows = [];
+  if (customer && customer.price_rank_code === "HANBAIOU_URI_1") {
+    var overrides = await sb.rpc("get_product_rank1_prices", { target_ids: null });
+    if (overrides.error) throw overrides.error;
+    rank1Rows = overrides.data || [];
+  }
+  var baseKeys = new Set(priceRows.map(function(row) {
+    return String(row.dkd_shohin_id) + "|" + normalizeProductKind(row.product_kind);
+  }));
+  rank1Rows.forEach(function(row) {
+    var key = String(row.dkd_shohin_id) + "|" + normalizeProductKind(row.product_kind);
+    if (!baseKeys.has(key)) {
+      priceRows.push({ dkd_shohin_id: row.dkd_shohin_id, product_kind: row.product_kind,
+        product_variant_id: null, base_price_jpy: null });
+      baseKeys.add(key);
+    }
+  });
+  var rank1Map = {};
+  rank1Rows.forEach(function(row) {
+    rank1Map[String(row.dkd_shohin_id) + "|" + normalizeProductKind(row.product_kind)] = parseInt(row.price_jpy, 10);
+  });
   var productMap = await loadCustomerPriceListProductMap(priceRows.map(function(row) { return row.dkd_shohin_id; }));
   var settings = Object.assign(defaultCustomerDisplaySettings(), context.settings || customerAccessSettings || {});
   var visibilityRows = context.visibilityRows || customerAccessVisibilityRows || [];
@@ -49492,9 +49656,10 @@ async function loadCustomerPriceListRows(customer, context) {
     if (!product) return;
     var category = String(product.category_code || product.category || "");
     if (!customerCategoryIsVisible(category, visibilityRows)) return;
-    var salesPrice = calculateSalesPriceClient(price.base_price_jpy, rank);
-    if (salesPrice === null || (salesPrice === 0 && !settings.show_zero_price)) return;
     var key = String(price.dkd_shohin_id) + "|" + normalizeProductKind(price.product_kind);
+    var salesPrice = rank1Map[key] != null ? rank1Map[key]
+      : (price.base_price_jpy == null ? null : calculateSalesPriceClient(price.base_price_jpy, rank));
+    if (salesPrice === null || (salesPrice === 0 && !settings.show_zero_price)) return;
     var previous = grouped[key];
     if (!previous || (previous.price.product_variant_id && !price.product_variant_id)) {
       grouped[key] = { product: product, price: price, salesPrice: salesPrice };
@@ -54540,6 +54705,8 @@ document.getElementById("user-permission-edit-overlay").addEventListener("click"
 document.getElementById("btn-user-auth-history-close").addEventListener("click", function(){ document.getElementById("user-auth-history-overlay").classList.remove("show"); });
 document.getElementById("btn-sales-pricing-cancel").addEventListener("click", closeSalesPricingOverlay);
 document.getElementById("btn-sales-pricing-save").addEventListener("click", saveSalesPricing);
+document.getElementById("btn-sales-rank1-save").addEventListener("click", saveSalesRank1Price);
+document.getElementById("sales-rank1-price").addEventListener("input", renderSalesRankPreview);
 document.getElementById("btn-sales-rank-save").addEventListener("click", saveSalesPriceRanks);
 document.querySelectorAll("input[name='sales-core-return-required']").forEach(function(input) {
   input.addEventListener("change", function() {

@@ -177,6 +177,8 @@ jobs:
         run: node scripts/verify-sales-pricing-reference-prices.js
       - name: Verify sales pricing responsive layout
         run: node scripts/verify-sales-pricing-layout.js
+      - name: Verify class-1 dedicated pricing
+        run: node scripts/verify-rank1-pricing.js
       - name: Verify core return policy
         run: node scripts/verify-core-return-policy.js
       - name: Verify core return management

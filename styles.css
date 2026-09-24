@@ -197,6 +197,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .sales-pricing-field-help { font-size: 11px; color: #8a94a6; line-height: 1.45; margin-top: 4px; }
 .sales-pricing-core-charge.disabled { opacity: .55; }
 .sales-pricing-preview { margin-top: 14px; border-top: 1px solid #dfe5ec; padding-top: 12px; }
+.sales-rank1-override { margin-top: 14px; padding: 12px; border: 1px solid #bed4fa; border-radius: 8px; background: #f6f9ff; }
+.sales-rank1-heading { font-weight: 700; color: #17365d; }
+.sales-rank1-help { margin: 5px 0 10px; font-size: 12px; color: #50627b; }
+.sales-rank1-controls { display: flex; gap: 8px; align-items: center; }
+.sales-rank1-controls .form-input { max-width: 190px; }
+.sales-rank1-status { min-height: 18px; margin-top: 6px; font-size: 12px; color: #50627b; }
+.sales-rank1-status.error { color: #bd1d34; }
 .sales-pricing-preview-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 .sales-pricing-preview-title { font-size: 13px; font-weight: 700; color: #1a1a2e; }
 .sales-pricing-preview-head .btn-sm-edit { flex: 0 0 auto; min-height: 34px; }
@@ -247,6 +254,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .sales-pricing-grid { grid-template-columns: 1fr; }
   .sales-pricing-base-field { grid-row: auto; }
   .sales-pricing-preview-head { align-items: stretch; flex-direction: column; }
+  .sales-rank1-controls { flex-wrap: wrap; }
   .sales-pricing-preview-head .btn-sm-edit { width: 100%; }
   .sales-rank-table tr:not(:first-child) { grid-template-columns: 1fr; }
   .sales-rank-table td:nth-child(n) { grid-column: 1; }
