@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const vm = require("vm");
 
 const root = path.resolve(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "app.js"), "utf8").replace(/\r\n/g, "\n");
@@ -66,9 +67,28 @@ for (const fragment of [
   "result.adjustments.push({ adjustment_code: code, amount_jpy: amount, note: note || null })",
   "result.productAdjustment > result.subtotal",
   "result.shippingAdjustment > shipping",
-  "Math.floor((result.subtotal - result.productAdjustment) * 0.10)",
+  "result.subtotal - result.productAdjustment + shipping - result.shippingAdjustment",
+  "calculateSalesKingExternalTax(taxableAmount, 1000)",
   "result.subtotal - result.adjustmentTotal + shipping + result.tax"
 ]) requireFragment(calculation, fragment);
+
+const taxCalculation = functionSource("calculateSalesKingExternalTax");
+const taxSandbox = {};
+vm.runInNewContext(`${taxCalculation}; this.calculateTax = calculateSalesKingExternalTax;`, taxSandbox);
+const taxCases = [
+  { name: "unchanged values", taxable: 1500, expected: 150 },
+  { name: "same-rate product and shipping are rounded once", taxable: 10, expected: 1 },
+  { name: "half yen rounds up", taxable: 5, expected: 1 },
+  { name: "shipping discount reduces taxable base", taxable: 105, expected: 11 },
+  { name: "zero shipping", taxable: 105, expected: 11 }
+];
+taxCases.forEach(({ name, taxable, expected }) => {
+  const actual = taxSandbox.calculateTax(taxable, 1000);
+  if (actual !== expected) throw new Error(`${name}: expected ${expected}, got ${actual}`);
+});
+if (taxSandbox.calculateTax(-1, 1000) !== 0 || taxSandbox.calculateTax(100, -1) !== 0) {
+  throw new Error("Invalid tax inputs must be rejected by the preview helper");
+}
 
 const fullShippingDiscount = functionSource("setSalesOrderFullShippingDiscount");
 for (const fragment of [

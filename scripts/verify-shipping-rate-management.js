@@ -227,6 +227,11 @@ const saveSource = sourceBetween("async function saveShippingRate", "async funct
   if (!saveSource.includes(fragment)) throw new Error(`shipping save field is missing: ${fragment}`);
 });
 
+const shippingFormSource = sourceBetween("function openShippingRateForm", "function closeShippingRateForm");
+if (!shippingFormSource.includes('row ? (row.tax_type || "unknown") : "excluded"')) {
+  throw new Error("new shipping rates must default to tax excluded");
+}
+
 if (!source.includes(customerShippingListener)) {
   throw new Error("customer shipping list must remain reachable in the internal customer preview");
 }

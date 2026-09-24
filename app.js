@@ -18034,6 +18034,14 @@ function salesOrderPricingEditorHtml(order) {
     "<div id='sales-order-pricing-validation' class='sales-order-pricing-validation' aria-live='polite'></div>";
 }
 
+function calculateSalesKingExternalTax(taxableAmountJpy, taxRateBasisPoints) {
+  var taxableAmount = Number(taxableAmountJpy);
+  var taxRate = Number(taxRateBasisPoints);
+  if (!Number.isSafeInteger(taxableAmount) || taxableAmount < 0 ||
+      !Number.isSafeInteger(taxRate) || taxRate < 0) return 0;
+  return Math.floor((taxableAmount * taxRate + 5000) / 10000);
+}
+
 function readSalesOrderPricingEditor() {
   var result = { items: [], adjustments: [], subtotal: 0, productAdjustment: 0, shippingAdjustment: 0, adjustmentTotal: 0, shipping: 0, tax: 0, total: 0, error: "" };
   var rows = Array.from(document.querySelectorAll("#sales-order-pricing-content [data-sales-order-pricing-item]"));
@@ -18091,7 +18099,8 @@ function readSalesOrderPricingEditor() {
     result.error = "送料値引きは送料以下にしてください。";
     return result;
   }
-  result.tax = Math.floor((result.subtotal - result.productAdjustment) * 0.10) + Math.floor((shipping - result.shippingAdjustment) * 0.10);
+  var taxableAmount = result.subtotal - result.productAdjustment + shipping - result.shippingAdjustment;
+  result.tax = calculateSalesKingExternalTax(taxableAmount, 1000);
   result.total = result.subtotal - result.adjustmentTotal + shipping + result.tax;
   if (!Number.isSafeInteger(result.total) || result.total > 2000000000) result.error = "合計金額が上限を超えています。";
   return result;
@@ -20880,7 +20889,7 @@ function openShippingRateForm(row) {
   document.getElementById("shipping-rate-island-condition").value = row ? (row.remote_island_condition || "") : "";
   document.getElementById("shipping-rate-note").value = row ? (row.note || "") : "";
   document.getElementById("shipping-rate-origin-region").value = row ? (row.origin_region || "") : "";
-  document.getElementById("shipping-rate-tax-type").value = row ? (row.tax_type || "unknown") : "included";
+  document.getElementById("shipping-rate-tax-type").value = row ? (row.tax_type || "unknown") : "excluded";
   document.getElementById("shipping-rate-display-order").value = row ? (parseInt(row.display_order, 10) || 0) : 0;
   document.getElementById("shipping-rate-active").checked = row ? row.is_active !== false : true;
   var message = document.getElementById("shipping-rate-form-message");
