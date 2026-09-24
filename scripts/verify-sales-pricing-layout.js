@@ -71,6 +71,7 @@ const sandbox = {
     rounding_method: "round"
   }],
   salesPricingCustomerCounts: { HANBAIOU_URI_1: 2 },
+  currentSalesRank1Row: null,
   canManageSalesPricing: () => true,
   canViewBasePrice: () => true,
   calculateSalesPriceClient: () => 6500,
@@ -99,5 +100,9 @@ requireFragment(sandbox.wrap.innerHTML, ">四捨五入</option>", "rounding meth
 if (sandbox.wrap.innerHTML.includes(">round</option>")) {
   throw new Error("raw rounding method codes must not be shown to users");
 }
+
+sandbox.currentSalesRank1Row = { price_jpy: 5800 };
+vm.runInNewContext(`${source.slice(start, end)}\nrenderSalesRankPreview();`, sandbox);
+requireFragment(sandbox.wrap.innerHTML, "¥5800", "class-1 override must win over the shared base price");
 
 console.log("sales pricing responsive layout guard passed");
