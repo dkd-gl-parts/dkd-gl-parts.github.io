@@ -2,7 +2,7 @@
 (function() {
   "use strict";
 
-  var state = { preview: null, requestId: null, loading: false, generation: 0, categories: {} };
+  var state = { preview: null, requestId: null, loading: false, generation: 0, categories: {}, view: "included" };
   var byId = function(id) { return document.getElementById(id); };
   var yen = function(value) { return Number(value).toLocaleString("ja-JP") + "円"; };
   var safe = function(value) { return esc(value == null ? "" : String(value)); };
@@ -26,9 +26,14 @@
     state.generation += 1;
     state.preview = null;
     state.requestId = null;
+    state.view = "included";
     byId("cpr-issue-button").disabled = true;
     byId("cpr-summary").hidden = true;
+    byId("cpr-summary").innerHTML = "";
     byId("cpr-exclusions").hidden = true;
+    byId("cpr-detail-heading").hidden = true;
+    byId("cpr-preview-table").dataset.cprView = "included";
+    byId("cpr-detail-column").textContent = "税抜価格";
     byId("cpr-preview-rows").innerHTML = "<tr><td colspan='5' class='cpr-empty'>条件を指定してプレビューを更新してください。</td></tr>";
     setStatus(message || "条件を指定してプレビューを更新してください。", false);
   }
@@ -41,15 +46,66 @@
     return state.categories[code] || code || "—";
   }
 
+  function exclusionLabel(reason) {
+    return ({ hidden: "非公開", price_hidden: "価格非表示", no_price: "価格未設定", zero: "0円", other: "その他" })[reason] || "その他";
+  }
+
+  function detailRows(payload, view) {
+    var included = Array.isArray(payload.rows) ? payload.rows : [];
+    var excluded = Array.isArray(payload.excluded_rows) ? payload.excluded_rows : [];
+    if (view === "included") return included;
+    if (view === "excluded") return excluded;
+    return included.concat(excluded).sort(function(a, b) {
+      var key = function(row) { return [row.category_code, row.gltek_part_number, row.genuine_part_number,
+        row.manufacturer_part_number, row.dkd_shohin_id, row.product_kind].map(function(value) { return String(value || ""); }).join("\u0000"); };
+      return key(a).localeCompare(key(b), "ja");
+    });
+  }
+
+  function renderDetail() {
+    var payload = state.preview;
+    if (!payload) return;
+    var summary = payload.summary || {};
+    var view = state.view;
+    var rows = detailRows(payload, view);
+    var count = view === "included" ? Number(summary.included_count) || 0 :
+      view === "excluded" ? (Number(summary.candidate_count) || 0) - (Number(summary.included_count) || 0) :
+      Number(summary.candidate_count) || 0;
+    var labels = { candidate: "候補", included: "掲載", excluded: "除外" };
+    byId("cpr-detail-heading").hidden = false;
+    byId("cpr-detail-heading").textContent = labels[view] + "品番 " + count + "件";
+    byId("cpr-preview-table").dataset.cprView = view;
+    byId("cpr-detail-column").textContent = view === "excluded" ? "除外理由" : view === "candidate" ? "価格／判定" : "税抜価格";
+    byId("cpr-summary").querySelectorAll("[data-cpr-view]").forEach(function(button) {
+      button.setAttribute("aria-pressed", button.dataset.cprView === view ? "true" : "false");
+    });
+    byId("cpr-preview-rows").innerHTML = rows.length ? rows.map(function(row) {
+      var excluded = !!row.exclusion_reason;
+      var detail = excluded ? "<span class='cpr-exclusion-reason'>" + safe(exclusionLabel(row.exclusion_reason)) + "</span>" :
+        safe(yen(row.sales_price_jpy)) + (view === "candidate" ? "<small>掲載</small>" : "");
+      return "<tr><td>" + safe(row.category_label || categoryLabel(row.category_code)) + "<small>" + safe(kindLabel(row.product_kind)) + "</small></td>" +
+        "<td class='cpr-g-part-number'>" + safe(row.gltek_part_number || "—") + "</td>" +
+        "<td>" + safe(row.genuine_part_number || "—") + "</td>" +
+        "<td>" + safe(row.manufacturer_part_number || "—") + "</td>" +
+        "<td>" + detail + "</td></tr>";
+    }).join("") : "<tr><td colspan='5' class='cpr-empty'>" +
+      (view === "excluded" ? "除外された品番はありません。" : view === "candidate" ? "候補品番はありません。" : "掲載できる価格がありません。") + "</td></tr>";
+    setStatus(view === "excluded" ? "PDFに掲載しない品番と理由を表示しています。" :
+      view === "candidate" ? "候補の品番と掲載判定を表示しています。" :
+      rows.length ? "得意先に適用される販売価格を確認してください。" : "掲載できる品番がありません。", false);
+  }
+
   function renderPreview(payload) {
     var rows = Array.isArray(payload.rows) ? payload.rows : [];
     var summary = payload.summary || {};
     var count = Number(summary.included_count) || 0;
+    state.preview = payload;
+    state.view = "included";
     byId("cpr-summary").hidden = false;
     byId("cpr-summary").innerHTML =
-      "<span>候補<strong>" + safe(summary.candidate_count || 0) + "件</strong></span>" +
-      "<span>掲載<strong>" + safe(count) + "件</strong></span>" +
-      "<span>除外<strong>" + safe((Number(summary.candidate_count) || 0) - count) + "件</strong></span>";
+      "<button type='button' data-cpr-view='candidate' aria-pressed='false'>候補<strong>" + safe(summary.candidate_count || 0) + "件</strong></button>" +
+      "<button type='button' data-cpr-view='included' aria-pressed='true'>掲載<strong>" + safe(count) + "件</strong></button>" +
+      "<button type='button' data-cpr-view='excluded' aria-pressed='false'>除外<strong>" + safe((Number(summary.candidate_count) || 0) - count) + "件</strong></button>";
     var exclusions = [
       ["非公開", summary.excluded_hidden],
       ["価格非表示", summary.excluded_price_hidden],
@@ -62,15 +118,7 @@
     exclusionEl.textContent = exclusions.length ? "除外内訳：" + exclusions.map(function(entry) {
       return entry[0] + " " + entry[1] + "件";
     }).join(" / ") : "";
-    byId("cpr-preview-rows").innerHTML = rows.length ? rows.slice(0, 200).map(function(row) {
-      return "<tr><td>" + safe(row.category_label || categoryLabel(row.category_code)) + "<small>" + safe(kindLabel(row.product_kind)) + "</small></td>" +
-        "<td class='cpr-g-part-number'>" + safe(row.gltek_part_number || "—") + "</td>" +
-        "<td>" + safe(row.genuine_part_number || "—") + "</td>" +
-        "<td>" + safe(row.manufacturer_part_number || "—") + "</td>" +
-        "<td>" + safe(yen(row.sales_price_jpy)) + "</td></tr>";
-    }).join("") : "<tr><td colspan='5' class='cpr-empty'>掲載できる価格がありません。</td></tr>";
-    setStatus(rows.length > 200 ? "先頭200件を表示中。PDFには全" + count + "件を掲載します。" :
-      rows.length ? "得意先に適用される販売価格を確認してください。" : "掲載できる品番がありません。", false);
+    renderDetail();
     byId("cpr-issue-button").disabled = !rows.length;
   }
 
@@ -85,7 +133,11 @@
       var result = await sb.rpc("get_customer_price_report_preview", args);
       if (result.error) throw result.error;
       if (generation !== state.generation || !isScreenActive("customer-price-report")) return;
-      if (!result.data || !Array.isArray(result.data.rows) || !result.data.preview_hash) throw new Error("価格表の応答が不正です");
+      if (!result.data || !Array.isArray(result.data.rows) || !Array.isArray(result.data.excluded_rows) ||
+          !result.data.preview_hash || result.data.rows.length !== Number(result.data.summary && result.data.summary.included_count) ||
+          result.data.rows.length + result.data.excluded_rows.length !== Number(result.data.summary && result.data.summary.candidate_count)) {
+        throw new Error("価格表の明細と件数が一致しません。画面を更新してください");
+      }
       state.preview = result.data;
       state.requestId = crypto.randomUUID();
       renderPreview(result.data);
@@ -278,6 +330,12 @@
     });
     byId("cpr-part-number").addEventListener("keydown", function(event) { if (event.key === "Enter") preview(); });
     byId("cpr-preview-button").addEventListener("click", preview);
+    byId("cpr-summary").addEventListener("click", function(event) {
+      var button = event.target.closest("[data-cpr-view]");
+      if (!button || !state.preview) return;
+      state.view = button.dataset.cprView;
+      renderDetail();
+    });
     byId("cpr-issue-button").addEventListener("click", issue);
     byId("cpr-history-refresh").addEventListener("click", loadHistory);
     byId("cpr-history-list").addEventListener("click", function(event) {
