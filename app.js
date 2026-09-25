@@ -7054,7 +7054,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1048";
+var APP_VERSION       = "v1.1.1049";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -28485,6 +28485,7 @@ async function enterProductKindStockMgmt() {
   configureProductKindStockMode();
   var saveBtn = document.getElementById("btn-product-kind-stock-save");
   if (saveBtn) setCspStyle(saveBtn, "display", canEditProductKindStockMgmt() ? "" : "none");
+  if (window.DcatsContainerStockImport) window.DcatsContainerStockImport.enter();
   await populateProductKindStockCategoryOptions();
   renderProductKindStockEmpty();
 }

@@ -2365,6 +2365,40 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .core-collection-selected-product { grid-template-columns: 1fr; }
 }
 .stock-mgmt-body { max-width: 1360px; }
+.container-stock-card { margin: 0 0 18px; padding: 18px; border: 1px solid #dbe4ef; border-radius: 12px; background: #fff; box-shadow: 0 1px 5px rgba(17, 35, 60, .05); }
+.container-stock-card[hidden], .container-stock-history[hidden] { display: none; }
+.container-stock-head { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+.container-stock-head h2 { margin: 0 0 4px; font-size: 17px; color: #1a2b40; }
+.container-stock-head p { margin: 0; font-size: 12px; color: #617187; }
+.container-stock-warning { margin: 12px 0; padding: 9px 11px; border-radius: 7px; background: #fff8e8; color: #7b551c; font-size: 12px; line-height: 1.55; }
+.container-stock-inputs { display: flex; align-items: end; flex-wrap: wrap; gap: 10px; }
+.container-stock-inputs > label { display: grid; gap: 5px; min-width: min(100%, 260px); color: #3e4f64; font-size: 12px; font-weight: 700; }
+.container-stock-inputs .form-input { width: 100%; }
+.container-stock-file-control { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.container-stock-file-control span { font-size: 12px; color: #52647b; overflow-wrap: anywhere; }
+.container-stock-status { margin: 10px 0 0; font-size: 12px; color: #375f43; line-height: 1.55; }
+.container-stock-status.is-error { color: #b42318; }
+.container-stock-sheets { display: grid; gap: 8px; margin-top: 12px; }
+.container-stock-sheet { display: flex; align-items: end; flex-wrap: wrap; gap: 9px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f9fbfe; }
+.container-stock-sheet label { display: grid; gap: 4px; font-size: 11px; color: #52647b; }
+.container-stock-sheet .container-stock-sheet-check { display: flex; align-items: center; gap: 6px; min-width: 120px; font-weight: 700; font-size: 13px; color: #24364a; }
+.container-stock-sheet-summary { align-self: center; font-size: 12px; color: #52647b; }
+.container-stock-sheet select { min-width: 120px; max-width: 180px; }
+.container-stock-sheet input[type='number'] { width: 76px; }
+.container-stock-results { margin-top: 12px; }
+.container-stock-summary { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 8px; font-size: 13px; font-weight: 700; }
+.container-stock-duplicate, .container-stock-unresolved { color: #b42318; }
+.container-stock-table-wrap { max-height: 440px; overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
+.container-stock-table { width: 100%; min-width: 840px; margin: 0; font-size: 12px; }
+.container-stock-table td { vertical-align: middle; }
+.container-stock-table td:first-child small { display: block; color: #667085; margin-top: 3px; }
+.container-stock-table select { width: 100%; min-width: 245px; font-size: 12px; }
+.container-stock-table .container-stock-source { color: #667085; max-width: 180px; overflow-wrap: anywhere; }
+.container-stock-footer { display: flex; justify-content: flex-end; margin-top: 12px; }
+.container-stock-history { margin-top: 12px; padding: 12px; border-radius: 8px; background: #f7f9fc; font-size: 12px; color: #344054; }
+.container-stock-history h3 { margin: 0 0 6px; font-size: 13px; }
+.container-stock-history ul { margin: 0; padding-left: 20px; line-height: 1.7; }
+.container-stock-card button:disabled { opacity: .52; cursor: not-allowed; }
 .stock-mgmt-toolbar { align-items: stretch; }
 .stock-mgmt-toolbar .form-select { min-width: 150px; max-width: 210px; }
 .stock-mgmt-table-wrap { overflow-x: auto; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); background: #fff; }
@@ -2409,6 +2443,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .stock-history-delta.minus { color: #d92d20; font-weight: 800; }
 @media (max-width: 767px) {
   .stock-mgmt-body { padding: 14px 8px; }
+  .container-stock-card { padding: 12px; }
+  .container-stock-head { align-items: flex-start; }
+  .container-stock-head .btn-secondary { flex: 0 0 auto; }
+  .container-stock-inputs > label, .container-stock-file-control, .container-stock-inputs > button { width: 100%; }
+  .container-stock-file-control { flex-wrap: wrap; }
+  .container-stock-sheet label { flex: 1 1 115px; }
+  .container-stock-sheet select { max-width: none; width: 100%; }
   .stock-mgmt-toolbar .form-select { max-width: none; flex: 1 1 140px; }
   .stock-mgmt-table { min-width: 960px; font-size: 12px; }
   .stock-history-form { grid-template-columns: 1fr 1fr; }
