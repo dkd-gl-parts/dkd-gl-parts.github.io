@@ -29,7 +29,7 @@
     byId("cpr-issue-button").disabled = true;
     byId("cpr-summary").hidden = true;
     byId("cpr-exclusions").hidden = true;
-    byId("cpr-preview-rows").innerHTML = "<tr><td colspan='4' class='cpr-empty'>条件を指定してプレビューを更新してください。</td></tr>";
+    byId("cpr-preview-rows").innerHTML = "<tr><td colspan='5' class='cpr-empty'>条件を指定してプレビューを更新してください。</td></tr>";
     setStatus(message || "条件を指定してプレビューを更新してください。", false);
   }
 
@@ -64,10 +64,11 @@
     }).join(" / ") : "";
     byId("cpr-preview-rows").innerHTML = rows.length ? rows.slice(0, 200).map(function(row) {
       return "<tr><td>" + safe(row.category_label || categoryLabel(row.category_code)) + "<small>" + safe(kindLabel(row.product_kind)) + "</small></td>" +
-        "<td>" + safe(row.gltek_part_number || "—") + "<small>" + safe(row.genuine_part_number || "—") + "</small></td>" +
+        "<td class='cpr-g-part-number'>" + safe(row.gltek_part_number || "—") + "</td>" +
+        "<td>" + safe(row.genuine_part_number || "—") + "</td>" +
         "<td>" + safe(row.manufacturer_part_number || "—") + "</td>" +
         "<td>" + safe(yen(row.sales_price_jpy)) + "</td></tr>";
-    }).join("") : "<tr><td colspan='4' class='cpr-empty'>掲載できる価格がありません。</td></tr>";
+    }).join("") : "<tr><td colspan='5' class='cpr-empty'>掲載できる価格がありません。</td></tr>";
     setStatus(rows.length > 200 ? "先頭200件を表示中。PDFには全" + count + "件を掲載します。" :
       rows.length ? "得意先に適用される販売価格を確認してください。" : "掲載できる品番がありません。", false);
     byId("cpr-issue-button").disabled = !rows.length;
