@@ -7,6 +7,12 @@
     fileName: "",
     fileSha256: "",
     autoReferenceName: "",
+    costListId: "",
+    costListName: "",
+    costProductIds: [],
+    costListReady: false,
+    costListLoading: false,
+    costListRequestSeq: 0,
     sheets: [],
     preview: null,
     previewInputFingerprint: "",
@@ -41,6 +47,80 @@
   }
   function selectedReference() {
     return (byId("container-stock-reference").value || "").trim();
+  }
+  function costListRequired() {
+    return !!byId("container-stock-cost-list");
+  }
+  function canPreview() {
+    return !state.working && !state.costListLoading && !!state.sheets.length &&
+      selectedReference().length >= 3 &&
+      (!costListRequired() || (state.costListId && state.costListReady));
+  }
+  async function fetchCostProductIds(listId) {
+    var result = await sb.from("manufacturing_cost_list_items")
+      .select("dkd_shohin_id", { count: "exact" }).eq("list_id", Number(listId)).limit(1001);
+    if (result.error) throw result.error;
+    if (!result.data || !result.data.length) throw new Error("リストに商品がありません。");
+    if (result.data.length > 1000 || (result.count != null && result.count > result.data.length))
+      throw new Error("原価計算リストの商品数が上限を超えています。");
+    return result.data.map(function(item) { return String(item.dkd_shohin_id); }).sort();
+  }
+  async function loadCostLists() {
+    var select = byId("container-stock-cost-list");
+    if (!select || !root.sb) return;
+    select.disabled = true;
+    select.innerHTML = "<option value=''>リストを読み込んでいます</option>";
+    var result = await sb.from("manufacturing_cost_lists")
+      .select("id,list_name")
+      .eq("is_active", true).eq("product_kind", "rebuilt")
+      .order("updated_at", { ascending: false }).limit(100);
+    var options = result.error ? [] : result.data || [];
+    select.innerHTML = "<option value=''>原価計算リストを選択</option>" +
+      options.map(function(item) {
+        return "<option value='" + esc(item.id) + "'>" + esc(item.list_name) + "</option>";
+      }).join("") + "<option value='none'>該当リストなし（通常の品番照合）</option>";
+    select.disabled = false;
+    if (state.costListId) select.value = state.costListId;
+    var note = byId("container-stock-cost-list-note");
+    if (note && result.error)
+      note.textContent = "原価計算リストを取得できません。閲覧権限を確認するか、通常の品番照合を選んでください。";
+    else if (note && !options.length)
+      note.textContent = "利用できる保存済み原価計算リストがありません。通常の品番照合を選んでください。";
+  }
+  async function loadCostListProducts() {
+    var listId = state.costListId;
+    var requestSeq = ++state.costListRequestSeq;
+    state.costProductIds = [];
+    state.costListReady = listId === "none";
+    state.costListLoading = !!listId && listId !== "none";
+    var note = byId("container-stock-cost-list-note");
+    if (!state.costListLoading) {
+      if (note) note.textContent = listId === "none"
+        ? "原価計算リストは使いません。候補が複数ある場合は入庫先を確認してください。"
+        : "保存済みの原価計算リストを選んでください。";
+      byId("container-stock-preview").disabled = !canPreview();
+      return;
+    }
+    if (note) note.textContent = "原価計算で照合済みの商品を読み込んでいます。";
+    byId("container-stock-preview").disabled = true;
+    try {
+      var productIds = await fetchCostProductIds(listId);
+      if (requestSeq !== state.costListRequestSeq) return;
+      state.costProductIds = productIds;
+      state.costListReady = true;
+      if (note) note.textContent = state.costListName + " の照合済み " +
+        state.costProductIds.length + " 商品を優先します。一致しない品番は要確認のまま残します。";
+    } catch (error) {
+      if (requestSeq !== state.costListRequestSeq) return;
+      state.costListReady = false;
+      if (note) note.textContent = "原価計算リストを読み込めません: " +
+        (error.message || String(error));
+    } finally {
+      if (requestSeq === state.costListRequestSeq) {
+        state.costListLoading = false;
+        byId("container-stock-preview").disabled = !canPreview();
+      }
+    }
   }
   function validReference(value) {
     var reference = String(value || "").trim();
@@ -117,7 +197,7 @@
     state.applied = false;
     byId("container-stock-results").innerHTML = "";
     byId("container-stock-apply").disabled = true;
-    byId("container-stock-preview").disabled = state.working || !state.sheets.length || selectedReference().length < 3;
+    byId("container-stock-preview").disabled = !canPreview();
   }
   function renderSheets() {
     var host = byId("container-stock-sheets");
@@ -227,13 +307,21 @@
     state.corrections = {};
     state.correctionReasons = {};
     state.preferredTargets = {};
+    state.costListId = "";
+    state.costListName = "";
+    state.costProductIds = [];
+    state.costListReady = false;
+    state.costListLoading = false;
+    state.costListRequestSeq += 1;
+    var costSelect = byId("container-stock-cost-list");
+    if (costSelect) costSelect.value = "";
     useFileNameAsReference(file.name);
     byId("container-stock-file-name").textContent = file.name;
     invalidatePreview();
     renderSheets();
     setStatus(!selectedReference()
       ? "ファイル名を識別子に使用できません。識別子を入力してから照合してください。"
-      : "ファイルを読み込みました。ファイル名・シート・列・区分を確認し、取込内容を照合してください。",
+      : "ファイルを読み込みました。原価計算リスト・シート・列・区分を確認して照合してください。",
     !selectedReference());
   }
   function sourceLabel(row) {
@@ -335,6 +423,12 @@
         " · " + esc(duplicate.container_reference) + " · " + esc(duplicate.received_at) + "</strong>";
     }
     html += "</div>";
+    if (state.costListId && state.costListId !== "none") {
+      var costUnique = rows.filter(function(row) { return !!automaticTarget(row); }).length;
+      html += "<p class='container-stock-cost-summary'>原価計算リスト「" +
+        esc(state.costListName) + "」から入庫先を自動選択可能 " + costUnique +
+        "件 / 要確認 " + (rows.length - costUnique) + "件</p>";
+    }
     html += renderResolver(rows.find(function(row) { return sourceKey(row) === state.editingKey; }));
     html += "<div class='container-stock-table-wrap'><table class='mgmt-table container-stock-table'>" +
       "<thead><tr><th>区分・品番</th><th>数量</th><th>入庫先の商品</th><th>現在庫 → 入庫後</th><th>出典</th></tr></thead><tbody>";
@@ -363,6 +457,9 @@
         html += "<span class='container-stock-unresolved'>エラー: 商品マスタに一致なし</span>";
       } else {
         if (!selected) html += "<span class='container-stock-choice'>候補の選択が必要</span>";
+        if (state.costListId && state.costListId !== "none" && !candidates.some(function(candidate) {
+          return state.costProductIds.indexOf(String(candidate.dkd_shohin_id)) >= 0;
+        })) html += "<span class='container-stock-choice'>原価計算リストに一致なし・入庫先を確認</span>";
         html += "<select class='form-select' data-container-row='" + index + "' aria-label='" +
           esc(row.part_number + " の入庫先") + "'><option value=''>候補を選択</option>";
         candidates.forEach(function(candidate) {
@@ -375,6 +472,7 @@
               (candidate.genuine_part_number_2 || "-") + " / " +
               (candidate.manufacturer_part_number || "-") +
               (candidate.product_variant_id ? "" : " / 区分を新規作成") +
+              (state.costProductIds.indexOf(String(candidate.dkd_shohin_id)) >= 0 ? " / 原価計算リスト" : "") +
               (active ? "" : " / 無効")) + "</option>";
         });
         html += "</select>";
@@ -395,6 +493,10 @@
   }
   async function previewReceipt() {
     if (state.working) return;
+    if (costListRequired() && (!state.costListId || !state.costListReady)) {
+      setStatus("原価計算リストを選ぶか、該当リストなしを選んでください。", true);
+      return;
+    }
     if (state.draftDirty) {
       setStatus("編集中の品番を修正・再照合するか、編集を閉じてから照合してください。", true);
       return;
@@ -405,7 +507,8 @@
     try { rows = collectedRows(); }
     catch (error) { setStatus(error.message, true); return; }
     var inputFingerprint = JSON.stringify({
-      reference: reference, fileName: state.fileName, fileSha256: state.fileSha256, rows: rows
+      reference: reference, fileName: state.fileName, fileSha256: state.fileSha256,
+      costListId: state.costListId, costProductIds: state.costProductIds, rows: rows
     });
     invalidatePreview();
     state.working = true;
@@ -422,28 +525,40 @@
       if (result.error) throw result.error;
       if (inputFingerprint !== JSON.stringify({
         reference: selectedReference(), fileName: state.fileName,
-        fileSha256: state.fileSha256, rows: collectedRows()
+        fileSha256: state.fileSha256, costListId: state.costListId,
+        costProductIds: state.costProductIds, rows: collectedRows()
       })) throw new Error("取込条件が変わりました。再照合してください。");
       state.preview = result.data;
       state.previewInputFingerprint = inputFingerprint;
       state.selections = {};
       (state.preview.rows || []).forEach(function(row) {
-        var candidates = row.candidates || [];
-        var preferred = state.preferredTargets[sourceKey(row)];
-        if (preferred && candidates.some(function(candidate) {
-          return String(candidate.dkd_shohin_id) === preferred && candidate.variant_active !== false;
-        })) state.selections[sourceKey(row)] = preferred;
-        else if (candidates.length === 1 && candidates[0].variant_active !== false)
-          state.selections[sourceKey(row)] = String(candidates[0].dkd_shohin_id);
+        var automatic = automaticTarget(row);
+        if (automatic) state.selections[sourceKey(row)] = automatic;
       });
     } catch (error) {
       invalidatePreview();
       setStatus("照合に失敗しました: " + (error.message || String(error)), true);
     } finally {
       state.working = false;
-      byId("container-stock-preview").disabled = !state.sheets.length || selectedReference().length < 3;
+      byId("container-stock-preview").disabled = !canPreview();
       if (state.preview) renderPreview();
     }
+  }
+  function automaticTarget(row) {
+    var candidates = (row.candidates || []).filter(function(candidate) {
+      return candidate.variant_active !== false;
+    });
+    if (state.costListId && state.costListId !== "none") {
+      var costCandidates = candidates.filter(function(candidate) {
+        return state.costProductIds.indexOf(String(candidate.dkd_shohin_id)) >= 0;
+      });
+      return costCandidates.length === 1 ? String(costCandidates[0].dkd_shohin_id) : "";
+    }
+    var preferred = state.preferredTargets[sourceKey(row)];
+    if (preferred && candidates.some(function(candidate) {
+      return String(candidate.dkd_shohin_id) === preferred;
+    })) return preferred;
+    return candidates.length === 1 ? String(candidates[0].dkd_shohin_id) : "";
   }
   async function applyReceipt() {
     if (state.working || !state.preview || state.preview.duplicate || state.applied ||
@@ -455,7 +570,8 @@
     try {
       currentFingerprint = JSON.stringify({
         reference: reference, fileName: state.fileName,
-        fileSha256: state.fileSha256, rows: collectedRows()
+        fileSha256: state.fileSha256, costListId: state.costListId,
+        costProductIds: state.costProductIds, rows: collectedRows()
       });
     } catch (error) {
       currentFingerprint = "";
@@ -466,12 +582,38 @@
       setStatus("取込条件が変わりました。再照合してください。", true);
       return;
     }
-    if (!root.confirm(reference + " の " + rows.length + "品番・" +
-      Number(state.preview.total_quantity).toLocaleString("ja-JP") +
-      "台を在庫へ加算します。入庫を確定しますか？")) return;
+    var selectionFingerprint = JSON.stringify(state.selections);
     state.working = true;
     byId("container-stock-apply").disabled = true;
     byId("container-stock-preview").disabled = true;
+    if (state.costListId && state.costListId !== "none") {
+      try {
+        var currentProductIds = await fetchCostProductIds(state.costListId);
+        if (JSON.stringify(currentProductIds) !== JSON.stringify(state.costProductIds))
+          throw new Error("原価計算リストの内容が変更されました。");
+      } catch (error) {
+        state.working = false;
+        invalidatePreview();
+        setStatus("原価計算リストを再確認できません: " +
+          (error.message || String(error)) + " 再照合してください。", true);
+        return;
+      }
+    }
+    if (!state.preview || currentFingerprint !== state.previewInputFingerprint ||
+        selectionFingerprint !== JSON.stringify(state.selections)) {
+      state.working = false;
+      invalidatePreview();
+      setStatus("取込条件が変わりました。再照合してください。", true);
+      return;
+    }
+    if (!root.confirm(reference + " の " + rows.length + "品番・" +
+      Number(state.preview.total_quantity).toLocaleString("ja-JP") +
+      "台を在庫へ加算します。入庫を確定しますか？")) {
+      state.working = false;
+      byId("container-stock-preview").disabled = !canPreview();
+      renderPreview();
+      return;
+    }
     renderPreview();
     setStatus("在庫と入庫履歴を登録しています。");
     try {
@@ -511,7 +653,7 @@
       invalidatePreview();
     } finally {
       state.working = false;
-      byId("container-stock-preview").disabled = !state.sheets.length || selectedReference().length < 3;
+      byId("container-stock-preview").disabled = !canPreview();
     }
   }
   async function loadHistory() {
@@ -663,6 +805,11 @@
     if (!host.hidden) {
       invalidatePreview();
       setStatus("Excel / CSVを選択してください。ファイル名を識別子に使用します。");
+      loadCostLists().catch(function(error) {
+        var note = byId("container-stock-cost-list-note");
+        if (note) note.textContent = "原価計算リストを取得できません: " +
+          (error.message || String(error));
+      });
     }
   }
   function init() {
@@ -680,6 +827,14 @@
       state.preferredTargets = {};
       state.fileName = "";
       state.fileSha256 = "";
+      state.costListId = "";
+      state.costListName = "";
+      state.costProductIds = [];
+      state.costListReady = false;
+      state.costListLoading = false;
+      state.costListRequestSeq += 1;
+      var costSelect = byId("container-stock-cost-list");
+      if (costSelect) costSelect.value = "";
       byId("container-stock-file-name").textContent = "";
       byId("container-stock-sheets").innerHTML = "";
       invalidatePreview();
@@ -799,6 +954,15 @@
         searchProducts();
       }
     });
+    var costListSelect = byId("container-stock-cost-list");
+    if (costListSelect) costListSelect.addEventListener("change", function() {
+      state.costListId = costListSelect.value;
+      state.costListName = costListSelect.selectedOptions[0]
+        ? costListSelect.selectedOptions[0].textContent : "";
+      state.preferredTargets = {};
+      invalidatePreview();
+      loadCostListProducts();
+    });
     byId("container-stock-results").addEventListener("input", function(event) {
       if (event.target.id === "container-stock-match-part") {
         state.draftPart = event.target.value;
@@ -820,7 +984,8 @@
   }
   root.DcatsContainerStockImport = {
     enter: enter, _collectRows: collectedRows, _renderPreview: renderPreview,
-    _validPartNumber: validPartNumber, _useFileNameAsReference: useFileNameAsReference, _state: state
+    _validPartNumber: validPartNumber, _useFileNameAsReference: useFileNameAsReference,
+    _automaticTarget: automaticTarget, _state: state
   };
   if (typeof document !== "undefined") {
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true });
