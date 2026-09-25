@@ -2,7 +2,7 @@
 (function() {
   "use strict";
 
-  var state = { preview: null, requestId: null, loading: false, generation: 0, categories: {}, view: "included" };
+  var state = { preview: null, requestId: null, loading: false, generation: 0, categories: {}, categoryOptions: [], categoryLoad: 0, view: "included" };
   var byId = function(id) { return document.getElementById(id); };
   var yen = function(value) { return Number(value).toLocaleString("ja-JP") + "円"; };
   var safe = function(value) { return esc(value == null ? "" : String(value)); };
@@ -144,7 +144,7 @@
     } catch (error) {
       if (generation === state.generation) setStatus("プレビューに失敗しました：" + (error.message || error), true);
     } finally {
-      button.disabled = false;
+      button.disabled = byId("cpr-category").disabled || !Number(byId("cpr-customer").value);
     }
   }
 
@@ -288,10 +288,47 @@
     }).join("");
     if (preselectedCustomerId) customerSelect.value = String(preselectedCustomerId);
     state.categories = {};
-    categorySelect.innerHTML = "<option value=''>すべて</option>" + (results[1].data || []).map(function(row) {
+    state.categoryOptions = (results[1].data || []).map(function(row) {
       state.categories[row.category_code] = row.label_ja || row.category_code;
-      return "<option value='" + safe(row.category_code) + "'>" + safe(state.categories[row.category_code]) + "</option>";
-    }).join("");
+      return row.category_code;
+    });
+    categorySelect.innerHTML = "<option value=''>すべて</option>";
+    categorySelect.disabled = true;
+    if (customerSelect.value) await loadVisibleCategories();
+  }
+
+  async function loadVisibleCategories() {
+    var categorySelect = byId("cpr-category");
+    var previewButton = byId("cpr-preview-button");
+    var customerId = Number(byId("cpr-customer").value) || null;
+    var previous = categorySelect.value;
+    var load = ++state.categoryLoad;
+    categorySelect.disabled = true;
+    previewButton.disabled = true;
+    categorySelect.innerHTML = "<option value=''>すべて</option>";
+    categorySelect.value = "";
+    if (!customerId) return;
+    try {
+      var result = await sb.from("customer_product_visibility")
+        .select("visibility_scope,category_code,is_visible")
+        .eq("sales_customer_id", customerId)
+        .in("visibility_scope", ["all", "category"])
+        .limit(2000);
+      if (load !== state.categoryLoad || Number(byId("cpr-customer").value) !== customerId) return;
+      if (result.error) throw result.error;
+      var rows = result.data || [];
+      var visible = state.categoryOptions.filter(function(code) { return customerCategoryIsVisible(code, rows); });
+      categorySelect.innerHTML = "<option value=''>すべて</option>" + visible.map(function(code) {
+        return "<option value='" + safe(code) + "'>" + safe(state.categories[code]) + "</option>";
+      }).join("");
+      if (visible.indexOf(previous) >= 0) categorySelect.value = previous;
+      categorySelect.disabled = false;
+      previewButton.disabled = false;
+    } catch (error) {
+      if (load !== state.categoryLoad) return;
+      categorySelect.innerHTML = "<option value=''>カテゴリ設定を読み込めません</option>";
+      setStatus("カテゴリ設定を読み込めませんでした：" + (error.message || error), true);
+    }
   }
 
   function enterReportHub() {
@@ -324,7 +361,10 @@
     ["cpr-customer", "cpr-category", "cpr-kind", "cpr-part-number"].forEach(function(id) {
       byId(id).addEventListener(id === "cpr-part-number" ? "input" : "change", function() {
         clearPreview();
-        if (id === "cpr-customer") loadHistory();
+        if (id === "cpr-customer") {
+          loadVisibleCategories();
+          loadHistory();
+        }
       });
     });
     byId("cpr-part-number").addEventListener("keydown", function(event) { if (event.key === "Enter") preview(); });
