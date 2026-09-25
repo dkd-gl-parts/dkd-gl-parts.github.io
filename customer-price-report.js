@@ -251,11 +251,9 @@
 
   function bindEvents() {
     if (!byId("screen-customer-price-report")) return;
-    byId("btn-back-report-hub").addEventListener("click", returnToMenuFresh);
     byId("btn-logout-report-hub").addEventListener("click", doLogout);
     byId("report-hub-open-price").addEventListener("click", function() { enterCustomerPriceReport(); });
     byId("report-hub-open-ranking").addEventListener("click", enterManufacturingRankingReport);
-    byId("btn-back-customer-price-report").addEventListener("click", enterReportHub);
     byId("btn-logout-customer-price-report").addEventListener("click", doLogout);
     ["cpr-customer", "cpr-category", "cpr-kind", "cpr-part-number"].forEach(function(id) {
       byId(id).addEventListener(id === "cpr-part-number" ? "input" : "change", function() {

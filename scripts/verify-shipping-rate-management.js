@@ -277,8 +277,10 @@ if (!menuReturnSource.includes("clearAppRestoreState();") ||
     menuReturnSource.includes("window.location.reload()")) {
   throw new Error("standard management screens must return directly to the authenticated menu without a page reload");
 }
-if (!source.includes('document.getElementById("btn-back-manufacturing-ranking-report").addEventListener("click", returnToMenuFresh);')) {
-  throw new Error("manufacturing ranking report must return to the menu");
+if (!source.includes('document.getElementById("btn-back-report-hub").addEventListener("click", returnToMenuFresh);') ||
+    !source.includes('document.getElementById("btn-back-manufacturing-ranking-report").addEventListener("click", function(){ enterReportHub(); });') ||
+    !source.includes('document.getElementById("btn-back-customer-price-report").addEventListener("click", function(){ enterReportHub(); });')) {
+  throw new Error("report screens must return through the report hub and menu");
 }
 
 console.log("shipping rate management guard passed");

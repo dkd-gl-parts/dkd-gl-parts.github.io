@@ -54623,7 +54623,9 @@ document.getElementById("btn-back-product-kind-stock-mgmt").addEventListener("cl
 document.getElementById("btn-back-manufacturing-cost-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-finished-label-mgmt").addEventListener("click", returnFromFinishedLabelMgmtToMenu);
 document.getElementById("btn-back-finished-product-shipping").addEventListener("click", returnFromFinishedProductShipping);
-document.getElementById("btn-back-manufacturing-ranking-report").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-report-hub").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-customer-price-report").addEventListener("click", function(){ enterReportHub(); });
+document.getElementById("btn-back-manufacturing-ranking-report").addEventListener("click", function(){ enterReportHub(); });
 document.getElementById("btn-back-production-ranking-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-kikan-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-rakuten-price").addEventListener("click", returnToMenuFresh);
