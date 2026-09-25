@@ -60,9 +60,10 @@
 .cpr-summary strong { margin-left: 6px; color: var(--dcats-ink); }
 .cpr-exclusions { margin-bottom: 12px; color: #795622; font-size: 12px; line-height: 1.5; }
 .cpr-table-wrap { overflow-x: auto; }
-.cpr-table { width: 100%; border-collapse: collapse; min-width: 610px; }
+.cpr-table { width: 100%; border-collapse: collapse; min-width: 680px; }
 .cpr-table th { padding: 10px 9px; border-bottom: 2px solid #dbe4ed; background: #f7f9fc; color: #3d5067; text-align: left; font-size: 12px; }
 .cpr-table td { padding: 10px 9px; border-bottom: 1px solid #edf1f5; vertical-align: top; }
+.cpr-table .cpr-g-part-number { font-size: 11px; white-space: nowrap; }
 .cpr-table td:last-child { white-space: nowrap; text-align: right; font-weight: 800; color: #132f50; }
 .cpr-table small { display: block; margin-top: 4px; color: #667588; }
 .cpr-empty { padding: 55px 10px !important; color: #8a99a9; text-align: center !important; font-weight: 400 !important; }
@@ -90,12 +91,14 @@
   .cpr-table thead { display: none; }
   .cpr-table tbody { display: block; }
   .cpr-table tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid #e2e9f0; border-radius: 8px; }
+  .cpr-table td:first-child { grid-column: 1 / -1; }
   .cpr-table td { display: block; min-width: 0; padding: 9px 11px; border-bottom: 0; overflow-wrap: anywhere; }
   .cpr-table td::before { display: block; margin-bottom: 3px; color: #667588; font-size: 10px; font-weight: 800; }
   .cpr-table td:nth-child(1)::before { content: "カテゴリ・区分"; }
-  .cpr-table td:nth-child(2)::before { content: "G品番 / 純正品番"; }
-  .cpr-table td:nth-child(3)::before { content: "メーカー品番"; }
-  .cpr-table td:nth-child(4)::before { content: "税抜価格"; }
+  .cpr-table td:nth-child(2)::before { content: "G品番"; }
+  .cpr-table td:nth-child(3)::before { content: "純正品番"; }
+  .cpr-table td:nth-child(4)::before { content: "メーカー品番"; }
+  .cpr-table td:nth-child(5)::before { content: "税抜価格"; }
   .cpr-table td:last-child { text-align: left; }
   .cpr-table .cpr-empty { grid-column: 1 / -1; }
   .cpr-table .cpr-empty::before { display: none; }
