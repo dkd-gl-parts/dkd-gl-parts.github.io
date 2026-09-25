@@ -165,6 +165,8 @@ jobs:
         run: |
           node scripts/verify-manufacturing-cost-import.js
           node scripts/verify-document-import-parsers.js
+      - name: Verify container rebuilt stock import
+        run: node scripts/verify-container-stock-import.js
       - name: Verify manufacturing cost snapshot status
         run: node scripts/verify-manufacturing-cost-snapshot-status.js
       - name: Verify manufacturing cost company breakdown

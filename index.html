@@ -3281,6 +3281,30 @@
     </div>
   </div>
   <div class="mgmt-body stock-mgmt-body">
+    <section class="container-stock-card" id="container-stock-import" aria-labelledby="container-stock-title" hidden>
+      <div class="container-stock-head">
+        <div>
+          <h2 id="container-stock-title">コンテナ一括入庫</h2>
+          <p>Excel / CSVの品番と数量を照合し、リビルト在庫に加算します。</p>
+        </div>
+        <button type="button" class="btn-secondary" id="container-stock-history-toggle">入庫履歴</button>
+      </div>
+      <p class="container-stock-warning">この機能の導入前に反映した在庫は自動で重複判定できません。初回は既存の在庫履歴も確認してください。</p>
+      <div class="container-stock-inputs">
+        <label>コンテナ識別子（必須）<input class="form-input" id="container-stock-reference" type="text" maxlength="100" autocomplete="off" placeholder="例: GLTEK-2026-09-001"></label>
+        <div class="container-stock-file-control">
+          <input id="container-stock-file" type="file" accept=".xlsx,.xls,.xlsm,.csv" hidden>
+          <button class="btn-secondary" id="container-stock-choose" type="button">Excel / CSVを選択</button>
+          <span id="container-stock-file-name"></span>
+        </div>
+        <button class="btn-primary" id="container-stock-preview" type="button" disabled>取込内容を照合</button>
+      </div>
+      <div id="container-stock-status" class="container-stock-status" role="status" aria-live="polite"></div>
+      <div id="container-stock-sheets" class="container-stock-sheets"></div>
+      <div id="container-stock-results" class="container-stock-results"></div>
+      <div class="container-stock-footer"><button class="btn-primary" id="container-stock-apply" type="button" disabled>確認した内容で一括入庫</button></div>
+      <div id="container-stock-history" class="container-stock-history" hidden></div>
+    </section>
     <div class="mgmt-toolbar stock-mgmt-toolbar">
       <input class="mgmt-search" id="product-kind-stock-search" type="search" data-i18n-ph="product_kind_stock_search_ph">
       <select class="form-select" id="product-kind-stock-category">
@@ -5354,6 +5378,7 @@
 <script src="app.js?v=1.1.1049"></script>
 <script src="sales-order-revision.js?v=1.1.1049"></script>
 <script src="manufacturing-cost-import.js?v=1.1.1049"></script>
+<script src="container-stock-import.js?v=1.1.1049"></script>
 <script src="product-3d.js?v=1.1.1049"></script>
 <script src="assets/concierge-pet/concierge-pet.js?v=1.1.1049"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.1049&amp;ranking=18"></script>

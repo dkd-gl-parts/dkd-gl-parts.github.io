@@ -28485,6 +28485,7 @@ async function enterProductKindStockMgmt() {
   configureProductKindStockMode();
   var saveBtn = document.getElementById("btn-product-kind-stock-save");
   if (saveBtn) setCspStyle(saveBtn, "display", canEditProductKindStockMgmt() ? "" : "none");
+  if (window.DcatsContainerStockImport) window.DcatsContainerStockImport.enter();
   await populateProductKindStockCategoryOptions();
   renderProductKindStockEmpty();
 }

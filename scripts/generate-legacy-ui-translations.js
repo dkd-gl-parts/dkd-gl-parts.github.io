@@ -10,6 +10,7 @@ const htmlPath = path.join(root, "index.html");
 const outputPath = path.join(root, "legacy-i18n.js");
 const runtimeScriptPaths = [
   "app.js",
+  "container-stock-import.js",
   "sales-order-revision.js",
   "install-app.js",
   "label-print-window.js",
@@ -20,6 +21,7 @@ const runtimeScriptPaths = [
 ];
 const curatedTranslations = {
   en: {
+    "行目の数量を確認してください。": "Please check the quantity on this row.",
     "帳票出力 / レポート": "Reports / Report Center",
     "目的に合わせた帳票を選んでください。": "Choose a report for your purpose.",
     "得意先向け販売価格表": "Customer Sales Price List",
@@ -482,6 +484,7 @@ const curatedTranslations = {
     "本書、対象製品、製造シリアル、車両・取付情報をご提示ください。": "Present this document, the covered product, the manufacturing serial number, and the vehicle and installation information."
   },
   zh: {
+    "行目の数量を確認してください。": "请检查该行的数量。",
     "帳票出力 / レポート": "报表 / 报表中心",
     "目的に合わせた帳票を選んでください。": "请根据用途选择报表。",
     "得意先向け販売価格表": "客户销售价格表",
