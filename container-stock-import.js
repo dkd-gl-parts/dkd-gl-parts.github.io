@@ -8,14 +8,20 @@
     fileSha256: "",
     sheets: [],
     preview: null,
+    previewInputFingerprint: "",
     selections: {},
     corrections: {},
+    correctionReasons: {},
     preferredTargets: {},
     editingKey: "",
+    draftPart: "",
+    draftReason: "",
+    draftDirty: false,
     searchResults: [],
     searchQuery: "",
     searchError: "",
     searching: false,
+    searchRequestSeq: 0,
     working: false,
     applied: false
   };
@@ -87,8 +93,12 @@
   }
   function invalidatePreview() {
     state.preview = null;
+    state.previewInputFingerprint = "";
     state.selections = {};
     state.editingKey = "";
+    state.draftPart = "";
+    state.draftReason = "";
+    state.draftDirty = false;
     state.searchResults = [];
     state.applied = false;
     byId("container-stock-results").innerHTML = "";
@@ -166,7 +176,10 @@
     if (rows.length > MAX_LINES) throw new Error("一度に取り込める品番は200件までです。");
     return rows.map(function(row) {
       var matchPart = matchPartFor(row);
-      return Object.assign({}, row, { match_part_number: matchPart });
+      return Object.assign({}, row, {
+        match_part_number: matchPart,
+        match_reason: state.correctionReasons[sourceKey(row)] || ""
+      });
     });
   }
   async function readFile(file) {
@@ -198,6 +211,7 @@
     state.fileSha256 = sha;
     state.sheets = sheets;
     state.corrections = {};
+    state.correctionReasons = {};
     state.preferredTargets = {};
     byId("container-stock-file-name").textContent = file.name;
     invalidatePreview();
@@ -212,7 +226,8 @@
   function renderResolver(row) {
     if (!row) return "";
     var original = row.part_number;
-    var matchPart = row.match_part_number || original;
+    var matchPart = state.draftPart;
+    var reason = state.draftReason;
     var canManageProducts = typeof root.canEdit === "function" && root.canEdit();
     var html = "<section class='container-stock-resolver' aria-label='品番の照合を修正'>" +
       "<div class='container-stock-resolver-head'><div><strong>照合を修正 · " + esc(original) + "</strong>" +
@@ -221,6 +236,8 @@
       "<p>元ファイルの品番・数量は変更しません。読み取り違い、またはこの入庫だけの品番読み替えを指定し、再照合します。</p>" +
       "<div class='container-stock-resolver-fields'><label>照合に使う品番" +
       "<input class='form-input' id='container-stock-match-part' type='text' maxlength='80' value='" + esc(matchPart) + "'></label>" +
+      "<label>修正理由（品番を変える場合は必須）" +
+      "<input class='form-input' id='container-stock-match-reason' type='text' maxlength='300' value='" + esc(reason) + "' placeholder='例: 原票の品番表記違いを現物ラベルで確認'></label>" +
       "<button type='button' class='btn-primary' data-container-save-match>品番を修正して再照合</button></div>" +
       "<p class='container-stock-resolver-hint'>区分が違う場合は、上のシート設定を直してから再照合してください。</p>" +
       "<div class='container-stock-resolver-search'><label>既存商品を探す" +
@@ -319,7 +336,7 @@
     html += "</tbody></table></div>";
     host.innerHTML = html;
     byId("container-stock-apply").disabled =
-      !!duplicate || state.working || state.applied || !rows.length ||
+      !!duplicate || state.working || state.applied || state.draftDirty || !rows.length ||
       rows.some(function(row) {
         return !state.selections[sourceKey(row)] || !(row.candidates || []).some(function(candidate) {
           return String(candidate.dkd_shohin_id) === state.selections[sourceKey(row)] && candidate.variant_active !== false;
@@ -328,11 +345,18 @@
   }
   async function previewReceipt() {
     if (state.working) return;
+    if (state.draftDirty) {
+      setStatus("編集中の品番を修正・再照合するか、編集を閉じてから照合してください。", true);
+      return;
+    }
     var reference = selectedReference();
     if (reference.length < 3) { setStatus("コンテナ識別子を3文字以上で入力してください。", true); return; }
     var rows;
     try { rows = collectedRows(); }
     catch (error) { setStatus(error.message, true); return; }
+    var inputFingerprint = JSON.stringify({
+      reference: reference, fileName: state.fileName, fileSha256: state.fileSha256, rows: rows
+    });
     state.working = true;
     byId("container-stock-preview").disabled = true;
     byId("container-stock-apply").disabled = true;
@@ -345,7 +369,12 @@
         p_rows: rows
       });
       if (result.error) throw result.error;
+      if (inputFingerprint !== JSON.stringify({
+        reference: selectedReference(), fileName: state.fileName,
+        fileSha256: state.fileSha256, rows: collectedRows()
+      })) throw new Error("取込条件が変わりました。再照合してください。");
       state.preview = result.data;
+      state.previewInputFingerprint = inputFingerprint;
       state.selections = {};
       (state.preview.rows || []).forEach(function(row) {
         var candidates = row.candidates || [];
@@ -368,16 +397,27 @@
     } finally {
       state.working = false;
       byId("container-stock-preview").disabled = !state.sheets.length || selectedReference().length < 3;
+      if (state.preview) renderPreview();
     }
   }
   async function applyReceipt() {
-    if (state.working || !state.preview || state.preview.duplicate || state.applied) return;
+    if (state.working || !state.preview || state.preview.duplicate || state.applied || state.draftDirty) return;
     var rows = state.preview.rows || [];
     if (!rows.length || rows.some(function(row) { return !state.selections[sourceKey(row)]; })) return;
     var reference = selectedReference();
-    if (reference !== state.preview.container_reference) {
+    var currentFingerprint;
+    try {
+      currentFingerprint = JSON.stringify({
+        reference: reference, fileName: state.fileName,
+        fileSha256: state.fileSha256, rows: collectedRows()
+      });
+    } catch (error) {
+      currentFingerprint = "";
+    }
+    if (reference !== state.preview.container_reference ||
+        currentFingerprint !== state.previewInputFingerprint) {
       invalidatePreview();
-      setStatus("コンテナ識別子が変わりました。再照合してください。", true);
+      setStatus("取込条件が変わりました。再照合してください。", true);
       return;
     }
     if (!root.confirm(reference + " の " + rows.length + "品番・" +
@@ -392,6 +432,7 @@
         return {
           part_number: row.part_number,
           match_part_number: row.match_part_number || row.part_number,
+          match_reason: row.match_reason || "",
           category_code: row.category_code,
           quantity: row.quantity,
           sources: row.sources,
@@ -444,6 +485,10 @@
     if (state.searching || !state.preview || !state.editingKey) return;
     var input = byId("container-stock-product-search");
     var query = input ? input.value.trim() : "";
+    var matchInput = byId("container-stock-match-part");
+    var reasonInput = byId("container-stock-match-reason");
+    if (matchInput) state.draftPart = matchInput.value;
+    if (reasonInput) state.draftReason = reasonInput.value;
     state.searchQuery = query;
     state.searchError = "";
     state.searchResults = [];
@@ -456,6 +501,8 @@
       return sourceKey(item) === state.editingKey;
     });
     if (!row) return;
+    var searchKey = state.editingKey;
+    var searchSeq = ++state.searchRequestSeq;
     state.searching = true;
     renderPreview();
     try {
@@ -473,13 +520,17 @@
         result = await root.fetchCoreProductMasterMatches(query, row.category_code, 20);
       }
       if (result.error) throw result.error;
+      if (searchSeq !== state.searchRequestSeq || searchKey !== state.editingKey) return;
       state.searchResults = result.data || [];
       if (!state.searchResults.length) state.searchError = "該当する商品がありません。品番を確認するか、商品マスタへ新規登録してください。";
     } catch (error) {
-      state.searchError = "商品を検索できませんでした: " + (error.message || String(error));
+      if (searchSeq === state.searchRequestSeq)
+        state.searchError = "商品を検索できませんでした: " + (error.message || String(error));
     } finally {
-      state.searching = false;
-      renderPreview();
+      if (searchSeq === state.searchRequestSeq) {
+        state.searching = false;
+        renderPreview();
+      }
     }
   }
   async function saveMatch(part, preferredTarget) {
@@ -494,13 +545,30 @@
       renderPreview();
       return;
     }
-    if (corrected === row.part_number) delete state.corrections[state.editingKey];
-    else state.corrections[state.editingKey] = corrected;
+    var reasonInput = byId("container-stock-match-reason");
+    var reason = reasonInput ? reasonInput.value.trim() : state.draftReason.trim();
+    if (corrected !== row.part_number && (reason.length < 5 || reason.length > 300 || /[\x00-\x1f\x7f]/.test(reason))) {
+      state.searchError = "品番を変更する場合は、修正理由を5～300文字で入力してください。";
+      renderPreview();
+      return;
+    }
+    if (corrected === row.part_number) {
+      delete state.corrections[state.editingKey];
+      delete state.correctionReasons[state.editingKey];
+    } else {
+      state.corrections[state.editingKey] = corrected;
+      state.correctionReasons[state.editingKey] = reason;
+    }
     if (preferredTarget) state.preferredTargets[state.editingKey] = String(preferredTarget);
     else delete state.preferredTargets[state.editingKey];
     state.searchError = "";
     state.searchResults = [];
+    state.searchRequestSeq += 1;
+    state.searching = false;
     state.searchQuery = "";
+    state.draftPart = corrected;
+    state.draftReason = reason;
+    state.draftDirty = false;
     byId("container-stock-apply").disabled = true;
     await previewReceipt();
   }
@@ -514,6 +582,7 @@
       return sourceKey(item) === state.editingKey;
     });
     if (!row) return;
+    var editingKey = state.editingKey;
     if (mode === "edit") {
       if (!product || !product.dkd_shohin_id) return;
       var fresh = await sb.from("core_products")
@@ -527,6 +596,7 @@
       }
       product = fresh.data;
     }
+    if (editingKey !== state.editingKey || !state.preview) return;
     invalidatePreview();
     setStatus("商品マスタを保存した後、必ず取込内容を再照合してください。", true);
     await root.openCoreProductForm(mode, product || null, "management");
@@ -556,6 +626,7 @@
       var file = fileInput.files && fileInput.files[0];
       state.sheets = [];
       state.corrections = {};
+      state.correctionReasons = {};
       state.preferredTargets = {};
       state.fileName = "";
       state.fileSha256 = "";
@@ -592,6 +663,7 @@
       }
       invalidatePreview();
       state.corrections = {};
+      state.correctionReasons = {};
       state.preferredTargets = {};
       renderSheets();
       setStatus("シート設定を変更しました。取込内容を再照合してください。");
@@ -617,6 +689,11 @@
         var row = state.preview.rows[Number(edit.dataset.containerEdit)];
         if (!row) return;
         state.editingKey = sourceKey(row);
+        state.searchRequestSeq += 1;
+        state.searching = false;
+        state.draftPart = row.match_part_number || row.part_number;
+        state.draftReason = state.correctionReasons[state.editingKey] || row.match_reason || "";
+        state.draftDirty = false;
         state.searchResults = [];
         state.searchQuery = "";
         state.searchError = "";
@@ -626,7 +703,16 @@
         return;
       }
       if (target.closest("[data-container-close-editor]")) {
+        if (state.draftDirty) {
+          invalidatePreview();
+          setStatus("編集中の修正を破棄しました。取込内容を再照合してください。", true);
+          return;
+        }
         state.editingKey = "";
+        state.searchRequestSeq += 1;
+        state.searching = false;
+        state.draftPart = "";
+        state.draftReason = "";
         state.searchResults = [];
         renderPreview();
         return;
@@ -661,6 +747,19 @@
         event.preventDefault();
         searchProducts();
       }
+    });
+    byId("container-stock-results").addEventListener("input", function(event) {
+      if (event.target.id === "container-stock-match-part") {
+        state.draftPart = event.target.value;
+        state.draftDirty = true;
+        byId("container-stock-apply").disabled = true;
+      }
+      if (event.target.id === "container-stock-match-reason") {
+        state.draftReason = event.target.value;
+        state.draftDirty = true;
+        byId("container-stock-apply").disabled = true;
+      }
+      if (event.target.id === "container-stock-product-search") state.searchQuery = event.target.value;
     });
     byId("container-stock-history-toggle").addEventListener("click", function() {
       var history = byId("container-stock-history");

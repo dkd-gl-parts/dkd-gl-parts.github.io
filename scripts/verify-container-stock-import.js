@@ -44,11 +44,14 @@ assert.deepStrictEqual(rows.find((row) => row.part_number === "31400-58J10").sou
 assert.strictEqual(rows.find((row) => row.part_number === "31400-58J10").match_part_number, "31400-58J10");
 
 receipt._state.corrections["alternator|31400-58J10"] = "31400-58J11";
+receipt._state.correctionReasons["alternator|31400-58J10"] = "現物ラベルで確認済み";
 rows = receipt._collectRows();
 assert.strictEqual(rows.find((row) => row.part_number === "31400-58J10").match_part_number, "31400-58J11");
+assert.strictEqual(rows.find((row) => row.part_number === "31400-58J10").match_reason, "現物ラベルで確認済み");
 assert.strictEqual(rows.find((row) => row.part_number === "31400-58J10").quantity, 10);
 assert.strictEqual(rows.reduce((sum, row) => sum + row.quantity, 0), 13);
 delete receipt._state.corrections["alternator|31400-58J10"];
+delete receipt._state.correctionReasons["alternator|31400-58J10"];
 assert.strictEqual(receipt._validPartNumber("SM-760-01"), true);
 assert.strictEqual(receipt._validPartNumber("xx"), false);
 
@@ -70,6 +73,7 @@ receipt._state.editingKey = "alternator|31400-58J10";
 receipt._renderPreview();
 assert.match(fakeElements["container-stock-results"].innerHTML, /照合を修正/);
 assert.match(fakeElements["container-stock-results"].innerHTML, /この入庫だけの品番読み替え/);
+assert.match(fakeElements["container-stock-results"].innerHTML, /修正理由/);
 receipt._state.preview = null;
 receipt._state.editingKey = "";
 

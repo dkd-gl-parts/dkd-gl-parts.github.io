@@ -21,6 +21,15 @@ const runtimeScriptPaths = [
 ];
 const curatedTranslations = {
   en: {
+    "照合に使う品番": "Part number used for matching",
+    "修正理由（品番を変える場合は必須）": "Correction reason (required when changing the part number)",
+    "既存商品を探す": "Find an existing product",
+    "候補選択待ち": "Awaiting candidate selection",
+    "照合品番:": "Matched part number:",
+    "一致なし": "Unmatched",
+    "編集中の品番を修正・再照合するか、編集を閉じてから照合してください。": "Save and recheck the part-number correction, or close the editor before checking again.",
+    "取込条件が変わりました。再照合してください。": "The import settings changed. Please check the import again.",
+    "編集中の修正を破棄しました。取込内容を再照合してください。": "The unsaved correction was discarded. Please check the import again.",
     "行目の数量を確認してください。": "Please check the quantity on this row.",
     "帳票出力 / レポート": "Reports / Report Center",
     "目的に合わせた帳票を選んでください。": "Choose a report for your purpose.",
@@ -484,6 +493,15 @@ const curatedTranslations = {
     "本書、対象製品、製造シリアル、車両・取付情報をご提示ください。": "Present this document, the covered product, the manufacturing serial number, and the vehicle and installation information."
   },
   zh: {
+    "照合に使う品番": "用于匹配的品号",
+    "修正理由（品番を変える場合は必須）": "修改原因（更改品号时必填）",
+    "既存商品を探す": "查找现有商品",
+    "候補選択待ち": "等待选择候选项",
+    "照合品番:": "匹配品号：",
+    "一致なし": "未匹配",
+    "編集中の品番を修正・再照合するか、編集を閉じてから照合してください。": "请保存并重新核对品号修改，或关闭编辑后再核对。",
+    "取込条件が変わりました。再照合してください。": "导入条件已更改，请重新核对。",
+    "編集中の修正を破棄しました。取込内容を再照合してください。": "未保存的修改已放弃，请重新核对导入内容。",
     "行目の数量を確認してください。": "请检查该行的数量。",
     "帳票出力 / レポート": "报表 / 报表中心",
     "目的に合わせた帳票を選んでください。": "请根据用途选择报表。",
