@@ -37,9 +37,9 @@ expect(app.includes('action: "report-hub"'), "reports menu must open its hub");
   "メーカー品番",
   "販売価格"
 ].forEach((fragment) => expect(report.includes(fragment), `price report contract is missing: ${fragment}`));
-expect(report.includes("ご注文前に最新の在庫状況と価格をご確認ください。"), "printed terms must include the stock and price caution");
+expect(report.includes("ご注文前に最新の価格と在庫状況をご確認ください。"), "printed guidance must include the stock and price check");
 expect(report.includes("PDF保存時は印刷設定の「ヘッダーとフッター」をオフにしてください。"), "PDF toolbar must explain browser header/footer settings");
-expect(!report.includes("document-footer"), "print terms must not be orphaned on a footer-only page");
+expect(!report.includes("document-footer"), "print guidance must not be orphaned on a footer-only page");
 expect(!report.includes("product_base_prices"), "browser must not calculate a report from base-price rows");
 expect(!report.includes("calculateSalesPriceClient"), "browser must not calculate effective sales prices");
 expect(!report.includes("price_rank_code"), "customer-facing report must not expose price ranks");
@@ -47,6 +47,7 @@ expect(!report.includes("manufacturing_cost"), "customer-facing report must not 
 expect(!report.includes("basis_note"), "customer-facing report must not expose price-basis notes");
 expect(/@page\s*{[^}]*size:\s*A4\s+portrait/i.test(css), "price report must use A4 portrait printing");
 expect(css.includes(".price-list thead { display: table-header-group; }"), "printed page headers must repeat");
+expect(css.includes(".report-notes") && css.includes("break-inside: avoid"), "price guidance must stay together on the first page");
 expect(css.includes("@media screen and (max-width: 700px)") && css.includes(".print-help { flex: 0 0 100%; }"), "narrow print preview must keep PDF controls visible");
 expect(css.includes(".category-section + .category-section { break-before: page; page-break-before: always;"), "each later category must start a new printed page");
 expect(/\.price-list \.g-part-number\s*\{[^}]*font-size:\s*9px;[^}]*white-space:\s*nowrap;[^}]*overflow-wrap:\s*normal;/.test(css), "G part numbers must print smaller on one line");
@@ -115,11 +116,18 @@ const printed = runtime.renderCustomerPriceReport({
 });
 expect((printed.match(/<section class='category-section'>/g) || []).length === 2, "report rows must be grouped into one section per category");
 expect(printed.indexOf("ALT-1") < printed.indexOf("ALT-2") && printed.indexOf("ALT-2") < printed.indexOf("STA-1"), "category rows must stay grouped in first-seen order");
-expect((printed.match(/<tr><td>[123]<\/td>/g) || []).length === 3, "all report rows must retain sequential numbers");
+expect((printed.match(/<tr><td>/g) || []).length === 3, "all report rows must print without a number cell");
+expect(!printed.includes("<th>No.</th>") && !/<tr><td>\d+<\/td>/.test(printed), "customer-facing report must not show a No. column or row number");
+expect(printed.includes("<tr><td>オルタネータ"), "the first printed cell must contain the category, not a number");
+expect((printed.match(/<th>/g) || []).length === 10, "each category must use a five-column table");
 expect(printed.includes("<td class='g-part-number'>G0102-10001</td>"), "G part numbers must use the single-line code cell");
 expect(!printed.includes("INTERNAL-ISSUE-ID") && !printed.includes("発行番号："), "internal issue number must not print");
 expect(!printed.includes("円表示です。") && !printed.includes("本書に掲載のない"), "removed explanatory phrases must not print");
-expect(printed.includes("掲載価格は税抜です。") && printed.includes("最新の在庫状況と価格をご確認ください。"), "tax and inventory cautions must remain");
+expect(printed.includes("<strong>価格・送料</strong>") && printed.includes("<strong>ご注文前の確認</strong>"), "price conditions and pre-order check must have separate labels");
+expect(printed.includes("本書の価格は発行日時点の税抜価格です。送料・消費税は別途申し受けます。"), "separate-shipping report must explain tax-exclusive price and charges");
+expect(printed.includes("価格・在庫状況は変動する場合があります。ご注文前に最新の価格と在庫状況をご確認ください。"), "pre-order check must state what may change");
+const freeShipping = runtime.renderCustomerPriceReport({ customer: { name: "架空得意先", shipping_charge_rule: "free" }, rows: [] });
+expect(freeShipping.includes("送料は無料です。消費税は別途申し受けます。") && !freeShipping.includes("送料・消費税は別途申し受けます。"), "free-shipping customer must retain its shipping rule");
 const singleCategory = runtime.renderCustomerPriceReport({
   customer: { name: "架空得意先" },
   rows: [{ category_code: "starter", category_label: "スタータ", genuine_part_number: "ONLY-1", product_kind: "rebuilt", sales_price_jpy: 5000 }]
