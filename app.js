@@ -7698,6 +7698,8 @@ var CONCIERGE_AI_SCREEN_IDS = Object.freeze({
   "customer-shipping": true,
   "customer-users": true,
   "kikan-mgmt": true,
+  "report-hub": true,
+  "customer-price-report": true,
   "manufacturing-ranking-report": true,
   "production-ranking-mgmt": true,
   "rakuten-bulk": true,
