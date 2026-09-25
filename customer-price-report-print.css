@@ -1,0 +1,32 @@
+@page { size: A4 portrait; margin: 13mm 12mm 15mm; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #1c2936; background: #fff; font-family: "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif; font-size: 11px; }
+.print-toolbar { display: flex; gap: 8px; justify-content: flex-end; padding: 12px; background: #eef2f6; }
+.print-toolbar button { padding: 8px 14px; border: 1px solid #c9d2dd; border-radius: 6px; background: #fff; color: #223b57; font: inherit; font-weight: 700; cursor: pointer; }
+.print-toolbar button:first-child { border-color: #c60020; background: #d6001d; color: #fff; }
+.document { max-width: 210mm; margin: 0 auto; padding: 12mm; }
+.document-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10mm; border-bottom: 2px solid #1a1a2e; padding-bottom: 7mm; }
+.document-head h1 { margin: 0 0 3mm; color: #1a1a2e; font-size: 24px; letter-spacing: .04em; }
+.document-head small { color: #5e6b79; }
+.document-meta { text-align: right; line-height: 1.6; white-space: nowrap; }
+.customer { margin: 7mm 0 5mm; padding: 4mm 5mm; border: 1px solid #cfd8e1; background: #f8fafc; font-size: 12px; font-weight: 700; }
+.terms { margin: 0 0 6mm; line-height: 1.6; }
+.price-list { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.price-list thead { display: table-header-group; }
+.price-list th { padding: 2.5mm 2mm; border-bottom: 1.5px solid #253c56; background: #eff3f7; text-align: left; font-size: 10px; }
+.price-list td { padding: 2.6mm 2mm; border-bottom: 1px solid #dae1e8; vertical-align: top; overflow-wrap: anywhere; }
+.price-list th:nth-child(1), .price-list td:nth-child(1) { width: 7%; }
+.price-list th:nth-child(2), .price-list td:nth-child(2) { width: 15%; }
+.price-list th:nth-child(3), .price-list td:nth-child(3) { width: 14%; }
+.price-list th:nth-child(4), .price-list td:nth-child(4) { width: 19%; }
+.price-list th:nth-child(5), .price-list td:nth-child(5) { width: 20%; }
+.price-list th:nth-child(6), .price-list td:nth-child(6) { width: 25%; text-align: right; white-space: nowrap; }
+.price-list tr { break-inside: avoid; page-break-inside: avoid; }
+.price-list .secondary { display: block; margin-top: 1.5mm; color: #697789; font-size: 9px; }
+.price-list .price { font-size: 12px; font-weight: 800; }
+.document-footer { margin-top: 6mm; border-top: 1px solid #dce3e9; padding-top: 3mm; color: #5d6976; line-height: 1.7; }
+@media print {
+  .print-toolbar { display: none; }
+  .document { max-width: none; padding: 0; }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

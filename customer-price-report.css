@@ -1,0 +1,102 @@
+#screen-report-hub,
+#screen-customer-price-report { font-family: var(--dcats-font-ui); }
+.cpr-hub,
+.cpr-page { width: min(1280px, 100%); margin: 0 auto; padding: 28px 22px 44px; }
+.cpr-hub-heading { margin-bottom: 24px; }
+.cpr-eyebrow { display: block; color: #80520e; font-size: 11px; font-weight: 800; letter-spacing: .12em; }
+.cpr-hub-heading h1,
+.cpr-intro h1 { margin: 5px 0 8px; color: var(--dcats-ink); font-size: 26px; line-height: 1.3; }
+.cpr-hub-heading p,
+.cpr-intro p { color: #526176; line-height: 1.6; }
+.cpr-hub-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.cpr-hub-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 9px;
+  min-height: 190px; padding: 26px; border: 1px solid #d5dde7; border-radius: 15px;
+  background: #fff; text-align: left; color: var(--dcats-ink); cursor: pointer;
+  box-shadow: 0 8px 28px rgba(8, 31, 58, .05);
+}
+.cpr-hub-card:hover { border-color: #b68138; box-shadow: 0 10px 30px rgba(8, 31, 58, .1); }
+.cpr-hub-card[hidden] { display: none; }
+.cpr-hub-card:focus-visible,
+.cpr-page button:focus-visible,
+.cpr-page input:focus-visible,
+.cpr-page select:focus-visible { outline: 3px solid var(--dcats-focus); outline-offset: 2px; }
+.cpr-hub-card-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 10px; background: #fff1de; color: #8d5710; font-size: 21px; }
+.cpr-hub-card strong { font-size: 18px; }
+.cpr-hub-card span:last-child { color: #5c6878; line-height: 1.5; }
+.cpr-intro {
+  display: flex; justify-content: space-between; align-items: center; gap: 20px;
+  margin-bottom: 20px; padding: 24px 28px; border: 1px solid #e6d4b3;
+  border-radius: 15px; background: linear-gradient(120deg, #fffaf1, #fff);
+}
+.cpr-intro-mark { display: grid; place-items: center; width: 70px; height: 70px; flex: none; border-radius: 18px; background: #f7e4c4; color: #875314; font-size: 36px; font-weight: 800; }
+.cpr-workspace { display: grid; grid-template-columns: minmax(250px, 300px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.cpr-panel { border: 1px solid #dce4ec; border-radius: 13px; background: #fff; box-shadow: 0 4px 18px rgba(8, 31, 58, .04); }
+.cpr-filters { padding: 20px; }
+.cpr-filters h2,
+.cpr-panel-head h2 { color: var(--dcats-ink); font-size: 17px; }
+.cpr-filters label { display: block; margin-top: 17px; }
+.cpr-filters label > span { display: flex; justify-content: space-between; color: #31445b; font-size: 12px; font-weight: 800; margin-bottom: 7px; }
+.cpr-filters em { color: #bb1830; font-size: 11px; font-style: normal; }
+.cpr-filters select,
+.cpr-filters input { width: 100%; height: 39px; padding: 0 10px; border: 1px solid #bfcbd8; border-radius: 7px; background: #fff; color: #142a42; font: inherit; }
+.cpr-filters input::placeholder { color: #8190a0; }
+.cpr-primary,
+.cpr-secondary { min-height: 39px; padding: 8px 15px; border-radius: 7px; font: inherit; font-weight: 800; cursor: pointer; }
+.cpr-primary { border: 1px solid #c0001b; background: var(--dcats-brand-red); color: #fff; }
+.cpr-primary:hover:not(:disabled) { background: var(--dcats-brand-red-hover); }
+.cpr-primary:disabled { opacity: .48; cursor: not-allowed; }
+.cpr-secondary { border: 1px solid #bdc9d5; background: #fff; color: #28415f; }
+.cpr-secondary:hover:not(:disabled) { background: #f4f7fa; }
+.cpr-filters > .cpr-primary { width: 100%; margin-top: 22px; }
+.cpr-help { margin-top: 12px; color: #667487; font-size: 12px; line-height: 1.5; }
+.cpr-preview { min-width: 0; padding: 19px; }
+.cpr-panel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.cpr-panel-head h2 { margin-top: 3px; }
+.cpr-status { margin: 16px 0; padding: 12px 14px; border-radius: 7px; background: #f3f7fb; color: #415a75; line-height: 1.5; }
+.cpr-status.error { background: #fff0f0; color: #9b1b2e; }
+.cpr-summary { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.cpr-summary span { padding: 8px 11px; border: 1px solid #d4e3f0; border-radius: 7px; background: #f3f8fc; color: #2b4562; }
+.cpr-summary strong { margin-left: 6px; color: var(--dcats-ink); }
+.cpr-exclusions { margin-bottom: 12px; color: #795622; font-size: 12px; line-height: 1.5; }
+.cpr-table-wrap { overflow-x: auto; }
+.cpr-table { width: 100%; border-collapse: collapse; min-width: 610px; }
+.cpr-table th { padding: 10px 9px; border-bottom: 2px solid #dbe4ed; background: #f7f9fc; color: #3d5067; text-align: left; font-size: 12px; }
+.cpr-table td { padding: 10px 9px; border-bottom: 1px solid #edf1f5; vertical-align: top; }
+.cpr-table td:last-child { white-space: nowrap; text-align: right; font-weight: 800; color: #132f50; }
+.cpr-table small { display: block; margin-top: 4px; color: #667588; }
+.cpr-empty { padding: 55px 10px !important; color: #8a99a9; text-align: center !important; font-weight: 400 !important; }
+.cpr-history { margin-top: 16px; padding: 20px; }
+.cpr-history-list { display: grid; gap: 8px; margin-top: 16px; }
+.cpr-history-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #e2e8ee; border-radius: 8px; }
+.cpr-history-item strong { display: block; color: var(--dcats-ink); }
+.cpr-history-item small { display: block; margin-top: 4px; color: #657489; }
+.cpr-history-empty { color: #748296; }
+@media (max-width: 780px) {
+  .cpr-hub-grid,
+  .cpr-workspace { grid-template-columns: 1fr; }
+  .cpr-hub,
+  .cpr-page { padding: 20px 12px 36px; }
+  .cpr-intro { padding: 19px; }
+  .cpr-intro-mark { display: none; }
+  .cpr-history-item { align-items: flex-start; }
+}
+@media (max-width: 480px) {
+  .cpr-panel-head { align-items: flex-start; }
+  .cpr-panel-head .cpr-primary { max-width: 120px; }
+  .cpr-history-item { flex-direction: column; }
+  .cpr-table-wrap { overflow-x: visible; }
+  .cpr-table { display: block; min-width: 0; }
+  .cpr-table thead { display: none; }
+  .cpr-table tbody { display: block; }
+  .cpr-table tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid #e2e9f0; border-radius: 8px; }
+  .cpr-table td { display: block; min-width: 0; padding: 9px 11px; border-bottom: 0; overflow-wrap: anywhere; }
+  .cpr-table td::before { display: block; margin-bottom: 3px; color: #667588; font-size: 10px; font-weight: 800; }
+  .cpr-table td:nth-child(1)::before { content: "カテゴリ・区分"; }
+  .cpr-table td:nth-child(2)::before { content: "G品番 / 純正品番"; }
+  .cpr-table td:nth-child(3)::before { content: "メーカー品番"; }
+  .cpr-table td:nth-child(4)::before { content: "税抜価格"; }
+  .cpr-table td:last-child { text-align: left; }
+  .cpr-table .cpr-empty { grid-column: 1 / -1; }
+  .cpr-table .cpr-empty::before { display: none; }
+}
