@@ -159,7 +159,7 @@
     var stylesheetUrl = new URL("customer-price-report-print.css", window.location.href).href +
       "?dcats_version=" + encodeURIComponent(APP_VERSION);
     var shipping = customer.shipping_charge_rule === "free" ?
-      "送料は無料です。消費税は別途となります。" : "送料・消費税は別途となります。";
+      "送料は無料です。消費税は別途申し受けます。" : "送料・消費税は別途申し受けます。";
     var groups = new Map();
     rows.forEach(function(row) {
       var key = row.category_code || "";
@@ -168,11 +168,9 @@
       });
       groups.get(key).rows.push(row);
     });
-    var rowNumber = 0;
     var categorySections = Array.from(groups.values()).map(function(group) {
       var body = group.rows.map(function(row) {
-        rowNumber += 1;
-        return "<tr><td>" + rowNumber + "</td><td>" + safe(row.category_label || categoryLabel(row.category_code)) +
+        return "<tr><td>" + safe(row.category_label || categoryLabel(row.category_code)) +
           "<span class='secondary'>" + safe(kindLabel(row.product_kind)) + "</span></td><td class='g-part-number'>" +
           safe(row.gltek_part_number || "—") + "</td><td>" + safe(row.genuine_part_number || "—") +
           (row.genuine_part_number_2 ? "<span class='secondary'>" + safe(row.genuine_part_number_2) + "</span>" : "") +
@@ -180,7 +178,7 @@
           safe(yen(row.sales_price_jpy)) + "</td></tr>";
       }).join("");
       return "<section class='category-section'><h2 class='category-heading'>" + safe(group.label) + "</h2>" +
-        "<table class='price-list'><thead><tr><th>No.</th><th>カテゴリ・区分</th><th>G品番</th><th>純正品番</th><th>メーカー品番</th><th>販売価格</th></tr></thead><tbody>" +
+        "<table class='price-list'><thead><tr><th>カテゴリ・区分</th><th>G品番</th><th>純正品番</th><th>メーカー品番</th><th>販売価格</th></tr></thead><tbody>" +
         body + "</tbody></table></section>";
     }).join("");
     return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>" +
@@ -191,7 +189,8 @@
       "<div class='document-meta'>発行日時：" + safe(dateLabel(issue.issued_at)) +
       "<br>発行者：" + safe(issue.issued_by_name || "—") + "</div></header>" +
       "<div class='customer'>" + safe(customer.name || "—") + " 御中</div>" +
-      "<p class='terms'>" + safe(shipping) + " 掲載価格は税抜です。発行時点の価格です。ご注文前に最新の在庫状況と価格をご確認ください。</p>" +
+      "<div class='report-notes'><div class='report-note'><strong>価格・送料</strong><p>本書の価格は発行日時点の税抜価格です。" + safe(shipping) + "</p></div>" +
+      "<div class='report-note'><strong>ご注文前の確認</strong><p>価格・在庫状況は変動する場合があります。ご注文前に最新の価格と在庫状況をご確認ください。</p></div></div>" +
       categorySections +
       "</main></body></html>";
   }
