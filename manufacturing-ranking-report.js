@@ -1710,7 +1710,8 @@
     byId("manufacturing-ranking-supplier").addEventListener("change", updatePreview);
     byId("manufacturing-ranking-supplier-status").addEventListener("change", updatePreview);
     byId("btn-back-manufacturing-ranking-report").addEventListener("click", function() {
-      if (typeof returnToMenuFresh === "function") returnToMenuFresh();
+      if (typeof enterReportHub === "function") enterReportHub();
+      else if (typeof returnToMenuFresh === "function") returnToMenuFresh();
       else if (typeof showScreen === "function") showScreen("menu");
     });
     byId("btn-logout-manufacturing-ranking-report").addEventListener("click", function() {

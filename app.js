@@ -615,7 +615,7 @@ var TRANSLATIONS = {
     mi_data_title: "データ管理",
     mi_data_desc: "品番データの一括インポートや編集ができます。",
     mi_report_title: "レポート",
-    mi_report_desc: "在庫・出荷データの集計レポートを表示します。",
+    mi_report_desc: "得意先向け販売価格表と製造ランキング帳票を作成します。",
     tag_coming: "準備中",
     tag_admin_only: "管理者専用",
     ph_search: "品番で検索 (ハイフン有無OK)",
@@ -1770,7 +1770,7 @@ var TRANSLATIONS = {
     customer_access_show_zero_price: "0円の価格も表示",
     customer_access_priced_only: "販売価格がある商品だけ表示",
     customer_access_show_no_price: "価格未設定の商品も表示",
-    customer_access_price_list: "価格表を印刷・PDF保存",
+    customer_access_price_list: "販売価格表を作成",
     customer_access_price_list_loading: "価格表を作成中...",
     customer_access_price_list_empty: "価格設定済みの商品がありません。",
     customer_access_price_list_unsaved: "表示設定または価格ランクに未保存の変更があります。先に変更を保存してください。",
@@ -2925,7 +2925,7 @@ var TRANSLATIONS = {
     mi_data_title: "Data Management",
     mi_data_desc: "Bulk import and edit part number data.",
     mi_report_title: "Reports",
-    mi_report_desc: "View inventory and shipping summary reports.",
+    mi_report_desc: "Create customer price lists and manufacturing ranking reports.",
     tag_coming: "Coming Soon",
     tag_admin_only: "Admin Only",
     ph_search: "Search by part number (hyphens optional)",
@@ -4080,7 +4080,7 @@ var TRANSLATIONS = {
     customer_access_show_zero_price: "Show zero-yen prices",
     customer_access_priced_only: "Show only products with sales price",
     customer_access_show_no_price: "Show products without price",
-    customer_access_price_list: "Print / Save Price List as PDF",
+    customer_access_price_list: "Create Customer Price List",
     customer_access_price_list_loading: "Preparing price list...",
     customer_access_price_list_empty: "No products have a configured price.",
     customer_access_price_list_unsaved: "Display settings or the price rank have unsaved changes. Save the changes first.",
@@ -5276,7 +5276,7 @@ var TRANSLATIONS = {
     mi_data_title: "数据管理",
     mi_data_desc: "批量导入和编辑零件编号数据。",
     mi_report_title: "报告",
-    mi_report_desc: "查看库存和出货汇总报告。",
+    mi_report_desc: "制作客户销售价格表与制造排行报表。",
     tag_coming: "即将推出",
     tag_admin_only: "仅限管理员",
     ph_search: "按零件编号搜索（有无连字符均可）",
@@ -6390,7 +6390,7 @@ var TRANSLATIONS = {
     customer_access_show_zero_price: "显示0日元价格",
     customer_access_priced_only: "仅显示有销售价格的商品",
     customer_access_show_no_price: "显示未设置价格的商品",
-    customer_access_price_list: "打印价格表／保存PDF",
+    customer_access_price_list: "制作销售价格表",
     customer_access_price_list_loading: "正在生成价格表...",
     customer_access_price_list_empty: "没有已设置价格的商品。",
     customer_access_price_list_unsaved: "显示设置或价格等级有未保存的更改。请先保存更改。",
@@ -7054,7 +7054,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1047";
+var APP_VERSION       = "v1.1.1048";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -9969,7 +9969,7 @@ function updateAllHeaders() {
   var cls   = roleClass(userProfile.role);
   var greet = tf("greeting", { name: name });
 
-  ["menu","customer-portal","customer-shipping","customer-catalog","customer-orders","sales-order-mgmt","shipping-document-mgmt","core-return-mgmt","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","component-compat-mgmt","product-kind-stock-mgmt","manufacturing-cost-mgmt","finished-label-mgmt","finished-product-shipping","production-ranking-mgmt","manufacturing-ranking-report","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","shipping-rate-mgmt","logs"].forEach(function(sc) {
+  ["menu","customer-portal","customer-shipping","customer-catalog","customer-orders","sales-order-mgmt","shipping-document-mgmt","core-return-mgmt","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","component-compat-mgmt","product-kind-stock-mgmt","manufacturing-cost-mgmt","finished-label-mgmt","finished-product-shipping","production-ranking-mgmt","report-hub","customer-price-report","manufacturing-ranking-report","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","shipping-rate-mgmt","logs"].forEach(function(sc) {
     var nameEl  = document.getElementById(sc + "-username");
     var badgeEl = document.getElementById(sc + "-role-badge");
     if (nameEl)  nameEl.textContent = name;
@@ -10195,7 +10195,7 @@ function renderMenu() {
     { icon: "&#x1F517;", titleKey: "mi_component_compat_title", descKey: "mi_component_compat_desc", action: "component-compat-mgmt", available: canManageComponentCompatibility() },
     { icon: "&#x1F4B0;", titleKey: "sales_pricing_title", descKey: "sales_pricing_mgmt_desc", action: "sales-pricing-mgmt", available: canViewSalesPricing() },
     { icon: "&#x1F6D2;", titleKey: "mi_purchase_mgmt_title", descKey: "mi_purchase_mgmt_desc", action: "purchase-mgmt", available: canViewPurchaseMgmt() },
-    { icon: "&#x1F4CA;", titleKey: "mi_report_title", descKey: "mi_report_desc", action: "manufacturing-ranking-report", available: canViewManufacturingReport() },
+    { icon: "&#x1F4CA;", titleKey: "mi_report_title", descKey: "mi_report_desc", action: "report-hub", available: canViewManufacturingReport() || canManageCustomerAccess() },
     { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canManageCompatibility() },
     { icon: "&#x2699;", titleKey: "mi_api_settings_title", descKey: "mi_api_settings_desc", action: "api-settings", available: canManageSharedSettings() },
     { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: canViewOperationLogs() }
@@ -10264,7 +10264,7 @@ function renderMenu() {
       else if (card.dataset.action === "product-kind-stock-mgmt") enterProductKindStockMgmt();
       else if (card.dataset.action === "manufacturing-cost-mgmt") enterManufacturingCostMgmt();
       else if (card.dataset.action === "production-ranking-mgmt") enterProductionRankingMgmt();
-      else if (card.dataset.action === "manufacturing-ranking-report") enterManufacturingRankingReport();
+      else if (card.dataset.action === "report-hub") enterReportHub();
       else if (card.dataset.action === "kikan-mgmt") enterKikanMgmt();
       else if (card.dataset.action === "rakuten-price") enterRakutenPrice();
       else if (card.dataset.action === "rakuten-bulk") enterRakutenBulk();
@@ -49723,31 +49723,7 @@ function writeCustomerPriceListWindow(win, html) {
 async function openCustomerPriceList() {
   if (!canManageCustomerAccess() || !currentCustomerAccessCustomer) { alert(t("err_perm")); return; }
   if (customerAccessHasUnsavedChanges()) { alert(t("customer_access_price_list_unsaved")); return; }
-  var button = document.getElementById("btn-customer-price-list");
-  var originalText = button ? button.textContent : "";
-  var win = window.open("", "_blank");
-  if (!win) { alert(t("customer_access_price_list_popup_blocked")); return; }
-  try { win.opener = null; } catch (e) { /* Browser controls the opener relationship. */ }
-  if (button) { button.disabled = true; button.textContent = t("customer_access_price_list_loading"); }
-  writeCustomerPriceListWindow(win, "<!doctype html><html lang='ja'><head><meta charset='utf-8'><link rel='stylesheet' href='customer-price-list-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></head><body><main class='message-page'>" + esc(t("customer_access_price_list_loading")) + "</main></body></html>");
-  try {
-    var customer = Object.assign({}, currentCustomerAccessCustomer);
-    var priceListContext = {
-      settings: Object.assign({}, customerAccessSettings || {}),
-      visibilityRows: (customerAccessVisibilityRows || []).map(function(row) { return Object.assign({}, row); })
-    };
-    var rows = await loadCustomerPriceListRows(customer, priceListContext);
-    if (!rows.length) {
-      writeCustomerPriceListWindow(win, "<!doctype html><html lang='ja'><head><meta charset='utf-8'><link rel='stylesheet' href='customer-price-list-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></head><body><div class='toolbar'><button class='secondary' id='dcats-close-customer-price-list' type='button'>閉じる</button></div><main class='message-page'>" + esc(t("customer_access_price_list_empty")) + "</main></body></html>");
-      return;
-    }
-    writeCustomerPriceListWindow(win, buildCustomerPriceListHtml(customer, rows, priceListContext.settings));
-  } catch (e) {
-    console.warn("customer price list failed", e);
-    if (!win.closed) writeCustomerPriceListWindow(win, "<!doctype html><html lang='ja'><head><meta charset='utf-8'><link rel='stylesheet' href='customer-price-list-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></head><body><div class='toolbar'><button class='secondary' id='dcats-close-customer-price-list' type='button'>閉じる</button></div><main class='message-page error'>" + esc(t("customer_access_price_list_failed")) + "</main></body></html>");
-  } finally {
-    if (button && button.isConnected) { button.disabled = false; button.textContent = originalText || t("customer_access_price_list"); }
-  }
+  await enterCustomerPriceReport(currentCustomerAccessCustomer.id);
 }
 
 function customerAccessCategoryChecksHtml() {

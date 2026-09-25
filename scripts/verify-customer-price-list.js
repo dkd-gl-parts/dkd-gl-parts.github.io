@@ -3,47 +3,47 @@ const path = require("path");
 
 const root = path.resolve(__dirname, "..");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
-const css = fs.readFileSync(path.join(root, "customer-price-list-print.css"), "utf8");
+const report = fs.readFileSync(path.join(root, "customer-price-report.js"), "utf8");
+const css = fs.readFileSync(path.join(root, "customer-price-report-print.css"), "utf8");
+const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const build = fs.readFileSync(path.join(root, "scripts", "build-static-site.js"), "utf8");
 const workflow = fs.readFileSync(path.join(root, ".github", "workflows", "search-performance-guard.yml"), "utf8");
 
 function expect(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+expect(/async function openCustomerPriceList\(\)\s*{[\s\S]*?await enterCustomerPriceReport\(currentCustomerAccessCustomer\.id\);\s*}/.test(app),
+  "existing customer-price-list action must open the new report flow");
+expect(app.includes('action: "report-hub"'), "reports menu must open its hub");
 [
-  "async function loadCustomerPriceListBaseRows",
-  ".range(from, from + pageSize - 1)",
-  "async function loadCustomerPriceListProductMap",
-  "async function loadCustomerPriceListRows",
-  "customerCategoryIsVisible(category, visibilityRows)",
-  "calculateSalesPriceClient(price.base_price_jpy, rank)",
-  "function buildCustomerPriceListHtml",
-  "customerProductKindLabel(price.product_kind)",
-  "function customerPriceListShippingTerms",
-  "送料は無料です。消費税は別途となります。",
-  "送料・消費税は別途となります。",
-  "buildCustomerPriceListHtml(customer, rows, priceListContext.settings)",
+  'sb.rpc("get_customer_price_report_preview"',
+  'sb.rpc("issue_customer_price_report"',
+  'sb.rpc("list_customer_price_report_issues"',
+  'sb.rpc("get_customer_price_report_issue"',
+  "p_preview_hash: state.preview.preview_hash",
+  "p_request_id: state.requestId",
+  'window.open("", "_blank")',
+  "!Array.isArray(result.data.rows)",
+  "win.print()",
+  "safe(yen(row.sales_price_jpy))",
+  "safe(customer.name",
+  "categoryLabel(row.category_code)",
   "G品番",
   "純正品番",
   "メーカー品番",
-  "販売価格",
-  "メモ",
-  "送料・消費税は別途となります。",
-  "在庫販売のため、ご注文前に当社システムで最新の在庫状況をご確認ください。",
-  "customerAccessHasUnsavedChanges()",
-  "window.open(\"\", \"_blank\")",
-  "win.print()",
-  "id='btn-customer-price-list'"
-].forEach((fragment) => expect(app.includes(fragment), `customer price list wiring is missing: ${fragment}`));
+  "販売価格"
+].forEach((fragment) => expect(report.includes(fragment), `price report contract is missing: ${fragment}`));
+expect(!report.includes("product_base_prices"), "browser must not calculate a report from base-price rows");
+expect(!report.includes("calculateSalesPriceClient"), "browser must not calculate effective sales prices");
+expect(!report.includes("price_rank_code"), "customer-facing report must not expose price ranks");
+expect(!report.includes("manufacturing_cost"), "customer-facing report must not expose manufacturing cost");
+expect(!report.includes("basis_note"), "customer-facing report must not expose price-basis notes");
+expect(/@page\s*{[^}]*size:\s*A4\s+portrait/i.test(css), "price report must use A4 portrait printing");
+expect(css.includes(".price-list thead { display: table-header-group; }"), "printed page headers must repeat");
+expect(html.includes('id="screen-report-hub"') && html.includes('id="screen-customer-price-report"'), "report screens must exist");
+expect(html.includes('src="customer-price-report.js?') && html.includes('href="customer-price-report.css?'), "report assets must load");
+expect(build.includes('"customer-price-report.js"') && build.includes('"customer-price-report-print.css"'), "report assets must ship");
+expect(workflow.includes("run: node scripts/verify-customer-price-list.js"), "CI must verify the report contract");
 
-expect(!app.includes("esc(price.basis_note"), "internal price-basis notes must not be printed for customers");
-expect(!app.includes("<th>大光品番</th>"), "Daiko part numbers must not be printed on customer price lists");
-expect(!app.includes("<span>得意先コード</span>"), "customer codes must not be printed on customer price lists");
-expect(!app.includes("<span>価格ランク</span>"), "price ranks must not be printed on customer price lists");
-expect(!app.includes("<span>掲載件数</span>"), "item counts must not be printed on customer price lists");
-expect(!app.includes("<h1>販売価格表</h1><p>Daiko Catalog &amp; Search System</p>"), "the system subtitle must not be printed on customer price lists");
-expect(/@page\s*{[^}]*size:\s*A4\s+portrait/i.test(css), "customer price list must use A4 portrait printing");
-expect(css.includes(".price-list thead { display: table-header-group; }"), "price list headers must repeat on printed pages");
-expect(workflow.includes('run: node scripts/verify-customer-price-list.js'), "GitHub Actions must verify the customer price list");
-
-console.log("customer price list guard passed");
+console.log("customer price report guard passed");
