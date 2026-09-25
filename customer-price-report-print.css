@@ -24,6 +24,7 @@ body { margin: 0; color: #1c2936; background: #fff; font-family: "Noto Sans JP",
 .price-list th:nth-child(4), .price-list td:nth-child(4) { width: 19%; }
 .price-list th:nth-child(5), .price-list td:nth-child(5) { width: 20%; }
 .price-list th:nth-child(6), .price-list td:nth-child(6) { width: 25%; text-align: right; white-space: nowrap; }
+.price-list .g-part-number { font-size: 9px; white-space: nowrap; overflow-wrap: normal; }
 .price-list tr { break-inside: avoid; page-break-inside: avoid; }
 .price-list .secondary { display: block; margin-top: 1.5mm; color: #697789; font-size: 9px; }
 .price-list .price { font-size: 12px; font-weight: 800; }

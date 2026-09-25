@@ -48,6 +48,7 @@ expect(/@page\s*{[^}]*size:\s*A4\s+portrait/i.test(css), "price report must use 
 expect(css.includes(".price-list thead { display: table-header-group; }"), "printed page headers must repeat");
 expect(css.includes("@media screen and (max-width: 700px)") && css.includes(".print-help { flex: 0 0 100%; }"), "narrow print preview must keep PDF controls visible");
 expect(css.includes(".category-section + .category-section { break-before: page; page-break-before: always;"), "each later category must start a new printed page");
+expect(/\.price-list \.g-part-number\s*\{[^}]*font-size:\s*9px;[^}]*white-space:\s*nowrap;[^}]*overflow-wrap:\s*normal;/.test(css), "G part numbers must print smaller on one line");
 expect(html.includes('id="screen-report-hub"') && html.includes('id="screen-customer-price-report"'), "report screens must exist");
 expect(html.includes('src="customer-price-report.js?') && html.includes('href="customer-price-report.css?'), "report assets must load");
 expect(build.includes('"customer-price-report.js"') && build.includes('"customer-price-report-print.css"'), "report assets must ship");
@@ -69,7 +70,7 @@ const printed = runtime.renderCustomerPriceReport({
   issued_by_name: "検証用",
   customer: { name: "架空得意先", shipping_charge_rule: "separate" },
   rows: [
-    { category_code: "alternator", category_label: "オルタネータ", genuine_part_number: "ALT-1", product_kind: "rebuilt", sales_price_jpy: 5000 },
+    { category_code: "alternator", category_label: "オルタネータ", gltek_part_number: "G0102-10001", genuine_part_number: "ALT-1", product_kind: "rebuilt", sales_price_jpy: 5000 },
     { category_code: "starter", category_label: "スタータ", genuine_part_number: "STA-1", product_kind: "rebuilt", sales_price_jpy: 6000 },
     { category_code: "alternator", category_label: "オルタネータ", genuine_part_number: "ALT-2", product_kind: "rebuilt", sales_price_jpy: 7000 }
   ]
@@ -77,6 +78,7 @@ const printed = runtime.renderCustomerPriceReport({
 expect((printed.match(/<section class='category-section'>/g) || []).length === 2, "report rows must be grouped into one section per category");
 expect(printed.indexOf("ALT-1") < printed.indexOf("ALT-2") && printed.indexOf("ALT-2") < printed.indexOf("STA-1"), "category rows must stay grouped in first-seen order");
 expect((printed.match(/<tr><td>[123]<\/td>/g) || []).length === 3, "all report rows must retain sequential numbers");
+expect(printed.includes("<td class='g-part-number'>G0102-10001</td>"), "G part numbers must use the single-line code cell");
 expect(!printed.includes("INTERNAL-ISSUE-ID") && !printed.includes("発行番号："), "internal issue number must not print");
 expect(!printed.includes("円表示です。") && !printed.includes("本書に掲載のない"), "removed explanatory phrases must not print");
 expect(printed.includes("掲載価格は税抜です。") && printed.includes("最新の在庫状況と価格をご確認ください。"), "tax and inventory cautions must remain");

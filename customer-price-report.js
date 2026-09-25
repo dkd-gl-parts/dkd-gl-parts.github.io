@@ -120,7 +120,7 @@
       var body = group.rows.map(function(row) {
         rowNumber += 1;
         return "<tr><td>" + rowNumber + "</td><td>" + safe(row.category_label || categoryLabel(row.category_code)) +
-          "<span class='secondary'>" + safe(kindLabel(row.product_kind)) + "</span></td><td>" +
+          "<span class='secondary'>" + safe(kindLabel(row.product_kind)) + "</span></td><td class='g-part-number'>" +
           safe(row.gltek_part_number || "—") + "</td><td>" + safe(row.genuine_part_number || "—") +
           (row.genuine_part_number_2 ? "<span class='secondary'>" + safe(row.genuine_part_number_2) + "</span>" : "") +
           "</td><td>" + safe(row.manufacturer_part_number || "—") + "</td><td class='price'>" +
