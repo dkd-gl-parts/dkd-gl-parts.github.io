@@ -6,7 +6,8 @@ const XLSX = require("../vendor/xlsx-0.20.3.full.min.js");
 require("../manufacturing-cost-import.js");
 const fakeElements = {
   "container-stock-results": { innerHTML: "" },
-  "container-stock-apply": { disabled: true }
+  "container-stock-apply": { disabled: true },
+  "container-stock-reference": { value: "" }
 };
 globalThis.document = {
   readyState: "loading",
@@ -18,6 +19,12 @@ require("../container-stock-import.js");
 const parser = globalThis.DcatsManufacturingCostImport;
 const receipt = globalThis.DcatsContainerStockImport;
 assert.ok(parser && receipt, "shared parser and receipt module must load");
+assert.strictEqual(receipt._useFileNameAsReference("GLTEK完品2ed.xlsx"), true);
+assert.strictEqual(fakeElements["container-stock-reference"].value, "GLTEK完品2ed.xlsx");
+assert.strictEqual(receipt._useFileNameAsReference("other.xlsx"), false, "existing identifier must not be overwritten");
+fakeElements["container-stock-reference"].value = "";
+assert.strictEqual(receipt._useFileNameAsReference("L".repeat(110) + ".xlsx"), false);
+assert.strictEqual(fakeElements["container-stock-reference"].value, "");
 
 function sheet(name, matrix, category) {
   return { name, matrix, category, included: true, overrides: {} };
