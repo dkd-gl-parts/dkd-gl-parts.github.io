@@ -2388,6 +2388,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .container-stock-results { margin-top: 12px; }
 .container-stock-summary { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 8px; font-size: 13px; font-weight: 700; }
 .container-stock-duplicate, .container-stock-unresolved { color: #b42318; }
+.container-stock-choice { display: block; margin-bottom: 5px; color: #9a5b00; font-weight: 700; }
+.container-stock-resolution-notice { margin: 0 0 10px; padding: 9px 11px; border: 1px solid #f5c6c1; border-radius: 7px; background: #fff6f5; color: #9d271f; font-size: 12px; }
+.container-stock-error-row td { background: #fff9f8; }
+.container-stock-fix-button { display: block; margin-top: 5px; padding: 2px 0; border: 0; background: none; color: #1765ad; font: inherit; font-weight: 700; cursor: pointer; text-decoration: underline; }
+.container-stock-fix-button:focus-visible { outline: 2px solid #1765ad; outline-offset: 2px; }
+.container-stock-resolver { margin: 0 0 12px; padding: 12px; border: 1px solid #9bc3ec; border-radius: 8px; background: #f7fbff; font-size: 12px; }
+.container-stock-resolver-head { display: flex; align-items: start; justify-content: space-between; gap: 10px; }
+.container-stock-resolver-head strong { display: block; font-size: 14px; color: #19334c; }
+.container-stock-resolver-head small { display: block; margin-top: 3px; color: #667085; }
+.container-stock-resolver p { margin: 9px 0; line-height: 1.5; }
+.container-stock-resolver-fields, .container-stock-resolver-search { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; margin: 10px 0; }
+.container-stock-resolver-fields label, .container-stock-resolver-search label { display: grid; gap: 5px; flex: 1 1 260px; color: #3e4f64; font-weight: 700; }
+.container-stock-resolver-fields button, .container-stock-resolver-search button { min-height: 36px; }
+.container-stock-resolver-hint { color: #667085; }
+.container-stock-product-results { display: grid; gap: 6px; margin: 10px 0; max-height: 250px; overflow-y: auto; }
+.container-stock-product-result { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px; border: 1px solid #dce8f4; border-radius: 6px; background: #fff; }
+.container-stock-product-result > div { flex: 1 1 220px; min-width: 0; }
+.container-stock-product-result strong, .container-stock-product-result small { display: block; overflow-wrap: anywhere; }
+.container-stock-product-result small { margin-top: 3px; color: #667085; }
 .container-stock-table-wrap { max-height: 440px; overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
 .container-stock-table { width: 100%; min-width: 840px; margin: 0; font-size: 12px; }
 .container-stock-table td { vertical-align: middle; }
@@ -2450,6 +2469,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .container-stock-file-control { flex-wrap: wrap; }
   .container-stock-sheet label { flex: 1 1 115px; }
   .container-stock-sheet select { max-width: none; width: 100%; }
+  .container-stock-resolver-fields button, .container-stock-resolver-search button { width: 100%; }
+  .container-stock-product-result button { flex: 1 1 130px; }
   .stock-mgmt-toolbar .form-select { max-width: none; flex: 1 1 140px; }
   .stock-mgmt-table { min-width: 960px; font-size: 12px; }
   .stock-history-form { grid-template-columns: 1fr 1fr; }

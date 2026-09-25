@@ -4,6 +4,15 @@ const path = require("path");
 const XLSX = require("../vendor/xlsx-0.20.3.full.min.js");
 
 require("../manufacturing-cost-import.js");
+const fakeElements = {
+  "container-stock-results": { innerHTML: "" },
+  "container-stock-apply": { disabled: true }
+};
+globalThis.document = {
+  readyState: "loading",
+  addEventListener() {},
+  getElementById(id) { return fakeElements[id] || null; }
+};
 require("../container-stock-import.js");
 
 const parser = globalThis.DcatsManufacturingCostImport;
@@ -32,6 +41,41 @@ assert.strictEqual(rows.length, 3);
 assert.strictEqual(rows.reduce((sum, row) => sum + row.quantity, 0), 13);
 assert.strictEqual(rows.find((row) => row.part_number === "31400-58J10").quantity, 10);
 assert.deepStrictEqual(rows.find((row) => row.part_number === "31400-58J10").sources[0].rows, [3, 4]);
+assert.strictEqual(rows.find((row) => row.part_number === "31400-58J10").match_part_number, "31400-58J10");
+
+receipt._state.corrections["alternator|31400-58J10"] = "31400-58J11";
+receipt._state.correctionReasons["alternator|31400-58J10"] = "現物ラベルで確認済み";
+rows = receipt._collectRows();
+assert.strictEqual(rows.find((row) => row.part_number === "31400-58J10").match_part_number, "31400-58J11");
+assert.strictEqual(rows.find((row) => row.part_number === "31400-58J10").match_reason, "現物ラベルで確認済み");
+assert.strictEqual(rows.find((row) => row.part_number === "31400-58J10").quantity, 10);
+assert.strictEqual(rows.reduce((sum, row) => sum + row.quantity, 0), 13);
+delete receipt._state.corrections["alternator|31400-58J10"];
+delete receipt._state.correctionReasons["alternator|31400-58J10"];
+assert.strictEqual(receipt._validPartNumber("SM-760-01"), true);
+assert.strictEqual(receipt._validPartNumber("xx"), false);
+
+receipt._state.preview = {
+  total_quantity: 13,
+  rows: [
+    { ...rows.find((row) => row.part_number === "31400-58J10"), candidates: [], match_part_number: "31400-58J11" },
+    { ...rows.find((row) => row.part_number === "27060-B2030"), candidates: [{ dkd_shohin_id: 123, genuine_part_number: "27060-B2030",
+      stock_qty: 4, variant_active: true }] }
+  ]
+};
+receipt._state.selections = {};
+receipt._renderPreview();
+assert.match(fakeElements["container-stock-results"].innerHTML, /一致なし 1件/);
+assert.match(fakeElements["container-stock-results"].innerHTML, /エラー: 商品マスタに一致なし/);
+assert.match(fakeElements["container-stock-results"].innerHTML, /照合品番: 31400-58J11/);
+assert.strictEqual(fakeElements["container-stock-apply"].disabled, true);
+receipt._state.editingKey = "alternator|31400-58J10";
+receipt._renderPreview();
+assert.match(fakeElements["container-stock-results"].innerHTML, /照合を修正/);
+assert.match(fakeElements["container-stock-results"].innerHTML, /この入庫だけの品番読み替え/);
+assert.match(fakeElements["container-stock-results"].innerHTML, /修正理由/);
+receipt._state.preview = null;
+receipt._state.editingKey = "";
 
 receipt._state.sheets[0].category = "";
 assert.throws(() => receipt._collectRows(), /区分を選択/);
