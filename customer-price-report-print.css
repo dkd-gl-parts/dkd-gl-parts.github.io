@@ -1,7 +1,8 @@
 @page { size: A4 portrait; margin: 13mm 12mm 15mm; }
 * { box-sizing: border-box; }
 body { margin: 0; color: #1c2936; background: #fff; font-family: "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif; font-size: 11px; }
-.print-toolbar { display: flex; gap: 8px; justify-content: flex-end; padding: 12px; background: #eef2f6; }
+.print-toolbar { display: flex; gap: 8px; justify-content: flex-end; align-items: center; padding: 12px; background: #eef2f6; }
+.print-help { margin-right: auto; color: #4d5d6e; }
 .print-toolbar button { padding: 8px 14px; border: 1px solid #c9d2dd; border-radius: 6px; background: #fff; color: #223b57; font: inherit; font-weight: 700; cursor: pointer; }
 .print-toolbar button:first-child { border-color: #c60020; background: #d6001d; color: #fff; }
 .document { max-width: 210mm; margin: 0 auto; padding: 12mm; }
@@ -24,7 +25,11 @@ body { margin: 0; color: #1c2936; background: #fff; font-family: "Noto Sans JP",
 .price-list tr { break-inside: avoid; page-break-inside: avoid; }
 .price-list .secondary { display: block; margin-top: 1.5mm; color: #697789; font-size: 9px; }
 .price-list .price { font-size: 12px; font-weight: 800; }
-.document-footer { margin-top: 6mm; border-top: 1px solid #dce3e9; padding-top: 3mm; color: #5d6976; line-height: 1.7; }
+@media screen and (max-width: 700px) {
+  .print-toolbar { position: sticky; top: 0; z-index: 1; flex-wrap: wrap; justify-content: flex-start; }
+  .print-help { flex: 0 0 100%; }
+  .document { min-width: 680px; padding: 18px; }
+}
 @media print {
   .print-toolbar { display: none; }
   .document { max-width: none; padding: 0; }
