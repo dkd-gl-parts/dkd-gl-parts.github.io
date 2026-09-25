@@ -12,6 +12,8 @@ body { margin: 0; color: #1c2936; background: #fff; font-family: "Noto Sans JP",
 .document-meta { text-align: right; line-height: 1.6; white-space: nowrap; }
 .customer { margin: 7mm 0 5mm; padding: 4mm 5mm; border: 1px solid #cfd8e1; background: #f8fafc; font-size: 12px; font-weight: 700; }
 .terms { margin: 0 0 6mm; line-height: 1.6; }
+.category-section + .category-section { margin-top: 6mm; }
+.category-heading { margin: 0 0 3mm; color: #253c56; font-size: 13px; }
 .price-list { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .price-list thead { display: table-header-group; }
 .price-list th { padding: 2.5mm 2mm; border-bottom: 1.5px solid #253c56; background: #eff3f7; text-align: left; font-size: 10px; }
@@ -33,5 +35,7 @@ body { margin: 0; color: #1c2936; background: #fff; font-family: "Noto Sans JP",
 @media print {
   .print-toolbar { display: none; }
   .document { max-width: none; padding: 0; }
+  .category-section + .category-section { break-before: page; page-break-before: always; margin-top: 0; }
+  .category-heading { break-after: avoid; page-break-after: avoid; }
   body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

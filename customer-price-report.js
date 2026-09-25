@@ -107,24 +107,39 @@
       "?dcats_version=" + encodeURIComponent(APP_VERSION);
     var shipping = customer.shipping_charge_rule === "free" ?
       "送料は無料です。消費税は別途となります。" : "送料・消費税は別途となります。";
-    var body = rows.map(function(row, index) {
-      return "<tr><td>" + (index + 1) + "</td><td>" + safe(row.category_label || categoryLabel(row.category_code)) +
-        "<span class='secondary'>" + safe(kindLabel(row.product_kind)) + "</span></td><td>" +
-        safe(row.gltek_part_number || "—") + "</td><td>" + safe(row.genuine_part_number || "—") +
-        (row.genuine_part_number_2 ? "<span class='secondary'>" + safe(row.genuine_part_number_2) + "</span>" : "") +
-        "</td><td>" + safe(row.manufacturer_part_number || "—") + "</td><td class='price'>" +
-        safe(yen(row.sales_price_jpy)) + "</td></tr>";
+    var groups = new Map();
+    rows.forEach(function(row) {
+      var key = row.category_code || "";
+      if (!groups.has(key)) groups.set(key, {
+        label: row.category_label || categoryLabel(row.category_code), rows: []
+      });
+      groups.get(key).rows.push(row);
+    });
+    var rowNumber = 0;
+    var categorySections = Array.from(groups.values()).map(function(group) {
+      var body = group.rows.map(function(row) {
+        rowNumber += 1;
+        return "<tr><td>" + rowNumber + "</td><td>" + safe(row.category_label || categoryLabel(row.category_code)) +
+          "<span class='secondary'>" + safe(kindLabel(row.product_kind)) + "</span></td><td>" +
+          safe(row.gltek_part_number || "—") + "</td><td>" + safe(row.genuine_part_number || "—") +
+          (row.genuine_part_number_2 ? "<span class='secondary'>" + safe(row.genuine_part_number_2) + "</span>" : "") +
+          "</td><td>" + safe(row.manufacturer_part_number || "—") + "</td><td class='price'>" +
+          safe(yen(row.sales_price_jpy)) + "</td></tr>";
+      }).join("");
+      return "<section class='category-section'><h2 class='category-heading'>" + safe(group.label) + "</h2>" +
+        "<table class='price-list'><thead><tr><th>No.</th><th>カテゴリ・区分</th><th>G品番</th><th>純正品番</th><th>メーカー品番</th><th>販売価格</th></tr></thead><tbody>" +
+        body + "</tbody></table></section>";
     }).join("");
     return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>" +
       "<title>販売価格表 " + safe(customer.name) + "</title>" +
       "<link rel='stylesheet' href='" + safe(stylesheetUrl) + "'></head><body>" +
       "<div class='print-toolbar'><span class='print-help'>PDF保存時は印刷設定の「ヘッダーとフッター」をオフにしてください。</span><button type='button' id='cpr-print'>印刷・PDF保存</button><button type='button' id='cpr-close'>閉じる</button></div>" +
       "<main class='document'><header class='document-head'><div><h1>販売価格表</h1><small>Daiko Catalog &amp; Search System</small></div>" +
-      "<div class='document-meta'>発行番号：" + safe(issue.issue_id || "—") + "<br>発行日時：" + safe(dateLabel(issue.issued_at)) +
+      "<div class='document-meta'>発行日時：" + safe(dateLabel(issue.issued_at)) +
       "<br>発行者：" + safe(issue.issued_by_name || "—") + "</div></header>" +
       "<div class='customer'>" + safe(customer.name || "—") + " 御中</div>" +
-      "<p class='terms'>" + safe(shipping) + " 掲載価格は税抜・円表示です。発行時点の価格です。ご注文前に最新の在庫状況と価格をご確認ください。本書に掲載のない品番は価格未設定または公開対象外です。</p>" +
-      "<table class='price-list'><thead><tr><th>No.</th><th>カテゴリ・区分</th><th>G品番</th><th>純正品番</th><th>メーカー品番</th><th>販売価格</th></tr></thead><tbody>" + body + "</tbody></table>" +
+      "<p class='terms'>" + safe(shipping) + " 掲載価格は税抜です。発行時点の価格です。ご注文前に最新の在庫状況と価格をご確認ください。</p>" +
+      categorySections +
       "</main></body></html>";
   }
 
