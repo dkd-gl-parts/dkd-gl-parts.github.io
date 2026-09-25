@@ -103,6 +103,8 @@
   function printHtml(issue) {
     var customer = issue.customer || {};
     var rows = Array.isArray(issue.rows) ? issue.rows : [];
+    var stylesheetUrl = new URL("customer-price-report-print.css", window.location.href).href +
+      "?dcats_version=" + encodeURIComponent(APP_VERSION);
     var shipping = customer.shipping_charge_rule === "free" ?
       "送料は無料です。消費税は別途となります。" : "送料・消費税は別途となります。";
     var body = rows.map(function(row, index) {
@@ -115,7 +117,7 @@
     }).join("");
     return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>" +
       "<title>販売価格表 " + safe(customer.name) + "</title>" +
-      "<link rel='stylesheet' href='customer-price-report-print.css?dcats_version=" + encodeURIComponent(APP_VERSION) + "'></head><body>" +
+      "<link rel='stylesheet' href='" + safe(stylesheetUrl) + "'></head><body>" +
       "<div class='print-toolbar'><button type='button' id='cpr-print'>印刷・PDF保存</button><button type='button' id='cpr-close'>閉じる</button></div>" +
       "<main class='document'><header class='document-head'><div><h1>販売価格表</h1><small>Daiko Catalog &amp; Search System</small></div>" +
       "<div class='document-meta'>発行番号：" + safe(issue.issue_id || "—") + "<br>発行日時：" + safe(dateLabel(issue.issued_at)) +
@@ -132,6 +134,7 @@
     win.document.open();
     win.document.write(printHtml(issue));
     win.document.close();
+    try { win.opener = null; } catch (ignore) { /* Browser owns opener restrictions. */ }
     win.document.getElementById("cpr-print").addEventListener("click", function() { win.print(); });
     win.document.getElementById("cpr-close").addEventListener("click", function() { win.close(); });
     return true;
@@ -150,7 +153,6 @@
     }
     var win = window.open("", "_blank");
     if (!win) { setStatus("ポップアップを許可して、もう一度お試しください。", true); return; }
-    try { win.opener = null; } catch (ignore) { /* Browser owns opener restrictions. */ }
     win.document.body.textContent = "価格表を発行しています…";
     state.loading = true;
     byId("cpr-issue-button").disabled = true;
@@ -196,7 +198,6 @@
   async function reopen(issueId) {
     var win = window.open("", "_blank");
     if (!win) { setStatus("ポップアップを許可して、もう一度お試しください。", true); return; }
-    try { win.opener = null; } catch (ignore) { /* Browser owns opener restrictions. */ }
     win.document.body.textContent = "保存済み価格表を読み込んでいます…";
     var result = await sb.rpc("get_customer_price_report_issue", { p_issue_id: issueId });
     if (result.error || !result.data || !Array.isArray(result.data.rows)) {

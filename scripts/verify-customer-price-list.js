@@ -26,6 +26,7 @@ expect(app.includes('action: "report-hub"'), "reports menu must open its hub");
   'window.open("", "_blank")',
   "!Array.isArray(result.data.rows)",
   "win.print()",
+  'new URL("customer-price-report-print.css", window.location.href)',
   "safe(yen(row.sales_price_jpy))",
   "safe(customer.name",
   "categoryLabel(row.category_code)",
