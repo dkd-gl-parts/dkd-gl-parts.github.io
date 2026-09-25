@@ -62,6 +62,24 @@ delete receipt._state.corrections["alternator|31400-58J10"];
 delete receipt._state.correctionReasons["alternator|31400-58J10"];
 assert.strictEqual(receipt._validPartNumber("SM-760-01"), true);
 assert.strictEqual(receipt._validPartNumber("xx"), false);
+const candidateRow = {
+  category_code: "starter", part_number: "SM-760-01",
+  candidates: [
+    { dkd_shohin_id: 101, variant_active: true },
+    { dkd_shohin_id: 102, variant_active: true }
+  ]
+};
+receipt._state.costListId = "6";
+receipt._state.costProductIds = ["102"];
+assert.strictEqual(receipt._automaticTarget(candidateRow), "102", "saved cost-list product wins over other master candidates");
+receipt._state.costProductIds = [];
+assert.strictEqual(receipt._automaticTarget(candidateRow), "", "a product absent from the cost list stays unresolved");
+receipt._state.costProductIds = ["101", "102"];
+assert.strictEqual(receipt._automaticTarget(candidateRow), "", "multiple cost-list products require review");
+receipt._state.costListId = "none";
+assert.strictEqual(receipt._automaticTarget(candidateRow), "", "ordinary matching does not guess among multiple products");
+receipt._state.costListId = "";
+receipt._state.costProductIds = [];
 
 receipt._state.preview = {
   total_quantity: 13,
