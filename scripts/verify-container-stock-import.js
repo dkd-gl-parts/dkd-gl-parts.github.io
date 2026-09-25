@@ -7,6 +7,7 @@ require("../manufacturing-cost-import.js");
 const fakeElements = {
   "container-stock-results": { innerHTML: "" },
   "container-stock-apply": { disabled: true },
+  "container-stock-status": { textContent: "", classList: { toggle() {} } },
   "container-stock-reference": { value: "" }
 };
 globalThis.document = {
@@ -72,17 +73,61 @@ receipt._state.preview = {
 };
 receipt._state.selections = {};
 receipt._renderPreview();
+assert.match(fakeElements["container-stock-results"].innerHTML, /照合完了・未解決あり（在庫未反映）/);
+assert.match(fakeElements["container-stock-status"].textContent, /照合完了/);
 assert.match(fakeElements["container-stock-results"].innerHTML, /一致なし 1件/);
 assert.match(fakeElements["container-stock-results"].innerHTML, /エラー: 商品マスタに一致なし/);
 assert.match(fakeElements["container-stock-results"].innerHTML, /照合品番: 31400-58J11/);
 assert.strictEqual(fakeElements["container-stock-apply"].disabled, true);
 receipt._state.editingKey = "alternator|31400-58J10";
 receipt._renderPreview();
+assert.match(fakeElements["container-stock-results"].innerHTML, /照合結果を修正中（在庫未反映）/);
 assert.match(fakeElements["container-stock-results"].innerHTML, /照合を修正/);
 assert.match(fakeElements["container-stock-results"].innerHTML, /この入庫だけの品番読み替え/);
 assert.match(fakeElements["container-stock-results"].innerHTML, /修正理由/);
 receipt._state.preview = null;
 receipt._state.editingKey = "";
+
+receipt._state.preview = {
+  total_quantity: 13,
+  rows: rows.map((row, index) => ({ ...row, candidates: [{
+    dkd_shohin_id: 200 + index, genuine_part_number: row.part_number,
+    stock_qty: 4, variant_active: true
+  }] })),
+  duplicate: null
+};
+receipt._state.selections = {};
+receipt._renderPreview();
+assert.match(fakeElements["container-stock-results"].innerHTML, /照合完了・未解決あり（在庫未反映）/);
+assert.strictEqual(fakeElements["container-stock-apply"].disabled, true);
+receipt._state.preview.rows.forEach((row, index) => {
+  receipt._state.selections[`${row.category_code}|${row.part_number}`] = String(200 + index);
+});
+receipt._renderPreview();
+assert.match(fakeElements["container-stock-results"].innerHTML, /照合完了・入庫可能（在庫未反映）/);
+assert.match(fakeElements["container-stock-results"].innerHTML, /まだ在庫には反映していません/);
+assert.strictEqual(fakeElements["container-stock-apply"].disabled, false);
+receipt._state.editingKey = "alternator|31400-58J10";
+receipt._renderPreview();
+assert.match(fakeElements["container-stock-results"].innerHTML, /照合結果を修正中（在庫未反映）/);
+assert.strictEqual(fakeElements["container-stock-apply"].disabled, true);
+receipt._state.editingKey = "";
+receipt._state.preview.duplicate = { id: 1, container_reference: "OTHER.xlsx", received_at: "2026-09-25" };
+receipt._renderPreview();
+assert.match(fakeElements["container-stock-results"].innerHTML, /照合完了・取込済み（再入庫不可）/);
+assert.strictEqual(fakeElements["container-stock-apply"].disabled, true);
+receipt._state.preview.duplicate = null;
+receipt._state.working = true;
+receipt._renderPreview();
+assert.match(fakeElements["container-stock-results"].innerHTML, /入庫を登録中です/);
+assert.strictEqual(fakeElements["container-stock-apply"].disabled, true);
+receipt._state.applied = true;
+receipt._renderPreview();
+assert.match(fakeElements["container-stock-results"].innerHTML, /入庫完了（在庫反映済み）/);
+assert.strictEqual(fakeElements["container-stock-apply"].disabled, true);
+receipt._state.working = false;
+receipt._state.applied = false;
+receipt._state.preview = null;
 
 receipt._state.sheets[0].category = "";
 assert.throws(() => receipt._collectRows(), /区分を選択/);

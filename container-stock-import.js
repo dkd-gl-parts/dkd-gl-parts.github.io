@@ -289,9 +289,44 @@
     var duplicate = preview.duplicate;
     var unmatched = rows.filter(function(row) { return !(row.candidates || []).length; }).length;
     var needsChoice = rows.filter(function(row) {
-      return (row.candidates || []).length > 0 && !state.selections[sourceKey(row)];
+      var selected = state.selections[sourceKey(row)];
+      return (row.candidates || []).length > 0 && !(row.candidates || []).some(function(candidate) {
+        return String(candidate.dkd_shohin_id) === String(selected) && candidate.variant_active !== false;
+      });
     }).length;
-    var html = "<div class='container-stock-summary'>" + rows.length + "品番 / " +
+    var statusTone, statusTitle, statusDetail;
+    if (state.applied) {
+      statusTone = "applied";
+      statusTitle = "入庫完了（在庫反映済み）";
+      statusDetail = "在庫に反映しました。取込履歴から確認できます。";
+    } else if (state.working) {
+      statusTone = "working";
+      statusTitle = "入庫を登録中です";
+      statusDetail = "処理が終わるまで再操作しないでください。";
+    } else if (duplicate) {
+      statusTone = "duplicate";
+      statusTitle = "照合完了・取込済み（再入庫不可）";
+      statusDetail = "同じ識別子・ファイル・品番と数量のいずれかが取込済みです。再入庫できません。";
+    } else if (state.editingKey || state.draftDirty) {
+      statusTone = "editing";
+      statusTitle = "照合結果を修正中（在庫未反映）";
+      statusDetail = "修正して再照合するか、編集を閉じてください。まだ在庫には反映していません。";
+    } else if (!rows.length) {
+      statusTone = "attention";
+      statusTitle = "照合完了・対象品番なし";
+      statusDetail = "対象品番がありません。シートと列の設定を確認してください。";
+    } else if (unmatched || needsChoice) {
+      statusTone = "attention";
+      statusTitle = "照合完了・未解決あり（在庫未反映）";
+      statusDetail = "一致なし・候補選択待ちを解消すると入庫できます。まだ在庫には反映していません。";
+    } else {
+      statusTone = "ready";
+      statusTitle = "照合完了・入庫可能（在庫未反映）";
+      statusDetail = "すべての入庫先が確定しました。まだ在庫には反映していません。内容を確認してから一括入庫してください。";
+    }
+    var html = "<div class='container-stock-result-state is-" + statusTone + "' role='group' aria-label='照合結果'>" +
+      "<strong>" + esc(statusTitle) + "</strong><p>" + esc(statusDetail) + "</p></div>" +
+      "<div class='container-stock-summary'>" + rows.length + "品番 / " +
       Number(preview.total_quantity || 0).toLocaleString("ja-JP") + "台" +
       "<span class='container-stock-unresolved' role='status'>一致なし " + unmatched + "件</span>" +
       "<span>候補選択待ち " + needsChoice + "件</span>";
@@ -300,7 +335,6 @@
         " · " + esc(duplicate.container_reference) + " · " + esc(duplicate.received_at) + "</strong>";
     }
     html += "</div>";
-    if (unmatched || needsChoice) html += "<p class='container-stock-resolution-notice'>未解決の行があるため、一括入庫はできません。行を修正・選択してから再確認してください。</p>";
     html += renderResolver(rows.find(function(row) { return sourceKey(row) === state.editingKey; }));
     html += "<div class='container-stock-table-wrap'><table class='mgmt-table container-stock-table'>" +
       "<thead><tr><th>区分・品番</th><th>数量</th><th>入庫先の商品</th><th>現在庫 → 入庫後</th><th>出典</th></tr></thead><tbody>";
@@ -354,12 +388,10 @@
     html += "</tbody></table></div>";
     host.innerHTML = html;
     byId("container-stock-apply").disabled =
-      !!duplicate || state.working || state.applied || state.draftDirty || !rows.length ||
-      rows.some(function(row) {
-        return !state.selections[sourceKey(row)] || !(row.candidates || []).some(function(candidate) {
-          return String(candidate.dkd_shohin_id) === state.selections[sourceKey(row)] && candidate.variant_active !== false;
-        });
-      });
+      !!duplicate || state.working || state.applied || !!state.editingKey || state.draftDirty ||
+      !rows.length || !!unmatched || !!needsChoice;
+    if (!state.working && !state.applied) setStatus(statusTitle,
+      statusTone === "duplicate" || statusTone === "attention");
   }
   async function previewReceipt() {
     if (state.working) return;
@@ -375,6 +407,7 @@
     var inputFingerprint = JSON.stringify({
       reference: reference, fileName: state.fileName, fileSha256: state.fileSha256, rows: rows
     });
+    invalidatePreview();
     state.working = true;
     byId("container-stock-preview").disabled = true;
     byId("container-stock-apply").disabled = true;
@@ -403,12 +436,6 @@
         else if (candidates.length === 1 && candidates[0].variant_active !== false)
           state.selections[sourceKey(row)] = String(candidates[0].dkd_shohin_id);
       });
-      renderPreview();
-      if (state.preview.duplicate) setStatus("同じコンテナ識別子、ファイル、または品番・数量の内容が取込済みです。再取込できません。", true);
-      else if ((state.preview.rows || []).some(function(row) {
-        return !(row.candidates || []).length;
-      })) setStatus("一致なしの行があります。品番を修正するか、商品マスタを確認してください。全行の照合が終わるまで入庫できません。", true);
-      else setStatus("候補を確認してください。すべての入庫先を確定すると入庫できます。");
     } catch (error) {
       invalidatePreview();
       setStatus("照合に失敗しました: " + (error.message || String(error)), true);
@@ -419,7 +446,8 @@
     }
   }
   async function applyReceipt() {
-    if (state.working || !state.preview || state.preview.duplicate || state.applied || state.draftDirty) return;
+    if (state.working || !state.preview || state.preview.duplicate || state.applied ||
+        state.editingKey || state.draftDirty) return;
     var rows = state.preview.rows || [];
     if (!rows.length || rows.some(function(row) { return !state.selections[sourceKey(row)]; })) return;
     var reference = selectedReference();
@@ -444,6 +472,7 @@
     state.working = true;
     byId("container-stock-apply").disabled = true;
     byId("container-stock-preview").disabled = true;
+    renderPreview();
     setStatus("在庫と入庫履歴を登録しています。");
     try {
       var payload = rows.map(function(row) {
