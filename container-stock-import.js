@@ -6,6 +6,7 @@
   var state = {
     fileName: "",
     fileSha256: "",
+    autoReferenceName: "",
     sheets: [],
     preview: null,
     previewInputFingerprint: "",
@@ -40,6 +41,19 @@
   }
   function selectedReference() {
     return (byId("container-stock-reference").value || "").trim();
+  }
+  function validReference(value) {
+    var reference = String(value || "").trim();
+    var key = reference.toUpperCase().replace(/[-\s\u3000]/g, "");
+    return reference.length >= 3 && reference.length <= 100 &&
+      key.length >= 3 && key.length <= 80 && !/[\x00-\x1f\x7f]/.test(reference);
+  }
+  function useFileNameAsReference(name) {
+    var reference = String(name || "").trim();
+    if (selectedReference() || !validReference(reference)) return false;
+    byId("container-stock-reference").value = reference;
+    state.autoReferenceName = reference;
+    return true;
   }
   function sourceKey(row) {
     return row.category_code + "|" + String(row.part_number || "").trim().toUpperCase();
@@ -213,10 +227,14 @@
     state.corrections = {};
     state.correctionReasons = {};
     state.preferredTargets = {};
+    useFileNameAsReference(file.name);
     byId("container-stock-file-name").textContent = file.name;
     invalidatePreview();
     renderSheets();
-    setStatus("ファイルを読み込みました。シート・列・区分を確認し、取込内容を照合してください。");
+    setStatus(!selectedReference()
+      ? "ファイル名を識別子に使用できません。識別子を入力してから照合してください。"
+      : "ファイルを読み込みました。ファイル名・シート・列・区分を確認し、取込内容を照合してください。",
+    !selectedReference());
   }
   function sourceLabel(row) {
     return (row.sources || []).map(function(source) {
@@ -615,7 +633,7 @@
       root.canEditProductKindStockMgmt());
     if (!host.hidden) {
       invalidatePreview();
-      setStatus("コンテナ識別子とExcel / CSVを指定してください。");
+      setStatus("Excel / CSVを選択してください。ファイル名を識別子に使用します。");
     }
   }
   function init() {
@@ -624,6 +642,9 @@
     byId("container-stock-choose").addEventListener("click", function() { fileInput.click(); });
     fileInput.addEventListener("change", async function() {
       var file = fileInput.files && fileInput.files[0];
+      if (state.autoReferenceName && selectedReference() === state.autoReferenceName)
+        byId("container-stock-reference").value = "";
+      state.autoReferenceName = "";
       state.sheets = [];
       state.corrections = {};
       state.correctionReasons = {};
@@ -641,6 +662,7 @@
       finally { state.working = false; invalidatePreview(); }
     });
     byId("container-stock-reference").addEventListener("input", function() {
+      state.autoReferenceName = "";
       invalidatePreview();
       setStatus("");
     });
@@ -769,7 +791,7 @@
   }
   root.DcatsContainerStockImport = {
     enter: enter, _collectRows: collectedRows, _renderPreview: renderPreview,
-    _validPartNumber: validPartNumber, _state: state
+    _validPartNumber: validPartNumber, _useFileNameAsReference: useFileNameAsReference, _state: state
   };
   if (typeof document !== "undefined") {
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true });
