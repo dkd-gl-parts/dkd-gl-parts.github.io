@@ -85,4 +85,18 @@
   .cpr-panel-head { align-items: flex-start; }
   .cpr-panel-head .cpr-primary { max-width: 120px; }
   .cpr-history-item { flex-direction: column; }
+  .cpr-table-wrap { overflow-x: visible; }
+  .cpr-table { display: block; min-width: 0; }
+  .cpr-table thead { display: none; }
+  .cpr-table tbody { display: block; }
+  .cpr-table tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid #e2e9f0; border-radius: 8px; }
+  .cpr-table td { display: block; min-width: 0; padding: 9px 11px; border-bottom: 0; overflow-wrap: anywhere; }
+  .cpr-table td::before { display: block; margin-bottom: 3px; color: #667588; font-size: 10px; font-weight: 800; }
+  .cpr-table td:nth-child(1)::before { content: "カテゴリ・区分"; }
+  .cpr-table td:nth-child(2)::before { content: "G品番 / 純正品番"; }
+  .cpr-table td:nth-child(3)::before { content: "メーカー品番"; }
+  .cpr-table td:nth-child(4)::before { content: "税抜価格"; }
+  .cpr-table td:last-child { text-align: left; }
+  .cpr-table .cpr-empty { grid-column: 1 / -1; }
+  .cpr-table .cpr-empty::before { display: none; }
 }
