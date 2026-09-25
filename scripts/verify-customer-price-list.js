@@ -38,6 +38,7 @@ expect(app.includes('action: "report-hub"'), "reports menu must open its hub");
   "販売価格"
 ].forEach((fragment) => expect(report.includes(fragment), `price report contract is missing: ${fragment}`));
 expect(report.includes("ご注文前に最新の価格と在庫状況をご確認ください。"), "printed guidance must include the stock and price check");
+expect(report.includes('sb.from("customer_product_visibility")') && report.includes('customerCategoryIsVisible(code, rows)'), "category choices must follow the selected customer's saved visibility rules");
 expect(report.includes("PDF保存時は印刷設定の「ヘッダーとフッター」をオフにしてください。"), "PDF toolbar must explain browser header/footer settings");
 expect(!report.includes("document-footer"), "print guidance must not be orphaned on a footer-only page");
 expect(!report.includes("product_base_prices"), "browser must not calculate a report from base-price rows");
@@ -75,7 +76,7 @@ const runtime = {
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   })[char])
 };
-vm.runInNewContext(report.replace(/\}\)\(\);\s*$/, "globalThis.renderCustomerPriceReport = printHtml;globalThis.renderCustomerPricePreview = renderPreview;globalThis.renderCustomerPriceDetail = renderDetail;globalThis.customerPriceState = state;globalThis.clearCustomerPricePreview = clearPreview;})();"), runtime);
+vm.runInNewContext(report.replace(/\}\)\(\);\s*$/, "globalThis.renderCustomerPriceReport = printHtml;globalThis.renderCustomerPricePreview = renderPreview;globalThis.renderCustomerPriceDetail = renderDetail;globalThis.customerPriceState = state;globalThis.clearCustomerPricePreview = clearPreview;globalThis.loadVisibleCustomerPriceCategories = loadVisibleCategories;})();"), runtime);
 runtime.renderCustomerPricePreview({
   summary: { candidate_count: 1, included_count: 1 },
   rows: [{ category_code: "alternator", category_label: "オルタネータ", gltek_part_number: "G0102-10001", genuine_part_number: "31100-RV4-004", manufacturer_part_number: "104210-1000", product_kind: "rebuilt", sales_price_jpy: 12000 }]
@@ -134,4 +135,43 @@ const singleCategory = runtime.renderCustomerPriceReport({
 });
 expect((singleCategory.match(/<section class='category-section'>/g) || []).length === 1 && singleCategory.includes("ONLY-1"), "a single category must print once without a blank category page");
 
-console.log("customer price report guard passed");
+const defaults = app.match(/var DEFAULT_CUSTOMER_VISIBLE_CATEGORY_CODES = \[[^\]]+\];/);
+const categoryVisible = app.match(/function customerCategoryIsVisible\(categoryCode, visibilityRows\) \{[\s\S]*?\n\}/);
+expect(defaults && categoryVisible, "shared customer category visibility helper must exist");
+vm.runInNewContext(defaults[0] + "\n" + categoryVisible[0], runtime);
+runtime.customerPriceState.categoryOptions = ["alternator", "starter", "injector"];
+runtime.customerPriceState.categories = { alternator: "オルタネータ", starter: "スタータ", injector: "インジェクター" };
+elements["cpr-customer"].value = "13";
+let visibilityResult = { data: [] };
+runtime.sb = { from(table) {
+  expect(table === "customer_product_visibility", "only saved customer visibility is read for category choices");
+  return { select() { return this; }, eq() { return this; }, in() { return this; }, limit() { return Promise.resolve(visibilityResult); } };
+} };
+
+(async () => {
+  elements["cpr-category"].value = "injector";
+  await runtime.loadVisibleCustomerPriceCategories();
+  expect(!elements["cpr-category"].innerHTML.includes("インジェクター") && elements["cpr-category"].value === "", "default six-category rule must remove injector and reset a hidden selection");
+  visibilityResult = { data: [
+    { visibility_scope: "all", is_visible: false },
+    { visibility_scope: "category", category_code: "alternator", is_visible: true }
+  ] };
+  await runtime.loadVisibleCustomerPriceCategories();
+  expect(elements["cpr-category"].innerHTML.includes("オルタネータ") && !elements["cpr-category"].innerHTML.includes("スタータ"), "saved category allow-list must drive report choices");
+  visibilityResult = { data: [
+    { visibility_scope: "all", is_visible: true },
+    { visibility_scope: "category", category_code: "injector", is_visible: false }
+  ] };
+  await runtime.loadVisibleCustomerPriceCategories();
+  expect(!elements["cpr-category"].innerHTML.includes("インジェクター") && elements["cpr-category"].innerHTML.includes("スタータ"), "category-specific hide must override show-all");
+  visibilityResult = { data: [
+    { visibility_scope: "all", is_visible: false },
+    { visibility_scope: "category", category_code: "injector", is_visible: true }
+  ] };
+  await runtime.loadVisibleCustomerPriceCategories();
+  expect(elements["cpr-category"].innerHTML.includes("インジェクター"), "an explicitly enabled injector category must remain selectable");
+  visibilityResult = { data: null, error: new Error("visibility unavailable") };
+  await runtime.loadVisibleCustomerPriceCategories();
+  expect(elements["cpr-category"].disabled && elements["cpr-preview-button"].disabled && elements["cpr-status"].classList, "visibility read errors must fail closed");
+  console.log("customer price report guard passed");
+})().catch(error => { console.error(error); process.exitCode = 1; });
