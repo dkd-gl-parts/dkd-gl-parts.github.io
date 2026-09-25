@@ -52,33 +52,56 @@ expect(css.includes(".category-section + .category-section { break-before: page;
 expect(/\.price-list \.g-part-number\s*\{[^}]*font-size:\s*9px;[^}]*white-space:\s*nowrap;[^}]*overflow-wrap:\s*normal;/.test(css), "G part numbers must print smaller on one line");
 expect(/\.cpr-table \.cpr-g-part-number\s*\{[^}]*font-size:\s*11px;[^}]*white-space:\s*nowrap;/.test(screenCss), "only the preview G part number must be smaller and stay on one line");
 expect(screenCss.includes('.cpr-table td:nth-child(2)::before { content: "G品番"; }') && screenCss.includes('.cpr-table td:nth-child(3)::before { content: "純正品番"; }'), "narrow preview must label G and genuine parts separately");
+expect(screenCss.includes('.cpr-summary button[aria-pressed="true"]') && screenCss.includes('.cpr-table[data-cpr-view="excluded"]'), "detail switches and narrow exclusion labels must be styled");
 expect(html.includes('<th>G品番</th><th>純正品番</th><th>メーカー品番</th>') && html.includes('colspan="5" class="cpr-empty"'), "preview must have separate G and genuine columns");
+expect(html.includes('id="cpr-detail-heading"') && html.includes('id="cpr-preview-table"'), "price report detail heading and table must exist");
 expect(html.includes('id="screen-report-hub"') && html.includes('id="screen-customer-price-report"'), "report screens must exist");
 expect(html.includes('src="customer-price-report.js?') && html.includes('href="customer-price-report.css?'), "report assets must load");
 expect(build.includes('"customer-price-report.js"') && build.includes('"customer-price-report-print.css"'), "report assets must ship");
 expect(workflow.includes("run: node scripts/verify-customer-price-list.js"), "CI must verify the report contract");
 
 const elements = {};
+const listeners = {};
 const runtime = {
   URL,
   APP_VERSION: "v-test",
+  doLogout: () => {},
+  enterManufacturingRankingReport: () => {},
   window: { location: { href: "https://example.test/index.html" } },
-  document: { getElementById: id => id === "screen-customer-price-report" ? null : (elements[id] ||= { classList: { toggle() {} } }) },
+  document: { getElementById: id => (elements[id] ||= { classList: { toggle() {} }, dataset: {}, querySelectorAll: () => [],
+    addEventListener: (name, fn) => { (listeners[id] ||= {})[name] = fn; } }) },
   esc: value => String(value).replace(/[&<>"']/g, char => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   })[char])
 };
-vm.runInNewContext(report.replace(/\}\)\(\);\s*$/, "globalThis.renderCustomerPriceReport = printHtml;globalThis.renderCustomerPricePreview = renderPreview;globalThis.clearCustomerPricePreview = clearPreview;})();"), runtime);
+vm.runInNewContext(report.replace(/\}\)\(\);\s*$/, "globalThis.renderCustomerPriceReport = printHtml;globalThis.renderCustomerPricePreview = renderPreview;globalThis.renderCustomerPriceDetail = renderDetail;globalThis.customerPriceState = state;globalThis.clearCustomerPricePreview = clearPreview;})();"), runtime);
 runtime.renderCustomerPricePreview({
   summary: { candidate_count: 1, included_count: 1 },
   rows: [{ category_code: "alternator", category_label: "オルタネータ", gltek_part_number: "G0102-10001", genuine_part_number: "31100-RV4-004", manufacturer_part_number: "104210-1000", product_kind: "rebuilt", sales_price_jpy: 12000 }]
 });
 expect(elements["cpr-preview-rows"].innerHTML.includes("<td class='cpr-g-part-number'>G0102-10001</td><td>31100-RV4-004</td>"), "preview must show small G code beside normal-size genuine code");
 expect(!elements["cpr-preview-rows"].innerHTML.includes("<small>31100-RV4-004</small>"), "genuine part number must not be the small caption");
+expect(elements["cpr-summary"].innerHTML.includes("data-cpr-view='candidate'") && elements["cpr-summary"].innerHTML.includes("data-cpr-view='excluded'"), "all three counts must be detail switches");
+runtime.renderCustomerPricePreview({
+  summary: { candidate_count: 3, included_count: 1, excluded_hidden: 1, excluded_no_price: 1 },
+  rows: [{ category_code: "alternator", gltek_part_number: "G-1", genuine_part_number: "IN-1", sales_price_jpy: 12000 }],
+  excluded_rows: [
+    { category_code: "alternator", gltek_part_number: "G-2", genuine_part_number: "OUT-1", exclusion_reason: "hidden" },
+    { category_code: "starter", gltek_part_number: "G-3", genuine_part_number: "OUT-2", exclusion_reason: "no_price" }
+  ]
+});
+listeners["cpr-summary"].click({ target: { closest: () => ({ dataset: { cprView: "excluded" } }) } });
+expect(runtime.customerPriceState.view === "excluded", "clicking excluded count must switch the detail view");
+expect(elements["cpr-detail-heading"].textContent === "除外品番 2件", "excluded detail count must match summary");
+expect(elements["cpr-preview-rows"].innerHTML.includes("OUT-1") && elements["cpr-preview-rows"].innerHTML.includes("非公開") && elements["cpr-preview-rows"].innerHTML.includes("価格未設定"), "excluded detail must show part numbers and reasons");
+expect(!elements["cpr-preview-rows"].innerHTML.includes("12,000円"), "excluded detail must not reveal included prices");
+listeners["cpr-summary"].click({ target: { closest: () => ({ dataset: { cprView: "candidate" } }) } });
+expect(elements["cpr-detail-heading"].textContent === "候補品番 3件" && elements["cpr-preview-rows"].innerHTML.includes("IN-1") && elements["cpr-preview-rows"].innerHTML.includes("OUT-2"), "candidate detail must include priced and excluded rows");
 runtime.renderCustomerPricePreview({ rows: [], summary: {} });
 expect(elements["cpr-preview-rows"].innerHTML.includes("colspan='5'"), "empty preview must span all five columns");
 runtime.clearCustomerPricePreview();
 expect(elements["cpr-preview-rows"].innerHTML.includes("colspan='5'"), "cleared preview must span all five columns");
+expect(elements["cpr-summary"].hidden && elements["cpr-detail-heading"].hidden && runtime.customerPriceState.view === "included", "filter changes must clear old detail");
 const printed = runtime.renderCustomerPriceReport({
   issue_id: "INTERNAL-ISSUE-ID",
   issued_at: "2026-09-25T00:00:00Z",

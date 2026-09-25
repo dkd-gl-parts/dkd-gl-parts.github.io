@@ -56,12 +56,16 @@
 .cpr-status { margin: 16px 0; padding: 12px 14px; border-radius: 7px; background: #f3f7fb; color: #415a75; line-height: 1.5; }
 .cpr-status.error { background: #fff0f0; color: #9b1b2e; }
 .cpr-summary { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-.cpr-summary span { padding: 8px 11px; border: 1px solid #d4e3f0; border-radius: 7px; background: #f3f8fc; color: #2b4562; }
+.cpr-summary button { padding: 8px 11px; border: 1px solid #d4e3f0; border-radius: 7px; background: #f3f8fc; color: #2b4562; font: inherit; cursor: pointer; }
+.cpr-summary button:hover { border-color: #8faccc; background: #eaf3fb; }
+.cpr-summary button[aria-pressed="true"] { border-color: #2266a3; background: #e4f1fc; box-shadow: inset 0 -2px #2266a3; }
 .cpr-summary strong { margin-left: 6px; color: var(--dcats-ink); }
-.cpr-exclusions { margin-bottom: 12px; color: #795622; font-size: 12px; line-height: 1.5; }
-.cpr-table-wrap { overflow-x: auto; }
+.cpr-exclusions { margin-bottom: 12px; color: #795622; font-size: 12px; line-height: 1.5; word-break: keep-all; }
+.cpr-detail-heading { margin: 12px 0 8px; color: var(--dcats-ink); font-size: 14px; }
+.cpr-exclusion-reason { color: #795622; font-weight: 800; }
+.cpr-table-wrap { max-height: 560px; overflow: auto; }
 .cpr-table { width: 100%; border-collapse: collapse; min-width: 680px; }
-.cpr-table th { padding: 10px 9px; border-bottom: 2px solid #dbe4ed; background: #f7f9fc; color: #3d5067; text-align: left; font-size: 12px; }
+.cpr-table th { position: sticky; top: 0; z-index: 1; padding: 10px 9px; border-bottom: 2px solid #dbe4ed; background: #f7f9fc; color: #3d5067; text-align: left; font-size: 12px; }
 .cpr-table td { padding: 10px 9px; border-bottom: 1px solid #edf1f5; vertical-align: top; }
 .cpr-table .cpr-g-part-number { font-size: 11px; white-space: nowrap; }
 .cpr-table td:last-child { white-space: nowrap; text-align: right; font-weight: 800; color: #132f50; }
@@ -99,6 +103,8 @@
   .cpr-table td:nth-child(3)::before { content: "純正品番"; }
   .cpr-table td:nth-child(4)::before { content: "メーカー品番"; }
   .cpr-table td:nth-child(5)::before { content: "税抜価格"; }
+  .cpr-table[data-cpr-view="candidate"] td:nth-child(5)::before { content: "価格／判定"; }
+  .cpr-table[data-cpr-view="excluded"] td:nth-child(5)::before { content: "除外理由"; }
   .cpr-table td:last-child { text-align: left; }
   .cpr-table .cpr-empty { grid-column: 1 / -1; }
   .cpr-table .cpr-empty::before { display: none; }
