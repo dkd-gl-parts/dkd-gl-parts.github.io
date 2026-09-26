@@ -125,6 +125,8 @@
       bridgeHanbaiohLaunched: "販売王25を起動しました。「D-CATS連携テスト（実データ禁止）」を確認してから手動で取り込んでください。",
       bridgeHanbaiohAlreadyRunning: "販売王25はこのPCで起動済みです。別ログインは行いません。［ツール→利用状況］のユーザー名と画面上部のデータ名称を確認し、割当と違えば取込を止めて管理者へ連絡してください。",
       bridgeHanbaiohAlreadyRunningBubble: "販売王は起動中です。利用者と会社データを確認してください。",
+      bridgeHanbaiohStateUnverified: "販売王25の起動状態を確認できません。同じPCで別ログインを試さず、販売王の画面・利用者・データ名称を確認してください。不明な場合は取込を止めて管理者へ連絡してください。",
+      bridgeHanbaiohStateUnverifiedBubble: "販売王の起動状態が不明です。別ログインを試さないでください。",
       bridgePreparedExisting: "同じCSVは準備済みです。既存の待機データを使用します。",
       bridgeInvalidFileName: "受信フォルダー内のCSVファイル名だけを入力してください。",
       bridgeFileMissing: "受信フォルダーにCSVが見つかりません。ファイル名と保存場所を確認してください。",
@@ -222,6 +224,8 @@
       bridgeHanbaiohLaunched: "Launched Sales King 25. Confirm “D-CATS Integration Test (No Production Data)” before importing manually.",
       bridgeHanbaiohAlreadyRunning: "Sales King 25 is already running on this PC. No second sign-in will be attempted. Confirm the user name under Tools → Usage Status and the data name in the window title. If either differs from the assigned account, stop the import and contact an administrator.",
       bridgeHanbaiohAlreadyRunningBubble: "Sales King is running. Check the user and company data.",
+      bridgeHanbaiohStateUnverified: "The Sales King 25 launch state could not be verified. Do not try another sign-in on this PC. Check the Sales King window, user, and data name. If uncertain, stop the import and contact an administrator.",
+      bridgeHanbaiohStateUnverifiedBubble: "Sales King status is unknown. Do not try another sign-in.",
       bridgePreparedExisting: "This CSV is already staged. The existing queued item will be used.",
       bridgeInvalidFileName: "Enter only a CSV file name from the Windows inbox.",
       bridgeFileMissing: "The CSV was not found in the Windows inbox. Check its file name and location.",
@@ -319,6 +323,8 @@
       bridgeHanbaiohLaunched: "已启动销售王25。请确认“D-CATS联动测试（禁止使用实际数据）”后再手动导入。",
       bridgeHanbaiohAlreadyRunning: "销售王25已在此电脑运行，不会再次登录。请在“工具→使用状况”确认用户名，并在窗口标题确认数据名称；若与分配的信息不符，请停止导入并联系管理员。",
       bridgeHanbaiohAlreadyRunningBubble: "销售王已在运行，请确认用户和公司数据。",
+      bridgeHanbaiohStateUnverified: "无法确认销售王25的启动状态。请勿在此电脑再次登录；先确认销售王窗口、用户名和数据名称。如仍无法确认，请停止导入并联系管理员。",
+      bridgeHanbaiohStateUnverifiedBubble: "销售王状态不明，请勿再次登录。",
       bridgePreparedExisting: "相同CSV已准备完成，将使用现有等待数据。",
       bridgeInvalidFileName: "请只输入Windows收件文件夹中的CSV文件名。",
       bridgeFileMissing: "Windows收件文件夹中未找到CSV，请检查文件名和保存位置。",
@@ -950,7 +956,7 @@
     if (bridgeCustomerFileInput) bridgeCustomerFileInput.disabled = bridgeRequestPending;
     bridgeStatus.textContent = copy(bridgeStatusState.key, bridgeStatusState.values || {});
     bridgeStatus.classList.toggle("is-success", ["bridgeSuccess", "bridgeSalesPrepared", "bridgeTestSalesStaged", "bridgeTestSalesExisting", "bridgeCustomerPrepared", "bridgePreparedExisting", "bridgeFolderOpened", "bridgeHanbaiohLaunched"].indexOf(bridgeStatusState.key) >= 0);
-    bridgeStatus.classList.toggle("is-warning", bridgeStatusState.key === "bridgeHanbaiohAlreadyRunning");
+    bridgeStatus.classList.toggle("is-warning", ["bridgeHanbaiohAlreadyRunning", "bridgeHanbaiohStateUnverified"].indexOf(bridgeStatusState.key) >= 0);
     bridgeStatus.classList.toggle("is-error", ["bridgeInvalidFileName", "bridgeFileMissing", "bridgeValidationFailed", "bridgeUnavailable", "bridgeTimeout", "bridgeForbidden", "bridgeFailed"].indexOf(bridgeStatusState.key) >= 0);
   }
 
@@ -1008,11 +1014,12 @@
     });
   }
 
-  function bridgeFailureStatus(error) {
+  function bridgeFailureStatus(error, command) {
     var code = String(error && error.code || "");
     var message = String(error && error.message || "");
     var status = Number(error && error.context && error.context.status || error && error.status || 0);
     if (status === 401 || status === 403 || /system_admin|required|forbidden/i.test(message)) return { key: "bridgeForbidden" };
+    if (command === "launch_hanbaioh25" && code === "HANBAIOH_LOCAL_SESSION_UNVERIFIED") return { key: "bridgeHanbaiohStateUnverified" };
     if (code === "BRIDGE_TIMEOUT") return { key: "bridgeTimeout" };
     if (["EXTENSION_UNAVAILABLE", "NATIVE_HOST_UNAVAILABLE"].indexOf(code) >= 0) return { key: "bridgeUnavailable" };
     if (code === "CSV_VALIDATION_FAILED") {
@@ -1091,10 +1098,11 @@
       playExternalState(statusKey === "bridgeHanbaiohAlreadyRunning" ? "review" : "success", 2200);
     } catch (error) {
       if (token !== bridgeRequestToken || !isSystemAdminSession()) return;
-      var failure = bridgeFailureStatus(error);
+      var failure = bridgeFailureStatus(error, command);
       setBridgeStatus(failure.key, failure.values);
-      showBubble(copy(failure.key, failure.values || {}), 4200);
-      playExternalState("failed", 2600);
+      var localStateUnknown = failure.key === "bridgeHanbaiohStateUnverified";
+      showBubble(copy(localStateUnknown ? "bridgeHanbaiohStateUnverifiedBubble" : failure.key, failure.values || {}), 4200);
+      playExternalState(localStateUnknown ? "review" : "failed", 2600);
     } finally {
       if (token === bridgeRequestToken) {
         bridgeRequestPending = false;

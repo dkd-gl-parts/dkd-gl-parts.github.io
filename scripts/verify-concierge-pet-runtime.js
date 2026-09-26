@@ -619,6 +619,26 @@ for (const [id, timer] of Array.from(pendingTimers.entries()).filter(([, timer])
 }
 await new Promise((resolve) => setImmediate(resolve));
 assert(bridgeStatus.textContent === "Windows連携から応答がありませんでした。もう一度確認してください。" && bridgeStatus.classList.contains("is-error"), "Windows integration timeout did not fail safely");
+bridgeResponseFactory = (request) => ({ id: request.id, ok: false, error: {
+  code: "HANBAIOH_LOCAL_SESSION_UNVERIFIED", message: "synthetic raw diagnostic must stay hidden",
+} });
+dispatch(bridgeLaunchButton.listeners, "click", { target: bridgeLaunchButton });
+await new Promise((resolve) => setImmediate(resolve));
+await new Promise((resolve) => setImmediate(resolve));
+assert(bridgeStatus.textContent.includes("起動状態を確認できません") && bridgeStatus.textContent.includes("別ログインを試さず") && bridgeStatus.textContent.includes("取込を止めて") && !bridgeStatus.textContent.includes("synthetic raw diagnostic") && bridgeStatus.classList.contains("is-warning") && !bridgeStatus.classList.contains("is-success"), "Unknown local Sales King state must stop with fixed administrator guidance");
+assert(byClass("dcats-concierge-bubble")[0].textContent === "販売王の起動状態が不明です。別ログインを試さないでください。", "Unknown local Sales King state must show a short character bubble");
+documentObject.documentElement.lang = "en";
+notifyObservers();
+assert(bridgeStatus.textContent.includes("Do not try another sign-in") && bridgeStatus.classList.contains("is-warning"), "English unknown-state guidance was not translated");
+documentObject.documentElement.lang = "zh-CN";
+notifyObservers();
+assert(bridgeStatus.textContent.includes("请勿在此电脑再次登录") && bridgeStatus.classList.contains("is-warning"), "Chinese unknown-state guidance was not translated");
+documentObject.documentElement.lang = "ja";
+notifyObservers();
+dispatch(bridgeButton.listeners, "click", { target: bridgeButton });
+await new Promise((resolve) => setImmediate(resolve));
+await new Promise((resolve) => setImmediate(resolve));
+assert(bridgeStatus.textContent === "Windows連携を確認できませんでした。時間をおいてもう一度お試しください。" && bridgeStatus.classList.contains("is-error"), "A non-launch command must not inherit Sales King launch-state guidance");
 bridgeResponseFactory = (request) => ({ id: request.id, ok: true, command: request.command, data: { counts: {}, jobs: [] } });
 assert(api.getSettings().character === "suzuto" && api.getSettings().mode === "active", "User A defaults are invalid");
 
