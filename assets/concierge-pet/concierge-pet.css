@@ -38,11 +38,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.1059");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.1060");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.1059");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.1060");
 }
 
 .dcats-concierge-hit-target {
@@ -524,6 +524,10 @@
 
 .dcats-concierge-bridge-status.is-success {
   color: #1e725f;
+}
+
+.dcats-concierge-bridge-status.is-warning {
+  color: #8c4b0b;
 }
 
 .dcats-concierge-bridge-status.is-error {
