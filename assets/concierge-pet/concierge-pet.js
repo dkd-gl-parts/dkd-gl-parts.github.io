@@ -123,7 +123,8 @@
       bridgeCustomerPrepared: "得意先CSVを{rows}行・{customers}得意先・警告{warnings}件で確認待ちに準備しました。",
       bridgeFolderOpened: "取込待ちフォルダーを開きました。販売王への取込は会社名を確認して手動で行ってください。",
       bridgeHanbaiohLaunched: "販売王25を起動しました。「D-CATS連携テスト（実データ禁止）」を確認してから手動で取り込んでください。",
-      bridgeHanbaiohAlreadyRunning: "販売王25は既に起動しています。「D-CATS連携テスト（実データ禁止）」を確認してから手動で取り込んでください。",
+      bridgeHanbaiohAlreadyRunning: "販売王25はこのPCで起動済みです。別ログインは行いません。［ツール→利用状況］のユーザー名と画面上部のデータ名称を確認し、割当と違えば取込を止めて管理者へ連絡してください。",
+      bridgeHanbaiohAlreadyRunningBubble: "販売王は起動中です。利用者と会社データを確認してください。",
       bridgePreparedExisting: "同じCSVは準備済みです。既存の待機データを使用します。",
       bridgeInvalidFileName: "受信フォルダー内のCSVファイル名だけを入力してください。",
       bridgeFileMissing: "受信フォルダーにCSVが見つかりません。ファイル名と保存場所を確認してください。",
@@ -219,7 +220,8 @@
       bridgeCustomerPrepared: "Staged {rows} rows for {customers} customers with {warnings} warnings for review.",
       bridgeFolderOpened: "Opened the import-ready folder. Confirm the company name before importing into Sales King manually.",
       bridgeHanbaiohLaunched: "Launched Sales King 25. Confirm “D-CATS Integration Test (No Production Data)” before importing manually.",
-      bridgeHanbaiohAlreadyRunning: "Sales King 25 is already running. Confirm “D-CATS Integration Test (No Production Data)” before importing manually.",
+      bridgeHanbaiohAlreadyRunning: "Sales King 25 is already running on this PC. No second sign-in will be attempted. Confirm the user name under Tools → Usage Status and the data name in the window title. If either differs from the assigned account, stop the import and contact an administrator.",
+      bridgeHanbaiohAlreadyRunningBubble: "Sales King is running. Check the user and company data.",
       bridgePreparedExisting: "This CSV is already staged. The existing queued item will be used.",
       bridgeInvalidFileName: "Enter only a CSV file name from the Windows inbox.",
       bridgeFileMissing: "The CSV was not found in the Windows inbox. Check its file name and location.",
@@ -315,7 +317,8 @@
       bridgeCustomerPrepared: "已将{rows}行、{customers}个客户的CSV加入确认等待，警告{warnings}项。",
       bridgeFolderOpened: "已打开待导入文件夹。请确认公司名称后再手动导入销售王。",
       bridgeHanbaiohLaunched: "已启动销售王25。请确认“D-CATS联动测试（禁止使用实际数据）”后再手动导入。",
-      bridgeHanbaiohAlreadyRunning: "销售王25已在运行。请确认“D-CATS联动测试（禁止使用实际数据）”后再手动导入。",
+      bridgeHanbaiohAlreadyRunning: "销售王25已在此电脑运行，不会再次登录。请在“工具→使用状况”确认用户名，并在窗口标题确认数据名称；若与分配的信息不符，请停止导入并联系管理员。",
+      bridgeHanbaiohAlreadyRunningBubble: "销售王已在运行，请确认用户和公司数据。",
       bridgePreparedExisting: "相同CSV已准备完成，将使用现有等待数据。",
       bridgeInvalidFileName: "请只输入Windows收件文件夹中的CSV文件名。",
       bridgeFileMissing: "Windows收件文件夹中未找到CSV，请检查文件名和保存位置。",
@@ -946,7 +949,8 @@
     if (bridgeSalesFileInput) bridgeSalesFileInput.disabled = bridgeRequestPending;
     if (bridgeCustomerFileInput) bridgeCustomerFileInput.disabled = bridgeRequestPending;
     bridgeStatus.textContent = copy(bridgeStatusState.key, bridgeStatusState.values || {});
-    bridgeStatus.classList.toggle("is-success", ["bridgeSuccess", "bridgeSalesPrepared", "bridgeTestSalesStaged", "bridgeTestSalesExisting", "bridgeCustomerPrepared", "bridgePreparedExisting", "bridgeFolderOpened", "bridgeHanbaiohLaunched", "bridgeHanbaiohAlreadyRunning"].indexOf(bridgeStatusState.key) >= 0);
+    bridgeStatus.classList.toggle("is-success", ["bridgeSuccess", "bridgeSalesPrepared", "bridgeTestSalesStaged", "bridgeTestSalesExisting", "bridgeCustomerPrepared", "bridgePreparedExisting", "bridgeFolderOpened", "bridgeHanbaiohLaunched"].indexOf(bridgeStatusState.key) >= 0);
+    bridgeStatus.classList.toggle("is-warning", bridgeStatusState.key === "bridgeHanbaiohAlreadyRunning");
     bridgeStatus.classList.toggle("is-error", ["bridgeInvalidFileName", "bridgeFileMissing", "bridgeValidationFailed", "bridgeUnavailable", "bridgeTimeout", "bridgeForbidden", "bridgeFailed"].indexOf(bridgeStatusState.key) >= 0);
   }
 
@@ -1083,8 +1087,8 @@
           : { rows: Number(summary.rowCount || 0), customers: Number(summary.uniqueCustomerCount || 0), warnings: Array.isArray(validation.warnings) ? validation.warnings.length : 0 };
       }
       setBridgeStatus(statusKey, statusValues);
-      showBubble(copy(statusKey, statusValues), 4200);
-      playExternalState("success", 2200);
+      showBubble(copy(statusKey === "bridgeHanbaiohAlreadyRunning" ? "bridgeHanbaiohAlreadyRunningBubble" : statusKey, statusValues), 4200);
+      playExternalState(statusKey === "bridgeHanbaiohAlreadyRunning" ? "review" : "success", 2200);
     } catch (error) {
       if (token !== bridgeRequestToken || !isSystemAdminSession()) return;
       var failure = bridgeFailureStatus(error);
